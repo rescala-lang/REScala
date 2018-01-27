@@ -9,7 +9,14 @@ import scala.collection.immutable.{LinearSeq, Queue}
 import scala.language.experimental.macros
 
 
-/** Occurs based on the dependencies.
+/** Events only propagate a value when they are changing,
+  * when the system is at rest, events have no values.
+  *
+  * Note: We hide implicit parameters of the API in the documentation.
+  * They are used to ensure correct creation, and you normally do not have to worry about them,
+  * except if you accidentially call the implicit parameterlist, in which cas you may get cryptic errors.
+  * This is a scala limitation.
+  * We also hide the internal state parameter of passed and returned events.
   *
   * @tparam T Value type of the event occurrences.
   * @tparam S Internal [[rescala.core.Struct]]ure of state.
@@ -28,11 +35,14 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
   override def interpret(v: Pulse[T] @uncheckedVariance): Option[T] = v.toOption
 
   /** Adds an observer.
+    * @usecase def +=(handler: T => Unit): Observe[S]
     * @see observe
     * @group accessor*/
   final def +=(handler: T => Unit)(implicit ticket: CreationTicket[S]): Observe[S] = observe(handler)(ticket)
 
-  /** add an observer
+  /** Add an observer.
+    * @return the resulting [[Observe]] can be used to remove the observer.
+    * @usecase def observe(handler: T => Unit): Observe[S]
     * @group accessor */
   final def observe(
     onSuccess: T => Unit,
@@ -40,7 +50,8 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
   )(implicit ticket: CreationTicket[S]): Observe[S] = Observe.strong(this, fireImmediately = false)(onSuccess, onFailure)
 
   /** Uses a partial function `onFailure` to recover an error carried by the event into a value when returning Some(value),
-    * or filters the error when returning None */
+    * or filters the error when returning None
+    * @usecase recover[R >: T](onFailure: PartialFunction[Throwable, Option[R]]): rescala.Event[R]*/
   final def recover[R >: T](onFailure: PartialFunction[Throwable, Option[R]])(implicit ticket: CreationTicket[S]): Event[R, S] =
     Events.staticNamed(s"(recover $this)", this) { st =>
       st.dependStatic(this) match {
@@ -50,11 +61,13 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
     }
 
   /** Collects the results from a partial function
+    * @usecase def collect[U](pf: PartialFunction[T, U]): rescala.Event[U]
     * @group operator */
   final def collect[U](pf: PartialFunction[T, U])(implicit ticket: CreationTicket[S]): Event[U, S] =
     Events.staticNamed(s"(collect $this)", this) { st => st.dependStatic(this).collect(pf) }
 
   /** Events disjunction.
+    * @usecase def ||[U >: T](other: Event[U]): rescala.Event[U]
     * @group operator */
   final def ||[U >: T](other: Event[U, S])(implicit ticket: CreationTicket[S]): Event[U, S] = {
     Events.staticNamed(s"(or $this $other)", this, other) { st =>
@@ -63,14 +76,19 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
     }
   }
 
-  /** EV filtered with a predicate
+  /** Filters the event, only propagating the value when the filter is true.
+    * @usecase def filter(pred: T => Boolean): rescala.Event[T]
     * @group operator*/
-  final def filter(pred: T => Boolean)(implicit ticket: CreationTicket[S]): Event[T, S] = Events.staticNamed(s"(filter $this)", this) { st => st.dependStatic(this).filter(pred) }
-  /** EV filtered with a predicate
+  final def filter(pred: T => Boolean)(implicit ticket: CreationTicket[S]): Event[T, S] =
+    Events.staticNamed(s"(filter $this)", this) { st => st.dependStatic(this).filter(pred) }
+  /** Filters the event, only propagating the value when the filter is true.
+    * @usecase def fold[A](init: A)(op: (A, T) => A): rescala.Signal[A]
+    * @see filter
     * @group operator*/
   final def &&(pred: T => Boolean)(implicit ticket: CreationTicket[S]): Event[T, S] = filter(pred)
 
-  /** EV is triggered except if the other one is triggered
+  /** Propagates the event only when except does not fire.
+    * @usecase def \[U](except: Event[U]): rescala.Event[T]
     * @group operator*/
   final def \[U](except: Event[U, S])(implicit ticket: CreationTicket[S]): Event[T, S] = {
     Events.staticNamed(s"(except $this  $except)", this, except) { st =>
@@ -82,7 +100,8 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
     }
   }
 
-  /** Events conjunction
+  /** Merge the event with the other, if both fire simultaneously.
+    * @usecase def and[U, R](other: Event[U]): rescala.Event[R]
     * @group operator*/
   final def and[U, R](other: Event[U, S])(merger: (T, U) => R)(implicit ticket: CreationTicket[S]): Event[R, S] = {
     Events.staticNamed(s"(and $this $other)", this, other) { st =>
@@ -93,11 +112,14 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
     }
   }
 
-  /** Event conjunction with a merge method creating a tuple of both event parameters
-    * @group operator*/
+  /** Merge the event with the other into a tuple, if both fire simultaneously.
+    * @usecase def zip[U](other: Event[U]): rescala.Event[(T, U)]
+    * @group operator
+    * @see and */
   final def zip[U](other: Event[U, S])(implicit ticket: CreationTicket[S]): Event[(T, U), S] = and(other)(Tuple2.apply)
 
-  /** Event disjunction with a merge method creating a tuple of both optional event parameters wrapped
+  /** Merge the event with the other into a tuple, even if only one of them fired.
+    * @usecase def zipOuter[U](other: Event[U, S]): rescala.Event[(Option[T], Option[U])]
     * @group operator*/
   final def zipOuter[U](other: Event[U, S])(implicit ticket: CreationTicket[S]): Event[(Option[T], Option[U]), S] = {
     Events.staticNamed(s"(zipOuter $this $other)", this, other) { st =>
@@ -107,11 +129,13 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
     }
   }
 
-  /** Transform the event parameter
+  /** Transform the event.
+    * @usecase def map[A](expression: T => A): rescala.Event[A]
     * @group operator*/
   final def map[A](expression: T => A)(implicit ticket: CreationTicket[S]): Event[A, S] = macro rescala.macros.ReactiveMacros.EventMapMacro[T, A, S]
 
   /** Drop the event parameter; equivalent to map((_: Any) => ())
+    * @usecase def dropParam(implicit ticket: CreationTicket[S]): rescala.Event[Unit]
     * @group operator*/
   final def dropParam(implicit ticket: CreationTicket[S]): Event[Unit, S] = Events.static(this)(_ => Some(()))
 
@@ -130,6 +154,7 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
   }
 
   /** reduces events with a given reduce function to create a Signal
+    * @usecase def reduce[A](reducer: (=> A, => T) => A): rescala.Signal[A]
     * @group conversion */
   final def reduce[A: ReSerializable](reducer: (=> A, => T) => A)(implicit ticket: CreationTicket[S]): Signal[A, S] =
     ticket { initialTurn =>
@@ -140,6 +165,7 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
 
   /** Applies a function on the current value of the signal every time the event occurs,
     * starting with the init value before the first event occurrence
+    * @usecase def iterate[A](init: A)(f: A => A): rescala.Signal[A]
     * @group conversion */
   final def iterate[A: ReSerializable](init: A)(f: A => A)(implicit ticket: CreationTicket[S]): Signal[A, S] =
     fold(init)((acc, _) => f(acc))
