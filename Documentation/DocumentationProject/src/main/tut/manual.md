@@ -14,7 +14,7 @@ scalaVersion := "2.12.4"
 
 resolvers += Resolver.bintrayRepo("stg-tud", "maven")
 
-libraryDependencies += "de.tuda.stg" %% "rescala" % "0.20.0"
+libraryDependencies += "de.tuda.stg" %% "rescala" % "0.21.0"
 ```
 
 Install [sbt](http://www.scala-sbt.org/) and run `sbt console` inside the folder,

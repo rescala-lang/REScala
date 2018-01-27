@@ -6,8 +6,8 @@ import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations._
 import rescala.core.{Scheduler, Struct}
 import rescala.reactives.{Evt, Var}
-import rescala.restore.ReStoringScheduler
-import rescala.core.ReCirce._
+import rescala.restoration.ReStoringScheduler
+import rescala.restoration.ReCirce._
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)

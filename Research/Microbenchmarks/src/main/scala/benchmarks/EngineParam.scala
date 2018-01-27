@@ -11,7 +11,7 @@ class EngineParam[S <: Struct] {
 
   def engine: Scheduler[S] = engineName match {
     case "stm" => rescala.stm.STMEngine.stm.asInstanceOf[Scheduler[S]]
-    case "restoring" => new rescala.restore.ReStoringScheduler().asInstanceOf[Scheduler[S]]
+    case "restoring" => new rescala.restoration.ReStoringScheduler().asInstanceOf[Scheduler[S]]
     case "fullmv" => new rescala.fullmv.FullMVEngine(scala.concurrent.duration.Duration.Zero, "benchmark").asInstanceOf[Scheduler[S]]
     case other => Engines.byName[S](other)
   }

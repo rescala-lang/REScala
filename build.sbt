@@ -5,6 +5,7 @@ ThisBuild / shellPrompt := { state => Project.extract(state).currentRef.project 
 maxErrors := 5
 crossScalaVersions := Seq(cfg.version_211, cfg.version_212)
 ThisBuild / incOptions := (ThisBuild / incOptions).value.withLogRecompileOnMacro(false)
+cfg.noPublish
 
 lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
   caseStudyEditor,
@@ -89,7 +90,7 @@ lazy val reswing = project.in(file("Extensions/RESwing"))
   .dependsOn(rescalaJVM)
 
 lazy val restore = crossProject.in(file("Extensions/restoration"))
-  .settings(name := "restoration", cfg.base, cfg.strictScalac, lib.circe)
+  .settings(name := "restoration", cfg.base, cfg.strictScalac, lib.circe, cfg.noPublish)
   .dependsOn(rescala, tests % "test->test")
   .jsSettings(cfg.js, lib.jsdom)
 lazy val restoreJVM = restore.jvm
@@ -195,7 +196,7 @@ lazy val microbench = project.in(file("Research/Microbenchmarks"))
   .settings(name := "microbenchmarks", cfg.base, cfg.noPublish, mainClass in Compile := Some("org.openjdk.jmh.Main"),
     TaskKey[Unit]("compileJmh") := Seq(compile in pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh).dependOn.value)
   .enablePlugins(JavaAppPackaging)
-  .dependsOn(stm, fullmv)
+  .dependsOn(stm, fullmv, restoreJVM)
 
 
 // ===================================================================================== Settings
@@ -208,7 +209,7 @@ lazy val cfg = new {
 
   val base = List(
     organization := "de.tuda.stg",
-    version := "0.21.0-SNAPSHOT",
+    version := "0.21.0",
     scalaVersion := version_212,
     baseScalac,
     // scaladoc
@@ -224,9 +225,12 @@ lazy val cfg = new {
 
 
   /*
+  * publish procedure copied from:
+  *   https://github.com/portable-scala/sbt-crossproject/commit/fbe10fe5cee1f545be75a310612b30e520729a0d#diff-6a3371457528722a734f3c51d9238c13
   * Have your Bintray credentials stored as
     [documented here](http://www.scala-sbt.org/1.0/docs/Publishing.html#Credentials),
     using realm `Bintray API Realm` and host `api.bintray.com`
+  * Use `publish` from sbt
   * Log in to Bintray and publish the files that were sent
   */
   lazy val bintray = Seq(
@@ -236,8 +240,7 @@ lazy val cfg = new {
     scmInfo := Some(
       ScmInfo(
         browseUrl = url("https://github.com/guidosalva/REScala/"),
-        connection =
-          "scm:git:git@github.com:guidosalva/REScala.git"
+        connection = "scm:git:git@github.com:guidosalva/REScala.git"
       )
     ),
     // Publish to Bintray, without the sbt-bintray plugin
