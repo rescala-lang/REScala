@@ -10,7 +10,7 @@ trait Struct { type State[P, S <: Struct] }
 
 /** Source of (reactive) values, the [[Struct]] defines how the state is stored internally,
   * and how dependencies are managed.
-  * State can only be accessed with a correct [[Ticket]].
+  * State can only be accessed with a correct [[InnerTicket]].
   *
   * @tparam S [[Struct]] defining the internal state */
 trait ReSource[S <: Struct] {

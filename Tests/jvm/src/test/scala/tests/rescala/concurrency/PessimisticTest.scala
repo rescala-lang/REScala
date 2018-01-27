@@ -70,10 +70,10 @@ class PessimisticTest extends RETests {
     val (syncIn2, s21) = SynchronizedReevaluation(v2)
 
     // so if s11 becomes true, this adds a dependency on v2
-    val s12 = engine.dynamic(s11) { t => if (t.read(s11) != 0) t.read(s21) else 2 }
+    val s12 = engine.dynamic(s11) { t => if (t.depend(s11) != 0) t.depend(s21) else 2 }
 
     // this does as above, causing one or the other to access something which will change later
-    val s22 = engine.dynamic(s21) { t => if (t.read(s21) != 1) t.read(s11) else 3 }
+    val s22 = engine.dynamic(s21) { t => if (t.depend(s21) != 1) t.depend(s11) else 3 }
 
     val results1 = new ReevaluationTracker(s12)
     val results2 = new ReevaluationTracker(s22)
@@ -113,7 +113,7 @@ class PessimisticTest extends RETests {
     val b2 = b0.map(identity).map(!_) // dirty hacks to get il_3 to reevaluate first on levelbased engines
     val i0 = Var(11)
     var reeval = 0
-    val i1_3 = explicitEngine.dynamic(b0) { t => reeval += 1; if (t.read(b0) && t.read(b2)) t.read(i0) else 42 }
+    val i1_3 = explicitEngine.dynamic(b0) { t => reeval += 1; if (t.depend(b0) && t.depend(b2)) t.depend(i0) else 42 }
 
     var regs = 0
     var unregs = 0
@@ -177,9 +177,9 @@ class PessimisticTest extends RETests {
     // after that the level is increased and this nonesense no longer happens
     val b2b3i2 = engine.dynamic(bl1) { t =>
       reeval ::= t.creation
-      if (t.read(bl1)) {
-        if (t.read(bl3)) {
-          val res = t.read(il1)
+      if (t.depend(bl1)) {
+        if (t.depend(bl3)) {
+          val res = t.depend(il1)
           assert(res === 11, "did not read old value, this may happen spouriosly, probably because of the timing issue in this test")
           res
         }
@@ -193,7 +193,7 @@ class PessimisticTest extends RETests {
 
     // this is here, so that we have i lock bl1.
     // we need this to be a dynamic lock to lock just this single reactive and not bl3 etc.
-    val i2b2 = engine.dynamic(il1)(t => if (t.read(il1) == 0) t.read(bl1) else false)
+    val i2b2 = engine.dynamic(il1)(t => if (t.depend(il1) == 0) t.depend(bl1) else false)
     val results2 = new ReevaluationTracker(i2b2)
 
     // bl0 -> bl1 -> (bl2) -> bl3
@@ -250,13 +250,13 @@ class PessimisticTest extends RETests {
     // after that the level is increased and this nonesense no longer happens
     val b2b3i2 = engine.dynamic(bl1) { t =>
       reeval ::= t.creation
-      if (t.read(bl1)) {
-        if (t.read(bl3)) {
-          val res = t.read(il0) + t.read(il1)
+      if (t.depend(bl1)) {
+        if (t.depend(bl3)) {
+          val res = t.depend(il0) + t.depend(il1)
           assert(res === 22, "did not read old value")
           res
         }
-        else t.read(il0)
+        else t.depend(il0)
       }
       else 42
     }
@@ -265,7 +265,7 @@ class PessimisticTest extends RETests {
 
     // this is here, so that we have i lock bl1.
     // we need this to be a dynamic lock to lock just this single reactive and not bl3 etc.
-    val i2b2 = engine.dynamic(il1)(t => if (t.read(il1) == 17) t.read(bl1) else false)
+    val i2b2 = engine.dynamic(il1)(t => if (t.depend(il1) == 17) t.depend(bl1) else false)
     val results2 = new ReevaluationTracker(i2b2)
 
     // bl0 -> bl1 -> (bl2) -> bl3

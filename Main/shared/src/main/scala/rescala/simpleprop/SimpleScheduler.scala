@@ -42,7 +42,7 @@ class SimpleScheduler extends Scheduler[SimpleStruct] {
 
     // admission
     val admissionTicket = new AdmissionTicket(SimpleCreation) {
-      override def read[A](reactive: ReSourciV[A, SimpleStruct]): A = reactive.state.value
+      override def access[A](reactive: ReSourciV[A, SimpleStruct]): A = reactive.state.value
     }
     val admissionResult = admissionPhase(admissionTicket)
     val initials = admissionTicket.initialChanges.valuesIterator.collect {
@@ -86,8 +86,8 @@ object Util {
   }
 
   val dt = new ReevTicket[Nothing, SimpleStruct](SimpleCreation) {
-    override def dynamicAfter[A](reactive: ReSourciV[A, SimpleStruct]): A = ???
-    override def staticAfter[A](reactive: ReSourciV[A, SimpleStruct]): A = reactive.state.value
+    override def dynamicAccess[A](reactive: ReSourciV[A, SimpleStruct]): A = ???
+    override def staticAccess[A](reactive: ReSourciV[A, SimpleStruct]): A = reactive.state.value
   }
 
   def evaluate(reactive: Reactive[SimpleStruct], incoming: Set[ReSource[SimpleStruct]]): Unit = {

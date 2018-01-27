@@ -9,7 +9,7 @@ class LightImplicitSyntaxTest extends RETests {
   allEngines("experiment With Implicit Syntax") { engine =>
     import engine._
 
-    implicit def getSignalValueDynamic[T](s: Signal[T])(implicit ticket: engine.DynamicTicket): T = ticket.read(s)
+    implicit def getSignalValueDynamic[T](s: Signal[T])(implicit ticket: engine.DynamicTicket): T = ticket.depend(s)
     def Signal[T](f: DynamicTicket => T)(implicit maybe: CreationTicket): Signal[T] = dynamic()(f)
 
     val price = Var(3)

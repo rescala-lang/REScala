@@ -55,7 +55,7 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
     */
   final def recover[R >: T](onFailure: PartialFunction[Throwable, Option[R]])(implicit ticket: CreationTicket[S]): Event[R, S] =
     Events.staticNamed(s"(recover $this)", this) { st =>
-      st.dependStatic(this) match {
+      st.collectStatic(this) match {
         case Exceptional(t) => onFailure.applyOrElse[Throwable, Option[R]](t, throw _).fold[Pulse[R]](Pulse.NoChange)(Pulse.Value(_))
         case other => other
       }
@@ -65,15 +65,15 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
     * @usecase def collect[U](pf: PartialFunction[T, U]): rescala.Event[U]
     * @group operator */
   final def collect[U](pf: PartialFunction[T, U])(implicit ticket: CreationTicket[S]): Event[U, S] =
-    Events.staticNamed(s"(collect $this)", this) { st => st.dependStatic(this).collect(pf) }
+    Events.staticNamed(s"(collect $this)", this) { st => st.collectStatic(this).collect(pf) }
 
   /** Events disjunction.
     * @usecase def ||[U >: T](other: rescala.Event[U]): rescala.Event[U]
     * @group operator */
   final def ||[U >: T](other: Event[U, S])(implicit ticket: CreationTicket[S]): Event[U, S] = {
     Events.staticNamed(s"(or $this $other)", this, other) { st =>
-      val tp = st.dependStatic(this)
-      if (tp.isChange) tp else st.dependStatic(other)
+      val tp = st.collectStatic(this)
+      if (tp.isChange) tp else st.collectStatic(other)
     }
   }
 
@@ -81,7 +81,7 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
     * @usecase def filter(pred: T => Boolean): rescala.Event[T]
     * @group operator*/
   final def filter(pred: T => Boolean)(implicit ticket: CreationTicket[S]): Event[T, S] =
-    Events.staticNamed(s"(filter $this)", this) { st => st.dependStatic(this).filter(pred) }
+    Events.staticNamed(s"(filter $this)", this) { st => st.collectStatic(this).filter(pred) }
   /** Filters the event, only propagating the value when the filter is true.
     * @usecase def &&(pred: T => Boolean): rescala.Event[T]
     * @see filter
@@ -93,8 +93,8 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
     * @group operator*/
   final def \[U](except: Event[U, S])(implicit ticket: CreationTicket[S]): Event[T, S] = {
     Events.staticNamed(s"(except $this  $except)", this, except) { st =>
-      st.dependStatic(except) match {
-        case NoChange => st.dependStatic(this)
+      st.collectStatic(except) match {
+        case NoChange => st.collectStatic(this)
         case Value(_) => Pulse.NoChange
         case ex@Exceptional(_) => ex
       }
@@ -107,8 +107,8 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
   final def and[U, R](other: Event[U, S])(merger: (T, U) => R)(implicit ticket: CreationTicket[S]): Event[R, S] = {
     Events.staticNamed(s"(and $this $other)", this, other) { st =>
       for {
-        left <- st.dependStatic(this)
-        right <- st.dependStatic(other)
+        left <- st.collectStatic(this)
+        right <- st.collectStatic(other)
       } yield {merger(left, right)}
     }
   }
@@ -124,8 +124,8 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
     * @group operator*/
   final def zipOuter[U](other: Event[U, S])(implicit ticket: CreationTicket[S]): Event[(Option[T], Option[U]), S] = {
     Events.staticNamed(s"(zipOuter $this $other)", this, other) { st =>
-      val left = st.dependStatic(this)
-      val right = st.dependStatic(other)
+      val left = st.collectStatic(this)
+      val right = st.collectStatic(other)
       if (right.isChange || left.isChange) Value(left.toOption -> right.toOption) else NoChange
     }
   }
@@ -148,7 +148,7 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
   final def fold[A: ReSerializable](init: A)(op: (A, T) => A)(implicit ticket: CreationTicket[S]): Signal[A, S] = {
     ticket { initialTurn =>
       Signals.staticFold[A, S](Set(this), Pulse.tryCatch(Pulse.Value(init))) { (st, currentValue) =>
-        val value = st.dependStatic(this).get
+        val value = st.collectStatic(this).get
         op(currentValue(), value)
       }(initialTurn)(ticket.rename)
     }
@@ -160,7 +160,7 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
   final def reduce[A: ReSerializable](reducer: (=> A, => T) => A)(implicit ticket: CreationTicket[S]): Signal[A, S] =
     ticket { initialTurn =>
       Signals.staticFold[A, S](Set(this), Pulse.empty) { (st, currentValue) =>
-        reducer(currentValue(), st.dependStatic(this).get)
+        reducer(currentValue(), st.collectStatic(this).get)
       }(initialTurn)(ticket.rename)
     }
 
@@ -231,7 +231,7 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
     * @group conversion*/
   final def toggle[A](a: Signal[A, S], b: Signal[A, S])(implicit ticket: CreationTicket[S], ev: ReSerializable[Boolean]): Signal[A, S] = ticket { ict =>
     val switched: Signal[Boolean, S] = iterate(false) {!_}(ev, ict)
-    Signals.dynamic(switched, a, b) { s => if (s.dependDynamic(switched).get) s.dependDynamic(b).get else s.dependDynamic(a).get }(ict)
+    Signals.dynamic(switched, a, b) { s => if (s.collectDynamic(switched).get) s.collectDynamic(b).get else s.collectDynamic(a).get }(ict)
   }
 
   /** Switch to a new Signal once, on the occurrence of event e.
@@ -240,9 +240,9 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
   final def switchOnce[A, B >: T](original: Signal[A, S], newSignal: Signal[A, S])(implicit ticket: CreationTicket[S], ev: ReSerializable[Option[B]]): Signal[A, S] = ticket { turn =>
     val latest = latestOption[B]()(turn, ev)
     Signals.dynamic(latest, original, newSignal) { t =>
-      t.dependDynamic(latest).get match {
-        case None => t.dependDynamic(original).get
-        case Some(_) => t.dependDynamic(newSignal).get
+      t.collectDynamic(latest).get match {
+        case None => t.collectDynamic(original).get
+        case Some(_) => t.collectDynamic(newSignal).get
       }
     }(turn)
   }
@@ -255,8 +255,8 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
   final def switchTo[A >: T](original: Signal[A, S])(implicit ticket: CreationTicket[S], ev: ReSerializable[Option[A]]): Signal[A, S] = ticket { turn =>
     val latest = latestOption[A]()(turn, ev)
     Signals.dynamic(latest, original) { s =>
-      s.dependDynamic(latest).get match {
-        case None => s.dependDynamic(original).get
+      s.collectDynamic(latest).get match {
+        case None => s.collectDynamic(original).get
         case Some(x) => x
       }
     }(turn)
