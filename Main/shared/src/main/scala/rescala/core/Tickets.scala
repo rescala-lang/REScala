@@ -7,58 +7,40 @@ import scala.annotation.implicitNotFound
 import scala.collection.mutable
 import scala.language.implicitConversions
 
-/* tickets are created by the REScala schedulers, to restrict operations to the correct scopes */
-
-// thoughts regarding now, before and after:
-// before: can be used at any time during turns. Thus its parameter should accept implicit turns only.
-//         However, we want to be able to invoke .before inside, e.g., the closure of a .fold, where the turn
-//         is not present in the scope. Thus before also accepts engines, but dynamically checks, that this engine
-//         has a current turn set. This could probably be ensured statically by making sure that every reactive
-//         definition site somehow provides the reevaluating ticket as an implicit in the scope, but I'm not sure
-//         if this is possible without significant syntactical inconvenience.
-//  after: falls under the same considerations as before, with the added exception that it should only accept
-//         turns that completed their admission phase and started their propagation phase. This is currently not
-//         checked at all, but could also be ensured statically the same as above.
-//    now: can be used inside turns only during admission and wrapup, or outside of turns at all times. Since during
-//         admission and wrapup, a corresponding OutsidePropagationTicket is in scope, it accepts these tickets as
-//         high priority implicit parameters. In case such a ticket is not available, it accepts engines, and then
-//         dynamically checks that the engine does NOT have a current turn (in the current thread context). I think
-//         this cannot be ensured statically, as users can always hide implicitly available current turns.
-
-
 class Ticket[S <: Struct](val creation: Initializer[S])
 
 abstract class ReevTicket[T, S <: Struct](creation: Initializer[S]) extends DynamicTicket[S](creation) with Result[T, S] {
-  def trackDependencies(): Unit = collectedDependencies = Set.empty
-  private var collectedDependencies: Set[ReSource[S]] = null
-  def getDependencies(): Option[Set[ReSource[S]]] = Option(collectedDependencies)
 
-  override def dependStatic[A](reactive: ReSourciV[A, S]): A = {
+  // schedulers implement these to allow access
+  protected def staticAfter[A](reactive: ReSourciV[A, S]): A
+  protected def dynamicAfter[A](reactive: ReSourciV[A, S]): A
+
+  // dependency tracking accesses
+  private[rescala] override def dependStatic[A](reactive: ReSourciV[A, S]): A = {
     if (collectedDependencies != null) collectedDependencies += reactive
     staticAfter(reactive)
   }
 
-  def dependDynamic[A](reactive: ReSourciV[A, S]): A = {
+  private[rescala] override def dependDynamic[A](reactive: ReSourciV[A, S]): A = {
     if (collectedDependencies != null) collectedDependencies += reactive
     dynamicAfter(reactive)
   }
 
-  protected def staticAfter[A](reactive: ReSourciV[A, S]): A
-  protected def dynamicAfter[A](reactive: ReSourciV[A, S]): A
-
-
   // inline result into ticket, to reduce the amount of garbage during reevaluation
-  var propagate = false
-  var value: T = _
-  var effect: () => Unit = null
+  private var collectedDependencies: Set[ReSource[S]] = null
+  private var propagate = false
+  private var value: T = _
+  private var effect: () => Unit = null
+  final def trackDependencies(): Unit = collectedDependencies = Set.empty
   final def withPropagate(p: Boolean): ReevTicket[T, S] = {propagate = p; this}
   final def withValue(v: T): ReevTicket[T, S] = {require(v != null, "value must not be null"); value = v; propagate = true; this}
   final def withEffect(v: () => Unit): ReevTicket[T, S] = {effect = v; this}
 
-  override def forValue(f: T => Unit): Unit = if (value != null) f(value)
-  override def forEffect(f: (() => Unit) => Unit): Unit = if (effect != null) f(effect)
+  final override def forValue(f: T => Unit): Unit = if (value != null) f(value)
+  final override def forEffect(f: (() => Unit) => Unit): Unit = if (effect != null) f(effect)
+  final override def getDependencies(): Option[Set[ReSource[S]]] = Option(collectedDependencies)
 
-  def reset[NT](): ReevTicket[NT, S] = {
+  final def reset[NT](): ReevTicket[NT, S] = {
     propagate = false
     value = null.asInstanceOf[T]
     effect = null
@@ -69,13 +51,13 @@ abstract class ReevTicket[T, S <: Struct](creation: Initializer[S]) extends Dyna
 }
 
 abstract class DynamicTicket[S <: Struct](creation: Initializer[S]) extends StaticTicket[S](creation) {
-  def read[V, A](reactive: MacroAccessors[V, A, S]): A = reactive.interpret(dependDynamic(reactive))
-  def dependDynamic[A](reactive: ReSourciV[A, S]): A
+  final def read[V, A](reactive: MacroAccessors[V, A, S]): A = reactive.interpret(dependDynamic(reactive))
+  private[rescala] def dependDynamic[A](reactive: ReSourciV[A, S]): A
 }
 
 sealed abstract class StaticTicket[S <: Struct](creation: Initializer[S]) extends Ticket(creation) {
-  def staticRead[V, A](reactive: MacroAccessors[V, A, S]): A = reactive.interpret(dependStatic(reactive))
-  def dependStatic[A](reactive: ReSourciV[A, S]): A
+  final def staticRead[V, A](reactive: MacroAccessors[V, A, S]): A = reactive.interpret(dependStatic(reactive))
+  private[rescala] def dependStatic[A](reactive: ReSourciV[A, S]): A
 }
 
 
