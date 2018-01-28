@@ -40,7 +40,7 @@ object SimpleCreation extends Initializer[SimpleStruct] {
 object SimpleScheduler extends Scheduler[SimpleStruct] {
   val initial: ArrayBuffer[Reactive] = ArrayBuffer[Reactive]()
   val sorted: ArrayBuffer[Reactive] = ArrayBuffer[Reactive]()
-  override private[rescala] def executeTurn[R](initialWrites: Traversable[ReSource], admissionPhase: AdmissionTicket => R) = {
+  override private[rescala] def executeTurn[R](initialWrites: Traversable[ReSource], admissionPhase: AdmissionTicket => R) = synchronized {
 
     // admission
     val admissionTicket = new AdmissionTicket(SimpleCreation) {
@@ -67,7 +67,9 @@ object SimpleScheduler extends Scheduler[SimpleStruct] {
     sorted.clear()
 
     //wrapup
-    if (admissionTicket.wrapUp != null) ???
+    if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(new WrapUpTicket {
+      override private[rescala] def access[A](reactive: ReSourciV[A, SimpleStruct]) = reactive.state.value
+    })
     admissionResult
   }
   override private[rescala] def singleNow[A](reactive: ReSourciV[A, SimpleStruct]) = reactive.state.value
