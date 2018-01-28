@@ -209,7 +209,7 @@ lazy val cfg = new {
 
   val base = List(
     organization := "de.tuda.stg",
-    version := "0.22.0-SNAPSHOT",
+    version := "0.21.0",
     scalaVersion := version_212,
     baseScalac,
     // scaladoc
@@ -253,7 +253,7 @@ lazy val cfg = new {
       } else {
         val url = new java.net.URL(
           s"https://api.bintray.com/content/stg-tud/maven/$proj/$ver")
-        val patterns = Resolver.ivyStylePatterns
+        val patterns = Resolver.mavenStylePatterns
         Some(Resolver.url("bintray", url)(patterns))
       }
     }
