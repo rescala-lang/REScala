@@ -43,16 +43,16 @@ class Keychain[InterTurn](init: Key[InterTurn]) {
     assert(head eq key, s"tried to drop $key from $this but is not head! ($keys)")
     val locks = key.grabLocks()
     assert(locks.toSet.size == locks.size, s"duplicated locks detected")
-    val lockIt = locks.iterator
     if (keys.isEmpty) {
-      while (lockIt.hasNext) lockIt.next().transfer(null, key)
+      locks.foreach(_.transfer(null, key))
     }
     else {
       val target = keys.peek()
-      while (lockIt.hasNext) lockIt.next().transfer(target, key, transferWriteSet = fallthrough.nonEmpty)
+      locks.foreach(_.transfer(target, key, transferWriteSet = fallthrough.nonEmpty))
       fallthrough -= target
       target.continue()
     }
+    locks.synchronized(locks.clear())
   }
 
 }

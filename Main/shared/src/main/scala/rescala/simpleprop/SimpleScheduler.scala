@@ -47,7 +47,7 @@ object SimpleScheduler extends Scheduler[SimpleStruct] {
       override def access[A](reactive: ReSourciV[A, SimpleStruct]): A = reactive.state.value
     }
     val admissionResult = admissionPhase(admissionTicket)
-    val sources = admissionTicket.initialChanges.valuesIterator.collect {
+    val sources = admissionTicket.initialChanges.collect {
       case ic if ic.accept(ic.source.state.value) =>
         ic.source.state.value = ic.value
         ic.source

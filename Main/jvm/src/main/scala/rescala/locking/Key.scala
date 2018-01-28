@@ -1,8 +1,8 @@
 package rescala.locking
 
 import java.util.concurrent.Semaphore
-import java.util.concurrent.atomic.AtomicReference
-import java.util.function.UnaryOperator
+
+import scala.collection.mutable.ArrayBuffer
 
 final class Key[InterTurn](val turn: InterTurn) {
 
@@ -28,13 +28,10 @@ final class Key[InterTurn](val turn: InterTurn) {
   }
 
   /** contains a list of all locks owned by us. */
-  private[this] val heldLocks: AtomicReference[List[TurnLock[InterTurn]]] = new AtomicReference[List[TurnLock[InterTurn]]](Nil)
-
-  private[locking] def addLock(lock: TurnLock[InterTurn]): Unit = heldLocks.updateAndGet(new UnaryOperator[List[TurnLock[InterTurn]]] {
-    override def apply(t: List[TurnLock[InterTurn]]): List[TurnLock[InterTurn]] = lock :: t
-  })
-
-  private[locking] def grabLocks() = heldLocks.getAndSet(Nil)
+  //  private[this] val heldLocks: AtomicReference[List[TurnLock[InterTurn]]] = new AtomicReference[List[TurnLock[InterTurn]]](Nil)
+  private[this] val heldLocks: ArrayBuffer[TurnLock[InterTurn]] = ArrayBuffer[TurnLock[InterTurn]]()
+  private[locking] def addLock(lock: TurnLock[InterTurn]): Unit = heldLocks.synchronized {heldLocks += lock}
+  private[locking] def grabLocks() = heldLocks.synchronized(heldLocks)
 
   /** release all locks we hold or transfer them to a waiting transaction if there is one
     * holds the master lock for request */

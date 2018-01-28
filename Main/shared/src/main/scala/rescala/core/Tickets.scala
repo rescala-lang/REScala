@@ -4,7 +4,7 @@ import rescala.macros.MacroAccessors
 import rescala.reactives.Signal
 
 import scala.annotation.implicitNotFound
-import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 import scala.language.implicitConversions
 
 /** [[InnerTicket]]s are used in Rescala to give capabilities to contexts during propagation.
@@ -85,11 +85,11 @@ abstract class AdmissionTicket[S <: Struct](creation: Initializer[S]) extends In
   def access[A](reactive: ReSourciV[A, S]): A
   final def now[A](reactive: Signal[A, S]): A = access(reactive).get
 
-  private val _initialChanges: mutable.Map[ReSource[S], InitialChange[S]] = mutable.HashMap()
-  private[rescala] def initialChanges: collection.Map[ReSource[S], InitialChange[S]] = _initialChanges
+  private val _initialChanges = ArrayBuffer[InitialChange[S]]()
+  private[rescala] def initialChanges: Iterable[InitialChange[S]] = _initialChanges
   private[rescala] def recordChange[T](ic: InitialChange[S]): Unit = {
-    assert(!_initialChanges.contains(ic.source), "must not admit same source twice in one turn")
-    _initialChanges.put(ic.source, ic)
+    assert(!_initialChanges.exists(c => c.source == ic.source), "must not admit same source twice in one turn")
+    _initialChanges += ic
   }
 
   private[rescala] var wrapUp: WrapUpTicket[S] => Unit = null

@@ -57,9 +57,9 @@ class FullMVEngine(val timeout: Duration, val name: String) extends SchedulerImp
 
       // propagation phase
       if (setWrites.nonEmpty) {
-        turn.initialChanges = admissionTicket.initialChanges
+        turn.initialChanges = admissionTicket.initialChanges.map(ic => ic.source -> ic).toMap
         turn.activeBranchDifferential(TurnPhase.Executing, setWrites.size)
-        for(write <- setWrites) threadPool.submit(SourceNotification(turn, write, admissionResult.isSuccess && admissionTicket.initialChanges.contains(write)))
+        for(write <- setWrites) threadPool.submit(SourceNotification(turn, write, admissionResult.isSuccess && turn.initialChanges.contains(write)))
       }
 
       // wrap-up "phase" (executes in parallel with propagation)
