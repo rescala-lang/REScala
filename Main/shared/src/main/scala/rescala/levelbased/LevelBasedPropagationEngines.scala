@@ -22,13 +22,9 @@ trait LevelBasedPropagationEngines {
 
 
   implicit val synchron: SimpleEngine = {
-    val synchronTurn = new SimpleNoLock
-    new TwoVersionSchedulerImpl[SimpleStruct, SimpleNoLock]("Synchron", () =>  synchronTurn ) {
+    new TwoVersionSchedulerImpl[SimpleStruct, SimpleNoLock]("Synchron", () =>  new SimpleNoLock ) {
       override protected[rescala] def executeTurn[R](initialWrites: Traversable[ReSource], admissionPhase: AdmissionTicket => R): R =
-        synchronized {
-          try super.executeTurn(initialWrites, admissionPhase)
-          finally synchronTurn.clear()
-        }
+        synchronized { super.executeTurn(initialWrites, admissionPhase) }
     }
   }
 
