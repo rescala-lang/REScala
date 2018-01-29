@@ -5,7 +5,6 @@ import java.nio.file.{Files, Paths, StandardOpenOption}
 import rescala.reactives.Observe
 
 
-
 object RunConsole {
   def main(args: Array[String]): Unit = {
     val nAnimals = 100
@@ -13,7 +12,7 @@ object RunConsole {
     val width = 100
     val height = 100
     val repetitions = 10
-    val threadCounts = Range.inclusive(1,16)
+    val threadCounts = Range.inclusive(1, 16)
 
     val outfile = s"universe-${Globals.engineName}.csv"
 
@@ -38,13 +37,48 @@ object RunConsole {
         world.tick()
         world.runPlan()
       }
-      //    println(world.time)
-      //    println(world.status)
-      //    println(world.board.dump)
+      //      println(world.time)
+      //      println(world.status)
+      //      println(world.board.dump)
       val duration = (System.nanoTime() - start) / 1E9d
       if (repetition > 0) Files.write(Paths.get(outfile),
         s"""$repetition,$threads,$duration,"${Globals.engineName}","UniverseCaseStudy",$height,$width,$nAnimals,$nPlants${"\n"}""".getBytes(),
         StandardOpenOption.APPEND)
     }
   }
+
+}
+
+
+object RunPrinting {
+  def main(args: Array[String]): Unit = {
+    val nAnimals = 100
+    val nPlants = 300
+    val width = 70
+    val height = 20
+    val repetitions = 10
+
+    Observe.dereferenceAllStrongObserversWARNINGonlyUseThisIfYouKnowWhatYouAreDoing()
+    System.gc()
+    Globals.setParallelism(1)
+
+    val world = new World(width, height)
+
+    world batchSpawn(nAnimals, nPlants)
+
+    val start = System.nanoTime()
+    import universe.Globals.engine
+    world.time.day.observe{ _ =>
+      println(world.time)
+      println(world.status)
+      println(world.board.dump)
+    }
+    while (world.time.week.now < 2) {
+      world.tick()
+      world.runPlan()
+
+    }
+    val duration = (System.nanoTime() - start) / 1E9d
+  }
+
 }

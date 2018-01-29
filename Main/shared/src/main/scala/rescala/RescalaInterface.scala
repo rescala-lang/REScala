@@ -1,11 +1,10 @@
 package rescala
 
 import rescala.core.{ReSerializable, Struct}
-import rescala.macros.MacroTags.Static
-import rescala.macros.MacroTags.Dynamic
+import rescala.macros.MacroTags.{Dynamic, Static}
 import rescala.reactives.Source
 
-import scala.language.existentials
+import scala.language.{existentials, implicitConversions}
 
 /** Rescala has two main abstractions. [[Event]] and [[Signal]] commonly referred to as reactives.
   * Use [[Var]] to create signal sources and [[Evt]] to create event sources.
@@ -115,6 +114,9 @@ abstract class RescalaInterface[S <: Struct] {
     final def dynamic[A](expression: Option[A])(implicit ticket: CreationTicket): Event[A] =
       macro rescala.macros.ReactiveMacros.ReactiveExpression[A, S, Dynamic, rescala.reactives.Events.type]
   }
+
+  implicit def EventOps[T](e: Event[T]) = new Events.EOps[T, S](e)
+
 
   /** Contains static methods to create Events
     * @group create */
