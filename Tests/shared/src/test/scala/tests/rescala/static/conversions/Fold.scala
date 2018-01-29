@@ -206,9 +206,9 @@ class Fold extends RETests {
     val reset = Evt[Unit]
 
     val res = Events.fold(""){ acc => Events.Match(
+      reset >> (_ => ""),
       word >> identity,
       count >> (acc * _),
-      reset >> (_ => ""),
     )}
 
     assert (res.now == "")
@@ -222,9 +222,8 @@ class Fold extends RETests {
     assert (res.now == "hellohello")
     word.fire("world")
     assert (res.now == "world")
-    reset.fire()
-    assert(res.now == "")
+    update(count -> 2, word -> "do them all!", reset -> (()))
+    assert (res.now == "do them all!do them all!")
   }
-
 
 }

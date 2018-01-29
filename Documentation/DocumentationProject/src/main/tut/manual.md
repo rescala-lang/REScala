@@ -622,6 +622,37 @@ e.fire(2)
 assert(s.now == 13)
 ```
 
+## Fold matchers
+
+The `fold` `Match` construct allows to match on one of multiple events.
+For every firing event, the corresponding handler function is executed,
+to compute the new state.
+If multiple events fire at the same time,
+the handlers are executed in order.
+The acc parameter reflects the current state.
+
+
+```tut:book
+val word = Evt[String]
+val count = Evt[Int]
+val reset = Evt[Unit]
+
+val result = Events.fold(""){ acc => Events.Match(
+  reset >> (_ => ""),
+  word >> identity,
+  count >> (acc * _),
+)}
+
+result.observe(r => println(r))
+
+count.fire(10)
+reset.fire()
+word.fire("hello")
+count.fire(2)
+word.fire("world")
+update(count -> 2, word -> "do them all!", reset -> (()))
+```
+
 ## Iterate
 
 Returns a signal holding the value computed by `f` on the
