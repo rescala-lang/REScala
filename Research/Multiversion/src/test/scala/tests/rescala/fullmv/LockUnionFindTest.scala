@@ -276,4 +276,55 @@ class LockUnionFindTest extends FunSuite {
 
     assert(lock1.refCount.get <= 0)
   }
+
+  test("reentrant tryLock works") {
+    val turn1 = engine.newTurn()
+    turn1.beginExecuting()
+    val lock1 = turn1.subsumableLock.get()
+
+    assert(lock1.refCount.get === 1)
+
+    val l1 = Await.result(turn1.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
+
+    assert(lock1.refCount.get === 2)
+
+    assert(Await.result(turn1.trySubsume(l1), Duration.Zero) === Successful)
+
+    assert(lock1.refCount.get === 2)
+
+    l1.asyncUnlock()
+    turn1.completeExecuting()
+
+    assert(lock1.refCount.get <= 1)
+  }
+
+  test("blocked tryLock works") {
+    val turn1 = engine.newTurn()
+    turn1.beginExecuting()
+    val lock1 = turn1.subsumableLock.get()
+
+    val turn2 = engine.newTurn()
+    turn2.beginExecuting()
+    val lock2 = turn2.subsumableLock.get()
+
+    assert(lock1.refCount.get === 1)
+    assert(lock2.refCount.get === 1)
+
+    val l1 = Await.result(turn1.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
+    val l2 = Await.result(turn2.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
+
+    assert(lock1.refCount.get === 2)
+    assert(lock2.refCount.get === 2)
+
+    assert(Await.result(turn2.trySubsume(l1), Duration.Zero) === Blocked)
+
+    assert(lock1.refCount.get === 2)
+    assert(lock2.refCount.get === 2)
+
+    l1.asyncUnlock()
+    l2.asyncUnlock()
+
+    turn1.completeExecuting()
+    turn2.completeExecuting()
+  }
 }

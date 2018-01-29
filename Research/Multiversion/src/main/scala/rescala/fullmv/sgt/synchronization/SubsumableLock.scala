@@ -25,6 +25,7 @@ case object Deallocated extends TrySubsumeResult with TryLockResult {
 
 trait SubsumableLockEntryPoint {
   def getLockedRoot: Future[Option[Host.GUID]]
+  // result has one thread reference counted
   def tryLock(): Future[TryLockResult]
   def trySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult]
 }
@@ -46,13 +47,18 @@ trait SubsumableLock extends SubsumableLockProxy with Hosted {
   override val host: SubsumableLockHost
 
   def getLockedRoot: Future[Option[Host.GUID]]
+  // result will have one thread reference to present a uniform interface for remote calls
+  // (a result received from remote would immediately be deallocated if the thread receiving it doesn't hold a reference)
   def tryLock0(hopCount: Int): Future[TryLockResult0]
+  // result will have one thread reference to present a uniform interface for remote calls
+  // (a result received from remote would immediately be deallocated if the thread receiving it doesn't hold a reference)
+  // parameter does have a thread reference counted from being locked, but this must be retained to be released upon unlock.
   def trySubsume0(hopCount: Int, lockedNewParent: SubsumableLock): Future[TrySubsumeResult0]
   def asyncUnlock0(): Unit
 
   def asyncUnlock(): Unit = {
     asyncUnlock0()
-    if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this unlocked, dropping temporary thread reference")
+    if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this dropping temporary thread reference after unlock")
     localSubRefs(1)
   }
 
@@ -94,7 +100,7 @@ trait SubsumableLock extends SubsumableLockProxy with Hosted {
 }
 
 object SubsumableLock {
-  val DEBUG = false
+  val DEBUG = true
 
   def acquireLock[R](contender: FullMVTurn, timeout: Duration): SubsumableLock = {
     if (DEBUG) System.out.println(s"[${Thread.currentThread().getName}] syncing on SCC of $contender")
@@ -115,7 +121,7 @@ object SubsumableLock {
   }
 
   def acquireLock[R](defender: FullMVTurn, contender: FullMVTurn, timeout: Duration): Option[SubsumableLock] = {
-    assert(defender.host == contender.host)
+    assert(defender.host == contender.host, s"trying to sync $defender and $contender from different hosts")
     if (DEBUG) System.out.println(s"[${Thread.currentThread().getName}] syncing $defender and $contender into a common SCC")
     val bo = new Backoff()
     @tailrec def reTryLock(): Option[SubsumableLock] = {

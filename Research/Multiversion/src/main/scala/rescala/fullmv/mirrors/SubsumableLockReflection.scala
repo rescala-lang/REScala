@@ -11,76 +11,89 @@ import scala.concurrent.Future
 class SubsumableLockReflection(override val host: SubsumableLockHost, override val guid: Host.GUID, val proxy: SubsumableLockProxy) extends SubsumableLock {
   override def getLockedRoot: Future[Option[GUID]] = proxy.getLockedRoot
   override def tryLock0(hopCount: Int): Future[TryLockResult0] = {
-    if(tryLocalAddRefs(1)) {
-      proxy.remoteTryLock().map { remoteRes =>
-        val res = remoteRes match {
-          case RemoteLocked(lock) =>
-            if (lock == this) {
-              if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this locked remotely; $hopCount new refs")
-              if(hopCount > 0) localAddRefs(hopCount)
-            } else {
-              if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this locked remotely under new parent $lock, passing ${hopCount + 1} new refs")
-              lock.localAddRefs(hopCount + 1)
-            }
-            Locked0(1, lock)
-          case RemoteBlocked(lock) =>
-            if (lock == this) {
-              if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this blocked remotely; $hopCount new refs")
-              if (hopCount > 0) localAddRefs(hopCount)
-            } else {
-              if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this blocked on new remote parent $lock, passing ${hopCount + 1} new refs")
-              lock.localAddRefs(hopCount + 1)
-            }
-            Blocked0(1, lock)
-          case RemoteGCd =>
-            throw new AssertionError(s"since $this is holding a local reference to the remote $proxy, the remote instance should be prevented from deallocation?")
+    if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this sending remote tryLock request")
+    proxy.remoteTryLock().map {
+      case RemoteLocked(lock) =>
+        if (lock == this) {
+          if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this locked remotely; adding $hopCount new refs (retaining connection establishment reference as thread reference)")
+          if(hopCount > 0) localAddRefs(hopCount)
+        } else {
+          if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this locked remotely under new parent $lock, passing ${hopCount + 1} new refs")
+          lock.localAddRefs(hopCount + 1)
         }
-        localSubRefs(1)
-        res
-      }(FullMVEngine.notWorthToMoveToTaskpool)
-    } else {
-      GarbageCollected0.futured
-    }
+        Locked0(0, lock)
+      case RemoteBlocked(lock) =>
+        if (lock == this) {
+          if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this blocked remotely; $hopCount new refs (retaining connection establishment reference as thread reference)")
+          if(hopCount > 0) localAddRefs(hopCount)
+        } else {
+          if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this blocked remotely under new parent $lock, passing ${hopCount + 1} new refs (retaining connection establishment reference as thread reference)")
+          lock.localAddRefs(hopCount + 1)
+        }
+        Blocked0(0, lock)
+      case RemoteGCd =>
+        assert(this.refCount.get <= 0, s"remote was gc'd while $this still holds a reference")
+        GarbageCollected0
+    }(FullMVEngine.notWorthToMoveToTaskpool)
   }
 
   override def trySubsume0(hopCount: Int, lockedNewParent: SubsumableLock): Future[TrySubsumeResult0] = {
     if(lockedNewParent == this) {
       assert(lockedNewParent eq this, s"instance caching broken? $this came into contact with different reflection of same origin on same host")
-      if (DEBUG) println(s"[${Thread.currentThread().getName}] trySubsume $this to itself reentrant success; $hopCount new refs")
+      if (DEBUG) println(s"[${Thread.currentThread().getName}] trySubsume $this to itself reentrant success; $hopCount new refs (includes new thread reference)")
       // safe because locked by the current thread and thus cannot be deallocated
-      if(hopCount > 1) localAddRefs(hopCount)
-      Future.successful(Successful0(1))
-    } else if(tryLocalAddRefs(1)) {
-      if(SubsumableLock.DEBUG) println(s"adding connection establishment reference remote trySubsume parameter $lockedNewParent")
-      lockedNewParent.localAddRefs(1)
-      proxy.remoteTrySubsume(lockedNewParent).map{ remoteRes =>
-        val res = remoteRes match {
-          case RemoteSubsumed =>
-            if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this remote trySubsume succeeded, sending ${hopCount + 1} new refs to $lockedNewParent")
-            lockedNewParent.localAddRefs(hopCount + 1)
-            Successful0(1)
-          case RemoteBlocked(newParent) =>
-            if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this remote trySubsume failed, passing $hopCount new refs to $newParent")
-            if(hopCount > 0) localAddRefs(hopCount)
-            Blocked0(1, newParent)
-          case RemoteGCd =>
-            throw new AssertionError(s"since $this is holding a local reference to the remote $proxy, the remote instance should be prevented from deallocation?")
-        }
-        localSubRefs(1)
-        res
-      }(FullMVEngine.notWorthToMoveToTaskpool)
+      if(hopCount > 0) localAddRefs(hopCount)
+      Future.successful(Successful0(0))
     } else {
-      GarbageCollected0.futured
+      if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this sending remote trySubsume $lockedNewParent request, adding remote parameter transfer reference")
+      lockedNewParent.localAddRefs(1)
+      proxy.remoteTrySubsume(lockedNewParent).map{
+        case RemoteSubsumed =>
+          if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this remote trySubsume succeeded, sending ${hopCount + 1} new refs to $lockedNewParent")
+          lockedNewParent.localAddRefs(hopCount + 1)
+          Successful0(0)
+        case RemoteBlocked(newParent) =>
+          if(newParent == this) {
+            if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this remote trySubsume $lockedNewParent blocked, $hopCount new refs (retaining connection establishment reference as thread reference)")
+            if(hopCount > 0) newParent.localAddRefs(hopCount)
+          } else {
+            if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this remote trySubsume $lockedNewParent blocked under new parent $newParent, passing ${hopCount + 1} refs (retaining connection establishment reference as thread reference)")
+            newParent.localAddRefs(hopCount + 1)
+          }
+          Blocked0(0, newParent)
+        case RemoteGCd =>
+          assert(this.refCount.get <= 0, s"remote was gc'd while $this still holds a reference")
+          GarbageCollected0
+      }(FullMVEngine.notWorthToMoveToTaskpool)
     }
   }
 
-  override def asyncUnlock0(): Unit = proxy.remoteAsyncUnlock()
-  override def remoteAsyncUnlock(): Unit = proxy.remoteAsyncUnlock()
-  override def remoteTryLock(): Future[RemoteTryLockResult] = proxy.remoteTryLock()
-  override def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[RemoteTrySubsumeResult] = proxy.remoteTrySubsume(lockedNewParent)
+  override def asyncUnlock0(): Unit = {
+    if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this sending unlock request")
+    proxy.remoteAsyncUnlock()
+  }
+  override def remoteAsyncUnlock(): Unit = {
+    if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this passing through unlock request")
+    proxy.remoteAsyncUnlock()
+  }
+  override def remoteTryLock(): Future[RemoteTryLockResult] = {
+    if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this passing through tryLock request")
+    proxy.remoteTryLock().map{ res =>
+      if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this passing through tryLock result $res")
+      res
+    }(FullMVEngine.notWorthToMoveToTaskpool)
+  }
+  override def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[RemoteTrySubsumeResult] = {
+    if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this passing through trySubsume $lockedNewParent, using thread reference as connection establishment reference")
+    proxy.remoteTrySubsume(lockedNewParent).map { res =>
+      if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this passing through trySubsume $lockedNewParent result $res, dropping temporary parameter reference")
+      lockedNewParent.localSubRefs(1)
+      res
+    }(FullMVEngine.notWorthToMoveToTaskpool)
+  }
 
   override protected def dumped(): Unit = {
-    if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this no refs remaining, deallocating and dropping remote reference")
+    if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this no refs remaining, deallocating and dropping remote reference")
     proxy.asyncRemoteRefDropped()
   }
 

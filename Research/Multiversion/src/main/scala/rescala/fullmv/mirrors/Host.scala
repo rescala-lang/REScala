@@ -19,7 +19,7 @@ trait Hosted {
 object Host {
   type GUID = Long
   val dummyGuid: GUID = 0L
-  val DEBUG = false
+  val DEBUG = true
 }
 sealed trait CacheResult[T] { val instance: T }
 case class Found[T](instance: T) extends CacheResult[T]
@@ -27,7 +27,7 @@ case class Instantiated[T](instance: T) extends CacheResult[T]
 trait Host[T] {
   val dummy: T
   def getInstance(guid: Host.GUID): Option[T]
-  def getCachedOrReceiveRemote(guid: Host.GUID, instantiateReflection: => T): CacheResult[T]
+  def getCachedOrReceiveRemote(guid: Host.GUID, instantiateReflection: => (Boolean, T)): CacheResult[T]
   def dropInstance(guid: GUID, instance: T): Unit
   def createLocal[U <: T](create: Host.GUID => U): U
 }
@@ -35,7 +35,7 @@ trait Host[T] {
 trait HostImpl[T] extends Host[T] {
   val instances: ConcurrentMap[GUID, T] = new ConcurrentHashMap()
   override def getInstance(guid: GUID): Option[T] = Option(instances.get(guid))
-  override def getCachedOrReceiveRemote(guid: Host.GUID, instantiateReflection: => T): CacheResult[T] = {
+  override def getCachedOrReceiveRemote(guid: Host.GUID, instantiateReflection: => (Boolean, T)): CacheResult[T] = {
     @inline @tailrec def findOrReserveInstance(): T = {
       val found = instances.putIfAbsent(guid, dummy)
       if(found != dummy) {
@@ -52,17 +52,21 @@ trait HostImpl[T] extends Host[T] {
       Found(known)
     } else {
       if(Host.DEBUG) println(s"[${Thread.currentThread().getName}] on $this cache miss for $guid, invoking instantiation...")
-      val instance = instantiateReflection
-      val replaced = instances.replace(guid, dummy, instance)
-      assert(replaced, s"someone stole the dummy placeholder while instantiating remotely received $guid on $this!")
-      if(Host.DEBUG) println(s"[${Thread.currentThread().getName}] on $this cached $instance")
+      val (doCache, instance) = instantiateReflection
+      if(doCache) {
+        val replaced = instances.replace(guid, dummy, instance)
+        assert(replaced, s"someone stole the dummy placeholder while instantiating remotely received $guid on $this!")
+        if(Host.DEBUG) println(s"[${Thread.currentThread().getName}] on $this cached newly instantiated $instance")
+      } else {
+        if(Host.DEBUG) println(s"[${Thread.currentThread().getName}] on $this instantiated $instance without caching")
+      }
       Instantiated(instance)
     }
   }
   override def dropInstance(guid: GUID, instance: T): Unit = {
     val removed = instances.remove(guid, instance)
     assert(removed, s"removal of $instance on $this failed")
-    if(Host.DEBUG) println(s"[${Thread.currentThread().getName}] deallocated $instance")
+    if(Host.DEBUG) println(s"[${Thread.currentThread().getName}] on $this evicted $instance")
   }
   override def createLocal[U <: T](create: GUID => U): U = {
     @inline @tailrec def redoId(): GUID = {
@@ -85,23 +89,21 @@ trait HostImpl[T] extends Host[T] {
 trait SubsumableLockHost extends Host[SubsumableLock] {
   def getCachedOrReceiveRemoteWithReference(guid: Host.GUID, remoteProxy: => SubsumableLockProxy): SubsumableLock = {
     @tailrec def retry(): SubsumableLock = {
-      getCachedOrReceiveRemote(guid, new SubsumableLockReflection(this, guid, remoteProxy)) match {
+      getCachedOrReceiveRemote(guid, (true, new SubsumableLockReflection(this, guid, remoteProxy))) match {
         case Instantiated(instance) =>
-          if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this cache miss for remote lock reception, newly instantiated $instance")
           instance
         case Found(instance) =>
           if (instance.tryLocalAddRefs(1)) {
-            if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this cache hit for remotely received $instance, dropping connection establishment remote reference on $remoteProxy")
+            if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this secured new local ref on cached $instance, dropping connection establishment remote reference.")
             remoteProxy.asyncRemoteRefDropped()
             instance
           } else {
-            if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this cache hit for remotely received $instance, but was concurrently deallocated; retrying cache lookup.")
+            if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this remotely received $instance cache hit was concurrently deallocated; retrying cache lookup.")
             retry()
           }
       }
     }
     retry()
-
   }
 }
 

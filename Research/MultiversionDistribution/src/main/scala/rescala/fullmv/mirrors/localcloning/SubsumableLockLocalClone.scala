@@ -23,15 +23,10 @@ class SubsumableLockLocalCloneProxy(mirrorHost: SubsumableLockHost, localProxy: 
     case RemoteGCd => RemoteGCd
   }(FullMVEngine.notWorthToMoveToTaskpool)
   override def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[RemoteTrySubsumeResult] = {
-    val parameterOnMirrorHostWithTemporaryReference = SubsumableLockLocalClone(lockedNewParent, mirrorHost)
-    localProxy.remoteTrySubsume(parameterOnMirrorHostWithTemporaryReference).map { res =>
-      val transferRes = res match {
-        case RemoteSubsumed => RemoteSubsumed
-        case RemoteBlocked(newParent: SubsumableLock) => RemoteBlocked(SubsumableLockLocalClone(newParent, reflectionHost))
-        case RemoteGCd => RemoteGCd
-      }
-      parameterOnMirrorHostWithTemporaryReference.localSubRefs(1)
-      transferRes
+    localProxy.remoteTrySubsume(SubsumableLockLocalClone(lockedNewParent, mirrorHost)).map {
+      case RemoteSubsumed => RemoteSubsumed
+      case RemoteBlocked(newParent: SubsumableLock) => RemoteBlocked(SubsumableLockLocalClone(newParent, reflectionHost))
+      case RemoteGCd => RemoteGCd
     }(FullMVEngine.notWorthToMoveToTaskpool)
   }
   override def remoteAsyncUnlock(): Unit = localProxy.remoteAsyncUnlock()

@@ -20,8 +20,7 @@ class FullMVEngine(val timeout: Duration, val name: String) extends SchedulerImp
     instances.put(Host.dummyGuid, dummy)
     dummy.beginExecuting()
     dummy.completeExecuting()
-    if(Host.DEBUG || SubsumableLock.DEBUG || FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this " +
-      s"")
+    if(Host.DEBUG || SubsumableLock.DEBUG || FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this SETUP COMPLETE")
     dummy
   }
   def newTurn(): FullMVTurnImpl = createLocal(new FullMVTurnImpl(this, _, Thread.currentThread(), lockHost.newLock()))
@@ -84,7 +83,8 @@ class FullMVEngine(val timeout: Duration, val name: String) extends SchedulerImp
     }
   }
 
-  override def toString: String = "Host " + name
+  override def toString: String = "Turns " + name
+  def cacheStatus: String = s"${instances.size()} turn instances and ${lockHost.instances.size()} lock instances"
 }
 
 object FullMVEngine {

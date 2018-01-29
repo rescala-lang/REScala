@@ -323,34 +323,40 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
 
   def lookUpLocalTurnParameterInstance(bundle: TurnPushBundle, endpoint: EndPointWithInfrastructure[Msg]): FullMVTurn = {
     val (guid, phase, tree) = bundle
+    val active = phase < TurnPhase.Completed
     // TODO ideally, the main turn and the predecessor turns should be tracked separately here. For the main turn,
     // both phase and predecessor tree must be subscribed. For the predecessor turns, a phase subscription is
     // sufficient, and not also subscribing predecessors might reduce the workload.
-    var toConnect = Set.empty[Host.GUID]
-    val preds = tree.map { case (predGuid, predPhase) =>
-      host.getCachedOrReceiveRemote(predGuid, {
-        toConnect += predGuid
-        new FullMVTurnReflection(host, predGuid, predPhase, new FullMVTurnMirrorProxyToEndpoint(predGuid, endpoint))
-      }).instance
-    }
+    if(active) {
+      var toConnect = Set.empty[Host.GUID]
+      val preds = tree.map { case (predGuid, predPhase) =>
+        host.getCachedOrReceiveRemote(predGuid, {
+          val predActive = predPhase < TurnPhase.Completed
+          if (predActive) toConnect += predGuid
+          (predActive, new FullMVTurnReflection(host, predGuid, predPhase, new FullMVTurnMirrorProxyToEndpoint(predGuid, endpoint)))
+        }).instance
+      }
 
-    val instance = host.getCachedOrReceiveRemote(guid, {
-      toConnect += guid
-      val turn = new FullMVTurnReflection(host, guid, phase, new FullMVTurnMirrorProxyToEndpoint(guid, endpoint))
-      turn.newPredecessors(preds)
-      turn
-    }) match {
-      case Found(found) =>
-        if(found.isInstanceOf[FullMVTurnReflection]) {
-          val reflection = found.asInstanceOf[FullMVTurnReflectionProxyToEndpoint]
-          reflection.newPhase(phase)
-          reflection.newPredecessors(preds)
-        }
-        found
-      case Instantiated(x) => x
+      val instance = host.getCachedOrReceiveRemote(guid, {
+        toConnect += guid
+        val turn = new FullMVTurnReflection(host, guid, phase, new FullMVTurnMirrorProxyToEndpoint(guid, endpoint))
+        turn.newPredecessors(preds)
+        (true, turn)
+      }) match {
+        case Found(found) =>
+          if (found.isInstanceOf[FullMVTurnReflection]) {
+            val reflection = found.asInstanceOf[FullMVTurnReflectionProxyToEndpoint]
+            reflection.newPhase(phase)
+            reflection.newPredecessors(preds)
+          }
+          found
+        case Instantiated(x) => x
+      }
+      if (toConnect.nonEmpty) doAsync(endpoint, AsyncAddReplicator(toConnect))
+      instance
+    } else {
+      new FullMVTurnReflection(host, guid, phase, new FullMVTurnMirrorProxyToEndpoint(guid, endpoint))
     }
-    if(toConnect.nonEmpty) doAsync(endpoint, AsyncAddReplicator(toConnect))
-    instance
   }
 
   def localTurnReceiverInstance(guid: Host.GUID): Option[FullMVTurn] = {
@@ -456,8 +462,9 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
     var toConnect = Set.empty[Host.GUID]
     val preds = tree.map { case (predGuid, predPhase) =>
       host.getCachedOrReceiveRemote(predGuid, {
-        toConnect += predGuid
-        new FullMVTurnReflection(host, predGuid, predPhase, new FullMVTurnMirrorProxyToEndpoint(predGuid, endpoint))
+        val active = predPhase < TurnPhase.Completed
+        if (active) toConnect += predGuid
+        (active, new FullMVTurnReflection(host, predGuid, predPhase, new FullMVTurnMirrorProxyToEndpoint(predGuid, endpoint)))
       }).instance
     }
     if(toConnect.nonEmpty) doAsync(endpoint, AsyncAddReplicator(toConnect))

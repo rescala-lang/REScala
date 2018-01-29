@@ -103,10 +103,35 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
   override def newSuccessor(successor: FullMVTurn): Future[Unit] = proxy.newSuccessor(successor)
 
   override def getLockedRoot: Future[Option[GUID]] = proxy.getLockedRoot
-  override def tryLock(): Future[TryLockResult] = proxy.remoteTryLock()
-  override def remoteTryLock(): Future[TryLockResult] = proxy.remoteTryLock()
-  override def trySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult] = proxy.remoteTrySubsume(lockedNewParent)
-  override def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult] = proxy.remoteTrySubsume(lockedNewParent)
+  override def tryLock(): Future[TryLockResult] = {
+    if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this sending tryLock request")
+    proxy.remoteTryLock().map {res =>
+      if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this received tryLock result $res (retaining remote transfer reference as thread reference)")
+      res
+    }(FullMVEngine.notWorthToMoveToTaskpool)
+  }
+  override def remoteTryLock(): Future[TryLockResult] = {
+    if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this passing through tryLock request")
+    proxy.remoteTryLock().map {res =>
+      if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this passing through tryLock result $res (retaining remote transfer reference as thread reference)")
+      res
+    }(FullMVEngine.notWorthToMoveToTaskpool)
+  }
+  override def trySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult] = {
+    if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this sending trySubsume $lockedNewParent request, adding remote parameter transfer reference")
+    lockedNewParent.localAddRefs(1)
+    proxy.remoteTrySubsume(lockedNewParent).map {res =>
+      if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this received trySubsume $lockedNewParent result $res")
+      res
+    }(FullMVEngine.notWorthToMoveToTaskpool)
+  }
+  override def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult] = {
+    if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this passing through trySubsume $lockedNewParent request")
+    proxy.remoteTrySubsume(lockedNewParent).map {res =>
+      if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this passing through trySubsume $lockedNewParent result $res")
+      res
+    }(FullMVEngine.notWorthToMoveToTaskpool)
+  }
 
   override def toString: String = s"FullMVTurnReflection($guid on $host, ${TurnPhase.toString(phase)}${if(localBranchCountBuffer.get != 0) s"(${localBranchCountBuffer.get})" else ""})"
 }

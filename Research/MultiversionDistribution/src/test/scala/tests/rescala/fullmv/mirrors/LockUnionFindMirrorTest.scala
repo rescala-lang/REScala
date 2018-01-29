@@ -3,16 +3,16 @@ package tests.rescala.fullmv.mirrors
 import org.scalatest.FunSuite
 import rescala.fullmv.FullMVEngine
 import rescala.fullmv.mirrors.localcloning.FullMVTurnLocalClone
-import rescala.fullmv.sgt.synchronization.{Blocked, Locked, Successful}
+import rescala.fullmv.sgt.synchronization.{Blocked, Locked, SubsumableLock, Successful}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.Await
 
 class LockUnionFindMirrorTest extends FunSuite {
   test("double remote lock/block/unlock works") {
-    val host1a = new FullMVEngine(Duration.Zero, "host1")
-    val host1b = new FullMVEngine(Duration.Zero, "host2")
-    val hostX = new FullMVEngine(Duration.Zero, "host3")
+    val host1a = new FullMVEngine(Duration.Zero, "host1a")
+    val host1b = new FullMVEngine(Duration.Zero, "host1b")
+    val hostX = new FullMVEngine(Duration.Zero, "hostX")
 
     val turn1 = host1a.newTurn()
     val lock1 = turn1.subsumableLock.get
@@ -91,9 +91,9 @@ class LockUnionFindMirrorTest extends FunSuite {
   }
 
   test("blocked remote subsume leaves reference counts intact") {
-    val host1a = new FullMVEngine(Duration.Zero, "host1")
-    val host1b = new FullMVEngine(Duration.Zero, "host2")
-    val hostX = new FullMVEngine(Duration.Zero, "host3")
+    val host1a = new FullMVEngine(Duration.Zero, "host1a")
+    val host1b = new FullMVEngine(Duration.Zero, "host1b")
+    val hostX = new FullMVEngine(Duration.Zero, "hostX")
 
     val turn1 = host1a.newTurn()
     val lock1 = turn1.subsumableLock.get
@@ -121,6 +121,7 @@ class LockUnionFindMirrorTest extends FunSuite {
     val l2 = Await.result(turn2.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
     assert(l2.refCount.get === 2) // turn2, thread
 
+    println("XOXOXOXOXOXOXOXOXOXOXOXOXOXOXOXOXOXOXOXOXOXOXOXOXOXOXOXO")
     assert(Await.result(turn1onX.trySubsume(l2), Duration.Zero) === Blocked)
 
     assert(lock1.refCount.get === 2) // turn1, lock1onB
@@ -175,11 +176,11 @@ class LockUnionFindMirrorTest extends FunSuite {
   }
 
   test("quintuple remote single subsume and gc works") {
-    val host1a = new FullMVEngine(Duration.Zero, "host1")
-    val host1b = new FullMVEngine(Duration.Zero, "host2")
-    val host2a = new FullMVEngine(Duration.Zero, "host3")
-    val host2b = new FullMVEngine(Duration.Zero, "host3")
-    val hostX = new FullMVEngine(Duration.Zero, "host3")
+    val host1a = new FullMVEngine(Duration.Zero, "host1a")
+    val host1b = new FullMVEngine(Duration.Zero, "host1b")
+    val host2a = new FullMVEngine(Duration.Zero, "host2a")
+    val host2b = new FullMVEngine(Duration.Zero, "host2b")
+    val hostX = new FullMVEngine(Duration.Zero, "hostX")
 
     val turn1 = host1a.newTurn()
     val lock1 = turn1.subsumableLock.get
@@ -286,5 +287,218 @@ class LockUnionFindMirrorTest extends FunSuite {
     assert(lock1on2b.refCount.get <= 0)
     assert(hostX.lockHost.getInstance(lock1.guid).isEmpty)
     assert(lock1onX.refCount.get <= 0)
+  }
+
+  test("reentrant tryLock works") {
+    val host1a = new FullMVEngine(Duration.Zero, "host1a")
+    val host1b = new FullMVEngine(Duration.Zero, "host1b")
+    val hostX = new FullMVEngine(Duration.Zero, "hostX")
+    val turn1 = host1a.newTurn()
+    turn1.beginExecuting()
+    val lock1 = turn1.subsumableLock.get()
+
+    if(SubsumableLock.DEBUG) println(s"reentrant trylock with $turn1 under $lock1")
+    val turn1onB = FullMVTurnLocalClone(turn1, host1b)
+    val turn1onX = FullMVTurnLocalClone(turn1onB, hostX)
+
+    assert(lock1.refCount.get === 1) // turn1
+    assert(host1a.lockHost.getInstance(lock1.guid).get eq lock1)
+    assert(host1b.lockHost.getInstance(lock1.guid).isEmpty)
+    assert(hostX.lockHost.getInstance(lock1.guid).isEmpty)
+
+    val l1 = Await.result(turn1onX.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
+
+    assert(lock1.refCount.get === 2) // Turn1, lock1onB
+    assert(host1a.lockHost.getInstance(lock1.guid).get eq lock1)
+    val lock1onB = host1b.lockHost.getInstance(lock1.guid).get
+    assert(lock1onB.refCount.get === 1) // lock1onX
+    val lock1onX = hostX.lockHost.getInstance(lock1.guid).get
+    assert(lock1onX.refCount.get === 1) // thread
+
+    assert(Await.result(turn1onX.trySubsume(l1), Duration.Zero) === Successful)
+
+    assert(lock1.refCount.get === 2) // Turn1, lock1onB
+    assert(host1a.lockHost.getInstance(lock1.guid).get eq lock1)
+    assert(lock1onB.refCount.get === 1) // lock1onX
+    assert(host1b.lockHost.getInstance(lock1.guid).get eq lock1onB)
+    assert(lock1onX.refCount.get === 1) // thread
+    assert(hostX.lockHost.getInstance(lock1.guid).get eq lock1onX)
+
+    l1.asyncUnlock()
+
+    assert(lock1.refCount.get === 1) // turn1
+    assert(host1a.lockHost.getInstance(lock1.guid).get eq lock1)
+    assert(host1b.lockHost.getInstance(lock1.guid).isEmpty)
+    assert(hostX.lockHost.getInstance(lock1.guid).isEmpty)
+
+    turn1.completeExecuting()
+
+    assert(lock1.refCount.get <= 1)
+    assert(host1a.lockHost.getInstance(lock1.guid).isEmpty)
+    assert(host1b.lockHost.getInstance(lock1.guid).isEmpty)
+    assert(hostX.lockHost.getInstance(lock1.guid).isEmpty)
+  }
+
+  test("remote blocked-self trySubsume works") {
+    val host1 = new FullMVEngine(Duration.Zero, "host1")
+    val host2 = new FullMVEngine(Duration.Zero, "host2")
+    val turn1 = host1.newTurn()
+    turn1.beginExecuting()
+    val lock1 = turn1.subsumableLock.get()
+
+    val turn2 = host2.newTurn()
+    turn2.beginExecuting()
+    val lock2 = turn2.subsumableLock.get()
+
+    val turn3 = host2.newTurn()
+    turn3.beginExecuting()
+    val lock3 = turn3.subsumableLock.get()
+
+    println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+
+    val l3 = Await.result(turn3.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
+    val turn1on2 = FullMVTurnLocalClone(turn1, host2)
+    val lock1on2 = Await.result(turn1on2.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
+    assert(Await.result(turn2.trySubsume(lock1on2), Duration.Zero) === Successful)
+
+    assert(lock1on2 === lock1)
+    assert(lock1on2 ne lock1)
+    assert(lock1.refCount.get === 2) // turn1, lock1on2
+    assert(lock1on2.refCount.get === 2) // turn2, thread
+    assert(lock2.refCount.get <= 0)
+    assert(lock3.refCount.get === 2) // turn3, thread
+    assert(host1.lockHost.getInstance(lock3.guid).isEmpty)
+
+    assert(Await.result(turn2.trySubsume(l3), Duration.Zero) === Blocked)
+
+    assert(lock1.refCount.get === 2) // turn1, lock1on2
+    assert(lock1on2.refCount.get === 2) // turn2, thread
+    assert(lock3.refCount.get === 2) // turn3, thread
+    assert(host1.lockHost.getInstance(lock3.guid).isEmpty)
+
+    lock1on2.asyncUnlock()
+
+    assert(lock1.refCount.get === 2) // turn1, lock1on2
+    assert(lock1on2.refCount.get === 1) // turn2
+    assert(host2.lockHost.getInstance(lock1.guid).get eq lock1on2)
+    assert(lock3.refCount.get === 2) // turn3, thread
+    assert(host1.lockHost.getInstance(lock3.guid).isEmpty)
+
+    assert(Await.result(turn2.trySubsume(l3), Duration.Zero) === Successful)
+
+    assert(lock1.refCount.get === 1) // turn1
+    assert(lock1on2.refCount.get <= 0) // turn2
+    assert(host2.lockHost.getInstance(lock1.guid).isEmpty)
+    assert(lock3.refCount.get === 4) // turn2, turn3, thread, lock3on1
+    val lock3on1 = host1.lockHost.getInstance(lock3.guid).get
+    assert(lock3on1.refCount.get === 1) // lock1
+  }
+
+  test("remote blocked-other trySubsume works") {
+    val host1 = new FullMVEngine(Duration.Zero, "host1")
+    val host2 = new FullMVEngine(Duration.Zero, "host2")
+    val host3 = new FullMVEngine(Duration.Zero, "host3")
+    println("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB")
+    val turn1 = host1.newTurn()
+    turn1.beginExecuting()
+    val lock1 = turn1.subsumableLock.get()
+
+    val turn2 = host2.newTurn()
+    turn2.beginExecuting()
+    val lock2 = turn2.subsumableLock.get()
+
+    val turn3 = host3.newTurn()
+    turn3.beginExecuting()
+    val lock3 = turn3.subsumableLock.get()
+
+    val turn1on2 = FullMVTurnLocalClone(turn1, host2)
+    val lock1on2 = Await.result(turn1on2.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
+    assert(Await.result(turn2.trySubsume(lock1on2), Duration.Zero) === Successful)
+    lock1on2.asyncUnlock()
+
+    val turn3on1 = FullMVTurnLocalClone(turn3, host1)
+    val lock3on1 = Await.result(turn3on1.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
+    assert(Await.result(turn1.trySubsume(lock3on1), Duration.Zero) === Successful)
+
+    assert(lock1on2 === lock1)
+    assert(lock1on2 ne lock1)
+    assert(lock3on1 === lock3)
+    assert(lock3on1 ne lock3)
+    assert(lock1.refCount.get === 1) // lock1on2
+    assert(lock1on2.refCount.get === 1) // turn2
+    assert(lock2.refCount.get <= 0)
+    assert(lock3.refCount.get === 2) // turn3, lock3on1
+    assert(lock3on1.refCount.get === 3) // turn1, lock1, thread
+
+    val turn4 = host2.newTurn()
+    turn4.beginExecuting()
+    val lock4 = turn3.subsumableLock.get()
+    val l4 = Await.result(turn4.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
+    assert(lock4.refCount.get === 2) // turn4, thread
+
+    assert(Await.result(turn2.trySubsume(l4), Duration.Zero) === Blocked)
+
+    assert(lock1.refCount.get <= 0) // lock1on2
+    assert(lock1on2.refCount.get <= 0) // turn2
+    assert(lock3.refCount.get === 2) // turn3, lock3on1
+    assert(lock3on1.refCount.get === 3) // turn1, lock3on2, thread
+    val lock3on2 = host2.lockHost.getInstance(lock3.guid).get
+    assert(lock3on2.refCount.get === 1) // turn2
+  }
+
+  test("remote other trySubsume works") {
+    val host1 = new FullMVEngine(Duration.Zero, "host1")
+    val host2 = new FullMVEngine(Duration.Zero, "host2")
+    val host3 = new FullMVEngine(Duration.Zero, "host3")
+    println("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCC")
+    val turn1 = host1.newTurn()
+    turn1.beginExecuting()
+    val lock1 = turn1.subsumableLock.get()
+
+    val turn2 = host2.newTurn()
+    turn2.beginExecuting()
+    val lock2 = turn2.subsumableLock.get()
+
+    val turn3 = host3.newTurn()
+    turn3.beginExecuting()
+    val lock3 = turn3.subsumableLock.get()
+
+    val turn1on2 = FullMVTurnLocalClone(turn1, host2)
+    val lock1on2 = Await.result(turn1on2.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
+    assert(Await.result(turn2.trySubsume(lock1on2), Duration.Zero) === Successful)
+    lock1on2.asyncUnlock()
+
+    val turn3on1 = FullMVTurnLocalClone(turn3, host1)
+    val lock3on1 = Await.result(turn3on1.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
+    assert(Await.result(turn1.trySubsume(lock3on1), Duration.Zero) === Successful)
+    lock3on1.asyncUnlock()
+
+    assert(lock1on2 === lock1)
+    assert(lock1on2 ne lock1)
+    assert(lock3on1 === lock3)
+    assert(lock3on1 ne lock3)
+    assert(lock1.refCount.get === 1) // lock1on2
+    assert(lock1on2.refCount.get === 1) // turn2
+    assert(lock2.refCount.get <= 0)
+    assert(lock3.refCount.get === 2) // turn3, lock3on1
+    assert(lock3on1.refCount.get === 2) // turn1, lock1
+
+    val turn4 = host2.newTurn()
+    turn4.beginExecuting()
+    val lock4 = turn4.subsumableLock.get()
+    val l4 = Await.result(turn4.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
+    assert(lock4.refCount.get === 2) // turn4, thread
+
+    assert(Await.result(turn2.trySubsume(l4), Duration.Zero) === Successful)
+
+    assert(lock1.refCount.get <= 0) // lock1on2
+    assert(lock1on2.refCount.get <= 0)
+    assert(lock3.refCount.get === 2) // turn3, lock3on1
+    assert(lock3on1.refCount.get === 1) // turn1
+    assert(lock4.refCount.get === 4) // turn2, turn4, lock4on1, thread
+    val lock4on1 = host1.lockHost.getInstance(lock4.guid).get
+    assert(lock4on1.refCount.get === 1) // lock4on3
+    val lock4on3 = host3.lockHost.getInstance(lock4.guid).get
+    assert(lock4on3.refCount.get === 1) // lock3
   }
 }

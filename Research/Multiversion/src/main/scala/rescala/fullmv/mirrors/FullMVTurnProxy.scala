@@ -17,6 +17,8 @@ trait FullMVTurnProxy {
   def newSuccessor(successor: FullMVTurn): Future[Unit]
 
   def getLockedRoot: Future[Option[Host.GUID]]
+  // result has one thread reference counted
   def remoteTryLock(): Future[TryLockResult]
+  // parameter has one thread reference counted, result has one thread reference counted
   def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult]
 }
