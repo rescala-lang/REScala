@@ -53,7 +53,7 @@ import rescala._
   * ShapesPanel.
   */
 object LFullyModularBall extends Main {
-  class BouncingBall(val initVx: Double, val initVy: Double, val diameter: Signal[Int], val resetIn: Event[Point]) {
+  class BouncingBall(val initVx: Double, val initVy: Double, val diameter: Signal[Int], val reset: Event[Point]) {
     val horizontalBounceSources: Var[List[Event[Any]]] = Var(List())
     val verticalBounceSources: Var[List[Event[Any]]] = Var(List())
     val filteredHorizontalBounceSources = horizontalBounceSources.map(_.map(_.recover{case _: IllegalArgumentException => None}))
@@ -65,14 +65,12 @@ object LFullyModularBall extends Main {
         .fold(initVy / Clock.NanoSecond) { (old, _ ) => -old }.value)}
 
     //TODO: using now to remove cycle …
-    val inc = Clock.ticks.map(tick => Right[Point, Pos](velocity.now * tick.toDouble))
+    val inc = Clock.ticks.map(tick => velocity.now * tick.toDouble)
 
-    val reset = resetIn.map(pos => Left[Point, Pos](pos))
-
-    val pos = (reset || inc).fold(Pos(0,0)){
-      case (_, Left(Point(x, y))) => Pos(x, y)
-      case (pX, Right(inc)) => pX + inc
-    }
+    val pos = Events.fold(Pos(0,0))( acc => Events.Match(
+      reset >> { case Point(x, y) => Pos(x, y) },
+      inc >>  { inc => acc + inc },
+    ))
 
     val shape = new Circle(pos, diameter)
   }

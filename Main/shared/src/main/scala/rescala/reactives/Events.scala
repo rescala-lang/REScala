@@ -37,14 +37,15 @@ object Events {
   }
 
   /** Folds when any one of a list of events occurs, if multiple events occur, every fold is executed in order. */
-  final def fold[A: ReSerializable, S <: Struct](init: A)(ops: ((Event[T, S], (A, T) => A) forSome {type T})*)(implicit ticket: CreationTicket[S]): Signal[A, S] = {
+  final def fold[A: ReSerializable, S <: Struct](init: A)(accthingy: (=> A) => Seq[(Event[T, S], T => A) forSome {type T}])(implicit ticket: CreationTicket[S]): Signal[A, S] = {
     ticket { initialTurn =>
-      val dependecies = ops.map(_._1)
-      Signals.staticFold[A, S](dependecies.toSet, Pulse.tryCatch(Pulse.Value(init))) { (st, currentValue) =>
-        var acc = currentValue()
+      var acc = init
+      val ops = accthingy(acc)
+      val dependencies = ops.map(_._1)
+      Signals.staticFold[A, S](dependencies.toSet, Pulse.tryCatch(Pulse.Value(init))) { (st, currentValue) =>
         for ((ev, f) <- ops) {
           val value = st.dependStatic(ev)
-          value.foreach(v => acc = f(acc, v))
+          value.foreach(v => acc = f(v))
         }
         acc
 
@@ -52,9 +53,11 @@ object Events {
     }
   }
 
+  final def Match[S <: Struct, A](ops : (Event[T, S], T => A) forSome {type T}*): Seq[((Event[T, S], T => A)) forSome {type T}] = ops
+
   class EOps[T, S <: Struct](val e: Event[T, S]) {
     /** Constructs a pair similar to ->, however this one is compatible with type inference for [[fold]] */
-    final def >> [A](fun: (A, T) => A): (Event[T, S], (A, T) => A) = (e, fun)
+    final def >> [A](fun: T => A): (Event[T, S], T => A) = (e, fun)
   }
 }
 
