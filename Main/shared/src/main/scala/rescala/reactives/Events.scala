@@ -39,15 +39,19 @@ object Events {
   /** Folds when any one of a list of events occurs, if multiple events occur, every fold is executed in order. */
   final def fold[A: ReSerializable, S <: Struct](init: A)(accthingy: (=> A) => Seq[(Event[T, S], T => A) forSome {type T}])(implicit ticket: CreationTicket[S]): Signal[A, S] = {
     ticket { initialTurn =>
-      var acc = init
-      val ops = accthingy(acc)
+      var acc = () => init
+      val ops = accthingy(acc())
       val dependencies = ops.map(_._1)
       Signals.staticFold[A, S](dependencies.toSet, Pulse.tryCatch(Pulse.Value(init))) { (st, currentValue) =>
+        acc = currentValue
         for ((ev, f) <- ops) {
           val value = st.dependStatic(ev)
-          value.foreach(v => acc = f(v))
+          value.foreach { v =>
+            val res = f(v)
+            acc = () => res
+          }
         }
-        acc
+        acc()
 
       }(initialTurn)(ticket.rename)
     }
