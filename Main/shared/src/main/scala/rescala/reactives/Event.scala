@@ -196,13 +196,6 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
   final def latestOption[A >: T]()(implicit ticket: CreationTicket[S], ev: ReSerializable[Option[A]]): Signal[Option[A], S] =
     fold(None: Option[A]) { (_, v) => Some(v) }
 
-  /** calls factory on each occurrence of event e, resetting the SL to a newly generated one
-    * @usecase def reset[T1 >: T, A, R](init: T1)(factory: T1 => rescala.Signal[A]): rescala.Signal[A]
-    * @group conversion*/
-  final def reset[T1 >: T : ReSerializable, A, R](init: T1)(factory: T1 => Signal[A, S])
-    (implicit ticket: CreationTicket[S], ev: Flatten[Signal[A, S], S, R]): R =
-    latest(init).map(factory).flatten(ev, ticket)
-
   /** Returns a signal which holds the last n events in a list. At the beginning the
     * list increases in size up to when n values are available
     * @usecase def last[A >: T](n: Int): rescala.Signal[LinearSeq[A]]
