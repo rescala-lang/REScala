@@ -6,7 +6,7 @@ import rescala.Engines
 import rescala.core.Scheduler
 import rescala.core.infiltration.JVMInfiltrator
 import rescala.parrp.{Backoff, ParRP}
-import tests.rescala.util.{RETests, ReevaluationTracker, SetAndExtractTransactionHandle, _}
+import tests.rescala.testtools.{RETests, ReevaluationTracker, SetAndExtractTransactionHandle, _}
 import rescala.twoversion.TwoVersionSchedulerImpl
 
 class PessimisticTest extends RETests {

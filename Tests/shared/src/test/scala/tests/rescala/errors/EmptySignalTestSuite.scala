@@ -1,6 +1,6 @@
 package tests.rescala.errors
 
-import tests.rescala.util.RETests
+import tests.rescala.testtools.RETests
 
 class EmptySignalTestSuite extends RETests {
 

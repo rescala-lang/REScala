@@ -4,7 +4,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 import org.scalatest.FunSuite
 import rescala.fullmv._
-import tests.rescala.util.Spawn
+import tests.rescala.testtools.Spawn
 
 import scala.annotation.tailrec
 import scala.concurrent.TimeoutException

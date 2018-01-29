@@ -3,7 +3,7 @@ package tests.rescala.static.signals
 import java.util.concurrent.atomic.AtomicInteger
 
 import rescala.core.infiltration.Infiltrator.assertLevel
-import tests.rescala.util.RETests
+import tests.rescala.testtools.RETests
 
 
 class SignalTestSuite extends RETests {

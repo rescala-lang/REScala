@@ -2,7 +2,7 @@ package tests.rescala.dynamic
 
 import rescala.Engines
 import rescala.core.infiltration.Infiltrator.assertLevel
-import tests.rescala.util.RETests
+import tests.rescala.testtools.RETests
 
 class TrueDynamicSignals extends RETests {
 

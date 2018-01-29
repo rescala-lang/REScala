@@ -1,6 +1,6 @@
 package tests.rescala.static.conversions
 
-import tests.rescala.util.RETests
+import tests.rescala.testtools.RETests
 
 import scala.collection.LinearSeq
 

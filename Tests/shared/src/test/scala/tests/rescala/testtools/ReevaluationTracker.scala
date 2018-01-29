@@ -1,4 +1,4 @@
-package tests.rescala.util
+package tests.rescala.testtools
 
 import org.scalatest.{Assertions, Matchers}
 import rescala.core.{CreationTicket, Struct}

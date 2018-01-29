@@ -1,6 +1,6 @@
 package tests.rescala.dynamic.conversions
 
-import tests.rescala.util.RETests
+import tests.rescala.testtools.RETests
 
 
 class Fold extends RETests {

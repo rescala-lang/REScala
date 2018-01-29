@@ -1,7 +1,7 @@
-package tests.rescala.reevaluations
+package tests.rescala.misc
 
 import org.scalatest.prop.Whenever
-import tests.rescala.util.RETests
+import tests.rescala.testtools.RETests
 
 
 class ReevaluationCount extends RETests with Whenever {
