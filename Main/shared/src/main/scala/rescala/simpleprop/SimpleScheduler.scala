@@ -6,13 +6,14 @@ import rescala.core.{Initializer, ReSource, ReSourciV, Reactive, ReevTicket, Sch
 import scala.collection.mutable.ArrayBuffer
 
 trait SimpleStruct extends Struct {
-  override type State[P, S <: Struct] = SimpleState[P, _]
+  override type State[P, S <: Struct, N] = SimpleState[P, N]
 }
 
 class SimpleState[V, N](
   var value: V,
   transient: Option[V]) {
   var outgoing: Set[Reactive[SimpleStruct]] = Set.empty
+  var notification: N = _
   var discovered = false
   var dirty = false
   def reset(): Unit = {
@@ -106,6 +107,7 @@ object Util {
     if (reev.propagate) reactive.state.outgoing.foreach(_.state.dirty = true)
     if (reev.getDependencies().isDefined) ???
     reev.forValue(reactive.state.value = _)
+    reev.forNotification(reactive.state.notification = _)
     reev.forEffect(_())
   }
 }

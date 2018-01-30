@@ -5,7 +5,7 @@ import rescala.core.{ReSource, Reactive, Struct}
 import scala.language.higherKinds
 
 trait TwoVersionStruct extends GraphStruct {
-  override type State[P, S <: Struct] <: GraphStructType[S] with ReadWriteValue[P, S]
+  override type State[P, S <: Struct, N] <: GraphStructType[S] with ReadWriteValue[P, S]
 }
 
 /**
@@ -62,7 +62,7 @@ abstract class PropagationStructImpl[P, S <: Struct](override var current: P, ov
   * Wrapper for a struct type combining GraphSpore and PulsingSpore
   */
 trait GraphStruct extends Struct {
-  override type State[P, S <: Struct] <: GraphStructType[S] with ReadWriteValue[P, S]
+  override type State[P, S <: Struct, N] <: GraphStructType[S] with ReadWriteValue[P, S]
 }
 
 /**

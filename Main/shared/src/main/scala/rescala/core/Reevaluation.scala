@@ -1,16 +1,17 @@
 package rescala.core
 
 
-trait Result[T, S <: Struct] {
+trait Result[T, N, S <: Struct] {
   def propagate: Boolean
   def forValue(f: T => Unit): Unit
   def forEffect(f: (() => Unit) => Unit): Unit
+  def forNotification(f: N => Unit): Unit
   def getDependencies(): Option[Set[ReSource[S]]]
 }
 
 
 object Result {
-  def fromPulse[P, S <: Struct](t: ReevTicket[Pulse[P], S], value: Pulse[P]): Result[Pulse[P], S] = {
+  def fromPulse[P, N, S <: Struct](t: ReevTicket[Pulse[P], N, S], value: Pulse[P]): Result[Pulse[P], N, S] = {
     if (value.isChange) t.withValue(value)
     else t
   }

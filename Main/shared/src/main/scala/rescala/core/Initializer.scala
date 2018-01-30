@@ -4,26 +4,26 @@ import rescala.core.Initializer.Param
 
 trait Initializer[S <: Struct] {
   /** Creates and correctly initializes new [[Reactive]]s */
-  final private[rescala] def create[P, T <: Reactive[S]]
-  (incoming: Set[ReSource[S]], valuePersistency: Param[P])(instantiateReactive: S#State[P, S] => T): T = {
-    val state = makeDerivedStructState(valuePersistency)
+  final private[rescala] def create[P, T <: Reactive[S], N]
+  (incoming: Set[ReSource[S]], valuePersistency: Param[P])(instantiateReactive: S#State[P, S, N] => T): T = {
+    val state = makeDerivedStructState[P, N](valuePersistency)
     val reactive = instantiateReactive(state)
     ignite(reactive, incoming, valuePersistency.ignitionRequiresReevaluation)
     reactive
   }
 
   /** Correctly initializes [[ReSource]]s */
-  final private[rescala] def createSource[P, T <: ReSource[S]]
-  (valuePersistency: Param[P])(instantiateReactive: S#State[P, S] => T): T = {
-    val state = makeSourceStructState(valuePersistency)
+  final private[rescala] def createSource[P, T <: ReSource[S], N]
+  (valuePersistency: Param[P])(instantiateReactive: S#State[P, S, N] => T): T = {
+    val state = makeSourceStructState[P, N](valuePersistency)
     instantiateReactive(state)
   }
 
   /** Creates the internal state of [[Reactive]]s */
-  protected[this] def makeDerivedStructState[P, N](valuePersistency: Param[P]): S#State[P, S]
+  protected[this] def makeDerivedStructState[P, N](valuePersistency: Param[P]): S#State[P, S, N]
 
   /**  Creates the internal state of [[ReSourciV]]s */
-  protected[this] def makeSourceStructState[P, N](valuePersistency: Param[P]): S#State[P, S] =
+  protected[this] def makeSourceStructState[P, N](valuePersistency: Param[P]): S#State[P, S, N] =
     makeDerivedStructState[P, N](valuePersistency)
   /**
     * to be implemented by the propagation algorithm, called when a new reactive has been instantiated and needs to be connected to the graph and potentially reevaluated.

@@ -19,8 +19,8 @@ object Observe {
   private val strongObserveReferences = scala.collection.mutable.HashSet[Observe[_]]()
 
   private abstract class Obs[T, S <: Struct]
-  (bud: S#State[Unit, S], dependency: ReSourciV[Pulse[T], S], fun: T => Unit, fail: Throwable => Unit, name: REName)
-    extends Base[Unit, S](bud, name) with Reactive[S] with Observe[S]  {
+  (bud: S#State[Unit, S, Nothing], dependency: ReSourciV[Pulse[T], S], fun: T => Unit, fail: Throwable => Unit, name: REName)
+    extends Base[Unit, S, Nothing](bud, name) with Reactive[S] with Observe[S]  {
     this: DisconnectableImpl[S] =>
 
     override protected[rescala] def reevaluate(dt: ReIn): Rout = {
@@ -40,7 +40,7 @@ object Observe {
   }
 
   def weak[T, S <: Struct](dependency: ReSourciV[Pulse[T], S], fireImmediately: Boolean)(fun: T => Unit, fail: Throwable => Unit)(implicit ct: CreationTicket[S]): Observe[S] = {
-    ct(initTurn => initTurn.create[Unit, Obs[T, S]](Set(dependency), if(fireImmediately) Initializer.SignalObserver else Initializer.EventObserver) { state =>
+    ct(initTurn => initTurn.create[Unit, Obs[T, S], Nothing](Set(dependency), if(fireImmediately) Initializer.SignalObserver else Initializer.EventObserver) { state =>
       new Obs[T, S](state, dependency, fun, fail, ct.rename) with DisconnectableImpl[S]
     })
   }

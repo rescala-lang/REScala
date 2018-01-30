@@ -172,9 +172,9 @@ abstract class RescalaInterface[S <: Struct] {
     * @return Result of the admission function
     * @group update
     */
-  def update(changes: (Source[A, S], A) forSome { type A } *): Unit = {
+  def update(changes: (Source[A, S, _], A) forSome { type A } *): Unit = {
     explicitEngine.executeTurn(changes.map(_._1), { t =>
-      def admit[A](change: (Source[A, S], A)) = change._1.admit(change._2)(t)
+      def admit[A](change: (Source[A, S, _], A)) = change._1.admit(change._2)(t)
       for(change <- changes) admit(change)
     })
   }

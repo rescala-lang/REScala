@@ -80,7 +80,7 @@ trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropaga
       reactive.state.base(token)
     }
   }
-  private[rescala] def makeDynamicReevaluationTicket[V](b: V): ReevTicket[V, S] = new ReevTicket[V, S](this, b) {
+  private[rescala] def makeDynamicReevaluationTicket[V, N](b: V): ReevTicket[V, N, S] = new ReevTicket[V, N, S](this, b) {
     override def dynamicAccess[A](reactive: ReSourciV[A, S]): A = TwoVersionPropagationImpl.this.dynamicAfter(reactive)
     override def staticAccess[A](reactive: ReSourciV[A, S]): A = reactive.state.get(token)
   }

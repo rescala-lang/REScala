@@ -15,10 +15,10 @@ class InnerTicket[S <: Struct](val creation: Initializer[S])
   * The ticket tracks return values, such as dependencies, the value, and if the value should be propagated.
   * Such usages make it unsuitable as an API for the user, where [[StaticTicket]] or [[DynamicTicket]] should be used instead.
   * */
-abstract class ReevTicket[T, S <: Struct](
+abstract class ReevTicket[T, N, S <: Struct](
   creation: Initializer[S],
   private var _before: T,
-) extends DynamicTicket[S](creation) with Result[T, S] {
+) extends DynamicTicket[S](creation) with Result[T, N, S] {
 
   // schedulers implement these to allow access
   protected def staticAccess[A](reactive: ReSourciV[A, S]): A
@@ -40,25 +40,28 @@ abstract class ReevTicket[T, S <: Struct](
 
   private var _propagate = false
   private var value: T = _
+  private var notification: N = _
   private var effect: () => Unit = null
   final def before: T = _before
   final def trackDependencies(): Unit = collectedDependencies = Set.empty
-  final def withPropagate(p: Boolean): ReevTicket[T, S] = {_propagate = p; this}
-  final def withValue(v: T): ReevTicket[T, S] = {require(v != null, "value must not be null"); value = v; _propagate = true; this}
-  final def withEffect(v: () => Unit): ReevTicket[T, S] = {effect = v; this}
+  final def withPropagate(p: Boolean): ReevTicket[T, N, S] = {_propagate = p; this}
+  final def withNotification(n: N): ReevTicket[T, N, S] = {notification = n; this}
+  final def withValue(v: T): ReevTicket[T, N, S] = {require(v != null, "value must not be null"); value = v; _propagate = true; this}
+  final def withEffect(v: () => Unit): ReevTicket[T, N, S] = {effect = v; this}
 
 
   final override def propagate: Boolean = _propagate
   final override def forValue(f: T => Unit): Unit = if (value != null) f(value)
   final override def forEffect(f: (() => Unit) => Unit): Unit = if (effect != null) f(effect)
+  final override def forNotification(f: N=> Unit): Unit = if (notification != null) f(notification)
   final override def getDependencies(): Option[Set[ReSource[S]]] = Option(collectedDependencies)
 
-  final def reset[NT](nb: NT): ReevTicket[NT, S] = {
+  final def reset[NT, NN](nb: NT): ReevTicket[NT, NN, S] = {
     _propagate = false
     value = null.asInstanceOf[T]
     effect = null
     collectedDependencies = null
-    val res = this.asInstanceOf[ReevTicket[NT, S]]
+    val res = this.asInstanceOf[ReevTicket[NT, NN, S]]
     res._before = nb
     res
   }

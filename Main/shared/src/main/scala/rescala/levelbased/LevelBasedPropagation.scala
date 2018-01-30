@@ -20,10 +20,10 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
     _propagating.clear()
   }
 
-  val reevaluaitonTicket: ReevTicket[_, S] = makeDynamicReevaluationTicket(null)
+  val reevaluaitonTicket: ReevTicket[_, _, S] = makeDynamicReevaluationTicket(null)
 
   override def evaluate(r: Reactive[S]): Unit = evaluateIn(r)(reevaluaitonTicket.reset(r.state.base(token)))
-  def evaluateIn(head: Reactive[S])(dt: ReevTicket[head.Value, S]): Unit = {
+  def evaluateIn(head: Reactive[S])(dt: ReevTicket[head.Value, head.Notification, S]): Unit = {
     val reevRes = head.reevaluate(dt)
 
     val dependencies: Option[Set[ReSource[S]]] = reevRes.getDependencies()
