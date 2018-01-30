@@ -1,6 +1,6 @@
 package tests.rescala.static.events
 
-import tests.rescala.util.RETests
+import tests.rescala.testtools.RETests
 
 
 class dropParam_EventTest extends RETests {

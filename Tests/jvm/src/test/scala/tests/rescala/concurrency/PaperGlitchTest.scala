@@ -5,7 +5,7 @@ import java.util.concurrent.{ConcurrentLinkedQueue, CountDownLatch}
 import org.scalatest.FunSuite
 import rescala.Engines
 import rescala.reactives.Var
-import tests.rescala.util.Spawn
+import tests.rescala.testtools.Spawn
 
 import scala.util.Random
 

@@ -1,6 +1,6 @@
 package tests.rescala.static.conversions
 
-import tests.rescala.util.RETests
+import tests.rescala.testtools.RETests
 
 import scala.collection.LinearSeq
 
@@ -194,6 +194,36 @@ class Fold extends RETests {
 
     assert(listed.now == List("hello"))
 
+  }
+
+
+  /* fold expressions */
+
+  allEngines("fold expression works"){ engine => import engine._
+
+    val word = Evt[String]
+    val count = Evt[Int]
+    val reset = Evt[Unit]
+
+    val res = Events.fold(""){ acc => Events.Match(
+      reset >> (_ => ""),
+      word >> identity,
+      count >> (acc * _),
+    )}
+
+    assert (res.now == "")
+    count.fire(10)
+    assert (res.now == "")
+    reset.fire()
+    assert (res.now == "")
+    word.fire("hello")
+    assert (res.now == "hello")
+    count.fire(2)
+    assert (res.now == "hellohello")
+    word.fire("world")
+    assert (res.now == "world")
+    update(count -> 2, word -> "do them all!", reset -> (()))
+    assert (res.now == "do them all!do them all!")
   }
 
 }

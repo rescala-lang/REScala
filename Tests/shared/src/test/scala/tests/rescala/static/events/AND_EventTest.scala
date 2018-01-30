@@ -1,6 +1,6 @@
 package tests.rescala.static.events
 
-import tests.rescala.util.RETests
+import tests.rescala.testtools.RETests
 
 
 class AND_EventTest extends RETests {

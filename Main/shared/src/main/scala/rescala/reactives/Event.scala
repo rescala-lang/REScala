@@ -179,13 +179,6 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
   final def count()(implicit ticket: CreationTicket[S], ev: ReSerializable[Int]): Signal[Int, S] =
     fold(0)((acc, _) => acc + 1)
 
-  /** Calls f on each occurrence of event e, setting the SL to the generated value.
-    * The initial signal is obtained by f(init)
-    * @usecase def set[B >: T, A](init: B)(f: (B => A)): rescala.Signal[A]
-    * @group conversion */
-  final def set[B >: T : ReSerializable, A](init: B)(f: (B => A))(implicit ticket: CreationTicket[S]): Signal[A, S] =
-    latest(init).map(f)
-
   /** returns a signal holding the latest value of the event.
     * @usecase def latest[A >: T](init: A): rescala.Signal[A]
     * @group conversion */
@@ -202,13 +195,6 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
     * @group conversion*/
   final def latestOption[A >: T]()(implicit ticket: CreationTicket[S], ev: ReSerializable[Option[A]]): Signal[Option[A], S] =
     fold(None: Option[A]) { (_, v) => Some(v) }
-
-  /** calls factory on each occurrence of event e, resetting the SL to a newly generated one
-    * @usecase def reset[T1 >: T, A, R](init: T1)(factory: T1 => rescala.Signal[A]): rescala.Signal[A]
-    * @group conversion*/
-  final def reset[T1 >: T : ReSerializable, A, R](init: T1)(factory: T1 => Signal[A, S])
-    (implicit ticket: CreationTicket[S], ev: Flatten[Signal[A, S], S, R]): R =
-    set(init)(factory).flatten(ev, ticket)
 
   /** Returns a signal which holds the last n events in a list. At the beginning the
     * list increases in size up to when n values are available
@@ -261,5 +247,7 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
       }
     }(turn)
   }
+
+
 
 }

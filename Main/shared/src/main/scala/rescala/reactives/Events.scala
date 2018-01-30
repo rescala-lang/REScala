@@ -4,6 +4,8 @@ import rescala.core.Pulse.{Exceptional, NoChange, Value}
 import rescala.core._
 import rescala.reactives.Signals.Diff
 
+import scala.language.existentials
+
 /** Functions to construct events, you probably want to use the operators on [[Event]] for a nicer API. */
 object Events {
 
@@ -33,7 +35,38 @@ object Events {
       state => new ChangeEvent[A, S](state, signal, ticket.rename) with DisconnectableImpl[S]
     }
   }
+
+  /** Folds when any one of a list of events occurs, if multiple events occur, every fold is executed in order. */
+  final def fold[A: ReSerializable, S <: Struct](init: A)(accthingy: (=> A) => Seq[(Event[T, S], T => A) forSome {type T}])(implicit ticket: CreationTicket[S]): Signal[A, S] = {
+    ticket { initialTurn =>
+      var acc = () => init
+      val ops = accthingy(acc())
+      val dependencies = ops.map(_._1)
+      Signals.staticFold[A, S](dependencies.toSet, Pulse.tryCatch(Pulse.Value(init))) { (st, currentValue) =>
+        acc = currentValue
+        for ((ev, f) <- ops) {
+          val value = st.dependStatic(ev)
+          value.foreach { v =>
+            val res = f(v)
+            acc = () => res
+          }
+        }
+        acc()
+
+      }(initialTurn)(ticket.rename)
+    }
+  }
+
+  final def Match[S <: Struct, A](ops : (Event[T, S], T => A) forSome {type T}*): Seq[((Event[T, S], T => A)) forSome {type T}] = ops
+
+  class EOps[T, S <: Struct](val e: Event[T, S]) {
+    /** Constructs a pair similar to ->, however this one is compatible with type inference for [[fold]] */
+    final def >> [A](fun: T => A): (Event[T, S], T => A) = (e, fun)
+  }
 }
+
+
+
 
 private abstract class StaticEvent[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: StaticTicket[S] => Pulse[T], name: REName)
   extends Base[Pulse[T], S](_bud, name) with Event[T, S] {

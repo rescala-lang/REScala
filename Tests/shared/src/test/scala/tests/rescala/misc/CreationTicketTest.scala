@@ -1,7 +1,7 @@
-package tests.rescala
+package tests.rescala.misc
 
 import rescala.core.Struct
-import tests.rescala.util.RETests
+import tests.rescala.testtools.RETests
 
 
 class CreationTicketTest extends RETests {

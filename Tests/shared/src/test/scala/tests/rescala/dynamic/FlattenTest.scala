@@ -1,6 +1,6 @@
 package tests.rescala.dynamic
 
-import tests.rescala.util.RETests
+import tests.rescala.testtools.RETests
 
 class FlattenTest extends RETests {
 

@@ -1,4 +1,4 @@
-package tests.rescala.util
+package tests.rescala.testtools
 
 import org.scalactic.source
 import org.scalatest.FunSuite
@@ -17,6 +17,6 @@ abstract class RETests extends FunSuite with TableDrivenPropertyChecks {
   }
 
   def allEngines(text: String)(testCase: Scheduler[TestStruct] => Any)(implicit pos: source.Position): Unit = {
-    engines(tests.rescala.util.TestEngines.all: _*)(text)(testCase)(pos)
+    engines(tests.rescala.testtools.TestEngines.all: _*)(text)(testCase)(pos)
   }
 }

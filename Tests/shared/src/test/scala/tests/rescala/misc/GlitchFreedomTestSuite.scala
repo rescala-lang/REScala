@@ -1,6 +1,6 @@
-package tests.rescala
+package tests.rescala.misc
 
-import tests.rescala.util.RETests
+import tests.rescala.testtools.RETests
 
 class GlitchFreedomTestSuite extends RETests {
 

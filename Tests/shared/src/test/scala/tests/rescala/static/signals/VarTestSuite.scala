@@ -1,6 +1,6 @@
 package tests.rescala.static.signals
 
-import tests.rescala.util.RETests
+import tests.rescala.testtools.RETests
 
 //These 3 are for JUnitRunner
 

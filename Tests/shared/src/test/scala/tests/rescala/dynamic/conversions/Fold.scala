@@ -1,6 +1,6 @@
 package tests.rescala.dynamic.conversions
 
-import tests.rescala.util.RETests
+import tests.rescala.testtools.RETests
 
 
 class Fold extends RETests {
@@ -66,49 +66,6 @@ class Fold extends RETests {
     assert(s2.now == 100)
     v1.set(2)
     assert(s2.now == 100)
-  }
-
-  /* reset */
-  allEngines("reset  The Initial Value Of The Signal Is Given By Init And The Factory") { engine => import engine._
-    val e = Evt[Int]
-    val v1 = Var(0)
-    val v2 = Var(10)
-    val s1 = v1.map {_ + 1}
-    val s2 = v2.map {_ + 1}
-
-    def factory(x: Int) = x % 2 match {
-      case 0 => s1
-      case 1 => s2
-    }
-    val s3 = e.reset(100)(factory)
-
-    assert(s3.now == 1)
-    v1.set(1)
-    assert(s3.now == 2)
-
-  }
-
-  allEngines("reset  The Value Of The Signal Is Given By The Event And The Factory") { engine => import engine._
-    val e = Evt[Int]
-    val v1 = Var(0)
-    val v2 = Var(10)
-    val s1 = v1.map {_ + 1}
-    val s2 = v2.map {_ + 1}
-
-    def factory(x: Int) = x % 2 match {
-      case 0 => s1
-      case 1 => s2
-    }
-
-    val s3 = e.reset(100)(factory)
-
-    //assert(s3.get == 1)
-    v1.set(1)
-    assert(s3.now == 2)
-    e.fire(101)
-    assert(s3.now == 11)
-    v2.set(11)
-    assert(s3.now == 12)
   }
 
   /* switchOnce */
