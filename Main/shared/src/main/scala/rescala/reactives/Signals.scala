@@ -80,6 +80,11 @@ object Signals {
     }
   }
 
+  private[rescala] def computeNewValue[T, N, S <: Struct](rein: ReevTicket[Pulse[T], N, S], newValue: () => T): ReevTicket[Pulse[T], N, S] = {
+    val newPulse = Pulse.tryCatch(Pulse.diffPulse(newValue(), rein.before))
+    if (newPulse.isChange) rein.withValue(newPulse) else rein
+  }
+
 }
 
 
@@ -87,11 +92,9 @@ private abstract class StaticSignal[T, S <: Struct](_bud: Sstate[S, T], expr: (S
   extends Base[Pulse[T], S, Pulse[T]](_bud, name) with Signal[T, S] {
 
   override protected[rescala] def reevaluate(rein: ReIn): Rout = {
-    def newValue = expr(rein, () => rein.before.get)
-    val newPulse = Pulse.tryCatch(Pulse.diffPulse(newValue, rein.before))
-
-    Result.fromPulse[T, Pulse[T], S](rein, newPulse)
+    Signals.computeNewValue(rein, () => expr(rein, () => rein.before.get))
   }
+
 }
 
 private abstract class DynamicSignal[T, S <: Struct](_bud: Sstate[S, T], expr: DynamicTicket[S] => T, name: REName)
@@ -99,8 +102,7 @@ private abstract class DynamicSignal[T, S <: Struct](_bud: Sstate[S, T], expr: D
 
   override protected[rescala] def reevaluate(rein: ReIn): Rout = {
     rein.trackDependencies()
-    val newPulse = Pulse.tryCatch {Pulse.diffPulse(expr(rein), rein.before)}
-    Result.fromPulse[T, Pulse[T], S](rein, newPulse)
+    Signals.computeNewValue(rein, () => expr(rein))
   }
 }
 

@@ -30,13 +30,13 @@ import scala.language.implicitConversions
   */
 trait Event[+T, S <: Struct] extends ReSource[S] with Interp[S, Option[T]] with Disconnectable[S] {
 
-  override type Value <: Pulse[T]
+  override type Notification <: Pulse[T]
 
-  implicit def valueAccess[A, B](v: (A, B)): A = v._1
+  implicit def valueAccess[A, B](v: (A, B)): B = v._2
 
   /** Interprets the pulse of the event by converting to an option
     * @group internal */
-  override def interpret(v: Value, n: Notification): Option[T] = v.toOption
+  override def interpret(v: Value, n: Notification): Option[T] = n.toOption
 
   /** Adds an observer.
     * @usecase def +=(handler: T => Unit): Observe[S]
@@ -59,7 +59,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[S, Option[T]] with 
     */
   final def recover[R >: T](onFailure: PartialFunction[Throwable, Option[R]])(implicit ticket: CreationTicket[S]): Event[R, S] =
     Events.staticNamed(s"(recover $this)", this) { st =>
-      st.collectStatic(this)._1 match {
+      valueAccess(st.collectStatic(this)) match {
         case Exceptional(t) => onFailure.applyOrElse[Throwable, Option[R]](t, throw _).fold[Pulse[R]](Pulse.NoChange)(Pulse.Value(_))
         case other => other
       }

@@ -75,7 +75,7 @@ object Events {
 private abstract class StaticEvent[T, S <: Struct](_bud: Estate[S, T], expr: StaticTicket[S] => Pulse[T], name: REName)
   extends Base[Pulse[T], S, Pulse[T]](_bud, name) with Event[T, S] {
   override protected[rescala] def reevaluate(rein: ReIn): Rout =
-    Result.fromPulse(rein, Pulse.tryCatch(expr(rein), onEmpty = NoChange))
+    Result.noteFromPulse(rein, Pulse.tryCatch(expr(rein), onEmpty = NoChange))
 }
 
 
@@ -90,14 +90,14 @@ private abstract class ChangeEvent[T, S <: Struct](_bud: Estate[S, Diff[T]], sig
         val from = u.to
         if (from == to) rein
         else {
-          Result.fromPulse(rein, Pulse.Value(Diff(from, to)))
+          Result.noteFromPulse(rein, Pulse.Value(Diff(from, to)))
           rein.withNotification(Pulse.Value(Diff(from, to)))
         }
       case NoChange =>
         val res = Diff(Pulse.empty, to)
         rein.withValue(Pulse.Value(res)).withPropagate(false)
       case x@Exceptional(_) =>
-        Result.fromPulse(rein, x) //should not happen, change does not actually access other pulses
+        Result.noteFromPulse(rein, x) //should not happen, change does not actually access other pulses
     }
   }
 }
@@ -107,6 +107,6 @@ private abstract class DynamicEvent[T, S <: Struct](_bud: Estate[S, T], expr: Dy
 
   override protected[rescala] def reevaluate(rein: ReIn): Rout = {
     rein.trackDependencies()
-    Result.fromPulse(rein, Pulse.tryCatch(expr(rein), onEmpty = NoChange))
+    Result.noteFromPulse(rein, Pulse.tryCatch(expr(rein), onEmpty = NoChange))
   }
 }

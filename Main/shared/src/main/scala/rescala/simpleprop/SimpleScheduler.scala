@@ -55,7 +55,9 @@ object SimpleScheduler extends Scheduler[SimpleStruct] {
       val admissionResult = admissionPhase(admissionTicket)
       val sources = admissionTicket.initialChanges.collect {
         case ic if ic.accept(ic.source.state.value) =>
-          ic.source.state.value = ic.value
+          if (ic.source.isInstanceOf[Evt[_]])
+            ic.source.state.notification = ic.value.asInstanceOf[ic.source.Notification]
+          else ic.source.state.value = ic.value
           ic.source
       }.toSeq
       sources.foreach(_.state.outgoing.foreach(initial += _))

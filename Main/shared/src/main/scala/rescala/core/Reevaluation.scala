@@ -11,8 +11,9 @@ trait Result[T, N, S <: Struct] {
 
 
 object Result {
-  def fromPulse[P, N, S <: Struct](t: ReevTicket[Pulse[P], N, S], value: Pulse[P]): Result[Pulse[P], N, S] = {
-    if (value.isChange) t.withValue(value)
+
+  def noteFromPulse[P, N, S <: Struct](t: ReevTicket[P, Pulse[N], S], value: Pulse[N]): Result[P, Pulse[N], S] = {
+    if (value.isChange) t.withNotification(value)
     else t
   }
 }
