@@ -33,7 +33,7 @@ object Events {
   def change[A, S <: Struct](signal: Signal[A, S])(implicit ticket: CreationTicket[S]): Event[Diff[A], S] = ticket { initTurn =>
     initTurn.create[Pulse[Diff[A]], ChangeEvent[A, S]](Set(signal), Initializer.ChangeEvent) {
       state => new ChangeEvent[A, S](state, signal, ticket.rename) with DisconnectableImpl[S]
-    }
+    }.map(identity)(initTurn)
   }
 
   /** Folds when any one of a list of events occurs, if multiple events occur, every fold is executed in order. */
