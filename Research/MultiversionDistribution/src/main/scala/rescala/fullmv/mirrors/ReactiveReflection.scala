@@ -2,7 +2,6 @@ package rescala.fullmv.mirrors
 
 import java.util.concurrent.ConcurrentHashMap
 
-import rescala.sharedimpl.TurnImpl
 import rescala.core.Reactive
 import rescala.core._
 import rescala.fullmv.tasks._
@@ -52,12 +51,13 @@ trait ReactiveReflection[-P] extends Reactive[FullMVStruct] with ReactiveReflect
   }
 }
 
-class ReactiveReflectionImpl[P](override val host: FullMVEngine, var ignoreTurn: Option[FullMVTurn], initialState: FullMVState[Pulse[P], FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]], rename: REName) extends Base[P, FullMVStruct](initialState, rename) with ReactiveReflection[P] {
+class ReactiveReflectionImpl[P](override val host: FullMVEngine, var ignoreTurn: Option[FullMVTurn], initialState: FullMVState[Pulse[P], FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]], rename: REName) extends Base[Pulse[P], FullMVStruct](initialState, rename) with ReactiveReflection[P] {
   val _buffer = new ConcurrentHashMap[FullMVTurn, Pulse[P]]()
   override def buffer(turn: FullMVTurn, value: Pulse[P]): Unit = _buffer.put(turn, value)
   override def submit(action: FullMVAction): Unit = host.threadPool.submit(action)
 
-  override protected[rescala] def reevaluate(turn: TurnImpl[FullMVStruct], before: Value, indeps: Set[ReSource[FullMVStruct]]): WithValue[Value, FullMVStruct] = {
+  override protected[rescala] def reevaluate(ticket: ReevTicket[Value, FullMVStruct], before: Value): Result[Value, FullMVStruct] = {
+    val turn = ticket.creation
     val value = _buffer.remove(turn)
     if(value == null) {
       if(ignoreTurn.contains(turn)){
@@ -65,10 +65,10 @@ class ReactiveReflectionImpl[P](override val host: FullMVEngine, var ignoreTurn:
       } else {
         throw new AssertionError(s"$this was reevaluated for $turn but no value was buffered.")
       }
-      WithValue.StaticPulse(Pulse.NoChange: Pulse[P], indeps)
+      Result.fromPulse[P, FullMVStruct](ticket, Pulse.NoChange: Pulse[P])
     } else {
       if(ignoreTurn.contains(turn)) ignoreTurn = None
-      WithValue.StaticPulse(value, indeps)
+      Result.fromPulse[P, FullMVStruct](ticket, value)
     }
   }
 }

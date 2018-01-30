@@ -1,7 +1,5 @@
 package rescala.fullmv.mirrors
 
-
-import rescala.sharedimpl.TurnImpl
 import rescala.core.Reactive
 import rescala.core._
 import rescala.fullmv._
@@ -88,5 +86,5 @@ class ReactiveMirror[A](val getValue: FullMVTurn => A, val reflectionProxy: Reac
   override def drop(txn: FullMVTurn, remove: Reactive[FullMVStruct]): (Seq[FullMVTurn], Option[FullMVTurn]) = ???
   override def retrofitSinkFrames(successorWrittenVersions: Seq[FullMVTurn], maybeSuccessorFrame: Option[FullMVTurn], arity: Int): Unit = ???
 
-  override protected[rescala] def reevaluate(turn: TurnImpl[FullMVStruct], before: Value, indeps: Set[ReSource[FullMVStruct]]): WithValue[Value, FullMVStruct] = ???
+  override protected[rescala] def reevaluate(ticket: ReevTicket[Value, FullMVStruct], before: Value): Result[Value, FullMVStruct] = ???
 }

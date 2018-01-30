@@ -211,14 +211,14 @@ object ReactiveTransmittable {
       new ReactiveReflectionImpl[P](host, None, state, "SignalReflection") with Signal[P, FullMVStruct] {
         override def disconnect()(implicit engine: Scheduler[FullMVStruct]): Unit = ???
       }
-    override val valuePersistency: ValuePersistency[Pulse[P]] = ValuePersistency.DerivedSignal[P]
+    override val valuePersistency: Initializer.Param[Pulse[P]] = Initializer.DerivedSignal[P]
   }
   implicit def eventTransmittable[P, S](implicit host: FullMVEngine, messageTransmittable: Transmittable[MessageWithInfrastructure[Message[Pluse[P]]], S, MessageWithInfrastructure[Message[Pluse[P]]]], serializable: Serializable[S]): Transmittable[Event[P, FullMVStruct], S, Event[P, FullMVStruct]] = new ReactiveTransmittable[P, Event[P, FullMVStruct], S] {
     override def instantiate(state: NodeVersionHistory[Pulse[P], FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]], initTurn: FullMVTurn) =
       new ReactiveReflectionImpl[P](host, Some(initTurn), state, "EventReflection") with Event[P, FullMVStruct] {
         override def disconnect()(implicit engine: Scheduler[FullMVStruct]): Unit = ???
       }
-    override val valuePersistency: ValuePersistency[Pulse[P]] = ValuePersistency.Event[P]
+    override val valuePersistency: Initializer.Param[Pulse[P]] = Initializer.Event[P]
   }
 }
 
@@ -367,7 +367,7 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
     localTurnReceiverInstance(guid).asInstanceOf[FullMVTurnReflection]
   }
 
-  val valuePersistency: ValuePersistency[Pulse[P]]
+  val valuePersistency: Initializer.Param[Pulse[P]]
 
   override def receive(value: MessageWithInfrastructure[Msg], remote: RemoteRef, endpoint: EndPointWithInfrastructure[Msg]): R = {
     if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host receiving a value")
