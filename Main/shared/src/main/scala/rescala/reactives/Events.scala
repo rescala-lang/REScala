@@ -71,26 +71,26 @@ object Events {
 
 private abstract class StaticEvent[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: StaticTicket[S] => Pulse[T], name: REName)
   extends Base[Pulse[T], S](_bud, name) with Event[T, S] {
-  override protected[rescala] def reevaluate(dt: ReevTicket[Value, S], before: Pulse[T]): Result[Value, S] =
-    Result.fromPulse(dt, Pulse.tryCatch(expr(dt), onEmpty = NoChange))
+  override protected[rescala] def reevaluate(rein: ReIn): Rout =
+    Result.fromPulse(rein, Pulse.tryCatch(expr(rein), onEmpty = NoChange))
 }
 
 
 private abstract class ChangeEvent[T, S <: Struct](_bud: S#State[Pulse[Diff[T]], S], signal: Signal[T, S], name: REName)
   extends Base[Pulse[Diff[T]], S](_bud, name) with Event[Diff[T], S] {
-  override protected[rescala] def reevaluate(st: ReevTicket[Value, S], before: Pulse[Diff[T]]): Result[Value, S] = {
-    val to: Pulse[T] = st.collectStatic(signal)
-    if (to == Pulse.empty) return st
-    before match {
+  override protected[rescala] def reevaluate(rein: ReIn): Rout = {
+    val to: Pulse[T] = rein.collectStatic(signal)
+    if (to == Pulse.empty) return rein
+    rein.before match {
       case Value(u) =>
         val from = u.to
-        if (from == to) st
-        else Result.fromPulse(st, Pulse.Value(Diff(from, to)))
+        if (from == to) rein
+        else Result.fromPulse(rein, Pulse.Value(Diff(from, to)))
       case NoChange =>
-        val res = Diff(Pulse.empty, st.collectStatic(signal))
-        st.withValue(Pulse.Value(res)).withPropagate(false)
+        val res = Diff(Pulse.empty, rein.collectStatic(signal))
+        rein.withValue(Pulse.Value(res)).withPropagate(false)
       case x@Exceptional(_) =>
-        Result.fromPulse(st, x) //should not happen, change does not actually access other pulses
+        Result.fromPulse(rein, x) //should not happen, change does not actually access other pulses
     }
   }
 }
@@ -98,8 +98,8 @@ private abstract class ChangeEvent[T, S <: Struct](_bud: S#State[Pulse[Diff[T]],
 private abstract class DynamicEvent[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: DynamicTicket[S] => Pulse[T], name: REName)
   extends Base[Pulse[T], S](_bud, name) with Event[T, S] {
 
-  override protected[rescala] def reevaluate(dt: ReevTicket[Value, S], before: Pulse[T]): Result[Value, S] = {
-    dt.trackDependencies()
-    Result.fromPulse(dt, Pulse.tryCatch(expr(dt), onEmpty = NoChange))
+  override protected[rescala] def reevaluate(rein: ReIn): Rout = {
+    rein.trackDependencies()
+    Result.fromPulse(rein, Pulse.tryCatch(expr(rein), onEmpty = NoChange))
   }
 }

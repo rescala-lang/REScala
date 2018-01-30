@@ -24,9 +24,12 @@ trait ReSourciV[+P, S <: Struct] extends ReSource[S] { type Value <: P}
 /** A reactive value is something that can be reevaluated */
 trait Reactive[S <: Struct] extends ReSource[S] {
 
+  type ReIn = ReevTicket[Value, S]
+  type Rout = Result[Value, S]
+
   /** called if any of the dependencies ([[ReSource]]s) changed in the current update turn,
     * after all (known) dependencies are updated */
-  protected[rescala] def reevaluate(ticket: ReevTicket[Value, S], before: Value): Result[Value, S]
+  protected[rescala] def reevaluate(input: ReIn): Rout
 }
 
 /** Base implementation for reactives, combining [[ReSourciV]] for value access, with [[Reactive]] for scheduling,

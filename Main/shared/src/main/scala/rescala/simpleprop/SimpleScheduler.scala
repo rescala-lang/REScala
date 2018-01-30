@@ -96,13 +96,13 @@ object Util {
     rem.foreach(_toposort)
   }
 
-  val dt = new ReevTicket[Nothing, SimpleStruct](SimpleCreation) {
+  val dt = new ReevTicket(SimpleCreation, null) {
     override def dynamicAccess[A](reactive: ReSourciV[A, SimpleStruct]): A = ???
     override def staticAccess[A](reactive: ReSourciV[A, SimpleStruct]): A = reactive.state.value
   }
 
   def evaluate(reactive: Reactive[SimpleStruct], incoming: Set[ReSource[SimpleStruct]]): Unit = {
-    val reev = reactive.reevaluate(dt.reset(), reactive.state.value)
+    val reev = reactive.reevaluate(dt.reset(reactive.state.value))
     if (reev.propagate) reactive.state.outgoing.foreach(_.state.dirty = true)
     if (reev.getDependencies().isDefined) ???
     reev.forValue(reactive.state.value = _)

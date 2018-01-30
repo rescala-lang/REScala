@@ -30,13 +30,13 @@ trait DisconnectableImpl[S <: Struct] extends Reactive[S] with Disconnectable[S]
   }
 
 
-  abstract final override protected[rescala] def reevaluate(turn: ReevTicket[Value, S], before: Value): Result[Value, S] = {
+  abstract final override protected[rescala] def reevaluate(rein: ReIn): Rout = {
     if (disconnected) {
-      turn.trackDependencies()
-      turn
+      rein.trackDependencies()
+      rein
     }
     else {
-      super.reevaluate(turn, before)
+      super.reevaluate(rein)
     }
   }
 

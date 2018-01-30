@@ -23,7 +23,7 @@ object Observe {
     extends Base[Unit, S](bud, name) with Reactive[S] with Observe[S]  {
     this: DisconnectableImpl[S] =>
 
-    override protected[rescala] def reevaluate(dt: ReevTicket[Value, S], before: Value): Result[Value, S] = {
+    override protected[rescala] def reevaluate(dt: ReIn): Rout = {
       dt.collectStatic(dependency) match {
         case Pulse.NoChange => dt
         case Pulse.empty => dt

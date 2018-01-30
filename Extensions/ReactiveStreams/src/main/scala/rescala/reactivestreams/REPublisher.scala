@@ -33,27 +33,27 @@ object REPublisher {
     var requested: Long = 0
     var cancelled = false
 
-    override protected[rescala] def reevaluate(ticket: ReevTicket[Value, S], before: Pulse[T]): Result[Value, S] = {
-      ticket.collectStatic(dependency).toOptionTry match {
-        case None => ticket
+    override protected[rescala] def reevaluate(rein: ReIn): Rout = {
+      rein.collectStatic(dependency).toOptionTry match {
+        case None => rein
         case Some(tryValue) =>
           synchronized {
             while (requested <= 0 && !cancelled) wait(100)
             if (cancelled) {
-              ticket.trackDependencies()
-              ticket
+              rein.trackDependencies()
+              rein
             }
             else {
               requested -= 1
               tryValue match {
                 case Success(v) =>
                   subscriber.onNext(v)
-                  ticket
+                  rein
                 case Failure(t) =>
                   subscriber.onError(t)
                   cancelled = true
-                  ticket.trackDependencies()
-                  ticket
+                  rein.trackDependencies()
+                  rein
               }
             }
           }
