@@ -121,7 +121,6 @@ class LockUnionFindMirrorTest extends FunSuite {
     val l2 = Await.result(turn2.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
     assert(l2.refCount.get === 2) // turn2, thread
 
-    println("XOXOXOXOXOXOXOXOXOXOXOXOXOXOXOXOXOXOXOXOXOXOXOXOXOXOXOXO")
     assert(Await.result(turn1onX.trySubsume(l2), Duration.Zero) === Blocked)
 
     assert(lock1.refCount.get === 2) // turn1, lock1onB
@@ -354,8 +353,6 @@ class LockUnionFindMirrorTest extends FunSuite {
     turn3.beginExecuting()
     val lock3 = turn3.subsumableLock.get()
 
-    println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
-
     val l3 = Await.result(turn3.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
     val turn1on2 = FullMVTurnLocalClone(turn1, host2)
     val lock1on2 = Await.result(turn1on2.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
@@ -398,7 +395,7 @@ class LockUnionFindMirrorTest extends FunSuite {
     val host1 = new FullMVEngine(Duration.Zero, "host1")
     val host2 = new FullMVEngine(Duration.Zero, "host2")
     val host3 = new FullMVEngine(Duration.Zero, "host3")
-    println("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB")
+
     val turn1 = host1.newTurn()
     turn1.beginExecuting()
     val lock1 = turn1.subsumableLock.get()
@@ -438,19 +435,20 @@ class LockUnionFindMirrorTest extends FunSuite {
 
     assert(Await.result(turn2.trySubsume(l4), Duration.Zero) === Blocked)
 
-    assert(lock1.refCount.get <= 0) // lock1on2
-    assert(lock1on2.refCount.get <= 0) // turn2
+    assert(lock1.refCount.get <= 0)
+    assert(lock1on2.refCount.get <= 0)
     assert(lock3.refCount.get === 2) // turn3, lock3on1
     assert(lock3on1.refCount.get === 3) // turn1, lock3on2, thread
     val lock3on2 = host2.lockHost.getInstance(lock3.guid).get
     assert(lock3on2.refCount.get === 1) // turn2
+    assert(lock4.refCount.get === 2) // turn4, thread
   }
 
   test("remote other trySubsume works") {
     val host1 = new FullMVEngine(Duration.Zero, "host1")
     val host2 = new FullMVEngine(Duration.Zero, "host2")
     val host3 = new FullMVEngine(Duration.Zero, "host3")
-    println("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCC")
+
     val turn1 = host1.newTurn()
     turn1.beginExecuting()
     val lock1 = turn1.subsumableLock.get()

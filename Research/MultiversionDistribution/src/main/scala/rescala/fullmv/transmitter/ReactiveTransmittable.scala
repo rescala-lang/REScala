@@ -330,18 +330,21 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
     if(active) {
       var toConnect = Set.empty[Host.GUID]
       val preds = tree.map { case (predGuid, predPhase) =>
-        host.getCachedOrReceiveRemote(predGuid, {
-          val predActive = predPhase < TurnPhase.Completed
-          if (predActive) toConnect += predGuid
-          (predActive, new FullMVTurnReflection(host, predGuid, predPhase, new FullMVTurnMirrorProxyToEndpoint(predGuid, endpoint)))
-        }).instance
+        if(predPhase < TurnPhase.Completed) {
+          host.getCachedOrReceiveRemote(predGuid, {
+            toConnect += predGuid
+            new FullMVTurnReflection(host, predGuid, predPhase, new FullMVTurnMirrorProxyToEndpoint(predGuid, endpoint))
+          }).instance
+        } else {
+          new FullMVTurnReflection(host, predGuid, predPhase, null)
+        }
       }
 
       val instance = host.getCachedOrReceiveRemote(guid, {
         toConnect += guid
         val turn = new FullMVTurnReflection(host, guid, phase, new FullMVTurnMirrorProxyToEndpoint(guid, endpoint))
         turn.newPredecessors(preds)
-        (true, turn)
+        turn
       }) match {
         case Found(found) =>
           if (found.isInstanceOf[FullMVTurnReflection]) {
@@ -355,7 +358,7 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
       if (toConnect.nonEmpty) doAsync(endpoint, AsyncAddReplicator(toConnect))
       instance
     } else {
-      new FullMVTurnReflection(host, guid, phase, new FullMVTurnMirrorProxyToEndpoint(guid, endpoint))
+      new FullMVTurnReflection(host, guid, phase, null)
     }
   }
 
@@ -461,11 +464,14 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
   def receivePredecessorTree(tree: CaseClassTransactionSpanningTreeNode[(Host.GUID, TurnPhase.Type)], endpoint: EndPointWithInfrastructure[Msg]): CaseClassTransactionSpanningTreeNode[FullMVTurn] = {
     var toConnect = Set.empty[Host.GUID]
     val preds = tree.map { case (predGuid, predPhase) =>
-      host.getCachedOrReceiveRemote(predGuid, {
-        val active = predPhase < TurnPhase.Completed
-        if (active) toConnect += predGuid
-        (active, new FullMVTurnReflection(host, predGuid, predPhase, new FullMVTurnMirrorProxyToEndpoint(predGuid, endpoint)))
-      }).instance
+      if(predPhase < TurnPhase.Completed) {
+        host.getCachedOrReceiveRemote(predGuid, {
+          toConnect += predGuid
+          new FullMVTurnReflection(host, predGuid, predPhase, new FullMVTurnMirrorProxyToEndpoint(predGuid, endpoint))
+        }).instance
+      } else {
+        new FullMVTurnReflection(host, predGuid, predPhase, null)
+      }
     }
     if(toConnect.nonEmpty) doAsync(endpoint, AsyncAddReplicator(toConnect))
     preds

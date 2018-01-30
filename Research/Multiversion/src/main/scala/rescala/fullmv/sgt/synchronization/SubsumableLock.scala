@@ -100,7 +100,7 @@ trait SubsumableLock extends SubsumableLockProxy with Hosted {
 }
 
 object SubsumableLock {
-  val DEBUG = true
+  val DEBUG = false
 
   def acquireLock[R](contender: FullMVTurn, timeout: Duration): SubsumableLock = {
     if (DEBUG) System.out.println(s"[${Thread.currentThread().getName}] syncing on SCC of $contender")

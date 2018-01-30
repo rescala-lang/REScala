@@ -31,6 +31,7 @@ trait RegularReevaluationHandling extends ReevaluationHandling[Reactive[FullMVSt
     res.getDependencies().foreach(commitDependencyDiff(node, node.state.incomings))
     var value = Option(node.state.reevIn(turn))
     res.forValue(v => value = Some(v))
+    res.forEffect(_())
     processReevaluationResult(if(res.propagate) value else None)
   }
 

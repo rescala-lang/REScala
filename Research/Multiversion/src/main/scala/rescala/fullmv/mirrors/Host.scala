@@ -19,7 +19,7 @@ trait Hosted {
 object Host {
   type GUID = Long
   val dummyGuid: GUID = 0L
-  val DEBUG = true
+  val DEBUG = false
 }
 sealed trait CacheResult[T] { val instance: T }
 case class Found[T](instance: T) extends CacheResult[T]
@@ -27,7 +27,7 @@ case class Instantiated[T](instance: T) extends CacheResult[T]
 trait Host[T] {
   val dummy: T
   def getInstance(guid: Host.GUID): Option[T]
-  def getCachedOrReceiveRemote(guid: Host.GUID, instantiateReflection: => (Boolean, T)): CacheResult[T]
+  def getCachedOrReceiveRemote(guid: Host.GUID, instantiateReflection: => T): CacheResult[T]
   def dropInstance(guid: GUID, instance: T): Unit
   def createLocal[U <: T](create: Host.GUID => U): U
 }
@@ -35,7 +35,7 @@ trait Host[T] {
 trait HostImpl[T] extends Host[T] {
   val instances: ConcurrentMap[GUID, T] = new ConcurrentHashMap()
   override def getInstance(guid: GUID): Option[T] = Option(instances.get(guid))
-  override def getCachedOrReceiveRemote(guid: Host.GUID, instantiateReflection: => (Boolean, T)): CacheResult[T] = {
+  override def getCachedOrReceiveRemote(guid: Host.GUID, instantiateReflection: => T): CacheResult[T] = {
     @inline @tailrec def findOrReserveInstance(): T = {
       val found = instances.putIfAbsent(guid, dummy)
       if(found != dummy) {
@@ -52,14 +52,10 @@ trait HostImpl[T] extends Host[T] {
       Found(known)
     } else {
       if(Host.DEBUG) println(s"[${Thread.currentThread().getName}] on $this cache miss for $guid, invoking instantiation...")
-      val (doCache, instance) = instantiateReflection
-      if(doCache) {
-        val replaced = instances.replace(guid, dummy, instance)
-        assert(replaced, s"someone stole the dummy placeholder while instantiating remotely received $guid on $this!")
-        if(Host.DEBUG) println(s"[${Thread.currentThread().getName}] on $this cached newly instantiated $instance")
-      } else {
-        if(Host.DEBUG) println(s"[${Thread.currentThread().getName}] on $this instantiated $instance without caching")
-      }
+      val instance = instantiateReflection
+      val replaced = instances.replace(guid, dummy, instance)
+      assert(replaced, s"someone stole the dummy placeholder while instantiating remotely received $guid on $this!")
+      if(Host.DEBUG) println(s"[${Thread.currentThread().getName}] on $this cached newly instantiated $instance")
       Instantiated(instance)
     }
   }
@@ -89,7 +85,7 @@ trait HostImpl[T] extends Host[T] {
 trait SubsumableLockHost extends Host[SubsumableLock] {
   def getCachedOrReceiveRemoteWithReference(guid: Host.GUID, remoteProxy: => SubsumableLockProxy): SubsumableLock = {
     @tailrec def retry(): SubsumableLock = {
-      getCachedOrReceiveRemote(guid, (true, new SubsumableLockReflection(this, guid, remoteProxy))) match {
+      getCachedOrReceiveRemote(guid, new SubsumableLockReflection(this, guid, remoteProxy)) match {
         case Instantiated(instance) =>
           instance
         case Found(instance) =>

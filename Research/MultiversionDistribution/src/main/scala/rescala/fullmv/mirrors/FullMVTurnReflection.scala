@@ -77,18 +77,20 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
   }
 
   override def newPhase(phase: TurnPhase.Type): Future[Unit] = synchronized {
-    if(this.phase < phase) {
-      val reps = replicatorLock.synchronized {
+    replicatorLock.synchronized {
+      if(this.phase < phase) {
         this.phase = phase
-        replicators
-      }
-      if (phase == TurnPhase.Completed) {
-        predecessors = Set.empty
-        host.dropInstance(guid, this)
-      }
-      FullMVEngine.broadcast(reps) { _.newPhase(phase) }
-    } else {
-      Future.unit
+        Some(replicators)
+      } else None
+    } match {
+      case Some(reps) =>
+        if (phase == TurnPhase.Completed) {
+          predecessors = Set.empty
+          host.dropInstance(guid, this)
+        }
+        FullMVEngine.broadcast(reps) { _.newPhase(phase) }
+      case None =>
+        Future.unit
     }
   }
 

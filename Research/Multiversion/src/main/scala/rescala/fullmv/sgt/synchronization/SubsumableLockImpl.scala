@@ -197,15 +197,15 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
         lockedNewParent.localSubRefs(1)
         RemoteGCd.futured
       case parent =>
-        parent.trySubsume0(1, lockedNewParent).flatMap {
+        parent.trySubsume0(0, lockedNewParent).flatMap {
           case Successful0(failedRefChanges) =>
-            val finalFailedRefChanges = failedRefChanges + trySwap(parent, lockedNewParent) + 2
-            if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this returning trySubsume success to remote, correcting $finalFailedRefChanges failed ref changes to $lockedNewParent (includes temporary remote parameter reference and non-rewriting reflection reference)")
+            val finalFailedRefChanges = failedRefChanges + trySwap(parent, lockedNewParent) + 1
+            if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this returning trySubsume success to remote, correcting $finalFailedRefChanges failed ref changes to $lockedNewParent (includes temporary remote parameter reference)")
             lockedNewParent.localSubRefs(finalFailedRefChanges)
             RemoteSubsumed.futured
           case Blocked0(failedRefChanges, newRoot) =>
             val finalFailedRefChanges = failedRefChanges + trySwap(parent, newRoot)
-            if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this returning trySubsume blocked under $newRoot to remote, correcting $finalFailedRefChanges (thread reference is retained for remote connection establishment) and dropping temporary remote parameter reference on $lockedNewParent")
+            if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this returning trySubsume blocked under $newRoot to remote, correcting $finalFailedRefChanges (retaining thread reference for remote connection establishment) and dropping temporary remote parameter reference on $lockedNewParent")
             if(finalFailedRefChanges != 0) newRoot.localSubRefs(finalFailedRefChanges)
             lockedNewParent.localSubRefs(1)
             Future.successful(RemoteBlocked(newRoot))

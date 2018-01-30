@@ -74,7 +74,7 @@ class ReactiveMirrorTest extends FunSuite {
     val hold = {import engineB._; derived.last(1)}
 
     assert({import engineB._; hold.now} === List())
-    assert(tracker === ArrayBuffer((None, None, None))) // because dynamic events are stupid :) This *should* be tracker.isEmpty === true
+    assert(tracker.isEmpty) // in case this failed, someone may have changed event initialization semantics again. Try instead for === ArrayBuffer((None, None, None))
     tracker.clear()
 
     ;{import engineA._; input.fire(123)}

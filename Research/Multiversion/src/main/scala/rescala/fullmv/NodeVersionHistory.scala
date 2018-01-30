@@ -199,7 +199,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
   _versions(0) = new Version(init, lastWrittenPredecessorIfStable = null, out = Set(), pending = 0, changed = 0, Some(valuePersistency.initialValue))
   var size = 1
   var latestValue: V = valuePersistency.initialValue
-
+  
   private def createVersionInHole(position: Int, txn: T) = {
     assert(position > 0, s"must not create version at $position <= 0")
     val predVersion = _versions(position - 1)
@@ -1072,7 +1072,8 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     val version = synchronized {
       val pos = ensureReadVersion(txn)
       // DO NOT INLINE THIS! it breaks the code! see https://scastie.scala-lang.org/briJDRO3RCmIMEd1zApmBQ
-      _versions(pos) }
+      _versions(pos)
+    }
     if(!version.isFinal) ForkJoinPool.managedBlock(version.blockForFinal)
     if (version.value.isDefined) {
       version.value.get

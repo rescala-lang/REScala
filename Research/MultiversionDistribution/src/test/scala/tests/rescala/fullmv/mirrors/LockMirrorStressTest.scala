@@ -6,7 +6,7 @@ import org.scalatest.FunSuite
 import rescala.fullmv._
 import rescala.fullmv.mirrors.localcloning.FullMVTurnLocalClone
 import rescala.parrp.Backoff
-import tests.rescala.util.Spawn
+import tests.rescala.testtools.Spawn
 
 import scala.annotation.tailrec
 import scala.concurrent.TimeoutException
@@ -43,11 +43,14 @@ class LockMirrorStressTest extends FunSuite {
             val backoff = new Backoff(maxBackoff = 100L*1000L*1000L)
             @tailrec def reTryLock(): Unit = {
               if(running) {
-                val turnOnLocalHost = FullMVTurnLocalClone(turns(pick).get, hosts(i))
-                SerializationGraphTracking.tryLock(turnOnLocalHost, ownTurn, UnlockedUnknown) match {
-                  case LockedSameSCC(lock) => lock.asyncUnlock()
-                  case _ => backoff.backoff(); reTryLock()
-                }
+                val otherTurn = turns(pick).get
+                if(otherTurn.phase < TurnPhase.Completed) {
+                  val turnOnLocalHost = FullMVTurnLocalClone(otherTurn, hosts(i))
+                  SerializationGraphTracking.tryLock(turnOnLocalHost, ownTurn, UnlockedUnknown) match {
+                    case LockedSameSCC(lock) => lock.asyncUnlock()
+                    case _ => backoff.backoff(); reTryLock()
+                  }
+                } else reTryLock()
               }
             }
             reTryLock()
