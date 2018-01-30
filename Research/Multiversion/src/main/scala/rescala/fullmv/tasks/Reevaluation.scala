@@ -1,6 +1,6 @@
 package rescala.fullmv.tasks
 
-import rescala.core.{ReSource, ReSourciV, Reactive, ReevTicket, Result}
+import rescala.core.{ReSource, Interp, Reactive, ReevTicket, Result}
 import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation.{FollowFraming, NextReevaluation, NoSuccessor}
 import rescala.fullmv.NotificationResultAction.{Glitched, ReevOutResult}
 import rescala.fullmv._
@@ -15,8 +15,8 @@ trait RegularReevaluationHandling extends ReevaluationHandling[Reactive[FullMVSt
 //    assert(Thread.currentThread() == turn.userlandThread, s"$this on different thread ${Thread.currentThread().getName}")
     assert(turn.phase == TurnPhase.Executing, s"$turn cannot reevaluate (requires executing phase")
     val ticket = new ReevTicket[node.Value, FullMVStruct](turn, node.state.reevIn(turn)) {
-      override protected def staticAccess[A](reactive: ReSourciV[A, FullMVStruct]): A = turn.staticAfter(reactive)
-      override protected def dynamicAccess[A](reactive: ReSourciV[A, FullMVStruct]): A = turn.dynamicAfter(reactive)
+      override protected def staticAccess[A](reactive: Interp[A, FullMVStruct]): A = turn.staticAfter(reactive)
+      override protected def dynamicAccess[A](reactive: Interp[A, FullMVStruct]): A = turn.dynamicAfter(reactive)
     }
     val res: Result[node.Value, FullMVStruct] = try {
       turn.host.withTurn(turn) {

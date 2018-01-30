@@ -22,7 +22,7 @@ trait Initializer[S <: Struct] {
   /** Creates the internal state of [[Reactive]]s */
   protected[this] def makeDerivedStructState[P, N](valuePersistency: Param[P]): S#State[P, S, N]
 
-  /**  Creates the internal state of [[ReSourciV]]s */
+  /**  Creates the internal state of [[Interp]]s */
   protected[this] def makeSourceStructState[P, N](valuePersistency: Param[P]): S#State[P, S, N] =
     makeDerivedStructState[P, N](valuePersistency)
   /**

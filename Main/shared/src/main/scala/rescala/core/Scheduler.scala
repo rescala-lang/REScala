@@ -16,7 +16,7 @@ trait Scheduler[S <: Struct] extends RescalaInterface[S] {
   override def explicitEngine: this.type = this
 
   private[rescala] def executeTurn[R](initialWrites: Traversable[ReSource], admissionPhase: AdmissionTicket => R): R
-  private[rescala] def singleNow[A](reactive: ReSourciV[A, S]): A
+  private[rescala] def singleNow[A](reactive: Signal[A]): A
   private[rescala] def create[T](f: (Creation) => T): T
 }
 

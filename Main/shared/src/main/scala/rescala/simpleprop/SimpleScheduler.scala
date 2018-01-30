@@ -1,7 +1,7 @@
 package rescala.simpleprop
 
 import rescala.core.Initializer.Param
-import rescala.core.{Initializer, ReSource, ReSourciV, Reactive, ReevTicket, Scheduler, Struct}
+import rescala.core.{Initializer, ReSource, Reactive, ReevTicket, Scheduler, Struct}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -20,6 +20,7 @@ class SimpleState[V, N](
     discovered = false
     dirty = false
     transient.foreach(value = _)
+    notification = null.asInstanceOf[N]
   }
 }
 
@@ -50,7 +51,7 @@ object SimpleScheduler extends Scheduler[SimpleStruct] {
 
     // admission
     val admissionTicket = new AdmissionTicket(SimpleCreation) {
-      override def access[A](reactive: ReSourciV[A, SimpleStruct]): A = reactive.state.value
+      override def access[A](reactive: Signal[A]): A = reactive.state.value.get
     }
     val admissionResult = admissionPhase(admissionTicket)
     val sources = admissionTicket.initialChanges.collect {
@@ -75,11 +76,11 @@ object SimpleScheduler extends Scheduler[SimpleStruct] {
 
     //wrapup
     if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(new WrapUpTicket {
-      override private[rescala] def access[A](reactive: ReSourciV[A, SimpleStruct]) = reactive.state.value
+      override private[rescala] def access[A](reactive: ReSource) = reactive.state.notification
     })
     admissionResult
   }
-  override private[rescala] def singleNow[A](reactive: ReSourciV[A, SimpleStruct]) = reactive.state.value
+  override private[rescala] def singleNow[A](reactive: Signal[A]) = reactive.state.value.get
   override private[rescala] def create[T](f: Creation => T) = f(SimpleCreation)
 }
 
@@ -98,8 +99,8 @@ object Util {
   }
 
   val dt = new ReevTicket(SimpleCreation, null) {
-    override def dynamicAccess[A](reactive: ReSourciV[A, SimpleStruct]): A = ???
-    override def staticAccess[A](reactive: ReSourciV[A, SimpleStruct]): A = reactive.state.value
+    override def dynamicAccess[A](reactive: ReSource[SimpleStruct]) = ???
+    override def staticAccess[A](reactive: ReSource[SimpleStruct]) = reactive.state.notification
   }
 
   def evaluate(reactive: Reactive[SimpleStruct], incoming: Set[ReSource[SimpleStruct]]): Unit = {

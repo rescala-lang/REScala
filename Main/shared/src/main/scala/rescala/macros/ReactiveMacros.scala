@@ -263,7 +263,7 @@ class ReactiveMacros(val c: blackbox.Context) {
         ((tree.tpe.baseClasses contains staticSignalClass) || (tree.tpe.baseClasses contains staticEventClass))
   }
 
-  /** detects variants to access reactives using [[MacroAccessors]] */
+  /** detects variants to access reactives using [[Interp]] */
   object REApply {
     def unapply(arg: Tree): Option[Tree] = arg match {
       case Apply(Select(reactive, tn), Nil)

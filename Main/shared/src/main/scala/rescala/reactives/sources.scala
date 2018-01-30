@@ -3,7 +3,7 @@ package rescala.reactives
 import rescala.core._
 import rescala.reactives.Events.Estate
 
-abstract class Source[T, S <: Struct, N](initialState: S#State[Pulse[T], S, N], name: REName) extends RENamed(name) with ReSourciV[Pulse[T], S] {
+abstract class Source[T, S <: Struct, N](initialState: S#State[Pulse[T], S, N], name: REName) extends RENamed(name) with ReSource[S] {
   override type Value = Pulse[T]
   override type Notification = N
   final override protected[rescala] def state: S#State[Pulse[T], S, N] = initialState
@@ -46,7 +46,7 @@ object Evt {
   * @tparam A Type stored by the signal
   * @tparam S Struct type used for the propagation of the signal
   */
-final class Var[A, S <: Struct] private[rescala](initialState: Signals.Sstate[S, A], name: REName) extends Source[A, S, Nothing](initialState, name) with Signal[A, S] {
+final class Var[A, S <: Struct] private[rescala](initialState: Signals.Sstate[S, A], name: REName) extends Source[A, S, Pulse[A]](initialState, name) with Signal[A, S] {
   //def update(value: A)(implicit fac: Engine[S]): Unit = set(value)
   def set(value: A)(implicit fac: Scheduler[S]): Unit = fac.transaction(this) {admit(value)(_)}
 
@@ -64,7 +64,7 @@ object Var {
   def apply[T: ReSerializable, S <: Struct](initval: T)(implicit ticket: CreationTicket[S]): Var[T, S] = fromChange(Pulse.Value(initval))
   def empty[T: ReSerializable, S <: Struct]()(implicit ticket: CreationTicket[S]): Var[T, S] = fromChange(Pulse.empty)
   private[this] def fromChange[T: ReSerializable, S <: Struct](change: Pulse.Change[T])(implicit ticket: CreationTicket[S]): Var[T, S] = ticket { t =>
-    t.createSource[Pulse[T], Var[T, S], Nothing](Initializer.InitializedSignal(change))(new Var[T, S](_, ticket.rename))
+    t.createSource[Pulse[T], Var[T, S], Pulse[T]](Initializer.InitializedSignal(change))(new Var[T, S](_, ticket.rename))
   }
 }
 

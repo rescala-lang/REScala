@@ -1,7 +1,7 @@
 package tests.rescala.testtools
 
-import rescala.Engines
+import rescala.simpleprop.SimpleScheduler
 
 object TestEngines {
-  val all  = Engines.all
+  val all  = Seq(SimpleScheduler)
 }

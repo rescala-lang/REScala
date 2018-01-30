@@ -2,9 +2,8 @@ package rescala.reactives
 
 import rescala.core.Pulse.{Exceptional, NoChange, Value}
 import rescala.core._
-import rescala.macros.MacroAccessors
+import rescala.macros.Interp
 
-import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.immutable.{LinearSeq, Queue}
 import scala.language.experimental.macros
 
@@ -28,11 +27,11 @@ import scala.language.experimental.macros
   * @groupname accessors Accessors and observers
   * @groupprio accessor 5
   */
-trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[Pulse[T], Option[T], S] with Disconnectable[S] {
+trait Event[+T, S <: Struct] extends ReNote[S, Pulse[T]] with Interp[S, Option[T]] with Disconnectable[S] {
 
   /** Interprets the pulse of the event by converting to an option
     * @group internal */
-  override def interpret(v: Pulse[T] @uncheckedVariance): Option[T] = v.toOption
+  override def interpret(n: Notification): Option[T] = n.toOption
 
   /** Adds an observer.
     * @usecase def +=(handler: T => Unit): Observe[S]
@@ -55,7 +54,7 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
     */
   final def recover[R >: T](onFailure: PartialFunction[Throwable, Option[R]])(implicit ticket: CreationTicket[S]): Event[R, S] =
     Events.staticNamed(s"(recover $this)", this) { st =>
-      st.collectStatic(this) match {
+      (st.collectStatic(this): Pulse[T]) match {
         case Exceptional(t) => onFailure.applyOrElse[Throwable, Option[R]](t, throw _).fold[Pulse[R]](Pulse.NoChange)(Pulse.Value(_))
         case other => other
       }
@@ -93,7 +92,7 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
     * @group operator*/
   final def \[U](except: Event[U, S])(implicit ticket: CreationTicket[S]): Event[T, S] = {
     Events.staticNamed(s"(except $this  $except)", this, except) { st =>
-      st.collectStatic(except) match {
+      (st.collectStatic(except): Pulse[U]) match {
         case NoChange => st.collectStatic(this)
         case Value(_) => Pulse.NoChange
         case ex@Exceptional(_) => ex
@@ -217,7 +216,7 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
     * @group conversion*/
   final def toggle[A](a: Signal[A, S], b: Signal[A, S])(implicit ticket: CreationTicket[S], ev: ReSerializable[Boolean]): Signal[A, S] = ticket { ict =>
     val switched: Signal[Boolean, S] = iterate(false) {!_}(ev, ict)
-    Signals.dynamic(switched, a, b) { s => if (s.collectDynamic(switched).get) s.collectDynamic(b).get else s.collectDynamic(a).get }(ict)
+    Signals.dynamic(switched, a, b) { s => if (s.depend(switched)) s.depend(b) else s.depend(a) }(ict)
   }
 
   /** Switch to a new Signal once, on the occurrence of event e.
@@ -226,9 +225,9 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
   final def switchOnce[A, B >: T](original: Signal[A, S], newSignal: Signal[A, S])(implicit ticket: CreationTicket[S], ev: ReSerializable[Option[B]]): Signal[A, S] = ticket { turn =>
     val latest = latestOption[B]()(turn, ev)
     Signals.dynamic(latest, original, newSignal) { t =>
-      t.collectDynamic(latest).get match {
-        case None => t.collectDynamic(original).get
-        case Some(_) => t.collectDynamic(newSignal).get
+      (t.depend(latest) : Option[B]) match {
+        case None => t.depend(original)
+        case Some(_) => t.depend(newSignal)
       }
     }(turn)
   }
@@ -241,8 +240,8 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
   final def switchTo[A >: T](original: Signal[A, S])(implicit ticket: CreationTicket[S], ev: ReSerializable[Option[A]]): Signal[A, S] = ticket { turn =>
     val latest = latestOption[A]()(turn, ev)
     Signals.dynamic(latest, original) { s =>
-      s.collectDynamic(latest).get match {
-        case None => s.collectDynamic(original).get
+      s.depend(latest) match {
+        case None => s.depend(original)
         case Some(x) => x
       }
     }(turn)

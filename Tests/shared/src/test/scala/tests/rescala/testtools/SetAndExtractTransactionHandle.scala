@@ -4,7 +4,7 @@ import rescala.core.{Initializer, Scheduler, Struct}
 import rescala.reactives.Source
 
 object SetAndExtractTransactionHandle {
-  def apply[A, S <: Struct](source: Source[A, S], value: A)(implicit engine: Scheduler[S]): Initializer[S] = {
+  def apply[A, S <: Struct, N](source: Source[A, S, N], value: A)(implicit engine: Scheduler[S]): Initializer[S] = {
     engine.transaction(source) { implicit t =>
       source.admit(value)
       t.creation

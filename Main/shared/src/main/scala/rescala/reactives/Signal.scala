@@ -1,11 +1,10 @@
 package rescala.reactives
 
 import rescala.core._
-import rescala.macros.MacroAccessors
+import rescala.macros.Interp
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 import rescala.reactives.Signals.{Diff, static}
 
-import scala.annotation.unchecked.uncheckedVariance
 import scala.util.control.NonFatal
 
 /** Time changing value derived from the dependencies.
@@ -20,12 +19,14 @@ import scala.util.control.NonFatal
   * @groupname accessors Accessors and observers
   * @groupprio accessor 5
   */
-trait Signal[+A, S <: Struct] extends ReSourciV[Pulse[A], S] with MacroAccessors[Pulse[A], A, S] with Disconnectable[S] {
+trait Signal[+A, S <: Struct] extends ReNote[S, Pulse[A]] with Interp[S, A] with Disconnectable[S] {
+
+  override type Value <: Pulse[A]
 
   /** Returns the current value of the signal
     * @group accessor */
   final def now(implicit scheduler: Scheduler[S]): A = {
-    try { scheduler.singleNow(this).get }
+    try { scheduler.singleNow(this) }
     catch {
       case EmptySignalControlThrowable => throw new NoSuchElementException(s"Signal $this is empty")
       case other: Throwable => throw new IllegalStateException(s"Signal $this has an error value", other)
@@ -34,7 +35,7 @@ trait Signal[+A, S <: Struct] extends ReSourciV[Pulse[A], S] with MacroAccessors
 
   /** Interprets the pulse of the signal by returning the value
     * @group internal */
-  override def interpret(v: Pulse[A]@uncheckedVariance): A = v.get
+  override def interpret(n: Notification): A = n.get
 
   /** add an observer
     * @group accessor */

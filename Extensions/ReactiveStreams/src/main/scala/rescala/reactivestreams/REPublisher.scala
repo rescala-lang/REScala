@@ -2,18 +2,18 @@ package rescala.reactivestreams
 
 
 import org.reactivestreams.{Publisher, Subscriber, Subscription}
-import rescala.core.{Base, Pulse, REName, ReSourciV, ReevTicket, Result, Scheduler, Struct, Initializer}
+import rescala.core.{Base, Pulse, REName, Interp, ReevTicket, Result, Scheduler, Struct, Initializer}
 
 import scala.util.{Failure, Success}
 
 
 object REPublisher {
 
-  def apply[T, S <: Struct](dependency: ReSourciV[Pulse[T], S])(implicit fac: Scheduler[S]): REPublisher[T, S] =
+  def apply[T, S <: Struct](dependency: Interp[Pulse[T], S])(implicit fac: Scheduler[S]): REPublisher[T, S] =
     new REPublisher[T, S](dependency, fac)
 
 
-  class REPublisher[T, S <: Struct](dependency: ReSourciV[Pulse[T], S], fac: Scheduler[S]) extends Publisher[T] {
+  class REPublisher[T, S <: Struct](dependency: Interp[Pulse[T], S], fac: Scheduler[S]) extends Publisher[T] {
 
     override def subscribe(s: Subscriber[_ >: T]): Unit = {
       val sub = REPublisher.subscription(dependency, s, fac)
@@ -23,11 +23,11 @@ object REPublisher {
   }
 
   class SubscriptionReactive[T, S <: Struct](
-    bud: S#State[Pulse[T], S],
-    dependency: ReSourciV[Pulse[T], S],
-    subscriber: Subscriber[_ >: T],
-    fac: Scheduler[S],
-    name: REName
+                                              bud: S#State[Pulse[T], S],
+                                              dependency: Interp[Pulse[T], S],
+                                              subscriber: Subscriber[_ >: T],
+                                              fac: Scheduler[S],
+                                              name: REName
   ) extends Base[Pulse[T], S](bud, name) with Subscription {
 
     var requested: Long = 0
@@ -74,9 +74,9 @@ object REPublisher {
   }
 
   def subscription[T, S <: Struct](
-    dependency: ReSourciV[Pulse[T], S],
-    subscriber: Subscriber[_ >: T],
-    fac: Scheduler[S]
+                                    dependency: Interp[Pulse[T], S],
+                                    subscriber: Subscriber[_ >: T],
+                                    fac: Scheduler[S]
   ): SubscriptionReactive[T, S] = {
     fac.transaction() { ticket =>
       ticket.creation.create[Pulse[T], SubscriptionReactive[T, S]](Set(dependency), Initializer.DerivedSignal) { state =>

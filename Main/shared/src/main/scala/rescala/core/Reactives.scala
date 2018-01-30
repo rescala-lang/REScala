@@ -20,7 +20,7 @@ trait ReSource[S <: Struct] {
 }
 
 /** Makes the Value type well known, such that user computations can read values from (e.g., before, after, etc.)*/
-trait ReSourciV[+P, S <: Struct] extends ReSource[S] { type Value <: P}
+trait ReNote[S <: Struct, +N] extends ReSource[S] {type Notification <: N}
 
 /** A reactive value is something that can be reevaluated */
 trait Reactive[S <: Struct] extends ReSource[S] {
@@ -33,12 +33,12 @@ trait Reactive[S <: Struct] extends ReSource[S] {
   protected[rescala] def reevaluate(input: ReIn): Rout
 }
 
-/** Base implementation for reactives, combining [[ReSourciV]] for value access, with [[Reactive]] for scheduling,
+/** Base implementation for reactives, combining [[ReNote]] for value access, with [[Reactive]] for scheduling,
   * together with a [[REName]] and asking for a [[Struct.State]]
   * @param initialState the initial state passed by the scheduler
   * @param rename the name of the reactive, useful for debugging as it often contains positional information */
 abstract class Base[P, S <: Struct, N](initialState: S#State[P, S, N], rename: REName)
-  extends RENamed(rename) with  ReSourciV[P, S] with Reactive[S] {
+  extends RENamed(rename) with ReNote[S, N] with Reactive[S] {
   override type Value = P
   override type Notification = N
   final override protected[rescala] def state: S#State[P, S, N] = initialState

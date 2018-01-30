@@ -1,6 +1,7 @@
 package rescala.twoversion
 
 import rescala.core._
+import rescala.reactives.Signal
 
 import scala.util.control.NonFatal
 
@@ -75,21 +76,21 @@ trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropaga
 
 
   override private[rescala] def makeAdmissionPhaseTicket() = new AdmissionTicket[S](this) {
-    override def access[A](reactive: ReSourciV[A, S]): A = {
+    override def access[A](reactive: Signal[A, S]): A = {
       dynamicDependencyInteraction(reactive)
-      reactive.state.base(token)
+      reactive.state.base(token).get
     }
   }
   private[rescala] def makeDynamicReevaluationTicket[V, N](b: V): ReevTicket[V, N, S] = new ReevTicket[V, N, S](this, b) {
-    override def dynamicAccess[A](reactive: ReSourciV[A, S]): A = TwoVersionPropagationImpl.this.dynamicAfter(reactive)
-    override def staticAccess[A](reactive: ReSourciV[A, S]): A = reactive.state.get(token)
+    override def dynamicAccess[A](reactive: ReSource[S]) = TwoVersionPropagationImpl.this.dynamicAfter(reactive).asInstanceOf
+    override def staticAccess[A](reactive: ReSource[S]) = reactive.state.get(token).asInstanceOf
   }
 
   private[rescala] def makeWrapUpPhaseTicket(): WrapUpTicket[S] = new WrapUpTicket[S] {
-    override def access[A](reactive: ReSourciV[A, S]): A = TwoVersionPropagationImpl.this.dynamicAfter(reactive)
+    override def access[A](reactive: ReSource[S]) = TwoVersionPropagationImpl.this.dynamicAfter(reactive).asInstanceOf
   }
 
-  private[rescala] def dynamicAfter[P](reactive: ReSourciV[P, S]) = {
+  private[rescala] def dynamicAfter[P](reactive: ReSource[S]) = {
     // Note: This only synchronizes reactive to be serializable-synchronized, but not glitch-free synchronized.
     // Dynamic reads thus may return glitched values, which the reevaluation handling implemented in subclasses
     // must account for by repeating glitched reevaluations!
