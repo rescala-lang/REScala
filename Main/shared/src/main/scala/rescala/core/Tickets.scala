@@ -21,16 +21,16 @@ abstract class ReevTicket[T, N, S <: Struct](
 ) extends DynamicTicket[S](creation) with Result[T, N, S] {
 
   // schedulers implement these to allow access
-  protected def staticAccess[A](reactive: ReSource[S]): reactive.Notification
-  protected def dynamicAccess[A](reactive: ReSource[S]): reactive.Notification
+  protected def staticAccess[A](reactive: ReSource[S]): (reactive.Value, reactive.Notification)
+  protected def dynamicAccess[A](reactive: ReSource[S]): (reactive.Value, reactive.Notification)
 
   // dependency tracking accesses
-  private[rescala] final override def collectStatic[A](reactive: ReSource[S]): reactive.Notification = {
+  private[rescala] final override def collectStatic[A](reactive: ReSource[S]): (reactive.Value, reactive.Notification) = {
     if (collectedDependencies != null) collectedDependencies += reactive
     staticAccess(reactive)
   }
 
-  private[rescala] final override def collectDynamic[A](reactive: ReSource[S]): reactive.Notification = {
+  private[rescala] final override def collectDynamic[A](reactive: ReSource[S]): (reactive.Value, reactive.Notification) = {
     if (collectedDependencies != null) collectedDependencies += reactive
     dynamicAccess(reactive)
   }
@@ -70,14 +70,15 @@ abstract class ReevTicket[T, N, S <: Struct](
 
 /** User facing low level API to access values in a dynamic context. */
 abstract class DynamicTicket[S <: Struct](creation: Initializer[S]) extends StaticTicket[S](creation) {
-  private[rescala] def collectDynamic[A](reactive: ReSource[S]): reactive.Notification
-  final def depend[A](reactive: Interp[S, A]): A = reactive.interpret(collectDynamic(reactive))
+  private[rescala] def collectDynamic[A](reactive: ReSource[S]): (reactive.Value, reactive.Notification)
+  final def depend[A](reactive: Interp[S, A]): A = (reactive.interpret _).tupled(collectDynamic(reactive))
 }
 
 /** User facing low level API to access values in a static context. */
 sealed abstract class StaticTicket[S <: Struct](creation: Initializer[S]) extends InnerTicket(creation) {
-  private[rescala] def collectStatic[A](reactive:  ReSource[S]): reactive.Notification
-  final def dependStatic[A](reactive: Interp[S, A]): A = reactive.interpret(collectStatic(reactive))
+  private[rescala] def collectStatic[A](reactive:  ReSource[S]): (reactive.Value, reactive.Notification)
+  final def dependStatic[A](reactive: Interp[S, A]): A = (reactive.interpret _).tupled(collectStatic(reactive))
+
 }
 
 /** Records the initial source changes to be propagated */
@@ -107,7 +108,7 @@ abstract class AdmissionTicket[S <: Struct](creation: Initializer[S]) extends In
 
 abstract class WrapUpTicket[S <: Struct] {
   private[rescala] def access[A](reactive: ReSource[S]): reactive.Notification
-  final def now[A](reactive: Interp[]): A = reactive.interpret(access(reactive))
+  final def now[A](reactive: Interp[S, A]): A = ???
 }
 
 

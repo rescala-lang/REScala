@@ -19,7 +19,7 @@ import scala.util.control.NonFatal
   * @groupname accessors Accessors and observers
   * @groupprio accessor 5
   */
-trait Signal[+A, S <: Struct] extends ReNote[S, Pulse[A]] with Interp[S, A] with Disconnectable[S] {
+trait Signal[+A, S <: Struct] extends ReSource[S] with Interp[S, A] with Disconnectable[S] {
 
   override type Value <: Pulse[A]
 
@@ -35,7 +35,7 @@ trait Signal[+A, S <: Struct] extends ReNote[S, Pulse[A]] with Interp[S, A] with
 
   /** Interprets the pulse of the signal by returning the value
     * @group internal */
-  override def interpret(n: Notification): A = n.get
+  override def interpret(v: Value, n: Notification): A = v.get
 
   /** add an observer
     * @group accessor */
@@ -46,7 +46,7 @@ trait Signal[+A, S <: Struct] extends ReNote[S, Pulse[A]] with Interp[S, A] with
 
   /** Uses a partial function `onFailure` to recover an error carried by the event into a value. */
   final def recover[R >: A](onFailure: PartialFunction[Throwable,R])(implicit ticket: CreationTicket[S]): Signal[R, S] = Signals.static(this) { st =>
-    try st.collectStatic(this).get catch {
+    try st.dependStatic(this) catch {
       case NonFatal(e) => onFailure.applyOrElse[Throwable, R](e, throw _)
     }
   }
@@ -58,7 +58,7 @@ trait Signal[+A, S <: Struct] extends ReNote[S, Pulse[A]] with Interp[S, A] with
   final def abortOnError()(implicit ticket: CreationTicket[S]): Signal[A, S] = recover{case t => throw new UnhandledFailureException(this, t)}
 
   final def withDefault[R >: A](value: R)(implicit ticket: CreationTicket[S]): Signal[R, S] = Signals.static(this) { (st) =>
-    try st.collectStatic(this).get catch {
+    try st.dependStatic(this) catch {
       case EmptySignalControlThrowable => value
     }
   }
@@ -66,7 +66,7 @@ trait Signal[+A, S <: Struct] extends ReNote[S, Pulse[A]] with Interp[S, A] with
   /** Return a Signal with f applied to the value
     * @group operator */
   final def map[B](f: A => B)(implicit ticket: CreationTicket[S]): Signal[B, S] =
-    static(this) { t => f(t.collectStatic(this).get) }
+    static(this) { t => f(t.dependStatic(this)) }
 
   /** Flattens the inner reactive.
     * @group operator */
@@ -85,7 +85,7 @@ trait Signal[+A, S <: Struct] extends ReNote[S, Pulse[A]] with Interp[S, A] with
     * to the event is the new value of the signal
     * @group conversion */
   final def changed(implicit ticket: CreationTicket[S]): Event[A, S] = Events.staticNamed(s"(changed $this)", this) { st =>
-    st.collectStatic(this) match {
+    st.collectStatic(this)._1 match {
       case Pulse.empty => Pulse.NoChange
       case other => other
     }

@@ -83,7 +83,7 @@ private abstract class ChangeEvent[T, S <: Struct](_bud: Estate[S, Diff[T]], sig
   extends Base[Pulse[Diff[T]], S, Pulse[Diff[T]]](_bud, name) with Event[Diff[T], S] {
 
   override protected[rescala] def reevaluate(rein: ReIn): Rout = {
-    val to: Pulse[T] = rein.collectStatic(signal)
+    val to: Pulse[T] = rein.collectStatic(signal)._1
     if (to == Pulse.empty) return rein
     rein.before match {
       case Value(u) =>
@@ -94,7 +94,7 @@ private abstract class ChangeEvent[T, S <: Struct](_bud: Estate[S, Diff[T]], sig
           rein.withNotification(Pulse.Value(Diff(from, to)))
         }
       case NoChange =>
-        val res = Diff(Pulse.empty, rein.collectStatic(signal))
+        val res = Diff(Pulse.empty, to)
         rein.withValue(Pulse.Value(res)).withPropagate(false)
       case x@Exceptional(_) =>
         Result.fromPulse(rein, x) //should not happen, change does not actually access other pulses

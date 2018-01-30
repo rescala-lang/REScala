@@ -35,7 +35,10 @@ object Observe {
         }
       } catch {
         case NonFatal(t) =>
-          if (fail eq null) throw new UnhandledFailureException(this, t)
+          if (fail eq null) {
+            t.printStackTrace()
+            throw new UnhandledFailureException(this, t)
+          }
           else dt.withEffect(() => fail(t))
       }
     }

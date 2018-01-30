@@ -6,6 +6,7 @@ import rescala.macros.Interp
 
 import scala.collection.immutable.{LinearSeq, Queue}
 import scala.language.experimental.macros
+import scala.language.implicitConversions
 
 
 /** Events only propagate a value when they are changing,
@@ -27,11 +28,15 @@ import scala.language.experimental.macros
   * @groupname accessors Accessors and observers
   * @groupprio accessor 5
   */
-trait Event[+T, S <: Struct] extends ReNote[S, Pulse[T]] with Interp[S, Option[T]] with Disconnectable[S] {
+trait Event[+T, S <: Struct] extends ReSource[S] with Interp[S, Option[T]] with Disconnectable[S] {
+
+  override type Value <: Pulse[T]
+
+  implicit def valueAccess[A, B](v: (A, B)): A = v._1
 
   /** Interprets the pulse of the event by converting to an option
     * @group internal */
-  override def interpret(n: Notification): Option[T] = n.toOption
+  override def interpret(v: Value, n: Notification): Option[T] = v.toOption
 
   /** Adds an observer.
     * @usecase def +=(handler: T => Unit): Observe[S]
@@ -54,7 +59,7 @@ trait Event[+T, S <: Struct] extends ReNote[S, Pulse[T]] with Interp[S, Option[T
     */
   final def recover[R >: T](onFailure: PartialFunction[Throwable, Option[R]])(implicit ticket: CreationTicket[S]): Event[R, S] =
     Events.staticNamed(s"(recover $this)", this) { st =>
-      (st.collectStatic(this): Pulse[T]) match {
+      st.collectStatic(this)._1 match {
         case Exceptional(t) => onFailure.applyOrElse[Throwable, Option[R]](t, throw _).fold[Pulse[R]](Pulse.NoChange)(Pulse.Value(_))
         case other => other
       }
