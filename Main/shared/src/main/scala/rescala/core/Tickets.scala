@@ -83,7 +83,7 @@ abstract class InitialChange[S <: Struct] {
   * Keeps track of written sources internally. */
 abstract class AdmissionTicket[S <: Struct](creation: Initializer[S]) extends InnerTicket(creation) {
   def access[A](reactive: ReSourciV[A, S]): A
-  final def now[A](reactive: Signal[A, S]): A = access(reactive).get
+  final def now[A](reactive: Signal[A, S]): A = reactive.interpret(access(reactive))
 
   private val _initialChanges = ArrayBuffer[InitialChange[S]]()
   private[rescala] def initialChanges: Iterable[InitialChange[S]] = _initialChanges
