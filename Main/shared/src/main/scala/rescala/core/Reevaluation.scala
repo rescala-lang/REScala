@@ -1,7 +1,7 @@
 package rescala.core
 
 
-trait Result[+T, S <: Struct] {
+trait Result[T, S <: Struct] {
   def propagate: Boolean
   def forValue(f: T => Unit): Unit
   def forEffect(f: (() => Unit) => Unit): Unit

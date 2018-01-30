@@ -20,11 +20,11 @@ trait Initializer[S <: Struct] {
   }
 
   /** Creates the internal state of [[Reactive]]s */
-  protected[this] def makeDerivedStructState[P](valuePersistency: Param[P]): S#State[P, S]
+  protected[this] def makeDerivedStructState[P, N](valuePersistency: Param[P]): S#State[P, S]
 
   /**  Creates the internal state of [[ReSourciV]]s */
-  protected[this] def makeSourceStructState[P](valuePersistency: Param[P]): S#State[P, S] =
-    makeDerivedStructState(valuePersistency)
+  protected[this] def makeSourceStructState[P, N](valuePersistency: Param[P]): S#State[P, S] =
+    makeDerivedStructState[P, N](valuePersistency)
   /**
     * to be implemented by the propagation algorithm, called when a new reactive has been instantiated and needs to be connected to the graph and potentially reevaluated.
     * @param reactive the newly instantiated reactive

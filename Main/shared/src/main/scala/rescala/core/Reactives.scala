@@ -23,6 +23,7 @@ trait ReSourciV[+P, S <: Struct] extends ReSource[S] { type Value <: P}
 
 /** A reactive value is something that can be reevaluated */
 trait Reactive[S <: Struct] extends ReSource[S] {
+  type Notification
 
   type ReIn = ReevTicket[Value, S]
   type Rout = Result[Value, S]

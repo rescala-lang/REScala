@@ -10,7 +10,7 @@ import rescala.twoversion.TwoVersionSchedulerImpl
 trait LevelBasedPropagationEngines {
 
   private[rescala] class SimpleNoLock extends LevelBasedPropagation[SimpleStruct] {
-    override protected def makeDerivedStructState[P](valuePersistency: Param[P]): SimpleStruct#State[P, SimpleStruct] = {
+    override protected def makeDerivedStructState[P, N](valuePersistency: Param[P]): SimpleStruct#State[P, SimpleStruct] = {
       new LevelStructTypeImpl(valuePersistency.initialValue, valuePersistency.isTransient)
     }
     override def releasePhase(): Unit = ()

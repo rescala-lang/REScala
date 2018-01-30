@@ -6,10 +6,10 @@ import rescala.core.{Initializer, ReSource, ReSourciV, Reactive, ReevTicket, Sch
 import scala.collection.mutable.ArrayBuffer
 
 trait SimpleStruct extends Struct {
-  override type State[P, S <: Struct] = SimpleState[P]
+  override type State[P, S <: Struct] = SimpleState[P, _]
 }
 
-class SimpleState[V](
+class SimpleState[V, N](
   var value: V,
   transient: Option[V]) {
   var outgoing: Set[Reactive[SimpleStruct]] = Set.empty
@@ -23,8 +23,8 @@ class SimpleState[V](
 }
 
 object SimpleCreation extends Initializer[SimpleStruct] {
-  override protected[this] def makeDerivedStructState[P](valuePersistency: Param[P]): SimpleState[P] =
-    new SimpleState[P](valuePersistency.initialValue, if (valuePersistency.isTransient) Some(valuePersistency.initialValue) else None)
+  override protected[this] def makeDerivedStructState[P, N](valuePersistency: Param[P]): SimpleState[P, N] =
+    new SimpleState[P, N](valuePersistency.initialValue, if (valuePersistency.isTransient) Some(valuePersistency.initialValue) else None)
   override protected[this] def ignite(reactive: Reactive[SimpleStruct], incoming: Set[ReSource[SimpleStruct]], ignitionRequiresReevaluation: Boolean): Unit = {
 
     incoming.foreach { dep =>
