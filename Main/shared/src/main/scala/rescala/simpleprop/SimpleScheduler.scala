@@ -9,7 +9,9 @@ trait SimpleStruct extends Struct {
   override type State[P, S <: Struct] = SimpleState[P]
 }
 
-class SimpleState[V](var value: V, transient: Option[V]) {
+class SimpleState[V](
+  var value: V,
+  transient: Option[V]) {
   var outgoing: Set[Reactive[SimpleStruct]] = Set.empty
   var discovered = false
   var dirty = false
@@ -40,7 +42,10 @@ object SimpleCreation extends Initializer[SimpleStruct] {
 object SimpleScheduler extends Scheduler[SimpleStruct] {
   val initial: ArrayBuffer[Reactive] = ArrayBuffer[Reactive]()
   val sorted: ArrayBuffer[Reactive] = ArrayBuffer[Reactive]()
+  var idle = true
   override private[rescala] def executeTurn[R](initialWrites: Traversable[ReSource], admissionPhase: AdmissionTicket => R) = synchronized {
+    require(idle, "simple scheduler is not reentrant")
+    idle = false
 
     // admission
     val admissionTicket = new AdmissionTicket(SimpleCreation) {
@@ -65,6 +70,7 @@ object SimpleScheduler extends Scheduler[SimpleStruct] {
     sorted.foreach(_.state.reset)
 
     sorted.clear()
+    idle = true
 
     //wrapup
     if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(new WrapUpTicket {
