@@ -205,7 +205,7 @@ class Fold extends RETests {
     val count = Evt[Int]
     val reset = Evt[Unit]
 
-    val res = Events.fold(""){ acc => Events.Match(
+    val res = Events.foldAll(""){ acc => Events.Match(
       reset >> (_ => ""),
       word >> identity,
       count >> (acc * _),

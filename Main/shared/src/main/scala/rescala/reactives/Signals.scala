@@ -10,17 +10,6 @@ import scala.concurrent.{ExecutionContext, Future}
 object Signals {
   type Sstate[S <: Struct, T] = S#State[Pulse[T], S, Unit]
 
-  /** creates a signal that statically depends on the dependencies with a given initial value */
-  def staticFold[T: ReSerializable, S <: Struct](dependencies: Set[ReSource[S]],
-                                                 init: Pulse[T])
-                                                (expr: (StaticTicket[S], () => T) => T)
-                                                (ict: Initializer[S])
-                                                (name: REName): Signal[T, S] = {
-    ict.create[Pulse[T], StaticSignal[T, S], Unit](dependencies, Initializer.InitializedSignal[Pulse[T]](init), inite = false) {
-      state => new StaticSignal[T, S](state, expr, name) with DisconnectableImpl[S]
-    }
-  }
-
   /** creates a new static signal depending on the dependencies, reevaluating the function */
   def static[T, S <: Struct](dependencies: ReSource[S]*)
                             (expr: StaticTicket[S] => T)

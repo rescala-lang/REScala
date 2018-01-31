@@ -46,15 +46,31 @@ object Events {
     Events.static(internal)(st => st.dependStatic(internal))(initTurn)
   }
 
+  def foldOne[A, T: ReSerializable, S <: Struct](dependency: Event[A, S], init: T)(expr: (T, A) => T)(implicit ticket: CreationTicket[S]): Signal[T, S] = {
+    fold(Set[ReSource[S]](dependency), init)((st, acc) => expr(acc(), st.collectStatic(dependency)._2.get))
+  }
+
+  /** Folds events with a given operation to create a Signal.
+    *
+    * @see [[Event.fold]]*/
+  def fold[T: ReSerializable, S <: Struct](dependencies: Set[ReSource[S]], init: T)(expr: (StaticTicket[S], () => T) => T)(implicit ticket: CreationTicket[S]): Signal[T, S] = {
+    ticket { initialTurn =>
+      initialTurn.create[Pulse[T], StaticSignal[T, S], Unit](dependencies,
+        Initializer.InitializedSignal[Pulse[T]](Pulse.tryCatch(Pulse.Value(init))), inite = false) {
+        state => new StaticSignal[T, S](state, expr, ticket.rename) with DisconnectableImpl[S]
+      }
+    }
+  }
+
   /** Folds when any one of a list of events occurs, if multiple events occur, every fold is executed in order. */
-  final def fold[A: ReSerializable, S <: Struct](init: A)
-                                                (accthingy: (=> A) => Seq[(Event[T, S], T => A) forSome {type T}])
-                                                (implicit ticket: CreationTicket[S]): Signal[A, S] = {
+  final def foldAll[A: ReSerializable, S <: Struct](init: A)
+                                                   (accthingy: (=> A) => Seq[(Event[T, S], T => A) forSome {type T}])
+                                                   (implicit ticket: CreationTicket[S]): Signal[A, S] = {
     ticket { initialTurn =>
       var acc = () => init
       val ops = accthingy(acc())
       val dependencies = ops.map(_._1)
-      Signals.staticFold[A, S](dependencies.toSet, Pulse.tryCatch(Pulse.Value(init))) { (st, currentValue) =>
+      fold[A, S](dependencies.toSet[ReSource[S]], init) { (st, currentValue) =>
         acc = currentValue
         for ((ev, f) <- ops) {
           val value = st.dependStatic(ev)
@@ -64,8 +80,7 @@ object Events {
           }
         }
         acc()
-
-      }(initialTurn)(ticket.rename)
+      }(implicitly[ReSerializable[A]], CreationTicket.fromCreation(initialTurn)(ticket.rename))
     }
   }
 

@@ -149,23 +149,18 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[S, Option[T]] with 
     * @group conversion
     * @usecase def fold[A](init: A)(op: (A, T) => A): rescala.Signal[A]
     * @inheritdoc */
-  final def fold[A: ReSerializable](init: A)(op: (A, T) => A)(implicit ticket: CreationTicket[S]): Signal[A, S] = {
-    ticket { initialTurn =>
-      Signals.staticFold[A, S](Set(this), Pulse.tryCatch(Pulse.Value(init))) { (st, currentValue) =>
-        val value = st.collectStatic(this).get
-        op(currentValue(), value)
-      }(initialTurn)(ticket.rename)
-    }
-  }
+  final def fold[A](init: A)(op: (A, T) => A)(implicit ticket: CreationTicket[S], serializable: ReSerializable[A]): Signal[A, S] = macro rescala.macros.ReactiveMacros.EventFoldMacro[T, A, S]
 
   /** reduces events with a given reduce function to create a Signal
     * @usecase def reduce[A](reducer: (=> A, => T) => A): rescala.Signal[A]
     * @group conversion */
   final def reduce[A: ReSerializable](reducer: (=> A, => T) => A)(implicit ticket: CreationTicket[S]): Signal[A, S] =
     ticket { initialTurn =>
-      Signals.staticFold[A, S](Set(this), Pulse.empty) { (st, currentValue) =>
-        reducer(currentValue(), st.collectStatic(this).get)
-      }(initialTurn)(ticket.rename)
+      initialTurn.create[Pulse[A], StaticSignal[A, S], Unit](Set(this), Initializer.InitializedSignal[Pulse[A]](Pulse.empty), inite = false) { state =>
+        new StaticSignal[A, S](state,
+          { (st, currentValue) => reducer(currentValue(), st.collectStatic(this).get) },
+          ticket.rename) with DisconnectableImpl[S]
+      }
     }
 
   /** Applies a function on the current value of the signal every time the event occurs,
@@ -173,7 +168,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[S, Option[T]] with 
     * @usecase def iterate[A](init: A)(f: A => A): rescala.Signal[A]
     * @group conversion */
   final def iterate[A: ReSerializable](init: A)(f: A => A)(implicit ticket: CreationTicket[S]): Signal[A, S] =
-    fold(init)((acc, _) => f(acc))
+    Events.foldOne(this, init)((acc, _) => f(acc))
 
   /** Counts the occurrences of the event. Starts from 0, when the event has never been
     * fired yet. The argument of the event is simply discarded.
@@ -181,13 +176,13 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[S, Option[T]] with 
     * @usecase def count(): rescala.Signal[Int]
     * @inheritdoc */
   final def count()(implicit ticket: CreationTicket[S], ev: ReSerializable[Int]): Signal[Int, S] =
-    fold(0)((acc, _) => acc + 1)
+    Events.foldOne(this, 0)((acc, _) => acc + 1)
 
   /** returns a signal holding the latest value of the event.
     * @usecase def latest[A >: T](init: A): rescala.Signal[A]
     * @group conversion */
   final def latest[A >: T : ReSerializable](init: A)(implicit ticket: CreationTicket[S]): Signal[A, S] =
-    fold(init)((_, v) => v)
+    Events.foldOne(this, init)((_, v) => v)
   /** returns a signal holding the latest value of the event.
     * @usecase def latest[A >: T](): rescala.Signal[A]
     * @group conversion */
@@ -198,14 +193,14 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[S, Option[T]] with 
     * @usecase def latestOption[A >: T](): rescala.Signal[Option[A]]
     * @group conversion*/
   final def latestOption[A >: T]()(implicit ticket: CreationTicket[S], ev: ReSerializable[Option[A]]): Signal[Option[A], S] =
-    fold(None: Option[A]) { (_, v) => Some(v) }
+    Events.foldOne(this, None: Option[A]) { (_, v) => Some(v) }
 
   /** Returns a signal which holds the last n events in a list. At the beginning the
     * list increases in size up to when n values are available
     * @usecase def last[A >: T](n: Int): rescala.Signal[LinearSeq[A]]
     * @group conversion*/
   final def last[A >: T](n: Int)(implicit ticket: CreationTicket[S], ev: ReSerializable[Queue[A]]): Signal[LinearSeq[A], S] = {
-    fold(Queue[A]()) { (queue: Queue[A], v: T) =>
+    Events.foldOne(this, Queue[A]()) { (queue: Queue[A], v: T) =>
       if (queue.lengthCompare(n) >= 0) queue.tail.enqueue(v) else queue.enqueue(v)
     }
   }
@@ -214,7 +209,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[S, Option[T]] with 
     * @usecase def list[A >: T](): rescala.Signal[List[A]]
     * @group conversion*/
   final def list[A >: T]()(implicit ticket: CreationTicket[S], ev: ReSerializable[List[A]]): Signal[List[A], S] =
-    fold(List[A]())((acc, v) => v :: acc)
+    Events.foldOne(this, List[A]())((acc, v) => v :: acc)
 
   /** Switch back and forth between two signals on occurrence of event e
     * @usecase def toggle[A](a: rescala.Signal[A], b: rescala.Signal[A]): rescala.Signal[A]

@@ -161,10 +161,9 @@ trait TransposeTopper[S <: Struct] {
 //    individualCounts.map(_()).sum
 ////    individualCounts.foldLeft(0){ (sum, signal) => sum + signal() }
 //  }
-  override val successCount: Signal[Int] = {
-  val t = implicitly[CreationTicket]
-  t{ Signals.staticFold[Int, S](successes.toSet[ReSource], Pulse.Value(0)) { (ticket, before) => before() + 1 } (_)(t.rename) }
-}
+
+
+  override val successCount: Signal[Int] = Events.fold(successes.toSet[ReSource], 0){(ticket, before) => before() + 1}
 }
 
 object PaperPhilosophers {

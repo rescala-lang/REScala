@@ -78,6 +78,42 @@ class ReactiveMacros(val c: blackbox.Context) {
 
   }
 
+  def EventFoldMacro[T: c.WeakTypeTag, A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag]
+  (init: c.Expr[A])(op: c.Expr[(A, T) => A])(ticket: c.Expr[rescala.core.CreationTicket[S]], serializable: c.Expr[rescala.core.ReSerializable[A]]): c.Tree = {
+    if (c.hasErrors)
+      return q"""throw new ${termNames.ROOTPKG}.scala.NotImplementedError("macro not expanded because of other compilation errors")"""
+
+    val innerTicketTermName: TermName = TermName(c.freshName("ticket$"))
+    val innerTicketIdent: Ident = Ident(innerTicketTermName)
+
+    val weAnalysis = new WholeExpressionAnalysis(op.tree)
+    val cutOut = new CutOutTransformer(weAnalysis)
+    val cutOutTree = cutOut.transform(op.tree)
+    val detections = new RewriteTransformer[S](weAnalysis, innerTicketIdent, requireStatic = true)
+    val rewrittenTree = detections transform cutOutTree
+
+
+    val mapFunctionArgumentTermName = TermName(c.freshName("eventValue$"))
+    val mapFunctionArgumentIdent = Ident(mapFunctionArgumentTermName)
+
+    val extendedDetections = mapFunctionArgumentIdent :: detections.detectedStaticReactives ::: cutOut.cutOutReactiveIdentifiers
+
+    val eventsSymbol = weakTypeOf[rescala.reactives.Events.type].termSymbol
+
+
+    // def fold[T: ReSerializable, S <: Struct](dependencies: Set[ReSource[S]], init: T)(expr: (StaticTicket[S], () => T) => T)(implicit ticket: CreationTicket[S]): Signal[T, S] = {
+    val valDefs = (q"val $mapFunctionArgumentTermName = ${c.prefix}": ValDef) :: cutOut.cutOutReactivesVals.reverse
+    val accumulatorTerm: TermName = TermName(c.freshName("accumulator$"))
+    val accumulatorIdent: Ident = Ident(accumulatorTerm)
+    val ticketType = weakTypeOf[StaticTicket[S]]
+    val body =
+      q"""$eventsSymbol.fold[${weakTypeOf[A]}, ${weakTypeOf[S]}](Set(..$extendedDetections), $init)(
+         ($innerTicketIdent: $ticketType, $accumulatorIdent: ${weakTypeOf[T]}) => $rewrittenTree($accumulatorIdent(), $innerTicketIdent.dependStatic($mapFunctionArgumentIdent).get))(${serializable}, $ticket)"""
+    val block: c.universe.Tree = Block(valDefs, body)
+    ReTyper(c).untypecheck(block)
+
+  }
+
   private def makeExpression[S <: Struct : c.WeakTypeTag, A: c.WeakTypeTag](
     signalsOrEvents: c.universe.Symbol,
     outerTicket: c.Tree,
