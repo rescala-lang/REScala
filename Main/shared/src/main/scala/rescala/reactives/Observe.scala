@@ -2,7 +2,7 @@ package rescala.reactives
 
 import rescala.core._
 import rescala.macros.Interp
-import rescala.reactives.RExceptions.UnhandledFailureException
+import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 
 import scala.util.control.NonFatal
 
@@ -34,6 +34,7 @@ object Observe {
           case v => dt.withEffect(() => fun(v.asInstanceOf[T]))
         }
       } catch {
+        case EmptySignalControlThrowable => dt
         case NonFatal(t) =>
           if (fail eq null) {
             throw new UnhandledFailureException(this, t)

@@ -46,11 +46,4 @@ class PhiloTest extends FunSuite {
   test("eating Contests Spinning") {`eat!`(Engines.parrp, dynamic = false)}
   test("eating Contests Spinning Dynamic") {`eat!`(Engines.parrp, dynamic = true)}
 
-  test("eating Contests Spinning Locksweep") {`eat!`(Engines.locksweep, dynamic = false)}
-  test("eating Contests Spinning Dynamic Locksweep") {`eat!`(Engines.locksweep, dynamic = true)}
-
-
-  //  test("eatingContestsSpinningParallelLocksweep"){`eat!`(JVMEngines.parallellocksweep, dynamic = false)}
-  //  test("eatingContestsSpinningDynamicParallelLocksweep"){`eat!`(JVMEngines.parallellocksweep, dynamic = true)}
-
 }

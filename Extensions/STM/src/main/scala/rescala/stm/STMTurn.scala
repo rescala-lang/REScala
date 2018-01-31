@@ -8,11 +8,11 @@ import rescala.twoversion.Token
 import scala.concurrent.stm.{InTxn, atomic}
 
 class STMTurn extends LevelBasedPropagation[STMTurn] with LevelStruct {
-  override type State[P, S <: Struct] = STMStructType[P, S]
+  override type State[V, S <: Struct, N] = STMStructType[V, S, N]
 
   /** used to create state containers of each reactive */
-  override protected def makeDerivedStructState[P](valuePersistency: InitValues[P]): State[P, STMTurn] = {
-    new STMStructType(valuePersistency.initialValue, valuePersistency.isTransient)
+  override protected def makeDerivedStructState[V, N](valuePersistency: InitValues[V, N]): State[V, STMTurn, N] = {
+    new STMStructType(valuePersistency)
   }
   override def releasePhase(): Unit = ()
   // this is unsafe when used improperly

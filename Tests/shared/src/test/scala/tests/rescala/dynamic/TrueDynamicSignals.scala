@@ -234,23 +234,18 @@ class TrueDynamicSignals extends RETests {
 
 
   allEngines("creating Signals Inside Signals") { engine => import engine._
+    val outside = Var(1)
 
-    // ignore for locksweep, as it does not support predeclared levels, so would run into an endless loop below
-    whenever(engine != Engines.locksweep) {
-
-      val outside = Var(1)
-
-      val testsig = dynamic() { t =>
-        //remark 01.10.2014: without the bound the inner signal will be enqueued (it is level 0 same as its dependency)
-        //this will cause testsig to reevaluate again, after the inner signal is fully updated.
-        // leading to an infinite loop
-        t.depend(dynamic(outside) { t => t.depend(outside) })
-      }
-
-      assert(testsig.now === 1)
-      outside set 2
-      assert(testsig.now === 2)
+    val testsig = dynamic() { t =>
+      //remark 01.10.2014: without the bound the inner signal will be enqueued (it is level 0 same as its dependency)
+      //this will cause testsig to reevaluate again, after the inner signal is fully updated.
+      // leading to an infinite loop
+      t.depend(dynamic(outside) { t => t.depend(outside) })
     }
+
+    assert(testsig.now === 1)
+    outside set 2
+    assert(testsig.now === 2)
   }
 
 

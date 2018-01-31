@@ -21,7 +21,7 @@ class GarbageCollectionTest extends RETests with Whenever {
         val res = v1.map(_ => new Array[Int](1024 * 1024))
         val obs = res.observe(_ => Unit)
         obs.remove()
-        Observe.weak(res, fireImmediately = true)(_ => Unit, fail = null)
+        Observe.weak(res, fireImmediately = true)((_: Array[Int]) => Unit, fail = null)
 
         val p = new PhantomReference(res, q)
         (v1, p)

@@ -27,7 +27,7 @@ class BufferedValueStruct[P, S <: Struct, N](ip: InitValues[P, N]) extends ReadW
     owner = token
     res
   }
-  override def setNotificaiton(notification: N, token: Token): Boolean = {
+  override def setNotification(notification: N, token: Token): Boolean = {
     assert(owner == null || owner == token, s"buffer owned by $owner written by $token")
     this.notification = notification
     val res = owner == null
@@ -101,7 +101,7 @@ trait ReadWriteValue[P, S <: Struct, N] extends Committable[S] {
   def get(token: Token): P
   def write(value: P, token: Token): Boolean
   def notification(token: Token): N
-  def setNotificaiton(notification: N, token: Token): Boolean
+  def setNotification(notification: N, token: Token): Boolean
 }
 
 

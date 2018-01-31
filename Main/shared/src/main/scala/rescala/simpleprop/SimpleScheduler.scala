@@ -1,7 +1,7 @@
 package rescala.simpleprop
 
 import rescala.core.Initializer.InitValues
-import rescala.core.{InitialChangeN, InitialChangeV, Initializer, ReSource, Reactive, ReevTicket, Scheduler, Struct}
+import rescala.core.{Initializer, ReSource, Reactive, ReevTicket, Scheduler, Struct}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -55,12 +55,8 @@ object SimpleScheduler extends Scheduler[SimpleStruct] {
       }
       val admissionResult = admissionPhase(admissionTicket)
       val sources = admissionTicket.initialChanges.collect {
-        case iv: InitialChangeV[SimpleStruct] if iv.accept(iv.source.state.value) =>
-          iv.source.state.value = iv.value
-          iv.source
-        case in: InitialChangeN[SimpleStruct] =>
-          in.source.state.notification = in.value
-          in.source
+        case iv if iv.writeNotification(iv.source.state.notification = _) ||
+          iv.writeValue(iv.source.state.value, iv.source.state.value = _) => iv.source
       }.toSeq
       sources.foreach(_.state.outgoing.foreach(initial += _))
       initial.foreach(_.state.dirty = true)

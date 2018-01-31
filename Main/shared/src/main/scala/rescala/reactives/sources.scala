@@ -28,9 +28,10 @@ final class Evt[T, S <: Struct] private[rescala](initialState: Estate[S, T], nam
   def fire(value: T)(implicit fac: Scheduler[S]): Unit = fac.transaction(this) {admit(value)(_)}
   override def disconnect()(implicit engine: Scheduler[S]): Unit = ()
   def admitPulse(pulse: Pulse[T])(implicit ticket: AdmissionTicket[S]): Unit = {
-    ticket.recordChange(new InitialChangeN[S] {
+    ticket.recordChange(new InitialChange[S] {
       override val source = Evt.this
-      override val value: source.Notification = pulse
+      override def writeValue(b: Unit, v: Unit => Unit): Boolean = false
+      override def writeNotification(v: Pulse[T] => Unit): Boolean = {v(pulse); true}
     })
   }
 }
@@ -66,11 +67,11 @@ final class Var[A, S <: Struct] private[rescala](initialState: Signals.Sstate[S,
 
   override def disconnect()(implicit engine: Scheduler[S]): Unit = ()
 
-  final def admitPulse(pulse: Pulse[A])(implicit ticket: AdmissionTicket[S]): Unit = {
-    ticket.recordChange(new InitialChangeV[S] {
+  def admitPulse(pulse: Pulse[A])(implicit ticket: AdmissionTicket[S]): Unit = {
+    ticket.recordChange(new InitialChange[S] {
       override val source: Var.this.type = Var.this
-      override val value: Value = pulse
-      override def accept(before: source.Value): Boolean = before != value
+      override def writeValue(b: Pulse[A], v: Pulse[A] => Unit): Boolean = if (b != pulse) {v(pulse); true} else false
+      override def writeNotification(v: Unit => Unit): Boolean = false
     })
   }
 }

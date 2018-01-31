@@ -104,7 +104,8 @@ private abstract class ChangeEvent[T, S <: Struct](_bud: S#State[Pulse[T], S, Pu
     val from: Pulse[T] = rein.before
     if (to == Pulse.empty) return rein // ignore empty propagations
     rein.withValue(to) // update internal state
-    rein.withNotification(Pulse.Value(Diff(from, to)))
+    if (from != Pulse.NoChange) rein.withNotification(Pulse.Value(Diff(from, to)))
+    rein
   }
 }
 

@@ -16,12 +16,12 @@ trait ParRPInterTurn {
 
 }
 
-class ParRPStructType[P, S <: Struct](current: P, transient: Boolean, val lock: TurnLock[ParRPInterTurn])
-  extends LevelStructTypeImpl[P, S](current, transient)
+class ParRPStructType[V, S <: Struct, N](ip: InitValues[V, N], val lock: TurnLock[ParRPInterTurn])
+  extends LevelStructTypeImpl[V, S, N](ip)
 
 
 class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropagation[ParRP] with ParRPInterTurn with LevelStruct {
-  override type State[P, S <: Struct] = ParRPStructType[P, S]
+  override type State[P, S <: Struct, N] = ParRPStructType[P, S, N]
 
   private type TState = ParRP
 
@@ -40,11 +40,11 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
 
   final val key: Key[ParRPInterTurn] = new Key(this)
 
-  override protected def makeDerivedStructState[P, N](valuePersistency: InitValues[P]): ParRPStructType[P, ParRP] = {
+  override protected def makeDerivedStructState[V, N](ip: InitValues[V, N]): ParRPStructType[V, ParRP, N] = {
     val lock = new TurnLock[ParRPInterTurn]
     val owner = lock.tryLock(key)
     assert(owner eq key, s"$this failed to acquire lock on newly created reactive")
-    new ParRPStructType(valuePersistency.initialValue, valuePersistency.isTransient, lock)
+    new ParRPStructType(ip, lock)
   }
 
   /** this is called after the turn has finished propagating, but before handlers are executed */

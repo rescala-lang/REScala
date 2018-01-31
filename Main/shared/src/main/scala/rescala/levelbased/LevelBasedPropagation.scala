@@ -1,6 +1,6 @@
 package rescala.levelbased
 
-import rescala.core.{InitialChange, InitialChangeN, InitialChangeV, ReSource, Reactive, ReevTicket}
+import rescala.core.{InitialChange, ReSource, Reactive, ReevTicket}
 import rescala.twoversion.TwoVersionPropagationImpl
 
 import scala.collection.mutable.ArrayBuffer
@@ -66,14 +66,10 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
     }
   }
 
-  final override def initialize(ic: InitialChange[S]): Unit = ic match {
-    case iv: InitialChangeV[S] if iv.accept(iv.source.state.base(token))  =>
-      writeState(iv.source)(iv.value)
-      enqueueOutgoing(ic.source)
-    case in: InitialChangeN[S] =>
-      writeNotification(in.source)(in.value)
-      enqueueOutgoing(ic.source)
-
+  final override def initialize(ic: InitialChange[S]): Unit = {
+    val v = ic.writeNotification(writeNotification(ic.source))
+    val n = ic.writeValue(ic.source.state.base(token), writeState(ic.source))
+    if (v || n) enqueueOutgoing(ic.source)
   }
 
   def propagationPhase(): Unit = levelQueue.evaluateQueue()

@@ -16,7 +16,7 @@ lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
   caseStudyShapes,
   crdts,
   datastructures,
-  distributedFullmv,
+//  distributedFullmv,
   dividi,
   documentation,
   examples,
@@ -182,10 +182,10 @@ lazy val fullmv = project.in(file("Research/Multiversion"))
     cfg.test, cfg.noPublish)
   .dependsOn(rescalaJVM, testsJVM % "test->test")
 
-lazy val distributedFullmv = project.in(file("Research/MultiversionDistribution"))
-  .settings( cfg.base, name := "rescala-distributed-multiversion",
-    cfg.test, cfg.noPublish, lib.retierTransmitter, lib.circe)
-  .dependsOn(fullmv, testsJVM % "test->test")
+//lazy val distributedFullmv = project.in(file("Research/MultiversionDistribution"))
+//  .settings( cfg.base, name := "rescala-distributed-multiversion",
+//    cfg.test, cfg.noPublish, lib.retierTransmitter, lib.circe)
+//  .dependsOn(fullmv, testsJVM % "test->test")
 
 lazy val meta = project.in(file("Research/Meta"))
   .dependsOn(rescalaJVM)

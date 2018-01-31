@@ -97,7 +97,7 @@ trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropaga
     if (pulsing.state.write(value, token)) this.schedule(pulsing.state)
   }
   def writeNotification(pulsing: ReSource[S])(value: pulsing.Notification): Unit = {
-    if (pulsing.state.setNotificaiton(value, token)) this.schedule(pulsing.state)
+    if (pulsing.state.setNotification(value, token)) this.schedule(pulsing.state)
   }
 
 }

@@ -82,21 +82,10 @@ sealed abstract class StaticTicket[S <: Struct](creation: Initializer[S]) extend
 
 }
 
-sealed trait InitialChange[S <: Struct] {
-  def source: ReSource[S]
-}
-/** Records the initial source changes to be propagated */
-abstract class InitialChangeV[S <: Struct] extends InitialChange[S] {
+trait InitialChange[S <: Struct] {
   val source: ReSource[S]
-  def value: source.Value
-  /** Returns true iff the new [[value]] should be propagated, given the old value. */
-  def accept(before: source.Value): Boolean
-}
-
-/** Records the initial source changes to be propagated */
-abstract class InitialChangeN[S <: Struct] extends InitialChange[S] {
-  val source: ReSource[S]
-  def value: source.Notification
+  def writeValue(b: source.Value, v: source.Value => Unit): Boolean
+  def writeNotification(v: source.Notification => Unit): Boolean
 }
 
 /** Enables reading of the current value during admission.
