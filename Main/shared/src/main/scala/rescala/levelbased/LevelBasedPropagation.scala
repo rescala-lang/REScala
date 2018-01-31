@@ -1,6 +1,6 @@
 package rescala.levelbased
 
-import rescala.core.{InitialChange, ReSource, Reactive, ReevTicket}
+import rescala.core.{InitialChange, InitialChangeN, InitialChangeV, ReSource, Reactive, ReevTicket}
 import rescala.twoversion.TwoVersionPropagationImpl
 
 import scala.collection.mutable.ArrayBuffer
@@ -33,14 +33,10 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
       levelQueue.enqueue(minimalLevel)(head)
     } else {
       dependencies.foreach(commitDependencyDiff(head, head.state.incoming()))
-      reevRes.forValue(writeValue(head, minimalLevel))
+      reevRes.forValue(writeState(head))
       reevRes.forEffect(observe)
       if (reevRes.propagate) enqueueOutgoing(head, minimalLevel)
     }
-  }
-
-  private def writeValue(head: ReSource[S], minLevel: Int = -42)(value: head.Value): Unit = {
-    writeState(head)(value)
   }
 
   private def enqueueOutgoing(head: ReSource[S], minLevel: Int = -42) = {
@@ -69,9 +65,14 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
     }
   }
 
-  final override def initialize(ic: InitialChange[S]): Unit = {
-    writeValue(ic.source)(ic.value)
-    enqueueOutgoing(ic.source)
+  final override def initialize(ic: InitialChange[S]): Unit = ic match {
+    case iv: InitialChangeV[S] if iv.accept(iv.source.state.base(token))  =>
+      writeState(iv.source)(iv.value)
+      enqueueOutgoing(ic.source)
+    case in: InitialChangeN[S] =>
+      ///TODO:: writeNotification(in.source)(in.value)
+      enqueueOutgoing(ic.source)
+
   }
 
   def propagationPhase(): Unit = levelQueue.evaluateQueue()

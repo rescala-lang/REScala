@@ -22,7 +22,7 @@ trait Initializer[S <: Struct] {
   /** Creates the internal state of [[Reactive]]s */
   protected[this] def makeDerivedStructState[P, N](valuePersistency: Param[P]): S#State[P, S, N]
 
-  /**  Creates the internal state of [[Interp]]s */
+  /**  Creates the internal state of [[ReSource]]s */
   protected[this] def makeSourceStructState[P, N](valuePersistency: Param[P]): S#State[P, S, N] =
     makeDerivedStructState[P, N](valuePersistency)
   /**
@@ -37,33 +37,57 @@ trait Initializer[S <: Struct] {
 
 object Initializer {
 
-  sealed class Param[V](
-    val initialValue: V,
-    val isTransient: Boolean,
+  sealed trait Param[V] {
+    def initialValue: V
+    val isTransient: Boolean
     val ignitionRequiresReevaluation: Boolean
-  )
+  }
 
-  private object _Event extends Param[Pulse[Nothing]](Pulse.NoChange, isTransient = true, ignitionRequiresReevaluation = false)
-  def Event[V]: Param[Pulse[V]] = _Event.asInstanceOf[Param[Pulse[V]]]
+  val Event: Param[Nothing] = new Param[Nothing]{
+    override def initialValue: Nothing = ???
+    override val isTransient: Boolean = true
+    override val ignitionRequiresReevaluation: Boolean = false
+  }
 
-  private object _DynamicEvent extends Param[Pulse[Nothing]](Pulse.NoChange, isTransient = true, ignitionRequiresReevaluation = true)
-  def DynamicEvent[V]: Param[Pulse[V]] = _DynamicEvent.asInstanceOf[Param[Pulse[V]]]
+  object DynamicEvent extends Param[Nothing]{
+    override def initialValue: Nothing = ???
+    override val isTransient: Boolean = true
+    override val ignitionRequiresReevaluation: Boolean = true
+  }
 
-  private object _DerivedSignal extends Param[Pulse.Change[Nothing]](Pulse.empty, isTransient = false, ignitionRequiresReevaluation = true)
+  private object _DerivedSignal extends Param[Pulse.Change[Nothing]]{
+    override val initialValue: Pulse.Change[Nothing] = Pulse.empty
+    override val isTransient: Boolean = false
+    override val ignitionRequiresReevaluation: Boolean = true
+  }
   def DerivedSignal[V]: Param[Pulse[V]] = _DerivedSignal.asInstanceOf[Param[Pulse[V]]]
 
   case class InitializedSignal[V: ReSerializable](override val initialValue: Pulse[V])
-    extends Param[Pulse[V]](initialValue, isTransient = false, ignitionRequiresReevaluation = false) {
+    extends Param[Pulse[V]] {
+    override val isTransient: Boolean = false
+    override val ignitionRequiresReevaluation: Boolean = false
     def serializable: ReSerializable[Pulse[V]] = ReSerializable.pulseSerializable
   }
 
-  private object _ObserverS extends Param[Unit]((), isTransient = true, ignitionRequiresReevaluation = true)
+  private object _ObserverS extends Param[Unit] {
+    override val initialValue: Unit = ()
+    override val isTransient: Boolean = true
+    override val ignitionRequiresReevaluation: Boolean = true
+  }
   def SignalObserver[V]: Param[Unit] = _ObserverS.asInstanceOf[Param[Unit]]
 
-  private object _ObserverE extends Param[Unit]((), isTransient = true, ignitionRequiresReevaluation = false)
+  private object _ObserverE extends Param[Unit] {
+    override val initialValue: Unit = ()
+    override val isTransient: Boolean = true
+    override val ignitionRequiresReevaluation: Boolean = false
+  }
   def EventObserver[V]: Param[Unit] = _ObserverE.asInstanceOf[Param[Unit]]
 
-  private object _ChangeEvent extends Param[Pulse[Nothing]](Pulse.NoChange, isTransient = false, ignitionRequiresReevaluation = true)
+  private object _ChangeEvent extends Param[Pulse[Nothing]] {
+    override val initialValue: Pulse[Nothing] = Pulse.NoChange
+    override val isTransient: Boolean = false
+    override val ignitionRequiresReevaluation: Boolean = true
+  }
   def ChangeEvent[V]: Param[Pulse[V]] = _ChangeEvent.asInstanceOf[Param[Pulse[V]]]
 
 }

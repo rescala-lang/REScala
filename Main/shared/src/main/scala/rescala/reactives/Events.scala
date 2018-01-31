@@ -9,24 +9,29 @@ import scala.language.existentials
 
 /** Functions to construct events, you probably want to use the operators on [[Event]] for a nicer API. */
 object Events {
-  type Estate[S <: Struct, T]  = S#State[Pulse[T], S, Pulse[T]]
+  type Estate[S <: Struct, T] = S#State[Nothing, S, Pulse[T]]
 
 
   /** the basic method to create static events */
-  def staticNamed[T, S <: Struct](name: String, dependencies: ReSource[S]*)(calculate: StaticTicket[S] => Pulse[T])(implicit ticket: CreationTicket[S]): Event[T, S] = ticket { initTurn =>
-    initTurn.create[Pulse[T], StaticEvent[T, S], Pulse[T]](dependencies.toSet, Initializer.Event) {
+  def staticNamed[T, S <: Struct](name: String,
+                                  dependencies: ReSource[S]*)
+                                 (calculate: StaticTicket[S] => Pulse[T])
+                                 (implicit ticket: CreationTicket[S]): Event[T, S] = ticket { initTurn =>
+    initTurn.create[Nothing, StaticEvent[T, S], Pulse[T]](dependencies.toSet, Initializer.Event) {
       state => new StaticEvent[T, S](state, calculate, name) with DisconnectableImpl[S]
     }
   }
 
   /** Creates static events */
-  def static[T, S <: Struct](dependencies: ReSource[S]*)(calculate: StaticTicket[S] => Option[T])(implicit ticket: CreationTicket[S]): Event[T, S] =
+  def static[T, S <: Struct](dependencies: ReSource[S]*)
+                            (calculate: StaticTicket[S] => Option[T])
+                            (implicit ticket: CreationTicket[S]): Event[T, S] =
     staticNamed(ticket.rename.name, dependencies: _*)(st => Pulse.fromOption(calculate(st)))
 
   /** Creates dynamic events */
   def dynamic[T, S <: Struct](dependencies: ReSource[S]*)(expr: DynamicTicket[S] => Option[T])(implicit ticket: CreationTicket[S]): Event[T, S] = {
     ticket { initialTurn =>
-      initialTurn.create[Pulse[T], DynamicEvent[T, S], Pulse[T]](dependencies.toSet, Initializer.DynamicEvent) {
+      initialTurn.create[Nothing, DynamicEvent[T, S], Pulse[T]](dependencies.toSet, Initializer.DynamicEvent) {
         state => new DynamicEvent[T, S](state, expr.andThen(Pulse.fromOption), ticket.rename) with DisconnectableImpl[S]
       }
     }
@@ -41,7 +46,9 @@ object Events {
   }
 
   /** Folds when any one of a list of events occurs, if multiple events occur, every fold is executed in order. */
-  final def fold[A: ReSerializable, S <: Struct](init: A)(accthingy: (=> A) => Seq[(Event[T, S], T => A) forSome {type T}])(implicit ticket: CreationTicket[S]): Signal[A, S] = {
+  final def fold[A: ReSerializable, S <: Struct](init: A)
+                                                (accthingy: (=> A) => Seq[(Event[T, S], T => A) forSome {type T}])
+                                                (implicit ticket: CreationTicket[S]): Signal[A, S] = {
     ticket { initialTurn =>
       var acc = () => init
       val ops = accthingy(acc())
@@ -61,27 +68,32 @@ object Events {
     }
   }
 
-  final def Match[S <: Struct, A](ops : (Event[T, S], T => A) forSome {type T}*): Seq[((Event[T, S], T => A)) forSome {type T}] = ops
+  final def Match[S <: Struct, A](ops: (Event[T, S], T => A) forSome {type T}*): Seq[((Event[T, S], T => A)) forSome {type T}] = ops
 
   class EOps[T, S <: Struct](val e: Event[T, S]) {
     /** Constructs a pair similar to ->, however this one is compatible with type inference for [[fold]] */
-    final def >> [A](fun: T => A): (Event[T, S], T => A) = (e, fun)
+    final def >>[A](fun: T => A): (Event[T, S], T => A) = (e, fun)
+  }
+
+  def noteFromPulse[P, N, S <: Struct](t: ReevTicket[P, Pulse[N], S], value: Pulse[N]): Result[P, Pulse[N], S] = {
+    if (value.isChange) t.withNotification(value)
+    else t
   }
 }
 
 
-
-
 private abstract class StaticEvent[T, S <: Struct](_bud: Estate[S, T], expr: StaticTicket[S] => Pulse[T], name: REName)
-  extends Base[Pulse[T], S, Pulse[T]](_bud, name) with Event[T, S] {
+  extends Base[Nothing, S, Pulse[T]](_bud, name) with Event[T, S] {
   override protected[rescala] def reevaluate(rein: ReIn): Rout =
-    Result.noteFromPulse(rein, Pulse.tryCatch(expr(rein), onEmpty = NoChange))
+    Events.noteFromPulse[Nothing, T, S](rein, Pulse.tryCatch(expr(rein), onEmpty = NoChange))
 }
 
 
-private abstract class ChangeEvent[T, S <: Struct](_bud: Estate[S, Diff[T]], signal: Signal[T, S], name: REName)
+private abstract class ChangeEvent[T, S <: Struct](_bud:S#State[Pulse[Diff[T]], S, Pulse[Diff[T]]], signal: Signal[T, S], name: REName)
   extends Base[Pulse[Diff[T]], S, Pulse[Diff[T]]](_bud, name) with Event[Diff[T], S] {
 
+  override type Value = Pulse[Diff[T]]
+  override def interpret(v: Pulse[Diff[T]], n: Pulse[Diff[T]]): Option[Diff[T]] = n.toOption
   override protected[rescala] def reevaluate(rein: ReIn): Rout = {
     val to: Pulse[T] = rein.collectStatic(signal)._1
     if (to == Pulse.empty) return rein
@@ -90,23 +102,22 @@ private abstract class ChangeEvent[T, S <: Struct](_bud: Estate[S, Diff[T]], sig
         val from = u.to
         if (from == to) rein
         else {
-          Result.noteFromPulse(rein, Pulse.Value(Diff(from, to)))
-          rein.withNotification(Pulse.Value(Diff(from, to)))
+          val v = Pulse.Value(Diff(from, to))
+          if (v.isChange) rein.withValue(v); rein.withNotification(v)
         }
       case NoChange =>
         val res = Diff(Pulse.empty, to)
         rein.withValue(Pulse.Value(res)).withPropagate(false)
-      case x@Exceptional(_) =>
-        Result.noteFromPulse(rein, x) //should not happen, change does not actually access other pulses
+      case Exceptional(x) => throw x // should not happen, before is never exceptional.
     }
   }
 }
 
 private abstract class DynamicEvent[T, S <: Struct](_bud: Estate[S, T], expr: DynamicTicket[S] => Pulse[T], name: REName)
-  extends Base[Pulse[T], S, Pulse[T]](_bud, name) with Event[T, S] {
+  extends Base[Nothing, S, Pulse[T]](_bud, name) with Event[T, S] {
 
   override protected[rescala] def reevaluate(rein: ReIn): Rout = {
     rein.trackDependencies()
-    Result.noteFromPulse(rein, Pulse.tryCatch(expr(rein), onEmpty = NoChange))
+    Events.noteFromPulse[Nothing, T, S](rein, Pulse.tryCatch(expr(rein), onEmpty = NoChange))
   }
 }

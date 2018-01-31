@@ -52,11 +52,7 @@ trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropaga
 
   def initialize(ic: InitialChange[S]): Unit
 
-  final override def initializationPhase(initialChanges: Traversable[InitialChange[S]]): Unit = initialChanges.foreach { ic =>
-    if (ic.accept(ic.source.state.base(token))) {
-      initialize(ic)
-    }
-  }
+  final override def initializationPhase(initialChanges: Traversable[InitialChange[S]]): Unit = initialChanges.foreach(initialize)
 
   final def commitDependencyDiff(node: Reactive[S], current: Set[ReSource[S]])(updated: Set[ReSource[S]]): Unit = {
     val indepsRemoved = current -- updated
@@ -100,4 +96,5 @@ trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropaga
   def writeState(pulsing: ReSource[S])(value: pulsing.Value): Unit = {
     if (pulsing.state.write(value, token)) this.schedule(pulsing.state)
   }
+
 }

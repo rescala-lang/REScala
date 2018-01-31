@@ -9,15 +9,6 @@ trait Result[T, N, S <: Struct] {
   def getDependencies(): Option[Set[ReSource[S]]]
 }
 
-
-object Result {
-
-  def noteFromPulse[P, N, S <: Struct](t: ReevTicket[P, Pulse[N], S], value: Pulse[N]): Result[P, Pulse[N], S] = {
-    if (value.isChange) t.withNotification(value)
-    else t
-  }
-}
-
 trait Disconnectable[S <: Struct] {
   def disconnect()(implicit engine: Scheduler[S]): Unit
 }
