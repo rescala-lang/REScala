@@ -47,7 +47,9 @@ object Events {
   }
 
   def foldOne[A, T: ReSerializable, S <: Struct](dependency: Event[A, S], init: T)(expr: (T, A) => T)(implicit ticket: CreationTicket[S]): Signal[T, S] = {
-    fold(Set[ReSource[S]](dependency), init)((st, acc) => expr(acc(), st.collectStatic(dependency)._2.get))
+    fold(Set[ReSource[S]](dependency), init){(st, acc) =>
+      val a = st.collectStatic(dependency)._2.get
+      expr(acc(), a)}
   }
 
   /** Folds events with a given operation to create a Signal.
