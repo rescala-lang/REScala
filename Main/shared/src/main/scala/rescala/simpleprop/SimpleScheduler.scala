@@ -39,13 +39,14 @@ object SimpleCreation extends Initializer[SimpleStruct] {
 
 
 object SimpleScheduler extends Scheduler[SimpleStruct] {
-  val initial: ArrayBuffer[Reactive] = ArrayBuffer[Reactive]()
-  val sorted: ArrayBuffer[Reactive] = ArrayBuffer[Reactive]()
+
   var idle = true
   override private[rescala] def executeTurn[R](initialWrites: Traversable[ReSource], admissionPhase: AdmissionTicket => R) = synchronized {
     require(idle, "simple scheduler is not reentrant")
     idle = false
     try {
+      val initial: ArrayBuffer[Reactive] = ArrayBuffer[Reactive]()
+      val sorted: ArrayBuffer[Reactive] = ArrayBuffer[Reactive]()
       // admission
       val admissionTicket = new AdmissionTicket(SimpleCreation) {
         override def access[A](reactive: Signal[A]): A = reactive.state.value.get
@@ -100,13 +101,12 @@ object Util {
     rem.foreach(_toposort)
   }
 
-  val dt = new ReevTicket(SimpleCreation, null) {
-    override def dynamicAccess[A](reactive: ReSource[SimpleStruct]) = ???
-    override def staticAccess[A](reactive: ReSource[SimpleStruct]) = (reactive.state.value, reactive.state.notification)
-  }
-
   def evaluate(reactive: Reactive[SimpleStruct], incoming: Set[ReSource[SimpleStruct]]): Unit = {
-    val reev = reactive.reevaluate(dt.reset(reactive.state.value))
+    val dt = new ReevTicket[reactive.Value, reactive.Notification, SimpleStruct](SimpleCreation, reactive.state.value) {
+      override def dynamicAccess[A](reactive: ReSource[SimpleStruct]) = ???
+      override def staticAccess[A](reactive: ReSource[SimpleStruct]) = (reactive.state.value, reactive.state.notification)
+    }
+    val reev = reactive.reevaluate(dt)
     if (reev.propagate) reactive.state.outgoing.foreach(_.state.dirty = true)
     if (reev.getDependencies().isDefined) ???
     reev.forValue(reactive.state.value = _)
