@@ -38,8 +38,8 @@ class except_EventTest extends RETests {
     val e1 = Evt[Int]
     val e2 = e1 map ((x: Int) => x * 2)
     val e3 = e1 filter (_ => cond)
-    val e1_except_e2 = e2 \ e3
-    e1_except_e2 += ((x: Int) => { test += 1 })
+    val e2_except_e3 = e2 \ e3
+    e2_except_e3 += ((x: Int) => { test += 1 })
 
 
     e1.fire(10)

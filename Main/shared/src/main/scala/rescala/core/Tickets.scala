@@ -61,6 +61,7 @@ abstract class ReevTicket[V, N, S <: Struct](
     value = null.asInstanceOf[V]
     effect = null
     collectedDependencies = null
+    notification = null.asInstanceOf[N]
     val res = this.asInstanceOf[ReevTicket[NT, NN, S]]
     res._before = nb
     res

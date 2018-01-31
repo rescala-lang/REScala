@@ -32,11 +32,11 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[S, Option[T]] with 
 
   override type Notification <: Pulse[T]
 
-  implicit def valueAccess[A, B](v: (A, B)): B = v._2
+  implicit def valueAccess[A, B](v: (A, Pulse[B])): Pulse[B] = Option(v._2).getOrElse(Pulse.NoChange)
 
   /** Interprets the pulse of the event by converting to an option
     * @group internal */
-  override def interpret(v: Value, n: Notification): Option[T] = n.toOption
+  override def interpret(v: Value, n: Notification): Option[T] = Option(n).flatMap(_.toOption)
 
   /** Adds an observer.
     * @usecase def +=(handler: T => Unit): Observe[S]
@@ -97,7 +97,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[S, Option[T]] with 
     * @group operator*/
   final def \[U](except: Event[U, S])(implicit ticket: CreationTicket[S]): Event[T, S] = {
     Events.staticNamed(s"(except $this  $except)", this, except) { st =>
-      (st.collectStatic(except): Pulse[U]) match {
+      valueAccess(st.collectStatic(except)) match {
         case NoChange => st.collectStatic(this)
         case Value(_) => Pulse.NoChange
         case ex@Exceptional(_) => ex

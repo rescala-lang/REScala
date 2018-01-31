@@ -1,7 +1,7 @@
 package rescala.simpleprop
 
 import rescala.core.Initializer.Param
-import rescala.core.{InitialChangeV, Initializer, ReSource, Reactive, ReevTicket, Scheduler, Struct}
+import rescala.core.{InitialChangeN, InitialChangeV, Initializer, ReSource, Reactive, ReevTicket, Scheduler, Struct}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -9,8 +9,7 @@ trait SimpleStruct extends Struct {
   override type State[P, S <: Struct, N] = SimpleState[P, N]
 }
 
-class SimpleState[V, N](var value: V,
-                        transient: Option[V]) {
+class SimpleState[V, N](var value: V) {
   var outgoing: Set[Reactive[SimpleStruct]] = Set.empty
   var notification: N = _
   var discovered = false
@@ -18,14 +17,13 @@ class SimpleState[V, N](var value: V,
   def reset(): Unit = {
     discovered = false
     dirty = false
-    transient.foreach(value = _)
     notification = null.asInstanceOf[N]
   }
 }
 
 object SimpleCreation extends Initializer[SimpleStruct] {
   override protected[this] def makeDerivedStructState[P, N](valuePersistency: Param[P]): SimpleState[P, N] =
-    new SimpleState[P, N](valuePersistency.initialValue, if (valuePersistency.isTransient) Some(valuePersistency.initialValue) else None)
+    new SimpleState[P, N](valuePersistency.initialValue)
   override protected[this] def ignite(reactive: Reactive[SimpleStruct], incoming: Set[ReSource[SimpleStruct]], ignitionRequiresReevaluation: Boolean): Unit = {
 
     incoming.foreach { dep =>
@@ -55,10 +53,11 @@ object SimpleScheduler extends Scheduler[SimpleStruct] {
       val admissionResult = admissionPhase(admissionTicket)
       val sources = admissionTicket.initialChanges.collect {
         case iv: InitialChangeV[SimpleStruct] if iv.accept(iv.source.state.value) =>
-          if (iv.source.isInstanceOf[Evt[_]])
-            iv.source.state.notification = iv.value.asInstanceOf[iv.source.Notification]
-          else iv.source.state.value = iv.value
+          iv.source.state.value = iv.value
           iv.source
+        case in: InitialChangeN[SimpleStruct] =>
+          in.source.state.notification = in.value
+          in.source
       }.toSeq
       sources.foreach(_.state.outgoing.foreach(initial += _))
       initial.foreach(_.state.dirty = true)
