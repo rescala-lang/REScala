@@ -6,10 +6,10 @@ import rescala.core.Pulse
 import tests.rescala.testtools.RETests
 
 
-class OR_EventTest extends RETests {
+class OR_EventTest extends RETests { multiEngined { engine => import engine._
 
 
-  allEngines("handler Of OR Is Executed If Any Of The Events Fires") { engine => import engine._
+  test("handler Of OR Is Executed If Any Of The Events Fires") {
     var test = 0
     val e1 = Evt[Int]
     val e2 = Evt[Int]
@@ -24,7 +24,7 @@ class OR_EventTest extends RETests {
 
   }
 
-  allEngines("handler Of OR Is Executed Only Once") { engine => import engine._
+  test("handler Of OR Is Executed Only Once") {
 
     val test = new AtomicInteger(0)
     val e1 = Evt[Int]
@@ -40,7 +40,7 @@ class OR_EventTest extends RETests {
     assert(test.get == 4)
   }
 
-  allEngines("OR event select correct event") { engine => import engine._
+  test("OR event select correct event") {
     val e1 = Evt[String]
     val e2 = Evt[String]
 
@@ -71,4 +71,4 @@ class OR_EventTest extends RETests {
 
   }
 
-}
+} }

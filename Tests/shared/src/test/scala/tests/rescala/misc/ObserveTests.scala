@@ -2,9 +2,9 @@ package tests.rescala.misc
 
 import tests.rescala.testtools.RETests
 
-class ObserveTests extends RETests {
+class ObserveTests extends RETests { multiEngined { engine => import engine._
 
-  allEngines("can observe signals") { engine => import engine._
+  test("can observe signals") {
     var result = List[Int]()
     val v1 = Var(0)
     v1.observe(result ::= _)
@@ -16,7 +16,7 @@ class ObserveTests extends RETests {
     assert(result === List(10, 0))
   }
 //
-//  allEngines("self removing observers are possible, although maybe not as straight forward as one would wish?"){ engine => import engine._
+//  test("self removing observers are possible, although maybe not as straight forward as one would wish?"){
 //    var result = List[Int]()
 //    val v1 = Var(0)
 //    lazy val link: Signal[Int] = Signals.static(v1) { t =>
@@ -42,7 +42,7 @@ class ObserveTests extends RETests {
 //    assert(result === List(10, 0))
 //  }
 //
-//  allEngines("simpler self removing observers, but this does not fire on attach"){ engine => import engine._
+//  test("simpler self removing observers, but this does not fire on attach"){
 //    var result = List[Int]()
 //    val v1 = Var(0)
 //
@@ -65,4 +65,4 @@ class ObserveTests extends RETests {
 //    assert(result === List(10))
 //  }
 
-}
+} }

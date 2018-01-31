@@ -3,11 +3,11 @@ package tests.rescala.static.events
 import tests.rescala.testtools.RETests
 
 
-class dropParam_EventTest extends RETests {
+class dropParam_EventTest extends RETests { multiEngined { engine => import engine._
 
 
 
-  allEngines("handler Of drop Param  Is Executed"){ engine => import engine._
+  test("handler Of drop Param  Is Executed"){
     var test = 0
     val e1 = Evt[Int]
     val e1_drop: Event[Unit] = e1.dropParam
@@ -18,4 +18,4 @@ class dropParam_EventTest extends RETests {
     assert(test == 2)
   }
 
-}
+} }

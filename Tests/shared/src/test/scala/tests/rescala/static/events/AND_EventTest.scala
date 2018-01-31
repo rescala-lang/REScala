@@ -3,12 +3,12 @@ package tests.rescala.static.events
 import tests.rescala.testtools.RETests
 
 
-class AND_EventTest extends RETests {
+class AND_EventTest extends RETests { multiEngined { engine => import engine._
 
 
 
 
-  allEngines("handler Of AND Is NOT Executed If Events Fire Singularly"){ engine => import engine._
+  test("handler Of AND Is NOT Executed If Events Fire Singularly"){
     var test = 0
     val e1 = Evt[Int]
     val e2 = Evt[Int]
@@ -24,7 +24,7 @@ class AND_EventTest extends RETests {
 
   }
 
-  allEngines("handler Of AND Does Not Remember Old Rounds"){ engine => import engine._
+  test("handler Of AND Does Not Remember Old Rounds"){
     var test = 0
     val e1 = Evt[Int]
     val e2 = Evt[Int]
@@ -39,7 +39,7 @@ class AND_EventTest extends RETests {
 
   }
 
-  allEngines("handler Of AND IsExecuted If Both Events Fire"){ engine => import engine._
+  test("handler Of AND IsExecuted If Both Events Fire"){
 
     var test = 0
     val e1 = Evt[Int]
@@ -55,4 +55,4 @@ class AND_EventTest extends RETests {
     assert(test == 4)
   }
 
-}
+} }

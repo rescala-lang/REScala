@@ -7,12 +7,13 @@ import rescala.reactives.Observe
 import rescala.stm.STMEngine
 import tests.rescala.testtools.RETests
 
-class GarbageCollectionTest extends RETests with Whenever {
+class GarbageCollectionTest extends RETests with Whenever { multiEngined { engine => import engine._
 
+  if(engine == STMEngine.stm) { test("nothing"){} }
+else {
 
-  allEngines("garbage collection for simple signal mappings"){engine => import engine._
+  test("garbage collection for simple signal mappings"){
 
-    whenever(engine != STMEngine.stm) {
 
       val q = new ReferenceQueue[Signal[Array[Int]]]()
 
@@ -43,4 +44,4 @@ class GarbageCollectionTest extends RETests with Whenever {
 
   }
 
-}
+}}

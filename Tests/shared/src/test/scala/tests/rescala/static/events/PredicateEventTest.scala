@@ -3,11 +3,11 @@ package tests.rescala.static.events
 import tests.rescala.testtools.RETests
 
 
-class PredicateEventTest extends RETests {
+class PredicateEventTest extends RETests { multiEngined { engine => import engine._
 
 
 
-  allEngines("predicate Event Is Executed Only If The Predicate Is True"){ engine => import engine._
+  test("predicate Event Is Executed Only If The Predicate Is True"){
     var test = 0
     var cond = false
     val e1 = Evt[Int]
@@ -25,4 +25,4 @@ class PredicateEventTest extends RETests {
   }
 
 
-}
+} }

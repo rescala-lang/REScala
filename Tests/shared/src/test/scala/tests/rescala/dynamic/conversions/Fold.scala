@@ -3,11 +3,11 @@ package tests.rescala.dynamic.conversions
 import tests.rescala.testtools.RETests
 
 
-class Fold extends RETests {
+class Fold extends RETests { multiEngined { engine => import engine._
 
 
   /* toggle */
-  allEngines("toggle the Initial Value Is Set Correctly") { engine => import engine._
+  test("toggle the Initial Value Is Set Correctly") {
     val e = Evt[Int]
     val v1 = Var(1)
     val s1 = v1.map {_ + 1}
@@ -19,7 +19,7 @@ class Fold extends RETests {
     assert(s2.now == 12)
   }
 
-  allEngines("toggle the Event Switches The Signal") { engine => import engine._
+  test("toggle the Event Switches The Signal") {
     val e = Evt[Int]
     val v1 = Var(1)
     val s1 = v1.map {_ + 1}
@@ -43,7 +43,7 @@ class Fold extends RETests {
   }
 
   /* switchTo */
-  allEngines("switch To the Initial Value Is Set To The Signal") { engine => import engine._
+  test("switch To the Initial Value Is Set To The Signal") {
     val e = Evt[Int]
     val v1 = Var(1)
     val s1 = v1.map {_ + 1}
@@ -54,7 +54,7 @@ class Fold extends RETests {
     assert(s2.now == 3)
   }
 
-  allEngines("switch To the Event Switches The Value To The Value Of The Event") { engine => import engine._
+  test("switch To the Event Switches The Value To The Value Of The Event") {
     val e = Evt[Int]
     val v1 = Var(1)
     val s1 = v1.map {_ + 1}
@@ -69,7 +69,7 @@ class Fold extends RETests {
   }
 
   /* switchOnce */
-  allEngines("switch Once the Initial Value Is Set To The Signal") { engine => import engine._
+  test("switch Once the Initial Value Is Set To The Signal") {
     val e = Evt[Int]
     val v1 = Var(0)
     val v2 = Var(10)
@@ -82,7 +82,7 @@ class Fold extends RETests {
     assert(s3.now == 2)
   }
 
-  allEngines("switch Once the Event Switches The Value To The Value Of The Other Signal") { engine => import engine._
+  test("switch Once the Event Switches The Value To The Value Of The Other Signal") {
     val e = Evt[Int]
     val v1 = Var(0)
     val v2 = Var(10)
@@ -97,4 +97,4 @@ class Fold extends RETests {
     assert(s3.now == 12)
   }
 
-}
+} }

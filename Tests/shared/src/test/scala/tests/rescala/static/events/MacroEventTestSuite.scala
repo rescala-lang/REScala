@@ -2,10 +2,10 @@ package tests.rescala.static.events
 
 import tests.rescala.testtools.RETests
 
-class MacroEventTestSuite extends RETests {
+class MacroEventTestSuite extends RETests { multiEngined { engine => import engine._
 
 
-  allEngines("simple"){ engine => import engine._
+  test("simple"){
     val ev1 = Evt[Int]
     val v1 = Var(8)
     val snapshotEvent = Event {
@@ -24,7 +24,7 @@ class MacroEventTestSuite extends RETests {
 
   }
 
-  allEngines("map"){ engine => import engine._
+  test("map"){
     val ev1 = Evt[Int]
     val v1 = Var(8)
     val snapshotEvent = ev1.map(i =>  i + v1() )
@@ -41,7 +41,7 @@ class MacroEventTestSuite extends RETests {
 
   }
 
-  allEngines("map as static"){ engine => import engine._
+  test("map as static"){
     val ev1 = Evt[Int]
     val snapshotEvent = ev1.map(i =>  i + 1 )
 
@@ -58,7 +58,7 @@ class MacroEventTestSuite extends RETests {
   }
 
 
-  allEngines("use Events In Signal Expression") { engine => import engine._
+  test("use Events In Signal Expression") {
     val e1 = Evt[Int]
     val e2 = Evt[Int]
     val res = Signal {List(e1(), e2()).flatten.sum}
@@ -73,7 +73,7 @@ class MacroEventTestSuite extends RETests {
 
   }
 
-  allEngines("use Event Expression") { engine => import engine._
+  test("use Event Expression") {
     val e1 = Evt[Int]
     val e2 = Evt[Int]
     val event = Event {Some(List(e1(), e2()).flatten)}
@@ -91,7 +91,7 @@ class MacroEventTestSuite extends RETests {
 
 
 
-  allEngines("cut out created signals") { engine => import engine._
+  test("cut out created signals") {
     val e1 = Evt[Int]
 
     val event =  Event { Some{ e1.count.value } }
@@ -107,4 +107,4 @@ class MacroEventTestSuite extends RETests {
 
   }
 
-}
+} }

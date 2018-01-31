@@ -103,7 +103,7 @@ class PessimisticTest extends RETests {
     results2.assertClear(4)
   }
 
-  test("ParRP should (not?) Add And Remove Dependency In One Turn") {
+  "ParRP should (not?) Add And Remove Dependency In One Turn" in {
     import Engines.parrp._
 
     // this behavior is not necessary for correctness; adding and removing the edge (i.e. regs and unregs +=1)

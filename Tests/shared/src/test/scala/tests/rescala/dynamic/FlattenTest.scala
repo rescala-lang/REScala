@@ -2,9 +2,9 @@ package tests.rescala.dynamic
 
 import tests.rescala.testtools.RETests
 
-class FlattenTest extends RETests {
+class FlattenTest extends RETests { multiEngined { engine => import engine._
 
-  allEngines("flatten var") { engine => import engine._
+  test("flatten var") {
     val sv = Signal { Var(10) }.flatten
     val vv = Var(Var(10)).flatten
     val vs = Var(Signal{10}).flatten
@@ -15,13 +15,13 @@ class FlattenTest extends RETests {
     assert (ss.now === 10)
   }
 
-  allEngines("flatten array") { engine => import engine._
+  test("flatten array") {
     val sv = Signal { Array(Var(10)) }.flatten
     assert (sv.now sameElements Array(10))
 
   }
 
-  allEngines("creating Signals Inside Signals and flattening"){ engine => import engine._
+  test("creating Signals Inside Signals and flattening"){
 
 
     val outside = Var(1)
@@ -34,7 +34,7 @@ class FlattenTest extends RETests {
     assert(testsig.now === 2)
   }
 
-  allEngines("flatten Signal Seq"){ engine => import engine._
+  test("flatten Signal Seq"){
     val v = Var.empty[Seq[Signal[Int]]]
     var count = 0
     val v1, v2, v3 = {count += 1 ; Var(count) }
@@ -54,7 +54,7 @@ class FlattenTest extends RETests {
   }
 
 
-  allEngines("flatten Signal Set"){ engine => import engine._
+  test("flatten Signal Set"){
     val v = Var.empty[Set[Var[Int]]]
     var count = 0
     val v1, v2, v3 = {count += 1 ; Var(count) }
@@ -74,7 +74,7 @@ class FlattenTest extends RETests {
   }
 
 
-  allEngines("flatten Signal Array"){ engine => import engine._
+  test("flatten Signal Array"){
     val v = Var.empty[Array[Var[Int]]]
     var count = 0
     val v1, v2, v3 = {count += 1 ; Var(count) }
@@ -94,7 +94,7 @@ class FlattenTest extends RETests {
   }
 
 
-  allEngines("flatten Signal Option"){ engine => import engine._
+  test("flatten Signal Option"){
     val v = Var(Option.empty[Var[Int]])
     val w = Var(1)
 
@@ -111,7 +111,7 @@ class FlattenTest extends RETests {
     assert(flat.now === Some(100), "flatten fails 3")
   }
 
-  allEngines("flatten Event"){ engine => import engine._
+  test("flatten Event"){
     val e1 = Evt[Int]
     val condition = e1.latest(-1)
     val level1Event = e1.map(_ => "level 1")
@@ -129,7 +129,7 @@ class FlattenTest extends RETests {
     assert(log == List("level 1", "level 2"))
   }
 
-  allEngines("flatten Event Same Level"){ engine => import engine._
+  test("flatten Event Same Level"){
     val e1 = Evt[Int]
     val level2Condition = e1.latest(-1).map(identity)
     val level1EventA = e1.map(_ => "A")
@@ -148,7 +148,7 @@ class FlattenTest extends RETests {
   }
 
 
-  allEngines("unwrap  Event"){ engine => import engine._
+  test("unwrap  Event"){
     val e1 = Evt[Int]
     val e2 = Evt[Int]
     val eventSelector = Var(e1)
@@ -171,7 +171,7 @@ class FlattenTest extends RETests {
     assert(lastEvent == 5)
   }
 
-  allEngines("dynamic Level"){ engine => import engine._
+  test("dynamic Level"){
     val v1 = Var(1)
 
     val derived = v1.map(identity)
@@ -207,7 +207,7 @@ class FlattenTest extends RETests {
     assert(log == List(1, 13, 1, 13))
   }
 
-  allEngines("basic Higher Order Signal can Be Defereferenced"){ engine => import engine._
+  test("basic Higher Order Signal can Be Defereferenced"){
     val v = Var(42)
     val s1: Signal[Int] = v.map(identity)
     val s2: Signal[Signal[Int]] = dynamic() { t => s1 }
@@ -220,7 +220,7 @@ class FlattenTest extends RETests {
   }
 
 
-  allEngines("basic Higher Order Signal deref Fires Change"){ engine => import engine._
+  test("basic Higher Order Signal deref Fires Change"){
     val v = Var(42)
     val sValue: Signal[Int] = v.map(identity)
     val sHigher: Signal[Signal[Int]] = dynamic() { t => sValue }
@@ -241,7 +241,7 @@ class FlattenTest extends RETests {
   }
 
 
-  allEngines("basic Higher Order Signal higher Order Fires Change"){ engine => import engine._
+  test("basic Higher Order Signal higher Order Fires Change"){
     val v1 = Var(42)
     val v2 = Var(123)
     val s1: Signal[Int] = v1.map(identity)
@@ -279,7 +279,7 @@ class FlattenTest extends RETests {
   }
 
 
-  allEngines("order3 Signal"){ engine => import engine._
+  test("order3 Signal"){
 
     val v = Var(42)
     val s0: Signal[Int] = v.map(identity)
@@ -312,7 +312,7 @@ class FlattenTest extends RETests {
   }
 
 
-  allEngines("list Of Signals Section"){ engine => import engine._
+  test("list Of Signals Section"){
     val tick = Evt[Unit]
     val count = tick.iterate(0)(_ + 1)
     val doubled = count.map(_ * 2)
@@ -344,4 +344,4 @@ class FlattenTest extends RETests {
     assert(dereferenced.now == 4)
   }
 
-}
+} }

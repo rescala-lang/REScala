@@ -4,11 +4,11 @@ import org.scalatest.prop.Whenever
 import tests.rescala.testtools.RETests
 
 
-class ReevaluationCount extends RETests with Whenever {
+class ReevaluationCount extends RETests { multiEngined { engine => import engine._
 
 
 
-  allEngines("keep fixed Dependencies"){ engine => import engine._
+  test("keep fixed Dependencies"){
 
     val v1 = Var(true)
     val v2 = Var(0)
@@ -43,4 +43,4 @@ class ReevaluationCount extends RETests with Whenever {
   }
 
 
-}
+} }

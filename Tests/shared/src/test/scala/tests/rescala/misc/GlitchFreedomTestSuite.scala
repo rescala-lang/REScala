@@ -2,10 +2,9 @@ package tests.rescala.misc
 
 import tests.rescala.testtools.RETests
 
-class GlitchFreedomTestSuite extends RETests {
+class GlitchFreedomTestSuite extends RETests { multiEngined { engine => import engine._
 
-  allEngines("no Glitches In Simple Case") { engine =>
-    import engine._
+  test("no Glitches In Simple Case") {
 
     val v1 = Var(1)
     val s1 = v1.map {2 * _}
@@ -24,4 +23,4 @@ class GlitchFreedomTestSuite extends RETests {
 
   }
 
-}
+} }

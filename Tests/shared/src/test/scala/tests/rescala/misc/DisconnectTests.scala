@@ -2,9 +2,9 @@ package tests.rescala.misc
 
 import tests.rescala.testtools.RETests
 
-class DisconnectTests extends RETests {
+class DisconnectTests extends RETests { multiEngined { engine => import engine._
 
-  allEngines("remove incoming dependencies when disconnecting signals") { engine => import engine._
+  test("remove incoming dependencies when disconnecting signals") {
     val v1 = Var(10)
     val m1 = v1.map(_ + 10)
     val m2 = m1.map(_ + 10)
@@ -28,4 +28,4 @@ class DisconnectTests extends RETests {
 
   }
 
-}
+} }

@@ -1,12 +1,11 @@
 package tests.rescala.dynamic
 
-import rescala.Engines
 import rescala.core.infiltration.Infiltrator.assertLevel
 import tests.rescala.testtools.RETests
 
-class TrueDynamicSignals extends RETests {
+class TrueDynamicSignals extends RETests { multiEngined { engine => import engine._
 
-  allEngines("signals Nested In Vars"){ engine => import engine._
+  test("signals Nested In Vars"){
 
     val a = Var(3)
     val b = Var(Signal(a()))
@@ -20,7 +19,7 @@ class TrueDynamicSignals extends RETests {
 
   }
 
-  allEngines("nested Defined Signals"){ engine => import engine._
+  test("nested Defined Signals"){
     val a = Var(3)
     val b = Signal.dynamic {
       val c = Signal { a() }
@@ -34,7 +33,7 @@ class TrueDynamicSignals extends RETests {
     assert(b.now === 5)
   }
 
-  allEngines("use Of Inside Signal"){ engine => import engine._
+  test("use Of Inside Signal"){
     val outside = Var(1)
     val inside = Var(10)
 
@@ -52,7 +51,7 @@ class TrueDynamicSignals extends RETests {
     assert(sig.now === 2)
   }
 
-  allEngines("use Of Outside Signal"){ engine => import engine._
+  test("use Of Outside Signal"){
     val outside = Var(1)
     val inside = Var(10)
 
@@ -72,7 +71,7 @@ class TrueDynamicSignals extends RETests {
     assert(testsig.now === 2)
   }
 
-  allEngines("pattern Matching Anonymous Function Nested Signals"){ engine => import engine._
+  test("pattern Matching Anonymous Function Nested Signals"){
     val v1 = Var(1)
     val v2 = Var(2)
     val s1 = Signal { List(Some(v1), None, Some(v2), None) }
@@ -84,7 +83,7 @@ class TrueDynamicSignals extends RETests {
     assert(s2.now === List(10, 2))
   }
 
-  allEngines("outer And Inner Values"){ engine => import engine._
+  test("outer And Inner Values"){
     val v = Var(0)
     object obj {
       def sig = Signal { v() }
@@ -112,9 +111,9 @@ class TrueDynamicSignals extends RETests {
     assert(testsig.now === 55)
   }
 
-  allEngines("chained Signals2"){ engine => import engine._
+  test("chained Signals2"){
 
-    import scala.language.reflectiveCalls
+ import scala.language.reflectiveCalls
 
     val v1 = Var { 20 }
     val v2 = Var { new {def signal = Signal { v1() } } }
@@ -139,7 +138,7 @@ class TrueDynamicSignals extends RETests {
     assert(sig.now === 80)
   }
 
-  allEngines("extracting Signal Side Effects"){ engine => import engine._
+  test("extracting Signal Side Effects"){
     val e1 = Evt[Int]
     def newSignal(): Signal[Int] = e1.count()
 
@@ -159,9 +158,9 @@ class TrueDynamicSignals extends RETests {
     assert(normalRes.now === 1, "end, normal")
   }
 
-  allEngines("chained Signals1"){ engine => import engine._
+  test("chained Signals1"){
 
-    import scala.language.reflectiveCalls
+ import scala.language.reflectiveCalls
 
     val v1 = Var { 1 }
     val v2 = Var { 2 }
@@ -179,7 +178,7 @@ class TrueDynamicSignals extends RETests {
   }
 
 
-  allEngines("signal Does Not Reevaluate The Expression If Depends On IsUpdated That Is Not In Current Dependencies"){ engine => import engine._
+  test("signal Does Not Reevaluate The Expression If Depends On IsUpdated That Is Not In Current Dependencies"){
     val condition = Var(true)
     val ifTrue = Var(0)
     val ifFalse = Var(10)
@@ -219,7 +218,7 @@ class TrueDynamicSignals extends RETests {
 
 
 
-  allEngines("basic Higher Order Signal can Be Accessed"){ engine => import engine._
+  test("basic Higher Order Signal can Be Accessed"){
     val v = Var(42)
     val s1: Signal[Int] = v.map(identity)
     val s2: Signal[Signal[Int]] = dynamic() { t => s1 }
@@ -233,7 +232,7 @@ class TrueDynamicSignals extends RETests {
 
 
 
-  allEngines("creating Signals Inside Signals") { engine => import engine._
+  test("creating Signals Inside Signals") {
     val outside = Var(1)
 
     val testsig = dynamic() { t =>
@@ -249,7 +248,7 @@ class TrueDynamicSignals extends RETests {
   }
 
 
-  allEngines("dynamic dependency changes ontop of stuff that is not changing"){ engine => import engine._
+  test("dynamic dependency changes ontop of stuff that is not changing"){
     val v0 = Var("level 0")
     val v3 = v0.map(_ => "level 1").map(_ => "level 2").map(_ => "level 3")
 
@@ -265,7 +264,7 @@ class TrueDynamicSignals extends RETests {
     assertLevel(`dynamic signal changing from level 1 to level 4`, 4)
   }
 
-  allEngines("creating signals in signals based on changing signals dynamic"){ engine => import engine._
+  test("creating signals in signals based on changing signals dynamic"){
     val v0 = Var("level 0")
     val v3 = v0.map(_ + "level 1").map(_  + "level 2").map(_ + "level 3")
 
@@ -283,4 +282,4 @@ class TrueDynamicSignals extends RETests {
     assertLevel(`dynamic signal changing from level 1 to level 4`, 5)
   }
 
-}
+} }

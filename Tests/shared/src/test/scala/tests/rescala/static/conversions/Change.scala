@@ -5,10 +5,10 @@ import rescala.reactives.RExceptions.EmptySignalControlThrowable
 import tests.rescala.testtools.RETests
 
 
-class Change extends RETests {
+class Change extends RETests { multiEngined { engine => import engine._
 
   /* changed */
-  allEngines("changed is Not Triggered On Creation") { engine => import engine._
+  test("changed is Not Triggered On Creation") {
     var test = 0
     val v1 = Var(1)
     val s1 = v1.map {_ + 1}
@@ -18,7 +18,7 @@ class Change extends RETests {
     assert(test == 0)
   }
 
-  allEngines("changed is Triggered When The Signal Changes") { engine => import engine._
+  test("changed is Triggered When The Signal Changes") {
     var test = 0
     val v1 = Var(1)
     val s1 = v1.map {_ + 1}
@@ -31,7 +31,7 @@ class Change extends RETests {
     assert(test == 2)
   }
 
-  allEngines("changed the Value Of The Event Reflects The Change In The Signal") { engine => import engine._
+  test("changed the Value Of The Event Reflects The Change In The Signal") {
     var test = 0
     val v1 = Var(1)
     val s1 = v1.map {_ + 1}
@@ -45,7 +45,7 @@ class Change extends RETests {
   }
 
   /* changedTo */
-  allEngines("changed To is Not Triggered On Creation") { engine => import engine._
+  test("changed To is Not Triggered On Creation") {
     var test = 0
     val v1 = Var(1)
     val s1 = v1.map {_ + 1}
@@ -55,7 +55,7 @@ class Change extends RETests {
     assert(test == 0)
   }
 
-  allEngines("changed To is Triggered When The Signal Has The Given Value") { engine => import engine._
+  test("changed To is Triggered When The Signal Has The Given Value") {
     var test = 0
     val v1 = Var(1)
     val s1 = v1.map {_ + 1}
@@ -71,7 +71,7 @@ class Change extends RETests {
 
 
   /* change */
-  allEngines("change is Not Triggered On Creation") { engine => import engine._
+  test("change is Not Triggered On Creation") {
     var test = 0
     val v1 = Var(1)
     val s1 = v1.map {_ + 1}
@@ -81,7 +81,7 @@ class Change extends RETests {
     assert(test == 0)
   }
 
-  allEngines("change is Triggered When The Signal Changes") { engine => import engine._
+  test("change is Triggered When The Signal Changes") {
     var test = 0
     val v1 = Var(1)
     val s1 = v1.map {_ + 1}
@@ -98,7 +98,7 @@ class Change extends RETests {
     assert(test === 2)
   }
 
-  allEngines("change the Value Of The Event Reflects The Change In The Signal") { engine => import engine._
+  test("change the Value Of The Event Reflects The Change In The Signal") {
     var test = (0, 0)
     val v1 = Var(1)
     val s1 = v1.map {_ + 1}
@@ -113,7 +113,7 @@ class Change extends RETests {
 
   /* with empty signals */
 
-  allEngines("changing emptyness") { engine => import engine._
+  test("changing emptyness") {
     val v2 = Var.empty[String]
 
     val e2 = v2.change.map(_.pair).recover{case t => Some("failed" -> t.toString)}
@@ -132,7 +132,7 @@ class Change extends RETests {
   }
 
 
-  allEngines("folding changing and emptyness") { engine => import engine._
+  test("folding changing and emptyness") {
     val v1 = Var.empty[String]
     val v2 = Var.empty[String]
 
@@ -171,4 +171,4 @@ class Change extends RETests {
 
 
 
-}
+} }

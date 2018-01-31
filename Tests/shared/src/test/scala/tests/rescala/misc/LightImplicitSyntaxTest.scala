@@ -4,10 +4,9 @@ import tests.rescala.testtools.RETests
 
 import scala.language.implicitConversions
 
-class LightImplicitSyntaxTest extends RETests {
+class LightImplicitSyntaxTest extends RETests { multiEngined { engine => import engine._
 
-  allEngines("experiment With Implicit Syntax") { engine =>
-    import engine._
+  test("experiment With Implicit Syntax") {
 
     implicit def getSignalValueDynamic[T](s: Signal[T])(implicit ticket: engine.DynamicTicket): T = ticket.depend(s)
     def Signal[T](f: DynamicTicket => T)(implicit maybe: CreationTicket): Signal[T] = dynamic()(f)
@@ -27,4 +26,4 @@ class LightImplicitSyntaxTest extends RETests {
 
   }
 
-}
+} }

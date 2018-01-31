@@ -3,12 +3,12 @@ package tests.rescala.misc
 import tests.rescala.testtools.RETests
 
 
-class ReactiveCreationInTurnsTest extends RETests {
+class ReactiveCreationInTurnsTest extends RETests { multiEngined { engine => import engine._
 
 
 
 
-  allEngines("evaluations Of Inner Signals"){ engine => import engine._
+  test("evaluations Of Inner Signals"){
 
     val v1 = Var(5)
     val c1 = Var(0)
@@ -26,7 +26,7 @@ class ReactiveCreationInTurnsTest extends RETests {
 
   }
 
-  allEngines("evaluations Of Inner Related Signals"){ engine => import engine._
+  test("evaluations Of Inner Related Signals"){
 
     val v1 = Var(5)
     val v2 = v1.map { x =>
@@ -44,7 +44,7 @@ class ReactiveCreationInTurnsTest extends RETests {
   }
 
 
-  allEngines("change Of Created Signal"){ engine => import engine._
+  test("change Of Created Signal"){
 
     engine.transaction() { implicit t =>
       val v1 = rescala.reactives.Var(0)
@@ -86,7 +86,7 @@ class ReactiveCreationInTurnsTest extends RETests {
 
   }
 
-//  allEngines("create changes during reevaluation"){ engine => import engine._
+//  test("create changes during reevaluation"){
 //    val v = Var(1)
 //    val mapped = v.map(_ + 0)
 //
@@ -112,4 +112,4 @@ class ReactiveCreationInTurnsTest extends RETests {
 
 
 
-}
+} }

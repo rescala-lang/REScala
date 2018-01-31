@@ -7,11 +7,11 @@ import tests.rescala.testtools.RETests
 
 
 
-class LevelPropagation extends RETests {
+class LevelPropagation extends RETests { multiEngined { engine => import engine._
 
 
 
-  allEngines("works On Elements In Queue"){ engine => import engine._
+  test("works On Elements In Queue"){
     val level0 = Var(0)
     val l1 = level0.map(_ + 1)
     val l2 = l1.map(_ + 1)
@@ -53,7 +53,7 @@ class LevelPropagation extends RETests {
 
   }
 
-  allEngines("does Not Break Stuff When Nothing Changes Before Dependencies Are Correct"){ engine => import engine._
+  test("does Not Break Stuff When Nothing Changes Before Dependencies Are Correct"){
     val l0 = Var(0)
     val l1 = l0.map(_ + 1)
     val l2 = l1.map(_ + 1)
@@ -80,7 +80,7 @@ class LevelPropagation extends RETests {
 
   }
 
-  allEngines("does Not Reevaluate Stuff If Nothing Changes"){ engine => import engine._
+  test("does Not Reevaluate Stuff If Nothing Changes"){
     val l0 = Var(0)
     val l1 = l0.map(_ + 1)
     val l2 = l1.map(_ + 1)
@@ -117,7 +117,7 @@ class LevelPropagation extends RETests {
 
   }
 
-  allEngines("level Increase And Change From Somewhere Else Works Together"){ engine => import engine._
+  test("level Increase And Change From Somewhere Else Works Together"){
     val l0 = Var(0)
     val l1 = l0.map(_ + 1)
     val l2 = l1.map(_ + 1)
@@ -153,7 +153,7 @@ class LevelPropagation extends RETests {
 
   }
 
-  allEngines("level increase but value change only after correct level is reached"){ engine => import engine._
+  test("level increase but value change only after correct level is reached"){
 
     val l0 = Var(0)
     val l1 = l0.map(_ + 1)
@@ -191,4 +191,4 @@ class LevelPropagation extends RETests {
 
     }
 
-}
+} }

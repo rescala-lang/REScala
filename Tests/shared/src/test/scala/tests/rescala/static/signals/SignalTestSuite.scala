@@ -6,10 +6,10 @@ import rescala.core.infiltration.Infiltrator.assertLevel
 import tests.rescala.testtools.RETests
 
 
-class SignalTestSuite extends RETests {
+class SignalTestSuite extends RETests { multiEngined { engine => import engine._
 
 
-  allEngines("handler Is Called When Change Occurs"){ engine => import engine._
+  test("handler Is Called When Change Occurs"){
 
     var test = 0
     val v1 = Var(1)
@@ -32,7 +32,7 @@ class SignalTestSuite extends RETests {
   }
 
 
-  allEngines("signal Reevaluates The Expression When Something It Depends On Is Updated"){ engine => import engine._
+  test("signal Reevaluates The Expression When Something It Depends On Is Updated"){
     val v = Var(0)
     var i = 1
     val s = Signal { v() + i }
@@ -42,7 +42,7 @@ class SignalTestSuite extends RETests {
     assert(s.now == 4)
   }
 
-  allEngines("the Expression Is Not Evaluated Every Time now Is Called"){ engine => import engine._
+  test("the Expression Is Not Evaluated Every Time now Is Called"){
     var a = 10
     val s = Signal(1 + 1 + a)
     assert(s.now === 12)
@@ -52,7 +52,7 @@ class SignalTestSuite extends RETests {
 
 
 
-  allEngines("level Is Correctly Computed"){ engine => import engine._
+  test("level Is Correctly Computed"){
 
     val v = Var(1)
 
@@ -70,7 +70,7 @@ class SignalTestSuite extends RETests {
 
 
 
-  allEngines("dependant Is Only Invoked On Value Changes"){ engine => import engine._
+  test("dependant Is Only Invoked On Value Changes"){
     var changes = 0
     val v = Var(1)
     val s = Signal {
@@ -91,7 +91,7 @@ class SignalTestSuite extends RETests {
 
 
 
-  allEngines("creating signals in signals based on changing signals"){ engine => import engine._
+  test("creating signals in signals based on changing signals"){
     val v0 = Var("level 0")
     val v3 = v0.map(_ + "level 1").map(_  + "level 2").map(_ + "level 3")
 
@@ -111,7 +111,7 @@ class SignalTestSuite extends RETests {
 
 
 
-  allEngines("signal Reevaluates The Expression"){ engine => import engine._
+  test("signal Reevaluates The Expression"){
     val v = Var(0)
     var i = 1
     val s: Signal[Int] = v.map { _ => i }
@@ -120,7 +120,7 @@ class SignalTestSuite extends RETests {
     assert(s.now == 2)
   }
 
-  allEngines("the Expression Is Note Evaluated Every Time Get Val Is Called"){ engine => import engine._
+  test("the Expression Is Note Evaluated Every Time Get Val Is Called"){
     var a = 10
     val s: Signal[Int] = Signals.static()(_ => 1 + 1 + a)
     assert(s.now === 12)
@@ -129,12 +129,12 @@ class SignalTestSuite extends RETests {
   }
 
 
-  allEngines("simple Signal Returns Correct Expressions"){ engine => import engine._
+  test("simple Signal Returns Correct Expressions"){
     val s: Signal[Int] = Signals.static()(_ => 1 + 1 + 1)
     assert(s.now === 3)
   }
 
-  allEngines("the Expression Is Evaluated Only Once"){ engine => import engine._
+  test("the Expression Is Evaluated Only Once"){
 
     var a = 0
     val v = Var(10)
@@ -152,7 +152,7 @@ class SignalTestSuite extends RETests {
     assert(s1.now === 1)
   }
 
-  allEngines("handlers Are Executed"){ engine => import engine._
+  test("handlers Are Executed"){
 
     val test = new AtomicInteger(0)
     val v = Var(1)
@@ -171,7 +171,7 @@ class SignalTestSuite extends RETests {
     assert(test.get == 3)
   }
 
-  allEngines("level Is Correctly Computed with combinators"){ engine => import engine._
+  test("level Is Correctly Computed with combinators"){
 
     val v = Var(1)
 
@@ -186,7 +186,7 @@ class SignalTestSuite extends RETests {
   }
 
 
-  allEngines("no Change Propagations"){ engine => import engine._
+  test("no Change Propagations"){
     val v = Var(1)
     val s = v.map(_ => 1)
     val s2 = Signal { s() }
@@ -211,4 +211,4 @@ class SignalTestSuite extends RETests {
 
   }
 
-}
+} }

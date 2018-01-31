@@ -2,9 +2,9 @@ package tests.rescala.errors
 
 import tests.rescala.testtools.RETests
 
-class EmptySignalTestSuite extends RETests {
+class EmptySignalTestSuite extends RETests { multiEngined { engine => import engine._
 
-  allEngines("basic Empty Signal Test"){ engine => import engine._
+  test("basic Empty Signal Test"){
 
     val v = Var.empty[Int]
 
@@ -30,7 +30,7 @@ class EmptySignalTestSuite extends RETests {
 
   }
 
-  allEngines("flatten empty signal when mapping event"){ engine => import engine._
+  test("flatten empty signal when mapping event"){
 
     val v = Var.empty[Event[Unit]]
 
@@ -60,7 +60,7 @@ class EmptySignalTestSuite extends RETests {
     assert(s.now == 1, "mapped event after event fire")
   }
 
-  allEngines("unwrap Empty Signal"){ engine => import engine._
+  test("unwrap Empty Signal"){
     val v = Var.empty[Event[Int]]
     val e = v.flatten
 
@@ -80,7 +80,7 @@ class EmptySignalTestSuite extends RETests {
 
   }
 
-  allEngines("propagate emptiness"){ engine => import engine._
+  test("propagate emptiness"){
     val v = Var[Int](6)
     val v2 = Var[Int](6)
     val sig = Signal { v() + v2() }
@@ -107,4 +107,4 @@ class EmptySignalTestSuite extends RETests {
   }
 
 
-}
+} }

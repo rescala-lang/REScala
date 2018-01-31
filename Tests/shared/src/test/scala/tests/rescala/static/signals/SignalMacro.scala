@@ -2,9 +2,9 @@ package tests.rescala.static.signals
 
 import tests.rescala.testtools.RETests
 
-class SignalMacro extends RETests {
+class SignalMacro extends RETests { multiEngined { engine => import engine._
 
-  allEngines(".value acces works"){ engine => import engine._
+  test(".value acces works"){
 
     val v = Var(List(1,2,3))
     val s1: Signal[List[Int]] = Signal { v.value.map(_ + 2) }
@@ -15,7 +15,7 @@ class SignalMacro extends RETests {
 
   }
 
-  allEngines("conversion Function With Argument In Signal"){ engine => import engine._
+  test("conversion Function With Argument In Signal"){
 
     var test = 0
     val e = Evt[Int]
@@ -31,7 +31,7 @@ class SignalMacro extends RETests {
   }
 
 
-  allEngines("conversion Function Without Argument In Signal"){ engine => import engine._
+  test("conversion Function Without Argument In Signal"){
 
     var test = 0
     val e = Evt[Int]
@@ -49,7 +49,7 @@ class SignalMacro extends RETests {
 
 
 
-  allEngines("conversion Functions Work In Signals In Object Construction In Overriden Def"){ engine => import engine._
+  test("conversion Functions Work In Signals In Object Construction In Overriden Def"){
     // a previous macro implementation yielded wrong results for code of the
     // following form, see:
     // https://github.com/guidosalva/examples/pull/4/files#r11724000
@@ -86,7 +86,7 @@ class SignalMacro extends RETests {
 
 
 
-  allEngines("case Classes And Objects"){ engine => import engine._
+  test("case Classes And Objects"){
     // would fail due to https://issues.scala-lang.org/browse/SI-5467
     // if we didn't work around un-type-checking issues
 
@@ -134,7 +134,7 @@ class SignalMacro extends RETests {
     assert(sig.now == "value37")
   }
 
-  allEngines("lazy Values"){ engine => import engine._
+  test("lazy Values"){
     // would fail due to https://issues.scala-lang.org/browse/SI-5466
     // if we didn't work around un-type-checking issues
 
@@ -159,7 +159,7 @@ class SignalMacro extends RETests {
     assert(sig.now == 0)
   }
 
-  allEngines("pattern Matching And Wildcard"){ engine => import engine._
+  test("pattern Matching And Wildcard"){
     // would fail due to https://issues.scala-lang.org/browse/SI-5465
     // if we didn't work around un-type-checking issues
 
@@ -185,7 +185,7 @@ class SignalMacro extends RETests {
   }
 
 
-  allEngines("pattern Matching Anonymous Function"){ engine => import engine._
+  test("pattern Matching Anonymous Function"){
     val s1 = Signal { List(Some(1), Some(2), None, Some(4), None) }
     val s2 = Signal {
       s1() collect { case Some(n) => n }
@@ -194,7 +194,7 @@ class SignalMacro extends RETests {
   }
 
 
-  allEngines("abstract Type Member"){ engine =>
+  test("abstract Type Member"){
     // the renamed engines are a workaround for this bug: https://issues.scala-lang.org/browse/SI-10036
     // using the same engine in both trait and object causes the compiler to generate two field with the same name
     val engine1 = engine
@@ -210,11 +210,10 @@ class SignalMacro extends RETests {
       type A = Int
       lazy val v = Var(4)
     }
-    implicit val iengine = engine
-    assert(o.s.now == 4)
+    assert(o.s.now(engine) == 4)
   }
 
-  allEngines("default Arguments"){ engine => import engine._
+  test("default Arguments"){
     val s = Signal {
       def a(v: Int, i: Int = 8, j: Int, k: Int = 8) = v + i + j + k
       a(6, j = 5)
@@ -226,7 +225,7 @@ class SignalMacro extends RETests {
 
 
 
-  allEngines("function As Getter For Signal"){ engine => import engine._
+  test("function As Getter For Signal"){
 
  import scala.language.reflectiveCalls
 
@@ -243,7 +242,7 @@ class SignalMacro extends RETests {
   }
 
 
-  allEngines("function As Getter For Event And Conversion Function"){ engine => import engine._
+  test("function As Getter For Event And Conversion Function"){
 
  import scala.language.reflectiveCalls
 
@@ -260,7 +259,7 @@ class SignalMacro extends RETests {
   }
 
 
-  allEngines("correctly replace ticket during macro expansion"){ engine => import engine._
+  test("correctly replace ticket during macro expansion"){
 
     def wantsTicket(implicit ct: engine.CreationTicket, ct2: engine.CreationTicket) = {
       ct == ct2 && ct.isInnerTicket() && ct2.isInnerTicket()
@@ -272,4 +271,4 @@ class SignalMacro extends RETests {
 
   }
 
-}
+} }

@@ -9,7 +9,7 @@ import scala.util.{Failure, Success, Try}
 
 
 
-class ExceptionPropagationTestSuite extends RETests {
+class ExceptionPropagationTestSuite extends RETests { multiEngined { engine => import engine._
 
 
   // we need this because scalajs does not throw exceptions
@@ -18,7 +18,7 @@ class ExceptionPropagationTestSuite extends RETests {
 
 
 
-  allEngines("basic Signal Exceptions"){ engine => import engine._
+  test("basic Signal Exceptions"){
     val v = Var(42)
     val ds = Signal { div(v()) }
     val ss = v.map(div)
@@ -33,7 +33,7 @@ class ExceptionPropagationTestSuite extends RETests {
 
   }
 
-  allEngines("basic Event Excepitons"){ engine => import engine._
+  test("basic Event Excepitons"){
     val e = Evt[Int]
     val de = Event { e().map(div) }
     val se = e.map(div)
@@ -57,7 +57,7 @@ class ExceptionPropagationTestSuite extends RETests {
   }
 
 
-  allEngines("more Exceptions"){ engine => import engine._
+  test("more Exceptions"){
     val input = Evt[String]
     val trimmed = input.map(_.trim)
     val toInted = trimmed.map(_.toInt)
@@ -93,7 +93,7 @@ class ExceptionPropagationTestSuite extends RETests {
 
   }
 
-  allEngines("signal Regenerating"){ engine => import engine._
+  test("signal Regenerating"){
     val input = Var("100")
     val trimmed = input.map(_.trim)
     val folded = trimmed.map(_.toInt)
@@ -135,7 +135,7 @@ class ExceptionPropagationTestSuite extends RETests {
   }
 
 
-  allEngines("observers can abort"){ engine => import engine._
+  test("observers can abort"){
     val v = Var(0)
     val ds = Signal { div(v()) }
 
@@ -154,7 +154,7 @@ class ExceptionPropagationTestSuite extends RETests {
     assert(v.now === 42, "transaction is aborted on failure")
   }
 
-  allEngines("do not observe emptiness"){ engine => import engine._
+  test("do not observe emptiness"){
     val v = Var.empty[Int]
     val ds = Signal { div(v()) }
 
@@ -172,7 +172,7 @@ class ExceptionPropagationTestSuite extends RETests {
     intercept[NoSuchElementException]{v.now}
   }
 
-  allEngines("abort combinator"){ engine => import engine._
+  test("abort combinator"){
     val v = Var(0)
     val ds = Signal { div(v()) }
 
@@ -188,7 +188,7 @@ class ExceptionPropagationTestSuite extends RETests {
     assert(v.now === 42, "transaction is aborted on failure")
   }
 
-  allEngines("partial recovery"){ engine => import engine._
+  test("partial recovery"){
     val v = Var(2)
     val ds = Signal { div(v()) }
     val ds2: Signal[Int] = Signal { if (ds() == 10) throw new IndexOutOfBoundsException else ds() }
@@ -202,4 +202,4 @@ class ExceptionPropagationTestSuite extends RETests {
     intercept[IllegalStateException](ds2.now)
 
   }
-}
+} }

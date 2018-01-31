@@ -4,31 +4,31 @@ import rescala.core.Struct
 import tests.rescala.testtools.RETests
 
 
-class CreationTicketTest extends RETests {
+class CreationTicketTest extends RETests { multiEngined { engine => import engine._
 
   /* this test uses some shady planned()(identity) to get the turn object out of the transaction
    * you should not do this. */
   def getTurn[S2 <: Struct](implicit engine: rescala.core.Scheduler[S2]): rescala.core.Initializer[S2] = engine.transaction()(_.creation)
 
-  allEngines("none Dynamic No Implicit") { engine => import engine._
+  test("none Dynamic No Implicit") {
     assert(implicitly[CreationTicket].self === Right(engine))
   }
 
-  allEngines("some Dynamic No Implicit") { engine => import engine._
+  test("some Dynamic No Implicit") {
     engine.transaction() { (dynamicTurn: AdmissionTicket) =>
       assert(implicitly[CreationTicket].self === Right(engine))
       assert(implicitly[CreationTicket].apply(identity) === dynamicTurn.creation)
     }
   }
 
-  allEngines("none Dynamic Some Implicit") { engine => import engine._
+  test("none Dynamic Some Implicit") {
     implicit val implicitTurn: Creation = getTurn
     assert(implicitly[CreationTicket].self === Left(implicitTurn))
     assert(implicitly[CreationTicket].apply(identity) === implicitTurn)
   }
 
   // Cannot run a turn inside a turn with pipelining
-  allEngines("some Dynamic Some Implicit") { engine => import engine._
+  test("some Dynamic Some Implicit") {
     //    if (engine.isInstanceOf[PipelineEngine]) {
     //      throw new IllegalStateException("pipeline engine cannot run a turn inside a turn")
     //    }
@@ -43,7 +43,7 @@ class CreationTicketTest extends RETests {
 
 
 
-  allEngines("implicit In Closures") { engine => import engine._
+  test("implicit In Closures") {
     val closureDefinition: Creation = getTurn(engine)
     val closure = {
       implicit def it: Creation = closureDefinition
@@ -55,7 +55,7 @@ class CreationTicketTest extends RETests {
     }
   }
 
-  allEngines("dynamic In Closures") { engine => import engine._
+  test("dynamic In Closures") {
     val closure = {
       engine.transaction() { t =>
         () => implicitly[CreationTicket]
@@ -67,4 +67,4 @@ class CreationTicketTest extends RETests {
     }
   }
 
-}
+} }

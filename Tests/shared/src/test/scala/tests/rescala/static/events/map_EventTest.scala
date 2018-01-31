@@ -3,11 +3,11 @@ package tests.rescala.static.events
 import tests.rescala.testtools.RETests
 
 
-class map_EventTest extends RETests {
+class map_EventTest extends RETests { multiEngined { engine => import engine._
 
 
 
-  allEngines("handler Of map  Is Executed"){ engine => import engine._
+  test("handler Of map  Is Executed"){
     var test = 0
     val e1 = Evt[Int]
     val e1_map = e1 map ((x: Int) => x * 2)
@@ -18,7 +18,7 @@ class map_EventTest extends RETests {
     assert(test == 2)
   }
 
-  allEngines("the Function Passed To map is Applied"){ engine => import engine._
+  test("the Function Passed To map is Applied"){
     var test = 0
     val e1 = Evt[Int]
     val e1_map = e1 map ((x: Int) => x * 2)
@@ -29,4 +29,4 @@ class map_EventTest extends RETests {
     assert(test == 20)
   }
 
-}
+} }

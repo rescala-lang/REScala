@@ -7,23 +7,23 @@ import tests.rescala.testtools.RETests
 
 
 
-class VarTestSuite extends RETests {
+class VarTestSuite extends RETests { multiEngined { engine => import engine._
 
 
 
-  allEngines("get Val After Creation Returns Initialization Value"){ engine => import engine._
+  test("get Val After Creation Returns Initialization Value"){
     val v = Var(1)
     assert(v.now == 1)
   }
 
-  allEngines("get Val Returns Correct Value"){ engine => import engine._
+  test("get Val Returns Correct Value"){
     val v = Var(1)
     v.set(10)
     assert(v.now == 10)
   }
 
 
-  allEngines("var Notifies Signal Of Changes"){ engine => import engine._
+  test("var Notifies Signal Of Changes"){
     val v = Var(1)
     val s = v.map { _ + 1 }
     assert(v.now == 1)
@@ -35,7 +35,7 @@ class VarTestSuite extends RETests {
 
   }
 
-  allEngines("change Event Only Triggered On Value Change"){ engine => import engine._
+  test("change Event Only Triggered On Value Change"){
     var changes = 0
     val v = Var(1)
     v.observe { _ => changes += 1 }
@@ -49,7 +49,7 @@ class VarTestSuite extends RETests {
     assert(changes == 3)
   }
 
-  allEngines("dependant Is Only Invoked On Value Change"){ engine => import engine._
+  test("dependant Is Only Invoked On Value Change"){
     var changes = 0
     val v = Var(1)
     val s = v.map { i => changes += 1; i + 1 }
@@ -62,7 +62,7 @@ class VarTestSuite extends RETests {
     assert(changes == 2)
   }
 
-  allEngines("transform Var"){ engine => import engine._
+  test("transform Var"){
     val v1 = Var(0)
     def inc() = v1.transform(1.+)
 
@@ -79,4 +79,4 @@ class VarTestSuite extends RETests {
 
   }
 
-}
+} }

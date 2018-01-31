@@ -3,11 +3,11 @@ package tests.rescala.static.events
 import tests.rescala.testtools.RETests
 
 
-class EventTest extends RETests {
+class EventTest extends RETests { multiEngined { engine => import engine._
 
 
 
-  allEngines("handlers Are Executed"){ engine => import engine._
+  test("handlers Are Executed"){
     var test = 0
     val e1 = Evt[Int]
     e1 += ((x: Int) => { test += 1 })
@@ -16,7 +16,7 @@ class EventTest extends RETests {
     assert(test == 2)
   }
 
-  allEngines("correct Value Is Received"){ engine => import engine._
+  test("correct Value Is Received"){
     var test = 0
     val e1 = Evt[Int]
     e1 += ((x: Int) => { test += x })
@@ -24,7 +24,7 @@ class EventTest extends RETests {
     assert(test == 10)
   }
 
-  allEngines("events Without Params Is Called"){ engine => import engine._
+  test("events Without Params Is Called"){
     var test = 0
     val e1 = Evt[Unit]
     e1 += (_ => { test += 1 })
@@ -33,7 +33,7 @@ class EventTest extends RETests {
   }
 
 
-  allEngines("function Is Called"){ engine => import engine._
+  test("function Is Called"){
     var test = 0
 
     def f(x: Int): Unit = { test += 1 }
@@ -47,7 +47,7 @@ class EventTest extends RETests {
   }
 
 
-  allEngines("events With Method Handlers With Parameter"){ engine => import engine._
+  test("events With Method Handlers With Parameter"){
 
     var test = 0
     val e = Evt[Int]
@@ -60,4 +60,4 @@ class EventTest extends RETests {
 
   }
 
-}
+} }

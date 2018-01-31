@@ -9,12 +9,12 @@ import tests.rescala.testtools.RETests
  * polymorphism, overriding, etc...
  */
 
-class OOPropertiesEventTest extends RETests {
+class OOPropertiesEventTest extends RETests { multiEngined { engine => import engine._
 
 
 
 
-  allEngines("events Are Inherited"){ engine => import engine._
+  test("events Are Inherited"){
 
     var test = 0
 
@@ -30,7 +30,7 @@ class OOPropertiesEventTest extends RETests {
   }
 
 
-  allEngines("can Trigger Events In Superclass"){ engine => import engine._
+  test("can Trigger Events In Superclass"){
 
     var test = 0
 
@@ -46,7 +46,7 @@ class OOPropertiesEventTest extends RETests {
   }
 
 
-  allEngines("issue With Overriding Events"){ engine => import engine._
+  test("issue With Overriding Events"){
 
      intercept[Exception] {
       var test = 0
@@ -74,7 +74,7 @@ class OOPropertiesEventTest extends RETests {
   class X {}
   class Y extends X {}
 
-  allEngines("refine"){ engine => import engine._
+  test("refine"){
 
     var test = 0
 
@@ -92,4 +92,4 @@ class OOPropertiesEventTest extends RETests {
     assert(test == 1)
   }
 
-}
+} }

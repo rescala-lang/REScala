@@ -3,9 +3,9 @@ package tests.rescala.dynamic
 import tests.rescala.testtools.RETests
 
 
-class ObserverCreation extends RETests {
+class ObserverCreation extends RETests { multiEngined { engine => import engine._
 
-  allEngines("add Event After"){ engine => import engine._
+  test("add Event After"){
     var res = 0
     val e0 = Evt[Int]
     val e1 = e0.map(identity)
@@ -16,7 +16,7 @@ class ObserverCreation extends RETests {
 
   }
 
-  allEngines("event Handlers Can Be Removed"){ engine => import engine._
+  test("event Handlers Can Be Removed"){
     var test = 0
     val e1 = Evt[Int]
     val f = (x: Int) => { test += 1 }
@@ -29,4 +29,4 @@ class ObserverCreation extends RETests {
     assert(test == 2)
   }
 
-}
+} }
