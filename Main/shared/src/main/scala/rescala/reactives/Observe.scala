@@ -22,8 +22,8 @@ object Observe {
   private val strongObserveReferences = scala.collection.mutable.HashSet[Observe[_]]()
 
   private abstract class Obs[T, S <: Struct]
-  (bud: S#State[Unit, S, Nothing], dependency: Interp[S, Any], fun: T => Unit, fail: Throwable => Unit, name: REName)
-    extends Base[Unit, S, Nothing](bud, name) with Reactive[S] with Observe[S] {
+  (bud: S#State[Unit, S, Unit], dependency: Interp[S, Any], fun: T => Unit, fail: Throwable => Unit, name: REName)
+    extends Base[Unit, S, Unit](bud, name) with Reactive[S] with Observe[S] {
     this: DisconnectableImpl[S] =>
 
     override protected[rescala] def reevaluate(dt: ReIn): Rout = {
@@ -36,7 +36,6 @@ object Observe {
       } catch {
         case NonFatal(t) =>
           if (fail eq null) {
-            t.printStackTrace()
             throw new UnhandledFailureException(this, t)
           }
           else dt.withEffect(() => fail(t))
@@ -48,8 +47,13 @@ object Observe {
     }
   }
 
-  def weak[T, S <: Struct](dependency: Interp[S, Any], fireImmediately: Boolean)(fun: T => Unit, fail: Throwable => Unit)(implicit ct: CreationTicket[S]): Observe[S] = {
-    ct(initTurn => initTurn.create[Unit, Obs[T, S], Nothing](Set(dependency), if (fireImmediately) Initializer.SignalObserver else Initializer.EventObserver) { state =>
+  def weak[T, S <: Struct](dependency: Interp[S, Any],
+                           fireImmediately: Boolean)
+                          (fun: T => Unit,
+                           fail: Throwable => Unit)
+                          (implicit ct: CreationTicket[S]): Observe[S] = {
+    ct(initTurn => initTurn.create[Unit, Obs[T, S], Unit](Set(dependency),
+      Initializer.Observer, fireImmediately) { state =>
       new Obs[T, S](state, dependency, fun, fail, ct.rename) with DisconnectableImpl[S]
     })
   }

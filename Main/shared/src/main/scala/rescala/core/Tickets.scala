@@ -117,8 +117,8 @@ abstract class AdmissionTicket[S <: Struct](creation: Initializer[S]) extends In
 
 
 abstract class WrapUpTicket[S <: Struct] {
-  private[rescala] def access[A](reactive: ReSource[S]): reactive.Notification
-  final def now[A](reactive: Interp[S, A]): A = ???
+  private[rescala] def access[A](reactive: ReSource[S]): (reactive.Value, reactive.Notification)
+  final def now[A](reactive: Interp[S, A]): A = (reactive.interpret _).tupled(access(reactive))
 }
 
 

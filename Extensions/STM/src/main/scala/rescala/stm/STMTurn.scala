@@ -1,6 +1,6 @@
 package rescala.stm
 
-import rescala.core.Initializer.Param
+import rescala.core.Initializer.InitValues
 import rescala.core.{ReSource, Struct}
 import rescala.levelbased.{LevelBasedPropagation, LevelStruct}
 import rescala.twoversion.Token
@@ -11,7 +11,7 @@ class STMTurn extends LevelBasedPropagation[STMTurn] with LevelStruct {
   override type State[P, S <: Struct] = STMStructType[P, S]
 
   /** used to create state containers of each reactive */
-  override protected def makeDerivedStructState[P](valuePersistency: Param[P]): State[P, STMTurn] = {
+  override protected def makeDerivedStructState[P](valuePersistency: InitValues[P]): State[P, STMTurn] = {
     new STMStructType(valuePersistency.initialValue, valuePersistency.isTransient)
   }
   override def releasePhase(): Unit = ()

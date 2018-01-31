@@ -1,17 +1,19 @@
 package rescala.simpleprop
 
-import rescala.core.Initializer.Param
+import rescala.core.Initializer.InitValues
 import rescala.core.{InitialChangeN, InitialChangeV, Initializer, ReSource, Reactive, ReevTicket, Scheduler, Struct}
 
 import scala.collection.mutable.ArrayBuffer
 
 trait SimpleStruct extends Struct {
-  override type State[P, S <: Struct, N] = SimpleState[P, N]
+  override type State[V, S <: Struct, N] = SimpleState[V, N]
 }
 
-class SimpleState[V, N](var value: V) {
+class SimpleState[V, N](ip: InitValues[V, N]) {
+
+  var value: V = ip.initialValue
+  var notification: N = ip.initialNotification
   var outgoing: Set[Reactive[SimpleStruct]] = Set.empty
-  var notification: N = _
   var discovered = false
   var dirty = false
   def reset(): Unit = {
@@ -22,8 +24,8 @@ class SimpleState[V, N](var value: V) {
 }
 
 object SimpleCreation extends Initializer[SimpleStruct] {
-  override protected[this] def makeDerivedStructState[P, N](valuePersistency: Param[P]): SimpleState[P, N] =
-    new SimpleState[P, N](valuePersistency.initialValue)
+  override protected[this] def makeDerivedStructState[V, N](ip: InitValues[V, N]): SimpleState[V, N] =
+    new SimpleState[V, N](ip)
   override protected[this] def ignite(reactive: Reactive[SimpleStruct], incoming: Set[ReSource[SimpleStruct]], ignitionRequiresReevaluation: Boolean): Unit = {
 
     incoming.foreach { dep =>
@@ -77,7 +79,7 @@ object SimpleScheduler extends Scheduler[SimpleStruct] {
 
       //wrapup
       if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(new WrapUpTicket {
-        override private[rescala] def access[A](reactive: ReSource) = reactive.state.notification
+        override private[rescala] def access[A](reactive: ReSource) = (reactive.state.value, reactive.state.notification)
       })
       admissionResult
     } finally idle = true

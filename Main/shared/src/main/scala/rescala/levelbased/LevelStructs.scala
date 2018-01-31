@@ -1,5 +1,6 @@
 package rescala.levelbased
 
+import rescala.core.Initializer.InitValues
 import rescala.core.Struct
 import rescala.twoversion._
 
@@ -9,14 +10,14 @@ import scala.language.higherKinds
   * Wrapper for a struct type that combines GraphSpore, PulsingSpore and is leveled
   */
 trait LevelStruct extends TwoVersionStruct {
-  override type State[P, S <: Struct, N] <: LevelStructType[S] with GraphStructType[S] with ReadWriteValue[P, S]
+  override type State[P, S <: Struct, N] <: LevelStructType[S] with GraphStructType[S] with ReadWriteValue[P, S, N]
 }
 
 /**
   * Wrapper for the instance of LevelSpore
   */
 trait SimpleStruct extends LevelStruct {
-  override type State[P, S <: Struct, N] = LevelStructTypeImpl[P, S]
+  override type State[P, S <: Struct, N] = LevelStructTypeImpl[P, S, N]
 }
 
 /**
@@ -29,16 +30,9 @@ trait LevelStructType[S <: Struct] extends GraphStructType[S] {
   def updateLevel(i: Int): Int
 }
 
-/**
-  * Implementation of a struct with graph and buffered pulse storage functionality that also support setting a level.
-  *
-  * @param current         Pulse used as initial value for the struct
-  * @param transient       If a struct is marked as transient, changes to it can not be committed (and are released instead)
-  * @tparam P Pulse stored value type
-  * @tparam S Type of the reactive values that are connected to this struct
-  */
-class LevelStructTypeImpl[P, S <: Struct](current: P, transient: Boolean)
-  extends PropagationStructImpl[P, S](current, transient) with LevelStructType[S] {
+/** Implementation of a struct with graph and buffered pulse storage functionality that also support setting a level. */
+class LevelStructTypeImpl[P, S <: Struct, N](ip: InitValues[P, N])
+  extends PropagationStructImpl[P, S, N](ip) with LevelStructType[S] {
 
   var _level: Int = 0
 

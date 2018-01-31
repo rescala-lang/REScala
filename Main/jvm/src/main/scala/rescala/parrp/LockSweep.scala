@@ -2,7 +2,7 @@ package rescala.parrp
 
 import java.util
 
-import rescala.core.Initializer.Param
+import rescala.core.Initializer.InitValues
 import rescala.core._
 import rescala.locking._
 import rescala.twoversion.{PropagationStructImpl, TwoVersionPropagationImpl, TwoVersionStruct}
@@ -42,7 +42,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
 
 
 
-  override protected def makeDerivedStructState[P, N](valuePersistency: Param[P]): LSStruct#State[P, TState] = {
+  override protected def makeDerivedStructState[P, N](valuePersistency: InitValues[P]): LSStruct#State[P, TState] = {
     val lock = new TurnLock[LSInterTurn]
     val owner = lock.tryLock(key)
     assert(owner eq key, s"$this failed to acquire lock on newly created reactive")

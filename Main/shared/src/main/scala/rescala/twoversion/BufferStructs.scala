@@ -1,11 +1,12 @@
 package rescala.twoversion
 
+import rescala.core.Initializer.InitValues
 import rescala.core.{ReSource, Reactive, Struct}
 
 import scala.language.higherKinds
 
 trait TwoVersionStruct extends GraphStruct {
-  override type State[P, S <: Struct, N] <: GraphStructType[S] with ReadWriteValue[P, S]
+  override type State[P, S <: Struct, N] <: GraphStructType[S] with ReadWriteValue[P, S, N]
 }
 
 /**
@@ -13,9 +14,9 @@ trait TwoVersionStruct extends GraphStruct {
   *
   * @tparam P Pulse stored value type
   */
-trait BufferedValueStruct[P, S <: Struct] extends ReadWriteValue[P, S] with Committable[S] {
-  var current: P
-  protected val transient: Boolean
+class BufferedValueStruct[P, S <: Struct, N](ip: InitValues[P, N]) extends ReadWriteValue[P, S, N] with Committable[S] {
+  var current: P = ip.initialValue
+  var notification: N = ip.initialNotification
   protected var owner: Token = null
   private var update: P = _
 
@@ -26,14 +27,23 @@ trait BufferedValueStruct[P, S <: Struct] extends ReadWriteValue[P, S] with Comm
     owner = token
     res
   }
-  override def get(token: Token): P = { if (token eq owner) update else current }
+  override def setNotificaiton(notification: N, token: Token): Boolean = {
+    assert(owner == null || owner == token, s"buffer owned by $owner written by $token")
+    this.notification = notification
+    val res = owner == null
+    owner = token
+    res
+  }
   override def base(token: Token): P = current
+  override def get(token: Token): P = {if (token eq owner) update else current}
+  override def notification(token: Token): N = {if (token eq owner) notification else ip.initialNotification}
 
   override def commit(turn: TwoVersionPropagation[S]): Unit = {
-    if (!transient) current = update
+    current = update
     release(turn)
   }
   override def release(turn: TwoVersionPropagation[S]): Unit = {
+    notification = null.asInstanceOf[N]
     owner = null
   }
 }
@@ -42,11 +52,10 @@ trait BufferedValueStruct[P, S <: Struct] extends ReadWriteValue[P, S] with Comm
   * Implementation of a struct with graph functionality and a buffered pulse storage.
   *
   * @param current Pulse used as initial value for the struct
-  * @param transient If a struct is marked as transient, changes to it can not be committed (and are released instead)
   * @tparam P Pulse stored value type
   * @tparam S Type of the reactive values that are connected to this struct
   */
-abstract class PropagationStructImpl[P, S <: Struct](override var current: P, override val transient: Boolean) extends GraphStructType[S] with BufferedValueStruct[P, S] {
+abstract class PropagationStructImpl[P, S <: Struct, N](ip: InitValues[P, N]) extends BufferedValueStruct[P, S, N](ip) with GraphStructType[S] {
   protected var _incoming: Set[ReSource[S]] = Set.empty
   protected var _outgoing: scala.collection.mutable.Map[Reactive[S], None.type] = rescala.util.WeakHashMap.empty
 
@@ -62,7 +71,7 @@ abstract class PropagationStructImpl[P, S <: Struct](override var current: P, ov
   * Wrapper for a struct type combining GraphSpore and PulsingSpore
   */
 trait GraphStruct extends Struct {
-  override type State[P, S <: Struct, N] <: GraphStructType[S] with ReadWriteValue[P, S]
+  override type State[P, S <: Struct, N] <: GraphStructType[S] with ReadWriteValue[P, S, N]
 }
 
 /**
@@ -81,19 +90,18 @@ trait GraphStructType[S <: Struct] {
 case class Token(payload: AnyRef = null)
 
 
-trait ReadValue[P] {
-  def base(token: Token): P
-  def get(token: Token): P
-}
-
 /**
   * Spore that has a buffered pulse indicating a potential update and storing the updated and the old value.
   * Through the buffer, it is possible to either revert or apply the update
   *
   * @tparam P Pulse stored value type
   */
-trait ReadWriteValue[P, S <: Struct] extends ReadValue[P] with Committable[S] {
+trait ReadWriteValue[P, S <: Struct, N] extends Committable[S] {
+  def base(token: Token): P
+  def get(token: Token): P
   def write(value: P, token: Token): Boolean
+  def notification(token: Token): N
+  def setNotificaiton(notification: N, token: Token): Boolean
 }
 
 

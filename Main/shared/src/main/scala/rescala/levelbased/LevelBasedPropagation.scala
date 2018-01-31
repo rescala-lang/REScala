@@ -34,6 +34,7 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
     } else {
       dependencies.foreach(commitDependencyDiff(head, head.state.incoming()))
       reevRes.forValue(writeState(head))
+      reevRes.forNotification(writeNotification(head))
       reevRes.forEffect(observe)
       if (reevRes.propagate) enqueueOutgoing(head, minimalLevel)
     }
@@ -70,7 +71,7 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
       writeState(iv.source)(iv.value)
       enqueueOutgoing(ic.source)
     case in: InitialChangeN[S] =>
-      ///TODO:: writeNotification(in.source)(in.value)
+      writeNotification(in.source)(in.value)
       enqueueOutgoing(ic.source)
 
   }

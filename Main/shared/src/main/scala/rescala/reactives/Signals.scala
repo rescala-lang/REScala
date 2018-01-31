@@ -16,7 +16,7 @@ object Signals {
                                                 (expr: (StaticTicket[S], () => T) => T)
                                                 (ict: Initializer[S])
                                                 (name: REName): Signal[T, S] = {
-    ict.create[Pulse[T], StaticSignal[T, S], Unit](dependencies, Initializer.InitializedSignal[T](init)) {
+    ict.create[Pulse[T], StaticSignal[T, S], Unit](dependencies, Initializer.InitializedSignal[Pulse[T]](init), inite = false) {
       state => new StaticSignal[T, S](state, expr, name) with DisconnectableImpl[S]
     }
   }
@@ -28,7 +28,7 @@ object Signals {
     ct { initialTurn =>
       def ignore2[Tick, Current, Res](f: Tick => Res): (Tick, Current) => Res = (ticket, _) => f(ticket)
 
-      initialTurn.create[Pulse[T], StaticSignal[T, S], Unit](dependencies.toSet, Initializer.DerivedSignal) {
+      initialTurn.create[Pulse[T], StaticSignal[T, S], Unit](dependencies.toSet, Initializer.DerivedSignal, inite = true) {
         state => new StaticSignal[T, S](state, ignore2(expr), ct.rename) with DisconnectableImpl[S]
       }
     }
@@ -38,7 +38,7 @@ object Signals {
                              (expr: DynamicTicket[S] => T)
                              (implicit ct: CreationTicket[S]): Signal[T, S] =
     ct { initialTurn =>
-      initialTurn.create[Pulse[T], DynamicSignal[T, S], Unit](dependencies.toSet, Initializer.DerivedSignal) {
+      initialTurn.create[Pulse[T], DynamicSignal[T, S], Unit](dependencies.toSet, Initializer.DerivedSignal, inite = true) {
         state => new DynamicSignal[T, S](state, expr, ct.rename) with DisconnectableImpl[S]
       }
     }
