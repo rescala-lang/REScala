@@ -9,7 +9,7 @@ import scala.language.existentials
 
 /** Functions to construct events, you probably want to use the operators on [[Event]] for a nicer API. */
 object Events {
-  type Estate[S <: Struct, T] = S#State[Nothing, S, Pulse[T]]
+  type Estate[S <: Struct, T] = S#State[Unit, S, Pulse[T]]
 
 
   /** the basic method to create static events */
@@ -17,7 +17,7 @@ object Events {
                                   dependencies: ReSource[S]*)
                                  (calculate: StaticTicket[S] => Pulse[T])
                                  (implicit ticket: CreationTicket[S]): Event[T, S] = ticket { initTurn =>
-    initTurn.create[Nothing, StaticEvent[T, S], Pulse[T]](dependencies.toSet, Initializer.Event) {
+    initTurn.create[Unit, StaticEvent[T, S], Pulse[T]](dependencies.toSet, Initializer.Event) {
       state => new StaticEvent[T, S](state, calculate, name) with DisconnectableImpl[S]
     }
   }
@@ -31,7 +31,7 @@ object Events {
   /** Creates dynamic events */
   def dynamic[T, S <: Struct](dependencies: ReSource[S]*)(expr: DynamicTicket[S] => Option[T])(implicit ticket: CreationTicket[S]): Event[T, S] = {
     ticket { initialTurn =>
-      initialTurn.create[Nothing, DynamicEvent[T, S], Pulse[T]](dependencies.toSet, Initializer.DynamicEvent) {
+      initialTurn.create[Unit, DynamicEvent[T, S], Pulse[T]](dependencies.toSet, Initializer.DynamicEvent) {
         state => new DynamicEvent[T, S](state, expr.andThen(Pulse.fromOption), ticket.rename) with DisconnectableImpl[S]
       }
     }
@@ -83,9 +83,9 @@ object Events {
 
 
 private abstract class StaticEvent[T, S <: Struct](_bud: Estate[S, T], expr: StaticTicket[S] => Pulse[T], name: REName)
-  extends Base[Nothing, S, Pulse[T]](_bud, name) with Event[T, S] {
+  extends Base[Unit, S, Pulse[T]](_bud, name) with Event[T, S] {
   override protected[rescala] def reevaluate(rein: ReIn): Rout =
-    Events.noteFromPulse[Nothing, T, S](rein, Pulse.tryCatch(expr(rein), onEmpty = NoChange))
+    Events.noteFromPulse[Unit, T, S](rein, Pulse.tryCatch(expr(rein), onEmpty = NoChange))
 }
 
 
@@ -114,10 +114,10 @@ private abstract class ChangeEvent[T, S <: Struct](_bud:S#State[Pulse[Diff[T]], 
 }
 
 private abstract class DynamicEvent[T, S <: Struct](_bud: Estate[S, T], expr: DynamicTicket[S] => Pulse[T], name: REName)
-  extends Base[Nothing, S, Pulse[T]](_bud, name) with Event[T, S] {
+  extends Base[Unit, S, Pulse[T]](_bud, name) with Event[T, S] {
 
   override protected[rescala] def reevaluate(rein: ReIn): Rout = {
     rein.trackDependencies()
-    Events.noteFromPulse[Nothing, T, S](rein, Pulse.tryCatch(expr(rein), onEmpty = NoChange))
+    Events.noteFromPulse[Unit, T, S](rein, Pulse.tryCatch(expr(rein), onEmpty = NoChange))
   }
 }

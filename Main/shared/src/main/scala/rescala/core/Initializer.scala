@@ -43,14 +43,14 @@ object Initializer {
     val ignitionRequiresReevaluation: Boolean
   }
 
-  val Event: Param[Nothing] = new Param[Nothing]{
-    override def initialValue: Nothing = ???
+  val Event: Param[Unit] = new Param[Unit]{
+    override val initialValue: Unit = ()
     override val isTransient: Boolean = true
     override val ignitionRequiresReevaluation: Boolean = false
   }
 
-  object DynamicEvent extends Param[Nothing]{
-    override def initialValue: Nothing = ???
+  object DynamicEvent extends Param[Unit]{
+    override val initialValue: Unit = ()
     override val isTransient: Boolean = true
     override val ignitionRequiresReevaluation: Boolean = true
   }

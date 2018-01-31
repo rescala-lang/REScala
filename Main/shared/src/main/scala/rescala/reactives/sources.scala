@@ -18,8 +18,8 @@ abstract class Source[S <: Struct, T](name: REName) extends RENamed(name) with R
 final class Evt[T, S <: Struct] private[rescala](initialState: Estate[S, T], name: REName)
   extends Source[S, T](name) with Event[T, S] {
   override type Notification = Pulse[T]
-  override type Value = Nothing
-  override protected[rescala] def state: S#State[Nothing, S, Pulse[T]] = initialState
+  override type Value = Unit
+  override protected[rescala] def state: S#State[Unit, S, Pulse[T]] = initialState
 
   /** Trigger the event */
   @deprecated("use .fire instead of apply", "0.21.0")
@@ -38,7 +38,7 @@ final class Evt[T, S <: Struct] private[rescala](initialState: Estate[S, T], nam
 /** Creates new [[Evt]]s */
 object Evt {
   def apply[T, S <: Struct]()(implicit ticket: CreationTicket[S]): Evt[T, S] = ticket { t =>
-    t.createSource[Nothing, Evt[T, S], Pulse[T]](Initializer.Event)(new Evt[T, S](_, ticket.rename))
+    t.createSource[Unit, Evt[T, S], Pulse[T]](Initializer.Event)(new Evt[T, S](_, ticket.rename))
   }
 }
 
@@ -51,9 +51,9 @@ object Evt {
 final class Var[A, S <: Struct] private[rescala](initialState: Signals.Sstate[S, A], name: REName)
   extends Source[S, A](name) with Signal[A, S] {
   override type Value = Pulse[A]
-  override type Notification = Nothing
+  override type Notification = Unit
 
-  override protected[rescala] def state: S#State[Pulse[A], S, Nothing] = initialState
+  override protected[rescala] def state: S#State[Pulse[A], S, Unit] = initialState
 
   //def update(value: A)(implicit fac: Engine[S]): Unit = set(value)
   def set(value: A)(implicit fac: Scheduler[S]): Unit = fac.transaction(this) {admit(value)(_)}
@@ -80,7 +80,7 @@ object Var {
   def apply[T: ReSerializable, S <: Struct](initval: T)(implicit ticket: CreationTicket[S]): Var[T, S] = fromChange(Pulse.Value(initval))
   def empty[T: ReSerializable, S <: Struct]()(implicit ticket: CreationTicket[S]): Var[T, S] = fromChange(Pulse.empty)
   private[this] def fromChange[T: ReSerializable, S <: Struct](change: Pulse.Change[T])(implicit ticket: CreationTicket[S]): Var[T, S] = ticket { t =>
-    t.createSource[Pulse[T], Var[T, S], Nothing](Initializer.InitializedSignal(change))(new Var[T, S](_, ticket.rename))
+    t.createSource[Pulse[T], Var[T, S], Unit](Initializer.InitializedSignal(change))(new Var[T, S](_, ticket.rename))
   }
 }
 
