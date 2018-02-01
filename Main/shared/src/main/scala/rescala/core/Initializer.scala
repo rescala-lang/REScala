@@ -39,7 +39,7 @@ trait Initializer[S <: Struct] {
 
 object Initializer {
 
-  class InitValues[+V, +N](val initialValue: V, val initialNotification: N)
+  class InitValues[+V, +N](val initialValue: V, val noNotification: N)
   val Event = new InitValues((), Pulse.NoChange)
   val Change = new InitValues(Pulse.NoChange, Pulse.NoChange)
   val DerivedSignal = new InitValues(Pulse.empty, ())

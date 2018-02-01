@@ -42,7 +42,7 @@ class STMStructType[V, S <: Struct, N](ip: InitValues[V, N]) extends LevelStruct
 
 
 
-  override def notification(token: Token): N = notification.get(inTxn(token)).getOrElse(ip.initialNotification)
+  override def notification(token: Token): N = notification.get(inTxn(token)).getOrElse(ip.noNotification)
 
 
   override def setNotification(notification: N, token: Token): Boolean = {

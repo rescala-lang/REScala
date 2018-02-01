@@ -12,14 +12,14 @@ trait SimpleStruct extends Struct {
 class SimpleState[V, N](ip: InitValues[V, N]) {
 
   var value: V = ip.initialValue
-  var notification: N = ip.initialNotification
+  var notification: N = ip.noNotification
   var outgoing: Set[Reactive[SimpleStruct]] = Set.empty
   var discovered = false
   var dirty = false
   def reset(): Unit = {
     discovered = false
     dirty = false
-    notification = null.asInstanceOf[N]
+    notification = ip.noNotification
   }
 }
 

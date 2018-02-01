@@ -16,7 +16,7 @@ trait TwoVersionStruct extends GraphStruct {
   */
 class BufferedValueStruct[P, S <: Struct, N](ip: InitValues[P, N]) extends ReadWriteValue[P, S, N] with Committable[S] {
   var current: P = ip.initialValue
-  var notification: N = ip.initialNotification
+  var notification: N = ip.noNotification
   protected var owner: Token = null
   private var update: P = _
 
@@ -36,14 +36,14 @@ class BufferedValueStruct[P, S <: Struct, N](ip: InitValues[P, N]) extends ReadW
   }
   override def base(token: Token): P = current
   override def get(token: Token): P = {if (token eq owner) update else current}
-  override def notification(token: Token): N = {if (token eq owner) notification else ip.initialNotification}
+  override def notification(token: Token): N = {if (token eq owner) notification else ip.noNotification}
 
   override def commit(turn: TwoVersionPropagation[S]): Unit = {
     current = update
     release(turn)
   }
   override def release(turn: TwoVersionPropagation[S]): Unit = {
-    notification = ip.initialNotification
+    notification = ip.noNotification
     owner = null
   }
 }
