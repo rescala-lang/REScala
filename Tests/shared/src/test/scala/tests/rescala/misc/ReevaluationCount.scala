@@ -1,6 +1,5 @@
 package tests.rescala.misc
 
-import org.scalatest.prop.Whenever
 import tests.rescala.testtools.RETests
 
 

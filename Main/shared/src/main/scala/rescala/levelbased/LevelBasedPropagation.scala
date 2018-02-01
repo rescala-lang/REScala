@@ -20,10 +20,10 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
     _propagating.clear()
   }
 
-  val reevaluaitonTicket: ReevTicket[_, _, S] = makeDynamicReevaluationTicket(null)
+  val reevaluaitonTicket: ReevTicket[_, S] = makeDynamicReevaluationTicket(null)
 
   override def evaluate(r: Reactive[S]): Unit = evaluateIn(r)(reevaluaitonTicket.reset(r.state.base(token)))
-  def evaluateIn(head: Reactive[S])(dt: ReevTicket[head.Value, head.Notification, S]): Unit = {
+  def evaluateIn(head: Reactive[S])(dt: ReevTicket[head.Value, S]): Unit = {
     val reevRes = head.reevaluate(dt)
 
     val dependencies: Option[Set[ReSource[S]]] = reevRes.getDependencies()
@@ -34,7 +34,6 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
     } else {
       dependencies.foreach(commitDependencyDiff(head, head.state.incoming()))
       reevRes.forValue(writeState(head))
-      reevRes.forNotification(writeNotification(head))
       reevRes.forEffect(observe)
       if (reevRes.propagate) enqueueOutgoing(head, minimalLevel)
     }
@@ -67,9 +66,8 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
   }
 
   final override def initialize(ic: InitialChange[S]): Unit = {
-    val v = ic.writeNotification(writeNotification(ic.source))
     val n = ic.writeValue(ic.source.state.base(token), writeState(ic.source))
-    if (v || n) enqueueOutgoing(ic.source)
+    if (n) enqueueOutgoing(ic.source)
   }
 
   def propagationPhase(): Unit = levelQueue.evaluateQueue()

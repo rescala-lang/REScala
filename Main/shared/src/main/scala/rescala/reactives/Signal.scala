@@ -35,7 +35,7 @@ trait Signal[+A, S <: Struct] extends ReSource[S] with Interp[S, A] with Disconn
 
   /** Interprets the pulse of the signal by returning the value
     * @group internal */
-  override def interpret(v: Value, n: Notification): A = v.get
+  override def interpret(v: Value): A = v.get
 
   /** add an observer
     * @group accessor */
@@ -85,7 +85,7 @@ trait Signal[+A, S <: Struct] extends ReSource[S] with Interp[S, A] with Disconn
     * to the event is the new value of the signal
     * @group conversion */
   final def changed(implicit ticket: CreationTicket[S]): Event[A, S] = Events.staticNamed(s"(changed $this)", this) { st =>
-    st.collectStatic(this)._1 match {
+    st.collectStatic(this) match {
       case Pulse.empty => Pulse.NoChange
       case other => other
     }

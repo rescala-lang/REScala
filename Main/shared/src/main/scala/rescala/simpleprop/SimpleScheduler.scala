@@ -6,26 +6,25 @@ import rescala.core.{Initializer, ReSource, Reactive, ReevTicket, Scheduler, Str
 import scala.collection.mutable.ArrayBuffer
 
 trait SimpleStruct extends Struct {
-  override type State[V, S <: Struct, N] = SimpleState[V, N]
+  override type State[V, S <: Struct] = SimpleState[V]
 }
 
-class SimpleState[V, N](ip: InitValues[V, N]) {
+class SimpleState[V](ip: InitValues[V]) {
 
   var value: V = ip.initialValue
-  var notification: N = ip.noNotification
   var outgoing: Set[Reactive[SimpleStruct]] = Set.empty
   var discovered = false
   var dirty = false
   def reset(): Unit = {
     discovered = false
     dirty = false
-    notification = ip.noNotification
+    value = ip.unchange.unchange(value)
   }
 }
 
 object SimpleCreation extends Initializer[SimpleStruct] {
-  override protected[this] def makeDerivedStructState[V, N](ip: InitValues[V, N]): SimpleState[V, N] =
-    new SimpleState[V, N](ip)
+  override protected[this] def makeDerivedStructState[V](ip: InitValues[V]): SimpleState[V] =
+    new SimpleState[V](ip)
   override protected[this] def ignite(reactive: Reactive[SimpleStruct], incoming: Set[ReSource[SimpleStruct]], ignitionRequiresReevaluation: Boolean): Unit = {
 
     incoming.foreach { dep =>
@@ -51,12 +50,11 @@ object SimpleScheduler extends Scheduler[SimpleStruct] {
       val sorted: ArrayBuffer[Reactive] = ArrayBuffer[Reactive]()
       // admission
       val admissionTicket = new AdmissionTicket(SimpleCreation) {
-        override def access[A](reactive: Signal[A]): A = reactive.state.value.get
+        override def access[A](reactive: Signal[A]) = reactive.state.value
       }
       val admissionResult = admissionPhase(admissionTicket)
       val sources = admissionTicket.initialChanges.collect {
-        case iv if iv.writeNotification(iv.source.state.notification = _) ||
-          iv.writeValue(iv.source.state.value, iv.source.state.value = _) => iv.source
+        case iv if iv.writeValue(iv.source.state.value, iv.source.state.value = _) => iv.source
       }.toSeq
       sources.foreach(_.state.outgoing.foreach(initial += _))
       initial.foreach(_.state.dirty = true)
@@ -75,7 +73,7 @@ object SimpleScheduler extends Scheduler[SimpleStruct] {
 
       //wrapup
       if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(new WrapUpTicket {
-        override private[rescala] def access[A](reactive: ReSource) = (reactive.state.value, reactive.state.notification)
+        override private[rescala] def access(reactive: ReSource) = reactive.state.value
       })
       admissionResult
     } finally idle = true
@@ -100,15 +98,14 @@ object Util {
   }
 
   def evaluate(reactive: Reactive[SimpleStruct], incoming: Set[ReSource[SimpleStruct]]): Unit = {
-    val dt = new ReevTicket[reactive.Value, reactive.Notification, SimpleStruct](SimpleCreation, reactive.state.value) {
-      override def dynamicAccess[A](reactive: ReSource[SimpleStruct]) = ???
-      override def staticAccess[A](reactive: ReSource[SimpleStruct]) = (reactive.state.value, reactive.state.notification)
+    val dt = new ReevTicket[reactive.Value, SimpleStruct](SimpleCreation, reactive.state.value) {
+      override def dynamicAccess(reactive: ReSource[SimpleStruct]) = ???
+      override def staticAccess(reactive: ReSource[SimpleStruct]) = reactive.state.value
     }
     val reev = reactive.reevaluate(dt)
     if (reev.propagate) reactive.state.outgoing.foreach(_.state.dirty = true)
     if (reev.getDependencies().isDefined) ???
     reev.forValue(reactive.state.value = _)
-    reev.forNotification(reactive.state.notification = _)
     reev.forEffect(_ ())
   }
 }

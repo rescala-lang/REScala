@@ -24,6 +24,6 @@ trait Interp[S <: Struct, +T] extends ReSource[S] {
 
   /** Interprets the internal type to the external type
     * @group internal */
-  def interpret(v: Value, n: Notification): T
+  def interpret(v: Value): T
 
 }

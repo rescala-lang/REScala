@@ -8,7 +8,6 @@ import scala.collection.immutable.{LinearSeq, Queue}
 import scala.language.experimental.macros
 import scala.language.implicitConversions
 
-
 /** Events only propagate a value when they are changing,
   * when the system is at rest, events have no values.
   *
@@ -30,13 +29,12 @@ import scala.language.implicitConversions
   */
 trait Event[+T, S <: Struct] extends ReSource[S] with Interp[S, Option[T]] with Disconnectable[S] {
 
-  override type Notification <: Pulse[T]
 
-  implicit def valueAccess[A, B](v: (A, Pulse[B])): Pulse[B] = Option(v._2).getOrElse(Pulse.NoChange)
+  implicit def internalAccess(v: Value): Pulse[T]
 
   /** Interprets the pulse of the event by converting to an option
     * @group internal */
-  override def interpret(v: Value, n: Notification): Option[T] = Option(n).flatMap(_.toOption)
+  override def interpret(v: Value): Option[T] = v.toOption
 
   /** Adds an observer.
     * @usecase def +=(handler: T => Unit): Observe[S]
@@ -59,7 +57,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[S, Option[T]] with 
     */
   final def recover[R >: T](onFailure: PartialFunction[Throwable, Option[R]])(implicit ticket: CreationTicket[S]): Event[R, S] =
     Events.staticNamed(s"(recover $this)", this) { st =>
-      valueAccess(st.collectStatic(this)) match {
+      st.collectStatic(this) match {
         case Exceptional(t) => onFailure.applyOrElse[Throwable, Option[R]](t, throw _).fold[Pulse[R]](Pulse.NoChange)(Pulse.Value(_))
         case other => other
       }
@@ -77,7 +75,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[S, Option[T]] with 
   final def ||[U >: T](other: Event[U, S])(implicit ticket: CreationTicket[S]): Event[U, S] = {
     Events.staticNamed(s"(or $this $other)", this, other) { st =>
       val tp = st.collectStatic(this)
-      if (tp.isChange) tp else st.collectStatic(other)
+      if (tp.isChange) tp else other.internalAccess(st.collectStatic(other))
     }
   }
 
@@ -97,7 +95,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[S, Option[T]] with 
     * @group operator*/
   final def \[U](except: Event[U, S])(implicit ticket: CreationTicket[S]): Event[T, S] = {
     Events.staticNamed(s"(except $this  $except)", this, except) { st =>
-      valueAccess(st.collectStatic(except)) match {
+      (except.internalAccess(st.collectStatic(except)): Pulse[U]) match {
         case NoChange => st.collectStatic(this)
         case Value(_) => Pulse.NoChange
         case ex@Exceptional(_) => ex
@@ -111,8 +109,8 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[S, Option[T]] with 
   final def and[U, R](other: Event[U, S])(merger: (T, U) => R)(implicit ticket: CreationTicket[S]): Event[R, S] = {
     Events.staticNamed(s"(and $this $other)", this, other) { st =>
       for {
-        left <- st.collectStatic(this)
-        right <- st.collectStatic(other)
+        left <- internalAccess(st.collectStatic(this)): Pulse[T]
+        right <- other.internalAccess(st.collectStatic(other)) : Pulse[U]
       } yield {merger(left, right)}
     }
   }
@@ -128,8 +126,8 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[S, Option[T]] with 
     * @group operator*/
   final def zipOuter[U](other: Event[U, S])(implicit ticket: CreationTicket[S]): Event[(Option[T], Option[U]), S] = {
     Events.staticNamed(s"(zipOuter $this $other)", this, other) { st =>
-      val left = st.collectStatic(this)
-      val right = st.collectStatic(other)
+      val left: Pulse[T] = st.collectStatic(this)
+      val right: Pulse[U] = other.internalAccess(st.collectStatic(other))
       if (right.isChange || left.isChange) Value(left.toOption -> right.toOption) else NoChange
     }
   }
@@ -156,7 +154,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[S, Option[T]] with 
     * @group conversion */
   final def reduce[A: ReSerializable](reducer: (=> A, => T) => A)(implicit ticket: CreationTicket[S]): Signal[A, S] =
     ticket { initialTurn =>
-      initialTurn.create[Pulse[A], StaticSignal[A, S], Unit](Set(this), Initializer.InitializedSignal[Pulse[A]](Pulse.empty), inite = false) { state =>
+      initialTurn.create[Pulse[A], StaticSignal[A, S]](Set(this), Initializer.InitializedSignal[Pulse[A]](Pulse.empty), inite = false) { state =>
         new StaticSignal[A, S](state,
           { (st, currentValue) => reducer(currentValue(), st.collectStatic(this).get) },
           ticket.rename) with DisconnectableImpl[S]

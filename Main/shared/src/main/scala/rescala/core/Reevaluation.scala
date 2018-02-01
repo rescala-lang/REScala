@@ -1,11 +1,10 @@
 package rescala.core
 
 
-trait Result[T, N, S <: Struct] {
+trait Result[T, S <: Struct] {
   def propagate: Boolean
   def forValue(f: T => Unit): Unit
   def forEffect(f: (() => Unit) => Unit): Unit
-  def forNotification(f: N => Unit): Unit
   def getDependencies(): Option[Set[ReSource[S]]]
 }
 

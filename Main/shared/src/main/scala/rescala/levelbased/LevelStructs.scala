@@ -10,14 +10,14 @@ import scala.language.higherKinds
   * Wrapper for a struct type that combines GraphSpore, PulsingSpore and is leveled
   */
 trait LevelStruct extends TwoVersionStruct {
-  override type State[P, S <: Struct, N] <: LevelStructType[S] with GraphStructType[S] with ReadWriteValue[P, S, N]
+  override type State[P, S <: Struct] <: LevelStructType[S] with GraphStructType[S] with ReadWriteValue[P, S]
 }
 
 /**
   * Wrapper for the instance of LevelSpore
   */
 trait SimpleStruct extends LevelStruct {
-  override type State[P, S <: Struct, N] = LevelStructTypeImpl[P, S, N]
+  override type State[P, S <: Struct] = LevelStructTypeImpl[P, S]
 }
 
 /**
@@ -31,8 +31,8 @@ trait LevelStructType[S <: Struct] extends GraphStructType[S] {
 }
 
 /** Implementation of a struct with graph and buffered pulse storage functionality that also support setting a level. */
-class LevelStructTypeImpl[P, S <: Struct, N](ip: InitValues[P, N])
-  extends PropagationStructImpl[P, S, N](ip) with LevelStructType[S] {
+class LevelStructTypeImpl[P, S <: Struct](ip: InitValues[P])
+  extends PropagationStructImpl[P, S](ip) with LevelStructType[S] {
 
   var _level: Int = 0
 

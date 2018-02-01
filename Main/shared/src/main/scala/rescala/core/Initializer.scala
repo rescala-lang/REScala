@@ -1,32 +1,33 @@
 package rescala.core
 
 import rescala.core.Initializer.InitValues
+import rescala.reactives.Signals.Diff
 
 trait Initializer[S <: Struct] {
   /** Creates and correctly initializes new [[Reactive]]s */
-  final private[rescala] def create[P, T <: Reactive[S], N](incoming: Set[ReSource[S]],
-                                                            initv: InitValues[P, N],
+  final private[rescala] def create[V, T <: Reactive[S]](incoming: Set[ReSource[S]],
+                                                            initv: InitValues[V],
                                                             inite: Boolean)
-                                                           (instantiateReactive: S#State[P, S, N] => T): T = {
-    val state = makeDerivedStructState[P, N](initv)
+                                                           (instantiateReactive: S#State[V, S] => T): T = {
+    val state = makeDerivedStructState[V](initv)
     val reactive = instantiateReactive(state)
     ignite(reactive, incoming, inite)
     reactive
   }
 
   /** Correctly initializes [[ReSource]]s */
-  final private[rescala] def createSource[V, T <: ReSource[S], N]
-    (intv: InitValues[V, N])(instantiateReactive: S#State[V, S, N] => T): T = {
-    val state = makeSourceStructState[V, N](intv)
+  final private[rescala] def createSource[V, T <: ReSource[S]]
+    (intv: InitValues[V])(instantiateReactive: S#State[V, S] => T): T = {
+    val state = makeSourceStructState[V](intv)
     instantiateReactive(state)
   }
 
   /** Creates the internal state of [[Reactive]]s */
-  protected[this] def makeDerivedStructState[V, N](valuePersistency: InitValues[V, N]): S#State[V, S, N]
+  protected[this] def makeDerivedStructState[V](valuePersistency: InitValues[V]): S#State[V, S]
 
   /**  Creates the internal state of [[ReSource]]s */
-  protected[this] def makeSourceStructState[V, N](valuePersistency: InitValues[V, N]): S#State[V, S, N] =
-    makeDerivedStructState[V, N](valuePersistency)
+  protected[this] def makeSourceStructState[V](valuePersistency: InitValues[V]): S#State[V, S] =
+    makeDerivedStructState[V](valuePersistency)
   /**
     * to be implemented by the propagation algorithm, called when a new reactive has been instantiated and needs to be connected to the graph and potentially reevaluated.
     * @param reactive the newly instantiated reactive
@@ -39,14 +40,25 @@ trait Initializer[S <: Struct] {
 
 object Initializer {
 
-  class InitValues[+V, +N](val initialValue: V, val noNotification: N)
-  val Event = new InitValues((), Pulse.NoChange)
-  val Change = new InitValues(Pulse.NoChange, Pulse.NoChange)
-  val DerivedSignal = new InitValues(Pulse.empty, ())
-  val Observer = new InitValues((), ())
+  trait Unchange[T] {
+    def unchange(v: T): T
+  }
 
-  case class InitializedSignal[V: ReSerializable](override val initialValue: V)
-    extends InitValues[V, Unit](initialValue, ()) {
-    def serializable: ReSerializable[Pulse[V]] = ReSerializable.pulseSerializable
+  class EUnchange[T] extends Unchange[Pulse[T]] {override def unchange(v: Pulse[T]): Pulse[T] = Pulse.NoChange }
+
+  class SUnchange[T] extends Unchange[T] { override def unchange(v: T): T = v }
+  class CUnchange[T] extends Unchange[(Pulse[T], Pulse[Diff[T]])] {
+    override def unchange(v: (Pulse[T], Pulse[Diff[T]])): (Pulse[T], Pulse[Diff[T]]) = v.copy(_2 = Pulse.NoChange)
+  }
+
+  class InitValues[V](val initialValue: V, val unchange: Unchange[V])
+  def Event[T] = new InitValues[Pulse[T]](Pulse.NoChange, new EUnchange[T])
+  def Change[T] = new InitValues[(Pulse[T], Pulse[Diff[T]])]((Pulse.NoChange, Pulse.NoChange), new CUnchange[T])
+  def DerivedSignal[T] = new InitValues[Pulse[T]](Pulse.empty, new SUnchange[Pulse[T]])
+  def Observer[T] = new InitValues(Pulse.NoChange, new EUnchange[T])
+
+  case class InitializedSignal[T: ReSerializable](override val initialValue: T)
+    extends InitValues[T](initialValue, new SUnchange[T]) {
+    def serializable: ReSerializable[Pulse[T]] = ReSerializable.pulseSerializable
   }
 }

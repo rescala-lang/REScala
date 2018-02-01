@@ -72,18 +72,18 @@ trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropaga
 
 
   override private[rescala] def makeAdmissionPhaseTicket() = new AdmissionTicket[S](this) {
-    override def access[A](reactive: Signal[A, S]): A = {
+    override def access[A](reactive: Signal[A, S]) = {
       dynamicDependencyInteraction(reactive)
-      reactive.state.base(token).get
+      reactive.state.base(token)
     }
   }
-  private[rescala] def makeDynamicReevaluationTicket[V, N](b: V): ReevTicket[V, N, S] = new ReevTicket[V, N, S](this, b) {
-    override def dynamicAccess[A](reactive: ReSource[S]) = TwoVersionPropagationImpl.this.dynamicAfter(reactive)
-    override def staticAccess[A](reactive: ReSource[S]) = (reactive.state.get(token), reactive.state.notification(token))
+  private[rescala] def makeDynamicReevaluationTicket[V, N](b: V): ReevTicket[V, S] = new ReevTicket[V, S](this, b) {
+    override def dynamicAccess(reactive: ReSource[S]) = TwoVersionPropagationImpl.this.dynamicAfter(reactive)
+    override def staticAccess(reactive: ReSource[S]) = reactive.state.get(token)
   }
 
   private[rescala] def makeWrapUpPhaseTicket(): WrapUpTicket[S] = new WrapUpTicket[S] {
-    override def access[A](reactive: ReSource[S]) = TwoVersionPropagationImpl.this.dynamicAfter(reactive)
+    override def access(reactive: ReSource[S]) = TwoVersionPropagationImpl.this.dynamicAfter(reactive)
   }
 
   private[rescala] def dynamicAfter[P](reactive: ReSource[S]) = {
@@ -91,13 +91,10 @@ trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropaga
     // Dynamic reads thus may return glitched values, which the reevaluation handling implemented in subclasses
     // must account for by repeating glitched reevaluations!
     dynamicDependencyInteraction(reactive)
-    (reactive.state.get(token), reactive.state.notification(token))
+    reactive.state.get(token)
   }
   def writeState(pulsing: ReSource[S])(value: pulsing.Value): Unit = {
     if (pulsing.state.write(value, token)) this.schedule(pulsing.state)
-  }
-  def writeNotification(pulsing: ReSource[S])(value: pulsing.Notification): Unit = {
-    if (pulsing.state.setNotification(value, token)) this.schedule(pulsing.state)
   }
 
 }

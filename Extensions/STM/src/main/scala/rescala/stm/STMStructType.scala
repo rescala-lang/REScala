@@ -7,7 +7,7 @@ import rescala.twoversion.{ReadWriteValue, Token, TwoVersionPropagation}
 
 import scala.concurrent.stm.{InTxn, Ref, TxnLocal}
 
-class STMStructType[V, S <: Struct, N](ip: InitValues[V, N]) extends LevelStructType[S] with ReadWriteValue[V, S, N] {
+class STMStructType[V, S <: Struct](ip: InitValues[V]) extends LevelStructType[S] with ReadWriteValue[V, S] {
 
   // use dynamic scope lookup to find txn
   def inTxn(): InTxn = scala.concurrent.stm.atomic(identity)
@@ -22,7 +22,7 @@ class STMStructType[V, S <: Struct, N](ip: InitValues[V, N]) extends LevelStruct
   val _outgoing: Ref[Set[Reactive[S]]] = Ref(Set.empty)
   val _incoming: Ref[Set[ReSource[S]]] = Ref(Set.empty)
 
-  val pulses: ReadWriteValue[V, S, N] = this
+  val pulses: ReadWriteValue[V, S] = this
   def incoming(): Set[ReSource[S]] = _incoming.get(inTxn())
   override def level(): Int = _level.get(inTxn())
   override def drop(reactive: Reactive[S]): Unit = _outgoing.transformAndGet(_ - reactive)(inTxn())
@@ -33,22 +33,13 @@ class STMStructType[V, S <: Struct, N](ip: InitValues[V, N]) extends LevelStruct
 
 
   private val current: Ref[V] = Ref(ip.initialValue)
-  private val notification: TxnLocal[Option[N]] = TxnLocal(None)
 
   private val update: TxnLocal[Option[V]] = TxnLocal(None,beforeCommit = { implicit inTxn =>
     val updateValue: Option[V] = update.get
-    if (updateValue.isDefined) current.set(updateValue.get)
+    if (updateValue.isDefined) current.set(ip.unchange.unchange(updateValue.get))
   })
 
 
-
-  override def notification(token: Token): N = notification.get(inTxn(token)).getOrElse(ip.noNotification)
-
-
-  override def setNotification(notification: N, token: Token): Boolean = {
-    this.notification.set(Some(notification))(inTxn(token))
-    false
-  }
   override def write(value: V, token: Token): Boolean = {
     update.set(Some(value))(inTxn(token))
     false

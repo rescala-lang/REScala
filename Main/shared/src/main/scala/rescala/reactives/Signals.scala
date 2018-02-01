@@ -8,7 +8,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 /** Functions to construct signals, you probably want to use signal expressions in [[rescala.RescalaInterface.Signal]] for a nicer API. */
 object Signals {
-  type Sstate[S <: Struct, T] = S#State[Pulse[T], S, Unit]
+  type Sstate[S <: Struct, T] = S#State[Pulse[T], S]
 
   /** creates a new static signal depending on the dependencies, reevaluating the function */
   def static[T, S <: Struct](dependencies: ReSource[S]*)
@@ -17,7 +17,7 @@ object Signals {
     ct { initialTurn =>
       def ignore2[Tick, Current, Res](f: Tick => Res): (Tick, Current) => Res = (ticket, _) => f(ticket)
 
-      initialTurn.create[Pulse[T], StaticSignal[T, S], Unit](dependencies.toSet, Initializer.DerivedSignal, inite = true) {
+      initialTurn.create[Pulse[T], StaticSignal[T, S]](dependencies.toSet, Initializer.DerivedSignal, inite = true) {
         state => new StaticSignal[T, S](state, ignore2(expr), ct.rename) with DisconnectableImpl[S]
       }
     }
@@ -27,7 +27,7 @@ object Signals {
                              (expr: DynamicTicket[S] => T)
                              (implicit ct: CreationTicket[S]): Signal[T, S] =
     ct { initialTurn =>
-      initialTurn.create[Pulse[T], DynamicSignal[T, S], Unit](dependencies.toSet, Initializer.DerivedSignal, inite = true) {
+      initialTurn.create[Pulse[T], DynamicSignal[T, S]](dependencies.toSet, Initializer.DerivedSignal, inite = true) {
         state => new DynamicSignal[T, S](state, expr, ct.rename) with DisconnectableImpl[S]
       }
     }
@@ -79,7 +79,7 @@ object Signals {
     }
   }
 
-  private[rescala] def computeNewValue[T, N, S <: Struct](rein: ReevTicket[Pulse[T], N, S], newValue: () => T): ReevTicket[Pulse[T], N, S] = {
+  private[rescala] def computeNewValue[T, S <: Struct](rein: ReevTicket[Pulse[T], S], newValue: () => T): ReevTicket[Pulse[T], S] = {
     val newPulse = Pulse.tryCatch(Pulse.diffPulse(newValue(), rein.before))
     if (newPulse.isChange) rein.withValue(newPulse) else rein
   }
@@ -88,20 +88,20 @@ object Signals {
 
 
 private abstract class StaticSignal[T, S <: Struct](_bud: Sstate[S, T], expr: (StaticTicket[S], () => T) => T, name: REName)
-  extends Base[Pulse[T], S, Unit](_bud, name) with Signal[T, S] {
+  extends Base[Pulse[T], S](_bud, name) with Signal[T, S] {
 
   override protected[rescala] def reevaluate(rein: ReIn): Rout = {
-    Signals.computeNewValue[T, Unit, S](rein, () => expr(rein, () => rein.before.get))
+    Signals.computeNewValue[T, S](rein, () => expr(rein, () => rein.before.get))
   }
 
 }
 
 private abstract class DynamicSignal[T, S <: Struct](_bud: Sstate[S, T], expr: DynamicTicket[S] => T, name: REName)
-  extends Base[Pulse[T], S, Unit](_bud, name) with Signal[T, S] {
+  extends Base[Pulse[T], S](_bud, name) with Signal[T, S] {
 
   override protected[rescala] def reevaluate(rein: ReIn): Rout = {
     rein.trackDependencies()
-    Signals.computeNewValue[T, Unit, S](rein, () => expr(rein))
+    Signals.computeNewValue[T, S](rein, () => expr(rein))
   }
 }
 
