@@ -14,7 +14,7 @@ class SubsumableLockReflection(override val host: SubsumableLockHost, override v
     if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this sending remote tryLock request")
     proxy.remoteTryLock().map {
       case RemoteLocked(lock) =>
-        if (lock == this) {
+        if (lock eq this) {// note: This must not be an == comparison. The received instance may be a new remote reflection of the same original lock, while this instance was concurrently deallocated and cannot have new references added!
           if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this locked remotely; adding $hopCount new refs (retaining connection establishment reference as thread reference)")
           if(hopCount > 0) localAddRefs(hopCount)
         } else {
@@ -23,9 +23,9 @@ class SubsumableLockReflection(override val host: SubsumableLockHost, override v
         }
         Locked0(0, lock)
       case RemoteBlocked(lock) =>
-        if (lock == this) {
+        if (lock eq this) { // note: This must not be an == comparison. The received instance may be a new remote reflection of the same original lock, while this instance was concurrently deallocated and cannot have new references added!
           if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this blocked remotely; $hopCount new refs (retaining connection establishment reference as thread reference)")
-          if(hopCount > 0) localAddRefs(hopCount)
+          if (hopCount > 0) localAddRefs(hopCount)
         } else {
           if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this blocked remotely under new parent $lock, passing ${hopCount + 1} new refs (retaining connection establishment reference as thread reference)")
           lock.localAddRefs(hopCount + 1)
@@ -53,7 +53,7 @@ class SubsumableLockReflection(override val host: SubsumableLockHost, override v
           lockedNewParent.localAddRefs(hopCount + 1)
           Successful0(0)
         case RemoteBlocked(newParent) =>
-          if(newParent == this) {
+          if(newParent eq this) {
             if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this remote trySubsume $lockedNewParent blocked, $hopCount new refs (retaining connection establishment reference as thread reference)")
             if(hopCount > 0) newParent.localAddRefs(hopCount)
           } else {
@@ -84,10 +84,9 @@ class SubsumableLockReflection(override val host: SubsumableLockHost, override v
     }(FullMVEngine.notWorthToMoveToTaskpool)
   }
   override def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[RemoteTrySubsumeResult] = {
-    if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this passing through trySubsume $lockedNewParent, using thread reference as connection establishment reference")
+    if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this passing through trySubsume $lockedNewParent, using parameter reference as connection establishment reference")
     proxy.remoteTrySubsume(lockedNewParent).map { res =>
-      if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this passing through trySubsume $lockedNewParent result $res, dropping temporary parameter reference")
-      lockedNewParent.localSubRefs(1)
+      if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this passing through trySubsume $lockedNewParent result $res")
       res
     }(FullMVEngine.notWorthToMoveToTaskpool)
   }

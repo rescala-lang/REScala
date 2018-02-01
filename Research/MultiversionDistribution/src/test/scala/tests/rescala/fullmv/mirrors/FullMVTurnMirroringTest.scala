@@ -12,27 +12,27 @@ class FullMVTurnMirroringTest extends FunSuite {
   val hostA = new FullMVEngine(Duration.Zero, "A")
   val hostB = new FullMVEngine(Duration.Zero, "B")
 
-  test("instance lookup and equality"){
+  test("instance lookup"){
     val a = host0.newTurn()
     val turn0 = FullMVTurnLocalClone(a, host0)
-    assert((turn0 eq a) === true)
+    assert(turn0 === a)
 
     val cloneA = FullMVTurnLocalClone(a, hostA)
-    assert((cloneA ne a) === true)
-    assert(cloneA === a)
-    assert((FullMVTurnLocalClone(a, hostA) eq cloneA) === true)
-    assert((FullMVTurnLocalClone(cloneA, hostA) eq cloneA) === true)
-    assert((FullMVTurnLocalClone(cloneA, host0) eq a) === true)
+    assert(cloneA !== a)
+    assert(cloneA.remotelyEquals(a))
+    assert(FullMVTurnLocalClone(a, hostA) === cloneA)
+    assert(FullMVTurnLocalClone(cloneA, hostA) === cloneA)
+    assert(FullMVTurnLocalClone(cloneA, host0) === a)
 
     val cloneB = FullMVTurnLocalClone(cloneA, hostB)
-    assert((cloneB ne a) === true)
-    assert(cloneB === a)
-    assert((cloneB ne cloneA) === true)
-    assert(cloneB === cloneA)
-    assert((FullMVTurnLocalClone(cloneA, hostB) eq cloneB) === true)
-    assert((FullMVTurnLocalClone(cloneB, hostB) eq cloneB) === true)
-    assert((FullMVTurnLocalClone(cloneB, hostA) eq cloneA) === true)
-    assert((FullMVTurnLocalClone(cloneB, host0) eq a) === true)
+    assert(cloneB !== a)
+    assert(cloneB.remotelyEquals(a))
+    assert(cloneB !== cloneA)
+    assert(cloneB.remotelyEquals(cloneA))
+    assert(FullMVTurnLocalClone(cloneA, hostB) === cloneB)
+    assert(FullMVTurnLocalClone(cloneB, hostB) === cloneB)
+    assert(FullMVTurnLocalClone(cloneB, hostA) === cloneA)
+    assert(FullMVTurnLocalClone(cloneB, host0) === a)
   }
 
   test("phase propagation") {

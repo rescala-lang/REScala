@@ -41,7 +41,7 @@ case object GarbageCollected0 extends TrySubsumeResult0 with TryLockResult0 {
   val futured = Future.successful(this)
 }
 
-trait SubsumableLock extends SubsumableLockProxy with Hosted {
+trait SubsumableLock extends SubsumableLockProxy with Hosted[SubsumableLock] {
   val refCount = new AtomicInteger(1)
 
   override val host: SubsumableLockHost
@@ -100,7 +100,7 @@ trait SubsumableLock extends SubsumableLockProxy with Hosted {
 }
 
 object SubsumableLock {
-  val DEBUG = true
+  val DEBUG = false
 
   def acquireLock[R](contender: FullMVTurn, timeout: Duration): SubsumableLock = {
     if (DEBUG) System.out.println(s"[${Thread.currentThread().getName}] syncing on SCC of $contender")

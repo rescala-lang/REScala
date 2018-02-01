@@ -8,10 +8,10 @@ import rescala.fullmv.sgt.synchronization.{SubsumableLock, SubsumableLockImpl}
 
 import scala.annotation.tailrec
 
-trait Hosted {
-  val host: Host[_]
+trait Hosted[R] {
+  val host: Host[R]
+  def remotelyEquals(obj: Hosted[R]): Boolean = obj.guid == guid
   val guid: Host.GUID
-  override def equals(obj: scala.Any): Boolean = obj.isInstanceOf[Hosted] && obj.asInstanceOf[Hosted].guid == guid
   val hc: Int = (guid ^ (guid >>> 32)).toInt
   override def hashCode(): Int = hc
 }

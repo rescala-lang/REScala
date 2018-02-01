@@ -16,7 +16,7 @@ import scala.util.{Failure, Random, Success}
 class LockMirrorStressTest extends FunSuite {
   test("stress") {
 
-    val numWorkers = 2
+    val numWorkers = 4
 
     val hosts = Array.tabulate(numWorkers)(i => new FullMVEngine(Duration.Zero, "stress-" + i))
     val turns = Array.tabulate(numWorkers){ i=>
@@ -24,8 +24,8 @@ class LockMirrorStressTest extends FunSuite {
       turn.beginExecuting()
       new AtomicReference(turn)
     }
-    val duration = 1000
-    println(s"starting lock stress test for ${duration/1000} seconds...")
+    val duration = 10000
+    println(s"starting lock stress test " + (if(duration == 0) "until key press" else s"for ${duration / 1000} seconds..."))
     var running: Boolean = true
     val threads = Array.tabulate(numWorkers)(i => Spawn {
       try {
@@ -65,13 +65,13 @@ class LockMirrorStressTest extends FunSuite {
     })
 
     val timeout = System.currentTimeMillis() + duration
-    while(running && System.currentTimeMillis() < timeout) {
+    while(running && (if(duration == 0) System.in.available() == 0 else System.currentTimeMillis() < timeout)) {
       Thread.sleep(50)
     }
     if(!running) println(s"Premature termination after ${(duration - (timeout - System.currentTimeMillis())) / 1000} seconds")
     running = false
 
-    val finalTimeout = System.currentTimeMillis() + 3000
+    val finalTimeout = System.currentTimeMillis() + 500
     val scores = threads.map(_.await(math.max(0, finalTimeout - System.currentTimeMillis())))
     println("lock stress test thread results:")
     println("\t" + scores.zipWithIndex.map { case (count, idx) => idx + ": " + count }.mkString("\n\t"))

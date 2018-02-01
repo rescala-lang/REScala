@@ -39,7 +39,7 @@ object FullMVTurnLocalClone {
         val reflection = new FullMVTurnReflection(reflectionHost, turn.guid, phase, mirrorProxy)
         // TODO this probably doesnt work due to endless loop; the predecessor turns have to subscibe asynchronously, not as a nested call.
         if(predTree != null) reflection.newPredecessors(predTree.map{ pred =>
-          if(pred == reflection) reflection else FullMVTurnLocalClone(pred, reflectionHost)
+          if(pred.remotelyEquals(reflection)) reflection else FullMVTurnLocalClone(pred, reflectionHost)
         })
         reflection
       }) match {
