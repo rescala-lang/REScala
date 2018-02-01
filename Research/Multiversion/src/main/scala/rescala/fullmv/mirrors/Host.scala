@@ -19,15 +19,15 @@ trait Hosted {
 object Host {
   type GUID = Long
   val dummyGuid: GUID = 0L
-  val DEBUG = false
+  val DEBUG = SubsumableLock.DEBUG
 }
-sealed trait CacheResult[T] { val instance: T }
-case class Found[T](instance: T) extends CacheResult[T]
-case class Instantiated[T](instance: T) extends CacheResult[T]
+sealed trait CacheResult[T, +U <: T] { val instance: T }
+case class Found[T](instance: T) extends CacheResult[T, Nothing]
+case class Instantiated[T, U <: T](instance: U) extends CacheResult[T, U]
 trait Host[T] {
   val dummy: T
   def getInstance(guid: Host.GUID): Option[T]
-  def getCachedOrReceiveRemote(guid: Host.GUID, instantiateReflection: => T): CacheResult[T]
+  def getCachedOrReceiveRemote[U <: T](guid: Host.GUID, instantiateReflection: => U): CacheResult[T, U]
   def dropInstance(guid: GUID, instance: T): Unit
   def createLocal[U <: T](create: Host.GUID => U): U
 }
@@ -35,7 +35,7 @@ trait Host[T] {
 trait HostImpl[T] extends Host[T] {
   val instances: ConcurrentMap[GUID, T] = new ConcurrentHashMap()
   override def getInstance(guid: GUID): Option[T] = Option(instances.get(guid))
-  override def getCachedOrReceiveRemote(guid: Host.GUID, instantiateReflection: => T): CacheResult[T] = {
+  override def getCachedOrReceiveRemote[U <: T](guid: Host.GUID, instantiateReflection: => U): CacheResult[T, U] = {
     @inline @tailrec def findOrReserveInstance(): T = {
       val found = instances.putIfAbsent(guid, dummy)
       if(found != dummy) {

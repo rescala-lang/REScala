@@ -144,26 +144,49 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
   override def remoteAsyncUnlock(): Unit = {
     asyncUnlock0()
   }
-  override def remoteTryLock(): Future[RemoteTryLockResult] = {
+  @tailrec final override def remoteTryLock(): Future[RemoteTryLockResult] = {
     if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this dispatching remote tryLock request locally")
-    // Technically, this is a tryLock(-1) and +1 on whatever result is returned, but this is simplified into just tryLock(0) here.
-    tryLock0(0).map{
-      case Locked0(failedRefChanges, newRoot) =>
-        if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this returning tryLock success to remote, correcting $failedRefChanges failed ref changes to $newRoot (thread reference is retained for remote connection establishment)")
-        if(failedRefChanges != 0) newRoot.localSubRefs(failedRefChanges)
-        RemoteLocked(newRoot)
-      case Blocked0(failedRefChanges, Self) =>
-        if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this returning tryLock self-blocked to remote, correcting $failedRefChanges failed ref changes (thread reference is retained for remote connection establishment)")
-        if(failedRefChanges != 0) localSubRefs(failedRefChanges)
-        RemoteBlocked(Self)
-      case Blocked0(failedRefChanges, newRoot) =>
-        if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this returning tryLock blocked under $newRoot to remote, correcting $failedRefChanges failed ref changes (thread reference is retained for remote connection establishment)")
-        if(failedRefChanges != 0) newRoot.localSubRefs(failedRefChanges)
-        RemoteBlocked(newRoot)
-      case GarbageCollected0 =>
-        if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this returning tryLock abort to remote")
-        RemoteGCd
-    }(FullMVEngine.notWorthToMoveToTaskpool)
+    state.get match {
+      case null =>
+        if(state.compareAndSet(null, Self)) {
+          if(DEBUG) println(s"[${Thread.currentThread().getName}] remote tryLocked $this; adding remote connection establishment reference")
+          // should be safe because we are now calling tryLock only on the contender, which means there is a guaranteed
+          // reference that will not be deallocated concurrently?
+          localAddRefs(1)
+          Future.successful(RemoteLocked(this))
+        } else {
+          if(DEBUG) println(s"[${Thread.currentThread().getName}] retrying contended remote tryLock attempt of $this")
+          remoteTryLock()
+        }
+      case Self =>
+        // not safe because held by different thread which could concurrently unlock and deallocate?
+        if(tryLocalAddRefs(1)) {
+          if(DEBUG) println(s"[${Thread.currentThread().getName}] remote tryLock $this blocked; added new remote connection establishment reference")
+          Future.successful(RemoteBlocked(this))
+        } else {
+          if (DEBUG) println(s"[${Thread.currentThread().getName}] remote tryLock $this blocked, but no refs added due to concurrent release+gc")
+          RemoteGCd.futured
+        }
+      case host.dummy =>
+        if (DEBUG) println(s"[${Thread.currentThread().getName}] remote tryLock $this failed to deallocation race")
+        RemoteGCd.futured
+      case parent =>
+        parent.tryLock0(0).flatMap{
+          case Locked0(failedRefChanges, newRoot) =>
+            val finalFailedRefChanges = failedRefChanges + trySwap(parent, newRoot)
+            if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this returning tryLock success to remote, correcting $finalFailedRefChanges failed ref changes to $newRoot (thread reference is retained for remote connection establishment)")
+            if(finalFailedRefChanges != 0) newRoot.localSubRefs(finalFailedRefChanges)
+            Future.successful(RemoteLocked(newRoot))
+          case Blocked0(failedRefChanges, newRoot) =>
+            val finalFailedRefChanges = failedRefChanges + trySwap(parent, newRoot)
+            if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this returning tryLock blocked under $newRoot to remote, correcting $finalFailedRefChanges failed ref changes (thread reference is retained for remote connection establishment)")
+            if(finalFailedRefChanges != 0) newRoot.localSubRefs(finalFailedRefChanges)
+            Future.successful(RemoteBlocked(newRoot))
+          case GarbageCollected0 =>
+            if (DEBUG) println(s"[${Thread.currentThread().getName}] retrying remote tryLock $this after parent was concurrently deallocated")
+            this.asInstanceOf[SubsumableLock].remoteTryLock()
+        }(FullMVEngine.notWorthToMoveToTaskpool)
+    }
   }
 
   @tailrec final override def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[RemoteTrySubsumeResult] = {
@@ -173,27 +196,27 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
       case null =>
         val success = state.compareAndSet(null, lockedNewParent)
         if(success) {
-          if (DEBUG) println(s"[${Thread.currentThread().getName}] trySubsume $this succeeded; retaining temporary remote parameter reference as new subsumption reference")
+          if (DEBUG) println(s"[${Thread.currentThread().getName}] remote trySubsume $this succeeded; retaining temporary remote parameter reference as new subsumption reference")
           // safe because locked by the current thread and thus cannot be deallocated
 //          lockedNewParent.localAddRefs(1)
           RemoteSubsumed.futured
         } else {
-          if (DEBUG) println(s"[${Thread.currentThread().getName}] retrying contended trySubsume $this to $lockedNewParent")
+          if (DEBUG) println(s"[${Thread.currentThread().getName}] retrying contended remote trySubsume $this to $lockedNewParent")
           remoteTrySubsume(lockedNewParent)
         }
       case Self =>
         // not safe because held by different thread which could concurrently unlock and deallocate?
         if(tryLocalAddRefs(1)) {
-          if (DEBUG) println(s"[${Thread.currentThread().getName}] trySubsume $this to $lockedNewParent blocked; added remote connection establishment reference and dropping temporary remote parameter reference")
+          if (DEBUG) println(s"[${Thread.currentThread().getName}] remote trySubsume $this to $lockedNewParent blocked; added remote connection establishment reference and dropping temporary remote parameter reference")
           lockedNewParent.localSubRefs(1)
           Future.successful(RemoteBlocked(this))
         } else {
-          if (DEBUG) println(s"[${Thread.currentThread().getName}] trySubsume $this to $lockedNewParent failed to deallocation race; dropping temporary remote parameter reference")
+          if (DEBUG) println(s"[${Thread.currentThread().getName}] remote trySubsume $this to $lockedNewParent failed to deallocation race; dropping temporary remote parameter reference")
           lockedNewParent.localSubRefs(1)
           RemoteGCd.futured
         }
       case host.dummy =>
-        if (DEBUG) println(s"[${Thread.currentThread().getName}] trySubsume $this to $lockedNewParent failed to deallocation race; dropping temporary remote parameter reference")
+        if (DEBUG) println(s"[${Thread.currentThread().getName}] remote trySubsume $this to $lockedNewParent failed to deallocation race; dropping temporary remote parameter reference")
         lockedNewParent.localSubRefs(1)
         RemoteGCd.futured
       case parent =>
@@ -210,7 +233,7 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
             lockedNewParent.localSubRefs(1)
             Future.successful(RemoteBlocked(newRoot))
           case GarbageCollected0 =>
-            if (DEBUG) println(s"[${Thread.currentThread().getName}] retrying trySubsume $this after parent was concurrently deallocated")
+            if (DEBUG) println(s"[${Thread.currentThread().getName}] retrying remote trySubsume $this after parent was concurrently deallocated")
             this.asInstanceOf[SubsumableLock].remoteTrySubsume(lockedNewParent)
         }(FullMVEngine.notWorthToMoveToTaskpool)
     }

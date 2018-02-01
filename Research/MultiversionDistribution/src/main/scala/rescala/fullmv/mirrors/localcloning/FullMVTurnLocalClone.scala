@@ -4,7 +4,8 @@ import rescala.fullmv.mirrors._
 import rescala.fullmv.sgt.synchronization._
 import rescala.fullmv.{FullMVEngine, FullMVTurn, TransactionSpanningTreeNode, TurnPhase}
 
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration.Duration
 
 object FullMVTurnLocalClone {
   def apply(turn: FullMVTurn, reflectionHost: FullMVEngine): FullMVTurn = {
@@ -40,16 +41,19 @@ object FullMVTurnLocalClone {
         if(predTree != null) reflection.newPredecessors(predTree.map{ pred =>
           if(pred == reflection) reflection else FullMVTurnLocalClone(pred, reflectionHost)
         })
-
-        val reflectionProxy = new FullMVTurnReflectionProxy {
-          override def newPhase(phase: TurnPhase.Type): Future[Unit] = reflection.newPhase(phase)
-          override def newPredecessors(predecessors: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = reflection.newPredecessors(predecessors.map(FullMVTurnLocalClone(_, reflectionHost)))
-        }
-        val (initPhase, initPreds) = turn.addReplicator(reflectionProxy)
-        reflection.newPhase(initPhase)
-        reflection.newPredecessors(initPreds)
         reflection
-      }).instance
+      }) match {
+        case Instantiated(reflection) =>
+          val reflectionProxy = new FullMVTurnReflectionProxy {
+            override def newPhase(phase: TurnPhase.Type): Future[Unit] = reflection.newPhase(phase)
+            override def newPredecessors(predecessors: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = reflection.newPredecessors(predecessors.map(FullMVTurnLocalClone(_, reflectionHost)))
+          }
+          val (initPhase, initPreds) = turn.addReplicator(reflectionProxy)
+          Await.result(reflection.newPhase(initPhase), Duration.Zero) // This is a local call, so should be completed.
+          Await.result(reflection.newPredecessors(initPreds), Duration.Zero) // This is a local call, so should be completed.
+          reflection
+        case Found(instance) => instance
+      }
     } else {
       new FullMVTurnReflection(reflectionHost, turn.guid, phase, null)
     }

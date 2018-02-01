@@ -324,12 +324,12 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
       l.tryLock0(hopCount).flatMap {
         case Locked0(failedRefChanges, newLockedRoot) =>
           val finalFailedRefChanges = failedRefChanges + trySwap(l, newLockedRoot)
-          if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this locked, correcting $finalFailedRefChanges failed ref changes to $newLockedRoot (thread reference is retained and passed out)")
+          if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this tryLocked $newLockedRoot, correcting $finalFailedRefChanges failed ref changes (thread reference is retained and passed out)")
           if(finalFailedRefChanges > 0) newLockedRoot.localSubRefs(finalFailedRefChanges)
           Future.successful(Locked(newLockedRoot))
         case Blocked0(failedRefChanges, newRoot) =>
           val finalFailedRefChanges = 1 + failedRefChanges + trySwap(l, newRoot)
-          if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this blocked, correcting $finalFailedRefChanges failed ref changes to $newRoot (includes thread reference)")
+          if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this tryLock blocked under $newRoot, correcting $finalFailedRefChanges failed ref changes (includes thread reference)")
           newRoot.localSubRefs(finalFailedRefChanges)
           Blocked.futured
         case GarbageCollected0 =>
@@ -352,12 +352,12 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
       l.trySubsume0(hopCount, lockedNewParent).flatMap {
         case Successful0(failedRefChanges) =>
           val finalFailedRefChanges = failedRefChanges + trySwap(l, lockedNewParent)
-          if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this subsume success correcting $finalFailedRefChanges failed ref changes to $lockedNewParent")
+          if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this trySubsumed under $lockedNewParent, correcting $finalFailedRefChanges failed ref changes")
           if(finalFailedRefChanges > 0) lockedNewParent.localSubRefs(finalFailedRefChanges)
           Successful.futured
         case Blocked0(failedRefChanges, newRoot) =>
           val finalFailedRefChanges = 1 + failedRefChanges + trySwap(l, newRoot)
-          if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this subsume blocked, correcting $finalFailedRefChanges failed ref changes to $newRoot (includes thread reference)")
+          if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this trySubsume blocked under $newRoot, correcting $finalFailedRefChanges failed ref changes (includes thread reference)")
           newRoot.localSubRefs(finalFailedRefChanges)
           Blocked.futured
         case GarbageCollected0 =>
