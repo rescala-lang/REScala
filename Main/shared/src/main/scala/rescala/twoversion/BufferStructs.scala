@@ -43,7 +43,7 @@ class BufferedValueStruct[P, S <: Struct, N](ip: InitValues[P, N]) extends ReadW
     release(turn)
   }
   override def release(turn: TwoVersionPropagation[S]): Unit = {
-    notification = null.asInstanceOf[N]
+    notification = ip.initialNotification
     owner = null
   }
 }
