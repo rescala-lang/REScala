@@ -103,12 +103,15 @@ class ReactiveMacros(val c: blackbox.Context) {
 
     // def fold[T: ReSerializable, S <: Struct](dependencies: Set[ReSource[S]], init: T)(expr: (StaticTicket[S], () => T) => T)(implicit ticket: CreationTicket[S]): Signal[T, S] = {
     val valDefs = (q"val $mapFunctionArgumentTermName = ${c.prefix}": ValDef) :: cutOut.cutOutReactivesVals.reverse
-    val accumulatorTerm: TermName = TermName(c.freshName("accumulator$"))
-    val accumulatorIdent: Ident = Ident(accumulatorTerm)
+    val accumulatorIdent: Ident = Ident( TermName(c.freshName("accumulator$")))
+    val pulseIdent: Ident = Ident( TermName(c.freshName("pulse")))
     val ticketType = weakTypeOf[StaticTicket[S]]
     val body =
       q"""$eventsSymbol.fold[${weakTypeOf[A]}, ${weakTypeOf[S]}](Set(..$extendedDetections), $init)(
-         ($innerTicketIdent: $ticketType, $accumulatorIdent: ${weakTypeOf[T]}) => $rewrittenTree($accumulatorIdent(), $innerTicketIdent.dependStatic($mapFunctionArgumentIdent).get))(${serializable}, $ticket)"""
+          ($innerTicketIdent: $ticketType, $accumulatorIdent: ${weakTypeOf[T]}) => {
+            val $pulseIdent = $innerTicketIdent.dependStatic($mapFunctionArgumentIdent).get
+            $rewrittenTree($accumulatorIdent(), $pulseIdent)
+          })($serializable, $ticket)"""
     val block: c.universe.Tree = Block(valDefs, body)
     ReTyper(c).untypecheck(block)
 
