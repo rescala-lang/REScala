@@ -37,8 +37,8 @@ class TextArea(text: String) extends ReComponent {
     val (del, ins) = change
     val (count, content0) = content
 
-    val selStart = min(caret.dot.now, caret.mark.now)
-    val selEnd = max(caret.dot.now, caret.mark.now)
+    val selStart = min(caret.dot.value, caret.mark.value)
+    val selEnd = max(caret.dot.value, caret.mark.value)
     val content1 = if (selStart == selEnd) content0
     else
       content0.substring(0, selStart) + content0.substring(selEnd)
@@ -92,8 +92,8 @@ class TextArea(text: String) extends ReComponent {
       val (olddot, oldmark) = oldpos
       val (newdot, newmark) = newpos
 
-      val dot = if (newdot >= 0 && newdot <= content.now.length) newdot else olddot
-      val mark = if (newmark >= 0 && newmark <= content.now.length) newmark else oldmark
+      val dot = if (newdot >= 0 && newdot <= content.value.length) newdot else olddot
+      val mark = if (newmark >= 0 && newmark <= content.value.length) newmark else oldmark
       (dot, mark)
     }
 

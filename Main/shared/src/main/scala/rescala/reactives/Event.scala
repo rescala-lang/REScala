@@ -149,7 +149,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[S, Option[T]] with 
     * @group conversion
     * @usecase def fold[A](init: A)(op: (A, T) => A): rescala.Signal[A]
     * @inheritdoc */
-  final def fold[A](init: A)(op: (A, T) => A)(implicit ticket: CreationTicket[S], serializable: ReSerializable[A]): Signal[A, S] = Events.foldOne(this, init)(op)
+  final def fold[A](init: A)(op: (A, T) => A)(implicit ticket: CreationTicket[S], serializable: ReSerializable[A]): Signal[A, S] = macro rescala.macros.ReactiveMacros.EventFoldMacro[T, A, S]
 
   /** reduces events with a given reduce function to create a Signal
     * @usecase def reduce[A](reducer: (=> A, => T) => A): rescala.Signal[A]

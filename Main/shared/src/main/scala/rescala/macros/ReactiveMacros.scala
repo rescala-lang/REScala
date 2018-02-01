@@ -203,7 +203,8 @@ class ReactiveMacros(val c: blackbox.Context) {
         //   Signal { s() }
         // }
         //
-        case reactive@(TypeApply(_, _) | Apply(_, _) | Select(_, _)) if weAnalysis.isReactiveThatCanBeCutOut(reactive) =>
+        case reactive@(TypeApply(_, _) | Apply(_, _) | Select(_, _) | Block(_, _) | Typed(_, _))
+          if weAnalysis.isReactiveThatCanBeCutOut(reactive) =>
 
           // create the signal definition to be cut out of the
           // macro expression and its substitution variable
@@ -273,10 +274,16 @@ class ReactiveMacros(val c: blackbox.Context) {
 
     def isReactiveThatCanBeCutOut(reactive: c.universe.Tree): Boolean = {
       isReactive(reactive) &&
-        reactive.symbol.isTerm &&
-        !reactive.symbol.asTerm.isVal &&
-        !reactive.symbol.asTerm.isVar &&
-        !reactive.symbol.asTerm.isAccessor &&
+        (reactive match {
+          case Block(_, _) =>
+            true
+          case Typed(expr, _) =>
+            isReactiveThatCanBeCutOut(expr)
+          case _ => reactive.symbol.isTerm &&
+            !reactive.symbol.asTerm.isVal &&
+            !reactive.symbol.asTerm.isVar &&
+            !reactive.symbol.asTerm.isAccessor
+        }) &&
         !containsCriticalReferences(reactive)
     }
 
