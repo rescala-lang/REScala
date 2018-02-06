@@ -149,10 +149,10 @@ trait FullMVTurn extends Initializer[FullMVStruct] with FullMVTurnProxy with Sub
 
   private[rescala] def writeIndeps(node: Reactive[FullMVStruct], indepsAfter: Set[ReSource[FullMVStruct]]): Unit = node.state.incomings = indepsAfter
 
-  private[rescala] def staticBefore[P](reactive: Interp[P, FullMVStruct]) = reactive.state.staticBefore(this)
-  private[rescala] def staticAfter[P](reactive: Interp[P, FullMVStruct]) = reactive.state.staticAfter(this)
-  private[rescala] def dynamicBefore[P](reactive: Interp[P, FullMVStruct]) = reactive.state.dynamicBefore(this)
-  private[rescala] def dynamicAfter[P](reactive: Interp[P, FullMVStruct]) = reactive.state.dynamicAfter(this)
+  private[rescala] def staticBefore(reactive: ReSource[FullMVStruct]) = reactive.state.staticBefore(this)
+  private[rescala] def staticAfter(reactive: ReSource[FullMVStruct]) = reactive.state.staticAfter(this)
+  private[rescala] def dynamicBefore(reactive: ReSource[FullMVStruct]) = reactive.state.dynamicBefore(this)
+  private[rescala] def dynamicAfter(reactive: ReSource[FullMVStruct]) = reactive.state.dynamicAfter(this)
 
   def observe(f: () => Unit): Unit = f()
 }

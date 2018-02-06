@@ -968,7 +968,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
       version.changed = 0
       latestReevOut = position
       val stabilizeTo = if (maybeValue.isDefined) {
-        if(!valuePersistency.isTransient) latestValue = maybeValue.get
+        latestValue = valuePersistency.unchange.unchange(maybeValue.get)
         if(FullMVEngine.DEBUG && latestValue.isInstanceOf[Exceptional]){
           println(s"[${Thread.currentThread().getName}] WARNING: glitch free evaluation result is exceptional:")
           latestValue.asInstanceOf[Exceptional].throwable.printStackTrace()
@@ -1039,7 +1039,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     *         own writes.
     */
   override def dynamicBefore(txn: T): V = {
-    assert(!valuePersistency.isTransient, s"$txn invoked dynamicBefore on transient node")
+//    assert(!valuePersistency.isTransient, s"$txn invoked dynamicBefore on transient node")
     val version = synchronized {
       val pos = ensureReadVersion(txn)
       // DO NOT INLINE THIS! it breaks the code! see https://scastie.scala-lang.org/briJDRO3RCmIMEd1zApmBQ
@@ -1050,7 +1050,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
   }
 
   override def staticBefore(txn: T): V = {
-    assert(!valuePersistency.isTransient, s"$txn invoked staticBefore on transient struct")
+//    assert(!valuePersistency.isTransient, s"$txn invoked staticBefore on transient struct")
     val version = synchronized {
       val pos = findFinalPosition(txn)
       _versions(if (pos < 0) -pos - 1 else pos)
@@ -1077,10 +1077,8 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     if(!version.isFinal) ForkJoinPool.managedBlock(version.blockForFinal)
     if (version.value.isDefined) {
       version.value.get
-    } else if(valuePersistency.isTransient) {
-      valuePersistency.initialValue
     } else {
-      version.lastWrittenPredecessorIfStable.value.get
+      valuePersistency.unchange.unchange(version.lastWrittenPredecessorIfStable.value.get)
     }
   }
 
@@ -1089,12 +1087,10 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
       val pos = findFinalPosition(txn)
       _versions(if (pos < 0) -pos - 1 else pos)
     }
-    if(valuePersistency.isTransient && (version.txn != txn || version.value.isEmpty)) {
-      valuePersistency.initialValue
-    } else if (version.value.isDefined) {
+    if(version.txn == txn && version.value.isDefined) {
       version.value.get
     } else {
-      version.lastWrittenPredecessorIfStable.value.get
+      valuePersistency.unchange.unchange(version.lastWrittenPredecessorIfStable.value.get)
     }
   }
 

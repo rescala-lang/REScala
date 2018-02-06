@@ -2,7 +2,7 @@ package rescala.fullmv
 
 import java.util.concurrent.{Executor, ForkJoinPool}
 
-import rescala.core.{Interp, SchedulerImpl}
+import rescala.core.SchedulerImpl
 import rescala.fullmv.mirrors.{FullMVTurnHost, Host, HostImpl, SubsumableLockHostImpl}
 import rescala.fullmv.sgt.synchronization.SubsumableLock
 import rescala.fullmv.tasks.{Framing, SourceNotification}
@@ -27,7 +27,7 @@ class FullMVEngine(val timeout: Duration, val name: String) extends SchedulerImp
 
   val threadPool = new ForkJoinPool()
 
-  override private[rescala] def singleNow[A](reactive: Interp[A, FullMVStruct]) = reactive.state.latestValue
+  override private[rescala] def singleNow[A](reactive: Signal[A]) = reactive.state.latestValue.get
 
   override private[rescala] def executeTurn[R](declaredWrites: Traversable[ReSource], admissionPhase: (AdmissionTicket) => R): R = {
     val turn = newTurn()
@@ -45,7 +45,7 @@ class FullMVEngine(val timeout: Duration, val name: String) extends SchedulerImp
 
       // admission phase
       val admissionTicket = new AdmissionTicket(turn) {
-        override def access[A](reactive: Interp[A, FullMVStruct]): A = turn.dynamicBefore(reactive)
+        override def access[A](reactive: Signal[A]): reactive.Value = turn.dynamicBefore(reactive)
       }
       val admissionResult = Try { admissionPhase(admissionTicket) }
       if (FullMVEngine.DEBUG) admissionResult match {
@@ -66,7 +66,7 @@ class FullMVEngine(val timeout: Duration, val name: String) extends SchedulerImp
         admissionResult
       } else {
         val wrapUpTicket = new WrapUpTicket(){
-          override def access[A](reactive: Interp[A, FullMVStruct]): A = turn.dynamicAfter(reactive)
+          override def access(reactive: ReSource): reactive.Value = turn.dynamicAfter(reactive)
         }
         admissionResult.map{ i =>
           // executed in map call so that exceptions in wrapUp make the transaction result a Failure

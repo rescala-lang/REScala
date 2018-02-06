@@ -8,12 +8,12 @@ import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
 object ReactiveMirror {
-  def apply[A](reactive: ReSourciV[A, FullMVStruct], turn: FullMVTurn, reflectionProxy: ReactiveReflectionProxy[A], reflectionIsTransient: Boolean, rename: REName): (Array[(FullMVTurn, A)], Option[FullMVTurn]) = {
+  def apply[A](reactive: ReSource[FullMVStruct], turn: FullMVTurn, reflectionIsTransient: Boolean, rename: REName)(toPulse: reactive.Value => A, reflectionProxy: ReactiveReflectionProxy[A]): (Array[(FullMVTurn, A)], Option[FullMVTurn]) = {
     assert(turn.host == reactive.state.host, s"mirror installation for $reactive on ${reactive.state.host} with $turn from different ${turn.host}")
-    def getValue(turn: FullMVTurn): A = reactive.state.staticAfter(turn)
+    def getValue(turn: FullMVTurn): A = toPulse(reactive.state.staticAfter(turn))
     val mirror = new ReactiveMirror(getValue, reflectionProxy, turn.host.timeout, rename)
 
-    val ownValue = reactive.state.dynamicAfter(turn)
+    val ownValue = toPulse(reactive.state.dynamicAfter(turn))
     val (successorWrittenVersions, maybeFirstFrame) = reactive.state.discover(turn, mirror)
     val mustAddBaseValue = !reflectionIsTransient && (successorWrittenVersions.isEmpty || successorWrittenVersions.head != turn)
     var idx = if(mustAddBaseValue) 1 else 0
@@ -86,5 +86,6 @@ class ReactiveMirror[A](val getValue: FullMVTurn => A, val reflectionProxy: Reac
   override def drop(txn: FullMVTurn, remove: Reactive[FullMVStruct]): (Seq[FullMVTurn], Option[FullMVTurn]) = ???
   override def retrofitSinkFrames(successorWrittenVersions: Seq[FullMVTurn], maybeSuccessorFrame: Option[FullMVTurn], arity: Int): Unit = ???
 
-  override protected[rescala] def reevaluate(ticket: ReevTicket[Value, FullMVStruct], before: Value): Result[Value, FullMVStruct] = ???
+
+  override protected[rescala] def reevaluate(input: ReIn) = ???
 }
