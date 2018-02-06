@@ -1,25 +1,57 @@
 package rescala.fullmv.mirrors
 
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
 
 import rescala.fullmv._
 import rescala.fullmv.TurnPhase.Type
 import rescala.fullmv.mirrors.Host.GUID
 import rescala.fullmv.sgt.synchronization.{SubsumableLock, SubsumableLockEntryPoint, TryLockResult, TrySubsumeResult}
 
+import scala.annotation.tailrec
 import scala.concurrent.{Await, Future}
 
-class FullMVTurnReflection(override val host: FullMVEngine, override val guid: Host.GUID, initialPhase: TurnPhase.Type, val proxy: FullMVTurnProxy) extends FullMVTurn with SubsumableLockEntryPoint with FullMVTurnReflectionProxy {
-  object phaseParking
-  @volatile var phase: TurnPhase.Type = initialPhase
-  object replicatorLock
-  var _selfNode: Option[TransactionSpanningTreeNode[FullMVTurn]] = None
-  def selfNode: TransactionSpanningTreeNode[FullMVTurn] = _selfNode.get
-  @volatile var predecessors: Set[FullMVTurn] = Set()
+class FullMVTurnReflection(override val host: FullMVEngine, override val guid: Host.GUID, initialPhase: TurnPhase.Type, val proxy: FullMVTurnProxy) extends FullMVTurn with SubsumableLockEntryPoint with FullMVTurnPhaseReflectionProxy with FullMVTurnPredecessorReflectionProxy {
+  val _phase: AtomicInteger = new AtomicInteger(initialPhase)
+  override def phase: TurnPhase.Type = _phase.get
+
+  val predecessorIndex: AtomicReference[(Set[FullMVTurn], TransactionSpanningTreeNode[FullMVTurn])] = new AtomicReference(null)
+  override def selfNode: TransactionSpanningTreeNode[FullMVTurn] = {
+    val maybeInitialized = predecessorIndex.get
+    if(maybeInitialized == null) null else maybeInitialized._2
+  }
+  override def isTransitivePredecessor(txn: FullMVTurn): Boolean = (txn == this) || {
+    val maybeInitialized = predecessorIndex.get
+    maybeInitialized != null && maybeInitialized._1(txn)
+  }
 
   var localBranchCountBuffer = new AtomicInteger(0)
 
-  var replicators: Set[FullMVTurnReflectionProxy] = Set.empty
+  @volatile var predecessorSubscribed = -1
+  object predecessorSubscriptionParking
+
+  override def ensurePredecessorReplication(): Unit = {
+    if(predecessorSubscribed != 1) {
+      // ensure that only the first guy to call this actually registers a subscription
+      // and all the others only continue after that first guy is done
+      val mustSubscribe = predecessorSubscriptionParking.synchronized {
+        if (predecessorSubscribed == -1) {
+          predecessorSubscribed = 0
+          true
+        } else {
+          while (predecessorSubscribed == 0) predecessorSubscriptionParking.wait()
+          false
+        }
+      }
+      if (mustSubscribe) {
+        if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this subscribing predecessors.")
+        newPredecessors(Await.result(proxy.addPredecessorReplicator(this), host.timeout))
+        predecessorSubscriptionParking.synchronized {
+          predecessorSubscribed = 1
+          predecessorSubscriptionParking.notifyAll()
+        }
+      }
+    }
+  }
 
   override def activeBranchDifferential(forState: TurnPhase.Type, differential: Int): Unit = {
     assert(phase == forState, s"$this received branch differential for wrong state ${TurnPhase.toString(forState)}")
@@ -46,58 +78,55 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
     }
   }
 
-  override def isTransitivePredecessor(txn: FullMVTurn): Boolean = txn == this || predecessors(txn)
-
-  override def addReplicator(replicator: FullMVTurnReflectionProxy): (TurnPhase.Type, TransactionSpanningTreeNode[FullMVTurn]) = replicatorLock.synchronized {
-    replicators += replicator
-    (phase, selfNode)
-  }
-
-  private def indexChildren(predecessors: Set[FullMVTurn], node: TransactionSpanningTreeNode[FullMVTurn]): Set[FullMVTurn] = {
-    val txn = node.txn
-    var maybeChangedPreds = predecessors
-    if(!predecessors.contains(txn)) maybeChangedPreds += txn
-    val it = node.iterator()
-    while(it.hasNext) maybeChangedPreds = indexChildren(maybeChangedPreds, it.next())
-    maybeChangedPreds
-  }
-
-  override def newPredecessors(tree: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = synchronized {
-    val newPreds = indexChildren(predecessors, _selfNode.getOrElse(CaseClassTransactionSpanningTreeNode[FullMVTurn](this, Array.empty[CaseClassTransactionSpanningTreeNode[FullMVTurn]])))
-    if(newPreds ne predecessors) {
-      predecessors = newPreds
-      val reps = replicatorLock.synchronized {
-        this._selfNode = Some(tree)
-        replicators
+  override def newPredecessors(predecessors: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = {
+    //  override def asyncNewPredecessors(predecessors: TransactionSpanningTreeNode[FullMVTurn]): Unit = {
+    if(phase < TurnPhase.Completed) {
+      val newPreds = FullMVTurnReflection.buildIndex(predecessors)
+      @inline @tailrec def retryCommitWhileNewer(): Future[Unit] = {
+        val before = predecessorIndex.get
+        if ((before == null || before._1.size < newPreds.size) && phase < TurnPhase.Completed) {
+          if (!predecessorIndex.compareAndSet(before, (newPreds, predecessors))) {
+            retryCommitWhileNewer()
+          } else {
+            if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this updated predecessors: $newPreds.")
+//            predecessorReplicators.get.foreach(_.asyncNewPredecessors(predecessors))
+            FullMVEngine.broadcast(predecessorReplicators.get)(_.newPredecessors(predecessors))
+          }
+        } else {
+          Future.unit
+        }
       }
-      FullMVEngine.broadcast(reps) { _.newPredecessors(tree) }
+      retryCommitWhileNewer()
     } else {
       Future.unit
     }
   }
 
-  override def newPhase(phase: TurnPhase.Type): Future[Unit] = synchronized {
-    replicatorLock.synchronized {
-      if(this.phase < phase) {
-        this.phase = phase
-        Some(replicators)
-      } else None
-    } match {
-      case Some(reps) =>
-        if (phase == TurnPhase.Completed) {
-          predecessors = Set.empty
+  @tailrec final override def asyncNewPhase(phase: TurnPhase.Type): Unit = {
+    val currentPhase = _phase.get
+    if(currentPhase < phase) {
+      if(!_phase.compareAndSet(currentPhase, phase)) {
+        asyncNewPhase(currentPhase)
+      } else {
+        phaseReplicators.get.foreach(_.asyncNewPhase(phase))
+        if(phase == TurnPhase.Completed) {
           host.dropInstance(guid, this)
+          phaseReplicators.set(null)
+          predecessorReplicators.set(null)
+          predecessorIndex.set(null)
         }
-        FullMVEngine.broadcast(reps) { _.newPhase(phase) }
-      case None =>
-        Future.unit
+        wakeWaitersAfterPhaseSwitch(phase)
+      }
     }
   }
 
   override def asyncRemoteBranchComplete(forPhase: Type): Unit = proxy.asyncRemoteBranchComplete(forPhase)
   override def addRemoteBranch(forPhase: TurnPhase.Type): Future[Unit] = proxy.addRemoteBranch(forPhase)
 
-  override def acquirePhaseLockIfAtMost(maxPhase: Type): Future[TurnPhase.Type] = proxy.acquirePhaseLockIfAtMost(maxPhase)
+  override def acquirePhaseLockIfAtMost(maxPhase: Type): Future[TurnPhase.Type] = proxy.acquirePhaseLockIfAtMost(maxPhase).map{phase =>
+    asyncNewPhase(phase)
+    phase
+  }(FullMVEngine.notWorthToMoveToTaskpool)
   override def addPredecessor(tree: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = proxy.addPredecessor(tree)
   override def asyncReleasePhaseLock(): Unit = proxy.asyncReleasePhaseLock()
   override def maybeNewReachableSubtree(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = proxy.maybeNewReachableSubtree(attachBelow, spanningSubTreeRoot)
@@ -136,4 +165,13 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
   }
 
   override def toString: String = s"FullMVTurnReflection($guid on $host, ${TurnPhase.toString(phase)}${if(localBranchCountBuffer.get != 0) s"(${localBranchCountBuffer.get})" else ""})"
+}
+
+object FullMVTurnReflection {
+  def buildIndex[T](tree: TransactionSpanningTreeNode[T], accumulator: Set[T] = Set.empty[T]): Set[T] = {
+    var accu = accumulator + tree.txn
+    val it = tree.iterator()
+    while(it.hasNext) accu = buildIndex(it.next, accu)
+    accu
+  }
 }

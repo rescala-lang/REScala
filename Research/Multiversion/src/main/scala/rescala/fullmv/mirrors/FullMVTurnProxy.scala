@@ -21,4 +21,7 @@ trait FullMVTurnProxy {
   def remoteTryLock(): Future[TryLockResult]
   // parameter has one thread reference counted, result has one thread reference counted
   def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult]
+
+  def asyncAddPhaseReplicator(replicator: FullMVTurnPhaseReflectionProxy): Unit
+  def addPredecessorReplicator(replicator: FullMVTurnPredecessorReflectionProxy): Future[TransactionSpanningTreeNode[FullMVTurn]]
 }

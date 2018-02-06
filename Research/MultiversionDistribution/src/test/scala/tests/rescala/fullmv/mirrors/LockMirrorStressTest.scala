@@ -43,7 +43,7 @@ class LockMirrorStressTest extends FunSuite {
             val backoff = new Backoff(maxBackoff = 100L*1000L*1000L)
             @tailrec def reTryLock(): Unit = {
               if(running) {
-                val turnOnLocalHost = FullMVTurnLocalClone(turns(pick).get, hosts(i))
+                val turnOnLocalHost = FullMVTurnLocalClone.passive(turns(pick).get, hosts(i))
                 if (turnOnLocalHost.phase < TurnPhase.Completed) {
                   SerializationGraphTracking.tryLock(turnOnLocalHost, ownTurn, UnlockedUnknown) match {
                     case LockedSameSCC(lock) => lock.asyncUnlock()

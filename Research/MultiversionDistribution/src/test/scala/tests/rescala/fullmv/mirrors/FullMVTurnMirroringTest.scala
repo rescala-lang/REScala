@@ -8,58 +8,66 @@ import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
 class FullMVTurnMirroringTest extends FunSuite {
-  val host0 = new FullMVEngine(Duration.Zero, "0")
-  val hostA = new FullMVEngine(Duration.Zero, "A")
-  val hostB = new FullMVEngine(Duration.Zero, "B")
 
   test("instance lookup"){
+    val host0 = new FullMVEngine(Duration.Zero, "0")
+    val hostA = new FullMVEngine(Duration.Zero, "A")
+    val hostB = new FullMVEngine(Duration.Zero, "B")
+
     val a = host0.newTurn()
-    val turn0 = FullMVTurnLocalClone(a, host0)
+    a.beginExecuting()
+    val turn0 = FullMVTurnLocalClone.active(a, host0)
     assert(turn0 === a)
 
-    val cloneA = FullMVTurnLocalClone(a, hostA)
+    val cloneA = FullMVTurnLocalClone.active(a, hostA)
     assert(cloneA !== a)
     assert(cloneA.remotelyEquals(a))
-    assert(FullMVTurnLocalClone(a, hostA) === cloneA)
-    assert(FullMVTurnLocalClone(cloneA, hostA) === cloneA)
-    assert(FullMVTurnLocalClone(cloneA, host0) === a)
+    assert(FullMVTurnLocalClone.active(a, hostA) === cloneA)
+    assert(FullMVTurnLocalClone.active(cloneA, hostA) === cloneA)
+    assert(FullMVTurnLocalClone.active(cloneA, host0) === a)
 
-    val cloneB = FullMVTurnLocalClone(cloneA, hostB)
+    val cloneB = FullMVTurnLocalClone.active(cloneA, hostB)
     assert(cloneB !== a)
     assert(cloneB.remotelyEquals(a))
     assert(cloneB !== cloneA)
     assert(cloneB.remotelyEquals(cloneA))
-    assert(FullMVTurnLocalClone(cloneA, hostB) === cloneB)
-    assert(FullMVTurnLocalClone(cloneB, hostB) === cloneB)
-    assert(FullMVTurnLocalClone(cloneB, hostA) === cloneA)
-    assert(FullMVTurnLocalClone(cloneB, host0) === a)
+    assert(FullMVTurnLocalClone.active(cloneA, hostB) === cloneB)
+    assert(FullMVTurnLocalClone.active(cloneB, hostB) === cloneB)
+    assert(FullMVTurnLocalClone.active(cloneB, hostA) === cloneA)
+    assert(FullMVTurnLocalClone.active(cloneB, host0) === a)
   }
 
   test("phase propagation") {
-    val turn = host0.newTurn()
-    val turnA = FullMVTurnLocalClone(turn, hostA)
-    assert(turn.phase === TurnPhase.Uninitialized)
-    assert(turnA.phase === TurnPhase.Uninitialized)
+    val host0 = new FullMVEngine(Duration.Zero, "0")
+    val hostA = new FullMVEngine(Duration.Zero, "A")
+    val hostB = new FullMVEngine(Duration.Zero, "B")
 
-    turn.awaitAndSwitchPhase(TurnPhase.Framing)
+    val turn = host0.newTurn()
+    turn.beginFraming()
+
+    val turnA = FullMVTurnLocalClone.active(turn, hostA)
     assert(turn.phase === TurnPhase.Framing)
     assert(turnA.phase === TurnPhase.Framing)
-    val turnB = FullMVTurnLocalClone(turnA, hostB)
+    val turnB = FullMVTurnLocalClone.active(turnA, hostB)
     assert(turnB.phase === TurnPhase.Framing)
 
-    turn.awaitAndSwitchPhase(TurnPhase.Executing)
+    turn.completeFraming()
     assert(turn.phase === TurnPhase.Executing)
     assert(turnA.phase === TurnPhase.Executing)
     assert(turnB.phase === TurnPhase.Executing)
   }
 
   test("branch counting") {
+    val host0 = new FullMVEngine(Duration.Zero, "0")
+    val hostA = new FullMVEngine(Duration.Zero, "A")
+    val hostB = new FullMVEngine(Duration.Zero, "B")
+
     val turn = host0.newTurn()
-    turn.awaitAndSwitchPhase(TurnPhase.Executing)
+    turn.beginExecuting()
     turn.activeBranchDifferential(TurnPhase.Executing, 1)
 
     // turn goes remote to hostA
-    val turnA = FullMVTurnLocalClone(turn, hostA)
+    val turnA = FullMVTurnLocalClone.active(turn, hostA)
     turn.addRemoteBranch(TurnPhase.Executing)
     turn.activeBranchDifferential(TurnPhase.Executing, -1)
     turnA.newBranchFromRemote(TurnPhase.Executing)
@@ -70,7 +78,7 @@ class FullMVTurnMirroringTest extends FunSuite {
     assert(turn.activeBranches.get == 1)
 
     // first branch goes remote to hostB
-    val turnB = FullMVTurnLocalClone(turnA, hostB)
+    val turnB = FullMVTurnLocalClone.active(turnA, hostB)
     turnA.addRemoteBranch(TurnPhase.Executing)
     turnA.activeBranchDifferential(TurnPhase.Executing, -1)
     turnB.newBranchFromRemote(TurnPhase.Executing)
@@ -101,30 +109,33 @@ class FullMVTurnMirroringTest extends FunSuite {
   }
 
   test("predecessor propagation") {
+    val host0 = new FullMVEngine(Duration.Zero, "0")
+    val hostA = new FullMVEngine(Duration.Zero, "A")
+    val hostB = new FullMVEngine(Duration.Zero, "B")
+
     // 0 -> A -> B
     val turnOneRoot = host0.newTurn()
+    turnOneRoot.beginExecuting()
     val turnOne: FullMVTurn = turnOneRoot
-    println(s"turnOne on host0: $turnOne with ${turnOne.asInstanceOf[FullMVTurnImpl].subsumableLock.get()}")
-    val turnOneA = FullMVTurnLocalClone(turnOne, hostA)
-    val turnOneB = FullMVTurnLocalClone(turnOneA, hostB)
+    if(FullMVEngine.DEBUG) println(s"turnOne on host0: $turnOne with ${turnOne.asInstanceOf[FullMVTurnImpl].subsumableLock.get()}")
+    val turnOneA = FullMVTurnLocalClone.active(turnOne, hostA)
+    val turnOneB = FullMVTurnLocalClone.active(turnOneA, hostB)
 
     // A -> 0 -> B
     val turnTwoRoot = hostA.newTurn()
+    turnTwoRoot.beginExecuting()
     val turnTwoA: FullMVTurn = turnTwoRoot
-    println(s"turnTwo on hostA: $turnTwoA with ${turnTwoA.asInstanceOf[FullMVTurnImpl].subsumableLock.get()}")
-    val turnTwo = FullMVTurnLocalClone(turnTwoA, host0)
-    val turnTwoB = FullMVTurnLocalClone(turnTwo, hostB)
+    if(FullMVEngine.DEBUG) println(s"turnTwo on hostA: $turnTwoA with ${turnTwoA.asInstanceOf[FullMVTurnImpl].subsumableLock.get()}")
+    val turnTwo = FullMVTurnLocalClone.active(turnTwoA, host0)
+    val turnTwoB = FullMVTurnLocalClone.active(turnTwo, hostB)
 
     // B -> A -> 0
     val turnThreeRoot = hostB.newTurn()
+    turnThreeRoot.beginExecuting()
     val turnThreeB: FullMVTurn = turnThreeRoot
-    println(s"turnThree on hostB: $turnThreeB with ${turnThreeB.asInstanceOf[FullMVTurnImpl].subsumableLock.get()}")
-    val turnThreeA = FullMVTurnLocalClone(turnThreeB, hostA)
-    val turnThree = FullMVTurnLocalClone(turnThreeA, host0)
-
-    turnOneRoot.awaitAndSwitchPhase(TurnPhase.Executing)
-    turnTwoRoot.awaitAndSwitchPhase(TurnPhase.Executing)
-    turnThreeRoot.awaitAndSwitchPhase(TurnPhase.Framing)
+    if(FullMVEngine.DEBUG) println(s"turnThree on hostB: $turnThreeB with ${turnThreeB.asInstanceOf[FullMVTurnImpl].subsumableLock.get()}")
+    val turnThreeA = FullMVTurnLocalClone.active(turnThreeB, hostA)
+    val turnThree = FullMVTurnLocalClone.active(turnThreeA, host0)
 
     assert(turnOne.isTransitivePredecessor(turnTwo) === false)
     assert(turnOne.isTransitivePredecessor(turnThree) === false)
@@ -172,8 +183,20 @@ class FullMVTurnMirroringTest extends FunSuite {
     assert(turnThreeB.isTransitivePredecessor(turnOneB) === false)
     assert(turnThreeB.isTransitivePredecessor(turnTwoB) === false)
 
-    val locked2 = SerializationGraphTracking.tryLock(turnOneB, turnTwoB, UnlockedUnknown).asInstanceOf[LockedSameSCC].lock
-    Await.result(turnThreeA.addPredecessor(turnTwoA.selfNode), Duration.Zero)
+    val hostC = new FullMVEngine(Duration.Zero, "C")
+    val turnOneC = FullMVTurnLocalClone.active(turnOneA, hostC)
+    val turnTwoC = FullMVTurnLocalClone.active(turnTwoA, hostC)
+    val turnThreeC = FullMVTurnLocalClone.active(turnThreeA, hostC)
+
+    assert(turnOneC.isTransitivePredecessor(turnTwoC) === false)
+    assert(turnOneC.isTransitivePredecessor(turnThreeC) === false)
+    assert(turnTwoC.isTransitivePredecessor(turnOneC) === true)
+    assert(turnTwoC.isTransitivePredecessor(turnThreeC) === false)
+    assert(turnThreeC.isTransitivePredecessor(turnOneC) === false)
+    assert(turnThreeC.isTransitivePredecessor(turnTwoC) === false)
+
+    val locked2 = SerializationGraphTracking.tryLock(turnThreeC, turnTwoC, UnlockedUnknown).asInstanceOf[LockedSameSCC].lock
+    Await.result(turnThreeC.addPredecessor(turnTwoC.selfNode), Duration.Zero)
     locked2.asyncUnlock()
 
     assert(turnOne.isTransitivePredecessor(turnTwo) === false)
@@ -196,5 +219,12 @@ class FullMVTurnMirroringTest extends FunSuite {
     assert(turnTwoB.isTransitivePredecessor(turnThreeB) === false)
     assert(turnThreeB.isTransitivePredecessor(turnOneB) === true)
     assert(turnThreeB.isTransitivePredecessor(turnTwoB) === true)
+
+    assert(turnOneC.isTransitivePredecessor(turnTwoC) === false)
+    assert(turnOneC.isTransitivePredecessor(turnThreeC) === false)
+    assert(turnTwoC.isTransitivePredecessor(turnOneC) === true)
+    assert(turnTwoC.isTransitivePredecessor(turnThreeC) === false)
+    assert(turnThreeC.isTransitivePredecessor(turnOneC) === true)
+    assert(turnThreeC.isTransitivePredecessor(turnTwoC) === true)
   }
 }

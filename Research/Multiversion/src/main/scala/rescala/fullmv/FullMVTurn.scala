@@ -1,14 +1,20 @@
 package rescala.fullmv
 
+import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.locks.LockSupport
 import java.util.concurrent.{ConcurrentHashMap, ForkJoinTask}
 
 import rescala.core.Initializer.InitValues
 import rescala.core._
 import rescala.fullmv.NotificationResultAction._
 import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation._
-import rescala.fullmv.mirrors.{FullMVTurnProxy, FullMVTurnReflectionProxy, Hosted}
+import rescala.fullmv.TurnPhase.Type
+import rescala.fullmv.mirrors._
 import rescala.fullmv.sgt.synchronization.SubsumableLockEntryPoint
 import rescala.fullmv.tasks.{Notification, Reevaluation}
+
+import scala.annotation.tailrec
+import scala.concurrent.Future
 
 trait FullMVTurn extends Initializer[FullMVStruct] with FullMVTurnProxy with SubsumableLockEntryPoint with Hosted[FullMVTurn] {
   override val host: FullMVEngine
@@ -17,9 +23,18 @@ trait FullMVTurn extends Initializer[FullMVStruct] with FullMVTurnProxy with Sub
 
   // ===== Turn State Manangement External API
   val waiters = new ConcurrentHashMap[Thread, TurnPhase.Type]()
+  def wakeWaitersAfterPhaseSwitch(newPhase: Type): Unit = {
+    val it = waiters.entrySet().iterator()
+    while (it.hasNext) {
+      val waiter = it.next()
+      if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this phase switch unparking ${waiter.getKey.getName}.")
+      if (waiter.getValue <= newPhase) LockSupport.unpark(waiter.getKey)
+    }
+  }
+
   def selfNode: TransactionSpanningTreeNode[FullMVTurn]
   // should be mirrored/buffered locally
-  def phase: TurnPhase.Type
+  def phase: TurnPhase.Type // must implement a read barrier
   def activeBranchDifferential(forState: TurnPhase.Type, differential: Int): Unit
   def newBranchFromRemote(forState: TurnPhase.Type): Unit
 
@@ -27,9 +42,41 @@ trait FullMVTurn extends Initializer[FullMVStruct] with FullMVTurnProxy with Sub
   // should be mirrored/buffered locally
   def isTransitivePredecessor(txn: FullMVTurn): Boolean
 
-  // ===== Remote Replication Stuff
-  // should be local-only, but needs to be available on remote mirrors too to support multi-hop communication.
-  def addReplicator(replicator: FullMVTurnReflectionProxy): (TurnPhase.Type, TransactionSpanningTreeNode[FullMVTurn])
+  //========================================================Remote Replication============================================================
+
+  val phaseReplicators: AtomicReference[List[FullMVTurnPhaseReflectionProxy]] = new AtomicReference(Nil) // implicit set, write accesses are synchronized through CAS
+  override def asyncAddPhaseReplicator(replicator: FullMVTurnPhaseReflectionProxy): Unit = {
+    if(phase < TurnPhase.Completed) {
+      val added = FullMVTurn.atomicAdd(phaseReplicators, replicator)
+      assert(added || phase == TurnPhase.Completed, s"phase replicator addition should only return failure, if $this is completed")
+      replicator.asyncNewPhase(phase)
+    } else {
+      replicator.asyncNewPhase(TurnPhase.Completed)
+    }
+  }
+
+  val predecessorReplicators: AtomicReference[List[FullMVTurnPredecessorReflectionProxy]] = new AtomicReference(Nil) // implicit set, write accesses are synchronized through CAS
+  override def addPredecessorReplicator(replicator: FullMVTurnPredecessorReflectionProxy): Future[TransactionSpanningTreeNode[FullMVTurn]] = {
+    if(phase < TurnPhase.Completed) {
+      val added = FullMVTurn.atomicAdd(predecessorReplicators, replicator)
+      if(!added) {
+        assert(phase == TurnPhase.Completed, s"phase replicator addition should only return failure, if $this is completed")
+        Future.successful(CaseClassTransactionSpanningTreeNode(this, Array.empty))
+      } else {
+        val preds = selfNode
+        if(preds == null)  {
+          assert(phase == TurnPhase.Completed, s"predecessor tree root should have been initialized for this call to be possible, and should not have been deallocated yet as $this isn't completed")
+          Future.successful(CaseClassTransactionSpanningTreeNode(this, Array.empty))
+        } else {
+          Future.successful(preds)
+        }
+      }
+    } else {
+      Future.successful(CaseClassTransactionSpanningTreeNode(this, Array.empty))
+    }
+  }
+
+  def ensurePredecessorReplication(): Unit
 
   //========================================================Scheduler Interface============================================================
 
@@ -107,4 +154,24 @@ trait FullMVTurn extends Initializer[FullMVStruct] with FullMVTurnProxy with Sub
   private[rescala] def dynamicBefore[P](reactive: Interp[P, FullMVStruct]) = reactive.state.dynamicBefore(this)
   private[rescala] def dynamicAfter[P](reactive: Interp[P, FullMVStruct]) = reactive.state.dynamicAfter(this)
 
-  def observe(f: () => Unit): Unit = f()}
+  def observe(f: () => Unit): Unit = f()
+}
+
+object FullMVTurn {
+  def atomicAdd[T](list: AtomicReference[List[T]], element: T): Boolean = {
+    @tailrec def tryAdd(): Boolean = {
+      val before = list.get()
+      if (before != null){
+        if (!list.compareAndSet(before, element :: before)){
+          tryAdd()
+        } else {
+          true
+        }
+      } else {
+        false
+      }
+    }
+    tryAdd()
+  }
+
+}

@@ -4,7 +4,10 @@ import rescala.fullmv.{FullMVTurn, TransactionSpanningTreeNode, TurnPhase}
 
 import scala.concurrent.Future
 
-trait FullMVTurnReflectionProxy {
+trait FullMVTurnPhaseReflectionProxy {
+  def asyncNewPhase(phase: TurnPhase.Type): Unit
+}
+
+trait FullMVTurnPredecessorReflectionProxy {
   def newPredecessors(predecessors: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit]
-  def newPhase(phase: TurnPhase.Type): Future[Unit]
 }

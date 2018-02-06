@@ -4,14 +4,18 @@ import rescala.fullmv.mirrors._
 import rescala.fullmv.sgt.synchronization._
 import rescala.fullmv.{FullMVEngine, FullMVTurn, TransactionSpanningTreeNode, TurnPhase}
 
-import scala.concurrent.{Await, Future}
-import scala.concurrent.duration.Duration
+import scala.concurrent.Future
 
 object FullMVTurnLocalClone {
-  def apply(turn: FullMVTurn, reflectionHost: FullMVEngine): FullMVTurn = {
-    val predTree = turn.selfNode
+  def active(turn: FullMVTurn, reflectionHost: FullMVEngine): FullMVTurn = {
+    val instance = passive(turn, reflectionHost)
+    instance.ensurePredecessorReplication()
+    instance
+  }
+
+  def passive(turn: FullMVTurn, reflectionHost: FullMVEngine): FullMVTurn = {
     val phase = turn.phase
-    assert(predTree != null || phase == TurnPhase.Completed, s"predecessor tree of $turn was null, but turn still didn't show as completed")
+    assert(phase > TurnPhase.Uninitialized, s"trying to clone uninitialized turn")
     val active = phase < TurnPhase.Completed
     if(active) {
       reflectionHost.getCachedOrReceiveRemote(turn.guid, {
@@ -19,12 +23,12 @@ object FullMVTurnLocalClone {
         val localMirror: FullMVTurnProxy = turn
         val mirrorProxy: FullMVTurnProxy = new FullMVTurnProxy {
           override def acquirePhaseLockIfAtMost(maxPhase: TurnPhase.Type): Future[TurnPhase.Type] = localMirror.acquirePhaseLockIfAtMost(maxPhase)
-          override def addPredecessor(tree: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = localMirror.addPredecessor(tree.map(FullMVTurnLocalClone(_, mirrorHost)))
-          override def maybeNewReachableSubtree(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = localMirror.maybeNewReachableSubtree(FullMVTurnLocalClone(attachBelow, mirrorHost), spanningSubTreeRoot.map(FullMVTurnLocalClone(_, mirrorHost)))
+          override def addPredecessor(tree: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = localMirror.addPredecessor(tree.map(FullMVTurnLocalClone.passive(_, mirrorHost)))
+          override def maybeNewReachableSubtree(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = localMirror.maybeNewReachableSubtree(FullMVTurnLocalClone.passive(attachBelow, mirrorHost), spanningSubTreeRoot.map(FullMVTurnLocalClone.passive(_, mirrorHost)))
 
           override def asyncRemoteBranchComplete(forPhase: TurnPhase.Type): Unit = localMirror.asyncRemoteBranchComplete(forPhase)
           override def addRemoteBranch(forPhase: TurnPhase.Type): Future[Unit] = localMirror.addRemoteBranch(forPhase)
-          override def newSuccessor(successor: FullMVTurn): Future[Unit] = localMirror.newSuccessor(FullMVTurnLocalClone(successor, mirrorHost))
+          override def newSuccessor(successor: FullMVTurn): Future[Unit] = localMirror.newSuccessor(FullMVTurnLocalClone.passive(successor, mirrorHost))
           override def asyncReleasePhaseLock(): Unit = localMirror.asyncReleasePhaseLock()
 
           override def getLockedRoot: Future[Option[Host.GUID]] = localMirror.getLockedRoot
@@ -34,23 +38,21 @@ object FullMVTurnLocalClone {
             case Deallocated => Deallocated
           } (FullMVEngine.notWorthToMoveToTaskpool)
           override def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult] = localMirror.remoteTrySubsume(SubsumableLockLocalClone(lockedNewParent, mirrorHost.lockHost))
-        }
 
-        val reflection = new FullMVTurnReflection(reflectionHost, turn.guid, phase, mirrorProxy)
-        // TODO this probably doesnt work due to endless loop; the predecessor turns have to subscibe asynchronously, not as a nested call.
-        if(predTree != null) reflection.newPredecessors(predTree.map{ pred =>
-          if(pred.remotelyEquals(reflection)) reflection else FullMVTurnLocalClone(pred, reflectionHost)
-        })
-        reflection
+          override def asyncAddPhaseReplicator(replicator: FullMVTurnPhaseReflectionProxy): Unit = localMirror.asyncAddPhaseReplicator(new FullMVTurnPhaseReflectionProxy {
+            override def asyncNewPhase(phase: TurnPhase.Type): Unit = replicator.asyncNewPhase(phase)
+          })
+          override def addPredecessorReplicator(replicator: FullMVTurnPredecessorReflectionProxy): Future[TransactionSpanningTreeNode[FullMVTurn]] = localMirror.addPredecessorReplicator(new FullMVTurnPredecessorReflectionProxy {
+            override def newPredecessors(predecessors: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = replicator.newPredecessors(predecessors.map(FullMVTurnLocalClone.passive(_, reflectionHost)))
+          }).map {
+            _.map(FullMVTurnLocalClone.passive(_, reflectionHost))
+          }(FullMVEngine.notWorthToMoveToTaskpool)
+        }
+        new FullMVTurnReflection(reflectionHost, turn.guid, phase, mirrorProxy)
       }) match {
         case Instantiated(reflection) =>
-          val reflectionProxy = new FullMVTurnReflectionProxy {
-            override def newPhase(phase: TurnPhase.Type): Future[Unit] = reflection.newPhase(phase)
-            override def newPredecessors(predecessors: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = reflection.newPredecessors(predecessors.map(FullMVTurnLocalClone(_, reflectionHost)))
-          }
-          val (initPhase, initPreds) = turn.addReplicator(reflectionProxy)
-          Await.result(reflection.newPhase(initPhase), Duration.Zero) // This is a local call, so should be completed.
-          Await.result(reflection.newPredecessors(initPreds), Duration.Zero) // This is a local call, so should be completed.
+          reflection.proxy.asyncAddPhaseReplicator(reflection)
+          if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] newly local-cloned $reflection from $turn")
           reflection
         case Found(instance) => instance
       }
