@@ -70,6 +70,8 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[S, Option[T]] with 
     Events.staticNamed(s"(collect $this)", this) { st => st.collectStatic(this).collect(pf) }
 
   /** Events disjunction.
+    * Propagates the values if any of the events fires.
+    * Only propagates the left event if both fire.
     * @usecase def ||[U >: T](other: rescala.Event[U]): rescala.Event[U]
     * @group operator */
   final def ||[U >: T](other: Event[U, S])(implicit ticket: CreationTicket[S]): Event[U, S] = {
