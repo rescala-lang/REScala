@@ -87,6 +87,7 @@ class DistributionEngine(hostName: String = InetAddress.getLocalHost.getHostAddr
       })
     }
 
+    locally()
     // Update all other hosts
     broadcastUpdates(varName, pVar.crdtSignal.now)
   }

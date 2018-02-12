@@ -16,11 +16,12 @@ import scala.collection.immutable.HashMap
   * @tparam A The type of the elements stored in this array
   */
 case class RGOA[A](payload: (GSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[Any]])) extends StateCRDTSequence[A] {
-  override type selfType = RGOA[A]
-  override type valueType = List[A]
-  override type payloadType = (GSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[Any]])
+  type selfType = RGOA[A]
+  type valueType = List[A]
+  type payloadType = (GSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[Any]])
   val logger: Logger = Logger[RGOA[A]]
   val (_, edges): ((GSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[Any]])) = payload
+
 
   override def vertices: GSet[Vertex[Any]] = payload._1
 
@@ -57,7 +58,7 @@ case class RGOA[A](payload: (GSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[Any]
     insert(Vertex.start, v)
   }
 
-  override def value: List[A] = iterator.toList
+  def value: List[A] = iterator.toList
 
   def iterator: Iterator[A] = vertexIterator.map(v => v.value)
 
@@ -76,27 +77,9 @@ case class RGOA[A](payload: (GSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[Any]
     }
   }
 
-  def merge(c: StateCRDT): RGOA[A] = c match {
-    case r: RGOA[A] =>
-      val newVertices = r.vertexIterator.toList.filter(!this.vertices.contains(_))
+  def fromPayload(payload: payloadType): RGOA[A] = RGOA(payload)
 
-      logger.debug(s"Merging $c into $this")
-      logger.debug(s"found new vertices: $newVertices")
-
-      // build map of old insertion positions of the new vertices
-      val oldPositions = r.edges.foldLeft(Map(): Map[Vertex[Any], Vertex[Any]]) {
-        case (m, (u, v)) => if (newVertices.contains(v)) m + (v -> u) else m
-      }
-
-      // update edges by inserting vertices at the right positions
-      newVertices.foldLeft(this) {
-        case (merged: RGOA[A], v: Vertex[A]) => logger.debug(s"inserting $v at position ${oldPositions(v)}"); merged.insert(oldPositions(v), v)
-      }
-  }
-
-  override def fromPayload(payload: payloadType): RGOA[A] = RGOA(payload)
-
-  override def fromValue(value: valueType): RGOA[A] = {
+  def fromValue(value: valueType): RGOA[A] = {
     val emptyPayload: payloadType = (GSet[Vertex[Any]](Vertex.start, Vertex.end), HashMap[Vertex[Any], Vertex[Any]](Vertex.start -> Vertex.end))
     val newRGA: RGOA[A] = fromPayload(emptyPayload)
 
@@ -143,4 +126,26 @@ object RGOA {
   def apply[A](): RGOA[A] = empty
 
   def empty[A]: RGOA[A] = new RGOA[A]((GSet(Vertex.start, Vertex.end), HashMap(Vertex.start -> Vertex.end)))
+
+  implicit def RGOAStateCRDTInstance[A]: StateCRDT[List[A], RGOA[A]] = new StateCRDT[List[A], RGOA[A]] {
+    override def value(target: RGOA[A]): List[A] = target.value
+    override def merge(left: RGOA[A], r: RGOA[A]): RGOA[A] = {
+        val newVertices = r.vertexIterator.toList.filter(!left.vertices.contains(_))
+
+        left.logger.debug(s"Merging $r into $left")
+        left.logger.debug(s"found new vertices: $newVertices")
+
+        // build map of old insertion positions of the new vertices
+        val oldPositions = r.edges.foldLeft(Map(): Map[Vertex[Any], Vertex[Any]]) {
+          case (m, (u, v)) => if (newVertices.contains(v)) m + (v -> u) else m
+        }
+
+        // update edges by inserting vertices at the right positions
+        newVertices.foldLeft(left) {
+          case (merged: RGOA[A], v: Vertex[A]) =>
+            left.logger.debug(s"inserting $v at position ${oldPositions(v)}")
+            merged.insert(oldPositions(v), v)
+        }
+    }
+  }
 }

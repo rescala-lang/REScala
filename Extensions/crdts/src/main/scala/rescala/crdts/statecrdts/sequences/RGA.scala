@@ -16,8 +16,8 @@ import scala.collection.immutable.HashMap
   */
 case class RGA[A](payload: (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[Any]])) extends RemovableSequence[A] {
   override type selfType = RGA[A]
-  override type valueType = List[A]
-  override type payloadType = (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[Any]])
+  type valueType = List[A]
+  type payloadType = (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[Any]])
   val logger: Logger = Logger[RGA[A]]
   val (_, edges): ((TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[Any]])) = payload
 
@@ -54,7 +54,7 @@ case class RGA[A](payload: (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[An
 
   override def vertices: TwoPSet[Vertex[Any]] = payload._1
 
-  override def value: List[A] = iterator.toList
+  def value: List[A] = iterator.toList
 
   def iterator: Iterator[A] = vertexIterator.map(v => v.value)
 
@@ -73,32 +73,9 @@ case class RGA[A](payload: (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[An
     }
   }
 
-  def merge(c: StateCRDT): RGA[A] = c match {
-    case r: RGA[A] =>
-      val newVertices = r.vertexIterator.toList.filter(!this.vertices.contains(_))
+  def fromPayload(payload: payloadType): RGA[A] = RGA(payload)
 
-      logger.debug(s"Merging $c into $this")
-      logger.debug(s"found new vertices: $newVertices")
-
-      // build map of old insertion positions of the new vertices
-      val oldPositions = r.edges.foldLeft(Map(): Map[Vertex[Any], Vertex[Any]]) {
-        case (m, (u, v)) => if (newVertices.contains(v)) m + (v -> u) else m
-      }
-
-      // update edges by inserting vertices at the right positions
-      val mergedEdges = newVertices.foldLeft(this) {
-        case (merged: RGA[A], v: Vertex[A]) => logger.debug(s"inserting $v at position ${oldPositions(v)}"); merged.insert(oldPositions(v), v)
-      }.edges
-
-      // merge vertices
-      val mergedVertices = vertices.merge(r.vertices)
-
-      fromPayload((mergedVertices, mergedEdges))
-  }
-
-  override def fromPayload(payload: payloadType): RGA[A] = RGA(payload)
-
-  override def fromValue(value: valueType): RGA[A] = {
+  def fromValue(value: valueType): RGA[A] = {
     val emptyPayload: payloadType = (TwoPSet[Vertex[Any]](Vertex.start, Vertex.end), HashMap[Vertex[Any], Vertex[Any]](Vertex.start -> Vertex.end))
     val newRGA: RGA[A] = fromPayload(emptyPayload)
 
@@ -145,4 +122,29 @@ object RGA {
   def apply[A](): RGA[A] = empty
 
   def empty[A]: RGA[A] = new RGA[A]((TwoPSet(Vertex.start, Vertex.end), HashMap(Vertex.start -> Vertex.end)))
+
+  implicit def RGACRDTInstance[A] = new StateCRDT[List[A], RGA[A]] {
+    override def value(target: RGA[A]): List[A] = target.value
+    override def merge(left: RGA[A], r: RGA[A]): RGA[A] = {
+      val newVertices = r.vertexIterator.toList.filter(!left.vertices.contains(_))
+
+      left.logger.debug(s"Merging $r into $left")
+      left.logger.debug(s"found new vertices: $newVertices")
+
+      // build map of old insertion positions of the new vertices
+      val oldPositions = r.edges.foldLeft(Map(): Map[Vertex[Any], Vertex[Any]]) {
+        case (m, (u, v)) => if (newVertices.contains(v)) m + (v -> u) else m
+      }
+
+      // update edges by inserting vertices at the right positions
+      val mergedEdges = newVertices.foldLeft(left) {
+        case (merged: RGA[A], v: Vertex[A]) => left.logger.debug(s"inserting $v at position ${oldPositions(v)}"); merged.insert(oldPositions(v), v)
+      }.edges
+
+      // merge vertices
+      val mergedVertices = TwoPSet.TwoPSetCRDTInstance.merge(left.vertices, r.vertices)
+
+      RGA((mergedVertices, mergedEdges))
+    }
+  }
 }

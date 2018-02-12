@@ -10,7 +10,7 @@ import rescala.crdts.statecrdts.sequences.{RGA, Vertex}
   */
 case class PVertexList[A](initial: RGA[A] = RGA.empty[A],
                           internalChanges: Evt[RGA[A]] = Evt[RGA[A]],
-                          externalChanges: Evt[RGA[A]] = Evt[RGA[A]]) extends Publishable[RGA[A]] {
+                          externalChanges: Evt[RGA[A]] = Evt[RGA[A]]) extends Publishable[List[A], RGA[A]] {
   def contains[A1 >: A](v: Vertex[A1]): Boolean = crdtSignal.now.contains(v)
 
 

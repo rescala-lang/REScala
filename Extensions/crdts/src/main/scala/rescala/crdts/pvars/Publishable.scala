@@ -1,14 +1,8 @@
 package rescala.crdts.pvars
 
 import akka.actor.ActorRef
-import akka.pattern.ask
-import akka.util.Timeout
 import rescala._
-import rescala.crdts.pvars.DistributionEngine.{PublishReadOnly, PublishVar}
 import rescala.crdts.statecrdts.StateCRDT
-
-import scala.concurrent.Await
-import scala.concurrent.duration.{Duration, _}
 
 /**
   * Classes implementing this trait can be published and are then synchronized by the DistributionEngine (specified by
@@ -20,26 +14,17 @@ import scala.concurrent.duration.{Duration, _}
   *
   * @tparam A The type of the underlying StateCRDT.
   */
-trait Publishable[A <: StateCRDT] {
-  lazy val changes: Event[A] = internalChanges || externalChanges
-  lazy val crdtSignal: Signal[A] = changes.fold(initial) { (c1, c2) =>
-    c1.merge(c2).asInstanceOf[A]
+abstract class Publishable[A, F]()(implicit stateCRDT: StateCRDT[A, F]) {
+  lazy val changes: Event[F] = internalChanges || externalChanges
+  lazy val crdtSignal: Signal[F] = changes.fold(initial) { (c1, c2) =>
+    stateCRDT.merge(c1,c2)
   }
-  lazy val valueSignal: Signal[A#valueType] = crdtSignal.map(_.value)
+  lazy val valueSignal: Signal[A] = crdtSignal.map(s => stateCRDT.value(s))
 
   //val name: String
-  val initial: A
-  val internalChanges: Event[A]
-  val externalChanges: Event[A]
-
-  def get: A = now
-
-  /**
-    * Returns the current state of this publishable.
-    *
-    * @return a CRDT representing the current state
-    */
-  def now: A = crdtSignal.now
+  val initial: F
+  val internalChanges: Event[F]
+  val externalChanges: Event[F]
 
   /**
     * Shortcut to get the public value of the published CvRDT.
@@ -48,7 +33,7 @@ trait Publishable[A <: StateCRDT] {
     *
     * @return an immutable object representing the public value of the published CvRDT
     */
-  def value: A#valueType = valueSignal.now
+  def value: A = valueSignal.now
 
   // TODO: implement blocking sync operation
   //def sync(implicit engine: ActorRef): Unit = engine ! SyncVar(this)
@@ -62,15 +47,17 @@ trait Publishable[A <: StateCRDT] {
 */
   // publish this to the distribution engine
   def publish(name: String)(implicit engine: ActorRef): Unit = {
-    implicit val timeout = Timeout(60.second)
-    val sendMessage = engine ? PublishVar(name, this)
-    Await.ready(sendMessage, Duration.Inf) // make publish a blocking operation
+    locally(name); locally(engine)
+//    implicit val timeout = Timeout(60.second)
+//    val sendMessage = engine ? PublishVar(name, this)
+//    Await.ready(sendMessage, Duration.Inf) // make publish a blocking operation
   }
 
   // publish this as read-only to the distribution engine
   def publishReadOnly(name: String)(implicit engine: ActorRef): Unit = {
-    implicit val timeout = Timeout(60.second)
-    val sendMessage = engine ? PublishReadOnly(name, this)
-    Await.ready(sendMessage, Duration.Inf) // make publish a blocking operation
+    locally(name); locally(engine)
+//    implicit val timeout = Timeout(60.second)
+//    val sendMessage = engine ? PublishReadOnly(name, this)
+//    Await.ready(sendMessage, Duration.Inf) // make publish a blocking operation
   }
 }

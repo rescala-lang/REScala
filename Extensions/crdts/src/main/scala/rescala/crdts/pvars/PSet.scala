@@ -5,7 +5,7 @@ import rescala.crdts.statecrdts.sets.ORSet
 
 case class PSet[A](initial: ORSet[A] = ORSet(),
                    internalChanges: Evt[ORSet[A]] = Evt[ORSet[A]],
-                   externalChanges: Evt[ORSet[A]] = Evt[ORSet[A]]) extends Publishable[ORSet[A]] {
+                   externalChanges: Evt[ORSet[A]] = Evt[ORSet[A]]) extends Publishable[Set[A],ORSet[A]] {
 
   def add(a: A): Unit = internalChanges.fire(crdtSignal.now.add(a))
 

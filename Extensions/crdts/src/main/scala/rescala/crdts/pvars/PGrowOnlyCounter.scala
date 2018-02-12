@@ -11,7 +11,7 @@ import rescala.crdts.statecrdts.counters.GCounter
 case class PGrowOnlyCounter(initial: GCounter = GCounter(0),
                             internalChanges: rescala.Evt[GCounter] = Evt[GCounter],
                             externalChanges: rescala.Evt[GCounter] = Evt[GCounter])
-  extends Publishable[GCounter] {
+  extends Publishable[Int, GCounter] {
 
   def increase: Int = {
     internalChanges.fire(crdtSignal.now.increase)

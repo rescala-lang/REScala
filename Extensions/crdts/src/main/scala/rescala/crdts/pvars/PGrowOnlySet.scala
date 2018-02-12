@@ -5,7 +5,7 @@ import rescala.crdts.statecrdts.sets.GSet
 
 case class PGrowOnlySet[A](initial: GSet[A] = GSet[A](),
                            internalChanges: Evt[GSet[A]] = Evt[GSet[A]],
-                           externalChanges: Evt[GSet[A]] = Evt[GSet[A]]) extends Publishable[GSet[A]] {
+                           externalChanges: Evt[GSet[A]] = Evt[GSet[A]]) extends Publishable[Set[A],GSet[A]] {
 
   def add(a: A): Unit = internalChanges.fire(crdtSignal.now.add(a))
 

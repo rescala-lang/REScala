@@ -5,7 +5,7 @@ import rescala.crdts.statecrdts.sets.StateCRDTSet
 
 import scala.collection.immutable.HashMap
 
-trait StateCRDTSequence[A] extends StateCRDT {
+trait StateCRDTSequence[A] {
   def vertices: StateCRDTSet[Vertex[Any]]
 
   def edges: HashMap[Vertex[Any], Vertex[Any]]
