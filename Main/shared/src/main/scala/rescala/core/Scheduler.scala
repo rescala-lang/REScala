@@ -17,13 +17,13 @@ trait Scheduler[S <: Struct] extends RescalaInterface[S] {
 
   private[rescala] def executeTurn[R](initialWrites: Traversable[ReSource], admissionPhase: AdmissionTicket => R): R
   private[rescala] def singleNow[A](reactive: Signal[A]): A
-  private[rescala] def create[T](f: (Creation) => T): T
+  private[rescala] def creationDynamicLookup[T](f: (Creation) => T): T
 }
 
 
 trait SchedulerImpl[S <: Struct, ExactTurn <: Initializer[S]] extends Scheduler[S] {
 
-  override private[rescala] def create[T](f: (Creation) => T) = {
+  override private[rescala] def creationDynamicLookup[T](f: (Creation) => T) = {
     _currentTurn.value match {
       case Some(turn) => f(turn)
       case None => executeTurn(Set.empty, ticket => f(ticket.creation))
