@@ -1087,8 +1087,12 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
       val pos = findFinalPosition(txn)
       _versions(if (pos < 0) -pos - 1 else pos)
     }
-    if(version.txn == txn && version.value.isDefined) {
-      version.value.get
+    if(version.value.isDefined) {
+      if(version.txn == txn) {
+        version.value.get
+      } else {
+        valuePersistency.unchange.unchange(version.value.get)
+      }
     } else {
       valuePersistency.unchange.unchange(version.lastWrittenPredecessorIfStable.value.get)
     }
