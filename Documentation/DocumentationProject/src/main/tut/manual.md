@@ -463,17 +463,17 @@ e1.fire(1)
 e2.fire(2)
 ```
 
-## Predicate Events
+## Filtering (Predicate) Events
 
-The event `e && p` is fired if `e` occurs and the predicate `p` is
+The event `e filter p` (or the alternative syntax `e && p`) is fired if `e` occurs and the predicate `p` is
 satisfied. The predicate is a function that accepts the event
 parameter as a formal parameter and returns `Boolean`. In other
-words the `&&` operator filters the events according to their
+words the filter operator filters the events according to their
 parameter and a predicate.
 
 ```tut:book
 val e = Evt[Int]()
-val e_AND: Event[Int] = e && ((x: Int) => x>10)
+val e_AND: Event[Int] = e filter ((x: Int) => x>10)
 e_AND += ((x: Int) => println(x))
 e.fire(5)
 e.fire(15)
@@ -791,39 +791,6 @@ v set(3)
 assert(test == 1)
 ```
 
-## Reset
-
-When the ```reset``` function is called for the first time, the
-```init``` value is used by the factory to determine the signal
-returned by the ```reset``` function. When the event occurs the
- factory is applied to the event value to determine the new signal.
-
-`reset[T,A](e: Event[T], init: T)(factory: (T)=>Signal[A]): Signal[A]`
-
-Example:
-
-```tut:book
-val e = Evt[Int]()
-val v1 =  Var(0)
-val v2 =  Var(10)
-val s1 = Signal{ v1() + 1 }
-val s2 = Signal{ v2() + 1 }
-
-def factory(x: Int) = x%2 match {
-  case 0 => s1
-  case 1 => s2
-}
-val s3 = e.reset(100)(factory)
-
-assert(s3.now == 1)
-v1.set(1)
-assert(s3.now == 2)
-e.fire(101)
-assert(s3.now == 11)
-v2.set(11)
-assert(s3.now == 12)
-```
-
 ## Switch/toggle
 
 The ```toggle``` function switches alternatively between the given
@@ -1042,8 +1009,8 @@ has a constant value 2 and is not updated when the var changes.
 
 ```tut:book
 val a = Var(1)
-val b = increment(a.now)
-val s = Signal{ b + 1 }
+val b = increment(a.now) // b is not reactive
+val s = Signal{ b + 1 } // s is a constant signal with value 2
 ```
 
 The following solution is syntactically correct and the signal

@@ -179,6 +179,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[S, Option[T]] with 
     Events.foldOne(this, 0)((acc, _) => acc + 1)
 
   /** returns a signal holding the latest value of the event.
+    * @param init initial value of the returned signal
     * @usecase def latest[A >: T](init: A): rescala.Signal[A]
     * @group conversion */
   final def latest[A >: T : ReSerializable](init: A)(implicit ticket: CreationTicket[S]): Signal[A, S] =
