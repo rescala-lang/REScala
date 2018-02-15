@@ -35,10 +35,8 @@ object ReactiveTransmittable {
   sealed trait Message[+P] {
     def toTuple: Msg[P] = this match {
       case UnitResponse => allEmpty("UnitResponse")
-
       case Connect(turn) => allEmpty("Connect").copy(_2 = turn._1, _3 = turn._2)
       case Initialize(initValues, maybeFirstFrame) => allEmpty("Initialize").copy(_2 = maybeFirstFrame.map(_._1).getOrElse(Host.dummyGuid), _3 = maybeFirstFrame.map(_._2).getOrElse(TurnPhase.Uninitialized), _6 = initValues.map{case ((t,p),v) => (t,p,v)}, _8 = maybeFirstFrame.isDefined)
-
       case AsyncIncrementFrame(turn) => allEmpty("AsyncIncrementFrame").copy(_2 = turn._1, _3 = turn._2)
       case AsyncDecrementFrame(turn) => allEmpty("AsyncDecrementFrame").copy(_2 = turn._1, _3 = turn._2)
       case AsyncIncrementSupersedeFrame(turn, supersede) => allEmpty("AsyncIncrementSupersedeFrame").copy(_2 = turn._1, _3 = turn._2, _4 = supersede._1, _5 = supersede._2)
@@ -49,30 +47,25 @@ object ReactiveTransmittable {
       case AsyncNewValueFollowFrame(turn, value, followFrame) => allEmpty("AsyncNewValueFollowFrame").copy(_6 = Seq((turn._1, turn._2, value)), _4 = followFrame._1, _5 = followFrame._2)
       case AsyncAddPhaseReplicator(turn, knownPhase) => allEmpty("AsyncAddPhaseReplicator").copy(_2 = turn, _3 = knownPhase)
       case AsyncNewPhase(turn) => allEmpty("AsyncNewPhase").copy(_2 = turn._1, _3 = turn._2)
-
       case AddPredecessorReplicator(turn) => allEmpty("AddPredecessorReplicator").copy(_2 = turn)
       case PredecessorsResponse(preds) => allEmpty("PredecessorsResponse").copy(_7 = preds)
       case NewPredecessors(newPredecessors) => allEmpty("NewPredecessors").copy(_7 = newPredecessors)
-
       case AddRemoteBranch(turn, forPhase) => allEmpty("AddRemoteBranch").copy(_2 = turn, _3 = forPhase)
       case AsyncRemoteBranchComplete(turn, forPhase) => allEmpty("AsyncRemoteBranchComplete").copy(_2 = turn, _3 = forPhase)
-
       case AcquirePhaseLockIfAtMost(turn, phase) => allEmpty("AcquirePhaseLockIfAtMost").copy(_2 = turn, _3 = phase)
       case AcquirePhaseLockResponse(phase) => allEmpty("AcquirePhaseLockResponse").copy(_3 = phase)
       case AddPredecessor(turn, predecessorTree) => allEmpty("AddPredecessor").copy(_2 = turn, _7 = predecessorTree)
       case AsyncReleasePhaseLock(turn) => allEmpty("AsyncReleasePhaseLock").copy(_2 = turn)
       case MaybeNewReachableSubtree(turn, attachBelow, spanningTree) => allEmpty("MaybeNewReachableSubtree").copy(_2 = turn, _4 = attachBelow._1, _5 = attachBelow._2, _7 = spanningTree)
       case NewSuccessor(turn, successor) => allEmpty("NewSuccessor").copy(_2 = turn, _4 = successor._1, _5 = successor._2)
-
       case TurnGetLockedRoot(turn) => allEmpty("TurnGetLockedRoot").copy(_2 = turn)
       case MaybeLockResponse(newParentIfFailed) => allEmpty("MaybeLockResponse").copy(_2 = newParentIfFailed.getOrElse(Host.dummyGuid), _8 = newParentIfFailed.isDefined)
       case TurnTryLock(turn) => allEmpty("TurnTryLock").copy(_2 = turn)
       case TurnLockedResponse(lock) => allEmpty("TurnLockedResponse").copy(_2 = lock)
       case TurnTrySubsume(turn, lockedNewParent) => allEmpty("TurnTrySubsume").copy(_2 = turn, _4 = lockedNewParent)
       case TurnBlockedResponse => allEmpty("TurnBlockedResponse")
-      case TurnSuccessfulResponse => allEmpty("TurnSuccessful")
-      case TurnDeallocatedResponse => allEmpty("TurnDeallocated")
-
+      case TurnSuccessfulResponse => allEmpty("TurnSuccessfulResponse")
+      case TurnDeallocatedResponse => allEmpty("TurnDeallocatedResponse")
       case LockGetLockedRoot(lock) => allEmpty("LockGetLockedRoot").copy(_2 = lock)
       case LockTryLock(lock) => allEmpty("LockTryLock").copy(_2 = lock)
       case LockSuccessfulResponse => allEmpty("LockSuccessfulResponse")
