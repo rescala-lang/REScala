@@ -8,7 +8,6 @@ import rescala.core.Initializer.InitValues
 import rescala.core._
 import rescala.fullmv.NotificationResultAction._
 import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation._
-import rescala.fullmv.TurnPhase.Type
 import rescala.fullmv.mirrors._
 import rescala.fullmv.sgt.synchronization.SubsumableLockEntryPoint
 import rescala.fullmv.tasks.{Notification, Reevaluation}
@@ -23,7 +22,7 @@ trait FullMVTurn extends Initializer[FullMVStruct] with FullMVTurnProxy with Sub
 
   // ===== Turn State Manangement External API
   val waiters = new ConcurrentHashMap[Thread, TurnPhase.Type]()
-  def wakeWaitersAfterPhaseSwitch(newPhase: Type): Unit = {
+  def wakeWaitersAfterPhaseSwitch(newPhase: TurnPhase.Type): Unit = {
     val it = waiters.entrySet().iterator()
     while (it.hasNext) {
       val waiter = it.next()
@@ -45,11 +44,11 @@ trait FullMVTurn extends Initializer[FullMVStruct] with FullMVTurnProxy with Sub
   //========================================================Remote Replication============================================================
 
   val phaseReplicators: AtomicReference[List[FullMVTurnPhaseReflectionProxy]] = new AtomicReference(Nil) // implicit set, write accesses are synchronized through CAS
-  override def asyncAddPhaseReplicator(replicator: FullMVTurnPhaseReflectionProxy): Unit = {
+  override def asyncAddPhaseReplicator(replicator: FullMVTurnPhaseReflectionProxy, knownPhase: TurnPhase.Type): Unit = {
     if(phase < TurnPhase.Completed) {
       val added = FullMVTurn.atomicAdd(phaseReplicators, replicator)
       assert(added || phase == TurnPhase.Completed, s"phase replicator addition should only return failure, if $this is completed")
-      replicator.asyncNewPhase(phase)
+      if(knownPhase < phase) replicator.asyncNewPhase(phase)
     } else {
       replicator.asyncNewPhase(TurnPhase.Completed)
     }
