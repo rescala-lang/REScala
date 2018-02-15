@@ -22,8 +22,8 @@ this should allow you to follow along the following examples.
 
 # API Documentation
 
-* [Signal documentation](../scaladoc/#rescala.reactives.Signal)
-* [Event documentation](../scaladoc/#rescala.reactives.Event)
+* [Signal documentation](../scaladoc/rescala/reactives/Signal.html)
+* [Event documentation](../scaladoc/rescala/reactives/Event.html)
 
 
 # Introduction
@@ -42,7 +42,7 @@ use only *Rescala* events to design application that do not need
 time-changing values.
 
 **Scope** The manual serves as an introduction of the concepts in *Rescala*.
-The full API is covered in the [scaladoc](../scaladoc/) especially for [Signals](../scaladoc/#rescala.reactives.Signal) and [Events](../scaladoc/#rescala.reactives.Signal).
+The full API is covered in the [scaladoc](../scaladoc/) especially for Signals and Events (see above for direct links).
 More details can be found in [[7, 3]](#ref).
 
 The manual introduces the concepts related to functional reactive
