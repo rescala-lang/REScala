@@ -23,7 +23,7 @@ case class Request(requestId: Long) extends MessageType
 case class Response(requestId: Long) extends MessageType
 
 object ReactiveTransmittable {
-  val DEBUG: Boolean = FullMVEngine.DEBUG
+  val DEBUG: Boolean = FullMVEngine.DEBUG || SubsumableLock.DEBUG
 
   type EndPointWithInfrastructure[T] = Endpoint[MessageWithInfrastructure[T], MessageWithInfrastructure[T]]
   type MessageWithInfrastructure[T] = (Long, T)
@@ -244,7 +244,7 @@ object ReactiveTransmittable {
 
 abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit val host: FullMVEngine, messageTransmittable: Transmittable[ReactiveTransmittable.MessageWithInfrastructure[ReactiveTransmittable.Msg[ReactiveTransmittable.Pluse[P]]], S, ReactiveTransmittable.MessageWithInfrastructure[ReactiveTransmittable.Msg[ReactiveTransmittable.Pluse[P]]]], serializable: Serializable[S]) extends PushBasedTransmittable[R, ReactiveTransmittable.MessageWithInfrastructure[ReactiveTransmittable.Msg[ReactiveTransmittable.Pluse[P]]], S, ReactiveTransmittable.MessageWithInfrastructure[ReactiveTransmittable.Msg[ReactiveTransmittable.Pluse[P]]], R] {
   def bundle(turn: FullMVTurn): TurnPushBundle = {
-    assert(turn.host == host)
+    assert(turn.host == host, s"$turn is not on $host?!")
     (turn.guid, turn.phase)
   }
 
@@ -462,7 +462,9 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
     case AsyncAddPhaseReplicator(receiver, known) =>
       localTurnReceiverInstance(receiver) match {
         case Some(turn) => turn.asyncAddPhaseReplicator(new FullMVTurnPhaseReflectionProxyToEndpoint(turn, endpoint), known)
-        case None => doAsync(endpoint, AsyncNewPhase(receiver -> TurnPhase.Completed))
+        case None =>
+          if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host receiver of request $message was deallocated; ignoring call as it is no longer needed")
+          doAsync(endpoint, AsyncNewPhase(receiver -> TurnPhase.Completed))
       }
     case AsyncNewPhase(bundle) =>
       localTurnReflectionReceiverInstance(bundle)
@@ -470,7 +472,7 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
 
   private def sendTree(predTree: TransactionSpanningTreeNode[FullMVTurn]) = {
     predTree.map { predPred =>
-      assert(predPred.host == host)
+      assert(predPred.host == host, s"$predPred is not on $host?!")
       (predPred.guid, predPred.phase)
     }
   }
@@ -489,7 +491,9 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
     case AcquirePhaseLockIfAtMost(receiver, phase) =>
       localTurnReceiverInstance(receiver) match {
         case Some(turn) => turn.acquirePhaseLockIfAtMost(phase).map(AcquirePhaseLockResponse)(FullMVEngine.notWorthToMoveToTaskpool)
-        case None => Future.successful(AcquirePhaseLockResponse(TurnPhase.Completed))
+        case None =>
+          if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host receiver of request $request was deallocated")
+          Future.successful(AcquirePhaseLockResponse(TurnPhase.Completed))
       }
     case MaybeNewReachableSubtree(receiver, attachBelow, spanningSubTreeRoot) =>
       val maybeTurn = localTurnReceiverInstance(receiver)
@@ -502,23 +506,29 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
     case NewSuccessor(receiver, successor) =>
       localTurnReceiverInstance(receiver) match {
         case Some(turn) => turn.newSuccessor(getKnownLocalTurnParameterInstance(successor, endpoint))
-        case None => Future.successful(UnitResponse) // predecessor was concurrently deallocated and thus just won't message successor any longer and we can just ignore this call.
+        case None =>
+          if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host receiver of request $request was deallocated; ignoring call as it is no longer needed")
+          Future.successful(UnitResponse)
       }
     case TurnGetLockedRoot(receiver) =>
       localTurnReceiverInstance(receiver) match {
         case Some(turn) => turn.getLockedRoot.map(MaybeLockResponse)(FullMVEngine.notWorthToMoveToTaskpool)
-        case None => Future.successful(MaybeLockResponse(None))
+        case None =>
+          if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host receiver of request $request was deallocated")
+          Future.successful(MaybeLockResponse(None))
       }
     case TurnTryLock(receiver) =>
       localTurnReceiverInstance(receiver) match {
         case Some(turn) => turn.remoteTryLock().map {
           case Locked(lock) =>
-            assert(lock.host == host)
+            assert(lock.host == host.lockHost, s"$lock is not on ${host.lockHost}?!")
             TurnLockedResponse(lock.guid)
           case Blocked => TurnBlockedResponse
           case Deallocated => TurnDeallocatedResponse
         }(FullMVEngine.notWorthToMoveToTaskpool)
-        case None => Future.successful(TurnDeallocatedResponse)
+        case None =>
+          if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host receiver of request $request was deallocated")
+          Future.successful(TurnDeallocatedResponse)
       }
     case TurnTrySubsume(receiver, lockedNewParent) =>
       localTurnReceiverInstance(receiver) match {
@@ -527,7 +537,10 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
           case Blocked => TurnBlockedResponse
           case Deallocated => TurnDeallocatedResponse
         }(FullMVEngine.notWorthToMoveToTaskpool)
-        case None => Future.successful(TurnDeallocatedResponse)
+        case None =>
+          if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host receiver of request $request was deallocated, dropping remote parameter reference on $lockedNewParent")
+          doAsync(endpoint, LockAsyncRemoteRefDropped(lockedNewParent))
+          Future.successful(TurnDeallocatedResponse)
       }
     case NewPredecessors(predecessors) =>
       localTurnReflectionReceiverInstance(predecessors.txn).get.newPredecessors(predecessors.map { lookUpLocalTurnParameterInstance(_, endpoint) })
@@ -536,21 +549,25 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
     case LockGetLockedRoot(receiver) =>
       localLockReceiverInstance(receiver) match {
         case Some(lock) => lock.getLockedRoot.map(MaybeLockResponse)(FullMVEngine.notWorthToMoveToTaskpool)
-        case None => Future.failed(new AssertionError(s"query for locked root on deallocated turn $receiver"))
+        case None =>
+          if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host receiver of request $request was deallocated; reporting error.")
+          Future.failed(new AssertionError(s"query for locked root on deallocated turn $receiver"))
       }
     case LockTryLock(receiver) =>
       localLockReceiverInstance(receiver) match {
         case Some(lock) =>
           lock.remoteTryLock().map {
             case RemoteLocked(newParent) =>
-              assert(newParent.host == host)
+              assert(newParent.host == host.lockHost, s"$newParent is not on ${host.lockHost}?!")
               LockLockedResponse(newParent.guid)
             case RemoteBlocked(newParent) =>
-              assert(newParent.host == host)
+              assert(newParent.host == host.lockHost, s"$newParent is not on ${host.lockHost}?!")
               LockBlockedResponse(newParent.guid)
             case RemoteGCd => LockDeallocatedResponse
           }(FullMVEngine.notWorthToMoveToTaskpool)
-        case None => Future.successful(LockDeallocatedResponse)
+        case None =>
+          if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host receiver of request $request was deallocated")
+          Future.successful(LockDeallocatedResponse)
       }
     case LockTrySubsume(receiver, lockedNewParent) =>
       localLockReceiverInstance(receiver) match {
@@ -558,11 +575,14 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
           lock.remoteTrySubsume(lookUpLocalLockParameterInstanceWithReference(lockedNewParent, endpoint)).map {
             case RemoteSubsumed => LockSuccessfulResponse
             case RemoteBlocked(newParent) =>
-              assert(newParent.host == host)
+              assert(newParent.host == host.lockHost, s"$newParent is not on ${host.lockHost}?!")
               LockBlockedResponse(newParent.guid)
             case RemoteGCd => LockDeallocatedResponse
           }(FullMVEngine.notWorthToMoveToTaskpool)
-        case None => Future.successful(LockDeallocatedResponse)
+        case None =>
+          if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host receiver of request $request was deallocated, dropping remote parameter reference on $lockedNewParent")
+          doAsync(endpoint, LockAsyncRemoteRefDropped(lockedNewParent))
+          Future.successful(LockDeallocatedResponse)
       }
     case AddPredecessorReplicator(receiver) =>
       localTurnReceiverInstance(receiver) match {
@@ -571,6 +591,7 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
             PredecessorsResponse(preds.map(bundle))
           }(FullMVEngine.notWorthToMoveToTaskpool)
         case None =>
+          if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host receiver of request $request was deallocated")
           Future.successful(PredecessorsResponse(CaseClassTransactionSpanningTreeNode(receiver -> TurnPhase.Completed, Array.empty)))
       }
   }
@@ -597,11 +618,11 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
       doAsync(endpoint, AsyncReleasePhaseLock(guid))
     }
     override def maybeNewReachableSubtree(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = {
-      assert(attachBelow.host == host)
+      assert(attachBelow.host == host, s"$attachBelow is not on $host?!")
       doRequest(endpoint, MaybeNewReachableSubtree(guid, (attachBelow.guid, attachBelow.phase), sendTree(spanningSubTreeRoot)))
     }
     override def newSuccessor(successor: FullMVTurn): Future[Unit] = {
-      assert(successor.host == host)
+      assert(successor.host == host, s"$successor is not on $host?!")
       doRequest(endpoint, NewSuccessor(guid, (successor.guid, successor.phase)))
     }
 
@@ -618,7 +639,7 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
       }(executeInTaskPool)
     }
     override def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult] = {
-      assert(lockedNewParent.host == host.lockHost)
+      assert(lockedNewParent.host == host.lockHost, s"$lockedNewParent is not on ${host.lockHost}?!")
       doRequest(endpoint, TurnTrySubsume(guid, lockedNewParent.guid)).map {
         case TurnSuccessfulResponse => Successful
         case TurnBlockedResponse => Blocked
@@ -677,7 +698,7 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
       }(executeInTaskPool)
     }
     override def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[RemoteTrySubsumeResult] = {
-      assert(lockedNewParent.host == host.lockHost)
+      assert(lockedNewParent.host == host.lockHost, s"$lockedNewParent is not on ${host.lockHost}?!")
       doRequest(endpoint, LockTrySubsume(guid, lockedNewParent.guid)).map {
         case LockSuccessfulResponse => RemoteSubsumed
         case LockBlockedResponse(newParent) => RemoteBlocked(lookUpLocalLockParameterInstanceWithReference(newParent, endpoint))

@@ -133,7 +133,7 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
 
   override def newSuccessor(successor: FullMVTurn): Future[Unit] = proxy.newSuccessor(successor)
 
-  override def getLockedRoot: Future[Option[GUID]] = proxy.getLockedRoot
+  override def getLockedRoot: Future[Option[GUID]] = if(proxy == null) SubsumableLock.futureNone else proxy.getLockedRoot
   override def tryLock(): Future[TryLockResult] = {
     if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this sending tryLock request")
     proxy.remoteTryLock().map {res =>
@@ -157,7 +157,7 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
     }(FullMVEngine.notWorthToMoveToTaskpool)
   }
   override def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult] = {
-    if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this passing through trySubsume $lockedNewParent request")
+    if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this passing through trySubsume $lockedNewParent request (passing on remote parameter reference)")
     proxy.remoteTrySubsume(lockedNewParent).map {res =>
       if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this passing through trySubsume $lockedNewParent result $res")
       res

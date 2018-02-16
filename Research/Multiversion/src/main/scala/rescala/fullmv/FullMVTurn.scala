@@ -131,7 +131,6 @@ trait FullMVTurn extends Initializer[FullMVStruct] with FullMVTurnProxy with Sub
     }
   }
 
-
   private[rescala] def discover(node: ReSource[FullMVStruct], addOutgoing: Reactive[FullMVStruct]): Unit = {
     val r@(successorWrittenVersions, maybeFollowFrame) = node.state.discover(this, addOutgoing)
     assert((successorWrittenVersions ++ maybeFollowFrame).forall(retrofit => retrofit == this || retrofit.isTransitivePredecessor(this)), s"$this retrofitting contains predecessors: discover $node -> $addOutgoing retrofits $r from ${node.state}")

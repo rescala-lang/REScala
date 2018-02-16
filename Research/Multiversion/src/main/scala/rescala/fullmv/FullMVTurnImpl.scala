@@ -249,21 +249,22 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
       // this prevents concurrent threads from seeing some of the newly established relations,
       // but not yet some transitive ones of those, which may violate several assertions
       // (although this doesn't actually break anything beyond these assertions)
-      predecessorSpanningTreeNodes = copySubTreeRootAndAssessChildren(predecessorSpanningTreeNodes, attachBelow, spanningSubTreeRoot, incompleteCallsAccumulator)
+      val (updatedTree, updatedAccu) = copySubTreeRootAndAssessChildren(predecessorSpanningTreeNodes, attachBelow, spanningSubTreeRoot, incompleteCallsAccumulator)
+      predecessorSpanningTreeNodes = updatedTree
 
-      FullMVEngine.accumulateBroadcastFutures(incompleteCallsAccumulator, predecessorReplicators.get) { _.newPredecessors(selfNode) }
-      FullMVEngine.condenseCallResults(incompleteCallsAccumulator)
+      val updated2Accu = FullMVEngine.accumulateBroadcastFutures(updatedAccu, predecessorReplicators.get) { _.newPredecessors(selfNode) }
+      FullMVEngine.condenseCallResults(updated2Accu)
     } else {
       Future.unit
     }
   }
 
-  private def copySubTreeRootAndAssessChildren(bufferPredecessorSpanningTreeNodes: Map[FullMVTurn, MutableTransactionSpanningTreeNode[FullMVTurn]], attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn], newSuccessorCallsAccumulator: FullMVEngine.CallAccumulator[Unit]): Map[FullMVTurn, MutableTransactionSpanningTreeNode[FullMVTurn]] = {
+  private def copySubTreeRootAndAssessChildren(bufferPredecessorSpanningTreeNodes: Map[FullMVTurn, MutableTransactionSpanningTreeNode[FullMVTurn]], attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn], newSuccessorCallsAccumulator: FullMVEngine.CallAccumulator[Unit]): (Map[FullMVTurn, MutableTransactionSpanningTreeNode[FullMVTurn]], FullMVEngine.CallAccumulator[Unit]) = {
     val newTransitivePredecessor = spanningSubTreeRoot.txn
     assert(newTransitivePredecessor.host == host, s"new predecessor $newTransitivePredecessor of $this is hosted on ${newTransitivePredecessor.host} different from $host")
     if(spanningSubTreeRoot.txn.phase < TurnPhase.Completed) {
       val newSuccessorCall = newTransitivePredecessor.newSuccessor(this)
-      FullMVEngine.accumulateFuture(newSuccessorCallsAccumulator, newSuccessorCall)
+      var updatedAccu = FullMVEngine.accumulateFuture(newSuccessorCallsAccumulator, newSuccessorCall)
 
       val copiedSpanningTreeNode = new MutableTransactionSpanningTreeNode(newTransitivePredecessor)
       var updatedBufferPredecessorSpanningTreeNodes = bufferPredecessorSpanningTreeNodes + (newTransitivePredecessor -> copiedSpanningTreeNode)
@@ -273,12 +274,14 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
       while (it.hasNext) {
         val child = it.next()
         if (!isTransitivePredecessor(child.txn)) {
-          updatedBufferPredecessorSpanningTreeNodes = copySubTreeRootAndAssessChildren(updatedBufferPredecessorSpanningTreeNodes, newTransitivePredecessor, child, newSuccessorCallsAccumulator)
+          val (updated2Buffer, updated2Accu) = copySubTreeRootAndAssessChildren(updatedBufferPredecessorSpanningTreeNodes, newTransitivePredecessor, child, newSuccessorCallsAccumulator)
+          updatedBufferPredecessorSpanningTreeNodes = updated2Buffer
+          updatedAccu = updated2Accu
         }
       }
-      updatedBufferPredecessorSpanningTreeNodes
+      (updatedBufferPredecessorSpanningTreeNodes, updatedAccu)
     } else {
-      bufferPredecessorSpanningTreeNodes
+      (bufferPredecessorSpanningTreeNodes, newSuccessorCallsAccumulator)
     }
   }
 
