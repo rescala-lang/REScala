@@ -13,11 +13,11 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
   Self =>
   val state = new AtomicReference[SubsumableLock](null)
 
-  override def getLockedRoot: Future[Option[Host.GUID]] = {
+  override def getLockedRoot: Future[LockStateResult0] = {
     state.get match {
-      case null => futureNone
-      case Self => Future.successful(Some(guid))
-      case host.dummy => futureNone
+      case null => UnlockedState.futured
+      case Self => Future.successful(LockedState(guid))
+      case host.dummy => ConcurrentDeallocation.futured
       case parent => parent.getLockedRoot
     }
   }

@@ -1,6 +1,6 @@
 package rescala.fullmv.mirrors
 
-import rescala.fullmv.sgt.synchronization.SubsumableLock
+import rescala.fullmv.sgt.synchronization.{LockStateResult0, SubsumableLock}
 
 import scala.concurrent.Future
 
@@ -17,7 +17,7 @@ case object RemoteGCd extends RemoteTrySubsumeResult with RemoteTryLockResult {
 }
 
 trait SubsumableLockProxy {
-  def getLockedRoot: Future[Option[Host.GUID]]
+  def getLockedRoot: Future[LockStateResult0]
   // result will have one temporary remote parameter reference for the caller to receive.
   def remoteTryLock(): Future[RemoteTryLockResult]
   // parameter has one temporary remote parameter reference counted, which will be cleared by this call.

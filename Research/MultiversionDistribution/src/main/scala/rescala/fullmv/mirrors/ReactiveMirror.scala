@@ -32,47 +32,41 @@ class ReactiveMirror[A](val getValue: FullMVTurn => A, val reflectionProxy: Reac
   override protected[rescala] val state = this
   override val host: FullMVEngine = null
   override def incrementFrame(txn: FullMVTurn): FramingBranchResult[FullMVTurn, Reactive[FullMVStruct]] = {
-    val add = txn.addRemoteBranch(TurnPhase.Framing)
+    Await.result(txn.addRemoteBranch(TurnPhase.Framing), timeout)
     reflectionProxy.asyncIncrementFrame(txn)
-    Await.result(add, timeout)
     FramingBranchResult.FramingBranchEnd
   }
   override def decrementFrame(txn: FullMVTurn): FramingBranchResult[FullMVTurn, Reactive[FullMVStruct]] = {
-    val add = txn.addRemoteBranch(TurnPhase.Framing)
+    Await.result(txn.addRemoteBranch(TurnPhase.Framing), timeout)
     reflectionProxy.asyncDecrementFrame(txn)
-    Await.result(add, timeout)
     FramingBranchResult.FramingBranchEnd
   }
   override def incrementSupersedeFrame(txn: FullMVTurn, supersede: FullMVTurn): FramingBranchResult[FullMVTurn, Reactive[FullMVStruct]] = {
-    val add = txn.addRemoteBranch(TurnPhase.Framing)
+    Await.result(txn.addRemoteBranch(TurnPhase.Framing), timeout)
     reflectionProxy.asyncIncrementSupersedeFrame(txn, supersede)
-    Await.result(add, timeout)
     FramingBranchResult.FramingBranchEnd
   }
   override def decrementReframe(txn: FullMVTurn, reframe: FullMVTurn): FramingBranchResult[FullMVTurn, Reactive[FullMVStruct]] = {
-    val add = txn.addRemoteBranch(TurnPhase.Framing)
+    Await.result(txn.addRemoteBranch(TurnPhase.Framing), timeout)
     reflectionProxy.asyncDeframeReframe(txn, reframe)
-    Await.result(add, timeout)
     FramingBranchResult.FramingBranchEnd
   }
   override def notify(txn: FullMVTurn, changed: Boolean): NotificationResultAction[FullMVTurn, Reactive[FullMVStruct]] = {
-    val add = txn.addRemoteBranch(TurnPhase.Executing)
+    Await.result(txn.addRemoteBranch(TurnPhase.Executing), timeout)
     if(changed) {
       reflectionProxy.asyncNewValue(txn, getValue(txn))
     } else {
       reflectionProxy.asyncResolvedUnchanged(txn)
     }
-    Await.result(add, timeout)
     NotificationResultAction.GlitchFreeReadyButQueued
   }
   override def notifyFollowFrame(txn: FullMVTurn, changed: Boolean, followFrame: FullMVTurn): NotificationResultAction[FullMVTurn, Reactive[FullMVStruct]] = {
-    val add = txn.addRemoteBranch(TurnPhase.Executing)
+    Await.result(txn.addRemoteBranch(TurnPhase.Executing), timeout)
     if(changed) {
       reflectionProxy.asyncNewValueFollowFrame(txn, getValue(txn), followFrame)
     } else {
       reflectionProxy.asyncResolvedUnchangedFollowFrame(txn, followFrame)
     }
-    Await.result(add, timeout)
     NotificationResultAction.GlitchFreeReadyButQueued
   }
   override def latestValue: Value = ???

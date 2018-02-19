@@ -4,8 +4,7 @@ import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
 
 import rescala.fullmv._
 import rescala.fullmv.TurnPhase.Type
-import rescala.fullmv.mirrors.Host.GUID
-import rescala.fullmv.sgt.synchronization.{SubsumableLock, SubsumableLockEntryPoint, TryLockResult, TrySubsumeResult}
+import rescala.fullmv.sgt.synchronization._
 
 import scala.annotation.tailrec
 import scala.concurrent.{Await, Future}
@@ -105,6 +104,23 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
   @tailrec final override def asyncNewPhase(phase: TurnPhase.Type): Unit = {
     val currentPhase = _phase.get
     if(currentPhase < phase) {
+      val preds = predecessorIndex.get
+      if(preds != null) {
+        val iterator = preds._2.iterator()
+        while(iterator.hasNext) {
+          val child = iterator.next().txn
+          if(child.phase < phase) {
+            assert(child.isInstanceOf[FullMVTurnReflection], s"$this predecessor $child has phase < ${TurnPhase.toString(phase)}, but is not a reflection (i.e., this cannot be caused by the async phase transition message being delayed)")
+            // this case may occur if this reflection receives a phase transition notification, but has another reflection as predecessor,
+            // who's base turn did a required preceeding phase transition properly before this reflections' base, but the corresponding
+            // remote notification is delayed, e.g., because it must pass through more hops.
+            if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this pre-empting phase transition of predecessor $child to $phase.")
+            // we therefore can pre-empt the other reflection's message, which makes it so that phase transitions on this host appear
+            // consistent with the transactions predecessor order.
+            child.asInstanceOf[FullMVTurnPhaseReflectionProxy].asyncNewPhase(phase)
+          }
+        }
+      }
       if(!_phase.compareAndSet(currentPhase, phase)) {
         asyncNewPhase(currentPhase)
       } else {
@@ -127,17 +143,53 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
     asyncNewPhase(phase)
     phase
   }(FullMVEngine.notWorthToMoveToTaskpool)
-  override def addPredecessor(tree: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = proxy.addPredecessor(tree)
+  override def addPredecessor(tree: TransactionSpanningTreeNode[FullMVTurn]): Future[Boolean] = {
+    if(tree.txn.phase == TurnPhase.Completed) {
+      if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this aborting predecessor addition of known completed ${tree.txn}")
+      Future.successful(true)
+    } else {
+      proxy.addPredecessor(tree).map { wasNotAddedBecauseCompleted =>
+        val predecessor = tree.txn
+        if (wasNotAddedBecauseCompleted && predecessor.phase < TurnPhase.Completed) {
+          assert(predecessor.isInstanceOf[FullMVTurnReflection], s"$this predecessor $predecessor is not completed despite the remote host saying so, but is not a reflection (i.e., this cannot be caused by the async phase transition message being delayed)")
+          // this case may occur if this reflection tries to add a predecessor relationship for an uncompleted parameter reflection,
+          // but on this reflection's base instance's host, the parameter turn is already known completed. In this case, the predecessor
+          // relation addition returns without actually broadcasting an according edge. If the caller thus queries for this
+          // relation after having tried to add it, this query may fail.
+          if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this pre-empting completion transition of predecessor $predecessor")
+          // to make this case work correctly, the base instance returns true if the parameter turn is known completed.
+          // we then here pre-empt the not-yet arrived phase transition for the parameter turn.
+          predecessor.asInstanceOf[FullMVTurnPhaseReflectionProxy].asyncNewPhase(TurnPhase.Completed)
+        }
+        wasNotAddedBecauseCompleted
+      }(FullMVEngine.notWorthToMoveToTaskpool)
+    }
+  }
   override def asyncReleasePhaseLock(): Unit = proxy.asyncReleasePhaseLock()
   override def maybeNewReachableSubtree(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = proxy.maybeNewReachableSubtree(attachBelow, spanningSubTreeRoot)
 
   override def newSuccessor(successor: FullMVTurn): Future[Unit] = proxy.newSuccessor(successor)
 
-  override def getLockedRoot: Future[Option[GUID]] = if(proxy == null) SubsumableLock.futureNone else proxy.getLockedRoot
+  override def getLockedRoot: Future[LockStateResult] = {
+    if(proxy == null) {
+      assert(phase == TurnPhase.Completed, s"incomplete $this without proxy?")
+      CompletedState.futured
+    } else proxy.getLockedRoot.map { res =>
+      if(res == CompletedState) {
+        if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this lock state result pre-empting completion transition")
+        asyncNewPhase(TurnPhase.Completed)
+      }
+      res
+    }(FullMVEngine.notWorthToMoveToTaskpool)
+  }
   override def tryLock(): Future[TryLockResult] = {
     if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this sending tryLock request")
     proxy.remoteTryLock().map {res =>
       if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this received tryLock result $res (retaining remote transfer reference as thread reference)")
+      if(res == Deallocated) {
+        if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this try lock result pre-empting completion transition")
+        asyncNewPhase(TurnPhase.Completed)
+      }
       res
     }(FullMVEngine.notWorthToMoveToTaskpool)
   }
@@ -145,6 +197,10 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
     if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this passing through tryLock request")
     proxy.remoteTryLock().map {res =>
       if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this passing through tryLock result $res (retaining remote transfer reference as thread reference)")
+      if(res == Deallocated) {
+        if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this remote try lock result pre-empting completion transition")
+        asyncNewPhase(TurnPhase.Completed)
+      }
       res
     }(FullMVEngine.notWorthToMoveToTaskpool)
   }
@@ -153,6 +209,10 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
     lockedNewParent.localAddRefs(1)
     proxy.remoteTrySubsume(lockedNewParent).map {res =>
       if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this received trySubsume $lockedNewParent result $res")
+      if(res == Deallocated) {
+        if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this try subsume result pre-empting completion transition")
+        asyncNewPhase(TurnPhase.Completed)
+      }
       res
     }(FullMVEngine.notWorthToMoveToTaskpool)
   }
@@ -160,6 +220,10 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
     if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this passing through trySubsume $lockedNewParent request (passing on remote parameter reference)")
     proxy.remoteTrySubsume(lockedNewParent).map {res =>
       if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this passing through trySubsume $lockedNewParent result $res")
+      if(res == Deallocated) {
+        if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this remote try subsume result pre-empting completion transition")
+        asyncNewPhase(TurnPhase.Completed)
+      }
       res
     }(FullMVEngine.notWorthToMoveToTaskpool)
   }

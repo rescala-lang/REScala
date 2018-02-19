@@ -17,7 +17,7 @@ object FullMVTurnLocalClone {
         val localMirror: FullMVTurnProxy = turn
         val mirrorProxy: FullMVTurnProxy = new FullMVTurnProxy {
           override def acquirePhaseLockIfAtMost(maxPhase: TurnPhase.Type): Future[TurnPhase.Type] = localMirror.acquirePhaseLockIfAtMost(maxPhase)
-          override def addPredecessor(tree: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = localMirror.addPredecessor(tree.map(FullMVTurnLocalClone(_, mirrorHost)))
+          override def addPredecessor(tree: TransactionSpanningTreeNode[FullMVTurn]): Future[Boolean] = localMirror.addPredecessor(tree.map(FullMVTurnLocalClone(_, mirrorHost)))
           override def maybeNewReachableSubtree(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = localMirror.maybeNewReachableSubtree(FullMVTurnLocalClone(attachBelow, mirrorHost), spanningSubTreeRoot.map(FullMVTurnLocalClone(_, mirrorHost)))
 
           override def asyncRemoteBranchComplete(forPhase: TurnPhase.Type): Unit = localMirror.asyncRemoteBranchComplete(forPhase)
@@ -25,7 +25,7 @@ object FullMVTurnLocalClone {
           override def newSuccessor(successor: FullMVTurn): Future[Unit] = localMirror.newSuccessor(FullMVTurnLocalClone(successor, mirrorHost))
           override def asyncReleasePhaseLock(): Unit = localMirror.asyncReleasePhaseLock()
 
-          override def getLockedRoot: Future[Option[Host.GUID]] = localMirror.getLockedRoot
+          override def getLockedRoot: Future[LockStateResult] = localMirror.getLockedRoot
           override def remoteTryLock(): Future[TryLockResult] = localMirror.remoteTryLock().map {
             case Locked(lockedRoot) => Locked(SubsumableLockLocalClone(lockedRoot, reflectionHost.lockHost))
             case Blocked => Blocked
@@ -48,7 +48,12 @@ object FullMVTurnLocalClone {
           reflection.proxy.asyncAddPhaseReplicator(reflection, phase)
           if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] newly local-cloned $reflection from $turn")
           reflection
-        case Found(instance) => instance
+        case Found(reflection: FullMVTurnReflection) =>
+          reflection.asyncNewPhase(phase)
+          reflection
+        case Found(notReflection) =>
+          assert(phase <= notReflection.phase, s"apparently $notReflection has a newer phase ($phase) on a remote copy than the local original?")
+          notReflection
       }
     } else {
       new FullMVTurnReflection(reflectionHost, turn.guid, phase, null)

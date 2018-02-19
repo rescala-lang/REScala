@@ -1,13 +1,13 @@
 package rescala.fullmv
 
-import java.util.concurrent.{Executor, ForkJoinPool}
+import java.util.concurrent.ForkJoinPool
 
 import rescala.core.SchedulerImpl
 import rescala.fullmv.mirrors.{FullMVTurnHost, Host, HostImpl, SubsumableLockHostImpl}
 import rescala.fullmv.sgt.synchronization.SubsumableLock
 import rescala.fullmv.tasks.{Framing, SourceNotification}
 
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 import scala.util.Try
 
@@ -25,7 +25,9 @@ class FullMVEngine(val timeout: Duration, val name: String) extends SchedulerImp
   }
   def newTurn(): FullMVTurnImpl = createLocal(new FullMVTurnImpl(this, _, Thread.currentThread(), lockHost.newLock()))
 
-  val threadPool = new ForkJoinPool()
+  val threadPool = new ForkJoinPool() with ExecutionContext {
+    override def reportFailure(cause: Throwable): Unit = cause.printStackTrace()
+  }
 
   override private[rescala] def singleNow[A](reactive: Signal[A]) = reactive.state.latestValue.get
 
@@ -92,9 +94,10 @@ object FullMVEngine {
 
   val default = new FullMVEngine(10.seconds, "default")
 
-  val notWorthToMoveToTaskpool: ExecutionContextExecutor = ExecutionContext.fromExecutor(new Executor{
-    override def execute(command: Runnable): Unit = command.run()
-  })
+  object notWorthToMoveToTaskpool extends ExecutionContext {
+    override def execute(runnable: Runnable): Unit = runnable.run()
+    override def reportFailure(t: Throwable): Unit = throw new IllegalStateException("problem in scala.concurrent internal callback", t)
+  }
 
   type CallAccumulator[T] = List[Future[T]]
   def newAccumulator(): CallAccumulator[Unit] = Nil

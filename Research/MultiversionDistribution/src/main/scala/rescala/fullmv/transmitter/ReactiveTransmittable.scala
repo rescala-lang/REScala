@@ -28,15 +28,15 @@ object ReactiveTransmittable {
   type EndPointWithInfrastructure[T] = Endpoint[MessageWithInfrastructure[T], MessageWithInfrastructure[T]]
   type MessageWithInfrastructure[T] = (Long, T)
 
-  type Msg[+T] = (String, Host.GUID, TurnPhase.Type, Host.GUID, TurnPhase.Type, Seq[(Host.GUID, TurnPhase.Type, T)], CaseClassTransactionSpanningTreeNode[(Host.GUID, TurnPhase.Type)], Boolean)
-  def allEmpty[T](name: String): Msg[T] = (name, Host.dummyGuid, TurnPhase.Uninitialized, Host.dummyGuid, TurnPhase.Uninitialized, Seq.empty, CaseClassTransactionSpanningTreeNode((Host.dummyGuid, TurnPhase.Uninitialized), Array.empty), false)
+  type Msg[+T] = (String, Host.GUID, TurnPhase.Type, Host.GUID, TurnPhase.Type, Seq[(Host.GUID, TurnPhase.Type, T)], CaseClassTransactionSpanningTreeNode[(Host.GUID, TurnPhase.Type)], Array[Byte])
+  def allEmpty[T](name: String): Msg[T] = (name, Host.dummyGuid, TurnPhase.Uninitialized, Host.dummyGuid, TurnPhase.Uninitialized, Seq.empty, CaseClassTransactionSpanningTreeNode((Host.dummyGuid, TurnPhase.Uninitialized), Array.empty), Array.empty)
   val ASYNC_REQUEST = 0
 
   sealed trait Message[+P] {
     def toTuple: Msg[P] = this match {
       case UnitResponse => allEmpty("UnitResponse")
       case Connect(turn) => allEmpty("Connect").copy(_2 = turn._1, _3 = turn._2)
-      case Initialize(initValues, maybeFirstFrame) => allEmpty("Initialize").copy(_2 = maybeFirstFrame.map(_._1).getOrElse(Host.dummyGuid), _3 = maybeFirstFrame.map(_._2).getOrElse(TurnPhase.Uninitialized), _6 = initValues.map{case ((t,p),v) => (t,p,v)}, _8 = maybeFirstFrame.isDefined)
+      case Initialize(initValues, maybeFirstFrame) => allEmpty("Initialize").copy(_2 = maybeFirstFrame.map(_._1).getOrElse(Host.dummyGuid), _3 = maybeFirstFrame.map(_._2).getOrElse(TurnPhase.Uninitialized), _6 = initValues.map{case ((t,p),v) => (t,p,v)})
       case AsyncIncrementFrame(turn) => allEmpty("AsyncIncrementFrame").copy(_2 = turn._1, _3 = turn._2)
       case AsyncDecrementFrame(turn) => allEmpty("AsyncDecrementFrame").copy(_2 = turn._1, _3 = turn._2)
       case AsyncIncrementSupersedeFrame(turn, supersede) => allEmpty("AsyncIncrementSupersedeFrame").copy(_2 = turn._1, _3 = turn._2, _4 = supersede._1, _5 = supersede._2)
@@ -55,11 +55,15 @@ object ReactiveTransmittable {
       case AcquirePhaseLockIfAtMost(turn, phase) => allEmpty("AcquirePhaseLockIfAtMost").copy(_2 = turn, _3 = phase)
       case AcquirePhaseLockResponse(phase) => allEmpty("AcquirePhaseLockResponse").copy(_3 = phase)
       case AddPredecessor(turn, predecessorTree) => allEmpty("AddPredecessor").copy(_2 = turn, _7 = predecessorTree)
+      case BooleanResponse(bool) => allEmpty(if(bool) "BooleanTrueResponse" else "BooleanFalseResponse")
       case AsyncReleasePhaseLock(turn) => allEmpty("AsyncReleasePhaseLock").copy(_2 = turn)
       case MaybeNewReachableSubtree(turn, attachBelow, spanningTree) => allEmpty("MaybeNewReachableSubtree").copy(_2 = turn, _4 = attachBelow._1, _5 = attachBelow._2, _7 = spanningTree)
       case NewSuccessor(turn, successor) => allEmpty("NewSuccessor").copy(_2 = turn, _4 = successor._1, _5 = successor._2)
       case TurnGetLockedRoot(turn) => allEmpty("TurnGetLockedRoot").copy(_2 = turn)
-      case MaybeLockResponse(newParentIfFailed) => allEmpty("MaybeLockResponse").copy(_2 = newParentIfFailed.getOrElse(Host.dummyGuid), _8 = newParentIfFailed.isDefined)
+      case LockStateTurnCompletedResponse => allEmpty("LockStateTurnCompletedResponse")
+      case LockStateLockedResponse(guid) => allEmpty("LockStateLockedResponse").copy(_2 = guid)
+      case LockStateUnlockedResponse => allEmpty("LockStateUnlockedResponse")
+      case LockStateContendedResponse => allEmpty("LockStateContendedResponse")
       case TurnTryLock(turn) => allEmpty("TurnTryLock").copy(_2 = turn)
       case TurnLockedResponse(lock) => allEmpty("TurnLockedResponse").copy(_2 = lock)
       case TurnTrySubsume(turn, lockedNewParent) => allEmpty("TurnTrySubsume").copy(_2 = turn, _4 = lockedNewParent)
@@ -75,13 +79,14 @@ object ReactiveTransmittable {
       case LockDeallocatedResponse => allEmpty("LockDeallocatedResponse")
       case LockAsyncUnlock(lock) => allEmpty("LockAsyncUnlock").copy(_2 = lock)
       case LockAsyncRemoteRefDropped(lock) => allEmpty("LockAsyncRemoteRefDropped").copy(_2 = lock)
+      case RemoteExceptionResponse(se) => allEmpty("RemoteExceptionResponse").copy(_8 = se)
     }
   }
   object Message {
     def fromTuple[P](tuple: Msg[P]): Message[P] = tuple match {
       case ("UnitResponse", _, _, _, _, _, _, _) => UnitResponse
       case ("Connect", turn, phase, _, _, _, _, _) => Connect(turn -> phase)
-      case ("Initialize", maybeFirstFrame, maybeFirstPhase, _, _, initValues, _, firstFrame) => Initialize(initValues.map { case (t,p,v) => ((t, p), v) }, if(firstFrame) Some(maybeFirstFrame -> maybeFirstPhase) else None)
+      case ("Initialize", maybeFirstFrame, maybeFirstPhase, _, _, initValues, _, firstFrame) => Initialize(initValues.map { case (t,p,v) => ((t, p), v) }, if(maybeFirstFrame != Host.dummyGuid || maybeFirstPhase != TurnPhase.Uninitialized) Some(maybeFirstFrame -> maybeFirstPhase) else None)
       case ("AsyncIncrementFrame", turn, phase, _, _, _, _, _) => AsyncIncrementFrame(turn -> phase)
       case ("AsyncDecrementFrame", turn, phase, _, _, _, _, _) => AsyncDecrementFrame(turn -> phase)
       case ("AsyncIncrementSupersedeFrame", turn, phase, supersede, supersedePhase, _, _, _) => AsyncIncrementSupersedeFrame(turn -> phase, supersede -> supersedePhase)
@@ -100,11 +105,16 @@ object ReactiveTransmittable {
       case ("AcquirePhaseLockIfAtMost", turn, phase, _, _, _, _, _) => AcquirePhaseLockIfAtMost(turn, phase)
       case ("AcquirePhaseLockResponse", _, phase, _, _, _, _, _) => AcquirePhaseLockResponse(phase)
       case ("AddPredecessor", turn, _, _, _, _, tree, _) => AddPredecessor(turn, tree)
+      case ("BooleanTrueResponse", _, _, _, _, _, _, _) => BooleanResponse(true)
+      case ("BooleanFalseResponse", _, _, _, _, _, _, _) => BooleanResponse(false)
       case ("AsyncReleasePhaseLock", turn, _, _, _, _, _, _) => AsyncReleasePhaseLock(turn)
       case ("MaybeNewReachableSubtree", turn, _, attachBelow, attachPhase, _, tree, _) => MaybeNewReachableSubtree(turn, attachBelow -> attachPhase, tree)
       case ("NewSuccessor", turn, _, successor, successorPhase, _, _, _) => NewSuccessor(turn, successor -> successorPhase)
       case ("TurnGetLockedRoot", turn, _, _, _, _, _, _) => TurnGetLockedRoot(turn)
-      case ("MaybeLockResponse", maybeLock, _, _, _, _, _, defined) => MaybeLockResponse(if(defined) Some(maybeLock) else None)
+      case ("LockStateTurnCompletedResponse", _, _, _, _, _, _, _) => LockStateTurnCompletedResponse
+      case ("LockStateLockedResponse", guid, _, _, _, _, _, _) => LockStateLockedResponse(guid)
+      case ("LockStateUnlockedResponse", _, _, _, _, _, _, _) => LockStateUnlockedResponse
+      case ("LockStateContendedResponse", _, _, _, _, _, _, _) => LockStateContendedResponse
       case ("TurnTryLock", turn, _, _, _, _, _, _) => TurnTryLock(turn)
       case ("TurnLockedResponse", lock, _, _, _, _, _, _) => TurnLockedResponse(lock)
       case ("TurnTrySubsume", turn, _, lock, _, _, _, _) => TurnTrySubsume(turn, lock)
@@ -120,6 +130,7 @@ object ReactiveTransmittable {
       case ("LockDeallocatedResponse", _, _, _, _, _, _, _) => LockDeallocatedResponse
       case ("LockAsyncUnlock", lock, _, _, _, _, _, _) => LockAsyncUnlock(lock)
       case ("LockAsyncRemoteRefDropped", lock, _, _, _, _, _, _) => LockAsyncRemoteRefDropped(lock)
+      case ("RemoteExceptionResponse", _, _, _, _, _, _, se) => RemoteExceptionResponse(se)
       case otherwise =>
         val e = new AssertionError("Unrecognized message: " + otherwise)
         e.printStackTrace()
@@ -132,6 +143,7 @@ object ReactiveTransmittable {
   }
   sealed trait Response[+P] extends Message[P]
   case object UnitResponse extends Response[Nothing]
+  case class RemoteExceptionResponse(serializedThrowable: Array[Byte]) extends Response[Nothing]
   import scala.language.implicitConversions
   implicit def unitResponseToUnitFuture(future: Future[UnitResponse.type]): Future[Unit] = future.map(_ => ())(FullMVEngine.notWorthToMoveToTaskpool)
   implicit def unitToUnitResponseFuture(future: Future[Unit]): Future[UnitResponse.type] = future.map(_ => UnitResponse)(FullMVEngine.notWorthToMoveToTaskpool)
@@ -157,14 +169,15 @@ object ReactiveTransmittable {
   case class AsyncRemoteBranchComplete(turn: Host.GUID, forPhase: TurnPhase.Type) extends Async[Nothing]
   case class AcquirePhaseLockIfAtMost(turn: Host.GUID, phase: TurnPhase.Type) extends Request[Nothing]{ override type Response = AcquirePhaseLockResponse }
   case class AcquirePhaseLockResponse(phase: TurnPhase.Type) extends Response[Nothing]
-  case class AddPredecessor(turn: Host.GUID, predecessorTree: CaseClassTransactionSpanningTreeNode[TurnPushBundle]) extends Request[Nothing]{ override type Response = UnitResponse.type }
+  case class AddPredecessor(turn: Host.GUID, predecessorTree: CaseClassTransactionSpanningTreeNode[TurnPushBundle]) extends Request[Nothing]{ override type Response = BooleanResponse }
+  case class BooleanResponse(bool: Boolean) extends Response[Nothing]
   case class AsyncReleasePhaseLock(turn: Host.GUID) extends Async[Nothing]
   case class MaybeNewReachableSubtree(turn: Host.GUID, attachBelow: TurnPushBundle, spanningTree: CaseClassTransactionSpanningTreeNode[TurnPushBundle]) extends Request[Nothing]{ override type Response = UnitResponse.type }
   case class NewSuccessor(turn: Host.GUID, successor: TurnPushBundle) extends Request[Nothing]{ override type Response = UnitResponse.type }
-  /** [[SubsumableLockEntryPoint]] && [[SubsumableLockProxy]] **/
-  case class MaybeLockResponse(newParentIfFailed: Option[Host.GUID]) extends Response[Nothing]
   /** [[SubsumableLockEntryPoint]] **/
-  case class TurnGetLockedRoot(turn: Host.GUID) extends Request[Nothing]{ override type Response = MaybeLockResponse }
+  case class TurnGetLockedRoot(turn: Host.GUID) extends Request[Nothing]{ override type Response = TurnLockStateResponse }
+  sealed trait TurnLockStateResponse extends Response[Nothing]
+  case object LockStateTurnCompletedResponse extends TurnLockStateResponse
   case class TurnTryLock(turn: Host.GUID) extends Request[Nothing]{ override type Response = TurnTryLockResponse }
   sealed trait TurnTryLockResponse extends Response[Nothing]
   case class TurnLockedResponse(lock: Host.GUID) extends TurnTryLockResponse
@@ -174,7 +187,11 @@ object ReactiveTransmittable {
   case object TurnBlockedResponse extends TurnTryLockResponse with TurnTrySubsumeResponse
   case object TurnDeallocatedResponse extends TurnTryLockResponse with TurnTrySubsumeResponse
   /** [[SubsumableLockProxy]] **/
-  case class LockGetLockedRoot(lock: Host.GUID) extends Request[Nothing]{ override type Response = MaybeLockResponse }
+  case class LockGetLockedRoot(lock: Host.GUID) extends Request[Nothing]{ override type Response = LockStateResponse }
+  sealed trait LockStateResponse extends Response[Nothing]
+  case class LockStateLockedResponse(guid: Host.GUID) extends LockStateResponse with TurnLockStateResponse
+  case object LockStateUnlockedResponse extends LockStateResponse with TurnLockStateResponse
+  case object LockStateContendedResponse extends LockStateResponse
   case class LockTryLock(lock: Host.GUID) extends Request[Nothing]{ override type Response = LockTryLockResponse }
   sealed trait LockTryLockResponse extends Response[Nothing]
   case class LockLockedResponse(lock: Host.GUID) extends LockTryLockResponse
@@ -190,15 +207,23 @@ object ReactiveTransmittable {
   /** [[FullMVTurnPredecessorReflectionProxy]] **/
   case class NewPredecessors(newPredecessors: CaseClassTransactionSpanningTreeNode[TurnPushBundle]) extends Request[Nothing] { override type Response = UnitResponse.type }
 
+  def deserializeThrowable(se: Array[Byte]): Throwable = {
+    val bais = new ByteArrayInputStream(se)
+    val ois = new ObjectInputStream(bais)
+    ois.readObject().asInstanceOf[Throwable]
+  }
+  def serializeThrowable(t: Throwable): Array[Byte] = {
+    val baos = new ByteArrayOutputStream()
+    val oos = new ObjectOutputStream(baos)
+    oos.writeObject(t)
+    oos.flush()
+    baos.toByteArray
+  }
   sealed trait Pluse[+P] {
     def toPulse: Pulse[P] = this match {
       case Pluse.NoChange => Pulse.NoChange
       case Pluse.Value(v) => Pulse.Value(v)
-      case Pluse.Exceptional(se) =>
-        val bais = new ByteArrayInputStream(se)
-        val ois = new ObjectInputStream(bais)
-        val e = ois.readObject().asInstanceOf[Throwable]
-        Pulse.Exceptional(e)
+      case Pluse.Exceptional(se) => Pulse.Exceptional(deserializeThrowable(se))
     }
   }
   object Pluse {
@@ -206,12 +231,7 @@ object ReactiveTransmittable {
       pulse match {
         case Pulse.NoChange => Pluse.NoChange
         case Pulse.Value(v) => Pluse.Value(v)
-        case Pulse.Exceptional(e) =>
-          val baos = new ByteArrayOutputStream()
-          val oos = new ObjectOutputStream(baos)
-          oos.writeObject(e)
-          oos.flush()
-          Pluse.Exceptional(baos.toByteArray)
+        case Pulse.Exceptional(t) => Pluse.Exceptional(serializeThrowable(t))
       }
     }
     case object NoChange extends Pluse[Nothing]
@@ -264,13 +284,13 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
     (msg._1, Message.fromTuple(msg._2)) match {
       case (_, async: Async) =>
         host.threadPool.submit(new Runnable {
-          if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host processing async $async")
           override def run(): Unit = {
+            if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host processing async $async")
             try {
               handleAsync(localReactive, endpoint, async)
             } catch {
               // TODO cannot propagate this back to sender because async, what else to do?
-              case t: Throwable => t.printStackTrace()
+              case t: Throwable => new Exception("Error processing async " + async, t).printStackTrace()
             }
           }
         })
@@ -280,15 +300,19 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
             if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host processing request $request")
             try {
               handleRequest(localReactive, endpoint, request).onComplete {
-                case Failure(e) =>
-                  new Exception(s"$host failed processing request $request", e).printStackTrace()
                 case Success(response) =>
                   if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host replying $requestId: $response")
                   endpoint.send((requestId, response.toTuple))
+                case Failure(t) =>
+                  if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host request $requestId completed, but resulted in failure; returning ${t.getClass.getName}: ${t.getMessage} to remote")
+                  if(ReactiveTransmittable.DEBUG) t.printStackTrace()
+                  endpoint.send(requestId -> RemoteExceptionResponse(serializeThrowable(t)).toTuple)
               }(FullMVEngine.notWorthToMoveToTaskpool)
             } catch {
-              // TODO exceptions should propagate back to the sender?
-              case t: Throwable => t.printStackTrace()
+              case t: Throwable =>
+                if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host request $requestId failed to execute; returning ${t.getClass.getName}: ${t.getMessage} to remote")
+                if(ReactiveTransmittable.DEBUG) t.printStackTrace()
+                endpoint.send(requestId -> RemoteExceptionResponse(serializeThrowable(t)).toTuple)
             }
           }
         })
@@ -296,9 +320,13 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
         try {
           val promise = requestTracker.remove(requestId).asInstanceOf[Promise[Response]] /* typesafety yay */
           assert(promise != null, s"request $requestId unknown!")
-          promise.complete(Success(response))
+          promise.complete(response match {
+            case RemoteExceptionResponse(se) => Failure(deserializeThrowable(se))
+            case otherwise => Success(response)
+          })
         } catch {
-          // TODO exceptions should propagate back to the sender?
+          // this should only happen on framework bugs. Since we're just completing a future, everything client-code that happens as
+          // a reaction of that should catch and propagate exceptions itself, so no client exceptions should be thrown uncaught..
           case t: Throwable => t.printStackTrace()
         }
     }
@@ -502,20 +530,24 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
     case AddPredecessor(receiver, predecessorTree) =>
       val maybeTurn = localTurnReceiverInstance(receiver)
       assert(maybeTurn.isDefined, s"someone tried to add predecessors on turn $receiver, which should thus not have been possible to be deallocated")
-      maybeTurn.get.addPredecessor(predecessorTree.map { lookUpLocalTurnParameterInstance(_, endpoint) })
+      maybeTurn.get.addPredecessor(predecessorTree.map { lookUpLocalTurnParameterInstance(_, endpoint) }).map(BooleanResponse)(FullMVEngine.notWorthToMoveToTaskpool)
     case NewSuccessor(receiver, successor) =>
       localTurnReceiverInstance(receiver) match {
-        case Some(turn) => turn.newSuccessor(getKnownLocalTurnParameterInstance(successor, endpoint))
+        case Some(turn) => turn.newSuccessor(lookUpLocalTurnParameterInstance(successor, endpoint))
         case None =>
           if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host receiver of request $request was deallocated; ignoring call as it is no longer needed")
           Future.successful(UnitResponse)
       }
     case TurnGetLockedRoot(receiver) =>
       localTurnReceiverInstance(receiver) match {
-        case Some(turn) => turn.getLockedRoot.map(MaybeLockResponse)(FullMVEngine.notWorthToMoveToTaskpool)
+        case Some(turn) => turn.getLockedRoot.map {
+          case LockedState(guid) => LockStateLockedResponse(guid)
+          case UnlockedState => LockStateUnlockedResponse
+          case CompletedState => LockStateTurnCompletedResponse
+        }(FullMVEngine.notWorthToMoveToTaskpool)
         case None =>
           if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host receiver of request $request was deallocated")
-          Future.successful(MaybeLockResponse(None))
+          Future.successful(LockStateTurnCompletedResponse)
       }
     case TurnTryLock(receiver) =>
       localTurnReceiverInstance(receiver) match {
@@ -548,10 +580,14 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
 
     case LockGetLockedRoot(receiver) =>
       localLockReceiverInstance(receiver) match {
-        case Some(lock) => lock.getLockedRoot.map(MaybeLockResponse)(FullMVEngine.notWorthToMoveToTaskpool)
+        case Some(lock) => lock.getLockedRoot.map{
+          case LockedState(guid) => LockStateLockedResponse(guid)
+          case UnlockedState => LockStateUnlockedResponse
+          case ConcurrentDeallocation => LockStateContendedResponse
+        }(FullMVEngine.notWorthToMoveToTaskpool)
         case None =>
-          if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host receiver of request $request was deallocated; reporting error.")
-          Future.failed(new AssertionError(s"query for locked root on deallocated turn $receiver"))
+          if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host receiver of request $request was deallocated.")
+          Future.successful(LockStateContendedResponse)
       }
     case LockTryLock(receiver) =>
       localLockReceiverInstance(receiver) match {
@@ -611,8 +647,10 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
       }(executeInTaskPool)
     }
 
-    override def addPredecessor(tree: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = {
-      doRequest(endpoint, AddPredecessor(guid, sendTree(tree)))
+    override def addPredecessor(tree: TransactionSpanningTreeNode[FullMVTurn]): Future[Boolean] = {
+      doRequest(endpoint, AddPredecessor(guid, sendTree(tree))).map {
+        case BooleanResponse(bool) => bool
+      }(FullMVEngine.notWorthToMoveToTaskpool)
     }
     override def asyncReleasePhaseLock(): Unit = {
       doAsync(endpoint, AsyncReleasePhaseLock(guid))
@@ -626,9 +664,11 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
       doRequest(endpoint, NewSuccessor(guid, (successor.guid, successor.phase)))
     }
 
-    override def getLockedRoot: Future[Option[Host.GUID]] = {
+    override def getLockedRoot: Future[LockStateResult] = {
       doRequest(endpoint, TurnGetLockedRoot(guid)).map {
-        case MaybeLockResponse(maybeRoot) => maybeRoot
+        case LockStateLockedResponse(lock) => LockedState(lock)
+        case LockStateUnlockedResponse => UnlockedState
+        case LockStateTurnCompletedResponse => CompletedState
       }(FullMVEngine.notWorthToMoveToTaskpool)
     }
     override def remoteTryLock(): Future[TryLockResult] = {
@@ -684,10 +724,11 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
     override def remoteAsyncUnlock(): Unit = {
       doAsync(endpoint, LockAsyncUnlock(guid))
     }
-    override def getLockedRoot: Future[Option[Host.GUID]] = {
+    override def getLockedRoot: Future[LockStateResult0] = {
       doRequest(endpoint, LockGetLockedRoot(guid)).map {
-        case MaybeLockResponse(maybeRoot) =>
-          maybeRoot
+        case LockStateLockedResponse(lock) => LockedState(lock)
+        case LockStateUnlockedResponse => UnlockedState
+        case LockStateContendedResponse => ConcurrentDeallocation
       }(FullMVEngine.notWorthToMoveToTaskpool)
     }
     override def remoteTryLock(): Future[RemoteTryLockResult] = {

@@ -23,8 +23,22 @@ case object Deallocated extends TrySubsumeResult with TryLockResult {
   val futured = Future.successful(this)
 }
 
+sealed trait LockStateResult
+sealed trait LockStateResult0
+case class LockedState(guid: Host.GUID) extends LockStateResult with LockStateResult0
+case object UnlockedState extends LockStateResult with LockStateResult0 {
+  val futured = Future.successful(this)
+}
+case object CompletedState extends LockStateResult {
+  val futured = Future.successful(this)
+}
+case object ConcurrentDeallocation extends LockStateResult0 {
+  val futured = Future.successful(this)
+}
+
+
 trait SubsumableLockEntryPoint {
-  def getLockedRoot: Future[Option[Host.GUID]]
+  def getLockedRoot: Future[LockStateResult]
   // result has one thread reference counted
   def tryLock(): Future[TryLockResult]
   def trySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult]
@@ -46,7 +60,7 @@ trait SubsumableLock extends SubsumableLockProxy with Hosted[SubsumableLock] {
 
   override val host: SubsumableLockHost
 
-  def getLockedRoot: Future[Option[Host.GUID]]
+  def getLockedRoot: Future[LockStateResult0]
   // result will have one thread reference to present a uniform interface for remote calls
   // (a result received from remote would immediately be deallocated if the thread receiving it doesn't hold a reference)
   def tryLock0(hopCount: Int): Future[TryLockResult0]

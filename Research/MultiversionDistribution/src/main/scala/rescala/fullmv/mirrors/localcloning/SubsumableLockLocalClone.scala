@@ -2,7 +2,7 @@ package rescala.fullmv.mirrors.localcloning
 
 import rescala.fullmv.FullMVEngine
 import rescala.fullmv.mirrors._
-import rescala.fullmv.sgt.synchronization.SubsumableLock
+import rescala.fullmv.sgt.synchronization.{LockStateResult0, SubsumableLock}
 
 import scala.concurrent.Future
 
@@ -16,7 +16,7 @@ object SubsumableLockLocalClone {
 }
 
 class SubsumableLockLocalCloneProxy(mirrorHost: SubsumableLockHost, localProxy: SubsumableLockProxy, reflectionHost: SubsumableLockHost) extends SubsumableLockProxy {
-  override def getLockedRoot: Future[Option[Host.GUID]] = localProxy.getLockedRoot
+  override def getLockedRoot: Future[LockStateResult0] = localProxy.getLockedRoot
   override def remoteTryLock(): Future[RemoteTryLockResult] = localProxy.remoteTryLock().map {
     case RemoteLocked(newParent: SubsumableLock) => RemoteLocked(SubsumableLockLocalClone(newParent, reflectionHost))
     case RemoteBlocked(newParent: SubsumableLock) => RemoteBlocked(SubsumableLockLocalClone(newParent, reflectionHost))

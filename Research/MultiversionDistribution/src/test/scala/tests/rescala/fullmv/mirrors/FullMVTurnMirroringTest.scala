@@ -68,7 +68,7 @@ class FullMVTurnMirroringTest extends FunSuite {
 
     // turn goes remote to hostA
     val turnA = FullMVTurnLocalClone(turn, hostA)
-    turn.addRemoteBranch(TurnPhase.Executing)
+    Await.result(turn.addRemoteBranch(TurnPhase.Executing), Duration.Zero)
     turn.activeBranchDifferential(TurnPhase.Executing, -1)
     turnA.newBranchFromRemote(TurnPhase.Executing)
     assert(turn.activeBranches.get == 1)
@@ -79,18 +79,18 @@ class FullMVTurnMirroringTest extends FunSuite {
 
     // first branch goes remote to hostB
     val turnB = FullMVTurnLocalClone(turnA, hostB)
-    turnA.addRemoteBranch(TurnPhase.Executing)
+    Await.result(turnA.addRemoteBranch(TurnPhase.Executing), Duration.Zero)
     turnA.activeBranchDifferential(TurnPhase.Executing, -1)
     turnB.newBranchFromRemote(TurnPhase.Executing)
     assert(turn.activeBranches.get == 2)
 
     // second branch goes remote back to host0
-    turnA.addRemoteBranch(TurnPhase.Executing)
+    Await.result(turnA.addRemoteBranch(TurnPhase.Executing), Duration.Zero)
     turn.newBranchFromRemote(TurnPhase.Executing)
     assert(turn.activeBranches.get == 3)
 
     // third branch goes remote also to hostB
-    turnA.addRemoteBranch(TurnPhase.Executing)
+    Await.result(turnA.addRemoteBranch(TurnPhase.Executing), Duration.Zero)
     turnA.activeBranchDifferential(TurnPhase.Executing, -1)
     turnB.newBranchFromRemote(TurnPhase.Executing)
     assert(turn.activeBranches.get == 2)

@@ -1,7 +1,5 @@
 package tests.rescala.fullmv.transmitter
 
-import java.util.concurrent.atomic.AtomicInteger
-
 import org.scalatest.FunSuite
 import rescala.fullmv.transmitter.ReactiveTransmittable
 import rescala.fullmv.{FullMVEngine, FullMVStruct}
@@ -13,7 +11,6 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 
 class ReactiveTransmittableTest extends FunSuite {
-  val ports = new AtomicInteger(1099)
   class Host(name: String) extends FullMVEngine(10.second, name) {
     val registry = new Registry
 
@@ -27,7 +24,7 @@ class ReactiveTransmittableTest extends FunSuite {
 
   test("basic transmission works") {
     val hostA = new Host("basicA")
-    val port = ports.getAndIncrement()
+    val port = TransmitterTestsPortManagement.getFreePort()
     hostA.registry.listen(TCP(port))
     try {
       val input = {import hostA._; Var(5)}
@@ -48,7 +45,7 @@ class ReactiveTransmittableTest extends FunSuite {
 
   test("transmission supports derivations") {
     val hostA = new Host("derivationA")
-    val port = ports.getAndIncrement()
+    val port = TransmitterTestsPortManagement.getFreePort()
     hostA.registry.listen(TCP(port))
     try {
       val input = {import hostA._; Var(5)}
@@ -81,7 +78,7 @@ class ReactiveTransmittableTest extends FunSuite {
     }
 
     val hostA = new GFHost("gfA")
-    val port = ports.getAndIncrement()
+    val port = TransmitterTestsPortManagement.getFreePort()
     hostA.registry.listen(TCP(port))
     try {
       val input = {import hostA._; Var(5)}
@@ -136,7 +133,7 @@ class ReactiveTransmittableTest extends FunSuite {
     }
 
     val hostA = new GFHost("gfA")
-    val port = ports.getAndIncrement()
+    val port = TransmitterTestsPortManagement.getFreePort()
     hostA.registry.listen(TCP(port))
     try {
       val input = {import hostA._; Evt[Int]()}

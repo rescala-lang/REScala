@@ -1,7 +1,6 @@
 package rescala.fullmv.mirrors
 
 import rescala.fullmv.FullMVEngine
-import rescala.fullmv.mirrors.Host.GUID
 import rescala.fullmv.sgt.synchronization.SubsumableLock.DEBUG
 import rescala.fullmv.sgt.synchronization._
 
@@ -9,7 +8,7 @@ import scala.concurrent.Future
 
 // TODO should be able to shortcut the localAddRefs(x)+failedRefChanges=1 into localAddRefs(x-1)
 class SubsumableLockReflection(override val host: SubsumableLockHost, override val guid: Host.GUID, val proxy: SubsumableLockProxy) extends SubsumableLock {
-  override def getLockedRoot: Future[Option[GUID]] = proxy.getLockedRoot
+  override def getLockedRoot: Future[LockStateResult0] = proxy.getLockedRoot
   override def tryLock0(hopCount: Int): Future[TryLockResult0] = {
     if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this sending remote tryLock request")
     proxy.remoteTryLock().map {

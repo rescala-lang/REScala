@@ -7,7 +7,8 @@ import rescala.core.{InitialChange, ReSource}
 import rescala.fullmv.mirrors.Host
 import rescala.fullmv.sgt.synchronization._
 
-import scala.annotation.tailrec
+import scala.annotation.elidable.ASSERTION
+import scala.annotation.{elidable, tailrec}
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.{Await, Future}
 
@@ -231,14 +232,35 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
     }
   }
 
-  def addPredecessor(predecessorSpanningTree: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = {
-    assert(predecessorSpanningTree.txn.phase > TurnPhase.Uninitialized, s"$this addition of initializing predecessor ${predecessorSpanningTree.txn} should be impossible")
-    assert(Await.result(getLockedRoot, host.timeout).isDefined, s"addPredecessor while own lock isn't held")
-    assert(Await.result(getLockedRoot, host.timeout) == Await.result(predecessorSpanningTree.txn.getLockedRoot, host.timeout) || predecessorSpanningTree.txn.phase == TurnPhase.Completed, s"addPredecessor while $this under lock ${Await.result(getLockedRoot, host.timeout)} but ${predecessorSpanningTree.txn} under ${Await.result(predecessorSpanningTree.txn.getLockedRoot, host.timeout)}.")
-    assert(!isTransitivePredecessor(predecessorSpanningTree.txn), s"attempted to establish already existing predecessor relation ${predecessorSpanningTree.txn} -> $this")
-    if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this new predecessor ${predecessorSpanningTree.txn}.")
+  @elidable(ASSERTION) @inline
+  def assertLockedState(predecessor: FullMVTurn): Unit = {
+    assert(predecessor.phase > TurnPhase.Uninitialized, s"$this addition of initializing predecessor $predecessor should be impossible")
+    val ownLock = getLockedRoot
+    val otherLock = predecessor.getLockedRoot
+    Await.result(ownLock, host.timeout) match {
+      case LockedState(guid) =>
+        Await.result(otherLock, host.timeout) match {
+          case LockedState(otherGuid) => if(guid != otherGuid) throw new AssertionError(s"predecessor $predecessor and $this under different locks $otherGuid and $guid!")
+          case UnlockedState => throw new AssertionError(s"predecessor $predecessor not locked!")
+          case CompletedState => // ok
+        }
+      case UnlockedState => throw new AssertionError(s"$this not locked!")
+      case CompletedState => throw new AssertionError(s"May no longer add predecessors to completed $this")
+    }
+  }
 
-    FullMVEngine.broadcast(successorsIncludingSelf) { _.maybeNewReachableSubtree(this, predecessorSpanningTree) }
+  def addPredecessor(predecessorSpanningTree: TransactionSpanningTreeNode[FullMVTurn]): Future[Boolean] = {
+    val predecessor = predecessorSpanningTree.txn
+    if(predecessor.phase == TurnPhase.Completed) {
+      if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this aborting predecessor addition of known completed $predecessor")
+      Future.successful(true)
+    } else {
+      assertLockedState(predecessor)
+      assert(!isTransitivePredecessor(predecessor), s"attempted to establish already existing predecessor relation $predecessor -> $this")
+      if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this adding predecessor $predecessor.")
+
+      FullMVEngine.broadcast(successorsIncludingSelf)(_.maybeNewReachableSubtree(this, predecessorSpanningTree)).map(_ => predecessor.phase == TurnPhase.Completed)(FullMVEngine.notWorthToMoveToTaskpool)
+    }
   }
 
   override def maybeNewReachableSubtree(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = {
@@ -295,9 +317,18 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
 
   //========================================================SSG SCC Mutual Exclusion Control============================================================
 
-  override def getLockedRoot: Future[Option[Host.GUID]] = {
+  override def getLockedRoot: Future[LockStateResult] = {
     val l = subsumableLock.get
-    if(l == null) SubsumableLock.futureNone else l.getLockedRoot
+    if(l == null) {
+      assert(phase == TurnPhase.Completed, s"lock was deallocated although $this is still active?")
+      CompletedState.futured
+    } else {
+      l.getLockedRoot.flatMap {
+        case x@LockedState(lock) => Future.successful(x)
+        case UnlockedState => UnlockedState.futured
+        case ConcurrentDeallocation => getLockedRoot
+      }(FullMVEngine.notWorthToMoveToTaskpool)
+    }
   }
   override def tryLock(): Future[TryLockResult] = {
     if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this dispatching local tryLock request")

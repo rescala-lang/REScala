@@ -20,10 +20,9 @@ class XShapeSerializabilityTest extends FunSuite {
 
   def isGlitched(v: Merge[Data[Merge[_]]]): Boolean = v.left.data != v.right.data
 
-  val ports = new AtomicInteger(1099)
   class SideHost(name: String) extends FullMVEngine(10.second, name) {
     val registry = new Registry
-    val port: Int = ports.getAndIncrement()
+    val port: Int = TransmitterTestsPortManagement.getFreePort()
     registry.listen(TCP(port))
     def shutdown() = registry.terminate()
 
