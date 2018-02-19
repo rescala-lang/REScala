@@ -72,14 +72,18 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
     } else {
       state.get match {
         case null =>
+          // safe because locked by the current thread and thus cannot be deallocated
+          // must count the references before actually establishing them, though, as
+          // their removal might otherwise temporarily under-drop the counter and
+          // thereby deallocate the lock prematurely
+          lockedNewParent.localAddRefs(hopCount + 2)
           val success = state.compareAndSet(null, lockedNewParent)
           if(success) {
-            if (DEBUG) println(s"[${Thread.currentThread().getName}] trySubsume $this succeeded; passing ${hopCount + 2} new refs (new subsumption reference, no thread reference)")
-            // safe because locked by the current thread and thus cannot be deallocated
-            lockedNewParent.localAddRefs(hopCount + 2)
+            if (DEBUG) println(s"[${Thread.currentThread().getName}] trySubsume $this succeeded; added ${hopCount + 2} new refs (new subsumption reference, no thread reference)")
             Successful0.zeroFutured
           } else {
-            if (DEBUG) println(s"[${Thread.currentThread().getName}] retrying contended trySubsume $this to $lockedNewParent")
+            lockedNewParent.localSubRefs(hopCount + 2)
+            if (DEBUG) println(s"[${Thread.currentThread().getName}] retrying contended trySubsume $this to $lockedNewParent (re-removed ${hopCount + 2} prematurely added references)")
             trySubsume0(hopCount, lockedNewParent)
           }
         case Self =>
