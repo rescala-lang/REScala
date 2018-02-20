@@ -26,18 +26,6 @@ class Elevator(val nFloors: Int) {
 
 
 
-  val position: Signal[Int] = integrate {speed.now * direction.now}
-  // Define Signals describing state and behavior of the elevator
-  val destination = Signal {
-    queue.head() match {
-      case None => position()
-      case Some(target) => FloorPos(target)
-    }
-  }
-  val speed = tick.iterate(0) { v => math.min(v + accelaration.now, MaxSpeed) }
-  val stopped = Signal {speed() == 0}
-  val distance = Signal {destination() - position()}
-  val direction = Signal {math.signum(distance())}
   val accelaration: Signal[Int] = Signal {
     val break = math.abs(distance()) <= BreakDist
     if (break) {
@@ -46,9 +34,21 @@ class Elevator(val nFloors: Int) {
     }
     else MaxAccel
   }
+  val speed: Signal[Int] = tick.iterate(0) { v => math.min(v + accelaration.now, MaxSpeed) }
+  val position: Signal[Int] = integrate {speed.now * direction.now}
+  val direction = Signal {math.signum(distance())}
+  val distance = Signal {destination() - position()}
+  // Define Signals describing state and behavior of the elevator
+  val destination = Signal {
+    queue.head() match {
+      case None => position()
+      case Some(target) => FloorPos(target)
+    }
+  }
+  val stopped = Signal {speed() == 0}
   val currentFloor = Signal {
     val p = position()
-    FloorPos.indexOf(FloorPos.sortBy(f => math.abs(f - p)).head)
+    FloorPos.indexOf(FloorPos.minBy(f => math.abs(f - p)))
   }
   val reached = Signal {stopped() && position() == destination()}
   val reachedFloor: Event[Int] = reached.changed && {_ == true} map { (_: Boolean) => currentFloor.value }

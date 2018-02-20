@@ -314,7 +314,7 @@ class FlattenTest extends RETests { multiEngined { engine => import engine._
 
   test("list Of Signals Section"){
     val tick = Evt[Unit]
-    val count = tick.iterate(0)(_ + 1)
+    val count = tick.count()
     val doubled = count.map(_ * 2)
     val mod2 = count.map(_ % 2)
 

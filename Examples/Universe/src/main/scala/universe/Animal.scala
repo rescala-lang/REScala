@@ -112,7 +112,7 @@ abstract class Animal(implicit world: World) extends BoardElement {
   }
 
 
-  private val age: Signal[Int] = world.time.day.changed.iterate(1)(_ + 1) //#SIG //#IF //#IF
+  private val age: Signal[Int] = world.time.day.changed.count() //#SIG //#IF //#IF
 
   final val isAdult = age.map(_ > Animal.FertileAge)(CreationTicket.fromEngineImplicit)
 
