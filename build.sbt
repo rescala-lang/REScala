@@ -184,8 +184,8 @@ lazy val fullmv = project.in(file("Research/Multiversion"))
 
 lazy val distributedFullmv = project.in(file("Research/MultiversionDistribution"))
   .settings( cfg.base, name := "rescala-distributed-multiversion",
-    cfg.test, cfg.noPublish, lib.retierTransmitter, lib.circe)
-  .dependsOn(fullmv, testsJVM % "test->test")
+    cfg.test, cfg.noPublish, lib.circe)
+  .dependsOn(fullmv, lib.multitierCommunication, lib.multitierTCP % "test", testsJVM % "test->test")
 
 lazy val meta = project.in(file("Research/Meta"))
   .dependsOn(rescalaJVM)
@@ -378,10 +378,7 @@ lazy val lib = new {
 
   val jline = libraryDependencies += "org.scala-lang.modules" % "scala-jline" % "2.12.1"
 
-  val retierTransmitter = Seq(
-    libraryDependencies += "de.tuda.stg" %% "retier-communication" % "0.0.1-SNAPSHOT",
-    libraryDependencies += "de.tuda.stg" %% "retier-communicator-tcp" % "0.0.1-SNAPSHOT" % "test",
-    libraryDependencies += "de.tuda.stg" %% "retier-serializer-upickle" % "0.0.1-SNAPSHOT" % "test")
-
+  private val multitierGitRepo = uri("https://github.com/allprojects/multitier.git#development")
+  val multitierCommunication = ProjectRef( multitierGitRepo, "retierCommunicationJVM")
+  val multitierTCP = ProjectRef( multitierGitRepo, "retierCommunicatorTcpJVM")
 }
-
