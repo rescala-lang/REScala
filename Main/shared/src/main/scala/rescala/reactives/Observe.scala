@@ -1,7 +1,6 @@
 package rescala.reactives
 
-import rescala.core._
-import rescala.macros.Interp
+import rescala.core.{Interp, _}
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 
 import scala.util.control.NonFatal

@@ -1,6 +1,5 @@
 package rescala.core
 
-import rescala.macros.Interp
 import rescala.reactives.Signal
 
 import scala.annotation.implicitNotFound

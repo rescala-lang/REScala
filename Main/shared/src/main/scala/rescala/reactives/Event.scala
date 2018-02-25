@@ -1,8 +1,7 @@
 package rescala.reactives
 
 import rescala.core.Pulse.{Exceptional, NoChange, Value}
-import rescala.core._
-import rescala.macros.Interp
+import rescala.core.{Interp, _}
 
 import scala.collection.immutable.{LinearSeq, Queue}
 import scala.language.experimental.macros

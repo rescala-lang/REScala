@@ -276,7 +276,7 @@ class ReactiveMacros(val c: blackbox.Context) {
     }.nonEmpty
 
     def isReactiveThatCanBeCutOut(reactive: c.universe.Tree): Boolean = {
-      isReactive(reactive) &&
+      isInterpretable(reactive) &&
         (reactive match {
           case Block(_, _) =>
             true
@@ -298,25 +298,24 @@ class ReactiveMacros(val c: blackbox.Context) {
       "internal warning: tree type was null, " +
         "this should not happen but the signal may still work")
 
-  def isReactive(tree: Tree): Boolean = {
-    val staticSignalClass = c.mirror staticClass "_root_.rescala.reactives.Signal"
-    val staticEventClass = c.mirror staticClass "_root_.rescala.reactives.Event"
+  def isInterpretable(tree: Tree): Boolean = {
+    val staticInterpClass = c.mirror staticClass "_root_.rescala.core.Interp"
 
     if (tree.tpe == null) {treeTypeNullWarning(); false}
     else
       !(tree.tpe <:< definitions.NullTpe) &&
         !(tree.tpe <:< definitions.NothingTpe) &&
-        ((tree.tpe.baseClasses contains staticSignalClass) || (tree.tpe.baseClasses contains staticEventClass))
+        ((tree.tpe.baseClasses contains staticInterpClass))
   }
 
   /** detects variants to access reactives using [[Interp]] */
   object REApply {
     def unapply(arg: Tree): Option[Tree] = arg match {
       case Apply(Select(reactive, tn), Nil)
-        if "apply" == tn.decodedName.toString && isReactive(reactive) =>
+        if "apply" == tn.decodedName.toString && isInterpretable(reactive) =>
         Some(reactive)
       case Select(reactive, tn)
-        if "value" == tn.decodedName.toString && isReactive(reactive) =>
+        if "value" == tn.decodedName.toString && isInterpretable(reactive) =>
         Some(reactive)
       case _ => None
     }

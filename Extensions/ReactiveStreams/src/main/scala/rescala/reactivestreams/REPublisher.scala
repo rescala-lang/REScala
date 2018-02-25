@@ -2,8 +2,7 @@ package rescala.reactivestreams
 
 
 import org.reactivestreams.{Publisher, Subscriber, Subscription}
-import rescala.core.{Base, Initializer, Pulse, REName, Scheduler, Struct}
-import rescala.macros.Interp
+import rescala.core.{Base, Initializer, Interp, Pulse, REName, Scheduler, Struct}
 
 import scala.util.{Failure, Success}
 
