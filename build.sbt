@@ -16,7 +16,6 @@ lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
   caseStudyShapes,
   crdts,
   datastructures,
-  distributedFullmv,
   dividi,
   documentation,
   examples,
@@ -182,10 +181,10 @@ lazy val fullmv = project.in(file("Research/Multiversion"))
     cfg.test, cfg.noPublish)
   .dependsOn(rescalaJVM, testsJVM % "test->test")
 
-lazy val distributedFullmv = project.in(file("Research/MultiversionDistribution"))
-  .settings( cfg.base, name := "rescala-distributed-multiversion",
-    cfg.test, cfg.noPublish, lib.circe)
-  .dependsOn(fullmv, lib.multitierCommunication, lib.multitierTCP % "test", testsJVM % "test->test")
+//lazy val distributedFullmv = project.in(file("Research/MultiversionDistribution"))
+//  .settings( cfg.base, name := "rescala-distributed-multiversion",
+//    cfg.test, cfg.noPublish, lib.circe)
+//  .dependsOn(fullmv, lib.multitierCommunication, lib.multitierTCP % "test", testsJVM % "test->test")
 
 lazy val meta = project.in(file("Research/Meta"))
   .dependsOn(rescalaJVM)
@@ -209,7 +208,7 @@ lazy val cfg = new {
 
   val base = List(
     organization := "de.tuda.stg",
-    version := "0.21.1",
+    version := "0.21.2-SNAPSHOT",
     scalaVersion := version_212,
     baseScalac,
     // scaladoc
@@ -378,7 +377,7 @@ lazy val lib = new {
 
   val jline = libraryDependencies += "org.scala-lang.modules" % "scala-jline" % "2.12.1"
 
-  private val multitierGitRepo = uri("https://github.com/allprojects/multitier.git#development")
-  val multitierCommunication = ProjectRef( multitierGitRepo, "retierCommunicationJVM")
-  val multitierTCP = ProjectRef( multitierGitRepo, "retierCommunicatorTcpJVM")
+//  private val multitierGitRepo = uri("https://github.com/allprojects/multitier.git#development")
+//  val multitierCommunication = ProjectRef( multitierGitRepo, "retierCommunicationJVM")
+//  val multitierTCP = ProjectRef( multitierGitRepo, "retierCommunicatorTcpJVM")
 }
