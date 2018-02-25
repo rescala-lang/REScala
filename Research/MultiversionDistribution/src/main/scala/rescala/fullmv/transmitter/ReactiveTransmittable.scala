@@ -239,7 +239,12 @@ object ReactiveTransmittable {
     final case class Exceptional(serializedThrowable: Array[Byte]) extends Pluse[Nothing]
   }
 
-  implicit def signalTransmittable[P, S](implicit host: FullMVEngine, messageTransmittable: Transmittable[MessageWithInfrastructure[Msg[Pluse[P]]], S, MessageWithInfrastructure[Msg[Pluse[P]]]], serializable: Serializable[S]): Transmittable[Signal[P, FullMVStruct], S, Signal[P, FullMVStruct]] = new ReactiveTransmittable[P, Signal[P, FullMVStruct], S] {
+  implicit def signalTransmittable[P, S](implicit
+                                         host: FullMVEngine,
+                                         messageTransmittable: Transmittable[MessageWithInfrastructure[Msg[Pluse[P]]], S, MessageWithInfrastructure[Msg[Pluse[P]]]],
+                                         serializable: Serializable[S]
+                                        ): Transmittable[Signal[P, FullMVStruct], S, Signal[P, FullMVStruct]] =
+    new ReactiveTransmittable[P, Signal[P, FullMVStruct], S] {
     override def instantiate(state: NodeVersionHistory[Pulse[P], FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]], initTurn: FullMVTurn): ReactiveReflectionImpl[Pulse[P]] with Signal[P, FullMVStruct] =
       new ReactiveReflectionImpl[Pulse[P]](host, None, state, "SignalReflection") with Signal[P, FullMVStruct] {
         override def disconnect()(implicit engine: Scheduler[FullMVStruct]): Unit = ???
