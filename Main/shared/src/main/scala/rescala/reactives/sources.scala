@@ -18,7 +18,7 @@ abstract class Source[S <: Struct, T](name: REName) extends RENamed(name) with R
 final class Evt[T, S <: Struct] private[rescala](initialState: Estate[S, T], name: REName)
   extends Source[S, T](name) with Event[T, S] {
   override type Value = Pulse[T]
-  override protected[rescala] def state: S#State[Pulse[T], S] = initialState
+  override protected[rescala] def state: State = initialState
 
   override def internalAccess(v: Pulse[T]): Pulse[T] = v
   /** Trigger the event */
@@ -52,7 +52,7 @@ final class Var[A, S <: Struct] private[rescala](initialState: Signals.Sstate[S,
   extends Source[S, A](name) with Signal[A, S] {
   override type Value = Pulse[A]
 
-  override protected[rescala] def state: S#State[Pulse[A], S] = initialState
+  override protected[rescala] def state: State = initialState
 
   //def update(value: A)(implicit fac: Engine[S]): Unit = set(value)
   def set(value: A)(implicit fac: Scheduler[S]): Unit = fac.transaction(this) {admit(value)(_)}

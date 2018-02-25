@@ -15,14 +15,15 @@ trait Struct { type State[V, S <: Struct] }
   * @tparam S [[Struct]] defining the internal state */
 trait ReSource[S <: Struct] {
   type Value
-  protected[rescala] def state: S#State[Value, S]
+  final type State = S#State[Value, S]
+  protected[rescala] def state: State
 }
 
 /** A reactive value is something that can be reevaluated */
 trait Reactive[S <: Struct] extends ReSource[S] {
 
-  type ReIn = ReevTicket[Value, S]
-  type Rout = Result[Value, S]
+  final type ReIn = ReevTicket[Value, S]
+  final type Rout = Result[Value, S]
 
   /** called if any of the dependencies ([[ReSource]]s) changed in the current update turn,
     * after all (known) dependencies are updated */
@@ -36,5 +37,5 @@ trait Reactive[S <: Struct] extends ReSource[S] {
 abstract class Base[V, S <: Struct](initialState: S#State[V, S], rename: REName)
   extends RENamed(rename) with Reactive[S] {
   override type Value = V
-  final override protected[rescala] def state: S#State[V, S] = initialState
+  final override protected[rescala] def state: State = initialState
 }
