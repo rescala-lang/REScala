@@ -60,6 +60,6 @@ object Initializer {
 
   case class InitializedSignal[T: ReSerializable](override val initialValue: T)
     extends InitValues[T](initialValue, new SUnchange[T]) {
-    def serializable: ReSerializable[Pulse[T]] = ReSerializable.pulseSerializable
+    def serializable: ReSerializable[T] = implicitly
   }
 }

@@ -17,13 +17,14 @@ class ReStoringTurn(restore: ReStore) extends LevelBasedPropagation[ReStoringStr
         restore.get(name) match {
           case None =>
             //println(s"new struct $name")
-            new ReStoringStructType[P, ReStoringStruct](restore, name, is.serializable, init, false)
+            new ReStoringStructType[P, ReStoringStruct](restore, name, is.serializable, is)
           case Some(v) =>
             //println(s"old struct $name $s")
-            new ReStoringStructType[P, ReStoringStruct](restore, name, is.serializable, is.serializable.deserialize(v).get, false)
+            val restoredValue = Initializer.InitializedSignal(is.serializable.deserialize(v).get)
+            new ReStoringStructType[P, ReStoringStruct](restore, name, is.serializable, restoredValue)
         }
       case _ =>
-        new ReStoringStructType(null, null, null, valuePersistency.initialValue, valuePersistency.isTransient)
+        new ReStoringStructType(null, null, null, valuePersistency)
     }
   }
 
@@ -34,7 +35,8 @@ class ReStoringTurn(restore: ReStore) extends LevelBasedPropagation[ReStoringStr
 
 }
 
-class ReStoringStructType[P, S <: Struct](storage: ReStore, val name: String, serializable: ReSerializable[P], initialVal: P, transient: Boolean) extends LevelStructTypeImpl[P, S](initialVal, transient) {
+class ReStoringStructType[P, S <: Struct](storage: ReStore, val name: String, serializable: ReSerializable[P], initialVal: InitValues[P])
+  extends LevelStructTypeImpl[P, S](initialVal) {
   override def commit(turn: TwoVersionPropagation[S]): Unit = {
     super.commit(turn)
     if (storage != null) {

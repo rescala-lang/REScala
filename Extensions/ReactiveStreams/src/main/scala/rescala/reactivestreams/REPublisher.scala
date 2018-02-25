@@ -2,7 +2,8 @@ package rescala.reactivestreams
 
 
 import org.reactivestreams.{Publisher, Subscriber, Subscription}
-import rescala.core.{Base, Pulse, REName, Interp, ReevTicket, Result, Scheduler, Struct, Initializer}
+import rescala.core.{Base, Initializer, Pulse, REName, Scheduler, Struct}
+import rescala.macros.Interp
 
 import scala.util.{Failure, Success}
 
@@ -22,19 +23,18 @@ object REPublisher {
 
   }
 
-  class SubscriptionReactive[T, S <: Struct](
-                                              bud: S#State[Pulse[T], S],
-                                              dependency: Interp[Pulse[T], S],
-                                              subscriber: Subscriber[_ >: T],
-                                              fac: Scheduler[S],
-                                              name: REName
-  ) extends Base[Pulse[T], S](bud, name) with Subscription {
+  class SubscriptionReactive[T, S <: Struct](bud: S#State[Pulse[T], S],
+                                             dependency: Interp[Pulse[T], S],
+                                             subscriber: Subscriber[_ >: T],
+                                             fac: Scheduler[S],
+                                             name: REName
+                                            ) extends Base[Pulse[T], S](bud, name) with Subscription {
 
     var requested: Long = 0
     var cancelled = false
 
     override protected[rescala] def reevaluate(rein: ReIn): Rout = {
-      rein.collectStatic(dependency).toOptionTry match {
+      rein.dependStatic(dependency).toOptionTry match {
         case None => rein
         case Some(tryValue) =>
           synchronized {
@@ -77,9 +77,9 @@ object REPublisher {
                                     dependency: Interp[Pulse[T], S],
                                     subscriber: Subscriber[_ >: T],
                                     fac: Scheduler[S]
-  ): SubscriptionReactive[T, S] = {
+                                  ): SubscriptionReactive[T, S] = {
     fac.transaction() { ticket =>
-      ticket.creation.create[Pulse[T], SubscriptionReactive[T, S]](Set(dependency), Initializer.DerivedSignal) { state =>
+      ticket.creation.create[Pulse[T], SubscriptionReactive[T, S]](Set(dependency), Initializer.DerivedSignal, inite = false) { state =>
         new SubscriptionReactive[T, S](state, dependency, subscriber, fac, s"forSubscriber($subscriber)")
       }
     }
