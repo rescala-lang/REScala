@@ -6,9 +6,9 @@ import rescala.reactives.Signals.Diff
 trait Initializer[S <: Struct] {
   /** Creates and correctly initializes new [[Reactive]]s */
   final private[rescala] def create[V, T <: Reactive[S]](incoming: Set[ReSource[S]],
-                                                            initv: InitValues[V],
-                                                            inite: Boolean)
-                                                           (instantiateReactive: S#State[V, S] => T): T = {
+                                                         initv: InitValues[V],
+                                                         inite: Boolean)
+                                                        (instantiateReactive: S#State[V, S] => T): T = {
     val state = makeDerivedStructState[V](initv)
     val reactive = instantiateReactive(state)
     ignite(reactive, incoming, inite)
@@ -25,13 +25,14 @@ trait Initializer[S <: Struct] {
   /** Creates the internal state of [[Reactive]]s */
   protected[this] def makeDerivedStructState[V](valuePersistency: InitValues[V]): S#State[V, S]
 
-  /**  Creates the internal state of [[ReSource]]s */
+  /** Creates the internal state of [[ReSource]]s */
   protected[this] def makeSourceStructState[V](valuePersistency: InitValues[V]): S#State[V, S] =
     makeDerivedStructState[V](valuePersistency)
   /**
     * to be implemented by the propagation algorithm, called when a new reactive has been instantiated and needs to be connected to the graph and potentially reevaluated.
-    * @param reactive the newly instantiated reactive
-    * @param incoming a set of incoming dependencies
+    *
+    * @param reactive                     the newly instantiated reactive
+    * @param incoming                     a set of incoming dependencies
     * @param ignitionRequiresReevaluation true if the reactive must be reevaluated at creation even if none of its dependencies change in the creating turn.
     */
   protected[this] def ignite(reactive: Reactive[S], incoming: Set[ReSource[S]], ignitionRequiresReevaluation: Boolean): Unit
@@ -44,9 +45,9 @@ object Initializer {
     def unchange(v: T): T
   }
 
-  class EUnchange[T] extends Unchange[Pulse[T]] {override def unchange(v: Pulse[T]): Pulse[T] = Pulse.NoChange }
+  class EUnchange[T] extends Unchange[Pulse[T]] {override def unchange(v: Pulse[T]): Pulse[T] = Pulse.NoChange}
 
-  class SUnchange[T] extends Unchange[T] { override def unchange(v: T): T = v }
+  class SUnchange[T] extends Unchange[T] {override def unchange(v: T): T = v}
   class CUnchange[T] extends Unchange[(Pulse[T], Pulse[Diff[T]])] {
     override def unchange(v: (Pulse[T], Pulse[Diff[T]])): (Pulse[T], Pulse[Diff[T]]) = v.copy(_2 = Pulse.NoChange)
   }
