@@ -27,7 +27,7 @@ import scala.language.implicitConversions
   * @groupname accessors Accessors and observers
   * @groupprio accessor 5
   */
-trait Event[+T, S <: Struct] extends ReSource[S] with Interp[S, Option[T]] with Disconnectable[S] {
+trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with Disconnectable[S] {
 
 
   implicit def internalAccess(v: Value): Pulse[T]

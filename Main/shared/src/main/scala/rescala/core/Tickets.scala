@@ -68,13 +68,13 @@ abstract class ReevTicket[V, S <: Struct](
 /** User facing low level API to access values in a dynamic context. */
 abstract class DynamicTicket[S <: Struct](creation: Initializer[S]) extends StaticTicket[S](creation) {
   private[rescala] def collectDynamic(reactive: ReSource[S]): reactive.Value
-  final def depend[A](reactive: Interp[S, A]): A = reactive.interpret(collectDynamic(reactive))
+  final def depend[A](reactive: Interp[A, S]): A = reactive.interpret(collectDynamic(reactive))
 }
 
 /** User facing low level API to access values in a static context. */
 sealed abstract class StaticTicket[S <: Struct](creation: Initializer[S]) extends InnerTicket(creation) {
   private[rescala] def collectStatic(reactive: ReSource[S]): reactive.Value
-  final def dependStatic[A](reactive: Interp[S, A]): A = reactive.interpret(collectStatic(reactive))
+  final def dependStatic[A](reactive: Interp[A, S]): A = reactive.interpret(collectStatic(reactive))
 
 }
 
@@ -102,7 +102,7 @@ abstract class AdmissionTicket[S <: Struct](creation: Initializer[S]) extends In
 
 abstract class WrapUpTicket[S <: Struct] {
   private[rescala] def access(reactive: ReSource[S]): reactive.Value
-  final def now[A](reactive: Interp[S, A]): A = reactive.interpret(access(reactive))
+  final def now[A](reactive: Interp[A, S]): A = reactive.interpret(access(reactive))
 }
 
 

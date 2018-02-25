@@ -22,7 +22,7 @@ object Observe {
   private val strongObserveReferences = scala.collection.mutable.HashSet[Observe[_]]()
 
   private abstract class Obs[T, S <: Struct]
-  (bud: S#State[Pulse[Nothing], S], dependency: Interp[S, Any], fun: T => Unit, fail: Throwable => Unit, name: REName)
+  (bud: S#State[Pulse[Nothing], S], dependency: Interp[Any, S], fun: T => Unit, fail: Throwable => Unit, name: REName)
     extends Base[Pulse[Nothing], S](bud, name) with Reactive[S] with Observe[S] {
     this: DisconnectableImpl[S] =>
 
@@ -48,7 +48,7 @@ object Observe {
     }
   }
 
-  def weak[T, S <: Struct](dependency: Interp[S, Any],
+  def weak[T, S <: Struct](dependency: Interp[Any, S],
                            fireImmediately: Boolean)
                           (fun: T => Unit,
                            fail: Throwable => Unit)
@@ -59,7 +59,7 @@ object Observe {
     })
   }
 
-  def strong[T, S <: Struct](dependency: Interp[S, Any], fireImmediately: Boolean)(fun: T => Unit, fail: Throwable => Unit)(implicit maybe: CreationTicket[S]): Observe[S] = {
+  def strong[T, S <: Struct](dependency: Interp[Any, S], fireImmediately: Boolean)(fun: T => Unit, fail: Throwable => Unit)(implicit maybe: CreationTicket[S]): Observe[S] = {
     val obs = weak(dependency, fireImmediately)(fun, fail)
     strongObserveReferences.synchronized(strongObserveReferences.add(obs))
     obs

@@ -19,7 +19,7 @@ import scala.util.control.NonFatal
   * @groupname accessors Accessors and observers
   * @groupprio accessor 5
   */
-trait Signal[+A, S <: Struct] extends ReSource[S] with Interp[S, A] with Disconnectable[S] {
+trait Signal[+A, S <: Struct] extends ReSource[S] with Interp[A, S] with Disconnectable[S] {
 
   override type Value <: Pulse[A]
 
