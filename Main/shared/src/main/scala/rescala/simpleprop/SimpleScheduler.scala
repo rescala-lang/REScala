@@ -78,7 +78,7 @@ object SimpleScheduler extends Scheduler[SimpleStruct] {
       admissionResult
     } finally idle = true
   }
-  override private[rescala] def singleNow[A](reactive: Signal[A]) = reactive.state.value.get
+  override private[rescala] def singleNow[A](reactive: Signal[A]) = reactive.interpret(reactive.state.value)
   override private[rescala] def creationDynamicLookup[T](f: Creation => T) = f(SimpleCreation)
 }
 

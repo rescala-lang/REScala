@@ -9,7 +9,7 @@ import rescala.core.{Initializer, SchedulerImpl}
   * @tparam TImpl Turn type used by the engine
   */
 trait TwoVersionScheduler[S <: TwoVersionStruct, TImpl <: TwoVersionPropagation[S] with Initializer[S]] extends SchedulerImpl[S, TImpl] {
-  override private[rescala] def singleNow[A](reactive: Signal[A]) = reactive.state.base(null).get
+  override private[rescala] def singleNow[A](reactive: Signal[A]) = reactive.interpret(reactive.state.base(null))
 
   /** goes through the whole turn lifecycle
     * - create a new turn and put it on the stack
