@@ -202,13 +202,13 @@ lazy val microbench = project.in(file("Research/Microbenchmarks"))
 
 lazy val cfg = new {
 
-  val version_211 = "2.11.11"
+  val version_211 = "2.11.12"
   val version_212 = "2.12.4"
 
 
   val base = List(
     organization := "de.tuda.stg",
-    version := "0.21.2-SNAPSHOT",
+    version := "0.22.0",
     scalaVersion := version_212,
     baseScalac,
     // scaladoc
