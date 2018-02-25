@@ -24,7 +24,7 @@ package object rescalatags {
         .withDefault("".render)
 
       val observer = Observe.weak(result.change, fireImmediately = false)(
-        { case Diff(lastTag, newTag) =>
+        { case Some(Diff(lastTag, newTag)) =>
           if (lastTag.parentNode != null && !scalajs.js.isUndefined(lastTag.parentNode)) {
             lastTag.parentNode.replaceChild(newTag, lastTag)
           }

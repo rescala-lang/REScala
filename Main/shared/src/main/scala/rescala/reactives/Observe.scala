@@ -28,11 +28,8 @@ object Observe {
 
     override protected[rescala] def reevaluate(dt: ReIn): Rout = {
       try {
-        dt.dependStatic(dependency) match {
-          case None => dt
-          case Some(v) => dt.withEffect(() => fun(v.asInstanceOf[T]))
-          case v => dt.withEffect(() => fun(v.asInstanceOf[T]))
-        }
+        val v = dt.dependStatic(dependency)
+        dt.withEffect(() => fun(v))
       } catch {
         case EmptySignalControlThrowable => dt
         case NonFatal(t) =>
@@ -48,7 +45,7 @@ object Observe {
     }
   }
 
-  def weak[T, S <: Struct](dependency: ReSource[S],
+  def weak[T, S <: Struct](dependency: Interp[T, S],
                            fireImmediately: Boolean)
                           (fun: T => Unit,
                            fail: Throwable => Unit)
@@ -59,7 +56,7 @@ object Observe {
     })
   }
 
-  def strong[T, S <: Struct](dependency: ReSource[S], fireImmediately: Boolean)(fun: dependency.Value => Unit, fail: Throwable => Unit)(implicit maybe: CreationTicket[S]): Observe[S] = {
+  def strong[T, S <: Struct](dependency: Interp[T, S], fireImmediately: Boolean)(fun: T => Unit, fail: Throwable => Unit)(implicit maybe: CreationTicket[S]): Observe[S] = {
     val obs = weak(dependency, fireImmediately)(fun, fail)
     strongObserveReferences.synchronized(strongObserveReferences.add(obs))
     obs

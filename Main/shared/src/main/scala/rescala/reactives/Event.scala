@@ -49,7 +49,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
   final def observe(
     onSuccess: T => Unit,
     onFailure: Throwable => Unit = null
-  )(implicit ticket: CreationTicket[S]): Observe[S] = Observe.strong(this, fireImmediately = false)(onSuccess, onFailure)
+  )(implicit ticket: CreationTicket[S]): Observe[S] = Observe.strong(this, fireImmediately = false)(v => onSuccess(v.get), onFailure)
 
   /** Uses a partial function `onFailure` to recover an error carried by the event into a value when returning Some(value),
     * or filters the error when returning None
