@@ -18,8 +18,8 @@ class RescalatagsTest extends FlatSpec with TableDrivenPropertyChecks {
 
     it should s"put var into dom" in {
       val v = Var.empty[Tag]
-      val frag: Node = v.asFrag.render
-      assert(frag.textContent === "", "empty var gives empty frag")
+      val rendered: Node = v.asFrag.render
+      assert(rendered.textContent === "", "empty var gives empty frag")
 
       val outer = div(v.asFrag)
       val outerR = outer.render
@@ -63,6 +63,30 @@ class RescalatagsTest extends FlatSpec with TableDrivenPropertyChecks {
 
       v.set("index.html")
       assert(ourTag.outerHTML === a(href := "index.html").render.outerHTML, "changing var changes href again")
+
+    }
+
+    it should s"work with multiple childern" in {
+
+      val v = Var(frag(span("hey"), span("ho")))
+
+      val outer = div(v.asFrag)
+      val outerR = outer.render
+      val outerWithOtherChildren = div(span("before"), v.asFrag, span("after"))
+      val oR = outerWithOtherChildren.render
+
+      assert(outerR.innerHTML === "<span>hey</span><span>ho</span>", "render fragments")
+      assert(oR.innerHTML === "<span>before</span><span>hey</span><span>ho</span><span>after</span>", "render fragments2")
+
+      v.set(span("hallo welt"))
+      assert(outerR.innerHTML === "<span>hallo welt</span>", "setting to less elements works")
+      assert(oR.innerHTML === "<span>before</span><span>hallo welt</span><span>after</span>", "setting to less elements works2")
+
+
+      v.set(frag(span("hey2"), span("ho2")))
+      assert(outerR.innerHTML === "<span>hey2</span><span>ho2</span>", "increasing works")
+      assert(oR.innerHTML === "<span>before</span><span>hey2</span><span>ho2</span><span>after</span>", "increasing works2")
+
 
     }
   }

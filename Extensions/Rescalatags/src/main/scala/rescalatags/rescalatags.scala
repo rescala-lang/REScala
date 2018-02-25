@@ -1,6 +1,6 @@
 import org.scalajs.dom
-import org.scalajs.dom.Node
-import rescala.core.{Initializer, CreationTicket, Scheduler, Struct}
+import org.scalajs.dom.{DocumentFragment, Node}
+import rescala.core.{CreationTicket, Initializer, Scheduler, Struct}
 import rescala.reactives.Signals.Diff
 import rescala.reactives.{Observe, Signal}
 
@@ -9,7 +9,7 @@ import scalatags.JsDom.all._
 
 package object rescalatags {
 
-  implicit class SignalToScalatags[S <: Struct](signal: Signal[Tag, S]) {
+  implicit class SignalToScalatags[S <: Struct](signal: Signal[Frag, S]) {
     /**
       * converts a Signal of a scalatags Tag to a scalatags Frag which automatically reflects changes to the signal in the dom
       */
@@ -23,10 +23,31 @@ package object rescalatags {
         .recover { case t => span(t.toString).render }
         .withDefault("".render)
 
+      def nodeList(n: Node): List[Node] = {
+        if (n.isInstanceOf[DocumentFragment]) List.tabulate(n.childNodes.length)(n.childNodes.apply)
+        else List(n)
+      }
+
+      @scala.annotation.tailrec
+      def replaceAll(parent: Node, old: List[Node], now: List[Node]): Unit = (old, now) match {
+        case (o::Nil, n :: (ns @ _ :: _)) if o.nextSibling != null =>
+          parent.replaceChild(n, o)
+          ns.foreach(parent.insertBefore(_, o.nextSibling))
+        case (o::os, n::ns) =>
+          parent.replaceChild(n, o)
+          replaceAll(parent, os, ns)
+
+        case (Nil, ns) => ns.foreach(parent.appendChild)
+        case (os, Nil) => os.foreach(parent.removeChild)
+      }
+
       val observer = Observe.weak(result.change, fireImmediately = false)(
-        { case Some(Diff(lastTag, newTag)) =>
-          if (lastTag.parentNode != null && !scalajs.js.isUndefined(lastTag.parentNode)) {
-            lastTag.parentNode.replaceChild(newTag, lastTag)
+        { case Some(Diff(lastFrag, newFrag)) =>
+          val olds = nodeList(lastFrag)
+          val news = nodeList(newFrag)
+          val parent = olds.head.parentNode
+          if (parent != null && !scalajs.js.isUndefined(parent)) {
+            replaceAll(parent,olds,news)
           }
         },
         t => throw t)
