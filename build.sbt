@@ -111,7 +111,8 @@ lazy val stm = project.in(file("Extensions/STM"))
 
 lazy val crdts = project.in(file("Extensions/crdts"))
   .dependsOn(rescalaJVM)
-  .settings(name := "recrdt", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.akka, lib.scalaLogback, cfg.strictScalac)
+  .settings(name := "recrdt", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.akka, lib.scalaLogback, cfg.strictScalac,
+    lib.retierTransmitter, lib.circe)
 
 lazy val rescalafx = project.in(file("Extensions/javafx"))
   .dependsOn(rescalaJVM)
@@ -392,7 +393,11 @@ lazy val lib = new {
 
   val retierTransmitter = List(
     resolvers += Resolver.bintrayRepo("stg-tud", "maven"),
-    libraryDependencies += "de.tuda.stg" %% "scala-loci-communication" % "0.2.0",
-    libraryDependencies += "de.tuda.stg" %% "scala-loci-communicator-tcp" % "0.2.0" % "test",
-    libraryDependencies += "de.tuda.stg" %% "scala-loci-serializer-upickle" % "0.2.0" % "test")
+    libraryDependencies ++= List(
+      "retier-communication",
+      "retier-communicator-tcp",
+      "retier-communicator-ws-akka",
+      "retier-serializer-upickle",
+      "retier-serializer-circe",
+    ).map(n => "de.tuda.stg" %% n % "0.2.0")
 }
