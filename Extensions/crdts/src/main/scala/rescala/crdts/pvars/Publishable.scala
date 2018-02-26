@@ -33,7 +33,7 @@ abstract class Publishable[A, F]()(implicit stateCRDT: StateCRDT[A, F]) {
     *
     * @return an immutable object representing the public value of the published CvRDT
     */
-  def value: A = valueSignal.now
+  def value: A = valueSignal.readValueOnce
 
   // TODO: implement blocking sync operation
   //def sync(implicit engine: ActorRef): Unit = engine ! SyncVar(this)

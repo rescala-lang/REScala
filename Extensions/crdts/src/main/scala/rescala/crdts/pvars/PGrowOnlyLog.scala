@@ -7,9 +7,9 @@ case class PGrowOnlyLog[A](initial: RGOA[A] = RGOA[A](),
                            internalChanges: Evt[RGOA[A]] = Evt[RGOA[A]],
                            externalChanges: Evt[RGOA[A]] = Evt[RGOA[A]]) extends Publishable[List[A], RGOA[A]]()(RGOA.RGOAStateCRDTInstance[A]) {
 
-  def append(a: A): Unit = internalChanges.fire(crdtSignal.now.append(Vertex(a)))
+  def append(a: A): Unit = internalChanges.fire(crdtSignal.readValueOnce.append(Vertex(a)))
 
-  def contains(a: A): Boolean = crdtSignal.now.containsValue(a)
+  def contains(a: A): Boolean = crdtSignal.readValueOnce.containsValue(a)
 
   // allows the log to log events of type a and append them to the log
   def observe(e: Event[A]):Unit = e.observe(a => append(a))

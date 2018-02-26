@@ -51,10 +51,10 @@ final case class ReSwingEventValue[T: ReSerializable](private val value: Lazy[Ev
 }
 
 final case class ReSwingSignalValue[T: ReSerializable](private val value: Lazy[Signal[T]]) extends ReSwingValue[T] {
-  protected val signal = Lazy { (value().changed || event()) latest value().now }
+  protected val signal = Lazy { (value().changed || event()) latest value().readValueOnce }
   private[reswing] def fixed = true
-  private[reswing] def get = value().now
-  private[reswing] def use(setter: T => Unit): Unit = { value().changed += setter; setter(value().now) }
+  private[reswing] def get = value().readValueOnce
+  private[reswing] def use(setter: T => Unit): Unit = { value().changed += setter; setter(value().readValueOnce) }
 }
 
 object ReSwingValue {

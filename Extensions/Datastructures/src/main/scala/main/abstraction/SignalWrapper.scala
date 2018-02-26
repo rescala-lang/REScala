@@ -7,7 +7,7 @@ abstract class SignalWrapper {
 
   protected val internalValue: Var[Signal[InternalType]]
 
-  def toValue: InternalType = internalValue.now.now
+  def toValue: InternalType = internalValue.readValueOnce.readValueOnce
 
   protected def wrap[WrappedType, WrapperType](implicit wrapping: SignalWrappable[WrappedType, WrapperType]):
     Signal[WrappedType] => WrapperType = (unwrapped: Signal[WrappedType]) => wrapping.wrap(unwrapped)
@@ -17,7 +17,7 @@ abstract class SignalWrapper {
       Signal.dynamic(f(internalValue()()))
 
   protected def liftMutating0(f: InternalType => InternalType)(): Unit = {
-      val signal = internalValue.now
+      val signal = internalValue.readValueOnce
       internalValue set Signal(f(signal()))
   }
 
@@ -25,7 +25,7 @@ abstract class SignalWrapper {
       Signal.dynamic(f(internalValue()(), p1()))
 
   protected def liftMutating1[Param1T](f: (InternalType, Param1T) => InternalType)(p1: Signal[Param1T]): Unit = {
-      val signal = internalValue.now
+      val signal = internalValue.readValueOnce
       internalValue set Signal(f(signal(), p1()))
   }
 
@@ -33,7 +33,7 @@ abstract class SignalWrapper {
       Signal.dynamic(f(internalValue()(), p1(), p2()))
 
   protected def liftMutating2[Param1T, Param2T](f: (InternalType, Param1T, Param2T) => InternalType)(p1: Signal[Param1T], p2: Signal[Param2T]): Unit = {
-      val signal = internalValue.now
+      val signal = internalValue.readValueOnce
       internalValue set Signal(f(signal(), p1(), p2()))
   }
 
@@ -41,7 +41,7 @@ abstract class SignalWrapper {
       Signal.dynamic(f(internalValue()(), p1(), p2(), p3()))
 
   protected def liftMutating3[Param1T, Param2T, Param3T](f: (InternalType, Param1T, Param2T, Param3T) => InternalType)(p1: Signal[Param1T], p2: Signal[Param2T], p3: Signal[Param3T]): Unit = {
-      val signal = internalValue.now
+      val signal = internalValue.readValueOnce
       internalValue set Signal(f(signal(), p1(), p2(), p3()))
   }
 
@@ -49,7 +49,7 @@ abstract class SignalWrapper {
       Signal.dynamic(f(internalValue()(), p1(), p2(), p3(), p4()))
 
   protected def liftMutating4[Param1T, Param2T, Param3T, Param4T](f: (InternalType, Param1T, Param2T, Param3T, Param4T) => InternalType)(p1: Signal[Param1T], p2: Signal[Param2T], p3: Signal[Param3T], p4: Signal[Param4T]): Unit = {
-      val signal = internalValue.now
+      val signal = internalValue.readValueOnce
       internalValue set Signal(f(signal(), p1(), p2(), p3(), p4()))
   }
 }
