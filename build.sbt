@@ -111,7 +111,8 @@ lazy val stm = project.in(file("Extensions/STM"))
 
 lazy val crdts = project.in(file("Extensions/crdts"))
   .dependsOn(rescalaJVM)
-  .settings(name := "recrdt", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.akka, lib.scalaLogback, cfg.strictScalac)
+  .settings(name := "recrdt", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.akka, lib.scalaLogback, cfg.strictScalac,
+    lib.retierTransmitter, lib.circe)
 
 lazy val rescalafx = project.in(file("Extensions/javafx"))
   .dependsOn(rescalaJVM)
@@ -181,10 +182,10 @@ lazy val fullmv = project.in(file("Research/Multiversion"))
     cfg.test, cfg.noPublish)
   .dependsOn(rescalaJVM, testsJVM % "test->test")
 
-//lazy val distributedFullmv = project.in(file("Research/MultiversionDistribution"))
-//  .settings( cfg.base, name := "rescala-distributed-multiversion",
-//    cfg.test, cfg.noPublish, lib.circe, lib.retierTransmitter)
-//  .dependsOn(fullmv, testsJVM % "test->test")
+lazy val distributedFullmv = project.in(file("Research/MultiversionDistribution"))
+ .settings( cfg.base, name := "rescala-distributed-multiversion",
+   cfg.test, cfg.noPublish, lib.circe, lib.retierTransmitter)
+ .dependsOn(fullmv, testsJVM % "test->test")
 
 lazy val meta = project.in(file("Research/Meta"))
   .dependsOn(rescalaJVM)
@@ -377,8 +378,11 @@ lazy val lib = new {
 
   val jline = libraryDependencies += "org.scala-lang.modules" % "scala-jline" % "2.12.1"
 
-//  val retierTransmitter = Seq(
-//    libraryDependencies += "de.tuda.stg" %% "retier-communication" % "0.0.1-SNAPSHOT",
-//    libraryDependencies += "de.tuda.stg" %% "retier-communicator-tcp" % "0.0.1-SNAPSHOT" % "test",
-//    libraryDependencies += "de.tuda.stg" %% "retier-serializer-upickle" % "0.0.1-SNAPSHOT" % "test")
+  val retierTransmitter = libraryDependencies ++= Seq(
+    "retier-communication",
+    "retier-communicator-tcp",
+    "retier-communicator-ws-akka",
+    "retier-serializer-upickle",
+    "retier-serializer-circe",
+    ).map(n => "de.tuda.stg" %% n % "0+")
 }
