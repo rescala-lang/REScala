@@ -48,18 +48,18 @@ class OR_EventTest extends RETests { multiEngined { engine => import engine._
 
     val log = e3.list()
 
-    assert(log.now === Nil)
+    assert(log.readValueOnce === Nil)
 
     e1.fire("one")
-    assert(log.now === List("one"))
+    assert(log.readValueOnce === List("one"))
 
     e2.fire("two")
-    assert(log.now === List("two", "one"))
+    assert(log.readValueOnce === List("two", "one"))
 
 
     update(e1 -> "three a", e2 -> "three b")
 
-    assert(log.now === List("three a", "two", "one"))
+    assert(log.readValueOnce === List("three a", "two", "one"))
 
 
     transaction(e1, e2) { turn =>
@@ -67,7 +67,7 @@ class OR_EventTest extends RETests { multiEngined { engine => import engine._
       e2.admit("five b")(turn)
     }
 
-    intercept[IllegalStateException](log.now)
+    intercept[IllegalStateException](log.readValueOnce)
 
   }
 

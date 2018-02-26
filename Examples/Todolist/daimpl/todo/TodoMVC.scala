@@ -25,7 +25,7 @@ object TodoMVC {
     new Task(dec, don)
   }
   implicit val taskEncoder: io.circe.Encoder[Task] = io.circe.Encoder.forProduct3[String, Boolean, List[String], Task]("decs", "done", "names"){t =>
-    (t.desc.now, t.done.now, List(getName(t.desc), getName(t.done)))
+    (t.desc.readValueOnce, t.done.readValueOnce, List(getName(t.desc), getName(t.done)))
   }
 
   class Task(desc_ : String, done_ : Boolean) {
@@ -78,7 +78,7 @@ object TodoMVC {
 //                   .reduce {  (a, b) => a && b},
           onclick:={ e: dom.UIEvent =>
             println("eh?")
-            tasks.now.foreach { it =>
+            tasks.readValueOnce.foreach { it =>
               it.done set !e.target.asInstanceOf[dom.html.Input].checked } }),
         label(`for`:="toggle-all", "Mark all as complete"),
         Signal.dynamic { ul(`class`:="todo-list", tasks().map { t =>
@@ -129,7 +129,7 @@ object TodoMVC {
         `type`:="button",
         `class`:=Signal { if (tasks().size==0) "hidden" else ""},
         value:="remove all done todos", onclick:={ e: dom.UIEvent =>
-          tasks set tasks.now.filter { t => !t.done.now }
+          tasks set tasks.readValueOnce.filter { t => !t.done.readValueOnce }
         }
       )
     ).render, document.body.firstElementChild)

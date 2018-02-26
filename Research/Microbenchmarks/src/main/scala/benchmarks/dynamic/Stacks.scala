@@ -62,13 +62,13 @@ class Stacks[S <: Struct] {
       implicit val engine = state.engine
       val index = params.getThreadIndex % params.getThreadCount
       state.sources(index).set(step.run())
-      state.dynamics(index).now
+      state.dynamics(index).readValueOnce
     }
     else {
       implicit val engine = state.engine
       val index = params.getThreadIndex % params.getThreadCount
       state.sources(index).set(step.run())
-      state.dynamics(index).now
+      state.dynamics(index).readValueOnce
     }
   }
 

@@ -10,8 +10,8 @@ class SignalMacro extends RETests { multiEngined { engine => import engine._
     val s1: Signal[List[Int]] = Signal { v.value.map(_ + 2) }
     val s2: Signal[List[Int]] = Signal { v.apply.map(_ + 2) }
 
-    assert(s1.now === List(3,4,5))
-    assert(s2.now === List(3,4,5))
+    assert(s1.readValueOnce === List(3, 4, 5))
+    assert(s2.readValueOnce === List(3, 4, 5))
 
   }
 
@@ -22,11 +22,11 @@ class SignalMacro extends RETests { multiEngined { engine => import engine._
     val s: Signal[Int] = Signal { 2 * e.latest(0).apply() }
 
     s.changed += { _ => test += 1 }
-    assert(s.now === 0)
+    assert(s.readValueOnce === 0)
     e.fire(2)
-    assert(s.now === 4)
+    assert(s.readValueOnce === 4)
     e.fire(3)
-    assert(s.now === 6)
+    assert(s.readValueOnce === 6)
     assert(test === 2)
   }
 
@@ -38,11 +38,11 @@ class SignalMacro extends RETests { multiEngined { engine => import engine._
     val s: Signal[Option[Int]] = Signal { e.latestOption().apply() }
 
     s.changed += { _ => test += 1 }
-    assert(s.now === None)
+    assert(s.readValueOnce === None)
     e.fire(2)
-    assert(s.now === Some(2))
+    assert(s.readValueOnce === Some(2))
     e.fire(3)
-    assert(s.now === Some(3))
+    assert(s.readValueOnce === Some(3))
     assert(test === 2)
   }
 
@@ -70,11 +70,11 @@ class SignalMacro extends RETests { multiEngined { engine => import engine._
 
     a.obj()
     s.changed += { _ => test += 1 }
-    assert(s.now === 0)
+    assert(s.readValueOnce === 0)
     e.fire(2)
-    assert(s.now === 4)
+    assert(s.readValueOnce === 4)
     e.fire(3)
-    assert(s.now === 6)
+    assert(s.readValueOnce === 6)
     assert(test === 2)
   }
 
@@ -123,15 +123,15 @@ class SignalMacro extends RETests { multiEngined { engine => import engine._
       D.x + (i * j + C("")(0).a)
     }
 
-    assert(sig.now == "value15")
+    assert(sig.readValueOnce == "value15")
     v2 set new A(3)
-    assert(sig.now == "value15")
+    assert(sig.readValueOnce == "value15")
     v1 set new A(3)
-    assert(sig.now == "value19")
+    assert(sig.readValueOnce == "value19")
     v2 set B(4)
-    assert(sig.now == "value29")
+    assert(sig.readValueOnce == "value29")
     v1 set new A(5)
-    assert(sig.now == "value37")
+    assert(sig.readValueOnce == "value37")
   }
 
   test("lazy Values"){
@@ -146,17 +146,17 @@ class SignalMacro extends RETests { multiEngined { engine => import engine._
       if (v2()) v else 0
     }
 
-    assert(sig.now == 0)
+    assert(sig.readValueOnce == 0)
     v1 set 5
-    assert(sig.now == 0)
+    assert(sig.readValueOnce == 0)
     v2 set true
-    assert(sig.now == 5)
+    assert(sig.readValueOnce == 5)
     v1 set 2
-    assert(sig.now == 2)
+    assert(sig.readValueOnce == 2)
     v2 set false
-    assert(sig.now == 0)
+    assert(sig.readValueOnce == 0)
     v1 set 8
-    assert(sig.now == 0)
+    assert(sig.readValueOnce == 0)
   }
 
   test("pattern Matching And Wildcard"){
@@ -173,15 +173,15 @@ class SignalMacro extends RETests { multiEngined { engine => import engine._
       }
     }
 
-    assert(sig.now == 2)
+    assert(sig.readValueOnce == 2)
     v2 set 50
-    assert(sig.now == 2)
+    assert(sig.readValueOnce == 2)
     v1 set List(7, 8, 9)
-    assert(sig.now == 50)
+    assert(sig.readValueOnce == 50)
     v2 set 4
-    assert(sig.now == 4)
+    assert(sig.readValueOnce == 4)
     v1 set List(10, 11)
-    assert(sig.now == 11)
+    assert(sig.readValueOnce == 11)
   }
 
 
@@ -190,7 +190,7 @@ class SignalMacro extends RETests { multiEngined { engine => import engine._
     val s2 = Signal {
       s1() collect { case Some(n) => n }
     }
-    assert(s2.now === List(1, 2, 4))
+    assert(s2.readValueOnce === List(1, 2, 4))
   }
 
 
@@ -210,7 +210,7 @@ class SignalMacro extends RETests { multiEngined { engine => import engine._
       type A = Int
       lazy val v = Var(4)
     }
-    assert(o.s.now(engine) == 4)
+    assert(o.s.readValueOnce(engine) == 4)
   }
 
   test("default Arguments"){
@@ -218,7 +218,7 @@ class SignalMacro extends RETests { multiEngined { engine => import engine._
       def a(v: Int, i: Int = 8, j: Int, k: Int = 8) = v + i + j + k
       a(6, j = 5)
     }
-    assert(s.now == 27)
+    assert(s.readValueOnce == 27)
   }
 
 
@@ -236,9 +236,9 @@ class SignalMacro extends RETests { multiEngined { engine => import engine._
 
     val sig = Signal { getSignal(o)() }
 
-    assert(sig.now === 20)
+    assert(sig.readValueOnce === 20)
     v set 30
-    assert(sig.now === 30)
+    assert(sig.readValueOnce === 30)
   }
 
 
@@ -253,9 +253,9 @@ class SignalMacro extends RETests { multiEngined { engine => import engine._
 
     val sig = Signal { getSignal(o).latestOption().apply() }
 
-    assert(sig.now === None)
+    assert(sig.readValueOnce === None)
     e.fire(30)
-    assert(sig.now === Some(30))
+    assert(sig.readValueOnce === Some(30))
   }
 
 
@@ -267,7 +267,7 @@ class SignalMacro extends RETests { multiEngined { engine => import engine._
 
     val s = Signal { wantsTicket }
 
-    assert(s.now === true)
+    assert(s.readValueOnce === true)
 
   }
 

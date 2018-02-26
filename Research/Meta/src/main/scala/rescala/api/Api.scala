@@ -61,7 +61,7 @@ object Api {
     override def changed[A](signal: Signal[A]): Event[A] = signal.changed
 
     override def observe[A](event: Event[A])(f: (A) => Unit): Unit = event.observe(f)
-    override def now[A](signal: Signal[A]): A = signal.now
+    override def now[A](signal: Signal[A]): A = signal.readValueOnce
     override def fire[A](evt: Evt[A], value: A): Unit = evt.fire(value)
     override def set[A](vr: Var[A], value: A): Unit = vr.set(value)
     override def disconnectE(event : Event[_]): Unit = event.disconnect()

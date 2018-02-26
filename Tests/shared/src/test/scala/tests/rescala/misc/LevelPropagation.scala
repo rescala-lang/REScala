@@ -16,22 +16,22 @@ class LevelPropagation extends RETests { multiEngined { engine => import engine.
     val l1 = level0.map(_ + 1)
     val l2 = l1.map(_ + 1)
     val level3 = l2.map(_ + 1)
-    assert(level0.now === 0)
-    assert(l1.now === 1)
-    assert(l2.now === 2)
-    assert(level3.now === 3)
+    assert(level0.readValueOnce === 0)
+    assert(l1.readValueOnce === 1)
+    assert(l2.readValueOnce === 2)
+    assert(level3.readValueOnce === 3)
     val level_1_to_4 = dynamic(level0) { t =>
       if (t.depend(level0) == 10) t.depend(level3) else 42
     }
-    assert(level_1_to_4.now === 42)
+    assert(level_1_to_4.readValueOnce === 42)
     var evaluatesOnlyOncePerTurn = 0
     val level_2_to_5 = Signals.lift(level0, level_1_to_4) { (x, y) => evaluatesOnlyOncePerTurn += 1; x + y }
-    assert(level_2_to_5.now === 0 + 42)
+    assert(level_2_to_5.readValueOnce === 0 + 42)
 
     assertLevel(level3, 3)
     assertLevel(level_1_to_4, 1)
     assertLevel(level_2_to_5, 2)
-    assert(level_2_to_5.now === 42)
+    assert(level_2_to_5.readValueOnce === 42)
     assert(evaluatesOnlyOncePerTurn === 1)
 
     level0.set(5)
@@ -39,7 +39,7 @@ class LevelPropagation extends RETests { multiEngined { engine => import engine.
     assertLevel(level3, 3)
     assertLevel(level_1_to_4, 1)
     assertLevel(level_2_to_5, 2)
-    assert(level_2_to_5.now === 47)
+    assert(level_2_to_5.readValueOnce === 47)
     assert(evaluatesOnlyOncePerTurn === 2)
 
     level0.set(10)
@@ -47,7 +47,7 @@ class LevelPropagation extends RETests { multiEngined { engine => import engine.
     assertLevel(level3, 3)
     assertLevel(level_1_to_4, 4)
     assertLevel(level_2_to_5, 5)
-    assert(level_2_to_5.now === 23)
+    assert(level_2_to_5.readValueOnce === 23)
     assert(evaluatesOnlyOncePerTurn === 3)
 
 
@@ -66,8 +66,8 @@ class LevelPropagation extends RETests { multiEngined { engine => import engine.
     assertLevel(l3, 3)
     assertLevel(l1t4, 1)
     assertLevel(l2t5, 2)
-    assert(l1t4.now === 3)
-    assert(l2t5.now === 4)
+    assert(l1t4.readValueOnce === 3)
+    assert(l2t5.readValueOnce === 4)
 
 
     l0.set(10)
@@ -75,8 +75,8 @@ class LevelPropagation extends RETests { multiEngined { engine => import engine.
     assertLevel(l3, 3)
     assertLevel(l1t4, 4)
     assertLevel(l2t5, 5)
-    assert(l1t4.now === 13)
-    assert(l2t5.now === 14)
+    assert(l1t4.readValueOnce === 13)
+    assert(l2t5.readValueOnce === 14)
 
   }
 
@@ -95,8 +95,8 @@ class LevelPropagation extends RETests { multiEngined { engine => import engine.
     assertLevel(l3, 3)
     assertLevel(l1t4, 1)
     assertLevel(l2t5, 2)
-    assert(l1t4.now === 13)
-    assert(l2t5.now === 14)
+    assert(l1t4.readValueOnce === 13)
+    assert(l2t5.readValueOnce === 14)
     assert(reevals === 1)
 
     // changing l0 to 10 will update the dependencies of l1t4 to include l3, but that is 13 which is the same value
@@ -107,12 +107,12 @@ class LevelPropagation extends RETests { multiEngined { engine => import engine.
     assertLevel(l3, 3)
     assertLevel(l1t4, 4)
     assertLevel(l2t5, 5)
-    assert(l0.now === 10)
-    assert(l1.now === 11)
-    assert(l2.now === 12)
-    assert(l3.now === 13)
-    assert(l1t4.now === 13)
-    assert(l2t5.now === 14)
+    assert(l0.readValueOnce === 10)
+    assert(l1.readValueOnce === 11)
+    assert(l2.readValueOnce === 12)
+    assert(l3.readValueOnce === 13)
+    assert(l1t4.readValueOnce === 13)
+    assert(l2t5.readValueOnce === 14)
 
 
   }
@@ -134,8 +134,8 @@ class LevelPropagation extends RETests { multiEngined { engine => import engine.
     assertLevel(l1t4, 1)
     assertLevel(l2t5, 2)
     assertLevel(l3t6, 3)
-    assert(l1t4.now === 13)
-    assert(l2t5.now === 14)
+    assert(l1t4.readValueOnce === 13)
+    assert(l2t5.readValueOnce === 14)
     assert(reevals === 1)
     assert(reevals2 === 1)
 
@@ -145,8 +145,8 @@ class LevelPropagation extends RETests { multiEngined { engine => import engine.
     assertLevel(l3, 3)
     assertLevel(l1t4, 4)
     assertLevel(l2t5, 5)
-    assert(l1t4.now === 13)
-    assert(l2t5.now === 24)
+    assert(l1t4.readValueOnce === 13)
+    assert(l2t5.readValueOnce === 24)
     assert(reevals === 2)
     assert(reevals2 === 2)
 
@@ -169,8 +169,8 @@ class LevelPropagation extends RETests { multiEngined { engine => import engine.
     assertLevel(l3, 3)
     assertLevel(l1t4, 1)
     assertLevel(l2t5, 2)
-    assert(l1t4.now === 3)
-    assert(l2t5.now === 4)
+    assert(l1t4.readValueOnce === 3)
+    assert(l2t5.readValueOnce === 4)
     assert(reevals === 1)
 
     // changing l0 to 10 will update the dependencies of l1t4 to include l3, but that is 13 which is the same value
@@ -181,12 +181,12 @@ class LevelPropagation extends RETests { multiEngined { engine => import engine.
     assertLevel(l3, 3)
     assertLevel(l1t4, 4)
     assertLevel(l2t5, 5)
-    assert(l0.now === 10)
-    assert(l1.now === 11)
-    assert(l2.now === 12)
-    assert(l3.now === 13)
-    assert(l1t4.now === 13)
-    assert(l2t5.now === 14)
+    assert(l0.readValueOnce === 10)
+    assert(l1.readValueOnce === 11)
+    assert(l2.readValueOnce === 12)
+    assert(l3.readValueOnce === 13)
+    assert(l1t4.readValueOnce === 13)
+    assert(l2t5.readValueOnce === 14)
 
 
     }

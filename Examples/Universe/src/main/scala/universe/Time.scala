@@ -12,5 +12,5 @@ class Time {
   val week = day map (_ / 7)
   val timestring = Signal.static(s"Week: ${week.value} Day: ${day.value}  hour: ${hour.value}")
   val newWeek = week.changed
-  override def toString: String = timestring.now
+  override def toString: String = timestring.readValueOnce
 }

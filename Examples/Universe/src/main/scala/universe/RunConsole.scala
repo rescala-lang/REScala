@@ -33,7 +33,7 @@ object RunConsole {
 
       val start = System.nanoTime()
       import universe.Globals.engine
-      while (world.time.week.now < 2) {
+      while (world.time.week.readValueOnce < 2) {
         world.tick()
         world.runPlan()
       }
@@ -73,7 +73,7 @@ object RunPrinting {
       println(world.status)
       println(world.board.dump)
     }
-    while (world.time.week.now < 2) {
+    while (world.time.week.readValueOnce < 2) {
       world.tick()
       world.runPlan()
 

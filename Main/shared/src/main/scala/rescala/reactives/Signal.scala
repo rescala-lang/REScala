@@ -22,10 +22,15 @@ trait Signal[+A, S <: Struct] extends ReSource[S] with Interp[A, S] with Disconn
 
   override type Value <: Pulse[A]
 
+
+  @deprecated("Using now is in most cases not what you want." +
+                " It does not build dependencies, does not integrate into transactions." +
+                " Use `readValueOnce` for examples and debug output.", "0.23.0")
+  final def now(implicit scheduler: Scheduler[S]): A = readValueOnce
   /** Returns the current value of the signal
     * @group accessor */
-  final def now(implicit scheduler: Scheduler[S]): A = {
-    try { scheduler.singleNow(this) }
+  final def readValueOnce(implicit scheduler: Scheduler[S]): A = {
+    try { scheduler.singleReadValueOnce(this) }
     catch {
       case EmptySignalControlThrowable => throw new NoSuchElementException(s"Signal $this is empty")
       case other: Throwable => throw new IllegalStateException(s"Signal $this has an error value", other)

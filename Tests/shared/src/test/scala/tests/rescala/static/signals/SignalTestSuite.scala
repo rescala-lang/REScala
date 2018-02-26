@@ -18,15 +18,15 @@ class SignalTestSuite extends RETests { multiEngined { engine => import engine._
     val s1 = Signals.lift(v1, v2) { _ + _ }
     s1.changed += { (_) => test += 1 }
 
-    assert(s1.now == 3)
+    assert(s1.readValueOnce == 3)
     assert(test == 0)
 
     v2.set(3)
-    assert(s1.now == 4)
+    assert(s1.readValueOnce == 4)
     assert(test == 1)
 
     v2.set(3)
-    assert(s1.now == 4)
+    assert(s1.readValueOnce == 4)
     assert(test == 1)
 
   }
@@ -37,17 +37,17 @@ class SignalTestSuite extends RETests { multiEngined { engine => import engine._
     var i = 1
     val s = Signal { v() + i }
     i = 2
-    assert(s.now == 1)
+    assert(s.readValueOnce == 1)
     v.set(2)
-    assert(s.now == 4)
+    assert(s.readValueOnce == 4)
   }
 
   test("the Expression Is Not Evaluated Every Time now Is Called"){
     var a = 10
     val s = Signal(1 + 1 + a)
-    assert(s.now === 12)
+    assert(s.readValueOnce === 12)
     a = 11
-    assert(s.now === 12)
+    assert(s.readValueOnce === 12)
   }
 
 
@@ -77,9 +77,9 @@ class SignalTestSuite extends RETests { multiEngined { engine => import engine._
       changes += 1; v() + 1
     }
     assert(changes === 1)
-    assert(s.now === 2)
+    assert(s.readValueOnce === 2)
     v.set(2)
-    assert(s.now === 3)
+    assert(s.readValueOnce === 3)
     assert(changes === 2)
     v.set(2)
     assert(changes === 2) // is actually 3
@@ -100,12 +100,12 @@ class SignalTestSuite extends RETests { multiEngined { engine => import engine._
         v3.map(_ + "level 4 inner").apply()
       }
     }
-    assert(`dynamic signal changing from level 1 to level 5`.now == "level 0")
+    assert(`dynamic signal changing from level 1 to level 5`.readValueOnce == "level 0")
     //note: will start with level 5 because of static guess of current level done by the macro expansion
     assertLevel(`dynamic signal changing from level 1 to level 5`, 5)
 
     v0.set("level0+")
-    assert(`dynamic signal changing from level 1 to level 5`.now == "level0+level 1level 2level 3level 4 inner")
+    assert(`dynamic signal changing from level 1 to level 5`.readValueOnce == "level0+level 1level 2level 3level 4 inner")
     assertLevel(`dynamic signal changing from level 1 to level 5`, 5)
   }
 
@@ -117,21 +117,21 @@ class SignalTestSuite extends RETests { multiEngined { engine => import engine._
     val s: Signal[Int] = v.map { _ => i }
     i = 2
     v.set(2)
-    assert(s.now == 2)
+    assert(s.readValueOnce == 2)
   }
 
   test("the Expression Is Note Evaluated Every Time Get Val Is Called"){
     var a = 10
     val s: Signal[Int] = Signals.static()(_ => 1 + 1 + a)
-    assert(s.now === 12)
+    assert(s.readValueOnce === 12)
     a = 11
-    assert(s.now === 12)
+    assert(s.readValueOnce === 12)
   }
 
 
   test("simple Signal Returns Correct Expressions"){
     val s: Signal[Int] = Signals.static()(_ => 1 + 1 + 1)
-    assert(s.now === 3)
+    assert(s.readValueOnce === 3)
   }
 
   test("the Expression Is Evaluated Only Once"){
@@ -149,7 +149,7 @@ class SignalTestSuite extends RETests { multiEngined { engine => import engine._
     assert(a == 2)
     v.set(21)
     assert(a == 3)
-    assert(s1.now === 1)
+    assert(s1.readValueOnce === 1)
   }
 
   test("handlers Are Executed"){
@@ -191,22 +191,22 @@ class SignalTestSuite extends RETests { multiEngined { engine => import engine._
     val s = v.map(_ => 1)
     val s2 = Signal { s() }
 
-    assert(s2.now === 1)
-    assert(s.now === 1)
+    assert(s2.readValueOnce === 1)
+    assert(s.readValueOnce === 1)
 
     v.set(2)
-    assert(s.now === 1)
-    assert(s2.now === 1)
+    assert(s.readValueOnce === 1)
+    assert(s2.readValueOnce === 1)
 
 
     v.set(2)
-    assert(s2.now === 1)
-    assert(s.now === 1)
+    assert(s2.readValueOnce === 1)
+    assert(s.readValueOnce === 1)
 
 
     v.set(3)
-    assert(s2.now === 1)
-    assert(s.now === 1)
+    assert(s2.readValueOnce === 1)
+    assert(s.readValueOnce === 1)
 
 
   }

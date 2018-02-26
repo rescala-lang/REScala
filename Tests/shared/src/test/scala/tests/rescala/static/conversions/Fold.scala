@@ -12,7 +12,7 @@ class Fold extends RETests { multiEngined { engine => import engine._
     val e = Evt[Int]
     val f = (x: Int, y: Int) => x + y
     val s: Signal[Int] = e.fold(10)(f)
-    assert(s.now == 10)
+    assert(s.readValueOnce == 10)
   }
 
   test("fold the Result Signal Increases When Events Occur") {
@@ -21,7 +21,7 @@ class Fold extends RETests { multiEngined { engine => import engine._
     val s: Signal[Int] = e.fold(10)(f)
     e.fire(1)
     e.fire(1)
-    assert(s.now == 12)
+    assert(s.readValueOnce == 12)
   }
 
 
@@ -29,7 +29,7 @@ class Fold extends RETests { multiEngined { engine => import engine._
   test("count the Initial Value Is Set Correctly"){
     val e = Evt[Int]
     val s: Signal[Int] = e.count
-    assert(s.now == 0)
+    assert(s.readValueOnce == 0)
   }
 
   test("count the Result Signal Increases When Events Occur"){
@@ -37,7 +37,7 @@ class Fold extends RETests { multiEngined { engine => import engine._
     val s: Signal[Int] = e.count
     e.fire(1)
     e.fire(1)
-    assert(s.now == 2)
+    assert(s.readValueOnce == 2)
   }
 
 
@@ -46,7 +46,7 @@ class Fold extends RETests { multiEngined { engine => import engine._
     val e = Evt[Int]
     val f = (x: Int) => x
     val s: Signal[Int] = e.iterate(10)(f)
-    assert(s.now == 10)
+    assert(s.readValueOnce == 10)
   }
 
   test("iterate the Function is Executed Every Time The Event Fires") {
@@ -60,7 +60,7 @@ class Fold extends RETests { multiEngined { engine => import engine._
     assert(test == 2)
     e.fire(1)
     assert(test == 3)
-    assert(s.now === 10)
+    assert(s.readValueOnce === 10)
   }
 
   // TODO: does it make sense ?
@@ -75,18 +75,18 @@ class Fold extends RETests { multiEngined { engine => import engine._
     assert(test == 11)
     e.fire(1)
     assert(test == 12)
-    assert(s.now === 13)
+    assert(s.readValueOnce === 13)
   }
 
   test("iterate the result signal does not depend on the event value") {
     val e = Evt[Int]
     val s: Signal[Int] = e.iterate(10)(identity)
     e.fire(1)
-    assert(s.now == 10)
+    assert(s.readValueOnce == 10)
     e.fire(2)
-    assert(s.now == 10)
+    assert(s.readValueOnce == 10)
     e.fire(1)
-    assert(s.now == 10)
+    assert(s.readValueOnce == 10)
   }
 
   /* latest */
@@ -94,7 +94,7 @@ class Fold extends RETests { multiEngined { engine => import engine._
     val e = Evt[Int]
     val s: Signal[Int] = e.latest(10)
 
-    assert(s.now == 10)
+    assert(s.readValueOnce == 10)
   }
 
   test("latest the Functionis Executed Every Time The Event Fires") {
@@ -102,11 +102,11 @@ class Fold extends RETests { multiEngined { engine => import engine._
     val s: Signal[Int] = e.latest(10)
 
     e.fire(1)
-    assert(s.now == 1)
+    assert(s.readValueOnce == 1)
     e.fire(2)
-    assert(s.now == 2)
+    assert(s.readValueOnce == 2)
     e.fire(1)
-    assert(s.now == 1)
+    assert(s.readValueOnce == 1)
   }
 
 
@@ -115,7 +115,7 @@ class Fold extends RETests { multiEngined { engine => import engine._
     val e = Evt[Int]
     val s: Signal[Option[Int]] = e.latestOption()
 
-    assert(s.now == None)
+    assert(s.readValueOnce == None)
   }
 
   test("latest Option the Functionis Executed Every Time The Event Fires") {
@@ -123,11 +123,11 @@ class Fold extends RETests { multiEngined { engine => import engine._
     val s: Signal[Option[Int]] = e.latestOption()
 
     e.fire(1)
-    assert(s.now == Option(1))
+    assert(s.readValueOnce == Option(1))
     e.fire(2)
-    assert(s.now == Option(2))
+    assert(s.readValueOnce == Option(2))
     e.fire(1)
-    assert(s.now == Option(1))
+    assert(s.readValueOnce == Option(1))
   }
 
 
@@ -136,7 +136,7 @@ class Fold extends RETests { multiEngined { engine => import engine._
     val e = Evt[Int]
     val s: Signal[LinearSeq[Int]] = e.last(5)
 
-    assert(s.now == List())
+    assert(s.readValueOnce == List())
   }
 
   test("last collects The LastN Events") {
@@ -144,18 +144,18 @@ class Fold extends RETests { multiEngined { engine => import engine._
     val s: Signal[LinearSeq[Int]] = e.last(5)
 
 
-    assert(s.now == LinearSeq())
+    assert(s.readValueOnce == LinearSeq())
     e.fire(1)
-    assert(s.now == LinearSeq(1))
+    assert(s.readValueOnce == LinearSeq(1))
     e.fire(2)
-    assert(s.now == LinearSeq(1, 2))
+    assert(s.readValueOnce == LinearSeq(1, 2))
 
     e.fire(3)
     e.fire(4)
     e.fire(5)
-    assert(s.now == LinearSeq(1, 2, 3, 4, 5))
+    assert(s.readValueOnce == LinearSeq(1, 2, 3, 4, 5))
     e.fire(6)
-    assert(s.now == LinearSeq(2, 3, 4, 5, 6))
+    assert(s.readValueOnce == LinearSeq(2, 3, 4, 5, 6))
   }
 
   /* list */
@@ -163,24 +163,24 @@ class Fold extends RETests { multiEngined { engine => import engine._
     val e = Evt[Int]
     val s = e.list()
 
-    assert(s.now == List())
+    assert(s.readValueOnce == List())
   }
 
   test("list the Functionis Executed Every Time The Event Fires") {
     val e = Evt[Int]
     val s = e.list()
 
-    assert(s.now == List())
+    assert(s.readValueOnce == List())
     e.fire(1)
-    assert(s.now == List(1))
+    assert(s.readValueOnce == List(1))
     e.fire(2)
-    assert(s.now == List(2, 1))
+    assert(s.readValueOnce == List(2, 1))
 
     e.fire(3)
     e.fire(4)
     e.fire(5)
     e.fire(6)
-    assert(s.now == List(6, 5, 4, 3, 2, 1))
+    assert(s.readValueOnce == List(6, 5, 4, 3, 2, 1))
   }
 
   test("create folds during tx"){
@@ -192,7 +192,7 @@ class Fold extends RETests { multiEngined { engine => import engine._
       e.list()
     }
 
-    assert(listed.now == List("hello"))
+    assert(listed.readValueOnce == List("hello"))
 
   }
 
@@ -211,19 +211,19 @@ class Fold extends RETests { multiEngined { engine => import engine._
       count >> (acc * _),
     )}
 
-    assert (res.now == "")
+    assert (res.readValueOnce == "")
     count.fire(10)
-    assert (res.now == "")
+    assert (res.readValueOnce == "")
     reset.fire()
-    assert (res.now == "")
+    assert (res.readValueOnce == "")
     word.fire("hello")
-    assert (res.now == "hello")
+    assert (res.readValueOnce == "hello")
     count.fire(2)
-    assert (res.now == "hellohello")
+    assert (res.readValueOnce == "hellohello")
     word.fire("world")
-    assert (res.now == "world")
+    assert (res.readValueOnce == "world")
     update(count -> 2, word -> "do them all!", reset -> (()))
-    assert (res.now == "do them all!do them all!")
+    assert (res.readValueOnce == "do them all!do them all!")
   }
 
 } }

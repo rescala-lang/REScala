@@ -12,10 +12,10 @@ class RecurringPropagation extends RETests { multiEngined { engine => import eng
 
     m1.observe(v1.set)
 
-    assert(v1.now == 2)
+    assert(v1.readValueOnce == 2)
 
     e1.fire(100)
-    assert(v1.now == 110)
+    assert(v1.readValueOnce == 110)
 
   }
 
@@ -27,11 +27,11 @@ class RecurringPropagation extends RETests { multiEngined { engine => import eng
 
     m1.observe(v1.set)
 
-    assert(v1.now == 2)
+    assert(v1.readValueOnce == 2)
 
     v1.observe(current => if (current > 100) () else e1.fire(current))
 
-    assert(v1.now == 102)
+    assert(v1.readValueOnce == 102)
 
   }
 

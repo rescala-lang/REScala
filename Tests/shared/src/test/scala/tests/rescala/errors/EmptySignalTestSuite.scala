@@ -8,7 +8,7 @@ class EmptySignalTestSuite extends RETests { multiEngined { engine => import eng
 
     val v = Var.empty[Int]
 
-    intercept[NoSuchElementException](v.now)
+    intercept[NoSuchElementException](v.readValueOnce)
 
     var res = -100
 
@@ -18,13 +18,13 @@ class EmptySignalTestSuite extends RETests { multiEngined { engine => import eng
 
     val s = v.map(1.+)
 
-    intercept[NoSuchElementException](s.now)
+    intercept[NoSuchElementException](s.readValueOnce)
 
     v.set(100)
 
     assert(res == 100, "observed?")
-    assert(v.now == 100, "changed from empty to value")
-    assert(s.now == 101, "changed from empty to value 2")
+    assert(v.readValueOnce == 100, "changed from empty to value")
+    assert(s.readValueOnce == 101, "changed from empty to value 2")
 
 
 
@@ -46,18 +46,18 @@ class EmptySignalTestSuite extends RETests { multiEngined { engine => import eng
 
     assert(s != null, "sanity")
 
-    assert(s.now == 0, "mapped event")
+    assert(s.readValueOnce == 0, "mapped event")
 
 
     val e3 = Evt[Unit]
 
     v.set(e3)
 
-    assert(s.now == 0, "mapped event after var set")
+    assert(s.readValueOnce == 0, "mapped event after var set")
 
     e3.fire()
 
-    assert(s.now == 1, "mapped event after event fire")
+    assert(s.readValueOnce == 1, "mapped event after event fire")
   }
 
   test("unwrap Empty Signal"){
@@ -87,21 +87,21 @@ class EmptySignalTestSuite extends RETests { multiEngined { engine => import eng
     val e = sig.changed
     val folded = e.fold(0)(_ - _)
 
-    assert(v.now === 6)
-    assert(sig.now === v.now + v2.now)
-    assert(folded.now === 0)
+    assert(v.readValueOnce === 6)
+    assert(sig.readValueOnce === v.readValueOnce + v2.readValueOnce)
+    assert(folded.readValueOnce === 0)
 
     v.setEmpty()
-    intercept[NoSuchElementException](v.now)
-    intercept[NoSuchElementException](sig.now)
-    assert(v2.now === 6)
-    assert(folded.now === 0)
+    intercept[NoSuchElementException](v.readValueOnce)
+    intercept[NoSuchElementException](sig.readValueOnce)
+    assert(v2.readValueOnce === 6)
+    assert(folded.readValueOnce === 0)
 
     v.set(10)
-    assert(v.now === 10)
-    assert(v2.now === 6)
-    assert(sig.now === v.now + v2.now)
-    assert(folded.now === -16)
+    assert(v.readValueOnce === 10)
+    assert(v2.readValueOnce === 6)
+    assert(sig.readValueOnce === v.readValueOnce + v2.readValueOnce)
+    assert(folded.readValueOnce === -16)
 
 
   }

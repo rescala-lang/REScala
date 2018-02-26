@@ -128,8 +128,8 @@ abstract class RescalaInterface[S <: Struct] {
   /**
     * Executes a transaction.
     *
-    * @param initialWrites All inputs that might be changed by the transaction
-    * @param admissionPhase An admission function that may perform arbitrary [[rescala.reactives.Signal.now]] reads
+    * @param initialWrites  All inputs that might be changed by the transaction
+    * @param admissionPhase An admission function that may perform arbitrary [[rescala.reactives.Signal.readValueOnce]] reads
     *                       to [[rescala.reactives.Evt.admit]] / [[rescala.reactives.Var.admit]] arbitrary
     *                       input changes that will be applied as an atomic transaction at the end.
     * @tparam R Result type of the admission function
@@ -143,14 +143,14 @@ abstract class RescalaInterface[S <: Struct] {
   /**
     * Executes a transaction with WrapUpPhase.
     *
-    * @param initialWrites All inputs that might be changed by the transaction
-    * @param admissionPhase An admission function that may perform arbitrary [[rescala.reactives.Signal.now]] reads
+    * @param initialWrites  All inputs that might be changed by the transaction
+    * @param admissionPhase An admission function that may perform arbitrary [[rescala.reactives.Signal.readValueOnce]] reads
     *                       to [[rescala.reactives.Evt.admit]] / [[rescala.reactives.Var.admit]] arbitrary
     *                       input changes that will be applied as an atomic transaction at the end.
     *                       The return value of this phase will be passed to the wrapUpPhase
-    * @param wrapUpPhase A wrap-up function that receives the admissionPhase result and may perform arbitrary
-    *                    [[rescala.reactives.Signal.now]] reads which are
-    *                    executed after the update propagation.
+    * @param wrapUpPhase    A wrap-up function that receives the admissionPhase result and may perform arbitrary
+    *                       [[rescala.reactives.Signal.readValueOnce]] reads which are
+    *                       executed after the update propagation.
     * @tparam I Intermediate Result type passed from admission to wrapup phase
     * @tparam R Final Result type of the wrapup phase
     * @return Result of the wrapup function

@@ -23,7 +23,7 @@ class World(val width: Int = 100, val height: Int = 100) {
     s"Animals alive: $a Total born: $b"
   }
   var updates: List[() => Unit] = Nil
-  def status = statusString.now
+  def status = statusString.readValueOnce
   def tick() = {
     time.tick.fire()
     board.removeDead()

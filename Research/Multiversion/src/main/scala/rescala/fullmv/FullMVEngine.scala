@@ -29,7 +29,7 @@ class FullMVEngine(val timeout: Duration, val name: String) extends SchedulerImp
     override def reportFailure(cause: Throwable): Unit = cause.printStackTrace()
   }
 
-  override private[rescala] def singleNow[A](reactive: Signal[A]) = reactive.state.latestValue.get
+  override private[rescala] def singleReadValueOnce[A](reactive: Signal[A]) = reactive.state.latestValue.get
 
   override private[rescala] def executeTurn[R](declaredWrites: Traversable[ReSource], admissionPhase: (AdmissionTicket) => R): R = {
     val turn = newTurn()

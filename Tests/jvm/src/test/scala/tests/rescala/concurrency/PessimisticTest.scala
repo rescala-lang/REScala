@@ -31,9 +31,9 @@ class PessimisticTest extends RETests {
     t1.join(1000)
     assert(autoSync.getCount == 0)
 
-    assert(s1.now === true)
+    assert(s1.readValueOnce === true)
     trackS1.assertClear(true)
-    assert(s2.now === true)
+    assert(s2.readValueOnce === true)
   }
 
   engines(Engines.parrp)("Pessimistic Engines should safely execute concurrently admitted updates to summed signals"){ engine =>
@@ -57,7 +57,7 @@ class PessimisticTest extends RETests {
     assert(latch.getCount == 0)
 
     sumTracker.assert((0 to size).reverse:_*)
-    assert(sum.now === size)
+    assert(sum.readValueOnce === size)
   }
 
   engines(Engines.parrp)("Pessimistic Engines should correctly execute crossed dynamic discoveries"){ engine =>

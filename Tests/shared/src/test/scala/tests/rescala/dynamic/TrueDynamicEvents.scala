@@ -12,11 +12,11 @@ class TrueDynamicEvents extends RETests { multiEngined { engine => import engine
     val res = event.latest()
 
     e1.fire(Signal(1))
-    assert(res.now === 1)
+    assert(res.readValueOnce === 1)
     e1.fire(Signal(2))
-    assert(res.now === 2)
+    assert(res.readValueOnce === 2)
     e1.fire(Signal(3))
-    assert(res.now === 3)
+    assert(res.readValueOnce === 3)
 
   }
 } }

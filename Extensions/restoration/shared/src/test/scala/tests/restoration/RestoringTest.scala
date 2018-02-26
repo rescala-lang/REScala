@@ -13,12 +13,12 @@ class RestoringTest extends FunSuite {
       val e = engine.Evt[Unit]()
       val c = e.count()
 
-      assert(c.now == 0)
+      assert(c.readValueOnce == 0)
 
       e.fire()
       e.fire()
 
-      assert(c.now == 2)
+      assert(c.readValueOnce == 2)
       engine.snapshot()
     }
 
@@ -27,11 +27,11 @@ class RestoringTest extends FunSuite {
       val e = engine1.Evt[Unit]()
       val c = e.count()
 
-      assert(c.now == 2)
+      assert(c.readValueOnce == 2)
 
       e.fire()
 
-      assert(c.now == 3)
+      assert(c.readValueOnce == 3)
     }
   }
 
@@ -43,16 +43,16 @@ class RestoringTest extends FunSuite {
       val e = engine.Evt[Unit]()
       val c = e.count()
 
-      assert(c.now == 0)
+      assert(c.readValueOnce == 0)
 
       e.fire()
       e.fire()
 
-      assert(c.now == 2)
+      assert(c.readValueOnce == 2)
 
       val mapped = c.map(_ + 10)
 
-      assert(mapped.now == 12)
+      assert(mapped.readValueOnce == 12)
 
       engine.snapshot()
 
@@ -63,15 +63,15 @@ class RestoringTest extends FunSuite {
       val e = engine1.Evt[Unit]()
       val c = e.count()
 
-      assert(c.now == 2)
+      assert(c.readValueOnce == 2)
 
       e.fire()
 
-      assert(c.now == 3)
+      assert(c.readValueOnce == 3)
 
       val mapped = c.map(_ + 10)
 
-      assert(mapped.now == 13)
+      assert(mapped.readValueOnce == 13)
 
 
     }

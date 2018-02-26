@@ -37,7 +37,7 @@ class Board(val width: Int, val height: Int) {
   /** removes the board element if present in the board */
   def removeDead() = {
     elements = elements.filter { case (p, be) =>
-      if (be.isDead.now) {
+      if (be.isDead.readValueOnce) {
         elementRemoved.fire(be)
         false
       }
@@ -79,8 +79,8 @@ class Board(val width: Int, val height: Int) {
   def dump: String = {
     def repr(be: Option[BoardElement]) = be match {
       case None => '.'
-      case Some(m: Male) if m.isAdult.now => 'm'
-      case Some(f: Female) if f.isAdult.now => if (f.isPregnant.now) 'F' else 'f'
+      case Some(m: Male) if m.isAdult.readValueOnce => 'm'
+      case Some(f: Female) if f.isAdult.readValueOnce => if (f.isPregnant.readValueOnce) 'F' else 'f'
       case Some(x: Animal) => 'x'
       case Some(p: Plant) => '#'
       case Some(_) => '?'

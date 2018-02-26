@@ -34,7 +34,7 @@ class EvaluationOrderWithHigherOrderSignalsTest extends RETests {
       }
 
       // final value should be correct
-      assert(flatten.now == newX)
+      assert(flatten.readValueOnce == newX)
       // value should be determined by reevaluating twice after discovering a higher-level dependency on first run
       reevaluationRestartTracker
     }

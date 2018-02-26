@@ -18,11 +18,11 @@ class LightImplicitSyntaxTest extends RETests { multiEngined { engine => import 
       quantity * (price + tax)
     }
 
-    assert(total.now === 4)
+    assert(total.readValueOnce === 4)
     price.set(6)
-    assert(total.now === 8)
+    assert(total.readValueOnce === 8)
     quantity.set(2)
-    assert(total.now === 16)
+    assert(total.readValueOnce === 16)
 
   }
 

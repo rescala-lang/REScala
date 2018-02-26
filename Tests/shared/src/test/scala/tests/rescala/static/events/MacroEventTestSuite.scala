@@ -14,13 +14,13 @@ class MacroEventTestSuite extends RETests { multiEngined { engine => import engi
 
     val res = snapshotEvent.latest(0)
 
-    assert(res.now === 0)
+    assert(res.readValueOnce === 0)
     ev1.fire(10)
-    assert(res.now === 18)
+    assert(res.readValueOnce === 18)
     v1.set(7)
-    assert(res.now === 18)
+    assert(res.readValueOnce === 18)
     ev1.fire(10)
-    assert(res.now === 17)
+    assert(res.readValueOnce === 17)
 
   }
 
@@ -31,13 +31,13 @@ class MacroEventTestSuite extends RETests { multiEngined { engine => import engi
 
     val res = snapshotEvent.latest(0)
 
-    assert(res.now === 0)
+    assert(res.readValueOnce === 0)
     ev1.fire(10)
-    assert(res.now === 18)
+    assert(res.readValueOnce === 18)
     v1.set(7)
-    assert(res.now === 18)
+    assert(res.readValueOnce === 18)
     ev1.fire(10)
-    assert(res.now === 17)
+    assert(res.readValueOnce === 17)
 
   }
 
@@ -47,13 +47,13 @@ class MacroEventTestSuite extends RETests { multiEngined { engine => import engi
 
     val res = snapshotEvent.latest(0)
 
-    assert(res.now === 0)
+    assert(res.readValueOnce === 0)
     ev1.fire(10)
-    assert(res.now === 11)
+    assert(res.readValueOnce === 11)
     ev1.fire(20)
-    assert(res.now === 21)
+    assert(res.readValueOnce === 21)
     ev1.fire(10)
-    assert(res.now === 11)
+    assert(res.readValueOnce === 11)
 
   }
 
@@ -63,13 +63,13 @@ class MacroEventTestSuite extends RETests { multiEngined { engine => import engi
     val e2 = Evt[Int]
     val res = Signal {List(e1(), e2()).flatten.sum}
 
-    assert(res.now === 0)
+    assert(res.readValueOnce === 0)
     e1.fire(10)
-    assert(res.now === 10)
+    assert(res.readValueOnce === 10)
     e2.fire(11)
-    assert(res.now === 11)
+    assert(res.readValueOnce === 11)
     update(e1 -> 10, e2 -> 10)
-    assert(res.now === 20)
+    assert(res.readValueOnce === 20)
 
   }
 
@@ -79,13 +79,13 @@ class MacroEventTestSuite extends RETests { multiEngined { engine => import engi
     val event = Event {Some(List(e1(), e2()).flatten)}
     val res = event.latest(Nil)
 
-    assert(res.now === Nil)
+    assert(res.readValueOnce === Nil)
     e1.fire(9)
-    assert(res.now === List(9))
+    assert(res.readValueOnce === List(9))
     e2.fire(10)
-    assert(res.now === List(10))
+    assert(res.readValueOnce === List(10))
     update(e1 -> 11, e2 -> 12)
-    assert(res.now === List(11, 12))
+    assert(res.readValueOnce === List(11, 12))
   }
 
 
@@ -99,11 +99,11 @@ class MacroEventTestSuite extends RETests { multiEngined { engine => import engi
     val res = event.latest()
 
     e1.fire(1)
-    assert(res.now === 1)
+    assert(res.readValueOnce === 1)
     e1.fire(2)
-    assert(res.now === 2)
+    assert(res.readValueOnce === 2)
     e1.fire(3)
-    assert(res.now === 3)
+    assert(res.readValueOnce === 3)
 
   }
 

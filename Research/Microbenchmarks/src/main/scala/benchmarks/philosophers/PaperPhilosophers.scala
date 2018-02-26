@@ -92,7 +92,7 @@ abstract class PaperPhilosophers[S <: Struct](val size: Int, val engine: Schedul
     }
   }
   def hasEaten(idx: Int): Boolean = {
-    sights(idx).now == Done
+    sights(idx).readValueOnce == Done
   }
   def rest(idx: Int): Unit = {
     phils(idx).set(Thinking)
@@ -117,7 +117,7 @@ abstract class PaperPhilosophers[S <: Struct](val size: Int, val engine: Schedul
   // To be implemented by your choice of topper (see below)
   val successCount: Signal[Int]
 
-  def total: Int = successCount.now
+  def total: Int = successCount.readValueOnce
 }
 
 trait EventTopper[S <: Struct] {

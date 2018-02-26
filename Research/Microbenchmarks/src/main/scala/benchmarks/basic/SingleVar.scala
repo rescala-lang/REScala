@@ -53,12 +53,12 @@ class SingleVar[S <: Struct] {
   @Benchmark
   def read(): Boolean = {
     if (lock == null) {
-      source.now
+      source.readValueOnce
     }
     else {
       lock.readLock().lock()
       try {
-        source.now
+        source.readValueOnce
       }
       finally lock.readLock().unlock()
     }

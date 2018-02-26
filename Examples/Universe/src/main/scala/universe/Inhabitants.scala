@@ -24,7 +24,7 @@ class Carnivore(implicit world: World) extends Animal {
 
 
   override protected def nextAction(pos: Pos): AnimalState = {
-    if (sleepy.now) Sleeping
+    if (sleepy.readValueOnce) Sleeping
     else super.nextAction(pos)
   }
 }
@@ -50,8 +50,8 @@ trait Female extends Animal {
   private val becomePregnant: Event[Unit] = isPregnant.changedTo(true) //#EVT //#IF
   private val pregnancyTime: Signal[Int] = Events.foldAll(Animal.PregnancyTime)( acc => Events.Match(
     becomePregnant >> {_ => Animal.PregnancyTime},
-    world.time.hour.changed >> {_ => acc - (if (isPregnant.now) 1 else 0)},
-  ))
+    world.time.hour.changed >> {_ => acc - (if (isPregnant.readValueOnce) 1 else 0)},
+    ))
   private val giveBirth: Event[Unit] = pregnancyTime.changedTo(0) //#EVT //#IF
   final override val isFertile = Signals.lift(isAdult, isPregnant) {_ && !_} //#SIG
 
@@ -60,7 +60,7 @@ trait Female extends Animal {
 
   giveBirth += { _ => //#HDL
     world.plan {
-      val father = mate.now.get
+      val father = mate.readValueOnce.get
       val child = createOffspring(father)
       world.board.getPosition(this).foreach { mypos =>
         world.board.nearestFree(mypos).foreach { target =>
@@ -71,7 +71,7 @@ trait Female extends Animal {
     }
   }
   final def procreate(father: Animal): Unit = {
-    if (isPregnant.now) return
+    if (isPregnant.readValueOnce) return
     mate.set(Some(father))
   }
 
@@ -93,9 +93,9 @@ trait Male extends Animal {
   private val seeksMate = Signals.lift(isFertile, energy) {_ && _ > Animal.ProcreateThreshold}
 
   final override def nextAction(pos: Pos): AnimalState = {
-    if (seeksMate.now) {
+    if (seeksMate.readValueOnce) {
       val findFemale: PartialFunction[BoardElement, Female] = {
-        case f: Female if f.isFertile.now => f
+        case f: Female if f.isFertile.readValueOnce => f
       }
       val neighbors = world.board.neighbors(pos)
       val females = neighbors.collectFirst(findFemale)

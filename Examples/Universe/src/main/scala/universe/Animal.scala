@@ -66,7 +66,7 @@ abstract class Animal(implicit world: World) extends BoardElement {
     world.plan {
       cstate match {
         case Moving(dir) => world.board.moveIfPossible(pos, dir)
-        case Eating(plant) => plant.takeEnergy(energyGain.now)
+        case Eating(plant) => plant.takeEnergy(energyGain.readValueOnce)
         case Attacking(prey) => prey.savage()
         case Procreating(female: Female) => female.procreate(this)
         case _ =>
@@ -88,11 +88,11 @@ abstract class Animal(implicit world: World) extends BoardElement {
 
   protected def nextAction(pos: Pos): AnimalState = {
     val neighbors = world.board.neighbors(pos)
-    val food = neighbors.collectFirst(findFood.now)
+    val food = neighbors.collectFirst(findFood.readValueOnce)
     val nextAction: AnimalState = food match {
       case Some(target) => reachedState(target) // I'm near food, eat it!
       case None => // I have to look for food nearby
-        world.board.nearby(pos, Animal.ViewRadius).collectFirst(findFood.now) match {
+        world.board.nearby(pos, Animal.ViewRadius).collectFirst(findFood.readValueOnce) match {
           case Some(target) =>
             val destination = world.board.getPosition(target)
             if (destination.isDefined)

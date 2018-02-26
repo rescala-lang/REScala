@@ -27,7 +27,7 @@ class Plant(implicit world: World) extends BoardElement {
     }
   }
   /** takes amount away from the energy of this plant */
-  def takeEnergy(amount: Int) = energy.set(energy.now - amount)
+  def takeEnergy(amount: Int) = energy.set(energy.readValueOnce - amount)
 }
 
 object Plant {

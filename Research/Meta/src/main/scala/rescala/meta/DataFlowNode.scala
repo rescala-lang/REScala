@@ -90,7 +90,7 @@ trait SignalNode[+A] extends ReactiveNode[A] {
   }
   override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: CreationTicket[S]): Signal[A, S]
 
-  def now[S <: Struct](implicit reifier: Reifier[S], ticket: Engine[S]): A = reify.now
+  def now[S <: Struct](implicit reifier: Reifier[S], ticket: Engine[S]): A = reify.readValueOnce
 
   def map[X >: A, B](f: (X) => B): MappedSignalNode[X, B] = MappedSignalNode(graph, newRef(), f)
   def change: ChangeEventNode[A] = ChangeEventNode(graph, newRef())

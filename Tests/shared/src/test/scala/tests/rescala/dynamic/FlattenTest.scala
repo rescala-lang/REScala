@@ -9,15 +9,15 @@ class FlattenTest extends RETests { multiEngined { engine => import engine._
     val vv = Var(Var(10)).flatten
     val vs = Var(Signal{10}).flatten
     val ss = Signal(Signal(10)).flatten
-    assert (sv.now === 10)
-    assert (vv.now === 10)
-    assert (vs.now === 10)
-    assert (ss.now === 10)
+    assert (sv.readValueOnce === 10)
+    assert (vv.readValueOnce === 10)
+    assert (vs.readValueOnce === 10)
+    assert (ss.readValueOnce === 10)
   }
 
   test("flatten array") {
     val sv = Signal { Array(Var(10)) }.flatten
-    assert (sv.now sameElements Array(10))
+    assert (sv.readValueOnce sameElements Array(10))
 
   }
 
@@ -29,9 +29,9 @@ class FlattenTest extends RETests { multiEngined { engine => import engine._
     val dynsig: Signal[Signal[Int]] = Signal { Signal { outside() } }
     val testsig = dynsig.flatten
 
-    assert(testsig.now === 1)
+    assert(testsig.readValueOnce === 1)
     outside set 2
-    assert(testsig.now === 2)
+    assert(testsig.readValueOnce === 2)
   }
 
   test("flatten Signal Seq"){
@@ -42,15 +42,15 @@ class FlattenTest extends RETests { multiEngined { engine => import engine._
 
     val flat = v.flatten
 
-    assert(flat.now === Seq(1,2,3), "flatten fails")
+    assert(flat.readValueOnce === Seq(1, 2, 3), "flatten fails")
 
     v2.set(100)
 
-    assert(flat.now === Seq(1,100,3), "flatten fails 2")
+    assert(flat.readValueOnce === Seq(1, 100, 3), "flatten fails 2")
 
     v.set(List(v3, v2))
 
-    assert(flat.now === Seq(3,100), "flatten fails 3")
+    assert(flat.readValueOnce === Seq(3, 100), "flatten fails 3")
   }
 
 
@@ -82,15 +82,15 @@ class FlattenTest extends RETests { multiEngined { engine => import engine._
 
     val flat = v.flatten
 
-    assert(flat.now === Array(1,2,3), "flatten fails")
+    assert(flat.readValueOnce === Array(1, 2, 3), "flatten fails")
 
     v2.set(100)
 
-    assert(flat.now === Array(1,100,3), "flatten fails 2")
+    assert(flat.readValueOnce === Array(1, 100, 3), "flatten fails 2")
 
     v.set(Array(v3, v2))
 
-    assert(flat.now === Array(3,100), "flatten fails 3")
+    assert(flat.readValueOnce === Array(3, 100), "flatten fails 3")
   }
 
 
@@ -100,15 +100,15 @@ class FlattenTest extends RETests { multiEngined { engine => import engine._
 
     val flat: Signal[Option[Int]] = v.flatten
 
-    assert(flat.now === None, "flatten fails")
+    assert(flat.readValueOnce === None, "flatten fails")
 
     v.set(Some(w))
 
-    assert(flat.now === Some(1), "flatten fails 2")
+    assert(flat.readValueOnce === Some(1), "flatten fails 2")
 
     w.set(100)
 
-    assert(flat.now === Some(100), "flatten fails 3")
+    assert(flat.readValueOnce === Some(100), "flatten fails 3")
   }
 
   test("flatten Event"){
@@ -213,10 +213,10 @@ class FlattenTest extends RETests { multiEngined { engine => import engine._
     val s2: Signal[Signal[Int]] = dynamic() { t => s1 }
     val sDeref = s2.flatten
 
-    assert(sDeref.now == 42)
+    assert(sDeref.readValueOnce == 42)
 
     v.set(0)
-    assert(sDeref.now == 0)
+    assert(sDeref.readValueOnce == 0)
   }
 
 
@@ -275,7 +275,7 @@ class FlattenTest extends RETests { multiEngined { engine => import engine._
     assert(sDerefChanged)
     assert(sHigherChanged)
 
-    assert(sDeref.now == 1234)
+    assert(sDeref.readValueOnce == 1234)
   }
 
 
@@ -308,7 +308,7 @@ class FlattenTest extends RETests { multiEngined { engine => import engine._
     assert(sDeref2_bChanged)
 
 
-    assert(s2.now.now.now == 0)
+    assert(s2.readValueOnce.readValueOnce.readValueOnce == 0)
   }
 
 
@@ -326,22 +326,22 @@ class FlattenTest extends RETests { multiEngined { engine => import engine._
     dereferenced.changed += { _ => dereferencedChanged = true }
 
     tick.fire()
-    assert(count.now == 1)
-    assert(doubled.now ==2)
-    assert(mod2.now == 1)
-    assert(selected.now == count)
+    assert(count.readValueOnce == 1)
+    assert(doubled.readValueOnce ==2)
+    assert(mod2.readValueOnce == 1)
+    assert(selected.readValueOnce == count)
     assert(dereferencedChanged)
     dereferencedChanged = false
-    assert(dereferenced.now == 1)
+    assert(dereferenced.readValueOnce == 1)
 
     tick.fire()
-    assert(count.now == 2)
-    assert(doubled.now ==4)
-    assert(mod2.now == 0)
-    assert(selected.now == doubled)
+    assert(count.readValueOnce == 2)
+    assert(doubled.readValueOnce ==4)
+    assert(mod2.readValueOnce == 0)
+    assert(selected.readValueOnce == doubled)
     assert(dereferencedChanged)
     dereferencedChanged = false
-    assert(dereferenced.now == 4)
+    assert(dereferenced.readValueOnce == 4)
   }
 
 } }

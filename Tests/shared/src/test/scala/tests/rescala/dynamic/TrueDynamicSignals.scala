@@ -11,11 +11,11 @@ class TrueDynamicSignals extends RETests { multiEngined { engine => import engin
     val b = Var(Signal(a()))
     val c = Signal.dynamic(b()())
 
-    assert(c.now === 3)
+    assert(c.readValueOnce === 3)
     a set 4
-    assert(c.now === 4)
+    assert(c.readValueOnce === 4)
     b set Signal(5)
-    assert(c.now === 5)
+    assert(c.readValueOnce === 5)
 
   }
 
@@ -26,11 +26,11 @@ class TrueDynamicSignals extends RETests { multiEngined { engine => import engin
       c()
     }
 
-    assert(b.now === 3)
+    assert(b.readValueOnce === 3)
     a set 4
-    assert(b.now === 4)
+    assert(b.readValueOnce === 4)
     a set 5
-    assert(b.now === 5)
+    assert(b.readValueOnce === 5)
   }
 
   test("use Of Inside Signal"){
@@ -44,11 +44,11 @@ class TrueDynamicSignals extends RETests { multiEngined { engine => import engin
       sig()
     }
 
-    assert(testsig.now === 10)
+    assert(testsig.readValueOnce === 10)
     outside set 2
     inside set 11
-    assert(testsig.now === 11)
-    assert(sig.now === 2)
+    assert(testsig.readValueOnce === 11)
+    assert(sig.readValueOnce === 2)
   }
 
   test("use Of Outside Signal"){
@@ -65,10 +65,10 @@ class TrueDynamicSignals extends RETests { multiEngined { engine => import engin
       sig().apply()
     }
 
-    assert(testsig.now === 1)
+    assert(testsig.readValueOnce === 1)
     outside set 2
     inside set 11
-    assert(testsig.now === 2)
+    assert(testsig.readValueOnce === 2)
   }
 
   test("pattern Matching Anonymous Function Nested Signals"){
@@ -78,9 +78,9 @@ class TrueDynamicSignals extends RETests { multiEngined { engine => import engin
     val s2 = Signal.dynamic {
       s1() collect { case Some(n) => n() }
     }
-    assert(s2.now === List(1, 2))
+    assert(s2.readValueOnce === List(1, 2))
     v1.set(10)
-    assert(s2.now === List(10, 2))
+    assert(s2.readValueOnce === List(10, 2))
   }
 
   test("outer And Inner Values"){
@@ -98,17 +98,17 @@ class TrueDynamicSignals extends RETests { multiEngined { engine => import engin
       localsig() + latest()
     }
 
-    assert(testsig.now === -1)
+    assert(testsig.readValueOnce === -1)
     evt.fire(100)
-    assert(testsig.now === 100)
+    assert(testsig.readValueOnce === 100)
     v set 10
-    assert(testsig.now === 110)
+    assert(testsig.readValueOnce === 110)
     evt.fire(10)
-    assert(testsig.now === 20)
+    assert(testsig.readValueOnce === 20)
     evt.fire(5)
-    assert(testsig.now === 15)
+    assert(testsig.readValueOnce === 15)
     v set 50
-    assert(testsig.now === 55)
+    assert(testsig.readValueOnce === 55)
   }
 
   test("chained Signals2"){
@@ -123,19 +123,19 @@ class TrueDynamicSignals extends RETests { multiEngined { engine => import engin
 
     val sig = Signal.dynamic { s().signal().signal(): @unchecked }
 
-    assert(sig.now === 20)
+    assert(sig.readValueOnce === 20)
     v1 set 30
-    assert(sig.now === 30)
+    assert(sig.readValueOnce === 30)
     v2 set new {def signal = Signal { 7 + v1() } }
-    assert(sig.now === 37)
+    assert(sig.readValueOnce === 37)
     v1 set 10
-    assert(sig.now === 17)
+    assert(sig.readValueOnce === 17)
     v3 set new {val signal = Signal { new {def signal = Signal { v1() } } } }
-    assert(sig.now === 10)
+    assert(sig.readValueOnce === 10)
     v2 set new {def signal = Signal { 10 + v1() } }
-    assert(sig.now === 10)
+    assert(sig.readValueOnce === 10)
     v1 set 80
-    assert(sig.now === 80)
+    assert(sig.readValueOnce === 80)
   }
 
   test("extracting Signal Side Effects"){
@@ -148,14 +148,14 @@ class TrueDynamicSignals extends RETests { multiEngined { engine => import engin
     val normalRes = Signals.dynamic() { t: DynamicTicket =>
       t.depend(newSignal())
     }
-    assert(macroRes.now === 0, "before, macro")
-    assert(normalRes.now === 0, "before, normal")
+    assert(macroRes.readValueOnce === 0, "before, macro")
+    assert(normalRes.readValueOnce === 0, "before, normal")
     e1.fire(1)
-    assert(macroRes.now === 1, "after, macro")
-    assert(normalRes.now === 1, "after, normal")
+    assert(macroRes.readValueOnce === 1, "after, macro")
+    assert(normalRes.readValueOnce === 1, "after, normal")
     e1.fire(1)
-    assert(macroRes.now === 2, "end, macro")
-    assert(normalRes.now === 1, "end, normal")
+    assert(macroRes.readValueOnce === 2, "end, macro")
+    assert(normalRes.readValueOnce === 1, "end, normal")
   }
 
   test("chained Signals1"){
@@ -168,13 +168,13 @@ class TrueDynamicSignals extends RETests { multiEngined { engine => import engin
 
     val sig = Signal.dynamic { v() map (_.s()) }
 
-    assert(sig.now === List(1, 2))
+    assert(sig.readValueOnce === List(1, 2))
     v1 set 5
-    assert(sig.now === List(5, 2))
+    assert(sig.readValueOnce === List(5, 2))
     v2 set 7
-    assert(sig.now === List(5, 7))
-    v set v.now.reverse
-    assert(sig.now === List(7, 5))
+    assert(sig.readValueOnce === List(5, 7))
+    v set v.readValueOnce.reverse
+    assert(sig.readValueOnce === List(7, 5))
   }
 
 
@@ -189,23 +189,23 @@ class TrueDynamicSignals extends RETests { multiEngined { engine => import engin
     }
 
     assert(reevaluations == 1)
-    assert(s.now == 0)
+    assert(s.readValueOnce == 0)
     ifTrue.set(1)
     assert(reevaluations == 2)
-    assert(s.now == 1)
+    assert(s.readValueOnce == 1)
     ifFalse.set(11) // No effect
     assert(reevaluations == 2)
-    assert(s.now == 1)
+    assert(s.readValueOnce == 1)
 
     condition.set(false)
     assert(reevaluations == 3)
-    assert(s.now == 11)
+    assert(s.readValueOnce == 11)
     ifFalse.set(12)
     assert(reevaluations == 4)
-    assert(s.now == 12)
+    assert(s.readValueOnce == 12)
     ifTrue.set(2) // No effect
     assert(reevaluations == 4)
-    assert(s.now == 12)
+    assert(s.readValueOnce == 12)
   }
 
 
@@ -223,10 +223,10 @@ class TrueDynamicSignals extends RETests { multiEngined { engine => import engin
     val s1: Signal[Int] = v.map(identity)
     val s2: Signal[Signal[Int]] = dynamic() { t => s1 }
 
-    assert(s2.now.now == 42)
+    assert(s2.readValueOnce.readValueOnce == 42)
 
     v.set(0)
-    assert(s2.now.now == 0)
+    assert(s2.readValueOnce.readValueOnce == 0)
   }
 
 
@@ -242,9 +242,9 @@ class TrueDynamicSignals extends RETests { multiEngined { engine => import engin
       t.depend(dynamic(outside) { t => t.depend(outside) })
     }
 
-    assert(testsig.now === 1)
+    assert(testsig.readValueOnce === 1)
     outside set 2
-    assert(testsig.now === 2)
+    assert(testsig.readValueOnce === 2)
   }
 
 
@@ -256,11 +256,11 @@ class TrueDynamicSignals extends RETests { multiEngined { engine => import engin
     val `dynamic signal changing from level 1 to level 4` = dynamic(condition) { t =>
       if (t.depend(condition)) t.depend(v3) else t.depend(v0)
     }
-    assert(`dynamic signal changing from level 1 to level 4`.now == "level 0")
+    assert(`dynamic signal changing from level 1 to level 4`.readValueOnce == "level 0")
     assertLevel(`dynamic signal changing from level 1 to level 4`, 1)
 
     condition.set(true)
-    assert(`dynamic signal changing from level 1 to level 4`.now == "level 3")
+    assert(`dynamic signal changing from level 1 to level 4`.readValueOnce == "level 3")
     assertLevel(`dynamic signal changing from level 1 to level 4`, 4)
   }
 
@@ -274,11 +274,11 @@ class TrueDynamicSignals extends RETests { multiEngined { engine => import engin
         ticket.depend(dynamic(v3) {t => t.depend(v3) + "level 4 inner" })
       }
     }
-    assert(`dynamic signal changing from level 1 to level 4`.now == "level 0")
+    assert(`dynamic signal changing from level 1 to level 4`.readValueOnce == "level 0")
     assertLevel(`dynamic signal changing from level 1 to level 4`, 1)
 
     v0.set("level0+")
-    assert(`dynamic signal changing from level 1 to level 4`.now == "level0+level 1level 2level 3level 4 inner")
+    assert(`dynamic signal changing from level 1 to level 4`.readValueOnce == "level0+level 1level 2level 3level 4 inner")
     assertLevel(`dynamic signal changing from level 1 to level 4`, 5)
   }
 

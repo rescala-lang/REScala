@@ -89,12 +89,12 @@ class Change extends RETests { multiEngined { engine => import engine._
     e += { x => test += 1 }
 
     assert(test === 0)
-    assert(s1.now === 2)
+    assert(s1.readValueOnce === 2)
     v1 set 2
-    assert(s1.now === 3)
+    assert(s1.readValueOnce === 3)
     assert(test === 1)
     v1 set 3
-    assert(s1.now === 4)
+    assert(s1.readValueOnce === 4)
     assert(test === 2)
   }
 
@@ -122,13 +122,13 @@ class Change extends RETests { multiEngined { engine => import engine._
 
     val log = ored.list()
 
-    assert(log.now === Nil)
+    assert(log.readValueOnce === Nil)
 
     v2.set("two")
-    assert(log.now === List())
+    assert(log.readValueOnce === List())
 
     v2.set("three")
-    assert(log.now === List("two" -> "three"))
+    assert(log.readValueOnce === List("two" -> "three"))
   }
 
 
@@ -143,28 +143,28 @@ class Change extends RETests { multiEngined { engine => import engine._
 
     val log = ored.list()
 
-    assert(log.now === Nil)
+    assert(log.readValueOnce === Nil)
 
     v1.set("one")
-    assert(log.now === List("constant" -> "one"))
+    assert(log.readValueOnce === List("constant" -> "one"))
 
     v2.set("two")
-    assert(log.now === List("constant" -> "one"))
+    assert(log.readValueOnce === List("constant" -> "one"))
 
     v2.set("three")
-    assert(log.now === List("two" -> "three", "constant" -> "one"))
+    assert(log.readValueOnce === List("two" -> "three", "constant" -> "one"))
 
 
     update(v1 -> "four a", v2 -> "four b")
 
-    assert(log.now === List("constant" -> "four a", "two" -> "three", "constant" -> "one"))
+    assert(log.readValueOnce === List("constant" -> "four a", "two" -> "three", "constant" -> "one"))
 
     transaction(v1, v2) { turn =>
       v1.admitPulse(Pulse.Exceptional(EmptySignalControlThrowable))(turn)
       v2.admit("five b")(turn)
     }
 
-    assert(log.now === List("four b" -> "five b", "constant" -> "four a", "two" -> "three", "constant" -> "one"))
+    assert(log.readValueOnce === List("four b" -> "five b", "constant" -> "four a", "two" -> "three", "constant" -> "one"))
 
   }
 

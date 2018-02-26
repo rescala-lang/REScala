@@ -17,9 +17,9 @@ class GlitchFreedomTestSuite extends RETests { multiEngined { engine => import e
 
     v1.set(3)
 
-    assert(s1List.now === List(6))
-    assert(s2List.now === List(9))
-    assert(s3List.now === List(15))
+    assert(s1List.readValueOnce === List(6))
+    assert(s2List.readValueOnce === List(9))
+    assert(s3List.readValueOnce === List(15))
 
   }
 
