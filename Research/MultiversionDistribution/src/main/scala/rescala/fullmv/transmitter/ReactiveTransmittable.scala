@@ -1,7 +1,7 @@
 package rescala.fullmv.transmitter
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
-import java.util.concurrent.{ConcurrentHashMap, ThreadLocalRandom}
+import java.util.concurrent.{ConcurrentHashMap, Executors, ThreadLocalRandom}
 
 import rescala.core.Reactive
 import rescala.core._
@@ -16,11 +16,6 @@ import retier.transmitter._
 import scala.annotation.tailrec
 import scala.concurrent._
 import scala.util.{Failure, Success}
-
-sealed trait MessageType
-case object AsyncRequest extends MessageType
-case class Request(requestId: Long) extends MessageType
-case class Response(requestId: Long) extends MessageType
 
 object ReactiveTransmittable {
   val DEBUG: Boolean = FullMVEngine.DEBUG || SubsumableLock.DEBUG
@@ -137,75 +132,85 @@ object ReactiveTransmittable {
         throw e
     }
   }
+  sealed trait PossiblyBlockingTopLevel[+P] extends Message[P]
+  sealed trait UnderlyingChatter extends Message[Nothing]
+
   sealed trait Async[+P] extends Message[P]
+  sealed trait PossiblyBlockingTopLevelAsync[+P] extends Async[P] with PossiblyBlockingTopLevel[P]
+  sealed trait UnderlyingChatterAsync extends Async[Nothing] with UnderlyingChatter
+
   sealed trait Request[+P] extends Message[P] {
     type Response <: ReactiveTransmittable.this.Response[P]
   }
+  sealed trait PossiblyBlockingTopLevelRequest[+P] extends Request[P] with PossiblyBlockingTopLevel[P]
+  sealed trait UnderlyingChatterRequest extends Request[Nothing] with UnderlyingChatter
+
   sealed trait Response[+P] extends Message[P]
-  case object UnitResponse extends Response[Nothing]
   case class RemoteExceptionResponse(serializedThrowable: Array[Byte]) extends Response[Nothing]
+  case object UnitResponse extends Response[Nothing]
   import scala.language.implicitConversions
   implicit def unitResponseToUnitFuture(future: Future[UnitResponse.type]): Future[Unit] = future.map(_ => ())(FullMVEngine.notWorthToMoveToTaskpool)
   implicit def unitToUnitResponseFuture(future: Future[Unit]): Future[UnitResponse.type] = future.map(_ => UnitResponse)(FullMVEngine.notWorthToMoveToTaskpool)
+
   type TurnPushBundle = (Host.GUID, TurnPhase.Type)
 
   /** Connection Establishment **/
-  case class Connect[P](turn: TurnPushBundle) extends Request[P]{ override type Response = Initialize[P] }
+  case class Connect[P](turn: TurnPushBundle) extends PossiblyBlockingTopLevelRequest[P]{ override type Response = Initialize[P] }
   case class Initialize[P](initValues: Seq[(TurnPushBundle, P)], maybeFirstFrame: Option[TurnPushBundle]) extends Response[P]
   /** [[ReactiveReflectionProxy]] **/
-  case class AsyncIncrementFrame(turn: TurnPushBundle) extends Async[Nothing]
-  case class AsyncDecrementFrame(turn: TurnPushBundle) extends Async[Nothing]
-  case class AsyncIncrementSupersedeFrame(turn: TurnPushBundle, supersede: TurnPushBundle) extends Async[Nothing]
-  case class AsyncDeframeReframe(turn: TurnPushBundle, reframe: TurnPushBundle) extends Async[Nothing]
-  case class AsyncResolveUnchanged(turn: TurnPushBundle) extends Async[Nothing]
-  case class AsyncResolveUnchangedFollowFrame(turn: TurnPushBundle, followFrame: TurnPushBundle) extends Async[Nothing]
-  case class AsyncNewValue[P](turn: TurnPushBundle, value: P) extends Async[P]
-  case class AsyncNewValueFollowFrame[P](turn: TurnPushBundle, value: P, followFrame: TurnPushBundle) extends Async[P]
+  case class AsyncIncrementFrame(turn: TurnPushBundle) extends PossiblyBlockingTopLevelAsync[Nothing]
+  case class AsyncDecrementFrame(turn: TurnPushBundle) extends PossiblyBlockingTopLevelAsync[Nothing]
+  case class AsyncIncrementSupersedeFrame(turn: TurnPushBundle, supersede: TurnPushBundle) extends PossiblyBlockingTopLevelAsync[Nothing]
+  case class AsyncDeframeReframe(turn: TurnPushBundle, reframe: TurnPushBundle) extends PossiblyBlockingTopLevelAsync[Nothing]
+  case class AsyncResolveUnchanged(turn: TurnPushBundle) extends PossiblyBlockingTopLevelAsync[Nothing]
+  case class AsyncResolveUnchangedFollowFrame(turn: TurnPushBundle, followFrame: TurnPushBundle) extends PossiblyBlockingTopLevelAsync[Nothing]
+  case class AsyncNewValue[P](turn: TurnPushBundle, value: P) extends PossiblyBlockingTopLevelAsync[P]
+  case class AsyncNewValueFollowFrame[P](turn: TurnPushBundle, value: P, followFrame: TurnPushBundle) extends PossiblyBlockingTopLevelAsync[P]
   /** [[FullMVTurnProxy]] **/
-  case class AsyncAddPhaseReplicator(turn: Host.GUID, alreadyKnownPhase: TurnPhase.Type) extends Async[Nothing]
-  case class AddPredecessorReplicator(turn: Host.GUID) extends Request[Nothing] { override type Response = PredecessorsResponse }
+  case class AsyncAddPhaseReplicator(turn: Host.GUID, alreadyKnownPhase: TurnPhase.Type) extends UnderlyingChatterAsync
+  case class AddPredecessorReplicator(turn: Host.GUID) extends UnderlyingChatterRequest { override type Response = PredecessorsResponse }
   case class PredecessorsResponse(predecessors: CaseClassTransactionSpanningTreeNode[TurnPushBundle]) extends Response[Nothing]
-  case class AddRemoteBranch(turn: Host.GUID, forPhase: TurnPhase.Type) extends Request[Nothing] { override type Response = UnitResponse.type }
-  case class AsyncRemoteBranchComplete(turn: Host.GUID, forPhase: TurnPhase.Type) extends Async[Nothing]
-  case class AcquirePhaseLockIfAtMost(turn: Host.GUID, phase: TurnPhase.Type) extends Request[Nothing]{ override type Response = AcquirePhaseLockResponse }
+  case class AddRemoteBranch(turn: Host.GUID, forPhase: TurnPhase.Type) extends UnderlyingChatterRequest { override type Response = UnitResponse.type }
+  case class AsyncRemoteBranchComplete(turn: Host.GUID, forPhase: TurnPhase.Type) extends UnderlyingChatterAsync
+  case class AcquirePhaseLockIfAtMost(turn: Host.GUID, phase: TurnPhase.Type) extends UnderlyingChatterRequest{ override type Response = AcquirePhaseLockResponse }
   case class AcquirePhaseLockResponse(phase: TurnPhase.Type) extends Response[Nothing]
-  case class AddPredecessor(turn: Host.GUID, predecessorTree: CaseClassTransactionSpanningTreeNode[TurnPushBundle]) extends Request[Nothing]{ override type Response = BooleanResponse }
+  case class AddPredecessor(turn: Host.GUID, predecessorTree: CaseClassTransactionSpanningTreeNode[TurnPushBundle]) extends UnderlyingChatterRequest{ override type Response = BooleanResponse }
   case class BooleanResponse(bool: Boolean) extends Response[Nothing]
-  case class AsyncReleasePhaseLock(turn: Host.GUID) extends Async[Nothing]
-  case class MaybeNewReachableSubtree(turn: Host.GUID, attachBelow: TurnPushBundle, spanningTree: CaseClassTransactionSpanningTreeNode[TurnPushBundle]) extends Request[Nothing]{ override type Response = UnitResponse.type }
-  case class NewSuccessor(turn: Host.GUID, successor: TurnPushBundle) extends Request[Nothing]{ override type Response = UnitResponse.type }
+  case class AsyncReleasePhaseLock(turn: Host.GUID) extends UnderlyingChatterAsync
+  case class MaybeNewReachableSubtree(turn: Host.GUID, attachBelow: TurnPushBundle, spanningTree: CaseClassTransactionSpanningTreeNode[TurnPushBundle]) extends UnderlyingChatterRequest{ override type Response = UnitResponse.type }
+  case class NewSuccessor(turn: Host.GUID, successor: TurnPushBundle) extends UnderlyingChatterRequest{ override type Response = UnitResponse.type }
   /** [[SubsumableLockEntryPoint]] **/
-  case class TurnGetLockedRoot(turn: Host.GUID) extends Request[Nothing]{ override type Response = TurnLockStateResponse }
+  case class TurnGetLockedRoot(turn: Host.GUID) extends UnderlyingChatterRequest{ override type Response = TurnLockStateResponse }
   sealed trait TurnLockStateResponse extends Response[Nothing]
   case object LockStateTurnCompletedResponse extends TurnLockStateResponse
-  case class TurnTryLock(turn: Host.GUID) extends Request[Nothing]{ override type Response = TurnTryLockResponse }
+  case class TurnTryLock(turn: Host.GUID) extends UnderlyingChatterRequest{ override type Response = TurnTryLockResponse }
   sealed trait TurnTryLockResponse extends Response[Nothing]
   case class TurnLockedResponse(lock: Host.GUID) extends TurnTryLockResponse
-  case class TurnTrySubsume(turn: Host.GUID, lockedNewParent: Host.GUID) extends Request[Nothing]{ override type Response = TurnTrySubsumeResponse }
+  case class TurnTrySubsume(turn: Host.GUID, lockedNewParent: Host.GUID) extends UnderlyingChatterRequest{ override type Response = TurnTrySubsumeResponse }
   sealed trait TurnTrySubsumeResponse extends Response[Nothing]
   case object TurnSuccessfulResponse extends TurnTrySubsumeResponse
   case object TurnBlockedResponse extends TurnTryLockResponse with TurnTrySubsumeResponse
   case object TurnDeallocatedResponse extends TurnTryLockResponse with TurnTrySubsumeResponse
   /** [[SubsumableLockProxy]] **/
-  case class LockGetLockedRoot(lock: Host.GUID) extends Request[Nothing]{ override type Response = LockStateResponse }
+  case class LockGetLockedRoot(lock: Host.GUID) extends UnderlyingChatterRequest{ override type Response = LockStateResponse }
   sealed trait LockStateResponse extends Response[Nothing]
   case class LockStateLockedResponse(guid: Host.GUID) extends LockStateResponse with TurnLockStateResponse
   case object LockStateUnlockedResponse extends LockStateResponse with TurnLockStateResponse
   case object LockStateContendedResponse extends LockStateResponse
-  case class LockTryLock(lock: Host.GUID) extends Request[Nothing]{ override type Response = LockTryLockResponse }
+  case class LockTryLock(lock: Host.GUID) extends UnderlyingChatterRequest{ override type Response = LockTryLockResponse }
   sealed trait LockTryLockResponse extends Response[Nothing]
   case class LockLockedResponse(lock: Host.GUID) extends LockTryLockResponse
-  case class LockTrySubsume(lock: Host.GUID, lockedNewParent: Host.GUID) extends Request[Nothing]{ override type Response = LockTrySubsumeResponse }
+  case class LockTrySubsume(lock: Host.GUID, lockedNewParent: Host.GUID) extends UnderlyingChatterRequest{ override type Response = LockTrySubsumeResponse }
   sealed trait LockTrySubsumeResponse extends Response[Nothing]
   case object LockSuccessfulResponse extends LockTrySubsumeResponse
   case class LockBlockedResponse(lock: Host.GUID) extends LockTryLockResponse with LockTrySubsumeResponse
   case object LockDeallocatedResponse extends LockTryLockResponse with LockTrySubsumeResponse
-  case class LockAsyncUnlock(lock: Host.GUID) extends Async[Nothing]
-  case class LockAsyncRemoteRefDropped(lock: Host.GUID) extends Async[Nothing]
+  case class LockAsyncUnlock(lock: Host.GUID) extends UnderlyingChatterAsync
+  case class LockAsyncRemoteRefDropped(lock: Host.GUID) extends UnderlyingChatterAsync
   /** [[FullMVTurnPhaseReflectionProxy]] **/
-  case class AsyncNewPhase(turn: TurnPushBundle) extends Async[Nothing]
+  case class AsyncNewPhase(turn: TurnPushBundle) extends UnderlyingChatterAsync
   /** [[FullMVTurnPredecessorReflectionProxy]] **/
-  case class NewPredecessors(newPredecessors: CaseClassTransactionSpanningTreeNode[TurnPushBundle]) extends Request[Nothing] { override type Response = UnitResponse.type }
+  case class NewPredecessors(newPredecessors: CaseClassTransactionSpanningTreeNode[TurnPushBundle]) extends UnderlyingChatterRequest { override type Response = UnitResponse.type }
 
   def deserializeThrowable(se: Array[Byte]): Throwable = {
     val bais = new ByteArrayInputStream(se)
@@ -276,35 +281,31 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
   import ReactiveTransmittable._
   type Msg = ReactiveTransmittable.Msg[Pluse[P]]
   type Message = ReactiveTransmittable.Message[Pluse[P]]
-  type Async = ReactiveTransmittable.Async[Pluse[P]]
-  type Request = ReactiveTransmittable.Request[Pluse[P]]
   type Response = ReactiveTransmittable.Response[Pluse[P]]
 
-  val executeInTaskPool: ExecutionContext = ExecutionContext.fromExecutorService(host.threadPool)
-
+  val executeInTaskPool: ExecutionContext = ExecutionContext.fromExecutor(Executors.newCachedThreadPool())
   val requestTracker = new ConcurrentHashMap[Long, Promise[_ <: Response]]()
 
-  def handleMessage(localReactive: Either[R, ReactiveReflection[Pulse[P]]], endpoint: EndPointWithInfrastructure[Msg])(msg: MessageWithInfrastructure[Msg]): Unit = {
-    if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host receive incoming $msg")
-    (msg._1, Message.fromTuple(msg._2)) match {
-      case (_, async: Async) =>
-        host.threadPool.submit(new Runnable {
+  def handleChatter(endpoint: EndPointWithInfrastructure[Msg], requestId: Long, message: UnderlyingChatter): Unit = {
+    message match {
+      case async: UnderlyingChatterAsync =>
+        executeInTaskPool.execute(new Runnable {
           override def run(): Unit = {
             if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host processing async $async")
             try {
-              handleAsync(localReactive, endpoint, async)
+              handleAsyncChatter(endpoint, async)
             } catch {
               // TODO cannot propagate this back to sender because async, what else to do?
               case t: Throwable => new Exception("Error processing async " + async, t).printStackTrace()
             }
           }
         })
-      case (requestId, request: Request) =>
-        host.threadPool.submit(new Runnable {
+      case request: UnderlyingChatterRequest =>
+        executeInTaskPool.execute(new Runnable {
           override def run(): Unit = {
             if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host processing request $request")
             try {
-              handleRequest(localReactive, endpoint, request).onComplete {
+              handleRequestChatter(endpoint, request).onComplete {
                 case Success(response) =>
                   if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host replying $requestId: $response")
                   endpoint.send((requestId, response.toTuple))
@@ -321,34 +322,63 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
             }
           }
         })
-      case (requestId, response: Response) =>
-        try {
-          val promise = requestTracker.remove(requestId).asInstanceOf[Promise[Response]] /* typesafety yay */
-          assert(promise != null, s"request $requestId unknown!")
-          promise.complete(response match {
-            case RemoteExceptionResponse(se) => Failure(deserializeThrowable(se))
-            case otherwise => Success(response)
-          })
-        } catch {
-          // this should only happen on framework bugs. Since we're just completing a future, everything client-code that happens as
-          // a reaction of that should catch and propagate exceptions itself, so no client exceptions should be thrown uncaught..
-          case t: Throwable => t.printStackTrace()
-        }
     }
   }
 
-  override def send(value: R, remote: RemoteRef, endpoint: EndPointWithInfrastructure[Msg]): MessageWithInfrastructure[Msg] = {
-    if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host sending $value")
-    endpoint.receive.notify (handleMessage(Left(value), endpoint))
+  def consumeResponse(requestId: Long, response: Response): Unit = {
+    try {
+      val promise = requestTracker.remove(requestId).asInstanceOf[Promise[Response]] /* typesafety yay */
+      assert(promise != null, s"request $requestId unknown!")
+      promise.complete(response match {
+        case RemoteExceptionResponse(se) => Failure(deserializeThrowable(se))
+        case otherwise => Success(response)
+      })
+    } catch {
+      // this should only happen on framework bugs. Since we're just completing a future, everything client-code that happens as
+      // a reaction of that should catch and propagate exceptions itself, so no client exceptions should be thrown uncaught..
+      case t: Throwable => t.printStackTrace()
+    }
+  }
+
+  override def send(reactive: R, remote: RemoteRef, endpoint: EndPointWithInfrastructure[Msg]): MessageWithInfrastructure[Msg] = {
+    if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host sending $reactive")
+    endpoint.receive.notify { mwi: MessageWithInfrastructure[Msg] =>
+      if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] sender $host receive incoming $mwi")
+      val (requestId: Long, msg: Msg) = mwi
+      Message.fromTuple(msg) match {
+        case response: Response =>
+          consumeResponse(requestId, response)
+        case Connect(turnBundle) =>
+          host.threadPool.submit(new Runnable {
+            override def run(): Unit = {
+              try {
+                if (ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host processing connect $reactive $turnBundle")
+                val (initValues, maybeFirstFrame) = ReactiveMirror[Pulse[P]](reactive, lookUpLocalTurnParameterInstance(turnBundle, endpoint), isTransient, s"Mirror($endpoint)")(toPulse(reactive), new ReactiveReflectionProxyToEndpoint(endpoint))
+                val response = Initialize(initValues.map { case (aTurn, value) =>
+                  (bundle(aTurn), Pluse.fromPulse(value))
+                }, maybeFirstFrame.map(bundle))
+                endpoint.send(requestId -> response.toTuple)
+              } catch {
+                case t: Throwable =>
+                  if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host connect $reactive $turnBundle failed to execute; returning ${t.getClass.getName}: ${t.getMessage} to remote")
+                  if(ReactiveTransmittable.DEBUG) t.printStackTrace()
+                  endpoint.send(requestId -> RemoteExceptionResponse(serializeThrowable(t)).toTuple)
+              }
+            }
+          })
+        case otherwise: PossiblyBlockingTopLevel[P] => new Exception("Illegal top level message received on sender side: " + otherwise)
+        case otherwise: UnderlyingChatter => handleChatter(endpoint, requestId, otherwise)
+      }
+    }
     (0L, UnitResponse.toTuple)
   }
 
-  def doAsync(endpoint: EndPointWithInfrastructure[Msg], parameters: Async): Unit = {
+  def doAsync(endpoint: EndPointWithInfrastructure[Msg], parameters: Async[Pluse[P]]): Unit = {
     if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host send async $parameters")
     endpoint.send((0L, parameters.toTuple))
   }
 
-  def doRequest(endpoint: EndPointWithInfrastructure[Msg],  parameters: Request): Future[parameters.Response] = {
+  def doRequest(endpoint: EndPointWithInfrastructure[Msg],  parameters: Request[Pluse[P]]): Future[parameters.Response] = {
     val promise = Promise[parameters.Response]()
     @inline @tailrec def createRequest(): Long = {
       val requestId = ThreadLocalRandom.current().nextLong()
@@ -428,7 +458,28 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
     val state = turn.makeDerivedStructState[Pulse[P]](valuePersistency)
     val reflection = instantiate(state, turn)
     if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host instantiating $reflection, requesting initialization starting at $turn")
-    endpoint.receive.notify (handleMessage(Right(reflection), endpoint))
+    endpoint.receive.notify { mwi: MessageWithInfrastructure[Msg] =>
+      if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] receiver $host receive incoming $mwi")
+      val (requestId: Long, msg: Msg) = mwi
+      Message.fromTuple(msg) match {
+        case response: Response =>
+          consumeResponse(requestId, response)
+        case topLevel: PossiblyBlockingTopLevelAsync[Pluse[P]] =>
+          host.threadPool.submit(new Runnable {
+            override def run(): Unit = {
+              if (ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host processing top level async $topLevel")
+              try {
+                handleTopLevelAsync(reflection, endpoint, topLevel)
+              } catch {
+                // TODO cannot propagate this back to sender because async, what else to do?
+                case t: Throwable => new Exception("Error processing top level async " + topLevel, t).printStackTrace()
+              }
+            }
+          })
+        case otherwise: PossiblyBlockingTopLevel[P] => new Exception("Illegal top level message received on receiver side: " + otherwise)
+        case otherwise: UnderlyingChatter => handleChatter(endpoint, requestId, otherwise)
+      }
+    }
     doRequest(endpoint, Connect[Pluse[P]](bundle(turn))).foreach {
       case Initialize(initValues, maybeFirstFrame) =>
         if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host received initialization package for $reflection")
@@ -456,24 +507,26 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
 
   def instantiate(state: NodeVersionHistory[Pulse[P], FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]], initTurn: FullMVTurn): ReactiveReflectionImpl[Pulse[P]] with R
 
-  def handleAsync(localReactive: Either[R, ReactiveReflection[Pulse[P]]], endpoint: EndPointWithInfrastructure[Msg], message: Async): Unit = message match {
+  def handleTopLevelAsync(reflection: ReactiveReflection[Pulse[P]], endpoint: EndPointWithInfrastructure[Msg], message: PossiblyBlockingTopLevelAsync[Pluse[P]]): Unit = message match {
     case AsyncIncrementFrame(turn) =>
-      localReactive.right.get.asyncIncrementFrame(lookUpLocalTurnParameterInstance(turn, endpoint))
+      reflection.asyncIncrementFrame(lookUpLocalTurnParameterInstance(turn, endpoint))
     case AsyncDecrementFrame(turn) =>
-      localReactive.right.get.asyncDecrementFrame(lookUpLocalTurnParameterInstance(turn, endpoint))
+      reflection.asyncDecrementFrame(lookUpLocalTurnParameterInstance(turn, endpoint))
     case AsyncIncrementSupersedeFrame(turn, supersede) =>
-      localReactive.right.get.asyncIncrementSupersedeFrame(lookUpLocalTurnParameterInstance(turn, endpoint), lookUpLocalTurnParameterInstance(supersede, endpoint))
+      reflection.asyncIncrementSupersedeFrame(lookUpLocalTurnParameterInstance(turn, endpoint), lookUpLocalTurnParameterInstance(supersede, endpoint))
     case AsyncDeframeReframe(turn, reframe) =>
-      localReactive.right.get.asyncDeframeReframe(lookUpLocalTurnParameterInstance(turn, endpoint), lookUpLocalTurnParameterInstance(reframe, endpoint))
+      reflection.asyncDeframeReframe(lookUpLocalTurnParameterInstance(turn, endpoint), lookUpLocalTurnParameterInstance(reframe, endpoint))
     case AsyncResolveUnchanged(turn) =>
-      localReactive.right.get.asyncResolvedUnchanged(lookUpLocalTurnParameterInstance(turn, endpoint))
+      reflection.asyncResolvedUnchanged(lookUpLocalTurnParameterInstance(turn, endpoint))
     case AsyncResolveUnchangedFollowFrame(turn, followFrame) =>
-      localReactive.right.get.asyncResolvedUnchangedFollowFrame(lookUpLocalTurnParameterInstance(turn, endpoint), lookUpLocalTurnParameterInstance(followFrame, endpoint))
+      reflection.asyncResolvedUnchangedFollowFrame(lookUpLocalTurnParameterInstance(turn, endpoint), lookUpLocalTurnParameterInstance(followFrame, endpoint))
     case AsyncNewValue(turn, value) =>
-      localReactive.right.get.asyncNewValue(lookUpLocalTurnParameterInstance(turn, endpoint), value.toPulse)
+      reflection.asyncNewValue(lookUpLocalTurnParameterInstance(turn, endpoint), value.toPulse)
     case AsyncNewValueFollowFrame(turn, value, followFrame) =>
-      localReactive.right.get.asyncNewValueFollowFrame(lookUpLocalTurnParameterInstance(turn, endpoint), value.toPulse, lookUpLocalTurnParameterInstance(followFrame, endpoint))
+      reflection.asyncNewValueFollowFrame(lookUpLocalTurnParameterInstance(turn, endpoint), value.toPulse, lookUpLocalTurnParameterInstance(followFrame, endpoint))
+  }
 
+  def handleAsyncChatter(endpoint: EndPointWithInfrastructure[Msg], message: UnderlyingChatterAsync): Unit = message match {
     case AsyncRemoteBranchComplete(receiver, forPhase) =>
       val maybeTurn = localTurnReceiverInstance(receiver)
       assert(maybeTurn.isDefined, s"supposedly a remote still has a branch, but $maybeTurn has already been deallocated")
@@ -510,13 +563,7 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
     }
   }
 
-  def handleRequest(localReactive: Either[R, ReactiveReflection[Pulse[P]]], endpoint: EndPointWithInfrastructure[Msg], request: Request): Future[Response] = request match {
-    case Connect(turn) =>
-      val localInstance = localReactive.left.get
-      val (initValues, maybeFirstFrame) = ReactiveMirror[Pulse[P]](localInstance, lookUpLocalTurnParameterInstance(turn, endpoint), isTransient, s"Mirror($endpoint)")(toPulse(localInstance), new ReactiveReflectionProxyToEndpoint(endpoint))
-      Future.successful(Initialize(initValues.map { case (aTurn, value) =>
-        (bundle(aTurn), Pluse.fromPulse(value))
-      }, maybeFirstFrame.map(bundle)))
+  def handleRequestChatter(endpoint: EndPointWithInfrastructure[Msg], request: UnderlyingChatterRequest): Future[Response] = request match {
     case AddRemoteBranch(receiver, forPhase) =>
       val maybeTurn = localTurnReceiverInstance(receiver)
       assert(maybeTurn.isDefined, s"someone tried to revive $receiver, which should thus not have been possible to be deallocated")

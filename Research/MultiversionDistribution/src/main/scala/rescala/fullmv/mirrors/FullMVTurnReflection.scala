@@ -1,5 +1,7 @@
 package rescala.fullmv.mirrors
 
+import java.util.concurrent.ForkJoinPool
+import java.util.concurrent.ForkJoinPool.ManagedBlocker
 import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
 
 import rescala.fullmv._
@@ -7,9 +9,9 @@ import rescala.fullmv.TurnPhase.Type
 import rescala.fullmv.sgt.synchronization._
 
 import scala.annotation.tailrec
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 
-class FullMVTurnReflection(override val host: FullMVEngine, override val guid: Host.GUID, initialPhase: TurnPhase.Type, val proxy: FullMVTurnProxy) extends FullMVTurn with SubsumableLockEntryPoint with FullMVTurnPhaseReflectionProxy with FullMVTurnPredecessorReflectionProxy {
+class FullMVTurnReflection(override val host: FullMVEngine, override val guid: Host.GUID, initialPhase: TurnPhase.Type, val proxy: FullMVTurnProxy) extends FullMVTurn with SubsumableLockEntryPoint with FullMVTurnPhaseReflectionProxy with FullMVTurnPredecessorReflectionProxy with ManagedBlocker {
   val _phase: AtomicInteger = new AtomicInteger(initialPhase)
   override def phase: TurnPhase.Type = _phase.get
 
@@ -32,25 +34,26 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
     if(predecessorSubscribed != 1) {
       // ensure that only the first guy to call this actually registers a subscription
       // and all the others only continue after that first guy is done
-      val mustSubscribe = predecessorSubscriptionParking.synchronized {
-        if (predecessorSubscribed == -1) {
-          predecessorSubscribed = 0
-          true
-        } else {
-          while (predecessorSubscribed == 0) predecessorSubscriptionParking.wait()
-          false
-        }
-      }
-      if (mustSubscribe) {
-        if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this subscribing predecessors.")
-        newPredecessors(Await.result(proxy.addPredecessorReplicator(this), host.timeout))
-        predecessorSubscriptionParking.synchronized {
-          predecessorSubscribed = 1
-          predecessorSubscriptionParking.notifyAll()
-        }
+      predecessorSubscriptionParking.synchronized {
+        val before = predecessorSubscribed
+        if (before == -1) predecessorSubscribed = 0
+        before
+      } match {
+        case -1 =>
+          if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this subscribing predecessors.")
+          newPredecessors(FullMVEngine.myAwait(proxy.addPredecessorReplicator(this), host.timeout))
+          predecessorSubscriptionParking.synchronized {
+            predecessorSubscribed = 1
+            predecessorSubscriptionParking.notifyAll()
+          }
+        case 0 =>
+          ForkJoinPool.managedBlock(this)
+        case 1 => // ignore
       }
     }
   }
+  override def isReleasable: Boolean = predecessorSubscriptionParking.synchronized { predecessorSubscribed != 0 }
+  override def block(): Boolean = predecessorSubscriptionParking.synchronized { isReleasable || {predecessorSubscriptionParking.wait(); isReleasable} }
 
   override def activeBranchDifferential(forState: TurnPhase.Type, differential: Int): Unit = {
     assert(phase == forState, s"$this received branch differential for wrong state ${TurnPhase.toString(forState)}")
@@ -60,7 +63,7 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
     val after = before + differential
     if(before == 0) {
       if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this reactivated locally, registering remote branch.")
-      Await.result(proxy.addRemoteBranch(forState), host.timeout)
+      FullMVEngine.myAwait(proxy.addRemoteBranch(forState), host.timeout)
     } else if(after == 0) {
       if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this done locally, deregistering remote branch.")
       proxy.asyncRemoteBranchComplete(forState)

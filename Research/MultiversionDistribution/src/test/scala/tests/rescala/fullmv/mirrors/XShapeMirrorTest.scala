@@ -94,7 +94,7 @@ class XShapeMirrorTest extends FunSuite {
 
 
     val duration = 10000
-    println(s"starting lock stress test " + (if(duration == 0) "until key press" else s"for ${duration / 1000} seconds..."))
+    println(s"starting X-Shape mirror stress test " + (if(duration == 0) "until key press" else s"for ${duration / 1000} seconds..."))
     var running: Boolean = true
     def worker(host: SideHost) = Spawn {
       try {
@@ -124,7 +124,7 @@ class XShapeMirrorTest extends FunSuite {
     val scoreLeft = workerLeft.await(500)
     val scoreRight = workerRight.await(500)
     val scores = Array(scoreLeft, scoreRight)
-    println("lock stress test thread results:")
+    println("X-Shape mirror stress test thread results:")
     println("\t" + scores.zipWithIndex.map { case (count, idx) => idx + ": " + count }.mkString("\n\t"))
     scores.find {
       case Failure(ex: TimeoutException) => false
@@ -146,7 +146,7 @@ class XShapeMirrorTest extends FunSuite {
         println(s"top merge: ${merge.now}")
         fail("there were errors")
       case Some(sum) =>
-        println(s"lock stress test totaled $sum iterations (individual scores: ${scores.mkString(", ")}")
+        println(s"X-Shape mirror stress test totaled $sum iterations (individual scores: ${scores.mkString(", ")}")
         assert(violations.get.isEmpty)
         assert(merge.now === Merge(
           Data("lmerge", Merge(Data("left", scoreLeft.get), Data("right", scoreRight.get))),

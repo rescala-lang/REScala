@@ -2,12 +2,12 @@ package rescala.fullmv.sgt.synchronization
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import rescala.fullmv.FullMVTurn
+import rescala.fullmv.{FullMVEngine, FullMVTurn}
 import rescala.fullmv.mirrors._
 import rescala.parrp.Backoff
 
 import scala.annotation.tailrec
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 
 sealed trait TryLockResult
@@ -120,7 +120,7 @@ object SubsumableLock {
     if (DEBUG) System.out.println(s"[${Thread.currentThread().getName}] syncing on SCC of $contender")
     val bo = new Backoff()
     @tailrec def reTryLock(): SubsumableLock = {
-      Await.result(contender.tryLock(), timeout) match {
+      FullMVEngine.myAwait(contender.tryLock(), timeout) match {
         case Locked(lockedRoot) =>
           if (DEBUG) System.out.println(s"[${Thread.currentThread().getName}] now owns SCC of $contender under $lockedRoot")
           lockedRoot
@@ -139,9 +139,9 @@ object SubsumableLock {
     if (DEBUG) System.out.println(s"[${Thread.currentThread().getName}] syncing $defender and $contender into a common SCC")
     val bo = new Backoff()
     @tailrec def reTryLock(): Option[SubsumableLock] = {
-      Await.result(contender.tryLock(), timeout) match {
+      FullMVEngine.myAwait(contender.tryLock(), timeout) match {
         case Locked(lockedRoot) =>
-          Await.result(defender.trySubsume(lockedRoot), timeout) match {
+          FullMVEngine.myAwait(defender.trySubsume(lockedRoot), timeout) match {
             case Successful =>
               if (DEBUG) System.out.println(s"[${Thread.currentThread().getName}] now owns SCC of $defender and $contender under $lockedRoot")
               Some(lockedRoot)

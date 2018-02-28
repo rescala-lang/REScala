@@ -7,7 +7,7 @@ import rescala.fullmv.mirrors.{FullMVTurnHost, Host, HostImpl, SubsumableLockHos
 import rescala.fullmv.sgt.synchronization.SubsumableLock
 import rescala.fullmv.tasks.{Framing, SourceNotification}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
 import scala.util.Try
 
@@ -97,6 +97,18 @@ object FullMVEngine {
   object notWorthToMoveToTaskpool extends ExecutionContext {
     override def execute(runnable: Runnable): Unit = runnable.run()
     override def reportFailure(t: Throwable): Unit = throw new IllegalStateException("problem in scala.concurrent internal callback", t)
+  }
+
+  def myAwait[T](future: Future[T], timeout: Duration): T = {
+    Await.result(future, timeout)
+//    if(!future.isCompleted) {
+//      val blocker = new ManagedBlocker {
+//        override def isReleasable: Boolean = future.isCompleted
+//        override def block(): Boolean = { Await.ready(future, timeout); true }
+//      }
+//      ForkJoinPool.managedBlock(blocker)
+//    }
+//    future.value.get.get
   }
 
   type CallAccumulator[T] = List[Future[T]]

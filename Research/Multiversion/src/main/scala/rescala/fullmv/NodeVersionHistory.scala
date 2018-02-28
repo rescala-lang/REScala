@@ -555,7 +555,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
         case TurnPhase.Executing =>
           tryRecordRelationship(predToRecord, predPos, lookFor, predToRecord, lookFor, sccState)
         case TurnPhase.Framing =>
-          Await.result(lookFor.acquirePhaseLockIfAtMost(TurnPhase.Framing), host.timeout) match {
+          FullMVEngine.myAwait(lookFor.acquirePhaseLockIfAtMost(TurnPhase.Framing), host.timeout) match {
             case TurnPhase.Framing =>
               try {
                 tryRecordRelationship(predToRecord, predPos, lookFor, predToRecord, lookFor, sccState)
@@ -583,7 +583,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     if (toSpeculative < toFinal) {
       assert(lookFor.phase == TurnPhase.Executing, s"$lookFor has a speculative successor, which should only happen if it is no longer framing.")
       val succToRecord = _versions(toSpeculative).txn
-      Await.result(succToRecord.acquirePhaseLockIfAtMost(TurnPhase.Executing), host.timeout) match {
+      FullMVEngine.myAwait(succToRecord.acquirePhaseLockIfAtMost(TurnPhase.Executing), host.timeout) match {
         case TurnPhase.Completed =>
           latestGChint = toSpeculative
           (Succeeded, sccState)
@@ -726,7 +726,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
         if(predPos < 0) throw new AssertionError(s"supposed-to-be predecessor $predecessor completed this having been assumed impossible")
         latestGChint = predPos
       } else {
-        Await.result(successor.addPredecessor(tree), host.timeout)
+        FullMVEngine.myAwait(successor.addPredecessor(tree), host.timeout)
       }
     }
   }
