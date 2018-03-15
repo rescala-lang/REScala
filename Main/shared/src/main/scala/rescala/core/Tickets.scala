@@ -14,10 +14,9 @@ class InnerTicket[S <: Struct](val creation: Initializer[S])
   * The ticket tracks return values, such as dependencies, the value, and if the value should be propagated.
   * Such usages make it unsuitable as an API for the user, where [[StaticTicket]] or [[DynamicTicket]] should be used instead.
   * */
-abstract class ReevTicket[V, S <: Struct](
-                                              creation: Initializer[S],
-                                              private var _before: V,
-                                            ) extends DynamicTicket[S](creation) with Result[V, S] {
+abstract class ReevTicket[V, S <: Struct](creation: Initializer[S],
+                                          private var _before: V,
+                                         ) extends DynamicTicket[S](creation) with Result[V, S] {
 
   // schedulers implement these to allow access
   protected def staticAccess(reactive: ReSource[S]): reactive.Value
@@ -25,7 +24,7 @@ abstract class ReevTicket[V, S <: Struct](
 
   // dependency tracking accesses
   private[rescala] final override def collectStatic(reactive: ReSource[S]): reactive.Value = {
-    if (collectedDependencies != null) collectedDependencies += reactive
+    assert(collectedDependencies == null || collectedDependencies.contains(reactive))
     staticAccess(reactive)
   }
 
@@ -41,7 +40,7 @@ abstract class ReevTicket[V, S <: Struct](
   private var value: V = _
   private var effect: () => Unit = null
   final def before: V = _before
-  final def trackDependencies(): Unit = collectedDependencies = Set.empty
+  final def trackDependencies(initial: Set[ReSource[S]]): Unit = collectedDependencies = initial
   final def withPropagate(p: Boolean): ReevTicket[V, S] = {_propagate = p; this}
   final def withValue(v: V): ReevTicket[V, S] = {require(v != null, "value must not be null"); value = v; _propagate = true; this}
   final def withEffect(v: () => Unit): ReevTicket[V, S] = {effect = v; this}

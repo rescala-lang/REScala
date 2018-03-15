@@ -183,7 +183,7 @@ class TrueDynamicSignals extends RETests { multiEngined { engine => import engin
     val ifTrue = Var(0)
     val ifFalse = Var(10)
     var reevaluations = 0
-    val s = Signals.dynamic(condition, ifTrue, ifFalse) { (dt: DynamicTicket) =>
+    val s = Signals.dynamic(condition) { (dt: DynamicTicket) =>
       reevaluations += 1
       if (dt.depend(condition)) dt.depend(ifTrue) else dt.depend(ifFalse)
     }

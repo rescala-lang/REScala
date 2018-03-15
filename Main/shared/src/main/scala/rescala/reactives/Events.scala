@@ -31,8 +31,9 @@ object Events {
   /** Creates dynamic events */
   def dynamic[T, S <: Struct](dependencies: ReSource[S]*)(expr: DynamicTicket[S] => Option[T])(implicit ticket: CreationTicket[S]): Event[T, S] = {
     ticket { initialTurn =>
-      initialTurn.create[Pulse[T], DynamicEvent[T, S]](dependencies.toSet, Initializer.Event, inite = true) {
-        state => new DynamicEvent[T, S](state, expr.andThen(Pulse.fromOption), ticket.rename) with DisconnectableImpl[S]
+      val staticDeps = dependencies.toSet
+      initialTurn.create[Pulse[T], DynamicEvent[T, S]](staticDeps, Initializer.Event, inite = true) {
+        state => new DynamicEvent[T, S](state, expr.andThen(Pulse.fromOption), ticket.rename, staticDeps) with DisconnectableImpl[S]
       }
     }
   }
@@ -126,12 +127,12 @@ private abstract class ChangeEvent[T, S <: Struct](_bud: S#State[(Pulse[T], Puls
   }
 }
 
-private abstract class DynamicEvent[T, S <: Struct](_bud: Estate[S, T], expr: DynamicTicket[S] => Pulse[T], name: REName)
+private abstract class DynamicEvent[T, S <: Struct](_bud: Estate[S, T], expr: DynamicTicket[S] => Pulse[T], name: REName, staticDeps: Set[ReSource[S]])
   extends Base[Pulse[T], S](_bud, name) with Event[T, S] {
 
   override def internalAccess(v: Pulse[T]): Pulse[T] = v
   override protected[rescala] def reevaluate(rein: ReIn): Rout = {
-    rein.trackDependencies()
+    rein.trackDependencies(staticDeps)
     Events.noteFromPulse[T, S](rein, Pulse.tryCatch(expr(rein), onEmpty = NoChange))
   }
 }

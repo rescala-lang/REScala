@@ -39,7 +39,7 @@ object REPublisher {
           synchronized {
             while (requested <= 0 && !cancelled) wait(100)
             if (cancelled) {
-              rein.trackDependencies()
+              rein.trackDependencies(Set.empty)
               rein
             }
             else {
@@ -51,7 +51,7 @@ object REPublisher {
                 case Failure(t) =>
                   subscriber.onError(t)
                   cancelled = true
-                  rein.trackDependencies()
+                  rein.trackDependencies(Set.empty)
                   rein
               }
             }

@@ -27,8 +27,9 @@ object Signals {
                              (expr: DynamicTicket[S] => T)
                              (implicit ct: CreationTicket[S]): Signal[T, S] =
     ct { initialTurn =>
-      initialTurn.create[Pulse[T], DynamicSignal[T, S]](dependencies.toSet, Initializer.DerivedSignal, inite = true) {
-        state => new DynamicSignal[T, S](state, expr, ct.rename) with DisconnectableImpl[S]
+      val staticDeps = dependencies.toSet
+      initialTurn.create[Pulse[T], DynamicSignal[T, S]](staticDeps, Initializer.DerivedSignal, inite = true) {
+        state => new DynamicSignal[T, S](state, expr, ct.rename, staticDeps) with DisconnectableImpl[S]
       }
     }
 
@@ -96,11 +97,11 @@ private abstract class StaticSignal[T, S <: Struct](_bud: Sstate[S, T], expr: (S
 
 }
 
-private abstract class DynamicSignal[T, S <: Struct](_bud: Sstate[S, T], expr: DynamicTicket[S] => T, name: REName)
+private abstract class DynamicSignal[T, S <: Struct](_bud: Sstate[S, T], expr: DynamicTicket[S] => T, name: REName, staticDeps: Set[ReSource[S]])
   extends Base[Pulse[T], S](_bud, name) with Signal[T, S] {
 
   override protected[rescala] def reevaluate(rein: ReIn): Rout = {
-    rein.trackDependencies()
+    rein.trackDependencies(staticDeps)
     Signals.computeNewValue[T, S](rein, () => expr(rein))
   }
 }
