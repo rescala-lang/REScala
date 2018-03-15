@@ -89,8 +89,7 @@ class MillGame {
     else MoveStoneSelect(player)
 
   private def decrementCount(player: Slot): Unit = {
-    val currentCount = remainCount.now
-    remainCount set currentCount.updated(player, currentCount(player) - 1)
+    remainCount.transform(currentCount => currentCount.updated(player, currentCount(player) - 1))
   }
 
   def playerInput(i: SlotIndex): Boolean = state match {
