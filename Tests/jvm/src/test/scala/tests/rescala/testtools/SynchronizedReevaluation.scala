@@ -59,7 +59,7 @@ object SynchronizedReevaluation {
   }
 
   def notifyOnceReached(syncs: SynchronizedReevaluation*): CountDownLatch = {
-    val latch = new CountDownLatch((syncs.size))
+    val latch = new CountDownLatch(syncs.size)
     syncs.foreach(_.addNotifyPoint(latch))
     latch
   }

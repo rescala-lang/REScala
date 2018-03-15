@@ -40,6 +40,7 @@ abstract class ReevTicket[V, S <: Struct](creation: Initializer[S],
   private var _propagate = false
   private var value: V = _
   private var effect: () => Unit = null
+  override final def toString: String = s"Result(value = $value, propagate = $propagate, deps = $collectedDependencies)"
   final def before: V = _before
   final def trackDependencies(initial: Set[ReSource[S]]): Unit = collectedDependencies = initial
   final def withPropagate(p: Boolean): ReevTicket[V, S] = {_propagate = p; this}

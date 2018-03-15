@@ -6,8 +6,12 @@ import rescala.Engines
 import rescala.core.Scheduler
 import rescala.core.infiltration.JVMInfiltrator
 import rescala.parrp.{Backoff, ParRP}
-import tests.rescala.testtools.{RETests, ReevaluationTracker, SetAndExtractTransactionHandle, _}
 import rescala.twoversion.TwoVersionSchedulerImpl
+import tests.rescala.testtools.{RETests, ReevaluationTracker, SetAndExtractTransactionHandle, _}
+
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class PessimisticTest extends RETests {
   engines(Engines.parrp)("SynchronizedReevaluation should synchronize reevaluations"){ (engine: Scheduler[TestStruct]) =>
@@ -60,48 +64,57 @@ class PessimisticTest extends RETests {
     assert(sum.readValueOnce === size)
   }
 
-  engines(Engines.parrp)("Pessimistic Engines should correctly execute crossed dynamic discoveries"){ engine =>
+  "Pessimistic Engines should correctly execute crossed dynamic discoveries" in { for (_ <- 1 to 1000) {
+    val engine = Engines.parrp
     import engine._
 
-    val v1 = Var(0)
-    val v2 = Var(1)
+    val initA = "init a"
+    val initB = "init b"
 
-    val (syncIn1, s11) = SynchronizedReevaluation(v1)
-    val (syncIn2, s21) = SynchronizedReevaluation(v2)
+    val staticA = "static a"
+    val staticB = "static b"
 
-    // so if s11 becomes true, this adds a dependency on v2
-    val s12 = engine.dynamic(s11) { t => if (t.depend(s11) != 0) t.depend(s21) else 2 }
+
+    val vA = Var(initA)(implicitly, "var A")
+    val vB = Var(initB)(implicitly, "var B")
+
+    val (syncInA, syncA) = SynchronizedReevaluation(vA)("sync A")
+    val (syncInB, syncB) = SynchronizedReevaluation(vB)("sync B")
+
+    // so if syncA becomes true, this adds a dependency on vB
+    val crossA = engine.dynamic(syncA) { t => if (t.depend(syncA) != initA) t.depend(syncB) else staticA} ("crossA")
 
     // this does as above, causing one or the other to access something which will change later
-    val s22 = engine.dynamic(s21) { t => if (t.depend(s21) != 1) t.depend(s11) else 3 }
+    val crossB = engine.dynamic(syncB) { t => if (t.depend(syncB) != initB) t.depend(syncA) else staticB } ("crossB")
 
-    val results1 = new ReevaluationTracker(s12)
-    val results2 = new ReevaluationTracker(s22)
+    val resultsA = new ReevaluationTracker(crossA)("resultsA")
+    val resultsB = new ReevaluationTracker(crossB)("resultsB")
 
-    results1.assertClear(2)
-    results2.assertClear(3)
+    resultsA.assertClear(staticA)
+    resultsB.assertClear(staticB)
 
     // force both turns to start executing before either may perform its dynamic discoveries
-    val latch = SynchronizedReevaluation.autoSyncNextReevaluation(syncIn1, syncIn2)
+    val syncBothLatch = SynchronizedReevaluation.autoSyncNextReevaluation(syncInA, syncInB)
 
-    // further force the first turn to wait for manual approval, so that the second turn will execute its discovery first
-    val latch1 = SynchronizedReevaluation.manuallySyncNextReevaluation(syncIn1)
 
-    val t1 = Spawn(v1.set(4))
-    val t2 = Spawn(v2.set(5))
+    // no evaluations happend yet
+    resultsA.assertClear()
+    resultsB.assertClear()
 
-    assert(latch.await(1000, TimeUnit.MILLISECONDS))
-    assert(latch1.getCount === 1) // t1 in should wait for manual approval only
-    results2.assertClear() // i should not have propagated over the dynamic discovery, despite being blocked manually
+    val finalA = "final a"
+    val finalB = "final b"
+    val t1 = Spawn(vA.set(finalA), Some("setting A thread"))
+    val t2 = Spawn(vB.set(finalB), Some("setting B thread"))
 
-    latch1.countDown()
+    assert(syncBothLatch.await(1000, TimeUnit.MILLISECONDS))
+
     t1.join(1000)
     t2.join(1000)
 
-    // turn 1 used the old value of v2 and the retrofitted reevaluation for turn 2 executed and used the new value
-    results1.assertClear(5, 1)
-    results2.assertClear(4)
-  }
+    // turn 1 used the old value of vB and the retrofitted reevaluation for turn 2 executed and used the new value
+    assert((resultsA.results == List(finalB, initB) && resultsB.results == List(finalA)) ||
+             (resultsA.results == List(finalB) && resultsB.results == List(finalA, initA)))
+  }}
 
   "ParRP should (not?) Add And Remove Dependency In One Turn" in {
     import Engines.parrp._
@@ -215,8 +228,8 @@ class PessimisticTest extends RETests {
 
     // we start the rescala.turns …
     // i will try to grab bl1, which is locked by b, so i will start to wait on b
-    val t1 = Spawn { SetAndExtractTransactionHandle(bl0, true) }
-    val t2 = Spawn { SetAndExtractTransactionHandle(il0, 0) }
+    val t1 = Future { SetAndExtractTransactionHandle(bl0, true) }
+    val t2 = Future {  SetAndExtractTransactionHandle(il0, 0) }
 
     assert(latch.await(1000, TimeUnit.MILLISECONDS))
     assert(latch1.getCount === 1) // b should wait for manual approval only
@@ -226,8 +239,8 @@ class PessimisticTest extends RETests {
     // which causes b to continue and evaluate b2b3i2
     // that will add and remove dependencies on il1, which we have readlocked.
     // that should NOT cause b2b3i2 to be reevaluated when i finally finishes
-    val turn1 = t1.join(1000)
-    val turn2 = t2.join(1000)
+    val turn1 = Await.result(t1, 1000.milliseconds)
+    val turn2 = Await.result(t2, 1000.milliseconds)
 
     results.assertClear(37)
     results2.assertClear(true)
@@ -287,8 +300,8 @@ class PessimisticTest extends RETests {
 
     // we start the rescala.turns …
     // i will try to grab bl1, which is locked by b, so i will start to wait on b
-    val t1 = Spawn { SetAndExtractTransactionHandle(bl0, true) }
-    val t2 = Spawn { SetAndExtractTransactionHandle(il0, 17)}
+    val t1 = Future { SetAndExtractTransactionHandle(bl0, true) }
+    val t2 = Future { SetAndExtractTransactionHandle(il0, 17)}
 
     assert(latch.await(1000, TimeUnit.MILLISECONDS))
     assert(latch1.getCount === 1) // b should wait for manual approval only
@@ -299,8 +312,8 @@ class PessimisticTest extends RETests {
     // that will add a dependencay on i10 and add and remove dependencies on il1, which we have both readlocked.
     // that SHUOLD cause b2b3i2 to be reevaluated when i finally finishes (because the dependency to il0 remains)
 
-    val turn1 = t1.join(1000)
-    val turn2 = t2.join(1000)
+    val turn1 = Await.result(t1, 1000.milliseconds)
+    val turn2 = Await.result(t2, 1000.milliseconds)
 
     results2.assertClear(true)
     results.assertClear(17, 11)
