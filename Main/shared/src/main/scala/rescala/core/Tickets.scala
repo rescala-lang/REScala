@@ -29,7 +29,8 @@ abstract class ReevTicket[V, S <: Struct](creation: Initializer[S],
   }
 
   private[rescala] final override def collectDynamic(reactive: ReSource[S]): reactive.Value = {
-    if (collectedDependencies != null) collectedDependencies += reactive
+    assert (collectedDependencies != null, "may not access dynamic dependencies without tracking dependencies")
+    collectedDependencies += reactive
     dynamicAccess(reactive)
   }
 
