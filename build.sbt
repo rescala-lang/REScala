@@ -312,12 +312,12 @@ lazy val lib = new {
 
   lazy val rss = libraryDependencies ++= Seq(
     "joda-time" % "joda-time" % "2.9.9",
-    "org.joda" % "joda-convert" % "1.9.2",
+    "org.joda" % "joda-convert" % "2.0.1",
     "org.codehaus.jsr166-mirror" % "jsr166y" % "1.7.0",
-    "org.scala-lang.modules" %% "scala-xml" % "1.0.6")
+    "org.scala-lang.modules" %% "scala-xml" % "1.1.0")
 
-  lazy val scalaswing = libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "2.0.1"
-  lazy val scalatest = libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.4" % "test"
+  lazy val scalaswing = libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "2.0.2"
+  lazy val scalatest = libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.5" % "test"
 
 
   lazy val circe = {
@@ -325,7 +325,7 @@ lazy val lib = new {
       "io.circe" %%% "circe-core",
       "io.circe" %%% "circe-generic",
       "io.circe" %%% "circe-parser"
-    ).map(_ % "0.9.1")
+    ).map(_ % "0.9.2")
   }
 
   val reactivestreams = libraryDependencies ++= List(
@@ -348,10 +348,10 @@ lazy val lib = new {
 
   val scalatags = libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.6.7"
 
-  val jsdom = libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "0.9.4"
+  val jsdom = libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "0.9.5"
 
   val akka = {
-    val akkaVersion = "2.5.9"
+    val akkaVersion = "2.5.11"
     // akka:
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
@@ -365,7 +365,7 @@ lazy val lib = new {
 
   val scalaLogback = Seq(
     libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.3",
-    libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.7.2"
+    libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.8.0"
   )
 
   val scalafx = Seq(
