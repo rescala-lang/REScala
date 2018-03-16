@@ -208,7 +208,6 @@ lazy val cfg = new {
 
   val base = List(
     organization := "de.tuda.stg",
-    version := "0.22.0",
     scalaVersion := version_212,
     baseScalac,
     // scaladoc
