@@ -1,5 +1,6 @@
 package tests.rescala.static.signals
 
+import rescala.macros.cutOutInReactiveMacro
 import tests.rescala.testtools.RETests
 
 class SignalMacro extends RETests { multiEngined { engine => import engine._
@@ -268,6 +269,22 @@ class SignalMacro extends RETests { multiEngined { engine => import engine._
     val s = Signal { wantsTicket }
 
     assert(s.readValueOnce === true)
+
+  }
+
+
+  test("define force cut out at definition time") {
+
+    val source = Var("Hallo")
+    object myMap {
+      var ms: engine.Var[String]@cutOutInReactiveMacro = source
+    }
+
+    val greeting = Signal {
+      (myMap.ms).value
+    }
+
+    assert(greeting.readValueOnce === source.readValueOnce)
 
   }
 

@@ -3,6 +3,7 @@ package rescala.macros
 import rescala.core.{CreationTicket, DynamicTicket, LowPriorityCreationImplicits, StaticTicket, Struct}
 import retypecheck._
 
+import scala.annotation.Annotation
 import scala.reflect.macros.blackbox
 
 object MacroTags {
@@ -10,6 +11,8 @@ object MacroTags {
   type Static <: Staticism
   type Dynamic <: Staticism
 }
+
+class cutOutInReactiveMacro extends Annotation
 
 class ReactiveMacros(val c: blackbox.Context) {
 
@@ -282,14 +285,25 @@ class ReactiveMacros(val c: blackbox.Context) {
             true
           case Typed(expr, _) =>
             isReactiveThatCanBeCutOut(expr)
-          case _ => reactive.symbol.isTerm &&
-            !reactive.symbol.asTerm.isVal &&
-            !reactive.symbol.asTerm.isVar &&
-            !reactive.symbol.asTerm.isAccessor
+          case _ =>
+
+            val annotatedForCutOut = if (!reactive.symbol.isMethod) false else {
+              reactive.symbol.asMethod.returnType match {
+                case AnnotatedType(annotations, _) =>
+                  annotations exists {_.tree.tpe <:< typeOf[cutOutInReactiveMacro]}
+                case _ => false
+              }
+            }
+
+            def automaticCutOut = reactive.symbol.isTerm &&
+              !reactive.symbol.asTerm.isVal &&
+              !reactive.symbol.asTerm.isVar &&
+              !reactive.symbol.asTerm.isAccessor
+
+            annotatedForCutOut || automaticCutOut
         }) &&
         !containsCriticalReferences(reactive)
     }
-
   }
 
 
