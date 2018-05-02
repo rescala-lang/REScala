@@ -3,7 +3,7 @@ package rescala.macros
 import rescala.core.{CreationTicket, DynamicTicket, LowPriorityCreationImplicits, StaticTicket, Struct}
 import retypecheck._
 
-import scala.annotation.Annotation
+import scala.annotation.StaticAnnotation
 import scala.reflect.macros.blackbox
 
 object MacroTags {
@@ -12,7 +12,7 @@ object MacroTags {
   type Dynamic <: Staticism
 }
 
-class cutOutInReactiveMacro extends Annotation
+class cutOutInReactiveMacro extends StaticAnnotation
 
 class ReactiveMacros(val c: blackbox.Context) {
 
