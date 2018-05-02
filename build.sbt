@@ -203,7 +203,7 @@ lazy val microbench = project.in(file("Research/Microbenchmarks"))
 lazy val cfg = new {
 
   val version_211 = "2.11.12"
-  val version_212 = "2.12.4"
+  val version_212 = "2.12.6"
 
 
   val base = List(
@@ -316,7 +316,7 @@ lazy val lib = new {
     "org.codehaus.jsr166-mirror" % "jsr166y" % "1.7.0",
     "org.scala-lang.modules" %% "scala-xml" % "1.1.0")
 
-  lazy val scalaswing = libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "2.0.2"
+  lazy val scalaswing = libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "2.0.3"
   lazy val scalatest = libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.5" % "test"
 
 
@@ -325,7 +325,7 @@ lazy val lib = new {
       "io.circe" %%% "circe-core",
       "io.circe" %%% "circe-generic",
       "io.circe" %%% "circe-parser"
-    ).map(_ % "0.9.2")
+    ).map(_ % "0.9.3")
   }
 
   val reactivestreams = libraryDependencies ++= List(
@@ -351,7 +351,7 @@ lazy val lib = new {
   val jsdom = libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "0.9.5"
 
   val akka = {
-    val akkaVersion = "2.5.11"
+    val akkaVersion = "2.5.12"
     // akka:
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
@@ -365,7 +365,7 @@ lazy val lib = new {
 
   val scalaLogback = Seq(
     libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.3",
-    libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.8.0"
+    libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.9.0"
   )
 
   val scalafx = Seq(
