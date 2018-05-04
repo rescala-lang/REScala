@@ -4,8 +4,8 @@ import rescala.fullmv.mirrors.localcloning.ReactiveLocalClone
 import rescala.fullmv.transmitter.ReactiveTransmittable
 import rescala.fullmv.{FullMVEngine, FullMVStruct}
 import rescala.reactives.Signal
-import retier.communicator.tcp.TCP
-import retier.registry.{Binding, Registry}
+import loci.communicator.tcp.TCP
+import loci.registry.{Binding, Registry}
 import tests.rescala.testtools.Spawn
 
 import scala.concurrent.Await
@@ -65,7 +65,7 @@ object CostAssessment {
 
           leftOutput = {
             import leftHost._
-            val remoteRight = Await.result(registry.request(TCP("localhost", rightHost.port)), timeout)
+            val remoteRight = Await.result(registry.connect(TCP("localhost", rightHost.port)), timeout)
             val outputFromRight = Await.result(registry.lookup(binding(i - 1), remoteRight), timeout)
             val merged = Signal { merge(leftOutputStatic(), outputFromRight()) }
             registry.bind(binding(i))(merged)
@@ -74,7 +74,7 @@ object CostAssessment {
 
           rightOutput = {
             import rightHost._
-            val remoteLeft = Await.result(registry.request(TCP("localhost", leftHost.port)), timeout)
+            val remoteLeft = Await.result(registry.connect(TCP("localhost", leftHost.port)), timeout)
             val outputFromLeft = Await.result(registry.lookup(binding(i - 1), remoteLeft), timeout)
             val merged = Signal { merge(outputFromLeft(), rightOutputStatic()) }
             registry.bind(binding(i))(merged)
@@ -86,9 +86,9 @@ object CostAssessment {
         try {
           import topHost._
 
-          val remoteLeft = Await.result(registry.request(TCP("localhost", leftHost.port)), timeout)
+          val remoteLeft = Await.result(registry.connect(TCP("localhost", leftHost.port)), timeout)
           val mergeFromLeft = Await.result(registry.lookup(binding(length), remoteLeft), timeout)
-          val remoteRight = Await.result(registry.request(TCP("localhost", rightHost.port)), timeout)
+          val remoteRight = Await.result(registry.connect(TCP("localhost", rightHost.port)), timeout)
           val mergeFromRight = Await.result(registry.lookup(binding(length), remoteRight), timeout)
           val topMerge: topHost.Signal[Map[String, Set[Int]]] = Signal { merge(mergeFromLeft(), mergeFromRight()) }
 
@@ -215,7 +215,7 @@ object CostAssessment {
         count += 2
       }
       count
-    }.join(until - System.currentTimeMillis() + 500L)
+    }.await(until - System.currentTimeMillis() + 500L)
     (res, res)
   }
 
@@ -236,7 +236,7 @@ object CostAssessment {
       }
       count
     }
-    left.join(until - System.currentTimeMillis() + 500L) -> right.join(until - System.currentTimeMillis() + 500L)
+    left.await(until - System.currentTimeMillis() + 500L) -> right.await(until - System.currentTimeMillis() + 500L)
   }
 
   def main(args: Array[String]): Unit = {

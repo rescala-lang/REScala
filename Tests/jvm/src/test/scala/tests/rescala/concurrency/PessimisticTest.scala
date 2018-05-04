@@ -32,7 +32,7 @@ class PessimisticTest extends RETests {
     assert(autoSync.getCount === 1) // but has reduced latch to only second turn missing
 
     v2.set(true)
-    t1.join(1000)
+    t1.await(1000)
     assert(autoSync.getCount == 0)
 
     assert(s1.readValueOnce === true)
@@ -57,7 +57,7 @@ class PessimisticTest extends RETests {
     })
 
     val timeout = System.currentTimeMillis() + 1000
-    threads.foreach(_.join(math.max(0, timeout - System.currentTimeMillis())))
+    threads.foreach(_.await(math.max(0, timeout - System.currentTimeMillis())))
     assert(latch.getCount == 0)
 
     sumTracker.assert((0 to size).reverse:_*)
@@ -108,8 +108,8 @@ class PessimisticTest extends RETests {
 
     assert(syncBothLatch.await(1000, TimeUnit.MILLISECONDS))
 
-    t1.join(1000)
-    t2.join(1000)
+    t1.await(1000)
+    t2.await(1000)
 
     // turn 1 used the old value of vB and the retrofitted reevaluation for turn 2 executed and used the new value
     assert((resultsA.results == List(finalB, initB) && resultsB.results == List(finalA)) ||

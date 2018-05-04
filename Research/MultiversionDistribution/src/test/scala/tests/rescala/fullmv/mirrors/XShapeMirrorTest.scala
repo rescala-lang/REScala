@@ -5,8 +5,6 @@ import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
 import org.scalatest.FunSuite
 import rescala.fullmv._
 import rescala.fullmv.mirrors.localcloning.ReactiveLocalClone
-import rescala.fullmv.transmitter.ReactiveTransmittable
-import retier.registry.{Binding, Registry}
 import tests.rescala.testtools.Spawn
 
 import scala.annotation.tailrec
@@ -44,16 +42,7 @@ class XShapeMirrorTest extends FunSuite {
       Signal{ Data("rmerge", Merge(sourceFromLeft(), source())) }
     }
 
-    object topHost extends FullMVEngine(Duration.Zero, "top") {
-      val registry = new Registry
-
-      import ReactiveTransmittable._
-      import io.circe.generic.auto._
-      import rescala.fullmv.transmitter.CirceSerialization._
-      implicit val host = this
-
-      val derivedBinding = Binding[Signal[Data[Merge[Data[Int]]]]]("derived")
-    }
+    object topHost extends FullMVEngine(Duration.Zero, "top")
     import topHost._
 
     val mergeFromLeft = ReactiveLocalClone(leftMerge, topHost)
@@ -121,8 +110,8 @@ class XShapeMirrorTest extends FunSuite {
     if(!running) println(s"Premature termination after ${(duration - (workerTimeout - System.currentTimeMillis())) / 1000} seconds")
     running = false
 
-    val scoreLeft = workerLeft.await(500)
-    val scoreRight = workerRight.await(500)
+    val scoreLeft = workerLeft.awaitTry(500)
+    val scoreRight = workerRight.awaitTry(500)
     val scores = Array(scoreLeft, scoreRight)
     println("X-Shape mirror stress test thread results:")
     println("\t" + scores.zipWithIndex.map { case (count, idx) => idx + ": " + count }.mkString("\n\t"))

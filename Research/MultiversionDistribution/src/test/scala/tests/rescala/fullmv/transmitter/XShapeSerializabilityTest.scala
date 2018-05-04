@@ -4,8 +4,8 @@ package tests.rescala.fullmv.transmitter
 import org.scalatest.FunSuite
 import rescala.fullmv.transmitter.ReactiveTransmittable
 import rescala.fullmv._
-import retier.communicator.tcp.TCP
-import retier.registry.{Binding, Registry}
+import loci.communicator.tcp.TCP
+import loci.registry.{Binding, Registry}
 import tests.rescala.testtools.Spawn
 
 import scala.concurrent.{Await, TimeoutException}
@@ -52,7 +52,7 @@ class XShapeSerializabilityTest extends FunSuite {
       try {
         val leftMerge = {
           import leftHost._
-          val remoteRight = Await.result(registry.request(TCP("localhost", rightHost.port)), timeout)
+          val remoteRight = Await.result(registry.connect(TCP("localhost", rightHost.port)), timeout)
           val sourceFromRight = Await.result(registry.lookup(sourceBinding, remoteRight), timeout)
           val merge = Signal{ Data("lmerge", Merge(taggedSource(), sourceFromRight())) }
           registry.bind(derivedBinding)(merge)
@@ -61,7 +61,7 @@ class XShapeSerializabilityTest extends FunSuite {
 
         val rightMerge = {
           import rightHost._
-          val remoteLeft = Await.result(registry.request(TCP("localhost", leftHost.port)), timeout)
+          val remoteLeft = Await.result(registry.connect(TCP("localhost", leftHost.port)), timeout)
           val sourceFromLeft = Await.result(registry.lookup(sourceBinding, remoteLeft), timeout)
           val merge = Signal{ Data("rmerge", Merge(sourceFromLeft(), taggedSource())) }
           registry.bind(derivedBinding)(merge)
@@ -72,9 +72,9 @@ class XShapeSerializabilityTest extends FunSuite {
         try {
           import topHost._
 
-          val remoteLeft = Await.result(registry.request(TCP("localhost", leftHost.port)), timeout)
+          val remoteLeft = Await.result(registry.connect(TCP("localhost", leftHost.port)), timeout)
           val mergeFromLeft = Await.result(registry.lookup(derivedBinding, remoteLeft), timeout)
-          val remoteRight = Await.result(registry.request(TCP("localhost", rightHost.port)), timeout)
+          val remoteRight = Await.result(registry.connect(TCP("localhost", rightHost.port)), timeout)
           val mergeFromRight = Await.result(registry.lookup(derivedBinding, remoteRight), timeout)
           val merge = Signal{ Merge(mergeFromLeft(), mergeFromRight()) }
 
@@ -132,8 +132,8 @@ class XShapeSerializabilityTest extends FunSuite {
           if(!running) println(s"Premature termination after ${(duration - (workerTimeout - System.currentTimeMillis())) / 1000} seconds")
           running = false
 
-          val scoreLeft = workerLeft.await(500)
-          val scoreRight = workerRight.await(500)
+          val scoreLeft = workerLeft.awaitTry(500)
+          val scoreRight = workerRight.awaitTry(500)
           val scores = Array(scoreLeft, scoreRight)
           println("X-Shape distributed Serializability stress test thread results:")
           println("\t" + scores.zipWithIndex.map { case (count, idx) => idx + ": " + count }.mkString("\n\t"))

@@ -11,7 +11,7 @@ import rescala.fullmv.sgt.synchronization._
 import rescala.fullmv._
 import rescala.fullmv.transmitter.ReactiveTransmittable.TurnPushBundle
 import rescala.reactives.{Event, Signal}
-import retier.transmitter._
+import loci.transmitter._
 
 import scala.annotation.tailrec
 import scala.concurrent._

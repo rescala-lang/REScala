@@ -3,7 +3,7 @@ package rescala.fullmv.transmitter
 import java.util.concurrent.{ConcurrentHashMap, ThreadLocalRandom}
 import java.util.concurrent.locks.LockSupport
 
-import retier.transmitter._
+import loci.transmitter._
 
 import scala.annotation.tailrec
 

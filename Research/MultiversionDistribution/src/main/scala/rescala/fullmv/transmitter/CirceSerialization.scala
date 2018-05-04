@@ -4,8 +4,8 @@ import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
 
-import retier.MessageBuffer
-import retier.transmitter.Serializable
+import loci.MessageBuffer
+import loci.transmitter.Serializable
 
 import scala.util.{Failure, Success, Try}
 

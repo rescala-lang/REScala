@@ -72,7 +72,7 @@ class PaperGlitchTest extends FunSuite {
     Thread.sleep(1000)
     cancelled = true
     assert(glitches.size() > 0)
-    t1.join(1000)
-    t2.join(1000)
+    t1.await(1000)
+    t2.await(1000)
   }
 }

@@ -2,8 +2,8 @@
 //
 //import rescala.fullmv.FullMVEngine
 //import rescala.fullmv.FullMVEngine.default._
-//import retier.communicator.tcp._
-//import retier.registry.{Binding, Registry}
+//import loci.communicator.tcp._
+//import loci.registry.{Binding, Registry}
 //
 //import scala.concurrent.duration._
 //import scala.concurrent.{Await, Future}

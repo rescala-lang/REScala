@@ -72,7 +72,7 @@ class LockMirrorStressTest extends FunSuite {
     running = false
 
     val finalTimeout = System.currentTimeMillis() + 500
-    val scores = threads.map(_.await(math.max(0, finalTimeout - System.currentTimeMillis())))
+    val scores = threads.map(_.awaitTry(math.max(0, finalTimeout - System.currentTimeMillis())))
     println("lock stress test thread results:")
     println("\t" + scores.zipWithIndex.map { case (count, idx) => idx + ": " + count }.mkString("\n\t"))
     scores.find {

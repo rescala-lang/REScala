@@ -6,7 +6,7 @@ import rescala.core.{Scheduler, Struct}
 import tests.rescala.testtools.Spawn
 
 import scala.concurrent.TimeoutException
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 
 class PhiloTest extends FunSuite {
   def `eat!`[S <: Struct](engine: Scheduler[S], dynamic: Boolean): Unit = {
@@ -27,7 +27,7 @@ class PhiloTest extends FunSuite {
     println(s"philo party sleeping on $engine (dynamic $dynamic)")
     Thread.sleep(1000)
     cancel = true
-    val threadResults = threads.map(t => (t, Try { t.join(1000) }))
+    val threadResults = threads.map(t => (t, t.awaitTry(1000) ))
     println(s"philo party done sleeping on $engine (dynamic $dynamic), score: ${table.eaten.get()}")
 
     val threadFailures = threadResults.filter{
