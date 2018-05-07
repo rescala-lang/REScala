@@ -72,18 +72,18 @@ trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropaga
 
 
   override private[rescala] def makeAdmissionPhaseTicket() = new AdmissionTicket[S](this) {
-    override def access[A](reactive: Signal[A, S]) = {
+    override def access[A](reactive: Signal[A, S]): reactive.Value = {
       dynamicDependencyInteraction(reactive)
       reactive.state.base(token)
     }
   }
   private[rescala] def makeDynamicReevaluationTicket[V, N](b: V): ReevTicket[V, S] = new ReevTicket[V, S](this, b) {
-    override def dynamicAccess(reactive: ReSource[S]) = TwoVersionPropagationImpl.this.dynamicAfter(reactive)
-    override def staticAccess(reactive: ReSource[S]) = reactive.state.get(token)
+    override def dynamicAccess(reactive: ReSource[S]): reactive.Value = TwoVersionPropagationImpl.this.dynamicAfter(reactive)
+    override def staticAccess(reactive: ReSource[S]): reactive.Value = reactive.state.get(token)
   }
 
   private[rescala] def makeWrapUpPhaseTicket(): WrapUpTicket[S] = new WrapUpTicket[S] {
-    override def access(reactive: ReSource[S]) = TwoVersionPropagationImpl.this.dynamicAfter(reactive)
+    override def access(reactive: ReSource[S]): reactive.Value = TwoVersionPropagationImpl.this.dynamicAfter(reactive)
   }
 
   private[rescala] def dynamicAfter[P](reactive: ReSource[S]) = {
