@@ -50,7 +50,7 @@ object SimpleScheduler extends Scheduler[SimpleStruct] {
       val sorted: ArrayBuffer[Reactive] = ArrayBuffer[Reactive]()
       // admission
       val admissionTicket = new AdmissionTicket(SimpleCreation) {
-        override def access[A](reactive: Signal[A]) = reactive.state.value
+        override def access[A](reactive: Signal[A]): reactive.Value = reactive.state.value
       }
       val admissionResult = admissionPhase(admissionTicket)
       val sources = admissionTicket.initialChanges.collect {
@@ -73,7 +73,7 @@ object SimpleScheduler extends Scheduler[SimpleStruct] {
 
       //wrapup
       if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(new WrapUpTicket {
-        override private[rescala] def access(reactive: ReSource) = reactive.state.value
+        override private[rescala] def access(reactive: ReSource): reactive.Value = reactive.state.value
       })
       admissionResult
     } finally idle = true
@@ -100,7 +100,7 @@ object Util {
   def evaluate(reactive: Reactive[SimpleStruct], incoming: Set[ReSource[SimpleStruct]]): Unit = {
     val dt = new ReevTicket[reactive.Value, SimpleStruct](SimpleCreation, reactive.state.value) {
       override def dynamicAccess(reactive: ReSource[SimpleStruct]) = ???
-      override def staticAccess(reactive: ReSource[SimpleStruct]) = reactive.state.value
+      override def staticAccess(reactive: ReSource[SimpleStruct]): reactive.Value = reactive.state.value
     }
     val reev = reactive.reevaluate(dt)
     if (reev.propagate) reactive.state.outgoing.foreach(_.state.dirty = true)

@@ -127,7 +127,7 @@ class ReactiveMacros(val c: blackbox.Context) {
     isStatic: Boolean,
     innerTicket: TermName,
     innerTree: Tree,
-    valDefs: List[ValDef],
+    valDefs: List[ValDef]
   ): Tree = {
     val creationMethod = TermName(if (isStatic) "static" else "dynamic")
     val ticketType = if (isStatic) weakTypeOf[StaticTicket[S]] else weakTypeOf[DynamicTicket[S]]

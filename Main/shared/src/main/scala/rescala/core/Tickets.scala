@@ -15,7 +15,7 @@ class InnerTicket[S <: Struct](val creation: Initializer[S])
   * Such usages make it unsuitable as an API for the user, where [[StaticTicket]] or [[DynamicTicket]] should be used instead.
   * */
 abstract class ReevTicket[V, S <: Struct](creation: Initializer[S],
-                                          private var _before: V,
+                                          private var _before: V
                                          ) extends DynamicTicket[S](creation) with Result[V, S] {
 
   // schedulers implement these to allow access
