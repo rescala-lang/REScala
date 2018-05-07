@@ -53,7 +53,8 @@ class ReactiveMacros(val c: blackbox.Context) {
     val ticketTermName: TermName = TermName(c.freshName("ticket$"))
     val ticketIdent: Ident = Ident(ticketTermName)
 
-    val weAnalysis = new WholeExpressionAnalysis(expression.tree)
+    // disable construction warnings for events
+    val weAnalysis = new WholeExpressionAnalysis(expression.tree, enableReactiveConstructionWarning = false)
     val cutOut = new CutOutTransformer(weAnalysis)
     val cutOutTree = cutOut.transform(expression.tree)
     val detections = new RewriteTransformer[S](weAnalysis, ticketIdent, requireStatic = true)
@@ -89,7 +90,8 @@ class ReactiveMacros(val c: blackbox.Context) {
     val innerTicketTermName: TermName = TermName(c.freshName("ticket$"))
     val innerTicketIdent: Ident = Ident(innerTicketTermName)
 
-    val weAnalysis = new WholeExpressionAnalysis(op.tree)
+    // disable construction warnings for events
+    val weAnalysis = new WholeExpressionAnalysis(op.tree, enableReactiveConstructionWarning = false)
     val cutOut = new CutOutTransformer(weAnalysis)
     val cutOutTree = cutOut.transform(op.tree)
     val detections = new RewriteTransformer[S](weAnalysis, innerTicketIdent, requireStatic = true)
@@ -231,7 +233,7 @@ class ReactiveMacros(val c: blackbox.Context) {
   }
 
 
-  class WholeExpressionAnalysis(expression: Tree) {
+  class WholeExpressionAnalysis(expression: Tree, enableReactiveConstructionWarning: Boolean = true) {
     val uncheckedExpressions: Set[Tree] = calcUncheckedExpressions(expression)
 
     // all symbols that are defined within the macro expression
@@ -273,7 +275,8 @@ class ReactiveMacros(val c: blackbox.Context) {
         case _ => false
       }
 
-      if (critical) checkAndWarnReactiveConstructions(reactive, uncheckedExpressions)
+      if (enableReactiveConstructionWarning && critical)
+        checkAndWarnReactiveConstructions(reactive, uncheckedExpressions)
 
       critical
     }.nonEmpty
@@ -319,7 +322,7 @@ class ReactiveMacros(val c: blackbox.Context) {
     else
       !(tree.tpe <:< definitions.NullTpe) &&
         !(tree.tpe <:< definitions.NothingTpe) &&
-        ((tree.tpe.baseClasses contains staticInterpClass))
+        (tree.tpe.baseClasses contains staticInterpClass)
   }
 
   /** detects variants to access reactives using [[Interp]] */
@@ -357,42 +360,41 @@ class ReactiveMacros(val c: blackbox.Context) {
   }
 
 
-
-  def checkAndWarnReactiveConstructions(reactive: c.universe.Tree, uncheckedExpressions: Set[c.universe.Tree]) = {
+  def checkAndWarnReactiveConstructions(reactive: c.universe.Tree, uncheckedExpressions: Set[c.universe.Tree]): Unit = {
 
     def potentialReactiveConstructionWarning(pos: Position): Unit =
       c.warning(pos,
-        "expression should not be placed inside a signal expression " +
-          "since it potentially creates a new reactive every time the " +
-          "signal is evaluated which can lead to unintentional behavior")
+                "expression should not be placed inside a signal expression " +
+                  "since it potentially creates a new reactive every time the " +
+                  "signal is evaluated which can lead to unintentional behavior")
+
+    def methodObjectType(method: Tree) = {
+      def methodObjectType(tree: Tree): Type =
+        if (tree.symbol != method.symbol)
+          tree.tpe
+        else if (tree.children.nonEmpty)
+          methodObjectType(tree.children.head)
+        else
+          NoType
+
+      methodObjectType(method) match {
+        // if we can access the type arguments of the type directly,
+        // return it
+        case tpe@TypeRef(_, _, _) => tpe
+        // otherwise, find the type in the term symbol's type signature
+        // whose type arguments can be accessed
+        case tpe =>
+          tpe.termSymbol.typeSignature find {
+            case TypeRef(_, _, _) => true
+            case _ => false
+          } match {
+            case Some(tpe) => tpe
+            case _ => tpe
+          }
+      }
+    }
 
     if (!uncheckedExpressions.contains(reactive)) {
-      def methodObjectType(method: Tree) = {
-        def methodObjectType(tree: Tree): Type =
-          if (tree.symbol != method.symbol)
-            tree.tpe
-          else if (tree.children.nonEmpty)
-            methodObjectType(tree.children.head)
-          else
-            NoType
-
-        methodObjectType(method) match {
-          // if we can access the type arguments of the type directly,
-          // return it
-          case tpe@TypeRef(_, _, _) => tpe
-          // otherwise, find the type in the term symbol's type signature
-          // whose type arguments can be accessed
-          case tpe =>
-            tpe.termSymbol.typeSignature find {
-              case TypeRef(_, _, _) => true
-              case _ => false
-            } match {
-              case Some(tpe) => tpe
-              case _ => tpe
-            }
-        }
-      }
-
       // issue no warning if the reactive is retrieved from a container
       // determined by the generic type parameter
       methodObjectType(reactive) match {
