@@ -5,21 +5,21 @@ import com.typesafe.config.ConfigFactory
 import rescala._
 import rescala.crdts.pvars.{subscribe, _}
 import rescala.crdts.statecrdts.sequences.{RGA, RGOA, Vertex}
-import retier._
-import retier.registry.Binding
-import retier.communicator.ws.akka._
-import retier.registry.Registry
+import loci._
+import loci.registry.Binding
+import loci.communicator.ws.akka._
+import loci.registry.Registry
 import io.circe.generic.auto._
 import rescala.crdts.statecrdts.StateCRDT
 import rescala.crdts.statecrdts.counters.GCounter
-import retier.registry.Binding
-import retier.serializer.circe._
-import retier.transmitter.RemoteRef
+import loci.registry.Binding
+import loci.serializer.circe._
+import loci.transmitter.RemoteRef
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import retier._
-import retier.transmitter._
+import loci._
+import loci.transmitter._
 
 import scala.language.higherKinds
 
@@ -128,7 +128,7 @@ object testSignalExpressions {
 
     { //client
       val registry = new Registry
-      val connection: Future[RemoteRef] = registry.request(WS("ws://localhost:1099/"))
+      val connection: Future[RemoteRef] = registry.connect(WS("ws://localhost:1099/"))
       connection.foreach { remote =>
         val subscribedSig = registry.lookup(counterBinding, remote)
         println("subscription")

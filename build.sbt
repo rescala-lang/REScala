@@ -378,11 +378,17 @@ lazy val lib = new {
 
   val jline = libraryDependencies += "org.scala-lang.modules" % "scala-jline" % "2.12.1"
 
-  val retierTransmitter = libraryDependencies ++= Seq(
-    "retier-communication",
-    "retier-communicator-tcp",
-    "retier-communicator-ws-akka",
-    "retier-serializer-upickle",
-    "retier-serializer-circe",
-    ).map(n => "de.tuda.stg" %% n % "0+")
+  val retierTransmitter = Seq(
+    libraryDependencies ++= Seq(
+    "scala-loci-communication",
+    "scala-loci-communicator-tcp",
+    "scala-loci-communicator-ws-akka",
+    "scala-loci-serializer-upickle",
+    "scala-loci-serializer-circe",
+    ).map(n => "de.tuda.stg" %% n % "0.2.0"),
+    libraryDependencies ++= Seq(
+      "com.typesafe.akka" %% "akka-http" % "10.1.1",
+      "com.typesafe.akka" %% "akka-stream" % "2.5.11"
+    ),
+    resolvers += Resolver.bintrayRepo("stg-tud", "maven"))
 }
