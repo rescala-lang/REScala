@@ -16,8 +16,6 @@ lazy val rescala = crossProject.in(file("Main"))
     cfg.base,
     lib.retypecheck, lib.sourcecode, lib.circe,
     cfg.strictScalac, cfg.snapshotAssertions,
-    cfg.generateLiftFunctions,
-    cfg.bintray,
     androidAware)
   .jvmSettings()
   .jsSettings(cfg.js)
@@ -87,8 +85,8 @@ lazy val commonAndroidSettings = androidAware ++ Seq(
 
 lazy val cfg = new {
 
-  val version_211 = "2.11.11"
-  val version_212 = "2.12.4"
+  val version_211 = "2.11.12"
+  val version_212 = "2.12.6"
 
 
   val base = List(
@@ -103,11 +101,6 @@ lazy val cfg = new {
     testOptions in Test += Tests.Argument("-oICN"),
     parallelExecution in Test := true,
     lib.scalatest
-  )
-
-  val bintray = List(
-    licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")),
-    bintrayOrganization := Some("stg-tud")
   )
 
   val noPublish = List(
@@ -144,32 +137,6 @@ lazy val cfg = new {
   lazy val snapshotAssertions = scalacOptions ++= (if (!version.value.endsWith("-SNAPSHOT")) List("-Xdisable-assertions", "-Xelide-below", "9999999")
   else Nil)
 
-
-  val generateLiftFunctions = sourceGenerators in Compile += Def.task {
-    val file = (sourceManaged in Compile).value / "rescala" / "reactives" / "GeneratedSignalLift.scala"
-    val definitions = (1 to 22).map { i =>
-      val params = 1 to i map ("n" + _)
-      val types = 1 to i map ("A" + _)
-      val signals = params zip types map { case (p, t) => s"$p: Signal[$t, S]" }
-      def sep(l: Seq[String]) = l.mkString(", ")
-      val getValues = params map (v => s"t.staticDepend($v).get")
-      s"""  def lift[${sep(types)}, B, S <: Struct](${sep(signals)})(fun: (${sep(types)}) => B)(implicit maybe: CreationTicket[S]): Signal[B, S] = {
-         |    static(${sep(params)})(t => fun(${sep(getValues)}))
-         |  }
-         |""".stripMargin
-    }
-    IO.write(file,
-      s"""package rescala.reactives
-         |
-         |import rescala.core._
-         |
-         |trait GeneratedSignalLift {
-         |self: Signals.type =>
-         |${definitions.mkString("\n")}
-         |}
-         |""".stripMargin)
-    Seq(file)
-  }.taskValue
 
   val mappingFilters = Seq(
     mappings in (Compile, packageBin) ~= { _.filter(!_._1.getName.endsWith(".conf")) },
