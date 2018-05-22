@@ -3,6 +3,8 @@ package examples.demo
 import examples.demo.GModularClockCircle.Clock
 import examples.demo.ui.{Circle, Point, Shape, ShapesPanel}
 import rescala._
+import rescala.reactives.Flatten
+import rescala.reactives.Flatten.firstFiringEvent
 
 /**
   * To resolve this circular initialization order, we introduce
@@ -59,13 +61,14 @@ object LFullyModularBall extends Main {
     val filteredHorizontalBounceSources = horizontalBounceSources.map(_.map(_.recover{case _: IllegalArgumentException => None}))
 
     val velocity = Signal { Pos(
-      x = filteredHorizontalBounceSources.flatten[Event[List[Option[Any]]]]
+      x = horizontalBounceSources.flatten(firstFiringEvent)
         .fold(initVx / Clock.NanoSecond) { (old, _) => -old }.value,
-      y = verticalBounceSources.flatten[Event[List[Option[Any]]]]
-        .fold(initVy / Clock.NanoSecond) { (old, _ ) => -old }.value)}
+      y = verticalBounceSources.flatten(firstFiringEvent)
+        .fold(initVy / Clock.NanoSecond) { (old, _ ) => -old }.value)
+    }
 
     //TODO: using now to remove cycle …
-    val inc = Clock.ticks.map(tick => velocity.now * tick.toDouble)
+    val inc = Clock.ticks.map(tick => velocity.readValueOnce * tick.toDouble)
 
     val pos = Events.foldAll(Pos(0,0))( acc => Events.Match(
       reset >> { case Point(x, y) => Pos(x, y) },

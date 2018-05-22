@@ -5,6 +5,7 @@ import java.awt.{Event => _, _}
 import java.util.NoSuchElementException
 
 import rescala._
+import rescala.reactives.Flatten
 
 import scala.swing.Panel
 
@@ -12,7 +13,7 @@ case class Point(x: Int, y: Int)
 
 class ShapesPanel(val shapes: Signal[Traversable[Shape]]) extends Panel {
   //val allChanges: Event[Any] = Event { shapes().find{ shape: Shape => shape.changed().isDefined } }
-  val allChanges: Event[Any] = shapes.map(_.map(_.changed)).flatten
+  val allChanges: Event[Any] = shapes.map(_.map(_.changed)).flatten(Flatten.firstFiringEvent)
 
   allChanges observe {_ => repaint() }
 
