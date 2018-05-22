@@ -74,7 +74,7 @@ trait Signal[+A, S <: Struct] extends ReSource[S] with Interp[A, S] with Disconn
 
   /** Flattens the inner reactive.
     * @group operator */
-  final def flatten[R](implicit flatten: Flatten[A, S, R]): R = flatten.apply(this)
+  final def flatten[R](implicit flatten: Flatten[Signal[A, S], R]): R = flatten.apply(this)
 
 //  /** Delays this signal by n occurrences */
 //  final def delay[A1 >: A](n: Int)(implicit ticket: CreationTicket[S], ev: ReSerializable[Queue[A1]]): Signal[A1, S] =
