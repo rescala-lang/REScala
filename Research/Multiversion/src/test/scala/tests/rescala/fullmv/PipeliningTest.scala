@@ -30,7 +30,7 @@ class PipeliningTest extends FunSuite {
     val startTime = System.currentTimeMillis()
     val spawned = for (_ <- 1 to numberOfUpdates) yield Spawn(input.transform(_ + 1))
     val timeout = System.currentTimeMillis() + leastPossibleMillisecondsWithoutPipelining + 1000
-    spawned.foreach(_.join(math.max(0, timeout - System.currentTimeMillis())))
+    spawned.foreach(_.await(math.max(0, timeout - System.currentTimeMillis())))
     val endTime = System.currentTimeMillis()
 
     assert(all === (pipelineLength to (pipelineLength + numberOfUpdates)))
