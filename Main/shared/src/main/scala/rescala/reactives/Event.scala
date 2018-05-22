@@ -138,6 +138,11 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
     * @group operator*/
   final def map[A](expression: T => A)(implicit ticket: CreationTicket[S]): Event[A, S] = macro rescala.macros.ReactiveMacros.EventMapMacro[T, A, S]
 
+  /** Flattens the inner value.
+    * @group operator */
+  final def flatten[R](implicit flatten: Flatten[Event[T, S], R]): R = flatten.apply(this)
+
+
   /** Drop the event parameter; equivalent to map((_: Any) => ())
     * @usecase def dropParam(implicit ticket: CreationTicket[S]): rescala.Event[Unit]
     * @group operator*/
@@ -246,7 +251,6 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
       }
     }(turn)
   }
-
 
 
 }

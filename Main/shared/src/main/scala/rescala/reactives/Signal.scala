@@ -72,7 +72,7 @@ trait Signal[+A, S <: Struct] extends ReSource[S] with Interp[A, S] with Disconn
   final def map[B](f: A => B)(implicit ticket: CreationTicket[S]): Signal[B, S] =
     static(this) { t => f(t.dependStatic(this)) }
 
-  /** Flattens the inner reactive.
+  /** Flattens the inner value.
     * @group operator */
   final def flatten[R](implicit flatten: Flatten[Signal[A, S], R]): R = flatten.apply(this)
 
