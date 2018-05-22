@@ -62,15 +62,15 @@ class FlattenTest extends RETests { multiEngined { engine => import engine._
 
     val flat = v.flatten
 
-    assert(flat.now === Set(1,2,3), "flatten fails")
+    assert(flat.readValueOnce === Set(1,2,3), "flatten fails")
 
     v2.set(100)
 
-    assert(flat.now === Set(1,100,3), "flatten fails 2")
+    assert(flat.readValueOnce === Set(1,100,3), "flatten fails 2")
 
     v.set(Set(v3, v2))
 
-    assert(flat.now === Set(3,100), "flatten fails 3")
+    assert(flat.readValueOnce === Set(3,100), "flatten fails 3")
   }
 
 
