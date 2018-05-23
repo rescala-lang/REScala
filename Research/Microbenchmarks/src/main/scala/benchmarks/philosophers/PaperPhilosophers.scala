@@ -2,7 +2,7 @@ package benchmarks.philosophers
 
 import java.util.concurrent.{Executors, ThreadLocalRandom}
 
-import rescala.core.{Scheduler, Pulse, REName, Struct}
+import rescala.core.{Scheduler, REName, Struct}
 import rescala.fullmv.FullMVStruct
 import rescala.parrp.Backoff
 

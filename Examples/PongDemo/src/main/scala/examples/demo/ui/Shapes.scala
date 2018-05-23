@@ -7,10 +7,10 @@ import rescala._
 
 trait Shape extends Serializable {
   val changed: Event[Any]
-  def centerX: Signal[Int]
-  def centerY: Signal[Int]
-  def hitboxWidth: Signal[Int]
-  def hitboxHeight: Signal[Int]
+  val centerX: Signal[Int]
+  val centerY: Signal[Int]
+  val hitboxWidth: Signal[Int]
+  val hitboxHeight: Signal[Int]
   def drawSnapshot(g: Graphics2D)(implicit turn: AdmissionTicket): Unit
 }
 

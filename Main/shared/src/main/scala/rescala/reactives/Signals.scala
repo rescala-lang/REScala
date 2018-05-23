@@ -1,6 +1,7 @@
 package rescala.reactives
 
 import rescala.core._
+import rescala.macros.cutOutOfUserComputation
 import rescala.reactives.RExceptions.EmptySignalControlThrowable
 import rescala.reactives.Signals.Sstate
 
@@ -11,6 +12,7 @@ object Signals {
   type Sstate[S <: Struct, T] = S#State[Pulse[T], S]
 
   /** creates a new static signal depending on the dependencies, reevaluating the function */
+  @cutOutOfUserComputation
   def static[T, S <: Struct](dependencies: ReSource[S]*)
                             (expr: StaticTicket[S] => T)
                             (implicit ct: CreationTicket[S]): Signal[T, S] =
@@ -23,6 +25,7 @@ object Signals {
     }
 
   /** creates a signal that has dynamic dependencies (which are detected at runtime with Signal.apply(turn)) */
+  @cutOutOfUserComputation
   def dynamic[T, S <: Struct](dependencies: ReSource[S]*)
                              (expr: DynamicTicket[S] => T)
                              (implicit ct: CreationTicket[S]): Signal[T, S] =
@@ -34,20 +37,24 @@ object Signals {
     }
 
   /** converts a future to a signal */
+  @cutOutOfUserComputation
   def fromFuture[A: ReSerializable, S <: Struct](fut: Future[A])(implicit fac: Scheduler[S], ec: ExecutionContext): Signal[A, S] = {
     val v: Var[A, S] = rescala.reactives.Var.empty[A, S]
     fut.onComplete { res => fac.transaction(v)(t => v.admitPulse(Pulse.tryCatch(Pulse.Value(res.get)))(t)) }
     v
   }
 
+  @cutOutOfUserComputation
   def lift[A, S <: Struct, R](los: Seq[Signal[A, S]])(fun: Seq[A] => R)(implicit maybe: CreationTicket[S]): Signal[R, S] = {
     static(los: _*) { t => fun(los.map(s => t.dependStatic(s))) }
   }
 
+  @cutOutOfUserComputation
   def lift[A1, B, S <: Struct](n1: Signal[A1, S])(fun: (A1) => B)(implicit maybe: CreationTicket[S]): Signal[B, S] = {
     static(n1)(t => fun(t.dependStatic(n1)))
   }
 
+  @cutOutOfUserComputation
   def lift[A1, A2, B, S <: Struct](n1: Signal[A1, S], n2: Signal[A2, S])(fun: (A1, A2) => B)(implicit maybe: CreationTicket[S]): Signal[B, S] = {
     static(n1, n2)(t => fun(t.dependStatic(n1), t.dependStatic(n2)))
   }

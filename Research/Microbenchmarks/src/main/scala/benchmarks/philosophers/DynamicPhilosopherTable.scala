@@ -15,7 +15,7 @@ class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(ov
 
     val forks = for (i <- 0 until tableSize) yield {
       val nextCircularIndex = mod(i + 1)
-      Signal {
+      Signal.dynamic {
         phils(i)() match {
           case Eating => Taken(i.toString)
           case Thinking =>
@@ -30,7 +30,7 @@ class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(ov
 
     for (i <- 0 until tableSize) yield {
       val ownName = i.toString
-      val vision = Signal {
+      val vision = Signal.dynamic {
         forks(i)() match {
           case Taken(name) if name != ownName => BlockedBy(name)
           case Taken(`ownName`) => Done
@@ -62,7 +62,7 @@ class HalfDynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long
 
     for (i <- 0 until tableSize) yield {
       val ownName = i.toString
-      val vision = Signal {
+      val vision = Signal.dynamic {
         forks(i)() match {
           case Taken(name) if name != ownName => BlockedBy(name)
           case Taken(`ownName`) => Done
@@ -89,7 +89,7 @@ class OtherHalfDynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work:
 
     val forks = for (i <- 0 until tableSize) yield {
       val nextCircularIndex = mod(i + 1)
-      Signal {
+      Signal.dynamic {
         phils(i)() match {
           case Eating => Taken(i.toString)
           case Thinking =>

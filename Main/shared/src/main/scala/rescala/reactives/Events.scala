@@ -2,6 +2,7 @@ package rescala.reactives
 
 import rescala.core.Pulse.NoChange
 import rescala.core._
+import rescala.macros.cutOutOfUserComputation
 import rescala.reactives.Events.Estate
 import rescala.reactives.Signals.Diff
 
@@ -13,6 +14,7 @@ object Events {
 
 
   /** the basic method to create static events */
+  @cutOutOfUserComputation
   def staticNamed[T, S <: Struct](name: String,
                                   dependencies: ReSource[S]*)
                                  (calculate: StaticTicket[S] => Pulse[T])
@@ -23,12 +25,14 @@ object Events {
   }
 
   /** Creates static events */
+  @cutOutOfUserComputation
   def static[T, S <: Struct](dependencies: ReSource[S]*)
                             (calculate: StaticTicket[S] => Option[T])
                             (implicit ticket: CreationTicket[S]): Event[T, S] =
     staticNamed(ticket.rename.name, dependencies: _*)(st => Pulse.fromOption(calculate(st)))
 
   /** Creates dynamic events */
+  @cutOutOfUserComputation
   def dynamic[T, S <: Struct](dependencies: ReSource[S]*)(expr: DynamicTicket[S] => Option[T])(implicit ticket: CreationTicket[S]): Event[T, S] = {
     ticket { initialTurn =>
       val staticDeps = dependencies.toSet
@@ -39,6 +43,7 @@ object Events {
   }
 
   /** Creates change events */
+  @cutOutOfUserComputation
   def change[T, S <: Struct](signal: Signal[T, S])(implicit ticket: CreationTicket[S]): Event[Diff[T], S] = ticket { initTurn =>
     val internal = initTurn.create[(Pulse[T], Pulse[Diff[T]]), ChangeEvent[T, S]](
       Set[ReSource[S]](signal), Initializer.Change, inite = true) { state =>
@@ -47,6 +52,7 @@ object Events {
     Events.static(internal)(st => st.dependStatic(internal))(initTurn)
   }
 
+  @cutOutOfUserComputation
   def foldOne[A, T: ReSerializable, S <: Struct](dependency: Event[A, S], init: T)(expr: (T, A) => T)(implicit ticket: CreationTicket[S]): Signal[T, S] = {
     fold(Set[ReSource[S]](dependency), init){(st, acc) =>
       val a: A = dependency.internalAccess(st.collectStatic(dependency)).get
@@ -56,6 +62,7 @@ object Events {
   /** Folds events with a given operation to create a Signal.
     *
     * @see [[Event.fold]]*/
+  @cutOutOfUserComputation
   def fold[T: ReSerializable, S <: Struct](dependencies: Set[ReSource[S]], init: T)(expr: (StaticTicket[S], () => T) => T)(implicit ticket: CreationTicket[S]): Signal[T, S] = {
     ticket { initialTurn =>
       initialTurn.create[Pulse[T], StaticSignal[T, S]](dependencies,
@@ -66,6 +73,7 @@ object Events {
   }
 
   /** Folds when any one of a list of events occurs, if multiple events occur, every fold is executed in order. */
+  @cutOutOfUserComputation
   final def foldAll[A: ReSerializable, S <: Struct](init: A)
                                                    (accthingy: (=> A) => Seq[(Event[T, S], T => A) forSome {type T}])
                                                    (implicit ticket: CreationTicket[S]): Signal[A, S] = {

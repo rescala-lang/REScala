@@ -12,7 +12,9 @@ object MacroTags {
   type Dynamic <: Staticism
 }
 
-class cutOutInReactiveMacro extends StaticAnnotation
+/** Annotated definitions are cut out of any reactive macro and only evaluated once when the reactive is created.
+  * This causes more dependencies to be static and reduces the number of unnecessarily created reactives. */
+class cutOutOfUserComputation extends StaticAnnotation
 
 class ReactiveMacros(val c: blackbox.Context) {
 
@@ -281,31 +283,23 @@ class ReactiveMacros(val c: blackbox.Context) {
       critical
     }.nonEmpty
 
-    def isReactiveThatCanBeCutOut(reactive: c.universe.Tree): Boolean = {
-      isInterpretable(reactive) &&
-        (reactive match {
-          case Block(_, _) =>
-            true
-          case Typed(expr, _) =>
-            isReactiveThatCanBeCutOut(expr)
-          case _ =>
+    def isReactiveThatCanBeCutOut(outerReactive: c.universe.Tree): Boolean = {
+      @scala.annotation.tailrec
+      def annotatedForCutOut(reactive: c.universe.Tree): Boolean = reactive match {
+        case Block(_, expr) => annotatedForCutOut(expr)
+        case Typed(expr, _) => annotatedForCutOut(expr)
+        case _ =>
 
-            val annotatedForCutOut = if (!reactive.symbol.isMethod) false else {
-              reactive.symbol.asMethod.returnType match {
-                case AnnotatedType(annotations, _) =>
-                  annotations exists {_.tree.tpe <:< typeOf[cutOutInReactiveMacro]}
-                case _ => false
-              }
-            }
+          val directAnnotations = reactive.symbol.annotations
+          val accessorAnnotations: List[Annotation] =
+            if (reactive.symbol.isMethod && reactive.symbol.asMethod.isAccessor)
+              reactive.symbol.asMethod.accessed.annotations
+            else Nil
 
-            def automaticCutOut = reactive.symbol.isTerm &&
-              !reactive.symbol.asTerm.isVal &&
-              !reactive.symbol.asTerm.isVar &&
-              !reactive.symbol.asTerm.isAccessor
+          (directAnnotations ++ accessorAnnotations) exists {_.tree.tpe <:< typeOf[cutOutOfUserComputation]}
+      }
 
-            annotatedForCutOut || automaticCutOut
-        }) &&
-        !containsCriticalReferences(reactive)
+      isInterpretable(outerReactive) && annotatedForCutOut(outerReactive) && !containsCriticalReferences(outerReactive)
     }
   }
 

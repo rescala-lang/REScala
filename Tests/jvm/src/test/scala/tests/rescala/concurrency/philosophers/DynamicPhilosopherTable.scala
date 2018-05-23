@@ -15,11 +15,13 @@ class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(ov
     val forks = for (i <- 0 until tableSize) yield {
       val nextCircularIndex = mod(i + 1)
       implicit val name: REName = s"Fork($i, $nextCircularIndex)"
+      val left = phils(i)
+      val right = phils(nextCircularIndex)
       Signal {
-        phils(i)() match {
+        left() match {
           case Hungry => Taken(i.toString)
           case Thinking =>
-            phils(nextCircularIndex)() match {
+            right() match {
               case Hungry => Taken(nextCircularIndex.toString)
               case Thinking => Free
             }

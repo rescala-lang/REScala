@@ -1,6 +1,7 @@
 package tests.rescala.dynamic
 
 import rescala.core.infiltration.Infiltrator.assertLevel
+import rescala.macros.cutOutOfUserComputation
 import tests.rescala.testtools.RETests
 
 class TrueDynamicSignals extends RETests { multiEngined { engine => import engine._
@@ -140,6 +141,7 @@ class TrueDynamicSignals extends RETests { multiEngined { engine => import engin
 
   test("extracting Signal Side Effects"){
     val e1 = Evt[Int]
+    @cutOutOfUserComputation
     def newSignal(): Signal[Int] = e1.count()
 
     val macroRes = Signal {

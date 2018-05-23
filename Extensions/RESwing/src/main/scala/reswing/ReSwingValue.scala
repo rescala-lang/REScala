@@ -2,6 +2,7 @@ package reswing
 
 import rescala._
 import rescala.core.ReSerializable
+import rescala.macros.cutOutOfUserComputation
 
 import scala.language.implicitConversions
 
@@ -82,5 +83,6 @@ object ReSwingValue {
   /**
    * Returns the Signal representing the value.
    */
+  @cutOutOfUserComputation
   implicit def toSignal[T](value: ReSwingValue[T]): Signal[T] = value.toSignal
 }

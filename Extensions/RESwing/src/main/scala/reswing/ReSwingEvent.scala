@@ -1,6 +1,7 @@
 package reswing
 
-import rescala.{implicitEngine, Event, Evt}
+import rescala.macros.cutOutOfUserComputation
+import rescala.{Event, Evt, implicitEngine}
 
 import scala.language.implicitConversions
 
@@ -42,5 +43,6 @@ object ReSwingEvent {
   /**
    * Returns the Event representing the event.
    */
+  @cutOutOfUserComputation
   implicit def toEvent[T](value: ReSwingEvent[T]): Event[T] = value.toEvent
 }

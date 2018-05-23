@@ -1,6 +1,6 @@
 package tests.rescala.static.signals
 
-import rescala.macros.cutOutInReactiveMacro
+import rescala.macros.cutOutOfUserComputation
 import tests.rescala.testtools.RETests
 
 class SignalMacro extends RETests { multiEngined { engine => import engine._
@@ -223,19 +223,16 @@ class SignalMacro extends RETests { multiEngined { engine => import engine._
   }
 
 
+  test("function As Getter For Signal") {
 
-
-
-  test("function As Getter For Signal"){
-
- import scala.language.reflectiveCalls
+    import scala.language.reflectiveCalls
 
     def getSignal(obj: {def signal: Signal[Int]}) = obj.signal
 
-    val v = Var { 20 }
-    val o = new {val signal = Signal { v() } }
+    val v = Var {20}
+    val o = new {val signal = Signal {v()}}
 
-    val sig = Signal { getSignal(o)() }
+    val sig = Signal.dynamic {getSignal(o)()}
 
     assert(sig.readValueOnce === 20)
     v set 30
@@ -273,11 +270,12 @@ class SignalMacro extends RETests { multiEngined { engine => import engine._
   }
 
 
-  test("define force cut out at definition time") {
+  test("define force cut out at definition time with accessor") {
 
     val source = Var("Hallo")
     object myMap {
-      var ms: engine.Var[String]@cutOutInReactiveMacro = source
+      @cutOutOfUserComputation
+      var ms: engine.Var[String] = source
     }
 
     val greeting = Signal {
@@ -285,6 +283,43 @@ class SignalMacro extends RETests { multiEngined { engine => import engine._
     }
 
     assert(greeting.readValueOnce === source.readValueOnce)
+    myMap.ms = Var("Something else")
+    assert(greeting.readValueOnce === source.readValueOnce)
+    source.set("Welt")
+    assert(greeting.readValueOnce === source.readValueOnce)
+  }
+
+
+  test("define force cut out at definition time with def") {
+
+    val source = Var("Hallo")
+    var indirectSource = source
+    object myMap {
+      @cutOutOfUserComputation
+      def ms: engine.Var[String] = indirectSource
+    }
+
+    val greeting = Signal {
+      (myMap.ms).value
+    }
+
+    assert(greeting.readValueOnce === source.readValueOnce)
+    indirectSource = Var("Something else")
+    assert(greeting.readValueOnce === source.readValueOnce)
+    source.set("Welt")
+    assert(greeting.readValueOnce === source.readValueOnce)
+  }
+
+  test("can generate signals in map") {
+
+    val source = Evt[String]
+    val mapping = Map("Hallo" -> Var("Welt"), "Test" -> Var("String"))
+
+    val selected = source.map(mapping.get).flatten.latest().flatten
+
+    source.fire("Hallo")
+
+    assert(selected.readValueOnce === "Welt")
 
   }
 

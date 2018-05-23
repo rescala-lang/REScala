@@ -22,7 +22,7 @@ object JMouseBouncingBall extends Main {
   val panel = new ShapesPanel(shapes)
 
   val velocity = Signal { Pos(
-    x = {panel.Mouse.leftButton.pressed.fold(200d / Clock.NanoSecond) { (old, _) => -old }}.value,
+    x = panel.Mouse.leftButton.pressed.fold(200d / Clock.NanoSecond) { (old, _) => -old }.value,
     y = panel.Mouse.rightButton.pressed.fold(150d / Clock.NanoSecond) { (old, _ ) => -old }.value)}
 
   val inc = Clock.ticks.map(tick => Right[Point, Pos](velocity.value * tick.toDouble))

@@ -4,6 +4,7 @@ import java.awt.datatransfer.{Clipboard, DataFlavor, StringSelection}
 import java.awt.{Dimension, Graphics2D, Point, Rectangle, SystemColor, Toolkit}
 
 import rescala._
+import rescala.macros.cutOutOfUserComputation
 import reswing.{ReComponent, ReSwingValue}
 import texteditor.{JScrollableComponent, LineIterator, LineOffset, Position}
 
@@ -114,10 +115,12 @@ class TextArea(text: String) extends ReComponent {
     def changeMarkPos(value: Position): Unit = changeMark(LineOffset.offset(content.now, value))
 
     // caret location as offset
+    @cutOutOfUserComputation
     def offset: rescala.Signal[Int] = dot
     def changeOffset(value: Int): Unit = changed.fire((value, value))
 
     // caret location as position (row and column)
+    @cutOutOfUserComputation
     def position: rescala.Signal[Position] = dotPos
     def changePosition(value: Position): Unit = changeOffset(LineOffset.offset(content.now, value))
 
