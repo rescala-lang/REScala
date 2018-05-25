@@ -12,7 +12,7 @@ import rescala.core.{Scheduler, Struct}
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @Warmup(iterations = 5, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
 @Measurement(iterations = 5, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
-@Fork(1)
+@Fork(3)
 @Threads(1)
 @State(Scope.Thread)
 class NaturalGraph[S <: Struct] {
