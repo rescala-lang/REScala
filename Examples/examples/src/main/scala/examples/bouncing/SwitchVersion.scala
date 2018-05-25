@@ -32,8 +32,8 @@ class SwitchVersion {
 
   // Using switch
 
-  val x: Signal[Int] = tick.fold(initPosition.x) {(pos, _) => pos + speedX.now}
-  val y: Signal[Int] = tick.fold(initPosition.y) {(pos, _) => pos + speedY.now}
+  val x: Signal[Int] = tick.fold(initPosition.x) {(pos, _) => pos + speedX.value}
+  val y: Signal[Int] = tick.fold(initPosition.y) {(pos, _) => pos + speedY.value}
 
   val xBounce = x.changed && (x => x < 0 || x + Size > Max_X)
   val yBounce = y.changed && (y => y < 0 || y + Size > Max_Y)
@@ -47,8 +47,8 @@ class SwitchVersion {
   val frame = new MainFrame {
     contents = new Panel() {
       preferredSize = new Dimension(600, 600)
-      override def paintComponent(g: Graphics2D): Unit = {
-	    g.fillOval(x.now, y.now, Size, Size)
+      override def paintComponent(g: Graphics2D): Unit = transaction(x, y){ t =>
+	    g.fillOval(t.now(x), t.now(y), Size, Size)
       }
     }
   }

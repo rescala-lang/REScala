@@ -50,25 +50,25 @@ class PongWindow {
 
       preferredSize = new Dimension(Pong.Max_X, Pong.Max_Y)
       val scoreFont = new Font("Tahoma", java.awt.Font.PLAIN, 32)
-      override def paintComponent(g: Graphics2D): Unit = {
+      override def paintComponent(g: Graphics2D): Unit = transaction(ball.x, ball.y, ball.leftRacket.area, ball.rightRacket.area) { t =>
         g.setColor(java.awt.Color.DARK_GRAY)
-        g.fillOval(ball.x.now, ball.y.now, Ball.Size, Ball.Size)
+        g.fillOval(t.now(ball.x), t.now(ball.y), Ball.Size, Ball.Size)
 
-        g.fillRect(ball.leftRacket.area.now.x,
-          ball.leftRacket.area.now.y,
-          ball.leftRacket.area.now.width,
-          ball.leftRacket.area.now.height
+        g.fillRect(t.now(ball.leftRacket.area).x,
+          t.now(ball.leftRacket.area).y,
+          t.now(ball.leftRacket.area).width,
+          t.now(ball.leftRacket.area).height
         )
-        g.fillRect(ball.rightRacket.area.now.x,
-          ball.rightRacket.area.now.y,
-          ball.rightRacket.area.now.width,
-          ball.rightRacket.area.now.height
+        g.fillRect(t.now(ball.rightRacket.area).x,
+          t.now(ball.rightRacket.area).y,
+          t.now(ball.rightRacket.area).width,
+          t.now(ball.rightRacket.area).height
         )
 
 
         g.setColor(new Color(200, 100, 50))
         g.setFont(scoreFont)
-        g.drawString(ball.score.now, Pong.Max_X / 2 - 50, 40)
+        g.drawString(t.now(ball.score), Pong.Max_X / 2 - 50, 40)
       }
     }
   }

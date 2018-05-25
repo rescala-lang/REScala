@@ -48,7 +48,7 @@ class CatchUp {
   val y = Signal {mouseY() + yOffset().toInt}
 
   // Old mouse position, some time ago
-  val mouseDelayed: Signal[Point] = mouse.position.changed.last(20).map(_.headOption.getOrElse(mouse.position.now))
+  val mouseDelayed: Signal[Point] = Signal { mouse.position.changed.last(20).value.headOption.getOrElse(mouse.position.value) }
   val delayedX = Signal {mouseDelayed().getX.toInt}
   val delayedY = Signal {mouseDelayed().getY.toInt}
 
@@ -86,19 +86,21 @@ class CatchUp {
       preferredSize = new Dimension(Max_X, Max_Y)
       val myFont = new Font("Tahoma", java.awt.Font.PLAIN, SizeY)
       override def paintComponent(g: Graphics2D): Unit = {
-        //val fontMetrics = g.getFontMetrics(myFont)
-        g.setColor(java.awt.Color.DARK_GRAY)
-        g.fill(catchBox.now)
-        if (caught.now)
-          g.setColor(java.awt.Color.RED)
-        g.fill(upBox.now)
-        g.setColor(java.awt.Color.WHITE)
-        g.setFont(myFont)
-        g.drawString("CATCH", catchBox.now.getX.toInt, catchBox.now.getY.toInt + SizeY - 5)
-        g.drawString("UP", upBox.now.getX.toInt, upBox.now.getY.toInt + SizeY - 5)
+        transaction(catchBox, caught, upBox, scoreString) { t =>
+          //val fontMetrics = g.getFontMetrics(myFont)
+          g.setColor(java.awt.Color.DARK_GRAY)
+          g.fill(t.now(catchBox))
+          if (t.now(caught))
+            g.setColor(java.awt.Color.RED)
+          g.fill(t.now(upBox))
+          g.setColor(java.awt.Color.WHITE)
+          g.setFont(myFont)
+          g.drawString("CATCH", t.now(catchBox).getX.toInt, t.now(catchBox).getY.toInt + SizeY - 5)
+          g.drawString("UP", t.now(upBox).getX.toInt, t.now(upBox).getY.toInt + SizeY - 5)
 
-        g.setColor(new Color(200, 100, 50))
-        g.drawString(scoreString.now, Max_X / 2 - 100, 40)
+          g.setColor(new Color(200, 100, 50))
+          g.drawString(t.now(scoreString), Max_X / 2 - 100, 40)
+        }
       }
     }
   }

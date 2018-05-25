@@ -32,7 +32,7 @@ object SignalVersion extends App {
 
   while (true) {
     Thread sleep 200
-    time set time.now + 1
+    time.transform(_ + 1)
   }
 
 
