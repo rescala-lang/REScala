@@ -20,30 +20,33 @@ class ReactiveMacros(val c: blackbox.Context) {
 
   import c.universe._
 
-  def ReactiveExpression[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag, IsStatic <: MacroTags.Staticism : c.WeakTypeTag, ReactiveType : c.WeakTypeTag]
-  (expression: c.Expr[A])(ticket: c.Tree): c.Tree = {
-
-    if (c.hasErrors)
-      return q"""throw new ${termNames.ROOTPKG}.scala.NotImplementedError("macro not expanded because of other compilation errors")"""
-
+  class Parser[S <: Struct: c.WeakTypeTag](tree: Tree, forceStatic: Boolean) {
     val ticketTermName: TermName = TermName(c.freshName("ticket$"))
     val ticketIdent: Ident = Ident(ticketTermName)
 
-    val forceStatic = !(weakTypeOf[IsStatic] <:< weakTypeOf[MacroTags.Dynamic])
-    val weAnalysis = new WholeExpressionAnalysis(expression.tree)
+    val weAnalysis = new WholeExpressionAnalysis(tree)
     val cutOut = new CutOutTransformer(weAnalysis)
-    val cutOutTree = cutOut.transform(expression.tree)
-    val detections = new RewriteTransformer(weAnalysis, ticketIdent, forceStatic)
+    val cutOutTree = cutOut.transform(tree)
+    val detections = new RewriteTransformer[S](weAnalysis, ticketIdent, forceStatic)
     val rewrittenTree = detections transform cutOutTree
+  }
+
+  def ReactiveExpression[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag, IsStatic <: MacroTags.Staticism : c.WeakTypeTag, ReactiveType : c.WeakTypeTag]
+  (expression: c.Expr[A])(ticket: c.Tree): c.Tree = {
+    if (c.hasErrors)
+      return q"""throw new ${termNames.ROOTPKG}.scala.NotImplementedError("macro not expanded because of other compilation errors")"""
+
+    val forceStatic = !(weakTypeOf[IsStatic] <:< weakTypeOf[MacroTags.Dynamic])
+    val p = new Parser[S](expression.tree, forceStatic)
 
     makeExpression[S, A](
-      weakTypeOf[ReactiveType].typeSymbol.asClass.module,
-      ticket,
-      detections.detectedStaticReactives,
-      detections.detectedDynamicReactives.isEmpty,
-      ticketTermName,
-      rewrittenTree,
-      cutOut.cutOutReactivesVals.reverse)
+      signalsOrEvents = weakTypeOf[ReactiveType].typeSymbol.asClass.module,
+      outerTicket = ticket,
+      dependencies = p.detections.detectedStaticReactives,
+      isStatic = p.detections.detectedDynamicReactives.isEmpty,
+      innerTicket = p.ticketTermName,
+      innerTree = p.rewrittenTree,
+      valDefs = p.cutOut.cutOutReactivesVals.reverse)
   }
 
 
@@ -52,35 +55,20 @@ class ReactiveMacros(val c: blackbox.Context) {
     if (c.hasErrors)
       return q"""throw new ${termNames.ROOTPKG}.scala.NotImplementedError("macro not expanded because of other compilation errors")"""
 
-    val ticketTermName: TermName = TermName(c.freshName("ticket$"))
-    val ticketIdent: Ident = Ident(ticketTermName)
 
-    // disable construction warnings for events
-    val weAnalysis = new WholeExpressionAnalysis(expression.tree)
-    val cutOut = new CutOutTransformer(weAnalysis)
-    val cutOutTree = cutOut.transform(expression.tree)
-    val detections = new RewriteTransformer[S](weAnalysis, ticketIdent, requireStatic = true)
-    val rewrittenTree = detections transform cutOutTree
+    val mapTree: Tree = q"""${c.prefix}.value.map($expression)"""
+    mapTree.forAll(t => if (t.tpe == null) {internal.setType(t, NoType); true} else false)
 
-
-    val mapFunctionArgumentTermName = TermName(c.freshName("eventValue$"))
-    val mapFunctionArgumentIdent = Ident(mapFunctionArgumentTermName)
-
-    val extendedDetections = mapFunctionArgumentIdent :: detections.detectedStaticReactives ::: cutOut.cutOutReactiveIdentifiers
-
-    val valueAccessMethod = TermName(if (detections.detectedDynamicReactives.isEmpty) "dependStatic" else "depend")
-
-    val mapTree = q"""$ticketTermName.$valueAccessMethod($mapFunctionArgumentIdent).map($rewrittenTree)"""
+    val p = new Parser(mapTree, forceStatic = true)
 
     makeExpression[S, A](
-      weakTypeOf[rescala.reactives.Events.type].termSymbol,
-      ticket,
-      extendedDetections,
-      detections.detectedDynamicReactives.isEmpty,
-      ticketTermName,
-      mapTree,
-      (q"val $mapFunctionArgumentTermName = ${c.prefix}" : ValDef) :: cutOut.cutOutReactivesVals.reverse
-    )
+      signalsOrEvents = weakTypeOf[rescala.reactives.Events.type].typeSymbol.asClass.module,
+      outerTicket = ticket,
+      dependencies = p.detections.detectedStaticReactives,
+      isStatic = p.detections.detectedDynamicReactives.isEmpty,
+      innerTicket = p.ticketTermName,
+      innerTree = p.rewrittenTree,
+      valDefs = p.cutOut.cutOutReactivesVals.reverse)
 
   }
 
@@ -89,35 +77,26 @@ class ReactiveMacros(val c: blackbox.Context) {
     if (c.hasErrors)
       return q"""throw new ${termNames.ROOTPKG}.scala.NotImplementedError("macro not expanded because of other compilation errors")"""
 
-    val innerTicketTermName: TermName = TermName(c.freshName("ticket$"))
-    val innerTicketIdent: Ident = Ident(innerTicketTermName)
-
-    // disable construction warnings for events
-    val weAnalysis = new WholeExpressionAnalysis(op.tree)
-    val cutOut = new CutOutTransformer(weAnalysis)
-    val cutOutTree = cutOut.transform(op.tree)
-    val detections = new RewriteTransformer[S](weAnalysis, innerTicketIdent, requireStatic = true)
-    val rewrittenTree = detections transform cutOutTree
-
+    val p = new Parser(op.tree, forceStatic = true)
 
     val mapFunctionArgumentTermName = TermName(c.freshName("eventValue$"))
     val mapFunctionArgumentIdent = Ident(mapFunctionArgumentTermName)
 
-    val extendedDetections = mapFunctionArgumentIdent :: detections.detectedStaticReactives ::: cutOut.cutOutReactiveIdentifiers
+    val extendedDetections = mapFunctionArgumentIdent :: p.detections.detectedStaticReactives
 
     val eventsSymbol = weakTypeOf[rescala.reactives.Events.type].termSymbol
 
 
     // def fold[T: ReSerializable, S <: Struct](dependencies: Set[ReSource[S]], init: T)(expr: (StaticTicket[S], () => T) => T)(implicit ticket: CreationTicket[S]): Signal[T, S] = {
-    val valDefs = (q"val $mapFunctionArgumentTermName = ${c.prefix}": ValDef) :: cutOut.cutOutReactivesVals.reverse
+    val valDefs = (q"val $mapFunctionArgumentTermName = ${c.prefix}": ValDef) :: p.cutOut.cutOutReactivesVals.reverse
     val accumulatorIdent: Ident = Ident( TermName(c.freshName("accumulator$")))
     val pulseIdent: Ident = Ident( TermName(c.freshName("pulse")))
     val ticketType = weakTypeOf[StaticTicket[S]]
     val body =
       q"""$eventsSymbol.fold[${weakTypeOf[A]}, ${weakTypeOf[S]}](Set(..$extendedDetections), $init)(
-          ($innerTicketIdent: $ticketType, $accumulatorIdent: ${weakTypeOf[T]}) => {
-            val $pulseIdent = $innerTicketIdent.dependStatic($mapFunctionArgumentIdent).get
-            $rewrittenTree($accumulatorIdent(), $pulseIdent)
+          (${p.ticketIdent}: $ticketType, $accumulatorIdent: ${weakTypeOf[T]}) => {
+            val $pulseIdent = ${p.ticketIdent}.dependStatic($mapFunctionArgumentIdent).get
+            ${p.rewrittenTree}($accumulatorIdent(), $pulseIdent)
           })($serializable, $ticket)"""
     val block: c.universe.Tree = Block(valDefs, body)
     ReTyper(c).untypecheck(block)
@@ -297,15 +276,16 @@ class ReactiveMacros(val c: blackbox.Context) {
   }
 
 
-  def treeTypeNullWarning(): Unit =
+  def treeTypeNullWarning(tree: Tree): Unit =
     c.warning(c.enclosingPosition,
       "internal warning: tree type was null, " +
-        "this should not happen but the signal may still work")
+        "this should not happen but the signal may still work\n" +
+        s"Offending tree: $tree")
 
   def isInterpretable(tree: Tree): Boolean = {
     val staticInterpClass = c.mirror staticClass "_root_.rescala.core.Interp"
 
-    if (tree.tpe == null) {treeTypeNullWarning(); false}
+    if (tree.tpe == null) {treeTypeNullWarning(tree); false}
     else
       !(tree.tpe <:< definitions.NullTpe) &&
         !(tree.tpe <:< definitions.NothingTpe) &&
