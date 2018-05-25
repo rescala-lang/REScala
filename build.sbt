@@ -348,7 +348,7 @@ lazy val lib = new {
 
   val scalatags = libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.6.7"
 
-  val jsdom = libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "0.9.5"
+  val jsdom = libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "0.9.6"
 
   val akka = {
     val akkaVersion = "2.5.12"

@@ -1,8 +1,8 @@
 logLevel := Level.Warn
 
-addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.3.3")
+addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.3.4")
 
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.22")
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.23")
 
 addSbtPlugin("org.tpolecat" % "tut-plugin" % "0.6.3")
 
