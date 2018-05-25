@@ -38,7 +38,7 @@ abstract class RescalaInterface[S <: Struct] {
   /** Signals represent time changing values of type A
     * @group reactive */
   final type Signal[+A] = reactives.Signal[A, S]
-  /** Events represent discrete occurences of values of type A
+  /** Events represent discrete occurrences of values of type A
     * @group reactive */
   final type Event[+A] = reactives.Event[A, S]
   /** @group reactive */
