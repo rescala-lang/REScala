@@ -6,7 +6,7 @@ import rescala.core.{Scheduler, Struct}
 
 @State(Scope.Benchmark)
 class EngineParam[S <: Struct] {
-  @Param(Array("synchron", "parrp", "locksweep", "stm", "fullmv"))
+  @Param(Array("synchron", "parrp", "stm", "fullmv"))
   var engineName: String = _
 
   def engine: Scheduler[S] = engineName match {
