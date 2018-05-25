@@ -29,11 +29,11 @@ class BufferedValueStruct[V, S <: Struct](ip: InitValues[V]) extends ReadWriteVa
   override def base(token: Token): V = current
   override def get(token: Token): V = {if (token eq owner) update else current}
 
-  override def commit(turn: TwoVersionPropagation[S]): Unit = {
+  override def commit(): Unit = {
     current = ip.unchange.unchange(update)
-    release(turn)
+    release()
   }
-  override def release(turn: TwoVersionPropagation[S]): Unit = {
+  override def release(): Unit = {
     update = null.asInstanceOf[V]
     owner = null
   }

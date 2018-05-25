@@ -3,7 +3,7 @@ package rescala.stm
 import rescala.core.Initializer.InitValues
 import rescala.core.{ReSource, Reactive, Struct}
 import rescala.levelbased.LevelStructType
-import rescala.twoversion.{ReadWriteValue, Token, TwoVersionPropagation}
+import rescala.twoversion.{ReadWriteValue, Token}
 
 import scala.concurrent.stm.{InTxn, Ref, TxnLocal}
 
@@ -52,6 +52,6 @@ class STMStructType[V, S <: Struct](ip: InitValues[V]) extends LevelStructType[S
   override def get(token: Token): V = update.get(inTxn(token)).getOrElse(current.get(inTxn(token)))
 
 
-  override def commit(turn: TwoVersionPropagation[S]): Unit = {}
-  override def release(turn: TwoVersionPropagation[S]): Unit = {}
+  override def commit(): Unit = {}
+  override def release(): Unit = {}
 }

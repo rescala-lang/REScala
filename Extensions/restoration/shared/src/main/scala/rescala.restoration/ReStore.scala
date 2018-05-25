@@ -3,7 +3,7 @@ package rescala.restoration
 import rescala.core.Initializer.InitValues
 import rescala.core.{Initializer, ReSerializable, ReSource, Struct}
 import rescala.levelbased.{LevelBasedPropagation, LevelStruct, LevelStructTypeImpl}
-import rescala.twoversion.{TwoVersionPropagation, TwoVersionScheduler}
+import rescala.twoversion.TwoVersionScheduler
 
 import scala.collection.mutable
 
@@ -37,8 +37,8 @@ class ReStoringTurn(restore: ReStore) extends LevelBasedPropagation[ReStoringStr
 
 class ReStoringStructType[P, S <: Struct](storage: ReStore, val name: String, serializable: ReSerializable[P], initialVal: InitValues[P])
   extends LevelStructTypeImpl[P, S](initialVal) {
-  override def commit(turn: TwoVersionPropagation[S]): Unit = {
-    super.commit(turn)
+  override def commit(): Unit = {
+    super.commit()
     if (storage != null) {
       storage.put(name, serializable.serialize(current))
     }

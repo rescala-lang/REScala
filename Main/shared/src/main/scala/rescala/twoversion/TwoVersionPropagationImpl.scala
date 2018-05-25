@@ -30,11 +30,11 @@ trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropaga
 
   def observe(f: () => Unit): Unit = observers += f
 
-  override def commitPhase(): Unit = toCommit.foreach{_.commit(this)}
+  override def commitPhase(): Unit = toCommit.foreach{_.commit()}
 
   override def rollbackPhase(): Unit = {
     val it = toCommit.iterator
-    while (it.hasNext) it.next().release(this)
+    while (it.hasNext) it.next().release()
   }
 
   override def observerPhase(): Unit = {
