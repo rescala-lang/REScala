@@ -1,6 +1,7 @@
 package rescala.macros
 
 import rescala.core.{CreationTicket, DynamicTicket, LowPriorityCreationImplicits, StaticTicket, Struct}
+import rescala.reactives.Events
 import retypecheck._
 
 import scala.annotation.StaticAnnotation
@@ -32,13 +33,12 @@ class ReactiveMacros(val c: blackbox.Context) {
   }
 
   def ReactiveExpression[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag, IsStatic <: MacroTags.Staticism : c.WeakTypeTag, ReactiveType : c.WeakTypeTag]
-  (expression: c.Expr[A])(ticket: c.Tree): c.Tree = {
+  (expression: Tree)(ticket: c.Tree): c.Tree = {
     if (c.hasErrors)
       return q"""throw new ${termNames.ROOTPKG}.scala.NotImplementedError("macro not expanded because of other compilation errors")"""
 
     val forceStatic = !(weakTypeOf[IsStatic] <:< weakTypeOf[MacroTags.Dynamic])
-    val p = new Parser[S](expression.tree, forceStatic)
-
+    val p = new Parser(expression, forceStatic)
     makeExpression[S, A](
       signalsOrEvents = weakTypeOf[ReactiveType].typeSymbol.asClass.module,
       outerTicket = ticket,
@@ -47,30 +47,16 @@ class ReactiveMacros(val c: blackbox.Context) {
       innerTicket = p.ticketTermName,
       innerTree = p.rewrittenTree,
       valDefs = p.cutOut.cutOutReactivesVals.reverse)
-  }
 
+  }
 
   def EventMapMacro[T: c.WeakTypeTag, A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag]
   (expression: c.Expr[T => A])(ticket: c.Tree): c.Tree = {
-    if (c.hasErrors)
-      return q"""throw new ${termNames.ROOTPKG}.scala.NotImplementedError("macro not expanded because of other compilation errors")"""
-
-
     val mapTree: Tree = q"""${c.prefix}.value.map($expression)"""
     mapTree.forAll(t => if (t.tpe == null) {internal.setType(t, NoType); true} else false)
-
-    val p = new Parser(mapTree, forceStatic = true)
-
-    makeExpression[S, A](
-      signalsOrEvents = weakTypeOf[rescala.reactives.Events.type].typeSymbol.asClass.module,
-      outerTicket = ticket,
-      dependencies = p.detections.detectedStaticReactives,
-      isStatic = p.detections.detectedDynamicReactives.isEmpty,
-      innerTicket = p.ticketTermName,
-      innerTree = p.rewrittenTree,
-      valDefs = p.cutOut.cutOutReactivesVals.reverse)
-
+    ReactiveExpression[A, S, MacroTags.Static, Events.type](mapTree)(ticket)
   }
+
 
   def EventFoldMacro[T: c.WeakTypeTag, A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag]
   (init: c.Expr[A])(op: c.Expr[(A, T) => A])(ticket: c.Expr[rescala.core.CreationTicket[S]], serializable: c.Expr[rescala.core.ReSerializable[A]]): c.Tree = {
