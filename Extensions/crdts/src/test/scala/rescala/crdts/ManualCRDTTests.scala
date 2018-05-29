@@ -1,26 +1,16 @@
 package rescala.crdts
 
-import akka.actor.{ActorRef, ActorSystem}
-import com.typesafe.config.ConfigFactory
-import rescala._
-import rescala.crdts.pvars.{subscribe, _}
-import rescala.crdts.statecrdts.sequences.{RGA, RGOA, Vertex}
-import loci._
-import loci.registry.Binding
-import loci.communicator.ws.akka._
-import loci.registry.Registry
 import io.circe.generic.auto._
-import rescala.crdts.statecrdts.StateCRDT
-import rescala.crdts.statecrdts.counters.GCounter
-import loci.registry.Binding
+import loci.communicator.ws.akka._
+import loci.registry.{Binding, Registry}
 import loci.serializer.circe._
-import loci.transmitter.RemoteRef
+import loci.transmitter.{RemoteRef, _}
+import rescala._
+import rescala.crdts.pvars._
+import rescala.crdts.statecrdts.counters.GCounter
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
-import loci._
-import loci.transmitter._
-
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 import scala.language.higherKinds
 
 object GCountTransmittable {
@@ -37,22 +27,26 @@ object GCountTransmittable {
 
         val observer = value.internalChanges.observe(c => endpoint.send(c))
 
+        endpoint.receive notify value.externalChanges.fire
+
         endpoint.closed notify { _ => observer.remove }
 
         value.crdtSignal.readValueOnce
       }
 
       def receive(value: To, remote: RemoteRef, endpoint: Endpoint[From, To]): PGrowOnlyCounter = {
-        val counter = PGrowOnlyCounter(0)
+        val counter = PGrowOnlyCounter()
         locally(counter.valueSignal)
+        counter.externalChanges fire value
 
         println(s"received $value")
         println(s"before: $counter, ")
 
-        counter.externalChanges.fire(value)
         endpoint.receive notify counter.externalChanges.fire
+        val observer = counter.internalChanges.observe(c => endpoint.send(c))
+        endpoint.closed notify { _ => observer.remove }
 
-       println(s"manual ${ implicitly[StateCRDT[Int, GCounter]].merge(counter.crdtSignal.readValueOnce, value)}")
+        // println(s"manual ${implicitly[StateCRDT[Int, GCounter]].merge(counter.crdtSignal.readValueOnce, value)}")
 
         println(s"after: $counter")
 
@@ -99,12 +93,14 @@ object testSignalExpressions {
     println("running server")
 
     val (sr, s2) = { //server
-//      val webSocket = WebSocketListener()
+      //      val webSocket = WebSocketListener()
       val registry = new Registry
-//      registry.listen(webSocket)
+      //      registry.listen(webSocket)
       registry.listen(WS(1099))
 
       val l1 = PGrowOnlyCounter(10)
+      registry.bind(counterBinding)(l1)
+      /*
       val l2 = PGrowOnlyCounter(100)
 
       //l1.publish("l1")
@@ -119,32 +115,43 @@ object testSignalExpressions {
       l2.increase
 
       println(sig2.readValueOnce)
-
+      */
       (registry, l1)
     }
 
     println("running client")
 
-
+    /**
     { //client
       val registry = new Registry
       val connection: Future[RemoteRef] = registry.connect(WS("ws://localhost:1099/"))
       connection.foreach { remote =>
         val subscribedSig = registry.lookup(counterBinding, remote)
         println("subscription")
-        subscribedSig.foreach(c => c.valueSignal.observe(println))
+        subscribedSig.foreach(c => c.valueSignal.observe(v => println("client value: " + v)))
       }
       connection.failed.foreach(println)
+
+
+    }
+      **/
+
+    val (cr, c1) = { //client2
+      val registry = new Registry
+      val connection: Future[RemoteRef] = registry.connect(WS("ws://localhost:1099/"))
+      val remote: RemoteRef = Await.result(connection, Duration.Inf)
+      val subscribedSig: Future[PGrowOnlyCounter] = registry.lookup(counterBinding, remote)
+      val counter : PGrowOnlyCounter = Await.result(subscribedSig, Duration.Inf)
+      (registry, counter)
     }
 
-
     println("done")
+    c1.increase
     Thread.sleep(1000)
-    s2.increase
-    s2.increase
-    s2.increase
-    s2.increase
     Thread.sleep(1000)
+
+    println("s2: " + s2.value)
+    println("c1: " + c1.value)
     println("slept")
     sr.terminate()
   }
