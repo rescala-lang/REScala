@@ -3,7 +3,6 @@ package rescala.core
 import rescala.reactives.Signal
 
 import scala.annotation.implicitNotFound
-import scala.collection.mutable.ArrayBuffer
 import scala.language.implicitConversions
 
 /** [[InnerTicket]]s are used in Rescala to give capabilities to contexts during propagation.
@@ -30,8 +29,13 @@ abstract class ReevTicket[V, S <: Struct](creation: Initializer[S],
 
   private[rescala] final override def collectDynamic(reactive: ReSource[S]): reactive.Value = {
     assert (collectedDependencies != null, "may not access dynamic dependencies without tracking dependencies")
-    collectedDependencies += reactive
-    dynamicAccess(reactive)
+    val updatedDeps = collectedDependencies + reactive
+    if(updatedDeps eq collectedDependencies) {
+      staticAccess(reactive)
+    } else {
+      collectedDependencies = updatedDeps
+      dynamicAccess(reactive)
+    }
   }
 
   // inline result into ticket, to reduce the amount of garbage during reevaluation
@@ -85,15 +89,16 @@ trait InitialChange[S <: Struct] {
 
 /** Enables reading of the current value during admission.
   * Keeps track of written sources internally. */
-abstract class AdmissionTicket[S <: Struct](creation: Initializer[S]) extends InnerTicket(creation) {
+abstract class AdmissionTicket[S <: Struct](creation: Initializer[S], declaredWrites: Set[ReSource[S]]) extends InnerTicket(creation) {
   def access[A](reactive: Signal[A, S]): reactive.Value
   final def now[A](reactive: Signal[A, S]): A = reactive.interpret(access(reactive))
 
-  private val _initialChanges = ArrayBuffer[InitialChange[S]]()
-  private[rescala] def initialChanges: Iterable[InitialChange[S]] = _initialChanges
+  private var _initialChanges = Map[ReSource[S], InitialChange[S]]()
+  private[rescala] def initialChanges: Map[ReSource[S], InitialChange[S]] = _initialChanges
   private[rescala] def recordChange[T](ic: InitialChange[S]): Unit = {
-    assert(!_initialChanges.exists(c => c.source == ic.source), "must not admit same source twice in one turn")
-    _initialChanges += ic
+    assert(declaredWrites.contains(ic.source), "must not set a source that has not been pre-declared for the transaction")
+    assert(!_initialChanges.contains(ic.source), "must not admit same source twice in one turn")
+    _initialChanges += ic.source -> ic
   }
 
   private[rescala] var wrapUp: WrapUpTicket[S] => Unit = null

@@ -35,19 +35,9 @@ class ReactiveMirror[A](val getValue: FullMVTurn => A, val reflectionProxy: Reac
     reflectionProxy.asyncIncrementFrame(txn)
     FramingBranchResult.FramingBranchEnd
   }
-  override def decrementFrame(txn: FullMVTurn): FramingBranchResult[FullMVTurn, Reactive[FullMVStruct]] = {
-    FullMVEngine.myAwait(txn.addRemoteBranch(TurnPhase.Framing), timeout)
-    reflectionProxy.asyncDecrementFrame(txn)
-    FramingBranchResult.FramingBranchEnd
-  }
   override def incrementSupersedeFrame(txn: FullMVTurn, supersede: FullMVTurn): FramingBranchResult[FullMVTurn, Reactive[FullMVStruct]] = {
     FullMVEngine.myAwait(txn.addRemoteBranch(TurnPhase.Framing), timeout)
     reflectionProxy.asyncIncrementSupersedeFrame(txn, supersede)
-    FramingBranchResult.FramingBranchEnd
-  }
-  override def decrementReframe(txn: FullMVTurn, reframe: FullMVTurn): FramingBranchResult[FullMVTurn, Reactive[FullMVStruct]] = {
-    FullMVEngine.myAwait(txn.addRemoteBranch(TurnPhase.Framing), timeout)
-    reflectionProxy.asyncDeframeReframe(txn, reframe)
     FramingBranchResult.FramingBranchEnd
   }
   override def notify(txn: FullMVTurn, changed: Boolean): NotificationResultAction[FullMVTurn, Reactive[FullMVStruct]] = {
@@ -57,7 +47,7 @@ class ReactiveMirror[A](val getValue: FullMVTurn => A, val reflectionProxy: Reac
     } else {
       reflectionProxy.asyncResolvedUnchanged(txn)
     }
-    NotificationResultAction.GlitchFreeReadyButQueued
+    NotificationResultAction.ChangedSomethingInQueue
   }
   override def notifyFollowFrame(txn: FullMVTurn, changed: Boolean, followFrame: FullMVTurn): NotificationResultAction[FullMVTurn, Reactive[FullMVStruct]] = {
     FullMVEngine.myAwait(txn.addRemoteBranch(TurnPhase.Executing), timeout)
@@ -66,7 +56,7 @@ class ReactiveMirror[A](val getValue: FullMVTurn => A, val reflectionProxy: Reac
     } else {
       reflectionProxy.asyncResolvedUnchangedFollowFrame(txn, followFrame)
     }
-    NotificationResultAction.GlitchFreeReadyButQueued
+    NotificationResultAction.ChangedSomethingInQueue
   }
   override def latestValue: Value = ???
   override def reevIn(turn: FullMVTurn): Nothing = ???

@@ -31,22 +31,21 @@ class FullMVEngine(val timeout: Duration, val name: String) extends SchedulerImp
 
   override private[rescala] def singleReadValueOnce[A](reactive: Signal[A]) = reactive.state.latestValue.get
 
-  override private[rescala] def executeTurn[R](declaredWrites: Traversable[ReSource], admissionPhase: (AdmissionTicket) => R): R = {
+  override def executeTurn[R](declaredWrites: Set[ReSource], admissionPhase: (AdmissionTicket) => R): R = {
     val turn = newTurn()
     withTurn(turn) {
-      val setWrites = declaredWrites.toSet // this *should* be part of the interface..
-      if (setWrites.nonEmpty) {
+      if (declaredWrites.nonEmpty) {
         // framing phase
         turn.beginFraming()
-        turn.activeBranchDifferential(TurnPhase.Framing, setWrites.size)
-        for (i <- setWrites) threadPool.submit(Framing(turn, i))
+        turn.activeBranchDifferential(TurnPhase.Framing, declaredWrites.size)
+        for (i <- declaredWrites) threadPool.submit(Framing(turn, i))
         turn.completeFraming()
       } else {
         turn.beginExecuting()
       }
 
       // admission phase
-      val admissionTicket = new AdmissionTicket(turn) {
+      val admissionTicket = new AdmissionTicket(turn, declaredWrites) {
         override def access[A](reactive: Signal[A]): reactive.Value = turn.dynamicBefore(reactive)
       }
       val admissionResult = Try { admissionPhase(admissionTicket) }
@@ -57,28 +56,28 @@ class FullMVEngine(val timeout: Duration, val name: String) extends SchedulerImp
       assert(turn.activeBranches.get == 0, s"Admission phase left ${turn.activeBranches.get()} tasks undone.")
 
       // propagation phase
-      if (setWrites.nonEmpty) {
-        turn.initialChanges = admissionTicket.initialChanges.map(ic => ic.source -> ic).toMap
-        turn.activeBranchDifferential(TurnPhase.Executing, setWrites.size)
-        for(write <- setWrites) threadPool.submit(SourceNotification(turn, write, admissionResult.isSuccess && turn.initialChanges.contains(write)))
+      if (declaredWrites.nonEmpty) {
+        turn.initialChanges = admissionTicket.initialChanges
+        turn.activeBranchDifferential(TurnPhase.Executing, declaredWrites.size)
+        for(write <- declaredWrites) threadPool.submit(SourceNotification(turn, write, admissionResult.isSuccess && turn.initialChanges.contains(write)))
       }
 
-      // wrap-up "phase" (executes in parallel with propagation)
+      // turn completion
+      turn.completeExecuting()
+
+      // wrap-up "phase"
       val transactionResult = if(admissionTicket.wrapUp == null){
         admissionResult
       } else {
         val wrapUpTicket = new WrapUpTicket(){
           override def access(reactive: ReSource): reactive.Value = turn.dynamicAfter(reactive)
         }
-        admissionResult.map{ i =>
+        admissionResult.map { i =>
           // executed in map call so that exceptions in wrapUp make the transaction result a Failure
           admissionTicket.wrapUp(wrapUpTicket)
           i
         }
       }
-
-      // turn completion
-      turn.completeExecuting()
 
       // result
       transactionResult.get

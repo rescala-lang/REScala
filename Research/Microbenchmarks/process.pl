@@ -24,13 +24,13 @@ my $CSVDIR = 'resultStore';
 my $OUTDIR = 'fig';
 my $BARGRAPH = abs_path("bargraph.pl");
 
-our $FONT = "Latin Modern Roman";
+our $FONT = "Times";
 our $FONTSIZE = "30";
 
 our $NAME_FINE = "Handcrafted";
-our $NAME_COARSE = "No snapshots";
-our $NAME_LOCKSWEEP = "MV-RP";
-our $NAME_PARRP = "ParRP";
+our $NAME_COARSE = "G-Lock";
+our $NAME_FULLMV = "FullMV";
+our $NAME_PARRP = "MV-RP";
 our $NAME_STM = "STM-RP";
 our $NAME_RESTORING = "Snapshots";
 
@@ -41,17 +41,16 @@ our $BARGRAPH_YFORMAT = "%1.1f";
 our $LEGEND_POS = "off";
 our $YRANGE = "[0:]";
 our $XRANGE = "[:]";
-our $GNUPLOT_TERMINAL = "pdf size 6,3";
+our $GNUPLOT_TERMINAL = "pdf size 5,2.5";
 our %MARGINS = (
-    lmargin => 8.8,
-    rmargin => 1.7,
-    tmargin => 0.4,
+    lmargin => 5.8,
+    rmargin => 1.5,
+    tmargin => 0.3,
     bmargin => 1.5,
   );
 our $VERTICAL_LINE = undef;
 our $X_VARYING = "Threads";
-our $BARGRAPH_LEGEND =
-"legendx=inside";
+our $BARGRAPH_LEGEND = "legendx=inside";
 our %ADDITIONAL_GNUPLOT_PARAMS = ();
 
 our $MANUAL_BARGRAPH_HACK = 0;
@@ -59,7 +58,7 @@ our $MANUAL_BARGRAPH_HACK = 0;
 sub prettyName($name) {
   $name =~ s/Param: engineName:\s*//;
   $name =~ s/pessimistic|spinning|REScalaSpin|parrp/$NAME_PARRP/;
-  $name =~ s/locksweep/$NAME_LOCKSWEEP/;
+  $name =~ s/fullmv/$NAME_FULLMV/;
   $name =~ s/stm|REScalaSTM|STM/$NAME_STM/;
   $name =~ s/synchron|REScalaSynchron/$NAME_COARSE/;
   $name =~ s/unmanaged/$NAME_FINE/;
@@ -69,11 +68,11 @@ sub prettyName($name) {
 
 sub styleByName($name) {
   given($name) {
-    when (/$NAME_PARRP/)     { 'linecolor "dark-green" lt 2 lw 2 pt 6  ps 1' }
-    when (/$NAME_STM/)       { 'linecolor "blue"       lt 2 lw 2 pt 5  ps 1' }
-    when (/$NAME_COARSE|Restore/)    { 'linecolor "blue"       lt 2 lw 2 pt 9  ps 1' }
+    when (/$NAME_PARRP/)     { 'linecolor "dark-green" lt 2 lw 2 pt 7  ps 1' }
+    when (/$NAME_STM/)       { 'linecolor "dark-green"       lt 2 lw 2 pt 7  ps 1' }
+    when (/$NAME_COARSE|Restore/)    { 'linecolor "red"       lt 2 lw 2 pt 9  ps 1' }
     when (/fair/)            { 'linecolor "light-blue" lt 2 lw 2 pt 8  ps 1' }
-    when (/$NAME_LOCKSWEEP/) { 'linecolor "dark-green" lt 2 lw 2 pt 7  ps 1' }
+    when (/$NAME_FULLMV/) { 'linecolor "blue" lt 2 lw 2 pt 5  ps 1' }
     when (/$NAME_FINE/)      { 'linecolor "black"      lt 2 lw 2 pt 11 ps 1' }
     when (/$NAME_RESTORING|Derive/) { 'linecolor "dark-green" lt 2 lw 2 pt 6  ps 1' }
     default { '' }
@@ -84,17 +83,18 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
 {
 
   importCSV();
-  $DBH->do("DELETE FROM $TABLE WHERE Threads > 16");
-  $DBH->do(qq[DELETE FROM $TABLE WHERE "Param: engineName" = "fair"]);
-  $DBH->do(qq[DELETE FROM $TABLE WHERE "Param: engineName" = "parrp"]);
+#  $DBH->do("DELETE FROM $TABLE WHERE Threads > 16");
+#  $DBH->do(qq[DELETE FROM $TABLE WHERE "Param: engineName" = "fair"]);
+#  $DBH->do(qq[DELETE FROM $TABLE WHERE "Param: engineName" = "parrp"]);
 
   remove_tree($_) for glob("$OUTDIR/*");
   mkdir $OUTDIR;
   chdir $OUTDIR;
 
   makeLegend();
-  #miscBenchmarks();
-  restorationBenchmarks();
+#  miscBenchmarks();
+#  restorationBenchmarks();
+  mvrpBenchmarks();
 
   $DBH->commit();
 }
@@ -122,16 +122,76 @@ sub restorationBenchmarks() {
   }
 }
 
-sub miscBenchmarks() {
+sub mvrpBenchmarks() {
+  # paper philosophers
+  for my $topper (queryChoices("Param: topper")) {
+    for my $dynamic (queryChoices("Param: dynamicity", "Param: topper" => $topper)) {
+      for my $philosophers (queryChoices("Param: philosophers", "Param: dynamicity" => $dynamic, "Param: topper" => $topper)) {
+        # local $YRANGE = "[0:500]" if $philosophers <= 64 && $dynamic eq "static";
+        # local $YRANGE = "[0:400]" if $philosophers <= 32 && $dynamic eq "static";
+        # local $YRANGE = "[0:800]" if $philosophers > 64 && $dynamic eq "static";
+        # local $YRANGE = "[0:300]" if $dynamic ne "static" && $philosophers <= 64;
+        local $YRANGE = "[0:150]" if $philosophers == 16 && $topper eq "none";
+        local $YRANGE_ROUND = 150 if $philosophers == 16 && $topper eq "none";
+        local $YTIC_COUNT = 3 if $philosophers == 16 && $topper eq "none";
+        local $YRANGE = "[0:400]" if $philosophers == 64 && $topper eq "none";
+        local $YRANGE_ROUND = 400 if $philosophers == 64 && $topper eq "none";
+        local $YRANGE = "[0:900]" if $philosophers == -4 && $topper eq "none";
+        local $YRANGE_ROUND = 900 if $philosophers == -4 && $topper eq "none";
+        plotBenchmarksFor("paperphilosophers-$topper", "$dynamic-$philosophers",
+          map { {Title => $_, "Param: engineName" => $_ , Benchmark => "benchmarks.philosophers.PaperPhilosopherCompetition.eatOnce",
+          "Param: philosophers" => $philosophers, "Param: dynamicity" => $dynamic, "Param: topper" => $topper } }
+            queryChoices("Param: engineName", "Param: topper" => $topper, "Param: dynamicity" => $dynamic, "Param: philosophers" => $philosophers));
+      }
+    }
+  }
 
+  # topologies
+  for my $work (queryChoices("Param: work", Benchmark => "benchmarks.simple.ReverseFan.run")) {
+    plotBenchmarksFor("topologies", "reverseFan-work-$work",
+        (map {{Title => $_, "Param: engineName" => $_, "Param: work" => $work, Benchmark => "benchmarks.simple.ReverseFan.run" }}
+          queryChoices("Param: engineName", "Param: work" => $work, Benchmark => "benchmarks.simple.ReverseFan.run")),);
+  }
+  for my $work (queryChoices("Param: work", Benchmark => "benchmarks.simple.SignalMapGrid.run")) {
+    for my $width (queryChoices("Param: width", "Param: work" => $work, Benchmark => "benchmarks.simple.SignalMapGrid.run")) {
+      for my $depth (queryChoices("Param: depth", "Param: width" => $width, "Param: work" => $work, Benchmark => "benchmarks.simple.SignalMapGrid.run")) {
+        my $name = "grid-w-$width-d-$depth";
+        if($width == 0) {
+          if($depth == 0) {
+            $name = "singleSource";
+          } else {
+            $name = "singleSource-$depth";
+          }
+        } elsif ($width == 1) {
+          $name = "chain-$depth";
+        } elsif ($depth == 1) {
+          $name = "fan-$width";
+        }
+        plotBenchmarksFor("topologies", "$name-work-$work",
+            (map {{Title => $_, "Param: engineName" => $_, "Param: depth" => $depth, "Param: width" => $width, "Param: work" => $work, Benchmark => "benchmarks.simple.SignalMapGrid.run" }}
+              queryChoices("Param: engineName", "Param: depth" => $depth, "Param: width" => $width, "Param: work" => $work, Benchmark => "benchmarks.simple.SignalMapGrid.run")),);
+      }
+    }
+  }
+
+  { # universe
+    #local $YRANGE = "[5:24] reverse";
+    local $YRANGE_ROUND = 10;
+    $DBH->do(qq[UPDATE $TABLE SET Score = 60 / Score WHERE Benchmark = "UniverseCaseStudy"]);
+    plotBenchmarksFor("Universe", "Universe",
+      (map {{Title => $_, "Param: engineName" => $_ , Benchmark => "UniverseCaseStudy" }}
+          queryChoices("Param: engineName", Benchmark => "UniverseCaseStudy")));
+  }
+}
+
+sub miscBenchmarks() {
   for my $dynamic (queryChoices("Param: tableType")) {
     for my $philosophers (queryChoices("Param: philosophers", "Param: tableType" => $dynamic)) {
       #local $LEGEND_POS = "left top" if $philosophers == 48  || $philosophers == 16;
       for my $layout (queryChoices("Param: layout", "Param: tableType" => $dynamic, "Param: philosophers" => $philosophers)) {
         # local $YRANGE = "[0:500]" if $philosophers <= 64 && $dynamic eq "static";
-        # local $YRANGE = "[0:300]" if $philosophers <= 32 && $dynamic eq "static";
         # local $YRANGE = "[0:800]" if $philosophers > 64 && $dynamic eq "static";
-        local $YRANGE = "[0:300]" if $dynamic ne "static" && $philosophers <= 64;
+        # local $YRANGE = "[0:300]" if $dynamic ne "static" && $philosophers <= 64;
         # local $YRANGE = "[0:200]" if $dynamic ne "static" && $philosophers <= 32;
         # local $YRANGE = "[0:]" if $layout eq "third";
         # local $LEGEND_POS = "left top" if $layout eq "third";
@@ -184,11 +244,12 @@ sub miscBenchmarks() {
 
   {
     for my $threads (8) {
-      local $BARGRAPH_LEGEND = "=nolegend";
+      local $BARGRAPH_LEGEND = "=noxlabels
+=nolegend";
       compareBargraph($threads, "bargraph", "parallelizable",
-        [qw<synchron locksweep stm unmanaged>],
-        Structures => q[results.Benchmark = "benchmarks.simple.TurnCreation.run"],
-        Read => q[results.Benchmark = "benchmarks.simple.SingleVar.read"],
+        [qw<synchron parrp fullmv stm unmanaged>],
+        Structures => q[results.Benchmark = "benchmarks.basic.TurnCreation.run"],
+        Read => q[results.Benchmark = "benchmarks.basic.SingleVar.read"],
         MultiFan => q[results.Benchmark = "benchmarks.simple.MultiReverseFan.run"],
         Build => q[results.Benchmark like "benchmarks.simple.SimplePhil.build"],
         Philosopher => q[(results.Benchmark = "benchmarks.philosophers.PhilosopherCompetition.eat"
@@ -199,15 +260,15 @@ sub miscBenchmarks() {
         #local $BARGRAPH_YFORMAT = "%1.2f";
         #local $MANUAL_BARGRAPH_HACK = 1;
         compareBargraph($threads, "bargraph", "non-parallelizable",
-          [qw<synchron locksweep stm unmanaged>],
+          [qw<synchron parrp fullmv stm unmanaged>],
           SingleSwitch => q[results.Benchmark = "benchmarks.dynamic.SingleSwitch.run"],
-          SingleWrite => q[results.Benchmark = "benchmarks.simple.SingleVar.write"],
+          SingleWrite => q[results.Benchmark = "benchmarks.basic.SingleVar.write"],
           ReverseFan => q[results.Benchmark = "benchmarks.simple.ReverseFan.run"],
           DynamicStack => q[results.Benchmark = "benchmarks.dynamic.Stacks.run"],
         );
       }
       compareBargraph($threads, "bargraph", "multiplied",
-        [qw<synchron locksweep stm unmanaged>],
+        [qw<synchron parrp fullmv stm unmanaged>],
         Natural => q[results.Benchmark = "benchmarks.simple.NaturalGraph.run"],
         SignalSeq => q[results.Benchmark = "benchmarks.simple.ChainSignal.run"],
         EventSeq => q[results.Benchmark = "benchmarks.simple.ChainEvent.run"],
@@ -218,11 +279,11 @@ sub miscBenchmarks() {
   }
 
 
-  { # dynamic stacks
-    plotBenchmarksFor("stacks", "Dynamic",
-      map {{Title => $_, "Param: work" => 0, "Param: engineName" => $_ , Benchmark => "benchmarks.dynamic.Stacks.run" }}
-        queryChoices("Param: engineName", Benchmark => "benchmarks.dynamic.Stacks.run"));
-    }
+  { # natural per-thread copies
+    plotBenchmarksFor("simple", "Natural",
+      map {{Title => $_, "Param: work" => 0, "Param: engineName" => $_ , Benchmark => "benchmarks.simple.NaturalGraph.run" }}
+        queryChoices("Param: engineName", Benchmark => "benchmarks.simple.NaturalGraph.run"));
+  }
 
   { # simplePhil
     local $NAME_FINE = "No Synchron";
@@ -340,16 +401,6 @@ sub miscBenchmarks() {
           queryChoices("Param: engineName", Benchmark => $benchmark, "Param: size" => $rooms)),);
     }
   }
-
-
-  {#universe
-    #local $YRANGE = "[5:24] reverse";
-    local $YRANGE_ROUND = 10;
-    $DBH->do(qq[UPDATE $TABLE SET Score = 60 / Score WHERE Benchmark = "UniverseCaseStudy"]);
-    plotBenchmarksFor("Universe", "Universe",
-      (map {{Title => $_, "Param: engineName" => $_ , Benchmark => "UniverseCaseStudy" }}
-          queryChoices("Param: engineName", Benchmark => "UniverseCaseStudy")));
-  }
 }
 
 sub query($varying, @keys) {
@@ -446,7 +497,7 @@ sub makeLegend() {
   my $chart = Chart::Gnuplot->new(
     output => "legend.pdf",
     terminal => "$GNUPLOT_TERMINAL enhanced font '$FONT,$FONTSIZE'",
-    key => "top left",
+    key => "top left vertical",
     %MARGINS,
     xrange => "[0:1]",
     yrange => "[0:1]",
@@ -487,7 +538,7 @@ sub plotDatasets($group, $name, $additionalParams, @datasets) {
     #logscale => "x 2; set logscale y 10",
     #ylabel => "Operations per millisecond",
     # xrange => "reverse",
-    ylabel => "Ops/ms",
+    #ylabel => "Ops/ms",
     %MARGINS,
     %$additionalParams,
     %ADDITIONAL_GNUPLOT_PARAMS
@@ -522,7 +573,7 @@ font=$FONT
 yscale=0.6666667
 xscale=1.4
 fontsz=19
-colors=red,green,blue,black
+colors=red,green,magenta,blue,black
 =norotate
 extraops=set ytics $BARGRAPH_YTICS
 $BARGRAPH_LEGEND

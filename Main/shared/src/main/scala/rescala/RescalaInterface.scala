@@ -137,7 +137,7 @@ abstract class RescalaInterface[S <: Struct] {
     * @group update
     */
   def transaction[R](initialWrites: ReSource*)(admissionPhase: AdmissionTicket => R): R = {
-    explicitEngine.executeTurn(initialWrites, admissionPhase)
+    explicitEngine.executeTurn(initialWrites.toSet, admissionPhase)
   }
 
   /**
@@ -173,9 +173,12 @@ abstract class RescalaInterface[S <: Struct] {
     * @group update
     */
   def update(changes: (Source[S, A], A) forSome { type A } *): Unit = {
-    explicitEngine.executeTurn(changes.map(_._1), { t =>
-      def admit[A](change: (Source[S, A], A)) = change._1.admit(change._2)(t)
-      for(change <- changes) admit(change)
+    explicitEngine.executeTurn(changes.foldLeft(Set.empty[ReSource]) { case (accu, (source, _)) =>
+      assert(!accu.contains(source), s"must not admit multiple values for the same source ($source was assigned multiple times)")
+      accu + source
+    }, { t =>
+      for(change <- changes) admit(t, change)
     })
   }
+  private def admit[A](t: AdmissionTicket, change: (Source[S, A], A)) = change._1.admit(change._2)(t)
 }

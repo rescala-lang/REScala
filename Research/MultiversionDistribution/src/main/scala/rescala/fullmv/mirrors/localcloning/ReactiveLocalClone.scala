@@ -41,9 +41,7 @@ object ReactiveLocalClone {
     // simple remote interface for transfer in one direction
     val reflectionProxy: ReactiveReflectionProxy[A] = new ReactiveReflectionProxy[A] {
       override def asyncIncrementFrame(turn: FullMVTurn): Unit = reflection.asyncIncrementFrame(FullMVTurnLocalClone(turn, reflectionHost))
-      override def asyncDecrementFrame(turn: FullMVTurn): Unit = reflection.asyncDecrementFrame(FullMVTurnLocalClone(turn, reflectionHost))
       override def asyncIncrementSupersedeFrame(turn: FullMVTurn, supersede: FullMVTurn): Unit = reflection.asyncIncrementSupersedeFrame(FullMVTurnLocalClone(turn, reflectionHost), FullMVTurnLocalClone(supersede, reflectionHost))
-      override def asyncDeframeReframe(turn: FullMVTurn, reframe: FullMVTurn): Unit = reflection.asyncDeframeReframe(FullMVTurnLocalClone(turn, reflectionHost), FullMVTurnLocalClone(reframe, reflectionHost))
       override def asyncNewValue(turn: FullMVTurn, value: A): Unit = reflection.asyncNewValue(FullMVTurnLocalClone(turn, reflectionHost), value)
       override def asyncResolvedUnchanged(turn: FullMVTurn): Unit = reflection.asyncResolvedUnchanged(FullMVTurnLocalClone(turn, reflectionHost))
       override def asyncResolvedUnchangedFollowFrame(turn: FullMVTurn, followFrame: FullMVTurn): Unit = reflection.asyncResolvedUnchangedFollowFrame(FullMVTurnLocalClone(turn, reflectionHost), FullMVTurnLocalClone(followFrame, reflectionHost))

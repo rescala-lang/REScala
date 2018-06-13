@@ -7,7 +7,7 @@ import benchmarks.{EngineParam, Size, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
 import rescala.Engines
-import rescala.core.Struct
+import rescala.core.{CreationTicket, Scheduler, Struct}
 import rescala.reactives.Evt
 
 
@@ -19,9 +19,9 @@ import rescala.reactives.Evt
 class ChatBench[S <: Struct] {
 
   @Benchmark
-  def chat(benchState: BenchState[S], threadParams: ThreadParams, engineParam: EngineParam[S]) = {
-    if (engineParam.engine != Engines.unmanaged) {
-      benchState.clients(threadParams.getThreadIndex).fire("hello")(engineParam.engine)
+  def chat(benchState: BenchState[S], threadParams: ThreadParams) = {
+    if (benchState.engine != Engines.unmanaged) {
+      benchState.clients(threadParams.getThreadIndex).fire("hello")(benchState.engine)
     }
     else {
       val ti = threadParams.getThreadIndex
@@ -31,7 +31,7 @@ class ChatBench[S <: Struct] {
       locks(room1).lock()
       locks(room2).lock()
       try {
-        benchState.clients(threadParams.getThreadIndex).fire("hello")(engineParam.engine)
+        benchState.clients(threadParams.getThreadIndex).fire("hello")(benchState.engine)
       }
       finally {
         locks(room2).unlock()
@@ -50,10 +50,11 @@ class BenchState[S <: Struct] {
   var cs: ChatServer[S] = _
   var clients: Array[Evt[String, S]] = _
   var locks: Array[Lock] = null
+  var engine: Scheduler[S] = _
 
   @Setup
   def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam[S], size: Size) = {
-    implicit val engine = engineParam.engine
+    engine = engineParam.engine
 
     val threads = params.getThreads
 
@@ -66,11 +67,11 @@ class BenchState[S <: Struct] {
       val room2 = (i + size.size / 2) % size.size
       cs.join(client, room1)
       cs.join(client, room2)
-      cs.histories.get(room1).observe(v => work.consume())
-      cs.histories.get(room2).observe(v => work.consume())
+      cs.histories.get(room1).observe(v => work.consume())(CreationTicket.fromEngine(engine))
+      cs.histories.get(room2).observe(v => work.consume())(CreationTicket.fromEngine(engine))
     }
 
-    if (engineParam.engine == Engines.unmanaged) {
+    if (engine == Engines.unmanaged) {
       locks = Array.fill(size.size)(new ReentrantLock())
     }
 

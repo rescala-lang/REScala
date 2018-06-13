@@ -57,7 +57,7 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
 
   /** lock all reactives reachable from the initial sources
     * retry when acquire returns false */
-  override def preparationPhase(initialWrites: Traversable[ReSource[TState]]): Unit = {
+  override def preparationPhase(initialWrites: Set[ReSource[TState]]): Unit = {
     val toVisit = new java.util.ArrayDeque[ReSource[TState]](10)
     val offer: ReSource[TState] => Unit = toVisit.offer
     initialWrites.foreach(offer)

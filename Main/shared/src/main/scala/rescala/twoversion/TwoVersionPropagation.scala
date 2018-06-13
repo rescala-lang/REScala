@@ -21,13 +21,13 @@ trait TwoVersionPropagation[S <: Struct]  {
     *
     * @param initialWrites List of affected reactive values
     */
-  def preparationPhase(initialWrites: Traversable[ReSource[S]]): Unit
+  def preparationPhase(initialWrites: Set[ReSource[S]]): Unit
 
   /**
     * Starts the propagation by applying the initial changes
     * @param initialChanges
     */
-  def initializationPhase(initialChanges: Traversable[InitialChange[S]]): Unit
+  def initializationPhase(initialChanges: Map[ReSource[S], InitialChange[S]]): Unit
 
   /**
     * Performs the actual propagation, setting the new (not yet committed) values for each reactive element.
@@ -55,7 +55,7 @@ trait TwoVersionPropagation[S <: Struct]  {
     */
   def releasePhase(): Unit
 
-  private[rescala] def makeAdmissionPhaseTicket(): AdmissionTicket[S]
+  private[rescala] def makeAdmissionPhaseTicket(initialWrites: Set[ReSource[S]]): AdmissionTicket[S]
   private[rescala] def makeWrapUpPhaseTicket(): WrapUpTicket[S]
 
 

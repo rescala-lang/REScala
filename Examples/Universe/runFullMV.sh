@@ -37,4 +37,4 @@ echo "---------------------------------------------"
 
 export LANG=en_US.UTF-8
 export JAVA_OPTS="-Xmx1024m -Xms1024m -DengineName=fullmv"
-./target/start
+./target/universal/stage/bin/run-console

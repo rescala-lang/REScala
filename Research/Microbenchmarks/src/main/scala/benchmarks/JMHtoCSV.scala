@@ -9,12 +9,14 @@ object JMHtoCSV {
   val BENCHMARK = "^# Benchmark: (.*)$".r
   val THREADS = "^# Threads: (\\d+) thread.*$".r
   val PARAMETERS = "^# Parameters: \\((.*)\\)$".r
-  val MEASUREMENT = "^Iteration .*: (\\d+)[.,](\\d+) ops/ms$".r
+  val MODE = "^# Benchmark mode: (.*)$".r
+  val MEASUREMENT = "^Iteration .*: (\\d+)[.,](\\d+) .*?$".r
 
   var outfiles = Map[String, FileWriter]()
   var benchmark: String = _
   var threads: String = _
   var parameters: String = _
+  var mode: String = _
 
   def main(args: Array[String]): Unit = {
     try {
@@ -26,14 +28,16 @@ object JMHtoCSV {
               benchmark = benchmarkName
             case THREADS(threadCount) =>
               threads = threadCount
+            case MODE(modeText) =>
+              mode = modeText
             case PARAMETERS(allParams) =>
               parameters = allParams.substring(allParams.indexOf('=') + 2).replaceAll(", [^=]+ = ", "\t")
               if(!outfiles.contains(benchmark)) {
                 outfiles += benchmark -> new FileWriter(benchmark + ".txt")
-                outfiles(benchmark).write("srcfile\tthreads\t" + allParams.substring(0, allParams.lastIndexOf('=')).replaceAll(" = [^=]+, ", "\t") + "\tmeasurement\n")
+                outfiles(benchmark).write("srcfile\tthreads\t" + allParams.substring(0, allParams.lastIndexOf('=')).replaceAll(" = [^=]+, ", "\t") + "\tmode\tmeasurement\n")
               }
             case MEASUREMENT(integer, decimal) =>
-              outfiles(benchmark).write(fileName + "\t" + threads + "\t" + parameters + "\t" + integer + "," + decimal + "\n")
+              outfiles(benchmark).write(fileName + "\t" + threads + "\t" + parameters + "\t" + mode + "\t" + integer + "," + decimal + "\n")
             case _ => // ignore
           }
         }

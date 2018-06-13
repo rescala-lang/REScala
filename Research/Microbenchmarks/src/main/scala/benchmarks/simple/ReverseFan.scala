@@ -29,8 +29,7 @@ class ReverseFan[S <: Struct] {
     engine = engineParam.engine
     val localEngine = engine
     import localEngine._
-    val threads = params.getThreads
-    sources = Array.fill(threads)(Var(step.get()))
+    sources = Array.fill(16)(Var(step.get()))
     val intermediate = sources.map(_.map { v => {work.consume(); v + 1} })
     result = Signals.lift(intermediate) { values => work.consumeSecondary(); values.sum }
     if (engine == Engines.unmanaged) isManual = true

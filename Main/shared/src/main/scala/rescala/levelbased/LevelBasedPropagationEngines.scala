@@ -14,7 +14,7 @@ trait LevelBasedPropagationEngines {
       new LevelStructTypeImpl(ip)
     }
     override def releasePhase(): Unit = ()
-    override def preparationPhase(initialWrites: Traversable[ReSource[SimpleStruct]]): Unit = {}
+    override def preparationPhase(initialWrites: Set[ReSource[SimpleStruct]]): Unit = {}
     override def dynamicDependencyInteraction(dependency: ReSource[SimpleStruct]): Unit = {}
   }
 
@@ -23,7 +23,7 @@ trait LevelBasedPropagationEngines {
 
   implicit val synchron: SimpleEngine = {
     new TwoVersionSchedulerImpl[SimpleStruct, SimpleNoLock]("Synchron", () =>  new SimpleNoLock ) {
-      override protected[rescala] def executeTurn[R](initialWrites: Traversable[ReSource], admissionPhase: AdmissionTicket => R): R =
+      override def executeTurn[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R): R =
         synchronized { super.executeTurn(initialWrites, admissionPhase) }
     }
   }

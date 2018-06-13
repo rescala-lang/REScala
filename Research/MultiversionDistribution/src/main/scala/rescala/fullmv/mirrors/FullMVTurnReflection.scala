@@ -142,10 +142,17 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
   override def asyncRemoteBranchComplete(forPhase: Type): Unit = proxy.asyncRemoteBranchComplete(forPhase)
   override def addRemoteBranch(forPhase: TurnPhase.Type): Future[Unit] = proxy.addRemoteBranch(forPhase)
 
-  override def acquirePhaseLockIfAtMost(maxPhase: Type): Future[TurnPhase.Type] = proxy.acquirePhaseLockIfAtMost(maxPhase).map{phase =>
-    asyncNewPhase(phase)
-    phase
-  }(FullMVEngine.notWorthToMoveToTaskpool)
+  override def acquirePhaseLockIfAtMost(maxPhase: Type): Future[TurnPhase.Type] = {
+    val localOptimistic = phase
+    if(localOptimistic <= maxPhase) {
+      proxy.acquirePhaseLockIfAtMost(maxPhase).map { phase =>
+        asyncNewPhase(phase)
+        phase
+      }(FullMVEngine.notWorthToMoveToTaskpool)
+    } else {
+      Future.successful(localOptimistic)
+    }
+  }
   override def addPredecessor(tree: TransactionSpanningTreeNode[FullMVTurn]): Future[Boolean] = {
     if(tree.txn.phase == TurnPhase.Completed) {
       if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this aborting predecessor addition of known completed ${tree.txn}")

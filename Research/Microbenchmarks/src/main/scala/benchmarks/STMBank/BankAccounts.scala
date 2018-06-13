@@ -1,6 +1,6 @@
 package benchmarks.STMBank
 
-import java.util.concurrent.locks.{Lock, ReentrantLock}
+import java.util.concurrent.locks.{Lock, ReentrantReadWriteLock}
 import java.util.concurrent.{ThreadLocalRandom, TimeUnit}
 
 import benchmarks.EngineParam
@@ -31,8 +31,8 @@ class ReactiveState[S <: Struct] {
   var windows: Array[Array[Var[Int, S]]] =_
 
 
-  var locks: Array[Lock] = null
-  var lockWindows: Array[Array[Lock]] = null
+  var writelocks: Array[_ <: Lock] = null
+  var readlockWindows: Array[Array[_ <: Lock]] = null
 
   @Setup(Level.Iteration)
   def setup(params: BenchmarkParams, engine: EngineParam[S]) = {
@@ -46,9 +46,10 @@ class ReactiveState[S <: Struct] {
     windows = accounts.grouped(numberOfAccounts / readWindowCount).toArray
     assert(windows.length == readWindowCount)
     if (engine.engineName == "unmanaged") {
-      locks = Array.fill(numberOfAccounts)(new ReentrantLock())
-      lockWindows = locks.grouped(numberOfAccounts / readWindowCount).toArray
-      assert(lockWindows.length == readWindowCount)
+      val locks = Array.fill(numberOfAccounts)(new ReentrantReadWriteLock())
+      writelocks = locks.map(_.writeLock)
+      readlockWindows = locks.map(_.readLock).grouped(numberOfAccounts / readWindowCount).toArray
+      assert(readlockWindows.length == readWindowCount)
     }
   }
 }
@@ -93,7 +94,7 @@ class BankAccounts[S <: Struct] {
 
   @Benchmark
   def reactive(rs: ReactiveState[S], bh: Blackhole) = {
-    if (rs.locks == null) {
+    if (rs.writelocks == null) {
       val tlr = ThreadLocalRandom.current()
       if (tlr.nextDouble() < rs.modifiedReadChance) {
         val window = rs.windows(tlr.nextInt(rs.windows.length))
@@ -121,7 +122,7 @@ class BankAccounts[S <: Struct] {
       if (tlr.nextDouble() < rs.modifiedReadChance) {
         val selectedWindow = tlr.nextInt(rs.windows.length)
         val window = rs.windows(selectedWindow)
-        val lockWindow = rs.lockWindows(selectedWindow)
+        val lockWindow = rs.readlockWindows(selectedWindow)
 
         lockWindow.foreach(_.lock())
         try {
@@ -139,8 +140,8 @@ class BankAccounts[S <: Struct] {
         if (a1 != a2) {
           val first = Math.min(a1, a2)
           val second = Math.max(a1, a2)
-          rs.locks(first).lock()
-          rs.locks(second).lock()
+          rs.writelocks(first).lock()
+          rs.writelocks(second).lock()
           try {
             val account1 = rs.accounts(a1)
             val account2 = rs.accounts(a2)
@@ -149,8 +150,8 @@ class BankAccounts[S <: Struct] {
               account2.admit(t.now(account2) - 4817)(t)
             }
           } finally {
-            rs.locks(first).unlock()
-            rs.locks(second).unlock()
+            rs.writelocks(first).unlock()
+            rs.writelocks(second).unlock()
           }
         }
       }

@@ -4,9 +4,9 @@ import java.util.concurrent.TimeUnit
 
 import benchmarks._
 import org.openjdk.jmh.annotations._
-import org.openjdk.jmh.infra.BenchmarkParams
-import rescala.core.{Scheduler, REName, Struct}
-import rescala.reactives.{Signal, Var}
+import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
+import rescala.core.{Scheduler, Struct}
+import rescala.reactives.{Signal, Signals, Var}
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -15,25 +15,27 @@ import rescala.reactives.{Signal, Var}
 @Fork(1)
 @Threads(1)
 @State(Scope.Benchmark)
-class SingleChainSignal[S <: Struct] extends BusyThreads {
+class LowContentionSerialOrder[S <: Struct] extends BusyThreads {
   implicit var engine: Scheduler[S] = _
-  var source: Var[Int, S] = _
-  var result: Signal[Int, S] = _
+  var sources: Array[Var[Int, S]] = _
+  var grid: Array[Array[Signal[Int, S]]] = _
+  @Param(Array("16"))
+  var size: Int = _
 
   @Setup(Level.Iteration)
-  def setup(params: BenchmarkParams, size: Size, step: Step, engineParam: EngineParam[S], work: Workload) = {
+  def setup(params: BenchmarkParams, engineParam: EngineParam[S], work: Workload) = {
     engine = engineParam.engine
-    source = Var(step.run())
-    result = source
-    for (i <- 1 to size.size) {
-      result = REName.named(s"map-$i") { implicit! =>
-        result.map{v => val r = v + 1; work.consume(); r}
+    sources = Array.fill(size)(Var(0))
+    grid = Array.tabulate(size - 1) { t =>
+      val a = size - 1 - t
+      Array.tabulate(a) { b =>
+        Signals.lift(sources(a), sources(b)) { (va, vb) => work.consume(); va + vb }
       }
     }
   }
 
   @Benchmark
-  def run(step: Step): Unit = source.set(step.run())
+  def run(threadParams: ThreadParams): Unit = sources(threadParams.getThreadIndex).transform(_ + 1)
 
 //  @TearDown(Level.Trial) def printStats(p: BenchmarkParams): Unit = {
 //    println()

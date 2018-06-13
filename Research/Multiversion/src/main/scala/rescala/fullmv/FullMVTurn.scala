@@ -79,13 +79,13 @@ trait FullMVTurn extends Initializer[FullMVStruct] with FullMVTurnProxy with Sub
 
   //========================================================Scheduler Interface============================================================
 
-  override def makeDerivedStructState[P](valuePersistency: InitValues[P]): NodeVersionHistory[P, FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]] = {
-    val state = new NodeVersionHistory[P, FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]](host.dummy, valuePersistency)
+  override def makeDerivedStructState[P](valuePersistency: InitValues[P]): NonblockingSkipListVersionHistory[P, FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]] = {
+    val state = new NonblockingSkipListVersionHistory[P, FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]](host.dummy, valuePersistency)
     state.incrementFrame(this)
     state
   }
 
-  override protected def makeSourceStructState[P](valuePersistency: InitValues[P]): NodeVersionHistory[P, FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]] = {
+  override protected def makeSourceStructState[P](valuePersistency: InitValues[P]): NonblockingSkipListVersionHistory[P, FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]] = {
     val state = makeDerivedStructState(valuePersistency)
     val res = state.notify(this, changed = false)
     assert(res == NoSuccessor(Set.empty))
@@ -131,14 +131,14 @@ trait FullMVTurn extends Initializer[FullMVStruct] with FullMVTurnProxy with Sub
     }
   }
 
-  private[rescala] def discover(node: ReSource[FullMVStruct], addOutgoing: Reactive[FullMVStruct]): Unit = {
+  def discover(node: ReSource[FullMVStruct], addOutgoing: Reactive[FullMVStruct]): Unit = {
     val r@(successorWrittenVersions, maybeFollowFrame) = node.state.discover(this, addOutgoing)
     assert((successorWrittenVersions ++ maybeFollowFrame).forall(retrofit => retrofit == this || retrofit.isTransitivePredecessor(this)), s"$this retrofitting contains predecessors: discover $node -> $addOutgoing retrofits $r from ${node.state}")
     if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] Reevaluation($this,$addOutgoing) discovering $node -> $addOutgoing re-queueing $successorWrittenVersions and re-framing $maybeFollowFrame")
     addOutgoing.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, 1)
   }
 
-  private[rescala] def drop(node: ReSource[FullMVStruct], removeOutgoing: Reactive[FullMVStruct]): Unit = {
+  def drop(node: ReSource[FullMVStruct], removeOutgoing: Reactive[FullMVStruct]): Unit = {
     val r@(successorWrittenVersions, maybeFollowFrame) = node.state.drop(this, removeOutgoing)
     assert((successorWrittenVersions ++ maybeFollowFrame).forall(retrofit => retrofit == this || retrofit.isTransitivePredecessor(this)), s"$this retrofitting contains predecessors: drop $node -> $removeOutgoing retrofits $r from ${node.state}")
     if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] Reevaluation($this,$removeOutgoing) dropping $node -> $removeOutgoing de-queueing $successorWrittenVersions and de-framing $maybeFollowFrame")

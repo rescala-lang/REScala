@@ -42,18 +42,18 @@ object SimpleCreation extends Initializer[SimpleStruct] {
 object SimpleScheduler extends Scheduler[SimpleStruct] {
 
   var idle = true
-  override private[rescala] def executeTurn[R](initialWrites: Traversable[ReSource], admissionPhase: AdmissionTicket => R) = synchronized {
+  override def executeTurn[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R) = synchronized {
     require(idle, "simple scheduler is not reentrant")
     idle = false
     try {
       val initial: ArrayBuffer[Reactive] = ArrayBuffer[Reactive]()
       val sorted: ArrayBuffer[Reactive] = ArrayBuffer[Reactive]()
       // admission
-      val admissionTicket = new AdmissionTicket(SimpleCreation) {
+      val admissionTicket = new AdmissionTicket(SimpleCreation, initialWrites) {
         override def access[A](reactive: Signal[A]): reactive.Value = reactive.state.value
       }
       val admissionResult = admissionPhase(admissionTicket)
-      val sources = admissionTicket.initialChanges.collect {
+      val sources = admissionTicket.initialChanges.values.collect {
         case iv if iv.writeValue(iv.source.state.value, iv.source.state.value = _) => iv.source
       }.toSeq
       sources.foreach(_.state.outgoing.foreach(initial += _))

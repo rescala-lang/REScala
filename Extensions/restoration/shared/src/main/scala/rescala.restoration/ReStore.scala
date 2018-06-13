@@ -30,7 +30,7 @@ class ReStoringTurn(restore: ReStore) extends LevelBasedPropagation[ReStoringStr
 
   override def dynamicDependencyInteraction(dependency: ReSource[ReStoringStruct]): Unit = ()
   override def releasePhase(): Unit = ()
-  override def preparationPhase(initialWrites: Traversable[ReSource[ReStoringStruct]]): Unit = ()
+  override def preparationPhase(initialWrites: Set[ReSource[ReStoringStruct]]): Unit = ()
 
 
 }
@@ -71,7 +71,7 @@ class ReStoringScheduler(domain: String = "", restoreFrom: mutable.Map[String, S
 
   override protected def makeTurn(priorTurn: Option[ReStoringTurn]): ReStoringTurn = new ReStoringTurn(this)
   lazy override val toString: String = s"Engine(Restoring: $domain)"
-  override protected[rescala] def executeTurn[R](initialWrites: Traversable[ReSource], admissionPhase: AdmissionTicket => R): R =
+  override def executeTurn[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R): R =
     synchronized(super.executeTurn(initialWrites, admissionPhase))
 }
 

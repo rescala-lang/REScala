@@ -18,23 +18,11 @@ trait ReactiveReflection[-P] extends Reactive[FullMVStruct] with ReactiveReflect
     turn.ensurePredecessorReplication()
     submit(Framing(turn, this))
   }
-  override def asyncDecrementFrame(turn: FullMVTurn): Unit = {
-    turn.newBranchFromRemote(TurnPhase.Framing)
-    turn.ensurePredecessorReplication()
-    submit(Deframing(turn, this))
-  }
   override def asyncIncrementSupersedeFrame(turn: FullMVTurn, supersede: FullMVTurn): Unit = {
     turn.newBranchFromRemote(TurnPhase.Framing)
     turn.ensurePredecessorReplication()
     supersede.ensurePredecessorReplication()
     submit(SupersedeFraming(turn, this, supersede))
-  }
-
-  override def asyncDeframeReframe(turn: FullMVTurn, reframe: FullMVTurn): Unit = {
-    turn.newBranchFromRemote(TurnPhase.Framing)
-    turn.ensurePredecessorReplication()
-    reframe.ensurePredecessorReplication()
-    submit(DeframeReframing(turn, this, reframe))
   }
 
   override def asyncResolvedUnchanged(turn: FullMVTurn): Unit = {

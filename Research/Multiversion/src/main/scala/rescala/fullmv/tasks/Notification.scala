@@ -14,15 +14,10 @@ trait NotificationAction[N <: ReSource[FullMVStruct]] extends ReevaluationHandli
 
   def processNotificationResult(notificationResultAction: NotificationResultAction[FullMVTurn, Reactive[FullMVStruct]]): Unit = {
     notificationResultAction match {
-      case GlitchFreeReadyButQueued =>
+      case ChangedSomethingInQueue =>
         turn.activeBranchDifferential(TurnPhase.Executing, -1)
-        Traversable.empty
-      case ResolvedNonFirstFrameToUnchanged =>
-        turn.activeBranchDifferential(TurnPhase.Executing, -1)
-        Traversable.empty
       case NotGlitchFreeReady =>
         turn.activeBranchDifferential(TurnPhase.Executing, -1)
-        Traversable.empty
       case GlitchFreeReady =>
         doReevaluation()
       case outAndSucc: NotificationOutAndSuccessorOperation[FullMVTurn, Reactive[FullMVStruct]] =>

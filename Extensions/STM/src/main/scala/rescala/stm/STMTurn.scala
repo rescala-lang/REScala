@@ -19,7 +19,7 @@ class STMTurn extends LevelBasedPropagation[STMTurn] with LevelStruct {
   def inTxn: InTxn = atomic(identity)
   override val token = Token(inTxn)
   override def dynamicDependencyInteraction(dependency: ReSource[STMTurn]): Unit = ()
-  override def preparationPhase(initialWrites: Traversable[ReSource[STMTurn]]): Unit = ()
+  override def preparationPhase(initialWrites: Set[ReSource[STMTurn]]): Unit = ()
 }
 
 

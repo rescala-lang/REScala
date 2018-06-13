@@ -106,7 +106,7 @@ lazy val datastructures = project.in(file("Extensions/Datastructures"))
   .settings(cfg.base, name := "datastructures", lib.scalatest, cfg.noPublish, cfg.strictScalac)
 
 lazy val stm = project.in(file("Extensions/STM"))
-  .settings(cfg.base, cfg.noPublish, lib.scalaStm)
+  .settings(cfg.base, cfg.noPublish, lib.scalaStm, exportJars := true)
   .dependsOn(rescalaJVM)
 
 lazy val crdts = project.in(file("Extensions/crdts"))
@@ -178,7 +178,7 @@ lazy val paroli = project.in(file("Examples/paroli-chat"))
 
 lazy val fullmv = project.in(file("Research/Multiversion"))
   .settings( cfg.base, name := "rescala-multiversion",
-    cfg.test, cfg.noPublish)
+    cfg.test, cfg.noPublish, exportJars := true)
   .dependsOn(rescalaJVM, testsJVM % "test->test")
 
 lazy val distributedFullmv = project.in(file("Research/MultiversionDistribution"))
@@ -278,6 +278,7 @@ lazy val cfg = new {
     "-feature",
     "-Xlint",
     "-Xfuture",
+//    "-Xdisable-assertions"
   )
 
   lazy val strictScalac = Compile / compile / scalacOptions ++= List(

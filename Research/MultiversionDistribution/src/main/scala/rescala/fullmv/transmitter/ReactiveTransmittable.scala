@@ -33,9 +33,7 @@ object ReactiveTransmittable {
       case Connect(turn) => allEmpty("Connect").copy(_2 = turn._1, _3 = turn._2)
       case Initialize(initValues, maybeFirstFrame) => allEmpty("Initialize").copy(_2 = maybeFirstFrame.map(_._1).getOrElse(Host.dummyGuid), _3 = maybeFirstFrame.map(_._2).getOrElse(TurnPhase.Uninitialized), _6 = initValues.map{case ((t,p),v) => (t,p,v)})
       case AsyncIncrementFrame(turn) => allEmpty("AsyncIncrementFrame").copy(_2 = turn._1, _3 = turn._2)
-      case AsyncDecrementFrame(turn) => allEmpty("AsyncDecrementFrame").copy(_2 = turn._1, _3 = turn._2)
       case AsyncIncrementSupersedeFrame(turn, supersede) => allEmpty("AsyncIncrementSupersedeFrame").copy(_2 = turn._1, _3 = turn._2, _4 = supersede._1, _5 = supersede._2)
-      case AsyncDeframeReframe(turn, reframe) => allEmpty("AsyncDeframeReframe").copy(_2 = turn._1, _3 = turn._2, _4 = reframe._1, _5 = reframe._2)
       case AsyncResolveUnchanged(turn) => allEmpty("AsyncResolveUnchanged").copy(_2 = turn._1, _3 = turn._2)
       case AsyncResolveUnchangedFollowFrame(turn, followFrame) => allEmpty("AsyncResolveUnchangedFollowFrame").copy(_2 = turn._1, _3 = turn._2, _4 = followFrame._1, _5 = followFrame._2)
       case AsyncNewValue(turn, value) => allEmpty("AsyncNewValue").copy(_6 = Seq((turn._1, turn._2, value)))
@@ -83,9 +81,7 @@ object ReactiveTransmittable {
       case ("Connect", turn, phase, _, _, _, _, _) => Connect(turn -> phase)
       case ("Initialize", maybeFirstFrame, maybeFirstPhase, _, _, initValues, _, firstFrame) => Initialize(initValues.map { case (t,p,v) => ((t, p), v) }, if(maybeFirstFrame != Host.dummyGuid || maybeFirstPhase != TurnPhase.Uninitialized) Some(maybeFirstFrame -> maybeFirstPhase) else None)
       case ("AsyncIncrementFrame", turn, phase, _, _, _, _, _) => AsyncIncrementFrame(turn -> phase)
-      case ("AsyncDecrementFrame", turn, phase, _, _, _, _, _) => AsyncDecrementFrame(turn -> phase)
       case ("AsyncIncrementSupersedeFrame", turn, phase, supersede, supersedePhase, _, _, _) => AsyncIncrementSupersedeFrame(turn -> phase, supersede -> supersedePhase)
-      case ("AsyncDeframeReframe", turn, phase, reframe, reframePhase, _, _, _) => AsyncDeframeReframe(turn -> phase, reframe -> reframePhase)
       case ("AsyncResolveUnchanged", turn, phase, _, _, _, _, _) => AsyncResolveUnchanged(turn -> phase)
       case ("AsyncResolveUnchangedFollowFrame", turn, phase, followFrame, followPhase, _, _, _) => AsyncResolveUnchangedFollowFrame(turn -> phase, followFrame -> followPhase)
       case ("AsyncNewValue", _, _, _, _, Seq((turn, phase, value)), _, _) => AsyncNewValue(turn -> phase, value)
@@ -159,9 +155,7 @@ object ReactiveTransmittable {
   case class Initialize[P](initValues: Seq[(TurnPushBundle, P)], maybeFirstFrame: Option[TurnPushBundle]) extends Response[P]
   /** [[ReactiveReflectionProxy]] **/
   case class AsyncIncrementFrame(turn: TurnPushBundle) extends PossiblyBlockingTopLevelAsync[Nothing]
-  case class AsyncDecrementFrame(turn: TurnPushBundle) extends PossiblyBlockingTopLevelAsync[Nothing]
   case class AsyncIncrementSupersedeFrame(turn: TurnPushBundle, supersede: TurnPushBundle) extends PossiblyBlockingTopLevelAsync[Nothing]
-  case class AsyncDeframeReframe(turn: TurnPushBundle, reframe: TurnPushBundle) extends PossiblyBlockingTopLevelAsync[Nothing]
   case class AsyncResolveUnchanged(turn: TurnPushBundle) extends PossiblyBlockingTopLevelAsync[Nothing]
   case class AsyncResolveUnchangedFollowFrame(turn: TurnPushBundle, followFrame: TurnPushBundle) extends PossiblyBlockingTopLevelAsync[Nothing]
   case class AsyncNewValue[P](turn: TurnPushBundle, value: P) extends PossiblyBlockingTopLevelAsync[P]
@@ -250,7 +244,7 @@ object ReactiveTransmittable {
                                          serializable: Serializable[S]
                                         ): Transmittable[Signal[P, FullMVStruct], S, Signal[P, FullMVStruct]] =
     new ReactiveTransmittable[P, Signal[P, FullMVStruct], S] {
-    override def instantiate(state: NodeVersionHistory[Pulse[P], FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]], initTurn: FullMVTurn): ReactiveReflectionImpl[Pulse[P]] with Signal[P, FullMVStruct] =
+    override def instantiate(state: FullMVState[Pulse[P], FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]], initTurn: FullMVTurn): ReactiveReflectionImpl[Pulse[P]] with Signal[P, FullMVStruct] =
       new ReactiveReflectionImpl[Pulse[P]](host, None, state, "SignalReflection") with Signal[P, FullMVStruct] {
         override def disconnect()(implicit engine: Scheduler[FullMVStruct]): Unit = ???
       }
@@ -260,7 +254,7 @@ object ReactiveTransmittable {
     override def toPulse(reactive: Signal[P, FullMVStruct]): reactive.Value => Pulse[P] = v => v
   }
   implicit def eventTransmittable[P, S](implicit host: FullMVEngine, messageTransmittable: Transmittable[MessageWithInfrastructure[Msg[Pluse[P]]], S, MessageWithInfrastructure[Msg[Pluse[P]]]], serializable: Serializable[S]): Transmittable[Event[P, FullMVStruct], S, Event[P, FullMVStruct]] = new ReactiveTransmittable[P, Event[P, FullMVStruct], S] {
-    override def instantiate(state: NodeVersionHistory[Pulse[P], FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]], initTurn: FullMVTurn): ReactiveReflectionImpl[Pulse[P]] with Event[P, FullMVStruct] =
+    override def instantiate(state: FullMVState[Pulse[P], FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]], initTurn: FullMVTurn): ReactiveReflectionImpl[Pulse[P]] with Event[P, FullMVStruct] =
       new ReactiveReflectionImpl[Pulse[P]](host, Some(initTurn), state, "EventReflection") with Event[P, FullMVStruct] {
         override def internalAccess(v: Pulse[P]): Pulse[P] = v
         override def disconnect()(implicit engine: Scheduler[FullMVStruct]): Unit = ???
@@ -505,17 +499,13 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
     reflection
   }
 
-  def instantiate(state: NodeVersionHistory[Pulse[P], FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]], initTurn: FullMVTurn): ReactiveReflectionImpl[Pulse[P]] with R
+  def instantiate(state: FullMVState[Pulse[P], FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]], initTurn: FullMVTurn): ReactiveReflectionImpl[Pulse[P]] with R
 
   def handleTopLevelAsync(reflection: ReactiveReflection[Pulse[P]], endpoint: EndPointWithInfrastructure[Msg], message: PossiblyBlockingTopLevelAsync[Pluse[P]]): Unit = message match {
     case AsyncIncrementFrame(turn) =>
       reflection.asyncIncrementFrame(lookUpLocalTurnParameterInstance(turn, endpoint))
-    case AsyncDecrementFrame(turn) =>
-      reflection.asyncDecrementFrame(lookUpLocalTurnParameterInstance(turn, endpoint))
     case AsyncIncrementSupersedeFrame(turn, supersede) =>
       reflection.asyncIncrementSupersedeFrame(lookUpLocalTurnParameterInstance(turn, endpoint), lookUpLocalTurnParameterInstance(supersede, endpoint))
-    case AsyncDeframeReframe(turn, reframe) =>
-      reflection.asyncDeframeReframe(lookUpLocalTurnParameterInstance(turn, endpoint), lookUpLocalTurnParameterInstance(reframe, endpoint))
     case AsyncResolveUnchanged(turn) =>
       reflection.asyncResolvedUnchanged(lookUpLocalTurnParameterInstance(turn, endpoint))
     case AsyncResolveUnchangedFollowFrame(turn, followFrame) =>
@@ -805,9 +795,7 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
 
   class ReactiveReflectionProxyToEndpoint(endpoint: EndPointWithInfrastructure[Msg]) extends ReactiveReflectionProxy[Pulse[P]] {
     override def asyncIncrementFrame(turn: FullMVTurn): Unit = doAsync(endpoint, AsyncIncrementFrame(bundle(turn)))
-    override def asyncDecrementFrame(turn: FullMVTurn): Unit = doAsync(endpoint, AsyncDecrementFrame(bundle(turn)))
     override def asyncIncrementSupersedeFrame(turn: FullMVTurn, supersede: FullMVTurn): Unit = doAsync(endpoint, AsyncIncrementSupersedeFrame(bundle(turn), bundle(supersede)))
-    override def asyncDeframeReframe(turn: FullMVTurn, reframe: FullMVTurn): Unit = doAsync(endpoint, AsyncDeframeReframe(bundle(turn), bundle(reframe)))
     override def asyncResolvedUnchanged(turn: FullMVTurn): Unit = doAsync(endpoint, AsyncResolveUnchanged(bundle(turn)))
     override def asyncResolvedUnchangedFollowFrame(turn: FullMVTurn, followFrame: FullMVTurn): Unit = doAsync(endpoint, AsyncResolveUnchangedFollowFrame(bundle(turn), bundle(followFrame)))
     override def asyncNewValue(turn: FullMVTurn, value: Pulse[P]): Unit = doAsync(endpoint, AsyncNewValue(bundle(turn), Pluse.fromPulse(value)))

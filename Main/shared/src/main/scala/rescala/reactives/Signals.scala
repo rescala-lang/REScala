@@ -108,7 +108,7 @@ private abstract class DynamicSignal[T, S <: Struct](_bud: Sstate[S, T], expr: D
   extends Base[Pulse[T], S](_bud, name) with Signal[T, S] {
 
   override protected[rescala] def reevaluate(rein: ReIn): Rout = {
-    rein.trackDependencies(staticDeps)
+    rein.trackDependencies(staticDeps) // TODO using indeps from node.state would be marginally better because it contains static AND current dynamic dependencies
     Signals.computeNewValue[T, S](rein, () => expr(rein))
   }
 }

@@ -20,30 +20,43 @@ if ($OSNAME eq "MSWin32") {
 }
 my $OUTDIR = 'out';
 my $RESULTDIR = 'results';
-my $SCHEDULER_TIME = "0:55:00";
+my $SCHEDULER_TIME = "0:30:00";
 my $SCHEDULER_REQUIRE = "avx\\&mpi";
 my $SCHEDULER_CORES = "16";
 
-# my @ENGINES = qw<parrp stm synchron locksweep>;
-my @ENGINES = qw<synchron>;
-# my @ENGINES_UNMANAGED = (@ENGINES, "unmanaged");
-my @ENGINES_UNMANAGED = (@ENGINES);
+my @ENGINES = qw<stm synchron fullmv>;
+# my @ENGINES = qw<synchron>;
+
+my @ENGINES_UNMANAGED = (@ENGINES, "unmanaged");
+# my @ENGINES_UNMANAGED = (@ENGINES);
+
 my @ENGINES_SNAPSHOTS = ("synchron", "restoring");
-my @THREADS = (1);
+
+my @THREADS = (1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16);
+# my @THREADS = (7);
+
 my @REDUCED_THREADS = (8);
 my @STEPS = (1,8,16,24,32,64);
 my @SIZES = (100);
-my @CHATSERVERSIZES = (1,2,4,8,16,32);
-my @PHILOSOPHERS = (16, 32, 64, 128);
+my @CHATSERVERSIZES = (4,8,16,32);
+
+my @PHILOSOPHERS = (-4, 16, 64);
+# my @PHILOSOPHERS = (64);
+
+my @BUSYS = ("false");
+
+my @DYNAMICITIES = ("static", "semi-static", "dynamic");
+# my @DYNAMICITIES = ("dynamic");
+
 my @SNAPSHOT_FOLDPERCENT = map {$_ / 10} (0..10);
 my @LAYOUTS = qw<alternating>;
 my %BASECONFIG = (
   # global locking does not deal well with sync iterations
   si => "false", # synchronize iterations
-  wi => 5, # warmup iterations
+  wi => 25, # warmup iterations
   w => "1000ms", # warmup time
-  f => 5, # forks
-  i => 5, # iterations
+  f => 6, # forks
+  i => 35, # iterations
   r => "1000ms", # time per iteration
   to => "10s", #timeout
 );
@@ -60,8 +73,8 @@ my $GITREF = qx[git show -s --format=%H HEAD];
 chomp $GITREF;
 
 my $command = shift @ARGV;
-# my @RUN = @ARGV ? @ARGV : qw<philosophers halfDynamicPhilosophers simplePhil expensiveConflict singleDynamic singleVar turnCreation simpleFan simpleReverseFan simpleNaturalGraph multiReverseFan stmbank chatServer simpleChain dynamicStacks noconflictPhilosophers>;
-my @RUN = @ARGV ? @ARGV : qw<snapshotOverhead snapshotRestoringVsInitial snapshotRestoringVsRecomputation errorPropagationVsMonadic simpleNaturalGraph>;
+my @RUN = @ARGV ? @ARGV : qw<signaltopper paperPhilosophers simplePhil singleDynamic singleVarWrite singleVarRead turnCreation simpleFan simpleReverseFan simpleNaturalGraph multiReverseFan stmbank chatServer chainSignal chainEvent dynamicStacks>;
+# my @RUN = @ARGV ? @ARGV : qw<snapshotOverhead snapshotRestoringVsInitial snapshotRestoringVsRecomputation errorPropagationVsMonadic simpleNaturalGraph>;
 say "selected: " . (join " ", sort @RUN);
 say "available: " . (join " ", sort keys %{&selection()});
 
@@ -82,7 +95,8 @@ sub init {
   chdir "../..";
 
   system('./sbt', 'set scalacOptions in ThisBuild ++= List("-Xdisable-assertions", "-Xelide-below", "9999999")',
-    'project microbench', 'jmh:compile', 'jmh:stage');
+    'project microbench', 'jmh:compile', 'jmh:stage',
+    'project universe', 'stage');
   chdir $MAINDIR;
 }
 
@@ -156,6 +170,107 @@ sub fromBaseConfig {
 
 sub selection {
   return {
+    signaltopper => sub {
+      my @runs;
+
+      for my $busy (@BUSYS) {
+        for my $threads (@THREADS) {
+          # for my $dynamicity (@DYNAMICITIES) {
+          for my $dynamicity ("dynamic") {
+            my $name = "paperphils-busy-$busy-threads-$threads-dynamicity-$dynamicity-signaltopper-16";
+            my $program = makeRunString( $name,
+              fromBaseConfig(
+                p => { # parameters
+                  dynamicity => $dynamicity,
+                  engineName => (join ',', @ENGINES_UNMANAGED),
+                  topper => "signal",
+                  philosophers => 16,
+                  runBusyThreads => $busy,
+                },
+                t => $threads, #threads
+              ),
+              "philosophers.PaperPhilosopherCompetition"
+            );
+            push @runs, {name => $name, program => $program};
+          }
+        }
+      }
+
+      @runs;
+    },
+
+    paperPhilosophers => sub {
+      my @runs;
+
+      for my $busy (@BUSYS) {
+        for my $threads (@THREADS) {
+          for my $dynamicity (@DYNAMICITIES) {
+            for my $phils (@PHILOSOPHERS) {
+              my $name = "paperphils-busy-$busy-threads-$threads-dynamicity-$dynamicity-philosophers-$phils";
+              my $program = makeRunString( $name,
+                fromBaseConfig(
+                  p => { # parameters
+                    dynamicity => $dynamicity,
+                    engineName => (join ',', @ENGINES_UNMANAGED),
+                    topper => "none",
+                    philosophers => $phils,
+                    runBusyThreads => $busy,
+                  },
+                  t => $threads, #threads
+                ),
+                "philosophers.PaperPhilosopherCompetition"
+              );
+              push @runs, {name => $name, program => $program};
+            }
+          }
+        }
+      }
+
+      @runs;
+    },
+
+    signalMapGrid => sub {
+      my @runs;
+
+      for my $threads (@THREADS) {
+        # 400 units work ~ 1us CPU core time
+        for my $work (0,800,2000,4000) { # 0, 2us, 5us, 10us
+#          my $name0 = "plainwork-threads-$threads-work-$work";
+#          my $program0 = makeRunString( $name0,
+#            fromBaseConfig(
+#              p => { # parameters
+#                work => $work,
+#              },
+#              t => $threads, #threads
+#            ),
+#            "simple.PlainWork"
+#          );
+#          push @runs, {name => $name0, program => $program0};
+
+#          for my $wd ([0, 0], [16, 1], [4, 4], [1, 16]) {
+          for my $wd ([0, 0], [4, 4], [1, 16]) {
+            my $width = $wd->[0];
+            my $depth = $wd->[1];
+            my $name = "signalmapgrid-w-$width-d-$depth-threads-$threads-work-$work";
+            my $program = makeRunString( $name,
+              fromBaseConfig(
+                p => { # parameters
+                  work => $work,
+                  engineName => (join ',', @ENGINES),
+                  width => $width,
+                  depth => $depth
+                },
+                t => $threads, #threads
+              ),
+              "simple.SignalMapGrid"
+            );
+            push @runs, {name => $name, program => $program};
+          }
+        }
+      }
+
+      @runs;
+    },
 
     philosophers => sub {
       my @runs;
@@ -174,7 +289,7 @@ sub selection {
                 },
                 t => $threads, #threads
               ),
-              "philosophers"
+              "philosophers.PhilosopherCompetition"
             );
             push @runs, {name => $name, program => $program};
           }
@@ -194,14 +309,14 @@ sub selection {
             my $program = makeRunString( $name,
               fromBaseConfig(
                 p => { # parameters
-                  tableType => 'static,other',
+                  tableType => 'static',
                   engineName => (join ',', @ENGINES_UNMANAGED),
                   philosophers => $phils,
                   layout => $layout,
                 },
                 t => $threads, #threads
               ),
-              "philosophers"
+              "philosophers.PhilosopherCompetition"
             );
             push @runs, {name => $name, program => $program};
           }
@@ -211,6 +326,32 @@ sub selection {
       @runs;
     },
 
+    halfDynamicNoconflictPhilosophers => sub {
+      my @runs;
+
+      for my $threads (@THREADS) {
+        for my $layout ("noconflict") {
+          for my $phils ($PHILOSOPHERS[-1]) {
+            my $name = "halfDynamicPhilosophers-threads-$threads-layout-$layout-philosophers-$phils";
+            my $program = makeRunString( $name,
+              fromBaseConfig(
+                p => { # parameters
+                  tableType => 'other',
+                  engineName => (join ',', @ENGINES_UNMANAGED),
+                  philosophers => $phils,
+                  layout => $layout,
+                },
+                t => $threads, #threads
+              ),
+              "philosophers.PhilosopherCompetition"
+            );
+            push @runs, {name => $name, program => $program};
+          }
+        }
+      }
+
+      @runs;
+    },
 
     dynamicPhilosophers => sub {
       my @runs;
@@ -230,7 +371,7 @@ sub selection {
                 },
                 t => $threads, #threads
               ),
-              "philosophers"
+              "philosophers.PhilosopherCompetition"
             );
             push @runs, {name => $name, program => $program};
           }
@@ -257,7 +398,7 @@ sub selection {
                 },
                 t => $threads, #threads
               ),
-              "philosophers"
+              "philosophers.PhilosopherCompetition"
             );
             push @runs, {name => $name, program => $program};
           }
@@ -396,11 +537,34 @@ sub selection {
       @runs;
     },
 
-    singleVar => sub {
+    singleVarWrite => sub {
+      my @runs;
+
+      for my $threads (@THREADS) {
+          my $name = "singleVarWrite-threads-$threads";
+          my $program = makeRunString( $name,
+            fromBaseConfig(
+              p => { # parameters
+                work => 0,
+                engineName => (join ',', @ENGINES),
+                width => 0,
+                depth => 0
+              },
+              t => $threads, #threads
+            ),
+            "simple.SignalMapGrid"
+           );
+          push @runs, {name => $name, program => $program};
+      }
+
+      @runs;
+    },
+
+    singleVarRead => sub {
       my @runs;
 
       for my $threads (@REDUCED_THREADS) {
-          my $name = "singleVar-threads-$threads";
+          my $name = "singleVarRead-threads-$threads";
           my $program = makeRunString( $name,
             fromBaseConfig(
               p => { # parameters
@@ -408,7 +572,7 @@ sub selection {
               },
               t => $threads,
             ),
-            "simple.SingleVar"
+            "basic.SingleVar.read"
           );
           push @runs, {name => $name, program => $program};
       }
@@ -428,7 +592,7 @@ sub selection {
               },
               t => $threads,
             ),
-            "simple.TurnCreation"
+            "basic.TurnCreation"
           );
           push @runs, {name => $name, program => $program};
       }
@@ -459,7 +623,7 @@ sub selection {
     simplePhil => sub {
       my @runs;
 
-      for my $threads (@THREADS) {
+      for my $threads (@REDUCED_THREADS) {
           my $name = "simplePhil-threads-$threads";
           my $program = makeRunString( $name,
             fromBaseConfig(
@@ -468,7 +632,7 @@ sub selection {
               },
               t => $threads,
             ),
-            "simple.SimplePhil"
+            "simple.SimplePhil.build"
           );
           push @runs, {name => $name, program => $program};
       }
@@ -476,12 +640,12 @@ sub selection {
       @runs;
     },
 
-    simpleChain => sub {
+    chainSignal => sub {
       my @runs;
 
       for my $threads (@REDUCED_THREADS) {
         for my $size (@SIZES) {
-            my $name = "simpleChain-size-$size-threads-$threads";
+            my $name = "chainSignal-size-$size-threads-$threads";
             my $program = makeRunString( $name,
               fromBaseConfig(
                 p => { # parameters
@@ -490,7 +654,7 @@ sub selection {
                 },
                 t => $threads,
               ),
-              "benchmarks.simple.Chain"
+              "benchmarks.simple.ChainSignal.run"
             );
             push @runs, {name => $name, program => $program};
         }
@@ -498,6 +662,29 @@ sub selection {
 
       @runs;
     },
+    chainEvent => sub {
+      my @runs;
+
+      for my $threads (@REDUCED_THREADS) {
+        for my $size (@SIZES) {
+            my $name = "chainEvent-size-$size-threads-$threads";
+            my $program = makeRunString( $name,
+              fromBaseConfig(
+                p => { # parameters
+                  engineName => (join ',', @ENGINES_UNMANAGED),
+                  size => $size,
+                },
+                t => $threads,
+              ),
+              "benchmarks.simple.ChainEvent"
+            );
+            push @runs, {name => $name, program => $program};
+        }
+      }
+
+      @runs;
+    },
+
 
     simpleFan => sub {
       my @runs;
@@ -521,21 +708,48 @@ sub selection {
       @runs;
     },
 
+    serialtransactions => sub {
+      my @runs;
+
+      for my $threads (@THREADS) {
+        for my $work (0, 1000, 2500, 5000) {
+          my $name = "serialtransactions-threads-$threads-work-$work";
+          my $program = makeRunString( $name,
+            fromBaseConfig(
+              p => { # parameters
+                engineName => (join ',', @ENGINES),
+                size => 16,
+                work => $work,
+              },
+              t => $threads,
+            ),
+            "benchmarks.simple.LowContentionSerialOrder"
+          );
+          push @runs, {name => $name, program => $program};
+        }
+      }
+
+      @runs;
+    },
+
     simpleReverseFan => sub {
       my @runs;
 
       for my $threads (@THREADS) {
-          my $name = "simpleReverseFan-threads-$threads";
+        for my $work (0, 12800, 32000, 64000) {
+          my $name = "simpleReverseFan-threads-$threads-work-$work";
           my $program = makeRunString( $name,
             fromBaseConfig(
               p => { # parameters
-                engineName => (join ',', @ENGINES_UNMANAGED),
+                engineName => (join ',', @ENGINES),
+                work => $work,
               },
               t => $threads,
             ),
             "benchmarks.simple.ReverseFan"
           );
           push @runs, {name => $name, program => $program};
+        }
       }
 
       @runs;
@@ -586,23 +800,25 @@ sub selection {
       my @runs;
 
       for my $size (16) {
+       for my $rwc (8,16,32,64) {
         for my $run (0,1,2,5,7,10,15,20,25,30,35,40,50,60,70,80,90,100) {
           my $chance = 0.16 * $run;
-          my $name = "stmbank-threads-$size-chance-$chance";
+          my $name = "stmbank-threads-$size-rwc-$rwc-chance-$chance";
           my $program = makeRunString($name,
             fromBaseConfig(
               p => { # parameters
                 engineName => (join ',', @ENGINES_UNMANAGED),
                 numberOfAccounts => 256,
-                readWindowCount => "4,8,16,32,64",
+                readWindowCount => $rwc,
                 globalReadChance => $chance,
               },
               t => $size, #threads
             ),
-            "STMBank.BankAccounts"
+            "STMBank.BankAccounts.reactive"
           );
           push @runs, {name => $name, program => $program};
         }
+       }
       }
 
       @runs;
@@ -613,12 +829,13 @@ sub selection {
       my @runs;
 
       for my $threads (@THREADS) {
-          my $name = "chatServer-threads-$threads";
+        for my $size (@CHATSERVERSIZES) {
+          my $name = "chatServer-threads-$threads-size-$size";
           my $program = makeRunString( $name,
             fromBaseConfig(
               p => { # parameters
                 engineName => (join ',', @ENGINES_UNMANAGED),
-                size => (join ",", @CHATSERVERSIZES),
+                size => $size,
                 work => 0,
               },
               t => $threads,
@@ -626,6 +843,7 @@ sub selection {
             "benchmarks.chatserver.ChatBench"
           );
           push @runs, {name => $name, program => $program};
+        }
       }
 
       @runs;
@@ -721,7 +939,7 @@ sub hhlrjob {
 #SBATCH -o job-%j.out
 #
 # Request the time you need for execution in [hour:]minute
-#SBATCH -t 00:55:00
+#SBATCH -t 00:30:00
 #
 # Required resources
 #SBATCH -C avx&mpi
@@ -742,12 +960,12 @@ echo "--------- java version ----------------------"
 java -version
 echo "---------------------------------------------"
 
-rm -r /tmp/\$(whoami)
-mkdir /tmp/\$(whoami)
+rm -r /tmp/\$(whoami)/\$SLURM_JOB_ID
+mkdir -p /tmp/\$(whoami)/\$SLURM_JOB_ID
 export LANG=en_US.UTF-8
-export JAVA_OPTS="-Xmx1024m -Xms1024m -Djava.io.tmpdir=/tmp/\$(whoami)"
+export JAVA_OPTS="-Xmx1024m -Xms1024m -Djava.io.tmpdir=/tmp/\$(whoami)/\$SLURM_JOB_ID"
 $programstring
-rm -r /tmp/\$(whoami)
+rm -r /tmp/\$(whoami)/\$SLURM_JOB_ID
 
 ENDPROGRAM
 }
