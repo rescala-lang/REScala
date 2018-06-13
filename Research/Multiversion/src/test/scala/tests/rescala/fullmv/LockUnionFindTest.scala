@@ -2,7 +2,7 @@ package tests.rescala.fullmv
 
 import org.scalatest.FunSuite
 import rescala.fullmv._
-import rescala.fullmv.sgt.synchronization.{Blocked, Locked, SubsumableLock, Successful}
+import rescala.fullmv.sgt.synchronization._
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -213,8 +213,8 @@ class LockUnionFindTest extends FunSuite {
 
     assert(Await.result(a.trySubsume(l1), Duration.Zero) === Successful)
 
-    assert(Await.result(a.getLockedRoot, Duration.Zero) === Some(l1.guid))
-    assert(Await.result(b.getLockedRoot, Duration.Zero) === Some(l1.guid))
+    assert(Await.result(a.getLockedRoot, Duration.Zero) === LockedState(l1.guid))
+    assert(Await.result(b.getLockedRoot, Duration.Zero) === LockedState(l1.guid))
     assert(Await.result(a.tryLock(), Duration.Zero) == Blocked)
     assert(Await.result(b.tryLock(), Duration.Zero) == Blocked)
 
