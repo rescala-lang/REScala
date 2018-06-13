@@ -16,14 +16,13 @@ object FullMVTurnLocalClone {
         val mirrorHost = turn.host
         val localMirror: FullMVTurnProxy = turn
         val mirrorProxy: FullMVTurnProxy = new FullMVTurnProxy {
-          override def acquirePhaseLockIfAtMost(maxPhase: TurnPhase.Type): Future[TurnPhase.Type] = localMirror.acquirePhaseLockIfAtMost(maxPhase)
+          override def acquireRemoteBranchIfPhaseAtMost(maxPhase: TurnPhase.Type): Future[TurnPhase.Type] = localMirror.acquireRemoteBranchIfPhaseAtMost(maxPhase)
           override def addPredecessor(tree: TransactionSpanningTreeNode[FullMVTurn]): Future[Boolean] = localMirror.addPredecessor(tree.map(FullMVTurnLocalClone(_, mirrorHost)))
           override def maybeNewReachableSubtree(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = localMirror.maybeNewReachableSubtree(FullMVTurnLocalClone(attachBelow, mirrorHost), spanningSubTreeRoot.map(FullMVTurnLocalClone(_, mirrorHost)))
 
           override def asyncRemoteBranchComplete(forPhase: TurnPhase.Type): Unit = localMirror.asyncRemoteBranchComplete(forPhase)
           override def addRemoteBranch(forPhase: TurnPhase.Type): Future[Unit] = localMirror.addRemoteBranch(forPhase)
           override def newSuccessor(successor: FullMVTurn): Future[Unit] = localMirror.newSuccessor(FullMVTurnLocalClone(successor, mirrorHost))
-          override def asyncReleasePhaseLock(): Unit = localMirror.asyncReleasePhaseLock()
 
           override def getLockedRoot: Future[LockStateResult] = localMirror.getLockedRoot
           override def remoteTryLock(): Future[TryLockResult] = localMirror.remoteTryLock().map {

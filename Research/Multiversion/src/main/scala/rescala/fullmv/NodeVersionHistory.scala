@@ -555,12 +555,12 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
         case TurnPhase.Executing =>
           tryRecordRelationship(predToRecord, predPos, lookFor, predToRecord, lookFor, sccState)
         case TurnPhase.Framing =>
-          FullMVEngine.myAwait(lookFor.acquirePhaseLockIfAtMost(TurnPhase.Framing), host.timeout) match {
+          FullMVEngine.myAwait(lookFor.acquireRemoteBranchIfPhaseAtMost(TurnPhase.Framing), host.timeout) match {
             case TurnPhase.Framing =>
               try {
                 tryRecordRelationship(predToRecord, predPos, lookFor, predToRecord, lookFor, sccState)
               } finally {
-                lookFor.asyncReleasePhaseLock()
+                lookFor.asyncRemoteBranchComplete(TurnPhase.Framing)
               }
             case TurnPhase.Executing =>
               // race conflict: lookFor was Framing earlier and ordered itself behind predToRecord, but lookFor
@@ -583,7 +583,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     if (toSpeculative < toFinal) {
       assert(lookFor.phase == TurnPhase.Executing, s"$lookFor has a speculative successor, which should only happen if it is no longer framing.")
       val succToRecord = _versions(toSpeculative).txn
-      FullMVEngine.myAwait(succToRecord.acquirePhaseLockIfAtMost(TurnPhase.Executing), host.timeout) match {
+      FullMVEngine.myAwait(succToRecord.acquireRemoteBranchIfPhaseAtMost(TurnPhase.Executing), host.timeout) match {
         case TurnPhase.Completed =>
           latestGChint = toSpeculative
           (Succeeded, sccState)
@@ -597,17 +597,16 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
           try {
             tryRecordRelationship(lookFor, -1, succToRecord, succToRecord, lookFor, sccState)
           } finally {
-            succToRecord.asyncReleasePhaseLock()
+            succToRecord.asyncRemoteBranchComplete(TurnPhase.Executing)
           }
         case TurnPhase.Framing =>
           try {
             val lock = ensureRelationIsRecorded(lookFor, -1, succToRecord, succToRecord, lookFor, sccState)
             (Succeeded, lock)
           } finally {
-            succToRecord.asyncReleasePhaseLock()
+            succToRecord.asyncRemoteBranchComplete(TurnPhase.Framing)
           }
         case unknown =>
-          succToRecord.asyncReleasePhaseLock()
           throw new AssertionError(s"$succToRecord has unknown phase $unknown")
       }
     } else if (!toFinalRelationIsRecorded) {

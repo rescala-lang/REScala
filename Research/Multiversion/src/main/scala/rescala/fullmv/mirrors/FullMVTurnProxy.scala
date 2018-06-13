@@ -9,9 +9,8 @@ trait FullMVTurnProxy {
   def addRemoteBranch(forPhase: TurnPhase.Type): Future[Unit]
   def asyncRemoteBranchComplete(forPhase: TurnPhase.Type): Unit
 
-  def acquirePhaseLockIfAtMost(maxPhase: TurnPhase.Type): Future[TurnPhase.Type]
+  def acquireRemoteBranchIfPhaseAtMost(maxPhase: TurnPhase.Type): Future[TurnPhase.Type]
   def addPredecessor(tree: TransactionSpanningTreeNode[FullMVTurn]): Future[Boolean]
-  def asyncReleasePhaseLock(): Unit
 
   def maybeNewReachableSubtree(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit]
   def newSuccessor(successor: FullMVTurn): Future[Unit]

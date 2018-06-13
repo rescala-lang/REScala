@@ -1,5 +1,6 @@
 package rescala.fullmv
 
+import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.atomic.{AtomicIntegerFieldUpdater, AtomicReference, AtomicReferenceFieldUpdater}
 import java.util.concurrent.locks.LockSupport
 
@@ -7,6 +8,7 @@ import rescala.core.Initializer.InitValues
 import rescala.core.Pulse
 
 import scala.annotation.{elidable, tailrec}
+import scala.concurrent.forkjoin.ForkJoinPool.ManagedBlocker
 
 sealed trait MaybeWritten[+V]
 case object NotFinal extends MaybeWritten[Nothing]
@@ -374,10 +376,10 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
         case TurnPhase.Completed => true
         case TurnPhase.Executing => NonblockingSkipListVersionHistory.tryRecordRelationship(current.txn, txn, current.txn, txn)
         case TurnPhase.Framing => /* and only if still Framing becomes relevant, ensure that we still are */
-          FullMVEngine.myAwait(txn.acquirePhaseLockIfAtMost(TurnPhase.Framing), txn.host.timeout) <= TurnPhase.Framing && (try {
+          FullMVEngine.myAwait(txn.acquireRemoteBranchIfPhaseAtMost(TurnPhase.Framing), txn.host.timeout) <= TurnPhase.Framing && (try {
             NonblockingSkipListVersionHistory.tryRecordRelationship(current.txn, txn, current.txn, txn)
           } finally {
-            txn.asyncReleasePhaseLock()
+            txn.asyncRemoteBranchComplete(TurnPhase.Framing)
           })
       })) {
         val v = tryInsertVersion(txn, current, next, null, NotFinal)
@@ -737,30 +739,30 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
   }
 
   private def sleepForVersionProperty(sleeperUpdater: AtomicReferenceFieldUpdater[LinkWithCounters[Any], List[Thread]], check: QueuedVersion => Boolean, version: QueuedVersion, label: String): Unit = {
-    @inline @tailrec def reSleep(): Unit = {
-      if (!check(version)) {
-        if (NonblockingSkipListVersionHistory.DEBUG || FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] parking for $label $version.")
-        val timeBefore = System.nanoTime()
-        LockSupport.parkNanos(NonblockingSkipListVersionHistory.this, 3000L * 1000 * 1000)
-        if (System.nanoTime() - timeBefore > 2000L * 1000 * 1000) {
-          if (!check(version)) {
-            val ff = firstFrame
-            if (ff != version && (ff == null || ff.txn.isTransitivePredecessor(version.txn))) {
-              throw new Exception(s"${Thread.currentThread().getName} got stuck on $version -> dropped without $label $version with state $this")
-            } else {
-//            System.err.println(s"[WARNING] ${Thread.currentThread().getName} stalled waiting for transition to stable of $version\r\n[WARNING] with state $this\r\n[WARNING]\tat ${Thread.currentThread().getStackTrace.mkString("\r\n[WARNING]\tat ")}")
-            }
-          } else {
-            throw new Exception(s"${Thread.currentThread().getName} did not receive wake-up call after transition to $label of $version with state $this")
-          }
-        }
-        reSleep()
-      } else {
-        if (NonblockingSkipListVersionHistory.DEBUG || FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] unparked on $label $version")
-      }
-    }
     if(version.addSleeper(sleeperUpdater)) {
-      reSleep()
+      ForkJoinPool.managedBlock(new ManagedBlocker() {
+        override def isReleasable: Boolean = check(version)
+        override def block(): Boolean = {
+          if (NonblockingSkipListVersionHistory.DEBUG || FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] parking for $label $version.")
+          val timeBefore = System.nanoTime()
+          LockSupport.parkNanos(NonblockingSkipListVersionHistory.this, 3000L * 1000 * 1000)
+          val res = check(version)
+          if (System.nanoTime() - timeBefore > 2000L * 1000 * 1000) {
+            if (res) {
+              val ff = firstFrame
+              if (ff != version && (ff == null || ff.txn.isTransitivePredecessor(version.txn))) {
+                throw new Exception(s"${Thread.currentThread().getName} got stuck on $version -> dropped without $label $version with state $this")
+              } else {
+//                System.err.println(s"[WARNING] ${Thread.currentThread().getName} stalled waiting for transition to stable of $version\r\n[WARNING] with state $this\r\n[WARNING]\tat ${Thread.currentThread().getStackTrace.mkString("\r\n[WARNING]\tat ")}")
+              }
+            } else {
+              new Exception(s"${Thread.currentThread().getName} did not receive wake-up call after transition to $label of $version with state $this").printStackTrace()
+            }
+          }
+          res
+        }
+      })
+      if (NonblockingSkipListVersionHistory.DEBUG || FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] unparked on $label $version")
     } else {
       assert(check(version), s"$label sleeper addition failed, but not $label: $version")
     }
@@ -827,7 +829,7 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
       ownOrPredecessor.readForFuture
     }
     if(NonblockingSkipListVersionHistory.TRACE_VALUES) println(s"[${Thread.currentThread().getName}] staticAfter for $txn ended at $ownOrPredecessor, returning $res")
-    //    perThreadReadTracker.set(() => s"staticAfter for $txn ended on $ownOrPredecessor, returning $res")
+//    perThreadReadTracker.set(() => s"staticAfter for $txn ended on $ownOrPredecessor, returning $res")
     res
   } catch {
     case t: Throwable =>
@@ -846,20 +848,15 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
       if (ls.txn == txn || txn.isTransitivePredecessor(ls.txn) || ls.txn.phase == TurnPhase.Completed) {
         assertFinalVersionExists0(txn, ls)
       } else {
-        //        assert(ls.txn.isTransitivePredecessor(txn), s"trying to look for $txn encountered unordered latestStable $ls; read tracker says ${perThreadReadTracker.get()()}")
+//        assert(ls.txn.isTransitivePredecessor(txn), s"trying to look for $txn encountered unordered latestStable $ls; read tracker says ${perThreadReadTracker.get()()}")
         assert(ls.txn.isTransitivePredecessor(txn), s"trying to look for $txn encountered unordered latestStable $ls; read tracker disabled...")
       }
     } else if(current.txn == txn) {
-      //      assert(current.isStable, s"found non-stable $current; read tracker says ${perThreadReadTracker.get()()}")
-      //      assert(current.isZeroCounters, s"found non-final $current; read tracker says ${perThreadReadTracker.get()()}")
-      assert(current.isStable, s"found non-stable $current; read tracker disabled...")
-      assert(current.isZeroCounters, s"found non-final $current; read tracker disabled...")
-      // the assertion below should replace the two above, but doesn't work in localOpt,
-      // because dynamicAfters wake up after sleepForStable instead of sleepForFinal..
-      // assert(current.isFinal, s"found non-final $current; read tracker says ${perThreadReadTracker.get()()}")
+//      assert(current.isFinal, s"found non-final $current; read tracker says ${perThreadReadTracker.get()()}")
+      assert(current.isFinal, s"found non-final $current; read tracker disabled...")
     } else {
-      //      assert(!current.txn.isTransitivePredecessor(txn), s"while looking for $txn, encountered successor $current; read tracker says ${perThreadReadTracker.get()()}")
-      //      assert(txn.isTransitivePredecessor(current.txn) || current.txn.phase == TurnPhase.Completed, s"while looking for $txn, encountered unordered $current; read tracker says ${perThreadReadTracker.get()()}")
+//      assert(!current.txn.isTransitivePredecessor(txn), s"while looking for $txn, encountered successor $current; read tracker says ${perThreadReadTracker.get()()}")
+//      assert(txn.isTransitivePredecessor(current.txn) || current.txn.phase == TurnPhase.Completed, s"while looking for $txn, encountered unordered $current; read tracker says ${perThreadReadTracker.get()()}")
       assert(!current.txn.isTransitivePredecessor(txn), s"while looking for $txn, encountered successor $current; read tracker disabled...")
       assert(txn.isTransitivePredecessor(current.txn) || current.txn.phase == TurnPhase.Completed, s"while looking for $txn, encountered unordered $current; read tracker disabled...")
       val next = current.get
@@ -867,7 +864,7 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
         // search fell off the list, restart
         assertFinalVersionExists0(txn, null)
       } else {
-        //        assert(next != null, s"reached end of list without finding version of $txn; read tracker says ${perThreadReadTracker.get()()}")
+//        assert(next != null, s"reached end of list without finding version of $txn; read tracker says ${perThreadReadTracker.get()()}")
         assert(next != null, s"reached end of list without finding version of $txn; read tracker disabled...")
         assertFinalVersionExists0(txn, next)
       }
@@ -912,7 +909,7 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
 
   def drop(txn: T, remove: OutDep): (List[T], Option[T]) = {
     val maybeVersion = ensureDynamicReadVersion(txn, assertSleepingAllowed = false)
-    //    assert(maybeVersion.isFinal, s"found non-final $txn; read tracker says ${perThreadReadTracker.get()()}")
+//    assert(maybeV ersion.isFinal, s"found non-final $txn; read tracker says ${perThreadReadTracker.get()()}")
     assert(maybeVersion.isFinal, s"found non-final $txn; read tracker disabled...")
     computeRetrofit(txn, remove, synchronized {
       outgoings -= remove
@@ -923,8 +920,8 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
   private def computeRetrofit(txn: T, sink: OutDep, latestStableAndFirstFrame: (QueuedVersion, QueuedVersion)): (List[T], Option[T]) = {
     val maybeFirstFrame = latestStableAndFirstFrame._2
     val frame = if(maybeFirstFrame != null) {
-      // in distributed, test if we can turn this into a positive lessThanAssumingNoRaceConditions(txn, maybeFirstFrame.txn).
-      //      assert(txn != maybeFirstFrame.txn && !txn.isTransitivePredecessor(maybeFirstFrame.txn), s"$txn must not retrofit in the future (firstFrame was $maybeFirstFrame).\r\nSource (this) state is: $this\r\nSink $sink state is: ${sink.asInstanceOf[rescala.core.Reactive[FullMVStruct]].state}\r\n, readTracker says ${perThreadReadTracker.get()}")
+      // TODO in distributed, test if we can turn this into a positive lessThanAssumingNoRaceConditions(txn, maybeFirstFrame.txn).
+//      assert(txn != maybeFirstFrame.txn && !txn.isTransitivePredecessor(maybeFirstFrame.txn), s"$txn must not retrofit in the future (firstFrame was $maybeFirstFrame).\r\nSource (this) state is: $this\r\nSink $sink state is: ${sink.asInstanceOf[rescala.core.Reactive[FullMVStruct]].state}\r\n, readTracker says ${perThreadReadTracker.get()}")
       assert(txn != maybeFirstFrame.txn && !txn.isTransitivePredecessor(maybeFirstFrame.txn), s"$txn must not retrofit in the future (firstFrame was $maybeFirstFrame).\r\nSource (this) state is: $this\r\nSink $sink state is: ${sink.asInstanceOf[rescala.core.Reactive[FullMVStruct]].state}\r\n, readTracker disabled...")
       Some(maybeFirstFrame.txn)
     } else {
@@ -949,19 +946,19 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
     */
   def retrofitSinkFrames(successorWrittenVersions: Seq[T], maybeSuccessorFrame: Option[T], arity: Int): Unit = {
     require(math.abs(arity) == 1)
-    //    @tailrec def checkFrames(current: List[T]): Unit = {
-    //      current match {
-    //        case Nil =>
-    //        case first :: Nil => if(maybeSuccessorFrame.isDefined) {
-    //          assert(maybeSuccessorFrame.get.isTransitivePredecessor(first), s"not $first < $maybeSuccessorFrame")
-    //        }
-    //        case first :: rest =>
-    //          val second :: _ = rest
-    //          assert(second.isTransitivePredecessor(current.head), s"not $first < $second")
-    //          checkFrames(rest)
-    //      }
-    //    }
-    //    checkFrames(successorWrittenVersions)
+//    @tailrec def checkFrames(current: List[T]): Unit = {
+//      current match {
+//        case Nil =>
+//        case first :: Nil => if(maybeSuccessorFrame.isDefined) {
+//          assert(maybeSuccessorFrame.get.isTransitivePredecessor(first), s"not $first < $maybeSuccessorFrame")
+//        }
+//        case first :: rest =>
+//          val second :: _ = rest
+//          assert(second.isTransitivePredecessor(current.head), s"not $first < $second")
+//          checkFrames(rest)
+//      }
+//    }
+//    checkFrames(successorWrittenVersions)
 
     var current = firstFrame
     for(txn <- successorWrittenVersions) {
@@ -1108,12 +1105,12 @@ object NonblockingSkipListVersionHistory {
     */
   def tryFixSuccessorOrderIfNotFixedYet(txn: FullMVTurn, succ: FullMVTurn): Boolean = {
     succ.isTransitivePredecessor(txn) || {
-      val res = FullMVEngine.myAwait(succ.acquirePhaseLockIfAtMost(TurnPhase.Framing), txn.host.timeout) < TurnPhase.Executing
+      val res = FullMVEngine.myAwait(succ.acquireRemoteBranchIfPhaseAtMost(TurnPhase.Framing), txn.host.timeout) < TurnPhase.Executing
       if (res) try {
         val established = tryRecordRelationship(txn, succ, succ, txn)
         assert(established, s"failed to order executing $txn before locked-framing $succ?")
       } finally {
-        succ.asyncReleasePhaseLock()
+        succ.asyncRemoteBranchComplete(TurnPhase.Framing)
       }
       res
     }

@@ -1,7 +1,7 @@
 package rescala.fullmv
 
 import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
-import java.util.concurrent.locks.{LockSupport, ReentrantReadWriteLock}
+import java.util.concurrent.locks.LockSupport
 
 import rescala.core.{InitialChange, ReSource}
 import rescala.fullmv.mirrors.Host
@@ -23,7 +23,6 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
   // counts the sum of in-flight notifications, in-progress reevaluations.
   var activeBranches = new AtomicInteger(0) // write accesses are synchronized through atomic adds
 
-  val phaseLock = new ReentrantReadWriteLock()
   @volatile var phase: TurnPhase.Type = TurnPhase.Uninitialized
 
   val subsumableLock: AtomicReference[SubsumableLock] = new AtomicReference(initialLock)
@@ -77,18 +76,16 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
         awaitAndSwitchPhase0(firstUnknownPredecessorIndex, 0L, null)
       } else if (firstUnknownPredecessorIndex == selfNode.size) {
         assert(registeredForWaiting == null, s"$this is still registered on $registeredForWaiting as waiter despite having finished waiting for it")
-        phaseLock.writeLock.lock()
-        // make thread-safe sure that we haven't received any new predecessors that might
-        // not be in the next phase yet. Only once that's sure we can also thread-safe sure
-        // check that no predecessors pushed any tasks into our queue anymore. And only then
-        // can we phase switch.
-        if (firstUnknownPredecessorIndex == selfNode.size && activeBranches.get() == 0) {
-          this.phase = newPhase
-          phaseLock.writeLock.unlock()
-        } else {
-          phaseLock.writeLock.unlock()
-          awaitAndSwitchPhase0(firstUnknownPredecessorIndex, 0L, null)
+        val success = synchronized {
+          // make thread-safe sure that we haven't received any new predecessors that might
+          // not be in the next phase yet. Only once that's sure we can also thread-safe sure
+          // check that no predecessors pushed any tasks into our queue anymore. And only then
+          // can we phase switch.
+          val success = firstUnknownPredecessorIndex == selfNode.size && activeBranches.get() == 0
+          if (success) this.phase = newPhase
+          success
         }
+        if(!success) awaitAndSwitchPhase0(firstUnknownPredecessorIndex, 0L, null)
       } else {
         val currentUnknownPredecessor = selfNode.children(firstUnknownPredecessorIndex).txn
         if(currentUnknownPredecessor.phase < newPhase) {
@@ -223,15 +220,19 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
     predecessorSpanningTreeNodes.contains(txn)
   }
 
-  def acquirePhaseLockIfAtMost(maxPhase: TurnPhase.Type): Future[TurnPhase.Type] = Future.successful {
+  @tailrec final def acquireRemoteBranchIfPhaseAtMost(maxPhase: TurnPhase.Type): Future[TurnPhase.Type] = {
     val pOptimistic = phase
     if(pOptimistic > maxPhase) {
-      pOptimistic
+      Future.successful(pOptimistic)
     } else {
-      phaseLock.readLock().lock()
-      val pSecure = phase
-      if (pSecure > maxPhase) phaseLock.readLock().unlock()
-      pSecure
+      val before = activeBranches.get()
+      if(before != 0 && activeBranches.compareAndSet(before, before + 1)) {
+        val pSecure = phase
+        if(pSecure > maxPhase) asyncRemoteBranchComplete(pSecure)
+        Future.successful(pSecure)
+      } else {
+        acquireRemoteBranchIfPhaseAtMost(maxPhase)
+      }
     }
   }
 
@@ -323,8 +324,6 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
     }
     Future.unit
   }
-
-  override def asyncReleasePhaseLock(): Unit = phaseLock.readLock().unlock()
 
   //========================================================SSG SCC Mutual Exclusion Control============================================================
 

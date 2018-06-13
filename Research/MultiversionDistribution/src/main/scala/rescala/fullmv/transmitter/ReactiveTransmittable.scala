@@ -45,11 +45,10 @@ object ReactiveTransmittable {
       case NewPredecessors(newPredecessors) => allEmpty("NewPredecessors").copy(_7 = newPredecessors)
       case AddRemoteBranch(turn, forPhase) => allEmpty("AddRemoteBranch").copy(_2 = turn, _3 = forPhase)
       case AsyncRemoteBranchComplete(turn, forPhase) => allEmpty("AsyncRemoteBranchComplete").copy(_2 = turn, _3 = forPhase)
-      case AcquirePhaseLockIfAtMost(turn, phase) => allEmpty("AcquirePhaseLockIfAtMost").copy(_2 = turn, _3 = phase)
-      case AcquirePhaseLockResponse(phase) => allEmpty("AcquirePhaseLockResponse").copy(_3 = phase)
+      case AcquireRemoteBranchIfAtMost(turn, phase) => allEmpty("AcquireRemoteBranchIfAtMost").copy(_2 = turn, _3 = phase)
+      case AcquireRemoteBranchResponse(phase) => allEmpty("AcquireRemoteBranchResponse").copy(_3 = phase)
       case AddPredecessor(turn, predecessorTree) => allEmpty("AddPredecessor").copy(_2 = turn, _7 = predecessorTree)
       case BooleanResponse(bool) => allEmpty(if(bool) "BooleanTrueResponse" else "BooleanFalseResponse")
-      case AsyncReleasePhaseLock(turn) => allEmpty("AsyncReleasePhaseLock").copy(_2 = turn)
       case MaybeNewReachableSubtree(turn, attachBelow, spanningTree) => allEmpty("MaybeNewReachableSubtree").copy(_2 = turn, _4 = attachBelow._1, _5 = attachBelow._2, _7 = spanningTree)
       case NewSuccessor(turn, successor) => allEmpty("NewSuccessor").copy(_2 = turn, _4 = successor._1, _5 = successor._2)
       case TurnGetLockedRoot(turn) => allEmpty("TurnGetLockedRoot").copy(_2 = turn)
@@ -93,12 +92,11 @@ object ReactiveTransmittable {
       case ("NewPredecessors", _, _, _, _, _, preds, _) => NewPredecessors(preds)
       case ("AddRemoteBranch", turn, phase, _, _, _, _, _) => AddRemoteBranch(turn, phase) // TODO this should not be an assert, but a push phase?
       case ("AsyncRemoteBranchComplete", turn, phase, _, _, _, _, _) => AsyncRemoteBranchComplete(turn, phase)
-      case ("AcquirePhaseLockIfAtMost", turn, phase, _, _, _, _, _) => AcquirePhaseLockIfAtMost(turn, phase)
-      case ("AcquirePhaseLockResponse", _, phase, _, _, _, _, _) => AcquirePhaseLockResponse(phase)
+      case ("AcquireRemoteBranchIfAtMost", turn, phase, _, _, _, _, _) => AcquireRemoteBranchIfAtMost(turn, phase)
+      case ("AcquireRemoteBranchResponse", _, phase, _, _, _, _, _) => AcquireRemoteBranchResponse(phase)
       case ("AddPredecessor", turn, _, _, _, _, tree, _) => AddPredecessor(turn, tree)
       case ("BooleanTrueResponse", _, _, _, _, _, _, _) => BooleanResponse(true)
       case ("BooleanFalseResponse", _, _, _, _, _, _, _) => BooleanResponse(false)
-      case ("AsyncReleasePhaseLock", turn, _, _, _, _, _, _) => AsyncReleasePhaseLock(turn)
       case ("MaybeNewReachableSubtree", turn, _, attachBelow, attachPhase, _, tree, _) => MaybeNewReachableSubtree(turn, attachBelow -> attachPhase, tree)
       case ("NewSuccessor", turn, _, successor, successorPhase, _, _, _) => NewSuccessor(turn, successor -> successorPhase)
       case ("TurnGetLockedRoot", turn, _, _, _, _, _, _) => TurnGetLockedRoot(turn)
@@ -166,11 +164,10 @@ object ReactiveTransmittable {
   case class PredecessorsResponse(predecessors: CaseClassTransactionSpanningTreeNode[TurnPushBundle]) extends Response[Nothing]
   case class AddRemoteBranch(turn: Host.GUID, forPhase: TurnPhase.Type) extends UnderlyingChatterRequest { override type Response = UnitResponse.type }
   case class AsyncRemoteBranchComplete(turn: Host.GUID, forPhase: TurnPhase.Type) extends UnderlyingChatterAsync
-  case class AcquirePhaseLockIfAtMost(turn: Host.GUID, phase: TurnPhase.Type) extends UnderlyingChatterRequest{ override type Response = AcquirePhaseLockResponse }
-  case class AcquirePhaseLockResponse(phase: TurnPhase.Type) extends Response[Nothing]
+  case class AcquireRemoteBranchIfAtMost(turn: Host.GUID, phase: TurnPhase.Type) extends UnderlyingChatterRequest{ override type Response = AcquireRemoteBranchResponse }
+  case class AcquireRemoteBranchResponse(phase: TurnPhase.Type) extends Response[Nothing]
   case class AddPredecessor(turn: Host.GUID, predecessorTree: CaseClassTransactionSpanningTreeNode[TurnPushBundle]) extends UnderlyingChatterRequest{ override type Response = BooleanResponse }
   case class BooleanResponse(bool: Boolean) extends Response[Nothing]
-  case class AsyncReleasePhaseLock(turn: Host.GUID) extends UnderlyingChatterAsync
   case class MaybeNewReachableSubtree(turn: Host.GUID, attachBelow: TurnPushBundle, spanningTree: CaseClassTransactionSpanningTreeNode[TurnPushBundle]) extends UnderlyingChatterRequest{ override type Response = UnitResponse.type }
   case class NewSuccessor(turn: Host.GUID, successor: TurnPushBundle) extends UnderlyingChatterRequest{ override type Response = UnitResponse.type }
   /** [[SubsumableLockEntryPoint]] **/
@@ -521,10 +518,6 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
       val maybeTurn = localTurnReceiverInstance(receiver)
       assert(maybeTurn.isDefined, s"supposedly a remote still has a branch, but $maybeTurn has already been deallocated")
       maybeTurn.get.asyncRemoteBranchComplete(forPhase)
-    case AsyncReleasePhaseLock(receiver) =>
-      val maybeTurn = localTurnReceiverInstance(receiver)
-      assert(maybeTurn.isDefined, s"$maybeTurn was deallocated while a remote supposedly held its phase lock")
-      maybeTurn.get.asyncReleasePhaseLock()
 
     case LockAsyncUnlock(receiver) =>
       val lock = localLockReceiverInstance(receiver)
@@ -558,12 +551,12 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
       val maybeTurn = localTurnReceiverInstance(receiver)
       assert(maybeTurn.isDefined, s"someone tried to revive $receiver, which should thus not have been possible to be deallocated")
       maybeTurn.get.addRemoteBranch(forPhase)
-    case AcquirePhaseLockIfAtMost(receiver, phase) =>
+    case AcquireRemoteBranchIfAtMost(receiver, phase) =>
       localTurnReceiverInstance(receiver) match {
-        case Some(turn) => turn.acquirePhaseLockIfAtMost(phase).map(AcquirePhaseLockResponse)(FullMVEngine.notWorthToMoveToTaskpool)
+        case Some(turn) => turn.acquireRemoteBranchIfPhaseAtMost(phase).map(AcquireRemoteBranchResponse)(FullMVEngine.notWorthToMoveToTaskpool)
         case None =>
           if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host receiver of request $request was deallocated")
-          Future.successful(AcquirePhaseLockResponse(TurnPhase.Completed))
+          Future.successful(AcquireRemoteBranchResponse(TurnPhase.Completed))
       }
     case MaybeNewReachableSubtree(receiver, attachBelow, spanningSubTreeRoot) =>
       val maybeTurn = localTurnReceiverInstance(receiver)
@@ -683,9 +676,9 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
       doAsync(endpoint, AsyncRemoteBranchComplete(guid, forPhase))
     }
 
-    override def acquirePhaseLockIfAtMost(maxPhase: Type): Future[TurnPhase.Type] = {
-      doRequest(endpoint, AcquirePhaseLockIfAtMost(guid, maxPhase)).map {
-        case AcquirePhaseLockResponse(phase) => phase
+    override def acquireRemoteBranchIfPhaseAtMost(maxPhase: Type): Future[TurnPhase.Type] = {
+      doRequest(endpoint, AcquireRemoteBranchIfAtMost(guid, maxPhase)).map {
+        case AcquireRemoteBranchResponse(phase) => phase
       }(executeInTaskPool)
     }
 
@@ -693,9 +686,6 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
       doRequest(endpoint, AddPredecessor(guid, sendTree(tree))).map {
         case BooleanResponse(bool) => bool
       }(FullMVEngine.notWorthToMoveToTaskpool)
-    }
-    override def asyncReleasePhaseLock(): Unit = {
-      doAsync(endpoint, AsyncReleasePhaseLock(guid))
     }
     override def maybeNewReachableSubtree(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = {
       assert(attachBelow.host == host, s"$attachBelow is not on $host?!")

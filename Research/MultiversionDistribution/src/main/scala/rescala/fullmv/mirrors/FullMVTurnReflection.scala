@@ -142,10 +142,10 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
   override def asyncRemoteBranchComplete(forPhase: Type): Unit = proxy.asyncRemoteBranchComplete(forPhase)
   override def addRemoteBranch(forPhase: TurnPhase.Type): Future[Unit] = proxy.addRemoteBranch(forPhase)
 
-  override def acquirePhaseLockIfAtMost(maxPhase: Type): Future[TurnPhase.Type] = {
+  override def acquireRemoteBranchIfPhaseAtMost(maxPhase: Type): Future[TurnPhase.Type] = {
     val localOptimistic = phase
     if(localOptimistic <= maxPhase) {
-      proxy.acquirePhaseLockIfAtMost(maxPhase).map { phase =>
+      proxy.acquireRemoteBranchIfPhaseAtMost(maxPhase).map { phase =>
         asyncNewPhase(phase)
         phase
       }(FullMVEngine.notWorthToMoveToTaskpool)
@@ -175,7 +175,6 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
       }(FullMVEngine.notWorthToMoveToTaskpool)
     }
   }
-  override def asyncReleasePhaseLock(): Unit = proxy.asyncReleasePhaseLock()
   override def maybeNewReachableSubtree(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = proxy.maybeNewReachableSubtree(attachBelow, spanningSubTreeRoot)
 
   override def newSuccessor(successor: FullMVTurn): Future[Unit] = proxy.newSuccessor(successor)
