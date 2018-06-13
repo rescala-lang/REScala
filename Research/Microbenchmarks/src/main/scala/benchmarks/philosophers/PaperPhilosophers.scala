@@ -89,8 +89,10 @@ abstract class PaperPhilosophers[S <: Struct](val size: Int, val engine: Schedul
         case Dynamicity.Static =>
           val idx = avoidStaticOptimization
           val prevIdx = (idx - 1 + size) % size
+          val leftFork = forks(prevIdx)
+          val rightFork = forks(idx)
           Signal.static[Sight] {
-            computeForkStatic(idx, (forks(prevIdx)(), forks(idx)()))
+            computeForkStatic(idx, (leftFork(), rightFork()))
           }
       }
 
