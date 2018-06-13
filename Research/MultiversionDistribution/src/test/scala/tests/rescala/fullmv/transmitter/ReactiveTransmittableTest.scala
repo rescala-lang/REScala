@@ -35,9 +35,9 @@ class ReactiveTransmittableTest extends FunSuite {
       val reflection: rescala.reactives.Signal[Int, FullMVStruct] = Await.result(hostB.registry.lookup(hostB.binding, remoteA), 10.second)
       Thread.sleep(1000)
 
-      assert({import hostB._; reflection.now} === 5)
+      assert({import hostB._; reflection.readValueOnce} === 5)
       ;{import hostA._; input.set(123)}
-      assert({import hostB._; reflection.now} === 123)
+      assert({import hostB._; reflection.readValueOnce} === 123)
     } finally {
       hostA.registry.terminate()
     }
@@ -59,9 +59,9 @@ class ReactiveTransmittableTest extends FunSuite {
 
       Thread.sleep(1000)
 
-      assert({import hostB._; derived.now} === 10)
+      assert({import hostB._; derived.readValueOnce} === 10)
       ;{import hostA._; input.set(123)}
-      assert({import hostB._; derived.now} === 246)
+      assert({import hostB._; derived.readValueOnce} === 246)
     } finally {
       hostA.registry.terminate()
     }
@@ -109,12 +109,12 @@ class ReactiveTransmittableTest extends FunSuite {
 
       Thread.sleep(1000)
 
-      assert({import hostB._; derived.now} === ((("1b", ("1a", 5)), 5, ("2b", ("2a", 5)))))
+      assert({import hostB._; derived.readValueOnce} === ((("1b", ("1a", 5)), 5, ("2b", ("2a", 5)))))
       assert(tracker === ArrayBuffer((("1b", ("1a", 5)), 5, ("2b", ("2a", 5)))))
       tracker.clear()
 
       ;{import hostA._; input.set(123)}
-      assert({import hostB._; derived.now} === ((("1b", ("1a", 123)), 123, ("2b", ("2a", 123)))))
+      assert({import hostB._; derived.readValueOnce} === ((("1b", ("1a", 123)), 123, ("2b", ("2a", 123)))))
       assert(tracker === ArrayBuffer((("1b", ("1a", 123)), 123, ("2b", ("2a", 123)))))
     } finally {
       hostA.registry.terminate()
@@ -165,12 +165,12 @@ class ReactiveTransmittableTest extends FunSuite {
 
       Thread.sleep(1000)
 
-      assert({import hostB._; hold.now} === List())
+      assert({import hostB._; hold.readValueOnce} === List())
       assert(tracker.isEmpty) // in case this failed, someone may have changed event initialization semantics again. Try instead for === ArrayBuffer((None, None, None))
       tracker.clear()
 
       ;{import hostA._; input.fire(123)}
-      assert({import hostB._; hold.now} === List((Some(("1b", ("1a", 123))), Some(123), Some(("2b", ("2a", 123))))))
+      assert({import hostB._; hold.readValueOnce} === List((Some(("1b", ("1a", 123))), Some(123), Some(("2b", ("2a", 123))))))
       assert(tracker === ArrayBuffer((Some(("1b", ("1a", 123))), Some(123), Some(("2b", ("2a", 123))))))
     } finally {
       hostA.registry.terminate()

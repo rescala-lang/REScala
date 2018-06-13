@@ -14,9 +14,9 @@ class ReactiveMirrorTest extends FunSuite {
     val input = {import engineA._; Var(5)}
     val reflection = ReactiveLocalClone(input, engineB)
 
-    assert({import engineB._; reflection.now} === 5)
+    assert({import engineB._; reflection.readValueOnce} === 5)
     ;{import engineA._; input.set(123)}
-    assert({import engineB._; reflection.now} === 123)
+    assert({import engineB._; reflection.readValueOnce} === 123)
   }
 
   test("reflection supports derivations") {
@@ -24,9 +24,9 @@ class ReactiveMirrorTest extends FunSuite {
     val reflection = ReactiveLocalClone(input, engineB)
     val derived = {import engineB._; reflection.map(_ * 2)}
 
-    assert({import engineB._; derived.now} === 10)
+    assert({import engineB._; derived.readValueOnce} === 10)
     ;{import engineA._; input.set(123)}
-    assert({import engineB._; derived.now} === 246)
+    assert({import engineB._; derived.readValueOnce} === 246)
   }
 
   test("reflection maintains glitch freedom") {
@@ -46,12 +46,12 @@ class ReactiveMirrorTest extends FunSuite {
       }
     }}
 
-    assert({import engineB._; derived.now} === ((("1b", ("1a", 5)), 5, ("2b", ("2a", 5)))))
+    assert({import engineB._; derived.readValueOnce} === ((("1b", ("1a", 5)), 5, ("2b", ("2a", 5)))))
     assert(tracker === ArrayBuffer((("1b", ("1a", 5)), 5, ("2b", ("2a", 5)))))
     tracker.clear()
 
     ;{import engineA._; input.set(123)}
-    assert({import engineB._; derived.now} === ((("1b", ("1a", 123)), 123, ("2b", ("2a", 123)))))
+    assert({import engineB._; derived.readValueOnce} === ((("1b", ("1a", 123)), 123, ("2b", ("2a", 123)))))
     assert(tracker === ArrayBuffer((("1b", ("1a", 123)), 123, ("2b", ("2a", 123)))))
   }
 
@@ -73,12 +73,12 @@ class ReactiveMirrorTest extends FunSuite {
     }}
     val hold = {import engineB._; derived.last(1)}
 
-    assert({import engineB._; hold.now} === List())
+    assert({import engineB._; hold.readValueOnce} === List())
     assert(tracker.isEmpty) // in case this failed, someone may have changed event initialization semantics again. Try instead for === ArrayBuffer((None, None, None))
     tracker.clear()
 
     ;{import engineA._; input.fire(123)}
-    assert({import engineB._; hold.now} === List((Some(("1b", ("1a", 123))), Some(123), Some(("2b", ("2a", 123))))))
+    assert({import engineB._; hold.readValueOnce} === List((Some(("1b", ("1a", 123))), Some(123), Some(("2b", ("2a", 123))))))
     assert(tracker === ArrayBuffer((Some(("1b", ("1a", 123))), Some(123), Some(("2b", ("2a", 123))))))
   }
 }

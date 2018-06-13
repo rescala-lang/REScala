@@ -60,7 +60,7 @@ class XShapeMirrorTest extends FunSuite {
     }
 
     assert(violations.get.isEmpty)
-    assert(merge.now === Merge(
+    assert(merge.readValueOnce === Merge(
       Data("lmerge", Merge(Data("left", 0), Data("right", 0))),
       Data("rmerge", Merge(Data("left", 0), Data("right", 0)))
     ))
@@ -68,7 +68,7 @@ class XShapeMirrorTest extends FunSuite {
     leftHost.step()
 
     assert(violations.get.isEmpty)
-    assert(merge.now === Merge(
+    assert(merge.readValueOnce === Merge(
       Data("lmerge", Merge(Data("left", 1), Data("right", 0))),
       Data("rmerge", Merge(Data("left", 1), Data("right", 0)))
     ))
@@ -76,7 +76,7 @@ class XShapeMirrorTest extends FunSuite {
     rightHost.step()
 
     assert(violations.get.isEmpty)
-    assert(merge.now === Merge(
+    assert(merge.readValueOnce === Merge(
       Data("lmerge", Merge(Data("left", 1), Data("right", 1))),
       Data("rmerge", Merge(Data("left", 1), Data("right", 1)))
     ))
@@ -130,14 +130,14 @@ class XShapeMirrorTest extends FunSuite {
     } match {
       case None =>
         println("no total and stats due to failures. state snapshot:")
-        println(s"sources: ${leftHost.source.now} and ${leftHost.source.now}")
-        println(s"side merges: ${leftMerge.now} and ${rightMerge.now}")
-        println(s"top merge: ${merge.now}")
+        println(s"sources: ${leftHost.source.readValueOnce} and ${leftHost.source.readValueOnce}")
+        println(s"side merges: ${leftMerge.readValueOnce} and ${rightMerge.readValueOnce}")
+        println(s"top merge: ${merge.readValueOnce}")
         fail("there were errors")
       case Some(sum) =>
         println(s"X-Shape mirror stress test totaled $sum iterations (individual scores: ${scores.mkString(", ")}")
         assert(violations.get.isEmpty)
-        assert(merge.now === Merge(
+        assert(merge.readValueOnce === Merge(
           Data("lmerge", Merge(Data("left", scoreLeft.get), Data("right", scoreRight.get))),
           Data("rmerge", Merge(Data("left", scoreLeft.get), Data("right", scoreRight.get)))
         ))

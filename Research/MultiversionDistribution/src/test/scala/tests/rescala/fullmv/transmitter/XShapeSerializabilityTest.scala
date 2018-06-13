@@ -82,7 +82,7 @@ class XShapeSerializabilityTest extends FunSuite {
           merge.observe { v => if(isGlitched(v)) violations = v :: violations }
 
           assert(violations.isEmpty)
-          assert(merge.now === Merge(
+          assert(merge.readValueOnce === Merge(
             Data("lmerge", Merge(Data("left", 0), Data("right", 0))),
             Data("rmerge", Merge(Data("left", 0), Data("right", 0)))
           ))
@@ -90,7 +90,7 @@ class XShapeSerializabilityTest extends FunSuite {
           leftHost.step()
 
           assert(violations.isEmpty)
-          assert(merge.now === Merge(
+          assert(merge.readValueOnce === Merge(
             Data("lmerge", Merge(Data("left", 1), Data("right", 0))),
             Data("rmerge", Merge(Data("left", 1), Data("right", 0)))
           ))
@@ -98,7 +98,7 @@ class XShapeSerializabilityTest extends FunSuite {
           rightHost.step()
 
           assert(violations.isEmpty)
-          assert(merge.now === Merge(
+          assert(merge.readValueOnce === Merge(
             Data("lmerge", Merge(Data("left", 1), Data("right", 1))),
             Data("rmerge", Merge(Data("left", 1), Data("right", 1)))
           ))
@@ -152,14 +152,14 @@ class XShapeSerializabilityTest extends FunSuite {
           } match {
             case None =>
               println("no total and stats due to failures. state snapshot:")
-              println(s"sources: ${leftHost.source.now} and ${leftHost.source.now}")
-              println(s"side merges: ${leftMerge.now} and ${rightMerge.now}")
-              println(s"top merge: ${merge.now}")
+              println(s"sources: ${leftHost.source.readValueOnce} and ${rightHost.source.readValueOnce}")
+              println(s"side merges: ${leftMerge.readValueOnce} and ${rightMerge.readValueOnce}")
+              println(s"top merge: ${merge.readValueOnce}")
               fail("there were errors")
             case Some(sum) =>
               println(s"X-Shape distributed Serializability stress test totaled $sum iterations (individual scores: ${scores.mkString(", ")}")
               assert(violations.isEmpty)
-              assert(merge.now === Merge(
+              assert(merge.readValueOnce === Merge(
                 Data("lmerge", Merge(Data("left", scoreLeft.get), Data("right", scoreRight.get))),
                 Data("rmerge", Merge(Data("left", scoreLeft.get), Data("right", scoreRight.get)))
               ))
