@@ -250,9 +250,8 @@ class ReactiveMacros(val c: blackbox.Context) {
       def annotatedForCutOut(reactive: c.universe.Tree): Boolean = reactive match {
         case Block(_, expr) => annotatedForCutOut(expr)
         case Typed(expr, _) => annotatedForCutOut(expr)
-        case e if internal.attachments(e).contains[ForceCutOut.type] => true
-        case _ =>
-
+        case _ if internal.attachments(reactive).contains[ForceCutOut.type] => true
+        case _ => if (reactive.symbol == null) false else {
           val directAnnotations = reactive.symbol.annotations
           val accessorAnnotations: List[Annotation] =
             if (reactive.symbol.isMethod && reactive.symbol.asMethod.isAccessor)
@@ -260,6 +259,7 @@ class ReactiveMacros(val c: blackbox.Context) {
             else Nil
 
           (directAnnotations ++ accessorAnnotations) exists {_.tree.tpe <:< typeOf[cutOutOfUserComputation]}
+        }
       }
 
       isInterpretable(outerReactive) && annotatedForCutOut(outerReactive) && !containsCriticalReferences(outerReactive)
