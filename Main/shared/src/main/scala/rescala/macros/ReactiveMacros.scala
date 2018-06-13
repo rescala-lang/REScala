@@ -50,9 +50,13 @@ class ReactiveMacros(val c: blackbox.Context) {
 
   }
 
+  object ForceCutOut
+
   def EventMapMacro[T: c.WeakTypeTag, A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag]
   (expression: c.Expr[T => A])(ticket: c.Tree): c.Tree = {
-    val mapTree: Tree = q"""${c.prefix}.value.map($expression)"""
+    val prefixTree = c.prefix.tree
+    internal.updateAttachment(prefixTree, ForceCutOut)
+    val mapTree: Tree = q"""${prefixTree}.value.map($expression)"""
     mapTree.forAll(t => if (t.tpe == null) {internal.setType(t, NoType); true} else false)
     ReactiveExpression[A, S, MacroTags.Static, Events.type](mapTree)(ticket)
   }
@@ -178,7 +182,7 @@ class ReactiveMacros(val c: blackbox.Context) {
         //   Signal { s() }
         // }
         //
-        case reactive@(TypeApply(_, _) | Apply(_, _) | Select(_, _) | Block(_, _) | Typed(_, _))
+        case reactive
           if weAnalysis.isReactiveThatCanBeCutOut(reactive) =>
 
           // create the signal definition to be cut out of the
@@ -246,6 +250,7 @@ class ReactiveMacros(val c: blackbox.Context) {
       def annotatedForCutOut(reactive: c.universe.Tree): Boolean = reactive match {
         case Block(_, expr) => annotatedForCutOut(expr)
         case Typed(expr, _) => annotatedForCutOut(expr)
+        case e if internal.attachments(e).contains[ForceCutOut.type] => true
         case _ =>
 
           val directAnnotations = reactive.symbol.annotations
