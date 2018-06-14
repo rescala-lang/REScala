@@ -246,7 +246,9 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
   override protected def dumped(): Unit = {
     state.getAndSet(host.dummy) match {
       case null => if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this deallocated without parent")
-      case Self => throw new AssertionError(s"$this was garbage collected while locked")
+      case Self =>
+        // cannot assert this, because async ref drop may overtake async unlock and result in lock beeing GC'd before being unlocked
+        // throw new AssertionError(s"$this was garbage collected while locked")
       case host.dummy => throw new AssertionError(s"$this was already garbage collected earlier")
       case parent =>
         if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this deallocated, dropping parent ref on $parent")

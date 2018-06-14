@@ -89,7 +89,7 @@ class FullMVEngine(val timeout: Duration, val name: String) extends SchedulerImp
 }
 
 object FullMVEngine {
-  val DEBUG = false
+  val DEBUG = true
 
   val default = new FullMVEngine(10.seconds, "default")
 

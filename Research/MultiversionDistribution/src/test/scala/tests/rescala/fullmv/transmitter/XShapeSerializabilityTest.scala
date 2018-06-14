@@ -104,7 +104,7 @@ class XShapeSerializabilityTest extends FunSuite {
           ))
 
 
-          val duration = 10000
+          val duration = 0//120000
           println(s"starting X-Shape distributed Serializability stress test " + (if(duration == 0) "until key press" else s"for ${duration / 1000} seconds..."))
           var running: Boolean = true
           def worker(host: SideHost) = Spawn {

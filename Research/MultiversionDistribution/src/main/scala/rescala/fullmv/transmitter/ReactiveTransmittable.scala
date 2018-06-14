@@ -301,14 +301,12 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
                   if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host replying $requestId: $response")
                   endpoint.send((requestId, response.toTuple))
                 case Failure(t) =>
-                  if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host request $requestId completed, but resulted in failure; returning ${t.getClass.getName}: ${t.getMessage} to remote")
-                  if(ReactiveTransmittable.DEBUG) t.printStackTrace()
+                  new Exception(s"[${Thread.currentThread().getName}] $host request $requestId completed, but resulted in failure; returning ${t.getClass.getName}: ${t.getMessage} to remote", t).printStackTrace()
                   endpoint.send(requestId -> RemoteExceptionResponse(serializeThrowable(t)).toTuple)
               }(FullMVEngine.notWorthToMoveToTaskpool)
             } catch {
               case t: Throwable =>
-                if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host request $requestId failed to execute; returning ${t.getClass.getName}: ${t.getMessage} to remote")
-                if(ReactiveTransmittable.DEBUG) t.printStackTrace()
+                new Exception(s"[${Thread.currentThread().getName}] $host request $requestId failed to execute; returning ${t.getClass.getName}: ${t.getMessage} to remote", t).printStackTrace()
                 endpoint.send(requestId -> RemoteExceptionResponse(serializeThrowable(t)).toTuple)
             }
           }
@@ -321,7 +319,10 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
       val promise = requestTracker.remove(requestId).asInstanceOf[Promise[Response]] /* typesafety yay */
       assert(promise != null, s"request $requestId unknown!")
       promise.complete(response match {
-        case RemoteExceptionResponse(se) => Failure(deserializeThrowable(se))
+        case RemoteExceptionResponse(se) =>
+          val t = deserializeThrowable(se)
+          new Exception("Received exception response", t).printStackTrace()
+          Failure(t)
         case otherwise => Success(response)
       })
     } catch {
@@ -351,13 +352,12 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
                 endpoint.send(requestId -> response.toTuple)
               } catch {
                 case t: Throwable =>
-                  if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host connect $reactive $turnBundle failed to execute; returning ${t.getClass.getName}: ${t.getMessage} to remote")
-                  if(ReactiveTransmittable.DEBUG) t.printStackTrace()
+                  new Exception(s"[${Thread.currentThread().getName}] $host request $requestId failed to execute; returning ${t.getClass.getName}: ${t.getMessage} to remote", t).printStackTrace()
                   endpoint.send(requestId -> RemoteExceptionResponse(serializeThrowable(t)).toTuple)
               }
             }
           })
-        case otherwise: PossiblyBlockingTopLevel[P] => new Exception("Illegal top level message received on sender side: " + otherwise)
+        case otherwise: PossiblyBlockingTopLevel[P] => new Exception("Illegal top level message received on sender side: " + otherwise).printStackTrace()
         case otherwise: UnderlyingChatter => handleChatter(endpoint, requestId, otherwise)
       }
     }
@@ -467,7 +467,7 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
               }
             }
           })
-        case otherwise: PossiblyBlockingTopLevel[P] => new Exception("Illegal top level message received on receiver side: " + otherwise)
+        case otherwise: PossiblyBlockingTopLevel[P] => new Exception("Illegal top level message received on receiver side: " + otherwise).printStackTrace()
         case otherwise: UnderlyingChatter => handleChatter(endpoint, requestId, otherwise)
       }
     }
@@ -521,8 +521,9 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
 
     case LockAsyncUnlock(receiver) =>
       val lock = localLockReceiverInstance(receiver)
-      assert(lock.isDefined, s"unlock should only be called along paths on which a reference is held, so concurrent deallocation should be impossible.")
-      lock.get.remoteAsyncUnlock()
+      // cannot assert this, because async ref drop may overtake async unlock and result in lock having been GC'd already (while locked!)
+      // assert(lock.isDefined, s"unlock should only be called along paths on which a reference is held, so concurrent deallocation should be impossible.")
+      if(lock.isDefined) lock.get.remoteAsyncUnlock()
     case LockAsyncRemoteRefDropped(receiver) =>
       val lock = localLockReceiverInstance(receiver)
       assert(lock.isDefined, s"a reference should only be dropped if it currently is held, so concurrent deallocation should be impossible.")
@@ -679,7 +680,7 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
     override def acquireRemoteBranchIfPhaseAtMost(maxPhase: Type): Future[TurnPhase.Type] = {
       doRequest(endpoint, AcquireRemoteBranchIfAtMost(guid, maxPhase)).map {
         case AcquireRemoteBranchResponse(phase) => phase
-      }(executeInTaskPool)
+      }(FullMVEngine.notWorthToMoveToTaskpool)
     }
 
     override def addPredecessor(tree: TransactionSpanningTreeNode[FullMVTurn]): Future[Boolean] = {
@@ -716,7 +717,7 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
         case TurnSuccessfulResponse => Successful
         case TurnBlockedResponse => Blocked
         case TurnDeallocatedResponse => Deallocated
-      }(executeInTaskPool)
+      }(FullMVEngine.notWorthToMoveToTaskpool)
     }
 
     override def asyncAddPhaseReplicator(replicator: FullMVTurnPhaseReflectionProxy, knownPhase: TurnPhase.Type): Unit = {
