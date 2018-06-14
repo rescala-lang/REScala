@@ -2,16 +2,17 @@ package rescala.crdts
 
 import io.circe.generic.auto._
 import loci.communicator.ws.akka._
-import loci.registry.{Binding, Registry}
+import loci.registry.{Binding, BindingBuilder, Registry}
 import loci.serializer.circe._
 import loci.transmitter.{RemoteRef, _}
-import rescala._
 import rescala.crdts.pvars._
+import rescala.crdts.pvars.PGrowOnlyCounter._
 import rescala.crdts.statecrdts.counters.GCounter
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.language.higherKinds
+
 
 object GCountTransmittable {
   implicit def rescalaSignalTransmittable[S](implicit
@@ -56,6 +57,53 @@ object GCountTransmittable {
   }
 }
 
+/*
+
+object PVarTransmittable {
+  implicit def rescalaSignalTransmittable[ValueType, CrdtType, S](implicit
+                                                   transmittable: Transmittable[CrdtType, S, CrdtType],
+                                                   serializable: Serializable[S], pVarFactory: PVarFactory[ValueType,CrdtType]) = {
+    type From = CrdtType
+    type To = CrdtType
+    type P = Publishable[ValueType, CrdtType]
+
+    new PushBasedTransmittable[P, From, S, To, P] {
+
+
+      def send(value: P, remote: RemoteRef, endpoint: Endpoint[From, To]): To = {
+
+        val observer = value.internalChanges.observe(c => endpoint.send(c))
+
+        endpoint.receive notify value.externalChanges.fire
+
+        endpoint.closed notify { _ => observer.remove }
+
+        value.crdtSignal.readValueOnce
+      }
+
+      def receive(value: To, remote: RemoteRef, endpoint: Endpoint[From, To]): P = {
+        val pvar: P = pVarFactory.create()
+        locally(pvar.valueSignal)
+        pvar.externalChanges.fire(value)
+
+        println(s"received $value")
+        println(s"before: $pvar, ")
+
+        endpoint.receive notify pvar.externalChanges.fire
+        val observer = pvar.internalChanges.observe(c => endpoint.send(c))
+        endpoint.closed notify { _ => observer.remove }
+
+        //println(s"manual ${implicitly[StateCRDT[ValueType, CrdtType]].merge(pvar.crdtSignal.readValueOnce, value)}")
+
+        println(s"after: $pvar")
+
+        pvar
+      }
+    }
+  }
+}
+
+*/
 
 //noinspection ScalaUnusedSymbol
 object testSignalExpressions {
@@ -85,10 +133,18 @@ object testSignalExpressions {
     //    }
     //    println(sig3)
 
-    import GCountTransmittable._
+    //import PVarTransmittable._
+    //import PGrowOnlyCounter._
+    //import GCountTransmittable._
 
-    val counterBinding = Binding[PGrowOnlyCounter]("counter")
+    //val p:Publishable[_,_] = PGrowOnlyCounter()
 
+    implicit def test: String = "a"
+
+    Predef.$conforms
+
+    val counterBinding = Binding[PGrowOnlyCounter]("counter")(BindingBuilder.value[PGrowOnlyCounter](Marshallable.
+        marshallable)))
 
     println("running server")
 
@@ -122,18 +178,18 @@ object testSignalExpressions {
     println("running client")
 
     /**
-    { //client
-      val registry = new Registry
-      val connection: Future[RemoteRef] = registry.connect(WS("ws://localhost:1099/"))
-      connection.foreach { remote =>
-        val subscribedSig = registry.lookup(counterBinding, remote)
-        println("subscription")
-        subscribedSig.foreach(c => c.valueSignal.observe(v => println("client value: " + v)))
-      }
-      connection.failed.foreach(println)
-
-
-    }
+      * { //client
+      * val registry = new Registry
+      * val connection: Future[RemoteRef] = registry.connect(WS("ws://localhost:1099/"))
+      *connection.foreach { remote =>
+      * val subscribedSig = registry.lookup(counterBinding, remote)
+      * println("subscription")
+      *subscribedSig.foreach(c => c.valueSignal.observe(v => println("client value: " + v)))
+      * }
+      *connection.failed.foreach(println)
+      * *
+      *
+      * }
       **/
 
     val (cr, c1) = { //client2
@@ -141,12 +197,13 @@ object testSignalExpressions {
       val connection: Future[RemoteRef] = registry.connect(WS("ws://localhost:1099/"))
       val remote: RemoteRef = Await.result(connection, Duration.Inf)
       val subscribedSig: Future[PGrowOnlyCounter] = registry.lookup(counterBinding, remote)
-      val counter : PGrowOnlyCounter = Await.result(subscribedSig, Duration.Inf)
+      val counter: PGrowOnlyCounter = Await.result(subscribedSig, Duration.Inf)
       (registry, counter)
     }
 
     println("done")
     c1.increase
+    s2.increase
     Thread.sleep(1000)
     Thread.sleep(1000)
 
