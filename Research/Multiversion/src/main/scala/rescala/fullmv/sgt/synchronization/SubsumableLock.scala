@@ -9,6 +9,7 @@ import rescala.parrp.Backoff
 import scala.annotation.tailrec
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
+import scala.util.{Failure, Success}
 
 sealed trait TryLockResult
 case class Locked(lock: SubsumableLock) extends TryLockResult
@@ -68,12 +69,16 @@ trait SubsumableLock extends SubsumableLockProxy with Hosted[SubsumableLock] {
   // (a result received from remote would immediately be deallocated if the thread receiving it doesn't hold a reference)
   // parameter does have a thread reference counted from being locked, but this must be retained to be released upon unlock.
   def trySubsume0(hopCount: Int, lockedNewParent: SubsumableLock): Future[TrySubsumeResult0]
-  def asyncUnlock0(): Unit
+  def unlock0(): Future[Unit]
 
   def asyncUnlock(): Unit = {
-    asyncUnlock0()
-    if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this dropping temporary thread reference after unlock")
-    localSubRefs(1)
+    unlock0().onComplete {
+      case Success(()) =>
+        if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this dropping temporary thread reference after unlock")
+        localSubRefs(1)
+      case Failure(t) =>
+        new Exception("remote async unlock failed", t).printStackTrace()
+    }(FullMVEngine.notWorthToMoveToTaskpool)
   }
 
   @tailrec final def tryLocalAddRefs(refs: Int): Boolean = {

@@ -104,9 +104,9 @@ class XShapeSerializabilityTest extends FunSuite {
           ))
 
 
-          val duration = 0//120000
+          val duration = 10000
           println(s"starting X-Shape distributed Serializability stress test " + (if(duration == 0) "until key press" else s"for ${duration / 1000} seconds..."))
-          var running: Boolean = true
+          @volatile var running: Boolean = true
           def worker(host: SideHost) = Spawn {
             try {
               var iterations = 1
@@ -129,11 +129,15 @@ class XShapeSerializabilityTest extends FunSuite {
           while(running && (if(duration == 0) System.in.available() == 0 else System.currentTimeMillis() < workerTimeout)) {
             Thread.sleep(50)
           }
-          if(!running) println(s"Premature termination after ${(duration - (workerTimeout - System.currentTimeMillis())) / 1000} seconds")
+          if(!running) {
+            println(s"Premature termination after ${(duration - (workerTimeout - System.currentTimeMillis())) / 1000} seconds")
+          } else {
+            println(s"Ran for ${(duration - (workerTimeout - System.currentTimeMillis())) / 1000} seconds")
+          }
           running = false
 
-          val scoreLeft = workerLeft.awaitTry(500)
-          val scoreRight = workerRight.awaitTry(500)
+          val scoreLeft = workerLeft.awaitTry(1000)
+          val scoreRight = workerRight.awaitTry(1000)
           val scores = Array(scoreLeft, scoreRight)
           println("X-Shape distributed Serializability stress test thread results:")
           println("\t" + scores.zipWithIndex.map { case (count, idx) => idx + ": " + count }.mkString("\n\t"))

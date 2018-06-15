@@ -89,7 +89,7 @@ class FullMVEngine(val timeout: Duration, val name: String) extends SchedulerImp
 }
 
 object FullMVEngine {
-  val DEBUG = true
+  val DEBUG = false
 
   val default = new FullMVEngine(10.seconds, "default")
 
@@ -99,15 +99,15 @@ object FullMVEngine {
   }
 
   def myAwait[T](future: Future[T], timeout: Duration): T = {
-    Await.result(future, timeout)
-//    if(!future.isCompleted) {
-//      val blocker = new ManagedBlocker {
-//        override def isReleasable: Boolean = future.isCompleted
-//        override def block(): Boolean = { Await.ready(future, timeout); true }
-//      }
-//      ForkJoinPool.managedBlock(blocker)
-//    }
-//    future.value.get.get
+//    Await.result(future, timeout)
+    if(!future.isCompleted) {
+      val blocker = new java.util.concurrent.ForkJoinPool.ManagedBlocker {
+        override def isReleasable: Boolean = future.isCompleted
+        override def block(): Boolean = { Await.ready(future, timeout); true }
+      }
+      ForkJoinPool.managedBlock(blocker)
+    }
+    future.value.get.get
   }
 
   type CallAccumulator[T] = List[Future[T]]

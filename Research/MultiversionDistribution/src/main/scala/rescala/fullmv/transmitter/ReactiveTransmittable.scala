@@ -69,7 +69,7 @@ object ReactiveTransmittable {
       case LockTrySubsume(lock, lockedNewParent) => allEmpty("LockTrySubsume").copy(_2 = lock, _4 = lockedNewParent)
       case LockBlockedResponse(lock) => allEmpty("LockBlockedResponse").copy(_2 = lock)
       case LockDeallocatedResponse => allEmpty("LockDeallocatedResponse")
-      case LockAsyncUnlock(lock) => allEmpty("LockAsyncUnlock").copy(_2 = lock)
+      case LockUnlock(lock) => allEmpty("LockUnlock").copy(_2 = lock)
       case LockAsyncRemoteRefDropped(lock) => allEmpty("LockAsyncRemoteRefDropped").copy(_2 = lock)
       case RemoteExceptionResponse(se) => allEmpty("RemoteExceptionResponse").copy(_8 = se)
     }
@@ -117,7 +117,7 @@ object ReactiveTransmittable {
       case ("LockTrySubsume", lock, _, newParent, _, _, _, _) => LockTrySubsume(lock, newParent)
       case ("LockBlockedResponse", newParent, _, _, _, _, _, _) => LockBlockedResponse(newParent)
       case ("LockDeallocatedResponse", _, _, _, _, _, _, _) => LockDeallocatedResponse
-      case ("LockAsyncUnlock", lock, _, _, _, _, _, _) => LockAsyncUnlock(lock)
+      case ("LockUnlock", lock, _, _, _, _, _, _) => LockUnlock(lock)
       case ("LockAsyncRemoteRefDropped", lock, _, _, _, _, _, _) => LockAsyncRemoteRefDropped(lock)
       case ("RemoteExceptionResponse", _, _, _, _, _, _, se) => RemoteExceptionResponse(se)
       case otherwise =>
@@ -196,7 +196,7 @@ object ReactiveTransmittable {
   case object LockSuccessfulResponse extends LockTrySubsumeResponse
   case class LockBlockedResponse(lock: Host.GUID) extends LockTryLockResponse with LockTrySubsumeResponse
   case object LockDeallocatedResponse extends LockTryLockResponse with LockTrySubsumeResponse
-  case class LockAsyncUnlock(lock: Host.GUID) extends UnderlyingChatterAsync
+  case class LockUnlock(lock: Host.GUID) extends UnderlyingChatterRequest{ override type Response = UnitResponse.type }
   case class LockAsyncRemoteRefDropped(lock: Host.GUID) extends UnderlyingChatterAsync
   /** [[FullMVTurnPhaseReflectionProxy]] **/
   case class AsyncNewPhase(turn: TurnPushBundle) extends UnderlyingChatterAsync
@@ -471,8 +471,8 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
         case otherwise: UnderlyingChatter => handleChatter(endpoint, requestId, otherwise)
       }
     }
-    doRequest(endpoint, Connect[Pluse[P]](bundle(turn))).foreach {
-      case Initialize(initValues, maybeFirstFrame) =>
+    doRequest(endpoint, Connect[Pluse[P]](bundle(turn))).onComplete {
+      case Success(Initialize(initValues, maybeFirstFrame)) =>
         if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host received initialization package for $reflection")
         val reflectionInitValues = initValues.map { case (mirrorTurn, v) =>
           val turn = lookUpLocalTurnParameterInstance(mirrorTurn, endpoint)
@@ -491,6 +491,7 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
         turn.ignite(reflection, Set.empty, ignitionRequiresReevaluation)
 
         turn.completeExecuting()
+      case Failure(throwable) => new Exception("Remote initialize failed", throwable).printStackTrace()
     }(executeInTaskPool)
 
     reflection
@@ -519,11 +520,6 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
       assert(maybeTurn.isDefined, s"supposedly a remote still has a branch, but $maybeTurn has already been deallocated")
       maybeTurn.get.asyncRemoteBranchComplete(forPhase)
 
-    case LockAsyncUnlock(receiver) =>
-      val lock = localLockReceiverInstance(receiver)
-      // cannot assert this, because async ref drop may overtake async unlock and result in lock having been GC'd already (while locked!)
-      // assert(lock.isDefined, s"unlock should only be called along paths on which a reference is held, so concurrent deallocation should be impossible.")
-      if(lock.isDefined) lock.get.remoteAsyncUnlock()
     case LockAsyncRemoteRefDropped(receiver) =>
       val lock = localLockReceiverInstance(receiver)
       assert(lock.isDefined, s"a reference should only be dropped if it currently is held, so concurrent deallocation should be impossible.")
@@ -656,6 +652,10 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
           doAsync(endpoint, LockAsyncRemoteRefDropped(lockedNewParent))
           Future.successful(LockDeallocatedResponse)
       }
+    case LockUnlock(receiver) =>
+      val lock = localLockReceiverInstance(receiver)
+      assert(lock.isDefined, s"unlock should only be called along paths on which a reference is held, so concurrent deallocation should be impossible.")
+      lock.get.remoteUnlock()
     case AddPredecessorReplicator(receiver) =>
       localTurnReceiverInstance(receiver) match {
         case Some(turn) =>
@@ -754,8 +754,8 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
   }
 
   class SubsumableLockProxyToEndpoint(val guid: Host.GUID, endpoint: EndPointWithInfrastructure[Msg]) extends SubsumableLockProxy {
-    override def remoteAsyncUnlock(): Unit = {
-      doAsync(endpoint, LockAsyncUnlock(guid))
+    override def remoteUnlock(): Future[Unit] = {
+      doRequest(endpoint, LockUnlock(guid))
     }
     override def getLockedRoot: Future[LockStateResult0] = {
       doRequest(endpoint, LockGetLockedRoot(guid)).map {

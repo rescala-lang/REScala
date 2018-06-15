@@ -111,14 +111,18 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
     }
   }
 
-  override def asyncUnlock0(): Unit = synchronized {
+  override def unlock0(): Future[Unit] = synchronized {
     state.get match {
-      case null => throw new IllegalStateException(s"unlock on unlocked $this")
+      case null => Future.failed(new IllegalStateException(s"unlock on unlocked $this"))
       case Self =>
-        if (!state.compareAndSet(Self, null)) throw new AssertionError(s"$this unlock failed due to contention!?")
-        if (DEBUG) println(s"[${Thread.currentThread().getName}] $this unlocked")
-      case host.dummy => throw new AssertionError("lock is always held together with a thread reference, so this should be impossible")
-      case parent => throw new IllegalStateException(s"unlock on subsumed $this")
+        if (!state.compareAndSet(Self, null)){
+          Future.failed(new AssertionError(s"$this unlock failed due to contention!?"))
+        } else {
+          if (DEBUG) println(s"[${Thread.currentThread().getName}] $this unlocked")
+          Future.unit
+        }
+      case host.dummy => Future.failed(new AssertionError("lock is always held together with a thread reference, so this should be impossible"))
+      case parent => Future.failed(new IllegalStateException(s"unlock on subsumed $this"))
     }
   }
 
@@ -145,9 +149,10 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
     }})"
   }
 
-  override def remoteAsyncUnlock(): Unit = {
-    asyncUnlock0()
+  override def remoteUnlock(): Future[Unit] = {
+    unlock0()
   }
+
   @tailrec final override def remoteTryLock(): Future[RemoteTryLockResult] = {
     if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this dispatching remote tryLock request locally")
     state.get match {
@@ -246,9 +251,7 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
   override protected def dumped(): Unit = {
     state.getAndSet(host.dummy) match {
       case null => if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this deallocated without parent")
-      case Self =>
-        // cannot assert this, because async ref drop may overtake async unlock and result in lock beeing GC'd before being unlocked
-        // throw new AssertionError(s"$this was garbage collected while locked")
+      case Self => throw new AssertionError(s"$this was garbage collected while locked")
       case host.dummy => throw new AssertionError(s"$this was already garbage collected earlier")
       case parent =>
         if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this deallocated, dropping parent ref on $parent")
