@@ -236,22 +236,22 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
     }
   }
 
-  @elidable(ASSERTION) @inline
-  def assertLockedState(predecessor: FullMVTurn): Unit = {
-    assert(predecessor.phase > TurnPhase.Uninitialized, s"$this addition of initializing predecessor $predecessor should be impossible")
-    val ownLock = getLockedRoot
-    val otherLock = predecessor.getLockedRoot
-    Await.result(ownLock, host.timeout) match {
-      case LockedState(guid) =>
-        Await.result(otherLock, host.timeout) match {
-          case LockedState(otherGuid) => if(guid != otherGuid) throw new AssertionError(s"predecessor $predecessor and $this under different locks $otherGuid and $guid!")
-          case UnlockedState => throw new AssertionError(s"predecessor $predecessor not locked!")
-          case CompletedState => // ok
-        }
-      case UnlockedState => throw new AssertionError(s"$this not locked!")
-      case CompletedState => throw new AssertionError(s"May no longer add predecessors to completed $this")
-    }
-  }
+//  @elidable(ASSERTION) @inline
+//  def assertLockedState(predecessor: FullMVTurn): Unit = {
+//    assert(predecessor.phase > TurnPhase.Uninitialized, s"$this addition of initializing predecessor $predecessor should be impossible")
+//    val ownLock = getLockedRoot
+//    val otherLock = predecessor.getLockedRoot
+//    Await.result(ownLock, host.timeout) match {
+//      case LockedState(guid) =>
+//        Await.result(otherLock, host.timeout) match {
+//          case LockedState(otherGuid) => if(guid != otherGuid) throw new AssertionError(s"predecessor $predecessor and $this under different locks $otherGuid and $guid!")
+//          case UnlockedState => throw new AssertionError(s"predecessor $predecessor not locked!")
+//          case CompletedState => // ok
+//        }
+//      case UnlockedState => throw new AssertionError(s"$this not locked!")
+//      case CompletedState => throw new AssertionError(s"May no longer add predecessors to completed $this")
+//    }
+//  }
 
   def addPredecessor(predecessorSpanningTree: TransactionSpanningTreeNode[FullMVTurn]): Future[Boolean] = {
     val predecessor = predecessorSpanningTree.txn
@@ -259,7 +259,8 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
       if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this aborting predecessor addition of known completed $predecessor")
       Future.successful(true)
     } else {
-      assertLockedState(predecessor)
+      // assertion disabled because it would cause a nested remote call in a remote chatter handler
+//      assertLockedState(predecessor)
       assert(!isTransitivePredecessor(predecessor), s"attempted to establish already existing predecessor relation $predecessor -> $this")
       if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this adding predecessor $predecessor.")
 

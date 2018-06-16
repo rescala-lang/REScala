@@ -1,7 +1,7 @@
 package rescala.fullmv.transmitter
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
-import java.util.concurrent.{ConcurrentHashMap, Executors, ThreadLocalRandom}
+import java.util.concurrent.{ConcurrentHashMap, ThreadLocalRandom}
 
 import rescala.core.Reactive
 import rescala.core._
@@ -241,8 +241,8 @@ object ReactiveTransmittable {
                                          serializable: Serializable[S]
                                         ): Transmittable[Signal[P, FullMVStruct], S, Signal[P, FullMVStruct]] =
     new ReactiveTransmittable[P, Signal[P, FullMVStruct], S] {
-    override def instantiate(state: FullMVState[Pulse[P], FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]], initTurn: FullMVTurn): ReactiveReflectionImpl[Pulse[P]] with Signal[P, FullMVStruct] =
-      new ReactiveReflectionImpl[Pulse[P]](host, None, state, "SignalReflection") with Signal[P, FullMVStruct] {
+    override def instantiate(state: FullMVState[Pulse[P], FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]], initTurn: FullMVTurn, name: String): ReactiveReflectionImpl[Pulse[P]] with Signal[P, FullMVStruct] =
+      new ReactiveReflectionImpl[Pulse[P]](host, None, state, s"SignalReflection($name)") with Signal[P, FullMVStruct] {
         override def disconnect()(implicit engine: Scheduler[FullMVStruct]): Unit = ???
       }
     override val valuePersistency: Initializer.InitValues[Pulse[P]] = Initializer.DerivedSignal[P]
@@ -251,8 +251,8 @@ object ReactiveTransmittable {
     override def toPulse(reactive: Signal[P, FullMVStruct]): reactive.Value => Pulse[P] = v => v
   }
   implicit def eventTransmittable[P, S](implicit host: FullMVEngine, messageTransmittable: Transmittable[MessageWithInfrastructure[Msg[Pluse[P]]], S, MessageWithInfrastructure[Msg[Pluse[P]]]], serializable: Serializable[S]): Transmittable[Event[P, FullMVStruct], S, Event[P, FullMVStruct]] = new ReactiveTransmittable[P, Event[P, FullMVStruct], S] {
-    override def instantiate(state: FullMVState[Pulse[P], FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]], initTurn: FullMVTurn): ReactiveReflectionImpl[Pulse[P]] with Event[P, FullMVStruct] =
-      new ReactiveReflectionImpl[Pulse[P]](host, Some(initTurn), state, "EventReflection") with Event[P, FullMVStruct] {
+    override def instantiate(state: FullMVState[Pulse[P], FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]], initTurn: FullMVTurn, name: String): ReactiveReflectionImpl[Pulse[P]] with Event[P, FullMVStruct] =
+      new ReactiveReflectionImpl[Pulse[P]](host, Some(initTurn), state, s"EventReflection($name)") with Event[P, FullMVStruct] {
         override def internalAccess(v: Pulse[P]): Pulse[P] = v
         override def disconnect()(implicit engine: Scheduler[FullMVStruct]): Unit = ???
       }
@@ -274,26 +274,26 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
   type Message = ReactiveTransmittable.Message[Pluse[P]]
   type Response = ReactiveTransmittable.Response[Pluse[P]]
 
-  val executeInTaskPool: ExecutionContext = ExecutionContext.fromExecutor(Executors.newCachedThreadPool())
+//  val executeInTaskPool: ExecutionContext = ExecutionContext.fromExecutor(Executors.newCachedThreadPool())
   val requestTracker = new ConcurrentHashMap[Long, Promise[_ <: Response]]()
 
   def handleChatter(endpoint: EndPointWithInfrastructure[Msg], requestId: Long, message: UnderlyingChatter): Unit = {
     message match {
       case async: UnderlyingChatterAsync =>
-        executeInTaskPool.execute(new Runnable {
-          override def run(): Unit = {
+//        executeInTaskPool.execute(new Runnable {
+//          override def run(): Unit = {
             if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host processing async $async")
             try {
               handleAsyncChatter(endpoint, async)
             } catch {
               // TODO cannot propagate this back to sender because async, what else to do?
-              case t: Throwable => new Exception("Error processing async " + async, t).printStackTrace()
+              case t: Throwable => new Exception(s"Error on $host processing async $async", t).printStackTrace()
             }
-          }
-        })
+//          }
+//        })
       case request: UnderlyingChatterRequest =>
-        executeInTaskPool.execute(new Runnable {
-          override def run(): Unit = {
+//        executeInTaskPool.execute(new Runnable {
+//          override def run(): Unit = {
             if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host processing request $request")
             try {
               handleRequestChatter(endpoint, request).onComplete {
@@ -309,8 +309,8 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
                 new Exception(s"[${Thread.currentThread().getName}] $host request $requestId failed to execute; returning ${t.getClass.getName}: ${t.getMessage} to remote", t).printStackTrace()
                 endpoint.send(requestId -> RemoteExceptionResponse(serializeThrowable(t)).toTuple)
             }
-          }
-        })
+//          }
+//        })
     }
   }
 
@@ -321,7 +321,7 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
       promise.complete(response match {
         case RemoteExceptionResponse(se) =>
           val t = deserializeThrowable(se)
-          new Exception("Received exception response", t).printStackTrace()
+          new Exception(s"$host received exception response for $requestId", t).printStackTrace()
           Failure(t)
         case otherwise => Success(response)
       })
@@ -361,7 +361,7 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
         case otherwise: UnderlyingChatter => handleChatter(endpoint, requestId, otherwise)
       }
     }
-    (0L, UnitResponse.toTuple)
+    (0L, allEmpty(reactive.toString))
   }
 
   def doAsync(endpoint: EndPointWithInfrastructure[Msg], parameters: Async[Pluse[P]]): Unit = {
@@ -447,7 +447,7 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
     val turn = host.newTurn()
     turn.beginExecuting()
     val state = turn.makeDerivedStructState[Pulse[P]](valuePersistency)
-    val reflection = instantiate(state, turn)
+    val reflection = instantiate(state, turn, value._2._1)
     if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host instantiating $reflection, requesting initialization starting at $turn")
     endpoint.receive.notify { mwi: MessageWithInfrastructure[Msg] =>
       if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] receiver $host receive incoming $mwi")
@@ -458,12 +458,12 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
         case topLevel: PossiblyBlockingTopLevelAsync[Pluse[P]] =>
           host.threadPool.submit(new Runnable {
             override def run(): Unit = {
-              if (ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host processing top level async $topLevel")
+              if (ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host processing top level async $topLevel for $reflection")
               try {
                 handleTopLevelAsync(reflection, endpoint, topLevel)
               } catch {
                 // TODO cannot propagate this back to sender because async, what else to do?
-                case t: Throwable => new Exception("Error processing top level async " + topLevel, t).printStackTrace()
+                case t: Throwable => new Exception(s"$host error processing top level async $topLevel for $reflection", t).printStackTrace()
               }
             }
           })
@@ -473,31 +473,35 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
     }
     doRequest(endpoint, Connect[Pluse[P]](bundle(turn))).onComplete {
       case Success(Initialize(initValues, maybeFirstFrame)) =>
-        if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host received initialization package for $reflection")
-        val reflectionInitValues = initValues.map { case (mirrorTurn, v) =>
-          val turn = lookUpLocalTurnParameterInstance(mirrorTurn, endpoint)
-          turn.ensurePredecessorReplication()
-          turn -> v
+        try {
+          if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host received initialization package for $reflection")
+          val reflectionInitValues = initValues.map { case (mirrorTurn, v) =>
+            val turn = lookUpLocalTurnParameterInstance(mirrorTurn, endpoint)
+            turn.ensurePredecessorReplication()
+            turn -> v
+          }
+          val reflectionMaybeFirstFrame = maybeFirstFrame.map { mirrorTurn =>
+            val turn = lookUpLocalTurnParameterInstance(mirrorTurn, endpoint)
+            turn.ensurePredecessorReplication()
+            turn
+          }
+
+          state.retrofitSinkFrames(reflectionInitValues.map(_._1), reflectionMaybeFirstFrame, +1)
+          for((reflectionTurn, v) <- reflectionInitValues) reflection.buffer(reflectionTurn, v.toPulse)
+
+          turn.ignite(reflection, Set.empty, ignitionRequiresReevaluation)
+
+          turn.completeExecuting()
+        } catch {
+          case t: Throwable => new Exception(s"$host processing initialization package for $reflection from remote failed", t).printStackTrace()
         }
-        val reflectionMaybeFirstFrame = maybeFirstFrame.map { mirrorTurn =>
-          val turn = lookUpLocalTurnParameterInstance(mirrorTurn, endpoint)
-          turn.ensurePredecessorReplication()
-          turn
-        }
-
-        state.retrofitSinkFrames(reflectionInitValues.map(_._1), reflectionMaybeFirstFrame, +1)
-        for((reflectionTurn, v) <- reflectionInitValues) reflection.buffer(reflectionTurn, v.toPulse)
-
-        turn.ignite(reflection, Set.empty, ignitionRequiresReevaluation)
-
-        turn.completeExecuting()
-      case Failure(throwable) => new Exception("Remote initialize failed", throwable).printStackTrace()
-    }(executeInTaskPool)
+      case Failure(throwable) => new Exception(s"$host remote connect request for $reflection failed", throwable).printStackTrace()
+    }(host.threadPool)
 
     reflection
   }
 
-  def instantiate(state: FullMVState[Pulse[P], FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]], initTurn: FullMVTurn): ReactiveReflectionImpl[Pulse[P]] with R
+  def instantiate(state: FullMVState[Pulse[P], FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]], initTurn: FullMVTurn, name: String): ReactiveReflectionImpl[Pulse[P]] with R
 
   def handleTopLevelAsync(reflection: ReactiveReflection[Pulse[P]], endpoint: EndPointWithInfrastructure[Msg], message: PossiblyBlockingTopLevelAsync[Pluse[P]]): Unit = message match {
     case AsyncIncrementFrame(turn) =>
@@ -709,7 +713,7 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
         case TurnLockedResponse(lock) => Locked(lookUpLocalLockParameterInstanceWithReference(lock, endpoint))
         case TurnBlockedResponse => Blocked
         case TurnDeallocatedResponse => Deallocated
-      }(executeInTaskPool)
+      }(FullMVEngine.notWorthToMoveToTaskpool)
     }
     override def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult] = {
       assert(lockedNewParent.host == host.lockHost, s"$lockedNewParent is not on ${host.lockHost}?!")
@@ -769,7 +773,7 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
         case LockLockedResponse(lock) => RemoteLocked(lookUpLocalLockParameterInstanceWithReference(lock, endpoint))
         case LockBlockedResponse(lock) => RemoteBlocked(lookUpLocalLockParameterInstanceWithReference(lock, endpoint))
         case LockDeallocatedResponse => RemoteGCd
-      }(executeInTaskPool)
+      }(FullMVEngine.notWorthToMoveToTaskpool)
     }
     override def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[RemoteTrySubsumeResult] = {
       assert(lockedNewParent.host == host.lockHost, s"$lockedNewParent is not on ${host.lockHost}?!")
@@ -777,7 +781,7 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
         case LockSuccessfulResponse => RemoteSubsumed
         case LockBlockedResponse(newParent) => RemoteBlocked(lookUpLocalLockParameterInstanceWithReference(newParent, endpoint))
         case LockDeallocatedResponse => RemoteGCd
-      }(executeInTaskPool)
+      }(FullMVEngine.notWorthToMoveToTaskpool)
     }
     override def asyncRemoteRefDropped(): Unit = {
       doAsync(endpoint, LockAsyncRemoteRefDropped(guid))

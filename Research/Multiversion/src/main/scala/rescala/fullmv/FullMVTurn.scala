@@ -62,9 +62,10 @@ trait FullMVTurn extends Initializer[FullMVStruct] with FullMVTurnProxy with Sub
         assert(phase == TurnPhase.Completed, s"phase replicator addition should only return failure, if $this is completed")
         Future.successful(CaseClassTransactionSpanningTreeNode(this, Array.empty))
       } else {
+        ensurePredecessorReplication()
         val preds = selfNode
         if(preds == null)  {
-          assert(phase == TurnPhase.Completed, s"predecessor tree root should have been initialized for this call to be possible, and should not have been deallocated yet as $this isn't completed")
+          assert(phase == TurnPhase.Completed, s"preds should only have been deallocated again since ensurePredecessor replication, if $this is completed")
           Future.successful(CaseClassTransactionSpanningTreeNode(this, Array.empty))
         } else {
           Future.successful(preds)
