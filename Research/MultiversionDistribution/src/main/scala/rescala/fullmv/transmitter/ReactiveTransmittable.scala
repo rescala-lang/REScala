@@ -69,7 +69,7 @@ object ReactiveTransmittable {
       case LockTrySubsume(lock, lockedNewParent) => allEmpty("LockTrySubsume").copy(_2 = lock, _4 = lockedNewParent)
       case LockBlockedResponse(lock) => allEmpty("LockBlockedResponse").copy(_2 = lock)
       case LockDeallocatedResponse => allEmpty("LockDeallocatedResponse")
-      case LockUnlock(lock) => allEmpty("LockUnlock").copy(_2 = lock)
+      case AsyncLockUnlock(lock) => allEmpty("AsyncLockUnlock").copy(_2 = lock)
       case LockAsyncRemoteRefDropped(lock) => allEmpty("LockAsyncRemoteRefDropped").copy(_2 = lock)
       case RemoteExceptionResponse(se) => allEmpty("RemoteExceptionResponse").copy(_8 = se)
     }
@@ -117,7 +117,7 @@ object ReactiveTransmittable {
       case ("LockTrySubsume", lock, _, newParent, _, _, _, _) => LockTrySubsume(lock, newParent)
       case ("LockBlockedResponse", newParent, _, _, _, _, _, _) => LockBlockedResponse(newParent)
       case ("LockDeallocatedResponse", _, _, _, _, _, _, _) => LockDeallocatedResponse
-      case ("LockUnlock", lock, _, _, _, _, _, _) => LockUnlock(lock)
+      case ("AsyncLockUnlock", lock, _, _, _, _, _, _) => AsyncLockUnlock(lock)
       case ("LockAsyncRemoteRefDropped", lock, _, _, _, _, _, _) => LockAsyncRemoteRefDropped(lock)
       case ("RemoteExceptionResponse", _, _, _, _, _, _, se) => RemoteExceptionResponse(se)
       case otherwise =>
@@ -196,7 +196,7 @@ object ReactiveTransmittable {
   case object LockSuccessfulResponse extends LockTrySubsumeResponse
   case class LockBlockedResponse(lock: Host.GUID) extends LockTryLockResponse with LockTrySubsumeResponse
   case object LockDeallocatedResponse extends LockTryLockResponse with LockTrySubsumeResponse
-  case class LockUnlock(lock: Host.GUID) extends UnderlyingChatterRequest{ override type Response = UnitResponse.type }
+  case class AsyncLockUnlock(lock: Host.GUID) extends UnderlyingChatterAsync
   case class LockAsyncRemoteRefDropped(lock: Host.GUID) extends UnderlyingChatterAsync
   /** [[FullMVTurnPhaseReflectionProxy]] **/
   case class AsyncNewPhase(turn: TurnPushBundle) extends UnderlyingChatterAsync
@@ -523,7 +523,10 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
       val maybeTurn = localTurnReceiverInstance(receiver)
       assert(maybeTurn.isDefined, s"supposedly a remote still has a branch, but $maybeTurn has already been deallocated")
       maybeTurn.get.asyncRemoteBranchComplete(forPhase)
-
+    case AsyncLockUnlock(receiver) =>
+      val lock = localLockReceiverInstance(receiver)
+      assert(lock.isDefined, s"unlock should only be called along paths on which a reference is held, so concurrent deallocation should be impossible.")
+      lock.get.remoteUnlock()
     case LockAsyncRemoteRefDropped(receiver) =>
       val lock = localLockReceiverInstance(receiver)
       assert(lock.isDefined, s"a reference should only be dropped if it currently is held, so concurrent deallocation should be impossible.")
@@ -656,10 +659,6 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
           doAsync(endpoint, LockAsyncRemoteRefDropped(lockedNewParent))
           Future.successful(LockDeallocatedResponse)
       }
-    case LockUnlock(receiver) =>
-      val lock = localLockReceiverInstance(receiver)
-      assert(lock.isDefined, s"unlock should only be called along paths on which a reference is held, so concurrent deallocation should be impossible.")
-      lock.get.remoteUnlock()
     case AddPredecessorReplicator(receiver) =>
       localTurnReceiverInstance(receiver) match {
         case Some(turn) =>
@@ -758,8 +757,8 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
   }
 
   class SubsumableLockProxyToEndpoint(val guid: Host.GUID, endpoint: EndPointWithInfrastructure[Msg]) extends SubsumableLockProxy {
-    override def remoteUnlock(): Future[Unit] = {
-      doRequest(endpoint, LockUnlock(guid))
+    override def remoteUnlock(): Unit = {
+      doAsync(endpoint, AsyncLockUnlock(guid))
     }
     override def getLockedRoot: Future[LockStateResult0] = {
       doRequest(endpoint, LockGetLockedRoot(guid)).map {

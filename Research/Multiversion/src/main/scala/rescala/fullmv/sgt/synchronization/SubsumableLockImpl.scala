@@ -111,18 +111,17 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
     }
   }
 
-  override def unlock0(): Future[Unit] = synchronized {
+  override def asyncUnlock0(): Unit = synchronized {
     state.get match {
-      case null => Future.failed(new IllegalStateException(s"unlock on unlocked $this"))
+      case null => throw new IllegalStateException(s"unlock on unlocked $this")
       case Self =>
         if (!state.compareAndSet(Self, null)){
-          Future.failed(new AssertionError(s"$this unlock failed due to contention!?"))
+          throw new AssertionError(s"$this unlock failed due to contention!?")
         } else {
           if (DEBUG) println(s"[${Thread.currentThread().getName}] $this unlocked")
-          Future.unit
         }
-      case host.dummy => Future.failed(new AssertionError("lock is always held together with a thread reference, so this should be impossible"))
-      case parent => Future.failed(new IllegalStateException(s"unlock on subsumed $this"))
+      case host.dummy => throw new AssertionError("lock is always held together with a thread reference, so this should be impossible")
+      case parent => throw new IllegalStateException(s"unlock on subsumed $this")
     }
   }
 
@@ -149,8 +148,8 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
     }})"
   }
 
-  override def remoteUnlock(): Future[Unit] = {
-    unlock0()
+  override def remoteUnlock(): Unit = {
+    asyncUnlock0()
   }
 
   @tailrec final override def remoteTryLock(): Future[RemoteTryLockResult] = {

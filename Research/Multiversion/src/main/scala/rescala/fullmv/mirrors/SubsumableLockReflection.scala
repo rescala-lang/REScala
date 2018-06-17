@@ -67,11 +67,11 @@ class SubsumableLockReflection(override val host: SubsumableLockHost, override v
     }
   }
 
-  override def unlock0(): Future[Unit] = {
+  override def asyncUnlock0(): Unit = {
     if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this sending unlock request")
     proxy.remoteUnlock()
   }
-  override def remoteUnlock(): Future[Unit] = {
+  override def remoteUnlock(): Unit = {
     if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this passing through unlock request")
     proxy.remoteUnlock()
   }

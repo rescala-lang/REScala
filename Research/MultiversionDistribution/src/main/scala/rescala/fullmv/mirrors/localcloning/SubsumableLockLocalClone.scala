@@ -29,6 +29,6 @@ class SubsumableLockLocalCloneProxy(mirrorHost: SubsumableLockHost, localProxy: 
       case RemoteGCd => RemoteGCd
     }(FullMVEngine.notWorthToMoveToTaskpool)
   }
-  override def remoteUnlock(): Future[Unit] = localProxy.remoteUnlock()
+  override def remoteUnlock(): Unit = localProxy.remoteUnlock()
   override def asyncRemoteRefDropped(): Unit = localProxy.asyncRemoteRefDropped()
 }
