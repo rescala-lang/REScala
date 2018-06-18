@@ -1,3 +1,5 @@
+package rescala.examples.distributed
+
 import tests.rescala.fullmv.transmitter.XShapeSerializabilityTest
 
 object XShapeSerializability {

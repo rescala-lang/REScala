@@ -274,43 +274,34 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
   type Message = ReactiveTransmittable.Message[Pluse[P]]
   type Response = ReactiveTransmittable.Response[Pluse[P]]
 
-//  val executeInTaskPool: ExecutionContext = ExecutionContext.fromExecutor(Executors.newCachedThreadPool())
   val requestTracker = new ConcurrentHashMap[Long, Promise[_ <: Response]]()
 
   def handleChatter(endpoint: EndPointWithInfrastructure[Msg], requestId: Long, message: UnderlyingChatter): Unit = {
     message match {
       case async: UnderlyingChatterAsync =>
-//        executeInTaskPool.execute(new Runnable {
-//          override def run(): Unit = {
-            if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host processing async $async")
-            try {
-              handleAsyncChatter(endpoint, async)
-            } catch {
-              // TODO cannot propagate this back to sender because async, what else to do?
-              case t: Throwable => new Exception(s"Error on $host processing async $async", t).printStackTrace()
-            }
-//          }
-//        })
+        if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host processing async $async")
+        try {
+          handleAsyncChatter(endpoint, async)
+        } catch {
+          // TODO cannot propagate this back to sender because async, what else to do?
+          case t: Throwable => new Exception(s"Error on $host processing async $async", t).printStackTrace()
+        }
       case request: UnderlyingChatterRequest =>
-//        executeInTaskPool.execute(new Runnable {
-//          override def run(): Unit = {
-            if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host processing request $request")
-            try {
-              handleRequestChatter(endpoint, request).onComplete {
-                case Success(response) =>
-                  if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host replying $requestId: $response")
-                  endpoint.send((requestId, response.toTuple))
-                case Failure(t) =>
-                  new Exception(s"[${Thread.currentThread().getName}] $host request $requestId completed, but resulted in failure; returning ${t.getClass.getName}: ${t.getMessage} to remote", t).printStackTrace()
-                  endpoint.send(requestId -> RemoteExceptionResponse(serializeThrowable(t)).toTuple)
-              }(FullMVEngine.notWorthToMoveToTaskpool)
-            } catch {
-              case t: Throwable =>
-                new Exception(s"[${Thread.currentThread().getName}] $host request $requestId failed to execute; returning ${t.getClass.getName}: ${t.getMessage} to remote", t).printStackTrace()
-                endpoint.send(requestId -> RemoteExceptionResponse(serializeThrowable(t)).toTuple)
-            }
-//          }
-//        })
+        if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host processing request $request")
+        try {
+          handleRequestChatter(endpoint, request).onComplete {
+            case Success(response) =>
+              if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host replying $requestId: $response")
+              endpoint.send((requestId, response.toTuple))
+            case Failure(t) =>
+              new Exception(s"[${Thread.currentThread().getName}] $host request $requestId completed, but resulted in failure; returning ${t.getClass.getName}: ${t.getMessage} to remote", t).printStackTrace()
+              endpoint.send(requestId -> RemoteExceptionResponse(serializeThrowable(t)).toTuple)
+          }(FullMVEngine.notWorthToMoveToTaskpool)
+        } catch {
+          case t: Throwable =>
+            new Exception(s"[${Thread.currentThread().getName}] $host request $requestId failed to execute; returning ${t.getClass.getName}: ${t.getMessage} to remote", t).printStackTrace()
+            endpoint.send(requestId -> RemoteExceptionResponse(serializeThrowable(t)).toTuple)
+        }
     }
   }
 
@@ -357,8 +348,10 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
               }
             }
           })
-        case otherwise: PossiblyBlockingTopLevel[P] => new Exception("Illegal top level message received on sender side: " + otherwise).printStackTrace()
-        case otherwise: UnderlyingChatter => handleChatter(endpoint, requestId, otherwise)
+        case otherwise: PossiblyBlockingTopLevel[P] =>
+          new Exception("Illegal top level message received on sender side: " + otherwise).printStackTrace()
+        case otherwise: UnderlyingChatter =>
+          handleChatter(endpoint, requestId, otherwise)
       }
     }
     (0L, allEmpty(reactive.toString))
@@ -456,19 +449,17 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
         case response: Response =>
           consumeResponse(requestId, response)
         case topLevel: PossiblyBlockingTopLevelAsync[Pluse[P]] =>
-          host.threadPool.submit(new Runnable {
-            override def run(): Unit = {
-              if (ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host processing top level async $topLevel for $reflection")
-              try {
-                handleTopLevelAsync(reflection, endpoint, topLevel)
-              } catch {
-                // TODO cannot propagate this back to sender because async, what else to do?
-                case t: Throwable => new Exception(s"$host error processing top level async $topLevel for $reflection", t).printStackTrace()
-              }
-            }
-          })
-        case otherwise: PossiblyBlockingTopLevel[P] => new Exception("Illegal top level message received on receiver side: " + otherwise).printStackTrace()
-        case otherwise: UnderlyingChatter => handleChatter(endpoint, requestId, otherwise)
+          if (ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host processing top level async $topLevel for $reflection")
+          try {
+            handleTopLevelAsync(reflection, endpoint, topLevel)
+          } catch {
+            // TODO cannot propagate this back to sender because async, what else to do?
+            case t: Throwable => new Exception(s"$host error processing top level async $topLevel for $reflection", t).printStackTrace()
+          }
+        case otherwise: PossiblyBlockingTopLevel[P] =>
+          new Exception("Illegal top level message received on receiver side: " + otherwise).printStackTrace()
+        case otherwise: UnderlyingChatter =>
+          handleChatter(endpoint, requestId, otherwise)
       }
     }
     doRequest(endpoint, Connect[Pluse[P]](bundle(turn))).onComplete {

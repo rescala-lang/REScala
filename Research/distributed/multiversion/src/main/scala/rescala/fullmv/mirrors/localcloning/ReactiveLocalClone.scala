@@ -53,8 +53,6 @@ object ReactiveLocalClone {
       override def asyncResolvedUnchangedFollowFrame(turn: FullMVTurn, followFrame: FullMVTurn): Unit = FakeDelayer.async(fakeDelay, reflection.asyncResolvedUnchangedFollowFrame(FullMVTurnLocalClone(turn, reflectionHost, fakeDelay), FullMVTurnLocalClone(followFrame, reflectionHost, fakeDelay)))
       override def asyncNewValueFollowFrame(turn: FullMVTurn, value: A, followFrame: FullMVTurn): Unit = FakeDelayer.async(fakeDelay, reflection.asyncNewValueFollowFrame(FullMVTurnLocalClone(turn, reflectionHost, fakeDelay), value, FullMVTurnLocalClone(followFrame, reflectionHost, fakeDelay)))
     }
-    // simple initialization data for transfer in the other direction
-    val (mirrorInitValues, mirrorMaybeFirstFrame) = ReactiveMirror(reactive, FullMVTurnLocalClone(connectTurn, reactive.state.host, fakeDelay), reflectionIsTransient, rename.derive("Mirror"))(toPulse, reflectionProxy)
 
     if(fakeDelay != Duration.Zero) {
       // Connect message transfer
@@ -62,14 +60,16 @@ object ReactiveLocalClone {
       while (firstWait < System.currentTimeMillis()) Thread.sleep(1)
     }
 
-    val reflectionInitValues = mirrorInitValues.map{ case (mirrorTurn, value) => FullMVTurnLocalClone(mirrorTurn, reflectionHost, fakeDelay) -> value }
-    val reflectionMaybeFirstFrame = mirrorMaybeFirstFrame.map((turn: FullMVTurn) => FullMVTurnLocalClone(turn, reflectionHost, fakeDelay))
+    // simple initialization data for transfer in the other direction
+    val (mirrorInitValues, mirrorMaybeFirstFrame) = ReactiveMirror(reactive, FullMVTurnLocalClone(connectTurn, reactive.state.host, fakeDelay), reflectionIsTransient, rename.derive("Mirror"))(toPulse, reflectionProxy)
 
     if(fakeDelay != Duration.Zero) {
       // Initialize message transfer
       val secondWait = System.currentTimeMillis() + fakeDelay.toMillis
       while (secondWait < System.currentTimeMillis()) Thread.sleep(1)
     }
+    val reflectionInitValues = mirrorInitValues.map{ case (mirrorTurn, value) => FullMVTurnLocalClone(mirrorTurn, reflectionHost, fakeDelay) -> value }
+    val reflectionMaybeFirstFrame = mirrorMaybeFirstFrame.map((turn: FullMVTurn) => FullMVTurnLocalClone(turn, reflectionHost, fakeDelay))
 
     reflection.state.retrofitSinkFrames(reflectionInitValues.map(_._1), reflectionMaybeFirstFrame, +1)
     for((reflectionTurn, value) <- reflectionInitValues) reflection.buffer(reflectionTurn, value)

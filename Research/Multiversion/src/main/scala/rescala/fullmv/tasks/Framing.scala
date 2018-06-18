@@ -13,10 +13,10 @@ trait FramingTask extends FullMVAction {
         turn.activeBranchDifferential(TurnPhase.Framing, -1)
       case Frame(out, maybeOtherTurn) =>
         branchCountDiffOnBranchOut(out, maybeOtherTurn)
-        for(dep <- out) Framing(maybeOtherTurn, dep).fork
+        for(dep <- out) new Framing(maybeOtherTurn, dep).fork
       case FrameSupersede(out, maybeOtherTurn, supersede) =>
         branchCountDiffOnBranchOut(out, maybeOtherTurn)
-        for(dep <- out) SupersedeFraming(maybeOtherTurn, dep, supersede).fork
+        for(dep <- out) new SupersedeFraming(maybeOtherTurn, dep, supersede).fork
     }
   }
 
@@ -33,17 +33,19 @@ trait FramingTask extends FullMVAction {
   def doFraming(): FramingBranchResult[FullMVTurn, ReSource[FullMVStruct]]
 }
 
-case class Framing(turn: FullMVTurn, node: ReSource[FullMVStruct]) extends FramingTask {
+class Framing(override val turn: FullMVTurn, override val node: ReSource[FullMVStruct]) extends FramingTask {
   override def doFraming(): FramingBranchResult[FullMVTurn, ReSource[FullMVStruct]] = {
     assert(turn.phase == TurnPhase.Framing, s"$this cannot increment frame (requires framing phase)")
     node.state.incrementFrame(turn)
   }
+  override def toString = s"Framing($turn, $node)"
 }
 
-case class SupersedeFraming(turn: FullMVTurn, node: ReSource[FullMVStruct], supersede: FullMVTurn) extends FramingTask {
+class SupersedeFraming(override val turn: FullMVTurn, override val node: ReSource[FullMVStruct], supersede: FullMVTurn) extends FramingTask {
   override def doFraming(): FramingBranchResult[FullMVTurn, ReSource[FullMVStruct]] = {
     assert(turn.phase == TurnPhase.Framing, s"$this cannot increment frame (requires framing phase)")
     assert(supersede.phase == TurnPhase.Framing, s"$supersede cannot have frame superseded (requires framing phase)")
     node.state.incrementSupersedeFrame(turn, supersede)
   }
+  override def toString = s"Framing($turn, $node)"
 }

@@ -5,8 +5,9 @@ import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperat
 import rescala.fullmv.NotificationResultAction.{Glitched, ReevOutResult}
 import rescala.fullmv._
 
-case class Reevaluation(override val turn: FullMVTurn, override val node: Reactive[FullMVStruct]) extends RegularReevaluationHandling {
+class Reevaluation(override val turn: FullMVTurn, override val node: Reactive[FullMVStruct]) extends RegularReevaluationHandling {
   override def doCompute(): Unit = doReevaluation()
+  override def toString = s"Reevaluation($turn, $node)"
 }
 
 trait RegularReevaluationHandling extends ReevaluationHandling[Reactive[FullMVStruct]] {
@@ -15,7 +16,7 @@ trait RegularReevaluationHandling extends ReevaluationHandling[Reactive[FullMVSt
 //    assert(Thread.currentThread() == turn.userlandThread, s"$this on different thread ${Thread.currentThread().getName}")
     assert(turn.phase == TurnPhase.Executing, s"$turn cannot reevaluate (requires executing phase")
     var value = node.state.reevIn(turn)
-    val ticket = new ReevTicket[node.Value, FullMVStruct](turn, value) {
+    val ticket: ReevTicket[node.Value, FullMVStruct] = new ReevTicket(turn, value) {
       override protected def staticAccess(reactive: ReSource[FullMVStruct]): reactive.Value = turn.staticAfter(reactive)
       override protected def dynamicAccess(reactive: ReSource[FullMVStruct]): reactive.Value = turn.dynamicAfter(reactive)
     }
@@ -44,11 +45,12 @@ trait RegularReevaluationHandling extends ReevaluationHandling[Reactive[FullMVSt
     turn.writeIndeps(node, updated)
   }
 
-  override def createReevaluation(succTxn: FullMVTurn) = Reevaluation(succTxn, node)
+  override def createReevaluation(succTxn: FullMVTurn) = new Reevaluation(succTxn, node)
 }
 
-case class SourceReevaluation(override val turn: FullMVTurn, override val node: ReSource[FullMVStruct]) extends SourceReevaluationHandling {
+class SourceReevaluation(override val turn: FullMVTurn, override val node: ReSource[FullMVStruct]) extends SourceReevaluationHandling {
   override def doCompute(): Unit = doReevaluation()
+  override def toString = s"SourceReevaluation($turn, $node)"
 }
 
 trait SourceReevaluationHandling extends ReevaluationHandling[ReSource[FullMVStruct]] {
@@ -66,11 +68,10 @@ trait SourceReevaluationHandling extends ReevaluationHandling[ReSource[FullMVStr
     }
   }
 
-  override def createReevaluation(succTxn: FullMVTurn): FullMVAction = SourceReevaluation(succTxn, node)
+  override def createReevaluation(succTxn: FullMVTurn): FullMVAction = new SourceReevaluation(succTxn, node)
 }
 
 trait ReevaluationHandling[N <: ReSource[FullMVStruct]] extends FullMVAction {
-  val node: N
   def createReevaluation(succTxn: FullMVTurn): FullMVAction
   def doReevaluation(): Unit
 
@@ -97,14 +98,14 @@ trait ReevaluationHandling[N <: ReSource[FullMVStruct]] extends FullMVAction {
         turn.activeBranchDifferential(TurnPhase.Executing, -1)
       case NoSuccessor(out) =>
         if(out.size != 1) turn.activeBranchDifferential(TurnPhase.Executing, out.size - 1)
-        for(dep <- out) Notification(turn, dep, changed).fork()
+        for(dep <- out) new Notification(turn, dep, changed).fork()
       case FollowFraming(out, succTxn) =>
         if(out.size != 1) turn.activeBranchDifferential(TurnPhase.Executing, out.size - 1)
-        for(dep <- out) NotificationWithFollowFrame(turn, dep, changed, succTxn).fork()
+        for(dep <- out) new NotificationWithFollowFrame(turn, dep, changed, succTxn).fork()
       case NextReevaluation(out, succTxn) =>
         succTxn.activeBranchDifferential(TurnPhase.Executing, 1)
         if(out.size != 1) turn.activeBranchDifferential(TurnPhase.Executing, out.size - 1)
-        for(dep <- out) NotificationWithFollowFrame(turn, dep, changed, succTxn).fork()
+        for(dep <- out) new NotificationWithFollowFrame(turn, dep, changed, succTxn).fork()
         createReevaluation(succTxn).fork()
     }
   }

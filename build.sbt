@@ -181,14 +181,20 @@ lazy val fullmv = project.in(file("Research/Multiversion"))
     cfg.test, cfg.noPublish, exportJars := true)
   .dependsOn(rescalaJVM, testsJVM % "test->test")
 
-lazy val distributedFullmv = project.in(file("Research/MultiversionDistribution"))
+lazy val distributedFullmv = project.in(file("Research/distributed/multiversion"))
   .settings( cfg.base, name := "rescala-distributed-multiversion",
     cfg.test, cfg.noPublish, lib.circe, lib.retierTransmitter, exportJars := true)
   .dependsOn(fullmv, testsJVM % "test->test")
 
-lazy val distributedApps = project.in(file("Research/DistributedApps"))
+lazy val distributedExamples = project.in(file("Research/distributed/examples"))
   .enablePlugins(JmhPlugin)
-  .settings(name := "rescala-distributed-apps", cfg.base, cfg.noPublish, mainClass in Compile := Some("org.openjdk.jmh.Main"),
+  .settings(name := "rescala-distributed-examples", cfg.base, cfg.noPublish)
+  .dependsOn(distributedFullmv % "compile->test")
+  .enablePlugins(JavaAppPackaging)
+
+lazy val distributedBenchmarks = project.in(file("Research/distributed/benchmarks"))
+  .enablePlugins(JmhPlugin)
+  .settings(name := "rescala-distributed-benchmarks", cfg.base, cfg.noPublish, mainClass in Compile := Some("org.openjdk.jmh.Main"),
     TaskKey[Unit]("compileJmh") := Seq(compile in pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh).dependOn.value)
   .dependsOn(distributedFullmv % "compile->test")
   .enablePlugins(JavaAppPackaging)

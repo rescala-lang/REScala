@@ -38,7 +38,7 @@ class FullMVEngine(val timeout: Duration, val name: String) extends SchedulerImp
         // framing phase
         turn.beginFraming()
         turn.activeBranchDifferential(TurnPhase.Framing, declaredWrites.size)
-        for (i <- declaredWrites) threadPool.submit(Framing(turn, i))
+        for (i <- declaredWrites) threadPool.submit(new Framing(turn, i))
         turn.completeFraming()
       } else {
         turn.beginExecuting()
@@ -59,7 +59,7 @@ class FullMVEngine(val timeout: Duration, val name: String) extends SchedulerImp
       if (declaredWrites.nonEmpty) {
         turn.initialChanges = admissionTicket.initialChanges
         turn.activeBranchDifferential(TurnPhase.Executing, declaredWrites.size)
-        for(write <- declaredWrites) threadPool.submit(SourceNotification(turn, write, admissionResult.isSuccess && turn.initialChanges.contains(write)))
+        for(write <- declaredWrites) threadPool.submit(new SourceNotification(turn, write, admissionResult.isSuccess && turn.initialChanges.contains(write)))
       }
 
       // turn completion
@@ -89,7 +89,7 @@ class FullMVEngine(val timeout: Duration, val name: String) extends SchedulerImp
 }
 
 object FullMVEngine {
-  val DEBUG = false
+  val DEBUG = true
 
   val default = new FullMVEngine(10.seconds, "default")
 

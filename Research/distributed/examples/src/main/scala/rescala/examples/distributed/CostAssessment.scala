@@ -1,4 +1,4 @@
-package rescala.distributedapps
+package rescala.examples.distributed
 
 import rescala.fullmv.mirrors.localcloning.ReactiveLocalClone
 import rescala.fullmv.transmitter.ReactiveTransmittable

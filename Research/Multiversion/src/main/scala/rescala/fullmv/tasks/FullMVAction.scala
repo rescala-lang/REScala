@@ -2,10 +2,12 @@ package rescala.fullmv.tasks
 
 import java.util.concurrent.RecursiveAction
 
-import rescala.fullmv.FullMVTurn
+import rescala.core.ReSource
+import rescala.fullmv.{FullMVStruct, FullMVTurn}
 
 trait FullMVAction extends RecursiveAction {
   val turn: FullMVTurn
+  val node: ReSource[FullMVStruct]
   override def compute(): Unit = {
     try { doCompute() } catch {
       case t: Throwable =>

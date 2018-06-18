@@ -1,4 +1,4 @@
-//package rescala.distributedapps
+//package rescala.examples.distributed
 //
 //import rescala.fullmv.FullMVEngine
 //import rescala.fullmv.FullMVEngine.default._

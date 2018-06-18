@@ -107,7 +107,7 @@ trait FullMVTurn extends Initializer[FullMVStruct] with FullMVTurnProxy with Sub
     // This matches the required behavior where the code that creates this reactive is expecting the initial
     // reevaluation (if one is required) to have been completed, but cannot access values from subsequent turns
     // and hence does not need to wait for those.
-    val ignitionNotification = Notification(this, reactive, changed = ignitionRequiresReevaluation)
+    val ignitionNotification = new Notification(this, reactive, changed = ignitionRequiresReevaluation)
     ignitionNotification.deliverNotification() match {
       case NotGlitchFreeReady =>
         if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this ignite $reactive did not spawn reevaluation.")
@@ -115,11 +115,11 @@ trait FullMVTurn extends Initializer[FullMVStruct] with FullMVTurnProxy with Sub
       case GlitchFreeReady =>
         if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this ignite $reactive spawned reevaluation.")
         activeBranchDifferential(TurnPhase.Executing, 1)
-        Reevaluation(this, reactive).compute()
+        new Reevaluation(this, reactive).compute()
       case NextReevaluation(out, succTxn) if out.isEmpty =>
         if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this ignite $reactive spawned reevaluation for successor $succTxn.")
         succTxn.activeBranchDifferential(TurnPhase.Executing, 1)
-        val succReev = Reevaluation(succTxn, reactive)
+        val succReev = new Reevaluation(succTxn, reactive)
         if(ForkJoinTask.inForkJoinPool()) {
           succReev.fork()
         } else {
