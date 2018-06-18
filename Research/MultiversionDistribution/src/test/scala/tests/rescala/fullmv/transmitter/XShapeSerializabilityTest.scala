@@ -1,6 +1,5 @@
 package tests.rescala.fullmv.transmitter
 
-
 import org.scalatest.FunSuite
 import rescala.fullmv.transmitter.ReactiveTransmittable
 import rescala.fullmv._
@@ -13,6 +12,12 @@ import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
 class XShapeSerializabilityTest extends FunSuite {
+  test("X-shaped serializability") {
+    assert(XShapeSerializabilityTest.run(10000) === null)
+  }
+}
+
+object XShapeSerializabilityTest {
   case class Data[+T](name: String, data: T)
   case class Merge[+T](left: T, right: T)
 
@@ -45,7 +50,7 @@ class XShapeSerializabilityTest extends FunSuite {
     def step() = source.transform(_ + 1)
   }
 
-  test("X-shaped serializability") {
+  def run(runForMillis: Long): String = {
     val leftHost = new SideHost("left")
     try {
       val rightHost = new SideHost("right")
@@ -81,35 +86,33 @@ class XShapeSerializabilityTest extends FunSuite {
           @volatile var violations: List[Merge[Data[Merge[Data[Int]]]]] = Nil
           merge.observe { v => if(isGlitched(v)) violations = v :: violations }
 
-          assert(violations.isEmpty)
-          assert(merge.readValueOnce === Merge(
-            Data("lmerge", Merge(Data("left", 0), Data("right", 0))),
-            Data("rmerge", Merge(Data("left", 0), Data("right", 0)))
-          ))
+//          assert(violations.isEmpty)
+//          assert(merge.readValueOnce === Merge(
+//            Data("lmerge", Merge(Data("left", 0), Data("right", 0))),
+//            Data("rmerge", Merge(Data("left", 0), Data("right", 0)))
+//          ))
+//
+//          leftHost.step()
+//
+//          assert(violations.isEmpty)
+//          assert(merge.readValueOnce === Merge(
+//            Data("lmerge", Merge(Data("left", 1), Data("right", 0))),
+//            Data("rmerge", Merge(Data("left", 1), Data("right", 0)))
+//          ))
+//
+//          rightHost.step()
+//
+//          assert(violations.isEmpty)
+//          assert(merge.readValueOnce === Merge(
+//            Data("lmerge", Merge(Data("left", 1), Data("right", 1))),
+//            Data("rmerge", Merge(Data("left", 1), Data("right", 1)))
+//          ))
 
-          leftHost.step()
-
-          assert(violations.isEmpty)
-          assert(merge.readValueOnce === Merge(
-            Data("lmerge", Merge(Data("left", 1), Data("right", 0))),
-            Data("rmerge", Merge(Data("left", 1), Data("right", 0)))
-          ))
-
-          rightHost.step()
-
-          assert(violations.isEmpty)
-          assert(merge.readValueOnce === Merge(
-            Data("lmerge", Merge(Data("left", 1), Data("right", 1))),
-            Data("rmerge", Merge(Data("left", 1), Data("right", 1)))
-          ))
-
-
-          val duration = 0//10000
-          println(s"starting X-Shape distributed Serializability stress test " + (if(duration == 0) "until key press" else s"for ${duration / 1000} seconds..."))
+          println(s"starting X-Shape distributed Serializability stress test " + (if(runForMillis == 0) "until key press" else s"for ${runForMillis / 1000} seconds..."))
           @volatile var running: Boolean = true
           def worker(host: SideHost) = Spawn {
             try {
-              var iterations = 1
+              var iterations = 0
               while(running) {
                 host.step()
                 iterations += 1
@@ -125,14 +128,14 @@ class XShapeSerializabilityTest extends FunSuite {
           val workerLeft = worker(leftHost)
           val workerRight = worker(rightHost)
 
-          val workerTimeout = System.currentTimeMillis() + duration
-          while(running && (if(duration == 0) System.in.available() == 0 else System.currentTimeMillis() < workerTimeout)) {
+          val workerTimeout = System.currentTimeMillis() + runForMillis
+          while(running && (if(runForMillis == 0) System.in.available() == 0 else System.currentTimeMillis() < workerTimeout)) {
             Thread.sleep(50)
           }
           if(!running) {
-            println(s"Premature termination after ${(duration - (workerTimeout - System.currentTimeMillis())) / 1000} seconds")
+            println(s"Premature termination after ${(runForMillis - (workerTimeout - System.currentTimeMillis())) / 1000} seconds")
           } else {
-            println(s"Ran for ${(duration - (workerTimeout - System.currentTimeMillis())) / 1000} seconds")
+            println(s"Ran for ${(runForMillis - (workerTimeout - System.currentTimeMillis())) / 1000} seconds")
           }
           running = false
 
@@ -159,30 +162,39 @@ class XShapeSerializabilityTest extends FunSuite {
               println(s"sources: ${leftHost.source.readValueOnce} and ${rightHost.source.readValueOnce}")
               println(s"side merges: ${leftMerge.readValueOnce} and ${rightMerge.readValueOnce}")
               println(s"top merge: ${merge.readValueOnce}")
-              fail("there were errors")
+              "there were errors"
             case Some(sum) =>
               println(s"X-Shape distributed Serializability stress test totaled $sum iterations (individual scores: ${scores.mkString(", ")}")
-              assert(violations.isEmpty)
-              assert(merge.readValueOnce === Merge(
-                Data("lmerge", Merge(Data("left", scoreLeft.get), Data("right", scoreRight.get))),
-                Data("rmerge", Merge(Data("left", scoreLeft.get), Data("right", scoreRight.get)))
-              ))
+              if(violations.nonEmpty) {
+                "There were violations:\r\n\t"+violations.mkString("\r\n\t")
+              } else {
+                val expected = Merge(
+                  Data("lmerge", Merge(Data("left", scoreLeft.get), Data("right", scoreRight.get))),
+                  Data("rmerge", Merge(Data("left", scoreLeft.get), Data("right", scoreRight.get)))
+                )
+                val actual = merge.readValueOnce
+                if (actual != expected) {
+                  s"Final value should be:\r\n\t$expected\r\nbut was\r\n\t$actual"
+                } else {
+                  val hosts = Array(leftHost, rightHost)
+                  hosts.foreach(host => println(s"$host orphan stats: ${host.cacheStatus}"))
 
-              val hosts = Array(leftHost, rightHost)
-              hosts.foreach(host => println(s"$host orphan stats: ${host.cacheStatus}"))
-
-              println(" == Orphan listing == ")
-              hosts.foreach { host =>
-                if(!host.instances.isEmpty || !host.lockHost.instances.isEmpty) {
-                  println(s"orphans on $host:")
-                  val it1 = host.instances.values().iterator()
-                  while (it1.hasNext) println("\t" + it1.next())
-                  val it2 = host.lockHost.instances.values().iterator()
-                  while (it2.hasNext) println("\t" + it2.next())
+                  println(" == Orphan listing == ")
+                  val ok = hosts.foldLeft(true) { (ok, host) =>
+                    if(host.instances.isEmpty && host.lockHost.instances.isEmpty) {
+                      ok
+                    } else {
+                      println(s"orphans on $host:")
+                      val it1 = host.instances.values().iterator()
+                      while (it1.hasNext) println("\t" + it1.next())
+                      val it2 = host.lockHost.instances.values().iterator()
+                      while (it2.hasNext) println("\t" + it2.next())
+                      false
+                    }
+                  }
+                  if(ok) null else "There were orphaned turn and/or lock instances."
                 }
               }
-
-              assert(hosts.map(host => host.instances.size() + host.lockHost.instances.size()).sum === 0)
           }
         } finally {
           topHost.shutdown()

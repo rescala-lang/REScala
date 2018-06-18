@@ -65,7 +65,7 @@ lazy val rescalaJS = rescala.js
 //lazy val rescalaNative = rescala.native
 
 lazy val tests = crossProject.in(file("Tests"))
-  .settings(name := "rescala-tests", cfg.noPublish, cfg.base, cfg.test)
+  .settings(name := "rescala-tests", cfg.noPublish, cfg.base, cfg.test, exportJars := true)
   .dependsOn(rescala)
   .jvmSettings().jsSettings(cfg.js)
 lazy val testsJVM = tests.jvm.dependsOn(stm)
@@ -183,9 +183,15 @@ lazy val fullmv = project.in(file("Research/Multiversion"))
 
 lazy val distributedFullmv = project.in(file("Research/MultiversionDistribution"))
   .settings( cfg.base, name := "rescala-distributed-multiversion",
-    cfg.test, cfg.noPublish, lib.circe, lib.retierTransmitter)
+    cfg.test, cfg.noPublish, lib.circe, lib.retierTransmitter, exportJars := true)
   .dependsOn(fullmv, testsJVM % "test->test")
 
+lazy val distributedApps = project.in(file("Research/DistributedApps"))
+  .settings( cfg.base, name := "rescala-distributed-apps",
+    cfg.test, cfg.noPublish, lib.circe, lib.retierTransmitter)
+  .dependsOn(distributedFullmv % "compile->test")
+  .enablePlugins(JavaAppPackaging)
+  
 lazy val meta = project.in(file("Research/Meta"))
   .dependsOn(rescalaJVM)
   .settings(cfg.base, cfg.test, cfg.noPublish, name := "meta")
