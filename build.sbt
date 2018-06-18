@@ -187,11 +187,12 @@ lazy val distributedFullmv = project.in(file("Research/MultiversionDistribution"
   .dependsOn(fullmv, testsJVM % "test->test")
 
 lazy val distributedApps = project.in(file("Research/DistributedApps"))
-  .settings( cfg.base, name := "rescala-distributed-apps",
-    cfg.test, cfg.noPublish, lib.circe, lib.retierTransmitter)
+  .enablePlugins(JmhPlugin)
+  .settings(name := "rescala-distributed-apps", cfg.base, cfg.noPublish, mainClass in Compile := Some("org.openjdk.jmh.Main"),
+    TaskKey[Unit]("compileJmh") := Seq(compile in pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh).dependOn.value)
   .dependsOn(distributedFullmv % "compile->test")
   .enablePlugins(JavaAppPackaging)
-  
+
 lazy val meta = project.in(file("Research/Meta"))
   .dependsOn(rescalaJVM)
   .settings(cfg.base, cfg.test, cfg.noPublish, name := "meta")
