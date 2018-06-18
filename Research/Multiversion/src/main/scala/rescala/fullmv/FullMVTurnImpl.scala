@@ -30,7 +30,7 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
   @volatile var selfNode = new MutableTransactionSpanningTreeNode[FullMVTurn](this) // this is also implicitly a set
   @volatile var predecessorSpanningTreeNodes: Map[FullMVTurn, MutableTransactionSpanningTreeNode[FullMVTurn]] = new scala.collection.immutable.Map.Map1(this, selfNode)
 
-  override def ensurePredecessorReplication(): Unit = Unit
+  override def ensurePredecessorReplication(): Future[Unit] = Future.unit
 
   override def asyncRemoteBranchComplete(forPhase: TurnPhase.Type): Unit = {
     if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this branch on some remote completed")

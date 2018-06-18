@@ -468,12 +468,12 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
           if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host received initialization package for $reflection")
           val reflectionInitValues = initValues.map { case (mirrorTurn, v) =>
             val turn = lookUpLocalTurnParameterInstance(mirrorTurn, endpoint)
-            turn.ensurePredecessorReplication()
+            FullMVEngine.myAwait(turn.ensurePredecessorReplication(), host.timeout)
             turn -> v
           }
           val reflectionMaybeFirstFrame = maybeFirstFrame.map { mirrorTurn =>
             val turn = lookUpLocalTurnParameterInstance(mirrorTurn, endpoint)
-            turn.ensurePredecessorReplication()
+            FullMVEngine.myAwait(turn.ensurePredecessorReplication(), host.timeout)
             turn
           }
 

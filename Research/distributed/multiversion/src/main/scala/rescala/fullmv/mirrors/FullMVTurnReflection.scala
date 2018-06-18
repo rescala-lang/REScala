@@ -27,10 +27,10 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
 
   var localBranchCountBuffer = new AtomicInteger(0)
 
-  @volatile var predecessorSubscribed = -1
+  @volatile var predecessorSubscribed: Int = -1
   object predecessorSubscriptionParking
 
-  override def ensurePredecessorReplication(): Unit = {
+  override def ensurePredecessorReplication(): Future[Unit] = {
     if(predecessorSubscribed != 1) {
       // ensure that only the first guy to call this actually registers a subscription
       // and all the others only continue after that first guy is done
@@ -41,15 +41,21 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
       } match {
         case -1 =>
           if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this subscribing predecessors.")
-          newPredecessors(FullMVEngine.myAwait(proxy.addPredecessorReplicator(this), host.timeout))
-          predecessorSubscriptionParking.synchronized {
-            predecessorSubscribed = 1
-            predecessorSubscriptionParking.notifyAll()
-          }
+          proxy.addPredecessorReplicator(this).map { res =>
+            newPredecessors(res)
+            predecessorSubscriptionParking.synchronized {
+              predecessorSubscribed = 1
+              predecessorSubscriptionParking.notifyAll()
+            }
+          }(FullMVEngine.notWorthToMoveToTaskpool)
         case 0 =>
           ForkJoinPool.managedBlock(this)
-        case 1 => // ignore
+          Future.unit
+        case 1 =>
+          Future.unit
       }
+    } else {
+      Future.unit
     }
   }
   override def isReleasable: Boolean = predecessorSubscriptionParking.synchronized { predecessorSubscribed != 0 }

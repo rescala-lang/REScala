@@ -76,7 +76,7 @@ trait FullMVTurn extends Initializer[FullMVStruct] with FullMVTurnProxy with Sub
     }
   }
 
-  def ensurePredecessorReplication(): Unit
+  def ensurePredecessorReplication(): Future[Unit]
 
   //========================================================Scheduler Interface============================================================
 

@@ -119,9 +119,9 @@ class FullMVTurnMirroringTest extends FunSuite {
     val turnOne: FullMVTurn = turnOneRoot
     if(FullMVEngine.DEBUG) println(s"turnOne on host0: $turnOne with ${turnOne.asInstanceOf[FullMVTurnImpl].subsumableLock.get()}")
     val turnOneA = FullMVTurnLocalClone(turnOne, hostA)
-    turnOneA.ensurePredecessorReplication()
+    Await.result(turnOneA.ensurePredecessorReplication(), Duration.Zero)
     val turnOneB = FullMVTurnLocalClone(turnOneA, hostB)
-    turnOneB.ensurePredecessorReplication()
+    Await.result(turnOneB.ensurePredecessorReplication(), Duration.Zero)
 
     // A -> 0 -> B
     val turnTwoRoot = hostA.newTurn()
@@ -129,9 +129,9 @@ class FullMVTurnMirroringTest extends FunSuite {
     val turnTwoA: FullMVTurn = turnTwoRoot
     if(FullMVEngine.DEBUG) println(s"turnTwo on hostA: $turnTwoA with ${turnTwoA.asInstanceOf[FullMVTurnImpl].subsumableLock.get()}")
     val turnTwo = FullMVTurnLocalClone(turnTwoA, host0)
-    turnTwo.ensurePredecessorReplication()
+    Await.result(turnTwo.ensurePredecessorReplication(), Duration.Zero)
     val turnTwoB = FullMVTurnLocalClone(turnTwo, hostB)
-    turnTwoB.ensurePredecessorReplication()
+    Await.result(turnTwoB.ensurePredecessorReplication(), Duration.Zero)
 
     // B -> A -> 0
     val turnThreeRoot = hostB.newTurn()
@@ -139,9 +139,9 @@ class FullMVTurnMirroringTest extends FunSuite {
     val turnThreeB: FullMVTurn = turnThreeRoot
     if(FullMVEngine.DEBUG) println(s"turnThree on hostB: $turnThreeB with ${turnThreeB.asInstanceOf[FullMVTurnImpl].subsumableLock.get()}")
     val turnThreeA = FullMVTurnLocalClone(turnThreeB, hostA)
-    turnThreeA.ensurePredecessorReplication()
+    Await.result(turnThreeA.ensurePredecessorReplication(), Duration.Zero)
     val turnThree = FullMVTurnLocalClone(turnThreeA, host0)
-    turnThree.ensurePredecessorReplication()
+    Await.result(turnThree.ensurePredecessorReplication(), Duration.Zero)
 
     assert(turnOne.isTransitivePredecessor(turnTwo) === false)
     assert(turnOne.isTransitivePredecessor(turnThree) === false)
@@ -191,11 +191,11 @@ class FullMVTurnMirroringTest extends FunSuite {
 
     val hostC = new FullMVEngine(Duration.Zero, "C")
     val turnOneC = FullMVTurnLocalClone(turnOneA, hostC)
-    turnOneC.ensurePredecessorReplication()
+    Await.result(turnOneC.ensurePredecessorReplication(), Duration.Zero)
     val turnTwoC = FullMVTurnLocalClone(turnTwoA, hostC)
-    turnTwoC.ensurePredecessorReplication()
+    Await.result(turnTwoC.ensurePredecessorReplication(), Duration.Zero)
     val turnThreeC = FullMVTurnLocalClone(turnThreeA, hostC)
-    turnThreeC.ensurePredecessorReplication()
+    Await.result(turnThreeC.ensurePredecessorReplication(), Duration.Zero)
 
     assert(turnOneC.isTransitivePredecessor(turnTwoC) === false)
     assert(turnOneC.isTransitivePredecessor(turnThreeC) === false)

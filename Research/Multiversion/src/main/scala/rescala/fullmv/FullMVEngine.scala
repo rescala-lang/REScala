@@ -89,12 +89,16 @@ class FullMVEngine(val timeout: Duration, val name: String) extends SchedulerImp
 }
 
 object FullMVEngine {
-  val DEBUG = true
+  val DEBUG = false
 
   val default = new FullMVEngine(10.seconds, "default")
 
   object notWorthToMoveToTaskpool extends ExecutionContext {
-    override def execute(runnable: Runnable): Unit = runnable.run()
+    override def execute(runnable: Runnable): Unit = try {
+      runnable.run()
+    } catch {
+      case t: Throwable => new Exception("Exception in future mapping", t).printStackTrace()
+    }
     override def reportFailure(t: Throwable): Unit = throw new IllegalStateException("problem in scala.concurrent internal callback", t)
   }
 
