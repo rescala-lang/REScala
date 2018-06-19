@@ -7,55 +7,13 @@ import loci.serializer.circe._
 import loci.transmitter.{RemoteRef, _}
 import rescala.crdts.pvars._
 import rescala.crdts.pvars.PGrowOnlyCounter._
+import rescala.crdts.pvars.PSet._
 import rescala.crdts.statecrdts.counters.GCounter
+import rescala._
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.language.higherKinds
-
-
-object GCountTransmittable {
-  implicit def rescalaSignalTransmittable[S](implicit
-                                             transmittable: Transmittable[GCounter, S, GCounter],
-                                             serializable: Serializable[S]) = {
-    type From = GCounter
-    type To = GCounter
-
-    new PushBasedTransmittable[PGrowOnlyCounter, From, S, To, PGrowOnlyCounter] {
-
-
-      def send(value: PGrowOnlyCounter, remote: RemoteRef, endpoint: Endpoint[From, To]): To = {
-
-        val observer = value.internalChanges.observe(c => endpoint.send(c))
-
-        endpoint.receive notify value.externalChanges.fire
-
-        endpoint.closed notify { _ => observer.remove }
-
-        value.crdtSignal.readValueOnce
-      }
-
-      def receive(value: To, remote: RemoteRef, endpoint: Endpoint[From, To]): PGrowOnlyCounter = {
-        val counter = PGrowOnlyCounter()
-        locally(counter.valueSignal)
-        counter.externalChanges fire value
-
-        println(s"received $value")
-        println(s"before: $counter, ")
-
-        endpoint.receive notify counter.externalChanges.fire
-        val observer = counter.internalChanges.observe(c => endpoint.send(c))
-        endpoint.closed notify { _ => observer.remove }
-
-        // println(s"manual ${implicitly[StateCRDT[Int, GCounter]].merge(counter.crdtSignal.readValueOnce, value)}")
-
-        println(s"after: $counter")
-
-        counter
-      }
-    }
-  }
-}
 
 /*
 
@@ -143,35 +101,18 @@ object testSignalExpressions {
 
     Predef.$conforms
 
-    val counterBinding = Binding[PGrowOnlyCounter]("counter")(BindingBuilder.value[PGrowOnlyCounter](Marshallable.
-        marshallable)))
+    val counterBinding = Binding[PGrowOnlyCounter]("counter")
+    val SetBinding = Binding[PSet[Int]]("set")
 
     println("running server")
 
     val (sr, s2) = { //server
-      //      val webSocket = WebSocketListener()
       val registry = new Registry
-      //      registry.listen(webSocket)
       registry.listen(WS(1099))
 
       val l1 = PGrowOnlyCounter(10)
       registry.bind(counterBinding)(l1)
-      /*
-      val l2 = PGrowOnlyCounter(100)
 
-      //l1.publish("l1")
-      registry.bind(counterBinding)(l1)
-
-      val sig2 = Signal {
-        l1() + l2()
-      }
-
-      println(sig2.readValueOnce)
-
-      l2.increase
-
-      println(sig2.readValueOnce)
-      */
       (registry, l1)
     }
 
@@ -202,13 +143,18 @@ object testSignalExpressions {
     }
 
     println("done")
+    val s: Signal[Int] = Signal {
+      c1() + s2()
+    }
     c1.increase
     s2.increase
+
     Thread.sleep(1000)
     Thread.sleep(1000)
 
     println("s2: " + s2.value)
     println("c1: " + c1.value)
+    println("s: " + s.readValueOnce)
     println("slept")
     sr.terminate()
   }
