@@ -12,8 +12,8 @@ import scala.concurrent.duration._
 
 @BenchmarkMode(Array(Mode.AverageTime))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
-@Warmup(iterations = 10, time = 2000, timeUnit = TimeUnit.MILLISECONDS)
-@Measurement(iterations = 20, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
+@Warmup(iterations = 5, time = 5000, timeUnit = TimeUnit.MILLISECONDS)
+@Measurement(iterations = 7, time = 5000, timeUnit = TimeUnit.MILLISECONDS)
 @Fork(1)
 @Threads(1)
 @State(Scope.Benchmark)
@@ -23,7 +23,7 @@ class SingleRemoteTransfer {
   var nodes: Seq[(FullMVEngine, Signal[Int, FullMVStruct])] = _
   @Param(Array("50"))
   var msDelay: Int = _
-  @Param(Array("1", "2"))
+  @Param(Array("1", "2", "3", "5"))
   var depth: Int = _
 
   @Setup(Level.Iteration)
@@ -52,7 +52,6 @@ class SingleRemoteTransfer {
 
   @Benchmark
   def run(): Unit = {
-    println("size is " + nodes.size)
     source.transform(_ + 1)(sourceEngine)
   }
 }
