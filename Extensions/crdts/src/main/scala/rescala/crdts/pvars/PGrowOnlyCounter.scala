@@ -76,9 +76,9 @@ object PGrowOnlyCounter {
   */
 
 
-  implicit def rescalaSignalTransmittable[S](implicit
-                                             transmittable: Transmittable[GCounter, S, GCounter],
-                                             serializable: Serializable[S]) = {
+  implicit def pGrowOnlyCounterTransmittable[S](implicit
+                                                transmittable: Transmittable[GCounter, S, GCounter],
+                                                serializable: Serializable[S], pVarFactory: PVarFactory[PGrowOnlyCounter]) = {
     type From = GCounter
     type To = GCounter
 
@@ -97,7 +97,7 @@ object PGrowOnlyCounter {
       }
 
       def receive(value: To, remote: RemoteRef, endpoint: Endpoint[From, To]): PGrowOnlyCounter = {
-        val counter = PGrowOnlyCounter()
+        val counter: PGrowOnlyCounter = pVarFactory.create()
         locally(counter.valueSignal)
         counter.externalChanges fire value
 
@@ -127,8 +127,8 @@ object PGrowOnlyCounter {
     new PGrowOnlyCounter(init)
   }
 
-  implicit object PGrowOnlyCounterFactory extends PVarFactory[Int, GCounter] {
-    override def apply(): Publishable[Int, GCounter] = PGrowOnlyCounter()
+  implicit object PGrowOnlyCounterFactory extends PVarFactory[PGrowOnlyCounter] {
+    override def apply(): PGrowOnlyCounter = PGrowOnlyCounter()
   }
 
 
