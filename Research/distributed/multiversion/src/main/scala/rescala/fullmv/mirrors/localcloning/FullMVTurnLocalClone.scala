@@ -17,27 +17,27 @@ object FullMVTurnLocalClone {
         val mirrorHost = turn.host
         val localMirror: FullMVTurnProxy = turn
         val mirrorProxy: FullMVTurnProxy = new FullMVTurnProxy {
-          override def acquireRemoteBranchIfPhaseAtMost(maxPhase: TurnPhase.Type): Future[TurnPhase.Type] = FakeDelayer.requestReply(fakeDelay, localMirror.acquireRemoteBranchIfPhaseAtMost(maxPhase))
-          override def addPredecessor(tree: TransactionSpanningTreeNode[FullMVTurn]): Future[Boolean] = FakeDelayer.requestReply(fakeDelay, localMirror.addPredecessor(tree.map((turn: FullMVTurn) => FullMVTurnLocalClone(turn, mirrorHost, fakeDelay))))
-          override def maybeNewReachableSubtree(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = FakeDelayer.requestReply(fakeDelay, localMirror.maybeNewReachableSubtree(FullMVTurnLocalClone(attachBelow, mirrorHost, fakeDelay), spanningSubTreeRoot.map((turn: FullMVTurn) => FullMVTurnLocalClone(turn, mirrorHost, fakeDelay))))
+          override def acquireRemoteBranchIfPhaseAtMost(maxPhase: TurnPhase.Type): Future[TurnPhase.Type] = FakeDelayer.requestReply(reflectionHost, mirrorHost, fakeDelay, localMirror.acquireRemoteBranchIfPhaseAtMost(maxPhase))
+          override def addPredecessor(tree: TransactionSpanningTreeNode[FullMVTurn]): Future[Boolean] = FakeDelayer.requestReply(reflectionHost, mirrorHost, fakeDelay, localMirror.addPredecessor(tree.map((turn: FullMVTurn) => FullMVTurnLocalClone(turn, mirrorHost, fakeDelay))))
+          override def maybeNewReachableSubtree(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = FakeDelayer.requestReply(reflectionHost, mirrorHost, fakeDelay, localMirror.maybeNewReachableSubtree(FullMVTurnLocalClone(attachBelow, mirrorHost, fakeDelay), spanningSubTreeRoot.map((turn: FullMVTurn) => FullMVTurnLocalClone(turn, mirrorHost, fakeDelay))))
 
-          override def asyncRemoteBranchComplete(forPhase: TurnPhase.Type): Unit = FakeDelayer.async(fakeDelay, localMirror.asyncRemoteBranchComplete(forPhase))
-          override def addRemoteBranch(forPhase: TurnPhase.Type): Future[Unit] = FakeDelayer.requestReply(fakeDelay, localMirror.addRemoteBranch(forPhase))
-          override def newSuccessor(successor: FullMVTurn): Future[Unit] = FakeDelayer.requestReply(fakeDelay, localMirror.newSuccessor(FullMVTurnLocalClone(successor, mirrorHost, fakeDelay)))
+          override def asyncRemoteBranchComplete(forPhase: TurnPhase.Type): Unit = FakeDelayer.async(reflectionHost, mirrorHost, fakeDelay, localMirror.asyncRemoteBranchComplete(forPhase))
+          override def addRemoteBranch(forPhase: TurnPhase.Type): Future[Unit] = FakeDelayer.requestReply(reflectionHost, mirrorHost, fakeDelay, localMirror.addRemoteBranch(forPhase))
+          override def newSuccessor(successor: FullMVTurn): Future[Unit] = FakeDelayer.requestReply(reflectionHost, mirrorHost, fakeDelay, localMirror.newSuccessor(FullMVTurnLocalClone(successor, mirrorHost, fakeDelay)))
 
-          override def getLockedRoot: Future[LockStateResult] = FakeDelayer.requestReply(fakeDelay, localMirror.getLockedRoot)
-          override def remoteTryLock(): Future[TryLockResult] = FakeDelayer.requestReply(fakeDelay, localMirror.remoteTryLock().map {
+          override def getLockedRoot: Future[LockStateResult] = FakeDelayer.requestReply(reflectionHost, mirrorHost, fakeDelay, localMirror.getLockedRoot)
+          override def remoteTryLock(): Future[TryLockResult] = FakeDelayer.requestReply(reflectionHost, mirrorHost, fakeDelay, localMirror.remoteTryLock().map {
             case Locked(lockedRoot) => Locked(SubsumableLockLocalClone(lockedRoot, reflectionHost.lockHost, fakeDelay))
             case Blocked => Blocked
             case Deallocated => Deallocated
           } (FullMVEngine.notWorthToMoveToTaskpool))
-          override def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult] = FakeDelayer.requestReply(fakeDelay, localMirror.remoteTrySubsume(SubsumableLockLocalClone(lockedNewParent, mirrorHost.lockHost, fakeDelay)))
+          override def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult] = FakeDelayer.requestReply(reflectionHost, mirrorHost, fakeDelay, localMirror.remoteTrySubsume(SubsumableLockLocalClone(lockedNewParent, mirrorHost.lockHost, fakeDelay)))
 
-          override def asyncAddPhaseReplicator(replicator: FullMVTurnPhaseReflectionProxy, knownPhase: TurnPhase.Type): Unit = FakeDelayer.async(fakeDelay, localMirror.asyncAddPhaseReplicator(new FullMVTurnPhaseReflectionProxy {
-            override def asyncNewPhase(phase: TurnPhase.Type): Unit = FakeDelayer.async(fakeDelay, replicator.asyncNewPhase(phase))
+          override def asyncAddPhaseReplicator(replicator: FullMVTurnPhaseReflectionProxy, knownPhase: TurnPhase.Type): Unit = FakeDelayer.async(reflectionHost, mirrorHost, fakeDelay, localMirror.asyncAddPhaseReplicator(new FullMVTurnPhaseReflectionProxy {
+            override def asyncNewPhase(phase: TurnPhase.Type): Unit = FakeDelayer.async(mirrorHost, reflectionHost, fakeDelay, replicator.asyncNewPhase(phase))
           }, knownPhase))
-          override def addPredecessorReplicator(replicator: FullMVTurnPredecessorReflectionProxy): Future[TransactionSpanningTreeNode[FullMVTurn]] = FakeDelayer.requestReply(fakeDelay, localMirror.addPredecessorReplicator(new FullMVTurnPredecessorReflectionProxy {
-            override def newPredecessors(predecessors: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = FakeDelayer.requestReply(fakeDelay, replicator.newPredecessors(predecessors.map((turn: FullMVTurn) => FullMVTurnLocalClone(turn, reflectionHost, fakeDelay))))
+          override def addPredecessorReplicator(replicator: FullMVTurnPredecessorReflectionProxy): Future[TransactionSpanningTreeNode[FullMVTurn]] = FakeDelayer.requestReply(reflectionHost, mirrorHost, fakeDelay, localMirror.addPredecessorReplicator(new FullMVTurnPredecessorReflectionProxy {
+            override def newPredecessors(predecessors: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = FakeDelayer.requestReply(mirrorHost, reflectionHost, fakeDelay, replicator.newPredecessors(predecessors.map((turn: FullMVTurn) => FullMVTurnLocalClone(turn, reflectionHost, fakeDelay))))
           }).map {
             _.map((turn: FullMVTurn) => FullMVTurnLocalClone(turn, reflectionHost, fakeDelay))
           }(FullMVEngine.notWorthToMoveToTaskpool))

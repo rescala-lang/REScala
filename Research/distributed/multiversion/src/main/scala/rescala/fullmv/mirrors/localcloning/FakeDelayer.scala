@@ -4,13 +4,14 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{ScheduledThreadPoolExecutor, TimeUnit}
 
 import rescala.fullmv.FullMVEngine
+import rescala.fullmv.mirrors.Host
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Future, Promise}
 
 object FakeDelayer {
   val LOGGING: Boolean = false
-  
+
   var executor: ScheduledThreadPoolExecutor = _
 
   def enable(): Unit = {
@@ -23,38 +24,38 @@ object FakeDelayer {
   }
 
   val i = new AtomicInteger(0)
-  def async(fakeDelay: Duration, op: => Unit): Unit = {
+  def async(from: Host[_], to: Host[_], fakeDelay: Duration, op: => Unit): Unit = {
     if(fakeDelay == Duration.Zero) {
       op
     } else {
       if(FakeDelayer.executor == null) throw new IllegalStateException("Fake delay must be explicitly .enable()'d!")
       val id = i.incrementAndGet()
-      if (LOGGING) println(s"[${System.currentTimeMillis()}] scheduling async $id: ${Thread.currentThread().getStackTrace()(2).toString}")
+      if (LOGGING) println(s"[${System.currentTimeMillis()}] $from to $to async $id: ${Thread.currentThread().getStackTrace()(2).toString}")
       FakeDelayer.executor.schedule(new Runnable() {
         override def run(): Unit = {
-          if (LOGGING) println(s"[${System.currentTimeMillis()}] executing async $id")
+          if (LOGGING) println(s"[${System.currentTimeMillis()}] $to executing async $id")
           op
         }
       }, fakeDelay.toMillis, TimeUnit.MILLISECONDS)
     }
   }
 
-  def requestReply[V](fakeDelay: Duration, future: => Future[V]): Future[V] = {
+  def requestReply[V](from: Host[_], to: Host[_], fakeDelay: Duration, future: => Future[V]): Future[V] = {
     if(fakeDelay == Duration.Zero) {
       future
     } else {
       if(FakeDelayer.executor == null) throw new IllegalStateException("Fake delay must be explicitly .enable()'d!")
       val promise = Promise[V]
       val id = i.incrementAndGet()
-      if (LOGGING) println(s"[${System.currentTimeMillis()}] scheduling request $id: ${Thread.currentThread().getStackTrace()(2).toString}")
+      if (LOGGING) println(s"[${System.currentTimeMillis()}] $from to $to request $id: ${Thread.currentThread().getStackTrace()(2).toString}")
       FakeDelayer.executor.schedule(new Runnable() {
         override def run(): Unit = {
-          if (LOGGING) println(s"[${System.currentTimeMillis()}] executing request $id")
+          if (LOGGING) println(s"[${System.currentTimeMillis()}] $to executing request $id")
           future.onComplete { v =>
-            if (LOGGING) println(s"[${System.currentTimeMillis()}] scheduling reply for $id: $v")
+            if (LOGGING) println(s"[${System.currentTimeMillis()}] $to to $from reply $id: $v")
             FakeDelayer.executor.schedule(new Runnable() {
               override def run(): Unit = {
-                if (LOGGING) println(s"[${System.currentTimeMillis()}] delivering reply for $id")
+                if (LOGGING) println(s"[${System.currentTimeMillis()}] $from receive reply $id")
                 promise.complete(v)
               }
             }, fakeDelay.toMillis, TimeUnit.MILLISECONDS)
