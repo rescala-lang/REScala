@@ -83,41 +83,43 @@ object Publishable {
     **/
   class PVarTransmittable[S, C, P <: Publishable[_, C]](implicit
                                                         transmittable: Transmittable[C, S, C],
-                                                        serializable: Serializable[S], pVarFactory: PVarFactory[P])
-    extends PushBasedTransmittable[P, C, S, C, P] {
+                                                        serializable: Serializable[S], pVarFactory: PVarFactory[P]) {
+    new PushBasedTransmittable[P, C, S, C, P] {
 
-    type From = C
-    type To = C
+      type From = C
+      type To = C
 
-    def send(value: P, remote: RemoteRef, endpoint: Endpoint[From, To]): To = {
+      def send(value: P, remote: RemoteRef, endpoint: Endpoint[From, To]): To = {
 
-      val observer = value.internalChanges.observe(c => endpoint.send(c))
+        val observer = value.internalChanges.observe(c => endpoint.send(c))
 
-      endpoint.receive notify value.externalChanges.fire
+        endpoint.receive notify value.externalChanges.fire
 
-      endpoint.closed notify { _ => observer.remove }
+        endpoint.closed notify { _ => observer.remove }
 
-      value.crdtSignal.readValueOnce
+        value.crdtSignal.readValueOnce
+      }
+
+      def receive(value: To, remote: RemoteRef, endpoint: Endpoint[From, To]): P = {
+        val pVar: P = pVarFactory.create()
+        locally(pVar.valueSignal)
+        pVar.externalChanges fire value
+
+        println(s"received $value")
+        println(s"before: $pVar, ")
+
+        endpoint.receive notify pVar.externalChanges.fire
+        val observer = pVar.internalChanges.observe(c => endpoint.send(c))
+        endpoint.closed notify { _ => observer.remove }
+
+        // println(s"manual ${implicitly[StateCRDT[Int, GCounter]].merge(counter.crdtSignal.readValueOnce, value)}")
+
+        println(s"after: $pVar")
+
+        pVar
+      }
     }
 
-    def receive(value: To, remote: RemoteRef, endpoint: Endpoint[From, To]): P = {
-      val pVar: P = pVarFactory.create()
-      locally(pVar.valueSignal)
-      pVar.externalChanges fire value
-
-      println(s"received $value")
-      println(s"before: $pVar, ")
-
-      endpoint.receive notify pVar.externalChanges.fire
-      val observer = pVar.internalChanges.observe(c => endpoint.send(c))
-      endpoint.closed notify { _ => observer.remove }
-
-      // println(s"manual ${implicitly[StateCRDT[Int, GCounter]].merge(counter.crdtSignal.readValueOnce, value)}")
-
-      println(s"after: $pVar")
-
-      pVar
-    }
   }
 
 }

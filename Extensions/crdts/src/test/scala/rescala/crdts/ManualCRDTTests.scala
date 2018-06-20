@@ -5,11 +5,14 @@ import loci.communicator.ws.akka._
 import loci.registry.{Binding, BindingBuilder, Registry}
 import loci.serializer.circe._
 import loci.transmitter.{RemoteRef, _}
+import loci.transmitter.Serializable
 import rescala.crdts.pvars._
+import rescala.crdts.pvars.Publishable.PVarFactory
 import rescala.crdts.pvars.PGrowOnlyCounter._
 import rescala.crdts.pvars.PSet._
 import rescala.crdts.statecrdts.counters.GCounter
 import rescala._
+import rescala.crdts.statecrdts.sets.ORSet
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -102,8 +105,13 @@ object testSignalExpressions {
     Predef.$conforms
 
     val counterBinding = Binding[PGrowOnlyCounter]("counter")
-    val SetBinding = Binding[PSet[Int]]("set")
-
+    pSetTransmittableManual[Int, ORSet[Int]]
+    val setBinding = Binding[PSet[Int]]("set")
+    /* val counterBinding = Binding[PGrowOnlyCounter]("counter")(BindingBuilder.value[PGrowOnlyCounter](
+      Marshallable.marshallable[GCounter, Int, GCounter](
+        PGrowOnlyCounter.pGrowOnlyCounterTransmittable.asInstanceOf[Transmittable[GCounter,Int,GCounter]], implicitly[Serializable[Int]]
+      ))
+    */
     println("running server")
 
     val (sr, s2) = { //server
