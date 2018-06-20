@@ -1,19 +1,16 @@
 package rescala.crdts
 
-// import io.circe.generic.auto._
-import loci.communicator.ws.akka._
-import loci.registry.{Binding, BindingBuilder, Registry}
+import io.circe.generic.auto._
+import loci.registry.{Binding, BindingBuilder}
 import loci.serializer.circe._
-import loci.transmitter.RemoteRef
-import rescala._
+import loci.transmitter.{Marshallable, Transmittable}
 import rescala.crdts.pvars.Publishable._
+import rescala.crdts.statecrdts.sets.ORSet
 //import rescala.crdts.pvars.PGrowOnlyCounter._
 //import rescala.crdts.pvars.PSet._
 import rescala.crdts.pvars._
 // import rescala.crdts.statecrdts.sets.ORSet
 
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
 import scala.language.higherKinds
 
 /*
@@ -98,67 +95,76 @@ object testSignalExpressions {
 
     //val p:Publishable[_,_] = PGrowOnlyCounter()
 
-    val counterBinding = Binding[PGrowOnlyCounter]("counter")(BindingBuilder.value[PGrowOnlyCounter])
-    // pSetTransmittableManual[Int, ORSet[Int]]
+//    val counterBinding = Binding[PGrowOnlyCounter]("counter")(BindingBuilder.value[PGrowOnlyCounter])
+//     pSetTransmittableManual[Int, ORSet[Int]]
+
+      PVarTransmittable[ORSet[Int], PSet[Int]]
+//    transmittable: Transmittable[Crdt, Crdt, Crdt],
+//    serializable: Serializable[Crdt],
+//    pVarFactory: PVarFactory[P[A, Crdt]]
+//    ): PushBasedTransmittable[P[A, Crdt], Crdt, Crdt, Crdt, P[A, Crdt]] = {
+    val marsh: Marshallable[PSet[Int]] {
+  type Result = PSet[Int]
+} = Marshallable.marshallable
     val setBinding = Binding[PSet[Int]]("set")
     /* val counterBinding = Binding[PGrowOnlyCounter]("counter")(BindingBuilder.value[PGrowOnlyCounter](
       Marshallable.marshallable[GCounter, Int, GCounter](
         PGrowOnlyCounter.pGrowOnlyCounterTransmittable.asInstanceOf[Transmittable[GCounter,Int,GCounter]], implicitly[Serializable[Int]]
       ))
-    */
-    println("running server")
-
-    val (sr, s2) = { //server
-      val registry = new Registry
-      registry.listen(WS(1099))
-
-      val l1 = PGrowOnlyCounter(10)
-      registry.bind(counterBinding)(l1)
-
-      (registry, l1)
-    }
-
-    println("running client")
-
-    /**
-      * { //client
-      * val registry = new Registry
-      * val connection: Future[RemoteRef] = registry.connect(WS("ws://localhost:1099/"))
-      *connection.foreach { remote =>
-      * val subscribedSig = registry.lookup(counterBinding, remote)
-      * println("subscription")
-      *subscribedSig.foreach(c => c.valueSignal.observe(v => println("client value: " + v)))
-      * }
-      *connection.failed.foreach(println)
-      * *
-      *
-      * }
-      **/
-
-    val (cr, c1) = { //client2
-      val registry = new Registry
-      val connection: Future[RemoteRef] = registry.connect(WS("ws://localhost:1099/"))
-      val remote: RemoteRef = Await.result(connection, Duration.Inf)
-      val subscribedSig: Future[PGrowOnlyCounter] = registry.lookup(counterBinding, remote)
-      val counter: PGrowOnlyCounter = Await.result(subscribedSig, Duration.Inf)
-      (registry, counter)
-    }
-
-    println("done")
-    val s: Signal[Int] = Signal {
-      c1() + s2()
-    }
-    c1.increase
-    s2.increase
-
-    Thread.sleep(1000)
-    Thread.sleep(1000)
-
-    println("s2: " + s2.value)
-    println("c1: " + c1.value)
-    println("s: " + s.readValueOnce)
-    println("slept")
-    sr.terminate()
+//    */
+//    println("running server")
+//
+//    val (sr, s2) = { //server
+//      val registry = new Registry
+//      registry.listen(WS(1099))
+//
+//      val l1 = PGrowOnlyCounter(10)
+//      registry.bind(counterBinding)(l1)
+//
+//      (registry, l1)
+//    }
+//
+//    println("running client")
+//
+//    /**
+//      * { //client
+//      * val registry = new Registry
+//      * val connection: Future[RemoteRef] = registry.connect(WS("ws://localhost:1099/"))
+//      *connection.foreach { remote =>
+//      * val subscribedSig = registry.lookup(counterBinding, remote)
+//      * println("subscription")
+//      *subscribedSig.foreach(c => c.valueSignal.observe(v => println("client value: " + v)))
+//      * }
+//      *connection.failed.foreach(println)
+//      * *
+//      *
+//      * }
+//      **/
+//
+//    val (cr, c1) = { //client2
+//      val registry = new Registry
+//      val connection: Future[RemoteRef] = registry.connect(WS("ws://localhost:1099/"))
+//      val remote: RemoteRef = Await.result(connection, Duration.Inf)
+//      val subscribedSig: Future[PGrowOnlyCounter] = registry.lookup(counterBinding, remote)
+//      val counter: PGrowOnlyCounter = Await.result(subscribedSig, Duration.Inf)
+//      (registry, counter)
+//    }
+//
+//    println("done")
+//    val s: Signal[Int] = Signal {
+//      c1() + s2()
+//    }
+//    c1.increase
+//    s2.increase
+//
+//    Thread.sleep(1000)
+//    Thread.sleep(1000)
+//
+//    println("s2: " + s2.value)
+//    println("c1: " + c1.value)
+//    println("s: " + s.readValueOnce)
+//    println("slept")
+//    sr.terminate()
   }
 }
 

@@ -60,7 +60,7 @@ abstract class Publishable[A, F]()(implicit stateCRDT: StateCRDT[A, F]) {
 
   // publish this as read-only to the distribution engine
   def publishReadOnly(name: String)(implicit engine: ActorRef): Unit = {
-    locally(name);
+    locally(name)
     locally(engine)
     //    implicit val timeout = Timeout(60.second)
     //    val sendMessage = engine ? PublishReadOnly(name, this)
@@ -80,9 +80,12 @@ object Publishable {
     * @tparam Crdt CRDT type
     * @tparam P    pVar type
     **/
-  implicit def PVarTransmittable[Crdt, P <: Publishable[_, Crdt]](implicit transmittable: Transmittable[Crdt, Crdt, Crdt],
-                                                                  serializable: Serializable[Crdt],
-                                                                  pVarFactory: PVarFactory[P]): PushBasedTransmittable[P, Crdt, Crdt, Crdt, P] = {
+  implicit def PVarTransmittable[Crdt, P](implicit
+                                          ev: P <:< Publishable[_, Crdt],
+                                          transmittable: Transmittable[Crdt, Crdt, Crdt],
+                                          serializable: Serializable[Crdt],
+                                          pVarFactory: PVarFactory[P]
+                                         ): PushBasedTransmittable[P, Crdt, Crdt, Crdt, P] = {
     new PushBasedTransmittable[P, Crdt, Crdt, Crdt, P] {
 
       type From = Crdt
@@ -100,7 +103,7 @@ object Publishable {
       }
 
       def receive(value: To, remote: RemoteRef, endpoint: Endpoint[From, To]): P = {
-        val pVar: P = pVarFactory.create()
+        val pVar = pVarFactory.create()
         locally(pVar.valueSignal)
         pVar.externalChanges fire value
 
