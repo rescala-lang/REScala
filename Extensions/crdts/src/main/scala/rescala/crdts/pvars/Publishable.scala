@@ -4,7 +4,6 @@ import akka.actor.ActorRef
 import loci.transmitter._
 import rescala._
 import rescala.crdts.statecrdts.StateCRDT
-import rescala.crdts.statecrdts.counters.GCounter
 
 /**
   * Classes implementing this trait can be published and are then synchronized by the DistributionEngine (specified by
@@ -78,16 +77,16 @@ object Publishable {
   }
 
   /**
-    * @tparam C CRDT type
-    * @tparam P pVar type
+    * @tparam Crdt CRDT type
+    * @tparam P    pVar type
     **/
-  class PVarTransmittable[S, C, P <: Publishable[_, C]](implicit
-                                                        transmittable: Transmittable[C, S, C],
-                                                        serializable: Serializable[S], pVarFactory: PVarFactory[P]) {
-    new PushBasedTransmittable[P, C, S, C, P] {
+  implicit def PVarTransmittable[Crdt, P <: Publishable[_, Crdt]](implicit transmittable: Transmittable[Crdt, Crdt, Crdt],
+                                                                  serializable: Serializable[Crdt],
+                                                                  pVarFactory: PVarFactory[P]): PushBasedTransmittable[P, Crdt, Crdt, Crdt, P] = {
+    new PushBasedTransmittable[P, Crdt, Crdt, Crdt, P] {
 
-      type From = C
-      type To = C
+      type From = Crdt
+      type To = Crdt
 
       def send(value: P, remote: RemoteRef, endpoint: Endpoint[From, To]): To = {
 
