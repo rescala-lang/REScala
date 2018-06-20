@@ -1,3 +1,5 @@
+// shadow sbt-scalajs' crossProject and CrossType from Scala.js 0.6.x
+import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
 // set the prompt (for this build) to include the project id.
 ThisBuild / shellPrompt := { state => Project.extract(state).currentRef.project + "> " }
@@ -41,7 +43,7 @@ lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
   .settings(cfg.noPublish)
 
 
-lazy val rescala = crossProject.in(file("Main"))
+lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Main"))
   .settings(
     name := "rescala",
     cfg.base,
@@ -64,7 +66,7 @@ lazy val rescalaJS = rescala.js
 
 //lazy val rescalaNative = rescala.native
 
-lazy val tests = crossProject.in(file("Tests"))
+lazy val tests = crossProject(JSPlatform, JVMPlatform).in(file("Tests"))
   .settings(name := "rescala-tests", cfg.noPublish, cfg.base, cfg.test, exportJars := true)
   .dependsOn(rescala)
   .jvmSettings().jsSettings(cfg.js)
@@ -88,7 +90,7 @@ lazy val reswing = project.in(file("Extensions/RESwing"))
   .settings(name := "reswing", cfg.base, cfg.bintray, cfg.strictScalac, lib.scalaswing)
   .dependsOn(rescalaJVM)
 
-lazy val restore = crossProject.in(file("Extensions/restoration"))
+lazy val restore = crossProject(JSPlatform, JVMPlatform).in(file("Extensions/restoration"))
   .settings(name := "restoration", cfg.base, cfg.strictScalac, lib.circe, cfg.noPublish)
   .dependsOn(rescala, tests % "test->test")
   .jsSettings(cfg.js, lib.jsdom)
