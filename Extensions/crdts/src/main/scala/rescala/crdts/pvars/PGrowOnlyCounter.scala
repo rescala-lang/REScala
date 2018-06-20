@@ -2,12 +2,7 @@ package rescala.crdts.pvars
 
 import rescala.Evt
 import rescala.crdts.pvars.Publishable.PVarFactory
-import rescala.crdts.statecrdts.StateCRDT
 import rescala.crdts.statecrdts.counters.GCounter
-import loci.communicator.ws.akka._
-import loci.registry.{Binding, Registry}
-import loci.serializer.circe._
-import loci.transmitter.{RemoteRef, _}
 
 /**
   * DistributedGCounters are increase-only counter variables.
@@ -23,8 +18,6 @@ case class PGrowOnlyCounter(initial: GCounter = GCounter(0),
     internalChanges.fire(crdtSignal.readValueOnce.increase)
     value
   }
-
-  override def createNew: Publishable[Int, GCounter] = new PGrowOnlyCounter()
 }
 
 object PGrowOnlyCounter {
@@ -75,6 +68,7 @@ object PGrowOnlyCounter {
   }
   */
 
+  /*
 
   implicit def pGrowOnlyCounterTransmittable[S](implicit
                                                 transmittable: Transmittable[GCounter, S, GCounter],
@@ -117,6 +111,8 @@ object PGrowOnlyCounter {
     }
 
   }
+
+  */
 
 
   /**

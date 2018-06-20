@@ -1,10 +1,8 @@
 package rescala.crdts.pvars
 
 import loci.transmitter._
-import loci.serializer.upickle._
 import rescala._
-import rescala.crdts.pvars.Publishable.{PVarFactory, PVarTransmittable}
-import rescala.crdts.statecrdts.counters.GCounter
+import rescala.crdts.pvars.Publishable.PVarFactory
 import rescala.crdts.statecrdts.sets.ORSet
 
 case class PSet[A](initial: ORSet[A] = ORSet[A](),
@@ -74,10 +72,5 @@ object PSet {
       }
     }
 
-  }
-
-  implicit def pSetTransmittable[A, S](implicit transmittable: Transmittable[ORSet[A], S, ORSet[A]],
-                                       serializable: Serializable[S], pVarFactory: PVarFactory[PSet[A]]) = {
-    new PVarTransmittable[S, ORSet[A], PSet[A]]
   }
 }

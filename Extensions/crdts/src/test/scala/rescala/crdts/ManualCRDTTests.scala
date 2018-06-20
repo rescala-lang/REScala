@@ -1,18 +1,16 @@
 package rescala.crdts
 
-import io.circe.generic.auto._
+// import io.circe.generic.auto._
 import loci.communicator.ws.akka._
 import loci.registry.{Binding, BindingBuilder, Registry}
 import loci.serializer.circe._
-import loci.transmitter.{RemoteRef, _}
-import loci.transmitter.Serializable
-import rescala.crdts.pvars._
-import rescala.crdts.pvars.Publishable.PVarFactory
-import rescala.crdts.pvars.PGrowOnlyCounter._
-import rescala.crdts.pvars.PSet._
-import rescala.crdts.statecrdts.counters.GCounter
+import loci.transmitter.RemoteRef
 import rescala._
-import rescala.crdts.statecrdts.sets.ORSet
+import rescala.crdts.pvars.Publishable._
+//import rescala.crdts.pvars.PGrowOnlyCounter._
+//import rescala.crdts.pvars.PSet._
+import rescala.crdts.pvars._
+// import rescala.crdts.statecrdts.sets.ORSet
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -100,12 +98,8 @@ object testSignalExpressions {
 
     //val p:Publishable[_,_] = PGrowOnlyCounter()
 
-    implicit def test: String = "a"
-
-    Predef.$conforms
-
-    val counterBinding = Binding[PGrowOnlyCounter]("counter")
-    pSetTransmittableManual[Int, ORSet[Int]]
+    val counterBinding = Binding[PGrowOnlyCounter]("counter")(BindingBuilder.value[PGrowOnlyCounter])
+    // pSetTransmittableManual[Int, ORSet[Int]]
     val setBinding = Binding[PSet[Int]]("set")
     /* val counterBinding = Binding[PGrowOnlyCounter]("counter")(BindingBuilder.value[PGrowOnlyCounter](
       Marshallable.marshallable[GCounter, Int, GCounter](
