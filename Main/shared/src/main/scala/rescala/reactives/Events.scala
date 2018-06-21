@@ -66,7 +66,7 @@ object Events {
   def fold[T: ReSerializable, S <: Struct](dependencies: Set[ReSource[S]], init: T)(expr: (StaticTicket[S], () => T) => T)(implicit ticket: CreationTicket[S]): Signal[T, S] = {
     ticket { initialTurn =>
       initialTurn.create[Pulse[T], StaticSignal[T, S]](dependencies,
-        Initializer.InitializedSignal[Pulse[T]](Pulse.tryCatch(Pulse.Value(init))), inite = false) {
+        Initializer.InitializedSignal[Pulse[T]](Pulse.tryCatch(Pulse.Value(init)))(ReSerializable.pulseSerializable), inite = false) {
         state => new StaticSignal[T, S](state, expr, ticket.rename) with DisconnectableImpl[S]
       }
     }

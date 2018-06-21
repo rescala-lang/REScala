@@ -12,11 +12,15 @@ import scalatags.JsDom.tags2.section
 
 import rescalatags._
 
+
 object TodoMVC {
 
   implicit val storingEngine: LocalStorageStore = new LocalStorageStore()
   import storingEngine._
+
   import rescala.restoration.ReCirce._
+  import io.circe.Encoder._
+  import io.circe.Decoder._
 
 //  var unique = 0
 

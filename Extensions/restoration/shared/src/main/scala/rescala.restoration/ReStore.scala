@@ -20,7 +20,7 @@ class ReStoringTurn(restore: ReStore) extends LevelBasedPropagation[ReStoringStr
             new ReStoringStructType[P, ReStoringStruct](restore, name, is.serializable, is)
           case Some(v) =>
             //println(s"old struct $name $s")
-            val restoredValue = Initializer.InitializedSignal(is.serializable.deserialize(v).get)
+            val restoredValue = Initializer.InitializedSignal(is.serializable.deserialize(v).get)(is.serializable)
             new ReStoringStructType[P, ReStoringStruct](restore, name, is.serializable, restoredValue)
         }
       case _ =>
