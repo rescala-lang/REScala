@@ -28,8 +28,9 @@ trait ReactiveReflection[-P] extends Reactive[FullMVStruct] with ReactiveReflect
     submit(new SupersedeFraming(turn, this, supersede) {
       override def doCompute(): Unit = {
         turn.newBranchFromRemote(TurnPhase.Framing)
-        FullMVEngine.myAwait(turn.ensurePredecessorReplication(), host.timeout)
+        val async = turn.ensurePredecessorReplication()
         FullMVEngine.myAwait(supersede.ensurePredecessorReplication(), host.timeout)
+        FullMVEngine.myAwait(async, host.timeout)
         super.doCompute()
       }
       override def toString: String = "Remote" + super.toString
@@ -51,8 +52,9 @@ trait ReactiveReflection[-P] extends Reactive[FullMVStruct] with ReactiveReflect
     submit(new NotificationWithFollowFrame(turn, this, changed = false, followFrame) {
       override def doCompute(): Unit = {
         turn.newBranchFromRemote(TurnPhase.Executing)
-        FullMVEngine.myAwait(turn.ensurePredecessorReplication(), host.timeout)
+        val async = turn.ensurePredecessorReplication()
         FullMVEngine.myAwait(followFrame.ensurePredecessorReplication(), host.timeout)
+        FullMVEngine.myAwait(async, host.timeout)
         super.doCompute()
       }
       override def toString: String = "Remote" + super.toString
@@ -75,8 +77,9 @@ trait ReactiveReflection[-P] extends Reactive[FullMVStruct] with ReactiveReflect
     submit(new NotificationWithFollowFrame(turn, this, changed = true, followFrame) {
       override def doCompute(): Unit = {
         turn.newBranchFromRemote(TurnPhase.Executing)
-        FullMVEngine.myAwait(turn.ensurePredecessorReplication(), host.timeout)
+        val async = turn.ensurePredecessorReplication()
         FullMVEngine.myAwait(followFrame.ensurePredecessorReplication(), host.timeout)
+        FullMVEngine.myAwait(async, host.timeout)
         buffer(turn, value)
         super.doCompute()
       }
