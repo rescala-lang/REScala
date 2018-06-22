@@ -70,7 +70,7 @@ class RemoteGlitchLoop {
 
   @Benchmark
   def run(): Unit = {
-    val newValue = sourceEngine.transaction(source) { t =>
+    val newValue = sourceEngine.executeTurn(source) { t =>
       val newValue = t.now(source) + 1
       source.admit(newValue)(t)
       newValue

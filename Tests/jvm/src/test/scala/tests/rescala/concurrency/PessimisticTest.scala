@@ -2,19 +2,18 @@ package tests.rescala.concurrency
 
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 
-import rescala.Engines
-import rescala.core.Scheduler
+import rescala.Interfaces
 import rescala.core.infiltration.JVMInfiltrator
 import rescala.parrp.{Backoff, ParRP}
 import rescala.twoversion.TwoVersionSchedulerImpl
 import tests.rescala.testtools.{RETests, ReevaluationTracker, SetAndExtractTransactionHandle, _}
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
 
 class PessimisticTest extends RETests {
-  engines(Engines.parrp)("SynchronizedReevaluation should synchronize reevaluations"){ (engine: Scheduler[TestStruct]) =>
+  engines(Interfaces.parrp)("SynchronizedReevaluation should synchronize reevaluations"){ engine =>
     import engine._
 
     val v1 = Var(false)
@@ -40,7 +39,7 @@ class PessimisticTest extends RETests {
     assert(s2.readValueOnce === true)
   }
 
-  engines(Engines.parrp)("Pessimistic Engines should safely execute concurrently admitted updates to summed signals"){ engine =>
+  engines(Interfaces.parrp)("Pessimistic Engines should safely execute concurrently admitted updates to summed signals"){ engine =>
     import engine._
 
     val size = 10
@@ -65,8 +64,8 @@ class PessimisticTest extends RETests {
   }
 
   "Pessimistic Engines should correctly execute crossed dynamic discoveries" in { for (_ <- 1 to 1000) {
-    val engine = Engines.parrp
-    import engine._
+    val interface = Interfaces.parrp
+    import interface._
 
     val initA = "init a"
     val initB = "init b"
@@ -82,10 +81,10 @@ class PessimisticTest extends RETests {
     val (syncInB, syncB) = SynchronizedReevaluation(vB)("sync B")
 
     // so if syncA becomes true, this adds a dependency on vB
-    val crossA = engine.dynamic(syncA) { t => if (t.depend(syncA) != initA) t.depend(syncB) else staticA} ("crossA")
+    val crossA = interface.dynamic(syncA) { t => if (t.depend(syncA) != initA) t.depend(syncB) else staticA} ("crossA")
 
     // this does as above, causing one or the other to access something which will change later
-    val crossB = engine.dynamic(syncB) { t => if (t.depend(syncB) != initB) t.depend(syncA) else staticB } ("crossB")
+    val crossB = interface.dynamic(syncB) { t => if (t.depend(syncB) != initB) t.depend(syncA) else staticB } ("crossB")
 
     val resultsA = new ReevaluationTracker(crossA)("resultsA")
     val resultsB = new ReevaluationTracker(crossB)("resultsB")
@@ -117,7 +116,7 @@ class PessimisticTest extends RETests {
   }}
 
   "ParRP should (not?) Add And Remove Dependency In One Turn" in {
-    import Engines.parrp._
+    import rescala.Interfaces.parrp._
 
     // this behavior is not necessary for correctness; adding and removing the edge (i.e. regs and unregs +=1)
     // would be equally correct. It is implemented purely to discover accidental behavior changes, but should
@@ -126,7 +125,7 @@ class PessimisticTest extends RETests {
     val b2 = b0.map(identity).map(!_) // dirty hacks to get il_3 to reevaluate first on levelbased engines
     val i0 = Var(11)
     var reeval = 0
-    val i1_3 = explicitEngine.dynamic(b0) { t => reeval += 1; if (t.depend(b0) && t.depend(b2)) t.depend(i0) else 42 }
+    val i1_3 = dynamic(b0) { t => reeval += 1; if (t.depend(b0) && t.depend(b2)) t.depend(i0) else 42 }
 
     var regs = 0
     var unregs = 0
@@ -174,7 +173,7 @@ class PessimisticTest extends RETests {
     assert(unregs === 0)
   }
 
-  engines(Engines.parrp)("Pessimistic Engines should not retrofit a reevaluation for t2, after a dependency might have been added and removed again inside a single t1 While Owned By t2"){ engine =>
+  engines(Interfaces.parrp)("Pessimistic Engines should not retrofit a reevaluation for t2, after a dependency might have been added and removed again inside a single t1 While Owned By t2"){ engine =>
     import engine._
 
     val bl0 = Var(false)
@@ -247,7 +246,7 @@ class PessimisticTest extends RETests {
     assert(Set(List(turn1, turn1), List(turn1)).contains(reeval), " -- for reference, turn2 was "+turn2)
   }
 
-  engines(Engines.parrp)("pessimistic engines should add two dynamic dependencies and remove only one"){ engine =>
+  engines(Interfaces.parrp)("pessimistic engines should add two dynamic dependencies and remove only one"){ engine =>
     import engine._
 
     val bl0 = Var(false)

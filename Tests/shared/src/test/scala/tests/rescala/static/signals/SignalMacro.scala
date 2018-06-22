@@ -211,7 +211,7 @@ class SignalMacro extends RETests { multiEngined { engine => import engine._
       type A = Int
       lazy val v = Var(4)
     }
-    assert(o.s.readValueOnce(engine) == 4)
+    assert(o.s.readValueOnce == 4)
   }
 
   test("default Arguments"){

@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 import benchmarks._
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
-import rescala.core.{Scheduler, Struct}
+import rescala.core.{Scheduler, Struct};import rescala.interface.RescalaInterface
 import rescala.reactives.{Signal, Signals, Var}
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -16,7 +16,7 @@ import rescala.reactives.{Signal, Signals, Var}
 @Threads(1)
 @State(Scope.Benchmark)
 class LowContentionSerialOrder[S <: Struct] extends BusyThreads {
-  implicit var engine: Scheduler[S] = _
+  var engine: RescalaInterface[S] = _; implicit def scheduler: Scheduler[S] = engine.scheduler
   var sources: Array[Var[Int, S]] = _
   var grid: Array[Array[Signal[Int, S]]] = _
   @Param(Array("16"))

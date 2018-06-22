@@ -3,12 +3,13 @@ package benchmarks.philosophers
 import java.util.concurrent.locks.ReentrantLock
 import java.util.concurrent.{Executors, ThreadLocalRandom}
 
-import rescala.core.{REName, Scheduler, Struct}
+import rescala.core.{REName, Struct}
+import rescala.interface.RescalaInterface
 import rescala.parrp.Backoff
 
 import scala.annotation.tailrec
-import scala.concurrent.{Await, Future, TimeoutException}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future, TimeoutException}
 import scala.util.{Failure, Success, Try}
 
 sealed trait Dynamicity
@@ -17,7 +18,7 @@ object Dynamicity {
   case object SemiStatic extends Dynamicity
   case object Dynamic extends Dynamicity
 }
-abstract class PaperPhilosophers[S <: Struct](val size: Int, val engine: Scheduler[S], dynamicity: Dynamicity) {
+abstract class PaperPhilosophers[S <: Struct](val size: Int, val engine: RescalaInterface[S], dynamicity: Dynamicity) {
 
   import engine._
 

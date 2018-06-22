@@ -6,7 +6,8 @@ import java.util.concurrent.locks.{Lock, ReentrantLock}
 import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
-import rescala.core.{Scheduler, Struct}
+import rescala.core.Struct
+import rescala.interface.RescalaInterface
 import rescala.reactives.Signal
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -18,7 +19,7 @@ import rescala.reactives.Signal
 @State(Scope.Benchmark)
 class MultiReverseFan[S <: Struct] {
 
-  var engine: Scheduler[S] = _
+  var engine: RescalaInterface[S] = _
 
   var sources: Array[rescala.reactives.Var[Int, S]] = _
   var results: Array[Signal[Int, S]] = _
@@ -47,11 +48,11 @@ class MultiReverseFan[S <: Struct] {
   @Benchmark
   def run(step: Step, params: ThreadParams): Unit = {
     val index = params.getThreadIndex
-    if (locks == null) sources(index).set(step.run())(engine)
+    if (locks == null) sources(index).set(step.run())(engine.scheduler)
     else {
       locks(index / groupSize).lock()
       try {
-        sources(index).set(step.run())(engine)
+        sources(index).set(step.run())(engine.scheduler)
       }
       finally locks(index / groupSize).unlock()
     }

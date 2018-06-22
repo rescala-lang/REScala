@@ -5,7 +5,8 @@ import java.util.concurrent.TimeUnit
 import benchmarks._
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
-import rescala.core.{Scheduler, REName, Struct}
+import rescala.core.{REName, Scheduler, Struct}
+import rescala.interface.RescalaInterface
 import rescala.reactives.{Signal, Var}
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -16,7 +17,8 @@ import rescala.reactives.{Signal, Var}
 @Threads(1)
 @State(Scope.Benchmark)
 class SignalMapGrid[S <: Struct] extends BusyThreads {
-  implicit var engine: Scheduler[S] = _
+  var engine: RescalaInterface[S] = _
+  implicit def scheduler: Scheduler[S] = engine.scheduler
   var source: Var[Int, S] = _
   var leafs: Seq[Signal[Int, S]] = _
   @Param(Array("1", "4", "16"))

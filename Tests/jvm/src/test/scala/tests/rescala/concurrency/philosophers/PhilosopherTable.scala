@@ -2,14 +2,15 @@ package tests.rescala.concurrency.philosophers
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import rescala.core.{Scheduler, Struct, WrapUpTicket}
-
+import rescala.core.{Struct, WrapUpTicket}
+import rescala.interface.RescalaInterface
 import rescala.parrp.Backoff
 import rescala.reactives.Signals.lift
 import rescala.reactives.{Signal, Var}
 
-class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit val engine: Scheduler[S]) {
-  import engine.Var
+class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(val interface: RescalaInterface[S]) {
+  import interface.Var
+  import interface.implicitScheduler
   import tests.rescala.concurrency.philosophers.PhilosopherTable._
 
   val seatings: Seq[Seating[S]] = createTable(philosopherCount)
@@ -58,7 +59,7 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit 
   }
 
   def tryEat(seating: Seating[S]): Boolean =
-    engine.transactionWithWrapup(seating.philosopher) { turn =>
+    interface.transactionWithWrapup(seating.philosopher) { turn =>
       val forksAreFree = turn.now(seating.vision) == Ready
       if (forksAreFree) {
         // println(Thread.currentThread().getName + " start " + turn + ": Eating on " + seating.philosopher)

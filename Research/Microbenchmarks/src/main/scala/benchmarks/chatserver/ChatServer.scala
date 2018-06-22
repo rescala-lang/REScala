@@ -1,11 +1,12 @@
 package benchmarks.chatserver
 
-import rescala.core.{Scheduler, Struct}
+import rescala.core.Struct
+import rescala.interface.RescalaInterface
 
 import scala.collection.LinearSeq
 import scala.collection.immutable.Queue
 
-class ChatServer[S <: Struct]()(val engine: Scheduler[S]) {
+class ChatServer[S <: Struct]()(val engine: RescalaInterface[S]) {
 
   import engine._
 

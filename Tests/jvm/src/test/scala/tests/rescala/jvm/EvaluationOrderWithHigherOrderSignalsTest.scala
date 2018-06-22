@@ -1,6 +1,6 @@
 package tests.rescala.jvm
 
-import rescala.core.Scheduler
+import rescala.interface.RescalaInterface
 import tests.rescala.testtools.RETests
 
 sealed trait ChangeX
@@ -9,7 +9,7 @@ case object SetUnchanged extends ChangeX
 case object SetChanged extends ChangeX
 
 class EvaluationOrderWithHigherOrderSignalsTest extends RETests {
-  def run(engine: Scheduler[TestStruct], changeX: ChangeX): Unit = {
+  def run(engine: RescalaInterface[TestStruct], changeX: ChangeX): Unit = {
     import engine._
 
     val initialX = "initialValue"

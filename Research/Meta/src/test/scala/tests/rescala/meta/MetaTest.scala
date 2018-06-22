@@ -5,7 +5,7 @@ import rescala.api.Api
 import rescala.meta._
 
 class MetaTest extends FunSuite {
-  import rescala.Engines.synchron
+  import rescala.Schedulers.synchron
   implicit val reifier = new rescala.meta.EngineReifier
 
   test("meta AST creation test") {

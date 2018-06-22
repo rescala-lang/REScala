@@ -38,7 +38,7 @@ class PhilosopherCompetition[S <: Struct] {
 
   def tryUpdateCycle(comp: Competition[S], seating: Seating[S]): Boolean = {
     val res = comp.table.tryEat(seating)
-    if (res) seating.philosopher.set(Thinking)(comp.table.engine)
+    if (res) seating.philosopher.set(Thinking)(comp.table.engine.scheduler)
     !res
   }
 
@@ -68,7 +68,7 @@ class PhilosopherCompetition[S <: Struct] {
         try {
           thirdLock.lock()
           try {
-            seating.philosopher.set(Thinking)(comp.table.engine)
+            seating.philosopher.set(Thinking)(comp.table.engine.scheduler)
           }
           finally {thirdLock.unlock()}
         }
@@ -123,7 +123,7 @@ class Competition[S <: Struct] extends BusyThreads {
   def cleanEating(): Unit = {
     //print(s"actually eaten: ${ table.eaten.get() } measured: ")
     table.eaten.set(0)
-    table.seatings.foreach(_.philosopher.set(Thinking)(table.engine))
+    table.seatings.foreach(_.philosopher.set(Thinking)(table.engine.scheduler))
   }
 
   final def deal[A](initialDeck: List[A], numberOfHands: Int): List[List[A]] = {

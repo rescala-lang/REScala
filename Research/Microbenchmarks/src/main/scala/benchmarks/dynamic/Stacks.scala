@@ -5,8 +5,8 @@ import java.util.concurrent.TimeUnit
 import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
-import rescala.Engines
-import rescala.core.{Scheduler, Struct}
+import rescala.Schedulers
+import rescala.core.{Scheduler, Struct};import rescala.interface.RescalaInterface
 import rescala.reactives._
 
 import scala.collection.immutable.Range
@@ -22,15 +22,15 @@ class StackState[S <: Struct] {
   var sources: Array[Var[Int, S]] = _
   var results: Array[Signal[Int, S]] = _
   var dynamics: Array[Signal[Int, S]] = _
-  var engine: Scheduler[S] = _
+  var engine: RescalaInterface[S] = _
   var isManual: Boolean = false
 
   @Setup(Level.Iteration)
   def setup(params: BenchmarkParams, eParam: EngineParam[S], work: Workload, size: Size, step: Step) = {
     engine = eParam.engine
     val threads = params.getThreads
-    implicit val e = engine
-    if (e == Engines.unmanaged) { isManual = true }
+    implicit def scheduler: Scheduler[S] = engine.scheduler
+    if (scheduler == Schedulers.unmanaged) {isManual = true }
     sources = Range(0, threads).map(_ => Var(0)).toArray
     results = sources.map { source =>
       var cur: Signal[Int, S] = source
@@ -39,7 +39,7 @@ class StackState[S <: Struct] {
     }
 
     dynamics = results.zipWithIndex.map { case (r, i) =>
-      e.Signal.dynamic {
+      engine.Signal.dynamic {
         val v = r()
         val idx = i + (if (step.test(v)) 2 else 1)
         results(idx % threads)()
@@ -58,14 +58,13 @@ class Stacks[S <: Struct] {
 
   @Benchmark
   def run(state: StackState[S], step: Step, params: ThreadParams) = {
+    implicit def scheduler: Scheduler[S] = state.engine.scheduler
     if (state.isManual) state.synchronized {
-      implicit val engine = state.engine
       val index = params.getThreadIndex % params.getThreadCount
       state.sources(index).set(step.run())
       state.dynamics(index).readValueOnce
     }
     else {
-      implicit val engine = state.engine
       val index = params.getThreadIndex % params.getThreadCount
       state.sources(index).set(step.run())
       state.dynamics(index).readValueOnce

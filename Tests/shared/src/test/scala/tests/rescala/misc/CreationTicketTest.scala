@@ -1,6 +1,6 @@
 package tests.rescala.misc
 
-import rescala.core.Struct
+import rescala.core.{Scheduler, Struct}
 import tests.rescala.testtools.RETests
 
 
@@ -8,14 +8,14 @@ class CreationTicketTest extends RETests { multiEngined { engine => import engin
 
   /* this test uses some shady planned()(identity) to get the turn object out of the transaction
    * you should not do this. */
-  def getTurn[S2 <: Struct](implicit engine: rescala.core.Scheduler[S2]): rescala.core.Initializer[S2] = engine.transaction()(_.creation)
+  def getTurn[S2 <: Struct](implicit engine: Scheduler[S2]): rescala.core.Initializer[S2] = engine.executeTurn()(_.creation)
 
   test("none Dynamic No Implicit") {
     assert(implicitly[CreationTicket].self === Right(engine))
   }
 
   test("some Dynamic No Implicit") {
-    engine.transaction() { (dynamicTurn: AdmissionTicket) =>
+    engine.transaction() { dynamicTurn: AdmissionTicket =>
       assert(implicitly[CreationTicket].self === Right(engine))
       assert(implicitly[CreationTicket].apply(identity) === dynamicTurn.creation)
     }
@@ -33,7 +33,7 @@ class CreationTicketTest extends RETests { multiEngined { engine => import engin
     //      throw new IllegalStateException("pipeline engine cannot run a turn inside a turn")
     //    }
     //    else {
-    engine.transaction() { (dynamicTurn: AdmissionTicket) =>
+    engine.transaction() { dynamicTurn: AdmissionTicket =>
       implicit val implicitTurn: Creation = getTurn
       assert(implicitly[CreationTicket].self === Left(implicitTurn))
       assert(implicitly[CreationTicket].apply(identity) === implicitTurn)
@@ -44,7 +44,7 @@ class CreationTicketTest extends RETests { multiEngined { engine => import engin
 
 
   test("implicit In Closures") {
-    val closureDefinition: Creation = getTurn(engine)
+    val closureDefinition: Creation = getTurn(engine.scheduler)
     val closure = {
       implicit def it: Creation = closureDefinition
       () => implicitly[CreationTicket]

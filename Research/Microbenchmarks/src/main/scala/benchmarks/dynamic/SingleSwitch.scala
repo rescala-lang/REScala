@@ -5,8 +5,8 @@ import java.util.concurrent.TimeUnit
 import benchmarks.{EngineParam, Step}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
-import rescala.Engines
-import rescala.core.{Scheduler, Struct}
+import rescala.Schedulers
+import rescala.core.{Scheduler, Struct};import rescala.interface.RescalaInterface
 import rescala.reactives.Var
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -18,7 +18,8 @@ import rescala.reactives.Var
 @State(Scope.Benchmark)
 class SingleSwitch[S <: Struct] {
 
-  implicit var engine: Scheduler[S] = _
+  var engine: RescalaInterface[S] = _
+  implicit def scheduler: Scheduler[S] = engine.scheduler
 
   var source: Var[Int, S] = _
 
@@ -34,7 +35,7 @@ class SingleSwitch[S <: Struct] {
       if (step.test(source())) d1() else d2()
     }
 
-    if (engine == Engines.unmanaged) isManual = true
+    if (engine.scheduler == Schedulers.unmanaged) isManual = true
 
   }
 

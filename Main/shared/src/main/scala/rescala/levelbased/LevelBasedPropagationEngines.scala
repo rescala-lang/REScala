@@ -18,17 +18,14 @@ trait LevelBasedPropagationEngines {
     override def dynamicDependencyInteraction(dependency: ReSource[SimpleStruct]): Unit = {}
   }
 
-  type SimpleEngine = Scheduler[SimpleStruct]
-
-
-  implicit val synchron: SimpleEngine = {
-    new TwoVersionSchedulerImpl[SimpleStruct, SimpleNoLock]("Synchron", () =>  new SimpleNoLock ) {
+  implicit val synchron: Scheduler[SimpleStruct] = {
+    new TwoVersionSchedulerImpl[SimpleStruct, SimpleNoLock]("Synchron", () =>  new SimpleNoLock) {
       override def executeTurn[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R): R =
         synchronized { super.executeTurn(initialWrites, admissionPhase) }
     }
   }
 
-  implicit val unmanaged: SimpleEngine = new TwoVersionSchedulerImpl[SimpleStruct, SimpleNoLock]("Unmanaged", () => new SimpleNoLock())
+  implicit val unmanaged: Scheduler[SimpleStruct] = new TwoVersionSchedulerImpl[SimpleStruct, SimpleNoLock]("Unmanaged", () => new SimpleNoLock())
 
 }
 

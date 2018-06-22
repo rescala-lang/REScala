@@ -6,7 +6,8 @@ import java.util.concurrent.{ThreadLocalRandom, TimeUnit}
 import benchmarks.EngineParam
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, Blackhole}
-import rescala.core.{Scheduler, Struct}
+import rescala.core.Struct
+import rescala.interface.RescalaInterface
 import rescala.reactives._
 
 import scala.concurrent.stm.{Ref, atomic}
@@ -26,7 +27,7 @@ class ReactiveState[S <: Struct] {
   var globalReadChance: Double = _
   var modifiedReadChance: Double = _
 
-  var engine: Scheduler[S] = _
+  var engine: RescalaInterface[S] = _
   var accounts: Array[Var[Int, S]] = _
   var windows: Array[Array[Var[Int, S]]] =_
 
@@ -38,7 +39,7 @@ class ReactiveState[S <: Struct] {
   def setup(params: BenchmarkParams, engine: EngineParam[S]) = {
     this.engine = engine.engine
     val threads = params.getThreads
-    implicit val e = this.engine
+    implicit val e = this.engine.implicitScheduler
 
     modifiedReadChance = globalReadChance / threads
 

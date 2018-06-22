@@ -6,14 +6,15 @@ import org.scalatest.FlatSpec
 import org.scalatest.prop.TableDrivenPropertyChecks
 import rescala.Engines
 import rescalatags._
-
 import scalatags.JsDom.all._
 import rescala.default.doNotSerialize
+import rescala.interface.RescalaInterface
 
 class RescalatagsTest extends FlatSpec with TableDrivenPropertyChecks {
 
   forAll(Table("engine", Engines.all: _*)) { engine =>
-    import engine._
+    val interface = RescalaInterface.interfaceFor(engine)
+    import interface._
 
     behavior of engine.toString
 

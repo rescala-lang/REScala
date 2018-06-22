@@ -6,7 +6,7 @@ import rescala.meta.DataFlowGraph
 import rescala.meta.optimization.OperatorFusion
 
 class OperatorFusionTest extends FunSuite {
-  import rescala.Engines.synchron
+  import rescala.Schedulers.synchron
   implicit val reifier = new rescala.meta.EngineReifier
 
   test("Event map fusion test") {

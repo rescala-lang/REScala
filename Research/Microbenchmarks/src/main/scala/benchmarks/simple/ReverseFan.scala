@@ -5,8 +5,9 @@ import java.util.concurrent.TimeUnit
 import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
-import rescala.Engines
-import rescala.core.{Scheduler, Struct}
+import rescala.Schedulers
+import rescala.core.Struct
+import rescala.interface.RescalaInterface
 import rescala.reactives.Signal
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -18,7 +19,7 @@ import rescala.reactives.Signal
 @State(Scope.Benchmark)
 class ReverseFan[S <: Struct] {
 
-  var engine: Scheduler[S] = _
+  var engine: RescalaInterface[S] = _
 
   var sources: Array[rescala.reactives.Var[Int, S]] = _
   var result: Signal[Int, S] = _
@@ -32,12 +33,12 @@ class ReverseFan[S <: Struct] {
     sources = Array.fill(16)(Var(step.get()))
     val intermediate = sources.map(_.map { v => {work.consume(); v + 1} })
     result = Signals.lift(intermediate) { values => work.consumeSecondary(); values.sum }
-    if (engine == Engines.unmanaged) isManual = true
+    if (engine.scheduler == Schedulers.unmanaged) isManual = true
 
   }
 
   @Benchmark
   def run(step: Step, params: ThreadParams): Unit =
-    if (isManual) synchronized {sources(params.getThreadIndex).set(step.run())(engine)}
-    else sources(params.getThreadIndex).set(step.run())(engine)
+    if (isManual) synchronized {sources(params.getThreadIndex).set(step.run())(engine.scheduler)}
+    else sources(params.getThreadIndex).set(step.run())(engine.scheduler)
 }

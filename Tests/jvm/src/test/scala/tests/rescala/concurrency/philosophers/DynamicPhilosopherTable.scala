@@ -1,11 +1,11 @@
 package tests.rescala.concurrency.philosophers
 
-import rescala.core.{Scheduler, REName, Struct}
+import rescala.core.{REName, Struct}
+import rescala.interface.RescalaInterface
 import tests.rescala.concurrency.philosophers.PhilosopherTable._
 
-class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(override implicit val engine: Scheduler[S]) extends PhilosopherTable(philosopherCount, work)(engine) {
-
-  import engine.{Signal, Var}
+class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(ri: RescalaInterface[S]) extends PhilosopherTable(philosopherCount, work)(ri) {
+  import interface.{Var, Signal, implicitScheduler}
 
   override def createTable(tableSize: Int): Seq[Seating[S]] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize

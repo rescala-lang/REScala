@@ -2,6 +2,7 @@ package rescala.simpleprop
 
 import rescala.core.Initializer.InitValues
 import rescala.core.{Initializer, ReSource, Reactive, ReevTicket, Scheduler, Struct}
+import rescala.interface.Aliases
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -39,7 +40,7 @@ object SimpleCreation extends Initializer[SimpleStruct] {
 }
 
 
-object SimpleScheduler extends Scheduler[SimpleStruct] {
+object SimpleScheduler extends Scheduler[SimpleStruct] with Aliases[SimpleStruct] {
 
   var idle = true
   override def executeTurn[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R) = synchronized {

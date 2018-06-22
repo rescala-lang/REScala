@@ -16,7 +16,7 @@ trait Disconnectable[S <: Struct] {
 trait DisconnectableImpl[S <: Struct] extends Reactive[S] with Disconnectable[S] {
   @volatile private var disconnected = false
   final def disconnect()(implicit engine: Scheduler[S]): Unit = {
-    engine.transaction(this) { turn =>
+    engine.executeTurn(this) { turn =>
       disconnected = true
     }
   }

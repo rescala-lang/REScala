@@ -1,6 +1,6 @@
 package rescala.crdts.pvars
 
-import rescala.default.implicitEngine
+import rescala.default.implicitScheduler
 import rescala.default.Evt
 import rescala.crdts.pvars.Publishable.PVarFactory
 import rescala.crdts.statecrdts.counters.GCounter

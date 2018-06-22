@@ -2,12 +2,17 @@ package rescala.restoration
 
 import org.scalajs.dom
 import org.scalajs.dom.Storage
+import rescala.core.Scheduler
+import rescala.interface.RescalaInterface
 import rescala.twoversion.TwoVersionScheduler
 
 import scala.collection.mutable
 import scala.util.Random
 
-class LocalStorageStore(domain: String = "") extends TwoVersionScheduler[ReStoringStruct, ReStoringTurn] with ReStore {
+class LocalStorageStore(domain: String = "") extends TwoVersionScheduler[ReStoringStruct, ReStoringTurn] with ReStore with RescalaInterface[ReStoringStruct] {
+
+
+  override def scheduler: Scheduler[ReStoringStruct] = this
 
   val storage: Storage = dom.window.localStorage
 

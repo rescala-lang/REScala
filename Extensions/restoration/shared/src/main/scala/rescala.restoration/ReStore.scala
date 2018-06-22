@@ -1,7 +1,8 @@
 package rescala.restoration
 
 import rescala.core.Initializer.InitValues
-import rescala.core.{Initializer, ReSerializable, ReSource, Struct}
+import rescala.core.{Initializer, ReSerializable, ReSource, Scheduler, Struct}
+import rescala.interface.RescalaInterface
 import rescala.levelbased.{LevelBasedPropagation, LevelStruct, LevelStructTypeImpl}
 import rescala.twoversion.TwoVersionScheduler
 
@@ -35,7 +36,10 @@ class ReStoringTurn(restore: ReStore) extends LevelBasedPropagation[ReStoringStr
 
 }
 
-class ReStoringStructType[P, S <: Struct](storage: ReStore, val name: String, serializable: ReSerializable[P], initialVal: InitValues[P])
+class ReStoringStructType[P, S <: Struct](storage: ReStore,
+                                          val name: String,
+                                          serializable: ReSerializable[P],
+                                          initialVal: InitValues[P])
   extends LevelStructTypeImpl[P, S](initialVal) {
   override def commit(): Unit = {
     super.commit()
@@ -57,7 +61,11 @@ trait ReStore {
 }
 
 
-class ReStoringScheduler(domain: String = "", restoreFrom: mutable.Map[String, String] = mutable.HashMap()) extends TwoVersionScheduler[ReStoringStruct, ReStoringTurn] with ReStore {
+class ReStoringScheduler(domain: String = "", restoreFrom: mutable.Map[String, String] = mutable.HashMap())
+  extends TwoVersionScheduler[ReStoringStruct, ReStoringTurn] with ReStore with RescalaInterface[ReStoringStruct] {
+
+
+  override def scheduler: Scheduler[ReStoringStruct] = this
 
   def values: mutable.Map[String, String] = restoreFrom
   var count = 0

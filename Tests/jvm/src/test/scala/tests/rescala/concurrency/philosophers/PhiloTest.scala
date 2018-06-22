@@ -1,15 +1,16 @@
 package tests.rescala.concurrency.philosophers
 
 import org.scalatest.FunSuite
-import rescala.Engines
-import rescala.core.{Scheduler, Struct}
+import rescala.Interfaces
+import rescala.core.Struct
+import rescala.interface.RescalaInterface
 import tests.rescala.testtools.Spawn
 
 import scala.concurrent.TimeoutException
 import scala.util.{Failure, Success}
 
 class PhiloTest extends FunSuite {
-  def `eat!`[S <: Struct](engine: Scheduler[S], dynamic: Boolean): Unit = {
+  def `eat!`[S <: Struct](engine: RescalaInterface[S], dynamic: Boolean): Unit = {
     val size = 3
     val table =
       if (!dynamic) new PhilosopherTable(size, 0)(engine)
@@ -43,7 +44,7 @@ class PhiloTest extends FunSuite {
     assert(threadFailures.isEmpty, threadFailures.size + " threads failed.")
   }
 
-  test("eating Contests Spinning") {`eat!`(Engines.parrp, dynamic = false)}
-  test("eating Contests Spinning Dynamic") {`eat!`(Engines.parrp, dynamic = true)}
+  test("eating Contests Spinning") {`eat!`(Interfaces.parrp, dynamic = false)}
+  test("eating Contests Spinning Dynamic") {`eat!`(Interfaces.parrp, dynamic = true)}
 
 }

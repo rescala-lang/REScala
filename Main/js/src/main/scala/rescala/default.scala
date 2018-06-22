@@ -1,5 +1,5 @@
 package rescala
-import rescala.core.ReSerializable
+import rescala.core.{ReSerializable, Scheduler}
 import rescala.levelbased.SimpleStruct
 
 /** REScala has two main abstractions. [[rescala.Event]] and [[rescala.Signal]] commonly referred to as reactives.
@@ -9,7 +9,8 @@ import rescala.levelbased.SimpleStruct
   * signals additionally can be created using [[rescala.Signal]] expressions.
   **/
 object default extends rescala.interface.RescalaInterface[SimpleStruct] {
-  override implicit def explicitEngine: rescala.Engines.SimpleEngine = rescala.Engines.default
+  override implicit def scheduler: Scheduler[SimpleStruct] = rescala.Engines.default
+
   /** @group internal */
   implicit def doNotSerialize[T]: ReSerializable[T] = ReSerializable.serializationUnavailable
 

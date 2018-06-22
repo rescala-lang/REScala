@@ -6,6 +6,7 @@ import benchmarks.{EngineParam, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
 import rescala.core.{Scheduler, Struct}
+import rescala.interface.RescalaInterface
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -16,7 +17,8 @@ import rescala.core.{Scheduler, Struct}
 @State(Scope.Benchmark)
 class TurnCreation[S <: Struct] {
 
-  implicit var engine: Scheduler[S] = _
+  var engine: RescalaInterface[S] = _
+  implicit def scheduler: Scheduler[S] = engine.scheduler
 
 
   @Setup

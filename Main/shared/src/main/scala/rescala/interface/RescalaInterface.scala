@@ -1,11 +1,17 @@
 package rescala.interface
 
-import rescala.core.{ReSerializable, Struct}
+import rescala.core.{ReSerializable, Scheduler, Struct}
 import rescala.macros.MacroTags.{Dynamic, Static}
 import rescala.reactives.Source
 import rescala.reactives
 
 import scala.language.{existentials, implicitConversions}
+
+object RescalaInterface {
+  def interfaceFor[S <: Struct](someScheduler: Scheduler[S]): RescalaInterface[S] = new RescalaInterface[S] {
+    override def scheduler: Scheduler[S] = someScheduler
+  }
+}
 
 /** Rescala has two main abstractions. [[Event]] and [[Signal]] commonly referred to as reactives.
   * Use [[Var]] to create signal sources and [[Evt]] to create event sources.
@@ -27,46 +33,17 @@ import scala.language.{existentials, implicitConversions}
   * @groupdesc internal Methods and type aliases for advanced usages, these are most relevant to abstract
   *           over multiple scheduler implementations.
   **/
-abstract class RescalaInterface[S <: Struct] {
+trait RescalaInterface[S <: Struct] extends Aliases[S] {
   // need the import inside of the trait, otherwise scala complains that it is shadowed by rescala.macros
   import scala.language.experimental.macros
 
   /** @group internal */
-  def explicitEngine: rescala.core.Scheduler[S]
+  def scheduler: rescala.core.Scheduler[S]
   /** @group internal */
-  implicit def implicitEngine: rescala.core.Scheduler[S] = explicitEngine
-
-  /** Signals represent time changing values of type A
-    * @group reactive */
-  final type Signal[+A] = reactives.Signal[A, S]
-  /** Events represent discrete occurrences of values of type A
-    * @group reactive */
-  final type Event[+A] = reactives.Event[A, S]
-  /** @group reactive */
-  final type Observe = reactives.Observe[S]
-  /** @group reactive */
-  final type Var[A] = reactives.Var[A, S]
-  /** @group reactive */
-  final type Evt[A] = reactives.Evt[A, S]
-  /** @group internal */
-  final type StaticTicket = rescala.core.StaticTicket[S]
-  /** @group internal */
-  final type DynamicTicket = rescala.core.DynamicTicket[S]
-  /** @group internal */
-  final type AdmissionTicket = rescala.core.AdmissionTicket[S]
-  /** @group internal */
-  final type WrapUpTicket = rescala.core.WrapUpTicket[S]
-  /** @group internal */
-  final type CreationTicket = rescala.core.CreationTicket[S]
-  /** @group internal */
-  final type Creation = rescala.core.Initializer[S]
-  /** @group internal */
-  final type Reactive = rescala.core.Reactive[S]
-  /** @group internal */
-  final type ReSource = rescala.core.ReSource[S]
+  implicit def implicitScheduler: rescala.core.Scheduler[S] = scheduler
 
   /** @group create */
-  final def Evt[A](): Evt[A] = reactives.Evt[A, S]()(explicitEngine)
+  final def Evt[A](): Evt[A] = reactives.Evt[A, S]()(scheduler)
 
   //  final def Var[A](v: A): Var[A] = reactives.Var[A, S](v)(Ticket.fromEngineImplicit(this))
   //  final def Var[A](): Var[A] = reactives.Var[A, S]()(Ticket.fromEngineImplicit(this))
@@ -138,7 +115,7 @@ abstract class RescalaInterface[S <: Struct] {
     * @group update
     */
   def transaction[R](initialWrites: ReSource*)(admissionPhase: AdmissionTicket => R): R = {
-    explicitEngine.executeTurn(initialWrites.toSet, admissionPhase)
+    scheduler.executeTurn(initialWrites: _*)(admissionPhase)
   }
 
   /**
@@ -174,7 +151,7 @@ abstract class RescalaInterface[S <: Struct] {
     * @group update
     */
   def update(changes: (Source[S, A], A) forSome { type A } *): Unit = {
-    explicitEngine.executeTurn(changes.foldLeft(Set.empty[ReSource]) { case (accu, (source, _)) =>
+    scheduler.executeTurn(changes.foldLeft(Set.empty[ReSource]) { case (accu, (source, _)) =>
       assert(!accu.contains(source), s"must not admit multiple values for the same source ($source was assigned multiple times)")
       accu + source
     }, { t =>

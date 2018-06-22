@@ -6,8 +6,9 @@ import java.util.concurrent.locks.{ReadWriteLock, ReentrantReadWriteLock}
 import benchmarks.{EngineParam, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
-import rescala.Engines
-import rescala.core.{Scheduler, Struct}
+import rescala.Schedulers
+import rescala.core.{Scheduler, Struct};import rescala.interface.RescalaInterface
+import rescala.interface.RescalaInterface
 import rescala.reactives.Var
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -19,7 +20,8 @@ import rescala.reactives.Var
 @State(Scope.Benchmark)
 class SingleVar[S <: Struct] {
 
-  implicit var engine: Scheduler[S] = _
+  var engine: RescalaInterface[S] = _
+  implicit def scheduler: Scheduler[S] = engine.scheduler
 
   var source: Var[Boolean, S] = _
   var current: Boolean = _
@@ -31,7 +33,7 @@ class SingleVar[S <: Struct] {
     engine = engineParam.engine
     current = false
     source = engine.Var(current)
-    if (engineParam.engine == Engines.unmanaged) lock = new ReentrantReadWriteLock()
+    if (engineParam.engine.scheduler == Schedulers.unmanaged) lock = new ReentrantReadWriteLock()
   }
 
   @Benchmark

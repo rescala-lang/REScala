@@ -5,6 +5,8 @@ import java.util.concurrent.TimeUnit
 import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations._
 import rescala.core.{Scheduler, Struct}
+import rescala.interface.RescalaInterface
+import rescala.levelbased.SimpleStruct
 import rescala.reactives.{Evt, Var}
 import rescala.restoration.ReStoringScheduler
 import rescala.restoration.ReCirce._
@@ -18,7 +20,9 @@ import rescala.restoration.ReCirce._
 @State(Scope.Thread)
 class RestoringSimple[S <: Struct] {
 
-  implicit var engine: Scheduler[S] = _
+  var engine: RescalaInterface[S] = _
+  implicit def scheduler: Scheduler[S] = engine.scheduler
+
 
   var source: Evt[Int, S] = _
   var result: List[Any] = _
@@ -56,7 +60,9 @@ class RestoringSimple[S <: Struct] {
 @State(Scope.Thread)
 class RestoringVar[S <: Struct] {
 
-  implicit var engine: Scheduler[S] = _
+  var engine: RescalaInterface[S] = _
+  implicit def scheduler: Scheduler[S] = engine.scheduler
+
   var sourceVar: Var[Int, S] = _
 
   @Setup
@@ -80,7 +86,10 @@ class RestoringSnapshotVsInitial {
 
   var snapshot: scala.collection.mutable.Map[String, String] = _
 
-  def build[S <: Struct](implicit engine: Scheduler[S], size: Int) = {
+  val syncInterface: RescalaInterface[SimpleStruct] = RescalaInterface.interfaceFor(rescala.Schedulers.synchron)
+
+  def build[S <: Struct](engine: RescalaInterface[S], size: Int) = {
+    import engine.implicitScheduler
     val source = engine.Evt[Int]()
     val res = for (i <- 1 to size) yield {
       source.count.map(_+1).map(_+1)
@@ -108,7 +117,7 @@ class RestoringSnapshotVsInitial {
 
   @Benchmark
   def noSnapshots(size: Size) = {
-    build(rescala.Engines.synchron, size.size)
+    build(syncInterface, size.size)
   }
 
 

@@ -7,6 +7,7 @@ import benchmarks.{EngineParam, Step, Workload}
 import org.openjdk.jmh.annotations.{Benchmark, BenchmarkMode, Fork, Measurement, Mode, OutputTimeUnit, Param, Scope, Setup, State, Threads, Warmup}
 import org.openjdk.jmh.infra.BenchmarkParams
 import rescala.core.{Scheduler, Struct}
+import rescala.interface.RescalaInterface
 import rescala.reactives.{Signal, Var}
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -18,7 +19,8 @@ import rescala.reactives.{Signal, Var}
 @State(Scope.Thread)
 class StaticVsDynamic[S <: Struct] {
 
-  implicit var engine: Scheduler[S] = _
+  var engine: RescalaInterface[S] = _
+  implicit def scheduler: Scheduler[S] = engine.scheduler
 
   @Param(Array("true", "false"))
   var static: Boolean = _

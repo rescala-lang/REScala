@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import benchmarks.{EngineParam, Workload}
 import org.openjdk.jmh.annotations._
-import rescala.core.{Scheduler, Struct}
+import rescala.core.{Scheduler, Struct};import rescala.interface.RescalaInterface
 import rescala.reactives._
 
 @AuxCounters
@@ -36,13 +36,13 @@ class ExpensiveConflict[S <: Struct] {
   var cheapSource: Var[Int, S] = _
   var expensiveSource: Var[Int, S] = _
   var result: Signal[Int, S] = _
-  var engine: Scheduler[S] = _
+  var engine: RescalaInterface[S] = _
   var tried: Int = _
 
   @Setup(Level.Iteration)
   def setup(engine: EngineParam[S], work: Workload) = {
     this.engine = engine.engine
-    implicit val e = this.engine
+    implicit def scheduler: Scheduler[S] = this.engine.scheduler
     tried = 0
     cheapSource = Var(input.incrementAndGet())
     expensiveSource = Var(input.incrementAndGet())
@@ -54,14 +54,14 @@ class ExpensiveConflict[S <: Struct] {
   @Group("g")
   @GroupThreads(1)
   def cheap() = {
-    cheapSource.set(input.incrementAndGet())(engine)
+    cheapSource.set(input.incrementAndGet())(engine.scheduler)
   }
 
   @Benchmark
   @Group("g")
   @GroupThreads(1)
   def expensive(counter: EvaluationCounter) = {
-    expensiveSource.set(input.incrementAndGet())(engine)
+    expensiveSource.set(input.incrementAndGet())(engine.scheduler)
     counter.tried += tried
     counter.succeeded += 1
     tried = 0

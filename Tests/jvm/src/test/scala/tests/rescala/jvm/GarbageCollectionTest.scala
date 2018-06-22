@@ -4,12 +4,12 @@ import java.lang.ref.{PhantomReference, ReferenceQueue}
 
 import org.scalatest.prop.Whenever
 import rescala.reactives.Observe
-import rescala.stm.STMEngine
+import rescala.stm.STMScheduler
 import tests.rescala.testtools.RETests
 
 class GarbageCollectionTest extends RETests with Whenever { multiEngined { engine => import engine._
 
-  if(engine == STMEngine.stm) { test("nothing"){} }
+  if(engine.scheduler == STMScheduler.stm) {test("nothing"){} }
 else {
 
   test("garbage collection for simple signal mappings"){

@@ -45,7 +45,7 @@ trait Api {
 object Api {
   object synchronApi extends Api {
 
-    import rescala.Engines.synchron
+    import rescala.Schedulers.synchron
 
     override type Signal[+A] = synchron.Signal[A]
     override type Event[+A] = synchron.Event[A]

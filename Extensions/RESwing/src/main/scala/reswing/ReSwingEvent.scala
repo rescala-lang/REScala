@@ -1,7 +1,7 @@
 package reswing
 
 import rescala.macros.cutOutOfUserComputation
-import rescala.default.{Event, Evt, implicitEngine}
+import rescala.default.{Event, Evt, implicitScheduler}
 
 import scala.language.implicitConversions
 

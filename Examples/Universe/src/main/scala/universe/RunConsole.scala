@@ -32,7 +32,7 @@ object RunConsole {
       world batchSpawn(nAnimals, nPlants)
 
       val start = System.nanoTime()
-      import universe.Globals.engine
+      import universe.Globals.engine.implicitScheduler
       while (world.time.week.readValueOnce < 2) {
         world.tick()
         world.runPlan()
@@ -67,7 +67,7 @@ object RunPrinting {
     world batchSpawn(nAnimals, nPlants)
 
     val start = System.nanoTime()
-    import universe.Globals.engine
+    import universe.Globals.engine.implicitScheduler
     world.time.day.observe{ _ =>
       println(world.time)
       println(world.status)

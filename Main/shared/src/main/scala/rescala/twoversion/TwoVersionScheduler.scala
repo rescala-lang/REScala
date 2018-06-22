@@ -1,6 +1,7 @@
 package rescala.twoversion
 
-import rescala.core.{Initializer, SchedulerImpl}
+import rescala.core.{AdmissionTicket, Initializer, ReSource, SchedulerImpl}
+import rescala.reactives.Signal
 
 /**
   * Implementation of the turn handling defined in the Engine trait
@@ -9,7 +10,7 @@ import rescala.core.{Initializer, SchedulerImpl}
   * @tparam TImpl Turn type used by the engine
   */
 trait TwoVersionScheduler[S <: TwoVersionStruct, TImpl <: TwoVersionPropagation[S] with Initializer[S]] extends SchedulerImpl[S, TImpl] {
-  override private[rescala] def singleReadValueOnce[A](reactive: Signal[A]) = reactive.interpret(reactive.state.base(null))
+  override private[rescala] def singleReadValueOnce[A](reactive: Signal[A, S]) = reactive.interpret(reactive.state.base(null))
 
   /** goes through the whole turn lifecycle
     * - create a new turn and put it on the stack
@@ -28,7 +29,7 @@ trait TwoVersionScheduler[S <: TwoVersionStruct, TImpl <: TwoVersionPropagation[
     * - run the party! phase
     *   - not yet implemented
     * */
-  override def executeTurn[R](initialWrites: Set[ReSource], admissionPhase: (AdmissionTicket) => R) = {
+  override def executeTurn[R](initialWrites: Set[ReSource[S]], admissionPhase: AdmissionTicket[S] => R): R = {
     val turn = makeTurn(_currentTurn.value)
 
     val result = try {

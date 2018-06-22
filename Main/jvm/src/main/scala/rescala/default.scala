@@ -10,7 +10,7 @@ import rescala.parrp.ParRP
   * signals additionally can be created using [[rescala.Signal]] expressions.
   **/
 object default extends interface.RescalaInterface[ParRP] {
-  override def explicitEngine: Scheduler[ParRP] = rescala.Engines.parrp
+  override def scheduler: Scheduler[ParRP] = rescala.Schedulers.parrp
   /** @group internal */
   implicit def serializationUnavailable[T]: ReSerializable[T] = ReSerializable.serializationUnavailable
 }

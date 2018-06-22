@@ -4,11 +4,11 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import benchmarks.philosophers.PhilosopherTable._
 import org.openjdk.jmh.infra.Blackhole
-import rescala.core.{Scheduler, Struct}
+import rescala.core.{Scheduler, Struct};import rescala.interface.RescalaInterface
 import rescala.reactives._
 
-class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit val engine: Scheduler[S]) {
-
+class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(val engine: RescalaInterface[S]) {
+  implicit def scheduler: Scheduler[S] = engine.scheduler
 
   val seatings = createTable(philosopherCount)
 

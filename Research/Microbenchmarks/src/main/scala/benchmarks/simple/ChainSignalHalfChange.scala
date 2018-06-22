@@ -6,6 +6,7 @@ import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
 import rescala.core.{Scheduler, Struct}
+import rescala.interface.RescalaInterface
 import rescala.reactives.{Signal, Var}
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -17,7 +18,8 @@ import rescala.reactives.{Signal, Var}
 @State(Scope.Thread)
 class ChainSignalHalfChange[S <: Struct] {
 
-  implicit var engine: Scheduler[S] = _
+  var engine: RescalaInterface[S] = _;
+  implicit def scheduler: Scheduler[S] = engine.scheduler
 
   var source: Var[Int, S] = _
   var result: Signal[Int, S] = _
@@ -28,10 +30,10 @@ class ChainSignalHalfChange[S <: Struct] {
     source = Var(step.run())
     result = source
     for (_ <- Range(0, size.size)) {
-      result = result.map{v => val r = v + 1; work.consume(); r}
+      result = result.map { v => val r = v + 1; work.consume(); r }
     }
     for (_ <- Range(0, size.size)) {
-      result = result.map{v => v + 1; work.consume(); 0}
+      result = result.map { v => v + 1; work.consume(); 0 }
     }
   }
 

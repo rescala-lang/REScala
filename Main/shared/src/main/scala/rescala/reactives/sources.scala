@@ -25,7 +25,7 @@ final class Evt[T, S <: Struct] private[rescala](initialState: Estate[S, T], nam
   @deprecated("use .fire instead of apply", "0.21.0")
   def apply(value: T)(implicit fac: Scheduler[S]): Unit = fire(value)
   def fire()(implicit fac: Scheduler[S], ev: Unit =:= T): Unit = fire(ev(Unit))(fac)
-  def fire(value: T)(implicit fac: Scheduler[S]): Unit = fac.transaction(this) {admit(value)(_)}
+  def fire(value: T)(implicit fac: Scheduler[S]): Unit = fac.executeTurn(this) {admit(value)(_)}
   override def disconnect()(implicit engine: Scheduler[S]): Unit = ()
   def admitPulse(pulse: Pulse[T])(implicit ticket: AdmissionTicket[S]): Unit = {
     ticket.recordChange(new InitialChange[S] {
@@ -55,13 +55,13 @@ final class Var[A, S <: Struct] private[rescala](initialState: Signals.Sstate[S,
   override protected[rescala] def state: State = initialState
 
   //def update(value: A)(implicit fac: Engine[S]): Unit = set(value)
-  def set(value: A)(implicit fac: Scheduler[S]): Unit = fac.transaction(this) {admit(value)(_)}
+  def set(value: A)(implicit fac: Scheduler[S]): Unit = fac.executeTurn(this) {admit(value)(_)}
 
-  def transform(f: A => A)(implicit fac: Scheduler[S]): Unit = fac.transaction(this) { t =>
+  def transform(f: A => A)(implicit fac: Scheduler[S]): Unit = fac.executeTurn(this) { t =>
     admit(f(t.now(this)))(t)
   }
 
-  def setEmpty()(implicit fac: Scheduler[S]): Unit = fac.transaction(this)(t => admitPulse(Pulse.empty)(t))
+  def setEmpty()(implicit fac: Scheduler[S]): Unit = fac.executeTurn(this)(t => admitPulse(Pulse.empty)(t))
 
   override def disconnect()(implicit engine: Scheduler[S]): Unit = ()
 

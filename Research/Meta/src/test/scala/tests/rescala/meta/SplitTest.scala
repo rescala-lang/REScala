@@ -6,7 +6,7 @@ import rescala.meta.DataFlowGraph
 import rescala.meta.optimization.GraphSplit
 
 class SplitTest extends FunSuite {
-  import rescala.Engines.synchron
+  import rescala.Schedulers.synchron
   implicit val reifier = new rescala.meta.EngineReifier
 
   test("Copy split test") {
