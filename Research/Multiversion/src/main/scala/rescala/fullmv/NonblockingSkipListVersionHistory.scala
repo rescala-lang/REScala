@@ -431,7 +431,7 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
     // or drop retrofitting with firstFrame retrofit for followFraming, then pending may update from 0 to -1 here
     version.decrementPending()
 
-    if(java.util.concurrent.ThreadLocalRandom.current().nextDouble < .05d) Thread.`yield`()
+    // if(java.util.concurrent.ThreadLocalRandom.current().nextDouble < .05d) Thread.`yield`()
     // check if the notification triggers subsequent actions
     if (version == firstFrame && version.pending == 0) {
       if (version.changed > 0) {

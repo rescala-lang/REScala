@@ -47,7 +47,7 @@ class ReactiveMirror[A](val getValue: FullMVTurn => A, val reflectionProxy: Reac
     } else {
       reflectionProxy.asyncResolvedUnchanged(txn)
     }
-    true -> NotificationResultAction.DoNothing
+    false -> NotificationResultAction.DoNothing
   }
   override def notifyFollowFrame(txn: FullMVTurn, changed: Boolean, followFrame: FullMVTurn): (Boolean, NotificationResultAction[FullMVTurn, Reactive[FullMVStruct]]) = {
     FullMVEngine.myAwait(txn.addRemoteBranch(TurnPhase.Executing), timeout)
@@ -56,7 +56,7 @@ class ReactiveMirror[A](val getValue: FullMVTurn => A, val reflectionProxy: Reac
     } else {
       reflectionProxy.asyncResolvedUnchangedFollowFrame(txn, followFrame)
     }
-    true -> NotificationResultAction.DoNothing
+    false -> NotificationResultAction.DoNothing
   }
   override def latestValue: Value = ???
   override def reevIn(turn: FullMVTurn): Nothing = ???
