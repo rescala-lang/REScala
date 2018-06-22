@@ -28,7 +28,7 @@ trait FullMVState[V, T <: FullMVTurn, Reactive, OutDep] {
     * @param txn     the transaction sending the notification
     * @param changed whether or not the dependency changed
     */
-  def notify(txn: T, changed: Boolean): NotificationResultAction[T, OutDep]
+  def notify(txn: T, changed: Boolean): (Boolean, NotificationResultAction[T, OutDep])
 
   /**
     * entry point for change/nochange notification reception with follow-up framing
@@ -37,7 +37,7 @@ trait FullMVState[V, T <: FullMVTurn, Reactive, OutDep] {
     * @param changed     whether or not the dependency changed
     * @param followFrame a transaction for which to create a subsequent frame, furthering its partial framing.
     */
-  def notifyFollowFrame(txn: T, changed: Boolean, followFrame: T): NotificationResultAction[T, OutDep]
+  def notifyFollowFrame(txn: T, changed: Boolean, followFrame: T): (Boolean, NotificationResultAction[T, OutDep])
 
   def reevIn(turn: T): V
 
@@ -93,5 +93,5 @@ trait FullMVState[V, T <: FullMVTurn, Reactive, OutDep] {
     * @param maybeSuccessorFrame      maybe a reframing to perform for the first successor frame
     * @param arity                    +1 for discover adding frames, -1 for drop removing frames.
     */
-  def retrofitSinkFrames(successorWrittenVersions: Seq[T], maybeSuccessorFrame: Option[T], arity: Int): Unit
+  def retrofitSinkFrames(successorWrittenVersions: Seq[T], maybeSuccessorFrame: Option[T], arity: Int): Seq[T]
 }

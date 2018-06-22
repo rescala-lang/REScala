@@ -40,23 +40,23 @@ class ReactiveMirror[A](val getValue: FullMVTurn => A, val reflectionProxy: Reac
     reflectionProxy.asyncIncrementSupersedeFrame(txn, supersede)
     FramingBranchResult.FramingBranchEnd
   }
-  override def notify(txn: FullMVTurn, changed: Boolean): NotificationResultAction[FullMVTurn, Reactive[FullMVStruct]] = {
+  override def notify(txn: FullMVTurn, changed: Boolean): (Boolean, NotificationResultAction[FullMVTurn, Reactive[FullMVStruct]]) = {
     FullMVEngine.myAwait(txn.addRemoteBranch(TurnPhase.Executing), timeout)
     if(changed) {
       reflectionProxy.asyncNewValue(txn, getValue(txn))
     } else {
       reflectionProxy.asyncResolvedUnchanged(txn)
     }
-    NotificationResultAction.ChangedSomethingInQueue
+    true -> NotificationResultAction.DoNothing
   }
-  override def notifyFollowFrame(txn: FullMVTurn, changed: Boolean, followFrame: FullMVTurn): NotificationResultAction[FullMVTurn, Reactive[FullMVStruct]] = {
+  override def notifyFollowFrame(txn: FullMVTurn, changed: Boolean, followFrame: FullMVTurn): (Boolean, NotificationResultAction[FullMVTurn, Reactive[FullMVStruct]]) = {
     FullMVEngine.myAwait(txn.addRemoteBranch(TurnPhase.Executing), timeout)
     if(changed) {
       reflectionProxy.asyncNewValueFollowFrame(txn, getValue(txn), followFrame)
     } else {
       reflectionProxy.asyncResolvedUnchangedFollowFrame(txn, followFrame)
     }
-    NotificationResultAction.ChangedSomethingInQueue
+    true -> NotificationResultAction.DoNothing
   }
   override def latestValue: Value = ???
   override def reevIn(turn: FullMVTurn): Nothing = ???
@@ -67,7 +67,7 @@ class ReactiveMirror[A](val getValue: FullMVTurn => A, val reflectionProxy: Reac
   override def staticAfter(txn: FullMVTurn): Nothing = ???
   override def discover(txn: FullMVTurn, add: Reactive[FullMVStruct]): (Seq[FullMVTurn], Option[FullMVTurn]) = ???
   override def drop(txn: FullMVTurn, remove: Reactive[FullMVStruct]): (Seq[FullMVTurn], Option[FullMVTurn]) = ???
-  override def retrofitSinkFrames(successorWrittenVersions: Seq[FullMVTurn], maybeSuccessorFrame: Option[FullMVTurn], arity: Int): Unit = ???
+  override def retrofitSinkFrames(successorWrittenVersions: Seq[FullMVTurn], maybeSuccessorFrame: Option[FullMVTurn], arity: Int): Seq[FullMVTurn] = ???
 
 
   override protected[rescala] def reevaluate(input: ReIn) = ???

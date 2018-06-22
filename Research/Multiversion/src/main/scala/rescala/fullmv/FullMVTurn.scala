@@ -89,7 +89,7 @@ trait FullMVTurn extends Initializer[FullMVStruct] with FullMVTurnProxy with Sub
   override protected def makeSourceStructState[P](valuePersistency: InitValues[P]): NonblockingSkipListVersionHistory[P, FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]] = {
     val state = makeDerivedStructState(valuePersistency)
     val res = state.notify(this, changed = false)
-    assert(res == NoSuccessor(Set.empty))
+    assert(res == true -> NoSuccessor(Set.empty))
     state
   }
 
@@ -99,7 +99,7 @@ trait FullMVTurn extends Initializer[FullMVStruct] with FullMVTurnProxy with Sub
     incoming.foreach { discover =>
       discover.state.dynamicAfter(this) // TODO should we get rid of this?
     val (successorWrittenVersions, maybeFollowFrame) = discover.state.discover(this, reactive)
-      reactive.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, 1)
+      reactive.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, 1).foreach(_.activeBranchDifferential(TurnPhase.Executing, 1))
     }
     reactive.state.incomings = incoming
     // Execute this notification manually to be able to execute a resulting reevaluation immediately.
@@ -107,26 +107,30 @@ trait FullMVTurn extends Initializer[FullMVStruct] with FullMVTurnProxy with Sub
     // This matches the required behavior where the code that creates this reactive is expecting the initial
     // reevaluation (if one is required) to have been completed, but cannot access values from subsequent turns
     // and hence does not need to wait for those.
+    activeBranchDifferential(TurnPhase.Executing, 1)
     val ignitionNotification = new Notification(this, reactive, changed = ignitionRequiresReevaluation)
     ignitionNotification.deliverNotification() match {
-      case NotGlitchFreeReady =>
-        if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this ignite $reactive did not spawn reevaluation.")
-      // ignore
-      case GlitchFreeReady =>
+      case (true, DoNothing) =>
+        if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this ignite $reactive spawned a branch.")
+      case (false, DoNothing) =>
+        if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this ignite $reactive did not spawn a branch or reevaluation.")
+        activeBranchDifferential(TurnPhase.Executing, -1)
+      case (retainBranch, ReevaluationReady) =>
         if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this ignite $reactive spawned reevaluation.")
-        activeBranchDifferential(TurnPhase.Executing, 1)
-        new Reevaluation(this, reactive).compute()
-      case NextReevaluation(out, succTxn) if out.isEmpty =>
+        new Reevaluation(this, reactive).doReevaluation(retainBranch)
+      case (true, NextReevaluation(out, succTxn)) if out.isEmpty =>
         if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this ignite $reactive spawned reevaluation for successor $succTxn.")
-        succTxn.activeBranchDifferential(TurnPhase.Executing, 1)
+        activeBranchDifferential(TurnPhase.Executing, -1)
         val succReev = new Reevaluation(succTxn, reactive)
         if(ForkJoinTask.inForkJoinPool()) {
           succReev.fork()
         } else {
           host.threadPool.submit(succReev)
         }
-      case otherOut: NotificationOutAndSuccessorOperation[FullMVTurn, Reactive[FullMVStruct]] if otherOut.out.isEmpty =>
-      // ignore
+      case (true, NoSuccessor(out)) if out.isEmpty=>
+        activeBranchDifferential(TurnPhase.Executing, -1)
+      case (true, FollowFraming(out, _)) if out.isEmpty=>
+        activeBranchDifferential(TurnPhase.Executing, -1)
       case other =>
         throw new AssertionError(s"$this ignite $reactive: unexpected result: $other")
     }
@@ -134,16 +138,18 @@ trait FullMVTurn extends Initializer[FullMVStruct] with FullMVTurnProxy with Sub
 
   def discover(node: ReSource[FullMVStruct], addOutgoing: Reactive[FullMVStruct]): Unit = {
     val r@(successorWrittenVersions, maybeFollowFrame) = node.state.discover(this, addOutgoing)
-    assert((successorWrittenVersions ++ maybeFollowFrame).forall(retrofit => retrofit == this || retrofit.isTransitivePredecessor(this)), s"$this retrofitting contains predecessors: discover $node -> $addOutgoing retrofits $r from ${node.state}")
+//    assert((successorWrittenVersions ++ maybeFollowFrame).forall(retrofit => retrofit == this || retrofit.isTransitivePredecessor(this)), s"$this retrofitting contains predecessors: discover $node -> $addOutgoing retrofits $r from ${node.state}")
     if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] Reevaluation($this,$addOutgoing) discovering $node -> $addOutgoing re-queueing $successorWrittenVersions and re-framing $maybeFollowFrame")
-    addOutgoing.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, 1)
+    val newBranches = addOutgoing.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, 1)
+    newBranches.foreach(_.activeBranchDifferential(TurnPhase.Executing, 1))
   }
 
   def drop(node: ReSource[FullMVStruct], removeOutgoing: Reactive[FullMVStruct]): Unit = {
     val r@(successorWrittenVersions, maybeFollowFrame) = node.state.drop(this, removeOutgoing)
-    assert((successorWrittenVersions ++ maybeFollowFrame).forall(retrofit => retrofit == this || retrofit.isTransitivePredecessor(this)), s"$this retrofitting contains predecessors: drop $node -> $removeOutgoing retrofits $r from ${node.state}")
+//    assert((successorWrittenVersions ++ maybeFollowFrame).forall(retrofit => retrofit == this || retrofit.isTransitivePredecessor(this)), s"$this retrofitting contains predecessors: drop $node -> $removeOutgoing retrofits $r from ${node.state}")
     if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] Reevaluation($this,$removeOutgoing) dropping $node -> $removeOutgoing de-queueing $successorWrittenVersions and de-framing $maybeFollowFrame")
-    removeOutgoing.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, -1)
+    val deletedBranches = removeOutgoing.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, -1)
+    deletedBranches.foreach(_.activeBranchDifferential(TurnPhase.Executing, -1))
   }
 
   private[rescala] def writeIndeps(node: Reactive[FullMVStruct], indepsAfter: Set[ReSource[FullMVStruct]]): Unit = node.state.incomings = indepsAfter

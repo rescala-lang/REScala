@@ -26,7 +26,7 @@ class DeframeTest extends FunSuite {
     assert(new Framing(turnLeftOne, middle).doFraming() === FramingBranchResult.Frame(Set(top), turnLeftOne))
     assert(new Framing(turnLeftOne, top).doFraming() === FramingBranchResult.Frame(Set(), turnLeftOne))
     turnLeftOne.completeFraming()
-    assert(new Notification(turnLeftOne, middle, changed = true).deliverNotification() === NotificationResultAction.GlitchFreeReady)
+    assert(new Notification(turnLeftOne, middle, changed = true).deliverNotification() === true -> NotificationResultAction.ReevaluationReady)
 
     val turnRightOne = engine.newTurn()
     turnRightOne.beginFraming()
@@ -46,7 +46,7 @@ class DeframeTest extends FunSuite {
     val reevMiddle = new Reevaluation(turnLeftOne, middle)
     assert(reevMiddle.processReevaluationResult(Some(123.asInstanceOf[reevMiddle.node.Value])) === NoSuccessor(Set(top)))
     //    assert(reevMiddle.processReevaluationResult(Some(123.asInstanceOf[reevMiddle.node.Value])) === FollowFraming(Set(top), turnRightTwo))
-    assert(new Notification(turnLeftOne, top, changed = true).deliverNotification() === NotificationResultAction.GlitchFreeReady)
+    assert(new Notification(turnLeftOne, top, changed = true).deliverNotification() === true -> NotificationResultAction.ReevaluationReady)
     //    assert(NotificationWithFollowFrame(turnLeftOne, top, changed = true, turnRightTwo).deliverNotification() === NotificationResultAction.GlitchFreeReady)
 
     assert(new SupersedeFraming(turnRightOne, middle, turnRightTwo).doFraming() === FramingBranchResult.FramingBranchEnd)
@@ -75,7 +75,7 @@ class DeframeTest extends FunSuite {
     assert(new Framing(turnLeftOne, middle).doFraming() === FramingBranchResult.Frame(Set(top), turnLeftOne))
     assert(new Framing(turnLeftOne, top).doFraming() === FramingBranchResult.Frame(Set(), turnLeftOne))
     turnLeftOne.completeFraming()
-    assert(new Notification(turnLeftOne, middle, changed = true).deliverNotification() === NotificationResultAction.GlitchFreeReady)
+    assert(new Notification(turnLeftOne, middle, changed = true).deliverNotification() === true -> NotificationResultAction.ReevaluationReady)
 
     val turnRightOne = engine.newTurn()
     turnRightOne.beginFraming()
@@ -99,7 +99,7 @@ class DeframeTest extends FunSuite {
     val reevMiddle = new Reevaluation(turnLeftOne, middle)
     assert(reevMiddle.processReevaluationResult(Some(123.asInstanceOf[reevMiddle.node.Value])) === NoSuccessor(Set(top)))
     //    assert(reevMiddle.processReevaluationResult(Some(123.asInstanceOf[reevMiddle.node.Value])) === FollowFraming(Set(top), turnRightTwo))
-    assert(new Notification(turnLeftOne, top, changed = true).deliverNotification() === NotificationResultAction.GlitchFreeReady)
+    assert(new Notification(turnLeftOne, top, changed = true).deliverNotification() === true -> NotificationResultAction.ReevaluationReady)
     //    assert(NotificationWithFollowFrame(turnLeftOne, top, changed = true, turnRightTwo).deliverNotification() === NotificationResultAction.GlitchFreeReady)
 
     assert(new SupersedeFraming(turnRightOne, middle, turnRightTwo).doFraming() === FramingBranchResult.Frame(Set(top), turnLeftTwo))

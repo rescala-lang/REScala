@@ -25,9 +25,8 @@ object NotificationResultAction {
   //    reev: wait/ready/unchanged/unchanged+FF/unchanged+next
   // upon reevOut:
   //    done/FF/next
-  case object NotGlitchFreeReady extends NotificationResultAction[Nothing, Nothing]
-  case object ChangedSomethingInQueue extends NotificationResultAction[Nothing, Nothing]
-  case object GlitchFreeReady extends NotificationResultAction[Nothing, Nothing]
+  case object DoNothing extends NotificationResultAction[Nothing, Nothing]
+  case object ReevaluationReady extends NotificationResultAction[Nothing, Nothing]
   sealed trait ReevOutResult[+T, +R]
   case object Glitched extends ReevOutResult[Nothing, Nothing]
   sealed trait NotificationOutAndSuccessorOperation[+T, R] extends NotificationResultAction[T, R] with ReevOutResult[T, R] {
@@ -878,7 +877,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     * @param txn the transaction sending the notification
     * @param changed whether or not the dependency changed
     */
-  override def notify(txn: T, changed: Boolean): NotificationResultAction[T, OutDep] = synchronized {
+  override def notify(txn: T, changed: Boolean): (Boolean, NotificationResultAction[T, OutDep]) = synchronized {
     val result = notify0(getFramePositionPropagating(txn), txn, changed)
     assertOptimizationsIntegrity(s"notify($txn, $changed) -> $result")
     result
@@ -890,7 +889,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     * @param changed whether or not the dependency changed
     * @param followFrame a transaction for which to create a subsequent frame, furthering its partial framing.
     */
-  override def notifyFollowFrame(txn: T, changed: Boolean, followFrame: T): NotificationResultAction[T, OutDep] = synchronized {
+  override def notifyFollowFrame(txn: T, changed: Boolean, followFrame: T): (Boolean, NotificationResultAction[T, OutDep]) = synchronized {
     val (pos, followPos) = getFramePositionsPropagating(txn, followFrame)
     _versions(followPos).pending += 1
     val result = notify0(pos, txn, changed)
@@ -898,7 +897,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     result
   }
 
-  private def notify0(position: Int, txn: T, changed: Boolean): NotificationResultAction[T, OutDep] = {
+  private def notify0(position: Int, txn: T, changed: Boolean): (Boolean, NotificationResultAction[T, OutDep]) = {
     val version = _versions(position)
     // This assertion is probably pointless as it only verifies a subset of assertStabilityIsCorrect, i.e., if this
     // would fail, then assertStabilityIsCorrect will have failed at the end of the previous operation already.
@@ -913,19 +912,15 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     }
 
     // check if the notification triggers subsequent actions
-    if (version.pending == 0) {
-      if (position == firstFrame) {
-        if (version.changed > 0) {
-          NotificationResultAction.GlitchFreeReady
-        } else {
-          // ResolvedFirstFrameToUnchanged
-          progressToNextWriteForNotification(version, version.lastWrittenPredecessorIfStable)
-        }
+    if (position == firstFrame && version.pending == 0) {
+      if (version.changed > 0) {
+        (version.changed == 1, NotificationResultAction.ReevaluationReady)
       } else {
-        NotificationResultAction.ChangedSomethingInQueue
+        // ResolvedFirstFrameToUnchanged
+        (true, progressToNextWriteForNotification(version, version.lastWrittenPredecessorIfStable))
       }
     } else {
-      NotificationResultAction.NotGlitchFreeReady
+      (version.changed == 1, NotificationResultAction.DoNothing)
     }
   }
 
@@ -1120,15 +1115,18 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     * @param maybeSuccessorFrame maybe a reframing to perform for the first successor frame
     * @param arity +1 for discover adding frames, -1 for drop removing frames.
     */
-  override def retrofitSinkFrames(successorWrittenVersions: Seq[T], maybeSuccessorFrame: Option[T], arity: Int): Unit = synchronized {
+  override def retrofitSinkFrames(successorWrittenVersions: Seq[T], maybeSuccessorFrame: Option[T], arity: Int): Seq[T]= synchronized {
     require(math.abs(arity) == 1)
     var minPos = firstFrame
-    for(txn <- successorWrittenVersions) {
+    val res = successorWrittenVersions.filter { txn =>
       val position = ensureReadVersion(txn, minPos)
       val version = _versions(position)
       // note: if drop retrofitting overtook a change notification, changed may update from 0 to -1 here!
+      val before = version.changed == 0
       version.changed += arity
+      val after = version.changed == 0
       minPos = position + 1
+      before != after
     }
 
     if (maybeSuccessorFrame.isDefined) {
@@ -1143,6 +1141,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     }
     // cannot make this assertion here because dynamic events might make the firstFrame not a frame when dropping the only incoming changed dependency..
     //assertOptimizationsIntegrity(s"retrofitSinkFrames(writes=$successorWrittenVersions, maybeFrame=$maybeSuccessorFrame)")
+    res
   }
 
   /**

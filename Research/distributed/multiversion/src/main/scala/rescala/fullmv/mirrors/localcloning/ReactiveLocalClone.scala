@@ -2,7 +2,7 @@ package rescala.fullmv.mirrors.localcloning
 
 import rescala.core._
 import rescala.fullmv.mirrors.{ReactiveMirror, ReactiveReflectionImpl, ReactiveReflectionProxy}
-import rescala.fullmv.{FullMVEngine, FullMVStruct, FullMVTurn}
+import rescala.fullmv.{FullMVEngine, FullMVStruct, FullMVTurn, TurnPhase}
 import rescala.reactives.{Event, Signal}
 
 import scala.concurrent.duration.Duration
@@ -74,7 +74,7 @@ object ReactiveLocalClone {
     val reflectionInitValues = mirrorInitValues.map{ case (mirrorTurn, value) => FullMVTurnLocalClone(mirrorTurn, reflectionHost, fakeDelay) -> value }
     val reflectionMaybeFirstFrame = mirrorMaybeFirstFrame.map((turn: FullMVTurn) => FullMVTurnLocalClone(turn, reflectionHost, fakeDelay))
 
-    reflection.state.retrofitSinkFrames(reflectionInitValues.map(_._1), reflectionMaybeFirstFrame, +1)
+    reflection.state.retrofitSinkFrames(reflectionInitValues.map(_._1), reflectionMaybeFirstFrame, +1).foreach(_.activeBranchDifferential(TurnPhase.Executing, 1))
     for((reflectionTurn, value) <- reflectionInitValues) reflection.buffer(reflectionTurn, value)
   }
 }

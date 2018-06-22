@@ -349,7 +349,7 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
     * @param txn the transaction sending the notification
     * @param changed whether or not the dependency changed
     */
-  def notify(txn: T, changed: Boolean): NotificationResultAction[T, OutDep] = {
+  def notify(txn: T, changed: Boolean): (Boolean, NotificationResultAction[T, OutDep]) = {
     val version = enqueueNotifying(txn)
     val result = notify0(version, changed)
     if(NonblockingSkipListVersionHistory.DEBUG) println(s"[${Thread.currentThread().getName}] notify $txn with change=$changed => $result.")
@@ -404,7 +404,7 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
     * @param changed whether or not the dependency changed
     * @param followFrame a transaction for which to create a subsequent frame, furthering its partial framing.
     */
-  def notifyFollowFrame(txn: T, changed: Boolean, followFrame: T): NotificationResultAction[T, OutDep] = {
+  def notifyFollowFrame(txn: T, changed: Boolean, followFrame: T): (Boolean, NotificationResultAction[T, OutDep]) = {
     val version: QueuedVersion = enqueueNotifying(txn)
     var followVersion: QueuedVersion = null
     while(followVersion == null) followVersion = enqueueFollowFraming(followFrame, version)
@@ -414,7 +414,7 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
     result
   }
 
-  private def notify0(version: QueuedVersion, changed: Boolean): NotificationResultAction[T, OutDep] = synchronized {
+  private def notify0(version: QueuedVersion, changed: Boolean): (Boolean, NotificationResultAction[T, OutDep]) = synchronized {
     if(version == firstFrame) {
       val ls = laggingLatestStable.get()
       if(ls != version) {
@@ -423,30 +423,27 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
         ls.lazySet(ls)
       }
     }
-    if (changed) {
-      // note: if drop retrofitting overtook the change notification, change may update from -1 to 0 here!
-      version.incrementChanged()
-    }
+
+    // note: if drop retrofitting overtook the change notification, change may update from -1 to 0 here!
+    val retainBranch = changed && version.incrementChanged() == 1
 
     // note: if the notification overtook a previous turn's notification with followFraming for this transaction,
     // or drop retrofitting with firstFrame retrofit for followFraming, then pending may update from 0 to -1 here
     version.decrementPending()
 
+    if(java.util.concurrent.ThreadLocalRandom.current().nextDouble < .05d) Thread.`yield`()
     // check if the notification triggers subsequent actions
-    if (version == firstFrame) {
-      if (version.pending == 0) {
-        if (version.changed > 0) {
-          NotificationResultAction.GlitchFreeReady
-        } else {
-          // ResolvedFirstFrameToUnchanged
-          version.value = Unwritten
-          findNextAndUpdateFirstFrame(version, version, version.previousWriteIfStable)
-        }
+    if (version == firstFrame && version.pending == 0) {
+      if (version.changed > 0) {
+        (retainBranch, NotificationResultAction.ReevaluationReady)
       } else {
-        NotificationResultAction.NotGlitchFreeReady
+        // ResolvedFirstFrameToUnchanged
+        assert(!retainBranch, s"On second thought, I think this *can* happen, because drops are non-blocking and may drop the 0->1 change back to 0 between above and here, but it hasn't yet, so let's see if it actually fails at some point.")
+        version.value = Unwritten
+        (true, findNextAndUpdateFirstFrame(version, version, version.previousWriteIfStable))
       }
     } else {
-      NotificationResultAction.ChangedSomethingInQueue
+      (retainBranch, NotificationResultAction.DoNothing)
     }
   }
 
@@ -944,7 +941,7 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
     * @param maybeSuccessorFrame maybe a reframing to perform for the first successor frame
     * @param arity +1 for discover adding frames, -1 for drop removing frames.
     */
-  def retrofitSinkFrames(successorWrittenVersions: Seq[T], maybeSuccessorFrame: Option[T], arity: Int): Unit = {
+  def retrofitSinkFrames(successorWrittenVersions: Seq[T], maybeSuccessorFrame: Option[T], arity: Int): Seq[T] = {
     require(math.abs(arity) == 1)
 //    @tailrec def checkFrames(current: List[T]): Unit = {
 //      current match {
@@ -961,7 +958,7 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
 //    checkFrames(successorWrittenVersions)
 
     var current = firstFrame
-    for(txn <- successorWrittenVersions) {
+    val res = successorWrittenVersions.filter { txn =>
       val version = if(current.txn == txn) {
         // can only occur for successorWrittenVersions.head
         current
@@ -974,9 +971,9 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
       }
       // note: if drop retrofitting overtook a change notification, changed may update from 0 to -1 here!
       if(arity == +1) {
-        version.incrementChanged()
+        version.incrementChanged() == 1
       } else {
-        version.decrementChanged()
+        version.decrementChanged() == 0
       }
     }
 
@@ -1001,6 +998,8 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
         version.decrementPending()
       }
     }
+
+    res
   }
 
   private def tryInsertVersion(txn: T, current: QueuedVersion, next: QueuedVersion, previousWriteIfStable: QueuedVersion, value: MaybeWritten[V]): QueuedVersion = {

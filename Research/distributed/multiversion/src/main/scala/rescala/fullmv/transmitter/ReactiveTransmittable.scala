@@ -477,7 +477,7 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
             turn
           }
 
-          state.retrofitSinkFrames(reflectionInitValues.map(_._1), reflectionMaybeFirstFrame, +1)
+          state.retrofitSinkFrames(reflectionInitValues.map(_._1), reflectionMaybeFirstFrame, +1).foreach(_.activeBranchDifferential(TurnPhase.Executing, 1))
           for((reflectionTurn, v) <- reflectionInitValues) reflection.buffer(reflectionTurn, v.toPulse)
 
           turn.ignite(reflection, Set.empty, ignitionRequiresReevaluation)

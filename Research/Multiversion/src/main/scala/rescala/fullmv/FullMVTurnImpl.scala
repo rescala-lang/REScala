@@ -7,9 +7,8 @@ import rescala.core.{InitialChange, ReSource}
 import rescala.fullmv.mirrors.Host
 import rescala.fullmv.sgt.synchronization._
 
-import scala.annotation.elidable.ASSERTION
-import scala.annotation.{elidable, tailrec}
-import scala.concurrent.{Await, Future}
+import scala.annotation.tailrec
+import scala.concurrent.Future
 
 class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GUID, val userlandThread: Thread, initialLock: SubsumableLock) extends FullMVTurn {
   var initialChanges: collection.Map[ReSource[FullMVStruct], InitialChange[FullMVStruct]] = _
@@ -231,6 +230,7 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
         if(pSecure > maxPhase) asyncRemoteBranchComplete(pSecure)
         Future.successful(pSecure)
       } else {
+        Thread.`yield`()
         acquireRemoteBranchIfPhaseAtMost(maxPhase)
       }
     }
