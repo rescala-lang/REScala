@@ -736,12 +736,12 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
     }
   }
 
-  class FullMVTurnPhaseReflectionProxyToEndpoint(val mirroredTurn: FullMVTurn, endpoint: EndPointWithInfrastructure[Msg]) extends FullMVTurnPhaseReflectionProxy {
+  class FullMVTurnPhaseReflectionProxyToEndpoint(val mirroredTurn: FullMVTurn, val endpoint: EndPointWithInfrastructure[Msg]) extends FullMVTurnPhaseReflectionProxy {
     override def asyncNewPhase(phase: TurnPhase.Type): Unit = {
       doAsync(endpoint, AsyncNewPhase(mirroredTurn.guid -> mirroredTurn.phase))
     }
   }
-  class FullMVTurnPredecessorReflectionProxyToEndpoint(val mirroredTurn: FullMVTurn, endpoint: EndPointWithInfrastructure[Msg]) extends FullMVTurnPredecessorReflectionProxy {
+  class FullMVTurnPredecessorReflectionProxyToEndpoint(val mirroredTurn: FullMVTurn, val endpoint: EndPointWithInfrastructure[Msg]) extends FullMVTurnPredecessorReflectionProxy {
     override def newPredecessors(predecessors: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = {
       doRequest(endpoint, NewPredecessors(sendTree(predecessors)))
     }
