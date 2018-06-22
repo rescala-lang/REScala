@@ -1,6 +1,6 @@
 package examples.meanwindow
 
-import rescala._
+import rescala.default._
 
 object EventWindows extends App {
 

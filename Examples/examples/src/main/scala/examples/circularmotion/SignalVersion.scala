@@ -1,7 +1,7 @@
 package examples.circularmotion
 
 
-import rescala._
+import rescala.default._
 
 
 

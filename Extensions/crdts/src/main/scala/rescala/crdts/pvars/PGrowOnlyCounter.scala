@@ -1,6 +1,7 @@
 package rescala.crdts.pvars
 
-import rescala.Evt
+import rescala.default.implicitEngine
+import rescala.default.Evt
 import rescala.crdts.pvars.Publishable.PVarFactory
 import rescala.crdts.statecrdts.counters.GCounter
 
@@ -10,8 +11,8 @@ import rescala.crdts.statecrdts.counters.GCounter
   * @param initial The initial value of this variable.
   */
 case class PGrowOnlyCounter(initial: GCounter = GCounter(0),
-                            internalChanges: rescala.Evt[GCounter] = Evt[GCounter],
-                            externalChanges: rescala.Evt[GCounter] = Evt[GCounter])
+                            internalChanges: Evt[GCounter] = Evt[GCounter],
+                            externalChanges: Evt[GCounter] = Evt[GCounter])
   extends Publishable[Int, GCounter] {
 
   def increase: Int = {

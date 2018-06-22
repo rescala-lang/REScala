@@ -3,7 +3,7 @@ package reandroidthings
 import android.hardware.{Sensor, SensorEvent, SensorEventListener, SensorManager}
 import com.google.android.things.contrib.driver.bmx280.Bmx280SensorDriver
 import reandroidthings.iot_devices.BoardDefaults
-import rescala._
+import rescala.default._
 
 import scala.reflect.ClassTag
 

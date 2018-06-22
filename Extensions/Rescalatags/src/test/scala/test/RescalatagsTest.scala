@@ -8,6 +8,7 @@ import rescala.Engines
 import rescalatags._
 
 import scalatags.JsDom.all._
+import rescala.default.doNotSerialize
 
 class RescalatagsTest extends FlatSpec with TableDrivenPropertyChecks {
 

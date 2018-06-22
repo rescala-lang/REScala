@@ -1,7 +1,7 @@
 package reader.data
 
-import rescala._
-import rescala._
+import rescala.default._
+import rescala.default._
 
 /**
  * The FeedStore stores RSSChannels and RSSItems.

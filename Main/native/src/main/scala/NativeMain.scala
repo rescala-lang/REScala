@@ -1,4 +1,4 @@
-import rescala._
+import rescala.default._
 
 object NativeMain {
 

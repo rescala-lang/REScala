@@ -1,6 +1,6 @@
 package reader
 
-import rescala._
+import rescala.default._
 
 import scala.language.implicitConversions
 

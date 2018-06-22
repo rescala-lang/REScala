@@ -1,6 +1,6 @@
 package rescala.core
 
-import rescala.RescalaInterface
+import rescala.interface.RescalaInterface
 
 import scala.annotation.implicitNotFound
 import scala.util.DynamicVariable

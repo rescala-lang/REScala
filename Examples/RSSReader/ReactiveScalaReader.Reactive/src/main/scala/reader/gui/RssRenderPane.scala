@@ -7,7 +7,7 @@ import scala.swing.EditorPane
 
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
-import rescala._
+import rescala.default._
 import reader.data.RSSItem
 
 /**

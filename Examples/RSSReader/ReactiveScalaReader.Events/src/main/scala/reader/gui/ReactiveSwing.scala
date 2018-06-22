@@ -1,7 +1,7 @@
 package reader.gui
 
 import scala.swing.ListView
-import rescala._
+import rescala.default._
 import reswing.ReListView
 import reswing.ReSwingValue
 

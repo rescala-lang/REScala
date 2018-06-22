@@ -1,6 +1,6 @@
 package main.abstraction
 
-import rescala._
+import rescala.default._
 
 abstract class SignalWrapper {
   type InternalType

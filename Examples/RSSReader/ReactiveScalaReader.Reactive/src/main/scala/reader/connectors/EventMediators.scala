@@ -5,7 +5,7 @@ import reader.data.XmlParser
 import reader.network.Fetcher
 import reader.network.UrlChecker
 
-import rescala._
+import rescala.default._
 
 trait EventMediator {
   def mediate(fetcher: Fetcher,

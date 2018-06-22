@@ -2,7 +2,7 @@ package texteditor.signalsAndEventsFromEventsOnly
 
 import javax.swing
 
-import rescala._
+import rescala.default._
 
 class Timer(delay0: Int) {
   val peer: swing.Timer = new swing.Timer(delay0, null) {

@@ -2,7 +2,7 @@ package examples.demo
 
 import examples.demo.GModularClockCircle.Clock
 import examples.demo.ui.{Circle, Point, Shape, ShapesPanel}
-import rescala._
+import rescala.default._
 
 /**
   * Eventually, our Pong game will require a bouncing ball that moves

@@ -1,7 +1,7 @@
 package test.abstraction
 
 import org.scalatest._
-import rescala._
+import rescala.default._
 
 import scala.language.implicitConversions
 

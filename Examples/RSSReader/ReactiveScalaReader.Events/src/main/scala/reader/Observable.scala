@@ -1,6 +1,6 @@
 package reader
 
-import rescala._
+import rescala.default._
 /*
  * Implementation of an observable method
  */

@@ -1,6 +1,6 @@
 package texteditor.signalsAndEventsFromImperative
 
-import rescala._
+import rescala.default._
 import reswing.{ReButton, ReLabel, ReTextArea}
 
 import scala.math.min

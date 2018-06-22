@@ -9,7 +9,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import com.typesafe.scalalogging._
 import rescala.crdts.pvars.DistributionEngine._
-import rescala._
+import rescala.default._
 import rescala.crdts.statecrdts._
 
 import scala.concurrent.Await

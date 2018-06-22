@@ -6,7 +6,7 @@ import examples.demo.LFullyModularBall.BouncingBall
 import examples.demo.MPlayingFieldBall.PlayingField
 import examples.demo.ORacketMultiBall.Racket
 import examples.demo.ui.{Shape, ShapesPanel}
-import rescala._
+import rescala.default._
 import rescala.core.Pulse
 
 import scala.swing.{Dimension, MainFrame, SimpleSwingApplication}
@@ -22,7 +22,7 @@ object RRecovery extends Main {
       resizable = false
       override def closeOperation(): Unit = {
         val s = panel2.Mouse._position
-        rescala.transaction(s) { t =>
+        transaction(s) { t =>
           s.admitPulse(Pulse.Exceptional(new IllegalArgumentException))(t)
         }
 

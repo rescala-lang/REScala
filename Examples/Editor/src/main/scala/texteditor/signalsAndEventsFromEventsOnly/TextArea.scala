@@ -3,7 +3,7 @@ package texteditor.signalsAndEventsFromEventsOnly
 import java.awt.datatransfer.{DataFlavor, StringSelection}
 import java.awt.{Dimension, Graphics2D, Point, Rectangle, SystemColor, Toolkit}
 
-import rescala._
+import rescala.default._
 import rescala.macros.cutOutOfUserComputation
 import reswing.{ReComponent, ReSwingValue}
 import texteditor.{JScrollableComponent, LineIterator, LineOffset, Position}
@@ -87,7 +87,7 @@ class TextArea extends ReComponent {
     private val markVar = Var(0) //#VAR
 
     @cutOutOfUserComputation
-    def mark: rescala.Signal[Int] = markVar
+    def mark: Signal[Int] = markVar
     def mark_=(value: Int) = if (value >= 0 && value <= buffer.length.readValueOnce) markVar set value
 
     // caret location as offset

@@ -1,6 +1,6 @@
 package reader.gui
 
-import rescala._
+import rescala.default._
 import reswing.ReListView
 import reswing.ReSwingValue
 

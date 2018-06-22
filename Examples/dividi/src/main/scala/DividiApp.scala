@@ -1,7 +1,7 @@
 import akka.actor.{ActorRef, ActorSystem}
 import com.typesafe.config.{Config, ConfigFactory}
 import com.typesafe.scalalogging.Logger
-import rescala._
+import rescala.default._
 import rescala.crdts.pvars._
 
 import scala.math.BigDecimal.RoundingMode

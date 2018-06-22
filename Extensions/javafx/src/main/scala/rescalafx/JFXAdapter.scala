@@ -1,6 +1,6 @@
 package rescalafx
 
-import rescala._
+import rescala.default._
 
 import scalafx.application.Platform
 import scalafx.beans.property.{BooleanProperty, DoubleProperty, Property, StringProperty}

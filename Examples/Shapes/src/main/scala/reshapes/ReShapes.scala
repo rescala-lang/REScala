@@ -3,7 +3,7 @@ package reshapes
 import java.net.{BindException, ConnectException}
 import javax.swing.JOptionPane
 
-import rescala._
+import rescala.default._
 import reshapes.actions.{LoadAction, SaveAction}
 import reshapes.drawing.{Command, DrawingSpaceState, MergeDrawingSpaces, NetworkSpaceState}
 import reshapes.figures.Shape

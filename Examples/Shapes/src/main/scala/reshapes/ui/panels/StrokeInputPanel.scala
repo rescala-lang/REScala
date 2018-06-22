@@ -12,7 +12,7 @@ import scala.swing.Label
 import scala.swing.Orientation
 
 import javax.swing.JColorChooser
-import rescala._
+import rescala.default._
 import reswing.ReButton
 import reswing.ReSlider
 

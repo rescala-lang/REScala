@@ -4,7 +4,7 @@ import reader.connectors.{CentralizedEvents, SimpleReporter}
 import reader.data.{FeedStore, RSSItem, XmlParser}
 import reader.gui.GUI
 import reader.network.{Fetcher, UrlChecker}
-import rescala._
+import rescala.default._
 
 import scala.io.Source
 import scala.swing.Dialog.Message

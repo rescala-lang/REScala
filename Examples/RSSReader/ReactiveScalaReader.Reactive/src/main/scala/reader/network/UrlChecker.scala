@@ -6,7 +6,7 @@ import java.net.URL
 import java.net.UnknownHostException
 
 import reader.Observable
-import rescala._
+import rescala.default._
 
 class UrlChecker {
   type CheckArg = String

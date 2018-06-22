@@ -1,6 +1,6 @@
 package reshapes.util
 
-import rescala._
+import rescala.default._
 import scala.language.higherKinds
 import scala.collection.mutable.ListBuffer
 

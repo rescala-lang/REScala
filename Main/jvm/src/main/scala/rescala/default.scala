@@ -1,5 +1,7 @@
-import rescala.core.ReSerializable
-import rescala.levelbased.SimpleStruct
+package rescala
+
+import rescala.core.{Scheduler, ReSerializable}
+import rescala.parrp.ParRP
 
 /** REScala has two main abstractions. [[rescala.Event]] and [[rescala.Signal]] commonly referred to as reactives.
   * Use [[rescala.Var]] to create signal sources and [[rescala.Evt]] to create event sources.
@@ -7,9 +9,8 @@ import rescala.levelbased.SimpleStruct
   * Events and signals can be created from other reactives by using combinators,
   * signals additionally can be created using [[rescala.Signal]] expressions.
   **/
-package object rescala extends RescalaInterface[SimpleStruct] {
-  override implicit def explicitEngine: Engines.SimpleEngine = rescala.Engines.default
+object default extends interface.RescalaInterface[ParRP] {
+  override def explicitEngine: Scheduler[ParRP] = rescala.Engines.parrp
   /** @group internal */
-  implicit def doNotSerialize[T]: ReSerializable[T] = ReSerializable.serializationUnavailable
-
+  implicit def serializationUnavailable[T]: ReSerializable[T] = ReSerializable.serializationUnavailable
 }

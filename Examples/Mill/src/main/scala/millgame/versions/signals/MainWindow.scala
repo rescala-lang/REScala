@@ -4,7 +4,7 @@ import java.awt.{BasicStroke, Color, Dimension, Font, RenderingHints}
 
 import millgame._
 import millgame.types._
-import rescala._
+import rescala.default._
 import reswing._
 
 import scala.swing._
@@ -67,7 +67,7 @@ class MillDrawer(val game: MillGame)
   val MiddlePercent = 2f / 3
   val InnerPercent = 1f / 3
 
-  val squareSize: rescala.Signal[Int] = Signal { //#SIG
+  val squareSize: Signal[Int] = Signal { //#SIG
     (math.min(size().width, size().height) * SizePercent).toInt
   }
 

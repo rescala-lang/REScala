@@ -11,9 +11,9 @@ import reader.Observable
 
 import scala.xml.Node
 import scala.xml.NodeSeq
-import rescala._
-import rescala._
-import rescala._
+import rescala.default._
+import rescala.default._
+import rescala.default._
 import reader.common.sequence
 
 /**

@@ -1,7 +1,7 @@
 package examples.datastructures
 
 
-import rescala._
+import rescala.default._
 
 import scala.collection.immutable.Queue
 

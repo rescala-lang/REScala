@@ -2,7 +2,7 @@ package examples.demo
 
 import examples.demo.GModularClockCircle.Clock
 import examples.demo.ui.{Circle, Point, Shape, ShapesPanel}
-import rescala._
+import rescala.default._
 
 /**
   * We now begin to introduce user interaction. Currently, the

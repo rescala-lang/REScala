@@ -8,7 +8,7 @@ import java.util.Date
 import java.util.Locale
 
 import reader.Observable
-import rescala._
+import rescala.default._
 
 import scala.xml.Node
 import scala.xml.NodeSeq

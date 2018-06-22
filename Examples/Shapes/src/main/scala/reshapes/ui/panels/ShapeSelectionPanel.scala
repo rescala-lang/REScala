@@ -3,7 +3,7 @@ package reshapes.ui.panels
 import scala.swing.BoxPanel
 import scala.swing.Orientation
 
-import rescala._
+import rescala.default._
 import reshapes.ReShapes
 import reshapes.figures.Freedraw
 import reshapes.figures.Line

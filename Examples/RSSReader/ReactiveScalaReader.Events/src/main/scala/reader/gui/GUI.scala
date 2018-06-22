@@ -4,7 +4,7 @@ import java.awt.{Dimension, Point, Toolkit}
 import javax.swing.ImageIcon
 
 import reader.data.{FeedStore, RSSChannel, RSSItem}
-import rescala._
+import rescala.default._
 import reswing.{ReButton, ReCheckBox, ReLabel, ReSwingValue}
 
 import scala.swing._

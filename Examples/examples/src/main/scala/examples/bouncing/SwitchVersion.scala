@@ -3,7 +3,7 @@ package examples.bouncing
 
 import java.awt.{Dimension, Graphics2D, Point}
 
-import rescala._
+import rescala.default._
 
 import scala.swing.{MainFrame, Panel, SimpleSwingApplication, Swing}
 

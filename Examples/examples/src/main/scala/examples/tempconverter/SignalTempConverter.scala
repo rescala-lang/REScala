@@ -2,11 +2,11 @@ package examples.tempconverter
 
 
 // EScala lib + behaviour extensions
-import rescala._
-import rescala._
-import rescala._
-import rescala._
-import rescala._
+import rescala.default._
+import rescala.default._
+import rescala.default._
+import rescala.default._
+import rescala.default._
 
 // Scala swing events
 import swing._

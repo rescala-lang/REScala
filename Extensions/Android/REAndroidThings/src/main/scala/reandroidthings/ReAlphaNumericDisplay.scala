@@ -5,7 +5,7 @@ import android.util.Log
 
 import com.google.android.things.contrib.driver.ht16k33.AlphanumericDisplay
 import reandroidthings.iot_devices.BoardDefaults
-import rescala._
+import rescala.default._
 
 object ReAlphaNumericDisplay {
   protected var peer: AlphanumericDisplay = null

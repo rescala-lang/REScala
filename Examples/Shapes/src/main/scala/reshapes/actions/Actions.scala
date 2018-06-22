@@ -10,7 +10,7 @@ import reshapes.ReShapes
 import reshapes.drawing.CreateShape
 import reshapes.figures.Shape
 import scala.language.reflectiveCalls
-import rescala._
+import rescala.default._
 
 /**
  * Serializes all currently drawn shapes to a chosen file

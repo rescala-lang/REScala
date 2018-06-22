@@ -4,6 +4,7 @@ import rescala.core.CreationTicket
 import rescala.reactives.Signals
 import universe.Animal._
 import universe.Globals.engine._
+import rescala.core.ReSerializable.serializationUnavailable
 
 object Animal {
   val StartEnergy = 200

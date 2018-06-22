@@ -1,7 +1,7 @@
 package rescala.crdts
 
 import akka.actor.ActorRef
-import rescala._
+import rescala.default._
 
 import scala.language.{implicitConversions}
 

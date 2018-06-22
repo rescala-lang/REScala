@@ -2,7 +2,7 @@ package examples.demo
 
 import examples.demo.GModularClockCircle.Clock
 import examples.demo.ui.{Circle, Shape, ShapesPanel}
-import rescala._
+import rescala.default._
 
 /**
   * As Clock is now a closed module, we can move it to an external

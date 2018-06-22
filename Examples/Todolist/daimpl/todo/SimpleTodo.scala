@@ -2,7 +2,7 @@ package daimpl.todo
 
 import org.scalajs.dom
 import org.scalajs.dom.document
-import rescala._
+import rescala.default._
 import rescalatags._
 
 import scala.scalajs.js.annotation.JSExportTopLevel

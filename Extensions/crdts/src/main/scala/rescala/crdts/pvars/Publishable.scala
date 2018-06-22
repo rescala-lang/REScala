@@ -2,7 +2,7 @@ package rescala.crdts.pvars
 
 import akka.actor.ActorRef
 import loci.transmitter._
-import rescala._
+import rescala.default._
 import rescala.crdts.statecrdts.StateCRDT
 
 /**

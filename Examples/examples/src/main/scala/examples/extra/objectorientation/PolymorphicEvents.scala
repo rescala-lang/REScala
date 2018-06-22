@@ -1,6 +1,6 @@
 package examples.extra.objectorientation
 
-import rescala._
+import rescala.default._
 
 class Keyboard {
   protected lazy val press: Event[String] = Evt[String]

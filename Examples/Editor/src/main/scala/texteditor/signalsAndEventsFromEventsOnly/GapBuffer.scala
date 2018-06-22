@@ -1,6 +1,6 @@
 package texteditor.signalsAndEventsFromEventsOnly
 
-import rescala._
+import rescala.default._
 
 /**
  * Iterates over `array` whose content has the size of `count`.

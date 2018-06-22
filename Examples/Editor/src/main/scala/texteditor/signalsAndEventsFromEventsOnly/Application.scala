@@ -1,6 +1,6 @@
 package texteditor.signalsAndEventsFromEventsOnly
 
-import rescala._
+import rescala.default._
 import reswing.{ReButton, ReLabel}
 
 import scala.swing.BorderPanel.Position

@@ -1,6 +1,6 @@
 import java.net._
 
-import rescala._
+import rescala.default._
 
 import scala.xml.{NodeSeq, XML}
 

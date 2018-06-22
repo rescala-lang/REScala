@@ -1,6 +1,6 @@
 package rescala.crdts.pvars
 
-import rescala._
+import rescala.default._
 import rescala.crdts.statecrdts.sequences.{RGOA, Vertex}
 
 case class PGrowOnlyLog[A](initial: RGOA[A] = RGOA[A](),

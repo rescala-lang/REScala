@@ -3,7 +3,7 @@ package texteditor.events
 import java.awt.datatransfer.{DataFlavor, StringSelection}
 import java.awt.{Dimension, Graphics2D, Point, Rectangle, SystemColor, Toolkit}
 
-import rescala._
+import rescala.default._
 import reswing.ReComponent
 import texteditor.{JScrollableComponent, LineIterator, LineOffset, Position}
 

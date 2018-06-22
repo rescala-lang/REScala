@@ -1,7 +1,7 @@
 package reshapes.drawing
 
 import reshapes.figures.Shape
-import rescala._
+import rescala.default._
 
 abstract class Command {
   def execute(shapes: List[Shape]): List[Shape]

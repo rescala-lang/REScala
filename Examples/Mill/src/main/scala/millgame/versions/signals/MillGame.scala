@@ -1,7 +1,7 @@
 package millgame.versions.signals
 
 import millgame.types._
-import rescala._
+import rescala.default._
 
 
 abstract class Gamestate {

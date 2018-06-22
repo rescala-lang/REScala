@@ -1,7 +1,7 @@
 package reswing
 
 import rescala.macros.cutOutOfUserComputation
-import rescala.{Event, Evt, implicitEngine}
+import rescala.default.{Event, Evt, implicitEngine}
 
 import scala.language.implicitConversions
 
@@ -15,7 +15,7 @@ sealed abstract class ReSwingEvent[T] {
 
 final class ReSwingEventOut[T] private[reswing]
     (initLazily: ReSwingEventOut[T] => Unit) extends ReSwingEvent[T] {
-  private val event: Lazy[rescala.Evt[T]] = Lazy { Evt[T] }
+  private val event: Lazy[Evt[T]] = Lazy { Evt[T] }
   private[reswing] def toEvent = { if (!event.isDefined) initLazily(this); event() }
   private[reswing] def apply(value: T) = if (event.isDefined) event().fire(value)
 }

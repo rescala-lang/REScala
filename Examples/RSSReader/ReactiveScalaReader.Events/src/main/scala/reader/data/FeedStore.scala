@@ -1,6 +1,6 @@
 package reader.data
 
-import rescala._
+import rescala.default._
 
 import scala.collection.mutable.Map
 

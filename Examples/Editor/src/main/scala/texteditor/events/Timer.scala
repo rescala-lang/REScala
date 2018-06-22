@@ -2,7 +2,7 @@ package texteditor.events
 
 import javax.swing
 
-import rescala._
+import rescala.default._
 
 import scala.swing.event.Event
 

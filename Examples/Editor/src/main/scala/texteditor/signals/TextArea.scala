@@ -3,7 +3,7 @@ package texteditor.signals
 import java.awt.datatransfer.{Clipboard, DataFlavor, StringSelection}
 import java.awt.{Dimension, Graphics2D, Point, Rectangle, SystemColor, Toolkit}
 
-import rescala._
+import rescala.default._
 import rescala.macros.cutOutOfUserComputation
 import reswing.{ReComponent, ReSwingValue}
 import texteditor.{JScrollableComponent, LineIterator, LineOffset, Position}
@@ -73,9 +73,9 @@ class TextArea(text: String) extends ReComponent {
     new Iterable[Char] {def iterator: Iterator[Char] = it.iterator.slice(start, end)}: Iterable[Char]
   }
 
-  protected lazy val selectedAll: rescala.Evt[Unit] = Evt[Unit]
-  protected lazy val pasted: rescala.Evt[Unit] = Evt[Unit]
-  protected lazy val copied: rescala.Evt[Unit] = Evt[Unit]
+  protected lazy val selectedAll: Evt[Unit] = Evt[Unit]
+  protected lazy val pasted: Evt[Unit] = Evt[Unit]
+  protected lazy val copied: Evt[Unit] = Evt[Unit]
 
   def selectAll(): Unit = selectedAll.fire()
   def paste(): Unit = pasted.fire()
@@ -116,12 +116,12 @@ class TextArea(text: String) extends ReComponent {
 
     // caret location as offset
     @cutOutOfUserComputation
-    def offset: rescala.Signal[Int] = dot
+    def offset: Signal[Int] = dot
     def changeOffset(value: Int): Unit = changed.fire((value, value))
 
     // caret location as position (row and column)
     @cutOutOfUserComputation
-    def position: rescala.Signal[Position] = dotPos
+    def position: Signal[Position] = dotPos
     def changePosition(value: Position): Unit = changeOffset(LineOffset.offset(content.now, value))
 
     protected[TextArea] val blink: Timer = new Timer(500).start

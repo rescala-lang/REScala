@@ -3,11 +3,11 @@ package millgame.versions.signals
 import millgame._
 import millgame.types._
 
-import rescala._
+import rescala.default._
 
-import rescala._
-import rescala._
-import rescala._
+import rescala.default._
+import rescala.default._
+import rescala.default._
 
 class MillBoard {
     /* wrap stones Var, to have the same interface as other versions */

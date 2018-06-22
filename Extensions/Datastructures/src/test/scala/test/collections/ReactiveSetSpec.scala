@@ -2,7 +2,7 @@ package test.collections
 
 import main.collections._
 import org.scalatest._
-import rescala._
+import rescala.default._
 
 import scala.language.implicitConversions
 

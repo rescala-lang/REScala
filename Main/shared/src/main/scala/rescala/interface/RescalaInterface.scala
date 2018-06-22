@@ -1,8 +1,9 @@
-package rescala
+package rescala.interface
 
 import rescala.core.{ReSerializable, Struct}
 import rescala.macros.MacroTags.{Dynamic, Static}
 import rescala.reactives.Source
+import rescala.reactives
 
 import scala.language.{existentials, implicitConversions}
 

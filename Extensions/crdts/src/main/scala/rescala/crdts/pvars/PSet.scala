@@ -1,7 +1,7 @@
 package rescala.crdts.pvars
 
 import loci.transmitter._
-import rescala._
+import rescala.default._
 import rescala.crdts.pvars.Publishable.PVarFactory
 import rescala.crdts.statecrdts.sets.ORSet
 

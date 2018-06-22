@@ -3,7 +3,7 @@ package examples.demo
 import java.awt.Dimension
 
 import examples.demo.ui.{Circle, Rectangle, ShapesPanel}
-import rescala._
+import rescala.default._
 
 import scala.swing.{MainFrame, SimpleSwingApplication, UIElement}
 

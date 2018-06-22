@@ -1,7 +1,7 @@
 package main.collections
 
 import main.abstraction._
-import rescala._
+import rescala.default._
 
 import scala.collection.immutable.Vector
 

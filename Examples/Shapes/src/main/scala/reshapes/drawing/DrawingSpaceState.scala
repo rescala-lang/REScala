@@ -4,7 +4,7 @@ import java.awt.Color
 import java.io.{OutputStreamWriter, PrintWriter}
 import java.net.{InetAddress, ServerSocket, Socket, SocketException}
 
-import rescala._
+import rescala.default._
 import reshapes.figures.{Line, Shape}
 
 import scala.xml.{Attribute, Null, Text, XML}
