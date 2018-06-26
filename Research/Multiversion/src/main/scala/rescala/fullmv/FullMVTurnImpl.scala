@@ -29,7 +29,9 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
   @volatile var selfNode = new MutableTransactionSpanningTreeNode[FullMVTurn](this) // this is also implicitly a set
   @volatile var predecessorSpanningTreeNodes: Map[FullMVTurn, MutableTransactionSpanningTreeNode[FullMVTurn]] = new scala.collection.immutable.Map.Map1(this, selfNode)
 
-  override def ensurePredecessorReplication(): Future[Unit] = Future.unit
+  override def ensurePredecessorReplication(startAt: TransactionSpanningTreeNode[FullMVTurn], clock: Int): Unit = {
+    assert(clock <= predecessorReplicationClock, s"recevied newer predecessors from a remote copy?")
+  }
 
   override def asyncRemoteBranchComplete(forPhase: TurnPhase.Type): Unit = {
     if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this branch on some remote completed")
@@ -61,6 +63,52 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
 
   //========================================================Local State Control============================================================
 
+// TODO draft for async turn phase transitions
+//  val firstUnknownPredecessor = new AtomicInteger(0)
+//  def checkTransition(): Unit = {
+//    val toPhase = phase + 1
+//    @tailrec def check(fup: Int): Int = {
+//      if (fup == selfNode.size) {
+//        if(activeBranches.get() == 0) {
+//          if (fup == selfNode.size) {
+//            -1
+//          } else {
+//            // an active branch added a new predecessor after the first if condition, but
+//            // completed before the second if condition => restart check
+//            check(fup)
+//          }
+//        } else {
+//          // do nothing; checkTransition will be re-called when branches transition to zero
+//          fup
+//        }
+//      } else {
+//        val currentUnknownPredecessor = selfNode.children(fup).txn
+//        if (currentUnknownPredecessor.phase < toPhase) {
+//          val waiters = toPhase match {
+//            case TurnPhase.Executing => currentUnknownPredecessor.executingWaiters
+//            case TurnPhase.Completed => currentUnknownPredecessor.completionWaiters
+//          }
+//          if (FullMVTurn.atomicAdd(waiters, { () => checkTransition() })) {
+//            if (currentUnknownPredecessor.phase >= toPhase) {
+//              check(fup + 1)
+//            } else {
+//              fup
+//            }
+//          } else {
+//            assert(currentUnknownPredecessor.phase >= toPhase)
+//            check(fup + 1)
+//          }
+//        } else {
+//          check(fup + 1)
+//        }
+//      }
+//    }
+//
+//    val fupBefore = firstUnknownPredecessor.get()
+//    val fupAfter = check(fupBefore)
+//    if(fupBefore != fupAfter) firstUnknownPredecessor.compareAndSet(fupBefore, fupAfter)
+//  }
+
   def awaitAndSwitchPhase(newPhase: TurnPhase.Type): Unit = {
     assert(newPhase > this.phase, s"$this cannot progress backwards to phase $newPhase.")
     @inline @tailrec def awaitAndSwitchPhase0(firstUnknownPredecessorIndex: Int, parkAfter: Long, registeredForWaiting: FullMVTurn): Unit = {
@@ -75,16 +123,14 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
         awaitAndSwitchPhase0(firstUnknownPredecessorIndex, 0L, null)
       } else if (firstUnknownPredecessorIndex == selfNode.size) {
         assert(registeredForWaiting == null, s"$this is still registered on $registeredForWaiting as waiter despite having finished waiting for it")
-        val success = synchronized {
-          // make thread-safe sure that we haven't received any new predecessors that might
-          // not be in the next phase yet. Only once that's sure we can also thread-safe sure
-          // check that no predecessors pushed any tasks into our queue anymore. And only then
-          // can we phase switch.
-          val success = firstUnknownPredecessorIndex == selfNode.size && activeBranches.get() == 0
-          if (success) this.phase = newPhase
-          success
+        // make thread-safe sure that we haven't received any new predecessors that might
+        // not be in the next phase yet. Only then can we phase switch.
+        if(firstUnknownPredecessorIndex == selfNode.size) {
+          assert(activeBranches.get() == 0, s"should be impossible to regain a branch at this point")
+          this.phase = newPhase
+        } else {
+          awaitAndSwitchPhase0(firstUnknownPredecessorIndex, 0L, null)
         }
-        if(!success) awaitAndSwitchPhase0(firstUnknownPredecessorIndex, 0L, null)
       } else {
         val currentUnknownPredecessor = selfNode.children(firstUnknownPredecessorIndex).txn
         if(currentUnknownPredecessor.phase < newPhase) {
@@ -268,6 +314,8 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
     }
   }
 
+
+  @volatile var predecessorReplicationClock: Int = 0
   override def maybeNewReachableSubtree(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = {
     if (!isTransitivePredecessor(spanningSubTreeRoot.txn)) {
       val incompleteCallsAccumulator = FullMVEngine.newAccumulator()
@@ -279,12 +327,15 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
       val (updatedTree, updatedAccu) = copySubTreeRootAndAssessChildren(predecessorSpanningTreeNodes, attachBelow, spanningSubTreeRoot, incompleteCallsAccumulator)
       predecessorSpanningTreeNodes = updatedTree
 
-      val updated2Accu = FullMVEngine.accumulateBroadcastFutures(updatedAccu, predecessorReplicators.get) { _.newPredecessors(selfNode) }
+      val clock = predecessorReplicationClock + 1
+      predecessorReplicationClock = clock
+      val updated2Accu = FullMVEngine.accumulateBroadcastFutures(updatedAccu, predecessorReplicators.get) { _.newPredecessors(selfNode, clock) }
       FullMVEngine.condenseCallResults(updated2Accu)
     } else {
       Future.unit
     }
   }
+  override def clockedPredecessors: (TransactionSpanningTreeNode[FullMVTurn], Int) = (selfNode, predecessorReplicationClock)
 
   private def copySubTreeRootAndAssessChildren(bufferPredecessorSpanningTreeNodes: Map[FullMVTurn, MutableTransactionSpanningTreeNode[FullMVTurn]], attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn], newSuccessorCallsAccumulator: FullMVEngine.CallAccumulator[Unit]): (Map[FullMVTurn, MutableTransactionSpanningTreeNode[FullMVTurn]], FullMVEngine.CallAccumulator[Unit]) = {
     val newTransitivePredecessor = spanningSubTreeRoot.txn

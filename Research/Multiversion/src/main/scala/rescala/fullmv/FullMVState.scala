@@ -76,7 +76,7 @@ trait FullMVState[V, T <: FullMVTurn, Reactive, OutDep] {
     * @param add the new edge's sink node
     * @return the appropriate [[Version.value]].
     */
-  def discover(txn: T, add: OutDep): (Seq[T], Option[T])
+  def discover(txn: T, add: OutDep): (List[T], Option[T])
 
   /**
     * entry point for drop(this, ticket.issuer); may suspend temporarily.
@@ -84,7 +84,7 @@ trait FullMVState[V, T <: FullMVTurn, Reactive, OutDep] {
     * @param txn    the executing reevaluation's transaction
     * @param remove the removed edge's sink node
     */
-  def drop(txn: T, remove: OutDep): (Seq[T], Option[T])
+  def drop(txn: T, remove: OutDep): (List[T], Option[T])
 
   /**
     * performs the reframings on the sink of a discover(n, this) with arity +1, or drop(n, this) with arity -1

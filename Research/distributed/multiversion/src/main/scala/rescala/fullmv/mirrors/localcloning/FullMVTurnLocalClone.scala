@@ -8,6 +8,12 @@ import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 
 object FullMVTurnLocalClone {
+  def withPredecessorReplication(turn: FullMVTurn, reflectionHost: FullMVEngine, fakeDelay: Duration = Duration.Zero): FullMVTurn = {
+    val clone = FullMVTurnLocalClone(turn, reflectionHost, fakeDelay)
+    val startReplication = turn.clockedPredecessors
+    clone.ensurePredecessorReplication(startReplication._1.map(FullMVTurnLocalClone(_, reflectionHost, fakeDelay)), startReplication._2 )
+    clone
+  }
   def apply(turn: FullMVTurn, reflectionHost: FullMVEngine, fakeDelay: Duration = Duration.Zero): FullMVTurn = {
     val phase = turn.phase
     assert(phase > TurnPhase.Uninitialized, s"trying to clone uninitialized turn")
@@ -36,11 +42,11 @@ object FullMVTurnLocalClone {
           override def asyncAddPhaseReplicator(replicator: FullMVTurnPhaseReflectionProxy, knownPhase: TurnPhase.Type): Unit = FakeDelayer.async(reflectionHost, mirrorHost, fakeDelay, localMirror.asyncAddPhaseReplicator(new FullMVTurnPhaseReflectionProxy {
             override def asyncNewPhase(phase: TurnPhase.Type): Unit = FakeDelayer.async(mirrorHost, reflectionHost, fakeDelay, replicator.asyncNewPhase(phase))
           }, knownPhase))
-          override def addPredecessorReplicator(replicator: FullMVTurnPredecessorReflectionProxy): Future[TransactionSpanningTreeNode[FullMVTurn]] = FakeDelayer.requestReply(reflectionHost, mirrorHost, fakeDelay, localMirror.addPredecessorReplicator(new FullMVTurnPredecessorReflectionProxy {
-            override def newPredecessors(predecessors: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = FakeDelayer.requestReply(mirrorHost, reflectionHost, fakeDelay, replicator.newPredecessors(predecessors.map((turn: FullMVTurn) => FullMVTurnLocalClone(turn, reflectionHost, fakeDelay))))
-          }).map {
-            _.map((turn: FullMVTurn) => FullMVTurnLocalClone(turn, reflectionHost, fakeDelay))
-          }(FullMVEngine.notWorthToMoveToTaskpool))
+          override def asyncAddPredecessorReplicator(replicator: FullMVTurnPredecessorReflectionProxy, startAt: TransactionSpanningTreeNode[FullMVTurn], clock: Int): Unit = FakeDelayer.async(reflectionHost, mirrorHost, fakeDelay, {
+            localMirror.asyncAddPredecessorReplicator(new FullMVTurnPredecessorReflectionProxy {
+              override def newPredecessors(predecessors: TransactionSpanningTreeNode[FullMVTurn], clock: Int): Future[Unit] = FakeDelayer.requestReply(mirrorHost, reflectionHost, fakeDelay, replicator.newPredecessors(predecessors.map((turn: FullMVTurn) => FullMVTurnLocalClone(turn, reflectionHost, fakeDelay)), clock))
+            }, startAt.map(FullMVTurnLocalClone(_, mirrorHost, fakeDelay)), clock)
+          })
         }
         new FullMVTurnReflection(reflectionHost, turn.guid, phase, mirrorProxy)
       }) match {

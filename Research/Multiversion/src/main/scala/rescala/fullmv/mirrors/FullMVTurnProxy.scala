@@ -22,5 +22,5 @@ trait FullMVTurnProxy {
   def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult]
 
   def asyncAddPhaseReplicator(replicator: FullMVTurnPhaseReflectionProxy, knownPhase: TurnPhase.Type): Unit
-  def addPredecessorReplicator(replicator: FullMVTurnPredecessorReflectionProxy): Future[TransactionSpanningTreeNode[FullMVTurn]]
+  def asyncAddPredecessorReplicator(replicator: FullMVTurnPredecessorReflectionProxy, startAt: TransactionSpanningTreeNode[FullMVTurn], clock: Int): Unit
 }

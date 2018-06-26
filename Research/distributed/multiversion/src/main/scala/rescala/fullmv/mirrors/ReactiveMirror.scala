@@ -7,7 +7,7 @@ import rescala.fullmv._
 import scala.concurrent.duration.Duration
 
 object ReactiveMirror {
-  def apply[A](reactive: ReSource[FullMVStruct], turn: FullMVTurn, reflectionIsTransient: Boolean, rename: REName)(toPulse: reactive.Value => A, reflectionProxy: ReactiveReflectionProxy[A]): (Array[(FullMVTurn, A)], Option[FullMVTurn]) = {
+  def apply[A](reactive: ReSource[FullMVStruct], turn: FullMVTurn, reflectionIsTransient: Boolean, rename: REName)(toPulse: reactive.Value => A, reflectionProxy: ReactiveReflectionProxy[A]): (List[(FullMVTurn, A)], Option[FullMVTurn]) = {
     assert(turn.host == reactive.state.host, s"mirror installation for $reactive on ${reactive.state.host} with $turn from different ${turn.host}")
     def getValue(turn: FullMVTurn): A = toPulse(reactive.state.staticAfter(turn))
     val mirror = new ReactiveMirror(getValue, reflectionProxy, turn.host.timeout, rename)
@@ -15,14 +15,10 @@ object ReactiveMirror {
     val ownValue = toPulse(reactive.state.dynamicAfter(turn))
     val (successorWrittenVersions, maybeFirstFrame) = reactive.state.discover(turn, mirror)
     val mustAddBaseValue = !reflectionIsTransient && (successorWrittenVersions.isEmpty || successorWrittenVersions.head != turn)
-    var idx = if(mustAddBaseValue) 1 else 0
-    val initValues = new Array[(FullMVTurn, A)](successorWrittenVersions.size + idx)
-    if(mustAddBaseValue) initValues(0) = turn -> ownValue
-    for(succ <- successorWrittenVersions) {
-      initValues(idx) = succ -> getValue(succ)
-      idx += 1
+    val initValues = successorWrittenVersions.map { succ =>
+      succ -> getValue(succ)
     }
-    (initValues, maybeFirstFrame)
+    (if(mustAddBaseValue) ((turn, ownValue) :: initValues) else initValues, maybeFirstFrame)
   }
 }
 
@@ -65,8 +61,8 @@ class ReactiveMirror[A](val getValue: FullMVTurn => A, val reflectionProxy: Reac
   override def staticBefore(txn: FullMVTurn): Nothing = ???
   override def dynamicAfter(txn: FullMVTurn): Nothing = ???
   override def staticAfter(txn: FullMVTurn): Nothing = ???
-  override def discover(txn: FullMVTurn, add: Reactive[FullMVStruct]): (Seq[FullMVTurn], Option[FullMVTurn]) = ???
-  override def drop(txn: FullMVTurn, remove: Reactive[FullMVStruct]): (Seq[FullMVTurn], Option[FullMVTurn]) = ???
+  override def discover(txn: FullMVTurn, add: Reactive[FullMVStruct]): (List[FullMVTurn], Option[FullMVTurn]) = ???
+  override def drop(txn: FullMVTurn, remove: Reactive[FullMVStruct]): (List[FullMVTurn], Option[FullMVTurn]) = ???
   override def retrofitSinkFrames(successorWrittenVersions: Seq[FullMVTurn], maybeSuccessorFrame: Option[FullMVTurn], arity: Int): Seq[FullMVTurn] = ???
 
 

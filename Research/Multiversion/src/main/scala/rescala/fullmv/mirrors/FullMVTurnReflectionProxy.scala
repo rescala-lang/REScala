@@ -9,5 +9,5 @@ trait FullMVTurnPhaseReflectionProxy {
 }
 
 trait FullMVTurnPredecessorReflectionProxy {
-  def newPredecessors(predecessors: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit]
+  def newPredecessors(predecessors: TransactionSpanningTreeNode[FullMVTurn], clock: Int): Future[Unit]
 }

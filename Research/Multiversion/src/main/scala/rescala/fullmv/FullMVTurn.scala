@@ -13,7 +13,6 @@ import rescala.fullmv.sgt.synchronization.SubsumableLockEntryPoint
 import rescala.fullmv.tasks.{Notification, Reevaluation}
 
 import scala.annotation.tailrec
-import scala.concurrent.Future
 
 trait FullMVTurn extends Initializer[FullMVStruct] with FullMVTurnProxy with SubsumableLockEntryPoint with Hosted[FullMVTurn] {
   override val host: FullMVEngine
@@ -21,6 +20,9 @@ trait FullMVTurn extends Initializer[FullMVStruct] with FullMVTurnProxy with Sub
   //========================================================Internal Management============================================================
 
   // ===== Turn State Manangement External API
+// TODO draft for async turn phase transitions
+//  val executingWaiters = AtomicReference[List[() => Unit]]
+//  val completionWaiters = AtomicReference[List[() => Unit]]
   val waiters = new ConcurrentHashMap[Thread, TurnPhase.Type]()
   def wakeWaitersAfterPhaseSwitch(newPhase: TurnPhase.Type): Unit = {
     val it = waiters.entrySet().iterator()
@@ -54,29 +56,25 @@ trait FullMVTurn extends Initializer[FullMVStruct] with FullMVTurnProxy with Sub
     }
   }
 
+  def clockedPredecessors: (TransactionSpanningTreeNode[FullMVTurn], Int)
   val predecessorReplicators: AtomicReference[List[FullMVTurnPredecessorReflectionProxy]] = new AtomicReference(Nil) // implicit set, write accesses are synchronized through CAS
-  override def addPredecessorReplicator(replicator: FullMVTurnPredecessorReflectionProxy): Future[TransactionSpanningTreeNode[FullMVTurn]] = {
+
+
+  override def asyncAddPredecessorReplicator(replicator: FullMVTurnPredecessorReflectionProxy, startAt: TransactionSpanningTreeNode[FullMVTurn], clock: Int): Unit = {
     if(phase < TurnPhase.Completed) {
       val added = FullMVTurn.atomicAdd(predecessorReplicators, replicator)
       if(!added) {
         assert(phase == TurnPhase.Completed, s"phase replicator addition should only return failure, if $this is completed")
-        Future.successful(CaseClassTransactionSpanningTreeNode(this, Array.empty))
       } else {
-        ensurePredecessorReplication()
-        val preds = selfNode
-        if(preds == null)  {
-          assert(phase == TurnPhase.Completed, s"preds should only have been deallocated again since ensurePredecessor replication, if $this is completed")
-          Future.successful(CaseClassTransactionSpanningTreeNode(this, Array.empty))
-        } else {
-          Future.successful(preds)
-        }
+        ensurePredecessorReplication(startAt, clock)
+        val (knownPreds, knownClock) = clockedPredecessors
+        if(clock < knownClock) replicator.newPredecessors(knownPreds, knownClock)
       }
-    } else {
-      Future.successful(CaseClassTransactionSpanningTreeNode(this, Array.empty))
     }
   }
 
-  def ensurePredecessorReplication(): Future[Unit]
+  final def ensurePredecessorReplication(clockedPredecessors: (TransactionSpanningTreeNode[FullMVTurn], Int)): Unit = ensurePredecessorReplication(clockedPredecessors._1, clockedPredecessors._2)
+  def ensurePredecessorReplication(startAt: TransactionSpanningTreeNode[FullMVTurn], clock: Int): Unit
 
   //========================================================Scheduler Interface============================================================
 

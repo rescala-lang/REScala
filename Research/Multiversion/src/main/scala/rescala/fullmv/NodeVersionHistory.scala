@@ -1090,7 +1090,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     * @param add the new edge's sink node
     * @return the appropriate [[Version.value]].
     */
-  override def discover(txn: T, add: OutDep): (Seq[T], Option[T]) = synchronized {
+  override def discover(txn: T, add: OutDep): (List[T], Option[T]) = synchronized {
     val position = ensureReadVersion(txn)
     assert(!out.contains(add), "must not discover an already existing edge!")
     out += add
@@ -1102,7 +1102,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     * @param txn the executing reevaluation's transaction
     * @param remove the removed edge's sink node
     */
-  override def drop(txn: T, remove: OutDep): (Seq[T], Option[T]) = synchronized {
+  override def drop(txn: T, remove: OutDep): (List[T], Option[T]) = synchronized {
     val position = ensureReadVersion(txn)
     assert(out.contains(remove), "must not drop a non-existing edge!")
     out -= remove
@@ -1150,7 +1150,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     * @return a list of transactions with written successor versions and maybe the transaction of the first successor
     *         frame if it exists, for which reframings have to be performed at the sink.
     */
-  private def retrofitSourceOuts(position: Int): (Seq[T], Option[T]) = {
+  private def retrofitSourceOuts(position: Int): (List[T], Option[T]) = {
     // allocate array to the maximum number of written versions that might follow
     // (any version at index firstFrame or later can only be a frame, not written)
     val sizePrediction = math.max(firstFrame - position, 0)
@@ -1174,7 +1174,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     }
     if(successorWrittenVersions.size > sizePrediction) System.err.println(s"FullMV retrofitSourceOuts predicted size max($firstFrame - $position, 0) = $sizePrediction, but size eventually was ${successorWrittenVersions.size}")
     assertOptimizationsIntegrity(s"retrofitSourceOuts(from=$position) -> (writes=$successorWrittenVersions, maybeFrame=$maybeSuccessorFrame)")
-    (successorWrittenVersions, maybeSuccessorFrame)
+    (successorWrittenVersions.toList, maybeSuccessorFrame)
   }
 
   def fullGC(): Int = synchronized {

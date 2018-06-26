@@ -1,6 +1,5 @@
 package rescala.fullmv.mirrors
 
-import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.ForkJoinPool.ManagedBlocker
 import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
 
@@ -15,7 +14,7 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
   val _phase: AtomicInteger = new AtomicInteger(initialPhase)
   override def phase: TurnPhase.Type = _phase.get
 
-  val predecessorIndex: AtomicReference[(Set[FullMVTurn], TransactionSpanningTreeNode[FullMVTurn])] = new AtomicReference(null)
+  val predecessorIndex: AtomicReference[(Set[FullMVTurn], TransactionSpanningTreeNode[FullMVTurn], Int)] = new AtomicReference(null)
   override def selfNode: TransactionSpanningTreeNode[FullMVTurn] = {
     val maybeInitialized = predecessorIndex.get
     if(maybeInitialized == null) null else maybeInitialized._2
@@ -30,34 +29,19 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
   @volatile var predecessorSubscribed: Int = -1
   object predecessorSubscriptionParking
 
-  override def ensurePredecessorReplication(): Future[Unit] = {
-    if(predecessorSubscribed != 1) {
-      // ensure that only the first guy to call this actually registers a subscription
-      // and all the others only continue after that first guy is done
-      predecessorSubscriptionParking.synchronized {
-        val before = predecessorSubscribed
-        if (before == -1) predecessorSubscribed = 0
-        before
-      } match {
-        case -1 =>
-          if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this subscribing predecessors.")
-          proxy.addPredecessorReplicator(this).map { res =>
-            newPredecessors(res)
-            predecessorSubscriptionParking.synchronized {
-              predecessorSubscribed = 1
-              predecessorSubscriptionParking.notifyAll()
-            }
-          }(FullMVEngine.notWorthToMoveToTaskpool)
-        case 0 =>
-          ForkJoinPool.managedBlock(this)
-          Future.unit
-        case 1 =>
-          Future.unit
-      }
-    } else {
-      Future.unit
+
+  override def clockedPredecessors: (TransactionSpanningTreeNode[FullMVTurn], Type) = {
+    val (_, tree, clock) = predecessorIndex.get
+    (tree, clock)
+  }
+
+  override def ensurePredecessorReplication(startAt: TransactionSpanningTreeNode[FullMVTurn], clock: Type): Unit = {
+    val before = predecessorIndex.get
+    if(before == null && predecessorIndex.compareAndSet(null, (FullMVTurnReflection.buildIndex(startAt), startAt, clock))) {
+      proxy.asyncAddPredecessorReplicator(this, startAt, clock)
     }
   }
+
   override def isReleasable: Boolean = predecessorSubscriptionParking.synchronized { predecessorSubscribed != 0 }
   override def block(): Boolean = predecessorSubscriptionParking.synchronized { isReleasable || {predecessorSubscriptionParking.wait(); isReleasable} }
 
@@ -86,19 +70,21 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
     }
   }
 
-  override def newPredecessors(predecessors: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = {
+  override def newPredecessors(predecessors: TransactionSpanningTreeNode[FullMVTurn], clock: Int): Future[Unit] = {
     //  override def asyncNewPredecessors(predecessors: TransactionSpanningTreeNode[FullMVTurn]): Unit = {
     if(phase < TurnPhase.Completed) {
       val newPreds = FullMVTurnReflection.buildIndex(predecessors)
       @inline @tailrec def retryCommitWhileNewer(): Future[Unit] = {
         val before = predecessorIndex.get
-        if ((before == null || before._1.size < newPreds.size) && phase < TurnPhase.Completed) {
-          if (!predecessorIndex.compareAndSet(before, (newPreds, predecessors))) {
+        if(before == null) {
+          assert(phase == TurnPhase.Completed, s"shouldn't happen otherwise?")
+          Future.unit
+        } else if (before._3 < clock) {
+          if (!predecessorIndex.compareAndSet(before, (newPreds, predecessors, clock))) {
             retryCommitWhileNewer()
           } else {
             if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this updated predecessors: $newPreds.")
-//            predecessorReplicators.get.foreach(_.asyncNewPredecessors(predecessors))
-            FullMVEngine.broadcast(predecessorReplicators.get)(_.newPredecessors(predecessors))
+            FullMVEngine.broadcast(predecessorReplicators.get)(_.newPredecessors(predecessors, clock))
           }
         } else {
           Future.unit
