@@ -10,6 +10,7 @@ import scala.language.{existentials, implicitConversions}
 object RescalaInterface {
   def interfaceFor[S <: Struct](someScheduler: Scheduler[S]): RescalaInterface[S] = new RescalaInterface[S] {
     override def scheduler: Scheduler[S] = someScheduler
+    override def toString: String = s"Interface($scheduler)"
   }
 }
 

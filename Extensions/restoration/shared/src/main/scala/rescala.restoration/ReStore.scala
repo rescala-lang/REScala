@@ -83,7 +83,7 @@ class RestoringInterface(domain: String, restoreFrom: mutable.Map[String, String
   def snapshot(): mutable.Map[String, String] = values
 
   override protected def makeTurn(priorTurn: Option[ReStoringTurn]): ReStoringTurn = new ReStoringTurn(this)
-  lazy override val toString: String = s"Engine(Restoring: $domain)"
+  override def schedulerName : String = s"Restoring[$domain]"
   override def executeTurn[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R): R =
     synchronized(super.executeTurn(initialWrites, admissionPhase))
 }

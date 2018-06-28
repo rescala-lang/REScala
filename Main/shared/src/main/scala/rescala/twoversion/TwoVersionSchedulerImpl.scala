@@ -10,11 +10,10 @@ import rescala.core.Initializer
   * @tparam TImpl Turn type used by the engine
   */
 class TwoVersionSchedulerImpl[S <: TwoVersionStruct, TImpl <: TwoVersionPropagation[S] with Initializer[S]]
-(name: String, newTurn: (TwoVersionSchedulerImpl[S, TImpl], Option[TImpl]) => TImpl)
+(override val schedulerName: String, newTurn: (TwoVersionSchedulerImpl[S, TImpl], Option[TImpl]) => TImpl)
   extends TwoVersionScheduler[S, TImpl] {
 
   def this(name: String, newTurn: () => TImpl) = this(name, (_, _) => newTurn())
 
   override protected def makeTurn(priorTurn: Option[TImpl]): TImpl = newTurn(this, priorTurn)
-  lazy override val toString: String = s"Engine($name)"
 }

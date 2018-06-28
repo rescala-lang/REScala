@@ -18,6 +18,10 @@ trait Scheduler[S <: Struct] {
   def executeTurn[R](initialWrites: Set[ReSource[S]], admissionPhase: AdmissionTicket[S] => R): R
   private[rescala] def singleReadValueOnce[A](reactive: Signal[A, S]): A
   private[rescala] def creationDynamicLookup[T](f: Initializer[S] => T): T
+
+  /** Name of the scheduler, used for helpful error messages. */
+  def schedulerName: String
+  override def toString: String = s"Scheduler($schedulerName)"
 }
 
 

@@ -48,6 +48,6 @@ class LocalStorageStore(domain: String = "") extends TwoVersionScheduler[ReStori
 
   def getName(r: ReSource) = r.state.name
 
+  override def schedulerName: String = s"Restoring[$domain]"
   override protected def makeTurn(priorTurn: Option[ReStoringTurn]): ReStoringTurn = new ReStoringTurn(this)
-  lazy override val toString: String = s"Engine(Restoring: $domain)"
 }

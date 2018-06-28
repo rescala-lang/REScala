@@ -12,7 +12,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Try
 
-class FullMVEngine(val timeout: Duration, val name: String)
+class FullMVEngine(val timeout: Duration, val schedulerName: String)
   extends SchedulerImpl[FullMVStruct, FullMVTurn] with FullMVTurnHost with HostImpl[FullMVTurn] with RescalaInterface[FullMVStruct] {
 
 
@@ -20,7 +20,7 @@ class FullMVEngine(val timeout: Duration, val name: String)
 
 
   override object lockHost extends SubsumableLockHostImpl {
-    override def toString: String = "Locks " + name
+    override def toString: String = "Locks " + schedulerName
   }
   override val dummy: FullMVTurnImpl = {
     val dummy = new FullMVTurnImpl(this, Host.dummyGuid, null, lockHost.newLock())
@@ -91,7 +91,7 @@ class FullMVEngine(val timeout: Duration, val name: String)
     }
   }
 
-  override def toString: String = "Turns " + name
+  override def toString: String = "Turns " + schedulerName
   def cacheStatus: String = s"${instances.size()} turn instances and ${lockHost.instances.size()} lock instances"
 }
 
