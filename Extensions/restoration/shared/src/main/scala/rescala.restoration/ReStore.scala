@@ -3,7 +3,7 @@ package rescala.restoration
 import rescala.core.Initializer.InitValues
 import rescala.core.{Initializer, ReSerializable, ReSource, Scheduler, Struct}
 import rescala.interface.RescalaInterface
-import rescala.levelbased.{LevelBasedPropagation, LevelStruct, LevelStructTypeImpl}
+import rescala.levelbased.{LevelBasedPropagation, LevelStruct, LevelStateImpl}
 import rescala.twoversion.TwoVersionScheduler
 
 import scala.collection.mutable
@@ -16,7 +16,7 @@ object RestoringInterface {
 
 class ReStoringTurn(restore: ReStore) extends LevelBasedPropagation[ReStoringStruct] {
 
-  override protected def makeDerivedStructState[P](valuePersistency: InitValues[P]): ReStoringStructType[P, ReStoringStruct] = {
+  override protected def makeDerivedStructState[P](valuePersistency: InitValues[P]): ReStoringState[P, ReStoringStruct] = {
     valuePersistency match {
       case is@Initializer.InitializedSignal(init) if is.serializable != rescala.core.ReSerializable.doNotSerialize =>
         if (is.serializable == rescala.core.ReSerializable.serializationUnavailable) throw new Exception(s"restore requires serializable reactive: $valuePersistency")
@@ -24,14 +24,14 @@ class ReStoringTurn(restore: ReStore) extends LevelBasedPropagation[ReStoringStr
         restore.get(name) match {
           case None =>
             //println(s"new struct $name")
-            new ReStoringStructType[P, ReStoringStruct](restore, name, is.serializable, is)
+            new ReStoringState[P, ReStoringStruct](restore, name, is.serializable, is)
           case Some(v) =>
             //println(s"old struct $name $s")
             val restoredValue = Initializer.InitializedSignal(is.serializable.deserialize(v).get)(is.serializable)
-            new ReStoringStructType[P, ReStoringStruct](restore, name, is.serializable, restoredValue)
+            new ReStoringState[P, ReStoringStruct](restore, name, is.serializable, restoredValue)
         }
       case _ =>
-        new ReStoringStructType(null, null, null, valuePersistency)
+        new ReStoringState(null, null, null, valuePersistency)
     }
   }
 
@@ -42,11 +42,11 @@ class ReStoringTurn(restore: ReStore) extends LevelBasedPropagation[ReStoringStr
 
 }
 
-class ReStoringStructType[P, S <: Struct](storage: ReStore,
-                                          val name: String,
-                                          serializable: ReSerializable[P],
-                                          initialVal: InitValues[P])
-  extends LevelStructTypeImpl[P, S](initialVal) {
+class ReStoringState[P, S <: Struct](storage: ReStore,
+                                     val name: String,
+                                     serializable: ReSerializable[P],
+                                     initialVal: InitValues[P])
+  extends LevelStateImpl[P, S](initialVal) {
   override def commit(): Unit = {
     super.commit()
     if (storage != null) {
@@ -57,7 +57,7 @@ class ReStoringStructType[P, S <: Struct](storage: ReStore,
 
 
 trait ReStoringStruct extends LevelStruct {
-  override type State[P, S <: Struct] = ReStoringStructType[P, S]
+  override type State[P, S <: Struct] = ReStoringState[P, S]
 }
 
 trait ReStore {

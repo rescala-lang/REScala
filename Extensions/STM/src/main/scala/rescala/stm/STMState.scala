@@ -2,12 +2,12 @@ package rescala.stm
 
 import rescala.core.Initializer.InitValues
 import rescala.core.{ReSource, Reactive, Struct}
-import rescala.levelbased.LevelStructType
+import rescala.levelbased.LevelState
 import rescala.twoversion.{ReadWriteValue, Token}
 
 import scala.concurrent.stm.{InTxn, Ref, TxnLocal}
 
-class STMStructType[V, S <: Struct](ip: InitValues[V]) extends LevelStructType[S] with ReadWriteValue[V, S] {
+class STMState[V, S <: Struct](ip: InitValues[V]) extends LevelState[S] with ReadWriteValue[V, S] {
 
   // use dynamic scope lookup to find txn
   def inTxn(): InTxn = scala.concurrent.stm.atomic(identity)

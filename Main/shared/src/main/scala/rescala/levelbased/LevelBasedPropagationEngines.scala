@@ -11,7 +11,7 @@ trait LevelBasedPropagationEngines {
 
   private[rescala] class SimpleNoLock extends LevelBasedPropagation[SimpleStruct] {
     override protected def makeDerivedStructState[P](ip: InitValues[P]): SimpleStruct#State[P, SimpleStruct] = {
-      new LevelStructTypeImpl(ip)
+      new LevelStateImpl(ip)
     }
     override def releasePhase(): Unit = ()
     override def preparationPhase(initialWrites: Set[ReSource[SimpleStruct]]): Unit = {}

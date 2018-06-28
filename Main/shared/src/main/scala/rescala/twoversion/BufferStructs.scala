@@ -6,7 +6,7 @@ import rescala.core.{ReSource, Reactive, Struct}
 import scala.language.higherKinds
 
 trait TwoVersionStruct extends GraphStruct {
-  override type State[P, S <: Struct] <: GraphStructType[S] with ReadWriteValue[P, S]
+  override type State[P, S <: Struct] <: GraphState[S] with ReadWriteValue[P, S]
 }
 
 /**
@@ -40,7 +40,7 @@ class BufferedValueStruct[V, S <: Struct](ip: InitValues[V]) extends ReadWriteVa
 }
 
 /**  Implementation of a struct with graph functionality and a buffered pulse storage.  */
-abstract class PropagationStructImpl[P, S <: Struct](ip: InitValues[P]) extends BufferedValueStruct[P, S](ip) with GraphStructType[S] {
+abstract class PropagationStructImpl[P, S <: Struct](ip: InitValues[P]) extends BufferedValueStruct[P, S](ip) with GraphState[S] {
   protected var _incoming: Set[ReSource[S]] = Set.empty
   protected var _outgoing: scala.collection.mutable.Map[Reactive[S], None.type] = rescala.util.WeakHashMap.empty
 
@@ -56,7 +56,7 @@ abstract class PropagationStructImpl[P, S <: Struct](ip: InitValues[P]) extends 
   * Wrapper for a struct type combining GraphSpore and PulsingSpore
   */
 trait GraphStruct extends Struct {
-  override type State[P, S <: Struct] <: GraphStructType[S] with ReadWriteValue[P, S]
+  override type State[P, S <: Struct] <: GraphState[S] with ReadWriteValue[P, S]
 }
 
 /**
@@ -64,7 +64,7 @@ trait GraphStruct extends Struct {
   *
   * @tparam S Type of the reactive values that are connected to this struct
   */
-trait GraphStructType[S <: Struct] {
+trait GraphState[S <: Struct] {
   def incoming(): Set[ReSource[S]]
   def updateIncoming(reactives: Set[ReSource[S]]): Unit
   def outgoing(): Iterable[Reactive[S]]

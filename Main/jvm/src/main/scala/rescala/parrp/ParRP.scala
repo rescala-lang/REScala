@@ -2,7 +2,7 @@ package rescala.parrp
 
 import rescala.core.Initializer.InitValues
 import rescala.core._
-import rescala.levelbased.{LevelBasedPropagation, LevelStruct, LevelStructTypeImpl}
+import rescala.levelbased.{LevelBasedPropagation, LevelStruct, LevelStateImpl}
 import rescala.locking._
 
 trait ParRPInterTurn {
@@ -16,12 +16,12 @@ trait ParRPInterTurn {
 
 }
 
-class ParRPStructType[V, S <: Struct](ip: InitValues[V], val lock: TurnLock[ParRPInterTurn])
-  extends LevelStructTypeImpl[V, S](ip)
+class ParRPState[V, S <: Struct](ip: InitValues[V], val lock: TurnLock[ParRPInterTurn])
+  extends LevelStateImpl[V, S](ip)
 
 
 class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropagation[ParRP] with ParRPInterTurn with LevelStruct {
-  override type State[P, S <: Struct] = ParRPStructType[P, S]
+  override type State[P, S <: Struct] = ParRPState[P, S]
 
   private type TState = ParRP
 
@@ -41,11 +41,11 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
   final val key: Key[ParRPInterTurn] = new Key(this)
 
 
-  override protected[this] def makeDerivedStructState[V](ip: InitValues[V]): ParRPStructType[V, ParRP] = {
+  override protected[this] def makeDerivedStructState[V](ip: InitValues[V]): ParRPState[V, ParRP] = {
     val lock = new TurnLock[ParRPInterTurn]
     val owner = lock.tryLock(key)
     assert(owner eq key, s"$this failed to acquire lock on newly created reactive")
-    new ParRPStructType(ip, lock)
+    new ParRPState(ip, lock)
   }
 
   /** this is called after the turn has finished propagating, but before handlers are executed */
