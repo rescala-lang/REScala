@@ -7,7 +7,6 @@ import rescala.levelbased.{LevelBasedPropagation, LevelStateImpl, LevelStruct}
 import rescala.twoversion.TwoVersionScheduler
 
 import scala.collection.mutable
-import scala.util.Random
 
 object RestoringInterface {
   def apply(domain: String = "", restoreFrom: mutable.Map[String, String] = mutable.HashMap()): RestoringInterface =
@@ -79,14 +78,8 @@ trait ReStoreImpl extends ReStore with TwoVersionScheduler[ReStoringStruct, ReSt
     if (nextNames.nonEmpty) {
       nextNames.dequeue()
     }
-    else
-    if (_currentTurn.value.isDefined) {
-      domain + Random.nextLong()
-    }
-    else {
-      count += 1
-      domain + count
-    }
+    count += 1
+    domain + count
   }
 
   def getName(r: ReSource[ReStoringStruct]) = r.state.name
