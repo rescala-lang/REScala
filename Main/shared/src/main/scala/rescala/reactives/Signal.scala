@@ -43,15 +43,18 @@ trait Signal[+A, S <: Struct] extends ReSource[S] with Interp[A, S] with Disconn
   override def interpret(v: Value): A = v.get
 
   /** add an observer
+    *
     * @group accessor */
-  final def observe(
-    onSuccess: A => Unit,
-    onFailure: Throwable => Unit = null
-  )(implicit ticket: CreationTicket[S]): Observe[S] = Observe.strong(this, fireImmediately = true)(onSuccess, onFailure)
+  final def observe(onValue: A => Unit,
+                    onError: Throwable => Unit = null)
+                   (implicit ticket: CreationTicket[S])
+  : Observe[S] = Observe.strong(this, fireImmediately = true)(onValue, onError)
 
   /** Uses a partial function `onFailure` to recover an error carried by the event into a value. */
   @cutOutOfUserComputation
-  final def recover[R >: A](onFailure: PartialFunction[Throwable,R])(implicit ticket: CreationTicket[S]): Signal[R, S] = Signals.static(this) { st =>
+  final def recover[R >: A](onFailure: PartialFunction[Throwable, R])
+                           (implicit ticket: CreationTicket[S])
+  : Signal[R, S] = Signals.static(this) { st =>
     try st.dependStatic(this) catch {
       case NonFatal(e) => onFailure.applyOrElse[Throwable, R](e, throw _)
     }
@@ -62,10 +65,12 @@ trait Signal[+A, S <: Struct] extends ReSource[S] with Interp[A, S] with Disconn
   //final def recover[R >: A](onFailure: Throwable => R)(implicit ticket: TurnSource[S]): Signal[R, S] = recover(PartialFunction(onFailure))
 
   @cutOutOfUserComputation
-  final def abortOnError()(implicit ticket: CreationTicket[S]): Signal[A, S] = recover{case t => throw new UnhandledFailureException(this, t)}
+  final def abortOnError()(implicit ticket: CreationTicket[S]): Signal[A, S]
+  = recover{case t => throw new UnhandledFailureException(this, t)}
 
   @cutOutOfUserComputation
-  final def withDefault[R >: A](value: R)(implicit ticket: CreationTicket[S]): Signal[R, S] = Signals.static(this) { (st) =>
+  final def withDefault[R >: A](value: R)(implicit ticket: CreationTicket[S])
+  : Signal[R, S] = Signals.static(this) { st =>
     try st.dependStatic(this) catch {
       case EmptySignalControlThrowable => value
     }
@@ -74,8 +79,8 @@ trait Signal[+A, S <: Struct] extends ReSource[S] with Interp[A, S] with Disconn
   /** Return a Signal with f applied to the value
     * @group operator */
   @cutOutOfUserComputation
-  final def map[B](f: A => B)(implicit ticket: CreationTicket[S]): Signal[B, S] =
-    static(this) { t => f(t.dependStatic(this)) }
+  final def map[B](f: A => B)(implicit ticket: CreationTicket[S]): Signal[B, S]
+  = static(this) { t => f(t.dependStatic(this)) }
 
   /** Flattens the inner value.
     * @group operator */
@@ -94,9 +99,11 @@ trait Signal[+A, S <: Struct] extends ReSource[S] with Interp[A, S] with Disconn
 
   /** Create an event that fires every time the signal changes. The value associated
     * to the event is the new value of the signal
+    *
     * @group conversion */
   @cutOutOfUserComputation
-  final def changed(implicit ticket: CreationTicket[S]): Event[A, S] = Events.staticNamed(s"(changed $this)", this) { st =>
+  final def changed(implicit ticket: CreationTicket[S]): Event[A, S]
+  = Events.staticNamed(s"(changed $this)", this) { st =>
     st.collectStatic(this) match {
       case Pulse.empty => Pulse.NoChange
       case other => other
@@ -106,6 +113,7 @@ trait Signal[+A, S <: Struct] extends ReSource[S] with Interp[A, S] with Disconn
   /** Convenience function filtering to events which change this reactive to value
     * @group conversion */
   @cutOutOfUserComputation
-  final def changedTo[V >: A](value: V)(implicit ticket: CreationTicket[S]): Event[Unit, S] = changed.filter(_ == value).dropParam
+  final def changedTo[V >: A](value: V)(implicit ticket: CreationTicket[S]): Event[Unit, S]
+  = changed.filter(_ == value).dropParam
 }
 
