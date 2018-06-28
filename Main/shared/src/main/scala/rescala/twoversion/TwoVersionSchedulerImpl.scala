@@ -1,7 +1,6 @@
 package rescala.twoversion
 
-import rescala.core.{Initializer, Scheduler}
-import rescala.interface.RescalaInterface
+import rescala.core.Initializer
 
 /**
   * Implementation of the turn creation function based on a given function as class parameter
@@ -12,13 +11,9 @@ import rescala.interface.RescalaInterface
   */
 class TwoVersionSchedulerImpl[S <: TwoVersionStruct, TImpl <: TwoVersionPropagation[S] with Initializer[S]]
 (name: String, newTurn: (TwoVersionSchedulerImpl[S, TImpl], Option[TImpl]) => TImpl)
-  extends TwoVersionScheduler[S, TImpl] with RescalaInterface[S] {
+  extends TwoVersionScheduler[S, TImpl] {
 
   def this(name: String, newTurn: () => TImpl) = this(name, (_, _) => newTurn())
-
-
-  override def scheduler: Scheduler[S] = this
-
 
   override protected def makeTurn(priorTurn: Option[TImpl]): TImpl = newTurn(this, priorTurn)
   lazy override val toString: String = s"Engine($name)"

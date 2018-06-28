@@ -1,16 +1,16 @@
 package tests.restoration
 
 import org.scalatest.FunSuite
-import rescala.restoration.ReStoringScheduler
 import rescala.restoration.ReCirce._
+import rescala.restoration.RestoringInterface
 
 class RestoringTest extends FunSuite {
 
   test("simple save and restore"){
 
     val snapshot = {
-      implicit val engine = new ReStoringScheduler()
-      val e = engine.Evt[Unit]()
+      implicit val api = RestoringInterface()
+      val e = api.Evt[Unit]()
       val c = e.count()
 
       assert(c.readValueOnce == 0)
@@ -19,11 +19,11 @@ class RestoringTest extends FunSuite {
       e.fire()
 
       assert(c.readValueOnce == 2)
-      engine.snapshot()
+      api.snapshot()
     }
 
     {
-      implicit val engine1 = new ReStoringScheduler(restoreFrom = snapshot)
+      implicit val engine1 = RestoringInterface(restoreFrom = snapshot)
       val e = engine1.Evt[Unit]()
       val c = e.count()
 
@@ -39,7 +39,7 @@ class RestoringTest extends FunSuite {
   test("save and restore with changes in between"){
 
     val snapshot = {
-      implicit val engine = new ReStoringScheduler()
+      implicit val engine = RestoringInterface()
       val e = engine.Evt[Unit]()
       val c = e.count()
 
@@ -59,7 +59,7 @@ class RestoringTest extends FunSuite {
     }
 
     {
-      implicit val engine1 = new ReStoringScheduler(restoreFrom = snapshot)
+      implicit val engine1 = RestoringInterface(restoreFrom = snapshot)
       val e = engine1.Evt[Unit]()
       val c = e.count()
 

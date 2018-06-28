@@ -8,8 +8,8 @@ import rescala.core.{Scheduler, Struct}
 import rescala.interface.RescalaInterface
 import rescala.levelbased.SimpleStruct
 import rescala.reactives.{Evt, Var}
-import rescala.restoration.ReStoringScheduler
 import rescala.restoration.ReCirce._
+import rescala.restoration.RestoringInterface
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -99,7 +99,7 @@ class RestoringSnapshotVsInitial {
 
   @Setup
   def setup(size: Size) = {
-    val engine = new ReStoringScheduler()
+    val engine = RestoringInterface()
     val (source, res) = build(engine, size.size)
     source.fire(10)(engine)
     source.fire(20)(engine)
@@ -107,11 +107,11 @@ class RestoringSnapshotVsInitial {
   }
 
   @Benchmark
-  def fresh(size: Size) = build(new ReStoringScheduler(), size.size)
+  def fresh(size: Size) = build(RestoringInterface(), size.size)
 
   @Benchmark
   def restored(size: Size) = {
-    val engine = new ReStoringScheduler(restoreFrom = snapshot)
+    val engine = RestoringInterface(restoreFrom = snapshot)
     build(engine, size.size)
   }
 
@@ -134,7 +134,7 @@ class RestoringSnapshotVsRecomputationA[S <: Struct] {
 
   var snapshot: scala.collection.mutable.Map[String, String] = _
 
-  def build(implicit engine: ReStoringScheduler) = {
+  def build(implicit engine: RestoringInterface.RestoringWithAPI) = {
     val source = engine.Evt[Int]()
     val res = source.list().map(_.size)
     (source, res)
@@ -142,7 +142,7 @@ class RestoringSnapshotVsRecomputationA[S <: Struct] {
 
   @Setup
   def setup(size: Size, workload: Workload) = {
-    val engine = new ReStoringScheduler()
+    val engine = RestoringInterface()
     val (source, res) = build(engine)
     for (i <- 1 to size.size) source.fire(i)(engine)
     snapshot = engine.snapshot()
@@ -150,7 +150,7 @@ class RestoringSnapshotVsRecomputationA[S <: Struct] {
 
   @Benchmark
   def restored(size: Size) = {
-    val engine = new ReStoringScheduler(restoreFrom = snapshot)
+    val engine = RestoringInterface(restoreFrom = snapshot)
     build(engine)
   }
 }
@@ -166,7 +166,7 @@ class RestoringSnapshotVsRecomputationB[S <: Struct] {
 
   var snapshot: scala.collection.mutable.Map[String, String] = _
 
-  def build(implicit engine: ReStoringScheduler) = {
+  def build(implicit engine: RestoringInterface.RestoringWithAPI) = {
     val source = engine.Evt[Int]()
     val res = source.count().map(List.tabulate(_)(identity))
     (source, res)
@@ -174,7 +174,7 @@ class RestoringSnapshotVsRecomputationB[S <: Struct] {
 
   @Setup
   def setup(size: Size, workload: Workload) = {
-    val engine = new ReStoringScheduler()
+    val engine = RestoringInterface()
     val (source, res) = build(engine)
     for (i <- 1 to size.size) source.fire(i)(engine)
     snapshot = engine.snapshot()
@@ -182,7 +182,7 @@ class RestoringSnapshotVsRecomputationB[S <: Struct] {
 
   @Benchmark
   def derived(size: Size) = {
-    val engine = new ReStoringScheduler(restoreFrom = snapshot)
+    val engine = RestoringInterface(restoreFrom = snapshot)
     build(engine)
   }
 }

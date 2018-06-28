@@ -1,7 +1,7 @@
 package rescala.levelbased
 
 import rescala.core.Initializer.InitValues
-import rescala.core.{ReSource, Scheduler}
+import rescala.core.{AdmissionTicket, ReSource, Scheduler}
 import rescala.twoversion.TwoVersionSchedulerImpl
 
 /**
@@ -20,7 +20,7 @@ trait LevelBasedPropagationEngines {
 
   implicit val synchron: Scheduler[SimpleStruct] = {
     new TwoVersionSchedulerImpl[SimpleStruct, SimpleNoLock]("Synchron", () =>  new SimpleNoLock) {
-      override def executeTurn[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R): R =
+      override def executeTurn[R](initialWrites: Set[ReSource[SimpleStruct]], admissionPhase: AdmissionTicket[SimpleStruct] => R): R =
         synchronized { super.executeTurn(initialWrites, admissionPhase) }
     }
   }
