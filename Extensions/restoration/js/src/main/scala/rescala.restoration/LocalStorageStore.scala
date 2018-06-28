@@ -3,38 +3,17 @@ package rescala.restoration
 import org.scalajs.dom
 import org.scalajs.dom.Storage
 import rescala.core.Scheduler
-import rescala.interface.RescalaInterface
-import rescala.twoversion.TwoVersionScheduler
+import rescala.interface.RescalaInterfaceRequireSerializer
 
-import scala.collection.mutable
-import scala.util.Random
+class LocalStorageStore(override val domain: String = "")
+  extends ReStoreImpl
+  with RescalaInterfaceRequireSerializer[ReStoringStruct] {
 
-class LocalStorageStore(domain: String = "") extends TwoVersionScheduler[ReStoringStruct, ReStoringTurn] with ReStore with RescalaInterface[ReStoringStruct] {
 
 
   override def scheduler: Scheduler[ReStoringStruct] = this
 
   val storage: Storage = dom.window.localStorage
-
-  var count = 0
-  val nextNames: mutable.Queue[String] = mutable.Queue.empty
-
-  def nextName(): String = {
-    if (nextNames.nonEmpty) {
-      nextNames.dequeue()
-    }
-    else
-    if (_currentTurn.value.isDefined) {
-      domain + Random.nextLong()
-    }
-    else {
-      count += 1
-      domain + count
-    }
-  }
-
-
-  def addNextNames(n: String*) = nextNames.enqueue(n: _*)
 
   override def put(key: String, value: String): Unit = {
     println(s"store $key -> $value")
@@ -45,8 +24,6 @@ class LocalStorageStore(domain: String = "") extends TwoVersionScheduler[ReStori
     println(s"parsed $key -> $res")
     res
   }
-
-  def getName(r: ReSource) = r.state.name
 
   override def schedulerName: String = s"Restoring[$domain]"
   override protected def makeTurn(priorTurn: Option[ReStoringTurn]): ReStoringTurn = new ReStoringTurn(this)

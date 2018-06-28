@@ -5,7 +5,7 @@ import rescala.interface.RescalaInterface
 import tests.rescala.concurrency.philosophers.PhilosopherTable._
 
 class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(ri: RescalaInterface[S]) extends PhilosopherTable(philosopherCount, work)(ri) {
-  import interface.{Var, Signal, implicitScheduler}
+  import interface.{Var, Signal, implicitScheduler, noSerialization}
 
   override def createTable(tableSize: Int): Seq[Seating[S]] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize

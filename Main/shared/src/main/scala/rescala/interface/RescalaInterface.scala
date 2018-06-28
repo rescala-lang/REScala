@@ -14,6 +14,10 @@ object RescalaInterface {
   }
 }
 
+trait RescalaInterface[S <: Struct] extends RescalaInterfaceRequireSerializer[S] {
+  implicit def noSerialization[T]: ReSerializable[T] = rescala.core.ReSerializable.serializationUnavailable
+}
+
 /** Rescala has two main abstractions. [[Event]] and [[Signal]] commonly referred to as reactives.
   * Use [[Var]] to create signal sources and [[Evt]] to create event sources.
   *
@@ -34,7 +38,7 @@ object RescalaInterface {
   * @groupdesc internal Methods and type aliases for advanced usages, these are most relevant to abstract
   *           over multiple scheduler implementations.
   **/
-trait RescalaInterface[S <: Struct] extends Aliases[S] {
+trait RescalaInterfaceRequireSerializer[S <: Struct] extends Aliases[S] {
   // need the import inside of the trait, otherwise scala complains that it is shadowed by rescala.macros
   import scala.language.experimental.macros
 
@@ -159,5 +163,5 @@ trait RescalaInterface[S <: Struct] extends Aliases[S] {
       for(change <- changes) admit(t, change)
     })
   }
-  private def admit[A](t: AdmissionTicket, change: (Source[S, A], A)) = change._1.admit(change._2)(t)
+  private def admit[A](t: AdmissionTicket, change: (Source[S, A], A)): Unit = change._1.admit(change._2)(t)
 }

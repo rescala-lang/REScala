@@ -11,6 +11,7 @@ import rescala.reactives.{Signal, Var}
 class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(val interface: RescalaInterface[S]) {
   import interface.Var
   import interface.implicitScheduler
+  import interface.noSerialization
   import tests.rescala.concurrency.philosophers.PhilosopherTable._
 
   val seatings: Seq[Seating[S]] = createTable(philosopherCount)

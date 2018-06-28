@@ -2,11 +2,12 @@ package rescala.restoration
 
 import rescala.core.Initializer.InitValues
 import rescala.core.{Initializer, ReSerializable, ReSource, Scheduler, Struct}
-import rescala.interface.RescalaInterface
-import rescala.levelbased.{LevelBasedPropagation, LevelStruct, LevelStateImpl}
+import rescala.interface.RescalaInterfaceRequireSerializer
+import rescala.levelbased.{LevelBasedPropagation, LevelStateImpl, LevelStruct}
 import rescala.twoversion.TwoVersionScheduler
 
 import scala.collection.mutable
+import scala.util.Random
 
 object RestoringInterface {
   def apply(domain: String = "", restoreFrom: mutable.Map[String, String] = mutable.HashMap()): RestoringInterface =
@@ -64,20 +65,42 @@ trait ReStore {
   def nextName(): String
   def put(key: String, value: String): Unit
   def get(key: String): Option[String]
+  def addNextNames(n: String*): Unit
+}
+
+trait ReStoreImpl extends ReStore with TwoVersionScheduler[ReStoringStruct, ReStoringTurn] {
+
+  var count = 0
+  val nextNames: mutable.Queue[String] = mutable.Queue.empty
+
+  def domain: String
+
+  def nextName(): String = {
+    if (nextNames.nonEmpty) {
+      nextNames.dequeue()
+    }
+    else
+    if (_currentTurn.value.isDefined) {
+      domain + Random.nextLong()
+    }
+    else {
+      count += 1
+      domain + count
+    }
+  }
+
+  def getName(r: ReSource[ReStoringStruct]) = r.state.name
+  def addNextNames(n: String*): Unit = nextNames.enqueue(n: _*)
 }
 
 
-class RestoringInterface(domain: String, restoreFrom: mutable.Map[String, String])
-  extends TwoVersionScheduler[ReStoringStruct, ReStoringTurn] with ReStore with RescalaInterface[ReStoringStruct] {
+class RestoringInterface(override val domain: String, restoreFrom: mutable.Map[String, String])
+  extends ReStoreImpl with RescalaInterfaceRequireSerializer[ReStoringStruct] {
 
   override def scheduler: Scheduler[ReStoringStruct] = this
 
   def values: mutable.Map[String, String] = restoreFrom
-  var count = 0
-  def nextName(): String = {
-    count += 1
-    domain + count
-  }
+
   override def put(key: String, value: String): Unit = values.put(key, value)
   override def get(key: String): Option[String] = values.get(key)
   def snapshot(): mutable.Map[String, String] = values

@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations._
 import rescala.core.{Scheduler, Struct}
-import rescala.interface.RescalaInterface
+import rescala.interface.{RescalaInterface, RescalaInterfaceRequireSerializer}
 import rescala.levelbased.SimpleStruct
 import rescala.reactives.{Evt, Var}
 import rescala.restoration.ReCirce._
@@ -88,7 +88,7 @@ class RestoringSnapshotVsInitial {
 
   val syncInterface: RescalaInterface[SimpleStruct] = RescalaInterface.interfaceFor(rescala.Schedulers.synchron)
 
-  def build[S <: Struct](engine: RescalaInterface[S], size: Int) = {
+  def build[S <: Struct](engine: RescalaInterfaceRequireSerializer[S], size: Int) = {
     import engine.implicitScheduler
     val source = engine.Evt[Int]()
     val res = for (i <- 1 to size) yield {
