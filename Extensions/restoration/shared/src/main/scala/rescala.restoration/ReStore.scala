@@ -1,7 +1,7 @@
 package rescala.restoration
 
 import rescala.core.Initializer.InitValues
-import rescala.core.{AdmissionTicket, Initializer, ReSerializable, ReSource, Scheduler, Struct}
+import rescala.core.{Initializer, ReSerializable, ReSource, Scheduler, Struct}
 import rescala.interface.RescalaInterface
 import rescala.levelbased.{LevelBasedPropagation, LevelStruct, LevelStructTypeImpl}
 import rescala.twoversion.TwoVersionScheduler
@@ -9,11 +9,8 @@ import rescala.twoversion.TwoVersionScheduler
 import scala.collection.mutable
 
 object RestoringInterface {
-  type RestoringWithAPI = ReStoringScheduler with RescalaInterface[ReStoringStruct]
-  def apply(domain: String = "", restoreFrom: mutable.Map[String, String] = mutable.HashMap()): RestoringWithAPI =
-    new ReStoringScheduler(domain, restoreFrom) with RescalaInterface[ReStoringStruct] {
-      override def scheduler: Scheduler[ReStoringStruct] = this
-    }
+  def apply(domain: String = "", restoreFrom: mutable.Map[String, String] = mutable.HashMap()): RestoringInterface =
+    new RestoringInterface(domain, restoreFrom)
 }
 
 
@@ -70,8 +67,10 @@ trait ReStore {
 }
 
 
-class ReStoringScheduler(domain: String, restoreFrom: mutable.Map[String, String])
-  extends TwoVersionScheduler[ReStoringStruct, ReStoringTurn] with ReStore {
+class RestoringInterface(domain: String, restoreFrom: mutable.Map[String, String])
+  extends TwoVersionScheduler[ReStoringStruct, ReStoringTurn] with ReStore with RescalaInterface[ReStoringStruct] {
+
+  override def scheduler: Scheduler[ReStoringStruct] = this
 
   def values: mutable.Map[String, String] = restoreFrom
   var count = 0
@@ -85,7 +84,7 @@ class ReStoringScheduler(domain: String, restoreFrom: mutable.Map[String, String
 
   override protected def makeTurn(priorTurn: Option[ReStoringTurn]): ReStoringTurn = new ReStoringTurn(this)
   lazy override val toString: String = s"Engine(Restoring: $domain)"
-  override def executeTurn[R](initialWrites: Set[ReSource[ReStoringStruct]], admissionPhase: AdmissionTicket[ReStoringStruct] => R): R =
+  override def executeTurn[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R): R =
     synchronized(super.executeTurn(initialWrites, admissionPhase))
 }
 

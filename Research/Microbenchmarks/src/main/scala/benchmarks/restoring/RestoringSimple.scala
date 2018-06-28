@@ -134,7 +134,7 @@ class RestoringSnapshotVsRecomputationA[S <: Struct] {
 
   var snapshot: scala.collection.mutable.Map[String, String] = _
 
-  def build(implicit engine: RestoringInterface.RestoringWithAPI) = {
+  def build(implicit engine: RestoringInterface) = {
     val source = engine.Evt[Int]()
     val res = source.list().map(_.size)
     (source, res)
@@ -166,7 +166,7 @@ class RestoringSnapshotVsRecomputationB[S <: Struct] {
 
   var snapshot: scala.collection.mutable.Map[String, String] = _
 
-  def build(implicit engine: RestoringInterface.RestoringWithAPI) = {
+  def build(implicit engine: RestoringInterface) = {
     val source = engine.Evt[Int]()
     val res = source.count().map(List.tabulate(_)(identity))
     (source, res)
