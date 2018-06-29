@@ -27,7 +27,8 @@ class PaperExampleSharedCalendar extends FreeSpec {
     addNextNames(names: _*)
     Entry(Var(title), Var(java.time.Instant.parse(date)))
   }
-  implicit val taskEncoder: io.circe.Encoder[Entry] = io.circe.Encoder.forProduct3[String, String, List[String], Entry]("decs", "done", "names"){t =>
+  implicit val taskEncoder: io.circe.Encoder[Entry]
+  = io.circe.Encoder.forProduct3[String, String, List[String], Entry]("decs", "done", "names") { t =>
     (t.title.readValueOnce, t.date.readValueOnce.toString, List(getName(t.title), getName(t.date)))
   }
 
@@ -40,7 +41,7 @@ class PaperExampleSharedCalendar extends FreeSpec {
     val holiday: interface.Evt[Entry] = Evt[Entry]
     def nationalHolidays(): Event[Entry] = holiday
   }
-  object Log { def appendEntry(entry: Entry): Unit = println(s"Log: $entry")}
+  object Log { def appendEntry(entry: Entry): Unit = println(s"Log: $entry") }
   object Ui {
     def displayEntryList(entry: Set[Entry]): Unit = println(s"UI: $entry")
     def displayError(error: Throwable): Unit = println(s"Error: $error")
@@ -78,8 +79,5 @@ class PaperExampleSharedCalendar extends FreeSpec {
       onValue = Ui.displayEntryList,
       onError = Ui.displayError)
   }
-
-
-
 
 }
