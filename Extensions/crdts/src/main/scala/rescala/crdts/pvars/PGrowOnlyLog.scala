@@ -1,5 +1,6 @@
 package rescala.crdts.pvars
 
+import rescala.crdts.pvars.Publishable.PVarFactory
 import rescala.default._
 import rescala.crdts.statecrdts.sequences.{RGOA, Vertex}
 
@@ -23,4 +24,9 @@ object PGrowOnlyLog {
     val init: RGOA[A] = RGOA().fromValue(values)
     new PGrowOnlyLog[A](init)
   }
+
+  implicit def PGrowOnlyLogFactory[A]: PVarFactory[PGrowOnlyLog[A]] =
+    new PVarFactory[PGrowOnlyLog[A]] {
+      override def apply(): PGrowOnlyLog[A] = PGrowOnlyLog[A]()
+    }
 }

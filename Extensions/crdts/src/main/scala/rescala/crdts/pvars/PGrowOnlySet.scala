@@ -1,5 +1,6 @@
 package rescala.crdts.pvars
 
+import rescala.crdts.pvars.Publishable.PVarFactory
 import rescala.default._
 import rescala.crdts.statecrdts.sets.GSet
 
@@ -20,4 +21,9 @@ object PGrowOnlySet {
     val init: GSet[A] = GSet().fromValue(values)
     new PGrowOnlySet[A](init)
   }
+
+  implicit def PGrowOnlySetFactory[A]: PVarFactory[PGrowOnlySet[A]] =
+    new PVarFactory[PGrowOnlySet[A]] {
+      override def apply(): PGrowOnlySet[A] = PGrowOnlySet[A]()
+    }
 }
