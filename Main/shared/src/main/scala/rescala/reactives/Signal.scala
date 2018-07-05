@@ -24,9 +24,11 @@ trait Signal[+A, S <: Struct] extends ReSource[S] with Interp[A, S] with Disconn
   override type Value <: Pulse[A]
 
 
-  @deprecated("Using now is in most cases not what you want." +
-                " It does not build dependencies, does not integrate into transactions." +
-                " Use `readValueOnce` for examples and debug output.", "0.23.0")
+  /** Returns the current value of the signal
+    * However, using now is in most cases not what you want.
+    * It does not build dependencies, does not integrate into transactions.
+    * Use only for examples and debug output.
+    * @group accessor */
   final def now(implicit scheduler: Scheduler[S]): A = readValueOnce
   /** Returns the current value of the signal
     * @group accessor */
