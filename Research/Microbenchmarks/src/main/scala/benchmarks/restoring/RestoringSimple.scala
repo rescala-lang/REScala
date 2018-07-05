@@ -9,7 +9,7 @@ import rescala.interface.{RescalaInterface, RescalaInterfaceRequireSerializer}
 import rescala.levelbased.SimpleStruct
 import rescala.reactives.{Evt, Var}
 import rescala.restoration.ReCirce._
-import rescala.restoration.RestoringInterface
+import rescala.restoration.{InMemoryStore, RestoringInterface}
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -134,7 +134,7 @@ class RestoringSnapshotVsRecomputationA[S <: Struct] {
 
   var snapshot: scala.collection.mutable.Map[String, String] = _
 
-  def build(implicit engine: RestoringInterface) = {
+  def build(implicit engine: InMemoryStore) = {
     val source = engine.Evt[Int]()
     val res = source.list().map(_.size)
     (source, res)
@@ -166,7 +166,7 @@ class RestoringSnapshotVsRecomputationB[S <: Struct] {
 
   var snapshot: scala.collection.mutable.Map[String, String] = _
 
-  def build(implicit engine: RestoringInterface) = {
+  def build(implicit engine: InMemoryStore) = {
     val source = engine.Evt[Int]()
     val res = source.count().map(List.tabulate(_)(identity))
     (source, res)

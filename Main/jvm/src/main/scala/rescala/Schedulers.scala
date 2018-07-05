@@ -23,7 +23,7 @@ object Schedulers extends LevelBasedPropagationEngines {
 
   implicit val simple: SimpleScheduler.type = SimpleScheduler
 
-  def parrpWithBackoff(backOff: () => Backoff): Scheduler[ParRP] = new TwoVersionSchedulerImpl[ParRP, ParRP]("ParRP", (_, prior) => new ParRP(backOff(), prior))
+  def parrpWithBackoff(backOff: () => Backoff): Scheduler[ParRP] = new TwoVersionSchedulerImpl[ParRP, ParRP]("ParRP", prior => new ParRP(backOff(), prior))
 
 }
 

@@ -19,13 +19,13 @@ trait LevelBasedPropagationEngines {
   }
 
   implicit val synchron: Scheduler[SimpleStruct] = {
-    new TwoVersionSchedulerImpl[SimpleStruct, SimpleNoLock]("Synchron", () =>  new SimpleNoLock) {
+    new TwoVersionSchedulerImpl[SimpleStruct, SimpleNoLock]("Synchron", _ => new SimpleNoLock) {
       override def executeTurn[R](initialWrites: Set[ReSource[SimpleStruct]], admissionPhase: AdmissionTicket[SimpleStruct] => R): R =
         synchronized { super.executeTurn(initialWrites, admissionPhase) }
     }
   }
 
-  implicit val unmanaged: Scheduler[SimpleStruct] = new TwoVersionSchedulerImpl[SimpleStruct, SimpleNoLock]("Unmanaged", () => new SimpleNoLock())
+  implicit val unmanaged: Scheduler[SimpleStruct] = new TwoVersionSchedulerImpl[SimpleStruct, SimpleNoLock]("Unmanaged", _ => new SimpleNoLock())
 
 }
 
