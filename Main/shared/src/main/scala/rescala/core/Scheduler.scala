@@ -27,14 +27,14 @@ trait Scheduler[S <: Struct] {
 
 trait SchedulerImpl[S <: Struct, ExactTurn <: Initializer[S]] extends Scheduler[S] {
 
-  override private[rescala] def creationDynamicLookup[T](f: Initializer[S] => T) = {
+  final override private[rescala] def creationDynamicLookup[T](f: Initializer[S] => T) = {
     _currentTurn.value match {
       case Some(turn) => f(turn)
       case None => executeTurn(Set.empty, ticket => f(ticket.creation))
     }
   }
 
-  protected val _currentTurn: DynamicVariable[Option[ExactTurn]] = new DynamicVariable[Option[ExactTurn]](None)
-  private[rescala] def withTurn[R](turn: ExactTurn)(thunk: => R): R = _currentTurn.withValue(Some(turn))(thunk)
+  final protected val _currentTurn: DynamicVariable[Option[ExactTurn]] = new DynamicVariable[Option[ExactTurn]](None)
+  final private[rescala] def withTurn[R](turn: ExactTurn)(thunk: => R): R = _currentTurn.withValue(Some(turn))(thunk)
 }
 
