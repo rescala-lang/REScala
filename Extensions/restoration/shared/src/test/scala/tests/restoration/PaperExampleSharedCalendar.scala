@@ -22,12 +22,12 @@ class PaperExampleSharedCalendar extends FreeSpec {
     Either.catchNonFatal(java.time.LocalDate.parse(str)).leftMap(t => "Instant: " + t.getMessage)
   }
 
-  implicit val taskDecoder: io.circe.Decoder[Entry]
+  implicit val entryDecoder: io.circe.Decoder[Entry]
   = io.circe.Decoder.forProduct3[String, String, List[String], Entry]("title", "date", "names") { (title, date, names) =>
     addNextNames(names: _*)
     Entry(Var(title), Var(java.time.LocalDate.parse(date)))
   }
-  implicit val taskEncoder: io.circe.Encoder[Entry]
+  implicit val entryEncoder: io.circe.Encoder[Entry]
   = io.circe.Encoder.forProduct3[String, String, List[String], Entry]("decs", "done", "names") { t =>
     (t.title.readValueOnce, t.date.readValueOnce.toString, List(getName(t.title), getName(t.date)))
   }

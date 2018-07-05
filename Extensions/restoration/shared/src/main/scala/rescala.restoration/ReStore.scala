@@ -9,8 +9,8 @@ import rescala.twoversion.TwoVersionScheduler
 import scala.collection.mutable
 
 object RestoringInterface {
-  def apply(domain: String = "", restoreFrom: mutable.Map[String, String] = mutable.HashMap()): RestoringInterface =
-    new RestoringInterface(domain, restoreFrom)
+  def apply(domain: String = "", restoreFrom: mutable.Map[String, String] = mutable.HashMap()): InMemoryStore =
+    new InMemoryStore(domain, restoreFrom)
 }
 
 
@@ -87,7 +87,7 @@ trait ReStoreImpl extends ReStore with TwoVersionScheduler[ReStoringStruct, ReSt
 }
 
 
-class RestoringInterface(override val domain: String, restoreFrom: mutable.Map[String, String])
+class InMemoryStore(override val domain: String, restoreFrom: mutable.Map[String, String])
   extends ReStoreImpl with RescalaInterfaceRequireSerializer[ReStoringStruct] {
 
   override def scheduler: Scheduler[ReStoringStruct] = this
