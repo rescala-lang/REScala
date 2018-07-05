@@ -3,16 +3,29 @@ package sequences
 
 import rescala.crdts.statecrdts.sequences.Vertex.Timestamp
 
-case class Vertex[+A](value: A, timestamp: Timestamp) extends Serializable {
+sealed trait Vertex {
+  val timestamp: Timestamp
+}
+
+case object startVertex extends Vertex {
+  override val timestamp: Timestamp = -1
+}
+case object endVertex extends Vertex {
+  override val timestamp: Timestamp = 0
+}
+
+case class ValueVertex[+A](value: A, timestamp: Timestamp) extends Vertex {
   override def toString: String = s"$value{$timestamp}"
 }
 
 object Vertex {
   type Timestamp = Long
-  val start: Vertex[Any] = Vertex[Any]("start", -1)
-  val end: Vertex[Any] = Vertex[Any]("end", 0)
 
-  def apply[A](value: A): Vertex[A] = new Vertex(value, genTimestamp)
+  def start: startVertex.type = startVertex
+  def end: endVertex.type = endVertex
+
+  def apply[A](value: A): ValueVertex[A] = new ValueVertex(value, genTimestamp)
 
   def genTimestamp: Timestamp = System.currentTimeMillis
 }
+
