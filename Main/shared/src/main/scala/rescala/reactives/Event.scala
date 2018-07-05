@@ -13,7 +13,7 @@ import scala.language.implicitConversions
   *
   * Note: We hide implicit parameters of the API in the documentation.
   * They are used to ensure correct creation, and you normally do not have to worry about them,
-  * except if you accidentially call the implicit parameterlist, in which cas you may get cryptic errors.
+  * except if you accidentially call the implicit parameter list, in which cas you may get cryptic errors.
   * This is a scala limitation.
   * We also hide the internal state parameter of passed and returned events.
   *
@@ -49,7 +49,8 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
   final def observe(
     onSuccess: T => Unit,
     onFailure: Throwable => Unit = null
-  )(implicit ticket: CreationTicket[S]): Observe[S] = Observe.strong(this, fireImmediately = false)(v => onSuccess(v.get), onFailure)
+  )(implicit ticket: CreationTicket[S]): Observe[S]
+  = Observe.strong(this, fireImmediately = false)(v => onSuccess(v.get), onFailure)
 
   /** Uses a partial function `onFailure` to recover an error carried by the event into a value when returning Some(value),
     * or filters the error when returning None
@@ -147,7 +148,8 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
     * @usecase def map[A](expression: T => A): rescala.Event[A]
     * @group operator*/
   @cutOutOfUserComputation
-  final def map[A](expression: T => A)(implicit ticket: CreationTicket[S]): Event[A, S] = macro rescala.macros.ReactiveMacros.EventMapMacro[T, A, S]
+  final def map[A](expression: T => A)(implicit ticket: CreationTicket[S]): Event[A, S]
+  = macro rescala.macros.ReactiveMacros.EventMapMacro[T, A, S]
 
   /** Flattens the inner value.
     * @group operator */
@@ -167,18 +169,29 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
     * @usecase def fold[A](init: A)(op: (A, T) => A): rescala.Signal[A]
     * @inheritdoc */
   @cutOutOfUserComputation
-  final def fold[A](init: A)(op: (A, T) => A)(implicit ticket: CreationTicket[S], serializable: ReSerializable[A]): Signal[A, S] = macro rescala.macros.ReactiveMacros.EventFoldMacro[T, A, S]
+  final def fold[A](init: A)
+                   (op: (A, T) => A)
+                   (implicit ticket: CreationTicket[S], serializable: ReSerializable[A])
+  : Signal[A, S]
+  = macro rescala.macros.ReactiveMacros.EventFoldMacro[T, A, S]
 
   /** reduces events with a given reduce function to create a Signal
+    *
     * @usecase def reduce[A](reducer: (=> A, => T) => A): rescala.Signal[A]
     * @group conversion */
   @cutOutOfUserComputation
   final def reduce[A: ReSerializable](reducer: (=> A, => T) => A)(implicit ticket: CreationTicket[S]): Signal[A, S] =
     ticket { initialTurn =>
-      initialTurn.create[Pulse[A], StaticSignal[A, S]](Set(this), Initializer.InitializedSignal[Pulse[A]](Pulse.empty)(ReSerializable.pulseSerializable), inite = false) { state =>
-        new StaticSignal[A, S](state,
-          { (st, currentValue) => reducer(currentValue(), st.collectStatic(this).get) },
-          ticket.rename) with DisconnectableImpl[S]
+      initialTurn.create[Pulse[A], StaticSignal[A, S]](
+        Set(this),
+        Initializer.InitializedSignal[Pulse[A]](Pulse.empty)(ReSerializable.pulseSerializable),
+        inite = false
+      ) { state =>
+        new StaticSignal[A, S](
+          initial = state,
+          expr = { (st, currentValue) => reducer(currentValue(), st.collectStatic(this).get) },
+          name = ticket.rename
+        ) with DisconnectableImpl[S]
       }
     }
 

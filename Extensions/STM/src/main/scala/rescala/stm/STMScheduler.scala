@@ -1,7 +1,6 @@
 package rescala.stm
 
 import rescala.core._
-import rescala.levelbased.SimpleStruct
 import rescala.twoversion.TwoVersionSchedulerImpl
 
 import scala.concurrent.stm.atomic

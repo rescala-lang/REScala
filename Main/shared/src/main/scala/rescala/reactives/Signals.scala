@@ -9,7 +9,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 /** Functions to construct signals, you probably want to use signal expressions in [[rescala.RescalaInterface.Signal]] for a nicer API. */
 object Signals {
-  type Sstate[S <: Struct, T] = S#State[Pulse[T], S]
+  type Sstate[T, S <: Struct] = S#State[Pulse[T], S]
 
   /** creates a new static signal depending on the dependencies, reevaluating the function */
   @cutOutOfUserComputation
@@ -50,7 +50,7 @@ object Signals {
   }
 
   @cutOutOfUserComputation
-  def lift[A1, B, S <: Struct](n1: Signal[A1, S])(fun: (A1) => B)(implicit maybe: CreationTicket[S]): Signal[B, S] = {
+  def lift[A1, B, S <: Struct](n1: Signal[A1, S])(fun: A1 => B)(implicit maybe: CreationTicket[S]): Signal[B, S] = {
     static(n1)(t => fun(t.dependStatic(n1)))
   }
 
@@ -95,8 +95,8 @@ object Signals {
 }
 
 
-private abstract class StaticSignal[T, S <: Struct](_bud: Sstate[S, T], expr: (StaticTicket[S], () => T) => T, name: REName)
-  extends Base[Pulse[T], S](_bud, name) with Signal[T, S] {
+private abstract class StaticSignal[T, S <: Struct](initial: Sstate[T, S], expr: (StaticTicket[S], () => T) => T, name: REName)
+  extends Base[Pulse[T], S](initial, name) with Signal[T, S] {
 
   override protected[rescala] def reevaluate(rein: ReIn): Rout = {
     Signals.computeNewValue[T, S](rein, () => expr(rein, () => rein.before.get))
@@ -104,8 +104,8 @@ private abstract class StaticSignal[T, S <: Struct](_bud: Sstate[S, T], expr: (S
 
 }
 
-private abstract class DynamicSignal[T, S <: Struct](_bud: Sstate[S, T], expr: DynamicTicket[S] => T, name: REName, staticDeps: Set[ReSource[S]])
-  extends Base[Pulse[T], S](_bud, name) with Signal[T, S] {
+private abstract class DynamicSignal[T, S <: Struct](initial: Sstate[T, S], expr: DynamicTicket[S] => T, name: REName, staticDeps: Set[ReSource[S]])
+  extends Base[Pulse[T], S](initial, name) with Signal[T, S] {
 
   override protected[rescala] def reevaluate(rein: ReIn): Rout = {
     rein.trackDependencies(staticDeps) // TODO using indeps from node.state would be marginally better because it contains static AND current dynamic dependencies

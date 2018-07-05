@@ -48,7 +48,7 @@ object Evt {
   * @tparam A Type stored by the signal
   * @tparam S Struct type used for the propagation of the signal
   */
-final class Var[A, S <: Struct] private[rescala](initialState: Signals.Sstate[S, A], name: REName)
+final class Var[A, S <: Struct] private[rescala](initialState: Signals.Sstate[A, S], name: REName)
   extends Source[S, A](name) with Signal[A, S] {
   override type Value = Pulse[A]
 
