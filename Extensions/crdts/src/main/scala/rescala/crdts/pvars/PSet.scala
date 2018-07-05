@@ -1,9 +1,8 @@
 package rescala.crdts.pvars
 
-import loci.transmitter._
-import rescala.default._
 import rescala.crdts.pvars.Publishable.PVarFactory
 import rescala.crdts.statecrdts.sets.ORSet
+import rescala.default._
 
 case class PSet[A](initial: ORSet[A] = ORSet[A](),
                    internalChanges: Evt[ORSet[A]] = Evt[ORSet[A]],
