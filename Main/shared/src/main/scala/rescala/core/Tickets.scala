@@ -115,6 +115,7 @@ abstract class WrapUpTicket[S <: Struct] {
 @implicitNotFound(msg = "Could not find capability to create reactives. Maybe a missing import?")
 final case class CreationTicket[S <: Struct](self: Either[Initializer[S], Scheduler[S]])(val rename: REName) {
 
+  /** Returns true if this ticket is already part of a transaction. */
   def isInnerTicket(): Boolean = self.isLeft
   /** Using the ticket requires to create a new scope, such that we can ensure that everything happens in the same transaction */
   def apply[T](f: Initializer[S] => T): T = self match {
