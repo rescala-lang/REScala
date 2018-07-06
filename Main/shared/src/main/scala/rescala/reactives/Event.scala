@@ -181,18 +181,16 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
     * @group conversion */
   @cutOutOfUserComputation
   final def reduce[A: ReSerializable](reducer: (=> A, => T) => A)(implicit ticket: CreationTicket[S]): Signal[A, S] =
-    ticket { initialTurn =>
-      initialTurn.create[Pulse[A], StaticSignal[A, S]](
-        Set(this),
-        Initializer.InitializedSignal[Pulse[A]](Pulse.empty)(ReSerializable.pulseSerializable),
-        inite = false
-      ) { state =>
-        new StaticSignal[A, S](
-          initial = state,
-          expr = { (st, currentValue) => reducer(currentValue(), st.collectStatic(this).get) },
-          name = ticket.rename
-        ) with DisconnectableImpl[S]
-      }
+    ticket.create[Pulse[A], StaticSignal[A, S]](
+      Set(this),
+      Initializer.InitializedSignal[Pulse[A]](Pulse.empty)(ReSerializable.pulseSerializable),
+      inite = false
+    ) { state =>
+      new StaticSignal[A, S](
+        initial = state,
+        expr = { (st, currentValue) => reducer(currentValue(), st.collectStatic(this).get) },
+        name = ticket.rename
+      ) with DisconnectableImpl[S]
     }
 
   /** Applies a function on the current value of the signal every time the event occurs,
@@ -255,7 +253,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
     * @usecase def toggle[A](a: rescala.Signal[A], b: rescala.Signal[A]): rescala.Signal[A]
     * @group conversion*/
   @cutOutOfUserComputation
-  final def toggle[A](a: Signal[A, S], b: Signal[A, S])(implicit ticket: CreationTicket[S], ev: ReSerializable[Boolean]): Signal[A, S] = ticket { ict =>
+  final def toggle[A](a: Signal[A, S], b: Signal[A, S])(implicit ticket: CreationTicket[S], ev: ReSerializable[Boolean]): Signal[A, S] = ticket.transaction { ict =>
     val switched: Signal[Boolean, S] = iterate(false) {!_}(ev, ict)
     Signals.dynamic(switched, a, b) { s => if (s.depend(switched)) s.depend(b) else s.depend(a) }(ict)
   }
@@ -264,7 +262,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
     * @usecase def switchOnce[A, B >: T](original: rescala.Signal[A], newSignal: rescala.Signal[A]): rescala.Signal[A]
     * @group conversion*/
   @cutOutOfUserComputation
-  final def switchOnce[A, B >: T](original: Signal[A, S], newSignal: Signal[A, S])(implicit ticket: CreationTicket[S], ev: ReSerializable[Option[B]]): Signal[A, S] = ticket { turn =>
+  final def switchOnce[A, B >: T](original: Signal[A, S], newSignal: Signal[A, S])(implicit ticket: CreationTicket[S], ev: ReSerializable[Option[B]]): Signal[A, S] = ticket.transaction { turn =>
     val latest = latestOption[B]()(turn, ev)
     Signals.dynamic(latest, original, newSignal) { t =>
       (t.depend(latest) : Option[B]) match {
@@ -280,7 +278,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
     * @usecase def switchTo[A >: T](original: rescala.Signal[A]): rescala.Signal[A]
     * @group conversion */
   @cutOutOfUserComputation
-  final def switchTo[A >: T](original: Signal[A, S])(implicit ticket: CreationTicket[S], ev: ReSerializable[Option[A]]): Signal[A, S] = ticket { turn =>
+  final def switchTo[A >: T](original: Signal[A, S])(implicit ticket: CreationTicket[S], ev: ReSerializable[Option[A]]): Signal[A, S] = ticket.transaction { turn =>
     val latest = latestOption[A]()(turn, ev)
     Signals.dynamic(latest, original) { s =>
       s.depend(latest) match {

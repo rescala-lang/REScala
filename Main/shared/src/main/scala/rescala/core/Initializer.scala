@@ -7,7 +7,8 @@ trait Initializer[S <: Struct] {
   /** Creates and correctly initializes new [[Reactive]]s */
   final private[rescala] def create[V, T <: Reactive[S]](incoming: Set[ReSource[S]],
                                                          initv: InitValues[V],
-                                                         inite: Boolean)
+                                                         inite: Boolean,
+                                                         creationTicket: CreationTicket[S])
                                                         (instantiateReactive: S#State[V, S] => T): T = {
     val state = makeDerivedStructState[V](initv)
     val reactive = instantiateReactive(state)
@@ -17,7 +18,7 @@ trait Initializer[S <: Struct] {
 
   /** Correctly initializes [[ReSource]]s */
   final private[rescala] def createSource[V, T <: ReSource[S]]
-    (intv: InitValues[V])(instantiateReactive: S#State[V, S] => T): T = {
+    (intv: InitValues[V], creationTicket: CreationTicket[S])(instantiateReactive: S#State[V, S] => T): T = {
     val state = makeSourceStructState[V](intv)
     instantiateReactive(state)
   }

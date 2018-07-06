@@ -18,8 +18,8 @@ object Events {
   def staticNamed[T, S <: Struct](name: String,
                                   dependencies: ReSource[S]*)
                                  (calculate: StaticTicket[S] => Pulse[T])
-                                 (implicit ticket: CreationTicket[S]): Event[T, S] = ticket { initTurn =>
-    initTurn.create[Pulse[T], StaticEvent[T, S]](dependencies.toSet, Initializer.Event, inite = false) {
+                                 (implicit ticket: CreationTicket[S]): Event[T, S] = {
+    ticket.create[Pulse[T], StaticEvent[T, S]](dependencies.toSet, Initializer.Event, inite = false) {
       state => new StaticEvent[T, S](state, calculate, name) with DisconnectableImpl[S]
     }
   }
@@ -33,20 +33,22 @@ object Events {
 
   /** Creates dynamic events */
   @cutOutOfUserComputation
-  def dynamic[T, S <: Struct](dependencies: ReSource[S]*)(expr: DynamicTicket[S] => Option[T])(implicit ticket: CreationTicket[S]): Event[T, S] = {
-    ticket { initialTurn =>
-      val staticDeps = dependencies.toSet
-      initialTurn.create[Pulse[T], DynamicEvent[T, S]](staticDeps, Initializer.Event, inite = true) {
-        state => new DynamicEvent[T, S](state, expr.andThen(Pulse.fromOption), ticket.rename, staticDeps) with DisconnectableImpl[S]
-      }
+  def dynamic[T, S <: Struct](dependencies: ReSource[S]*)
+                             (expr: DynamicTicket[S] => Option[T])
+                             (implicit ticket: CreationTicket[S]): Event[T, S] = {
+    val staticDeps = dependencies.toSet
+    ticket.create[Pulse[T], DynamicEvent[T, S]](staticDeps, Initializer.Event, inite = true) { state =>
+      new DynamicEvent[T, S](state, expr.andThen(Pulse.fromOption), ticket.rename, staticDeps)
+          with DisconnectableImpl[S]
     }
   }
 
   /** Creates change events */
   @cutOutOfUserComputation
-  def change[T, S <: Struct](signal: Signal[T, S])(implicit ticket: CreationTicket[S]): Event[Diff[T], S] = ticket { initTurn =>
+  def change[T, S <: Struct](signal: Signal[T, S])(implicit ticket: CreationTicket[S]): Event[Diff[T], S]
+  = ticket.transaction { initTurn =>
     val internal = initTurn.create[(Pulse[T], Pulse[Diff[T]]), ChangeEvent[T, S]](
-      Set[ReSource[S]](signal), Initializer.Change, inite = true) { state =>
+      Set[ReSource[S]](signal), Initializer.Change, inite = true, ticket) { state =>
       new ChangeEvent[T, S](state, signal, ticket.rename) with DisconnectableImpl[S]
     }
     Events.static(internal)(st => st.dependStatic(internal))(initTurn)
@@ -63,12 +65,15 @@ object Events {
     *
     * @see [[Event.fold]]*/
   @cutOutOfUserComputation
-  def fold[T: ReSerializable, S <: Struct](dependencies: Set[ReSource[S]], init: T)(expr: (StaticTicket[S], () => T) => T)(implicit ticket: CreationTicket[S]): Signal[T, S] = {
-    ticket { initialTurn =>
-      initialTurn.create[Pulse[T], StaticSignal[T, S]](dependencies,
-        Initializer.InitializedSignal[Pulse[T]](Pulse.tryCatch(Pulse.Value(init)))(ReSerializable.pulseSerializable), inite = false) {
-        state => new StaticSignal[T, S](state, expr, ticket.rename) with DisconnectableImpl[S]
-      }
+  def fold[T: ReSerializable, S <: Struct](dependencies: Set[ReSource[S]], init: T)
+                                          (expr: (StaticTicket[S], () => T) => T)
+                                          (implicit ticket: CreationTicket[S])
+  : Signal[T, S] = {
+    ticket.create(
+      dependencies,
+      Initializer.InitializedSignal[Pulse[T]](Pulse.tryCatch(Pulse.Value(init)))(ReSerializable.pulseSerializable),
+      inite = false) {
+      state => new StaticSignal[T, S](state, expr, ticket.rename) with DisconnectableImpl[S]
     }
   }
 
@@ -77,7 +82,6 @@ object Events {
   final def foldAll[A: ReSerializable, S <: Struct](init: A)
                                                    (accthingy: (=> A) => Seq[(Event[T, S], T => A) forSome {type T}])
                                                    (implicit ticket: CreationTicket[S]): Signal[A, S] = {
-    ticket { initialTurn =>
       var acc = () => init
       val ops = accthingy(acc())
       val dependencies = ops.map(_._1)
@@ -91,8 +95,7 @@ object Events {
           }
         }
         acc()
-      }(implicitly[ReSerializable[A]], CreationTicket.fromCreation(initialTurn)(ticket.rename))
-    }
+      }
   }
 
   final def Match[S <: Struct, A](ops: (Event[T, S], T => A) forSome {type T}*): Seq[((Event[T, S], T => A)) forSome {type T}] = ops

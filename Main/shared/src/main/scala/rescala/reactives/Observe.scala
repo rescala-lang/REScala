@@ -49,10 +49,10 @@ object Observe {
                           (fun: T => Unit,
                            fail: Throwable => Unit)
                           (implicit ct: CreationTicket[S]): Observe[S] = {
-    ct(initTurn => initTurn.create[Pulse[Nothing], Obs[T, S]](Set(dependency),
+    ct.create[Pulse[Nothing], Obs[T, S]](Set(dependency),
       Initializer.Observer, fireImmediately) { state =>
       new Obs[T, S](state, dependency, fun, fail, ct.rename) with DisconnectableImpl[S]
-    })
+    }
   }
 
   def strong[T, S <: Struct](dependency: Interp[T, S], fireImmediately: Boolean)(fun: T => Unit, fail: Throwable => Unit)(implicit maybe: CreationTicket[S]): Observe[S] = {

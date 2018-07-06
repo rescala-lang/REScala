@@ -14,7 +14,7 @@ package object rescalatags {
       * converts a Signal of a scalatags Tag to a scalatags Frag which automatically reflects changes to the signal in the dom
       */
     def asFrag(implicit ct: CreationTicket[S], engine: Scheduler[S]): Frag = {
-      ct { creation => asFragInner(engine)(creation) }
+      ct.transaction { asFragInner(engine)(_) }
     }
 
     private def asFragInner(engine: Scheduler[S])(implicit creation: Initializer[S]): REFrag = {

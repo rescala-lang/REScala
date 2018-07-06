@@ -2,7 +2,7 @@ package rescala.reactivestreams
 
 
 import org.reactivestreams.{Publisher, Subscriber, Subscription}
-import rescala.core.{Base, Initializer, Interp, Pulse, REName, Scheduler, Struct}
+import rescala.core.{Base, CreationTicket, Initializer, Interp, Pulse, REName, Scheduler, Struct}
 
 import scala.util.{Failure, Success}
 
@@ -72,14 +72,18 @@ object REPublisher {
     }
   }
 
-  def subscription[T, S <: Struct](
-                                    dependency: Interp[Pulse[T], S],
-                                    subscriber: Subscriber[_ >: T],
-                                    fac: Scheduler[S]
+  def subscription[T, S <: Struct](dependency: Interp[Pulse[T], S],
+                                   subscriber: Subscriber[_ >: T],
+                                   fac: Scheduler[S]
                                   ): SubscriptionReactive[T, S] = {
     fac.executeTurn() { ticket =>
-      ticket.creation.create[Pulse[T], SubscriptionReactive[T, S]](Set(dependency), Initializer.DerivedSignal, inite = false) { state =>
-        new SubscriptionReactive[T, S](state, dependency, subscriber, fac, s"forSubscriber($subscriber)")
+      val name: REName = s"forSubscriber($subscriber)"
+      ticket.creation.create[Pulse[T], SubscriptionReactive[T, S]](
+        Set(dependency),
+        Initializer.DerivedSignal,
+        inite = false,
+        CreationTicket(Left(ticket.creation), name)) {
+        state => new SubscriptionReactive[T, S](state, dependency, subscriber, fac, name)
       }
     }
   }

@@ -15,26 +15,26 @@ object Signals {
   @cutOutOfUserComputation
   def static[T, S <: Struct](dependencies: ReSource[S]*)
                             (expr: StaticTicket[S] => T)
-                            (implicit ct: CreationTicket[S]): Signal[T, S] =
-    ct { initialTurn =>
-      def ignore2[Tick, Current, Res](f: Tick => Res): (Tick, Current) => Res = (ticket, _) => f(ticket)
+                            (implicit ct: CreationTicket[S])
+  : Signal[T, S] = {
+    def ignore2[Tick, Current, Res](f: Tick => Res): (Tick, Current) => Res = (ticket, _) => f(ticket)
 
-      initialTurn.create[Pulse[T], StaticSignal[T, S]](dependencies.toSet, Initializer.DerivedSignal, inite = true) {
-        state => new StaticSignal[T, S](state, ignore2(expr), ct.rename) with DisconnectableImpl[S]
-      }
+    ct.create[Pulse[T], StaticSignal[T, S]](dependencies.toSet, Initializer.DerivedSignal, inite = true) {
+      state => new StaticSignal[T, S](state, ignore2(expr), ct.rename) with DisconnectableImpl[S]
     }
+  }
 
   /** creates a signal that has dynamic dependencies (which are detected at runtime with Signal.apply(turn)) */
   @cutOutOfUserComputation
   def dynamic[T, S <: Struct](dependencies: ReSource[S]*)
                              (expr: DynamicTicket[S] => T)
-                             (implicit ct: CreationTicket[S]): Signal[T, S] =
-    ct { initialTurn =>
-      val staticDeps = dependencies.toSet
-      initialTurn.create[Pulse[T], DynamicSignal[T, S]](staticDeps, Initializer.DerivedSignal, inite = true) {
-        state => new DynamicSignal[T, S](state, expr, ct.rename, staticDeps) with DisconnectableImpl[S]
-      }
+                             (implicit ct: CreationTicket[S])
+  : Signal[T, S] = {
+    val staticDeps = dependencies.toSet
+    ct.create[Pulse[T], DynamicSignal[T, S]](staticDeps, Initializer.DerivedSignal, inite = true) {
+      state => new DynamicSignal[T, S](state, expr, ct.rename, staticDeps) with DisconnectableImpl[S]
     }
+  }
 
   /** converts a future to a signal */
   @cutOutOfUserComputation

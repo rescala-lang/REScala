@@ -1,5 +1,6 @@
 package rescala.core
 
+import rescala.core.Initializer.InitValues
 import rescala.reactives.Signal
 
 import scala.annotation.implicitNotFound
@@ -118,10 +119,22 @@ abstract class WrapUpTicket[S <: Struct] {
 @implicitNotFound(msg = "Could not find capability to create reactives. Maybe a missing import?")
 final case class CreationTicket[S <: Struct](self: Either[Initializer[S], Scheduler[S]], rename: REName) {
 
+  private[rescala] def create[V, T <: Reactive[S]](incoming: Set[ReSource[S]],
+                                                         initv: InitValues[V],
+                                                         inite: Boolean)
+                                                        (instantiateReactive: S#State[V, S] => T): T = {
+    transaction(_.create(incoming, initv, inite, this)(instantiateReactive))
+  }
+  private[rescala] def createSource[V, T <: ReSource[S]]
+    (intv: InitValues[V])(instantiateReactive: S#State[V, S] => T): T = {
+
+    transaction(_.createSource(intv, this)(instantiateReactive))
+  }
+
   /** Returns true if this ticket is already part of a transaction. */
   def isInnerTicket(): Boolean = self.isLeft
   /** Using the ticket requires to create a new scope, such that we can ensure that everything happens in the same transaction */
-  def apply[T](f: Initializer[S] => T): T = self match {
+  def transaction[T](f: Initializer[S] => T): T = self match {
     case Left(integrated) => f(integrated)
     case Right(engine) => engine.creationDynamicLookup(f)
   }

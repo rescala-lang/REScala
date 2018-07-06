@@ -17,21 +17,21 @@ class CreationTicketTest extends RETests { multiEngined { engine => import engin
   test("some Dynamic No Implicit") {
     engine.transaction() { dynamicTurn: AdmissionTicket =>
       assert(implicitly[CreationTicket].self === Right(engine.scheduler))
-      assert(implicitly[CreationTicket].apply(identity) === dynamicTurn.creation)
+      assert(implicitly[CreationTicket].transaction(identity) === dynamicTurn.creation)
     }
   }
 
   test("none Dynamic Some Implicit") {
     implicit val implicitTurn: Creation = getTurn
     assert(implicitly[CreationTicket].self === Left(implicitTurn))
-    assert(implicitly[CreationTicket].apply(identity) === implicitTurn)
+    assert(implicitly[CreationTicket].transaction(identity) === implicitTurn)
   }
 
   test("some Dynamic Some Implicit") {
     engine.transaction() { dynamicTurn: AdmissionTicket =>
       implicit val implicitTurn: Creation = getTurn
       assert(implicitly[CreationTicket].self === Left(implicitTurn))
-      assert(implicitly[CreationTicket].apply(identity) === implicitTurn)
+      assert(implicitly[CreationTicket].transaction(identity) === implicitTurn)
     }
   }
 
@@ -43,7 +43,7 @@ class CreationTicketTest extends RETests { multiEngined { engine => import engin
     }
     engine.transaction() { dynamic =>
       assert(closure().self === Left(closureDefinition))
-      assert(closure().apply(identity) === closureDefinition)
+      assert(closure().transaction(identity) === closureDefinition)
     }
   }
 
@@ -55,7 +55,7 @@ class CreationTicketTest extends RETests { multiEngined { engine => import engin
     }
     engine.transaction() { dynamic =>
       assert(closure().self === Right(engine.scheduler))
-      assert(closure().apply(identity) === dynamic.creation)
+      assert(closure().transaction(identity) === dynamic.creation)
     }
   }
 
