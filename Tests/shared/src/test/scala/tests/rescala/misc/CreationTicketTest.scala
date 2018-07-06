@@ -11,12 +11,12 @@ class CreationTicketTest extends RETests { multiEngined { engine => import engin
   def getTurn[S2 <: Struct](implicit engine: Scheduler[S2]): rescala.core.Initializer[S2] = engine.executeTurn()(_.creation)
 
   test("none Dynamic No Implicit") {
-    assert(implicitly[CreationTicket].self === Right(engine))
+    assert(implicitly[CreationTicket].self === Right(engine.scheduler))
   }
 
   test("some Dynamic No Implicit") {
     engine.transaction() { dynamicTurn: AdmissionTicket =>
-      assert(implicitly[CreationTicket].self === Right(engine))
+      assert(implicitly[CreationTicket].self === Right(engine.scheduler))
       assert(implicitly[CreationTicket].apply(identity) === dynamicTurn.creation)
     }
   }
@@ -27,21 +27,13 @@ class CreationTicketTest extends RETests { multiEngined { engine => import engin
     assert(implicitly[CreationTicket].apply(identity) === implicitTurn)
   }
 
-  // Cannot run a turn inside a turn with pipelining
   test("some Dynamic Some Implicit") {
-    //    if (engine.isInstanceOf[PipelineEngine]) {
-    //      throw new IllegalStateException("pipeline engine cannot run a turn inside a turn")
-    //    }
-    //    else {
     engine.transaction() { dynamicTurn: AdmissionTicket =>
       implicit val implicitTurn: Creation = getTurn
       assert(implicitly[CreationTicket].self === Left(implicitTurn))
       assert(implicitly[CreationTicket].apply(identity) === implicitTurn)
-      //      }
     }
   }
-
-
 
   test("implicit In Closures") {
     val closureDefinition: Creation = getTurn(engine.scheduler)
@@ -56,13 +48,13 @@ class CreationTicketTest extends RETests { multiEngined { engine => import engin
   }
 
   test("dynamic In Closures") {
-    val closure = {
+    val closure: () => engine.CreationTicket = {
       engine.transaction() { t =>
         () => implicitly[CreationTicket]
       }
     }
     engine.transaction() { dynamic =>
-      assert(closure().self === Right(engine))
+      assert(closure().self === Right(engine.scheduler))
       assert(closure().apply(identity) === dynamic.creation)
     }
   }
