@@ -87,7 +87,7 @@ class TrueDynamicSignals extends RETests { multiEngined { engine => import engin
   test("outer And Inner Values"){
     val v = Var(0)
     object obj {
-      def sig = Signal { v() }
+      def sig(implicit ct: CreationTicket) = Signal { v() }
     }
 
     val evt = Evt[Int]
@@ -117,23 +117,23 @@ class TrueDynamicSignals extends RETests { multiEngined { engine => import engin
  import scala.language.reflectiveCalls
 
     val v1 = Var { 20 }
-    val v2 = Var { new {def signal = Signal { v1() } } }
+    val v2 = Var { new {def signal(implicit ct: CreationTicket) = Signal { v1() } } }
     val v3 = Var { new {val signal = Signal { v2() } } }
 
     val s = Signal { v3() }
 
-    val sig = Signal.dynamic { s().signal().signal(): @unchecked }
+    val sig = Signal.dynamic { s().signal().signal.value }
 
     assert(sig.readValueOnce === 20)
     v1 set 30
     assert(sig.readValueOnce === 30)
-    v2 set new {def signal = Signal { 7 + v1() } }
+    v2 set new {def signal(implicit ct: CreationTicket)  = Signal { 7 + v1() } }
     assert(sig.readValueOnce === 37)
     v1 set 10
     assert(sig.readValueOnce === 17)
-    v3 set new {val signal = Signal { new {def signal = Signal { v1() } } } }
+    v3 set new {val signal = Signal { new {def signal(implicit ct: CreationTicket)  = Signal { v1() } } } }
     assert(sig.readValueOnce === 10)
-    v2 set new {def signal = Signal { 10 + v1() } }
+    v2 set new {def signal(implicit ct: CreationTicket)  = Signal { 10 + v1() } }
     assert(sig.readValueOnce === 10)
     v1 set 80
     assert(sig.readValueOnce === 80)
@@ -142,12 +142,12 @@ class TrueDynamicSignals extends RETests { multiEngined { engine => import engin
   test("extracting Signal Side Effects"){
     val e1 = Evt[Int]
     @cutOutOfUserComputation
-    def newSignal(): Signal[Int] = e1.count()
+    def newSignal()(implicit ct: CreationTicket): Signal[Int] = e1.count()
 
     val macroRes = Signal {
-      newSignal()()
+      newSignal()(implicitly).value
     }
-    val normalRes = Signals.dynamic() { t: DynamicTicket =>
+    val normalRes = Signals.dynamic() { implicit t: DynamicTicket =>
       t.depend(newSignal())
     }
     assert(macroRes.readValueOnce === 0, "before, macro")
@@ -237,11 +237,11 @@ class TrueDynamicSignals extends RETests { multiEngined { engine => import engin
   test("creating Signals Inside Signals") {
     val outside = Var(1)
 
-    val testsig = dynamic() { t =>
+    val testsig = dynamic() { implicit to =>
       //remark 01.10.2014: without the bound the inner signal will be enqueued (it is level 0 same as its dependency)
       //this will cause testsig to reevaluate again, after the inner signal is fully updated.
       // leading to an infinite loop
-      t.depend(dynamic(outside) { t => t.depend(outside) })
+      to.depend(dynamic(outside) { ti => ti.depend(outside) })
     }
 
     assert(testsig.readValueOnce === 1)

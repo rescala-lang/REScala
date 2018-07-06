@@ -12,7 +12,8 @@ class ReactiveCreationInTurnsTest extends RETests { multiEngined { engine => imp
 
     val v1 = Var(5)
     val c1 = Var(0)
-    val v2 = v1.map { x =>
+    val v2 = Signal {
+      val _ = v1.value
       var res = 0
       c1.map(x => {res += 1; x})
       res
@@ -29,7 +30,8 @@ class ReactiveCreationInTurnsTest extends RETests { multiEngined { engine => imp
   test("evaluations Of Inner Related Signals"){
 
     val v1 = Var(5)
-    val v2 = v1.map { x =>
+    val v2 = Signal {
+      val _ = v1.value
       var res = 0
       v1.map(x => {res += 1; x})
       res
