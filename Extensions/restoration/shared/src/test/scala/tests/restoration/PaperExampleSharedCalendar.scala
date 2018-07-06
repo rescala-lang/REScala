@@ -23,11 +23,11 @@ class PaperExampleSharedCalendar extends FreeSpec {
   }
 
   implicit val entryDecoder: io.circe.Decoder[Entry]
-  = io.circe.Decoder.decodeTuple2[String, String].map{
-    case (title, date) => Entry(Var.empty[String](implicitly, title), Var.empty[Date](implicitly, date))
+  = io.circe.Decoder.decodeTuple2[Var[String], Var[Date]].map{
+    case (title, date) => Entry(title, date)
   }
   implicit val entryEncoder: io.circe.Encoder[Entry]
-  = io.circe.Encoder.encodeTuple2[String, String].contramap[Entry](t => (getName(t.title).name, getName(t.date).name))
+  = io.circe.Encoder.encodeTuple2[Signal[String], Signal[Date]].contramap[Entry](t => (t.title, t.date))
 
   object Date { def today(): Date = java.time.LocalDate.now() }
   object Week {
