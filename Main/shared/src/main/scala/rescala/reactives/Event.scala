@@ -258,35 +258,4 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
     Signals.dynamic(switched, a, b) { s => if (s.depend(switched)) s.depend(b) else s.depend(a) }(ict)
   }
 
-  /** Switch to a new Signal once, on the occurrence of event e.
-    * @usecase def switchOnce[A, B >: T](original: rescala.Signal[A], newSignal: rescala.Signal[A]): rescala.Signal[A]
-    * @group conversion*/
-  @cutOutOfUserComputation
-  final def switchOnce[A, B >: T](original: Signal[A, S], newSignal: Signal[A, S])(implicit ticket: CreationTicket[S], ev: ReSerializable[Option[B]]): Signal[A, S] = ticket.transaction { turn =>
-    val latest = latestOption[B]()(turn, ev)
-    Signals.dynamic(latest, original, newSignal) { t =>
-      (t.depend(latest) : Option[B]) match {
-        case None => t.depend(original)
-        case Some(_) => t.depend(newSignal)
-      }
-    }(turn)
-  }
-
-  /** Initially the result signal has the value of the original signal.
-    * Every time the event fires, the result signal changes to the value of the event,
-    * the original signal is no longer used.
-    * @usecase def switchTo[A >: T](original: rescala.Signal[A]): rescala.Signal[A]
-    * @group conversion */
-  @cutOutOfUserComputation
-  final def switchTo[A >: T](original: Signal[A, S])(implicit ticket: CreationTicket[S], ev: ReSerializable[Option[A]]): Signal[A, S] = ticket.transaction { turn =>
-    val latest = latestOption[A]()(turn, ev)
-    Signals.dynamic(latest, original) { s =>
-      s.depend(latest) match {
-        case None => s.depend(original)
-        case Some(x) => x
-      }
-    }(turn)
-  }
-
-
 }
