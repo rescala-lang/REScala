@@ -46,6 +46,9 @@ abstract class ReevTicket[V, S <: Struct](creation: Initializer[S],
   private var effect: () => Unit = null
   override final def toString: String = s"Result(value = $value, propagate = $propagate, deps = $collectedDependencies)"
   final def before: V = _before
+  /** Advises the ticket to track dynamic dependencies.
+    * The passed initial set of dependencies may be processed as if they were static,
+    * and are also returned in the resulting dependencies. */
   final def trackDependencies(initial: Set[ReSource[S]]): Unit = collectedDependencies = initial
   final def withPropagate(p: Boolean): ReevTicket[V, S] = {_propagate = p; this}
   final def withValue(v: V): ReevTicket[V, S] = {require(v != null, "value must not be null"); value = v; _propagate = true; this}
