@@ -75,7 +75,7 @@ final class Var[A, S <: Struct] private[rescala](initialState: Signals.Sstate[A,
 /** Creates new [[Var]]s */
 object Var {
   def apply[T: ReSerializable, S <: Struct](initval: T)(implicit ticket: CreationTicket[S]): Var[T, S] = fromChange(Pulse.Value(initval))
-  def empty[T: ReSerializable, S <: Struct]()(implicit ticket: CreationTicket[S]): Var[T, S] = fromChange(Pulse.empty)
+  def empty[T: ReSerializable, S <: Struct](implicit ticket: CreationTicket[S]): Var[T, S] = fromChange(Pulse.empty)
   private[this] def fromChange[T: ReSerializable, S <: Struct](change: Pulse[T])(implicit ticket: CreationTicket[S]): Var[T, S] =
     ticket.createSource[Pulse[T], Var[T, S]](Initializer.InitializedSignal(change)(ReSerializable.pulseSerializable))(new Var[T, S](_, ticket.rename))
 }

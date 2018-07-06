@@ -56,7 +56,7 @@ trait RescalaInterfaceRequireSerializer[S <: Struct] extends Aliases[S] {
   /** @group create */
   object Var {
     def apply[A: ReSerializable](v: A)(implicit ct: CreationTicket): Var[A] = reactives.Var[A, S](v)(implicitly, ct)
-    def empty[A: ReSerializable](implicit ct: CreationTicket): Var[A] = reactives.Var.empty[A, S]()(implicitly, ct)
+    def empty[A: ReSerializable](implicit ct: CreationTicket): Var[A] = reactives.Var.empty[A, S](implicitly, ct)
   }
 
   /** @group internal */

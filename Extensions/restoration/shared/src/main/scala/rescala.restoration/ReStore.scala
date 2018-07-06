@@ -68,6 +68,7 @@ trait ReStore {
   def deriveName(name: REName): REName
   def put(key: REName, value: String): Unit
   def get(key: REName): Option[String]
+  def getName(r: ReSource[ReStoringStruct]) = r.state.name
 }
 
 trait ReStoreImpl extends ReStore with TwoVersionScheduler[ReStoringStruct, ReStoringTurn] {
@@ -80,7 +81,6 @@ trait ReStoreImpl extends ReStore with TwoVersionScheduler[ReStoringStruct, ReSt
     if (count != 0) name.derive(count.toString) else name
   }
 
-  def getName(r: ReSource[ReStoringStruct]) = r.state.name
 }
 
 

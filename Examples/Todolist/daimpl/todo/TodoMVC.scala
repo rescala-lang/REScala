@@ -1,11 +1,13 @@
 package daimpl.todo
 
+import java.util.concurrent.ThreadLocalRandom
+
 import org.scalajs.dom
 import org.scalajs.dom.html.Input
 import org.scalajs.dom.{UIEvent, document}
 import rescala.core.ReSerializable
 import rescala.restoration.{LocalStorageStore, ReCirce}
-import rescala.restoration.ReCirce.recirce
+import rescala.restoration.ReCirce.{recirce, varDecoder, varEncoder}
 import rescalatags._
 import scalatags.JsDom.all._
 import scalatags.JsDom.tags2.section
@@ -17,12 +19,6 @@ object TodoMVC {
 
   implicit val storingEngine: LocalStorageStore = new LocalStorageStore()
   import storingEngine._
-
-  implicit def varDecoder[A](implicit reSerializable: ReSerializable[A]): io.circe.Decoder[Var[A]] =
-    io.circe.Decoder.decodeString.map(n => Var.empty[A](reSerializable, n))
-
-  implicit def varEncoder[A]: io.circe.Encoder[Var[A]] =
-    io.circe.Encoder.encodeString.contramap{ t => getName(t).name }
 
   implicit val taskDecoder: io.circe.Decoder[Task] = io.circe.Decoder.decodeTuple2[Var[String], Var[Boolean]].map { case (desc, done) =>
     new Task(desc, done)
@@ -36,7 +32,10 @@ object TodoMVC {
   }
 
   object Task {
-    def apply(desc: String, done: Boolean) = new Task(Var(desc)(implicitly, System.nanoTime().toString), Var(done)(implicitly, System.nanoTime().toString))
+    def apply(desc: String, done: Boolean) = {
+      val rn = ThreadLocalRandom.current().nextLong()
+        new Task(Var(desc)(implicitly, rn.toString), Var(done)(implicitly, rn.toString + "b"))
+      }
   }
 
   @JSExportTopLevel("daimpl.todo.TodoMVC.main")
