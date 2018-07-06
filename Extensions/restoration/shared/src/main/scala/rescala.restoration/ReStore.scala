@@ -1,7 +1,7 @@
 package rescala.restoration
 
 import rescala.core.Initializer.InitValues
-import rescala.core.{Initializer, ReSerializable, ReSource, Scheduler, Struct}
+import rescala.core.{CreationTicket, Initializer, ReSerializable, ReSource, Scheduler, Struct}
 import rescala.interface.RescalaInterfaceRequireSerializer
 import rescala.levelbased.{LevelBasedPropagation, LevelStateImpl, LevelStruct}
 import rescala.twoversion.TwoVersionScheduler
@@ -16,7 +16,9 @@ object RestoringInterface {
 
 class ReStoringTurn(restore: ReStore) extends LevelBasedPropagation[ReStoringStruct] {
 
-  override protected def makeDerivedStructState[P](valuePersistency: InitValues[P]): ReStoringState[P, ReStoringStruct] = {
+  override protected def makeDerivedStructState[P](valuePersistency: InitValues[P],
+                                                   creationTicket: CreationTicket[ReStoringStruct])
+  : ReStoringState[P, ReStoringStruct] = {
     valuePersistency match {
       case is@Initializer.InitializedSignal(init) if is.serializable != rescala.core.ReSerializable.doNotSerialize =>
         if (is.serializable == rescala.core.ReSerializable.serializationUnavailable) throw new Exception(s"restore requires serializable reactive: $valuePersistency")

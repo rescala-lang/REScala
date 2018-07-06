@@ -10,7 +10,7 @@ trait Initializer[S <: Struct] {
                                                          inite: Boolean,
                                                          creationTicket: CreationTicket[S])
                                                         (instantiateReactive: S#State[V, S] => T): T = {
-    val state = makeDerivedStructState[V](initv)
+    val state = makeDerivedStructState[V](initv, creationTicket)
     val reactive = instantiateReactive(state)
     ignite(reactive, incoming, inite)
     reactive
@@ -19,16 +19,16 @@ trait Initializer[S <: Struct] {
   /** Correctly initializes [[ReSource]]s */
   final private[rescala] def createSource[V, T <: ReSource[S]]
     (intv: InitValues[V], creationTicket: CreationTicket[S])(instantiateReactive: S#State[V, S] => T): T = {
-    val state = makeSourceStructState[V](intv)
+    val state = makeSourceStructState[V](intv, creationTicket)
     instantiateReactive(state)
   }
 
   /** Creates the internal state of [[Reactive]]s */
-  protected[this] def makeDerivedStructState[V](valuePersistency: InitValues[V]): S#State[V, S]
+  protected[this] def makeDerivedStructState[V](valuePersistency: InitValues[V], creationTicket: CreationTicket[S]): S#State[V, S]
 
   /** Creates the internal state of [[ReSource]]s */
-  protected[this] def makeSourceStructState[V](valuePersistency: InitValues[V]): S#State[V, S] =
-    makeDerivedStructState[V](valuePersistency)
+  protected[this] def makeSourceStructState[V](valuePersistency: InitValues[V], creationTicket: CreationTicket[S]): S#State[V, S] =
+    makeDerivedStructState[V](valuePersistency, creationTicket)
   /**
     * to be implemented by the propagation algorithm, called when a new reactive has been instantiated and needs to be connected to the graph and potentially reevaluated.
     *

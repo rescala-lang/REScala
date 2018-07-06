@@ -78,14 +78,14 @@ trait FullMVTurn extends Initializer[FullMVStruct] with FullMVTurnProxy with Sub
 
   //========================================================Scheduler Interface============================================================
 
-  override def makeDerivedStructState[P](valuePersistency: InitValues[P]): NonblockingSkipListVersionHistory[P, FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]] = {
+  override def makeDerivedStructState[P](valuePersistency: InitValues[P], creationTicket: CreationTicket[FullMVStruct]): NonblockingSkipListVersionHistory[P, FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]] = {
     val state = new NonblockingSkipListVersionHistory[P, FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]](host.dummy, valuePersistency)
     state.incrementFrame(this)
     state
   }
 
-  override protected def makeSourceStructState[P](valuePersistency: InitValues[P]): NonblockingSkipListVersionHistory[P, FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]] = {
-    val state = makeDerivedStructState(valuePersistency)
+  override protected def makeSourceStructState[P](valuePersistency: InitValues[P], creationTicket: CreationTicket[FullMVStruct]): NonblockingSkipListVersionHistory[P, FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]] = {
+    val state = makeDerivedStructState(valuePersistency, creationTicket)
     val res = state.notify(this, changed = false)
     assert(res == true -> NoSuccessor(Set.empty))
     state

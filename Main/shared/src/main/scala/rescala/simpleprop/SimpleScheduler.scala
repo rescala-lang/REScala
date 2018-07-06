@@ -1,7 +1,7 @@
 package rescala.simpleprop
 
 import rescala.core.Initializer.InitValues
-import rescala.core.{Initializer, ReSource, Reactive, ReevTicket, Scheduler, Struct}
+import rescala.core.{CreationTicket, Initializer, ReSource, Reactive, ReevTicket, Scheduler, Struct}
 import rescala.interface.Aliases
 
 import scala.collection.mutable.ArrayBuffer
@@ -24,8 +24,9 @@ class SimpleState[V](ip: InitValues[V]) {
 }
 
 object SimpleCreation extends Initializer[SimpleStruct] {
-  override protected[this] def makeDerivedStructState[V](ip: InitValues[V]): SimpleState[V] =
-    new SimpleState[V](ip)
+  override protected[this] def makeDerivedStructState[V](ip: InitValues[V], creationTicket: CreationTicket[SimpleStruct])
+  : SimpleState[V] = new SimpleState[V](ip)
+
   override protected[this] def ignite(reactive: Reactive[SimpleStruct], incoming: Set[ReSource[SimpleStruct]], ignitionRequiresReevaluation: Boolean): Unit = {
 
     incoming.foreach { dep =>

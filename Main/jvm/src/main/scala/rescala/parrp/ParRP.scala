@@ -41,7 +41,7 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
   final val key: Key[ParRPInterTurn] = new Key(this)
 
 
-  override protected[this] def makeDerivedStructState[V](ip: InitValues[V]): ParRPState[V, ParRP] = {
+  override protected[this] def makeDerivedStructState[V](ip: InitValues[V], creationTicket: CreationTicket[ParRP]): ParRPState[V, ParRP] = {
     val lock = new TurnLock[ParRPInterTurn]
     val owner = lock.tryLock(key)
     assert(owner eq key, s"$this failed to acquire lock on newly created reactive")
