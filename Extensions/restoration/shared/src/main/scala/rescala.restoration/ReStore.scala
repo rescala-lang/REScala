@@ -1,7 +1,7 @@
 package rescala.restoration
 
 import rescala.core.Initializer.InitValues
-import rescala.core.{CreationTicket, Initializer, ReSerializable, ReSource, Scheduler, Struct}
+import rescala.core.{CreationTicket, Initializer, REName, ReSerializable, ReSource, Scheduler, Struct}
 import rescala.interface.RescalaInterfaceRequireSerializer
 import rescala.levelbased.{LevelBasedPropagation, LevelStateImpl, LevelStruct}
 import rescala.twoversion.TwoVersionScheduler
@@ -9,8 +9,8 @@ import rescala.twoversion.TwoVersionScheduler
 import scala.collection.mutable
 
 object RestoringInterface {
-  def apply(domain: String = "", restoreFrom: mutable.Map[String, String] = mutable.HashMap()): InMemoryStore =
-    new InMemoryStore(domain, restoreFrom)
+  def apply(restoreFrom: mutable.Map[REName, String] = mutable.HashMap()): InMemoryStore =
+    new InMemoryStore(restoreFrom)
 }
 
 
@@ -21,11 +21,13 @@ class ReStoringTurn(restore: ReStore) extends LevelBasedPropagation[ReStoringStr
   : ReStoringState[P, ReStoringStruct] = {
     valuePersistency match {
       case is@Initializer.InitializedSignal(init) if is.serializable != rescala.core.ReSerializable.doNotSerialize =>
-        if (is.serializable == rescala.core.ReSerializable.serializationUnavailable) throw new Exception(s"restore requires serializable reactive: $valuePersistency")
-        val name = restore.nextName
+        if (is.serializable == rescala.core.ReSerializable.serializationUnavailable)
+          throw new Exception(s"restore requires serializable reactive: $valuePersistency")
+        val name = restore.deriveName(creationTicket.rename)
         restore.get(name) match {
           case None =>
             //println(s"new struct $name")
+            restore.put(name, is.serializable.serialize(valuePersistency.initialValue))
             new ReStoringState[P, ReStoringStruct](restore, name, is.serializable, is)
           case Some(v) =>
             //println(s"old struct $name $s")
@@ -45,7 +47,7 @@ class ReStoringTurn(restore: ReStore) extends LevelBasedPropagation[ReStoringStr
 }
 
 class ReStoringState[P, S <: Struct](storage: ReStore,
-                                     val name: String,
+                                     val name: REName,
                                      serializable: ReSerializable[P],
                                      initialVal: InitValues[P])
   extends LevelStateImpl[P, S](initialVal) {
@@ -63,45 +65,38 @@ trait ReStoringStruct extends LevelStruct {
 }
 
 trait ReStore {
-  def nextName(): String
-  def put(key: String, value: String): Unit
-  def get(key: String): Option[String]
-  def addNextNames(n: String*): Unit
+  def deriveName(name: REName): REName
+  def put(key: REName, value: String): Unit
+  def get(key: REName): Option[String]
 }
 
 trait ReStoreImpl extends ReStore with TwoVersionScheduler[ReStoringStruct, ReStoringTurn] {
 
-  var count = 0
-  val nextNames: mutable.Queue[String] = mutable.Queue.empty
+  var seenNames = Map[REName, Int]()
 
-  def domain: String
-
-  def nextName(): String = {
-    if (nextNames.nonEmpty) {
-      nextNames.dequeue()
-    }
-    count += 1
-    domain + count
+  def deriveName(name: REName): REName = synchronized {
+    val count =  seenNames.getOrElse(name, 0)
+    seenNames = seenNames.updated(name, count + 1)
+    if (count != 0) name.derive(count.toString) else name
   }
 
   def getName(r: ReSource[ReStoringStruct]) = r.state.name
-  def addNextNames(n: String*): Unit = nextNames.enqueue(n: _*)
 }
 
 
-class InMemoryStore(override val domain: String, restoreFrom: mutable.Map[String, String])
+class InMemoryStore(restoreFrom: mutable.Map[REName, String])
   extends ReStoreImpl with RescalaInterfaceRequireSerializer[ReStoringStruct] {
 
   override def scheduler: Scheduler[ReStoringStruct] = this
 
-  def values: mutable.Map[String, String] = restoreFrom
+  def values: mutable.Map[REName, String] = restoreFrom
 
-  override def put(key: String, value: String): Unit = values.put(key, value)
-  override def get(key: String): Option[String] = values.get(key)
-  def snapshot(): mutable.Map[String, String] = values
+  override def put(key: REName, value: String): Unit = values.put(key, value)
+  override def get(key: REName): Option[String] = values.get(key)
+  def snapshot(): mutable.Map[REName, String] = values
 
   override protected def makeTurn(priorTurn: Option[ReStoringTurn]): ReStoringTurn = new ReStoringTurn(this)
-  override def schedulerName : String = s"Restoring[$domain]"
+  override def schedulerName : String = s"InMemoryStorage"
   override def executeTurn[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R): R =
     synchronized(super.executeTurn(initialWrites, admissionPhase))
 }

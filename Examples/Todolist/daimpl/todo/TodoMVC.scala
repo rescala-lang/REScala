@@ -4,14 +4,13 @@ import org.scalajs.dom
 import org.scalajs.dom.html.Input
 import org.scalajs.dom.{UIEvent, document}
 import rescala.core.ReSerializable
-import rescala.restoration.LocalStorageStore
-
-import scala.scalajs.js.annotation.JSExportTopLevel
+import rescala.restoration.{LocalStorageStore, ReCirce}
+import rescala.restoration.ReCirce.recirce
+import rescalatags._
 import scalatags.JsDom.all._
 import scalatags.JsDom.tags2.section
 
-import rescalatags._
-import rescala.restoration.ReCirce.recirce
+import scala.scalajs.js.annotation.JSExportTopLevel
 
 
 object TodoMVC {
@@ -19,35 +18,37 @@ object TodoMVC {
   implicit val storingEngine: LocalStorageStore = new LocalStorageStore()
   import storingEngine._
 
-//  var unique = 0
+  implicit def varDecoder[A](implicit reSerializable: ReSerializable[A]): io.circe.Decoder[Var[A]] =
+    io.circe.Decoder.decodeString.map(n => Var.empty[A](reSerializable, n))
 
-  implicit val taskDecoder: io.circe.Decoder[Task] = io.circe.Decoder.forProduct3[String, Boolean, List[String], Task]("decs", "done", "names") { (dec, don, names) =>
-    storingEngine.addNextNames(names: _*)
-    new Task(dec, don)
+  implicit def varEncoder[A]: io.circe.Encoder[Var[A]] =
+    io.circe.Encoder.encodeString.contramap{ t => getName(t).name }
+
+  implicit val taskDecoder: io.circe.Decoder[Task] = io.circe.Decoder.decodeTuple2[Var[String], Var[Boolean]].map { case (desc, done) =>
+    new Task(desc, done)
   }
-  implicit val taskEncoder: io.circe.Encoder[Task] = io.circe.Encoder.forProduct3[String, Boolean, List[String], Task]("decs", "done", "names"){t =>
-    (t.desc.readValueOnce, t.done.readValueOnce, List(getName(t.desc), getName(t.done)))
+  implicit val taskEncoder: io.circe.Encoder[Task] = io.circe.Encoder.encodeTuple2[Var[String], Var[Boolean]].contramap{ t =>
+    (t.desc, t.done)
   }
 
-  class Task(desc_ : String, done_ : Boolean) {
-//    val id   = unique
-    val desc = Var(desc_)
-    val done = Var(done_)
+  class Task(val desc : Var[String], val done : Var[Boolean]) {
     val editing = Var(false)(ReSerializable.doNotSerialize, implicitly)
-//    unique += 1
+  }
+
+  object Task {
+    def apply(desc: String, done: Boolean) = new Task(Var(desc)(implicitly, System.nanoTime().toString), Var(done)(implicitly, System.nanoTime().toString))
   }
 
   @JSExportTopLevel("daimpl.todo.TodoMVC.main")
   def main(): Unit = {
 
     val innerTasks = List(
-      new Task("get milk", false),
-      new Task("get sugar", false),
-      new Task("get coffee", false),
-      new Task("walk the dog", false)
+      Task("get milk", false),
+      Task("get sugar", false),
+      Task("get coffee", false),
+      Task("walk the dog", false)
     )
-    storingEngine.addNextNames("tasklist")
-    val tasks = Var(innerTasks)
+    val tasks = Var(innerTasks)(ReCirce.recirce, "tasklist")
 
     lazy val newTodo: Input = input(
       id := "newtodo",
@@ -58,7 +59,7 @@ object TodoMVC {
       // TODO onchange --> on enter
       onchange := { e: UIEvent =>
         e.preventDefault()
-        tasks.transform(new Task(newTodo.value, false) :: _)
+        tasks.transform(Task(newTodo.value, false) :: _)
         newTodo.value = ""
       }
     ).render

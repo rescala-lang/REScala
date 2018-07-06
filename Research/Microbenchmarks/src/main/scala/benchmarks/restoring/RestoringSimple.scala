@@ -4,7 +4,7 @@ import java.util.concurrent.TimeUnit
 
 import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations._
-import rescala.core.{Scheduler, Struct}
+import rescala.core.{REName, Scheduler, Struct}
 import rescala.interface.{RescalaInterface, RescalaInterfaceRequireSerializer}
 import rescala.levelbased.SimpleStruct
 import rescala.reactives.{Evt, Var}
@@ -84,7 +84,7 @@ class RestoringVar[S <: Struct] {
 @State(Scope.Thread)
 class RestoringSnapshotVsInitial {
 
-  var snapshot: scala.collection.mutable.Map[String, String] = _
+  var snapshot: scala.collection.mutable.Map[REName, String] = _
 
   val syncInterface: RescalaInterface[SimpleStruct] = RescalaInterface.interfaceFor(rescala.Schedulers.synchron)
 
@@ -132,7 +132,7 @@ class RestoringSnapshotVsInitial {
 @State(Scope.Thread)
 class RestoringSnapshotVsRecomputationA[S <: Struct] {
 
-  var snapshot: scala.collection.mutable.Map[String, String] = _
+  var snapshot: scala.collection.mutable.Map[REName, String] = _
 
   def build(implicit engine: InMemoryStore) = {
     val source = engine.Evt[Int]()
@@ -164,7 +164,7 @@ class RestoringSnapshotVsRecomputationA[S <: Struct] {
 @State(Scope.Thread)
 class RestoringSnapshotVsRecomputationB[S <: Struct] {
 
-  var snapshot: scala.collection.mutable.Map[String, String] = _
+  var snapshot: scala.collection.mutable.Map[REName, String] = _
 
   def build(implicit engine: InMemoryStore) = {
     val source = engine.Evt[Int]()

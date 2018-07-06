@@ -14,7 +14,7 @@ class EngineParam[S <: Struct] {
 
   def engine: RescalaInterface[S] = RescalaInterface.interfaceFor(engineName match {
     case "stm" => rescala.stm.STMScheduler.stm.asInstanceOf[Scheduler[S]]
-    case "restoring" => rescala.restoration.RestoringInterface("", mutable.HashMap()).asInstanceOf[Scheduler[S]]
+    case "restoring" => rescala.restoration.RestoringInterface(mutable.HashMap()).asInstanceOf[Scheduler[S]]
     case "fullmv" => new rescala.fullmv.FullMVEngine(scala.concurrent.duration.Duration.Zero, "benchmark").asInstanceOf[Scheduler[S]]
     case other => Schedulers.byName[S](other)
   })

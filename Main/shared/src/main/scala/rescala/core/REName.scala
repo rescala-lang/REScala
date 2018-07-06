@@ -6,7 +6,7 @@ import scala.language.implicitConversions
   * Provides names for dynamic dependencies based on their definition position to allow easier debugging
   */
 case class REName(name: String) {
-  def derive(derivation: String): String = s"$derivation($name)"
+  def derive(derivation: String): REName = s"$derivation($name)"
 }
 
 abstract class RENamed(rename: REName) {
