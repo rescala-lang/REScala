@@ -27,7 +27,8 @@ trait LevelBasedPropagationEngines {
     }
   }
 
-  implicit val unmanaged: Scheduler[SimpleStruct] = new TwoVersionSchedulerImpl[SimpleStruct, SimpleNoLock]("Unmanaged", _ => new SimpleNoLock())
+  implicit val unmanaged: Scheduler[SimpleStruct] =
+    new TwoVersionSchedulerImpl[SimpleStruct, SimpleNoLock]("Unmanaged", _ => new SimpleNoLock())
 
 }
 

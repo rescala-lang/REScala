@@ -8,7 +8,4 @@ object Engines extends LevelBasedPropagationEngines {
 
   val all: List[Scheduler[SimpleStruct]] = List(synchron, unmanaged)
 
-  val locksweep: Scheduler[_] = null
-  val parallellocksweep: Scheduler[_] = null
-
 }
