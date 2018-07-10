@@ -6,7 +6,7 @@ import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations._
 import rescala.core.{REName, Scheduler, Struct}
 import rescala.interface.{RescalaInterface, RescalaInterfaceRequireSerializer}
-import rescala.levelbased.SimpleStruct
+import rescala.levelbased.LevelStructImpl
 import rescala.reactives.{Evt, Var}
 import rescala.restoration.ReCirce._
 import rescala.restoration.{InMemoryStore, RestoringInterface}
@@ -86,7 +86,7 @@ class RestoringSnapshotVsInitial {
 
   var snapshot: scala.collection.mutable.Map[REName, String] = _
 
-  val syncInterface: RescalaInterface[SimpleStruct] = RescalaInterface.interfaceFor(rescala.Schedulers.synchron)
+  val syncInterface: RescalaInterface[LevelStructImpl] = RescalaInterface.interfaceFor(rescala.Schedulers.synchron)
 
   def build[S <: Struct](engine: RescalaInterfaceRequireSerializer[S], size: Int) = {
     import engine.implicitScheduler

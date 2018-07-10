@@ -5,16 +5,33 @@ import rescala.core.{ReSource, Reactive, Struct}
 
 import scala.language.higherKinds
 
-trait TwoVersionStruct extends GraphStruct {
+
+trait TwoVersionStruct extends Struct {
   override type State[P, S <: Struct] <: GraphState[S] with ReadWriteValue[P, S]
 }
 
-/**
-  * Spore that implements both the buffered pulse and the buffering capabilities itself.
-  *
-  * @tparam V Pulse stored value type
-  */
-class BufferedValueStruct[V, S <: Struct](ip: InitValues[V]) extends ReadWriteValue[V, S] with Committable[S] {
+case class Token(payload: AnyRef = null)
+
+
+/** State that has a buffered pulse indicating a potential update and storing the updated and the old value.
+  * Through the buffer, it is possible to either revert or apply the update */
+trait ReadWriteValue[P, S <: Struct] extends Committable[S] {
+  def base(token: Token): P
+  def get(token: Token): P
+  def write(value: P, token: Token): Boolean
+}
+
+/** State representing a node in a graph by providing information about incoming and outgoing edges. */
+trait GraphState[S <: Struct] {
+  def incoming(): Set[ReSource[S]]
+  def updateIncoming(reactives: Set[ReSource[S]]): Unit
+  def outgoing(): Iterable[Reactive[S]]
+  def discover(reactive: Reactive[S]): Unit
+  def drop(reactive: Reactive[S]): Unit
+}
+
+/** State that implements both the buffered pulse and the buffering capabilities itself. */
+class BufferedValueState[V, S <: Struct](ip: InitValues[V]) extends ReadWriteValue[V, S] with Committable[S] {
   var current: V = ip.initialValue
   protected var owner: Token = null
   private var update: V = _
@@ -40,52 +57,18 @@ class BufferedValueStruct[V, S <: Struct](ip: InitValues[V]) extends ReadWriteVa
 }
 
 /**  Implementation of a struct with graph functionality and a buffered pulse storage.  */
-abstract class PropagationStructImpl[P, S <: Struct](ip: InitValues[P]) extends BufferedValueStruct[P, S](ip) with GraphState[S] {
+abstract class GraphStateImpl[P, S <: Struct](ip: InitValues[P]) extends BufferedValueState[P, S](ip) with GraphState[S] {
   protected var _incoming: Set[ReSource[S]] = Set.empty
   protected var _outgoing: scala.collection.mutable.Map[Reactive[S], None.type] = rescala.util.WeakHashMap.empty
 
 
-  def incoming(): Set[ReSource[S]] = _incoming
-  def updateIncoming(reactives: Set[ReSource[S]]): Unit = _incoming = reactives
+  override def incoming(): Set[ReSource[S]] = _incoming
+  override def updateIncoming(reactives: Set[ReSource[S]]): Unit = _incoming = reactives
   override def outgoing(): Iterable[Reactive[S]] = _outgoing.keys
   override def discover(reactive: Reactive[S]): Unit = _outgoing.put(reactive, None)
   override def drop(reactive: Reactive[S]): Unit = _outgoing -= reactive
 }
 
-/**
-  * Wrapper for a struct type combining GraphSpore and PulsingSpore
-  */
-trait GraphStruct extends Struct {
-  override type State[P, S <: Struct] <: GraphState[S] with ReadWriteValue[P, S]
-}
-
-/**
-  * Spore that can represent a node in a graph by providing information about incoming and outgoing edges.
-  *
-  * @tparam S Type of the reactive values that are connected to this struct
-  */
-trait GraphState[S <: Struct] {
-  def incoming(): Set[ReSource[S]]
-  def updateIncoming(reactives: Set[ReSource[S]]): Unit
-  def outgoing(): Iterable[Reactive[S]]
-  def discover(reactive: Reactive[S]): Unit
-  def drop(reactive: Reactive[S]): Unit
-}
-
-case class Token(payload: AnyRef = null)
-
-
-/**
-  * Spore that has a buffered pulse indicating a potential update and storing the updated and the old value.
-  * Through the buffer, it is possible to either revert or apply the update
-  *
-  * @tparam P Pulse stored value type
-  */
-trait ReadWriteValue[P, S <: Struct] extends Committable[S] {
-  def base(token: Token): P
-  def get(token: Token): P
-  def write(value: P, token: Token): Boolean
-}
 
 
 

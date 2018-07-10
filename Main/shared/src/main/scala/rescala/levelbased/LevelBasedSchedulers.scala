@@ -9,28 +9,28 @@ import rescala.twoversion.TwoVersionScheduler
   */
 trait LevelBasedSchedulers {
 
-  private[rescala] class SimpleNoLock extends LevelBasedPropagation[SimpleStruct] {
+  private[rescala] class SimpleNoLock extends LevelBasedPropagation[LevelStructImpl] {
     override protected def makeDerivedStructState[P](ip: InitValues[P],
-                                                     creationTicket: CreationTicket[SimpleStruct])
-    : SimpleStruct#State[P, SimpleStruct] = {
+                                                     creationTicket: CreationTicket[LevelStructImpl])
+    : LevelStructImpl#State[P, LevelStructImpl] = {
       new LevelStateImpl(ip)
     }
     override def releasePhase(): Unit = ()
-    override def preparationPhase(initialWrites: Set[ReSource[SimpleStruct]]): Unit = {}
-    override def dynamicDependencyInteraction(dependency: ReSource[SimpleStruct]): Unit = {}
+    override def preparationPhase(initialWrites: Set[ReSource[LevelStructImpl]]): Unit = {}
+    override def dynamicDependencyInteraction(dependency: ReSource[LevelStructImpl]): Unit = {}
   }
 
-  implicit val synchron: Scheduler[SimpleStruct] = {
-    new TwoVersionScheduler[SimpleStruct, SimpleNoLock] {
+  implicit val synchron: Scheduler[LevelStructImpl] = {
+    new TwoVersionScheduler[LevelStructImpl, SimpleNoLock] {
       override protected def makeTurn(priorTurn: Option[SimpleNoLock]): SimpleNoLock = new SimpleNoLock
       override def schedulerName: String = "Synchron"
-      override def executeTurn[R](initialWrites: Set[ReSource[SimpleStruct]], admissionPhase: AdmissionTicket[SimpleStruct] => R): R =
+      override def executeTurn[R](initialWrites: Set[ReSource[LevelStructImpl]], admissionPhase: AdmissionTicket[LevelStructImpl] => R): R =
         synchronized { super.executeTurn(initialWrites, admissionPhase) }
     }
   }
 
-  implicit val unmanaged: Scheduler[SimpleStruct] =
-    new TwoVersionScheduler[SimpleStruct, SimpleNoLock] {
+  implicit val unmanaged: Scheduler[LevelStructImpl] =
+    new TwoVersionScheduler[LevelStructImpl, SimpleNoLock] {
       override protected def makeTurn(priorTurn: Option[SimpleNoLock]): SimpleNoLock = new SimpleNoLock()
       override def schedulerName: String = "Unmanaged"
     }
