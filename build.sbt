@@ -34,7 +34,6 @@ lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
   restoreJVM,
   restoreJS,
   reswing,
-  stm,
   testsJS,
   testsJVM,
   todolist,
@@ -69,7 +68,7 @@ lazy val tests = crossProject(JSPlatform, JVMPlatform).in(file("Tests"))
   .settings(name := "rescala-tests", cfg.noPublish, cfg.base, cfg.test, exportJars := true)
   .dependsOn(rescala)
   .jvmSettings().jsSettings(cfg.js)
-lazy val testsJVM = tests.jvm.dependsOn(stm)
+lazy val testsJVM = tests.jvm
 lazy val testsJS = tests.js
 
 lazy val documentation = project.in(file("Documentation/DocumentationProject"))
@@ -105,10 +104,6 @@ lazy val rescalatags = project.in(file("Extensions/Rescalatags"))
 lazy val datastructures = project.in(file("Extensions/Datastructures"))
   .dependsOn(rescalaJVM)
   .settings(cfg.base, name := "datastructures", lib.scalatest, cfg.noPublish, cfg.strictScalac)
-
-lazy val stm = project.in(file("Extensions/STM"))
-  .settings(cfg.base, cfg.noPublish, lib.scalaStm, exportJars := true)
-  .dependsOn(rescalaJVM)
 
 lazy val crdts = project.in(file("Extensions/crdts"))
   .dependsOn(rescalaJVM)
@@ -150,7 +145,7 @@ lazy val caseStudyRSSSimple = project.in(file("Examples/RSSReader/SimpleRssReade
   .settings(cfg.base, name := "rssreader-case-study-simple", lib.rss, cfg.noPublish, cfg.test)
 
 lazy val universe = project.in(file("Examples/Universe"))
-  .dependsOn(rescalaJVM, stm, fullmv)
+  .dependsOn(rescalaJVM, fullmv)
   .settings(cfg.base, cfg.noPublish, name := "rescala-universe")
   .enablePlugins(JavaAppPackaging)
 
@@ -210,7 +205,7 @@ lazy val microbench = project.in(file("Research/Microbenchmarks"))
   .settings(name := "microbenchmarks", cfg.base, cfg.noPublish, mainClass in Compile := Some("org.openjdk.jmh.Main"),
     TaskKey[Unit]("compileJmh") := Seq(compile in pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh).dependOn.value)
   .enablePlugins(JavaAppPackaging)
-  .dependsOn(stm, fullmv, restoreJVM)
+  .dependsOn(fullmv, restoreJVM)
 
 
 // ===================================================================================== Settings
@@ -349,8 +344,6 @@ lazy val lib = new {
     "org.reactivestreams" % "reactive-streams" % "1.0.2",
     "org.reactivestreams" % "reactive-streams-tck" % "1.0.2"
   )
-
-  val scalaStm = libraryDependencies += "org.scala-stm" %% "scala-stm" % "0.8"
 
   val retypecheck = List(
     resolvers += Resolver.bintrayRepo("pweisenburger", "maven"),

@@ -7,11 +7,12 @@ import rescala.interface.RescalaInterface
 import scala.collection.parallel.ForkJoinTaskSupport
 
 object Globals {
-  val engineName = System.getProperty("engineName", "parrp")
+  val engineName: String = System.getProperty("engineName", "parrp")
 
   implicit val engine: RescalaInterface[Struct] = RescalaInterface.interfaceFor(engineName match {
-    case "fullmv" => new rescala.fullmv.FullMVEngine(scala.concurrent.duration.Duration.Zero, "fullmv-universe").asInstanceOf[Scheduler[Struct]]
-    case "stm" => rescala.stm.STMScheduler.stm.asInstanceOf[Scheduler[Struct]]
+    case "fullmv" =>
+      new rescala.fullmv.FullMVEngine(scala.concurrent.duration.Duration.Zero, "fullmv-universe")
+        .asInstanceOf[Scheduler[Struct]]
     case _ => Schedulers.byName[Struct](engineName)
   })
 
