@@ -1,6 +1,7 @@
 package rescala.levelbased
 
 import rescala.core.{InitialChange, ReSource, Reactive, ReevTicket}
+import rescala.levelbased.LevelQueue.noLevelIncrease
 import rescala.twoversion.TwoVersionPropagationImpl
 
 import scala.collection.mutable.ArrayBuffer
@@ -11,7 +12,7 @@ import scala.collection.mutable.ArrayBuffer
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
 trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[S] with LevelQueue.Evaluator[S] {
-  private val _propagating = ArrayBuffer[ReSource[S]]()
+  private val _propagating: ArrayBuffer[ReSource[S]] = ArrayBuffer[ReSource[S]]()
 
   val levelQueue = new LevelQueue[S](this)(this)
 
@@ -39,7 +40,7 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
     }
   }
 
-  private def enqueueOutgoing(head: ReSource[S], minLevel: Int = -42) = {
+  private def enqueueOutgoing(head: ReSource[S], minLevel: Int): ArrayBuffer[ReSource[S]] = {
     head.state.outgoing().foreach(levelQueue.enqueue(minLevel))
     _propagating += head
   }
@@ -67,7 +68,7 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
 
   final override def initialize(ic: InitialChange[S]): Unit = {
     val n = ic.writeValue(ic.source.state.base(token), writeState(ic.source))
-    if (n) enqueueOutgoing(ic.source)
+    if (n) enqueueOutgoing(ic.source, noLevelIncrease)
   }
 
   def propagationPhase(): Unit = levelQueue.evaluateQueue()

@@ -97,6 +97,9 @@ private[levelbased] object LevelQueue {
     def evaluate(r: Reactive[S]): Unit
   }
 
+  /** The value to not increase the level of an enqueued [[QueueElement]].*/
+  def noLevelIncrease: Int = Int.MinValue
+
   private final case class QueueElement[S <: Struct](level: Int, reactive: Reactive[S], var minLevel: Int, var needsEvaluate: Boolean) extends Comparable[QueueElement[S]] {
     // order by level, then by reactive
     val order: Long = (level.toLong << 32) | (reactive.hashCode.toLong & 0x00000000ffffffffl)
