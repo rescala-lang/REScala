@@ -15,7 +15,7 @@ object RescalaInterface {
 }
 
 trait RescalaInterface[S <: Struct] extends RescalaInterfaceRequireSerializer[S] {
-  implicit def noSerialization[T]: ReSerializable[T] = rescala.core.ReSerializable.serializationUnavailable
+  implicit def noSerialization[T]: ReSerializable[T] = rescala.core.ReSerializable.noSerializer
 }
 
 /** Rescala has two main abstractions. [[Event]] and [[Signal]] commonly referred to as reactives.

@@ -100,6 +100,7 @@ lazy val rescalatags = project.in(file("Extensions/Rescalatags"))
     cfg.js, lib.scalatags, jsDependencies += RuntimeDOM)
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(rescalaJS)
+  .dependsOn(testsJS % "test->test")
 
 lazy val datastructures = project.in(file("Extensions/Datastructures"))
   .dependsOn(rescalaJVM)

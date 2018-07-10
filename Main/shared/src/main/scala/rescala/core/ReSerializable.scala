@@ -29,11 +29,11 @@ object ReSerializable {
   }
 
   def doNotSerialize[T]: ReSerializable[T] = DoNotSerialize.asInstanceOf[ReSerializable[T]]
-  def serializationUnavailable[T]: _root_.rescala.core.ReSerializable[T] = NoSerializer.asInstanceOf[ReSerializable[T]]
+  def noSerializer[T]: _root_.rescala.core.ReSerializable[T] = NoSerializer.asInstanceOf[ReSerializable[T]]
 
 
   def pulseSerializable[T](implicit s: ReSerializable[T]): ReSerializable[Pulse[T]] = {
-    if (s == null) null else if (s == doNotSerialize) doNotSerialize else if (s == serializationUnavailable) serializationUnavailable
+    if (s == null) null else if (s == doNotSerialize) doNotSerialize else if (s == noSerializer) noSerializer
     else new ReSerializable[Pulse[T]] {
       override def serialize(value: Pulse[T]): String = value.toOption.fold("")(s.serialize)
       override def deserialize(value: String): Try[Pulse[T]] = if (value.isEmpty) Success(Pulse.empty)

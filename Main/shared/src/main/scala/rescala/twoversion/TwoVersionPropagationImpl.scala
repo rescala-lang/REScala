@@ -12,7 +12,6 @@ import scala.util.control.NonFatal
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
 trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropagation[S] with Initializer[S] {
-  outer =>
 
   private var _token: Token = Token()
   def token: Token = _token
@@ -52,7 +51,8 @@ trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropaga
 
   def initialize(ic: InitialChange[S]): Unit
 
-  final override def initializationPhase(initialChanges: Map[ReSource[S], InitialChange[S]]): Unit = initialChanges.values.foreach(initialize)
+  final override def initializationPhase(initialChanges: Map[ReSource[S], InitialChange[S]]): Unit =
+    initialChanges.values.foreach(initialize)
 
   final def commitDependencyDiff(node: Reactive[S], current: Set[ReSource[S]])(updated: Set[ReSource[S]]): Unit = {
     val indepsRemoved = current -- updated
@@ -67,11 +67,12 @@ trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropaga
 
   private[rescala] def writeIndeps(node: Reactive[S], indepsAfter: Set[ReSource[S]]): Unit = node.state.updateIncoming(indepsAfter)
 
-  /** allow turn to handle dynamic access to reactives */
+  /** allow the propagation to handle dynamic access to reactives */
   def dynamicDependencyInteraction(dependency: ReSource[S]): Unit
 
 
-  override private[rescala] def makeAdmissionPhaseTicket(initialWrites: Set[ReSource[S]]) = new AdmissionTicket[S](this, initialWrites) {
+  override private[rescala] def makeAdmissionPhaseTicket(initialWrites: Set[ReSource[S]]): AdmissionTicket[S]
+  = new AdmissionTicket[S](this, initialWrites) {
     override def access[A](reactive: Signal[A, S]): reactive.Value = {
       dynamicDependencyInteraction(reactive)
       reactive.state.base(token)

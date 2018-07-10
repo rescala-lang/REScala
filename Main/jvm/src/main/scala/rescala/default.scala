@@ -1,6 +1,6 @@
 package rescala
 
-import rescala.core.{Scheduler, ReSerializable}
+import rescala.core.Scheduler
 import rescala.parrp.ParRP
 
 /** REScala has two main abstractions. [[rescala.Event]] and [[rescala.Signal]] commonly referred to as reactives.
@@ -11,6 +11,4 @@ import rescala.parrp.ParRP
   **/
 object default extends interface.RescalaInterface[ParRP] {
   override def scheduler: Scheduler[ParRP] = rescala.Schedulers.parrp
-  /** @group internal */
-  implicit def serializationUnavailable[T]: ReSerializable[T] = ReSerializable.serializationUnavailable
 }

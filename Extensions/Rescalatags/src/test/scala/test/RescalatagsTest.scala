@@ -2,23 +2,13 @@ package test
 
 import org.scalajs.dom.Node
 import org.scalajs.dom.html.Span
-import org.scalatest.FlatSpec
-import org.scalatest.prop.TableDrivenPropertyChecks
-import rescala.Engines
 import rescalatags._
 import scalatags.JsDom.all._
-import rescala.default.doNotSerialize
-import rescala.interface.RescalaInterface
+import tests.rescala.testtools.RETests
 
-class RescalatagsTest extends FlatSpec with TableDrivenPropertyChecks {
+class RescalatagsTest extends RETests { multiEngined { engine => import engine._
 
-  forAll(Table("engine", Engines.all: _*)) { engine =>
-    val interface = RescalaInterface.interfaceFor(engine)
-    import interface._
-
-    behavior of engine.toString
-
-    it should s"put var into dom" in {
+    test("put var into dom") {
       val v = Var.empty[Tag]
       val rendered: Node = v.asFrag.render
       assert(rendered.textContent === "", "empty var gives empty frag")
@@ -36,7 +26,7 @@ class RescalatagsTest extends FlatSpec with TableDrivenPropertyChecks {
 
     }
 
-    it should s"put style into dom" in {
+    test("put style into dom") {
       val v = Var.empty[String]
 
       // we do this because this tends to be globally set from other tests …
@@ -53,7 +43,7 @@ class RescalatagsTest extends FlatSpec with TableDrivenPropertyChecks {
       assert(ourTag.style.getPropertyValue("backgroundColor") === "blue", "changing var changes color again")
     }
 
-    it should s"put attribute into dom" in {
+    test("put attribute into dom") {
       val v = Var.empty[String]
 
       val ourTag = a(href := v).render
@@ -68,7 +58,7 @@ class RescalatagsTest extends FlatSpec with TableDrivenPropertyChecks {
 
     }
 
-    it should s"work with multiple childern" in {
+    test("work with multiple childern") {
 
       val v = Var(frag(span("hey"), span("ho")))
 

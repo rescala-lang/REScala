@@ -21,7 +21,7 @@ class ReStoringTurn(restore: ReStore) extends LevelBasedPropagation[ReStoringStr
   : ReStoringState[P, ReStoringStruct] = {
     valuePersistency match {
       case is@Initializer.InitializedSignal(init) if is.serializable != rescala.core.ReSerializable.doNotSerialize =>
-        if (is.serializable == rescala.core.ReSerializable.serializationUnavailable)
+        if (is.serializable == rescala.core.ReSerializable.noSerializer)
           throw new Exception(s"restore requires serializable reactive: $valuePersistency")
         val name = restore.deriveName(creationTicket.rename)
         restore.get(name) match {
