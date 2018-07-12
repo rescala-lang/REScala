@@ -1,7 +1,6 @@
-package rescala.crdts.statecrdts
-package sequences
+package rescala.crdts.statecrdts.sequences
 
-trait RemovableSequence[A] extends StateCRDTSequence[A] {
+trait RemovableSequence[A] {
   type selfType
-  def remove[A1 >: A](v: Vertex[A1]): selfType
+  def remove(v: ValueVertex[A]): selfType
 }
