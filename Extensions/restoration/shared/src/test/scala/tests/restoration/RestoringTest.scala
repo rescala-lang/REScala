@@ -2,16 +2,22 @@ package tests.restoration
 
 import org.scalatest.FunSuite
 import rescala.restoration.ReCirce._
-import rescala.restoration.RestoringInterface
+import rescala.restoration.{InMemoryStore, RestoringInterface}
 
 class RestoringTest extends FunSuite {
 
+  def makeGraph()(implicit api: InMemoryStore) = {
+    val e = api.Evt[Unit]()
+    (e, e.count())
+  }
+
   test("simple save and restore"){
+
+
 
     val snapshot = {
       implicit val api = RestoringInterface()
-      val e = api.Evt[Unit]()
-      val c = e.count()
+      val (e,c) = makeGraph()
 
       assert(c.readValueOnce == 0)
 
@@ -24,8 +30,7 @@ class RestoringTest extends FunSuite {
 
     {
       implicit val engine1 = RestoringInterface(restoreFrom = snapshot)
-      val e = engine1.Evt[Unit]()
-      val c = e.count()
+      val (e,c) = makeGraph()
 
       assert(c.readValueOnce == 2)
 
@@ -40,8 +45,7 @@ class RestoringTest extends FunSuite {
 
     val snapshot = {
       implicit val engine = RestoringInterface()
-      val e = engine.Evt[Unit]()
-      val c = e.count()
+      val (e,c) = makeGraph()
 
       assert(c.readValueOnce == 0)
 
@@ -50,7 +54,7 @@ class RestoringTest extends FunSuite {
 
       assert(c.readValueOnce == 2)
 
-      val mapped = c.map(_ + 10)
+      val mapped = c.map(_ + 10)("mapped")
 
       assert(mapped.readValueOnce == 12)
 
@@ -60,8 +64,7 @@ class RestoringTest extends FunSuite {
 
     {
       implicit val engine1 = RestoringInterface(restoreFrom = snapshot)
-      val e = engine1.Evt[Unit]()
-      val c = e.count()
+      val (e,c) = makeGraph()
 
       assert(c.readValueOnce == 2)
 
@@ -69,7 +72,7 @@ class RestoringTest extends FunSuite {
 
       assert(c.readValueOnce == 3)
 
-      val mapped = c.map(_ + 10)
+      val mapped = c.map(_ + 10)("mapped")
 
       assert(mapped.readValueOnce == 13)
 
