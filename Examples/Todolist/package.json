@@ -1,6 +1,5 @@
 {
   "dependencies": {
-    "jsdom": "^9.8.3",
     "todomvc-app-css": "^2.0.6",
     "todomvc-common": "^1.0.3"
   }
