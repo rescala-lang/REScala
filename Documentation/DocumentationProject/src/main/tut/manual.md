@@ -198,7 +198,7 @@ val SPEED = 10
 val time = Var(0)
 val space = Signal{ SPEED * time() }
 
-space.changed += ((x: Int) => println(x))
+space observe ((x: Int) => println(x))
 
 while (time.now < 5) {
   Thread sleep 20
@@ -212,21 +212,6 @@ When the value of the `time` var changes, the signal expression
 at Line 3 is reevaluated and the value of `space` is
 updated. Finally, the current value of the `space` signal is
 printed every time the value of the signal changes.
-
-Printing the value of a signal deserves some more considerations.
-Technically, this is achieved by converting the ```space``` signal to
-an event that is fired every time the signal changes its value
-(Line 5). The conversion is performed by the
-`changed` operator. The `+=` operator attaches an handler to
-the event returned by the `changed` operator. When the event
-fires, the handler is executed. Line 5 is equivalent to
-the following code:
-
-```tut:book
-val e: Event[Int] = space.changed
-val handler:  (Int => Unit) =  ((x: Int) => println(x))
-e observe handler
-```
 
 Note that using `println(space.now)` would also print the
 value of the signal, but only at the point in time in which the print
@@ -306,17 +291,17 @@ val e1: Event[Int] = Evt[Int]()
 ## Registering Handlers
 
 Handlers are code blocks that are executed when the event fires. The
-`+=` operator attaches the handler to the event. The handler is a
+`observe` operator attaches the handler to the event. The handler is a
 first class function that receives the attached value as a parameter.
 The following are valid handler definitions.
 
 ```tut:book
 var state = 0
 val e = Evt[Int]()
-e += { println(_) }
-e += (x => println(x))
-e += ((x: Int) => println(x))
-e += (x => {  // Multiple statements in the handler
+e observe { println(_) }
+e observe (x => println(x))
+e observe ((x: Int) => println(x))
+e observe (x => {  // Multiple statements in the handler
   state = x
   println(x)
 })
@@ -329,11 +314,11 @@ perform side effects. For example is the event is of type
 
 ```tut:book
 val e = Evt[(Int,String)]()
-e += (x => {
+e observe (x => {
   println(x._1)
   println(x._2)
 })
-e += ((x: (Int,String)) => {
+e observe ((x: (Int,String)) => {
   println(x)
 })
 ```
@@ -343,8 +328,8 @@ in the handler.
 
 ```tut:book
 val e = Evt[Int]()
-e += { x => println() }
-e += { (x: Int) => println() }
+e observe { x => println() }
+e observe { (x: Int) => println() }
 ```
 
 Scala allows one to refer to a method using the partially applied
@@ -357,7 +342,7 @@ def m1(x: Int) = {
   println(y)
 }
 val e = Evt[Int]
-e += m1 _
+e observe m1 _
 e.fire(10)
 ```
 
@@ -383,7 +368,7 @@ handler.
 
 ```tut:book
 val e = Evt[Int]()
-e += { x => println(x) }
+e observe { x => println(x) }
 e.fire(10)
 e.fire(10)
 ```
@@ -394,8 +379,8 @@ order for handler execution.
 
 ```tut:book
 val e = Evt[Int]()
-e += { x => println(x) }
-e += { x => println(f"n: $x")}
+e observe { x => println(x) }
+e observe { x => println(f"n: $x")}
 e.fire(10)
 e.fire(10)
 ```
@@ -409,8 +394,8 @@ event is fired.
 ```tut:book
 val e = Evt[Int]()
 
-val handler1 = e += println
-val handler2 = e += { x => println(s"n: $x") }
+val handler1 = e observe println
+val handler2 = e observe { x => println(s"n: $x") }
 e.fire(10)
 handler2.remove()
 e.fire(10)
@@ -458,7 +443,7 @@ must have the same parameter type (`Int` in the next example).
 val e1 = Evt[Int]()
 val e2 = Evt[Int]()
 val e1_OR_e2 = e1 || e2
-e1_OR_e2 += ((x: Int) => println(x))
+e1_OR_e2 observe ((x: Int) => println(x))
 e1.fire(1)
 e2.fire(2)
 ```
@@ -474,7 +459,7 @@ parameter and a predicate.
 ```tut:book
 val e = Evt[Int]()
 val e_AND: Event[Int] = e filter ((x: Int) => x>10)
-e_AND += ((x: Int) => println(x))
+e_AND observe ((x: Int) => println(x))
 e.fire(5)
 e.fire(15)
 ```
@@ -489,7 +474,7 @@ value of the resulting event.
 ```tut:book
 val e = Evt[Int]()
 val e_MAP: Event[String] = e map ((x: Int) => x.toString)
-e_MAP += ((x: String) => println(s"Here: $x"))
+e_MAP observe ((x: String) => println(s"Here: $x"))
 e.fire(5)
 e.fire(15)
 ```
@@ -504,7 +489,7 @@ operator transforms an `Event[Int]` into an `Event[Unit]`.
 ```tut:book
 val e = Evt[Int]()
 val e_drop: Event[Unit] = e.dropParam
-e_drop += (_ => println("*"))
+e_drop observe (_ => println("*"))
 e.fire(10)
 e.fire(10)
 ```
@@ -556,7 +541,8 @@ function fires a new event every time a signal changes its value.
 
 <figure markdown="1">
 ![Event-Signal](./images/event-signal.png)
-<figcaption>Figure 1: Basic conversion functions.</figcaption>
+<figcaption>Figure 1: Basic conversion functions.
+</figcaption>
 </figure>
 
 ## Event to Signal: Latest
@@ -594,7 +580,7 @@ var test = 0
 val v =  Var(1)
 val s = Signal{ v() + 1 }
 val e: Event[Int] = s.changed
-e += ((x:Int)=>{test+=1})
+e observe ((x:Int)=>{test+=1})
 v.set(2)
 assert(test == 1)
 v.set(3)
@@ -763,7 +749,7 @@ Example:
 ```tut:book
 val s = Var(5)
 val e = s.change
-e += println
+e observe println
 
 s.set(10)
 s.set(20)
@@ -782,7 +768,7 @@ var test = 0
 val v =  Var(1)
 val s = Signal{ v() + 1 }
 val e: Event[Unit] = s.changedTo(3)
-e += ((x:Unit)=>{test+=1})
+e observe ((x:Unit)=>{test+=1})
 
 assert(test == 0)
 v set(2)
@@ -791,30 +777,9 @@ v set(3)
 assert(test == 1)
 ```
 
-## Switch/toggle
-
-The ```toggle``` function switches alternatively between the given
-signals on the occurrence of an event ```e```. The value attached to
-the event is simply discarded.
-
-```toggle[T](e : Event[_], a: Signal[T], b: Signal[T]): Signal[T]```
-
-The `switchTo` function switches the value of the signal on the
-occurrence of the event ```e```. The resulting signal is a constant
-signal whose value is the value carried by the event ```e```.
-
-```switchTo[T](e : Event[T], original: Signal[T]): Signal[T]```
-
-The ```switchOnce``` function switches to a new signal provided as a
-parameter, once, on the occurrence of the event ```e```.
-
-`switchOnce[T](e: Event[_], original: Signal[T], newSignal: Signal[T]): Signal[T]`
-
 ## Flatten
 
-The ```unwrap``` function is used to ``unwrap'' an event inside a signal.
-
-```def unwrap[T](wrappedEvent: Signal[Event[T]]): Event[T]```
+The ```flatten``` function is used to ``flatten'' nested reactives.
 
 It can, for instance, be used to detect if any signal within a collection of signals
 fired a changed event:
@@ -826,7 +791,7 @@ val v3 = Var(true)
 val collection: List[Signal[_]] = List(v1, v2, v3)
 val innerChanges = Signal {collection.map(_.changed).reduce((a, b) => a || b)}
 val anyChanged = innerChanges.flatten
-anyChanged += println
+anyChanged observe println
 v1.set(10)
 v2.set("Changed")
 v3.set(false)
