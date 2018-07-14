@@ -283,7 +283,7 @@ class ReactiveMacros(val c: blackbox.Context) {
         (tree.tpe.baseClasses contains staticInterpClass)
   }
 
-  /** detects variants to access reactives using [[Interp]] */
+  /** detects variants to access reactives using [[rescala.core.Interp]] */
   object REApply {
     def unapply(arg: Tree): Option[Tree] = arg match {
       case Apply(Select(reactive, tn), Nil)

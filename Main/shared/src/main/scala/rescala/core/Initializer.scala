@@ -4,7 +4,7 @@ import rescala.core.Initializer.InitValues
 import rescala.reactives.Signals.Diff
 
 trait Initializer[S <: Struct] {
-  /** Creates and correctly initializes new [[Reactive]]s */
+  /** Creates and correctly initializes new [[rescala.core.Reactive]]s */
   final private[rescala] def create[V, T <: Reactive[S]](incoming: Set[ReSource[S]],
                                                          initv: InitValues[V],
                                                          inite: Boolean,
