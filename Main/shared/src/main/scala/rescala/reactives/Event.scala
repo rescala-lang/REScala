@@ -54,7 +54,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
 
   /** Uses a partial function `onFailure` to recover an error carried by the event into a value when returning Some(value),
     * or filters the error when returning None
-    * @usecase def recover[R >: T](onFailure: PartialFunction[Throwable, Option[R]]): rescala.Event[R]
+    * @usecase def recover[R >: T](onFailure: PartialFunction[Throwable, Option[R]]): rescala.default.Event[R]
     */
   @cutOutOfUserComputation
   final def recover[R >: T](onFailure: PartialFunction[Throwable, Option[R]])(implicit ticket: CreationTicket[S]): Event[R, S] =
@@ -66,7 +66,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
     }
 
   /** Collects the results from a partial function
-    * @usecase def collect[U](pf: PartialFunction[T, U]): rescala.Event[U]
+    * @usecase def collect[U](pf: PartialFunction[T, U]): rescala.default.Event[U]
     * @group operator */
   @cutOutOfUserComputation
   final def collect[U](pf: PartialFunction[T, U])(implicit ticket: CreationTicket[S]): Event[U, S] =
@@ -75,7 +75,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
   /** Events disjunction.
     * Propagates the values if any of the events fires.
     * Only propagates the left event if both fire.
-    * @usecase def ||[U >: T](other: rescala.Event[U]): rescala.Event[U]
+    * @usecase def ||[U >: T](other: rescala.default.Event[U]): rescala.default.Event[U]
     * @group operator */
   @cutOutOfUserComputation
   final def ||[U >: T](other: Event[U, S])(implicit ticket: CreationTicket[S]): Event[U, S] = {
@@ -86,20 +86,20 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
   }
 
   /** Filters the event, only propagating the value when the filter is true.
-    * @usecase def filter(pred: T => Boolean): rescala.Event[T]
+    * @usecase def filter(pred: T => Boolean): rescala.default.Event[T]
     * @group operator*/
   @cutOutOfUserComputation
   final def filter(pred: T => Boolean)(implicit ticket: CreationTicket[S]): Event[T, S] =
     Events.staticNamed(s"(filter $this)", this) { st => st.collectStatic(this).filter(pred) }
   /** Filters the event, only propagating the value when the filter is true.
-    * @usecase def &&(pred: T => Boolean): rescala.Event[T]
+    * @usecase def &&(pred: T => Boolean): rescala.default.Event[T]
     * @see filter
     * @group operator*/
   @cutOutOfUserComputation
   final def &&(pred: T => Boolean)(implicit ticket: CreationTicket[S]): Event[T, S] = filter(pred)
 
   /** Propagates the event only when except does not fire.
-    * @usecase def \[U](except: rescala.Event[U]): rescala.Event[T]
+    * @usecase def \[U](except: rescala.default.Event[U]): rescala.default.Event[T]
     * @group operator*/
   @cutOutOfUserComputation
   final def \[U](except: Event[U, S])(implicit ticket: CreationTicket[S]): Event[T, S] = {
@@ -113,7 +113,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
   }
 
   /** Merge the event with the other, if both fire simultaneously.
-    * @usecase def and[U, R](other: rescala.Event[U]): rescala.Event[R]
+    * @usecase def and[U, R](other: rescala.default.Event[U]): rescala.default.Event[R]
     * @group operator*/
   @cutOutOfUserComputation
   final def and[U, R](other: Event[U, S])(merger: (T, U) => R)(implicit ticket: CreationTicket[S]): Event[R, S] = {
@@ -126,14 +126,14 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
   }
 
   /** Merge the event with the other into a tuple, if both fire simultaneously.
-    * @usecase def zip[U](other: rescala.Event[U]): rescala.Event[(T, U)]
+    * @usecase def zip[U](other: rescala.default.Event[U]): rescala.default.Event[(T, U)]
     * @group operator
     * @see and */
   @cutOutOfUserComputation
   final def zip[U](other: Event[U, S])(implicit ticket: CreationTicket[S]): Event[(T, U), S] = and(other)(Tuple2.apply)
 
   /** Merge the event with the other into a tuple, even if only one of them fired.
-    * @usecase def zipOuter[U](other: Event[U, S]): rescala.Event[(Option[T], Option[U])]
+    * @usecase def zipOuter[U](other: Event[U, S]): rescala.default.Event[(Option[T], Option[U])]
     * @group operator*/
   @cutOutOfUserComputation
   final def zipOuter[U](other: Event[U, S])(implicit ticket: CreationTicket[S]): Event[(Option[T], Option[U]), S] = {
@@ -145,7 +145,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
   }
 
   /** Transform the event.
-    * @usecase def map[A](expression: T => A): rescala.Event[A]
+    * @usecase def map[A](expression: T => A): rescala.default.Event[A]
     * @group operator*/
   @cutOutOfUserComputation
   final def map[A](expression: T => A)(implicit ticket: CreationTicket[S]): Event[A, S]
@@ -158,7 +158,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
 
 
   /** Drop the event parameter; equivalent to map((_: Any) => ())
-    * @usecase def dropParam(implicit ticket: CreationTicket[S]): rescala.Event[Unit]
+    * @usecase def dropParam(implicit ticket: CreationTicket[S]): rescala.default.Event[Unit]
     * @group operator*/
   @cutOutOfUserComputation
   final def dropParam(implicit ticket: CreationTicket[S]): Event[Unit, S] = Events.static(this)(_ => Some(()))
@@ -166,7 +166,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
 
   /** Folds events with a given operation to create a Signal.
     * @group conversion
-    * @usecase def fold[A](init: A)(op: (A, T) => A): rescala.Signal[A]
+    * @usecase def fold[A](init: A)(op: (A, T) => A): rescala.default.Signal[A]
     * @inheritdoc */
   @cutOutOfUserComputation
   final def fold[A](init: A)
@@ -177,7 +177,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
 
   /** reduces events with a given reduce function to create a Signal
     *
-    * @usecase def reduce[A](reducer: (=> A, => T) => A): rescala.Signal[A]
+    * @usecase def reduce[A](reducer: (=> A, => T) => A): rescala.default.Signal[A]
     * @group conversion */
   @cutOutOfUserComputation
   final def reduce[A: ReSerializable](reducer: (=> A, => T) => A)(implicit ticket: CreationTicket[S]): Signal[A, S] =
@@ -195,7 +195,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
 
   /** Applies a function on the current value of the signal every time the event occurs,
     * starting with the init value before the first event occurrence
-    * @usecase def iterate[A](init: A)(f: A => A): rescala.Signal[A]
+    * @usecase def iterate[A](init: A)(f: A => A): rescala.default.Signal[A]
     * @group conversion */
   @cutOutOfUserComputation
   final def iterate[A: ReSerializable](init: A)(f: A => A)(implicit ticket: CreationTicket[S]): Signal[A, S] =
@@ -204,7 +204,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
   /** Counts the occurrences of the event. Starts from 0, when the event has never been
     * fired yet. The argument of the event is simply discarded.
     * @group conversion
-    * @usecase def count(): rescala.Signal[Int]
+    * @usecase def count(): rescala.default.Signal[Int]
     * @inheritdoc */
   @cutOutOfUserComputation
   final def count()(implicit ticket: CreationTicket[S], ev: ReSerializable[Int]): Signal[Int, S] =
@@ -212,20 +212,20 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
 
   /** returns a signal holding the latest value of the event.
     * @param init initial value of the returned signal
-    * @usecase def latest[A >: T](init: A): rescala.Signal[A]
+    * @usecase def latest[A >: T](init: A): rescala.default.Signal[A]
     * @group conversion */
   @cutOutOfUserComputation
   final def latest[A >: T : ReSerializable](init: A)(implicit ticket: CreationTicket[S]): Signal[A, S] =
     Events.foldOne(this, init)((_, v) => v)
   /** returns a signal holding the latest value of the event.
-    * @usecase def latest[A >: T](): rescala.Signal[A]
+    * @usecase def latest[A >: T](): rescala.default.Signal[A]
     * @group conversion */
   @cutOutOfUserComputation
   final def latest[A >: T : ReSerializable]()(implicit ticket: CreationTicket[S]): Signal[A, S] =
     reduce[A]((_, v) => v)
 
   /** Holds the latest value of an event as an Option, None before the first event occured
-    * @usecase def latestOption[A >: T](): rescala.Signal[Option[A]]
+    * @usecase def latestOption[A >: T](): rescala.default.Signal[Option[A]]
     * @group conversion*/
   @cutOutOfUserComputation
   final def latestOption[A >: T]()(implicit ticket: CreationTicket[S], ev: ReSerializable[Option[A]]): Signal[Option[A], S] =
@@ -233,7 +233,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
 
   /** Returns a signal which holds the last n events in a list. At the beginning the
     * list increases in size up to when n values are available
-    * @usecase def last[A >: T](n: Int): rescala.Signal[LinearSeq[A]]
+    * @usecase def last[A >: T](n: Int): rescala.default.Signal[LinearSeq[A]]
     * @group conversion*/
   @cutOutOfUserComputation
   final def last[A >: T](n: Int)(implicit ticket: CreationTicket[S], ev: ReSerializable[Queue[A]]): Signal[LinearSeq[A], S] = {
@@ -243,14 +243,14 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
   }
 
   /** collects events resulting in a variable holding a list of all values.
-    * @usecase def list[A >: T](): rescala.Signal[List[A]]
+    * @usecase def list[A >: T](): rescala.default.Signal[List[A]]
     * @group conversion*/
   @cutOutOfUserComputation
   final def list[A >: T]()(implicit ticket: CreationTicket[S], ev: ReSerializable[List[A]]): Signal[List[A], S] =
     Events.foldOne(this, List[A]())((acc, v) => v :: acc)
 
   /** Switch back and forth between two signals on occurrence of event e
-    * @usecase def toggle[A](a: rescala.Signal[A], b: rescala.Signal[A]): rescala.Signal[A]
+    * @usecase def toggle[A](a: rescala.default.Signal[A], b: rescala.default.Signal[A]): rescala.default.Signal[A]
     * @group conversion*/
   @cutOutOfUserComputation
   final def toggle[A](a: Signal[A, S], b: Signal[A, S])(implicit ticket: CreationTicket[S], ev: ReSerializable[Boolean]): Signal[A, S] = ticket.transaction { ict =>

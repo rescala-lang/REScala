@@ -63,7 +63,7 @@ object Events {
 
   /** Folds events with a given operation to create a Signal.
     *
-    * @see [[Event.fold]]*/
+    * @see [[rescala.reactives.Event.fold]]*/
   @cutOutOfUserComputation
   def fold[T: ReSerializable, S <: Struct](dependencies: Set[ReSource[S]], init: T)
                                           (expr: (StaticTicket[S], () => T) => T)

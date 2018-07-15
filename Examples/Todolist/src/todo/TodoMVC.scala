@@ -1,4 +1,4 @@
-package daimpl.todo
+package todo
 
 import java.util.concurrent.ThreadLocalRandom
 
@@ -13,7 +13,6 @@ import scalatags.JsDom.all._
 import scalatags.JsDom.tags2.section
 
 import scala.scalajs.js.annotation.JSExportTopLevel
-
 
 object TodoMVC {
 
@@ -30,7 +29,6 @@ object TodoMVC {
   class Task(val desc : Var[String], val done : Var[Boolean]) {
     val editing = Var(false)(ReSerializable.doNotSerialize, implicitly)
   }
-
   object Task {
     def apply(desc: String, done: Boolean) = {
       val rn = ThreadLocalRandom.current().nextLong()
@@ -38,14 +36,13 @@ object TodoMVC {
       }
   }
 
-  @JSExportTopLevel("daimpl.todo.TodoMVC.main")
+  @JSExportTopLevel("todo.TodoMVC.main")
   def main(): Unit = {
 
     val innerTasks = List(
+      Task("walk the dog", false),
       Task("get milk", false),
-      Task("get sugar", false),
-      Task("get coffee", false),
-      Task("walk the dog", false)
+      Task("get coffee", false)
     )
     val tasks = Var(innerTasks)(ReCirce.recirce, "tasklist")
 
@@ -53,17 +50,17 @@ object TodoMVC {
       id := "newtodo",
       `class` := "new-todo",
       placeholder := "What needs to be done?",
-      autofocus := "",
+      autofocus := "autofocus",
 
-      // TODO onchange --> on enter
       onchange := { e: UIEvent =>
         e.preventDefault()
-        tasks.transform(Task(newTodo.value, false) :: _)
+        if (newTodo.value.trim != "")
+          tasks.transform(Task(newTodo.value.trim, false) :: _)
         newTodo.value = ""
       }
     ).render
 
-    document.body.replaceChild(div(
+    val content = div(
       `class`:="todoapp",
       header(
         `class`:="header",
@@ -74,15 +71,22 @@ object TodoMVC {
       section(
         `class`:= "main",
         `style`:= Signal { if(tasks().isEmpty) "display:hidden" else "" },
-        input( `class`:="toggle-all", `type`:="checkbox",
-//          checked:=tasks.now.map { it => it.done.now }
-//                   .reduce {  (a, b) => a && b},
-          onclick:={ e: dom.UIEvent =>
-            println("eh?")
+        input( id:="toggle-all", name:="toggle-all", `class`:="toggle-all", `type`:="checkbox",
+          onchange:={ e: dom.UIEvent =>
             tasks.readValueOnce.foreach { it =>
-              it.done set !e.target.asInstanceOf[dom.html.Input].checked } }),
+              it.done set e.target.asInstanceOf[dom.html.Input].checked } }),
         label(`for`:="toggle-all", "Mark all as complete"),
         Signal.dynamic { ul(`class`:="todo-list", tasks().map { t =>
+
+          val change = { e: dom.UIEvent =>
+            val myinput = e.target.asInstanceOf[dom.html.Input]
+            t.desc set myinput.value.trim
+            t.editing set false
+            tasks.transform(_.filter { t => t.desc.readValueOnce != "" }) }
+
+          val myinput = input(
+            `class`:="edit", `type`:="text",
+            value:=t.desc(), onchange:=change, onblur:=change).render
 
           li(
             `class`:=
@@ -92,7 +96,9 @@ object TodoMVC {
             div(
               `class`:="view",
 
-              ondblclick:={ e: dom.UIEvent => t.editing set true },
+              ondblclick:={ e: dom.UIEvent =>
+                tasks.readValueOnce.foreach( tt => tt.editing.set(t==tt) )
+              },
 
               input( `class`:="toggle", `type`:="checkbox",
                 if (t.done()) checked else "",
@@ -108,31 +114,37 @@ object TodoMVC {
                 })
             ),
 
-            input( `class`:="edit", `type`:="text",
-              value:=t.desc(),
-              onchange:={ e: dom.UIEvent =>
-                val input = e.target.asInstanceOf[dom.html.Input]
-                t.editing set false
-                t.desc set input.value
-              }
-            )
+            myinput
           )
-
         }) }.asFrag
       ),
 
-//            onchange := { e: dom.UIEvent =>
-//              t.desc set e.target.asInstanceOf[dom.html.Input].value
-//              tasks set tasks.now.filter { (x)=> x.desc.now != "" }
-//            }
+      div(
+        `class`:="footer",
+        `style`:= Signal { if(tasks().isEmpty) "display:none" else "" },
 
-      input(
-        `type`:="button",
-        `class`:=Signal { if (tasks().size==0) "hidden" else ""},
-        value:="remove all done todos", onclick:={ e: dom.UIEvent =>
-          tasks set tasks.readValueOnce.filter { t => !t.done.readValueOnce }
-        }
+        Signal.dynamic {
+          val leftTasks = tasks().filter(!_.done())
+          span(
+            `class`:="todo-count",
+            strong("" + leftTasks.size),
+            span(if (leftTasks.size == 1)
+              " item left" else " items left")
+          )
+        }.asFrag,
+
+        button(
+          `class`:=Signal.dynamic {
+            "clear-completed" + 
+            (if (tasks().filter(t => t.done()).size==0)
+              " hidden" else "") },
+          onclick:={ e: dom.UIEvent =>
+            tasks.transform(_.filter { t => !t.done.readValueOnce }) },
+          "remove all done todos"
+        )
       )
-    ).render, document.body.firstElementChild)
+    )
+
+    document.body.replaceChild(content.render, document.body.firstElementChild)
   }
 }

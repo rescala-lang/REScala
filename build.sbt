@@ -89,14 +89,14 @@ lazy val reswing = project.in(file("Extensions/RESwing"))
   .dependsOn(rescalaJVM)
 
 lazy val restore = crossProject(JSPlatform, JVMPlatform).in(file("Extensions/restoration"))
-  .settings(name := "restoration", cfg.base, cfg.strictScalac, lib.circe, cfg.noPublish)
+  .settings(name := "rescala-restoration", cfg.base, cfg.strictScalac, lib.circe,  cfg.bintray)
   .dependsOn(rescala, tests % "test->test")
   .jsSettings(cfg.js, lib.jsdom)
 lazy val restoreJVM = restore.jvm
 lazy val restoreJS = restore.js
 
 lazy val rescalatags = project.in(file("Extensions/Rescalatags"))
-  .settings(cfg.base, cfg.strictScalac, cfg.bintray, cfg.test,
+  .settings(name := "rescalatags", cfg.base, cfg.strictScalac, cfg.bintray, cfg.test,
     cfg.js, lib.scalatags, jsDependencies += RuntimeDOM)
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(rescalaJS)

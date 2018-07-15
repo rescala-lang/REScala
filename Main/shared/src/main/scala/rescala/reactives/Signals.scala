@@ -7,7 +7,7 @@ import rescala.reactives.Signals.Sstate
 
 import scala.concurrent.{ExecutionContext, Future}
 
-/** Functions to construct signals, you probably want to use signal expressions in [[rescala.RescalaInterface.Signal]] for a nicer API. */
+/** Functions to construct signals, you probably want to use signal expressions in [[rescala.interface.RescalaInterface.Signal]] for a nicer API. */
 object Signals {
   type Sstate[T, S <: Struct] = S#State[Pulse[T], S]
 

@@ -61,8 +61,6 @@ class PaperExampleSharedCalendar extends FreeSpec {
     val selectedWeek = Signal {Week.of(selectedDay.value)}
 
     val entrySet: Signal[Set[Entry]] =
-//      if (distribute) ReplicatedSet("SharedEntries").collect(allEntries)
-//      else
       allEntries.fold(Set.empty[Entry]) { (entries, entry) => entries + entry }
 
     val selectedEntries = Signal.dynamic {

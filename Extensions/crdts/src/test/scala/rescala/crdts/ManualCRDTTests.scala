@@ -2,11 +2,10 @@ package rescala.crdts
 
 import io.circe.generic.auto._
 import loci.communicator.ws.akka.WS
-import loci.registry.{Binding, BindingBuilder, Registry}
+import loci.registry.{Binding, Registry}
 import loci.serializer.circe._
-import loci.transmitter.{Marshallable, RemoteRef, Transmittable}
+import loci.transmitter.RemoteRef
 import rescala.crdts.pvars.Publishable._
-import rescala.crdts.statecrdts.sets.ORSet
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
