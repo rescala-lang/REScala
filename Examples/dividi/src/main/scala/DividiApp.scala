@@ -1,20 +1,25 @@
-import akka.actor.{ActorRef, ActorSystem}
-import com.typesafe.config.{Config, ConfigFactory}
-import com.typesafe.scalalogging.Logger
-import rescala.default._
-import rescala.crdts.pvars._
+import java.io.IOException
 
-import scala.math.BigDecimal.RoundingMode
-import scalafx.Includes.{when, _}
-import scalafx.application.{JFXApp, Platform}
-import scalafx.beans.binding.Bindings
+import com.typesafe.scalalogging.Logger
+import io.circe.generic.auto._
+import loci.communicator.ws.akka.WS
+import loci.registry.{Binding, Registry}
+import loci.serializer.circe._
+import loci.transmitter.RemoteRef
+import rescala.crdts.pvars.PGrowOnlyLog
+import rescala.crdts.pvars.Publishable._
+import rescala.default._
+import scalafx.Includes._
+import scalafx.application.JFXApp
+import scalafx.application.JFXApp.PrimaryStage
 import scalafx.beans.property._
-import scalafx.geometry.Insets
-import scalafx.geometry.Pos.{CenterLeft, TopRight}
 import scalafx.scene.Scene
 import scalafx.scene.control._
-import scalafx.scene.layout._
-import scalafx.scene.text.Text
+import scalafxml.core.{FXMLView, NoDependencyResolver}
+
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
+import scala.math.BigDecimal.RoundingMode
 
 
 /** An example of  a BorderPane layout, with placement of children in the top,
@@ -23,45 +28,24 @@ import scalafx.scene.text.Text
   * @see scalafx.scene.layout.BorderPane
   */
 object DividiApp extends JFXApp {
-  // ask for username
-  val enterNameDialog: TextInputDialog = new TextInputDialog(defaultValue = "Alice") {
+  // display splashscreen and ask for username
+  val enterNameDialog = new TextInputDialog(defaultValue = "Alice") {
     initOwner(stage)
     title = "Dividi"
     headerText = "Welcome to Dividi!"
     contentText = "Please enter your name:"
   }
-  val username: String = enterNameDialog.showAndWait().getOrElse("")
+  val username = enterNameDialog.showAndWait().getOrElse("")
   if (username == "") System.exit(0)
 
-  val port: Int = {
-    if (username == "Alice") 2500
-    else if (username == "Bob") 2501
-    else if (username == "Charlie") 2502
-    else 2503
+  // load new gui
+  val resource = getClass.getResource("Gui.fxml")
+  if (resource == null) {
+    throw new IOException("Cannot load resource: Gui.fxml")
   }
-
-  // create an Akka system & engine
-  val config: Config = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + port).
-    withFallback(ConfigFactory.load())
-  val system = ActorSystem("ClusterSystem", config)
-
-  implicit val engine: ActorRef = system.actorOf(DistributionEngine.props(username), username)
 
   val onlineGui = BooleanProperty(true)
   val delayGui = IntegerProperty(0)
-
-  // bind gui properties to engine
-  onlineGui.onChange((_, _, newVal) => {
-    DistributionEngine.setOnline(newVal.booleanValue())
-    if (newVal.booleanValue())
-      logger.debug(s"Setting engine to online mode")
-    else
-      logger.debug(s"Setting engine to offline mode")
-  })
-  delayGui.onChange((_, _, newVal) => {
-    DistributionEngine.setDelay(newVal.longValue() * 1000)
-    logger.debug(s"Setting engine delay to ${newVal.longValue() * 1000}ms")
-  })
 
   // define event fired on submit
   type Title = String
@@ -79,12 +63,28 @@ object DividiApp extends JFXApp {
   }
 
   // instanciate shared log
-  val transactionLog: PGrowOnlyLog[Transaction] = PGrowOnlyLog[Transaction]()
-  transactionLog.publish("TransactionLog")
+  val logBinding = Binding[PGrowOnlyLog[Transaction]]("log")
+  val (registry, transactionLog): (Registry, PGrowOnlyLog[Transaction]) = {
+    val registry = new Registry
+    if (username == "Alice") { //server mode
+      registry.listen(WS(1099))
 
-  val newTransaction: rescala.Evt[Transaction] = Evt[Transaction]()
+      val newLog = PGrowOnlyLog[Transaction]()
+      registry.bind(logBinding)(newLog)
+
+      (registry, newLog)
+    }
+    else { // client mode
+      val connection: Future[RemoteRef] = registry.connect(WS("ws://localhost:1099/"))
+      val remote: RemoteRef = Await.result(connection, Duration.Inf)
+      val subscribedLog: Future[PGrowOnlyLog[Transaction]] = registry.lookup(logBinding, remote)
+      val log: PGrowOnlyLog[Transaction] = Await.result(subscribedLog, Duration.Inf)
+      (registry, log)
+    }
+  }
+
   // listen for new transactions and append them to the log
-  //newTransaction.observe(transaction => transactionLog.append(transaction))
+  val newTransaction: Evt[Transaction] = Evt[Transaction]()
   transactionLog.observe(newTransaction)
 
   // extract all people involved
@@ -98,7 +98,14 @@ object DividiApp extends JFXApp {
     transactionLog().foldLeft(Map[Payer, Amount]().withDefaultValue(0: Amount))((debts, transaction) => {
       val payer = transaction.payer
       val amount = transaction.amount
-      val share = transaction.amount / transaction.sharedBetween.size
+
+      val share = {
+        if (transaction.sharedBetween.nonEmpty)
+          transaction.amount / transaction.sharedBetween.size
+        else
+          0: Amount
+      }
+
 
       // map with updated debt for all people involved in transaction
       val updatedDebtorEntries = transaction.sharedBetween.foldLeft(debts)((map, debtor) => {
@@ -145,182 +152,12 @@ object DividiApp extends JFXApp {
     }
   }
 
-  stage = new JFXApp.PrimaryStage {
+  // render FXML
+  val root = FXMLView(resource, NoDependencyResolver)
+  stage = new PrimaryStage() {
     title = s"Dividi: $username"
-    width = 500
-    height = 600
-    resizable = true
-    scene = new Scene {
-      root = {
-        val stdToolBar = new ToolBar {
-          id = "standard"
-
-          val onlineButton: ToggleButton = new ToggleButton {
-            minWidth = 100
-            selected <==> onlineGui
-
-            text <== when(selected) choose "Online" otherwise "Offline"
-          }
-
-          val delayLabel: Label = new Label {
-            text <== Bindings.createStringBinding(
-              () =>
-                Option(delayGui.value).getOrElse(0).toString + "s"
-              , delayGui
-            )
-            alignment = TopRight
-          }
-
-          content = List(
-            onlineButton,
-            new HBox {
-              prefWidth = 135
-              alignment = CenterLeft
-              children = List(new Label("Message Delay: "),
-                delayLabel)
-            },
-            new Slider(0, 20, 0) {
-              prefWidth = 150
-              value <==> delayGui
-              majorTickUnit = 1.0
-              minorTickCount = 0
-              //blockIncrement = 1.0
-              //showTickMarks = true
-              snapToTicks = true
-            })
-        }
-
-        val debtOverviewBox = new HBox {
-          padding = Insets(20)
-
-          val debtOverview: Text {
-            val initial: Payer
-          } = new Text {
-            val initial = "You are all set!"
-            text() = initial
-            howToSettle.changed += (newTransactions => {
-              val settleTransactions = newTransactions.map(transaction => {
-                val sender = transaction._1
-                val receiver = transaction._2
-                val amount = transaction._3
-
-                if (sender == username)
-                  s"You owe $receiver $amount. Transfer it!"
-                else if (receiver == username)
-                  s"$sender owes you $amount."
-                else
-                  s"$sender owes $receiver $amount."
-              }).mkString("\n")
-
-              if (settleTransactions.isEmpty)
-                this.text() = initial
-              else
-                this.text() = settleTransactions
-            })
-          }
-          debtOverview.setStyle("-fx-font-weight: bold")
-          children = debtOverview
-        }
-
-        val logOutput = new TextArea {
-          editable = false
-          text = ""
-          vgrow = Priority.Always
-          //textAlignment = TextAlignment.Justify
-
-          // bind output to log changes
-          transactionLog.changed += (l => this.text() = l.mkString("\n"))
-        }
-
-        //peopleSelectionBox.setStyle("-fx-padding: 0 0 0 20;")
-
-        val transactionPane = new TitledPane {
-          text = "New Transaction"
-          animated = true
-          expanded = true
-
-          val purpose: TextField = new TextField {
-            promptText = "Enter Title..."
-            newTransaction.observe(_ => this.text = "")
-          }
-          val amount: TextField = new TextField {
-            promptText = "Enter Amount..."
-            newTransaction.observe(_ => this.text = "")
-          }
-
-          object peopleSelectionBox extends VBox {
-            spacing = 10
-            val checkboxes: Signal[Seq[CheckBox]] = Signal {
-              val l = peopleInvolved().toList.sorted
-              logger.debug("updating checkboxes")
-              l.map(person => new CheckBox {
-                text = person.toString
-                selected = false
-                newTransaction.observe(_ => this.selected = false)
-              })
-            }
-            checkboxes.changed += (boxes => Platform.runLater {
-              this.children = boxes
-            })
-            children = checkboxes.now
-          }
-
-          val peopleInput: TextField = new TextField {
-            promptText = "new Person"
-            maxWidth = 135
-            newTransaction.observe(_ => this.text = "")
-          }
-
-          val submitButton: Button = new Button {
-            text = "Submit"
-            defaultButton = true
-            maxWidth = 100
-            maxHeight = 100
-          }
-
-          // add submit action
-          submitButton.onAction = _ => {
-            // transactionPane.expanded = false
-            var peopleInvolved = peopleSelectionBox.checkboxes.now.filter(_.selected() == true).map(_.text()).toSet
-            if (peopleInput.text() != "") peopleInvolved += peopleInput.text()
-            val purposeText = purpose.text()
-            val amountDecimal = BigDecimal(amount.text().toString).setScale(2, RoundingMode.CEILING)
-            val payer = username
-            val timestamp = System.currentTimeMillis
-            // Transaction(title: Title, amount: Amount, payer: Payer, sharedBetween: Set[Payer], timestamp: Timestamp)
-            newTransaction.fire(Transaction(purposeText, amountDecimal, payer, peopleInvolved, timestamp))
-          }
-
-          content = new VBox {
-            padding = Insets(20)
-            spacing = 10
-            children = List(
-              new HBox(spacing = 10, purpose, amount),
-              new Label("People involved:"),
-              peopleSelectionBox,
-              peopleInput,
-              submitButton)
-          }
-        }
-
-        val accordion = new Accordion {
-          maxHeight = 150
-          expandedPane = transactionPane
-          panes = List(transactionPane)
-        }
-
-        new BorderPane {
-          //maxWidth = 400
-          //maxHeight = 300
-          padding = Insets(0)
-          // top = topRectangle
-          center = new VBox(debtOverviewBox, logOutput)
-          bottom = accordion
-          top = stdToolBar
-        }
-      }
-    }
-
+    scene = new Scene(root)
   }
-  stage.onCloseRequest = _ => system.terminate()
+
+  stage.onCloseRequest = _ => registry.terminate() // terminate registry on window close
 }
