@@ -3,12 +3,25 @@ package rescala.crdts.statecrdts
 import java.net.InetAddress
 
 trait StateCRDT[A, F] {
-
   /** the public state of the CRDT */
   def value(target: F): A
 
   /** Merge this instance with another CRDT instance and return the resulting CRDT. */
   def merge(left: F, right: F): F
+
+  /** Allows the creation of new CRDTs by passing an initial value.
+    *
+    * @param value the value
+    * @return new CRDT instance representing the value
+    */
+  def fromValue(value: A): F
+
+  /** Allows the creation of new CRDTs by passing a payload.
+    *
+    * @param payload the payload
+    * @return new CRDT instance with the given payload
+    */
+  def fromPayload[P](payload: P): F
 }
 
 object StateCRDT {
