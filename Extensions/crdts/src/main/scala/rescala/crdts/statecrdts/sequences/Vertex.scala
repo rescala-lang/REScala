@@ -1,31 +1,52 @@
 package rescala.crdts.statecrdts
 package sequences
 
+import io.circe._
 import rescala.crdts.statecrdts.sequences.Vertex.Timestamp
 
-sealed trait Vertex {
-  val timestamp: Timestamp
-}
-
-case object startVertex extends Vertex {
-  override val timestamp: Timestamp = -1
-}
-case object endVertex extends Vertex {
-  override val timestamp: Timestamp = 0
-}
-
-case class ValueVertex[+A](value: A, timestamp: Timestamp) extends Vertex {
-  override def toString: String = s"$value{$timestamp}"
+case class Vertex[+A](value: Option[A], timestamp: Timestamp) {
+  override def toString: String = value match {
+    case Some(a) => s"$a{$timestamp}"
+    case _ => s"None{$timestamp}"
+  }
 }
 
 object Vertex {
   type Timestamp = Long
 
-  def start: startVertex.type = startVertex
-  def end: endVertex.type = endVertex
+  def start[A]: Vertex[A] = new Vertex(None, -1) {
+    override def toString = "start"
+  }
 
-  def apply[A](value: A): ValueVertex[A] = new ValueVertex(value, genTimestamp)
+  def end[A]: Vertex[A] = new Vertex(None, 0) {
+    override def toString = "end"
+  }
+
+  def apply[A](value: A): Vertex[A] = new Vertex[A](Some(value), genTimestamp)
 
   def genTimestamp: Timestamp = System.currentTimeMillis
-}
 
+  //noinspection ConvertExpressionToSAM
+  implicit def vertexKeyEncoder[A]: KeyEncoder[Vertex[A]] = {
+    new KeyEncoder[Vertex[A]] {
+      override def apply(vertex: Vertex[A]): String = vertex.toString
+    }
+  }
+
+  //noinspection ConvertExpressionToSAM
+  implicit def vertexKeyDecoder[A]: KeyDecoder[Vertex[A]] = {
+    new KeyDecoder[Vertex[A]] {
+      override def apply(key: String): Option[Vertex[A]] = {
+        val a: Array[String] = key.split("\\{|\\}")
+        println(a.toList)
+        a(0) match {
+          case "start" => Some(Vertex.start[A])
+          case "end" => Some(Vertex.end[A])
+          case _ => Some(Vertex[A]
+            (Some(a(0).asInstanceOf[A]), a(1).toLong))
+        }
+      }
+    }
+  }
+
+}
