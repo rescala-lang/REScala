@@ -108,7 +108,7 @@ lazy val datastructures = project.in(file("Extensions/Datastructures"))
 
 lazy val crdts = project.in(file("Extensions/crdts"))
   .dependsOn(rescalaJVM)
-  .settings(name := "recrdt", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.akka, lib.scalaLogback, cfg.strictScalac,
+  .settings(name := "recrdt", cfg.base, cfg.mappingFilters, lib.akka, lib.scalaLogback, cfg.strictScalac,
     lib.retierTransmitter, lib.circe)
 
 lazy val rescalafx = project.in(file("Extensions/javafx"))
