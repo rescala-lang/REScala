@@ -14,7 +14,7 @@ import scala.collection.mutable.ArrayBuffer
 trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[S] with LevelQueue.Evaluator[S] {
   private val _propagating: ArrayBuffer[ReSource[S]] = ArrayBuffer[ReSource[S]]()
 
-  val levelQueue = new LevelQueue[S](this)(this)
+  val levelQueue = new LevelQueue[S](this)
 
   override def clear(): Unit = {
     super.clear()

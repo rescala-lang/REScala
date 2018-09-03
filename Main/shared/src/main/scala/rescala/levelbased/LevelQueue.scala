@@ -8,10 +8,9 @@ import rescala.levelbased.LevelQueue.QueueElement
 /**
   * Level-based queue used the determine an evaluation order for reactive elements
   *
-  * @param currentTurn Turn of the evaluation
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
-final private[levelbased] class LevelQueue[S <: LevelStruct](evaluator: LevelQueue.Evaluator[S])(currentTurn: LevelBasedPropagation[S]) {
+final private[levelbased] class LevelQueue[S <: LevelStruct](evaluator: LevelQueue.Evaluator[S]) {
 
   private val elements = new PriorityQueue[QueueElement[S]]()
 
