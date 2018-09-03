@@ -323,11 +323,13 @@ lazy val cfg = new {
 
 lazy val lib = new {
 
+  val scalaxmlVersion = "1.1.0"
+
   lazy val rss = libraryDependencies ++= Seq(
-    "joda-time" % "joda-time" % "2.9.9",
-    "org.joda" % "joda-convert" % "2.0.1",
+    "joda-time" % "joda-time" % "2.10",
+    "org.joda" % "joda-convert" % "2.1.1",
     "org.codehaus.jsr166-mirror" % "jsr166y" % "1.7.0",
-    "org.scala-lang.modules" %% "scala-xml" % "1.1.0")
+    "org.scala-lang.modules" %% "scala-xml" % scalaxmlVersion)
 
   lazy val scalaswing = libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "2.0.3"
   lazy val scalatest = libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.5" % "test"
@@ -355,14 +357,14 @@ lazy val lib = new {
 
   val sourcecode = libraryDependencies += "com.lihaoyi" %%% "sourcecode" % "0.1.4"
 
-  val scalaXml = libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.0.6"
+  val scalaXml = libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % scalaxmlVersion
 
   val scalatags = libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.6.7"
 
   val jsdom = libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "0.9.6"
 
   val akka = {
-    val akkaVersion = "2.5.12"
+    val akkaVersion = "2.5.16"
     // akka:
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
@@ -396,7 +398,7 @@ lazy val lib = new {
     "scala-loci-serializer-circe",
     ).map(n => "de.tuda.stg" %% n % "0.2.0"),
     libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-http" % "10.1.1",
+      "com.typesafe.akka" %% "akka-http" % "10.1.4",
       "com.typesafe.akka" %% "akka-stream" % "2.5.11"
     ),
     resolvers += Resolver.bintrayRepo("stg-tud", "maven"))
