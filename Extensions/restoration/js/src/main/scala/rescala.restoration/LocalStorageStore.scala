@@ -3,6 +3,7 @@ package rescala.restoration
 import org.scalajs.dom
 import org.scalajs.dom.Storage
 import rescala.core.{REName, Scheduler}
+import rescala.debuggable.ChromeDebuggerInterface
 import rescala.interface.RescalaInterfaceRequireSerializer
 
 class LocalStorageStore()
@@ -26,5 +27,5 @@ class LocalStorageStore()
   }
 
   override def schedulerName: String = s"LocalStorage"
-  override protected def makeTurn(priorTurn: Option[ReStoringTurn]): ReStoringTurn = new ReStoringTurn(this)
+  override protected def makeTurn(priorTurn: Option[ReStoringTurn]): ReStoringTurn = new ReStoringTurn(this, ChromeDebuggerInterface)
 }

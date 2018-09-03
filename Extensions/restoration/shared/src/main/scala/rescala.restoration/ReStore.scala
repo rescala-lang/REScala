@@ -1,7 +1,8 @@
 package rescala.restoration
 
 import rescala.core.Initializer.InitValues
-import rescala.core.{CreationTicket, Initializer, REName, ReSerializable, ReSource, Scheduler, Struct}
+import rescala.core.{CreationTicket, Initializer, REName, ReSerializable, ReSource, Reactive, Scheduler, Struct}
+import rescala.debuggable.{DebuggerInterface, DisableDebugging, NodeID}
 import rescala.interface.RescalaInterfaceRequireSerializer
 import rescala.levelbased.{LevelBasedPropagation, LevelStateImpl, LevelStruct}
 import rescala.twoversion.TwoVersionScheduler
@@ -14,28 +15,34 @@ object RestoringInterface {
 }
 
 
-class ReStoringTurn(restore: ReStore) extends LevelBasedPropagation[ReStoringStruct] {
+class ReStoringTurn(restore: ReStore, debuggerInterface: DebuggerInterface = DisableDebugging)
+  extends LevelBasedPropagation[ReStoringStruct] {
 
   override protected def makeDerivedStructState[P](valuePersistency: InitValues[P],
                                                    creationTicket: CreationTicket[ReStoringStruct])
   : ReStoringState[P, ReStoringStruct] = {
+
+    val nodeID = restore.deriveName(creationTicket.rename)
+
+
     valuePersistency match {
       case is@Initializer.InitializedSignal(init) if is.serializable != rescala.core.ReSerializable.doNotSerialize =>
         if (is.serializable == rescala.core.ReSerializable.noSerializer)
           throw new Exception(s"restore requires serializable reactive: $valuePersistency")
-        val name = restore.deriveName(creationTicket.rename)
-        restore.get(name) match {
+        debuggerInterface.saveNode(NodeID(nodeID.name), creationTicket.rename.name, init.toString)
+        restore.get(nodeID) match {
           case None =>
             //println(s"new struct $name")
-            restore.put(name, is.serializable.serialize(valuePersistency.initialValue))
-            new ReStoringState[P, ReStoringStruct](restore, name, is.serializable, is)
+            restore.put(nodeID, is.serializable.serialize(valuePersistency.initialValue))
+            new ReStoringState[P, ReStoringStruct](restore, nodeID, is.serializable, is)
           case Some(v) =>
             //println(s"old struct $name $s")
             val restoredValue = Initializer.InitializedSignal(is.serializable.deserialize(v).get)(is.serializable)
-            new ReStoringState[P, ReStoringStruct](restore, name, is.serializable, restoredValue)
+            new ReStoringState[P, ReStoringStruct](restore, nodeID, is.serializable, restoredValue)
         }
       case _ =>
-        new ReStoringState(null, null, null, valuePersistency)
+        debuggerInterface.saveNode(NodeID(nodeID.name), creationTicket.rename.name, "")
+        new ReStoringState(null, nodeID, null, valuePersistency)
     }
   }
 
@@ -43,18 +50,31 @@ class ReStoringTurn(restore: ReStore) extends LevelBasedPropagation[ReStoringStr
   override def releasePhase(): Unit = ()
   override def preparationPhase(initialWrites: Set[ReSource[ReStoringStruct]]): Unit = ()
 
+  // for debugging
+  override def writeState(pulsing: ReSource[ReStoringStruct])
+                         (value: pulsing.Value)
+  : Unit = {
+    debuggerInterface.saveNode(NodeID(pulsing.state.nodeID.name), pulsing.toString, value.toString)
+    super.writeState(pulsing)(value)
+  }
 
+  override private[rescala] def discover(node: ReSource[ReStoringStruct],
+                                         addOutgoing: Reactive[ReStoringStruct])
+  : Unit = {
+    debuggerInterface.saveEdge(NodeID(node.state.nodeID.name), NodeID(addOutgoing.state.nodeID.name))
+    super.discover(node, addOutgoing)
+  }
 }
 
 class ReStoringState[P, S <: Struct](storage: ReStore,
-                                     val name: REName,
+                                     val nodeID: REName,
                                      serializable: ReSerializable[P],
                                      initialVal: InitValues[P])
   extends LevelStateImpl[P, S](initialVal) {
   override def commit(): Unit = {
     super.commit()
     if (storage != null) {
-      storage.put(name, serializable.serialize(current))
+      storage.put(nodeID, serializable.serialize(current))
     }
   }
 }
@@ -68,7 +88,7 @@ trait ReStore {
   def deriveName(name: REName): REName
   def put(key: REName, value: String): Unit
   def get(key: REName): Option[String]
-  def getName(r: ReSource[ReStoringStruct]) = r.state.name
+  def getName(r: ReSource[ReStoringStruct]) = r.state.nodeID
 }
 
 trait ReStoreImpl extends ReStore with TwoVersionScheduler[ReStoringStruct, ReStoringTurn] {

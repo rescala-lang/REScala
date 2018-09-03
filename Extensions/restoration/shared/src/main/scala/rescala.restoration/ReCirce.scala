@@ -22,10 +22,10 @@ object ReCirce {
     io.circe.Decoder.decodeString.map(n => Var.empty[A, ReStoringStruct](reSerializable, n))
 
   implicit def varEncoder[A]: io.circe.Encoder[Var[A, ReStoringStruct]] =
-    io.circe.Encoder.encodeString.contramap{ t => t.state.name.name }
+    io.circe.Encoder.encodeString.contramap{ t => t.state.nodeID.name }
 
   implicit def signalEncoder[A]: io.circe.Encoder[Signal[A, ReStoringStruct]] =
-    io.circe.Encoder.encodeString.contramap{ t => t.state.name.name }
+    io.circe.Encoder.encodeString.contramap{ t => t.state.nodeID.name }
 
   def pulseEncoder[T: Encoder](): Encoder[Pulse[T]] = io.circe.Encoder.encodeOption[T].contramap(_.toOption)
   def pulseDecoder[T: Decoder](): Decoder[Pulse[T]] = io.circe.Decoder.decodeOption[T].map(Pulse.fromOption)
