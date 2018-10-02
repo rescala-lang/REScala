@@ -27,7 +27,9 @@ object SimpleCreation extends Initializer[SimpleStruct] {
   override protected[this] def makeDerivedStructState[V](ip: InitValues[V], creationTicket: CreationTicket[SimpleStruct])
   : SimpleState[V] = new SimpleState[V](ip)
 
-  override protected[this] def ignite(reactive: Reactive[SimpleStruct], incoming: Set[ReSource[SimpleStruct]], ignitionRequiresReevaluation: Boolean): Unit = {
+  override protected[this] def ignite(reactive: Reactive[SimpleStruct],
+                                      incoming: Set[ReSource[SimpleStruct]],
+                                      ignitionRequiresReevaluation: Boolean): Unit = {
 
     incoming.foreach { dep =>
       dep.state.outgoing += reactive
