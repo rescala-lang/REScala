@@ -1,6 +1,6 @@
 package rescala.twoversion
 
-import rescala.core.{AdmissionTicket, Initializer, ReSource, SchedulerImpl}
+import rescala.core.{AdmissionTicket, Initializer, ReSource, DynamicInitializerLookup}
 import rescala.reactives.Signal
 
 /**
@@ -9,7 +9,7 @@ import rescala.reactives.Signal
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   * @tparam TImpl Turn type used by the engine
   */
-trait TwoVersionScheduler[S <: TwoVersionStruct, TImpl <: TwoVersionPropagation[S] with Initializer[S]] extends SchedulerImpl[S, TImpl] {
+trait TwoVersionScheduler[S <: TwoVersionStruct, TImpl <: TwoVersionPropagation[S] with Initializer[S]] extends DynamicInitializerLookup[S, TImpl] {
   override private[rescala] def singleReadValueOnce[A](reactive: Signal[A, S]) = reactive.interpret(reactive.state.base(null))
 
   /** goes through the whole turn lifecycle
@@ -34,7 +34,7 @@ trait TwoVersionScheduler[S <: TwoVersionStruct, TImpl <: TwoVersionPropagation[
 
     val result = try {
       turn.preparationPhase(initialWrites)
-      val result = withTurn(turn) {
+      val result = withDynamicInitializer(turn) {
         val admissionTicket = turn.makeAdmissionPhaseTicket(initialWrites)
         val admissionResult = admissionPhase(admissionTicket)
         turn.initializationPhase(admissionTicket.initialChanges)
