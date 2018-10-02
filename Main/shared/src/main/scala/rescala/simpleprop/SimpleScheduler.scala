@@ -16,11 +16,15 @@ class SimpleState[V](ip: InitValues[V]) {
   var outgoing: Set[Reactive[SimpleStruct]] = Set.empty
   var discovered = false
   var dirty = false
+  var done = false
   def reset(): Unit = {
     discovered = false
     dirty = false
+    done = false
     value = ip.unchange.unchange(value)
   }
+
+  override def toString: String = s"State(outgoing = $outgoing, discovered = $discovered, dirty = $dirty, done = $done)"
 }
 
 object SimpleCreation extends Initializer[SimpleStruct] {
@@ -29,14 +33,15 @@ object SimpleCreation extends Initializer[SimpleStruct] {
 
   override protected[this] def ignite(reactive: Reactive[SimpleStruct],
                                       incoming: Set[ReSource[SimpleStruct]],
-                                      ignitionRequiresReevaluation: Boolean): Unit = {
-
+                                      ignitionRequiresReevaluation: Boolean)
+  : Unit = {
     incoming.foreach { dep =>
       dep.state.outgoing += reactive
     }
 
     if (ignitionRequiresReevaluation) {
       Util.evaluate(reactive, incoming)
+      reactive.state.reset()
     }
   }
 
@@ -50,6 +55,7 @@ object SimpleScheduler extends Scheduler[SimpleStruct] with Aliases[SimpleStruct
   override def executeTurn[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R): R = synchronized {
     val initial: ArrayBuffer[Reactive] = ArrayBuffer[Reactive]()
     val sorted: ArrayBuffer[Reactive] = ArrayBuffer[Reactive]()
+
     // admission
     val admissionTicket = new AdmissionTicket(SimpleCreation, initialWrites) {
       override def access[A](reactive: Signal[A]): reactive.Value = reactive.state.value
@@ -58,18 +64,48 @@ object SimpleScheduler extends Scheduler[SimpleStruct] with Aliases[SimpleStruct
     val sources = admissionTicket.initialChanges.values.collect {
       case iv if iv.writeValue(iv.source.state.value, iv.source.state.value = _) => iv.source
     }.toSeq
-    sources.foreach(_.state.outgoing.foreach(initial += _))
-    initial.foreach(_.state.dirty = true)
+    sources.foreach{ s =>
+      s.state.dirty = true
+      s.state.done = true
+      s.state.outgoing.foreach { r =>
+        r.state.dirty = true
+        initial += r
+      }
+    }
 
     // propagation
-    Util.toposort(initial, sorted)
-    initial.clear()
-    sorted.reverseIterator.foreach(r => if (r.state.dirty) Util.evaluate(r, Set.empty))
+    @scala.annotation.tailrec
+    def propagation(): Unit = {
+      Util.toposort(initial, sorted)
+      println(s"sort order determinded to be $sorted")
+      val propagationIterator = sorted.reverseIterator
+      // first one where evaluation detects glitch
+      val glitched = propagationIterator.find { r =>
+        println(s"looking at $r with ${r.state}")
+        if (r.state.done) false
+        else if (r.state.dirty) {
+          println(s"evaluating $r")
+          Util.evaluate(r, Set.empty)
+        }
+        else false
+      }
+      glitched match {
+        case None =>
+        case Some(reactive) =>
+          initial.foreach(_.state.discovered = false)
+          sorted.foreach(_.state.discovered = false)
+          sorted.clear()
+          propagation()
+      }
+    }
+    propagation()
 
     //cleanup
+    initial.foreach(_.state.reset)
     sources.foreach(_.state.reset)
     sorted.foreach(_.state.reset)
 
+    initial.clear()
     sorted.clear()
 
 
@@ -98,15 +134,29 @@ object Util {
     rem.foreach(_toposort)
   }
 
-  def evaluate(reactive: Reactive[SimpleStruct], incoming: Set[ReSource[SimpleStruct]]): Unit = {
+  def evaluate(reactive: Reactive[SimpleStruct], incoming: Set[ReSource[SimpleStruct]]): Boolean = {
+    var potentialGlitch = false
     val dt = new ReevTicket[reactive.Value, SimpleStruct](SimpleCreation, reactive.state.value) {
-      override def dynamicAccess(reactive: ReSource[SimpleStruct]) = ???
-      override def staticAccess(reactive: ReSource[SimpleStruct]): reactive.Value = reactive.state.value
+      override def dynamicAccess(input: ReSource[SimpleStruct]): input.Value = {
+        if (input.state.discovered && !input.state.done)
+          potentialGlitch = true
+        input.state.value
+      }
+      override def staticAccess(input: ReSource[SimpleStruct]): input.Value = input.state.value
     }
     val reev = reactive.reevaluate(dt)
-    if (reev.propagate) reactive.state.outgoing.foreach(_.state.dirty = true)
-    if (reev.getDependencies().isDefined) ???
-    reev.forValue(reactive.state.value = _)
-    reev.forEffect(_ ())
+    reev.getDependencies().foreach {
+      _.foreach { input =>
+        input.state.outgoing = input.state.outgoing + reactive
+      }
+    }
+
+    if (potentialGlitch) true else {
+      if (reev.propagate) reactive.state.outgoing.foreach(_.state.dirty = true)
+      reev.forValue(reactive.state.value = _)
+      reev.forEffect(_ ())
+      reactive.state.done = true
+      false
+    }
   }
 }

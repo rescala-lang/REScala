@@ -200,14 +200,14 @@ class TrueDynamicSignals extends RETests { multiEngined { engine => import engin
     assert(s.readValueOnce == 1)
 
     condition.set(false)
-    assert(reevaluations == 3)
     assert(s.readValueOnce == 11)
+    assert(reevaluations == 3)
     ifFalse.set(12)
-    assert(reevaluations == 4)
     assert(s.readValueOnce == 12)
+    assert(reevaluations == 4)
     ifTrue.set(2) // No effect
-    assert(reevaluations == 4)
     assert(s.readValueOnce == 12)
+    assert(reevaluations == 4)
   }
 
 
