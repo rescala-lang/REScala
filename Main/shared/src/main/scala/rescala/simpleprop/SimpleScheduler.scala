@@ -45,44 +45,39 @@ object SimpleScheduler extends Scheduler[SimpleStruct] with Aliases[SimpleStruct
 
   override def schedulerName: String = "Simple"
 
-  var idle = true
-  override def executeTurn[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R) = synchronized {
-    require(idle, "simple scheduler is not reentrant")
-    idle = false
-    try {
-      val initial: ArrayBuffer[Reactive] = ArrayBuffer[Reactive]()
-      val sorted: ArrayBuffer[Reactive] = ArrayBuffer[Reactive]()
-      // admission
-      val admissionTicket = new AdmissionTicket(SimpleCreation, initialWrites) {
-        override def access[A](reactive: Signal[A]): reactive.Value = reactive.state.value
-      }
-      val admissionResult = admissionPhase(admissionTicket)
-      val sources = admissionTicket.initialChanges.values.collect {
-        case iv if iv.writeValue(iv.source.state.value, iv.source.state.value = _) => iv.source
-      }.toSeq
-      sources.foreach(_.state.outgoing.foreach(initial += _))
-      initial.foreach(_.state.dirty = true)
+  override def executeTurn[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R): R = synchronized {
+    val initial: ArrayBuffer[Reactive] = ArrayBuffer[Reactive]()
+    val sorted: ArrayBuffer[Reactive] = ArrayBuffer[Reactive]()
+    // admission
+    val admissionTicket = new AdmissionTicket(SimpleCreation, initialWrites) {
+      override def access[A](reactive: Signal[A]): reactive.Value = reactive.state.value
+    }
+    val admissionResult = admissionPhase(admissionTicket)
+    val sources = admissionTicket.initialChanges.values.collect {
+      case iv if iv.writeValue(iv.source.state.value, iv.source.state.value = _) => iv.source
+    }.toSeq
+    sources.foreach(_.state.outgoing.foreach(initial += _))
+    initial.foreach(_.state.dirty = true)
 
-      // propagation
-      Util.toposort(initial, sorted)
-      initial.clear()
-      sorted.reverseIterator.foreach(r => if (r.state.dirty) Util.evaluate(r, Set.empty))
+    // propagation
+    Util.toposort(initial, sorted)
+    initial.clear()
+    sorted.reverseIterator.foreach(r => if (r.state.dirty) Util.evaluate(r, Set.empty))
 
-      //cleanup
-      sources.foreach(_.state.reset)
-      sorted.foreach(_.state.reset)
+    //cleanup
+    sources.foreach(_.state.reset)
+    sorted.foreach(_.state.reset)
 
-      sorted.clear()
+    sorted.clear()
 
 
-      //wrapup
-      if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(new WrapUpTicket {
-        override private[rescala] def access(reactive: ReSource): reactive.Value = reactive.state.value
-      })
-      admissionResult
-    } finally idle = true
+    //wrapup
+    if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(new WrapUpTicket {
+      override private[rescala] def access(reactive: ReSource): reactive.Value = reactive.state.value
+    })
+    admissionResult
   }
-  override private[rescala] def singleReadValueOnce[A](reactive: Signal[A]) = reactive.interpret(reactive.state.value)
+  override private[rescala] def singleReadValueOnce[A](reactive: Signal[A]): A = reactive.interpret(reactive.state.value)
   override private[rescala] def creationDynamicLookup[T](f: Creation => T) = f(SimpleCreation)
 }
 
