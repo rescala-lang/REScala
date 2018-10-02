@@ -2,8 +2,8 @@ package rescala.interface
 
 import rescala.core.{ReSerializable, Scheduler, Struct}
 import rescala.macros.MacroTags.{Dynamic, Static}
-import rescala.reactives.Source
 import rescala.reactives
+import rescala.reactives.Source
 
 import scala.language.{existentials, implicitConversions}
 
@@ -48,7 +48,7 @@ trait RescalaInterfaceRequireSerializer[S <: Struct] extends Aliases[S] {
   implicit def implicitScheduler: rescala.core.Scheduler[S] = scheduler
 
   /** @group create */
-  final def Evt[A](): Evt[A] = reactives.Evt[A, S]()(scheduler)
+  final def Evt[A]()(implicit ticket: CreationTicket): Evt[A] = reactives.Evt[A, S]()(ticket)
 
   //  final def Var[A](v: A): Var[A] = reactives.Var[A, S](v)(Ticket.fromEngineImplicit(this))
   //  final def Var[A](): Var[A] = reactives.Var[A, S]()(Ticket.fromEngineImplicit(this))

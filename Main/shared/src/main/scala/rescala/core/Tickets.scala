@@ -120,9 +120,9 @@ abstract class WrapUpTicket[S <: Struct] {
 final case class CreationTicket[S <: Struct](self: Either[Initializer[S], Scheduler[S]], rename: REName) {
 
   private[rescala] def create[V, T <: Reactive[S]](incoming: Set[ReSource[S]],
-                                                         initv: InitValues[V],
-                                                         inite: Boolean)
-                                                        (instantiateReactive: S#State[V, S] => T): T = {
+                                                   initv   : InitValues[V],
+                                                   inite   : Boolean)
+                                                  (instantiateReactive: S#State[V, S] => T): T = {
     transaction(_.create(incoming, initv, inite, this)(instantiateReactive))
   }
   private[rescala] def createSource[V, T <: ReSource[S]]

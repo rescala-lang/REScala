@@ -7,7 +7,7 @@ abstract class Source[S <: Struct, T](name: REName) extends ReSource[S] {
 
   final def admit(value: T)(implicit ticket: AdmissionTicket[S]): Unit = admitPulse(Pulse.Value(value))
   def admitPulse(pulse: Pulse[T])(implicit ticket: AdmissionTicket[S]): Unit
-  override def toString: String = name.name
+  override def toString: String = s"${name.name}($state)"
 }
 
 /** Source events with imperative occurrences
