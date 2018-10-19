@@ -4,8 +4,9 @@ import rescala.crdts.statecrdts.StateCRDT
 import rescala.crdts.statecrdts.sets.RemovableCRDTSet
 
 trait RemovableCRDTSequence[A] extends CRDTSequence[A] {
-  def vertices: RemovableCRDTSet[Vertex[A]]
+  def vertices: RemovableCRDTSet[ValueVertex[A]]
 
-  def remove(v: Vertex[A])(implicit stateCRDT: StateCRDT[List[A], RemovableCRDTSequence[A]]): RemovableCRDTSequence[A] =
+  def remove(v: ValueVertex[A])(implicit
+                                stateCRDT: StateCRDT[valueType, selfType]): selfType =
     stateCRDT.fromPayload((vertices.remove(v), edges))
 }

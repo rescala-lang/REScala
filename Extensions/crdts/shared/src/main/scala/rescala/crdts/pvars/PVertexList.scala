@@ -2,7 +2,7 @@ package rescala.crdts.pvars
 
 import rescala.crdts.pvars.Publishable.PVarFactory
 import rescala.crdts.statecrdts.StateCRDT
-import rescala.crdts.statecrdts.sequences.{RGA, Vertex}
+import rescala.crdts.statecrdts.sequences.{RGA, ValueVertex, Vertex}
 import rescala.default._
 
 /**
@@ -29,9 +29,9 @@ case class PVertexList[A](initial: RGA[A] = RGA.empty[A],
     * @param position the vertex left of the new vertex
     * @param vertex   the vertex to be inserted
     */
-  def addRight(position: Vertex[A], vertex: Vertex[A]): Unit = internalChanges.fire(crdtSignal.readValueOnce.addRight(position, vertex))
+  def addRight(position: Vertex[A], vertex: ValueVertex[A]): Unit = internalChanges.fire(crdtSignal.readValueOnce.addRight(position, vertex))
 
-  def append(vertex: Vertex[A]): Unit = internalChanges.fire(crdtSignal.readValueOnce.append(vertex))
+  def append(vertex: ValueVertex[A]): Unit = internalChanges.fire(crdtSignal.readValueOnce.append(vertex))
 
   def successor(v: Vertex[A]): Vertex[A] = crdtSignal.readValueOnce.successor(v)
 

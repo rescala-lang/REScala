@@ -1,6 +1,5 @@
 package rescala.crdts.statecrdts.sequences
 
-import com.typesafe.scalalogging.Logger
 import rescala.crdts.statecrdts.StateCRDT
 import rescala.crdts.statecrdts.sets.TwoPSet
 
@@ -13,14 +12,13 @@ import scala.collection.immutable.HashMap
   *                between vertices.
   * @tparam A The type of the elements stored in this array
   */
-case class RGA[A](payload: (TwoPSet[Vertex[A]], HashMap[Vertex[A], Vertex[A]])) extends RemovableCRDTSequence[A] {
+case class RGA[A](payload: (TwoPSet[ValueVertex[A]], HashMap[Vertex[A], Vertex[A]])) extends RemovableCRDTSequence[A] {
   override type selfType = RGA[A]
-  override type payloadType = (TwoPSet[Vertex[A]], HashMap[Vertex[A], Vertex[A]])
+  override type payloadType = (TwoPSet[ValueVertex[A]], HashMap[Vertex[A], Vertex[A]])
 
-  val (vertices, edges): (TwoPSet[Vertex[A]], HashMap[Vertex[A], Vertex[A]]) = payload
-  val logger: Logger = Logger[RGA[A]]
+  val (vertices, edges): (TwoPSet[ValueVertex[A]], HashMap[Vertex[A], Vertex[A]]) = payload
 
-  override def fromPayload(payload: (TwoPSet[Vertex[A]], HashMap[Vertex[A], Vertex[A]])): RGA[A] = RGA[A](payload)
+  override def fromPayload(payload: (TwoPSet[ValueVertex[A]], HashMap[Vertex[A], Vertex[A]])): RGA[A] = RGA[A](payload)
 }
 
 
@@ -29,14 +27,14 @@ object RGA {
 
   def apply[A](): RGA[A] = empty
 
-  def empty[A]: RGA[A] = new RGA[A]((TwoPSet[Vertex[A]](), HashMap(Vertex.start -> Vertex.end)))
+  def empty[A]: RGA[A] = new RGA[A]((TwoPSet[ValueVertex[A]](), HashMap(startVertex -> endVertex)))
 
   implicit def RGA2CRDTInstance[A]: StateCRDT[List[A], RGA[A]] =
     new StateCRDT[List[A], RGA[A]] {
       override def value(target: RGA[A]): List[A] = target.value
 
       override def merge(left: RGA[A], r: RGA[A]): RGA[A] = {
-        val newVertices = r.vertexIterator.toList.filter(!left.vertices.contains(_))
+        val newVertices = r.vertexIterator.toList.filter(!left.edges.contains(_))
 
         left.logger.debug(s"Merging $r into $left")
         left.logger.debug(s"found new vertices: $newVertices")
@@ -61,11 +59,11 @@ object RGA {
 
       def fromValue(value: List[A]): RGA[A] = {
         val emptyPayload: (TwoPSet[Vertex[A]], HashMap[Vertex[A], Vertex[A]]) =
-          (TwoPSet[Vertex[A]](), HashMap[Vertex[A], Vertex[A]](Vertex.start -> Vertex.end))
+          (TwoPSet[Vertex[A]](), HashMap[Vertex[A], Vertex[A]](startVertex -> endVertex))
         val newRGA: RGA[A] = fromPayload(emptyPayload)
 
         value.reverse.foldLeft(newRGA) {
-          case (r: RGA[A], a) => r.addRight(Vertex.start, a)
+          case (r: RGA[A], a) => r.addRight(startVertex, a)
         }
       }
 
@@ -76,7 +74,7 @@ object RGA {
         * @return new CRDT instance with the given payload
         */
       override def fromPayload[P](payload: P): RGA[A] = RGA(payload
-        .asInstanceOf[(TwoPSet[Vertex[A]], HashMap[Vertex[A], Vertex[A]])])
+        .asInstanceOf[(TwoPSet[ValueVertex[A]], HashMap[Vertex[A], Vertex[A]])])
     }
 }
 

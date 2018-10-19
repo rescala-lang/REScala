@@ -19,22 +19,38 @@ import rescala.crdts.statecrdts.StateCRDT
 object testSignalExpressions {
   def main(args: Array[String]): Unit = {
 
+    type Title = String
+    type Amount = BigDecimal
+    type Payer = String
+    type Timestamp = Long
 
-    //var r = RGA("1","2")
+    case class Transaction(title: Title, amount: Amount, payer: Payer, sharedBetween: Set[Payer], timestamp: Timestamp) {
+      override def toString: String = {
+        val sharers = sharedBetween.toList.sorted
+        if (sharers.length > 1) s"$payer paid ${amount.toString} for $title. Shared between ${sharers.dropRight(1).mkString(", ")} and ${sharers.last}."
+        else s"$payer paid $amount for $title. Shared between ${sharers.mkString(",")}."
+      }
+    }
+
+    var r = RGOA("1","2")
+    val it = r.vertexIterator
+    println(it.next())
+    println(it.next())
+//    println(it.next())
     //var s = RGA[String]()
 
-    val p = Vertex(4)
-    val x = Vertex(5)
-    val j = Vertex.start
-    val k = Vertex.start[Int]
-    println(j == k)
+    val p = Vertex(BigDecimal(5.00))
+    val x = Vertex(BigDecimal(10.00))
+    val j = startVertex
     val l = List(p, x, j)
-    val f = Map[Vertex[Int], Vertex[Int]]() + (k -> x) + (x -> p)
+    val f = Map[Vertex[BigDecimal], Vertex[BigDecimal]]() + (p-> x) + (x -> p)
     val json = f.asJson
     println(json)
-    val m: Result[Map[Vertex[Int], Vertex[Int]]] = json.as[Map[Vertex[Int], Vertex[Int]]]
+    val m: Result[Map[Vertex[BigDecimal], Vertex[BigDecimal]]] = json.as[Map[Vertex[BigDecimal], Vertex[BigDecimal]]]
     println(f)
     println(m.getOrElse("error"))
+    println(f == m.getOrElse("error"))
+
 
     def merge[A, F](a: F, b: F)(implicit stateCRDT: StateCRDT[A, F]) = {
       stateCRDT.merge(a, b)
@@ -113,5 +129,6 @@ object testSignalExpressions {
     println("s2 == c1? " + (s2.value == c1.value))
     println("slept")
     sr.terminate()
+    cr.terminate()
   }
 }

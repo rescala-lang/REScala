@@ -108,15 +108,15 @@ object Publishable {
         pVar.externalChanges fire value
 
         println(s"received $value")
-        println(s"before: $pVar, ")
+        println(s"before: ${pVar.value}, ")
 
-        endpoint.receive notify pVar.externalChanges.fire
+        endpoint.receive notify {v => println(s"received val: $value"); pVar.externalChanges.fire(v)}
         val observer = pVar.internalChanges.observe(c => endpoint.send(c))
         endpoint.closed notify { _ => observer.remove }
 
         // println(s"manual ${implicitly[StateCRDT[Int, GCounter]].merge(counter.crdtSignal.readValueOnce, value)}")
 
-        println(s"after: $pVar")
+        println(s"after: ${pVar.value}")
 
         pVar
       }

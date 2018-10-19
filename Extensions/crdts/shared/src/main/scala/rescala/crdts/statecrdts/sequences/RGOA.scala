@@ -1,7 +1,6 @@
 package rescala.crdts.statecrdts
 package sequences
 
-import com.typesafe.scalalogging.Logger
 import rescala.crdts.statecrdts.sets.GSet
 
 import scala.collection.immutable.HashMap
@@ -13,13 +12,12 @@ import scala.collection.immutable.HashMap
   *                edges between vertices.
   * @tparam A The type of the elements stored in this array.
   */
-case class RGOA[A](payload: (GSet[Vertex[A]], HashMap[Vertex[A], Vertex[A]])) extends CRDTSequence[A] {
+case class RGOA[A](payload: (GSet[ValueVertex[A]], HashMap[Vertex[A], Vertex[A]])) extends CRDTSequence[A] {
   override type selfType = RGOA[A]
-  override type payloadType = (GSet[Vertex[A]], HashMap[Vertex[A], Vertex[A]])
-  val logger: Logger = Logger[RGOA[A]]
-  val (vertices, edges): (GSet[Vertex[A]], HashMap[Vertex[A], Vertex[A]]) = payload
+  override type payloadType = (GSet[ValueVertex[A]], HashMap[Vertex[A], Vertex[A]])
+  val (vertices, edges): (GSet[ValueVertex[A]], HashMap[Vertex[A], Vertex[A]]) = payload
 
-  override def fromPayload(payload: (GSet[Vertex[A]], HashMap[Vertex[A], Vertex[A]])): RGOA[A] = RGOA[A](payload)
+  override def fromPayload(payload: (GSet[ValueVertex[A]], HashMap[Vertex[A], Vertex[A]])): RGOA[A] = RGOA[A](payload)
 }
 
 object RGOA {
@@ -29,15 +27,15 @@ object RGOA {
 
   def apply[A](): RGOA[A] = empty
 
-  def empty[A]: RGOA[A] = new RGOA[A]((GSet[Vertex[A]](), HashMap[Vertex[A], Vertex[A]](Vertex.start -> Vertex.end)))
+  def empty[A]: RGOA[A] = new RGOA[A]((GSet[ValueVertex[A]](), HashMap[Vertex[A], Vertex[A]](startVertex-> endVertex)))
 
   implicit def RGOAStateCRDTInstance[A]: StateCRDT[List[A], RGOA[A]] = new StateCRDT[List[A], RGOA[A]] {
     override def value(target: RGOA[A]): List[A] = target.value
 
     override def merge(left: RGOA[A], r: RGOA[A]): RGOA[A] = {
-      val newVertices = r.vertexIterator.toList.filter(!left.vertices.contains(_))
-
       left.logger.debug(s"Merging $r into $left")
+
+      val newVertices = r.vertexIterator.toList.filter(!left.edges.contains(_))
       left.logger.debug(s"found new vertices: $newVertices")
 
       // build map of old insertion positions of the new vertices
@@ -60,11 +58,11 @@ object RGOA {
       */
     override def fromValue(value: List[A]): RGOA[A] = {
       val emptyPayload: (GSet[Vertex[A]], HashMap[Vertex[A], Vertex[A]]) =
-        (GSet[Vertex[A]](), HashMap[Vertex[A], Vertex[A]](Vertex.start -> Vertex.end))
+        (GSet[Vertex[A]](), HashMap[Vertex[A], Vertex[A]](startVertex -> endVertex))
       val newRGOA: RGOA[A] = fromPayload(emptyPayload)
 
       value.reverse.foldLeft(newRGOA) {
-        case (r: RGOA[A], a) => r.addRight(Vertex.start, a)
+        case (r: RGOA[A], a) => r.addRight(startVertex, a)
       }
     }
 
@@ -74,6 +72,6 @@ object RGOA {
       * @return new CRDT instance with the given payload
       */
     override def fromPayload[P](payload: P): RGOA[A] = RGOA(payload.
-      asInstanceOf[(GSet[Vertex[A]], HashMap[Vertex[A], Vertex[A]])])
+      asInstanceOf[(GSet[ValueVertex[A]], HashMap[Vertex[A], Vertex[A]])])
   }
 }
