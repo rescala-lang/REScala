@@ -42,8 +42,20 @@ object ChromeDebuggerInterface extends DebuggerInterface {
     send(msg)
   }
 
+
+  override def saveSnap(snapshotid: String): Unit = {
+    val msg = literal(
+      destination = "panel",
+      action = "saveSnap",
+      content = literal(
+        snapshotid = snapshotid
+      )
+    )
+    send(msg)
+  }
+
+
   def send(data: js.Object) = {
-    println("send " + JSON.stringify(data))
     org.scalajs.dom.window.postMessage(data, "*")
   }
 
@@ -51,22 +63,26 @@ object ChromeDebuggerInterface extends DebuggerInterface {
     org.scalajs.dom.window.onmessage = {e: org.scalajs.dom.MessageEvent =>
       val data = e.data.asInstanceOf[js.Dynamic]
       if (data.destination.asInstanceOf[String] == "rescala") {
-        if (data.`type`.asInstanceOf[String] == "set-signal") {
-          val nodeId = data.nodeId.asInstanceOf[String]
-          val value = data.value.asInstanceOf[String]
-          // TODO set nodeId to value
-          println(reStore.registeredNodes)
-          val r: ReSource[ReStoringStruct] = reStore.registeredNodes(nodeId)
-          reStore.executeTurn(r){ at =>
-            at.recordChange(new InitialChange[ReStoringStruct] {
-              override val source: ReSource[ReStoringStruct] = r
-              override def writeValue(b: source.Value, v: source.Value => Unit): Boolean = {v(Pulse.Value(value).asInstanceOf[source.Value]); true}
-            })
+        data.`type`.asInstanceOf[String] match {
+          case "set-signal" => {
+            val nodeId = data.nodeId.asInstanceOf[String]
+            val value = data.value.asInstanceOf[String]
+            // TODO set nodeId to value
+            val r: ReSource[ReStoringStruct] = reStore.registeredNodes(nodeId)
+            reStore.executeTurn(r){ at =>
+              at.recordChange(new InitialChange[ReStoringStruct] {
+                override val source: ReSource[ReStoringStruct] = r
+                override def writeValue(b: source.Value, v: source.Value => Unit): Boolean = {v(Pulse.Value(value).asInstanceOf[source.Value]); true}
+              })
+            }
+            println(JSON.stringify(nodeId) + " fire " + JSON.stringify(value))
           }
-          println(JSON.stringify(nodeId) + " fire " + JSON.stringify(value))
+
+          case "timeTravel" =>
+            val snapId = data.snapId.toString
+            reStore.restoreSnap(snapId)
         }
       }
-      println(JSON.stringify(data))
     }
   }
 

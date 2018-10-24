@@ -44,6 +44,12 @@ class ReStoringTurn(restore: ReStore, debuggerInterface: DebuggerInterface = Dis
   }
 
 
+  override def commitPhase(): Unit = {
+    super.commitPhase()
+    val snapshotid = restore.commitCurrentSnapshot()
+    debuggerInterface.saveSnap(snapshotid)
+  }
+
   override protected[this] def register(reactive: ReSource[ReStoringStruct]): Unit = {
     debuggerInterface.saveNode(NodeID(reactive.state.nodeID.str), reactive.state.nodeID.str, reactive.state.current.toString)
     restore.registerResource(reactive)
@@ -87,6 +93,9 @@ trait ReStoringStruct extends LevelStruct {
 }
 
 trait ReStore {
+  def commitCurrentSnapshot(): String = ""
+  def restoreSnap(snapId: String): Unit = ()
+
   def makeNameUnique(name: REName): REName
   def put(key: REName, value: String): Unit
   def get(key: REName): Option[String]
@@ -94,6 +103,7 @@ trait ReStore {
 }
 
 trait ReStoreImpl extends ReStore with TwoVersionScheduler[ReStoringStruct, ReStoringTurn] {
+
 
   var seenNames = Map[REName, Int]()
   var registeredNodes = Map[String, ReSource[ReStoringStruct]]()
