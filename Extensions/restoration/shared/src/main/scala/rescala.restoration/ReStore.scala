@@ -22,14 +22,12 @@ class ReStoringTurn(restore: ReStore, debuggerInterface: DebuggerInterface = Dis
                                                    creationTicket: CreationTicket[ReStoringStruct])
   : ReStoringState[P, ReStoringStruct] = {
 
-    val nodeID = restore.deriveName(creationTicket.rename)
-
+    val nodeID = restore.makeNameUnique(creationTicket.rename)
 
     valuePersistency match {
       case is@Initializer.InitializedSignal(init) if is.serializable != rescala.core.ReSerializable.doNotSerialize =>
         if (is.serializable == rescala.core.ReSerializable.noSerializer)
           throw new Exception(s"restore requires serializable reactive: $valuePersistency")
-        debuggerInterface.saveNode(NodeID(nodeID.name), creationTicket.rename.name, init.toString)
         restore.get(nodeID) match {
           case None =>
             //println(s"new struct $name")
@@ -41,11 +39,14 @@ class ReStoringTurn(restore: ReStore, debuggerInterface: DebuggerInterface = Dis
             new ReStoringState[P, ReStoringStruct](restore, nodeID, is.serializable, restoredValue)
         }
       case _ =>
-        debuggerInterface.saveNode(NodeID(nodeID.name), creationTicket.rename.name, "")
         new ReStoringState(null, nodeID, null, valuePersistency)
     }
   }
 
+
+  override protected[this] def register(reactive: ReSource[ReStoringStruct]): Unit = {
+    debuggerInterface.saveNode(NodeID(reactive.state.nodeID.str), reactive.state.nodeID.str, reactive.state.current.toString)
+  }
   override def dynamicDependencyInteraction(dependency: ReSource[ReStoringStruct]): Unit = ()
   override def releasePhase(): Unit = ()
   override def preparationPhase(initialWrites: Set[ReSource[ReStoringStruct]]): Unit = ()
@@ -54,14 +55,14 @@ class ReStoringTurn(restore: ReStore, debuggerInterface: DebuggerInterface = Dis
   override def writeState(pulsing: ReSource[ReStoringStruct])
                          (value: pulsing.Value)
   : Unit = {
-    debuggerInterface.saveNode(NodeID(pulsing.state.nodeID.name), pulsing.toString, value.toString)
+    debuggerInterface.saveNode(NodeID(pulsing.state.nodeID.str), pulsing.toString, value.toString)
     super.writeState(pulsing)(value)
   }
 
-  override private[rescala] def discover(node: ReSource[ReStoringStruct],
+  override private[rescala] def discover(node       : ReSource[ReStoringStruct],
                                          addOutgoing: Reactive[ReStoringStruct])
   : Unit = {
-    debuggerInterface.saveEdge(NodeID(node.state.nodeID.name), NodeID(addOutgoing.state.nodeID.name))
+    debuggerInterface.saveEdge(NodeID(node.state.nodeID.str), NodeID(addOutgoing.state.nodeID.str))
     super.discover(node, addOutgoing)
   }
 }
@@ -85,17 +86,23 @@ trait ReStoringStruct extends LevelStruct {
 }
 
 trait ReStore {
-  def deriveName(name: REName): REName
+  def makeNameUnique(name: REName): REName
   def put(key: REName, value: String): Unit
   def get(key: REName): Option[String]
-  def getName(r: ReSource[ReStoringStruct]) = r.state.nodeID
+  def registerResource(r: ReSource[ReStoringStruct]): Unit
 }
 
 trait ReStoreImpl extends ReStore with TwoVersionScheduler[ReStoringStruct, ReStoringTurn] {
 
   var seenNames = Map[REName, Int]()
+  var registeredNodes = Map[REName, Int]()
 
-  def deriveName(name: REName): REName = synchronized {
+
+  override def registerResource(r: ReSource[ReStoringStruct]): Unit = {
+    registeredNodes += r.state.nodeID -> r
+  }
+
+  def makeNameUnique(name: REName): REName = synchronized {
     val count =  seenNames.getOrElse(name, 0)
     seenNames = seenNames.updated(name, count + 1)
     if (count != 0) name.derive(count.toString) else name

@@ -32,13 +32,14 @@ object TodoMVC {
   }
   object Task {
     def apply(desc: String, done: Boolean) = {
-      val rn = ThreadLocalRandom.current().nextLong()
-        new Task(Var(desc)(implicitly, rn.toString), Var(done)(implicitly, rn.toString + "b"))
-      }
+      val rn = s"Task(${ThreadLocalRandom.current().nextLong().toHexString})"
+      new Task(Var(desc)(implicitly, rn.toString), Var(done)(implicitly, rn.toString + "b"))
+    }
   }
 
   @JSExportTopLevel("todo.TodoMVC.main")
   def main(): Unit = {
+    ChromeDebuggerInterface.setup()
 
     val innerTasks = List(
       Task("walk the dog", false),
@@ -56,7 +57,7 @@ object TodoMVC {
       onchange := { e: UIEvent =>
         e.preventDefault()
         if (newTodo.value.trim != "")
-          tasks.transform(Task(newTodo.value.trim, false) :: _)
+          tasks.transform(Task(newTodo.value.trim, done = false) :: _)
         newTodo.value = ""
       }
     ).render

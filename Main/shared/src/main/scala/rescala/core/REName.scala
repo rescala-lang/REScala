@@ -5,12 +5,12 @@ import scala.language.implicitConversions
 /**
   * Provides names for dynamic dependencies based on their definition position to allow easier debugging
   */
-case class REName(name: String) {
-  def derive(derivation: String): REName = s"$derivation($name)"
+case class REName(str: String) {
+  def derive(derivation: String): REName = s"$derivation($str)"
 }
 
 abstract class RENamed(rename: REName) {
-  override def toString: String = rename.name
+  override def toString: String = rename.str
 }
 
 //  implicit def fromCreation[S <: Struct](implicit ct: CreationTicket[S]): REName = ct.rename

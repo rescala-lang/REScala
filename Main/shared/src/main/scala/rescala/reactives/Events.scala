@@ -29,7 +29,7 @@ object Events {
   def static[T, S <: Struct](dependencies: ReSource[S]*)
                             (calculate: StaticTicket[S] => Option[T])
                             (implicit ticket: CreationTicket[S]): Event[T, S] =
-    staticNamed(ticket.rename.name, dependencies: _*)(st => Pulse.fromOption(calculate(st)))
+    staticNamed(ticket.rename.str, dependencies: _*)(st => Pulse.fromOption(calculate(st)))
 
   /** Creates dynamic events */
   @cutOutOfUserComputation

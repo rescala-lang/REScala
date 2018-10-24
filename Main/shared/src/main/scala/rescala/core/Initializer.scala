@@ -12,15 +12,20 @@ trait Initializer[S <: Struct] {
                                                         (instantiateReactive: S#State[V, S] => T): T = {
     val state = makeDerivedStructState[V](initv, creationTicket)
     val reactive = instantiateReactive(state)
+    register(reactive)
     ignite(reactive, incoming, inite)
     reactive
   }
+
+  protected[this] def register(reactive: ReSource[S]): Unit = ()
 
   /** Correctly initializes [[ReSource]]s */
   final private[rescala] def createSource[V, T <: ReSource[S]]
     (intv: InitValues[V], creationTicket: CreationTicket[S])(instantiateReactive: S#State[V, S] => T): T = {
     val state = makeSourceStructState[V](intv, creationTicket)
-    instantiateReactive(state)
+    val reactive = instantiateReactive(state)
+    register(reactive)
+    reactive
   }
 
   /** Creates the internal state of [[Reactive]]s */

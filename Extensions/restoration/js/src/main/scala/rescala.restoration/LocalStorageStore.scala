@@ -18,10 +18,10 @@ class LocalStorageStore()
 
   override def put(key: REName, value: String): Unit = {
     println(s"store $key -> $value")
-    storage.setItem(key.name, value)
+    storage.setItem(key.str, value)
   }
   override def get(key: REName): Option[String] = {
-    val res = Option(storage.getItem(key.name))
+    val res = Option(storage.getItem(key.str))
     println(s"parsed $key -> $res")
     res
   }
