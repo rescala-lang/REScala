@@ -39,7 +39,7 @@ object TodoMVC {
 
   @JSExportTopLevel("todo.TodoMVC.main")
   def main(): Unit = {
-    ChromeDebuggerInterface.setup()
+    ChromeDebuggerInterface.setup(storingEngine)
 
     val innerTasks = List(
       Task("walk the dog", false),

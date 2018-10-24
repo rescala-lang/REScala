@@ -46,6 +46,7 @@ class ReStoringTurn(restore: ReStore, debuggerInterface: DebuggerInterface = Dis
 
   override protected[this] def register(reactive: ReSource[ReStoringStruct]): Unit = {
     debuggerInterface.saveNode(NodeID(reactive.state.nodeID.str), reactive.state.nodeID.str, reactive.state.current.toString)
+    restore.registerResource(reactive)
   }
   override def dynamicDependencyInteraction(dependency: ReSource[ReStoringStruct]): Unit = ()
   override def releasePhase(): Unit = ()
@@ -95,11 +96,11 @@ trait ReStore {
 trait ReStoreImpl extends ReStore with TwoVersionScheduler[ReStoringStruct, ReStoringTurn] {
 
   var seenNames = Map[REName, Int]()
-  var registeredNodes = Map[REName, Int]()
+  var registeredNodes = Map[String, ReSource[ReStoringStruct]]()
 
 
   override def registerResource(r: ReSource[ReStoringStruct]): Unit = {
-    registeredNodes += r.state.nodeID -> r
+    registeredNodes += (r.state.nodeID.str -> r)
   }
 
   def makeNameUnique(name: REName): REName = synchronized {
