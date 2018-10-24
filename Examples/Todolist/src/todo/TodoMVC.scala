@@ -8,6 +8,7 @@ import org.scalajs.dom.{UIEvent, document}
 import rescala.core.ReSerializable
 import rescala.restoration.{LocalStorageStore, ReCirce}
 import rescala.restoration.ReCirce.{recirce, varDecoder, varEncoder}
+import rescala.debuggable.ChromeDebuggerInterface
 import rescalatags._
 import scalatags.JsDom.all._
 import scalatags.JsDom.tags2.section
