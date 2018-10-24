@@ -50,9 +50,9 @@ object ChromeDebuggerInterface extends DebuggerInterface {
     isSetup = true
     org.scalajs.dom.window.onmessage = {e: org.scalajs.dom.MessageEvent =>
       val data = e.data.asInstanceOf[js.Dynamic]
-      println(("will rescala get? 3"))
+      println("will rescala get? 3")
       if (data.destination.asInstanceOf[String] == "rescala") {
-        if (data.type == "set-signal") {
+        if (data.`type`.asInstanceOf[String] == "set-signal") {
           val nodeId = data.nodeId.asInstanceOf[String]
           val value = data.value.asInstanceOf[String]
           // TODO set nodeId to value
