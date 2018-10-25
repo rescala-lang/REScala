@@ -51,7 +51,9 @@ class ReStoringTurn(restore: ReStore, debuggerInterface: DebuggerInterface = Dis
   }
 
   override protected[this] def register(reactive: ReSource[ReStoringStruct]): Unit = {
-    debuggerInterface.saveNode(NodeID(reactive.state.nodeID.str), reactive.state.nodeID.str, reactive.state.current.toString)
+    debuggerInterface.saveNode(NodeID(reactive.state.nodeID.str),
+                               reactive.state.nodeID.str,
+                               reactive.state.current.toString)
     restore.registerResource(reactive)
   }
   override def dynamicDependencyInteraction(dependency: ReSource[ReStoringStruct]): Unit = ()

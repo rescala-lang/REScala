@@ -2,7 +2,7 @@ package rescala.restoration
 
 import org.scalajs.dom
 import org.scalajs.dom.Storage
-import rescala.core.{REName, Scheduler}
+import rescala.core.{REName, ReSerializable, Scheduler}
 import rescala.debuggable.ChromeDebuggerInterface
 import rescala.interface.RescalaInterfaceRequireSerializer
 
@@ -10,14 +10,25 @@ class LocalStorageStore()
   extends ReStoreImpl
   with RescalaInterfaceRequireSerializer[ReStoringStruct] {
 
-  var currentSnapshot: Map[REName, String] = Map()
-  var timetravelPoints: Map[String, Map[REName, String]] = Map()
-  var currentName: Int = 0
-
   val storage: Storage = dom.window.localStorage
 
-  scala.scalajs.js.Object.keys(storage).foreach { k =>
-    currentSnapshot += (REName(k) -> storage.getItem(k))
+  val snapshotcodec  : ReSerializable[Map[String, String]]              = ReCirce.recirce[Map[String, String]]
+  val timetravelCodec: ReSerializable[Map[String, Map[String, String]]] = ReCirce.recirce[Map[String, Map[String, String]]]
+
+  var currentSnapshot : Map[String, String]              = {
+    Option(storage.getItem("snapshotStorage§currentSnapshot"))
+    .flatMap(snapshotcodec.deserialize(_).toOption).getOrElse(Map())
+  }
+  var timetravelPoints: Map[String, Map[String, String]] = {
+    Option(storage.getItem("snapshotStorage§timetravelPoints"))
+    .flatMap(timetravelCodec.deserialize(_).toOption).getOrElse(Map())
+  }
+
+  var currentName: Int = Option(storage.getItem("snapshotStorage§currentName")).fold (0)(_.toInt)
+
+
+  scala.scalajs.js.Object.keys(storage).filterNot(_.startsWith("snapshotStorage§")).foreach { k =>
+    currentSnapshot += (k -> storage.getItem(k))
   }
 
   commitCurrentSnapshot()
@@ -39,8 +50,9 @@ class LocalStorageStore()
     println("========================")
     storage.clear()
     currentSnapshot.foreach {
-      case (name, value) => storage.setItem(name.str, value)
+      case (name, value) => storage.setItem(name, value)
     }
+    storage.setItem("snapshotStorage§timetravelPoints", timetravelCodec.serialize(timetravelPoints))
     dom.window.location.reload(false)
   }
 
@@ -50,7 +62,7 @@ class LocalStorageStore()
 
   override def put(key: REName, value: String): Unit = {
 //    println(s"store $key -> $value")
-    currentSnapshot += (key -> value)
+    currentSnapshot += (key.str -> value)
     storage.setItem(key.str, value)
   }
   override def get(key: REName): Option[String] = {
