@@ -9,7 +9,7 @@ case class REName(str: String) {
   def derive(derivation: String): REName = s"$derivation($str)"
 }
 
-abstract class RENamed(rename: REName) {
+abstract class RENamed(val rename: REName) {
   override def toString: String = rename.str
 }
 

@@ -55,6 +55,19 @@ object ChromeDebuggerInterface extends DebuggerInterface {
   }
 
 
+  override def sourceHint(id    : NodeID,
+                          hint  : String,
+                          values: Seq[String]): Unit = {
+    val msg = literal(
+      destination = "panel",
+      action = "sourceHint",
+      hint = hint,
+      values = values.toArray
+    )
+    send(msg)
+  }
+
+
   def send(data: js.Object) = {
     org.scalajs.dom.window.postMessage(data, "*")
   }

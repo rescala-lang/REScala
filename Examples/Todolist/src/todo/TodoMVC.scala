@@ -33,7 +33,11 @@ object TodoMVC {
   object Task {
     def apply(desc: String, done: Boolean) = {
       val rn = s"Task(${ThreadLocalRandom.current().nextLong().toHexString})"
-      new Task(Var(desc)(implicitly, rn.toString), Var(done)(implicitly, rn.toString + "b"))
+      val descV = Var(desc)(implicitly, rn.toString)
+      val doneV = Var(done)(implicitly, rn.toString + "b")
+      storingEngine.registerSource(desc)
+      storingEngine.registerSource(desc)
+      new Task(descV, doneV)
     }
   }
 
