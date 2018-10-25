@@ -62,7 +62,7 @@ object ChromeDebuggerInterface extends DebuggerInterface {
       destination = "panel",
       action = "sourceHint",
       hint = hint,
-      values = values.toArray
+      values = js.Array(values)
     )
     send(msg)
   }

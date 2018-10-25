@@ -35,8 +35,8 @@ object TodoMVC {
       val rn = s"Task(${ThreadLocalRandom.current().nextLong().toHexString})"
       val descV = Var(desc)(implicitly, rn.toString)
       val doneV = Var(done)(implicitly, rn.toString + "b")
-      storingEngine.registerSource(desc)
-      storingEngine.registerSource(desc)
+      storingEngine.registerSource(descV)
+      storingEngine.registerSource(doneV)
       new Task(descV, doneV)
     }
   }

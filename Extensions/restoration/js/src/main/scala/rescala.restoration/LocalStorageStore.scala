@@ -56,6 +56,7 @@ class LocalStorageStore()
       case (name, value) => storage.setItem(name, value)
     }
     storage.setItem("snapshotStorage§timetravelPoints", timetravelCodec.serialize(timetravelPoints))
+    storage.setItem("snapshotStorage§currentName", currentName.toString)
     dom.window.location.reload(false)
   }
 
