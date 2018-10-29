@@ -13,31 +13,33 @@ object ChromeDebuggerInterface extends DebuggerInterface {
 
   def saveNode(id: NodeID, name: String, value: String): Unit = {
     val msg = literal(
+      destination = "panel",
+      action = "save",
       content = literal(
         nodeId = id.str,
-//      'nodeType': type,
-//      'nodeMethod': method,
         nodeRef = name,
         nodeValue = value,
-//        sourceInfo = sourceInfo,
+        action = "node",
+//      nodeType: type,
+//      nodeMethod: method,
+//      sourceInfo = sourceInfo,
         ),
-      action = "saveNode",
-      destination = "panel"
     )
     send(msg)
   }
 
   def saveEdge(from: NodeID, to: NodeID): Unit = {
     val msg = literal(
+      destination = "panel",
+      action = "save",
       content = literal(
         edgeStart = from.str,
-//        "edgeStartName": edgeStart ? edgeStart.name : '',
         edgeEnd = to.str,
-//  "edgeEndName": edgeEnd ? edgeEnd.name : '',
-//  "edgeLabel": name
+        action = "edge",
+//      edgeStartName: edgeStart ? edgeStart.name : '',
+//      edgeEndName: edgeEnd ? edgeEnd.name : '',
+//      edgeLabel: name
         ),
-      action = "saveEdge",
-      destination = "panel"
     )
     send(msg)
   }
@@ -46,10 +48,11 @@ object ChromeDebuggerInterface extends DebuggerInterface {
   override def saveSnap(snapshotid: String): Unit = {
     val msg = literal(
       destination = "panel",
-      action = "saveSnap",
+      action = "save",
       content = literal(
-        snapshotid = snapshotid
-      )
+        snapshotid = snapshotid,
+        action = "snap",
+      ),
     )
     send(msg)
   }
@@ -61,15 +64,18 @@ object ChromeDebuggerInterface extends DebuggerInterface {
     val msg = literal(
       destination = "panel",
       action = "sourceHint",
-      hint = hint,
-      values = js.Array(values)
+      content = literal(
+        nodeId = id.str,
+        hint = hint,
+        values = js.Array(values)
+      )
     )
     send(msg)
   }
 
 
   def send(data: js.Object) = {
-    org.scalajs.dom.window.postMessage(data, "*")
+      org.scalajs.dom.window.postMessage(data, "*")
   }
 
   def setup(reStore: ReStoreImpl): Unit = {

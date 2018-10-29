@@ -92,12 +92,17 @@ object TodoMVC {
 
           val myinput = input(
             `class`:="edit", `type`:="text",
-            value:=t.desc(), onchange:=change, onblur:=change).render
+            value:=t.desc(),
+            onchange:=change, onblur:=change,
+            onkeypress:={e: dom.KeyboardEvent => if (e.keyCode == 13) { // 13 = enter key
+              e.preventDefault() // TODO somehow app breaks, if we listen to enter...?
+            }},
+            ).render
 
           li(
             `class`:=
-               (if (t.done()) "completed " else "")
-              +(if (t.editing()) "editing " else ""),
+               (if (t.done()) "completed " else " ")
+              +(if (t.editing()) "editing " else "no-editing "),
 
             div(
               `class`:="view",
