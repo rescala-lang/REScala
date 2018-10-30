@@ -94,5 +94,7 @@ object Demo {
     }
 
     document.body.replaceChild(content.render, document.body.firstElementChild)
+
+    ChromeDebuggerInterface.finishedLoading()
   }
 }
