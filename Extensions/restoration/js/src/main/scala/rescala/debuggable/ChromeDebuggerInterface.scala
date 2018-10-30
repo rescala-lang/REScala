@@ -79,6 +79,7 @@ object ChromeDebuggerInterface extends DebuggerInterface {
   }
 
   def setup(reStore: ReStoreImpl): Unit = {
+    println("setup debugger interface")
     org.scalajs.dom.window.onmessage = {e: org.scalajs.dom.MessageEvent =>
       val data = e.data.asInstanceOf[js.Dynamic]
       if (data.destination.asInstanceOf[String] == "rescala") {

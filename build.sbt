@@ -37,6 +37,7 @@ lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
   testsJS,
   testsJVM,
   todolist,
+  livedemo,
   universe)
   .settings(cfg.noPublish)
 
@@ -162,6 +163,11 @@ lazy val todolist = project.in(file("Examples/Todolist"))
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(rescalatags, restoreJS)
   .settings(cfg.base, cfg.noPublish, name := "todolist", scalaSource in Compile := baseDirectory.value)
+
+lazy val livedemo = project.in(file("Examples/LiveDemo"))
+                    .enablePlugins(ScalaJSPlugin)
+                    .dependsOn(rescalatags, restoreJS)
+                    .settings(cfg.base, cfg.noPublish, name := "livedemo", scalaSource in Compile := baseDirectory.value)
 
 lazy val dividi = project.in(file("Examples/dividi"))
   .dependsOn(crdts)
