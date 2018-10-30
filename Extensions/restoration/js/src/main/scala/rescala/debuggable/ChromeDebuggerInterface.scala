@@ -78,6 +78,14 @@ object ChromeDebuggerInterface extends DebuggerInterface {
       org.scalajs.dom.window.postMessage(data, "*")
   }
 
+  def finishedLoading() = {
+      val msg = literal(
+        destination = "panel",
+        action = "finishedLoading"
+      )
+      send(msg)
+  }
+
   def setup(reStore: ReStoreImpl): Unit = {
     println("setup debugger interface")
     org.scalajs.dom.window.onmessage = {e: org.scalajs.dom.MessageEvent =>
