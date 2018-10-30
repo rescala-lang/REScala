@@ -146,7 +146,7 @@ object TodoMVC {
 
         button(
           `class`:=Signal.dynamic {
-            "clear-completed" + 
+            "clear-completed" +
             (if (tasks().filter(t => t.done()).size==0)
               " hidden" else "") },
           onclick:={ e: dom.UIEvent =>
