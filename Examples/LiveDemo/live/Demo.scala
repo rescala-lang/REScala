@@ -27,12 +27,24 @@ object Demo {
     val content = storingEngine.transaction(){ tx =>
 
       val temperature = Evt[Double]
+      storingEngine.registerSource(temperature)
+
+      val time = temperature.count()
 
       val filtered = temperature.filter(_ < 100).filter(_ >= -40)
 
-      val history: Signal[Seq[Double]] = filtered.last(50)
+      val history: Signal[Seq[Double]] = filtered.last(5)
 
-      val aggregation: Signal[Seq[Double] => Double] = Signal({ x: Seq[Double] => x.sum / x.size })
+      val aggregations = Map(
+        "average" -> { x: Seq[Double] => x.sum / x.size },
+        "max" -> { x: Seq[Double] => x.max },
+        "sum" -> { x: Seq[Double] => x.sum }
+      )
+
+      val selectedAggregation = Var("sum")
+      storingEngine.registerSource(selectedAggregation, aggregations.keys.toSeq: _*)
+
+      val aggregation: Signal[Seq[Double] => Double] = Signal(aggregations(selectedAggregation.value))
 
       val aggregated = Signal {
         aggregation.value(history.value)
@@ -42,7 +54,8 @@ object Demo {
         `class` := "todoapp",
         header(
           `class` := "header",
-          h1("Temperatures")
+          h1("Temperatures"),
+          Signal { span(s"time ${time.value}") }.asFrag
         ),
 
         section(

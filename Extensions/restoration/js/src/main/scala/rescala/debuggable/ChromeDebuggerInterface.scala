@@ -94,16 +94,25 @@ object ChromeDebuggerInterface extends DebuggerInterface {
         data.`type`.asInstanceOf[String] match {
           case "set-signal" => {
             val nodeId = data.nodeId.asInstanceOf[String]
-            val value = data.value.asInstanceOf[String]
+            val valueS = data.value.asInstanceOf[String]
+            println(s"hint ${data.hint}")
+            val hint = data.hint.asInstanceOf[String]
+            val value = hint.toLowerCase match {
+              case s if s.contains("double") => valueS.toDouble
+              case s if s.contains("int") => valueS.toInt
+              case s if s.contains("string") => valueS
+            }
+
             // TODO set nodeId to value
             val r: ReSource[ReStoringStruct] = reStore.registeredNodes(nodeId)
+            println(JSON.stringify(nodeId) + " fire " + JSON.stringify(valueS))
             reStore.executeTurn(r){ at =>
               at.recordChange(new InitialChange[ReStoringStruct] {
                 override val source: ReSource[ReStoringStruct] = r
-                override def writeValue(b: source.Value, v: source.Value => Unit): Boolean = {v(Pulse.Value(value).asInstanceOf[source.Value]); true}
+                override def writeValue(b: source.Value, v: source.Value => Unit): Boolean =
+                {v(Pulse.Value(value).asInstanceOf[source.Value]); true}
               })
             }
-            println(JSON.stringify(nodeId) + " fire " + JSON.stringify(value))
           }
 
           case "timeTravel" =>
