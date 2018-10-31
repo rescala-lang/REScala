@@ -36,9 +36,10 @@ trait Reactive[S <: Struct] extends ReSource[S] {
   * @param initialState the initial state passed by the scheduler
   * @param rename the name of the reactive, useful for debugging as it often contains positional information */
 abstract class Base[V, S <: Struct](initialState: S#State[V, S], rename: REName)
-  extends RENamed(rename) with Reactive[S] {
+  extends Reactive[S] {
   override type Value = V
   final override protected[rescala] def state: State = initialState
+  override def toString: String = s"${rename.name}($state)"
 }
 
 

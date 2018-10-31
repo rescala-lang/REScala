@@ -21,7 +21,7 @@ trait RegularReevaluationHandling extends ReevaluationHandling[Reactive[FullMVSt
       override protected def dynamicAccess(reactive: ReSource[FullMVStruct]): reactive.Value = turn.dynamicAfter(reactive)
     }
     val res: Result[node.Value, FullMVStruct] = try {
-      turn.host.withTurn(turn) {
+      turn.host.withDynamicInitializer(turn) {
         node.reevaluate(ticket)
       }
     } catch {

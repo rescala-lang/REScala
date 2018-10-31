@@ -3,7 +3,6 @@ package rescala.core
 import rescala.reactives.Signal
 
 import scala.annotation.implicitNotFound
-import scala.util.DynamicVariable
 
 /**
   * Propagation engine that defines the basic data-types available to the user and creates turns for propagation handling
@@ -23,18 +22,3 @@ trait Scheduler[S <: Struct] {
   def schedulerName: String
   override def toString: String = s"Scheduler($schedulerName)"
 }
-
-
-trait SchedulerImpl[S <: Struct, ExactTurn <: Initializer[S]] extends Scheduler[S] {
-
-  final override private[rescala] def creationDynamicLookup[T](f: Initializer[S] => T) = {
-    _currentTurn.value match {
-      case Some(turn) => f(turn)
-      case None => executeTurn(Set.empty, ticket => f(ticket.creation))
-    }
-  }
-
-  final protected val _currentTurn: DynamicVariable[Option[ExactTurn]] = new DynamicVariable[Option[ExactTurn]](None)
-  final private[rescala] def withTurn[R](turn: ExactTurn)(thunk: => R): R = _currentTurn.withValue(Some(turn))(thunk)
-}
-

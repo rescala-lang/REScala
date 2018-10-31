@@ -7,9 +7,9 @@ class ObserverCreation extends RETests { multiEngined { engine => import engine.
 
   test("add Event After"){
     var res = 0
-    val e0 = Evt[Int]
-    val e1 = e0.map(identity)
-    e1.map(_ => e0.map {_ + 1}.observe {res = _})
+    val e0 = Evt[Int]()("source")
+    val e1 = e0.map(identity)("firstMap")
+    e1.map(_ => e0.map {_ + 1}("innerMap").observe {res = _}("observer"))("creatingMap")
     e0.fire(10)
 
     assert(res === 11)
@@ -18,9 +18,9 @@ class ObserverCreation extends RETests { multiEngined { engine => import engine.
 
   test("event Handlers Can Be Removed"){
     var test = 0
-    val e1 = Evt[Int]
+    val e1 = Evt[Int]()("e1")
     val f = (x: Int) => { test += 1 }
-    val o = e1 += f
+    val o = e1.observe(f)("e1Observer")
     e1.fire(10)
     e1.fire(10)
     assert(test == 2)

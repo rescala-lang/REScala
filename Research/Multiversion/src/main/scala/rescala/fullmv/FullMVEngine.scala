@@ -2,7 +2,7 @@ package rescala.fullmv
 
 import java.util.concurrent.ForkJoinPool
 
-import rescala.core.{Scheduler, SchedulerImpl}
+import rescala.core.{Scheduler, DynamicInitializerLookup}
 import rescala.fullmv.mirrors.{FullMVTurnHost, Host, HostImpl, SubsumableLockHostImpl}
 import rescala.fullmv.sgt.synchronization.SubsumableLock
 import rescala.fullmv.tasks.{Framing, SourceNotification}
@@ -13,7 +13,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Try
 
 class FullMVEngine(val timeout: Duration, val schedulerName: String)
-  extends SchedulerImpl[FullMVStruct, FullMVTurn] with FullMVTurnHost with HostImpl[FullMVTurn] with RescalaInterface[FullMVStruct] {
+  extends DynamicInitializerLookup[FullMVStruct, FullMVTurn] with FullMVTurnHost with HostImpl[FullMVTurn] with RescalaInterface[FullMVStruct] {
 
 
   override def scheduler: Scheduler[FullMVStruct] = this
@@ -40,7 +40,7 @@ class FullMVEngine(val timeout: Duration, val schedulerName: String)
 
   override def executeTurn[R](declaredWrites: Set[ReSource], admissionPhase: (AdmissionTicket) => R): R = {
     val turn = newTurn()
-    withTurn(turn) {
+    withDynamicInitializer(turn) {
       if (declaredWrites.nonEmpty) {
         // framing phase
         turn.beginFraming()
