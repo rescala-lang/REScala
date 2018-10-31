@@ -82,7 +82,7 @@ class LocalStorageStore()
   def registerSource[T: ClassTag](s: Source[ReStoringStruct, T], values: String*): Unit = {
     val ct = implicitly[ClassTag[T]]
 
-    ChromeDebuggerInterface.sourceHint(NodeID(s.rename.str), ct.runtimeClass.getSimpleName, values)
+    ChromeDebuggerInterface.sourceHint(NodeID(s.name.str), ct.runtimeClass.getSimpleName, values)
   }
 
 }

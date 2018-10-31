@@ -3,7 +3,7 @@ package rescala.reactives
 import rescala.core._
 import rescala.reactives.Events.Estate
 
-abstract class Source[S <: Struct, T](name: REName) extends ReSource[S] {
+abstract class Source[S <: Struct, T](val name: REName) extends ReSource[S] {
 
   final def admit(value: T)(implicit ticket: AdmissionTicket[S]): Unit = admitPulse(Pulse.Value(value))
   def admitPulse(pulse: Pulse[T])(implicit ticket: AdmissionTicket[S]): Unit
