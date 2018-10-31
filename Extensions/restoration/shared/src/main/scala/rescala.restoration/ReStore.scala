@@ -64,7 +64,7 @@ class ReStoringTurn(restore: ReStore, debuggerInterface: DebuggerInterface = Dis
   override def writeState(pulsing: ReSource[ReStoringStruct])
                          (value: pulsing.Value)
   : Unit = {
-    debuggerInterface.saveNode(NodeID(pulsing.state.nodeID.str), pulsing.toString, value.toString)
+    debuggerInterface.saveNode(NodeID(pulsing.state.nodeID.str), pulsing.state.nodeID.str, value.toString)
     super.writeState(pulsing)(value)
   }
 
