@@ -5,7 +5,7 @@ import java.util.concurrent.ThreadLocalRandom
 import org.scalajs.dom
 import org.scalajs.dom.html.Input
 import org.scalajs.dom.{UIEvent, document}
-import rescala.core.ReSerializable
+import rescala.core.{CreationTicket, ReSerializable}
 import rescala.restoration.{LocalStorageStore, ReCirce}
 import rescala.restoration.ReCirce.{recirce, varDecoder, varEncoder}
 import rescala.debuggable.ChromeDebuggerInterface
@@ -24,16 +24,16 @@ object Demo {
   def main(): Unit = {
     ChromeDebuggerInterface.setup(storingEngine)
 
-    val content = storingEngine.transaction(){ tx =>
+    val content = storingEngine.transaction(){ implicit tx =>
 
-      val temperature = Evt[Double]
+      val temperature = Evt[Double]()("temperature")
       storingEngine.registerSource(temperature)
 
-      val time = temperature.count()
+      val time = temperature.count()("time", implicitly)
 
-      val filtered = temperature.filter(_ < 100).filter(_ >= -40)
+      val filtered = temperature.filter(_ < 100)("less than 100").filter(_ >= -40)("more than -40")
 
-      val history: Signal[Seq[Double]] = filtered.last(5)
+      val history: Signal[Seq[Double]] = filtered.last(5)("history", implicitly)
 
       val aggregations = Map(
         "average" -> { x: Seq[Double] => x.sum / x.size },
@@ -41,14 +41,14 @@ object Demo {
         "sum" -> { x: Seq[Double] => x.sum }
       )
 
-      val selectedAggregation = Var("sum")
+      val selectedAggregation = Var("sum")(implicitly, "selected aggregation")
       storingEngine.registerSource(selectedAggregation, aggregations.keys.toSeq: _*)
 
-      val aggregation: Signal[Seq[Double] => Double] = Signal(aggregations(selectedAggregation.value))
+      val aggregation: Signal[Seq[Double] => Double] = Signal(aggregations(selectedAggregation.value))("aggregation")
 
       val aggregated = Signal {
         aggregation.value(history.value)
-      }
+      }("aggregated")
 
       div(
         `class` := "todoapp",

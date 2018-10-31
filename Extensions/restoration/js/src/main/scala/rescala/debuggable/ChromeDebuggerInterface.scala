@@ -25,7 +25,7 @@ object ChromeDebuggerInterface extends DebuggerInterface {
 //      sourceInfo = sourceInfo,
         ),
     )
-    send(msg)
+    if (!name.contains("rescala"))    send(msg)
   }
 
   def saveEdge(from: NodeID, to: NodeID): Unit = {
@@ -41,7 +41,7 @@ object ChromeDebuggerInterface extends DebuggerInterface {
 //      edgeLabel: name
         ),
     )
-    send(msg)
+    if (!(from.str + to.str).contains("rescala"))    send(msg)
   }
 
 
