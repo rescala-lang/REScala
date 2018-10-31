@@ -39,7 +39,7 @@ abstract class Base[V, S <: Struct](initialState: S#State[V, S], rename: REName)
   extends Reactive[S] {
   override type Value = V
   final override protected[rescala] def state: State = initialState
-  override def toString: String = s"${rename.name}($state)"
+  override def toString: String = s"${rename.str}($state)"
 }
 
 
