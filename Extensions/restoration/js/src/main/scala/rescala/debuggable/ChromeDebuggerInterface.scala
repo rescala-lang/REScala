@@ -67,7 +67,7 @@ object ChromeDebuggerInterface extends DebuggerInterface {
       content = literal(
         nodeId = id.str,
         hint = hint,
-        values = js.Array(values)
+        values = js.Array(values: _*)
       )
     )
     send(msg)
