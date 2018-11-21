@@ -109,6 +109,12 @@ object Events {
     if (value.isChange) t.withValue(value)
     else t
   }
+
+  def fromCallback[T, S <: Struct](cb: (T => Unit) => Unit)(implicit ct: CreationTicket[S], s: Scheduler[S]): Event[T, S] = {
+    val evt = Evt[T, S]
+    cb(evt.fire)
+    evt
+  }
 }
 
 
