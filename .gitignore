@@ -21,3 +21,4 @@ proguard-sbt.txt
 Research/Microbenchmarks/results/
 Examples/Todolist/node_modules/
 Examples/Todolist/package-lock.json
+Examples/LiveDemo/node_modules/
