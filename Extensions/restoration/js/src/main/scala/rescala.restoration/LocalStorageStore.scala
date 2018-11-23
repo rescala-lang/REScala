@@ -37,7 +37,7 @@ class LocalStorageStore()
   commitCurrentSnapshot()
 
   override def commitCurrentSnapshot(): String = {
-    println(s"commiting $currentName $currentSnapshot")
+//    println(s"commiting $currentName $currentSnapshot")
     val id = currentName.toString
     timetravelPoints = timetravelPoints.updated(id, currentSnapshot)
     currentName += 1

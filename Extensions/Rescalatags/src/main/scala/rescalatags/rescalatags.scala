@@ -1,53 +1,84 @@
+package rescala
 import org.scalajs.dom
 import org.scalajs.dom.{DocumentFragment, Element, Node}
-import rescala.core.{CreationTicket, Initializer, Scheduler, Struct}
-import rescala.reactives.Signals.Diff
-import rescala.reactives.{Observe, Signal}
+import rescala.core.{CreationTicket, Scheduler, Struct}
+import rescala.reactives.{Observe, Signal, Var}
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all._
 import scalatags.generic
 
 import scala.language.higherKinds
+import scala.scalajs.js
 
-package object rescalatags extends lowPriorityimplicits {
+package object rescalatags extends RescalatagsLowPriorityimplicits {
 
-  implicit def transformTypedTag[S <: Struct, Out <: Element]
-    (implicit ct: CreationTicket[S]): Signal[TypedTag[Out], S] => Signal[Out, S] = _.map(_.render)
+  implicit def transformTypedTag[S <: Struct, Out <: Element]: TypedTag[Out] => Out = _.render
 
 
-  implicit class SignalToScalatags[S <: Struct, In, Out <: Node](signal: Signal[In, S])(implicit transform: Signal[In, S] => Signal[Out, S]) {
+  implicit class SignalToScalatags[S <: Struct, In, Out <: Node](signal: Signal[In, S])
+                                                                (implicit transform: In => Out) {
     private[this] type ResultFrag = generic.Frag[Element, Out]
     /**
       * converts a Signal of a scalatags Tag to a scalatags Frag which automatically reflects changes to the signal in the dom
       */
-    def asFrag(implicit ct: CreationTicket[S], engine: Scheduler[S]): ResultFrag = {
-      ct.transaction { init => asFragInner(engine)(init) }
-    }
-
-    private def asFragInner(engine: Scheduler[S])(implicit creation: Initializer[S]): REFrag = {
-      val result: Signal[Out, S] = transform(signal)
-      val observer = makeObserver(result)
-      new REFrag(result, observer, engine)
+    def asFrag(implicit engine: Scheduler[S]): ResultFrag = {
+      new REFrag(signal, engine)
     }
 
 
-    private class REFrag(rendered: Signal[Out, S], val observe: Observe[S], engine: Scheduler[S]) extends ResultFrag {
-      override def applyTo(t: Element): Unit = t.appendChild(rendered.readValueOnce(engine))
-      override def render: Out = rendered.readValueOnce(engine)
+    private class REFrag(rendered: Signal[In, S], engine: Scheduler[S]) extends ResultFrag {
+      var observe: Observe[S] = null
+      var currentTag: Out = _
+      override def applyTo(parent: Element): Unit = {
+        CreationTicket.fromEngine(engine).transaction { init =>
+
+          currentTag = transform(init.accessTicket().now(rendered))
+          parent.appendChild(currentTag)
+
+          observe = Observe.weak(rendered, fireImmediately = false)(
+            { newTag =>
+              val newNode = transform(newTag)
+              val olds = nodeList(currentTag)
+              val news = nodeList(newNode)
+              if (parent != null && !scalajs.js.isUndefined(parent)) {
+                replaceAll(parent, olds, news)
+              }
+              currentTag = newNode
+            },
+             t => throw t)(init)
+        }
+
+
+      }
+      override def render: Out = ???
     }
   }
 
-  implicit def attrValue[T: AttrValue, S <: Struct, Sig[T2] <: Signal[T2, S]](implicit engine: Scheduler[S]): AttrValue[Sig[T]] = new AttrValue[Sig[T]] {
+  def genericReactiveAttrValue[T: AttrValue, S <: Struct, Sig[T2] <: Signal[T2, S]](implicit engine: Scheduler[S])
+  : AttrValue[Sig[T]] = new AttrValue[Sig[T]] {
     def apply(t: dom.Element, a: Attr, signal: Sig[T]): Unit = {
       signal.observe { value => implicitly[AttrValue[T]].apply(t, a, value) }
     }
   }
 
-  implicit def styleValue[T: StyleValue, S <: Struct, Sig[T2] <: Signal[T2, S]](implicit engine: Scheduler[S]): StyleValue[Sig[T]] = new StyleValue[Sig[T]] {
+  implicit def varAttrValue[T: AttrValue, S <: Struct](implicit engine: Scheduler[S])
+  : AttrValue[Var[T, S]] = genericReactiveAttrValue[T, S, ({type λ[T2] = Var[T2, S]})#λ]
+
+  implicit def signalAttrValue[T: AttrValue, S <: Struct](implicit engine: Scheduler[S])
+  : AttrValue[Signal[T, S]] = genericReactiveAttrValue[T, S, ({type λ[T2] = Signal[T2, S]})#λ]
+
+  def genericReactiveStyleValue[T: StyleValue, S <: Struct, Sig[T2] <: Signal[T2, S]](implicit engine: Scheduler[S])
+  : StyleValue[Sig[T]] = new StyleValue[Sig[T]] {
     def apply(t: dom.Element, s: Style, signal: Sig[T]): Unit = {
       signal.observe { value => implicitly[StyleValue[T]].apply(t, s, value) }
     }
   }
+
+  implicit def varStyleValue[T: StyleValue, S <: Struct](implicit engine: Scheduler[S])
+  : StyleValue[Var[T, S]] = genericReactiveStyleValue[T, S, ({type λ[T2] = Var[T2, S]})#λ]
+
+  implicit def signalStyleValue[T: StyleValue, S <: Struct](implicit engine: Scheduler[S])
+  : StyleValue[Signal[T, S]] = genericReactiveStyleValue[T, S, ({type λ[T2] = Signal[T2, S]})#λ]
 
 
   // helper functions
@@ -71,26 +102,16 @@ package object rescalatags extends lowPriorityimplicits {
     else List(n)
   }
 
-  private def makeObserver[S <: Struct](result: Signal[Node, S])(implicit creation: Initializer[S]): Observe[S] = {
-    Observe.weak(result.change, fireImmediately = false)(
-      { case Some(Diff(lastFrag, newFrag)) =>
-        val olds = nodeList(lastFrag)
-        val news = nodeList(newFrag)
-        val parent = olds.head.parentNode
-        if (parent != null && !scalajs.js.isUndefined(parent)) {
-          replaceAll(parent, olds, news)
-        }
-      },
-       t => throw t)
-  }
-
 }
 
-trait lowPriorityimplicits {
-  implicit def transformFragment[S <: Struct, Out <: Element]
-    (implicit ct: CreationTicket[S]): Signal[Frag, S] => Signal[Node, S] = signal =>
-    signal
-    .map(_.render)
-    .recover { case t => span(t.toString).render }
-    .withDefault("".render)
+trait RescalatagsLowPriorityimplicits {
+
+  implicit def bindEvt[T, S <: Struct](implicit scheduler: Scheduler[S]) = new generic.AttrValue[dom.Element, rescala.reactives.Evt[T, S]]{
+    def apply(t: dom.Element, a: generic.Attr, v: rescala.reactives.Evt[T, S]): Unit = {
+
+      t.asInstanceOf[js.Dynamic].updateDynamic(a.name)((e: T) => v.fire(e))
+    }
+  }
+
+  implicit def transformFragment[S <: Struct, Out <: Element]: Frag => Node = _.render
 }
