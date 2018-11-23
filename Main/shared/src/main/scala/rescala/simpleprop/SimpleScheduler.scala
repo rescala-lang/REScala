@@ -1,7 +1,7 @@
 package rescala.simpleprop
 
 import rescala.core.Initializer.InitValues
-import rescala.core.{CreationTicket, Initializer, ReSource, Reactive, ReevTicket, Scheduler, DynamicInitializerLookup, Struct}
+import rescala.core.{AccessTicket, CreationTicket, DynamicInitializerLookup, Initializer, ReSource, Reactive, ReevTicket, Scheduler, Struct}
 import rescala.interface.Aliases
 
 import scala.collection.mutable.ArrayBuffer
@@ -32,6 +32,12 @@ class SimpleCreation() extends Initializer[SimpleStruct] {
   : SimpleState[V] = new SimpleState[V](ip)
 
   private var createdReactives: Seq[Reactive[SimpleStruct]] = Seq.empty
+
+
+  override def accessTicket(): AccessTicket[SimpleStruct] = new AccessTicket[SimpleStruct] {
+    override private[rescala] def access(reactive: ReSource[SimpleStruct]): reactive.Value = reactive.state.value
+  }
+
 
   def drainCreated(): Seq[Reactive[SimpleStruct]] = {
     val tmp = createdReactives
@@ -84,7 +90,7 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleCrea
       withDynamicInitializer(creation) {
         // admission
         val admissionTicket = new AdmissionTicket(creation, initialWrites) {
-          override def access[A](reactive: Signal[A]): reactive.Value = reactive.state.value
+          override private[rescala] def access(reactive: ReSource): reactive.Value = reactive.state.value
         }
         val admissionResult = admissionPhase(admissionTicket)
         val sources = admissionTicket.initialChanges.values.collect {
@@ -118,9 +124,7 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleCrea
 
 
         //wrapup
-        if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(new WrapUpTicket {
-          override private[rescala] def access(reactive: ReSource): reactive.Value = reactive.state.value
-        })
+        if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(creation.accessTicket())
         admissionResult
       }
     }

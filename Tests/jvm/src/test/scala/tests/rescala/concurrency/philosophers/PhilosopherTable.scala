@@ -2,7 +2,7 @@ package tests.rescala.concurrency.philosophers
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import rescala.core.{Struct, WrapUpTicket}
+import rescala.core.{Struct, AccessTicket}
 import rescala.interface.RescalaInterface
 import rescala.parrp.Backoff
 import rescala.reactives.Signals.lift
@@ -109,7 +109,7 @@ object PhilosopherTable {
   // ============================================ Entity Creation =========================================================
 
   case class Seating[S <: Struct](placeNumber: Int, philosopher: Var[Philosopher, S], leftFork: Signal[Fork, S], rightFork: Signal[Fork, S], vision: Signal[Vision, S]) {
-    def inspect(t: WrapUpTicket[S]): String = s"Seating(${t.now(philosopher)}, ${t.now(leftFork)}, ${t.now(rightFork)}, ${t.now(vision)})"
+    def inspect(t: AccessTicket[S]): String = s"Seating(${t.now(philosopher)}, ${t.now(leftFork)}, ${t.now(rightFork)}, ${t.now(vision)})"
   }
 
 }

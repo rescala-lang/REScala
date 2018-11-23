@@ -1,6 +1,6 @@
 package rescala.twoversion
 
-import rescala.core.{AdmissionTicket, InitialChange, ReSource, Struct, WrapUpTicket}
+import rescala.core.{AdmissionTicket, InitialChange, ReSource, Struct}
 
 /**
   * Abstract propagation definition that defines phases for reactive propagation through dependent reactive elements.
@@ -56,7 +56,6 @@ trait TwoVersionPropagation[S <: Struct]  {
   def releasePhase(): Unit
 
   private[rescala] def makeAdmissionPhaseTicket(initialWrites: Set[ReSource[S]]): AdmissionTicket[S]
-  private[rescala] def makeWrapUpPhaseTicket(): WrapUpTicket[S]
 
 
 }

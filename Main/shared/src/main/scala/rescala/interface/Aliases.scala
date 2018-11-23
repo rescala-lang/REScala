@@ -23,7 +23,7 @@ trait Aliases[S <: Struct] {
   /** @group internal */
   final type AdmissionTicket = rescala.core.AdmissionTicket[S]
   /** @group internal */
-  final type WrapUpTicket = rescala.core.WrapUpTicket[S]
+  final type AccessTicket = rescala.core.AccessTicket[S]
   /** @group internal */
   final type CreationTicket = rescala.core.CreationTicket[S]
   /** @group internal */

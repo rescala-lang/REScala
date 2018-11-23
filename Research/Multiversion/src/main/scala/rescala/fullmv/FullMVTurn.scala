@@ -33,6 +33,10 @@ trait FullMVTurn extends Initializer[FullMVStruct] with FullMVTurnProxy with Sub
     }
   }
 
+  override def accessTicket(): AccessTicket[FullMVStruct] = new AccessTicket[FullMVStruct](){
+    override def access(reactive: ReSource[FullMVStruct]): reactive.Value = dynamicAfter(reactive)
+  }
+
   def selfNode: TransactionSpanningTreeNode[FullMVTurn]
   // should be mirrored/buffered locally
   def phase: TurnPhase.Type // must implement a read barrier

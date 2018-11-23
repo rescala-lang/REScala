@@ -139,7 +139,7 @@ trait RescalaInterfaceRequireSerializer[S <: Struct] extends Aliases[S] {
     * @return Result of the wrapup function
     * @group update
     */
-  def transactionWithWrapup[I, R](initialWrites: ReSource*)(admissionPhase: AdmissionTicket => I)(wrapUpPhase: (I, WrapUpTicket) => R): R = {
+  def transactionWithWrapup[I, R](initialWrites: ReSource*)(admissionPhase: AdmissionTicket => I)(wrapUpPhase: (I, AccessTicket) => R): R = {
     var res: Option[R] = None
     transaction(initialWrites: _*)(at => {
       val apr: I = admissionPhase(at)

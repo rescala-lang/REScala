@@ -39,7 +39,7 @@ trait TwoVersionScheduler[S <: TwoVersionStruct, TImpl <: TwoVersionPropagation[
         val admissionResult = admissionPhase(admissionTicket)
         turn.initializationPhase(admissionTicket.initialChanges)
         turn.propagationPhase()
-        if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(turn.makeWrapUpPhaseTicket())
+        if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(turn.accessTicket())
         admissionResult
       }
       turn.commitPhase()

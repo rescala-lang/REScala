@@ -110,11 +110,17 @@ object Events {
     else t
   }
 
-  def fromCallback[T, S <: Struct](cb: (T => Unit) => Unit)(implicit ct: CreationTicket[S], s: Scheduler[S]): Event[T, S] = {
-    val evt = Evt[T, S]
-    cb(evt.fire)
-    evt
+
+  final class FormCallbackT[T] private[Events](val u: Unit) extends AnyVal {
+    def apply[S <: Struct, R](body: (T => Unit) => R)
+                             (implicit ct: CreationTicket[S], s: Scheduler[S]): (Event[T, S], R) = {
+      val evt = Evt[T, S]
+      val res = body(evt.fire)
+      (evt, res)
+    }
   }
+
+  def fromCallback[T] = new FormCallbackT[T](())
 }
 
 

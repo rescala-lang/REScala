@@ -17,6 +17,9 @@ trait Initializer[S <: Struct] {
     reactive
   }
 
+  def accessTicket(): AccessTicket[S]
+
+
   protected[this] def register(reactive: ReSource[S]): Unit = ()
 
   /** Correctly initializes [[ReSource]]s */
@@ -42,6 +45,7 @@ trait Initializer[S <: Struct] {
     * @param ignitionRequiresReevaluation true if the reactive must be reevaluated at creation even if none of its dependencies change in the creating turn.
     */
   protected[this] def ignite(reactive: Reactive[S], incoming: Set[ReSource[S]], ignitionRequiresReevaluation: Boolean): Unit
+
 }
 
 

@@ -1,7 +1,6 @@
 package rescala.core
 
 import rescala.core.Initializer.InitValues
-import rescala.reactives.Signal
 
 import scala.annotation.implicitNotFound
 import scala.language.implicitConversions
@@ -93,9 +92,8 @@ trait InitialChange[S <: Struct] {
 
 /** Enables reading of the current value during admission.
   * Keeps track of written sources internally. */
-abstract class AdmissionTicket[S <: Struct](creation: Initializer[S], declaredWrites: Set[ReSource[S]]) extends InnerTicket(creation) {
-  def access[A](reactive: Signal[A, S]): reactive.Value
-  final def now[A](reactive: Signal[A, S]): A = reactive.interpret(access(reactive))
+abstract class AdmissionTicket[S <: Struct](creation: Initializer[S], declaredWrites: Set[ReSource[S]])
+  extends InnerTicket(creation) with AccessTicket[S] {
 
   private var _initialChanges = Map[ReSource[S], InitialChange[S]]()
   private[rescala] def initialChanges: Map[ReSource[S], InitialChange[S]] = _initialChanges
@@ -105,11 +103,11 @@ abstract class AdmissionTicket[S <: Struct](creation: Initializer[S], declaredWr
     _initialChanges += ic.source -> ic
   }
 
-  private[rescala] var wrapUp: WrapUpTicket[S] => Unit = null
+  private[rescala] var wrapUp: AccessTicket[S] => Unit = null
 }
 
 
-abstract class WrapUpTicket[S <: Struct] {
+trait AccessTicket[S <: Struct] {
   private[rescala] def access(reactive: ReSource[S]): reactive.Value
   final def now[A](reactive: Interp[A, S]): A = reactive.interpret(access(reactive))
 }

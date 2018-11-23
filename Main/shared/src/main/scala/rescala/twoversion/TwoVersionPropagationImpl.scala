@@ -1,7 +1,6 @@
 package rescala.twoversion
 
 import rescala.core._
-import rescala.reactives.Signal
 
 import scala.util.control.NonFatal
 
@@ -73,7 +72,7 @@ trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropaga
 
   override private[rescala] def makeAdmissionPhaseTicket(initialWrites: Set[ReSource[S]]): AdmissionTicket[S]
   = new AdmissionTicket[S](this, initialWrites) {
-    override def access[A](reactive: Signal[A, S]): reactive.Value = {
+    override private[rescala] def access(reactive: ReSource[S]): reactive.Value = {
       dynamicDependencyInteraction(reactive)
       reactive.state.base(token)
     }
@@ -83,9 +82,10 @@ trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropaga
     override def staticAccess(reactive: ReSource[S]): reactive.Value = reactive.state.get(token)
   }
 
-  private[rescala] def makeWrapUpPhaseTicket(): WrapUpTicket[S] = new WrapUpTicket[S] {
+  override def accessTicket(): AccessTicket[S] = new AccessTicket[S] {
     override def access(reactive: ReSource[S]): reactive.Value = TwoVersionPropagationImpl.this.dynamicAfter(reactive)
   }
+
 
   private[rescala] def dynamicAfter[P](reactive: ReSource[S]) = {
     // Note: This only synchronizes reactive to be serializable-synchronized, but not glitch-free synchronized.

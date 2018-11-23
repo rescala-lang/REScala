@@ -76,9 +76,7 @@ class FullMVEngine(val timeout: Duration, val schedulerName: String)
       val transactionResult = if(admissionTicket.wrapUp == null){
         admissionResult
       } else {
-        val wrapUpTicket = new WrapUpTicket(){
-          override def access(reactive: ReSource): reactive.Value = turn.dynamicAfter(reactive)
-        }
+        val wrapUpTicket = turn.accessTicket()
         admissionResult.map { i =>
           // executed in map call so that exceptions in wrapUp make the transaction result a Failure
           admissionTicket.wrapUp(wrapUpTicket)
