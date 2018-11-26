@@ -42,7 +42,7 @@ object TodoMVC {
 //    }
 //  }
 
-  class Taskres(val item: TypedTag[LI], val done: Signal[Boolean])
+  class Taskres(val item: TypedTag[LI], val done: Signal[Boolean], val removeClick: Event[Taskres])
 
   def maketask[__](str: String, toggleAll: Event[__]): Taskres = {
     val rn = s"Task(${ThreadLocalRandom.current().nextLong().toHexString})"
@@ -103,7 +103,8 @@ object TodoMVC {
       edittextInput(value := descV)
     )
 
-    new Taskres(listItem, doneV)
+    lazy val res: Taskres = new Taskres(listItem, doneV, removeClick.map(_ => res))
+    res
   }
 
   @JSExportTopLevel("todo.TodoMVC.main")
@@ -132,16 +133,19 @@ object TodoMVC {
       maketask("get coffee", toggleAll)
     )
 
-    val createTask = createTodo.map { str =>
-      println(s"before $str")
-      val res = maketask(str, toggleAll)
-      println("after")
-      res
-    }
+    val createTask = createTodo.map { str => maketask(str, toggleAll) }
 
-    val tasks = createTask.fold(innerTasks) { (tasks, t) =>
-      t :: tasks
-    }("tasklist", ReSerializable.doNotSerialize)
+
+    val (removeAllClick, removeAllButton) = addHandler[UIEvent](button("remove all done todos"), onclick)
+
+    val tasks = Events.foldAll(innerTasks) { tasks =>
+      Seq(
+        createTask >> {_ :: tasks},
+        removeAllClick >>> { dt => _ => tasks.filterNot(t => dt.depend(t.done)) },
+        tasks.map(_.removeClick) >> { t => tasks.filter(_ != t) }
+      )
+    }(ReSerializable.doNotSerialize, "tasklist")
+
 
 
     val content = div(
@@ -167,25 +171,19 @@ object TodoMVC {
         `style`:= Signal { if(tasks().isEmpty) "display:none" else "" },
 
         Signal.dynamic {
-          val leftTasks = tasks().filter(!_.done())
+          val remainingTasks = tasks().filter(!_.done())
           span(
             `class`:="todo-count",
-            strong("" + leftTasks.size),
-            span(if (leftTasks.size == 1)
+            strong("" + remainingTasks.size),
+            span(if (remainingTasks.size == 1)
               " item left" else " items left")
           )
         }.asFrag,
 
-        button(
-          `class`:=Signal.dynamic {
-            "clear-completed" +
-            (if (!tasks().exists(t => t.done()))
-              " hidden" else "") },
-          onclick:={ e: UIEvent =>
-//            tasks.transform(_.filter { t => !t.done.readValueOnce })
-},
-          "remove all done todos"
-        )
+        removeAllButton(`class` := Signal.dynamic {
+          "clear-completed" +
+          (if (!tasks().exists(t => t.done())) " hidden" else "")
+        })
       )
     )
 

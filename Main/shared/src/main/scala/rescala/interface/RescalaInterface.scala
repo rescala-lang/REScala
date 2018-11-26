@@ -99,6 +99,7 @@ trait RescalaInterfaceRequireSerializer[S <: Struct] extends Aliases[S] {
   }
 
   implicit def EventOps[T](e: Event[T]): Events.EOps[T, S] = new Events.EOps[T, S](e)
+  implicit def EventSeqOps[T](e: => Seq[Event[T]]): Events.ESeqOps[T, S] = new Events.ESeqOps[T, S](e)
 
 
   /** Contains static methods to create Events

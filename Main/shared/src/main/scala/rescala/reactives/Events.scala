@@ -82,38 +82,53 @@ object Events {
                                                    (implicit ticket: CreationTicket[S]): Signal[A, S] = {
     var acc = () => init
     val ops = accthingy(acc())
-    val staticInputs = ops.collect { case StaticFoldMatch(ev, _) => ev }.toSet
+    val staticInputs = ops.collect {
+      case StaticFoldMatch(ev, _) => ev
+      case StaticFoldMatchDynamic(ev, _) => ev
+    }.toSet
 
-    def operator(st: DynamicTicket[S], currentValue: () => A): A = {
-      acc = currentValue
+    def operator(dt: DynamicTicket[S], oldValue: () => A): A = {
+      acc = oldValue
+
+      def applyToAcc[T](f: T => A, value: Option[T]): Unit = {
+        value.foreach { v =>
+          val res = f(v)
+          acc = () => res
+        }
+      }
+
       ops.foreach {
         case StaticFoldMatch(ev, f)   =>
-          val value = st.dependStatic(ev)
-          value.foreach { v =>
-            val res = f(v)
-            acc = () => res
-          }
+          applyToAcc(f, dt.dependStatic(ev))
+        case StaticFoldMatchDynamic(ev, f)   =>
+          applyToAcc(f(dt), dt.dependStatic(ev))
         case DynamicFoldMatch(evs, f) =>
-
+          evs().map(dt.depend).foreach {applyToAcc(f, _)}
       }
       acc()
     }
 
-      ticket.create(
-        staticInputs.toSet[ReSource[S]],
-        Initializer.InitializedSignal[Pulse[A]](Pulse.tryCatch(Pulse.Value(init)))(ReSerializable.pulseSerializable),
-        inite = false) {
-        state => new DynamicSignal[A, S](state, operator, ticket.rename, staticInputs.toSet[ReSource[S]])
-      }
+    ticket.create(
+      staticInputs.toSet[ReSource[S]],
+      Initializer.InitializedSignal[Pulse[A]](Pulse.tryCatch(Pulse.Value(init)))(ReSerializable.pulseSerializable),
+      inite = true) {
+      state => new DynamicSignal[A, S](state, operator, ticket.rename, staticInputs.toSet[ReSource[S]])
+    }
   }
 
   sealed trait FoldMatch[T, A, S <: Struct]
   case class StaticFoldMatch[T, A, S <: Struct](event: Event[T, S], f: T => A) extends FoldMatch[T, A, S]
-  case class DynamicFoldMatch[T, A, S <: Struct](event: Seq[Event[T, S]], f: T => A) extends FoldMatch[T, A, S]
+  case class StaticFoldMatchDynamic[T, A, S <: Struct](event: Event[T, S], f: DynamicTicket[S] => T => A) extends FoldMatch[T, A, S]
+  case class DynamicFoldMatch[T, A, S <: Struct](event: () => Seq[Event[T, S]], f: T => A) extends FoldMatch[T, A, S]
 
-  class EOps[T, S <: Struct](val e: Event[T, S]) {
+  class EOps[T, S <: Struct](e: Event[T, S]) {
     /** Constructs a pair similar to ->, however this one is compatible with type inference for [[fold]] */
     final def >>[A](fun: T => A): StaticFoldMatch[T, A, S] = StaticFoldMatch(e, fun)
+    final def >>>[A](fun: DynamicTicket[S] => T => A): StaticFoldMatchDynamic[T, A, S] = StaticFoldMatchDynamic(e, fun)
+  }
+  class ESeqOps[T, S <: Struct](e: => Seq[Event[T, S]]) {
+    /** Constructs a pair similar to ->, however this one is compatible with type inference for [[fold]] */
+    final def >>[A](fun: T => A): DynamicFoldMatch[T, A, S] = DynamicFoldMatch(e _, fun)
   }
 
   def noteFromPulse[N, S <: Struct](t: ReevTicket[Pulse[N], S], value: Pulse[N]): Result[Pulse[N], S] = {
@@ -122,7 +137,7 @@ object Events {
   }
 
 
-  final class FormCallbackT[T] private[Events](val u: Unit) extends AnyVal {
+  final class FromCallbackT[T] private[Events](val u: Null) extends AnyVal {
     def apply[S <: Struct, R](body: (T => Unit) => R)
                              (implicit ct: CreationTicket[S], s: Scheduler[S]): (Event[T, S], R) = {
       val evt = Evt[T, S]
@@ -131,7 +146,7 @@ object Events {
     }
   }
 
-  def fromCallback[T] = new FormCallbackT[T](())
+  def fromCallback[T]: FromCallbackT[T] = new FromCallbackT[T](null)
 }
 
 
