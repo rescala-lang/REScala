@@ -6,8 +6,6 @@ import rescala.macros.cutOutOfUserComputation
 import rescala.reactives.Events.Estate
 import rescala.reactives.Signals.Diff
 
-import scala.language.existentials
-
 /** Functions to construct events, you probably want to use the operators on [[Event]] for a nicer API. */
 object Events {
   type Estate[S <: Struct, T] = S#State[Pulse[T], S]
@@ -73,36 +71,49 @@ object Events {
       dependencies,
       Initializer.InitializedSignal[Pulse[T]](Pulse.tryCatch(Pulse.Value(init)))(ReSerializable.pulseSerializable),
       inite = false) {
-      state => new StaticSignal[T, S](state, expr, ticket.rename) with DisconnectableImpl[S]
+      state => new StaticSignal[T, S](state, expr, ticket.rename)
     }
   }
 
   /** Folds when any one of a list of events occurs, if multiple events occur, every fold is executed in order. */
   @cutOutOfUserComputation
   final def foldAll[A: ReSerializable, S <: Struct](init: A)
-                                                   (accthingy: (=> A) => Seq[(Event[T, S], T => A) forSome {type T}])
+                                                   (accthingy: (=> A) => Seq[FoldMatch[_, A, S]])
                                                    (implicit ticket: CreationTicket[S]): Signal[A, S] = {
-      var acc = () => init
-      val ops = accthingy(acc())
-      val dependencies = ops.map(_._1)
-      fold[A, S](dependencies.toSet[ReSource[S]], init) { (st, currentValue) =>
-        acc = currentValue
-        for ((ev, f) <- ops) {
+    var acc = () => init
+    val ops = accthingy(acc())
+    val staticInputs = ops.collect { case StaticFoldMatch(ev, _) => ev }.toSet
+
+    def operator(st: DynamicTicket[S], currentValue: () => A): A = {
+      acc = currentValue
+      ops.foreach {
+        case StaticFoldMatch(ev, f)   =>
           val value = st.dependStatic(ev)
           value.foreach { v =>
             val res = f(v)
             acc = () => res
           }
-        }
-        acc()
+        case DynamicFoldMatch(evs, f) =>
+
+      }
+      acc()
+    }
+
+      ticket.create(
+        staticInputs.toSet[ReSource[S]],
+        Initializer.InitializedSignal[Pulse[A]](Pulse.tryCatch(Pulse.Value(init)))(ReSerializable.pulseSerializable),
+        inite = false) {
+        state => new DynamicSignal[A, S](state, operator, ticket.rename, staticInputs.toSet[ReSource[S]])
       }
   }
 
-  final def Match[S <: Struct, A](ops: (Event[T, S], T => A) forSome {type T}*): Seq[((Event[T, S], T => A)) forSome {type T}] = ops
+  sealed trait FoldMatch[T, A, S <: Struct]
+  case class StaticFoldMatch[T, A, S <: Struct](event: Event[T, S], f: T => A) extends FoldMatch[T, A, S]
+  case class DynamicFoldMatch[T, A, S <: Struct](event: Seq[Event[T, S]], f: T => A) extends FoldMatch[T, A, S]
 
   class EOps[T, S <: Struct](val e: Event[T, S]) {
     /** Constructs a pair similar to ->, however this one is compatible with type inference for [[fold]] */
-    final def >>[A](fun: T => A): (Event[T, S], T => A) = (e, fun)
+    final def >>[A](fun: T => A): StaticFoldMatch[T, A, S] = StaticFoldMatch(e, fun)
   }
 
   def noteFromPulse[N, S <: Struct](t: ReevTicket[Pulse[N], S], value: Pulse[N]): Result[Pulse[N], S] = {

@@ -190,7 +190,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
         initial = state,
         expr = { (st, currentValue) => reducer(currentValue(), st.collectStatic(this).get) },
         name = ticket.rename
-      ) with DisconnectableImpl[S]
+      )
     }
 
   /** Applies a function on the current value of the signal every time the event occurs,

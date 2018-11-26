@@ -205,7 +205,7 @@ class Fold extends RETests { multiEngined { engine => import engine._
     val count = Evt[Int]
     val reset = Evt[Unit]
 
-    val res = Events.foldAll(""){ acc => Events.Match(
+    val res = Events.foldAll(""){ acc => Seq(
       reset >> (_ => ""),
       word >> identity,
       count >> (acc * _),
