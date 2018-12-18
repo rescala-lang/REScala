@@ -220,7 +220,7 @@ lazy val microbench = project.in(file("Research/Microbenchmarks"))
 lazy val cfg = new {
 
   val version_211 = "2.11.12"
-  val version_212 = "2.12.7"
+  val version_212 = "2.12.8"
 
 
   val base = List(
