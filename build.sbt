@@ -15,7 +15,8 @@ lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
   caseStudyRSSReactive,
   caseStudyRSSSimple,
   caseStudyShapes,
-  crdts,
+  crdtsJVM,
+  crdtsJS,
   datastructures,
 //  dividi,
   documentation,
@@ -107,10 +108,12 @@ lazy val datastructures = project.in(file("Extensions/Datastructures"))
   .dependsOn(rescalaJVM)
   .settings(cfg.base, name := "datastructures", lib.scalatest, cfg.noPublish, cfg.strictScalac)
 
-lazy val crdts = project.in(file("Extensions/crdts"))
-  .dependsOn(rescalaJVM)
+lazy val crdts = crossProject(JSPlatform, JVMPlatform).in(file("Extensions/crdts"))
+  .dependsOn(rescala)
   .settings(name := "recrdt", cfg.base, cfg.mappingFilters, lib.akka, lib.scalaLogback, cfg.strictScalac,
     lib.retierTransmitter, lib.circe)
+lazy val crdtsJVM = crdts.jvm
+lazy val crdtsJS = crdts.js
 
 lazy val rescalafx = project.in(file("Extensions/javafx"))
   .dependsOn(rescalaJVM)
@@ -170,11 +173,11 @@ lazy val livedemo = project.in(file("Examples/LiveDemo"))
                     .settings(cfg.base, cfg.noPublish, name := "livedemo", scalaSource in Compile := baseDirectory.value)
 
 lazy val dividi = project.in(file("Examples/dividi"))
-  .dependsOn(crdts)
+  .dependsOn(crdtsJVM)
   .settings(name := "dividi", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.akka, lib.scalaLogback, lib.scalafx, cfg.strictScalac)
 
 lazy val paroli = project.in(file("Examples/paroli-chat"))
-  .dependsOn(crdts)
+  .dependsOn(crdtsJVM)
   .settings(name := "paroli-chat", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.akka, lib.scalaLogback, lib.jline, cfg.strictScalac)
 
 
