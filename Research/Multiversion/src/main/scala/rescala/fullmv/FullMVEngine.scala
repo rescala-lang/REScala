@@ -53,7 +53,7 @@ class FullMVEngine(val timeout: Duration, val schedulerName: String)
 
       // admission phase
       val admissionTicket = new AdmissionTicket(turn, declaredWrites) {
-        override def access[A](reactive: Signal[A]): reactive.Value = turn.dynamicBefore(reactive)
+        override private[rescala] def access(reactive: ReSource): reactive.Value = turn.dynamicBefore(reactive)
       }
       val admissionResult = Try { admissionPhase(admissionTicket) }
       if (FullMVEngine.DEBUG) admissionResult match {

@@ -116,6 +116,8 @@ object Events {
     }
   }
 
+  val Match = Seq
+
   sealed trait FoldMatch[T, A, S <: Struct]
   case class StaticFoldMatch[T, A, S <: Struct](event: Event[T, S], f: T => A) extends FoldMatch[T, A, S]
   case class StaticFoldMatchDynamic[T, A, S <: Struct](event: Event[T, S], f: DynamicTicket[S] => T => A) extends FoldMatch[T, A, S]

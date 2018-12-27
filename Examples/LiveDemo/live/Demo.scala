@@ -1,15 +1,10 @@
 package live
 
-import java.util.concurrent.ThreadLocalRandom
-
-import org.scalajs.dom
-import org.scalajs.dom.html.Input
-import org.scalajs.dom.{UIEvent, document}
-import rescala.core.{CreationTicket, ReSerializable}
-import rescala.restoration.{LocalStorageStore, ReCirce}
-import rescala.restoration.ReCirce.{recirce, varDecoder, varEncoder}
+import org.scalajs.dom.document
 import rescala.debuggable.ChromeDebuggerInterface
-import rescalatags._
+import rescala.rescalatags._
+import rescala.restoration.LocalStorageStore
+import rescala.restoration.ReCirce.recirce
 import scalatags.JsDom.all._
 import scalatags.JsDom.tags2.section
 
