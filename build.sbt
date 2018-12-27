@@ -1,10 +1,10 @@
 // shadow sbt-scalajs' crossProject and CrossType from Scala.js 0.6.x
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
-// set the prompt (for this build) to include the project id.
-ThisBuild / shellPrompt := { state => Project.extract(state).currentRef.project + "> " }
-// do not spam console with too many errors
-maxErrors := 5
+import Settings._
+import Dependencies._
+
+
 ThisBuild / incOptions := (ThisBuild / incOptions).value.withLogRecompileOnMacro(false)
 cfg.noPublish
 
@@ -48,7 +48,7 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Main"))
     name := "rescala",
     cfg.base,
     lib.retypecheck,
-    lib.sourcecode,
+    sourcecode,
     cfg.strictScalac,
     cfg.snapshotAssertions,
     cfg.bintray,
@@ -87,31 +87,31 @@ lazy val reactiveStreams = project.in(file("Extensions/ReactiveStreams"))
   .dependsOn(rescalaJVM)
 
 lazy val reswing = project.in(file("Extensions/RESwing"))
-  .settings(name := "reswing", cfg.base, cfg.bintray, cfg.strictScalac, lib.scalaswing)
+  .settings(name := "reswing", cfg.base, cfg.bintray, cfg.strictScalac, scalaswing)
   .dependsOn(rescalaJVM)
 
 lazy val restore = crossProject(JSPlatform, JVMPlatform).in(file("Extensions/restoration"))
-  .settings(name := "rescala-restoration", cfg.base, cfg.strictScalac, lib.circe,  cfg.bintray)
+  .settings(name := "rescala-restoration", cfg.base, cfg.strictScalac, circe,  cfg.bintray)
   .dependsOn(rescala, tests % "test->test")
-  .jsSettings(cfg.js, lib.jsdom)
+  .jsSettings(cfg.js, scalajsdom)
 lazy val restoreJVM = restore.jvm
 lazy val restoreJS = restore.js
 
 lazy val rescalatags = project.in(file("Extensions/Rescalatags"))
   .settings(name := "rescalatags", cfg.base, cfg.strictScalac, cfg.bintray, cfg.test,
-    cfg.js, lib.scalatags, jsDependencies += RuntimeDOM)
+    cfg.js, scalatags, jsDependencies += RuntimeDOM)
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(rescalaJS)
   .dependsOn(testsJS % "test->test")
 
 lazy val datastructures = project.in(file("Extensions/Datastructures"))
   .dependsOn(rescalaJVM)
-  .settings(cfg.base, name := "datastructures", lib.scalatest, cfg.noPublish, cfg.strictScalac)
+  .settings(cfg.base, name := "datastructures", scalatest, cfg.noPublish, cfg.strictScalac)
 
 lazy val crdts = crossProject(JSPlatform, JVMPlatform).in(file("Extensions/crdts"))
   .dependsOn(rescala)
-  .settings(name := "recrdt", cfg.base, cfg.mappingFilters, lib.akka, lib.scalaLogback, cfg.strictScalac,
-    lib.retierTransmitter, lib.circe)
+  .settings(name := "recrdt", cfg.base, cfg.mappingFilters, lib.akkaClusterCrdts, lib.scalaLogback, cfg.strictScalac,
+            lib.lociTransmitterDependencies, circe)
 lazy val crdtsJVM = crdts.jvm
 lazy val crdtsJS = crdts.js
 
@@ -119,15 +119,22 @@ lazy val rescalafx = project.in(file("Extensions/javafx"))
   .dependsOn(rescalaJVM)
   .settings(name := "rescalafx", cfg.base, cfg.noPublish, lib.scalafx)
 
+lazy val inspector = project.in(file("Extensions/Inspector"))
+                     .enablePlugins(ScalaJSPlugin)
+                     .dependsOn(rescalatags)
+                     .settings(cfg.base, cfg.noPublish,
+                               scalaJSUseMainModuleInitializer := true,
+                               name := "inspector")
+
 // ===================================================================================== Examples
 
 lazy val examples = project.in(file("Examples/examples"))
   .dependsOn(rescalaJVM)
-  .settings(name := "rescala-examples", cfg.base, cfg.noPublish, lib.scalaswing)
+  .settings(name := "rescala-examples", cfg.base, cfg.noPublish, scalaswing)
 
 lazy val pongDemo = project.in(file("Examples/PongDemo"))
   .dependsOn(rescalaJVM)
-  .settings(name := "pong-demo", cfg.base, cfg.noPublish, lib.scalaswing)
+  .settings(name := "pong-demo", cfg.base, cfg.noPublish, scalaswing)
 
 lazy val examplesReswing = project.in(file("Examples/examples-reswing"))
   .dependsOn(reswing)
@@ -156,7 +163,7 @@ lazy val universe = project.in(file("Examples/Universe"))
 
 lazy val caseStudyShapes = project.in(file("Examples/Shapes"))
   .dependsOn(reswing)
-  .settings(cfg.base, cfg.noPublish, name := "shapes-case-study", lib.scalaXml)
+  .settings(cfg.base, cfg.noPublish, name := "shapes-case-study", scalaXml)
 
 lazy val caseStudyMill = project.in(file("Examples/Mill"))
   .dependsOn(reswing)
@@ -174,11 +181,11 @@ lazy val livedemo = project.in(file("Examples/LiveDemo"))
 
 lazy val dividi = project.in(file("Examples/dividi"))
   .dependsOn(crdtsJVM)
-  .settings(name := "dividi", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.akka, lib.scalaLogback, lib.scalafx, cfg.strictScalac)
+  .settings(name := "dividi", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.akkaClusterCrdts, lib.scalaLogback, lib.scalafx, cfg.strictScalac)
 
 lazy val paroli = project.in(file("Examples/paroli-chat"))
   .dependsOn(crdtsJVM)
-  .settings(name := "paroli-chat", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.akka, lib.scalaLogback, lib.jline, cfg.strictScalac)
+  .settings(name := "paroli-chat", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.akkaClusterCrdts, lib.scalaLogback, lib.jline, cfg.strictScalac)
 
 
 // ===================================================================================== Research
@@ -190,7 +197,7 @@ lazy val fullmv = project.in(file("Research/Multiversion"))
 
 lazy val distributedFullmv = project.in(file("Research/distributed/multiversion"))
   .settings( cfg.base, name := "rescala-distributed-multiversion",
-    cfg.test, cfg.noPublish, lib.circe, lib.retierTransmitter, exportJars := true)
+    cfg.test, cfg.noPublish, circe, lib.lociTransmitterDependencies, exportJars := true)
   .dependsOn(fullmv, testsJVM % "test->test")
 
 lazy val distributedExamples = project.in(file("Research/distributed/examples"))
@@ -222,9 +229,6 @@ lazy val microbench = project.in(file("Research/Microbenchmarks"))
 
 lazy val cfg = new {
 
-  val version_211 = "2.11.12"
-  val version_212 = "2.12.8"
-
 
   val base = List(
     organization := "de.tuda.stg",
@@ -239,7 +243,7 @@ lazy val cfg = new {
   val test = List(
     testOptions in Test += Tests.Argument("-oICN"),
     parallelExecution in Test := true,
-    lib.scalatest
+    scalatest
   )
 
 
@@ -302,20 +306,7 @@ lazy val cfg = new {
 //    "-Xdisable-assertions"
   )
 
-  lazy val strictScalac = Compile / compile / scalacOptions ++= List(
-    //"-Xlog-implicits" ,
-    //"-Yno-predef" ,
-    //"-Yno-imports" ,
-    "-Xfatal-warnings",
-    //"-Yinline-warnings" ,
-    "-Yno-adapted-args",
-    "-Ywarn-dead-code",
-    "-Ywarn-nullary-override",
-    "-Ywarn-nullary-unit",
-    "-Ywarn-numeric-widen"
-    //"-Ywarn-value-discard" ,
-    //"-Ymacro-debug-lite" ,
-  )
+  lazy val strictScalac = Compile / compile / scalacOptions ++= strictScalacOptions
 
   lazy val snapshotAssertions = scalacOptions ++= (
     if (!version.value.endsWith("-SNAPSHOT")) List("-Xdisable-assertions", "-Xelide-below", "9999999")
@@ -332,25 +323,12 @@ lazy val cfg = new {
 
 lazy val lib = new {
 
-  val scalaxmlVersion = "1.1.1"
-
-  lazy val rss = libraryDependencies ++= Seq(
+  lazy val rss = Def.settings(
+    libraryDependencies ++= Seq(
     "joda-time" % "joda-time" % "2.10.1",
     "org.joda" % "joda-convert" % "2.1.2",
-    "org.codehaus.jsr166-mirror" % "jsr166y" % "1.7.0",
-    "org.scala-lang.modules" %% "scala-xml" % scalaxmlVersion)
-
-  lazy val scalaswing = libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "2.0.3"
-  lazy val scalatest = libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.5" % "test"
-
-
-  lazy val circe = {
-    libraryDependencies ++= Seq(
-      "io.circe" %%% "circe-core",
-      "io.circe" %%% "circe-generic",
-      "io.circe" %%% "circe-parser"
-    ).map(_ % "0.10.1")
-  }
+    "org.codehaus.jsr166-mirror" % "jsr166y" % "1.7.0"),
+    scalaXml)
 
   val reactivestreams = libraryDependencies ++= List(
     "org.reactivestreams" % "reactive-streams" % "1.0.2",
@@ -364,15 +342,15 @@ lazy val lib = new {
 
   val reflectionForMacroDefinitions = libraryDependencies += scalaOrganization.value % "scala-reflect" % scalaVersion.value % "provided"
 
-  val sourcecode = libraryDependencies += "com.lihaoyi" %%% "sourcecode" % "0.1.4"
 
-  val scalaXml = libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % scalaxmlVersion
+  val lociTransmitterDependencies = Def.settings(
+    lociCommunication ++ Seq(lociCommunicationCirce, lociCommunicationUpickle) ++ akkaStream,
+    resolvers += Resolvers.stg)
 
-  val scalatags = libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.6.7"
 
-  val jsdom = libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "0.9.6"
+  ///// Historic dependencies
 
-  val akka = {
+  val akkaClusterCrdts = {
     val akkaVersion = "2.5.18"
     // akka:
     libraryDependencies ++= Seq(
@@ -398,17 +376,4 @@ lazy val lib = new {
 
   val jline = libraryDependencies += "org.scala-lang.modules" % "scala-jline" % "2.12.1"
 
-  val retierTransmitter = Seq(
-    libraryDependencies ++= Seq(
-    "scala-loci-communication",
-    "scala-loci-communicator-tcp",
-    "scala-loci-communicator-ws-akka",
-    "scala-loci-serializer-upickle",
-    "scala-loci-serializer-circe",
-    ).map(n => "de.tuda.stg" %% n % "0.2.0"),
-    libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-http" % "10.1.5",
-      "com.typesafe.akka" %% "akka-stream" % "2.5.11"
-    ),
-    resolvers += Resolver.bintrayRepo("stg-tud", "maven"))
 }
