@@ -32,6 +32,8 @@ object Settings {
     "-Ywarn-numeric-widen",
     //"-Ywarn-value-discard" ,
     )
+  
+  val compileWithStrictScalacOptions = Compile / compile / scalacOptions ++= strictScalacOptions
 }
 
 object Resolvers {
