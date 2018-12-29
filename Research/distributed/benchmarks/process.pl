@@ -276,69 +276,6 @@ sub plotDatasets($group, $name, $additionalParams, @datasets) {
 }
 
 
-sub compareBargraph($threads, $group, $name, $engines, %conditions) {
-
-  my @engines = @$engines;
-  my ($head, @tail) = @engines;
-  my @pretty = map {prettyName($_)} @engines;
-  mkdir $group;
-  chdir $group;
-  my $TMPFILE = "$threads$name.perf";
-  open my $OUT, ">", $TMPFILE;
-  say $OUT "=cluster " . (join ", ", @pretty) . "
-=sortbmarks
-yformat=$BARGRAPH_YFORMAT
-xlabel=
-# ylabel=Speedup vs. $pretty[0]
-ylabelshift=2,0
-font=$FONT
-yscale=0.6666667
-xscale=1.4
-fontsz=19
-colors=red,green,magenta,blue,black
-=norotate
-extraops=set ytics $BARGRAPH_YTICS
-$BARGRAPH_LEGEND
-=table,";
-
-  if ($MANUAL_BARGRAPH_HACK) {
-    pop @tail;
-    pop @engines;
-  }
-
-  for my $name (keys %conditions) {
-    my $bmcond = $conditions{$name};
-    my $joinMapTail = sub ($f, $j = " AND ") { join $j, map { $f->() } @tail };
-    my $paramEqualIfDefined = sub ($param) { qq[(`$head`.`$param` IS NULL OR (] . $joinMapTail->(sub { qq[$_.`$param` = `$head`.`$param` ] }) . qq[)) ] };
-    sub sum($engine) { qq[ (sum($engine.Score * $engine.Samples) / sum($engine.Samples)) ] };
-    my $queryString = qq[SELECT ] .
-      (join ", ", map { sum($_) . " / " . sum($head) } @engines) .
-      qq[ FROM ] .
-      (join ", ", map { qq[(SELECT * FROM results WHERE ($bmcond) AND Threads = $threads AND `Param: engineName` = "$_") AS `$_` ]} @engines) . " WHERE " .
-      (join " AND ", map {$paramEqualIfDefined->("Param: size") } ("Param: step", "Param: work", "Param: size", "Threads", "Benchmark") ) .
-      qq[ GROUP BY `$head`.Benchmark];
-    #say $queryString;
-    my $row = $DBH->selectrow_arrayref($queryString);
-
-    if (not $row) {
-      say "bargraph for $name ($threads threads) did not return results";
-      #say $queryString;
-    }
-    else {
-      if ($MANUAL_BARGRAPH_HACK) {
-        $row = [@$row, 1];
-      }
-      say $OUT join ", ", $name, @$row;
-    }
-  }
-  close $OUT;
-  qx[perl $BARGRAPH -pdf $TMPFILE > $threads$name.pdf ];
-  unlink $TMPFILE;
-  chdir "..";
-}
-
-
-
 
 ##### IMPORTING
 
