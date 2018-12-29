@@ -31,10 +31,10 @@ my @DELAY = (24);
 my %BASECONFIG = (
   # global locking does not deal well with sync iterations
   #si => "false", # synchronize iterations
-  wi => 2,#5, # warmup iterations
+  wi => 5, # warmup iterations
   w => "5000ms", # warmup time
-  f => 1,#5, # forks
-  i => 3,#7, # iterations
+  f => 5, # forks
+  i => 7, # iterations
   r => "5000ms", # time per iteration
   to => "30s", #timeout
 );
@@ -202,25 +202,22 @@ sub selection {
     conflictdistance => sub {
       my @runs;
 
-      for my $threads (@THREADS) {
-        for my $totaldepth (5) {
-          for my $mergeAt (1,2,3,4,5) {
-            for my $delay (@DELAY) {
-              my $name = "conflict-distance-delay-$delay-totaldepth-$totaldepth-mergeAt-$mergeAt-threads-$threads";
-              my $program = makeRunString( $name,
-                fromBaseConfig(
-                  p => { # parameters
-                    totalDepth => $totaldepth,
-                    mergeAt => $mergeAt,
-                    msDelay => $delay,
-					threads => $threads,
-                  },
-                  t => 1, #threads
-                ),
-                "ConflictDistances"
-              );
-              push @runs, {name => $name, program => $program};
-            }
+      for my $totaldepth (5) {
+        for my $mergeAt (1 .. $totaldepth) {
+          for my $delay (@DELAY) {
+            my $name = "conflict-distance-delay-$delay-totaldepth-$totaldepth-mergeAt-$mergeAt-threads-2";
+            my $program = makeRunString( $name,
+              fromBaseConfig(
+                p => { # parameters
+                  totalDepth => $totaldepth,
+                  mergeAt => $mergeAt,
+                  msDelay => $delay,
+                },
+                t => 1, #threads
+              ),
+              "ConflictDistances"
+            );
+            push @runs, {name => $name, program => $program};
           }
         }
       }
