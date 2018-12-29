@@ -11,6 +11,7 @@ bin
 .settings/
 *.sublime-project
 *.sublime-workspace
+*.out
 website/
 test-output/
 Examples/Universe/*.csv
