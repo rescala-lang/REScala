@@ -25,7 +25,7 @@ my $SCHEDULER_REQUIRE = "avx\\&mpi";
 my $SCHEDULER_CORES = "16";
 
 #my @THREADS = (1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16);
-my @THREADS = (1,2,4,8);
+my @THREADS = (1,2,4,8,16);
 my @DELAY = (24);
 
 my %BASECONFIG = (
@@ -77,8 +77,7 @@ sub init {
 }
 
 sub run {
-  my @runs = makeRuns();
-  for my $run (@runs) {
+  my @runs = makeRuns();for my $run (@runs) {
     my $prog = $run->{program};
     say "executing $prog";
     system($prog);
@@ -150,11 +149,10 @@ sub selection {
       my @runs;
 
       for my $threads (@THREADS) {
-        # for my $dynamicity (@DYNAMICITIES) {
         for my $perHostWidth (1) {
           for my $perHostDepth (1) {
             for my $width (1) {
-              for my $depth (1, 2, 3, 5) {
+              for my $depth (1, 2, 3, 4, 5) {
                 for my $delay (@DELAY) {
                   my $name = "dist-grid-delay-$delay-phw-$perHostWidth-phd-$perHostDepth-w-$width-d-$depth-threads-$threads";
                   my $program = makeRunString( $name,
@@ -171,11 +169,60 @@ sub selection {
                     "DistributedSignalMapGrid"
                   );
                   push @runs, {name => $name, program => $program};
-				}
+                }
               }
-    	    }
-    	  }
-		}
+            }
+          }
+        }
+      }
+
+      @runs;
+    },
+    loopback => sub {
+      my @runs;
+
+      for my $threads (@THREADS) {
+        for my $delay (@DELAY) {
+          my $name = "loop-back-delay-$delay-threads-$threads";
+          my $program = makeRunString( $name,
+            fromBaseConfig(
+              p => { # parameters
+                msDelay => $delay,
+              },
+              t => $threads, #threads
+            ),
+            "RemoteGlitchLoop"
+          );
+          push @runs, {name => $name, program => $program};
+        }
+      }
+
+      @runs;
+    },
+    conflictdistance => sub {
+      my @runs;
+
+      for my $threads (@THREADS) {
+        for my $totaldepth (5) {
+          for my $mergeAt (1,2,3,4,5) {
+            for my $delay (@DELAY) {
+              my $name = "conflict-distance-delay-$delay-totaldepth-$totaldepth-mergeAt-$mergeAt-threads-$threads";
+              my $program = makeRunString( $name,
+                fromBaseConfig(
+                  p => { # parameters
+                    totalDepth => $totaldepth,
+                    mergeAt => $mergeAt,
+                    msDelay => $delay,
+					threads => $threads,
+                  },
+                  t => 1, #threads
+                ),
+                "ConflictDistances"
+              );
+              push @runs, {name => $name, program => $program};
+            }
+          }
+        }
       }
 
       @runs;
