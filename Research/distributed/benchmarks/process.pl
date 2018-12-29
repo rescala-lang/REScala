@@ -92,33 +92,42 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
   chdir $OUTDIR;
 
   makeLegend();
-#  miscBenchmarks();
-#  restorationBenchmarks();
-  mvrpBenchmarks();
+  distributionBenchmarks();
 
   $DBH->commit();
 }
 
-sub restorationBenchmarks() {
-  { # fold percentages
-    local $LEGEND_POS = "left bottom";
-    my $benchmark = "benchmarks.restoring.RestoringSimple.countMany";
-    local $X_VARYING = "Param: foldPercent";
-    for my $foldNodes (queryChoices("Param: size", Benchmark => $benchmark)) {
-      #local $LEGEND_POS = "right top" if $foldNodes == 4;
-      plotBenchmarksFor("folds", "foldPercentage$foldNodes",
-        (map {{Title => $_, "Param: engineName" => $_ , Benchmark => $benchmark, "Param: size" => $foldNodes }}
-          queryChoices("Param: engineName", Benchmark => $benchmark, "Param: size" => $foldNodes)),);
-    }
+sub distributionBenchmarks() {
+  { # conflict distance
+    my $benchmark = "rescala.benchmarks.distributed.rtt.ConflictDistance.run";
+    my $query = queryDataset(query("Param: mergeAt", "Benchmark"));
+    plotDatasets("rtt", "conflictdistance", {xlabel => "Merge Depth"},
+      $query->("foo", $benchmark)
+    );
   }
 
-  { # resotring vs deriving
-    local $X_VARYING = "Param: size";
-    local $LEGEND_POS = "right top";
-    local %ADDITIONAL_GNUPLOT_PARAMS = (logscale => "x 10");
-    plotBenchmarksFor("restoreVsDerive", "restoreVsDerive",
-      {Title => "Restore", Benchmark => "benchmarks.restoring.RestoringSnapshotVsRecomputationA.restored"},
-      {Title => "Derive", Benchmark => "benchmarks.restoring.RestoringSnapshotVsRecomputationB.derived"});
+  { # loop back
+    my $benchmark = "rescala.benchmarks.distributed.rtt.RemoteGlitchLoop.run";
+    my $query = queryDataset(query("Threads", "Benchmark"));
+    plotDatasets("rtt", "loopback", {xlabel => "Threads"},
+      $query->("foo", $benchmark)
+    );
+  }
+
+  { # map grid single threaded
+    my $benchmark = "rescala.benchmarks.distributed.rtt.DistributedSignalMapGrid.run";
+    my $query = queryDataset(query("Param: depthHosts", "Threads", "Benchmark"));
+    plotDatasets("rtt", "loopback", {xlabel => "Hosts"},
+      $query->("foo", 1, $benchmark)
+    );
+  }
+
+  { # map grid all threads
+    my $benchmark = "rescala.benchmarks.distributed.rtt.DistributedSignalMapGrid.run";
+    my $query = queryDataset(query("Threads", "Benchmark", "Param: depthHosts"));
+    plotDatasets("rtt", "loopback", {xlabel => "Threads"},
+      map { $query->("$_ Hosts", $benchmark, $_) } queryChoices("Param: depthHosts", "Benchmark" => $benchmark)
+	);
   }
 }
 
