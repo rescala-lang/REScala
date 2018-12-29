@@ -22,9 +22,10 @@ object ReactiveMirror {
   }
 }
 
-class ReactiveMirror[A](val getValue: FullMVTurn => A, val reflectionProxy: ReactiveReflectionProxy[A], val timeout: Duration, rename: REName) extends RENamed(rename) with Reactive[FullMVStruct] with FullMVState[Nothing, FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]] {
+class ReactiveMirror[A](val getValue: FullMVTurn => A, val reflectionProxy: ReactiveReflectionProxy[A], val timeout: Duration, rename: REName) extends Reactive[FullMVStruct] with FullMVState[Nothing, FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]] {
   override type Value = Nothing
   override protected[rescala] val state = this
+  override def toString: String = s"Mirror${rename.str}"
   override val host: FullMVEngine = null
   override def incrementFrame(txn: FullMVTurn): FramingBranchResult[FullMVTurn, Reactive[FullMVStruct]] = {
     FullMVEngine.myAwait(txn.addRemoteBranch(TurnPhase.Framing), timeout)

@@ -3,7 +3,6 @@ package rescala.benchmarks.distributed.rtt
 import java.util.concurrent.TimeUnit
 
 import org.openjdk.jmh.annotations._
-import rescala.core.REName
 import rescala.fullmv.mirrors.localcloning.{FakeDelayer, ReactiveLocalClone}
 import rescala.fullmv.{FullMVEngine, FullMVStruct}
 import rescala.reactives.{Signal, Var}

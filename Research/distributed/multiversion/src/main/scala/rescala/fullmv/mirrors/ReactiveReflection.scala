@@ -8,7 +8,6 @@ import rescala.fullmv.tasks._
 import rescala.fullmv.{FullMVEngine, FullMVState, FullMVStruct, FullMVTurn, TurnPhase}
 
 trait ReactiveReflection[-P] extends Reactive[FullMVStruct] with ReactiveReflectionProxy[P] {
-  self: RENamed =>
   val host: FullMVEngine
   def buffer(turn: FullMVTurn, value: P): Unit
   def submit(action: FullMVAction): Unit

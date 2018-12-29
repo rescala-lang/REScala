@@ -2,7 +2,7 @@ package rescala.fullmv.mirrors.localcloning
 
 import rescala.core._
 import rescala.fullmv.mirrors.{ReactiveMirror, ReactiveReflectionImpl, ReactiveReflectionProxy}
-import rescala.fullmv.{FullMVEngine, FullMVStruct, FullMVTurn, TurnPhase}
+import rescala.fullmv._
 import rescala.reactives.{Event, Signal}
 
 import scala.concurrent.duration.Duration
@@ -12,15 +12,13 @@ object ReactiveLocalClone {
   def apply[A](signal: Signal[A, FullMVStruct], host: FullMVEngine, fakeDelay: Duration)(implicit name: REName): Signal[A, FullMVStruct] = apply(signal, fakeDelay)(CreationTicket.fromEngine(host)(name))
   def apply[A](signal: Signal[A, FullMVStruct])(implicit ticket: CreationTicket[FullMVStruct]): Signal[A, FullMVStruct] = apply(signal, Duration.Zero)(ticket)
   def apply[A](signal: Signal[A, FullMVStruct], fakeDelay: Duration)(implicit ticket: CreationTicket[FullMVStruct]): Signal[A, FullMVStruct] = {
-    ticket { creation =>
-      val turn = creation /* fuckit */ .asInstanceOf[FullMVTurn]
-      creation.create(Set(), Initializer.DerivedSignal[A], inite = true) { initialState =>
-        val reflection = new ReactiveReflectionImpl[Pulse[A]](turn.host, None, initialState, ticket.rename.derive("SignalReflection")) with Signal[A, FullMVStruct] {
-          override def disconnect()(implicit engine: Scheduler[FullMVStruct]): Unit = ???
-        }
-        connectAndInitializeLocalPushClone(fakeDelay, signal, turn, reflectionIsTransient = false, ticket.rename.str)(identity, reflection)
-        reflection
+    ticket.create(Set(), Initializer.DerivedSignal[A], inite = true) { initialState =>
+      val turn = initialState.asInstanceOf[NonblockingSkipListVersionHistory[_, FullMVTurn, _, _]].laggingLatestStable.get().get().txn
+      val reflection = new ReactiveReflectionImpl[Pulse[A]](turn.host, None, initialState, ticket.rename.derive("SignalReflection")) with Signal[A, FullMVStruct] {
+        override def disconnect()(implicit engine: Scheduler[FullMVStruct]): Unit = ???
       }
+      connectAndInitializeLocalPushClone(fakeDelay, signal, turn, reflectionIsTransient = false, ticket.rename.str)(identity, reflection)
+      reflection
     }
   }
 
@@ -28,16 +26,14 @@ object ReactiveLocalClone {
   def apply[P](event: Event[P, FullMVStruct], host: FullMVEngine, fakeDelay: Duration)(implicit name: REName): Event[P, FullMVStruct] = apply(event, fakeDelay)(CreationTicket.fromEngine(host)(name))
   def apply[P](event: Event[P, FullMVStruct])(implicit ticket: CreationTicket[FullMVStruct]): Event[P, FullMVStruct] = apply(event, Duration.Zero)(ticket)
   def apply[P](event: Event[P, FullMVStruct], fakeDelay: Duration)(implicit ticket: CreationTicket[FullMVStruct]): Event[P, FullMVStruct] = {
-    ticket { creation =>
-      creation.create(Set(), Initializer.Event[P], inite = false) { initialState =>
-        val turn = creation /* fuckit */ .asInstanceOf[FullMVTurn]
-        val reflection = new ReactiveReflectionImpl[Pulse[P]](turn.host, Some(turn), initialState, ticket.rename.derive("EventReflection")) with Event[P, FullMVStruct] {
-          override def internalAccess(v: Pulse[P]): Pulse[P] = v
-          override def disconnect()(implicit engine: Scheduler[FullMVStruct]): Unit = ???
-        }
-        connectAndInitializeLocalPushClone(fakeDelay, event, turn, reflectionIsTransient = true, ticket.rename.str)(event.internalAccess, reflection)
-        reflection
+    ticket.create(Set(), Initializer.Event[P], inite = false) { initialState =>
+      val turn = initialState.asInstanceOf[NonblockingSkipListVersionHistory[_, FullMVTurn, _, _]].laggingLatestStable.get().get().txn
+      val reflection = new ReactiveReflectionImpl[Pulse[P]](turn.host, Some(turn), initialState, ticket.rename.derive("EventReflection")) with Event[P, FullMVStruct] {
+        override def internalAccess(v: Pulse[P]): Pulse[P] = v
+        override def disconnect()(implicit engine: Scheduler[FullMVStruct]): Unit = ???
       }
+      connectAndInitializeLocalPushClone(fakeDelay, event, turn, reflectionIsTransient = true, ticket.rename.str)(event.internalAccess, reflection)
+      reflection
     }
   }
 
