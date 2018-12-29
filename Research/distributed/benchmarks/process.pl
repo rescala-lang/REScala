@@ -23,7 +23,7 @@ my $TABLE = 'results';
 my $CSVDIR = 'resultStore';
 my $OUTDIR = 'fig';
 
-our $FONT = "Times";
+our $FONT = "Times New Roman";
 our $FONTSIZE = "30";
 
 our $NAME_FINE = "Handcrafted";
@@ -42,7 +42,7 @@ our $GNUPLOT_TERMINAL = "pdf size 5,2.5";
 our %MARGINS = (
     lmargin => 5.8,
     rmargin => 1.5,
-    tmargin => 0.3,
+    tmargin => 0.5,
     bmargin => 1.5,
   );
 our $VERTICAL_LINE = undef;
@@ -93,7 +93,7 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
 
 sub distributionBenchmarks() {
   { # conflict distance
-    my $benchmark = "rescala.benchmarks.distributed.rtt.ConflictDistance.run";
+    my $benchmark = "rescala.benchmarks.distributed.rtt.ConflictDistances.run";
     my $query = queryDataset(query("Param: mergeAt", "Benchmark"));
     plotDatasets("rtt", "conflictdistance", {xlabel => "Merge Depth"},
       $query->("foo", $benchmark)
@@ -111,15 +111,16 @@ sub distributionBenchmarks() {
   { # map grid single threaded
     my $benchmark = "rescala.benchmarks.distributed.rtt.DistributedSignalMapGrid.run";
     my $query = queryDataset(query("Param: depthHosts", "Threads", "Benchmark"));
-    plotDatasets("rtt", "loopback", {xlabel => "Hosts"},
+    plotDatasets("mapgrid", "singlethreaded", {xlabel => "Hosts"},
       $query->("foo", 1, $benchmark)
     );
   }
 
-  { # map grid all threads
+  { # map grid pipelining
+    local $LEGEND_POS = "bottom";
     my $benchmark = "rescala.benchmarks.distributed.rtt.DistributedSignalMapGrid.run";
     my $query = queryDataset(query("Threads", "Benchmark", "Param: depthHosts"));
-    plotDatasets("rtt", "loopback", {xlabel => "Threads"},
+    plotDatasets("mapgrid", "pipelining", {xlabel => "Threads"},
       map { $query->("$_ Hosts", $benchmark, $_) } queryChoices("Param: depthHosts", "Benchmark" => $benchmark)
 	);
   }
