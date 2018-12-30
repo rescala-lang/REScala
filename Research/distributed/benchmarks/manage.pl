@@ -203,27 +203,61 @@ sub selection {
       my @runs;
 
       for my $totaldepth (1..8) {
-        for my $mergeAt (1 .. $totaldepth) {
-          for my $delay (@DELAY) {
-            my $name = "conflict-distance-delay-$delay-totaldepth-$totaldepth-mergeAt-$mergeAt-threads-2";
-            my $program = makeRunString( $name,
-              fromBaseConfig(
-                p => { # parameters
-                  totalLength => $totaldepth,
-                  mergeAt => $mergeAt,
-                  msDelay => $delay,
-                },
-                t => 1, #threads
-              ),
-              "ConflictDistances"
-            );
-            push @runs, {name => $name, program => $program};
+        for my $width (2) {
+          for my $mergeAt (1 .. $totaldepth) {
+            for my $delay (@DELAY) {
+              my $name = "conflict-distance-delay-$delay-totaldepth-$totaldepth-width-$width-mergeAt-$mergeAt-threads-2";
+              my $program = makeRunString( $name,
+                fromBaseConfig(
+                  p => { # parameters
+                    totalLength => $totaldepth,
+					threads => $width,
+                    mergeAt => $mergeAt,
+                    msDelay => $delay,
+                  },
+                  t => 1, #threads
+                ),
+                "ConflictDistances"
+              );
+              push @runs, {name => $name, program => $program};
+            }
           }
         }
       }
 
       @runs;
     },
+    remerge => sub {
+      my @runs;
+
+      for my $threads (@THREADS) {
+        for my $width (2) {
+          for my $totaldepth (1..8) {
+            for my $mergeAt (1 .. $totaldepth) {
+              for my $delay (@DELAY) {
+                my $name = "dist-remerge-delay-$delay-w-$width-totaldepth-$totaldepth-remerge-$mergeAt-threads-$threads";
+                my $program = makeRunString( $name,
+                  fromBaseConfig(
+                    p => { # parameters
+                      widthHosts => $width,
+                      totalLength => $totaldepth,
+                mergeAt => $mergeAt,
+                      msDelay => $delay,
+                    },
+                    t => $threads, #threads
+                  ),
+                  "DistributedSignalMapGrid"
+                );
+                push @runs, {name => $name, program => $program};
+              }
+            }
+          }
+        }
+      }
+
+      @runs;
+    },
+
   };
 }
 
