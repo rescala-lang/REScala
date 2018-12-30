@@ -24,8 +24,8 @@ my $SCHEDULER_TIME = "0:30:00";
 my $SCHEDULER_REQUIRE = "avx\\&mpi";
 my $SCHEDULER_CORES = "16";
 
-#my @THREADS = (1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16);
-my @THREADS = (1,2,4,8,16);
+my @THREADS = (1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16);
+#my @THREADS = (1,2,4,8,16);
 my @DELAY = (24);
 
 my %BASECONFIG = (
@@ -36,7 +36,7 @@ my %BASECONFIG = (
   f => 5, # forks
   i => 7, # iterations
   r => "5000ms", # time per iteration
-  to => "30s", #timeout
+  to => "60s", #timeout
 );
 
 # stop java from formating numbers with `,` instead of `.`
@@ -152,7 +152,7 @@ sub selection {
         for my $perHostWidth (1) {
           for my $perHostDepth (1) {
             for my $width (1) {
-              for my $depth (1, 2, 3, 4, 5) {
+              for my $depth (1..8) {
                 for my $delay (@DELAY) {
                   my $name = "dist-grid-delay-$delay-phw-$perHostWidth-phd-$perHostDepth-w-$width-d-$depth-threads-$threads";
                   my $program = makeRunString( $name,
@@ -202,14 +202,14 @@ sub selection {
     conflictdistance => sub {
       my @runs;
 
-      for my $totaldepth (5) {
+      for my $totaldepth (1..8) {
         for my $mergeAt (1 .. $totaldepth) {
           for my $delay (@DELAY) {
             my $name = "conflict-distance-delay-$delay-totaldepth-$totaldepth-mergeAt-$mergeAt-threads-2";
             my $program = makeRunString( $name,
               fromBaseConfig(
                 p => { # parameters
-                  totalDepth => $totaldepth,
+                  totalLength => $totaldepth,
                   mergeAt => $mergeAt,
                   msDelay => $delay,
                 },
