@@ -48,20 +48,22 @@ object Dependencies {
   val betterFiles = libraryDependencies += ("com.github.pathikrit" %% "better-files" % "3.7.0")
   val circe = libraryDependencies ++= Seq("core", "generic", "generic-extras", "parser").map(n => "io.circe" %%% s"circe-$n" % "0.11.0")
   val decline = libraryDependencies += ("com.monovore" %% "decline" % "0.5.1")
+  val fastparse = libraryDependencies += "com.lihaoyi" %%% "fastparse" % "2.0.4"
   val fontawesome = libraryDependencies += ("org.webjars" % "font-awesome" % "5.3.1")
   val jsoup = libraryDependencies += ("org.jsoup" % "jsoup" % "1.11.3")
-  val lociDependency = Def.setting((n: String) => "de.tuda.stg" %%% s"scala-loci-$n" % "0.2.0")
   val lociCommunication = libraryDependencies ++= Seq("communication", "communicator-ws-akka").map(lociDependency.value)
   val lociCommunicationCirce =  libraryDependencies += lociDependency.value("serializer-circe")
   val lociCommunicationUpickle =  libraryDependencies += lociDependency.value("serializer-upickle")
+  val lociDependency = Def.setting((n: String) => "de.tuda.stg" %%% s"scala-loci-$n" % "0.2.0")
+  val pprint = libraryDependencies += "com.lihaoyi" %%% "pprint" % "0.5.3"
   val purecss = libraryDependencies += ("org.webjars.npm" % "purecss" % "1.0.0")
   val rmgkLogging = libraryDependencies += ("de.rmgk" %%% "logging" % "0.2.1")
   val scalacheck = libraryDependencies += ("org.scalacheck" %% "scalacheck" % "1.14.0" % "test")
   val scalactic = libraryDependencies += ("org.scalactic" %% "scalactic" % "3.0.5")
   val scalajsdom = libraryDependencies += ("org.scala-js" %%% "scalajs-dom" % "0.9.6")
+  val scalaswing = libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "2.0.3"
   val scalatags = libraryDependencies += ("com.lihaoyi" %%% "scalatags" % "0.6.7")
   val scalatest = libraryDependencies += ("org.scalatest" %% "scalatest" % "3.0.5" % "test")
-  val scalaswing = libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "2.0.3"
-  val sourcecode = libraryDependencies += "com.lihaoyi" %%% "sourcecode" % "0.1.4"
   val scalaXml = libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.1.1"
+  val sourcecode = libraryDependencies += "com.lihaoyi" %%% "sourcecode" % "0.1.4"
 }
