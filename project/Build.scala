@@ -1,10 +1,6 @@
-import sbt._
-import sbt.Keys._
-import org.scalajs.sbtplugin.ScalaJSPlugin
-import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
-import sbtcrossproject.CrossPlugin
-import sbtcrossproject.CrossPlugin.autoImport._
 import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
+import sbt.Keys._
+import sbt._
 
 
 object Settings {
@@ -48,13 +44,13 @@ object Dependencies {
   val betterFiles = libraryDependencies += ("com.github.pathikrit" %% "better-files" % "3.7.0")
   val circe = libraryDependencies ++= Seq("core", "generic", "generic-extras", "parser").map(n => "io.circe" %%% s"circe-$n" % "0.11.0")
   val decline = libraryDependencies += ("com.monovore" %% "decline" % "0.5.1")
-  val fastparse = libraryDependencies += "com.lihaoyi" %%% "fastparse" % "2.0.4"
+  val fastparse = libraryDependencies += "com.lihaoyi" %%% "fastparse" % "2.1.0"
   val fontawesome = libraryDependencies += ("org.webjars" % "font-awesome" % "5.3.1")
   val jsoup = libraryDependencies += ("org.jsoup" % "jsoup" % "1.11.3")
+  val lociDependency = Def.setting((n: String) => "de.tuda.stg" %%% s"scala-loci-$n" % "0.2.0")
   val lociCommunication = libraryDependencies ++= Seq("communication", "communicator-ws-akka").map(lociDependency.value)
   val lociCommunicationCirce =  libraryDependencies += lociDependency.value("serializer-circe")
   val lociCommunicationUpickle =  libraryDependencies += lociDependency.value("serializer-upickle")
-  val lociDependency = Def.setting((n: String) => "de.tuda.stg" %%% s"scala-loci-$n" % "0.2.0")
   val pprint = libraryDependencies += "com.lihaoyi" %%% "pprint" % "0.5.3"
   val purecss = libraryDependencies += ("org.webjars.npm" % "purecss" % "1.0.0")
   val rmgkLogging = libraryDependencies += ("de.rmgk" %%% "logging" % "0.2.1")
