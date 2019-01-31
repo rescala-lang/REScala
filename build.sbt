@@ -110,7 +110,7 @@ lazy val datastructures = project.in(file("Extensions/Datastructures"))
 
 lazy val crdts = crossProject(JSPlatform, JVMPlatform).in(file("Extensions/crdts"))
   .dependsOn(rescala)
-  .settings(name := "recrdt", cfg.base, cfg.mappingFilters, lib.akkaClusterCrdts, lib.scalaLogback, cfg.strictScalac,
+  .settings(name := "recrdt", cfg.base, cfg.mappingFilters, lib.scalaLogback, cfg.strictScalac,
             lib.lociTransmitterDependencies, circe)
 lazy val crdtsJVM = crdts.jvm
 lazy val crdtsJS = crdts.js
@@ -181,11 +181,11 @@ lazy val livedemo = project.in(file("Examples/LiveDemo"))
 
 lazy val dividi = project.in(file("Examples/dividi"))
   .dependsOn(crdtsJVM)
-  .settings(name := "dividi", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.akkaClusterCrdts, lib.scalaLogback, lib.scalafx, cfg.strictScalac)
+  .settings(name := "dividi", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.scalaLogback, lib.scalafx, cfg.strictScalac)
 
 lazy val paroli = project.in(file("Examples/paroli-chat"))
   .dependsOn(crdtsJVM)
-  .settings(name := "paroli-chat", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.akkaClusterCrdts, lib.scalaLogback, lib.jline, cfg.strictScalac)
+  .settings(name := "paroli-chat", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.scalaLogback, lib.jline, cfg.strictScalac)
 
 
 // ===================================================================================== Research
@@ -349,20 +349,6 @@ lazy val lib = new {
 
 
   ///// Historic dependencies
-
-  val akkaClusterCrdts = {
-    val akkaVersion = "2.5.18"
-    // akka:
-    libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
-      "com.typesafe.akka" %% "akka-actor" % akkaVersion,
-      "com.typesafe.akka" %% "akka-remote" % akkaVersion,
-      "com.typesafe.akka" %% "akka-cluster" % akkaVersion,
-      "com.typesafe.akka" %% "akka-cluster-metrics" % akkaVersion,
-      "com.typesafe.akka" %% "akka-cluster-tools" % akkaVersion,
-      "com.typesafe.akka" %% "akka-multi-node-testkit" % akkaVersion)
-  }
-
   val scalaLogback = Seq(
     libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.3",
     libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.9.0"
