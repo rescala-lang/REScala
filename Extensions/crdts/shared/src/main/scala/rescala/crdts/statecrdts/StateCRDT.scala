@@ -28,5 +28,5 @@ object StateCRDT {
     *
     * @return A new unique identifier (e.g. hostname/127.0.0.1::1274f9fe-cdf7-3f10-a7a4-33e8062d7435)
     */
-  def genId: String = java.util.UUID.nameUUIDFromBytes(BigInt(System.currentTimeMillis).toByteArray).toString
+  def genId: String = java.util.UUID.randomUUID().toString
 }
