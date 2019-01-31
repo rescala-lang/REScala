@@ -1,7 +1,5 @@
 package rescala.crdts.statecrdts
 
-import java.net.InetAddress
-
 trait StateCRDT[A, F] {
   /** the public state of the CRDT */
   def value(target: F): A
@@ -30,5 +28,5 @@ object StateCRDT {
     *
     * @return A new unique identifier (e.g. hostname/127.0.0.1::1274f9fe-cdf7-3f10-a7a4-33e8062d7435)
     */
-  def genId: String = InetAddress.getLocalHost + "::" + java.util.UUID.nameUUIDFromBytes(BigInt(System.currentTimeMillis).toByteArray)
+  def genId: String = java.util.UUID.nameUUIDFromBytes(BigInt(System.currentTimeMillis).toByteArray).toString
 }
