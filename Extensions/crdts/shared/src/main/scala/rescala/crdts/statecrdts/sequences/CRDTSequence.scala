@@ -1,6 +1,6 @@
 package rescala.crdts.statecrdts.sequences
 
-import com.typesafe.scalalogging.Logger
+//import com.typesafe.scalalogging.Logger
 import rescala.crdts.statecrdts.sets.StateCRDTSet
 
 import scala.collection.AbstractIterator
@@ -11,7 +11,7 @@ trait CRDTSequence[A] {
   type payloadType
   type selfType
 
-  val logger: Logger = Logger[CRDTSequence[A]]
+//  val logger: Logger = Logger[CRDTSequence[A]]
 
   def payload: payloadType
 
@@ -40,7 +40,7 @@ trait CRDTSequence[A] {
     case `endVertex` =>
       throw new IllegalArgumentException("There is no successor to the end node!")
     case _ => {
-      logger.debug(s"Searching successor of $v. Edges: $edges")
+//      logger.debug(s"Searching successor of $v. Edges: $edges")
       if (edges.contains(v)) edges(v) match {
         case `endVertex` => `endVertex`
         case u: Vertex[A] =>

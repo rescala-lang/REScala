@@ -33,10 +33,10 @@ object RGOA {
     override def value(target: RGOA[A]): List[A] = target.value
 
     override def merge(left: RGOA[A], r: RGOA[A]): RGOA[A] = {
-      left.logger.debug(s"Merging $r into $left")
+//      left.logger.debug(s"Merging $r into $left")
 
       val newVertices = r.vertexIterator.toList.filter(!left.edges.contains(_))
-      left.logger.debug(s"found new vertices: $newVertices")
+//      left.logger.debug(s"found new vertices: $newVertices")
 
       // build map of old insertion positions of the new vertices
       val oldPositions = r.edges.foldLeft(Map(): Map[Vertex[A], Vertex[A]]) {
@@ -46,7 +46,7 @@ object RGOA {
       // update edges by inserting vertices at the right positions
       newVertices.foldLeft(left) {
         case (merged: RGOA[A], v: Vertex[A]) =>
-          left.logger.debug(s"inserting $v at position ${oldPositions(v)}")
+//          left.logger.debug(s"inserting $v at position ${oldPositions(v)}")
           merged.addRight(oldPositions(v), v)
       }
     }

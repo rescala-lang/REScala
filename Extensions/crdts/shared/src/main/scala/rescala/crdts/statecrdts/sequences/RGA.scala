@@ -36,8 +36,8 @@ object RGA {
       override def merge(left: RGA[A], r: RGA[A]): RGA[A] = {
         val newVertices = r.vertexIterator.toList.filter(!left.edges.contains(_))
 
-        left.logger.debug(s"Merging $r into $left")
-        left.logger.debug(s"found new vertices: $newVertices")
+//        left.logger.debug(s"Merging $r into $left")
+//        left.logger.debug(s"found new vertices: $newVertices")
 
         // build map of old insertion positions of the new vertices
         val oldPositions = r.edges.foldLeft(Map(): Map[Vertex[A], Vertex[A]]) {
@@ -47,7 +47,7 @@ object RGA {
         // update edges by inserting vertices at the right positions
         val mergedEdges = newVertices.foldLeft(left) {
           case (merged: RGA[A], v: Vertex[A]) =>
-            left.logger.debug(s"inserting $v at position ${oldPositions(v)}")
+//            left.logger.debug(s"inserting $v at position ${oldPositions(v)}")
             merged.addRight(oldPositions(v), v)
         }.edges
 
