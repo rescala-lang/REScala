@@ -28,18 +28,20 @@ object ErsirJS {
     val connection: Future[RemoteRef] = registry.connect(WS(wsUri))
     connection.foreach { remote =>
       val descriptionsCRDT = registry.lookup(Bindings.crdtDescriptions, remote)
-      val descriptions = Signals.fromFuture(descriptionsCRDT).map(_.valueSignal).flatten
+      println(s"requesting $descriptionsCRDT")
+      descriptionsCRDT.onComplete(t => println(s"got $t"))
+      descriptionsCRDT.foreach { res =>
+        val descriptions = res.valueSignal
 
-      val manualStates = Evt[AppState]()
+        val manualStates = Evt[AppState]()
 
-      val actions = new Actions( manualStates = manualStates)
-      val index = new Index(actions, descriptions)
-      val app = new ReaderApp()
+        val actions = new Actions(manualStates = manualStates)
+        val index = new Index(actions, descriptions)
+        val app = new ReaderApp()
 
-      app.makeBody(index, manualStates).asFrag.applyTo(dom.document.body.parentElement)
+        app.makeBody(index, manualStates).asFrag.applyTo(dom.document.body.parentElement)
+      }
     }
   }
-
-
 
 }
