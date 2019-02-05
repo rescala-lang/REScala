@@ -1,0 +1,240 @@
+@import "lib/purecss/build/pure";
+@import "lib/font-awesome/css/svg-with-js";
+@import "underline-animation";
+
+$font-color: rgb(198, 211, 195);
+$theme-color: #16982B;
+//$border-color: #310000;
+$border-color: transparentize($theme-color, 0.8);
+$background-color: black;
+
+@mixin common-bg {
+  background-color: $background-color;
+}
+
+@mixin no-selection {
+  /* disable any form of selection */
+  -webkit-user-select: none; /* Chrome all / Safari all */
+  -moz-user-select: none; /* Firefox all */
+  -ms-user-select: none; /* IE 10+ */
+  user-select: none; /* Likely future */
+}
+
+@mixin reset-selection {
+  /* enable comment selection */
+  -webkit-user-select: initial; /* Chrome all / Safari all */
+  -moz-user-select: initial; /* Firefox all */
+  -ms-user-select: initial; /* IE 10+ */
+  user-select: initial; /* Likely future */
+}
+
+/* i wont pretend that i fully understand what im doing here
+it seems to do what i want (black background for page in fullscreen)
+it stops working in opera27 (webkit) when these are combined into a list of selectors
+please improve :D */
+*:-webkit-full-screen {
+  @include common-bg;
+}
+
+*:fullscreen {
+  @include common-bg;
+}
+
+*:-moz-full-screen {
+  @include common-bg;
+}
+
+/* disable scrollbar in webkit based browsers */
+::-webkit-scrollbar {
+  display: none;
+}
+
+body {
+  @include common-bg;
+  color: $font-color;
+  /* disable scrollbar in IE … untested so disabled
+  -ms-overflow-style: none; */
+}
+
+a {
+  text-decoration: none;
+  color: $font-color;
+  cursor: pointer;
+}
+
+#front section.chapters a:hover {
+  text-decoration: underline;
+}
+
+
+article p {
+  max-width: 800px;
+  margin: auto;
+}
+
+img {
+  -webkit-tap-highlight-color: transparent;
+  margin: 0 auto;
+  display: block;
+  padding: 0;
+  border: none;
+  background-color: white;
+}
+
+img::selection {
+  background: transparent;
+}
+
+fieldset, h1 {
+  margin: 2cm 10px;
+  padding: 10px 10px 10px 10px;
+  border: 1px solid $border-color;
+}
+
+h1 {
+  text-align: center;
+}
+
+legend {
+  font-size: large;
+}
+
+nav {
+  text-align: center;
+  & > * {
+    display: inline;
+  }
+}
+
+input {
+  color: black;
+}
+
+.pure-button {
+  color: $font-color;
+  background-color: lighten($background-color, 10%);
+}
+
+fieldset a:visited {
+  color: $theme-color;
+}
+
+/* index specific */
+
+#index {
+  fieldset a {
+    @include underline-from-center;
+  }
+  nav {
+    margin-top: 1cm;
+  }
+  fieldset > ul, ol {
+    column-width: 20em;
+    -webkit-column-width: 20em;
+    -moz-column-width: 20em;
+    list-style-type: none;
+  }
+  .unlinked {
+    font-size: 0.875em;
+  }
+}
+
+/* front specific */
+#front {
+  .preview {
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: space-around;
+    margin: 2cm 1cm;
+    padding: 0.5cm 0.5cm;
+    border: 1px solid $border-color;
+    text-align: center;
+  }
+
+  .preview > * {
+    margin: 0px 0.2%;
+  }
+
+  .preview img {
+    max-width: 100%;
+  }
+
+  .chapters fieldset {
+    margin: 0.5cm 10px;
+  }
+
+  .chapters a {
+    margin-right: 0.5em;
+  }
+}
+
+/* view specific */
+
+body#view {
+  display: flex;
+  flex-direction: column;
+  /*align-items: center;*/
+  min-height: 100vh;
+}
+
+#view {
+  section {
+    text-align: center;
+    flex-grow: 1;
+    /*display: flex;
+    flex: 1 0 auto;
+    flex-flow: row;
+    justify-content: space-around;
+    align-items: flex-start;*/
+    cursor: pointer;
+    @include no-selection;
+    p {
+      @include reset-selection;
+    }
+  }
+
+  nav {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    align-self: flex-end;
+    flex: 0 0 auto;
+    width: 100%;
+    padding: 0;
+
+    &> * {
+      flex-grow: 1;
+    }
+
+    .pure-button {
+      border-radius: 0;
+    }
+  }
+}
+
+//smallish screens
+@media only screen and (max-width: 1024px) {
+  #view img {
+    width: 100%;
+  }
+
+  // put prev & next into its own first row
+  #view nav {
+    flex-wrap: wrap;
+    :first-child {
+      order: -2;
+      flex-basis: 50%;
+    }
+    :last-child {
+      order: -1;
+      flex-basis: 50%;
+    }
+  }
+}
+
+//bigish screens
+@media only screen and (min-height: 1024px) and (min-width: 1024px) {
+  #view img {
+    max-height: 100vh;
+  }
+}
