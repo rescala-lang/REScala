@@ -24,12 +24,15 @@ object ErsirJS {
 
   def main(args: Array[String]): Unit = {
     dom.document.body = body("loading data …").render
+    println("uhm")
     val registry = new Registry
     val connection: Future[RemoteRef] = registry.connect(WS(wsUri))
     connection.foreach { remote =>
       val descriptionsCRDT = registry.lookup(Bindings.crdtDescriptions, remote)
       println(s"requesting $descriptionsCRDT")
-      descriptionsCRDT.onComplete(t => println(s"got $t"))
+      descriptionsCRDT.failed.foreach{ t =>
+        t.printStackTrace()
+      }
       descriptionsCRDT.foreach { res =>
         val descriptions = res.valueSignal
 

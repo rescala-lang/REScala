@@ -8,7 +8,7 @@ import ersir.shared.Log
 
 object Ersir {
 
-  val port = Opts.option[Int]("port", help = "Weberver listening port.").withDefault(2358)
+  val port = Opts.option[Int]("port", help = "Weberver listening port.").withDefault(9110)
   val interface = Opts.option[String]("interface", metavar = "interface", help = "Interface to bind the server on.").withDefault("0")
   val server = Opts.flag("noserver", "Do not start the server.").orTrue
   val core = Opts.flag("nodownload", "Do not start the downloader.").orTrue

@@ -3,7 +3,7 @@ package ersir.shared
 import io.circe.generic.auto._
 import loci.registry.Binding
 import loci.serializer.circe._
-import rescala.crdts.pvars.Publishable._
+import rescala.crdts.pvars.DistributedSignal._
 
 
 object Bindings {

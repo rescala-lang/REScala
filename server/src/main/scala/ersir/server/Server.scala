@@ -1,6 +1,7 @@
 package ersir.server
 
 import java.nio.file.Path
+import java.util.{Timer, TimerTask}
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.headers.{BasicHttpCredentials, HttpChallenges}
@@ -30,6 +31,9 @@ class Server(terminate: () => Unit,
              postsPath: Path,
             ) {
 
+  val multitime = new Timer
+
+
   val userSocketCache: mutable.Map[String, Route] = mutable.Map.empty
   def userSocket(user: String): Route = synchronized {
     userSocketCache.getOrElseUpdate(user, {
@@ -37,6 +41,9 @@ class Server(terminate: () => Unit,
       val webSocket = WebSocketListener()
       val registry = new Registry
       val pgol = rescala.crdts.pvars.PGrowOnlyLog[String](List("hallo", "welt"))
+      multitime.scheduleAtFixedRate(new TimerTask {
+        override def run(): Unit =  pgol.append(System.currentTimeMillis().toString)
+      }, 0l, 1000l)
       registry.bind(Bindings.crdtDescriptions)(pgol)
       registry.listen(webSocket)
       webSocket(user)
