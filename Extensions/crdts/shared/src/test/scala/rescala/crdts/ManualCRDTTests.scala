@@ -7,7 +7,7 @@ import loci.communicator.ws.akka.WS
 import loci.registry.{Binding, Registry}
 import loci.serializer.circe._
 import loci.transmitter.RemoteRef
-import rescala.crdts.pvars.Publishable._
+import rescala.crdts.pvars.DistributedSignal._
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}

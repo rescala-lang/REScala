@@ -1,20 +1,16 @@
 package rescala.crdts.pvars
 
-import rescala.default.implicitScheduler
-import rescala.default.Evt
-import rescala.crdts.pvars.Publishable.PVarFactory
+import rescala.crdts.pvars.DistributedSignal.PVarFactory
 import rescala.crdts.statecrdts.counters.GCounter
+import rescala.default.implicitScheduler
 
 /**
   * DistributedGCounters are increase-only counter variables.
   *
   * @param initial The initial value of this variable.
   */
-case class PGrowOnlyCounter(initial: GCounter = GCounter(0),
-                            internalChanges: Evt[GCounter] = Evt[GCounter],
-                            externalChanges: Evt[GCounter] = Evt[GCounter])
-  extends Publishable[Int, GCounter] {
-
+case class PGrowOnlyCounter(initial: GCounter = GCounter(0))
+extends DistributedSignal[Int, GCounter](initial) {
   def increase: Int = {
     internalChanges.fire(crdtSignal.readValueOnce.increase)
     value

@@ -1,9 +1,8 @@
 package rescala.crdts.pvars
 
-import akka.actor.ActorRef
 import loci.transmitter._
-import rescala.default._
 import rescala.crdts.statecrdts.StateCRDT
+import rescala.default._
 
 /**
   * Classes implementing this trait can be published and are then synchronized by the DistributionEngine (specified by
@@ -15,20 +14,17 @@ import rescala.crdts.statecrdts.StateCRDT
   *
   * @tparam A The value type of the underlying StateCRDT.
   */
-abstract class Publishable[A, F]()(implicit stateCRDT: StateCRDT[A, F]) {
+abstract class DistributedSignal[A, F](initial: F)(implicit stateCRDT: StateCRDT[A, F]) {
   type valueType = A
   type crdtType = F
 
-  lazy val changes: Event[F] = internalChanges || externalChanges
-  lazy val crdtSignal: Signal[F] = changes.fold(initial) { (c1, c2) =>
-    stateCRDT.merge(c1, c2)
+  private[rescala] val crdtSignal: Var[F] = Var(initial)
+  private[rescala] val internalChanges: Evt[F] = Evt[F]
+  def merge(other: F) = {
+    crdtSignal.transform(stateCRDT.merge(_, other))
+    internalChanges.fire(other)
   }
-  lazy val valueSignal: Signal[A] = crdtSignal.map(s => stateCRDT.value(s))
-
-  //val name: String
-  val initial: F
-  val internalChanges: Evt[F]
-  val externalChanges: Evt[F]
+  val valueSignal: Signal[A] = crdtSignal.map(s => stateCRDT.value(s))
 
   /**
     * Shortcut to get the public value of the published CvRDT.
@@ -39,36 +35,9 @@ abstract class Publishable[A, F]()(implicit stateCRDT: StateCRDT[A, F]) {
     */
   def value: A = valueSignal.readValueOnce
 
-  // TODO: implement blocking sync operation
-  //def sync(implicit engine: ActorRef): Unit = engine ! SyncVar(this)
-
-  // publish this to the distribution engine
-  /*def publish(): Unit = {
-    implicit val timeout = Timeout(60.second)
-    val sendMessage = getEngine ? PublishVar(this)
-    Await.ready(sendMessage, Duration.Inf) // make publish a blocking operation
-  }
-*/
-  // publish this to the distribution engine
-  def publish(name: String)(implicit engine: ActorRef): Unit = {
-    locally(name);
-    locally(engine)
-    //    implicit val timeout = Timeout(60.second)
-    //    val sendMessage = engine ? PublishVar(name, this)
-    //    Await.ready(sendMessage, Duration.Inf) // make publish a blocking operation
-  }
-
-  // publish this as read-only to the distribution engine
-  def publishReadOnly(name: String)(implicit engine: ActorRef): Unit = {
-    locally(name)
-    locally(engine)
-    //    implicit val timeout = Timeout(60.second)
-    //    val sendMessage = engine ? PublishReadOnly(name, this)
-    //    Await.ready(sendMessage, Duration.Inf) // make publish a blocking operation
-  }
 }
 
-object Publishable {
+object DistributedSignal {
 
   trait PVarFactory[A] {
     def apply(): A
@@ -81,7 +50,7 @@ object Publishable {
     * @tparam P    pVar type
     **/
   implicit def PVarTransmittable[Crdt, P](implicit
-                                          ev: P <:< Publishable[_, Crdt],
+                                          ev: P <:< DistributedSignal[_, Crdt],
                                           transmittable: Transmittable[Crdt, Crdt, Crdt],
                                           serializable: Serializable[Crdt],
                                           pVarFactory: PVarFactory[P]
@@ -95,7 +64,7 @@ object Publishable {
 
         val observer = value.internalChanges.observe(c => endpoint.send(c))
 
-        endpoint.receive notify value.externalChanges.fire
+        endpoint.receive notify value.merge
 
         endpoint.closed notify { _ => observer.remove }
 
@@ -105,12 +74,15 @@ object Publishable {
       def receive(value: To, remote: RemoteRef, endpoint: Endpoint[From, To]): P = {
         val pVar = pVarFactory.create()
         locally(pVar.valueSignal)
-        pVar.externalChanges fire value
+        pVar.merge(value)
 
         println(s"received $value")
         println(s"before: ${pVar.value}, ")
 
-        endpoint.receive notify {v => println(s"received val: $value"); pVar.externalChanges.fire(v)}
+        endpoint.receive notify { v =>
+          println(s"received val: $value")
+          pVar.merge(v)
+        }
         val observer = pVar.internalChanges.observe(c => endpoint.send(c))
         endpoint.closed notify { _ => observer.remove }
 

@@ -1,13 +1,12 @@
 package rescala.crdts.pvars
 
-import rescala.crdts.pvars.Publishable.PVarFactory
+import rescala.crdts.pvars.DistributedSignal.PVarFactory
 import rescala.crdts.statecrdts.StateCRDT
 import rescala.crdts.statecrdts.sets.ORSet
 import rescala.default._
 
-case class PSet[A](initial: ORSet[A] = ORSet[A](),
-                   internalChanges: Evt[ORSet[A]] = Evt[ORSet[A]](),
-                   externalChanges: Evt[ORSet[A]] = Evt[ORSet[A]]()) extends Publishable[Set[A], ORSet[A]] {
+case class PSet[A](initial: ORSet[A] = ORSet[A]())
+extends DistributedSignal[Set[A], ORSet[A]](initial) {
 
   def add(a: A): Unit = internalChanges.fire(crdtSignal.readValueOnce.add(a))
 

@@ -19,6 +19,7 @@ trait StateCRDT[A, F] {
     * @param payload the payload
     * @return new CRDT instance with the given payload
     */
+  //TODO: this can not be correct
   def fromPayload[P](payload: P): F
 }
 

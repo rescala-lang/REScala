@@ -1,13 +1,12 @@
 package rescala.crdts.pvars
 
-import rescala.crdts.pvars.Publishable.PVarFactory
+import rescala.crdts.pvars.DistributedSignal.PVarFactory
 import rescala.crdts.statecrdts.StateCRDT
 import rescala.crdts.statecrdts.sequences.{RGOA, Vertex}
 import rescala.default._
 
-case class PGrowOnlyLog[A](initial: RGOA[A] = RGOA[A](),
-                           internalChanges: Evt[RGOA[A]] = Evt[RGOA[A]](),
-                           externalChanges: Evt[RGOA[A]] = Evt[RGOA[A]]()) extends Publishable[List[A], RGOA[A]]()(RGOA.RGOAStateCRDTInstance[A]) {
+case class PGrowOnlyLog[A](initial: RGOA[A] = RGOA[A]())
+extends DistributedSignal[List[A], RGOA[A]](initial)(RGOA.RGOAStateCRDTInstance[A]) {
 
   def append(a: A): Unit = internalChanges.fire(crdtSignal.readValueOnce.append(Vertex(a)))
 

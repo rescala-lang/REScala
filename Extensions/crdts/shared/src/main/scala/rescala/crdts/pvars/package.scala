@@ -3,7 +3,7 @@ package rescala.crdts
 import akka.actor.ActorRef
 import rescala.default._
 
-import scala.language.{implicitConversions}
+import scala.language.implicitConversions
 
 
 package object pvars {
@@ -13,5 +13,5 @@ package object pvars {
   }
 
   // make publishables usable in signal expressions
-  implicit def publishableAsSignal[A, F](pub: Publishable[A, F]): Signal[A] = pub.valueSignal
+  implicit def publishableAsSignal[A, F](pub: DistributedSignal[A, F]): Signal[A] = pub.valueSignal
 }

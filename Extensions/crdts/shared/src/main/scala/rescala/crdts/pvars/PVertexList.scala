@@ -1,6 +1,6 @@
 package rescala.crdts.pvars
 
-import rescala.crdts.pvars.Publishable.PVarFactory
+import rescala.crdts.pvars.DistributedSignal.PVarFactory
 import rescala.crdts.statecrdts.StateCRDT
 import rescala.crdts.statecrdts.sequences.{RGA, ValueVertex, Vertex}
 import rescala.default._
@@ -10,9 +10,8 @@ import rescala.default._
   *
   * @param initial The initial value of this variable.
   */
-case class PVertexList[A](initial: RGA[A] = RGA.empty[A],
-                          internalChanges: Evt[RGA[A]] = Evt[RGA[A]](),
-                          externalChanges: Evt[RGA[A]] = Evt[RGA[A]]()) extends Publishable[List[A], RGA[A]] {
+case class PVertexList[A](initial: RGA[A] = RGA.empty[A])
+extends DistributedSignal[List[A], RGA[A]](initial) {
   def contains(v: Vertex[A]): Boolean = crdtSignal.readValueOnce.contains(v)
 
 

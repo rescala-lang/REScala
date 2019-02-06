@@ -7,7 +7,7 @@ import loci.registry.{Binding, Registry}
 import loci.serializer.circe._
 import loci.transmitter.RemoteRef
 import rescala.crdts.pvars.PGrowOnlyLog
-import rescala.crdts.pvars.Publishable._
+import rescala.crdts.pvars.DistributedSignal._
 import rescala.default._
 import scalafx.Includes._
 import scalafx.application.JFXApp

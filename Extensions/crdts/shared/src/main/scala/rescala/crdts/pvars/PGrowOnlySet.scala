@@ -1,13 +1,12 @@
 package rescala.crdts.pvars
 
-import rescala.crdts.pvars.Publishable.PVarFactory
+import rescala.crdts.pvars.DistributedSignal.PVarFactory
 import rescala.crdts.statecrdts.StateCRDT
 import rescala.crdts.statecrdts.sets.GSet
 import rescala.default._
 
-case class PGrowOnlySet[A](initial: GSet[A] = GSet[A](),
-                           internalChanges: Evt[GSet[A]] = Evt[GSet[A]](),
-                           externalChanges: Evt[GSet[A]] = Evt[GSet[A]]()) extends Publishable[Set[A], GSet[A]] {
+case class PGrowOnlySet[A](initial: GSet[A] = GSet[A]())
+extends DistributedSignal[Set[A], GSet[A]](initial) {
 
   def add(a: A): Unit = internalChanges.fire(crdtSignal.readValueOnce.add(a))
 
