@@ -3,6 +3,7 @@ package rescala.crdts.pvars
 import loci.transmitter._
 import rescala.crdts.statecrdts.StateCRDT
 import rescala.default._
+import rescala.macros.cutOutOfUserComputation
 
 /**
   * Classes implementing this trait can be published and are then synchronized by the DistributionEngine (specified by
@@ -18,11 +19,15 @@ abstract class DistributedSignal[A, F](initial: F)(implicit stateCRDT: StateCRDT
   type valueType = A
   type crdtType = F
 
-  private[rescala] val crdtSignal: Var[F] = Var(initial)
-  private[rescala] val internalChanges: Evt[F] = Evt[F]
-  def merge(other: F) = {
+  @cutOutOfUserComputation
+  private[rescala] val crdtSignal       : Var[F]    = Var(initial)
+  private[rescala] val localDeviceChange: Evt[Unit] = Evt[Unit]
+  private[rescala] def mergeInernal(other: F) = {
     crdtSignal.transform(stateCRDT.merge(_, other))
-    internalChanges.fire(other)
+  }
+  def merge(other: F) = {
+    mergeInernal(other)
+    localDeviceChange.fire()
   }
   val valueSignal: Signal[A] = crdtSignal.map(s => stateCRDT.value(s))
 
@@ -52,8 +57,8 @@ object DistributedSignal {
   implicit def PVarTransmittable[Crdt, P](implicit
                                           ev: P <:< DistributedSignal[_, Crdt],
                                           transmittable: Transmittable[Crdt, Crdt, Crdt],
-                                          serializable: Serializable[Crdt],
-                                          pVarFactory: PVarFactory[P]
+                                          serializable : Serializable[Crdt],
+                                          pVarFactory  : PVarFactory[P]
                                          ): PushBasedTransmittable[P, Crdt, Crdt, Crdt, P] = {
     new PushBasedTransmittable[P, Crdt, Crdt, Crdt, P] {
 
@@ -62,9 +67,13 @@ object DistributedSignal {
 
       def send(value: P, remote: RemoteRef, endpoint: Endpoint[From, To]): To = {
 
-        val observer = value.internalChanges.observe(c => endpoint.send(c))
+        println(s"sending crdt $value")
 
-        endpoint.receive notify value.merge
+        val observer = value.localDeviceChange
+                       .map(_ => value.crdtSignal.value)
+                       .observe(c => endpoint.send(c))
+
+        endpoint.receive notify value.mergeInernal
 
         endpoint.closed notify { _ => observer.remove }
 
@@ -72,8 +81,12 @@ object DistributedSignal {
       }
 
       def receive(value: To, remote: RemoteRef, endpoint: Endpoint[From, To]): P = {
+
+        println(s"receiving crdt $value")
+
+
         val pVar = pVarFactory.create()
-        locally(pVar.valueSignal)
+
         pVar.merge(value)
 
         println(s"received $value")
@@ -81,9 +94,11 @@ object DistributedSignal {
 
         endpoint.receive notify { v =>
           println(s"received val: $value")
-          pVar.merge(v)
+          pVar.mergeInernal(v)
         }
-        val observer = pVar.internalChanges.observe(c => endpoint.send(c))
+        val observer = pVar.localDeviceChange
+                       .map(_ => pVar.crdtSignal.value)
+                       .observe(c => endpoint.send(c))
         endpoint.closed notify { _ => observer.remove }
 
         // println(s"manual ${implicitly[StateCRDT[Int, GCounter]].merge(counter.crdtSignal.readValueOnce, value)}")

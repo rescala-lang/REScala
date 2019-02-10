@@ -8,9 +8,9 @@ import rescala.default._
 case class PSet[A](initial: ORSet[A] = ORSet[A]())
 extends DistributedSignal[Set[A], ORSet[A]](initial) {
 
-  def add(a: A): Unit = internalChanges.fire(crdtSignal.readValueOnce.add(a))
+  def add(a: A): Unit = localDeviceChange.fire(crdtSignal.readValueOnce.add(a))
 
-  def remove(a: A): Unit = internalChanges.fire(crdtSignal.readValueOnce.remove(a))
+  def remove(a: A): Unit = localDeviceChange.fire(crdtSignal.readValueOnce.remove(a))
 
   def contains(a: A): Boolean = crdtSignal.readValueOnce.contains(a)
 }

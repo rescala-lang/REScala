@@ -1,7 +1,7 @@
 package rescala.crdts.statecrdts
 package sequences
 
-import rescala.crdts.statecrdts.sets.GSet
+import rescala.crdts.statecrdts.sets.GrowOnlySet
 
 import scala.collection.immutable.HashMap
 
@@ -12,12 +12,12 @@ import scala.collection.immutable.HashMap
   *                edges between vertices.
   * @tparam A The type of the elements stored in this array.
   */
-case class RGOA[A](payload: (GSet[ValueVertex[A]], HashMap[Vertex[A], Vertex[A]])) extends CRDTSequence[A] {
+case class RGOA[A](payload: (GrowOnlySet[ValueVertex[A]], Map[Vertex[A], Vertex[A]])) extends CRDTSequence[A] {
   override type selfType = RGOA[A]
-  override type payloadType = (GSet[ValueVertex[A]], HashMap[Vertex[A], Vertex[A]])
-  val (vertices, edges): (GSet[ValueVertex[A]], HashMap[Vertex[A], Vertex[A]]) = payload
+  override type payloadType = (GrowOnlySet[ValueVertex[A]], Map[Vertex[A], Vertex[A]])
+  val (vertices, edges): (GrowOnlySet[ValueVertex[A]], Map[Vertex[A], Vertex[A]]) = payload
 
-  override def fromPayload(payload: (GSet[ValueVertex[A]], HashMap[Vertex[A], Vertex[A]])): RGOA[A] = RGOA[A](payload)
+  override def fromPayload(payload: (GrowOnlySet[ValueVertex[A]], Map[Vertex[A], Vertex[A]])): RGOA[A] = RGOA[A](payload)
 }
 
 object RGOA {
@@ -27,26 +27,26 @@ object RGOA {
 
   def apply[A](): RGOA[A] = empty
 
-  def empty[A]: RGOA[A] = new RGOA[A]((GSet[ValueVertex[A]](), HashMap[Vertex[A], Vertex[A]](startVertex-> endVertex)))
+  def empty[A]: RGOA[A] = new RGOA[A]((GrowOnlySet[ValueVertex[A]](), HashMap[Vertex[A], Vertex[A]](StartVertex -> EndVertex)))
 
   implicit def RGOAStateCRDTInstance[A]: StateCRDT[List[A], RGOA[A]] = new StateCRDT[List[A], RGOA[A]] {
     override def value(target: RGOA[A]): List[A] = target.value
 
-    override def merge(left: RGOA[A], r: RGOA[A]): RGOA[A] = {
-//      left.logger.debug(s"Merging $r into $left")
+    override def merge(left: RGOA[A], right: RGOA[A]): RGOA[A] = {
+      println(s"Merging $right into $left")
 
-      val newVertices = r.vertexIterator.toList.filter(!left.edges.contains(_))
-//      left.logger.debug(s"found new vertices: $newVertices")
+      val newVertices = right.vertexIterator.toList.filter(!left.edges.contains(_))
+      println(s"found new vertices in right: $newVertices")
 
       // build map of old insertion positions of the new vertices
-      val oldPositions = r.edges.foldLeft(Map(): Map[Vertex[A], Vertex[A]]) {
+      val oldPositions = right.edges.foldLeft(Map(): Map[Vertex[A], Vertex[A]]) {
         case (m, (u, v)) => if (newVertices.contains(v)) m + (v -> u) else m
       }
 
       // update edges by inserting vertices at the right positions
       newVertices.foldLeft(left) {
         case (merged: RGOA[A], v: Vertex[A]) =>
-//          left.logger.debug(s"inserting $v at position ${oldPositions(v)}")
+          println(s"inserting $v at position ${oldPositions(v)}")
           merged.addRight(oldPositions(v), v)
       }
     }
@@ -57,12 +57,12 @@ object RGOA {
       * @return new CRDT instance representing the value
       */
     override def fromValue(value: List[A]): RGOA[A] = {
-      val emptyPayload: (GSet[Vertex[A]], HashMap[Vertex[A], Vertex[A]]) =
-        (GSet[Vertex[A]](), HashMap[Vertex[A], Vertex[A]](startVertex -> endVertex))
+      val emptyPayload: (GrowOnlySet[Vertex[A]], HashMap[Vertex[A], Vertex[A]]) =
+        (GrowOnlySet[Vertex[A]](), HashMap[Vertex[A], Vertex[A]](StartVertex -> EndVertex))
       val newRGOA: RGOA[A] = fromPayload(emptyPayload)
 
       value.reverse.foldLeft(newRGOA) {
-        case (r: RGOA[A], a) => r.addRight(startVertex, a)
+        case (r: RGOA[A], a) => r.addRight(StartVertex, a)
       }
     }
 
@@ -71,7 +71,7 @@ object RGOA {
       * @param payload the payload
       * @return new CRDT instance with the given payload
       */
-    override def fromPayload[P](payload: P): RGOA[A] = RGOA(payload.
-      asInstanceOf[(GSet[ValueVertex[A]], HashMap[Vertex[A], Vertex[A]])])
+    def fromPayload[P](payload: P): RGOA[A] = RGOA(payload.
+      asInstanceOf[(GrowOnlySet[ValueVertex[A]], HashMap[Vertex[A], Vertex[A]])])
   }
 }

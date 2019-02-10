@@ -40,7 +40,7 @@ object GCounter {
       * @param payload the payload
       * @return new CRDT instance with the given payload
       */
-    override def fromPayload[P](payload: P): GCounter = GCounter(StateCRDT.genId,
+    def fromPayload[P](payload: P): GCounter = GCounter(StateCRDT.genId,
       payload.asInstanceOf[HashMap[String, Int]])
   }
 

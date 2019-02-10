@@ -12,13 +12,18 @@ import scala.collection.immutable.HashMap
   *                between vertices.
   * @tparam A The type of the elements stored in this array
   */
-case class RGA[A](payload: (TwoPSet[ValueVertex[A]], HashMap[Vertex[A], Vertex[A]])) extends RemovableCRDTSequence[A] {
+case class RGA[A](payload: (TwoPSet[ValueVertex[A]], HashMap[Vertex[A], Vertex[A]])) extends CRDTSequence[A] {
   override type selfType = RGA[A]
   override type payloadType = (TwoPSet[ValueVertex[A]], HashMap[Vertex[A], Vertex[A]])
 
   val (vertices, edges): (TwoPSet[ValueVertex[A]], HashMap[Vertex[A], Vertex[A]]) = payload
 
   override def fromPayload(payload: (TwoPSet[ValueVertex[A]], HashMap[Vertex[A], Vertex[A]])): RGA[A] = RGA[A](payload)
+
+  def remove(v: ValueVertex[A])(implicit
+                                stateCRDT: StateCRDT[valueType, selfType]): selfType =
+    stateCRDT.fromPayload((vertices.remove(v), edges))
+
 }
 
 
@@ -27,7 +32,7 @@ object RGA {
 
   def apply[A](): RGA[A] = empty
 
-  def empty[A]: RGA[A] = new RGA[A]((TwoPSet[ValueVertex[A]](), HashMap(startVertex -> endVertex)))
+  def empty[A]: RGA[A] = new RGA[A]((TwoPSet[ValueVertex[A]](), HashMap(StartVertex -> EndVertex)))
 
   implicit def RGA2CRDTInstance[A]: StateCRDT[List[A], RGA[A]] =
     new StateCRDT[List[A], RGA[A]] {
@@ -59,11 +64,11 @@ object RGA {
 
       def fromValue(value: List[A]): RGA[A] = {
         val emptyPayload: (TwoPSet[Vertex[A]], HashMap[Vertex[A], Vertex[A]]) =
-          (TwoPSet[Vertex[A]](), HashMap[Vertex[A], Vertex[A]](startVertex -> endVertex))
+          (TwoPSet[Vertex[A]](), HashMap[Vertex[A], Vertex[A]](StartVertex -> EndVertex))
         val newRGA: RGA[A] = fromPayload(emptyPayload)
 
         value.reverse.foldLeft(newRGA) {
-          case (r: RGA[A], a) => r.addRight(startVertex, a)
+          case (r: RGA[A], a) => r.addRight(StartVertex, a)
         }
       }
 

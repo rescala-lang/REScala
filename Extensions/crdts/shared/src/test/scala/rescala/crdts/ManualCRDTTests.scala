@@ -41,7 +41,7 @@ object testSignalExpressions {
 
     val p = Vertex(BigDecimal(5.00))
     val x = Vertex(BigDecimal(10.00))
-    val j = startVertex
+    val j = StartVertex
     val l = List(p, x, j)
     val f = Map[Vertex[BigDecimal], Vertex[BigDecimal]]() + (p-> x) + (x -> p)
     val json = f.asJson

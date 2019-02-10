@@ -28,9 +28,9 @@ extends DistributedSignal[List[A], RGA[A]](initial) {
     * @param position the vertex left of the new vertex
     * @param vertex   the vertex to be inserted
     */
-  def addRight(position: Vertex[A], vertex: ValueVertex[A]): Unit = internalChanges.fire(crdtSignal.readValueOnce.addRight(position, vertex))
+  def addRight(position: Vertex[A], vertex: ValueVertex[A]): Unit = localDeviceChange.fire(crdtSignal.readValueOnce.addRight(position, vertex))
 
-  def append(vertex: ValueVertex[A]): Unit = internalChanges.fire(crdtSignal.readValueOnce.append(vertex))
+  def append(vertex: ValueVertex[A]): Unit = localDeviceChange.fire(crdtSignal.readValueOnce.append(vertex))
 
   def successor(v: Vertex[A]): Vertex[A] = crdtSignal.readValueOnce.successor(v)
 
