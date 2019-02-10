@@ -60,25 +60,33 @@ object ErsirJS {
     val connection: Future[RemoteRef] = registry.connect(WS(wsUri))
     println(s"waiting for ws connection to server …")
     connection.foreach { remote =>
-      val descriptionsCRDT = registry.lookup(Bindings.crdtDescriptions, remote)
-      println(s"requesting $descriptionsCRDT")
-      descriptionsCRDT.failed.foreach{ t =>
+      val entryFuture = registry.lookup(Bindings.crdtDescriptions, remote)
+      println(s"requesting $entryFuture")
+      entryFuture.failed.foreach{ t =>
         t.printStackTrace()
       }
-      descriptionsCRDT.foreach { res =>
-        val descriptions = res.valueSignal
+      entryFuture.foreach { entryCrdt =>
+        val entrySignal = entryCrdt.valueSignal
 
         val emergencies = Future { ReMqtt.topicstream("city/alert_state") }
 
 
         emergencies.foreach(_.observe{ str =>
-          res.append(str)
+          entryCrdt.append(str)
         })
+
+        entryCrdt.append(
+          """Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
+tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
+quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
+consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
+cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
+proident, sunt in culpa qui officia deserunt mollit anim id est laborum.""")
 
         val manualStates = Evt[AppState]()
 
         val actions = new Actions(manualStates = manualStates)
-        val index = new Index(actions, descriptions)
+        val index = new Index(actions, entrySignal)
         val app = new ReaderApp()
 
         app.makeBody(index, manualStates).asFrag.applyTo(dom.document.body.parentElement)

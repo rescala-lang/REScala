@@ -33,7 +33,7 @@ object Ersir {
         if (shutdown) {
           services.terminateServer()
         }
-        Log.Main.info("initialization done")
+        Log.Main.info(s"initialization done, connect on http://$interface:$port/")
         services
     }
   }
