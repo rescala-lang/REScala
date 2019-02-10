@@ -31,12 +31,5 @@ object TwoPSet {
       val t = left.tombstones ++ right.tombstones
       new TwoPSet((e, t))
     }
-
-    /** Allows the creation of new CRDTs by passing an initial value.
-      *
-      * @param value the value
-      * @return new CRDT instance representing the value
-      */
-    override def fromValue(value: Set[A]): TwoPSet[A] = TwoPSet((value, Set[A]()))
   }
 }

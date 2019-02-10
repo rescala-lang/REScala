@@ -8,7 +8,4 @@ trait StateCRDT[A, F] {
   def merge(left: F, right: F): F
 }
 
-object StateCRDT {
-  /** Generates unique identifiers for use by CRDTs */
-  def genId: String = java.util.UUID.randomUUID().toString
-}
+

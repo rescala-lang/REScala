@@ -19,7 +19,7 @@ case object EndVertex extends Vertex[Nothing] {
   override def timestamp: Timestamp = 0
 }
 
-case class ValueVertex[+A](value: A, timestamp: Timestamp, id: String = StateCRDT.genId) extends Vertex[A]
+case class ValueVertex[+A](value: A, timestamp: Timestamp, id: String = GenIDUtil.genId) extends Vertex[A]
 
 object Vertex {
   type Timestamp = Long

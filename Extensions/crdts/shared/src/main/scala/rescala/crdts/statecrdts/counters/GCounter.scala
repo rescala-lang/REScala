@@ -15,7 +15,7 @@ case class GCounter(id: String, payload: HashMap[String, Int]) {
 
 object GCounter {
   def apply(value: Int): GCounter = {
-    val id = StateCRDT.genId // assign random id based on host
+    val id = GenIDUtil.genId // assign random id based on host
     GCounter(id, HashMap(id -> value))
   }
 
@@ -27,13 +27,6 @@ object GCounter {
         left.payload.merged(right.payload) {
           case ((k, v1), (_, v2)) => (k, v1 max v2)
         })
-
-    /** Allows the creation of new CRDTs by passing an initial value.
-      *
-      * @param value the value
-      * @return new CRDT instance representing the value
-      */
-    override def fromValue(value: Int): GCounter = GCounter(value)
   }
 
 }

@@ -21,12 +21,5 @@ object GrowOnlySet {
     override def value(target: GrowOnlySet[A]): Set[A] = target.value
 
     override def merge(left: GrowOnlySet[A], right: GrowOnlySet[A]): GrowOnlySet[A] = GrowOnlySet(left.value.union(right.value))
-
-    /** Allows the creation of new CRDTs by passing an initial value.
-      *
-      * @param value the value
-      * @return new CRDT instance representing the value
-      */
-    override def fromValue(value: Set[A]): GrowOnlySet[A] = GrowOnlySet(value)
   }
 }
