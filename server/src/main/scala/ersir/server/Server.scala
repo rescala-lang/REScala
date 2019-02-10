@@ -1,7 +1,6 @@
 package ersir.server
 
 import java.nio.file.Path
-import java.util.Timer
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.headers.{BasicHttpCredentials, HttpChallenges}
@@ -31,7 +30,7 @@ class Server(terminate: () => Unit,
              postsPath: Path,
             ) {
 
-  val multitime = new Timer
+  val pgol = rescala.crdts.distributables.PGrowOnlyLog[String]()
 
 
   val userSocketCache: mutable.Map[String, Route] = mutable.Map.empty
@@ -40,10 +39,6 @@ class Server(terminate: () => Unit,
       Log.debug(s"create new websocket for $user")
       val webSocket = WebSocketListener()
       val registry = new Registry
-      val pgol = rescala.crdts.pvars.PGrowOnlyLog[String](List("hallo", "welt"))
-//      multitime.scheduleAtFixedRate(new TimerTask {
-//        override def run(): Unit =  pgol.append(System.currentTimeMillis().toString)
-//      }, 0l, 1000l)
       registry.bind(Bindings.crdtDescriptions)(pgol)
       registry.listen(webSocket)
       webSocket(user)
@@ -124,6 +119,9 @@ class Server(terminate: () => Unit,
     } ~
     path("ws") {
       userSocket(user.id)
+    } ~
+    pathPrefix("static") {
+      getFromResourceDirectory("static")
     } ~
     path("web-fastopt.js.map") {
       getFromFile("web/target/scala-2.12/web-fastopt.js.map")

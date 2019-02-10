@@ -24,17 +24,21 @@ object mqtt extends js.Object {
 }
 
 object ReMqtt {
+  println(s"initializing mqtt …")
   val connection: js.Dynamic = mqtt.connect("ws://127.0.0.1:9001")
   val topics: mutable.Map[String, Evt[String]] = mutable.Map[String, Evt[String]]()
   connection.on("message", { (topic: String, message: js.Dynamic) =>
     topics.get(topic).foreach(e => e.fire(message.toString))
   })
+  println(s"mqtt initialized")
+
 
   def topicstream(topic: String): Evt[String] = {
     topics.getOrElseUpdate(topic, {
-      val evt = Evt[String]
+      println(s"subscribing to mqtt topic $topic")
       connection.subscribe(topic)
-      evt
+      println(s"subscribed to $topic")
+      Evt[String]
     })
   }
 }
@@ -51,10 +55,10 @@ object ErsirJS {
     println("initing")
     dom.document.body = body("loading data …").render
 
-    val emergencies = ReMqtt.topicstream("city/alert_state")
 
     val registry = new Registry
     val connection: Future[RemoteRef] = registry.connect(WS(wsUri))
+    println(s"waiting for ws connection to server …")
     connection.foreach { remote =>
       val descriptionsCRDT = registry.lookup(Bindings.crdtDescriptions, remote)
       println(s"requesting $descriptionsCRDT")
@@ -64,9 +68,12 @@ object ErsirJS {
       descriptionsCRDT.foreach { res =>
         val descriptions = res.valueSignal
 
-        emergencies.observe{ str =>
+        val emergencies = Future { ReMqtt.topicstream("city/alert_state") }
+
+
+        emergencies.foreach(_.observe{ str =>
           res.append(str)
-        }
+        })
 
         val manualStates = Evt[AppState]()
 

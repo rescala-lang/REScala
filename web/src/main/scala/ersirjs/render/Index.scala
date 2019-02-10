@@ -41,6 +41,7 @@ class Index(actions: Actions, list: Signal[List[String]]) {
       val searchForm = form(cls := "pure-form")(inputField, onsubmit := callback)
 
       body(id := "index",
+        img(src := "static/logo-small.svg"),
         Make.navigation(Make.fullscreenToggle("fullscreen"), searchForm, link_tools("tools")),
            fieldset(filteredList.map(is => ul(is.map(li(_)))).asFrag))
     }

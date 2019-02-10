@@ -92,7 +92,7 @@ class ReaderApp() {
 
     Signal.dynamic {
       currentAppState.value match {
-        case IndexState => (path_main, "Viscel")
+        case IndexState => (path_main, "Emergencity RSS Reader")
       }
     }.observe { case (u, t) =>
       dom.window.document.title = t
