@@ -34,14 +34,6 @@ object GCounter {
       * @return new CRDT instance representing the value
       */
     override def fromValue(value: Int): GCounter = GCounter(value)
-
-    /** Allows the creation of new CRDTs by passing a payload.
-      *
-      * @param payload the payload
-      * @return new CRDT instance with the given payload
-      */
-    def fromPayload[P](payload: P): GCounter = GCounter(StateCRDT.genId,
-      payload.asInstanceOf[HashMap[String, Int]])
   }
 
 }

@@ -1,7 +1,6 @@
 package rescala.crdts.pvars
 
 import rescala.crdts.pvars.DistributedSignal.PVarFactory
-import rescala.crdts.statecrdts.StateCRDT
 import rescala.crdts.statecrdts.sets.GrowOnlySet
 import rescala.default._
 
@@ -18,7 +17,7 @@ object PGrowOnlySet {
     * Allows creation of DistributedSets by passing a set of initial values.
     */
   def apply[A](values: Set[A]): PGrowOnlySet[A] = {
-    val init: GrowOnlySet[A] = implicitly[StateCRDT[Set[A], GrowOnlySet[A]]].fromValue(values)
+    val init: GrowOnlySet[A] = GrowOnlySet[A](values)
     new PGrowOnlySet[A](init)
   }
 

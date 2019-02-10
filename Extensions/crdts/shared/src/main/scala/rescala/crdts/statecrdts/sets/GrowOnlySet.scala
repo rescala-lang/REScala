@@ -28,12 +28,5 @@ object GrowOnlySet {
       * @return new CRDT instance representing the value
       */
     override def fromValue(value: Set[A]): GrowOnlySet[A] = GrowOnlySet(value)
-
-    /** Allows the creation of new CRDTs by passing a payload.
-      *
-      * @param payload the payload
-      * @return new CRDT instance with the given payload
-      */
-    override def fromPayload[P](payload: P): GrowOnlySet[A] = GrowOnlySet(payload.asInstanceOf[Set[A]])
   }
 }

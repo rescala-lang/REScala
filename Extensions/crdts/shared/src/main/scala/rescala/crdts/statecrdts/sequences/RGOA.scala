@@ -13,8 +13,8 @@ import scala.collection.immutable.HashMap
   * @tparam A The type of the elements stored in this array.
   */
 case class RGOA[A](payload: (GrowOnlySet[ValueVertex[A]], Map[Vertex[A], Vertex[A]])) extends CRDTSequence[A] {
-  override type selfType = RGOA[A]
-  override type payloadType = (GrowOnlySet[ValueVertex[A]], Map[Vertex[A], Vertex[A]])
+  override type SelfT = RGOA[A]
+  override type PayloadT = (GrowOnlySet[ValueVertex[A]], Map[Vertex[A], Vertex[A]])
   val (vertices, edges): (GrowOnlySet[ValueVertex[A]], Map[Vertex[A], Vertex[A]]) = payload
 
   override def fromPayload(payload: (GrowOnlySet[ValueVertex[A]], Map[Vertex[A], Vertex[A]])): RGOA[A] = RGOA[A](payload)
@@ -22,12 +22,29 @@ case class RGOA[A](payload: (GrowOnlySet[ValueVertex[A]], Map[Vertex[A], Vertex[
 
 object RGOA {
   def apply[A](values: A*): RGOA[A] = {
-    RGOAStateCRDTInstance.fromValue(values.toList)
+    apply(values.toList)
   }
 
   def apply[A](): RGOA[A] = empty
 
   def empty[A]: RGOA[A] = new RGOA[A]((GrowOnlySet[ValueVertex[A]](), HashMap[Vertex[A], Vertex[A]](StartVertex -> EndVertex)))
+
+
+  /** Allows the creation of new CRDTs by passing an initial value.
+    *
+    * @param value the value
+    * @return new CRDT instance representing the value
+    */
+  def apply[A](value: List[A]): RGOA[A] = {
+    val emptyPayload: (GrowOnlySet[ValueVertex[A]], HashMap[Vertex[A], Vertex[A]]) =
+      (GrowOnlySet[ValueVertex[A]](), HashMap[Vertex[A], Vertex[A]](StartVertex -> EndVertex))
+    val newRGOA: RGOA[A] = RGOA[A](emptyPayload)
+
+    value.reverse.foldLeft(newRGOA) {
+      case (r: RGOA[A], a) => r.addRight(StartVertex, a)
+    }
+  }
+
 
   implicit def RGOAStateCRDTInstance[A]: StateCRDT[List[A], RGOA[A]] = new StateCRDT[List[A], RGOA[A]] {
     override def value(target: RGOA[A]): List[A] = target.value
@@ -51,27 +68,5 @@ object RGOA {
       }
     }
 
-    /** Allows the creation of new CRDTs by passing an initial value.
-      *
-      * @param value the value
-      * @return new CRDT instance representing the value
-      */
-    override def fromValue(value: List[A]): RGOA[A] = {
-      val emptyPayload: (GrowOnlySet[Vertex[A]], HashMap[Vertex[A], Vertex[A]]) =
-        (GrowOnlySet[Vertex[A]](), HashMap[Vertex[A], Vertex[A]](StartVertex -> EndVertex))
-      val newRGOA: RGOA[A] = fromPayload(emptyPayload)
-
-      value.reverse.foldLeft(newRGOA) {
-        case (r: RGOA[A], a) => r.addRight(StartVertex, a)
-      }
-    }
-
-    /** Allows the creation of new CRDTs by passing a payload.
-      *
-      * @param payload the payload
-      * @return new CRDT instance with the given payload
-      */
-    def fromPayload[P](payload: P): RGOA[A] = RGOA(payload.
-      asInstanceOf[(GrowOnlySet[ValueVertex[A]], HashMap[Vertex[A], Vertex[A]])])
   }
 }

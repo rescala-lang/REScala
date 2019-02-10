@@ -38,12 +38,5 @@ object TwoPSet {
       * @return new CRDT instance representing the value
       */
     override def fromValue(value: Set[A]): TwoPSet[A] = TwoPSet((value, Set[A]()))
-
-    /** Allows the creation of new CRDTs by passing a payload.
-      *
-      * @param payload the payload
-      * @return new CRDT instance with the given payload
-      */
-    override def fromPayload[P](payload: P): TwoPSet[A] = TwoPSet(payload.asInstanceOf[(Set[A], Set[A])])
   }
 }

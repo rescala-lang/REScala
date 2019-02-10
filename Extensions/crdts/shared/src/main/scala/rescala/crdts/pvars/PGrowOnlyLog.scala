@@ -1,7 +1,6 @@
 package rescala.crdts.pvars
 
 import rescala.crdts.pvars.DistributedSignal.PVarFactory
-import rescala.crdts.statecrdts.StateCRDT
 import rescala.crdts.statecrdts.sequences.{RGOA, Vertex}
 import rescala.default._
 
@@ -20,10 +19,7 @@ object PGrowOnlyLog {
   /**
     * Allows creation of PVertexLogs by passing a set of initial values.
     */
-  def apply[A](values: List[A]): PGrowOnlyLog[A] = {
-    val init: RGOA[A] = implicitly[StateCRDT[List[A], RGOA[A]]].fromValue(values)
-    new PGrowOnlyLog[A](init)
-  }
+  def apply[A](values: List[A]): PGrowOnlyLog[A] = new PGrowOnlyLog[A](RGOA(values))
 
   //noinspection ConvertExpressionToSAM
   implicit def PGrowOnlyLogFactory[A]: PVarFactory[PGrowOnlyLog[A]] =

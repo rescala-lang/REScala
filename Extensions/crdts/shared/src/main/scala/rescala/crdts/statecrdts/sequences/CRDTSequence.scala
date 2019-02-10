@@ -6,19 +6,19 @@ import rescala.crdts.statecrdts.sets.StateCRDTSet
 import scala.collection.AbstractIterator
 
 trait CRDTSequence[A] {
-  type valueType = List[A]
-  type payloadType
-  type selfType
+  type ValueT = List[A]
+  type PayloadT
+  type SelfT
 
 //  val logger: Logger = Logger[CRDTSequence[A]]
 
-  def payload: payloadType
+  def payload: PayloadT
 
   def vertices: StateCRDTSet[ValueVertex[A]]
 
   def edges: Map[Vertex[A], Vertex[A]]
 
-  def fromPayload(payload: payloadType): selfType
+  def fromPayload(payload: PayloadT): SelfT
 
   def contains(v: Vertex[A]): Boolean = v match {
     case StartVertex       => true
@@ -55,7 +55,7 @@ trait CRDTSequence[A] {
     }
   }
 
-  def addRight(position: Vertex[A], a: A): selfType = addRight(position, new ValueVertex[A](a, Vertex.genTimestamp))
+  def addRight(position: Vertex[A], a: A): SelfT = addRight(position, new ValueVertex[A](a, Vertex.genTimestamp))
 
   /**
     * This method allows insertions of any type into the RGA. This is used to move the start and end nodes
@@ -64,7 +64,7 @@ trait CRDTSequence[A] {
     * @param v        the vertex to be inserted right to position
     * @return A new RAG containing the inserted element
     */
-  def addRight(position: Vertex[A], v: ValueVertex[A]): selfType =
+  def addRight(position: Vertex[A], v: ValueVertex[A]): SelfT =
     position match {
       case EndVertex                                  =>
         throw new IllegalArgumentException("Cannot insert after end node!")
@@ -76,7 +76,7 @@ trait CRDTSequence[A] {
           else {
             val newVertices = vertices.add(v)
             val newEdges = edges + (l -> v) + (v -> r)
-            fromPayload((newVertices, newEdges).asInstanceOf[payloadType])
+            fromPayload((newVertices, newEdges).asInstanceOf[PayloadT])
           }
         }
         else {
@@ -84,12 +84,12 @@ trait CRDTSequence[A] {
         }
     }
 
-  def append(v: ValueVertex[A]): selfType = {
+  def append(v: ValueVertex[A]): SelfT = {
     val position = if (vertexIterator.nonEmpty) vertexIterator.toList.last else StartVertex
     addRight(position, v)
   }
 
-  def prepend(v: ValueVertex[A]): selfType = {
+  def prepend(v: ValueVertex[A]): SelfT = {
     addRight(StartVertex, v)
   }
 

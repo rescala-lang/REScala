@@ -1,7 +1,6 @@
 package rescala.crdts.pvars
 
 import rescala.crdts.pvars.DistributedSignal.PVarFactory
-import rescala.crdts.statecrdts.StateCRDT
 import rescala.crdts.statecrdts.sets.ORSet
 import rescala.default._
 
@@ -20,7 +19,7 @@ object PSet {
     * Allows creation of DistributedSets by passing a set of initial values.
     */
   def apply[A](values: Set[A]): PSet[A] = {
-    val init: ORSet[A] = implicitly[StateCRDT[Set[A], ORSet[A]]].fromValue(values)
+    val init: ORSet[A] = ORSet[A](values)
     new PSet[A](init)
   }
 

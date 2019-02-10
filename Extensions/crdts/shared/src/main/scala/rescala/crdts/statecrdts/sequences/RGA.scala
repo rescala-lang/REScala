@@ -12,27 +12,46 @@ import scala.collection.immutable.HashMap
   *                between vertices.
   * @tparam A The type of the elements stored in this array
   */
-case class RGA[A](payload: (TwoPSet[ValueVertex[A]], HashMap[Vertex[A], Vertex[A]])) extends CRDTSequence[A] {
-  override type selfType = RGA[A]
-  override type payloadType = (TwoPSet[ValueVertex[A]], HashMap[Vertex[A], Vertex[A]])
+case class RGA[A](payload: RGA.Payload[A]) extends CRDTSequence[A] {
+  override type SelfT = RGA[A]
+  override type PayloadT = (TwoPSet[ValueVertex[A]], HashMap[Vertex[A], Vertex[A]])
 
   val (vertices, edges): (TwoPSet[ValueVertex[A]], HashMap[Vertex[A], Vertex[A]]) = payload
 
-  override def fromPayload(payload: (TwoPSet[ValueVertex[A]], HashMap[Vertex[A], Vertex[A]])): RGA[A] = RGA[A](payload)
+  override def fromPayload(payload: PayloadT): RGA[A] = RGA[A](payload)
 
-  def remove(v: ValueVertex[A])(implicit
-                                stateCRDT: StateCRDT[valueType, selfType]): selfType =
-    stateCRDT.fromPayload((vertices.remove(v), edges))
+  def remove(v: ValueVertex[A]): SelfT =
+    RGA.fromPayload((vertices.remove(v), edges))
 
 }
 
 
 object RGA {
-  def apply[A](values: A*): RGA[A] = RGA2CRDTInstance.fromValue(values.toList)
+  type Payload[A] = (TwoPSet[ValueVertex[A]], HashMap[Vertex[A], Vertex[A]])
+
+  def apply[A](values: A*): RGA[A] = {
+    val emptyPayload: (TwoPSet[ValueVertex[A]], HashMap[Vertex[A], Vertex[A]]) =
+      (TwoPSet[ValueVertex[A]](), HashMap[Vertex[A], Vertex[A]](StartVertex -> EndVertex))
+    val newRGA: RGA[A] = fromPayload[A](emptyPayload)
+
+    values.reverse.foldLeft(newRGA) {
+      case (r: RGA[A], a) => r.addRight(StartVertex, a)
+    }
+  }
+
+  def apply[A](value: List[A]): RGA[A] = apply(value : _*)
 
   def apply[A](): RGA[A] = empty
 
   def empty[A]: RGA[A] = new RGA[A]((TwoPSet[ValueVertex[A]](), HashMap(StartVertex -> EndVertex)))
+
+  /** Allows the creation of new CRDTs by passing a payload.
+    *
+    * @param payload the payload
+    * @return new CRDT instance with the given payload
+    */
+  def fromPayload[A](payload: Payload[A]): RGA[A] = RGA(payload)
+
 
   implicit def RGA2CRDTInstance[A]: StateCRDT[List[A], RGA[A]] =
     new StateCRDT[List[A], RGA[A]] {
@@ -61,25 +80,6 @@ object RGA {
 
         RGA((mergedVertices, mergedEdges))
       }
-
-      def fromValue(value: List[A]): RGA[A] = {
-        val emptyPayload: (TwoPSet[Vertex[A]], HashMap[Vertex[A], Vertex[A]]) =
-          (TwoPSet[Vertex[A]](), HashMap[Vertex[A], Vertex[A]](StartVertex -> EndVertex))
-        val newRGA: RGA[A] = fromPayload(emptyPayload)
-
-        value.reverse.foldLeft(newRGA) {
-          case (r: RGA[A], a) => r.addRight(StartVertex, a)
-        }
-      }
-
-      //override def fromPayload[((TwoPSet[Vertex[A]], HashMap[Vertex, Vertex]))](payload: (TwoPSet[Vertex[A]], HashMap[Vertex, Vertex])): RGA[A] = RGA(payload)
-      /** Allows the creation of new CRDTs by passing a payload.
-        *
-        * @param payload the payload
-        * @return new CRDT instance with the given payload
-        */
-      override def fromPayload[P](payload: P): RGA[A] = RGA(payload
-        .asInstanceOf[(TwoPSet[ValueVertex[A]], HashMap[Vertex[A], Vertex[A]])])
     }
 }
 

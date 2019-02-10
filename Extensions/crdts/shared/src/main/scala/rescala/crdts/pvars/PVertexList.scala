@@ -1,7 +1,6 @@
 package rescala.crdts.pvars
 
 import rescala.crdts.pvars.DistributedSignal.PVarFactory
-import rescala.crdts.statecrdts.StateCRDT
 import rescala.crdts.statecrdts.sequences.{RGA, ValueVertex, Vertex}
 import rescala.default._
 
@@ -44,7 +43,7 @@ object PVertexList {
     * Allows creation of DistributedVertexLists by passing a list of initial values.
     */
   def apply[A](values: List[A]): PVertexList[A] = {
-    val init: RGA[A] = implicitly[StateCRDT[List[A], RGA[A]]].fromValue(values)
+    val init: RGA[A] = RGA[A](values)
     new PVertexList[A](init)
   }
 

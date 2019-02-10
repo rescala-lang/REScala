@@ -1,5 +1,6 @@
 package rescala.crdts.statecrdts
 package sets
+
 import rescala.crdts.statecrdts.sets.ORSet.Identifier
 
 /**
@@ -8,7 +9,8 @@ import rescala.crdts.statecrdts.sets.ORSet.Identifier
   * @param payload The internal state of the set, consisting of two sets. One to store entries and their identifiers and one to track removed entries (tombstones).
   * @tparam A The type of the elements stored in this set
   */
-case class ORSet[A](payload: (Set[(A, Identifier)], Set[Identifier])) extends RemovableCRDTSet[A] { //TODO: maybe use a Map[A,List(Identifier)] for entries. This would speed up removes but slow down adds
+//TODO: maybe use a Map[A,List(Identifier)] for entries. This would speed up removes but slow down adds
+case class ORSet[A](payload: (Set[(A, Identifier)], Set[Identifier])) extends RemovableCRDTSet[A] {
   val (entries, tombstones) = payload
 
   override def add(a: A): ORSet[A] = {
@@ -16,14 +18,16 @@ case class ORSet[A](payload: (Set[(A, Identifier)], Set[Identifier])) extends Re
   }
 
   override def remove(a: A): ORSet[A] = {
-    val (_, newTombs) = entries.filter(entry => entry._1 == a).unzip // fetch ids of all instances of the element
+    // fetch ids of all instances of the element
+    val (_, newTombs) = entries.filter(entry => entry._1 == a).unzip
     ORSet((entries, tombstones ++ newTombs)) // add them to tombstones
   }
 
   override def contains(a: A): Boolean = value(a)
 
   override def value: Set[A] = {
-    val (values, _) = entries.filter(e => !tombstones(e._2)).unzip // filter all entries with tombstones
+    // filter all entries with tombstones
+    val (values, _) = entries.filter(e => !tombstones(e._2)).unzip
     values
   }
 }
@@ -36,6 +40,15 @@ object ORSet {
     new ORSet((a.toSet, Set()))
   }
 
+  /** Allows the creation of new CRDTs by passing an initial value.
+    *
+    * @param value the value
+    * @return new CRDT instance representing the value
+    */
+  def apply[A](value: Set[A]): ORSet[A] = {
+    apply(value.toSeq: _*)
+  }
+
   implicit def ORSetCRDTInstance[A]: StateCRDT[Set[A], ORSet[A]] = new StateCRDT[Set[A], ORSet[A]] {
     override def value(target: ORSet[A]): Set[A] = target.value
 
@@ -46,22 +59,6 @@ object ORSet {
       ORSet((entries, tombstones))
     }
 
-    /** Allows the creation of new CRDTs by passing an initial value.
-      *
-      * @param value the value
-      * @return new CRDT instance representing the value
-      */
-    override def fromValue(value: Set[A]): ORSet[A] = {
-      val entries = value.map(a => (a, StateCRDT.genId))
-      new ORSet((entries, Set()))
-    }
 
-    /** Allows the creation of new CRDTs by passing a payload.
-      *
-      * @param payload the payload
-      * @return new CRDT instance with the given payload
-      */
-    override def fromPayload[P](payload: P): ORSet[A] = ORSet(payload
-      .asInstanceOf[(Set[(A, Identifier)], Set[Identifier])])
   }
 }
