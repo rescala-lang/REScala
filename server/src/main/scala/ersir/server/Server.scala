@@ -1,7 +1,7 @@
 package ersir.server
 
 import java.nio.file.Path
-import java.util.{Timer, TimerTask}
+import java.util.Timer
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.headers.{BasicHttpCredentials, HttpChallenges}
@@ -41,9 +41,9 @@ class Server(terminate: () => Unit,
       val webSocket = WebSocketListener()
       val registry = new Registry
       val pgol = rescala.crdts.pvars.PGrowOnlyLog[String](List("hallo", "welt"))
-      multitime.scheduleAtFixedRate(new TimerTask {
-        override def run(): Unit =  pgol.append(System.currentTimeMillis().toString)
-      }, 0l, 1000l)
+//      multitime.scheduleAtFixedRate(new TimerTask {
+//        override def run(): Unit =  pgol.append(System.currentTimeMillis().toString)
+//      }, 0l, 1000l)
       registry.bind(Bindings.crdtDescriptions)(pgol)
       registry.listen(webSocket)
       webSocket(user)
@@ -96,41 +96,44 @@ class Server(terminate: () => Unit,
     path("") {
       complete(pages.landing)
     } ~
-      path("stop") {
-        if (!user.admin) reject
-        else complete {
-          Future {
-            Thread.sleep(100)
-            terminate()
-            Log.info("shutdown complete")
-          }
-          "shutdown"
+    path("stop") {
+      if (!user.admin) reject
+      else complete {
+        Future {
+          Thread.sleep(100)
+          terminate()
+          Log.info("shutdown complete")
         }
-      } ~
-      path("css") {
-        getFromFile("web/target/web/sass/main/stylesheets/style.css") ~
-          getFromResource("style.css")
-      } ~
-      path("style.css.map") {
-        getFromFile("web/target/web/sass/main/stylesheets/style.css.map") ~
-          getFromResource("style.css.map")
-      } ~
-      path("js") {
-        getFromFile("web/target/scala-2.12/web-opt.js") ~ getFromFile("web/target/scala-2.12/web-fastopt.js") ~
-          getFromResource("web-opt.js") ~ getFromResource("web-fastopt.js")
-      } ~
-      path("ws") {
-        userSocket(user.id)
-      } ~
-      path("web-fastopt.js.map") {
-        getFromFile("web/target/scala-2.12/web-fastopt.js.map")
-      } ~
-      path("web-opt.js.map") {
-        getFromFile("web/target/scala-2.12/web-opt.js.map")
-      } ~
-      path("tools") {
-        complete(pages.toolsResponse)
+        "shutdown"
       }
+    } ~
+    path("css") {
+      getFromFile("web/target/web/sass/main/stylesheets/style.css") ~
+      getFromResource("style.css")
+    } ~
+    path("style.css.map") {
+      getFromFile("web/target/web/sass/main/stylesheets/style.css.map") ~
+      getFromResource("style.css.map")
+    } ~
+    path("js") {
+      getFromFile("web/target/scala-2.12/scalajs-bundler/main/web-fastopt-bundle.js") ~
+      getFromFile("web/target/scala-2.12/web-opt.js") ~
+      getFromFile("web/target/scala-2.12/web-fastopt.js") ~
+      getFromResource("web-opt.js") ~
+      getFromResource("web-fastopt.js")
+    } ~
+    path("ws") {
+      userSocket(user.id)
+    } ~
+    path("web-fastopt.js.map") {
+      getFromFile("web/target/scala-2.12/web-fastopt.js.map")
+    } ~
+    path("web-opt.js.map") {
+      getFromFile("web/target/scala-2.12/web-opt.js.map")
+    } ~
+    path("tools") {
+      complete(pages.toolsResponse)
+    }
 
 
   def rejectNone[T](opt: => Option[T])(route: T => Route): Route = opt.map {route}.getOrElse(reject)

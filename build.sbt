@@ -14,7 +14,10 @@ val Libraries = new {
 
   val main = shared ++ Def.settings(scalactic, jsoup, betterFiles, decline, akkaHttp, akkaStream, scalatest, scalacheck)
 
-  val js: Def.SettingsDefinition = shared ++ Seq(scalajsdom, purecss, fontawesome)
+//  val mqttjs = jsDependencies += "org.webjars.npm" % "mqtt" % "2.18.2" / "2.18.2/mqtt.js" commonJSName "mqtt"
+  val mqttjs = npmDependencies in Compile += "mqtt" -> "2.18.2"
+
+  val js: Def.SettingsDefinition = shared ++ Seq(scalajsdom, purecss, fontawesome, mqttjs)
 }
 
 lazy val server = project.in(file("server"))
@@ -23,7 +26,7 @@ lazy val server = project.in(file("server"))
                     commonSettings,
                     fork := true,
                     Libraries.main,
-                    (Compile / compile) := ((Compile / compile) dependsOn (web / Compile / fastOptJS)).value,
+                    (Compile / compile) := ((Compile / compile) dependsOn (web / Compile / fastOptJS / webpack)).value,
                     Compile / compile := ((compile in Compile) dependsOn (web / Assets / SassKeys.sassify)).value,
                     (Compile / resources) += (web / Compile / fastOptJS / artifactPath).value,
                     (Compile / resources) ++= (web / Assets / SassKeys.sassify).value,
@@ -42,6 +45,7 @@ lazy val web = project.in(file("web"))
                  )
                .dependsOn(sharedJS)
                .enablePlugins(SbtSassify)
+               .enablePlugins(ScalaJSBundlerPlugin)
                .dependsOn(rescalatags, crdtsJS)
 
 lazy val shared = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure).in(file("shared"))

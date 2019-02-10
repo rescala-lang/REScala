@@ -16,7 +16,7 @@ class Index(actions: Actions, list: Signal[List[String]]) {
 
   def gen(): Signal[JsDom.TypedTag[html.Body]] = {
 
-    rescala.reactives.Signals.lift(list) { bookmarkedNarrations =>
+    rescala.reactives.Signals.lift(list) { itemsToDisplay =>
 
       val inputQuery = Var("")
       val inputField = input(value := inputQuery, `type` := "text", tabindex := "1", onkeyup := ({ (inp: html.Input) =>
@@ -24,8 +24,8 @@ class Index(actions: Actions, list: Signal[List[String]]) {
       }: js.ThisFunction))
 
       val filteredList = inputQuery.map { query =>
-        if (query.isEmpty) bookmarkedNarrations
-        else SearchUtil.search(query, bookmarkedNarrations.map(n => n -> n))
+        if (query.isEmpty) itemsToDisplay
+        else SearchUtil.search(query, itemsToDisplay.map(n => n -> n))
       }
 
       val firstSelected: Signal[Option[String]] = Signal {
@@ -42,7 +42,7 @@ class Index(actions: Actions, list: Signal[List[String]]) {
 
       body(id := "index",
         Make.navigation(Make.fullscreenToggle("fullscreen"), searchForm, link_tools("tools")),
-           fieldset(filteredList.map(frag(_)).asFrag))
+           fieldset(filteredList.map(is => ul(is.map(li(_)))).asFrag))
     }
   }
 

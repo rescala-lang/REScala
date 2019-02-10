@@ -20,6 +20,7 @@ class ServerPages() {
       head(
         title := "EmergenCity RSS Reader",
         link(href := path_css, rel := "stylesheet", `type` := MediaTypes.`text/css`.toString()),
+//        script(`type` := "text/javascript", src := "https://unpkg.com/mqtt/dist/mqtt.min.js"),
         meta(attrname := "viewport", content := "width=device-width, initial-scale=1, user-scalable=yes, minimal-ui"))
     )(stuff: _*)
 
