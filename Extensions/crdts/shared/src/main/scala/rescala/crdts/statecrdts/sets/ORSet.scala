@@ -14,7 +14,7 @@ case class ORSet[A](payload: (Set[(A, Identifier)], Set[Identifier])) extends Re
   val (entries, tombstones) = payload
 
   override def add(a: A): ORSet[A] = {
-    ORSet((entries + ((a, GenIDUtil.genId)), tombstones))
+    ORSet((entries + ((a, IdUtil.genId)), tombstones))
   }
 
   override def remove(a: A): ORSet[A] = {
@@ -33,10 +33,10 @@ case class ORSet[A](payload: (Set[(A, Identifier)], Set[Identifier])) extends Re
 }
 
 object ORSet {
-  type Identifier = String
+  type Identifier = IdUtil.Id
 
   def apply[A](values: A*): ORSet[A] = {
-    val a = values.map(a => (a, GenIDUtil.genId))
+    val a = values.map(a => (a, IdUtil.genId))
     new ORSet((a.toSet, Set()))
   }
 

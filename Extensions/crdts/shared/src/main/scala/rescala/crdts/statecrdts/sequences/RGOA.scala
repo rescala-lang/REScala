@@ -50,10 +50,10 @@ object RGOA {
     override def value(target: RGOA[A]): List[A] = target.value
 
     override def merge(left: RGOA[A], right: RGOA[A]): RGOA[A] = {
-      println(s"Merging $right into $left")
+//      println(s"Merging $right into $left")
 
       val newVertices = right.vertexIterator.toList.filter(!left.edges.contains(_))
-      println(s"found new vertices in right: $newVertices")
+//      println(s"found new vertices in right: $newVertices")
 
       // build map of old insertion positions of the new vertices
       val oldPositions = right.edges.foldLeft(Map(): Map[Vertex[A], Vertex[A]]) {

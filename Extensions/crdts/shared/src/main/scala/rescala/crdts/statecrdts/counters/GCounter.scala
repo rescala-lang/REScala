@@ -3,19 +3,19 @@ package counters
 
 import scala.collection.immutable.HashMap
 
-case class GCounter(id: String, payload: HashMap[String, Int]) {
+case class GCounter(id: IdUtil.Id, payload: HashMap[IdUtil.Id, Int]) {
   def value: Int = payload.values.sum
 
   def fromValue(value: Int): GCounter = GCounter(id, HashMap(id -> value))
 
-  def fromPayload(payload: HashMap[String, Int]): GCounter = GCounter(id, payload)
+  def fromPayload(payload: HashMap[IdUtil.Id, Int]): GCounter = GCounter(id, payload)
 
   def increase = GCounter(id, payload + (id -> (payload(id) + 1)))
 }
 
 object GCounter {
   def apply(value: Int): GCounter = {
-    val id = GenIDUtil.genId // assign random id based on host
+    val id = IdUtil.genId // assign random id based on host
     GCounter(id, HashMap(id -> value))
   }
 
