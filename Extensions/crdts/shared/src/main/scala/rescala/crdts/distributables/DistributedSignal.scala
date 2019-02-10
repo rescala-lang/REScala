@@ -1,4 +1,4 @@
-package rescala.crdts.pvars
+package rescala.crdts.distributables
 
 import loci.transmitter._
 import rescala.crdts.statecrdts.StateCRDT

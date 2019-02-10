@@ -1,6 +1,6 @@
 
 import akka.cluster.Cluster
-import rescala.crdts.pvars._
+import rescala.crdts.distributables._
 import com.typesafe.config.ConfigFactory
 import akka.actor._
 import akka.actor.Props

@@ -1,6 +1,6 @@
-package rescala.crdts.pvars
+package rescala.crdts.distributables
 
-import rescala.crdts.pvars.DistributedSignal.PVarFactory
+import rescala.crdts.distributables.DistributedSignal.PVarFactory
 import rescala.crdts.statecrdts.sequences.{RGA, ValueVertex, Vertex}
 import rescala.default._
 

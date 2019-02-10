@@ -7,11 +7,11 @@ import loci.communicator.ws.akka.WS
 import loci.registry.{Binding, Registry}
 import loci.serializer.circe._
 import loci.transmitter.RemoteRef
-import rescala.crdts.pvars.DistributedSignal._
+import rescala.crdts.distributables.DistributedSignal._
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
-import rescala.crdts.pvars._
+import rescala.crdts.distributables._
 import rescala.crdts.statecrdts.sequences._
 import rescala.crdts.statecrdts.StateCRDT
 
