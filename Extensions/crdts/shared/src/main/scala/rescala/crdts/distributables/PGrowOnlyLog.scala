@@ -7,7 +7,10 @@ import rescala.default._
 case class PGrowOnlyLog[A](initial: RGOA[A] = RGOA[A]())
 extends DistributedSignal[List[A], RGOA[A]](initial)(RGOA.RGOAStateCRDTInstance[A]) {
 
-  def append(a: A): Unit = localDeviceChange.fire(crdtSignal.readValueOnce.append(Vertex(a)))
+  def append(a: A): Unit = {
+    crdtSignal.transform(_.append(Vertex(a)))
+    localDeviceChange.fire()
+  }
 
   def contains(a: A): Boolean = crdtSignal.readValueOnce.containsValue(a)
 

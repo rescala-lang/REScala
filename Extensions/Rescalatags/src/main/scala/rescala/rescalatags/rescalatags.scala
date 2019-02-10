@@ -108,7 +108,6 @@ trait RescalatagsLowPriorityimplicits {
 
   implicit def bindEvt[T, S <: Struct](implicit scheduler: Scheduler[S]) = new generic.AttrValue[dom.Element, rescala.reactives.Evt[T, S]]{
     def apply(t: dom.Element, a: generic.Attr, v: rescala.reactives.Evt[T, S]): Unit = {
-
       t.asInstanceOf[js.Dynamic].updateDynamic(a.name)((e: T) => v.fire(e))
     }
   }
