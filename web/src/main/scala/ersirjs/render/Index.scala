@@ -26,7 +26,6 @@ class Index(actions: Actions, list: Signal[List[String]]) {
                                    onkeyup := fireSearch)
 
 
-
       val filteredList = inputQuery.map { query =>
         if (query.isEmpty) itemsToDisplay
         else SearchUtil.search(query, itemsToDisplay.map(n => n -> n))
@@ -46,10 +45,13 @@ class Index(actions: Actions, list: Signal[List[String]]) {
                  button(cls := "pure-button", "Post")))
 
       body(id := "index",
-           img(src := "static/logo-small.svg"),
-           searchForm,
-           addForm,
-           filteredList.map(is => main(is.map(article(_)))).asFrag)
+           img(cls:= "logo", src := "static/logo-small.svg"),
+           main(article(searchForm,
+                        addForm))(
+             filteredList.map(is => frag(is.map { str =>
+               val split: Int => Option[String] = str.split("\n", 2).lift
+               article(h1(stringFrag(split(0).getOrElse(""))), stringFrag(split(1).getOrElse("")))
+             }: _*)).asFrag))
     }
   }
 
