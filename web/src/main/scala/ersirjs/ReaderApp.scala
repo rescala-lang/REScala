@@ -8,6 +8,7 @@ import ersirjs.render.Index
 import org.scalajs.dom
 import org.scalajs.dom.experimental.URL
 import org.scalajs.dom.html
+import org.scalajs.dom.html.Body
 import org.scalajs.dom.raw.HashChangeEvent
 import rescala.default._
 import scalatags.JsDom.TypedTag
@@ -19,7 +20,7 @@ import scala.scalajs.js.URIUtils.decodeURIComponent
 class ReaderApp() {
 
 
-  def makeBody(index: Index, manualStates: Event[AppState]) = {
+  def makeBody(index: Index, manualStates: Event[AppState]): Signal[TypedTag[Body]] = {
 
 
     def pathToState(path: String): AppState = {

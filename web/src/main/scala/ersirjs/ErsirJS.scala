@@ -90,7 +90,11 @@ proident, sunt in culpa qui officia deserunt mollit anim id est laborum.""")
         val index = new Index(actions, entrySignal)
         val app = new ReaderApp()
 
-        app.makeBody(index, manualStates).asFrag.applyTo(dom.document.body.parentElement)
+        val bodyParent = dom.document.body.parentElement
+        bodyParent.removeChild(dom.document.body)
+        app.makeBody(index, manualStates).asFrag.applyTo(bodyParent)
+
+//        app.makeBody(index, manualStates).asFrag.applyTo(dom.document.body.parentElement)
       }
     }
   }
