@@ -20,8 +20,7 @@ case class RGA[A](payload: RGA.Payload[A]) extends CRDTSequence[A] {
 
   override def fromPayload(payload: PayloadT): RGA[A] = RGA[A](payload)
 
-  def remove(v: ValueVertex[A]): SelfT =
-    RGA.fromPayload((vertices.remove(v), edges))
+  def remove(v: ValueVertex[A]): SelfT = RGA((vertices.remove(v), edges))
 
 }
 
@@ -32,7 +31,7 @@ object RGA {
   def apply[A](values: A*): RGA[A] = {
     val emptyPayload: (TwoPSet[ValueVertex[A]], HashMap[Vertex[A], Vertex[A]]) =
       (TwoPSet[ValueVertex[A]](), HashMap[Vertex[A], Vertex[A]](StartVertex -> EndVertex))
-    val newRGA: RGA[A] = fromPayload[A](emptyPayload)
+    val newRGA: RGA[A] = apply[A](emptyPayload)
 
     values.reverse.foldLeft(newRGA) {
       case (r: RGA[A], a) => r.addRight(StartVertex, a)
@@ -44,13 +43,6 @@ object RGA {
   def apply[A](): RGA[A] = empty
 
   def empty[A]: RGA[A] = new RGA[A]((TwoPSet[ValueVertex[A]](), HashMap(StartVertex -> EndVertex)))
-
-  /** Allows the creation of new CRDTs by passing a payload.
-    *
-    * @param payload the payload
-    * @return new CRDT instance with the given payload
-    */
-  def fromPayload[A](payload: Payload[A]): RGA[A] = RGA(payload)
 
 
   implicit def RGA2CRDTInstance[A]: StateCRDT[List[A], RGA[A]] =

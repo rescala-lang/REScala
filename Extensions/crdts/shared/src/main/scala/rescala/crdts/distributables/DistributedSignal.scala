@@ -22,11 +22,11 @@ abstract class DistributedSignal[A, F](initial: F)(implicit stateCRDT: StateCRDT
   @cutOutOfUserComputation
   private[rescala] val crdtSignal       : Var[F]    = Var(initial)
   private[rescala] val localDeviceChange: Evt[Unit] = Evt[Unit]
-  private[rescala] def mergeInernal(other: F) = {
+  private[rescala] def mergeInternal(other: F) = {
     crdtSignal.transform(stateCRDT.merge(_, other))
   }
   def merge(other: F) = {
-    mergeInernal(other)
+    mergeInternal(other)
     localDeviceChange.fire()
   }
   val valueSignal: Signal[A] = crdtSignal.map(s => stateCRDT.value(s))
@@ -73,7 +73,7 @@ object DistributedSignal {
                        .map(_ => value.crdtSignal.value)
                        .observe(c => endpoint.send(c))
 
-        endpoint.receive notify value.mergeInernal
+        endpoint.receive notify value.merge
 
         endpoint.closed notify { _ => observer.remove }
 
@@ -94,7 +94,7 @@ object DistributedSignal {
 
         endpoint.receive notify { v =>
           println(s"received val: $value")
-          pVar.mergeInernal(v)
+          pVar.mergeInternal(v)
         }
         val observer = pVar.localDeviceChange
                        .map(_ => pVar.crdtSignal.value)

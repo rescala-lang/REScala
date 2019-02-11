@@ -7,12 +7,11 @@ package sets
   * @param payload The payload consisting of one set for added entries and one set for removed entries (tombstones).
   * @tparam A The type of the elements in the set.
   */
-case class TwoPSet[A](payload: (Set[A], Set[A])) extends RemovableCRDTSet[A] {
-  val (entries, tombstones): (Set[A], Set[A]) = payload
+case class TwoPSet[A](entries: Set[A], tombstones: Set[A]) extends RemovableCRDTSet[A] {
 
-  override def add(e: A): TwoPSet[A] = TwoPSet((entries + e, tombstones))
+  override def add(e: A): TwoPSet[A] = TwoPSet(entries + e, tombstones)
 
-  override def remove(e: A): TwoPSet[A] = if (entries(e)) TwoPSet((entries, tombstones + e)) else this
+  override def remove(e: A): TwoPSet[A] = if (entries(e)) TwoPSet(entries, tombstones + e) else this
 
   override def contains(e: A): Boolean = entries.contains(e) && !tombstones.contains(e)
 
@@ -21,7 +20,7 @@ case class TwoPSet[A](payload: (Set[A], Set[A])) extends RemovableCRDTSet[A] {
 
 object TwoPSet {
   def apply[A](values: A*): TwoPSet[A] = {
-    new TwoPSet((values.toSet, Set()))
+    new TwoPSet(values.toSet, Set())
   }
 
   implicit def TwoPSetCRDTInstance[A]: StateCRDT[Set[A], TwoPSet[A]] = new StateCRDT[Set[A], TwoPSet[A]] {
@@ -29,7 +28,7 @@ object TwoPSet {
     override def merge(left: TwoPSet[A], right: TwoPSet[A]): TwoPSet[A] = {
       val e = left.entries ++ right.entries
       val t = left.tombstones ++ right.tombstones
-      new TwoPSet((e, t))
+      new TwoPSet(e, t)
     }
   }
 }
