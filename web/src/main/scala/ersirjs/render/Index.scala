@@ -14,9 +14,9 @@ class Index(actions: Actions, list: Signal[List[String]]) {
   def gen(): Signal[JsDom.TypedTag[html.Body]] = {
 
     list.map { itemsToDisplay =>
-      val articles = itemsToDisplay.map { str =>
+      val articles = itemsToDisplay.reverse.map { str =>
         val split: Int => Option[String] = str.split("\n", 2).lift
-        article(h1(stringFrag(split(0).getOrElse(""))), stringFrag(split(1).getOrElse("")))
+        article(lang := "en", h1(stringFrag(split(0).getOrElse(""))), stringFrag(split(1).getOrElse("")))
       }
 
       body(id := "index",

@@ -8,10 +8,6 @@ $theme-color: #16982B;
 $border-color: transparentize($theme-color, 0.8);
 $background-color: #FAFAFA;
 
-@mixin common-bg {
-  background-color: $background-color;
-}
-
 @mixin no-selection {
   /* disable any form of selection */
   -webkit-user-select: none; /* Chrome all / Safari all */
@@ -28,28 +24,19 @@ $background-color: #FAFAFA;
   user-select: initial; /* Likely future */
 }
 
-/* i wont pretend that i fully understand what im doing here
-it seems to do what i want (black background for page in fullscreen)
-it stops working in opera27 (webkit) when these are combined into a list of selectors
-please improve :D */
-*:-webkit-full-screen {
-  @include common-bg;
-}
-
-*:fullscreen {
-  @include common-bg;
-}
-
-*:-moz-full-screen {
-  @include common-bg;
-}
-
 body {
-  @include common-bg;
+  background-color: $background-color;
+  transition: background-color 1s;
   color: $font-color;
-  /* disable scrollbar in IE … untested so disabled
-  -ms-overflow-style: none; */
   font-family: "Liberation Sans", "Helvetica", "Arial", sans-serif;
+}
+
+body.emergency {
+  background-color: #f91111;
+}
+
+body.green {
+  background-color: #16982b;
 }
 
 a {
@@ -73,7 +60,6 @@ img.logo {
   display: block;
   padding: 0;
   border: none;
-  @include common-bg;
 }
 
 
@@ -105,14 +91,12 @@ main {
 
 article {
   box-shadow: 0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24);
-  background: white;
+  background: #fffc;
   border-bottom: 1px solid #EBEBEB;
   margin: 1em;
   padding: 1em;
-}
-
-article {
   text-align: justify;
+  hyphens: auto;
   h1 {
     font-size: 1em;
     text-align: left;

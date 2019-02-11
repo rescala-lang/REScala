@@ -8,10 +8,11 @@ import loci.transmitter.RemoteRef
 import org.scalajs.dom
 import rescala.default._
 import rescala.rescalatags._
-import scalatags.JsDom.implicits.stringFrag
+import scalatags.JsDom.attrs.cls
+import scalatags.JsDom.implicits._
 import scalatags.JsDom.tags.body
-import scala.collection.mutable
 
+import scala.collection.mutable
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
@@ -68,12 +69,8 @@ object ErsirJS {
       entryFuture.foreach { entryCrdt =>
         val entrySignal = entryCrdt.valueSignal
 
-        val emergencies = Future { ReMqtt.topicstream("city/alert_state") }
-
-
-        emergencies.foreach(_.observe{ str =>
-          entryCrdt.append(str)
-        })
+//        val emergencies = ReMqtt.topicstream("city/alert_state")
+        val currentEmergency = Var("")
 
         entryCrdt.append(
           """Breaking News!
@@ -90,9 +87,14 @@ proident, sunt in culpa qui officia deserunt mollit anim id est laborum.""")
         val index = new Index(actions, entrySignal)
         val app = new ReaderApp()
 
+
+        val bodySig = Signal { app.makeBody(index, manualStates).value.apply(cls := currentEmergency) }
+
+
+
         val bodyParent = dom.document.body.parentElement
         bodyParent.removeChild(dom.document.body)
-        app.makeBody(index, manualStates).asFrag.applyTo(bodyParent)
+        bodySig.asFrag.applyTo(bodyParent)
 
 //        app.makeBody(index, manualStates).asFrag.applyTo(dom.document.body.parentElement)
       }

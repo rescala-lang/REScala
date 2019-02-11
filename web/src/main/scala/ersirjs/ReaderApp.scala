@@ -11,6 +11,7 @@ import org.scalajs.dom.html
 import org.scalajs.dom.html.Body
 import org.scalajs.dom.raw.HashChangeEvent
 import rescala.default._
+import rescala.macros.cutOutOfUserComputation
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all.{body, stringFrag}
 
@@ -19,7 +20,7 @@ import scala.scalajs.js.URIUtils.decodeURIComponent
 
 class ReaderApp() {
 
-
+  @cutOutOfUserComputation
   def makeBody(index: Index, manualStates: Event[AppState]): Signal[TypedTag[Body]] = {
 
 
