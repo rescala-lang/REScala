@@ -120,6 +120,9 @@ class Server(terminate: () => Unit,
     path("ws") {
       userSocket(user.id)
     } ~
+    path("sw") {
+      getFromResource("serviceworker.js")
+    } ~
     pathPrefix("static") {
       getFromResourceDirectory("static")
     } ~

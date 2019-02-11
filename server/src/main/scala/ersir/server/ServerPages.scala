@@ -29,7 +29,7 @@ class ServerPages() {
         style(raw(resourceLoader.resourceAsString("style.css"))),
         script(raw("""if('serviceWorker' in navigator) {
   navigator.serviceWorker
-           .register('static/serviceworker.js')
+           .register('sw')
            .then(function() { console.log('Service Worker Registered'); }); }"""))),
       )(stuff: _*)
 

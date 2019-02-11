@@ -26,6 +26,8 @@ class ResourceLoader() {
     Try {
       Resource.getAsStream(findAsset(path).get).buffered.bytes
     }.orElse(Try {
+      Resource.getAsStream(path).buffered.bytes
+    }).orElse(Try {
       Resource.getUrl()
       val resourcepath = Resource.getUrl()
       (File(resourcepath) / s"../../../../web/target/web/sass/main/stylesheets/$path").bytes
