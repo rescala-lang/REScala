@@ -69,11 +69,10 @@ object DistributedSignal {
 
         println(s"sending crdt $value")
 
-        val observer = value.localDeviceChange
-                       .map(_ => value.crdtSignal.value)
+        val observer = value.crdtSignal
                        .observe(c => endpoint.send(c))
 
-        endpoint.receive notify value.merge
+        endpoint.receive notify value.mergeInternal
 
         endpoint.closed notify { _ => observer.remove }
 
@@ -96,9 +95,7 @@ object DistributedSignal {
           println(s"received val: $value")
           pVar.mergeInternal(v)
         }
-        val observer = pVar.localDeviceChange
-                       .map(_ => pVar.crdtSignal.value)
-                       .observe(c => endpoint.send(c))
+        val observer = pVar.crdtSignal.observe(c => endpoint.send(c))
         endpoint.closed notify { _ => observer.remove }
 
         // println(s"manual ${implicitly[StateCRDT[Int, GCounter]].merge(counter.crdtSignal.readValueOnce, value)}")
