@@ -93,7 +93,11 @@ proident, sunt in culpa qui officia deserunt mollit anim id est laborum.""")
         val manualStates = Evt[AppState]()
 
         val actions = new Actions(manualStates = manualStates)
-        val index = new Index(actions, entrySignal)
+        val connectClass = ReMqtt.connected.map {
+          case true => "connected"
+          case _    => ""
+        }
+        val index = new Index(actions, connectClass, entrySignal)
         val app = new ReaderApp()
 
 

@@ -55,12 +55,32 @@ article p {
   margin: auto;
 }
 
-img.logo {
+header {
   margin: 1em auto;
-  display: block;
-  padding: 0;
-  border: none;
+  height: 80px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
+
+header > svg {
+  width: 64px;
+  height: 64px;
+}
+
+header > * {
+  margin: 0 1em 0 1em;
+}
+
+#lamphead {
+  fill: #cb1f25;
+}
+
+.connected #lamphead {
+  fill: #1acb3a;
+}
+
+
 
 
 h1 {

@@ -18,11 +18,20 @@ object Mqttjs extends js.Object {
 object ReMqtt {
   println(s"initializing mqtt …")
   val connection: js.Dynamic = Mqttjs.connect("ws://127.0.0.1:9001")
+  def isConnected(): Boolean = js.DynamicImplicits.truthValue(connection.connected)
+  val connected = Var[Boolean](isConnected)
+
+  connection.on("connect", () => connected.set(isConnected))
+  connection.on("reconnect", () => connected.set(isConnected))
+  connection.on("close", () => connected.set(isConnected))
+  connection.on("error", () => connected.set(isConnected))
+
   val topics: mutable.Map[String, Evt[String]] = mutable.Map[String, Evt[String]]()
   connection.on("message", { (topic: String, message: js.Dynamic) =>
     topics.get(topic).foreach(e => e.fire(message.toString))
   })
   println(s"mqtt initialized")
+
 
 
   def topicstream(topic: String): Evt[String] = {

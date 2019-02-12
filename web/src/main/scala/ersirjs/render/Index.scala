@@ -1,14 +1,14 @@
 package ersirjs.render
 
-import ersirjs.Actions
+import ersirjs.{Actions, Icons}
 import org.scalajs.dom.html
 import rescala.default._
+import rescala.rescalatags._
 import scalatags.JsDom
 import scalatags.JsDom.all._
-import scalatags.JsDom.implicits.stringFrag
 import scalatags.JsDom.tags2.{article, main}
 
-class Index(actions: Actions, list: Signal[List[String]]) {
+class Index(actions: Actions, connected: Signal[String], list: Signal[List[String]]) {
 
 
   def gen(): Signal[JsDom.TypedTag[html.Body]] = {
@@ -24,8 +24,9 @@ class Index(actions: Actions, list: Signal[List[String]]) {
       }
 
       body(id := "index",
-           img(cls := "logo", src := "static/logo-small.svg"),
-           main(articles))
+            header(cls := connected, img(cls := "logo", src := "static/logo-small.svg"),
+                   Icons.lamp),
+           main (articles))
     }
 
 //      val fireSearch = Evt[html.Input]()
