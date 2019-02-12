@@ -12,12 +12,20 @@ val Libraries = new {
     rmgkLogging, scalatags, lociCommunication, circe
   )
 
-  val main = shared ++ Def.settings(scalactic, jsoup, betterFiles, decline, akkaHttp, akkaStream, scalatest, scalacheck, betterFiles)
+  val main = shared ++ Def.settings(scalactic,
+                                    jsoup,
+                                    betterFiles,
+                                    decline,
+                                    akkaHttp,
+                                    akkaStream,
+                                    scalatest,
+                                    scalacheck,
+                                    betterFiles)
 
-//  val mqttjs = jsDependencies += "org.webjars.npm" % "mqtt" % "2.18.2" / "2.18.2/mqtt.js" commonJSName "mqtt"
   val mqttjs = npmDependencies in Compile += "mqtt" -> "2.18.2"
+  val cytoscape = npmDependencies in Compile += "cytoscape" -> "3.4.0"
 
-  val js: Def.SettingsDefinition = shared ++ Seq(scalajsdom, purecss, fontawesome, mqttjs)
+  val js: Def.SettingsDefinition = shared ++ Seq(scalajsdom, purecss, fontawesome, mqttjs, cytoscape)
 }
 
 lazy val server = project.in(file("server"))

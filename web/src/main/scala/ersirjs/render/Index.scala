@@ -16,7 +16,11 @@ class Index(actions: Actions, list: Signal[List[String]]) {
     list.map { itemsToDisplay =>
       val articles = itemsToDisplay.reverse.map { str =>
         val split: Int => Option[String] = str.split("\n", 2).lift
-        article(lang := "en", h1(stringFrag(split(0).getOrElse(""))), stringFrag(split(1).getOrElse("")))
+        article(lang := "en",
+                div(cls := "pic", style := "background-image: url(https://www.digitalstadt-darmstadt.de/wp-content/uploads/2019/02/telekom_com_Darmstadt_5G_3-1030x687.jpg);"),
+                div(
+                  h1(stringFrag(split(0).getOrElse(""))),
+                  stringFrag(split(1).getOrElse(""))))
       }
 
       body(id := "index",

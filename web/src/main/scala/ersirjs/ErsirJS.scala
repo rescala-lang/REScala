@@ -1,6 +1,7 @@
 package ersirjs
 
 import ersir.shared._
+import ersirjs.facade.ReMqtt
 import ersirjs.render.Index
 import loci.communicator.ws.akka.WS
 import loci.registry.Registry
@@ -10,39 +11,9 @@ import rescala.default._
 import rescala.rescalatags._
 import scalatags.JsDom.attrs.cls
 import scalatags.JsDom.implicits._
-import scalatags.JsDom.tags.body
 
-import scala.collection.mutable
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import scala.scalajs.js
-import scala.scalajs.js.annotation.JSImport
-
-@JSImport("mqtt", JSImport.Namespace)
-@js.native
-object mqtt extends js.Object {
-  def connect(i: String): js.Dynamic = js.native
-}
-
-object ReMqtt {
-  println(s"initializing mqtt …")
-  val connection: js.Dynamic = mqtt.connect("ws://127.0.0.1:9001")
-  val topics: mutable.Map[String, Evt[String]] = mutable.Map[String, Evt[String]]()
-  connection.on("message", { (topic: String, message: js.Dynamic) =>
-    topics.get(topic).foreach(e => e.fire(message.toString))
-  })
-  println(s"mqtt initialized")
-
-
-  def topicstream(topic: String): Evt[String] = {
-    topics.getOrElseUpdate(topic, {
-      println(s"subscribing to mqtt topic $topic")
-      connection.subscribe(topic)
-      println(s"subscribed to $topic")
-      Evt[String]
-    })
-  }
-}
 
 
 object ErsirJS {
@@ -54,7 +25,45 @@ object ErsirJS {
 
   def main(args: Array[String]): Unit = {
     println("initing")
-    dom.document.body = body("loading data …").render
+
+//    val cytoscapeContainer = div(style := "height: 100vh;").render
+//
+//    dom.document.body = body(cytoscapeContainer)
+//
+//    val cy = Cytoscape(literal(container = cytoscapeContainer,
+//                              elements = js.Array(
+//                                literal(data = literal(id = "a")),
+//                                literal(data = literal(id = "b")),
+//                                literal(data = literal(id = "ab", source = "a", target = "b")),
+//                                ),
+//                              style = js.Array(
+//                                literal(
+//                                  selector = "node",
+//                                  style = literal(
+//                                    "background-color" -> "#666",
+//                                    "label" -> "data(id)")
+//                                ),
+//                                literal(
+//                                  selector = "edge",
+//                                  style = literal(
+//                                    "width" -> 3,
+//                                    "line-color" -> "#ccc",
+//                                    "target-arrow-color" -> "#ccc",
+//                                    "target-arrow-shape" -> "triangle"
+//                                  )
+//                                )
+//                              ),
+//                              layout = literal(
+//                                name = "grid",
+//                                rows = 1,
+//                                )))
+//    println(cy.nodes().length)
+//
+//    cy.add(literal(data = literal(id = "c")))
+//    cy.layout(literal(
+//      name = "grid",
+//      rows = 1,
+//      )).run()
 
 
     val registry = new Registry
@@ -63,14 +72,14 @@ object ErsirJS {
     connection.foreach { remote =>
       val entryFuture = registry.lookup(Bindings.crdtDescriptions, remote)
       println(s"requesting $entryFuture")
-      entryFuture.failed.foreach{ t =>
+      entryFuture.failed.foreach { t =>
         t.printStackTrace()
       }
       entryFuture.foreach { entryCrdt =>
         val entrySignal = entryCrdt.valueSignal
 
-//        val emergencies = ReMqtt.topicstream("city/alert_state")
-        val currentEmergency = Var("")
+        val emergencies = ReMqtt.topicstream("city/alert_state")
+        val currentEmergency = emergencies.latest("")
 
         entryCrdt.append(
           """Breaking News!
@@ -88,8 +97,9 @@ proident, sunt in culpa qui officia deserunt mollit anim id est laborum.""")
         val app = new ReaderApp()
 
 
-        val bodySig = Signal { app.makeBody(index, manualStates).value.apply(cls := currentEmergency) }
-
+        val bodySig = Signal {
+          app.makeBody(index, manualStates).value.apply(cls := currentEmergency)
+        }
 
 
         val bodyParent = dom.document.body.parentElement

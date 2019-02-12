@@ -27,11 +27,11 @@ class ServerPages() {
         meta(attrname := "viewport",
              content := "width=device-width, initial-scale=1, user-scalable=yes, minimal-ui"),
         style(raw(resourceLoader.resourceAsString("style.css"))),
-        script(raw("""if('serviceWorker' in navigator) {
-  navigator.serviceWorker
-           .register('sw')
-           .then(function() { console.log('Service Worker Registered'); }); }"""))),
-      )(stuff: _*)
+//        script(raw("""if('serviceWorker' in navigator) {
+//  navigator.serviceWorker
+//           .register('sw')
+//           .then(function() { console.log('Service Worker Registered'); }); }"""))
+))(stuff: _*)
 
   def htmlResponse(tag: Tag): HttpResponse = HttpResponse(entity = HttpEntity(
     ContentType(MediaTypes.`text/html`, HttpCharsets.`UTF-8`),

@@ -97,9 +97,20 @@ article {
   padding: 1em;
   text-align: justify;
   hyphens: auto;
+
+  display:flex;
+
   h1 {
     font-size: 1em;
     text-align: left;
     margin-top: 0;
   }
+}
+
+.pic {
+  width: calc(50% - 2em);
+  flex-shrink: 0;
+  margin-right: 1em;
+  background-size: cover;
+  background-position: center;
 }
