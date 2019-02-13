@@ -23,9 +23,8 @@ val Libraries = new {
                                     betterFiles)
 
   val mqttjs = npmDependencies in Compile += "mqtt" -> "2.18.2"
-  val cytoscape = npmDependencies in Compile += "cytoscape" -> "3.4.0"
 
-  val js: Def.SettingsDefinition = shared ++ Seq(scalajsdom, purecss, fontawesome, mqttjs, cytoscape)
+  val js: Def.SettingsDefinition = shared ++ Seq(scalajsdom, purecss, fontawesome, mqttjs)
 }
 
 lazy val server = project.in(file("server"))

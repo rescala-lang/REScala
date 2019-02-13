@@ -8,7 +8,7 @@ import loci.registry.Registry
 import loci.transmitter.RemoteRef
 import org.scalajs.dom
 import rescala.default._
-import rescala.rescalatags._
+import rescala.Tags._
 import scalatags.JsDom.attrs.cls
 import scalatags.JsDom.implicits._
 
@@ -81,14 +81,8 @@ object ErsirJS {
         val emergencies = ReMqtt.topicstream("city/alert_state")
         val currentEmergency = emergencies.latest("")
 
-        entryCrdt.append(
-          """Breaking News!
-Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
-tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
-quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
-consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
-cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
-proident, sunt in culpa qui officia deserunt mollit anim id est laborum.""")
+        Future { entryCrdt.append(
+          s"""Breaking News! ${System.currentTimeMillis()}""")}
 
         val manualStates = Evt[AppState]()
 
@@ -108,7 +102,7 @@ proident, sunt in culpa qui officia deserunt mollit anim id est laborum.""")
 
         val bodyParent = dom.document.body.parentElement
         bodyParent.removeChild(dom.document.body)
-        bodySig.asFrag.applyTo(bodyParent)
+        bodySig.asModifier.applyTo(bodyParent)
 
 //        app.makeBody(index, manualStates).asFrag.applyTo(dom.document.body.parentElement)
       }

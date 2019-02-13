@@ -113,7 +113,7 @@ class ReaderApp() {
       // printing the html.Body actually causes it to no longer display the inner rendered signals
       val bodySignal: Signal[TypedTag[html.Body]] = currentAppState.map {
         case IndexState => indexBody
-      }.flatten
+      }
       val bodyTag: Signal[TypedTag[html.Body]] = bodySignal
         .withDefault(body("loading more data"))
         .recover { case t => body(t.toString) }
