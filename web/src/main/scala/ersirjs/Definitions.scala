@@ -68,13 +68,7 @@ object Icons {
 
   val lamp: Modifier =raw("""<svg viewBox="0 0 512 512" >
  <def>
-   <path id="lamphead"
-         d="m 32 0
-            h -64
-            l -10 -96
-            h 84
-            l -10 96
-            z" />
+
 
    <path id="lamphat"
          d="m 64 0
@@ -124,7 +118,13 @@ object Icons {
  </def>
 
  <g style="fill:none;stroke:#444041;stroke-width:10">
-   <use x="256" y="180" xlink:href="#lamphead"/>
+      <path transform="translate(256, 180)" id="lamphead"
+         d="m 32 0
+            h -64
+            l -10 -96
+            h 84
+            l -10 96
+            z" />
    <use x="256" y="84" xlink:href="#lamphat" />
    <use x="256" y="180" xlink:href="#lampmast" />
    <use x="256" y="400" xlink:href="#lampsocket" />

@@ -20,11 +20,24 @@ object ReMqtt {
   val connection: js.Dynamic = Mqttjs.connect("ws://127.0.0.1:9001")
   def isConnected(): Boolean = js.DynamicImplicits.truthValue(connection.connected)
   val connected = Var[Boolean](isConnected)
+  connected.observe(c => println(s"connected => $c"))
 
-  connection.on("connect", () => connected.set(isConnected))
-  connection.on("reconnect", () => connected.set(isConnected))
-  connection.on("close", () => connected.set(isConnected))
-  connection.on("error", () => connected.set(isConnected))
+  connection.on("connect", () => {
+    println("connect event")
+    connected.set(isConnected)
+  })
+  connection.on("reconnect", () => {
+    println("reconnect event")
+    connected.set(isConnected)
+  })
+  connection.on("close", () => {
+    println("close event")
+    connected.set(isConnected)
+  })
+  connection.on("error", () => {
+    println("error event")
+    connected.set(isConnected)
+  })
 
   val topics: mutable.Map[String, Evt[String]] = mutable.Map[String, Evt[String]]()
   connection.on("message", { (topic: String, message: js.Dynamic) =>

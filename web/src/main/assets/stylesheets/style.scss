@@ -74,6 +74,7 @@ header > * {
 
 #lamphead {
   fill: #cb1f25;
+  transition: fill 1s;
 }
 
 .connected #lamphead {
