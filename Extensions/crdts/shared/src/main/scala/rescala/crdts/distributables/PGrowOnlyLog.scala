@@ -9,7 +9,9 @@ extends DistributedSignal[List[A], RGOA[A]](initial)(RGOA.RGOAStateCRDTInstance[
 
   def append(a: A): Unit = {
     crdtSignal.transform(_.append(Vertex(a)))
-    localDeviceChange.fire()
+  }
+  def prepend(a: A): Unit = {
+    crdtSignal.transform(_.prepend(Vertex(a)))
   }
 
   def contains(a: A): Boolean = crdtSignal.readValueOnce.containsValue(a)

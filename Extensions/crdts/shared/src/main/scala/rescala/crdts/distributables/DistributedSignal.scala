@@ -27,7 +27,6 @@ abstract class DistributedSignal[A, F](initial: F)(implicit stateCRDT: StateCRDT
   }
   def merge(other: F) = {
     mergeInternal(other)
-    localDeviceChange.fire()
   }
   val valueSignal: Signal[A] = crdtSignal.map(s => stateCRDT.value(s))
 

@@ -2,7 +2,7 @@ package live
 
 import org.scalajs.dom.document
 import rescala.debuggable.ChromeDebuggerInterface
-import rescala.rescalatags._
+import rescala.Tags._
 import rescala.restoration.LocalStorageStore
 import rescala.restoration.ReCirce.recirce
 import scalatags.JsDom.all._
@@ -50,7 +50,7 @@ object Demo {
         header(
           `class` := "header",
           h1("Temperatures"),
-          Signal { span(s"time ${time.value}") }.asFrag
+          Signal { span(s"time ${time.value}") }.asModifier
         ),
 
         section(
@@ -66,7 +66,7 @@ object Demo {
                       ),
                     )
                })
-          }.asFrag
+          }.asModifier
         ),
 
         div(
@@ -74,7 +74,7 @@ object Demo {
           `style` := Signal {if (history.value.isEmpty) "display:none" else ""},
 
           label("aggregated: "),
-          Signal {span(aggregated.value)}.asFrag
+          Signal {span(aggregated.value)}.asModifier
         )
       )
     }

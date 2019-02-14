@@ -9,7 +9,7 @@ import rescala.core.{ReSerializable, Scheduler}
 import rescala.debuggable.ChromeDebuggerInterface
 import rescala.restoration.{LocalStorageStore, ReStoringStruct}
 import rescala.restoration.ReCirce.recirce
-import rescala.rescalatags._
+import rescala.Tags._
 import scalatags.JsDom
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all._
@@ -94,8 +94,8 @@ object TodoMVC {
         },
         Signal {
           input(`class` := "toggle", `type` := "checkbox", doneClickModifier,
-                if (doneV.value) checked else "" )}.asFrag,
-        label(descV.map(stringFrag).asFrag),
+                if (doneV.value) checked else "" )}.asModifier,
+        label(descV.map(stringFrag).asModifier),
         removeTaskButton
       ),
 
@@ -164,7 +164,7 @@ object TodoMVC {
         tasks.map(l =>
                     ul(
                       `class` := "todo-list",
-                      l.map(_.item))).asFrag
+                      l.map(_.item))).asModifier
       ),
       div(
         `class`:="footer",
@@ -178,7 +178,7 @@ object TodoMVC {
             span(if (remainingTasks.size == 1)
               " item left" else " items left")
           )
-        }.asFrag,
+        }.asModifier,
 
         removeAllButton(`class` := Signal.dynamic {
           "clear-completed" +

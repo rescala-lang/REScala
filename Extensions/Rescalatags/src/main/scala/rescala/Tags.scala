@@ -1,56 +1,48 @@
 package rescala
+
 import org.scalajs.dom
 import org.scalajs.dom.{DocumentFragment, Element, Node}
 import rescala.core.{CreationTicket, Scheduler, Struct}
-import rescala.reactives.{Observe, Signal, Var}
-import scalatags.JsDom.TypedTag
-import scalatags.JsDom.all._
+import rescala.reactives.{Evt, Observe, Signal, Var}
+import scalatags.JsDom.all.{Attr, AttrValue, Frag, Modifier, Style, StyleValue}
 import scalatags.generic
 
 import scala.language.higherKinds
+
 import scala.scalajs.js
 
-package object rescalatags extends RescalatagsLowPriorityimplicits {
+object Tags {
 
-  implicit def transformTypedTag[S <: Struct, Out <: Element]: TypedTag[Out] => Out = _.render
-
-
-  implicit class SignalToScalatags[S <: Struct, In, Out <: Node](signal: Signal[In, S])
-                                                                (implicit transform: In => Out) {
-    private[this] type ResultFrag = generic.Frag[Element, Out]
+  implicit class SignalToScalatags[S <: Struct](val signal: Signal[Frag, S]) extends AnyVal {
     /**
       * converts a Signal of a scalatags Tag to a scalatags Frag which automatically reflects changes to the signal in the dom
       */
-    def asFrag(implicit engine: Scheduler[S]): ResultFrag = {
-      new REFrag(signal, engine)
+    def asModifier(implicit engine: Scheduler[S]): Modifier = {
+      new REModifier[S](signal, engine)
     }
+  }
 
+  private class REModifier[S <: Struct](rendered: Signal[Frag, S], engine: Scheduler[S]) extends Modifier {
+    var observe     : Observe[S] = null
+    var currentNodes: List[Node] = _
+    override def applyTo(parent: Element): Unit = {
+      CreationTicket.fromEngine(engine).transaction { init =>
 
-    private class REFrag(rendered: Signal[In, S], engine: Scheduler[S]) extends ResultFrag {
-      var observe: Observe[S] = null
-      var currentTag: Out = _
-      override def applyTo(parent: Element): Unit = {
-        CreationTicket.fromEngine(engine).transaction { init =>
+        val nodes = init.accessTicket().now(rendered).render
+        parent.appendChild(nodes)
+        currentNodes = nodeList(nodes)
 
-          currentTag = transform(init.accessTicket().now(rendered))
-          parent.appendChild(currentTag)
-
-          observe = Observe.weak(rendered, fireImmediately = false)(
-            { newTag =>
-              val newNode = transform(newTag)
-              val olds = nodeList(currentTag)
-              val news = nodeList(newNode)
-              if (parent != null && !scalajs.js.isUndefined(parent)) {
-                replaceAll(parent, olds, news)
-              }
-              currentTag = newNode
-            },
-             t => throw t)(init)
-        }
-
-
+        observe = Observe.weak(rendered, fireImmediately = false)(
+          { newTag =>
+            val newNode = newTag.render
+            val news = nodeList(newNode)
+            if (parent != null && !scalajs.js.isUndefined(parent)) {
+              replaceAll(parent, currentNodes, news)
+            }
+            currentNodes = news
+          },
+           t => throw t)(init)
       }
-      override def render: Out = ???
     }
   }
 
@@ -80,6 +72,12 @@ package object rescalatags extends RescalatagsLowPriorityimplicits {
   implicit def signalStyleValue[T: StyleValue, S <: Struct](implicit engine: Scheduler[S])
   : StyleValue[Signal[T, S]] = genericReactiveStyleValue[T, S, ({type λ[T2] = Signal[T2, S]})#λ]
 
+  implicit def bindEvt[T, S <: Struct](implicit scheduler: Scheduler[S]): generic.AttrValue[Element, Evt[T, S]]
+  = new generic.AttrValue[dom.Element, rescala.reactives.Evt[T, S]] {
+    def apply(t: dom.Element, a: generic.Attr, v: rescala.reactives.Evt[T, S]): Unit = {
+      t.asInstanceOf[js.Dynamic].updateDynamic(a.name)((e: T) => v.fire(e))
+    }
+  }
 
   // helper functions
 
@@ -102,15 +100,5 @@ package object rescalatags extends RescalatagsLowPriorityimplicits {
     else List(n)
   }
 
-}
 
-trait RescalatagsLowPriorityimplicits {
-
-  implicit def bindEvt[T, S <: Struct](implicit scheduler: Scheduler[S]) = new generic.AttrValue[dom.Element, rescala.reactives.Evt[T, S]]{
-    def apply(t: dom.Element, a: generic.Attr, v: rescala.reactives.Evt[T, S]): Unit = {
-      t.asInstanceOf[js.Dynamic].updateDynamic(a.name)((e: T) => v.fire(e))
-    }
-  }
-
-  implicit def transformFragment[S <: Struct, Out <: Element]: Frag => Node = _.render
 }
