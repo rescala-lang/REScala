@@ -24,13 +24,22 @@ object Tags {
 
   private class REModifier[S <: Struct](rendered: Signal[Frag, S], engine: Scheduler[S]) extends Modifier {
     var observe     : Observe[S] = null
-    var currentNodes: List[Node] = _
+    var currentNodes: List[Node] = Nil
     override def applyTo(parent: Element): Unit = {
       CreationTicket.fromEngine(engine).transaction { init =>
 
-        val nodes = init.accessTicket().now(rendered).render
-        parent.appendChild(nodes)
-        currentNodes = nodeList(nodes)
+        if (observe == null) {
+          val nodes = init.accessTicket().now(rendered).render
+          parent.appendChild(nodes)
+          currentNodes = nodeList(nodes)
+        }
+        else {
+          println(s"Warning, added $rendered to dom AGAIN, this is experimental")
+          observe.remove()(engine)
+          observe = null
+          replaceAll(parent, Nil, currentNodes)
+        }
+
 
         observe = Observe.weak(rendered, fireImmediately = false)(
           { newTag =>
