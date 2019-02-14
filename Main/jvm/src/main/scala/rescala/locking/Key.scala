@@ -6,6 +6,9 @@ import scala.collection.mutable.ArrayBuffer
 
 final class Key[InterTurn](val turn: InterTurn) {
 
+  /* access to this var is protected by the intrinsic lock of the current keychain,
+   * i.e., the value pointed to by this reference … .
+   * the lock keychain method ensures correct locking of this field */
   @volatile private[locking] var keychain: Keychain[InterTurn] = new Keychain(this)
 
   val id: Long = keychain.id
@@ -20,6 +23,9 @@ final class Key[InterTurn](val turn: InterTurn) {
   def lockKeychain[R](f: Keychain[InterTurn] => R): R = {
     while (true) {
       val oldChain = keychain
+      // we are worried that the value of keychain changes between the
+      // call of the `keychain` accessor, and the call to synchronized
+      // so we check that it is the same as before
       keychain.synchronized {
         if (oldChain eq keychain) return f(oldChain)
       }
@@ -28,7 +34,6 @@ final class Key[InterTurn](val turn: InterTurn) {
   }
 
   /** contains a list of all locks owned by us. */
-  //  private[this] val heldLocks: AtomicReference[List[TurnLock[InterTurn]]] = new AtomicReference[List[TurnLock[InterTurn]]](Nil)
   private[this] val heldLocks: ArrayBuffer[TurnLock[InterTurn]] = ArrayBuffer[TurnLock[InterTurn]]()
   private[locking] def addLock(lock: TurnLock[InterTurn]): Unit = heldLocks.synchronized {heldLocks += lock}
   private[locking] def grabLocks() = heldLocks.synchronized(heldLocks)
