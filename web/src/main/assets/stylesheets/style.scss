@@ -1,11 +1,8 @@
 @import "lib/purecss/build/pure";
 @import "lib/font-awesome/css/svg-with-js";
-@import "underline-animation";
 
 $font-color: rgb(0, 0, 0);
 $theme-color: #16982B;
-//$border-color: #310000;
-$border-color: transparentize($theme-color, 0.8);
 $background-color: #FAFAFA;
 
 @mixin no-selection {
