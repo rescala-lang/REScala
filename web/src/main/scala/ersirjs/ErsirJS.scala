@@ -26,45 +26,6 @@ object ErsirJS {
   def main(args: Array[String]): Unit = {
     println("initing")
 
-//    val cytoscapeContainer = div(style := "height: 100vh;").render
-//
-//    dom.document.body = body(cytoscapeContainer)
-//
-//    val cy = Cytoscape(literal(container = cytoscapeContainer,
-//                              elements = js.Array(
-//                                literal(data = literal(id = "a")),
-//                                literal(data = literal(id = "b")),
-//                                literal(data = literal(id = "ab", source = "a", target = "b")),
-//                                ),
-//                              style = js.Array(
-//                                literal(
-//                                  selector = "node",
-//                                  style = literal(
-//                                    "background-color" -> "#666",
-//                                    "label" -> "data(id)")
-//                                ),
-//                                literal(
-//                                  selector = "edge",
-//                                  style = literal(
-//                                    "width" -> 3,
-//                                    "line-color" -> "#ccc",
-//                                    "target-arrow-color" -> "#ccc",
-//                                    "target-arrow-shape" -> "triangle"
-//                                  )
-//                                )
-//                              ),
-//                              layout = literal(
-//                                name = "grid",
-//                                rows = 1,
-//                                )))
-//    println(cy.nodes().length)
-//
-//    cy.add(literal(data = literal(id = "c")))
-//    cy.layout(literal(
-//      name = "grid",
-//      rows = 1,
-//      )).run()
-
 
     val registry = new Registry
     val connection: Future[RemoteRef] = registry.connect(WS(wsUri))
