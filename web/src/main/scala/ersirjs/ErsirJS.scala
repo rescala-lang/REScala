@@ -7,8 +7,8 @@ import loci.communicator.ws.akka.WS
 import loci.registry.Registry
 import loci.transmitter.RemoteRef
 import org.scalajs.dom
-import rescala.default._
 import rescala.Tags._
+import rescala.default._
 import scalatags.JsDom.attrs.cls
 import scalatags.JsDom.implicits._
 
@@ -41,9 +41,6 @@ object ErsirJS {
 
         val emergencies = ReMqtt.topicstream("city/alert_state")
         val currentEmergency = emergencies.latest("")
-
-        Future { entryCrdt.append(
-          s"""Breaking News! ${System.currentTimeMillis()}""")}
 
         val manualStates = Evt[AppState]()
 

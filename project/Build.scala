@@ -49,7 +49,7 @@ object Dependencies {
   val fontawesome = libraryDependencies += ("org.webjars" % "font-awesome" % "5.3.1")
   val jsoup = libraryDependencies += ("org.jsoup" % "jsoup" % "1.11.3")
   val lociDependency = Def.setting((n: String) => "de.tuda.stg" %%% s"scala-loci-$n" % "0.2.0")
-  val lociCommunication = libraryDependencies ++= Seq("communication", "communicator-ws-akka").map(lociDependency.value)
+  val lociCommunication = libraryDependencies ++= Seq("communication", "communicator-ws-akka", "communicator-webrtc").map(lociDependency.value)
   val lociCommunicationCirce =  libraryDependencies += lociDependency.value("serializer-circe")
   val lociCommunicationUpickle =  libraryDependencies += lociDependency.value("serializer-upickle")
   val purecss = libraryDependencies += ("org.webjars.npm" % "purecss" % "1.0.0")

@@ -1,5 +1,6 @@
 package ersirjs.render
 
+import ersir.shared.Emergentcy
 import ersirjs.{Actions, Icons}
 import org.scalajs.dom.html
 import rescala.default._
@@ -8,19 +9,18 @@ import scalatags.JsDom
 import scalatags.JsDom.all._
 import scalatags.JsDom.tags2.{article, main}
 
-class Index(actions: Actions, connected: Signal[String], list: Signal[List[String]]) {
+class Index(actions: Actions, connected: Signal[String], list: Signal[List[Emergentcy]]) {
 
 
   def gen(): JsDom.TypedTag[html.Body] = {
 
     val articles = list.map { itemsToDisplay =>
-      SeqFrag(itemsToDisplay.map { str =>
-        val split: Int => Option[String] = str.split("\n", 2).lift
-        article(lang := "en",
-                div(cls := "pic", style := "background-image: url(https://www.digitalstadt-darmstadt.de/wp-content/uploads/2019/02/telekom_com_Darmstadt_5G_3-1030x687.jpg);"),
+      SeqFrag(itemsToDisplay.map { emergentcy =>
+        article(lang := "de",
+                div(cls := "pic", style := s"background-image: url(${emergentcy.img});"),
                 div(
-                  h1(stringFrag(split(0).getOrElse(""))),
-                  stringFrag(split(1).getOrElse(""))))
+                  h1(stringFrag(emergentcy.title)),
+                  stringFrag(emergentcy.desc)))
       })
     }
     body(id := "index",

@@ -7,11 +7,13 @@ import akka.http.scaladsl.model.headers.{BasicHttpCredentials, HttpChallenges}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.AuthenticationResult
 import akka.http.scaladsl.server.{Directive, Route}
-import ersir.shared.Bindings
+import ersir.shared.{Bindings, Emergentcy}
 import ersir.shared.Log.{Server => Log}
 import loci.communicator.ws.akka._
 import loci.registry.Registry
+import org.jsoup.Jsoup
 
+import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.concurrent.Future
 
@@ -24,13 +26,26 @@ object userStore {
 }
 
 
+
 class Server(terminate: () => Unit,
              pages: ServerPages,
              system: ActorSystem,
              postsPath: Path,
             ) {
 
-  val pgol = rescala.crdts.distributables.PGrowOnlyLog[String]()
+  val pgol = rescala.crdts.distributables.PGrowOnlyLog[Emergentcy]()
+
+  val doc = Jsoup.connect("https://www.digitalstadt-darmstadt.de/feed").get()
+  val titles = doc.select("channel item").iterator().asScala.toList
+  titles.foreach { e =>
+    val image = Jsoup.parse(e.selectFirst("content|encoded").text(),
+                            "https://www.digitalstadt-darmstadt.de/feed/")
+                .selectFirst(".avia_image").absUrl("src")
+    pgol.append(
+    Emergentcy(e.selectFirst("title").text(),
+               e.selectFirst("description").text(),
+               image))
+  }
 
 
   val userSocketCache: mutable.Map[String, Route] = mutable.Map.empty

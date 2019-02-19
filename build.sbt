@@ -20,11 +20,13 @@ val Libraries = new {
                                     akkaStream,
                                     scalatest,
                                     scalacheck,
-                                    betterFiles)
+                                    betterFiles,
+                                    jsoup)
 
-  val mqttjs = npmDependencies in Compile += "mqtt" -> "2.18.2"
+  val npmDeps = npmDependencies in Compile ++= Seq("mqtt" -> "2.18.2")
 
-  val js: Def.SettingsDefinition = shared ++ Seq(scalajsdom, purecss, fontawesome, mqttjs)
+
+  val js: Def.SettingsDefinition = shared ++ Seq(scalajsdom, purecss, fontawesome, npmDeps)
 }
 
 lazy val server = project.in(file("server"))
