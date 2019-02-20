@@ -43,7 +43,7 @@ object ErsirJS {
   }
 
   def main(args: Array[String]): Unit = {
-    println("initing")
+    println("initing 2")
 
 
     val registry = new Registry

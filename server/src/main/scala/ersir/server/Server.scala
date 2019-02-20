@@ -117,21 +117,8 @@ class Server(terminate: () => Unit,
         "shutdown"
       }
     } ~
-    path("css") {
-      getFromFile("web/target/web/sass/main/stylesheets/style.css") ~
-      getFromResource("style.css")
-    } ~
-    path("style.css.map") {
-      getFromFile("web/target/web/sass/main/stylesheets/style.css.map") ~
-      getFromResource("style.css.map")
-    } ~
-    path("js") {
-      getFromFile("web/target/scala-2.12/scalajs-bundler/main/web-fastopt-bundle.js") ~
-      getFromFile("web/target/scala-2.12/web-opt.js") ~
-      getFromFile("web/target/scala-2.12/web-fastopt.js") ~
-      getFromResource("web-opt.js") ~
-      getFromResource("web-fastopt.js")
-    } ~
+    WebResources.mainJs.route ~ WebResources.css.route ~
+    WebResources.libJS.route ~ WebResources.loaderJs.route ~
     path("ws") {
       userSocket(user.id)
     } ~

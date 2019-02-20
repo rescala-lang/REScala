@@ -51,6 +51,7 @@ lazy val web = project.in(file("web"))
                  commonSettings,
                  Libraries.js,
                  scalaJSUseMainModuleInitializer := true,
+                 webpackBundlingMode := BundlingMode.LibraryOnly(),
                  )
                .dependsOn(sharedJS)
                .enablePlugins(SbtSassify)
