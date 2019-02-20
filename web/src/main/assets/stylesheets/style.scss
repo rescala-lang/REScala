@@ -101,17 +101,14 @@ fieldset a:visited {
   color: $theme-color;
 }
 
-main {
+article {
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
-}
 
-article {
   box-shadow: 0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24);
   background: #fffc;
   border-bottom: 1px solid #EBEBEB;
-  margin: 1em;
   padding: 1em;
   text-align: justify;
   hyphens: auto;

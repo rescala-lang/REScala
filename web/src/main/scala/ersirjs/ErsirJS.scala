@@ -14,6 +14,25 @@ import scalatags.JsDom.implicits._
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
+import scala.util.control.NonFatal
+
+
+@JSExportTopLevel("Post")
+object ErsirPost {
+  var pgol: rescala.crdts.distributables.PGrowOnlyLog[Emergentcy] = null
+
+  @JSExport
+  def add(s: String): Unit = {
+    try {
+      val Array(title, desc) = s.split("\n", 2)
+      pgol.prepend(Emergentcy(title, desc, ""))
+    }
+    catch {
+      case NonFatal(_) => pgol.prepend(Emergentcy(s, "", ""))
+    }
+  }
+}
 
 
 object ErsirJS {
@@ -37,6 +56,7 @@ object ErsirJS {
         t.printStackTrace()
       }
       entryFuture.foreach { entryCrdt =>
+        ErsirPost.pgol = entryCrdt
         val entrySignal = entryCrdt.valueSignal
 
         val emergencies = ReMqtt.topicstream("city/alert_state")
@@ -45,6 +65,7 @@ object ErsirJS {
         val manualStates = Evt[AppState]()
 
         val actions = new Actions(manualStates = manualStates)
+
         val connectClass = ReMqtt.connected.map {
           case true => "connected"
           case _    => ""
@@ -61,8 +82,6 @@ object ErsirJS {
         val bodyParent = dom.document.body.parentElement
         bodyParent.removeChild(dom.document.body)
         bodySig.asModifier.applyTo(bodyParent)
-
-//        app.makeBody(index, manualStates).asFrag.applyTo(dom.document.body.parentElement)
       }
     }
   }

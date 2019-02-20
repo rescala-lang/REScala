@@ -17,9 +17,6 @@ class Actions(manualStates: Evt[AppState]) {
 
   private def gotoIndex(): Unit = manualStates.fire(IndexState)
 
-
-
-
   def button_index(ts: Modifier*): Tag = lcButton(gotoIndex(), ts: _*)
 
 
