@@ -115,7 +115,9 @@ article {
 
   display:flex;
 
-  animation: slide-down 0.4s ease;
+  &:first-child {
+    animation: slide-down 0.4s ease;
+  }
 
   h1 {
     font-size: 1em;
