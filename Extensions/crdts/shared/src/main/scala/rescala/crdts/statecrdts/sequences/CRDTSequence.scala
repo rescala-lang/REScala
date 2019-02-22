@@ -36,7 +36,7 @@ trait CRDTSequence[A] {
   }
 
   def successor(v: Vertex[A]): Vertex[A] = {
-    println(s"computing successor of $v in ${edges.keySet}")
+//    println(s"computing successor of $v in ${edges.keySet}")
     v match {
       case EndVertex =>
         throw new IllegalArgumentException("There is no successor to the end node!")

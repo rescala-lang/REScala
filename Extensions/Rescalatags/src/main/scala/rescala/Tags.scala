@@ -8,7 +8,6 @@ import scalatags.JsDom.all.{Attr, AttrValue, Frag, Modifier, Style, StyleValue}
 import scalatags.generic
 
 import scala.language.higherKinds
-
 import scala.scalajs.js
 
 object Tags {
@@ -30,8 +29,8 @@ object Tags {
 
         if (observe == null) {
           val nodes = init.accessTicket().now(rendered).render
-          parent.appendChild(nodes)
           currentNodes = nodeList(nodes)
+          parent.appendChild(nodes)
         }
         else {
           println(s"Warning, added $rendered to dom AGAIN, this is experimental")
@@ -45,6 +44,7 @@ object Tags {
           { newTag =>
             val newNode = newTag.render
             val news = nodeList(newNode)
+            println(s"$rendered parent $parent")
             if (parent != null && !scalajs.js.isUndefined(parent)) {
               replaceAll(parent, currentNodes, news)
             }
@@ -93,8 +93,9 @@ object Tags {
   @scala.annotation.tailrec
   private def replaceAll(parent: Node, old: List[Node], now: List[Node]): Unit = (old, now) match {
     case (o :: Nil, n :: (ns@_ :: _)) if o.nextSibling != null =>
+      val endSibling = o.nextSibling
       parent.replaceChild(n, o)
-      ns.foreach(parent.insertBefore(_, o.nextSibling))
+      ns.foreach(parent.insertBefore(_, endSibling))
     case (o :: os, n :: ns) =>
       parent.replaceChild(n, o)
       replaceAll(parent, os, ns)
