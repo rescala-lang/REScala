@@ -2,20 +2,19 @@ package todo
 
 import java.util.concurrent.ThreadLocalRandom
 
-import org.scalajs.dom
 import org.scalajs.dom.html.{Input, LI}
-import org.scalajs.dom.{KeyboardEvent, UIEvent, document}
-import rescala.core.{ReSerializable, Scheduler}
-import rescala.debuggable.ChromeDebuggerInterface
-import rescala.restoration.{LocalStorageStore, ReStoringStruct}
-import rescala.restoration.ReCirce.recirce
+import org.scalajs.dom.{UIEvent, document}
 import rescala.Tags._
+import rescala.core.ReSerializable
+import rescala.debuggable.ChromeDebuggerInterface
+import rescala.restoration.LocalStorageStore
+import rescala.restoration.ReCirce.recirce
 import scalatags.JsDom
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all._
 import scalatags.JsDom.tags2.section
 
-import scala.scalajs.js.annotation.JSExportTopLevel
+import scala.Function.const
 
 object TodoMVC {
 
@@ -49,14 +48,7 @@ object TodoMVC {
 
 
     val (edittext, edittextInput) = Events.fromCallback[UIEvent]{ inputChange =>
-      input(
-        `class` := "edit", `type` := "text",
-        onchange := inputChange, onblur := inputChange,
-        onkeypress := { e: KeyboardEvent =>
-          if (e.keyCode == 13) { // 13 = enter key
-            e.preventDefault() // TODO somehow app breaks, if we listen to enter...?
-          }
-        })
+      input(`class` := "edit", `type` := "text", onchange := inputChange, onblur := inputChange)
     }
 
     val edittextStr = edittext
@@ -65,18 +57,24 @@ object TodoMVC {
                         myinput.value.trim
                       }
 
-    val descV = edittextStr
-                .fold(str) { (_, uie) => uie }(rn.toString, implicitly)
+    val descV = edittextStr.fold(str) { (_, uie) => uie }(rn.toString, implicitly)
 
-    val editingV = edittextStr.fold(false)((_, _) => false)
+    val (editStart, editbox) = Events.fromCallback[UIEvent]{ cb =>
+      div(
+        `class`:="view",
+        ondblclick:= cb
+      )
+    }
 
+    val editingV = (edittextStr map const(false)) || (editStart map const(true)) latest(init = false)
 
     val (doneClick, doneClickModifier) = Events.fromCallback[UIEvent](onchange := _)
 
     val doneV = (toggleAll || doneClick).fold(false)((v, _) => !v)(rn.toString + "b", implicitly)
 
 
-    val (removeClick, removeTaskButton) = addHandler[UIEvent](button(`class` := "destroy"), onclick)
+    val (removeClick, removeTaskButton) =
+      Events.fromCallback[UIEvent](cb => button(`class` := "destroy", onclick := cb))
 
 
 
@@ -86,20 +84,13 @@ object TodoMVC {
         +(if (editingV.value) "editing " else "no-editing ")
       ),
 
-      div(
-        `class`:="view",
-
-        ondblclick:= { e: UIEvent =>
-//          tasks.readValueOnce.foreach( tt => tt.editing.set(t==tt) )
-        },
+      editbox(
         Signal {
           input(`class` := "toggle", `type` := "checkbox", doneClickModifier,
                 if (doneV.value) checked else "" )}.asModifier,
         label(descV.map(stringFrag).asModifier),
         removeTaskButton
       ),
-
-
       edittextInput(value := descV)
     )
 
@@ -107,9 +98,7 @@ object TodoMVC {
     res
   }
 
-  @JSExportTopLevel("todo.TodoMVC.main")
-  def main(): Unit = {
-
+  def main(args: Array[String]): Unit = {
 
     ChromeDebuggerInterface.setup(storingEngine)
 
@@ -119,12 +108,13 @@ object TodoMVC {
       placeholder := "What needs to be done?",
       autofocus := "autofocus")
 
-    val (createTodo, todoInputField) = createHandler(todoInputTag, onchange)
+    val (createTodo, todoInputField) = inputFieldHandler(todoInputTag, onchange)
 
 
-    val (toggleAll, toggleAllTag) = addHandler[UIEvent](
-      input(id := "toggle-all", name := "toggle-all", `class` := "toggle-all", `type` := "checkbox"),
-      onchange)
+    val (toggleAll, toggleAllTag) = Events.fromCallback[UIEvent] { cb =>
+      input(id := "toggle-all", name := "toggle-all", `class` := "toggle-all",
+            `type` := "checkbox", onchange := cb)
+    }
 
 
     val innerTasks = List(
@@ -136,7 +126,8 @@ object TodoMVC {
     val createTask = createTodo.map { str => maketask(str, toggleAll) }
 
 
-    val (removeAllClick, removeAllButton) = addHandler[UIEvent](button("remove all done todos"), onclick)
+    val (removeAllClick, removeAllButton) =
+      Events.fromCallback[UIEvent](cb => button("remove all done todos", onclick := cb))
 
     val tasks = Events.foldAll(innerTasks) { tasks =>
       Seq(
@@ -192,25 +183,17 @@ object TodoMVC {
     ChromeDebuggerInterface.finishedLoading()
   }
 
-  def createHandler(tag: TypedTag[Input], attr: Attr): (Event[String], Input) = {
-    val (createTodo: storingEngine.Event[UIEvent], todoInputField1: TypedTag[Input]) = addHandler[UIEvent][Input](tag, attr)
+  def inputFieldHandler(tag: TypedTag[Input], attr: Attr): (Event[String], Input) = {
+    val (handlerTriggered: Event[UIEvent], todoInputField1: TypedTag[Input]) =
+      Events.fromCallback[UIEvent](cb => tag(attr := cb))
 
     val todoInputField: Input = todoInputField1.render
 
-
-    (createTodo.map { e: UIEvent =>
+    (handlerTriggered.map { e: UIEvent =>
       e.preventDefault()
       val res = todoInputField.value.trim
       todoInputField.value = ""
       res
     }, todoInputField)
   }
-
-
-  final class addHandlerT[Ev](val p: Unit) extends AnyVal {
-    def apply[T <: dom.Element](tag: TypedTag[T], attr: Attr)
-                               (implicit ct: CreationTicket, s: Scheduler[ReStoringStruct]): (Event[Ev], TypedTag[T]) =
-      Events.fromCallback[Ev](cb => tag(attr := cb))(ct, s)
-  }
-  def addHandler[Ev]: addHandlerT[Ev] = new addHandlerT[Ev](())
 }

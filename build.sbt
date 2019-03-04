@@ -172,7 +172,9 @@ lazy val caseStudyMill = project.in(file("Examples/Mill"))
 lazy val todolist = project.in(file("Examples/Todolist"))
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(rescalatags, restoreJS)
-  .settings(cfg.base, cfg.noPublish, name := "todolist", scalaSource in Compile := baseDirectory.value)
+  .settings(cfg.base, cfg.noPublish, name := "todolist",
+            scalaSource in Compile := baseDirectory.value,
+            scalaJSUseMainModuleInitializer := true)
 
 lazy val livedemo = project.in(file("Examples/LiveDemo"))
                     .enablePlugins(ScalaJSPlugin)
