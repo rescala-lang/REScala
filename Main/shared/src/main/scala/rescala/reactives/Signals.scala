@@ -111,12 +111,12 @@ sealed private abstract class SignalImpl[T, S <: Struct](initial: Sstate[T, S],
 final private class StaticSignal[T, S <: Struct](initial: Sstate[T, S],
                                                  expr: (StaticTicket[S], () => T) => T,
                                                  name: REName)
-  extends SignalImpl(initial, expr, name, null) with DisconnectableImpl[S]
+  extends SignalImpl[T, S](initial, expr, name, null) with DisconnectableImpl[S]
 
 final private class DynamicSignal[T, S <: Struct](initial: Sstate[T, S],
                                                   expr   : (DynamicTicket[S], () => T) => T,
                                                   name   : REName,
                                                   staticDeps: Set[ReSource[S]])
-  extends SignalImpl(initial, expr, name, staticDeps) with DisconnectableImpl[S]
+  extends SignalImpl[T, S](initial, expr, name, staticDeps) with DisconnectableImpl[S]
 
 

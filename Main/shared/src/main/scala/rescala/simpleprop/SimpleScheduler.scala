@@ -51,7 +51,7 @@ class SimpleCreation() extends Initializer[SimpleStruct] {
   : Unit = {
     println(s"creating $reactive")
     println(incoming)
-    incoming.map { dep =>
+    incoming.foreach { dep =>
       dep.state.outgoing += reactive
     }
     reactive.state.discovered = true

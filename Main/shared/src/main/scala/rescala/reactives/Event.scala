@@ -181,7 +181,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
     * @group conversion */
   @cutOutOfUserComputation
   final def reduce[A: ReSerializable](reducer: (=> A, => T) => A)(implicit ticket: CreationTicket[S]): Signal[A, S] =
-    ticket.create[Pulse[A], StaticSignal[A, S]](
+    ticket.create(
       Set(this),
       Initializer.InitializedSignal[Pulse[A]](Pulse.empty)(ReSerializable.pulseSerializable),
       inite = false
