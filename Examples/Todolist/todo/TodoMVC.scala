@@ -2,6 +2,8 @@ package todo
 
 import java.util.concurrent.ThreadLocalRandom
 
+import io.circe.generic.semiauto
+import io.circe.{Decoder, Encoder}
 import org.scalajs.dom.html.{Input, LI}
 import org.scalajs.dom.{UIEvent, document}
 import rescala.Tags._
@@ -12,8 +14,6 @@ import scalatags.JsDom
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all._
 import scalatags.JsDom.tags2.section
-
-import io.circe.generic.auto._
 
 import scala.Function.const
 
@@ -32,14 +32,18 @@ object TodoMVC {
     def edit(str: String) = copy(desc = str)
   }
 
-  implicit val taskDecoder: io.circe.Decoder[Taskref] =
-    io.circe.Decoder.decodeString.map(???)
-  implicit val taskEncoder: io.circe.Encoder[Taskref] =
-    io.circe.Encoder.encodeString.contramap(_.id)
+  implicit val taskDataDecoder: Decoder[TaskData] = semiauto.deriveDecoder
+  implicit val taskDataEncoder: Encoder[TaskData] = semiauto.deriveEncoder
+
+  implicit val taskDecoder: Decoder[Taskref] =
+    Decoder.decodeTuple2[String, TaskData].map{ case (s, td) => maketask(td, s) }
+  implicit val taskEncoder: Encoder[Taskref] =
+    Encoder.encodeTuple2[String, TaskData].contramap[Taskref](tr => (tr.id, tr.initial))
 
   class Taskref(val id: String,
                 val listItem: TypedTag[LI],
                 val contents: Signal[TaskData],
+                val initial: TaskData,
                 val removeClick: Event[String])
 
   def maketask(initial: TaskData,
@@ -92,7 +96,7 @@ object TodoMVC {
       edittext.value(value := contents.map(_.desc))
     )
 
-    new Taskref(randomName, listItem, contents, removeButton.event.map(_ => randomName))
+    new Taskref(randomName, listItem, contents, initial, removeButton.event.map(_ => randomName))
   }
 
   def main(args: Array[String]): Unit = {
