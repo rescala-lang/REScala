@@ -22,23 +22,10 @@ abstract class DistributedSignal[A, F](initial: F)(implicit stateCRDT: StateCRDT
   @cutOutOfUserComputation
   private[rescala] val crdtSignal       : Var[F]    = Var(initial)
   private[rescala] val localDeviceChange: Evt[Unit] = Evt[Unit]
-  private[rescala] def mergeInternal(other: F) = {
+  private[rescala] def merge(other: F): Unit = {
     crdtSignal.transform(stateCRDT.merge(_, other))
   }
-  def merge(other: F) = {
-    mergeInternal(other)
-  }
   val valueSignal: Signal[A] = crdtSignal.map(s => stateCRDT.value(s))
-
-  /**
-    * Shortcut to get the public value of the published CvRDT.
-    * The actual return type depends on the chosen CvRDT. It could be Integer for Counter CRDTs or List for Sequence
-    * based CvRDTs.
-    *
-    * @return an immutable object representing the public value of the published CvRDT
-    */
-  def value: A = valueSignal.readValueOnce
-
 }
 
 object DistributedSignal {
@@ -71,7 +58,7 @@ object DistributedSignal {
         val observer = value.crdtSignal
                        .observe(c => endpoint.send(c))
 
-        endpoint.receive notify value.mergeInternal
+        endpoint.receive notify value.merge
 
         endpoint.closed notify { _ => observer.remove }
 
@@ -92,7 +79,7 @@ object DistributedSignal {
 
         endpoint.receive notify { v =>
           println(s"received val: $value")
-          pVar.mergeInternal(v)
+          pVar.merge(v)
         }
         val observer = pVar.crdtSignal.observe(c => endpoint.send(c))
         endpoint.closed notify { _ => observer.remove }

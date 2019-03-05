@@ -1,5 +1,5 @@
 package rescala.crdts.statecrdts
-package counters
+package primitives
 
 import scala.collection.immutable.HashMap
 

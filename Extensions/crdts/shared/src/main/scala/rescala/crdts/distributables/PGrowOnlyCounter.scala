@@ -1,7 +1,7 @@
 package rescala.crdts.distributables
 
 import rescala.crdts.distributables.DistributedSignal.PVarFactory
-import rescala.crdts.statecrdts.counters.GCounter
+import rescala.crdts.statecrdts.primitives.GCounter
 import rescala.default.implicitScheduler
 
 /**
@@ -11,9 +11,8 @@ import rescala.default.implicitScheduler
   */
 case class PGrowOnlyCounter(initial: GCounter = GCounter(0))
 extends DistributedSignal[Int, GCounter](initial) {
-  def increase: Int = {
+  def increase: Unit = {
     localDeviceChange.fire(crdtSignal.readValueOnce.increase)
-    value
   }
 }
 

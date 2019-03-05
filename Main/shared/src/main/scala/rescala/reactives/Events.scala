@@ -139,16 +139,17 @@ object Events {
   }
 
 
-  final class FromCallbackT[T] private[Events](val u: Null) extends AnyVal {
+  case class CBResult[S <: Struct, T, R](event: Event[T, S], value: R)
+  final class FromCallbackT[T] private[Events](val dummy: Boolean = true) extends AnyVal {
     def apply[S <: Struct, R](body: (T => Unit) => R)
-                             (implicit ct: CreationTicket[S], s: Scheduler[S]): (Event[T, S], R) = {
+                             (implicit ct: CreationTicket[S], s: Scheduler[S]): CBResult[S, T, R] = {
       val evt = Evt[T, S]
       val res = body(evt.fire)
-      (evt, res)
+      CBResult(evt, res)
     }
   }
 
-  def fromCallback[T]: FromCallbackT[T] = new FromCallbackT[T](null)
+  def fromCallback[T]: FromCallbackT[T] = new FromCallbackT[T]()
 }
 
 

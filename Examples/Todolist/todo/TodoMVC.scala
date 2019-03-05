@@ -5,7 +5,6 @@ import java.util.concurrent.ThreadLocalRandom
 import org.scalajs.dom.html.{Input, LI}
 import org.scalajs.dom.{UIEvent, document}
 import rescala.Tags._
-import rescala.core.ReSerializable
 import rescala.debuggable.ChromeDebuggerInterface
 import rescala.restoration.LocalStorageStore
 import rescala.restoration.ReCirce.recirce
@@ -14,6 +13,8 @@ import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all._
 import scalatags.JsDom.tags2.section
 
+import io.circe.generic.auto._
+
 import scala.Function.const
 
 object TodoMVC {
@@ -21,81 +22,77 @@ object TodoMVC {
   implicit val storingEngine: LocalStorageStore = new LocalStorageStore()
   import storingEngine._
 
+  val toggleAll = Events.fromCallback[UIEvent] { cb =>
+    input(id := "toggle-all", name := "toggle-all", `class` := "toggle-all",
+          `type` := "checkbox", onchange := cb)
+  }
 
-//  implicit val taskDecoder: io.circe.Decoder[Task] = io.circe.Decoder.decodeTuple2[Var[String], Var[Boolean]].map { case (desc, done) =>
-//    new Task(desc, done)
-//  }
-//  implicit val taskEncoder: io.circe.Encoder[Task] = io.circe.Encoder.encodeTuple2[Var[String], Var[Boolean]].contramap{ t =>
-//    (t.desc, t.done)
-//  }
+  case class TaskData(desc: String, done: Boolean = false) {
+    def toggle(): TaskData = copy(done = !done)
+    def edit(str: String) = copy(desc = str)
+  }
 
-//  class Task(val desc : Var[String], val done : Signal[Boolean]) {
-//    val editing = Var(false)(ReSerializable.doNotSerialize, implicitly)
-//  }
-//  object Task {
-//    def apply(desc: String, done: Boolean) = {
-//      val rn = s"Task(${ThreadLocalRandom.current().nextLong().toHexString})"
-//      val descV = Var(desc)(implicitly, rn.toString)
-//      val doneV = toggleAll.fold(done)((v, _) => !v)(rn.toString + "b", implicitly)
-//      new Task(descV, doneV)
-//    }
-//  }
+  implicit val taskDecoder: io.circe.Decoder[Taskref] =
+    io.circe.Decoder.decodeString.map(???)
+  implicit val taskEncoder: io.circe.Encoder[Taskref] =
+    io.circe.Encoder.encodeString.contramap(_.id)
 
-  class Taskres(val item: TypedTag[LI], val done: Signal[Boolean], val removeClick: Event[Taskres])
+  class Taskref(val id: String,
+                val listItem: TypedTag[LI],
+                val contents: Signal[TaskData],
+                val removeClick: Event[String])
 
-  def maketask[__](str: String, toggleAll: Event[__]): Taskres = {
-    val rn = s"Task(${ThreadLocalRandom.current().nextLong().toHexString})"
+  def maketask(initial: TaskData,
+               randomName: String = s"Task(${ThreadLocalRandom.current().nextLong().toHexString})")
+  : Taskref = {
 
 
-    val (edittext, edittextInput) = Events.fromCallback[UIEvent]{ inputChange =>
+    val edittext = Events.fromCallback[UIEvent]{ inputChange =>
       input(`class` := "edit", `type` := "text", onchange := inputChange, onblur := inputChange)
     }
 
-    val edittextStr = edittext
-                      .map { e: UIEvent =>
-                        val myinput = e.target.asInstanceOf[Input]
-                        myinput.value.trim
-                      }
-
-    val descV = edittextStr.fold(str) { (_, uie) => uie }(rn.toString, implicitly)
-
-    val (editStart, editbox) = Events.fromCallback[UIEvent]{ cb =>
-      div(
-        `class`:="view",
-        ondblclick:= cb
-      )
+    val edittextStr = edittext.event.map { e: UIEvent =>
+      val myinput = e.target.asInstanceOf[Input]
+      myinput.value.trim
     }
 
-    val editingV = (edittextStr map const(false)) || (editStart map const(true)) latest(init = false)
 
-    val (doneClick, doneClickModifier) = Events.fromCallback[UIEvent](onchange := _)
+    val editDiv = Events.fromCallback[UIEvent] { cb =>
+      div(`class` := "view", ondblclick := cb)
+    }
 
-    val doneV = (toggleAll || doneClick).fold(false)((v, _) => !v)(rn.toString + "b", implicitly)
+    val editingV = (edittextStr map const(false)) || (editDiv.event map const(true)) latest(init = false)
+
+    val doneClick = Events.fromCallback[UIEvent](onchange := _)
+
+    val doneEv = toggleAll.event || doneClick.event
+
+    val contents = Events.foldAll(initial)(current => Seq(
+      doneEv >> const(current.toggle),
+      edittextStr >> current.edit
+    ))(implicitly, randomName)
 
 
-    val (removeClick, removeTaskButton) =
+    val removeButton =
       Events.fromCallback[UIEvent](cb => button(`class` := "destroy", onclick := cb))
-
-
 
     val listItem = li(
       `class` := Signal (
-        (if (doneV.value) "completed " else " ")
+        (if (contents.value.done) "completed " else " ")
         +(if (editingV.value) "editing " else "no-editing ")
       ),
 
-      editbox(
+      editDiv.value(
         Signal {
-          input(`class` := "toggle", `type` := "checkbox", doneClickModifier,
-                if (doneV.value) checked else "" )}.asModifier,
-        label(descV.map(stringFrag).asModifier),
-        removeTaskButton
+          input(`class` := "toggle", `type` := "checkbox", doneClick.value,
+                if (contents.value.done) checked else "" )}.asModifier,
+        label(contents.map(c => stringFrag(c.desc)).asModifier),
+        removeButton.value
       ),
-      edittextInput(value := descV)
+      edittext.value(value := contents.map(_.desc))
     )
 
-    lazy val res: Taskres = new Taskres(listItem, doneV, removeClick.map(_ => res))
-    res
+    new Taskref(randomName, listItem, contents, removeButton.event.map(_ => randomName))
   }
 
   def main(args: Array[String]): Unit = {
@@ -111,31 +108,25 @@ object TodoMVC {
     val (createTodo, todoInputField) = inputFieldHandler(todoInputTag, onchange)
 
 
-    val (toggleAll, toggleAllTag) = Events.fromCallback[UIEvent] { cb =>
-      input(id := "toggle-all", name := "toggle-all", `class` := "toggle-all",
-            `type` := "checkbox", onchange := cb)
-    }
-
-
     val innerTasks = List(
-      maketask("walk the dog", toggleAll),
-      maketask("get milk", toggleAll),
-      maketask("get coffee", toggleAll)
+      maketask(TaskData("walk the dog")),
+      maketask(TaskData("get milk")),
+      maketask(TaskData("get coffee"))
     )
 
-    val createTask = createTodo.map { str => maketask(str, toggleAll) }
+    val createTask = createTodo.map { str => maketask(TaskData(str)) }
 
 
-    val (removeAllClick, removeAllButton) =
+    val removeAll =
       Events.fromCallback[UIEvent](cb => button("remove all done todos", onclick := cb))
 
     val tasks = Events.foldAll(innerTasks) { tasks =>
       Seq(
         createTask >> {_ :: tasks},
-        removeAllClick >>> { dt => _ => tasks.filterNot(t => dt.depend(t.done)) },
-        tasks.map(_.removeClick) >> { t => tasks.filter(_ != t) }
+        removeAll.event >>> { dt => _ => tasks.filterNot(t => dt.depend(t.contents).done) },
+        tasks.map(_.removeClick) >> { t => tasks.filter(_.id != t) }
       )
-    }(ReSerializable.doNotSerialize, "tasklist")
+    }(implicitly, "tasklist")
 
 
 
@@ -150,19 +141,19 @@ object TodoMVC {
       section(
         `class` := "main",
         `style` := Signal {if (tasks().isEmpty) "display:hidden" else ""},
-        toggleAllTag,
+        toggleAll.value,
         label(`for` := "toggle-all", "Mark all as complete"),
         tasks.map(l =>
                     ul(
                       `class` := "todo-list",
-                      l.map(_.item))).asModifier
+                      l.map(_.listItem))).asModifier
       ),
       div(
         `class`:="footer",
         `style`:= Signal { if(tasks().isEmpty) "display:none" else "" },
 
         Signal.dynamic {
-          val remainingTasks = tasks().filter(!_.done())
+          val remainingTasks = tasks().filter(!_.contents.value.done)
           span(
             `class`:="todo-count",
             strong("" + remainingTasks.size),
@@ -171,9 +162,9 @@ object TodoMVC {
           )
         }.asModifier,
 
-        removeAllButton(`class` := Signal.dynamic {
+        removeAll.value(`class` := Signal.dynamic {
           "clear-completed" +
-          (if (!tasks().exists(t => t.done())) " hidden" else "")
+          (if (!tasks().exists(t => t.contents.value.done)) " hidden" else "")
         })
       )
     )
@@ -184,12 +175,11 @@ object TodoMVC {
   }
 
   def inputFieldHandler(tag: TypedTag[Input], attr: Attr): (Event[String], Input) = {
-    val (handlerTriggered: Event[UIEvent], todoInputField1: TypedTag[Input]) =
-      Events.fromCallback[UIEvent](cb => tag(attr := cb))
+    val handler = Events.fromCallback[UIEvent](cb => tag(attr := cb))
 
-    val todoInputField: Input = todoInputField1.render
+    val todoInputField: Input = handler.value.render
 
-    (handlerTriggered.map { e: UIEvent =>
+    (handler.event.map { e: UIEvent =>
       e.preventDefault()
       val res = todoInputField.value.trim
       todoInputField.value = ""
