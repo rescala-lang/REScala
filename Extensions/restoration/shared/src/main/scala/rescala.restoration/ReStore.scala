@@ -115,10 +115,12 @@ trait ReStoreImpl extends ReStore with TwoVersionScheduler[ReStoringStruct, ReSt
     registeredNodes += (r.state.nodeID.str -> r)
   }
 
+  // disabled for now …
   def makeNameUnique(name: REName): REName = synchronized {
-    val count =  seenNames.getOrElse(name, 0)
-    seenNames = seenNames.updated(name, count + 1)
-    if (count != 0) name.derive(count.toString) else name
+    name
+//    val count =  seenNames.getOrElse(name, 0)
+//    seenNames = seenNames.updated(name, count + 1)
+//    if (count != 0) name.derive(count.toString) else name
   }
 
 }

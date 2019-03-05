@@ -17,6 +17,8 @@ import scalatags.JsDom.all._
 import scalatags.JsDom.tags2.section
 
 import scala.Function.const
+import scala.scalajs.js.timers.setTimeout
+
 
 object TodoMVC {
 
@@ -82,20 +84,22 @@ object TodoMVC {
     val removeButton =
       Events.fromCallback[UIEvent](cb => button(`class` := "destroy", onclick := cb))
 
+    val editInput = edittext.value(value := contents.map(_.desc)).render
+    editDiv.event.observe(_ => setTimeout(0){editInput.focus()})
+
     val listItem = li(
-      `class` := Signal (
-        (if (contents.value.done) "completed " else " ")
-        +(if (editingV.value) "editing " else "no-editing ")
+      `class` := Signal(
+        (if (contents.value.done) "completed " else "")
+        + (if (editingV.value) "editing " else "no-editing ")
       ),
 
       editDiv.value(
-        Signal {
-          input(`class` := "toggle", `type` := "checkbox", doneClick.value,
-                if (contents.value.done) checked else "" )}.asModifier,
+        input(`class` := "toggle", `type` := "checkbox", doneClick.value,
+              checked := contents.map(c => if (c.done) Some(checked.v) else None))(checked := false),
         label(contents.map(c => stringFrag(c.desc)).asModifier),
         removeButton.value
       ),
-      edittext.value(value := contents.map(_.desc))
+      editInput
     )
 
     new Taskref(randomName, listItem, contents, initial, removeButton.event.map(_ => randomName))
@@ -115,9 +119,9 @@ object TodoMVC {
 
 
     val innerTasks = List(
-      maketask(TaskData("walk the dog")),
-      maketask(TaskData("get milk")),
-      maketask(TaskData("get coffee"))
+      maketask(TaskData("walk the dog"), "initdog"),
+      maketask(TaskData("get milk"), "initmilk"),
+      maketask(TaskData("get coffee"), "initcoffe")
     )
 
     val createTask = createTodo.map { str => maketask(TaskData(str)) }

@@ -88,6 +88,20 @@ object Tags {
     }
   }
 
+  implicit def optionAttrValue[T](implicit ev: AttrValue[T])
+  : generic.AttrValue[Element, Option[T]] = new AttrValue[Option[T]] {
+    override def apply(t: Element, a: Attr, v: Option[T]): Unit = {
+      v match {
+        case Some(value) => ev.apply(t, a, value)
+        case None        =>
+          a.namespace match {
+            case None     => t.removeAttribute(a.name)
+            case Some(ns) => t.removeAttributeNS(ns.uri, a.name)
+          }
+      }
+    }
+  }
+
   // helper functions
 
   @scala.annotation.tailrec
