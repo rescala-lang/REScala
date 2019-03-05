@@ -7,6 +7,7 @@ import io.circe.{Decoder, Encoder}
 import org.scalajs.dom.html.{Input, LI}
 import org.scalajs.dom.{UIEvent, document}
 import rescala.Tags._
+import rescala.core.ReSerializable
 import rescala.debuggable.ChromeDebuggerInterface
 import rescala.restoration.LocalStorageStore
 import rescala.restoration.ReCirce.recirce
@@ -65,7 +66,8 @@ object TodoMVC {
       div(`class` := "view", ondblclick := cb)
     }
 
-    val editingV = (edittextStr map const(false)) || (editDiv.event map const(true)) latest(init = false)
+    val changeEditing = (edittextStr map const(false)) || (editDiv.event map const(true))
+    val editingV =  changeEditing.latest(init = false)(ReSerializable.doNotSerialize, implicitly)
 
     val doneClick = Events.fromCallback[UIEvent](onchange := _)
 
