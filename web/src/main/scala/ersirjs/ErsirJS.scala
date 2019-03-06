@@ -59,8 +59,9 @@ object ErsirJS {
         ErsirPost.pgol = entryCrdt
         val entrySignal = entryCrdt.valueSignal
 
-//        val emergencies = ReMqtt.topicstream("city/alert_state")
-        val currentEmergency = Evt[String].latest("")
+        ReMqtt.start()
+        val emergencies = ReMqtt.topicstream("city/alert_state")
+        val currentEmergency = emergencies.latest("")
 
         val manualStates = Evt[AppState]()
 
