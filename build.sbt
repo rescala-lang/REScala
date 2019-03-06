@@ -1,5 +1,3 @@
-import java.nio.file.Paths
-
 import Dependencies._
 import Settings._
 import sbtcrossproject.CrossPlugin.autoImport.{CrossType, crossProject}
