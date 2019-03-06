@@ -4,6 +4,7 @@ import java.util.concurrent.ThreadLocalRandom
 
 import io.circe.generic.semiauto
 import io.circe.{Decoder, Encoder}
+import loci.communicator.experimental.webrtc.WebRTC.ConnectorFactory
 import org.scalajs.dom.html.{Input, LI}
 import org.scalajs.dom.{UIEvent, document}
 import rescala.Tags._
@@ -18,6 +19,17 @@ import scalatags.JsDom.tags2.section
 
 import scala.Function.const
 import scala.scalajs.js.timers.setTimeout
+import loci.communicator.experimental.webrtc._
+import loci.registry.{Binding, Registry}
+import loci.serializer.circe._
+import loci.transmitter.RemoteRef
+import io.circe.syntax._
+
+
+import io.circe.generic.auto._
+
+import scala.concurrent.{Future, Promise}
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 
 object TodoMVC {
@@ -105,6 +117,10 @@ object TodoMVC {
     new Taskref(randomName, listItem, contents, initial, removeButton.event.map(_ => randomName))
   }
 
+
+  val registry = new Registry
+  val crdtDescriptions = Binding[TaskData => String]("taskData")
+
   def main(args: Array[String]): Unit = {
 
     ChromeDebuggerInterface.setup(storingEngine)
@@ -124,11 +140,20 @@ object TodoMVC {
       maketask(TaskData("get coffee"), "initcoffe")
     )
 
-    val createTask = createTodo.map { str => maketask(TaskData(str)) }
 
 
     val removeAll =
       Events.fromCallback[UIEvent](cb => button("remove all done todos", onclick := cb))
+
+    val remote = Events.fromCallback[TaskData](cb => registry.bind(crdtDescriptions){td =>
+      cb(td)
+      "success"
+    })
+
+    val creations = createTodo.map(str => TaskData(str)) || remote.event
+
+    val createTask = creations.map { td => maketask(td) }
+
 
     val tasks = Events.foldAll(innerTasks) { tasks =>
       Seq(
@@ -137,7 +162,6 @@ object TodoMVC {
         tasks.map(_.removeClick) >> { t => tasks.filter(_.id != t) }
       )
     }(implicitly, "tasklist")
-
 
 
     val content = div(
@@ -179,9 +203,52 @@ object TodoMVC {
       )
     )
 
+
     document.body.replaceChild(content.render, document.body.firstElementChild)
+    document.body.appendChild(webrtchandlingArea.render)
 
     ChromeDebuggerInterface.finishedLoading()
+  }
+
+
+
+
+
+
+  def webrtchandlingArea: Tag = {
+
+    val renderedTa = textarea().render
+    val renderedPre = pre().render
+
+    var pn: Option[PendingNonesense] = None
+
+    val hb = button("host", onclick := { uie: UIEvent =>
+      val res = webrtcIntermediate(WebRTC.offer())
+      res.session.foreach(s => renderedPre.textContent = s.asJson.noSpaces)
+      pn = Some(res)
+      val remoteFut = registry.connect(res.connector)
+      remoteFut.foreach { remote =>
+        registry.lookup(crdtDescriptions, remote)(TaskData("connected!!!!"))
+      }
+    })
+
+
+    val cb = button("connect", onclick := { uie: UIEvent =>
+      val cs = io.circe.parser.decode[WebRTC.CompleteSession](renderedTa.value).right.get
+      (pn match {
+        case None     => // we are client
+          val res = webrtcIntermediate(WebRTC.answer())
+          res.session.foreach(s => renderedPre.textContent = s.asJson.noSpaces)
+          registry.connect(res.connector)
+          res.connector
+        case Some(ss) => // we are server
+          ss.connector
+      }) set cs
+    })
+
+    section(hb, cb, renderedPre, renderedTa)
+
+
   }
 
   def inputFieldHandler(tag: TypedTag[Input], attr: Attr): (Event[String], Input) = {
@@ -196,4 +263,16 @@ object TodoMVC {
       res
     }, todoInputField)
   }
+
+
+  case class PendingNonesense(connector: WebRTC.Connector,
+                         session: Future[WebRTC.CompleteSession])
+
+  def webrtcIntermediate(cf: ConnectorFactory) = {
+    val p = Promise[WebRTC.CompleteSession]()
+    val answer = cf complete(p.success)
+    PendingNonesense(answer, p.future)
+  }
+
+
 }

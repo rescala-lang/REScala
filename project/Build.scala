@@ -51,6 +51,7 @@ object Dependencies {
   val lociCommunication = libraryDependencies ++= Seq("communication", "communicator-ws-akka", "communicator-tcp").map(lociDependency.value)
   val lociCommunicationCirce =  libraryDependencies += lociDependency.value("serializer-circe")
   val lociCommunicationUpickle =  libraryDependencies += lociDependency.value("serializer-upickle")
+  val lociCommunicationWebRTC =  libraryDependencies += lociDependency.value("communicator-webrtc")
   val pprint = libraryDependencies += "com.lihaoyi" %%% "pprint" % "0.5.3"
   val purecss = libraryDependencies += ("org.webjars.npm" % "purecss" % "1.0.0")
   val rmgkLogging = libraryDependencies += ("de.rmgk" %%% "logging" % "0.2.1")

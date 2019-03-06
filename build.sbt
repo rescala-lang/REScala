@@ -174,7 +174,9 @@ lazy val todolist = project.in(file("Examples/Todolist"))
   .dependsOn(rescalatags, restoreJS)
   .settings(cfg.base, cfg.noPublish, name := "todolist",
             scalaSource in Compile := baseDirectory.value,
-            scalaJSUseMainModuleInitializer := true)
+            scalaJSUseMainModuleInitializer := true,
+            lociCommunicationWebRTC,
+            lociCommunicationCirce)
 
 lazy val livedemo = project.in(file("Examples/LiveDemo"))
                     .enablePlugins(ScalaJSPlugin)

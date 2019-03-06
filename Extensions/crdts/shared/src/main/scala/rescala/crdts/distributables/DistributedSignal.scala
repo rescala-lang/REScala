@@ -75,7 +75,6 @@ object DistributedSignal {
         pVar.merge(value)
 
         println(s"received $value")
-        println(s"before: ${pVar.value}, ")
 
         endpoint.receive notify { v =>
           println(s"received val: $value")
@@ -86,7 +85,6 @@ object DistributedSignal {
 
         // println(s"manual ${implicitly[StateCRDT[Int, GCounter]].merge(counter.crdtSignal.readValueOnce, value)}")
 
-        println(s"after: ${pVar.value}")
 
         pVar
       }
