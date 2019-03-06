@@ -1,20 +1,15 @@
 package rescala.crdts.distributables
 
 import rescala.crdts.distributables.DistributedSignal.PVarFactory
-import rescala.crdts.statecrdts.sequences.{RGOA, Vertex}
+import rescala.crdts.statecrdts.sequences.RGOA
 import rescala.default._
 
-case class PGrowOnlyLog[A](initial: RGOA[A] = RGOA[A]())
+case class PGrowOnlyLog[A](initial: RGOA[A] = RGOA.empty[A])
 extends DistributedSignal[List[A], RGOA[A]](initial)(RGOA.crdt[A]) {
 
   def append(a: A): Unit = {
-    crdtSignal.transform(_.append(Vertex(a)))
+    crdtSignal.transform(_.append(a))
   }
-  def prepend(a: A): Unit = {
-    crdtSignal.transform(_.prepend(Vertex(a)))
-  }
-
-  def contains(a: A): Boolean = crdtSignal.readValueOnce.containsValue(a)
 
   // allows the log to log events of type a and append them to the log
   def observe(e: Event[A]): Unit = e.observe(a => append(a))

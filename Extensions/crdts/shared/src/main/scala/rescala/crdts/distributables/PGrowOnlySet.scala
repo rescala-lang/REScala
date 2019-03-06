@@ -7,7 +7,7 @@ import rescala.default._
 case class PGrowOnlySet[A](initial: GrowOnlySet[A] = GrowOnlySet[A]())
 extends DistributedSignal[Set[A], GrowOnlySet[A]](initial) {
 
-  def add(a: A): Unit = localDeviceChange.fire(crdtSignal.readValueOnce.add(a))
+  def add(a: A): Unit = crdtSignal.transform(_.add(a))
 
   def contains(a: A): Boolean = crdtSignal.readValueOnce.contains(a)
 }

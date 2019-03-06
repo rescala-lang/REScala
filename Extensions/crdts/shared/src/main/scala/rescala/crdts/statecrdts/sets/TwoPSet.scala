@@ -15,7 +15,7 @@ case class TwoPSet[A](entries: Set[A], tombstones: Set[A]) extends RemovableCRDT
 
   override def contains(e: A): Boolean = entries.contains(e) && !tombstones.contains(e)
 
-  override def value: Set[A] = entries -- tombstones
+  override lazy val value: Set[A] = entries -- tombstones
 }
 
 object TwoPSet {

@@ -1,7 +1,7 @@
 package rescala.crdts.distributables
 
 import rescala.crdts.distributables.DistributedSignal.PVarFactory
-import rescala.crdts.statecrdts.sequences.{RGA, ValueVertex, Vertex}
+import rescala.crdts.statecrdts.sequences.{RGA, Vertex}
 import rescala.default._
 
 /**
@@ -11,31 +11,22 @@ import rescala.default._
   */
 case class PVertexList[A](initial: RGA[A] = RGA.empty[A])
 extends DistributedSignal[List[A], RGA[A]](initial) {
-  def contains(v: Vertex[A]): Boolean = crdtSignal.readValueOnce.contains(v)
+  def contains(v: Vertex): Boolean = crdtSignal.readValueOnce.contains(v)
 
 
   /**
     *
     * @return True if the list contains both u and v and u is ordered before v.
     */
-  def before(u: Vertex[A], v: Vertex[A]): Boolean = crdtSignal.readValueOnce.before(u, v)
+  def before(u: Vertex, v: Vertex): Boolean = crdtSignal.readValueOnce.before(u, v)
 
-  /**
-    * To store values in a DistributedVertexList one has to wrap the value in a Vertex by writing Vertex(value). The
-    * insertion position is specified by passing the vertex left of the new vertex.
-    *
-    * @param position the vertex left of the new vertex
-    * @param vertex   the vertex to be inserted
-    */
-  def addRight(position: Vertex[A], vertex: ValueVertex[A]): Unit = localDeviceChange.fire(crdtSignal.readValueOnce.addRight(position, vertex))
+  def append(value: A): Unit = crdtSignal.transform(_.append(value))
 
-  def append(vertex: ValueVertex[A]): Unit = localDeviceChange.fire(crdtSignal.readValueOnce.append(vertex))
-
-  def successor(v: Vertex[A]): Vertex[A] = crdtSignal.readValueOnce.successor(v)
+  def successor(v: Vertex): Vertex = crdtSignal.readValueOnce.successor(v)
 
   def valueIterator: Iterator[A] = crdtSignal.readValueOnce.iterator
 
-  def iterator: Iterator[Vertex[A]] = crdtSignal.readValueOnce.vertexIterator
+  def iterator: Iterator[Vertex] = crdtSignal.readValueOnce.vertexIterator
 }
 
 object PVertexList {

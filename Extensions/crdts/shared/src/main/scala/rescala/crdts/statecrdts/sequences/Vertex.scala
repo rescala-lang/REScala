@@ -3,51 +3,36 @@ package sequences
 
 import io.circe._
 import io.circe.generic.extras._
-import io.circe.generic.extras.auto._
 import rescala.crdts.statecrdts.sequences.Vertex.Timestamp
 
-sealed trait Vertex[+A] {
-  def timestamp: Timestamp
-}
 
-
-case object StartVertex extends Vertex[Nothing] {
-  override def timestamp: Timestamp = -1
-}
-
-case object EndVertex extends Vertex[Nothing] {
-  override def timestamp: Timestamp = 0
-}
-
-case class ValueVertex[+A](value: A, timestamp: Timestamp, id: IdUtil.Id = IdUtil.genId) extends Vertex[A]
+case class Vertex(timestamp: Timestamp, id: IdUtil.Id)
 
 object Vertex {
   type Timestamp = Long
 
-  def apply[A](value: A): ValueVertex[A] = new ValueVertex[A](value, genTimestamp)
+  val start: Vertex = Vertex(-1, "start")
+  val end: Vertex = Vertex(0, "end")
 
-  def genTimestamp: Timestamp = System.currentTimeMillis
+  def fresh[A](): Vertex = Vertex( IdUtil.genTimestamp, IdUtil.genId)
 
   implicit val config: Configuration = Configuration.default
 
+  implicit val vertexEncoder: Encoder[Vertex] = semiauto.deriveEncoder[Vertex]
+  implicit val vertexDecoder: Decoder[Vertex] = semiauto.deriveDecoder[Vertex]
 
-  def vertexEncoder[A: Encoder]: Encoder[Vertex[A]] = semiauto.deriveEncoder[Vertex[A]]
-  def vertexDecoder[A: Decoder]: Decoder[Vertex[A]] = semiauto.deriveDecoder[Vertex[A]]
-
-  //noinspection ConvertExpressionToSAM
-  implicit def vertexKeyEncoder[A: Encoder]: KeyEncoder[Vertex[A]] = {
-    new KeyEncoder[Vertex[A]] {
-      override def apply(vertex: Vertex[A]): String = {
-        vertexEncoder[A].apply(vertex).noSpaces
+  implicit val vertexKeyEncoder: KeyEncoder[Vertex] = {
+    new KeyEncoder[Vertex] {
+      override def apply(vertex: Vertex): String = {
+        vertexEncoder.apply(vertex).noSpaces
       }
     }
   }
 
-  //noinspection ConvertExpressionToSAM
-  implicit def vertexKeyDecoder[A: Decoder]: KeyDecoder[Vertex[A]] = {
-    new KeyDecoder[Vertex[A]] {
-      override def apply(key: String): Option[Vertex[A]] = {
-        io.circe.parser.decode[Vertex[A]](key)(vertexDecoder[A]).toOption
+  implicit val vertexKeyDecoder: KeyDecoder[Vertex] = {
+    new KeyDecoder[Vertex] {
+      override def apply(key: String): Option[Vertex] = {
+        io.circe.parser.decode[Vertex](key)(vertexDecoder).toOption
       }
     }
   }

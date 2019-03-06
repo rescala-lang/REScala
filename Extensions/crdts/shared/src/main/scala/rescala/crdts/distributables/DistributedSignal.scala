@@ -21,7 +21,6 @@ abstract class DistributedSignal[A, F](initial: F)(implicit stateCRDT: StateCRDT
 
   @cutOutOfUserComputation
   private[rescala] val crdtSignal       : Var[F]    = Var(initial)
-  private[rescala] val localDeviceChange: Evt[Unit] = Evt[Unit]
   private[rescala] def merge(other: F): Unit = {
     crdtSignal.transform(stateCRDT.merge(_, other))
   }

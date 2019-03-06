@@ -1,6 +1,5 @@
 package rescala.crdts.statecrdts.sequences
 
-//import com.typesafe.scalalogging.Logger
 import rescala.crdts.statecrdts.sets.StateCRDTSet
 
 import scala.collection.AbstractIterator
@@ -10,42 +9,39 @@ trait CRDTSequence[A] {
   type PayloadT
   type SelfT
 
-//  val logger: Logger = Logger[CRDTSequence[A]]
+  val vertices: StateCRDTSet[Vertex]
 
-  def payload: PayloadT
+  val edges: Map[Vertex, Vertex]
 
-  def vertices: StateCRDTSet[ValueVertex[A]]
-
-  def edges: Map[Vertex[A], Vertex[A]]
+  val values: Map[Vertex, A]
 
   def fromPayload(payload: PayloadT): SelfT
 
-  def contains(v: Vertex[A]): Boolean = v match {
-    case StartVertex       => true
-    case EndVertex         => true
-    case v: ValueVertex[A] => vertices.contains(v)
+  def contains(v: Vertex): Boolean = v match {
+    case Vertex.start => true
+    case Vertex.end   => true
+    case v: Vertex    => vertices.contains(v)
   }
 
-  def containsValue(a: A): Boolean = vertices.value.map(_.value).contains(a)
-
-  def before(u: Vertex[A], v: Vertex[A]): Boolean = u match {
-    case StartVertex       => true
-    case EndVertex         => false
-    case u: ValueVertex[A] => edges(u) == v || before(edges(u), v)
-    case _                 => throw new IllegalArgumentException(s"CRDTSequence does not contain Vertex $u!")
+  def before(u: Vertex, v: Vertex): Boolean = u match {
+    case Vertex.start => true
+    case Vertex.end   => false
+    case u: Vertex    => edges(u) == v || before(edges(u), v)
+    case _            => throw new IllegalArgumentException(s"CRDTSequence does not contain Vertex $u!")
   }
 
-  def successor(v: Vertex[A]): Vertex[A] = {
+  def successor(v: Vertex): Vertex = {
 //    println(s"computing successor of $v in ${edges.keySet}")
     v match {
-      case EndVertex =>
+      case Vertex.end =>
         throw new IllegalArgumentException("There is no successor to the end node!")
-      case _         => {
+      case _          => {
 //      logger.debug(s"Searching successor of $v. Edges: $edges")
+        println(s"searching for $v in $edges")
         if (edges.contains(v)) {
           edges(v) match {
-            case EndVertex    => EndVertex
-            case u: Vertex[A] =>
+            case Vertex.end => Vertex.end
+            case u: Vertex  =>
               if (contains(u)) u
               else successor(u)
           }
@@ -55,7 +51,7 @@ trait CRDTSequence[A] {
     }
   }
 
-  def addRight(position: Vertex[A], a: A): SelfT = addRight(position, new ValueVertex[A](a, Vertex.genTimestamp))
+  def addRight(position: Vertex, a: A): SelfT = addRight(position, Vertex.fresh(), a)
 
   /**
     * This method allows insertions of any type into the RGA. This is used to move the start and end nodes
@@ -64,15 +60,15 @@ trait CRDTSequence[A] {
     * @param v        the vertex to be inserted right to position
     * @return A new RAG containing the inserted element
     */
-  def addRight(position: Vertex[A], v: ValueVertex[A]): SelfT =
+  def addRight(position: Vertex, v: Vertex, value: A): SelfT =
     position match {
-      case EndVertex                                  =>
+      case Vertex.end =>
         throw new IllegalArgumentException("Cannot insert after end node!")
-      case _ =>
+      case _          =>
         if (edges.contains(position)) {
           val (l, r) = (position, edges(position))
           // Check if the vertex right to us has been inserted after us.  If yes, insert v after the new vertex.
-          if (r.timestamp > v.timestamp) addRight(r, v)
+          if (r.timestamp > v.timestamp) addRight(r, v, value)
           else {
             val newVertices = vertices.add(v)
             val newEdges = edges + (l -> v) + (v -> r)
@@ -84,31 +80,36 @@ trait CRDTSequence[A] {
         }
     }
 
-  def append(v: ValueVertex[A]): SelfT = {
-    val position = if (vertexIterator.nonEmpty) vertexIterator.toList.last else StartVertex
-    addRight(position, v)
+  def append(value: A): SelfT = {
+    val position = if (vertexIterator.nonEmpty) vertexIterator.toList.last else Vertex.start
+    addRight(position, value)
   }
 
-  def prepend(v: ValueVertex[A]): SelfT = {
-    addRight(StartVertex, v)
+  def prepend(value: A): SelfT = addRight(Vertex.start, value)
+
+
+  def value: List[A] = {
+    println(s"iterating")
+    val list = iterator.toList
+    println(s"iterating done")
+    list
   }
 
-  def value: List[A] = iterator.toList
+  def iterator: Iterator[A] = vertexIterator.map(v => values(v))
 
-  def iterator: Iterator[A] = vertexIterator.map(v => v.value)
-
-  def vertexIterator: Iterator[ValueVertex[A]] = new AbstractIterator[ValueVertex[A]] {
-    var lastVertex: Vertex[A] = StartVertex
+  def vertexIterator: Iterator[Vertex] = new AbstractIterator[Vertex] {
+    var lastVertex: Vertex = Vertex.start
 
     override def hasNext: Boolean = successor(lastVertex) match {
-      case EndVertex => false
-      case _         => true
+      case Vertex.end => false
+      case _          => true
     }
 
-    override def next(): ValueVertex[A] = {
+    override def next(): Vertex = {
       successor(lastVertex) match {
-        case v: ValueVertex[A] => lastVertex = v; v
-        case _ => throw new NoSuchElementException("Requesting iterator value after endVertex!")
+        case v: Vertex => lastVertex = v; v
+        case _         => throw new NoSuchElementException(
+          "Requesting iterator value after Vertex.end!")
       }
     }
   }

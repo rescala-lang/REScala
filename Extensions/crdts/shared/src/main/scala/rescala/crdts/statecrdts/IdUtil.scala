@@ -2,8 +2,11 @@ package rescala.crdts.statecrdts
 
 import java.util.UUID
 
+
 object IdUtil {
-  type Id = UUID
+  def genTimestamp(): Long = System.currentTimeMillis
+
+  type Id = String
   /** Generates unique identifiers for use by CRDTs */
-  def genId: Id = UUID.randomUUID()
+  def genId(): Id = UUID.randomUUID().toString
 }

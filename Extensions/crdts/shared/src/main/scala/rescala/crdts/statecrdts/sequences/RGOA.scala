@@ -12,22 +12,20 @@ import scala.collection.immutable.HashMap
   *                edges between vertices.
   * @tparam A The type of the elements stored in this array.
   */
-case class RGOA[A](payload: (GrowOnlySet[ValueVertex[A]], Map[Vertex[A], Vertex[A]])) extends CRDTSequence[A] {
+case class RGOA[A](vertices: GrowOnlySet[Vertex],
+                   edges: Map[Vertex, Vertex],
+                   values: Map[Vertex, A])
+  extends CRDTSequence[A] {
   override type SelfT = RGOA[A]
-  override type PayloadT = (GrowOnlySet[ValueVertex[A]], Map[Vertex[A], Vertex[A]])
-  val (vertices, edges): (GrowOnlySet[ValueVertex[A]], Map[Vertex[A], Vertex[A]]) = payload
+  override type PayloadT = (GrowOnlySet[Vertex], Map[Vertex, Vertex], Map[Vertex, A])
 
-  override def fromPayload(payload: (GrowOnlySet[ValueVertex[A]], Map[Vertex[A], Vertex[A]])): RGOA[A] = RGOA[A](payload)
+  override def fromPayload(payload: PayloadT): RGOA[A] =
+    RGOA[A](payload._1, payload._2, payload._3)
 }
 
 object RGOA {
-  def apply[A](values: A*): RGOA[A] = {
-    apply(values.toList)
-  }
 
-  def apply[A](): RGOA[A] = empty
-
-  def empty[A]: RGOA[A] = new RGOA[A]((GrowOnlySet[ValueVertex[A]](), HashMap[Vertex[A], Vertex[A]](StartVertex -> EndVertex)))
+  def empty[A]: RGOA[A] = new RGOA[A](GrowOnlySet[Vertex](), HashMap[Vertex, Vertex](Vertex.start -> Vertex.end), Map())
 
 
   /** Allows the creation of new CRDTs by passing an initial value.
@@ -35,13 +33,9 @@ object RGOA {
     * @param value the value
     * @return new CRDT instance representing the value
     */
-  def apply[A](value: List[A]): RGOA[A] = {
-    val emptyPayload: (GrowOnlySet[ValueVertex[A]], HashMap[Vertex[A], Vertex[A]]) =
-      (GrowOnlySet[ValueVertex[A]](), HashMap[Vertex[A], Vertex[A]](StartVertex -> EndVertex))
-    val newRGOA: RGOA[A] = RGOA[A](emptyPayload)
-
-    value.reverse.foldLeft(newRGOA) {
-      case (r: RGOA[A], a) => r.addRight(StartVertex, a)
+  def apply[A](value: Seq[A]): RGOA[A] = {
+    value.reverse.foldLeft(empty[A]) {
+      case (r: RGOA[A], a) => r.addRight(Vertex.start, a)
     }
   }
 
@@ -56,15 +50,15 @@ object RGOA {
 //      println(s"found new vertices in right: $newVertices")
 
       // build map of old insertion positions of the new vertices
-      val oldPositions = right.edges.foldLeft(Map(): Map[Vertex[A], Vertex[A]]) {
+      val oldPositions = right.edges.foldLeft(Map(): Map[Vertex, Vertex]) {
         case (m, (u, v)) => if (newVertices.contains(v)) m + (v -> u) else m
       }
 
       // update edges by inserting vertices at the right positions
       newVertices.foldLeft(left) {
-        case (merged: RGOA[A], v: Vertex[A]) =>
+        case (merged: RGOA[A], v: Vertex) =>
           println(s"inserting $v at position ${oldPositions(v)}")
-          merged.addRight(oldPositions(v), v)
+          merged.addRight(oldPositions(v), v, left.values(v))
       }
     }
 

@@ -12,7 +12,7 @@ import rescala.default.implicitScheduler
 case class PGrowOnlyCounter(initial: GCounter = GCounter(0))
 extends DistributedSignal[Int, GCounter](initial) {
   def increase(): Unit = {
-    localDeviceChange.fire(crdtSignal.readValueOnce.increase)
+    crdtSignal.transform(_.increase)
   }
 }
 

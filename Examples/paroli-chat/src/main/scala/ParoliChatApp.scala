@@ -53,14 +53,14 @@ object ParoliChatApp {
     }
     }
 
-    history.append(Vertex(s"System: Hello $name!"))
+    history.append(s"System: Hello $name!")
 
     while (true) {
       // print input prompt
       val msg: String = console.readLine(s"[$name]: ")
 
       // add messages to the end of the history
-      history.append(Vertex(s"[$name] $msg"))
+      history.append(s"[$name] $msg")
     }
 
     def drawInterface(name: String, log: List[String]): Unit = {
