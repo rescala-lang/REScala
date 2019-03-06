@@ -1,7 +1,7 @@
 package rescala.crdts.statecrdts.sequences
 
 import rescala.crdts.statecrdts.StateCRDT
-import rescala.crdts.statecrdts.sets.TwoPSet
+import rescala.crdts.statecrdts.sets.{StateCRDTSet, TwoPSet}
 
 import scala.collection.immutable.HashMap
 
@@ -17,10 +17,15 @@ case class RGA[A](vertices: TwoPSet[Vertex],
                   values: Map[Vertex, A])
   extends CRDTSequence[A] {
 
-  override type PayloadT = (TwoPSet[Vertex], Map[Vertex, Vertex], Map[Vertex, A])
-  override def fromPayload(payload: PayloadT): RGA[A] = RGA[A](payload._1, payload._2, payload._3)
   override type SelfT = RGA[A]
   def remove(v: Vertex): SelfT = copy(vertices = vertices.remove(v))
+  override def copySub(vertices: StateCRDTSet[Vertex],
+                       edges: Map[Vertex, Vertex],
+                       values: Map[Vertex, A]): RGA[A] = {
+    vertices match {
+      case v : TwoPSet[Vertex] => copy(v, edges, values)
+    }
+  }
 }
 
 
@@ -49,9 +54,11 @@ object RGA {
           case (m, (u, v)) => if (newVertices.contains(v)) m + (v -> u) else m
         }
 
-        newVertices.foldLeft(left) { case (merged: RGA[A], v: Vertex) =>
+        val partialnew =  newVertices.foldLeft(left) { case (merged: RGA[A], v: Vertex) =>
             merged.addRight(oldPositions(v), v, left.values(v))
         }
+
+        partialnew.copy(vertices = TwoPSet.TwoPSetCRDTInstance.merge(left.vertices, r.vertices))
       }
     }
 }

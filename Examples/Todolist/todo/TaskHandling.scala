@@ -58,6 +58,7 @@ class TaskHandling(implicit val storingScheduler: LocalStorageStore) {
                randomName: String = s"Task(${ThreadLocalRandom.current().nextLong().toHexString})")
   : Taskref = {
 
+    println(s"make new task: $initial, $randomName")
 
     val edittext = Events.fromCallback[UIEvent]{ inputChange =>
       input(`class` := "edit", `type` := "text", onchange := inputChange, onblur := inputChange)
@@ -80,7 +81,7 @@ class TaskHandling(implicit val storingScheduler: LocalStorageStore) {
 
     val doneEv = toggleAll.event || doneClick.event
 
-    val contents = Events.foldAll(initial)(current => Seq(
+    val taskData = Events.foldAll(initial)(current => Seq(
       doneEv >> const(current.toggle),
       edittextStr >> current.edit
     ))(implicitly[ReSerializable[TaskData]], randomName)
@@ -89,25 +90,25 @@ class TaskHandling(implicit val storingScheduler: LocalStorageStore) {
     val removeButton =
       Events.fromCallback[UIEvent](cb => button(`class` := "destroy", onclick := cb))
 
-    val editInput = edittext.value(value := contents.map(_.desc)).render
+    val editInput = edittext.value(value := taskData.map(_.desc)).render
     editDiv.event.observe(_ => setTimeout(0){editInput.focus()})
 
     val listItem = li(
       `class` := Signal(
-        (if (contents.value.done) "completed " else "")
+        (if (taskData.value.done) "completed " else "")
         + (if (editingV.value) "editing " else "no-editing ")
       ),
 
       editDiv.value(
         input(`class` := "toggle", `type` := "checkbox", doneClick.value,
-              checked := contents.map(c => if (c.done) Some(checked.v) else None))(checked := false),
-        label(contents.map(c => stringFrag(c.desc)).asModifier),
+              checked := taskData.map(c => if (c.done) Some(checked.v) else None))(checked := false),
+        label(taskData.map(c => stringFrag(c.desc)).asModifier),
         removeButton.value
       ),
       editInput
     )
 
-    new Taskref(randomName, listItem, contents, initial, removeButton.event.map(_ => randomName))
+    new Taskref(randomName, listItem, taskData, initial, removeButton.event.map(_ => randomName))
   }
 
 }

@@ -61,7 +61,7 @@ object Tags {
     def apply(t: dom.Element, a: Attr, signal: Sig[T]): Unit = {
       signal.observe(
          onValue =  value => implicitly[AttrValue[T]].apply(t, a, value),
-         onError = println)
+         onError = e => println(s"error on $e"))
     }
   }
 

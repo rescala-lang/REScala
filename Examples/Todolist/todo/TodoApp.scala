@@ -50,14 +50,14 @@ class TodoApp[TH <: TaskHandling](val taskHandling: TH)(implicit val storingSche
 
     val tasksRGOA = Events.foldAll(RGOA(innerTasks)) { tasks =>
       Seq(
-        externalTasks >> {et => RGOA.crdt[taskHandling.Taskref].merge(et,tasks)},
-        createTask >> {tasks.append},
+        //externalTasks >> {et => RGOA.crdt[taskHandling.Taskref].merge(tasks, et)},
+        createTask >> {tasks.prepend},
         //removeAll.event >>> { dt => _ => tasks.filterNot(t => dt.depend(t.contents).done) },
         //tasks.map(_.removeClick) >> { t => tasks.filter(_.id != t) }
       )
     }(implicitly, "tasklist")
 
-    val tasks = tasksRGOA.map(v => {println(v);v}).map(_.value)
+    val tasks = tasksRGOA.map(v => {println(s"task rgoa: $v");v}).map(_.value).map(v => {println(s"task rgoa values: $v");v})
 
 
     val content = div(
@@ -83,7 +83,7 @@ class TodoApp[TH <: TaskHandling](val taskHandling: TH)(implicit val storingSche
         `style` := Signal {if (tasks().isEmpty) "display:none" else ""},
 
         Signal.dynamic {
-          val remainingTasks = tasks().filter(!_.contents.value.done)
+          val remainingTasks = tasks.value.filter(!_.contents.value.done)
           span(
             `class` := "todo-count",
             strong("" + remainingTasks.size),

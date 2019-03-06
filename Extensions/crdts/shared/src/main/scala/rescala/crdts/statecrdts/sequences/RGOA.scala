@@ -1,7 +1,7 @@
 package rescala.crdts.statecrdts
 package sequences
 
-import rescala.crdts.statecrdts.sets.GrowOnlySet
+import rescala.crdts.statecrdts.sets.{GrowOnlySet, StateCRDTSet}
 
 import scala.collection.immutable.HashMap
 
@@ -17,10 +17,12 @@ case class RGOA[A](vertices: GrowOnlySet[Vertex],
                    values: Map[Vertex, A])
   extends CRDTSequence[A] {
   override type SelfT = RGOA[A]
-  override type PayloadT = (GrowOnlySet[Vertex], Map[Vertex, Vertex], Map[Vertex, A])
-
-  override def fromPayload(payload: PayloadT): RGOA[A] =
-    RGOA[A](payload._1, payload._2, payload._3)
+  override def copySub(vertices: StateCRDTSet[Vertex],
+                       edges: Map[Vertex, Vertex],
+                       values: Map[Vertex, A]): RGOA[A] =
+    vertices match {
+      case v: GrowOnlySet[Vertex] => copy(v, edges, values)
+    }
 }
 
 object RGOA {
@@ -50,16 +52,17 @@ object RGOA {
 //      println(s"found new vertices in right: $newVertices")
 
       // build map of old insertion positions of the new vertices
-      val oldPositions = right.edges.foldLeft(Map(): Map[Vertex, Vertex]) {
+      val oldPositions = right.edges.foldLeft(Map[Vertex, Vertex]()) {
         case (m, (u, v)) => if (newVertices.contains(v)) m + (v -> u) else m
       }
 
       // update edges by inserting vertices at the right positions
-      newVertices.foldLeft(left) {
+      val partialnew = newVertices.foldLeft(left) {
         case (merged: RGOA[A], v: Vertex) =>
           println(s"inserting $v at position ${oldPositions(v)}")
           merged.addRight(oldPositions(v), v, left.values(v))
       }
+      partialnew.copy(vertices = GrowOnlySet.GSetStateCRDTInstance.merge(left.vertices, right.vertices))
     }
 
   }
