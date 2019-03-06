@@ -12,9 +12,9 @@ object Navigation {
   case class Mode(i: Int) extends Navigate
 
 
-  val (handleKeypress, _) = Events.fromCallback[KeyboardEvent](dom.document.onkeydown = _)
+  val handleKeypress = Events.fromCallback[KeyboardEvent](dom.document.onkeydown = _)
   val navigate = Evt[Navigate]
-  val keypressNavigations = handleKeypress.map(_.key).collect {
+  val keypressNavigations = handleKeypress.event.map(_.key).collect {
     case "ArrowLeft" | "a" | "," => Prev
     case "ArrowRight" | "d" | "." => Next
     case n if n.matches("""^\d+$""") => Mode(n.toInt)

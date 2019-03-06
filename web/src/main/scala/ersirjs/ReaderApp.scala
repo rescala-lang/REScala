@@ -46,11 +46,11 @@ class ReaderApp() {
       dom.window.location.hash
     }
 
-    val (hashChange, _) =
+    val hashChange =
       Events.fromCallback[HashChangeEvent](dom.window.onhashchange = _)
-    hashChange.observe(hc => Log.JS.debug(s"hash change event: ${hc.oldURL} -> ${hc.newURL}"))
+    hashChange.event.observe(hc => Log.JS.debug(s"hash change event: ${hc.oldURL} -> ${hc.newURL}"))
 
-    val hashBasedStates = hashChange.map(hc => pathToState(new URL(hc.newURL).hash): @unchecked)
+    val hashBasedStates = hashChange.event.map(hc => pathToState(new URL(hc.newURL).hash): @unchecked)
 
 
     val targetStates: Event[AppState] = hashBasedStates || manualStates
