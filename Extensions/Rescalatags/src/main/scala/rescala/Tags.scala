@@ -55,10 +55,13 @@ object Tags {
     }
   }
 
-  def genericReactiveAttrValue[T: AttrValue, S <: Struct, Sig[T2] <: Signal[T2, S]](implicit engine: Scheduler[S])
+  def genericReactiveAttrValue[T: AttrValue, S <: Struct, Sig[T2] <: Signal[T2, S]]
+  (implicit engine: Scheduler[S])
   : AttrValue[Sig[T]] = new AttrValue[Sig[T]] {
     def apply(t: dom.Element, a: Attr, signal: Sig[T]): Unit = {
-      signal.observe { value => implicitly[AttrValue[T]].apply(t, a, value) }
+      signal.observe(
+         onValue =  value => implicitly[AttrValue[T]].apply(t, a, value),
+         onError = println)
     }
   }
 

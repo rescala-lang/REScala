@@ -46,7 +46,7 @@ object RGOA {
   }
 
 
-  implicit def RGOAStateCRDTInstance[A]: StateCRDT[List[A], RGOA[A]] = new StateCRDT[List[A], RGOA[A]] {
+  implicit def crdt[A]: StateCRDT[List[A], RGOA[A]] = new StateCRDT[List[A], RGOA[A]] {
     override def value(target: RGOA[A]): List[A] = target.value
 
     override def merge(left: RGOA[A], right: RGOA[A]): RGOA[A] = {

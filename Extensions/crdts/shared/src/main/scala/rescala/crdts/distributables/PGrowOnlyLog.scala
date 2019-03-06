@@ -5,7 +5,7 @@ import rescala.crdts.statecrdts.sequences.{RGOA, Vertex}
 import rescala.default._
 
 case class PGrowOnlyLog[A](initial: RGOA[A] = RGOA[A]())
-extends DistributedSignal[List[A], RGOA[A]](initial)(RGOA.RGOAStateCRDTInstance[A]) {
+extends DistributedSignal[List[A], RGOA[A]](initial)(RGOA.crdt[A]) {
 
   def append(a: A): Unit = {
     crdtSignal.transform(_.append(Vertex(a)))

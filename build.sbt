@@ -171,7 +171,7 @@ lazy val caseStudyMill = project.in(file("Examples/Mill"))
 
 lazy val todolist = project.in(file("Examples/Todolist"))
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(rescalatags, restoreJS)
+  .dependsOn(rescalatags, restoreJS, crdtsJS)
   .settings(cfg.base, cfg.noPublish, name := "todolist",
             scalaSource in Compile := baseDirectory.value,
             scalaJSUseMainModuleInitializer := true,
