@@ -54,10 +54,12 @@ case class WebResource(href: String, route: Route)
 object WebResources {
 
   val libJS = WebResource("jslib", path("jslib") {
-    getFromFile("web/target/scala-2.12/scalajs-bundler/main/web-fastopt-library.js")
+    getFromFile("web/target/scala-2.12/scalajs-bundler/main/web-fastopt-library.js") ~
+    getFromResource("web-fastopt-library.js")
   })
   val loaderJs = WebResource("jsloader", path("jsloader") {
-    getFromFile("web/target/scala-2.12/scalajs-bundler/main/web-fastopt-loader.js")
+    getFromFile("web/target/scala-2.12/scalajs-bundler/main/web-fastopt-loader.js") ~
+    getFromResource("web-fastopt-loader.js")
   })
 
   val mainJs = WebResource("js", path("js") {

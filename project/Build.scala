@@ -1,10 +1,6 @@
-import sbt._
-import sbt.Keys._
-import org.scalajs.sbtplugin.ScalaJSPlugin
-import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
-import sbtcrossproject.CrossPlugin
-import sbtcrossproject.CrossPlugin.autoImport._
 import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
+import sbt.Keys._
+import sbt._
 
 
 object Settings {

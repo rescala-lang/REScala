@@ -30,7 +30,7 @@ object ReMqtt {
 
     println(s"initializing mqtt …")
 
-    connection = Mqttjs.connect("ws://127.0.0.1:9001")
+    connection = Mqttjs.connect(wsUri)
 
     connected.observe(c => println(s"connected => $c"))
 

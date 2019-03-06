@@ -1,6 +1,8 @@
-import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
-import Settings._
+import java.nio.file.Paths
+
 import Dependencies._
+import Settings._
+import sbtcrossproject.CrossPlugin.autoImport.{CrossType, crossProject}
 
 val commonSettings: sbt.Def.SettingsDefinition = Seq(
     scalaVersion := version_212,
@@ -37,7 +39,9 @@ lazy val server = project.in(file("server"))
                     Libraries.main,
                     (Compile / compile) := ((Compile / compile) dependsOn (web / Compile / fastOptJS / webpack)).value,
                     Compile / compile := ((compile in Compile) dependsOn (web / Assets / SassKeys.sassify)).value,
-                    (Compile / resources) += (web / Compile / fastOptJS / artifactPath).value,
+                    (Compile / resources) ++= {
+                      val path = (web / Compile / fastOptJS / artifactPath).value.toPath
+                      path.getParent.toFile.listFiles().toSeq},
                     (Compile / resources) ++= (web / Assets / SassKeys.sassify).value,
                     )
                   .enablePlugins(JavaServerAppPackaging)
