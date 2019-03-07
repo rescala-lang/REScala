@@ -93,20 +93,14 @@ class TaskHandling(implicit val storingScheduler: LocalStorageStore) {
     val editInput = edittext.value(value := taskData.map(_.desc)).render
     editDiv.event.observe(_ => setTimeout(0){editInput.focus()})
 
-    val listItem = li(
-      `class` := Signal(
-        (if (taskData.value.done) "completed " else "")
-        + (if (editingV.value) "editing " else "no-editing ")
-      ),
-
-      editDiv.value(
-        input(`class` := "toggle", `type` := "checkbox", doneClick.value,
-              checked := taskData.map(c => if (c.done) Some(checked.v) else None))(checked := false),
-        label(taskData.map(c => stringFrag(c.desc)).asModifier),
-        removeButton.value
-      ),
-      editInput
-    )
+    val listItem = li(`class` := editingV.map(if (_) "editing" else "no-editing"),
+                      editDiv.value(
+                        input(`class` := "toggle", `type` := "checkbox", doneClick.value,
+                              checked := taskData.map(c => if (c.done) Some(checked.v) else None)),
+                        label(taskData.map(c => stringFrag(c.desc)).asModifier),
+                        removeButton.value
+                      ),
+                      editInput)
 
     new Taskref(randomName, listItem, taskData, initial, removeButton.event.map(_ => randomName))
   }

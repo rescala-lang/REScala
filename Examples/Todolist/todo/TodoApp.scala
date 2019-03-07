@@ -5,7 +5,7 @@ import org.scalajs.dom.UIEvent
 import org.scalajs.dom.html.{Div, Input}
 import rescala.Tags._
 import rescala.lattices.Lattice
-import rescala.lattices.sequences.RGOA
+import rescala.lattices.sequences.RGA
 import rescala.restoration.LocalStorageStore
 import rescala.restoration.ReCirce._
 import scalatags.JsDom
@@ -23,9 +23,9 @@ class TodoApp[TH <: TaskHandling](val taskHandling: TH)(implicit val storingSche
   import storingScheduler._
   import taskHandling.{maketask, toggleAll}
 
-  case class TodoRes(div: TypedTag[Div], tasklist: Signal[RGOA[taskHandling.Taskref]])
+  case class TodoRes(div: TypedTag[Div], tasklist: Signal[RGA[taskHandling.Taskref]])
 
-  def getContents(externalTasks: Event[RGOA[taskHandling.Taskref]]): TodoRes = {
+  def getContents(externalTasks: Event[RGA[taskHandling.Taskref]]): TodoRes = {
 
     val todoInputTag: JsDom.TypedTag[Input] = input(
       id := "newtodo",
@@ -49,12 +49,12 @@ class TodoApp[TH <: TaskHandling](val taskHandling: TH)(implicit val storingSche
     val createTask = createTodo.map(str => maketask(TaskData(str)) )
 
 
-    val tasksRGOA = Events.foldAll(RGOA(innerTasks)) { tasks =>
+    val tasksRGOA = Events.foldAll(RGA(innerTasks)) { tasks =>
       Seq(
         externalTasks >> {et => Lattice.merge(tasks, et)},
         createTask >> {tasks.prepend},
-        //removeAll.event >>> { dt => _ => tasks.filterNot(t => dt.depend(t.contents).done) },
-        //tasks.map(_.removeClick) >> { t => tasks.filter(_.id != t) }
+        removeAll.event >>> { dt => _ => tasks.filter(t => !dt.depend(t.contents).done) },
+        tasks.value.map(_.removeClick) >> { t => tasks.filter(_.id != t) }
         )
     }(implicitly, "tasklist")
 

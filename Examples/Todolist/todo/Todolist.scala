@@ -9,8 +9,8 @@ import loci.serializer.circe._
 import loci.transmitter.RemoteRef
 import org.scalajs.dom.{UIEvent, document}
 import rescala.debuggable.ChromeDebuggerInterface
+import rescala.lattices.sequences.RGA
 import rescala.restoration.LocalStorageStore
-import rescala.lattices.sequences.RGOA
 import scalatags.JsDom.all._
 import scalatags.JsDom.tags2.section
 
@@ -22,7 +22,7 @@ import scala.util.Try
 object Todolist {
 
 
-  type TodoTransfer = RGOA[taskHandling.Taskref]
+  type TodoTransfer = RGA[taskHandling.Taskref]
 
   implicit val storingEngine: LocalStorageStore = new LocalStorageStore()
   import storingEngine._
@@ -39,7 +39,7 @@ object Todolist {
 
     ChromeDebuggerInterface.setup(storingEngine)
 
-    val remote = Events.fromCallback[RGOA[taskHandling.Taskref]](
+    val remote = Events.fromCallback[TodoTransfer](
       cb => registry.bind(crdtDescriptions) { td: TodoTransfer =>
         println(s"receiving tasklist $td")
         Try{cb(td)}.failed.foreach{println}

@@ -13,6 +13,7 @@ case class TwoPSet[A](entries: Set[A], tombstones: Set[A]) extends RemovableCRDT
   override def add(e: A): TwoPSet[A] = TwoPSet(entries + e, tombstones)
 
   override def remove(e: A): TwoPSet[A] = if (entries(e)) TwoPSet(entries, tombstones + e) else this
+  def remove(e: Seq[A]): TwoPSet[A] = TwoPSet(entries, tombstones ++ entries.intersect(e.toSet))
 
   override def contains(e: A): Boolean = entries.contains(e) && !tombstones.contains(e)
 

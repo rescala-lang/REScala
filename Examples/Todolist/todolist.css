@@ -219,7 +219,7 @@ body {
   transition: color 0.4s;
 }
 
-.todo-list li.completed label {
+.todo-list input[checked]+label {
   color: #d9d9d9;
   text-decoration: line-through;
 }

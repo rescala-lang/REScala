@@ -8,8 +8,6 @@ import scala.collection.immutable.HashMap
 /**
   * Replicated Growable Array
   *
-  * @param payload The payload consist of one TwoPhase Set which stores the vertices, one HashMap which stores the edges
-  *                between vertices.
   * @tparam A The type of the elements stored in this array
   */
 case class RGA[A](vertices: TwoPSet[Vertex],
@@ -18,7 +16,13 @@ case class RGA[A](vertices: TwoPSet[Vertex],
   extends CRDTSequence[A] {
 
   override type SelfT = RGA[A]
-  def remove(v: Vertex): SelfT = copy(vertices = vertices.remove(v))
+  def remove(v: Seq[Vertex]): SelfT = copy(vertices = vertices.remove(v))
+  def filter(keep: A => Boolean) = {
+    val removed = values.collect { case (k, v) if !keep(v) => k }
+    println(s"removing $removed")
+    remove(removed.toList)
+  }
+
   override def copySub(vertices: StateCRDTSet[Vertex],
                        edges: Map[Vertex, Vertex],
                        values: Map[Vertex, A]): RGA[A] = {
@@ -53,7 +57,7 @@ object RGA {
         }
 
         val partialnew =  newVertices.foldLeft(left) { case (merged: RGA[A], v: Vertex) =>
-            merged.addRight(oldPositions(v), v, left.values(v))
+            merged.addRight(oldPositions(v), v, right.values(v))
         }
 
         partialnew.copy(vertices = TwoPSet.TwoPSetCRDTInstance.merge(left.vertices, right.vertices))
