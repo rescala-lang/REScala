@@ -15,14 +15,13 @@ import rescala.restoration.LocalStorageStore
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all._
 import rescala.restoration.ReCirce._
-
 import loci.communicator.experimental.webrtc.WebRTC.ConnectorFactory
 import loci.communicator.experimental.webrtc._
 import loci.registry.{Binding, Registry}
 import loci.serializer.circe._
 
-
 import scala.Function.const
+import scala.collection.mutable
 import scala.scalajs.js.timers.setTimeout
 
 case class TaskData(desc: String, done: Boolean = false) {
@@ -40,6 +39,7 @@ object TaskData {
 
 class TaskHandling(implicit val storingScheduler: LocalStorageStore) {
   import storingScheduler._
+
 
   class Taskref(val id: String,
                 val listItem: TypedTag[LI],
@@ -61,13 +61,14 @@ class TaskHandling(implicit val storingScheduler: LocalStorageStore) {
   }
 
 
-
+  val knownTasks: mutable.Map[String, Taskref] = mutable.Map()
 
   def maketask(initial: TaskData,
                randomName: String = s"Task(${ThreadLocalRandom.current().nextLong().toHexString})")
-  : Taskref = {
-
+  : Taskref = knownTasks.getOrElseUpdate(randomName, {
     println(s"make new task: $initial, $randomName")
+
+
 
     val edittext = Events.fromCallback[UIEvent]{ inputChange =>
       input(`class` := "edit", `type` := "text", onchange := inputChange, onblur := inputChange)
@@ -115,6 +116,6 @@ class TaskHandling(implicit val storingScheduler: LocalStorageStore) {
                       editInput)
 
     new Taskref(randomName, listItem, taskData, initial, removeButton.event.map(_ => randomName))
-  }
+  })
 
 }
