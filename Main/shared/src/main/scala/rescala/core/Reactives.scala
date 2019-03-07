@@ -18,7 +18,7 @@ trait ReSource[S <: Struct] {
   type Value
   final type State = S#State[Value, S]
   protected[rescala] def state: State
-  def name: REName
+  protected[rescala] def name: REName
 }
 
 /** A reactive value is something that can be reevaluated */
