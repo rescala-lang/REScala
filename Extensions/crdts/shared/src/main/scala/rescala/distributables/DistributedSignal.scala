@@ -15,14 +15,12 @@ import rescala.lattices.Lattice
   *
   * @tparam A The value type of the underlying StateCRDT.
   */
-abstract class DistributedSignal[A, F](initial: F, convert: F => A)(implicit stateCRDT: Lattice[F]) {
-  type valueType = A
-  type crdtType = F
+abstract class DistributedSignal[A, F: Lattice](initial: F, convert: F => A) {
 
   @cutOutOfUserComputation
-  private[rescala] val crdtSignal       : Var[F]    = Var(initial)
+  private[rescala] val crdtSignal: Var[F] = Var(initial)
   private[rescala] def merge(other: F): Unit = {
-    crdtSignal.transform(stateCRDT.merge(_, other))
+    crdtSignal.transform(Lattice[F].merge(_, other))
   }
   val valueSignal: Signal[A] = crdtSignal.map(convert)
 }
@@ -42,8 +40,8 @@ object DistributedSignal {
   implicit def PVarTransmittable[Crdt, P](implicit
                                           ev: P <:< DistributedSignal[_, Crdt],
                                           transmittable: Transmittable[Crdt, Crdt, Crdt],
-                                          serializable : Serializable[Crdt],
-                                          pVarFactory  : PVarFactory[P]
+                                          serializable: Serializable[Crdt],
+                                          pVarFactory: PVarFactory[P]
                                          ): PushBasedTransmittable[P, Crdt, Crdt, Crdt, P] = {
     new PushBasedTransmittable[P, Crdt, Crdt, Crdt, P] {
 
@@ -92,50 +90,3 @@ object DistributedSignal {
   }
 
 }
-
-/*
-// A: value type
-// F: crdt type
-// P: publishable type
-// this is needed to make pVars transmittable using the loci framework
-implicit def rescalaSignalTransmittable[F,S](implicit
-                                           transmittable: Transmittable[F, S, F],
-                                           serializable: Serializable[S], pVarFactory: PVarFactory[A,F]) = {
-  type From = F
-  type To = F
-
-  new PushBasedTransmittable[Publishable[_,F], From, S, To, Publishable[_,F]] {
-
-
-    def send(value: Publishable[_,F], remote: RemoteRef, endpoint: Endpoint[From, To]): To = {
-
-      val observer = value.internalChanges.observe(c => endpoint.send(c))
-
-      endpoint.receive notify value.externalChanges.fire
-
-      endpoint.closed notify { _ => observer.remove }
-
-      value.crdtSignal.readValueOnce
-    }
-
-    def receive(value: To, remote: RemoteRef, endpoint: Endpoint[From, To]): Publishable[_,F] = {
-      val pvar : Publishable[_,F] = createPVar[To]
-      locally(pvar.valueSignal)
-      pvar.externalChanges.fire(value)
-
-      println(s"received $value")
-      println(s"before: $pvar, ")
-
-      endpoint.receive notify pvar.externalChanges.fire
-      val observer = pvar.internalChanges.observe(c => endpoint.send(c))
-      endpoint.closed notify { _ => observer.remove }
-
-      // println(s"manual ${implicitly[StateCRDT[Int, GCounter]].merge(counter.crdtSignal.readValueOnce, value)}")
-
-      println(s"after: $pvar")
-
-      pvar
-    }
-  }
-}
-*/

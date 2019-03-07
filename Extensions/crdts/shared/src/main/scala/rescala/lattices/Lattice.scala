@@ -7,3 +7,6 @@ trait Lattice[A] {
   def merge(left: A, right: A): A
 }
 
+object Lattice {
+  def apply[A](implicit ev: Lattice[A]): Lattice[A] = ev
+}
