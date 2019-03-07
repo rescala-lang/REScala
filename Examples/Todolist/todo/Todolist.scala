@@ -15,6 +15,7 @@ import scalatags.JsDom.tags2.section
 
 import scala.concurrent.{Future, Promise}
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import scala.util.Try
 
 
 object Todolist {
@@ -39,8 +40,10 @@ object Todolist {
 
     val remote = Events.fromCallback[RGOA[taskHandling.Taskref]](
       cb => registry.bind(crdtDescriptions) { td: TodoTransfer =>
-      cb(td)
-    })
+        println(s"receiving tasklist $td")
+        Try{cb(td)}.failed.foreach{println}
+        println(s"caled cb")
+      })
 
     remote.event.observe(tl => println(s"received $tl"))
 

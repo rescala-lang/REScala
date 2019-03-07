@@ -44,21 +44,21 @@ object RGOA {
 
   implicit def crdt[A]: Lattice[RGOA[A]] = new Lattice[RGOA[A]] {
     override def merge(left: RGOA[A], right: RGOA[A]): RGOA[A] = {
-//      println(s"Merging $right into $left")
+      println(s"Merging $right into $left")
 
       val newVertices = right.vertexIterator.toList.filter(!left.edges.contains(_))
-//      println(s"found new vertices in right: $newVertices")
+      println(s"found new vertices in right: $newVertices")
 
       // build map of old insertion positions of the new vertices
       val oldPositions = right.edges.foldLeft(Map[Vertex, Vertex]()) {
-        case (m, (u, v)) => if (newVertices.contains(v)) m + (v -> u) else m
+        case (map, (l, r)) => if (newVertices.contains(r)) map + (r -> l) else map
       }
 
       // update edges by inserting vertices at the right positions
       val partialnew = newVertices.foldLeft(left) {
-        case (merged: RGOA[A], v: Vertex) =>
+        case (merged, v) =>
           println(s"inserting $v at position ${oldPositions(v)}")
-          merged.addRight(oldPositions(v), v, left.values(v))
+          merged.addRight(oldPositions(v), v, right.values(v))
       }
       partialnew.copy(vertices = GrowOnlySet.GSetStateCRDTInstance.merge(left.vertices, right.vertices))
     }

@@ -34,7 +34,7 @@ object RGA {
 
 
   def apply[A](values: Seq[A]): RGA[A] = {
-    values.reverse.foldLeft(empty[A]) {
+    values.reverseIterator.foldLeft(empty[A]) {
       case (r, a) => r.addRight(Vertex.start, a)
     }
   }
@@ -44,11 +44,11 @@ object RGA {
 
   implicit def RGA2CRDTInstance[A]: Lattice[RGA[A]] =
     new Lattice[RGA[A]] {
-      override def merge(left: RGA[A], r: RGA[A]): RGA[A] = {
-        val newVertices = r.vertexIterator.toList.filter(!left.edges.contains(_))
+      override def merge(left: RGA[A], right: RGA[A]): RGA[A] = {
+        val newVertices = right.vertexIterator.toList.filter(!left.edges.contains(_))
 
         // build map of old insertion positions of the new vertices
-        val oldPositions = r.edges.foldLeft(Map(): Map[Vertex, Vertex]) {
+        val oldPositions = right.edges.foldLeft(Map(): Map[Vertex, Vertex]) {
           case (m, (u, v)) => if (newVertices.contains(v)) m + (v -> u) else m
         }
 
@@ -56,7 +56,7 @@ object RGA {
             merged.addRight(oldPositions(v), v, left.values(v))
         }
 
-        partialnew.copy(vertices = TwoPSet.TwoPSetCRDTInstance.merge(left.vertices, r.vertices))
+        partialnew.copy(vertices = TwoPSet.TwoPSetCRDTInstance.merge(left.vertices, right.vertices))
       }
     }
 }
