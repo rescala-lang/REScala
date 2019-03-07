@@ -99,7 +99,7 @@ sealed private abstract class SignalImpl[T, S <: Struct](initial: Sstate[T, S],
                                                          expr: (DynamicTicket[S], () => T) => T,
                                                          name: REName,
                                                          staticDeps: Set[ReSource[S]])
-  extends Base[Pulse[T], S](initial, name) with Signal[T, S] {
+  extends Base[Pulse[T], S](initial, name) with Derived[S] with Signal[T, S] {
 
   override protected[rescala] def reevaluate(rein: ReIn): Rout = {
     rein.trackDependencies(staticDeps)

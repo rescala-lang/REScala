@@ -29,7 +29,7 @@ trait Aliases[S <: Struct] {
   /** @group internal */
   final type Creation = rescala.core.Initializer[S]
   /** @group internal */
-  final type Reactive = rescala.core.Reactive[S]
+  final type Reactive = rescala.core.Derived[S]
   /** @group internal */
   final type ReSource = rescala.core.ReSource[S]
 }

@@ -13,7 +13,7 @@ trait Disconnectable[S <: Struct] {
 }
 
 
-trait DisconnectableImpl[S <: Struct] extends Reactive[S] with Disconnectable[S] {
+trait DisconnectableImpl[S <: Struct] extends Derived[S] with Disconnectable[S] {
   @volatile private var disconnected = false
   final def disconnect()(implicit engine: Scheduler[S]): Unit = {
     engine.executeTurn(this) { turn =>

@@ -5,13 +5,13 @@ import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperat
 import rescala.fullmv.NotificationResultAction.{Glitched, ReevOutResult}
 import rescala.fullmv._
 
-class Reevaluation(override val turn: FullMVTurn, override val node: Reactive[FullMVStruct]) extends RegularReevaluationHandling {
+class Reevaluation(override val turn: FullMVTurn, override val node: Derived[FullMVStruct]) extends RegularReevaluationHandling {
   override def doCompute(): Unit = doReevaluation(retainBranch = true)
   override def toString = s"Reevaluation($turn, $node)"
 }
 
-trait RegularReevaluationHandling extends ReevaluationHandling[Reactive[FullMVStruct]] {
-  override val node: Reactive[FullMVStruct]
+trait RegularReevaluationHandling extends ReevaluationHandling[Derived[FullMVStruct]] {
+  override val node: Derived[FullMVStruct]
   def doReevaluation(retainBranch: Boolean): Unit = {
 //    assert(Thread.currentThread() == turn.userlandThread, s"$this on different thread ${Thread.currentThread().getName}")
     assert(turn.phase == TurnPhase.Executing, s"$turn cannot reevaluate (requires executing phase")
@@ -37,7 +37,7 @@ trait RegularReevaluationHandling extends ReevaluationHandling[Reactive[FullMVSt
     processReevOutResult(retainBranch, res2, changed = res.propagate)
   }
 
-  final def commitDependencyDiff(node: Reactive[FullMVStruct], current: Set[ReSource[FullMVStruct]])(updated: Set[ReSource[FullMVStruct]]): Unit = {
+  final def commitDependencyDiff(node: Derived[FullMVStruct], current: Set[ReSource[FullMVStruct]])(updated: Set[ReSource[FullMVStruct]]): Unit = {
     val indepsRemoved = current -- updated
     val indepsAdded = updated -- current
     indepsRemoved.foreach(turn.drop(_, node))
@@ -75,7 +75,7 @@ trait ReevaluationHandling[N <: ReSource[FullMVStruct]] extends FullMVAction {
   def createReevaluation(succTxn: FullMVTurn): FullMVAction
   def doReevaluation(retainBranch: Boolean): Unit
 
-  def processReevaluationResult(maybeChange: Option[node.Value]): ReevOutResult[FullMVTurn, Reactive[FullMVStruct]] = {
+  def processReevaluationResult(maybeChange: Option[node.Value]): ReevOutResult[FullMVTurn, Derived[FullMVStruct]] = {
     val reevOutResult = node.state.reevOut(turn, maybeChange)
     if(FullMVEngine.DEBUG && maybeChange.isDefined && maybeChange.get.isInstanceOf[Pulse.Exceptional]){
       // could be a framework exception that is relevant to debugging, but was eaten by reactive's
@@ -91,7 +91,7 @@ trait ReevaluationHandling[N <: ReSource[FullMVStruct]] extends FullMVAction {
     reevOutResult
   }
 
-  def processReevOutResult(retainBranch: Boolean, outAndSucc: ReevOutResult[FullMVTurn, Reactive[FullMVStruct]], changed: Boolean): Unit = {
+  def processReevOutResult(retainBranch: Boolean, outAndSucc: ReevOutResult[FullMVTurn, Derived[FullMVStruct]], changed: Boolean): Unit = {
     outAndSucc match {
       case Glitched =>
         // do nothing, reevaluation will be repeated at a later point
@@ -109,7 +109,7 @@ trait ReevaluationHandling[N <: ReSource[FullMVStruct]] extends FullMVAction {
     }
   }
 
-  private def doBranchDiff(retainBranch: Boolean, out: Set[Reactive[FullMVStruct]]) = {
+  private def doBranchDiff(retainBranch: Boolean, out: Set[Derived[FullMVStruct]]) = {
     val branchDiff = out.size - (if(retainBranch) 1 else 2)
     if (branchDiff != 0) turn.activeBranchDifferential(TurnPhase.Executing, branchDiff)
   }

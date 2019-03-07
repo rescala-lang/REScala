@@ -1,7 +1,7 @@
 package rescala.simpleprop
 
 import rescala.core.Initializer.InitValues
-import rescala.core.{AccessTicket, CreationTicket, DynamicInitializerLookup, Initializer, ReSource, Reactive, ReevTicket, Scheduler, Struct}
+import rescala.core.{AccessTicket, CreationTicket, DynamicInitializerLookup, Initializer, ReSource, Derived, ReevTicket, Scheduler, Struct}
 import rescala.interface.Aliases
 
 import scala.collection.mutable.ArrayBuffer
@@ -12,11 +12,11 @@ trait SimpleStruct extends Struct {
 
 class SimpleState[V](ip: InitValues[V]) {
 
-  var value: V = ip.initialValue
-  var outgoing: Set[Reactive[SimpleStruct]] = Set.empty
-  var discovered = false
-  var dirty = false
-  var done = false
+  var value: V                             = ip.initialValue
+  var outgoing: Set[Derived[SimpleStruct]] = Set.empty
+  var discovered                           = false
+  var dirty                                = false
+  var done                                 = false
   def reset(): Unit = {
     discovered = false
     dirty = false
@@ -31,7 +31,7 @@ class SimpleCreation() extends Initializer[SimpleStruct] {
   override protected[this] def makeDerivedStructState[V](ip: InitValues[V], creationTicket: CreationTicket[SimpleStruct])
   : SimpleState[V] = new SimpleState[V](ip)
 
-  private var createdReactives: Seq[Reactive[SimpleStruct]] = Seq.empty
+  private var createdReactives: Seq[Derived[SimpleStruct]] = Seq.empty
 
 
   override def accessTicket(): AccessTicket[SimpleStruct] = new AccessTicket[SimpleStruct] {
@@ -39,13 +39,13 @@ class SimpleCreation() extends Initializer[SimpleStruct] {
   }
 
 
-  def drainCreated(): Seq[Reactive[SimpleStruct]] = {
+  def drainCreated(): Seq[Derived[SimpleStruct]] = {
     val tmp = createdReactives
     createdReactives = Seq.empty
     tmp
   }
 
-  override protected[this] def ignite(reactive: Reactive[SimpleStruct],
+  override protected[this] def ignite(reactive: Derived[SimpleStruct],
                                       incoming: Set[ReSource[SimpleStruct]],
                                       ignitionRequiresReevaluation: Boolean)
   : Unit = {
@@ -137,9 +137,9 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleCrea
 
 
 object Util {
-  def toposort(rem: Seq[Reactive[SimpleStruct]]): Seq[Reactive[SimpleStruct]] = {
-    val sorted = ArrayBuffer[Reactive[SimpleStruct]]()
-    def _toposort(rem: Reactive[SimpleStruct]): Unit = {
+  def toposort(rem: Seq[Derived[SimpleStruct]]): Seq[Derived[SimpleStruct]] = {
+    val sorted = ArrayBuffer[Derived[SimpleStruct]]()
+    def _toposort(rem: Derived[SimpleStruct]): Unit = {
       if (rem.state.discovered) ()
       else {
         rem.state.discovered = true
@@ -153,7 +153,7 @@ object Util {
   }
 
   @scala.annotation.tailrec
-  def evaluateAll(evaluatees: Seq[Reactive[SimpleStruct]], creation: SimpleCreation): Seq[Reactive[SimpleStruct]] = {
+  def evaluateAll(evaluatees: Seq[Derived[SimpleStruct]], creation: SimpleCreation): Seq[Derived[SimpleStruct]] = {
     println(s"evaluating $evaluatees")
     // first one where evaluation detects glitch
     val glitched = evaluatees.reverseIterator.find { r =>
@@ -175,7 +175,7 @@ object Util {
     }
   }
 
-  def evaluate(reactive: Reactive[SimpleStruct], incoming: Set[ReSource[SimpleStruct]], creationTicket: SimpleCreation): Boolean = {
+  def evaluate(reactive: Derived[SimpleStruct], incoming: Set[ReSource[SimpleStruct]], creationTicket: SimpleCreation): Boolean = {
     var potentialGlitch = false
     val dt = new ReevTicket[reactive.Value, SimpleStruct](creationTicket, reactive.state.value) {
       override def dynamicAccess(input: ReSource[SimpleStruct]): input.Value = {

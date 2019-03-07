@@ -153,16 +153,20 @@ object Events {
 }
 
 
-private abstract class StaticEvent[T, S <: Struct](_bud: Estate[S, T], expr: StaticTicket[S] => Pulse[T], name: REName)
-  extends Base[Pulse[T], S](_bud, name) with Event[T, S] {
+private abstract class StaticEvent[T, S <: Struct](_bud: Estate[S, T],
+                                                   expr: StaticTicket[S] => Pulse[T],
+                                                   name: REName)
+  extends Base[Pulse[T], S](_bud, name) with Derived[S] with Event[T, S] {
   override def internalAccess(v: Pulse[T]): Pulse[T] = v
   override protected[rescala] def reevaluate(rein: ReIn): Rout =
     Events.noteFromPulse[T, S](rein, Pulse.tryCatch(expr(rein), onEmpty = NoChange))
 }
 
 
-private abstract class ChangeEvent[T, S <: Struct](_bud: S#State[(Pulse[T], Pulse[Diff[T]]), S], signal: Signal[T, S], name: REName)
-  extends Base[(Pulse[T], Pulse[Diff[T]]), S](_bud, name) with Event[Diff[T], S] {
+private abstract class ChangeEvent[T, S <: Struct](_bud: S#State[(Pulse[T], Pulse[Diff[T]]), S],
+                                                   signal: Signal[T, S],
+                                                   name: REName)
+  extends Base[(Pulse[T], Pulse[Diff[T]]), S](_bud, name) with Derived[S] with Event[Diff[T], S] {
 
   override type Value = (Pulse[T], Pulse[Diff[T]])
 
@@ -179,8 +183,11 @@ private abstract class ChangeEvent[T, S <: Struct](_bud: S#State[(Pulse[T], Puls
   }
 }
 
-private abstract class DynamicEvent[T, S <: Struct](_bud: Estate[S, T], expr: DynamicTicket[S] => Pulse[T], name: REName, staticDeps: Set[ReSource[S]])
-  extends Base[Pulse[T], S](_bud, name) with Event[T, S] {
+private abstract class DynamicEvent[T, S <: Struct](_bud: Estate[S, T],
+                                                    expr: DynamicTicket[S] => Pulse[T],
+                                                    name: REName,
+                                                    staticDeps: Set[ReSource[S]])
+  extends Base[Pulse[T], S](_bud, name) with Derived[S] with Event[T, S] {
 
   override def internalAccess(v: Pulse[T]): Pulse[T] = v
   override protected[rescala] def reevaluate(rein: ReIn): Rout = {

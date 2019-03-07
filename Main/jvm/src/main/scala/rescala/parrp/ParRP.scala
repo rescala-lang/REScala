@@ -8,11 +8,11 @@ import rescala.locking._
 trait ParRPInterTurn {
   private type TState = ParRP
 
-  def discover(sink: ReSource[TState], source: Reactive[TState]): Unit
-  def drop(sink: ReSource[TState], source: Reactive[TState]): Unit
+  def discover(sink: ReSource[TState], source: Derived[TState]): Unit
+  def drop(sink: ReSource[TState], source: Derived[TState]): Unit
 
-  def forget(reactive: Reactive[TState]): Unit
-  def admit(reactive: Reactive[TState]): Unit
+  def forget(reactive: Derived[TState]): Unit
+  def admit(reactive: Derived[TState]): Unit
 
 }
 
@@ -81,14 +81,14 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
   }
 
 
-  override def forget(reactive: Reactive[TState]): Unit = levelQueue.remove(reactive)
-  override def admit(reactive: Reactive[TState]): Unit = levelQueue.enqueue(reactive.state.level())(reactive)
+  override def forget(reactive: Derived[TState]): Unit = levelQueue.remove(reactive)
+  override def admit(reactive: Derived[TState]): Unit = levelQueue.enqueue(reactive.state.level())(reactive)
 
   /** registering a dependency on a node we do not personally own does require some additional care.
     * we let the other turn update the dependency and admit the dependent into the propagation queue
     * so that it gets updated when that turn continues
     * the responsibility for correctly passing the locks is moved to the commit phase */
-  override def discover(source: ReSource[TState], sink: Reactive[TState]): Unit = {
+  override def discover(source: ReSource[TState], sink: Derived[TState]): Unit = {
     val owner = acquireShared(source)
     if (owner ne key) {
       owner.turn.discover(source, sink)
@@ -103,7 +103,7 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
   }
 
   /** this is for cases where we register and then unregister the same dependency in a single turn */
-  override def drop(source: ReSource[TState], sink: Reactive[TState]): Unit = {
+  override def drop(source: ReSource[TState], sink: Derived[TState]): Unit = {
     val owner = acquireShared(source)
     if (owner ne key) {
       owner.turn.drop(source, sink)

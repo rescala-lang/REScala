@@ -22,7 +22,7 @@ object Observe {
 
   private abstract class Obs[T, S <: Struct]
   (bud: S#State[Pulse[Nothing], S], dependency: Interp[T, S], fun: T => Unit, fail: Throwable => Unit, name: REName)
-    extends Base[Pulse[Nothing], S](bud, name) with Reactive[S] with Observe[S] {
+    extends Base[Pulse[Nothing], S](bud, name) with Derived[S] with Observe[S] {
     this: DisconnectableImpl[S] =>
 
     override protected[rescala] def reevaluate(dt: ReIn): Rout = {

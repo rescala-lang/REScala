@@ -3,7 +3,7 @@ package rescala.fullmv.transmitter
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
 import java.util.concurrent.{ConcurrentHashMap, ThreadLocalRandom}
 
-import rescala.core.Reactive
+import rescala.core.Derived
 import rescala.core._
 import rescala.fullmv.TurnPhase.Type
 import rescala.fullmv.mirrors._
@@ -245,7 +245,7 @@ object ReactiveTransmittable {
                                          serializable: Serializable[S]
                                         ): Transmittable[Signal[P, FullMVStruct], S, Signal[P, FullMVStruct]] =
     new ReactiveTransmittable[P, Signal[P, FullMVStruct], S] {
-    override def instantiate(state: FullMVState[Pulse[P], FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]], initTurn: FullMVTurn, name: String): ReactiveReflectionImpl[Pulse[P]] with Signal[P, FullMVStruct] =
+    override def instantiate(state: FullMVState[Pulse[P], FullMVTurn, ReSource[FullMVStruct], Derived[FullMVStruct]], initTurn: FullMVTurn, name: String): ReactiveReflectionImpl[Pulse[P]] with Signal[P, FullMVStruct] =
       new ReactiveReflectionImpl[Pulse[P]](host, None, state, s"SignalReflection($name)") with Signal[P, FullMVStruct] {
         override def disconnect()(implicit engine: Scheduler[FullMVStruct]): Unit = ???
       }
@@ -255,7 +255,7 @@ object ReactiveTransmittable {
     override def toPulse(reactive: Signal[P, FullMVStruct]): reactive.Value => Pulse[P] = v => v
   }
   implicit def eventTransmittable[P, S](implicit host: FullMVEngine, messageTransmittable: Transmittable[MessageWithInfrastructure[Msg[Pluse[P]]], S, MessageWithInfrastructure[Msg[Pluse[P]]]], serializable: Serializable[S]): Transmittable[Event[P, FullMVStruct], S, Event[P, FullMVStruct]] = new ReactiveTransmittable[P, Event[P, FullMVStruct], S] {
-    override def instantiate(state: FullMVState[Pulse[P], FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]], initTurn: FullMVTurn, name: String): ReactiveReflectionImpl[Pulse[P]] with Event[P, FullMVStruct] =
+    override def instantiate(state: FullMVState[Pulse[P], FullMVTurn, ReSource[FullMVStruct], Derived[FullMVStruct]], initTurn: FullMVTurn, name: String): ReactiveReflectionImpl[Pulse[P]] with Event[P, FullMVStruct] =
       new ReactiveReflectionImpl[Pulse[P]](host, Some(initTurn), state, s"EventReflection($name)") with Event[P, FullMVStruct] {
         override def internalAccess(v: Pulse[P]): Pulse[P] = v
         override def disconnect()(implicit engine: Scheduler[FullMVStruct]): Unit = ???
@@ -503,7 +503,7 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
     reflection
   }
 
-  def instantiate(state: FullMVState[Pulse[P], FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]], initTurn: FullMVTurn, name: String): ReactiveReflectionImpl[Pulse[P]] with R
+  def instantiate(state: FullMVState[Pulse[P], FullMVTurn, ReSource[FullMVStruct], Derived[FullMVStruct]], initTurn: FullMVTurn, name: String): ReactiveReflectionImpl[Pulse[P]] with R
 
   def handleTopLevelAsync(reflection: ReactiveReflection[Pulse[P]], endpoint: EndPointWithInfrastructure[Msg], message: PossiblyBlockingTopLevelAsync[Pluse[P]]): Unit = message match {
     case AsyncIncrementFrame(turn) =>

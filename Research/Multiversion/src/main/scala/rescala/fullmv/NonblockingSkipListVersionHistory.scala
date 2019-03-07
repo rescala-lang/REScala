@@ -919,7 +919,7 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
     val frame = if(maybeFirstFrame != null) {
       // TODO in distributed, test if we can turn this into a positive lessThanAssumingNoRaceConditions(txn, maybeFirstFrame.txn).
 //      assert(txn != maybeFirstFrame.txn && !txn.isTransitivePredecessor(maybeFirstFrame.txn), s"$txn must not retrofit in the future (firstFrame was $maybeFirstFrame).\r\nSource (this) state is: $this\r\nSink $sink state is: ${sink.asInstanceOf[rescala.core.Reactive[FullMVStruct]].state}\r\n, readTracker says ${perThreadReadTracker.get()}")
-      assert(txn != maybeFirstFrame.txn && !txn.isTransitivePredecessor(maybeFirstFrame.txn), s"$txn must not retrofit in the future (firstFrame was $maybeFirstFrame).\r\nSource (this) state is: $this\r\nSink $sink state is: ${sink.asInstanceOf[rescala.core.Reactive[FullMVStruct]].state}\r\n, readTracker disabled...")
+      assert(txn != maybeFirstFrame.txn && !txn.isTransitivePredecessor(maybeFirstFrame.txn), s"$txn must not retrofit in the future (firstFrame was $maybeFirstFrame).\r\nSource (this) state is: $this\r\nSink $sink state is: ${sink.asInstanceOf[rescala.core.Derived[FullMVStruct]].state}\r\n, readTracker disabled...")
       Some(maybeFirstFrame.txn)
     } else {
       None

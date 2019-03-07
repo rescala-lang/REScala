@@ -1,6 +1,6 @@
 package rescala.levelbased
 
-import rescala.core.{InitialChange, ReSource, Reactive, ReevTicket}
+import rescala.core.{InitialChange, ReSource, Derived, ReevTicket}
 import rescala.levelbased.LevelQueue.noLevelIncrease
 import rescala.twoversion.TwoVersionPropagationImpl
 
@@ -23,8 +23,8 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
 
   val reevaluationTicket: ReevTicket[_, S] = makeDynamicReevaluationTicket(null)
 
-  override def evaluate(r: Reactive[S]): Unit = evaluateIn(r)(reevaluationTicket.reset(r.state.base(token)))
-  def evaluateIn(head: Reactive[S])(dt: ReevTicket[head.Value, S]): Unit = {
+  override def evaluate(r: Derived[S]): Unit = evaluateIn(r)(reevaluationTicket.reset(r.state.base(token)))
+  def evaluateIn(head: Derived[S])(dt: ReevTicket[head.Value, S]): Unit = {
     val reevRes = head.reevaluate(dt)
 
     val dependencies: Option[Set[ReSource[S]]] = reevRes.getDependencies()
@@ -47,7 +47,7 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
 
   private def maximumLevel(dependencies: Set[ReSource[S]]): Int = dependencies.foldLeft(-1)((acc, r) => math.max(acc, r.state.level()))
 
-  override protected def ignite(reactive: Reactive[S], incoming: Set[ReSource[S]], ignitionRequiresReevaluation: Boolean): Unit = {
+  override protected def ignite(reactive: Derived[S], incoming: Set[ReSource[S]], ignitionRequiresReevaluation: Boolean): Unit = {
     val level = if (incoming.isEmpty) 0 else incoming.map(_.state.level()).max + 1
     reactive.state.updateLevel(level)
 

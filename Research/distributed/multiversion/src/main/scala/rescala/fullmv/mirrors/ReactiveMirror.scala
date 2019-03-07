@@ -1,6 +1,6 @@
 package rescala.fullmv.mirrors
 
-import rescala.core.Reactive
+import rescala.core.Derived
 import rescala.core._
 import rescala.fullmv._
 
@@ -22,22 +22,22 @@ object ReactiveMirror {
   }
 }
 
-class ReactiveMirror[A](val getValue: FullMVTurn => A, val reflectionProxy: ReactiveReflectionProxy[A], val timeout: Duration, rename: REName) extends Reactive[FullMVStruct] with FullMVState[Nothing, FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]] {
+class ReactiveMirror[A](val getValue: FullMVTurn => A, val reflectionProxy: ReactiveReflectionProxy[A], val timeout: Duration, rename: REName) extends Derived[FullMVStruct] with FullMVState[Nothing, FullMVTurn, ReSource[FullMVStruct], Derived[FullMVStruct]] {
   override type Value = Nothing
   override protected[rescala] val state = this
   override def toString: String = s"Mirror${rename.str}"
   override val host: FullMVEngine = null
-  override def incrementFrame(txn: FullMVTurn): FramingBranchResult[FullMVTurn, Reactive[FullMVStruct]] = {
+  override def incrementFrame(txn: FullMVTurn): FramingBranchResult[FullMVTurn, Derived[FullMVStruct]] = {
     FullMVEngine.myAwait(txn.addRemoteBranch(TurnPhase.Framing), timeout)
     reflectionProxy.asyncIncrementFrame(txn)
     FramingBranchResult.FramingBranchEnd
   }
-  override def incrementSupersedeFrame(txn: FullMVTurn, supersede: FullMVTurn): FramingBranchResult[FullMVTurn, Reactive[FullMVStruct]] = {
+  override def incrementSupersedeFrame(txn: FullMVTurn, supersede: FullMVTurn): FramingBranchResult[FullMVTurn, Derived[FullMVStruct]] = {
     FullMVEngine.myAwait(txn.addRemoteBranch(TurnPhase.Framing), timeout)
     reflectionProxy.asyncIncrementSupersedeFrame(txn, supersede)
     FramingBranchResult.FramingBranchEnd
   }
-  override def notify(txn: FullMVTurn, changed: Boolean): (Boolean, NotificationResultAction[FullMVTurn, Reactive[FullMVStruct]]) = {
+  override def notify(txn: FullMVTurn, changed: Boolean): (Boolean, NotificationResultAction[FullMVTurn, Derived[FullMVStruct]]) = {
     FullMVEngine.myAwait(txn.addRemoteBranch(TurnPhase.Executing), timeout)
     if(changed) {
       reflectionProxy.asyncNewValue(txn, getValue(txn))
@@ -46,7 +46,7 @@ class ReactiveMirror[A](val getValue: FullMVTurn => A, val reflectionProxy: Reac
     }
     false -> NotificationResultAction.DoNothing
   }
-  override def notifyFollowFrame(txn: FullMVTurn, changed: Boolean, followFrame: FullMVTurn): (Boolean, NotificationResultAction[FullMVTurn, Reactive[FullMVStruct]]) = {
+  override def notifyFollowFrame(txn: FullMVTurn, changed: Boolean, followFrame: FullMVTurn): (Boolean, NotificationResultAction[FullMVTurn, Derived[FullMVStruct]]) = {
     FullMVEngine.myAwait(txn.addRemoteBranch(TurnPhase.Executing), timeout)
     if(changed) {
       reflectionProxy.asyncNewValueFollowFrame(txn, getValue(txn), followFrame)
@@ -57,13 +57,13 @@ class ReactiveMirror[A](val getValue: FullMVTurn => A, val reflectionProxy: Reac
   }
   override def latestValue: Value = ???
   override def reevIn(turn: FullMVTurn): Nothing = ???
-  override def reevOut(turn: FullMVTurn, maybeValue: Option[Value]): NotificationResultAction.ReevOutResult[FullMVTurn, Reactive[FullMVStruct]] = ???
+  override def reevOut(turn: FullMVTurn, maybeValue: Option[Value]): NotificationResultAction.ReevOutResult[FullMVTurn, Derived[FullMVStruct]] = ???
   override def dynamicBefore(txn: FullMVTurn): Nothing = ???
   override def staticBefore(txn: FullMVTurn): Nothing = ???
   override def dynamicAfter(txn: FullMVTurn): Nothing = ???
   override def staticAfter(txn: FullMVTurn): Nothing = ???
-  override def discover(txn: FullMVTurn, add: Reactive[FullMVStruct]): (List[FullMVTurn], Option[FullMVTurn]) = ???
-  override def drop(txn: FullMVTurn, remove: Reactive[FullMVStruct]): (List[FullMVTurn], Option[FullMVTurn]) = ???
+  override def discover(txn: FullMVTurn, add: Derived[FullMVStruct]): (List[FullMVTurn], Option[FullMVTurn]) = ???
+  override def drop(txn: FullMVTurn, remove: Derived[FullMVStruct]): (List[FullMVTurn], Option[FullMVTurn]) = ???
   override def retrofitSinkFrames(successorWrittenVersions: Seq[FullMVTurn], maybeSuccessorFrame: Option[FullMVTurn], arity: Int): Seq[FullMVTurn] = ???
 
 

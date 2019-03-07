@@ -1,7 +1,7 @@
 package rescala.restoration
 
 import rescala.core.Initializer.InitValues
-import rescala.core.{CreationTicket, Initializer, REName, ReSerializable, ReSource, Reactive, Scheduler, Struct}
+import rescala.core.{CreationTicket, Initializer, REName, ReSerializable, ReSource, Derived, Scheduler, Struct}
 import rescala.debuggable.{DebuggerInterface, DisableDebugging, NodeID}
 import rescala.interface.RescalaInterfaceRequireSerializer
 import rescala.levelbased.{LevelBasedPropagation, LevelStateImpl, LevelStruct}
@@ -69,7 +69,7 @@ class ReStoringTurn(restore: ReStore, debuggerInterface: DebuggerInterface = Dis
   }
 
   override private[rescala] def discover(node       : ReSource[ReStoringStruct],
-                                         addOutgoing: Reactive[ReStoringStruct])
+                                         addOutgoing: Derived[ReStoringStruct])
   : Unit = {
     debuggerInterface.saveEdge(NodeID(node.state.nodeID.str), NodeID(addOutgoing.state.nodeID.str))
     super.discover(node, addOutgoing)

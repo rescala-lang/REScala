@@ -50,7 +50,7 @@ trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropaga
   final override def initializationPhase(initialChanges: Map[ReSource[S], InitialChange[S]]): Unit =
     initialChanges.values.foreach(initialize)
 
-  final def commitDependencyDiff(node: Reactive[S], current: Set[ReSource[S]])(updated: Set[ReSource[S]]): Unit = {
+  final def commitDependencyDiff(node: Derived[S], current: Set[ReSource[S]])(updated: Set[ReSource[S]]): Unit = {
     val indepsRemoved = current -- updated
     val indepsAdded = updated -- current
     indepsRemoved.foreach(drop(_, node))
@@ -58,10 +58,10 @@ trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropaga
     writeIndeps(node, updated)
   }
 
-  private[rescala] def discover(node: ReSource[S], addOutgoing: Reactive[S]): Unit = node.state.discover(addOutgoing)
-  private[rescala] def drop(node: ReSource[S], removeOutgoing: Reactive[S]): Unit = node.state.drop(removeOutgoing)
+  private[rescala] def discover(node: ReSource[S], addOutgoing: Derived[S]): Unit = node.state.discover(addOutgoing)
+  private[rescala] def drop(node: ReSource[S], removeOutgoing: Derived[S]): Unit = node.state.drop(removeOutgoing)
 
-  private[rescala] def writeIndeps(node: Reactive[S], indepsAfter: Set[ReSource[S]]): Unit = node.state.updateIncoming(indepsAfter)
+  private[rescala] def writeIndeps(node: Derived[S], indepsAfter: Set[ReSource[S]]): Unit = node.state.updateIncoming(indepsAfter)
 
   /** allow the propagation to handle dynamic access to reactives */
   def dynamicDependencyInteraction(dependency: ReSource[S]): Unit

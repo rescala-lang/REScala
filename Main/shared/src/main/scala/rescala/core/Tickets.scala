@@ -9,7 +9,7 @@ import scala.language.implicitConversions
   * [[ReevTicket]] is used during reevaluation, and [[AdmissionTicket]] during the initialization. */
 class InnerTicket[S <: Struct](val creation: Initializer[S])
 
-/** [[ReevTicket]] is given to the [[Reactive]] reevaluate method and allows to access other reactives.
+/** [[ReevTicket]] is given to the [[Derived]] reevaluate method and allows to access other reactives.
   * The ticket tracks return values, such as dependencies, the value, and if the value should be propagated.
   * Such usages make it unsuitable as an API for the user, where [[StaticTicket]] or [[DynamicTicket]] should be used instead.
   * */
@@ -117,10 +117,10 @@ trait AccessTicket[S <: Struct] {
 @implicitNotFound(msg = "Could not find capability to create reactives. Maybe a missing import?")
 final case class CreationTicket[S <: Struct](self: Either[Initializer[S], Scheduler[S]], rename: REName) {
 
-  private[rescala] def create[V, T <: Reactive[S]](incoming: Set[ReSource[S]],
-                                                   initv   : InitValues[V],
-                                                   inite   : Boolean)
-                                                  (instantiateReactive: S#State[V, S] => T): T = {
+  private[rescala] def create[V, T <: Derived[S]](incoming: Set[ReSource[S]],
+                                                  initv   : InitValues[V],
+                                                  inite   : Boolean)
+                                                 (instantiateReactive: S#State[V, S] => T): T = {
     transaction(_.create(incoming, initv, inite, this)(instantiateReactive))
   }
   private[rescala] def createSource[V, T <: ReSource[S]]

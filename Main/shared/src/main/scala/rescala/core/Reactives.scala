@@ -21,7 +21,7 @@ trait ReSource[S <: Struct] {
 }
 
 /** A reactive value is something that can be reevaluated */
-trait Reactive[S <: Struct] extends ReSource[S] {
+trait Derived[S <: Struct] extends ReSource[S] {
 
   final type ReIn = ReevTicket[Value, S]
   final type Rout = Result[Value, S]
@@ -31,14 +31,15 @@ trait Reactive[S <: Struct] extends ReSource[S] {
   protected[rescala] def reevaluate(input: ReIn): Rout
 }
 
-/** Base implementation for reactives, with [[Reactive]] for scheduling,
+/** Base implementation for reactives, with [[Derived]] for scheduling,
   * together with a [[REName]] and asking for a [[Struct.State]]
-  * @param initialState the initial state passed by the scheduler
+ *
+  * @param state the initial state passed by the scheduler
   * @param rename the name of the reactive, useful for debugging as it often contains positional information */
-abstract class Base[V, S <: Struct](initialState: S#State[V, S], rename: REName)
-  extends Reactive[S] {
+abstract class Base[V, S <: Struct](override protected[rescala] val state: S#State[V, S],
+                                    val rename: REName)
+  extends ReSource[S] {
   override type Value = V
-  final override protected[rescala] def state: State = initialState
   override def toString: String = s"${rename.str}($state)"
 }
 

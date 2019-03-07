@@ -2,7 +2,7 @@ package rescala.levelbased
 
 import java.util.PriorityQueue
 
-import rescala.core.{Reactive, Struct}
+import rescala.core.{Derived, Struct}
 import rescala.levelbased.LevelQueue.QueueElement
 
 /**
@@ -31,7 +31,7 @@ final private[levelbased] class LevelQueue[S <: LevelStruct](evaluator: LevelQue
     * @param needsEvaluate Indicates if the element needs re-evaluation itself, otherwise it is just a level change
     * @param dep           Element to add to the queue
     */
-  def enqueue(minLevel: Int, needsEvaluate: Boolean = true)(dep: Reactive[S]): Unit = {
+  def enqueue(minLevel: Int, needsEvaluate: Boolean = true)(dep: Derived[S]): Unit = {
     elements.offer(QueueElement[S](dep.state.level(), dep, minLevel, needsEvaluate))
   }
 
@@ -83,7 +83,7 @@ final private[levelbased] class LevelQueue[S <: LevelStruct](evaluator: LevelQue
     *
     * @param reactive Element to remove from the queue
     */
-  def remove(reactive: Reactive[S]): Unit = {
+  def remove(reactive: Derived[S]): Unit = {
     val it = elements.iterator()
     while (it.hasNext) if (it.next().reactive eq reactive) it.remove()
   }
@@ -93,13 +93,13 @@ final private[levelbased] class LevelQueue[S <: LevelStruct](evaluator: LevelQue
 private[levelbased] object LevelQueue {
 
   trait Evaluator[S <: Struct] {
-    def evaluate(r: Reactive[S]): Unit
+    def evaluate(r: Derived[S]): Unit
   }
 
   /** The value to not increase the level of an enqueued [[QueueElement]].*/
   def noLevelIncrease: Int = Int.MinValue
 
-  private final case class QueueElement[S <: Struct](level: Int, reactive: Reactive[S], var minLevel: Int, var needsEvaluate: Boolean) extends Comparable[QueueElement[S]] {
+  private final case class QueueElement[S <: Struct](level: Int, reactive: Derived[S], var minLevel: Int, var needsEvaluate: Boolean) extends Comparable[QueueElement[S]] {
     // order by level, then by reactive
     val order: Long = (level.toLong << 32) | (reactive.hashCode.toLong & 0x00000000ffffffffl)
     override def compareTo(o: QueueElement[S]): Int = java.lang.Long.compare(order, o.order)

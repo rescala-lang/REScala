@@ -2,12 +2,12 @@ package rescala.fullmv.mirrors
 
 import java.util.concurrent.ConcurrentHashMap
 
-import rescala.core.Reactive
+import rescala.core.Derived
 import rescala.core._
 import rescala.fullmv.tasks._
 import rescala.fullmv.{FullMVEngine, FullMVState, FullMVStruct, FullMVTurn, TurnPhase}
 
-trait ReactiveReflection[-P] extends Reactive[FullMVStruct] with ReactiveReflectionProxy[P] {
+trait ReactiveReflection[-P] extends Derived[FullMVStruct] with ReactiveReflectionProxy[P] {
   val host: FullMVEngine
   def buffer(turn: FullMVTurn, value: P): Unit
   def submit(action: FullMVAction): Unit
@@ -75,7 +75,7 @@ trait ReactiveReflection[-P] extends Reactive[FullMVStruct] with ReactiveReflect
   }
 }
 
-class ReactiveReflectionImpl[P](override val host: FullMVEngine, var ignoreTurn: Option[FullMVTurn], initialState: FullMVState[P, FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]], rename: REName) extends Base[P, FullMVStruct](initialState, rename) with ReactiveReflection[P] {
+class ReactiveReflectionImpl[P](override val host: FullMVEngine, var ignoreTurn: Option[FullMVTurn], initialState: FullMVState[P, FullMVTurn, ReSource[FullMVStruct], Derived[FullMVStruct]], rename: REName) extends Base[P, FullMVStruct](initialState, rename) with ReactiveReflection[P] {
   val _buffer = new ConcurrentHashMap[FullMVTurn, P]()
   override def buffer(turn: FullMVTurn, value: P): Unit = _buffer.put(turn, value)
   override def submit(action: FullMVAction): Unit = host.threadPool.submit(action)

@@ -4,12 +4,12 @@ import rescala.core.Initializer.InitValues
 import rescala.reactives.Signals.Diff
 
 trait Initializer[S <: Struct] {
-  /** Creates and correctly initializes new [[rescala.core.Reactive]]s */
-  final private[rescala] def create[V, T <: Reactive[S]](incoming: Set[ReSource[S]],
-                                                         initv: InitValues[V],
-                                                         inite: Boolean,
-                                                         creationTicket: CreationTicket[S])
-                                                        (instantiateReactive: S#State[V, S] => T): T = {
+  /** Creates and correctly initializes new [[rescala.core.Derived]]s */
+  final private[rescala] def create[V, T <: Derived[S]](incoming: Set[ReSource[S]],
+                                                        initv: InitValues[V],
+                                                        inite: Boolean,
+                                                        creationTicket: CreationTicket[S])
+                                                       (instantiateReactive: S#State[V, S] => T): T = {
     val state = makeDerivedStructState[V](initv, creationTicket)
     val reactive = instantiateReactive(state)
     register(reactive)
@@ -31,7 +31,7 @@ trait Initializer[S <: Struct] {
     reactive
   }
 
-  /** Creates the internal state of [[Reactive]]s */
+  /** Creates the internal state of [[Derived]]s */
   protected[this] def makeDerivedStructState[V](valuePersistency: InitValues[V], creationTicket: CreationTicket[S]): S#State[V, S]
 
   /** Creates the internal state of [[ReSource]]s */
@@ -44,7 +44,7 @@ trait Initializer[S <: Struct] {
     * @param incoming                     a set of incoming dependencies
     * @param ignitionRequiresReevaluation true if the reactive must be reevaluated at creation even if none of its dependencies change in the creating turn.
     */
-  protected[this] def ignite(reactive: Reactive[S], incoming: Set[ReSource[S]], ignitionRequiresReevaluation: Boolean): Unit
+  protected[this] def ignite(reactive: Derived[S], incoming: Set[ReSource[S]], ignitionRequiresReevaluation: Boolean): Unit
 
 }
 

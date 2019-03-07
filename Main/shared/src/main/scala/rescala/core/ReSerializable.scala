@@ -14,10 +14,10 @@ trait ReSerializable[T] {
 object ReSerializable {
 
   // do not serialize reactives, or containers of reactives.
-  implicit def resevent[R <: Reactive[_]]: ReSerializable[R] = doNotSerialize
-  implicit def resarray[R <: Reactive[_]]: ReSerializable[Array[R]] = doNotSerialize
-  implicit def restrav[T <: Traversable[_ <: Reactive[_]]]: ReSerializable[T] = doNotSerialize
-  implicit def resopt[T <: Option[_ <: Reactive[_]]]: ReSerializable[T] = doNotSerialize
+  implicit def resevent[R <: Derived[_]]: ReSerializable[R] = doNotSerialize
+  implicit def resarray[R <: Derived[_]]: ReSerializable[Array[R]] = doNotSerialize
+  implicit def restrav[T <: Traversable[_ <: Derived[_]]]: ReSerializable[T] = doNotSerialize
+  implicit def resopt[T <: Option[_ <: Derived[_]]]: ReSerializable[T] = doNotSerialize
 
   object DoNotSerialize extends ReSerializable[Any] {
     override def serialize(value: Any): String = ???
