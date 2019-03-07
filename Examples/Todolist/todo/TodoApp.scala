@@ -1,16 +1,17 @@
 package todo
 
+import io.circe.generic.auto._
 import org.scalajs.dom.UIEvent
 import org.scalajs.dom.html.{Div, Input}
+import rescala.Tags._
+import rescala.lattices.Lattice
+import rescala.lattices.sequences.RGOA
 import rescala.restoration.LocalStorageStore
+import rescala.restoration.ReCirce._
 import scalatags.JsDom
-import scalatags.JsDom.{Attr, TypedTag}
 import scalatags.JsDom.all._
 import scalatags.JsDom.tags2.section
-import rescala.Tags._
-import rescala.restoration.ReCirce._
-import io.circe.generic.auto._
-import rescala.lattices.sequences.RGOA
+import scalatags.JsDom.{Attr, TypedTag}
 
 object TodoApp{
   def apply(taskHandling: TaskHandling)(implicit storingScheduler: LocalStorageStore)
@@ -22,8 +23,7 @@ class TodoApp[TH <: TaskHandling](val taskHandling: TH)(implicit val storingSche
   import storingScheduler._
   import taskHandling.{maketask, toggleAll}
 
-  // tasklist: Signal[RGOA[taskHandling.Taskref]]
-  case class TodoRes(div: TypedTag[Div])
+  case class TodoRes(div: TypedTag[Div], tasklist: Signal[RGOA[taskHandling.Taskref]])
 
   def getContents(externalTasks: Event[RGOA[taskHandling.Taskref]]): TodoRes = {
 
@@ -49,16 +49,19 @@ class TodoApp[TH <: TaskHandling](val taskHandling: TH)(implicit val storingSche
     val createTask = createTodo.map(str => maketask(TaskData(str)) )
 
 
-    val tasksRGOA = Events.foldAll(innerTasks) { tasks =>
+    val tasksRGOA = Events.foldAll(RGOA(innerTasks)) { tasks =>
       Seq(
-        //externalTasks >> {et => RGOA.crdt[taskHandling.Taskref].merge(tasks, et)},
-        createTask >> {tasks.::},
+        externalTasks >> {et => Lattice.merge(tasks, et)},
+        createTask >> {tasks.prepend},
         //removeAll.event >>> { dt => _ => tasks.filterNot(t => dt.depend(t.contents).done) },
         //tasks.map(_.removeClick) >> { t => tasks.filter(_.id != t) }
-      )
+        )
     }(implicitly, "tasklist")
 
-    val tasks = tasksRGOA.map(v => {println(s"task rgoa: $v");v}).map(v => {println(s"task rgoa values: $v");v})
+    val tasks = tasksRGOA
+      .map(v => {println(s"task rgoa: $v");v})
+      .map(_.value)
+      .map(v => {println(s"task rgoa values: $v");v})
 
 
     val content = div(
@@ -100,7 +103,7 @@ class TodoApp[TH <: TaskHandling](val taskHandling: TH)(implicit val storingSche
       )
     )
 
-    TodoRes(content)
+    TodoRes(content, tasksRGOA)
   }
 
   def inputFieldHandler(tag: TypedTag[Input], attr: Attr): (Event[String], Input) = {

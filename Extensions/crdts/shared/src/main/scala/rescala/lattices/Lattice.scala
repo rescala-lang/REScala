@@ -9,4 +9,5 @@ trait Lattice[A] {
 
 object Lattice {
   def apply[A](implicit ev: Lattice[A]): Lattice[A] = ev
+  def merge[A: Lattice](left: A, right: A) = apply.merge(left, right)
 }
