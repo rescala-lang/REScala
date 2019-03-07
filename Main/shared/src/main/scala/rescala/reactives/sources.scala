@@ -3,11 +3,9 @@ package rescala.reactives
 import rescala.core._
 import rescala.reactives.Events.Estate
 
-abstract class Source[S <: Struct, T](val name: REName) extends ReSource[S] {
-
+trait Source[S <: Struct, T] extends ReSource[S] {
   final def admit(value: T)(implicit ticket: AdmissionTicket[S]): Unit = admitPulse(Pulse.Value(value))
   def admitPulse(pulse: Pulse[T])(implicit ticket: AdmissionTicket[S]): Unit
-  override def toString: String = s"${name.str}($state)"
 }
 
 /** Source events with imperative occurrences
@@ -17,9 +15,8 @@ abstract class Source[S <: Struct, T](val name: REName) extends ReSource[S] {
   * @tparam S Struct type used for the propagation of the event
   */
 final class Evt[T, S <: Struct] private[rescala](initialState: Estate[S, T], name: REName)
-  extends Source[S, T](name) with Event[T, S] {
+  extends Base[Pulse[T], S](initialState, name) with Source[S, T] with Event[T, S] {
   override type Value = Pulse[T]
-  override protected[rescala] def state: State = initialState
 
   override def internalAccess(v: Pulse[T]): Pulse[T] = v
   /** Trigger the event */
@@ -49,10 +46,8 @@ object Evt {
   * @tparam S Struct type used for the propagation of the signal
   */
 final class Var[A, S <: Struct] private[rescala](initialState: Signals.Sstate[A, S], name: REName)
-  extends Source[S, A](name) with Signal[A, S] {
+  extends Base[Pulse[A], S](initialState, name) with Source[S, A] with Signal[A, S] {
   override type Value = Pulse[A]
-
-  override protected[rescala] def state: State = initialState
 
   //def update(value: A)(implicit fac: Engine[S]): Unit = set(value)
   def set(value: A)(implicit fac: Scheduler[S]): Unit = fac.executeTurn(this) {admit(value)(_)}

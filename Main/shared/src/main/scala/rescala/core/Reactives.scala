@@ -18,6 +18,7 @@ trait ReSource[S <: Struct] {
   type Value
   final type State = S#State[Value, S]
   protected[rescala] def state: State
+  def name: REName
 }
 
 /** A reactive value is something that can be reevaluated */
@@ -37,10 +38,10 @@ trait Derived[S <: Struct] extends ReSource[S] {
   * @param state the initial state passed by the scheduler
   * @param rename the name of the reactive, useful for debugging as it often contains positional information */
 abstract class Base[V, S <: Struct](override protected[rescala] val state: S#State[V, S],
-                                    val rename: REName)
+                                    override val name: REName)
   extends ReSource[S] {
   override type Value = V
-  override def toString: String = s"${rename.str}($state)"
+  override def toString: String = s"${name.str}($state)"
 }
 
 
