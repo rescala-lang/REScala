@@ -82,7 +82,7 @@ class TaskHandling(implicit val storingScheduler: LocalStorageStore) {
     val doneEv = toggleAll.event || doneClick.event
 
     val taskData = Events.foldAll(initial)(current => Seq(
-      doneEv >> const(current.toggle),
+      doneEv >> {_ => current.toggle()},
       edittextStr >> current.edit
     ))(implicitly[ReSerializable[TaskData]], randomName)
 

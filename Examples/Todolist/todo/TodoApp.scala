@@ -22,7 +22,8 @@ class TodoApp[TH <: TaskHandling](val taskHandling: TH)(implicit val storingSche
   import storingScheduler._
   import taskHandling.{maketask, toggleAll}
 
-  case class TodoRes(div: TypedTag[Div], tasklist: Signal[RGOA[taskHandling.Taskref]])
+  // tasklist: Signal[RGOA[taskHandling.Taskref]]
+  case class TodoRes(div: TypedTag[Div])
 
   def getContents(externalTasks: Event[RGOA[taskHandling.Taskref]]): TodoRes = {
 
@@ -48,16 +49,16 @@ class TodoApp[TH <: TaskHandling](val taskHandling: TH)(implicit val storingSche
     val createTask = createTodo.map(str => maketask(TaskData(str)) )
 
 
-    val tasksRGOA = Events.foldAll(RGOA(innerTasks)) { tasks =>
+    val tasksRGOA = Events.foldAll(innerTasks) { tasks =>
       Seq(
         //externalTasks >> {et => RGOA.crdt[taskHandling.Taskref].merge(tasks, et)},
-        createTask >> {tasks.prepend},
+        createTask >> {tasks.::},
         //removeAll.event >>> { dt => _ => tasks.filterNot(t => dt.depend(t.contents).done) },
         //tasks.map(_.removeClick) >> { t => tasks.filter(_.id != t) }
       )
     }(implicitly, "tasklist")
 
-    val tasks = tasksRGOA.map(v => {println(s"task rgoa: $v");v}).map(_.value).map(v => {println(s"task rgoa values: $v");v})
+    val tasks = tasksRGOA.map(v => {println(s"task rgoa: $v");v}).map(v => {println(s"task rgoa values: $v");v})
 
 
     val content = div(
@@ -99,7 +100,7 @@ class TodoApp[TH <: TaskHandling](val taskHandling: TH)(implicit val storingSche
       )
     )
 
-    TodoRes(content, tasksRGOA)
+    TodoRes(content)
   }
 
   def inputFieldHandler(tag: TypedTag[Input], attr: Attr): (Event[String], Input) = {

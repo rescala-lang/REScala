@@ -40,7 +40,6 @@ object Todolist {
     val remote = Events.fromCallback[RGOA[taskHandling.Taskref]](
       cb => registry.bind(crdtDescriptions) { td: TodoTransfer =>
       cb(td)
-      "success"
     })
 
     remote.event.observe(tl => println(s"received $tl"))
@@ -50,12 +49,12 @@ object Todolist {
     document.body.replaceChild(todores.div.render, document.body.firstElementChild)
     document.body.appendChild(webrtchandlingArea.render)
 
-    remotePromise.observe { f =>
-      todores.tasklist.observe{s =>
-        println(s"sending tasklist $s")
-        f(s)
-      }
-    }
+    //remotePromise.observe { f =>
+    //  todores.tasklist.observe{s =>
+    //    println(s"sending tasklist $s")
+    //    f(s)
+    //  }
+    //}
 
     ChromeDebuggerInterface.finishedLoading()
   }
