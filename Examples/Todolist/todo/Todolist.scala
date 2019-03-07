@@ -17,7 +17,7 @@ import scala.concurrent.{Future, Promise}
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 
-object TodoMVC {
+object Todolist {
 
 
   type TodoTransfer = RGOA[taskHandling.Taskref]
