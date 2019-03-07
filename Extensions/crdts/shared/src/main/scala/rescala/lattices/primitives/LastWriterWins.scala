@@ -2,7 +2,9 @@ package rescala.lattices.primitives
 
 import rescala.lattices.Lattice
 
-case class LastWriterWins[A](timestamp: Long, payload: A)
+case class LastWriterWins[A](timestamp: Long, payload: A) {
+  def map[B](f: A => B): LastWriterWins[B] = LastWriterWins(f(payload))
+}
 
 object LastWriterWins {
   def apply[A](value: A): LastWriterWins[A] = {
@@ -12,7 +14,7 @@ object LastWriterWins {
 
   implicit def LastWriterWinsCRDT[A]: Lattice[LastWriterWins[A]] = new Lattice[LastWriterWins[A]] {
     override def merge(left: LastWriterWins[A], right: LastWriterWins[A]): LastWriterWins[A] =
-      if (left.timestamp < right.timestamp) right else left
+      if (right.timestamp > left.timestamp) right else left
   }
 
 }

@@ -3,15 +3,24 @@ package todo
 import java.util.concurrent.ThreadLocalRandom
 
 import io.circe.generic.semiauto
+import io.circe.generic.auto._
 import io.circe.{Decoder, Encoder}
 import org.scalajs.dom.UIEvent
 import org.scalajs.dom.html.{Input, LI}
 import rescala.Tags._
 import rescala.core.ReSerializable
+import rescala.lattices.primitives.LastWriterWins
+import rescala.locidistribute.LociDist
 import rescala.restoration.LocalStorageStore
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all._
 import rescala.restoration.ReCirce._
+
+import loci.communicator.experimental.webrtc.WebRTC.ConnectorFactory
+import loci.communicator.experimental.webrtc._
+import loci.registry.{Binding, Registry}
+import loci.serializer.circe._
+
 
 import scala.Function.const
 import scala.scalajs.js.timers.setTimeout
@@ -81,11 +90,14 @@ class TaskHandling(implicit val storingScheduler: LocalStorageStore) {
 
     val doneEv = toggleAll.event || doneClick.event
 
-    val taskData = Events.foldAll(initial)(current => Seq(
-      doneEv >> {_ => current.toggle()},
-      edittextStr >> current.edit
-    ))(implicitly[ReSerializable[TaskData]], randomName)
+    val taskDataL = Events.foldAll(LastWriterWins(initial))(current => Seq(
+      doneEv >> {_ => current.map(_.toggle())},
+      edittextStr >> {v => current.map(_.edit(v))}
+    ))(implicitly, randomName)
 
+    LociDist.distribute(taskDataL, Todolist.registry, Todolist.storingEngine.scheduler)
+
+    val taskData = taskDataL.map(_.payload)
 
     val removeButton =
       Events.fromCallback[UIEvent](cb => button(`class` := "destroy", onclick := cb))

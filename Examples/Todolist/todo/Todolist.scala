@@ -8,9 +8,12 @@ import loci.registry.{Binding, Registry}
 import loci.serializer.circe._
 import loci.transmitter.RemoteRef
 import org.scalajs.dom.{UIEvent, document}
+import rescala.Tags._
 import rescala.debuggable.ChromeDebuggerInterface
-import rescala.lattices.sequences.RGA
+import rescala.lattices.sequences.{RGA, RGOA}
+import rescala.locidistribute.LociDist
 import rescala.restoration.LocalStorageStore
+import rescala.restoration.ReCirce._
 import scalatags.JsDom.all._
 import scalatags.JsDom.tags2.section
 
@@ -35,6 +38,8 @@ object Todolist {
 
   val remoteConnected = Evt[RemoteRef]
 
+
+
   def main(args: Array[String]): Unit = {
 
     ChromeDebuggerInterface.setup(storingEngine)
@@ -50,8 +55,18 @@ object Todolist {
 
     val todores = todoApp.getContents(remote.event)
 
+    val meh = Evt[String]
+    val mehs = meh.fold(RGOA.empty[String])((c, e) => c.append(e))("meh", implicitly)
+    LociDist.distribute(mehs, registry, storingEngine.scheduler)
+
+    meh.fire(s"meh ${System.currentTimeMillis()}")
+
+
+
     document.body.replaceChild(todores.div.render, document.body.firstElementChild)
     document.body.appendChild(webrtchandlingArea.render)
+    document.body.appendChild(div(mehs.map(r => ul(r.value.map(li(_)))).asModifier).render)
+
 
     remoteConnected.observe { remote =>
       println(s"host connected $remote")
