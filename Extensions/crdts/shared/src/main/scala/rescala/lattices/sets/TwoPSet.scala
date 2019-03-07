@@ -1,5 +1,6 @@
-package rescala.crdts.statecrdts
-package sets
+package rescala.lattices.sets
+
+import rescala.lattices.Lattice
 
 /**
   * Two phase set where elements can be added and removed but never added again.
@@ -23,8 +24,7 @@ object TwoPSet {
     new TwoPSet(values.toSet, Set())
   }
 
-  implicit def TwoPSetCRDTInstance[A]: StateCRDT[Set[A], TwoPSet[A]] = new StateCRDT[Set[A], TwoPSet[A]] {
-    override def value(target: TwoPSet[A]): Set[A] = target.value
+  implicit def TwoPSetCRDTInstance[A]: Lattice[TwoPSet[A]] = new Lattice[TwoPSet[A]] {
     override def merge(left: TwoPSet[A], right: TwoPSet[A]): TwoPSet[A] = {
       val e = left.entries ++ right.entries
       val t = left.tombstones ++ right.tombstones

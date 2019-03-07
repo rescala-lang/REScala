@@ -6,16 +6,15 @@ import loci.communicator.ws.akka.WS
 import loci.registry.{Binding, Registry}
 import loci.serializer.circe._
 import loci.transmitter.RemoteRef
-import rescala.crdts.distributables.PGrowOnlyLog
 import rescala.crdts.distributables.DistributedSignal._
 import rescala.default._
+import rescala.distributables.PGrowOnlyLog
 import scalafx.Includes._
 import scalafx.application.JFXApp
 import scalafx.application.JFXApp.PrimaryStage
 import scalafx.beans.property._
 import scalafx.scene.Scene
 import scalafx.scene.control._
-import scalafxml.core.{FXMLView, NoDependencyResolver}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}

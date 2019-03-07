@@ -1,9 +1,9 @@
-package rescala.crdts.distributables
+package rescala.distributables
 
 import loci.transmitter._
-import rescala.crdts.statecrdts.StateCRDT
 import rescala.default._
 import rescala.macros.cutOutOfUserComputation
+import rescala.lattices.Lattice
 
 /**
   * Classes implementing this trait can be published and are then synchronized by the DistributionEngine (specified by
@@ -15,7 +15,7 @@ import rescala.macros.cutOutOfUserComputation
   *
   * @tparam A The value type of the underlying StateCRDT.
   */
-abstract class DistributedSignal[A, F](initial: F)(implicit stateCRDT: StateCRDT[A, F]) {
+abstract class DistributedSignal[A, F](initial: F, convert: F => A)(implicit stateCRDT: Lattice[F]) {
   type valueType = A
   type crdtType = F
 
@@ -24,7 +24,7 @@ abstract class DistributedSignal[A, F](initial: F)(implicit stateCRDT: StateCRDT
   private[rescala] def merge(other: F): Unit = {
     crdtSignal.transform(stateCRDT.merge(_, other))
   }
-  val valueSignal: Signal[A] = crdtSignal.map(s => stateCRDT.value(s))
+  val valueSignal: Signal[A] = crdtSignal.map(convert)
 }
 
 object DistributedSignal {

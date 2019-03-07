@@ -1,4 +1,4 @@
-package rescala.crdts
+package rescala
 
 import io.circe.Decoder.Result
 import io.circe.generic.auto._
@@ -13,7 +13,10 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import rescala.crdts.distributables._
 import rescala.crdts.statecrdts.sequences._
-import rescala.crdts.statecrdts.StateCRDT
+import rescala.crdts.statecrdts.Lattice
+import rescala.distributables.{PGrowOnlyCounter, PGrowOnlyLog, PGrowOnlySet, PSet, PVertexList}
+import rescala.lattices.Lattice
+import rescala.lattices.sequences.Vertex
 
 //noinspection ScalaUnusedSymbol
 object testSignalExpressions {
@@ -52,7 +55,7 @@ object testSignalExpressions {
     println(f == m.getOrElse("error"))
 
 
-    def merge[A, F](a: F, b: F)(implicit stateCRDT: StateCRDT[A, F]) = {
+    def merge[A, F](a: F, b: F)(implicit stateCRDT: Lattice[A, F]) = {
       stateCRDT.merge(a, b)
     }
 

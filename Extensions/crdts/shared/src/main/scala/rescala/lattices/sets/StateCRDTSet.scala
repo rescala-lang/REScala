@@ -1,5 +1,4 @@
-package rescala.crdts.statecrdts
-package sets
+package rescala.lattices.sets
 
 trait StateCRDTSet[A] {
   def add(e: A): StateCRDTSet[A]

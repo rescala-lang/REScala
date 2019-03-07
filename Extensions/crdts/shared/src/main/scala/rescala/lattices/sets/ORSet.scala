@@ -1,7 +1,7 @@
-package rescala.crdts.statecrdts
-package sets
+package rescala.lattices.sets
 
-import rescala.crdts.statecrdts.sets.ORSet.Identifier
+import rescala.lattices.sets.ORSet.Identifier
+import rescala.lattices.{IdUtil, Lattice}
 
 /**
   * Implementation of an Observed-Remove Set as described by Shapiro et al. (2011)
@@ -49,9 +49,7 @@ object ORSet {
     apply(value.toSeq: _*)
   }
 
-  implicit def ORSetCRDTInstance[A]: StateCRDT[Set[A], ORSet[A]] = new StateCRDT[Set[A], ORSet[A]] {
-    override def value(target: ORSet[A]): Set[A] = target.value
-
+  implicit def ORSetCRDTInstance[A]: Lattice[ORSet[A]] = new Lattice[ORSet[A]] {
     override def merge(left: ORSet[A], right: ORSet[A]): ORSet[A] = {
       val (entries1, tombs1) = left.payload
       val (entries2, tombs2) = right.payload

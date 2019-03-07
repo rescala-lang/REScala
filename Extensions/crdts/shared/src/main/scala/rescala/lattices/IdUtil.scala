@@ -1,4 +1,4 @@
-package rescala.crdts.statecrdts
+package rescala.lattices
 
 import java.util.UUID
 

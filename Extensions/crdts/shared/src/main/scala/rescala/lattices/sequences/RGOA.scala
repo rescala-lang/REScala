@@ -1,7 +1,7 @@
-package rescala.crdts.statecrdts
-package sequences
+package rescala.lattices.sequences
 
-import rescala.crdts.statecrdts.sets.{GrowOnlySet, StateCRDTSet}
+import rescala.lattices.Lattice
+import rescala.lattices.sets.{GrowOnlySet, StateCRDTSet}
 
 import scala.collection.immutable.HashMap
 
@@ -42,9 +42,7 @@ object RGOA {
   }
 
 
-  implicit def crdt[A]: StateCRDT[List[A], RGOA[A]] = new StateCRDT[List[A], RGOA[A]] {
-    override def value(target: RGOA[A]): List[A] = target.value
-
+  implicit def crdt[A]: Lattice[RGOA[A]] = new Lattice[RGOA[A]] {
     override def merge(left: RGOA[A], right: RGOA[A]): RGOA[A] = {
 //      println(s"Merging $right into $left")
 

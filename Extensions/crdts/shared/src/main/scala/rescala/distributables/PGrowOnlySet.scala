@@ -1,11 +1,11 @@
-package rescala.crdts.distributables
+package rescala.distributables
 
-import rescala.crdts.distributables.DistributedSignal.PVarFactory
-import rescala.crdts.statecrdts.sets.GrowOnlySet
 import rescala.default._
+import rescala.distributables.DistributedSignal.PVarFactory
+import rescala.lattices.sets.GrowOnlySet
 
 case class PGrowOnlySet[A](initial: GrowOnlySet[A] = GrowOnlySet[A]())
-extends DistributedSignal[Set[A], GrowOnlySet[A]](initial) {
+extends DistributedSignal[Set[A], GrowOnlySet[A]](initial, _.value) {
 
   def add(a: A): Unit = crdtSignal.transform(_.add(a))
 

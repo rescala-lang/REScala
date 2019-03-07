@@ -1,6 +1,6 @@
-package rescala.crdts.statecrdts.sequences
+package rescala.lattices.sequences
 
-import rescala.crdts.statecrdts.sets.StateCRDTSet
+import rescala.lattices.sets.StateCRDTSet
 
 import scala.collection.AbstractIterator
 

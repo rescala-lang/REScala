@@ -1,9 +1,9 @@
-package rescala.crdts.statecrdts
-package sequences
+package rescala.lattices.sequences
 
 import io.circe._
 import io.circe.generic.extras._
-import rescala.crdts.statecrdts.sequences.Vertex.Timestamp
+import rescala.lattices.IdUtil
+import rescala.lattices.sequences.Vertex.Timestamp
 
 
 case class Vertex(timestamp: Timestamp, id: IdUtil.Id)

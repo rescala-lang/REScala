@@ -1,5 +1,6 @@
-package rescala.crdts.statecrdts
-package primitives
+package rescala.lattices.primitives
+
+import rescala.lattices.{IdUtil, Lattice}
 
 import scala.collection.immutable.HashMap
 
@@ -19,9 +20,7 @@ object GCounter {
     GCounter(id, HashMap(id -> value))
   }
 
-  implicit def GCounterCRDT: StateCRDT[Int, GCounter] = new StateCRDT[Int, GCounter] {
-    override def value(target: GCounter): Int = target.value
-
+  implicit def GCounterCRDT: Lattice[GCounter] = new Lattice[GCounter] {
     override def merge(left: GCounter, right: GCounter): GCounter =
       GCounter(left.id,
         left.payload.merged(right.payload) {

@@ -1,5 +1,6 @@
-package rescala.crdts.statecrdts
-package sets
+package rescala.lattices.sets
+
+import rescala.lattices.Lattice
 
 case class GrowOnlySet[A](payload: Set[A]) extends StateCRDTSet[A] {
   override def add(e: A): GrowOnlySet[A] = GrowOnlySet(payload + e)
@@ -17,9 +18,7 @@ object GrowOnlySet {
     new GrowOnlySet(values.toSet)
   }
 
-  implicit def GSetStateCRDTInstance[A]: StateCRDT[Set[A], GrowOnlySet[A]] = new StateCRDT[Set[A], GrowOnlySet[A]] {
-    override def value(target: GrowOnlySet[A]): Set[A] = target.value
-
+  implicit def GSetStateCRDTInstance[A]: Lattice[GrowOnlySet[A]] = new Lattice[GrowOnlySet[A]] {
     override def merge(left: GrowOnlySet[A], right: GrowOnlySet[A]): GrowOnlySet[A] = GrowOnlySet(left.value.union(right.value))
   }
 }

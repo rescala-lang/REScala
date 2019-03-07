@@ -1,8 +1,8 @@
-package rescala.crdts.distributables
+package rescala.distributables
 
-import rescala.crdts.distributables.DistributedSignal.PVarFactory
-import rescala.crdts.statecrdts.primitives.GCounter
 import rescala.default.implicitScheduler
+import rescala.distributables.DistributedSignal.PVarFactory
+import rescala.lattices.primitives.GCounter
 
 /**
   * DistributedGCounters are increase-only counter variables.
@@ -10,7 +10,7 @@ import rescala.default.implicitScheduler
   * @param initial The initial value of this variable.
   */
 case class PGrowOnlyCounter(initial: GCounter = GCounter(0))
-extends DistributedSignal[Int, GCounter](initial) {
+extends DistributedSignal[Int, GCounter](initial, _.value) {
   def increase(): Unit = {
     crdtSignal.transform(_.increase)
   }

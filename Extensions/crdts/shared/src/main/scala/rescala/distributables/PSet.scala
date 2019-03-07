@@ -1,11 +1,11 @@
-package rescala.crdts.distributables
+package rescala.distributables
 
-import rescala.crdts.distributables.DistributedSignal.PVarFactory
-import rescala.crdts.statecrdts.sets.ORSet
 import rescala.default._
+import rescala.distributables.DistributedSignal.PVarFactory
+import rescala.lattices.sets.ORSet
 
 case class PSet[A](initial: ORSet[A] = ORSet[A]())
-extends DistributedSignal[Set[A], ORSet[A]](initial) {
+extends DistributedSignal[Set[A], ORSet[A]](initial, _.value) {
 
   def add(a: A): Unit = crdtSignal.transform(_.add(a))
 

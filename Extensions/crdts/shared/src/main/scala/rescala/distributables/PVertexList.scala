@@ -1,8 +1,8 @@
-package rescala.crdts.distributables
+package rescala.distributables
 
-import rescala.crdts.distributables.DistributedSignal.PVarFactory
-import rescala.crdts.statecrdts.sequences.{RGA, Vertex}
 import rescala.default._
+import rescala.distributables.DistributedSignal.PVarFactory
+import rescala.lattices.sequences.{RGA, Vertex}
 
 /**
   * DistributedVertexLists are LinkedLists operating on so called Vertices. Vertices store a value of type `A`.
@@ -10,7 +10,7 @@ import rescala.default._
   * @param initial The initial value of this variable.
   */
 case class PVertexList[A](initial: RGA[A] = RGA.empty[A])
-extends DistributedSignal[List[A], RGA[A]](initial) {
+extends DistributedSignal[List[A], RGA[A]](initial, _.value) {
   def contains(v: Vertex): Boolean = crdtSignal.readValueOnce.contains(v)
 
 

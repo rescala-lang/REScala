@@ -1,6 +1,6 @@
-package rescala.crdts.statecrdts.primitives
+package rescala.lattices.primitives
 
-import rescala.crdts.statecrdts.StateCRDT
+import rescala.lattices.Lattice
 
 case class LastWriterWins[A](timestamp: Long, payload: A)
 
@@ -10,9 +10,7 @@ object LastWriterWins {
     LastWriterWins(timestamp, value)
   }
 
-  implicit def LastWriterWinsCRDT[A]: StateCRDT[A, LastWriterWins[A]] = new StateCRDT[A, LastWriterWins[A]] {
-    override def value(target: LastWriterWins[A]): A = target.payload
-
+  implicit def LastWriterWinsCRDT[A]: Lattice[LastWriterWins[A]] = new Lattice[LastWriterWins[A]] {
     override def merge(left: LastWriterWins[A], right: LastWriterWins[A]): LastWriterWins[A] =
       if (left.timestamp < right.timestamp) right else left
   }

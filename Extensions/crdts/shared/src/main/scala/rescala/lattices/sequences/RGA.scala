@@ -1,7 +1,7 @@
-package rescala.crdts.statecrdts.sequences
+package rescala.lattices.sequences
 
-import rescala.crdts.statecrdts.StateCRDT
-import rescala.crdts.statecrdts.sets.{StateCRDTSet, TwoPSet}
+import rescala.lattices.Lattice
+import rescala.lattices.sets.{StateCRDTSet, TwoPSet}
 
 import scala.collection.immutable.HashMap
 
@@ -42,10 +42,8 @@ object RGA {
   def empty[A]: RGA[A] = new RGA[A](TwoPSet[Vertex](), Map(Vertex.start -> Vertex.end), Map())
 
 
-  implicit def RGA2CRDTInstance[A]: StateCRDT[List[A], RGA[A]] =
-    new StateCRDT[List[A], RGA[A]] {
-      override def value(target: RGA[A]): List[A] = target.value
-
+  implicit def RGA2CRDTInstance[A]: Lattice[RGA[A]] =
+    new Lattice[RGA[A]] {
       override def merge(left: RGA[A], r: RGA[A]): RGA[A] = {
         val newVertices = r.vertexIterator.toList.filter(!left.edges.contains(_))
 

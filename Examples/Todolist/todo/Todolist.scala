@@ -7,9 +7,9 @@ import loci.communicator.experimental.webrtc._
 import loci.registry.{Binding, Registry}
 import loci.serializer.circe._
 import org.scalajs.dom.{UIEvent, document}
-import rescala.crdts.statecrdts.sequences.RGOA
 import rescala.debuggable.ChromeDebuggerInterface
 import rescala.restoration.LocalStorageStore
+import rescala.lattices.sequences.RGOA
 import scalatags.JsDom.all._
 import scalatags.JsDom.tags2.section
 

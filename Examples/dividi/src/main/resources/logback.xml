@@ -9,7 +9,7 @@
     </appender>
 
     <!-- <logger name="pvars.DistributionEngine" level="WARN"/> -->
-    <logger name="rescala.crdts.statecrdts.sequences.RGOA" level="WARN"/>
+    <logger name="rescala.lattices.sequences.RGOA" level="WARN"/>
     <logger name="Dividi" level="WARN"/>
 
     <root level="warn">

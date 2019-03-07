@@ -8,9 +8,9 @@ import scalatags.JsDom.{Attr, TypedTag}
 import scalatags.JsDom.all._
 import scalatags.JsDom.tags2.section
 import rescala.Tags._
-import rescala.crdts.statecrdts.sequences.RGOA
 import rescala.restoration.ReCirce._
 import io.circe.generic.auto._
+import rescala.lattices.sequences.RGOA
 
 object TodoApp{
   def apply(taskHandling: TaskHandling)(implicit storingScheduler: LocalStorageStore)

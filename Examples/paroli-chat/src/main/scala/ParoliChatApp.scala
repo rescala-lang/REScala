@@ -4,7 +4,8 @@ import rescala.crdts.distributables._
 import com.typesafe.config.ConfigFactory
 import akka.actor._
 import akka.actor.Props
-import rescala.crdts.statecrdts.sequences.Vertex
+import rescala.distributables.PVertexList
+import rescala.lattices.sequences.Vertex
 
 import scala.tools.jline
 
