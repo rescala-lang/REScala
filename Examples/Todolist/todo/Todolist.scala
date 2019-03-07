@@ -6,6 +6,7 @@ import loci.communicator.experimental.webrtc.WebRTC.ConnectorFactory
 import loci.communicator.experimental.webrtc._
 import loci.registry.{Binding, Registry}
 import loci.serializer.circe._
+import loci.transmitter.RemoteRef
 import org.scalajs.dom.{UIEvent, document}
 import rescala.debuggable.ChromeDebuggerInterface
 import rescala.restoration.LocalStorageStore
@@ -32,7 +33,7 @@ object Todolist {
   val registry = new Registry
   val crdtDescriptions = Binding[TodoTransfer => Unit]("taskData")
 
-  val remotePromise = Evt[TodoTransfer => Future[Unit]]
+  val remoteConnected = Evt[RemoteRef]
 
   def main(args: Array[String]): Unit = {
 
@@ -52,10 +53,12 @@ object Todolist {
     document.body.replaceChild(todores.div.render, document.body.firstElementChild)
     document.body.appendChild(webrtchandlingArea.render)
 
-    remotePromise.observe { f =>
-      todores.tasklist.observe{s =>
+    remoteConnected.observe { remote =>
+      println(s"host connected $remote")
+      val res = registry.lookup(crdtDescriptions, remote)
+      todores.tasklist.observe { s =>
         println(s"sending tasklist $s")
-        f(s)
+        res(s)
       }
     }
 
@@ -77,11 +80,7 @@ object Todolist {
       res.session.foreach(s => renderedPre.textContent = s.asJson.noSpaces)
       pn = Some(res)
       val remoteFut = registry.connect(res.connector)
-      remoteFut.foreach { remote =>
-        val res = registry.lookup(crdtDescriptions, remote)
-        println(s"host connected $res")
-        remotePromise.fire(res)
-      }
+      remoteFut.foreach(remoteConnected.fire(_))
     })
 
 
@@ -91,7 +90,7 @@ object Todolist {
         case None     => // we are client
           val res = webrtcIntermediate(WebRTC.answer())
           res.session.foreach(s => renderedPre.textContent = s.asJson.noSpaces)
-          registry.connect(res.connector)
+          registry.connect(res.connector).foreach(remoteConnected.fire(_))
           res.connector
         case Some(ss) => // we are server
           ss.connector
