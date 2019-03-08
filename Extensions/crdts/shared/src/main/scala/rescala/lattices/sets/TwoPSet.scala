@@ -1,6 +1,7 @@
 package rescala.lattices.sets
 
 import rescala.lattices.Lattice
+import rescala.lattices.sequences.SetLike
 
 /**
   * Two phase set where elements can be added and removed but never added again.
@@ -8,16 +9,16 @@ import rescala.lattices.Lattice
   * @param payload The payload consisting of one set for added entries and one set for removed entries (tombstones).
   * @tparam A The type of the elements in the set.
   */
-case class TwoPSet[A](entries: Set[A], tombstones: Set[A]) extends RemovableCRDTSet[A] {
+case class TwoPSet[A](entries: Set[A], tombstones: Set[A]) {
 
-  override def add(e: A): TwoPSet[A] = TwoPSet(entries + e, tombstones)
+  def add(e: A): TwoPSet[A] = TwoPSet(entries + e, tombstones)
 
-  override def remove(e: A): TwoPSet[A] = if (entries(e)) TwoPSet(entries, tombstones + e) else this
+  def remove(e: A): TwoPSet[A] = if (entries(e)) TwoPSet(entries, tombstones + e) else this
   def remove(e: Seq[A]): TwoPSet[A] = TwoPSet(entries, tombstones ++ entries.intersect(e.toSet))
 
-  override def contains(e: A): Boolean = entries.contains(e) && !tombstones.contains(e)
+  def contains(e: A): Boolean = entries.contains(e) && !tombstones.contains(e)
 
-  override lazy val value: Set[A] = entries -- tombstones
+  lazy val value: Set[A] = entries -- tombstones
 }
 
 object TwoPSet {
@@ -25,11 +26,14 @@ object TwoPSet {
     new TwoPSet(values.toSet, Set())
   }
 
-  implicit def TwoPSetCRDTInstance[A]: Lattice[TwoPSet[A]] = new Lattice[TwoPSet[A]] {
-    override def merge(left: TwoPSet[A], right: TwoPSet[A]): TwoPSet[A] = {
-      val e = left.entries ++ right.entries
-      val t = left.tombstones ++ right.tombstones
-      new TwoPSet(e, t)
+  implicit def instance[A]: Lattice[TwoPSet[A]] with SetLike[A, TwoPSet[A]] =
+    new Lattice[TwoPSet[A]] with SetLike[A, TwoPSet[A]] {
+      override def merge(left: TwoPSet[A], right: TwoPSet[A]): TwoPSet[A] = {
+        val e = left.entries ++ right.entries
+        val t = left.tombstones ++ right.tombstones
+        new TwoPSet(e, t)
+      }
+      override def add(set: TwoPSet[A], value: A): TwoPSet[A] = set.add(value)
+      override def contains(set: TwoPSet[A], value: A): Boolean = set.contains(value)
     }
-  }
 }

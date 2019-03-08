@@ -1,26 +1,33 @@
 package rescala.lattices.sequences
 
-import rescala.lattices.sets.StateCRDTSet
-
 import scala.collection.AbstractIterator
 
-trait CRDTSequence[A] {
-  type SelfT
+trait SetLike[A, F] {
+  def add(set: F, value: A): F
+  def contains(set: F, value: A): Boolean
+}
 
-  val vertices: StateCRDTSet[Vertex]
+object SetLike {
+  implicit def setInstance[A]: SetLike[A, Set[A]] = new SetLike[A, Set[A]] {
+    override def add(set: Set[A], value: A): Set[A] = set + value
+    override def contains(set: Set[A], value: A): Boolean = set.contains(value)
+  }
+}
 
-  val edges: Map[Vertex, Vertex]
+abstract class CRDTSequence[A, VertexSet, SelfT](implicit vertexSet: SetLike[Vertex, VertexSet]) {
 
-  val values: Map[Vertex, A]
+  val vertices: VertexSet
+  val edges   : Map[Vertex, Vertex]
+  val values  : Map[Vertex, A]
 
-  def copySub(vertices: StateCRDTSet[Vertex] = vertices,
-           edges: Map[Vertex, Vertex] = edges,
-           values: Map[Vertex, A] = values): SelfT
+  def copySub(vertices: VertexSet,
+              edges: Map[Vertex, Vertex],
+              values: Map[Vertex, A]): SelfT
 
   def contains(v: Vertex): Boolean = v match {
     case Vertex.start => true
     case Vertex.end   => true
-    case v: Vertex    => vertices.contains(v)
+    case v: Vertex    => vertexSet.contains(vertices, v)
   }
 
   def before(u: Vertex, v: Vertex): Boolean = u match {
@@ -32,7 +39,7 @@ trait CRDTSequence[A] {
 
   def successor(v: Vertex): Vertex = {
     edges.get(v) match {
-      case None => throw new IllegalArgumentException(s"CRDTSequence does not contain $v")
+      case None    => throw new IllegalArgumentException(s"CRDTSequence does not contain $v")
       case Some(u) => if (contains(u)) u else successor(u)
     }
   }
@@ -42,23 +49,23 @@ trait CRDTSequence[A] {
   /**
     * This method allows insertions of any type into the RGA. This is used to move the start and end nodes
     *
-    * @param left the vertex specifying the position
-    * @param insertee        the vertex to be inserted right to position
+    * @param left     the vertex specifying the position
+    * @param insertee the vertex to be inserted right to position
     * @return A new RAG containing the inserted element
     */
   def addRight(left: Vertex, insertee: Vertex, value: A): SelfT = {
     if (left == Vertex.end) throw new IllegalArgumentException("Cannot insert after end node!")
 
     val right = edges.getOrElse(left,
-                            throw new IllegalArgumentException(s"Insertion failed! CRDTSequence does not contain specified position vertex $left!"))
+                                throw new IllegalArgumentException(s"Insertion failed! CRDTSequence does not contain specified position vertex $left!"))
     // Check if the vertex right to us has been inserted after us.
     // If yes, insert v after the new vertex.
     // TODO: why tough? should we not just ADD here?
     if (right.timestamp > insertee.timestamp) addRight(right, insertee, value)
     else {
-      val newVertices = vertices.add(insertee)
+      val newVertices = vertexSet.add(vertices, insertee)
       val newEdges = edges + (left -> insertee) + (insertee -> right)
-      val newValues = values.updated(insertee,  value)
+      val newValues = values.updated(insertee, value)
       copySub(newVertices, newEdges, newValues)
     }
   }

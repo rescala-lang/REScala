@@ -2,9 +2,10 @@ package todo
 
 import java.util.concurrent.ThreadLocalRandom
 
-import io.circe.generic.semiauto
 import io.circe.generic.auto._
+import io.circe.generic.semiauto
 import io.circe.{Decoder, Encoder}
+import loci.serializer.circe._
 import org.scalajs.dom.UIEvent
 import org.scalajs.dom.html.{Input, LI}
 import rescala.Tags._
@@ -12,13 +13,9 @@ import rescala.core.ReSerializable
 import rescala.lattices.primitives.LastWriterWins
 import rescala.locidistribute.LociDist
 import rescala.restoration.LocalStorageStore
+import rescala.restoration.ReCirce._
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all._
-import rescala.restoration.ReCirce._
-import loci.communicator.experimental.webrtc.WebRTC.ConnectorFactory
-import loci.communicator.experimental.webrtc._
-import loci.registry.{Binding, Registry}
-import loci.serializer.circe._
 
 import scala.Function.const
 import scala.collection.mutable
