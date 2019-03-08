@@ -3,7 +3,6 @@ package rescala.core
 import scala.annotation.compileTimeOnly
 import scala.language.higherKinds
 
-
 /** Every [[ReSource]] has an internal data[[Struct]]ure which is externally defined by the scheduler.
   * Its main use is to allow the external algorithm to manage concurrency for the internal data.
   * Using the indirection with the State type here allows us to not have unbound type parameters everywhere. */
@@ -34,26 +33,26 @@ trait Derived[S <: Struct] extends ReSource[S] {
 
 /** Base implementation for reactives, with [[Derived]] for scheduling,
   * together with a [[REName]] and asking for a [[Struct.State]]
- *
+  *
   * @param state the initial state passed by the scheduler
   * @param rename the name of the reactive, useful for debugging as it often contains positional information */
 abstract class Base[V, S <: Struct](override protected[rescala] val state: S#State[V, S],
                                     override val name: REName)
-  extends ReSource[S] {
+    extends ReSource[S] {
   override type Value = V
   override def toString: String = s"${name.str}($state)"
 }
-
 
 /** Common macro accessors for [[rescala.reactives.Signal]] and [[rescala.reactives.Event]]
   * @tparam A return type of the accessor
   * @groupname accessor Accessor and observers */
 trait Interp[+A, S <: Struct] extends ReSource[S] {
+
   /** Makes the enclosing reactive expression depend on the current value of the reactive.
     * Is an alias for [[value]].
     * @group accessor
     * @see value*/
-  @compileTimeOnly(s"$this apply can only be used inside of reactive expressions")
+  @compileTimeOnly(s"${this} apply can only be used inside of reactive expressions")
   final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")
 
   /** Makes the enclosing reactive expression depend on the current value of the reactive.
