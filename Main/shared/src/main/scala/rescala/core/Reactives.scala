@@ -35,7 +35,7 @@ trait Derived[S <: Struct] extends ReSource[S] {
   * together with a [[REName]] and asking for a [[Struct.State]]
   *
   * @param state the initial state passed by the scheduler
-  * @param rename the name of the reactive, useful for debugging as it often contains positional information */
+  * @param name the name of the reactive, useful for debugging as it often contains positional information */
 abstract class Base[V, S <: Struct](override protected[rescala] val state: S#State[V, S],
                                     override val name: REName)
     extends ReSource[S] {
