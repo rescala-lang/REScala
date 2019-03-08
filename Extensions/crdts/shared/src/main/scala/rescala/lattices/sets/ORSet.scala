@@ -27,7 +27,7 @@ object ORSet {
   def apply[A](values: Set[A]): ORSet[A] = ORSet(values.map(IdUtil.genId -> _).toMap, Set())
 
 
-  implicit def ORSetCRDTInstance[A]: Lattice[ORSet[A]] = new Lattice[ORSet[A]] {
+  implicit def lattice[A]: Lattice[ORSet[A]] = new Lattice[ORSet[A]] {
     override def merge(left: ORSet[A], right: ORSet[A]): ORSet[A] = {
       val lefte = left.entries -- right.tombstones
       val righte = right.entries -- left.tombstones

@@ -1,12 +1,13 @@
 package todo
 
 import io.circe.generic.auto._
+import loci.serializer.circe._
 import org.scalajs.dom.UIEvent
 import org.scalajs.dom.html.{Div, Input}
 import rescala.Tags._
-import rescala.lattices.Lattice
 import rescala.lattices.sequences.RGA
 import rescala.lattices.sequences.RGA.RGA
+import rescala.locidistribute.LociDist
 import rescala.restoration.LocalStorageStore
 import rescala.restoration.ReCirce._
 import scalatags.JsDom
@@ -26,7 +27,7 @@ class TodoApp[TH <: TaskHandling](val taskHandling: TH)(implicit val storingSche
 
   case class TodoRes(div: TypedTag[Div], tasklist: Signal[RGA[taskHandling.Taskref]])
 
-  def getContents(externalTasks: Event[RGA[taskHandling.Taskref]]): TodoRes = {
+  def getContents(): TodoRes = {
 
     val todoInputTag: JsDom.TypedTag[Input] = input(
       id := "newtodo",
@@ -50,16 +51,17 @@ class TodoApp[TH <: TaskHandling](val taskHandling: TH)(implicit val storingSche
     val createTask = createTodo.map(str => maketask(TaskData(str)) )
 
 
-    val tasksRGOA = Events.foldAll(RGA(innerTasks)) { tasks =>
+    val tasksRGA = Events.foldAll(RGA(innerTasks)) { tasks =>
       Seq(
-        externalTasks >> {et => Lattice.merge(tasks, et)},
         createTask >> {tasks.prepend},
         removeAll.event >>> { dt => _ => tasks.filter(t => !dt.depend(t.contents).done) },
         tasks.value.map(_.removeClick) >> { t => tasks.filter(_.id != t) }
         )
     }(implicitly, "tasklist")
 
-    val tasks = tasksRGOA
+    LociDist.distribute(tasksRGA, Todolist.registry, storingScheduler.scheduler)
+
+    val tasks = tasksRGA
       .map(v => {println(s"task rgoa: $v");v})
       .map(_.value)
       .map(v => {println(s"task rgoa values: $v");v})
@@ -104,7 +106,7 @@ class TodoApp[TH <: TaskHandling](val taskHandling: TH)(implicit val storingSche
       )
     )
 
-    TodoRes(content, tasksRGOA)
+    TodoRes(content, tasksRGA)
   }
 
   def inputFieldHandler(tag: TypedTag[Input], attr: Attr): (Event[String], Input) = {
