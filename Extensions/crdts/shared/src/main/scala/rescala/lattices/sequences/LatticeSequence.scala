@@ -1,28 +1,16 @@
 package rescala.lattices.sequences
 
+import rescala.lattices.Lattice
+import rescala.lattices.sequences.RGA.RGA
+import rescala.lattices.sets.SetLike
+
 import scala.collection.AbstractIterator
 
-trait SetLike[A, F] {
-  def add(set: F, value: A): F
-  def contains(set: F, value: A): Boolean
-}
 
-object SetLike {
-  implicit def setInstance[A]: SetLike[A, Set[A]] = new SetLike[A, Set[A]] {
-    override def add(set: Set[A], value: A): Set[A] = set + value
-    override def contains(set: Set[A], value: A): Boolean = set.contains(value)
-  }
-}
-
-abstract class CRDTSequence[A, VertexSet, SelfT](implicit vertexSet: SetLike[Vertex, VertexSet]) {
-
-  val vertices: VertexSet
-  val edges   : Map[Vertex, Vertex]
-  val values  : Map[Vertex, A]
-
-  def copySub(vertices: VertexSet,
-              edges: Map[Vertex, Vertex],
-              values: Map[Vertex, A]): SelfT
+case class LatticeSequence[A, VertexSet](vertices: VertexSet,
+                                         edges: Map[Vertex, Vertex],
+                                         values: Map[Vertex, A]
+                                        )(implicit val vertexSet: SetLike[Vertex, VertexSet]) {
 
   def contains(v: Vertex): Boolean = v match {
     case Vertex.start => true
@@ -44,7 +32,7 @@ abstract class CRDTSequence[A, VertexSet, SelfT](implicit vertexSet: SetLike[Ver
     }
   }
 
-  def addRight(position: Vertex, a: A): SelfT = addRight(position, Vertex.fresh(), a)
+  def addRight(position: Vertex, a: A): LatticeSequence[A, VertexSet] = addRight(position, Vertex.fresh(), a)
 
   /**
     * This method allows insertions of any type into the RGA. This is used to move the start and end nodes
@@ -53,7 +41,7 @@ abstract class CRDTSequence[A, VertexSet, SelfT](implicit vertexSet: SetLike[Ver
     * @param insertee the vertex to be inserted right to position
     * @return A new RAG containing the inserted element
     */
-  def addRight(left: Vertex, insertee: Vertex, value: A): SelfT = {
+  def addRight(left: Vertex, insertee: Vertex, value: A): LatticeSequence[A, VertexSet] = {
     if (left == Vertex.end) throw new IllegalArgumentException("Cannot insert after end node!")
 
     val right = edges.getOrElse(left,
@@ -66,16 +54,16 @@ abstract class CRDTSequence[A, VertexSet, SelfT](implicit vertexSet: SetLike[Ver
       val newVertices = vertexSet.add(vertices, insertee)
       val newEdges = edges + (left -> insertee) + (insertee -> right)
       val newValues = values.updated(insertee, value)
-      copySub(newVertices, newEdges, newValues)
+      copy(newVertices, newEdges, newValues)(vertexSet)
     }
   }
 
-  def append(value: A): SelfT = {
+  def append(value: A): LatticeSequence[A, VertexSet] = {
     val position = if (vertexIterator.nonEmpty) vertexIterator.toList.last else Vertex.start
     addRight(position, value)
   }
 
-  def prepend(value: A): SelfT = addRight(Vertex.start, value)
+  def prepend(value: A): LatticeSequence[A, VertexSet] = addRight(Vertex.start, value)
 
 
   def value: List[A] = iterator.toList
@@ -96,6 +84,40 @@ abstract class CRDTSequence[A, VertexSet, SelfT](implicit vertexSet: SetLike[Ver
         case _         => throw new NoSuchElementException(
           "Requesting iterator value after Vertex.end!")
       }
+    }
+  }
+}
+
+object LatticeSequence {
+  implicit def lattice[A, VS: Lattice]: Lattice[LatticeSequence[A, VS]] =
+    new Lattice[LatticeSequence[A, VS]] {
+
+
+      override def merge(left: LatticeSequence[A, VS], right: LatticeSequence[A, VS]): LatticeSequence[A, VS] = {
+        val newVertices = right.vertexIterator.toList.filter(!left.edges.contains(_))
+
+        // build map of old insertion positions of the new vertices
+        val oldPositions = right.edges.foldLeft(Map(): Map[Vertex, Vertex]) {
+          case (m, (u, v)) => if (newVertices.contains(v)) m + (v -> u) else m
+        }
+
+        val partialnew = newVertices.foldLeft(left) { case (merged, v) =>
+          merged.addRight(oldPositions(v), v, right.values(v))
+        }
+
+        partialnew.copy(vertices = Lattice.merge(left.vertices, right.vertices),
+                           edges = partialnew.edges,
+                           values = partialnew.values)(partialnew.vertexSet)
+      }
+    }
+
+
+  implicit class RGAOps[A](rga: RGA[A]) {
+    def remove(v: Seq[Vertex]): RGA[A] = rga.copy(vertices = rga.vertices.remove(v))
+    def filter(keep: A => Boolean): RGA[A] = {
+      val removed = rga.values.collect { case (k, v) if !keep(v) => k }
+      println(s"removing $removed")
+      remove(removed.toList)
     }
   }
 }

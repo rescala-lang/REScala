@@ -10,6 +10,7 @@ import loci.transmitter.RemoteRef
 import org.scalajs.dom.{UIEvent, document}
 import rescala.Tags._
 import rescala.debuggable.ChromeDebuggerInterface
+import rescala.lattices.sequences.RGA.RGA
 import rescala.lattices.sequences.{RGA, RGOA}
 import rescala.locidistribute.LociDist
 import rescala.restoration.LocalStorageStore

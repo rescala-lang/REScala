@@ -2,6 +2,7 @@ package rescala.distributables
 
 import rescala.default._
 import rescala.distributables.DistributedSignal.PVarFactory
+import rescala.lattices.sequences.RGA.RGA
 import rescala.lattices.sequences.{RGA, Vertex}
 
 /**

@@ -1,7 +1,6 @@
 package rescala.lattices.sets
 
 import rescala.lattices.Lattice
-import rescala.lattices.sequences.SetLike
 
 /**
   * Two phase set where elements can be added and removed but never added again.

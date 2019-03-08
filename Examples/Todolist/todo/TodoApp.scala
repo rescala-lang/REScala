@@ -6,6 +6,7 @@ import org.scalajs.dom.html.{Div, Input}
 import rescala.Tags._
 import rescala.lattices.Lattice
 import rescala.lattices.sequences.RGA
+import rescala.lattices.sequences.RGA.RGA
 import rescala.restoration.LocalStorageStore
 import rescala.restoration.ReCirce._
 import scalatags.JsDom

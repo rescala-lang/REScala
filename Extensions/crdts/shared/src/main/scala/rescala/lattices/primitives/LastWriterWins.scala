@@ -12,7 +12,7 @@ object LastWriterWins {
     LastWriterWins(timestamp, value)
   }
 
-  implicit def LastWriterWinsCRDT[A]: Lattice[LastWriterWins[A]] = new Lattice[LastWriterWins[A]] {
+  implicit def lattice[A]: Lattice[LastWriterWins[A]] = new Lattice[LastWriterWins[A]] {
     override def merge(left: LastWriterWins[A], right: LastWriterWins[A]): LastWriterWins[A] =
       if (right.timestamp > left.timestamp) right else left
   }

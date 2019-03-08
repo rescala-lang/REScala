@@ -3,9 +3,10 @@ package rescala.distributables
 import rescala.default._
 import rescala.distributables.DistributedSignal.PVarFactory
 import rescala.lattices.sequences.RGOA
+import rescala.lattices.sequences.RGOA.RGOA
 
 case class PGrowOnlyLog[A](initial: RGOA[A] = RGOA.empty[A])
-extends DistributedSignal[List[A], RGOA[A]](initial, _.value)(RGOA.crdt[A]) {
+  extends DistributedSignal[List[A], RGOA[A]](initial, _.value)(RGOA.lattice[A]) {
 
   def append(a: A): Unit = {
     crdtSignal.transform(_.append(a))

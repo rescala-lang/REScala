@@ -20,7 +20,7 @@ object GCounter {
     GCounter(id, HashMap(id -> value))
   }
 
-  implicit def GCounterCRDT: Lattice[GCounter] = new Lattice[GCounter] {
+  implicit def lattice: Lattice[GCounter] = new Lattice[GCounter] {
     override def merge(left: GCounter, right: GCounter): GCounter =
       GCounter(left.id,
         left.payload.merged(right.payload) {
