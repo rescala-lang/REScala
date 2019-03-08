@@ -58,9 +58,15 @@ object Todolist {
       renderedTa.value = ""
     }
 
+    def showSession(s: WebRTC.CompleteSession) = {
+      val message = s.asJson.noSpaces
+      renderedPre.textContent = message
+      org.scalajs.dom.window.getSelection().selectAllChildren(renderedPre)
+    }
+
     val hb = button("host", onclick := { uie: UIEvent =>
       val res = webrtcIntermediate(WebRTC.offer())
-      res.session.foreach(s => renderedPre.textContent = s.asJson.noSpaces)
+      res.session.foreach(showSession)
       pendingServer = Some(res)
       registry.connect(res.connector).foreach(_ => connected())
     })
@@ -71,7 +77,7 @@ object Todolist {
       val connector = pendingServer match {
         case None     => // we are client
           val res = webrtcIntermediate(WebRTC.answer())
-          res.session.foreach(s => renderedPre.textContent = s.asJson.noSpaces)
+          res.session.foreach(showSession)
           res.connector
         case Some(ss) => // we are server
           pendingServer = None

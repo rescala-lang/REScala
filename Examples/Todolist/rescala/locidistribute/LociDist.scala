@@ -46,7 +46,7 @@ object LociDist {
       val remoteUpdate: A => Future[Unit] = registry.lookup(signalBinding, remoteRef)
       observers += (remoteRef -> signal.observe { s =>
         println(s"calling remote observers for $signalName")
-        remoteUpdate(s)
+        if (remoteRef.connected) remoteUpdate(s)
       }(scheduler))
     }
 
