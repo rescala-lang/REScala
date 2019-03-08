@@ -89,7 +89,8 @@ case class LatticeSequence[A, VertexSet](vertices: VertexSet,
 }
 
 object LatticeSequence {
-  implicit def lattice[A, VS: Lattice]: Lattice[LatticeSequence[A, VS]] =
+  implicit def lattice[A, VS: Lattice](implicit sl: SetLike[Vertex, VS])
+  : Lattice[LatticeSequence[A, VS]] =
     new Lattice[LatticeSequence[A, VS]] {
 
 
@@ -105,15 +106,19 @@ object LatticeSequence {
           merged.addRight(oldPositions(v), v, right.values(v))
         }
 
-        partialnew.copy(vertices = Lattice.merge(left.vertices, right.vertices),
+        val vertices = Lattice.merge(left.vertices, right.vertices)
+
+        partialnew.copy(vertices = vertices,
                            edges = partialnew.edges,
-                           values = partialnew.values)(partialnew.vertexSet)
+                           values = partialnew.values.filterKeys(sl.contains(vertices, _))
+        )(partialnew.vertexSet)
       }
     }
 
 
   implicit class RGAOps[A](rga: RGA[A]) {
-    def remove(v: Seq[Vertex]): RGA[A] = rga.copy(vertices = rga.vertices.remove(v))
+    def remove(v: Seq[Vertex]): RGA[A] =
+      rga.copy(vertices = rga.vertices.remove(v.toSet), values = rga.values -- v)
     def filter(keep: A => Boolean): RGA[A] = {
       val removed = rga.values.collect { case (k, v) if !keep(v) => k }
       println(s"removing $removed")
