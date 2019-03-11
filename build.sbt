@@ -175,8 +175,8 @@ lazy val todolist = project.in(file("Examples/Todolist"))
   .settings(cfg.base, cfg.noPublish, name := "todolist",
             scalaSource in Compile := baseDirectory.value,
             scalaJSUseMainModuleInitializer := true,
-            lociCommunicationWebRTC,
-            lociCommunicationCirce)
+            loci.webrtc,
+            loci.circe)
 
 lazy val livedemo = project.in(file("Examples/LiveDemo"))
                     .enablePlugins(ScalaJSPlugin)
@@ -348,8 +348,7 @@ lazy val lib = new {
 
 
   val lociTransmitterDependencies = Def.settings(
-    lociCommunication ++ Seq(lociCommunicationCirce, lociCommunicationUpickle) ++ akkaStream,
-    resolvers += Resolvers.stg)
+    loci.communication, loci.circe, loci.upickle)
 
 
   ///// Historic dependencies

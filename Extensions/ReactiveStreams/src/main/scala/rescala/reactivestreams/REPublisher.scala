@@ -2,7 +2,7 @@ package rescala.reactivestreams
 
 
 import org.reactivestreams.{Publisher, Subscriber, Subscription}
-import rescala.core.{Base, CreationTicket, Initializer, Interp, Pulse, REName, Scheduler, Struct}
+import rescala.core.{Base, CreationTicket, Derived, Initializer, Interp, Pulse, REName, Scheduler, Struct}
 
 import scala.util.{Failure, Success}
 
@@ -27,7 +27,8 @@ object REPublisher {
                                              subscriber: Subscriber[_ >: T],
                                              fac: Scheduler[S],
                                              name: REName
-                                            ) extends Base[Pulse[T], S](bud, name) with Subscription {
+                                            )
+    extends Base[Pulse[T], S](bud, name) with Derived[S] with Subscription {
 
     var requested: Long = 0
     var cancelled = false
