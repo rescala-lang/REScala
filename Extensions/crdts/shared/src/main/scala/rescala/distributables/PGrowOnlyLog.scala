@@ -6,11 +6,11 @@ import rescala.lattices.sequences.RGOA
 import rescala.lattices.sequences.RGOA.RGOA
 
 case class PGrowOnlyLog[A](initial: RGOA[A] = RGOA.empty[A])
-  extends DistributedSignal[List[A], RGOA[A]](initial, _.value)(RGOA.lattice[A]) {
+extends DistributedSignal[List[A], RGOA[A]](initial, _.value)(RGOA.lattice[A]) {
 
-  def append(a: A): Unit = {
-    crdtSignal.transform(_.append(a))
-  }
+  def transform(f: RGOA[A] => RGOA[A]): Unit = crdtSignal.transform(f)
+  def prepend(a: A): Unit = transform(_.append(a))
+  def append(a: A): Unit = transform(_.append(a))
 
   // allows the log to log events of type a and append them to the log
   def observe(e: Event[A]): Unit = e.observe(a => append(a))
