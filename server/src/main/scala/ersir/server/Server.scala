@@ -33,7 +33,7 @@ class Server(terminate: () => Unit,
              postsPath: Path,
             ) {
 
-  val pgol = rescala.crdts.distributables.PGrowOnlyLog[Emergentcy]()
+  val pgol = rescala.distributables.PGrowOnlyLog[Emergentcy]()
 
   val doc = Jsoup.connect("https://www.digitalstadt-darmstadt.de/feed").get()
   val titles = doc.select("channel item").iterator().asScala.toList

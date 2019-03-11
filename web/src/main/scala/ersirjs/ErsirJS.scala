@@ -20,7 +20,7 @@ import scala.util.control.NonFatal
 
 @JSExportTopLevel("Post")
 object ErsirPost {
-  var pgol: rescala.crdts.distributables.PGrowOnlyLog[Emergentcy] = null
+  var pgol: rescala.distributables.PGrowOnlyLog[Emergentcy] = null
 
   @JSExport
   def add(s: String): Unit = {

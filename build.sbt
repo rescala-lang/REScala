@@ -8,8 +8,7 @@ val commonSettings: sbt.Def.SettingsDefinition = Seq(
 
 val Libraries = new {
   val shared = Def.settings(
-    resolvers ++= Resolvers.all,
-    rmgkLogging, scalatags, lociCommunication, circe
+    rmgkLogging, scalatags, loci.communication, loci.wsAkka, circe
   )
 
   val main = shared ++ Def.settings(scalactic,
@@ -17,7 +16,6 @@ val Libraries = new {
                                     betterFiles,
                                     decline,
                                     akkaHttp,
-                                    akkaStream,
                                     scalatest,
                                     scalacheck,
                                     betterFiles,
@@ -26,7 +24,7 @@ val Libraries = new {
   val npmDeps = npmDependencies in Compile ++= Seq("mqtt" -> "2.18.2")
 
 
-  val js: Def.SettingsDefinition = shared ++ Seq(scalajsdom, purecss, fontawesome, npmDeps)
+  val js: Def.SettingsDefinition = shared ++ Seq(scalajsdom, fontawesome, npmDeps, normalizecss)
 }
 
 lazy val server = project.in(file("server"))
