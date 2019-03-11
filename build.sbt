@@ -2,30 +2,44 @@ import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 import Settings._
 import Dependencies._
 
-scalaVersion := version_212
-Compile / compile / scalacOptions ++= strictScalacOptions
-resolvers ++= Resolvers.all
+scalaVersion_212
+strictCompile
 
 enablePlugins(JavaServerAppPackaging)
 enablePlugins(ScalaJSPlugin)
+enablePlugins(SbtSassify)
+enablePlugins(ScalaJSBundlerPlugin)
 
-akkaHttp
-akkaStream
 betterFiles
-circe
+cats
 decline
-fontawesome
+fastparse
 jsoup
-lociCommunication
-lociCommunicationCirce
-lociCommunicationUpickle
-purecss
-rmgkLogging
-scalacheck
+pprint
 scalactic
-scalajsdom
-scalatags
-scalatest
-scalaswing
+rmgkLogging
 sourcecode
+akkaHttp
+circe
+
+// frontend
+normalizecss
+scalatags
+scalajsdom
+fontawesome
+
+  // tests
+scalacheck
+scalatest
+
+  // legacy
 scalaXml
+scalaswing
+
+
+loci.communication   
+loci.circe   
+loci.tcp   
+loci.upickle   
+loci.webrtc   
+loci.wsAkka

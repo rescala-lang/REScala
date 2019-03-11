@@ -9,12 +9,12 @@ import sbt._
 object Settings {
 
   val scalaVersion_211 = Def.settings(
-    version := "2.11.12",
-    scalacOptions ++= tpolecatsScalacOptions
+    ThisBuild / version := "2.11.12",
+    ThisBuild / scalacOptions ++= tpolecatsScalacOptions
   )
   val scalaVersion_212 = Def.settings(
-    version := "2.12.8",
-    scalacOptions ++= tpolecatsScalacOptions
+    ThisBuild / version := "2.12.8",
+    ThisBuild / scalacOptions ++= tpolecatsScalacOptions
   )
 
   lazy val tpolecatsScalacOptions = Seq(
@@ -27,8 +27,8 @@ object Settings {
     "-language:higherKinds",             // Allow higher-kinded types
     "-language:implicitConversions",     // Allow definition of implicit functions called views
     "-unchecked",                        // Enable additional warnings where generated code depends on assumptions.
-    "-Xcheckinit",                       // Wrap field accessors to throw an exception on uninitialized access.
-    // "-Xfatal-warnings",                  // Fail the compilation if there are any warnings.
+    //"-Xcheckinit",                       // Wrap field accessors to throw an exception on uninitialized access.
+    //"-Xfatal-warnings",                  // Fail the compilation if there are any warnings.
     "-Xfuture",                          // Turn on future language features.
     "-Xlint:adapted-args",               // Warn if an argument list is modified to match the receiver.
     "-Xlint:by-name-right-associative",  // By-name parameter of right associative operator.
@@ -59,10 +59,10 @@ object Settings {
     "-Ywarn-unused:implicits",           // Warn if an implicit parameter is unused.
     "-Ywarn-unused:imports",             // Warn if an import selector is not referenced.
     "-Ywarn-unused:locals",              // Warn if a local definition is unused.
-    "-Ywarn-unused:params",              // Warn if a value parameter is unused.
-    "-Ywarn-unused:patvars",             // Warn if a variable bound in a pattern is unused.
+    //"-Ywarn-unused:params",              // Warn if a value parameter is unused.
+    //"-Ywarn-unused:patvars",             // Warn if a variable bound in a pattern is unused.
     "-Ywarn-unused:privates",            // Warn if a private member is unused.
-    "-Ywarn-value-discard"               // Warn when non-Unit expression results are unused.
+    //"-Ywarn-value-discard"               // Warn when non-Unit expression results are unused.
   )
 
   val strictCompile = Compile / compile / scalacOptions += "-Xfatal-warnings"
@@ -85,7 +85,7 @@ object Dependencies {
   val pprint      = ld += "com.lihaoyi" %%% "pprint" % "0.5.3"
   val scalactic   = ld += "org.scalactic" %% "scalactic" % "3.0.6"
   val rmgkLogging = Def.settings(Resolvers.rmgk, ld += "de.rmgk" %%% "logging" % "0.2.1")
-  val sourcecode  = ld += "com.lihaoyi" %%% "sourcecode" % "0.1.4"
+  val sourcecode  = ld += "com.lihaoyi" %%% "sourcecode" % "0.1.5"
 
   val akkaHttp = ld ++= (Seq("akka-http-core",
                              "akka-http")
@@ -103,7 +103,7 @@ object Dependencies {
   val normalizecss = ld += "org.webjars.npm" % "normalize.css" % "8.0.1"
   val scalatags    = ld += "com.lihaoyi" %%% "scalatags" % "0.6.7"
   val scalajsdom   = ld += "org.scala-js" %%% "scalajs-dom" % "0.9.6"
-  val fontawesome  = ld += "org.webjars" % "font-awesome" % "5.3.1"
+  val fontawesome  = ld += "org.webjars" % "font-awesome" % "5.7.2"
 
   // tests
   val scalacheck = ld += "org.scalacheck" %% "scalacheck" % "1.14.0" % "test"
@@ -111,7 +111,7 @@ object Dependencies {
 
   // legacy
   val scalaXml   = ld += "org.scala-lang.modules" %% "scala-xml" % "1.1.1"
-  val scalaswing = ld += "org.scala-lang.modules" %% "scala-swing" % "2.0.3"
+  val scalaswing = ld += "org.scala-lang.modules" %% "scala-swing" % "2.1.0"
 
 
   object loci {
