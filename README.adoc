@@ -1,0 +1,35 @@
+= Readme
+
+This is an https://www.scala-sbt.org/[sbt] project, the sbt launcher script is included,
+so all commands should work with only a local JVM installed. Tested on openjdk-11.
+`./sbt` launches an interactive compile shell, which makes incremental compilation much faster,
+for batch processing, use `./sbt some commands`
+
+Examples:
+
+....
+# compile the project
+./sbt compile
+
+# run the server
+./sbt server/run
+
+# commandline parameters
+./sbt "server/run ar1 arg2"
+....
+
+
+== Deployment
+
+....
+# deploy to jars + scripts
+./sbt stage
+....
+
+This produces a folder containing a standalone version of the server in
+
+....
+./server/target/universal/stage
+....
+
+which can then be executed the same as the `run` command above:

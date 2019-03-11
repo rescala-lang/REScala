@@ -70,10 +70,10 @@ lazy val sharedJVM = shared.jvm
 lazy val sharedJS = shared.js
 
 
-lazy val rescalatags = ProjectRef(base = file("../REScala"), id = "rescalatags")
-lazy val rescalaJVM = ProjectRef(base = file("../REScala"), id = "rescalaJVM")
-lazy val crdtsJVM = ProjectRef(base = file("../REScala"), id = "crdtsJVM")
-lazy val crdtsJS = ProjectRef(base = file("../REScala"), id = "crdtsJS")
+lazy val rescalatags = ProjectRef(base = file("rescala"), id = "rescalatags")
+lazy val rescalaJVM = ProjectRef(base = file("rescala"), id = "rescalaJVM")
+lazy val crdtsJVM = ProjectRef(base = file("rescala"), id = "crdtsJVM")
+lazy val crdtsJS = ProjectRef(base = file("rescala"), id = "crdtsJS")
 
 
 
