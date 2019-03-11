@@ -2,7 +2,7 @@ package test
 
 import org.scalajs.dom.Node
 import org.scalajs.dom.html.Span
-import rescalatags._
+import rescala.Tags._
 import scalatags.JsDom.all._
 import tests.rescala.testtools.RETests
 
@@ -10,10 +10,10 @@ class RescalatagsTest extends RETests { multiEngined { engine => import engine._
 
     test("put var into dom") {
       val v = Var.empty[Tag]
-      val rendered: Node = v.asFrag.render
+      val rendered: Node = div(v.asModifier).render
       assert(rendered.textContent === "", "empty var gives empty frag")
 
-      val outer = div(v.asFrag)
+      val outer = div(v.asModifier)
       val outerR = outer.render
 
       assert(outerR.innerHTML === "", "empty var into dom is empty")
@@ -62,9 +62,9 @@ class RescalatagsTest extends RETests { multiEngined { engine => import engine._
 
       val v = Var(frag(span("hey"), span("ho")))
 
-      val outer = div(v.asFrag)
+      val outer = div(v.asModifier)
       val outerR = outer.render
-      val outerWithOtherChildren = div(span("before"), v.asFrag, span("after"))
+      val outerWithOtherChildren = div(span("before"), v.asModifier, span("after"))
       val oR = outerWithOtherChildren.render
 
       assert(outerR.innerHTML === "<span>hey</span><span>ho</span>", "render fragments")

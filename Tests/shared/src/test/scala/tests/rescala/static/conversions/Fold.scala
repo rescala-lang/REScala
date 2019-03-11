@@ -208,7 +208,7 @@ class Fold extends RETests { multiEngined { engine => import engine._
     val res = Events.foldAll(""){ acc => Seq(
       reset >> (_ => ""),
       word >> identity,
-      count >> (acc * _),
+      count >> (acc * _)
     )}
 
     assert (res.readValueOnce == "")
