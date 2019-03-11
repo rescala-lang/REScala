@@ -5,6 +5,7 @@ import rescala.core.{Scheduler, Struct}
 import rescala.interface.RescalaInterface
 
 import scala.collection.parallel.ForkJoinTaskSupport
+import scala.concurrent.forkjoin.ForkJoinPool
 
 object Globals {
   val engineName: String = System.getProperty("engineName", "parrp")
@@ -20,7 +21,7 @@ object Globals {
   def setParallelism(n: Int): Unit = {
     if (taskSupport != null) taskSupport.environment.shutdown()
     taskSupport = {
-      new ForkJoinTaskSupport(new java.util.concurrent.ForkJoinPool(n))
+      new ForkJoinTaskSupport(new ForkJoinPool(n))
     }
   }
 

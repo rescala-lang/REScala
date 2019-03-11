@@ -1,6 +1,7 @@
 package rescala.fullmv
 
 import java.util.concurrent.ForkJoinPool
+import java.util.concurrent.ForkJoinPool.ManagedBlocker
 import java.util.concurrent.atomic.{AtomicIntegerFieldUpdater, AtomicReference, AtomicReferenceFieldUpdater}
 import java.util.concurrent.locks.LockSupport
 
@@ -8,7 +9,6 @@ import rescala.core.Initializer.InitValues
 import rescala.core.Pulse
 
 import scala.annotation.{elidable, tailrec}
-import scala.concurrent.forkjoin.ForkJoinPool.ManagedBlocker
 
 sealed trait MaybeWritten[+V]
 case object NotFinal extends MaybeWritten[Nothing]

@@ -5,6 +5,8 @@ import io.circe.generic.extras._
 import rescala.lattices.IdUtil
 import rescala.lattices.sequences.Vertex.Timestamp
 
+import scala.util.Right
+
 
 case class Vertex(timestamp: Timestamp, id: IdUtil.Id)
 
@@ -32,7 +34,11 @@ object Vertex {
   implicit val vertexKeyDecoder: KeyDecoder[Vertex] = {
     new KeyDecoder[Vertex] {
       override def apply(key: String): Option[Vertex] = {
-        io.circe.parser.decode[Vertex](key)(vertexDecoder).toOption
+        // to option not available in 2.11
+        io.circe.parser.decode[Vertex](key)(vertexDecoder) match {
+          case Right(b) => Some(b)
+          case _        => None
+        }
       }
     }
   }

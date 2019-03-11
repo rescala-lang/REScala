@@ -136,6 +136,6 @@ object FullMVEngine {
   }
   def condenseCallResults(accumulator: Iterable[Future[Unit]]): Future[Unit] = {
     // TODO this should collect exceptions..
-    accumulator.foldLeft(Future.unit) { (fu, call) => fu.flatMap(_ => call)(notWorthToMoveToTaskpool) }
+    accumulator.foldLeft(Future.successful(())) { (fu, call) => fu.flatMap(_ => call)(notWorthToMoveToTaskpool) }
   }
 }

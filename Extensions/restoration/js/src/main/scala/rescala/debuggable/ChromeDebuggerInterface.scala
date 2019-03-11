@@ -19,13 +19,13 @@ object ChromeDebuggerInterface extends DebuggerInterface {
         nodeId = id.str,
         nodeRef = name,
         nodeValue = value,
-        action = "node",
+        action = "node"
 //      nodeType: type,
 //      nodeMethod: method,
 //      sourceInfo = sourceInfo,
-        ),
+        )
     )
-    if (!name.contains("rescala"))    send(msg)
+    if (!name.contains("rescala")) send(msg)
   }
 
   def saveEdge(from: NodeID, to: NodeID): Unit = {
@@ -35,11 +35,11 @@ object ChromeDebuggerInterface extends DebuggerInterface {
       content = literal(
         edgeStart = from.str,
         edgeEnd = to.str,
-        action = "edge",
+        action = "edge"
 //      edgeStartName: edgeStart ? edgeStart.name : '',
 //      edgeEndName: edgeEnd ? edgeEnd.name : '',
 //      edgeLabel: name
-        ),
+        )
     )
     if (!(from.str + to.str).contains("rescala"))    send(msg)
   }
@@ -51,8 +51,8 @@ object ChromeDebuggerInterface extends DebuggerInterface {
       action = "save",
       content = literal(
         snapshotid = snapshotid,
-        action = "snap",
-      ),
+        action = "snap"
+      )
     )
     send(msg)
   }

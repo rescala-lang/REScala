@@ -12,13 +12,6 @@ extends DistributedSignal[Set[A], Set[A]](initial, x => x) {
 }
 
 object PGrowOnlySet {
-  /**
-    * Allows creation of DistributedSets by passing a set of initial values.
-    */
-  def apply[A](values: Set[A]): PGrowOnlySet[A] = {
-    new PGrowOnlySet[A](values)
-  }
-
   //noinspection ConvertExpressionToSAM
   implicit def PGrowOnlySetFactory[A]: PVarFactory[PGrowOnlySet[A]] =
     new PVarFactory[PGrowOnlySet[A]] {

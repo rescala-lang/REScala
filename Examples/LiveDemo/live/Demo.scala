@@ -62,8 +62,8 @@ object Demo {
                  li(`class` := "no-editing ",
                     div(
                       `class` := "view",
-                      label(temp),
-                      ),
+                      label(temp)
+                      )
                     )
                })
           }.asModifier

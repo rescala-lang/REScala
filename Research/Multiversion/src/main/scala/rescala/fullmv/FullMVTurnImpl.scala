@@ -58,7 +58,7 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
     assert(phase == forPhase, s"$this received branch differential for wrong state ${TurnPhase.toString(forPhase)}")
     if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this new branch on some remote")
     activeBranches.getAndIncrement()
-    Future.unit
+    Future.successful(())
   }
 
   //========================================================Local State Control============================================================
@@ -332,7 +332,7 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
       val updated2Accu = FullMVEngine.accumulateBroadcastFutures(updatedAccu, predecessorReplicators.get) { _.newPredecessors(selfNode, clock) }
       FullMVEngine.condenseCallResults(updated2Accu)
     } else {
-      Future.unit
+      Future.successful(())
     }
   }
   override def clockedPredecessors: (TransactionSpanningTreeNode[FullMVTurn], Int) = (selfNode, predecessorReplicationClock)
@@ -374,7 +374,7 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
       // by a racing ordering relation establishment occasionally, this doesn't hurt.
       successorsIncludingSelf = successor :: before
     }
-    Future.unit
+    Future.successful(())
   }
 
   //========================================================SSG SCC Mutual Exclusion Control============================================================
