@@ -44,11 +44,10 @@ case class LatticeSequence[A, VertexSet](vertices: VertexSet,
   def addRight(left: Vertex, insertee: Vertex, value: A): LatticeSequence[A, VertexSet] = {
     if (left == Vertex.end) throw new IllegalArgumentException("Cannot insert after end node!")
 
-    val right = edges.getOrElse(left,
-                                throw new IllegalArgumentException(s"Insertion failed! CRDTSequence does not contain specified position vertex $left!"))
+    val right = successor(left)
     // Check if the vertex right to us has been inserted after us.
     // If yes, insert v after the new vertex.
-    // TODO: why tough? should we not just ADD here?
+    // TODO: why though? should we not just ADD here?
     if (right.timestamp > insertee.timestamp) addRight(right, insertee, value)
     else {
       val newVertices = vertexSet.add(vertices, insertee)
