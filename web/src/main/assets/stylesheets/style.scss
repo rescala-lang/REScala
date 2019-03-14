@@ -103,6 +103,7 @@ fieldset a:visited {
 
 article {
   max-width: 600px;
+  min-height: 150px;
   margin-left: auto;
   margin-right: auto;
 
@@ -125,6 +126,17 @@ article {
     margin-top: 0;
   }
 }
+
+
+article.addentry {
+  display: flex;
+  flex-direction: column;
+
+  textarea {
+    flex-grow: 1;
+  }
+}
+
 
 .pic {
   width: calc(50% - 2em);
