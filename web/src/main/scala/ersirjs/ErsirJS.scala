@@ -23,13 +23,13 @@ object ErsirPost {
   var pgol: rescala.distributables.PGrowOnlyLog[Emergentcy] = null
 
   @JSExport
-  def add(s: String): Unit = {
+  def add(s: String, url: String = ""): Unit = {
     try {
       val Array(title, desc) = s.split("\n", 2)
-      pgol.prepend(Emergentcy(title, desc, ""))
+      pgol.prepend(Emergentcy(title, desc, url))
     }
     catch {
-      case NonFatal(_) => pgol.prepend(Emergentcy(s, "", ""))
+      case NonFatal(_) => pgol.prepend(Emergentcy(s, "", url))
     }
   }
 }
