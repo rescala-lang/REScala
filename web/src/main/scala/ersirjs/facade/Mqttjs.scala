@@ -17,18 +17,23 @@ object Mqttjs extends js.Object {
 object ReMqtt {
   var connection: js.Dynamic = _
   def isConnected(): Boolean = js.DynamicImplicits.truthValue(connection.connected)
-  val connected = Var[Boolean](false)
+  val connected                                = Var[Boolean](false)
   val topics: mutable.Map[String, Evt[String]] = mutable.Map[String, Evt[String]]()
 
   val wsUri: String = {
-//    val wsProtocol = if (dom.document.location.protocol == "https:") "wss" else "ws"
+    //    val wsProtocol = if (dom.document.location.protocol == "https:") "wss" else "ws"
     val wsProtocol = "ws"
-    s"$wsProtocol://${dom.document.location.host}:9001/"
+    val hash = dom.window.location.hash
+    val location = if (hash.length > 2) hash.substring(1)
+                   else dom.document.location.host
+
+    s"$wsProtocol://$location:9001/"
   }
 
   def start() = {
 
-    println(s"initializing mqtt …")
+    println(s"initializing mqtt $wsUri …")
+
 
     connection = Mqttjs.connect(wsUri)
 
@@ -55,6 +60,10 @@ object ReMqtt {
       topics.get(topic).foreach(e => e.fire(message.toString))
     })
     println(s"mqtt initialized")
+  }
+
+  def send(channel: String, content: String): Unit = {
+    connection.publish(channel, content)
   }
 
 

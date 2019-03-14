@@ -3,12 +3,16 @@ package ersirjs
 import ersir.shared._
 import ersirjs.facade.ReMqtt
 import ersirjs.render.Index
+import io.circe.generic.auto._
+import io.circe.syntax._
 import loci.communicator.ws.akka.WS
 import loci.registry.Registry
 import loci.transmitter.RemoteRef
 import org.scalajs.dom
 import rescala.Tags._
 import rescala.default._
+import rescala.lattices.Lattice
+import rescala.lattices.sequences.RGOA.RGOA
 import scalatags.JsDom.attrs.cls
 import scalatags.JsDom.implicits._
 
@@ -60,6 +64,21 @@ object ErsirJS {
         val entrySignal = entryCrdt.valueSignal
 
         ReMqtt.start()
+
+        entryCrdt.crdtSignal.observe { crdt =>
+          val json = crdt.asJson.noSpaces
+          ReMqtt.send("ersir/entries", json)
+        }
+
+        val entryStream = ReMqtt.topicstream("ersir/entries").map { str =>
+          io.circe.parser.decode[RGOA[Emergentcy]](str)
+        }
+
+        entryStream.observe{
+          case Right(rg) => entryCrdt.transform(Lattice.merge(_, rg))
+          case _ =>
+        }
+
         val emergencies = ReMqtt.topicstream("city/alert_state")
         val currentEmergency = emergencies.latest("")
 

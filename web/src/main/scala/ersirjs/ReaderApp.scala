@@ -6,10 +6,8 @@ import ersirjs.Definitions.path_main
 import ersirjs.Navigation.{Mode, Next, Prev, navigationEvents}
 import ersirjs.render.Index
 import org.scalajs.dom
-import org.scalajs.dom.experimental.URL
 import org.scalajs.dom.html
 import org.scalajs.dom.html.Body
-import org.scalajs.dom.raw.HashChangeEvent
 import rescala.default._
 import rescala.macros.cutOutOfUserComputation
 import scalatags.JsDom.TypedTag
@@ -46,14 +44,14 @@ class ReaderApp() {
       dom.window.location.hash
     }
 
-    val hashChange =
-      Events.fromCallback[HashChangeEvent](dom.window.onhashchange = _)
-    hashChange.event.observe(hc => Log.JS.debug(s"hash change event: ${hc.oldURL} -> ${hc.newURL}"))
+    //val hashChange =
+    //  Events.fromCallback[HashChangeEvent](dom.window.onhashchange = _)
+    //hashChange.event.observe(hc => Log.JS.debug(s"hash change event: ${hc.oldURL} -> ${hc.newURL}"))
+    //
+    //val hashBasedStates = hashChange.event.map(hc => pathToState(new URL(hc.newURL).hash): @unchecked)
 
-    val hashBasedStates = hashChange.event.map(hc => pathToState(new URL(hc.newURL).hash): @unchecked)
 
-
-    val targetStates: Event[AppState] = hashBasedStates || manualStates
+    val targetStates: Event[AppState] = manualStates // || hashBasedStates
 
     val initialState = pathToState(getHash)
     val initialPos = initialState match {
@@ -98,12 +96,12 @@ class ReaderApp() {
       }
     }.observe { case (u, t) =>
       dom.window.document.title = t
-      val h = getHash
-      // for some reason, the leading # is not returned by getHash, when nothing follows
-      if (h != u && !(u == "#" && h == "")) {
-        dom.window.history.pushState(null, null, u)
-        Log.JS.debug(s"pushing history '$u' was '$h' length ${dom.window.history.length}")
-      }
+      //val h = getHash
+      //// for some reason, the leading # is not returned by getHash, when nothing follows
+      //if (h != u && !(u == "#" && h == "")) {
+      //  dom.window.history.pushState(null, null, u)
+      //  Log.JS.debug(s"pushing history '$u' was '$h' length ${dom.window.history.length}")
+      //}
     }
 
     val indexBody = index.gen()
