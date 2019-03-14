@@ -9,7 +9,7 @@ case class PGrowOnlyLog[A](initial: RGOA[A] = RGOA.empty[A])
 extends DistributedSignal[List[A], RGOA[A]](initial, _.value)(RGOA.lattice[A]) {
 
   def transform(f: RGOA[A] => RGOA[A]): Unit = crdtSignal.transform(f)
-  def prepend(a: A): Unit = transform(_.append(a))
+  def prepend(a: A): Unit = transform(_.prepend(a))
   def append(a: A): Unit = transform(_.append(a))
 
   // allows the log to log events of type a and append them to the log
