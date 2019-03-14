@@ -66,8 +66,10 @@ object ErsirJS {
         ReMqtt.start()
 
         entryCrdt.crdtSignal.observe { crdt =>
-          val json = crdt.asJson.noSpaces
-          ReMqtt.send("ersir/entries", json)
+          if (ReMqtt.isConnected()) {
+            val json = crdt.asJson.noSpaces
+            ReMqtt.send("ersir/entries", json)
+          }
         }
 
         val entryStream = ReMqtt.topicstream("ersir/entries").map { str =>
