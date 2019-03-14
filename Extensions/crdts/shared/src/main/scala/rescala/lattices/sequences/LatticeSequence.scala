@@ -45,9 +45,7 @@ case class LatticeSequence[A, VertexSet](vertices: VertexSet,
     if (left == Vertex.end) throw new IllegalArgumentException("Cannot insert after end node!")
 
     val right = successor(left)
-    // Check if the vertex right to us has been inserted after us.
-    // If yes, insert v after the new vertex.
-    // TODO: why though? should we not just ADD here?
+    // sort order during merge based on most recent on towards start
     if (right.timestamp > insertee.timestamp) addRight(right, insertee, value)
     else {
       val newVertices = vertexSet.add(vertices, insertee)
