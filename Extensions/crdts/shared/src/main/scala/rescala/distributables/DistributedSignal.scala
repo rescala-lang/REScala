@@ -18,7 +18,7 @@ import rescala.lattices.Lattice
 abstract class DistributedSignal[A, F: Lattice](initial: F, convert: F => A) {
 
   @cutOutOfUserComputation
-  private[rescala] val crdtSignal: Var[F] = Var(initial)
+  val crdtSignal: Var[F] = Var(initial)
   private[rescala] def merge(other: F): Unit = {
     crdtSignal.transform(Lattice[F].merge(_, other))
   }
