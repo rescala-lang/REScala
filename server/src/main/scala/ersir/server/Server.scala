@@ -3,8 +3,8 @@ package ersir.server
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.headers.{BasicHttpCredentials, HttpChallenges}
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.directives.AuthenticationResult
-import akka.http.scaladsl.server.{Directive, Route}
+import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.server.directives.AuthenticationDirective
 import ersir.shared.Log.{Server => Log}
 import ersir.shared.{Bindings, Emergentcy}
 import loci.communicator.ws.akka._
@@ -56,70 +56,44 @@ class Server(terminate: () => Unit,
     })
   }
 
+  def route: Route = decodeRequest(encodeResponse(subPathRoute(publicRoute ~ basicAuth(authedRoute))))
 
-  def authenticate(credentials: Option[BasicHttpCredentials]): Option[User] = credentials match {
-    case Some(BasicHttpCredentials(username, password)) =>
-      Log.trace(s"login: $username $password")
-      // time("login") {
-      if (username.matches("\\w+")) {
-        userStore.getOrAddFirstUser(username, password)
+  val basicAuth: AuthenticationDirective[User] = {
+    val realm = "Username is used to store configuration; Passwords are saved in plain text; User is created on first login"
+
+    authenticateOrRejectWithChallenge[BasicHttpCredentials, User] { credentials ⇒
+      val userOption = credentials.flatMap { bc =>
+        authenticate(bc.username, bc.password)
       }
-      else None
-    // }
-    case None => None
-  }
-
-
-  def sprayLikeBasicAuth[T](realm: String, authenticator: Option[BasicHttpCredentials] => Option[T]): Directive[Tuple1[T]] =
-    authenticateOrRejectWithChallenge[BasicHttpCredentials, T] { cred ⇒
-      authenticator(cred) match {
-        case Some(t) ⇒ Future.successful(AuthenticationResult.success(t))
-        case None    ⇒ Future.successful(AuthenticationResult.failWithChallenge(HttpChallenges.basic(
-          realm)))
-      }
-    }
-
-  def route: Route = {
-    decodeRequest {
-      encodeResponse {
-        sprayLikeBasicAuth(
-          "Username is used to store configuration; Passwords are saved in plain text; User is created on first login",
-          authenticate) { user =>
-          extractRequest { request =>
-            request.headers.find(h => h.is("x-path-prefix")) match {
-              case None         => defaultRoute(user)
-              case Some(prefix) => pathPrefix(prefix.value()) {defaultRoute(user)}
-            }
-          }
-        }
-      }
+      Future.successful(userOption.toRight(HttpChallenges.basic(realm)))
     }
   }
+
+  def authenticate(username: String, password: String): Option[User] = {
+    Log.trace(s"login: $username $password")
+    if (username.matches("\\w+")) {
+      userStore.getOrAddFirstUser(username, password)
+    }
+    else None
+  }
+
+  def subPathRoute(continueRoute: Route): Route =
+    extractRequest { request =>
+      request.headers.find(h => h.is("x-path-prefix")) match {
+        case None         => continueRoute
+        case Some(prefix) => pathPrefix(prefix.value()) {continueRoute}
+      }
+    }
 
   // we use the enclosing ActorContext's or ActorSystem's dispatcher for our Futures and Scheduler
   import system.dispatcher
 
-
-  def defaultRoute(user: User): Route =
+  def publicRoute: Route = {
     path("") {
       complete(pages.landing)
     } ~
-    path("stop") {
-      if (!user.admin) reject
-      else complete {
-        Future {
-          Thread.sleep(100)
-          terminate()
-          Log.info("shutdown complete")
-        }
-        "shutdown"
-      }
-    } ~
     WebResources.mainJs.route ~ WebResources.css.route ~
     WebResources.libJS.route ~ WebResources.loaderJs.route ~
-    path("ws") {
-      userSocket(user.id)
-    } ~
     path("sw") {
       getFromResource("serviceworker.js")
     } ~
@@ -141,6 +115,25 @@ class Server(terminate: () => Unit,
         complete("ok")
       }
     }
+  }
+
+  def authedRoute(user: User): Route =
+
+    path("stop") {
+      if (!user.admin) reject
+      else complete {
+        Future {
+          Thread.sleep(100)
+          terminate()
+          Log.info("shutdown complete")
+        }
+        "shutdown"
+      }
+    } ~
+    path("ws") {
+      userSocket(user.id)
+    }
+
 
 
   def rejectNone[T](opt: => Option[T])(route: T => Route): Route = opt.map {route}.getOrElse(reject)
