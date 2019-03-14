@@ -38,3 +38,17 @@ which can then be executed the same as the `run` command above:
 cd ./server/target/universal/stage
 bin/
 ....
+
+
+== Add entries
+
+=== Via HTTP:
+
+....
+curl --data-urlencode "title=test" --data-urlencode "description=test description" --data-urlencode "imageUrl=http://vignette1.wikia.nocookie.net/uncyclopedia/images/0/0a/Ohnoes.jpg/revision/latest?cb\x3d20061026122429"  "http://0.0.0.0:9110/add-entry"
+....
+
+Note that sending Data URLs instead of actual URLs should make images available even without internet.
+Data urls have the format: `data:image/png;base64,base64dataHere`
+
+

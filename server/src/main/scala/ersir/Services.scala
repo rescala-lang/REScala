@@ -28,7 +28,6 @@ class Services(relativeBasedir: Path, relativeBlobdir: Path, relativePostdir: Pa
   val definitionsdir     : Path = basepath.resolve("definitions")
   val exportdir          : Path = basepath.resolve("export")
   val usersdir           : Path = basepath.resolve("users")
-  val postsdir           : Path = basepath.resolve(relativePostdir)
   lazy val scribedir: Path = create(basepath.resolve("db3"))
   lazy val cachedir : Path = create(basepath.resolve("cache"))
 
@@ -48,8 +47,7 @@ class Services(relativeBasedir: Path, relativeBlobdir: Path, relativePostdir: Pa
   lazy val serverPages = new ServerPages()
   lazy val server      = new Server(terminate = () => terminateServer(),
                                     pages = serverPages,
-                                    system = system,
-                                    postsPath = postsdir
+                                    system = system
   )
 
   lazy val serverBinding: Future[ServerBinding] = http.bindAndHandle(

@@ -1,14 +1,12 @@
 package ersir.server
 
-import java.nio.file.Path
-
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.headers.{BasicHttpCredentials, HttpChallenges}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.AuthenticationResult
 import akka.http.scaladsl.server.{Directive, Route}
-import ersir.shared.{Bindings, Emergentcy}
 import ersir.shared.Log.{Server => Log}
+import ersir.shared.{Bindings, Emergentcy}
 import loci.communicator.ws.akka._
 import loci.registry.Registry
 import org.jsoup.Jsoup
@@ -26,25 +24,23 @@ object userStore {
 }
 
 
-
 class Server(terminate: () => Unit,
              pages: ServerPages,
              system: ActorSystem,
-             postsPath: Path,
             ) {
 
-  val pgol = rescala.distributables.PGrowOnlyLog[Emergentcy]()
+  val serverSideEntries = rescala.distributables.PGrowOnlyLog[Emergentcy]()
 
-  val doc = Jsoup.connect("https://www.digitalstadt-darmstadt.de/feed").get()
+  val doc    = Jsoup.connect("https://www.digitalstadt-darmstadt.de/feed").get()
   val titles = doc.select("channel item").iterator().asScala.toList
   titles.foreach { e =>
     val image = Jsoup.parse(e.selectFirst("content|encoded").text(),
                             "https://www.digitalstadt-darmstadt.de/feed/")
                 .selectFirst(".avia_image").absUrl("src")
-    pgol.append(
-    Emergentcy(e.selectFirst("title").text(),
-               e.selectFirst("description").text(),
-               image))
+    serverSideEntries.append(
+      Emergentcy(e.selectFirst("title").text(),
+                 e.selectFirst("description").text(),
+                 image))
   }
 
 
@@ -54,7 +50,7 @@ class Server(terminate: () => Unit,
       Log.debug(s"create new websocket for $user")
       val webSocket = WebSocketListener()
       val registry = new Registry
-      registry.bind(Bindings.crdtDescriptions)(pgol)
+      registry.bind(Bindings.crdtDescriptions)(serverSideEntries)
       registry.listen(webSocket)
       webSocket(user)
     })
@@ -78,18 +74,20 @@ class Server(terminate: () => Unit,
     authenticateOrRejectWithChallenge[BasicHttpCredentials, T] { cred ⇒
       authenticator(cred) match {
         case Some(t) ⇒ Future.successful(AuthenticationResult.success(t))
-        case None    ⇒ Future.successful(AuthenticationResult.failWithChallenge(HttpChallenges.basic(realm)))
+        case None    ⇒ Future.successful(AuthenticationResult.failWithChallenge(HttpChallenges.basic(
+          realm)))
       }
     }
 
   def route: Route = {
     decodeRequest {
       encodeResponse {
-        sprayLikeBasicAuth("Username is used to store configuration; Passwords are saved in plain text; User is created on first login",
+        sprayLikeBasicAuth(
+          "Username is used to store configuration; Passwords are saved in plain text; User is created on first login",
           authenticate) { user =>
           extractRequest { request =>
             request.headers.find(h => h.is("x-path-prefix")) match {
-              case None => defaultRoute(user)
+              case None         => defaultRoute(user)
               case Some(prefix) => pathPrefix(prefix.value()) {defaultRoute(user)}
             }
           }
@@ -136,6 +134,12 @@ class Server(terminate: () => Unit,
     } ~
     path("tools") {
       complete(pages.toolsResponse)
+    } ~
+    path("add-entry") {
+      formFields(('title, 'description, 'imageUrl)).as(Emergentcy) { em =>
+        serverSideEntries.prepend(em)
+        complete("ok")
+      }
     }
 
 
