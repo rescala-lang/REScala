@@ -24,10 +24,9 @@ object ReMqtt {
     //    val wsProtocol = if (dom.document.location.protocol == "https:") "wss" else "ws"
     val wsProtocol = "ws"
     val hash = dom.window.location.hash
-    val location = if (hash.length > 2) hash.substring(1)
-                   else dom.document.location.host
+    if (hash.length > 2) hash.substring(1)
+    else s"$wsProtocol://${dom.document.location.host}:9001/"
 
-    s"$wsProtocol://$location:9001/"
   }
 
   def start() = {

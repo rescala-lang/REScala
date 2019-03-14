@@ -40,6 +40,12 @@ bin/
 ....
 
 
+=== Change MQTT broker address
+
+Add the websocket url of the broker to the url hash of the applicaiton, e.g.,
+`http://0.0.0.0:9110/#ws://127.0.0.1:9001/` and refresh the page.
+
+
 == Add entries
 
 === Via HTTP:
@@ -51,4 +57,7 @@ curl --data-urlencode "title=test" --data-urlencode "description=test descriptio
 Note that sending Data URLs instead of actual URLs should make images available even without internet.
 Data urls have the format: `data:image/png;base64,base64dataHere`
 
+== Observe entries
 
+The application chatters on the MQTT topic `ersir/entries`.
+The Data is a JSON object containing all interesting applicaiton state.
