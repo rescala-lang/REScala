@@ -2,9 +2,9 @@ import Dependencies._
 import Settings._
 import sbtcrossproject.CrossPlugin.autoImport.{CrossType, crossProject}
 
-val commonSettings: sbt.Def.SettingsDefinition = Seq(
-    scalaVersion := version_212,
-    Compile / compile / scalacOptions ++= strictScalacOptions)
+val commonSettings: sbt.Def.SettingsDefinition = Def.settings(
+    scalaVersion_212,
+    strictCompile)
 
 val Libraries = new {
   val shared = Def.settings(
