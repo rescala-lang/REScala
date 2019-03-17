@@ -13,7 +13,7 @@ val Libraries = new {
     rmgkLogging, scalatags, loci.communication, loci.wsAkka, circe
   )
 
-  val main = shared ++ Def.settings(jsoup,
+  val main = Def.settings(jsoup,
                                     betterFiles,
                                     decline,
                                     akkaHttp)
@@ -21,7 +21,7 @@ val Libraries = new {
   val npmDeps = npmDependencies in Compile ++= Seq("mqtt" -> "2.18.2")
 
 
-  val js: Def.SettingsDefinition = shared ++ Seq(scalajsdom, npmDeps, normalizecss)
+  val js: Def.SettingsDefinition = Seq(scalajsdom, npmDeps, normalizecss)
 }
 
 val vbundle = TaskKey[File]("vbundle", "bundles all the viscel resources")
@@ -71,7 +71,8 @@ lazy val web = project.in(file("web"))
                  commonSettings,
                  Libraries.js,
                  scalaJSUseMainModuleInitializer := true,
-                 webpackBundlingMode := BundlingMode.LibraryOnly()
+                 webpackBundlingMode := BundlingMode.LibraryOnly(),
+                 scalacOptions += "-P:scalajs:sjsDefinedByDefault"
                )
                .dependsOn(sharedJS)
                .enablePlugins(SbtSassify)

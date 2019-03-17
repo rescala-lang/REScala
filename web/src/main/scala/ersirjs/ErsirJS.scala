@@ -1,98 +1,96 @@
 package ersirjs
 
+import ersir.shared.Log.Log
 import ersir.shared._
 import ersirjs.facade.ReMqtt
 import ersirjs.render.Index
 import io.circe.generic.auto._
+import io.circe.parser.decode
 import io.circe.syntax._
 import loci.communicator.ws.akka.WS
 import loci.registry.Registry
+import loci.serializer.circe._
 import loci.transmitter.RemoteRef
 import org.scalajs.dom
 import rescala.Tags._
 import rescala.default._
 import rescala.lattices.Lattice
+import rescala.lattices.sequences.RGOA
 import rescala.lattices.sequences.RGOA.RGOA
+import rescala.locidistribute.LociDist
 import scalatags.JsDom.attrs.cls
 import scalatags.JsDom.implicits._
-import io.circe.parser.decode
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
-import scala.util.control.NonFatal
-
-
-@JSExportTopLevel("Post")
-object ErsirPost {
-  var pgol: rescala.distributables.PGrowOnlyLog[Posting] = null
-
-  @JSExport
-  def add(s: String, url: String = ""): Unit = {
-    try {
-      val Array(title, desc) = s.split("\n", 2)
-      pgol.prepend(Posting(title, desc, url, System.currentTimeMillis()))
-    }
-    catch {
-      case NonFatal(_) => pgol.prepend(Posting(s, "", url, System.currentTimeMillis()))
-    }
-  }
-}
-
 
 object ErsirJS {
 
-  val wsUri: String = {
-    val wsProtocol = if (dom.document.location.protocol == "https:") "wss" else "ws"
-    s"$wsProtocol://${dom.document.location.host}${dom.document.location.pathname}ws"
+  type Postings = Epoche[RGOA[Posting]]
+
+  ReMqtt.start()
+
+  val mqttStream: Event[Postings] =
+    ReMqtt
+    .topicstream("ersir/entries")
+    .map(decode[Postings])
+    .collect { case Right(rg) => rg }
+
+
+
+
+  val emergencies      = ReMqtt.topicstream("city/alert_state")
+  val currentEmergency = emergencies.latest("")
+
+  val connectClass = ReMqtt.connected.map {
+    case true => "connected"
+    case _    => ""
   }
+
+  val index = new Index(connectClass)
+
+
+  val postings: Signal[Postings] =
+    Events.foldAll(Epoche(RGOA(List.empty[Posting])))(state => Seq(
+      mqttStream >> { rg => Lattice.merge[Postings](state, rg) },
+      index.addPost.event >> {post => state.map(_.prepend(post))}
+    ))
+
+
+  postings.observe { crdt =>
+    if (ReMqtt.isConnected()) {
+      val json = crdt.asJson.noSpaces
+      ReMqtt.send("ersir/entries", json)
+    }
+  }
+
+  val registry = new Registry
+
+  LociDist.distribute(postings, registry, scheduler)
+
+
 
   def main(args: Array[String]): Unit = {
     dom.window.document.title = "Emergencity RSS Reader"
+    dom.document.body = index.gen(postings).apply(cls := currentEmergency).render
+    lociConnect()
+  }
 
-    val registry = new Registry
+  def lociConnect(): Future[RemoteRef] = {
+    val wsUri: String = {
+      val wsProtocol = if (dom.document.location.protocol == "https:") "wss" else "ws"
+      s"$wsProtocol://${dom.document.location.host}${dom.document.location.pathname}ws"
+    }
+
     val connection: Future[RemoteRef] = registry.connect(WS(wsUri))
-    println(s"connecting to $wsUri …")
+    Log.debug(s"connecting loci to $wsUri …")
     connection.foreach { remote =>
-      val entryFuture = registry.lookup(Bindings.crdtDescriptions, remote)
-      println(s"requesting $entryFuture")
-      entryFuture.failed.foreach { t =>
-        t.printStackTrace()
-      }
-      entryFuture.foreach { entryCrdt =>
-        ErsirPost.pgol = entryCrdt
-        val entrySignal = entryCrdt.valueSignal
-
-        ReMqtt.start()
-
-        entryCrdt.crdtSignal.observe { crdt =>
-          if (ReMqtt.isConnected()) {
-            val json = crdt.asJson.noSpaces
-            ReMqtt.send("ersir/entries", json)
-          }
-        }
-
-
-        val entryStream = ReMqtt
-                          .topicstream("ersir/entries")
-                          .map(decode[RGOA[Posting]])
-                          .collect { case Right(rg) => rg }
-
-        entryStream.observe(rg => entryCrdt.transform(Lattice.merge(_, rg)))
-
-        val emergencies = ReMqtt.topicstream("city/alert_state")
-        val currentEmergency = emergencies.latest("")
-
-        val connectClass = ReMqtt.connected.map {
-          case true => "connected"
-          case _    => ""
-        }
-        val index = new Index(connectClass, entrySignal)
-
-
-        dom.document.body = index.gen().apply(cls := currentEmergency).render
+      remote.disconnected.foreach { _ =>
+        Log.debug(s"loci reconnect")
+        lociConnect()
       }
     }
+    connection
   }
 
 }
