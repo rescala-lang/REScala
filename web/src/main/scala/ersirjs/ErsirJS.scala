@@ -71,7 +71,17 @@ object ErsirJS {
   def main(args: Array[String]): Unit = {
     dom.window.document.title = "Emergencity RSS Reader"
     dom.document.body = index.gen(postings).apply(cls := currentEmergency).render
-    lociConnect()
+    var connecting = false
+    scala.scalajs.js.timers.setInterval(1000){
+      if (!connecting && !registry.remotes.exists(_.connected)) {
+        connecting = true
+        lociConnect().onComplete {res =>
+          Log.trace(s"loci connection try finished: $res")
+          connecting = false
+        }
+      }
+    }
+
   }
 
   def lociConnect(): Future[RemoteRef] = {
@@ -83,9 +93,10 @@ object ErsirJS {
     val connection: Future[RemoteRef] = registry.connect(WS(wsUri))
     Log.debug(s"connecting loci to $wsUri …")
     connection.foreach { remote =>
+      Notifications.send(s"connected to server")
       remote.disconnected.foreach { _ =>
+        Notifications.send(s"disconnected from server")
         Log.debug(s"loci reconnect")
-        lociConnect()
       }
     }
     connection
