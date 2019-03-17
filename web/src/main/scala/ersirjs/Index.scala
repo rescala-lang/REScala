@@ -47,7 +47,10 @@ class Index(connected: Signal[String]) {
 
             val encoded = canvasTag.toDataURL("image/jpeg", 0.5)
             println(s"printing $encoded")
-            postCB(Posting.parse(textinput.value.toString, encoded))
+            val posting = Posting.parse(textinput.value.toString, encoded)
+            textinput.value = ""
+            imageinput.value = imageinput.defaultValue
+            postCB(posting)
           }
 
           imageTag.src = dataUrl
