@@ -44,6 +44,7 @@ class Server(pages: ServerPages,
 
   def route: Route = decodeRequest(subPathRoute(publicRoute))
 
+  // this is for eventual proxying, currently not used, but maybe?
   def subPathRoute(continueRoute: Route): Route =
     extractRequest { request =>
       request.headers.find(h => h.is("x-path-prefix")) match {
@@ -51,8 +52,6 @@ class Server(pages: ServerPages,
         case Some(prefix) => pathPrefix(prefix.value()) {continueRoute}
       }
     }
-
-  // we use the enclosing ActorContext's or ActorSystem's dispatcher for our Futures and Scheduler
 
   def publicRoute: Route = {
     path("") {
