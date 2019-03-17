@@ -89,10 +89,12 @@ lazy val sharedJVM = shared.jvm
 lazy val sharedJS = shared.js
 
 
-lazy val rescalatags = ProjectRef(base = file("rescala"), id = "rescalatags")
-lazy val rescalaJVM = ProjectRef(base = file("rescala"), id = "rescalaJVM")
-lazy val crdtsJVM = ProjectRef(base = file("rescala"), id = "crdtsJVM")
-lazy val crdtsJS = ProjectRef(base = file("rescala"), id = "crdtsJS")
+lazy val rescalaRepo = uri("git://github.com/rescala-lang/REScala.git#" +
+                           "3a8224d382151f51aae8d9da4ca161f6a617c525")
+lazy val rescalatags = ProjectRef(rescalaRepo, "rescalatags")
+lazy val rescalaJVM = ProjectRef(rescalaRepo, "rescalaJVM")
+lazy val crdtsJVM = ProjectRef(rescalaRepo, "crdtsJVM")
+lazy val crdtsJS = ProjectRef(rescalaRepo, "crdtsJS")
 
 
 
