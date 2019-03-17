@@ -35,8 +35,6 @@ object ErsirJS {
     .collect { case Right(rg) => rg }
 
 
-
-
   val emergencies      = ReMqtt.topicstream("city/alert_state")
   val currentEmergency = emergencies.latest("")
 
@@ -47,12 +45,14 @@ object ErsirJS {
 
   val index = new Index(connectClass)
 
+  val addPost = index.addPost.event
+                .filter(p => p.title.nonEmpty || p.img.nonEmpty)
 
   val postings: Signal[Postings] =
     Events.foldAll(Epoche(RGOA(List.empty[Posting])))(state => Seq(
       mqttStream >> { rg => Lattice.merge[Postings](state, rg) },
-      index.addPost.event >> {post => state.map(_.prepend(post))},
-      index.reset.event >> {rs => state.next(RGOA(Nil))}
+      addPost >> { post => state.map(_.prepend(post)) },
+      index.reset.event >> { rs => state.next(RGOA(Nil)) }
     ))(implicitly, "postings")
 
 
@@ -68,15 +68,14 @@ object ErsirJS {
   LociDist.distribute(postings, registry, scheduler)
 
 
-
   def main(args: Array[String]): Unit = {
     dom.window.document.title = "Emergencity RSS Reader"
     dom.document.body = index.gen(postings).apply(cls := currentEmergency).render
     var connecting = false
-    scala.scalajs.js.timers.setInterval(1000){
+    scala.scalajs.js.timers.setInterval(1000) {
       if (!connecting && !registry.remotes.exists(_.connected)) {
         connecting = true
-        lociConnect().onComplete {res =>
+        lociConnect().onComplete { res =>
           Log.trace(s"loci connection try finished: $res")
           connecting = false
         }
