@@ -9,11 +9,11 @@ import sbt._
 object Settings {
 
   val scalaVersion_211 = Def.settings(
-    ThisBuild / version := "2.11.12",
+    ThisBuild / scalaVersion := "2.11.12",
     ThisBuild / scalacOptions ++= tpolecatsScalacOptions
   )
   val scalaVersion_212 = Def.settings(
-    ThisBuild / version := "2.12.8",
+    ThisBuild / scalaVersion := "2.12.8",
     ThisBuild / scalacOptions ++= tpolecatsScalacOptions
   )
 
