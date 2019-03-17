@@ -7,16 +7,9 @@ import ersir.shared.{Bindings, Posting}
 import loci.communicator.ws.akka._
 import loci.registry.Registry
 import org.jsoup.Jsoup
+import rescala.distributables.PGrowOnlyLog
 
 import scala.collection.JavaConverters._
-
-case class User(id: String, password: String, admin: Boolean)
-
-object userStore {
-  def getOrAddFirstUser(name: String, password: String) = synchronized {
-    Some(User(name, password, admin = true))
-  }
-}
 
 
 class Server(pages: ServerPages,
@@ -24,18 +17,20 @@ class Server(pages: ServerPages,
              webResources: WebResources
             ) {
 
-  val serverSideEntries = rescala.distributables.PGrowOnlyLog[Posting]()
+  val serverSideEntries: PGrowOnlyLog[Posting] = rescala.distributables.PGrowOnlyLog[Posting]()
 
-  val doc    = Jsoup.connect("https://www.digitalstadt-darmstadt.de/feed").get()
-  val titles = doc.select("channel item").iterator().asScala.toList
-  titles.foreach { e =>
-    val image = Jsoup.parse(e.selectFirst("content|encoded").text(),
-                            "https://www.digitalstadt-darmstadt.de/feed/")
-                .selectFirst(".avia_image").absUrl("src")
-    serverSideEntries.append(
-      Posting(e.selectFirst("title").text(),
-              e.selectFirst("description").text(),
-              image, 0))
+  def addNewsFeed(): Unit = {
+    val doc = Jsoup.connect("https://www.digitalstadt-darmstadt.de/feed").get()
+    val titles = doc.select("channel item").iterator().asScala.toList
+    titles.foreach { e =>
+      val image = Jsoup.parse(e.selectFirst("content|encoded").text(),
+                              "https://www.digitalstadt-darmstadt.de/feed/")
+                  .selectFirst(".avia_image").absUrl("src")
+      serverSideEntries.append(
+        Posting(e.selectFirst("title").text(),
+                e.selectFirst("description").text(),
+                image, 0))
+    }
   }
 
 

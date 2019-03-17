@@ -8,33 +8,27 @@ import ersir.shared.Log
 
 object Ersir {
 
-  val port       = Opts.option[Int]("port", help = "Weberver listening port.")
-                   .withDefault(9110)
-  val interface  = Opts.option[String]("interface",
-                                       metavar = "interface",
-                                       help = "Interface to bind the server on.")
-                   .withDefault("0")
-  val server     = Opts.flag("noserver", "Do not start the server.")
-                   .orTrue
-  val optBasedir = Opts.option[Path]("basedir", short = "b", metavar = "directory",
-                                     help = "Base directory to store settings and data.")
-                   .withDefault(
-                     Paths.get("./"))
-  val shutdown   = Opts.flag("shutdown", "Shutdown directly.")
-                   .orFalse
+  val port      : Opts[Int]     = Opts.option[Int]("port", help = "Weberver listening port.")
+                                  .withDefault(9110)
+  val interface : Opts[String]  = Opts.option[String]("interface",
+                                                      metavar = "interface",
+                                                      help = "Interface to bind the server on.")
+                                  .withDefault("0")
+  val server    : Opts[Boolean] = Opts.flag("noserver", "Do not start the server.")
+                                  .orTrue
+  val optBasedir: Opts[Path]    = Opts.option[Path]("basedir", short = "b", metavar = "directory",
+                                                    help = "Base directory to store settings and data.")
+                                  .withDefault(
+                                    Paths.get("./"))
 
-  val command = Command(name = "ersir", header = "Start server!") {
+  val command: Command[Services] = Command(name = "ersir", header = "Start server!") {
     val services = (optBasedir, interface, port).mapN(new Services(_, _, _))
 
-    (services, server, shutdown).mapN {
-      (services, server, shutdown) =>
+    (services, server).mapN {
+      (services, server) =>
 
         if (server) {
           services.startServer()
-        }
-
-        if (shutdown) {
-          services.terminateServer()
         }
         Log.Main.info(s"initialization done, connect on http://$interface:$port/")
         services
