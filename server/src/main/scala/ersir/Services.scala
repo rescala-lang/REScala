@@ -10,7 +10,6 @@ import akka.http.scaladsl.settings.{ParserSettings, RoutingSettings}
 import akka.http.scaladsl.{Http, HttpExt}
 import akka.stream.ActorMaterializer
 import com.typesafe.config.ConfigFactory.parseString
-import ersir.server.{Server, ServerPages, WebResources}
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 

@@ -1,10 +1,10 @@
-package ersir.server
+package ersir
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
-import ersir.shared.{Epoche, Posting}
 import ersir.shared.Log.Log
+import ersir.shared.{Epoche, Posting}
 import io.circe.generic.auto._
 import loci.communicator.ws.akka._
 import loci.registry.Registry

@@ -2,8 +2,6 @@ package ersirjs
 
 import ersir.shared.Log.Log
 import ersir.shared._
-import ersirjs.facade.ReMqtt
-import ersirjs.render.Index
 import io.circe.generic.auto._
 import io.circe.parser.decode
 import io.circe.syntax._

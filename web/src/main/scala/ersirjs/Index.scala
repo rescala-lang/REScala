@@ -1,8 +1,7 @@
-package ersirjs.render
+package ersirjs
 
 import ersir.shared.Posting
 import ersirjs.ErsirJS.Postings
-import ersirjs.Icons
 import org.scalajs.dom.{CanvasRenderingContext2D, FileReader, UIEvent, html}
 import rescala.Tags._
 import rescala.default._

@@ -1,10 +1,10 @@
-package ersir.server
+package ersir
 
 import java.nio.file.Path
 
 import akka.http.scaladsl.server.Directives.{_enhanceRouteWithConcatenation, getFromFile, path}
 import akka.http.scaladsl.server.Route
-import ersir.server.ResourcePaths._
+import ersir.ResourcePaths._
 
 object ResourcePaths {
   val jsm  : List[(String, String)] = List(

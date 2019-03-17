@@ -1,4 +1,4 @@
-package ersir.server
+package ersir
 
 import akka.http.scaladsl.model._
 import scalatags.Text.Frag

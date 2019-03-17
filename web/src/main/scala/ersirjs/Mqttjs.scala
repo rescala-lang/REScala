@@ -1,4 +1,4 @@
-package ersirjs.facade
+package ersirjs
 
 import org.scalajs.dom
 import rescala.default._
