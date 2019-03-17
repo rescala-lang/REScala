@@ -48,12 +48,11 @@ object ErsirJS {
   }
 
   def main(args: Array[String]): Unit = {
-    println("initing 2")
-
+    dom.window.document.title = "Emergencity RSS Reader"
 
     val registry = new Registry
     val connection: Future[RemoteRef] = registry.connect(WS(wsUri))
-    println(s"waiting for ws connection to server …")
+    println(s"connecting to $wsUri …")
     connection.foreach { remote =>
       val entryFuture = registry.lookup(Bindings.crdtDescriptions, remote)
       println(s"requesting $entryFuture")
@@ -84,26 +83,14 @@ object ErsirJS {
         val emergencies = ReMqtt.topicstream("city/alert_state")
         val currentEmergency = emergencies.latest("")
 
-        val manualStates = Evt[AppState]()
-
-        val actions = new Actions(manualStates = manualStates)
-
         val connectClass = ReMqtt.connected.map {
           case true => "connected"
           case _    => ""
         }
-        val index = new Index(actions, connectClass, entrySignal)
-        val app = new ReaderApp()
+        val index = new Index(connectClass, entrySignal)
 
 
-        val bodySig = Signal {
-          app.makeBody(index, manualStates).value.apply(cls := currentEmergency)
-        }
-
-
-        val bodyParent = dom.document.body.parentElement
-        bodyParent.removeChild(dom.document.body)
-        bodySig.asModifier.applyTo(bodyParent)
+        dom.document.body = index.gen().apply(cls := currentEmergency).render
       }
     }
   }

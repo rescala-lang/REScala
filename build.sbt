@@ -57,7 +57,8 @@ lazy val server = project.in(file("server"))
                     commonSettings,
                     fork := true,
                     Libraries.main,
-                    vbundleDef
+                    vbundleDef,
+                    (Compile / compile) := ((Compile / compile) dependsOn vbundle).value
                   )
                   .enablePlugins(JavaServerAppPackaging)
                   .dependsOn(sharedJVM)
@@ -70,8 +71,8 @@ lazy val web = project.in(file("web"))
                  commonSettings,
                  Libraries.js,
                  scalaJSUseMainModuleInitializer := true,
-                 webpackBundlingMode := BundlingMode.LibraryOnly(),
-                 )
+                 webpackBundlingMode := BundlingMode.LibraryOnly()
+               )
                .dependsOn(sharedJS)
                .enablePlugins(SbtSassify)
                .enablePlugins(ScalaJSBundlerPlugin)

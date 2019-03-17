@@ -13,7 +13,7 @@ object Ersir {
   val interface : Opts[String]  = Opts.option[String]("interface",
                                                       metavar = "interface",
                                                       help = "Interface to bind the server on.")
-                                  .withDefault("0")
+                                  .withDefault("localhost")
   val optBasedir: Opts[Path]    = Opts.option[Path]("basedir", short = "b", metavar = "directory",
                                                     help = "Base directory to store settings and data.")
                                   .withDefault(
