@@ -1,6 +1,6 @@
 package ersirjs.render
 
-import ersir.shared.Emergentcy
+import ersir.shared.Posting
 import ersirjs.{Actions, ErsirPost, Icons}
 import org.scalajs.dom.{CanvasRenderingContext2D, FileReader, UIEvent, html}
 import rescala.Tags._
@@ -9,7 +9,7 @@ import scalatags.JsDom
 import scalatags.JsDom.all._
 import scalatags.JsDom.tags2.{article, main}
 
-class Index(actions: Actions, connected: Signal[String], list: Signal[List[Emergentcy]]) {
+class Index(actions: Actions, connected: Signal[String], list: Signal[List[Posting]]) {
 
 
 

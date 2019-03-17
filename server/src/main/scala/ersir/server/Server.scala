@@ -6,7 +6,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.AuthenticationDirective
 import ersir.shared.Log.{Server => Log}
-import ersir.shared.{Bindings, Emergentcy}
+import ersir.shared.{Bindings, Posting}
 import loci.communicator.ws.akka._
 import loci.registry.Registry
 import org.jsoup.Jsoup
@@ -29,7 +29,7 @@ class Server(terminate: () => Unit,
              system: ActorSystem,
             ) {
 
-  val serverSideEntries = rescala.distributables.PGrowOnlyLog[Emergentcy]()
+  val serverSideEntries = rescala.distributables.PGrowOnlyLog[Posting]()
 
   val doc    = Jsoup.connect("https://www.digitalstadt-darmstadt.de/feed").get()
   val titles = doc.select("channel item").iterator().asScala.toList
@@ -38,9 +38,9 @@ class Server(terminate: () => Unit,
                             "https://www.digitalstadt-darmstadt.de/feed/")
                 .selectFirst(".avia_image").absUrl("src")
     serverSideEntries.append(
-      Emergentcy(e.selectFirst("title").text(),
-                 e.selectFirst("description").text(),
-                 image))
+      Posting(e.selectFirst("title").text(),
+              e.selectFirst("description").text(),
+              image, 0))
   }
 
 
@@ -110,7 +110,7 @@ class Server(terminate: () => Unit,
       complete(pages.toolsResponse)
     } ~
     path("add-entry") {
-      formFields(('title, 'description, 'imageUrl)).as(Emergentcy) { em =>
+      formFields(('title, 'description, 'imageUrl, 'timestamp.as[Long])).as(Posting.apply) { em =>
         serverSideEntries.prepend(em)
         complete("ok")
       }

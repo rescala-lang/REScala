@@ -15,6 +15,7 @@ import rescala.lattices.Lattice
 import rescala.lattices.sequences.RGOA.RGOA
 import scalatags.JsDom.attrs.cls
 import scalatags.JsDom.implicits._
+import io.circe.parser.decode
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -24,16 +25,16 @@ import scala.util.control.NonFatal
 
 @JSExportTopLevel("Post")
 object ErsirPost {
-  var pgol: rescala.distributables.PGrowOnlyLog[Emergentcy] = null
+  var pgol: rescala.distributables.PGrowOnlyLog[Posting] = null
 
   @JSExport
   def add(s: String, url: String = ""): Unit = {
     try {
       val Array(title, desc) = s.split("\n", 2)
-      pgol.prepend(Emergentcy(title, desc, url))
+      pgol.prepend(Posting(title, desc, url, System.currentTimeMillis()))
     }
     catch {
-      case NonFatal(_) => pgol.prepend(Emergentcy(s, "", url))
+      case NonFatal(_) => pgol.prepend(Posting(s, "", url, System.currentTimeMillis()))
     }
   }
 }
@@ -72,14 +73,13 @@ object ErsirJS {
           }
         }
 
-        val entryStream = ReMqtt.topicstream("ersir/entries").map { str =>
-          io.circe.parser.decode[RGOA[Emergentcy]](str)
-        }
 
-        entryStream.observe{
-          case Right(rg) => entryCrdt.transform(Lattice.merge(_, rg))
-          case _ =>
-        }
+        val entryStream = ReMqtt
+                          .topicstream("ersir/entries")
+                          .map(decode[RGOA[Posting]])
+                          .collect { case Right(rg) => rg }
+
+        entryStream.observe(rg => entryCrdt.transform(Lattice.merge(_, rg)))
 
         val emergencies = ReMqtt.topicstream("city/alert_state")
         val currentEmergency = emergencies.latest("")
