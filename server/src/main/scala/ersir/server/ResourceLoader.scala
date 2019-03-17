@@ -7,18 +7,18 @@ import akka.http.scaladsl.server.Route
 import ersir.server.ResourcePaths._
 
 object ResourcePaths {
-  val mappings: Map[String, String] = Map(
-    "jslib" -> "web-fastopt-library.js.gz",
-    "jsloader" -> "web-fastopt-loader.js.gz",
-    "js" -> "web-fastopt.js.gz",
+  val mappings: Seq[(String, String)] = Seq(
+    "web-fastopt-library.js" -> "web-fastopt-library.js.gz",
+    "web-fastopt-loader.js" -> "web-fastopt-loader.js.gz",
+    "web-fastopt.js" -> "web-fastopt.js.gz",
     "web-fastopt.js.map" -> "web-fastopt.js.map.gz",
-    "css" -> "style.css.gz",
+    "style.css" -> "style.css.gz",
     "style.css.map" -> "style.css.map.gz",
-    "sw" -> "serviceworker.js"
+    "serviceworker.js" -> "serviceworker.js"
   )
 
-  val css: List[String] = mappings.keysIterator.filter(_.startsWith("css")).toList
-  val js : List[String] = mappings.keysIterator.filter(_.startsWith("js")).toList
+  val css: List[String] = mappings.iterator.map(_._1).filter(_.endsWith("css")).toList
+  val js : List[String] = mappings.iterator.map(_._1).filter(_.endsWith("js")).toList
 }
 
 class WebResources(resourcePath: Path) {

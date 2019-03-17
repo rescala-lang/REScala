@@ -14,7 +14,9 @@ import ersir.server.{Server, ServerPages, WebResources}
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 
-class Services(relativeBasedir: Path, interface: String, port: Int) {
+class Services(val relativeBasedir: Path,
+               val interface: String,
+               val port: Int) {
 
 
   /* ====== paths ====== */

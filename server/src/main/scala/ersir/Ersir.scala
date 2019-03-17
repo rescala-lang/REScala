@@ -14,24 +14,17 @@ object Ersir {
                                                       metavar = "interface",
                                                       help = "Interface to bind the server on.")
                                   .withDefault("0")
-  val server    : Opts[Boolean] = Opts.flag("noserver", "Do not start the server.")
-                                  .orTrue
   val optBasedir: Opts[Path]    = Opts.option[Path]("basedir", short = "b", metavar = "directory",
                                                     help = "Base directory to store settings and data.")
                                   .withDefault(
                                     Paths.get("./"))
 
   val command: Command[Services] = Command(name = "ersir", header = "Start server!") {
-    val services = (optBasedir, interface, port).mapN(new Services(_, _, _))
-
-    (services, server).mapN {
-      (services, server) =>
-
-        if (server) {
-          services.startServer()
-        }
-        Log.Main.info(s"initialization done, connect on http://$interface:$port/")
-        services
+    (optBasedir, interface, port).mapN(new Services(_, _, _)).map { services =>
+      Log.Main.info(s"loading ressources from ${services.basepath}")
+      Log.Main.info(s"initialization done, connect on http://${services.interface}:${services.port}/")
+      services.startServer()
+      services
     }
   }
 
