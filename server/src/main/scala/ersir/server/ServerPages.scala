@@ -11,9 +11,6 @@ import scalatags.text.Frag
 
 class ServerPages() {
 
-  val resourceLoader = new ResourceLoader()
-
-
   def makeHtml(stuff: Frag*): Tag =
     html(
       head(
