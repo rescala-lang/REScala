@@ -1,13 +1,10 @@
 package ersir.server
 
 import akka.http.scaladsl.model._
-import io.circe.Encoder
-import io.circe.syntax._
 import scalatags.Text.Frag
-import scalatags.Text.attrs.{`for`, `type`, action, attr, cls, content, href, id, rel, src, title, value, name => attrname}
+import scalatags.Text.attrs.{`type`, attr, content, href, rel, src, title, name => attrname}
 import scalatags.Text.implicits.{Tag, stringAttr, stringFrag}
-import scalatags.Text.tags.{SeqFrag, body, div, fieldset, form, frag, h1, head, html, input, label, legend, link, meta, script}
-import scalatags.Text.tags2.section
+import scalatags.Text.tags.{SeqFrag, body, frag, head, html, link, meta, script}
 
 class ServerPages() {
 
@@ -38,33 +35,5 @@ class ServerPages() {
                                frag(ResourcePaths.js.map(js => script(src := js))))
 
   val landing: HttpResponse = htmlResponse(fullHtml)
-
-  def jsonResponse[T: Encoder](value: T): HttpResponse = HttpResponse(entity = HttpEntity(
-    ContentType(MediaTypes.`application/json`),
-    value.asJson.noSpaces))
-
-  def labelledInput(name: String, inputType: String = "text"): Frag =
-    div(cls := "pure-control-group",
-        label(name, `for` := name), input(id := name, `type` := inputType, attrname := name)
-    )
-
-
-  val toolsPage: Tag = makeHtml(
-    body(h1("Tools"),
-         makeToolForm("stop", Nil),
-         makeToolForm("import", Seq("id", "name", "path")),
-         makeToolForm("add", Seq("url"))
-    )
-  )
-
-  private def makeToolForm(formAction: String, inputs: Seq[String]) = {
-    section(
-      fieldset(legend(formAction.capitalize),
-               form(cls := "pure-form pure-form-aligned", action := formAction,
-                    frag(inputs.map(labelledInput(_)): _*),
-                    div(cls := "pure-controls",
-                        input(`type` := "submit", cls := "pure-button", value := formAction)))))
-  }
-  val toolsResponse: HttpResponse = htmlResponse(toolsPage)
 
 }
