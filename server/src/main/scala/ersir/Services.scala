@@ -1,6 +1,6 @@
 package ersir
 
-import java.nio.file.{Files, Path}
+import java.nio.file.Path
 import java.util.concurrent.{LinkedBlockingQueue, ThreadPoolExecutor, TimeUnit}
 
 import akka.actor.ActorSystem
@@ -9,45 +9,66 @@ import akka.http.scaladsl.server.{RouteResult, RoutingLog}
 import akka.http.scaladsl.settings.{ParserSettings, RoutingSettings}
 import akka.http.scaladsl.{Http, HttpExt}
 import akka.stream.ActorMaterializer
-import ersir.server.{Server, ServerPages}
+import com.typesafe.config.ConfigFactory.parseString
+import ersir.server.{Server, ServerPages, WebResources}
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 
-class Services(relativeBasedir: Path, relativeBlobdir: Path, relativePostdir: Path, interface: String, port: Int) {
+class Services(relativeBasedir: Path, interface: String, port: Int) {
 
 
   /* ====== paths ====== */
 
-  def create(p: Path): Path = {
-    Files.createDirectories(p)
-    p
-  }
-  val basepath           : Path = relativeBasedir.toAbsolutePath
-  val blobdir            : Path = basepath.resolve(relativeBlobdir)
-  val metarratorconfigdir: Path = basepath.resolve("metarrators")
-  val definitionsdir     : Path = basepath.resolve("definitions")
-  val exportdir          : Path = basepath.resolve("export")
-  val usersdir           : Path = basepath.resolve("users")
-  lazy val scribedir: Path = create(basepath.resolve("db3"))
-  lazy val cachedir : Path = create(basepath.resolve("cache"))
-
+  val basepath: Path = relativeBasedir.toAbsolutePath
 
   /* ====== execution ====== */
 
-  lazy val system                                     = ActorSystem()
-  lazy val materializer    : ActorMaterializer        = ActorMaterializer()(system)
-  lazy val http            : HttpExt                  = Http(system)
+  val actorConfig = """
+akka.http {
+	client {
+		user-agent-header = ersir/0
+		connecting-timeout = 30s
+		response-chunk-aggregation-limit = 32m
+		chunkless-streaming = off
+	}
+	host-connection-pool {
+		max-connections = 1
+		pipelining-limit = 1
+		max-retries = 3
+	}
+	parsing {
+		max-content-length = 32m
+		max-chunk-size = 32m
+		max-to-strict-bytes = 32m
+	}
+}
+akka {
+	log-dead-letters = 0
+	log-dead-letters-during-shutdown = off
+	log-config-on-start = off
+}
+"""
+
   lazy val executionContext: ExecutionContextExecutor =
     ExecutionContext.fromExecutor(new ThreadPoolExecutor(0, 1, 1L,
                                                          TimeUnit.SECONDS,
-                                                         new LinkedBlockingQueue[Runnable]))
+                                                         new LinkedBlockingQueue[Runnable]()))
+
+  lazy val system: ActorSystem = ActorSystem(name = "ersir",
+                                             config = Some(parseString(actorConfig)),
+                                             defaultExecutionContext = Some(executionContext))
+
+  lazy val materializer: ActorMaterializer = ActorMaterializer()(system)
+  lazy val http        : HttpExt           = Http(system)
+
 
   /* ====== main webserver ====== */
 
-  lazy val serverPages = new ServerPages()
-  lazy val server      = new Server(terminate = () => terminateServer(),
-                                    pages = serverPages,
-                                    system = system
+  lazy val webResources = new WebResources(basepath)
+  lazy val serverPages  = new ServerPages()
+  lazy val server       = new Server(pages = serverPages,
+                                     system = system,
+                                     webResources
   )
 
   lazy val serverBinding: Future[ServerBinding] = http.bindAndHandle(
@@ -66,8 +87,6 @@ class Services(relativeBasedir: Path, relativeBlobdir: Path, relativePostdir: Pa
       system.terminate()
     }(system.dispatcher)
   }
-
-
 
 
 }

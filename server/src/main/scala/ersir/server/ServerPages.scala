@@ -3,11 +3,11 @@ package ersir.server
 import akka.http.scaladsl.model._
 import io.circe.Encoder
 import io.circe.syntax._
+import scalatags.Text.Frag
 import scalatags.Text.attrs.{`for`, `type`, action, attr, cls, content, href, id, rel, src, title, value, name => attrname}
 import scalatags.Text.implicits.{Tag, stringAttr, stringFrag}
-import scalatags.Text.tags.{body, div, fieldset, form, frag, h1, head, html, input, label, legend, link, meta, script}
+import scalatags.Text.tags.{SeqFrag, body, div, fieldset, form, frag, h1, head, html, input, label, legend, link, meta, script}
 import scalatags.Text.tags2.section
-import scalatags.text.Frag
 
 class ServerPages() {
 
@@ -17,23 +17,25 @@ class ServerPages() {
         title := "EmergenCity RSS Reader",
         link(rel := "manifest", href := "static/manifest.json"),
         link(rel := "icon", href := "static/icon.png", attr("sizes") := "192x192"),
-        link(href := WebResources.css.href, rel := "stylesheet", `type` := MediaTypes.`text/css`.toString()),
+        SeqFrag(ResourcePaths.css.map { css =>
+          link(href := css,
+               rel := "stylesheet",
+               `type` := MediaTypes.`text/css`.toString())
+        }),
         meta(attrname := "viewport",
              content := "width=device-width, initial-scale=1, user-scalable=yes, minimal-ui"),
 //        script(raw("""if('serviceWorker' in navigator) {
 //  navigator.serviceWorker
 //           .register('sw')
 //           .then(function() { console.log('Service Worker Registered'); }); }"""))
-))(stuff: _*)
+        ))(stuff: _*)
 
   def htmlResponse(tag: Tag): HttpResponse = HttpResponse(entity = HttpEntity(
     ContentType(MediaTypes.`text/html`, HttpCharsets.`UTF-8`),
     "<!DOCTYPE html>" + tag.render))
 
   val fullHtml: Tag = makeHtml(body("if nothing happens, your javascript does not work"),
-                               script(src := WebResources.libJS.href),
-                               script(src := WebResources.loaderJs.href),
-                               script(src := WebResources.mainJs.href))
+                               frag(ResourcePaths.js.map(js => script(src := js))))
 
   val landing: HttpResponse = htmlResponse(fullHtml)
 
