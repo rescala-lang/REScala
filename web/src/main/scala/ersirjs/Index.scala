@@ -11,8 +11,8 @@ import scalatags.JsDom.tags2.{article, main}
 
 class Index(connected: Signal[String]) {
 
-  val textinput = textarea.render
-  val imageinput = input(`type` :="file", accept :="image/*", attr("capture") := "camera",
+  val textinput  = textarea.render
+  val imageinput = input(`type` := "file", accept := "image/*", attr("capture") := "camera",
                          "Take a picture").render
 
   val addPost = Events.fromCallback[Posting] { postCB =>
@@ -58,13 +58,16 @@ class Index(connected: Signal[String]) {
     }
   }
 
+  val reset = Events.fromCallback[UIEvent] {onclick := _}
+
 
   def gen(list: Signal[Postings]): JsDom.TypedTag[html.Body] = {
 
     val articles = list.map { itemsToDisplay =>
       SeqFrag(itemsToDisplay.value.value.map { emergentcy =>
         article(lang := "de",
-                if (emergentcy.img.isEmpty) frag() else div(cls := "pic", style := s"background-image: url(${emergentcy.img});"),
+                if (emergentcy.img.isEmpty) frag() else div(cls := "pic",
+                                                            style := s"background-image: url(${emergentcy.img});"),
                 div(
                   h1(stringFrag(emergentcy.title)),
                   stringFrag(emergentcy.desc)))
@@ -72,13 +75,16 @@ class Index(connected: Signal[String]) {
     }
 
     body(id := "index",
-           header(cls := connected, img(cls := "logo", src := "static/logo-small.svg"),
+         header(cls := connected, img(cls := "logo", src := "static/logo-small.svg"),
                 Icons.lamp),
-        article(cls := "addentry",
-                textinput,
-                div("Add an Image: ", imageinput),
-                button("Post", addPost.value)),
-         main(articles.asModifier))
+         article(cls := "controls",
+                 textinput,
+                 div("Add an Image: ", imageinput),
+                 button("Post", addPost.value)),
+         main(articles.asModifier),
+         article(cls := "controls",
+                 button("Reset", reset.value))
+    )
 
 
   }
