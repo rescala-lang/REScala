@@ -54,7 +54,7 @@ object ErsirJS {
     Events.foldAll(Epoche(RGOA(List.empty[Posting])))(state => Seq(
       mqttStream >> { rg => Lattice.merge[Postings](state, rg) },
       index.addPost.event >> {post => state.map(_.prepend(post))}
-    ))
+    ))(implicitly, "postings")
 
 
   postings.observe { crdt =>

@@ -31,7 +31,7 @@ class Server(pages: ServerPages,
   val serverSideEntries: Signal[Epoche[RGOA[Posting]]] =
     manualAddPostings.fold(Epoche(RGOA(List.empty[Posting]))) { (state, added) =>
       state.map(ps => Lattice.merge(ps, RGOA(added)))
-    }
+    }("postings", implicitly)
 
   val registry = new Registry
 
