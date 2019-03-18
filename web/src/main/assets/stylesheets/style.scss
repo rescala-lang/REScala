@@ -130,10 +130,16 @@ article {
 article.controls {
   display: flex;
   flex-direction: column;
+  justify-content: space-evenly;
+  text-align: left;
 
   textarea {
     flex-grow: 1;
   }
+}
+
+button, input {
+  padding: 0.5em;
 }
 
 
@@ -154,4 +160,8 @@ article.controls {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+button {
+  padding: 0.5em;
 }

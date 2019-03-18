@@ -81,7 +81,6 @@ object ErsirJS {
         }
       }
     }
-
   }
 
   def lociConnect(): Future[RemoteRef] = {

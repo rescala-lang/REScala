@@ -82,11 +82,13 @@ class Index(connected: Signal[String]) {
                 Icons.lamp),
          article(cls := "controls",
                  textinput,
-                 div("Add an Image: ", imageinput),
+                 imageinput,
                  button("Post", addPost.value)),
          main(articles.asModifier),
          article(cls := "controls",
-                 button("Reset", reset.value))
+                 button("Reset", reset.value),
+                 button("Fullscreen",
+                        onclick := {(_: UIEvent) => Fullscreen.toggleFullscreen()}))
     )
 
 
