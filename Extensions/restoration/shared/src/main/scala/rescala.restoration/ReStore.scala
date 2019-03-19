@@ -50,6 +50,14 @@ class ReStoringTurn(restore: ReStore, debuggerInterface: DebuggerInterface = Dis
     debuggerInterface.saveSnap(snapshotid)
   }
 
+
+  override def observerPhase(): Unit = {
+    println(s"starting observers in $this")
+    val start = System.nanoTime()
+    super.observerPhase()
+    println(s"${(System.nanoTime() - start) / 1000000d} for observers in $this")
+  }
+
   override protected[this] def register(reactive: ReSource[ReStoringStruct]): Unit = {
     debuggerInterface.saveNode(NodeID(reactive.state.nodeID.str),
                                reactive.state.nodeID.str,

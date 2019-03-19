@@ -49,8 +49,12 @@ class TodoApp[TH <: TaskHandling](val taskHandling: TH)(implicit val storingSche
     val removeAll =
       Events.fromCallback[UIEvent](cb => button("remove all done todos", onclick := cb))
 
-    val createTask = createTodo.map(str => maketask(TaskData(str)) )
+    var timings = 0d
 
+    val createTask = createTodo.map { str =>
+      timings = System.nanoTime()
+      maketask(TaskData(str))
+    }
 
     val tasksRGA = Events.foldAll(RGA(innerTasks)) { tasks =>
       Seq(
@@ -62,7 +66,13 @@ class TodoApp[TH <: TaskHandling](val taskHandling: TH)(implicit val storingSche
 
     LociDist.distribute(tasksRGA, Todolist.registry)(Binding("tasklist"))
 
-    val tasks = tasksRGA.map(_.value)
+    val tasks = tasksRGA.map(_.value.reverse)
+
+    tasks.map{ _ =>
+      (System.nanoTime() - timings) / 1000000d
+    }.observe{t =>
+      timings = 0d
+      println(s"$t between create and end")}
 
 
     val content = div(

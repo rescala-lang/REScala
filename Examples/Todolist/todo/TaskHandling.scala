@@ -65,6 +65,7 @@ class TaskHandling(implicit val storingScheduler: LocalStorageStore) {
                randomName: String = s"Task(${ThreadLocalRandom.current().nextLong().toHexString})")
   : Taskref = knownTasks.getOrElseUpdate(randomName, {
     println(s"make new task: $initial, $randomName")
+    val start = System.nanoTime()
 
 
 
@@ -112,6 +113,8 @@ class TaskHandling(implicit val storingScheduler: LocalStorageStore) {
                         removeButton.value
                       ),
                       editInput)
+
+    println(s"created task in ${(System.nanoTime() - start) / 1000000d}")
 
     new Taskref(randomName, listItem, taskData, initial, removeButton.event.map(_ => randomName))
   })
