@@ -43,14 +43,18 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
   final def +=(handler: T => Unit)(implicit ticket: CreationTicket[S]): Observe[S] = observe(handler)(ticket)
 
   /** Add an observer.
+    *
     * @return the resulting [[Observe]] can be used to remove the observer.
     * @usecase def observe(handler: T => Unit): Observe[S]
     * @group accessor */
-  final def observe(
-    onSuccess: T => Unit,
-    onFailure: Throwable => Unit = null
-  )(implicit ticket: CreationTicket[S]): Observe[S]
-  = Observe.strong(this, fireImmediately = false)(v => onSuccess(v.get), onFailure)
+  final def observe(onSuccess: T => Unit,
+                    onFailure: Throwable => Unit = null,
+                    removeIf: T => Boolean = _ => false)
+                   (implicit ticket: CreationTicket[S]): Observe[S]
+  = Observe.strong(this, fireImmediately = false)(
+    v => onSuccess(v.get),
+    onFailure,
+    v => removeIf(v.get))
 
   /** Uses a partial function `onFailure` to recover an error carried by the event into a value when returning Some(value),
     * or filters the error when returning None

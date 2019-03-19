@@ -3,7 +3,7 @@ package rescala.restoration
 import org.scalajs.dom
 import org.scalajs.dom.Storage
 import rescala.core.{REName, ReSerializable, Scheduler}
-import rescala.debuggable.{ChromeDebuggerInterface, NodeID}
+import rescala.debuggable.DisableDebugging
 import rescala.interface.RescalaInterfaceRequireSerializer
 import rescala.reactives.Source
 
@@ -76,13 +76,13 @@ class LocalStorageStore()
   }
 
   override def schedulerName: String = s"LocalStorage"
-  override protected def makeTurn(priorTurn: Option[ReStoringTurn]): ReStoringTurn = new ReStoringTurn(this, ChromeDebuggerInterface)
+  override protected def makeTurn(priorTurn: Option[ReStoringTurn]): ReStoringTurn = new ReStoringTurn(this, DisableDebugging)
 
 
   def registerSource[T: ClassTag](s: Source[ReStoringStruct, T], values: String*): Unit = {
-    val ct = implicitly[ClassTag[T]]
+    //val ct = implicitly[ClassTag[T]]
 
-    ChromeDebuggerInterface.sourceHint(NodeID(s.name.str), ct.runtimeClass.getSimpleName, values)
+    //ChromeDebuggerInterface.sourceHint(NodeID(s.name.str), ct.runtimeClass.getSimpleName, values)
   }
 
 }

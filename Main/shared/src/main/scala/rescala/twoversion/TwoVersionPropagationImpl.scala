@@ -14,8 +14,8 @@ trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropaga
 
   val token: Token = Token()
 
-  private val toCommit = scala.collection.mutable.ArrayBuffer[Committable[S]]()
-  private val observers = scala.collection.mutable.ArrayBuffer[() => Unit]()
+  val toCommit = scala.collection.mutable.ArrayBuffer[Committable[S]]()
+  val observers = scala.collection.mutable.ArrayBuffer[() => Unit]()
 
   override def schedule(commitable: Committable[S]): Unit = toCommit += commitable
 

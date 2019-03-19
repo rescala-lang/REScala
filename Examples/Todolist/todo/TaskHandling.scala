@@ -5,7 +5,7 @@ import java.util.concurrent.ThreadLocalRandom
 import io.circe.generic.auto._
 import io.circe.generic.semiauto
 import io.circe.{Decoder, Encoder}
-import loci.registry.Binding
+import loci.registry.{Binding, BindingBuilder}
 import loci.serializer.circe._
 import org.scalajs.dom.UIEvent
 import org.scalajs.dom.html.{Input, LI}
@@ -20,6 +20,7 @@ import scalatags.JsDom.all._
 
 import scala.Function.const
 import scala.collection.mutable
+import scala.concurrent.Future
 import scala.scalajs.js.timers.setTimeout
 
 case class TaskData(desc: String, done: Boolean = false) {
@@ -61,13 +62,14 @@ class TaskHandling(implicit val storingScheduler: LocalStorageStore) {
 
   val knownTasks: mutable.Map[String, Taskref] = mutable.Map()
 
+  val bindingBuilder: BindingBuilder[LastWriterWins[TaskData] => Unit] {
+    type RemoteCall = LastWriterWins[TaskData] => Future[Unit]
+  } = implicitly
+
   def maketask(initial: TaskData,
                randomName: String = s"Task(${ThreadLocalRandom.current().nextLong().toHexString})")
   : Taskref = knownTasks.getOrElseUpdate(randomName, {
     println(s"make new task: $initial, $randomName")
-    val start = System.nanoTime()
-
-
 
     val edittext = Events.fromCallback[UIEvent]{ inputChange =>
       input(`class` := "edit", `type` := "text", onchange := inputChange, onblur := inputChange)
@@ -95,7 +97,7 @@ class TaskHandling(implicit val storingScheduler: LocalStorageStore) {
       edittextStr >> {v => current.map(_.edit(v))}
     ))(implicitly, randomName)
 
-    LociDist.distribute(taskDataL, Todolist.registry)(Binding(randomName))
+    LociDist.distribute(taskDataL, Todolist.registry)(Binding(randomName)(bindingBuilder))
 
     val taskData = taskDataL.map(_.payload)
 
@@ -113,8 +115,6 @@ class TaskHandling(implicit val storingScheduler: LocalStorageStore) {
                         removeButton.value
                       ),
                       editInput)
-
-    println(s"created task in ${(System.nanoTime() - start) / 1000000d}")
 
     new Taskref(randomName, listItem, taskData, initial, removeButton.event.map(_ => randomName))
   })

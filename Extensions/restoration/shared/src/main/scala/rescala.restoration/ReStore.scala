@@ -1,8 +1,8 @@
 package rescala.restoration
 
 import rescala.core.Initializer.InitValues
-import rescala.core.{CreationTicket, Initializer, REName, ReSerializable, ReSource, Derived, Scheduler, Struct}
-import rescala.debuggable.{DebuggerInterface, DisableDebugging, NodeID}
+import rescala.core._
+import rescala.debuggable.{DebuggerInterface, DisableDebugging}
 import rescala.interface.RescalaInterfaceRequireSerializer
 import rescala.levelbased.{LevelBasedPropagation, LevelStateImpl, LevelStruct}
 import rescala.twoversion.TwoVersionScheduler
@@ -43,45 +43,12 @@ class ReStoringTurn(restore: ReStore, debuggerInterface: DebuggerInterface = Dis
     }
   }
 
-
-  override def commitPhase(): Unit = {
-    super.commitPhase()
-    val snapshotid = restore.commitCurrentSnapshot()
-    debuggerInterface.saveSnap(snapshotid)
-  }
-
-
-  override def observerPhase(): Unit = {
-    println(s"starting observers in $this")
-    val start = System.nanoTime()
-    super.observerPhase()
-    println(s"${(System.nanoTime() - start) / 1000000d} for observers in $this")
-  }
-
   override protected[this] def register(reactive: ReSource[ReStoringStruct]): Unit = {
-    debuggerInterface.saveNode(NodeID(reactive.state.nodeID.str),
-                               reactive.state.nodeID.str,
-                               reactive.state.current.toString)
     restore.registerResource(reactive)
   }
   override def dynamicDependencyInteraction(dependency: ReSource[ReStoringStruct]): Unit = ()
   override def releasePhase(): Unit = ()
   override def preparationPhase(initialWrites: Set[ReSource[ReStoringStruct]]): Unit = ()
-
-  // for debugging
-  override def writeState(pulsing: ReSource[ReStoringStruct])
-                         (value: pulsing.Value)
-  : Unit = {
-    debuggerInterface.saveNode(NodeID(pulsing.state.nodeID.str), pulsing.state.nodeID.str, value.toString)
-    super.writeState(pulsing)(value)
-  }
-
-  override private[rescala] def discover(node       : ReSource[ReStoringStruct],
-                                         addOutgoing: Derived[ReStoringStruct])
-  : Unit = {
-    debuggerInterface.saveEdge(NodeID(node.state.nodeID.str), NodeID(addOutgoing.state.nodeID.str))
-    super.discover(node, addOutgoing)
-  }
 }
 
 class ReStoringState[P, S <: Struct](storage: ReStore,

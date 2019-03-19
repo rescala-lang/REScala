@@ -32,7 +32,9 @@ case class LatticeSequence[A, VertexSet](vertices: VertexSet,
     }
   }
 
-  def addRight(position: Vertex, a: A): LatticeSequence[A, VertexSet] = addRight(position, Vertex.fresh(), a)
+  def addRight(position: Vertex, a: A): LatticeSequence[A, VertexSet] = {
+    addRight(position, Vertex.fresh(), a)
+  }
 
   /**
     * This method allows insertions of any type into the RGA. This is used to move the start and end nodes

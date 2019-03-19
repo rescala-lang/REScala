@@ -6,7 +6,6 @@ import loci.communicator.experimental.webrtc.WebRTC.ConnectorFactory
 import loci.communicator.experimental.webrtc._
 import loci.registry.Registry
 import org.scalajs.dom.{UIEvent, document}
-import rescala.debuggable.ChromeDebuggerInterface
 import rescala.lattices.sequences.RGA.RGA
 import rescala.restoration.LocalStorageStore
 import scalatags.JsDom.all._
@@ -30,17 +29,11 @@ object Todolist {
 
   def main(args: Array[String]): Unit = {
 
-    ChromeDebuggerInterface.setup(storingEngine)
-
     val todores = todoApp.getContents()
-
-
 
     document.body.replaceChild(todores.div.render, document.body.firstElementChild)
     document.body.appendChild(webrtchandlingArea.render)
 
-
-    ChromeDebuggerInterface.finishedLoading()
   }
 
 

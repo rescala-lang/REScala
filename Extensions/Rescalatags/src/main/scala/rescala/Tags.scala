@@ -12,6 +12,18 @@ import scala.scalajs.js
 
 object Tags {
 
+  def isInDocumentHack(elem: dom.Element): Any => Boolean = {
+    var second = false
+    _ => {
+      if (second) {
+        !js.Dynamic.global.document.contains(elem).asInstanceOf[Boolean]
+      } else {
+        second = true
+        false
+      }
+    }
+  }
+
   implicit class SignalToScalatags[S <: Struct](val signal: Signal[Frag, S]) extends AnyVal {
     /**
       * converts a Signal of a scalatags Tag to a scalatags Frag which automatically reflects changes to the signal in the dom
@@ -33,7 +45,7 @@ object Tags {
           parent.appendChild(nodes)
         }
         else {
-          println(s"Warning, added $rendered to dom AGAIN, this is experimental")
+          //println(s"Warning, added $rendered to dom AGAIN, this is experimental")
           observe.remove()(engine)
           observe = null
           replaceAll(parent, Nil, currentNodes)
@@ -50,7 +62,8 @@ object Tags {
             }
             currentNodes = news
           },
-           t => throw t)(init)
+           t => throw t,
+           isInDocumentHack(parent))(init)
       }
     }
   }
@@ -61,7 +74,8 @@ object Tags {
     def apply(t: dom.Element, a: Attr, signal: Sig[T]): Unit = {
       signal.observe(
          onValue =  value => implicitly[AttrValue[T]].apply(t, a, value),
-         onError = e => println(s"error on $e"))
+         onError = e => println(s"error on $e"),
+         removeIf = isInDocumentHack(t))
     }
   }
 
@@ -74,7 +88,9 @@ object Tags {
   def genericReactiveStyleValue[T: StyleValue, S <: Struct, Sig[T2] <: Signal[T2, S]](implicit engine: Scheduler[S])
   : StyleValue[Sig[T]] = new StyleValue[Sig[T]] {
     def apply(t: dom.Element, s: Style, signal: Sig[T]): Unit = {
-      signal.observe { value => implicitly[StyleValue[T]].apply(t, s, value) }
+      signal.observe ({ value =>
+        implicitly[StyleValue[T]].apply(t, s, value)
+      }, removeIf = isInDocumentHack(t))
     }
   }
 

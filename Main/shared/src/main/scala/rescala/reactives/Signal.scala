@@ -48,9 +48,10 @@ trait Signal[+A, S <: Struct] extends ReSource[S] with Interp[A, S] with Disconn
     *
     * @group accessor */
   final def observe(onValue: A => Unit,
-                    onError: Throwable => Unit = null)
+                    onError: Throwable => Unit = null,
+                    removeIf: A => Boolean = _ => false)
                    (implicit ticket: CreationTicket[S])
-  : Observe[S] = Observe.strong(this, fireImmediately = true)(onValue, onError)
+  : Observe[S] = Observe.strong(this, fireImmediately = true)(onValue, onError, removeIf)
 
   /** Uses a partial function `onFailure` to recover an error carried by the event into a value. */
   @cutOutOfUserComputation
