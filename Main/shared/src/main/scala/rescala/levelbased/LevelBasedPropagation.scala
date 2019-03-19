@@ -12,17 +12,18 @@ import scala.collection.mutable.ArrayBuffer
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
 trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[S] with LevelQueue.Evaluator[S] {
+
+  /** Stores all active reactives in case we create more later and need to reevaluate them. */
   private val _propagating: ArrayBuffer[ReSource[S]] = ArrayBuffer[ReSource[S]]()
 
   val levelQueue = new LevelQueue[S](this)
 
-  override def clear(): Unit = {
-    super.clear()
-    _propagating.clear()
-  }
-
-  val reevaluationTicket: ReevTicket[_, S] = makeDynamicReevaluationTicket(null)
-
+  /** Store a single resettable ticket for the whole evaluation.
+    * This optimization drastically reduces garbage generation of a relatively expensive object */
+  private val reevaluationTicket: ReevTicket[_, S] = makeDynamicReevaluationTicket(null)
+  /** Overrides [[LevelQueue.Evaluator]], this is essentially a callback,
+    * but inlined for better optimization.
+    * TODO: Benchmark if this actually makes a difference */
   override def evaluate(r: Derived[S]): Unit = evaluateIn(r)(reevaluationTicket.reset(r.state.base(token)))
   def evaluateIn(head: Derived[S])(dt: ReevTicket[head.Value, S]): Unit = {
     val reevRes = head.reevaluate(dt)
