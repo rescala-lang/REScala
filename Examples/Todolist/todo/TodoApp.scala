@@ -1,13 +1,14 @@
 package todo
 
 import io.circe.generic.auto._
+import loci.registry.Binding
 import loci.serializer.circe._
 import org.scalajs.dom.UIEvent
 import org.scalajs.dom.html.{Div, Input}
 import rescala.Tags._
+import rescala.distributables.LociDist
 import rescala.lattices.sequences.RGA
 import rescala.lattices.sequences.RGA.RGA
-import rescala.locidistribute.LociDist
 import rescala.restoration.LocalStorageStore
 import rescala.restoration.ReCirce._
 import scalatags.JsDom
@@ -59,12 +60,9 @@ class TodoApp[TH <: TaskHandling](val taskHandling: TH)(implicit val storingSche
         )
     }(implicitly, "tasklist")
 
-    LociDist.distribute(tasksRGA, Todolist.registry, storingScheduler.scheduler)
+    LociDist.distribute(tasksRGA, Todolist.registry)(Binding("tasklist"))
 
-    val tasks = tasksRGA
-      .map(v => {println(s"task rgoa: $v");v})
-      .map(_.value)
-      .map(v => {println(s"task rgoa values: $v");v})
+    val tasks = tasksRGA.map(_.value)
 
 
     val content = div(

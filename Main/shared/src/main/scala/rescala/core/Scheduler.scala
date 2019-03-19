@@ -22,3 +22,7 @@ trait Scheduler[S <: Struct] {
   def schedulerName: String
   override def toString: String = s"Scheduler($schedulerName)"
 }
+
+object Scheduler {
+  def apply[S <: Struct](implicit scheduler: Scheduler[S]): Scheduler[S] = scheduler
+}

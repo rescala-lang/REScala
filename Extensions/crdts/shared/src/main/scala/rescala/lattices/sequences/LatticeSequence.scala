@@ -118,7 +118,6 @@ object LatticeSequence {
       rga.copy(vertices = rga.vertices.remove(v.toSet), values = rga.values -- v)
     def filter(keep: A => Boolean): RGA[A] = {
       val removed = rga.values.collect { case (k, v) if !keep(v) => k }
-      println(s"removing $removed")
       remove(removed.toList)
     }
   }

@@ -5,13 +5,14 @@ import java.util.concurrent.ThreadLocalRandom
 import io.circe.generic.auto._
 import io.circe.generic.semiauto
 import io.circe.{Decoder, Encoder}
+import loci.registry.Binding
 import loci.serializer.circe._
 import org.scalajs.dom.UIEvent
 import org.scalajs.dom.html.{Input, LI}
 import rescala.Tags._
 import rescala.core.ReSerializable
+import rescala.distributables.LociDist
 import rescala.lattices.primitives.LastWriterWins
-import rescala.locidistribute.LociDist
 import rescala.restoration.LocalStorageStore
 import rescala.restoration.ReCirce._
 import scalatags.JsDom.TypedTag
@@ -93,7 +94,7 @@ class TaskHandling(implicit val storingScheduler: LocalStorageStore) {
       edittextStr >> {v => current.map(_.edit(v))}
     ))(implicitly, randomName)
 
-    LociDist.distribute(taskDataL, Todolist.registry, Todolist.storingEngine.scheduler)
+    LociDist.distribute(taskDataL, Todolist.registry)(Binding(randomName))
 
     val taskData = taskDataL.map(_.payload)
 
