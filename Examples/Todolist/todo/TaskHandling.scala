@@ -67,9 +67,9 @@ class TaskHandling(implicit val storingScheduler: LocalStorageStore) {
   } = implicitly
 
   def maketask(initial: TaskData,
-               randomName: String = s"Task(${ThreadLocalRandom.current().nextLong().toHexString})")
-  : Taskref = knownTasks.getOrElseUpdate(randomName, {
-    println(s"make new task: $initial, $randomName")
+               uniqueId: String = s"Task(${ThreadLocalRandom.current().nextLong().toHexString})")
+  : Taskref = knownTasks.getOrElseUpdate(uniqueId, {
+    println(s"make new task: $initial, $uniqueId")
 
     val edittext = Events.fromCallback[UIEvent]{ inputChange =>
       input(`class` := "edit", `type` := "text", onchange := inputChange, onblur := inputChange)
@@ -95,9 +95,9 @@ class TaskHandling(implicit val storingScheduler: LocalStorageStore) {
     val taskDataL = Events.foldAll(LastWriterWins(initial))(current => Seq(
       doneEv >> {_ => current.map(_.toggle())},
       edittextStr >> {v => current.map(_.edit(v))}
-    ))(implicitly, randomName)
+    ))(implicitly, uniqueId)
 
-    LociDist.distribute(taskDataL, Todolist.registry)(Binding(randomName)(bindingBuilder))
+    LociDist.distribute(taskDataL, Todolist.registry)(Binding(uniqueId)(bindingBuilder))
 
     val taskData = taskDataL.map(_.payload)
 
@@ -116,7 +116,7 @@ class TaskHandling(implicit val storingScheduler: LocalStorageStore) {
                       ),
                       editInput)
 
-    new Taskref(randomName, listItem, taskData, initial, removeButton.event.map(_ => randomName))
+    new Taskref(uniqueId, listItem, taskData, initial, removeButton.event.map(_ => uniqueId))
   })
 
 }
