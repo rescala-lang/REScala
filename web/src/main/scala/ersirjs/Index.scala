@@ -78,7 +78,9 @@ class Index(connected: Signal[String]) {
     }
 
     body(id := "index",
-         header(cls := connected, img(cls := "logo", src := "static/logo-small.svg"),
+         header(cls := connected,
+                Icons.disconnected,
+                img(cls := "logo", src := "static/logo-small.svg"),
                 Icons.lamp),
          article(cls := "controls",
                  textinput,

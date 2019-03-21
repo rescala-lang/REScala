@@ -64,6 +64,25 @@ header > svg {
   height: 64px;
 }
 
+svg:first-child {
+  transition: 1s;
+
+  animation: blink-animation 1s linear alternate infinite;
+  path {
+    fill: #f23834;
+  }
+}
+
+@keyframes blink-animation {
+  to {
+    opacity: 0;
+  }
+}
+
+.hideConnectionIssues > svg:first-child {
+  opacity: 0;
+}
+
 header > * {
   margin: 0 1em 0 1em;
 }

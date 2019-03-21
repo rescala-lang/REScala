@@ -38,10 +38,18 @@ object ErsirJS {
   val emergencies      = ReMqtt.topicstream("city/alert_state")
   val currentEmergency = emergencies.latest("")
 
-  val connectClass = ReMqtt.connected.map {
+  val connectionSignal = Var(false)
+
+  val mqtt = ReMqtt.connected.map {
     case true => "connected"
     case _    => ""
   }
+
+  val connectClass = Signal {
+    val internet = connectionSignal.value
+    s"${mqtt.value}${if(internet) " hideConnectionIssues" else ""}"
+  }
+
 
   val index = new Index(connectClass)
 
@@ -92,9 +100,9 @@ object ErsirJS {
     val connection: Future[RemoteRef] = registry.connect(WS(wsUri))
     Log.debug(s"connecting loci to $wsUri …")
     connection.foreach { remote =>
-      Notifications.send(s"connected to server")
+      connectionSignal.set(true)
       remote.disconnected.foreach { _ =>
-        Notifications.send(s"disconnected from server")
+        connectionSignal.set(false)
         Log.debug(s"loci reconnect")
       }
     }
