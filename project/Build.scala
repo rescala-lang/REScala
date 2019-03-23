@@ -9,12 +9,12 @@ import sbt._
 object Settings {
 
   val scalaVersion_211 = Def.settings(
-    ThisBuild / scalaVersion := "2.11.12",
-    ThisBuild / scalacOptions ++= tpolecatsScalacOptions
+    scalaVersion := "2.11.12",
+    scalacOptions ++= tpolecatsScalacOptions
   )
   val scalaVersion_212 = Def.settings(
-    ThisBuild / scalaVersion := "2.12.8",
-    ThisBuild / scalacOptions ++= tpolecatsScalacOptions
+    scalaVersion := "2.12.8",
+    scalacOptions ++= tpolecatsScalacOptions
   )
 
   lazy val tpolecatsScalacOptions = Seq(
