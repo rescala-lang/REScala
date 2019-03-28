@@ -13,18 +13,22 @@ install:
       }
   - cmd: SET PATH=C:\sbt\sbt\bin;%JAVA_HOME%\bin;%PATH%
   - cmd: SET SBT_OPTS=-Xmx4g
+  - cmd: SET IVY_CACHE_DIR=C:\ivy/
+  - cmd: echo %USERPROFILE%
+
 build_script:
   - sbt clean +compile
 test_script:
   - sbt +test
 cache:
+  - C:\ivy\
   - C:\sbt\
   - C:\Users\appveyor\.m2
   - C:\Users\appveyor\.ivy2
 notifications:
   - provider: Webhook
-    url: https://webhooks.gitter.im/e/4aa4132de72201e17062
+    url: https://webhooks.gitter.im/e/c1185511cfd69e5a58a1
     method: POST
-    on_build_success: false
+    on_build_success: true
     on_build_failure: true
-    on_build_status_changed: false
+    on_build_status_changed: true
