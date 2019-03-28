@@ -3,7 +3,7 @@ package ersir
 import akka.http.scaladsl.model._
 import scalatags.Text.Frag
 import scalatags.Text.attrs.{`type`, attr, content, href, rel, src, title, name => attrname}
-import scalatags.Text.implicits.{Tag, stringAttr, stringFrag}
+import scalatags.Text.implicits.{Tag, stringAttr, stringFrag, raw}
 import scalatags.Text.tags.{SeqFrag, body, frag, head, html, link, meta, script}
 
 class ServerPages() {
@@ -21,10 +21,10 @@ class ServerPages() {
         }),
         meta(attrname := "viewport",
              content := "width=device-width, initial-scale=1, user-scalable=yes, minimal-ui"),
-//        script(raw("""if('serviceWorker' in navigator) {
-//  navigator.serviceWorker
-//           .register('sw')
-//           .then(function() { console.log('Service Worker Registered'); }); }"""))
+  //      script(raw("""if('serviceWorker' in navigator) {
+  //navigator.serviceWorker
+  //         .register('serviceworker.js')
+  //         .then(function() { console.log('Service Worker Registered'); }); }"""))
         ))(stuff: _*)
 
   def htmlResponse(tag: Tag): HttpResponse = HttpResponse(entity = HttpEntity(

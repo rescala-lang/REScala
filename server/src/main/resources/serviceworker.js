@@ -3,7 +3,10 @@ self.addEventListener('install', function(e) {
         caches.open('EmergenCity').then(function(cache) {
             return cache.addAll([
                 '',
-                'static/logo-small.svg'
+                'static/logo-small.svg',
+                'web-fastopt-library.js',
+                'web-fastopt-loader.js',
+                'web-fastopt.js'
             ]);
         })
     );
