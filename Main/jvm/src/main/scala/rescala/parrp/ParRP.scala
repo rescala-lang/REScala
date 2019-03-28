@@ -109,7 +109,7 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
       owner.turn.drop(source, sink)
       if (source.state.lock.isWriteLock) {
         key.lockKeychain(_.removeFallthrough(owner))
-        if (!sink.state.incoming().exists{ inc =>
+        if (!sink.state.incoming.exists{ inc =>
           val lock = inc.state.lock
           lock.isOwner(owner) && lock.isWriteLock
         }) owner.turn.forget(sink)

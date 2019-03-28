@@ -51,8 +51,7 @@ object Tags {
           replaceAll(parent, Nil, currentNodes)
         }
 
-
-        observe = Observe.weak(rendered, fireImmediately = false)(
+        observe = Observe.strong(rendered, fireImmediately = false)(
           { newTag =>
             val newNode = newTag.render
             val news = nodeList(newNode)

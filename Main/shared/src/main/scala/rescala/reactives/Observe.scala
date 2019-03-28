@@ -16,32 +16,26 @@ trait Observe[S <: Struct] {
 }
 
 object Observe {
-  def dereferenceAllStrongObserversWARNINGonlyUseThisIfYouKnowWhatYouAreDoing(): Unit = strongObserveReferences.clear()
 
-  private val strongObserveReferences = scala.collection.mutable.HashSet[Observe[_]]()
-
-  private abstract class Obs[T, S <: Struct]
-  (bud: S#State[Pulse[Nothing], S],
-   dependency: Interp[T, S],
-   fun: T => Unit,
-   fail: Throwable => Unit,
-   name: REName,
-   removeIf: T => Boolean
-  )
-    extends Base[Pulse[Nothing], S](bud, name) with Derived[S] with Observe[S] {
+  private abstract class Obs[T, S <: Struct](state: S#State[Pulse[Nothing], S],
+                                             dependency: Interp[T, S],
+                                             fun: T => Unit,
+                                             fail: Throwable => Unit,
+                                             name: REName,
+                                             removeIf: T => Boolean)
+    extends Base[Pulse[Nothing], S](state, name) with Derived[S] with Observe[S] {
     this: DisconnectableImpl[S] =>
 
     override protected[rescala] def reevaluate(dt: ReIn): Rout = {
       try {
         val v = dt.dependStatic(dependency)
         if (removeIf(v)) {
-          strongObserveReferences.synchronized(strongObserveReferences.remove(this))
           dt.trackDependencies(Set.empty)
         }
         else dt.withEffect(() => fun(v))
       } catch {
         case EmptySignalControlThrowable => dt
-        case NonFatal(t) =>
+        case NonFatal(t)                 =>
           if (fail eq null) {
             throw new UnhandledFailureException(this, t)
           }
@@ -50,31 +44,19 @@ object Observe {
     }
     override def remove()(implicit fac: Scheduler[S]): Unit = {
       disconnect()
-      strongObserveReferences.synchronized(strongObserveReferences.remove(this))
     }
   }
 
-  def weak[T, S <: Struct](dependency: Interp[T, S],
-                           fireImmediately: Boolean)
-                          (fun: T => Unit,
-                           fail: Throwable => Unit,
-                           removeIf: T => Boolean
-                          )
-                          (implicit ct: CreationTicket[S]): Observe[S] = {
-    ct.create[Pulse[Nothing], Obs[T, S]](Set(dependency),
-      Initializer.Observer, fireImmediately) { state =>
-      new Obs[T, S](state, dependency, fun, fail, ct.rename, removeIf) with DisconnectableImpl[S]
-    }
-  }
-
-  def strong[T, S <: Struct](dependency: Interp[T, S], fireImmediately: Boolean)
+  def strong[T, S <: Struct](dependency: Interp[T, S],
+                             fireImmediately: Boolean)
                             (fun: T => Unit,
                              fail: Throwable => Unit,
                              removeIf: T => Boolean)
-                            (implicit maybe: CreationTicket[S]): Observe[S] = {
-    val obs = weak(dependency, fireImmediately)(fun, fail, removeIf)
-    strongObserveReferences.synchronized(strongObserveReferences.add(obs))
-    obs
+                            (implicit ct: CreationTicket[S]): Observe[S] = {
+    ct.create[Pulse[Nothing], Obs[T, S]](Set(dependency),
+                                         Initializer.Observer, fireImmediately) { state =>
+      new Obs[T, S](state, dependency, fun, fail, ct.rename, removeIf) with DisconnectableImpl[S]
+    }
   }
 
 }

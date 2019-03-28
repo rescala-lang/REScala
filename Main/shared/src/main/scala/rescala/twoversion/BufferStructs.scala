@@ -1,7 +1,8 @@
 package rescala.twoversion
 
 import rescala.core.Initializer.InitValues
-import rescala.core.{ReSource, Derived, Struct}
+import rescala.core.{Derived, ReSource, Struct}
+import scala.collection.mutable
 
 import scala.language.higherKinds
 
@@ -26,8 +27,8 @@ trait GraphState[S <: Struct] {
   def incoming(): Set[ReSource[S]]
   def updateIncoming(reactives: Set[ReSource[S]]): Unit
   def outgoing(): Iterable[Derived[S]]
-  def discover(reactive: Derived[S]): Unit
-  def drop(reactive: Derived[S]): Unit
+  def discoveredBy(reactive: Derived[S]): Unit
+  def droppedBy(reactive: Derived[S]): Unit
 }
 
 /** State that implements both the buffered pulse and the buffering capabilities itself. */
@@ -56,17 +57,16 @@ class BufferedValueState[V, S <: Struct](ip: InitValues[V]) extends ReadWriteVal
   }
 }
 
-/**  Implementation of a struct with graph functionality and a buffered pulse storage.  */
-abstract class GraphStateImpl[P, S <: Struct](ip: InitValues[P]) extends BufferedValueState[P, S](ip) with GraphState[S] {
-  protected var _incoming: Set[ReSource[S]]                                    = Set.empty
-  protected var _outgoing: scala.collection.mutable.Map[Derived[S], None.type] = rescala.util.WeakHashMap.empty
+/** Implementation of a struct with graph functionality and a buffered pulse storage.  */
+abstract class GraphStateImpl[P, S <: Struct](ip: InitValues[P])
+  extends BufferedValueState[P, S](ip) with GraphState[S] {
+  var incoming : Set[ReSource[S]]                   = Set.empty
+  protected var _outgoing: mutable.Map[Derived[S], None.type] = mutable.HashMap()
 
-
-  override def incoming(): Set[ReSource[S]] = _incoming
-  override def updateIncoming(reactives: Set[ReSource[S]]): Unit = _incoming = reactives
+  override def updateIncoming(reactives: Set[ReSource[S]]): Unit = incoming = reactives
   override def outgoing(): Iterable[Derived[S]] = _outgoing.keys
-  override def discover(reactive: Derived[S]): Unit = _outgoing.put(reactive, None)
-  override def drop(reactive: Derived[S]): Unit = _outgoing -= reactive
+  override def discoveredBy(reactive: Derived[S]): Unit = _outgoing.put(reactive, None)
+  override def droppedBy(reactive: Derived[S]): Unit = _outgoing -= reactive
 }
 
 

@@ -51,8 +51,8 @@ trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropaga
     writeIndeps(node, updated)
   }
 
-  private[rescala] def discover(node: ReSource[S], addOutgoing: Derived[S]): Unit = node.state.discover(addOutgoing)
-  private[rescala] def drop(node: ReSource[S], removeOutgoing: Derived[S]): Unit = node.state.drop(removeOutgoing)
+  private[rescala] def discover(source: ReSource[S], sink: Derived[S]): Unit = source.state.discoveredBy(sink)
+  private[rescala] def drop(source: ReSource[S], sink: Derived[S]): Unit = source.state.droppedBy(sink)
 
   private[rescala] def writeIndeps(node: Derived[S], indepsAfter: Set[ReSource[S]]): Unit = node.state.updateIncoming(indepsAfter)
 

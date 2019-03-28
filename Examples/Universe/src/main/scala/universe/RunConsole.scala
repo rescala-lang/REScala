@@ -2,8 +2,6 @@ package universe
 
 import java.nio.file.{Files, Paths, StandardOpenOption}
 
-import rescala.reactives.Observe
-
 
 object RunConsole {
   def main(args: Array[String]): Unit = {
@@ -23,7 +21,9 @@ object RunConsole {
     for (repetition <- 0 to repetitions; threads <- threadCounts) {
       println(s"rep: $repetition, threads: $threads")
 
-      Observe.dereferenceAllStrongObserversWARNINGonlyUseThisIfYouKnowWhatYouAreDoing()
+      println(s"WARN: not sure why the next call was here, not sure what removing it broke, " +
+              s"but observers … work differently now")
+      //Observe.dereferenceAllStrongObserversWARNINGonlyUseThisIfYouKnowWhatYouAreDoing()
       System.gc()
       Globals.setParallelism(threads)
 
@@ -58,7 +58,9 @@ object RunPrinting {
     val height = 20
     val repetitions = 10
 
-    Observe.dereferenceAllStrongObserversWARNINGonlyUseThisIfYouKnowWhatYouAreDoing()
+    println(s"WARN: not sure why the next call was here, not sure what removing it broke, " +
+            s"but observers … work differently now")
+    // Observe.dereferenceAllStrongObserversWARNINGonlyUseThisIfYouKnowWhatYouAreDoing()
     System.gc()
     Globals.setParallelism(1)
 
