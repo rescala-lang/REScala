@@ -4,7 +4,6 @@ import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 import Settings._
 import Dependencies._
 
-
 ThisBuild / incOptions := (ThisBuild / incOptions).value.withLogRecompileOnMacro(false)
 cfg.noPublish
 
@@ -236,13 +235,11 @@ lazy val cfg = new {
 
   val base = List(
     organization := "de.tuda.stg",
-    scalaVersion := version_212,
-    crossScalaVersions := Seq(version_211, version_212),
-    baseScalac,
+        baseScalac,
     // scaladoc
     autoAPIMappings := true,
     Compile / doc / scalacOptions += "-groups",
-  )
+  ) ++ scalaVersion_212
 
   val test = List(
     testOptions in Test += Tests.Argument("-oICN"),
@@ -310,7 +307,7 @@ lazy val cfg = new {
 //    "-Xdisable-assertions"
   )
 
-  lazy val strictScalac = Compile / compile / scalacOptions ++= strictScalacOptions
+  lazy val strictScalac = strictCompile
 
   lazy val snapshotAssertions = scalacOptions ++= (
     if (!version.value.endsWith("-SNAPSHOT")) List("-Xdisable-assertions", "-Xelide-below", "9999999")

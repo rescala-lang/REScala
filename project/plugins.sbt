@@ -1,7 +1,7 @@
 /** This file is shared between multiple projects
   * and may contain unused dependencies */
 
-// scalajs 
+// scalajs
 addSbtPlugin("ch.epfl.scala" % "sbt-scalajs-bundler" % "0.14.0")
 addSbtPlugin("org.irundaia.sbt" % "sbt-sassify" % "1.4.12")
 addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "0.6.0")
