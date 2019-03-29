@@ -32,7 +32,7 @@ trait GraphState[S <: Struct] {
 }
 
 /** State that implements both the buffered pulse and the buffering capabilities itself. */
-class BufferedValueState[V, S <: Struct](ip: InitValues[V]) extends ReadWriteValue[V, S] with Committable[S] {
+class BufferedValueState[V, S <: Struct](ip: InitValues[V]) extends ReadWriteValue[V, S] {
   var current: V = ip.initialValue
   protected var owner: Token = null
   private var update: V = _
