@@ -12,8 +12,8 @@ trait LevelBasedSchedulers {
   private[rescala] class SimpleNoLock extends LevelBasedPropagation[LevelStructImpl] {
     override protected def makeDerivedStructState[P](ip: InitValues[P],
                                                      creationTicket: CreationTicket[LevelStructImpl])
-    : LevelStructImpl#State[P, LevelStructImpl] = {
-      new LevelStateImpl(ip)
+    : LevelState[P, LevelStructImpl] = {
+      new LevelState(ip)
     }
     override def releasePhase(): Unit = ()
     override def preparationPhase(initialWrites: Set[ReSource[LevelStructImpl]]): Unit = {}

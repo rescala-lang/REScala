@@ -2,7 +2,7 @@ package rescala.parrp
 
 import rescala.core.Initializer.InitValues
 import rescala.core._
-import rescala.levelbased.{LevelBasedPropagation, LevelStruct, LevelStateImpl}
+import rescala.levelbased.{LevelBasedPropagation, LevelStruct, LevelState}
 import rescala.locking._
 
 trait ParRPInterTurn {
@@ -17,7 +17,7 @@ trait ParRPInterTurn {
 }
 
 class ParRPState[V, S <: Struct](ip: InitValues[V], val lock: TurnLock[ParRPInterTurn])
-  extends LevelStateImpl[V, S](ip)
+  extends LevelState[V, S](ip)
 
 
 class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropagation[ParRP] with ParRPInterTurn with LevelStruct {

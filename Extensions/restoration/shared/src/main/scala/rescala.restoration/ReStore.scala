@@ -4,7 +4,7 @@ import rescala.core.Initializer.InitValues
 import rescala.core._
 import rescala.debuggable.{DebuggerInterface, DisableDebugging}
 import rescala.interface.RescalaInterfaceRequireSerializer
-import rescala.levelbased.{LevelBasedPropagation, LevelStateImpl, LevelStruct}
+import rescala.levelbased.{LevelBasedPropagation, LevelState, LevelStruct}
 import rescala.twoversion.TwoVersionScheduler
 
 import scala.collection.mutable
@@ -55,7 +55,7 @@ class ReStoringState[P, S <: Struct](storage: ReStore,
                                      val nodeID: REName,
                                      serializable: ReSerializable[P],
                                      initialVal: InitValues[P])
-  extends LevelStateImpl[P, S](initialVal) {
+  extends LevelState[P, S](initialVal) {
   override def commit(): Unit = {
     super.commit()
     if (storage != null) {

@@ -34,7 +34,7 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
     if (redo) {
       levelQueue.enqueue(minimalLevel)(head)
     } else {
-      dependencies.foreach(commitDependencyDiff(head, head.state.incoming()))
+      dependencies.foreach(commitDependencyDiff(head, head.state.incoming))
       reevRes.forValue(writeState(head))
       reevRes.forEffect(observe)
       if (reevRes.propagate) enqueueOutgoing(head, minimalLevel)
