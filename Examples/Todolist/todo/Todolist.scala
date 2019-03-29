@@ -71,13 +71,13 @@ object Todolist {
         case None     => // we are client
           val res = webrtcIntermediate(WebRTC.answer())
           res.session.foreach(showSession)
+          registry.connect(res.connector).foreach(_ => connected())
           res.connector
         case Some(ss) => // we are server
           pendingServer = None
           ss.connector
       }
       connector.set(cs)
-      registry.connect(connector).foreach(_ => connected())
     })
 
     section(hb, cb, renderedPre, renderedTa)
