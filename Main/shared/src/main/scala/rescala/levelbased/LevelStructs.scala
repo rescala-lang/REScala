@@ -8,7 +8,7 @@ import scala.language.higherKinds
 
 
 trait LevelStruct extends TwoVersionStruct {
-  override type State[P, S <: Struct] <: LevelState[P, S] with GraphState[S] with ReadWriteValue[P, S]
+  override type State[P, S <: Struct] <: LevelState[P, S]
 }
 
 
@@ -18,7 +18,7 @@ trait LevelStructImpl extends LevelStruct {
 
 
 class LevelState[P, S <: Struct](ip: InitValues[P])
-  extends GraphStateImpl[P, S](ip) {
+  extends TwoVersionState[P, S](ip) {
 
   private var _level: Int = 0
 
