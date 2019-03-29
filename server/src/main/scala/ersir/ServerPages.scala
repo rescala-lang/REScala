@@ -3,7 +3,7 @@ package ersir
 import akka.http.scaladsl.model._
 import scalatags.Text.Frag
 import scalatags.Text.attrs.{`type`, attr, content, href, rel, src, title, name => attrname}
-import scalatags.Text.implicits.{Tag, stringAttr, stringFrag, raw}
+import scalatags.Text.implicits.{Tag, stringAttr, stringFrag}
 import scalatags.Text.tags.{SeqFrag, body, frag, head, html, link, meta, script}
 
 class ServerPages() {

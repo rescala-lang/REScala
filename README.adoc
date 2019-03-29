@@ -61,3 +61,13 @@ Data urls have the format: `data:image/png;base64,base64dataHere`
 
 The application chatters on the MQTT topic `ersir/entries`.
 The Data is a JSON object containing all interesting applicaiton state.
+
+
+== Installing as a Web App
+
+To install, the app must be accessed from an https url.
+If the websocket target is NOT `wss` then browsers will not allow that connection,
+in Firefox, set the following to true to disable security:
+`network.websocket.allowInsecureFromHTTPS`.
+
+… but then you can no longer configure the `wss`. Dang.
