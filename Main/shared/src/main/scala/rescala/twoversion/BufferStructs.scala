@@ -16,7 +16,7 @@ case class Token(payload: AnyRef = null)
 
 /** State that implements both the buffered pulse and the buffering capabilities itself. */
 abstract class TwoVersionState[V, S <: Struct](ip: InitValues[V])
-  extends Committable[S] {
+  extends Committable {
 
   protected var current: V     = ip.initialValue
   private   var owner  : Token = null

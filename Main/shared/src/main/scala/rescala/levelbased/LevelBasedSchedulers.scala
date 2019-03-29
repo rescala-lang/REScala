@@ -9,7 +9,7 @@ import rescala.twoversion.TwoVersionScheduler
   */
 trait LevelBasedSchedulers {
 
-  private[rescala] class SimpleNoLock extends LevelBasedPropagation[LevelStructImpl] {
+  private[rescala] class SimpleNoLock extends LevelBasedTransaction[LevelStructImpl] {
     override protected def makeDerivedStructState[P](ip: InitValues[P],
                                                      creationTicket: CreationTicket[LevelStructImpl])
     : LevelState[P, LevelStructImpl] = {
@@ -24,8 +24,8 @@ trait LevelBasedSchedulers {
     new TwoVersionScheduler[LevelStructImpl, SimpleNoLock] {
       override protected def makeTurn(priorTurn: Option[SimpleNoLock]): SimpleNoLock = new SimpleNoLock
       override def schedulerName: String = "Synchron"
-      override def executeTurn[R](initialWrites: Set[ReSource[LevelStructImpl]], admissionPhase: AdmissionTicket[LevelStructImpl] => R): R =
-        synchronized { super.executeTurn(initialWrites, admissionPhase) }
+      override def forceNewTransaction[R](initialWrites: Set[ReSource[LevelStructImpl]], admissionPhase: AdmissionTicket[LevelStructImpl] => R): R =
+        synchronized { super.forceNewTransaction(initialWrites, admissionPhase) }
     }
   }
 

@@ -17,12 +17,12 @@ object Schedulers extends LevelBasedSchedulers {
     case other => throw new IllegalArgumentException(s"unknown engine $other")
   }
 
-  implicit val parrp: Scheduler[ParRP] = parrpWithBackoff(() => new Backoff)
+  implicit val parrp: Scheduler[ParRPStruct] = parrpWithBackoff(() => new Backoff)
 
   implicit val simple: SimpleScheduler.type = SimpleScheduler
 
-  def parrpWithBackoff(backOff: () => Backoff): Scheduler[ParRP] =
-    new TwoVersionScheduler[ParRP, ParRP] {
+  def parrpWithBackoff(backOff: () => Backoff): Scheduler[ParRPStruct] =
+    new TwoVersionScheduler[ParRPStruct, ParRP] {
       override protected def makeTurn(priorTurn: Option[ParRP]): ParRP = new ParRP(backOff(), priorTurn)
       override def schedulerName: String = "ParRP"
     }

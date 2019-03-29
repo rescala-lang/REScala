@@ -1,11 +1,9 @@
 package rescala.twoversion
 
-import rescala.core.Struct
-
 /**
   * Indicates that a class stores buffered changes that can be committed or reverted
   */
-trait Committable[S <: Struct] {
+trait Committable {
   /** Commits the buffered changes. */
   def commit(): Unit
 
@@ -13,3 +11,6 @@ trait Committable[S <: Struct] {
   def release(): Unit
 }
 
+trait Observation {
+  def execute(): Unit
+}

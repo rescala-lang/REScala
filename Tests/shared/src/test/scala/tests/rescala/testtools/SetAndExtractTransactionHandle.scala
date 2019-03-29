@@ -5,7 +5,7 @@ import rescala.reactives.Source
 
 object SetAndExtractTransactionHandle {
   def apply[A, S <: Struct, N](source: Source[S, A], value: A)(implicit engine: Scheduler[S]): Initializer[S] = {
-    engine.executeTurn(source) { implicit t =>
+    engine.forceNewTransaction(source) { implicit t =>
       source.admit(value)
       t.creation
     }

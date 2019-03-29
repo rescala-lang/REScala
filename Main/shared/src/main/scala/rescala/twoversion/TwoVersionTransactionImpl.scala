@@ -2,6 +2,7 @@ package rescala.twoversion
 
 import rescala.core._
 
+import scala.collection.mutable.ArrayBuffer
 import scala.util.control.NonFatal
 
 /**
@@ -10,16 +11,16 @@ import scala.util.control.NonFatal
   *
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
-trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropagation[S] with Initializer[S] {
+trait TwoVersionTransactionImpl[S <: TwoVersionStruct] extends TwoVersionTransaction[S] with Initializer[S] {
 
   val token: Token = Token()
 
-  val toCommit = scala.collection.mutable.ArrayBuffer[Committable[S]]()
-  val observers = scala.collection.mutable.ArrayBuffer[() => Unit]()
+  val toCommit = ArrayBuffer[Committable]()
+  val observers = ArrayBuffer[Observation]()
 
-  override def schedule(commitable: Committable[S]): Unit = toCommit += commitable
+  override def schedule(commitable: Committable): Unit = toCommit += commitable
 
-  def observe(f: () => Unit): Unit = observers += f
+  def observe(f: Observation): Unit = observers += f
 
   override def commitPhase(): Unit = toCommit.foreach{_.commit()}
 
@@ -28,7 +29,7 @@ trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropaga
   override def observerPhase(): Unit = {
     var failure: Throwable = null
     observers.foreach { n =>
-      try n.apply()
+      try n.execute()
       catch {case NonFatal(e) => failure = e}
     }
     // find some failure and rethrow the contained exception
@@ -68,16 +69,16 @@ trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropaga
     }
   }
   private[rescala] def makeDynamicReevaluationTicket[V, N](b: V): ReevTicket[V, S] = new ReevTicket[V, S](this, b) {
-    override def dynamicAccess(reactive: ReSource[S]): reactive.Value = TwoVersionPropagationImpl.this.dynamicAfter(reactive)
+    override def dynamicAccess(reactive: ReSource[S]): reactive.Value = TwoVersionTransactionImpl.this.dynamicAfter(reactive)
     override def staticAccess(reactive: ReSource[S]): reactive.Value = reactive.state.get(token)
   }
 
   override def accessTicket(): AccessTicket[S] = new AccessTicket[S] {
-    override def access(reactive: ReSource[S]): reactive.Value = TwoVersionPropagationImpl.this.dynamicAfter(reactive)
+    override def access(reactive: ReSource[S]): reactive.Value = TwoVersionTransactionImpl.this.dynamicAfter(reactive)
   }
 
 
-  private[rescala] def dynamicAfter[P](reactive: ReSource[S]) = {
+  private[rescala] def dynamicAfter[P](reactive: ReSource[S]): reactive.Value = {
     // Note: This only synchronizes reactive to be serializable-synchronized, but not glitch-free synchronized.
     // Dynamic reads thus may return glitched values, which the reevaluation handling implemented in subclasses
     // must account for by repeating glitched reevaluations!

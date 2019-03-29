@@ -7,10 +7,12 @@ import rescala.reactives.Signal
   * Implementation of the turn handling defined in the Engine trait
   *
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
-  * @tparam TImpl Turn type used by the engine
+  * @tparam Tx Transaction type used by the scheduler
   */
-trait TwoVersionScheduler[S <: TwoVersionStruct, TImpl <: TwoVersionPropagation[S] with Initializer[S]] extends DynamicInitializerLookup[S, TImpl] {
-  override private[rescala] def singleReadValueOnce[A](reactive: Signal[A, S]) = reactive.interpret(reactive.state.base(null))
+trait TwoVersionScheduler[S <: TwoVersionStruct, Tx <: TwoVersionTransaction[S] with Initializer[S]]
+  extends DynamicInitializerLookup[S, Tx] {
+  override private[rescala] def singleReadValueOnce[A](reactive: Signal[A, S]): A =
+    reactive.interpret(reactive.state.base(null))
 
   /** goes through the whole turn lifecycle
     * - create a new turn and put it on the stack
@@ -29,7 +31,8 @@ trait TwoVersionScheduler[S <: TwoVersionStruct, TImpl <: TwoVersionPropagation[
     * - run the party! phase
     *   - not yet implemented
     * */
-  override def executeTurn[R](initialWrites: Set[ReSource[S]], admissionPhase: AdmissionTicket[S] => R): R = {
+  override def forceNewTransaction[R](initialWrites: Set[ReSource[S]],
+                                      admissionPhase: AdmissionTicket[S] => R): R = {
     val turn = makeTurn(_currentTurn.value)
 
     val result = try {
@@ -57,6 +60,6 @@ trait TwoVersionScheduler[S <: TwoVersionStruct, TImpl <: TwoVersionPropagation[
     result
   }
 
-  protected def makeTurn(priorTurn: Option[TImpl]): TImpl
+  protected def makeTurn(priorTurn: Option[Tx]): Tx
 
 }

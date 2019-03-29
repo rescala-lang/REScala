@@ -20,7 +20,7 @@ object LociDist {
     println(s"binding $signalName")
     registry.bind(binding) { newValue =>
       println(s"received value for $signalName: ${newValue.hashCode()}")
-      Scheduler[S].executeTurn(signal) { admissionTicket =>
+      Scheduler[S].forceNewTransaction(signal) { admissionTicket =>
         admissionTicket.recordChange(new InitialChange[S] {
           override val source = signal
           override def writeValue(b: source.Value, v: source.Value => Unit): Boolean = {

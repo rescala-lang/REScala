@@ -38,7 +38,7 @@ class FullMVEngine(val timeout: Duration, val schedulerName: String)
 
   override private[rescala] def singleReadValueOnce[A](reactive: Signal[A]) = reactive.state.latestValue.get
 
-  override def executeTurn[R](declaredWrites: Set[ReSource], admissionPhase: (AdmissionTicket) => R): R = {
+  override def forceNewTransaction[R](declaredWrites: Set[ReSource], admissionPhase: (AdmissionTicket) => R): R = {
     val turn = newTurn()
     withDynamicInitializer(turn) {
       if (declaredWrites.nonEmpty) {

@@ -2,11 +2,11 @@ package rescala.parrp
 
 import rescala.core.Initializer.InitValues
 import rescala.core._
-import rescala.levelbased.{LevelBasedPropagation, LevelStruct, LevelState}
+import rescala.levelbased.{LevelBasedTransaction, LevelStruct, LevelState}
 import rescala.locking._
 
 trait ParRPInterTurn {
-  private type TState = ParRP
+  private type TState = ParRPStruct
 
   def discover(sink: ReSource[TState], source: Derived[TState]): Unit
   def drop(sink: ReSource[TState], source: Derived[TState]): Unit
@@ -20,10 +20,15 @@ class ParRPState[V, S <: Struct](ip: InitValues[V], val lock: TurnLock[ParRPInte
   extends LevelState[V, S](ip)
 
 
-class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropagation[ParRP] with ParRPInterTurn with LevelStruct {
+trait ParRPStruct extends LevelStruct {
   override type State[P, S <: Struct] = ParRPState[P, S]
+}
 
-  private type TState = ParRP
+
+class ParRP(backoff: Backoff, priorTurn: Option[ParRP])
+  extends LevelBasedTransaction[ParRPStruct] with ParRPInterTurn  {
+
+  private type TState = ParRPStruct
 
 
   override def writeState(pulsing: ReSource[TState])(value: pulsing.Value): Unit = {
@@ -41,7 +46,9 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
   final val key: Key[ParRPInterTurn] = new Key(this)
 
 
-  override protected[this] def makeDerivedStructState[V](ip: InitValues[V], creationTicket: CreationTicket[ParRP]): ParRPState[V, ParRP] = {
+  override protected[this] def makeDerivedStructState[V](ip: InitValues[V],
+                                                         creationTicket: CreationTicket[TState])
+  : ParRPState[V, TState] = {
     val lock = new TurnLock[ParRPInterTurn]
     val owner = lock.tryLock(key)
     assert(owner eq key, s"$this failed to acquire lock on newly created reactive")

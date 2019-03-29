@@ -2,7 +2,7 @@ package rescala.levelbased
 
 import rescala.core.{InitialChange, ReSource, Derived, ReevTicket}
 import rescala.levelbased.LevelQueue.noLevelIncrease
-import rescala.twoversion.TwoVersionPropagationImpl
+import rescala.twoversion.TwoVersionTransactionImpl
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -11,7 +11,7 @@ import scala.collection.mutable.ArrayBuffer
   *
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
-trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[S] with LevelQueue.Evaluator[S] {
+trait LevelBasedTransaction[S <: LevelStruct] extends TwoVersionTransactionImpl[S] with LevelQueue.Evaluator[S] {
 
   /** Stores all active reactives in case we create more later and need to reevaluate them. */
   private val _propagating: ArrayBuffer[ReSource[S]] = ArrayBuffer[ReSource[S]]()

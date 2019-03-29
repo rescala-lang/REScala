@@ -8,7 +8,7 @@ class CreationTicketTest extends RETests { multiEngined { engine => import engin
 
   /* this test uses some shady planned()(identity) to get the turn object out of the transaction
    * you should not do this. */
-  def getTurn[S2 <: Struct](implicit engine: Scheduler[S2]): rescala.core.Initializer[S2] = engine.executeTurn()(_.creation)
+  def getTurn[S2 <: Struct](implicit engine: Scheduler[S2]): rescala.core.Initializer[S2] = engine.forceNewTransaction()(_.creation)
 
   test("none Dynamic No Implicit") {
     assert(implicitly[CreationTicket].self === Right(engine.scheduler))

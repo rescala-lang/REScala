@@ -7,14 +7,14 @@ import rescala.core.{AdmissionTicket, InitialChange, ReSource, Struct}
   *
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
-trait TwoVersionPropagation[S <: Struct]  {
+trait TwoVersionTransaction[S <: Struct]  {
 
   /**
     * Schedules a temporarily written change to be committed by the turn.
     *
     * @param committable Commitable element to be scheduled
     */
-  def schedule(committable: Committable[S]): Unit
+  def schedule(committable: Committable): Unit
 
   /**
     * Locks (and potentially otherwise prepares) all affected reactive values to prevent interfering changes.

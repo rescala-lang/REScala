@@ -81,7 +81,7 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleCrea
 
   var idle = true
 
-  override def executeTurn[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R): R = synchronized {
+  override def forceNewTransaction[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R): R = synchronized {
     if (!idle) throw new IllegalStateException("Scheduler is not reentrant")
     idle = false
     try {
@@ -197,7 +197,7 @@ object Util {
     if (potentialGlitch) true else {
       if (reev.propagate) reactive.state.outgoing.foreach(_.state.dirty = true)
       reev.forValue(reactive.state.value = _)
-      reev.forEffect(_ ())
+      reev.forEffect(_.execute())
       reactive.state.done = true
       false
     }

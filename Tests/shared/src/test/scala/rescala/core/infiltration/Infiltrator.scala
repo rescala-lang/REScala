@@ -10,7 +10,7 @@ object Infiltrator {
   final def assertLevel[S <: Struct](reactive: core.ReSource[S], level: Int, text: String = "level did not match")(implicit maybe: Scheduler[S]) =
     reactive.state match {
       case rb: LevelState[S@unchecked] => {
-        val rblevel = maybe.executeTurn() { at =>
+        val rblevel = maybe.forceNewTransaction() { at =>
           rb.level()
         }
         assert(rblevel == level, s"$text, $reactive level was $rblevel but expected $level")

@@ -1,6 +1,7 @@
 package rescala.core
 
 import rescala.core.Initializer.InitValues
+import rescala.twoversion.Observation
 
 import scala.annotation.implicitNotFound
 import scala.language.implicitConversions
@@ -43,7 +44,7 @@ abstract class ReevTicket[V, S <: Struct](creation: Initializer[S],
 
   private var _propagate = false
   private var value: V = _
-  private var effect: () => Unit = null
+  private var effect: Observation = null
   override final def toString: String = s"Result(value = $value, propagate = $propagate, deps = $collectedDependencies)"
   final def before: V = _before
   /** Advises the ticket to track dynamic dependencies.
@@ -52,12 +53,12 @@ abstract class ReevTicket[V, S <: Struct](creation: Initializer[S],
   final def trackDependencies(initial: Set[ReSource[S]]): ReevTicket[V, S] = {collectedDependencies = initial; this}
   final def withPropagate(p: Boolean): ReevTicket[V, S] = {_propagate = p; this}
   final def withValue(v: V): ReevTicket[V, S] = {require(v != null, "value must not be null"); value = v; _propagate = true; this}
-  final def withEffect(v: () => Unit): ReevTicket[V, S] = {effect = v; this}
+  final def withEffect(v: Observation): ReevTicket[V, S] = {effect = v; this}
 
 
   final override def propagate: Boolean = _propagate
   final override def forValue(f: V => Unit): Unit = if (value != null) f(value)
-  final override def forEffect(f: (() => Unit) => Unit): Unit = if (effect != null) f(effect)
+  final override def forEffect(f: Observation => Unit): Unit = if (effect != null) f(effect)
   final override def getDependencies(): Option[Set[ReSource[S]]] = Option(collectedDependencies)
 
   final def reset[NT](nb: NT): ReevTicket[NT, S] = {

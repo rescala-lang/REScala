@@ -4,7 +4,7 @@ import rescala.core.Initializer.InitValues
 import rescala.core._
 import rescala.debuggable.{DebuggerInterface, DisableDebugging}
 import rescala.interface.RescalaInterfaceRequireSerializer
-import rescala.levelbased.{LevelBasedPropagation, LevelState, LevelStruct}
+import rescala.levelbased.{LevelBasedTransaction, LevelState, LevelStruct}
 import rescala.twoversion.TwoVersionScheduler
 
 import scala.collection.mutable
@@ -16,7 +16,7 @@ object RestoringInterface {
 
 
 class ReStoringTurn(restore: ReStore, debuggerInterface: DebuggerInterface = DisableDebugging)
-  extends LevelBasedPropagation[ReStoringStruct] {
+  extends LevelBasedTransaction[ReStoringStruct] {
 
   override protected def makeDerivedStructState[P](valuePersistency: InitValues[P],
                                                    creationTicket: CreationTicket[ReStoringStruct])
@@ -114,8 +114,8 @@ class InMemoryStore(restoreFrom: mutable.Map[REName, String])
 
   override protected def makeTurn(priorTurn: Option[ReStoringTurn]): ReStoringTurn = new ReStoringTurn(this)
   override def schedulerName : String = s"InMemoryStorage"
-  override def executeTurn[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R): R =
-    synchronized(super.executeTurn(initialWrites, admissionPhase))
+  override def forceNewTransaction[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R): R =
+    synchronized(super.forceNewTransaction(initialWrites, admissionPhase))
 }
 
 

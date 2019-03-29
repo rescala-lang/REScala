@@ -121,7 +121,7 @@ trait RescalaInterfaceRequireSerializer[S <: Struct] extends Aliases[S] {
     * @group update
     */
   def transaction[R](initialWrites: ReSource*)(admissionPhase: AdmissionTicket => R): R = {
-    scheduler.executeTurn(initialWrites: _*)(admissionPhase)
+    scheduler.forceNewTransaction(initialWrites: _*)(admissionPhase)
   }
 
   /**
@@ -157,7 +157,7 @@ trait RescalaInterfaceRequireSerializer[S <: Struct] extends Aliases[S] {
     * @group update
     */
   def update(changes: (Source[S, A], A) forSome { type A } *): Unit = {
-    scheduler.executeTurn(changes.foldLeft(Set.empty[ReSource]) { case (accu, (source, _)) =>
+    scheduler.forceNewTransaction(changes.foldLeft(Set.empty[ReSource]) { case (accu, (source, _)) =>
       assert(!accu.contains(source), s"must not admit multiple values for the same source ($source was assigned multiple times)")
       accu + source
     }, { t =>

@@ -32,7 +32,7 @@ trait RegularReevaluationHandling extends ReevaluationHandling[Derived[FullMVStr
     }
     res.getDependencies().foreach(commitDependencyDiff(node, node.state.incomings))
     res.forValue(v => value = v)
-    res.forEffect(_())
+    res.forEffect(_.execute())
     val res2 = processReevaluationResult(if(res.propagate) Some(value) else None)
     processReevOutResult(retainBranch, res2, changed = res.propagate)
   }

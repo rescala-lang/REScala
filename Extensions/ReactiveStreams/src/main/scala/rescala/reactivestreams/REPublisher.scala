@@ -77,7 +77,7 @@ object REPublisher {
                                    subscriber: Subscriber[_ >: T],
                                    fac: Scheduler[S]
                                   ): SubscriptionReactive[T, S] = {
-    fac.executeTurn() { ticket =>
+    fac.forceNewTransaction() { ticket =>
       val name: REName = s"forSubscriber($subscriber)"
       ticket.creation.create[Pulse[T], SubscriptionReactive[T, S]](
         Set(dependency),

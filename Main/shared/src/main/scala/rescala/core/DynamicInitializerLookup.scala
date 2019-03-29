@@ -7,7 +7,7 @@ trait DynamicInitializerLookup[S <: Struct, ExactInitializer <: Initializer[S]] 
   final override private[rescala] def creationDynamicLookup[T](f: Initializer[S] => T): T = {
     _currentTurn.value match {
       case Some(turn) => f(turn)
-      case None => executeTurn(Set.empty, ticket => f(ticket.creation))
+      case None => forceNewTransaction(Set.empty, ticket => f(ticket.creation))
     }
   }
 

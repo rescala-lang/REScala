@@ -1,10 +1,12 @@
 package rescala.core
 
+import rescala.twoversion.Observation
+
 
 trait Result[T, S <: Struct] {
   def propagate: Boolean
   def forValue(f: T => Unit): Unit
-  def forEffect(f: (() => Unit) => Unit): Unit
+  def forEffect(f: Observation => Unit): Unit
   def getDependencies(): Option[Set[ReSource[S]]]
 }
 

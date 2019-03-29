@@ -17,8 +17,7 @@ trait LevelStructImpl extends LevelStruct {
 }
 
 
-class LevelState[P, S <: Struct](ip: InitValues[P])
-  extends TwoVersionState[P, S](ip) {
+class LevelState[P, S <: Struct](ip: InitValues[P]) extends TwoVersionState[P, S](ip) {
 
   private var _level: Int = 0
 

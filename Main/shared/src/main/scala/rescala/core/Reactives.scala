@@ -6,7 +6,10 @@ import scala.language.higherKinds
 /** Every [[ReSource]] has an internal data[[Struct]]ure which is externally defined by the scheduler.
   * Its main use is to allow the external algorithm to manage concurrency for the internal data.
   * Using the indirection with the State type here allows us to not have unbound type parameters everywhere. */
-trait Struct { type State[V, S <: Struct] }
+trait Struct {
+  type State[V, S <: Struct]
+  def canNotBeImplemented[A]: A
+}
 
 /** Source of (reactive) values, the [[Struct]] defines how the state is stored internally,
   * and how dependencies are managed.
