@@ -78,21 +78,21 @@ class TodoApp[TH <: TaskHandling](val taskHandling: TH)(implicit val storingSche
         `style` := Signal {if (tasks().isEmpty) "display:hidden" else ""},
         toggleAll.value,
         label(`for` := "toggle-all", "Mark all as complete"),
-        tasks.map(l =>
-                    ul(
-                      `class` := "todo-list",
-                      l.map(_.listItem))).asModifier
+        ul(
+          `class` := "todo-list",
+          tasks.map(l => l.map(_.listItem)).asModifierL
+          )
       ),
       div(
         `class` := "footer",
         `style` := Signal {if (tasks().isEmpty) "display:none" else ""},
 
         Signal.dynamic {
-          val remainingTasks = tasks.value.filter(!_.contents.value.done)
+          val remainingTasks = tasks.value.count(!_.contents.value.done)
           span(
             `class` := "todo-count",
-            strong("" + remainingTasks.size),
-            span(if (remainingTasks.size == 1)
+            strong("" + remainingTasks),
+            span(if (remainingTasks == 1)
                    " item left" else " items left")
           )
         }.asModifier,

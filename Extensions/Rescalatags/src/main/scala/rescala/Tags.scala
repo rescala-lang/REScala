@@ -1,22 +1,28 @@
 package rescala
 
 import org.scalajs.dom
-import org.scalajs.dom.{DocumentFragment, Element, Node}
+import org.scalajs.dom.{Element, Node}
 import rescala.core.{CreationTicket, Scheduler, Struct}
 import rescala.reactives.{Evt, Observe, Signal, Var}
-import scalatags.JsDom.all.{Attr, AttrValue, Frag, Modifier, Style, StyleValue}
+import scalatags.JsDom.{StringFrag, TypedTag}
+import scalatags.JsDom.all.{Attr, AttrValue, Modifier, Style, StyleValue}
 import scalatags.generic
+import scalatags.jsdom.Frag
 
 import scala.language.higherKinds
 import scala.scalajs.js
 
 object Tags {
 
+  def isInDocument(element: Element): Boolean = {
+    js.Dynamic.global.document.contains(element).asInstanceOf[Boolean]
+  }
+
   def isInDocumentHack(elem: dom.Element): Any => Boolean = {
     var second = false
     _ => {
       if (second) {
-        !js.Dynamic.global.document.contains(elem).asInstanceOf[Boolean]
+        !isInDocument(elem)
       } else {
         second = true
         false
@@ -24,7 +30,7 @@ object Tags {
     }
   }
 
-  implicit class SignalToScalatags[S <: Struct](val signal: Signal[Frag, S]) extends AnyVal {
+  implicit class SignalToScalatags[S <: Struct](val signal: Signal[TypedTag[Element], S]) extends AnyVal {
     /**
       * converts a Signal of a scalatags Tag to a scalatags Frag which automatically reflects changes to the signal in the dom
       */
@@ -33,36 +39,82 @@ object Tags {
     }
   }
 
+  implicit class SignalStrToScalatags[S <: Struct](val signal: Signal[StringFrag, S]) extends AnyVal {
+    /**
+      * converts a Signal of a scalatags Tag to a scalatags Frag which automatically reflects changes to the signal in the dom
+      */
+    def asModifier(implicit engine: Scheduler[S]): Modifier = {
+      new REModifier[S](signal, engine)
+    }
+  }
+
+  implicit class SignalTagListToScalatags[S <: Struct](val signal: Signal[Seq[TypedTag[Element]], S]) extends AnyVal {
+    /**
+      * converts a Signal of a scalatags Tag to a scalatags Frag which automatically reflects changes to the signal in the dom
+      */
+    def asModifierL(implicit engine: Scheduler[S]): Modifier = {
+      new REModifierList[S](signal, engine)
+    }
+  }
+
   private class REModifier[S <: Struct](rendered: Signal[Frag, S], engine: Scheduler[S]) extends Modifier {
     var observe     : Observe[S] = null
-    var currentNodes: List[Node] = Nil
+    var currentNode: Node = null
+    override def applyTo(parent: Element): Unit = {
+      CreationTicket.fromEngine(engine).transaction { init =>
+        if (observe != null) {
+          observe.remove()(engine)
+          currentNode.parentNode.removeChild(currentNode)
+          currentNode = null
+        }
+
+        observe = Observe.strong(rendered, fireImmediately = true)(
+        { newTag =>
+          println(s"$rendered parent $parent")
+          if (parent != null && !scalajs.js.isUndefined(parent)) {
+            val newNode = newTag.render
+            println(s"$rendered appending $newNode to $parent with $currentNode")
+            if (currentNode != null) parent.replaceChild(newNode, currentNode)
+            else parent.appendChild(newNode)
+            currentNode = newNode
+          }
+        },
+         t => throw t,
+         isInDocumentHack(parent))(init)
+      }
+    }
+  }
+
+  private class REModifierList[S <: Struct](rendered: Signal[Seq[TypedTag[Element]], S], engine: Scheduler[S]) extends Modifier {
+    var observe     : Observe[S] = null
+    var currentNodes: Seq[Element] = Nil
+    var currentTags: Seq[TypedTag[Element]] = Nil
     override def applyTo(parent: Element): Unit = {
       CreationTicket.fromEngine(engine).transaction { init =>
 
         if (observe == null) {
-          val nodes = init.accessTicket().now(rendered).render
-          currentNodes = nodeList(nodes)
-          parent.appendChild(nodes)
+          currentTags = init.accessTicket().now(rendered)
+          currentNodes = currentTags.map(_.render)
+          currentNodes.foreach(parent.appendChild)
         }
         else {
           //println(s"Warning, added $rendered to dom AGAIN, this is experimental")
           observe.remove()(engine)
           observe = null
-          replaceAll(parent, Nil, currentNodes)
+          // adding nodes to the dom again should move them
+          currentNodes.foreach(parent.appendChild)
         }
 
         observe = Observe.strong(rendered, fireImmediately = false)(
-          { newTag =>
-            val newNode = newTag.render
-            val news = nodeList(newNode)
-            println(s"$rendered parent $parent")
-            if (parent != null && !scalajs.js.isUndefined(parent)) {
-              replaceAll(parent, currentNodes, news)
-            }
-            currentNodes = news
-          },
-           t => throw t,
-           isInDocumentHack(parent))(init)
+        { newTags =>
+          println(s"$rendered parent $parent")
+          if (parent != null && !scalajs.js.isUndefined(parent)) {
+            currentNodes = replaceAll(parent, currentNodes, currentTags, newTags)
+            currentTags = newTags
+          }
+        },
+         t => throw t,
+         isInDocumentHack(parent))(init)
       }
     }
   }
@@ -122,24 +174,48 @@ object Tags {
 
   // helper functions
 
-  @scala.annotation.tailrec
-  private def replaceAll(parent: Node, old: List[Node], now: List[Node]): Unit = (old, now) match {
-    case (o :: Nil, n :: (ns@_ :: _)) if o.nextSibling != null =>
-      val endSibling = o.nextSibling
-      parent.replaceChild(n, o)
-      ns.foreach(parent.insertBefore(_, endSibling))
-    case (o :: os, n :: ns) =>
-      parent.replaceChild(n, o)
-      replaceAll(parent, os, ns)
+  private def replaceAll(parent: Node,
+                         oldNodes: Seq[Element],
+                         oldTags: Seq[TypedTag[Element]],
+                         newTags: Seq[TypedTag[Element]]): List[Element] = {
+    println(s"replacing for $parent")
+    val oni = oldNodes.iterator
+    val oti = oldTags.iterator
+    val nti = newTags.iterator
+    var newNodes = List[Element]()
+    var last: Element = null
+    while(nti.hasNext && oti.hasNext) {
+      val on = oni.next()
+      last = on
+      val ot = oti.next()
+      val nt = nti.next()
+      if (ot != nt) {
+        val nn = nt.render
+        newNodes ::= nn
+        parent.replaceChild(on, nn)
+        last = nn
+      } else {
+        newNodes ::= on
+      }
+    }
+    val nextSibling = if (last != null) last.nextSibling else null
+    if (nextSibling != null) {
+      while (nti.hasNext) {
+        val nn = nti.next().render
+        newNodes ::= nn
+        parent.insertBefore(nn, nextSibling)
+      }
+    }
+    else {
+      while (nti.hasNext) {
+        val nn = nti.next().render
+        newNodes ::= nn
+        parent.appendChild(nn)
+      }
+    }
+    while(oni.hasNext) parent.removeChild(oni.next())
 
-    case (Nil, ns) => ns.foreach(parent.appendChild)
-    case (os, Nil) => os.foreach(parent.removeChild)
-  }
-
-
-  private def nodeList(n: Node): List[Node] = {
-    if (n.isInstanceOf[DocumentFragment]) List.tabulate(n.childNodes.length)(n.childNodes.apply)
-    else List(n)
+    newNodes.reverse
   }
 
 
