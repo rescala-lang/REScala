@@ -109,7 +109,7 @@ lazy val datastructures = project.in(file("Extensions/Datastructures"))
 lazy val crdts = crossProject(JSPlatform, JVMPlatform).in(file("Extensions/crdts"))
   .dependsOn(rescala)
   .settings(name := "recrdt", cfg.base, cfg.mappingFilters, lib.scalaLogback, cfg.strictScalac,
-            lib.lociTransmitterDependencies, circe, scalacheck, scalatest)
+            lib.lociTransmitterDependencies, circe, scalacheck, scalatest, cfg.bintray)
 lazy val crdtsJVM = crdts.jvm
 lazy val crdtsJS = crdts.js
 
