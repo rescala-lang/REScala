@@ -1,0 +1,73 @@
+= Readme
+
+This is an https://www.scala-sbt.org/[sbt] project, the sbt launcher script is included,
+so all commands should work with only a local JVM installed. Tested on openjdk-11.
+`./sbt` launches an interactive compile shell, which makes incremental compilation much faster,
+for batch processing, use `./sbt some commands`
+
+Examples:
+
+....
+# compile the project
+./sbt compile
+
+# run the server
+./sbt server/run
+
+# commandline parameters
+./sbt "server/run ar1 arg2"
+....
+
+
+== Deployment
+
+....
+# deploy to jars + scripts
+./sbt stage
+....
+
+This produces a folder containing a standalone version of the server in
+
+....
+./server/target/universal/stage
+....
+
+which can then be executed the same as the `run` command above:
+
+....
+cd ./server/target/universal/stage
+bin/
+....
+
+
+=== Change MQTT broker address
+
+Add the websocket url of the broker to the url hash of the applicaiton, e.g.,
+`http://0.0.0.0:9110/#ws://127.0.0.1:9001/` and refresh the page.
+
+
+== Add entries
+
+=== Via HTTP:
+
+....
+curl --data-urlencode "title=test" --data-urlencode "description=test description" --data-urlencode "imageUrl=http://vignette1.wikia.nocookie.net/uncyclopedia/images/0/0a/Ohnoes.jpg/revision/latest?cb\x3d20061026122429"  "http://0.0.0.0:9110/add-entry"
+....
+
+Note that sending Data URLs instead of actual URLs should make images available even without internet.
+Data urls have the format: `data:image/png;base64,base64dataHere`
+
+== Observe entries
+
+The application chatters on the MQTT topic `ersir/entries`.
+The Data is a JSON object containing all interesting applicaiton state.
+
+
+== Installing as a Web App
+
+To install, the app must be accessed from an https url.
+If the websocket target is NOT `wss` then browsers will not allow that connection,
+in Firefox, set the following to true to disable security:
+`network.websocket.allowInsecureFromHTTPS`.
+
+… but then you can no longer configure the `wss`. Dang.

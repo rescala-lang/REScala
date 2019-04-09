@@ -1,0 +1,3 @@
+[submodule "rescala"]
+	path = rescala
+	url = git@github.com:rescala-lang/REScala.git
