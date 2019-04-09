@@ -10,9 +10,7 @@ cfg.noPublish
 lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
   caseStudyEditor,
   caseStudyMill,
-  caseStudyRSSEvents,
-  caseStudyRSSReactive,
-  caseStudyRSSSimple,
+  caseStudyRSS,
   caseStudyShapes,
   crdtsJVM,
   crdtsJS,
