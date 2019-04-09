@@ -9,8 +9,6 @@ import scala.swing.Swing
 import scala.swing.Swing.EmptyIcon
 
 import rescala.default._
-import rescala.default._
-import rescala.default._
 import reader.connectors.CentralizedEvents
 import reader.connectors.SimpleReporter
 import reader.data.FeedStore

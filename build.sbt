@@ -142,17 +142,9 @@ lazy val caseStudyEditor = project.in(file("Examples/Editor"))
   .dependsOn(reswing)
   .settings(name := "editor-case-study", cfg.base, cfg.noPublish)
 
-lazy val caseStudyRSSEvents = project.in(file("Examples/RSSReader/ReactiveScalaReader.Events"))
-  .dependsOn(reswing)
-  .settings(name := "rssreader-case-study", lib.rss, cfg.base, cfg.noPublish, cfg.test)
-
-lazy val caseStudyRSSReactive = project.in(file("Examples/RSSReader/ReactiveScalaReader.Reactive"))
+lazy val caseStudyRSS = project.in(file("Examples/RSSReader/ReactiveScalaReader.Reactive"))
   .dependsOn(reswing)
   .settings(cfg.base, name := "rssreader-case-study-reactive", lib.rss, cfg.noPublish, cfg.test)
-
-lazy val caseStudyRSSSimple = project.in(file("Examples/RSSReader/SimpleRssReader"))
-  .dependsOn(reswing)
-  .settings(cfg.base, name := "rssreader-case-study-simple", lib.rss, cfg.noPublish, cfg.test)
 
 lazy val universe = project.in(file("Examples/Universe"))
   .dependsOn(rescalaJVM, fullmv)

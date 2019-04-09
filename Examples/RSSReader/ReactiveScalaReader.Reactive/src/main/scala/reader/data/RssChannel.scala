@@ -15,11 +15,11 @@ import java.util.Date
  * @param pubDate     - publication date for the content of the channel
  * @param source      - URL to the rss feed this channel was obtained from
  */
-case class RSSChannel(val title: String,
-                      val link: Option[URL],
-                      val description: String,
-                      val pubDate: Option[Date],
-                      val source: Option[URL])
+case class RSSChannel(title: String,
+                      link: Option[URL],
+                      description: String,
+                      pubDate: Option[Date],
+                      source: Option[URL])
 		                extends Ordered[RSSChannel] {
   def compare(that: RSSChannel) = {
     val result = for {

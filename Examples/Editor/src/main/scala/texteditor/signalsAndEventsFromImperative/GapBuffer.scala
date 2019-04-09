@@ -47,8 +47,7 @@ class GapBuffer {
   private var buf = new Array[Char](0)
   private val size = Var(0) //#VAR
   private val offsets: Signal[(Int, Int)] = (caretChanged && //#SIG //#EF
-      { offset => offset >= 0 && offset <= size.now }
-      map { offset: Int => (offsets.value._2, offset) }).latest((0, 0)) //#EF //#IF
+      { offset => offset >= 0 && offset <= size.now }).fold((0,0))((s, n) => s._2 -> n)
 
   offsets.changed += { //#HDL
     case (prev, cur) =>

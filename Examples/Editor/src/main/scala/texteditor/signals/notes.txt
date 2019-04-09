@@ -1,5 +1,0 @@
-
-
-
-based on the event + signals from event version
-This version does not use a mutable data structure (gap buffer) to represent the text, state is represented using signals and events only. There is just very little imperative code left that is needed to interact with certain library functions (like clipboard copy/paste)

@@ -21,11 +21,11 @@ import java.util.Date
  * @param pubDate    - indicates when the item was published
  * @param srcChannel - the RSSChannel that the item came from
  */
-case class RSSItem(val title       : String,
-                   val link        : Option[URL],
-                   val description : String,
-                   val pubDate     : Option[Date],
-                   val srcChannel  : Option[RSSChannel])
+case class RSSItem(title       : String,
+                   link        : Option[URL],
+                   description : String,
+                   pubDate     : Option[Date],
+                   srcChannel  : Option[RSSChannel])
                      extends Ordered[RSSItem] {
   def compare(that: RSSItem) = {
     val result = for {
@@ -38,7 +38,7 @@ case class RSSItem(val title       : String,
 }
 
 object RSSItem{
-  def changeSource(item: RSSItem, src: Option[RSSChannel]) = item match {
+  def changeSource(item: RSSItem, src: Option[RSSChannel]): RSSItem = item match {
     case RSSItem(title, link, desc, date, _) => RSSItem(title, link, desc, date, src)
   }
 }
