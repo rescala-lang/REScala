@@ -4,7 +4,6 @@ import java.nio.file.{Path, Paths}
 
 import cats.implicits._
 import com.monovore.decline.{Opts, Command}
-import ersir.shared.Log.Log
 
 object Ersir {
 
@@ -21,10 +20,10 @@ object Ersir {
 
   val command: Command[Services] = Command(name = "ersir", header = "Start server!") {
     (optBasedir, interface, port).mapN(new Services(_, _, _)).map { services =>
-      Log.info(s"loading ressources from ${services.basepath}")
-      Log.info(s"starting server, fetching posts …")
+      scribe.info(s"loading ressources from ${services.basepath}")
+      scribe.info(s"starting server, fetching posts …")
       services.startServer()
-      Log.info(s"initialization done, connect on http://${services.interface}:${services.port}/")
+      scribe.info(s"initialization done, connect on http://${services.interface}:${services.port}/")
       services
     }
   }

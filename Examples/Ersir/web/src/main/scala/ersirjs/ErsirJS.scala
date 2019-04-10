@@ -1,6 +1,5 @@
 package ersirjs
 
-import ersir.shared.Log.Log
 import ersir.shared._
 import io.circe.generic.auto._
 import io.circe.parser.decode
@@ -84,7 +83,7 @@ object ErsirJS {
       if (!connecting && !registry.remotes.exists(_.connected)) {
         connecting = true
         lociConnect().onComplete { res =>
-          Log.trace(s"loci connection try finished: $res")
+          scribe.trace(s"loci connection try finished: $res")
           connecting = false
         }
       }
@@ -98,12 +97,12 @@ object ErsirJS {
     }
 
     val connection: Future[RemoteRef] = registry.connect(WS(wsUri))
-    Log.debug(s"connecting loci to $wsUri …")
+    scribe.debug(s"connecting loci to $wsUri …")
     connection.foreach { remote =>
       connectionSignal.set(true)
       remote.disconnected.foreach { _ =>
         connectionSignal.set(false)
-        Log.debug(s"loci reconnect")
+        scribe.debug(s"loci reconnect")
       }
     }
     connection

@@ -1,6 +1,7 @@
 // shadow sbt-scalajs' crossProject and CrossType from Scala.js 0.6.x
-import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
+import java.nio.file.Files
 
+import sbtcrossproject.CrossPlugin.autoImport.{CrossType, crossProject}
 import Settings._
 import Dependencies._
 
@@ -115,12 +116,6 @@ lazy val rescalafx = project.in(file("Extensions/javafx"))
   .dependsOn(rescalaJVM)
   .settings(name := "rescalafx", cfg.base, cfg.noPublish, lib.scalafx)
 
-lazy val inspector = project.in(file("Extensions/Inspector"))
-                     .enablePlugins(ScalaJSPlugin)
-                     .dependsOn(rescalatags)
-                     .settings(cfg.base, cfg.noPublish,
-                               scalaJSUseMainModuleInitializer := true,
-                               name := "inspector")
 
 // ===================================================================================== Examples
 
@@ -347,3 +342,74 @@ lazy val lib = new {
   val jline = libraryDependencies += "org.scala-lang.modules" % "scala-jline" % "2.12.1"
 
 }
+
+
+
+
+val vbundle    = TaskKey[File]("vbundle", "bundles all the viscel resources")
+val vbundleDef = vbundle := {
+  val jsfiles = (ersirWeb / Compile / fastOptJS / webpack).value
+  val styles = (ersirWeb / Assets / SassKeys.sassify).value
+  val bundleTarget = (Universal / target).value.toPath.resolve("stage/resources")
+  Files.createDirectories(bundleTarget)
+  Files.createDirectories(bundleTarget.resolve("static"))
+
+  def gzipToTarget(f: File): Unit = IO.gzip(f, bundleTarget.resolve(f.name + ".gz").toFile)
+
+  jsfiles.foreach { af =>
+    val jsfile = af.data
+    gzipToTarget(jsfile)
+    val map = jsfile.toPath.getParent.resolve(jsfile.name + ".map").toFile
+    if (map.exists()) gzipToTarget(jsfile.toPath.getParent.resolve(jsfile.name + ".map").toFile)
+  }
+
+  val staticResources = (Compile / resources).value
+  val resdir = (Compile / resourceDirectory).value
+  staticResources.filter(_.isFile).foreach { f =>
+    IO.copyFile(f,
+                bundleTarget.resolve(resdir.relativize(f).get.toPath).toFile)
+  }
+  styles.foreach(gzipToTarget)
+  bundleTarget.toFile
+}
+
+lazy val ersirServer = project.in(file("Examples/Ersir/server"))
+                       .settings(
+                         name := "server",
+                         fork := true,
+                         jsoup,
+                         betterFiles,
+                         decline,
+                         akkaHttp,
+                         vbundleDef,
+                         (Compile / compile) := ((Compile / compile) dependsOn vbundle).value
+                         )
+                       .enablePlugins(JavaServerAppPackaging)
+                       .dependsOn(ersirSharedJVM)
+                       .dependsOn(rescalaJVM, crdtsJVM)
+
+lazy val ersirWeb = project.in(file("Examples/Ersir/web"))
+                    .enablePlugins(ScalaJSPlugin)
+                    .settings(
+                      name := "web",
+                      scalajsdom, npmDependencies in Compile ++= Seq("mqtt" -> "2.18.2"), normalizecss,
+                      scalaJSUseMainModuleInitializer := true,
+                      webpackBundlingMode := BundlingMode.LibraryOnly(),
+                      scalacOptions += "-P:scalajs:sjsDefinedByDefault"
+                      )
+                    .dependsOn(ersirSharedJS)
+                    .enablePlugins(SbtSassify)
+                    .enablePlugins(ScalaJSBundlerPlugin)
+                    .dependsOn(rescalatags, crdtsJS)
+
+lazy val ersirShared = crossProject(JSPlatform, JVMPlatform)
+  .crossType(CrossType.Pure).in(file("Examples/Ersir/shared"))
+                       .settings(
+                         name := "shared",
+                           scalatags, loci.communication, loci.wsAkka, circe, scribe
+                         )
+                       .jsConfigure(_.dependsOn(crdtsJS))
+                       .jvmConfigure(_.dependsOn(crdtsJVM))
+lazy val ersirSharedJVM = ersirShared.jvm
+lazy val ersirSharedJS = ersirShared.js
+

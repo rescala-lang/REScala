@@ -22,7 +22,7 @@ object LociDist {
     val signalBinding = Binding[A => Unit](signalName)
     registry.bind(signalBinding) { newValue =>
       println(s"received value for $signalName: $newValue")
-      scheduler.executeTurn(signal) { admissionTicket =>
+      scheduler.forceNewTransaction(signal) { admissionTicket =>
         admissionTicket.recordChange(new InitialChange[S] {
           override val source = signal
           override def writeValue(b: source.Value, v: source.Value => Unit): Boolean = {

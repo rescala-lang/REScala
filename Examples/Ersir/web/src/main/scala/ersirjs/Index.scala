@@ -67,14 +67,14 @@ class Index(connected: Signal[String]) {
   def gen(list: Signal[Postings]): JsDom.TypedTag[html.Body] = {
 
     val articles = list.map { itemsToDisplay =>
-      SeqFrag(itemsToDisplay.value.value.map { emergentcy =>
+      itemsToDisplay.value.value.map { emergentcy =>
         article(lang := "de",
                 if (emergentcy.img.isEmpty) frag() else div(cls := "pic",
                                                             style := s"background-image: url(${emergentcy.img});"),
                 div(
                   h1(stringFrag(emergentcy.title)),
                   stringFrag(emergentcy.desc)))
-      })
+      }
     }
 
     body(id := "index",
@@ -86,7 +86,7 @@ class Index(connected: Signal[String]) {
                  textinput,
                  imageinput,
                  button("Post", addPost.value)),
-         main(articles.asModifier),
+         main(articles.asModifierL),
          article(cls := "controls",
                  button("Reset", reset.value),
                  button("Fullscreen",

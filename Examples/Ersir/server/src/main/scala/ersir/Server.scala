@@ -3,7 +3,6 @@ package ersir
 import akka.actor.ActorSystem
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
-import ersir.shared.Log.Log
 import ersir.shared.{Epoche, Posting}
 import io.circe.generic.auto._
 import loci.communicator.ws.akka._
@@ -40,7 +39,7 @@ class Server(pages: ServerPages,
   LociDist.distribute(serverSideEntries, registry, scheduler)
 
   serverSideEntries.observe{sse =>
-    Log.trace(s"new postings ${sse.value.value}")
+    scribe.trace(s"new postings ${sse.value.value}")
   }
 
   serverSideEntries.change.observe { case Diff(from, to) =>
