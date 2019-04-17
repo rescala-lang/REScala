@@ -18,7 +18,7 @@ case class Token(payload: AnyRef = null)
 abstract class TwoVersionState[V, S <: Struct](ip: InitValues[V])
   extends Committable {
 
-  protected var current: V     = ip.initialValue
+  protected[rescala] var current: V     = ip.initialValue
   private   var owner  : Token = null
   private   var update : V     = _
 

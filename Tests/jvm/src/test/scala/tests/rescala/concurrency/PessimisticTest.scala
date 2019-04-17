@@ -4,7 +4,7 @@ import java.util.concurrent.{CountDownLatch, TimeUnit}
 
 import rescala.Interfaces
 import rescala.core.infiltration.JVMInfiltrator
-import rescala.parrp.{Backoff, ParRP}
+import rescala.parrp.{Backoff, ParRP, ParRPStruct}
 import rescala.twoversion.TwoVersionScheduler
 import tests.rescala.testtools.{RETests, ReevaluationTracker, SetAndExtractTransactionHandle, _}
 
@@ -130,7 +130,7 @@ class PessimisticTest extends RETests {
     var regs = 0
     var unregs = 0
 
-    val mockFac = new TwoVersionScheduler[ParRP, ParRP] {
+    val mockFac = new TwoVersionScheduler[ParRPStruct, ParRP] {
       override def schedulerName: String = "Reg/Unreg counting ParRP"
       override protected def makeTurn(priorTurn: Option[ParRP]): ParRP = new ParRP(new Backoff(), None) {
         override def discover(source: ReSource, sink: Reactive): Unit = {

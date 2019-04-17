@@ -2,7 +2,7 @@ package rescala.parrp
 
 import rescala.core.Initializer.InitValues
 import rescala.core._
-import rescala.levelbased.{LevelBasedTransaction, LevelStruct, LevelState}
+import rescala.levelbased.{LevelBasedTransaction, LevelState, LevelStruct}
 import rescala.locking._
 
 trait ParRPInterTurn {
