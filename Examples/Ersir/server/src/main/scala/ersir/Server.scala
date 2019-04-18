@@ -49,17 +49,18 @@ class Server(pages: ServerPages,
   }
 
   def addNewsFeed(): Unit = {
-    val doc = Jsoup.connect("https://www.digitalstadt-darmstadt.de/feed").get()
-    val titles = doc.select("channel item").iterator().asScala
+    val doc = Jsoup.connect("https://www.digitalstadt-darmstadt.de/news/feed/").get()
+    val titles = doc.select("channel item").iterator().asScala.toList
+    scribe.info(s"found ${titles.size} rss entries")
     val posts = titles.map { e =>
       val image = Jsoup.parse(e.selectFirst("content|encoded").text(),
-                              "https://www.digitalstadt-darmstadt.de/feed/")
-                  .selectFirst(".avia_image").absUrl("src")
+                              "https://www.digitalstadt-darmstadt.de/news/feed/")
+                  .selectFirst("img.attachment-full").absUrl("src")
       Posting(e.selectFirst("title").text(),
-              e.selectFirst("description").text(),
+              Jsoup.parse(e.selectFirst("description").text(), "").text(),
               image, 0)
     }
-    manualAddPostings.fire(posts.toList)
+    manualAddPostings.fire(posts)
   }
 
 
