@@ -192,7 +192,7 @@ object Tags {
       if (ot != nt) {
         val nn = nt.render
         newNodes ::= nn
-        parent.replaceChild(on, nn)
+        parent.replaceChild(nn, on)
         last = nn
       } else {
         newNodes ::= on
