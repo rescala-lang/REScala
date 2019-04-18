@@ -2,7 +2,7 @@ package rescala.locidistribute
 
 import loci.registry.{Binding, Registry}
 import loci.serializer.circe._
-import loci.transmitter.{MarshallableArgument, RemoteRef}
+import loci.transmitter.{AbstractionRef, Channel, MarshallableArgument, RemoteRef}
 import rescala.core.{InitialChange, Scheduler, Struct}
 import rescala.lattices.Lattice
 import rescala.reactives
@@ -21,13 +21,11 @@ object LociDist {
     println(s"binding $signalName")
     val signalBinding = Binding[A => Unit](signalName)
     registry.bind(signalBinding) { newValue =>
-      println(s"received value for $signalName: $newValue")
       scheduler.forceNewTransaction(signal) { admissionTicket =>
         admissionTicket.recordChange(new InitialChange[S] {
           override val source = signal
           override def writeValue(b: source.Value, v: source.Value => Unit): Boolean = {
             val merged = b.map(Lattice[A].merge(_, newValue)).asInstanceOf[source.Value]
-            println(s"writing $newValue onto $b, result is $merged")
             if (merged != b) {
               v(merged)
               true

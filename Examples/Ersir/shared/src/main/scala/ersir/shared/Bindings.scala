@@ -9,14 +9,13 @@ import rescala.lattices.sequences.RGOA.RGOA
 
 case class Posting(title: String,
                    desc: String,
-                   img: String,
-                   timestamp: Long)
+                   img: String)
 
 object Posting {
   def parse(textfield: String, url: String = ""): Posting = {
     val split = textfield.split("\n", 2)
     val Array(title, desc) = if (split.length == 2) split else Array(textfield, "")
-    Posting(title, desc, url, System.currentTimeMillis())
+    Posting(title, desc, url)
   }
 
   implicit val postingEncoder: Encoder[Posting] = deriveEncoder[Posting]

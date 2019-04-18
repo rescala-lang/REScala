@@ -20,6 +20,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.Future
 
 
+
 class Server(pages: ServerPages,
              system: ActorSystem,
              webResources: WebResources
@@ -36,6 +37,7 @@ class Server(pages: ServerPages,
 
   addNewsFeed()
 
+  scribe.info("test")
   LociDist.distribute(serverSideEntries, registry, scheduler)
 
   serverSideEntries.observe{sse =>
@@ -58,7 +60,7 @@ class Server(pages: ServerPages,
                   .selectFirst("img.attachment-full").absUrl("src")
       Posting(e.selectFirst("title").text(),
               Jsoup.parse(e.selectFirst("description").text(), "").text(),
-              image, 0)
+              image)
     }
     manualAddPostings.fire(posts)
   }
@@ -90,7 +92,7 @@ class Server(pages: ServerPages,
       getFromResourceDirectory("static")
     } ~
     path("add-entry") {
-      formFields(('title, 'description, 'imageUrl, 'timestamp.as[Long])).as(Posting.apply) { em =>
+      formFields(('title, 'description, 'imageUrl)).as(Posting.apply) { em =>
         manualAddPostings.fire(List(em))
         complete("ok")
       }
