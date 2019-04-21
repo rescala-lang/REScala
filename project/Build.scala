@@ -79,11 +79,12 @@ object Dependencies {
 
   val betterFiles = ld += "com.github.pathikrit" %% "better-files" % "3.7.1"
   val cats        = ld += "org.typelevel" %%% "cats-core" % "1.6.0"
-  val decline     = ld += "com.monovore" %% "decline" % "0.6.1"
+  val decline     = ld += "com.monovore" %% "decline" % "0.6.2"
   val fastparse   = ld += "com.lihaoyi" %%% "fastparse" % "2.1.0"
   val jsoup       = ld += "org.jsoup" % "jsoup" % "1.11.3"
-  val pprint      = ld += "com.lihaoyi" %%% "pprint" % "0.5.3"
-  val scalactic   = ld += "org.scalactic" %% "scalactic" % "3.0.6"
+  val pprint      = ld += "com.lihaoyi" %%% "pprint" % "0.5.4"
+  val scalactic   = ld += "org.scalactic" %% "scalactic" % "3.0.7"
+  val scribe      = ld += "com.outr" %%% "scribe" % "2.7.3"
   val rmgkLogging = Def.settings(Resolvers.rmgk, ld += "de.rmgk" %%% "logging" % "0.2.1")
   val sourcecode  = ld += "com.lihaoyi" %%% "sourcecode" % "0.1.5"
 
@@ -101,13 +102,13 @@ object Dependencies {
 
   // frontend
   val normalizecss = ld += "org.webjars.npm" % "normalize.css" % "8.0.1"
-  val scalatags    = ld += "com.lihaoyi" %%% "scalatags" % "0.6.7"
+  val scalatags    = ld += "com.lihaoyi" %%% "scalatags" % "0.6.8"
   val scalajsdom   = ld += "org.scala-js" %%% "scalajs-dom" % "0.9.6"
   val fontawesome  = ld += "org.webjars" % "font-awesome" % "5.7.2"
 
   // tests
   val scalacheck = ld += "org.scalacheck" %% "scalacheck" % "1.14.0" % "test"
-  val scalatest  = ld += "org.scalatest" %% "scalatest" % "3.0.6" % "test"
+  val scalatest  = ld += "org.scalatest" %% "scalatest" % "3.0.7" % "test"
 
   // legacy
   val scalaXml   = ld += "org.scala-lang.modules" %% "scala-xml" % "1.1.1"
