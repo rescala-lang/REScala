@@ -90,8 +90,8 @@ object Dependencies {
 
   val akkaHttp = ld ++= (Seq("akka-http-core",
                              "akka-http")
-                         .map(n => "com.typesafe.akka" %% n % "10.1.7") ++
-                         Seq("com.typesafe.akka" %% "akka-stream" % "2.5.21"))
+                         .map(n => "com.typesafe.akka" %% n % "10.1.8") ++
+                         Seq("com.typesafe.akka" %% "akka-stream" % "2.5.22"))
 
   val circe = ld ++= Seq("core",
                          "generic",
