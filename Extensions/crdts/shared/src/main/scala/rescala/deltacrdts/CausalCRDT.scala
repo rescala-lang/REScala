@@ -42,6 +42,10 @@ case class AddWinsSet[A](current: Map[Id, Set[Dot]], past: Set[Dot], ids: Map[A,
   def clear: delta = {
     (Map(), current.dots, Set())
   }
+
+  def toSet: Set[A] = ids.keySet.filter(d => current.keySet.contains(ids(d)))
+
+  def contains(e: A): Boolean = toSet.contains(e)
 }
 
 /**
