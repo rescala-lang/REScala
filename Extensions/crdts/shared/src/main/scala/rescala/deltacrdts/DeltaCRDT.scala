@@ -15,5 +15,6 @@ trait DeltaCRDT[A, D] {
 
 object DeltaCRDT {
   def apply[A,D](implicit ev: DeltaCRDT[A,D]): DeltaCRDT[A,D] = ev
-  def applyΔ[A,D](implicit ev: DeltaCRDT[A,D], crdt: A, delta: D): A = apply[A,D].applyΔ(crdt, delta)
+
+  def applyΔ[A, D](crdt: A, delta: D)(implicit ev: DeltaCRDT[A, D]): A = apply[A, D].applyΔ(crdt, delta)
 }

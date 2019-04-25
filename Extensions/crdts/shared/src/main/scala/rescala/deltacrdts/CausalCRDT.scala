@@ -57,7 +57,7 @@ trait CausalCRDT[A, T, D] extends DeltaCRDT[A, D] {
 
   def causalContext(a: A): Set[Dot]
 
-  def merge(left: A, right: A)(implicit dotStore: DotStore[T]): A = {
+  def merge(left: A, right: A)(implicit ev: DotStore[T]): A = {
     val (d, c) = DotStore.merge(dotStore(left), causalContext(left), dotStore(right), causalContext(right))
     apply(d, c)
   }
@@ -70,7 +70,7 @@ object CausalCRDT {
 
       override def causalContext(addWinsSet: AddWinsSet[A]): Set[Dot] = addWinsSet.past
 
-      override def merge(left: AddWinsSet[A], right: AddWinsSet[A])(implicit dotStore: DotStore[Map[Id, Set[Dot]]]): AddWinsSet[A] = {
+      override def merge(left: AddWinsSet[A], right: AddWinsSet[A])(implicit ev: DotStore[Map[Id, Set[Dot]]]): AddWinsSet[A] = {
         val causal: AddWinsSet[A] = super.merge(left, right)
         val current = dotStore(causal)
         val past = causalContext(causal)
@@ -79,7 +79,7 @@ object CausalCRDT {
         AddWinsSet(current, past, ids)
       }
 
-      override def apply(dotStore: Map[Id, Set[Dot]], causalContext: Set[Dot]): AddWinsSet[A] = CausalCRDT(dotStore, causalContext, Map()) // TODO: what to do when I have the dotStore, the causalContext but not the actual values for the ids?
+      override def apply(store: Map[Id, Set[Dot]], causalContext: Set[Dot]): AddWinsSet[A] = AddWinsSet(store, causalContext, Map()) // TODO: what to do when I have the dotStore, the causalContext but not the actual values for the ids?
 
       override def applyΔ(crdt: AddWinsSet[A], delta: (Map[Id, Set[Dot]], Set[Dot], Set[(A, Id)])): AddWinsSet[A] = {
         val (deltaCurrent, deltaPast, deltaIdData) = delta
