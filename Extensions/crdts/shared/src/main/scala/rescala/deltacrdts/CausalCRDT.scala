@@ -68,6 +68,13 @@ trait CausalCRDT[A, T, D] extends DeltaCRDT[A, D] {
 }
 
 object CausalCRDT {
+
+  implicit class CausalCRDTOps[A](caller: A) {
+    def merge[T, D](right: A)(implicit causalCRDT: CausalCRDT[A, T, D], dotStore: DotStore[T]): A = {
+      causalCRDT.merge(caller, right)
+    }
+  }
+
   implicit def addWinsSetCRDT[A]: CausalCRDT[AddWinsSet[A], Map[Id, Set[Dot]], (Map[Id, Set[Dot]], Set[Dot], Set[(A, Id)])] =
     new CausalCRDT[AddWinsSet[A], Map[Id, Set[Dot]], (Map[Id, Set[Dot]], Set[Dot], Set[(A, Id)])] {
       override def dotStore(addWinsSet: AddWinsSet[A]): Map[Id, Set[Dot]] = addWinsSet.current
