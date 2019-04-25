@@ -1,7 +1,7 @@
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.FreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import rescala.deltacrdts.dotstores.Dot
+import rescala.deltacrdts.dotstores.{Dot, DotStore}
 import rescala.deltacrdts.dotstores.DotStore._
 
 object DotSetGenerator {
@@ -12,7 +12,7 @@ object DotSetGenerator {
 
 
   implicit val genSet: Arbitrary[Set[Dot]] = Arbitrary(for {
-    ids <- Gen.listOf(Gen.oneOf('a' to 'g').map(_.toString)).map(_.toSet)
+    ids <- Gen.listOf(Gen.oneOf('a' to 'z').map(_.toString)).map(_.toSet)
     if ids.nonEmpty
     value <- Gen.listOfN(ids.size, Gen.oneOf(0 to 100))
     dots <- ids.zip(value).map(e => Dot(e._1,e._2))
@@ -21,38 +21,56 @@ object DotSetGenerator {
 
 
 class DotSetTests extends FreeSpec with ScalaCheckDrivenPropertyChecks {
-//  import DotSetGenerator._
+
+  import DotSetGenerator._
 
   "Manual Tests" in {
     val d1 = Dot("1", 1)
-    val s = Set(d1)
-    assert(s.dots.contains(d1))
+    val d2 = Dot("2", 1)
 
-//    val t = Set(Dot("2", 1))
-//    val union = s.merge(t)
-//    val union2 = DotStore.merge(s,t)
-//    assert(union.contains(d1) && union.contains(d2))
-//    assert(union2.contains(d1) && union2.contains(d2))
+    val s1 = Set(d1)
+    assert(s1.dots.contains(d1))
+
+    val s2 = Set(d2)
+    val c1 = Set(d1)
+    val c2 = Set(d1, d2) // d1 is already deleted in the second causal context
+
+    val mergedStore = DotStore.merge(s1, c1, s2, c2)._1
+
+    assert(!mergedStore.contains(d1))
+    assert(mergedStore.contains(d2))
   }
 
-//  "merge" in forAll { (s: Set[Dot], t: Set[Dot]) =>
-//    // check merge methods
-//    val m1 = s.merge(t)
-//    val m2 = t.merge(s)
-//    val m3 = DotStore.merge(s,t)
-//    assert(m1 == m2 && m2 == m3)
-//
-//    // check if all elements in
-//    for (e <- s) yield {
-//      assert(m1.contains(e) && m2.contains(e) && m3.contains(e))
-//    }
-//    for (e <- t) yield {
-//      assert(m1.contains(e) && m2.contains(e) && m3.contains(e))
-//    }
-//
-//    // count elements
-//    assert(m1.size == m2.size && m2.size == m3.size)
-//    assert(m1.size == s.size + t.size - s.intersect(t).size)
-//  }
+  "merge" in forAll { (s1: Set[Dot], t1: Set[Dot], s2: Set[Dot], t2: Set[Dot]) =>
+    // add all current values to their causal contexts
+    val c1 = s1 ++ t1
+    val c2 = s2 ++ t2
 
+    // commutativity
+    val m1 = DotStore.merge(s1, c1, s2, c2)
+    val m2 = DotStore.merge(s2, c2, s1, c1)
+    assert(m1 == m2)
+
+    // check if all elements were added to the new causal context
+    val (ms, mc) = m1
+    for (e <- c1) yield {
+      assert(mc.contains(e))
+    }
+    for (e <- c2) yield {
+      assert(mc.contains(e))
+    }
+
+    val deadElements = c1.filter(!s1.contains(_)) ++ c2.filter(!s2.contains(_))
+    val newElements = (s1 union s2) -- deadElements
+
+    // check that already deleted elements are not added again
+    for (e <- deadElements) yield {
+      assert(!ms.contains(e))
+    }
+
+    // check that the new store contains all new elements
+    for (e <- newElements) yield {
+      assert(ms.contains(e))
+    }
+  }
 }
