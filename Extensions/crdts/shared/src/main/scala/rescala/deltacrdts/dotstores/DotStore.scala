@@ -25,7 +25,8 @@ trait DotStore[A] {
 
 object DotStore {
   def next[A](id: Id, c: A)(implicit dotStore: DotStore[A]): Dot = {
-    val maxCount = c.dots.filter(_.replicaId == id).map(_.counter).max
+    val dotsWithId = c.dots.filter(_.replicaId == id)
+    val maxCount = if (dotsWithId.isEmpty) 0 else dotsWithId.map(_.counter).max
     Dot(id, maxCount + 1)
   }
 
@@ -62,12 +63,10 @@ object DotStore {
 
     override def dots(a: Set[Dot]): Set[Dot] = a
 
-    override def compress(a: Set[Dot]): Set[Dot] = {
-      // Map[replicaId, dots]
-      // Purpose: Only keep the newest dot for every complete series of dots
-      // TODO: actually implement DotStore compression
-      a
-    }
+    /**
+      * Only keeps the highest element of each dot subsequence in the set.
+      */
+    override def compress(a: Set[Dot]): Set[Dot] = a.filter(d => !a.contains(Dot(d.replicaId, d.counter + 1)))
 
     override def empty: Set[Dot] = Set[Dot]()
 
