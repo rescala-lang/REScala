@@ -1,7 +1,7 @@
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.FreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import rescala.deltacrdts.dotstores.{Dot, DotStore}
+import rescala.deltacrdts.dotstores.{Causal, Dot, DotStore}
 import rescala.deltacrdts.dotstores.DotStore._
 
 object DotSetGenerator {
@@ -35,7 +35,7 @@ class DotSetTests extends FreeSpec with ScalaCheckDrivenPropertyChecks {
     val c1 = Set(d1)
     val c2 = Set(d1, d2) // d1 is already deleted in the second causal context
 
-    val mergedStore = DotStore.merge(s1, c1, s2, c2)._1
+    val mergedStore = DotStore[Set[Dot]].merge(Causal(s1, c1), Causal(s2, c2)).store
 
     assert(!mergedStore.contains(d1))
     assert(mergedStore.contains(d2))
@@ -47,17 +47,16 @@ class DotSetTests extends FreeSpec with ScalaCheckDrivenPropertyChecks {
     val c2 = s2 ++ t2
 
     // commutativity
-    val m1 = DotStore.merge(s1, c1, s2, c2)
-    val m2 = DotStore.merge(s2, c2, s1, c1)
+    val m1 = DotStore.merge(Causal(s1, c1), Causal(s2, c2))
+    val m2 = DotStore.merge(Causal(s2, c2), Causal(s1, c1))
     assert(m1 == m2)
 
     // check if all elements were added to the new causal context
-    val (ms, mc) = m1
     for (e <- c1) yield {
-      assert(mc.contains(e))
+      assert(m1.context.contains(e))
     }
     for (e <- c2) yield {
-      assert(mc.contains(e))
+      assert(m1.context.contains(e))
     }
 
     val deadElements = c1.filter(!s1.contains(_)) ++ c2.filter(!s2.contains(_))
@@ -65,12 +64,12 @@ class DotSetTests extends FreeSpec with ScalaCheckDrivenPropertyChecks {
 
     // check that already deleted elements are not added again
     for (e <- deadElements) yield {
-      assert(!ms.contains(e))
+      assert(!m1.store.contains(e))
     }
 
     // check that the new store contains all new elements
     for (e <- newElements) yield {
-      assert(ms.contains(e))
+      assert(m1.store.contains(e))
     }
   }
 }

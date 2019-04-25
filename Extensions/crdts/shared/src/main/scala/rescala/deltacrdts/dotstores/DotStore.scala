@@ -3,15 +3,17 @@ package rescala.deltacrdts.dotstores
 import rescala.lattices.IdUtil.Id
 
 case class Dot(replicaId: Id, counter: Int)
+case class Causal[A](store: A, context: Set[Dot])
 
 trait DotStore[A] {
-  def add(a: A, d: Dot): A
+  type Store = A
+  def add(a: Store, d: Dot): Store
 
-  def dots(a: A): Set[Dot]
+  def dots(a: Store): Set[Dot]
 
-  def compress(a: A): A
+  def compress(a: Store): Store
 
-  def empty: A
+  def empty: Store
 
   /**
     * Merges two dotstores with respect to their causal contexts. The new element contains all the dots that are either
@@ -20,23 +22,25 @@ trait DotStore[A] {
     *
     * @return
     */
-  def merge(left: A, leftContext: Set[Dot], right: A, rightContext: Set[Dot]): (A, Set[Dot])
+  def merge(left: Causal[A], right: Causal[A]): Causal[A]
 }
 
 object DotStore {
-  def next[A](id: Id, c: A)(implicit dotStore: DotStore[A]): Dot = {
+  def next[A: DotStore](id: Id, c: A): Dot = {
     val dotsWithId = c.dots.filter(_.replicaId == id)
     val maxCount = if (dotsWithId.isEmpty) 0 else dotsWithId.map(_.counter).max
     Dot(id, maxCount + 1)
   }
 
-  def merge[A](m1: A, c1: Set[Dot], m2: A, c2: Set[Dot])(implicit dotStore: DotStore[A]): (A, Set[Dot]) = {
-    dotStore.merge(m1, c1, m2, c2)
+  def merge[A: DotStore](left: Causal[A], right: Causal[A]): Causal[A] = {
+    DotStore[A].merge(left, right)
   }
 
-  def empty[A](implicit dotStore: DotStore[A]): A = dotStore.empty
+  def apply[A](implicit dotStore: DotStore[A]): dotStore.type = dotStore
 
-  implicit class DotStoreOps[A](caller: A) {
+  def empty[A: DotStore]: A = DotStore[A].empty
+
+  implicit class DotStoreOps[A](val caller: A) extends AnyVal {
     /**
       * adds a dot to the dotstore and compresses it afterwards
       */
@@ -59,46 +63,47 @@ object DotStore {
 
   // instances
   implicit def DotSetInstance: DotStore[Set[Dot]] = new DotStore[Set[Dot]] {
-    override def add(a: Set[Dot], d: Dot): Set[Dot] = a + d
+    override def add(a: Store, d: Dot): Store = a + d
 
-    override def dots(a: Set[Dot]): Set[Dot] = a
+    override def dots(a: Store): Store = a
 
     /**
       * Only keeps the highest element of each dot subsequence in the set.
       */
-    override def compress(a: Set[Dot]): Set[Dot] = a.filter(d => !a.contains(Dot(d.replicaId, d.counter + 1)))
+    //TODO: how do we know where subsequences started?
+    override def compress(a: Store): Store = a.filter(d => !a.contains(Dot(d.replicaId, d.counter + 1)))
 
-    override def empty: Set[Dot] = Set[Dot]()
+    override def empty: Store = Set.empty
 
-    override def merge(left: Set[Dot], leftContext: Set[Dot], right: Set[Dot], rightContext: Set[Dot]): (Set[Dot], Set[Dot]) = {
-      val common = left intersect right
-      val newElements = (left -- rightContext) union (right -- leftContext)
-      (common union newElements, leftContext union rightContext)
+    override def merge(left: Causal[Store], right: Causal[Store]): Causal[Store] = {
+      val common = left.store intersect right.store
+      val newElements = (left.store diff  right.context) union (right.store diff left.context)
+      Causal(common union newElements, left.context union right.context)
     }
   }
 
   implicit def DotMapInstance[A](implicit dotStore: DotStore[A]): DotStore[Map[Id, A]] = new DotStore[Map[Id, A]] {
-    override def add(a: Map[Id, A], d: Dot): Map[Id, A] = a.mapValues(_.add(d))
+    override def add(a: Store, d: Dot): Store = a.mapValues(_.add(d))
 
-    override def dots(a: Map[Id, A]): Set[Dot] = a.values.flatMap(_.dots).toSet
+    override def dots(a: Store): Set[Dot] = a.values.flatMap(_.dots).toSet
 
-    override def compress(a: Map[Id, A]): Map[Id, A] = a.mapValues(dotStore.compress)
+    override def compress(a: Store): Store = a.mapValues(dotStore.compress)
 
-    override def empty: Map[Id, A] = Map[Id, A]()
+    override def empty: Store = Map.empty
 
-    override def merge(left: Map[Id, A], leftContext: Set[Dot], right: Map[Id, A], rightContext: Set[Dot]): (Map[Id, A], Set[Dot]) = {
-      val newStore: Map[Id, A] = (left.keySet union right.keySet).map(id => {
+    override def merge(left: Causal[Store], right: Causal[Store]): Causal[Store] = {
+      val newStore: Store = (left.store.keySet union right.store.keySet).map(id => {
         // those are needed to allow merging even if the element is only in one of the DotMaps
-        val leftn: Map[Id, A] = left.withDefaultValue(DotStore.empty[A])
-        val rightn: Map[Id, A] = right.withDefaultValue(DotStore.empty[A])
+        val leftn: Store = left.store.withDefaultValue(DotStore.empty[A])
+        val rightn: Store = right.store.withDefaultValue(DotStore.empty[A])
 
         // merge the dotstores for each id
-        val (value, _) = DotStore.merge(leftn(id), leftContext, rightn(id), rightContext)
-        (id, value)
+        val value = DotStore[A].merge(Causal(leftn(id), left.context), Causal(rightn(id), right.context))
+        (id, value.store)
       }).filter { case (_, value) => value != DotStore.empty[A] } // filter out empty elements
         .toMap // return a new map
-      val newContext = leftContext union rightContext // simply take the union of both contexts
-      (newStore, newContext)
+      val newContext = left.context union right.context // simply take the union of both contexts
+      Causal(newStore, newContext)
     }
   }
 }

@@ -1,7 +1,7 @@
 package rescala.deltacrdts
 
 import rescala.deltacrdts.dotstores.DotStore._
-import rescala.deltacrdts.dotstores.{Dot, DotStore}
+import rescala.deltacrdts.dotstores.{Causal, Dot, DotStore}
 import rescala.lattices.IdUtil
 import rescala.lattices.IdUtil.Id
 
@@ -55,15 +55,15 @@ case class AddWinsSet[A](current: Map[Id, Set[Dot]], past: Set[Dot], ids: Map[A,
   * @tparam D type of the Deltas
   */
 trait CausalCRDT[A, T, D] extends DeltaCRDT[A, D] {
-  def apply(dotStore: T, causalContext: Set[Dot]): A
+  def apply(causal: Causal[T]): A
 
   def dotStore(a: A): T
 
   def causalContext(a: A): Set[Dot]
 
   def merge(left: A, right: A)(implicit ev: DotStore[T]): A = {
-    val (d, c) = DotStore.merge(dotStore(left), causalContext(left), dotStore(right), causalContext(right))
-    apply(d, c)
+    def mkCausal(v: A): Causal[T] = Causal(dotStore(v), causalContext(v))
+    apply(DotStore[T].merge(mkCausal(left), mkCausal(right)))
   }
 }
 
@@ -90,7 +90,7 @@ object CausalCRDT {
         AddWinsSet(current, past, ids)
       }
 
-      override def apply(store: Map[Id, Set[Dot]], causalContext: Set[Dot]): AddWinsSet[A] = AddWinsSet(store, causalContext, Map()) // TODO: what to do when I have the dotStore, the causalContext but not the actual values for the ids?
+      override def apply(causal: Causal[Map[Id, Set[Dot]]]): AddWinsSet[A] = AddWinsSet(causal.store, causal.context, Map()) // TODO: what to do when I have the dotStore, the causalContext but not the actual values for the ids?
 
       override def applyΔ(crdt: AddWinsSet[A], delta: (Map[Id, Set[Dot]], Set[Dot], Set[(A, Id)])): AddWinsSet[A] = {
         val (deltaCurrent, deltaPast, deltaIdData) = delta
