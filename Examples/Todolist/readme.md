@@ -1,26 +1,15 @@
 # REScala • [TodoMVC](http://todomvc.com)
 
-> 
+>
 > REScala is a Scala library for functional reactive programming on the JVM and
 > the Web. It provides a rich API for event stream transformations and signal
 > composition with managed consistent up-to-date state and minimal syntactic
 > overhead. It supports concurrent and distributed programs.
-> 
-> _[REScala - https://guidosalva.github.io/REScala/]
-> 
-
-## Resources
-
-- [Website](https://guidosalva.github.io/REScala/)
-- [Manual](https://guidosalva.github.io/REScala/manual/)
-- [Scaladoc](https://guidosalva.github.io/REScala/scaladoc/rescala/index.html)
-- [Publications](https://guidosalva.github.io/REScala/Publications.html)
-- [Github](https://github.com/guidosalva/REScala/)
-- [Todolist Github](https://github.com/guidosalva/REScala/tree/master/Examples/Todolist)
+>
+> REScala — www.rescala-lang.com
+>
 
 ## Implementation
-
-See also [https://guidosalva.github.io/REScala/todolist]
 
 We implemented most of the TodoMVC specification.
 Especially interesting is the use of reactive signals to generate html-elements,
@@ -72,7 +61,4 @@ simpletodo.html the script src to the new version.
 
 (See other branch 'chat' for another app using rescala-multitiere/retier.)
 
-## Credit
-
-See https://guidosalva.github.io/REScala/contact.html#contributions
 
