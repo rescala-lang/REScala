@@ -15,13 +15,9 @@ trait DotStore[A] {
 
   def empty: Store
 
-  /**
-    * Merges two dotstores with respect to their causal contexts. The new element contains all the dots that are either
+  /** Merges two dotstores with respect to their causal contexts. The new element contains all the dots that are either
     * contained in both dotstores or contained in one of the dotstores but not in the causal context (history) of the
-    * other one.
-    *
-    * @return
-    */
+    * other one. */
   def merge(left: Causal[A], right: Causal[A]): Causal[A]
 }
 
@@ -41,24 +37,17 @@ object DotStore {
   def empty[A: DotStore]: A = DotStore[A].empty
 
   implicit class DotStoreOps[A](val caller: A) extends AnyVal {
-    /**
-      * adds a dot to the dotstore and compresses it afterwards
-      */
+
     def add(d: Dot)(implicit dotStore: DotStore[A]): A = {
-      dotStore.compress(dotStore.add(caller, d)) // TODO: split add and addAndCompress methods to allow adding without compression
+      dotStore.compress(dotStore.add(caller, d))
     }
 
-    def addMultiple(c: Iterable[Dot])(implicit dotStore: DotStore[A]): A = {
-      dotStore.compress(c.foldLeft(caller: A) { (akk: A, dot: Dot) => dotStore.add(akk, dot)})
+    def addAll(c: Iterable[Dot])(implicit dotStore: DotStore[A]): A = {
+      dotStore.compress(c.foldLeft(caller: A)(dotStore.add))
     }
 
-    def contains(d: Dot)(implicit dotStore: DotStore[A]): Boolean = {
-      dotStore.dots(caller).contains(d)
-    }
-
-    def dots(implicit dotStore: DotStore[A]): Set[Dot] = {
-      dotStore.dots(caller)
-    }
+    def dots(implicit dotStore: DotStore[A]): Set[Dot] = dotStore.dots(caller)
+    def contains(d: Dot)(implicit dotStore: DotStore[A]): Boolean = dots.contains(d)
   }
 
   // instances

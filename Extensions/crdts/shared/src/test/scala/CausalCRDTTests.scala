@@ -1,6 +1,5 @@
 import org.scalacheck.Arbitrary
 import org.scalatest.FreeSpec
-import org.scalatest.prop.PropertyChecks
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import rescala.deltacrdts.CausalCRDT._
 import rescala.deltacrdts.{AddWinsSet, DeltaCRDT}

@@ -8,7 +8,7 @@ import rescala.lattices.IdUtil.Id
 case class AddWinsSet[A](current: Map[Id, Set[Dot]], past: Set[Dot], ids: Map[A, Id]) {
   //(updatesCurrent[Set[(id, dot)], knownPast[Set[dot]], newData[Set[(id,data)])
   // a delta always includes new (id,dot) pairs, the known causal context for the modified ids as well as the new data elements
-  type delta = (Map[Id, Set[Dot]], Set[Dot], Set[(A, Id)])
+  type TDelta = (Map[Id, Set[Dot]], Set[Dot], Set[(A, Id)])
 
   /**
     * Adding an element adds it to the current dot store as well as to the causal context (past).
@@ -16,7 +16,7 @@ case class AddWinsSet[A](current: Map[Id, Set[Dot]], past: Set[Dot], ids: Map[A,
     * @param e the element to be added
     * @return
     */
-  def add(e: A): delta = {
+  def add(e: A): TDelta = {
     val id = ids.getOrElse(e, IdUtil.genId())
     val dot = DotStore.next(id, past)
     // this is what the paper does:
@@ -26,20 +26,18 @@ case class AddWinsSet[A](current: Map[Id, Set[Dot]], past: Set[Dot], ids: Map[A,
     (Map(id -> Set(dot)), Set(dot), Set((e, id)))
   }
 
-  /**
-    * Removing an element adds its dots to the causal context.
-    *
-    * @param e the element to be removed
-    * @return
-    */
-  def remove(e: A): delta = {
+  /** Merging removes all elements the other side should known (based on the causal context),
+    * but does not contain.
+    * Thus, the delta for removal is the empty map,
+    * with the dot of the removed element in the context. */
+  def remove(e: A): TDelta = {
     ids.get(e) match {
       case None => throw new IllegalArgumentException(s"Cannot remove element $e since it is not in the set.")
       case Some(id) => (Map(), current(id).dots, Set())
     }
   }
 
-  def clear: delta = {
+  def clear: TDelta = {
     (Map(), current.dots, Set())
   }
 
@@ -48,22 +46,16 @@ case class AddWinsSet[A](current: Map[Id, Set[Dot]], past: Set[Dot], ids: Map[A,
   def contains(e: A): Boolean = toSet.contains(e)
 }
 
-/**
-  *
-  * @tparam A type of the CausalCRDT
-  * @tparam T type of the DotStore
-  * @tparam D type of the Deltas
-  */
-trait CausalCRDT[A, T, D] extends DeltaCRDT[A, D] {
-  def apply(causal: Causal[T]): A
+trait CausalCRDT[TCausal, TDotStore, TDelta] extends DeltaCRDT[TCausal, TDelta] {
+  def apply(causal: Causal[TDotStore]): TCausal
 
-  def dotStore(a: A): T
+  def dotStore(a: TCausal): TDotStore
 
-  def causalContext(a: A): Set[Dot]
+  def causalContext(a: TCausal): Set[Dot]
 
-  def merge(left: A, right: A)(implicit ev: DotStore[T]): A = {
-    def mkCausal(v: A): Causal[T] = Causal(dotStore(v), causalContext(v))
-    apply(DotStore[T].merge(mkCausal(left), mkCausal(right)))
+  def merge(left: TCausal, right: TCausal)(implicit ev: DotStore[TDotStore]): TCausal = {
+    def mkCausal(v: TCausal): Causal[TDotStore] = Causal(dotStore(v), causalContext(v))
+    apply(DotStore[TDotStore].merge(mkCausal(left), mkCausal(right)))
   }
 }
 
@@ -90,8 +82,9 @@ object CausalCRDT {
         AddWinsSet(current, past, ids)
       }
 
-      override def apply(causal: Causal[Map[Id, Set[Dot]]]): AddWinsSet[A] = AddWinsSet(causal.store, causal.context, Map()) // TODO: what to do when I have the dotStore, the causalContext but not the actual values for the ids?
-
+      override def apply(causal: Causal[Map[Id, Set[Dot]]]): AddWinsSet[A] =
+        // TODO: what to do when I have the dotStore, the causalContext but not the actual values for the ids?
+        AddWinsSet(causal.store, causal.context, Map())
       override def applyΔ(crdt: AddWinsSet[A], delta: (Map[Id, Set[Dot]], Set[Dot], Set[(A, Id)])): AddWinsSet[A] = {
         val (deltaCurrent, deltaPast, deltaIdData) = delta
         merge(crdt, AddWinsSet(deltaCurrent, deltaPast, deltaIdData.toMap))

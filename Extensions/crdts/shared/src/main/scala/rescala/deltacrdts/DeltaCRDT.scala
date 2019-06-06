@@ -1,15 +1,8 @@
 package rescala.deltacrdts
 
-/**
-  *
-  * @tparam A type of the CRDT
-  * @tparam D type of the delta mutations
-  */
+/** @tparam A type of the CRDT
+  * @tparam D type of the delta mutation */
 trait DeltaCRDT[A, D] {
-  /**
-    * Applies a delta mutation to a CRDT
-    * @return
-    */
   def applyΔ(crdt: A, delta: D): A
 }
 
