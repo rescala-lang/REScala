@@ -2,7 +2,7 @@ package rescala.deltacrdts
 
 import rescala.deltacrdts.dotstores.DotStore._
 import rescala.deltacrdts.dotstores.{Causal, Dot, DotStore}
-import rescala.lattices.IdUtil
+import rescala.lattices.{IdUtil, Lattice}
 import rescala.lattices.IdUtil.Id
 
 case class AddWinsSet[A](current: Map[Id, Set[Dot]], past: Set[Dot], ids: Map[A, Id]) {
@@ -46,7 +46,7 @@ case class AddWinsSet[A](current: Map[Id, Set[Dot]], past: Set[Dot], ids: Map[A,
   def contains(e: A): Boolean = toSet.contains(e)
 }
 
-trait CausalCRDT[TCausal, TDotStore, TDelta] extends DeltaCRDT[TCausal, TDelta] {
+trait CausalCRDT[TCausal, TDotStore, TDelta] {
   def apply(causal: Causal[TDotStore]): TCausal
 
   def dotStore(a: TCausal): TDotStore
@@ -59,36 +59,22 @@ trait CausalCRDT[TCausal, TDotStore, TDelta] extends DeltaCRDT[TCausal, TDelta] 
   }
 }
 
-object CausalCRDT {
+object AWS {
+  private type Delta[A] = (Map[Id, Set[Dot]], Set[Dot], Set[(A, Id)])
+  def applyΔ[T](crdt: AddWinsSet[T], delta: Delta[T]): AddWinsSet[T] = {
+    val (deltaCurrent, deltaPast, deltaIdData) = delta
+    AddWinsSet.addWinsSetLattice.merge(crdt, AddWinsSet(deltaCurrent, deltaPast, deltaIdData.toMap))
+  }
+}
 
-  implicit class CausalCRDTOps[A](caller: A) {
-    def merge[T, D](right: A)(implicit causalCRDT: CausalCRDT[A, T, D], dotStore: DotStore[T]): A = {
-      causalCRDT.merge(caller, right)
+object AddWinsSet {
+  implicit def addWinsSetLattice[A]: Lattice[AddWinsSet[A]] = new Lattice[AddWinsSet[A]] {
+    override def merge(left: AddWinsSet[A], right: AddWinsSet[A]): AddWinsSet[A] = {
+      def mkCausal(v: AddWinsSet[A]): Causal[Map[Id, Set[Dot]]] = Causal(v.current, v.past)
+      val causal  = DotStore.merge(mkCausal(left), mkCausal(right))
+      val ids = left.ids ++ right.ids // also merge data->id maps of the two sets
+      AddWinsSet(causal.store, causal.context, ids)
     }
   }
-
-  implicit def addWinsSetCRDT[A]: CausalCRDT[AddWinsSet[A], Map[Id, Set[Dot]], (Map[Id, Set[Dot]], Set[Dot], Set[(A, Id)])] =
-    new CausalCRDT[AddWinsSet[A], Map[Id, Set[Dot]], (Map[Id, Set[Dot]], Set[Dot], Set[(A, Id)])] {
-      override def dotStore(addWinsSet: AddWinsSet[A]): Map[Id, Set[Dot]] = addWinsSet.current
-
-      override def causalContext(addWinsSet: AddWinsSet[A]): Set[Dot] = addWinsSet.past
-
-      override def merge(left: AddWinsSet[A], right: AddWinsSet[A])(implicit ev: DotStore[Map[Id, Set[Dot]]]): AddWinsSet[A] = {
-        val causal: AddWinsSet[A] = super.merge(left, right)
-        val current = dotStore(causal)
-        val past = causalContext(causal)
-
-        val ids = left.ids ++ right.ids // also merge data->id maps of the two sets
-        AddWinsSet(current, past, ids)
-      }
-
-      override def apply(causal: Causal[Map[Id, Set[Dot]]]): AddWinsSet[A] =
-        // TODO: what to do when I have the dotStore, the causalContext but not the actual values for the ids?
-        AddWinsSet(causal.store, causal.context, Map())
-      override def applyΔ(crdt: AddWinsSet[A], delta: (Map[Id, Set[Dot]], Set[Dot], Set[(A, Id)])): AddWinsSet[A] = {
-        val (deltaCurrent, deltaPast, deltaIdData) = delta
-        merge(crdt, AddWinsSet(deltaCurrent, deltaPast, deltaIdData.toMap))
-      }
-    }
 }
 
