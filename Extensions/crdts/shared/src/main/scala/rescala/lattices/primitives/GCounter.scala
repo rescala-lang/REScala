@@ -11,7 +11,9 @@ case class GCounter(id: IdUtil.Id, payload: HashMap[IdUtil.Id, Int]) {
 
   def fromPayload(payload: HashMap[IdUtil.Id, Int]): GCounter = GCounter(id, payload)
 
-  def increase = GCounter(id, payload + (id -> (payload(id) + 1)))
+  def increaseΔ: GCounter = GCounter(id, HashMap(id -> (payload(id) + 1)))
+
+  def increase: GCounter = Lattice.merge(this, increaseΔ)
 }
 
 object GCounter {
