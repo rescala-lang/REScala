@@ -2,7 +2,7 @@ package rescala.incremental
 
 import rescala.core._
 import rescala.macros.cutOutOfUserComputation
-import rescala.reactives.Signal
+import rescala.reactives.{Event, Events, Signal}
 
 
 
@@ -24,8 +24,20 @@ trait ReactiveDeltaSet[T, S <: Struct] extends ReSource[S] {
   @cutOutOfUserComputation
   def filter[A](expression: T => Boolean)(implicit ticket: CreationTicket[S]): ReactiveDeltaSet[A, S] = ???
 
+
   @cutOutOfUserComputation
-  def aggregate[A](expression: (A, Delta[T]) => A)(implicit ticket: CreationTicket[S]): Signal[A, S] = ???
+  def asEvent(implicit ticket: CreationTicket[S]): Event[Delta[T], S] = {
+    Events.static( this) { staticTicket =>
+      val delta = staticTicket.collectStatic(this)
+      Some(delta)
+    }
+  }
+
+  @cutOutOfUserComputation
+  def aggregate[A: ReSerializable](initial: A)(expression: (A, Delta[T]) => A)(implicit ticket: CreationTicket[S]): Signal[A, S] = {
+    val event = asEvent
+    Events.foldOne(event, initial){ expression }
+  }
 
 }
 
