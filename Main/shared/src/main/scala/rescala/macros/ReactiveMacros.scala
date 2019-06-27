@@ -88,8 +88,9 @@ class ReactiveMacros(val c: blackbox.Context) {
     val body =
       q"""$eventsSymbol.fold[${weakTypeOf[A]}, ${weakTypeOf[S]}](Set(..$extendedDetections), $init)(
           (${p.ticketIdent}: $ticketType, $accumulatorIdent: ${weakTypeOf[T]}) => {
-            val $pulseIdent = ${p.ticketIdent}.dependStatic($mapFunctionArgumentIdent).get
-            ${p.rewrittenTree}($accumulatorIdent(), $pulseIdent)
+            val $pulseIdent = ${p.ticketIdent}.dependStatic($mapFunctionArgumentIdent)
+            if ($pulseIdent.isDefined) { ${p.rewrittenTree}($accumulatorIdent(), $pulseIdent.get) }
+            else {$accumulatorIdent()}
           })($serializable, $ticket)"""
     val block: c.universe.Tree = Block(valDefs, body)
     ReTyper(c).untypecheck(block)

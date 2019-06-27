@@ -226,4 +226,14 @@ class Fold extends RETests { multiEngined { engine => import engine._
     assert (res.readValueOnce == "do them all!do them all!")
   }
 
+
+  test("changing only a signal when folding") {
+    val e = Evt[Int]
+    val v = Var(0)
+    val f = e.fold(0) { (_, _) => v.value }
+    f observe identity
+
+    v.set(1)
+  }
+
 } }
