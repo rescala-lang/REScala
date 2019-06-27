@@ -8,7 +8,7 @@ import rescala.lattices.IdUtil.Id
 case class AddWinsSet[A](current: Map[Id, Set[Dot]], past: Set[Dot], ids: Map[A, Id]) {
   //(updatesCurrent[Set[(id, dot)], knownPast[Set[dot]], newData[Set[(id,data)])
   // a delta always includes new (id,dot) pairs, the known causal context for the modified ids as well as the new data elements
-  type TDelta = (Map[Id, Set[Dot]], Set[Dot], Set[(A, Id)])
+  type TDelta = AddWinsSet[A]
 
   /**
     * Adding an element adds it to the current dot store as well as to the causal context (past).
@@ -30,15 +30,15 @@ case class AddWinsSet[A](current: Map[Id, Set[Dot]], past: Set[Dot], ids: Map[A,
     * but does not contain.
     * Thus, the delta for removal is the empty map,
     * with the dot of the removed element in the context. */
-  def remove(e: A): TDelta = {
+  def remove(e: A): AddWinsSet[A] = {
     ids.get(e) match {
       case None => throw new IllegalArgumentException(s"Cannot remove element $e since it is not in the set.")
-      case Some(id) => (Map(), current(id).dots, Set())
+      case Some(id) => AddWinsSet[A](Map(), current(id).dots, Map())
     }
   }
 
-  def clear: TDelta = {
-    (Map(), current.dots, Set())
+  def clear: AddWinsSet[A] = {
+    AddWinsSet[A](Map(), current.dots, Map())
   }
 
   def toSet: Set[A] = ids.keySet.filter(d => current.keySet.contains(ids(d)))
@@ -64,6 +64,9 @@ object AWS {
   def applyΔ[T](crdt: AddWinsSet[T], delta: Delta[T]): AddWinsSet[T] = {
     val (deltaCurrent, deltaPast, deltaIdData) = delta
     AddWinsSet.addWinsSetLattice.merge(crdt, AddWinsSet(deltaCurrent, deltaPast, deltaIdData.toMap))
+  }
+  def applyΔ[T](crdt: AddWinsSet[T], delta: AddWinsSet[T]): AddWinsSet[T] = {
+    AddWinsSet.addWinsSetLattice.merge(crdt, delta)
   }
 }
 
