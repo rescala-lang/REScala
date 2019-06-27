@@ -17,9 +17,20 @@ abstract class RENamed(val rename: REName) {
 object REName extends LowPriorityREName {
   implicit def fromString(s: String): REName = REName(s)
   def named[T](name: String)(f: /* implicit */ REName => T) = f(REName(name))
+
+
+  private var seenNames = Map[REName, Int]()
+  def makeNameUnique(name: REName): REName = synchronized {
+    val count =  seenNames.getOrElse(name, 0)
+    seenNames = seenNames.updated(name, count + 1)
+    if (count != 0) name.derive(count.toString) else name
+  }
+
+
 }
 
 trait LowPriorityREName {
-  implicit def create(implicit file: sourcecode.Enclosing, line: sourcecode.Line): REName = REName(s"${file.value}:${line.value}")
+  implicit def create(implicit file: sourcecode.Enclosing, line: sourcecode.Line): REName =
+    REName.makeNameUnique(REName(s"${file.value}:${line.value}"))
 }
 

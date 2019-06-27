@@ -7,8 +7,8 @@ import rescala.restoration.{InMemoryStore, RestoringInterface}
 class RestoringTest extends FunSuite {
 
   def makeGraph()(implicit api: InMemoryStore) = {
-    val e = api.Evt[Unit]()
-    (e, e.count())
+    val e = api.Evt[Unit]()("graph main event")
+    (e, e.count()("graph fold", implicitly))
   }
 
   test("simple save and restore"){
