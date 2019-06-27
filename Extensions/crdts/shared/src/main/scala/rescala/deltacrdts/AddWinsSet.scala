@@ -16,14 +16,14 @@ case class AddWinsSet[A](current: Map[Id, Set[Dot]], past: Set[Dot], ids: Map[A,
     * @param e the element to be added
     * @return
     */
-  def add(e: A): TDelta = {
+  def add(e: A): AddWinsSet[A] = {
     val id = ids.getOrElse(e, IdUtil.genId())
     val dot = DotStore.next(id, past)
     // this is what the paper does:
     //    (Set((id, dot)), past.getOrElse(id, Set()) + dot, Set((id, e)))
     // this is sufficient in my opinion:
     // for adds we don't have to know (in the CC) conflicting adds or removes for this element because adds win anyway
-    (Map(id -> Set(dot)), Set(dot), Set((e, id)))
+    AddWinsSet(Map(id -> Set(dot)), Set(dot), Map(e -> id))
   }
 
   /** Merging removes all elements the other side should known (based on the causal context),
