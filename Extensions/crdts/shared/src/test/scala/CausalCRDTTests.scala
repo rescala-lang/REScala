@@ -1,14 +1,15 @@
 import org.scalacheck.Arbitrary
 import org.scalatest.FreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import rescala.deltacrdts.AddWinsSet
+import rescala.deltacrdts.dotstores.{Dot, DotStoreLattice}
 import rescala.lattices.Lattice.LatticeOps
-import rescala.deltacrdts.{AddWinsSet}
 
 import scala.util.Random
 
 object AWTestHelper {
   def merge[T](crdt: AddWinsSet[T], delta: AddWinsSet[T]): AddWinsSet[T] = {
-    AddWinsSet.addWinsSetLattice.merge(crdt, delta)
+    DotStoreLattice.DotMapInstance[T, Set[Dot]].merge(crdt, delta)
   }
 }
 
@@ -16,35 +17,35 @@ object AWTestHelper {
 class CausalCRDTTests extends FreeSpec with ScalaCheckPropertyChecks {
   implicit lazy val addWinsSetWithStrings: Arbitrary[AddWinsSet[String]] = Arbitrary(for {
     values <- Arbitrary.arbitrary[Set[String]]
-  } yield values.foldLeft(AddWinsSet[String](Map(), Set(), Map()))
-  ((set, value) => AWTestHelper.merge(set, set.add(value))))
+  } yield values.foldLeft(AddWinsSet.empty[String])
+  ((set, value) => AWTestHelper.merge(set, set.addRandom(value))))
 
   implicit lazy val addWinsSetWithInts: Arbitrary[AddWinsSet[Int]] = Arbitrary(for {
     values <- Arbitrary.arbitrary[Set[Int]]
-  } yield values.foldLeft(AddWinsSet[Int](Map(), Set(), Map()))
-  ((set, value) => AWTestHelper.merge(set, set.add(value))))
+  } yield values.foldLeft(AddWinsSet.empty[Int])
+  ((set, value) => AWTestHelper.merge(set, set.addRandom(value))))
 
   "An AddWinsSet should support" - {
-    val initial = AddWinsSet[String](Map(), Set(), Map())
+    val initial = AddWinsSet[String](Map(), Set())
     val elem = "Mop"
     val elem2 = "Mip"
 
     "adding elements" - {
       "manual tests" in {
-        val d1 = initial.add(elem)
-        val d2 = initial.add(elem2)
+        val d1 = initial.addRandom(elem)
+        val d2 = initial.addRandom(elem2)
         val bothAdded = AWTestHelper.merge(AWTestHelper.merge(initial, d1), d2)
         assert(!initial.contains(elem))
         assert(bothAdded.contains(elem) && bothAdded.contains(elem2))
       }
       "property based tests" - {
         "with strings" in forAll { (s: AddWinsSet[String], elem: String) =>
-          val delta = s.add(elem)
+          val delta = s.addRandom(elem)
           val added = AWTestHelper.merge(s, delta)
           assert(added.contains(elem))
         }
         "with integers" in forAll { (s: AddWinsSet[Int], elem: Int) =>
-          val delta = s.add(elem)
+          val delta = s.addRandom(elem)
           val added = AWTestHelper.merge(s, delta)
           assert(added.contains(elem))
         }
@@ -54,7 +55,7 @@ class CausalCRDTTests extends FreeSpec with ScalaCheckPropertyChecks {
 
     "removing elements" - {
       "manual tests" in {
-        val d1 = initial.add(elem)
+        val d1 = initial.addRandom(elem)
         val added: AddWinsSet[String] = AWTestHelper.merge(initial, d1)
 
         val d2 = added.remove(elem)
@@ -83,8 +84,8 @@ class CausalCRDTTests extends FreeSpec with ScalaCheckPropertyChecks {
     }
 
     "clearing all elements" in {
-      val d1 = initial.add(elem)
-      val d2 = initial.add(elem2)
+      val d1 = initial.addRandom(elem)
+      val d2 = initial.addRandom(elem2)
       val bothAdded = AWTestHelper.merge(AWTestHelper.merge(initial, d1), d2)
 
       val d3 = bothAdded.clear
@@ -98,8 +99,8 @@ class CausalCRDTTests extends FreeSpec with ScalaCheckPropertyChecks {
       }
 
       "with other instances" in {
-        val d1 = initial.add(elem)
-        val d2 = initial.add(elem2)
+        val d1 = initial.addRandom(elem)
+        val d2 = initial.addRandom(elem2)
         val bothAdded = AWTestHelper.merge(AWTestHelper.merge(initial, d1), d2)
         val merged = initial.merge(bothAdded)
         assert(merged.contains(elem) && merged.contains(elem2))

@@ -1,28 +1,36 @@
 package rescala.deltacrdts
 
-import rescala.deltacrdts.dotstores.DotStore._
-import rescala.deltacrdts.dotstores.{Causal, Dot, DotStore}
+import rescala.deltacrdts.dotstores.DotStoreLattice._
+import rescala.deltacrdts.dotstores.{Causal, Dot, DotStoreLattice}
 import rescala.lattices.{IdUtil, Lattice}
 import rescala.lattices.IdUtil.Id
 
-case class AddWinsSet[A](current: Map[Id, Set[Dot]], past: Set[Dot], ids: Map[A, Id]) {
+import scala.language.implicitConversions
+
+case class AddWinsSet[A](store: Map[A, Set[Dot]], context: Set[Dot]) {
   //(updatesCurrent[Set[(id, dot)], knownPast[Set[dot]], newData[Set[(id,data)])
   // a delta always includes new (id,dot) pairs, the known causal context for the modified ids as well as the new data elements
-  /**
-    * Adding an element adds it to the current dot store as well as to the causal context (past).
-    *
-    * @param e the element to be added
-    * @return
-    */
-  def add(e: A): AddWinsSet[A] = {
-    val id = ids.getOrElse(e, IdUtil.genId())
-    val dot = DotStore.next(id, past)
+
+  /** Adds a value conceptually from a new random replica */
+  // TODO: this … is probably not a good idea
+  def addRandom(e: A): AddWinsSet[A] = {
+    val id = IdUtil.genId()
+    add(e, id)
+  }
+
+  /** Adding an element adds it to the current dot store as well as to the causal context (past). */
+  def add(element: A, replicaID: Id): AddWinsSet[A] = {
+    val dot = DotStoreLattice.next(replicaID, context)
+    val onlyDot = Set(dot)
+    AddWinsSet(Map(element -> onlyDot), store.get(element).fold(onlyDot)(_ + dot))
+
+    // TODO: potential optimization
     // this is what the paper does:
     //    (Set((id, dot)), past.getOrElse(id, Set()) + dot, Set((id, e)))
     // this is sufficient in my opinion:
     // for adds we don't have to know (in the CC) conflicting adds or removes for this element because adds win anyway
     //AddWinsSet(Map(id -> Set(dot)), Set(dot), Map(e -> id))
-    AddWinsSet(Map(id -> Set(dot)), current.getOrElse(id, Set()) + dot, Map(e -> id))
+
   }
 
   /** Merging removes all elements the other side should known (based on the causal context),
@@ -30,17 +38,16 @@ case class AddWinsSet[A](current: Map[Id, Set[Dot]], past: Set[Dot], ids: Map[A,
     * Thus, the delta for removal is the empty map,
     * with the dot of the removed element in the context. */
   def remove(e: A): AddWinsSet[A] = {
-    val dots = ids.get(e).fold(Set.empty[Dot])(current(_).dots)
-    AddWinsSet[A](Map.empty, dots, Map.empty)
+    val dots = store.get(e).map(_.dots).toSet.flatten
+    AddWinsSet[A](Map.empty, dots)
   }
 
-  def clear: AddWinsSet[A] = {
-    AddWinsSet[A](Map(), current.dots, Map())
-  }
+  def clear: AddWinsSet[A] = AddWinsSet[A](Map(), store.dots)
 
-  def toSet: Set[A] = ids.keySet.filter(d => current.keySet.contains(ids(d)))
+  def toSet: Set[A] = store.keySet
 
-  def contains(e: A): Boolean = toSet.contains(e)
+  def contains(e: A): Boolean = store.contains(e)
+
 }
 
 //trait CausalCRDT[TCausal, TDotStore] {
@@ -57,13 +64,21 @@ case class AddWinsSet[A](current: Map[Id, Set[Dot]], past: Set[Dot], ids: Map[A,
 //}
 
 object AddWinsSet {
+
+  def empty[A] = AddWinsSet[A](Map.empty[A, Set[Dot]], Set.empty[Dot])
+
+
+  /* AddWinsSet is isomorphic to the corresponding Causal */
+
+  implicit def toCausal[A](addWinsSet: AddWinsSet[A]): Causal[Map[A, Set[Dot]]] =
+    Causal(addWinsSet.store, addWinsSet.context)
+  implicit def fromCausal[A](causal: Causal[Map[A, Set[Dot]]]) =  AddWinsSet(causal.store, causal.context)
+
   implicit def addWinsSetLattice[A]: Lattice[AddWinsSet[A]] = new Lattice[AddWinsSet[A]] {
-    override def merge(left: AddWinsSet[A], right: AddWinsSet[A]): AddWinsSet[A] = {
-      def mkCausal(v: AddWinsSet[A]): Causal[Map[Id, Set[Dot]]] = Causal(v.current, v.past)
-      val causal  = DotStore.merge(mkCausal(left), mkCausal(right))
-      val ids = left.ids ++ right.ids // also merge data->id maps of the two sets
-      AddWinsSet(causal.store, causal.context, ids)
-    }
+    override def merge(left: AddWinsSet[A], right: AddWinsSet[A]): AddWinsSet[A] =
+      DotStoreLattice.DotMapInstance[A, Set[Dot]].merge(left, right)
   }
+
+
 }
 

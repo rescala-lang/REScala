@@ -1,8 +1,8 @@
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.FreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import rescala.deltacrdts.dotstores.{Causal, Dot, DotStore}
-import rescala.deltacrdts.dotstores.DotStore._
+import rescala.deltacrdts.dotstores.{Causal, Dot, DotStoreLattice}
+import rescala.deltacrdts.dotstores.DotStoreLattice._
 
 object DotSetGenerator {
   implicit val genDot: Arbitrary[Dot] = Arbitrary(for {
@@ -35,7 +35,7 @@ class DotSetTests extends FreeSpec with ScalaCheckDrivenPropertyChecks {
     val c1 = Set(d1)
     val c2 = Set(d1, d2) // d1 is already deleted in the second causal context
 
-    val mergedStore = DotStore[Set[Dot]].merge(Causal(s1, c1), Causal(s2, c2)).store
+    val mergedStore = DotStoreLattice[Set[Dot]].merge(Causal(s1, c1), Causal(s2, c2)).store
 
     assert(!mergedStore.contains(d1))
     assert(mergedStore.contains(d2))
@@ -47,8 +47,8 @@ class DotSetTests extends FreeSpec with ScalaCheckDrivenPropertyChecks {
     val c2 = s2 ++ t2
 
     // commutativity
-    val m1 = DotStore.merge(Causal(s1, c1), Causal(s2, c2))
-    val m2 = DotStore.merge(Causal(s2, c2), Causal(s1, c1))
+    val m1 = DotStoreLattice.merge(Causal(s1, c1), Causal(s2, c2))
+    val m2 = DotStoreLattice.merge(Causal(s2, c2), Causal(s1, c1))
     assert(m1 == m2)
 
     // check if all elements were added to the new causal context
