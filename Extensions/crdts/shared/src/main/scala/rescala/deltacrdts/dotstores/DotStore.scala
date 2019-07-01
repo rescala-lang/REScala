@@ -34,20 +34,18 @@ object DotStore {
 
   def apply[A](implicit dotStore: DotStore[A]): dotStore.type = dotStore
 
-  def empty[A: DotStore]: A = DotStore[A].empty
-
   implicit class DotStoreOps[A](val caller: A) extends AnyVal {
 
     def add(d: Dot)(implicit dotStore: DotStore[A]): A = {
       dotStore.compress(dotStore.add(caller, d))
     }
 
-    def addAll(c: Iterable[Dot])(implicit dotStore: DotStore[A]): A = {
-      dotStore.compress(c.foldLeft(caller: A)(dotStore.add))
-    }
+    //def addAll(c: Iterable[Dot])(implicit dotStore: DotStore[A]): A = {
+    //  dotStore.compress(c.foldLeft(caller: A)(dotStore.add))
+    //}
 
     def dots(implicit dotStore: DotStore[A]): Set[Dot] = dotStore.dots(caller)
-    def contains(d: Dot)(implicit dotStore: DotStore[A]): Boolean = dots.contains(d)
+    //def contains(d: Dot)(implicit dotStore: DotStore[A]): Boolean = dots.contains(d)
   }
 
   // instances
@@ -71,25 +69,23 @@ object DotStore {
     }
   }
 
-  implicit def DotMapInstance[A](implicit dotStore: DotStore[A]): DotStore[Map[Id, A]] = new DotStore[Map[Id, A]] {
+  implicit def DotMapInstance[A: DotStore]: DotStore[Map[Id, A]] = new DotStore[Map[Id, A]] {
     override def add(a: Store, d: Dot): Store = a.mapValues(_.add(d))
 
     override def dots(a: Store): Set[Dot] = a.values.flatMap(_.dots).toSet
 
-    override def compress(a: Store): Store = a.mapValues(dotStore.compress)
+    override def compress(a: Store): Store = a.mapValues(DotStore[A].compress)
 
     override def empty: Store = Map.empty
 
     override def merge(left: Causal[Store], right: Causal[Store]): Causal[Store] = {
-      val newStore: Store = (left.store.keySet union right.store.keySet).map(id => {
-        // those are needed to allow merging even if the element is only in one of the DotMaps
-        val leftn: Store = left.store.withDefaultValue(DotStore.empty[A])
-        val rightn: Store = right.store.withDefaultValue(DotStore.empty[A])
+      val newStore: Store = (left.store.keySet union right.store.keySet).map{ id =>
 
         // merge the dotstores for each id
-        val value = DotStore[A].merge(Causal(leftn(id), left.context), Causal(rightn(id), right.context))
+        val value = DotStore[A].merge(Causal(left.store.getOrElse(id, DotStore[A].empty), left.context),
+                                      Causal(right.store.getOrElse(id, DotStore[A].empty), right.context))
         (id, value.store)
-      }).filter { case (_, value) => value != DotStore.empty[A] } // filter out empty elements
+      }.filter { case (_, value) => value != DotStore[A].empty } // filter out empty elements
         .toMap // return a new map
       val newContext = left.context union right.context // simply take the union of both contexts
       Causal(newStore, newContext)
