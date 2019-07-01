@@ -117,6 +117,8 @@ trait Signal[+A, S <: Struct] extends ReSource[S] with Interp[A, S] with Disconn
     * @group conversion */
   @cutOutOfUserComputation
   final def changedTo[V >: A](value: V)(implicit ticket: CreationTicket[S]): Event[Unit, S]
-  = changed.filter(_ == value).dropParam
+  = Events.staticNamed(s"(filter $this)", this) { st =>
+    st.collectStatic(this).filter(_ == value) }
+    .dropParam
 }
 

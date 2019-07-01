@@ -41,6 +41,14 @@ object Events {
     }
   }
 
+  object MapFuncImpl { def apply[T1, A](value: Option[T1], mapper: T1 => A): Option[A] =
+    value.map(mapper)}
+  object FilterFuncImpl { def apply[T1, A](value: Option[T1], filter: T1 => Boolean): Option[T1] =
+    value.filter(filter)}
+  object CollectFuncImpl { def apply[T1, A](value: Option[T1], filter: PartialFunction[T1, A]): Option[A] =
+    value.collect(filter)
+  }
+
   /** Creates change events */
   @cutOutOfUserComputation
   def change[T, S <: Struct](signal: Signal[T, S])(implicit ticket: CreationTicket[S]): Event[Diff[T], S]

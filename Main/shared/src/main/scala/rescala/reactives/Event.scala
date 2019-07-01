@@ -73,8 +73,9 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
     * @usecase def collect[U](pf: PartialFunction[T, U]): rescala.default.Event[U]
     * @group operator */
   @cutOutOfUserComputation
-  final def collect[U](pf: PartialFunction[T, U])(implicit ticket: CreationTicket[S]): Event[U, S] =
-    Events.staticNamed(s"(collect $this)", this) { st => st.collectStatic(this).collect(pf) }
+  final def collect[U](expression: PartialFunction[T, U])(implicit ticket: CreationTicket[S]): Event[U, S]
+  = macro rescala.macros.ReactiveMacros.EventMapMacro[T, T, S, Events.CollectFuncImpl.type]
+    //Events.staticNamed(s"(collect $this)", this) { st => st.collectStatic(this).collect(pf) }
 
   /** Events disjunction.
     * Propagates the values if any of the events fires.
@@ -93,14 +94,15 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
     * @usecase def filter(pred: T => Boolean): rescala.default.Event[T]
     * @group operator*/
   @cutOutOfUserComputation
-  final def filter(pred: T => Boolean)(implicit ticket: CreationTicket[S]): Event[T, S] =
-    Events.staticNamed(s"(filter $this)", this) { st => st.collectStatic(this).filter(pred) }
+  final def filter(expression: T => Boolean)(implicit ticket: CreationTicket[S]): Event[T, S]
+  = macro rescala.macros.ReactiveMacros.EventMapMacro[T, T, S, Events.FilterFuncImpl.type]
   /** Filters the event, only propagating the value when the filter is true.
     * @usecase def &&(pred: T => Boolean): rescala.default.Event[T]
     * @see filter
     * @group operator*/
   @cutOutOfUserComputation
-  final def &&(pred: T => Boolean)(implicit ticket: CreationTicket[S]): Event[T, S] = filter(pred)
+  final def &&(expression: T => Boolean)(implicit ticket: CreationTicket[S]): Event[T, S]
+  = macro rescala.macros.ReactiveMacros.EventMapMacro[T, T, S, Events.FilterFuncImpl.type]
 
   /** Propagates the event only when except does not fire.
     * @usecase def \[U](except: rescala.default.Event[U]): rescala.default.Event[T]
@@ -153,7 +155,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
     * @group operator*/
   @cutOutOfUserComputation
   final def map[A](expression: T => A)(implicit ticket: CreationTicket[S]): Event[A, S]
-  = macro rescala.macros.ReactiveMacros.EventMapMacro[T, A, S]
+  = macro rescala.macros.ReactiveMacros.EventMapMacro[T, A, S, Events.MapFuncImpl.type]
 
   /** Flattens the inner value.
     * @group operator */

@@ -52,12 +52,13 @@ class ReactiveMacros(val c: blackbox.Context) {
 
   object ForceCutOut
 
-  def EventMapMacro[T: c.WeakTypeTag, A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag]
-  (expression: c.Expr[T => A])(ticket: c.Tree): c.Tree = {
+  def EventMapMacro[T: c.WeakTypeTag, A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag, FuncImpl: c.WeakTypeTag]
+  (expression: c.Tree)(ticket: c.Tree): c.Tree = {
     val prefixTree = c.prefix.tree
     internal.updateAttachment(prefixTree, ForceCutOut)
-    val mapTree: Tree = q"""${prefixTree}.value.map($expression)"""
-    mapTree.forAll(t => if (t.tpe == null) {internal.setType(t, NoType); true} else false)
+    val funcImpl = weakTypeOf[FuncImpl].typeSymbol.asClass.module
+    val mapTree: Tree = q"""$funcImpl.apply[${weakTypeOf[T]}, ${weakTypeOf[A]}]($prefixTree.value, $expression)"""
+    mapTree.foreach(t => if (t.tpe == null) internal.setType(t, NoType))
     ReactiveExpression[A, S, MacroTags.Static, Events.type](mapTree)(ticket)
   }
 
