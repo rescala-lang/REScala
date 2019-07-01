@@ -2,8 +2,8 @@ import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
 import sbt.Keys._
 import sbt._
 
-/** This file is shared between multiple projects
-  * and may contain unused dependencies */
+/* This file is shared between multiple projects
+ * and may contain unused dependencies */
 
 
 object Settings {
@@ -77,16 +77,18 @@ object Dependencies {
 
   def ld = libraryDependencies
 
-  val betterFiles = ld += "com.github.pathikrit" %% "better-files" % "3.7.1"
+  val betterFiles = ld += "com.github.pathikrit" %% "better-files" % "3.8.0"
   val cats        = ld += "org.typelevel" %%% "cats-core" % "1.6.0"
   val decline     = ld += "com.monovore" %% "decline" % "0.6.2"
-  val fastparse   = ld += "com.lihaoyi" %%% "fastparse" % "2.1.0"
+  val fastparse   = ld += "com.lihaoyi" %%% "fastparse" % "2.1.2"
   val jsoup       = ld += "org.jsoup" % "jsoup" % "1.11.3"
+  val kaleidoscope= ld += "com.propensive" %% "kaleidoscope" % "0.1.0"
   val pprint      = ld += "com.lihaoyi" %%% "pprint" % "0.5.4"
+  val rmgkLogging = Def.settings(Resolvers.rmgk, ld += "de.rmgk" %%% "logging" % "0.2.1")
   val scalactic   = ld += "org.scalactic" %% "scalactic" % "3.0.7"
   val scribe      = ld += "com.outr" %%% "scribe" % "2.7.3"
-  val rmgkLogging = Def.settings(Resolvers.rmgk, ld += "de.rmgk" %%% "logging" % "0.2.1")
-  val sourcecode  = ld += "com.lihaoyi" %%% "sourcecode" % "0.1.5"
+  val sourcecode  = ld += "com.lihaoyi" %%% "sourcecode" % "0.1.6"
+  val upickle     = ld += "com.lihaoyi" %% "upickle" % "0.7.4"
 
   val akkaHttp = ld ++= (Seq("akka-http-core",
                              "akka-http")
