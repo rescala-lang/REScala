@@ -1,17 +1,18 @@
-package rescala.deltacrdts
-
 import loci.communicator.ws.akka.WS
 import loci.registry.{Binding, Registry}
 import loci.transmitter.RemoteRef
 import org.scalatest.FreeSpec
-import rescala.{default, reactives}
 import rescala.default._
-import rescala.distributables.LociDist
 import rescala.distributables.LociDist.dfold
-import rescala.parrp.ParRPStruct
+import rescala.lattices.sequences.RGA.RGA
+import loci.serializer.circe._
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
+
+import io.circe.Decoder.Result
+import io.circe.generic.auto._
+import io.circe.syntax._
 
 class DistLociTest extends FreeSpec {
   "very simple fold " in {
@@ -27,9 +28,7 @@ class DistLociTest extends FreeSpec {
       val registry = new Registry
       registry.listen(WS(1099))
 
-      val serverFold = (dfold(serverSource, registry)
-      (List.empty[String])
-      ((list, msg) => msg :: list)(Binding("messages")))
+      val serverFold = makeListGraph(serverSource, registry)
 
       (registry, serverFold)
     }
@@ -41,15 +40,15 @@ class DistLociTest extends FreeSpec {
     val (clientRegistry, clientFold) = {
       val registry = new Registry
       val connection: Future[RemoteRef] = registry.connect(WS("ws://localhost:1099/"))
-      val remote: RemoteRef = Await.result(connection, Duration.Inf)
+      Await.result(connection, Duration.Inf)
 
       val clientFold = makeListGraph(clientSource, registry)
 
       (registry, clientFold)
     }
 
-    serverSource.fire("element 1")
     clientSource.fire("element 2")
+    serverSource.fire("element 1")
 
     println(clientFold.now)
     println(serverFold.now)
@@ -65,9 +64,12 @@ class DistLociTest extends FreeSpec {
     clientRegistry.terminate()
   }
 
-  def makeListGraph(clientSource: Evt[String], registry: Registry): Signal[List[String]] = {
-    val theList = dfold(clientSource, registry)(List.empty[String])
-    ((list, msg) => msg :: list)(Binding("messages")))
-    theList
+  def makeListGraph(clientSource: Evt[String], registry: Registry): Signal[String] = {
+    val theList = dfold(clientSource)(List.empty[String])((list, msg) => list :+ msg)(registry, Binding[RGA[String] => Unit]("messages"))
+    val size = theList.map(l => l.size - 1)
+
+    Signal {
+      theList.value(size.value)
+    }
   }
 }

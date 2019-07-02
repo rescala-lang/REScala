@@ -2,17 +2,35 @@ package rescala.distributables
 
 import loci.registry.{Binding, Registry}
 import loci.transmitter.RemoteRef
-import rescala.core.{InitialChange, Scheduler, Struct}
+import rescala.core.{InitialChange, ReSerializable, Scheduler, Struct}
 import rescala.lattices.Lattice
-import rescala.reactives
-import rescala.reactives.Observe
+import rescala.lattices.sequences.RGA.RGA
+import rescala.lattices.sequences.RGA
+import rescala.reactives.{Event, Events, Observe, Signal}
 
 import scala.concurrent.Future
 
 object LociDist {
 
+  def dfold[T, Res, S <: Struct : Scheduler]
+  (event: Event[T, S])
+  (init: Res)(f: (Res, T) => Res)
+  (registry: Registry, binding: Binding[RGA[T] => Unit] {type RemoteCall = RGA[T] => Future[Unit]})
+  (implicit reSerializable: ReSerializable[RGA[T]])
+  : Signal[Res, S] = {
+    val fold = Events.foldOne(event, RGA.empty[T]) { (acc, occ) =>
+      println(s"appending $acc $occ")
+      acc.append(occ) }
+
+    val res = fold.map(_.iterator.foldLeft(init){ (acc, occ) =>
+      println(s"folding $acc $occ")
+      f(acc, occ)})
+    distribute(fold, registry)(binding)
+    res
+  }
+
   def distribute[A: Lattice, S <: Struct : Scheduler]
-  (signal: reactives.Signal[A, S],
+  (signal: Signal[A, S],
    registry: Registry)
   (binding: Binding[A => Unit] {type RemoteCall = A => Future[Unit]})
   : Unit = {
