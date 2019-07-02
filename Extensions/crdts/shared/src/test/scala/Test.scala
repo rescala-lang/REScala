@@ -1,18 +1,15 @@
+import io.circe.generic.auto._
 import loci.communicator.ws.akka.WS
 import loci.registry.{Binding, Registry}
+import loci.serializer.circe._
 import loci.transmitter.RemoteRef
 import org.scalatest.FreeSpec
 import rescala.default._
 import rescala.distributables.LociDist.dfold
 import rescala.lattices.sequences.RGA.RGA
-import loci.serializer.circe._
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
-
-import io.circe.Decoder.Result
-import io.circe.generic.auto._
-import io.circe.syntax._
 
 class DistLociTest extends FreeSpec {
   "very simple fold " in {
