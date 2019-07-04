@@ -118,7 +118,7 @@ class Fold extends RETests { multiEngined { engine => import engine._
     assert(s.readValueOnce == None)
   }
 
-  test("latest Option the Functionis Executed Every Time The Event Fires") {
+  test("latest Option the Function is Executed Every Time The Event Fires") {
     val e = Evt[Int]
     val s: Signal[Option[Int]] = e.latestOption()
 
