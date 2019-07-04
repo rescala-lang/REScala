@@ -74,7 +74,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
     * @group operator */
   @cutOutOfUserComputation
   final def collect[U](expression: PartialFunction[T, U])(implicit ticket: CreationTicket[S]): Event[U, S]
-  = macro rescala.macros.ReactiveMacros.EventMapMacro[T, T, S, Events.CollectFuncImpl.type]
+  = macro rescala.macros.ReactiveMacros.EventMapMacro[T, U, S, Events.CollectFuncImpl.type]
     //Events.staticNamed(s"(collect $this)", this) { st => st.collectStatic(this).collect(pf) }
 
   /** Events disjunction.
