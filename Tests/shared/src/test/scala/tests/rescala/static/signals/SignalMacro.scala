@@ -259,8 +259,8 @@ class SignalMacro extends RETests { multiEngined { engine => import engine._
 
   test("correctly replace ticket during macro expansion"){
 
-    def wantsTicket(implicit ct: engine.CreationTicket, ct2: engine.CreationTicket) = {
-      (ct == ct2, ct.isInnerTicket(), ct2.isInnerTicket())
+    def wantsTicket(implicit ct: engine.CreationTicket, ct2: engine.CreationTicket): (Boolean, Boolean, Boolean) = {
+      (ct.self == ct2.self, ct.isInnerTicket(), ct2.isInnerTicket())
     }
 
     val s = Signal { wantsTicket }
