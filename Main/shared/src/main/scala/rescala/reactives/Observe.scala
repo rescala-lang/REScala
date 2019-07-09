@@ -32,14 +32,14 @@ object Observe {
         if (removeIf(v)) {
           dt.trackDependencies(Set.empty)
         }
-        else dt.withEffect(() => fun(v))
+        else dt.withEffect(new rescala.twoversion.Observation { def execute() = fun(v) })
       } catch {
         case EmptySignalControlThrowable => dt
         case NonFatal(t)                 =>
           if (fail eq null) {
             throw new UnhandledFailureException(this, t)
           }
-          else dt.withEffect(() => fail(t))
+          else dt.withEffect(new rescala.twoversion.Observation { def execute() = fail(t) })
       }
     }
     override def remove()(implicit fac: Scheduler[S]): Unit = {
