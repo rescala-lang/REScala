@@ -22,7 +22,7 @@ final class Evt[T, S <: Struct] private[rescala](initialState: Estate[S, T], nam
   /** Trigger the event */
   @deprecated("use .fire instead of apply", "0.21.0")
   def apply(value: T)(implicit fac: Scheduler[S]): Unit = fire(value)
-  def fire()(implicit fac: Scheduler[S], ev: Unit =:= T): Unit = fire(ev(Unit))(fac)
+  def fire()(implicit fac: Scheduler[S], ev: Unit =:= T): Unit = fire(ev(()))(fac)
   def fire(value: T)(implicit fac: Scheduler[S]): Unit = fac.forceNewTransaction(this) {admit(value)(_)}
   override def disconnect()(implicit engine: Scheduler[S]): Unit = ()
   def admitPulse(pulse: Pulse[T])(implicit ticket: AdmissionTicket[S]): Unit = {

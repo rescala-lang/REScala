@@ -17,7 +17,7 @@ class GarbageCollectionTest extends RETests with Whenever { multiEngined { engin
       def makeGarbage() = {
         val v1 = Var(0)
         val res = v1.map(_ => new Array[Int](1024 * 1024))
-        val obs = res.observe(_ => Unit)
+        val obs = res.observe(_ => ())
         obs.remove()
         res.disconnect()
         val p = new PhantomReference(res, q)
