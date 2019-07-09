@@ -227,6 +227,23 @@ class Fold extends RETests { multiEngined { engine => import engine._
   }
 
 
+  test("fold expression compiles with values of a subtype"){
+    val e0 = Evt[Unit]
+    val e1 = Evt[Int]
+
+    val res = Events.foldAll(Option.empty[Int]){ _ => Seq(
+      e0 >> { _ => Some(1) },
+      e1 >> { _ => Option(2) }
+    )}
+
+    assert (res.readValueOnce == None)
+    e0.fire()
+    assert (res.readValueOnce == Some(1))
+    e1.fire(0)
+    assert (res.readValueOnce == Some(2))
+  }
+
+
   test("changing only a signal when folding") {
     val e = Evt[Int]
     val v = Var(0)

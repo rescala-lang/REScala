@@ -86,7 +86,7 @@ object Events {
   /** Folds when any one of a list of events occurs, if multiple events occur, every fold is executed in order. */
   @cutOutOfUserComputation
   final def foldAll[A: ReSerializable, S <: Struct](init: A)
-                                                   (accthingy: (=> A) => Seq[FoldMatch[_, A, S]])
+                                                   (accthingy: (=> A) => Seq[FoldMatch[A, S]])
                                                    (implicit ticket: CreationTicket[S]): Signal[A, S] = {
     var acc = () => init
     val ops = accthingy(acc())
@@ -126,19 +126,19 @@ object Events {
 
   val Match = Seq
 
-  sealed trait FoldMatch[T, A, S <: Struct]
-  case class StaticFoldMatch[T, A, S <: Struct](event: Event[T, S], f: T => A) extends FoldMatch[T, A, S]
-  case class StaticFoldMatchDynamic[T, A, S <: Struct](event: Event[T, S], f: DynamicTicket[S] => T => A) extends FoldMatch[T, A, S]
-  case class DynamicFoldMatch[T, A, S <: Struct](event: () => Seq[Event[T, S]], f: T => A) extends FoldMatch[T, A, S]
+  sealed trait FoldMatch[+A, S <: Struct]
+  case class StaticFoldMatch[T, +A, S <: Struct](event: Event[T, S], f: T => A) extends FoldMatch[A, S]
+  case class StaticFoldMatchDynamic[T, +A, S <: Struct](event: Event[T, S], f: DynamicTicket[S] => T => A) extends FoldMatch[A, S]
+  case class DynamicFoldMatch[T, +A, S <: Struct](event: () => Seq[Event[T, S]], f: T => A) extends FoldMatch[A, S]
 
   class EOps[T, S <: Struct](e: Event[T, S]) {
     /** Constructs a pair similar to ->, however this one is compatible with type inference for [[fold]] */
-    final def >>[A](fun: T => A): StaticFoldMatch[T, A, S] = StaticFoldMatch(e, fun)
-    final def >>>[A](fun: DynamicTicket[S] => T => A): StaticFoldMatchDynamic[T, A, S] = StaticFoldMatchDynamic(e, fun)
+    final def >>[A](fun: T => A): FoldMatch[A, S] = StaticFoldMatch(e, fun)
+    final def >>>[A](fun: DynamicTicket[S] => T => A): FoldMatch[A, S] = StaticFoldMatchDynamic(e, fun)
   }
   class ESeqOps[T, S <: Struct](e: => Seq[Event[T, S]]) {
     /** Constructs a pair similar to ->, however this one is compatible with type inference for [[fold]] */
-    final def >>[A](fun: T => A): DynamicFoldMatch[T, A, S] = DynamicFoldMatch(e _, fun)
+    final def >>[A](fun: T => A): FoldMatch[A, S] = DynamicFoldMatch(e _, fun)
   }
 
   def noteFromPulse[N, S <: Struct](t: ReevTicket[Pulse[N], S], value: Pulse[N]): Result[Pulse[N], S] = {
