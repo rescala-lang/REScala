@@ -1,7 +1,6 @@
 package rescala.core
 
 import rescala.core.Initializer.InitValues
-import rescala.twoversion.Observation
 
 import scala.annotation.implicitNotFound
 import scala.language.implicitConversions

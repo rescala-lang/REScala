@@ -11,6 +11,3 @@ trait Committable {
   def release(): Unit
 }
 
-trait Observation {
-  def execute(): Unit
-}
