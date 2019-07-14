@@ -101,7 +101,7 @@ private[levelbased] object LevelQueue {
 
   private final case class QueueElement[S <: Struct](level: Int, reactive: Derived[S], var minLevel: Int, var needsEvaluate: Boolean) extends Comparable[QueueElement[S]] {
     // order by level, then by reactive
-    val order: Long = (level.toLong << 32) | (reactive.hashCode.toLong & 0x00000000ffffffffl)
+    val order: Long = (level.toLong << 32) | (reactive.hashCode.toLong & 0x00000000ffffffffL)
     override def compareTo(o: QueueElement[S]): Int = java.lang.Long.compare(order, o.order)
   }
 }

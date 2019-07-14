@@ -283,7 +283,7 @@ lazy val cfg = new {
     "-unchecked",
     "-feature",
     "-Xlint",
-    "-Xfuture",
+    //"-Xfuture",
 //    "-Xdisable-assertions"
   )
 
@@ -306,8 +306,8 @@ lazy val lib = new {
 
   lazy val rss = Def.settings(
     libraryDependencies ++= Seq(
-    "joda-time" % "joda-time" % "2.10.1",
-    "org.joda" % "joda-convert" % "2.1.2",
+    "joda-time" % "joda-time" % "2.10.3",
+    "org.joda" % "joda-convert" % "2.2.1",
     "org.codehaus.jsr166-mirror" % "jsr166y" % "1.7.0"),
     scalaXml)
 
@@ -331,7 +331,7 @@ lazy val lib = new {
   ///// Historic dependencies
   val scalaLogback = Seq(
     libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.3",
-    libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.9.0"
+    libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"
   )
 
   val scalafx = Seq(

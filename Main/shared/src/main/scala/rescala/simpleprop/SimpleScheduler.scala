@@ -149,7 +149,8 @@ object Util {
     }
 
     rem.foreach(_toposort)
-    sorted
+    // need toSeq for 2.13, where Seq is immutable
+    sorted.toSeq
   }
 
   @scala.annotation.tailrec
