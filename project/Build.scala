@@ -30,8 +30,6 @@ object Settings {
     //"-Xcheckinit",                       // Wrap field accessors to throw an exception on uninitialized access.
     //"-Xfatal-warnings",                  // Fail the compilation if there are any warnings.
     "-Xlint:adapted-args",               // Warn if an argument list is modified to match the receiver./
-    // does not work on 2.11
-    //"-Xlint:constant",                   // Evaluation of a constant arithmetic expression results in an error.
     "-Xlint:delayedinit-select",         // Selecting member of DelayedInit.
     "-Xlint:doc-detached",               // A Scaladoc comment appears to be detached from its element.
     "-Xlint:inaccessible",               // Warn about inaccessible types in method signatures.
@@ -46,15 +44,18 @@ object Settings {
     "-Xlint:stars-align",                // Pattern sequence wildcard must align with sequence component.
     "-Xlint:type-parameter-shadow",      // A local type parameter shadows a type already in scope.
     "-Ywarn-dead-code",                  // Warn when dead code is identified.
-    "-Ywarn-extra-implicit",             // Warn when more than one implicit parameter section is defined.
+    // does not work on 2.11
     "-Ywarn-numeric-widen",              // Warn when numerics are widened.
-    "-Ywarn-unused:implicits",           // Warn if an implicit parameter is unused.
-    "-Ywarn-unused:imports",             // Warn if an import selector is not referenced.
-    "-Ywarn-unused:locals",              // Warn if a local definition is unused.
     //"-Ywarn-unused:params",              // Warn if a value parameter is unused.
     //"-Ywarn-unused:patvars",             // Warn if a variable bound in a pattern is unused.
-    "-Ywarn-unused:privates",            // Warn if a private member is unused.
     //"-Ywarn-value-discard"               // Warn when non-Unit expression results are unused.
+    // do not work on 2.11
+    //"-Xlint:constant",                   // Evaluation of a constant arithmetic expression results in an error.
+    //"-Ywarn-extra-implicit",             // Warn when more than one implicit parameter section is defined.
+    //"-Ywarn-unused:implicits",           // Warn if an implicit parameter is unused.
+    //"-Ywarn-unused:imports",             // Warn if an import selector is not referenced.
+    //"-Ywarn-unused:locals",              // Warn if a local definition is unused.
+    //"-Ywarn-unused:privates",            // Warn if a private member is unused.
     // do not work on 2.13
     "-Ywarn-inaccessible",               // Warn about inaccessible types in method signatures.
     "-Ywarn-infer-any",                  // Warn when a type argument is inferred to be `Any`.
@@ -107,7 +108,7 @@ object Dependencies {
 
   // frontend
   val normalizecss = ld += "org.webjars.npm" % "normalize.css" % "8.0.1"
-  val scalatags    = ld += "com.lihaoyi" %%% "scalatags" % "0.7.0"
+  val scalatags    = ld += "com.lihaoyi" %%% "scalatags" % "0.6.8"
   val scalajsdom   = ld += "org.scala-js" %%% "scalajs-dom" % "0.9.6"
   val fontawesome  = ld += "org.webjars" % "font-awesome" % "5.7.2"
 
