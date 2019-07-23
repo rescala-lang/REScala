@@ -9,9 +9,9 @@ addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.27")
 
 // operations
 addSbtPlugin("com.dwijnand" % "sbt-dynver" % "3.3.0") // https://github.com/dwijnand/sbt-dynver
-addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.3.19") // https://github.com/sbt/sbt-native-packager
+addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.3.20") // https://github.com/sbt/sbt-native-packager
 
 // tooling
-addSbtPlugin("org.tpolecat" % "tut-plugin" % "0.6.10")
-addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.3.4")
+addSbtPlugin("org.tpolecat" % "tut-plugin" % "0.6.11")
+addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.3.6")
 
