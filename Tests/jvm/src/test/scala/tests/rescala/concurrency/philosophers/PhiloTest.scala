@@ -41,7 +41,7 @@ class PhiloTest extends FunSuite {
         true
       case (_, Success(_)) => false
     }
-    assert(threadFailures.isEmpty, threadFailures.size + " threads failed.")
+    assert(threadFailures.isEmpty, threadFailures.size.toString + " threads failed.")
   }
 
   test("eating Contests Spinning") {`eat!`(Interfaces.parrp, dynamic = false)}

@@ -16,7 +16,7 @@ object ReSerializable {
   // do not serialize reactives, or containers of reactives.
   implicit def resevent[R <: Derived[_]]: ReSerializable[R] = doNotSerialize
   implicit def resarray[R <: Derived[_]]: ReSerializable[Array[R]] = doNotSerialize
-  implicit def restrav[T <: Traversable[_ <: Derived[_]]]: ReSerializable[T] = doNotSerialize
+  implicit def restrav[T <: Iterable[_ <: Derived[_]]]: ReSerializable[T] = doNotSerialize
   implicit def resopt[T <: Option[_ <: Derived[_]]]: ReSerializable[T] = doNotSerialize
 
   object DoNotSerialize extends ReSerializable[Any] {

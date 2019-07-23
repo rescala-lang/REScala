@@ -5,7 +5,6 @@ import rescala.macros.MacroTags.{Dynamic, Static}
 import rescala.reactives
 import rescala.reactives.Source
 
-import scala.language.{existentials, implicitConversions}
 
 object RescalaInterface {
   def interfaceFor[S <: Struct](someScheduler: Scheduler[S]): RescalaInterface[S] = new RescalaInterface[S] {
@@ -39,8 +38,6 @@ trait RescalaInterface[S <: Struct] extends RescalaInterfaceRequireSerializer[S]
   *           over multiple scheduler implementations.
   **/
 trait RescalaInterfaceRequireSerializer[S <: Struct] extends Aliases[S] {
-  // need the import inside of the trait, otherwise scala complains that it is shadowed by rescala.macros
-  import scala.language.experimental.macros
 
   /** @group internal */
   def scheduler: rescala.core.Scheduler[S]

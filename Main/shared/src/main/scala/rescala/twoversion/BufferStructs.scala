@@ -4,7 +4,6 @@ import rescala.core.Initializer.InitValues
 import rescala.core.{Derived, ReSource, Struct}
 
 import scala.collection.mutable
-import scala.language.higherKinds
 
 
 trait TwoVersionStruct extends Struct {

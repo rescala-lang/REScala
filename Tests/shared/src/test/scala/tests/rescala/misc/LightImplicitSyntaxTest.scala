@@ -2,8 +2,6 @@ package tests.rescala.misc
 
 import tests.rescala.testtools.RETests
 
-import scala.language.implicitConversions
-
 class LightImplicitSyntaxTest extends RETests { multiEngined { engine => import engine._
 
   test("experiment With Implicit Syntax") {

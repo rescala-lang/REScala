@@ -3,7 +3,6 @@ package rescala.core
 import rescala.core.Initializer.InitValues
 
 import scala.annotation.implicitNotFound
-import scala.language.implicitConversions
 
 /** [[InnerTicket]]s are used in Rescala to give capabilities to contexts during propagation.
   * [[ReevTicket]] is used during reevaluation, and [[AdmissionTicket]] during the initialization. */

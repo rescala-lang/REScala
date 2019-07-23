@@ -1,7 +1,6 @@
 package rescala.core
 
 import scala.annotation.compileTimeOnly
-import scala.language.higherKinds
 
 /** Every [[ReSource]] has an internal data[[Struct]]ure which is externally defined by the scheduler.
   * Its main use is to allow the external algorithm to manage concurrency for the internal data.

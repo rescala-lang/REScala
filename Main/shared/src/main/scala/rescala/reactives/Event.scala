@@ -5,8 +5,6 @@ import rescala.core.{Interp, _}
 import rescala.macros.cutOutOfUserComputation
 
 import scala.collection.immutable.{LinearSeq, Queue}
-import scala.language.experimental.macros
-import scala.language.implicitConversions
 
 /** Events only propagate a value when they are changing,
   * when the system is at rest, events have no values.

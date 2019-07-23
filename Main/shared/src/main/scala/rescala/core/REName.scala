@@ -1,7 +1,5 @@
 package rescala.core
 
-import scala.language.implicitConversions
-
 /**
   * Provides names for dynamic dependencies based on their definition position to allow easier debugging
   */

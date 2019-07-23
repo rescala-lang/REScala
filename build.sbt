@@ -219,6 +219,7 @@ lazy val cfg = new {
     // scaladoc
     autoAPIMappings := true,
     Compile / doc / scalacOptions += "-groups",
+    commonCrossBuildVersions,
   ) ++ scalaVersion_212
 
   val test = List(

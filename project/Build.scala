@@ -8,6 +8,8 @@ import sbt._
 
 object Settings {
 
+  val commonCrossBuildVersions = crossScalaVersions := Seq("2.12.8", "2.13.0")
+
   val scalaVersion_211 = Def.settings(
     scalaVersion := "2.11.12",
     scalacOptions ++= tpolecatsScalacOptions
@@ -16,6 +18,11 @@ object Settings {
     scalaVersion := "2.12.8",
     scalacOptions ++= tpolecatsScalacOptions
   )
+  val scalaVersion_213 = Def.settings(
+    scalaVersion := "2.13.0",
+    scalacOptions ++= tpolecatsScalacOptions
+    )
+
 
   lazy val tpolecatsScalacOptions = Seq(
     "-deprecation",                      // Emit warning and location for usages of deprecated APIs.
@@ -56,15 +63,15 @@ object Settings {
     "-Ywarn-unused:locals",              // Warn if a local definition is unused.
     "-Ywarn-unused:privates",            // Warn if a private member is unused.
     // do not work on 2.13
-    "-Ywarn-inaccessible",               // Warn about inaccessible types in method signatures.
-    "-Ywarn-infer-any",                  // Warn when a type argument is inferred to be `Any`.
-    "-Yno-adapted-args",                 // Do not adapt an argument list (either by inserting () or creating a tuple) to match the receiver.
-    "-Ypartial-unification",             // Enable partial unification in type constructor inference
-    "-Xlint:by-name-right-associative",  // By-name parameter of right associative operator.
-    "-Xlint:unsound-match",              // Pattern match may not be typesafe.
-    "-Ywarn-nullary-override",           // Warn when non-nullary `def f()' overrides nullary `def f'.
-    "-Ywarn-nullary-unit",               // Warn when nullary methods return Unit.
-    "-Xfuture",                          // Turn on future language features.
+    //"-Ywarn-inaccessible",               // Warn about inaccessible types in method signatures.
+    //"-Ywarn-infer-any",                  // Warn when a type argument is inferred to be `Any`.
+    //"-Yno-adapted-args",                 // Do not adapt an argument list (either by inserting () or creating a tuple) to match the receiver.
+    //"-Ypartial-unification",             // Enable partial unification in type constructor inference
+    //"-Xlint:by-name-right-associative",  // By-name parameter of right associative operator.
+    //"-Xlint:unsound-match",              // Pattern match may not be typesafe.
+    //"-Ywarn-nullary-override",           // Warn when non-nullary `def f()' overrides nullary `def f'.
+    //"-Ywarn-nullary-unit",               // Warn when nullary methods return Unit.
+    //"-Xfuture",                          // Turn on future language features.
 
     )
 

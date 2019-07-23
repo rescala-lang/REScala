@@ -4,7 +4,6 @@ import rescala.core.Initializer.InitValues
 import rescala.core.Struct
 import rescala.twoversion._
 
-import scala.language.higherKinds
 
 
 trait LevelStruct extends TwoVersionStruct {
