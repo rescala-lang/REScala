@@ -4,7 +4,7 @@ shallow_clone: true
 install:
   - ps: |
       Add-Type -AssemblyName System.IO.Compression.FileSystem
-      if (!(Test-Path -Path "C:\sbt\sbt\bin\sbt.cmd" )) {
+      if (!(Test-Path -Path "C:\sbt\sbt\bin\sbt.bat" )) {
         (new-object System.Net.WebClient).DownloadFile(
           'https://dl.bintray.com/sbt/native-packages/sbt/0.13.11/sbt-0.13.11.zip',
           'C:\sbt-bin.zip'
@@ -17,13 +17,14 @@ install:
   - cmd: echo %USERPROFILE%
 
 build_script:
-  - sbt clean +compile
+  - sbt clean compile
 test_script:
-  - sbt +test
+  - sbt test
 cache:
   - C:\ivy\
   - C:\sbt\
   - C:\Users\appveyor\.m2
+  - C:\Users\appveyor\.sbt
   - C:\Users\appveyor\.ivy2
 notifications:
   - provider: Webhook
