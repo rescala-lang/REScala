@@ -59,7 +59,7 @@ class ReactiveMacros(val c: blackbox.Context) {
     val funcImpl = weakTypeOf[FuncImpl].typeSymbol.asClass.module
     val mapTree: Tree = q"""$funcImpl.apply[${weakTypeOf[T]}, ${weakTypeOf[A]}]($prefixTree.value, $expression)"""
     mapTree.foreach(t => if (t.tpe == null) internal.setType(t, NoType))
-    ReactiveExpression[A, S, MacroTags.Static, Events.type](mapTree)(ticket)
+    ReactiveExpression[A, S, MacroTags.Dynamic, Events.type](mapTree)(ticket)
   }
 
 
