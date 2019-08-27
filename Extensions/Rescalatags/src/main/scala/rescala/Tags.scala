@@ -53,7 +53,7 @@ object Tags {
       * converts a Signal of a scalatags Tag to a scalatags Frag which automatically reflects changes to the signal in the dom
       */
     def asModifierL(implicit engine: Scheduler[S]): Modifier = {
-      new REModifierList[S](signal, engine)
+      new REModifierList[S](signal.withDefault(Nil), engine)
     }
   }
 
