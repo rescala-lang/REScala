@@ -1,6 +1,7 @@
 package rescala.core
 
 import rescala.core.Initializer.InitValues
+import rescala.reactives.RExceptions.EmptySignalControlThrowable
 
 import scala.annotation.implicitNotFound
 
@@ -108,7 +109,13 @@ abstract class AdmissionTicket[S <: Struct](creation: Initializer[S], declaredWr
 
 trait AccessTicket[S <: Struct] {
   private[rescala] def access(reactive: ReSource[S]): reactive.Value
-  final def now[A](reactive: Interp[A, S]): A = reactive.interpret(access(reactive))
+  final def now[A](reactive: Interp[A, S]): A = {
+    try { reactive.interpret(access(reactive)) }
+    catch {
+      case EmptySignalControlThrowable => throw new NoSuchElementException(s"$this is empty")
+      case other: Throwable => throw new IllegalStateException(s"$this has an error value", other)
+    }
+  }
 }
 
 
