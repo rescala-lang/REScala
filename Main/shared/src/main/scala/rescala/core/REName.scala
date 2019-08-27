@@ -4,7 +4,7 @@ package rescala.core
   * Provides names for dynamic dependencies based on their definition position to allow easier debugging
   */
 case class REName(str: String) {
-  def derive(derivation: String): REName = s"$derivation($str)"
+  def derive(derivation: String): REName = s"»$str«'$derivation"
 }
 
 abstract class RENamed(val rename: REName) {
