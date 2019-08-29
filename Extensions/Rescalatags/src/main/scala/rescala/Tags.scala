@@ -2,8 +2,9 @@ package rescala
 
 import org.scalajs.dom
 import org.scalajs.dom.{Element, Node}
-import rescala.core.{CreationTicket, Scheduler, Struct}
-import rescala.reactives.{Evt, Observe, Signal, Var}
+import rescala.core.{CreationTicket, Interp, Scheduler, Struct}
+import rescala.reactives.Observe.ObserveInteract
+import rescala.reactives.{Evt, Observe, RExceptions, Signal, Var}
 import scalatags.JsDom.{StringFrag, TypedTag}
 import scalatags.JsDom.all.{Attr, AttrValue, Modifier, Style, StyleValue}
 import scalatags.generic
@@ -11,6 +12,7 @@ import scalatags.jsdom.Frag
 
 import scala.language.higherKinds
 import scala.scalajs.js
+import scala.util.Try
 
 object Tags {
 
@@ -69,7 +71,7 @@ object Tags {
         }
 
         observe = Observe.strong(rendered, fireImmediately = true)(
-        { newTag =>
+          tagObserver(parent, rendered) { newTag =>
           println(s"$rendered parent $parent")
           if (parent != null && !scalajs.js.isUndefined(parent)) {
             val newNode = newTag.render
@@ -78,10 +80,21 @@ object Tags {
             else parent.appendChild(newNode)
             currentNode = newNode
           }
-        },
-         t => throw t,
-         isInDocumentHack(parent))(init)
+        })(init)
       }
+    }
+  }
+
+  def tagObserver[A, S <: Struct](parent: dom.Element, rendered : Interp[A, S])
+                                 (fun: A => Unit)
+                                 (reevalVal: rendered.Value)
+  : ObserveInteract = new ObserveInteract {
+    override def shouldRemove: Boolean =
+      Try {isInDocumentHack(parent)(rendered.interpret(reevalVal))}.getOrElse(false)
+    override def testUnhandled(): Unit = ()
+    override def execute(): Unit = {
+      fun(RExceptions.toExternalException(rendered, rendered.interpret(reevalVal)))
+
     }
   }
 
@@ -105,16 +118,15 @@ object Tags {
           currentNodes.foreach(parent.appendChild)
         }
 
-        observe = Observe.strong(rendered, fireImmediately = false)(
-        { newTags =>
-          println(s"$rendered parent $parent")
-          if (parent != null && !scalajs.js.isUndefined(parent)) {
-            currentNodes = replaceAll(parent, currentNodes, currentTags, newTags)
-            currentTags = newTags
+        observe = Observe.strong(rendered, fireImmediately = false) {
+          tagObserver(parent, rendered) { newTags =>
+            println(s"$rendered parent $parent")
+            if (parent != null && !scalajs.js.isUndefined(parent)) {
+              currentNodes = replaceAll(parent, currentNodes, currentTags, newTags)
+              currentTags = newTags
+            }
           }
-        },
-         t => throw t,
-         isInDocumentHack(parent))(init)
+        }(init)
       }
     }
   }

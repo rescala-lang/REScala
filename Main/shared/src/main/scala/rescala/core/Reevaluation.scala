@@ -24,7 +24,7 @@ trait DisconnectableImpl[S <: Struct] extends Derived[S] with Disconnectable[S] 
   }
 
 
-  abstract final override protected[rescala] def reevaluate(rein: ReIn): Rout = {
+  final abstract override protected[rescala] def reevaluate(rein: ReIn): Rout = {
     if (disconnected) {
       rein.trackDependencies(Set.empty)
       rein

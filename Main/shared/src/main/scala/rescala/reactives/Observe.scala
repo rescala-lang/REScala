@@ -1,9 +1,6 @@
 package rescala.reactives
 
-import rescala.core.{Interp, _}
-import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
-
-import scala.util.control.NonFatal
+import rescala.core._
 
 /**
   * Generic interface for observers that represent a function registered to trigger for every reevaluation of a reactive value.
@@ -17,45 +14,31 @@ trait Observe[S <: Struct] {
 
 object Observe {
 
-  private abstract class Obs[T, S <: Struct](state: S#State[Pulse[Nothing], S],
-                                             dependency: Interp[T, S],
-                                             fun: T => Unit,
-                                             fail: Throwable => Unit,
-                                             name: REName,
-                                             removeIf: T => Boolean)
-    extends Base[Pulse[Nothing], S](state, name) with Derived[S] with Observe[S] {
-    this: DisconnectableImpl[S] =>
-
-    override protected[rescala] def reevaluate(dt: ReIn): Rout = {
-      try {
-        val v = dt.dependStatic(dependency)
-        if (removeIf(v)) {
-          dt.trackDependencies(Set.empty)
-        }
-        else dt.withEffect(new Observation { def execute() = fun(v) })
-      } catch {
-        case EmptySignalControlThrowable => dt
-        case NonFatal(t)                 =>
-          if (fail eq null) {
-            throw new UnhandledFailureException(this, t)
-          }
-          else dt.withEffect(new Observation { def execute() = fail(t) })
-      }
-    }
-    override def remove()(implicit fac: Scheduler[S]): Unit = {
-      disconnect()
-    }
+  trait ObserveInteract extends Observation {
+    def shouldRemove: Boolean
+    def testUnhandled(): Unit
   }
 
-  def strong[T, S <: Struct](dependency: Interp[T, S],
-                             fireImmediately: Boolean)
-                            (fun: T => Unit,
-                             fail: Throwable => Unit,
-                             removeIf: T => Boolean)
+  def strong[T, S <: Struct](dependency: ReSource[S], fireImmediately: Boolean)
+                            (fun: dependency.Value => ObserveInteract)
                             (implicit ct: CreationTicket[S]): Observe[S] = {
-    ct.create[Pulse[Nothing], Obs[T, S]](Set(dependency),
-                                         Initializer.Observer, fireImmediately) { state =>
-      new Obs[T, S](state, dependency, fun, fail, ct.rename, removeIf) with DisconnectableImpl[S]
+    ct.create[Pulse[Nothing], Observe[S] with Derived[S]](Set(dependency),
+                                                          Initializer.Observer,
+                                                          fireImmediately) { state =>
+      abstract class Obs
+        extends Base[Pulse[Nothing], S](state, ct.rename) with Derived[S] with Observe[S] {
+        this: DisconnectableImpl[S] =>
+
+        override protected[rescala] def reevaluate(dt: ReIn): Rout = {
+          val v  = dt.collectStatic(dependency)
+          val oi = fun(v)
+          oi.testUnhandled()
+          if (oi.shouldRemove) dt.trackDependencies(Set.empty)
+          else dt.withEffect(oi)
+        }
+        override def remove()(implicit fac: Scheduler[S]): Unit = disconnect()
+      }
+      new Obs with DisconnectableImpl[S]
     }
   }
 

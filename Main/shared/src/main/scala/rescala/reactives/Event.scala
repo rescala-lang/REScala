@@ -3,6 +3,8 @@ package rescala.reactives
 import rescala.core.Pulse.{Exceptional, NoChange, Value}
 import rescala.core.{Interp, _}
 import rescala.macros.cutOutOfUserComputation
+import rescala.reactives.Observe.ObserveInteract
+import rescala.reactives.RExceptions.UnhandledFailureException
 
 import scala.collection.immutable.{LinearSeq, Queue}
 
@@ -11,7 +13,7 @@ import scala.collection.immutable.{LinearSeq, Queue}
   *
   * Note: We hide implicit parameters of the API in the documentation.
   * They are used to ensure correct creation, and you normally do not have to worry about them,
-  * except if you accidentially call the implicit parameter list, in which cas you may get cryptic errors.
+  * except if you accidentally call the implicit parameter list, in which cas you may get cryptic errors.
   * This is a scala limitation.
   * We also hide the internal state parameter of passed and returned events.
   *
@@ -49,10 +51,22 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
                     onFailure: Throwable => Unit = null,
                     removeIf: T => Boolean = _ => false)
                    (implicit ticket: CreationTicket[S]): Observe[S]
-  = Observe.strong(this, fireImmediately = false)(
-    v => onSuccess(v.get),
-    onFailure,
-    v => removeIf(v.get))
+  = Observe.strong(this, fireImmediately = false) { reevalVal =>
+    val internalVal = internalAccess(reevalVal)
+    new ObserveInteract {
+      override def shouldRemove: Boolean = reevalVal.map(removeIf).getOrElse(false)
+      override def testUnhandled(): Unit =
+        if (onFailure == null && reevalVal.isInstanceOf[Pulse.Exceptional]) {
+          val f = reevalVal.asInstanceOf[Pulse.Exceptional].throwable
+          throw new UnhandledFailureException(Event.this, f)
+        }
+      override def execute(): Unit = internalVal match {
+        case Pulse.NoChange => ()
+        case Pulse.Value(v) => onSuccess(v)
+        case Pulse.Exceptional(f) => onFailure(f)
+      }
+    }
+  }
 
   /** Uses a partial function `onFailure` to recover an error carried by the event into a value when returning Some(value),
     * or filters the error when returning None

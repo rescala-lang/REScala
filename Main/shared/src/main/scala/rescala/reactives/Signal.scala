@@ -1,7 +1,8 @@
 package rescala.reactives
 
-import rescala.core.{Interp, _}
+import rescala.core._
 import rescala.macros.cutOutOfUserComputation
+import rescala.reactives.Observe.ObserveInteract
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 import rescala.reactives.Signals.{Diff, static}
 
@@ -33,11 +34,7 @@ trait Signal[+A, S <: Struct] extends ReSource[S] with Interp[A, S] with Disconn
   /** Returns the current value of the signal
     * @group accessor */
   final def readValueOnce(implicit scheduler: Scheduler[S]): A = {
-    try { scheduler.singleReadValueOnce(this) }
-    catch {
-      case EmptySignalControlThrowable => throw new NoSuchElementException(s"Signal $this is empty")
-      case other: Throwable => throw new IllegalStateException(s"Signal $this has an error value", other)
-    }
+    RExceptions.toExternalException(this, scheduler.singleReadValueOnce(this) )
   }
 
   /** Interprets the pulse of the signal by returning the value
@@ -51,7 +48,21 @@ trait Signal[+A, S <: Struct] extends ReSource[S] with Interp[A, S] with Disconn
                     onError: Throwable => Unit = null,
                     removeIf: A => Boolean = _ => false)
                    (implicit ticket: CreationTicket[S])
-  : Observe[S] = Observe.strong(this, fireImmediately = true)(onValue, onError, removeIf)
+  : Observe[S] = Observe.strong(this, fireImmediately = true){ reevalVal =>
+    new ObserveInteract {
+      override def shouldRemove: Boolean = reevalVal.map(removeIf).getOrElse(false)
+      override def testUnhandled: Unit =
+        if (onError == null && reevalVal.isInstanceOf[Pulse.Exceptional] && reevalVal != Pulse.empty) {
+          val f = reevalVal.asInstanceOf[Pulse.Exceptional].throwable
+          throw new UnhandledFailureException(Signal.this, f)
+        }
+      override def execute(): Unit = reevalVal match {
+        case Pulse.empty => ()
+        case Pulse.Value(v) => onValue(v)
+        case Pulse.Exceptional(f) => onError(f)
+      }
+    }
+  }
 
   /** Uses a partial function `onFailure` to recover an error carried by the event into a value. */
   @cutOutOfUserComputation

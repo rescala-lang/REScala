@@ -60,8 +60,8 @@ class TrueDynamicSignals extends RETests { multiEngined { engine => import engin
 
     val testsig = Signal.dynamic {
       {
-        def sig = Signal { inside() }
-        sig()
+        def insideSig = Signal { inside() }
+        insideSig()
       }
       sig().apply()
     }

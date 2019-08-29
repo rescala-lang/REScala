@@ -53,7 +53,7 @@ class SimpleCreation() extends Initializer[FStruct] {
     if (ignitionRequiresReevaluation) {
       println(s"creation evaluation $reactive")
       // evaluate immediately to support some higher order + creation nonsense
-      while (!Reevaluate.evaluate(reactive, this)){}
+      Reevaluate.evaluate(reactive, r => true, this)
     }
   }
 
@@ -123,10 +123,10 @@ object FScheduler extends DynamicInitializerLookup[FStruct, SimpleCreation]
 
 case class Propagation(active: Set[ReSource[FStruct]], processed: Set[ReSource[FStruct]], creationTicket: SimpleCreation) {
   def run(): Unit = {
-    println("propagating:")
-    println(s"active: $active\nprocessed: $processed\n" +
-            s"ready: $ready\noutdated: $outdated\nall: $allReactives\n" +
-            s"unprocessed: $unprocessed")
+    //println("propagating:")
+    //println(s"active: $active\nprocessed: $processed\n" +
+    //        s"ready: $ready\noutdated: $outdated\nall: $allReactives\n" +
+    //        s"unprocessed: $unprocessed")
     if (processed == allReactives) () // commit and be done, snapshots are handled elsewhere
     else { // reevaluate or skip
 
@@ -147,7 +147,7 @@ case class Propagation(active: Set[ReSource[FStruct]], processed: Set[ReSource[F
         // in the calculus they just execute the empty operation
         println(s"reevaluating $r")
         val evaluated = r match {
-          case r: Derived[FStruct] => Reevaluate.evaluate(r, creationTicket)
+          case r: Derived[FStruct] => Reevaluate.evaluate(r, r => r.state.inputs.subsetOf(processed + r), creationTicket)
           case _             => true
         }
         if (evaluated) Propagation(active + r, processed + r, creationTicket).run
@@ -163,9 +163,7 @@ case class Propagation(active: Set[ReSource[FStruct]], processed: Set[ReSource[F
   lazy val ready: Set[ReSource[FStruct]] = {
     unprocessed.filter{r =>
       val processedAndI = processed + r
-      val res = r.state.inputs.subsetOf(processedAndI)
-      println(s"ready check for $r is $res\n ${r.state.inputs} subset of $processedAndI")
-      res
+      r.state.inputs.subsetOf(processedAndI)
     }
   }
 
@@ -176,7 +174,7 @@ case class Propagation(active: Set[ReSource[FStruct]], processed: Set[ReSource[F
 }
 
 object Reevaluate {
-  def evaluate(reactive: Derived[FStruct], creationTicket: SimpleCreation): Boolean = {
+  def evaluate(reactive: Derived[FStruct], dynamicOk: ReSource[FStruct] => Boolean, creationTicket: SimpleCreation): Boolean = {
     val dt = new ReevTicket[reactive.Value, FStruct](creationTicket, reactive.state.value) {
       override def dynamicAccess(input: ReSource[FStruct]): input.Value = {
         input.state.value
@@ -199,11 +197,10 @@ object Reevaluate {
       case None         => // static reactive
         finishReevaluation()
       case Some(inputs) => //dynamic reactive
-        if (inputs == reactive.state.inputs) finishReevaluation()
-        else {
-          reactive.state.inputs = inputs
-          false
-        }
+        reactive.state.inputs = inputs
+        if (dynamicOk(reactive)) finishReevaluation()
+        else false
+
     }
   }
 }
