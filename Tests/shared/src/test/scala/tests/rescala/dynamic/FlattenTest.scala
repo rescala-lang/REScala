@@ -351,20 +351,20 @@ class FlattenTest extends RETests { multiEngined { engine => import engine._
     val res = flat.latest()
     var count = 0
 
-    res.observe(_ => count += 1)
+    res.observe{ _ => count += 1 }
 
     assert(count == 0)
 
     someInput.fire(Some("Hello"))
-    assert(count == 1)
+    assert(count == 1, "first some")
     assert(res.readValueOnce == "Hello", "flatten some")
 
     someInput.fire(None)
-    assert(count == 1)
+    assert(count == 1, "first none")
     assert(res.readValueOnce == "Hello", "flatten none")
 
     someInput.fire(Some("World"))
-    assert(count == 2)
+    assert(count == 2, "second some")
     assert(res.readValueOnce == "World", "flatten some again")
 
   }
