@@ -8,23 +8,22 @@ import sbt._
 
 object Settings {
 
-  val commonCrossBuildVersions = crossScalaVersions := Seq("2.12.8", "2.13.0")
+  val commonCrossBuildVersions = crossScalaVersions := Seq("2.12.9", "2.13.0")
 
   val scalaVersion_211 = Def.settings(
     scalaVersion := "2.11.12",
-    scalacOptions ++= tpolecatsScalacOptions
+    scalacOptions ++= tpolecatsScalacOptionsCommon ++ scalaOptions12minus
   )
   val scalaVersion_212 = Def.settings(
-    scalaVersion := "2.12.8",
-    scalacOptions ++= tpolecatsScalacOptions
+    scalaVersion := "2.12.9",
+    scalacOptions ++= tpolecatsScalacOptionsCommon ++ scalacOptions12plus ++ scalaOptions12minus
   )
   val scalaVersion_213 = Def.settings(
     scalaVersion := "2.13.0",
-    scalacOptions ++= tpolecatsScalacOptions
+    scalacOptions ++= tpolecatsScalacOptionsCommon ++ scalacOptions12plus
     )
 
-
-  lazy val tpolecatsScalacOptions = Seq(
+  lazy val tpolecatsScalacOptionsCommon = Seq(
     "-deprecation",                      // Emit warning and location for usages of deprecated APIs.
     "-encoding", "utf-8",                // Specify character encoding used by source files.
     "-explaintypes",                     // Explain type errors in more detail.
@@ -55,6 +54,8 @@ object Settings {
     //"-Ywarn-unused:params",              // Warn if a value parameter is unused.
     //"-Ywarn-unused:patvars",             // Warn if a variable bound in a pattern is unused.
     //"-Ywarn-value-discard"               // Warn when non-Unit expression results are unused.
+    )
+  lazy val scalacOptions12plus = Seq(
     // do not work on 2.11
     "-Xlint:constant",                   // Evaluation of a constant arithmetic expression results in an error.
     "-Ywarn-extra-implicit",             // Warn when more than one implicit parameter section is defined.
@@ -62,18 +63,19 @@ object Settings {
     "-Ywarn-unused:imports",             // Warn if an import selector is not referenced.
     "-Ywarn-unused:locals",              // Warn if a local definition is unused.
     "-Ywarn-unused:privates",            // Warn if a private member is unused.
+  )
+  lazy val scalaOptions12minus = Seq(
     // do not work on 2.13
-    //"-Ywarn-inaccessible",               // Warn about inaccessible types in method signatures.
-    //"-Ywarn-infer-any",                  // Warn when a type argument is inferred to be `Any`.
-    //"-Yno-adapted-args",                 // Do not adapt an argument list (either by inserting () or creating a tuple) to match the receiver.
-    //"-Ypartial-unification",             // Enable partial unification in type constructor inference
-    //"-Xlint:by-name-right-associative",  // By-name parameter of right associative operator.
-    //"-Xlint:unsound-match",              // Pattern match may not be typesafe.
-    //"-Ywarn-nullary-override",           // Warn when non-nullary `def f()' overrides nullary `def f'.
-    //"-Ywarn-nullary-unit",               // Warn when nullary methods return Unit.
-    //"-Xfuture",                          // Turn on future language features.
-
-    )
+    "-Ywarn-inaccessible",               // Warn about inaccessible types in method signatures.
+    "-Ywarn-infer-any",                  // Warn when a type argument is inferred to be `Any`.
+    "-Yno-adapted-args",                 // Do not adapt an argument list (either by inserting () or creating a tuple) to match the receiver.
+    "-Ypartial-unification",             // Enable partial unification in type constructor inference
+    "-Xlint:by-name-right-associative",  // By-name parameter of right associative operator.
+    "-Xlint:unsound-match",              // Pattern match may not be typesafe.
+    "-Ywarn-nullary-override",           // Warn when non-nullary `def f()' overrides nullary `def f'.
+    "-Ywarn-nullary-unit",               // Warn when nullary methods return Unit.
+    "-Xfuture",                          // Turn on future language features.
+  )
 
   val strictCompile = Compile / compile / scalacOptions += "-Xfatal-warnings"
 }
@@ -96,14 +98,14 @@ object Dependencies {
   val pprint      = ld += "com.lihaoyi" %%% "pprint" % "0.5.4"
   val rmgkLogging = Def.settings(Resolvers.rmgk, ld += "de.rmgk" %%% "logging" % "0.2.1")
   val scalactic   = ld += "org.scalactic" %% "scalactic" % "3.0.7"
-  val scribe      = ld += "com.outr" %%% "scribe" % "2.7.3"
+  val scribe      = ld += "com.outr" %%% "scribe" % "2.7.9"
   val sourcecode  = ld += "com.lihaoyi" %%% "sourcecode" % "0.1.7"
   val upickle     = ld += "com.lihaoyi" %% "upickle" % "0.7.4"
 
   val akkaHttp = ld ++= (Seq("akka-http-core",
                              "akka-http")
-                         .map(n => "com.typesafe.akka" %% n % "10.1.8") ++
-                         Seq("com.typesafe.akka" %% "akka-stream" % "2.5.23"))
+                         .map(n => "com.typesafe.akka" %% n % "10.1.9") ++
+                         Seq("com.typesafe.akka" %% "akka-stream" % "2.5.25"))
 
   val circe = ld ++= Seq("core",
                          "generic",
@@ -114,9 +116,9 @@ object Dependencies {
 
   // frontend
   val normalizecss = ld += "org.webjars.npm" % "normalize.css" % "8.0.1"
-  val scalatags    = ld += "com.lihaoyi" %%% "scalatags" % "0.6.8"
+  val scalatags    = ld += "com.lihaoyi" %%% "scalatags" % "0.7.0"
   val scalajsdom   = ld += "org.scala-js" %%% "scalajs-dom" % "0.9.6"
-  val fontawesome  = ld += "org.webjars" % "font-awesome" % "5.7.2"
+  val fontawesome  = ld += "org.webjars" % "font-awesome" % "5.10.1"
 
   // tests
   val scalacheck = ld += "org.scalacheck" %% "scalacheck" % "1.14.0" % "test"
