@@ -10,7 +10,6 @@ import scalatags.JsDom.all.{Attr, AttrValue, Modifier, Style, StyleValue}
 import scalatags.generic
 import scalatags.jsdom.Frag
 
-import scala.language.higherKinds
 import scala.scalajs.js
 import scala.util.Try
 
