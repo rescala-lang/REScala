@@ -1,6 +1,6 @@
-// shadow sbt-scalajs' crossProject and CrossType from Scala.js 0.6.x
 import java.nio.file.Files
 
+// shadow sbt-scalajs' crossProject and CrossType from Scala.js 0.6.x
 import sbtcrossproject.CrossPlugin.autoImport.{CrossType, crossProject}
 import Settings._
 import Dependencies._
@@ -9,19 +9,13 @@ ThisBuild / incOptions := (ThisBuild / incOptions).value.withLogRecompileOnMacro
 cfg.noPublish
 
 lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
-  caseStudyEditor,
-  caseStudyMill,
-  caseStudyRSS,
-  caseStudyShapes,
   datastructures,
 //  dividi,
   documentation,
   examples,
-  examplesReswing,
   fullmv,
   microbench,
 //  paroli,
-  pongDemo,
   rescalaJS,
   rescalaJVM,
 //  rescalafx,
@@ -33,7 +27,7 @@ lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
   .settings(cfg.noPublish)
 
 
-lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Main"))
+lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Code/Main"))
   .settings(
     name := "rescala",
     cfg.base,
@@ -71,7 +65,7 @@ lazy val rescalaJS = rescala.js
 
 //lazy val rescalaNative = rescala.native
 
-lazy val tests = crossProject(JSPlatform, JVMPlatform).in(file("Tests"))
+lazy val tests = crossProject(JSPlatform, JVMPlatform).in(file("Code/Tests"))
   .settings(name := "rescala-tests", cfg.noPublish, cfg.base, cfg.test,scalacheck,
             Dependencies.loci.wsAkka, Dependencies.akkaHttp,
             lib.lociTransmitterDependencies, circe, lib.lociTransmitterDependencies,
@@ -90,55 +84,31 @@ lazy val documentation = project.in(file("Documentation/DocumentationProject"))
 
 // ===================================================================================== Extensions
 
-lazy val reswing = project.in(file("Extensions/RESwing"))
+lazy val reswing = project.in(file("Code/Extensions/RESwing"))
   .settings(name := "reswing", cfg.base, cfg.bintray, cfg.strictScalac, scalaswing)
   .dependsOn(rescalaJVM)
 
-lazy val datastructures = project.in(file("Extensions/Datastructures"))
-  .dependsOn(rescalaJVM)
-  .settings(cfg.base, name := "datastructures", scalatest, cfg.noPublish, cfg.strictScalac)
-
-lazy val rescalafx = project.in(file("Extensions/javafx"))
+lazy val rescalafx = project.in(file("Code/Extensions/javafx"))
   .dependsOn(rescalaJVM)
   .settings(name := "rescalafx", cfg.base, cfg.noPublish, lib.scalafx)
 
 
 // ===================================================================================== Examples
 
-lazy val examples = project.in(file("Examples/examples"))
-  .dependsOn(rescalaJVM)
+lazy val examples = project.in(file("Code/Examples/examples"))
+  .dependsOn(rescalaJVM, reswing)
   .settings(name := "rescala-examples", cfg.base, cfg.noPublish, scalaswing)
 
-lazy val pongDemo = project.in(file("Examples/PongDemo"))
-  .dependsOn(rescalaJVM)
-  .settings(name := "pong-demo", cfg.base, cfg.noPublish, scalaswing)
+lazy val datastructures = project.in(file("Code/Examples/Datastructures"))
+                                 .dependsOn(rescalaJVM)
+                                 .settings(cfg.base, name := "datastructures", scalatest, cfg.noPublish, cfg.strictScalac)
 
-lazy val examplesReswing = project.in(file("Examples/examples-reswing"))
-  .dependsOn(reswing)
-  .settings(name := "reswing-examples", cfg.base, cfg.noPublish)
-
-lazy val caseStudyEditor = project.in(file("Examples/Editor"))
-  .dependsOn(reswing)
-  .settings(name := "editor-case-study", cfg.base, cfg.noPublish)
-
-lazy val caseStudyRSS = project.in(file("Examples/RSSReader/ReactiveScalaReader.Reactive"))
-  .dependsOn(reswing)
-  .settings(cfg.base, name := "rssreader-case-study-reactive", lib.rss, cfg.noPublish, cfg.test)
-
-lazy val universe = project.in(file("Examples/Universe"))
+lazy val universe = project.in(file("Code/Examples/Universe"))
   .dependsOn(rescalaJVM, fullmv)
   .settings(cfg.base, cfg.noPublish, name := "rescala-universe")
   .enablePlugins(JavaAppPackaging)
 
-lazy val caseStudyShapes = project.in(file("Examples/Shapes"))
-  .dependsOn(reswing)
-  .settings(cfg.base, cfg.noPublish, name := "shapes-case-study", scalaXml)
-
-lazy val caseStudyMill = project.in(file("Examples/Mill"))
-  .dependsOn(reswing)
-  .settings(cfg.base, cfg.noPublish, name := "mill-case-study")
-
-lazy val todolist = project.in(file("Examples/Todolist"))
+lazy val todolist = project.in(file("Code/Examples/Todolist"))
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(rescalaJS)
   .settings(cfg.base, cfg.noPublish, name := "todolist",
@@ -148,41 +118,41 @@ lazy val todolist = project.in(file("Examples/Todolist"))
             loci.webrtc,
             loci.circe)
 
-lazy val dividi = project.in(file("Examples/dividi"))
+lazy val dividi = project.in(file("Code/Examples/dividi"))
   .dependsOn(rescalaJVM)
   .settings(name := "dividi", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.scalaLogback, lib.scalafx, cfg.strictScalac)
 
-lazy val paroli = project.in(file("Examples/paroli-chat"))
+lazy val paroli = project.in(file("Code/Examples/paroli-chat"))
   .dependsOn(rescalaJVM)
   .settings(name := "paroli-chat", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.scalaLogback, lib.jline, cfg.strictScalac)
 
 
 // ===================================================================================== Research
 
-lazy val fullmv = project.in(file("Research/Multiversion"))
+lazy val fullmv = project.in(file("Code/Research/Multiversion"))
   .settings( cfg.base, name := "rescala-multiversion",
     cfg.test, cfg.noPublish, exportJars := true)
   .dependsOn(rescalaJVM, testsJVM % "test->test")
 
-lazy val distributedFullmv = project.in(file("Research/distributed/multiversion"))
+lazy val distributedFullmv = project.in(file("Code/Research/distributed/multiversion"))
   .settings( cfg.base, name := "rescala-distributed-multiversion",
     cfg.test, cfg.noPublish, circe, lib.lociTransmitterDependencies, exportJars := true)
   .dependsOn(fullmv, testsJVM % "test->test")
 
-lazy val distributedExamples = project.in(file("Research/distributed/examples"))
+lazy val distributedExamples = project.in(file("Code/Research/distributed/examples"))
   .enablePlugins(JmhPlugin)
   .settings(name := "rescala-distributed-examples", cfg.base, cfg.noPublish)
   .dependsOn(distributedFullmv % "compile->test")
   .enablePlugins(JavaAppPackaging)
 
-lazy val distributedBenchmarks = project.in(file("Research/distributed/benchmarks"))
+lazy val distributedBenchmarks = project.in(file("Code/Research/distributed/benchmarks"))
   .enablePlugins(JmhPlugin)
   .settings(name := "rescala-distributed-benchmarks", cfg.base, cfg.noPublish, mainClass in Compile := Some("org.openjdk.jmh.Main"),
     TaskKey[Unit]("compileJmh") := Seq(compile in pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh).dependOn.value)
   .dependsOn(distributedFullmv % "compile->test")
   .enablePlugins(JavaAppPackaging)
 
-lazy val microbench = project.in(file("Research/Microbenchmarks"))
+lazy val microbench = project.in(file("Code/Research/Microbenchmarks"))
   .enablePlugins(JmhPlugin)
   .settings(name := "microbenchmarks", cfg.base, cfg.noPublish, mainClass in Compile := Some("org.openjdk.jmh.Main"),
     circe,
@@ -358,7 +328,7 @@ val vbundleDef = vbundle := {
   bundleTarget.toFile
 }
 
-lazy val ersirServer = project.in(file("Examples/Ersir/server"))
+lazy val ersirServer = project.in(file("Code/Examples/Ersir/server"))
                        .settings(
                          name := "server",
                          fork := true,
@@ -373,7 +343,7 @@ lazy val ersirServer = project.in(file("Examples/Ersir/server"))
                        .dependsOn(ersirSharedJVM)
                        .dependsOn(rescalaJVM)
 
-lazy val ersirWeb = project.in(file("Examples/Ersir/web"))
+lazy val ersirWeb = project.in(file("Code/Examples/Ersir/web"))
                     .enablePlugins(ScalaJSPlugin)
                     .settings(
                       name := "web",
@@ -388,7 +358,7 @@ lazy val ersirWeb = project.in(file("Examples/Ersir/web"))
                     .dependsOn(rescalaJS)
 
 lazy val ersirShared = crossProject(JSPlatform, JVMPlatform)
-  .crossType(CrossType.Pure).in(file("Examples/Ersir/shared"))
+  .crossType(CrossType.Pure).in(file("Code/Examples/Ersir/shared"))
   .settings(
     name := "shared",
     scalatags, loci.communication, loci.wsAkka, circe, scribe
