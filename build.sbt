@@ -304,8 +304,8 @@ lazy val lib = new {
     scalaXml)
 
   val reactivestreams = libraryDependencies ++= List(
-    "org.reactivestreams" % "reactive-streams" % "1.0.2",
-    "org.reactivestreams" % "reactive-streams-tck" % "1.0.2"
+    "org.reactivestreams" % "reactive-streams" % "1.0.3",
+    "org.reactivestreams" % "reactive-streams-tck" % "1.0.3"
   )
 
   val retypecheck = List(

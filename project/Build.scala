@@ -117,7 +117,7 @@ object Dependencies {
   // frontend
   val normalizecss = ld += "org.webjars.npm" % "normalize.css" % "8.0.1"
   val scalatags    = ld += "com.lihaoyi" %%% "scalatags" % "0.7.0"
-  val scalajsdom   = ld += "org.scala-js" %%% "scalajs-dom" % "0.9.6"
+  val scalajsdom   = ld += "org.scala-js" %%% "scalajs-dom" % "0.9.7"
   val fontawesome  = ld += "org.webjars" % "font-awesome" % "5.10.1"
 
   // tests
