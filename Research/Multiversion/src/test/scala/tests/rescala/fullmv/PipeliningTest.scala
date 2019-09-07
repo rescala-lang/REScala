@@ -7,7 +7,7 @@ import tests.rescala.testtools.Spawn
 
 class PipeliningTest extends FunSuite {
   test("pipelining works") {
-    val millisecondsPerNode = 10
+    val millisecondsPerNode = 10L
     val pipelineLength = 20
     val numberOfUpdates = 10
 
