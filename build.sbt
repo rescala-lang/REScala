@@ -46,18 +46,20 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Main"))
     // for reactive streams api
     lib.reactivestreams,
     // for restoration
-    circe,
+    libraryDependencies ++= List(
+      "io.circe" %%% s"circe-core" % "0.11.1" % "provided",
+      "io.circe" %%% s"circe-parser" % "0.11.1" % "provided",
+      ),
     // for distribution
-    lib.lociTransmitterDependencies
+    libraryDependencies += "de.tuda.stg" %%% s"scala-loci-communication" % "0.2.0" % "provided"
     )
   .jvmSettings()
   .jsSettings(
     cfg.js,
     // for restoration
-    scalajsdom,
+    libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "0.9.7" % "provided",
     // for rescalatags
-    scalatags,
-    jsDependencies += RuntimeDOM
+    libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.7.0" % "provided"
     )
 //  .nativeSettings(
 //    crossScalaVersions := Seq("2.11.8"),
@@ -71,7 +73,9 @@ lazy val rescalaJS = rescala.js
 
 lazy val tests = crossProject(JSPlatform, JVMPlatform).in(file("Tests"))
   .settings(name := "rescala-tests", cfg.noPublish, cfg.base, cfg.test,scalacheck,
-            Dependencies.loci.wsAkka, Dependencies.akkaHttp)
+            Dependencies.loci.wsAkka, Dependencies.akkaHttp,
+            lib.lociTransmitterDependencies, circe, lib.lociTransmitterDependencies,
+            scalatags)
   .dependsOn(rescala)
   .jvmSettings().jsSettings(cfg.js)
 lazy val testsJVM = tests.jvm
@@ -90,24 +94,9 @@ lazy val reswing = project.in(file("Extensions/RESwing"))
   .settings(name := "reswing", cfg.base, cfg.bintray, cfg.strictScalac, scalaswing)
   .dependsOn(rescalaJVM)
 
-//lazy val restore = crossProject(JSPlatform, JVMPlatform).in(file("Extensions/restoration"))
-//  .settings(name := "rescala-restoration", cfg.base, cfg.strictScalac,  cfg.bintray)
-//  .dependsOn(rescala, tests % "test->test")
-//  .jsSettings(cfg.js, scalajsdom)
-//lazy val restoreJVM = restore.jvm
-//lazy val restoreJS = restore.js
-
 lazy val datastructures = project.in(file("Extensions/Datastructures"))
   .dependsOn(rescalaJVM)
   .settings(cfg.base, name := "datastructures", scalatest, cfg.noPublish, cfg.strictScalac)
-
-//lazy val crdts = crossProject(JSPlatform, JVMPlatform).in(file("Extensions/crdts"))
-//  .dependsOn(rescala)
-//  .settings(name := "recrdt", cfg.base, cfg.mappingFilters, lib.scalaLogback, cfg.strictScalac,
-//            lib.lociTransmitterDependencies, circe, , scalatest, cfg.bintray,
-//            Dependencies.loci.wsAkka, Dependencies.akkaHttp)
-//lazy val crdtsJVM = crdts.jvm
-//lazy val crdtsJS = crdts.js
 
 lazy val rescalafx = project.in(file("Extensions/javafx"))
   .dependsOn(rescalaJVM)
@@ -153,6 +142,7 @@ lazy val todolist = project.in(file("Examples/Todolist"))
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(rescalaJS)
   .settings(cfg.base, cfg.noPublish, name := "todolist",
+            circe, scalatags,
             scalaSource in Compile := baseDirectory.value,
             scalaJSUseMainModuleInitializer := true,
             loci.webrtc,
@@ -195,6 +185,7 @@ lazy val distributedBenchmarks = project.in(file("Research/distributed/benchmark
 lazy val microbench = project.in(file("Research/Microbenchmarks"))
   .enablePlugins(JmhPlugin)
   .settings(name := "microbenchmarks", cfg.base, cfg.noPublish, mainClass in Compile := Some("org.openjdk.jmh.Main"),
+    circe,
     TaskKey[Unit]("compileJmh") := Seq(compile in pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh).dependOn.value)
   .enablePlugins(JavaAppPackaging)
   .dependsOn(fullmv, rescalaJVM)
@@ -306,7 +297,7 @@ lazy val lib = new {
 
   val reactivestreams = libraryDependencies ++= List(
     "org.reactivestreams" % "reactive-streams" % "1.0.3",
-    "org.reactivestreams" % "reactive-streams-tck" % "1.0.3"
+    //"org.reactivestreams" % "reactive-streams-tck" % "1.0.3"
   )
 
   val retypecheck = List(

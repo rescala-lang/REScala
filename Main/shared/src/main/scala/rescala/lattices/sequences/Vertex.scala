@@ -1,7 +1,6 @@
 package rescala.lattices.sequences
 
 import io.circe._
-import io.circe.generic.extras._
 import rescala.lattices.IdUtil
 import rescala.lattices.sequences.Vertex.Timestamp
 
@@ -18,10 +17,10 @@ object Vertex {
 
   def fresh[A](): Vertex = Vertex( IdUtil.genTimestamp, IdUtil.genId)
 
-  implicit val config: Configuration = Configuration.default
-
-  implicit val vertexEncoder: Encoder[Vertex] = semiauto.deriveEncoder[Vertex]
-  implicit val vertexDecoder: Decoder[Vertex] = semiauto.deriveDecoder[Vertex]
+  implicit val vertexEncoder: Encoder[Vertex] =
+    Encoder.forProduct2("timestamp", "id")(v => (v.timestamp, v.id))
+  implicit val vertexDecoder: Decoder[Vertex] =
+    Decoder.forProduct2("timestamp", "id")(Vertex.apply)
 
   implicit val vertexKeyEncoder: KeyEncoder[Vertex] = {
     new KeyEncoder[Vertex] {
