@@ -1,6 +1,8 @@
+package tests.distribution
+
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.FreeSpec
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.lattices.Lattice
 import rescala.lattices.primitives.GCounter
 
@@ -13,9 +15,9 @@ object DataGenerator {
   } yield GCounter(id, scala.collection.immutable.HashMap(ids.zip(value).toSeq : _*)))
 }
 
-class CounterTest extends FreeSpec with GeneratorDrivenPropertyChecks {
+class CounterTest extends FreeSpec with ScalaCheckDrivenPropertyChecks {
 
-  import DataGenerator._
+  import tests.distribution.DataGenerator._
 
 
   "idempotent" in forAll { (a: GCounter, b: GCounter) =>

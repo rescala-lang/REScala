@@ -1,3 +1,5 @@
+package tests.distribution
+
 import org.scalacheck.Arbitrary
 import org.scalatest.FreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
