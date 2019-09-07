@@ -97,7 +97,7 @@ lazy val rescalafx = project.in(file("Code/Extensions/javafx"))
 
 lazy val examples = project.in(file("Code/Examples/examples"))
   .dependsOn(rescalaJVM, reswing)
-  .settings(name := "rescala-examples", cfg.base, cfg.noPublish, scalaswing)
+  .settings(name := "rescala-examples", cfg.base, cfg.noPublish, scalaswing, scalaXml)
 
 lazy val datastructures = project.in(file("Code/Examples/Datastructures"))
                                  .dependsOn(rescalaJVM)
