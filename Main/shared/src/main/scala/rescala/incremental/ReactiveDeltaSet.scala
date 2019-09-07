@@ -1,4 +1,4 @@
-package rescala.incremental
+package incremental
 
 import rescala.core._
 import rescala.macros.cutOutOfUserComputation
