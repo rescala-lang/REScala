@@ -5,6 +5,8 @@ import rescala.interface.RescalaInterface
 import rescala.{Interfaces, Schedulers}
 
 object TestEngines {
-  val all: List[RescalaInterface[_ <: Struct]] = List(RescalaInterface.interfaceFor(Schedulers.unmanaged),
-                                                      Interfaces.parrp)
+  val all: List[RescalaInterface[_ <: Struct]] =
+    List(RescalaInterface.interfaceFor(Schedulers.unmanaged),
+          RescalaInterface.interfaceFor(rescala.research.FScheduler),
+         Interfaces.parrp)
 }

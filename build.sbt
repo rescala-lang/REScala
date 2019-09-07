@@ -21,7 +21,6 @@ lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
   examples,
   examplesReswing,
   fullmv,
-  //meta,
   microbench,
 //  paroli,
   pongDemo,
@@ -195,10 +194,6 @@ lazy val distributedBenchmarks = project.in(file("Research/distributed/benchmark
     TaskKey[Unit]("compileJmh") := Seq(compile in pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh).dependOn.value)
   .dependsOn(distributedFullmv % "compile->test")
   .enablePlugins(JavaAppPackaging)
-
-lazy val meta = project.in(file("Research/Meta"))
-  .dependsOn(rescalaJVM)
-  .settings(cfg.base, cfg.test, cfg.noPublish, name := "meta")
 
 lazy val microbench = project.in(file("Research/Microbenchmarks"))
   .enablePlugins(JmhPlugin)
