@@ -13,8 +13,6 @@ lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
   caseStudyMill,
   caseStudyRSS,
   caseStudyShapes,
-  crdtsJVM,
-  crdtsJS,
   datastructures,
 //  dividi,
   documentation,
@@ -24,13 +22,9 @@ lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
   microbench,
 //  paroli,
   pongDemo,
-  reactiveStreams,
   rescalaJS,
   rescalaJVM,
 //  rescalafx,
-  rescalatags,
-  restoreJVM,
-  restoreJS,
   reswing,
   testsJS,
   testsJVM,
@@ -49,9 +43,22 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Main"))
     cfg.snapshotAssertions,
     cfg.bintray,
     lib.reflectionForMacroDefinitions,
-  )
+    // for reactive streams api
+    lib.reactivestreams,
+    // for restoration
+    circe,
+    // for distribution
+    lib.lociTransmitterDependencies
+    )
   .jvmSettings()
-  .jsSettings(cfg.js)
+  .jsSettings(
+    cfg.js,
+    // for restoration
+    scalajsdom,
+    // for rescalatags
+    scalatags,
+    jsDependencies += RuntimeDOM
+    )
 //  .nativeSettings(
 //    crossScalaVersions := Seq("2.11.8"),
 //    scalaVersion := "2.11.8")
@@ -78,39 +85,28 @@ lazy val documentation = project.in(file("Documentation/DocumentationProject"))
 
 // ===================================================================================== Extensions
 
-lazy val reactiveStreams = project.in(file("Extensions/ReactiveStreams"))
-  .settings(cfg.base, cfg.noPublish, lib.reactivestreams)
-  .dependsOn(rescalaJVM)
-
 lazy val reswing = project.in(file("Extensions/RESwing"))
   .settings(name := "reswing", cfg.base, cfg.bintray, cfg.strictScalac, scalaswing)
   .dependsOn(rescalaJVM)
 
-lazy val restore = crossProject(JSPlatform, JVMPlatform).in(file("Extensions/restoration"))
-  .settings(name := "rescala-restoration", cfg.base, cfg.strictScalac, circe,  cfg.bintray)
-  .dependsOn(rescala, tests % "test->test")
-  .jsSettings(cfg.js, scalajsdom)
-lazy val restoreJVM = restore.jvm
-lazy val restoreJS = restore.js
-
-lazy val rescalatags = project.in(file("Extensions/Rescalatags"))
-  .settings(name := "rescalatags", cfg.base, cfg.strictScalac, cfg.bintray, cfg.test,
-    cfg.js, scalatags, jsDependencies += RuntimeDOM)
-  .enablePlugins(ScalaJSPlugin)
-  .dependsOn(rescalaJS)
-  .dependsOn(testsJS % "test->test")
+//lazy val restore = crossProject(JSPlatform, JVMPlatform).in(file("Extensions/restoration"))
+//  .settings(name := "rescala-restoration", cfg.base, cfg.strictScalac,  cfg.bintray)
+//  .dependsOn(rescala, tests % "test->test")
+//  .jsSettings(cfg.js, scalajsdom)
+//lazy val restoreJVM = restore.jvm
+//lazy val restoreJS = restore.js
 
 lazy val datastructures = project.in(file("Extensions/Datastructures"))
   .dependsOn(rescalaJVM)
   .settings(cfg.base, name := "datastructures", scalatest, cfg.noPublish, cfg.strictScalac)
 
-lazy val crdts = crossProject(JSPlatform, JVMPlatform).in(file("Extensions/crdts"))
-  .dependsOn(rescala)
-  .settings(name := "recrdt", cfg.base, cfg.mappingFilters, lib.scalaLogback, cfg.strictScalac,
-            lib.lociTransmitterDependencies, circe, scalacheck, scalatest, cfg.bintray,
-            Dependencies.loci.wsAkka, Dependencies.akkaHttp)
-lazy val crdtsJVM = crdts.jvm
-lazy val crdtsJS = crdts.js
+//lazy val crdts = crossProject(JSPlatform, JVMPlatform).in(file("Extensions/crdts"))
+//  .dependsOn(rescala)
+//  .settings(name := "recrdt", cfg.base, cfg.mappingFilters, lib.scalaLogback, cfg.strictScalac,
+//            lib.lociTransmitterDependencies, circe, scalacheck, scalatest, cfg.bintray,
+//            Dependencies.loci.wsAkka, Dependencies.akkaHttp)
+//lazy val crdtsJVM = crdts.jvm
+//lazy val crdtsJS = crdts.js
 
 lazy val rescalafx = project.in(file("Extensions/javafx"))
   .dependsOn(rescalaJVM)
@@ -154,7 +150,7 @@ lazy val caseStudyMill = project.in(file("Examples/Mill"))
 
 lazy val todolist = project.in(file("Examples/Todolist"))
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(rescalatags, restoreJS, crdtsJS)
+  .dependsOn(rescalaJS)
   .settings(cfg.base, cfg.noPublish, name := "todolist",
             scalaSource in Compile := baseDirectory.value,
             scalaJSUseMainModuleInitializer := true,
@@ -162,11 +158,11 @@ lazy val todolist = project.in(file("Examples/Todolist"))
             loci.circe)
 
 lazy val dividi = project.in(file("Examples/dividi"))
-  .dependsOn(crdtsJVM)
+  .dependsOn(rescalaJVM)
   .settings(name := "dividi", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.scalaLogback, lib.scalafx, cfg.strictScalac)
 
 lazy val paroli = project.in(file("Examples/paroli-chat"))
-  .dependsOn(crdtsJVM)
+  .dependsOn(rescalaJVM)
   .settings(name := "paroli-chat", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.scalaLogback, lib.jline, cfg.strictScalac)
 
 
@@ -200,7 +196,7 @@ lazy val microbench = project.in(file("Research/Microbenchmarks"))
   .settings(name := "microbenchmarks", cfg.base, cfg.noPublish, mainClass in Compile := Some("org.openjdk.jmh.Main"),
     TaskKey[Unit]("compileJmh") := Seq(compile in pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh).dependOn.value)
   .enablePlugins(JavaAppPackaging)
-  .dependsOn(fullmv, restoreJVM)
+  .dependsOn(fullmv, rescalaJVM)
 
 
 // ===================================================================================== Settings
@@ -383,7 +379,7 @@ lazy val ersirServer = project.in(file("Examples/Ersir/server"))
                          )
                        .enablePlugins(JavaServerAppPackaging)
                        .dependsOn(ersirSharedJVM)
-                       .dependsOn(rescalaJVM, crdtsJVM)
+                       .dependsOn(rescalaJVM)
 
 lazy val ersirWeb = project.in(file("Examples/Ersir/web"))
                     .enablePlugins(ScalaJSPlugin)
@@ -397,16 +393,15 @@ lazy val ersirWeb = project.in(file("Examples/Ersir/web"))
                     .dependsOn(ersirSharedJS)
                     .enablePlugins(SbtSassify)
                     .enablePlugins(ScalaJSBundlerPlugin)
-                    .dependsOn(rescalatags, crdtsJS)
+                    .dependsOn(rescalaJS)
 
 lazy val ersirShared = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure).in(file("Examples/Ersir/shared"))
-                       .settings(
-                         name := "shared",
-                           scalatags, loci.communication, loci.wsAkka, circe, scribe
-                         )
-                       .jsConfigure(_.dependsOn(crdtsJS))
-                       .jvmConfigure(_.dependsOn(crdtsJVM))
+  .settings(
+    name := "shared",
+    scalatags, loci.communication, loci.wsAkka, circe, scribe
+    )
+  .dependsOn(rescala)
 lazy val ersirSharedJVM = ersirShared.jvm
 lazy val ersirSharedJS = ersirShared.js
 
