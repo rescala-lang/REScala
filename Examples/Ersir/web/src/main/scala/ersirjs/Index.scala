@@ -3,7 +3,7 @@ package ersirjs
 import ersir.shared.Posting
 import ersirjs.ErsirJS.Postings
 import org.scalajs.dom.{CanvasRenderingContext2D, FileReader, UIEvent, html}
-import rescala.Tags._
+import rescala.extra.Tags._
 import rescala.default._
 import scalatags.JsDom
 import scalatags.JsDom.all._

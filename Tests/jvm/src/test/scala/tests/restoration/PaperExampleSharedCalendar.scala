@@ -6,8 +6,8 @@ import java.time.{LocalDate => Date}
 import cats.syntax.either._
 import io.circe.{Decoder, Encoder}
 import org.scalatest.FreeSpec
-import rescala.restoration.ReCirce._
-import rescala.restoration.RestoringInterface
+import rescala.extra.restoration.ReCirce._
+import rescala.extra.restoration.RestoringInterface
 
 
 

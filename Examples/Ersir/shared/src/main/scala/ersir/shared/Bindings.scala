@@ -5,7 +5,7 @@ import io.circe.generic.semiauto._
 import io.circe.{Decoder, Encoder}
 import loci.registry.Binding
 import loci.serializer.circe._
-import rescala.lattices.sequences.RGOA.RGOA
+import rescala.extra.lattices.sequences.RGOA.RGOA
 
 case class Posting(title: String,
                    desc: String,

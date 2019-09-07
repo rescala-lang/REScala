@@ -3,9 +3,9 @@ package tests.distribution
 import org.scalacheck.Arbitrary
 import org.scalatest.FreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import rescala.deltacrdts.AddWinsSet
-import rescala.deltacrdts.dotstores.{Dot, DotStoreLattice}
-import rescala.lattices.Lattice.LatticeOps
+import rescala.extra.deltacrdts.AddWinsSet
+import rescala.extra.deltacrdts.dotstores.{Dot, DotStoreLattice}
+import rescala.extra.lattices.Lattice.LatticeOps
 
 import scala.util.Random
 

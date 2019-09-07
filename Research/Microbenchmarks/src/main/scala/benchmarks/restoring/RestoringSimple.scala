@@ -8,8 +8,8 @@ import rescala.core.{REName, Scheduler, Struct}
 import rescala.interface.{RescalaInterface, RescalaInterfaceRequireSerializer}
 import rescala.levelbased.LevelStructImpl
 import rescala.reactives.{Evt, Var}
-import rescala.restoration.ReCirce._
-import rescala.restoration.{InMemoryStore, RestoringInterface}
+import rescala.extra.restoration.ReCirce._
+import rescala.extra.restoration.{InMemoryStore, RestoringInterface}
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)

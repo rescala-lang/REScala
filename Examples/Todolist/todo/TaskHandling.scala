@@ -9,12 +9,12 @@ import loci.registry.{Binding, BindingBuilder}
 import loci.serializer.circe._
 import org.scalajs.dom.UIEvent
 import org.scalajs.dom.html.{Input, LI}
-import rescala.Tags._
+import rescala.extra.Tags._
 import rescala.core.ReSerializable
-import rescala.distributables.LociDist
-import rescala.lattices.primitives.LastWriterWins
-import rescala.restoration.LocalStorageStore
-import rescala.restoration.ReCirce._
+import rescala.extra.distributables.LociDist
+import rescala.extra.lattices.primitives.LastWriterWins
+import rescala.extra.restoration.LocalStorageStore
+import rescala.extra.restoration.ReCirce._
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all._
 

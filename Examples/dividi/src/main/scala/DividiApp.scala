@@ -8,7 +8,7 @@ import loci.serializer.circe._
 import loci.transmitter.RemoteRef
 import rescala.crdts.distributables.DistributedSignal._
 import rescala.default._
-import rescala.distributables.PGrowOnlyLog
+import rescala.extra.distributables.PGrowOnlyLog
 import scalafx.Includes._
 import scalafx.application.JFXApp
 import scalafx.application.JFXApp.PrimaryStage

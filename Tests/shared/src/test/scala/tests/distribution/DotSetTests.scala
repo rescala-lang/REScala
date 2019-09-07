@@ -3,8 +3,8 @@ package tests.distribution
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.FreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import rescala.deltacrdts.dotstores.DotStoreLattice._
-import rescala.deltacrdts.dotstores.{Causal, Dot, DotStoreLattice}
+import rescala.extra.deltacrdts.dotstores.DotStoreLattice._
+import rescala.extra.deltacrdts.dotstores.{Causal, Dot, DotStoreLattice}
 
 object DotSetGenerator {
   implicit val genDot: Arbitrary[Dot] = Arbitrary(for {

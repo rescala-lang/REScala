@@ -10,9 +10,9 @@ import loci.registry.Registry
 import loci.serializer.circe._
 import org.jsoup.Jsoup
 import rescala.default._
-import rescala.lattices.Lattice
-import rescala.lattices.sequences.RGOA
-import rescala.lattices.sequences.RGOA.RGOA
+import rescala.extra.lattices.Lattice
+import rescala.extra.lattices.sequences.RGOA
+import rescala.extra.lattices.sequences.RGOA.RGOA
 import rescala.locidistribute.LociDist
 import rescala.reactives.Signals.Diff
 

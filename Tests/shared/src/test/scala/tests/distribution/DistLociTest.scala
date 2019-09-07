@@ -7,8 +7,8 @@ import loci.serializer.circe._
 import loci.transmitter.RemoteRef
 import org.scalatest.FreeSpec
 import rescala.default._
-import rescala.distributables.LociDist.dfold
-import rescala.lattices.sequences.RGA.RGA
+import rescala.extra.distributables.LociDist.dfold
+import rescala.extra.lattices.sequences.RGA.RGA
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}

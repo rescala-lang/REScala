@@ -78,7 +78,7 @@ class DividiPresenter(private val onlineButton: JFXToggleButton,
   })
   debtOutput.text() = initial
 
-  def handleSubmit(event: ActionEvent) {
+  def handleSubmit(event: ActionEvent) = {
     val purpose = titleField.getText
     val amount = amountField.getText()
     val newPerson = newPersonField.getText()

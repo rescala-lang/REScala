@@ -3,8 +3,8 @@ package tests.distribution
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.FreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import rescala.lattices.Lattice
-import rescala.lattices.primitives.GCounter
+import rescala.extra.lattices.Lattice
+import rescala.extra.lattices.primitives.GCounter
 
 object DataGenerator {
   implicit val genCounter: Arbitrary[GCounter] = Arbitrary(for {

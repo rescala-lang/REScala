@@ -1,8 +1,8 @@
 package tests.restoration
 
 import org.scalatest.FunSuite
-import rescala.restoration.ReCirce._
-import rescala.restoration.{InMemoryStore, RestoringInterface}
+import rescala.extra.restoration.ReCirce._
+import rescala.extra.restoration.{InMemoryStore, RestoringInterface}
 
 class RestoringTest extends FunSuite {
 

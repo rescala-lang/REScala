@@ -5,12 +5,12 @@ import loci.registry.Binding
 import loci.serializer.circe._
 import org.scalajs.dom.UIEvent
 import org.scalajs.dom.html.{Div, Input}
-import rescala.Tags._
-import rescala.distributables.LociDist
-import rescala.lattices.sequences.RGA
-import rescala.lattices.sequences.RGA.RGA
-import rescala.restoration.LocalStorageStore
-import rescala.restoration.ReCirce._
+import rescala.extra.Tags._
+import rescala.extra.distributables.LociDist
+import rescala.extra.lattices.sequences.RGA
+import rescala.extra.lattices.sequences.RGA.RGA
+import rescala.extra.restoration.LocalStorageStore
+import rescala.extra.restoration.ReCirce._
 import scalatags.JsDom
 import scalatags.JsDom.all._
 import scalatags.JsDom.tags2.section

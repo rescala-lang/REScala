@@ -4,7 +4,7 @@ import loci.registry.{Binding, Registry}
 import loci.serializer.circe._
 import loci.transmitter.{AbstractionRef, Channel, MarshallableArgument, RemoteRef}
 import rescala.core.{InitialChange, Scheduler, Struct}
-import rescala.lattices.Lattice
+import rescala.extra.lattices.Lattice
 import rescala.reactives
 import rescala.reactives.Observe
 

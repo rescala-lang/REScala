@@ -4,7 +4,7 @@ import java.lang.ref.{PhantomReference, ReferenceQueue}
 
 import org.scalatest.prop.Whenever
 import rescala.core.Pulse
-import rescala.simpleprop.SimpleScheduler
+import rescala.extra.simpleprop.SimpleScheduler
 import tests.rescala.testtools.RETests
 
 class GarbageCollectionTest extends RETests with Whenever { multiEngined { engine => import engine._

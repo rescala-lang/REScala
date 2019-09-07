@@ -2,7 +2,7 @@ package test
 
 import org.scalajs.dom.{Element, Node}
 import org.scalajs.dom.html.Span
-import rescala.Tags._
+import rescala.extra.Tags._
 import scalatags.JsDom.all._
 import scalatags.JsDom.TypedTag
 import tests.rescala.testtools.RETests

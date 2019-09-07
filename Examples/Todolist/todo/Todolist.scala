@@ -6,8 +6,8 @@ import loci.communicator.experimental.webrtc.WebRTC.ConnectorFactory
 import loci.communicator.experimental.webrtc._
 import loci.registry.Registry
 import org.scalajs.dom.{UIEvent, document}
-import rescala.lattices.sequences.RGA.RGA
-import rescala.restoration.LocalStorageStore
+import rescala.extra.lattices.sequences.RGA.RGA
+import rescala.extra.restoration.LocalStorageStore
 import scalatags.JsDom.all._
 import scalatags.JsDom.tags2.section
 

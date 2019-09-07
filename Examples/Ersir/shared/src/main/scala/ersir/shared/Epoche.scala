@@ -1,6 +1,6 @@
 package ersir.shared
 
-import rescala.lattices.Lattice
+import rescala.extra.lattices.Lattice
 
 case class Epoche[A](sequence: Long, value: A) {
   def map[B](f: A => B): Epoche[B] = copy(value = f(value))

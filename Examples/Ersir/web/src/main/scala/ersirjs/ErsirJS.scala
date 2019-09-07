@@ -8,8 +8,8 @@ import loci.serializer.circe._
 import loci.transmitter.RemoteRef
 import org.scalajs.dom
 import rescala.default._
-import rescala.lattices.sequences.RGOA
-import rescala.lattices.sequences.RGOA.RGOA
+import rescala.extra.lattices.sequences.RGOA
+import rescala.extra.lattices.sequences.RGOA.RGOA
 import rescala.locidistribute.LociDist
 
 import scala.concurrent.Future
