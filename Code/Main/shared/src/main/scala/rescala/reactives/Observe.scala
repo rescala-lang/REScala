@@ -15,8 +15,7 @@ trait Observe[S <: Struct] {
 object Observe {
 
   trait ObserveInteract extends Observation {
-    def shouldRemove: Boolean
-    def testUnhandled(): Unit
+    def checkExceptionAndRemoval(): Boolean
   }
 
   def strong[T, S <: Struct](dependency: ReSource[S], fireImmediately: Boolean)
@@ -32,8 +31,7 @@ object Observe {
         override protected[rescala] def reevaluate(dt: ReIn): Rout = {
           val v  = dt.collectStatic(dependency)
           val oi = fun(v)
-          oi.testUnhandled()
-          if (oi.shouldRemove) dt.trackDependencies(Set.empty)
+          if (oi.checkExceptionAndRemoval()) dt.trackDependencies(Set.empty)
           else dt.withEffect(oi)
         }
         override def remove()(implicit fac: Scheduler[S]): Unit = disconnect()

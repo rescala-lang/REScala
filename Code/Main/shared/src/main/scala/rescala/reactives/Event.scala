@@ -47,23 +47,25 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
     * @return the resulting [[Observe]] can be used to remove the observer.
     * @usecase def observe(handler: T => Unit): Observe[S]
     * @group accessor */
-  final def observe(onSuccess: T => Unit,
-                    onFailure: Throwable => Unit = null,
-                    removeIf: T => Boolean = _ => false)
+  final def observe(onValue: T => Unit,
+                    onError: Throwable => Unit = null,
+                    fireImmediately: Boolean = false)
                    (implicit ticket: CreationTicket[S]): Observe[S]
-  = Observe.strong(this, fireImmediately = false) { reevalVal =>
+  = Observe.strong(this, fireImmediately) { reevalVal =>
     val internalVal = internalAccess(reevalVal)
     new ObserveInteract {
-      override def shouldRemove: Boolean = reevalVal.map(removeIf).getOrElse(false)
-      override def testUnhandled(): Unit =
-        if (onFailure == null && reevalVal.isInstanceOf[Pulse.Exceptional]) {
-          val f = reevalVal.asInstanceOf[Pulse.Exceptional].throwable
-          throw new UnhandledFailureException(Event.this, f)
+      override def checkExceptionAndRemoval(): Boolean = {
+        reevalVal match {
+          case Pulse.Exceptional(f) if onError == null =>
+            throw new UnhandledFailureException(Event.this, f)
+          case _                                       => ()
         }
+        false
+      }
       override def execute(): Unit = internalVal match {
-        case Pulse.NoChange => ()
-        case Pulse.Value(v) => onSuccess(v)
-        case Pulse.Exceptional(f) => onFailure(f)
+        case Pulse.NoChange       => ()
+        case Pulse.Value(v)       => onValue(v)
+        case Pulse.Exceptional(f) => onError(f)
       }
     }
   }

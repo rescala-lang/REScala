@@ -19,10 +19,12 @@ Code/Examples/LiveDemo/node_modules/
 Code/Examples/Todolist/node_modules/
 Code/Examples/Todolist/package-lock.json
 Code/Examples/Universe/*.csv
-proguard-sbt.txt
+Code/Extensions/Inspector
 Code/Research/Microbenchmarks/Results.zip
 Code/Research/Microbenchmarks/results/
+node_modules
+package-lock.json
+proguard-sbt.txt
 target
 test-output/
 website/
-Code/Extensions/Inspector

@@ -49,7 +49,6 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Code/Main"))
     )
   .jvmSettings()
   .jsSettings(
-    cfg.js,
     // for restoration
     libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "0.9.7" % "provided",
     // for rescalatags
@@ -66,12 +65,14 @@ lazy val rescalaJS = rescala.js
 //lazy val rescalaNative = rescala.native
 
 lazy val tests = crossProject(JSPlatform, JVMPlatform).in(file("Code/Tests"))
-  .settings(name := "rescala-tests", cfg.noPublish, cfg.base, cfg.test,scalacheck,
-            Dependencies.loci.wsAkka, Dependencies.akkaHttp,
+  .settings(name := "rescala-tests", cfg.noPublish, cfg.base, cfg.test, scalacheck,
+            Dependencies.loci.wsAkka,
             lib.lociTransmitterDependencies, circe, lib.lociTransmitterDependencies,
             scalatags)
   .dependsOn(rescala)
-  .jvmSettings().jsSettings(cfg.js)
+  .jvmSettings(Dependencies.akkaHttp).jsSettings(
+  jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv
+  )
 lazy val testsJVM = tests.jvm
 lazy val testsJS = tests.js
 
@@ -228,8 +229,6 @@ lazy val cfg = new {
     publish := {},
     publishLocal := {}
   )
-
-  val js = scalaJSUseRhino in Global := true
 
   lazy val baseScalac = scalacOptions ++= List(
     "-deprecation",

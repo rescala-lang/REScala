@@ -46,16 +46,20 @@ trait Signal[+A, S <: Struct] extends ReSource[S] with Interp[A, S] with Disconn
     * @group accessor */
   final def observe(onValue: A => Unit,
                     onError: Throwable => Unit = null,
-                    removeIf: A => Boolean = _ => false)
+                    fireImmediately: Boolean = true)
                    (implicit ticket: CreationTicket[S])
-  : Observe[S] = Observe.strong(this, fireImmediately = true){ reevalVal =>
+  : Observe[S] = Observe.strong(this, fireImmediately) { reevalVal =>
     new ObserveInteract {
-      override def shouldRemove: Boolean = reevalVal.map(removeIf).getOrElse(false)
-      override def testUnhandled: Unit =
-        if (onError == null && reevalVal.isInstanceOf[Pulse.Exceptional] && reevalVal != Pulse.empty) {
-          val f = reevalVal.asInstanceOf[Pulse.Exceptional].throwable
-          throw new UnhandledFailureException(Signal.this, f)
+      override def checkExceptionAndRemoval(): Boolean = {
+        reevalVal match {
+          case Pulse.empty                             => ()
+          case Pulse.Exceptional(f) if onError == null =>
+            throw new UnhandledFailureException(Signal.this, f)
+          case _                                       => ()
         }
+        false
+      }
+
       override def execute(): Unit = reevalVal match {
         case Pulse.empty => ()
         case Pulse.Value(v) => onValue(v)

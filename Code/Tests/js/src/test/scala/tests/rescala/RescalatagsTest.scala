@@ -1,4 +1,4 @@
-package test
+package tests.rescala
 
 import org.scalajs.dom.{Element, Node}
 import org.scalajs.dom.html.Span
@@ -30,18 +30,15 @@ class RescalatagsTest extends RETests { multiEngined { engine => import engine._
     test("put style into dom") {
       val v = Var.empty[String]
 
-      // we do this because this tends to be globally set from other tests …
-      span.render.style.setProperty("backgroundColor", "green")
-
       val ourTag: Span = span(backgroundColor := v).render
 
-      assert(ourTag.style.getPropertyValue("backgroundColor") === "green", "empty color does not render")
+      assert(ourTag.style.getPropertyValue(backgroundColor.cssName) === "", "empty color does not render")
 
       v.set("red")
-      assert(ourTag.style.getPropertyValue("backgroundColor") === "red", "changing var changes color")
+      assert(ourTag.style.getPropertyValue(backgroundColor.cssName) === "red", "changing var changes color")
 
       v.set("blue")
-      assert(ourTag.style.getPropertyValue("backgroundColor") === "blue", "changing var changes color again")
+      assert(ourTag.style.getPropertyValue(backgroundColor.cssName) === "blue", "changing var changes color again")
     }
 
     test("put attribute into dom") {

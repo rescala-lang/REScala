@@ -2,16 +2,16 @@ package rescala.extra
 
 import org.scalajs.dom
 import org.scalajs.dom.{Element, Node}
-import rescala.core.{CreationTicket, Interp, Scheduler, Struct}
+import rescala.core.{CreationTicket, Pulse, Scheduler, Struct}
 import rescala.reactives.Observe.ObserveInteract
-import rescala.reactives.{Evt, Observe, RExceptions, Signal, Var}
+import rescala.reactives.RExceptions.UnhandledFailureException
+import rescala.reactives.{Evt, Observe, Signal, Var}
 import scalatags.JsDom.all.{Attr, AttrValue, Modifier, Style, StyleValue}
 import scalatags.JsDom.{StringFrag, TypedTag}
 import scalatags.generic
 import scalatags.jsdom.Frag
 
 import scala.scalajs.js
-import scala.util.Try
 
 object Tags {
 
@@ -84,16 +84,26 @@ object Tags {
     }
   }
 
-  def tagObserver[A, S <: Struct](parent: dom.Element, rendered : Interp[A, S])
+  def tagObserver[A, S <: Struct](parent: dom.Element, rendered : Signal[A, S])
                                  (fun: A => Unit)
-                                 (reevalVal: rendered.Value)
+                                 (reevalVal: Pulse[A])
   : ObserveInteract = new ObserveInteract {
-    override def shouldRemove: Boolean =
-      Try {isInDocumentHack(parent)(rendered.interpret(reevalVal))}.getOrElse(false)
-    override def testUnhandled(): Unit = ()
-    override def execute(): Unit = {
-      fun(RExceptions.toExternalException(rendered, rendered.interpret(reevalVal)))
+    override def checkExceptionAndRemoval(): Boolean = {
+      reevalVal match {
+        case Pulse.empty | Pulse.NoChange          => false
+        case Pulse.Exceptional(f) =>
+          throw new UnhandledFailureException(rendered, f)
+        case Pulse.Value(v)       =>
+          isInDocumentHack(parent)(v)
+      }
+    }
 
+    override def execute(): Unit = reevalVal match {
+      case Pulse.empty | Pulse.NoChange => ()
+      case Pulse.Value(v) =>
+        fun(v)
+      case Pulse.Exceptional(f) =>
+        throw new IllegalStateException("should have aborted earlier", f)
     }
   }
 
@@ -134,10 +144,9 @@ object Tags {
   (implicit engine: Scheduler[S])
   : AttrValue[Sig[T]] = new AttrValue[Sig[T]] {
     def apply(t: dom.Element, a: Attr, signal: Sig[T]): Unit = {
-      signal.observe(
-         onValue =  value => implicitly[AttrValue[T]].apply(t, a, value),
-         onError = e => println(s"error on $e"),
-         removeIf = isInDocumentHack(t))
+      Observe.strong(signal, fireImmediately = true)(tagObserver(t, signal){value =>
+        implicitly[AttrValue[T]].apply(t, a, value)
+      })
     }
   }
 
@@ -147,12 +156,12 @@ object Tags {
   implicit def signalAttrValue[T: AttrValue, S <: Struct](implicit engine: Scheduler[S])
   : AttrValue[Signal[T, S]] = genericReactiveAttrValue[T, S, ({type λ[T2] = Signal[T2, S]})#λ]
 
-  def genericReactiveStyleValue[T: StyleValue, S <: Struct, Sig[T2] <: Signal[T2, S]](implicit engine: Scheduler[S])
+  def genericReactiveStyleValue[T, S <: Struct, Sig[T2] <: Signal[T2, S]](implicit engine: Scheduler[S], tstyle: StyleValue[T])
   : StyleValue[Sig[T]] = new StyleValue[Sig[T]] {
     def apply(t: dom.Element, s: Style, signal: Sig[T]): Unit = {
-      signal.observe ({ value =>
-        implicitly[StyleValue[T]].apply(t, s, value)
-      }, removeIf = isInDocumentHack(t))
+      Observe.strong(signal, fireImmediately = true)(tagObserver(t, signal)({ value =>
+        tstyle.apply(t, s, value)
+      }))
     }
   }
 
