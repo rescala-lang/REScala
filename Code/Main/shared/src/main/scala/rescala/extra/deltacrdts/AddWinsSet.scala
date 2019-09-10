@@ -37,10 +37,7 @@ case class AddWinsSet[A](store: Map[A, Set[Dot]], context: Set[Dot]) {
     * but does not contain.
     * Thus, the delta for removal is the empty map,
     * with the dot of the removed element in the context. */
-  def remove(e: A): AddWinsSet[A] = {
-    val dots = store.get(e).map(_.dots).toSet.flatten
-    AddWinsSet[A](Map.empty, dots)
-  }
+  def remove(e: A): AddWinsSet[A] = AddWinsSet[A](Map.empty, store.getOrElse(e, Set.empty))
 
   def clear: AddWinsSet[A] = AddWinsSet[A](Map(), store.dots)
 
@@ -65,14 +62,15 @@ case class AddWinsSet[A](store: Map[A, Set[Dot]], context: Set[Dot]) {
 
 object AddWinsSet {
 
-  def empty[A] = AddWinsSet[A](Map.empty[A, Set[Dot]], Set.empty[Dot])
+  def empty[A]: AddWinsSet[A] = AddWinsSet[A](Map.empty[A, Set[Dot]], Set.empty[Dot])
 
 
   /* AddWinsSet is isomorphic to the corresponding Causal */
 
   implicit def toCausal[A](addWinsSet: AddWinsSet[A]): Causal[Map[A, Set[Dot]]] =
     Causal(addWinsSet.store, addWinsSet.context)
-  implicit def fromCausal[A](causal: Causal[Map[A, Set[Dot]]]) =  AddWinsSet(causal.store, causal.context)
+  implicit def fromCausal[A](causal: Causal[Map[A, Set[Dot]]]): AddWinsSet[A] =
+    AddWinsSet(causal.store, causal.context)
 
   implicit def addWinsSetLattice[A]: Lattice[AddWinsSet[A]] = new Lattice[AddWinsSet[A]] {
     override def merge(left: AddWinsSet[A], right: AddWinsSet[A]): AddWinsSet[A] =
