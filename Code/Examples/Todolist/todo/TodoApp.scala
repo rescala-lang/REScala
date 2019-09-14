@@ -3,6 +3,7 @@ package todo
 import io.circe.generic.auto._
 import loci.registry.Binding
 import loci.serializer.circe._
+import loci.transmitter.Marshallable
 import org.scalajs.dom.UIEvent
 import org.scalajs.dom.html.{Div, Input}
 import rescala.extra.Tags._
@@ -24,7 +25,9 @@ object TodoApp{
 class TodoApp[TH <: TaskHandling](val taskHandling: TH)(implicit val storingScheduler: LocalStorageStore) {
 
   import storingScheduler._
-  import taskHandling.{maketask, toggleAll}
+  import taskHandling.{maketask, toggleAll, Taskref}
+
+  implicit val RGAMarshallable: Marshallable[RGA[Taskref], RGA[Taskref], _] = implicitly
 
   case class TodoRes(div: TypedTag[Div], tasklist: Signal[RGA[taskHandling.Taskref]])
 

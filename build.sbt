@@ -45,7 +45,7 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Code/Main"))
       "io.circe" %%% s"circe-parser" % "0.11.1" % "provided",
       ),
     // for distribution
-    libraryDependencies += "de.tuda.stg" %%% s"scala-loci-communication" % "0.2.0" % "provided"
+    libraryDependencies += "de.tuda.stg" %%% s"scala-loci-communication" % "0.3.0" % "provided"
     )
   .jvmSettings()
   .jsSettings(

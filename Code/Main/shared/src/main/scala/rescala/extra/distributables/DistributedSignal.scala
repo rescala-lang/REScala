@@ -5,6 +5,10 @@ import rescala.default._
 import rescala.macros.cutOutOfUserComputation
 import rescala.extra.lattices.Lattice
 
+import scala.concurrent.Future
+
+
+
 /**
   * Classes implementing this trait can be published and are then synchronized by the DistributionEngine (specified by
   * the implicit val `engine`). Internal changes to the underlying StateCRDT are made by firing an `internalChanges` event
@@ -33,60 +37,43 @@ object DistributedSignal {
     def create(): A = apply()
   }
 
-  /**
-    * @tparam Crdt CRDT type
-    * @tparam P    pVar type
-    **/
-  implicit def PVarTransmittable[Crdt, P](implicit
-                                          ev: P <:< DistributedSignal[_, Crdt],
-                                          transmittable: Transmittable[Crdt, Crdt, Crdt],
-                                          serializable: Serializable[Crdt],
-                                          pVarFactory: PVarFactory[P]
-                                         ): PushBasedTransmittable[P, Crdt, Crdt, Crdt, P] = {
-    new PushBasedTransmittable[P, Crdt, Crdt, Crdt, P] {
 
-      type From = Crdt
-      type To = Crdt
+  implicit def DistributedSignalTransmittable
+  [P, Crdt, T, I, U](implicit
+                     ev: P <:< DistributedSignal[_, Crdt],
+                     pVarFactory: PVarFactory[P],
+                     transmittable: Transmittable[Crdt, I, Crdt])
+  : ConnectedTransmittable.Proxy[P, I, P] {
+    type Proxy = Future[P]
+    type Internal = P
+    type Message = transmittable.Type
+  } = {
 
-      def send(value: P, remote: RemoteRef, endpoint: Endpoint[From, To]): To = {
+    ConnectedTransmittable.Proxy(
+      provide = (value, context) => {
 
-        println(s"sending crdt $value")
+        val observer = value.crdtSignal.observe(context.endpoint.send)
 
-        val observer = value.crdtSignal
-                       .observe(c => endpoint.send(c))
-
-        endpoint.receive notify value.merge
-
-        endpoint.closed notify { _ => observer.remove }
+        context.endpoint.closed notify { _ => observer.remove }
 
         value.crdtSignal.readValueOnce
-      }
+      },
 
-      def receive(value: To, remote: RemoteRef, endpoint: Endpoint[From, To]): P = {
+      receive = (value, context) => {
+        val signal = pVarFactory.create()
 
-        println(s"receiving crdt $value")
+        signal.merge(value)
+        context.endpoint.receive.notify { signal.merge }
 
+        signal
+      },
 
-        val pVar = pVarFactory.create()
+      direct = (signal, context) => signal,
 
-        pVar.merge(value)
-
-        println(s"received $value")
-
-        endpoint.receive notify { v =>
-          println(s"received val: $value")
-          pVar.merge(v)
-        }
-        val observer = pVar.crdtSignal.observe(c => endpoint.send(c))
-        endpoint.closed notify { _ => observer.remove }
-
-        // println(s"manual ${implicitly[StateCRDT[Int, GCounter]].merge(counter.crdtSignal.readValueOnce, value)}")
-
-
-        pVar
-      }
-    }
-
+      proxy = (future, context) => {
+        future
+      })
   }
 
 }
+

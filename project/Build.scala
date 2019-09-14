@@ -132,7 +132,7 @@ object Dependencies {
   object loci {
     def generic(n: String) = Def.settings(
       Resolvers.stg,
-      ld += "de.tuda.stg" %%% s"scala-loci-$n" % "0.2.0")
+      ld += "de.tuda.stg" %%% s"scala-loci-$n" % "0.3.0")
 
     val communication = generic("communication")
 
