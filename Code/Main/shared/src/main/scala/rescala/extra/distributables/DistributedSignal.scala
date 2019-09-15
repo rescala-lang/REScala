@@ -5,9 +5,6 @@ import rescala.default._
 import rescala.macros.cutOutOfUserComputation
 import rescala.extra.lattices.Lattice
 
-import scala.concurrent.Future
-
-
 
 /**
   * Classes implementing this trait can be published and are then synchronized by the DistributionEngine (specified by
@@ -43,13 +40,11 @@ object DistributedSignal {
                      ev: P <:< DistributedSignal[_, Crdt],
                      pVarFactory: PVarFactory[P],
                      transmittable: Transmittable[Crdt, I, Crdt])
-  : ConnectedTransmittable.Proxy[P, I, P] {
-    type Proxy = Future[P]
-    type Internal = P
+  : ConnectedTransmittable[P, I, P] {
     type Message = transmittable.Type
   } = {
 
-    ConnectedTransmittable.Proxy(
+    ConnectedTransmittable(
       provide = (value, context) => {
         val observer = value.crdtSignal.observe(context.endpoint.send)
         context.endpoint.closed notify { _ => observer.remove }
@@ -60,9 +55,7 @@ object DistributedSignal {
         signal.merge(value)
         context.endpoint.receive.notify { signal.merge }
         signal
-      },
-      direct = (signal, context) => signal,
-      proxy = (future, context) => future)
+      })
   }
 
 }
