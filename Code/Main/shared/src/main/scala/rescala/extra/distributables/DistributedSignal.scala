@@ -39,7 +39,7 @@ object DistributedSignal {
 
 
   implicit def DistributedSignalTransmittable
-  [P, Crdt, T, I, U](implicit
+  [P, Crdt, T, I](implicit
                      ev: P <:< DistributedSignal[_, Crdt],
                      pVarFactory: PVarFactory[P],
                      transmittable: Transmittable[Crdt, I, Crdt])
@@ -51,28 +51,18 @@ object DistributedSignal {
 
     ConnectedTransmittable.Proxy(
       provide = (value, context) => {
-
         val observer = value.crdtSignal.observe(context.endpoint.send)
-
         context.endpoint.closed notify { _ => observer.remove }
-
         value.crdtSignal.readValueOnce
       },
-
       receive = (value, context) => {
         val signal = pVarFactory.create()
-
         signal.merge(value)
         context.endpoint.receive.notify { signal.merge }
-
         signal
       },
-
       direct = (signal, context) => signal,
-
-      proxy = (future, context) => {
-        future
-      })
+      proxy = (future, context) => future)
   }
 
 }
