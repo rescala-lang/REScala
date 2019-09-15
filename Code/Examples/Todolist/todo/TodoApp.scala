@@ -3,7 +3,7 @@ package todo
 import io.circe.generic.auto._
 import loci.registry.Binding
 import loci.serializer.circe._
-import loci.transmitter.Marshallable
+import loci.transmitter.IdenticallyTransmittable
 import org.scalajs.dom.UIEvent
 import org.scalajs.dom.html.{Div, Input}
 import rescala.extra.Tags._
@@ -27,7 +27,7 @@ class TodoApp[TH <: TaskHandling](val taskHandling: TH)(implicit val storingSche
   import storingScheduler._
   import taskHandling.{maketask, toggleAll, Taskref}
 
-  implicit val RGAMarshallable: Marshallable[RGA[Taskref], RGA[Taskref], _] = implicitly
+  implicit val transmittableRGA: IdenticallyTransmittable[RGA[Taskref]] = IdenticallyTransmittable()
 
   case class TodoRes(div: TypedTag[Div], tasklist: Signal[RGA[taskHandling.Taskref]])
 

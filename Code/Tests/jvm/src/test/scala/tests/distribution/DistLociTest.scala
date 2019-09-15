@@ -4,7 +4,7 @@ import io.circe.generic.auto._
 import loci.communicator.ws.akka.WS
 import loci.registry.{Binding, Registry}
 import loci.serializer.circe._
-import loci.transmitter.{Marshallable, RemoteRef}
+import loci.transmitter.{IdenticallyTransmittable, RemoteRef}
 import org.scalatest.FreeSpec
 import rescala.default._
 import rescala.extra.distributables.LociDist.dfold
@@ -63,7 +63,7 @@ class DistLociTest extends FreeSpec {
     clientRegistry.terminate()
   }
 
-  implicit val RGAMarshallable: Marshallable[RGA[String], RGA[String], _] = implicitly
+  implicit val transmittableRGA: IdenticallyTransmittable[RGA[String]] = IdenticallyTransmittable()
 
   def makeListGraph(clientSource: Evt[String], registry: Registry): Signal[String] = {
     val theList = dfold(clientSource)(List.empty[String])((list, msg) => list :+ msg)(registry, Binding[RGA[String] => Unit]("messages"))

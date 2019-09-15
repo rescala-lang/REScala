@@ -7,7 +7,7 @@ import io.circe.generic.semiauto
 import io.circe.{Decoder, Encoder}
 import loci.registry.{Binding, BindingBuilder}
 import loci.serializer.circe._
-import loci.transmitter.{ContextBuilder, Marshallable, Transmittable}
+import loci.transmitter.IdenticallyTransmittable
 import org.scalajs.dom.UIEvent
 import org.scalajs.dom.html.{Input, LI}
 import rescala.extra.Tags._
@@ -63,11 +63,11 @@ class TaskHandling(implicit val storingScheduler: LocalStorageStore) {
 
   val knownTasks: mutable.Map[String, Taskref] = mutable.Map()
 
-  type LWWTD = LastWriterWins[TaskData]
-  implicit val LWWTDTransmittable: Marshallable[LWWTD, LWWTD, _] = implicitly
-  val bindingBuilder: BindingBuilder[LWWTD => Unit] {
-    type RemoteCall = LWWTD => Future[Unit]
-  } = loci.registry.BindingBuilder.function1
+  implicit val transmittableLWWTD: IdenticallyTransmittable[LastWriterWins[TaskData]] = IdenticallyTransmittable()
+
+  val bindingBuilder: BindingBuilder[LastWriterWins[TaskData] => Unit] {
+    type RemoteCall = LastWriterWins[TaskData] => Future[Unit]
+  } = implicitly
 
   def maketask(initial: TaskData,
                uniqueId: String = s"Task(${ThreadLocalRandom.current().nextLong().toHexString})")
