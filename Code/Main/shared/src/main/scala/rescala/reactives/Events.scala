@@ -48,6 +48,12 @@ object Events {
   object CollectFuncImpl { def apply[T1, A](value: Option[T1], filter: PartialFunction[T1, A]): Option[A] =
     value.collect(filter)
   }
+  object FoldFuncImpl{ def apply[T1, A](state: () => A, value: Option[T1], step: (A, T1) => A): A =
+    value match {
+      case None => state()
+      case Some(v) => step(state(), v)
+    }
+  }
 
   /** Creates change events */
   @cutOutOfUserComputation
@@ -62,7 +68,7 @@ object Events {
 
   @cutOutOfUserComputation
   def foldOne[A, T: ReSerializable, S <: Struct](dependency: Event[A, S], init: T)(expr: (T, A) => T)(implicit ticket: CreationTicket[S]): Signal[T, S] = {
-    fold(Set[ReSource[S]](dependency), init){(st, acc) =>
+    fold(Set[ReSource[S]](dependency), init){st => acc =>
       val a: A = dependency.internalAccess(st.collectStatic(dependency)).get
       expr(acc(), a)}
   }
@@ -72,14 +78,14 @@ object Events {
     * @see [[rescala.reactives.Event.fold]]*/
   @cutOutOfUserComputation
   def fold[T: ReSerializable, S <: Struct](dependencies: Set[ReSource[S]], init: T)
-                                          (expr: (StaticTicket[S], () => T) => T)
+                                          (expr: StaticTicket[S] => (() => T) => T)
                                           (implicit ticket: CreationTicket[S])
   : Signal[T, S] = {
     ticket.create(
       dependencies,
       Initializer.InitializedSignal[Pulse[T]](Pulse.tryCatch(Pulse.Value(init)))(ReSerializable.pulseSerializable),
       inite = false) {
-      state => new StaticSignal[T, S](state, expr, ticket.rename)
+      state => new StaticSignal[T, S](state, (st, v) => expr(st)(v), ticket.rename)
     }
   }
 

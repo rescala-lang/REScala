@@ -21,45 +21,54 @@ class ReactiveMacros(val c: blackbox.Context) {
 
   import c.universe._
 
-  class Parser[S <: Struct: c.WeakTypeTag](tree: Tree, forceStatic: Boolean) {
-    val ticketTermName: TermName = TermName(c.freshName("ticket$"))
-    val ticketIdent: Ident = Ident(ticketTermName)
+  private def compileErrorsAst: Tree =
+    q"""throw new ${termNames.ROOTPKG}.scala.NotImplementedError("macro not expanded because of other compilation errors")"""
 
-    val weAnalysis = new WholeExpressionAnalysis(tree)
-    val cutOut = new CutOutTransformer(weAnalysis)
-    val cutOutTree = cutOut.transform(tree)
-    val detections = new RewriteTransformer[S](weAnalysis, ticketIdent, forceStatic)
-    val rewrittenTree = detections transform cutOutTree
-  }
 
-  def ReactiveExpression[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag, IsStatic <: MacroTags.Staticism : c.WeakTypeTag, ReactiveType : c.WeakTypeTag]
+  def ReactiveExpression[
+    A: c.WeakTypeTag,
+    S <: Struct : c.WeakTypeTag,
+    IsStatic <: MacroTags.Staticism : c.WeakTypeTag,
+    ReactiveType : c.WeakTypeTag]
   (expression: Tree)(ticket: c.Tree): c.Tree = {
-    if (c.hasErrors)
-      return q"""throw new ${termNames.ROOTPKG}.scala.NotImplementedError("macro not expanded because of other compilation errors")"""
+    if (c.hasErrors) return compileErrorsAst
 
     val forceStatic = !(weakTypeOf[IsStatic] <:< weakTypeOf[MacroTags.Dynamic])
-    val p = new Parser(expression, forceStatic)
-    makeExpression[S, A](
-      signalsOrEvents = weakTypeOf[ReactiveType].typeSymbol.asClass.module,
-      outerTicket = ticket,
-      dependencies = p.detections.detectedStaticReactives,
-      isStatic = p.detections.detectedDynamicReactives.isEmpty,
-      innerTicket = p.ticketTermName,
-      innerTree = p.rewrittenTree,
-      valDefs = p.cutOut.cutOutReactivesVals.reverse)
+    val lego = new MacroLego(expression, forceStatic)
 
+    val signalsOrEvents = weakTypeOf[ReactiveType].typeSymbol.asClass.module
+    val dependencies = lego.detections.detectedStaticReactives
+    val isStatic = lego.detections.detectedDynamicReactives.isEmpty
+    val creationMethod = TermName(if (isStatic) "static" else "dynamic")
+    val ticketType = if (isStatic) weakTypeOf[StaticTicket[S]] else weakTypeOf[DynamicTicket[S]]
+
+    val body = q"""$signalsOrEvents.$creationMethod[${weakTypeOf[A]}, ${weakTypeOf[S]}](
+         ..$dependencies
+         ){${lego.contextualizedExpression(ticketType)}}($ticket)"""
+
+    lego.wrapFinalize(body)
   }
 
+
+  def fixNullTypes(tree: Tree): Unit =
+    tree.foreach(t => if (t.tpe == null) internal.setType(t, NoType))
+
   object ForceCutOut
+  def prefixValue: Tree = {
+    val prefixTree = c.prefix.tree
+    internal.updateAttachment(prefixTree, ForceCutOut)
+    q"$prefixTree.value"
+  }
+
 
   def EventMapMacro[T: c.WeakTypeTag, A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag, FuncImpl: c.WeakTypeTag]
   (expression: c.Tree)(ticket: c.Tree): c.Tree = {
-    val prefixTree = c.prefix.tree
-    internal.updateAttachment(prefixTree, ForceCutOut)
+    if (c.hasErrors) return compileErrorsAst
+
     val funcImpl = weakTypeOf[FuncImpl].typeSymbol.asClass.module
-    val mapTree: Tree = q"""$funcImpl.apply[${weakTypeOf[T]}, ${weakTypeOf[A]}]($prefixTree.value, $expression)"""
-    mapTree.foreach(t => if (t.tpe == null) internal.setType(t, NoType))
-    ReactiveExpression[A, S, MacroTags.Dynamic, Events.type](mapTree)(ticket)
+    val computation: Tree = q"""$funcImpl.apply[${weakTypeOf[T]}, ${weakTypeOf[A]}]($prefixValue, $expression)"""
+    fixNullTypes(computation)
+    ReactiveExpression[A, S, MacroTags.Dynamic, Events.type](computation)(ticket)
   }
 
 
@@ -68,53 +77,48 @@ class ReactiveMacros(val c: blackbox.Context) {
   (op: c.Expr[(A, T) => A])
   (ticket: c.Expr[rescala.core.CreationTicket[S]], serializable: c.Expr[rescala.core.ReSerializable[A]])
   : c.Tree = {
-    if (c.hasErrors)
-      return q"""throw new ${termNames.ROOTPKG}.scala.NotImplementedError("macro not expanded because of other compilation errors")"""
-
-    val p = new Parser(op.tree, forceStatic = true)
-
-    val mapFunctionArgumentTermName = TermName(c.freshName("eventValue$"))
-    val mapFunctionArgumentIdent = Ident(mapFunctionArgumentTermName)
-
-    val extendedDetections = mapFunctionArgumentIdent :: p.detections.detectedStaticReactives
+    if (c.hasErrors) return compileErrorsAst
 
     val eventsSymbol = weakTypeOf[rescala.reactives.Events.type].termSymbol
-
-
-    // def fold[T: ReSerializable, S <: Struct](dependencies: Set[ReSource[S]], init: T)(expr: (StaticTicket[S], () => T) => T)(implicit ticket: CreationTicket[S]): Signal[T, S] = {
-    val valDefs = (q"val $mapFunctionArgumentTermName = ${c.prefix}": ValDef) :: p.cutOut.cutOutReactivesVals.reverse
-    val accumulatorIdent: Ident = Ident( TermName(c.freshName("accumulator$")))
-    val pulseIdent: Ident = Ident( TermName(c.freshName("pulse")))
     val ticketType = weakTypeOf[StaticTicket[S]]
-    val body =
-      q"""$eventsSymbol.fold[${weakTypeOf[A]}, ${weakTypeOf[S]}](Set(..$extendedDetections), $init)(
-          (${p.ticketIdent}: $ticketType, $accumulatorIdent: ${weakTypeOf[T]}) => {
-            val $pulseIdent = ${p.ticketIdent}.dependStatic($mapFunctionArgumentIdent)
-            if ($pulseIdent.isDefined) { ${p.rewrittenTree}($accumulatorIdent(), $pulseIdent.get) }
-            else {$accumulatorIdent()}
-          })($serializable, $ticket)"""
-    val block: c.universe.Tree = Block(valDefs, body)
-    ReTyper(c).untypecheck(block)
+    val funcImpl = weakTypeOf[rescala.reactives.Events.FoldFuncImpl.type].typeSymbol.asClass.module
+    val computation = q"""$funcImpl.apply[${weakTypeOf[T]}, ${weakTypeOf[A]}](_, $prefixValue, $op)"""
+    fixNullTypes(computation)
 
+    val lego = new MacroLego(computation, forceStatic = true)
+    val detections = lego.detections.detectedStaticReactives
+
+    val body =
+      q"""$eventsSymbol.fold[${weakTypeOf[A]}, ${weakTypeOf[S]}](Set(..$detections), $init)(
+           ${lego.contextualizedExpression(ticketType)}
+          )($serializable, $ticket)"""
+
+    lego.wrapFinalize(body)
   }
 
-  private def makeExpression[S <: Struct : c.WeakTypeTag, A: c.WeakTypeTag](
-    signalsOrEvents: c.universe.Symbol,
-    outerTicket: c.Tree,
-    dependencies: Seq[Tree],
-    isStatic: Boolean,
-    innerTicket: TermName,
-    innerTree: Tree,
-    valDefs: List[ValDef]
-  ): Tree = {
-    val creationMethod = TermName(if (isStatic) "static" else "dynamic")
-    val ticketType = if (isStatic) weakTypeOf[StaticTicket[S]] else weakTypeOf[DynamicTicket[S]]
-    val computation = q"{$innerTicket: $ticketType => $innerTree }"
-    val body = q"""$signalsOrEvents.$creationMethod[${weakTypeOf[A]}, ${weakTypeOf[S]}](
-         ..$dependencies
-         ){$computation}($outerTicket)"""
-    val block: c.universe.Tree = Block(valDefs, body)
-    ReTyper(c).untypecheck(block)
+
+
+
+
+  class MacroLego[S <: Struct: c.WeakTypeTag](tree: Tree, forceStatic: Boolean) {
+    private val ticketTermName: TermName = TermName(c.freshName("ticket$"))
+    val ticketIdent: Ident = Ident(ticketTermName)
+
+    val weAnalysis = new WholeExpressionAnalysis(tree)
+    val cutOut = new CutOutTransformer(weAnalysis)
+    val cutOutTree = cutOut.transform(tree)
+    val detections = new RewriteTransformer[S](weAnalysis, ticketIdent, forceStatic)
+    val rewrittenTree = detections transform cutOutTree
+
+    def contextualizedExpression(contextType: Type) =
+      q"{$ticketTermName: $contextType => $rewrittenTree }"
+
+    def wrapFinalize(body: Tree): Tree = {
+      val valDefs = cutOut.cutOutReactivesVals.reverse
+      val block: c.universe.Tree = Block(valDefs, body)
+      ReTyper(c).untypecheck(block)
+    }
+
   }
 
   object IsCutOut
@@ -214,7 +218,9 @@ class ReactiveMacros(val c: blackbox.Context) {
 
     // all symbols that are defined within the macro expression
     val symbolsDefinedInsideMacroExpression: Map[Symbol, DefTree] = (expression collect {
-      case defTree: DefTree => defTree.symbol -> defTree
+      // filter NoSymbols, as everything we synthetically generate seems to miss the symbol,
+      // resulting in synthetic reactive accesses potentially not being cut out
+      case defTree: DefTree if defTree.symbol != NoSymbol => defTree.symbol -> defTree
     }).toMap
 
 
