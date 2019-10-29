@@ -32,14 +32,14 @@ object Todolist {
     val todores = todoApp.getContents()
 
     document.body.replaceChild(todores.div.render, document.body.firstElementChild)
-    document.body.appendChild(webrtchandlingArea.render)
+    document.body.appendChild(webrtcHandlingArea.render)
 
   }
 
 
 
 
-  def webrtchandlingArea: Tag = {
+  def webrtcHandlingArea: Tag = {
 
     val renderedTa = textarea().render
     val renderedPre = pre().render
