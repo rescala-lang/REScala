@@ -13,6 +13,7 @@ use Data::Dumper;
 use Chart::Gnuplot;
 use File::Find;
 use File::Path qw(make_path remove_tree);
+use List::Util qw(max);
 use Cwd 'abs_path';
 
 # combining standard deviations is not trivial, but would be possible:
@@ -36,7 +37,7 @@ our $NAME_RESTORING = "Snapshots";
 our $YTIC_COUNT = 4;
 our $YRANGE_ROUND = 100;
 our $LEGEND_POS = "off";
-our $YRANGE = "[0:]";
+our $YMAX = 0;
 our $XRANGE = "[:]";
 our $GNUPLOT_TERMINAL = "pdf size 5,2.5";
 our %MARGINS = (
@@ -85,7 +86,6 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
   mkdir $OUTDIR;
   chdir $OUTDIR;
 
-  makeLegend();
   distributionBenchmarks();
 
   $DBH->commit();
@@ -93,36 +93,136 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
 
 sub distributionBenchmarks() {
   { # conflict distance
-    my $benchmark = "rescala.benchmarks.distributed.rtt.ConflictDistances.run";
-    my $query = queryDataset(query("Param: mergeAt", "Benchmark"));
-    plotDatasets("rtt", "conflictdistance", {xlabel => "Merge Depth"},
-      $query->("foo", $benchmark)
+    my $benchmark1 = "rescala.benchmarks.distributed.rtt.ConflictDistances.run";
+    my $benchmark2 = "rescala.benchmarks.distributed.rtt.Remerge.run";
+    my $query = queryDataset(query("Param: mergeAt", "Benchmark", "Param: totalLength"));
+    local $XRANGE = "[1:]";
+    {
+      local $YTIC_COUNT = 5;
+      local $YMAX = 5500;
+    
+      plotDatasets("rtt", "conflictdistance-total", {xlabel => "Merge Depth"},
+        map { $query->("$_ Hops", $benchmark1, $_) } (reverse queryChoices("Param: totalLength", "Benchmark" => $benchmark1)) 
+      );
+      
+      plotDatasets("rtt", "remerge-total", {xlabel => "Merge Depth"},
+        map { $query->("$_ Hops", $benchmark2, $_) } (reverse queryChoices("Param: totalLength", "Benchmark" => $benchmark2)) 
+      );
+    }
+    
+    {
+      my @datasets = map {
+        my $name = prettyName(unmangleName($_));
+        Chart::Gnuplot::DataSet->new(
+          xdata => [10,20],
+          ydata => [10,20],
+          title => $name,
+          style => 'linespoints ' . styling($name),
+        )
+        } reverse(queryChoices("Param: totalLength"));
+      local %MARGINS = (
+          lmargin => 0.5,
+          rmargin => 0.5,
+          tmargin => 0.2,
+          bmargin => 0.2,
+        );
+      my $chart = Chart::Gnuplot->new(
+        output => "rtt/legend.pdf",
+        terminal => "pdf size 8,.75 enhanced font '$FONT,$FONTSIZE'",
+        key => "top left vertical",
+        %MARGINS,
+        xrange => "[0:1]",
+        yrange => "[0:1]",
+        noborder => "",
+        noxtics => "",
+        noytics => "",
+        notitle => "",
+        noxlabel => "",
+        noylabel => "",
+      );
+      $chart->plot2d(@datasets);
+    }
+    
+    
+    my $q = queryDataset(query("avg(score)", "Benchmark", "Param: depthHosts"));
+    for my $depth (queryChoices("Param: totalLength", "Benchmark" => "rescala.benchmarks.distributed.rtt.ConflictDistances.run")) {
+      my $baseline = shift ($q->("$depth Hosts", "rescala.benchmarks.distributed.rtt.DistributedSignalMapGrid.run", $depth)->ydata);
+      say Dumper("Correcting Conflicts with totalLength $depth by baseline score of $baseline.");
+      $DBH->do(qq[UPDATE $TABLE SET Score = Score - $baseline WHERE (Benchmark = "rescala.benchmarks.distributed.rtt.ConflictDistances.run" OR Benchmark = "rescala.benchmarks.distributed.rtt.Remerge.run") AND "Param: totalLength" = "$depth"]);
+      $DBH->commit();
+    }
+    
+    plotDatasets("rtt", "conflictdistance-relative", {xlabel => "Merge Depth"},
+      map { $query->("$_ Hops", $benchmark1, $_) } (reverse queryChoices("Param: totalLength", "Benchmark" => $benchmark1)) 
+    );
+    
+    plotDatasets("rtt", "remerge-relative", {xlabel => "Merge Depth"},
+      map { $query->("$_ Hops", $benchmark2, $_) } (reverse queryChoices("Param: totalLength", "Benchmark" => $benchmark2)) 
+    );
+    
+    # say Dumper(queryDataset(query("Param: totalLength", "Benchmark", "Param: mergeAt")) -> ("before", "rescala.benchmarks.distributed.rtt.ConflictDistances.run", "3"));
+    # say Dumper(queryChoices("Param: totalLength", "Benchmark" => $benchmark1));
+    
+    say Dumper("Re-orienting stuff");
+    $DBH->do(qq[UPDATE $TABLE SET "Param: totalLength" = "Param: totalLength" - "Param: mergeAt" WHERE Benchmark = "rescala.benchmarks.distributed.rtt.ConflictDistances.run" OR Benchmark = "rescala.benchmarks.distributed.rtt.Remerge.run"]);
+    $DBH->commit();
+
+    local $LEGEND_POS = "outside right center";
+    local $GNUPLOT_TERMINAL = "pdf size 7,2.5";
+    local %MARGINS = (
+      lmargin => 5.8,
+      rmargin => 20,
+      tmargin => 0.5,
+      bmargin => 1.5,
+    );
+
+    plotDatasets("rtt", "conflictdistance-bwd-relative", {xlabel => "Merge Depth"},
+      map { $query->("$_", $benchmark1, $_) } (queryChoices("Param: totalLength", "Benchmark" => $benchmark1)) 
+    );
+    
+    plotDatasets("rtt", "remerge-bwd-relative", {xlabel => "Merge Depth"},
+      map { $query->("$_", $benchmark2, $_) } (queryChoices("Param: totalLength", "Benchmark" => $benchmark2)) 
     );
   }
+
 
   { # loop back
-    my $benchmark = "rescala.benchmarks.distributed.rtt.RemoteGlitchLoop.run";
-    my $query = queryDataset(query("Threads", "Benchmark"));
+    local $LEGEND_POS = "inside right bottom";
+    my $benchmark1 = "rescala.benchmarks.distributed.rtt.RemoteGlitchLoop.run";
+    my $query1 = queryDataset(query("Threads", "Benchmark"));
+    my $benchmark2 = "rescala.benchmarks.distributed.rtt.DistributedSignalMapGrid.run";
+    my $query2 = queryDataset(query("Threads", "Benchmark", "Param: depthHosts"));
     plotDatasets("rtt", "loopback", {xlabel => "Threads"},
-      $query->("foo", $benchmark)
+      $query2->("Chain", $benchmark2, 2),
+      $query1->("Loop", $benchmark1),
     );
   }
-
+  
   { # map grid single threaded
+    local $LEGEND_POS = "inside left top";
     my $benchmark = "rescala.benchmarks.distributed.rtt.DistributedSignalMapGrid.run";
-    my $query = queryDataset(query("Param: depthHosts", "Threads", "Benchmark"));
-    plotDatasets("mapgrid", "singlethreaded", {xlabel => "Hosts"},
-      $query->("foo", 1, $benchmark)
+    my $query1 = queryDataset(query("Param: depthHosts", "Threads", "Benchmark", "Param: widthHosts"));
+    my $query2 = queryDataset(query("Param: widthHosts", "Threads", "Benchmark", "Param: depthHosts"));
+    plotDatasets("mapgrid", "singlethreaded", {xlabel => "Hops"},
+      $query1->("1 Branch", 1, $benchmark, 1),
+      $query2->("5 Hops", 1, $benchmark, 5),
     );
   }
-
+  
   { # map grid pipelining
-    local $LEGEND_POS = "bottom";
+    local $LEGEND_POS = "outside right center";
+    local $GNUPLOT_TERMINAL = "pdf size 9,2.5";
+    local %MARGINS = (
+      lmargin => 5.8,
+      rmargin => 30,
+      tmargin => 0.5,
+      bmargin => 1.5,
+    );
     my $benchmark = "rescala.benchmarks.distributed.rtt.DistributedSignalMapGrid.run";
     my $query = queryDataset(query("Threads", "Benchmark", "Param: depthHosts"));
     plotDatasets("mapgrid", "pipelining", {xlabel => "Threads"},
-      map { $query->("$_ Hosts", $benchmark, $_) } queryChoices("Param: depthHosts", "Benchmark" => $benchmark)
-	);
+      map { $query->("$_ Hops", $benchmark, $_) } (reverse queryChoices("Param: depthHosts", "Benchmark" => $benchmark))
+    );
   }
 }
 
@@ -207,33 +307,6 @@ sub unmangleName($name) {
   return $name =~ s/\$u(\d{4})/chr(hex($1))/egr; # / highlighter
 }
 
-sub makeLegend() {
-  my @datasets = map {
-    my $name = prettyName(unmangleName($_));
-    Chart::Gnuplot::DataSet->new(
-      xdata => [10,20],
-      ydata => [10,20],
-      title => $name,
-      style => 'linespoints ' . styling($name),
-    )
-    } queryChoices("Param: engineName");
-  my $chart = Chart::Gnuplot->new(
-    output => "legend.pdf",
-    terminal => "$GNUPLOT_TERMINAL enhanced font '$FONT,$FONTSIZE'",
-    key => "top left vertical",
-    %MARGINS,
-    xrange => "[0:1]",
-    yrange => "[0:1]",
-    noborder => "",
-    noxtics => "",
-    noytics => "",
-    notitle => "",
-    noxlabel => "",
-    noylabel => "",
-  );
-  $chart->plot2d(@datasets);
-}
-
 sub roundTo($target, $value) {
   int($value / $target +1)* $target;
 }
@@ -244,9 +317,9 @@ sub plotDatasets($group, $name, $additionalParams, @datasets) {
     say "dataset for $group/$name is empty";
     return;
   }
-  #say Dumper(@datasets);
+  # say Dumper(@datasets);
   my ($ymax,) = sort {$b <=> $a} map {@{$_->{ydata}}} @datasets;
-  $ymax = roundTo($YRANGE_ROUND, $ymax);
+  $ymax = max roundTo($YRANGE_ROUND, $ymax), $YMAX;
   $name = unmangleName($name);
   my $nospecial = $name =~ s/\W/_/gr; # / highlighter
   my $chart = Chart::Gnuplot->new(
@@ -256,7 +329,7 @@ sub plotDatasets($group, $name, $additionalParams, @datasets) {
     #title  => $name,
     #xlabel => "Active threads",
     xrange => $XRANGE,
-    yrange => $YRANGE,
+    yrange => ($YMAX eq 0) ? "[0:]" : "[0:$YMAX]",
     ytics => $ymax/$YTIC_COUNT,
     #logscale => "x 2; set logscale y 10",
     #ylabel => "Operations per millisecond",
@@ -311,7 +384,7 @@ sub updateTable($DBH, $TABLE, @columns) {
 
   sub typeColumn($columnName) {
     given($columnName) {
-      when(["Threads", "Score", 'Score Error (99,9%)', 'Samples', 'Param: depth', 'Param: sources']) { return qq["$columnName" REAL] }
+      when(["Threads", "Score", 'Score Error (99,9%)', 'Samples', 'Param: totalLength', 'Param: mergeAt', 'Param: depth', 'Param: sources']) { return qq["$columnName" REAL] }
       default { return qq["$columnName"] }
     }
   }

@@ -9,7 +9,6 @@ import rescala.parrp.Backoff
 import scala.annotation.tailrec
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
-import scala.util.{Failure, Success}
 
 sealed trait TryLockResult
 case class Locked(lock: SubsumableLock) extends TryLockResult

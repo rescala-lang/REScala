@@ -45,7 +45,7 @@ trait FullMVState[V, T <: FullMVTurn, Reactive, OutDep] {
     * progress [[firstFrame]] forward until a [[Version.isFrame]] is encountered, and
     * return the resulting notification out (with reframing if subsequent write is found).
     */
-  def reevOut(turn: T, maybeValue: Option[V]): NotificationResultAction.ReevOutResult[T, OutDep]
+  def reevOut(turn: T, maybeValue: Option[V]): NotificationResultAction.NotificationOutAndSuccessorOperation[T, OutDep]
 
   /**
     * entry point for before(this); may suspend.

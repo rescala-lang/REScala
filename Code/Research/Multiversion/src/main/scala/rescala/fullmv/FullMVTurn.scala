@@ -91,7 +91,7 @@ trait FullMVTurn extends Initializer[FullMVStruct] with FullMVTurnProxy with Sub
   override protected def makeSourceStructState[P](valuePersistency: InitValues[P], creationTicket: CreationTicket[FullMVStruct]): NonblockingSkipListVersionHistory[P, FullMVTurn, ReSource[FullMVStruct], Derived[FullMVStruct]] = {
     val state = makeDerivedStructState(valuePersistency, creationTicket)
     val res = state.notify(this, changed = false)
-    assert(res == true -> NoSuccessor(Set.empty))
+    assert(res == true -> PureNotifyOnly(Set.empty))
     state
   }
 
@@ -120,7 +120,7 @@ trait FullMVTurn extends Initializer[FullMVStruct] with FullMVTurnProxy with Sub
       case (retainBranch, ReevaluationReady) =>
         if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this ignite $reactive spawned reevaluation.")
         new Reevaluation(this, reactive).doReevaluation(retainBranch)
-      case (true, NextReevaluation(out, succTxn)) if out.isEmpty =>
+      case (true, NotifyAndReevaluationReadySuccessor(out, succTxn)) if out.isEmpty =>
         if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this ignite $reactive spawned reevaluation for successor $succTxn.")
         activeBranchDifferential(TurnPhase.Executing, -1)
         val succReev = new Reevaluation(succTxn, reactive)
@@ -129,9 +129,9 @@ trait FullMVTurn extends Initializer[FullMVStruct] with FullMVTurnProxy with Sub
         } else {
           host.threadPool.submit(succReev)
         }
-      case (true, NoSuccessor(out)) if out.isEmpty=>
+      case (true, PureNotifyOnly(out)) if out.isEmpty=>
         activeBranchDifferential(TurnPhase.Executing, -1)
-      case (true, FollowFraming(out, _)) if out.isEmpty=>
+      case (true, NotifyAndNonReadySuccessor(out, _)) if out.isEmpty=>
         activeBranchDifferential(TurnPhase.Executing, -1)
       case other =>
         throw new AssertionError(s"$this ignite $reactive: unexpected result: $other")

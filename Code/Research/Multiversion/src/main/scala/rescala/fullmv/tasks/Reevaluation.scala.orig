@@ -75,7 +75,11 @@ trait ReevaluationHandling[N <: ReSource[FullMVStruct]] extends FullMVAction {
   def createReevaluation(succTxn: FullMVTurn): FullMVAction
   def doReevaluation(retainBranch: Boolean): Unit
 
-  def processReevaluationResult(maybeChange: Option[node.Value]): NotificationOutAndSuccessorOperation[FullMVTurn, Derived[FullMVStruct]] = {
+<<<<<<< HEAD:Code/Research/Multiversion/src/main/scala/rescala/fullmv/tasks/Reevaluation.scala
+  def processReevaluationResult(maybeChange: Option[node.Value]): ReevOutResult[FullMVTurn, Derived[FullMVStruct]] = {
+=======
+  def processReevaluationResult(maybeChange: Option[node.Value]): NotificationOutAndSuccessorOperation[FullMVTurn, Reactive[FullMVStruct]] = {
+>>>>>>> Some Cleaning up / simplifying and documentation:Research/Multiversion/src/main/scala/rescala/fullmv/tasks/Reevaluation.scala
     val reevOutResult = node.state.reevOut(turn, maybeChange)
     if(FullMVEngine.DEBUG && maybeChange.isDefined && maybeChange.get.isInstanceOf[Pulse.Exceptional]){
       // could be a framework exception that is relevant to debugging, but was eaten by reactive's
@@ -87,7 +91,11 @@ trait ReevaluationHandling[N <: ReSource[FullMVStruct]] extends FullMVAction {
     reevOutResult
   }
 
-  def processReevOutResult(retainBranch: Boolean, outAndSucc: NotificationOutAndSuccessorOperation[FullMVTurn, Derived[FullMVStruct]], changed: Boolean): Unit = {
+<<<<<<< HEAD:Code/Research/Multiversion/src/main/scala/rescala/fullmv/tasks/Reevaluation.scala
+  def processReevOutResult(retainBranch: Boolean, outAndSucc: ReevOutResult[FullMVTurn, Derived[FullMVStruct]], changed: Boolean): Unit = {
+=======
+  def processReevOutResult(retainBranch: Boolean, outAndSucc: NotificationOutAndSuccessorOperation[FullMVTurn, Reactive[FullMVStruct]], changed: Boolean): Unit = {
+>>>>>>> Some Cleaning up / simplifying and documentation:Research/Multiversion/src/main/scala/rescala/fullmv/tasks/Reevaluation.scala
     outAndSucc match {
       case PureNotifyOnly(out) =>
         doBranchDiff(retainBranch, out)

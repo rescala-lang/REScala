@@ -455,54 +455,48 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
     latestValue
   }
 
-  def reevOut(turn: T, maybeValue: Option[V]): NotificationResultAction.ReevOutResult[T, OutDep] = {
+  def reevOut(turn: T, maybeValue: Option[V]): NotificationResultAction.NotificationOutAndSuccessorOperation[T, OutDep] = {
     val version = firstFrame
     assert(laggingLatestStable.get == version, s"reevOut by $turn: latestStable ${laggingLatestStable.get} != firstFrame $version")
     assert(version.txn == turn, s"$turn called reevDone, but first frame is $version (different transaction)")
-    assert(version.pending >= 0, s"firstFrame with pending < 0 shold be impossible")
-    assert(version.changed >= 0, s"firstFrame with changed < 0 shold be impossible")
+    assert(version.pending >= 0, s"firstFrame with pending < 0 should be impossible")
+    assert(version.changed >= 0, s"firstFrame with changed < 0 should be impossible")
     assert(!version.isZeroCounters || maybeValue.isEmpty, s"$turn cannot write change to ${maybeValue.get} into non-frame $version")
     assert(!version.isFinal, s"$turn cannot write twice: $version")
 
-    val result = if(version.pending > 0) {
-      if(NonblockingSkipListVersionHistory.TRACE_VALUES) println(s"[${Thread.currentThread().getName}] $turn reevaluation of $version was glitched and will be repeated.")
-      NotificationResultAction.Glitched
-    } else {
-      assert(version.pending == 0, s"$this is not ready to be written")
-      assert(version.changed > 0 || (version.changed == 0 && maybeValue.isEmpty), s"$turn cannot write changed=${maybeValue.isDefined} in $this")
-      if(NonblockingSkipListVersionHistory.DEBUG || FullMVEngine.DEBUG) maybeValue match {
-        case Some(Pulse.Exceptional(t)) =>
-          throw new Exception(s"Glitch-free reevaluation result for $version is exceptional", maybeValue.get.asInstanceOf[Pulse.Exceptional].throwable)
-        case _ => // ignore
-      }
-      synchronized {
-        val stabilizeTo = if (maybeValue.isDefined) {
-          val selfValue = maybeValue.get
-          val futureValue = valuePersistency.unchange.unchange(selfValue)
-          version.finalize(Written(selfValue, futureValue))
-          if(lazyPeriodicGC.txn.phase == TurnPhase.Completed) {
-            lazyPeriodicGC.previousWriteIfStable = null
-            lazyPeriodicGC = version
-          }
-          latestValue = futureValue
-          version
-        } else {
-          version.finalize(Unwritten)
-          version.previousWriteIfStable
-        }
-        version.changed = 0 // no need to use the atomic updater here, because no racing threads can exist anymore.
-        val res = findNextAndUpdateFirstFrame(version, version, stabilizeTo)
-        if(NonblockingSkipListVersionHistory.TRACE_VALUES) {
-          if(maybeValue.isDefined) {
-            println(s"[${Thread.currentThread().getName}] reevOut $turn wrote $version => $res")
-          } else {
-            println(s"[${Thread.currentThread().getName}] reevOut $turn left $version unchanged => $res.")
-          }
-        }
-        res
-      }
+    assert(version.pending == 0, s"$turn completed reevaluation, but first frame $version is no longer glitch free ready -- retrofitting during reevaluation could cause this, but dynamicAfter should be implemented to suspend for final, which should make such a retrofitting case impossible.")
+    assert(version.changed > 0 || (version.changed == 0 && maybeValue.isEmpty), s"$turn cannot write changed=${maybeValue.isDefined} in $this")
+    if(NonblockingSkipListVersionHistory.DEBUG || FullMVEngine.DEBUG) maybeValue match {
+      case Some(Pulse.Exceptional(t)) =>
+        throw new Exception(s"Glitch-free reevaluation result for $version is exceptional", maybeValue.get.asInstanceOf[Pulse.Exceptional].throwable)
+      case _ => // ignore
     }
-    result
+    synchronized {
+      val stabilizeTo = if (maybeValue.isDefined) {
+        val selfValue = maybeValue.get
+        val futureValue = valuePersistency.unchange.unchange(selfValue)
+        version.finalize(Written(selfValue, futureValue))
+        if(lazyPeriodicGC.txn.phase == TurnPhase.Completed) {
+          lazyPeriodicGC.previousWriteIfStable = null
+          lazyPeriodicGC = version
+        }
+        latestValue = futureValue
+        version
+      } else {
+        version.finalize(Unwritten)
+        version.previousWriteIfStable
+      }
+      version.changed = 0 // no need to use the atomic updater here, because no racing threads can exist anymore.
+      val res = findNextAndUpdateFirstFrame(version, version, stabilizeTo)
+      if(NonblockingSkipListVersionHistory.TRACE_VALUES) {
+        if(maybeValue.isDefined) {
+          println(s"[${Thread.currentThread().getName}] reevOut $turn wrote $version => $res")
+        } else {
+          println(s"[${Thread.currentThread().getName}] reevOut $turn left $version unchanged => $res.")
+        }
+      }
+      res
+    }
   }
 
   @tailrec private def findNextAndUpdateFirstFrame(finalizedVersion: QueuedVersion, current: QueuedVersion, stabilizeTo: QueuedVersion): NotificationResultAction.NotificationOutAndSuccessorOperation[T, OutDep] = {
@@ -544,14 +538,14 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
   private def decideSuccessorOperation(newFirstFrame: QueuedVersion): NotificationResultAction.NotificationOutAndSuccessorOperation[T, OutDep] = {
     if(newFirstFrame != null) {
       if(newFirstFrame.pending == 0) {
-        NotificationResultAction.NotificationOutAndSuccessorOperation.NextReevaluation(outgoings, newFirstFrame.txn)
+        NotificationResultAction.NotificationOutAndSuccessorOperation.NotifyAndReevaluationReadySuccessor(outgoings, newFirstFrame.txn)
       } else if(newFirstFrame.pending > 0) {
-        NotificationResultAction.NotificationOutAndSuccessorOperation.FollowFraming(outgoings, newFirstFrame.txn)
+        NotificationResultAction.NotificationOutAndSuccessorOperation.NotifyAndNonReadySuccessor(outgoings, newFirstFrame.txn)
       } else /* if(maybeNewFirstFrame.pending < 0) */ {
-        NotificationResultAction.NotificationOutAndSuccessorOperation.NoSuccessor(outgoings)
+        NotificationResultAction.NotificationOutAndSuccessorOperation.PureNotifyOnly(outgoings)
       }
     } else {
-      NotificationResultAction.NotificationOutAndSuccessorOperation.NoSuccessor(outgoings)
+      NotificationResultAction.NotificationOutAndSuccessorOperation.PureNotifyOnly(outgoings)
     }
   }
 

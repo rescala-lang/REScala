@@ -4,7 +4,7 @@ import org.scalatest.FunSuite
 import rescala.core.Initializer
 import rescala.fullmv.FramingBranchResult.{Frame, FramingBranchEnd}
 import rescala.fullmv.NotificationResultAction.{ReevaluationReady, DoNothing}
-import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation.{NextReevaluation, NoSuccessor}
+import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation.{NotifyAndReevaluationReadySuccessor, PureNotifyOnly}
 import rescala.fullmv._
 
 import scala.concurrent.duration.Duration
@@ -26,7 +26,7 @@ class NodeVersionHistoryTest extends FunSuite {
     assert(n.notify(turn1, changed = true) === true -> DoNothing)
     assert(n.notify(turn1, changed = false) === false -> ReevaluationReady)
     assert(n.reevIn(turn1) === 10)
-    assert(n.reevOut(turn1, Some(5)) === NoSuccessor(Set.empty))
+    assert(n.reevOut(turn1, Some(5)) === PureNotifyOnly(Set.empty))
     turn1.completeExecuting()
 
     val turn2 = engine.newTurn()
@@ -35,7 +35,7 @@ class NodeVersionHistoryTest extends FunSuite {
     turn2.completeFraming()
     assert(n.notify(turn2, changed = true) === true -> ReevaluationReady)
     assert(n.reevIn(turn2) === 5)
-    assert(n.reevOut(turn2, Some(10)) === NoSuccessor(Set.empty))
+    assert(n.reevOut(turn2, Some(10)) === PureNotifyOnly(Set.empty))
     turn2.completeExecuting()
   }
 
@@ -51,7 +51,7 @@ class NodeVersionHistoryTest extends FunSuite {
     turn1.beginFraming()
     assert(n.incrementFrame(turn1) === Frame(Set.empty, turn1))
     turn1.completeFraming()
-    assert(n.notify(turn1, changed = false) === true -> NoSuccessor(Set.empty))
+    assert(n.notify(turn1, changed = false) === true -> PureNotifyOnly(Set.empty))
     turn1.completeExecuting()
 
     val turn2 = engine.newTurn()
@@ -65,9 +65,9 @@ class NodeVersionHistoryTest extends FunSuite {
     turn3.completeFraming()
 
     assert(n.notify(turn3, changed = true) === true -> DoNothing)
-    assert(n.notify(turn2, changed = false) === true -> NextReevaluation(Set.empty, turn3))
+    assert(n.notify(turn2, changed = false) === true -> NotifyAndReevaluationReadySuccessor(Set.empty, turn3))
     assert(n.reevIn(turn3) === 10)
-    assert(n.reevOut(turn3, Some(5)) === NoSuccessor(Set.empty))
+    assert(n.reevOut(turn3, Some(5)) === PureNotifyOnly(Set.empty))
     turn2.completeExecuting()
   }
 
@@ -99,7 +99,7 @@ class NodeVersionHistoryTest extends FunSuite {
 
     n.notify(reevaluate, changed = true)
     n.retrofitSinkFrames(Nil, Some(framing1), -1)
-    assert(n.reevOut(reevaluate, Some(11)) === NoSuccessor(Set.empty))
+    assert(n.reevOut(reevaluate, Some(11)) === PureNotifyOnly(Set.empty))
 //    assert(n.reevOut(reevaluate, Some(Pulse.Value(11))) === FollowFraming(Set.empty, framing2))
 
     assert(n.incrementSupersedeFrame(framing1, framing2) === FramingBranchEnd)

@@ -27,15 +27,13 @@ object NotificationResultAction {
   //    done/FF/next
   case object DoNothing extends NotificationResultAction[Nothing, Nothing]
   case object ReevaluationReady extends NotificationResultAction[Nothing, Nothing]
-  sealed trait ReevOutResult[+T, +R]
-  case object Glitched extends ReevOutResult[Nothing, Nothing]
-  sealed trait NotificationOutAndSuccessorOperation[+T, R] extends NotificationResultAction[T, R] with ReevOutResult[T, R] {
+  sealed trait NotificationOutAndSuccessorOperation[+T, R] extends NotificationResultAction[T, R] {
     val out: Set[R]
   }
   object NotificationOutAndSuccessorOperation {
-    case class NoSuccessor[R](out: Set[R]) extends NotificationOutAndSuccessorOperation[Nothing, R]
-    case class FollowFraming[T, R](out: Set[R], succTxn: T) extends NotificationOutAndSuccessorOperation[T, R]
-    case class NextReevaluation[T, R](out: Set[R], succTxn: T) extends NotificationOutAndSuccessorOperation[T, R]
+    case class PureNotifyOnly[R](out: Set[R]) extends NotificationOutAndSuccessorOperation[Nothing, R]
+    case class NotifyAndNonReadySuccessor[T, R](out: Set[R], succTxn: T) extends NotificationOutAndSuccessorOperation[T, R]
+    case class NotifyAndReevaluationReadySuccessor[T, R](out: Set[R], succTxn: T) extends NotificationOutAndSuccessorOperation[T, R]
   }
 }
 
@@ -933,27 +931,24 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     * progress [[firstFrame]] forward until a [[Version.isFrame]] is encountered, and
     * return the resulting notification out (with reframing if subsequent write is found).
     */
-  override def reevOut(turn: T, maybeValue: Option[V]): NotificationResultAction.ReevOutResult[T, OutDep] = synchronized {
+  override def reevOut(turn: T, maybeValue: Option[V]): NotificationResultAction.NotificationOutAndSuccessorOperation[T, OutDep] = synchronized {
     val position = firstFrame
     val version = _versions(position)
     assert(version.txn == turn, s"$turn called reevDone, but first frame is $version (different transaction)")
     assert(!version.isWritten, s"$turn cannot write twice: $version")
+    assert(version.pending == 0, s"$turn completed reevaluation, but first frame $version is no longer glitch free ready -- retrofitting during reevaluation could cause this, but dynamicAfter should be implemented to suspend for final, which should make such a retrofitting case impossible.")
+    assert((version.isFrame && version.isReadyForReevaluation) || (maybeValue.isEmpty && version.isReadOrDynamic), s"$turn cannot write changed=${maybeValue.isDefined} in $this")
 
-    val result = if(version.pending != 0) {
-      NotificationResultAction.Glitched
+    version.changed = 0
+    latestReevOut = position
+    val stabilizeTo = if (maybeValue.isDefined) {
+      latestValue = valuePersistency.unchange.unchange(maybeValue.get)
+      version.value = maybeValue
+      version
     } else {
-      assert((version.isFrame && version.isReadyForReevaluation) || (maybeValue.isEmpty && version.isReadOrDynamic), s"$turn cannot write changed=${maybeValue.isDefined} in $this")
-      version.changed = 0
-      latestReevOut = position
-      val stabilizeTo = if (maybeValue.isDefined) {
-        latestValue = valuePersistency.unchange.unchange(maybeValue.get)
-        version.value = maybeValue
-        version
-      } else {
-        version.lastWrittenPredecessorIfStable
-      }
-      progressToNextWriteForNotification(version, stabilizeTo)
+      version.lastWrittenPredecessorIfStable
     }
+    val result = progressToNextWriteForNotification(version, stabilizeTo)
     assertOptimizationsIntegrity(s"reevOut($turn, ${maybeValue.isDefined}) -> $result")
     result
   }
@@ -970,17 +965,17 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
       if(maybeNewFirstFrame.pending == 0) {
         assert(maybeNewFirstFrame.changed != 0, s"stabilize stopped at marker $maybeNewFirstFrame in $this")
         if(maybeNewFirstFrame.changed > 0) {
-          NotificationResultAction.NotificationOutAndSuccessorOperation.NextReevaluation(out, maybeNewFirstFrame.txn)
+          NotificationResultAction.NotificationOutAndSuccessorOperation.NotifyAndReevaluationReadySuccessor(out, maybeNewFirstFrame.txn)
         } else /* if(maybeNewFirstFrame.changed < 0) */ {
           throw new AssertionError("need figure out how to handle this case if we find that it can occur, assuming for now it cannot...")
         }
       } else if(maybeNewFirstFrame.pending > 0) {
-        NotificationResultAction.NotificationOutAndSuccessorOperation.FollowFraming(out, maybeNewFirstFrame.txn)
+        NotificationResultAction.NotificationOutAndSuccessorOperation.NotifyAndNonReadySuccessor(out, maybeNewFirstFrame.txn)
       } else /* if(maybeNewFirstFrame.pending < 0) */ {
-        NotificationResultAction.NotificationOutAndSuccessorOperation.NoSuccessor(out)
+        NotificationResultAction.NotificationOutAndSuccessorOperation.PureNotifyOnly(out)
       }
     } else {
-      NotificationResultAction.NotificationOutAndSuccessorOperation.NoSuccessor(out)
+      NotificationResultAction.NotificationOutAndSuccessorOperation.PureNotifyOnly(out)
     }
     res
   }
