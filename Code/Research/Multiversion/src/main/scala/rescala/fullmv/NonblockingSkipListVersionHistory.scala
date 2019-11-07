@@ -297,16 +297,6 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
     }
   }
 
-  @tailrec private def witnessFirstFrame(current: QueuedVersion): QueuedVersion = {
-    if(current == null) {
-      null
-    } else if(!current.isZeroCounters) {
-      current
-    } else {
-      val next = current.get()
-      witnessFirstFrame(if(next == current) firstFrame else next)
-    }
-  }
   @tailrec private def ensureStableOnInsertedExecuting(current: QueuedVersion, trackedStable: QueuedVersion, self: QueuedVersion, assertSelfMayBeDropped: Boolean): QueuedVersion = {
     assert(assertSelfMayBeDropped || current != null, s"$self was supposed to not become final, but everthing is final because there are no more frames.")
     assert(assertSelfMayBeDropped || current == self || self.txn.isTransitivePredecessor(current.txn), s"$self was supposed to not become final, but fell before firstFrame $current")
@@ -349,7 +339,7 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
     * @param txn the transaction sending the notification
     * @param changed whether or not the dependency changed
     */
-  def notify(txn: T, changed: Boolean): (Boolean, NotificationResultAction[T, OutDep]) = {
+  def notify(txn: T, changed: Boolean): (Boolean, NotificationBranchResult[T, OutDep]) = {
     val version = enqueueNotifying(txn)
     val result = notify0(version, changed)
     if(NonblockingSkipListVersionHistory.DEBUG) println(s"[${Thread.currentThread().getName}] notify $txn with change=$changed => $result.")
@@ -404,7 +394,7 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
     * @param changed whether or not the dependency changed
     * @param followFrame a transaction for which to create a subsequent frame, furthering its partial framing.
     */
-  def notifyFollowFrame(txn: T, changed: Boolean, followFrame: T): (Boolean, NotificationResultAction[T, OutDep]) = {
+  def notifyFollowFrame(txn: T, changed: Boolean, followFrame: T): (Boolean, NotificationBranchResult[T, OutDep]) = {
     val version: QueuedVersion = enqueueNotifying(txn)
     var followVersion: QueuedVersion = null
     while(followVersion == null) followVersion = enqueueFollowFraming(followFrame, version)
@@ -414,7 +404,7 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
     result
   }
 
-  private def notify0(version: QueuedVersion, changed: Boolean): (Boolean, NotificationResultAction[T, OutDep]) = synchronized {
+  private def notify0(version: QueuedVersion, changed: Boolean): (Boolean, NotificationBranchResult[T, OutDep]) = synchronized {
     if(version == firstFrame) {
       val ls = laggingLatestStable.get()
       if(ls != version) {
@@ -435,7 +425,7 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
     // check if the notification triggers subsequent actions
     if (version == firstFrame && version.pending == 0) {
       if (version.changed > 0) {
-        (retainBranch, NotificationResultAction.ReevaluationReady)
+        (retainBranch, NotificationBranchResult.ReevaluationReady)
       } else {
         // ResolvedFirstFrameToUnchanged
         assert(!retainBranch, s"On second thought, I think this *can* happen, because drops are non-blocking and may drop the 0->1 change back to 0 between above and here, but it hasn't yet, so let's see if it actually fails at some point.")
@@ -443,7 +433,7 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
         (true, findNextAndUpdateFirstFrame(version, version, version.previousWriteIfStable))
       }
     } else {
-      (retainBranch, NotificationResultAction.DoNothing)
+      (retainBranch, NotificationBranchResult.DoNothing)
     }
   }
 
@@ -455,7 +445,7 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
     latestValue
   }
 
-  def reevOut(turn: T, maybeValue: Option[V]): NotificationResultAction.NotificationOutAndSuccessorOperation[T, OutDep] = {
+  def reevOut(turn: T, maybeValue: Option[V]): NotificationBranchResult.ReevOutBranchResult[T, OutDep] = {
     val version = firstFrame
     assert(laggingLatestStable.get == version, s"reevOut by $turn: latestStable ${laggingLatestStable.get} != firstFrame $version")
     assert(version.txn == turn, s"$turn called reevDone, but first frame is $version (different transaction)")
@@ -499,7 +489,7 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
     }
   }
 
-  @tailrec private def findNextAndUpdateFirstFrame(finalizedVersion: QueuedVersion, current: QueuedVersion, stabilizeTo: QueuedVersion): NotificationResultAction.NotificationOutAndSuccessorOperation[T, OutDep] = {
+  @tailrec private def findNextAndUpdateFirstFrame(finalizedVersion: QueuedVersion, current: QueuedVersion, stabilizeTo: QueuedVersion): NotificationBranchResult.ReevOutBranchResult[T, OutDep] = {
     assert(current.isStable, s"pushStable from $current must be final, which implies stable, but not set stable.")
     assert(current.pending == 0, s"pushStable from $current must be final (pending)")
     assert(current.changed == 0, s"pushStable from $current must be final (changed)")
@@ -535,17 +525,17 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
     }
   }
 
-  private def decideSuccessorOperation(newFirstFrame: QueuedVersion): NotificationResultAction.NotificationOutAndSuccessorOperation[T, OutDep] = {
+  private def decideSuccessorOperation(newFirstFrame: QueuedVersion): NotificationBranchResult.ReevOutBranchResult[T, OutDep] = {
     if(newFirstFrame != null) {
       if(newFirstFrame.pending == 0) {
-        NotificationResultAction.NotificationOutAndSuccessorOperation.NotifyAndReevaluationReadySuccessor(outgoings, newFirstFrame.txn)
+        NotificationBranchResult.ReevOutBranchResult.NotifyAndReevaluationReadySuccessor(outgoings, newFirstFrame.txn)
       } else if(newFirstFrame.pending > 0) {
-        NotificationResultAction.NotificationOutAndSuccessorOperation.NotifyAndNonReadySuccessor(outgoings, newFirstFrame.txn)
+        NotificationBranchResult.ReevOutBranchResult.NotifyAndNonReadySuccessor(outgoings, newFirstFrame.txn)
       } else /* if(maybeNewFirstFrame.pending < 0) */ {
-        NotificationResultAction.NotificationOutAndSuccessorOperation.PureNotifyOnly(outgoings)
+        NotificationBranchResult.ReevOutBranchResult.PureNotifyOnly(outgoings)
       }
     } else {
-      NotificationResultAction.NotificationOutAndSuccessorOperation.PureNotifyOnly(outgoings)
+      NotificationBranchResult.ReevOutBranchResult.PureNotifyOnly(outgoings)
     }
   }
 
@@ -573,23 +563,6 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
       } else {
         casInvalidValue
       }
-    }
-  }
-
-  /**
-    * check whether txn < succ, knowing that either txn < succ or succ < txn must be the case
-    * @param self is expected to be executing
-    * @param succ
-    * @return true if txn < succ, false if succ < txn (or succ completed), may stall briefly if racing order establishment
-    */
-  @tailrec private def lessThanRaceConditionSafeInserted(self: QueuedVersion, succ: QueuedVersion): Boolean = {
-    if (succ.txn.phase == TurnPhase.Framing || succ.txn.isTransitivePredecessor(self.txn)) {
-      true
-    } else if (succ.txn.phase == TurnPhase.Completed || self.txn.isTransitivePredecessor(succ.txn)) {
-      false
-    } else {
-      Thread.`yield`()
-      lessThanRaceConditionSafeInserted(self, succ)
     }
   }
 
@@ -873,29 +846,6 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
       outgoings += add
       (laggingLatestStable.get, firstFrame)
     })
-  }
-
-  private def compareAll(namesAndTxns: (String, T)*): Seq[String] = {
-    if(namesAndTxns.isEmpty) Nil else {
-      val (leftName, left) = namesAndTxns.head
-      val tail = namesAndTxns.tail
-      (if(left != null) {
-        tail.collect {
-          case (rightName, right) if right != null => tableLine(leftName, left, rightName, right)
-        }
-      } else {
-        Seq.empty
-      }) ++ compareAll(tail:_*) :+ (leftName + " = " + left)
-    }
-  }
-
-  private def tableLine(leftName: String, left: T, rightName: String, right: T) = {
-    leftName + (if(left == right) " == " else (right.isTransitivePredecessor(left), left.isTransitivePredecessor(right)) match {
-      case (true, true) => " cyclic "
-      case (true, false) => " < "
-      case (false, true) => " > "
-      case (false, false) => " unordered "
-    }) + rightName
   }
 
   def drop(txn: T, remove: OutDep): (List[T], Option[T]) = {

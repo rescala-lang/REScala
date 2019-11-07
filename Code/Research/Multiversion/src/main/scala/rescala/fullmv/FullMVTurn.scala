@@ -6,8 +6,8 @@ import java.util.concurrent.{ConcurrentHashMap, ForkJoinTask}
 
 import rescala.core.Initializer.InitValues
 import rescala.core._
-import rescala.fullmv.NotificationResultAction._
-import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation._
+import rescala.fullmv.NotificationBranchResult._
+import rescala.fullmv.NotificationBranchResult.ReevOutBranchResult._
 import rescala.fullmv.mirrors._
 import rescala.fullmv.sgt.synchronization.SubsumableLockEntryPoint
 import rescala.fullmv.tasks.{Notification, Reevaluation}

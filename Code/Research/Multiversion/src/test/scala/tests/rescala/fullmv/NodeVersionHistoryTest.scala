@@ -3,8 +3,8 @@ package tests.rescala.fullmv
 import org.scalatest.FunSuite
 import rescala.core.Initializer
 import rescala.fullmv.FramingBranchResult.{Frame, FramingBranchEnd}
-import rescala.fullmv.NotificationResultAction.{ReevaluationReady, DoNothing}
-import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation.{NotifyAndReevaluationReadySuccessor, PureNotifyOnly}
+import rescala.fullmv.NotificationBranchResult.{ReevaluationReady, DoNothing}
+import rescala.fullmv.NotificationBranchResult.ReevOutBranchResult.{NotifyAndReevaluationReadySuccessor, PureNotifyOnly}
 import rescala.fullmv._
 
 import scala.concurrent.duration.Duration

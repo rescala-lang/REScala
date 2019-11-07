@@ -28,7 +28,7 @@ trait FullMVState[V, T <: FullMVTurn, Reactive, OutDep] {
     * @param txn     the transaction sending the notification
     * @param changed whether or not the dependency changed
     */
-  def notify(txn: T, changed: Boolean): (Boolean, NotificationResultAction[T, OutDep])
+  def notify(txn: T, changed: Boolean): (Boolean, NotificationBranchResult[T, OutDep])
 
   /**
     * entry point for change/nochange notification reception with follow-up framing
@@ -37,7 +37,7 @@ trait FullMVState[V, T <: FullMVTurn, Reactive, OutDep] {
     * @param changed     whether or not the dependency changed
     * @param followFrame a transaction for which to create a subsequent frame, furthering its partial framing.
     */
-  def notifyFollowFrame(txn: T, changed: Boolean, followFrame: T): (Boolean, NotificationResultAction[T, OutDep])
+  def notifyFollowFrame(txn: T, changed: Boolean, followFrame: T): (Boolean, NotificationBranchResult[T, OutDep])
 
   def reevIn(turn: T): V
 
@@ -45,7 +45,7 @@ trait FullMVState[V, T <: FullMVTurn, Reactive, OutDep] {
     * progress [[firstFrame]] forward until a [[Version.isFrame]] is encountered, and
     * return the resulting notification out (with reframing if subsequent write is found).
     */
-  def reevOut(turn: T, maybeValue: Option[V]): NotificationResultAction.NotificationOutAndSuccessorOperation[T, OutDep]
+  def reevOut(turn: T, maybeValue: Option[V]): NotificationBranchResult.ReevOutBranchResult[T, OutDep]
 
   /**
     * entry point for before(this); may suspend.

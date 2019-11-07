@@ -1,8 +1,8 @@
 package rescala.fullmv.tasks
 
 import rescala.core._
-import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation.{NotifyAndNonReadySuccessor, NotifyAndReevaluationReadySuccessor, PureNotifyOnly}
-import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation
+import rescala.fullmv.NotificationBranchResult.ReevOutBranchResult.{NotifyAndNonReadySuccessor, NotifyAndReevaluationReadySuccessor, PureNotifyOnly}
+import rescala.fullmv.NotificationBranchResult.ReevOutBranchResult
 import rescala.fullmv._
 
 class Reevaluation(override val turn: FullMVTurn, override val node: Derived[FullMVStruct]) extends RegularReevaluationHandling {
@@ -75,7 +75,7 @@ trait ReevaluationHandling[N <: ReSource[FullMVStruct]] extends FullMVAction {
   def createReevaluation(succTxn: FullMVTurn): FullMVAction
   def doReevaluation(retainBranch: Boolean): Unit
 
-  def processReevaluationResult(maybeChange: Option[node.Value]): NotificationOutAndSuccessorOperation[FullMVTurn, Derived[FullMVStruct]] = {
+  def processReevaluationResult(maybeChange: Option[node.Value]): ReevOutBranchResult[FullMVTurn, Derived[FullMVStruct]] = {
     val reevOutResult = node.state.reevOut(turn, maybeChange)
     if(FullMVEngine.DEBUG && maybeChange.isDefined && maybeChange.get.isInstanceOf[Pulse.Exceptional]){
       // could be a framework exception that is relevant to debugging, but was eaten by reactive's
@@ -87,7 +87,7 @@ trait ReevaluationHandling[N <: ReSource[FullMVStruct]] extends FullMVAction {
     reevOutResult
   }
 
-  def processReevOutResult(retainBranch: Boolean, outAndSucc: NotificationOutAndSuccessorOperation[FullMVTurn, Derived[FullMVStruct]], changed: Boolean): Unit = {
+  def processReevOutResult(retainBranch: Boolean, outAndSucc: ReevOutBranchResult[FullMVTurn, Derived[FullMVStruct]], changed: Boolean): Unit = {
     outAndSucc match {
       case PureNotifyOnly(out) =>
         doBranchDiff(retainBranch, out)

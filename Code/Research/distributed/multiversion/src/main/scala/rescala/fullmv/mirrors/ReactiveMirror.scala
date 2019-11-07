@@ -22,10 +22,10 @@ object ReactiveMirror {
   }
 }
 
-class ReactiveMirror[A](val getValue: FullMVTurn => A, val reflectionProxy: ReactiveReflectionProxy[A], val timeout: Duration, rename: REName) extends Derived[FullMVStruct] with FullMVState[Nothing, FullMVTurn, ReSource[FullMVStruct], Derived[FullMVStruct]] {
+class ReactiveMirror[A](val getValue: FullMVTurn => A, val reflectionProxy: ReactiveReflectionProxy[A], val timeout: Duration, override val name: REName) extends Derived[FullMVStruct] with FullMVState[Nothing, FullMVTurn, ReSource[FullMVStruct], Derived[FullMVStruct]] {
   override type Value = Nothing
   override protected[rescala] val state = this
-  override def toString: String = s"Mirror${rename.str}"
+  override def toString: String = s"Mirror${name.str}"
   override val host: FullMVEngine = null
   override def incrementFrame(txn: FullMVTurn): FramingBranchResult[FullMVTurn, Derived[FullMVStruct]] = {
     FullMVEngine.myAwait(txn.addRemoteBranch(TurnPhase.Framing), timeout)
@@ -37,27 +37,27 @@ class ReactiveMirror[A](val getValue: FullMVTurn => A, val reflectionProxy: Reac
     reflectionProxy.asyncIncrementSupersedeFrame(txn, supersede)
     FramingBranchResult.FramingBranchEnd
   }
-  override def notify(txn: FullMVTurn, changed: Boolean): (Boolean, NotificationResultAction[FullMVTurn, Derived[FullMVStruct]]) = {
+  override def notify(txn: FullMVTurn, changed: Boolean): (Boolean, NotificationBranchResult[FullMVTurn, Derived[FullMVStruct]]) = {
     FullMVEngine.myAwait(txn.addRemoteBranch(TurnPhase.Executing), timeout)
     if(changed) {
       reflectionProxy.asyncNewValue(txn, getValue(txn))
     } else {
       reflectionProxy.asyncResolvedUnchanged(txn)
     }
-    false -> NotificationResultAction.DoNothing
+    false -> NotificationBranchResult.DoNothing
   }
-  override def notifyFollowFrame(txn: FullMVTurn, changed: Boolean, followFrame: FullMVTurn): (Boolean, NotificationResultAction[FullMVTurn, Derived[FullMVStruct]]) = {
+  override def notifyFollowFrame(txn: FullMVTurn, changed: Boolean, followFrame: FullMVTurn): (Boolean, NotificationBranchResult[FullMVTurn, Derived[FullMVStruct]]) = {
     FullMVEngine.myAwait(txn.addRemoteBranch(TurnPhase.Executing), timeout)
     if(changed) {
       reflectionProxy.asyncNewValueFollowFrame(txn, getValue(txn), followFrame)
     } else {
       reflectionProxy.asyncResolvedUnchangedFollowFrame(txn, followFrame)
     }
-    false -> NotificationResultAction.DoNothing
+    false -> NotificationBranchResult.DoNothing
   }
   override def latestValue: Value = ???
   override def reevIn(turn: FullMVTurn): Nothing = ???
-  override def reevOut(turn: FullMVTurn, maybeValue: Option[Value]): NotificationResultAction.NotificationOutAndSuccessorOperation[FullMVTurn, Derived[FullMVStruct]] = ???
+  override def reevOut(turn: FullMVTurn, maybeValue: Option[Value]): NotificationBranchResult.ReevOutBranchResult[FullMVTurn, Derived[FullMVStruct]] = ???
   override def dynamicBefore(txn: FullMVTurn): Nothing = ???
   override def staticBefore(txn: FullMVTurn): Nothing = ???
   override def dynamicAfter(txn: FullMVTurn): Nothing = ???
