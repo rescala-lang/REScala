@@ -15,11 +15,13 @@ case class AddWinsSet[A](store: Map[A, Set[Dot]], context: Set[Dot]) {
   // TODO: this … is probably not a good idea
   def addRandom(e: A): AddWinsSet[A] = {
     val id = IdUtil.genId()
-    add(e, id)
+    addΔ(e, id)
   }
 
+  def add(element: A, replicaID: Id): AddWinsSet[A] = Lattice.merge(this, addΔ(element, replicaID))
+
   /** Adding an element adds it to the current dot store as well as to the causal context (past). */
-  def add(element: A, replicaID: Id): AddWinsSet[A] = {
+  def addΔ(element: A, replicaID: Id): AddWinsSet[A] = {
     val dot = DotStoreLattice.next(replicaID, context)
     val onlyDot = Set(dot)
     AddWinsSet(Map(element -> onlyDot), store.get(element).fold(onlyDot)(_ + dot))
@@ -37,7 +39,7 @@ case class AddWinsSet[A](store: Map[A, Set[Dot]], context: Set[Dot]) {
     * but does not contain.
     * Thus, the delta for removal is the empty map,
     * with the dot of the removed element in the context. */
-  def remove(e: A): AddWinsSet[A] = AddWinsSet[A](Map.empty, store.getOrElse(e, Set.empty))
+  def removeΔ(e: A): AddWinsSet[A] = AddWinsSet[A](Map.empty, store.getOrElse(e, Set.empty))
 
   def clear: AddWinsSet[A] = AddWinsSet[A](Map(), store.dots)
 

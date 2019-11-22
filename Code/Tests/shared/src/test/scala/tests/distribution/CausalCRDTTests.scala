@@ -60,7 +60,7 @@ class CausalCRDTTests extends FreeSpec with ScalaCheckPropertyChecks {
         val d1 = initial.addRandom(elem)
         val added: AddWinsSet[String] = AWTestHelper.merge(initial, d1)
 
-        val d2 = added.remove(elem)
+        val d2 = added.removeΔ(elem)
         val removed: AddWinsSet[String] = AWTestHelper.merge(added, d2)
         assert(!removed.contains(elem))
       }
@@ -69,7 +69,7 @@ class CausalCRDTTests extends FreeSpec with ScalaCheckPropertyChecks {
           whenever(s.toSet.nonEmpty) {
             // randomly pick one element:
             val elem: String = Random.shuffle(s.toSet.toList).head
-            val delta = s.remove(elem)
+            val delta = s.removeΔ(elem)
             val removed: AddWinsSet[String] = AWTestHelper.merge(s, delta)
             assert(!removed.contains(elem))
           }
@@ -78,7 +78,7 @@ class CausalCRDTTests extends FreeSpec with ScalaCheckPropertyChecks {
           whenever(s.toSet.nonEmpty) {
             // randomly pick one element:
             val elem: Int = Random.shuffle(s.toSet.toList).head
-            val delta = s.remove(elem)
+            val delta = s.removeΔ(elem)
             val removed: AddWinsSet[Int] = AWTestHelper.merge(s, delta)
             assert(!removed.contains(elem))
           }
