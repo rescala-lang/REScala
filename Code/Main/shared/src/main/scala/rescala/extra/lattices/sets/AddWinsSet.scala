@@ -1,9 +1,9 @@
-package rescala.extra.deltacrdts
+package rescala.extra.lattices.sets
 
-import rescala.extra.deltacrdts.dotstores.DotStoreLattice._
-import rescala.extra.deltacrdts.dotstores.{Causal, Dot, DotStoreLattice}
-import rescala.extra.lattices.{IdUtil, Lattice}
 import rescala.extra.lattices.IdUtil.Id
+import rescala.extra.lattices.dotstores.DotStoreLattice._
+import rescala.extra.lattices.dotstores.{Causal, Dot, DotStoreLattice}
+import rescala.extra.lattices.{IdUtil, Lattice}
 
 import scala.language.implicitConversions
 

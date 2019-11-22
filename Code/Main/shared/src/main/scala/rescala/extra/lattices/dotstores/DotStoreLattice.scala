@@ -1,4 +1,4 @@
-package rescala.extra.deltacrdts.dotstores
+package rescala.extra.lattices.dotstores
 
 import rescala.extra.lattices.IdUtil.Id
 import rescala.extra.lattices.Lattice
