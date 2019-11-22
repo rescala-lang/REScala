@@ -20,15 +20,16 @@ class AddWinsSetBench[S <: Struct] {
   @Param(Array("0", "1", "10", "100"))
   var setSize: Int = _
 
-  var rep1Set: AddWinsSet[String] = _
-  var rep2Set: AddWinsSet[String] = _
-  val rep1id                      = IdUtil.genId()
-  val rep2id                      = IdUtil.genId()
-  var rep2Δ  : AddWinsSet[String] = _
+  var rep1Set       : AddWinsSet[String] = _
+  var rep1SetPlusOne: AddWinsSet[String] = _
+  var rep2Set       : AddWinsSet[String] = _
+  val rep1id                             = IdUtil.genId()
+  val rep2id                             = IdUtil.genId()
+  var rep2Δ         : AddWinsSet[String] = _
 
 
   private def makeRep(rep: IdUtil.Id): AddWinsSet[String] = {
-    0.until(setSize).foldLeft(AddWinsSet.empty[String]) { case (s, v) => s.add(v.toString, rep) }
+    0.until(setSize).foldLeft(AddWinsSet.empty[String]) { case (s, v) => s.add(v.toString + rep, rep) }
   }
 
   @Setup
@@ -36,6 +37,7 @@ class AddWinsSetBench[S <: Struct] {
     rep1Set = makeRep(rep1id)
     rep2Set = makeRep(rep2id)
     rep2Δ = rep2Set.addΔ("hallo welt", rep2id)
+    rep1SetPlusOne = Lattice.merge(rep1Set, rep2Δ)
   }
 
 
@@ -56,6 +58,13 @@ class AddWinsSetBench[S <: Struct] {
 
   @Benchmark
   def merge() = Lattice.merge(rep1Set, rep2Set)
+
+  @Benchmark
+  def mergeSelf() = Lattice.merge(rep1Set, rep1Set)
+
+  @Benchmark
+  def mergeSelfPlusOne() = Lattice.merge(rep1Set, rep1Set)
+
 
   @Benchmark
   def mergeΔ() = Lattice.merge(rep1Set, rep2Δ)
