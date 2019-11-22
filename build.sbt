@@ -156,7 +156,7 @@ lazy val distributedBenchmarks = project.in(file("Code/Research/distributed/benc
 lazy val microbench = project.in(file("Code/Research/Microbenchmarks"))
   .enablePlugins(JmhPlugin)
   .settings(name := "microbenchmarks", cfg.base, cfg.noPublish, mainClass in Compile := Some("org.openjdk.jmh.Main"),
-    circe,
+    circe, upickle,
     TaskKey[Unit]("compileJmh") := Seq(compile in pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh).dependOn.value)
   .enablePlugins(JavaAppPackaging)
   .dependsOn(fullmv, rescalaJVM)
