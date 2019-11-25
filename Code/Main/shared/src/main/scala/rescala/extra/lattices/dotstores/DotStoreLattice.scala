@@ -7,6 +7,80 @@ case class Dot(replicaId: Id, counter: Int)
 case class Causal[A](store: A, context: Set[Dot])
 
 
+object IntTree {
+
+  case class Range(from: Int, until: Int, less: Range, more: Range)
+
+  def show(tree: Range): String = {
+    if (tree == null) "[]"
+    else s"{L${show(tree.less)} I[${tree.from}, ${tree.until-1}] R${show(tree.more)}}"
+  }
+
+  val empty: Range = null
+
+  def insert(tree: Range, value: Int): Range = insert(tree, value, value + 1)
+
+  private def overlap(start: Int, middle: Int, end: Int): Boolean = start <= middle && middle <= end
+
+  private def max(tree: Range): (Range, Range) = {
+    import tree._
+    if (tree == null) (tree, tree)
+    else if (more != null) {
+      val (t, m) = max(more)
+      (copy(more = t), m)
+    }
+    else (less, tree)
+  }
+
+  private def min(tree: Range): (Range, Range) = {
+    import tree._
+    if (tree == null) (tree, tree)
+    else if (less != null) {
+      val (t, m) = min(less)
+      (copy(less = t), m)
+    }
+    else (more, tree)
+  }
+
+
+  @scala.annotation.tailrec
+  private def flatten(tree: Range): Range = {
+    import tree._
+    if (tree == null) tree
+    else {
+      val (upd, lesser) = max(less)
+      if (lesser != null && from <= lesser.until) flatten(Range(math.min(from, lesser.from), math.max(until, lesser.until), upd, more))
+      else {
+        val (upd, morere) = min(more)
+        if (morere != null && morere.from <= until) flatten(Range(math.min(from, morere.from), math.max(until, morere.until), less, upd))
+        else tree
+      }
+    }
+  }
+
+  def insert(tree: Range, iFrom: Int, iUntil: Int): Range = {
+    import tree._
+    if (tree == null) Range(iFrom, iUntil, null, null)
+    else if (overlap(from, iFrom, until)) flatten(Range(from, math.max(iUntil, until), less, more))
+    else if (overlap(from, iUntil, until)) flatten(Range(math.min(from, iFrom), until, less, more))
+    else if (iUntil < from) Range(from, until, insert(less, iFrom, iUntil), more)
+    else if (until < iFrom) Range(from, until, less, insert(more, iFrom, iUntil))
+    else throw new IllegalStateException(s"do not understand how ($iFrom, $iUntil) relates to ($from, $until)")
+  }
+
+  @scala.annotation.tailrec
+  def contains(tree: Range, search: Int): Boolean = {
+    if (tree == null) false
+    else if (search < tree.from) contains(tree.less, search)
+    else if (tree.until <= search) contains(tree.more, search)
+    else true
+  }
+}
+
+
+
+
+
 /** Dot stores provide a generic way to merge datastructures,
   * implemented on top of one of the provided dot stores.
   * */
