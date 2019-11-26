@@ -6,7 +6,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.lattices.dotstores.IntTree
 
 object IntRangeGenerator {
-  implicit val genDot: Arbitrary[IntTree.Range] = Arbitrary(for {
+  implicit val genDot: Arbitrary[IntTree.Tree] = Arbitrary(for {
     values <- Gen.someOf(0 to 20)
   } yield values.foldLeft(IntTree.empty)(IntTree.insert))
 
@@ -17,7 +17,7 @@ class IntRangeTests extends FreeSpec with ScalaCheckDrivenPropertyChecks {
 
   import IntRangeGenerator._
 
-  "insert one" in forAll { (it1: IntTree.Range) =>
+  "insert one" in forAll { (it1: IntTree.Tree) =>
     println(IntTree.show(it1))
     for (x <- 0 to 20) assert(IntTree.contains(IntTree.insert(it1, x), x))
   }

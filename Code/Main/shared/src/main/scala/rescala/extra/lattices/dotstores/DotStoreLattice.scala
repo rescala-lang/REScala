@@ -6,9 +6,8 @@ import rescala.extra.lattices.Lattice
 case class Dot(replicaId: Id, counter: Int)
 case class Causal[A](store: A, context: Set[Dot])
 
-case class CausalO[A](store: A, context: Context)
+case class Context(internal: Map[Id, IntTree.Tree]) {
 
-case class Context(internal: Map[Id, IntTree.Range]) {
   def add(replicaId: Id, time: Int): Context = Context(internal.updated(
     replicaId,
     IntTree.insert(internal.getOrElse(replicaId, IntTree.empty), time)
@@ -51,97 +50,109 @@ object Context {
 
 object IntTree {
 
-  case class Range(from: Int, until: Int, less: Range, more: Range)
+  sealed trait Tree
+  case class Range(from: Int, until: Int, less: Tree, more: Tree) extends Tree
+  case object Empty extends Tree
 
-  implicit val rangeLattice: Lattice[Range] = new Lattice[Range] {
-    override def merge(left: Range, right: Range): Range = IntTree.merge(left, right)
+  implicit val rangeLattice: Lattice[Tree] = new Lattice[Tree] {
+    override def merge(left: Tree, right: Tree): Tree = IntTree.merge(left, right)
   }
 
-  def fromIterator(iterable: Iterator[Int]): Range = iterable.foldLeft(empty)(IntTree.insert)
+  def fromIterator(iterable: Iterator[Int]): Tree = iterable.foldLeft(empty)(IntTree.insert)
 
-  def show(tree: Range): String = {
-    if (tree == null) "[]"
-    else s"{L${show(tree.less)} I[${tree.from}, ${tree.until-1}] R${show(tree.more)}}"
+  def show(tree: Tree): String = tree match {
+    case Empty => "[]"
+    case tree : Range => s"{L${show(tree.less)} I[${tree.from}, ${tree.until-1}] R${show(tree.more)}}"
   }
 
-  val empty: Range = null
+  val empty: Tree = Empty
 
-  def insert(tree: Range, value: Int): Range = insert(tree, value, value + 1)
+  def insert(tree: Tree, value: Int): Tree = insert(tree, value, value + 1)
 
-  def ranges(tree: Range): List[Range] = {
-    if (tree == null) Nil
-    else (ranges(tree.less) :+ tree) ++ ranges(tree.more)
+  def ranges(tree: Tree): List[Range] = tree match {
+    case Empty => Nil
+    case tree : Range => (ranges(tree.less) :+ tree) ++ ranges(tree.more)
   }
 
-  def toSeq(tree: Range): List[Int] = {
-    if (tree == null) Nil
-    else toSeq(tree.less) ++ (tree.from until tree.until) ++ toSeq(tree.more)
+  def toSeq(tree: Tree): List[Int] = tree match {
+    case Empty => Nil
+    case tree : Range =>  toSeq(tree.less) ++ (tree.from until tree.until) ++ toSeq(tree.more)
   }
 
-  def merge(left: Range, right: Range): Range = ranges(right).foldLeft(left){ (ir, r) => insert(ir, r.from, r.until)}
+  def merge(left: Tree, right: Tree): Tree = ranges(right).foldLeft(left){ (ir, r) => insert(ir, r.from, r.until)}
 
   private def overlap(start: Int, middle: Int, end: Int): Boolean = start <= middle && middle <= end
 
-  def nextValue(tree: Range, default: Int): Int = {
-    val (_, maxr) = max(tree)
-    if (maxr == null) default
-    else maxr.until
+  def nextValue(tree: Tree, default: Int): Int = max(tree) match {
+    case (_, maxr: Range) => maxr.until
+    case _ => default
   }
 
-  def max(tree: Range): (Range, Range) = {
-    import tree._
-    if (tree == null) (tree, tree)
-    else if (more != null) {
-      val (t, m) = max(more)
-      (copy(more = t), m)
-    }
-    else (less, tree)
-  }
-
-  def min(tree: Range): (Range, Range) = {
-    import tree._
-    if (tree == null) (tree, tree)
-    else if (less != null) {
-      val (t, m) = min(less)
-      (copy(less = t), m)
-    }
-    else (more, tree)
-  }
-
-
-  @scala.annotation.tailrec
-  private def flatten(tree: Range): Range = {
-    import tree._
-    if (tree == null) tree
-    else {
-      val (upd, lesser) = max(less)
-      if (lesser != null && from <= lesser.until) flatten(Range(math.min(from, lesser.from), math.max(until, lesser.until), upd, more))
-      else {
-        val (upd, morere) = min(more)
-        if (morere != null && morere.from <= until) flatten(Range(math.min(from, morere.from), math.max(until, morere.until), less, upd))
-        else tree
+  def max(tree: Tree): (Tree, Tree) = tree match {
+    case Empty       => (tree, tree)
+    case tree: Range =>
+      import tree._
+      more match {
+        case more: Range =>
+          val (t, m) = max(more)
+          (copy(more = t), m)
+        case Empty       => (less, tree)
       }
+  }
+
+  def min(tree: Tree): (Tree, Tree) = tree match {
+    case Empty       => (tree, tree)
+    case tree: Range =>
+      import tree._
+    less match {
+      case less: Range =>
+                val (t, m) = min(less)
+        (copy(less = t), m)
+      case Empty =>(more, tree)
     }
   }
 
-  def insert(tree: Range, iFrom: Int, iUntil: Int): Range = {
-    import tree._
-    if (tree == null) Range(iFrom, iUntil, null, null)
-    else if (overlap(from, iFrom, until)) flatten(Range(from, math.max(iUntil, until), less, more))
-    else if (overlap(from, iUntil, until)) flatten(Range(math.min(from, iFrom), until, less, more))
-    else if (iUntil < from) Range(from, until, insert(less, iFrom, iUntil), more)
-    else if (until < iFrom) Range(from, until, less, insert(more, iFrom, iUntil))
-    else throw new IllegalStateException(s"do not understand how ($iFrom, $iUntil) relates to ($from, $until)")
+
+  @scala.annotation.tailrec
+  private def flatten(tree: Tree): Tree = tree match {
+    case Empty       => tree
+    case tree: Range =>
+      import tree._
+      max(less) match {
+        case (upd, lesser: Range) if from <= lesser.until =>
+          flatten(Range(math.min(from, lesser.from), math.max(until, lesser.until), upd, more))
+
+        case _ =>
+          min(more) match {
+            case (upd, morere: Range) if morere.from <= until =>
+              flatten(Range(math.min(from, morere.from), math.max(until, morere.until), less, upd))
+
+            case _ => tree
+          }
+      }
+  }
+
+  def insert(tree: Tree, iFrom: Int, iUntil: Int): Tree = tree match {
+    case Empty       => Range(iFrom, iUntil, Empty, Empty)
+    case tree: Range =>
+      import tree._
+      if (overlap(from, iFrom, until)) flatten(Range(from, math.max(iUntil, until), less, more))
+      else if (overlap(from, iUntil, until)) flatten(Range(math.min(from, iFrom), until, less, more))
+      else if (iUntil < from) Range(from, until, insert(less, iFrom, iUntil), more)
+      else if (until < iFrom) Range(from, until, less, insert(more, iFrom, iUntil))
+      else throw new IllegalStateException(s"do not understand how ($iFrom, $iUntil) relates to ($from, $until)")
   }
 
   @scala.annotation.tailrec
-  def contains(tree: Range, search: Int): Boolean = {
-    if (tree == null) false
-    else if (search < tree.from) contains(tree.less, search)
+  def contains(tree: Tree, search: Int): Boolean = tree match {
+    case Empty => false
+    case tree : Range =>{
+    if (search < tree.from) contains(tree.less, search)
     else if (tree.until <= search) contains(tree.more, search)
     else true
   }
 }
+      }
 
 
 
