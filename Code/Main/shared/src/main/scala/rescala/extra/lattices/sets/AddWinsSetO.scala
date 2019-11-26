@@ -10,10 +10,10 @@ case class AddWinsSetO[A](store: Map[A, Context], context: Context) {
 
   /** Adding an element adds it to the current dot store as well as to the causal context (past). */
   def addΔ(element: A, replicaID: Id): AddWinsSetO[A] = {
-    val time = context.nextTime(replicaID)
+    val time     = context.nextTime(replicaID)
     val singular = Context.single(replicaID, time)
     AddWinsSetO(Map(element -> singular),
-               store.get(element).fold(singular)(_.add(replicaID, time)))
+                store.get(element).fold(singular)(_.add(replicaID, time)))
 
     // TODO: potential optimization
     // this is what the paper does:
@@ -50,8 +50,6 @@ case class AddWinsSetO[A](store: Map[A, Context], context: Context) {
 //}
 
 
-
-
 object AddWinsSetO {
 
   def empty[A]: AddWinsSetO[A] = AddWinsSetO[A](Map.empty, Context.empty)
@@ -59,27 +57,28 @@ object AddWinsSetO {
   implicit def latticeAddWinsSet[A]: Lattice[AddWinsSetO[A]] = new Lattice[AddWinsSetO[A]] {
 
 
-
     override def merge(left: AddWinsSetO[A], right: AddWinsSetO[A]): AddWinsSetO[A] = {
 
-    // The new store is everything both sides have seen and everything that is new.
-    // If something is missing from the store (but in the context) it has been deleted.
-    val newStore = (left.store.keySet union right.store.keySet).map { keyValue =>
-      val leftDots: Context = left.store.getOrElse(keyValue, Context.empty)
-      val rightDots = right.store.getOrElse(keyValue, Context.empty)
+      // The new store is everything both sides have seen and everything that is new.
+      // If something is missing from the store (but in the context) it has been deleted.
+      val newStore = (left.store.keys ++ right.store.keys).toSet.map { keyValue: A =>
+        val leftDots : Context = left.store.getOrElse(keyValue, Context.empty)
+        val rightDots: Context = right.store.getOrElse(keyValue, Context.empty)
 
-      val common = leftDots.intersect(rightDots)
-      val newElements = Lattice.merge((leftDots diff  right.context), (rightDots diff left.context))
-      val fullNew = Lattice.merge(common, newElements)
+        val common     : Context = leftDots.intersect(rightDots)
+        val leftNew    : Context = leftDots diff right.context
+        val rightNew   : Context = rightDots diff left.context
+        val newElements: Context = Lattice.merge(leftNew, rightNew)
+        val fullNew    : Context = Lattice.merge(common, newElements)
 
-      (keyValue, fullNew)
-    }.filter {_._2 != Context.empty}.toMap
+        (keyValue, fullNew)
+      }.filter {_._2 != Context.empty}.toMap
 
-    // the merged state has seen everything from both sides
-    val newContext = Lattice.merge(left.context, right.context)
-    AddWinsSetO(newStore, newContext)
+      // the merged state has seen everything from both sides
+      val newContext = Lattice.merge(left.context, right.context)
+      AddWinsSetO(newStore, newContext)
+    }
   }
-}
 
 
 }

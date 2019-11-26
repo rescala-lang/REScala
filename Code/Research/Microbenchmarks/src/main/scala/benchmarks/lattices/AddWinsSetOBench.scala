@@ -17,15 +17,17 @@ import rescala.extra.lattices.{IdUtil, Lattice}
 @State(Scope.Thread)
 class AddWinsSetOBench[S <: Struct] {
 
-  @Param(Array("0", "1", "10", "100", "1000"))
+  @Param(Array("1", "1000"))
   var setSize: Int = _
 
   var rep1Set       : AddWinsSetO[String] = _
   var rep1SetPlusOne: AddWinsSetO[String] = _
   var rep2Set       : AddWinsSetO[String] = _
-  val rep1id                             = IdUtil.genId()
-  val rep2id                             = IdUtil.genId()
+  val rep1id                             = "rep1"
+  val rep2id                             = "rep2"
   var rep2Δ         : AddWinsSetO[String] = _
+  var justSetRep1: Set[String] = _
+  var justSetRep2: Set[String] = _
 
 
   private def makeRep(rep: IdUtil.Id): AddWinsSetO[String] = {
@@ -38,6 +40,8 @@ class AddWinsSetOBench[S <: Struct] {
     rep2Set = makeRep(rep2id)
     rep2Δ = rep2Set.addΔ("hallo welt", rep2id)
     rep1SetPlusOne = Lattice.merge(rep1Set, rep2Δ)
+    justSetRep1 = rep1Set.store.keySet
+    justSetRep2 = rep2Set.store.keySet
   }
 
 
@@ -57,7 +61,13 @@ class AddWinsSetOBench[S <: Struct] {
   def containsFirst() = rep1Set.contains("0")
 
   @Benchmark
-  def merge() = Lattice.merge(rep1Set, rep2Set)
+  def merge() = AddWinsSetO.latticeAddWinsSet.merge(rep1Set, rep2Set)
+
+  @Benchmark
+  def mergeBaseline() = Lattice.merge(rep1Set.store, rep2Set.store)
+
+    @Benchmark
+  def mergeBaselineBaseline() = Lattice.merge(justSetRep1, justSetRep2)
 
   @Benchmark
   def mergeSelf() = Lattice.merge(rep1Set, rep1Set)

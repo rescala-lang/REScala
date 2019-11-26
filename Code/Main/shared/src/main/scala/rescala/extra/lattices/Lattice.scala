@@ -27,7 +27,7 @@ object Lattice {
   }
 
   implicit def mapLattice[K, V: Lattice]: Lattice[Map[K, V]] = (left, right) =>
-    Lattice.merge(left.keySet, right.keySet).iterator
+    (left.keysIterator ++ right.keysIterator).toSet[K].iterator
            .flatMap { key =>
              Lattice.merge(left.get(key), right.get(key)).map(key -> _)
            }.toMap

@@ -12,20 +12,17 @@ case class Context(internal: Map[Id, IntTree.Tree]) {
     replicaId,
     IntTree.insert(internal.getOrElse(replicaId, IntTree.empty), time)
     ))
-  def dots(): Set[Dot] = internal.iterator.flatMap { case (id, range) =>
-    IntTree.toSeq(range).map(Dot(id, _))
-  }.toSet
   def nextTime(replicaId: Id): Int = {
     val range = internal.getOrElse(replicaId, IntTree.empty)
     IntTree.nextValue(range, 0)
   }
   def diff(extern: Context): Context = Context {
-    internal.map{ case (id, range) =>
-      val filtered = extern.internal.get(id).map{ erange =>
+    internal.map { case (id, range) =>
+      val filtered = extern.internal.get(id).map { erange =>
         val keep = IntTree.toSeq(range).filterNot(IntTree.contains(erange, _))
         IntTree.fromIterator(keep.iterator)
       }
-        id -> filtered.getOrElse(range)
+      id -> filtered.getOrElse(range)
     }
   }
   def intersect(other: Context): Context = Context {
