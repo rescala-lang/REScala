@@ -6,10 +6,58 @@ import rescala.extra.lattices.Lattice
 case class Dot(replicaId: Id, counter: Int)
 case class Causal[A](store: A, context: Set[Dot])
 
+case class CausalO[A](store: A, context: Context)
+
+case class Context(internal: Map[Id, IntTree.Range]) {
+  def add(replicaId: Id, time: Int): Context = Context(internal.updated(
+    replicaId,
+    IntTree.insert(internal.getOrElse(replicaId, IntTree.empty), time)
+    ))
+  def dots(): Set[Dot] = internal.iterator.flatMap { case (id, range) =>
+    IntTree.toSeq(range).map(Dot(id, _))
+  }.toSet
+  def nextTime(replicaId: Id): Int = {
+    val range = internal.getOrElse(replicaId, IntTree.empty)
+    IntTree.nextValue(range, 0)
+  }
+  def diff(extern: Context): Context = Context {
+    internal.map{ case (id, range) =>
+      val filtered = extern.internal.get(id).map{ erange =>
+        val keep = IntTree.toSeq(range).filterNot(IntTree.contains(erange, _))
+        IntTree.fromIterator(keep.iterator)
+      }
+        id -> filtered.getOrElse(range)
+    }
+  }
+  def intersect(other: Context): Context = Context {
+    internal.iterator.filter{case (id, _ ) => other.internal.contains(id) }.map{ case (id, range) =>
+      val otherRange = other.internal(id)
+      val res = IntTree.fromIterator(IntTree.toSeq(range).iterator.filter(IntTree.contains(otherRange, _)))
+      id -> res
+    }.toMap
+  }
+}
+
+object Context {
+  def single(replicaId: Id, time: Int): Context = Context(Map((replicaId, IntTree.insert(IntTree.empty, time))))
+  val empty: Context = Context(Map.empty)
+
+  implicit val contextLattice: Lattice[Context] = new Lattice[Context] {
+    override def merge(left: Context, right: Context): Context = {
+      Context(Lattice.merge(left.internal, right.internal))
+    }
+  }
+}
 
 object IntTree {
 
   case class Range(from: Int, until: Int, less: Range, more: Range)
+
+  implicit val rangeLattice: Lattice[Range] = new Lattice[Range] {
+    override def merge(left: Range, right: Range): Range = IntTree.merge(left, right)
+  }
+
+  def fromIterator(iterable: Iterator[Int]): Range = iterable.foldLeft(empty)(IntTree.insert)
 
   def show(tree: Range): String = {
     if (tree == null) "[]"
@@ -20,9 +68,27 @@ object IntTree {
 
   def insert(tree: Range, value: Int): Range = insert(tree, value, value + 1)
 
+  def ranges(tree: Range): List[Range] = {
+    if (tree == null) Nil
+    else (ranges(tree.less) :+ tree) ++ ranges(tree.more)
+  }
+
+  def toSeq(tree: Range): List[Int] = {
+    if (tree == null) Nil
+    else toSeq(tree.less) ++ (tree.from until tree.until) ++ toSeq(tree.more)
+  }
+
+  def merge(left: Range, right: Range): Range = ranges(right).foldLeft(left){ (ir, r) => insert(ir, r.from, r.until)}
+
   private def overlap(start: Int, middle: Int, end: Int): Boolean = start <= middle && middle <= end
 
-  private def max(tree: Range): (Range, Range) = {
+  def nextValue(tree: Range, default: Int): Int = {
+    val (_, maxr) = max(tree)
+    if (maxr == null) default
+    else maxr.until
+  }
+
+  def max(tree: Range): (Range, Range) = {
     import tree._
     if (tree == null) (tree, tree)
     else if (more != null) {
@@ -32,7 +98,7 @@ object IntTree {
     else (less, tree)
   }
 
-  private def min(tree: Range): (Range, Range) = {
+  def min(tree: Range): (Range, Range) = {
     import tree._
     if (tree == null) (tree, tree)
     else if (less != null) {
@@ -80,11 +146,10 @@ object IntTree {
 
 
 
-
 /** Dot stores provide a generic way to merge datastructures,
   * implemented on top of one of the provided dot stores.
   * */
-trait DotStoreLattice[Store] extends Lattice[Causal[Store]] {
+trait DotStoreLattice[Store] {
   def add(a: Store, d: Dot): Store
 
   def dots(a: Store): Set[Dot]
@@ -101,7 +166,7 @@ trait DotStoreLattice[Store] extends Lattice[Causal[Store]] {
 
 object DotStoreLattice {
   def next[A: DotStoreLattice](id: Id, c: A): Dot = {
-    val dotsWithId = c.dots.filter(_.replicaId == id)
+    val dotsWithId = DotStoreLattice[A].dots(c).filter(_.replicaId == id)
     val maxCount = if (dotsWithId.isEmpty) 0 else dotsWithId.map(_.counter).max
     Dot(id, maxCount + 1)
   }
@@ -112,21 +177,8 @@ object DotStoreLattice {
 
   def apply[A](implicit dotStore: DotStoreLattice[A]): dotStore.type = dotStore
 
-  implicit class DotStoreOps[A](val caller: A) extends AnyVal {
-
-    def add(d: Dot)(implicit dotStore: DotStoreLattice[A]): A = {
-      dotStore.compress(dotStore.add(caller, d))
-    }
-
-    //def addAll(c: Iterable[Dot])(implicit dotStore: DotStore[A]): A = {
-    //  dotStore.compress(c.foldLeft(caller: A)(dotStore.add))
-    //}
-
-    def dots(implicit dotStore: DotStoreLattice[A]): Set[Dot] = dotStore.dots(caller)
-    //def contains(d: Dot)(implicit dotStore: DotStore[A]): Boolean = dots.contains(d)
-  }
-
   // instances
+
   implicit def DotSetInstance: DotStoreLattice[Set[Dot]] = new DotStoreLattice[Set[Dot]] {
     type Store = Set[Dot]
 
@@ -150,14 +202,16 @@ object DotStoreLattice {
     }
   }
 
-  implicit def DotMapInstance[Key, A: DotStoreLattice]: DotStoreLattice[Map[Key, A]] = new DotStoreLattice[Map[Key, A]] {
+
+
+  implicit def DotMapInstance[Key, A](implicit dsl: DotStoreLattice[A]): DotStoreLattice[Map[Key, A]] = new DotStoreLattice[Map[Key, A]] {
     type Store = Map[Key, A]
 
-    override def add(a: Store, d: Dot): Store = a.mapValues(_.add(d))
+    override def add(a: Store, d: Dot): Store = a.mapValues(v => dsl.add(v, d))
 
-    override def dots(a: Store): Set[Dot] = a.valuesIterator.flatMap(_.dots).toSet
+    override def dots(a: Store): Set[Dot] = a.valuesIterator.flatMap(dsl.dots).toSet
 
-    override def compress(a: Store): Store = a.mapValues(DotStoreLattice[A].compress)
+    override def compress(a: Store): Store = a.mapValues(dsl.compress)
 
     override def empty: Store = Map.empty
 

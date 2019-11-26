@@ -19,4 +19,17 @@ object Lattice {
       override def merge(left: Set[A], right: Set[A]): Set[A] = left.union(right)
     }
 
+
+  implicit def optionLattice[A: Lattice]: Lattice[Option[A]] = {
+    case (None, r)    => r
+    case (l, None)    => l
+    case (Some(l), Some(r)) => Some(Lattice.merge[A](l, r))
+  }
+
+  implicit def mapLattice[K, V: Lattice]: Lattice[Map[K, V]] = (left, right) =>
+    Lattice.merge(left.keySet, right.keySet).iterator
+           .flatMap { key =>
+             Lattice.merge(left.get(key), right.get(key)).map(key -> _)
+           }.toMap
+
 }

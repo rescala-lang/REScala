@@ -41,7 +41,7 @@ case class AddWinsSet[A](store: Map[A, Set[Dot]], context: Set[Dot]) {
     * with the dot of the removed element in the context. */
   def removeΔ(e: A): AddWinsSet[A] = AddWinsSet[A](Map.empty, store.getOrElse(e, Set.empty))
 
-  def clear: AddWinsSet[A] = AddWinsSet[A](Map(), store.dots)
+  def clear: AddWinsSet[A] = AddWinsSet[A](Map(), DotStoreLattice[Map[A, Set[Dot]]].dots(store))
 
   def toSet: Set[A] = store.keySet
 

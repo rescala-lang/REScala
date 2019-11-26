@@ -2,11 +2,11 @@ package benchmarks.lattices
 
 import java.util.concurrent.TimeUnit
 
+import benchmarks.lattices.Codecs._
 import org.openjdk.jmh.annotations._
 import rescala.core.Struct
-import rescala.extra.lattices.dotstores.{Context, Dot, IntTree}
+import rescala.extra.lattices.sets.AddWinsSetO
 import rescala.extra.lattices.{IdUtil, Lattice}
-import rescala.extra.lattices.sets.{AddWinsSet, AddWinsSetO}
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -15,21 +15,21 @@ import rescala.extra.lattices.sets.{AddWinsSet, AddWinsSetO}
 @Fork(3)
 @Threads(1)
 @State(Scope.Thread)
-class AddWinsSetBench[S <: Struct] {
+class AddWinsSetOBench[S <: Struct] {
 
   @Param(Array("0", "1", "10", "100", "1000"))
   var setSize: Int = _
 
-  var rep1Set       : AddWinsSet[String] = _
-  var rep1SetPlusOne: AddWinsSet[String] = _
-  var rep2Set       : AddWinsSet[String] = _
+  var rep1Set       : AddWinsSetO[String] = _
+  var rep1SetPlusOne: AddWinsSetO[String] = _
+  var rep2Set       : AddWinsSetO[String] = _
   val rep1id                             = IdUtil.genId()
   val rep2id                             = IdUtil.genId()
-  var rep2Δ         : AddWinsSet[String] = _
+  var rep2Δ         : AddWinsSetO[String] = _
 
 
-  private def makeRep(rep: IdUtil.Id): AddWinsSet[String] = {
-    0.until(setSize).foldLeft(AddWinsSet.empty[String]) { case (s, v) => s.add(v.toString + rep, rep) }
+  private def makeRep(rep: IdUtil.Id): AddWinsSetO[String] = {
+    0.until(setSize).foldLeft(AddWinsSetO.empty[String]) { case (s, v) => s.add(v.toString + rep, rep) }
   }
 
   @Setup
@@ -73,47 +73,26 @@ class AddWinsSetBench[S <: Struct] {
   @Benchmark
   def serializeUJson() = {
     import upickle.default._
-    import Codecs.awsUJsonCodec
     write(rep1Set)
   }
 
   @Benchmark
   def serializeCirce() = {
     import io.circe.syntax._
-    import Codecs.awsCirceCodec
     rep1Set.asJson.noSpaces
   }
 
   @Benchmark
   def serializeUJsonΔ() = {
     import upickle.default._
-    import Codecs.awsUJsonCodec
     write(rep2Δ)
   }
 
   @Benchmark
   def serializeCirceΔ() = {
     import io.circe.syntax._
-    import Codecs.awsCirceCodec
     rep2Δ.asJson.noSpaces
   }
 
 }
 
-object Codecs {
-
-  import upickle.default._
-
-  implicit val dotUJsonCodec: upickle.default.ReadWriter[Dot] = upickle.default.macroRW
-  implicit val itRangeCodec: upickle.default.ReadWriter[IntTree.Range] = upickle.default.macroRW
-  implicit val contextCodec: upickle.default.ReadWriter[Context] = upickle.default.macroRW
-
-
-  implicit val awsOUJsonCodec: upickle.default.ReadWriter[AddWinsSetO[String]] = upickle.default.macroRW
-  implicit val awsUJsonCodec: upickle.default.ReadWriter[AddWinsSet[String]] = upickle.default.macroRW
-
-  import io.circe.generic.auto._
-
-  implicit val awsOCirceCodec: io.circe.Encoder[AddWinsSetO[String]] = io.circe.generic.semiauto.deriveEncoder
-  implicit val awsCirceCodec: io.circe.Encoder[AddWinsSet[String]] = io.circe.generic.semiauto.deriveEncoder
-}
