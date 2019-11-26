@@ -31,7 +31,7 @@ class DotSetTests extends FreeSpec with ScalaCheckDrivenPropertyChecks {
     val d2 = Dot("2", 1)
 
     val s1 = Set(d1)
-    assert(s1.dots.contains(d1))
+    assert(DotStoreLattice.DotSetInstance.dots(s1).contains(d1))
 
     val s2 = Set(d2)
     val c1 = Set(d1)

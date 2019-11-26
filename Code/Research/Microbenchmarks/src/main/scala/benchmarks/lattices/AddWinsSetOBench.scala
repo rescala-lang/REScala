@@ -64,6 +64,9 @@ class AddWinsSetOBench[S <: Struct] {
   def merge() = AddWinsSetO.latticeAddWinsSet.merge(rep1Set, rep2Set)
 
   @Benchmark
+  def merge2() = AddWinsSetO.latticeAddWinsSetPerfOpt.merge(rep1Set, rep2Set)
+
+  @Benchmark
   def mergeBaseline() = Lattice.merge(rep1Set.store, rep2Set.store)
 
     @Benchmark

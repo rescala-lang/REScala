@@ -54,7 +54,7 @@ object AddWinsSetO {
 
   def empty[A]: AddWinsSetO[A] = AddWinsSetO[A](Map.empty, Context.empty)
 
-  implicit def latticeAddWinsSet[A]: Lattice[AddWinsSetO[A]] = new Lattice[AddWinsSetO[A]] {
+  def latticeAddWinsSet[A]: Lattice[AddWinsSetO[A]] = new Lattice[AddWinsSetO[A]] {
 
 
     override def merge(left: AddWinsSetO[A], right: AddWinsSetO[A]): AddWinsSetO[A] = {
@@ -73,6 +73,38 @@ object AddWinsSetO {
 
         (keyValue, fullNew)
       }.filter {_._2 != Context.empty}.toMap
+
+      // the merged state has seen everything from both sides
+      val newContext = Lattice.merge(left.context, right.context)
+      AddWinsSetO(newStore, newContext)
+    }
+  }
+
+  implicit def latticeAddWinsSetPerfOpt[A]: Lattice[AddWinsSetO[A]] = new Lattice[AddWinsSetO[A]] {
+
+    override def merge(left: AddWinsSetO[A], right: AddWinsSetO[A]): AddWinsSetO[A] = {
+
+      val leftChanges = left.store.map { case (value, context) =>
+        val otherDots    = right.store.getOrElse(value, Context.empty)
+        val intersection = context.intersect(otherDots)
+        val additions    = context.diff(right.context)
+        val otherAdditions = otherDots.diff(left.context)
+        val newContext   = Lattice.merge(Lattice.merge(intersection, additions), otherAdditions)
+        if (newContext == context) None
+        else Some(value -> newContext)
+      }
+
+      val rightAdditions = right.store.collect {
+        case (value, context) if !left.store.contains(value) =>
+          val rightAdditions = context.diff(left.context)
+          Some(value -> rightAdditions)
+      }
+
+       val newStore = (leftChanges ++ rightAdditions)
+        .collect{case Some(pair) => pair}
+        .foldLeft(left.store){case (store, (value, context)) =>
+          store.updated(value, context)
+        }
 
       // the merged state has seen everything from both sides
       val newContext = Lattice.merge(left.context, right.context)
