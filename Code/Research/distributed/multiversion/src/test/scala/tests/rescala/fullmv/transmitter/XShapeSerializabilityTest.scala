@@ -1,6 +1,6 @@
 package tests.rescala.fullmv.transmitter
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import rescala.fullmv.transmitter.ReactiveTransmittable
 import rescala.fullmv._
 import loci.communicator.tcp.TCP
@@ -11,7 +11,7 @@ import scala.concurrent.{Await, TimeoutException}
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
-class XShapeSerializabilityTest extends FunSuite {
+class XShapeSerializabilityTest extends AnyFunSuite {
   test("X-shaped serializability") {
     assert(XShapeSerializabilityTest.run(10000) === null)
   }

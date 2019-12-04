@@ -1,6 +1,6 @@
 package tests.rescala.fullmv
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import rescala.core.Initializer
 import rescala.fullmv.FramingBranchResult.{Frame, FramingBranchEnd}
 import rescala.fullmv.NotificationBranchResult.{ReevaluationReady, DoNothing}
@@ -9,7 +9,7 @@ import rescala.fullmv._
 
 import scala.concurrent.duration.Duration
 
-class NodeVersionHistoryTest extends FunSuite {
+class NodeVersionHistoryTest extends AnyFunSuite {
   test("Frame Notify Reevout") {
     val engine = new FullMVEngine(Duration.Zero, "fnr")
 

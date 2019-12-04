@@ -1,7 +1,7 @@
 package tests.distribution
 
 import org.scalacheck.Arbitrary
-import org.scalatest.FreeSpec
+import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import rescala.extra.lattices.dotstores.{Dot, DotStoreLattice}
 import rescala.extra.lattices.Lattice.LatticeOps
@@ -16,7 +16,7 @@ object AWTestHelper {
 }
 
 
-class CausalCRDTTests extends FreeSpec with ScalaCheckPropertyChecks {
+class CausalCRDTTests extends AnyFreeSpec with ScalaCheckPropertyChecks {
   implicit lazy val addWinsSetWithStrings: Arbitrary[AddWinsSet[String]] = Arbitrary(for {
     values <- Arbitrary.arbitrary[Set[String]]
   } yield values.foldLeft(AddWinsSet.empty[String])

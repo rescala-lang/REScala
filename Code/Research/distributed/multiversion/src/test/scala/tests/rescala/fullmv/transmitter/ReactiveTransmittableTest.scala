@@ -1,6 +1,6 @@
 package tests.rescala.fullmv.transmitter
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import rescala.fullmv.transmitter.ReactiveTransmittable
 import rescala.fullmv.{FullMVEngine, FullMVStruct}
 import loci.communicator.tcp.TCP
@@ -10,7 +10,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-class ReactiveTransmittableTest extends FunSuite {
+class ReactiveTransmittableTest extends AnyFunSuite {
   class Host(name: String) extends FullMVEngine(10.second, name) {
     val registry = new Registry
 

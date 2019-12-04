@@ -2,7 +2,7 @@ package tests.rescala.fullmv.mirrors
 
 import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import rescala.fullmv._
 import rescala.fullmv.mirrors.localcloning.ReactiveLocalClone
 import tests.rescala.testtools.Spawn
@@ -12,7 +12,7 @@ import scala.concurrent.duration._
 import scala.concurrent.TimeoutException
 import scala.util.{Failure, Success}
 
-class XShapeMirrorTest extends FunSuite {
+class XShapeMirrorTest extends AnyFunSuite {
   case class Data[+T](name: String, data: T)
   case class Merge[+T](left: T, right: T)
 

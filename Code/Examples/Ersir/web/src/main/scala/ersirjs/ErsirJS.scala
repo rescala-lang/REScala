@@ -10,7 +10,7 @@ import org.scalajs.dom
 import rescala.default._
 import rescala.extra.lattices.sequences.RGOA
 import rescala.extra.lattices.sequences.RGOA.RGOA
-import rescala.locidistribute.LociDist
+import rescala.extra.distributables.LociDist
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -41,7 +41,7 @@ object ErsirJS {
 
   val registry = new Registry
 
-  LociDist.distribute(postings, registry, scheduler)
+  LociDist.distribute(postings, registry)(Bindings.crdtDescriptions)
 
 
   def main(args: Array[String]): Unit = {

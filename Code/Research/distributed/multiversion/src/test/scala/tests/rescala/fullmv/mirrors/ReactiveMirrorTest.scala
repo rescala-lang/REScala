@@ -1,13 +1,13 @@
 package tests.rescala.fullmv.mirrors
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import rescala.fullmv.FullMVEngine
 import rescala.fullmv.mirrors.localcloning.ReactiveLocalClone
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration.Duration
 
-class ReactiveMirrorTest extends FunSuite {
+class ReactiveMirrorTest extends AnyFunSuite {
   val engineA = new FullMVEngine(Duration.Zero, "A")
   val engineB = new FullMVEngine(Duration.Zero, "B")
   test("basic mirroring works") {

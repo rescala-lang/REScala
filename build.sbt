@@ -65,7 +65,7 @@ lazy val rescalaJS = rescala.js
 //lazy val rescalaNative = rescala.native
 
 lazy val tests = crossProject(JSPlatform, JVMPlatform).in(file("Code/Tests"))
-  .settings(name := "rescala-tests", cfg.noPublish, cfg.base, cfg.test, scalacheck,
+  .settings(name := "rescala-tests", cfg.noPublish, cfg.base, cfg.test, scalatestpluscheck,
             Dependencies.loci.wsAkka,
             lib.lociTransmitterDependencies, circe, lib.lociTransmitterDependencies,
             scalatags)
@@ -287,14 +287,29 @@ lazy val lib = new {
     libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"
   )
 
+  val jline = libraryDependencies += "org.scala-lang.modules" % "scala-jline" % "2.12.1"
+
+  // Determine OS version of JavaFX binaries
+  lazy val osName = System.getProperty("os.name") match {
+    case n if n.startsWith("Linux") => "linux"
+    case n if n.startsWith("Mac") => "mac"
+    case n if n.startsWith("Windows") => "win"
+    case _ => throw new Exception("Unknown platform!")
+  }
+
+  // Add JavaFX dependencies
+  lazy val javaFXModules = Seq("base", "controls", "fxml", "graphics", "media", "swing", "web")
+  val javafx = libraryDependencies ++= javaFXModules.map( m=>
+    "org.openjfx" % s"javafx-$m" % "12.0.2" classifier osName
+  )
+
+
   val scalafx = Seq(
     libraryDependencies += "org.scalafx" %% "scalafx" % "8.0.144-R12",
+    javafx,
     scalaswing,
     unmanagedJars in Compile += Attributed.blank(file(System.getenv("JAVA_HOME") + "/lib/ext/jfxrt.jar"))
   )
-
-  val jline = libraryDependencies += "org.scala-lang.modules" % "scala-jline" % "2.12.1"
-
 }
 
 
@@ -360,7 +375,7 @@ lazy val ersirShared = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure).in(file("Code/Examples/Ersir/shared"))
   .settings(
     name := "shared",
-    scalatags, loci.communication, loci.wsAkka, circe, scribe
+    scalatags, loci.communication, loci.wsAkka, circe, scribe,loci.circe
     )
   .dependsOn(rescala)
 lazy val ersirSharedJVM = ersirShared.jvm

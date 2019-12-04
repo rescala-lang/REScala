@@ -1,6 +1,6 @@
 package tests.rescala.concurrency.philosophers
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import rescala.Interfaces
 import rescala.core.Struct
 import rescala.interface.RescalaInterface
@@ -9,7 +9,7 @@ import tests.rescala.testtools.Spawn
 import scala.concurrent.TimeoutException
 import scala.util.{Failure, Success}
 
-class PhiloTest extends FunSuite {
+class PhiloTest extends AnyFunSuite {
   def `eat!`[S <: Struct](engine: RescalaInterface[S], dynamic: Boolean): Unit = {
     val size = 3
     val table =

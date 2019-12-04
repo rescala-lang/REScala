@@ -1,10 +1,10 @@
 package tests.restoration
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import rescala.extra.restoration.ReCirce._
 import rescala.extra.restoration.{InMemoryStore, RestoringInterface}
 
-class RestoringTest extends FunSuite {
+class RestoringTest extends AnyFunSuite {
 
   def makeGraph()(implicit api: InMemoryStore) = {
     val e = api.Evt[Unit]()("graph main event")

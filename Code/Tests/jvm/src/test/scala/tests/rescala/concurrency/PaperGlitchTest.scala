@@ -2,14 +2,14 @@ package tests.rescala.concurrency
 
 import java.util.concurrent.{ConcurrentLinkedQueue, CountDownLatch}
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import rescala.Schedulers
 import rescala.interface.RescalaInterface
 import tests.rescala.testtools.Spawn
 
 import scala.util.Random
 
-class PaperGlitchTest extends FunSuite {
+class PaperGlitchTest extends AnyFunSuite {
 
   ignore("execute paper glitch test"){
     /*val lnOf2 = scala.math.log(2) // natural log of 2*/

@@ -1,13 +1,13 @@
 package tests.rescala.fullmv
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import rescala.fullmv._
 import rescala.fullmv.sgt.synchronization._
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-class LockUnionFindTest extends FunSuite {
+class LockUnionFindTest extends AnyFunSuite {
   val engine = new FullMVEngine(Duration.Zero, "LockUnionFindTest")
 
   test("single lock gc works") {

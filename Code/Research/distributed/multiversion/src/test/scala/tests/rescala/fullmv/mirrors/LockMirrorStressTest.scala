@@ -2,7 +2,7 @@ package tests.rescala.fullmv.mirrors
 
 import java.util.concurrent.atomic.AtomicReference
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import rescala.fullmv._
 import rescala.fullmv.mirrors.localcloning.FullMVTurnLocalClone
 import rescala.parrp.Backoff
@@ -13,7 +13,7 @@ import scala.concurrent.TimeoutException
 import scala.concurrent.duration.Duration
 import scala.util.{Failure, Random, Success}
 
-class LockMirrorStressTest extends FunSuite {
+class LockMirrorStressTest extends AnyFunSuite {
   test("stress") {
 
     val numWorkers = 4

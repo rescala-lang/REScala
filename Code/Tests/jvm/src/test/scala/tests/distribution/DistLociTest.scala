@@ -5,7 +5,7 @@ import loci.communicator.ws.akka.WS
 import loci.registry.{Binding, Registry}
 import loci.serializer.circe._
 import loci.transmitter.{IdenticallyTransmittable, RemoteRef}
-import org.scalatest.FreeSpec
+import org.scalatest.freespec.AnyFreeSpec
 import rescala.default._
 import rescala.extra.distributables.LociDist.dfold
 import rescala.extra.lattices.sequences.RGA.RGA
@@ -13,7 +13,7 @@ import rescala.extra.lattices.sequences.RGA.RGA
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
-class DistLociTest extends FreeSpec {
+class DistLociTest extends AnyFreeSpec {
   "very simple fold " ignore {
 
 

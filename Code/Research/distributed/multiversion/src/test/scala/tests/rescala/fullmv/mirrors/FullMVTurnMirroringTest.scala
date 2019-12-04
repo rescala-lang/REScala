@@ -1,13 +1,13 @@
 package tests.rescala.fullmv.mirrors
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import rescala.fullmv._
 import rescala.fullmv.mirrors.localcloning.FullMVTurnLocalClone
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-class FullMVTurnMirroringTest extends FunSuite {
+class FullMVTurnMirroringTest extends AnyFunSuite {
 
   test("instance lookup"){
     val host0 = new FullMVEngine(Duration.Zero, "0")

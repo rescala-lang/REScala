@@ -3,8 +3,9 @@ package ersir.shared
 import io.circe.generic.auto._
 import io.circe.generic.semiauto._
 import io.circe.{Decoder, Encoder}
-import loci.registry.Binding
+import loci.registry.{Binding, BindingBuilder}
 import loci.serializer.circe._
+import loci.transmitter.IdenticallyTransmittable
 import rescala.extra.lattices.sequences.RGOA.RGOA
 
 case class Posting(title: String,
@@ -24,5 +25,15 @@ object Posting {
 }
 
 object Bindings {
-  val crdtDescriptions = Binding[Epoche[RGOA[Posting]]]("postings")
+  implicit def rgoaEncoder[A: Encoder]: Encoder[RGOA[A]] = deriveEncoder[RGOA[A]]
+  implicit def rgoaDecoder[A: Decoder]: Decoder[RGOA[A]] = deriveDecoder[RGOA[A]]
+
+
+  implicit def epocheEncoder[A: Encoder]: Encoder[Epoche[A]] = deriveEncoder
+  implicit def epocheDecoder[A: Decoder]: Decoder[Epoche[A]] = deriveDecoder
+
+  implicit val _Tbm: IdenticallyTransmittable[Epoche[RGOA[Posting]]] = IdenticallyTransmittable()
+
+
+  val crdtDescriptions = Binding[Epoche[RGOA[Posting]] => Unit]("postings")
 }

@@ -1,13 +1,13 @@
 package tests.rescala.testtools
 
 import org.scalactic.source
-import org.scalatest.FreeSpec
+import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.prop.TableDrivenPropertyChecks
 import rescala.core.Struct
 import rescala.interface.RescalaInterface
 
 
-abstract class RETests extends FreeSpec with TableDrivenPropertyChecks {
+abstract class RETests extends AnyFreeSpec with TableDrivenPropertyChecks {
 
   type TestStruct <: Struct
 

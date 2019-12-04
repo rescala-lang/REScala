@@ -1,6 +1,6 @@
 //package tests.rescala.fullmv
 //
-//import org.scalatest.FunSuite
+//import org.scalatest.funsuite.AnyFunSuite
 //import rescala.fullmv.sgt.synchronization.SubsumableLock.TryLockResult
 //import rescala.fullmv.sgt.synchronization.{SubsumableLock, SubsumableLockImpl}
 //import rescala.fullmv.transmitter.SubsumableLockTransmittable
@@ -14,7 +14,7 @@
 //import scala.concurrent.{Await, TimeoutException}
 //import scala.util.{Failure, Try}
 //
-//class RemoteLockUnionFindTest extends FunSuite {
+//class RemoteLockUnionFindTest extends AnyFunSuite {
 //  test("remote transfer works") {
 ////    val serializable = implicitly[Serializable[(Unit, Nothing, Long, (Int, TryLockResult), TryLockResult)]]
 //    val serializable = upickleBasedSerializable[SubsumableLockTransmittable.Message](

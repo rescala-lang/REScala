@@ -1,13 +1,13 @@
 package tests.rescala.fullmv
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import rescala.fullmv.NotificationBranchResult.ReevOutBranchResult.{NotifyAndNonReadySuccessor, PureNotifyOnly}
 import rescala.fullmv.{FramingBranchResult, FullMVEngine, NotificationBranchResult}
 import rescala.fullmv.tasks._
 
 import scala.concurrent.duration.Duration
 
-class DeframeTest extends FunSuite {
+class DeframeTest extends AnyFunSuite {
   test("deframe") {
     val engine = new FullMVEngine(Duration.Zero, "deframe-test")
     import engine._

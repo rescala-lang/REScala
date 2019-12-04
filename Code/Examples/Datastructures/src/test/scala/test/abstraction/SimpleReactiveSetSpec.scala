@@ -1,11 +1,11 @@
 package test.abstraction
 
-import org.scalatest._
+import org.scalatest.funspec._
 import rescala.default._
 
 import scala.language.implicitConversions
 
-class SimpleReactiveSetSpec extends FunSpec {
+class SimpleReactiveSetSpec extends AnyFunSpec {
 
   implicit def liftToSignal[T](v: T): Signal[T] = Var(v)
 

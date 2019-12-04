@@ -5,13 +5,13 @@ import java.time.{LocalDate => Date}
 
 import cats.syntax.either._
 import io.circe.{Decoder, Encoder}
-import org.scalatest.FreeSpec
+import org.scalatest.freespec.AnyFreeSpec
 import rescala.extra.restoration.ReCirce._
 import rescala.extra.restoration.RestoringInterface
 
 
 
-class PaperExampleSharedCalendar extends FreeSpec {
+class PaperExampleSharedCalendar extends AnyFreeSpec {
 
   val interface = RestoringInterface()
   import interface._

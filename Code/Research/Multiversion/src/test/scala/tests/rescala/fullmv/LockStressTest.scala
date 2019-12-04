@@ -2,7 +2,7 @@ package tests.rescala.fullmv
 
 import java.util.concurrent.atomic.AtomicReference
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import rescala.fullmv._
 import tests.rescala.testtools.Spawn
 
@@ -11,7 +11,7 @@ import scala.concurrent.TimeoutException
 import scala.concurrent.duration.Duration
 import scala.util.{Failure, Random, Success}
 
-class LockStressTest extends FunSuite {
+class LockStressTest extends AnyFunSuite {
   test("stress") {
     val host = new FullMVEngine(Duration.Zero, "lockStressTest")
 

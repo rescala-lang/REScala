@@ -1,6 +1,7 @@
 package tests.rescala.testtools
 
-import org.scalatest.{Assertions, Matchers}
+import org.scalatest.{Assertions}
+import org.scalatest.matchers.should.Matchers
 import rescala.core.{CreationTicket, Struct}
 import rescala.reactives.{Event, Signal}
 

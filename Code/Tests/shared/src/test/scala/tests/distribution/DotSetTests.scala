@@ -1,7 +1,7 @@
 package tests.distribution
 
 import org.scalacheck.{Arbitrary, Gen}
-import org.scalatest.FreeSpec
+import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.lattices.dotstores.DotStoreLattice._
 import rescala.extra.lattices.dotstores.{Causal, Dot, DotStoreLattice}
@@ -22,7 +22,7 @@ object DotSetGenerator {
 }
 
 
-class DotSetTests extends FreeSpec with ScalaCheckDrivenPropertyChecks {
+class DotSetTests extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
   import DotSetGenerator._
 

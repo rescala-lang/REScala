@@ -1,12 +1,12 @@
 package test.collections
 
 import main.collections._
-import org.scalatest._
+import org.scalatest.funspec._
 import rescala.default._
 
 import scala.language.implicitConversions
 
-class ReactiveListSpec extends FunSpec {
+class ReactiveListSpec extends AnyFunSpec {
   implicit def liftToSignal[T](v: T): Signal[T] = Var(v)
 
   describe("ReactiveList") {

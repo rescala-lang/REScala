@@ -1,6 +1,6 @@
 package tests.rescala.fullmv
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import rescala.fullmv.FullMVTurnImpl
 
 import scala.concurrent.Await
@@ -10,7 +10,7 @@ import rescala.fullmv.sgt.synchronization.{Locked, Successful}
 
 import scala.util.Random
 
-class FullMVTurnTransitiveReachabilityTest extends FunSuite {
+class FullMVTurnTransitiveReachabilityTest extends AnyFunSuite {
   case class Disagreement[T](from: T, to: T, closure: Boolean, addEdgeSearchPath: Boolean)
 
   private def findDisagreements[T](nodes: Set[T], trees: Map[T, FullMVTurnImpl], transitiveClosure: Map[T, Set[T]]) = {

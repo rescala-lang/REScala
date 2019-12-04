@@ -1,6 +1,6 @@
 package tests.rescala.fullmv.mirrors
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import rescala.fullmv.FullMVEngine
 import rescala.fullmv.mirrors.localcloning.FullMVTurnLocalClone
 import rescala.fullmv.sgt.synchronization.{Blocked, Locked, SubsumableLock, Successful}
@@ -8,7 +8,7 @@ import rescala.fullmv.sgt.synchronization.{Blocked, Locked, SubsumableLock, Succ
 import scala.concurrent.duration.Duration
 import scala.concurrent.Await
 
-class LockUnionFindMirrorTest extends FunSuite {
+class LockUnionFindMirrorTest extends AnyFunSuite {
   test("double remote direct lock/block/unlock works") {
     val host1a = new FullMVEngine(Duration.Zero, "host1a")
     val host1b = new FullMVEngine(Duration.Zero, "host1b")

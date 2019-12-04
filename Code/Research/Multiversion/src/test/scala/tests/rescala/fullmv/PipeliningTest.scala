@@ -1,11 +1,11 @@
 package tests.rescala.fullmv
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import rescala.core.REName
 import rescala.fullmv.FullMVEngine.default._
 import tests.rescala.testtools.Spawn
 
-class PipeliningTest extends FunSuite {
+class PipeliningTest extends AnyFunSuite {
   test("pipelining works") {
     val millisecondsPerNode = 10L
     val pipelineLength = 20

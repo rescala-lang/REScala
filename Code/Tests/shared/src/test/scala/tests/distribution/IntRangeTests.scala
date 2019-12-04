@@ -1,7 +1,7 @@
 package tests.distribution
 
 import org.scalacheck.{Arbitrary, Gen}
-import org.scalatest.FreeSpec
+import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.lattices.dotstores.IntTree
 import rescala.extra.lattices.sets.AddWinsSetO
@@ -14,7 +14,7 @@ object IntRangeGenerator {
 }
 
 
-class IntRangeTests extends FreeSpec with ScalaCheckDrivenPropertyChecks {
+class IntRangeTests extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
   import IntRangeGenerator._
 
@@ -37,7 +37,7 @@ class IntRangeTests extends FreeSpec with ScalaCheckDrivenPropertyChecks {
 
 }
 
-class AddWinsSetOTest extends FreeSpec with ScalaCheckDrivenPropertyChecks {
+class AddWinsSetOTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
   implicit val shortlists: Arbitrary[Seq[Int]] = Arbitrary(Gen.someOf(0 to 20))
 
@@ -47,7 +47,7 @@ class AddWinsSetOTest extends FreeSpec with ScalaCheckDrivenPropertyChecks {
     val aws2 = list2.foldLeft(AddWinsSetO.empty[Int])(_.add(_, replica))
 
     val mergeOld = AddWinsSetO.latticeAddWinsSet.merge(aws1, aws2)
-    val mergeNew = AddWinsSetO.latticeAddWinsSet2.merge(aws1, aws2)
+    val mergeNew = AddWinsSetO.latticeAddWinsSetPerfOpt.merge(aws1, aws2)
 
     assert(mergeOld == mergeNew)
   }
