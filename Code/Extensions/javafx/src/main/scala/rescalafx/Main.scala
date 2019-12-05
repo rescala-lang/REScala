@@ -7,6 +7,7 @@ import scalafx.scene.{Node, Scene}
 import scalafx.scene.control.{Label, Slider}
 import scalafx.scene.layout.VBox
 import JFXAdapter._
+import rescala.default._
 
 object Main extends JFXApp {
 

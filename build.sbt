@@ -121,11 +121,14 @@ lazy val todolist = project.in(file("Code/Examples/Todolist"))
 
 lazy val dividi = project.in(file("Code/Examples/dividi"))
   .dependsOn(rescalaJVM)
-  .settings(name := "dividi", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.scalaLogback, lib.scalafx, cfg.strictScalac)
+  .settings(name := "dividi", cfg.base, cfg.noPublish, cfg.mappingFilters,
+            lib.scalaLogback, lib.scalafx, circe, loci.communication, loci.circe,
+            loci.wsAkka, lib.scalafxExtras)
 
 lazy val paroli = project.in(file("Code/Examples/paroli-chat"))
   .dependsOn(rescalaJVM)
-  .settings(name := "paroli-chat", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.scalaLogback, lib.jline, cfg.strictScalac)
+  .settings(name := "paroli-chat", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.scalaLogback,
+            lib.jline, cfg.strictScalac, lib.oldAkkaCluster, circe)
 
 
 // ===================================================================================== Research
@@ -310,6 +313,25 @@ lazy val lib = new {
     scalaswing,
     unmanagedJars in Compile += Attributed.blank(file(System.getenv("JAVA_HOME") + "/lib/ext/jfxrt.jar"))
   )
+
+  val scalafxExtras = Seq(
+    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
+    libraryDependencies += "org.scalafx" %% "scalafxml-core-sfx8" % "0.5",
+    libraryDependencies += "com.jfoenix" % "jfoenix" % "9.0.8"
+    )
+
+  val oldAkkaCluster = {
+    val akkaVersion = "2.5.3"
+
+    libraryDependencies ++= Seq(
+      "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
+      "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+      "com.typesafe.akka" %% "akka-remote" % akkaVersion,
+      "com.typesafe.akka" %% "akka-cluster" % akkaVersion,
+      "com.typesafe.akka" %% "akka-cluster-metrics" % akkaVersion,
+      "com.typesafe.akka" %% "akka-cluster-tools" % akkaVersion,
+      "com.typesafe.akka" %% "akka-multi-node-testkit" % akkaVersion)
+  }
 }
 
 

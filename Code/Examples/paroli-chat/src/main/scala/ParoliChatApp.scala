@@ -1,13 +1,23 @@
 
 import akka.cluster.Cluster
-import rescala.crdts.distributables._
+import rescala.extra.distributables._
 import com.typesafe.config.ConfigFactory
 import akka.actor._
 import akka.actor.Props
 import rescala.extra.distributables.PVertexList
-import rescala.extra.lattices.sequences.Vertex
+import rescala.default._
 
 import scala.tools.jline
+
+class DistributionEngine extends Actor {
+  override def receive: Receive = {
+    case any => println(s"dummy implementation received $any")
+  }
+}
+
+object DistributionEngine {
+    def props(hostName: String) = Props(new DistributionEngine())
+}
 
 /**
   * Created by julian on 26.07.17.
@@ -42,14 +52,14 @@ object ParoliChatApp {
   }
 
   def run(name: String, e: ActorRef): Unit = {
-    implicit val engine = e
+    //implicit val engine = e
     val history: PVertexList[String] = PVertexList(List())
-    history.publish("ChatHistory")
+    //history.publish("ChatHistory")
 
     // redraw interface every time the history changes:
-    history.changes += { _ => {
+    history.crdtSignal.observe { value => {
       val safeLine = console.getCursorBuffer().copy()
-      drawInterface(name, history.value)
+      drawInterface(name, value.iterator.toList)
       console.resetPromptLine(console.getPrompt(), safeLine.toString, safeLine.cursor)
     }
     }

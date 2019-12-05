@@ -2,11 +2,11 @@ import java.io.IOException
 
 import com.typesafe.scalalogging.Logger
 import io.circe.generic.auto._
+import javafx.fxml.FXMLLoader
 import loci.communicator.ws.akka.WS
 import loci.registry.{Binding, Registry}
 import loci.serializer.circe._
-import loci.transmitter.RemoteRef
-import rescala.crdts.distributables.DistributedSignal._
+import loci.transmitter.{IdenticallyTransmittable, RemoteRef}
 import rescala.default._
 import rescala.extra.distributables.PGrowOnlyLog
 import scalafx.Includes._
@@ -61,9 +61,11 @@ object DividiApp extends JFXApp {
     }
   }
 
+  implicit val _transmittableGrowOnlyLog: IdenticallyTransmittable[PGrowOnlyLog[Transaction]] = IdenticallyTransmittable()
+
   // instanciate shared log
   val logBinding = Binding[PGrowOnlyLog[Transaction]]("log")
-  val (registry, transactionLog): (Registry, PGrowOnlyLog[Transaction]) = {
+  val (registry, transactionLogDist): (Registry, PGrowOnlyLog[Transaction]) = {
     val registry = new Registry
     if (username == "Alice") { //server mode
       registry.listen(WS(1099))
@@ -81,20 +83,21 @@ object DividiApp extends JFXApp {
       (registry, log)
     }
   }
+  val transactionLog = transactionLogDist.crdtSignal
 
   // listen for new transactions and append them to the log
   val newTransaction: Evt[Transaction] = Evt[Transaction]()
-  transactionLog.observe(newTransaction)
+  transactionLogDist.observe(newTransaction)
 
   // extract all people involved
   val peopleInvolved: Signal[Set[Payer]] = Signal {
-    transactionLog().foldLeft(Set[Payer](username))((people, transaction) =>
+    transactionLog().iterator.foldLeft(Set[Payer](username))((people, transaction) =>
       people + transaction.payer ++ transaction.sharedBetween)
   }
 
   // calculate a map keeping track of the debts of all users
   val debts: Signal[Map[Payer, Amount]] = Signal {
-    transactionLog().foldLeft(Map[Payer, Amount]().withDefaultValue(0: Amount))((debts, transaction) => {
+    transactionLog().iterator.foldLeft(Map[Payer, Amount]().withDefaultValue(0: Amount))((debts, transaction) => {
       val payer = transaction.payer
       val amount = transaction.amount
 
@@ -152,7 +155,7 @@ object DividiApp extends JFXApp {
   }
 
   // render FXML
-  val root = FXMLView(resource, NoDependencyResolver)
+  val root = FXMLLoader.load[Scene](resource)
   stage = new PrimaryStage() {
     title = s"Dividi: $username"
     scene = new Scene(root)

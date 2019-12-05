@@ -1,17 +1,15 @@
 import DividiApp.Payer
 import com.jfoenix.controls._
 import rescala.default._
+import scalafx.Includes._
+import scalafx.application.Platform
+import scalafx.event.ActionEvent
+import scalafx.scene.layout.VBox
+import scalafx.scene.text.{Text, TextFlow}
+import scalafxml.core.macros.sfxml
 
 import scala.math.BigDecimal
 import scala.math.BigDecimal.RoundingMode
-import scalafx.beans.property.StringProperty
-import scalafx.event.ActionEvent
-import scalafx.scene.control.{CheckBox, ChoiceBox, TextArea, TextField}
-import scalafx.scene.layout.{GridPane, VBox}
-import scalafx.scene.text.{Text, TextFlow}
-import scalafxml.core.macros.sfxml
-import scalafx.Includes._
-import scalafx.application.Platform
 
 @sfxml(additionalControls = List("com.jfoenix.controls"))
 class DividiPresenter(private val onlineButton: JFXToggleButton,
@@ -51,7 +49,7 @@ class DividiPresenter(private val onlineButton: JFXToggleButton,
   }})
 
   // bind logOutput
-  DividiApp.transactionLog.changed += (l => logOutput.text() = l.mkString("\n\n"))
+  DividiApp.transactionLog.changed += (l => logOutput.text() = l.iterator.mkString("\n\n"))
 
   // bind debtOutput
   val initial = "You are all set!"
