@@ -10,15 +10,15 @@ cfg.noPublish
 
 lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
   datastructures,
-//  dividi,
+  dividi,
   documentation,
   examples,
   fullmv,
   microbench,
-//  paroli,
+  paroli,
   rescalaJS,
   rescalaJVM,
-//  rescalafx,
+  rescalafx,
   reswing,
   testsJS,
   testsJVM,
