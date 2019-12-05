@@ -3,7 +3,7 @@ package ersir
 import akka.actor.ActorSystem
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
-import ersir.shared.{Epoche, Posting}
+import ersir.shared.{Bindings, Epoche, Posting}
 import io.circe.generic.auto._
 import loci.communicator.ws.akka._
 import loci.registry.Registry
@@ -13,7 +13,7 @@ import rescala.default._
 import rescala.extra.lattices.Lattice
 import rescala.extra.lattices.sequences.RGOA
 import rescala.extra.lattices.sequences.RGOA.RGOA
-import rescala.locidistribute.LociDist
+import rescala.extra.distributables.LociDist
 import rescala.reactives.Signals.Diff
 
 import scala.collection.JavaConverters._
@@ -38,7 +38,7 @@ class Server(pages: ServerPages,
   addNewsFeed()
 
   scribe.info("test")
-  LociDist.distribute(serverSideEntries, registry, scheduler)
+  LociDist.distribute(serverSideEntries, registry)(Bindings.crdtDescriptions)
 
   serverSideEntries.observe{sse =>
     scribe.trace(s"new postings ${sse.value.value}")
