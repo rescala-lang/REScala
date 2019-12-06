@@ -25,7 +25,7 @@ class AddWinsSetBench[S <: Struct] {
   var rep2Set       : AddWinsSet[String] = _
   val rep1id                             = IdUtil.genId()
   val rep2id                             = IdUtil.genId()
-  var rep2Δ         : AddWinsSet[String] = _
+  var rep2Delta         : AddWinsSet[String] = _
 
 
   private def makeRep(rep: IdUtil.Id): AddWinsSet[String] = {
@@ -36,8 +36,8 @@ class AddWinsSetBench[S <: Struct] {
   def setup(): Unit = {
     rep1Set = makeRep(rep1id)
     rep2Set = makeRep(rep2id)
-    rep2Δ = rep2Set.addΔ("hallo welt", rep2id)
-    rep1SetPlusOne = Lattice.merge(rep1Set, rep2Δ)
+    rep2Delta = rep2Set.addΔ("hallo welt", rep2id)
+    rep1SetPlusOne = Lattice.merge(rep1Set, rep2Delta)
   }
 
 
@@ -48,7 +48,7 @@ class AddWinsSetBench[S <: Struct] {
   def addOne() = rep1Set.add("Hallo Welt", rep1id)
 
   @Benchmark
-  def addOneΔ() = rep1Set.addΔ("Hallo Welt", rep1id)
+  def addOneDelta() = rep1Set.addΔ("Hallo Welt", rep1id)
 
   @Benchmark
   def containsNot() = rep1Set.contains("Hallo Welt")
@@ -67,7 +67,7 @@ class AddWinsSetBench[S <: Struct] {
 
 
   @Benchmark
-  def mergeΔ() = Lattice.merge(rep1Set, rep2Δ)
+  def mergeDelta() = Lattice.merge(rep1Set, rep2Delta)
 
 
   @Benchmark
@@ -85,17 +85,17 @@ class AddWinsSetBench[S <: Struct] {
   }
 
   @Benchmark
-  def serializeUJsonΔ() = {
+  def serializeUJsonDelta() = {
     import upickle.default._
     import Codecs.awsUJsonCodec
-    write(rep2Δ)
+    write(rep2Delta)
   }
 
   @Benchmark
-  def serializeCirceΔ() = {
+  def serializeCirceDelta() = {
     import io.circe.syntax._
     import Codecs.awsCirceCodec
-    rep2Δ.asJson.noSpaces
+    rep2Delta.asJson.noSpaces
   }
 
 }
