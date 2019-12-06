@@ -28,3 +28,4 @@ proguard-sbt.txt
 target
 test-output/
 website/
+.sync/
