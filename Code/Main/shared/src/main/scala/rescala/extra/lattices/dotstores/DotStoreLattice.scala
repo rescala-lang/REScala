@@ -26,9 +26,9 @@ case class Context(internal: Map[Id, IntTree.Tree]) {
     }
   }
   def intersect(other: Context): Context = Context {
-    internal.iterator.filter{case (id, _ ) => other.internal.contains(id) }.map{ case (id, range) =>
+    internal.iterator.filter { case (id, _) => other.internal.contains(id) }.map { case (id, range) =>
       val otherRange = other.internal(id)
-      val res = IntTree.fromIterator(IntTree.toSeq(range).iterator.filter(IntTree.contains(otherRange, _)))
+      val res        = IntTree.fromIterator(IntTree.toSeq(range).iterator.filter(IntTree.contains(otherRange, _)))
       id -> res
     }.toMap
   }
@@ -58,8 +58,8 @@ object IntTree {
   def fromIterator(iterable: Iterator[Int]): Tree = iterable.foldLeft(empty)(IntTree.insert)
 
   def show(tree: Tree): String = tree match {
-    case Empty => "[]"
-    case tree : Range => s"{L${show(tree.less)} I[${tree.from}, ${tree.until-1}] R${show(tree.more)}}"
+    case Empty       => "[]"
+    case tree: Range => s"{L${show(tree.less)} I[${tree.from}, ${tree.until - 1}] R${show(tree.more)}}"
   }
 
   val empty: Tree = Empty
@@ -67,22 +67,22 @@ object IntTree {
   def insert(tree: Tree, value: Int): Tree = insert(tree, value, value + 1)
 
   def ranges(tree: Tree): List[Range] = tree match {
-    case Empty => Nil
-    case tree : Range => (ranges(tree.less) :+ tree) ++ ranges(tree.more)
+    case Empty       => Nil
+    case tree: Range => (ranges(tree.less) :+ tree) ++ ranges(tree.more)
   }
 
   def toSeq(tree: Tree): List[Int] = tree match {
-    case Empty => Nil
-    case tree : Range =>  toSeq(tree.less) ++ (tree.from until tree.until) ++ toSeq(tree.more)
+    case Empty       => Nil
+    case tree: Range => toSeq(tree.less) ++ (tree.from until tree.until) ++ toSeq(tree.more)
   }
 
-  def merge(left: Tree, right: Tree): Tree = ranges(right).foldLeft(left){ (ir, r) => insert(ir, r.from, r.until)}
+  def merge(left: Tree, right: Tree): Tree = ranges(right).foldLeft(left) { (ir, r) => insert(ir, r.from, r.until) }
 
   private def overlap(start: Int, middle: Int, end: Int): Boolean = start <= middle && middle <= end
 
   def nextValue(tree: Tree, default: Int): Int = max(tree) match {
     case (_, maxr: Range) => maxr.until
-    case _ => default
+    case _                => default
   }
 
   def max(tree: Tree): (Tree, Tree) = tree match {
@@ -101,12 +101,12 @@ object IntTree {
     case Empty       => (tree, tree)
     case tree: Range =>
       import tree._
-    less match {
-      case less: Range =>
-                val (t, m) = min(less)
-        (copy(less = t), m)
-      case Empty =>(more, tree)
-    }
+      less match {
+        case less: Range =>
+          val (t, m) = min(less)
+          (copy(less = t), m)
+        case Empty       => (more, tree)
+      }
   }
 
 
@@ -142,21 +142,19 @@ object IntTree {
 
   @scala.annotation.tailrec
   def contains(tree: Tree, search: Int): Boolean = tree match {
-    case Empty => false
-    case tree : Range =>{
-    if (search < tree.from) contains(tree.less, search)
-    else if (tree.until <= search) contains(tree.more, search)
-    else true
+    case Empty       => false
+    case tree: Range => {
+      if (search < tree.from) contains(tree.less, search)
+      else if (tree.until <= search) contains(tree.more, search)
+      else true
+    }
   }
 }
-      }
-
-
 
 
 /** Dot stores provide a generic way to merge datastructures,
-  * implemented on top of one of the provided dot stores.
-  * */
+ * implemented on top of one of the provided dot stores.
+ * */
 trait DotStoreLattice[Store] {
   def add(a: Store, d: Dot): Store
 
@@ -167,15 +165,15 @@ trait DotStoreLattice[Store] {
   def empty: Store
 
   /** The new element contains all the dots that are either
-    * contained in both dotstores or contained in one of the dotstores but not in the causal context (history) of the
-    * other one. */
+   * contained in both dotstores or contained in one of the dotstores but not in the causal context (history) of the
+   * other one. */
   def merge(left: Causal[Store], right: Causal[Store]): Causal[Store]
 }
 
 object DotStoreLattice {
   def next[A: DotStoreLattice](id: Id, c: A): Dot = {
     val dotsWithId = DotStoreLattice[A].dots(c).filter(_.replicaId == id)
-    val maxCount = if (dotsWithId.isEmpty) 0 else dotsWithId.map(_.counter).max
+    val maxCount   = if (dotsWithId.isEmpty) 0 else dotsWithId.map(_.counter).max
     Dot(id, maxCount + 1)
   }
 
@@ -195,8 +193,8 @@ object DotStoreLattice {
     override def dots(a: Store): Store = a
 
     /**
-      * Only keeps the highest element of each dot subsequence in the set.
-      */
+     * Only keeps the highest element of each dot subsequence in the set.
+     */
     //TODO: how do we know where subsequences started?
     //TODO: this most likely only works with causal delivery of things, which we may not have
     override def compress(a: Store): Store = a.filter(d => !a.contains(Dot(d.replicaId, d.counter + 1)))
@@ -204,12 +202,11 @@ object DotStoreLattice {
     override def empty: Store = Set.empty
 
     override def merge(left: Causal[Store], right: Causal[Store]): Causal[Store] = {
-      val common = left.store intersect right.store
-      val newElements = (left.store diff  right.context) union (right.store diff left.context)
+      val common      = left.store intersect right.store
+      val newElements = (left.store diff right.context) union (right.store diff left.context)
       Causal(common union newElements, left.context union right.context)
     }
   }
-
 
 
   implicit def DotMapInstance[Key, A](implicit dsl: DotStoreLattice[A]): DotStoreLattice[Map[Key, A]] = new DotStoreLattice[Map[Key, A]] {
@@ -229,12 +226,12 @@ object DotStoreLattice {
 
       // The new store is everything both sides have seen and everything that is new.
       // If something is missing from the store (but in the context) it has been deleted.
-      val newStore: Store = (left.store.keySet union right.store.keySet).map{ id =>
+      val newStore: Store = (left.store.keySet union right.store.keySet).map { id =>
         val value = DotStoreLattice[A].merge(Causal(left.store.getOrElse(id, empty), left.context),
-                                      Causal(right.store.getOrElse(id, empty), right.context))
+                                             Causal(right.store.getOrElse(id, empty), right.context))
         (id, value.store)
-      }.filter { _._2 != empty }
-        .toMap
+      }.filter {_._2 != empty}
+                                                                        .toMap
 
       // the merged state has seen everything from both sides
       val newContext = left.context union right.context
