@@ -1,10 +1,112 @@
 package rescala.extra.lattices.sequences
 
+import rescala.extra.lattices.IdUtil.Id
 import rescala.extra.lattices.Lattice
 import rescala.extra.lattices.sequences.RGA.RGA
-import rescala.extra.lattices.sets.SetLike
+import rescala.extra.lattices.sets.{AddWinsSetO, SetLike}
 
 import scala.collection.AbstractIterator
+
+case class DeltaSequenceOrder(inner: Map[Vertex, Vertex]) {
+
+  def addRightEdgeDelta(left: Vertex, insertee: Vertex): DeltaSequenceOrder = {
+    inner.get(left) match {
+      case None        => DeltaSequenceOrder(Map(left -> insertee))
+      case Some(right) =>
+        // sort order during merge based on most recent on towards start
+        if (right.timestamp > insertee.timestamp) addRightEdgeDelta(right, insertee)
+        else DeltaSequenceOrder(Map((left -> insertee), (insertee -> right)))
+    }
+  }
+
+  def addRightEdge(left: Vertex, insertee: Vertex): DeltaSequenceOrder =
+    DeltaSequenceOrder(inner ++ addRightEdgeDelta(left, insertee).inner)
+}
+
+case class DeltaSequence[A](vertices: AddWinsSetO[Vertex],
+                            edges: DeltaSequenceOrder,
+                            values: Map[Vertex, A]
+                           ) {
+
+  def successor(v: Vertex): Option[Vertex] = {
+    edges.inner.get(v) match {
+      case None    => None
+      case Some(u) =>
+        if (vertices.contains(u)) Some(u) else successor(u)
+    }
+  }
+
+  def addRightDelta(replica: Id, left: Vertex, insertee: Vertex, value: A): DeltaSequence[A] = {
+    val newEdges    = edges.addRightEdgeDelta(left, insertee)
+    val newVertices = vertices.addΔ(insertee, replica)
+    val newValues   = Map(insertee -> value)
+    DeltaSequence(newVertices, newEdges, newValues)
+  }
+
+
+  def addRight(replica: Id, left: Vertex, insertee: Vertex, value: A): DeltaSequence[A] = {
+    Lattice.merge(this, addRightDelta(replica, left, insertee, value))
+  }
+
+
+  def iterator: Iterator[A] = vertexIterator.map(v => values(v))
+
+  def vertexIterator: Iterator[Vertex] = new AbstractIterator[Vertex] {
+    var lastVertex: Vertex = Vertex.start
+
+    var currentSuccessor: Option[Vertex] = successor(lastVertex)
+
+    override def hasNext: Boolean = currentSuccessor.isDefined
+
+    override def next(): Vertex = {
+      currentSuccessor match {
+        case Some(v) =>
+          lastVertex = v
+          currentSuccessor = successor(v)
+          v
+        case _       => throw new NoSuchElementException(
+          "Requesting iterator value after Vertex.end!")
+      }
+    }
+  }
+
+}
+
+object DeltaSequence {
+
+  def empty[A]: DeltaSequence[A] = DeltaSequence(AddWinsSetO.empty.add(Vertex.start, Vertex.start.id),
+                                                 DeltaSequenceOrder(Map()),
+                                                 Map.empty)
+
+  implicit def deltaSequenceLattice[A]: Lattice[DeltaSequence[A]] = new Lattice[DeltaSequence[A]] {
+
+    private val noMapConflictsLattice: Lattice[A] = new Lattice[A] {
+      override def merge(left: A, right: A): A =
+        if (left == right) left
+        else throw new IllegalStateException(s"assumed there would be no conflict, but have $left and $right")
+    }
+
+    override def merge(left: DeltaSequence[A], right: DeltaSequence[A]): DeltaSequence[A] = {
+      val newVertices = right.vertices.toSet.filter(!left.edges.inner.contains(_))
+
+      // build map of old insertion positions of the new vertices
+      val oldPositions = right.edges.inner.foldLeft(Map.empty[Vertex, Vertex]) {
+        case (m, (u, v)) => if (newVertices.contains(v)) m + (v -> u) else m
+      }
+
+      val newEdges = newVertices.foldLeft(left.edges) { case (merged, v) =>
+        merged.addRightEdge(oldPositions(v), v)
+      }
+      val vertices = Lattice.merge(left.vertices, right.vertices)
+      val values   = Lattice.merge(left.values, right.values)(Lattice.mapLattice(noMapConflictsLattice))
+
+      DeltaSequence(vertices = vertices,
+                    edges = newEdges,
+                    values = values.filterKeys(vertices.contains)
+                    )
+    }
+  }
+}
 
 
 case class LatticeSequence[A, VertexSet](vertices: VertexSet,
@@ -37,12 +139,12 @@ case class LatticeSequence[A, VertexSet](vertices: VertexSet,
   }
 
   /**
-    * This method allows insertions of any type into the RGA. This is used to move the start and end nodes
-    *
-    * @param left     the vertex specifying the position
-    * @param insertee the vertex to be inserted right to position
-    * @return A new RAG containing the inserted element
-    */
+   * This method allows insertions of any type into the RGA. This is used to move the start and end nodes
+   *
+   * @param left     the vertex specifying the position
+   * @param insertee the vertex to be inserted right to position
+   * @return A new RAG containing the inserted element
+   */
   def addRight(left: Vertex, insertee: Vertex, value: A): LatticeSequence[A, VertexSet] = {
     if (left == Vertex.end) throw new IllegalArgumentException("Cannot insert after end node!")
 
@@ -51,8 +153,8 @@ case class LatticeSequence[A, VertexSet](vertices: VertexSet,
     if (right.timestamp > insertee.timestamp) addRight(right, insertee, value)
     else {
       val newVertices = vertexSet.add(vertices, insertee)
-      val newEdges = edges + (left -> insertee) + (insertee -> right)
-      val newValues = values.updated(insertee, value)
+      val newEdges    = edges + (left -> insertee) + (insertee -> right)
+      val newValues   = values.updated(insertee, value)
       copy(newVertices, newEdges, newValues)(vertexSet)
     }
   }
@@ -91,8 +193,6 @@ object LatticeSequence {
   implicit def lattice[A, VS: Lattice](implicit sl: SetLike[Vertex, VS])
   : Lattice[LatticeSequence[A, VS]] =
     new Lattice[LatticeSequence[A, VS]] {
-
-
       override def merge(left: LatticeSequence[A, VS], right: LatticeSequence[A, VS]): LatticeSequence[A, VS] = {
         val newVertices = right.vertexIterator.toList.filter(!left.edges.contains(_))
 
@@ -108,9 +208,9 @@ object LatticeSequence {
         val vertices = Lattice.merge(left.vertices, right.vertices)
 
         partialnew.copy(vertices = vertices,
-                           edges = partialnew.edges,
-                           values = partialnew.values.filterKeys(sl.contains(vertices, _))
-        )(partialnew.vertexSet)
+                        edges = partialnew.edges,
+                        values = partialnew.values.filterKeys(sl.contains(vertices, _))
+                        )(partialnew.vertexSet)
       }
     }
 
