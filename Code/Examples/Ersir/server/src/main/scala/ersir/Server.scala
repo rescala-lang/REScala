@@ -41,7 +41,7 @@ class Server(pages: ServerPages,
   LociDist.distribute(serverSideEntries, registry)(Bindings.crdtDescriptions)
 
   serverSideEntries.observe{sse =>
-    scribe.trace(s"new postings ${sse.value.value}")
+    scribe.trace(s"new postings ${sse.value.toList}")
   }
 
   serverSideEntries.change.observe { case Diff(from, to) =>

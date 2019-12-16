@@ -67,7 +67,7 @@ class Index(connected: Signal[String]) {
   def gen(list: Signal[Postings]): JsDom.TypedTag[html.Body] = {
 
     val articles = list.map { itemsToDisplay =>
-      itemsToDisplay.value.value.map { emergentcy =>
+      itemsToDisplay.value.toList.map { emergentcy =>
         article(lang := "de",
                 if (emergentcy.img.isEmpty) frag() else div(cls := "pic",
                                                             style := s"background-image: url(${emergentcy.img});"),

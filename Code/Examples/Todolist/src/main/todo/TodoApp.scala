@@ -8,8 +8,7 @@ import org.scalajs.dom.UIEvent
 import org.scalajs.dom.html.{Div, Input}
 import rescala.extra.Tags._
 import rescala.extra.distributables.LociDist
-import rescala.extra.lattices.sequences.RGA
-import rescala.extra.lattices.sequences.RGA.RGA
+import rescala.extra.lattices.sequences.DeltaSequence
 import rescala.extra.restoration.LocalStorageStore
 import rescala.extra.restoration.ReCirce._
 import scalatags.JsDom
@@ -27,9 +26,9 @@ class TodoApp[TH <: TaskHandling](val taskHandling: TH)(implicit val storingSche
   import storingScheduler._
   import taskHandling.{maketask, toggleAll, Taskref}
 
-  implicit val transmittableRGA: IdenticallyTransmittable[RGA[Taskref]] = IdenticallyTransmittable()
+  implicit val transmittableRGA: IdenticallyTransmittable[DeltaSequence[Taskref]] = IdenticallyTransmittable()
 
-  case class TodoRes(div: TypedTag[Div], tasklist: Signal[RGA[taskHandling.Taskref]])
+  case class TodoRes(div: TypedTag[Div], tasklist: Signal[DeltaSequence[taskHandling.Taskref]])
 
   def getContents(): TodoRes = {
 
@@ -55,17 +54,19 @@ class TodoApp[TH <: TaskHandling](val taskHandling: TH)(implicit val storingSche
 
     val createTask = createTodo.map { str => maketask(TaskData(str)) }
 
-    val tasksRGA = Events.foldAll(RGA(innerTasks)) { tasks =>
+    val dummyId = "dummy"
+
+    val tasksRGA = Events.foldAll(DeltaSequence(dummyId, innerTasks)) { tasks =>
       Seq(
-        createTask >> {tasks.prepend},
-        removeAll.event >>> { dt => _ => tasks.filter(t => !dt.depend(t.contents).done) },
-        tasks.value.map(_.removeClick) >> { t => tasks.filter(_.id != t) }
+        createTask >> {tasks.prependDelta(dummyId, _)},
+        removeAll.event >>> { dt => _ => tasks.filterDelta(t => !dt.depend(t.contents).done) },
+        tasks.toList.map(_.removeClick) >> { t => tasks.filterDelta(_.id != t) }
         )
     }(implicitly, "tasklist")
 
     LociDist.distribute(tasksRGA, Todolist.registry)(Binding("tasklist"))
 
-    val tasks = tasksRGA.map(_.value.reverse)
+    val tasks = tasksRGA.map(_.toList.reverse)
 
 
     val content = div(

@@ -29,6 +29,7 @@ case class AddWinsSetO[A](store: Map[A, Context], context: Context) {
     * Thus, the delta for removal is the empty map,
     * with the dot of the removed element in the context. */
   def removeΔ(e: A): AddWinsSetO[A] = AddWinsSetO[A](Map.empty, store.getOrElse(e, Context.empty))
+  def remove(e: A): AddWinsSetO[A] = Lattice.merge(this, removeΔ(e))
 
   def toSet: Set[A] = store.keySet
 

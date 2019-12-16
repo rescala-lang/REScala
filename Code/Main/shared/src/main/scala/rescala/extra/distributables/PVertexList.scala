@@ -11,7 +11,7 @@ import rescala.extra.lattices.sequences.{RGA, Vertex}
   * @param initial The initial value of this variable.
   */
 case class PVertexList[A](initial: RGA[A] = RGA.empty[A])
-extends DistributedSignal[List[A], RGA[A]](initial, _.value) {
+extends DistributedSignal[List[A], RGA[A]](initial, _.toList) {
   def contains(v: Vertex): Boolean = crdtSignal.readValueOnce.contains(v)
 
 

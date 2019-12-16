@@ -6,7 +6,7 @@ import rescala.extra.lattices.sequences.RGOA
 import rescala.extra.lattices.sequences.RGOA.RGOA
 
 case class PGrowOnlyLog[A](initial: RGOA[A] = RGOA.empty[A])
-extends DistributedSignal[List[A], RGOA[A]](initial, _.value)(RGOA.lattice[A]) {
+extends DistributedSignal[List[A], RGOA[A]](initial, _.toList)(RGOA.lattice[A]) {
 
   def transform(f: RGOA[A] => RGOA[A]): Unit = crdtSignal.transform(f)
   def prepend(a: A): Unit = transform(_.prepend(a))
