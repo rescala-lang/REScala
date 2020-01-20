@@ -138,23 +138,23 @@ lazy val fullmv = project.in(file("Code/Research/Multiversion"))
     cfg.test, cfg.noPublish)
   .dependsOn(rescalaJVM, testsJVM % "test->test")
 
-lazy val distributedFullmv = project.in(file("Code/Research/distributed/multiversion"))
-  .settings( cfg.base, name := "rescala-distributed-multiversion",
-    cfg.test, cfg.noPublish, circe, lib.lociTransmitterDependencies)
-  .dependsOn(fullmv, testsJVM % "test->test")
-
-lazy val distributedExamples = project.in(file("Code/Research/distributed/examples"))
-  .enablePlugins(JmhPlugin)
-  .settings(name := "rescala-distributed-examples", cfg.base, cfg.noPublish)
-  .dependsOn(distributedFullmv % "compile->test")
-  .enablePlugins(JavaAppPackaging)
-
-lazy val distributedBenchmarks = project.in(file("Code/Research/distributed/benchmarks"))
-  .enablePlugins(JmhPlugin)
-  .settings(name := "rescala-distributed-benchmarks", cfg.base, cfg.noPublish, mainClass in Compile := Some("org.openjdk.jmh.Main"),
-    TaskKey[Unit]("compileJmh") := Seq(compile in pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh).dependOn.value)
-  .dependsOn(distributedFullmv % "compile->test")
-  .enablePlugins(JavaAppPackaging)
+//lazy val distributedFullmv = project.in(file("Code/Research/distributed/multiversion"))
+//  .settings( cfg.base, name := "rescala-distributed-multiversion",
+//    cfg.test, cfg.noPublish, circe, lib.lociTransmitterDependencies)
+//  .dependsOn(fullmv, testsJVM % "test->test")
+//
+//lazy val distributedExamples = project.in(file("Code/Research/distributed/examples"))
+//  .enablePlugins(JmhPlugin)
+//  .settings(name := "rescala-distributed-examples", cfg.base, cfg.noPublish)
+//  .dependsOn(distributedFullmv % "compile->test")
+//  .enablePlugins(JavaAppPackaging)
+//
+//lazy val distributedBenchmarks = project.in(file("Code/Research/distributed/benchmarks"))
+//  .enablePlugins(JmhPlugin)
+//  .settings(name := "rescala-distributed-benchmarks", cfg.base, cfg.noPublish, mainClass in Compile := Some("org.openjdk.jmh.Main"),
+//    TaskKey[Unit]("compileJmh") := Seq(compile in pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh).dependOn.value)
+//  .dependsOn(distributedFullmv % "compile->test")
+//  .enablePlugins(JavaAppPackaging)
 
 lazy val microbench = project.in(file("Code/Research/Microbenchmarks"))
   .enablePlugins(JmhPlugin)
