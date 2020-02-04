@@ -41,8 +41,8 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Code/Main"))
     lib.reactivestreams,
     // for restoration
     libraryDependencies ++= List(
-      "io.circe" %%% s"circe-core" % "0.11.1" % "provided",
-      "io.circe" %%% s"circe-parser" % "0.11.1" % "provided",
+      "io.circe" %%% s"circe-core" % circeVersion % "provided",
+      "io.circe" %%% s"circe-parser" % circeVersion % "provided",
       ),
     // for distribution
     libraryDependencies += "de.tuda.stg" %%% s"scala-loci-communication" % "0.3.0" % "provided"
@@ -50,9 +50,9 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Code/Main"))
   .jvmSettings()
   .jsSettings(
     // for restoration
-    libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "0.9.7" % "provided",
+    libraryDependencies += "org.scala-js" %%% "scalajs-dom" % scalajsdomVersion % "provided",
     // for rescalatags
-    libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.7.0" % "provided"
+    libraryDependencies += "com.lihaoyi" %%% "scalatags" % scalatagsVersion % "provided"
     )
 //  .nativeSettings(
 //    crossScalaVersions := Seq("2.11.8"),
@@ -308,7 +308,7 @@ lazy val lib = new {
 
 
   val scalafx = Seq(
-    libraryDependencies += "org.scalafx" %% "scalafx" % "8.0.144-R12",
+    libraryDependencies += "org.scalafx" %% "scalafx" % "12.0.2-R18",
     javafx,
     scalaswing,
     unmanagedJars in Compile += Attributed.blank(file(System.getenv("JAVA_HOME") + "/lib/ext/jfxrt.jar"))
@@ -317,11 +317,10 @@ lazy val lib = new {
   val scalafxExtras = Seq(
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
     libraryDependencies += "org.scalafx" %% "scalafxml-core-sfx8" % "0.5",
-    libraryDependencies += "com.jfoenix" % "jfoenix" % "9.0.8"
+    libraryDependencies += "com.jfoenix" % "jfoenix" % "9.0.9"
     )
 
   val oldAkkaCluster = {
-    val akkaVersion = "2.5.3"
 
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,

@@ -1,6 +1,7 @@
 import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
 import sbt.Keys._
 import sbt._
+import bloop.integrations.sbt.BloopKeys.bloopExportJarClassifiers
 
 /* This file is shared between multiple projects
  * and may contain unused dependencies */
@@ -78,10 +79,11 @@ object Settings {
   )
 
   val strictCompile = Compile / compile / scalacOptions += "-Xfatal-warnings"
+
+  val bloopSources = bloopExportJarClassifiers in Global := Some(Set("sources"))
 }
 
 object Resolvers {
-  val rmgk = resolvers += Resolver.bintrayRepo("rmgk", "maven")
   val stg  = resolvers += Resolver.bintrayRepo("stg-tud", "maven")
 }
 
@@ -89,39 +91,44 @@ object Dependencies {
 
   def ld = libraryDependencies
 
-  val betterFiles = ld += "com.github.pathikrit" %% "better-files" % "3.8.0"
-  val cats        = ld += "org.typelevel" %%% "cats-core" % "2.0.0"
-  val decline     = ld += "com.monovore" %%% "decline" % "1.0.0"
-  val fastparse   = ld += "com.lihaoyi" %%% "fastparse" % "2.1.3"
-  val jsoup       = ld += "org.jsoup" % "jsoup" % "1.12.1"
-  val kaleidoscope= ld += "com.propensive" %%% "kaleidoscope" % "0.1.0"
-  val pprint      = ld += "com.lihaoyi" %%% "pprint" % "0.5.6"
-  val rmgkLogging = Def.settings(Resolvers.rmgk, ld += "de.rmgk" %%% "logging" % "0.2.1")
-  val scalactic   = ld += "org.scalactic" %% "scalactic" % "3.0.7"
-  val scribe      = ld += "com.outr" %%% "scribe" % "2.7.10"
-  val sourcecode  = ld += "com.lihaoyi" %%% "sourcecode" % "0.1.7"
-  val upickle     = ld += "com.lihaoyi" %% "upickle" % "0.8.0"
+  val betterFiles  = ld += "com.github.pathikrit" %% "better-files" % "3.8.0"
+  val cats         = ld += "org.typelevel" %%% "cats-core" % "2.0.0"
+  val decline      = ld += "com.monovore" %%% "decline" % "1.0.0"
+  val fastparse    = ld += "com.lihaoyi" %%% "fastparse" % "2.1.3"
+  val jsoup        = ld += "org.jsoup" % "jsoup" % "1.12.1"
+  val kaleidoscope = ld += "com.propensive" %%% "kaleidoscope" % "0.1.0"
+  val pprint       = ld += "com.lihaoyi" %%% "pprint" % "0.5.6"
+  val scalactic    = ld += "org.scalactic" %% "scalactic" % "3.0.7"
+  val scribe       = ld += "com.outr" %%% "scribe" % "2.7.10"
+  val sourcecode   = ld += "com.lihaoyi" %%% "sourcecode" % "0.2.0"
+  val upickle      = ld += "com.lihaoyi" %% "upickle" % "0.9.8"
+  val toml         = ld += "tech.sparse" %%% "toml-scala" % "0.2.2"
 
+  val akkaVersion = "2.6.3"
   val akkaHttp = ld ++= (Seq("akka-http-core",
                              "akka-http")
-                         .map(n => "com.typesafe.akka" %% n % "10.1.9") ++
-                         Seq("com.typesafe.akka" %% "akka-stream" % "2.5.25"))
+                         .map(n => "com.typesafe.akka" %% n % "10.1.11") ++
+                         Seq("com.typesafe.akka" %% "akka-stream" % akkaVersion))
+
+  val circeVersion = "0.12.2"
 
   val circe = ld ++= Seq("core",
                          "generic",
                          "generic-extras",
                          "parser")
-                     .map(n => "io.circe" %%% s"circe-$n" % "0.11.1")
+                     .map(n => "io.circe" %%% s"circe-$n" % circeVersion)
 
 
   // frontend
   val normalizecss = ld += "org.webjars.npm" % "normalize.css" % "8.0.1"
-  val scalatags    = ld += "com.lihaoyi" %%% "scalatags" % "0.7.0"
-  val scalajsdom   = ld += "org.scala-js" %%% "scalajs-dom" % "0.9.7"
+  val scalatagsVersion = "0.8.4"
+  val scalatags    = ld += "com.lihaoyi" %%% "scalatags" % scalatagsVersion
+  val scalajsdomVersion = "0.9.8"
+  val scalajsdom   = ld += "org.scala-js" %%% "scalajs-dom" % scalajsdomVersion
   val fontawesome  = ld += "org.webjars" % "font-awesome" % "5.10.1"
 
   // tests
-  val scalacheck = ld += "org.scalacheck" %%% "scalacheck" % "1.14.2" % "test"
+  val scalacheck = ld += "org.scalacheck" %%% "scalacheck" % "1.14.3" % "test"
   val scalatestpluscheck = ld += "org.scalatestplus" %%% "scalatestplus-scalacheck" % "3.1.0.0-RC2" % "test"
   val scalatest  = ld += "org.scalatest" %%% "scalatest" % "3.1.0" % "test"
 
