@@ -36,7 +36,7 @@ object Tags {
       * converts a Signal of a scalatags Tag to a scalatags Frag which automatically reflects changes to the signal in the dom
       */
     def asModifier(implicit engine: Scheduler[S]): Modifier = {
-      new REModifier[S](signal, engine)
+      new REFragModifier[S](signal, engine)
     }
   }
 
@@ -45,7 +45,7 @@ object Tags {
       * converts a Signal of a scalatags Tag to a scalatags Frag which automatically reflects changes to the signal in the dom
       */
     def asModifier(implicit engine: Scheduler[S]): Modifier = {
-      new REModifier[S](signal, engine)
+      new REFragModifier[S](signal, engine)
     }
   }
 
@@ -54,13 +54,13 @@ object Tags {
       * converts a Signal of a scalatags Tag to a scalatags Frag which automatically reflects changes to the signal in the dom
       */
     def asModifierL(implicit engine: Scheduler[S]): Modifier = {
-      new REModifierList[S](signal.withDefault(Nil), engine)
+      new RETagListModifier[S](signal.withDefault(Nil), engine)
     }
   }
 
-  private class REModifier[S <: Struct](rendered: Signal[Frag, S], engine: Scheduler[S]) extends Modifier {
-    var observe     : Observe[S] = null
-    var currentNode: Node = null
+  private class REFragModifier[S <: Struct](rendered: Signal[Frag, S], engine: Scheduler[S]) extends Modifier {
+    var observe    : Observe[S] = null
+    var currentNode: Node       = null
     override def applyTo(parent: Element): Unit = {
       CreationTicket.fromEngine(engine).transaction { init =>
         if (observe != null) {
@@ -71,46 +71,46 @@ object Tags {
 
         observe = Observe.strong(rendered, fireImmediately = true)(
           tagObserver(parent, rendered) { newTag =>
-          println(s"$rendered parent $parent")
-          if (parent != null && !scalajs.js.isUndefined(parent)) {
-            val newNode = newTag.render
-            println(s"$rendered appending $newNode to $parent with $currentNode")
-            if (currentNode != null) parent.replaceChild(newNode, currentNode)
-            else parent.appendChild(newNode)
-            currentNode = newNode
-          }
-        })(init)
+            //println(s"$rendered parent $parent")
+            if (parent != null && !scalajs.js.isUndefined(parent)) {
+              val newNode = newTag.render
+              //println(s"$rendered appending $newNode to $parent with $currentNode")
+              if (currentNode != null) parent.replaceChild(newNode, currentNode)
+              else parent.appendChild(newNode)
+              currentNode = newNode
+            }
+          })(init)
       }
     }
   }
 
-  def tagObserver[A, S <: Struct](parent: dom.Element, rendered : Signal[A, S])
+  def tagObserver[A, S <: Struct](parent: dom.Element, rendered: Signal[A, S])
                                  (fun: A => Unit)
                                  (reevalVal: Pulse[A])
   : ObserveInteract = new ObserveInteract {
     override def checkExceptionAndRemoval(): Boolean = {
       reevalVal match {
-        case Pulse.empty | Pulse.NoChange          => false
-        case Pulse.Exceptional(f) =>
+        case Pulse.empty | Pulse.NoChange => false
+        case Pulse.Exceptional(f)         =>
           throw new UnhandledFailureException(rendered, f)
-        case Pulse.Value(v)       =>
+        case Pulse.Value(v)               =>
           isInDocumentHack(parent)(v)
       }
     }
 
     override def execute(): Unit = reevalVal match {
       case Pulse.empty | Pulse.NoChange => ()
-      case Pulse.Value(v) =>
+      case Pulse.Value(v)               =>
         fun(v)
-      case Pulse.Exceptional(f) =>
+      case Pulse.Exceptional(f)         =>
         throw new IllegalStateException("should have aborted earlier", f)
     }
   }
 
-  private class REModifierList[S <: Struct](rendered: Signal[Seq[TypedTag[Element]], S], engine: Scheduler[S]) extends Modifier {
-    var observe     : Observe[S] = null
-    var currentNodes: Seq[Element] = Nil
-    var currentTags: Seq[TypedTag[Element]] = Nil
+  private class RETagListModifier[S <: Struct](rendered: Signal[Seq[TypedTag[Element]], S], engine: Scheduler[S]) extends Modifier {
+    var observe     : Observe[S]             = null
+    var currentNodes: Seq[Element]           = Nil
+    var currentTags : Seq[TypedTag[Element]] = Nil
     override def applyTo(parent: Element): Unit = {
       CreationTicket.fromEngine(engine).transaction { init =>
 
@@ -144,7 +144,7 @@ object Tags {
   (implicit engine: Scheduler[S])
   : AttrValue[Sig[T]] = new AttrValue[Sig[T]] {
     def apply(t: dom.Element, a: Attr, signal: Sig[T]): Unit = {
-      Observe.strong(signal, fireImmediately = true)(tagObserver(t, signal){value =>
+      Observe.strong(signal, fireImmediately = true)(tagObserver(t, signal) { value =>
         implicitly[AttrValue[T]].apply(t, a, value)
       })
     }
@@ -194,17 +194,19 @@ object Tags {
 
   // helper functions
 
+  // this horrible contraption tries to iterate over the list of old tags that should be currently in the dom as nodes.
+  // it compares that with the list of new tags that are the target state, and replaces non matching values accordingly.
   private def replaceAll(parent: Node,
                          oldNodes: Seq[Element],
                          oldTags: Seq[TypedTag[Element]],
                          newTags: Seq[TypedTag[Element]]): List[Element] = {
-    println(s"replacing for $parent")
-    val oni = oldNodes.iterator
-    val oti = oldTags.iterator
-    val nti = newTags.iterator
-    var newNodes = List[Element]()
+    //println(s"replacing for $parent")
+    val oni           = oldNodes.iterator
+    val oti           = oldTags.iterator
+    val nti           = newTags.iterator
+    var newNodes      = List[Element]()
     var last: Element = null
-    while(nti.hasNext && oti.hasNext) {
+    while (nti.hasNext && oti.hasNext) {
       val on = oni.next()
       last = on
       val ot = oti.next()
@@ -233,7 +235,7 @@ object Tags {
         parent.appendChild(nn)
       }
     }
-    while(oni.hasNext) parent.removeChild(oni.next())
+    while (oni.hasNext) parent.removeChild(oni.next())
 
     newNodes.reverse
   }
