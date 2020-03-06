@@ -65,8 +65,10 @@ object Tags {
       CreationTicket.fromEngine(engine).transaction { init =>
         if (observe != null) {
           observe.remove()(engine)
-          currentNode.parentNode.removeChild(currentNode)
-          currentNode = null
+          if (currentNode != null) {
+            currentNode.parentNode.removeChild(currentNode)
+            currentNode = null
+          }
         }
 
         observe = Observe.strong(rendered, fireImmediately = true)(

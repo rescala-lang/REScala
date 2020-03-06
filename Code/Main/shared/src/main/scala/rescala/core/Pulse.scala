@@ -116,6 +116,8 @@ object Pulse {
     */
   def fromOption[P](opt: Option[P]): Pulse[P] = opt.fold[Pulse[P]](NoChange)(Value.apply)
 
+  def fromTry[P](tried: Try[P]): Pulse[P] = tried.fold(Pulse.Exceptional, Pulse.Value(_))
+
   /** Transforms the given pulse and an updated value into a pulse indicating a change from the pulse's value to
     * the given updated value. */
   def diffPulse[P](newValue: P, oldPulse: Pulse[P]): Pulse[P] = oldPulse match {
@@ -129,6 +131,7 @@ object Pulse {
   /** wrap a pulse generating function to store eventual exceptions into an exceptional pulse */
   def tryCatch[P >: Change[Nothing] <: Pulse[_]](f: => P, onEmpty: P = Pulse.empty): P = try f catch {
     case ufe: UnhandledFailureException => throw ufe
+    case npe: NullPointerException => throw npe
     case EmptySignalControlThrowable => onEmpty
     case NonFatal(t) => Exceptional(t)
   }

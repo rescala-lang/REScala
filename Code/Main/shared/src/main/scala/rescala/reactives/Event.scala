@@ -88,7 +88,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
     * @group operator */
   @cutOutOfUserComputation
   final def collect[U](expression: PartialFunction[T, U])(implicit ticket: CreationTicket[S]): Event[U, S]
-  = macro rescala.macros.ReactiveMacros.EventMapMacro[T, U, S, Events.CollectFuncImpl.type]
+  = macro rescala.macros.ReactiveMacros.ReactiveUsingFunctionMacro[T, U, S, Events.CollectFuncImpl.type, Events.type]
     //Events.staticNamed(s"(collect $this)", this) { st => st.collectStatic(this).collect(pf) }
 
   /** Events disjunction.
@@ -109,14 +109,14 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
     * @group operator*/
   @cutOutOfUserComputation
   final def filter(expression: T => Boolean)(implicit ticket: CreationTicket[S]): Event[T, S]
-  = macro rescala.macros.ReactiveMacros.EventMapMacro[T, T, S, Events.FilterFuncImpl.type]
+  = macro rescala.macros.ReactiveMacros.ReactiveUsingFunctionMacro[T, T, S, Events.FilterFuncImpl.type, Events.type]
   /** Filters the event, only propagating the value when the filter is true.
     * @usecase def &&(pred: T => Boolean): rescala.default.Event[T]
     * @see filter
     * @group operator*/
   @cutOutOfUserComputation
   final def &&(expression: T => Boolean)(implicit ticket: CreationTicket[S]): Event[T, S]
-  = macro rescala.macros.ReactiveMacros.EventMapMacro[T, T, S, Events.FilterFuncImpl.type]
+  = macro rescala.macros.ReactiveMacros.ReactiveUsingFunctionMacro[T, T, S, Events.FilterFuncImpl.type, Events.type]
 
   /** Propagates the event only when except does not fire.
     * @usecase def \[U](except: rescala.default.Event[U]): rescala.default.Event[T]
@@ -169,7 +169,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
     * @group operator*/
   @cutOutOfUserComputation
   final def map[A](expression: T => A)(implicit ticket: CreationTicket[S]): Event[A, S]
-  = macro rescala.macros.ReactiveMacros.EventMapMacro[T, A, S, Events.MapFuncImpl.type]
+  = macro rescala.macros.ReactiveMacros.ReactiveUsingFunctionMacro[T, A, S, Events.MapFuncImpl.type, Events.type]
 
   /** Flattens the inner value.
     * @group operator */

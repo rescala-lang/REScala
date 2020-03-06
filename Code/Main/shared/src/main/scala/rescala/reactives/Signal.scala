@@ -4,13 +4,13 @@ import rescala.core._
 import rescala.macros.cutOutOfUserComputation
 import rescala.reactives.Observe.ObserveInteract
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
-import rescala.reactives.Signals.{Diff, static}
+import rescala.reactives.Signals.Diff
 
 import scala.util.control.NonFatal
 
 /** Time changing value derived from the dependencies.
   *
-  * @tparam A Type stored by the signal
+  * @tparam T Type stored by the signal
   * @tparam S Struct type used for the propagation of the signal
   *
   * @groupname operator Signal operators
@@ -20,9 +20,9 @@ import scala.util.control.NonFatal
   * @groupname accessors Accessors and observers
   * @groupprio accessor 5
   */
-trait Signal[+A, S <: Struct] extends ReSource[S] with Interp[A, S] with Disconnectable[S] {
+trait Signal[+T, S <: Struct] extends ReSource[S] with Interp[T, S] with Disconnectable[S] {
 
-  override type Value <: Pulse[A]
+  override type Value <: Pulse[T]
 
 
   /** Returns the current value of the signal
@@ -30,21 +30,21 @@ trait Signal[+A, S <: Struct] extends ReSource[S] with Interp[A, S] with Disconn
     * It does not build dependencies, does not integrate into transactions.
     * Use only for examples and debug output.
     * @group accessor */
-  final def now(implicit scheduler: Scheduler[S]): A = readValueOnce
+  final def now(implicit scheduler: Scheduler[S]): T = readValueOnce
   /** Returns the current value of the signal
     * @group accessor */
-  final def readValueOnce(implicit scheduler: Scheduler[S]): A = {
+  final def readValueOnce(implicit scheduler: Scheduler[S]): T = {
     RExceptions.toExternalException(this, scheduler.singleReadValueOnce(this) )
   }
 
   /** Interprets the pulse of the signal by returning the value
     * @group internal */
-  override def interpret(v: Value): A = v.get
+  override def interpret(v: Value): T = v.get
 
   /** add an observer
     *
     * @group accessor */
-  final def observe(onValue: A => Unit,
+  final def observe(onValue: T => Unit,
                     onError: Throwable => Unit = null,
                     fireImmediately: Boolean = true)
                    (implicit ticket: CreationTicket[S])
@@ -70,7 +70,7 @@ trait Signal[+A, S <: Struct] extends ReSource[S] with Interp[A, S] with Disconn
 
   /** Uses a partial function `onFailure` to recover an error carried by the event into a value. */
   @cutOutOfUserComputation
-  final def recover[R >: A](onFailure: PartialFunction[Throwable, R])
+  final def recover[R >: T](onFailure: PartialFunction[Throwable, R])
                            (implicit ticket: CreationTicket[S])
   : Signal[R, S] = Signals.static(this) { st =>
     try st.dependStatic(this) catch {
@@ -83,11 +83,11 @@ trait Signal[+A, S <: Struct] extends ReSource[S] with Interp[A, S] with Disconn
   //final def recover[R >: A](onFailure: Throwable => R)(implicit ticket: TurnSource[S]): Signal[R, S] = recover(PartialFunction(onFailure))
 
   @cutOutOfUserComputation
-  final def abortOnError()(implicit ticket: CreationTicket[S]): Signal[A, S]
+  final def abortOnError()(implicit ticket: CreationTicket[S]): Signal[T, S]
   = recover{case t => throw new UnhandledFailureException(this, t)}
 
   @cutOutOfUserComputation
-  final def withDefault[R >: A](value: R)(implicit ticket: CreationTicket[S])
+  final def withDefault[R >: T](value: R)(implicit ticket: CreationTicket[S])
   : Signal[R, S] = Signals.static(this) { st =>
     try st.dependStatic(this) catch {
       case EmptySignalControlThrowable => value
@@ -97,13 +97,14 @@ trait Signal[+A, S <: Struct] extends ReSource[S] with Interp[A, S] with Disconn
   /** Return a Signal with f applied to the value
     * @group operator */
   @cutOutOfUserComputation
-  final def map[B](f: A => B)(implicit ticket: CreationTicket[S]): Signal[B, S]
-  = static(this) { t => f(t.dependStatic(this)) }
+  final def map[B](expression: T => B)(implicit ticket: CreationTicket[S]): Signal[B, S]
+  = macro rescala.macros.ReactiveMacros.ReactiveUsingFunctionMacro[T, B, S, Signals.MapFuncImpl.type, Signals.type]
+    //static(this) { t => f(t.dependStatic(this)) }
 
   /** Flattens the inner value.
     * @group operator */
   @cutOutOfUserComputation
-  final def flatten[R](implicit flatten: Flatten[Signal[A, S], R]): R = flatten.apply(this)
+  final def flatten[R](implicit flatten: Flatten[Signal[T, S], R]): R = flatten.apply(this)
 
 //  /** Delays this signal by n occurrences */
 //  final def delay[A1 >: A](n: Int)(implicit ticket: CreationTicket[S], ev: ReSerializable[Queue[A1]]): Signal[A1, S] =
@@ -113,14 +114,14 @@ trait Signal[+A, S <: Struct] extends ReSource[S] with Interp[A, S] with Disconn
     * Be aware that no change will be triggered when the signal changes to or from empty
     * @group conversion */
   @cutOutOfUserComputation
-  final def change(implicit ticket: CreationTicket[S]): Event[Diff[A], S] = Events.change(this)(ticket)
+  final def change(implicit ticket: CreationTicket[S]): Event[Diff[T], S] = Events.change(this)(ticket)
 
   /** Create an event that fires every time the signal changes. The value associated
     * to the event is the new value of the signal
     *
     * @group conversion */
   @cutOutOfUserComputation
-  final def changed(implicit ticket: CreationTicket[S]): Event[A, S]
+  final def changed(implicit ticket: CreationTicket[S]): Event[T, S]
   = Events.staticNamed(s"(changed $this)", this) { st =>
     st.collectStatic(this) match {
       case Pulse.empty => Pulse.NoChange
@@ -131,7 +132,7 @@ trait Signal[+A, S <: Struct] extends ReSource[S] with Interp[A, S] with Disconn
   /** Convenience function filtering to events which change this reactive to value
     * @group conversion */
   @cutOutOfUserComputation
-  final def changedTo[V >: A](value: V)(implicit ticket: CreationTicket[S]): Event[Unit, S]
+  final def changedTo[V >: T](value: V)(implicit ticket: CreationTicket[S]): Event[Unit, S]
   = Events.staticNamed(s"(filter $this)", this) { st =>
     st.collectStatic(this).filter(_ == value) }
     .dropParam

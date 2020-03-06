@@ -1,7 +1,6 @@
 package rescala.macros
 
 import rescala.core.{CreationTicket, DynamicTicket, LowPriorityCreationImplicits, StaticTicket, Struct}
-import rescala.reactives.Events
 import retypecheck._
 
 import scala.annotation.StaticAnnotation
@@ -61,14 +60,19 @@ class ReactiveMacros(val c: blackbox.Context) {
   }
 
 
-  def EventMapMacro[T: c.WeakTypeTag, A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag, FuncImpl: c.WeakTypeTag]
+  def ReactiveUsingFunctionMacro[
+    T: c.WeakTypeTag,
+    A: c.WeakTypeTag,
+    S <: Struct : c.WeakTypeTag,
+    FuncImpl: c.WeakTypeTag,
+    ReactiveType : c.WeakTypeTag]
   (expression: c.Tree)(ticket: c.Tree): c.Tree = {
     if (c.hasErrors) return compileErrorsAst
 
     val funcImpl = weakTypeOf[FuncImpl].typeSymbol.asClass.module
     val computation: Tree = q"""$funcImpl.apply[${weakTypeOf[T]}, ${weakTypeOf[A]}]($prefixValue, $expression)"""
     fixNullTypes(computation)
-    ReactiveExpression[A, S, MacroTags.Dynamic, Events.type](computation)(ticket)
+    ReactiveExpression[A, S, MacroTags.Dynamic, ReactiveType](computation)(ticket)
   }
 
 
@@ -98,6 +102,8 @@ class ReactiveMacros(val c: blackbox.Context) {
 
 
 
+
+  // here be dragons
 
 
   class MacroLego[S <: Struct: c.WeakTypeTag](tree: Tree, forceStatic: Boolean) {

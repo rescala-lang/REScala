@@ -60,6 +60,8 @@ object Signals {
     static(n1, n2)(t => fun(t.dependStatic(n1), t.dependStatic(n2)))
   }
 
+  object MapFuncImpl { def apply[T1, A](value: T1, mapper: T1 => A): A = mapper(value) }
+
   class Diff[+A](val from: Pulse[A], val to: Pulse[A]) {
 
     def _1: A = from.get
