@@ -39,7 +39,7 @@ trait RescalaInterface[S <: Struct] extends RescalaInterfaceRequireSerializer[S]
   **/
 trait RescalaInterfaceRequireSerializer[S <: Struct] extends Aliases[S] {
 
-  type Structure = S
+  type REStructure = S
 
   /** @group internal */
   def scheduler: rescala.core.Scheduler[S]
