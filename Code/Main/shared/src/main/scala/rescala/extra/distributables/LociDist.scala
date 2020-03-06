@@ -6,7 +6,7 @@ import rescala.core.{InitialChange, ReSerializable, Scheduler, Struct}
 import rescala.extra.lattices.Lattice
 import rescala.extra.lattices.sequences.RGA.RGA
 import rescala.extra.lattices.sequences.RGA
-import rescala.reactives.{Event, Events, Observe, Signal}
+import rescala.reactives.{Event, Events, Observe, Signal, Signals}
 
 import scala.concurrent.Future
 
@@ -22,9 +22,9 @@ object LociDist {
       println(s"appending $acc $occ")
       acc.append(occ) }
 
-    val res = fold.map(_.iterator.foldLeft(init){ (acc, occ) =>
+    val res = Signals.static(fold){st => st.dependStatic(fold).iterator.foldLeft(init){ (acc, occ) =>
       println(s"folding $acc $occ")
-      f(acc, occ)})
+      f(acc, occ)}}
     distribute(fold, registry)(binding)
     res
   }
