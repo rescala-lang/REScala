@@ -7,7 +7,7 @@ import rescala.reactives.{Signal, Var}
 import scala.util.{Failure, Left, Right, Success, Try}
 
 object ReCirce {
-  // build in method exists for scala 2.12, but not for 2.11
+  // built-in method exists for scala 2.12, but not for 2.11
   def eitherToTry[A](e: Either[Throwable, A]): Try[A] = e match {
     case Right(b) => Success(b)
     case Left(a)  => Failure(a)
