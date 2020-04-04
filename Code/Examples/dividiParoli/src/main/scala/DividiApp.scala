@@ -8,7 +8,6 @@ import loci.registry.{Binding, Registry}
 import loci.serializer.circe._
 import loci.transmitter.{IdenticallyTransmittable, RemoteRef}
 import rescala.default._
-import rescala.extra.distributables.PGrowOnlyLog
 import scalafx.Includes._
 import scalafx.application.JFXApp
 import scalafx.application.JFXApp.PrimaryStage

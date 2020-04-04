@@ -1,13 +1,44 @@
 
 import akka.cluster.Cluster
-import rescala.extra.distributables._
 import com.typesafe.config.ConfigFactory
 import akka.actor._
 import akka.actor.Props
-import rescala.extra.distributables.PVertexList
+import akka.actor.Actor
+import akka.actor.ActorLogging
+import akka.actor.Address
+import akka.cluster.Cluster
+import akka.cluster.ClusterEvent._
+import akka.cluster.MemberStatus
 import rescala.default._
 
-import scala.tools.jline
+class ParoliMemberListener extends Actor with ActorLogging {
+
+  val cluster = Cluster(context.system)
+
+  override def preStart(): Unit =
+    cluster.subscribe(self, classOf[MemberEvent])
+
+  override def postStop(): Unit =
+    cluster unsubscribe self
+
+  var nodes = Set.empty[Address]
+
+  def receive: PartialFunction[Any, Unit] = {
+    case state: CurrentClusterState =>
+      nodes = state.members.collect {
+        case m if m.status == MemberStatus.Up => m.address
+      }
+    case MemberUp(member) =>
+      nodes += member.address
+      log.info("Member is Up: {}. {} nodes in cluster",
+        member.address, nodes.size)
+    case MemberRemoved(member, _) =>
+      nodes -= member.address
+      log.info("Member is Removed: {}. {} nodes cluster",
+        member.address, nodes.size)
+    case _: MemberEvent => // ignore
+  }
+}
 
 class DistributionEngine extends Actor {
   override def receive: Receive = {
@@ -37,7 +68,7 @@ object ParoliChatApp {
     val joinAddress = Cluster(system).selfAddress
     Cluster(system).join(joinAddress)
 
-    /*val logActor =*/ system.actorOf(Props[MemberListener], "memberListener")
+    /*val logActor =*/ system.actorOf(Props[ParoliMemberListener], "memberListener")
   }
 
   def startup(name: String, port: String): Unit = {

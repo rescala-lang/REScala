@@ -1,7 +1,5 @@
-package rescala.extra.distributables
-
+import DistributedSignal.PVarFactory
 import rescala.default._
-import rescala.extra.distributables.DistributedSignal.PVarFactory
 import rescala.extra.lattices.sequences.RGOA
 import rescala.extra.lattices.sequences.RGOA.RGOA
 

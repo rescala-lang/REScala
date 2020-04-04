@@ -1,9 +1,7 @@
-package rescala.extra.distributables
-
 import loci.transmitter._
 import rescala.default._
-import rescala.macros.cutOutOfUserComputation
 import rescala.extra.lattices.Lattice
+import rescala.macros.cutOutOfUserComputation
 import rescala.reactives.Signals
 
 
@@ -21,7 +19,7 @@ abstract class DistributedSignal[A, F: Lattice](initial: F, convert: F => A) {
 
   @cutOutOfUserComputation
   val crdtSignal: Var[F] = Var(initial)
-  private[rescala] def merge(other: F): Unit = {
+  def merge(other: F): Unit = {
     crdtSignal.transform(Lattice[F].merge(_, other))
   }
   val valueSignal: Signal[A] = Signals.static(crdtSignal) { st => convert(st.dependStatic(crdtSignal)) }

@@ -11,12 +11,11 @@ bloopSources
 
 lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
   datastructures,
-  dividi,
+  dividiParoli,
   documentation,
   examples,
   fullmv,
   microbench,
-  paroli,
   rescalaJS,
   rescalaJVM,
   rescalafx,
@@ -120,16 +119,11 @@ lazy val todolist = project.in(file("Code/Examples/Todolist"))
             loci.webrtc,
             loci.circe)
 
-lazy val dividi = project.in(file("Code/Examples/dividi"))
+lazy val dividiParoli = project.in(file("Code/Examples/dividiParoli"))
   .dependsOn(rescalaJVM)
-  .settings(name := "dividi", cfg.base, cfg.noPublish, cfg.mappingFilters,
+  .settings(name := "dividi and paroli", cfg.base, cfg.noPublish, cfg.mappingFilters,
             lib.scalaLogback, lib.scalafx, circe, loci.communication, loci.circe,
-            loci.wsAkka, lib.scalafxExtras)
-
-lazy val paroli = project.in(file("Code/Examples/paroli-chat"))
-  .dependsOn(rescalaJVM)
-  .settings(name := "paroli-chat", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.scalaLogback,
-            lib.jline, cfg.strictScalac, lib.oldAkkaCluster, circe)
+            loci.wsAkka, lib.scalafxExtras, lib.jline,  lib.oldAkkaCluster)
 
 
 // ===================================================================================== Research
@@ -291,7 +285,7 @@ lazy val lib = new {
     libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"
   )
 
-  val jline = libraryDependencies += "org.scala-lang.modules" % "scala-jline" % "2.12.1"
+  val jline = libraryDependencies += "jline" % "jline" % "2.14.2"
 
   // Determine OS version of JavaFX binaries
   lazy val osName = System.getProperty("os.name") match {
@@ -386,8 +380,8 @@ lazy val ersirWeb = project.in(file("Code/Examples/Ersir/web"))
                       name := "web",
                       scalajsdom, npmDependencies in Compile ++= Seq("mqtt" -> "2.18.2"), normalizecss,
                       scalaJSUseMainModuleInitializer := true,
-                      webpackBundlingMode := BundlingMode.LibraryOnly(),
-                      scalacOptions += "-P:scalajs:sjsDefinedByDefault"
+                      webpackBundlingMode := BundlingMode.LibraryOnly()
+                      //scalacOptions += "-P:scalajs:sjsDefinedByDefault"
                       )
                     .dependsOn(ersirSharedJS)
                     .enablePlugins(SbtSassify)
