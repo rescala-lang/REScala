@@ -48,13 +48,13 @@ object DistributedSignal {
     ConnectedTransmittable(
       provide = (value, context) => {
         val observer = value.crdtSignal.observe(context.endpoint.send)
-        context.endpoint.closed notify { _ => observer.remove }
+        context.endpoint.closed.monitor { _ => observer.remove }
         value.crdtSignal.readValueOnce
       },
       receive = (value, context) => {
         val signal = pVarFactory.create()
         signal.merge(value)
-        context.endpoint.receive.notify { signal.merge }
+        context.endpoint.receive.monitor { signal.merge }
         signal
       })
   }

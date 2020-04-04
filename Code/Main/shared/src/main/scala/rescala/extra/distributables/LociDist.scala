@@ -67,9 +67,9 @@ object LociDist {
     }
 
 
-    registry.remoteJoined.notify(registerRemote)
+    registry.remoteJoined.monitor(registerRemote)
     registry.remotes.foreach(registerRemote)
-    registry.remoteLeft.notify { remoteRef =>
+    registry.remoteLeft.monitor { remoteRef =>
       println(s"removing remote $remoteRef")
       observers(remoteRef).remove()
     }

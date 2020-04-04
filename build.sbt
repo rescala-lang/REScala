@@ -7,6 +7,7 @@ import Dependencies._
 
 ThisBuild / incOptions := (ThisBuild / incOptions).value.withLogRecompileOnMacro(false)
 cfg.noPublish
+bloopSources
 
 lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
   datastructures,
@@ -45,7 +46,7 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Code/Main"))
       "io.circe" %%% s"circe-parser" % circeVersion % "provided",
       ),
     // for distribution
-    libraryDependencies += "de.tuda.stg" %%% s"scala-loci-communication" % "0.3.0" % "provided"
+    libraryDependencies += "de.tuda.stg" %%% s"scala-loci-communication" % loci.version % "provided"
     )
   .jvmSettings()
   .jsSettings(
@@ -71,7 +72,7 @@ lazy val tests = crossProject(JSPlatform, JVMPlatform).in(file("Code/Tests"))
             scalatags)
   .dependsOn(rescala)
   .jvmSettings(Dependencies.akkaHttp).jsSettings(
-  jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv
+  jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
   )
 lazy val testsJVM = tests.jvm
 lazy val testsJS = tests.js
@@ -300,12 +301,13 @@ lazy val lib = new {
     case _ => throw new Exception("Unknown platform!")
   }
 
-  // Add JavaFX dependencies
+  // Add JavaFX dependencies, should probably match whatever the scalafx version was tested against:
+  // https://www.scalafx.org/news/releases/
+  // then again, the announcement for 12.0.2 seems incorrect …
   lazy val javaFXModules = Seq("base", "controls", "fxml", "graphics", "media", "swing", "web")
   val javafx = libraryDependencies ++= javaFXModules.map( m=>
     "org.openjfx" % s"javafx-$m" % "12.0.2" classifier osName
   )
-
 
   val scalafx = Seq(
     libraryDependencies += "org.scalafx" %% "scalafx" % "12.0.2-R18",
@@ -315,7 +317,7 @@ lazy val lib = new {
   )
 
   val scalafxExtras = Seq(
-    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
+    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full),
     libraryDependencies += "org.scalafx" %% "scalafxml-core-sfx8" % "0.5",
     libraryDependencies += "com.jfoenix" % "jfoenix" % "9.0.9"
     )
