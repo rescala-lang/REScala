@@ -9,23 +9,30 @@ import bloop.integrations.sbt.BloopKeys.bloopExportJarClassifiers
 
 object Settings {
 
-  val commonCrossBuildVersions = crossScalaVersions := Seq("2.12.11", "2.13.1")
+  val commonCrossBuildVersions = crossScalaVersions := Seq("2.11.12", "2.12.11", "2.13.1")
 
   val scalaVersion_211 = Def.settings(
     scalaVersion := "2.11.12",
-    scalacOptions ++= scalacOptionsCommon ++ scalaOptions12minus
+    scalacOptions ++= settingsFor(scalaVersion.value)
   )
   val scalaVersion_212 = Def.settings(
     scalaVersion := "2.12.11",
-    scalacOptions ++= scalacOptionsCommon ++ scalacOptions12plus ++ scalaOptions12minus
+    scalacOptions ++= settingsFor(scalaVersion.value)
   )
   val scalaVersion_213 = Def.settings(
     scalaVersion := "2.13.1",
-    scalacOptions ++= scalacOptionsCommon ++ scalacOptions12plus
+    scalacOptions ++= settingsFor(scalaVersion.value)
     )
 
+  def settingsFor(version: String) = (
+    version match {
+      case a if a.startsWith("2.11") =>  scalacOptionsCommon ++ scalaOptions12minus
+      case a if a.startsWith("2.12") =>  scalacOptionsCommon ++ scalacOptions12plus ++ scalaOptions12minus
+      case a if a.startsWith("2.13") =>  scalacOptionsCommon ++ scalacOptions12plus
+    })
+
   // based on tpolecats scala options https://tpolecat.github.io/2017/04/25/scalac-flags.html
-  lazy val scalacOptionsCommon = Seq(
+  lazy val scalacOptionsCommon: Seq[String] = Seq(
     "-deprecation",                      // Emit warning and location for usages of deprecated APIs.
     "-encoding", "utf-8",                // Specify character encoding used by source files.
     "-explaintypes",                     // Explain type errors in more detail.
@@ -57,7 +64,7 @@ object Settings {
     //"-Ywarn-unused:patvars",             // Warn if a variable bound in a pattern is unused.
     //"-Ywarn-value-discard"               // Warn when non-Unit expression results are unused.
     )
-  lazy val scalacOptions12plus = Seq(
+  lazy val scalacOptions12plus: Seq[String] = Seq(
     // do not work on 2.11
     "-Xlint:constant",                   // Evaluation of a constant arithmetic expression results in an error.
     "-Ywarn-extra-implicit",             // Warn when more than one implicit parameter section is defined.
@@ -66,7 +73,7 @@ object Settings {
     "-Ywarn-unused:locals",              // Warn if a local definition is unused.
     "-Ywarn-unused:privates",            // Warn if a private member is unused.
   )
-  lazy val scalaOptions12minus = Seq(
+  lazy val scalaOptions12minus: Seq[String] = Seq(
     // do not work on 2.13
     "-Ywarn-inaccessible",               // Warn about inaccessible types in method signatures.
     "-Ywarn-infer-any",                  // Warn when a type argument is inferred to be `Any`.

@@ -212,11 +212,11 @@ object DotStoreLattice {
   implicit def DotMapInstance[Key, A](implicit dsl: DotStoreLattice[A]): DotStoreLattice[Map[Key, A]] = new DotStoreLattice[Map[Key, A]] {
     type Store = Map[Key, A]
 
-    override def add(a: Store, d: Dot): Store = a.mapValues(v => dsl.add(v, d))
+    override def add(a: Store, d: Dot): Store = a.mapValues(v => dsl.add(v, d)).toMap
 
     override def dots(a: Store): Set[Dot] = a.valuesIterator.flatMap(dsl.dots).toSet
 
-    override def compress(a: Store): Store = a.mapValues(dsl.compress)
+    override def compress(a: Store): Store = a.mapValues(dsl.compress).toMap
 
     override def empty: Store = Map.empty
 

@@ -33,7 +33,6 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Code/Main"))
     cfg.base,
     lib.retypecheck,
     sourcecode,
-    cfg.strictScalac,
     cfg.snapshotAssertions,
     cfg.bintray,
     lib.reflectionForMacroDefinitions,
@@ -41,11 +40,9 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Code/Main"))
     lib.reactivestreams,
     // for restoration
     libraryDependencies ++= List(
-      "io.circe" %%% s"circe-core" % circeVersion % "provided",
-      "io.circe" %%% s"circe-parser" % circeVersion % "provided",
-      ),
-    // for distribution
-    libraryDependencies += "de.tuda.stg" %%% s"scala-loci-communication" % loci.version % "provided"
+      "io.circe" %%% s"circe-core" % "[0.11.0,)" % "provided",
+      "io.circe" %%% s"circe-parser" % "[0.11.0,)" % "provided"
+      )
     )
   .jvmSettings()
   .jsSettings(
@@ -73,7 +70,7 @@ lazy val tests = crossProject(JSPlatform, JVMPlatform).in(file("Code/Tests"))
   .jvmSettings(Dependencies.akkaHttp).jsSettings(
   jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
   )
-lazy val testsJVM = tests.jvm
+lazy val testsJVM = tests.jvm.dependsOn(locidistribution)
 lazy val testsJS = tests.js
 
 lazy val documentation = project.in(file("Documentation/DocumentationProject"))
@@ -93,6 +90,10 @@ lazy val rescalafx = project.in(file("Code/Extensions/javafx"))
   .dependsOn(rescalaJVM)
   .settings(name := "rescalafx", cfg.base, cfg.noPublish, lib.scalafx)
 
+lazy val locidistribution = project.in(file("Code/Extensions/LociDistribution"))
+  .dependsOn(rescalaJVM)
+  .settings(name := "loci-distribution", cfg.base, cfg.noPublish, lib.lociTransmitterDependencies)
+
 
 // ===================================================================================== Examples
 
@@ -111,7 +112,7 @@ lazy val universe = project.in(file("Code/Examples/Universe"))
 
 lazy val todolist = project.in(file("Code/Examples/Todolist"))
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(rescalaJS)
+  .dependsOn(rescalaJS, locidistribution)
   .settings(cfg.base, cfg.noPublish, name := "todolist",
             circe, scalatags,
             scalaSource in Compile := baseDirectory.value,
@@ -165,14 +166,14 @@ lazy val microbench = project.in(file("Code/Research/Microbenchmarks"))
 lazy val cfg = new {
 
 
-  val base = List(
+  val base: Def.SettingsDefinition = List(
     organization := "de.tuda.stg",
         baseScalac,
     // scaladoc
     autoAPIMappings := true,
     Compile / doc / scalacOptions += "-groups",
-    commonCrossBuildVersions,
-  ) ++ scalaVersion_212
+    commonCrossBuildVersions
+  ) ++ scalaVersion_213
 
   val test = List(
     testOptions in Test += Tests.Argument("-oICN"),

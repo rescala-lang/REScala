@@ -116,7 +116,11 @@ object Pulse {
     */
   def fromOption[P](opt: Option[P]): Pulse[P] = opt.fold[Pulse[P]](NoChange)(Value.apply)
 
-  def fromTry[P](tried: Try[P]): Pulse[P] = tried.fold(Pulse.Exceptional, Pulse.Value(_))
+  /** Transforms a Try into a Value or Exceptional Pulse */
+  def fromTry[P](tried: Try[P]): Pulse[P] = tried match {
+    case Success(v) => Pulse.Value(v)
+    case Failure(e) => Pulse.Exceptional(e)
+  }
 
   /** Transforms the given pulse and an updated value into a pulse indicating a change from the pulse's value to
     * the given updated value. */

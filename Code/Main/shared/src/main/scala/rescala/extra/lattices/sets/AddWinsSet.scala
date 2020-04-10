@@ -5,8 +5,6 @@ import rescala.extra.lattices.dotstores.DotStoreLattice._
 import rescala.extra.lattices.dotstores.{Causal, Dot, DotStoreLattice}
 import rescala.extra.lattices.{IdUtil, Lattice}
 
-import scala.language.implicitConversions
-
 case class AddWinsSet[A](store: Map[A, Set[Dot]], context: Set[Dot]) {
   //(updatesCurrent[Set[(id, dot)], knownPast[Set[dot]], newData[Set[(id,data)])
   // a delta always includes new (id,dot) pairs, the known causal context for the modified ids as well as the new data elements

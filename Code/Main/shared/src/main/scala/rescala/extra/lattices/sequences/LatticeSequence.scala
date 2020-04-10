@@ -107,7 +107,7 @@ object LatticeSequence {
 
         partialnew.copy(vertices = vertices,
                         edges = partialnew.edges,
-                        values = partialnew.values.filterKeys(sl.contains(vertices, _))
+                        values = partialnew.values.filterKeys(sl.contains(vertices, _)).toMap
                         )(partialnew.vertexSet)
       }
     }

@@ -123,7 +123,7 @@ object DeltaSequence {
 
       DeltaSequence(vertices = vertices,
                     edges = newEdges,
-                    values = values.filterKeys(vertices.contains)
+                    values = values.filterKeys(vertices.contains).toMap
                     )
     }
   }
