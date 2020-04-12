@@ -270,7 +270,7 @@ lazy val lib = new {
 
   val retypecheck = List(
     Resolvers.stg,
-    libraryDependencies += "de.tuda.stg" %% "retypecheck" % "0.6.0"
+    libraryDependencies += "de.tuda.stg" %% "retypecheck" % "0.7.0"
   )
 
   val reflectionForMacroDefinitions = libraryDependencies += scalaOrganization.value % "scala-reflect" % scalaVersion.value % "provided"
