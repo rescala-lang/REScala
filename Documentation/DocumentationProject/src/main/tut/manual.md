@@ -108,10 +108,8 @@ assert(b.now == "Hello World")
 assert(c.now == List(0,1,2,3))
 ```
 
-Handlers are code blocks that are executed when the event fires.
-The `observe` operator attaches the handler to the event.
-When a handler is registered to an event, the handler is executed every time the event is fired.
-The handler is a first class function that receives the events value as a parameter.
+The `observe` attaches a handler function to the event.
+Every time the event is fired, the handler function is applied to the current value of the event.
 
 ```tut:silent
 val e = Evt[String]()
@@ -180,7 +178,7 @@ e.fire(10) // no reaction
 Signals are defined by the syntax ```Signal{```*sigexpr*```}```, where *sigexpr* is a side effect-free expression.
 A signal that carries integer values has the type ```Signal[Int]```.
 
-Inside a signal expression others signals should be accessed with the ```()``` operator.
+Inside a signal expression other signals should be accessed with the ```()``` operator.
 In the following code, the signal `c` is defined to be `a + b`.
 When `a` or `b` are updated, the value of `c` is updated as well.
 
