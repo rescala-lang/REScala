@@ -9,23 +9,35 @@ import bloop.integrations.sbt.BloopKeys.bloopExportJarClassifiers
 
 object Settings {
 
-  val commonCrossBuildVersions = crossScalaVersions := Seq("2.12.10", "2.13.1")
+  private val sv11 = "2.11.12"
+  private val sv12 = "2.12.11"
+  private val sv13 = "2.13.2"
+
+
+  val commonCrossBuildVersions = crossScalaVersions := Seq(sv11, sv12, sv13)
 
   val scalaVersion_211 = Def.settings(
-    scalaVersion := "2.11.12",
-    scalacOptions ++= scalacOptionsCommon ++ scalaOptions12minus
-  )
+    scalaVersion := sv11,
+    scalacOptions ++= settingsFor(scalaVersion.value)
+    )
   val scalaVersion_212 = Def.settings(
-    scalaVersion := "2.12.11",
-    scalacOptions ++= scalacOptionsCommon ++ scalacOptions12plus ++ scalaOptions12minus
-  )
+    scalaVersion := sv12,
+    scalacOptions ++= settingsFor(scalaVersion.value)
+    )
   val scalaVersion_213 = Def.settings(
-    scalaVersion := "2.13.1",
-    scalacOptions ++= scalacOptionsCommon ++ scalacOptions12plus
+    scalaVersion := sv13,
+    scalacOptions ++= settingsFor(scalaVersion.value)
     )
 
+  def settingsFor(version: String) = (
+    version match {
+      case a if a.startsWith("2.11") =>  scalacOptionsCommon ++ scalaOptions12minus
+      case a if a.startsWith("2.12") =>  scalacOptionsCommon ++ scalacOptions12plus ++ scalaOptions12minus
+      case a if a.startsWith("2.13") =>  scalacOptionsCommon ++ scalacOptions12plus
+    })
+
   // based on tpolecats scala options https://tpolecat.github.io/2017/04/25/scalac-flags.html
-  lazy val scalacOptionsCommon = Seq(
+  lazy val scalacOptionsCommon: Seq[String] = Seq(
     "-deprecation",                      // Emit warning and location for usages of deprecated APIs.
     "-encoding", "utf-8",                // Specify character encoding used by source files.
     "-explaintypes",                     // Explain type errors in more detail.
@@ -57,7 +69,7 @@ object Settings {
     //"-Ywarn-unused:patvars",             // Warn if a variable bound in a pattern is unused.
     //"-Ywarn-value-discard"               // Warn when non-Unit expression results are unused.
     )
-  lazy val scalacOptions12plus = Seq(
+  lazy val scalacOptions12plus: Seq[String] = Seq(
     // do not work on 2.11
     "-Xlint:constant",                   // Evaluation of a constant arithmetic expression results in an error.
     "-Ywarn-extra-implicit",             // Warn when more than one implicit parameter section is defined.
@@ -66,7 +78,7 @@ object Settings {
     "-Ywarn-unused:locals",              // Warn if a local definition is unused.
     "-Ywarn-unused:privates",            // Warn if a private member is unused.
   )
-  lazy val scalaOptions12minus = Seq(
+  lazy val scalaOptions12minus: Seq[String] = Seq(
     // do not work on 2.13
     "-Ywarn-inaccessible",               // Warn about inaccessible types in method signatures.
     "-Ywarn-infer-any",                  // Warn when a type argument is inferred to be `Any`.
@@ -86,6 +98,32 @@ object Settings {
 
 object Resolvers {
   val stg  = resolvers += Resolver.bintrayRepo("stg-tud", "maven")
+
+  def bintrayPublish(bintrayOrganization: String, githubOrganization: String, githubReponame: String) = Seq(
+    publishArtifact in Compile := true,
+    publishArtifact in Test := false,
+    licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")),
+    scmInfo := Some(
+      ScmInfo(
+        browseUrl = url(s"https://github.com/$githubOrganization/$githubReponame/"),
+        connection = s"scm:git:git@github.com:$githubOrganization/$githubReponame.git"
+      )
+    ),
+    // Publish to Bintray, without the sbt-bintray plugin
+    publishMavenStyle := true,
+    publishTo := {
+      val proj = moduleName.value
+      val ver  = version.value
+      if (isSnapshot.value) {
+        None // Bintray does not support snapshots
+      } else {
+        val url = new java.net.URL(
+          s"https://api.bintray.com/content/$bintrayOrganization/maven/$proj/$ver")
+        val patterns = Resolver.mavenStylePatterns
+        Some(Resolver.url("bintray", url)(patterns))
+      }
+    }
+  )
 }
 
 object Dependencies {
@@ -93,16 +131,17 @@ object Dependencies {
   def ld = libraryDependencies
 
   val betterFiles  = ld += "com.github.pathikrit" %% "better-files" % "3.8.0"
-  val cats         = ld += "org.typelevel" %%% "cats-core" % "2.0.0"
-  val decline      = ld += "com.monovore" %%% "decline" % "1.0.0"
-  val fastparse    = ld += "com.lihaoyi" %%% "fastparse" % "2.2.4"
+  val cats         = ld += "org.typelevel" %%% "cats-core" % "2.1.1"
+  val decline      = ld += "com.monovore" %%% "decline" % "1.2.0"
+  val fastparse    = ld += "com.lihaoyi" %%% "fastparse" % "2.3.0"
   val jsoup        = ld += "org.jsoup" % "jsoup" % "1.13.1"
   val kaleidoscope = ld += "com.propensive" %%% "kaleidoscope" % "0.1.0"
+  val magnolia     = ld += "com.propensive" %%% "magnolia" % "0.15.0"
   val pprint       = ld += "com.lihaoyi" %%% "pprint" % "0.5.9"
   val scalactic    = ld += "org.scalactic" %% "scalactic" % "3.0.7"
   val scribe       = ld += "com.outr" %%% "scribe" % "2.7.12"
   val sourcecode   = ld += "com.lihaoyi" %%% "sourcecode" % "0.2.1"
-  val upickle      = ld += "com.lihaoyi" %% "upickle" % "1.0.0"
+  val upickle      = ld += "com.lihaoyi" %% "upickle" % "1.1.0"
   val toml         = ld += "tech.sparse" %%% "toml-scala" % "0.2.2"
 
   val akkaVersion = "2.6.4"
@@ -121,17 +160,17 @@ object Dependencies {
 
 
   // frontend
-  val normalizecss = ld += "org.webjars.npm" % "normalize.css" % "8.0.1"
-  val scalatagsVersion = "0.8.6"
-  val scalatags    = ld += "com.lihaoyi" %%% "scalatags" % scalatagsVersion
+  val normalizecss      = ld += "org.webjars.npm" % "normalize.css" % "8.0.1"
+  val scalatagsVersion  = "0.9.0"
+  val scalatags         = ld += "com.lihaoyi" %%% "scalatags" % scalatagsVersion
   val scalajsdomVersion = "1.0.0"
-  val scalajsdom   = ld += "org.scala-js" %%% "scalajs-dom" % scalajsdomVersion
-  val fontawesome  = ld += "org.webjars" % "font-awesome" % "5.10.1"
+  val scalajsdom        = ld += "org.scala-js" %%% "scalajs-dom" % scalajsdomVersion
+  val fontawesome       = ld += "org.webjars" % "font-awesome" % "5.10.1"
 
   // tests
-  val scalacheck = ld += "org.scalacheck" %%% "scalacheck" % "1.14.3" % "test"
-  val scalatestpluscheck = ld += "org.scalatestplus" %%% "scalatestplus-scalacheck" % "3.1.0.0-RC2" % "test"
-  val scalatest  = ld += "org.scalatest" %%% "scalatest" % "3.1.1" % "test"
+  val scalacheck         = ld += "org.scalacheck" %%% "scalacheck" % "1.14.3" % "test"
+  val scalatestpluscheck = ld += "org.scalatestplus" %%% "scalacheck-1-14" % "3.1.1.1" % "test"
+  val scalatest          = ld += "org.scalatest" %%% "scalatest" % "3.1.1" % "test"
 
   // legacy
   val scalaXml   = ld += "org.scala-lang.modules" %% "scala-xml" % "1.3.0"
@@ -139,9 +178,11 @@ object Dependencies {
 
 
   object loci {
+
+    val version = "0.3.0"
     def generic(n: String) = Def.settings(
       Resolvers.stg,
-      ld += "de.tuda.stg" %%% s"scala-loci-$n" % "0.3.0")
+      ld += "de.tuda.stg" %%% s"scala-loci-$n" % version)
 
     val communication = generic("communication")
 
