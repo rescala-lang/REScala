@@ -7,7 +7,6 @@ import Dependencies._
 
 ThisBuild / incOptions := (ThisBuild / incOptions).value.withLogRecompileOnMacro(false)
 cfg.noPublish
-bloopSources
 
 lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
   datastructures,
@@ -173,7 +172,7 @@ lazy val cfg = new {
     autoAPIMappings := true,
     Compile / doc / scalacOptions += "-groups",
     commonCrossBuildVersions
-  ) ++ scalaVersion_213
+  ) ++ scalaVersion_212
 
   val test = List(
     testOptions in Test += Tests.Argument("-oICN"),
@@ -191,36 +190,8 @@ lazy val cfg = new {
   * Use `publish` from sbt
   * Log in to Bintray and publish the files that were sent
   */
-  lazy val bintray = Seq(
-    publishArtifact in Compile := true,
-    publishArtifact in Test := false,
-    licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")),
-    scmInfo := Some(
-      ScmInfo(
-        browseUrl = url("https://github.com/guidosalva/REScala/"),
-        connection = "scm:git:git@github.com:guidosalva/REScala.git"
-      )
-    ),
-    // Publish to Bintray, without the sbt-bintray plugin
-    publishMavenStyle := true,
-    publishTo := {
-      val proj = moduleName.value
-      val ver  = version.value
-      if (isSnapshot.value) {
-        None // Bintray does not support snapshots
-      } else {
-        val url = new java.net.URL(
-          s"https://api.bintray.com/content/stg-tud/maven/$proj/$ver")
-        val patterns = Resolver.mavenStylePatterns
-        Some(Resolver.url("bintray", url)(patterns))
-      }
-    }
-  )
+  lazy val bintray = Resolvers.bintrayPublish("rescala-lang", "stg-tud", "REScala")
 
-  // val bintrayPlugin = List(
-  //   licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")),
-  //   bintrayOrganization := Some("stg-tud")
-  // )
 
   lazy val noPublish = Seq(
     publishArtifact := false,

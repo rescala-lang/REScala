@@ -1,7 +1,6 @@
 import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
 import sbt.Keys._
 import sbt._
-import bloop.integrations.sbt.BloopKeys.bloopExportJarClassifiers
 
 /* This file is shared between multiple projects
  * and may contain unused dependencies */
@@ -9,18 +8,23 @@ import bloop.integrations.sbt.BloopKeys.bloopExportJarClassifiers
 
 object Settings {
 
-  val commonCrossBuildVersions = crossScalaVersions := Seq("2.11.12", "2.12.11", "2.13.1")
+  private val sv11 = "2.11.12"
+  private val sv12 = "2.12.11"
+  private val sv13 = "2.13.2"
+
+
+  val commonCrossBuildVersions = crossScalaVersions := Seq(sv11, sv12, sv13)
 
   val scalaVersion_211 = Def.settings(
-    scalaVersion := "2.11.12",
+    scalaVersion := sv11,
     scalacOptions ++= settingsFor(scalaVersion.value)
-  )
+    )
   val scalaVersion_212 = Def.settings(
-    scalaVersion := "2.12.11",
+    scalaVersion := sv12,
     scalacOptions ++= settingsFor(scalaVersion.value)
-  )
+    )
   val scalaVersion_213 = Def.settings(
-    scalaVersion := "2.13.1",
+    scalaVersion := sv13,
     scalacOptions ++= settingsFor(scalaVersion.value)
     )
 
@@ -87,12 +91,32 @@ object Settings {
   )
 
   val strictCompile = Compile / compile / scalacOptions += "-Xfatal-warnings"
-
-  val bloopSources = bloopExportJarClassifiers in Global := Some(Set("sources"))
 }
 
 object Resolvers {
   val stg  = resolvers += Resolver.bintrayRepo("stg-tud", "maven")
+
+  def bintrayPublish(bintrayOrganization: String, githubOrganization: String, githubReponame: String) = Seq(
+    publishArtifact in Compile := true,
+    publishArtifact in Test := false,
+    // licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")),
+    scmInfo := Some(
+      ScmInfo(
+        browseUrl = url(s"https://github.com/$githubOrganization/$githubReponame/"),
+        connection = s"scm:git:git@github.com:$githubOrganization/$githubReponame.git"
+      )
+    ),
+    // Publish to Bintray, without the sbt-bintray plugin
+    publishMavenStyle := true,
+    publishTo := {
+      val proj = moduleName.value
+      val ver  = version.value
+      val url = new java.net.URL(
+        s"https://api.bintray.com/content/$bintrayOrganization/maven/$proj/$ver")
+      val patterns = Resolver.mavenStylePatterns
+      Some(Resolver.url("bintray", url)(patterns))
+    }
+  )
 }
 
 object Dependencies {
@@ -100,19 +124,21 @@ object Dependencies {
   def ld = libraryDependencies
 
   val betterFiles  = ld += "com.github.pathikrit" %% "better-files" % "3.8.0"
-  val cats         = ld += "org.typelevel" %%% "cats-core" % "2.0.0"
-  val decline      = ld += "com.monovore" %%% "decline" % "1.0.0"
-  val fastparse    = ld += "com.lihaoyi" %%% "fastparse" % "2.2.4"
+  val cats         = ld += "org.typelevel" %%% "cats-core" % "2.1.1"
+  val decline      = ld += "com.monovore" %%% "decline" % "1.2.0"
+  val fastparse    = ld += "com.lihaoyi" %%% "fastparse" % "2.3.0"
   val jsoup        = ld += "org.jsoup" % "jsoup" % "1.13.1"
   val kaleidoscope = ld += "com.propensive" %%% "kaleidoscope" % "0.1.0"
+  val magnolia     = ld += "com.propensive" %%% "magnolia" % "0.15.0"
+  val okHttp       = ld += "com.squareup.okhttp3" % "okhttp" % "4.6.0"
   val pprint       = ld += "com.lihaoyi" %%% "pprint" % "0.5.9"
   val scalactic    = ld += "org.scalactic" %% "scalactic" % "3.0.7"
-  val scribe       = ld += "com.outr" %%% "scribe" % "2.7.12"
+  val scribe       = ld += "com.outr" %%% "scribe" % "[2.7.0,2.8.0)"
   val sourcecode   = ld += "com.lihaoyi" %%% "sourcecode" % "0.2.1"
-  val upickle      = ld += "com.lihaoyi" %% "upickle" % "1.0.0"
   val toml         = ld += "tech.sparse" %%% "toml-scala" % "0.2.2"
+  val upickle      = ld += "com.lihaoyi" %% "upickle" % "1.1.0"
 
-  val akkaVersion = "2.6.4"
+  val akkaVersion = "2.6.5"
   val akkaHttp = ld ++= (Seq("akka-http-core",
                              "akka-http")
                          .map(n => "com.typesafe.akka" %% n % "10.1.11") ++
@@ -128,17 +154,17 @@ object Dependencies {
 
 
   // frontend
-  val normalizecss = ld += "org.webjars.npm" % "normalize.css" % "8.0.1"
-  val scalatagsVersion = "0.8.6"
-  val scalatags    = ld += "com.lihaoyi" %%% "scalatags" % scalatagsVersion
+  val normalizecss      = ld += "org.webjars.npm" % "normalize.css" % "8.0.1"
+  val scalatagsVersion  = "0.9.0"
+  val scalatags         = ld += "com.lihaoyi" %%% "scalatags" % scalatagsVersion
   val scalajsdomVersion = "1.0.0"
-  val scalajsdom   = ld += "org.scala-js" %%% "scalajs-dom" % scalajsdomVersion
-  val fontawesome  = ld += "org.webjars" % "font-awesome" % "5.10.1"
+  val scalajsdom        = ld += "org.scala-js" %%% "scalajs-dom" % scalajsdomVersion
+  val fontawesome       = ld += "org.webjars" % "font-awesome" % "5.10.1"
 
   // tests
-  val scalacheck = ld += "org.scalacheck" %%% "scalacheck" % "1.14.3" % "test"
+  val scalacheck         = ld += "org.scalacheck" %%% "scalacheck" % "1.14.3" % "test"
   val scalatestpluscheck = ld += "org.scalatestplus" %%% "scalacheck-1-14" % "3.1.1.1" % "test"
-  val scalatest  = ld += "org.scalatest" %%% "scalatest" % "3.1.1" % "test"
+  val scalatest          = ld += "org.scalatest" %%% "scalatest" % "3.1.1" % "test"
 
   // legacy
   val scalaXml   = ld += "org.scala-lang.modules" %% "scala-xml" % "1.3.0"
@@ -147,7 +173,7 @@ object Dependencies {
 
   object loci {
 
-    val version = "0.3.0-29-g4009472"
+    val version = "0.3.0"
     def generic(n: String) = Def.settings(
       Resolvers.stg,
       ld += "de.tuda.stg" %%% s"scala-loci-$n" % version)
