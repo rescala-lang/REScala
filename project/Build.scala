@@ -173,7 +173,7 @@ object Dependencies {
 
   object loci {
 
-    val version = "0.3.0"
+    val version = "0.3.0-35-g5aaf998"
     def generic(n: String) = Def.settings(
       Resolvers.stg,
       ld += "de.tuda.stg" %%% s"scala-loci-$n" % version)
