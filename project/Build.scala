@@ -136,15 +136,16 @@ object Dependencies {
   val scribe       = ld += "com.outr" %%% "scribe" % "[2.7.0,2.8.0)"
   val sourcecode   = ld += "com.lihaoyi" %%% "sourcecode" % "0.2.1"
   val toml         = ld += "tech.sparse" %%% "toml-scala" % "0.2.2"
-  val upickle      = ld += "com.lihaoyi" %% "upickle" % "1.1.0"
+  val upickle      = ld += "com.lihaoyi" %% "upickle" % "[0.7.4,1.1.0]"
+  val scalaJavaTime= ld += "io.github.cquiroz" %%% "scala-java-time" % "2.0.0"
 
-  val akkaVersion = "2.6.5"
+  val akkaVersion = "[2.5.31, 2.6.5]"
   val akkaHttp = ld ++= (Seq("akka-http-core",
                              "akka-http")
                          .map(n => "com.typesafe.akka" %% n % "10.1.11") ++
                          Seq("com.typesafe.akka" %% "akka-stream" % akkaVersion))
 
-  val circeVersion = "0.13.0"
+  val circeVersion = "[0.11.2, 0.13.0]"
 
   val circe = ld ++= Seq("core",
                          "generic",
@@ -155,7 +156,7 @@ object Dependencies {
 
   // frontend
   val normalizecss      = ld += "org.webjars.npm" % "normalize.css" % "8.0.1"
-  val scalatagsVersion  = "0.9.0"
+  val scalatagsVersion  = "[0.6.8,0.9.0]"
   val scalatags         = ld += "com.lihaoyi" %%% "scalatags" % scalatagsVersion
   val scalajsdomVersion = "1.0.0"
   val scalajsdom        = ld += "org.scala-js" %%% "scalajs-dom" % scalajsdomVersion
@@ -173,7 +174,7 @@ object Dependencies {
 
   object loci {
 
-    val version = "0.3.0-35-g5aaf998"
+    val version = "0.4.0"
     def generic(n: String) = Def.settings(
       Resolvers.stg,
       ld += "de.tuda.stg" %%% s"scala-loci-$n" % version)

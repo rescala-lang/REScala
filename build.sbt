@@ -64,7 +64,7 @@ lazy val tests = crossProject(JSPlatform, JVMPlatform).in(file("Code/Tests"))
   .settings(name := "rescala-tests", cfg.noPublish, cfg.base, cfg.test, scalatestpluscheck,
             Dependencies.loci.wsAkka,
             lib.lociTransmitterDependencies, circe, lib.lociTransmitterDependencies,
-            scalatags)
+            scalatags, scalaJavaTime)
   .dependsOn(rescala)
   .jvmSettings(Dependencies.akkaHttp).jsSettings(
   jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
@@ -123,7 +123,7 @@ lazy val dividiParoli = project.in(file("Code/Examples/dividiParoli"))
   .dependsOn(rescalaJVM)
   .settings(name := "dividi and paroli", cfg.base, cfg.noPublish, cfg.mappingFilters,
             lib.scalaLogback, lib.scalafx, circe, loci.communication, loci.circe,
-            loci.wsAkka, lib.scalafxExtras, lib.jline,  lib.oldAkkaCluster)
+            loci.wsAkka, lib.scalafxExtras, lib.jline,  lib.oldAkkaCluster, akkaHttp)
 
 
 // ===================================================================================== Research

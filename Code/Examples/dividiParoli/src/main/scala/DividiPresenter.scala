@@ -1,5 +1,8 @@
+import java.util.function.{Consumer, Predicate}
+
 import DividiApp.Payer
 import com.jfoenix.controls._
+import javafx.scene.Node
 import rescala.default._
 import scalafx.Includes._
 import scalafx.application.Platform
@@ -86,9 +89,13 @@ class DividiPresenter(private val onlineButton: JFXToggleButton,
 
     var peopleInvolved: Set[Payer] = Set()
 
-    peopleCheckboxes.children.filtered(n => n.isInstanceOf[JFXCheckBox]).forEach(n => {
-      val checkBox = n.asInstanceOf[JFXCheckBox]
+    peopleCheckboxes.children.filtered(new Predicate[Node] {
+      override def test(t: Node): Boolean = t.isInstanceOf[JFXCheckBox]
+    }).forEach(new Consumer[Node] {
+      override def accept(t: Node): Unit = {
+      val checkBox = t.asInstanceOf[JFXCheckBox]
       if (checkBox.isSelected) peopleInvolved += checkBox.getText
+    }
     })
 
     if (newPerson != "") peopleInvolved += newPerson

@@ -160,5 +160,5 @@ object DividiApp extends JFXApp {
     scene = new Scene(root)
   }
 
-  stage.onCloseRequest = _ => registry.terminate() // terminate registry on window close
+  stage.onCloseRequest = (_: Any) => registry.terminate() // terminate registry on window close
 }
