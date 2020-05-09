@@ -3,7 +3,7 @@ package reswing
 import rescala.macros.cutOutOfUserComputation
 import rescala.default.{Event, Evt, implicitScheduler}
 
-import scala.language.implicitConversions
+
 
 /**
  * Represents `Swing` events that are fired by the library or passed to the

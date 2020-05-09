@@ -1,6 +1,6 @@
 package reswing
 
-import scala.language.implicitConversions
+
 import scala.swing.{Color, Dimension, Font, Table}
 import scala.swing.Table.{AutoResizeMode, ElementMode, IntervalMode}
 import scala.swing.event.{TableChanged, TableColumnsSelected, TableRowsAdded, TableRowsRemoved, TableRowsSelected, TableStructureChanged, TableUpdated}
@@ -137,19 +137,19 @@ class ReTable[A <: AnyRef](
       },
       classOf[TableStructureChanged])
 
-  rowHeight using (peer.rowHeight _, peer.rowHeight= _, "rowHeight")
-  autoResizeMode using (peer.autoResizeMode _, peer.autoResizeMode= _, "autoResizeMode")
+  rowHeight using ({() => peer.rowHeight}, peer.rowHeight= _, "rowHeight")
+  autoResizeMode using ({() => peer.autoResizeMode}, peer.autoResizeMode= _, "autoResizeMode")
 
   showHorizontalLines using (() => peer.peer.getShowHorizontalLines(),
-                             peer.peer.setShowHorizontalLines _, "showHorizontalLines")
+                             {peer.peer.setShowHorizontalLines(_)}, "showHorizontalLines")
   showVerticalLines using (() => peer.peer.getShowVerticalLines(),
-                           peer.peer.setShowVerticalLines _, "showVerticalLines")
-  gridColor using (peer.gridColor _, peer.gridColor= _, "gridColor")
+                           {peer.peer.setShowVerticalLines(_)}, "showVerticalLines")
+  gridColor using ({() => peer.gridColor}, peer.gridColor= _, "gridColor")
   fillsViewportHeight using (() => peer.peer.getFillsViewportHeight(),
-                             peer.peer.setFillsViewportHeight _, "fillsViewportHeight")
+                             {peer.peer.setFillsViewportHeight(_)}, "fillsViewportHeight")
   selectionForeground using (() => peer.selectionForeground, peer.selectionForeground= _,
                              "selectionForeground")
-  selectionBackground using (peer.selectionBackground _, peer.selectionBackground= _,
+  selectionBackground using ({() => peer.selectionBackground}, peer.selectionBackground= _,
                              "selectionBackground")
 
   selectColumnInterval using { range =>
@@ -177,13 +177,13 @@ class ReTable[A <: AnyRef](
     protected[ReTable] val peer = ReTable.this.peer.selection
 
     val columnLeadIndex = ReSwingValue using (
-        peer.columns.leadIndex _, (peer, classOf[TableColumnsSelected]))
+        {() => peer.columns.leadIndex}, (peer, classOf[TableColumnsSelected]))
     val columnAnchorIndex = ReSwingValue using (
-        peer.columns.anchorIndex _, (peer, classOf[TableColumnsSelected]))
+        {() => peer.columns.anchorIndex}, (peer, classOf[TableColumnsSelected]))
     val rowLeadIndex = ReSwingValue using (
-        peer.rows.leadIndex _, (peer, classOf[TableRowsSelected]))
+        {() => peer.rows.leadIndex}, (peer, classOf[TableRowsSelected]))
     val rowAnchorIndex = ReSwingValue using (
-        peer.rows.anchorIndex _, (peer, classOf[TableRowsSelected]))
+        {() => peer.rows.anchorIndex}, (peer, classOf[TableRowsSelected]))
 
     val columns = ReSwingValue using (
         { () => peer.columns.toSet }, (peer, classOf[TableColumnsSelected]))
@@ -193,8 +193,8 @@ class ReTable[A <: AnyRef](
         { () => peer.cells.toSet },
         (peer, classOf[TableColumnsSelected]), (peer, classOf[TableRowsSelected]))
 
-    intervalMode using (peer.intervalMode _, peer.intervalMode_= _)
-    elementMode using (peer.elementMode _, peer.elementMode= _,
+    intervalMode using ({() => peer.intervalMode}, peer.intervalMode_= _)
+    elementMode using ({() => peer.elementMode}, peer.elementMode= _,
                        "columnSelectionAllowed", "rowSelectionAllowed", "cellSelectionEnabled")
 
     val columnsSelected = ReSwingEvent using (peer, classOf[TableColumnsSelected])

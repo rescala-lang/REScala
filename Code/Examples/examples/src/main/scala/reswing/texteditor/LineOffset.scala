@@ -1,6 +1,6 @@
 package reswing.texteditor
 
-import scala.language.implicitConversions
+
 
 class LineIterator(it: Iterator[Char]) extends Iterator[String] {
   private var blank = !it.hasNext

@@ -32,7 +32,7 @@ import scala.swing.{Publisher, Reactor, UIElement}
  * extends ReSwingEventConnection {
  *   protected def peer: UIElement
  *
- *   repaint using peer.repaint _
+ *   repaint using {() => peer.repaint}
  * }
  * }}}
  */

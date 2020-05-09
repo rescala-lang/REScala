@@ -1,6 +1,6 @@
 package reswing
 
-import scala.language.implicitConversions
+
 import scala.swing.{Alignment, Color, Dimension, Font, TextField}
 import scala.swing.event.EditDone
 
@@ -36,7 +36,7 @@ class ReTextField(
   override protected lazy val peer =
     new TextField(null, columns) with ComponentMixin
 
-  horizontalAlignment using (peer.horizontalAlignment _,
+  horizontalAlignment using ({() => peer.horizontalAlignment},
                              peer.horizontalAlignment= _, "horizontalAlignment")
 
   val editDone = ReSwingEvent using classOf[EditDone]

@@ -4,7 +4,7 @@ import main.collections._
 import org.scalatest.funspec._
 import rescala.default._
 
-import scala.language.implicitConversions
+
 
 class ReactiveMapSpec extends AnyFunSpec {
   implicit def liftToSignal[T](v: T): Signal[T] = Var(v)

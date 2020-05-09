@@ -1,6 +1,6 @@
 package reswing
 
-import scala.language.implicitConversions
+
 import scala.swing.{Component, LayoutContainer}
 import scala.swing.event.{ComponentAdded, ComponentRemoved}
 
@@ -21,7 +21,7 @@ trait ReLayoutContainer[Constraints] extends ReUIElement {
 
   def contents: ReSwingValue[Map[Component, Constraints]]
 
-  contents using (peerContents _, peerContents_= _,
+  contents using ({() => peerContents}, peerContents_= _,
                   classOf[ComponentAdded], classOf[ComponentRemoved])
 
   object layout {

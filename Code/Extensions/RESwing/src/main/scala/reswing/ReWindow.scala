@@ -1,6 +1,6 @@
 package reswing
 
-import scala.language.implicitConversions
+
 import scala.swing.{Component, Dimension, Point, Rectangle, Window}
 import scala.swing.event.{UIElementMoved, UIElementResized, _}
 
@@ -18,9 +18,9 @@ abstract class ReWindow(
     ReRootPanel {
   protected def peer: Window
 
-  size using (peer.size _, peer.size_= _, classOf[UIElementResized])
-  location using (peer.location _, peer.location_= _, classOf[UIElementMoved])
-  bounds using (peer.bounds _, peer.bounds_= _, classOf[UIElementResized],
+  size using ({() => peer.size}, peer.size_= _, classOf[UIElementResized])
+  location using ({() => peer.location}, peer.location_= _, classOf[UIElementMoved])
+  bounds using ({() => peer.bounds}, peer.bounds_= _, classOf[UIElementResized],
                                                 classOf[UIElementMoved])
 
   val windowActivated = ReSwingEvent using (peer, classOf[WindowActivated])

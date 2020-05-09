@@ -2,7 +2,7 @@ package reswing
 
 import javax.swing.Icon
 
-import scala.language.implicitConversions
+
 import scala.swing.{Alignment, Color, Dimension, Font, Label}
 
 class ReLabel(
@@ -25,19 +25,19 @@ class ReLabel(
                 minimumSize, maximumSize, preferredSize) {
   override protected lazy val peer = new Label with ComponentMixin
 
-  text using (peer.text _, peer.text_= _, "text")
+  text using ({() => peer.text}, peer.text_= _, "text")
 
-  horizontalAlignment using (peer.horizontalAlignment _,
+  horizontalAlignment using ({() => peer.horizontalAlignment},
                              peer.horizontalAlignment= _, "horizontalAlignment")
-  verticalAlignment using (peer.verticalAlignment _,
+  verticalAlignment using ({() => peer.verticalAlignment},
                            peer.verticalAlignment= _, "verticalAlignment")
-  horizontalTextPosition using (peer.horizontalTextPosition _,
+  horizontalTextPosition using ({() => peer.horizontalTextPosition},
                                 peer.horizontalTextPosition= _, "horizontalTextPosition")
-  verticalTextPosition using (peer.verticalTextPosition _,
+  verticalTextPosition using ({() => peer.verticalTextPosition},
                               peer.verticalTextPosition_= _, "verticalTextPosition")
 
-  icon using (peer.icon _, peer.icon_= _, "icon")
-  disabledIcon using (peer.disabledIcon _, peer.disabledIcon_= _, "disabledIcon")
+  icon using ({() => peer.icon}, peer.icon_= _, "icon")
+  disabledIcon using ({() => peer.disabledIcon}, peer.disabledIcon_= _, "disabledIcon")
 }
 
 object ReLabel {

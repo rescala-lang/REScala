@@ -1,6 +1,6 @@
 package reswing
 
-import scala.language.implicitConversions
+
 import scala.swing.{Color, ComboBox, Dimension, Font}
 import scala.swing.event.{ListChanged, ListElementsAdded, ListElementsRemoved, SelectionChanged}
 
@@ -66,7 +66,7 @@ class ReComboBox[A](
       val item: ReSwingValue[Option[A]]) {
     protected[ReComboBox] val peer = ReComboBox.this.peer.selection
 
-    index using (peer.index _, peer.index= _, (peer, classOf[SelectionChanged]))
+    index using ({() => peer.index}, peer.index= _, (peer, classOf[SelectionChanged]))
     item using (
         { () => Option(peer.item) },
         { item => peer.item = item getOrElse null.asInstanceOf[A] },

@@ -1,7 +1,7 @@
 package reswing.millgame.types
 
 import scala.Numeric.Implicits._
-import scala.language.implicitConversions
+
 import java.awt.Color
 
 //

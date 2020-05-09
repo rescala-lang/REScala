@@ -1,6 +1,6 @@
 package reswing
 
-import scala.language.implicitConversions
+
 import scala.swing.{BoxPanel, Color, Dimension, Font, Orientation}
 
 class ReBoxPanel(

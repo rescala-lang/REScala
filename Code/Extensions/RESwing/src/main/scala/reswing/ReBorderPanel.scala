@@ -1,6 +1,6 @@
 package reswing
 
-import scala.language.implicitConversions
+
 import scala.swing.BorderPanel.Position
 import scala.swing.{BorderPanel, Color, Component, Dimension, Font}
 

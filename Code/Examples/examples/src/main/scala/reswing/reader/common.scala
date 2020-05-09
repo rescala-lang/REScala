@@ -2,7 +2,7 @@ package reswing.reader
 
 import java.net.URL
 
-import scala.language.implicitConversions
+
 
 object common {
   def ??? : Nothing = throw new Error("Implementation missing")

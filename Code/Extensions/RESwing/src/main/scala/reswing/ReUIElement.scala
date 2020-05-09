@@ -1,6 +1,6 @@
 package reswing
 
-import scala.language.implicitConversions
+
 import scala.swing.{Dimension, UIElement}
 import scala.swing.event.{UIElementMoved, UIElementResized}
 
@@ -12,14 +12,14 @@ abstract class ReUIElement(
     ReSwingValueConnection with ReSwingEventConnection {
   protected def peer: UIElement
 
-  val size = ReSwingValue using (peer.size _, classOf[UIElementResized])
-  val location = ReSwingValue using (peer.location _, classOf[UIElementMoved])
-  val bounds = ReSwingValue using (peer.bounds _, classOf[UIElementResized],
+  val size = ReSwingValue using ({() => peer.size}, classOf[UIElementResized])
+  val location = ReSwingValue using ({() => peer.location}, classOf[UIElementMoved])
+  val bounds = ReSwingValue using ({() => peer.bounds}, classOf[UIElementResized],
                                                   classOf[UIElementMoved])
 
-  minimumSize using (peer.minimumSize _, peer.minimumSize_= _, "minimumSize")
-  maximumSize using (peer.maximumSize _, peer.maximumSize_= _, "maximumSize")
-  preferredSize using (peer.preferredSize _, peer.preferredSize_= _, "preferredSize")
+  minimumSize using ({() => peer.minimumSize}, peer.minimumSize_= _, "minimumSize")
+  maximumSize using ({() => peer.maximumSize}, peer.maximumSize_= _, "maximumSize")
+  preferredSize using ({() => peer.preferredSize}, peer.preferredSize_= _, "preferredSize")
 
   def initReactiveLayer(): Unit = {
     initReSwingValueConnection

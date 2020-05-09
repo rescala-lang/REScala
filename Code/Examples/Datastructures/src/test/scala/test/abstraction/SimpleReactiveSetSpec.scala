@@ -3,7 +3,7 @@ package test.abstraction
 import org.scalatest.funspec._
 import rescala.default._
 
-import scala.language.implicitConversions
+
 
 class SimpleReactiveSetSpec extends AnyFunSpec {
 

@@ -1,13 +1,13 @@
 package reswing
 
-import scala.language.implicitConversions
+
 import scala.swing.{Component, SequentialContainer}
 import scala.swing.event.{ComponentAdded, ComponentRemoved}
 
 trait ReSequentialContainer extends ReUIElement {
   protected def peer: SequentialContainer
 
-  private def peerContents = peer.contents: CompList
+  private def peerContents: CompList = peer.contents.toSeq: CompList
 
   private def peerContents_=(components: CompList): Unit = {
     peer.contents.clear
@@ -18,11 +18,11 @@ trait ReSequentialContainer extends ReUIElement {
 
   def contents: ReSwingValue[CompList]
 
-  contents using (peerContents _, peerContents_= _,
+  contents using ({() => peerContents}, peerContents_= _,
                   classOf[ComponentAdded], classOf[ComponentRemoved])
 
   protected implicit class AddContent(contents: ReSwingValue[CompList]) {
-    def +=(component: Component) = peerContents :+= component
+    def +=(component: Component): Unit = peerContents :+= component
   }
 }
 

@@ -1,6 +1,6 @@
 package reswing
 
-import scala.language.implicitConversions
+
 import scala.swing.{Component, RootPanel}
 import scala.swing.event.{ComponentAdded, ComponentRemoved}
 

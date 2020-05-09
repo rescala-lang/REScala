@@ -1,6 +1,6 @@
 package reswing
 
-import scala.language.implicitConversions
+
 import scala.swing.{Color, Component, Dimension, Font, Graphics2D}
 import scala.swing.event._
 
@@ -17,12 +17,12 @@ abstract class ReComponent(
 
   override protected lazy val peer = new Component with ComponentMixin
 
-  val hasFocus = ReSwingValue using (peer.hasFocus _, classOf[FocusGained], classOf[FocusLost])
+  val hasFocus = ReSwingValue using ({() => peer.hasFocus}, classOf[FocusGained], classOf[FocusLost])
 
-  background using (peer.background _, peer.background_= _, "background")
-  foreground using (peer.foreground _, peer.foreground_= _, "foreground")
-  font using (peer.font _, peer.font_= _, "font")
-  enabled using (peer.enabled _, peer.enabled_= _, "enabled")
+  background using ({() => peer.background}, peer.background_= _, "background")
+  foreground using ({() => peer.foreground}, peer.foreground_= _, "foreground")
+  font using ({() => peer.font}, peer.font_= _, "font")
+  enabled using ({() => peer.enabled}, peer.enabled_= _, "enabled")
 
   object mouse {
     object clicks {

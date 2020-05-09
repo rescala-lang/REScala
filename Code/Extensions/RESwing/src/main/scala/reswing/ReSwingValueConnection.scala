@@ -3,7 +3,7 @@ package reswing
 import java.awt.event.{HierarchyEvent, HierarchyListener}
 
 import scala.collection.mutable.{ListBuffer, Map}
-import scala.language.implicitConversions
+
 import scala.swing.{Publisher, Reactor, Swing, UIElement}
 import scala.swing.event.Event
 
@@ -27,7 +27,7 @@ import scala.swing.event.Event
  * extends ReSwingValueConnection {
  *   protected def peer: UIElement
  *
- *   preferredSize using (peer.preferredSize _, peer.preferredSize_= _, "preferredSize")
+ *   preferredSize using ({() => peer.preferredSize}, peer.preferredSize_= _, "preferredSize")
  * }
  * }}}
  *
@@ -38,7 +38,7 @@ import scala.swing.event.Event
  * extends ReSwingValueConnection {
  *   protected def peer: Component
  *
- *   val hasFocus = ReSwingValue using (peer.hasFocus _, classOf[FocusGained], classOf[FocusLost])
+ *   val hasFocus = ReSwingValue using ({() => peer.hasFocus}, classOf[FocusGained], classOf[FocusLost])
  * }
  * }}}
  */

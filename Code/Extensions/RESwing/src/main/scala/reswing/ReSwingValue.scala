@@ -3,7 +3,7 @@ package reswing
 import rescala.default._
 import rescala.macros.cutOutOfUserComputation
 
-import scala.language.implicitConversions
+
 
 /**
  * Combines reactive values from the application and from the `Swing` library

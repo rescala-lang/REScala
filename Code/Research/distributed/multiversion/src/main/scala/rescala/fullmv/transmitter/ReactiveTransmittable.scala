@@ -146,7 +146,7 @@ object ReactiveTransmittable {
   sealed trait Response[+P] extends Message[P]
   case class RemoteExceptionResponse(serializedThrowable: Array[Byte]) extends Response[Nothing]
   case object UnitResponse extends Response[Nothing]
-  import scala.language.implicitConversions
+
   implicit def unitResponseToUnitFuture(future: Future[UnitResponse.type]): Future[Unit] = future.map(_ => ())(FullMVEngine.notWorthToMoveToTaskpool)
   implicit def unitToUnitResponseFuture(future: Future[Unit]): Future[UnitResponse.type] = future.map(_ => UnitResponse)(FullMVEngine.notWorthToMoveToTaskpool)
 

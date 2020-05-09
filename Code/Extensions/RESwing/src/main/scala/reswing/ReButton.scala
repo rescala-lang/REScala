@@ -2,7 +2,7 @@ package reswing
 
 import javax.swing.Icon
 
-import scala.language.implicitConversions
+
 import scala.swing.{Action, Alignment, Button, Color, Dimension, Font}
 
 class ReButton(

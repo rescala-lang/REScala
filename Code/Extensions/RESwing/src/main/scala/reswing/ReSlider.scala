@@ -1,6 +1,6 @@
 package reswing
 
-import scala.language.implicitConversions
+
 import scala.swing.{Color, Dimension, Font, Label, Slider}
 import scala.swing.event.ValueChanged
 
@@ -28,19 +28,19 @@ class ReSlider(
                 minimumSize, maximumSize, preferredSize) {
   override protected lazy val peer = new Slider with ComponentMixin
 
-  min using (peer.min _, peer.min_= _, "minimum")
-  max using (peer.max _, peer.max_= _, "maximum")
-  value using (peer.value _, peer.value_= _, classOf[ValueChanged])
-  extent using (peer.extent _, peer.extent_= _)
+  min using ({() => peer.min}, peer.min_= _, "minimum")
+  max using ({() => peer.max}, peer.max_= _, "maximum")
+  value using ({() => peer.value}, peer.value_= _, classOf[ValueChanged])
+  extent using ({() => peer.extent}, peer.extent_= _)
 
-  paintLabels using (peer.paintLabels _, peer.paintLabels_= _, "paintLabels")
-  paintTicks using (peer.paintTicks _, peer.paintTicks_= _, "paintTicks")
-  paintTrack using (peer.paintTrack _, peer.paintTrack_= _, "paintTrack")
+  paintLabels using ({() => peer.paintLabels}, peer.paintLabels_= _, "paintLabels")
+  paintTicks using ({() => peer.paintTicks}, peer.paintTicks_= _, "paintTicks")
+  paintTrack using ({() => peer.paintTrack}, peer.paintTrack_= _, "paintTrack")
 
-  snapToTicks using (peer.snapToTicks _, peer.snapToTicks_= _, "snapToTicks")
+  snapToTicks using ({() => peer.snapToTicks}, peer.snapToTicks_= _, "snapToTicks")
 
-  minorTickSpacing using (peer.minorTickSpacing _, peer.minorTickSpacing_= _, "minorTickSpacing")
-  majorTickSpacing using (peer.majorTickSpacing _, peer.majorTickSpacing_= _, "majorTickSpacing")
+  minorTickSpacing using ({() => peer.minorTickSpacing}, peer.minorTickSpacing_= _, "minorTickSpacing")
+  majorTickSpacing using ({() => peer.majorTickSpacing}, peer.majorTickSpacing_= _, "majorTickSpacing")
 
   labels using (
       { () => if (peer.peer.getLabelTable != null) peer.labels.toMap else null },
