@@ -6,6 +6,9 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.lattices.dotstores.IntTree
 import rescala.extra.lattices.sets.AddWinsSetO
 
+import scala.collection.Seq
+
+
 object IntRangeGenerator {
   implicit val genDot: Arbitrary[IntTree.Tree] = Arbitrary(for {
     values <- Gen.someOf(0 to 20)
