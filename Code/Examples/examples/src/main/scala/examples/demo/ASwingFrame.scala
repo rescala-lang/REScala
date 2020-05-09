@@ -5,6 +5,8 @@ import java.awt.Dimension
 import examples.demo.ui.{Circle, Rectangle, ShapesPanel}
 import rescala.default._
 
+import examples.demo.ui.Shape
+
 import scala.swing.{MainFrame, SimpleSwingApplication, UIElement}
 
 /**
@@ -15,7 +17,7 @@ import scala.swing.{MainFrame, SimpleSwingApplication, UIElement}
   */
 object ASwingFrame extends SimpleSwingApplication {
   override lazy val top = {
-    val panel = new ShapesPanel(Var(List(
+    val panel = new ShapesPanel(Var(List[Shape](
       new Circle(center = Var(Pos(75, 30)), diameter = Var(25)),
       new Circle(Var(Pos(100, 100)), Var(50)),
       new Rectangle(centerX = Var(-50), centerY = Var(-100), hitboxWidth = Var(10), hitboxHeight = Var(100))

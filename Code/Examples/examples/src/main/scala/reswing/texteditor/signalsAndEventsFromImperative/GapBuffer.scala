@@ -14,7 +14,6 @@ class CharacterIterator(buf: Array[Char], count: Int, caret: Int) extends Iterat
   private var b = 0
   private var c = 0
 
-  override def hasDefiniteSize = true
   override def size = count
 
   def hasNext = { c < count }

@@ -25,7 +25,7 @@ object RunConsole {
               s"but observers … work differently now")
       //Observe.dereferenceAllStrongObserversWARNINGonlyUseThisIfYouKnowWhatYouAreDoing()
       System.gc()
-      Globals.setParallelism(threads)
+      //Globals.setParallelism(threads)
 
       val world = new World(width, height)
 
@@ -62,7 +62,7 @@ object RunPrinting {
             s"but observers … work differently now")
     // Observe.dereferenceAllStrongObserversWARNINGonlyUseThisIfYouKnowWhatYouAreDoing()
     System.gc()
-    Globals.setParallelism(1)
+    //Globals.setParallelism(1)
 
     val world = new World(width, height)
 

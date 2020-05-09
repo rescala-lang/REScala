@@ -60,9 +60,9 @@ object LFullyModularBall extends Main {
     val filteredHorizontalBounceSources = horizontalBounceSources.map(_.map(_.recover{case _: IllegalArgumentException => None}))
 
     val velocity = Signal { Pos(
-      x = horizontalBounceSources.flatten(firstFiringEvent)
+      x = horizontalBounceSources.flatten[Event[Any]](firstFiringEvent)
         .fold(initVx / Clock.NanoSecond) { (old, _) => -old }.value,
-      y = verticalBounceSources.flatten(firstFiringEvent)
+      y = verticalBounceSources.flatten[Event[Any]](firstFiringEvent)
         .fold(initVy / Clock.NanoSecond) { (old, _ ) => -old }.value)
     }
 

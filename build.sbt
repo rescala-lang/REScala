@@ -9,7 +9,6 @@ ThisBuild / incOptions := (ThisBuild / incOptions).value.withLogRecompileOnMacro
 cfg.noPublish
 
 lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
-  datastructures,
   dividiParoli,
   documentation,
   examples,
@@ -100,10 +99,6 @@ lazy val examples = project.in(file("Code/Examples/examples"))
   .dependsOn(rescalaJVM, reswing)
   .settings(name := "rescala-examples", cfg.base, cfg.noPublish, scalaswing, scalaXml)
 
-lazy val datastructures = project.in(file("Code/Examples/Datastructures"))
-                                 .dependsOn(rescalaJVM)
-                                 .settings(cfg.base, name := "datastructures", scalatest, cfg.noPublish, cfg.strictScalac)
-
 lazy val universe = project.in(file("Code/Examples/Universe"))
   .dependsOn(rescalaJVM, fullmv)
   .settings(cfg.base, cfg.noPublish, name := "rescala-universe")
@@ -172,7 +167,7 @@ lazy val cfg = new {
     autoAPIMappings := true,
     Compile / doc / scalacOptions += "-groups",
     commonCrossBuildVersions
-  ) ++ scalaVersion_212
+  ) ++ scalaVersion_213
 
   val test = List(
     testOptions in Test += Tests.Argument("-oICN"),
@@ -210,7 +205,7 @@ lazy val cfg = new {
 //    "-Xdisable-assertions"
   )
 
-  lazy val strictScalac = strictCompile
+  lazy val strictScalac = List() //strictCompile
 
   lazy val snapshotAssertions = scalacOptions ++= (
     if (!version.value.endsWith("-SNAPSHOT")) List("-Xdisable-assertions", "-Xelide-below", "9999999")
@@ -282,11 +277,31 @@ lazy val lib = new {
     unmanagedJars in Compile += Attributed.blank(file(System.getenv("JAVA_HOME") + "/lib/ext/jfxrt.jar"))
   )
 
+  def `is 2.12+`(scalaVersion: String): Boolean =
+    CrossVersion.partialVersion(scalaVersion) collect { case (2, n) => n >= 12 } getOrElse false
+
+  def `is 2.13+`(scalaVersion: String): Boolean =
+    CrossVersion.partialVersion(scalaVersion) collect { case (2, n) => n >= 13 } getOrElse false
+
+
+  val macroparadise = Seq(
+    scalacOptions ++= {
+      if (`is 2.13+`(scalaVersion.value))
+        Seq("-Ymacro-annotations")
+      else
+        Seq.empty
+    },
+    libraryDependencies ++= {
+      if (`is 2.13+`(scalaVersion.value))
+        Seq.empty
+      else
+        Seq(compilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.patch))
+    })
+
   val scalafxExtras = Seq(
-    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full),
     libraryDependencies += "org.scalafx" %% "scalafxml-core-sfx8" % "0.5",
     libraryDependencies += "com.jfoenix" % "jfoenix" % "9.0.9"
-    )
+    ) ++ macroparadise
 
   val oldAkkaCluster = {
 
@@ -335,6 +350,7 @@ lazy val ersirServer = project.in(file("Code/Examples/Ersir/server"))
                        .settings(
                          name := "server",
                          fork := true,
+                         cfg.base,
                          jsoup,
                          betterFiles,
                          decline,
@@ -344,18 +360,21 @@ lazy val ersirServer = project.in(file("Code/Examples/Ersir/server"))
                          )
                        .enablePlugins(JavaServerAppPackaging)
                        .dependsOn(ersirSharedJVM)
+                       .dependsOn(locidistribution)
                        .dependsOn(rescalaJVM)
 
 lazy val ersirWeb = project.in(file("Code/Examples/Ersir/web"))
                     .enablePlugins(ScalaJSPlugin)
                     .settings(
                       name := "web",
+                      cfg.base,
                       scalajsdom, npmDependencies in Compile ++= Seq("mqtt" -> "2.18.2"), normalizecss,
                       scalaJSUseMainModuleInitializer := true,
                       webpackBundlingMode := BundlingMode.LibraryOnly()
                       //scalacOptions += "-P:scalajs:sjsDefinedByDefault"
                       )
                     .dependsOn(ersirSharedJS)
+                    .dependsOn(locidistribution)
                     .enablePlugins(SbtSassify)
                     .enablePlugins(ScalaJSBundlerPlugin)
                     .dependsOn(rescalaJS)
@@ -364,6 +383,7 @@ lazy val ersirShared = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure).in(file("Code/Examples/Ersir/shared"))
   .settings(
     name := "shared",
+    cfg.base,
     scalatags, loci.communication, loci.wsAkka, circe, scribe,loci.circe
     )
   .dependsOn(rescala)

@@ -1,8 +1,8 @@
 package reswing.reshapes
 
 import java.net.{BindException, ConnectException}
-import javax.swing.JOptionPane
 
+import javax.swing.JOptionPane
 import rescala.default._
 import reswing.reshapes.actions.{LoadAction, SaveAction}
 import reswing.reshapes.drawing.{Command, DrawingSpaceState, MergeDrawingSpaces, NetworkSpaceState}
@@ -16,6 +16,7 @@ import reswing.{ReMenu, ReMenuItem, ReSwingValue}
 import scala.collection.mutable.HashMap
 import scala.language.reflectiveCalls
 import scala.swing.BorderPanel.Position
+import scala.swing.TabbedPane.Page
 import scala.swing.{Action, BorderPanel, Component, Dimension, MainFrame, Menu, MenuBar, MenuItem, Separator, SimpleSwingApplication, Swing, TabbedPane}
 import scala.swing.event.SelectionChanged
 
@@ -65,13 +66,13 @@ object ReShapes extends SimpleSwingApplication {
 
     private lazy val itemsEvents: Signal[Seq[(Component, Event[Command])]] =  //#SIG
       (update map { _: Any =>  //#EF
-        ui.tabbedPane.pages filter { tab => tab.index != ui.tabbedPane.selection.index } map { tab =>
-          val item = new ReMenuItem(tab.title) //#IS( // )
+        (ui.tabbedPane.pages filter { tab => tab.index != ui.tabbedPane.selection.index } map { (tab: Page) =>
+          val item    = new ReMenuItem(tab.title) //#IS( // )
           val command = item.clicked map { _: Any => //#EF
             new MergeDrawingSpaces(panelDrawingSpaceStates(tab)._1)
           }
           (item: Component, command)
-        }
+        }).toSeq
       }) latest Seq.empty  //#IF
 
     contents += new Menu("File") {

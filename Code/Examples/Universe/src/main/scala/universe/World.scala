@@ -27,8 +27,8 @@ class World(val width: Int = 100, val height: Int = 100) {
   def tick() = {
     time.tick.fire()
     board.removeDead()
-    val pc = board.elements.par
-    pc.tasksupport = Globals.taskSupport
+    val pc = board.elements //.par
+    //pc.tasksupport = Globals.taskSupport
     pc.foreach { case (pos, be) => be.doStep(pos) }
   }
   /** batch spawns n Animals and m Plants */
@@ -64,8 +64,8 @@ class World(val width: Int = 100, val height: Int = 100) {
   def spawn(element: BoardElement, pos: Pos) = board.add(element, pos)
   def plan(f: => Unit) = synchronized(updates ::= f _)
   def runPlan() = {
-    val pc = updates.par
-    pc.tasksupport = Globals.taskSupport
+    val pc = updates //.par
+    //pc.tasksupport = Globals.taskSupport
     pc.foreach { u =>
       try {
         u()

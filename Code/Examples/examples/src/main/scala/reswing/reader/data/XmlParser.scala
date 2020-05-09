@@ -168,5 +168,5 @@ class XmlParser {
   private def extractInformation(xml: NodeSeq): Map[Symbol,String] =
     Map('title -> xml \ "title",
         'link -> xml \ "link",
-        'description -> xml \ "description") mapValues { _.text }
+        'description -> xml \ "description").view.mapValues { _.text }.toMap
 }

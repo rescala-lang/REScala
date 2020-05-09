@@ -10,11 +10,9 @@ import scala.swing.FlowPanel
 import scala.swing.Frame
 import scala.swing.Label
 import scala.swing.Orientation
-
 import javax.swing.JColorChooser
 import rescala.default._
-import reswing.ReButton
-import reswing.ReSlider
+import reswing.{ReButton, ReSlider, ReSwingValue}
 
 /**
  * Panel for various customization of the stroke.
@@ -27,7 +25,7 @@ class StrokeInputPanel extends FlowPanel {
       max = 50,
       value = 1,
       minorTickSpacing = 1,
-      labels = scala.collection.Map.empty[Int, Label],
+      labels = ReSwingValue(scala.collection.immutable.Map.empty[Int, Label]),
       paintTicks = true)
 
   private val showColorWindow = new ReButton("Show Colorinput")
