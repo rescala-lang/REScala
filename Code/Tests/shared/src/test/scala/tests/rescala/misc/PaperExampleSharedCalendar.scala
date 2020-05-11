@@ -1,33 +1,14 @@
-package tests.restoration
+package tests.rescala.misc
 
 import java.time.temporal.ChronoField
 import java.time.{LocalDate => Date}
 
-import cats.syntax.either._
-import io.circe.{Decoder, Encoder}
 import org.scalatest.freespec.AnyFreeSpec
-import rescala.extra.restoration.ReCirce._
-import rescala.extra.restoration.RestoringInterface
+import rescala.default._
 
 
 
 class PaperExampleSharedCalendar extends AnyFreeSpec {
-
-  val interface = RestoringInterface()
-  import interface._
-
-  /* coders for serialization */
-  implicit val instantWriter: Encoder[Date] = Encoder.encodeString.contramap[Date](_.toString)
-  implicit val instantReader: Decoder[Date] = Decoder.decodeString.emap { str =>
-    Either.catchNonFatal(java.time.LocalDate.parse(str)).leftMap(t => "Instant: " + t.getMessage)
-  }
-
-  implicit val entryDecoder: io.circe.Decoder[Entry]
-  = io.circe.Decoder.decodeTuple2[Var[String], Var[Date]].map{
-    case (title, date) => Entry(title, date)
-  }
-  implicit val entryEncoder: io.circe.Encoder[Entry]
-  = io.circe.Encoder.encodeTuple2[Signal[String], Signal[Date]].contramap[Entry](t => (t.title, t.date))
 
   object Date { def today(): Date = java.time.LocalDate.now() }
   object Week {
@@ -35,7 +16,7 @@ class PaperExampleSharedCalendar extends AnyFreeSpec {
     def of(date: Date): Date = date.`with`(ChronoField.DAY_OF_WEEK, 1)
   }
   object App {
-    val holiday: interface.Evt[Entry] = Evt[Entry]
+    val holiday: Evt[Entry] = Evt[Entry]
     def nationalHolidays(): Event[Entry] = holiday
   }
   object Log { def appendEntry(entry: Entry): Unit = println(s"Log: $entry") }

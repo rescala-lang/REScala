@@ -65,10 +65,11 @@ lazy val tests = crossProject(JSPlatform, JVMPlatform).in(file("Code/Tests"))
             lib.lociTransmitterDependencies, circe, lib.lociTransmitterDependencies,
             scalatags, scalaJavaTime)
   .dependsOn(rescala)
+  .dependsOn(locidistribution)
   .jvmSettings(Dependencies.akkaHttp).jsSettings(
   jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
   )
-lazy val testsJVM = tests.jvm.dependsOn(locidistribution)
+lazy val testsJVM = tests.jvm
 lazy val testsJS = tests.js
 
 lazy val documentation = project.in(file("Documentation/DocumentationProject"))
@@ -88,10 +89,13 @@ lazy val rescalafx = project.in(file("Code/Extensions/javafx"))
   .dependsOn(rescalaJVM)
   .settings(name := "rescalafx", cfg.base, cfg.noPublish, lib.scalafx)
 
-lazy val locidistribution = project.in(file("Code/Extensions/LociDistribution"))
-  .dependsOn(rescalaJVM)
+lazy val locidistribution = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure)
+  .in(file("Code/Extensions/LociDistribution"))
+  .dependsOn(rescala)
   .settings(name := "loci-distribution", cfg.base, cfg.noPublish, lib.lociTransmitterDependencies)
 
+lazy val locidistributionJS = locidistribution.js
+lazy val locidistributionJVM = locidistribution.jvm
 
 // ===================================================================================== Examples
 
@@ -106,7 +110,7 @@ lazy val universe = project.in(file("Code/Examples/Universe"))
 
 lazy val todolist = project.in(file("Code/Examples/Todolist"))
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(rescalaJS, locidistribution)
+  .dependsOn(rescalaJS, locidistributionJS)
   .settings(cfg.base, cfg.noPublish, name := "todolist",
             circe, scalatags,
             scalaSource in Compile := baseDirectory.value,
@@ -354,13 +358,11 @@ lazy val ersirServer = project.in(file("Code/Examples/Ersir/server"))
                          jsoup,
                          betterFiles,
                          decline,
-                         akkaHttp,
                          vbundleDef,
                          (Compile / compile) := ((Compile / compile) dependsOn vbundle).value
                          )
                        .enablePlugins(JavaServerAppPackaging)
                        .dependsOn(ersirSharedJVM)
-                       .dependsOn(locidistribution)
                        .dependsOn(rescalaJVM)
 
 lazy val ersirWeb = project.in(file("Code/Examples/Ersir/web"))
@@ -374,7 +376,6 @@ lazy val ersirWeb = project.in(file("Code/Examples/Ersir/web"))
                       //scalacOptions += "-P:scalajs:sjsDefinedByDefault"
                       )
                     .dependsOn(ersirSharedJS)
-                    .dependsOn(locidistribution)
                     .enablePlugins(SbtSassify)
                     .enablePlugins(ScalaJSBundlerPlugin)
                     .dependsOn(rescalaJS)
@@ -384,9 +385,11 @@ lazy val ersirShared = crossProject(JSPlatform, JVMPlatform)
   .settings(
     name := "shared",
     cfg.base,
-    scalatags, loci.communication, loci.wsAkka, circe, scribe,loci.circe
+    scalatags, loci.communication, loci.wsAkka, circe, scribe, loci.circe,
+    akkaHttp
     )
   .dependsOn(rescala)
+  .dependsOn(locidistribution)
 lazy val ersirSharedJVM = ersirShared.jvm
 lazy val ersirSharedJS = ersirShared.js
 

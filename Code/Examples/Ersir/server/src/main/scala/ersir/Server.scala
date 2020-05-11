@@ -4,16 +4,14 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import ersir.shared.{Bindings, Epoche, Posting}
-import io.circe.generic.auto._
 import loci.communicator.ws.akka._
 import loci.registry.Registry
-import loci.serializer.circe._
 import org.jsoup.Jsoup
 import rescala.default._
+import rescala.extra.distributables.LociDist
 import rescala.extra.lattices.Lattice
 import rescala.extra.lattices.sequences.RGOA
 import rescala.extra.lattices.sequences.RGOA.RGOA
-import rescala.extra.distributables.LociDist
 import rescala.reactives.Signals.Diff
 
 import scala.collection.JavaConverters._
@@ -31,7 +29,7 @@ class Server(pages: ServerPages,
   val serverSideEntries: Signal[Epoche[RGOA[Posting]]] =
     manualAddPostings.fold(Epoche(RGOA(List.empty[Posting]))) { (state, added) =>
       state.map(ps => Lattice.merge(ps, RGOA(added)))
-    }("postings", implicitly)
+    }("postings")
 
   val registry = new Registry
 
@@ -92,7 +90,7 @@ class Server(pages: ServerPages,
       getFromResourceDirectory("static")
     } ~
     path("add-entry") {
-      formFields(('title, 'description, 'imageUrl)).as(Posting.apply) { em =>
+      formFields(('title, 'description, 'imageUrl)).as(Posting.apply _) { em =>
         manualAddPostings.fire(List(em))
         complete("ok")
       }

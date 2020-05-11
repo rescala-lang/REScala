@@ -11,7 +11,6 @@ import rescala.reactives.{Signal, Var}
 class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(val interface: RescalaInterface[S]) {
   import interface.Var
   import interface.implicitScheduler
-  import interface.noSerialization
   import tests.rescala.concurrency.philosophers.PhilosopherTable._
 
   val seatings: Seq[Seating[S]] = createTable(philosopherCount)
@@ -45,7 +44,7 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(val inter
   def createTable(tableSize: Int): Seq[Seating[S]] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
 
-    val phils = for (i <- 0 until tableSize) yield Var[Philosopher](Thinking)(implicitly, s"Phil($i)")
+    val phils = for (i <- 0 until tableSize) yield Var[Philosopher](Thinking)(s"Phil($i)")
 
     val forks = for (i <- 0 until tableSize) yield {
       val nextCircularIndex = mod(i + 1)

@@ -11,11 +11,8 @@ import loci.transmitter.IdenticallyTransmittable
 import org.scalajs.dom.UIEvent
 import org.scalajs.dom.html.{Input, LI}
 import rescala.extra.Tags._
-import rescala.core.ReSerializable
 import rescala.extra.distributables.LociDist
 import rescala.extra.lattices.primitives.LastWriterWins
-import rescala.extra.restoration.LocalStorageStore
-import rescala.extra.restoration.ReCirce._
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all._
 
@@ -23,6 +20,8 @@ import scala.Function.const
 import scala.collection.mutable
 import scala.concurrent.Future
 import scala.scalajs.js.timers.setTimeout
+
+import rescala.default._
 
 case class TaskData(desc: String, done: Boolean = false) {
   def toggle(): TaskData = copy(done = !done)
@@ -37,8 +36,7 @@ object TaskData {
 
 
 
-class TaskHandling(implicit val storingScheduler: LocalStorageStore) {
-  import storingScheduler._
+class TaskHandling() {
 
 
   class Taskref(val id: String,
@@ -89,7 +87,7 @@ class TaskHandling(implicit val storingScheduler: LocalStorageStore) {
     }
 
     val changeEditing = (edittextStr map const(false)) || (editDiv.event map const(true))
-    val editingV =  changeEditing.latest(init = false)(ReSerializable.doNotSerialize, implicitly)
+    val editingV =  changeEditing.latest(init = false)(implicitly)
 
     val doneClick = Events.fromCallback[UIEvent](onchange := _)
 
@@ -98,7 +96,7 @@ class TaskHandling(implicit val storingScheduler: LocalStorageStore) {
     val taskDataL = Events.foldAll(LastWriterWins(initial))(current => Seq(
       doneEv >> {_ => current.map(_.toggle())},
       edittextStr >> {v => current.map(_.edit(v))}
-    ))(implicitly, uniqueId)
+    ))(uniqueId)
 
     LociDist.distribute(taskDataL, Todolist.registry)(Binding(uniqueId)(bindingBuilder))
 

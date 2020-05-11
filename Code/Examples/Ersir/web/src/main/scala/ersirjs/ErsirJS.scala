@@ -36,7 +36,7 @@ object ErsirJS {
     Events.foldAll(Epoche(RGOA(List.empty[Posting])))(state => Seq(
       addPost >> { post => state.map(_.prepend(post)) },
       index.reset.event >> { rs => state.next(RGOA(Nil)) }
-    ))(implicitly, "postings")
+    ))("postings")
 
 
   val registry = new Registry

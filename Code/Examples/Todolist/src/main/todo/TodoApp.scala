@@ -9,21 +9,19 @@ import org.scalajs.dom.html.{Div, Input}
 import rescala.extra.Tags._
 import rescala.extra.distributables.LociDist
 import rescala.extra.lattices.sequences.DeltaSequence
-import rescala.extra.restoration.LocalStorageStore
-import rescala.extra.restoration.ReCirce._
 import scalatags.JsDom
 import scalatags.JsDom.all._
 import scalatags.JsDom.tags2.section
 import scalatags.JsDom.{Attr, TypedTag}
+import rescala.default._
 
 object TodoApp{
-  def apply(taskHandling: TaskHandling)(implicit storingScheduler: LocalStorageStore)
+  def apply(taskHandling: TaskHandling)
   : TodoApp[taskHandling.type] = new TodoApp(taskHandling)
 }
 
-class TodoApp[TH <: TaskHandling](val taskHandling: TH)(implicit val storingScheduler: LocalStorageStore) {
+class TodoApp[TH <: TaskHandling](val taskHandling: TH) {
 
-  import storingScheduler._
   import taskHandling.{maketask, toggleAll, Taskref}
 
   implicit val transmittableRGA: IdenticallyTransmittable[DeltaSequence[Taskref]] = IdenticallyTransmittable()
@@ -62,7 +60,7 @@ class TodoApp[TH <: TaskHandling](val taskHandling: TH)(implicit val storingSche
         removeAll.event >>> { dt => _ => tasks.filterDelta(t => !dt.depend(t.contents).done) },
         tasks.toList.map(_.removeClick) >> { t => tasks.filterDelta(_.id != t) }
         )
-    }(implicitly, "tasklist")
+    }("tasklist")
 
     LociDist.distribute(tasksRGA, Todolist.registry)(Binding("tasklist"))
 

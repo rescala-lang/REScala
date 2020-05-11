@@ -2,10 +2,10 @@ package rescala.extra.distributables
 
 import loci.registry.{Binding, Registry}
 import loci.transmitter.RemoteRef
-import rescala.core.{InitialChange, ReSerializable, Scheduler, Struct}
+import rescala.core.{InitialChange, Scheduler, Struct}
 import rescala.extra.lattices.Lattice
-import rescala.extra.lattices.sequences.RGA.RGA
 import rescala.extra.lattices.sequences.RGA
+import rescala.extra.lattices.sequences.RGA.RGA
 import rescala.reactives.{Event, Events, Observe, Signal, Signals}
 
 import scala.concurrent.Future
@@ -16,7 +16,6 @@ object LociDist {
   (event: Event[T, S])
   (init: Res)(f: (Res, T) => Res)
   (registry: Registry, binding: Binding[RGA[T] => Unit] {type RemoteCall = RGA[T] => Future[Unit]})
-  (implicit reSerializable: ReSerializable[RGA[T]])
   : Signal[Res, S] = {
     val fold = Events.foldOne(event, RGA.empty[T]) { (acc, occ) =>
       println(s"appending $acc $occ")

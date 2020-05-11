@@ -67,7 +67,7 @@ object Events {
   }
 
   @cutOutOfUserComputation
-  def foldOne[A, T: ReSerializable, S <: Struct](dependency: Event[A, S], init: T)(expr: (T, A) => T)(implicit ticket: CreationTicket[S]): Signal[T, S] = {
+  def foldOne[A, T, S <: Struct](dependency: Event[A, S], init: T)(expr: (T, A) => T)(implicit ticket: CreationTicket[S]): Signal[T, S] = {
     fold(Set[ReSource[S]](dependency), init){st => acc =>
       val a: A = dependency.internalAccess(st.collectStatic(dependency)).get
       expr(acc(), a)}
@@ -77,13 +77,13 @@ object Events {
     *
     * @see [[rescala.reactives.Event.fold]]*/
   @cutOutOfUserComputation
-  def fold[T: ReSerializable, S <: Struct](dependencies: Set[ReSource[S]], init: T)
+  def fold[T, S <: Struct](dependencies: Set[ReSource[S]], init: T)
                                           (expr: StaticTicket[S] => (() => T) => T)
                                           (implicit ticket: CreationTicket[S])
   : Signal[T, S] = {
     ticket.create(
       dependencies,
-      Initializer.InitializedSignal[Pulse[T]](Pulse.tryCatch(Pulse.Value(init)))(ReSerializable.pulseSerializable),
+      Initializer.InitializedSignal[Pulse[T]](Pulse.tryCatch(Pulse.Value(init))),
       inite = false) {
       state => new StaticSignal[T, S](state, (st, v) => expr(st)(v), ticket.rename)
     }
@@ -91,7 +91,7 @@ object Events {
 
   /** Folds when any one of a list of events occurs, if multiple events occur, every fold is executed in order. */
   @cutOutOfUserComputation
-  final def foldAll[A: ReSerializable, S <: Struct](init: A)
+  final def foldAll[A, S <: Struct](init: A)
                                                    (accthingy: (=> A) => Seq[FoldMatch[A, S]])
                                                    (implicit ticket: CreationTicket[S]): Signal[A, S] = {
     var acc = () => init
@@ -124,7 +124,7 @@ object Events {
 
     ticket.create(
       staticInputs.toSet[ReSource[S]],
-      Initializer.InitializedSignal[Pulse[A]](Pulse.tryCatch(Pulse.Value(init)))(ReSerializable.pulseSerializable),
+      Initializer.InitializedSignal[Pulse[A]](Pulse.tryCatch(Pulse.Value(init))),
       inite = true) {
       state => new DynamicSignal[A, S](state, operator, ticket.rename, staticInputs.toSet[ReSource[S]])
     }

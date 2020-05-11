@@ -1,6 +1,6 @@
 package rescala.interface
 
-import rescala.core.{ReSerializable, Scheduler, Struct}
+import rescala.core.{Scheduler, Struct}
 import rescala.macros.MacroTags.{Dynamic, Static}
 import rescala.reactives
 import rescala.reactives.Source
@@ -11,10 +11,6 @@ object RescalaInterface {
     override def scheduler: Scheduler[S] = someScheduler
     override def toString: String = s"Interface($scheduler)"
   }
-}
-
-trait RescalaInterface[S <: Struct] extends RescalaInterfaceRequireSerializer[S] {
-  implicit def noSerialization[T]: ReSerializable[T] = rescala.core.ReSerializable.noSerializer
 }
 
 /** Rescala has two main abstractions. [[Event]] and [[Signal]] commonly referred to as reactives.
@@ -37,7 +33,7 @@ trait RescalaInterface[S <: Struct] extends RescalaInterfaceRequireSerializer[S]
   * @groupdesc internal Methods and type aliases for advanced usages, these are most relevant to abstract
   *           over multiple scheduler implementations.
   **/
-trait RescalaInterfaceRequireSerializer[S <: Struct] extends Aliases[S] {
+trait RescalaInterface[S <: Struct] extends Aliases[S] {
 
   type REStructure = S
 
@@ -54,8 +50,8 @@ trait RescalaInterfaceRequireSerializer[S <: Struct] extends Aliases[S] {
 
   /** @group create */
   object Var {
-    def apply[A: ReSerializable](v: A)(implicit ct: CreationTicket): Var[A] = reactives.Var[A, S](v)(implicitly, ct)
-    def empty[A: ReSerializable](implicit ct: CreationTicket): Var[A] = reactives.Var.empty[A, S](implicitly, ct)
+    def apply[A](v: A)(implicit ct: CreationTicket): Var[A] = reactives.Var[A, S](v)(ct)
+    def empty[A](implicit ct: CreationTicket): Var[A] = reactives.Var.empty[A, S](ct)
   }
 
   /** @group internal */

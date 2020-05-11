@@ -68,8 +68,7 @@ object Initializer {
   def DerivedSignal[T] = new InitValues[Pulse[T]](Pulse.empty, new SUnchange[Pulse[T]])
   def Observer[T] = new InitValues(Pulse.NoChange, new EUnchange[T])
 
-  case class InitializedSignal[T: ReSerializable](override val initialValue: T)
+  case class InitializedSignal[T](override val initialValue: T)
     extends InitValues[T](initialValue, new SUnchange[T]) {
-    def serializable: ReSerializable[T] = implicitly
   }
 }

@@ -79,7 +79,7 @@ class ReactiveMacros(val c: blackbox.Context) {
   def EventFoldMacro[T: c.WeakTypeTag, A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag]
   (init: c.Expr[A])
   (op: c.Expr[(A, T) => A])
-  (ticket: c.Expr[rescala.core.CreationTicket[S]], serializable: c.Expr[rescala.core.ReSerializable[A]])
+  (ticket: c.Expr[rescala.core.CreationTicket[S]])
   : c.Tree = {
     if (c.hasErrors) return compileErrorsAst
 
@@ -95,7 +95,7 @@ class ReactiveMacros(val c: blackbox.Context) {
     val body =
       q"""$eventsSymbol.fold[${weakTypeOf[A]}, ${weakTypeOf[S]}](Set(..$detections), $init)(
            ${lego.contextualizedExpression(ticketType)}
-          )($serializable, $ticket)"""
+          )($ticket)"""
 
     lego.wrapFinalize(body)
   }

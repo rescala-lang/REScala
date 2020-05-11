@@ -74,8 +74,8 @@ class PessimisticTest extends RETests {
     val staticB = "static b"
 
 
-    val vA = Var(initA)(implicitly, "var A")
-    val vB = Var(initB)(implicitly, "var B")
+    val vA = Var(initA)("var A")
+    val vB = Var(initB)("var B")
 
     val (syncInA, syncA) = SynchronizedReevaluation(vA)("sync A")
     val (syncInB, syncB) = SynchronizedReevaluation(vB)("sync B")

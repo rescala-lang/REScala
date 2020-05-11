@@ -7,20 +7,19 @@ import loci.communicator.experimental.webrtc._
 import loci.registry.Registry
 import org.scalajs.dom.{UIEvent, document}
 import rescala.extra.lattices.sequences.RGA.RGA
-import rescala.extra.restoration.LocalStorageStore
 import scalatags.JsDom.all._
 import scalatags.JsDom.tags2.section
 
 import scala.concurrent.{Future, Promise}
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
+import rescala.default._
+
 
 object Todolist {
 
 
   type TodoTransfer = RGA[taskHandling.Taskref]
-
-  implicit val storingEngine: LocalStorageStore = new LocalStorageStore()
 
   val taskHandling = new TaskHandling
   val todoApp = TodoApp(taskHandling)

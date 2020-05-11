@@ -34,7 +34,7 @@ trait ReactiveDeltaSet[T, S <: Struct] extends ReSource[S] {
   }
 
   @cutOutOfUserComputation
-  def aggregate[A: ReSerializable](initial: A)(expression: (A, Delta[T]) => A)(implicit ticket: CreationTicket[S]): Signal[A, S] = {
+  def aggregate[A](initial: A)(expression: (A, Delta[T]) => A)(implicit ticket: CreationTicket[S]): Signal[A, S] = {
     val event = asEvent
     Events.foldOne(event, initial){ expression }
   }
