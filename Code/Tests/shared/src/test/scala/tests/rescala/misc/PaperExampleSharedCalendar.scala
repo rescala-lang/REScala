@@ -1,7 +1,7 @@
 package tests.rescala.misc
 
 import java.time.temporal.ChronoField
-import java.time.{LocalDate => Date}
+import java.time.{Clock, LocalDate => Date}
 
 import org.scalatest.freespec.AnyFreeSpec
 import rescala.default._
@@ -10,7 +10,7 @@ import rescala.default._
 
 class PaperExampleSharedCalendar extends AnyFreeSpec {
 
-  object Date { def today(): Date = java.time.LocalDate.now() }
+  object Date { def today(): Date = java.time.LocalDate.now(Clock.systemUTC()) }
   object Week {
     /** use beginning of week as representation for current week */
     def of(date: Date): Date = date.`with`(ChronoField.DAY_OF_WEEK, 1)
