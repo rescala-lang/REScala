@@ -19,7 +19,7 @@ class PaperGlitchTest extends AnyFunSuite {
     // ============================================================================================================
 
     // change here for FUN
-    val interface = RescalaInterface.interfaceFor(Schedulers.unmanaged)
+    val interface = RescalaInterface.interfaceFor(Schedulers.parrp)
     import interface._
 
     val price = Var(3)
@@ -72,7 +72,7 @@ class PaperGlitchTest extends AnyFunSuite {
 
     Thread.sleep(1000)
     cancelled = true
-    assert(glitches.size() > 0)
+    assert(glitches.size() == 0)
     t1.await(1000)
     t2.await(1000)
   }
