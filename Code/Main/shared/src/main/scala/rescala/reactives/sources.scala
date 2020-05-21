@@ -1,7 +1,10 @@
 package rescala.reactives
 
 import rescala.core._
+import rescala.interface.RescalaInterface
 import rescala.reactives.Events.Estate
+
+
 
 trait Source[S <: Struct, T] extends ReSource[S] {
   final def admit(value: T)(implicit ticket: AdmissionTicket[S]): Unit = admitPulse(Pulse.Value(value))
@@ -39,14 +42,7 @@ abstract class Evt[T, S <: Struct] private[rescala](initialState: Estate[S, T], 
 //    ticket.createSource[Pulse[T], Evt[T, S]](Initializer.Event)(new Evt[T, S](_, ticket.rename))
 //}
 
-/** Source signals with imperatively updates.
-  *
-  * @param initialState of the signal
-  * @tparam A Type stored by the signal
-  * @tparam S Struct type used for the propagation of the signal
-  */
-abstract class Var[A, S <: Struct] private[rescala](initialState: Signals.Sstate[A, S], name: REName)
-  extends Base[Pulse[A], S](initialState, name) with Source[S, A] with Signal[A, S] {
+trait Var[A, S <: Struct] extends Source[S, A] with Signal[A, S] {
   override type Value = Pulse[A]
 
   //def update(value: A)(implicit fac: Engine[S]): Unit = set(value)
@@ -68,3 +64,18 @@ abstract class Var[A, S <: Struct] private[rescala](initialState: Signals.Sstate
   }
 }
 
+trait SourcesImpl[S <: Struct] {
+  this : RescalaInterface[S] =>
+
+  /** Source signals with imperatively updates.
+    *
+    * @param initialState of the signal
+    * @tparam A Type stored by the signal
+    * @tparam S Struct type used for the propagation of the signal
+    */
+  abstract class Var[A] private[rescala](initialState: rescala.reactives.Signals.Sstate[A, S], name: REName)
+    extends Base[Pulse[A], S](initialState, name) with rescala.reactives.Var[A, S] with Signal[A] {
+
+  }
+
+}

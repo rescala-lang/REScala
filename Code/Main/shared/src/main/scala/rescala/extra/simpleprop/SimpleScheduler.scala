@@ -1,8 +1,9 @@
 package rescala.extra.simpleprop
 
 import rescala.core.Initializer.InitValues
-import rescala.core.{AccessTicket, CreationTicket, DynamicInitializerLookup, Initializer, ReSource, Derived, ReevTicket, Scheduler, Struct}
+import rescala.core.{AccessTicket, CreationTicket, Derived, DynamicInitializerLookup, Initializer, ReSource, ReevTicket, Scheduler, Struct}
 import rescala.interface.Aliases
+import rescala.reactives
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -76,6 +77,13 @@ class SimpleCreation() extends Initializer[SimpleStruct] {
 object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleCreation]
                        with Scheduler[SimpleStruct]
                        with Aliases[SimpleStruct] {
+
+  /** Signals represent time changing values of type A
+    * @group reactive */
+  final type Signal[+A] = reactives.Signal[A, SimpleStruct]
+  /** Events represent discrete occurrences of values of type A
+    * @group reactive */
+  final type Event[+A] = reactives.Event[A, SimpleStruct]
 
   override def schedulerName: String = "Simple"
 

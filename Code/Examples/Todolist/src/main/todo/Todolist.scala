@@ -13,8 +13,6 @@ import scalatags.JsDom.tags2.section
 import scala.concurrent.{Future, Promise}
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
-import rescala.default._
-
 
 object Todolist {
 

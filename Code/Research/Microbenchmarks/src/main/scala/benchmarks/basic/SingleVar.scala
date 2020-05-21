@@ -9,7 +9,6 @@ import org.openjdk.jmh.infra.BenchmarkParams
 import rescala.Schedulers
 import rescala.core.{Scheduler, Struct};import rescala.interface.RescalaInterface
 import rescala.interface.RescalaInterface
-import rescala.reactives.Var
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -21,9 +20,10 @@ import rescala.reactives.Var
 class SingleVar[S <: Struct] {
 
   var engine: RescalaInterface[S] = _
+  val engineT = engine
   implicit def scheduler: Scheduler[S] = engine.scheduler
 
-  var source: Var[Boolean, S] = _
+  var source: engineT.Var[Boolean] = _
   var current: Boolean = _
   var lock: ReadWriteLock = _
 
@@ -32,7 +32,7 @@ class SingleVar[S <: Struct] {
   def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam[S]): Unit = {
     engine = engineParam.engine
     current = false
-    source = engine.Var(current)
+    source = engineT.Var(current)
     if (engineParam.engine.scheduler == Schedulers.unmanaged) lock = new ReentrantReadWriteLock()
   }
 

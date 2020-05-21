@@ -28,7 +28,7 @@ class RescalatagsTest extends RETests { multiEngined { engine => import engine._
     }
 
     test("put style into dom") {
-      val v = Var.empty[String]
+      val v: rescala.reactives.Var[String, engine.REStructure] = Var.empty[String]
 
       val ourTag: Span = span(backgroundColor := v).render
 

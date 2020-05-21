@@ -2,7 +2,7 @@ package tests.rescala.concurrency.philosophers
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import rescala.core.{Struct, AccessTicket}
+import rescala.core.{AccessTicket, Struct}
 import rescala.interface.RescalaInterface
 import rescala.parrp.Backoff
 import rescala.reactives.{Signal, Var}

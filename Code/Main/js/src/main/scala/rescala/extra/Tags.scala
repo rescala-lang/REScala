@@ -142,7 +142,7 @@ object Tags {
     }
   }
 
-  def genericReactiveAttrValue[T: AttrValue, S <: Struct, Sig[T2] <: Signal[T2, S]]
+  implicit def genericReactiveAttrValue[T: AttrValue, S <: Struct, Sig[T2] <: Signal[T2, S]]
   (implicit engine: Scheduler[S])
   : AttrValue[Sig[T]] = new AttrValue[Sig[T]] {
     def apply(t: dom.Element, a: Attr, signal: Sig[T]): Unit = {
@@ -152,11 +152,12 @@ object Tags {
     }
   }
 
-  implicit def varAttrValue[T: AttrValue, S <: Struct](implicit engine: Scheduler[S])
-  : AttrValue[Var[T, S]] = genericReactiveAttrValue[T, S, ({type λ[T2] = Var[T2, S]})#λ]
+  //implicit def varAttrValue[T: AttrValue, S <: Struct](implicit engine: Scheduler[S])
+  //: AttrValue[Var[T, S]] = genericReactiveAttrValue[T, S, ({type λ[T2] = Var[T2, S]})#λ]
+  //
+  //implicit def signalAttrValue[T: AttrValue, S <: Struct](implicit engine: Scheduler[S])
+  //: AttrValue[Signal[T, S]] = genericReactiveAttrValue[T, S, ({type λ[T2] = Signal[T2, S]})#λ]
 
-  implicit def signalAttrValue[T: AttrValue, S <: Struct](implicit engine: Scheduler[S])
-  : AttrValue[Signal[T, S]] = genericReactiveAttrValue[T, S, ({type λ[T2] = Signal[T2, S]})#λ]
 
   def genericReactiveStyleValue[T, S <: Struct, Sig[T2] <: Signal[T2, S]](implicit engine: Scheduler[S], tstyle: StyleValue[T])
   : StyleValue[Sig[T]] = new StyleValue[Sig[T]] {

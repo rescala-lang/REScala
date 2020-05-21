@@ -7,7 +7,7 @@ import rescala.extra.lattices.Lattice
 import rescala.extra.lattices.sequences.RGA
 import rescala.extra.lattices.sequences.RGA.RGA
 import rescala.interface.RescalaInterface
-import rescala.reactives.{Event, Events, Observe, Signal, Signals}
+import rescala.reactives.{Event, Observe, Signal}
 
 import scala.concurrent.Future
 

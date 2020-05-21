@@ -5,6 +5,7 @@ package rescala.extra.research
 import rescala.core.Initializer.InitValues
 import rescala.core.{AccessTicket, CreationTicket, Derived, DynamicInitializerLookup, Initializer, ReSource, ReevTicket, Scheduler, Struct}
 import rescala.interface.Aliases
+import rescala.reactives
 
 
 trait FStruct extends Struct {
@@ -66,6 +67,13 @@ class SimpleCreation() extends Initializer[FStruct] {
 object FScheduler extends DynamicInitializerLookup[FStruct, SimpleCreation]
                   with Scheduler[FStruct]
                   with Aliases[FStruct] {
+
+  /** Signals represent time changing values of type A
+    * @group reactive */
+  final type Signal[+A] = reactives.Signal[A, FStruct]
+  /** Events represent discrete occurrences of values of type A
+    * @group reactive */
+  final type Event[+A] = reactives.Event[A, FStruct]
 
   override def schedulerName: String = "FormalizationLike"
 

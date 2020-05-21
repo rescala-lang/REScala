@@ -7,9 +7,9 @@ package reswing
 final class Lazy[+T](init: => T) {
   private[this] var defined = false
   private[this] lazy val value = init
-  
+
   def isDefined = defined
-  def apply() = { defined = true; value }
+  def apply(): T = {defined = true; value }
 }
 
 object Lazy {

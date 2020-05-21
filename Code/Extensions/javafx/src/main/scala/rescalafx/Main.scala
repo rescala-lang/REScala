@@ -6,14 +6,14 @@ import scalafx.application.{JFXApp, Platform}
 import scalafx.scene.{Node, Scene}
 import scalafx.scene.control.{Label, Slider}
 import scalafx.scene.layout.VBox
-import JFXAdapter._
+import rescalafx.JFXAdapter._
 import rescala.default._
 
 object Main extends JFXApp {
 
   private val slider = new Slider(0, 30, 0)
   private val sliderValue = new Label()
-  sliderValue.text <== slider.value.toSignal.map(v => f"$v%.2f").toProperty
+  sliderValue.text <== (slider.value.toSignal.map(v => f"$v%.2f"): Signal[String]).toProperty
 
 
 

@@ -1,16 +1,14 @@
 package ersirjs
 
 import ersir.shared._
-import io.circe.generic.auto._
 import loci.communicator.ws.akka.WS
 import loci.registry.Registry
-import loci.serializer.circe._
 import loci.transmitter.RemoteRef
 import org.scalajs.dom
 import rescala.default._
+import rescala.extra.distributables.LociDist
 import rescala.extra.lattices.sequences.RGOA
 import rescala.extra.lattices.sequences.RGOA.RGOA
-import rescala.extra.distributables.LociDist
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue

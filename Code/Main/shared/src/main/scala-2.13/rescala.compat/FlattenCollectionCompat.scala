@@ -9,10 +9,10 @@ import scala.collection.IterableOps
 trait FlattenCollectionCompat {
   /** Flatten a Signal[Traversable[Signal[B]\]\] into a Signal[Traversable[B]\] where the new Signal updates whenever any of the inner or the outer signal updates */
   implicit def traversableSignals
-  [S <: Struct, B, T[U] <: IterableOps[U, T, T[U]], Sig[A1, S1 <: Struct] <: Signal[A1, S1]]
+  [S <: Struct, B, T[U] <: IterableOps[U, T, T[U]], Sig[A1] <: Signal[A1, S]]
   (implicit ticket: CreationTicket[S], api: RescalaInterface[S])
-  : Flatten[Signal[T[Sig[B, S]], S], Signal[T[B], S]] = new Flatten[Signal[T[Sig[B, S]], S], Signal[T[B], S]] {
-    def apply(sig: Signal[T[Sig[B, S]], S]): Signal[T[B], S] = api.Signals.dynamic(sig) { t => t.depend(sig) map { r: Signal[B, S] => t.depend(r) } }
+  : Flatten[Signal[T[Sig[B]], S], Signal[T[B], S]] = new Flatten[Signal[T[Sig[B]], S], Signal[T[B], S]] {
+    def apply(sig: Signal[T[Sig[B]], S]): Signal[T[B], S] = api.Signals.dynamic(sig) { t => t.depend(sig).map { r: Signal[B, S] => t.depend(r) } }
   }
   /** Flatten a Signal[Traversable[Event[B]\]\] into a Event[B]. The new Event fires the value of any inner firing Event.
     * If multiple inner Events fire, the first one in iteration order is selected. */

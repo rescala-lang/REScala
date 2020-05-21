@@ -1,7 +1,7 @@
 package benchmarks.philosophers
 
 import benchmarks.philosophers.PhilosopherTable._
-import rescala.core.{CreationTicket, Struct}
+import rescala.core.Struct
 import rescala.interface.RescalaInterface
 
 class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(override val engine: RescalaInterface[S])
@@ -85,7 +85,7 @@ class OtherHalfDynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work:
                                                    (override implicit val engine: RescalaInterface[S])
   extends PhilosopherTable(philosopherCount, work)(engine) {
 
-  import engine.{Var, Signal, implicitScheduler, Signals}
+  import engine.{Signal, Signals, Var, implicitScheduler}
 
   override def createTable(tableSize: Int): Seq[Seating[S]] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize

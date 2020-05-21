@@ -10,7 +10,7 @@ import rescala.macros.cutOutOfUserComputation
  */
 sealed abstract class ReSwingValue[T] {
   protected def signal: Lazy[Signal[T]]
-  protected val event = Lazy { Evt[T] }
+  protected val event: Lazy[Evt[T]] = Lazy {Evt[T] }
   protected var latestValue = null.asInstanceOf[T]
 
   private var init = null: ReSwingValue[T] => Unit
@@ -30,7 +30,7 @@ sealed abstract class ReSwingValue[T] {
 }
 
 final case class ReSwingNoValue[T]() extends ReSwingValue[T] {
-  protected val signal = Lazy { event() latest latestValue }
+  protected val signal: Lazy[Signal[T]] = Lazy { event() latest latestValue }
   private[reswing] def fixed = false
   private[reswing] def get = latestValue
   private[reswing] def use(setter: T => Unit): Unit = { }
