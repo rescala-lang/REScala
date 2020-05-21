@@ -24,11 +24,10 @@ object Observe {
     ct.create[Pulse[Nothing], Observe[S] with Derived[S]](Set(dependency),
                                                           Initializer.Observer,
                                                           fireImmediately) { state =>
-      abstract class Obs
-        extends Base[Pulse[Nothing], S](state, ct.rename) with Derived[S] with Observe[S] {
-        this: DisconnectableImpl[S] =>
+      class Obs
+        extends Base[Pulse[Nothing], S](state, ct.rename) with Derived[S] with Observe[S] with DisconnectableImpl[S] {
 
-        override protected[rescala] def reevaluate(dt: ReIn): Rout = {
+        override protected[rescala] def reevaluate(dt: ReIn): Rout = guardReevaluate(dt) {
           val v  = dt.collectStatic(dependency)
           val oi = fun(v)
           if (oi.checkExceptionAndRemoval()) dt.trackDependencies(Set.empty)
@@ -36,7 +35,7 @@ object Observe {
         }
         override def remove()(implicit fac: Scheduler[S]): Unit = disconnect()
       }
-      new Obs with DisconnectableImpl[S]
+      new Obs
     }
   }
 

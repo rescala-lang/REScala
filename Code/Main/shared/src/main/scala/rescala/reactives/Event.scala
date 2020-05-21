@@ -209,11 +209,13 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
       Initializer.InitializedSignal[Pulse[A]](Pulse.empty),
       inite = false
     ) { state =>
-      new rescalaAPI.StaticSignal[A](
+      new rescalaAPI.SignalImpl[A](
         initial = state,
         expr = { (st, currentValue) => reducer(currentValue(), st.collectStatic(this).get) },
-        name = ticket.rename
-      )(rescalaAPI)
+        name = ticket.rename,
+        staticDeps = None,
+        rescalaAPI = rescalaAPI
+        )
     }
 
   /** Applies a function on the current value of the signal every time the event occurs,
