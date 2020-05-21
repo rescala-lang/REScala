@@ -1,10 +1,8 @@
 package rescala.reactives
 
-import rescala.core.Pulse.NoChange
 import rescala.core._
 import rescala.interface.RescalaInterface
 import rescala.macros.cutOutOfUserComputation
-import rescala.reactives.Events.Estate
 import rescala.reactives.Signals.Diff
 
 
@@ -32,11 +30,6 @@ object Events {
       }
   }
 
-  def noteFromPulse[N, S <: Struct](t: ReevTicket[Pulse[N], S], value: Pulse[N]): Result[Pulse[N], S] = {
-    if (value.isChange) t.withValue(value)
-    else t
-  }
-
 }
 
 /** Functions to construct events, you probably want to use the operators on [[Event]] for a nicer API. */
@@ -44,7 +37,8 @@ trait Events[S <: Struct] {
 
   val rescalaAPI: RescalaInterface[S]
 
-  import rescalaAPI.{Signal, SignalImpl}
+  import rescalaAPI.Signal
+  import rescalaAPI.Impls._
 
   /** the basic method to create static events */
   @cutOutOfUserComputation
@@ -52,8 +46,8 @@ trait Events[S <: Struct] {
                      dependencies: ReSource[S]*)
                     (calculate: StaticTicket[S] => Pulse[T])
                     (implicit ticket: CreationTicket[S]): Event[T, S] = {
-    ticket.create[Pulse[T], EventImpl[T, S]](dependencies.toSet, Initializer.Event, inite = false) {
-      state => new EventImpl[T, S](state, calculate, name, None, rescalaAPI)
+    ticket.create[Pulse[T], EventImpl[T]](dependencies.toSet, Initializer.Event, inite = false) {
+      state => new EventImpl[T](state, calculate, name, None, rescalaAPI)
     }
   }
 
@@ -70,8 +64,8 @@ trait Events[S <: Struct] {
                 (expr: DynamicTicket[S] => Option[T])
                 (implicit ticket: CreationTicket[S]): Event[T, S] = {
     val staticDeps = dependencies.toSet
-    ticket.create[Pulse[T], EventImpl[T, S]](staticDeps, Initializer.Event, inite = true) { state =>
-      new EventImpl[T, S](state, expr.andThen(Pulse.fromOption), ticket.rename, Some(staticDeps), rescalaAPI)
+    ticket.create[Pulse[T], EventImpl[T]](staticDeps, Initializer.Event, inite = true) { state =>
+      new EventImpl[T](state, expr.andThen(Pulse.fromOption), ticket.rename, Some(staticDeps), rescalaAPI)
     }
   }
 
@@ -80,9 +74,9 @@ trait Events[S <: Struct] {
   @cutOutOfUserComputation
   def change[T](signal: rescala.reactives.Signal[T, S])(implicit ticket: CreationTicket[S]): Event[Diff[T], S]
   = ticket.transaction { initTurn =>
-    val internal = initTurn.create[(Pulse[T], Pulse[Diff[T]]), ChangeEvent[T, S]](
+    val internal = initTurn.create[(Pulse[T], Pulse[Diff[T]]), ChangeEventImpl[T]](
       Set[ReSource[S]](signal), Initializer.Change, inite = true, ticket) { state =>
-      new ChangeEvent[T, S](state, signal, ticket.rename)(rescalaAPI)
+      new ChangeEventImpl[T](state, signal, ticket.rename, rescalaAPI)
     }
     static(internal)(st => st.dependStatic(internal))(initTurn)
   }
@@ -182,40 +176,4 @@ trait Events[S <: Struct] {
   }
 
   def fromCallback[T]: FromCallbackT[T] = new FromCallbackT[T]()
-}
-
-
-private class ChangeEvent[T, S <: Struct](_bud: S#State[(Pulse[T], Pulse[Diff[T]]), S],
-                                          signal: Signal[T, S],
-                                          name: REName)
-                                         (override val rescalaAPI: RescalaInterface[S])
-  extends Base[(Pulse[T], Pulse[Diff[T]]), S](_bud, name) with Derived[S] with Event[Diff[T], S] with DisconnectableImpl[S] {
-
-  override type Value = (Pulse[T], Pulse[Diff[T]])
-
-
-  override def internalAccess(v: (Pulse[T], Pulse[Diff[T]])): Pulse[Diff[T]] = v._2
-  override def interpret(v: Value): Option[Diff[T]] = v._2.toOption
-
-  override protected[rescala] def reevaluate(rein: ReIn): Rout = guardReevaluate(rein) {
-    val to  : Pulse[T] = rein.collectStatic(signal)
-    val from: Pulse[T] = rein.before._1
-    if (to == Pulse.empty) return rein // ignore empty propagations
-    if (from != Pulse.NoChange) rein.withValue((to, Pulse.Value(Diff(from, to))))
-    else rein.withValue((to, Pulse.NoChange)).withPropagate(false)
-  }
-}
-
-private class EventImpl[T, S <: Struct](_bud: Estate[S, T],
-                                        expr: DynamicTicket[S] => Pulse[T],
-                                        name: REName,
-                                        staticDeps: Option[Set[ReSource[S]]],
-                                        override val rescalaAPI: RescalaInterface[S])
-  extends Base[Pulse[T], S](_bud, name) with Derived[S] with Event[T, S] with DisconnectableImpl[S] {
-
-  override def internalAccess(v: Pulse[T]): Pulse[T] = v
-  override protected[rescala] def reevaluate(rein: ReIn): Rout = guardReevaluate(rein) {
-    val rein2 = staticDeps.fold(rein.trackStatic())(rein.trackDependencies)
-    Events.noteFromPulse[T, S](rein2, Pulse.tryCatch(expr(rein2), onEmpty = NoChange))
-  }
 }

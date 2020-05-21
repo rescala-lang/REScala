@@ -49,7 +49,8 @@ trait Signals[S <: Struct] {
   val rescalaAPI: RescalaInterface[S]
   private def ignore2[Tick, Current, Res](f: Tick => Res): (Tick, Current) => Res = (ticket, _) => f(ticket)
 
-  import rescalaAPI.{Signal => Sig, Var, SignalImpl}
+  import rescalaAPI.{Signal => Sig, Var}
+  import rescalaAPI.Impls.SignalImpl
 
 
   /** creates a new static signal depending on the dependencies, reevaluating the function */
@@ -99,24 +100,3 @@ trait Signals[S <: Struct] {
   }
 }
 
-trait SignalDefaultImplementations[S <: Struct] {
-  self: RescalaInterface[S] =>
-
-  class SignalImpl[T](initial: Sstate[T, S],
-                      expr: (DynamicTicket, () => T) => T,
-                      name: REName,
-                      staticDeps: Option[Set[ReSource]],
-                      override val rescalaAPI: RescalaInterface[S])
-    extends Base[Pulse[T], S](initial, name) with Derived[S] with Signal[T] with DisconnectableImpl[S] {
-
-    private def computeNewValue(rein: ReevTicket[Pulse[T], S], newValue: () => T): ReevTicket[Pulse[T], S] = {
-      val newPulse = Pulse.tryCatch(Pulse.diffPulse(newValue(), rein.before))
-      if (newPulse.isChange) rein.withValue(newPulse) else rein
-    }
-
-    override protected[rescala] def reevaluate(rein: ReIn): Rout = guardReevaluate(rein) {
-      val rein2 = staticDeps.fold(rein.trackStatic())(rein.trackDependencies)
-      computeNewValue(rein2, () => expr(rein2, () => rein2.before.get))
-    }
-  }
-}

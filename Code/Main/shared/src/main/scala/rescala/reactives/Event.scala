@@ -209,7 +209,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
       Initializer.InitializedSignal[Pulse[A]](Pulse.empty),
       inite = false
     ) { state =>
-      new rescalaAPI.SignalImpl[A](
+      new rescalaAPI.Impls.SignalImpl[A](
         initial = state,
         expr = { (st, currentValue) => reducer(currentValue(), st.collectStatic(this).get) },
         name = ticket.rename,

@@ -3,7 +3,7 @@ package rescala.interface
 import rescala.core.{Base, Initializer, Pulse, REName, Scheduler, Struct}
 import rescala.macros.MacroTags.{Dynamic, Static}
 import rescala.reactives
-import rescala.reactives.{SignalDefaultImplementations, Source}
+import rescala.reactives.{DefaultImplementations, Source}
 
 
 object RescalaInterface {
@@ -33,7 +33,7 @@ object RescalaInterface {
   * @groupdesc internal Methods and type aliases for advanced usages, these are most relevant to abstract
   *           over multiple scheduler implementations.
   **/
-trait RescalaInterface[S <: Struct] extends Aliases[S] with SignalDefaultImplementations[S] {
+trait RescalaInterface[S <: Struct] extends Aliases[S] {
   /** @group internal */
   def scheduler: rescala.core.Scheduler[S]
   /** @group internal */
@@ -123,6 +123,10 @@ trait RescalaInterface[S <: Struct] extends Aliases[S] with SignalDefaultImpleme
   /** Contains static methods to create Signals
     * @group create */
   object Signals extends reactives.Signals[S] {
+    override val rescalaAPI: RescalaInterface.this.type = RescalaInterface.this
+  }
+
+  object Impls extends DefaultImplementations[S] {
     override val rescalaAPI: RescalaInterface.this.type = RescalaInterface.this
   }
 
