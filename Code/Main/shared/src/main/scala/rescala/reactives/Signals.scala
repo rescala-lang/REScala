@@ -11,7 +11,7 @@ import scala.concurrent.{ExecutionContext, Future}
 object Signals {
   type Sstate[T, S <: Struct] = S#State[Pulse[T], S]
 
-  object MapFuncImpl { def apply[T1, A](value: T1, mapper: T1 => A): A = mapper(value) }
+  object MapFuncImpl {def apply[T1, A](value: T1, mapper: T1 => A): A = mapper(value)}
 
   class Diff[+A](val from: Pulse[A], val to: Pulse[A]) {
 
@@ -20,7 +20,7 @@ object Signals {
     def pair: (A, A) = {
       try {
         val right = to.get
-        val left = from.get
+        val left  = from.get
         left -> right
       } catch {
         case EmptySignalControlThrowable => throw new NoSuchElementException(s"Can not convert $this to pair")
@@ -35,9 +35,9 @@ object Signals {
     def unapply[A](arg: Diff[A]): Option[(A, A)] = arg.from match {
       case Pulse.Value(v1) => arg.to match {
         case Pulse.Value(v2) => Some((v1, v2))
-        case _ => None
+        case _               => None
       }
-      case _ => None
+      case _               => None
     }
   }
 
@@ -55,8 +55,8 @@ trait Signals[S <: Struct] {
   /** creates a new static signal depending on the dependencies, reevaluating the function */
   @cutOutOfUserComputation
   def static[T](dependencies: ReSource[S]*)
-                  (expr: StaticTicket[S] => T)
-                  (implicit ct: CreationTicket[S])
+               (expr: StaticTicket[S] => T)
+               (implicit ct: CreationTicket[S])
   : Sig[T] = {
     ct.create[Pulse[T], StaticSignal[T]](dependencies.toSet, Initializer.DerivedSignal, inite = true) {
       state => new StaticSignal[T](state, ignore2(expr), ct.rename)(rescalaAPI)
@@ -66,8 +66,8 @@ trait Signals[S <: Struct] {
   /** creates a signal that has dynamic dependencies (which are detected at runtime with Signal.apply(turn)) */
   @cutOutOfUserComputation
   def dynamic[T](dependencies: ReSource[S]*)
-                             (expr: DynamicTicket[S] => T)
-                             (implicit ct: CreationTicket[S])
+                (expr: DynamicTicket[S] => T)
+                (implicit ct: CreationTicket[S])
   : Sig[T] = {
     val staticDeps = dependencies.toSet
     ct.create[Pulse[T], DynamicSignal[T]](staticDeps, Initializer.DerivedSignal, inite = true) {
@@ -100,12 +100,12 @@ trait Signals[S <: Struct] {
 }
 
 trait SignalDefaultImplementations[S <: Struct] {
-  self : RescalaInterface[S] =>
+  self: RescalaInterface[S] =>
 
   sealed private[rescala] abstract class SignalImpl[T](initial: Sstate[T, S],
-                                                           expr: (DynamicTicket, () => T) => T,
-                                                           name: REName,
-                                                           staticDeps: Set[ReSource])
+                                                       expr: (DynamicTicket, () => T) => T,
+                                                       name: REName,
+                                                       staticDeps: Set[ReSource])
     extends Base[Pulse[T], S](initial, name) with Derived[S] with Signal[T] {
 
     private def computeNewValue(rein: ReevTicket[Pulse[T], S], newValue: () => T): ReevTicket[Pulse[T], S] = {
@@ -121,16 +121,16 @@ trait SignalDefaultImplementations[S <: Struct] {
 
 
   final private[rescala] class StaticSignal[T](initial: Sstate[T, S],
-                                                   expr: (StaticTicket, () => T) => T,
-                                                   name: REName)
-                                                  (implicit override val rescalaAPI: RescalaInterface[S])
+                                               expr: (StaticTicket, () => T) => T,
+                                               name: REName)
+                                              (implicit override val rescalaAPI: RescalaInterface[S])
     extends SignalImpl[T](initial, expr, name, null) with DisconnectableImpl[S]
 
   final private[rescala] class DynamicSignal[T](initial: Sstate[T, S],
-                                                    expr: (DynamicTicket, () => T) => T,
-                                                    name: REName,
-                                                    staticDeps: Set[ReSource])
-                                                   (implicit override val rescalaAPI: RescalaInterface[S])
+                                                expr: (DynamicTicket, () => T) => T,
+                                                name: REName,
+                                                staticDeps: Set[ReSource])
+                                               (implicit override val rescalaAPI: RescalaInterface[S])
     extends SignalImpl[T](initial, expr, name, staticDeps) with DisconnectableImpl[S]
 
 
