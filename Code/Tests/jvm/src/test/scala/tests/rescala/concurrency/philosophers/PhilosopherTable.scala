@@ -5,7 +5,6 @@ import java.util.concurrent.atomic.AtomicInteger
 import rescala.core.{Struct, AccessTicket}
 import rescala.interface.RescalaInterface
 import rescala.parrp.Backoff
-import rescala.reactives.Signals.lift
 import rescala.reactives.{Signal, Var}
 
 class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(val interface: RescalaInterface[S]) {
@@ -48,12 +47,12 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(val inter
 
     val forks = for (i <- 0 until tableSize) yield {
       val nextCircularIndex = mod(i + 1)
-      lift(phils(i), phils(nextCircularIndex))(calcFork(i.toString, nextCircularIndex.toString))(s"Fork($i, $nextCircularIndex)")
+      interface.Signals.lift(phils(i), phils(nextCircularIndex))(calcFork(i.toString, nextCircularIndex.toString))(s"Fork($i, $nextCircularIndex)")
     }
 
     for (i <- 0 until tableSize) yield {
       val previousCircularIndex = mod(i - 1)
-      val vision = lift(forks(previousCircularIndex), forks(i))(calcVision(i.toString))(s"Vision($i)")
+      val vision = interface.Signals.lift(forks(previousCircularIndex), forks(i))(calcVision(i.toString))(s"Vision($i)")
       Seating(i, phils(i), forks(previousCircularIndex), forks(i), vision)
     }
   }

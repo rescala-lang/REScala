@@ -1,6 +1,6 @@
 package rescala.interface
 
-import rescala.core.{Scheduler, Struct}
+import rescala.core.{Initializer, Pulse, Scheduler, Struct}
 import rescala.macros.MacroTags.{Dynamic, Static}
 import rescala.reactives
 import rescala.reactives.Source
@@ -42,24 +42,39 @@ trait RescalaInterface[S <: Struct] extends Aliases[S] {
   /** @group internal */
   implicit def implicitScheduler: rescala.core.Scheduler[S] = scheduler
 
+  /** @group internal */
+  implicit def rescalaAPI :RescalaInterface[S] = this
+
   /** @group create */
-  final def Evt[A]()(implicit ticket: CreationTicket): Evt[A] = reactives.Evt[A, S]()(ticket)
+  final def Evt[A]()(implicit ticket: CreationTicket): Evt[A] = {
+    ticket.createSource[Pulse[A], Evt[A]](Initializer.Event)(init => {new reactives.Evt[A, S](init, ticket.rename){
+      override val rescalaAPI: RescalaInterface[S] = RescalaInterface.this
+    }}: Evt[A])
+  }
 
   //  final def Var[A](v: A): Var[A] = reactives.Var[A, S](v)(Ticket.fromEngineImplicit(this))
   //  final def Var[A](): Var[A] = reactives.Var[A, S]()(Ticket.fromEngineImplicit(this))
 
-  /** @group create */
+  /** Creates new [[Var]]s
+    * @group create */
   object Var {
-    def apply[A](v: A)(implicit ct: CreationTicket): Var[A] = reactives.Var[A, S](v)(ct)
-    def empty[A](implicit ct: CreationTicket): Var[A] = reactives.Var.empty[A, S](ct)
+      def apply[T](initval: T)(implicit ticket: CreationTicket): Var[T] = fromChange(Pulse.Value(initval))
+      def empty[T](implicit ticket: CreationTicket): Var[T] = fromChange(Pulse.empty)
+      private[this] def fromChange[T](change: Pulse[T])(implicit ticket: CreationTicket): Var[T] =
+        ticket.createSource[Pulse[T], Var[T]](Initializer.InitializedSignal(change))(new reactives.Var[T, S](_, ticket.rename){
+          override val rescalaAPI: RescalaInterface[S] = RescalaInterface.this
+        })
   }
 
   /** @group internal */
-  final def static[T](dependencies: ReSource*)(expr: StaticTicket => T)(implicit ct: CreationTicket): Signal[T] = Signals.static(dependencies: _*)(expr)
-  /** @group internal */
-  final def dynamic[T](dependencies: ReSource*)(expr: DynamicTicket => T)(implicit ct: CreationTicket): Signal[T] = Signals.dynamic(dependencies: _*)(expr)
-  /** @group internal */
-  final def dynamicE[T](dependencies: ReSource*)(expr: DynamicTicket => Option[T])(implicit ct: CreationTicket): Event[T] = Events.dynamic(dependencies: _*)(expr)
+  object NoMacro {
+    /** @group internal */
+    final def static[T](dependencies: ReSource*)(expr: StaticTicket => T)(implicit ct: CreationTicket): Signal[T] = Signals.static(dependencies: _*)(expr)
+    /** @group internal */
+    final def dynamic[T](dependencies: ReSource*)(expr: DynamicTicket => T)(implicit ct: CreationTicket): Signal[T] = Signals.dynamic(dependencies: _*)(expr)
+    /** @group internal */
+    final def dynamicE[T](dependencies: ReSource*)(expr: DynamicTicket => Option[T])(implicit ct: CreationTicket): Event[T] = Events.dynamic(dependencies: _*)(expr)
+  }
 
   /** A signal expression can be used to create signals accessing arbitrary other signals.
     * Use the apply method on a signal to access its value inside of a signal expression.
@@ -71,6 +86,7 @@ trait RescalaInterface[S <: Struct] extends Aliases[S] {
     * @group create
     **/
   object Signal {
+    def rescalaAPI: RescalaInterface[S] = RescalaInterface.this
     final def apply[A](expression: A)(implicit ticket: CreationTicket): Signal[A] =
       macro rescala.macros.ReactiveMacros.ReactiveExpression[A, S, Static, rescala.reactives.Signals.type]
     final def static[A](expression: A)(implicit ticket: CreationTicket): Signal[A] =
@@ -85,6 +101,7 @@ trait RescalaInterface[S <: Struct] extends Aliases[S] {
     * @see [[Signal]]
     * @group create */
   object Event {
+    def rescalaAPI: RescalaInterface[S] = RescalaInterface.this
     final def apply[A](expression: Option[A])(implicit ticket: CreationTicket): Event[A] =
       macro rescala.macros.ReactiveMacros.ReactiveExpression[A, S, Static, rescala.reactives.Events.type]
     final def static[A](expression: Option[A])(implicit ticket: CreationTicket): Event[A] =
@@ -93,16 +110,20 @@ trait RescalaInterface[S <: Struct] extends Aliases[S] {
       macro rescala.macros.ReactiveMacros.ReactiveExpression[A, S, Dynamic, rescala.reactives.Events.type]
   }
 
-  implicit def EventOps[T](e: Event[T]): Events.EOps[T, S] = new Events.EOps[T, S](e)
-  implicit def EventSeqOps[T](e: => Seq[Event[T]]): Events.ESeqOps[T, S] = new Events.ESeqOps[T, S](e)
+  implicit def EventOps[T](e: Event[T]): Events.EOps[T] = new Events.EOps[T](e)
+  implicit def EventSeqOps[T](e: => Seq[Event[T]]): Events.ESeqOps[T] = new Events.ESeqOps[T](e)
 
 
   /** Contains static methods to create Events
     * @group create */
-  val Events: reactives.Events.type = reactives.Events
+  object Events extends reactives.Events[S] {
+    override val rescalaAPI: RescalaInterface[S] = RescalaInterface.this
+  }
   /** Contains static methods to create Signals
     * @group create */
-  val Signals: reactives.Signals.type = reactives.Signals
+  object Signals extends reactives.Signals[S] {
+    override val rescalaAPI: RescalaInterface[S] = RescalaInterface.this
+  }
 
   /**
     * Executes a transaction.

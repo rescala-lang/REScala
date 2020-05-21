@@ -2,6 +2,7 @@ package rescala.reactives
 
 import rescala.core.Pulse.{Exceptional, NoChange, Value}
 import rescala.core.{Interp, _}
+import rescala.interface.RescalaInterface
 import rescala.macros.cutOutOfUserComputation
 import rescala.reactives.Observe.ObserveInteract
 import rescala.reactives.RExceptions.UnhandledFailureException
@@ -15,7 +16,7 @@ import scala.collection.immutable.{LinearSeq, Queue}
   * They are used to ensure correct creation, and you normally do not have to worry about them,
   * except if you accidentally call the implicit parameter list, in which cas you may get cryptic errors.
   * This is a scala limitation.
-  * We also hide the internal state parameter of passed and returned events.
+  * We also hide the internal state parameter of passed and returned rescalaAPI.events.
   *
   * @tparam T Value type of the event occurrences.
   * @tparam S Internal [[rescala.core.Struct]]ure of state.
@@ -29,6 +30,7 @@ import scala.collection.immutable.{LinearSeq, Queue}
   */
 trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with Disconnectable[S] {
 
+  val rescalaAPI: RescalaInterface[S]
 
   implicit def internalAccess(v: Value): Pulse[T]
 
@@ -76,7 +78,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
     */
   @cutOutOfUserComputation
   final def recover[R >: T](onFailure: PartialFunction[Throwable, Option[R]])(implicit ticket: CreationTicket[S]): Event[R, S] =
-    Events.staticNamed(s"(recover $this)", this) { st =>
+    rescalaAPI.Events.staticNamed(s"(recover $this)", this) { st =>
       st.collectStatic(this) match {
         case Exceptional(t) => onFailure.applyOrElse[Throwable, Option[R]](t, throw _).fold[Pulse[R]](Pulse.NoChange)(Pulse.Value(_))
         case other => other
@@ -88,7 +90,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
     * @group operator */
   @cutOutOfUserComputation
   final def collect[U](expression: PartialFunction[T, U])(implicit ticket: CreationTicket[S]): Event[U, S]
-  = macro rescala.macros.ReactiveMacros.ReactiveUsingFunctionMacro[T, U, S, Events.CollectFuncImpl.type, Events.type]
+  = macro rescala.macros.ReactiveMacros.ReactiveUsingFunctionMacro[T, U, S, Events.CollectFuncImpl.type, rescalaAPI.Events.type]
     //Events.staticNamed(s"(collect $this)", this) { st => st.collectStatic(this).collect(pf) }
 
   /** Events disjunction.
@@ -98,7 +100,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
     * @group operator */
   @cutOutOfUserComputation
   final def ||[U >: T](other: Event[U, S])(implicit ticket: CreationTicket[S]): Event[U, S] = {
-    Events.staticNamed(s"(or $this $other)", this, other) { st =>
+    rescalaAPI.Events.staticNamed(s"(or $this $other)", this, other) { st =>
       val tp = st.collectStatic(this)
       if (tp.isChange) tp else other.internalAccess(st.collectStatic(other))
     }
@@ -109,21 +111,21 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
     * @group operator*/
   @cutOutOfUserComputation
   final def filter(expression: T => Boolean)(implicit ticket: CreationTicket[S]): Event[T, S]
-  = macro rescala.macros.ReactiveMacros.ReactiveUsingFunctionMacro[T, T, S, Events.FilterFuncImpl.type, Events.type]
+  = macro rescala.macros.ReactiveMacros.ReactiveUsingFunctionMacro[T, T, S, Events.FilterFuncImpl.type, rescalaAPI.Events.type]
   /** Filters the event, only propagating the value when the filter is true.
     * @usecase def &&(pred: T => Boolean): rescala.default.Event[T]
     * @see filter
     * @group operator*/
   @cutOutOfUserComputation
   final def &&(expression: T => Boolean)(implicit ticket: CreationTicket[S]): Event[T, S]
-  = macro rescala.macros.ReactiveMacros.ReactiveUsingFunctionMacro[T, T, S, Events.FilterFuncImpl.type, Events.type]
+  = macro rescala.macros.ReactiveMacros.ReactiveUsingFunctionMacro[T, T, S, Events.FilterFuncImpl.type, rescalaAPI.Events.type]
 
   /** Propagates the event only when except does not fire.
     * @usecase def \[U](except: rescala.default.Event[U]): rescala.default.Event[T]
     * @group operator*/
   @cutOutOfUserComputation
   final def \[U](except: Event[U, S])(implicit ticket: CreationTicket[S]): Event[T, S] = {
-    Events.staticNamed(s"(except $this  $except)", this, except) { st =>
+    rescalaAPI.Events.staticNamed(s"(except $this  $except)", this, except) { st =>
       (except.internalAccess(st.collectStatic(except)): Pulse[U]) match {
         case NoChange => st.collectStatic(this)
         case Value(_) => Pulse.NoChange
@@ -137,7 +139,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
     * @group operator*/
   @cutOutOfUserComputation
   final def and[U, R](other: Event[U, S])(merger: (T, U) => R)(implicit ticket: CreationTicket[S]): Event[R, S] = {
-    Events.staticNamed(s"(and $this $other)", this, other) { st =>
+    rescalaAPI.Events.staticNamed(s"(and $this $other)", this, other) { st =>
       for {
         left <- internalAccess(st.collectStatic(this)): Pulse[T]
         right <- other.internalAccess(st.collectStatic(other)) : Pulse[U]
@@ -157,7 +159,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
     * @group operator*/
   @cutOutOfUserComputation
   final def zipOuter[U](other: Event[U, S])(implicit ticket: CreationTicket[S]): Event[(Option[T], Option[U]), S] = {
-    Events.staticNamed(s"(zipOuter $this $other)", this, other) { st =>
+    rescalaAPI.Events.staticNamed(s"(zipOuter $this $other)", this, other) { st =>
       val left: Pulse[T] = st.collectStatic(this)
       val right: Pulse[U] = other.internalAccess(st.collectStatic(other))
       if (right.isChange || left.isChange) Value(left.toOption -> right.toOption) else NoChange
@@ -169,7 +171,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
     * @group operator*/
   @cutOutOfUserComputation
   final def map[A](expression: T => A)(implicit ticket: CreationTicket[S]): Event[A, S]
-  = macro rescala.macros.ReactiveMacros.ReactiveUsingFunctionMacro[T, A, S, Events.MapFuncImpl.type, Events.type]
+  = macro rescala.macros.ReactiveMacros.ReactiveUsingFunctionMacro[T, A, S, Events.MapFuncImpl.type, rescalaAPI.Events.type]
 
   /** Flattens the inner value.
     * @group operator */
@@ -181,7 +183,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
     * @usecase def dropParam(implicit ticket: CreationTicket[S]): rescala.default.Event[Unit]
     * @group operator*/
   @cutOutOfUserComputation
-  final def dropParam(implicit ticket: CreationTicket[S]): Event[Unit, S] = Events.static(this)(_ => Some(()))
+  final def dropParam(implicit ticket: CreationTicket[S]): Event[Unit, S] = rescalaAPI.Events.static(this)(_ => Some(()))
 
 
   /** Folds events with a given operation to create a Signal.
@@ -210,7 +212,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
         initial = state,
         expr = { (st, currentValue) => reducer(currentValue(), st.collectStatic(this).get) },
         name = ticket.rename
-      )
+      )(rescalaAPI)
     }
 
   /** Applies a function on the current value of the signal every time the event occurs,
@@ -219,7 +221,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
     * @group conversion */
   @cutOutOfUserComputation
   final def iterate[A](init: A)(f: A => A)(implicit ticket: CreationTicket[S]): Signal[A, S] =
-    Events.foldOne(this, init)((acc, _) => f(acc))
+    rescalaAPI.Events.foldOne(this, init)((acc, _) => f(acc))
 
   /** Counts the occurrences of the event. Starts from 0, when the event has never been
     * fired yet. The argument of the event is simply discarded.
@@ -228,7 +230,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
     * @inheritdoc */
   @cutOutOfUserComputation
   final def count()(implicit ticket: CreationTicket[S]): Signal[Int, S] =
-    Events.foldOne(this, 0)((acc, _) => acc + 1)
+    rescalaAPI.Events.foldOne(this, 0)((acc, _) => acc + 1)
 
   /** returns a signal holding the latest value of the event.
     * @param init initial value of the returned signal
@@ -236,7 +238,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
     * @group conversion */
   @cutOutOfUserComputation
   final def latest[A >: T](init: A)(implicit ticket: CreationTicket[S]): Signal[A, S] =
-    Events.foldOne(this, init)((_, v) => v)
+    rescalaAPI.Events.foldOne(this, init)((_, v) => v)
   /** returns a signal holding the latest value of the event.
     * @usecase def latest[A >: T](): rescala.default.Signal[A]
     * @group conversion */
@@ -249,7 +251,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
     * @group conversion*/
   @cutOutOfUserComputation
   final def latestOption[A >: T]()(implicit ticket: CreationTicket[S]): Signal[Option[A], S] =
-    Events.foldOne(this, None: Option[A]) { (_, v) => Some(v) }
+    rescalaAPI.Events.foldOne(this, None: Option[A]) { (_, v) => Some(v) }
 
   /** Returns a signal which holds the last n events in a list. At the beginning the
     * list increases in size up to when n values are available
@@ -257,7 +259,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
     * @group conversion*/
   @cutOutOfUserComputation
   final def last[A >: T](n: Int)(implicit ticket: CreationTicket[S]): Signal[LinearSeq[A], S] = {
-    Events.foldOne(this, Queue[A]()) { (queue: Queue[A], v: T) =>
+    rescalaAPI.Events.foldOne(this, Queue[A]()) { (queue: Queue[A], v: T) =>
       if (queue.lengthCompare(n) >= 0) queue.tail.enqueue(v) else queue.enqueue(v)
     }
   }
@@ -267,7 +269,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
     * @group conversion*/
   @cutOutOfUserComputation
   final def list[A >: T]()(implicit ticket: CreationTicket[S]): Signal[List[A], S] =
-    Events.foldOne(this, List[A]())((acc, v) => v :: acc)
+    rescalaAPI.Events.foldOne(this, List[A]())((acc, v) => v :: acc)
 
   /** Switch back and forth between two signals on occurrence of event e
     * @usecase def toggle[A](a: rescala.default.Signal[A], b: rescala.default.Signal[A]): rescala.default.Signal[A]
@@ -276,7 +278,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
   final def toggle[A](a: Signal[A, S], b: Signal[A, S])(implicit ticket: CreationTicket[S])
   : Signal[A, S] = ticket.transaction { ict =>
     val switched: Signal[Boolean, S] = iterate(false) {!_}(ict)
-    Signals.dynamic(switched, a, b) { s => if (s.depend(switched)) s.depend(b) else s.depend(a) }(ict)
+    rescalaAPI.Signals.dynamic(switched, a, b) { s => if (s.depend(switched)) s.depend(b) else s.depend(a) }(ict)
   }
 
 }

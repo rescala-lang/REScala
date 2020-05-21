@@ -4,6 +4,7 @@ import java.util.concurrent.ForkJoinPool.ManagedBlocker
 import java.util.concurrent.{CountDownLatch, ForkJoinPool}
 
 import rescala.core.{CreationTicket, Struct}
+import rescala.interface.RescalaInterface
 import rescala.reactives.{Event, Signal}
 
 

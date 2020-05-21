@@ -26,7 +26,7 @@ class SimplePhil[S <: Struct] {
   def buildPhil(): (Var[Philosopher, S], Signal[Vision, S]) = {
     val p: Var[Philosopher, S] = engine.Var(Thinking)
     val f1, f2 = p.map(s => if (s == Thinking) Free else Taken("me"))
-    val v = Signals.lift(f1, f2) {calcVision("me")}
+    val v = engine.Signals.lift(f1, f2) {calcVision("me")}
     (p, v)
   }
 

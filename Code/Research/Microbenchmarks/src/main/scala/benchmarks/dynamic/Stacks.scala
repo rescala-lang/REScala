@@ -30,8 +30,9 @@ class StackState[S <: Struct] {
     engine = eParam.engine
     val threads = params.getThreads
     implicit def scheduler: Scheduler[S] = engine.scheduler
+    implicit def api = engine
     if (scheduler == Schedulers.unmanaged) {isManual = true }
-    sources = Range(0, threads).map(_ => Var(0)).toArray
+    sources = Range(0, threads).map(_ => engine.Var(0)).toArray
     results = sources.map { source =>
       var cur: Signal[Int, S] = source
       for (x <- Range(0, size.size)) {cur = cur.map(1.+)}

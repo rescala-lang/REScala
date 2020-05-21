@@ -1,6 +1,7 @@
 package rescala.reactives
 
 import rescala.core._
+import rescala.interface.RescalaInterface
 import rescala.macros.cutOutOfUserComputation
 import rescala.reactives.Observe.ObserveInteract
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
@@ -23,6 +24,8 @@ import scala.util.control.NonFatal
 trait Signal[+T, S <: Struct] extends ReSource[S] with Interp[T, S] with Disconnectable[S] {
 
   override type Value <: Pulse[T]
+
+  val rescalaAPI: RescalaInterface[S]
 
 
   /** Returns the current value of the signal
@@ -72,7 +75,7 @@ trait Signal[+T, S <: Struct] extends ReSource[S] with Interp[T, S] with Disconn
   @cutOutOfUserComputation
   final def recover[R >: T](onFailure: PartialFunction[Throwable, R])
                            (implicit ticket: CreationTicket[S])
-  : Signal[R, S] = Signals.static(this) { st =>
+  : rescalaAPI.Signal[R] = rescalaAPI.Signals.static(this) { st =>
     try st.dependStatic(this) catch {
       case NonFatal(e) => onFailure.applyOrElse[Throwable, R](e, throw _)
     }
@@ -88,7 +91,7 @@ trait Signal[+T, S <: Struct] extends ReSource[S] with Interp[T, S] with Disconn
 
   @cutOutOfUserComputation
   final def withDefault[R >: T](value: R)(implicit ticket: CreationTicket[S])
-  : Signal[R, S] = Signals.static(this) { st =>
+  : Signal[R, S] = rescalaAPI.Signals.static(this) { st =>
     try st.dependStatic(this) catch {
       case EmptySignalControlThrowable => value
     }
@@ -99,7 +102,7 @@ trait Signal[+T, S <: Struct] extends ReSource[S] with Interp[T, S] with Disconn
   @cutOutOfUserComputation
   final def map[B](expression: T => B)(implicit ticket: CreationTicket[S]): Signal[B, S]
   = macro rescala.macros.ReactiveMacros.ReactiveUsingFunctionMacro[T, B, S, Signals.MapFuncImpl.type, Signals.type]
-    //static(this) { t => f(t.dependStatic(this)) }
+
 
   /** Flattens the inner value.
     * @group operator */
@@ -114,7 +117,7 @@ trait Signal[+T, S <: Struct] extends ReSource[S] with Interp[T, S] with Disconn
     * Be aware that no change will be triggered when the signal changes to or from empty
     * @group conversion */
   @cutOutOfUserComputation
-  final def change(implicit ticket: CreationTicket[S]): Event[Diff[T], S] = Events.change(this)(ticket)
+  final def change(implicit ticket: CreationTicket[S]): Event[Diff[T], S] = rescalaAPI.Events.change(this)(ticket)
 
   /** Create an event that fires every time the signal changes. The value associated
     * to the event is the new value of the signal
@@ -122,7 +125,7 @@ trait Signal[+T, S <: Struct] extends ReSource[S] with Interp[T, S] with Disconn
     * @group conversion */
   @cutOutOfUserComputation
   final def changed(implicit ticket: CreationTicket[S]): Event[T, S]
-  = Events.staticNamed(s"(changed $this)", this) { st =>
+  = rescalaAPI.Events.staticNamed(s"(changed $this)", this) { st =>
     st.collectStatic(this) match {
       case Pulse.empty => Pulse.NoChange
       case other => other
@@ -133,7 +136,7 @@ trait Signal[+T, S <: Struct] extends ReSource[S] with Interp[T, S] with Disconn
     * @group conversion */
   @cutOutOfUserComputation
   final def changedTo[V >: T](value: V)(implicit ticket: CreationTicket[S]): Event[Unit, S]
-  = Events.staticNamed(s"(filter $this)", this) { st =>
+  = rescalaAPI.Events.staticNamed(s"(filter $this)", this) { st =>
     st.collectStatic(this).filter(_ == value) }
     .dropParam
 }

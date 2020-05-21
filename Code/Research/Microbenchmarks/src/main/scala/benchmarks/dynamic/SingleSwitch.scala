@@ -28,6 +28,8 @@ class SingleSwitch[S <: Struct] {
   @Setup
   def setup(params: BenchmarkParams, step: Step, engineParam: EngineParam[S]): Unit = {
     engine = engineParam.engine
+    val e = engine
+    import e._
     source = Var(step.get())
     val d1 = Var("true")
     val d2 = Var("false")

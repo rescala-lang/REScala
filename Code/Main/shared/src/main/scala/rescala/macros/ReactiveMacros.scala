@@ -23,40 +23,56 @@ class ReactiveMacros(val c: blackbox.Context) {
   private def compileErrorsAst: Tree =
     q"""throw new ${termNames.ROOTPKG}.scala.NotImplementedError("macro not expanded because of other compilation errors")"""
 
-
   def ReactiveExpression[
     A: c.WeakTypeTag,
     S <: Struct : c.WeakTypeTag,
     IsStatic <: MacroTags.Staticism : c.WeakTypeTag,
     ReactiveType : c.WeakTypeTag]
   (expression: Tree)(ticket: c.Tree): c.Tree = {
+    ReactiveExpressionWithAPI[A, S, IsStatic, ReactiveType](expression)(ticket)(q"(${c.prefix.tree}).rescalaAPI", None)
+  }
+
+  def ReactiveExpressionWithAPI[
+    A: c.WeakTypeTag,
+    S <: Struct : c.WeakTypeTag,
+    IsStatic <: MacroTags.Staticism : c.WeakTypeTag,
+    ReactiveType : c.WeakTypeTag]
+  (expression: Tree)(ticket: c.Tree)(rescalaAPI: Tree, prefixManipulation: Option[PrefixManipulation]): c.Tree = {
     if (c.hasErrors) return compileErrorsAst
 
     val forceStatic = !(weakTypeOf[IsStatic] <:< weakTypeOf[MacroTags.Dynamic])
     val lego = new MacroLego(expression, forceStatic)
 
-    val signalsOrEvents = weakTypeOf[ReactiveType].typeSymbol.asClass.module
+    val signalsOrEvents = weakTypeOf[ReactiveType].typeSymbol.asClass.module.asTerm.name
     val dependencies = lego.detections.detectedStaticReactives
     val isStatic = lego.detections.detectedDynamicReactives.isEmpty
     val creationMethod = TermName(if (isStatic) "static" else "dynamic")
     val ticketType = if (isStatic) weakTypeOf[StaticTicket[S]] else weakTypeOf[DynamicTicket[S]]
 
-    val body = q"""$signalsOrEvents.$creationMethod[${weakTypeOf[A]}, ${weakTypeOf[S]}](
+    val body = q"""$rescalaAPI.$signalsOrEvents.$creationMethod[${weakTypeOf[A]}](
          ..$dependencies
          ){${lego.contextualizedExpression(ticketType)}}($ticket)"""
 
-    lego.wrapFinalize(body)
+    lego.wrapFinalize(body, prefixManipulation)
   }
 
 
   def fixNullTypes(tree: Tree): Unit =
     tree.foreach(t => if (t.tpe == null) internal.setType(t, NoType))
 
+
   object ForceCutOut
-  def prefixValue: Tree = {
-    val prefixTree = c.prefix.tree
-    internal.updateAttachment(prefixTree, ForceCutOut)
-    q"$prefixTree.value"
+  class PrefixManipulation {
+    private val prefixTermName: TermName = TermName(c.freshName("prefix$"))
+    val prefixIdent: Ident = Ident(prefixTermName)
+    def prefixValue: Tree = {
+      val prefixTree = c.prefix.tree
+      internal.updateAttachment(prefixTree, ForceCutOut)
+      q"$prefixTree.value"
+    }
+    def prefixValDef(): ValDef = {
+      q"val $prefixTermName : ${c.prefix.actualType} = ${c.prefix.tree}": ValDef
+    }
   }
 
 
@@ -70,9 +86,10 @@ class ReactiveMacros(val c: blackbox.Context) {
     if (c.hasErrors) return compileErrorsAst
 
     val funcImpl = weakTypeOf[FuncImpl].typeSymbol.asClass.module
-    val computation: Tree = q"""$funcImpl.apply[${weakTypeOf[T]}, ${weakTypeOf[A]}]($prefixValue, $expression)"""
+    val pm = new PrefixManipulation
+    val computation: Tree = q"""$funcImpl.apply[${weakTypeOf[T]}, ${weakTypeOf[A]}](${pm.prefixValue}, $expression)"""
     fixNullTypes(computation)
-    ReactiveExpression[A, S, MacroTags.Dynamic, ReactiveType](computation)(ticket)
+    ReactiveExpressionWithAPI[A, S, MacroTags.Dynamic, ReactiveType](computation)(ticket)(q"${pm.prefixIdent}.rescalaAPI", Some(pm))
   }
 
 
@@ -83,21 +100,22 @@ class ReactiveMacros(val c: blackbox.Context) {
   : c.Tree = {
     if (c.hasErrors) return compileErrorsAst
 
-    val eventsSymbol = weakTypeOf[rescala.reactives.Events.type].termSymbol
+    val eventsSymbol = weakTypeOf[rescala.reactives.Events.type].termSymbol.asTerm.name
     val ticketType = weakTypeOf[StaticTicket[S]]
     val funcImpl = weakTypeOf[rescala.reactives.Events.FoldFuncImpl.type].typeSymbol.asClass.module
-    val computation = q"""$funcImpl.apply[${weakTypeOf[T]}, ${weakTypeOf[A]}](_, $prefixValue, $op)"""
+    val pm = new PrefixManipulation()
+    val computation = q"""$funcImpl.apply[${weakTypeOf[T]}, ${weakTypeOf[A]}](_, ${pm.prefixValue}, $op)"""
     fixNullTypes(computation)
 
     val lego = new MacroLego(computation, forceStatic = true)
     val detections = lego.detections.detectedStaticReactives
 
     val body =
-      q"""$eventsSymbol.fold[${weakTypeOf[A]}, ${weakTypeOf[S]}](Set(..$detections), $init)(
+      q"""${pm.prefixIdent}.rescalaAPI.$eventsSymbol.fold[${weakTypeOf[A]}](Set(..$detections), $init)(
            ${lego.contextualizedExpression(ticketType)}
           )($ticket)"""
 
-    lego.wrapFinalize(body)
+    lego.wrapFinalize(body, Some(pm))
   }
 
 
@@ -119,8 +137,8 @@ class ReactiveMacros(val c: blackbox.Context) {
     def contextualizedExpression(contextType: Type) =
       q"{$ticketTermName: $contextType => $rewrittenTree }"
 
-    def wrapFinalize(body: Tree): Tree = {
-      val valDefs = cutOut.cutOutReactivesVals.reverse
+    def wrapFinalize(body: Tree, prefixManipulation: Option[PrefixManipulation]): Tree = {
+      val valDefs = prefixManipulation.map(_.prefixValDef).toList ::: cutOut.cutOutReactivesVals.reverse
       val block: c.universe.Tree = Block(valDefs, body)
       ReTyper(c).untypecheck(block)
     }

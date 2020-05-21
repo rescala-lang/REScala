@@ -6,6 +6,7 @@ import rescala.core.{InitialChange, Scheduler, Struct}
 import rescala.extra.lattices.Lattice
 import rescala.extra.lattices.sequences.RGA
 import rescala.extra.lattices.sequences.RGA.RGA
+import rescala.interface.RescalaInterface
 import rescala.reactives.{Event, Events, Observe, Signal, Signals}
 
 import scala.concurrent.Future
@@ -16,12 +17,13 @@ object LociDist {
   (event: Event[T, S])
   (init: Res)(f: (Res, T) => Res)
   (registry: Registry, binding: Binding[RGA[T] => Unit] {type RemoteCall = RGA[T] => Future[Unit]})
+  (implicit api: RescalaInterface[S])
   : Signal[Res, S] = {
-    val fold = Events.foldOne(event, RGA.empty[T]) { (acc, occ) =>
+    val fold = api.Events.foldOne(event, RGA.empty[T]) { (acc, occ) =>
       println(s"appending $acc $occ")
       acc.append(occ) }
 
-    val res = Signals.static(fold){st => st.dependStatic(fold).iterator.foldLeft(init){ (acc, occ) =>
+    val res = api.Signals.static(fold){st => st.dependStatic(fold).iterator.foldLeft(init){ (acc, occ) =>
       println(s"folding $acc $occ")
       f(acc, occ)}}
     distribute(fold, registry)(binding)

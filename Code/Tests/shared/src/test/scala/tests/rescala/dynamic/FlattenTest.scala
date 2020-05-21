@@ -2,7 +2,8 @@ package tests.rescala.dynamic
 
 import tests.rescala.testtools.RETests
 
-class FlattenTest extends RETests { multiEngined { engine => import engine._
+class FlattenTest extends RETests { multiEngined { engine =>
+  import engine._
 
   test("flatten var") {
     val sv = Signal { Var(10) }.flatten
@@ -210,7 +211,7 @@ class FlattenTest extends RETests { multiEngined { engine => import engine._
   test("basic Higher Order Signal can Be Defereferenced"){
     val v = Var(42)
     val s1: Signal[Int] = v.map(identity)
-    val s2: Signal[Signal[Int]] = dynamic() { t => s1 }
+    val s2: Signal[Signal[Int]] = Signals.dynamic() { t => s1 }
     val sDeref = s2.flatten
 
     assert(sDeref.readValueOnce == 42)
@@ -223,7 +224,7 @@ class FlattenTest extends RETests { multiEngined { engine => import engine._
   test("basic Higher Order Signal deref Fires Change"){
     val v = Var(42)
     val sValue: Signal[Int] = v.map(identity)
-    val sHigher: Signal[Signal[Int]] = dynamic() { t => sValue }
+    val sHigher: Signal[Signal[Int]] = Signals.dynamic() { t => sValue }
     val sDeref = sHigher.flatten
 
     var sDerefChanged = false

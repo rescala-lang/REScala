@@ -2,7 +2,6 @@ import loci.transmitter._
 import rescala.default._
 import rescala.extra.lattices.Lattice
 import rescala.macros.cutOutOfUserComputation
-import rescala.reactives.Signals
 
 
 /**

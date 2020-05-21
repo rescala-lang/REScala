@@ -49,7 +49,7 @@ class ReactiveCreationInTurnsTest extends RETests { multiEngined { engine => imp
   test("change Of Created Signal"){
 
     engine.transaction() { implicit t =>
-      val v1 = rescala.reactives.Var(0)
+      val v1 = engine.Var(0)
       val v2 = v1.map(_ + 1)
       v1.change.observe(v => fail(s"created signals should not change, but change was $v"))
       v2.change.observe(v => fail(s"created mapped signals should not change, but change was $v"))

@@ -25,11 +25,11 @@ class LowContentionSerialOrder[S <: Struct] extends BusyThreads {
   @Setup(Level.Iteration)
   def setup(params: BenchmarkParams, engineParam: EngineParam[S], work: Workload) = {
     engine = engineParam.engine
-    sources = Array.fill(size)(Var(0))
+    sources = Array.fill(size)(engine.Var(0))
     grid = Array.tabulate(size - 1) { t =>
       val a = size - 1 - t
       Array.tabulate(a) { b =>
-        Signals.lift(sources(a), sources(b)) { (va, vb) => work.consume(); va + vb }
+        engine.Signals.lift(sources(a), sources(b)) { (va, vb) => work.consume(); va + vb }
       }
     }
   }

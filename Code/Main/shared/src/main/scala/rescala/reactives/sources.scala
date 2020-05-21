@@ -14,7 +14,7 @@ trait Source[S <: Struct, T] extends ReSource[S] {
   * @tparam T Type returned when the event fires
   * @tparam S Struct type used for the propagation of the event
   */
-final class Evt[T, S <: Struct] private[rescala](initialState: Estate[S, T], name: REName)
+abstract class Evt[T, S <: Struct] private[rescala](initialState: Estate[S, T], name: REName)
   extends Base[Pulse[T], S](initialState, name) with Source[S, T] with Event[T, S] {
   override type Value = Pulse[T]
 
@@ -33,11 +33,11 @@ final class Evt[T, S <: Struct] private[rescala](initialState: Estate[S, T], nam
   }
 }
 
-/** Creates new [[Evt]]s */
-object Evt {
-  def apply[T, S <: Struct]()(implicit ticket: CreationTicket[S]): Evt[T, S] =
-    ticket.createSource[Pulse[T], Evt[T, S]](Initializer.Event)(new Evt[T, S](_, ticket.rename))
-}
+///** Creates new [[Evt]]s */
+//object Evt {
+//  def apply[T, S <: Struct]()(implicit ticket: CreationTicket[S]): Evt[T, S] =
+//    ticket.createSource[Pulse[T], Evt[T, S]](Initializer.Event)(new Evt[T, S](_, ticket.rename))
+//}
 
 /** Source signals with imperatively updates.
   *
@@ -45,7 +45,7 @@ object Evt {
   * @tparam A Type stored by the signal
   * @tparam S Struct type used for the propagation of the signal
   */
-final class Var[A, S <: Struct] private[rescala](initialState: Signals.Sstate[A, S], name: REName)
+abstract class Var[A, S <: Struct] private[rescala](initialState: Signals.Sstate[A, S], name: REName)
   extends Base[Pulse[A], S](initialState, name) with Source[S, A] with Signal[A, S] {
   override type Value = Pulse[A]
 
@@ -66,13 +66,5 @@ final class Var[A, S <: Struct] private[rescala](initialState: Signals.Sstate[A,
       override def writeValue(b: Pulse[A], v: Pulse[A] => Unit): Boolean = if (b != pulse) {v(pulse); true} else false
     })
   }
-}
-
-/** Creates new [[Var]]s */
-object Var {
-  def apply[T, S <: Struct](initval: T)(implicit ticket: CreationTicket[S]): Var[T, S] = fromChange(Pulse.Value(initval))
-  def empty[T, S <: Struct](implicit ticket: CreationTicket[S]): Var[T, S] = fromChange(Pulse.empty)
-  private[this] def fromChange[T, S <: Struct](change: Pulse[T])(implicit ticket: CreationTicket[S]): Var[T, S] =
-    ticket.createSource[Pulse[T], Var[T, S]](Initializer.InitializedSignal(change))(new Var[T, S](_, ticket.rename))
 }
 

@@ -2,44 +2,15 @@ package rescala.reactives
 
 import rescala.core.Pulse.NoChange
 import rescala.core._
+import rescala.interface.RescalaInterface
 import rescala.macros.cutOutOfUserComputation
 import rescala.reactives.Events.Estate
 import rescala.reactives.Signals.Diff
 
-/** Functions to construct events, you probably want to use the operators on [[Event]] for a nicer API. */
+
 object Events {
   type Estate[S <: Struct, T] = S#State[Pulse[T], S]
 
-
-  /** the basic method to create static events */
-  @cutOutOfUserComputation
-  def staticNamed[T, S <: Struct](name: String,
-                                  dependencies: ReSource[S]*)
-                                 (calculate: StaticTicket[S] => Pulse[T])
-                                 (implicit ticket: CreationTicket[S]): Event[T, S] = {
-    ticket.create[Pulse[T], StaticEvent[T, S]](dependencies.toSet, Initializer.Event, inite = false) {
-      state => new StaticEvent[T, S](state, calculate, name) with DisconnectableImpl[S]
-    }
-  }
-
-  /** Creates static events */
-  @cutOutOfUserComputation
-  def static[T, S <: Struct](dependencies: ReSource[S]*)
-                            (calculate: StaticTicket[S] => Option[T])
-                            (implicit ticket: CreationTicket[S]): Event[T, S] =
-    staticNamed(ticket.rename.str, dependencies: _*)(st => Pulse.fromOption(calculate(st)))
-
-  /** Creates dynamic events */
-  @cutOutOfUserComputation
-  def dynamic[T, S <: Struct](dependencies: ReSource[S]*)
-                             (expr: DynamicTicket[S] => Option[T])
-                             (implicit ticket: CreationTicket[S]): Event[T, S] = {
-    val staticDeps = dependencies.toSet
-    ticket.create[Pulse[T], DynamicEvent[T, S]](staticDeps, Initializer.Event, inite = true) { state =>
-      new DynamicEvent[T, S](state, expr.andThen(Pulse.fromOption), ticket.rename, staticDeps)
-          with DisconnectableImpl[S]
-    }
-  }
 
   object MapFuncImpl { def apply[T1, A](value: Option[T1], mapper: T1 => A): Option[A] =
     value.map(mapper)}
@@ -55,19 +26,62 @@ object Events {
     }
   }
 
+  def noteFromPulse[N, S <: Struct](t: ReevTicket[Pulse[N], S], value: Pulse[N]): Result[Pulse[N], S] = {
+    if (value.isChange) t.withValue(value)
+    else t
+  }
+
+}
+
+/** Functions to construct events, you probably want to use the operators on [[Event]] for a nicer API. */
+trait Events[S <: Struct] {
+
+  def rescalaAPI: RescalaInterface[S]
+
+  /** the basic method to create static events */
+  @cutOutOfUserComputation
+  def staticNamed[T](name: String,
+                                  dependencies: ReSource[S]*)
+                                 (calculate: StaticTicket[S] => Pulse[T])
+                                 (implicit ticket: CreationTicket[S]): Event[T, S] = {
+    ticket.create[Pulse[T], StaticEvent[T, S]](dependencies.toSet, Initializer.Event, inite = false) {
+      state => new StaticEvent[T, S](state, calculate, name)(rescalaAPI) with DisconnectableImpl[S]
+    }
+  }
+
+  /** Creates static events */
+  @cutOutOfUserComputation
+  def static[T](dependencies: ReSource[S]*)
+                            (calculate: StaticTicket[S] => Option[T])
+                            (implicit ticket: CreationTicket[S]): Event[T, S] =
+    staticNamed(ticket.rename.str, dependencies: _*)(st => Pulse.fromOption(calculate(st)))
+
+  /** Creates dynamic events */
+  @cutOutOfUserComputation
+  def dynamic[T](dependencies: ReSource[S]*)
+                             (expr: DynamicTicket[S] => Option[T])
+                             (implicit ticket: CreationTicket[S]): Event[T, S] = {
+    val staticDeps = dependencies.toSet
+    ticket.create[Pulse[T], DynamicEvent[T, S]](staticDeps, Initializer.Event, inite = true) { state =>
+      new DynamicEvent[T, S](state, expr.andThen(Pulse.fromOption), ticket.rename, staticDeps)(rescalaAPI)
+          with DisconnectableImpl[S]
+    }
+  }
+
+
   /** Creates change events */
   @cutOutOfUserComputation
-  def change[T, S <: Struct](signal: Signal[T, S])(implicit ticket: CreationTicket[S]): Event[Diff[T], S]
+  def change[T](signal: Signal[T, S])(implicit ticket: CreationTicket[S]): Event[Diff[T], S]
   = ticket.transaction { initTurn =>
     val internal = initTurn.create[(Pulse[T], Pulse[Diff[T]]), ChangeEvent[T, S]](
       Set[ReSource[S]](signal), Initializer.Change, inite = true, ticket) { state =>
-      new ChangeEvent[T, S](state, signal, ticket.rename) with DisconnectableImpl[S]
+      new ChangeEvent[T, S](state, signal, ticket.rename)(rescalaAPI) with DisconnectableImpl[S]
     }
-    Events.static(internal)(st => st.dependStatic(internal))(initTurn)
+    static(internal)(st => st.dependStatic(internal))(initTurn)
   }
 
   @cutOutOfUserComputation
-  def foldOne[A, T, S <: Struct](dependency: Event[A, S], init: T)(expr: (T, A) => T)(implicit ticket: CreationTicket[S]): Signal[T, S] = {
+  def foldOne[A, T](dependency: Event[A, S], init: T)(expr: (T, A) => T)(implicit ticket: CreationTicket[S]): Signal[T, S] = {
     fold(Set[ReSource[S]](dependency), init){st => acc =>
       val a: A = dependency.internalAccess(st.collectStatic(dependency)).get
       expr(acc(), a)}
@@ -77,7 +91,7 @@ object Events {
     *
     * @see [[rescala.reactives.Event.fold]]*/
   @cutOutOfUserComputation
-  def fold[T, S <: Struct](dependencies: Set[ReSource[S]], init: T)
+  def fold[T](dependencies: Set[ReSource[S]], init: T)
                                           (expr: StaticTicket[S] => (() => T) => T)
                                           (implicit ticket: CreationTicket[S])
   : Signal[T, S] = {
@@ -85,15 +99,15 @@ object Events {
       dependencies,
       Initializer.InitializedSignal[Pulse[T]](Pulse.tryCatch(Pulse.Value(init))),
       inite = false) {
-      state => new StaticSignal[T, S](state, (st, v) => expr(st)(v), ticket.rename)
+      state => new StaticSignal[T, S](state, (st, v) => expr(st)(v), ticket.rename)(rescalaAPI)
     }
   }
 
   /** Folds when any one of a list of events occurs, if multiple events occur, every fold is executed in order. */
   @cutOutOfUserComputation
-  final def foldAll[A, S <: Struct](init: A)
-                                                   (accthingy: (=> A) => Seq[FoldMatch[A, S]])
-                                                   (implicit ticket: CreationTicket[S]): Signal[A, S] = {
+  final def foldAll[A](init: A)
+                      (accthingy: (=> A) => Seq[FoldMatch[A]])
+                      (implicit ticket: CreationTicket[S]): Signal[A, S] = {
     var acc = () => init
     val ops = accthingy(acc())
     val staticInputs = ops.collect {
@@ -126,38 +140,32 @@ object Events {
       staticInputs.toSet[ReSource[S]],
       Initializer.InitializedSignal[Pulse[A]](Pulse.tryCatch(Pulse.Value(init))),
       inite = true) {
-      state => new DynamicSignal[A, S](state, operator, ticket.rename, staticInputs.toSet[ReSource[S]])
+      state => new DynamicSignal[A, S](state, operator, ticket.rename, staticInputs.toSet[ReSource[S]])(rescalaAPI)
     }
   }
 
   val Match = Seq
 
-  sealed trait FoldMatch[+A, S <: Struct]
-  case class StaticFoldMatch[T, +A, S <: Struct](event: Event[T, S], f: T => A) extends FoldMatch[A, S]
-  case class StaticFoldMatchDynamic[T, +A, S <: Struct](event: Event[T, S], f: DynamicTicket[S] => T => A) extends FoldMatch[A, S]
-  case class DynamicFoldMatch[T, +A, S <: Struct](event: () => Seq[Event[T, S]], f: T => A) extends FoldMatch[A, S]
+  sealed trait FoldMatch[+A]
+  case class StaticFoldMatch[T, +A](event: Event[T, S], f: T => A) extends FoldMatch[A]
+  case class StaticFoldMatchDynamic[T, +A](event: Event[T, S], f: DynamicTicket[S] => T => A) extends FoldMatch[A]
+  case class DynamicFoldMatch[T, +A](event: () => Seq[Event[T, S]], f: T => A) extends FoldMatch[A]
 
-  class EOps[T, S <: Struct](e: Event[T, S]) {
+  class EOps[T](e: Event[T, S]) {
     /** Constructs a pair similar to ->, however this one is compatible with type inference for [[fold]] */
-    final def >>[A](fun: T => A): FoldMatch[A, S] = StaticFoldMatch(e, fun)
-    final def >>>[A](fun: DynamicTicket[S] => T => A): FoldMatch[A, S] = StaticFoldMatchDynamic(e, fun)
+    final def >>[A](fun: T => A): FoldMatch[A] = StaticFoldMatch(e, fun)
+    final def >>>[A](fun: DynamicTicket[S] => T => A): FoldMatch[A] = StaticFoldMatchDynamic(e, fun)
   }
-  class ESeqOps[T, S <: Struct](e: => Seq[Event[T, S]]) {
+  class ESeqOps[T](e: => Seq[Event[T, S]]) {
     /** Constructs a pair similar to ->, however this one is compatible with type inference for [[fold]] */
-    final def >>[A](fun: T => A): FoldMatch[A, S] = DynamicFoldMatch(e _, fun)
+    final def >>[A](fun: T => A): FoldMatch[A] = DynamicFoldMatch(e _, fun)
   }
 
-  def noteFromPulse[N, S <: Struct](t: ReevTicket[Pulse[N], S], value: Pulse[N]): Result[Pulse[N], S] = {
-    if (value.isChange) t.withValue(value)
-    else t
-  }
-
-
-  case class CBResult[S <: Struct, T, R](event: Event[T, S], value: R)
-  final class FromCallbackT[T] private[Events](val dummy: Boolean = true) extends AnyVal {
-    def apply[S <: Struct, R](body: (T => Unit) => R)
-                             (implicit ct: CreationTicket[S], s: Scheduler[S]): CBResult[S, T, R] = {
-      val evt = Evt[T, S]
+  case class CBResult[T, R](event: Event[T, S], value: R)
+  final class FromCallbackT[T] private[Events](val dummy: Boolean = true) {
+    def apply[R](body: (T => Unit) => R)
+                             (implicit ct: CreationTicket[S], s: Scheduler[S]): CBResult[T, R] = {
+      val evt = rescalaAPI.Evt[T]()(ct)
       val res = body(evt.fire)
       CBResult(evt, res)
     }
@@ -170,6 +178,7 @@ object Events {
 private abstract class StaticEvent[T, S <: Struct](_bud: Estate[S, T],
                                                    expr: StaticTicket[S] => Pulse[T],
                                                    name: REName)
+                                                  (implicit override val rescalaAPI: RescalaInterface[S])
   extends Base[Pulse[T], S](_bud, name) with Derived[S] with Event[T, S] {
   override def internalAccess(v: Pulse[T]): Pulse[T] = v
   override protected[rescala] def reevaluate(rein: ReIn): Rout =
@@ -180,6 +189,7 @@ private abstract class StaticEvent[T, S <: Struct](_bud: Estate[S, T],
 private abstract class ChangeEvent[T, S <: Struct](_bud: S#State[(Pulse[T], Pulse[Diff[T]]), S],
                                                    signal: Signal[T, S],
                                                    name: REName)
+                                                  (override val rescalaAPI: RescalaInterface[S])
   extends Base[(Pulse[T], Pulse[Diff[T]]), S](_bud, name) with Derived[S] with Event[Diff[T], S] {
 
   override type Value = (Pulse[T], Pulse[Diff[T]])
@@ -201,6 +211,7 @@ private abstract class DynamicEvent[T, S <: Struct](_bud: Estate[S, T],
                                                     expr: DynamicTicket[S] => Pulse[T],
                                                     name: REName,
                                                     staticDeps: Set[ReSource[S]])
+                                                   (override val rescalaAPI: RescalaInterface[S])
   extends Base[Pulse[T], S](_bud, name) with Derived[S] with Event[T, S] {
 
   override def internalAccess(v: Pulse[T]): Pulse[T] = v

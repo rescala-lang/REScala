@@ -223,7 +223,7 @@ class TrueDynamicSignals extends RETests { multiEngined { engine => import engin
   test("basic Higher Order Signal can Be Accessed"){
     val v = Var(42)
     val s1: Signal[Int] = v.map(identity)
-    val s2: Signal[Signal[Int]] = dynamic() { t => s1 }
+    val s2: Signal[Signal[Int]] = NoMacro.dynamic() { t => s1 }
 
     assert(s2.readValueOnce.readValueOnce == 42)
 
@@ -237,11 +237,11 @@ class TrueDynamicSignals extends RETests { multiEngined { engine => import engin
   test("creating Signals Inside Signals") {
     val outside = Var(1)
 
-    val testsig = dynamic() { implicit to =>
+    val testsig = NoMacro.dynamic() { implicit to =>
       //remark 01.10.2014: without the bound the inner signal will be enqueued (it is level 0 same as its dependency)
       //this will cause testsig to reevaluate again, after the inner signal is fully updated.
       // leading to an infinite loop
-      to.depend(dynamic(outside) { ti => ti.depend(outside) })
+      to.depend(NoMacro.dynamic(outside) { ti => ti.depend(outside) })
     }
 
     assert(testsig.readValueOnce === 1)
@@ -255,7 +255,7 @@ class TrueDynamicSignals extends RETests { multiEngined { engine => import engin
     val v3 = v0.map(_ => "level 1").map(_ => "level 2").map(_ => "level 3")
 
     val condition = Var(false)
-    val `dynamic signal changing from level 1 to level 4` = dynamic(condition) { t =>
+    val `dynamic signal changing from level 1 to level 4` = NoMacro.dynamic(condition) { t =>
       if (t.depend(condition)) t.depend(v3) else t.depend(v0)
     }
     assert(`dynamic signal changing from level 1 to level 4`.readValueOnce == "level 0")
@@ -270,10 +270,10 @@ class TrueDynamicSignals extends RETests { multiEngined { engine => import engin
     val v0 = Var("level 0")
     val v3 = v0.map(_ + "level 1").map(_  + "level 2").map(_ + "level 3")
 
-    val `dynamic signal changing from level 1 to level 4` = dynamic() { implicit ticket =>
+    val `dynamic signal changing from level 1 to level 4` = NoMacro.dynamic() { implicit ticket =>
       if (ticket.depend(v0) == "level 0") ticket.depend(v0) else {
         // the static bound is necessary here, otherwise we get infinite loops
-        ticket.depend(dynamic(v3) {t => t.depend(v3) + "level 4 inner" })
+        ticket.depend(NoMacro.dynamic(v3) {t => t.depend(v3) + "level 4 inner" })
       }
     }
     assert(`dynamic signal changing from level 1 to level 4`.readValueOnce == "level 0")

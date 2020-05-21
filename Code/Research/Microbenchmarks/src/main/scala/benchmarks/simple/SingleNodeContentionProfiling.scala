@@ -23,8 +23,8 @@ class SingleNodeContentionProfiling[S <: Struct] extends BusyThreads {
   @Setup(Level.Iteration)
   def setup(params: BenchmarkParams, step: Step, engineParam: EngineParam[S], work: Workload) = {
     engine = engineParam.engine
-    sources = Array.fill(params.getThreads)(Var(step.run()))
-    node = Signals.static((sources: Seq[Var[Int, S]]):_*)(_ => work.consume())
+    sources = Array.fill(params.getThreads)(engine.Var(step.run()))
+    node = engine.Signals.static((sources: Seq[Var[Int, S]]):_*)(_ => work.consume())
   }
 
   @Benchmark

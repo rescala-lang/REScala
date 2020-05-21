@@ -1,19 +1,18 @@
 package benchmarks.philosophers
 
 import benchmarks.philosophers.PhilosopherTable._
-import rescala.core.Struct
+import rescala.core.{CreationTicket, Struct}
 import rescala.interface.RescalaInterface
-import rescala.reactives.{Signals, Var}
 
 class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(override val engine: RescalaInterface[S])
   extends PhilosopherTable(philosopherCount, work)(engine) {
 
-  import engine.Signal
+  import engine._
 
   override def createTable(tableSize: Int): Seq[Seating[S]] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
 
-    val phils = for (i <- 0 until tableSize) yield Var[Philosopher, S](Thinking)
+    val phils = for (i <- 0 until tableSize) yield Var[Philosopher](Thinking)(engine.implicitScheduler)
 
     val forks = for (i <- 0 until tableSize) yield {
       val nextCircularIndex = mod(i + 1)
@@ -26,7 +25,7 @@ class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(ov
               case Thinking => Free
             }
         }
-      }
+      }(engine.implicitScheduler)
 
     }
 
@@ -52,12 +51,12 @@ class HalfDynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long
                                               (override val engine: RescalaInterface[S])
   extends PhilosopherTable(philosopherCount, work)(engine) {
 
-  import engine.Signal
+  import engine._
 
   override def createTable(tableSize: Int): Seq[Seating[S]] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
 
-    val phils = for (i <- 0 until tableSize) yield Var[Philosopher, S](Thinking)
+    val phils = for (i <- 0 until tableSize) yield Var[Philosopher](Thinking)
 
     val forks = for (i <- 0 until tableSize) yield {
       val nextCircularIndex = mod(i + 1)
@@ -86,12 +85,12 @@ class OtherHalfDynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work:
                                                    (override implicit val engine: RescalaInterface[S])
   extends PhilosopherTable(philosopherCount, work)(engine) {
 
-  import engine.Signal
+  import engine.{Var, Signal, implicitScheduler, Signals}
 
   override def createTable(tableSize: Int): Seq[Seating[S]] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
 
-    val phils = for (i <- 0 until tableSize) yield Var[Philosopher, S](Thinking)
+    val phils = for (i <- 0 until tableSize) yield Var[Philosopher](Thinking)
 
     val forks = for (i <- 0 until tableSize) yield {
       val nextCircularIndex = mod(i + 1)

@@ -20,7 +20,7 @@ class LevelPropagation extends RETests { multiEngined { engine => import engine.
     assert(l1.readValueOnce === 1)
     assert(l2.readValueOnce === 2)
     assert(level3.readValueOnce === 3)
-    val level_1_to_4 = dynamic(level0) { t =>
+    val level_1_to_4 = NoMacro.dynamic(level0) { t =>
       if (t.depend(level0) == 10) t.depend(level3) else 42
     }
     assert(level_1_to_4.readValueOnce === 42)
@@ -58,7 +58,7 @@ class LevelPropagation extends RETests { multiEngined { engine => import engine.
     val l1 = l0.map(_ + 1)
     val l2 = l1.map(_ + 1)
     val l3 = l2.map(_ + 1)
-    val l1t4 = dynamic(l0) { t =>
+    val l1t4 = NoMacro.dynamic(l0) { t =>
       if (t.depend(l0) == 10) t.depend(l3) else 3
     }
     val l2t5 = l1t4.map(_ + 1)
@@ -85,7 +85,7 @@ class LevelPropagation extends RETests { multiEngined { engine => import engine.
     val l1 = l0.map(_ + 1)
     val l2 = l1.map(_ + 1)
     val l3 = l2.map(_ + 1)
-    val l1t4 = dynamic(l0) { t =>
+    val l1t4 = NoMacro.dynamic(l0) { t =>
       if (t.depend(l0) == 10) t.depend(l3) else 13
     }
     var reevals = 0
@@ -122,7 +122,7 @@ class LevelPropagation extends RETests { multiEngined { engine => import engine.
     val l1 = l0.map(_ + 1)
     val l2 = l1.map(_ + 1)
     val l3 = l2.map(_ + 1)
-    val l1t4 = dynamic(l0) { t =>
+    val l1t4 = NoMacro.dynamic(l0) { t =>
       if (t.depend(l0) == 10) t.depend(l3) else 13
     }
     var reevals = 0
@@ -159,7 +159,7 @@ class LevelPropagation extends RETests { multiEngined { engine => import engine.
     val l1 = l0.map(_ + 1)
     val l2 = l1.map(_ + 1)
     val l3 = l2.map(_ + 1)
-    val l1t4 = dynamic(l0) { t =>
+    val l1t4 = NoMacro.dynamic(l0) { t =>
       if (t.depend(l0) == 10) t.depend(l3) else 3
     }
     var reevals = 0

@@ -8,11 +8,13 @@ import rescala.core.{Scheduler, Struct};import rescala.interface.RescalaInterfac
 import rescala.reactives._
 
 class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(val engine: RescalaInterface[S]) {
-  implicit def scheduler: Scheduler[S] = engine.scheduler
+
+  import engine._
 
   val seatings = createTable(philosopherCount)
 
   val eaten = new AtomicInteger(0)
+
 
   seatings.foreach { seating =>
     seating.vision.observe { state =>
@@ -25,7 +27,7 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(val engin
   def createTable(tableSize: Int): Seq[Seating[S]] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
 
-    val phils = for (i <- 0 until tableSize) yield Var[Philosopher, S](Thinking)
+    val phils = for (i <- 0 until tableSize) yield Var[Philosopher](Thinking)
 
     val forks = for (i <- 0 until tableSize) yield {
       val nextCircularIndex = mod(i + 1)

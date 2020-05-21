@@ -31,6 +31,7 @@ class MonadicErrors[S <: Struct] {
   @Setup
   def setup(params: BenchmarkParams, size: Size, engineParam: EngineParam[S], work: Workload) = {
     engine = engineParam.engine
+    implicit def api = engine
     if (isMonadic) {
       val source = engine.Evt[Try[Int]]
       var result: Event[Try[Int], S] = source
