@@ -315,7 +315,7 @@ class SignalMacro extends RETests { multiEngined { engine => import engine._
     val source = Evt[String]
     val mapping = Map("Hallo" -> Var("Welt"), "Test" -> Var("String"))
 
-    val selected = source.map(mapping.get).flatten.latest().flatten
+    val selected = source.map(mapping.get).flatten.latest().flatten(rescala.reactives.Flatten.signal)
 
     source.fire("Hallo")
 

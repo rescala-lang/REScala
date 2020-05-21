@@ -78,13 +78,6 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleCrea
                        with Scheduler[SimpleStruct]
                        with Aliases[SimpleStruct] {
 
-  /** Signals represent time changing values of type A
-    * @group reactive */
-  final type Signal[+A] = reactives.Signal[A, SimpleStruct]
-  /** Events represent discrete occurrences of values of type A
-    * @group reactive */
-  final type Event[+A] = reactives.Event[A, SimpleStruct]
-
   override def schedulerName: String = "Simple"
 
   var idle = true

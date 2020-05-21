@@ -13,7 +13,12 @@ object Main extends JFXApp {
 
   private val slider = new Slider(0, 30, 0)
   private val sliderValue = new Label()
-  sliderValue.text <== (slider.value.toSignal.map(v => f"$v%.2f"): Signal[String]).toProperty
+
+  sliderValue.text <== {
+    val sliderSignal = slider.value.toSignal
+    val str = sliderSignal.map(v => f"$v%.2f")
+    new SignalToStringProperty(str).toProperty
+  }
 
 
 

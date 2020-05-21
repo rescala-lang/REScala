@@ -42,6 +42,13 @@ abstract class Evt[T, S <: Struct] private[rescala](initialState: Estate[S, T], 
 //    ticket.createSource[Pulse[T], Evt[T, S]](Initializer.Event)(new Evt[T, S](_, ticket.rename))
 //}
 
+
+/** Source signals with imperatively updates.
+  *
+  * @param initialState of the signal
+  * @tparam A Type stored by the signal
+  * @tparam S Struct type used for the propagation of the signal
+  */
 trait Var[A, S <: Struct] extends Source[S, A] with Signal[A, S] {
   override type Value = Pulse[A]
 
@@ -62,20 +69,4 @@ trait Var[A, S <: Struct] extends Source[S, A] with Signal[A, S] {
       override def writeValue(b: Pulse[A], v: Pulse[A] => Unit): Boolean = if (b != pulse) {v(pulse); true} else false
     })
   }
-}
-
-trait SourcesImpl[S <: Struct] {
-  this : RescalaInterface[S] =>
-
-  /** Source signals with imperatively updates.
-    *
-    * @param initialState of the signal
-    * @tparam A Type stored by the signal
-    * @tparam S Struct type used for the propagation of the signal
-    */
-  abstract class Var[A] private[rescala](initialState: rescala.reactives.Signals.Sstate[A, S], name: REName)
-    extends Base[Pulse[A], S](initialState, name) with rescala.reactives.Var[A, S] with Signal[A] {
-
-  }
-
 }

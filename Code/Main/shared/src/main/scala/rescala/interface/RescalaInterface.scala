@@ -1,9 +1,9 @@
 package rescala.interface
 
-import rescala.core.{Initializer, Pulse, Scheduler, Struct}
+import rescala.core.{Base, Initializer, Pulse, REName, Scheduler, Struct}
 import rescala.macros.MacroTags.{Dynamic, Static}
 import rescala.reactives
-import rescala.reactives.{SignalDefaultImplementations, Source, SourcesImpl}
+import rescala.reactives.{SignalDefaultImplementations, Source}
 
 
 object RescalaInterface {
@@ -33,18 +33,7 @@ object RescalaInterface {
   * @groupdesc internal Methods and type aliases for advanced usages, these are most relevant to abstract
   *           over multiple scheduler implementations.
   **/
-trait RescalaInterface[S <: Struct] extends Aliases[S] with SignalDefaultImplementations[S] with SourcesImpl[S] {
-  /** Signals represent time changing values of type A
-    * @group reactive */
-  type Signal[+A] = reactives.Signal[A, S]
-  /** Events represent discrete occurrences of values of type A
-    * @group reactive */
-  final type Event[+A] = reactives.Event[A, S]
-  /** @group reactive */
-  final type Observe = reactives.Observe[S]
-  /** @group reactive */
-  final type Evt[A] = reactives.Evt[A, S]
-
+trait RescalaInterface[S <: Struct] extends Aliases[S] with SignalDefaultImplementations[S] {
   /** @group internal */
   def scheduler: rescala.core.Scheduler[S]
   /** @group internal */
@@ -62,18 +51,20 @@ trait RescalaInterface[S <: Struct] extends Aliases[S] with SignalDefaultImpleme
     }: Evt[A])
   }
 
-  //  final def Var[A](v: A): Var[A] = reactives.Var[A, S](v)(Ticket.fromEngineImplicit(this))
-  //  final def Var[A](): Var[A] = reactives.Var[A, S]()(Ticket.fromEngineImplicit(this))
 
   /** Creates new [[Var]]s
     * @group create */
   object Var {
-      def apply[T](initval: T)(implicit ticket: CreationTicket): RescalaInterface.this.Var[T] = fromChange(Pulse.Value(initval))
-      def empty[T](implicit ticket: CreationTicket): Var[T] = fromChange(Pulse.empty)
-      private[this] def fromChange[T](change: Pulse[T])(implicit ticket: CreationTicket): Var[T] =
-        ticket.createSource[Pulse[T], Var[T]](Initializer.InitializedSignal(change))(new Var[T](_, ticket.rename){
+    abstract class VarImpl[A] private[rescala](initialState: rescala.reactives.Signals.Sstate[A, S], name: REName)
+      extends Base[Pulse[A], S](initialState, name) with rescala.reactives.Var[A, S] with Signal[A]
+
+      def apply[T](initval: T)(implicit ticket: CreationTicket): VarImpl[T] = fromChange(Pulse.Value(initval))
+      def empty[T](implicit ticket: CreationTicket): VarImpl[T] = fromChange(Pulse.empty)
+      private[this] def fromChange[T](change: Pulse[T])(implicit ticket: CreationTicket): VarImpl[T] = {
+        ticket.createSource[Pulse[T], VarImpl[T]](Initializer.InitializedSignal(change))(new VarImpl[T](_, ticket.rename){
           override val rescalaAPI: RescalaInterface[S] = RescalaInterface.this
         })
+      }
   }
 
   /** @group internal */

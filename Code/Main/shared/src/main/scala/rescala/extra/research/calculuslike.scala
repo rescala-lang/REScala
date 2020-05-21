@@ -68,13 +68,6 @@ object FScheduler extends DynamicInitializerLookup[FStruct, SimpleCreation]
                   with Scheduler[FStruct]
                   with Aliases[FStruct] {
 
-  /** Signals represent time changing values of type A
-    * @group reactive */
-  final type Signal[+A] = reactives.Signal[A, FStruct]
-  /** Events represent discrete occurrences of values of type A
-    * @group reactive */
-  final type Event[+A] = reactives.Event[A, FStruct]
-
   override def schedulerName: String = "FormalizationLike"
 
   var allReactives = Set.empty[ReSource]
