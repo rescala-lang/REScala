@@ -66,9 +66,10 @@ class ReactiveMacros(val c: blackbox.Context) {
     private val prefixTermName: TermName = TermName(c.freshName("prefix$"))
     val prefixIdent: Ident = Ident(prefixTermName)
     def prefixValue: Tree = {
-      val prefixTree = c.prefix.tree
-      internal.updateAttachment(prefixTree, ForceCutOut)
-      q"$prefixTree.value"
+      //val prefixTree = c.prefix.tree
+      internal.updateAttachment(prefixIdent, IsCutOut)
+      internal.setType(prefixIdent, c.prefix.actualType)
+      q"$prefixIdent.value"
     }
     def prefixValDef(): ValDef = {
       q"val $prefixTermName : ${c.prefix.actualType} = ${c.prefix.tree}": ValDef
