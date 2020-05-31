@@ -9,7 +9,7 @@ import scala.collection.mutable
 
 @State(Scope.Benchmark)
 class EngineParam[S <: Struct] {
-  @Param(Array("synchron", "parrp", "fullmv"))
+  @Param(Array("synchron", "parrp", "fullmv", "simple"))
   var engineName: String = _
 
   def engine: RescalaInterface[S] = RescalaInterface.interfaceFor(engineName match {

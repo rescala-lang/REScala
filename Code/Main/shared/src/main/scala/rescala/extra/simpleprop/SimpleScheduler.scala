@@ -50,8 +50,6 @@ class SimpleInitializer() extends Initializer[SimpleStruct] {
                                       incoming: Set[ReSource[SimpleStruct]],
                                       ignitionRequiresReevaluation: Boolean)
   : Unit = {
-    println(s"creating $reactive")
-    println(incoming)
     incoming.foreach { dep =>
       dep.state.outgoing += reactive
     }
@@ -90,7 +88,6 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
     if (!idle) throw new IllegalStateException("Scheduler is not reentrant")
     idle = false
     try {
-      println(s"\nexecuting turn from $initialWrites")
       val creation = new SimpleInitializer()
       withDynamicInitializer(creation) {
         // admission
@@ -116,9 +113,7 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
         }
 
         // propagation
-        println(s"initial ${initial.mkString("\n\t","\n\t", "")}")
         val sorted = Util.toposort(initial)
-        println(s"sorted ${sorted.mkString("\n\t","\n\t", "")}")
         Util.evaluateAll(sorted, creation).foreach(_.state.reset())
         // evaluate everything that was created, but not accessed, and requires ignition
         val created = creation.drainCreated()
@@ -168,13 +163,10 @@ object Util {
 
   @scala.annotation.tailrec
   def evaluateAll(evaluatees: Seq[Derived[SimpleStruct]], creation: SimpleInitializer): Seq[Derived[SimpleStruct]] = {
-    println(s"evaluating $evaluatees")
     // first one where evaluation detects glitch
     val glitched = evaluatees.reverseIterator.find { r =>
-      println(s"looking at $r with ${r.state}")
       if (r.state.done) false
       else if (r.state.dirty) {
-        println(s"evaluating $r")
         Util.evaluate(r, creation)
       }
       else false
@@ -182,7 +174,6 @@ object Util {
     glitched match {
       case None           => evaluatees
       case Some(reactive) =>
-        println(s"glitched: $reactive")
         val evaluateNext = evaluatees ++ creation.drainCreated()
         evaluateNext.foreach(_.state.discovered = false)
         evaluateAll(Util.toposort(evaluateNext), creation)
@@ -194,7 +185,6 @@ object Util {
     val dt              = new ReevTicket[reactive.Value, SimpleStruct](creationTicket, reactive.state.value) {
       override def dynamicAccess(input: ReSource[SimpleStruct]): input.Value = {
         if (input.state.discovered && !input.state.done) {
-          println(s"glitch: $reactive accessed $input")
           potentialGlitch = true
         }
         input.state.value
@@ -209,11 +199,9 @@ object Util {
       val removed = incoming diff newDeps
       added.foreach { input =>
         input.state.outgoing = input.state.outgoing + reactive
-        println(s"adding dep $reactive to $input")
       }
       removed.foreach { input =>
         input.state.outgoing = input.state.outgoing - reactive
-        println(s"removing dep $reactive from $input")
       }
     }
 
