@@ -165,7 +165,7 @@ trait Events[S <: Struct] {
   }
   class ESeqOps[T](e: => Seq[Event[T, S]]) {
     /** Constructs a pair similar to ->, however this one is compatible with type inference for [[fold]] */
-    final def >>[A](fun: T => A): FoldMatch[A] = DynamicFoldMatch(e _, fun)
+    final def >>[A](fun: T => A): FoldMatch[A] = DynamicFoldMatch(() => e, fun)
   }
 
   case class CBResult[T, R](event: Event[T, S], value: R)
