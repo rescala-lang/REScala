@@ -213,7 +213,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
         initial = state,
         expr = { (st, currentValue) => reducer(currentValue(), st.collectStatic(this).get) },
         name = ticket.rename,
-        staticDeps = None,
+        isDynamicWithStaticDeps = None,
         rescalaAPI = rescalaAPI
         )
     }

@@ -1,11 +1,11 @@
 package rescala.reactives
 
 import rescala.core.Pulse.NoChange
-import rescala.core.{Base, Derived, DisconnectableImpl, Pulse, REName, ReevTicket, Result, Struct}
+import rescala.core.{Base, Derived, DisconnectableImpl, Pulse, REName, ReevTicket, Struct}
 import rescala.interface.RescalaInterface
+import rescala.reactives
 import rescala.reactives.Events.Estate
 import rescala.reactives.Signals.{Diff, Sstate}
-import rescala.reactives
 
 trait DefaultImplementations[S <: Struct] {
 
@@ -16,19 +16,40 @@ trait DefaultImplementations[S <: Struct] {
   class SignalImpl[T](initial: Sstate[T, S],
                       expr: (DynamicTicket, () => T) => T,
                       name: REName,
-                      staticDeps: Option[Set[ReSource]],
+                      isDynamicWithStaticDeps: Option[Set[ReSource]],
                       override val rescalaAPI: RescalaInterface[S])
-    extends Base[Pulse[T], S](initial, name) with Derived[S] with Signal[T] with DisconnectableImpl[S] {
+    extends DerivedImpl[T](initial, name, isDynamicWithStaticDeps) with Signal[T]{
 
-    private def computeNewValue(rein: ReevTicket[Pulse[T], S], newValue: () => T): ReevTicket[Pulse[T], S] = {
-      val newPulse = Pulse.tryCatch(Pulse.diffPulse(newValue(), rein.before))
-      if (newPulse.isChange) rein.withValue(newPulse) else rein
+
+    protected[this] def computePulse(rein: ReevTicket[Pulse[T], S]): Pulse[T] = {
+      Pulse.tryCatch(Pulse.diffPulse(expr(rein, () => rein.before.get), rein.before))
     }
+  }
+
+  abstract class DerivedImpl[T](initial: Sstate[T, S],
+                      name: REName,
+                      isDynamicWithStaticDeps: Option[Set[ReSource]])
+    extends Base[Pulse[T], S](initial, name) with Derived[S] with DisconnectableImpl[S] {
 
     override protected[rescala] def reevaluate(rein: ReIn): Rout = guardReevaluate(rein) {
-      val rein2 = staticDeps.fold(rein.trackStatic())(rein.trackDependencies)
-      computeNewValue(rein2, () => expr(rein2, () => rein2.before.get))
+      val rein2    = isDynamicWithStaticDeps.fold(rein.trackStatic())(rein.trackDependencies)
+      val newPulse = computePulse(rein2)
+      if (newPulse.isChange) rein2.withValue(newPulse) else rein2
     }
+    protected[this] def computePulse(rein: ReevTicket[Pulse[T], S]): Pulse[T]
+  }
+
+  class EventImpl[T](initial: Estate[S, T],
+                     expr: DynamicTicket => Pulse[T],
+                     name: REName,
+                     /** If this is None, the event is static. Else, it is dynamic with the set of static dependencies */
+                     isDynamicWithStaticDeps: Option[Set[ReSource]],
+                     override val rescalaAPI: RescalaInterface[S])
+    extends DerivedImpl[T](initial, name, isDynamicWithStaticDeps) with Event[T] {
+
+    override def internalAccess(v: Pulse[T]): Pulse[T] = v
+    override protected[this] def computePulse(rein: ReevTicket[Pulse[T], S]): Pulse[T] =
+      Pulse.tryCatch(expr(rein), onEmpty = NoChange)
   }
 
 
@@ -53,20 +74,5 @@ trait DefaultImplementations[S <: Struct] {
     }
   }
 
-  class EventImpl[T](_bud: Estate[S, T],
-                     expr: DynamicTicket => Pulse[T],
-                     name: REName,
-                     /** If this is None, the event is static. Else, it is dynamic with the set of static dependencies */
-                     isDynamicWithStaticDeps: Option[Set[ReSource]],
-                     override val rescalaAPI: RescalaInterface[S])
-    extends Base[Pulse[T], S](_bud, name) with Derived[S] with Event[T] with DisconnectableImpl[S] {
 
-    override def internalAccess(v: Pulse[T]): Pulse[T] = v
-    override protected[rescala] def reevaluate(rein: ReIn): Rout = guardReevaluate(rein) {
-      val rein2 = isDynamicWithStaticDeps.fold(rein.trackStatic())(rein.trackDependencies)
-      val value = Pulse.tryCatch(expr(rein2), onEmpty = NoChange)
-      if (value.isChange) rein2.withValue(value)
-      else rein2
-    }
-  }
 }
