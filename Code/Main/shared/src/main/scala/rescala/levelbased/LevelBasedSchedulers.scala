@@ -16,7 +16,7 @@ trait LevelBasedSchedulers {
     }
     override def releasePhase(): Unit = ()
     override def preparationPhase(initialWrites: Set[ReSource[LevelStructImpl]]): Unit = {}
-    override def dynamicDependencyInteraction(dependency: ReSource[LevelStructImpl]): Unit = {}
+    override def beforeDynamicDependencyInteraction(dependency: ReSource[LevelStructImpl]): Unit = {}
   }
 
   implicit val synchron: Scheduler[LevelStructImpl] = {

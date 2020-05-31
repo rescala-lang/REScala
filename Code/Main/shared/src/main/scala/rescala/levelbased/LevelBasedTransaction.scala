@@ -51,7 +51,7 @@ trait LevelBasedTransaction[S <: LevelStruct] extends TwoVersionTransactionImpl[
     reactive.state.updateLevel(level)
 
     incoming.foreach { dep =>
-      dynamicDependencyInteraction(dep)
+      beforeDynamicDependencyInteraction(dep)
       discover(dep, reactive)
     }
     reactive.state.updateIncoming(incoming)
@@ -65,7 +65,7 @@ trait LevelBasedTransaction[S <: LevelStruct] extends TwoVersionTransactionImpl[
     }
   }
 
-  final override def initialize(ic: InitialChange[S]): Unit = {
+  final override def prepareInitialChange(ic: InitialChange[S]): Unit = {
     val n = ic.writeValue(ic.source.state.base(token), writeState(ic.source))
     if (n) enqueueOutgoing(ic.source, noLevelIncrease)
   }

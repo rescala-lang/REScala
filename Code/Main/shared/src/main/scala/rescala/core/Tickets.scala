@@ -137,7 +137,7 @@ final case class CreationTicket[S <: Struct](self: Either[Initializer[S], Schedu
   /** Using the ticket requires to create a new scope, such that we can ensure that everything happens in the same transaction */
   def transaction[T](f: Initializer[S] => T): T = self match {
     case Left(integrated) => f(integrated)
-    case Right(engine) => engine.creationDynamicLookup(f)
+    case Right(engine) => engine.initializerDynamicLookup(f)
   }
 }
 

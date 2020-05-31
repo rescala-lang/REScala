@@ -39,10 +39,10 @@ trait TwoVersionTransactionImpl[S <: TwoVersionStruct] extends TwoVersionTransac
   }
 
 
-  def initialize(ic: InitialChange[S]): Unit
+  def prepareInitialChange(ic: InitialChange[S]): Unit
 
   final override def initializationPhase(initialChanges: Map[ReSource[S], InitialChange[S]]): Unit =
-    initialChanges.values.foreach(initialize)
+    initialChanges.values.foreach(prepareInitialChange)
 
   final def commitDependencyDiff(node: Derived[S], current: Set[ReSource[S]])(updated: Set[ReSource[S]]): Unit = {
     val indepsRemoved = current -- updated
@@ -58,13 +58,12 @@ trait TwoVersionTransactionImpl[S <: TwoVersionStruct] extends TwoVersionTransac
   private[rescala] def writeIndeps(node: Derived[S], indepsAfter: Set[ReSource[S]]): Unit = node.state.updateIncoming(indepsAfter)
 
   /** allow the propagation to handle dynamic access to reactives */
-  def dynamicDependencyInteraction(dependency: ReSource[S]): Unit
-
+  def beforeDynamicDependencyInteraction(dependency: ReSource[S]): Unit
 
   override private[rescala] def makeAdmissionPhaseTicket(initialWrites: Set[ReSource[S]]): AdmissionTicket[S]
   = new AdmissionTicket[S](this, initialWrites) {
     override private[rescala] def access(reactive: ReSource[S]): reactive.Value = {
-      dynamicDependencyInteraction(reactive)
+      beforeDynamicDependencyInteraction(reactive)
       reactive.state.base(token)
     }
   }
@@ -82,7 +81,7 @@ trait TwoVersionTransactionImpl[S <: TwoVersionStruct] extends TwoVersionTransac
     // Note: This only synchronizes reactive to be serializable-synchronized, but not glitch-free synchronized.
     // Dynamic reads thus may return glitched values, which the reevaluation handling implemented in subclasses
     // must account for by repeating glitched reevaluations!
-    dynamicDependencyInteraction(reactive)
+    beforeDynamicDependencyInteraction(reactive)
     reactive.state.get(token)
   }
   def writeState(pulsing: ReSource[S])(value: pulsing.Value): Unit = {

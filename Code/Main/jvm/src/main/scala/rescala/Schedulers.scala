@@ -22,8 +22,8 @@ object Schedulers extends LevelBasedSchedulers {
   implicit val simple: SimpleScheduler.type = SimpleScheduler
 
   def parrpWithBackoff(backOff: () => Backoff): Scheduler[ParRPStruct] =
-    new TwoVersionScheduler[ParRPStruct, ParRP] {
-      override protected def makeTurn(priorTurn: Option[ParRP]): ParRP = new ParRP(backOff(), priorTurn)
+    new TwoVersionScheduler[ParRPStruct, ParRPTransaction] {
+      override protected def makeTurn(priorTurn: Option[ParRPTransaction]): ParRPTransaction = new ParRPTransaction(backOff(), priorTurn)
       override def schedulerName: String = "ParRP"
     }
 }

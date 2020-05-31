@@ -4,7 +4,7 @@ import scala.util.DynamicVariable
 
 trait DynamicInitializerLookup[S <: Struct, ExactInitializer <: Initializer[S]] extends Scheduler[S] {
 
-  final override private[rescala] def creationDynamicLookup[T](f: Initializer[S] => T): T = {
+  final override private[rescala] def initializerDynamicLookup[T](f: Initializer[S] => T): T = {
     _currentTurn.value match {
       case Some(turn) => f(turn)
       case None => forceNewTransaction(Set.empty, ticket => f(ticket.initializer))

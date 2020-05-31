@@ -25,7 +25,7 @@ trait ParRPStruct extends LevelStruct {
 }
 
 
-class ParRP(backoff: Backoff, priorTurn: Option[ParRP])
+class ParRPTransaction(backoff: Backoff, priorTurn: Option[ParRPTransaction])
   extends LevelBasedTransaction[ParRPStruct] with ParRPInterTurn  {
 
   private type TState = ParRPStruct
@@ -58,7 +58,7 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP])
   override def releasePhase(): Unit = key.releaseAll()
 
   /** allow turn to handle dynamic access to reactives */
-  override def dynamicDependencyInteraction(dependency: ReSource[TState]): Unit = acquireShared(dependency)
+  override def beforeDynamicDependencyInteraction(dependency: ReSource[TState]): Unit = acquireShared(dependency)
 
 
   /** lock all reactives reachable from the initial sources
