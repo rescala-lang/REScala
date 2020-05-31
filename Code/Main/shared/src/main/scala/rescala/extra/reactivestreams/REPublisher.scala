@@ -79,11 +79,11 @@ object REPublisher {
                                   ): SubscriptionReactive[T, S] = {
     fac.forceNewTransaction() { ticket =>
       val name: REName = s"forSubscriber($subscriber)"
-      ticket.creation.create[Pulse[T], SubscriptionReactive[T, S]](
+      ticket.initializer.create[Pulse[T], SubscriptionReactive[T, S]](
         Set(dependency),
         Initializer.DerivedSignal,
         inite = false,
-        CreationTicket(Left(ticket.creation), name)) {
+        CreationTicket(Left(ticket.initializer), name)) {
         state => new SubscriptionReactive[T, S](state, dependency, subscriber, fac, name)
       }
     }

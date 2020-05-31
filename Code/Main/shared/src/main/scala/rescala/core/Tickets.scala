@@ -7,15 +7,15 @@ import scala.annotation.implicitNotFound
 
 /** [[InnerTicket]]s are used in Rescala to give capabilities to contexts during propagation.
   * [[ReevTicket]] is used during reevaluation, and [[AdmissionTicket]] during the initialization. */
-class InnerTicket[S <: Struct](val creation: Initializer[S])
+class InnerTicket[S <: Struct](val initializer: Initializer[S])
 
 /** [[ReevTicket]] is given to the [[Derived]] reevaluate method and allows to access other reactives.
   * The ticket tracks return values, such as dependencies, the value, and if the value should be propagated.
   * Such usages make it unsuitable as an API for the user, where [[StaticTicket]] or [[DynamicTicket]] should be used instead.
   * */
-abstract class ReevTicket[V, S <: Struct](creation: Initializer[S],
+abstract class ReevTicket[V, S <: Struct](initializer: Initializer[S],
                                           private var _before: V
-                                         ) extends DynamicTicket[S](creation) with Result[V, S] {
+                                         ) extends DynamicTicket[S](initializer) with Result[V, S] {
 
   // schedulers implement these to allow access
   protected def staticAccess(reactive: ReSource[S]): reactive.Value
@@ -93,8 +93,8 @@ trait InitialChange[S <: Struct] {
 
 /** Enables reading of the current value during admission.
   * Keeps track of written sources internally. */
-abstract class AdmissionTicket[S <: Struct](creation: Initializer[S], declaredWrites: Set[ReSource[S]])
-  extends InnerTicket(creation) with AccessTicket[S] {
+abstract class AdmissionTicket[S <: Struct](initializer: Initializer[S], declaredWrites: Set[ReSource[S]])
+  extends InnerTicket(initializer) with AccessTicket[S] {
 
   private var _initialChanges = Map[ReSource[S], InitialChange[S]]()
   private[rescala] def initialChanges: Map[ReSource[S], InitialChange[S]] = _initialChanges
@@ -143,10 +143,10 @@ final case class CreationTicket[S <: Struct](self: Either[Initializer[S], Schedu
 
 /** As reactives can be created during propagation, any [[InnerTicket]] can be converted to a creation ticket. */
 object CreationTicket extends LowPriorityCreationImplicits {
-  implicit def fromTicketImplicit[S <: Struct](implicit ticket: InnerTicket[S], line: REName): CreationTicket[S] = CreationTicket(Left(ticket.creation), line)
+  implicit def fromTicketImplicit[S <: Struct](implicit ticket: InnerTicket[S], line: REName): CreationTicket[S] = CreationTicket(Left(ticket.initializer), line)
 
-  implicit def fromCreationImplicit[S <: Struct](implicit creation: Initializer[S], line: REName): CreationTicket[S] = CreationTicket(Left(creation), line)
-  implicit def fromCreation[S <: Struct](creation: Initializer[S])(implicit line: REName): CreationTicket[S] = CreationTicket(Left(creation), line)
+  implicit def fromInitializerImplicit[S <: Struct](implicit initializer: Initializer[S], line: REName): CreationTicket[S] = CreationTicket(Left(initializer), line)
+  implicit def fromInitializer[S <: Struct](creation: Initializer[S])(implicit line: REName): CreationTicket[S] = CreationTicket(Left(creation), line)
 }
 
 /** If no [[InnerTicket]] is found, then these implicits will search for a [[Scheduler]],

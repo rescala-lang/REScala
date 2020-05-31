@@ -161,7 +161,7 @@ class ReactiveMacros(val c: blackbox.Context) {
         case turnSource@Apply(TypeApply(Select(_, TermName("fromEngineImplicit")), _), _)
           if turnSource.tpe =:= weakTypeOf[CreationTicket[S]] && turnSource.symbol.owner == symbolOf[LowPriorityCreationImplicits] =>
           q"""${termNames.ROOTPKG}.rescala.core.CreationTicket(
-                  ${termNames.ROOTPKG}.scala.Left($ticketIdent.creation),
+                  ${termNames.ROOTPKG}.scala.Left($ticketIdent.initializer),
                   ${termNames.ROOTPKG}.rescala.core.REName.create)"""
 
         case tree@Select(reactive, TermName("now")) =>

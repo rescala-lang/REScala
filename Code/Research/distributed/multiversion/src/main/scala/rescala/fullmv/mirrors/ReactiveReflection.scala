@@ -81,7 +81,7 @@ class ReactiveReflectionImpl[P](override val host: FullMVEngine, var ignoreTurn:
   override def submit(action: FullMVAction): Unit = host.threadPool.submit(action)
 
   override protected[rescala] def reevaluate(input: ReIn): ReevTicket[P, FullMVStruct] = {
-    val turn = input.creation
+    val turn = input.initializer
     val value = _buffer.remove(turn)
     if(value == null) {
       if(ignoreTurn.contains(turn)){

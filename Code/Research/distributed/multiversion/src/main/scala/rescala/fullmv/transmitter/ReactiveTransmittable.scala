@@ -453,7 +453,7 @@ abstract class ReactiveTransmittable[P, R <: ReSource[FullMVStruct], S](implicit
     if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host receiving a value")
     val turn = host.newTurn()
     turn.beginExecuting()
-    val state = turn.makeDerivedStructState[Pulse[P]](valuePersistency, CreationTicket.fromCreation(turn))
+    val state = turn.makeDerivedStructState[Pulse[P]](valuePersistency, turn)
     val reflection = instantiate(state, turn, value._2._1)
     if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host instantiating $reflection, requesting initialization starting at $turn")
     endpoint.receive.notify { mwi: MessageWithInfrastructure[Msg] =>

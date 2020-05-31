@@ -8,7 +8,7 @@ class CreationTicketTest extends RETests { multiEngined { engine => import engin
 
   /* this test uses some shady planned()(identity) to get the turn object out of the transaction
    * you should not do this. */
-  def getTurn[S2 <: Struct](implicit engine: Scheduler[S2]): rescala.core.Initializer[S2] = engine.forceNewTransaction()(_.creation)
+  def getTurn[S2 <: Struct](implicit engine: Scheduler[S2]): rescala.core.Initializer[S2] = engine.forceNewTransaction()(_.initializer)
 
   test("none Dynamic No Implicit") {
     assert(implicitly[CreationTicket].self === Right(engine.scheduler))
@@ -17,7 +17,7 @@ class CreationTicketTest extends RETests { multiEngined { engine => import engin
   test("some Dynamic No Implicit") {
     engine.transaction() { dynamicTurn: AdmissionTicket =>
       assert(implicitly[CreationTicket].self === Right(engine.scheduler))
-      assert(implicitly[CreationTicket].transaction(identity) === dynamicTurn.creation)
+      assert(implicitly[CreationTicket].transaction(identity) === dynamicTurn.initializer)
     }
   }
 
@@ -55,7 +55,7 @@ class CreationTicketTest extends RETests { multiEngined { engine => import engin
     }
     engine.transaction() { dynamic =>
       assert(closure().self === Right(engine.scheduler))
-      assert(closure().transaction(identity) === dynamic.creation)
+      assert(closure().transaction(identity) === dynamic.initializer)
     }
   }
 
