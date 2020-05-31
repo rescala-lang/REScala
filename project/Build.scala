@@ -11,6 +11,7 @@ object Settings {
   private val sv11 = "2.11.12"
   private val sv12 = "2.12.11"
   private val sv13 = "2.13.2"
+  private val svDotty = "0.24.0-RC1"
 
 
   val commonCrossBuildVersions = crossScalaVersions := Seq(sv11, sv12, sv13)
@@ -27,12 +28,17 @@ object Settings {
     scalaVersion := sv13,
     scalacOptions ++= settingsFor(scalaVersion.value)
     )
+  val scalaVersion_Dotty = Def.settings(
+    scalaVersion := svDotty,
+    scalacOptions ++= settingsFor(scalaVersion.value)
+    )
 
   def settingsFor(version: String) = (
     version match {
       case a if a.startsWith("2.11") =>  scalacOptionsCommon ++ scalaOptions12minus
       case a if a.startsWith("2.12") =>  scalacOptionsCommon ++ scalacOptions12plus ++ scalaOptions12minus
-      case a if a.startsWith("2.13") =>  scalacOptionsCommon ++ scalacOptions12plus
+      case a if a.startsWith("2.13") =>  scalacOptionsCommon ++ scalacOptions12plus ++ scalaOptions13
+      case a if a.startsWith("0.") =>  Seq("-language:Scala2Compat,implicitConversions")
     })
 
   // based on tpolecats scala options https://tpolecat.github.io/2017/04/25/scalac-flags.html
@@ -89,6 +95,9 @@ object Settings {
     "-Ywarn-nullary-unit",               // Warn when nullary methods return Unit.
     "-Xfuture",                          // Turn on future language features.
   )
+  lazy val scalaOptions13: Seq[String] = Seq(
+    "-Xsource:3"
+  )
 
   val strictCompile = Compile / compile / scalacOptions += "-Xfatal-warnings"
 }
@@ -124,7 +133,7 @@ object Dependencies {
   def ld = libraryDependencies
   val scribeVersion = "[2.7.0,2.8.0)"
 
-  val betterFiles  = ld += "com.github.pathikrit" %% "better-files" % "3.8.0"
+  val betterFiles  = ld += "com.github.pathikrit" %% "better-files" % "3.9.1"
   val cats         = ld += "org.typelevel" %%% "cats-core" % "2.1.1"
   val decline      = ld += "com.monovore" %%% "decline" % "1.2.0"
   val fastparse    = ld += "com.lihaoyi" %%% "fastparse" % "2.3.0"
@@ -132,7 +141,7 @@ object Dependencies {
   val jsoup        = ld += "org.jsoup" % "jsoup" % "1.13.1"
   val kaleidoscope = ld += "com.propensive" %%% "kaleidoscope" % "0.1.0"
   val magnolia     = ld += "com.propensive" %%% "magnolia" % "0.15.0"
-  val okHttp       = ld += "com.squareup.okhttp3" % "okhttp" % "4.6.0"
+  val okHttp       = ld += "com.squareup.okhttp3" % "okhttp" % "4.7.2"
   val pprint       = ld += "com.lihaoyi" %%% "pprint" % "0.5.9"
   val scalactic    = ld += "org.scalactic" %% "scalactic" % "3.0.7"
   val scalaJavaTime= ld += "io.github.cquiroz" %%% "scala-java-time" % "2.0.0"
@@ -141,6 +150,14 @@ object Dependencies {
   val sourcecode   = ld += "com.lihaoyi" %%% "sourcecode" % "0.2.1"
   val toml         = ld += "tech.sparse" %%% "toml-scala" % "0.2.2"
   val upickle      = ld += "com.lihaoyi" %% "upickle" % "[0.7.4,1.1.0]"
+
+  val jsoniter = {
+    val jsoniterVersion = "2.2.4"
+    ld ++= Seq(
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % jsoniterVersion exclude("io.github.cquiroz", s"scala-java-time-tzdb_sjs1_${scalaVersion.value.substring(0,4)}"), //exclude("io.github.cquiroz", s"scala-java-time_sjs1_${scalaVersion.value.substring(0,4)}"),
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % jsoniterVersion % "compile-internal" // or "provided", but it is required only in compile-time
+      )
+  }
 
   val akkaVersion = "[2.5.31, 2.6.5]"
   val akkaHttp = ld ++= (Seq("akka-http-core",
@@ -167,7 +184,7 @@ object Dependencies {
 
   // tests
   val scalacheck         = ld += "org.scalacheck" %%% "scalacheck" % "1.14.3" % "test"
-  val scalatestpluscheck = ld += "org.scalatestplus" %%% "scalacheck-1-14" % "3.1.1.1" % "test"
+  val scalatestpluscheck = ld += "org.scalatestplus" %%% "scalacheck-1-14" % "3.1.2.0" % "test"
   val scalatest          = ld += "org.scalatest" %%% "scalatest" % "3.1.2" % "test"
 
   // legacy
