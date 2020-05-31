@@ -54,15 +54,16 @@ trait DefaultImplementations[S <: Struct] {
   }
 
   class EventImpl[T](_bud: Estate[S, T],
-                             expr: DynamicTicket => Pulse[T],
-                             name: REName,
-                             staticDeps: Option[Set[ReSource]],
-                             override val rescalaAPI: RescalaInterface[S])
+                     expr: DynamicTicket => Pulse[T],
+                     name: REName,
+                     /** If this is None, the event is static. Else, it is dynamic with the set of static dependencies */
+                     isDynamicWithStaticDeps: Option[Set[ReSource]],
+                     override val rescalaAPI: RescalaInterface[S])
     extends Base[Pulse[T], S](_bud, name) with Derived[S] with Event[T] with DisconnectableImpl[S] {
 
     override def internalAccess(v: Pulse[T]): Pulse[T] = v
     override protected[rescala] def reevaluate(rein: ReIn): Rout = guardReevaluate(rein) {
-      val rein2 = staticDeps.fold(rein.trackStatic())(rein.trackDependencies)
+      val rein2 = isDynamicWithStaticDeps.fold(rein.trackStatic())(rein.trackDependencies)
       val value = Pulse.tryCatch(expr(rein2), onEmpty = NoChange)
       if (value.isChange) rein2.withValue(value)
       else rein2
