@@ -3,9 +3,8 @@
 package rescala.extra.research
 
 import rescala.core.Initializer.InitValues
-import rescala.core.{AccessTicket, CreationTicket, Derived, DynamicInitializerLookup, Initializer, ReSource, ReevTicket, Scheduler, Struct}
+import rescala.core.{AccessTicket, Derived, DynamicInitializerLookup, Initializer, ReSource, ReevTicket, Scheduler, Struct}
 import rescala.interface.Aliases
-import rescala.reactives
 
 
 trait FStruct extends Struct {
@@ -28,7 +27,7 @@ class StoreValue[V](val ip: InitValues[V]) {
   * especially during an ongoing propagation.
   * The formalization does not support this, to keep the complexity of the proofs in check. */
 class SimpleCreation() extends Initializer[FStruct] {
-  override protected[this] def makeDerivedStructState[V](ip: InitValues[V], creationTicket: CreationTicket[FStruct])
+  override protected[this] def makeDerivedStructState[V](ip: InitValues[V])
   : StoreValue[V] = new StoreValue[V](ip)
 
   override def accessTicket(): AccessTicket[FStruct] = new AccessTicket[FStruct] {

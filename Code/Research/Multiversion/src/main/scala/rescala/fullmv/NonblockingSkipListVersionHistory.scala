@@ -100,11 +100,11 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
     }
     def readForSelf: V = value match {
       case Written(valueForSelf, _) => valueForSelf
-      case _ => throw new NoSuchElementException(this + " is not written!")
+      case _ => throw new NoSuchElementException(this.toString + " is not written!")
     }
     def readForFuture: V = value match {
       case Written(_, valueForFuture) => valueForFuture
-      case _ => throw new NoSuchElementException(this + " is not written!")
+      case _ => throw new NoSuchElementException(this.toString + " is not written!")
     }
 
     override def toString: String = {

@@ -21,9 +21,7 @@ trait LevelBasedTransaction[S <: LevelStruct] extends TwoVersionTransactionImpl[
   /** Store a single resettable ticket for the whole evaluation.
     * This optimization drastically reduces garbage generation of a relatively expensive object */
   private val reevaluationTicket: ReevTicket[_, S] = makeDynamicReevaluationTicket(null)
-  /** Overrides [[LevelQueue.Evaluator]], this is essentially a callback,
-    * but inlined for better optimization.
-    * TODO: Benchmark if this actually makes a difference */
+  /** Overrides [[LevelQueue.Evaluator]], this is essentially an inlined callback */
   override def evaluate(r: Derived[S]): Unit = evaluateIn(r)(reevaluationTicket.reset(r.state.base(token)))
   def evaluateIn(head: Derived[S])(dt: ReevTicket[head.Value, S]): Unit = {
     val reevRes = head.reevaluate(dt)

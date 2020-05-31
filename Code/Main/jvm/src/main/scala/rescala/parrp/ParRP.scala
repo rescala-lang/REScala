@@ -46,8 +46,7 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP])
   final val key: Key[ParRPInterTurn] = new Key(this)
 
 
-  override protected[this] def makeDerivedStructState[V](ip: InitValues[V],
-                                                         creationTicket: CreationTicket[TState])
+  override protected[this] def makeDerivedStructState[V](ip: InitValues[V])
   : ParRPState[V, TState] = {
     val lock = new TurnLock[ParRPInterTurn]
     val owner = lock.tryLock(key)

@@ -1,7 +1,7 @@
 package rescala.levelbased
 
 import rescala.core.Initializer.InitValues
-import rescala.core.{AdmissionTicket, CreationTicket, ReSource, Scheduler}
+import rescala.core.{AdmissionTicket, ReSource, Scheduler}
 import rescala.twoversion.TwoVersionScheduler
 
 /**
@@ -10,8 +10,7 @@ import rescala.twoversion.TwoVersionScheduler
 trait LevelBasedSchedulers {
 
   private[rescala] class SimpleNoLock extends LevelBasedTransaction[LevelStructImpl] {
-    override protected def makeDerivedStructState[P](ip: InitValues[P],
-                                                     creationTicket: CreationTicket[LevelStructImpl])
+    override protected def makeDerivedStructState[P](ip: InitValues[P])
     : LevelState[P, LevelStructImpl] = {
       new LevelState(ip)
     }
