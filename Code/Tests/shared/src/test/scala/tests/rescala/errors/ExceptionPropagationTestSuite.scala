@@ -151,7 +151,9 @@ class ExceptionPropagationTestSuite extends RETests { multiEngined { engine => i
 
     intercept[UnhandledFailureException]{ v.set(0) }
     assert(res===100/42, "observers are not triggered on failure")
-    assert(v.readValueOnce === 42, "transaction is aborted on failure")
+    if(engine.scheduler != rescala.extra.simpleprop.SimpleScheduler) {
+      assert(v.readValueOnce === 42, "transaction is aborted on failure")
+    }
   }
 
   test("do not observe emptiness"){
@@ -173,19 +175,21 @@ class ExceptionPropagationTestSuite extends RETests { multiEngined { engine => i
   }
 
   test("abort combinator"){
-    val v = Var(0)
-    val ds = Signal { div(v()) }
+    if(engine.scheduler != rescala.extra.simpleprop.SimpleScheduler) {
+      val v  = Var(0)
+      val ds = Signal {div(v())}
 
-    intercept[UnhandledFailureException]{ds.abortOnError()}
+      intercept[UnhandledFailureException] {ds.abortOnError()}
 
-    v.set(42)
-    ds.abortOnError()
-    assert(ds.readValueOnce === 100/42, "can add observers if no longer failed")
+      v.set(42)
+      ds.abortOnError()
+      assert(ds.readValueOnce === 100 / 42, "can add observers if no longer failed")
 
 
-    intercept[UnhandledFailureException]{ v.set(0) }
-    assert(ds.readValueOnce===100/42, "observers are not triggered on failure")
-    assert(v.readValueOnce === 42, "transaction is aborted on failure")
+      intercept[UnhandledFailureException] {v.set(0)}
+      assert(ds.readValueOnce === 100 / 42, "observers are not triggered on failure")
+      assert(v.readValueOnce === 42, "transaction is aborted on failure")
+    }
   }
 
   test("partial recovery"){

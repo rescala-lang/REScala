@@ -4,13 +4,11 @@ import java.lang.ref.{PhantomReference, ReferenceQueue}
 
 import org.scalatest.prop.Whenever
 import rescala.core.Pulse
-import rescala.extra.simpleprop.SimpleScheduler
 import tests.rescala.testtools.RETests
 
 class GarbageCollectionTest extends RETests with Whenever { multiEngined { engine => import engine._
 
   "garbage collection for simple signal mappings" in {
-    whenever(engine.scheduler != SimpleScheduler) {
 
       val q = new ReferenceQueue[Signal[Array[Int]]]()
 
@@ -39,7 +37,6 @@ class GarbageCollectionTest extends RETests with Whenever { multiEngined { engin
         assert(!timeout, "did not GC a signal before timeout")
         if (q.poll() ne null) done = true
       }
-    }
   }
 
 }}
