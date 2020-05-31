@@ -27,7 +27,7 @@ trait LevelBasedTransaction[S <: LevelStruct] extends TwoVersionTransactionImpl[
     val reevRes = head.reevaluate(dt)
 
     val dependencies: Option[Set[ReSource[S]]] = reevRes.getDependencies()
-    val minimalLevel = dependencies.fold(0)(maximumLevel(_) + 1)
+    val minimalLevel = dependencies.fold(0)(nextLevel)
     val redo = head.state.level() < minimalLevel
     if (redo) {
       levelQueue.enqueue(minimalLevel)(head)
@@ -44,10 +44,11 @@ trait LevelBasedTransaction[S <: LevelStruct] extends TwoVersionTransactionImpl[
     _propagating += head
   }
 
-  private def maximumLevel(dependencies: Set[ReSource[S]]): Int = dependencies.foldLeft(-1)((acc, r) => math.max(acc, r.state.level()))
+  private def nextLevel(dependencies: Set[ReSource[S]]): Int =
+    if (dependencies.isEmpty) 0 else dependencies.map(_.state.level()).max + 1
 
   override protected def ignite(reactive: Derived[S], incoming: Set[ReSource[S]], ignitionRequiresReevaluation: Boolean): Unit = {
-    val level = if (incoming.isEmpty) 0 else incoming.map(_.state.level()).max + 1
+    val level = nextLevel(incoming)
     reactive.state.updateLevel(level)
 
     incoming.foreach { dep =>
