@@ -11,6 +11,11 @@ import scala.concurrent.{ExecutionContext, Future}
 object Signals {
   type Sstate[T, S <: Struct] = S#State[Pulse[T], S]
 
+  trait SignalResource[+T, S <: Struct] extends ReSource[S] with Interp[T, S] with Disconnectable[S] {
+    override type Value <: Pulse[T]
+    override def interpret(v: Value): T = v.get
+  }
+
   object MapFuncImpl {def apply[T1, A](value: T1, mapper: T1 => A): A = mapper(value)}
 
   class Diff[+A](val from: Pulse[A], val to: Pulse[A]) {
@@ -50,7 +55,7 @@ trait Signals[S <: Struct] {
   private def ignore2[Tick, Current, Res](f: Tick => Res): (Tick, Current) => Res = (ticket, _) => f(ticket)
 
   import rescalaAPI.{Signal => Sig, Var}
-  import rescalaAPI.Impls.SignalImpl
+  import rescalaAPI.Impls.{DerivedImpl, SignalImpl}
 
 
   /** creates a new static signal depending on the dependencies, reevaluating the function */
@@ -59,11 +64,18 @@ trait Signals[S <: Struct] {
                (expr: StaticTicket[S] => T)
                (implicit ct: CreationTicket[S])
   : Sig[T] = {
-    ct.create[Pulse[T], SignalImpl[T]](dependencies.toSet, Initializer.DerivedSignal, inite = true) {
-      state => new SignalImpl[T](state, ignore2(expr), ct.rename, None, rescalaAPI)
+    val derived = ct.create[Pulse[T], SignalImpl[T]](dependencies.toSet, Initializer.DerivedSignal, inite = true) {
+      state => new SignalImpl[T](state, ignore2(expr), ct.rename, None)
     }
+    signalAPI(derived)
   }
 
+  def signalAPI[T](derived: rescalaAPI.Impls.SignalImpl[T]): Signal[T, S] = {
+    new Signal[T, S] {
+      override                  val rescalaAPI  : RescalaInterface[S]          = Signals.this.rescalaAPI
+      override val innerDerived: Signals.SignalResource[T, S] = derived
+    }
+  }
   /** creates a signal that has dynamic dependencies (which are detected at runtime with Signal.apply(turn)) */
   @cutOutOfUserComputation
   def dynamic[T](dependencies: ReSource[S]*)
@@ -71,9 +83,10 @@ trait Signals[S <: Struct] {
                 (implicit ct: CreationTicket[S])
   : Sig[T] = {
     val staticDeps = dependencies.toSet
-    ct.create[Pulse[T], SignalImpl[T]](staticDeps, Initializer.DerivedSignal, inite = true) {
-      state => new SignalImpl[T](state, ignore2(expr), ct.rename, Some(staticDeps), rescalaAPI)
+    val derived = ct.create[Pulse[T], SignalImpl[T]](staticDeps, Initializer.DerivedSignal, inite = true) {
+      state => new SignalImpl[T](state, ignore2(expr), ct.rename, Some(staticDeps))
     }
+    signalAPI(derived)
   }
 
   /** converts a future to a signal */
@@ -86,17 +99,17 @@ trait Signals[S <: Struct] {
 
   @cutOutOfUserComputation
   def lift[A, R](los: Seq[Signal[A, S]])(fun: Seq[A] => R)(implicit maybe: CreationTicket[S]): Signal[R, S] = {
-    static(los: _*) { t => fun(los.map(s => t.dependStatic(s))) }
+    static(los.map(_.innerDerived): _*) { t => fun(los.map(s => t.dependStatic(s.innerDerived))) }
   }
 
   @cutOutOfUserComputation
   def lift[A1, B](n1: Signal[A1, S])(fun: A1 => B)(implicit maybe: CreationTicket[S]): Signal[B, S] = {
-    static(n1)(t => fun(t.dependStatic(n1)))
+    static(n1.innerDerived)(t => fun(t.dependStatic(n1.innerDerived)))
   }
 
   @cutOutOfUserComputation
   def lift[A1, A2, B](n1: Signal[A1, S], n2: Signal[A2, S])(fun: (A1, A2) => B)(implicit maybe: CreationTicket[S]): Signal[B, S] = {
-    static(n1, n2)(t => fun(t.dependStatic(n1), t.dependStatic(n2)))
+    static(n1.innerDerived, n2.innerDerived)(t => fun(t.dependStatic(n1.innerDerived), t.dependStatic(n2.innerDerived)))
   }
 }
 

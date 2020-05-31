@@ -1,9 +1,9 @@
 package rescala.interface
 
-import rescala.core.{Base, Initializer, Pulse, REName, Scheduler, Struct}
+import rescala.core.{Base, Initializer, Interp, Pulse, REName, Scheduler, Struct}
 import rescala.macros.MacroTags.{Dynamic, Static}
 import rescala.reactives
-import rescala.reactives.{DefaultImplementations, Source}
+import rescala.reactives.{DefaultImplementations, Signals, Source}
 
 
 object RescalaInterface {
@@ -57,12 +57,15 @@ trait RescalaInterface[S <: Struct] extends Aliases[S] {
   object Var {
     abstract class VarImpl[A] private[rescala](initialState: rescala.reactives.Signals.Sstate[A, S], name: REName)
       extends Base[Pulse[A], S](initialState, name) with rescala.reactives.Var[A, S] with Signal[A]
+    with rescala.reactives.Signals.SignalResource[A, S] with Interp[A, S]
 
       def apply[T](initval: T)(implicit ticket: CreationTicket): VarImpl[T] = fromChange(Pulse.Value(initval))
       def empty[T](implicit ticket: CreationTicket): VarImpl[T] = fromChange(Pulse.empty)
       private[this] def fromChange[T](change: Pulse[T])(implicit ticket: CreationTicket): VarImpl[T] = {
         ticket.createSource[Pulse[T], VarImpl[T]](Initializer.InitializedSignal(change))(new VarImpl[T](_, ticket.rename){
           override val rescalaAPI: RescalaInterface[S] = RescalaInterface.this
+          override def interpret(v: Pulse[T]): T = v.get
+          override val innerDerived = this
         })
       }
   }

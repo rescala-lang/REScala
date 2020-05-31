@@ -72,7 +72,7 @@ object Tags {
         }
 
         observe = Observe.strong(rendered, fireImmediately = true)(
-          tagObserver(parent, rendered) { newTag =>
+          tagObserver[Frag, S](parent, rendered) { newTag =>
             //println(s"$rendered parent $parent")
             if (parent != null && !scalajs.js.isUndefined(parent)) {
               val newNode = newTag.render

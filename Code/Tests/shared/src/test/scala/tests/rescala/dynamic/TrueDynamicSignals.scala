@@ -10,7 +10,7 @@ class TrueDynamicSignals extends RETests { multiEngined { engine => import engin
 
     val a = Var(3)
     val b = Var(Signal(a()))
-    val c = Signal.dynamic(b()())
+    val c = Signal.dynamic(b.value.value)
 
     assert(c.readValueOnce === 3)
     a set 4

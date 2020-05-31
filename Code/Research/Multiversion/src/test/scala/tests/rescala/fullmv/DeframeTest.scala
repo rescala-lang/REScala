@@ -12,14 +12,14 @@ class DeframeTest extends AnyFunSuite {
     val engine = new FullMVEngine(Duration.Zero, "deframe-test")
     import engine._
 
-    val dummy = Signal {-1}.asInstanceOf[Reactive]
+    val dummy = Signal {-1}.innerDerived.asInstanceOf[Reactive]
 
     val r = Signal { 0 }
-    val right = r.asInstanceOf[Reactive]
+    val right = r.innerDerived.asInstanceOf[Reactive]
     val m = Signal {r() + 1}
-    val middle = m.asInstanceOf[Reactive]
+    val middle = m.innerDerived.asInstanceOf[Reactive]
     val t = Signal {m() + 1}
-    val top = t.asInstanceOf[Reactive]
+    val top = t.innerDerived.asInstanceOf[Reactive]
 
     val turnLeftOne = engine.newTurn()
     turnLeftOne.beginFraming()
@@ -61,14 +61,14 @@ class DeframeTest extends AnyFunSuite {
     val engine = new FullMVEngine(Duration.Zero, "deframe-reframe-test")
     import engine._
 
-    val dummy = Signal {-1}.asInstanceOf[Reactive]
+    val dummy = Signal {-1}.innerDerived.asInstanceOf[Reactive]
 
     val r = Signal { 0 }
-    val right = r.asInstanceOf[Reactive]
+    val right = r.innerDerived.asInstanceOf[Reactive]
     val m = Signal {r() + 1}
-    val middle = m.asInstanceOf[Reactive]
+    val middle = m.innerDerived.asInstanceOf[Reactive]
     val t = Signal {m() + 1}
-    val top = t.asInstanceOf[Reactive]
+    val top = t.innerDerived.asInstanceOf[Reactive]
 
     val turnLeftOne = engine.newTurn()
     turnLeftOne.beginFraming()

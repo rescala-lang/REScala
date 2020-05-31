@@ -12,7 +12,7 @@ import rescala.reactives.Signal
 trait TwoVersionScheduler[S <: TwoVersionStruct, Tx <: TwoVersionTransaction[S] with Initializer[S]]
   extends DynamicInitializerLookup[S, Tx] {
   override private[rescala] def singleReadValueOnce[A](reactive: Signal[A, S]): A =
-    reactive.interpret(reactive.state.base(null))
+    reactive.innerDerived.interpret(reactive.innerDerived.state.base(null))
 
   /** goes through the whole turn lifecycle
     * - create a new turn and put it on the stack

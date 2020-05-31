@@ -1,11 +1,11 @@
 package rescala.reactives
 
 import rescala.core.Pulse.NoChange
-import rescala.core.{Base, Derived, DisconnectableImpl, Pulse, REName, ReevTicket, Struct}
+import rescala.core.{Base, Derived, DisconnectableImpl, Pulse, REName, ReevTicket, Scheduler, Struct}
 import rescala.interface.RescalaInterface
 import rescala.reactives
 import rescala.reactives.Events.Estate
-import rescala.reactives.Signals.{Diff, Sstate}
+import rescala.reactives.Signals.{Diff, SignalResource, Sstate}
 
 trait DefaultImplementations[S <: Struct] {
 
@@ -16,9 +16,8 @@ trait DefaultImplementations[S <: Struct] {
   class SignalImpl[T](initial: Sstate[T, S],
                       expr: (DynamicTicket, () => T) => T,
                       name: REName,
-                      isDynamicWithStaticDeps: Option[Set[ReSource]],
-                      override val rescalaAPI: RescalaInterface[S])
-    extends DerivedImpl[T](initial, name, isDynamicWithStaticDeps) with Signal[T]{
+                      isDynamicWithStaticDeps: Option[Set[ReSource]])
+    extends DerivedImpl[T](initial, name, isDynamicWithStaticDeps) with SignalResource[T, S] {
 
 
     protected[this] def computePulse(rein: ReevTicket[Pulse[T], S]): Pulse[T] = {
@@ -66,7 +65,7 @@ trait DefaultImplementations[S <: Struct] {
     override def interpret(v: Value): Option[Diff[T]] = v._2.toOption
 
     override protected[rescala] def reevaluate(rein: ReIn): Rout = guardReevaluate(rein) {
-      val to  : Pulse[T] = rein.collectStatic(signal)
+      val to  : Pulse[T] = rein.collectStatic(signal.innerDerived)
       val from: Pulse[T] = rein.before._1
       if (to == Pulse.empty) return rein // ignore empty propagations
       if (from != Pulse.NoChange) rein.withValue((to, Pulse.Value(Diff(from, to))))

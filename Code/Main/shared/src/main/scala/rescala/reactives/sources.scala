@@ -45,11 +45,10 @@ abstract class Evt[T, S <: Struct] private[rescala](initialState: Estate[S, T], 
 
 /** Source signals with imperatively updates.
   *
-  * @param initialState of the signal
   * @tparam A Type stored by the signal
   * @tparam S Struct type used for the propagation of the signal
   */
-trait Var[A, S <: Struct] extends Source[S, A] with Signal[A, S] {
+trait Var[A, S <: Struct] extends Source[S, A] with Signal[A, S] with Interp[A, S] {
   override type Value = Pulse[A]
 
   //def update(value: A)(implicit fac: Engine[S]): Unit = set(value)
@@ -60,8 +59,6 @@ trait Var[A, S <: Struct] extends Source[S, A] with Signal[A, S] {
   }
 
   def setEmpty()(implicit fac: Scheduler[S]): Unit = fac.forceNewTransaction(this)(t => admitPulse(Pulse.empty)(t))
-
-  override def disconnect()(implicit engine: Scheduler[S]): Unit = ()
 
   def admitPulse(pulse: Pulse[A])(implicit ticket: AdmissionTicket[S]): Unit = {
     ticket.recordChange(new InitialChange[S] {

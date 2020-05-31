@@ -98,12 +98,13 @@ trait Events[S <: Struct] {
              (expr: StaticTicket[S] => (() => T) => T)
              (implicit ticket: CreationTicket[S])
   : Signal[T] = {
-    ticket.create(
+    val res = ticket.create(
       dependencies,
       Initializer.InitializedSignal[Pulse[T]](Pulse.tryCatch(Pulse.Value(init))),
       inite = false) {
-      state => new SignalImpl[T](state, (st, v) => expr(st)(v), ticket.rename, None, rescalaAPI)
+      state => new SignalImpl[T](state, (st, v) => expr(st)(v), ticket.rename, None)
     }
+    rescalaAPI.Signals.signalAPI(res)
   }
 
   /** Folds when any one of a list of events occurs, if multiple events occur, every fold is executed in order. */
@@ -140,12 +141,14 @@ trait Events[S <: Struct] {
       acc()
     }
 
-    ticket.create(
+    val res = ticket.create(
       staticInputs.toSet[ReSource[S]],
       Initializer.InitializedSignal[Pulse[A]](Pulse.tryCatch(Pulse.Value(init))),
       inite = true) {
-      state => new SignalImpl[A](state, operator, ticket.rename, Some(staticInputs.toSet[ReSource[S]]), rescalaAPI)
+      state => new SignalImpl[A](state, operator, ticket.rename, Some(staticInputs.toSet[ReSource[S]]))
     }
+    rescalaAPI.Signals.signalAPI(res)
+
   }
 
   val Match = Seq

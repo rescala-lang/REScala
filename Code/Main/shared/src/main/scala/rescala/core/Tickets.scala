@@ -1,7 +1,7 @@
 package rescala.core
 
 import rescala.core.Initializer.InitValues
-import rescala.reactives.RExceptions
+import rescala.reactives.{RExceptions, Signal}
 
 import scala.annotation.implicitNotFound
 

@@ -203,8 +203,8 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
     * @usecase def reduce[A](reducer: (=> A, => T) => A): rescala.default.Signal[A]
     * @group conversion */
   @cutOutOfUserComputation
-  final def reduce[A](reducer: (=> A, => T) => A)(implicit ticket: CreationTicket[S]): Signal[A] =
-    ticket.create(
+  final def reduce[A](reducer: (=> A, => T) => A)(implicit ticket: CreationTicket[S]): Signal[A] = {
+    val res = ticket.create(
       Set(this),
       Initializer.InitializedSignal[Pulse[A]](Pulse.empty),
       inite = false
@@ -213,10 +213,11 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
         initial = state,
         expr = { (st, currentValue) => reducer(currentValue(), st.collectStatic(this).get) },
         name = ticket.rename,
-        isDynamicWithStaticDeps = None,
-        rescalaAPI = rescalaAPI
+        isDynamicWithStaticDeps = None
         )
     }
+    rescalaAPI.Signals.signalAPI(res)
+  }
 
   /** Applies a function on the current value of the signal every time the event occurs,
     * starting with the init value before the first event occurrence

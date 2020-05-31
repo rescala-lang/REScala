@@ -175,7 +175,7 @@ class ReactiveMacros(val c: blackbox.Context) {
         //   Signal { reactive_1() + reactive_2() }
         // to
         //   Signals.dynamic { s => s.depend(reactive_1) + s.depend(reactive_2) }
-        case tree@REApply(untransformedReactive) =>
+        case tree@MacroInterpretable(untransformedReactive) =>
           val reactive = transform(untransformedReactive)
           val reactiveApply =
             if (weAnalysis.isStaticDependency(reactive)) {
@@ -188,7 +188,7 @@ class ReactiveMacros(val c: blackbox.Context) {
               q"$ticketIdent.depend"
             }
           internal.setType(reactiveApply, tree.tpe)
-          q"$reactiveApply($reactive)"
+          q"$reactiveApply($reactive.interpretable)"
         case _ =>
           super.transform(tree)
       }
@@ -268,7 +268,7 @@ class ReactiveMacros(val c: blackbox.Context) {
     def containsCriticalReferences(reactive: c.universe.Tree): Boolean = reactive.filter {
       // check if reactive results from a function that is
       // itself called on a reactive value
-      case REApply(_) => true
+      case MacroInterpretable(_) => true
       // check reference definitions that are defined within the
       // macro expression but not within the reactive
       case tree: SymTree =>
@@ -310,7 +310,7 @@ class ReactiveMacros(val c: blackbox.Context) {
         s"Offending tree: $tree")
 
   def isInterpretable(tree: Tree): Boolean = {
-    val staticInterpClass = c.mirror staticClass "_root_.rescala.core.Interp"
+    val staticInterpClass = c.mirror staticClass "_root_.rescala.core.MacroInterp"
 
     if (tree.tpe == null) {treeTypeNullWarning(tree); false}
     else
@@ -319,8 +319,8 @@ class ReactiveMacros(val c: blackbox.Context) {
         (tree.tpe.baseClasses contains staticInterpClass)
   }
 
-  /** detects variants to access reactives using [[rescala.core.Interp]] */
-  object REApply {
+  /** detects variants to access reactives using [[rescala.core.MacroInterp]] */
+  object MacroInterpretable {
     def unapply(arg: Tree): Option[Tree] = arg match {
       case Apply(Select(reactive, tn), Nil)
         if "apply" == tn.decodedName.toString && isInterpretable(reactive) =>

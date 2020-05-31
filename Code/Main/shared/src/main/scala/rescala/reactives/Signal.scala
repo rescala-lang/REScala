@@ -1,6 +1,6 @@
 package rescala.reactives
 
-import rescala.core._
+import rescala.core.{Disconnectable, Interp, _}
 import rescala.interface.RescalaInterface
 import rescala.macros.cutOutOfUserComputation
 import rescala.reactives.Observe.ObserveInteract
@@ -21,12 +21,19 @@ import scala.util.control.NonFatal
   * @groupname accessors Accessors and observers
   * @groupprio accessor 5
   */
-trait Signal[+T, S <: Struct] extends ReSource[S] with Interp[T, S] with Disconnectable[S] {
+object Signal {
+  implicit def signalToSignal[T, S <: Struct](signal: Signal[T, S]): rescala.reactives.Signals.SignalResource[T, S] = signal.innerDerived
+}
+trait Signal[+T, S <: Struct] extends MacroInterp[T, S] with Disconnectable[S] {
 
-  override type Value <: Pulse[T]
 
   val rescalaAPI: RescalaInterface[S]
   import rescalaAPI.{Signal => Sig, _}
+
+
+  override def disconnect()(implicit engine: Scheduler[S]): Unit = innerDerived.disconnect()(engine)
+  val innerDerived: rescala.reactives.Signals.SignalResource[T, S]
+  override def interpretable: Interp[T, S] = innerDerived
 
 
   /** Returns the current value of the signal
@@ -41,9 +48,6 @@ trait Signal[+T, S <: Struct] extends ReSource[S] with Interp[T, S] with Disconn
     RExceptions.toExternalException(this, scheduler.singleReadValueOnce(this) )
   }
 
-  /** Interprets the pulse of the signal by returning the value
-    * @group internal */
-  override def interpret(v: Value): T = v.get
 
   /** add an observer
     *
@@ -52,13 +56,13 @@ trait Signal[+T, S <: Struct] extends ReSource[S] with Interp[T, S] with Disconn
                     onError: Throwable => Unit = null,
                     fireImmediately: Boolean = true)
                    (implicit ticket: CreationTicket)
-  : Observe = Observe.strong(this, fireImmediately) { reevalVal =>
+  : Observe = Observe.strong(this.innerDerived, fireImmediately) { reevalVal =>
     new ObserveInteract {
       override def checkExceptionAndRemoval(): Boolean = {
         reevalVal match {
           case Pulse.empty                             => ()
           case Pulse.Exceptional(f) if onError == null =>
-            throw new UnhandledFailureException(Signal.this, f)
+            throw new UnhandledFailureException(Signal.this.innerDerived, f)
           case _                                       => ()
         }
         false
@@ -76,8 +80,8 @@ trait Signal[+T, S <: Struct] extends ReSource[S] with Interp[T, S] with Disconn
   @cutOutOfUserComputation
   final def recover[R >: T](onFailure: PartialFunction[Throwable, R])
                            (implicit ticket: CreationTicket)
-  : Sig[R] = rescalaAPI.Signals.static(this) { st =>
-    try st.dependStatic(this) catch {
+  : Sig[R] = rescalaAPI.Signals.static(this.innerDerived) { st =>
+    try st.dependStatic(this.innerDerived) catch {
       case NonFatal(e) => onFailure.applyOrElse[Throwable, R](e, throw _)
     }
   }
@@ -88,12 +92,12 @@ trait Signal[+T, S <: Struct] extends ReSource[S] with Interp[T, S] with Disconn
 
   @cutOutOfUserComputation
   final def abortOnError()(implicit ticket: CreationTicket): Sig[T]
-  = recover{case t => throw new UnhandledFailureException(this, t)}
+  = recover{case t => throw new UnhandledFailureException(this.innerDerived, t)}
 
   @cutOutOfUserComputation
   final def withDefault[R >: T](value: R)(implicit ticket: CreationTicket)
-  : Sig[R] = rescalaAPI.Signals.static(this) { st =>
-    try st.dependStatic(this) catch {
+  : Sig[R] = rescalaAPI.Signals.static(this.innerDerived) { st =>
+    try st.dependStatic(this.innerDerived) catch {
       case EmptySignalControlThrowable => value
     }
   }
@@ -126,8 +130,8 @@ trait Signal[+T, S <: Struct] extends ReSource[S] with Interp[T, S] with Disconn
     * @group conversion */
   @cutOutOfUserComputation
   final def changed(implicit ticket: CreationTicket): Event[T]
-  = rescalaAPI.Events.staticNamed(s"(changed $this)", this) { st =>
-    st.collectStatic(this) match {
+  = rescalaAPI.Events.staticNamed(s"(changed $this)", this.innerDerived) { st =>
+    st.collectStatic(this.innerDerived) match {
       case Pulse.empty => Pulse.NoChange
       case other => other
     }
@@ -137,8 +141,8 @@ trait Signal[+T, S <: Struct] extends ReSource[S] with Interp[T, S] with Disconn
     * @group conversion */
   @cutOutOfUserComputation
   final def changedTo[V >: T](value: V)(implicit ticket: CreationTicket): Event[Unit]
-  = rescalaAPI.Events.staticNamed(s"(filter $this)", this) { st =>
-    st.collectStatic(this).filter(_ == value) }
+  = rescalaAPI.Events.staticNamed(s"(filter $this)", this.innerDerived) { st =>
+    st.collectStatic(this.innerDerived).filter(_ == value) }
     .dropParam
 }
 

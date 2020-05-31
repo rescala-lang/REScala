@@ -45,27 +45,34 @@ abstract class Base[V, S <: Struct](override protected[rescala] val state: S#Sta
   override def toString: String = s"${name.str}($state)"
 }
 
-/** Common macro accessors for [[rescala.reactives.Signal]] and [[rescala.reactives.Event]]
-  * @tparam A return type of the accessor
-  * @groupname accessor Accessor and observers */
-trait Interp[+A, S <: Struct] extends ReSource[S] {
+trait MacroInterp[+A, S <: Struct] {
 
   /** Makes the enclosing reactive expression depend on the current value of the reactive.
     * Is an alias for [[value]].
+    *
     * @group accessor
-    * @see value*/
+    * @see value */
   @compileTimeOnly(s"${this} apply can only be used inside of reactive expressions")
   final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")
 
   /** Makes the enclosing reactive expression depend on the current value of the reactive.
     * Is an alias for [[apply]].
+    *
     * @group accessor
-    * @see apply*/
+    * @see apply */
   @compileTimeOnly("value can only be used inside of reactive expressions")
   final def value: A = throw new IllegalAccessException(s"$this.value called outside of macro")
+
+  def interpretable: Interp[A, S]
+}
+
+/** Common macro accessors for [[rescala.reactives.Signal]] and [[rescala.reactives.Event]]
+  * @tparam A return type of the accessor
+  * @groupname accessor Accessor and observers */
+trait Interp[+A, S <: Struct] extends ReSource[S] with MacroInterp[A, S] {
 
   /** Interprets the internal type to the external type
     * @group internal */
   def interpret(v: Value): A
-
+  override def interpretable: Interp[A, S] = this
 }

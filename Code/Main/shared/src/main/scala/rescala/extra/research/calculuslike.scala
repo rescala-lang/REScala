@@ -127,7 +127,8 @@ object FScheduler extends DynamicInitializerLookup[FStruct, SimpleCreation]
       idle = true
     }
   }
-  override private[rescala] def singleReadValueOnce[A](reactive: Signal[A]): A = reactive.interpret(reactive.state.value)
+  override private[rescala] def singleReadValueOnce[A](reactive: Signal[A]): A =
+    reactive.innerDerived.interpret(reactive.innerDerived.state.value)
 }
 
 
