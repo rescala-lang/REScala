@@ -174,7 +174,7 @@ object Util {
     glitched match {
       case None           => evaluatees
       case Some(reactive) =>
-        val evaluateNext = evaluatees ++ creation.drainCreated()
+        val evaluateNext = evaluatees.filterNot(_.state.done) ++ creation.drainCreated()
         evaluateNext.foreach(_.state.discovered = false)
         evaluateAll(Util.toposort(evaluateNext), creation)
     }

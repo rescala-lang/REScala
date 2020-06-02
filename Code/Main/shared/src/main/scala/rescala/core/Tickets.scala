@@ -83,7 +83,6 @@ abstract class DynamicTicket[S <: Struct](creation: Initializer[S]) extends Stat
 sealed abstract class StaticTicket[S <: Struct](creation: Initializer[S]) extends InnerTicket(creation) {
   private[rescala] def collectStatic(reactive: ReSource[S]): reactive.Value
   final def dependStatic[A](reactive: Interp[A, S]): A = reactive.interpret(collectStatic(reactive))
-
 }
 
 trait InitialChange[S <: Struct] {
