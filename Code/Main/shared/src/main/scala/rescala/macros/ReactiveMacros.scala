@@ -61,19 +61,17 @@ class ReactiveMacros(val c: blackbox.Context) {
   def UDFExpressionWithAPI[
     A: c.WeakTypeTag,
     DependencyType: c.WeakTypeTag,
-    StaticTag: c.WeakTypeTag,
-    DynamicTag: c.WeakTypeTag,
-    IsStatic <: MacroTags.Staticism : c.WeakTypeTag]
+    Capability: c.WeakTypeTag]
   (expression: Tree): c.Tree = {
     if (c.hasErrors) return compileErrorsAst
 
-    val forceStatic = !(weakTypeOf[IsStatic] <:< weakTypeOf[MacroTags.Dynamic])
+    val forceStatic = !(weakTypeOf[Capability] <:< weakTypeOf[DynamicTicket[_]])
     val lego = new MacroLego(expression, forceStatic)
 
     val dependencies = lego.detections.detectedStaticReactives
     val isStatic = lego.detections.detectedDynamicReactives.isEmpty
     val creationMethod = TermName(if (isStatic) "static" else "dynamic")
-    val ticketType = if (isStatic) weakTypeOf[StaticTag] else weakTypeOf[DynamicTag]
+    val ticketType = weakTypeOf[Capability]
 
     val body = q"""_root_.rescala.reactives.UserDefinedFunction[${weakTypeOf[A]}, ${weakTypeOf[DependencyType]}, ${ticketType}](
          _root_.scala.collection.immutable.Set[${weakTypeOf[DependencyType]}](..$dependencies),

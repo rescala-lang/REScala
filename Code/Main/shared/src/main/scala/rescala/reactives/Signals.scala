@@ -51,7 +51,7 @@ object Signals {
 case class UserDefinedFunction[T, Dep, Cap](staticDependencies: Set[Dep], expression: Cap => T)
 object UserDefinedFunction{
   implicit def fromExpression[T, Dep, Cap](expression: => T): UserDefinedFunction[T, Dep, Cap] =
-    macro rescala.macros.ReactiveMacros.UDFExpressionWithAPI[T, Dep, Cap, Cap, MacroTags.Static]
+    macro rescala.macros.ReactiveMacros.UDFExpressionWithAPI[T, Dep, Cap]
 }
 
 /** Functions to construct signals, you probably want to use signal expressions in [[rescala.interface.RescalaInterface.Signal]] for a nicer API. */
@@ -64,7 +64,7 @@ trait Signals[S <: Struct] {
   import rescalaAPI.Impls.{DerivedImpl, SignalImpl}
 
   @cutOutOfUserComputation
-  def ofUDF[T](udf: UserDefinedFunction[T, ReSource[S], rescalaAPI.DynamicTicket])
+  def ofUDF[T](udf: UserDefinedFunction[T, ReSource[S], rescalaAPI.StaticTicket])
               (implicit ct: CreationTicket[S])
   : Sig[T] = {
     val derived = ct.create[Pulse[T], SignalImpl[T]](udf.staticDependencies, Initializer.DerivedSignal, inite = true) {
