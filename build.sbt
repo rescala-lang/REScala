@@ -189,7 +189,7 @@ lazy val cfg = new {
   * Use `publish` from sbt
   * Log in to Bintray and publish the files that were sent
   */
-  lazy val bintray = Resolvers.bintrayPublish("rescala-lang", "stg-tud", "REScala")
+  lazy val bintray = Resolvers.bintrayPublish("stg-tud","rescala-lang", "REScala")
 
 
   lazy val noPublish = Seq(

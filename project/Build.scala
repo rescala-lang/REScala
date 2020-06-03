@@ -124,7 +124,11 @@ object Resolvers {
         s"https://api.bintray.com/content/$bintrayOrganization/maven/$proj/$ver")
       val patterns = Resolver.mavenStylePatterns
       Some(Resolver.url("bintray", url)(patterns))
-    }
+    },
+    credentials ++= ((sys.env.get("BINTRAY_USERNAME"), sys.env.get("BINTRAY_PASSWORD")) match {
+        case (Some(name), Some(password)) => List(Credentials("Bintray API Realm", "api.bintray.com", name, password))
+        case _ => Nil
+      })
   )
 }
 
