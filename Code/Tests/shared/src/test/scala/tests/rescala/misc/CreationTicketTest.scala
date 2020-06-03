@@ -1,7 +1,6 @@
 package tests.rescala.misc
 
 import rescala.core.{Scheduler, Struct}
-import rescala.core.{Initializer}
 import tests.rescala.testtools.RETests
 
 

@@ -1,6 +1,6 @@
 package rescala.macros
 
-import rescala.core.{CreationTicket, DynamicTicket, LowPriorityCreationImplicits, StaticTicket, Struct}
+import rescala.core.{CreationTicket, DynamicTicket, LowPriorityCreationImplicits, ReSource, StaticTicket, Struct}
 import retypecheck._
 
 import scala.annotation.StaticAnnotation
@@ -54,6 +54,33 @@ class ReactiveMacros(val c: blackbox.Context) {
          ){${lego.contextualizedExpression(ticketType)}}($ticket)"""
 
     lego.wrapFinalize(body, prefixManipulation)
+  }
+
+  // case class UserDefinedFunction[T, Dep, Cap](staticDependencies: Set[Dep], expression: Cap => T)
+
+  def UDFExpressionWithAPI[
+    A: c.WeakTypeTag,
+    DependencyType: c.WeakTypeTag,
+    StaticTag: c.WeakTypeTag,
+    DynamicTag: c.WeakTypeTag,
+    IsStatic <: MacroTags.Staticism : c.WeakTypeTag]
+  (expression: Tree): c.Tree = {
+    if (c.hasErrors) return compileErrorsAst
+
+    val forceStatic = !(weakTypeOf[IsStatic] <:< weakTypeOf[MacroTags.Dynamic])
+    val lego = new MacroLego(expression, forceStatic)
+
+    val dependencies = lego.detections.detectedStaticReactives
+    val isStatic = lego.detections.detectedDynamicReactives.isEmpty
+    val creationMethod = TermName(if (isStatic) "static" else "dynamic")
+    val ticketType = if (isStatic) weakTypeOf[StaticTag] else weakTypeOf[DynamicTag]
+
+    val body = q"""_root_.rescala.reactives.UserDefinedFunction[${weakTypeOf[A]}, ${weakTypeOf[DependencyType]}, ${ticketType}](
+         _root_.scala.collection.immutable.Set[${weakTypeOf[DependencyType]}](..$dependencies),
+         ${lego.contextualizedExpression(ticketType)}
+         )"""
+
+    lego.wrapFinalize(body, None)
   }
 
 

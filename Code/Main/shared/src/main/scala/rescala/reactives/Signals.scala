@@ -2,7 +2,7 @@ package rescala.reactives
 
 import rescala.core._
 import rescala.interface.RescalaInterface
-import rescala.macros.cutOutOfUserComputation
+import rescala.macros.{MacroTags, cutOutOfUserComputation}
 import rescala.reactives.RExceptions.EmptySignalControlThrowable
 import rescala.reactives.Signals.Sstate
 
@@ -48,6 +48,12 @@ object Signals {
 
 }
 
+case class UserDefinedFunction[T, Dep, Cap](staticDependencies: Set[Dep], expression: Cap => T)
+object UserDefinedFunction{
+  implicit def fromExpression[T, Dep, Cap](expression: => T): UserDefinedFunction[T, Dep, Cap] =
+    macro rescala.macros.ReactiveMacros.UDFExpressionWithAPI[T, Dep, Cap, Cap, MacroTags.Static]
+}
+
 /** Functions to construct signals, you probably want to use signal expressions in [[rescala.interface.RescalaInterface.Signal]] for a nicer API. */
 trait Signals[S <: Struct] {
 
@@ -56,6 +62,17 @@ trait Signals[S <: Struct] {
 
   import rescalaAPI.{Signal => Sig, Var}
   import rescalaAPI.Impls.{DerivedImpl, SignalImpl}
+
+  @cutOutOfUserComputation
+  def ofUDF[T](udf: UserDefinedFunction[T, ReSource[S], rescalaAPI.DynamicTicket])
+              (implicit ct: CreationTicket[S])
+  : Sig[T] = {
+    val derived = ct.create[Pulse[T], SignalImpl[T]](udf.staticDependencies, Initializer.DerivedSignal, inite = true) {
+      state => new SignalImpl[T](state, ignore2(udf.expression), ct.rename, None)
+    }
+    signalAPI(derived)
+  }
+
 
 
   /** creates a new static signal depending on the dependencies, reevaluating the function */
@@ -72,7 +89,7 @@ trait Signals[S <: Struct] {
 
   def signalAPI[T](derived: rescalaAPI.Impls.SignalImpl[T]): Signal[T, S] = {
     new Signal[T, S] {
-      override                  val rescalaAPI  : RescalaInterface[S]          = Signals.this.rescalaAPI
+      override val rescalaAPI  : RescalaInterface[S]          = Signals.this.rescalaAPI
       override val innerDerived: Signals.SignalResource[T, S] = derived
     }
   }
