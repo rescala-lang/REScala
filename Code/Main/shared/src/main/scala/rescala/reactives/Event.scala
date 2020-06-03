@@ -216,7 +216,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
         isDynamicWithStaticDeps = None
         )
     }
-    rescalaAPI.Signals.signalAPI(res)
+    rescalaAPI.Signals.wrapWithSignalAPI(res)
   }
 
   /** Applies a function on the current value of the signal every time the event occurs,

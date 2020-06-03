@@ -48,7 +48,7 @@ object Signals {
 
 }
 
-case class UserDefinedFunction[T, Dep, Cap](staticDependencies: Set[Dep], expression: Cap => T)
+case class UserDefinedFunction[T, Dep, Cap](staticDependencies: Set[Dep], expression: Cap => T, isStatic: Boolean = true)
 object UserDefinedFunction{
   implicit def fromExpression[T, Dep, Cap](expression: => T): UserDefinedFunction[T, Dep, Cap] =
     macro rescala.macros.ReactiveMacros.UDFExpressionWithAPI[T, Dep, Cap]
@@ -63,14 +63,21 @@ trait Signals[S <: Struct] {
   import rescalaAPI.{Signal => Sig, Var}
   import rescalaAPI.Impls.{DerivedImpl, SignalImpl}
 
+  def wrapWithSignalAPI[T](derived: rescalaAPI.Impls.SignalImpl[T]): Signal[T, S] = {
+    new Signal[T, S] {
+      override val rescalaAPI  : RescalaInterface[S]          = Signals.this.rescalaAPI
+      override val innerDerived: Signals.SignalResource[T, S] = derived
+    }
+  }
+
   @cutOutOfUserComputation
-  def ofUDF[T](udf: UserDefinedFunction[T, ReSource[S], rescalaAPI.StaticTicket])
+  def ofUDF[T](udf: UserDefinedFunction[T, rescalaAPI.ReSource, rescalaAPI.DynamicTicket])
               (implicit ct: CreationTicket[S])
   : Sig[T] = {
     val derived = ct.create[Pulse[T], SignalImpl[T]](udf.staticDependencies, Initializer.DerivedSignal, inite = true) {
-      state => new SignalImpl[T](state, ignore2(udf.expression), ct.rename, None)
+      state => new SignalImpl[T](state, ignore2(udf.expression), ct.rename, if (udf.isStatic) None else Some(udf.staticDependencies))
     }
-    signalAPI(derived)
+    wrapWithSignalAPI(derived)
   }
 
 
@@ -84,15 +91,9 @@ trait Signals[S <: Struct] {
     val derived = ct.create[Pulse[T], SignalImpl[T]](dependencies.toSet, Initializer.DerivedSignal, inite = true) {
       state => new SignalImpl[T](state, ignore2(expr), ct.rename, None)
     }
-    signalAPI(derived)
+    wrapWithSignalAPI(derived)
   }
 
-  def signalAPI[T](derived: rescalaAPI.Impls.SignalImpl[T]): Signal[T, S] = {
-    new Signal[T, S] {
-      override val rescalaAPI  : RescalaInterface[S]          = Signals.this.rescalaAPI
-      override val innerDerived: Signals.SignalResource[T, S] = derived
-    }
-  }
   /** creates a signal that has dynamic dependencies (which are detected at runtime with Signal.apply(turn)) */
   @cutOutOfUserComputation
   def dynamic[T](dependencies: ReSource[S]*)
@@ -103,7 +104,7 @@ trait Signals[S <: Struct] {
     val derived = ct.create[Pulse[T], SignalImpl[T]](staticDeps, Initializer.DerivedSignal, inite = true) {
       state => new SignalImpl[T](state, ignore2(expr), ct.rename, Some(staticDeps))
     }
-    signalAPI(derived)
+    wrapWithSignalAPI(derived)
   }
 
   /** converts a future to a signal */

@@ -104,7 +104,7 @@ trait Events[S <: Struct] {
       inite = false) {
       state => new SignalImpl[T](state, (st, v) => expr(st)(v), ticket.rename, None)
     }
-    rescalaAPI.Signals.signalAPI(res)
+    rescalaAPI.Signals.wrapWithSignalAPI(res)
   }
 
   /** Folds when any one of a list of events occurs, if multiple events occur, every fold is executed in order. */
@@ -147,7 +147,7 @@ trait Events[S <: Struct] {
       inite = true) {
       state => new SignalImpl[A](state, operator, ticket.rename, Some(staticInputs.toSet[ReSource[S]]))
     }
-    rescalaAPI.Signals.signalAPI(res)
+    rescalaAPI.Signals.wrapWithSignalAPI(res)
 
   }
 
