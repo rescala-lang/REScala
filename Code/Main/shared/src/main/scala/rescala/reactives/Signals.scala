@@ -48,7 +48,7 @@ object Signals {
 
 }
 
-case class UserDefinedFunction[T, Dep, Cap](staticDependencies: Set[Dep], expression: Cap => T, isStatic: Boolean = true)
+case class UserDefinedFunction[+T, Dep, Cap](staticDependencies: Set[Dep], expression: Cap => T, isStatic: Boolean = true)
 object UserDefinedFunction{
   implicit def fromExpression[T, Dep, Cap](expression: => T): UserDefinedFunction[T, Dep, Cap] =
     macro rescala.macros.ReactiveMacros.UDFExpressionWithAPI[T, Dep, Cap]
