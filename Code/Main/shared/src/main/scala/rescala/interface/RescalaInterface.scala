@@ -70,15 +70,6 @@ trait RescalaInterface[S <: Struct] extends Aliases[S] {
       }
   }
 
-  /** @group internal */
-  object NoMacro {
-    /** @group internal */
-    final def static[T](dependencies: ReSource*)(expr: StaticTicket => T)(implicit ct: CreationTicket): Signal[T] = Signals.static(dependencies: _*)(expr)
-    /** @group internal */
-    final def dynamic[T](dependencies: ReSource*)(expr: DynamicTicket => T)(implicit ct: CreationTicket): Signal[T] = Signals.dynamic(dependencies: _*)(expr)
-    /** @group internal */
-    final def dynamicE[T](dependencies: ReSource*)(expr: DynamicTicket => Option[T])(implicit ct: CreationTicket): Event[T] = Events.dynamic(dependencies: _*)(expr)
-  }
 
   /** A signal expression can be used to create signals accessing arbitrary other signals.
     * Use the apply method on a signal to access its value inside of a signal expression.

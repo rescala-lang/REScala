@@ -81,10 +81,10 @@ class PessimisticTest extends RETests {
     val (syncInB, syncB) = SynchronizedReevaluation(vB)("sync B")
 
     // so if syncA becomes true, this adds a dependency on vB
-    val crossA = interface.NoMacro.dynamic(syncA) { t => if (t.depend(syncA) != initA) t.depend(syncB) else staticA} ("crossA")
+    val crossA = interface.Signals.dynamic(syncA) { t => if (t.depend(syncA) != initA) t.depend(syncB) else staticA} ("crossA")
 
     // this does as above, causing one or the other to access something which will change later
-    val crossB = interface.NoMacro.dynamic(syncB) { t => if (t.depend(syncB) != initB) t.depend(syncA) else staticB } ("crossB")
+    val crossB = interface.Signals.dynamic(syncB) { t => if (t.depend(syncB) != initB) t.depend(syncA) else staticB } ("crossB")
 
     val resultsA = new ReevaluationTracker(crossA)("resultsA")
     val resultsB = new ReevaluationTracker(crossB)("resultsB")
@@ -125,7 +125,7 @@ class PessimisticTest extends RETests {
     val b2 = b0.map(identity).map(!_) // dirty hacks to get il_3 to reevaluate first on levelbased engines
     val i0 = Var(11)
     var reeval = 0
-    val i1_3 = NoMacro.dynamic(b0) { t => reeval += 1; if (t.depend(b0) && t.depend(b2)) t.depend(i0) else 42 }
+    val i1_3 = Signals.dynamic(b0) { t => reeval += 1; if (t.depend(b0) && t.depend(b2)) t.depend(i0) else 42 }
 
     var regs = 0
     var unregs = 0
@@ -189,7 +189,7 @@ class PessimisticTest extends RETests {
     // at that point both bl1 and bl3 are true which causes il1 to be added as a dependency
     // but then bl3 becomes false at level 3, causing il1 to be removed again
     // after that the level is increased and this nonesense no longer happens
-    val b2b3i2 = engine.NoMacro.dynamic(bl1) { t =>
+    val b2b3i2 = engine.Signals.dynamic(bl1) { t =>
       reeval ::= t.initializer
       if (t.depend(bl1)) {
         if (t.depend(bl3)) {
@@ -207,7 +207,7 @@ class PessimisticTest extends RETests {
 
     // this is here, so that we have i lock bl1.
     // we need this to be a dynamic lock to lock just this single reactive and not bl3 etc.
-    val i2b2 = engine.NoMacro.dynamic(il1)(t => if (t.depend(il1) == 0) t.depend(bl1) else false)
+    val i2b2 = engine.Signals.dynamic(il1)(t => if (t.depend(il1) == 0) t.depend(bl1) else false)
     val results2 = new ReevaluationTracker(i2b2)
 
     // bl0 -> bl1 -> (bl2) -> bl3
@@ -262,7 +262,7 @@ class PessimisticTest extends RETests {
     // at that point both bl1 and bl3 are true which causes il1 and il0 to be added as a dependency
     // but then bl3 becomes false at level 3, causing il1 to be removed again (but il0 is still a dependency)
     // after that the level is increased and this nonesense no longer happens
-    val b2b3i2 = engine.NoMacro.dynamic(bl1) { t =>
+    val b2b3i2 = engine.Signals.dynamic(bl1) { t =>
       reeval ::= t.initializer
       if (t.depend(bl1)) {
         if (t.depend(bl3)) {
@@ -279,7 +279,7 @@ class PessimisticTest extends RETests {
 
     // this is here, so that we have i lock bl1.
     // we need this to be a dynamic lock to lock just this single reactive and not bl3 etc.
-    val i2b2 = engine.NoMacro.dynamic(il1)(t => if (t.depend(il1) == 17) t.depend(bl1) else false)
+    val i2b2 = engine.Signals.dynamic(il1)(t => if (t.depend(il1) == 17) t.depend(bl1) else false)
     val results2 = new ReevaluationTracker(i2b2)
 
     // bl0 -> bl1 -> (bl2) -> bl3
