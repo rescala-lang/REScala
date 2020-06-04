@@ -11,6 +11,7 @@ object Settings {
   private val sv11 = "2.11.12"
   private val sv12 = "2.12.11"
   private val sv13 = "2.13.2"
+  private val svDotty = "0.24.0-RC1"
 
 
   val commonCrossBuildVersions = crossScalaVersions := Seq(sv11, sv12, sv13)
@@ -27,12 +28,17 @@ object Settings {
     scalaVersion := sv13,
     scalacOptions ++= settingsFor(scalaVersion.value)
     )
+  val scalaVersion_Dotty = Def.settings(
+    scalaVersion := svDotty,
+    scalacOptions ++= settingsFor(scalaVersion.value)
+    )
 
   def settingsFor(version: String) = (
     version match {
       case a if a.startsWith("2.11") =>  scalacOptionsCommon ++ scalaOptions12minus
       case a if a.startsWith("2.12") =>  scalacOptionsCommon ++ scalacOptions12plus ++ scalaOptions12minus
-      case a if a.startsWith("2.13") =>  scalacOptionsCommon ++ scalacOptions12plus
+      case a if a.startsWith("2.13") =>  scalacOptionsCommon ++ scalacOptions12plus ++ scalaOptions13
+      case a if a.startsWith("0.") =>  Seq("-language:Scala2Compat,implicitConversions")
     })
 
   // based on tpolecats scala options https://tpolecat.github.io/2017/04/25/scalac-flags.html
@@ -89,6 +95,9 @@ object Settings {
     "-Ywarn-nullary-unit",               // Warn when nullary methods return Unit.
     "-Xfuture",                          // Turn on future language features.
   )
+  lazy val scalaOptions13: Seq[String] = Seq(
+    // "-Xsource:3"
+  )
 
   val strictCompile = Compile / compile / scalacOptions += "-Xfatal-warnings"
 }
@@ -115,7 +124,11 @@ object Resolvers {
         s"https://api.bintray.com/content/$bintrayOrganization/maven/$proj/$ver")
       val patterns = Resolver.mavenStylePatterns
       Some(Resolver.url("bintray", url)(patterns))
-    }
+    },
+    credentials ++= ((sys.env.get("BINTRAY_USERNAME"), sys.env.get("BINTRAY_PASSWORD")) match {
+        case (Some(name), Some(password)) => List(Credentials("Bintray API Realm", "api.bintray.com", name, password))
+        case _ => Nil
+      })
   )
 }
 
