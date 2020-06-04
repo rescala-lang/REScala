@@ -1,6 +1,9 @@
 name: publish to bintray
 
-on: [push]
+on:
+  push:
+    tags:
+    - 'v*'
 
 jobs:
   build:
