@@ -1,10 +1,10 @@
 package rescala.extra.simpleprop
 
 import rescala.core.Initializer.InitValues
-import rescala.core.{AccessTicket, Derived, DynamicInitializerLookup, Initializer, ReSource, ReevTicket, Scheduler, Struct}
+import rescala.core.{AccessTicket, Derived, DynamicInitializerLookup, Initializer, Observation, ReSource, ReevTicket, Scheduler, Struct}
 import rescala.interface.Aliases
 
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 trait SimpleStruct extends Struct {
   override type State[V, S <: Struct] = SimpleState[V]
@@ -28,7 +28,7 @@ class SimpleState[V](ip: InitValues[V]) {
   override def toString: String = s"State(outgoing = $outgoing, discovered = $discovered, dirty = $dirty, done = $done)"
 }
 
-class SimpleInitializer() extends Initializer[SimpleStruct] {
+class SimpleInitializer(afterCommitObservers: ListBuffer[Observation]) extends Initializer[SimpleStruct] {
   override protected[this] def makeDerivedStructState[V](ip: InitValues[V])
   : SimpleState[V] = new SimpleState[V](ip)
 
@@ -68,7 +68,7 @@ class SimpleInitializer() extends Initializer[SimpleStruct] {
       // do nothing, this reactive is reached by normal propagation later
     }
     else if (ignitionRequiresReevaluation || requiresReev) {
-      Util.evaluate(reactive, this)
+      Util.evaluate(reactive, this, afterCommitObservers)
     }
     else if (predecessorsDone) reactive.state.done = true
   }
@@ -87,8 +87,9 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
   override def forceNewTransaction[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R): R = synchronized {
     if (!idle) throw new IllegalStateException("Scheduler is not reentrant")
     idle = false
-    try {
-      val creation = new SimpleInitializer()
+    val afterCommitObservers: ListBuffer[Observation] = ListBuffer.empty
+    val res = try {
+      val creation = new SimpleInitializer(afterCommitObservers)
       withDynamicInitializer(creation) {
         // admission
         val admissionTicket: AdmissionTicket = new AdmissionTicket(creation, initialWrites) {
@@ -114,10 +115,10 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
 
         // propagation
         val sorted = Util.toposort(initial)
-        Util.evaluateAll(sorted, creation).foreach(_.state.reset())
+        Util.evaluateAll(sorted, creation, afterCommitObservers).foreach(_.state.reset())
         // evaluate everything that was created, but not accessed, and requires ignition
         val created = creation.drainCreated()
-        Util.evaluateAll(created, creation).foreach(_.state.reset())
+        Util.evaluateAll(created, creation, afterCommitObservers).foreach(_.state.reset())
         assert(creation.drainCreated().isEmpty)
 
         //cleanup
@@ -135,6 +136,8 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
     finally {
       idle = true
     }
+    afterCommitObservers.foreach(_.execute())
+    res
   }
   override private[rescala] def singleReadValueOnce[A](reactive: Signal[A]): A = {
     val id = reactive.innerDerived
@@ -162,12 +165,12 @@ object Util {
   }
 
   @scala.annotation.tailrec
-  def evaluateAll(evaluatees: Seq[Derived[SimpleStruct]], creation: SimpleInitializer): Seq[Derived[SimpleStruct]] = {
+  def evaluateAll(evaluatees: Seq[Derived[SimpleStruct]], creation: SimpleInitializer, afterCommitObservers: ListBuffer[Observation]): Seq[Derived[SimpleStruct]] = {
     // first one where evaluation detects glitch
     val glitched = evaluatees.reverseIterator.find { r =>
       if (r.state.done) false
       else if (r.state.dirty) {
-        Util.evaluate(r, creation)
+        Util.evaluate(r, creation, afterCommitObservers)
       }
       else false
     }
@@ -176,11 +179,11 @@ object Util {
       case Some(reactive) =>
         val evaluateNext = evaluatees.filterNot(_.state.done) ++ creation.drainCreated()
         evaluateNext.foreach(_.state.discovered = false)
-        evaluateAll(Util.toposort(evaluateNext), creation)
+        evaluateAll(Util.toposort(evaluateNext), creation, afterCommitObservers)
     }
   }
 
-  def evaluate(reactive: Derived[SimpleStruct], creationTicket: SimpleInitializer): Boolean = {
+  def evaluate(reactive: Derived[SimpleStruct], creationTicket: SimpleInitializer, afterCommitObservers: ListBuffer[Observation]): Boolean = {
     var potentialGlitch = false
     val dt              = new ReevTicket[reactive.Value, SimpleStruct](creationTicket, reactive.state.value) {
       override def dynamicAccess(input: ReSource[SimpleStruct]): input.Value = {
@@ -208,7 +211,7 @@ object Util {
     if (potentialGlitch) true else {
       if (reev.propagate) reactive.state.outgoing.foreach(_.state.dirty = true)
       reev.forValue(reactive.state.value = _)
-      reev.forEffect(_.execute())
+      reev.forEffect(o => afterCommitObservers.append(o))
       reactive.state.done = true
       false
     }
