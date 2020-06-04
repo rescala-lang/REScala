@@ -55,20 +55,20 @@ object Initializer {
     def unchange(v: T): T
   }
 
-  class EUnchange[T] extends Unchange[Pulse[T]] {override def unchange(v: Pulse[T]): Pulse[T] = Pulse.NoChange}
+  class ResetToNoChange[T] extends Unchange[Pulse[T]] {override def unchange(v: Pulse[T]): Pulse[T] = Pulse.NoChange}
 
-  class SUnchange[T] extends Unchange[T] {override def unchange(v: T): T = v}
-  class CUnchange[T] extends Unchange[(Pulse[T], Pulse[Diff[T]])] {
+  class KeepValue[T] extends Unchange[T] {override def unchange(v: T): T = v}
+  class ResetCurrentKeepState[T] extends Unchange[(Pulse[T], Pulse[Diff[T]])] {
     override def unchange(v: (Pulse[T], Pulse[Diff[T]])): (Pulse[T], Pulse[Diff[T]]) = v.copy(_2 = Pulse.NoChange)
   }
 
   class InitValues[V](val initialValue: V, val unchange: Unchange[V])
-  def Event[T] = new InitValues[Pulse[T]](Pulse.NoChange, new EUnchange[T])
-  def Change[T] = new InitValues[(Pulse[T], Pulse[Diff[T]])]((Pulse.NoChange, Pulse.NoChange), new CUnchange[T])
-  def DerivedSignal[T] = new InitValues[Pulse[T]](Pulse.empty, new SUnchange[Pulse[T]])
-  def Observer[T] = new InitValues(Pulse.NoChange, new EUnchange[T])
+  def Event[T] = new InitValues[Pulse[T]](Pulse.NoChange, new ResetToNoChange[T])
+  def Change[T] = new InitValues[(Pulse[T], Pulse[Diff[T]])]((Pulse.NoChange, Pulse.NoChange), new ResetCurrentKeepState[T])
+  def DerivedSignal[T] = new InitValues[Pulse[T]](Pulse.empty, new KeepValue[Pulse[T]])
+  def Observer[T] = new InitValues(Pulse.NoChange, new ResetToNoChange[T])
 
   case class InitializedSignal[T](override val initialValue: T)
-    extends InitValues[T](initialValue, new SUnchange[T]) {
+    extends InitValues[T](initialValue, new KeepValue[T]) {
   }
 }
