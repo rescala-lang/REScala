@@ -159,7 +159,7 @@ object Dependencies {
     val jsoniterVersion = "2.2.4"
     ld ++= Seq(
       "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % jsoniterVersion exclude("io.github.cquiroz", s"scala-java-time-tzdb_sjs1_${scalaVersion.value.substring(0,4)}"), //exclude("io.github.cquiroz", s"scala-java-time_sjs1_${scalaVersion.value.substring(0,4)}"),
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % jsoniterVersion % "compile-internal" // or "provided", but it is required only in compile-time
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % jsoniterVersion % "provided" // or "compile-internal"
       )
   }
 
