@@ -66,7 +66,7 @@ class LockStressTest extends AnyFunSuite {
     val finalTimeout = System.currentTimeMillis() + 1000
     val scores = threads.map(_.awaitTry(math.max(0, finalTimeout - System.currentTimeMillis())))
     println("lock stress test thread results:")
-    println("\t" + scores.zipWithIndex.map { case (count, idx) => idx + ": " + count }.mkString("\n\t"))
+    println("\t" + scores.zipWithIndex.map { case (count, idx) => s"$idx: $count" }.mkString("\n\t"))
     scores.find {
       case Failure(ex: TimeoutException) => false
       case Failure(_) => true
