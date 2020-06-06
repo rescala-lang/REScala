@@ -28,6 +28,7 @@ lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
 lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Code/Main"))
   .settings(
     name := "rescala",
+    strictCompile,
     cfg.base,
     lib.retypecheck,
     sourcecode,

@@ -1,7 +1,6 @@
 package rescala.reactives
 
 import rescala.core._
-import rescala.interface.RescalaInterface
 import rescala.reactives.Events.Estate
 
 

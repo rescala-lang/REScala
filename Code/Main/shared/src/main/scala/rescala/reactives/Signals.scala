@@ -2,9 +2,8 @@ package rescala.reactives
 
 import rescala.core._
 import rescala.interface.RescalaInterface
-import rescala.macros.{MacroTags, cutOutOfUserComputation}
+import rescala.macros.cutOutOfUserComputation
 import rescala.reactives.RExceptions.EmptySignalControlThrowable
-import rescala.reactives.Signals.Sstate
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -60,8 +59,8 @@ trait Signals[S <: Struct] {
   val rescalaAPI: RescalaInterface[S]
   private def ignore2[Tick, Current, Res](f: Tick => Res): (Tick, Current) => Res = (ticket, _) => f(ticket)
 
-  import rescalaAPI.{Signal => Sig, Var}
-  import rescalaAPI.Impls.{DerivedImpl, SignalImpl}
+  import rescalaAPI.Impls.SignalImpl
+  import rescalaAPI.{Var, Signal => Sig}
 
   def wrapWithSignalAPI[T](derived: rescalaAPI.Impls.SignalImpl[T]): Signal[T, S] = {
     new Signal[T, S] {

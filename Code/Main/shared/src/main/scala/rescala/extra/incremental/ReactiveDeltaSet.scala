@@ -3,7 +3,7 @@ package rescala.extra.incremental
 import rescala.core._
 import rescala.interface.RescalaInterface
 import rescala.macros.cutOutOfUserComputation
-import rescala.reactives.{Event, Events, Signal}
+import rescala.reactives.{Event, Signal}
 
 
 

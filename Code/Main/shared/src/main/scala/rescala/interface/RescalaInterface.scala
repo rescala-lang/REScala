@@ -3,7 +3,7 @@ package rescala.interface
 import rescala.core.{Base, Initializer, Interp, Pulse, REName, Scheduler, Struct}
 import rescala.macros.MacroTags.{Dynamic, Static}
 import rescala.reactives
-import rescala.reactives.{DefaultImplementations, Signals, Source}
+import rescala.reactives.{DefaultImplementations, Source}
 
 
 object RescalaInterface {

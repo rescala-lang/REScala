@@ -1,6 +1,6 @@
 package rescala.macros
 
-import rescala.core.{CreationTicket, DynamicTicket, LowPriorityCreationImplicits, ReSource, StaticTicket, Struct}
+import rescala.core.{CreationTicket, DynamicTicket, LowPriorityCreationImplicits, StaticTicket, Struct}
 import retypecheck._
 
 import scala.annotation.StaticAnnotation
@@ -56,8 +56,6 @@ class ReactiveMacros(val c: blackbox.Context) {
     lego.wrapFinalize(body, prefixManipulation)
   }
 
-  // case class UserDefinedFunction[T, Dep, Cap](staticDependencies: Set[Dep], expression: Cap => T)
-
   def UDFExpressionWithAPI[
     T: c.WeakTypeTag,
     DependencyType: c.WeakTypeTag,
@@ -70,7 +68,6 @@ class ReactiveMacros(val c: blackbox.Context) {
 
     val dependencies = lego.detections.detectedStaticReactives
     val isStatic = lego.detections.detectedDynamicReactives.isEmpty
-    val creationMethod = TermName(if (isStatic) "static" else "dynamic")
     val ticketType = weakTypeOf[Capability]
 
     val body = q"""_root_.rescala.reactives.UserDefinedFunction[${weakTypeOf[T]}, ${weakTypeOf[DependencyType]}, ${ticketType}](

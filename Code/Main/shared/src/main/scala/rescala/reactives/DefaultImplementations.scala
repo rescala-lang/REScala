@@ -1,7 +1,7 @@
 package rescala.reactives
 
 import rescala.core.Pulse.NoChange
-import rescala.core.{Base, Derived, DisconnectableImpl, Pulse, REName, ReevTicket, Scheduler, Struct}
+import rescala.core.{Base, Derived, DisconnectableImpl, Pulse, REName, ReevTicket, Struct}
 import rescala.interface.RescalaInterface
 import rescala.reactives
 import rescala.reactives.Events.Estate
@@ -67,8 +67,8 @@ trait DefaultImplementations[S <: Struct] {
     override protected[rescala] def reevaluate(rein: ReIn): Rout = guardReevaluate(rein) {
       val to  : Pulse[T] = rein.collectStatic(signal.innerDerived)
       val from: Pulse[T] = rein.before._1
-      if (to == Pulse.empty) return rein // ignore empty propagations
-      if (from != Pulse.NoChange) rein.withValue((to, Pulse.Value(Diff(from, to))))
+      if (to == Pulse.empty) rein // ignore empty propagations
+      else if (from != Pulse.NoChange) rein.withValue((to, Pulse.Value(Diff(from, to))))
       else rein.withValue((to, Pulse.NoChange)).withPropagate(false)
     }
   }
