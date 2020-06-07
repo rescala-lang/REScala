@@ -141,7 +141,7 @@ object Dependencies {
   val cats         = ld += "org.typelevel" %%% "cats-core" % "2.1.1"
   val decline      = ld += "com.monovore" %%% "decline" % "1.2.0"
   val fastparse    = ld += "com.lihaoyi" %%% "fastparse" % "2.3.0"
-  val javalin      = ld += "io.javalin" % "javalin" % "3.8.0"
+  val javalin      = ld += "io.javalin" % "javalin" % "3.9.0"
   val jsoup        = ld += "org.jsoup" % "jsoup" % "1.13.1"
   val kaleidoscope = ld += "com.propensive" %%% "kaleidoscope" % "0.1.0"
   val magnolia     = ld += "com.propensive" %%% "magnolia" % "0.15.0"
@@ -156,7 +156,7 @@ object Dependencies {
   val upickle      = ld += "com.lihaoyi" %% "upickle" % "[0.7.4,1.1.0]"
 
   val jsoniter = {
-    val jsoniterVersion = "2.2.4"
+    val jsoniterVersion = "2.2.5"
     ld ++= Seq(
       "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % jsoniterVersion exclude("io.github.cquiroz", s"scala-java-time-tzdb_sjs1_${scalaVersion.value.substring(0,4)}"), //exclude("io.github.cquiroz", s"scala-java-time_sjs1_${scalaVersion.value.substring(0,4)}"),
       "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % jsoniterVersion % "compile-internal" // or "provided", but it is required only in compile-time
