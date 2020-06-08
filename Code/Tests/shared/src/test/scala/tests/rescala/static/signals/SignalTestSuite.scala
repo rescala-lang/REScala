@@ -299,5 +299,31 @@ class SignalTestSuite extends RETests with ScalaCheckDrivenPropertyChecks { mult
         assertLevel(signal, signal.readValueOnce)
       }
     }
+
+    "count Is Correctly Computed" in forAll(Gen.posNum[Int]) { (n: Int) =>
+      val e = Evt[Int]()
+      val s: Signal[Int] = e.count
+
+      assert(s.readValueOnce == 0)
+      1 to n foreach { i => e.fire(i) }
+      assert(s.readValueOnce == n)
+    }
+
+    "latestOption Is Correctly Computed" in forAll(Gen.posNum[Int]) { (n: Int) =>
+      val e = Evt[Int]()
+      val s: Signal[Option[Int]] = e.latestOption()
+
+      assert(s.readValueOnce.isEmpty)
+      1 to n foreach { i =>
+        e.fire(i)
+        assert(s.readValueOnce ==  Option(i))
+      }
+    }
+
+
+
+
+
+
   }
 } }
