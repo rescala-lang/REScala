@@ -250,7 +250,7 @@ class TrueDynamicSignals extends RETests { multiEngined { engine => import engin
   }
 
 
-  test("dynamic dependency changes ontop of stuff that is not changing"){
+  test("dynamic dependency changes on top of stuff that is not changing"){
     val v0 = Var("level 0")
     val v3 = v0.map(_ => "level 1").map(_ => "level 2").map(_ => "level 3")
 

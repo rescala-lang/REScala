@@ -33,7 +33,7 @@ class ExceptionPropagationTestSuite extends RETests { multiEngined { engine => i
 
   }
 
-  test("basic Event Excepitons"){
+  test("basic Event Exceptions"){
     val e = Evt[Int]
     val de = Event { e().map(div) }
     val se = e.map(div)

@@ -4,7 +4,7 @@ import tests.rescala.testtools.RETests
 
 class RecurringPropagation extends RETests { multiEngined { engine => import engine._
 
-  test("can start propagations in observers") {
+  test("can start propagation in observers") {
 
     val e1 = Evt[Int]
     val m1 = e1.map(_ + 10)
@@ -19,7 +19,7 @@ class RecurringPropagation extends RETests { multiEngined { engine => import eng
 
   }
 
-  test("recursive propagations") {
+  test("recursive propagation") {
 
     val e1 = Evt[Int]
     val m1 = e1.map(_ + 10)

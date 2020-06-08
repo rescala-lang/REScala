@@ -53,7 +53,7 @@ class OOPropertiesEventTest extends RETests { multiEngined { engine => import en
 
       class A {
         lazy val e1: Event[Int] = Evt[Int]
-        // this will force e1 which is overriden below
+        // this will force e1 which is overridden below
         e1 += ((x: Int) => { test += 1 })
       }
 

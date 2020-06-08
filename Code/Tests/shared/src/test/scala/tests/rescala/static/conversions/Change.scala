@@ -113,7 +113,7 @@ class Change extends RETests { multiEngined { engine => import engine._
 
   /* with empty signals */
 
-  test("changing emptyness") {
+  test("changing emptiness") {
     val v2 = Var.empty[String]
 
     val e2 = v2.change.map(_.pair).recover{case t => Some("failed" -> t.toString)}
@@ -132,7 +132,7 @@ class Change extends RETests { multiEngined { engine => import engine._
   }
 
 
-  test("folding changing and emptyness") {
+  test("folding changing and emptiness") {
     val v1 = Var.empty[String]
     val v2 = Var.empty[String]
 

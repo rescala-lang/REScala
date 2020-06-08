@@ -208,7 +208,7 @@ class FlattenTest extends RETests { multiEngined { engine =>
     assert(log == List(1, 13, 1, 13))
   }
 
-  test("basic Higher Order Signal can Be Defereferenced"){
+  test("basic Higher Order Signal can be dereferenced"){
     val v = Var(42)
     val s1: Signal[Int] = v.map(identity)
     val s2: Signal[Signal[Int]] = Signals.dynamic() { t => s1 }
