@@ -2,11 +2,17 @@ package tests.rescala.static.signals
 
 import java.util.concurrent.atomic.AtomicInteger
 
+import org.scalacheck.{Arbitrary, Gen}
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.core.infiltration.Infiltrator.assertLevel
 import tests.rescala.testtools.RETests
 
+import scala.collection.Seq
+import scala.collection.mutable.ListBuffer
+import scala.util.Random
 
-class SignalTestSuite extends RETests { multiEngined { engine => import engine._
+
+class SignalTestSuite extends RETests with ScalaCheckDrivenPropertyChecks { multiEngined { engine => import engine._
 
 
   test("handler Is Called When Change Occurs"){
@@ -243,4 +249,55 @@ class SignalTestSuite extends RETests { multiEngined { engine => import engine._
 
   }
 
+  "property based tests" - {
+    implicit val shortlists: Arbitrary[Seq[Int]] = Arbitrary(Gen.someOf(0 to 1000))
+    implicit val positiveIntegers: Arbitrary[Int] = Arbitrary(Gen.posNum[Int])
+
+    "get last n signals" in forAll { (fireValues: Seq[Int], lastN: Int) =>
+      val e = Evt[Int]()
+      val s: Signal[scala.collection.LinearSeq[Int]] = e.last(lastN)
+
+      var fireCount = 0
+      val fire = (value: Int) => {
+        e.fire(value);
+        fireCount += 1
+      }
+
+      // make sure that the the list is initial empty
+      assert(s.readValueOnce.isEmpty)
+      for (i <- fireValues.indices) {
+        fire(fireValues(i))
+        // make sure that the list of the last n events contains at most `lastN` events and exactly `fireCount` if it is less than `lastN`
+        assert(s.readValueOnce.length == Math.min(fireCount, lastN))
+        // make sure that the elements of the list are as expected
+        val expectedLastN = fireValues.take(fireCount).takeRight(lastN)
+        assert(expectedLastN == s.readValueOnce)
+      }
+      // make sure that the event was fired for every item in `fireValues`
+      assert(fireCount == fireValues.length)
+    }
+
+
+    implicit val signalsGen: Arbitrary[List[Signal[Int]]] = Arbitrary(
+      for {
+        i <- Gen.oneOf(0 to 1000)
+      }
+      yield {
+        val root = Var(0)
+        var signals = new ListBuffer[Signal[Int]]()
+        signals += root
+        0 to i foreach { _ =>
+          val randomSignal = signals(Random.nextInt(signals.length))
+          signals += Signal{ 1 + randomSignal() }
+        }
+        signals.toList
+      }
+    )
+
+    "level Is Correctly Computed" in forAll { (signals: List[Signal[Int]]) =>
+      for (signal <- signals) {
+        assertLevel(signal, signal.readValueOnce)
+      }
+    }
+  }
 } }

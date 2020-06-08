@@ -1,5 +1,6 @@
 package tests.rescala.static.signals
 
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import tests.rescala.testtools.RETests
 
 //These 3 are for JUnitRunner
@@ -7,7 +8,7 @@ import tests.rescala.testtools.RETests
 
 
 
-class VarTestSuite extends RETests { multiEngined { engine => import engine._
+class VarTestSuite extends RETests with ScalaCheckDrivenPropertyChecks { multiEngined { engine => import engine._
 
 
 
@@ -79,4 +80,10 @@ class VarTestSuite extends RETests { multiEngined { engine => import engine._
 
   }
 
+  "property based tests" - {
+    "get Val After Creation Returns Initialization Value" in forAll { (initialValue: Int) =>
+      val v = Var(initialValue)
+      assert(v.readValueOnce == initialValue)
+    }
+  }
 } }
