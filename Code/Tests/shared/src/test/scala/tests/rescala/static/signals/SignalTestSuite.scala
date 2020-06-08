@@ -186,7 +186,7 @@ class SignalTestSuite extends RETests { multiEngined { engine => import engine._
   }
 
 
-  test("no Change Propagations"){
+  test("no Change Propagation"){
     val v = Var(1)
     val s = v.map(_ => 1)
     val s2 = Signal { s() }

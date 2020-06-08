@@ -5,7 +5,7 @@ import tests.rescala.testtools.RETests
 
 class SignalMacro extends RETests { multiEngined { engine => import engine._
 
-  test(".value acces works"){
+  test(".value access works"){
 
     val v = Var(List(1,2,3))
     val s1: Signal[List[Int]] = Signal { v.value.map(_ + 2) }
@@ -50,7 +50,7 @@ class SignalMacro extends RETests { multiEngined { engine => import engine._
 
 
 
-  test("conversion Functions Work In Signals In Object Construction In Overriden Def"){
+  test("conversion Functions Work In Signals In Object Construction In Overridden Def"){
     // a previous macro implementation yielded wrong results for code of the
     // following form, see:
     // https://github.com/guidosalva/examples/pull/4/files#r11724000
