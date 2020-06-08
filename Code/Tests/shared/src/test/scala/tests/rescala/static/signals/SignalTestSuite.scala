@@ -319,11 +319,5 @@ class SignalTestSuite extends RETests with ScalaCheckDrivenPropertyChecks { mult
         assert(s.readValueOnce ==  Option(i))
       }
     }
-
-
-
-
-
-
   }
 } }
