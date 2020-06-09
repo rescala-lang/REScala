@@ -1,5 +1,7 @@
 package tests.rescala.static.signals
 
+import org.scalacheck.Arbitrary
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import tests.rescala.testtools.RETests
 
@@ -8,7 +10,8 @@ import tests.rescala.testtools.RETests
 
 
 
-class VarTestSuite extends RETests with ScalaCheckDrivenPropertyChecks { multiEngined { engine => import engine._
+class VarTestSuite extends RETests with ScalaCheckDrivenPropertyChecks with Matchers {
+  multiEngined { engine => import engine._
 
 
 
@@ -84,6 +87,17 @@ class VarTestSuite extends RETests with ScalaCheckDrivenPropertyChecks { multiEn
     "get Val After Creation Returns Initialization Value" in forAll { (initialValue: Int) =>
       val v = Var(initialValue)
       assert(v.readValueOnce == initialValue)
+    }
+
+    "changed is correctly computed" in forAll(Arbitrary.arbitrary[List[Int]]) { (list: List[Int]) =>
+      val v = Var(0)
+      val e = v.changed
+      val s = e.latest
+
+      list.foreach { n =>
+        v.set(n)
+        s.now should be (n)
+      }
     }
   }
 } }

@@ -3,6 +3,7 @@ package tests.rescala.static.signals
 import java.util.concurrent.atomic.AtomicInteger
 
 import org.scalacheck.{Arbitrary, Gen}
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.core.infiltration.Infiltrator.assertLevel
 import tests.rescala.testtools.RETests
@@ -12,7 +13,8 @@ import scala.collection.mutable.ListBuffer
 import scala.util.Random
 
 
-class SignalTestSuite extends RETests with ScalaCheckDrivenPropertyChecks { multiEngined { engine => import engine._
+class SignalTestSuite extends RETests with ScalaCheckDrivenPropertyChecks with Matchers {
+  multiEngined { engine => import engine._
 
 
   test("handler Is Called When Change Occurs"){
@@ -318,6 +320,24 @@ class SignalTestSuite extends RETests with ScalaCheckDrivenPropertyChecks { mult
         e.fire(i)
         assert(s.readValueOnce ==  Option(i))
       }
+    }
+
+    "iterate only depends on init value" in forAll(Arbitrary.arbitrary[Array[Int]], Arbitrary.arbInt.arbitrary) {
+      (values: Array[Int], initial: Int) =>
+        var t = 0;
+        val evt = Evt[Int]
+        val func = (x: Int) => {
+          t = x; x + 1
+        }
+        val sig = evt.iterate(initial)(func)
+
+        values.indices foreach {
+          i =>
+            evt.fire(values(i))
+            t should be (initial + i)
+            sig.now should be (initial + 1 + i)
+        }
+
     }
   }
 } }
