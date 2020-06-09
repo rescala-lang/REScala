@@ -263,7 +263,9 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
     * @group conversion*/
   @cutOutOfUserComputation
   final def last[A >: T](n: Int)(implicit ticket: CreationTicket[S]): Signal[LinearSeq[A]] = {
-    rescalaAPI.Events.foldOne(this, Queue[A]()) { (queue: Queue[A], v: T) =>
+    if (n < 0) throw new IllegalArgumentException(s"length must be positive")
+    else if (n == 0) Signal.static(Nil)
+    else rescalaAPI.Events.foldOne(this, Queue[A]()) { (queue: Queue[A], v: T) =>
       if (queue.lengthCompare(n) >= 0) queue.tail.enqueue(v) else queue.enqueue(v)
     }
   }
