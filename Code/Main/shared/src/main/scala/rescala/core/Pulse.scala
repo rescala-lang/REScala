@@ -1,7 +1,7 @@
 package rescala.core
 
 import rescala.core.Pulse._
-import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
+import rescala.reactives.RExceptions.{EmptySignalControlThrowable, ObservedException}
 
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
@@ -134,7 +134,7 @@ object Pulse {
 
   /** wrap a pulse generating function to store eventual exceptions into an exceptional pulse */
   def tryCatch[P >: Change[Nothing] <: Pulse[_]](f: => P, onEmpty: P = Pulse.empty): P = try f catch {
-    case ufe: UnhandledFailureException => throw ufe
+    case ufe: ObservedException    => throw ufe
     case npe: NullPointerException => throw npe
     case EmptySignalControlThrowable => onEmpty
     case NonFatal(t) => Exceptional(t)

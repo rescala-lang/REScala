@@ -1,17 +1,28 @@
 package rescala.reactives
 
-import rescala.core.ReSource
+import rescala.core.{ReSource, Struct}
 
 import scala.util.control.ControlThrowable
 
 object RExceptions {
   object EmptySignalControlThrowable extends ControlThrowable
-  class UnhandledFailureException(location: ReSource[_], cause: Throwable) extends RuntimeException(s"a failure was observed but not handled by: $location", cause)
-  def toExternalException[R](r: Any, f: => R) = {
+
+  case class ObservedException(location: ReSource[_ <: Struct], details: String, cause: Throwable) extends RuntimeException(cause) {
+    override def getMessage: String = {
+      val nestedMessage = Option(cause.getMessage).fold(""){msg => s" $msg"}
+      s"»$location« $details: ${cause}$nestedMessage"
+    }
+  }
+
+
+
+  def toExternalReadException[R](r: ReSource[_ <: Struct], f: => R) = {
     try { f }
     catch {
       case EmptySignalControlThrowable => throw new NoSuchElementException(s"$r is empty")
-      case other: Throwable => throw new IllegalStateException(s"$r has an error value", other)
+        // todo improve error message
+      case other: Throwable => throw ObservedException(r, "was accessd but contained an exception", other)
     }
   }
+
 }

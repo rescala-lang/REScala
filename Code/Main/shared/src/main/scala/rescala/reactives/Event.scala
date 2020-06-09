@@ -5,7 +5,7 @@ import rescala.core.{Interp, _}
 import rescala.interface.RescalaInterface
 import rescala.macros.cutOutOfUserComputation
 import rescala.reactives.Observe.ObserveInteract
-import rescala.reactives.RExceptions.UnhandledFailureException
+import rescala.reactives.RExceptions.ObservedException
 
 import scala.collection.immutable.{LinearSeq, Queue}
 
@@ -60,7 +60,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
       override def checkExceptionAndRemoval(): Boolean = {
         reevalVal match {
           case Pulse.Exceptional(f) if onError == null =>
-            throw new UnhandledFailureException(Event.this, f)
+            throw new ObservedException(Event.this, "observed", f)
           case _                                       => ()
         }
         false

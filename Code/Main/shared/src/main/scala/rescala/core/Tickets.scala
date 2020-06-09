@@ -110,7 +110,7 @@ abstract class AdmissionTicket[S <: Struct](initializer: Initializer[S], declare
 trait AccessTicket[S <: Struct] {
   private[rescala] def access(reactive: ReSource[S]): reactive.Value
   final def now[A](reactive: Interp[A, S]): A = {
-    RExceptions.toExternalException(reactive, reactive.interpret(access(reactive)))
+    RExceptions.toExternalReadException(reactive, reactive.interpret(access(reactive)))
   }
 }
 

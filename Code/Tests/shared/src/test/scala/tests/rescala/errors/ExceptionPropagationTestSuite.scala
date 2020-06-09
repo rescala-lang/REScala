@@ -1,7 +1,7 @@
 package tests.rescala.errors
 
 import rescala.core.Pulse
-import rescala.reactives.RExceptions.UnhandledFailureException
+import rescala.reactives.RExceptions.ObservedException
 import tests.rescala.testtools.RETests
 
 import scala.util.{Failure, Success, Try}
@@ -28,8 +28,8 @@ class ExceptionPropagationTestSuite extends RETests { multiEngined { engine => i
 
     v.set(0)
 
-    intercept[IllegalStateException](ds.readValueOnce)
-    intercept[IllegalStateException](ss.readValueOnce)
+    intercept[ObservedException](ds.readValueOnce)
+    intercept[ObservedException](ss.readValueOnce)
 
   }
 
@@ -79,16 +79,16 @@ class ExceptionPropagationTestSuite extends RETests { multiEngined { engine => i
     assert(res.pair === (10 -> 5), "successful changed 2")
 
     input.fire(" 0  ")
-    intercept[IllegalStateException](folded.readValueOnce)
+    intercept[ObservedException](folded.readValueOnce)
     intercept[ArithmeticException](res.pair)
 
     input.fire(" aet ")
-    intercept[IllegalStateException](folded.readValueOnce)
+    intercept[ObservedException](folded.readValueOnce)
     intercept[NumberFormatException](res.pair)
 
 
     input.fire(" 2 ")
-    intercept[IllegalStateException](folded.readValueOnce)
+    intercept[ObservedException](folded.readValueOnce)
     intercept[NumberFormatException](res.pair)
 
   }
@@ -121,7 +121,7 @@ class ExceptionPropagationTestSuite extends RETests { multiEngined { engine => i
     assert(res.pair === (2 -> 0), "successful changed3")
 
     input.set(" aet ")
-    intercept[IllegalStateException](folded.readValueOnce)
+    intercept[ObservedException](folded.readValueOnce)
     intercept[NumberFormatException](res.pair)
 
 
@@ -141,7 +141,7 @@ class ExceptionPropagationTestSuite extends RETests { multiEngined { engine => i
 
     var res = 100
 
-    intercept[UnhandledFailureException]{ds.observe(res = _)}
+    intercept[ObservedException]{ds.observe(res = _)}
     assert(res === 100, "can not add observers to exceptional signals")
 
     v.set(42)
@@ -149,7 +149,7 @@ class ExceptionPropagationTestSuite extends RETests { multiEngined { engine => i
     assert(res === 100/42, "can add observers if no longer failed")
 
 
-    intercept[UnhandledFailureException]{ v.set(0) }
+    intercept[ObservedException]{v.set(0) }
     assert(res===100/42, "observers are not triggered on failure")
     if(engine.scheduler != rescala.extra.simpleprop.SimpleScheduler) {
       assert(v.readValueOnce === 42, "transaction is aborted on failure")
@@ -179,14 +179,14 @@ class ExceptionPropagationTestSuite extends RETests { multiEngined { engine => i
       val v  = Var(0)
       val ds = Signal {div(v())}
 
-      intercept[UnhandledFailureException] {ds.abortOnError()}
+      intercept[ObservedException] {ds.abortOnError("abort immediate")}
 
       v.set(42)
-      ds.abortOnError()
+      ds.abortOnError("abort later")
       assert(ds.readValueOnce === 100 / 42, "can add observers if no longer failed")
 
 
-      intercept[UnhandledFailureException] {v.set(0)}
+      intercept[ObservedException] {v.set(0)}
       assert(ds.readValueOnce === 100 / 42, "observers are not triggered on failure")
       assert(v.readValueOnce === 42, "transaction is aborted on failure")
     }
@@ -200,10 +200,10 @@ class ExceptionPropagationTestSuite extends RETests { multiEngined { engine => i
 
     assert(recovered.readValueOnce === 50)
     v.set(0)
-    intercept[IllegalStateException](recovered.readValueOnce)
+    intercept[ObservedException](recovered.readValueOnce)
     v.set(10)
     assert(recovered.readValueOnce === 9000)
-    intercept[IllegalStateException](ds2.readValueOnce)
+    intercept[ObservedException](ds2.readValueOnce)
 
   }
 } }

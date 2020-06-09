@@ -3,6 +3,7 @@ package tests.rescala.static.events
 import java.util.concurrent.atomic.AtomicInteger
 
 import rescala.core.Pulse
+import rescala.reactives.RExceptions.ObservedException
 import tests.rescala.testtools.RETests
 
 
@@ -67,7 +68,7 @@ class OR_EventTest extends RETests { multiEngined { engine => import engine._
       e2.admit("five b")(turn)
     }
 
-    intercept[IllegalStateException](log.readValueOnce)
+    intercept[ObservedException](log.readValueOnce)
 
   }
 

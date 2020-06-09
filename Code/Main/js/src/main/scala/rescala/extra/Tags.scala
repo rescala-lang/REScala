@@ -4,7 +4,7 @@ import org.scalajs.dom
 import org.scalajs.dom.{Element, Node}
 import rescala.core.{CreationTicket, Pulse, Scheduler, Struct}
 import rescala.reactives.Observe.ObserveInteract
-import rescala.reactives.RExceptions.UnhandledFailureException
+import rescala.reactives.RExceptions.ObservedException
 import rescala.reactives.{Evt, Observe, Signal, Var}
 import scalatags.JsDom.all.{Attr, AttrValue, Modifier, Style, StyleValue}
 import scalatags.JsDom.{StringFrag, TypedTag}
@@ -94,7 +94,7 @@ object Tags {
       reevalVal match {
         case Pulse.empty | Pulse.NoChange => false
         case Pulse.Exceptional(f)         =>
-          throw new UnhandledFailureException(rendered, f)
+          throw new ObservedException(rendered, s"signal tag attached to $parent observed", f)
         case Pulse.Value(v)               =>
           isInDocumentHack(parent)(v)
       }
