@@ -60,4 +60,17 @@ class EventTest extends RETests { multiEngined { engine => import engine._
 
   }
 
+  "from callback in transaction test" ignore {
+
+    val res = transaction() { implicit at =>
+      val res = Events.fromCallback[String] { cb =>
+        cb("some!")
+      }
+      res.event.latest("none")
+    }
+
+    assert(res.readValueOnce === "some!")
+
+  }
+
 } }
