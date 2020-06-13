@@ -156,7 +156,7 @@ object Dependencies {
   val upickle      = ld += "com.lihaoyi" %% "upickle" % "[0.7.4,1.1.0]"
 
   val jsoniter = {
-    val jsoniterVersion = "2.2.5"
+    val jsoniterVersion = "2.4.0"
     ld ++= Seq(
       "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % jsoniterVersion exclude("io.github.cquiroz", s"scala-java-time-tzdb_sjs1_${scalaVersion.value.substring(0,4)}"), //exclude("io.github.cquiroz", s"scala-java-time_sjs1_${scalaVersion.value.substring(0,4)}"),
       "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % jsoniterVersion % "provided" // or "compile-internal"
