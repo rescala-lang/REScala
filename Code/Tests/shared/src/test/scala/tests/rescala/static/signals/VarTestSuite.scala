@@ -1,6 +1,6 @@
 package tests.rescala.static.signals
 
-import org.scalacheck.Arbitrary
+import org.scalacheck.Gen
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import tests.rescala.testtools.RETests
@@ -89,8 +89,8 @@ class VarTestSuite extends RETests with ScalaCheckDrivenPropertyChecks with Matc
       assert(v.readValueOnce == initialValue)
     }
 
-    "changed is correctly computed" in forAll(Arbitrary.arbitrary[List[Int]]) { (list: List[Int]) =>
-      val v = Var(0)
+    "changed is correctly computed" in forAll(Gen.containerOf[List,Int](Gen.posNum[Int])) { (list: List[Int]) =>
+      val v = Var(-1)
       val e = v.changed
       val s = e.latest
 
