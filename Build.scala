@@ -186,8 +186,8 @@ object Dependencies {
 
   // tests
   val scalacheck         = ld += "org.scalacheck" %%% "scalacheck" % "1.14.3" % "test"
-  val scalatestpluscheck = ld += "org.scalatestplus" %%% "scalacheck-1-14" % "3.1.2.0" % "test"
-  val scalatest          = ld += "org.scalatest" %%% "scalatest" % "3.1.2" % "test"
+  val scalatestpluscheck = ld += "org.scalatestplus" %%% "scalacheck-1-14" % "3.2.0.0" % "test"
+  val scalatest          = ld += "org.scalatest" %%% "scalatest" % "3.2.0" % "test"
 
   // legacy
   val scalaXml   = ld += "org.scala-lang.modules" %% "scala-xml" % "1.3.0"
