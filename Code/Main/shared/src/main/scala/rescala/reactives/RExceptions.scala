@@ -14,6 +14,13 @@ object RExceptions {
     }
   }
 
+  case class PipelinedException(t: Throwable)  extends RuntimeException(t) {
+    override def getMessage: String = {
+      val nestedMessage = Option(t.getMessage).fold(""){msg => s" $msg"}
+      s"»${t}$nestedMessage"
+    }
+  }
+
 
 
   def toExternalReadException[R](r: ReSource[_ <: Struct], f: => R) = {
