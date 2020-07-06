@@ -10,7 +10,7 @@ object Settings {
 
   private val sv11 = "2.11.12"
   private val sv12 = "2.12.11"
-  private val sv13 = "2.13.2"
+  private val sv13 = "2.13.3"
   private val svDotty = "0.24.0-RC1"
 
 
@@ -60,8 +60,6 @@ object Settings {
     "-Xlint:inaccessible",               // Warn about inaccessible types in method signatures.
     "-Xlint:infer-any",                  // Warn when a type argument is inferred to be `Any`.
     "-Xlint:missing-interpolator",       // A string literal appears to be missing an interpolator id.
-    "-Xlint:nullary-override",           // Warn when non-nullary `def f()' overrides nullary `def f'.
-    "-Xlint:nullary-unit",               // Warn when nullary methods return Unit.
     "-Xlint:option-implicit",            // Option.apply used implicit view.
     "-Xlint:package-object-classes",     // Class or object defined in package object.
     "-Xlint:poly-implicit-overload",     // Parameterized overloaded implicit methods are not visible as view bounds.
@@ -141,7 +139,7 @@ object Dependencies {
   val cats         = ld += "org.typelevel" %%% "cats-core" % "2.1.1"
   val decline      = ld += "com.monovore" %%% "decline" % "1.2.0"
   val fastparse    = ld += "com.lihaoyi" %%% "fastparse" % "2.3.0"
-  val javalin      = ld += "io.javalin" % "javalin" % "3.8.0"
+  val javalin      = ld += "io.javalin" % "javalin" % "3.9.1"
   val jsoup        = ld += "org.jsoup" % "jsoup" % "1.13.1"
   val kaleidoscope = ld += "com.propensive" %%% "kaleidoscope" % "0.1.0"
   val magnolia     = ld += "com.propensive" %%% "magnolia" % "0.15.0"
@@ -156,7 +154,7 @@ object Dependencies {
   val upickle      = ld += "com.lihaoyi" %% "upickle" % "[0.7.4,1.1.0]"
 
   val jsoniter = {
-    val jsoniterVersion = "2.2.4"
+    val jsoniterVersion = "2.4.4"
     ld ++= Seq(
       "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % jsoniterVersion exclude("io.github.cquiroz", s"scala-java-time-tzdb_sjs1_${scalaVersion.value.substring(0,4)}"), //exclude("io.github.cquiroz", s"scala-java-time_sjs1_${scalaVersion.value.substring(0,4)}"),
       "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % jsoniterVersion % "provided" // or "compile-internal"
@@ -188,8 +186,8 @@ object Dependencies {
 
   // tests
   val scalacheck         = ld += "org.scalacheck" %%% "scalacheck" % "1.14.3" % "test"
-  val scalatestpluscheck = ld += "org.scalatestplus" %%% "scalacheck-1-14" % "3.1.2.0" % "test"
-  val scalatest          = ld += "org.scalatest" %%% "scalatest" % "3.1.2" % "test"
+  val scalatestpluscheck = ld += "org.scalatestplus" %%% "scalacheck-1-14" % "3.2.0.0" % "test"
+  val scalatest          = ld += "org.scalatest" %%% "scalatest" % "3.2.0" % "test"
 
   // legacy
   val scalaXml   = ld += "org.scala-lang.modules" %% "scala-xml" % "1.3.0"
