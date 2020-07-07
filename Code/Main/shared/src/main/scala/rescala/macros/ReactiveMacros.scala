@@ -30,7 +30,7 @@ class ReactiveMacros(val c: blackbox.Context) {
     IsStatic <: MacroTags.Staticism : c.WeakTypeTag,
     ReactiveType : c.WeakTypeTag]
   (expression: Tree)(ticket: c.Tree): c.Tree = {
-    val wrappedExpression = reify { try { c.Expr[Any](expression).splice } catch { case e: Throwable => throw PipelinedException(e) } }.tree
+    val wrappedExpression = reify { try { c.Expr[Any](expression).splice } catch { case e: Throwable => throw rescala.reactives.PipelinedException(e) } }.tree
     ReactiveExpression[A, S, IsStatic, ReactiveType](wrappedExpression)(ticket)
   }
 
