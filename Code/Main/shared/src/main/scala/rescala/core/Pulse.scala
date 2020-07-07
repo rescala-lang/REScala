@@ -1,7 +1,8 @@
 package rescala.core
 
 import rescala.core.Pulse._
-import rescala.reactives.RExceptions.{EmptySignalControlThrowable, ObservedException, PipelinedException}
+import rescala.reactives.PipelinedException
+import rescala.reactives.RExceptions.{EmptySignalControlThrowable, ObservedException}
 
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
@@ -136,7 +137,7 @@ object Pulse {
   def tryCatch[P >: Change[Nothing] <: Pulse[_]](f: => P, onEmpty: P = Pulse.empty): P = try f catch {
     case ufe: ObservedException    => throw ufe
     case npe: NullPointerException => throw npe
-    case PipelinedException(t) => throw t
+    case pe: PipelinedException[_] => throw pe
     case EmptySignalControlThrowable => onEmpty
     case NonFatal(t) => Exceptional(t)
   }

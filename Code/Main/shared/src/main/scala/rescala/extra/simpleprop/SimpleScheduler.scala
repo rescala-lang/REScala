@@ -3,6 +3,7 @@ package rescala.extra.simpleprop
 import rescala.core.Initializer.InitValues
 import rescala.core.{AccessTicket, Derived, DynamicInitializerLookup, Initializer, Observation, ReSource, ReevTicket, Scheduler, Struct}
 import rescala.interface.Aliases
+import rescala.reactives.{EvaluationException, PipelinedException, TransactionException}
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
@@ -132,6 +133,8 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
         if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(creation.accessTicket())
         admissionResult
       }
+    } catch {
+      case e: EvaluationException[SimpleStruct] => throw TransactionException(e, initialWrites)
     }
     finally {
       idle = true
@@ -194,26 +197,31 @@ object Util {
       }
       override def staticAccess(input: ReSource[SimpleStruct]): input.Value = input.state.value
     }
-    val reev            = reactive.reevaluate(dt)
-    reev.getDependencies().foreach { newDeps =>
-      val incoming = reactive.state.incoming
-      reactive.state.incoming = newDeps
-      val added = newDeps diff incoming
-      val removed = incoming diff newDeps
-      added.foreach { input =>
-        input.state.outgoing = input.state.outgoing + reactive
+    try {
+      val reev            = reactive.reevaluate(dt)
+      reev.getDependencies().foreach { newDeps =>
+        val incoming = reactive.state.incoming
+        reactive.state.incoming = newDeps
+        val added = newDeps diff incoming
+        val removed = incoming diff newDeps
+        added.foreach { input =>
+          input.state.outgoing = input.state.outgoing + reactive
+        }
+        removed.foreach { input =>
+          input.state.outgoing = input.state.outgoing - reactive
+        }
       }
-      removed.foreach { input =>
-        input.state.outgoing = input.state.outgoing - reactive
+
+      if (potentialGlitch) true else {
+        if (reev.propagate) reactive.state.outgoing.foreach(_.state.dirty = true)
+        reev.forValue(reactive.state.value = _)
+        reev.forEffect(o => afterCommitObservers.append(o))
+        reactive.state.done = true
+        false
       }
+    } catch {
+      case PipelinedException(t) => throw EvaluationException(t, reactive)
     }
 
-    if (potentialGlitch) true else {
-      if (reev.propagate) reactive.state.outgoing.foreach(_.state.dirty = true)
-      reev.forValue(reactive.state.value = _)
-      reev.forEffect(o => afterCommitObservers.append(o))
-      reactive.state.done = true
-      false
-    }
   }
 }
