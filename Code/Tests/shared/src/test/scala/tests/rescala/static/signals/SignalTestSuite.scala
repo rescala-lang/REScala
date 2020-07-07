@@ -6,7 +6,6 @@ import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.core.infiltration.Infiltrator.assertLevel
-import rescala.reactives.RExceptions.PipelinedException
 import tests.rescala.testtools.RETests
 
 import scala.collection.Seq
@@ -350,28 +349,6 @@ class SignalTestSuite extends RETests with ScalaCheckDrivenPropertyChecks with M
             sig.now should be (initial + 1 + i)
         }
 
-    }
-
-
-    "EXPERIMENTAL" in forAll(Gen.posNum[Int]) { (n: Int) =>
-      val e = Evt[Int]()
-      val s: Signal[Int] = e.count
-
-      var count = 0
-      val t = s.changed.fold(Seq.empty[Int]) { (acc, c) =>  acc :+ c }
-
-      val testSpec = Signal {
-        print(s(), t().size)
-        try {
-          assert(s() == t().size)
-        }
-        catch {
-          case e => throw PipelinedException(e)
-        }
-      }
-
-
-      1 to n foreach { i => e.fire(i) }
     }
   }
 } }
