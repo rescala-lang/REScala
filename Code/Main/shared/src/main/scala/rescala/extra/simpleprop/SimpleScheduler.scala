@@ -134,7 +134,7 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
         admissionResult
       }
     } catch {
-      case e: EvaluationException[SimpleStruct] => throw TransactionException(e, initialWrites)
+      case e@EvaluationException(_, _) => throw TransactionException(e, initialWrites)
     }
     finally {
       idle = true
