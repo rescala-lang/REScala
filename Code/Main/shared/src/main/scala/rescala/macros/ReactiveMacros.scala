@@ -1,7 +1,6 @@
 package rescala.macros
 
 import rescala.core.{CreationTicket, DynamicTicket, LowPriorityCreationImplicits, StaticTicket, Struct}
-import rescala.reactives.PipelinedException
 import retypecheck._
 
 import scala.annotation.StaticAnnotation

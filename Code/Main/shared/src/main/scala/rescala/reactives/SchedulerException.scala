@@ -1,11 +1,12 @@
 package rescala.reactives
 
 import rescala.core.{Derived, ReSource, Struct}
+import rescala.extra.simpleprop.SimpleStruct
 
 sealed trait SchedulerException extends RuntimeException {
 };
 
-case class EvaluationException[S <: Struct](t: Throwable, reactive: Derived[S])
+case class EvaluationException(t: Throwable, reactive: Derived[SimpleStruct])
   extends SchedulerException {
 
   override def getMessage: String = {
@@ -14,7 +15,7 @@ case class EvaluationException[S <: Struct](t: Throwable, reactive: Derived[S])
 
 }
 
-case class TransactionException[S <: Struct](t: EvaluationException[S], initialChanges: Set[ReSource[S]])
+case class TransactionException(t: EvaluationException, initialChanges: Set[ReSource[SimpleStruct]])
   extends SchedulerException {
 
   override def getMessage: String = {
