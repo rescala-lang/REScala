@@ -122,6 +122,15 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
         Util.evaluateAll(created, creation, afterCommitObservers).foreach(_.state.reset())
         assert(creation.drainCreated().isEmpty)
 
+        for (derived <- (created ++ sorted)) {
+          for (inv <- derived.invariances) {
+            if (!inv(derived.state.value)) {
+              throw EvaluationException(PipelinedException(new AssertionError("")), derived) // TODO: why is no assertionerror thrown?
+            }
+          }
+        }
+
+
         //cleanup
         initial.foreach(_.state.reset())
         created.foreach(_.state.reset())

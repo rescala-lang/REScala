@@ -16,6 +16,9 @@ class WithoutAPITest extends RETests {
       override type Value = T
       override protected[rescala] def state: State = initState
       override protected[rescala] def name: REName = "I am a source name"
+      override protected[rescala] var invariances: Seq[Value => Boolean] = Seq()
+
+
       override def interpret(v: Value): T = v
 
       def makeChange(newValue: T) = new InitialChange[TestStruct] {
@@ -35,6 +38,7 @@ class WithoutAPITest extends RETests {
       override type Value = String
       override protected[rescala] def state: State = initState
       override protected[rescala] def name: REName = "I am a name"
+      override protected[rescala] var invariances: Seq[Value => Boolean] = Seq()
 
       override protected[rescala] def reevaluate(input: ReIn): Rout = {
         val sourceVal = input.dependStatic(inputSource)
@@ -42,6 +46,7 @@ class WithoutAPITest extends RETests {
       }
 
       override def interpret(v: Value): String = v
+
     }
 
     test("simple usage of core recsala without signals or events") {

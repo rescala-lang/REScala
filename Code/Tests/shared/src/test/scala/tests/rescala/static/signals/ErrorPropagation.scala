@@ -16,24 +16,17 @@ class ErrorPropagation extends RETests with ScalaCheckDrivenPropertyChecks with 
 
       val t = s.changed.fold(Seq.empty[Int]) { (acc, c) => acc :+ c }
 
-      val testSpec = TestSpecification {
-        print(s(), t().size)
-        if (s() < 3) {
-          assert(s() == t().size)
-        } else {
-          assert(s() > t().size)
-        }
-//        try {
-//          if (s() < 3) {
-//            assert(s() == t().size)
-//          } else {
-//            assert(s() > t().size)
-//          }
+      s.specify(Seq(
+        a => a < 3
+      ))
+
+//      TestSpecification {
+//        if (s() < 3) {
+//          assert(s() == t().size)
+//        } else {
+//          assert(s() > t().size)
 //        }
-//        catch {
-//          case e: Throwable => throw PipelinedException(e)
-//        }
-      }
+//      }
 
       1 to n foreach { i => e.fire(i) }
     }

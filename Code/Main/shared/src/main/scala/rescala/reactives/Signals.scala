@@ -66,6 +66,7 @@ trait Signals[S <: Struct] {
     new Signal[T, S] {
       override val rescalaAPI  : RescalaInterface[S]          = Signals.this.rescalaAPI
       override val innerDerived: Signals.SignalResource[T, S] = derived
+      override def specify(invariances: Seq[T => Boolean]): Unit = super.specify(invariances)
     }
   }
 
