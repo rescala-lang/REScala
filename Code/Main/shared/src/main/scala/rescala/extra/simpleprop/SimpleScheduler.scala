@@ -134,7 +134,7 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
         admissionResult
       }
     } catch {
-      case e@EvaluationException(_, _) => throw TransactionException(e, initialWrites)
+      case e@EvaluationException(_, _) => throw TransactionException(e, Util.getCausalErrorChains(e.reactive, initialWrites))
     }
     finally {
       idle = true
@@ -223,5 +223,27 @@ object Util {
       case PipelinedException(t) => throw EvaluationException(t, reactive)
     }
 
+  }
+
+  def getCausalErrorChains(errorNode: Derived[SimpleStruct], initialWrites: Set[ReSource[SimpleStruct]]): Seq[Seq[ReSource[SimpleStruct]]] = {
+    import scala.collection.mutable.ListBuffer
+
+    val initialNames = initialWrites.map(_.name)
+
+    def traverse(node: ReSource[SimpleStruct], path: Seq[ReSource[SimpleStruct]]): Seq[Seq[ReSource[SimpleStruct]]] = {
+      val paths = new ListBuffer[Seq[ReSource[SimpleStruct]]]()
+      for (incoming <- node.state.incoming) {
+        val incName = incoming.name
+        if (initialNames.contains(incName)) {
+          paths += path :+ incoming
+        }
+        else {
+          paths ++= traverse(incoming, path :+ incoming)
+        }
+      }
+      paths.toList
+    }
+
+    traverse(errorNode, Seq(errorNode))
   }
 }

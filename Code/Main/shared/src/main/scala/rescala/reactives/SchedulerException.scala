@@ -15,16 +15,15 @@ case class EvaluationException(t: Throwable, reactive: Derived[SimpleStruct])
 
 }
 
-case class TransactionException(t: EvaluationException, initialChanges: Set[ReSource[SimpleStruct]])
+case class TransactionException(t: EvaluationException, causalErrorChains: Seq[Seq[ReSource[SimpleStruct]]])
   extends SchedulerException {
 
   override def getMessage: String = {
-    val changeSet: String = if(initialChanges.nonEmpty) {
-      initialChanges.map(re => re.name.str).fold("") {(msg, re) => s"$msg\n\t$re"}
-    } else {
-      "Empty"
-    }
-    s"${t.getMessage} with changeSet [$changeSet]"
+    val chainErrorMessage = if (causalErrorChains.nonEmpty)
+      "The error was caused by these update chains:\n\n" ++ causalErrorChains.map(_.map(_.name.str).mkString("\n↓\n")).mkString("\n---\n")
+    else "The error was not triggered by a change."
+
+    s"${t.getMessage}\n$chainErrorMessage\n"
   }
 }
 
