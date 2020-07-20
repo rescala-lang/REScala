@@ -144,5 +144,9 @@ trait Signal[+T, S <: Struct] extends MacroInterp[T, S] with Disconnectable[S] {
   = rescalaAPI.Events.staticNamed(s"(filter $this)", this.innerDerived) { st =>
     st.collectStatic(this.innerDerived).filter(_ == value) }
     .dropParam
+
+  def specify(inv: Seq[T => Boolean]): Unit = {
+    this.innerDerived.invariances = inv.map(inv => ((invp: Pulse[T]) => inv(invp.get)))
+  }
 }
 
