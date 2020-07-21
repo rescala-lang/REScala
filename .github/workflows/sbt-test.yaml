@@ -13,5 +13,7 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 11
+    - name: install jsdom
+      run: npm install jsdom
     - name: Run tests
       run: sbt test
