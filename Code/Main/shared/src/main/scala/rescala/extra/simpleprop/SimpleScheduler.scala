@@ -1,7 +1,7 @@
 package rescala.extra.simpleprop
 
 import rescala.core.Initializer.InitValues
-import rescala.core.{AccessTicket, Derived, DynamicInitializerLookup, Initializer, Observation, ReSource, ReevTicket, Scheduler, Struct}
+import rescala.core.{AccessTicket, Derived, DynamicInitializerLookup, Initializer, Observation, Pulse, ReSource, ReevTicket, Scheduler, Struct}
 import rescala.interface.Aliases
 import rescala.reactives.InvariantViolationException
 
@@ -19,6 +19,7 @@ class SimpleState[V](ip: InitValues[V]) {
   var discovered = false
   var dirty = false
   var done = false
+  var invariants: Seq[V => Boolean] = Seq.empty
 
   def reset(): Unit = {
     discovered = false
@@ -148,6 +149,16 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
     val id = reactive.innerDerived
     id.interpret(id.state.value)
   }
+
+  def specify[T](inv: Seq[T => Boolean], signal: Signal[T]): Unit = {
+    signal.state.invariants = inv.map(inv => ((invp: Pulse[T]) => inv(invp.get)))
+  }
+
+  implicit class SignalWithInvariants[T](val signal: Signal[T]) extends AnyVal {
+    def specify(inv: Seq[T => Boolean]): Unit = {
+      SimpleScheduler.this.specify(inv, signal)
+    }
+  }
 }
 
 
@@ -225,12 +236,12 @@ object Util {
   }
 
   def evaluateInvariants(reactives: Seq[Derived[SimpleStruct]], initialWrites: Set[ReSource[SimpleStruct]]): Unit = {
-    for (derived <- reactives) {
-      for (inv <- derived.invariants) {
-        if (!inv(derived.state.value)) {
-          throw InvariantViolationException(new IllegalArgumentException(s"${derived.state.value}"), derived, Util.getCausalErrorChains(derived, initialWrites)) // TODO: why is no assertionerror thrown?
-        }
-      }
+    for {
+      derived <- reactives
+      inv <- derived.state.invariants
+      if !inv(derived.state.value)
+    } {
+      throw InvariantViolationException(new IllegalArgumentException(s"${derived.state.value}"), derived, Util.getCausalErrorChains(derived, initialWrites)) // TODO: why is no assertionerror thrown?
     }
   }
 

@@ -36,10 +36,6 @@ trait DefaultImplementations[S <: Struct] {
       if (newPulse.isChange) rein2.withValue(newPulse) else rein2
     }
     protected[this] def computePulse(rein: ReevTicket[Pulse[T], S]): Pulse[T]
-
-    def specify(invariances: Seq[T => Boolean]): Unit = {
-      this.invariants = invariances.map(inv => ((invp: Pulse[T]) => inv(invp.get)))
-    }
   }
 
   class EventImpl[T](initial: Estate[S, T],
@@ -74,10 +70,6 @@ trait DefaultImplementations[S <: Struct] {
       if (to == Pulse.empty) rein // ignore empty propagations
       else if (from != Pulse.NoChange) rein.withValue((to, Pulse.Value(Diff(from, to))))
       else rein.withValue((to, Pulse.NoChange)).withPropagate(false)
-    }
-
-    def specify(invariances: Seq[T => Boolean]): Unit = {
-      this.invariants = invariances.map(inv => ((invp: Value) => inv(invp._1.get)))
     }
   }
 
