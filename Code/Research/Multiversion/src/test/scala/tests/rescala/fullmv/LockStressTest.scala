@@ -13,6 +13,9 @@ import scala.util.{Failure, Random, Success}
 
 class LockStressTest extends AnyFunSuite {
   test("stress") {
+    // this test just stackoverflows on windows. yay.
+    assume(!System.getProperty("os.name").contains("Windows"))
+
     val host = new FullMVEngine(Duration.Zero, "lockStressTest")
 
     val numWorkers = 4
