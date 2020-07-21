@@ -23,16 +23,6 @@ class ReactiveMacros(val c: blackbox.Context) {
   private def compileErrorsAst: Tree =
     q"""throw new ${termNames.ROOTPKG}.scala.NotImplementedError("macro not expanded because of other compilation errors")"""
 
-  def PipelinedExceptionThrowingReactiveExpression[
-    A: c.WeakTypeTag,
-    S <: Struct : c.WeakTypeTag,
-    IsStatic <: MacroTags.Staticism : c.WeakTypeTag,
-    ReactiveType : c.WeakTypeTag]
-  (expression: Tree)(ticket: c.Tree): c.Tree = {
-    val wrappedExpression = reify { try { c.Expr[Any](expression).splice } catch { case e: Throwable => throw rescala.reactives.PipelinedException(e) } }.tree
-    ReactiveExpression[A, S, IsStatic, ReactiveType](wrappedExpression)(ticket)
-  }
-
   def ReactiveExpression[
     A: c.WeakTypeTag,
     S <: Struct : c.WeakTypeTag,

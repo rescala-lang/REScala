@@ -3,7 +3,6 @@ package tests.rescala.static.signals
 import org.scalacheck.Gen
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import rescala.reactives.PipelinedException
 import tests.rescala.testtools.RETests
 
 class ErrorPropagation extends RETests with ScalaCheckDrivenPropertyChecks with Matchers {
