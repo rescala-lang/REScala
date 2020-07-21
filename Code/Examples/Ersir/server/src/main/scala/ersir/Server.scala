@@ -90,7 +90,7 @@ class Server(pages: ServerPages,
       getFromResourceDirectory("static")
     } ~
     path("add-entry") {
-      formFields(('title, 'description, 'imageUrl)).as(Posting.apply _) { em =>
+      formFields((Symbol("title"), Symbol("description"), Symbol("imageUrl"))).as(Posting.apply _) { em =>
         manualAddPostings.fire(List(em))
         complete("ok")
       }

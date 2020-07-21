@@ -29,7 +29,7 @@ object Ersir {
   }
 
 
-  def main(args: Array[String]): Unit = run(args: _*)
+  def main(args: Array[String]): Unit = run(args.toSeq: _*)
 
   def run(args: String*): Services = {
     command.parse(args) match {
