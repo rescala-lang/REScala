@@ -13,7 +13,7 @@ import scala.concurrent.duration.Duration
 import scala.util.{Failure, Random, Success}
 
 // workarounds for tests are fun. This stackoverlfows on windows because of a stackoverlofowish problem for subsumable lock
-object IgnoreTestOnWindows extends Tag(if (System.getProperty("os.name").contains("Windows")) "" else classOf[Ignore].getName)
+object IgnoreTestOnWindows extends Tag(if (System.getProperty("os.name").contains("Windows")) classOf[Ignore].getName else "")
 class LockStressTest extends AnyFunSuite {
   test("stress", IgnoreTestOnWindows) {
     val host = new FullMVEngine(Duration.Zero, "lockStressTest")
