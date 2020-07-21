@@ -30,3 +30,4 @@ test-output/
 website/
 .sync/
 out/
+.bsp/
