@@ -145,8 +145,5 @@ trait Signal[+T, S <: Struct] extends MacroInterp[T, S] with Disconnectable[S] {
     st.collectStatic(this.innerDerived).filter(_ == value) }
     .dropParam
 
-  def specify(inv: Seq[T => Boolean]): Unit = {
-    this.innerDerived.invariants = inv.map(inv => ((invp: Pulse[T]) => inv(invp.get)))
-  }
-}
 
+}

@@ -4,9 +4,12 @@ import org.scalacheck.Gen
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import tests.rescala.testtools.RETests
+import rescala.extra.simpleprop.SimpleScheduler.SignalWithInvariants
+import rescala.extra.simpleprop.SimpleStruct
+import rescala.interface.RescalaInterface
 
 class ErrorPropagation extends RETests with ScalaCheckDrivenPropertyChecks with Matchers {
-  multiEngined { engine =>
+    val engine: RescalaInterface[SimpleStruct] = RescalaInterface.interfaceFor(rescala.extra.simpleprop.SimpleScheduler)
     import engine._
 
     "EXPERIMENTAL" in forAll(Gen.posNum[Int]) { (n: Int) =>
@@ -29,6 +32,4 @@ class ErrorPropagation extends RETests with ScalaCheckDrivenPropertyChecks with 
 
       1 to n foreach { i => e.fire(i) }
     }
-  }
-
 }
