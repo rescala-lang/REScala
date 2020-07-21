@@ -20,7 +20,7 @@ trait ReSource[S <: Struct] {
   final type State = S#State[Value, S]
   protected[rescala] def state: State
   protected[rescala] def name: REName
-  protected[rescala] var invariances: Seq[Value => Boolean]
+  protected[rescala] var invariants: Seq[Value => Boolean]
 }
 
 /** A reactive value is something that can be reevaluated */
@@ -45,7 +45,7 @@ abstract class Base[V, S <: Struct](override protected[rescala] val state: S#Sta
   override type Value = V
   override def toString: String = s"${name.str}($state)"
 
-  protected[rescala] var invariances: Seq[Value => Boolean] = Seq()
+  protected[rescala] var invariants: Seq[Value => Boolean] = Seq()
 }
 
 trait MacroInterp[+A, S <: Struct] {

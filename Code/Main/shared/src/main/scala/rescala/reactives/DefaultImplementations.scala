@@ -38,7 +38,7 @@ trait DefaultImplementations[S <: Struct] {
     protected[this] def computePulse(rein: ReevTicket[Pulse[T], S]): Pulse[T]
 
     def specify(invariances: Seq[T => Boolean]): Unit = {
-      this.invariances = invariances.map(inv => ((invp: Pulse[T]) => inv(invp.get)))
+      this.invariants = invariances.map(inv => ((invp: Pulse[T]) => inv(invp.get)))
     }
   }
 
@@ -77,7 +77,7 @@ trait DefaultImplementations[S <: Struct] {
     }
 
     def specify(invariances: Seq[T => Boolean]): Unit = {
-      this.invariances = invariances.map(inv => ((invp: Value) => inv(invp._1.get)))
+      this.invariants = invariances.map(inv => ((invp: Value) => inv(invp._1.get)))
     }
   }
 
