@@ -123,14 +123,7 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
         Util.evaluateAll(created, creation, afterCommitObservers).foreach(_.state.reset())
         assert(creation.drainCreated().isEmpty)
 
-        for (derived <- (created ++ sorted)) {
-          for (inv <- derived.invariances) {
-            if (!inv(derived.state.value)) {
-              throw InvariantViolationException(new IllegalArgumentException(s"${derived.state.value}"), derived, Util.getCausalErrorChains(derived, initialWrites)) // TODO: why is no assertionerror thrown?
-            }
-          }
-        }
-
+        Util.evaluateInvariants(created ++ sorted, initialWrites)
 
         //cleanup
         initial.foreach(_.state.reset())
@@ -229,6 +222,16 @@ object Util {
       false
     }
 
+  }
+
+  def evaluateInvariants(reactives: Seq[Derived[SimpleStruct]], initialWrites: Set[ReSource[SimpleStruct]]): Unit = {
+    for (derived <- reactives) {
+      for (inv <- derived.invariants) {
+        if (!inv(derived.state.value)) {
+          throw InvariantViolationException(new IllegalArgumentException(s"${derived.state.value}"), derived, Util.getCausalErrorChains(derived, initialWrites)) // TODO: why is no assertionerror thrown?
+        }
+      }
+    }
   }
 
   def getCausalErrorChains(errorNode: Derived[SimpleStruct], initialWrites: Set[ReSource[SimpleStruct]]): Seq[Seq[ReSource[SimpleStruct]]] = {

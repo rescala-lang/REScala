@@ -16,7 +16,7 @@ class WithoutAPITest extends RETests {
       override type Value = T
       override protected[rescala] def state: State = initState
       override protected[rescala] def name: REName = "I am a source name"
-      override protected[rescala] var invariances: Seq[Value => Boolean] = Seq()
+      override protected[rescala] var invariants: Seq[Value => Boolean] = Seq()
 
 
       override def interpret(v: Value): T = v
@@ -38,7 +38,7 @@ class WithoutAPITest extends RETests {
       override type Value = String
       override protected[rescala] def state: State = initState
       override protected[rescala] def name: REName = "I am a name"
-      override protected[rescala] var invariances: Seq[Value => Boolean] = Seq()
+      override protected[rescala] var invariants: Seq[Value => Boolean] = Seq()
 
       override protected[rescala] def reevaluate(input: ReIn): Rout = {
         val sourceVal = input.dependStatic(inputSource)
