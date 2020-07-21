@@ -6,7 +6,7 @@ import rescala.extra.simpleprop.SimpleStruct
 sealed trait SchedulerException extends RuntimeException {
 };
 
-case class TransactionException(t: Throwable, reactive: Derived[SimpleStruct], causalErrorChains: Seq[Seq[ReSource[SimpleStruct]]])
+case class InvariantViolationException(t: Throwable, reactive: Derived[SimpleStruct], causalErrorChains: Seq[Seq[ReSource[SimpleStruct]]])
   extends SchedulerException {
 
   override def getMessage: String = {
@@ -16,4 +16,6 @@ case class TransactionException(t: Throwable, reactive: Derived[SimpleStruct], c
 
     s"${t.getMessage} in reactive ${reactive.name.str}\n$chainErrorMessage\n"
   }
+
+  override def fillInStackTrace() = this
 }

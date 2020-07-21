@@ -3,7 +3,7 @@ package rescala.extra.simpleprop
 import rescala.core.Initializer.InitValues
 import rescala.core.{AccessTicket, Derived, DynamicInitializerLookup, Initializer, Observation, ReSource, ReevTicket, Scheduler, Struct}
 import rescala.interface.Aliases
-import rescala.reactives.TransactionException
+import rescala.reactives.InvariantViolationException
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
@@ -126,7 +126,7 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
         for (derived <- (created ++ sorted)) {
           for (inv <- derived.invariances) {
             if (!inv(derived.state.value)) {
-              throw TransactionException(new AssertionError(""), derived, Util.getCausalErrorChains(derived, initialWrites)) // TODO: why is no assertionerror thrown?
+              throw InvariantViolationException(new IllegalArgumentException(s"${derived.state.value}"), derived, Util.getCausalErrorChains(derived, initialWrites)) // TODO: why is no assertionerror thrown?
             }
           }
         }
