@@ -3,7 +3,7 @@ package rescala.extra.simpleprop
 import rescala.core.Initializer.InitValues
 import rescala.core.{AccessTicket, Derived, DynamicInitializerLookup, Initializer, Observation, ReSource, ReevTicket, Scheduler, Struct}
 import rescala.interface.Aliases
-import rescala.reactives.{EvaluationException, PipelinedException, TransactionException}
+import rescala.reactives.TransactionException
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
@@ -13,12 +13,13 @@ trait SimpleStruct extends Struct {
 
 class SimpleState[V](ip: InitValues[V]) {
 
-  var value   : V                          = ip.initialValue
+  var value: V = ip.initialValue
   var outgoing: Set[Derived[SimpleStruct]] = Set.empty
   var incoming: Set[ReSource[SimpleStruct]] = Set.empty
-  var discovered                           = false
-  var dirty                                = false
-  var done                                 = false
+  var discovered = false
+  var dirty = false
+  var done = false
+
   def reset(): Unit = {
     discovered = false
     dirty = false
@@ -78,8 +79,8 @@ class SimpleInitializer(afterCommitObservers: ListBuffer[Observation]) extends I
 
 
 object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInitializer]
-                       with Scheduler[SimpleStruct]
-                       with Aliases[SimpleStruct] {
+  with Scheduler[SimpleStruct]
+  with Aliases[SimpleStruct] {
 
   override def schedulerName: String = "Simple"
 
@@ -96,8 +97,8 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
         val admissionTicket: AdmissionTicket = new AdmissionTicket(creation, initialWrites) {
           override private[rescala] def access(reactive: ReSource): reactive.Value = reactive.state.value
         }
-        val admissionResult                  = admissionPhase(admissionTicket)
-        val sources                          = admissionTicket.initialChanges.values.collect {
+        val admissionResult = admissionPhase(admissionTicket)
+        val sources = admissionTicket.initialChanges.values.collect {
           case iv if iv.writeValue(iv.source.state.value, iv.source.state.value = _) => iv.source
         }.toSeq
 
@@ -125,7 +126,7 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
         for (derived <- (created ++ sorted)) {
           for (inv <- derived.invariances) {
             if (!inv(derived.state.value)) {
-              throw EvaluationException(PipelinedException(new AssertionError("")), derived) // TODO: why is no assertionerror thrown?
+              throw TransactionException(new AssertionError(""), derived, Util.getCausalErrorChains(derived, initialWrites)) // TODO: why is no assertionerror thrown?
             }
           }
         }
@@ -142,8 +143,6 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
         if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(creation.accessTicket())
         admissionResult
       }
-    } catch {
-      case e@EvaluationException(_, _) => throw TransactionException(e, Util.getCausalErrorChains(e.reactive, initialWrites))
     }
     finally {
       idle = true
@@ -151,6 +150,7 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
     afterCommitObservers.foreach(_.execute())
     res
   }
+
   override private[rescala] def singleReadValueOnce[A](reactive: Signal[A]): A = {
     val id = reactive.innerDerived
     id.interpret(id.state.value)
@@ -187,7 +187,7 @@ object Util {
       else false
     }
     glitched match {
-      case None           => evaluatees
+      case None => evaluatees
       case Some(reactive) =>
         val evaluateNext = evaluatees.filterNot(_.state.done) ++ creation.drainCreated()
         evaluateNext.foreach(_.state.discovered = false)
@@ -197,39 +197,36 @@ object Util {
 
   def evaluate(reactive: Derived[SimpleStruct], creationTicket: SimpleInitializer, afterCommitObservers: ListBuffer[Observation]): Boolean = {
     var potentialGlitch = false
-    val dt              = new ReevTicket[reactive.Value, SimpleStruct](creationTicket, reactive.state.value) {
+    val dt = new ReevTicket[reactive.Value, SimpleStruct](creationTicket, reactive.state.value) {
       override def dynamicAccess(input: ReSource[SimpleStruct]): input.Value = {
         if (input.state.discovered && !input.state.done) {
           potentialGlitch = true
         }
         input.state.value
       }
+
       override def staticAccess(input: ReSource[SimpleStruct]): input.Value = input.state.value
     }
-    try {
-      val reev            = reactive.reevaluate(dt)
-      reev.getDependencies().foreach { newDeps =>
-        val incoming = reactive.state.incoming
-        reactive.state.incoming = newDeps
-        val added = newDeps diff incoming
-        val removed = incoming diff newDeps
-        added.foreach { input =>
-          input.state.outgoing = input.state.outgoing + reactive
-        }
-        removed.foreach { input =>
-          input.state.outgoing = input.state.outgoing - reactive
-        }
+    val reev = reactive.reevaluate(dt)
+    reev.getDependencies().foreach { newDeps =>
+      val incoming = reactive.state.incoming
+      reactive.state.incoming = newDeps
+      val added = newDeps diff incoming
+      val removed = incoming diff newDeps
+      added.foreach { input =>
+        input.state.outgoing = input.state.outgoing + reactive
       }
+      removed.foreach { input =>
+        input.state.outgoing = input.state.outgoing - reactive
+      }
+    }
 
-      if (potentialGlitch) true else {
-        if (reev.propagate) reactive.state.outgoing.foreach(_.state.dirty = true)
-        reev.forValue(reactive.state.value = _)
-        reev.forEffect(o => afterCommitObservers.append(o))
-        reactive.state.done = true
-        false
-      }
-    } catch {
-      case PipelinedException(t) => throw EvaluationException(t, reactive)
+    if (potentialGlitch) true else {
+      if (reev.propagate) reactive.state.outgoing.foreach(_.state.dirty = true)
+      reev.forValue(reactive.state.value = _)
+      reev.forEffect(o => afterCommitObservers.append(o))
+      reactive.state.done = true
+      false
     }
 
   }

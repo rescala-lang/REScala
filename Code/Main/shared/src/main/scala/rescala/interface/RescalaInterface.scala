@@ -90,16 +90,6 @@ trait RescalaInterface[S <: Struct] extends Aliases[S] {
       macro rescala.macros.ReactiveMacros.ReactiveExpression[A, S, Dynamic, rescala.reactives.Signals.type]
   }
 
-  object TestSpecification {
-    def rescalaAPI: RescalaInterface.this.type = RescalaInterface.this
-    final def apply[A](expression: A)(implicit ticket: CreationTicket): Signal[A] =
-      macro rescala.macros.ReactiveMacros.PipelinedExceptionThrowingReactiveExpression[A, S, Static, rescala.reactives.Signals.type]
-    final def static[A](expression: A)(implicit ticket: CreationTicket): Signal[A] =
-      macro rescala.macros.ReactiveMacros.PipelinedExceptionThrowingReactiveExpression[A, S, Static, rescala.reactives.Signals.type]
-    final def dynamic[A](expression: A)(implicit ticket: CreationTicket): Signal[A] =
-      macro rescala.macros.ReactiveMacros.PipelinedExceptionThrowingReactiveExpression[A, S, Dynamic, rescala.reactives.Signals.type]
-  }
-
   /** Similar to [[Signal]] expressions, but resulting in an event.
     * Accessed events return options depending on whether they fire or not,
     * and the complete result of the expression is an event as well.
