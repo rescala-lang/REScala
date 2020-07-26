@@ -1,6 +1,7 @@
 package tests.rescala.testtools
 
 import org.scalactic.source
+import org.scalatest.Tag
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.prop.TableDrivenPropertyChecks
 import rescala.core.Struct
@@ -12,7 +13,7 @@ abstract class RETests extends AnyFreeSpec with TableDrivenPropertyChecks {
   type TestStruct <: Struct
 
   def engines(es: RescalaInterface[_ <: Struct]*)
-             (text: String)
+             (text: String, tags: List[Tag] = Nil)
              (testCase: RescalaInterface[TestStruct] => Any)
              (implicit pos: source.Position): Unit = {
     forAll(Table("engine", es: _*)) { e =>

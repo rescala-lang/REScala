@@ -2,20 +2,18 @@ package tests.rescala.fullmv
 
 import java.util.concurrent.atomic.AtomicReference
 
-import org.scalatest.{Ignore, Tag}
 import org.scalatest.funsuite.AnyFunSuite
 import rescala.fullmv._
-import tests.rescala.testtools.Spawn
+import tests.rescala.testtools.{IgnoreOnWindowsBecause, Spawn}
 
 import scala.annotation.tailrec
 import scala.concurrent.TimeoutException
 import scala.concurrent.duration.Duration
 import scala.util.{Failure, Random, Success}
 
-// workarounds for tests are fun. This stackoverlfows on windows because of a stackoverlofowish problem for subsumable lock
-object IgnoreTestOnWindows extends Tag(if (System.getProperty("os.name").contains("Windows")) classOf[Ignore].getName else "")
+
 class LockStressTest extends AnyFunSuite {
-  test("stress", IgnoreTestOnWindows) {
+  test("stress", IgnoreOnWindowsBecause("this stackoverlfows in subsumable lock")) {
     val host = new FullMVEngine(Duration.Zero, "lockStressTest")
 
     val numWorkers = 4
