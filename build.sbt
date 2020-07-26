@@ -257,7 +257,7 @@ lazy val lib = new {
     libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"
   )
 
-  val jline = libraryDependencies += "jline" % "jline" % "2.14.2"
+  val jline = libraryDependencies += "jline" % "jline" % "2.14.6"
 
   // Determine OS version of JavaFX binaries
   lazy val osName = System.getProperty("os.name") match {
@@ -305,7 +305,7 @@ lazy val lib = new {
 
   val scalafxExtras = Seq(
     libraryDependencies += "org.scalafx" %% "scalafxml-core-sfx8" % "0.5",
-    libraryDependencies += "com.jfoenix" % "jfoenix" % "9.0.9"
+    libraryDependencies += "com.jfoenix" % "jfoenix" % "9.0.10"
     ) ++ macroparadise
 
   val oldAkkaCluster = {
