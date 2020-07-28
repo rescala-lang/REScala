@@ -184,7 +184,7 @@ case class Propagation(active: Set[ReSource[FStruct]], processed: Set[ReSource[F
 
         if (evaluated) {
           val nextActive = if (propagate) active + r else active
-          Propagation(nextActive, processed + r, knownReactives, creationTicket).run
+          Propagation(nextActive, processed + r, knownReactives, creationTicket).run()
         } else {
           println(s"redoing \n$oldRstring\nto\n${r.state.inputs}")
           Propagation(active, processed, knownReactives, creationTicket).run()

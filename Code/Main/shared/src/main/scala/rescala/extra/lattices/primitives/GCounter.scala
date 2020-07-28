@@ -18,7 +18,7 @@ case class GCounter(id: IdUtil.Id, payload: HashMap[IdUtil.Id, Int]) {
 
 object GCounter {
   def apply(value: Int): GCounter = {
-    val id = IdUtil.genId // assign random id based on host
+    val id = IdUtil.genId() // assign random id based on host
     GCounter(id, HashMap(id -> value))
   }
 
