@@ -83,7 +83,7 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
   with Scheduler[SimpleStruct]
   with Aliases[SimpleStruct] {
 
-  override def schedulerName: String = "Simple"
+  override def schedulerName: String = "SimpleWithInvariantSupport"
 
   var idle = true
 
