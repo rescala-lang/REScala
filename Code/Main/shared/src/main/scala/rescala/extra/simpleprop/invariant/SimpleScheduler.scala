@@ -1,9 +1,13 @@
 package rescala.extra.simpleprop.invariant
 
+import org.scalacheck.Gen
+import org.scalacheck.rng.Seed
+import rescala.core
 import rescala.core.Initializer.InitValues
-import rescala.core.{AccessTicket, Derived, DynamicInitializerLookup, Initializer, Observation, Pulse, ReSource, ReevTicket, Scheduler, Struct}
+import rescala.core.{AccessTicket, Derived, DynamicInitializerLookup, InitialChange, Initializer, Observation, Pulse, ReSource, ReevTicket, Scheduler, Struct}
 import rescala.interface.Aliases
 import rescala.reactives.InvariantViolationException
+import sun.reflect.generics.reflectiveObjects.NotImplementedException
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
@@ -20,6 +24,7 @@ class SimpleState[V](ip: InitValues[V]) {
   var dirty = false
   var done = false
   var invariants: Seq[V => Boolean] = Seq.empty
+  var gen: Gen[_] = _
 
   def reset(): Unit = {
     discovered = false
@@ -155,8 +160,46 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
   }
 
   implicit class SignalWithInvariants[T](val signal: Signal[T]) extends AnyVal {
-    def specify(inv: Seq[T => Boolean]): Unit = {
+
+    def specify(inv: (T => Boolean) *): Unit = {
       SimpleScheduler.this.specify(inv, signal)
+    }
+
+    def setValueGenerator(gen: Gen[T]): Unit = {
+      this.signal.state.gen = gen
+    }
+
+    def test(): Unit = {
+      if (this.signal.state.gen != null) {
+        forceValues((this.signal, this.signal.state.gen.pureApply(Gen.Parameters.default, Seed.random())))
+      } else {
+        //Find generator for each branch. select a value for each. force transaction
+        throw new NotImplementedException()
+      }
+    }
+
+    private def forceValues(changes: (Signal[A], A) forSome { type A } *): Unit = {
+      forceNewTransaction(changes.foldLeft(Set.empty[ReSource]) { case (accu, (source, _)) =>
+        assert(!accu.contains(source), s"must not admit multiple values for the same source ($source was assigned multiple times)")
+        accu + source
+      }, {
+        admissionTicket =>
+          changes.foreach {
+            change =>
+              admissionTicket.recordChange(new InitialChange[SimpleStruct] {
+                override val source: core.ReSource[SimpleStruct] = signal.innerDerived
+
+                override def writeValue(b: source.Value, v: source.Value => Unit): Boolean = {
+                  val casted = change._2.asInstanceOf[source.Value]
+                  if(casted != b) {
+                    v(casted)
+                    return true
+                  }
+                  false
+                }
+              })
+          }
+      })
     }
   }
 }

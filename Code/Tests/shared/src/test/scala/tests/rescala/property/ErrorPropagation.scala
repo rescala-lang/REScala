@@ -1,6 +1,6 @@
 package tests.rescala.property
 
-import org.scalacheck.Gen
+import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.simpleprop.invariant.SimpleScheduler.SignalWithInvariants
@@ -18,18 +18,23 @@ class ErrorPropagation extends RETests with ScalaCheckDrivenPropertyChecks with 
 
       val t = s.changed.fold(Seq.empty[Int]) { (acc, c) => acc :+ c }
 
-      s.specify(Seq(
+      s.specify(
         a => a <= n
-      ))
-
-//      TestSpecification {
-//        if (s() < 3) {
-//          assert(s() == t().size)
-//        } else {
-//          assert(s() > t().size)
-//        }
-//      }
+      )
 
       1 to n foreach { i => e.fire(i) }
+    }
+
+    "test single node" - {
+      val v = Var(0)
+      val s = Signal { v() * 2}
+
+      s.specify(
+        a => a > 0
+      )
+
+      s.setValueGenerator(Arbitrary.arbitrary[Int])
+
+      s.test()
     }
 }

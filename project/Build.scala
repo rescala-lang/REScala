@@ -185,9 +185,9 @@ object Dependencies {
   val fontawesome       = ld += "org.webjars" % "font-awesome" % "5.10.1"
 
   // tests
-  val scalacheck         = ld += "org.scalacheck" %%% "scalacheck" % "1.14.3" % "test"
-  val scalatestpluscheck = ld += "org.scalatestplus" %%% "scalacheck-1-14" % "3.2.0.0" % "test"
-  val scalatest          = ld += "org.scalatest" %%% "scalatest" % "3.2.0" % "test"
+  val scalacheck         = ld += "org.scalacheck" %%% "scalacheck" % "1.14.3"
+  val scalatestpluscheck = ld += "org.scalatestplus" %%% "scalacheck-1-14" % "3.2.0.0"
+  val scalatest          = ld += "org.scalatest" %%% "scalatest" % "3.2.0"
 
   // legacy
   val scalaXml   = ld += "org.scala-lang.modules" %% "scala-xml" % "1.3.0"

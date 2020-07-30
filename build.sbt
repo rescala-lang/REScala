@@ -41,7 +41,8 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Code/Main"))
     libraryDependencies ++= List(
       "io.circe" %%% s"circe-core" % "[0.11.0,)" % "provided",
       "io.circe" %%% s"circe-parser" % "[0.11.0,)" % "provided"
-      )
+      ),
+    scalatestpluscheck
     )
   .jvmSettings()
   .jsSettings(
