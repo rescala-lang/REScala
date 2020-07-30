@@ -3,11 +3,8 @@ package rescala.reactives
 import rescala.core.{Derived, ReSource}
 import rescala.extra.simpleprop.SimpleStruct
 
-sealed trait SchedulerException extends RuntimeException {
-};
-
-case class InvariantViolationException(t: Throwable, reactive: Derived[SimpleStruct], causalErrorChains: Seq[Seq[ReSource[SimpleStruct]]])
-  extends SchedulerException {
+class InvariantViolationException(t: Throwable, reactive: Derived[SimpleStruct], causalErrorChains: Seq[Seq[ReSource[SimpleStruct]]])
+  extends RuntimeException {
 
   override def getMessage: String = {
     val chainErrorMessage = if (causalErrorChains.nonEmpty)
