@@ -1,8 +1,9 @@
-package rescala.extra.simpleprop
+package rescala.extra.simpleprop.invariant
 
 import rescala.core.Initializer.InitValues
-import rescala.core.{AccessTicket, Derived, DynamicInitializerLookup, Initializer, Observation, ReSource, ReevTicket, Scheduler, Struct}
+import rescala.core.{AccessTicket, Derived, DynamicInitializerLookup, Initializer, Observation, Pulse, ReSource, ReevTicket, Scheduler, Struct}
 import rescala.interface.Aliases
+import rescala.reactives.InvariantViolationException
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
@@ -12,12 +13,14 @@ trait SimpleStruct extends Struct {
 
 class SimpleState[V](ip: InitValues[V]) {
 
-  var value   : V                          = ip.initialValue
+  var value: V = ip.initialValue
   var outgoing: Set[Derived[SimpleStruct]] = Set.empty
   var incoming: Set[ReSource[SimpleStruct]] = Set.empty
-  var discovered                           = false
-  var dirty                                = false
-  var done                                 = false
+  var discovered = false
+  var dirty = false
+  var done = false
+  var invariants: Seq[V => Boolean] = Seq.empty
+
   def reset(): Unit = {
     discovered = false
     dirty = false
@@ -95,8 +98,8 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
         val admissionTicket: AdmissionTicket = new AdmissionTicket(creation, initialWrites) {
           override private[rescala] def access(reactive: ReSource): reactive.Value = reactive.state.value
         }
-        val admissionResult                  = admissionPhase(admissionTicket)
-        val sources                          = admissionTicket.initialChanges.values.collect {
+        val admissionResult = admissionPhase(admissionTicket)
+        val sources = admissionTicket.initialChanges.values.collect {
           case iv if iv.writeValue(iv.source.state.value, iv.source.state.value = _) => iv.source
         }.toSeq
 
@@ -121,6 +124,8 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
         Util.evaluateAll(created, creation, afterCommitObservers).foreach(_.state.reset())
         assert(creation.drainCreated().isEmpty)
 
+        Util.evaluateInvariants(created ++ sorted, initialWrites)
+
         //cleanup
         initial.foreach(_.state.reset())
         created.foreach(_.state.reset())
@@ -139,9 +144,20 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
     afterCommitObservers.foreach(_.execute())
     res
   }
+
   override private[rescala] def singleReadValueOnce[A](reactive: Signal[A]): A = {
     val id = reactive.innerDerived
     id.interpret(id.state.value)
+  }
+
+  def specify[T](inv: Seq[T => Boolean], signal: Signal[T]): Unit = {
+    signal.state.invariants = inv.map(inv => ((invp: Pulse[T]) => inv(invp.get)))
+  }
+
+  implicit class SignalWithInvariants[T](val signal: Signal[T]) extends AnyVal {
+    def specify(inv: Seq[T => Boolean]): Unit = {
+      SimpleScheduler.this.specify(inv, signal)
+    }
   }
 }
 
@@ -175,7 +191,7 @@ object Util {
       else false
     }
     glitched match {
-      case None           => evaluatees
+      case None => evaluatees
       case Some(reactive) =>
         val evaluateNext = evaluatees.filterNot(_.state.done) ++ creation.drainCreated()
         evaluateNext.foreach(_.state.discovered = false)
@@ -185,13 +201,14 @@ object Util {
 
   def evaluate(reactive: Derived[SimpleStruct], creationTicket: SimpleInitializer, afterCommitObservers: ListBuffer[Observation]): Boolean = {
     var potentialGlitch = false
-    val dt              = new ReevTicket[reactive.Value, SimpleStruct](creationTicket, reactive.state.value) {
+    val dt = new ReevTicket[reactive.Value, SimpleStruct](creationTicket, reactive.state.value) {
       override def dynamicAccess(input: ReSource[SimpleStruct]): input.Value = {
         if (input.state.discovered && !input.state.done) {
           potentialGlitch = true
         }
         input.state.value
       }
+
       override def staticAccess(input: ReSource[SimpleStruct]): input.Value = input.state.value
     }
     val reev = reactive.reevaluate(dt)
@@ -216,5 +233,37 @@ object Util {
       false
     }
 
+  }
+
+  def evaluateInvariants(reactives: Seq[Derived[SimpleStruct]], initialWrites: Set[ReSource[SimpleStruct]]): Unit = {
+    for {
+      derived <- reactives
+      inv <- derived.state.invariants
+      if !inv(derived.state.value)
+    } {
+      throw new InvariantViolationException(new IllegalArgumentException(s"${derived.state.value}"), derived, Util.getCausalErrorChains(derived, initialWrites)) // TODO: why is no assertionerror thrown?
+    }
+  }
+
+  def getCausalErrorChains(errorNode: Derived[SimpleStruct], initialWrites: Set[ReSource[SimpleStruct]]): Seq[Seq[ReSource[SimpleStruct]]] = {
+    import scala.collection.mutable.ListBuffer
+
+    val initialNames = initialWrites.map(_.name)
+
+    def traverse(node: ReSource[SimpleStruct], path: Seq[ReSource[SimpleStruct]]): Seq[Seq[ReSource[SimpleStruct]]] = {
+      val paths = new ListBuffer[Seq[ReSource[SimpleStruct]]]()
+      for (incoming <- node.state.incoming) {
+        val incName = incoming.name
+        if (initialNames.contains(incName)) {
+          paths += path :+ incoming
+        }
+        else {
+          paths ++= traverse(incoming, path :+ incoming)
+        }
+      }
+      paths.toList
+    }
+
+    traverse(errorNode, Seq(errorNode))
   }
 }
