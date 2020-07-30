@@ -241,7 +241,7 @@ object Util {
       inv <- derived.state.invariants
       if !inv(derived.state.value)
     } {
-      throw InvariantViolationException(new IllegalArgumentException(s"${derived.state.value}"), derived, Util.getCausalErrorChains(derived, initialWrites)) // TODO: why is no assertionerror thrown?
+      throw new InvariantViolationException(new IllegalArgumentException(s"${derived.state.value}"), derived, Util.getCausalErrorChains(derived, initialWrites)) // TODO: why is no assertionerror thrown?
     }
   }
 
