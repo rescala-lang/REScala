@@ -16,8 +16,6 @@ class WithoutAPITest extends RETests {
       override type Value = T
       override protected[rescala] def state: State = initState
       override protected[rescala] def name: REName = "I am a source name"
-
-
       override def interpret(v: Value): T = v
 
       def makeChange(newValue: T) = new InitialChange[TestStruct] {
@@ -44,7 +42,6 @@ class WithoutAPITest extends RETests {
       }
 
       override def interpret(v: Value): String = v
-
     }
 
     test("simple usage of core recsala without signals or events") {
