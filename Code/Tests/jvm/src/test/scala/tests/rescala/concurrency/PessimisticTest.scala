@@ -110,10 +110,10 @@ class PessimisticTest extends RETests {
       val t1     = Spawn(vA.set(finalA), Some("setting A thread"))
       val t2     = Spawn(vB.set(finalB), Some("setting B thread"))
 
-      assert(syncBothLatch.await(1000, TimeUnit.MILLISECONDS))
+      assert(syncBothLatch.await(10000, TimeUnit.MILLISECONDS))
 
-      t1.await(1000)
-      t2.await(1000)
+      t1.await(10000)
+      t2.await(10000)
 
       // turn 1 used the old value of vB and the retrofitted reevaluation for turn 2 executed and used the new value
       assert((resultsA.results == List(finalB, initB) && resultsB.results == List(finalA)) ||

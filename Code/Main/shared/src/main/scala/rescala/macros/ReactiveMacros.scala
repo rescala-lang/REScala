@@ -94,7 +94,7 @@ class ReactiveMacros(val c: blackbox.Context) {
       internal.setType(prefixIdent, c.prefix.actualType)
       q"$prefixIdent.value"
     }
-    def prefixValDef(): ValDef = {
+    def prefixValDef: ValDef = {
       q"val $prefixTermName : ${c.prefix.actualType} = ${c.prefix.tree}": ValDef
     }
   }
@@ -251,8 +251,8 @@ class ReactiveMacros(val c: blackbox.Context) {
           cutOutReactivesVals ::= signalDef
           cutOutReactiveIdentifiers ::= ident
 
-          internal updateAttachment (ident, IsCutOut)
-          internal setType(ident, reactive.tpe)
+          internal.updateAttachment(ident, IsCutOut)
+          internal.setType(ident, reactive.tpe)
           ident
 
         case _ =>

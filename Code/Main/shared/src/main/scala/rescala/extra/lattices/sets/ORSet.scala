@@ -7,7 +7,7 @@ import rescala.extra.lattices.{IdUtil, Lattice}
   */
 case class ORSet[A](entries: Map[IdUtil.Id, A], tombstones: Set[IdUtil.Id]) {
 
-  def add(a: A): ORSet[A] = ORSet(entries.updated(IdUtil.genId, a), tombstones)
+  def add(a: A): ORSet[A] = ORSet(entries.updated(IdUtil.genId(), a), tombstones)
 
   def remove(a: A): ORSet[A] = {
     // fetch ids of all instances of the element
@@ -24,7 +24,7 @@ object ORSet {
 
   def empty[A]: ORSet[A] = ORSet(Map.empty, Set.empty)
 
-  def apply[A](values: Set[A]): ORSet[A] = ORSet(values.map(IdUtil.genId -> _).toMap, Set())
+  def apply[A](values: Set[A]): ORSet[A] = ORSet(values.map(IdUtil.genId() -> _).toMap, Set())
 
 
   implicit def lattice[A]: Lattice[ORSet[A]] = new Lattice[ORSet[A]] {

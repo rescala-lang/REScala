@@ -103,7 +103,7 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
           case iv if iv.writeValue(iv.source.state.value, iv.source.state.value = _) => iv.source
         }.toSeq
 
-        creation.drainCreated().foreach(_.state.reset)
+        creation.drainCreated().foreach(_.state.reset())
 
         val initial = sources.flatMap { s =>
           s.state.dirty = true
@@ -127,10 +127,10 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
         Util.evaluateInvariants(created ++ sorted, initialWrites)
 
         //cleanup
-        initial.foreach(_.state.reset)
-        created.foreach(_.state.reset)
-        sources.foreach(_.state.reset)
-        sorted.foreach(_.state.reset)
+        initial.foreach(_.state.reset())
+        created.foreach(_.state.reset())
+        sources.foreach(_.state.reset())
+        sorted.foreach(_.state.reset())
 
 
         //wrapup
