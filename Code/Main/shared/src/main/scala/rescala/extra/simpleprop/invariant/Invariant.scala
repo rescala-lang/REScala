@@ -1,0 +1,22 @@
+package rescala.extra.simpleprop.invariant
+
+import scala.reflect.macros.blackbox
+
+object Invariant {
+  def apply[T](inv: T => Boolean): Invariant[T] = macro InvariantInterface.createInvariantImpl[T]
+}
+
+class InvariantInterface(val c: blackbox.Context) {
+  def createInvariantImpl[T: c.WeakTypeTag](inv: c.Expr[T => Boolean]): c.Expr[Invariant[T]] = {
+    import c.universe._
+
+    val invariantRep = show(inv.tree)
+    val invariantRepTree = Literal(Constant(invariantRep))
+    val invarientRepExpr = c.Expr[String](invariantRepTree)
+    reify(new Invariant[T](inv.splice, invarientRepExpr.splice))
+  }
+}
+
+class Invariant[T](val inv: T => Boolean, val description: String) {
+  def validate(value: T): Boolean = inv(value)
+}
