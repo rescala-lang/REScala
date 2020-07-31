@@ -8,7 +8,7 @@ class InvariantViolationException(t: Throwable, reactive: ReSource[SimpleStruct]
 
   override def getMessage: String = {
     val chainErrorMessage = if (causalErrorChains.nonEmpty)
-      "The error was caused by these update chains:\n\n" ++ causalErrorChains.map(_.map(_.name.str).mkString("\n↓\n")).mkString("\n---\n")
+      "The error was caused by these update chains:\n\n" ++ causalErrorChains.map(_.map(r => s"${r.name.str} with value: ${r.state.value}").mkString("\n↓\n")).mkString("\n---\n")
     else "The error was not triggered by a change."
 
     s"${t.getMessage} in reactive ${reactive.name.str}\n$chainErrorMessage\n"
