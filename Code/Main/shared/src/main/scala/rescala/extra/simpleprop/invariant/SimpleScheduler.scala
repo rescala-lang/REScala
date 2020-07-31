@@ -171,18 +171,21 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
 
     def test(): Unit = {
       if (this.signal.state.gen != null) {
-        forceValues((this.signal, this.signal.state.gen.pureApply(Gen.Parameters.default, Seed.random())))
+        0 to 100 foreach {
+          _ => forceValues((this.signal, Pulse.Value(this.signal.state.gen.pureApply(Gen.Parameters.default, Seed.random()))))
+        }
       } else {
         //Find generator for each branch. select a value for each. force transaction
         throw new NotImplementedException()
       }
     }
 
+
+
     private def forceValues(changes: (Signal[A], A) forSome { type A } *): Unit = {
-      forceNewTransaction(changes.foldLeft(Set.empty[ReSource]) { case (accu, (source, _)) =>
-        assert(!accu.contains(source), s"must not admit multiple values for the same source ($source was assigned multiple times)")
-        accu + source
-      }, {
+      val asReSource = changes.foldLeft(Set.empty[core.ReSource[SimpleStruct]]) {case (acc, (source, _)) => acc + source}
+
+      forceNewTransaction(asReSource, {
         admissionTicket =>
           changes.foreach {
             change =>
@@ -200,6 +203,7 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
               })
           }
       })
+      Util.evaluateInvariants(asReSource.toSeq, asReSource)
     }
   }
 }
