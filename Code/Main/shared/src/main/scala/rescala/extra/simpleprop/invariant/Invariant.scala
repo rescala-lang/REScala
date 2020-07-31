@@ -10,7 +10,7 @@ class InvariantInterface(val c: blackbox.Context) {
   def createInvariantImpl[T: c.WeakTypeTag](inv: c.Expr[T => Boolean]): c.Expr[Invariant[T]] = {
     import c.universe._
 
-    val invariantRep = show(inv.tree)
+    val invariantRep = showCode(inv.tree)
     val invariantRepTree = Literal(Constant(invariantRep))
     val invarientRepExpr = c.Expr[String](invariantRepTree)
     reify(new Invariant[T](inv.splice, invarientRepExpr.splice))
