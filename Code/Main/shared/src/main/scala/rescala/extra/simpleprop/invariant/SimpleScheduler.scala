@@ -23,7 +23,7 @@ class SimpleState[V](ip: InitValues[V]) {
   var discovered = false
   var dirty = false
   var done = false
-  var invariants: Seq[V => Boolean] = Seq.empty
+  var invariants: Seq[Invariant[V]] = Seq.empty
   var gen: Gen[_] = _
 
   def reset(): Unit = {
@@ -155,13 +155,13 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
     id.interpret(id.state.value)
   }
 
-  def specify[T](inv: Seq[T => Boolean], signal: Signal[T]): Unit = {
-    signal.state.invariants = inv.map(inv => ((invp: Pulse[T]) => inv(invp.get)))
+  def specify[T](inv: Seq[Invariant[T]], signal: Signal[T]): Unit = {
+    signal.state.invariants = inv.map(inv => new Invariant((invp: Pulse[T]) => inv.inv(invp.get), inv.description))
   }
 
   implicit class SignalWithInvariants[T](val signal: Signal[T]) extends AnyVal {
 
-    def specify(inv: (T => Boolean) *): Unit = {
+    def specify(inv: Invariant[T] *): Unit = {
       SimpleScheduler.this.specify(inv, signal)
     }
 
@@ -286,9 +286,9 @@ object Util {
     for {
       reactive <- reactives
       inv <- reactive.state.invariants
-      if !inv(reactive.state.value)
+      if !inv.validate(reactive.state.value)
     } {
-      throw new InvariantViolationException(new IllegalArgumentException(s"${reactive.state.value}"), reactive, Util.getCausalErrorChains(reactive, initialWrites)) // TODO: why is no assertionerror thrown?
+      throw new InvariantViolationException(new IllegalArgumentException(s"${reactive.state.value} violates invariant ${inv.description}"), reactive, Util.getCausalErrorChains(reactive, initialWrites))
     }
   }
 
