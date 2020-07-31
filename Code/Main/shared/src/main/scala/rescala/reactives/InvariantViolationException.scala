@@ -1,9 +1,9 @@
 package rescala.reactives
 
-import rescala.core.{Derived, ReSource}
+import rescala.core.{ReSource}
 import rescala.extra.simpleprop.invariant.SimpleStruct
 
-class InvariantViolationException(t: Throwable, reactive: Derived[SimpleStruct], causalErrorChains: Seq[Seq[ReSource[SimpleStruct]]])
+class InvariantViolationException(t: Throwable, reactive: ReSource[SimpleStruct], causalErrorChains: Seq[Seq[ReSource[SimpleStruct]]])
   extends RuntimeException {
 
   override def getMessage: String = {

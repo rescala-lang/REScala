@@ -278,17 +278,17 @@ object Util {
 
   }
 
-  def evaluateInvariants(reactives: Seq[Derived[SimpleStruct]], initialWrites: Set[ReSource[SimpleStruct]]): Unit = {
+  def evaluateInvariants(reactives: Seq[ReSource[SimpleStruct]], initialWrites: Set[ReSource[SimpleStruct]]): Unit = {
     for {
-      derived <- reactives
-      inv <- derived.state.invariants
-      if !inv(derived.state.value)
+      reactive <- reactives
+      inv <- reactive.state.invariants
+      if !inv(reactive.state.value)
     } {
-      throw new InvariantViolationException(new IllegalArgumentException(s"${derived.state.value}"), derived, Util.getCausalErrorChains(derived, initialWrites)) // TODO: why is no assertionerror thrown?
+      throw new InvariantViolationException(new IllegalArgumentException(s"${reactive.state.value}"), reactive, Util.getCausalErrorChains(reactive, initialWrites)) // TODO: why is no assertionerror thrown?
     }
   }
 
-  def getCausalErrorChains(errorNode: Derived[SimpleStruct], initialWrites: Set[ReSource[SimpleStruct]]): Seq[Seq[ReSource[SimpleStruct]]] = {
+  def getCausalErrorChains(errorNode: ReSource[SimpleStruct], initialWrites: Set[ReSource[SimpleStruct]]): Seq[Seq[ReSource[SimpleStruct]]] = {
     import scala.collection.mutable.ListBuffer
 
     val initialNames = initialWrites.map(_.name)
