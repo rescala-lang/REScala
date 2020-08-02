@@ -3,10 +3,7 @@ package reswing.millgame.versions.signals
 import reswing.millgame._
 import reswing.millgame.types._
 
-import rescala.default._
 
-import rescala.default._
-import rescala.default._
 import rescala.default._
 
 class MillBoard {

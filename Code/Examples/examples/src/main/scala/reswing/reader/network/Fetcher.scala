@@ -10,8 +10,6 @@ import reswing.reader.Observable
 import scala.xml.NodeSeq
 import scala.xml.XML
 import rescala.default._
-import rescala.default._
-import rescala.default._
 
 /**
  * The Fetcher is responsible to fetch the xml data

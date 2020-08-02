@@ -12,8 +12,6 @@ import reswing.reader.Observable
 import scala.xml.Node
 import scala.xml.NodeSeq
 import rescala.default._
-import rescala.default._
-import rescala.default._
 import reswing.reader.common.sequence
 
 /**

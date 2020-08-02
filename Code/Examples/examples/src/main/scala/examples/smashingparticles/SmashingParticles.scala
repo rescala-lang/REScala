@@ -1,7 +1,6 @@
 package examples.smashingparticles
 
 import rescala.default._
-import rescala.default._
 import swing.{Swing, Panel, MainFrame, SimpleSwingApplication}
 import java.awt.{Graphics2D, Dimension}
 import java.awt.Point

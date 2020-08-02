@@ -1,5 +1,4 @@
 
-import akka.cluster.Cluster
 import com.typesafe.config.ConfigFactory
 import akka.actor._
 import akka.actor.Props

@@ -5,7 +5,6 @@ import rescala.Schedulers
 import rescala.core.{Scheduler, Struct}
 import rescala.interface.RescalaInterface
 
-import scala.collection.mutable
 
 @State(Scope.Benchmark)
 class EngineParam[S <: Struct] {

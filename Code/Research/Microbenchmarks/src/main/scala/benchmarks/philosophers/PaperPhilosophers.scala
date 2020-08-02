@@ -181,7 +181,6 @@ trait IndividualCounts[S <: Struct] {
 
 trait NoTopper[S <: Struct] extends IndividualCounts[S] {
   self: PaperPhilosophers[S] =>
-  import engine._
 
   val locks = Array.fill(size) {new ReentrantLock()}
   override def manuallyLocked[T](idx: Int)(f: => T): T = {
