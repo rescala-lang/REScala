@@ -3,7 +3,7 @@ package examples.extra.objectorientation
 import rescala.default._
 
 class Keyboard {
-  protected lazy val press: Event[String] = Evt[String]
+  protected lazy val press: Event[String] = Evt[String]()
   def keyPressed = press
   protected lazy val something = Signal {0}
 }

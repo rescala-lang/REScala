@@ -7,7 +7,7 @@ class dropParam_EventTest extends RETests { multiEngined { engine => import engi
 
   test("handler Of drop Param Is Executed"){
     var test = 0
-    val e1 = Evt[Int]
+    val e1 = Evt[Int]()
     val e1_drop: Event[Unit] = e1.dropParam
     e1_drop += (x => { test += 1; })
 

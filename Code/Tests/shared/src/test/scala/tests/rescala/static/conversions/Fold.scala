@@ -9,14 +9,14 @@ class Fold extends RETests { multiEngined { engine => import engine._
 
   /* fold */
   test("fold the Initial Value Is Set Correctly") {
-    val e = Evt[Int]
+    val e = Evt[Int]()
     val f = (x: Int, y: Int) => x + y
     val s: Signal[Int] = e.fold(10)(f)
     assert(s.readValueOnce == 10)
   }
 
   test("fold the Result Signal Increases When Events Occur") {
-    val e = Evt[Int]
+    val e = Evt[Int]()
     val f = (x: Int, y: Int) => x + y
     val s: Signal[Int] = e.fold(10)(f)
     e.fire(1)
@@ -27,13 +27,13 @@ class Fold extends RETests { multiEngined { engine => import engine._
 
   /* count */
   test("count the Initial Value Is Set Correctly"){
-    val e = Evt[Int]
+    val e = Evt[Int]()
     val s: Signal[Int] = e.count
     assert(s.readValueOnce == 0)
   }
 
   test("count the Result Signal Increases When Events Occur"){
-    val e = Evt[Int]
+    val e = Evt[Int]()
     val s: Signal[Int] = e.count
     e.fire(1)
     e.fire(1)
@@ -43,7 +43,7 @@ class Fold extends RETests { multiEngined { engine => import engine._
 
   /* iterate */
   test("iterate the Initial Value Is Set Correctly") {
-    val e = Evt[Int]
+    val e = Evt[Int]()
     val f = (x: Int) => x
     val s: Signal[Int] = e.iterate(10)(f)
     assert(s.readValueOnce == 10)
@@ -51,7 +51,7 @@ class Fold extends RETests { multiEngined { engine => import engine._
 
   test("iterate the Function is Executed Every Time The Event Fires") {
     var test: Int = 0
-    val e = Evt[Int]
+    val e = Evt[Int]()
     val f = (x: Int) => {test += 1; x}
     val s: Signal[Int] = e.iterate(10)(f)
     e.fire(1)
@@ -66,7 +66,7 @@ class Fold extends RETests { multiEngined { engine => import engine._
   // TODO: does it make sense ?
   test("iterate the Parameter Is Always The Init Value") {
     var test: Int = 0
-    val e = Evt[Int]
+    val e = Evt[Int]()
     val f = (x: Int) => {test = x; x + 1}
     val s: Signal[Int] = e.iterate(10)(f)
     e.fire(1)
@@ -79,7 +79,7 @@ class Fold extends RETests { multiEngined { engine => import engine._
   }
 
   test("iterate the result signal does not depend on the event value") {
-    val e = Evt[Int]
+    val e = Evt[Int]()
     val s: Signal[Int] = e.iterate(10)(identity)
     e.fire(1)
     assert(s.readValueOnce == 10)
@@ -91,14 +91,14 @@ class Fold extends RETests { multiEngined { engine => import engine._
 
   /* latest */
   test("latest the Initial Value Is Set Correctly") {
-    val e = Evt[Int]
+    val e = Evt[Int]()
     val s: Signal[Int] = e.latest(10)
 
     assert(s.readValueOnce == 10)
   }
 
   test("latest the Function is Executed Every Time The Event Fires") {
-    val e = Evt[Int]
+    val e = Evt[Int]()
     val s: Signal[Int] = e.latest(10)
 
     e.fire(1)
@@ -112,14 +112,14 @@ class Fold extends RETests { multiEngined { engine => import engine._
 
   /* latestOption */
   test("latest Option the Initial Value Is Set Correctly") {
-    val e = Evt[Int]
+    val e = Evt[Int]()
     val s: Signal[Option[Int]] = e.latestOption()
 
     assert(s.readValueOnce == None)
   }
 
   test("latest Option the Function is Executed Every Time The Event Fires") {
-    val e = Evt[Int]
+    val e = Evt[Int]()
     val s: Signal[Option[Int]] = e.latestOption()
 
     e.fire(1)
@@ -133,14 +133,14 @@ class Fold extends RETests { multiEngined { engine => import engine._
 
   /* last */
   test("last the Initial Value Is Set Correctly") {
-    val e = Evt[Int]
+    val e = Evt[Int]()
     val s: Signal[LinearSeq[Int]] = e.last(5)
 
     assert(s.readValueOnce == List())
   }
 
   test("last collects The LastN Events") {
-    val e = Evt[Int]
+    val e = Evt[Int]()
     val s: Signal[LinearSeq[Int]] = e.last(5)
 
 
@@ -160,14 +160,14 @@ class Fold extends RETests { multiEngined { engine => import engine._
 
   /* list */
   test("list the Initial Value Is Set Correctly") {
-    val e = Evt[Int]
+    val e = Evt[Int]()
     val s = e.list()
 
     assert(s.readValueOnce == List())
   }
 
   test("list the Function is Executed Every Time The Event Fires") {
-    val e = Evt[Int]
+    val e = Evt[Int]()
     val s = e.list()
 
     assert(s.readValueOnce == List())
@@ -185,8 +185,7 @@ class Fold extends RETests { multiEngined { engine => import engine._
 
   test("create folds during tx"){
 
-    val e = Evt[String]
-
+    val e = Evt[String]()
     val listed = transaction(e) { implicit t =>
       e.admit("hello")
       e.list()
@@ -201,10 +200,9 @@ class Fold extends RETests { multiEngined { engine => import engine._
 
   test("fold expression works"){
 
-    val word = Evt[String]
-    val count = Evt[Int]
-    val reset = Evt[Unit]
-
+    val word = Evt[String]()
+    val count = Evt[Int]()
+    val reset = Evt[Unit]()
     val res = Events.foldAll(""){ acc => Seq(
       reset >> (_ => ""),
       word >> identity,
@@ -228,9 +226,8 @@ class Fold extends RETests { multiEngined { engine => import engine._
 
 
   test("fold expression compiles with values of a subtype"){
-    val e0 = Evt[Unit]
-    val e1 = Evt[Int]
-
+    val e0 = Evt[Unit]()
+    val e1 = Evt[Int]()
     val res = Events.foldAll(Option.empty[Int]){ _ => Seq(
       e0 >> { _ => Some(1) },
       e1 >> { _ => Option(2) }
@@ -245,7 +242,7 @@ class Fold extends RETests { multiEngined { engine => import engine._
 
 
   test("changing only a signal when folding") {
-    val e = Evt[Int]
+    val e = Evt[Int]()
     val v = Var(0)
     val f = e.fold(0) { (_, _) => v.value }
     f observe identity

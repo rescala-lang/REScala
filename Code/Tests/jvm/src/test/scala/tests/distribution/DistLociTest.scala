@@ -20,8 +20,7 @@ class DistLociTest extends AnyFreeSpec {
     //val messagesBinding = Binding[RGA[String] => Unit]("messages")
 
 
-    val serverSource = Evt[String]
-
+    val serverSource = Evt[String]()
     val (serverRegistry, serverFold) = {
 
       val registry = new Registry
@@ -34,8 +33,7 @@ class DistLociTest extends AnyFreeSpec {
 
     println("running client")
 
-    val clientSource = Evt[String]
-
+    val clientSource = Evt[String]()
     val (clientRegistry, clientFold) = {
       val registry = new Registry
       val connection: Future[RemoteRef] = registry.connect(WS("ws://localhost:1099/"))

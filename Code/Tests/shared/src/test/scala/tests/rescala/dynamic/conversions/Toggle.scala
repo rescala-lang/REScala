@@ -8,7 +8,7 @@ class Toggle extends RETests {multiEngined { engine => import engine._
 
   /* toggle */
   test("toggle the Initial Value Is Set Correctly") {
-    val e = Evt[Int]
+    val e = Evt[Int]()
     val v1 = Var(1)
     val s1 = v1.map {_ + 1}
     val v2 = Var(11)
@@ -20,7 +20,7 @@ class Toggle extends RETests {multiEngined { engine => import engine._
   }
 
   test("toggle the Event Switches The Signal") {
-    val e = Evt[Int]
+    val e = Evt[Int]()
     val v1 = Var(1)
     val s1 = v1.map {_ + 1}
     val v2 = Var(11)

@@ -98,7 +98,7 @@ class SignalTestSuite extends RETests with ScalaCheckDrivenPropertyChecks with M
   "iterate only depends on init value" in forAll(Arbitrary.arbitrary[Array[Int]], Arbitrary.arbInt.arbitrary) {
     (values: Array[Int], initial: Int) =>
       var t = 0;
-      val evt = Evt[Int]
+      val evt = Evt[Int]()
       val func = (x: Int) => {
         t = x; x + 1
       }

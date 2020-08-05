@@ -152,7 +152,7 @@ def m1(x: Int) = {
   val y = x + 1
   println(y)
 }
-val e = Evt[Int]
+val e = Evt[Int]()
 val o1 = e observe m1 _
 ```
 ```tut:book
@@ -491,9 +491,9 @@ the handlers are executed in order.
 The acc parameter reflects the current state.
 
 ```tut:silent
-val word = Evt[String]
-val count = Evt[Int]
-val reset = Evt[Unit]
+val word = Evt[String]()
+val count = Evt[Int]()
+val reset = Evt[Unit]()
 val result = Events.foldAll(""){ acc => Events.Match(
   reset >> (_ => ""),
   word >> identity,

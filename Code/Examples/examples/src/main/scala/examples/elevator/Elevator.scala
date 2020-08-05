@@ -16,9 +16,8 @@ class Elevator(val nFloors: Int) {
   val WaitingTime = 10 // number of ticks to wait on each floor
 
   // expose this event to the outside
-  val tick = Evt[Unit]
-  val callToFloor = Evt[Int]
-
+  val tick = Evt[Unit]()
+  val callToFloor = Evt[Int]()
   val queue = SQueue(1)
 
   // helper function integrating values over tick (time)

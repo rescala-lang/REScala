@@ -19,7 +19,7 @@ class SignalMacro extends RETests { multiEngined { engine => import engine._
   test("conversion Function With Argument In Signal"){
 
     var test = 0
-    val e = Evt[Int]
+    val e = Evt[Int]()
     val s: Signal[Int] = Signal { 2 * e.latest(0).apply() }
 
     s.changed += { _ => test += 1 }
@@ -35,7 +35,7 @@ class SignalMacro extends RETests { multiEngined { engine => import engine._
   test("conversion Function Without Argument In Signal"){
 
     var test = 0
-    val e = Evt[Int]
+    val e = Evt[Int]()
     val s: Signal[Option[Int]] = Signal { e.latestOption().apply() }
 
     s.changed += { _ => test += 1 }
@@ -61,7 +61,7 @@ class SignalMacro extends RETests { multiEngined { engine => import engine._
     abstract class A {def obj(): Unit }
     val a = new A {
       def obj() = new {
-        val evt = Evt[Int]
+        val evt = Evt[Int]()
         val sig: Signal[Int] = Signal { 2 * evt.latest(0).apply() }
 
         e = evt
@@ -246,7 +246,7 @@ class SignalMacro extends RETests { multiEngined { engine => import engine._
 
     def getSignal(obj: {def evt: Event[Int]}) = obj.evt
 
-    val e = Evt[Int]
+    val e = Evt[Int]()
     val o = new {val evt = e }
 
     val sig = Signal { getSignal(o).latestOption().apply() }
@@ -312,7 +312,7 @@ class SignalMacro extends RETests { multiEngined { engine => import engine._
 
   test("can generate signals in map") {
 
-    val source = Evt[String]
+    val source = Evt[String]()
     val mapping = Map("Hallo" -> Var("Welt"), "Test" -> Var("String"))
 
     val selected = source.map(mapping.get).flatten.latest().flatten(rescala.reactives.Flatten.signal)

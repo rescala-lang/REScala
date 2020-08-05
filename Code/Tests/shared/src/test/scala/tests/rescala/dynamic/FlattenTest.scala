@@ -113,7 +113,7 @@ class FlattenTest extends RETests { multiEngined { engine =>
   }
 
   test("flatten Event"){
-    val e1 = Evt[Int]
+    val e1 = Evt[Int]()
     val condition = e1.latest(-1)
     val level1Event = e1.map(_ => "level 1")
     val level2Event = level1Event.map(_ => "level 2")
@@ -131,7 +131,7 @@ class FlattenTest extends RETests { multiEngined { engine =>
   }
 
   test("flatten Event Same Level"){
-    val e1 = Evt[Int]
+    val e1 = Evt[Int]()
     val level2Condition = e1.latest(-1).map(identity)
     val level1EventA = e1.map(_ => "A")
     val level1EventB = e1.map(_ => "B")
@@ -150,8 +150,8 @@ class FlattenTest extends RETests { multiEngined { engine =>
 
 
   test("unwrap  Event"){
-    val e1 = Evt[Int]
-    val e2 = Evt[Int]
+    val e1 = Evt[Int]()
+    val e2 = Evt[Int]()
     val eventSelector = Var(e1)
     val selected = eventSelector.map(identity)
     val unwrapped = selected.flatten
@@ -314,7 +314,7 @@ class FlattenTest extends RETests { multiEngined { engine =>
 
 
   test("list Of Signals Section"){
-    val tick = Evt[Unit]
+    val tick = Evt[Unit]()
     val count = tick.count()
     val doubled = count.map(_ * 2)
     val mod2 = count.map(_ % 2)

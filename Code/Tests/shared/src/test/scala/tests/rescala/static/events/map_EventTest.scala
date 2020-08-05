@@ -9,7 +9,7 @@ class map_EventTest extends RETests { multiEngined { engine => import engine._
 
   test("handler Of map  Is Executed"){
     var test = 0
-    val e1 = Evt[Int]
+    val e1 = Evt[Int]()
     val e1_map = e1 map ((x: Int) => x * 2)
     e1_map += ((x: Int) => { test += 1 })
 
@@ -20,7 +20,7 @@ class map_EventTest extends RETests { multiEngined { engine => import engine._
 
   test("the Function Passed To map is Applied"){
     var test = 0
-    val e1 = Evt[Int]
+    val e1 = Evt[Int]()
     val e1_map = e1 map ((x: Int) => x * 2)
     e1_map += ((x: Int) => { test = x })
 

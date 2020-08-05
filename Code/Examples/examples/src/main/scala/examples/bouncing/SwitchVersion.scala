@@ -27,9 +27,7 @@ class SwitchVersion {
   val initPosition = new Point(20, 10)
   val speed = new Point(10,8)
 
-  val tick = Evt[Unit]
-
-
+  val tick = Evt[Unit]()
   // Using switch
 
   val x: Signal[Int] = tick.fold(initPosition.x) {(pos, _) => pos + speedX.value}

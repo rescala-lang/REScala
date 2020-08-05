@@ -12,13 +12,13 @@ object ReactiveUtil {
     private[ReactiveUtil] def applyConnections() = events foreach (_())
 
     def apply[T](e: => Event[T]): Event[T] = {
-      val ev = Evt[T]
+      val ev = Evt[T]()
       events += { () => e.observe(ev.fire) }
       ev
     }
 
     def apply[T](s: => Signal[T], init: T = null.asInstanceOf[T]): Signal[T] = {
-      val ev = Evt[T]
+      val ev = Evt[T]()
       events += { () =>
         s.observe(ev.fire)
         ev.fire(s.now)
@@ -34,12 +34,12 @@ object ReactiveUtil {
    *
    * {{{
    * lazy val o1: { val ev: Event[Unit] } = new {
-   *   lazy val ev: Event[Unit] = Evt[Unit]
+   *   lazy val ev: Event[Unit] = Evt[Unit]()
    *   o2.ev += {_ => /* react on event */ }
    * }
    *
    * lazy val o2: { val ev: Event[Unit] } = new {
-   *   lazy val ev: Event[Unit] = Evt[Unit]
+   *   lazy val ev: Event[Unit] = Evt[Unit]()
    *   o1.ev += {_ => /* react on event */ }
    * }
    *
@@ -57,12 +57,12 @@ object ReactiveUtil {
    * {{{
    * val (o1, o2) = bilateralValues{ value =>
    *   lazy val o1: { val ev: Event[Unit] } = new {
-   *     lazy val ev: Event[Unit] = Evt[Unit]
+   *     lazy val ev: Event[Unit] = Evt[Unit]()
    *     value(o2.ev) += {_ => /* react on event */ }
    *   }
    *
    *   lazy val o2: { val ev: Event[Unit] } = new {
-   *     lazy val ev: Event[Unit] = Evt[Unit]
+   *     lazy val ev: Event[Unit] = Evt[Unit]()
    *     value(o1.ev) += {_ => /* react on event */ }
    *   }
    *

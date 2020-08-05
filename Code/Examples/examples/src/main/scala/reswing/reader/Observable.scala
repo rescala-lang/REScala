@@ -6,9 +6,8 @@ import rescala.default._
  */
 class Observable[T, U](body: T => U) extends (T => U) {
   // before and after, modeled as primitive events
-  lazy val before = Evt[T]
-  lazy val after = Evt[(T,U)]
-
+  lazy val before = Evt[T]()
+  lazy val after = Evt[(T,U)]()
   /*
   * Instrumented method implementation:
   * trigger events before and after the actual method execution

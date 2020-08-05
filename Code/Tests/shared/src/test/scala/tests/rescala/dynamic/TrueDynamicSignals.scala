@@ -90,8 +90,7 @@ class TrueDynamicSignals extends RETests { multiEngined { engine => import engin
       def sig(implicit ct: CreationTicket) = Signal { v() }
     }
 
-    val evt = Evt[Int]
-
+    val evt = Evt[Int]()
     val testsig = Signal.dynamic {
       val localsig = obj.sig
       val latest = evt latest -1
@@ -140,7 +139,7 @@ class TrueDynamicSignals extends RETests { multiEngined { engine => import engin
   }
 
   test("extracting Signal Side Effects"){
-    val e1 = Evt[Int]
+    val e1 = Evt[Int]()
     @cutOutOfUserComputation
     def newSignal()(implicit ct: CreationTicket): Signal[Int] = e1.count()
 

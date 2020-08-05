@@ -8,8 +8,8 @@ class except_EventTest extends RETests { multiEngined { engine => import engine.
 
   test("handler Of except  Is Executed If Basic Event Fires"){
     var test = 0
-    val e1 = Evt[Int]
-    val e2 = Evt[Int]
+    val e1 = Evt[Int]()
+    val e2 = Evt[Int]()
     val e1_except_e2 = e1 \ e2
     e1_except_e2 += ((x: Int) => { test += 1 })
 
@@ -20,8 +20,8 @@ class except_EventTest extends RETests { multiEngined { engine => import engine.
 
   test("handler Of except  Ignores The Second Event If Fires"){
     var test = 0
-    val e1 = Evt[Int]
-    val e2 = Evt[Int]
+    val e1 = Evt[Int]()
+    val e2 = Evt[Int]()
     val e1_except_e2 = e1 \ e2
     e1_except_e2 += ((x: Int) => { test += 1 })
 
@@ -35,7 +35,7 @@ class except_EventTest extends RETests { multiEngined { engine => import engine.
     var test = 0
 
     var cond = false
-    val e1 = Evt[Int]
+    val e1 = Evt[Int]()
     val e2 = e1 map ((x: Int) => x * 2)
     val e3 = e1 filter (_ => cond)
     val e2_except_e3 = e2 \ e3
@@ -61,7 +61,7 @@ class except_EventTest extends RETests { multiEngined { engine => import engine.
     var value = 0
 
     var cond = false
-    val e1 = Evt[Int]
+    val e1 = Evt[Int]()
     val e2 = e1 map ((x: Int) => x)
     val e3 = (e1 map ((x: Int) => x * 2)) filter (_ => cond)
     val e1_except_e2 = e2 \ e3

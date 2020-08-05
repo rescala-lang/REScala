@@ -19,7 +19,7 @@ class OOPropertiesEventTest extends RETests { multiEngined { engine => import en
     var test = 0
 
     class A {
-      val e1 = Evt[Int]
+      val e1 = Evt[Int]()
       e1 += ((x: Int) => { test += 1 })
     }
     class B extends A {
@@ -35,7 +35,7 @@ class OOPropertiesEventTest extends RETests { multiEngined { engine => import en
     var test = 0
 
     class A {
-      val e1 = Evt[Int]
+      val e1 = Evt[Int]()
     }
     class B extends A {
       e1 += ((x: Int) => { test += 1 })
@@ -52,14 +52,14 @@ class OOPropertiesEventTest extends RETests { multiEngined { engine => import en
       var test = 0
 
       class A {
-        lazy val e1: Event[Int] = Evt[Int]
+        lazy val e1: Event[Int] = Evt[Int]()
         // this will force e1 which is overridden below
         e1 += ((x: Int) => { test += 1 })
       }
 
       class B extends A {
-        val e2 = Evt[Int]
-        val e3 = Evt[Int]
+        val e2 = Evt[Int]()
+        val e3 = Evt[Int]()
         // but this override here requires e2 and e3 which are not yet initialized
         override lazy val e1: Event[Int] = e2 || e3
         e1 += ((x: Int) => { test += 1 })
@@ -79,11 +79,11 @@ class OOPropertiesEventTest extends RETests { multiEngined { engine => import en
     var test = 0
 
     class A {
-      val e1: Event[X] = Evt[X]
+      val e1: Event[X] = Evt[X]()
     }
     class B extends A {
-      val e2 = Evt[Y]
-      val e3 = Evt[Y]
+      val e2 = Evt[Y]()
+      val e3 = Evt[Y]()
       override val e1: Event[X] = e2 || e3
       e1 += ((x: X) => { test += 1 })
       e2.fire(new Y)

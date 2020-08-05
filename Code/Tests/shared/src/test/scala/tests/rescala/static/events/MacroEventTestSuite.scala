@@ -6,7 +6,7 @@ class MacroEventTestSuite extends RETests { multiEngined { engine => import engi
 
 
   test("simple"){
-    val ev1 = Evt[Int]
+    val ev1 = Evt[Int]()
     val v1 = Var(8)
     val snapshotEvent = Event {
       ev1().map(i => i + v1())
@@ -25,7 +25,7 @@ class MacroEventTestSuite extends RETests { multiEngined { engine => import engi
   }
 
   test("map"){
-    val ev1 = Evt[Int]
+    val ev1 = Evt[Int]()
     val v1 = Var(8)
     val snapshotEvent = ev1.map(i =>  i + v1() )
 
@@ -42,7 +42,7 @@ class MacroEventTestSuite extends RETests { multiEngined { engine => import engi
   }
 
   test("map as static"){
-    val ev1 = Evt[Int]
+    val ev1 = Evt[Int]()
     val snapshotEvent = ev1.map(i =>  i + 1 )
 
     val res = snapshotEvent.latest(0)
@@ -59,8 +59,8 @@ class MacroEventTestSuite extends RETests { multiEngined { engine => import engi
 
 
   test("use Events In Signal Expression") {
-    val e1 = Evt[Int]
-    val e2 = Evt[Int]
+    val e1 = Evt[Int]()
+    val e2 = Evt[Int]()
     val res = Signal {List(e1(), e2()).flatten.sum}
 
     assert(res.readValueOnce === 0)
@@ -74,8 +74,8 @@ class MacroEventTestSuite extends RETests { multiEngined { engine => import engi
   }
 
   test("use Event Expression") {
-    val e1 = Evt[Int]
-    val e2 = Evt[Int]
+    val e1 = Evt[Int]()
+    val e2 = Evt[Int]()
     val event = Event {Some(List(e1(), e2()).flatten)}
     val res = event.latest(Nil)
 
@@ -92,8 +92,7 @@ class MacroEventTestSuite extends RETests { multiEngined { engine => import engi
 
 
   test("cut out created signals") {
-    val e1 = Evt[Int]
-
+    val e1 = Evt[Int]()
     val event =  Event { Some{ e1.count.value } }
 
     val res = event.latest()

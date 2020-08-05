@@ -34,7 +34,7 @@ class MapBenchmarkWithInsert {
 
   @Setup(Level.Invocation)
   def prepare: Unit = {
-    addEvent = Evt[Int]
+    addEvent = Evt[Int]()
     val seq = addEvent.fold(Seq.range(1, arg))((s, x) => {
       s :+ x
     })

@@ -6,7 +6,7 @@ class RecurringPropagation extends RETests { multiEngined { engine => import eng
 
   test("can start propagation in observers") {
 
-    val e1 = Evt[Int]
+    val e1 = Evt[Int]()
     val m1 = e1.map(_ + 10)
     val v1 = Var(2)
 
@@ -21,7 +21,7 @@ class RecurringPropagation extends RETests { multiEngined { engine => import eng
 
   test("recursive propagation") {
 
-    val e1 = Evt[Int]
+    val e1 = Evt[Int]()
     val m1 = e1.map(_ + 10)
     val v1 = Var(2)
 

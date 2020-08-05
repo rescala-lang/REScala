@@ -34,7 +34,7 @@ class ExceptionPropagationTestSuite extends RETests { multiEngined { engine => i
   }
 
   test("basic Event Exceptions"){
-    val e = Evt[Int]
+    val e = Evt[Int]()
     val de = Event { e().map(div) }
     val se = e.map(div)
 
@@ -58,7 +58,7 @@ class ExceptionPropagationTestSuite extends RETests { multiEngined { engine => i
 
 
   test("more Exceptions"){
-    val input = Evt[String]
+    val input = Evt[String]()
     val trimmed = input.map(_.trim)
     val toInted = trimmed.map(_.toInt)
     val folded = toInted.fold(100)((acc, v) => div2(v, acc))

@@ -32,7 +32,7 @@ class SizeBenchmarkWithInsert{
 
   @Setup(Level.Invocation)
   def prepare: Unit = {
-    addEvent = Evt[Int]
+    addEvent = Evt[Int]()
     val seq = addEvent.fold(1 to arg toList)((s, x) => {
       s :+ x
     })

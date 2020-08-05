@@ -16,7 +16,7 @@ class PaperExampleSharedCalendar extends AnyFreeSpec {
     def of(date: Date): Date = date.`with`(ChronoField.DAY_OF_WEEK, 1)
   }
   object App {
-    val holiday: Evt[Entry] = Evt[Entry]
+    val holiday: Evt[Entry] = Evt[Entry]()
     def nationalHolidays(): Event[Entry] = holiday
   }
   object Log { def appendEntry(entry: Entry): Unit = println(s"Log: $entry") }

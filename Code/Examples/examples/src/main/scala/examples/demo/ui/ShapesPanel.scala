@@ -49,15 +49,15 @@ class ShapesPanel(val shapes: Signal[Traversable[Shape]]) extends Panel {
 
   object Mouse {
     class MouseButton {
-      val pressed = Evt[Point]
-      val released = Evt[Point]
-      val clicked = Evt[Point]
+      val pressed = Evt[Point]()
+      val released = Evt[Point]()
+      val clicked = Evt[Point]()
       val state = (pressed.map(_ => true) || released.map(_ => false)).latest(false)
     }
     val _position = Var[Point](Point(0, 0))
     val x = _position.map(_.x)
     val y = _position.map(_.y)
-    val wheel = Evt[Int]
+    val wheel = Evt[Int]()
     val _buttons: Array[MouseButton] = (0 until MouseInfo.getNumberOfButtons).map{_ => new MouseButton}.toArray
 
     def button(id: Int): MouseButton = _buttons(id - 1)

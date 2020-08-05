@@ -34,7 +34,7 @@ class ReactiveTextfield extends TextField with ReactiveText {
 class ReactiveLabel extends Label with ReactiveText
 class ReactiveButton extends Button with ReactiveText {
   // wrap the event to escala
-  val clicked = Evt[ButtonClicked]
+  val clicked = Evt[ButtonClicked]()
   reactions += { case c@ButtonClicked(_) => clicked.fire(c) }
 }
 

@@ -10,7 +10,7 @@ class PredicateEventTest extends RETests { multiEngined { engine => import engin
   test("predicate Event Is Executed Only If The Predicate Is True"){
     var test = 0
     var cond = false
-    val e1 = Evt[Int]
+    val e1 = Evt[Int]()
     val e2 = e1 filter ((x: Int) => cond)
     e2 += ((x: Int) => { test += 1 })
 
@@ -28,7 +28,7 @@ class PredicateEventTest extends RETests { multiEngined { engine => import engin
   test("collect filters values"){
     var test = 0
     var cond = false
-    val e1 = Evt[Int]
+    val e1 = Evt[Int]()
     val e2 = e1.collect{
       case e if cond => e
     }
@@ -45,7 +45,7 @@ class PredicateEventTest extends RETests { multiEngined { engine => import engin
   }
 
   test("collect maps and filters values"){
-    val e1 = Evt[String]
+    val e1 = Evt[String]()
     val e2 = e1.collect{
       case "accept" => true
     }

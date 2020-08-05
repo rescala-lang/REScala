@@ -12,8 +12,8 @@ class OR_EventTest extends RETests { multiEngined { engine => import engine._
 
   test("handler Of OR Is Executed If Any Of The Events Fires") {
     var test = 0
-    val e1 = Evt[Int]
-    val e2 = Evt[Int]
+    val e1 = Evt[Int]()
+    val e2 = Evt[Int]()
     val e1_OR_e2 = e1 || e2
     e1_OR_e2 += { _ => test += 1 }
 
@@ -28,7 +28,7 @@ class OR_EventTest extends RETests { multiEngined { engine => import engine._
   test("handler Of OR Is Executed Only Once") {
 
     val test = new AtomicInteger(0)
-    val e1 = Evt[Int]
+    val e1 = Evt[Int]()
     val e2 = e1 map (_ * 2)
     val e3 = e1 map (_ * 2)
     val e2_OR_e3 = e2 || e3
@@ -42,9 +42,8 @@ class OR_EventTest extends RETests { multiEngined { engine => import engine._
   }
 
   test("OR event select correct event") {
-    val e1 = Evt[String]
-    val e2 = Evt[String]
-
+    val e1 = Evt[String]()
+    val e2 = Evt[String]()
     val e3 = e1 || e2
 
     val log = e3.list()

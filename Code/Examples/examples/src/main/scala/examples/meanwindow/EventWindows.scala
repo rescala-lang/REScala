@@ -4,8 +4,7 @@ import rescala.default._
 
 object EventWindows extends App {
 
-  val e = Evt[Double]
-
+  val e = Evt[Double]()
   // val all = e.list()
   val window = e.last(5)
   val mean = Signal {

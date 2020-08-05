@@ -9,12 +9,10 @@ import scala.swing.event._
 class Mouse {
 
 	 /* EScala events */
-	val mouseMovedE = Evt[Point]
-	val mousePressedE = Evt[Point]
-	val mouseDraggedE = Evt[Point]
-	val mouseReleasedE = Evt[Point]
-
-
+	val mouseMovedE = Evt[Point]()
+	val mousePressedE = Evt[Point]()
+	val mouseDraggedE = Evt[Point]()
+	val mouseReleasedE = Evt[Point]()
 	/* Compose reactive values */
 	val mouseChangePosition = mouseMovedE || mouseDraggedE
 	val mousePressedOrReleased = mousePressedE || mouseReleasedE

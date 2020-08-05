@@ -34,8 +34,7 @@ class EmptySignalTestSuite extends RETests { multiEngined { engine => import eng
 
     val v = Var.empty[Event[Unit]]
 
-    val e1 = Evt[Unit]
-
+    val e1 = Evt[Unit]()
     val e2 = e1 map { _ => v.flatten.count }
 
     var s: Signal[Int] = null
@@ -49,8 +48,7 @@ class EmptySignalTestSuite extends RETests { multiEngined { engine => import eng
     assert(s.readValueOnce == 0, "mapped event")
 
 
-    val e3 = Evt[Unit]
-
+    val e3 = Evt[Unit]()
     v.set(e3)
 
     assert(s.readValueOnce == 0, "mapped event after var set")
@@ -70,8 +68,7 @@ class EmptySignalTestSuite extends RETests { multiEngined { engine => import eng
 
     assert(res === -100, "sanity")
 
-    val evt = Evt[Int]
-
+    val evt = Evt[Int]()
     v.set(evt)
 
     evt.fire(20)

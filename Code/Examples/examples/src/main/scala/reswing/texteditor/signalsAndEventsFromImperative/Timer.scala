@@ -17,8 +17,7 @@ class Timer(delay0: Int) {
   private val isRunning = Var(true)
 
   val running = Signal { isRunning() }
-  val fired = Evt[Unit]
-
+  val fired = Evt[Unit]()
   def delay = peer.getDelay
   def delay_=(delay: Int) = peer.setDelay(delay)
   def repeating = peer.isRepeats
