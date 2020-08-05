@@ -24,7 +24,7 @@ class Server(pages: ServerPages,
              webResources: WebResources
             ) {
 
-  val manualAddPostings: Evt[List[Posting]] = Evt[List[Posting]]
+  val manualAddPostings: Evt[List[Posting]] = Evt[List[Posting]]()
 
   val serverSideEntries: Signal[Epoche[RGOA[Posting]]] =
     manualAddPostings.fold(Epoche(RGOA(List.empty[Posting]))) { (state, added) =>
