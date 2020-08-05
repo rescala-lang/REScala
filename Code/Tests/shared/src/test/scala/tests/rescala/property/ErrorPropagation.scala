@@ -3,18 +3,18 @@ package tests.rescala.property
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import rescala.extra.simpleprop.invariant.SimpleScheduler.SignalWithInvariants
-import rescala.extra.simpleprop.invariant.{Invariant, SimpleStruct}
+import rescala.extra.invariant.SimpleScheduler.SignalWithInvariants
+import rescala.extra.invariant.{SimpleStruct, Invariant}
 import rescala.interface.RescalaInterface
 import tests.rescala.testtools.RETests
 
 class ErrorPropagation extends RETests with ScalaCheckDrivenPropertyChecks with Matchers {
-    val engine: RescalaInterface[SimpleStruct] = RescalaInterface.interfaceFor(rescala.extra.simpleprop.invariant.SimpleScheduler)
+    val engine: RescalaInterface[SimpleStruct] = RescalaInterface.interfaceFor(rescala.extra.invariant.SimpleScheduler)
     import engine._
 
     "EXPERIMENTAL" in forAll(Gen.posNum[Int]) { (n: Int) =>
       val e = Evt[Int]()
-      val s: Signal[Int] = e.count
+      val s: Signal[Int] = e.count()
 
       val t = s.changed.fold(Seq.empty[Int]) { (acc, c) => acc :+ c }
 

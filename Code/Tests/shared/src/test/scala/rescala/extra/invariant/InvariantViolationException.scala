@@ -1,7 +1,6 @@
-package rescala.reactives
+package rescala.extra.invariant
 
-import rescala.core.{ReSource}
-import rescala.extra.simpleprop.invariant.SimpleStruct
+import rescala.core.ReSource
 
 class InvariantViolationException(t: Throwable, reactive: ReSource[SimpleStruct], causalErrorChains: Seq[Seq[ReSource[SimpleStruct]]])
   extends RuntimeException {

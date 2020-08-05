@@ -1,4 +1,4 @@
-package rescala.extra.simpleprop.invariant
+package rescala.extra.invariant
 
 import scala.reflect.macros.blackbox
 

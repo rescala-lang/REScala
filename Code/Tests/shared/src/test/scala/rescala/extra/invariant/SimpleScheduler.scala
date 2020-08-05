@@ -1,12 +1,12 @@
-package rescala.extra.simpleprop.invariant
+package rescala.extra.invariant
 
 import org.scalacheck.Gen
 import org.scalacheck.rng.Seed
 import rescala.core
 import rescala.core.Initializer.InitValues
 import rescala.core.{AccessTicket, Derived, DynamicInitializerLookup, InitialChange, Initializer, Observation, Pulse, ReSource, ReevTicket, Scheduler, Struct}
+import rescala.extra.invariant.Invariant
 import rescala.interface.Aliases
-import rescala.reactives.InvariantViolationException
 import sun.reflect.generics.reflectiveObjects.NotImplementedException
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
