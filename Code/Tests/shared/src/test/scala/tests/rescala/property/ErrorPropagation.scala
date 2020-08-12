@@ -25,18 +25,25 @@ class ErrorPropagation extends RETests with ScalaCheckDrivenPropertyChecks with 
       1 to n foreach { i => e.fire(i) }
     }
 
-  /*
     "test single node" - {
       val v = Var(0)
-      val s = Signal { v() * 2}
+      val s1 = Signal { v() * 2}
+      val s2 = Signal { v() * 2}
+      val s3 = Signal { s1() + s2()}
 
-      s.specify(
+      v.setValueGenerator(Gen.choose(0, 0))// (Arbitrary.arbitrary[Int])
+      s1.setValueGenerator(Gen.choose(1, 1)) // (Arbitrary.arbitrary[Int])
+      s2.setValueGenerator(Gen.choose(2, 2)) // (Arbitrary.arbitrary[Int])
+
+
+      s2.specify(
+        Invariant {a => a > 3}
+      )
+      s3.specify(
         Invariant {a => a > 0}
       )
+      s3.test()
 
-      s.setValueGenerator(Arbitrary.arbitrary[Int])
-
-      s.test()
+      println(v.now, s1.now, s2.now, s3.now)
     }
-   */
 }

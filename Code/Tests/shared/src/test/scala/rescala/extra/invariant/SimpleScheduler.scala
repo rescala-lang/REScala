@@ -4,9 +4,7 @@ import org.scalacheck.Gen
 import org.scalacheck.rng.Seed
 import rescala.core
 import rescala.core.{AccessTicket, Derived, DynamicInitializerLookup, InitialChange, Initializer, Observation, Pulse, ReSource, ReevTicket, Scheduler, Struct}
-import rescala.extra.invariant.Invariant
 import rescala.interface.Aliases
-import sun.reflect.generics.reflectiveObjects.NotImplementedException
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
@@ -22,7 +20,6 @@ class SimpleState[V](var value: V) {
   var dirty = false
   var done = false
   var invariants: Seq[Invariant[V]] = Seq.empty
-  var gen: Gen[_] = _
 
   def reset(v: V): Unit = {
     discovered = false
@@ -160,53 +157,60 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
     signal.state.invariants = inv.map(inv => new Invariant((invp: Pulse[T]) => inv.inv(invp.get), inv.description))
   }
 
+  private val signalGeneratorMap = SignalGeneratorMap[Signal, Gen]
+
   implicit class SignalWithInvariants[T](val signal: Signal[T]) extends AnyVal {
 
-    def specify(inv: Invariant[T] *): Unit = {
+    def specify(inv: Invariant[T]*): Unit = {
       SimpleScheduler.this.specify(inv, signal)
     }
 
     def setValueGenerator(gen: Gen[T]): Unit = {
-      this.signal.state.gen = gen
+      signalGeneratorMap.put(this.signal, gen)
     }
 
     def test(): Unit = {
-      if (this.signal.state.gen != null) {
-        0 to 100 foreach {
-          _ => forceValues((this.signal, Pulse.Value(this.signal.state.gen.pureApply(Gen.Parameters.default, Seed.random()))))
-        }
-      } else {
-        //Find generator for each branch. select a value for each. force transaction
-        throw new NotImplementedException()
-      }
+      //      if (this.signal.state.gen != null) {
+      //        0 to 100 foreach {
+      //          _ => forceValues((this.signal, Pulse.Value(this.signal.state.gen.pureApply(Gen.Parameters.default, Seed.random()))))
+      //        }
+      //      } else {
+      //        //Find generator for each branch. select a value for each. force transaction
+      //        throw new NotImplementedException()
+      //      }
+      val changes = signalGeneratorMap.entries().map(pair => (pair._1, Pulse.Value(pair._2.pureApply(Gen.Parameters.default, Seed.random()))))
+      val initialWrites = forceValues(changes: _*)
+      Util.evaluateInvariants(Seq(this.signal), initialWrites)
     }
 
 
-
-    private def forceValues(changes: (Signal[A], A) forSome { type A } *): Unit = {
-      val asReSource = changes.foldLeft(Set.empty[core.ReSource[SimpleStruct]]) {case (acc, (source, _)) => acc + source}
+    private def forceValues(changes: (Signal[A], A) forSome {type A}*): Set[core.ReSource[SimpleStruct]] = {
+      val asReSource = changes.foldLeft(Set.empty[core.ReSource[SimpleStruct]]) { case (acc, (source, _)) => acc + source }
 
       forceNewTransaction(asReSource, {
         admissionTicket =>
           changes.foreach {
             change =>
-              admissionTicket.recordChange(new InitialChange[SimpleStruct] {
-                override val source: core.ReSource[SimpleStruct] = signal.resource
+              val initialChange: InitialChange[SimpleStruct] = new InitialChange[SimpleStruct] {
+                override val source: core.ReSource[SimpleStruct] = change._1.innerDerived
 
                 override def writeValue(b: source.Value, v: source.Value => Unit): Boolean = {
                   val casted = change._2.asInstanceOf[source.Value]
-                  if(casted != b) {
+                  if (casted != b) {
                     v(casted)
                     return true
                   }
                   false
                 }
-              })
+              }
+              admissionTicket.recordChange(initialChange)
           }
       })
-      Util.evaluateInvariants(asReSource.toSeq, asReSource)
+
+      asReSource
     }
   }
+
 }
 
 
