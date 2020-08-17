@@ -170,17 +170,15 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
     }
 
     def test(): Unit = {
-      //      if (this.signal.state.gen != null) {
-      //        0 to 100 foreach {
-      //          _ => forceValues((this.signal, Pulse.Value(this.signal.state.gen.pureApply(Gen.Parameters.default, Seed.random()))))
-      //        }
-      //      } else {
-      //        //Find generator for each branch. select a value for each. force transaction
-      //        throw new NotImplementedException()
-      //      }
       val changes = signalGeneratorMap.entries().map(pair => (pair._1, Pulse.Value(pair._2.pureApply(Gen.Parameters.default, Seed.random()))))
-      val initialWrites = forceValues(changes: _*)
-      Util.evaluateInvariants(Seq(this.signal), initialWrites)
+      for {
+        (signal, value) <- changes
+        inv <- signal.innerDerived.state.invariants
+        if !inv.validate(value.asInstanceOf[signal.innerDerived.Value])
+      } {
+        throw new InvariantViolatingGeneratorException(signal, inv, value)
+      }
+      forceValues(changes: _*)
     }
 
 
