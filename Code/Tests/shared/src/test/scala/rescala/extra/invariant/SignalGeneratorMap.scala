@@ -12,6 +12,7 @@ class SignalGeneratorMap[K[_], +V[_]] private(baseMap: scala.collection.mutable.
 
   def entries(): List[(K[Any], V[Any])] = this.map(pair => pair).toList.asInstanceOf[List[(K[Any], V[Any])]]
 
+  def values(): Iterable[K[Any]] = this.baseMap.values.asInstanceOf[mutable.Iterable[K[Any]]]
 }
 
 object SignalGeneratorMap {

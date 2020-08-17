@@ -1,6 +1,6 @@
 package rescala.extra.invariant
 
-import org.scalacheck.Gen
+import org.scalacheck.{Gen, Shrink}
 import org.scalacheck.rng.Seed
 import rescala.core
 import rescala.core.{AccessTicket, Derived, DynamicInitializerLookup, InitialChange, Initializer, Observation, Pulse, ReSource, ReevTicket, Scheduler, Struct}
@@ -169,7 +169,33 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
       signalGeneratorMap.put(this.signal, gen)
     }
 
+    def shrinkTest[A](signal: Signal[A], gen: Gen[A], value: A, shrinked: Seq[Gen[B] forSome { type B}], unchanged: Seq[(Signal[C], C) forSome { type C}]): Unit = {
+      try {
+        val valueShrink = implicitly[Shrink[A]]
+        val shrinkStream = valueShrink.shrink(value)
+        //TODO: inline
+        if(shrinkStream.isEmpty) {
+          signalGeneratorMap.entries().find(pair => !shrinked.contains(pair._2)) match {
+            case Some(value) => {
+              shrinkTest(value._1, value._2, unchanged.find(pair => pair._2 == value._1).get, shrinked :+ gen, unchanged.filter(pair => signal != pair._1) :+ (signal, value))
+            }
+            case None => //TODO thow "FullyShrinkedInvariantViolationException"
+          }
+        }
+        /*
+        TODO:
+        if stream not empty -> for each item shrink until new shrunk value with exception is found -> shrinkTest with new exception or shrink next generator
+         */
+      } catch {
+        case e: InvariantViolationException => ???
+      }
+    }
+
     def test(): Unit = {
+      /*
+      TODO:
+      run once -> on failure -> shrinkTest with first generator-value pair
+       */
       val changes = signalGeneratorMap.entries().map(pair => (pair._1, Pulse.Value(pair._2.pureApply(Gen.Parameters.default, Seed.random()))))
       for {
         (signal, value) <- changes
@@ -179,6 +205,7 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
         throw new InvariantViolatingGeneratorException(signal, inv, value)
       }
       forceValues(changes: _*)
+
     }
 
 
