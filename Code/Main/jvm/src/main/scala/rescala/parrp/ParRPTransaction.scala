@@ -1,6 +1,5 @@
 package rescala.parrp
 
-import rescala.core.Initializer.InitValues
 import rescala.core._
 import rescala.levelbased.{LevelBasedTransaction, LevelState, LevelStruct}
 import rescala.locking._
@@ -16,7 +15,7 @@ trait ParRPInterTurn {
 
 }
 
-class ParRPState[V, S <: Struct](ip: InitValues[V], val lock: TurnLock[ParRPInterTurn])
+class ParRPState[V, S <: Struct](ip: V, val lock: TurnLock[ParRPInterTurn])
   extends LevelState[V, S](ip)
 
 
@@ -46,7 +45,7 @@ class ParRPTransaction(backoff: Backoff, priorTurn: Option[ParRPTransaction])
   final val key: Key[ParRPInterTurn] = new Key(this)
 
 
-  override protected[this] def makeDerivedStructState[V](ip: InitValues[V])
+  override protected[this] def makeDerivedStructState[V](ip: V)
   : ParRPState[V, TState] = {
     val lock = new TurnLock[ParRPInterTurn]
     val owner = lock.tryLock(key)

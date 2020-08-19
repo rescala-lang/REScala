@@ -1,6 +1,5 @@
 package rescala.twoversion
 
-import rescala.core.Initializer.InitValues
 import rescala.core.{Derived, ReSource, Struct}
 
 import scala.collection.mutable
@@ -14,10 +13,9 @@ case class Token(payload: AnyRef = null)
 
 
 /** State that implements both the buffered pulse and the buffering capabilities itself. */
-abstract class TwoVersionState[V, S <: Struct](ip: InitValues[V])
+abstract class TwoVersionState[V, S <: Struct](protected[rescala] var current: V)
   extends Committable[V] {
 
-  protected[rescala] var current: V     = ip.initialValue
   private   var owner  : Token = null
   private   var update : V     = _
 

@@ -1,7 +1,6 @@
 package tests.rescala.fullmv
 
 import org.scalatest.funsuite.AnyFunSuite
-import rescala.core.{Initializer, Pulse}
 import rescala.fullmv.FramingBranchResult.{Frame, FramingBranchEnd}
 import rescala.fullmv.NotificationBranchResult.{DoNothing, ReevaluationReady}
 import rescala.fullmv.NotificationBranchResult.ReevOutBranchResult.{NotifyAndReevaluationReadySuccessor, PureNotifyOnly}

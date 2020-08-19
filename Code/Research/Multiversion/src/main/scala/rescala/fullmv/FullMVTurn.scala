@@ -4,7 +4,6 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.LockSupport
 import java.util.concurrent.{ConcurrentHashMap, ForkJoinTask}
 
-import rescala.core.Initializer.InitValues
 import rescala.core._
 import rescala.fullmv.NotificationBranchResult._
 import rescala.fullmv.NotificationBranchResult.ReevOutBranchResult._
@@ -82,13 +81,13 @@ trait FullMVTurn extends Initializer[FullMVStruct] with FullMVTurnProxy with Sub
 
   //========================================================Scheduler Interface============================================================
 
-  override def makeDerivedStructState[P](valuePersistency: InitValues[P]): NonblockingSkipListVersionHistory[P, FullMVTurn, ReSource[FullMVStruct], Derived[FullMVStruct]] = {
-    val state = new NonblockingSkipListVersionHistory[P, FullMVTurn, ReSource[FullMVStruct], Derived[FullMVStruct]](host.dummy, valuePersistency)
+  override def makeDerivedStructState[V](valuePersistency: V): NonblockingSkipListVersionHistory[V, FullMVTurn, ReSource[FullMVStruct], Derived[FullMVStruct]] = {
+    val state = new NonblockingSkipListVersionHistory[V, FullMVTurn, ReSource[FullMVStruct], Derived[FullMVStruct]](host.dummy, valuePersistency)
     state.incrementFrame(this)
     state
   }
 
-  override protected def makeSourceStructState[P](valuePersistency: InitValues[P]): NonblockingSkipListVersionHistory[P, FullMVTurn, ReSource[FullMVStruct], Derived[FullMVStruct]] = {
+  override protected def makeSourceStructState[V](valuePersistency: V): NonblockingSkipListVersionHistory[V, FullMVTurn, ReSource[FullMVStruct], Derived[FullMVStruct]] = {
     val state = makeDerivedStructState(valuePersistency)
     val res = state.notify(this, changed = false)
     assert(res == true -> PureNotifyOnly(Set.empty))

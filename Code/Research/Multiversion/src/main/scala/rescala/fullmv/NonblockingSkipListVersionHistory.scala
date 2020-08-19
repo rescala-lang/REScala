@@ -5,7 +5,6 @@ import java.util.concurrent.ForkJoinPool.ManagedBlocker
 import java.util.concurrent.atomic.{AtomicIntegerFieldUpdater, AtomicReference, AtomicReferenceFieldUpdater}
 import java.util.concurrent.locks.LockSupport
 
-import rescala.core.Initializer.InitValues
 import rescala.core.Pulse
 
 import scala.annotation.{elidable, tailrec}
@@ -25,7 +24,7 @@ case class Written[V](valueForSelf: V, valueForFuture: V) extends MaybeWritten[V
   * @tparam InDep the type of incoming dependency nodes
   * @tparam OutDep the type of outgoing dependency nodes
   */
-class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePersistency: InitValues[V]) extends FullMVState[V, T, InDep, OutDep] {
+class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePersistency: V) extends FullMVState[V, T, InDep, OutDep] {
   override val host = init.host
   /**
     * @param txn the transaction to which this version belongs
@@ -113,7 +112,7 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
   }
 
   val laggingLatestStable = new AtomicReference(new QueuedVersion(init, null, {
-    val iv = valuePersistency.initialValue
+    val iv = valuePersistency
     //TODO: this SHOULD be Written(iv, unchange(iv)), but unchange is no longer available at this point …
     Written(iv, iv)
   }, null))

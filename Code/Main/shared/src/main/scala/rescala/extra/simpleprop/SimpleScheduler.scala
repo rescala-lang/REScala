@@ -1,6 +1,5 @@
 package rescala.extra.simpleprop
 
-import rescala.core.Initializer.InitValues
 import rescala.core.{AccessTicket, Derived, DynamicInitializerLookup, Initializer, Observation, ReSource, ReevTicket, Scheduler, Struct}
 import rescala.interface.Aliases
 
@@ -10,9 +9,8 @@ trait SimpleStruct extends Struct {
   override type State[V, S <: Struct] = SimpleState[V]
 }
 
-class SimpleState[V](ip: InitValues[V]) {
+class SimpleState[V](var value: V) {
 
-  var value   : V                          = ip.initialValue
   var outgoing: Set[Derived[SimpleStruct]] = Set.empty
   var incoming: Set[ReSource[SimpleStruct]] = Set.empty
   var discovered                           = false
@@ -29,7 +27,7 @@ class SimpleState[V](ip: InitValues[V]) {
 }
 
 class SimpleInitializer(afterCommitObservers: ListBuffer[Observation]) extends Initializer[SimpleStruct] {
-  override protected[this] def makeDerivedStructState[V](ip: InitValues[V])
+  override protected[this] def makeDerivedStructState[V](ip: V)
   : SimpleState[V] = new SimpleState[V](ip)
 
   private var createdReactives: Seq[Derived[SimpleStruct]] = Seq.empty

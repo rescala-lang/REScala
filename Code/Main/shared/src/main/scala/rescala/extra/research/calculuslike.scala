@@ -2,7 +2,6 @@
   * of the corresponding paper as closely as possible */
 package rescala.extra.research
 
-import rescala.core.Initializer.InitValues
 import rescala.core.{AccessTicket, Derived, DynamicInitializerLookup, Initializer, ReSource, ReevTicket, Scheduler, Struct}
 import rescala.interface.Aliases
 
@@ -15,11 +14,8 @@ trait FStruct extends Struct {
   * inputs, values, and operator.
   * The operator is already handled by the common implementation, so we keep the value and inputs.
   * The store mapping does not exist as a single object, but instead each reactive has this state. */
-class StoreValue[V](val ip: InitValues[V]) {
-
-  var value : V                      = ip.initialValue
+class StoreValue[V](var value: V) {
   var inputs: Set[ReSource[FStruct]] = Set.empty
-
   override def toString: String = s""
 }
 
@@ -27,7 +23,7 @@ class StoreValue[V](val ip: InitValues[V]) {
   * especially during an ongoing propagation.
   * The formalization does not support this, to keep the complexity of the proofs in check. */
 class SimpleCreation() extends Initializer[FStruct] {
-  override protected[this] def makeDerivedStructState[V](ip: InitValues[V])
+  override protected[this] def makeDerivedStructState[V](ip: V)
   : StoreValue[V] = new StoreValue[V](ip)
 
   override def accessTicket(): AccessTicket[FStruct] = new AccessTicket[FStruct] {

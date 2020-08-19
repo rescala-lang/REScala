@@ -1,6 +1,5 @@
 package rescala.core
 
-import rescala.core.Initializer.InitValues
 import rescala.reactives.RExceptions
 
 import scala.annotation.implicitNotFound
@@ -125,13 +124,13 @@ trait AccessTicket[S <: Struct] {
 final case class CreationTicket[S <: Struct](self: Either[Initializer[S], Scheduler[S]], rename: REName) {
 
   private[rescala] def create[V, T <: Derived[S]](incoming: Set[ReSource[S]],
-                                                  initv   : InitValues[V],
+                                                  initv   : V,
                                                   inite   : Boolean)
                                                  (instantiateReactive: S#State[V, S] => T): T = {
     transaction(_.create(incoming, initv, inite, this)(instantiateReactive))
   }
   private[rescala] def createSource[V, T <: ReSource[S]]
-    (intv: InitValues[V])(instantiateReactive: S#State[V, S] => T): T = {
+    (intv: V)(instantiateReactive: S#State[V, S] => T): T = {
 
     transaction(_.createSource(intv, this)(instantiateReactive))
   }

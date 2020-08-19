@@ -206,7 +206,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
   final def reduce[A](reducer: (=> A, => T) => A)(implicit ticket: CreationTicket[S]): Signal[A] = {
     val res = ticket.create(
       Set(this),
-      Initializer.InitValues[Pulse[A]](Pulse.empty),
+      Pulse.empty: Pulse[A],
       inite = false
     ) { state =>
       new rescalaAPI.Impls.SignalImpl[A](

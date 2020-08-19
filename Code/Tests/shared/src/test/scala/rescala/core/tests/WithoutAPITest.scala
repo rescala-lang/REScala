@@ -1,6 +1,5 @@
 package rescala.core.tests
 
-import rescala.core.Initializer.InitValues
 import rescala.core.{InitialChange, Initializer, Interp, REName, CreationTicket => Ticket}
 import tests.rescala.testtools.RETests
 

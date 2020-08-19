@@ -1,6 +1,5 @@
 package rescala.levelbased
 
-import rescala.core.Initializer.InitValues
 import rescala.core.Struct
 import rescala.twoversion._
 
@@ -16,7 +15,7 @@ trait LevelStructImpl extends LevelStruct {
 }
 
 
-class LevelState[V, S <: Struct](ip: InitValues[V]) extends TwoVersionState[V, S](ip) {
+class LevelState[V, S <: Struct](ip: V) extends TwoVersionState[V, S](ip) {
 
   private var _level: Int = 0
 
