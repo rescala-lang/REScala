@@ -60,7 +60,7 @@ class WithoutAPITest extends RETests {
         Ticket.fromScheduler(scheduler)
           .create(
             Set(customSource),
-            "well this is an initial value",
+            "Well, this is an initial value",
             inite = false
           ) { createdState =>
             new CustomDerivedString(createdState, customSource)
