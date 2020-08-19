@@ -22,10 +22,12 @@ object Observe {
                             (fun: dependency.Value => ObserveInteract)
                             (implicit ct: CreationTicket[S]): Observe[S] = {
     ct.create[Pulse[Nothing], Observe[S] with Derived[S]](Set(dependency),
-                                                          Initializer.Observer,
+                                                          Pulse.NoChange,
                                                           fireImmediately) { state =>
       class Obs
         extends Base[Pulse[Nothing], S](state, ct.rename) with Derived[S] with Observe[S] with DisconnectableImpl[S] {
+
+        override protected[rescala] def commit(base: Obs.this.Value): Obs.this.Value = Pulse.NoChange
 
         override protected[rescala] def reevaluate(dt: ReIn): Rout = guardReevaluate(dt) {
           val v  = dt.collectStatic(dependency)

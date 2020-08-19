@@ -1,6 +1,6 @@
 package rescala.interface
 
-import rescala.core.{Base, Initializer, Interp, Pulse, REName, Scheduler, Struct}
+import rescala.core.{Base, Interp, Pulse, REName, Scheduler, Struct}
 import rescala.macros.MacroTags.{Dynamic, Static}
 import rescala.reactives
 import rescala.reactives.{DefaultImplementations, Source}
@@ -44,7 +44,7 @@ trait RescalaInterface[S <: Struct] extends Aliases[S] {
 
   /** @group create */
   final def Evt[A]()(implicit ticket: CreationTicket): Evt[A] = {
-    ticket.createSource[Pulse[A], Evt[A]](Initializer.Event)(init => {
+    ticket.createSource[Pulse[A], Evt[A]](Pulse.NoChange)(init => {
       new reactives.Evt[A, S](init, ticket.rename) {
         override val rescalaAPI: RescalaInterface[S] = RescalaInterface.this
       }
@@ -62,7 +62,7 @@ trait RescalaInterface[S <: Struct] extends Aliases[S] {
       def apply[T](initval: T)(implicit ticket: CreationTicket): VarImpl[T] = fromChange(Pulse.Value(initval))
       def empty[T](implicit ticket: CreationTicket): VarImpl[T] = fromChange(Pulse.empty)
       private[this] def fromChange[T](change: Pulse[T])(implicit ticket: CreationTicket): VarImpl[T] = {
-        ticket.createSource[Pulse[T], VarImpl[T]](Initializer.InitializedSignal(change))(s => new VarImpl[T](s, ticket.rename){
+        ticket.createSource[Pulse[T], VarImpl[T]](change)(s => new VarImpl[T](s, ticket.rename){
           override val rescalaAPI: RescalaInterface[S] = RescalaInterface.this
           override val innerDerived = this
         })

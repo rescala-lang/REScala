@@ -1,6 +1,7 @@
 package tests.rescala.fullmv
 
 import org.scalatest.funsuite.AnyFunSuite
+import rescala.core.Pulse
 import rescala.fullmv.NotificationBranchResult.ReevOutBranchResult.{NotifyAndNonReadySuccessor, PureNotifyOnly}
 import rescala.fullmv.{FramingBranchResult, FullMVEngine, NotificationBranchResult}
 import rescala.fullmv.tasks._
@@ -44,7 +45,7 @@ class DeframeTest extends AnyFunSuite {
     turnLeftOne.drop(right, middle)
 
     val reevMiddle = new Reevaluation(turnLeftOne, middle)
-    assert(reevMiddle.processReevaluationResult(Some(123.asInstanceOf[reevMiddle.node.Value])) === PureNotifyOnly(Set(top)))
+    assert(reevMiddle.processReevaluationResult(Some(Pulse.Value(123).asInstanceOf[reevMiddle.node.Value])) === PureNotifyOnly (Set(top)))
     //    assert(reevMiddle.processReevaluationResult(Some(123.asInstanceOf[reevMiddle.node.Value])) === FollowFraming(Set(top), turnRightTwo))
     assert(new Notification(turnLeftOne, top, changed = true).deliverNotification() === true -> NotificationBranchResult.ReevaluationReady)
     //    assert(NotificationWithFollowFrame(turnLeftOne, top, changed = true, turnRightTwo).deliverNotification() === NotificationResultAction.GlitchFreeReady)
@@ -54,7 +55,7 @@ class DeframeTest extends AnyFunSuite {
     //    assert(Deframing(turnRightTwo, top).doFraming() === FramingBranchResult.FramingBranchEnd)
 
     val reevTop = new Reevaluation(turnLeftOne, top)
-    assert(reevTop.processReevaluationResult(Some(234.asInstanceOf[reevTop.node.Value])) === PureNotifyOnly(Set()))
+    assert(reevTop.processReevaluationResult(Some(Pulse.Value(234).asInstanceOf[reevTop.node.Value])) === PureNotifyOnly(Set()))
   }
 
   test("deframe-reframe") {
@@ -97,7 +98,7 @@ class DeframeTest extends AnyFunSuite {
     turnLeftOne.drop(right, middle)
 
     val reevMiddle = new Reevaluation(turnLeftOne, middle)
-    assert(reevMiddle.processReevaluationResult(Some(123.asInstanceOf[reevMiddle.node.Value])) === PureNotifyOnly(Set(top)))
+    assert(reevMiddle.processReevaluationResult(Some(Pulse.Value(123).asInstanceOf[reevMiddle.node.Value])) === PureNotifyOnly(Set(top)))
     //    assert(reevMiddle.processReevaluationResult(Some(123.asInstanceOf[reevMiddle.node.Value])) === FollowFraming(Set(top), turnRightTwo))
     assert(new Notification(turnLeftOne, top, changed = true).deliverNotification() === true -> NotificationBranchResult.ReevaluationReady)
     //    assert(NotificationWithFollowFrame(turnLeftOne, top, changed = true, turnRightTwo).deliverNotification() === NotificationResultAction.GlitchFreeReady)
@@ -108,6 +109,6 @@ class DeframeTest extends AnyFunSuite {
     //    assert(DeframeReframing(turnRightTwo, top, turnLeftTwo).doFraming() === FramingBranchResult.FramingBranchEnd)
 
     val reevTop = new Reevaluation(turnLeftOne, top)
-    assert(reevTop.processReevaluationResult(Some(234.asInstanceOf[reevTop.node.Value])) === NotifyAndNonReadySuccessor(Set(), turnLeftTwo))
+    assert(reevTop.processReevaluationResult(Some(Pulse.Value(234).asInstanceOf[reevTop.node.Value])) === NotifyAndNonReadySuccessor(Set(), turnLeftTwo))
   }
 }

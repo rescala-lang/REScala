@@ -137,7 +137,7 @@ case class Propagation(active: Set[ReSource[FStruct]], processed: Set[ReSource[F
   // resets the state of all reactives back to whatever it should be after propagation
   // this is used primarily to reset all events back to no value
   def commit(): Unit = active.foreach { a =>
-    a.state.value = a.state.ip.unchange.unchange(a.state.value)
+    a.state.value = a.commit(a.state.value)
   }
 
   def run(): Propagation = {

@@ -18,11 +18,11 @@ class SimpleState[V](ip: InitValues[V]) {
   var discovered                           = false
   var dirty                                = false
   var done                                 = false
-  def reset(): Unit = {
+  def reset(v: V): Unit = {
     discovered = false
     dirty = false
     done = false
-    value = ip.unchange.unchange(value)
+    value = v
   }
 
   override def toString: String = s"State(outgoing = $outgoing, discovered = $discovered, dirty = $dirty, done = $done)"
@@ -84,6 +84,8 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
 
   var idle = true
 
+  def reset(r: ReSource) = r.state.reset(r.commit(r.state.value))
+
   override def forceNewTransaction[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R): R = synchronized {
     if (!idle) throw new IllegalStateException("Scheduler is not reentrant")
     idle = false
@@ -100,7 +102,7 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
           case iv if iv.writeValue(iv.source.state.value, iv.source.state.value = _) => iv.source
         }.toSeq
 
-        creation.drainCreated().foreach(_.state.reset())
+        creation.drainCreated().foreach(reset)
 
         val initial = sources.flatMap { s =>
           s.state.dirty = true
@@ -115,17 +117,17 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
 
         // propagation
         val sorted = Util.toposort(initial)
-        Util.evaluateAll(sorted, creation, afterCommitObservers).foreach(_.state.reset())
+        Util.evaluateAll(sorted, creation, afterCommitObservers).foreach(reset)
         // evaluate everything that was created, but not accessed, and requires ignition
         val created = creation.drainCreated()
-        Util.evaluateAll(created, creation, afterCommitObservers).foreach(_.state.reset())
+        Util.evaluateAll(created, creation, afterCommitObservers).foreach(reset)
         assert(creation.drainCreated().isEmpty)
 
         //cleanup
-        initial.foreach(_.state.reset())
-        created.foreach(_.state.reset())
-        sources.foreach(_.state.reset())
-        sorted.foreach(_.state.reset())
+        initial.foreach(reset)
+        created.foreach(reset)
+        sources.foreach(reset)
+        sorted.foreach(reset)
 
 
         //wrapup

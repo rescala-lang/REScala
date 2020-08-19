@@ -15,16 +15,16 @@ trait TwoVersionTransactionImpl[S <: TwoVersionStruct] extends TwoVersionTransac
 
   val token: Token = Token()
 
-  val toCommit = ArrayBuffer[Committable]()
+  val toCommit = ArrayBuffer[ReSource[S]]()
   val observers = ArrayBuffer[Observation]()
 
-  override def schedule(commitable: Committable): Unit = toCommit += commitable
+  override def schedule(commitable: ReSource[S]): Unit = toCommit += commitable
 
   def observe(f: Observation): Unit = observers += f
 
-  override def commitPhase(): Unit = toCommit.foreach{_.commit()}
+  override def commitPhase(): Unit = toCommit.foreach{r => r.state.commit(r.commit)}
 
-  override def rollbackPhase(): Unit = toCommit.foreach(_.release())
+  override def rollbackPhase(): Unit = toCommit.foreach(r => r.state.release())
 
   override def observerPhase(): Unit = {
     var failure: Throwable = null
@@ -85,7 +85,7 @@ trait TwoVersionTransactionImpl[S <: TwoVersionStruct] extends TwoVersionTransac
     reactive.state.get(token)
   }
   def writeState(pulsing: ReSource[S])(value: pulsing.Value): Unit = {
-    if (pulsing.state.write(value, token)) this.schedule(pulsing.state)
+    if (pulsing.state.write(value, token)) this.schedule(pulsing)
   }
 
 }

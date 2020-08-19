@@ -1,9 +1,9 @@
 package tests.rescala.fullmv
 
 import org.scalatest.funsuite.AnyFunSuite
-import rescala.core.Initializer
+import rescala.core.{Initializer, Pulse}
 import rescala.fullmv.FramingBranchResult.{Frame, FramingBranchEnd}
-import rescala.fullmv.NotificationBranchResult.{ReevaluationReady, DoNothing}
+import rescala.fullmv.NotificationBranchResult.{DoNothing, ReevaluationReady}
 import rescala.fullmv.NotificationBranchResult.ReevOutBranchResult.{NotifyAndReevaluationReadySuccessor, PureNotifyOnly}
 import rescala.fullmv._
 
@@ -15,7 +15,7 @@ class NodeVersionHistoryTest extends AnyFunSuite {
 
     val createN = engine.newTurn()
     createN.beginExecuting()
-    val n = new NonblockingSkipListVersionHistory[Int, FullMVTurn, Int, Int](createN, Initializer.InitializedSignal(10))
+    val n = new NonblockingSkipListVersionHistory[Int, FullMVTurn, Int, Int](createN, 10)
     createN.completeExecuting()
 
     val turn1 = engine.newTurn()
@@ -26,7 +26,7 @@ class NodeVersionHistoryTest extends AnyFunSuite {
     assert(n.notify(turn1, changed = true) === true -> DoNothing)
     assert(n.notify(turn1, changed = false) === false -> ReevaluationReady)
     assert(n.reevIn(turn1) === 10)
-    assert(n.reevOut(turn1, Some(5)) === PureNotifyOnly(Set.empty))
+    assert(n.reevOut(turn1, Some(5), identity) === PureNotifyOnly(Set.empty))
     turn1.completeExecuting()
 
     val turn2 = engine.newTurn()
@@ -35,7 +35,7 @@ class NodeVersionHistoryTest extends AnyFunSuite {
     turn2.completeFraming()
     assert(n.notify(turn2, changed = true) === true -> ReevaluationReady)
     assert(n.reevIn(turn2) === 5)
-    assert(n.reevOut(turn2, Some(10)) === PureNotifyOnly(Set.empty))
+    assert(n.reevOut(turn2, Some(10), identity) === PureNotifyOnly(Set.empty))
     turn2.completeExecuting()
   }
 
@@ -44,7 +44,7 @@ class NodeVersionHistoryTest extends AnyFunSuite {
 
     val createN = engine.newTurn()
     createN.beginExecuting()
-    val n = new NonblockingSkipListVersionHistory[Int, FullMVTurn, Int, Int](createN, Initializer.InitializedSignal(10))
+    val n = new NonblockingSkipListVersionHistory[Int, FullMVTurn, Int, Int](createN, 10)
     createN.completeExecuting()
 
     val turn1 = engine.newTurn()
@@ -67,7 +67,7 @@ class NodeVersionHistoryTest extends AnyFunSuite {
     assert(n.notify(turn3, changed = true) === true -> DoNothing)
     assert(n.notify(turn2, changed = false) === true -> NotifyAndReevaluationReadySuccessor(Set.empty, turn3))
     assert(n.reevIn(turn3) === 10)
-    assert(n.reevOut(turn3, Some(5)) === PureNotifyOnly(Set.empty))
+    assert(n.reevOut(turn3, Some(5), identity) === PureNotifyOnly(Set.empty))
     turn2.completeExecuting()
   }
 
@@ -76,7 +76,7 @@ class NodeVersionHistoryTest extends AnyFunSuite {
 
     val createN = engine.newTurn()
     createN.beginExecuting()
-    val n = new NonblockingSkipListVersionHistory[Int, FullMVTurn, Int, Int](createN, Initializer.InitializedSignal(10))
+    val n = new NonblockingSkipListVersionHistory[Int, FullMVTurn, Int, Int](createN, 10)
     createN.completeExecuting()
 
     val reevaluate = engine.newTurn()
@@ -99,7 +99,7 @@ class NodeVersionHistoryTest extends AnyFunSuite {
 
     n.notify(reevaluate, changed = true)
     n.retrofitSinkFrames(Nil, Some(framing1), -1)
-    assert(n.reevOut(reevaluate, Some(11)) === PureNotifyOnly(Set.empty))
+    assert(n.reevOut(reevaluate, Some(11), identity) === PureNotifyOnly(Set.empty))
 //    assert(n.reevOut(reevaluate, Some(Pulse.Value(11))) === FollowFraming(Set.empty, framing2))
 
     assert(n.incrementSupersedeFrame(framing1, framing2) === FramingBranchEnd)

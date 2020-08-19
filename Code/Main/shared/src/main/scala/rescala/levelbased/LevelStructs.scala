@@ -7,16 +7,16 @@ import rescala.twoversion._
 
 
 trait LevelStruct extends TwoVersionStruct {
-  override type State[P, S <: Struct] <: LevelState[P, S]
+  override type State[V, S <: Struct] <: LevelState[V, S]
 }
 
 
 trait LevelStructImpl extends LevelStruct {
-  override type State[P, S <: Struct] = LevelState[P, S]
+  override type State[V, S <: Struct] = LevelState[V, S]
 }
 
 
-class LevelState[P, S <: Struct](ip: InitValues[P]) extends TwoVersionState[P, S](ip) {
+class LevelState[V, S <: Struct](ip: InitValues[V]) extends TwoVersionState[V, S](ip) {
 
   private var _level: Int = 0
 

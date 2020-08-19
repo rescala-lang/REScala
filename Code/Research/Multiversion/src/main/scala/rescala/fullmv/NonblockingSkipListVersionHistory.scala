@@ -114,7 +114,8 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
 
   val laggingLatestStable = new AtomicReference(new QueuedVersion(init, null, {
     val iv = valuePersistency.initialValue
-    Written(iv, valuePersistency.unchange.unchange(iv))
+    //TODO: this SHOULD be Written(iv, unchange(iv)), but unchange is no longer available at this point …
+    Written(iv, iv)
   }, null))
   // synchronized, written sequentially only if firstFrame.txn.phase == Executing && queueHead == firstFrame by notify/reevOut
   @volatile var latestValue: V = laggingLatestStable.get.readForFuture
@@ -445,7 +446,7 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
     latestValue
   }
 
-  def reevOut(turn: T, maybeValue: Option[V]): NotificationBranchResult.ReevOutBranchResult[T, OutDep] = {
+  def reevOut(turn: T, maybeValue: Option[V], unchange: V => V): NotificationBranchResult.ReevOutBranchResult[T, OutDep] = {
     val version = firstFrame
     assert(laggingLatestStable.get == version, s"reevOut by $turn: latestStable ${laggingLatestStable.get} != firstFrame $version")
     assert(version.txn == turn, s"$turn called reevDone, but first frame is $version (different transaction)")
@@ -464,7 +465,7 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
     synchronized {
       val stabilizeTo = if (maybeValue.isDefined) {
         val selfValue = maybeValue.get
-        val futureValue = valuePersistency.unchange.unchange(selfValue)
+        val futureValue = unchange(selfValue)
         version.finalize(Written(selfValue, futureValue))
         if(lazyPeriodicGC.txn.phase == TurnPhase.Completed) {
           lazyPeriodicGC.previousWriteIfStable = null

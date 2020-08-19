@@ -15,7 +15,7 @@ case class Token(payload: AnyRef = null)
 
 /** State that implements both the buffered pulse and the buffering capabilities itself. */
 abstract class TwoVersionState[V, S <: Struct](ip: InitValues[V])
-  extends Committable {
+  extends Committable[V] {
 
   protected[rescala] var current: V     = ip.initialValue
   private   var owner  : Token = null
@@ -31,8 +31,8 @@ abstract class TwoVersionState[V, S <: Struct](ip: InitValues[V])
   def base(token: Token): V = current
   def get(token: Token): V = {if (token eq owner) update else current}
 
-  override def commit(): Unit = {
-    current = ip.unchange.unchange(update)
+  override def commit(r: V => V): Unit = {
+    current = r(update)
     release()
   }
   override def release(): Unit = {

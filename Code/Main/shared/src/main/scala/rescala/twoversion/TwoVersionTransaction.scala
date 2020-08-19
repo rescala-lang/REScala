@@ -14,7 +14,7 @@ trait TwoVersionTransaction[S <: Struct]  {
     *
     * @param committable Commitable element to be scheduled
     */
-  def schedule(committable: Committable): Unit
+  def schedule(committable: ReSource[S]): Unit
 
   /**
     * Locks (and potentially otherwise prepares) all affected reactive values to prevent interfering changes.

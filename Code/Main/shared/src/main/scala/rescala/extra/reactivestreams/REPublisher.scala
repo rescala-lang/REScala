@@ -2,7 +2,7 @@ package rescala.extra.reactivestreams
 
 
 import org.reactivestreams.{Publisher, Subscriber, Subscription}
-import rescala.core.{Base, CreationTicket, Derived, Initializer, Interp, Pulse, REName, Scheduler, Struct}
+import rescala.core.{Base, CreationTicket, Derived, Interp, Pulse, REName, Scheduler, Struct}
 
 import scala.util.{Failure, Success}
 
@@ -60,6 +60,9 @@ object REPublisher {
       }
     }
 
+
+    override protected[rescala] def commit(base: Pulse[T]): Pulse[T] = base
+
     override def cancel(): Unit = {
       synchronized {
         cancelled = true
@@ -81,7 +84,7 @@ object REPublisher {
       val name: REName = s"forSubscriber($subscriber)"
       ticket.initializer.create[Pulse[T], SubscriptionReactive[T, S]](
         Set(dependency),
-        Initializer.DerivedSignal,
+        Pulse.empty,
         inite = false,
         CreationTicket(Left(ticket.initializer), name)) {
         state => new SubscriptionReactive[T, S](state, dependency, subscriber, fac, name)

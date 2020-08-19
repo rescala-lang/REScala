@@ -76,7 +76,7 @@ trait ReevaluationHandling[N <: ReSource[FullMVStruct]] extends FullMVAction {
   def doReevaluation(retainBranch: Boolean): Unit
 
   def processReevaluationResult(maybeChange: Option[node.Value]): ReevOutBranchResult[FullMVTurn, Derived[FullMVStruct]] = {
-    val reevOutResult = node.state.reevOut(turn, maybeChange)
+    val reevOutResult = node.state.reevOut(turn, maybeChange, node.commit)
     if(FullMVEngine.DEBUG && maybeChange.isDefined && maybeChange.get.isInstanceOf[Pulse.Exceptional]){
       // could be a framework exception that is relevant to debugging, but was eaten by reactive's
       // exception propagation and thus wouldn't be reported otherwise..

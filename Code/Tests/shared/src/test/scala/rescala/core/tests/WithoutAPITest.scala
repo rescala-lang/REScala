@@ -15,6 +15,7 @@ class WithoutAPITest extends RETests {
       override protected[rescala] def state: State = initState
       override protected[rescala] def name: REName = "I am a source name"
       override def interpret(v: Value): T          = v
+      override protected[rescala] def commit(base: Value): Value = base
 
       def makeChange(newValue: T) =
         new InitialChange[TestStruct] {
@@ -36,6 +37,7 @@ class WithoutAPITest extends RETests {
       override type Value = String
       override protected[rescala] def state: State = initState
       override protected[rescala] def name: REName = "I am a name"
+      override protected[rescala] def commit(base: Value): Value = base
 
       override protected[rescala] def reevaluate(input: ReIn): Rout = {
         val sourceVal = input.dependStatic(inputSource)
@@ -49,7 +51,7 @@ class WithoutAPITest extends RETests {
 
       val customSource: CustomSource[String] =
         Ticket.fromScheduler(scheduler)
-          .createSource(new InitValues("Hi!", new Initializer.KeepValue)) { createdState =>
+          .createSource("Hi!") { createdState =>
             new CustomSource[String](createdState)
           }
 
@@ -59,7 +61,7 @@ class WithoutAPITest extends RETests {
         Ticket.fromScheduler(scheduler)
           .create(
             Set(customSource),
-            new InitValues("well this is an initial value", new Initializer.KeepValue),
+            "well this is an initial value",
             inite = false
           ) { createdState =>
             new CustomDerivedString(createdState, customSource)

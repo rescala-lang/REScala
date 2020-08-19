@@ -20,6 +20,8 @@ abstract class Evt[T, S <: Struct] private[rescala](initialState: Estate[S, T], 
   extends Base[Pulse[T], S](initialState, name) with Source[S, T] with Event[T, S] {
   override type Value = Pulse[T]
 
+  override protected[rescala] def commit(base: Value): Value = Pulse.NoChange
+
   override def internalAccess(v: Pulse[T]): Pulse[T] = v
   /** Trigger the event */
   @deprecated("use .fire instead of apply", "0.21.0")

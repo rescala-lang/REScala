@@ -46,6 +46,8 @@ trait DefaultImplementations[S <: Struct] {
                      override val rescalaAPI: RescalaInterface[S])
     extends DerivedImpl[T](initial, name, isDynamicWithStaticDeps) with Event[T] {
 
+
+    override protected[rescala] def commit(base: Pulse[T]): Pulse[T] = Pulse.NoChange
     override def internalAccess(v: Pulse[T]): Pulse[T] = v
     override protected[this] def computePulse(rein: ReevTicket[Pulse[T], S]): Pulse[T] =
       Pulse.tryCatch(expr(rein), onEmpty = NoChange)
@@ -60,7 +62,7 @@ trait DefaultImplementations[S <: Struct] {
 
     override type Value = (Pulse[T], Pulse[Diff[T]])
 
-
+    override protected[rescala] def commit(base: (Pulse[T], Pulse[Diff[T]])): (Pulse[T], Pulse[Diff[T]]) = base.copy(_2 = Pulse.NoChange)
     override def internalAccess(v: (Pulse[T], Pulse[Diff[T]])): Pulse[Diff[T]] = v._2
     override def interpret(v: Value): Option[Diff[T]] = v._2.toOption
 

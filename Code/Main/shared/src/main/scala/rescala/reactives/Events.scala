@@ -46,7 +46,7 @@ trait Events[S <: Struct] {
                      dependencies: ReSource[S]*)
                     (calculate: StaticTicket[S] => Pulse[T])
                     (implicit ticket: CreationTicket[S]): Event[T, S] = {
-    ticket.create[Pulse[T], EventImpl[T]](dependencies.toSet, Initializer.Event, inite = false) {
+    ticket.create[Pulse[T], EventImpl[T]](dependencies.toSet, Pulse.NoChange, inite = false) {
       state => new EventImpl[T](state, calculate, name, None, rescalaAPI)
     }
   }
@@ -64,7 +64,7 @@ trait Events[S <: Struct] {
                 (expr: DynamicTicket[S] => Option[T])
                 (implicit ticket: CreationTicket[S]): Event[T, S] = {
     val staticDeps = dependencies.toSet
-    ticket.create[Pulse[T], EventImpl[T]](staticDeps, Initializer.Event, inite = true) { state =>
+    ticket.create[Pulse[T], EventImpl[T]](staticDeps, Pulse.NoChange, inite = true) { state =>
       new EventImpl[T](state, expr.andThen(Pulse.fromOption), ticket.rename, Some(staticDeps), rescalaAPI)
     }
   }
@@ -75,7 +75,7 @@ trait Events[S <: Struct] {
   def change[T](signal: rescala.reactives.Signal[T, S])(implicit ticket: CreationTicket[S]): Event[Diff[T], S]
   = ticket.transaction { initTurn =>
     val internal = initTurn.create[(Pulse[T], Pulse[Diff[T]]), ChangeEventImpl[T]](
-      Set[ReSource[S]](signal), Initializer.Change, inite = true, ticket) { state =>
+      Set[ReSource[S]](signal), (Pulse.NoChange, Pulse.NoChange), inite = true, ticket) { state =>
       new ChangeEventImpl[T](state, signal, ticket.rename, rescalaAPI)
     }
     static(internal)(st => st.dependStatic(internal))(initTurn)
@@ -100,7 +100,7 @@ trait Events[S <: Struct] {
   : Signal[T] = {
     val res = ticket.create(
       dependencies,
-      Initializer.InitializedSignal[Pulse[T]](Pulse.tryCatch(Pulse.Value(init))),
+      Pulse.tryCatch[Pulse[T]](Pulse.Value(init)),
       inite = false) {
       state => new SignalImpl[T](state, (st, v) => expr(st)(v), ticket.rename, None)
     }
@@ -143,7 +143,7 @@ trait Events[S <: Struct] {
 
     val res = ticket.create(
       staticInputs.toSet[ReSource[S]],
-      Initializer.InitializedSignal[Pulse[A]](Pulse.tryCatch(Pulse.Value(init))),
+      Pulse.tryCatch[Pulse[A]](Pulse.Value(init)),
       inite = true) {
       state => new SignalImpl[A](state, operator, ticket.rename, Some(staticInputs.toSet[ReSource[S]]))
     }

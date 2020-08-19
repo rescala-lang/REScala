@@ -13,6 +13,7 @@ object Signals {
   trait SignalResource[+T, S <: Struct] extends ReSource[S] with Interp[T, S] with Disconnectable[S] {
     override type Value <: Pulse[T]
     override def interpret(v: Value): T = v.get
+    override protected[rescala] def commit(base: Value): Value = base
   }
 
   object MapFuncImpl {def apply[T1, A](value: T1, mapper: T1 => A): A = mapper(value)}
@@ -73,7 +74,7 @@ trait Signals[S <: Struct] {
   def ofUDF[T](udf: UserDefinedFunction[T, rescalaAPI.ReSource, rescalaAPI.DynamicTicket])
               (implicit ct: CreationTicket[S])
   : Sig[T] = {
-    val derived = ct.create[Pulse[T], SignalImpl[T]](udf.staticDependencies, Initializer.DerivedSignal, inite = true) {
+    val derived = ct.create[Pulse[T], SignalImpl[T]](udf.staticDependencies, Pulse.empty, inite = true) {
       state => new SignalImpl[T](state, ignore2(udf.expression), ct.rename, if (udf.isStatic) None else Some(udf.staticDependencies))
     }
     wrapWithSignalAPI(derived)
@@ -87,7 +88,7 @@ trait Signals[S <: Struct] {
                (expr: StaticTicket[S] => T)
                (implicit ct: CreationTicket[S])
   : Sig[T] = {
-    val derived = ct.create[Pulse[T], SignalImpl[T]](dependencies.toSet, Initializer.DerivedSignal, inite = true) {
+    val derived = ct.create[Pulse[T], SignalImpl[T]](dependencies.toSet, Pulse.empty, inite = true) {
       state => new SignalImpl[T](state, ignore2(expr), ct.rename, None)
     }
     wrapWithSignalAPI(derived)
@@ -100,7 +101,7 @@ trait Signals[S <: Struct] {
                 (implicit ct: CreationTicket[S])
   : Sig[T] = {
     val staticDeps = dependencies.toSet
-    val derived = ct.create[Pulse[T], SignalImpl[T]](staticDeps, Initializer.DerivedSignal, inite = true) {
+    val derived = ct.create[Pulse[T], SignalImpl[T]](staticDeps, Pulse.empty, inite = true) {
       state => new SignalImpl[T](state, ignore2(expr), ct.rename, Some(staticDeps))
     }
     wrapWithSignalAPI(derived)
