@@ -26,7 +26,7 @@ trait LevelBasedTransaction[S <: LevelStruct] extends TwoVersionTransactionImpl[
   def evaluateIn(head: Derived[S])(dt: ReevTicket[head.Value, S]): Unit = {
     val reevRes = head.reevaluate(dt)
 
-    val dependencies: Option[Set[ReSource[S]]] = reevRes.getDependencies()
+    val dependencies: Option[Set[ReSource[S]]] = reevRes.dependencies()
     val minimalLevel = dependencies.fold(0)(nextLevel)
     val redo = head.state.level() < minimalLevel
     if (redo) {

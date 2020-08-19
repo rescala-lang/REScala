@@ -2,10 +2,16 @@ package rescala.core
 
 
 trait Result[T, S <: Struct] {
+  /** True iff outputs must also be reevaluated, false iff the propagation ends here. */
   def propagate: Boolean
+  /** No-allocation accessor for the optional new value. */
   def forValue(f: T => Unit): Unit
+  /** No-allocation accessor for the effect caused by the reevaluation. */
   def forEffect(f: Observation => Unit): Unit
-  def getDependencies(): Option[Set[ReSource[S]]]
+  /** New dependencies.
+   * None for static reactives.
+   * Otherwise a list of all static reactives, and accessed dynamic reactives. */
+  def dependencies(): Option[Set[ReSource[S]]]
 }
 
 trait Observation {

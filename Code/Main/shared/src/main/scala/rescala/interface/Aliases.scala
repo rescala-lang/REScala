@@ -33,5 +33,5 @@ trait Aliases[S <: Struct] {
   /** @group internal */
   final type ReSource = rescala.core.ReSource[S]
   /** @group internal */
-  final type REStructure = S
+  final type ReStructure = S
 }

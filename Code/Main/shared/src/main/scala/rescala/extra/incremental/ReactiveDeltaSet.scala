@@ -61,7 +61,7 @@ final class SetSource[T, S <: Struct] private[rescala](initialState:  S#State[De
   def addInTx(delta: Delta[T])(implicit ticket: AdmissionTicket[S]): Unit = {
     ticket.recordChange(new InitialChange[S] {
       override val source = SetSource.this
-      override def writeValue(b: Delta[T], v: Delta[T] => Unit): Boolean = {v(delta); true}
+      override def writeValue(base: Delta[T], writeCallback: Delta[T] => Unit): Boolean = {writeCallback(delta); true}
     })
   }
 }

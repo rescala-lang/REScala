@@ -62,7 +62,7 @@ object Tags {
     var observe    : Observe[S] = null
     var currentNode: Node       = null
     override def applyTo(parent: Element): Unit = {
-      CreationTicket.fromEngine(engine).transaction { init =>
+      CreationTicket.fromScheduler(engine).transaction { init =>
         if (observe != null) {
           observe.remove()(engine)
           if (currentNode != null) {
@@ -114,7 +114,7 @@ object Tags {
     var currentNodes: Seq[Element]           = Nil
     var currentTags : Seq[TypedTag[Element]] = Nil
     override def applyTo(parent: Element): Unit = {
-      CreationTicket.fromEngine(engine).transaction { init =>
+      CreationTicket.fromScheduler(engine).transaction { init =>
 
         if (observe == null) {
           currentTags = init.accessTicket().now(rendered)

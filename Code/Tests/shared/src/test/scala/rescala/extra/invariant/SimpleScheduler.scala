@@ -259,7 +259,7 @@ object Util {
       override def staticAccess(input: ReSource[SimpleStruct]): input.Value = input.state.value
     }
     val reev = reactive.reevaluate(dt)
-    reev.getDependencies().foreach { newDeps =>
+    reev.dependencies().foreach { newDeps =>
       val incoming = reactive.state.incoming
       reactive.state.incoming = newDeps
       val added = newDeps diff incoming

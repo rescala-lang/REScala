@@ -30,7 +30,7 @@ trait RegularReevaluationHandling extends ReevaluationHandling[Derived[FullMVStr
         exception.printStackTrace()
         ticket.withPropagate(false)
     }
-    res.getDependencies().foreach(commitDependencyDiff(node, node.state.incomings))
+    res.dependencies().foreach(commitDependencyDiff(node, node.state.incomings))
     res.forValue(v => value = v)
     res.forEffect(_.execute())
     val res2 = processReevaluationResult(if(res.propagate) Some(value) else None)

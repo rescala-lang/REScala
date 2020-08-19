@@ -42,11 +42,11 @@ object LociDist {
       Scheduler[S].forceNewTransaction(signal) { admissionTicket =>
         admissionTicket.recordChange(new InitialChange[S] {
           override val source = signal.innerDerived
-          override def writeValue(b: source.Value, v: source.Value => Unit): Boolean = {
-            val merged = b.map(Lattice[A].merge(_, newValue)).asInstanceOf[source.Value]
-            println(s"writing ${newValue.hashCode()} onto ${b.hashCode()}, result is ${merged.hashCode()}")
-            if (merged != b) {
-              v(merged)
+          override def writeValue(base: source.Value, writeCallback: source.Value => Unit): Boolean = {
+            val merged = base.map(Lattice[A].merge(_, newValue)).asInstanceOf[source.Value]
+            println(s"writing ${newValue.hashCode()} onto ${base.hashCode()}, result is ${merged.hashCode()}")
+            if (merged != base) {
+              writeCallback(merged)
               true
             }
             else false

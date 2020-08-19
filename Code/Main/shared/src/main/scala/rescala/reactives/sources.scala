@@ -30,17 +30,10 @@ abstract class Evt[T, S <: Struct] private[rescala](initialState: Estate[S, T], 
   def admitPulse(pulse: Pulse[T])(implicit ticket: AdmissionTicket[S]): Unit = {
     ticket.recordChange(new InitialChange[S] {
       override val source = Evt.this
-      override def writeValue(b: Pulse[T], v: Pulse[T] => Unit): Boolean = {v(pulse); true}
+      override def writeValue(base: Pulse[T], writeCallback: Pulse[T] => Unit): Boolean = {writeCallback(pulse); true}
     })
   }
 }
-
-///** Creates new [[Evt]]s */
-//object Evt {
-//  def apply[T, S <: Struct]()(implicit ticket: CreationTicket[S]): Evt[T, S] =
-//    ticket.createSource[Pulse[T], Evt[T, S]](Initializer.Event)(new Evt[T, S](_, ticket.rename))
-//}
-
 
 /** Source signals with imperatively updates.
   *
@@ -62,7 +55,7 @@ trait Var[A, S <: Struct] extends Source[S, A] with Signal[A, S] with Interp[A, 
   def admitPulse(pulse: Pulse[A])(implicit ticket: AdmissionTicket[S]): Unit = {
     ticket.recordChange(new InitialChange[S] {
       override val source: Var.this.type = Var.this
-      override def writeValue(b: Pulse[A], v: Pulse[A] => Unit): Boolean = if (b != pulse) {v(pulse); true} else false
+      override def writeValue(base: Pulse[A], writeCallback: Pulse[A] => Unit): Boolean = if (base != pulse) {writeCallback(pulse); true} else false
     })
   }
 }

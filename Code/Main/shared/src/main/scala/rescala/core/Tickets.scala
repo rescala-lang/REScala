@@ -59,7 +59,7 @@ abstract class ReevTicket[V, S <: Struct](initializer: Initializer[S],
   final override def propagate: Boolean = _propagate
   final override def forValue(f: V => Unit): Unit = if (value != null) f(value)
   final override def forEffect(f: Observation => Unit): Unit = if (effect != null) f(effect)
-  final override def getDependencies(): Option[Set[ReSource[S]]] = Option(collectedDependencies)
+  final override def dependencies(): Option[Set[ReSource[S]]] = Option(collectedDependencies)
 
   final def reset[NT](nb: NT): ReevTicket[NT, S] = {
     _propagate = false
@@ -85,9 +85,14 @@ sealed abstract class StaticTicket[S <: Struct](creation: Initializer[S]) extend
   final def dependStatic[A](reactive: Interp[A, S]): A = reactive.interpret(collectStatic(reactive))
 }
 
+/** Encapsulates an action changing a single source. */
 trait InitialChange[S <: Struct] {
+  /** The source to be changed. */
   val source: ReSource[S]
-  def writeValue(b: source.Value, v: source.Value => Unit): Boolean
+  /** @param base the current (old) value of the source.
+   * @param writeCallback callback to apply the new value, executed only if the action is approved by the source.
+   * @return the propagation status of the source (whether or not to reevaluate output reactives). */
+  def writeValue(base: source.Value, writeCallback: source.Value => Unit): Boolean
 }
 
 /** Enables reading of the current value during admission.
@@ -151,7 +156,7 @@ object CreationTicket extends LowPriorityCreationImplicits {
 /** If no [[InnerTicket]] is found, then these implicits will search for a [[Scheduler]],
   * creating the reactives outside of any turn. */
 sealed trait LowPriorityCreationImplicits {
-  implicit def fromEngineImplicit[S <: Struct](implicit factory: Scheduler[S], line: REName): CreationTicket[S] = CreationTicket(Right(factory), line)
-  implicit def fromEngine[S <: Struct](factory: Scheduler[S])(implicit line: REName): CreationTicket[S] = CreationTicket(Right(factory), line)
+  implicit def fromSchedulerImplicit[S <: Struct](implicit factory: Scheduler[S], line: REName): CreationTicket[S] = CreationTicket(Right(factory), line)
+  implicit def fromScheduler[S <: Struct](factory: Scheduler[S])(implicit line: REName): CreationTicket[S] = CreationTicket(Right(factory), line)
   implicit def fromNameImplicit[S <: Struct](line: String)(implicit outer: CreationTicket[S]): CreationTicket[S] = CreationTicket(outer.self, line)
 }

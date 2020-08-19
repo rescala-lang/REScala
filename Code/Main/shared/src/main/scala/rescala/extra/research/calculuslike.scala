@@ -240,7 +240,7 @@ object Reevaluate {
       (true, reev.propagate)
     }
 
-    reev.getDependencies() match {
+    reev.dependencies() match {
       case None         => // static reactive
         finishReevaluation()
       case Some(inputs) => //dynamic reactive
