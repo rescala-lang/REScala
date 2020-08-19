@@ -1,7 +1,8 @@
 package rescala.extra.invariant
 
-import org.scalacheck.{Gen, Shrink}
-import org.scalacheck.rng.Seed
+import org.scalacheck.Prop.forAll
+import org.scalacheck.{Gen, Prop, Shrink}
+import org.scalacheck.util.Pretty
 import rescala.core
 import rescala.core.{AccessTicket, Derived, DynamicInitializerLookup, InitialChange, Initializer, Observation, Pulse, ReSource, ReevTicket, Scheduler, Struct}
 import rescala.interface.Aliases
@@ -16,10 +17,10 @@ class SimpleState[V](var value: V) {
 
   var outgoing: Set[Derived[SimpleStruct]] = Set.empty
   var incoming: Set[ReSource[SimpleStruct]] = Set.empty
-  var discovered = false
-  var dirty = false
-  var done = false
-  var invariants: Seq[Invariant[V]] = Seq.empty
+  var discovered                            = false
+  var dirty                                 = false
+  var done                                  = false
+  var invariants: Seq[Invariant[V]]         = Seq.empty
 
   def reset(v: V): Unit = {
     discovered = false
@@ -37,11 +38,10 @@ class SimpleInitializer(afterCommitObservers: ListBuffer[Observation]) extends I
 
   private var createdReactives: Seq[Derived[SimpleStruct]] = Seq.empty
 
-
-  override def accessTicket(): AccessTicket[SimpleStruct] = new AccessTicket[SimpleStruct] {
-    override private[rescala] def access(reactive: ReSource[SimpleStruct]): reactive.Value = reactive.state.value
-  }
-
+  override def accessTicket(): AccessTicket[SimpleStruct] =
+    new AccessTicket[SimpleStruct] {
+      override private[rescala] def access(reactive: ReSource[SimpleStruct]): reactive.Value = reactive.state.value
+    }
 
   def drainCreated(): Seq[Derived[SimpleStruct]] = {
     val tmp = createdReactives
@@ -49,10 +49,11 @@ class SimpleInitializer(afterCommitObservers: ListBuffer[Observation]) extends I
     tmp
   }
 
-  override protected[this] def ignite(reactive: Derived[SimpleStruct],
-                                      incoming: Set[ReSource[SimpleStruct]],
-                                      ignitionRequiresReevaluation: Boolean)
-  : Unit = {
+  override protected[this] def ignite(
+      reactive: Derived[SimpleStruct],
+      incoming: Set[ReSource[SimpleStruct]],
+      ignitionRequiresReevaluation: Boolean
+  ): Unit = {
     incoming.foreach { dep =>
       dep.state.outgoing += reactive
     }
@@ -61,7 +62,6 @@ class SimpleInitializer(afterCommitObservers: ListBuffer[Observation]) extends I
     reactive.state.dirty = ignitionRequiresReevaluation
     createdReactives :+= reactive
 
-
     val predecessorsDone = incoming.forall(r => !r.state.discovered || r.state.done)
     // requires reev, any predecessor is dirty, but all discovered predecessors are already done
     val requiresReev = incoming.exists(_.state.dirty) && predecessorsDone
@@ -69,19 +69,17 @@ class SimpleInitializer(afterCommitObservers: ListBuffer[Observation]) extends I
     val discovered = incoming.exists(_.state.discovered)
     if (discovered && !predecessorsDone) {
       // do nothing, this reactive is reached by normal propagation later
-    }
-    else if (ignitionRequiresReevaluation || requiresReev) {
+    } else if (ignitionRequiresReevaluation || requiresReev) {
       Util.evaluate(reactive, this, afterCommitObservers)
-    }
-    else if (predecessorsDone) reactive.state.done = true
+    } else if (predecessorsDone) reactive.state.done = true
   }
 
 }
 
-
-object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInitializer]
-  with Scheduler[SimpleStruct]
-  with Aliases[SimpleStruct] {
+object SimpleScheduler
+    extends DynamicInitializerLookup[SimpleStruct, SimpleInitializer]
+    with Scheduler[SimpleStruct]
+    with Aliases[SimpleStruct] {
 
   override def schedulerName: String = "SimpleWithInvariantSupport"
 
@@ -108,16 +106,16 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
 
         creation.drainCreated().foreach(reset)
 
-        val initial = sources.flatMap { s =>
-          s.state.dirty = true
-          s.state.done = true
-          s.state.discovered = true
-          s.state.outgoing
-        }
+            val initial = sources.flatMap { s =>
+              s.state.dirty = true
+              s.state.done = true
+              s.state.discovered = true
+              s.state.outgoing
+            }
 
-        initial.foreach { r =>
-          r.state.dirty = true
-        }
+            initial.foreach { r =>
+              r.state.dirty = true
+            }
 
         // propagation
         val sorted = Util.toposort(initial)
@@ -127,7 +125,7 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
         Util.evaluateAll(created, creation, afterCommitObservers).foreach(reset)
         assert(creation.drainCreated().isEmpty)
 
-        Util.evaluateInvariants(created ++ sorted, initialWrites)
+            Util.evaluateInvariants(created ++ sorted ++ initialWrites, initialWrites)
 
         //cleanup
         initial.foreach(reset)
@@ -135,18 +133,16 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
         sources.foreach(reset)
         sorted.foreach(reset)
 
-
-        //wrapup
-        if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(creation.accessTicket())
-        admissionResult
-      }
+            //wrapup
+            if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(creation.accessTicket())
+            admissionResult
+          }
+        } finally {
+          idle = true
+        }
+      afterCommitObservers.foreach(_.execute())
+      res
     }
-    finally {
-      idle = true
-    }
-    afterCommitObservers.foreach(_.execute())
-    res
-  }
 
   override private[rescala] def singleReadValueOnce[A](reactive: Signal[A]): A = {
     val id = reactive.resource
@@ -157,7 +153,19 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
     signal.state.invariants = inv.map(inv => new Invariant((invp: Pulse[T]) => inv.inv(invp.get), inv.description))
   }
 
-  private val signalGeneratorMap = SignalGeneratorMap[Signal, Gen]
+  class SignalGeneratorMap private(baseMap: scala.collection.mutable.WeakHashMap[Signal[Any], (Gen[Any], Shrink[Any], Any => Pretty)]) {
+    def apply[T](key: Signal[T]): (Gen[T], Shrink[T], T => Pretty) = baseMap(key).asInstanceOf[(Gen[T], Shrink[T], T => Pretty)]
+
+    def put[T](key: Signal[T], value: (Gen[T], Shrink[T], T => Pretty)): Option[Any] = baseMap.put(key, value.asInstanceOf[(Gen[Any], Shrink[Any], Any => Pretty)])
+
+    def entries(): List[(Signal[Any], (Gen[Any], Shrink[Any], Any => Pretty))] = baseMap.map(p => p).toList
+  }
+
+  object SignalGeneratorMap {
+    def apply = new SignalGeneratorMap(scala.collection.mutable.WeakHashMap.empty[Signal[Any], (Gen[Any], Shrink[Any], Any => Pretty)])
+  }
+
+  private val signalGeneratorMap = SignalGeneratorMap.apply
 
   implicit class SignalWithInvariants[T](val signal: Signal[T]) extends AnyVal {
 
@@ -165,79 +173,67 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
       SimpleScheduler.this.specify(inv, signal)
     }
 
-    def setValueGenerator(gen: Gen[T]): Unit = {
-      signalGeneratorMap.put(this.signal, gen)
-    }
-
-    def shrinkTest[A](signal: Signal[A], gen: Gen[A], value: A, shrinked: Seq[Gen[B] forSome { type B}], unchanged: Seq[(Signal[C], C) forSome { type C}]): Unit = {
-      try {
-        val valueShrink = implicitly[Shrink[A]]
-        val shrinkStream = valueShrink.shrink(value)
-        //TODO: inline
-        if(shrinkStream.isEmpty) {
-          signalGeneratorMap.entries().find(pair => !shrinked.contains(pair._2)) match {
-            case Some(value) => {
-              shrinkTest(value._1, value._2, unchanged.find(pair => pair._2 == value._1).get, shrinked :+ gen, unchanged.filter(pair => signal != pair._1) :+ (signal, value))
-            }
-            case None => //TODO thow "FullyShrinkedInvariantViolationException"
-          }
-        }
-        /*
-        TODO:
-        if stream not empty -> for each item shrink until new shrunk value with exception is found -> shrinkTest with new exception or shrink next generator
-         */
-      } catch {
-        case e: InvariantViolationException => ???
-      }
+    def setValueGenerator(gen: Gen[T])(implicit
+        s: Shrink[T],
+        pp: T => Pretty
+    ): Unit = {
+      signalGeneratorMap.put(this.signal, (gen, s.asInstanceOf[Shrink[Any]], pp.asInstanceOf[Any => Pretty]))
     }
 
     def test(): Unit = {
-      /*
-      TODO:
-      run once -> on failure -> shrinkTest with first generator-value pair
-       */
-      val changes = signalGeneratorMap.entries().map(pair => (pair._1, Pulse.Value(pair._2.pureApply(Gen.Parameters.default, Seed.random()))))
-      for {
-        (signal, value) <- changes
-        inv <- signal.innerDerived.state.invariants
-        if !inv.validate(value.asInstanceOf[signal.innerDerived.Value])
-      } {
-        throw new InvariantViolatingGeneratorException(signal, inv, value)
-      }
-      forceValues(changes: _*)
-
+      customForAll(
+        signalGeneratorMap.entries(),
+        changes => {
+          forceValues(changes.map(pair => (pair._1, Pulse.Value(pair._2))): _*)
+          true
+        }
+      ).check()
     }
 
+    private def customForAll[P](
+        signalGeneratorPairs: List[(Signal[Any], (Gen[Any], Shrink[Any], Any => Pretty))],
+        f: List[(Signal[Any], Any)] => Boolean,
+        generated: List[(Signal[Any], Any)] = List.empty
+    ): Prop =
+      signalGeneratorPairs match {
+        case Nil => Prop(f(generated))
+        case (sig, (gen, s, pp)) :: tail =>
+          forAll(gen)(t => customForAll(tail, f, generated :+ (sig, t)))(identity, s, pp)
+      }
 
-    private def forceValues(changes: (Signal[A], A) forSome {type A}*): Set[core.ReSource[SimpleStruct]] = {
-      val asReSource = changes.foldLeft(Set.empty[core.ReSource[SimpleStruct]]) { case (acc, (source, _)) => acc + source }
+    private def forceValues(changes: (Signal[A], A) forSome { type A }*): Set[core.ReSource[SimpleStruct]] = {
+      val asReSource = changes.foldLeft(Set.empty[core.ReSource[SimpleStruct]]) {
+        case (acc, (source, _)) => acc + source
+      }
 
-      forceNewTransaction(asReSource, {
-        admissionTicket =>
-          changes.foreach {
-            change =>
-              val initialChange: InitialChange[SimpleStruct] = new InitialChange[SimpleStruct] {
-                override val source: core.ReSource[SimpleStruct] = change._1.innerDerived
+      forceNewTransaction(
+        asReSource,
+        {
+          admissionTicket =>
+            changes.foreach {
+              change =>
+                val initialChange: InitialChange[SimpleStruct] = new InitialChange[SimpleStruct] {
+                  override val source: core.ReSource[SimpleStruct] = change._1.innerDerived
 
-                override def writeValue(b: source.Value, v: source.Value => Unit): Boolean = {
-                  val casted = change._2.asInstanceOf[source.Value]
-                  if (casted != b) {
-                    v(casted)
-                    return true
+                  override def writeValue(b: source.Value, v: source.Value => Unit): Boolean = {
+                    val casted = change._2.asInstanceOf[source.Value]
+                    if (casted != b) {
+                      v(casted)
+                      return true
+                    }
+                    false
                   }
-                  false
                 }
-              }
-              admissionTicket.recordChange(initialChange)
-          }
-      })
+                admissionTicket.recordChange(initialChange)
+            }
+        }
+      )
 
       asReSource
     }
   }
 
 }
-
 
 object Util {
   def toposort(rem: Seq[Derived[SimpleStruct]]): Seq[Derived[SimpleStruct]] = {
@@ -258,14 +254,17 @@ object Util {
   }
 
   @scala.annotation.tailrec
-  def evaluateAll(evaluatees: Seq[Derived[SimpleStruct]], creation: SimpleInitializer, afterCommitObservers: ListBuffer[Observation]): Seq[Derived[SimpleStruct]] = {
+  def evaluateAll(
+      evaluatees: Seq[Derived[SimpleStruct]],
+      creation: SimpleInitializer,
+      afterCommitObservers: ListBuffer[Observation]
+  ): Seq[Derived[SimpleStruct]] = {
     // first one where evaluation detects glitch
     val glitched = evaluatees.reverseIterator.find { r =>
       if (r.state.done) false
       else if (r.state.dirty) {
         Util.evaluate(r, creation, afterCommitObservers)
-      }
-      else false
+      } else false
     }
     glitched match {
       case None => evaluatees
@@ -276,7 +275,11 @@ object Util {
     }
   }
 
-  def evaluate(reactive: Derived[SimpleStruct], creationTicket: SimpleInitializer, afterCommitObservers: ListBuffer[Observation]): Boolean = {
+  def evaluate(
+      reactive: Derived[SimpleStruct],
+      creationTicket: SimpleInitializer,
+      afterCommitObservers: ListBuffer[Observation]
+  ): Boolean = {
     var potentialGlitch = false
     val dt = new ReevTicket[reactive.Value, SimpleStruct](creationTicket, reactive.state.value) {
       override def dynamicAccess(input: ReSource[SimpleStruct]): input.Value = {
@@ -292,7 +295,7 @@ object Util {
     reev.dependencies().foreach { newDeps =>
       val incoming = reactive.state.incoming
       reactive.state.incoming = newDeps
-      val added = newDeps diff incoming
+      val added   = newDeps diff incoming
       val removed = incoming diff newDeps
       added.foreach { input =>
         input.state.outgoing = input.state.outgoing + reactive
@@ -302,7 +305,8 @@ object Util {
       }
     }
 
-    if (potentialGlitch) true else {
+    if (potentialGlitch) true
+    else {
       if (reev.propagate) reactive.state.outgoing.foreach(_.state.dirty = true)
       reev.forValue(reactive.state.value = _)
       reev.forEffect(o => afterCommitObservers.append(o))
@@ -315,14 +319,21 @@ object Util {
   def evaluateInvariants(reactives: Seq[ReSource[SimpleStruct]], initialWrites: Set[ReSource[SimpleStruct]]): Unit = {
     for {
       reactive <- reactives
-      inv <- reactive.state.invariants
+      inv      <- reactive.state.invariants
       if !inv.validate(reactive.state.value)
     } {
-      throw new InvariantViolationException(new IllegalArgumentException(s"${reactive.state.value} violates invariant ${inv.description}"), reactive, Util.getCausalErrorChains(reactive, initialWrites))
+      throw new InvariantViolationException(
+        new IllegalArgumentException(s"${reactive.state.value} violates invariant ${inv.description}"),
+        reactive,
+        Util.getCausalErrorChains(reactive, initialWrites)
+      )
     }
   }
 
-  def getCausalErrorChains(errorNode: ReSource[SimpleStruct], initialWrites: Set[ReSource[SimpleStruct]]): Seq[Seq[ReSource[SimpleStruct]]] = {
+  def getCausalErrorChains(
+      errorNode: ReSource[SimpleStruct],
+      initialWrites: Set[ReSource[SimpleStruct]]
+  ): Seq[Seq[ReSource[SimpleStruct]]] = {
     import scala.collection.mutable.ListBuffer
 
     val initialNames = initialWrites.map(_.name)
@@ -333,8 +344,7 @@ object Util {
         val incName = incoming.name
         if (initialNames.contains(incName)) {
           paths += path :+ incoming
-        }
-        else {
+        } else {
           paths ++= traverse(incoming, path :+ incoming)
         }
       }
