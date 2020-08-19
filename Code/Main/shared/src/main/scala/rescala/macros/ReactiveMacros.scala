@@ -180,8 +180,8 @@ class ReactiveMacros(val c: blackbox.Context) {
     override def transform(tree: Tree): Tree =
       tree match {
         // replace any used CreationTicket in a Signal expression with the correct turn source for the current turn
-        //q"$_.fromEngineImplicit[..$_](...$_)"
-        case turnSource@Apply(TypeApply(Select(_, TermName("fromEngineImplicit")), _), _)
+        //q"$_.fromSchedulerImplicit[..$_](...$_)"
+        case turnSource@Apply(TypeApply(Select(_, TermName("fromSchedulerImplicit")), _), _)
           if turnSource.tpe =:= weakTypeOf[CreationTicket[S]] && turnSource.symbol.owner == symbolOf[LowPriorityCreationImplicits] =>
           q"""${termNames.ROOTPKG}.rescala.core.CreationTicket(
                   ${termNames.ROOTPKG}.scala.Left($ticketIdent.initializer),
