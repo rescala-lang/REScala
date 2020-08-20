@@ -17,11 +17,11 @@ class WithoutAPITest extends RETests {
       override protected[rescala] def commit(base: Value): Value = base
 
       def makeChange(newValue: T) =
-        new InitialChange[TestStruct] {
+        new InitialChange[ReStructure] {
           override val source = outer
-          override def writeValue(b: T, v: T => Unit): Boolean = {
-            if (b != newValue) {
-              v(newValue)
+          override def writeValue(base: T, writeCallback: T => Unit): Boolean = {
+            if (base != newValue) {
+              writeCallback(newValue)
               true
             } else false
           }
