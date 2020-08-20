@@ -14,7 +14,7 @@ object RExceptions {
     }
   }
 
-  def toExternalReadException[R](r: ReSource[_ <: Struct], f: => R) = {
+  def toExternalReadException[R](r: ReSource[_ <: Struct], f: => R): R = {
     try { f }
     catch {
       case EmptySignalControlThrowable => throw new NoSuchElementException(s"$r is empty")

@@ -120,9 +120,7 @@ trait RescalaInterface[S <: Struct] extends Aliases[S] {
     override val rescalaAPI: RescalaInterface.this.type = RescalaInterface.this
   }
 
-  object Impls extends DefaultImplementations[S] {
-    override val rescalaAPI: RescalaInterface.this.type = RescalaInterface.this
-  }
+  object Impls extends DefaultImplementations[S]
 
   /**
     * Executes a transaction.

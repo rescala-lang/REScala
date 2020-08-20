@@ -1,22 +1,17 @@
 package rescala.reactives
 
 import rescala.core.Pulse.NoChange
-import rescala.core.{Base, Derived, DisconnectableImpl, Pulse, REName, ReevTicket, Struct}
+import rescala.core._
 import rescala.interface.RescalaInterface
 import rescala.reactives
 import rescala.reactives.Events.Estate
-import rescala.reactives.Signals.{Diff, SignalResource, Sstate}
+import rescala.reactives.Signals.{SignalResource, Sstate}
 
 trait DefaultImplementations[S <: Struct] {
-
-  val rescalaAPI: RescalaInterface[S]
-
-  import rescalaAPI._
-
   class SignalImpl[T](initial: Sstate[T, S],
-                      expr: (DynamicTicket, () => T) => T,
+                      expr: (DynamicTicket[S], () => T) => T,
                       name: REName,
-                      isDynamicWithStaticDeps: Option[Set[ReSource]])
+                      isDynamicWithStaticDeps: Option[Set[ReSource[S]]])
     extends DerivedImpl[T](initial, name, isDynamicWithStaticDeps) with SignalResource[T, S] {
 
 
@@ -27,7 +22,7 @@ trait DefaultImplementations[S <: Struct] {
 
   abstract class DerivedImpl[T](initial: Sstate[T, S],
                       name: REName,
-                      isDynamicWithStaticDeps: Option[Set[ReSource]])
+                      isDynamicWithStaticDeps: Option[Set[ReSource[S]]])
     extends Base[Pulse[T], S](initial, name) with Derived[S] with DisconnectableImpl[S] {
 
     override protected[rescala] def reevaluate(rein: ReIn): Rout = guardReevaluate(rein) {
@@ -39,12 +34,12 @@ trait DefaultImplementations[S <: Struct] {
   }
 
   class EventImpl[T](initial: Estate[S, T],
-                     expr: DynamicTicket => Pulse[T],
+                     expr: DynamicTicket[S] => Pulse[T],
                      name: REName,
                      /** If this is None, the event is static. Else, it is dynamic with the set of static dependencies */
-                     isDynamicWithStaticDeps: Option[Set[ReSource]],
+                     isDynamicWithStaticDeps: Option[Set[ReSource[S]]],
                      override val rescalaAPI: RescalaInterface[S])
-    extends DerivedImpl[T](initial, name, isDynamicWithStaticDeps) with Event[T] {
+    extends DerivedImpl[T](initial, name, isDynamicWithStaticDeps) with Event[T, S] {
 
 
     override protected[rescala] def commit(base: Pulse[T]): Pulse[T] = Pulse.NoChange
@@ -58,7 +53,7 @@ trait DefaultImplementations[S <: Struct] {
                            signal: reactives.Signal[T, S],
                            name: REName,
                            override val rescalaAPI: RescalaInterface[S])
-    extends Base[(Pulse[T], Pulse[Diff[T]]), S](_bud, name) with Derived[S] with Event[Diff[T]] with DisconnectableImpl[S] {
+    extends Base[(Pulse[T], Pulse[Diff[T]]), S](_bud, name) with Derived[S] with Event[Diff[T], S] with DisconnectableImpl[S] {
 
     override type Value = (Pulse[T], Pulse[Diff[T]])
 

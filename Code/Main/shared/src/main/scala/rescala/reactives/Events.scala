@@ -3,7 +3,6 @@ package rescala.reactives
 import rescala.core._
 import rescala.interface.RescalaInterface
 import rescala.macros.cutOutOfUserComputation
-import rescala.reactives.Signals.Diff
 
 
 object Events {
@@ -37,8 +36,8 @@ trait Events[S <: Struct] {
 
   val rescalaAPI: RescalaInterface[S]
 
-  import rescalaAPI.Signal
   import rescalaAPI.Impls._
+  import rescalaAPI.Signal
 
   /** the basic method to create static events */
   @cutOutOfUserComputation

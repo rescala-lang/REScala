@@ -3,7 +3,6 @@ package rescala.reactives
 import rescala.core._
 import rescala.interface.RescalaInterface
 import rescala.macros.cutOutOfUserComputation
-import rescala.reactives.RExceptions.EmptySignalControlThrowable
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -17,34 +16,6 @@ object Signals {
   }
 
   object MapFuncImpl {def apply[T1, A](value: T1, mapper: T1 => A): A = mapper(value)}
-
-  class Diff[+A](val from: Pulse[A], val to: Pulse[A]) {
-
-    def _1: A = from.get
-    def _2: A = to.get
-    def pair: (A, A) = {
-      try {
-        val right = to.get
-        val left  = from.get
-        left -> right
-      } catch {
-        case EmptySignalControlThrowable => throw new NoSuchElementException(s"Can not convert $this to pair")
-      }
-    }
-
-    override def toString: String = s"Diff($from, $to)"
-  }
-
-  object Diff {
-    def apply[A](from: Pulse[A], to: Pulse[A]): Diff[A] = new Diff(from, to)
-    def unapply[A](arg: Diff[A]): Option[(A, A)] = arg.from match {
-      case Pulse.Value(v1) => arg.to match {
-        case Pulse.Value(v2) => Some((v1, v2))
-        case _               => None
-      }
-      case _               => None
-    }
-  }
 
 }
 
@@ -61,9 +32,8 @@ trait Signals[S <: Struct] {
   private def ignore2[Tick, Current, Res](f: Tick => Res): (Tick, Current) => Res = (ticket, _) => f(ticket)
 
   import rescalaAPI.Impls.SignalImpl
-  import rescalaAPI.{Var, Signal => Sig}
 
-  def wrapWithSignalAPI[T](derived: rescalaAPI.Impls.SignalImpl[T]): Signal[T, S] = {
+  def wrapWithSignalAPI[T](derived: SignalImpl[T]): Signal[T, S] = {
     new Signal[T, S] {
       override val rescalaAPI  : RescalaInterface[S]          = Signals.this.rescalaAPI
       override val innerDerived: Signals.SignalResource[T, S] = derived
@@ -71,9 +41,9 @@ trait Signals[S <: Struct] {
   }
 
   @cutOutOfUserComputation
-  def ofUDF[T](udf: UserDefinedFunction[T, rescalaAPI.ReSource, rescalaAPI.DynamicTicket])
+  def ofUDF[T](udf: UserDefinedFunction[T, ReSource[S], DynamicTicket[S]])
               (implicit ct: CreationTicket[S])
-  : Sig[T] = {
+  : Signal[T, S] = {
     val derived = ct.create[Pulse[T], SignalImpl[T]](udf.staticDependencies, Pulse.empty, inite = true) {
       state => new SignalImpl[T](state, ignore2(udf.expression), ct.rename, if (udf.isStatic) None else Some(udf.staticDependencies))
     }
@@ -87,7 +57,7 @@ trait Signals[S <: Struct] {
   def static[T](dependencies: ReSource[S]*)
                (expr: StaticTicket[S] => T)
                (implicit ct: CreationTicket[S])
-  : Sig[T] = {
+  : Signal[T, S] = {
     val derived = ct.create[Pulse[T], SignalImpl[T]](dependencies.toSet, Pulse.empty, inite = true) {
       state => new SignalImpl[T](state, ignore2(expr), ct.rename, None)
     }
@@ -99,7 +69,7 @@ trait Signals[S <: Struct] {
   def dynamic[T](dependencies: ReSource[S]*)
                 (expr: DynamicTicket[S] => T)
                 (implicit ct: CreationTicket[S])
-  : Sig[T] = {
+  : Signal[T, S] = {
     val staticDeps = dependencies.toSet
     val derived = ct.create[Pulse[T], SignalImpl[T]](staticDeps, Pulse.empty, inite = true) {
       state => new SignalImpl[T](state, ignore2(expr), ct.rename, Some(staticDeps))
@@ -110,7 +80,7 @@ trait Signals[S <: Struct] {
   /** converts a future to a signal */
   @cutOutOfUserComputation
   def fromFuture[A](fut: Future[A])(implicit fac: Scheduler[S], ec: ExecutionContext): Signal[A, S] = {
-    val v: Var[A] = rescalaAPI.Var.empty[A]
+    val v: Var[A, S] = rescalaAPI.Var.empty[A]
     fut.onComplete { res => fac.forceNewTransaction(v)(t => v.admitPulse(Pulse.tryCatch(Pulse.Value(res.get)))(t)) }
     v
   }

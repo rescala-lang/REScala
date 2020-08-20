@@ -5,7 +5,6 @@ import rescala.interface.RescalaInterface
 import rescala.macros.cutOutOfUserComputation
 import rescala.reactives.Observe.ObserveInteract
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, ObservedException}
-import rescala.reactives.Signals.Diff
 
 import scala.util.control.NonFatal
 
@@ -91,7 +90,7 @@ trait Signal[+T, S <: Struct] extends MacroInterp[T, S] with Disconnectable[S] {
   //final def recover[R >: A](onFailure: Throwable => R)(implicit ticket: TurnSource[S]): Sig[R] = recover(PartialFunction(onFailure))
 
   @cutOutOfUserComputation
-  final def abortOnError(message: String)(implicit ticket: CreationTicket): Sig[T]
+  final def abortOnError(message: String)(implicit ticket: CreationTicket): Signal[T, S]
   = recover{case t => throw ObservedException(this.innerDerived, s"forced abort ($message)", t)}
 
   @cutOutOfUserComputation
