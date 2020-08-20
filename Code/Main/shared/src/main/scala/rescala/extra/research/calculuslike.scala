@@ -7,15 +7,15 @@ import rescala.interface.Aliases
 
 
 trait FStruct extends Struct {
-  override type State[V, S <: Struct] = StoreValue[V]
+  override type State[V, S <: Struct] = StoreValue[V, S]
 }
 
 /** The formalization uses a per device store mapping reactives to their
   * inputs, values, and operator.
   * The operator is already handled by the common implementation, so we keep the value and inputs.
   * The store mapping does not exist as a single object, but instead each reactive has this state. */
-class StoreValue[V](var value: V) {
-  var inputs: Set[ReSource[FStruct]] = Set.empty
+class StoreValue[V, S <: Struct](var value: V) {
+  var inputs: Set[ReSource[S]] = Set.empty
   override def toString: String = s""
 }
 
@@ -24,7 +24,7 @@ class StoreValue[V](var value: V) {
   * The formalization does not support this, to keep the complexity of the proofs in check. */
 class SimpleCreation() extends Initializer[FStruct] {
   override protected[this] def makeDerivedStructState[V](ip: V)
-  : StoreValue[V] = new StoreValue[V](ip)
+  : StoreValue[V, FStruct] = new StoreValue[V, FStruct](ip)
 
   override def accessTicket(): AccessTicket[FStruct] = new AccessTicket[FStruct] {
     override private[rescala] def access(reactive: ReSource[FStruct]): reactive.Value = reactive.state.value
