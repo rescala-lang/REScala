@@ -151,7 +151,7 @@ class ExceptionPropagationTestSuite extends RETests { multiEngined { engine => i
 
     intercept[ObservedException]{v.set(0) }
     assert(res===100/42, "observers are not triggered on failure")
-    if(engine.scheduler != rescala.extra.simpleprop.SimpleScheduler) {
+    if(engine.scheduler != rescala.extra.scheduler.SimpleScheduler) {
       assert(v.readValueOnce === 42, "transaction is aborted on failure")
     }
   }
@@ -175,7 +175,7 @@ class ExceptionPropagationTestSuite extends RETests { multiEngined { engine => i
   }
 
   test("abort combinator"){
-    if(engine.scheduler != rescala.extra.simpleprop.SimpleScheduler) {
+    if(engine.scheduler != rescala.extra.scheduler.SimpleScheduler) {
       val v  = Var(0)
       val ds = Signal {div(v())}
 

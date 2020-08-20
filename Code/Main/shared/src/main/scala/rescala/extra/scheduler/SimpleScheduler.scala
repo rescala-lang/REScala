@@ -1,4 +1,4 @@
-package rescala.extra.simpleprop
+package rescala.extra.scheduler
 
 import rescala.core.{AccessTicket, Derived, DynamicInitializerLookup, Initializer, Observation, ReSource, ReevTicket, Scheduler, Struct}
 import rescala.interface.Aliases

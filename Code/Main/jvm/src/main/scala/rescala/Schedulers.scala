@@ -4,7 +4,7 @@ import rescala.core.{Scheduler, Struct}
 import rescala.interface.RescalaInterface
 import rescala.levelbased.LevelBasedSchedulers
 import rescala.parrp._
-import rescala.extra.simpleprop.SimpleScheduler
+import rescala.extra.scheduler.SimpleScheduler
 import rescala.twoversion.TwoVersionScheduler
 
 object Schedulers extends LevelBasedSchedulers {
