@@ -31,16 +31,16 @@ class ErrorPropagation extends RETests with ScalaCheckDrivenPropertyChecks with 
       val s2 = Signal { v() * 2}
       val s3 = Signal { s1() + s2()}
 
-      v.setValueGenerator(Gen.choose(-3, 5))// (Arbitrary.arbitrary[Int])
+//      v.setValueGenerator(Gen.choose(-3, 5))// (Arbitrary.arbitrary[Int])
       s1.setValueGenerator(Gen.choose(-10, 10)) // (Arbitrary.arbitrary[Int])
       s2.setValueGenerator(Gen.choose(5, 10)) // (Arbitrary.arbitrary[Int])
 
-      s1.specify(
-        Invariant {a => a >= 0}
-      )
-      s2.specify(
-        Invariant {a => a >= 0}
-      )
+//      s1.specify(
+//        Invariant {a => a >= 0}
+//      )
+//      s2.specify(
+//        Invariant {a => a >= 0}
+//      )
       s3.specify(
         Invariant {a => a >= 0}
       )

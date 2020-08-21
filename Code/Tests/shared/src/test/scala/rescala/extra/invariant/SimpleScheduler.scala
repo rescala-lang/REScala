@@ -213,7 +213,7 @@ object SimpleScheduler
             changes.foreach {
               change =>
                 val initialChange: InitialChange[SimpleStruct] = new InitialChange[SimpleStruct] {
-                  override val source: core.ReSource[SimpleStruct] = change._1.innerDerived
+                  override val source: core.ReSource[SimpleStruct] = change._1.resource
 
                   override def writeValue(b: source.Value, v: source.Value => Unit): Boolean = {
                     val casted = change._2.asInstanceOf[source.Value]
