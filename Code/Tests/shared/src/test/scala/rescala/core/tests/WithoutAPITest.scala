@@ -67,7 +67,7 @@ class WithoutAPITest extends RETests {
           }
 
       assert("Hi!" === transaction(customSource) { _.now(customSource) })
-      assert("well this is an initial value" === transaction(customDerived) { _.now(customDerived) })
+      assert("Well, this is an initial value" === transaction(customDerived) { _.now(customDerived) })
 
       transaction(customSource) { _.recordChange(customSource.makeChange("Hello!")) }
 
