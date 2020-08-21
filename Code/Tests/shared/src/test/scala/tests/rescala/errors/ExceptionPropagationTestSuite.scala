@@ -64,7 +64,7 @@ class ExceptionPropagationTestSuite extends RETests { multiEngined { engine => i
     val folded = toInted.fold(100)((acc, v) => div2(v, acc))
     val `change'd` = folded.change
 
-    var res: rescala.reactives.Signals.Diff[Int] = null
+    var res: rescala.reactives.Diff[Int] = null
     `change'd`.observe(res = _)
 
 
@@ -99,7 +99,7 @@ class ExceptionPropagationTestSuite extends RETests { multiEngined { engine => i
     val folded = trimmed.map(_.toInt)
     val `change'd` = folded.change
 
-    var res: rescala.reactives.Signals.Diff[Int] = null
+    var res: rescala.reactives.Diff[Int] = null
 
     `change'd`.observe(res = _)
 
