@@ -140,7 +140,7 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
     res
   }
   override private[rescala] def singleReadValueOnce[A](reactive: Signal[A]): A = {
-    val id = reactive.innerDerived
+    val id = reactive.resource
     id.interpret(id.state.value)
   }
 }

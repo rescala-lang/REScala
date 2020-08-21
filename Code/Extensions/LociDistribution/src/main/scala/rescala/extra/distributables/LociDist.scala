@@ -41,7 +41,7 @@ object LociDist {
       println(s"received value for $signalName: ${newValue.hashCode()}")
       Scheduler[S].forceNewTransaction(signal) { admissionTicket =>
         admissionTicket.recordChange(new InitialChange[S] {
-          override val source = signal.innerDerived
+          override val source = signal.resource
           override def writeValue(base: source.Value, writeCallback: source.Value => Unit): Boolean = {
             val merged = base.map(Lattice[A].merge(_, newValue)).asInstanceOf[source.Value]
             println(s"writing ${newValue.hashCode()} onto ${base.hashCode()}, result is ${merged.hashCode()}")

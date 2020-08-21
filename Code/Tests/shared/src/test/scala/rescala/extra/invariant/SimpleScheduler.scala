@@ -152,7 +152,7 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
   }
 
   override private[rescala] def singleReadValueOnce[A](reactive: Signal[A]): A = {
-    val id = reactive.innerDerived
+    val id = reactive.resource
     id.interpret(id.state.value)
   }
 
@@ -191,7 +191,7 @@ object SimpleScheduler extends DynamicInitializerLookup[SimpleStruct, SimpleInit
           changes.foreach {
             change =>
               admissionTicket.recordChange(new InitialChange[SimpleStruct] {
-                override val source: core.ReSource[SimpleStruct] = signal.innerDerived
+                override val source: core.ReSource[SimpleStruct] = signal.resource
 
                 override def writeValue(b: source.Value, v: source.Value => Unit): Boolean = {
                   val casted = change._2.asInstanceOf[source.Value]

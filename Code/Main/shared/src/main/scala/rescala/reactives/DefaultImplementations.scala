@@ -62,7 +62,7 @@ trait DefaultImplementations[S <: Struct] {
     override def interpret(v: Value): Option[Diff[T]] = v._2.toOption
 
     override protected[rescala] def reevaluate(rein: ReIn): Rout = guardReevaluate(rein) {
-      val to  : Pulse[T] = rein.collectStatic(signal.innerDerived)
+      val to  : Pulse[T] = rein.collectStatic(signal.resource)
       val from: Pulse[T] = rein.before._1
       if (to == Pulse.empty) rein // ignore empty propagations
       else if (from != Pulse.NoChange) rein.withValue((to, Pulse.Value(Diff(from, to))))

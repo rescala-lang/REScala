@@ -35,8 +35,8 @@ trait Signals[S <: Struct] {
 
   def wrapWithSignalAPI[T](derived: SignalImpl[T]): Signal[T, S] = {
     new Signal[T, S] {
-      override val rescalaAPI  : RescalaInterface[S]          = Signals.this.rescalaAPI
-      override val innerDerived: Signals.SignalResource[T, S] = derived
+      override val rescalaAPI: RescalaInterface[S]          = Signals.this.rescalaAPI
+      override val resource  : Signals.SignalResource[T, S] = derived
     }
   }
 
@@ -87,17 +87,17 @@ trait Signals[S <: Struct] {
 
   @cutOutOfUserComputation
   def lift[A, R](los: Seq[Signal[A, S]])(fun: Seq[A] => R)(implicit maybe: CreationTicket[S]): Signal[R, S] = {
-    static(los.map(_.innerDerived): _*) { t => fun(los.map(s => t.dependStatic(s.innerDerived))) }
+    static(los.map(_.resource): _*) { t => fun(los.map(s => t.dependStatic(s.resource))) }
   }
 
   @cutOutOfUserComputation
   def lift[A1, B](n1: Signal[A1, S])(fun: A1 => B)(implicit maybe: CreationTicket[S]): Signal[B, S] = {
-    static(n1.innerDerived)(t => fun(t.dependStatic(n1.innerDerived)))
+    static(n1.resource)(t => fun(t.dependStatic(n1.resource)))
   }
 
   @cutOutOfUserComputation
   def lift[A1, A2, B](n1: Signal[A1, S], n2: Signal[A2, S])(fun: (A1, A2) => B)(implicit maybe: CreationTicket[S]): Signal[B, S] = {
-    static(n1.innerDerived, n2.innerDerived)(t => fun(t.dependStatic(n1.innerDerived), t.dependStatic(n2.innerDerived)))
+    static(n1.resource, n2.resource)(t => fun(t.dependStatic(n1.resource), t.dependStatic(n2.resource)))
   }
 }
 

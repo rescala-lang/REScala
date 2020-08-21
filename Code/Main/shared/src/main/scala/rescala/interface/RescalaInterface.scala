@@ -64,7 +64,7 @@ trait RescalaInterface[S <: Struct] extends Aliases[S] {
       private[this] def fromChange[T](change: Pulse[T])(implicit ticket: CreationTicket): VarImpl[T] = {
         ticket.createSource[Pulse[T], VarImpl[T]](change)(s => new VarImpl[T](s, ticket.rename){
           override val rescalaAPI: RescalaInterface[S] = RescalaInterface.this
-          override val innerDerived = this
+          override val resource                        = this
         })
       }
   }
@@ -170,6 +170,8 @@ trait RescalaInterface[S <: Struct] extends Aliases[S] {
     * @group update
     */
   def update(changes: (Source[S, A], A) forSome { type A } *): Unit = {
+    def admit[A](t: AdmissionTicket, change: (Source[S, A], A)): Unit = change._1.admit(change._2)(t)
+
     scheduler.forceNewTransaction(changes.foldLeft(Set.empty[ReSource]) { case (accu, (source, _)) =>
       assert(!accu.contains(source), s"must not admit multiple values for the same source ($source was assigned multiple times)")
       accu + source
@@ -177,5 +179,4 @@ trait RescalaInterface[S <: Struct] extends Aliases[S] {
       for(change <- changes) admit(t, change)
     })
   }
-  private def admit[A](t: AdmissionTicket, change: (Source[S, A], A)): Unit = change._1.admit(change._2)(t)
 }
