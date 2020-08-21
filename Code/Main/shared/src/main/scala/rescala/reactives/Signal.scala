@@ -28,7 +28,7 @@ trait Signal[+T, S <: Struct] extends MacroInterp[T, S] with Disconnectable[S] {
 
 
   val rescalaAPI: RescalaInterface[S]
-  import rescalaAPI.{scheduler, Observe, CreationTicket}
+  import rescalaAPI.{scheduler, Observe, CreationTicket, Signal => Sig}
 
 
   override def disconnect()(implicit engine: Scheduler[S]): Unit = resource.disconnect()(engine)
@@ -80,7 +80,7 @@ trait Signal[+T, S <: Struct] extends MacroInterp[T, S] with Disconnectable[S] {
   @cutOutOfUserComputation
   final def recover[R >: T](onFailure: PartialFunction[Throwable, R])
                            (implicit ticket: CreationTicket)
-  : Signal[R, S] = rescalaAPI.Signals.static(this.resource) { st =>
+  : Sig[R] = rescalaAPI.Signals.static(this.resource) { st =>
     try st.dependStatic(this.resource) catch {
       case NonFatal(e) => onFailure.applyOrElse[Throwable, R](e, throw _)
     }
@@ -91,12 +91,12 @@ trait Signal[+T, S <: Struct] extends MacroInterp[T, S] with Disconnectable[S] {
   //final def recover[R >: A](onFailure: Throwable => R)(implicit ticket: TurnSource[S]): Signal[R, S = recover(PartialFunction(onFailure))
 
   @cutOutOfUserComputation
-  final def abortOnError(message: String)(implicit ticket: CreationTicket): Signal[T, S]
+  final def abortOnError(message: String)(implicit ticket: CreationTicket): Sig[T]
   = recover{case t => throw ObservedException(this.resource, s"forced abort ($message)", t)}
 
   @cutOutOfUserComputation
   final def withDefault[R >: T](value: R)(implicit ticket: CreationTicket)
-  : Signal[R, S] = rescalaAPI.Signals.static(this.resource) { st =>
+  : Sig[R] = rescalaAPI.Signals.static(this.resource) { st =>
     try st.dependStatic(this.resource) catch {
       case EmptySignalControlThrowable => value
     }
@@ -105,14 +105,14 @@ trait Signal[+T, S <: Struct] extends MacroInterp[T, S] with Disconnectable[S] {
   /** Return a Signal with f applied to the value
     * @group operator */
   @cutOutOfUserComputation
-  final def map[B](expression: T => B)(implicit ticket: CreationTicket): Signal[B, S]
+  final def map[B](expression: T => B)(implicit ticket: CreationTicket): Sig[B]
   = macro rescala.macros.ReactiveMacros.ReactiveUsingFunctionMacro[T, B, S, rescala.reactives.Signals.MapFuncImpl.type, Signals.type]
 
 
   /** Flattens the inner value.
     * @group operator */
   @cutOutOfUserComputation
-  final def flatten[R](implicit flatten: Flatten[Signal[T, S], R]): R = flatten.apply(this)
+  final def flatten[R](implicit flatten: Flatten[Sig[T], R]): R = flatten.apply(this)
 
 //  /** Delays this signal by n occurrences */
 //  final def delay[A1 >: A](n: Int)(implicit ticket: CreationTicket], ev: ReSerializable[Queue[A1]]): Sig[A1] =
