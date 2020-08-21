@@ -16,7 +16,7 @@ object Flatten extends rescala.compat.FlattenCollectionCompat {
   [S <: Struct, B, Sig[U] <: Signal[U, S]]
   (implicit ticket: CreationTicket[S], api: RescalaInterface[S])
   : Flatten[Signal[Sig[B], S], Signal[B, S]] = new Flatten[Signal[Sig[B], S], Signal[B, S]] {
-    def apply(sig: Signal[Sig[B], S]): Signal[B, S] = api.Signals.dynamic(sig) { t => t.depend(t.depend(sig).interpretable) }
+    def apply(sig: Signal[Sig[B], S]): Signal[B, S] = api.Signals.dynamic(sig) { t => t.depend(t.depend(sig).resource) }
   }
 
 

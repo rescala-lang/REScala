@@ -9,9 +9,10 @@ import scala.concurrent.{ExecutionContext, Future}
 object Signals {
   type Sstate[T, S <: Struct] = S#State[Pulse[T], S]
 
-  trait SignalResource[+T, S <: Struct] extends ReSource[S] with Interp[T, S] with Disconnectable[S] {
+  trait SignalResource[+T, S <: Struct] extends ReSource[S] with InterpMacro[T, S] with Disconnectable[S] {
     override type Value <: Pulse[T]
     override def interpret(v: Value): T = v.get
+    override def resource: Interp[T, S] = this
     override protected[rescala] def commit(base: Value): Value = base
   }
 

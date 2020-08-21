@@ -211,7 +211,7 @@ class ReactiveMacros(val c: blackbox.Context) {
               q"$ticketIdent.depend"
             }
           internal.setType(reactiveApply, tree.tpe)
-          q"$reactiveApply($reactive.interpretable)"
+          q"$reactiveApply($reactive.resource)"
         case _ =>
           super.transform(tree)
       }
@@ -333,7 +333,7 @@ class ReactiveMacros(val c: blackbox.Context) {
         s"Offending tree: $tree")
 
   def isInterpretable(tree: Tree): Boolean = {
-    val staticInterpClass = c.mirror staticClass "_root_.rescala.core.MacroInterp"
+    val staticInterpClass = c.mirror staticClass "_root_.rescala.core.MacroAccess"
 
     if (tree.tpe == null) {treeTypeNullWarning(tree); false}
     else
@@ -342,7 +342,7 @@ class ReactiveMacros(val c: blackbox.Context) {
         (tree.tpe.baseClasses contains staticInterpClass)
   }
 
-  /** detects variants to access reactives using [[rescala.core.MacroInterp]] */
+  /** detects variants to access reactives using [[rescala.core.MacroAccess]] */
   object MacroInterpretable {
     def unapply(arg: Tree): Option[Tree] = arg match {
       case Apply(Select(reactive, tn), Nil)

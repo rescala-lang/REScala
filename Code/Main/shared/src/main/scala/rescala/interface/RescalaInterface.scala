@@ -1,8 +1,9 @@
 package rescala.interface
 
-import rescala.core.{Base, Interp, Pulse, REName, Scheduler, Struct}
+import rescala.core.{Base, Pulse, REName, Scheduler, Struct}
 import rescala.macros.MacroTags.{Dynamic, Static}
 import rescala.reactives
+import rescala.reactives.Signals.SignalResource
 import rescala.reactives.{DefaultImplementations, Source}
 
 
@@ -56,17 +57,20 @@ trait RescalaInterface[S <: Struct] extends Aliases[S] {
     * @group create */
   object Var {
     abstract class VarImpl[A] private[rescala](initialState: rescala.reactives.Signals.Sstate[A, S], name: REName)
-      extends Base[Pulse[A], S](initialState, name) with Var[A]
-      with rescala.reactives.Signals.SignalResource[A, S] with Interp[A, S]
+      extends Base[Pulse[A], S](initialState, name)
+      with Var[A]
+      with SignalResource[A, S] {
+      override val resource: SignalResource[A, S] = this
+    }
 
-      def apply[T](initval: T)(implicit ticket: CreationTicket): VarImpl[T] = fromChange(Pulse.Value(initval))
-      def empty[T](implicit ticket: CreationTicket): VarImpl[T] = fromChange(Pulse.empty)
-      private[this] def fromChange[T](change: Pulse[T])(implicit ticket: CreationTicket): VarImpl[T] = {
-        ticket.createSource[Pulse[T], VarImpl[T]](change)(s => new VarImpl[T](s, ticket.rename){
-          override val rescalaAPI: RescalaInterface[S] = RescalaInterface.this
-          override val resource                        = this
-        })
-      }
+    def apply[T](initval: T)(implicit ticket: CreationTicket): VarImpl[T] = fromChange(Pulse.Value(initval))
+    def empty[T](implicit ticket: CreationTicket): VarImpl[T] = fromChange(Pulse.empty)
+    private[this] def fromChange[T](change: Pulse[T])(implicit ticket: CreationTicket): VarImpl[T] = {
+      ticket.createSource[Pulse[T], VarImpl[T]](change)(s => new VarImpl[T](s, ticket.rename){
+        override val rescalaAPI: RescalaInterface[S] = RescalaInterface.this
+        override val resource                        = this
+      })
+    }
   }
 
 

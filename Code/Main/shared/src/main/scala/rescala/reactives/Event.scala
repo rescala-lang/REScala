@@ -1,7 +1,7 @@
 package rescala.reactives
 
 import rescala.core.Pulse.{Exceptional, NoChange, Value}
-import rescala.core.{Interp, _}
+import rescala.core._
 import rescala.interface.RescalaInterface
 import rescala.macros.cutOutOfUserComputation
 import rescala.reactives.Observe.ObserveInteract
@@ -28,7 +28,7 @@ import scala.collection.immutable.{LinearSeq, Queue}
   * @groupname accessors Accessors and observers
   * @groupprio accessor 5
   */
-trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with Disconnectable[S] {
+trait Event[+T, S <: Struct] extends ReSource[S] with InterpMacro[Option[T], S] with Disconnectable[S] {
 
   val rescalaAPI: RescalaInterface[S]
   import rescalaAPI.Signal
@@ -38,6 +38,7 @@ trait Event[+T, S <: Struct] extends ReSource[S] with Interp[Option[T], S] with 
   /** Interprets the pulse of the event by converting to an option
     * @group internal */
   override def interpret(v: Value): Option[T] = v.toOption
+  override val resource: Event[T, S] = this
 
   /** Adds an observer.
     * @usecase def +=(handler: T => Unit): Observe[S]

@@ -24,7 +24,7 @@ import scala.util.control.NonFatal
 object Signal {
   implicit def signalResource[T, S <: Struct](signal: Signal[T, S]): SignalResource[T, S] = signal.resource
 }
-trait Signal[+T, S <: Struct] extends MacroInterp[T, S] with Disconnectable[S] {
+trait Signal[+T, S <: Struct] extends MacroAccess[T, Interp[T, S]] with Disconnectable[S] {
 
 
   val rescalaAPI: RescalaInterface[S]
@@ -32,8 +32,7 @@ trait Signal[+T, S <: Struct] extends MacroInterp[T, S] with Disconnectable[S] {
 
 
   override def disconnect()(implicit engine: Scheduler[S]): Unit = resource.disconnect()(engine)
-  val resource: SignalResource[T, S]
-  override def interpretable: Interp[T, S] = resource
+  override val resource: SignalResource[T, S]
 
 
   /** Returns the current value of the signal
