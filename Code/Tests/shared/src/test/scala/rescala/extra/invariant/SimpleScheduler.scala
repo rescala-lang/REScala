@@ -1,7 +1,8 @@
 package rescala.extra.invariant
 
 import org.scalacheck.Prop.forAll
-import org.scalacheck.{Gen, Prop, Shrink}
+import org.scalacheck.Test.{PropException, Result}
+import org.scalacheck.{Gen, Prop, Shrink, Test}
 import org.scalacheck.util.Pretty
 import rescala.core
 import rescala.core.{AccessTicket, Derived, DynamicInitializerLookup, InitialChange, Initializer, Observation, Pulse, ReSource, ReevTicket, Scheduler, Struct}
@@ -181,13 +182,18 @@ object SimpleScheduler
     }
 
     def test(): Unit = {
-      customForAll(
+      val result = Test.check(Test.Parameters.default, customForAll(
         signalGeneratorMap.entries(),
         changes => {
           forceValues(changes.map(pair => (pair._1, Pulse.Value(pair._2))): _*)
           true
         }
-      ).check()
+      ))
+      if(!result.passed) {
+        result.status match {
+          case PropException(_, e, _) => throw e
+        }
+      }
     }
 
     private def customForAll[P](

@@ -4,47 +4,92 @@ import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.invariant.SimpleScheduler.SignalWithInvariants
-import rescala.extra.invariant.{SimpleStruct, Invariant}
+import rescala.extra.invariant.{Invariant, InvariantViolationException, SimpleStruct}
 import rescala.interface.RescalaInterface
 import tests.rescala.testtools.RETests
 
 class ErrorPropagation extends RETests with ScalaCheckDrivenPropertyChecks with Matchers {
-    val engine: RescalaInterface[SimpleStruct] = RescalaInterface.interfaceFor(rescala.extra.invariant.SimpleScheduler)
-    import engine._
+  val engine: RescalaInterface[SimpleStruct] = RescalaInterface.interfaceFor(rescala.extra.invariant.SimpleScheduler)
 
-//    "EXPERIMENTAL" in forAll(Gen.posNum[Int]) { (n: Int) =>
-//      val e = Evt[Int]()
-//      val s: Signal[Int] = e.count()
-//
-//      val t = s.changed.fold(Seq.empty[Int]) { (acc, c) => acc :+ c }
-//
-//      s.specify(
-//        Invariant { a => a < n }
-//      )
-//
-//      1 to n foreach { i => e.fire(i) }
-//    }
+  import engine._
 
-    "test single node" - {
-      val v = Var(0)
-      val s1 = Signal { v() * 2}
-      val s2 = Signal { v() * 2}
-      val s3 = Signal { s1() + s2()}
+  "expect invalid invariants to fail" in forAll(Gen.posNum[Int]) { (n: Int) =>
+    assertThrows[InvariantViolationException] {
+      val e = Evt[Int]()
+      val s: Signal[Int] = e.count()
 
-//      v.setValueGenerator(Gen.choose(-3, 5))// (Arbitrary.arbitrary[Int])
-      s1.setValueGenerator(Gen.choose(-10, 10)) // (Arbitrary.arbitrary[Int])
-      s2.setValueGenerator(Gen.choose(5, 10)) // (Arbitrary.arbitrary[Int])
+      val t = s.changed.fold(Seq.empty[Int]) { (acc, c) => acc :+ c }
 
-//      s1.specify(
-//        Invariant {a => a >= 0}
-//      )
-//      s2.specify(
-//        Invariant {a => a >= 0}
-//      )
-      s3.specify(
-        Invariant {a => a >= 0}
+      s.specify(
+        Invariant { a => a < n }
       )
 
-      s3.test()
+      1 to n foreach { i => e.fire(i) }
     }
+  }
+
+  "correct invariants do not fail" in {
+    val v = Var(0)
+    val s1 = Signal {
+      v() * 2
+    }
+    val s2 = Signal {
+      v() * 2
+    }
+    val s3 = Signal {
+      s1() + s2()
+    }
+
+    s1.setValueGenerator(Gen.choose(0, 10)) // (Arbitrary.arbitrary[Int])
+    s2.setValueGenerator(Gen.choose(0, 10)) // (Arbitrary.arbitrary[Int])
+
+    s3.specify(
+      Invariant { a => a >= 0 }
+    )
+
+    s3.test()
+  }
+
+  "changes are propagated when testing invariants" in {
+    val v1 = Var(0)
+    val v2 = Var(0)
+
+    val s1 = Signal {
+      v1() * 2
+    }
+    val s2 = Signal {
+      v2() * 2
+    }
+
+    //signal under test
+    val sut = Signal {
+      s1() + s2()
+    }
+
+    v1.setValueGenerator(Arbitrary.arbitrary[Int])
+    v2.setValueGenerator(Arbitrary.arbitrary[Int])
+    sut.specify(
+      Invariant { value => value == (2 * (v1.now + v2.now)) }
+    )
+
+    sut.test()
+  }
+
+  "expect invalid invariants to fail when testing node" in {
+    assertThrows[InvariantViolationException] {
+      val v = Var("Hello")
+      val sut = Signal {
+        s"${v()}, World!"
+      }
+
+      v.setValueGenerator(Arbitrary.arbitrary[String])
+      sut.specify(
+        Invariant { value => value.length < 5 }
+      )
+
+
+      sut.test()
+    }
+
+  }
 }
