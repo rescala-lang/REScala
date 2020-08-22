@@ -15,10 +15,8 @@ class ErrorPropagation extends RETests with ScalaCheckDrivenPropertyChecks with 
 
   "expect invalid invariants to fail" in forAll(Gen.posNum[Int]) { (n: Int) =>
     assertThrows[InvariantViolationException] {
-      val e = Evt[Int]()
+      val e              = Evt[Int]()
       val s: Signal[Int] = e.count()
-
-      val t = s.changed.fold(Seq.empty[Int]) { (acc, c) => acc :+ c }
 
       s.specify(
         Invariant { a => a < n }
@@ -61,7 +59,7 @@ class ErrorPropagation extends RETests with ScalaCheckDrivenPropertyChecks with 
       v2() * 2
     }
 
-    //signal under test
+    // signal under test
     val sut = Signal {
       s1() + s2()
     }
@@ -86,7 +84,6 @@ class ErrorPropagation extends RETests with ScalaCheckDrivenPropertyChecks with 
       sut.specify(
         Invariant { value => value.length < 5 }
       )
-
 
       sut.test()
     }

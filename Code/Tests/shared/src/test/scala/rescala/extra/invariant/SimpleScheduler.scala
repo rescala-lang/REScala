@@ -5,7 +5,10 @@ import org.scalacheck.Test.{PropException, Result}
 import org.scalacheck.{Gen, Prop, Shrink, Test}
 import org.scalacheck.util.Pretty
 import rescala.core
-import rescala.core.{AccessTicket, Derived, DynamicInitializerLookup, InitialChange, Initializer, Observation, Pulse, ReSource, ReevTicket, Scheduler, Struct}
+import rescala.core.{
+  AccessTicket, Derived, DynamicInitializerLookup, InitialChange, Initializer, Observation, Pulse, ReSource, ReevTicket,
+  Scheduler, Struct
+}
 import rescala.interface.Aliases
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
@@ -16,7 +19,7 @@ trait SimpleStruct extends Struct {
 
 class SimpleState[V](var value: V) {
 
-  var outgoing: Set[Derived[SimpleStruct]] = Set.empty
+  var outgoing: Set[Derived[SimpleStruct]]  = Set.empty
   var incoming: Set[ReSource[SimpleStruct]] = Set.empty
   var discovered                            = false
   var dirty                                 = false
@@ -34,8 +37,7 @@ class SimpleState[V](var value: V) {
 }
 
 class SimpleInitializer(afterCommitObservers: ListBuffer[Observation]) extends Initializer[SimpleStruct] {
-  override protected[this] def makeDerivedStructState[V](ip: V)
-  : SimpleState[V] = new SimpleState[V](ip)
+  override protected[this] def makeDerivedStructState[V](ip: V): SimpleState[V] = new SimpleState[V](ip)
 
   private var createdReactives: Seq[Derived[SimpleStruct]] = Seq.empty
 
@@ -88,24 +90,25 @@ object SimpleScheduler
 
   def reset(r: ReSource) = r.state.reset(r.commit(r.state.value))
 
+  override def forceNewTransaction[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R): R =
+    synchronized {
+      if (!idle) throw new IllegalStateException("Scheduler is not reentrant")
+      idle = false
+      val afterCommitObservers: ListBuffer[Observation] = ListBuffer.empty
+      val res =
+        try {
+          val creation = new SimpleInitializer(afterCommitObservers)
+          withDynamicInitializer(creation) {
+            // admission
+            val admissionTicket: AdmissionTicket = new AdmissionTicket(creation, initialWrites) {
+              override private[rescala] def access(reactive: ReSource): reactive.Value = reactive.state.value
+            }
+            val admissionResult = admissionPhase(admissionTicket)
+            val sources = admissionTicket.initialChanges.values.collect {
+              case iv if iv.writeValue(iv.source.state.value, iv.source.state.value = _) => iv.source
+            }.toSeq
 
-  override def forceNewTransaction[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R): R = synchronized {
-    if (!idle) throw new IllegalStateException("Scheduler is not reentrant")
-    idle = false
-    val afterCommitObservers: ListBuffer[Observation] = ListBuffer.empty
-    val res = try {
-      val creation = new SimpleInitializer(afterCommitObservers)
-      withDynamicInitializer(creation) {
-        // admission
-        val admissionTicket: AdmissionTicket = new AdmissionTicket(creation, initialWrites) {
-          override private[rescala] def access(reactive: ReSource): reactive.Value = reactive.state.value
-        }
-        val admissionResult = admissionPhase(admissionTicket)
-        val sources = admissionTicket.initialChanges.values.collect {
-          case iv if iv.writeValue(iv.source.state.value, iv.source.state.value = _) => iv.source
-        }.toSeq
-
-        creation.drainCreated().foreach(reset)
+            creation.drainCreated().foreach(reset)
 
             val initial = sources.flatMap { s =>
               s.state.dirty = true
@@ -118,21 +121,21 @@ object SimpleScheduler
               r.state.dirty = true
             }
 
-        // propagation
-        val sorted = Util.toposort(initial)
-        Util.evaluateAll(sorted, creation, afterCommitObservers).foreach(reset)
-        // evaluate everything that was created, but not accessed, and requires ignition
-        val created = creation.drainCreated()
-        Util.evaluateAll(created, creation, afterCommitObservers).foreach(reset)
-        assert(creation.drainCreated().isEmpty)
+            // propagation
+            val sorted = Util.toposort(initial)
+            Util.evaluateAll(sorted, creation, afterCommitObservers).foreach(reset)
+            // evaluate everything that was created, but not accessed, and requires ignition
+            val created = creation.drainCreated()
+            Util.evaluateAll(created, creation, afterCommitObservers).foreach(reset)
+            assert(creation.drainCreated().isEmpty)
 
             Util.evaluateInvariants(created ++ sorted ++ initialWrites, initialWrites)
 
-        //cleanup
-        initial.foreach(reset)
-        created.foreach(reset)
-        sources.foreach(reset)
-        sorted.foreach(reset)
+            //cleanup
+            initial.foreach(reset)
+            created.foreach(reset)
+            sources.foreach(reset)
+            sorted.foreach(reset)
 
             //wrapup
             if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(creation.accessTicket())
@@ -154,16 +157,25 @@ object SimpleScheduler
     signal.state.invariants = inv.map(inv => new Invariant((invp: Pulse[T]) => inv.inv(invp.get), inv.description))
   }
 
-  class SignalGeneratorMap private(baseMap: scala.collection.mutable.HashMap[Signal[Any], (Gen[Any], Shrink[Any], Any => Pretty)]) {
-    def apply[T](key: Signal[T]): (Gen[T], Shrink[T], T => Pretty) = baseMap(key).asInstanceOf[(Gen[T], Shrink[T], T => Pretty)]
+  class SignalGeneratorMap private (baseMap: scala.collection.mutable.HashMap[
+    Signal[Any],
+    (Gen[Any], Shrink[Any], Any => Pretty)
+  ]) {
+    def apply[T](key: Signal[T]): (Gen[T], Shrink[T], T => Pretty) =
+      baseMap(key).asInstanceOf[(Gen[T], Shrink[T], T => Pretty)]
 
-    def put[T](key: Signal[T], value: (Gen[T], Shrink[T], T => Pretty)): Option[Any] = baseMap.put(key, value.asInstanceOf[(Gen[Any], Shrink[Any], Any => Pretty)])
+    def put[T](key: Signal[T], value: (Gen[T], Shrink[T], T => Pretty)): Option[Any] =
+      baseMap.put(key, value.asInstanceOf[(Gen[Any], Shrink[Any], Any => Pretty)])
 
     def entries(): List[(Signal[Any], (Gen[Any], Shrink[Any], Any => Pretty))] = baseMap.map(p => p).toList
   }
 
   object SignalGeneratorMap {
-    def apply = new SignalGeneratorMap(scala.collection.mutable.HashMap.empty[Signal[Any], (Gen[Any], Shrink[Any], Any => Pretty)])
+    def apply =
+      new SignalGeneratorMap(scala.collection.mutable.HashMap.empty[
+        Signal[Any],
+        (Gen[Any], Shrink[Any], Any => Pretty)
+      ])
   }
 
   private val signalGeneratorMap = SignalGeneratorMap.apply
@@ -182,14 +194,17 @@ object SimpleScheduler
     }
 
     def test(): Unit = {
-      val result = Test.check(Test.Parameters.default, customForAll(
-        signalGeneratorMap.entries(),
-        changes => {
-          forceValues(changes.map(pair => (pair._1, Pulse.Value(pair._2))): _*)
-          true
-        }
-      ))
-      if(!result.passed) {
+      val result = Test.check(
+        Test.Parameters.default,
+        customForAll(
+          signalGeneratorMap.entries(),
+          changes => {
+            forceValues(changes.map(pair => (pair._1, Pulse.Value(pair._2))): _*)
+            true
+          }
+        )
+      )
+      if (!result.passed) {
         result.status match {
           case PropException(_, e, _) => throw e
         }
