@@ -38,8 +38,8 @@ class ErrorPropagation extends RETests with ScalaCheckDrivenPropertyChecks with 
       s1() + s2()
     }
 
-    s1.setValueGenerator(Gen.choose(0, 10)) // (Arbitrary.arbitrary[Int])
-    s2.setValueGenerator(Gen.choose(0, 10)) // (Arbitrary.arbitrary[Int])
+    s1.setValueGenerator(Gen.choose(0, 10))
+    s2.setValueGenerator(Gen.choose(0, 10))
 
     s3.specify(
       Invariant { a => a >= 0 }
@@ -74,15 +74,15 @@ class ErrorPropagation extends RETests with ScalaCheckDrivenPropertyChecks with 
   }
 
   "expect invalid invariants to fail when testing node" in {
-      val v = Var("Hello")
-      val sut = Signal {
-        s"${v()}, World!"
-      }
+    val v = Var("Hello")
+    val sut = Signal {
+      s"${v()}, World!"
+    }
 
-      v.setValueGenerator(Arbitrary.arbitrary[String])
-      sut.specify(
-        Invariant { value => value.length < 5 }
-      )
+    v.setValueGenerator(Arbitrary.arbitrary[String])
+    sut.specify(
+      Invariant { value => value.length < 5 }
+    )
 
     assertThrows[InvariantViolationException] {
       sut.test()
@@ -100,9 +100,51 @@ class ErrorPropagation extends RETests with ScalaCheckDrivenPropertyChecks with 
       new Invariant("string_length", { value => value.length < 5 })
     )
 
-    val caught = intercept[InvariantViolationException] {sut.test()}
+    val caught = intercept[InvariantViolationException] { sut.test() }
 
     caught.getMessage.matches("$Value\\(.*\\) violates invariant string_length.*")
 
+  }
+
+  "signals can have multiple invariants" in {
+    val a = Var(10)
+    val b = Var(20)
+
+    val sut = Signal { Math.pow(a(), 2) + Math.pow(b(), 2) }
+
+    sut.specify(
+      Invariant { value => value >= a.now },
+      Invariant { value => value >= b.now }
+    )
+
+    a.setValueGenerator(Arbitrary.arbitrary[Int])
+    b.setValueGenerator(Arbitrary.arbitrary[Int])
+
+    sut.test()
+  }
+
+  "all invariants get tested" in forAll(Gen.choose(1, 50), Gen.choose(0, 49)) { (n: Int, failingIndex: Int) =>
+    //Create an arbitrary amount of invariants and select one to fail
+    whenever(failingIndex < n) {
+      val invariants = 0 to n map { i =>
+        new Invariant[Int](
+          s"invariant$i",
+          if (i == failingIndex) { value => value < 0 }
+          else { value => value > 0 }
+        )
+      }
+
+      val v   = Var(1)
+      val sut = Signal { v() }
+
+      v.setValueGenerator(Gen.posNum[Int])
+      sut.specify(invariants: _*)
+
+      //expect the correct invariant to fail
+      val caught = intercept[InvariantViolationException] { sut.test() }
+      val regex  = "$Value\\(.*\\) violates invariant invariant" + failingIndex + ".*"
+      caught.getMessage.matches(regex)
+
+    }
   }
 }
