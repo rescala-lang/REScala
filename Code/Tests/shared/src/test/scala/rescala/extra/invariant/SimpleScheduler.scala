@@ -154,7 +154,7 @@ object SimpleScheduler
     signal.state.invariants = inv.map(inv => new Invariant((invp: Pulse[T]) => inv.inv(invp.get), inv.description))
   }
 
-  class SignalGeneratorMap private(baseMap: scala.collection.mutable.WeakHashMap[Signal[Any], (Gen[Any], Shrink[Any], Any => Pretty)]) {
+  class SignalGeneratorMap private(baseMap: scala.collection.mutable.HashMap[Signal[Any], (Gen[Any], Shrink[Any], Any => Pretty)]) {
     def apply[T](key: Signal[T]): (Gen[T], Shrink[T], T => Pretty) = baseMap(key).asInstanceOf[(Gen[T], Shrink[T], T => Pretty)]
 
     def put[T](key: Signal[T], value: (Gen[T], Shrink[T], T => Pretty)): Option[Any] = baseMap.put(key, value.asInstanceOf[(Gen[Any], Shrink[Any], Any => Pretty)])
@@ -163,7 +163,7 @@ object SimpleScheduler
   }
 
   object SignalGeneratorMap {
-    def apply = new SignalGeneratorMap(scala.collection.mutable.WeakHashMap.empty[Signal[Any], (Gen[Any], Shrink[Any], Any => Pretty)])
+    def apply = new SignalGeneratorMap(scala.collection.mutable.HashMap.empty[Signal[Any], (Gen[Any], Shrink[Any], Any => Pretty)])
   }
 
   private val signalGeneratorMap = SignalGeneratorMap.apply
