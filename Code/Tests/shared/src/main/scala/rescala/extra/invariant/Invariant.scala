@@ -13,10 +13,10 @@ class InvariantInterface(val c: blackbox.Context) {
     val invariantRep = showCode(inv.tree)
     val invariantRepTree = Literal(Constant(invariantRep))
     val invarientRepExpr = c.Expr[String](invariantRepTree)
-    reify(new Invariant[T](inv.splice, invarientRepExpr.splice))
+    reify(new Invariant[T](invarientRepExpr.splice, inv.splice))
   }
 }
 
-class Invariant[T](val inv: T => Boolean, val description: String) {
+class Invariant[T](val description: String, val inv: T => Boolean) {
   def validate(value: T): Boolean = inv(value)
 }

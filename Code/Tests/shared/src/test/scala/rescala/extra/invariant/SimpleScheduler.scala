@@ -1,7 +1,7 @@
 package rescala.extra.invariant
 
 import org.scalacheck.Prop.forAll
-import org.scalacheck.Test.{PropException, Result}
+import org.scalacheck.Test.PropException
 import org.scalacheck.{Gen, Prop, Shrink, Test}
 import org.scalacheck.util.Pretty
 import rescala.core
@@ -154,7 +154,7 @@ object SimpleScheduler
   }
 
   def specify[T](inv: Seq[Invariant[T]], signal: Signal[T]): Unit = {
-    signal.state.invariants = inv.map(inv => new Invariant((invp: Pulse[T]) => inv.inv(invp.get), inv.description))
+    signal.state.invariants = inv.map(inv => new Invariant(inv.description, (invp: Pulse[T]) => inv.inv(invp.get)))
   }
 
   class SignalGeneratorMap private (baseMap: scala.collection.mutable.HashMap[

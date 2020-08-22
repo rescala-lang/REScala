@@ -74,7 +74,6 @@ class ErrorPropagation extends RETests with ScalaCheckDrivenPropertyChecks with 
   }
 
   "expect invalid invariants to fail when testing node" in {
-    assertThrows[InvariantViolationException] {
       val v = Var("Hello")
       val sut = Signal {
         s"${v()}, World!"
@@ -85,8 +84,25 @@ class ErrorPropagation extends RETests with ScalaCheckDrivenPropertyChecks with 
         Invariant { value => value.length < 5 }
       )
 
+    assertThrows[InvariantViolationException] {
       sut.test()
     }
+  }
+
+  "invariants can have names" in {
+    val v = Var("Hello")
+    val sut = Signal {
+      s"${v()}, World!"
+    }
+
+    v.setValueGenerator(Arbitrary.arbitrary[String])
+    sut.specify(
+      new Invariant("string_length", { value => value.length < 5 })
+    )
+
+    val caught = intercept[InvariantViolationException] {sut.test()}
+
+    caught.getMessage.matches("$Value\\(.*\\) violates invariant string_length.*")
 
   }
 }
