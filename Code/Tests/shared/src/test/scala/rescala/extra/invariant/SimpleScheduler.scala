@@ -5,10 +5,7 @@ import org.scalacheck.Test.PropException
 import org.scalacheck.util.Pretty
 import org.scalacheck.{Gen, Prop, Shrink, Test}
 import rescala.core
-import rescala.core.{
-  AccessTicket, Derived, DynamicInitializerLookup, InitialChange, Initializer, Observation, Pulse, ReSource, ReevTicket,
-  Scheduler, Struct
-}
+import rescala.core.{AccessTicket, Derived, DynamicInitializerLookup, InitialChange, Initializer, Observation, Pulse, ReSource, ReevTicket, Scheduler, Struct}
 import rescala.interface.Aliases
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
@@ -18,7 +15,6 @@ trait SimpleStruct extends Struct {
 }
 
 class SimpleState[V](var value: V) {
-
   var outgoing: Set[Derived[SimpleStruct]]  = Set.empty
   var incoming: Set[ReSource[SimpleStruct]] = Set.empty
   var discovered                            = false
@@ -200,41 +196,37 @@ object SimpleScheduler
     }
 
     private def customForAll[P](
-        signalGeneratorPairs: List[(Signal[Any], (Gen[Any], Shrink[Any], Any => Pretty))],
-        f: List[(Signal[Any], Any)] => Boolean,
-        generated: List[(Signal[Any], Any)] = List.empty
+        signalGeneratorPairs: List[(ReSource, Gen[A] forSome { type A })],
+        f: List[(ReSource, Any)] => Boolean,
+        generated: List[(ReSource, Any)] = List.empty
     ): Prop =
       signalGeneratorPairs match {
         case Nil => Prop(f(generated))
-        case (sig, (gen, s, pp)) :: tail =>
-          forAll(gen)(t => customForAll(tail, f, generated :+ (sig, t)))(identity, s, pp)
+        case (sig, gen) :: tail =>
+          forAll(gen)(t => customForAll(tail, f, generated :+ (sig, t)))
       }
 
-    private def findGenerators(): List[(Signal[Any], (Gen[Any], Shrink[Any], Any => Pretty))] = {
-
-      def findGeneratorsRecursive[U](signal: SimpleScheduler.Signal[U])(implicit
-          s: Shrink[U],
-          pp: U => Pretty
-      ): List[(Signal[Any], (Gen[Any], Shrink[Any], Any => Pretty))] = {
-        if (signal.state.gen != null) {
-          List((signal, (signal.state.gen, s, pp))).asInstanceOf[List[(
-              Signal[Any],
-              (Gen[Any], Shrink[Any], Any => Pretty)
-          )]]
-        } else if (signal.state.incoming == Set.empty) {
+    private def findGenerators(): List[(ReSource, Gen[A] forSome { type A})] = {
+      def findGeneratorsRecursive(resource: ReSource): List[(ReSource, Gen[A] forSome { type A})] = {
+        if (resource.state.gen != null) {
+          List((resource, resource.state.gen))
+        } else if (resource.state.incoming == Set.empty) {
           List()
         } else {
-          signal.state.incoming
-            .filter { incoming => incoming.isInstanceOf[Signal[_]] }
-            .flatMap { incoming => findGeneratorsRecursive(incoming.asInstanceOf[Signal[_]]) }
+          resource.state.incoming
+            .flatMap { incoming => findGeneratorsRecursive(incoming) }
             .toList
         }
       }
 
-      findGeneratorsRecursive(this.signal)
+      val gens = findGeneratorsRecursive(this.signal)
+      if(gens.isEmpty) {
+        throw NoGeneratorException(s"No generators found in incoming nodes for signal ${this.signal.name}")
+      }
+      gens
     }
 
-    private def forceValues(changes: (Signal[A], A) forSome { type A }*): Set[core.ReSource[SimpleStruct]] = {
+    private def forceValues(changes: (ReSource, A) forSome { type A }*): Set[core.ReSource[SimpleStruct]] = {
       val asReSource = changes.foldLeft(Set.empty[core.ReSource[SimpleStruct]]) {
         case (acc, (source, _)) => acc + source
       }
@@ -246,7 +238,7 @@ object SimpleScheduler
             changes.foreach {
               change =>
                 val initialChange: InitialChange[SimpleStruct] = new InitialChange[SimpleStruct] {
-                  override val source: core.ReSource[SimpleStruct] = change._1.resource
+                  override val source: core.ReSource[SimpleStruct] = change._1
 
                   override def writeValue(b: source.Value, v: source.Value => Unit): Boolean = {
                     val casted = change._2.asInstanceOf[source.Value]
