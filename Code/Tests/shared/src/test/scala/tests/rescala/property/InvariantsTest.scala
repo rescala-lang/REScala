@@ -4,7 +4,7 @@ import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.invariant.SimpleScheduler.SignalWithInvariants
-import rescala.extra.invariant.{Invariant, InvariantViolationException, SimpleStruct}
+import rescala.extra.invariant.{Invariant, InvariantViolationException, NoGeneratorException, SimpleStruct}
 import rescala.interface.RescalaInterface
 import tests.rescala.testtools.RETests
 
@@ -163,5 +163,10 @@ class InvariantsTest extends RETests with ScalaCheckDrivenPropertyChecks with Ma
       caught.getMessage.matches(regex)
 
     }
+  }
+
+  "expect NoGeneratorException when calling test on untestable node" in {
+    val v = Var(1)
+    assertThrows[NoGeneratorException] { v.test() }
   }
 }
