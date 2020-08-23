@@ -73,6 +73,23 @@ class InvariantsTest extends RETests with ScalaCheckDrivenPropertyChecks with Ma
     sut.test()
   }
 
+  "only closest generators are used" in {
+    val top = Var(10)
+    val left = Signal { top() + 1 }
+    val right = Signal { top() + 2 }
+    val sut = Signal { left() + right() }
+
+    val topChangedCount = top.changed.count()
+
+    top.setValueGenerator(Arbitrary.arbitrary[Int])
+    left.setValueGenerator(Arbitrary.arbitrary[Int])
+    right.setValueGenerator(Arbitrary.arbitrary[Int])
+
+    sut.test()
+
+    assert(topChangedCount.now == 0)
+  }
+
   "expect invalid invariants to fail when testing node" in {
     val v = Var("Hello")
     val sut = Signal {
