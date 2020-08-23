@@ -2,8 +2,8 @@ package rescala.extra.invariant
 
 import org.scalacheck.Prop.forAll
 import org.scalacheck.Test.PropException
-import org.scalacheck.{Gen, Prop, Shrink, Test}
 import org.scalacheck.util.Pretty
+import org.scalacheck.{Gen, Prop, Shrink, Test}
 import rescala.core
 import rescala.core.{
   AccessTicket, Derived, DynamicInitializerLookup, InitialChange, Initializer, Observation, Pulse, ReSource, ReevTicket,
@@ -25,6 +25,7 @@ class SimpleState[V](var value: V) {
   var dirty                                 = false
   var done                                  = false
   var invariants: Seq[Invariant[V]]         = Seq.empty
+  var gen: Gen[_]                           = _
 
   def reset(v: V): Unit = {
     discovered = false
@@ -170,34 +171,21 @@ object SimpleScheduler
     def entries(): List[(Signal[Any], (Gen[Any], Shrink[Any], Any => Pretty))] = baseMap.map(p => p).toList
   }
 
-  object SignalGeneratorMap {
-    def apply =
-      new SignalGeneratorMap(scala.collection.mutable.HashMap.empty[
-        Signal[Any],
-        (Gen[Any], Shrink[Any], Any => Pretty)
-      ])
-  }
-
-  private val signalGeneratorMap = SignalGeneratorMap.apply
-
   implicit class SignalWithInvariants[T](val signal: Signal[T]) extends AnyVal {
 
     def specify(inv: Invariant[T]*): Unit = {
       SimpleScheduler.this.specify(inv, signal)
     }
 
-    def setValueGenerator(gen: Gen[T])(implicit
-        s: Shrink[T],
-        pp: T => Pretty
-    ): Unit = {
-      signalGeneratorMap.put(this.signal, (gen, s.asInstanceOf[Shrink[Any]], pp.asInstanceOf[Any => Pretty]))
+    def setValueGenerator(gen: Gen[T]): Unit = {
+      this.signal.state.gen = gen
     }
 
     def test(): Unit = {
       val result = Test.check(
         Test.Parameters.default,
         customForAll(
-          signalGeneratorMap.entries(),
+          findGenerators(),
           changes => {
             forceValues(changes.map(pair => (pair._1, Pulse.Value(pair._2))): _*)
             true
@@ -221,6 +209,30 @@ object SimpleScheduler
         case (sig, (gen, s, pp)) :: tail =>
           forAll(gen)(t => customForAll(tail, f, generated :+ (sig, t)))(identity, s, pp)
       }
+
+    private def findGenerators(): List[(Signal[Any], (Gen[Any], Shrink[Any], Any => Pretty))] = {
+
+      def findGeneratorsRecursive[U](signal: SimpleScheduler.Signal[U])(implicit
+          s: Shrink[U],
+          pp: U => Pretty
+      ): List[(Signal[Any], (Gen[Any], Shrink[Any], Any => Pretty))] = {
+        if (signal.state.gen != null) {
+          List((signal, (signal.state.gen, s, pp))).asInstanceOf[List[(
+              Signal[Any],
+              (Gen[Any], Shrink[Any], Any => Pretty)
+          )]]
+        } else if (signal.state.incoming == Set.empty) {
+          List()
+        } else {
+          signal.state.incoming
+            .filter { incoming => incoming.isInstanceOf[Signal[_]] }
+            .flatMap { incoming => findGeneratorsRecursive(incoming.asInstanceOf[Signal[_]]) }
+            .toList
+        }
+      }
+
+      findGeneratorsRecursive(this.signal)
+    }
 
     private def forceValues(changes: (Signal[A], A) forSome { type A }*): Set[core.ReSource[SimpleStruct]] = {
       val asReSource = changes.foldLeft(Set.empty[core.ReSource[SimpleStruct]]) {
