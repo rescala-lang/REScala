@@ -8,7 +8,7 @@ import rescala.extra.invariant.{Invariant, InvariantViolationException, SimpleSt
 import rescala.interface.RescalaInterface
 import tests.rescala.testtools.RETests
 
-class InvarianceTest extends RETests with ScalaCheckDrivenPropertyChecks with Matchers {
+class InvariantsTest extends RETests with ScalaCheckDrivenPropertyChecks with Matchers {
   val engine: RescalaInterface[SimpleStruct] = RescalaInterface.interfaceFor(rescala.extra.invariant.SimpleScheduler)
 
   import engine._
