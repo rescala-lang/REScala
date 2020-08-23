@@ -2,11 +2,13 @@ package rescala.extra.invariant
 
 import rescala.core.ReSource
 
-class InvariantViolationException(
+sealed trait InvariantException extends RuntimeException
+
+case class InvariantViolationException(
     t: Throwable,
     reactive: ReSource[SimpleStruct],
     causalErrorChains: Seq[Seq[ReSource[SimpleStruct]]]
-) extends RuntimeException {
+) extends InvariantException {
 
   override val getMessage: String = {
     val chainErrorMessage =
@@ -19,5 +21,9 @@ class InvariantViolationException(
     s"${t.getMessage} in reactive ${reactive.name.str}\n$chainErrorMessage\n"
   }
 
-  override def fillInStackTrace() = this
+  override def fillInStackTrace(): InvariantViolationException = this
+}
+
+case class NoGeneratorException(message: String) extends InvariantException {
+  override val getMessage: String = message
 }
