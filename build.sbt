@@ -151,7 +151,7 @@ lazy val fullmv = project.in(file("Code/Research/Multiversion"))
 //  .dependsOn(distributedFullmv % "compile->test")
 //  .enablePlugins(JavaAppPackaging)
 
-lazy val microbench = project.in(file("Code/Research/Microbenchmarks"))
+lazy val microbench = project.in(file("Code/Microbenchmarks"))
   .enablePlugins(JmhPlugin)
   .settings(name := "microbenchmarks", cfg.base, cfg.noPublish, mainClass in Compile := Some("org.openjdk.jmh.Main"),
     circe, upickle,
