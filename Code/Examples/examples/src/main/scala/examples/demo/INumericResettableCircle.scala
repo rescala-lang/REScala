@@ -59,7 +59,7 @@ object INumericResettableCircle extends Main {
   val reset = panel.Mouse.middleButton.pressed.map(pos => Left[Point, Pos](pos))
 
   val pos = (reset || inc).fold(Pos(0,0)){
-    case (_, Left(Point(x, y))) => Pos(x, y)
+    case (_, Left(Point(x, y))) => Pos(x.toDouble, y.toDouble)
     case (pX, Right(inc)) => pX + inc
   }
 

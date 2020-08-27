@@ -22,8 +22,8 @@ class Pong(val tick: Evt[Unit], val mouse: Mouse) {
   val initPosition = new Point(400, 200)
   val speed = new Point(10, 8)
 
-  val x: Signal[Int] = tick.fold(initPosition.x) { (pos, _) => pos + speedX.value }
-  val y: Signal[Int] = tick.fold(initPosition.y) { (pos, _) => pos + speedY.value }
+  val x: Signal[Int] = tick.fold(initPosition.x) { (pos, _) => pos + speedX.value : @scala.annotation.nowarn }
+  val y: Signal[Int] = tick.fold(initPosition.y) { (pos, _) => pos + speedY.value : @scala.annotation.nowarn }
 
   val mouseY = Signal {mouse.position().getY().toInt}
 
@@ -47,5 +47,5 @@ class Pong(val tick: Evt[Unit], val mouse: Mouse) {
   val pointsPlayer = rightWall.count()
   val pointsComputer = leftWall.count()
 
-  val score = Signal {pointsPlayer() + " : " + pointsComputer()}
+  val score = Signal {pointsPlayer().toString + " : " + pointsComputer()}
 }

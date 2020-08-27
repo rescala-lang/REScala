@@ -5,10 +5,10 @@ package reswing.texteditor
 class LineIterator(it: Iterator[Char]) extends Iterator[String] {
   private var blank = !it.hasNext
   private var ch: Option[Char] = None
-  private def nextChar = if (ch.nonEmpty) { val c = ch.get; ch = None; c } else it.next
+  private def nextChar = if (ch.nonEmpty) { val c = ch.get; ch = None; c } else it.next()
 
   def hasNext = blank || !ch.isEmpty || it.hasNext
-  def next: String = {
+  def next(): String = {
     if (blank) { blank = false; return "" }
 
     val sb = new StringBuilder
@@ -16,7 +16,7 @@ class LineIterator(it: Iterator[Char]) extends Iterator[String] {
       nextChar match {
         case '\r' =>
           if (hasNext)
-            it.next match {
+            it.next() match {
               case '\n' => blank = !hasNext; return sb.toString + "\r\n"
               case c => ch = Some(c)
             }
@@ -61,7 +61,8 @@ object LineOffset {
 
   def offset(it: Iterator[Char], position: Position): Int = {
     var (row, col, off, prev) = (0, 0, 0, ' ')
-    for (ch <- it) {
+    while (it.hasNext) {
+      val ch = it.next()
       if (ch != '\n' || prev != '\r') {
         if (position == Position(row, col) || (position.row == row && (ch == '\n' || ch == '\r')))
           return off

@@ -164,7 +164,7 @@ class MillDrawer(val game: MillGame)
 
   indexClicked += { index => game.playerInput(index) } //#HDL
 
-  presentation.changed += { _ => this.repaint } //#HDL
+  presentation.changed += { _ => this.repaint() } //#HDL
 
   override def paintComponent(g: Graphics2D): Unit = {
     g.setRenderingHint(

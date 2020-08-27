@@ -62,7 +62,7 @@ object ReShapes extends SimpleSwingApplication {
     final lazy val merged = UnionEvent(Signal { //#SIG //#UE( //#EVT //#IF )
         itemsEvents() map { case (_, ev) => ev } })
 
-    lazy val update = Evt[Unit]   //#EVT
+    lazy val update = Evt[Unit]()   //#EVT
 
     private lazy val itemsEvents: Signal[Seq[(Component, Event[Command])]] =  //#SIG
       (update map { _: Any =>  //#EF
@@ -77,14 +77,14 @@ object ReShapes extends SimpleSwingApplication {
 
     contents += new Menu("File") {
       contents += new MenuItem(Action("New tab") { addTab() })
-      contents += new MenuItem(Action("New network tab") { addNetworkTab })
-      contents += new MenuItem(Action("Remove selected tab") { removeCurrentTab })
+      contents += new MenuItem(Action("New network tab") { addNetworkTab() })
+      contents += new MenuItem(Action("Remove selected tab") { removeCurrentTab() })
       contents += new Separator
       contents += new MenuItem(new SaveAction)
       contents += new MenuItem(new LoadAction)
       contents += new Separator
       contents += new ReMenuItem(text = ReSwingValue("Quit")) { //#IS( // )
-        clicked += { _ => quit }  //#HDL
+        clicked += { _ => quit() }  //#HDL
       }
     }
 
@@ -164,7 +164,7 @@ object ReShapes extends SimpleSwingApplication {
   }
 
   def addNetworkTab(): Unit = {
-    if (serverDialog.showDialog(ui.locationOnScreen) && serverDialog.inputIsValid)
+    if (serverDialog.showDialog(ui.locationOnScreen) && serverDialog.inputIsValid())
       try
         addTab({drawingSpaceState =>
           new NetworkSpaceState(
@@ -180,9 +180,9 @@ object ReShapes extends SimpleSwingApplication {
         case e: BindException =>
           JOptionPane.showMessageDialog(null, "Port cannot be bound", "BindException", JOptionPane.ERROR_MESSAGE)
         case e: Exception =>
-          e.printStackTrace
+          e.printStackTrace()
           JOptionPane.showMessageDialog(null, "Invalid input!")
-          addNetworkTab
+          addNetworkTab()
       }
   }
 
@@ -190,7 +190,7 @@ object ReShapes extends SimpleSwingApplication {
     if (ui.tabbedPane.pages.size > 0) {
       val (_, networkSpaceState) = panelDrawingSpaceStates(ui.tabbedPane.selection.page)
       if (networkSpaceState != null)
-        networkSpaceState.dispose
+        networkSpaceState.dispose()
       panelDrawingSpaceStates remove ui.tabbedPane.selection.page
       ui.tabbedPane.pages remove ui.tabbedPane.selection.index
       menu.update.fire()

@@ -11,7 +11,7 @@ object ImperativeVersion extends SimpleSwingApplication {
   override def main(args: Array[String]): Unit = {
     super.main(args)
     while (true) {
-	  Swing onEDTWait { application.tick }
+	  Swing onEDTWait { application.tick() }
       Thread sleep 20
     }
   }
@@ -29,7 +29,7 @@ class ImperativeVersion {
     position.translate(speed.x, speed.y)
     if(position.x < 0 || position.x + Size > Max_X) speed.x = -speed.x
     if(position.y < 0 || position.y + Size > Max_Y) speed.y = -speed.y
-    frame.repaint
+    frame.repaint()
   }
 
   // drawing code

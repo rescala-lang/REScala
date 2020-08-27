@@ -1,7 +1,6 @@
 package reswing.reshapes.util
 
 import rescala.default._
-import scala.language.higherKinds
 import scala.collection.mutable.ListBuffer
 
 object ReactiveUtil {
@@ -78,7 +77,7 @@ object ReactiveUtil {
   def bilateralValues[T <: AnyRef](body: BilateralValue => T): T = {
     val connect = new BilateralValue
     val res = body(connect)
-    connect.applyConnections
+    connect.applyConnections()
     res
   }
 
@@ -88,7 +87,7 @@ object ReactiveUtil {
    * is wrapped in a [[rescala.Signal]].
    */
   object UnionEvent {
-    def apply[T, E[T] <: Event[T], L[E] <: Traversable[E]]
+    def apply[T, E[T] <: Event[T], L[E] <: Iterable[E]]
              (signal: Signal[L[E[T]]]): Event[T] = {
       Event.dynamic {
         signal().flatMap(e => e()).headOption

@@ -20,7 +20,7 @@ import scala.swing.{MainFrame, SimpleSwingApplication, UIElement}
   * time drift.
   */
 object CClockCirclingCircle extends SimpleSwingApplication {
-  val NanoSecond = 1000000000l
+  val NanoSecond = 1000000000L
 
   val nsTime = Var(System.nanoTime())
   def tick() = nsTime.set(System.nanoTime())

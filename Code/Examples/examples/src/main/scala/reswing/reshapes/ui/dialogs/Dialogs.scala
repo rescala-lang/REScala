@@ -51,7 +51,7 @@ class ServerDialog extends CustomDialog {
     contents += listenerPortInput
     contents += new BoxPanel(Orientation.Horizontal) {
       contents += new Button(Action("OK") {
-        applyPorts
+        applyPorts()
         hideDialog(true)
       })
       contents += new Button(Action("Cancel") { hideDialog(false) })

@@ -44,7 +44,7 @@ class EventVersion {
     hasTicked.fire()
   }
 
-  val hasTicked = Evt[Unit] // Can be afterExec
+  val hasTicked = Evt[Unit]() // Can be afterExec
 
   // handle bouncing
   val xBounce = x.changed && (x => x < 0 || x + Size > Max_X)
@@ -53,7 +53,7 @@ class EventVersion {
   yBounce += { _ => speed.y = -speed.y }
 
   // handle repaint
-  hasTicked += { _ => frame.repaint }
+  hasTicked += { _ => frame.repaint() }
 
 
   // drawing code

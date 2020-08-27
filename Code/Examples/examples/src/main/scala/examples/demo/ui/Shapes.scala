@@ -18,7 +18,7 @@ class Circle (center: Signal[examples.demo.Pos],
               val diameter: Signal[Int],
               val border: Signal[Option[Color]] = Var(Some(Color.BLACK)),
               val fill: Signal[Option[Color]] = Var(None)) extends Shape {
-  def this(cx: Signal[Int], cy: Signal[Int], dia: Signal[Int]) = this(Signal{ Pos(cx.value, cy.value)}, dia)
+  def this(cx: Signal[Int], cy: Signal[Int], dia: Signal[Int]) = this(Signal{ Pos(cx.value.toDouble, cy.value.toDouble)}, dia)
   override val centerX: Signal[Int] = center.map(_.x.toInt)
   override val centerY: Signal[Int] = center.map(_.y.toInt)
   override val changed = centerX.changed || centerY.changed || diameter.changed || border.changed || fill.changed

@@ -22,7 +22,7 @@ import scala.swing.{MainFrame, SimpleSwingApplication, UIElement}
   */
 object GModularClockCircle extends SimpleSwingApplication {
   object Clock {
-    val NanoSecond = 1000000000l
+    val NanoSecond = 1000000000L
 
     private val _nsTime = Var(System.nanoTime())
     def tick() = _nsTime.set(System.nanoTime())

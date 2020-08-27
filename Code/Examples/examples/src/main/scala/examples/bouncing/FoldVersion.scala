@@ -28,9 +28,9 @@ class FoldVersion {
 
   val tick = Evt[Unit]()
   // Implementing switch with fold
-  val xx: Signal[Int] = tick.fold(initPosition.x) { (pos, _) => pos + (if (xSwitch.value) speed.x else -speed.x) }
+  val xx: Signal[Int] = tick.fold(initPosition.x) { (pos, _) => pos + (if (xSwitch.now : @scala.annotation.nowarn) speed.x else -speed.x) }
 
-  val yy: Signal[Int] = tick.fold(initPosition.y) { (pos, _) => pos + (if (ySwitch.value) speed.y else -speed.y) }
+  val yy: Signal[Int] = tick.fold(initPosition.y) { (pos, _) => pos + (if (ySwitch.now: @scala.annotation.nowarn) speed.y else -speed.y) }
 
   val xSwitch = (xx.changed && (x => x < 0 || x + Size > Max_X)).fold(false) { (a, _) => !a }
   val ySwitch = (yy.changed && (y => y < 0 || y + Size > Max_Y)).fold(false) { (a, _) => !a }

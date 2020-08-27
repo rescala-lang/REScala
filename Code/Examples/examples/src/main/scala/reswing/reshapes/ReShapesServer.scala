@@ -34,11 +34,11 @@ object ReShapesServer {
   def registerClient(inetAddress: InetAddress, port: Int) =
     if (!(clients contains ((inetAddress, port)))) {
       clients ::= ((inetAddress, port))
-      println("ReshapesServer register new client (%s, %d)" format (inetAddress, port))
+      println("ReshapesServer register new client (%s, %d)".format (inetAddress, port))
       println("\t registered clients: ")
       for (client <- clients)
-        println("\t  (%s, %d)" format (client._1, client._2))
-      println
+        println("\t  (%s, %d)".format (client._1, client._2))
+      println()
       sendToClient((inetAddress, port))
     }
 

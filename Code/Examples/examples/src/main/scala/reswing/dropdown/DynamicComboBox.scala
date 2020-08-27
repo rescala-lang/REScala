@@ -30,7 +30,7 @@ class DynamicComboBox[A] extends ComboBox[A](Nil: List[A]) {
 
 
 class ReDynamicComboBox[A](
-    val options: ReSwingValue[List[A]] = ReSwingNoValue[List[A]],
+    val options: ReSwingValue[List[A]] = ReSwingNoValue[List[A]](),
     val selection: ReSwingValue[Int] = (),
     val selectionForeground: ReSwingValue[Color] = (),
     val selectionBackground: ReSwingValue[Color] = (),
@@ -38,6 +38,6 @@ class ReDynamicComboBox[A](
 
   override protected lazy val peer = new DynamicComboBox[A] with ComponentMixin
 
-  (options using (peer.getChoices _, peer.setChoices _, classOf[Nothing]))
-  (selection using (peer.selection.index _, peer.selection.index_= _, (peer.selection, classOf[SelectionChanged])))
+  options.using (() => peer.getChoices, peer.setChoices _, classOf[Nothing])
+  selection.using (() => peer.selection.index, peer.selection.index_= _, (peer.selection, classOf[SelectionChanged]))
 }

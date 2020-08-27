@@ -5,7 +5,6 @@ package examples.tempconverter
 import rescala.default._
 
 // Scala swing events
-import swing._
 import scala.swing._
 import scala.swing.event._
 
@@ -22,8 +21,8 @@ object SignalTempConverter extends SimpleSwingApplication {
     val degree_c = Var(0)
 
     // content of the textfields is well-defined
-    fahrenheit.text = Signal {degree_c() * 9 / 5 + 32 + ""}
-    celsius.text = Signal {(degree_f() - 32) * 5 / 9 + ""}
+    fahrenheit.text = Signal {(degree_c() * 9 / 5 + 32).toString}
+    celsius.text = Signal {((degree_f() - 32) * 5 / 9).toString}
 
     // listener only changes model, doesn't care about the 'view' (setting the text of the textfields)
     listenTo(celsius, fahrenheit)

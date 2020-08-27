@@ -45,7 +45,7 @@ class DrawingPanel(val state: DrawingSpaceState) extends Panel {
         shape.draw(g)
   }
 
-  lazy val drawn = Evt[Command]  //#EVT
+  lazy val drawn = Evt[Command]()  //#EVT
 
   listenTo(mouse.clicks, mouse.moves)
 
@@ -75,7 +75,7 @@ class DrawingPanel(val state: DrawingSpaceState) extends Panel {
             currentShape = currentShape.asInstanceOf[Movable].movedShape(point, e.point)
       }
       point = e.point
-      repaint
+      repaint()
     case e: MouseReleased =>
       state.selectedShape.now match {
         case null =>
@@ -85,7 +85,7 @@ class DrawingPanel(val state: DrawingSpaceState) extends Panel {
           state.select.fire(currentShape)
       }
       currentShape = null
-      repaint
+      repaint()
   }
 
   (state.selectedShape.changed ||  //#IF //#EF
@@ -93,7 +93,7 @@ class DrawingPanel(val state: DrawingSpaceState) extends Panel {
   state.strokeWidth.changed ||   //#IF //#EF
   state.color.changed) += canvasChange   //#IF //#HDL
 
-  def canvasChange(x: Any) = repaint
+  def canvasChange(x: Any) = repaint()
 }
 
 /**
@@ -104,7 +104,7 @@ trait ShowIntersection extends DrawingPanel {
     super.paint(g)
     g.setColor(new Color(255, 0, 0))
     g.setStroke(new BasicStroke)
-    for (point <- getIntersectionPoints)
+    for (point <- getIntersectionPoints())
       g.drawOval(point.x - 3, point.y - 3, 6, 6)
   }
 
@@ -114,8 +114,8 @@ trait ShowIntersection extends DrawingPanel {
     for (shape <- state.shapes.now)
       for (otherShape <- state.shapes.now)
         if (shape != otherShape)
-          for (line <- shape.toLines)
-            for (otherLine <- otherShape.toLines) {
+          for (line <- shape.toLines())
+            for (otherLine <- otherShape.toLines()) {
               val intersection = MathUtil.getIntersectionsOfTwoLines(line, otherLine)
               if (intersection != null)
                 points += intersection

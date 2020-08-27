@@ -12,7 +12,7 @@ import scala.swing.Panel
 
 case class Point(x: Int, y: Int)
 
-class ShapesPanel(val shapes: Signal[Traversable[Shape]]) extends Panel {
+class ShapesPanel(val shapes: Signal[Iterable[Shape]]) extends Panel {
   //val allChanges: Event[Any] = Event { shapes().find{ shape: Shape => shape.changed().isDefined } }
   val allChanges: Event[Any] = shapes.map(_.map(_.changed)).flatten[Event[Any]](Flatten.firstFiringEvent)
 

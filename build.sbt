@@ -102,7 +102,7 @@ lazy val locidistributionJVM = locidistribution.jvm
 
 lazy val examples = project.in(file("Code/Examples/examples"))
   .dependsOn(rescalaJVM, reswing)
-  .settings(name := "rescala-examples", cfg.base, cfg.noPublish, scalaswing, scalaXml, cfg.noWarnings)
+  .settings(name := "rescala-examples", cfg.base, cfg.noPublish, scalaswing, scalaXml)
 
 lazy val universe = project.in(file("Code/Examples/Universe"))
   .dependsOn(rescalaJVM, fullmv)

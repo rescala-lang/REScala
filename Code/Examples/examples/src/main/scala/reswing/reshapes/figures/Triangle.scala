@@ -15,7 +15,7 @@ class Triangle(
   extends Shape(drawingSpaceState, strokeWidth, color, current, path) with Movable with Resizable {
 
   override def doDraw(g: Graphics2D) =
-    for ((a, b) <- toLines)
+    for ((a, b) <- toLines())
       g.drawLine(a.x, a.y, b.x, b.y)
 
   override def toLines() =

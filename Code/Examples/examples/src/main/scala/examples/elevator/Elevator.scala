@@ -10,7 +10,7 @@ class Elevator(val nFloors: Int) {
   val MaxAccel = 1
   val BreakTime = MaxSpeed / MaxAccel
   // number of ticks it takes to break down
-  val BreakDist = (1 to BreakTime)./:(0) {_ + MaxSpeed - MaxAccel * _}
+  val BreakDist = (1 to BreakTime).foldLeft(0) {_ + MaxSpeed - MaxAccel * _}
   val FloorStart = 10
   val FloorPos = Iterable.iterate(FloorStart, nFloors)(_ + FloorHeight).toList
   val WaitingTime = 10 // number of ticks to wait on each floor
@@ -25,18 +25,9 @@ class Elevator(val nFloors: Int) {
 
 
 
-  val accelaration: Signal[Int] = Signal {
-    val break = math.abs(distance()) <= BreakDist
-    if (break) {
-      if (stopped()) 0
-      else -MaxAccel
-    }
-    else MaxAccel
-  }
+
   val speed: Signal[Int] = tick.iterate(0) { v => math.min(v + accelaration.now, MaxSpeed) }
   val position: Signal[Int] = integrate {speed.now * direction.now}
-  val direction = Signal {math.signum(distance())}
-  val distance = Signal {destination() - position()}
   // Define Signals describing state and behavior of the elevator
   val destination = Signal {
     queue.head() match {
@@ -44,7 +35,20 @@ class Elevator(val nFloors: Int) {
       case Some(target) => FloorPos(target)
     }
   }
+  val distance = Signal {destination() - position()}
+  val direction = Signal {math.signum(distance())}
+
   val stopped = Signal {speed() == 0}
+
+  val accelaration: Signal[Int] = Signal {
+    val break = math.abs(distance()) <= BreakDist
+    if (break) {
+      if (stopped.value) 0
+      else -MaxAccel
+    }
+    else MaxAccel
+  }
+
   val currentFloor = Signal {
     val p = position()
     FloorPos.indexOf(FloorPos.minBy(f => math.abs(f - p)))
@@ -63,7 +67,7 @@ class Elevator(val nFloors: Int) {
 
 
   // Define some behavior with events
-  stoppedWaiting += { _ => queue.dequeue } // move to the next destination
+  stoppedWaiting += { _ => queue.dequeue() } // move to the next destination
   callToFloor += {queue enqueue _}
   // enqueue a new floor
 

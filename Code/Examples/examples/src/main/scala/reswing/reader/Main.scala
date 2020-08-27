@@ -19,7 +19,7 @@ import reswing.reader.network.Fetcher
 import reswing.reader.network.UrlChecker
 
 object Main extends App {
-  val tick = Evt[Unit]  //#EVT
+  val tick = Evt[Unit]()  //#EVT
   val checker = new UrlChecker
   val fetcher = new Fetcher(checker.checkedURL.fold(Set.empty[URL])(_ + _))
   val parser = new XmlParser
@@ -34,15 +34,15 @@ object Main extends App {
       },
       fetcher.state)
 
-  setupGuiEvents
+  setupGuiEvents()
 
   List(SimpleReporter, CentralizedEvents) foreach { m =>
     m.mediate(fetcher, parser, store, checker)
   }
 
-  checker.urlIsInvalid += { _ => showInvalidUrlDialog } //#HDL
+  checker.urlIsInvalid += { _ => showInvalidUrlDialog() } //#HDL
 
-  val sleepTime = 5000l //20000
+  val sleepTime = 5000L //20000
 
   // ---------------------------------------------------------------------------
 
@@ -73,12 +73,12 @@ object Main extends App {
 
     val guardedTick = tick && { _ => app.refreshAllowed.value } //#EVT //#EF
 
-    (app.refresh || guardedTick) += { _ => fetcher.fetchAll } //#EF //#HDL
+    (app.refresh || guardedTick) += { _ => fetcher.fetchAll() } //#EF //#HDL
   }
 
   private def loadURLs(path: String): Option[Seq[String]] = {
     println("trying to load from " + path)
-    val res = try Some(Source.fromFile(path).getLines.toList) catch { case _: Throwable => None }
+    val res = try Some(Source.fromFile(path).getLines().toList) catch { case _: Throwable => None }
     println("result: " + res)
     res
   }

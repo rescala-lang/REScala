@@ -21,7 +21,7 @@ import scala.swing.{MainFrame, SimpleSwingApplication, UIElement}
   * manual triggering of ticks in the main thread is no longer necessary.
   */
 object FClockNumericCircle extends SimpleSwingApplication {
-  val NanoSecond = 1000000000l
+  val NanoSecond = 1000000000L
 
   val nsTime = Var(System.nanoTime())
   def tick() = nsTime.set(System.nanoTime())

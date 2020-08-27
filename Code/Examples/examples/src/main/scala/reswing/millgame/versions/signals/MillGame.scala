@@ -11,32 +11,32 @@ abstract class Gamestate {
 
 case class PlaceStone(player: Slot) extends Gamestate {
   def getPlayer = player
-  def text = player + " to PLACE a stone"
+  def text = player.toString + " to PLACE a stone"
 }
 
 case class RemoveStone(player: Slot) extends Gamestate {
   def getPlayer = player
   def color = player.other
-  def text = player + " to REMOVE a " + color + " stone"
+  def text = player.toString + " to REMOVE a " + color + " stone"
 }
 
 case class MoveStoneSelect(player: Slot) extends Gamestate {
   def getPlayer = player
-  def text = player + " to MOVE a stone"
+  def text = player.toString + " to MOVE a stone"
 }
 
 case class MoveStoneDrop(player: Slot, index: SlotIndex) extends Gamestate {
   def getPlayer = player
-  def text = player + " to select destination for stone at position " + index
+  def text = player.toString + " to select destination for stone at position " + index
 }
 
 case class JumpStoneSelect(player: Slot) extends Gamestate {
   def getPlayer = player
-  def text = player + " to JUMP with a stone"
+  def text = player.toString + " to JUMP with a stone"
 }
 case class JumpStoneDrop(player: Slot, index: SlotIndex) extends Gamestate {
   def getPlayer = player
-  def text = player + " to select destination for stone at position " + index
+  def text = player.toString + " to select destination for stone at position " + index
 }
 
 case class GameOver(winner: Slot) extends Gamestate {

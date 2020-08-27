@@ -15,7 +15,7 @@ object SmashingParticles extends SimpleSwingApplication {
     while (true) {
 	  Swing onEDTWait {
 	    application.base.transform( _ + 1)
-        application.frame.repaint
+        application.frame.repaint()
       }
       Thread sleep 20
     }

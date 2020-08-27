@@ -1,7 +1,6 @@
 package reswing.reshapes.drawing
 
 import reswing.reshapes.figures.Shape
-import rescala.default._
 
 abstract class Command {
   def execute(shapes: List[Shape]): List[Shape]

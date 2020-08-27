@@ -54,7 +54,7 @@ import scala.swing.{MainFrame, SimpleSwingApplication, UIElement}
   * loop is broken, and the program is well-defined.
   */
 object EInaccurateNumericCircle extends SimpleSwingApplication {
-  val NanoSecond = 1000000000l
+  val NanoSecond = 1000000000L
 
   val nsTime = Var(System.nanoTime())
   def tick() = nsTime.set(System.nanoTime())
@@ -94,7 +94,7 @@ object EInaccurateNumericCircle extends SimpleSwingApplication {
     while(top.visible) {
       Thread.sleep(1)
       tick()
-      ticks.fire(1 * NanoSecond / 1000l)
+      ticks.fire(1 * NanoSecond / 1000L)
     }
   }
 }

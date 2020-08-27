@@ -18,8 +18,7 @@ class InfoPanel extends FlowPanel {
 
   val color = Signal.dynamic {  //#SIG
     if (state() != null)
-      "color: %d-%d-%d" format
-        (state().color().getRed, state().color().getGreen, state().color().getBlue)
+      "color: %d-%d-%d".format(state().color().getRed, state().color().getGreen, state().color().getBlue)
     else ""
   }
 
@@ -31,11 +30,10 @@ class InfoPanel extends FlowPanel {
 
   val selectedShape = Signal.dynamic {  //#SIG
     if (state() != null && state().selectedShape() != null)
-      "selected: %s" format state().selectedShape().toString
+      "selected: %s".format(state().selectedShape().toString)
     else ""
   }
 
   contents += new ReLabel(Signal.dynamic {   //#SIG //#IS( //)
-    "%s | %s | %s | %s | %s" format
-      (shapeCount(), color(), strokeWidth(), nextShape(), selectedShape()) } )
+    "%s | %s | %s | %s | %s".format(shapeCount(), color(), strokeWidth(), nextShape(), selectedShape()) } )
 }

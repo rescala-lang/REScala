@@ -8,7 +8,7 @@ import rescala.macros.cutOutOfUserComputation
 import reswing.{ReComponent, ReSwingValue}
 import reswing.texteditor.{JScrollableComponent, LineIterator, LineOffset, Position}
 
-import scala.language.{implicitConversions, postfixOps}
+import scala.language.postfixOps
 import scala.math.{max, min}
 import scala.swing.Component
 import scala.swing.event.Key
@@ -26,7 +26,7 @@ class TextArea extends ReComponent {
 
   protected lazy val buffer = new GapBuffer
 
-  def this(text: String) {
+  def this(text: String) = {
     this
     buffer.insert(text)
   }
@@ -35,7 +35,7 @@ class TextArea extends ReComponent {
     def it = LineIterator(buffer.iterable())
     new Dimension(2 * padding + it.map(stringWidth(_)).max, (it.size + 1) * lineHeight)
   }
-  preferredSize using (peer.preferredSize _, peer.preferredSize_= _, "preferredSize")
+  preferredSize.using (() => peer.preferredSize, peer.preferredSize_= _, "preferredSize")
 
   val charCount = Signal{ buffer.length() }
 
@@ -136,7 +136,7 @@ class TextArea extends ReComponent {
   }
 
   protected def pointFromPosition(position: Position) = {
-    val line = LineIterator(buffer.iterable.readValueOnce).drop(position.row).next
+    val line = LineIterator(buffer.iterable.readValueOnce).drop(position.row).next()
     val y = position.row * lineHeight
     val x = stringWidth(line.substring(0, math.min(position.col,line.length)))
     new Point(x + padding, y)
@@ -149,7 +149,7 @@ class TextArea extends ReComponent {
       if (it.hasNext) {
         var prefix = ""
         var col = 0
-        it.next.takeWhile{ ch =>
+        it.next().takeWhile{ ch =>
           if (stringWidth(prefix + ch) < point.x) { prefix += ch; col += 1; true } else false }
         col
       }
@@ -221,7 +221,7 @@ class TextArea extends ReComponent {
   }
 
   mouse.clicks.pressed += { e =>
-    this.requestFocusInWindow
+    this.requestFocusInWindow()
     caret.position = positionFromPoint(e.point)
   }
 
@@ -237,7 +237,7 @@ class TextArea extends ReComponent {
   }
 
   buffer.length.changed || caret.visible.changed ||
-    caret.dot.changed || caret.mark.changed += {_ => this.repaint }
+    caret.dot.changed || caret.mark.changed += {_ => this.repaint() }
 
   override def paintComponent(g: Graphics2D): Unit = {
     super.paintComponent(g)

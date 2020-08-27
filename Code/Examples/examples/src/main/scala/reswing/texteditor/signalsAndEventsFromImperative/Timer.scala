@@ -9,7 +9,7 @@ class Timer(delay0: Int) {
     override def fireActionPerformed(e: java.awt.event.ActionEvent): Unit = { Timer.this.isRunning set isRunning(); fired.fire() }
   }
 
-  def this(delay: Int, repeating: Boolean) {
+  def this(delay: Int, repeating: Boolean) = {
     this(delay)
     this.repeating = repeating
   }

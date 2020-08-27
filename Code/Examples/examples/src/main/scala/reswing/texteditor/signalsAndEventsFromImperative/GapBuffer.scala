@@ -17,7 +17,7 @@ class CharacterIterator(buf: Array[Char], count: Int, caret: Int) extends Iterat
   override def size = count
 
   def hasNext = { c < count }
-  def next = {
+  def next() = {
     if (b == caret)
       b += buf.length - count
     val ch = buf(b)
@@ -41,12 +41,12 @@ class CharacterIterator(buf: Array[Char], count: Int, caret: Int) extends Iterat
  * Moving the caret requires copying text from one segment to the other.
  */
 class GapBuffer {
-    val caretChanged = Evt[Int] //#EVT
+    val caretChanged = Evt[Int]() //#EVT
 
   private var buf = new Array[Char](0)
   private val size = Var(0) //#VAR
   private val offsets: Signal[(Int, Int)] = (caretChanged && //#SIG //#EF
-      { offset => offset >= 0 && offset <= size.now }).fold((0,0))((s, n) => s._2 -> n)
+      { offset => offset >= 0 && offset <= size.value }).fold((0,0))((s, n) => s._2 -> n)
 
   offsets.changed += { //#HDL
     case (prev, cur) =>

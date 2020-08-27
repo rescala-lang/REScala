@@ -18,9 +18,9 @@ class DrawingSpaceState {
   // currently selected shape inside the drawing space
   final lazy val selectedShape: Signal[Shape] =  //#SIG
     ((shapes.changed && { shapes =>  //#IF  //#EF
-       !(shapes contains selectedShape.now) } map {_: Any => null}) ||
+       !(shapes contains selectedShape.value) } map {_: Any => null}) ||
      (select && { shape =>  //#EF
-       shape == null || (shapes.now contains shape) })) latest null  //#IF
+       shape == null || (shapes.value contains shape) })) latest null  //#IF
   // currently drawn shapes
   final lazy val shapes: Signal[List[Shape]] = Signal { commandsShapes() match { case (_, shapes) => shapes } }  //#SIG
   // all executed commands
@@ -37,10 +37,10 @@ class DrawingSpaceState {
   lazy val reverted: Event[Command] = Evt[Command]()  //#EVT
 
   // events that can be called imperatively
-  final lazy val execute = Evt[Command]  //#EVT
-  final lazy val revert = Evt[Command]  //#EVT
-  final lazy val clear = Evt[Unit]  //#EVT
-  final lazy val select = Evt[Shape]  //#EVT
+  final lazy val execute = Evt[Command]() //#EVT
+  final lazy val revert = Evt[Command]()  //#EVT
+  final lazy val clear = Evt[Unit]()  //#EVT
+  final lazy val select = Evt[Shape]()  //#EVT
 
   private abstract class CommandType
   private case class Execute(command: Command) extends CommandType
@@ -63,7 +63,7 @@ class DrawingSpaceState {
             case index =>
               val count = index + 1
               (commands drop count,
-               (shapes /: (commands take count)) { (shapes, command) => command revert shapes })
+               (commands take count).foldLeft(shapes) { (shapes, command) => command revert shapes })
           }
         case Clear() =>
           (List.empty, List.empty)

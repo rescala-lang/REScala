@@ -22,13 +22,13 @@ class GUI(store: FeedStore,
   val refreshButton = new ReButton("Refresh")
   val refresh: Event[Unit] = refreshButton.clicked.dropParam: Event[Unit] //#EVT //#EF
 
-  val requestURLAddition = Evt[String] //#EVT
+  val requestURLAddition = Evt[String]() //#EVT
 
   val refreshCheckbox = new ReCheckBox("auto refresh", selected = true)
   def refreshAllowed = refreshCheckbox.selected
 
   def top = new MainFrame {
-    val quitAction = swing.Action("Quit") { quit }
+    val quitAction = swing.Action("Quit") { quit() }
     val urlDialogAction = swing.Action("Add url") {
       val input = Dialog.showInput(null,
                                    "Please enter a feed url:",
@@ -50,7 +50,7 @@ class GUI(store: FeedStore,
     }
 
     val (framewidth, frameheight) = (840, 480)
-    configure
+    configure()
 
     val channelList = new ReListViewEx[RSSChannel](Signal { store.channels().keys.toSeq }, //#SIG
         visibleRowCount = 3) {

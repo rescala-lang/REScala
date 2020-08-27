@@ -16,7 +16,7 @@ trait ReactiveText {
 }
 class ReactiveLabel extends Label with ReactiveText
 class ReactiveButton extends Button with ReactiveText {
-	val clicked = Evt[ButtonClicked] // wrap the event to escala
+	val clicked = Evt[ButtonClicked]() // wrap the event to escala
 	reactions += { case c @ ButtonClicked(_) => clicked.fire(c) }
 }
 
@@ -33,7 +33,7 @@ object SignalSwingApp extends SimpleSwingApplication {
     val nClicks = button.clicked.fold(0) {(x, _) => x + 1}
 
     // Signal to set label text
-    label.text = Signal { (if(nClicks() == 0) "No" else nClicks()) + " button clicks registered" }
+    label.text = Signal { (if(nClicks() == 0) "No" else nClicks()).toString + " button clicks registered" }
 
     // Alternative with switch
     //label.text = Signal {"No clicks"}.switchOnce(button.clicked)( Signal{ nClicks() + " clicks registered" } )

@@ -82,7 +82,7 @@ object DropdownSample3 extends SimpleSwingApplication {
     }
     val content: Signal[String] = Signal {col.text()}
     fields set content :: fields.readValueOnce
-    frame.pack
+    frame.pack()
   }
 
 }

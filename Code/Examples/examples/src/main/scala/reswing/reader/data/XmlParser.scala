@@ -20,7 +20,7 @@ import reswing.reader.common.sequence
 *
 */
 class XmlParser {
-  val explicitItemParsed = Evt[RSSItem] //#EVT
+  val explicitItemParsed = Evt[RSSItem]() //#EVT
 
   // only for clarity in event expressions below
   private def discardArgument[A](tuple: (Any,A)): A = tuple._2
@@ -74,9 +74,9 @@ class XmlParser {
       if (xmlNode.size == 1) {
         val meta = extractInformation(xmlNode)
         val date = extractDate(xmlNode)
-        val link = tryToCreateURL(meta('link))
+        val link = tryToCreateURL(meta(Symbol("link")))
 
-        val result = RSSChannel(meta('title), link, meta('description), date, url)
+        val result = RSSChannel(meta(Symbol("title")), link, meta(Symbol("description")), date, url)
         Some(result)
       }
       else
@@ -105,9 +105,9 @@ class XmlParser {
 
     val meta = extractInformation(xmlNode)
     val date = extractDate(xmlNode)
-    val link = tryToCreateURL(meta('link))
+    val link = tryToCreateURL(meta(Symbol("link")))
 
-    val result = RSSItem(meta('title), link, meta('description), date, None)
+    val result = RSSItem(meta(Symbol("title")), link, meta(Symbol("description")), date, None)
     Some(result)
   }
 
@@ -164,7 +164,7 @@ class XmlParser {
   }
 
   private def extractInformation(xml: NodeSeq): Map[Symbol,String] =
-    Map('title -> xml \ "title",
-        'link -> xml \ "link",
-        'description -> xml \ "description").view.mapValues { _.text }.toMap
+    Map(Symbol("title") -> xml \ "title",
+        Symbol("link") -> xml \ "link",
+        Symbol("description") -> xml \ "description").view.mapValues { _.text }.toMap
 }

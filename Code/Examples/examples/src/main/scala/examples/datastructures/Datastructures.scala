@@ -31,7 +31,7 @@ class SQueue[T] {
 object SQueue {
   def apply[T](xs: T*): SQueue[T] = {
     val sq: SQueue[T] = new SQueue[T]
-    sq._queue set sq._queue.now.enqueue(xs.toList)
+    sq._queue set sq._queue.now.enqueueAll(xs.toList)
     sq
   }
 }
@@ -48,7 +48,7 @@ class SStack[T] {
   // methods mutating the state of the SQueue
   def push(elem: T): Unit = _stack.transform(elem :: _)
   def pop(): T = {
-    val out :: rest = _stack.now
+    val out :: rest = _stack.now : @scala.annotation.nowarn
     _stack.set(rest)
     out
   }
