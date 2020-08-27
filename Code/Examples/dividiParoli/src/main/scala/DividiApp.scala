@@ -63,6 +63,7 @@ object DividiApp extends JFXApp {
   implicit val _transmittableGrowOnlyLog: IdenticallyTransmittable[PGrowOnlyLog[Transaction]] = IdenticallyTransmittable()
 
   // instanciate shared log
+  @scala.annotation.nowarn
   val logBinding = Binding[PGrowOnlyLog[Transaction]]("log")
   val (registry, transactionLogDist): (Registry, PGrowOnlyLog[Transaction]) = {
     val registry = new Registry

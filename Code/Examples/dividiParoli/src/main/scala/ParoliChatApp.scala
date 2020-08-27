@@ -67,7 +67,7 @@ object ParoliChatApp {
     val joinAddress = Cluster(system).selfAddress
     Cluster(system).join(joinAddress)
 
-    /*val logActor =*/ system.actorOf(Props[ParoliMemberListener], "memberListener")
+    /*val logActor =*/ system.actorOf(Props[ParoliMemberListener](), "memberListener")
   }
 
   def startup(name: String, port: String): Unit = {

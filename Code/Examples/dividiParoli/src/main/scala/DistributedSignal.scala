@@ -45,7 +45,7 @@ object DistributedSignal {
     ConnectedTransmittable(
       provide = (value, context) => {
         val observer = value.crdtSignal.observe(context.endpoint.send)
-        context.endpoint.closed.monitor { _ => observer.remove }
+        context.endpoint.closed.monitor { _ => observer.remove() }
         value.crdtSignal.readValueOnce
       },
       receive = (value, context) => {
