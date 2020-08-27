@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.tailrec
 import scala.collection.immutable.Queue
 
-final class TurnLock[InterTurn]() {
+final class ReLock[InterTurn]() {
 
   private val owner: AtomicReference[Key[InterTurn]] = new AtomicReference[Key[InterTurn]]()
   private val shared: AtomicReference[Queue[Key[InterTurn]]] = new AtomicReference[Queue[Key[InterTurn]]](Queue())

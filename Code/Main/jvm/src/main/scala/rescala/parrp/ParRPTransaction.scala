@@ -15,7 +15,7 @@ trait ParRPInterTurn {
 
 }
 
-class ParRPState[V, S <: Struct](ip: V, val lock: TurnLock[ParRPInterTurn])
+class ParRPState[V, S <: Struct](ip: V, val lock: ReLock[ParRPInterTurn])
   extends LevelState[V, S](ip)
 
 
@@ -47,7 +47,7 @@ class ParRPTransaction(backoff: Backoff, priorTurn: Option[ParRPTransaction])
 
   override protected[this] def makeDerivedStructState[V](ip: V)
   : ParRPState[V, TState] = {
-    val lock = new TurnLock[ParRPInterTurn]
+    val lock = new ReLock[ParRPInterTurn]
     val owner = lock.tryLock(key)
     assert(owner eq key, s"$this failed to acquire lock on newly created reactive")
     new ParRPState(ip, lock)

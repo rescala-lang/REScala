@@ -25,7 +25,7 @@ object Keychains {
     private case class Done[R](r: R) extends Result[R]
 
     @tailrec
-    def acquireShared[ParRPInterTurn](lock: TurnLock[ParRPInterTurn], requester: Key[ParRPInterTurn]): Key[ParRPInterTurn] = {
+    def acquireShared[ParRPInterTurn](lock: ReLock[ParRPInterTurn], requester: Key[ParRPInterTurn]): Key[ParRPInterTurn] = {
       val oldOwner = lock.tryLock(requester, write = false)
 
       val res: Result[Key[ParRPInterTurn]] =
