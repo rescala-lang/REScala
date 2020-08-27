@@ -5,9 +5,9 @@ import scala.swing.{Color, ComboBox, Dimension, Font}
 import scala.swing.event.{ListChanged, ListElementsAdded, ListElementsRemoved, SelectionChanged}
 
 class ReComboBox[A](
-    val items: ReSwingValue[Seq[A]] = ReSwingNoValue[Seq[A]],
+    val items: ReSwingValue[Seq[A]] = ReSwingNoValue[Seq[A]](),
     `selection.index`: ReSwingValue[Int] = (),
-    `selection.item`: ReSwingValue[Option[A]] = ReSwingNoValue[Option[A]],
+    `selection.item`: ReSwingValue[Option[A]] = ReSwingNoValue[Option[A]](),
     background: ReSwingValue[Color] = (),
     foreground: ReSwingValue[Color] = (),
     font: ReSwingValue[Font] = (),
@@ -41,7 +41,7 @@ class ReComboBox[A](
   javaPeer setModel new ReComboBox.ReComboBoxModel[A]
   modelChanged()
 
-  items using (
+  items.using(
       { () =>
         javaPeer.getModel match {
           case model: ReComboBox.ReComboBoxModel[A] => model.getItems
@@ -66,13 +66,13 @@ class ReComboBox[A](
       val item: ReSwingValue[Option[A]]) {
     protected[ReComboBox] val peer = ReComboBox.this.peer.selection
 
-    index using ({() => peer.index}, peer.index= _, (peer, classOf[SelectionChanged]))
-    item using (
+    index.using({() => peer.index}, peer.index= _, (peer, classOf[SelectionChanged]))
+    item.using(
         { () => Option(peer.item) },
         { item => peer.item = item getOrElse null.asInstanceOf[A] },
         (peer, classOf[SelectionChanged]))
 
-    val changed = ReSwingEvent using (peer, classOf[SelectionChanged])
+    val changed = ReSwingEvent.using(peer, classOf[SelectionChanged])
   }
 
   object ReSelection {

@@ -13,15 +13,15 @@ trait ReLayoutContainer[Constraints] extends ReUIElement {
   private def peerContents = peerLayout.toMap
 
   private def peerContents_=(components: Map[Component, Constraints]): Unit = {
-    peerLayout.clear
+    peerLayout.clear()
     peerLayout ++= components
-    peer.repaint
+    peer.repaint()
     peer.peer.validate()
   }
 
   def contents: ReSwingValue[Map[Component, Constraints]]
 
-  contents using ({() => peerContents}, peerContents_= _,
+  contents.using({() => peerContents}, peerContents_= _,
                   classOf[ComponentAdded], classOf[ComponentRemoved])
 
   object layout {

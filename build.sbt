@@ -83,7 +83,7 @@ lazy val documentation = project.in(file("Documentation/DocumentationProject"))
 // ===================================================================================== Extensions
 
 lazy val reswing = project.in(file("Code/Extensions/RESwing"))
-  .settings(name := "reswing", cfg.base, cfg.noPublish, cfg.strictScalac, scalaswing, cfg.noWarnings)
+  .settings(name := "reswing", cfg.base, cfg.noPublish, cfg.strictScalac, scalaswing)
   .dependsOn(rescalaJVM)
 
 lazy val rescalafx = project.in(file("Code/Extensions/javafx"))

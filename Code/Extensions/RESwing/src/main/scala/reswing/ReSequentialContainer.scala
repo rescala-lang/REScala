@@ -10,15 +10,15 @@ trait ReSequentialContainer extends ReUIElement {
   private def peerContents: CompList = peer.contents.toSeq: CompList
 
   private def peerContents_=(components: CompList): Unit = {
-    peer.contents.clear
+    peer.contents.clear()
     peer.contents ++= components
-    peer.repaint
+    peer.repaint()
     peer.peer.validate
   }
 
   def contents: ReSwingValue[CompList]
 
-  contents using ({() => peerContents}, peerContents_= _,
+  contents.using({() => peerContents}, peerContents_= _,
                   classOf[ComponentAdded], classOf[ComponentRemoved])
 
   protected implicit class AddContent(contents: ReSwingValue[CompList]) {

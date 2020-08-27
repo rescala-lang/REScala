@@ -10,13 +10,13 @@ import rescala.macros.cutOutOfUserComputation
  */
 sealed abstract class ReSwingValue[T] {
   protected def signal: Lazy[Signal[T]]
-  protected val event: Lazy[Evt[T]] = Lazy {Evt[T] }
+  protected val event: Lazy[Evt[T]] = Lazy {Evt[T]() }
   protected var latestValue = null.asInstanceOf[T]
 
   private var init = null: ReSwingValue[T] => Unit
 
   final protected def toSignal: Signal[T] = {
-    initPerform
+    initPerform()
     signal()
   }
 

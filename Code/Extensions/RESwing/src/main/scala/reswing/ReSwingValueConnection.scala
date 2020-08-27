@@ -27,7 +27,7 @@ import scala.swing.event.Event
  * extends ReSwingValueConnection {
  *   protected def peer: UIElement
  *
- *   preferredSize using ({() => peer.preferredSize}, peer.preferredSize_= _, "preferredSize")
+ *   preferredSize.using({() => peer.preferredSize}, peer.preferredSize_= _, "preferredSize")
  * }
  * }}}
  *
@@ -38,7 +38,7 @@ import scala.swing.event.Event
  * extends ReSwingValueConnection {
  *   protected def peer: Component
  *
- *   val hasFocus = ReSwingValue using ({() => peer.hasFocus}, classOf[FocusGained], classOf[FocusLost])
+ *   val hasFocus = ReSwingValue.using({() => peer.hasFocus}, classOf[FocusGained], classOf[FocusLost])
  * }
  * }}}
  */
@@ -94,7 +94,7 @@ private[reswing] trait ReSwingValueConnection {
       if (value != null)
         inSyncEDT {
           value() = getter()
-          value initLazily { _ => inSyncEDT { initReSwingValueConnection } }
+          value initLazily { _ => inSyncEDT { initReSwingValueConnection() } }
 
           delayedInitValues += { () =>
             var updatingSwingNotification = false
@@ -111,13 +111,13 @@ private[reswing] trait ReSwingValueConnection {
                 for (name <- names)
                   name match {
                     case Left(name) =>
-                      changingProperties getOrElseUpdate (name, ListBuffer()) += { () =>
+                      changingProperties.getOrElseUpdate (name, ListBuffer()) += { () =>
                         if (getter() != value.get)
                           Swing onEDT { if (getter() != value.get) set(value.get) } }
 
                     case Right((publisher, reaction)) =>
                       reactor listenTo publisher
-                      changingReactions getOrElseUpdate (reaction, ListBuffer()) += { () =>
+                      changingReactions.getOrElseUpdate (reaction, ListBuffer()) += { () =>
                         if (getter() != value.get)
                           Swing onEDT { if (getter() != value.get) set(value.get) } }
                   }
@@ -128,7 +128,7 @@ private[reswing] trait ReSwingValueConnection {
               for (name <- names)
                 name match {
                   case Left(name) =>
-                    changingProperties getOrElseUpdate (name, ListBuffer()) += { () =>
+                    changingProperties.getOrElseUpdate (name, ListBuffer()) += { () =>
                       updatingSwingNotification = true
                       value() = getter()
                       updatingSwingNotification = false }
@@ -188,7 +188,7 @@ private[reswing] trait ReSwingValueConnection {
   peer.peer.addHierarchyListener(new HierarchyListener {
     def hierarchyChanged(e: HierarchyEvent) =
       if ((e.getChangeFlags & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0) {
-        initReSwingValueConnection
+        initReSwingValueConnection()
         peer.peer.removeHierarchyListener(this)
       }
   })
@@ -196,6 +196,6 @@ private[reswing] trait ReSwingValueConnection {
   protected def initReSwingValueConnection(): Unit = {
     for (init <- delayedInitValues)
       init()
-    delayedInitValues.clear
+    delayedInitValues.clear()
   }
 }

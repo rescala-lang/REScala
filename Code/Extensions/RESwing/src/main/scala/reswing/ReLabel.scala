@@ -25,19 +25,19 @@ class ReLabel(
                 minimumSize, maximumSize, preferredSize) {
   override protected lazy val peer = new Label with ComponentMixin
 
-  text using ({() => peer.text}, peer.text_= _, "text")
+  text.using({() => peer.text}, peer.text_= _, "text")
 
-  horizontalAlignment using ({() => peer.horizontalAlignment},
+  horizontalAlignment.using({() => peer.horizontalAlignment},
                              peer.horizontalAlignment= _, "horizontalAlignment")
-  verticalAlignment using ({() => peer.verticalAlignment},
+  verticalAlignment.using({() => peer.verticalAlignment},
                            peer.verticalAlignment= _, "verticalAlignment")
-  horizontalTextPosition using ({() => peer.horizontalTextPosition},
+  horizontalTextPosition.using({() => peer.horizontalTextPosition},
                                 peer.horizontalTextPosition= _, "horizontalTextPosition")
-  verticalTextPosition using ({() => peer.verticalTextPosition},
+  verticalTextPosition.using({() => peer.verticalTextPosition},
                               peer.verticalTextPosition_= _, "verticalTextPosition")
 
-  icon using ({() => peer.icon}, peer.icon_= _, "icon")
-  disabledIcon using ({() => peer.disabledIcon}, peer.disabledIcon_= _, "disabledIcon")
+  icon.using({() => peer.icon}, peer.icon_= _, "icon")
+  disabledIcon.using({() => peer.disabledIcon}, peer.disabledIcon_= _, "disabledIcon")
 }
 
 object ReLabel {

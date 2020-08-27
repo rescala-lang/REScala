@@ -89,6 +89,6 @@ private[reswing] trait ReSwingEventConnection {
   protected def initReSwingEventConnection(): Unit = {
     for (init <- delayedInitEvents)
       init()
-    delayedInitEvents.clear
+    delayedInitEvents.clear()
   }
 }

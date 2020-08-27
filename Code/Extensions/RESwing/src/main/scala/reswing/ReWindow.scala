@@ -18,18 +18,18 @@ abstract class ReWindow(
     ReRootPanel {
   protected def peer: Window
 
-  size using ({() => peer.size}, peer.size_= _, classOf[UIElementResized])
-  location using ({() => peer.location}, peer.location_= _, classOf[UIElementMoved])
-  bounds using ({() => peer.bounds}, peer.bounds_= _, classOf[UIElementResized],
+  size.using({() => peer.size}, peer.size_= _, classOf[UIElementResized])
+  location.using({() => peer.location}, peer.location_= _, classOf[UIElementMoved])
+  bounds.using({() => peer.bounds}, peer.bounds_= _, classOf[UIElementResized],
                                                 classOf[UIElementMoved])
 
-  val windowActivated = ReSwingEvent using (peer, classOf[WindowActivated])
-  val windowClosed = ReSwingEvent using (peer, classOf[WindowClosed])
-  val windowClosing = ReSwingEvent using (peer, classOf[WindowClosing])
-  val windowDeactivated = ReSwingEvent using (peer, classOf[WindowDeactivated])
-  val windowDeiconified = ReSwingEvent using (peer, classOf[WindowDeiconified])
-  val windowIconified = ReSwingEvent using (peer, classOf[WindowIconified])
-  val windowOpened = ReSwingEvent using (peer, classOf[WindowOpened])
+  val windowActivated = ReSwingEvent.using(peer, classOf[WindowActivated])
+  val windowClosed = ReSwingEvent.using(peer, classOf[WindowClosed])
+  val windowClosing = ReSwingEvent.using(peer, classOf[WindowClosing])
+  val windowDeactivated = ReSwingEvent.using(peer, classOf[WindowDeactivated])
+  val windowDeiconified = ReSwingEvent.using(peer, classOf[WindowDeiconified])
+  val windowIconified = ReSwingEvent.using(peer, classOf[WindowIconified])
+  val windowOpened = ReSwingEvent.using(peer, classOf[WindowOpened])
 }
 
 object ReWindow {

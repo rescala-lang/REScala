@@ -6,7 +6,7 @@ import scala.swing.Table.{AutoResizeMode, ElementMode, IntervalMode}
 import scala.swing.event.{TableChanged, TableColumnsSelected, TableRowsAdded, TableRowsRemoved, TableRowsSelected, TableStructureChanged, TableUpdated}
 
 class ReTable[A <: AnyRef](
-    val rowData: ReSwingValue[Seq[Seq[A]]] = ReSwingNoValue[Seq[Seq[A]]],
+    val rowData: ReSwingValue[Seq[Seq[A]]] = ReSwingNoValue[Seq[Seq[A]]](),
     val columnNames: ReSwingValue[Seq[String]] = (),
     val editable: ReSwingValue[ReTable.Editable] = (),
     val rowHeight: ReSwingValue[Int] = (),
@@ -66,9 +66,9 @@ class ReTable[A <: AnyRef](
   }
 
   peer.peer setModel new ReTable.ReTableModel[A]
-  modelChanged
+  modelChanged()
 
-  rowData using (
+  rowData.using(
       { () =>
         peer.peer.getModel match {
           case model: ReTable.ReTableModel[A] =>
@@ -77,7 +77,7 @@ class ReTable[A <: AnyRef](
             for (r <- 0 to model.getRowCount())
               yield {
                 for (c <- 0 to model.getColumnCount())
-                  yield (model getValueAt (r, c)).asInstanceOf[A]
+                  yield (model.getValueAt (r, c)).asInstanceOf[A]
               }
         }
       },
@@ -87,14 +87,14 @@ class ReTable[A <: AnyRef](
           case _ =>
             val model = new ReTable.ReTableModel[A]
             peer.peer setModel model
-            modelChanged
+            modelChanged()
             model
         })() = Left(rowData)
       },
       classOf[TableChanged], classOf[TableRowsRemoved], classOf[TableRowsAdded],
       classOf[TableStructureChanged], classOf[TableUpdated])
 
-  columnNames using (
+  columnNames.using(
       { () =>
         peer.peer.getModel match {
           case model: ReTable.ReTableModel[A] =>
@@ -110,19 +110,19 @@ class ReTable[A <: AnyRef](
           case _ =>
             val model = new ReTable.ReTableModel[A]
             peer.peer setModel model
-            modelChanged
+            modelChanged()
             model
         })() = Right(columnNames)
       },
       classOf[TableStructureChanged])
 
-  editable using (
+  editable.using(
       { () =>
         peer.peer.getModel match {
           case model: ReTable.ReTableModel[A] =>
             model.getCellEditable
           case model =>
-            (row, column) => model isCellEditable (row, column)
+            (row, column) => model.isCellEditable (row, column)
         }
       },
       { editable =>
@@ -131,25 +131,25 @@ class ReTable[A <: AnyRef](
           case _ =>
             val model = new ReTable.ReTableModel[A]
             peer.peer setModel model
-            modelChanged
+            modelChanged()
             model
         }) setCellEditable editable
       },
       classOf[TableStructureChanged])
 
-  rowHeight using ({() => peer.rowHeight}, peer.rowHeight= _, "rowHeight")
-  autoResizeMode using ({() => peer.autoResizeMode}, peer.autoResizeMode= _, "autoResizeMode")
+  rowHeight.using({() => peer.rowHeight}, peer.rowHeight= _, "rowHeight")
+  autoResizeMode.using({() => peer.autoResizeMode}, peer.autoResizeMode= _, "autoResizeMode")
 
-  showHorizontalLines using (() => peer.peer.getShowHorizontalLines(),
+  showHorizontalLines.using(() => peer.peer.getShowHorizontalLines(),
                              {peer.peer.setShowHorizontalLines(_)}, "showHorizontalLines")
-  showVerticalLines using (() => peer.peer.getShowVerticalLines(),
+  showVerticalLines.using(() => peer.peer.getShowVerticalLines(),
                            {peer.peer.setShowVerticalLines(_)}, "showVerticalLines")
-  gridColor using ({() => peer.gridColor}, peer.gridColor= _, "gridColor")
-  fillsViewportHeight using (() => peer.peer.getFillsViewportHeight(),
+  gridColor.using({() => peer.gridColor}, peer.gridColor= _, "gridColor")
+  fillsViewportHeight.using(() => peer.peer.getFillsViewportHeight(),
                              {peer.peer.setFillsViewportHeight(_)}, "fillsViewportHeight")
-  selectionForeground using (() => peer.selectionForeground, peer.selectionForeground= _,
+  selectionForeground.using(() => peer.selectionForeground, peer.selectionForeground= _,
                              "selectionForeground")
-  selectionBackground using ({() => peer.selectionBackground}, peer.selectionBackground= _,
+  selectionBackground.using({() => peer.selectionBackground}, peer.selectionBackground= _,
                              "selectionBackground")
 
   selectColumnInterval using { range =>
@@ -162,8 +162,8 @@ class ReTable[A <: AnyRef](
       peer.peer.clearSelection
     else
       peer.peer.setRowSelectionInterval(range._1, range._2) }
-  selectAll using (() => peer.peer.selectAll())
-  clearSelection using (() => peer.peer.clearSelection())
+  selectAll.using(() => peer.peer.selectAll())
+  clearSelection.using(() => peer.peer.clearSelection())
 
   val changed = ReSwingEvent using classOf[TableChanged]
   val structureChanged = ReSwingEvent using classOf[TableStructureChanged]
@@ -176,29 +176,29 @@ class ReTable[A <: AnyRef](
       val elementMode: ReSwingValue[ElementMode.Value]) {
     protected[ReTable] val peer = ReTable.this.peer.selection
 
-    val columnLeadIndex = ReSwingValue using (
+    val columnLeadIndex = ReSwingValue.using(
         {() => peer.columns.leadIndex}, (peer, classOf[TableColumnsSelected]))
-    val columnAnchorIndex = ReSwingValue using (
+    val columnAnchorIndex = ReSwingValue.using(
         {() => peer.columns.anchorIndex}, (peer, classOf[TableColumnsSelected]))
-    val rowLeadIndex = ReSwingValue using (
+    val rowLeadIndex = ReSwingValue.using(
         {() => peer.rows.leadIndex}, (peer, classOf[TableRowsSelected]))
-    val rowAnchorIndex = ReSwingValue using (
+    val rowAnchorIndex = ReSwingValue.using(
         {() => peer.rows.anchorIndex}, (peer, classOf[TableRowsSelected]))
 
-    val columns = ReSwingValue using (
+    val columns = ReSwingValue.using(
         { () => peer.columns.toSet }, (peer, classOf[TableColumnsSelected]))
-    val rows = ReSwingValue using (
+    val rows = ReSwingValue.using(
         { () => peer.rows.toSet }, (peer, classOf[TableRowsSelected]))
-    val cells = ReSwingValue using (
+    val cells = ReSwingValue.using(
         { () => peer.cells.toSet },
         (peer, classOf[TableColumnsSelected]), (peer, classOf[TableRowsSelected]))
 
-    intervalMode using ({() => peer.intervalMode}, peer.intervalMode_= _)
-    elementMode using ({() => peer.elementMode}, peer.elementMode= _,
+    intervalMode.using({() => peer.intervalMode}, peer.intervalMode_= _)
+    elementMode.using({() => peer.elementMode}, peer.elementMode= _,
                        "columnSelectionAllowed", "rowSelectionAllowed", "cellSelectionEnabled")
 
-    val columnsSelected = ReSwingEvent using (peer, classOf[TableColumnsSelected])
-    val rowsSelected = ReSwingEvent using (peer, classOf[TableRowsSelected])
+    val columnsSelected = ReSwingEvent.using(peer, classOf[TableColumnsSelected])
+    val rowsSelected = ReSwingEvent.using(peer, classOf[TableRowsSelected])
   }
 
   object selection extends ReSelection(
