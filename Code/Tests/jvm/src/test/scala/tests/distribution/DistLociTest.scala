@@ -64,6 +64,7 @@ class DistLociTest extends AnyFreeSpec {
   implicit val transmittableRGA: IdenticallyTransmittable[RGA[String]] = IdenticallyTransmittable()
 
   def makeListGraph(clientSource: Evt[String], registry: Registry): Signal[String] = {
+    @scala.annotation.nowarn
     val theList = dfold(clientSource)(List.empty[String])((list, msg) => list :+ msg)(registry, Binding[RGA[String] => Unit]("messages"))
     val size = theList.map(l => l.size - 1)
 

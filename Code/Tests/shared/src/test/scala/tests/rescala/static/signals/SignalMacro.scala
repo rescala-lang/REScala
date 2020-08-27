@@ -97,6 +97,7 @@ class SignalMacro extends RETests { multiEngined { engine => import engine._
     val v1 = Var(new A(1))
     val v2 = Var(new A(2))
 
+    @scala.annotation.nowarn
     val sig = Signal {
       case class TraitCase(a: Trait)
 
