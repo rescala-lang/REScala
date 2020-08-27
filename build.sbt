@@ -83,7 +83,7 @@ lazy val documentation = project.in(file("Documentation/DocumentationProject"))
 // ===================================================================================== Extensions
 
 lazy val reswing = project.in(file("Code/Extensions/RESwing"))
-  .settings(name := "reswing", cfg.base, cfg.noPublish, cfg.strictScalac, scalaswing)
+  .settings(name := "reswing", cfg.base, cfg.noPublish, cfg.strictScalac, scalaswing, cfg.noWarnings)
   .dependsOn(rescalaJVM)
 
 lazy val rescalafx = project.in(file("Code/Extensions/javafx"))
@@ -102,7 +102,7 @@ lazy val locidistributionJVM = locidistribution.jvm
 
 lazy val examples = project.in(file("Code/Examples/examples"))
   .dependsOn(rescalaJVM, reswing)
-  .settings(name := "rescala-examples", cfg.base, cfg.noPublish, scalaswing, scalaXml)
+  .settings(name := "rescala-examples", cfg.base, cfg.noPublish, scalaswing, scalaXml, cfg.noWarnings)
 
 lazy val universe = project.in(file("Code/Examples/Universe"))
   .dependsOn(rescalaJVM, fullmv)
@@ -123,7 +123,8 @@ lazy val dividiParoli = project.in(file("Code/Examples/dividiParoli"))
   .dependsOn(rescalaJVM)
   .settings(name := "dividi and paroli", cfg.base, cfg.noPublish, cfg.mappingFilters,
             lib.scalaLogback, lib.scalafx, circe, loci.communication, loci.circe,
-            loci.wsAkka, lib.scalafxExtras, lib.jline,  lib.oldAkkaCluster, akkaHttp)
+            loci.wsAkka, lib.scalafxExtras, lib.jline,  lib.oldAkkaCluster, akkaHttp,
+            cfg.noWarnings)
 
 
 // ===================================================================================== Research
@@ -179,6 +180,8 @@ lazy val cfg = new {
     parallelExecution in Test := true,
     scalatest
   )
+
+  val noWarnings = scalacOptions += "--no-warnings"
 
 
   /*

@@ -27,8 +27,7 @@ class ChainEvent[S <: Struct] {
   @Setup
   def setup(params: BenchmarkParams, size: Size, engineParam: EngineParam[S], work: Workload) = {
     engine = engineParam.engine
-    source = engine.Evt[Int]
-    implicit def api = engine.rescalaAPI
+    source = engine.Evt[Int]()
     result = source
     for (_ <- Range(0, size.size)) {
       result = result.map { v => val r = v + 1; work.consume(); r }

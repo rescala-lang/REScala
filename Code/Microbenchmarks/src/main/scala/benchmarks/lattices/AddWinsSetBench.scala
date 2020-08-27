@@ -115,6 +115,6 @@ object Codecs {
 
   import io.circe.generic.auto._
 
-  implicit val awsOCirceCodec: io.circe.Encoder[AddWinsSetO[String]] = io.circe.generic.semiauto.deriveEncoder
-  implicit val awsCirceCodec: io.circe.Encoder[AddWinsSet[String]] = io.circe.generic.semiauto.deriveEncoder
+  implicit val awsOCirceCodec: io.circe.Encoder[AddWinsSetO[String]] = io.circe.generic.semiauto.deriveEncoder: @scala.annotation.nowarn
+  implicit val awsCirceCodec: io.circe.Encoder[AddWinsSet[String]] = io.circe.generic.semiauto.deriveEncoder: @scala.annotation.nowarn
 }

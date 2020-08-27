@@ -49,7 +49,7 @@ object Todolist {
     }
 
     def showSession(s: WebRTC.CompleteSession) = {
-      val message = s.asJson.noSpaces
+      val message = s.asJson.noSpaces : @scala.annotation.nowarn
       renderedPre.textContent = message
       org.scalajs.dom.window.getSelection().selectAllChildren(renderedPre)
     }
@@ -63,7 +63,7 @@ object Todolist {
 
 
     val cb = button("connect", onclick := { uie: UIEvent =>
-      val cs = io.circe.parser.decode[WebRTC.CompleteSession](renderedTa.value).right.get
+      val cs = io.circe.parser.decode[WebRTC.CompleteSession](renderedTa.value).right.get : @scala.annotation.nowarn // 2.12 compat
       val connector = pendingServer match {
         case None     => // we are client
           val res = webrtcIntermediate(WebRTC.answer())

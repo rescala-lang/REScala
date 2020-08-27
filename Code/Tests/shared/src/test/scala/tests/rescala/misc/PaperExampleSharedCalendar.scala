@@ -38,7 +38,7 @@ class PaperExampleSharedCalendar extends AnyFreeSpec {
     val automaticEntries: Event[Entry] = App.nationalHolidays()
     val allEntries = newEntry || automaticEntries
 
-    val selectedDay: Var[Date] = Var(Date.today)
+    val selectedDay: Var[Date] = Var(Date.today())
     val selectedWeek = Signal {Week.of(selectedDay.value)}
 
     val entrySet: Signal[Set[Entry]] =

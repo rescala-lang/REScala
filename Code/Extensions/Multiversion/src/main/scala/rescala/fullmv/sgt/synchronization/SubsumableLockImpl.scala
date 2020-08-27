@@ -140,7 +140,7 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
 
   override def toString: String = {
     val refs = refCount.get()
-    s"Lock($guid on $host, ${if(refs <= 0) "gc'd" else refs + " refs"}, ${if (this eq host.dummy) "dummy" else state.get match {
+    s"Lock($guid on $host, ${if(refs <= 0) "gc'd" else refs.toString + " refs"}, ${if (this eq host.dummy) "dummy" else state.get match {
       case null => "unlocked"
       case Self => "locked"
       case host.dummy => "gc'd"

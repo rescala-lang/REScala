@@ -31,19 +31,17 @@ class Creation[S <: Struct] {
 
   @Benchmark
   def `evt`(): Evt[String, S] = {
-    engine.Evt[String]
+    engine.Evt[String]()
   }
 
   @Benchmark
   def `derived signal`(): Signal[String, S] = {
-    implicit def api = engine.rescalaAPI
     engine.Var("").map(identity)
   }
 
   @Benchmark
   def `derived event`(): Event[String, S] = {
-    implicit def api = engine.rescalaAPI
-    engine.Evt[String].map(identity)
+    engine.Evt[String]().map(identity)
   }
 
 }

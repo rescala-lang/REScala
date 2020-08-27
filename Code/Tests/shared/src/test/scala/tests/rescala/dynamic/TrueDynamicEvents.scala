@@ -5,7 +5,7 @@ import tests.rescala.testtools.RETests
 class TrueDynamicEvents extends RETests { multiEngined { engine => import engine._
 
   test("higher order events") {
-    val e1 = Evt[Signal[Int]]
+    val e1 = Evt[Signal[Int]]()
 
     val event =  Event.dynamic { Some{ e1.value.get.value } }
 

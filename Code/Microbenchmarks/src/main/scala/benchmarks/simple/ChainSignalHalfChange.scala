@@ -28,7 +28,6 @@ class ChainSignalHalfChange[S <: Struct] {
   def setup(params: BenchmarkParams, size: Size, step: Step, engineParam: EngineParam[S], work: Workload) = {
     engine = engineParam.engine
     source = engine.Var(step.run())
-    implicit def api = engine.rescalaAPI
     result = source
     for (_ <- Range(0, size.size)) {
       result = result.map { v => val r = v + 1; work.consume(); r }

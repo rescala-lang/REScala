@@ -28,13 +28,13 @@ class Fold extends RETests { multiEngined { engine => import engine._
   /* count */
   test("count the Initial Value Is Set Correctly"){
     val e = Evt[Int]()
-    val s: Signal[Int] = e.count
+    val s: Signal[Int] = e.count()
     assert(s.readValueOnce == 0)
   }
 
   test("count the Result Signal Increases When Events Occur"){
     val e = Evt[Int]()
-    val s: Signal[Int] = e.count
+    val s: Signal[Int] = e.count()
     e.fire(1)
     e.fire(1)
     assert(s.readValueOnce == 2)

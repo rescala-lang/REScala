@@ -11,7 +11,7 @@ trait FullMVAction extends RecursiveAction {
   override def compute(): Unit = {
     try { doCompute() } catch {
       case t: Throwable =>
-        new Exception(this + " failed on " + Thread.currentThread().getName, t).printStackTrace()
+        new Exception(this.toString + " failed on " + Thread.currentThread().getName, t).printStackTrace()
     }
   }
   def doCompute(): Unit

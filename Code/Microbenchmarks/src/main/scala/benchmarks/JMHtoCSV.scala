@@ -22,7 +22,7 @@ object JMHtoCSV {
     try {
       for (fileName <- args) {
         println("processing "+fileName)
-        for ((line, lineNo) <- Source.fromFile(fileName).getLines.zipWithIndex) {
+        for ((line, lineNo) <- Source.fromFile(fileName).getLines().zipWithIndex) {
           line match {
             case BENCHMARK(benchmarkName) =>
               benchmark = benchmarkName

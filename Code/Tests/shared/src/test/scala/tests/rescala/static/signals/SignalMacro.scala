@@ -9,7 +9,7 @@ class SignalMacro extends RETests { multiEngined { engine => import engine._
 
     val v = Var(List(1,2,3))
     val s1: Signal[List[Int]] = Signal { v.value.map(_ + 2) }
-    val s2: Signal[List[Int]] = Signal { v.apply.map(_ + 2) }
+    val s2: Signal[List[Int]] = Signal { v.apply().map(_ + 2) }
 
     assert(s1.readValueOnce === List(3, 4, 5))
     assert(s2.readValueOnce === List(3, 4, 5))

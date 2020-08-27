@@ -93,7 +93,7 @@ class MacroEventTestSuite extends RETests { multiEngined { engine => import engi
 
   test("cut out created signals") {
     val e1 = Evt[Int]()
-    val event =  Event { Some{ e1.count.value } }
+    val event =  Event { Some{ e1.count().value } }
 
     val res = event.latest()
 

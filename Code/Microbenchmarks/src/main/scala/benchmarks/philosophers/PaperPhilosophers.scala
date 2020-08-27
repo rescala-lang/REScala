@@ -298,11 +298,11 @@ object PaperPhilosophers {
         case (Success(_), _) => // ignore
       }
       println("There were failures -> not accessing total score; individual threads summary:")
-      println("\t" + scores.zipWithIndex.map { case (count, idx) => (idx+1) + ": " + count }.mkString("\n\t"))
+      println("\t" + scores.zipWithIndex.map { case (count, idx) => (idx+1).toString + ": " + count }.mkString("\n\t"))
     } else {
       println("Philosophers done. Individual threads' scores:")
       val individualsSum = scores.map(_.get).sum
-      println("\t" + scores.zipWithIndex.map { case (count, idx) => (idx+1) + ": " + count }.mkString("\n\t"))
+      println("\t" + scores.zipWithIndex.map { case (count, idx) => (idx+1).toString + ": " + count }.mkString("\n\t"))
       if(table.total == individualsSum){
         println("Total score: " + table.total + " (matches individual scores' sum)")
       } else {

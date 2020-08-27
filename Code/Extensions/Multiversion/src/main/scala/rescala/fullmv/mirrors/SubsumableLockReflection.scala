@@ -97,6 +97,6 @@ class SubsumableLockReflection(override val host: SubsumableLockHost, override v
 
   override def toString: String = {
     val refs = refCount.get()
-    s"SubsumableLockReflection($guid on $host, ${if(refs <= 0) "gc'd" else refs + " refs"})"
+    s"SubsumableLockReflection($guid on $host, ${if(refs <= 0) "gc'd" else refs.toString + " refs"})"
   }
 }

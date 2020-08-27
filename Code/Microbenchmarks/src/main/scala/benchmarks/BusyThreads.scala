@@ -31,7 +31,7 @@ class BusyThreads {
       }
       println(s"starting $idleProcs busy threads...")
       if (!startLatch.await(1000, TimeUnit.MILLISECONDS)) {
-        println(startLatch.getCount + " busy threads failed to start")
+        println(startLatch.getCount.toString + " busy threads failed to start")
       }
     }
   }

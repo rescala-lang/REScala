@@ -29,7 +29,7 @@ object RunConsole {
 
       val world = new World(width, height)
 
-      world batchSpawn(nAnimals, nPlants)
+      world.batchSpawn(nAnimals, nPlants)
 
       val start = System.nanoTime()
       while (world.time.week.readValueOnce < 2) {
@@ -55,7 +55,7 @@ object RunPrinting {
     val nPlants = 300
     val width = 70
     val height = 20
-    
+
 
     println(s"WARN: not sure why the next call was here, not sure what removing it broke, " +
             s"but observers … work differently now")
@@ -65,7 +65,7 @@ object RunPrinting {
 
     val world = new World(width, height)
 
-    world batchSpawn(nAnimals, nPlants)
+    world.batchSpawn(nAnimals, nPlants)
 
     val start = System.nanoTime()
     import universe.Globals.engine.implicitScheduler

@@ -48,7 +48,7 @@ class SignalTestSuite extends RETests with ScalaCheckDrivenPropertyChecks with M
     }
     yield {
       val root = Var(0)
-      var signals = new ListBuffer[Signal[Int]]()
+      val signals = new ListBuffer[Signal[Int]]()
       signals += root
       0 to i foreach { _ =>
         val randomSignal = signals(Random.nextInt(signals.length))
@@ -66,7 +66,7 @@ class SignalTestSuite extends RETests with ScalaCheckDrivenPropertyChecks with M
 
   "count Is Correctly Computed" in forAll(Gen.posNum[Int]) { (n: Int) =>
     val e = Evt[Int]()
-    val s: Signal[Int] = e.count
+    val s: Signal[Int] = e.count()
 
     var count = 0
     s observe(c => {

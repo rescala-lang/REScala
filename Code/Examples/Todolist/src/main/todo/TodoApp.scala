@@ -28,6 +28,7 @@ class TodoApp[TH <: TaskHandling](val taskHandling: TH) {
 
   case class TodoRes(div: TypedTag[Div], tasklist: Signal[DeltaSequence[taskHandling.Taskref]])
 
+  @scala.annotation.nowarn // Auto-application to `()`
   def getContents(): TodoRes = {
 
     val todoInputTag: JsDom.TypedTag[Input] = input(
@@ -62,7 +63,7 @@ class TodoApp[TH <: TaskHandling](val taskHandling: TH) {
         )
     }("tasklist")
 
-    LociDist.distribute(tasksRGA, Todolist.registry)(Binding("tasklist"))
+    LociDist.distribute(tasksRGA, Todolist.registry)(Binding("tasklist")  : @scala.annotation.nowarn)
 
     val tasks = tasksRGA.map(_.toList.reverse)
 

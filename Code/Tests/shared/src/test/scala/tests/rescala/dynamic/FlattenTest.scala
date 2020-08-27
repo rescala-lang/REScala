@@ -347,7 +347,7 @@ class FlattenTest extends RETests { multiEngined { engine =>
 
 
   test("event of options"){
-    val someInput = Evt[Option[String]]
+    val someInput = Evt[Option[String]]()
     val flat = someInput.flatten
     val res = flat.latest()
     var count = 0

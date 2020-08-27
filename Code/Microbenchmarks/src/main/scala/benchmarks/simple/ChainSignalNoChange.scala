@@ -25,7 +25,6 @@ class ChainSignalNoChange[S <: Struct] {
   @Setup
   def setup(params: BenchmarkParams, size: Size, engineParam: EngineParam[S], work: Workload) = {
     engine = engineParam.engine
-    implicit def api = engine.rescalaAPI
     source = engine.Var(0)
     result = source
     for (_ <- Range(0, size.size)) {

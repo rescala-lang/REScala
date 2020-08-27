@@ -30,7 +30,7 @@ class ChatServer[S <: Struct]()(val engine: RescalaInterface[S]) {
       if (messages.isEmpty) None else Some(messages)
     }
     val history: History = newMessages.fold(Queue[String]()) { (queue, v) =>
-      if (queue.length >= 100) queue.tail.enqueue(v) else queue.enqueue(v)
+      if (queue.length >= 100) queue.tail.enqueueAll(v) else queue.enqueueAll(v)
     }
 
     rooms.putIfAbsent(room, clients) == null &&

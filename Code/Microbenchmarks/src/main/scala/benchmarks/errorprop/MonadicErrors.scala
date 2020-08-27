@@ -31,9 +31,8 @@ class MonadicErrors[S <: Struct] {
   @Setup
   def setup(params: BenchmarkParams, size: Size, engineParam: EngineParam[S], work: Workload) = {
     engine = engineParam.engine
-    implicit def api = engine
     if (isMonadic) {
-      val source = engine.Evt[Try[Int]]
+      val source = engine.Evt[Try[Int]]()
       var result: Event[Try[Int], S] = source
       for (_ <- Range(1, size.size)) {
         result = result.map { t: Try[Int] => t.map { v => val r = v + 1; work.consume(); r } }
@@ -42,7 +41,7 @@ class MonadicErrors[S <: Struct] {
       fire = i => source.fire(Try{i})
     }
     else {
-      val source = engine.Evt[Int]
+      val source = engine.Evt[Int]()
       var result: Event[Int, S] = source
       for (_ <- Range(1, size.size)) {
         result = result.map {  v => val r = v + 1; work.consume(); r  }

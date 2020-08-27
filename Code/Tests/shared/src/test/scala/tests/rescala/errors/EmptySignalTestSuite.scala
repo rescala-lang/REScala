@@ -35,7 +35,7 @@ class EmptySignalTestSuite extends RETests { multiEngined { engine => import eng
     val v = Var.empty[Event[Unit]]
 
     val e1 = Evt[Unit]()
-    val e2 = e1 map { _ => v.flatten.count }
+    val e2 = e1 map { _ => v.flatten.count() }
 
     var s: Signal[Int] = null
 

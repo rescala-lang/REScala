@@ -38,7 +38,7 @@ class MultiReverseFan[S <: Struct] {
 
     val intermediate = sources.map(_.map { v => {work.consume(); v + 1} }).grouped(groupSize)
     results = intermediate.map { sigs =>
-      Signals.lift(sigs) { values => work.consumeSecondary(); values.sum }
+      Signals.lift(sigs.toSeq) { values => work.consumeSecondary(); values.sum }
     }.toArray
 
     if (engineParam.engineName == "unmanaged") locks = Array.fill(threads / groupSize)(new ReentrantLock())

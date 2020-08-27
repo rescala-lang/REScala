@@ -32,7 +32,7 @@ class ReverseFan[S <: Struct] {
     import localEngine._
     sources = Array.fill(16)(Var(step.get()))
     val intermediate = sources.map(_.map { v => {work.consume(); v + 1} })
-    result = Signals.lift(intermediate) { values => work.consumeSecondary(); values.sum }
+    result = Signals.lift(intermediate.toSeq) { values => work.consumeSecondary(); values.sum }
     if (engine.scheduler == Schedulers.unmanaged) isManual = true
 
   }

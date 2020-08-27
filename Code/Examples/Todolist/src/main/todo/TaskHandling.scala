@@ -29,8 +29,8 @@ case class TaskData(desc: String, done: Boolean = false) {
 }
 
 object TaskData {
-  implicit val taskDataDecoder: Decoder[TaskData] = semiauto.deriveDecoder
-  implicit val taskDataEncoder: Encoder[TaskData] = semiauto.deriveEncoder
+  implicit val taskDataDecoder: Decoder[TaskData] = semiauto.deriveDecoder : @scala.annotation.nowarn
+  implicit val taskDataEncoder: Encoder[TaskData] = semiauto.deriveEncoder : @scala.annotation.nowarn
 }
 
 
@@ -63,6 +63,7 @@ class TaskHandling() {
 
   implicit val transmittableLWWTD: IdenticallyTransmittable[LastWriterWins[TaskData]] = IdenticallyTransmittable()
 
+  @scala.annotation.nowarn  // Auto-application to `()`
   val bindingBuilder: BindingBuilder[LastWriterWins[TaskData] => Unit] {
     type RemoteCall = LastWriterWins[TaskData] => Future[Unit]
   } = implicitly

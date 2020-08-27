@@ -4,7 +4,7 @@ package universe
 case class Pos(x: Int, y: Int) {
   def distance(other: Pos): Double = (other - this).euclidianNorm
   def directionTo(target: Pos): Pos = (target - this).normalize
-  def -(other: Pos): Pos = this + (-other)
+  def -(other: Pos): Pos = this + (other.unary_-())
   def +(other: Pos): Pos = Pos(x + other.x, y + other.y)
   def unary_-(): Pos = Pos(-x, -y)
   def normalize: Pos = /(euclidianNorm)
