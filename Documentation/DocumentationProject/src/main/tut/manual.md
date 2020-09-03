@@ -604,6 +604,106 @@ v2.set("Changed")
 v3.set(false)
 ```
 
+## Testing
+
+Conventional testing methods fail to thoroughly test reactive applications.
+Nodes may never be exposed to the full range of their possible inputs based on their current location in the spanned dependency graph.
+Furthermore, on receiving an invalid input, it is impossible to trace back the route of the problem.
+To tackle those shortcomings `rescala.extra.invarariant.SimpleScheduler` inside the `Tests-Sources` subproject adds the concept of _invariants_ and _generators_ to Rescala.
+
+### Invariants
+
+Invariants can be directly attached to `Vars` and `Signals` to define functions that shall be true after every change.
+Each node can have multiple invariants and they can be attached using `specify`.
+
+```tut:silent
+val v = Var { 42 }
+
+v.specify(
+  Invariant { value => value > 0 },
+  Invariant { value => value < 100 }
+)
+```
+
+Invariants can be named, to make them more expressive.
+
+```tut:silent
+v.specify(
+  new Invariant("always_positive", { value => value > 0} )
+)
+```
+
+If an invariant fails an `InvariantViolationException` will be thrown.
+The exception message will contain further information about the exception:
+
+```log
+rescala.extra.invariant.InvariantViolationException:
+
+Value(-1) violates invariant always_positive in reactive tests.rescala.property.InvariantsTest#sut:95
+
+The error was caused by these update chains:
+
+  tests.rescala.property.InvariantsTest#sut:95 with value: Value(-1)
+  ↓
+  tests.rescala.property.InvariantsTest#v:94 with value: Value(-100)
+```
+
+### Generators
+
+Generators allow to test a `Signal`s whole input range.
+For this purpose generators are attached to one or more predecessors of the node to be tested using `setValueGenerator`.
+Please check the [Scalacheck UserGuide](https://github.com/typelevel/scalacheck/blob/master/doc/UserGuide.md#generators) for more information on how to create generators.
+
+Calling `test` on a signal will traverse its dependencies, find the closest generator on each branch
+and then use property based testing to find inputs that violate specified invariants.
+
+```tut:silent
+val a = Var(42)
+val b = Var(42)
+val c = Signal { a() + b() }
+
+a.setValueGenerator(Gen.posNum[Int])
+b.setValueGenerator(Gen.posNum[Int])
+
+c.specify(
+  Invariant { value => value >= 0 },
+)
+
+c.test()
+```
+
+The following is a complete example that demonstrates the example above in a working test environment.
+Note that you have to manually import the engine for `rescala.extra.invariant.SimpleScheduler` as testing using _invariants_ and _generators_ is currently only supported using this scheduler.
+
+```tut:silent
+package tests.rescala.property
+
+import org.scalacheck.Gen
+import org.scalatest.freespec.AnyFreeSpec
+import rescala.extra.invariant.SimpleScheduler.SignalWithInvariants
+import rescala.extra.invariant.{Invariant, SimpleStruct}
+import rescala.interface.RescalaInterface
+
+class InvariantsTest extends AnyFreeSpec {
+  val engine: RescalaInterface[SimpleStruct] = RescalaInterface.interfaceFor(rescala.extra.invariant.SimpleScheduler)
+  import engine._
+
+  "expect sum of two positives to always be positive" in {
+    val a = Var(42)
+    val b = Var(42)
+    val c = Signal { a() + b() }
+
+    a.setValueGenerator(Gen.posNum[Int])
+    b.setValueGenerator(Gen.posNum[Int])
+
+    c.specify(
+      Invariant { value => value >= 0 },
+    )
+
+    c.test()
+  }
+}
+```
 
 ## Common Pitfalls
 
