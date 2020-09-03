@@ -127,7 +127,7 @@ class InvariantsTest extends RETests with ScalaCheckDrivenPropertyChecks with Ma
     val a = Var(10)
     val b = Var(20)
 
-    val sut = Signal { Math.pow(a(), 2) + Math.pow(b(), 2) }
+    val sut = Signal { Math.pow(a().toDouble, 2) + Math.pow(b().toDouble, 2) }
 
     sut.specify(
       Invariant { value => value >= a.now },

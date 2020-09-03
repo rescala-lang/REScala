@@ -2,8 +2,7 @@ package rescala.extra.invariant
 
 import org.scalacheck.Prop.forAll
 import org.scalacheck.Test.PropException
-import org.scalacheck.util.Pretty
-import org.scalacheck.{Gen, Prop, Shrink, Test}
+import org.scalacheck.{Gen, Prop, Test}
 import rescala.core
 import rescala.core.{AccessTicket, Derived, DynamicInitializerLookup, InitialChange, Initializer, Observation, Pulse, ReSource, ReevTicket, Scheduler, Struct}
 import rescala.interface.Aliases
@@ -154,19 +153,6 @@ object SimpleScheduler
     signal.state.invariants = inv.map(inv => new Invariant(inv.description, (invp: Pulse[T]) => inv.inv(invp.get)))
   }
 
-  class SignalGeneratorMap private (baseMap: scala.collection.mutable.HashMap[
-    Signal[Any],
-    (Gen[Any], Shrink[Any], Any => Pretty)
-  ]) {
-    def apply[T](key: Signal[T]): (Gen[T], Shrink[T], T => Pretty) =
-      baseMap(key).asInstanceOf[(Gen[T], Shrink[T], T => Pretty)]
-
-    def put[T](key: Signal[T], value: (Gen[T], Shrink[T], T => Pretty)): Option[Any] =
-      baseMap.put(key, value.asInstanceOf[(Gen[Any], Shrink[Any], Any => Pretty)])
-
-    def entries(): List[(Signal[Any], (Gen[Any], Shrink[Any], Any => Pretty))] = baseMap.map(p => p).toList
-  }
-
   implicit class SignalWithInvariants[T](val signal: Signal[T]) extends AnyVal {
 
     def specify(inv: Invariant[T]*): Unit = {
@@ -191,6 +177,7 @@ object SimpleScheduler
       if (!result.passed) {
         result.status match {
           case PropException(_, e, _) => throw e
+          case _ => throw new RuntimeException("Test failed!")
         }
       }
     }
@@ -203,7 +190,7 @@ object SimpleScheduler
       signalGeneratorPairs match {
         case Nil => Prop(f(generated))
         case (sig, gen) :: tail =>
-          forAll(gen)(t => customForAll(tail, f, generated :+ (sig, t)))
+          forAll(gen)(t => customForAll(tail, f, generated :+ ((sig, t))))
       }
 
     private def findGenerators(): List[(ReSource, Gen[A] forSome { type A})] = {
