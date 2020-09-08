@@ -178,13 +178,13 @@ object Dependencies {
   val normalizecss      = ld += "org.webjars.npm" % "normalize.css" % "8.0.1"
   val scalatagsVersion  = "[0.6.8,0.9.1]"
   val scalatags         = ld += "com.lihaoyi"   %%% "scalatags"     % scalatagsVersion
-  val scalajsdomVersion = "1.0.0"
+  val scalajsdomVersion = "1.1.0"
   val scalajsdom        = ld += "org.scala-js"  %%% "scalajs-dom"   % scalajsdomVersion
   val fontawesome       = ld += "org.webjars"     % "font-awesome"  % "5.10.1"
 
   // tests
   val scalacheck         = ld += "org.scalacheck"    %%% "scalacheck"      % "1.14.3"  % "test"
-  val scalatestpluscheck = ld += "org.scalatestplus" %%% "scalacheck-1-14" % "3.2.0.0" % "test"
+  val scalatestpluscheck = ld += "org.scalatestplus" %%% "scalacheck-1-14" % "3.2.2.0" % "test"
   val scalatest          = ld += "org.scalatest"     %%% "scalatest"       % "3.2.2"   % "test"
 
   // legacy
