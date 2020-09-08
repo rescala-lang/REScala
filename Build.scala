@@ -139,15 +139,15 @@ object Dependencies {
   val scribeVersion = "[2.7.0,2.8.0)"
 
   val betterFiles   = ld += "com.github.pathikrit" %% "better-files"    % "3.9.1"
-  val cats          = ld += "org.typelevel"       %%% "cats-core"       % "2.1.1"
-  val decline       = ld += "com.monovore"        %%% "decline"         % "1.2.0"
+  val cats          = ld += "org.typelevel"       %%% "cats-core"       % "2.2.0"
+  val decline       = ld += "com.monovore"        %%% "decline"         % "1.3.0"
   val fastparse     = ld += "com.lihaoyi"         %%% "fastparse"       % "2.3.0"
   val javalin       = ld += "io.javalin"            % "javalin"         % "3.9.1"
   val jsoup         = ld += "org.jsoup"             % "jsoup"           % "1.13.1"
   val kaleidoscope  = ld += "com.propensive"      %%% "kaleidoscope"    % "0.1.0"
   val magnolia      = ld += "com.propensive"      %%% "magnolia"        % "0.15.0"
   val okHttp        = ld += "com.squareup.okhttp3"  % "okhttp"          % "4.7.2"
-  val pprint        = ld += "com.lihaoyi"         %%% "pprint"          % "0.5.9"
+  val pprint        = ld += "com.lihaoyi"         %%% "pprint"          % "0.6.0"
   val scalactic     = ld += "org.scalactic"        %% "scalactic"       % "3.0.7"
   val scalaJavaTime = ld += "io.github.cquiroz"   %%% "scala-java-time" % "2.0.0"
   val scribe        = ld += "com.outr"            %%% "scribe"          % scribeVersion
@@ -185,7 +185,7 @@ object Dependencies {
   // tests
   val scalacheck         = ld += "org.scalacheck"    %%% "scalacheck"      % "1.14.3"  % "test"
   val scalatestpluscheck = ld += "org.scalatestplus" %%% "scalacheck-1-14" % "3.2.0.0" % "test"
-  val scalatest          = ld += "org.scalatest"     %%% "scalatest"       % "3.2.0"   % "test"
+  val scalatest          = ld += "org.scalatest"     %%% "scalatest"       % "3.2.2"   % "test"
 
   // legacy
   val scalaXml   = ld += "org.scala-lang.modules" %% "scala-xml"   % "1.3.0"
