@@ -2,6 +2,8 @@ package tests.rescala.dynamic
 
 import tests.rescala.testtools.RETests
 
+import scala.concurrent.Future
+
 class FlattenTest extends RETests {
   multiEngined { engine =>
     import engine._
@@ -353,6 +355,17 @@ class FlattenTest extends RETests {
       assert(count == 2, "second some")
       assert(res.readValueOnce == "World", "flatten some again")
 
+    }
+
+    test("flatten from future type inference") {
+      val joined = Evt[String]()
+      import scala.concurrent.ExecutionContext.Implicits.global
+      val res = (joined.map(str => engine.Signals.fromFuture(Future.successful(str)))
+             .latest(Signal { "unknown" })).flatten
+
+      joined.fire("test")
+
+      assert(res.readValueOnce == "test")
     }
 
   }

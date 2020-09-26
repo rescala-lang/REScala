@@ -14,12 +14,12 @@ trait Flatten[-A, R] {
 object Flatten extends rescala.compat.FlattenCollectionCompat {
 
   /** Flatten a Signal[Signal[B]\] into a Signal[B] that changes whenever the outer or inner signal changes. */
-  implicit def signal[S <: Struct, B, Sig[U] <: Signal[U, S]](implicit
+  implicit def signal[S <: Struct, B](implicit
       ticket: CreationTicket[S],
       api: RescalaInterface[S]
-  ): Flatten[Signal[Sig[B], S], Signal[B, S]] =
-    new Flatten[Signal[Sig[B], S], Signal[B, S]] {
-      def apply(sig: Signal[Sig[B], S]): Signal[B, S] =
+  ): Flatten[Signal[Signal[B, S], S], Signal[B, S]] =
+    new Flatten[Signal[Signal[B, S], S], Signal[B, S]] {
+      def apply(sig: Signal[Signal[B, S], S]): Signal[B, S] =
         api.Signals.dynamic(sig) { t => t.depend(t.depend(sig).resource) }
     }
 
