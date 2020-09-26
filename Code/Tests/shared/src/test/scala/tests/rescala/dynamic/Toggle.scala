@@ -1,4 +1,4 @@
-package tests.rescala.dynamic.conversions
+package tests.rescala.dynamic
 
 import tests.rescala.testtools.RETests
 
