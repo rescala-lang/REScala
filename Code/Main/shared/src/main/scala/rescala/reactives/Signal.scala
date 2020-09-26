@@ -153,7 +153,6 @@ trait Signal[+T, S <: Struct] extends MacroAccess[T, Interp[T, S]] with Disconne
   final def changedTo[V >: T](value: V)(implicit ticket: CreationTicket): Event[Unit, S] =
     rescalaAPI.Events.staticNamed(s"(filter $this)", this.resource) { st =>
       st.collectStatic(this.resource).filter(_ == value)
-    }
-      .dropParam
+    }.dropParam
 
 }
