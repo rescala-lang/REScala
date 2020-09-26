@@ -5,6 +5,7 @@ import rescala.interface.RescalaInterface
 import rescala.macros.cutOutOfUserComputation
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Success
 
 object Signals {
   type Sstate[T, S <: Struct] = S#State[Pulse[T], S]
@@ -87,9 +88,13 @@ trait Signals[S <: Struct] {
   /** converts a future to a signal */
   @cutOutOfUserComputation
   def fromFuture[A](fut: Future[A])(implicit fac: Scheduler[S], ec: ExecutionContext): Signal[A, S] = {
-    val v: Var[A, S] = rescalaAPI.Var.empty[A]
-    fut.onComplete { res => fac.forceNewTransaction(v)(t => v.admitPulse(Pulse.tryCatch(Pulse.Value(res.get)))(t)) }
-    v
+    fut.value match {
+      case Some(Success(value)) => rescalaAPI.Var(value)
+      case _ =>
+        val v: Var[A, S] = rescalaAPI.Var.empty[A]
+        fut.onComplete { res => fac.forceNewTransaction(v)(t => v.admitPulse(Pulse.tryCatch(Pulse.Value(res.get)))(t)) }
+        v
+    }
   }
 
   @cutOutOfUserComputation
