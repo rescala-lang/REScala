@@ -22,12 +22,15 @@ object GCounter {
     GCounter(id, HashMap(id -> value))
   }
 
-  implicit def lattice: Lattice[GCounter] = new Lattice[GCounter] {
-    override def merge(left: GCounter, right: GCounter): GCounter =
-      GCounter(left.id,
-        left.payload.merged(right.payload) {
-          case ((k, v1), (_, v2)) => (k, v1 max v2)
-        })
-  }
+  implicit def lattice: Lattice[GCounter] =
+    new Lattice[GCounter] {
+      override def merge(left: GCounter, right: GCounter): GCounter =
+        GCounter(
+          left.id,
+          left.payload.merged(right.payload) {
+            case ((k, v1), (_, v2)) => (k, v1 max v2)
+          }
+        )
+    }
 
 }

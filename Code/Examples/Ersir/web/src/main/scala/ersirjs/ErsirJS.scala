@@ -21,26 +21,25 @@ object ErsirJS {
 
   val connectClass = Signal {
     val internet = connectionSignal.value
-    s"${if(internet) " hideConnectionIssues" else ""}"
+    s"${if (internet) " hideConnectionIssues" else ""}"
   }
-
 
   val index = new Index(connectClass)
 
   val addPost = index.addPost.event
-                .filter(p => p.title.nonEmpty || p.img.nonEmpty)
+    .filter(p => p.title.nonEmpty || p.img.nonEmpty)
 
   val postings: Signal[Postings] =
-    Events.foldAll(Epoche(RGOA(List.empty[Posting])))(state => Seq(
-      addPost >> { post => state.map(_.prepend(post)) },
-      index.reset.event >> { rs => state.next(RGOA(Nil)) }
-    ))("postings")
-
+    Events.foldAll(Epoche(RGOA(List.empty[Posting])))(state =>
+      Seq(
+        addPost >> { post => state.map(_.prepend(post)) },
+        index.reset.event >> { rs => state.next(RGOA(Nil)) }
+      )
+    )("postings")
 
   val registry = new Registry
 
   LociDist.distribute(postings, registry)(Bindings.crdtDescriptions)
-
 
   def main(args: Array[String]): Unit = {
     dom.window.document.title = "Emergencity RSS Reader"

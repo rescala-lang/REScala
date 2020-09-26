@@ -34,18 +34,19 @@ object RRecovery extends Main {
       top.pack()
     }
   }
-  val shapes = Var[List[Shape]](List.empty)
-  val filteredShapes = Signal.dynamic { shapes().filter { q => Try(q.changed()).isSuccess} }
+  val shapes         = Var[List[Shape]](List.empty)
+  val filteredShapes = Signal.dynamic { shapes().filter { q => Try(q.changed()).isSuccess } }
   filteredShapes.observe(shapes.set)
   val panel = new ShapesPanel(filteredShapes)
 
   val playingField = new PlayingField(panel.width.map(_ - 25), panel.height.map(_ - 25))
-  val racket = new Racket(playingField.width, true, playingField.height, panel.Mouse.y)
+  val racket       = new Racket(playingField.width, true, playingField.height, panel.Mouse.y)
   shapes.transform(playingField.shape :: racket.shape :: _)
 
   val balls = List(
     new BouncingBall(200d, 150d, Var(50), panel.Mouse.middleButton.pressed),
-    new BouncingBall(-200d, 100d, Var(50), panel.Mouse.middleButton.pressed))
+    new BouncingBall(-200d, 100d, Var(50), panel.Mouse.middleButton.pressed)
+  )
 
   for (bouncingBall <- balls) {
     shapes.transform(bouncingBall.shape :: _)
@@ -64,9 +65,12 @@ object RRecovery extends Main {
     opponent.main(Array())
     val racket2 = new Racket(playingField.width, false, playingField.height, opponent.panel2.Mouse.y)
     shapes.transform(racket2.shape :: _)
-    racket2.posY.observe(_ => (), { e =>
-      shapes.transform(_.filter(_ != racket2.shape))
-    })
+    racket2.posY.observe(
+      _ => (),
+      { e =>
+        shapes.transform(_.filter(_ != racket2.shape))
+      }
+    )
 
     for (bouncingBall <- balls) {
       bouncingBall.horizontalBounceSources.transform(racket2.collisionWith(bouncingBall.shape) :: _)
@@ -75,6 +79,6 @@ object RRecovery extends Main {
 
   panel.Keyboard.released.map(_.getKeyChar).observe {
     case KeyEvent.VK_ENTER => addOpponent()
-    case _ =>
+    case _                 =>
   }
 }

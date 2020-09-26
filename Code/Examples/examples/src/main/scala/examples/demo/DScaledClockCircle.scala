@@ -42,14 +42,16 @@ object DScaledClockCircle extends SimpleSwingApplication {
   def tick() = nsTime.set(System.nanoTime())
 
   val shapes = Var[List[Shape]](List.empty)
-  val panel = new ShapesPanel(shapes)
+  val panel  = new ShapesPanel(shapes)
 
-  val angle = nsTime.map( _.toDouble / NanoSecond * math.Pi)
+  val angle = nsTime.map(_.toDouble / NanoSecond * math.Pi)
 
-  val pos = Signal { Pos(
-    (panel.width() / 2 - 50).toDouble * math.sin(angle()),
-    (panel.height() / 2 - 50).toDouble * math.cos(angle())) }
-
+  val pos = Signal {
+    Pos(
+      (panel.width() / 2 - 50).toDouble * math.sin(angle()),
+      (panel.height() / 2 - 50).toDouble * math.cos(angle())
+    )
+  }
 
   shapes.transform(new Circle(pos, Var(50)) :: _)
 
@@ -58,15 +60,15 @@ object DScaledClockCircle extends SimpleSwingApplication {
     new MainFrame {
       title = "REScala Demo"
       contents = panel
-      setLocationRelativeTo(new UIElement {override def peer = null})
+      setLocationRelativeTo(new UIElement { override def peer = null })
     }
   }
 
   override def main(args: Array[String]): Unit = {
     super.main(args)
 
-    while(!top.visible) Thread.sleep(5)
-    while(top.visible) {
+    while (!top.visible) Thread.sleep(5)
+    while (top.visible) {
       Thread.sleep(1)
       tick()
     }

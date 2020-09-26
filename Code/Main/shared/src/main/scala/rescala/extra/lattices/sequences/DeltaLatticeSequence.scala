@@ -22,14 +22,11 @@ case class DeltaSequenceOrder(inner: Map[Vertex, Vertex]) {
     DeltaSequenceOrder(inner ++ addRightEdgeDelta(left, insertee).inner)
 }
 
-case class DeltaSequence[A](vertices: AddWinsSetO[Vertex],
-                            edges: DeltaSequenceOrder,
-                            values: Map[Vertex, A]
-                           ) {
+case class DeltaSequence[A](vertices: AddWinsSetO[Vertex], edges: DeltaSequenceOrder, values: Map[Vertex, A]) {
 
   def successor(v: Vertex): Option[Vertex] = {
     edges.inner.get(v) match {
-      case None    => None
+      case None => None
       case Some(u) =>
         if (vertices.contains(u)) Some(u) else successor(u)
     }
@@ -41,7 +38,6 @@ case class DeltaSequence[A](vertices: AddWinsSetO[Vertex],
     val newValues   = Map(insertee -> value)
     DeltaSequence(newVertices, newEdges, newValues)
   }
-
 
   def addRight(replica: Id, left: Vertex, insertee: Vertex, value: A): DeltaSequence[A] = {
     Lattice.merge(this, addRightDelta(replica, left, insertee, value))
@@ -63,27 +59,28 @@ case class DeltaSequence[A](vertices: AddWinsSetO[Vertex],
 
   def toList: List[A] = iterator.toList
 
-
   def iterator: Iterator[A] = vertexIterator.map(v => values(v))
 
-  def vertexIterator: Iterator[Vertex] = new AbstractIterator[Vertex] {
-    var lastVertex: Vertex = Vertex.start
+  def vertexIterator: Iterator[Vertex] =
+    new AbstractIterator[Vertex] {
+      var lastVertex: Vertex = Vertex.start
 
-    var currentSuccessor: Option[Vertex] = successor(lastVertex)
+      var currentSuccessor: Option[Vertex] = successor(lastVertex)
 
-    override def hasNext: Boolean = currentSuccessor.isDefined
+      override def hasNext: Boolean = currentSuccessor.isDefined
 
-    override def next(): Vertex = {
-      currentSuccessor match {
-        case Some(v) =>
-          lastVertex = v
-          currentSuccessor = successor(v)
-          v
-        case _       => throw new NoSuchElementException(
-          "Requesting iterator value after Vertex.end!")
+      override def next(): Vertex = {
+        currentSuccessor match {
+          case Some(v) =>
+            lastVertex = v
+            currentSuccessor = successor(v)
+            v
+          case _ => throw new NoSuchElementException(
+              "Requesting iterator value after Vertex.end!"
+            )
+        }
       }
     }
-  }
 
 }
 
@@ -95,36 +92,34 @@ object DeltaSequence {
     }
   }
 
-  def empty[A]: DeltaSequence[A] = DeltaSequence(AddWinsSetO.empty.add(Vertex.start, Vertex.start.id),
-                                                 DeltaSequenceOrder(Map()),
-                                                 Map.empty)
+  def empty[A]: DeltaSequence[A] =
+    DeltaSequence(AddWinsSetO.empty.add(Vertex.start, Vertex.start.id), DeltaSequenceOrder(Map()), Map.empty)
 
-  implicit def deltaSequenceLattice[A]: Lattice[DeltaSequence[A]] = new Lattice[DeltaSequence[A]] {
+  implicit def deltaSequenceLattice[A]: Lattice[DeltaSequence[A]] =
+    new Lattice[DeltaSequence[A]] {
 
-    private val noMapConflictsLattice: Lattice[A] = new Lattice[A] {
-      override def merge(left: A, right: A): A =
-        if (left == right) left
-        else throw new IllegalStateException(s"assumed there would be no conflict, but have $left and $right")
-    }
-
-    override def merge(left: DeltaSequence[A], right: DeltaSequence[A]): DeltaSequence[A] = {
-      val newVertices = right.vertices.toSet.filter(!left.edges.inner.contains(_))
-
-      // build map of old insertion positions of the new vertices
-      val oldPositions = right.edges.inner.foldLeft(Map.empty[Vertex, Vertex]) {
-        case (m, (u, v)) => if (newVertices.contains(v)) m + (v -> u) else m
+      private val noMapConflictsLattice: Lattice[A] = new Lattice[A] {
+        override def merge(left: A, right: A): A =
+          if (left == right) left
+          else throw new IllegalStateException(s"assumed there would be no conflict, but have $left and $right")
       }
 
-      val newEdges = newVertices.foldLeft(left.edges) { case (merged, v) =>
-        merged.addRightEdge(oldPositions(v), v)
-      }
-      val vertices = Lattice.merge(left.vertices, right.vertices)
-      val values   = Lattice.merge(left.values, right.values)(Lattice.mapLattice(noMapConflictsLattice))
+      override def merge(left: DeltaSequence[A], right: DeltaSequence[A]): DeltaSequence[A] = {
+        val newVertices = right.vertices.toSet.filter(!left.edges.inner.contains(_))
 
-      DeltaSequence(vertices = vertices,
-                    edges = newEdges,
-                    values = values.view.filterKeys(vertices.contains).toMap
-                    )
+        // build map of old insertion positions of the new vertices
+        val oldPositions = right.edges.inner.foldLeft(Map.empty[Vertex, Vertex]) {
+          case (m, (u, v)) => if (newVertices.contains(v)) m + (v -> u) else m
+        }
+
+        val newEdges = newVertices.foldLeft(left.edges) {
+          case (merged, v) =>
+            merged.addRightEdge(oldPositions(v), v)
+        }
+        val vertices = Lattice.merge(left.vertices, right.vertices)
+        val values   = Lattice.merge(left.values, right.values)(Lattice.mapLattice(noMapConflictsLattice))
+
+        DeltaSequence(vertices = vertices, edges = newEdges, values = values.view.filterKeys(vertices.contains).toMap)
+      }
     }
-  }
 }

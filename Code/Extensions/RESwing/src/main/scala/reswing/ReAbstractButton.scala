@@ -2,7 +2,6 @@ package reswing
 
 import javax.swing.Icon
 
-
 import scala.swing.{AbstractButton, Alignment, Color, Dimension, Font}
 import scala.swing.event.ButtonClicked
 
@@ -26,31 +25,29 @@ class ReAbstractButton(
     enabled: ReSwingValue[Boolean] = (),
     minimumSize: ReSwingValue[Dimension] = (),
     maximumSize: ReSwingValue[Dimension] = (),
-    preferredSize: ReSwingValue[Dimension] = ())
-  extends
-    ReComponent(background, foreground, font, enabled,
-                minimumSize, maximumSize, preferredSize) {
+    preferredSize: ReSwingValue[Dimension] = ()
+) extends ReComponent(background, foreground, font, enabled, minimumSize, maximumSize, preferredSize) {
   override protected lazy val peer = new AbstractButton with ComponentMixin
 
-  text.using ({() => peer.text}, peer.text_= _, "text")
-  selected.using ({() => peer.selected}, peer.selected_= _, classOf[ButtonClicked])
+  text.using({ () => peer.text }, peer.text_= _, "text")
+  selected.using({ () => peer.selected }, peer.selected_= _, classOf[ButtonClicked])
 
-  horizontalAlignment.using ({() => peer.horizontalAlignment},
-                             peer.horizontalAlignment= _, "horizontalAlignment")
-  verticalAlignment.using ({() => peer.verticalAlignment},
-                           peer.verticalAlignment= _, "verticalAlignment")
-  horizontalTextPosition.using ({() => peer.horizontalTextPosition},
-                                peer.horizontalTextPosition= _, "horizontalTextPosition")
-  verticalTextPosition.using ({() => peer.verticalTextPosition},
-                              peer.verticalTextPosition_= _, "verticalTextPosition")
+  horizontalAlignment.using({ () => peer.horizontalAlignment }, peer.horizontalAlignment = _, "horizontalAlignment")
+  verticalAlignment.using({ () => peer.verticalAlignment }, peer.verticalAlignment = _, "verticalAlignment")
+  horizontalTextPosition.using(
+    { () => peer.horizontalTextPosition },
+    peer.horizontalTextPosition = _,
+    "horizontalTextPosition"
+  )
+  verticalTextPosition.using({ () => peer.verticalTextPosition }, peer.verticalTextPosition_= _, "verticalTextPosition")
 
-  icon.using ({() => peer.icon}, peer.icon_= _, "icon")
-  pressedIcon.using ({() => peer.pressedIcon}, peer.pressedIcon_= _, "pressedIcon")
-  selectedIcon.using ({() => peer.selectedIcon}, peer.selectedIcon_= _, "selectedIcon")
-  disabledIcon.using ({() => peer.disabledIcon}, peer.disabledIcon_= _, "disabledIcon")
-  disabledSelectedIcon.using ({() => peer.disabledSelectedIcon}, peer.disabledSelectedIcon_= _, "disabledSelectedIcon")
-  rolloverIcon.using ({() => peer.rolloverIcon}, peer.rolloverIcon_= _, "rolloverIcon")
-  rolloverSelectedIcon.using ({() => peer.rolloverSelectedIcon}, peer.rolloverSelectedIcon_= _, "rolloverSelectedIcon")
+  icon.using({ () => peer.icon }, peer.icon_= _, "icon")
+  pressedIcon.using({ () => peer.pressedIcon }, peer.pressedIcon_= _, "pressedIcon")
+  selectedIcon.using({ () => peer.selectedIcon }, peer.selectedIcon_= _, "selectedIcon")
+  disabledIcon.using({ () => peer.disabledIcon }, peer.disabledIcon_= _, "disabledIcon")
+  disabledSelectedIcon.using({ () => peer.disabledSelectedIcon }, peer.disabledSelectedIcon_= _, "disabledSelectedIcon")
+  rolloverIcon.using({ () => peer.rolloverIcon }, peer.rolloverIcon_= _, "rolloverIcon")
+  rolloverSelectedIcon.using({ () => peer.rolloverSelectedIcon }, peer.rolloverSelectedIcon_= _, "rolloverSelectedIcon")
 
   val clicked = ReSwingEvent.using(classOf[ButtonClicked])
 }

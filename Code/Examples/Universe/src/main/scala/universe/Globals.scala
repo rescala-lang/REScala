@@ -4,7 +4,6 @@ import rescala.Schedulers
 import rescala.core.{Scheduler, Struct}
 import rescala.interface.RescalaInterface
 
-
 object Globals {
   val engineName: String = System.getProperty("engineName", "parrp")
 

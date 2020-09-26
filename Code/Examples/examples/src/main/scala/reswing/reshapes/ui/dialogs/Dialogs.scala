@@ -30,13 +30,13 @@ abstract class CustomDialog extends Dialog {
 }
 
 class ServerDialog extends CustomDialog {
-  val hostnameInput = new TextField(50) { text = "localhost" }
-  val commandPortInput = new TextField(10) { text = "9998" }
+  val hostnameInput     = new TextField(50) { text = "localhost" }
+  val commandPortInput  = new TextField(10) { text = "9998" }
   val exchangePortInput = new TextField(10) { text = "9999" }
   val listenerPortInput = new TextField(10) { text = "1337" }
 
-  var hostname: String = null
-  var commandPort: Int = -1
+  var hostname: String  = null
+  var commandPort: Int  = -1
   var exchangePort: Int = -1
   var listenerPort: Int = -1
 
@@ -64,8 +64,7 @@ class ServerDialog extends CustomDialog {
       commandPort = commandPortInput.text.toInt
       exchangePort = exchangePortInput.text.toInt
       listenerPort = listenerPortInput.text.toInt
-    }
-    catch {
+    } catch {
       case e: NumberFormatException =>
         hostname = null
         commandPort = -1
@@ -77,16 +76,16 @@ class ServerDialog extends CustomDialog {
 
   def inputIsValid() =
     hostname != null &&
-    hostname.length > 0 &&
-    commandPort > 0 &&
-    exchangePort > 0 &&
-    listenerPort > 0
+      hostname.length > 0 &&
+      commandPort > 0 &&
+      exchangePort > 0 &&
+      listenerPort > 0
 }
 
 class NewTabDialog extends CustomDialog {
   val showIntersections = new CheckBox("show intersections")
-  val showCoordinates = new CheckBox("show coordinates")
-  val showNames = new CheckBox("show shape names")
+  val showCoordinates   = new CheckBox("show coordinates")
+  val showNames         = new CheckBox("show shape names")
 
   contents = new BoxPanel(Orientation.Vertical) {
     contents += showIntersections

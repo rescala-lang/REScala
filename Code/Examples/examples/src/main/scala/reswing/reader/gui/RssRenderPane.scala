@@ -10,9 +10,7 @@ import javax.swing.event.HyperlinkListener
 import rescala.default._
 import reswing.reader.data.RSSItem
 
-/**
-* Displays the content of an single RSS Item
-*/
+/** Displays the content of an single RSS Item */
 class RssItemRenderPane(item: Signal[Option[RSSItem]]) extends EditorPane {
   super.editable = false
   super.contentType = "text/html"
@@ -24,8 +22,7 @@ class RssItemRenderPane(item: Signal[Option[RSSItem]]) extends EditorPane {
       else if (e.getEventType == HyperlinkEvent.EventType.EXITED)
         peer.setToolTipText(null)
       else if (e.getEventType == HyperlinkEvent.EventType.ACTIVATED)
-        try
-            Desktop.getDesktop.browse(e.getURL.toURI)
+        try Desktop.getDesktop.browse(e.getURL.toURI)
         catch {
           case e: IOException => e.printStackTrace
         }
@@ -34,14 +31,16 @@ class RssItemRenderPane(item: Signal[Option[RSSItem]]) extends EditorPane {
   item.changed += { //#IF //#HDL
     _ match {
       case Some(item) =>
-        text = List("<b>Title:</b>",
-                    item.title,
-                    "<b>Publication date:</b>",
-                    item.pubDate.getOrElse("Unknown"),
-                    "<b>Source:</b>",
-                    item.link.map { link => "<a href="+link+">"+link+"</a>"}.getOrElse("Unknown"),
-                    "<hr>",
-                    item.description).mkString("<br>")
+        text = List(
+          "<b>Title:</b>",
+          item.title,
+          "<b>Publication date:</b>",
+          item.pubDate.getOrElse("Unknown"),
+          "<b>Source:</b>",
+          item.link.map { link => "<a href=" + link + ">" + link + "</a>" }.getOrElse("Unknown"),
+          "<hr>",
+          item.description
+        ).mkString("<br>")
       case None =>
         text = ""
     }

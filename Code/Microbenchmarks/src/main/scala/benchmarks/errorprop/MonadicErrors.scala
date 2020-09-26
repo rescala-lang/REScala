@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
-import rescala.core.{Scheduler, Struct};import rescala.interface.RescalaInterface
+import rescala.core.{Scheduler, Struct}; import rescala.interface.RescalaInterface
 import rescala.reactives.Event
 
 import scala.util.Try
@@ -19,10 +19,10 @@ import scala.util.Try
 @State(Scope.Thread)
 class MonadicErrors[S <: Struct] {
 
-  var engine: RescalaInterface[S] = _
+  var engine: RescalaInterface[S]      = _
   implicit def scheduler: Scheduler[S] = engine.scheduler
 
-  var fire: Int => Unit = _
+  var fire: Int => Unit          = _
   var finalresult: Event[Any, S] = _
 
   @Param(Array("true", "false"))
@@ -32,19 +32,24 @@ class MonadicErrors[S <: Struct] {
   def setup(params: BenchmarkParams, size: Size, engineParam: EngineParam[S], work: Workload) = {
     engine = engineParam.engine
     if (isMonadic) {
-      val source = engine.Evt[Try[Int]]()
+      val source                     = engine.Evt[Try[Int]]()
       var result: Event[Try[Int], S] = source
       for (_ <- Range(1, size.size)) {
-        result = result.map { t: Try[Int] => t.map { v => val r = v + 1; work.consume(); r } }
+        result = result.map { t: Try[Int] =>
+          t.map { v =>
+            val r = v + 1; work.consume(); r
+          }
+        }
       }
       finalresult = result
-      fire = i => source.fire(Try{i})
-    }
-    else {
-      val source = engine.Evt[Int]()
+      fire = i => source.fire(Try { i })
+    } else {
+      val source                = engine.Evt[Int]()
       var result: Event[Int, S] = source
       for (_ <- Range(1, size.size)) {
-        result = result.map {  v => val r = v + 1; work.consume(); r  }
+        result = result.map { v =>
+          val r = v + 1; work.consume(); r
+        }
       }
       finalresult = result
       fire = source.fire
@@ -54,4 +59,3 @@ class MonadicErrors[S <: Struct] {
   @Benchmark
   def run(step: Step): Unit = fire(step.run())
 }
-

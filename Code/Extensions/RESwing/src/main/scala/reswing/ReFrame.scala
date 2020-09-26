@@ -1,6 +1,5 @@
 package reswing
 
-
 import scala.swing.{Component, Dimension, Frame, Point, Rectangle}
 
 class ReFrame(
@@ -11,12 +10,9 @@ class ReFrame(
     bounds: ReSwingValue[Rectangle] = (),
     minimumSize: ReSwingValue[Dimension] = (),
     maximumSize: ReSwingValue[Dimension] = (),
-    preferredSize: ReSwingValue[Dimension] = ())
-  extends
-    ReWindow(contents, size, location, bounds,
-             minimumSize, maximumSize, preferredSize)
-  with
-    ReRichWindow {
+    preferredSize: ReSwingValue[Dimension] = ()
+) extends ReWindow(contents, size, location, bounds, minimumSize, maximumSize, preferredSize)
+    with ReRichWindow {
   override protected lazy val peer = new Frame
 }
 

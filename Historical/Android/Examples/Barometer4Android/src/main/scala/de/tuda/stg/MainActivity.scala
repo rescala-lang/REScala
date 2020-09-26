@@ -7,9 +7,8 @@ import rescala.default._
 import reandroidthings._
 
 class MainActivity extends AppCompatActivity {
-  private val TAG = "Barometer4Android"
+  private val TAG      = "Barometer4Android"
   implicit val context = this
-
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
@@ -17,11 +16,11 @@ class MainActivity extends AppCompatActivity {
 
     ReSensorManager.init(this.getApplicationContext)
     // get temperature sensor (requires cast)
-    val temperatureSensor: ReSensor[Float] = ReSensorManager.getSensor(ReSensor.TypeDynamicSensorMetaTemperatureDescriptor)
+    val temperatureSensor: ReSensor[Float] =
+      ReSensorManager.getSensor(ReSensor.TypeDynamicSensorMetaTemperatureDescriptor)
 
     ReAlphaNumericDisplay.init(temperatureSensor.valueChanged)
   }
-
 
   override def onDestroy(): Unit = {
     super.onDestroy()
@@ -29,7 +28,6 @@ class MainActivity extends AppCompatActivity {
 
     destroy()
   }
-
 
   def destroy(): Unit = {
     // remove sensors

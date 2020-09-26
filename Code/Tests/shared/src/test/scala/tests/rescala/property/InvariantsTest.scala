@@ -74,10 +74,10 @@ class InvariantsTest extends RETests with ScalaCheckDrivenPropertyChecks with Ma
   }
 
   "only closest generators are used" in {
-    val top = Var(10)
-    val left = Signal { top() + 1 }
+    val top   = Var(10)
+    val left  = Signal { top() + 1 }
     val right = Signal { top() + 2 }
-    val sut = Signal { left() + right() }
+    val sut   = Signal { left() + right() }
 
     val topChangedCount = top.changed.count()
 

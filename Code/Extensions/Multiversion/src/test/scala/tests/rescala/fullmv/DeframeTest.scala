@@ -13,21 +13,25 @@ class DeframeTest extends AnyFunSuite {
     val engine = new FullMVEngine(Duration.Zero, "deframe-test")
     import engine._
 
-    val dummy = Signal {-1}.resource.asInstanceOf[Reactive]
+    val dummy = Signal { -1 }.resource.asInstanceOf[Reactive]
 
-    val r = Signal { 0 }
-    val right = r.resource.asInstanceOf[Reactive]
-    val m = Signal {r() + 1}
+    val r      = Signal { 0 }
+    val right  = r.resource.asInstanceOf[Reactive]
+    val m      = Signal { r() + 1 }
     val middle = m.resource.asInstanceOf[Reactive]
-    val t = Signal {m() + 1}
-    val top = t.resource.asInstanceOf[Reactive]
+    val t      = Signal { m() + 1 }
+    val top    = t.resource.asInstanceOf[Reactive]
 
     val turnLeftOne = engine.newTurn()
     turnLeftOne.beginFraming()
     assert(new Framing(turnLeftOne, middle).doFraming() === FramingBranchResult.Frame(Set(top), turnLeftOne))
     assert(new Framing(turnLeftOne, top).doFraming() === FramingBranchResult.Frame(Set(), turnLeftOne))
     turnLeftOne.completeFraming()
-    assert(new Notification(turnLeftOne, middle, changed = true).deliverNotification() === true -> NotificationBranchResult.ReevaluationReady)
+    assert(new Notification(
+      turnLeftOne,
+      middle,
+      changed = true
+    ).deliverNotification() === true -> NotificationBranchResult.ReevaluationReady)
 
     val turnRightOne = engine.newTurn()
     turnRightOne.beginFraming()
@@ -41,42 +45,62 @@ class DeframeTest extends AnyFunSuite {
     assert(new Framing(turnRightTwo, right).doFraming() === FramingBranchResult.Frame(Set(middle), turnRightTwo))
     assert(new Framing(turnRightTwo, middle).doFraming() === FramingBranchResult.FramingBranchEnd)
 
-    assert(new Framing(turnRightOne, right).doFraming() === FramingBranchResult.FrameSupersede(Set(middle), turnRightOne, turnRightTwo))
+    assert(new Framing(turnRightOne, right).doFraming() === FramingBranchResult.FrameSupersede(
+      Set(middle),
+      turnRightOne,
+      turnRightTwo
+    ))
     turnLeftOne.drop(right, middle)
 
     val reevMiddle = new Reevaluation(turnLeftOne, middle)
-    assert(reevMiddle.processReevaluationResult(Some(Pulse.Value(123).asInstanceOf[reevMiddle.node.Value])) === PureNotifyOnly (Set(top)))
+    assert(reevMiddle.processReevaluationResult(
+      Some(Pulse.Value(123).asInstanceOf[reevMiddle.node.Value])
+    ) === PureNotifyOnly(Set(top)))
     //    assert(reevMiddle.processReevaluationResult(Some(123.asInstanceOf[reevMiddle.node.Value])) === FollowFraming(Set(top), turnRightTwo))
-    assert(new Notification(turnLeftOne, top, changed = true).deliverNotification() === true -> NotificationBranchResult.ReevaluationReady)
+    assert(new Notification(
+      turnLeftOne,
+      top,
+      changed = true
+    ).deliverNotification() === true -> NotificationBranchResult.ReevaluationReady)
     //    assert(NotificationWithFollowFrame(turnLeftOne, top, changed = true, turnRightTwo).deliverNotification() === NotificationResultAction.GlitchFreeReady)
 
-    assert(new SupersedeFraming(turnRightOne, middle, turnRightTwo).doFraming() === FramingBranchResult.FramingBranchEnd)
+    assert(new SupersedeFraming(
+      turnRightOne,
+      middle,
+      turnRightTwo
+    ).doFraming() === FramingBranchResult.FramingBranchEnd)
     //    assert(SupersedeFraming(turnRightOne, middle, turnRightTwo).doFraming() === FramingBranchResult.Deframe(Set(top), turnRightTwo))
     //    assert(Deframing(turnRightTwo, top).doFraming() === FramingBranchResult.FramingBranchEnd)
 
     val reevTop = new Reevaluation(turnLeftOne, top)
-    assert(reevTop.processReevaluationResult(Some(Pulse.Value(234).asInstanceOf[reevTop.node.Value])) === PureNotifyOnly(Set()))
+    assert(reevTop.processReevaluationResult(
+      Some(Pulse.Value(234).asInstanceOf[reevTop.node.Value])
+    ) === PureNotifyOnly(Set()))
   }
 
   test("deframe-reframe") {
     val engine = new FullMVEngine(Duration.Zero, "deframe-reframe-test")
     import engine._
 
-    val dummy = Signal {-1}.resource.asInstanceOf[Reactive]
+    val dummy = Signal { -1 }.resource.asInstanceOf[Reactive]
 
-    val r = Signal { 0 }
-    val right = r.resource.asInstanceOf[Reactive]
-    val m = Signal {r() + 1}
+    val r      = Signal { 0 }
+    val right  = r.resource.asInstanceOf[Reactive]
+    val m      = Signal { r() + 1 }
     val middle = m.resource.asInstanceOf[Reactive]
-    val t = Signal {m() + 1}
-    val top = t.resource.asInstanceOf[Reactive]
+    val t      = Signal { m() + 1 }
+    val top    = t.resource.asInstanceOf[Reactive]
 
     val turnLeftOne = engine.newTurn()
     turnLeftOne.beginFraming()
     assert(new Framing(turnLeftOne, middle).doFraming() === FramingBranchResult.Frame(Set(top), turnLeftOne))
     assert(new Framing(turnLeftOne, top).doFraming() === FramingBranchResult.Frame(Set(), turnLeftOne))
     turnLeftOne.completeFraming()
-    assert(new Notification(turnLeftOne, middle, changed = true).deliverNotification() === true -> NotificationBranchResult.ReevaluationReady)
+    assert(new Notification(
+      turnLeftOne,
+      middle,
+      changed = true
+    ).deliverNotification() === true -> NotificationBranchResult.ReevaluationReady)
 
     val turnRightOne = engine.newTurn()
     turnRightOne.beginFraming()
@@ -94,21 +118,36 @@ class DeframeTest extends AnyFunSuite {
     turnLeftTwo.beginFraming()
     assert(new Framing(turnLeftTwo, middle).doFraming() === FramingBranchResult.FramingBranchEnd)
 
-    assert(new Framing(turnRightOne, right).doFraming() === FramingBranchResult.FrameSupersede(Set(middle), turnRightOne, turnRightTwo))
+    assert(new Framing(turnRightOne, right).doFraming() === FramingBranchResult.FrameSupersede(
+      Set(middle),
+      turnRightOne,
+      turnRightTwo
+    ))
     turnLeftOne.drop(right, middle)
 
     val reevMiddle = new Reevaluation(turnLeftOne, middle)
-    assert(reevMiddle.processReevaluationResult(Some(Pulse.Value(123).asInstanceOf[reevMiddle.node.Value])) === PureNotifyOnly(Set(top)))
+    assert(reevMiddle.processReevaluationResult(
+      Some(Pulse.Value(123).asInstanceOf[reevMiddle.node.Value])
+    ) === PureNotifyOnly(Set(top)))
     //    assert(reevMiddle.processReevaluationResult(Some(123.asInstanceOf[reevMiddle.node.Value])) === FollowFraming(Set(top), turnRightTwo))
-    assert(new Notification(turnLeftOne, top, changed = true).deliverNotification() === true -> NotificationBranchResult.ReevaluationReady)
+    assert(new Notification(
+      turnLeftOne,
+      top,
+      changed = true
+    ).deliverNotification() === true -> NotificationBranchResult.ReevaluationReady)
     //    assert(NotificationWithFollowFrame(turnLeftOne, top, changed = true, turnRightTwo).deliverNotification() === NotificationResultAction.GlitchFreeReady)
 
-    assert(new SupersedeFraming(turnRightOne, middle, turnRightTwo).doFraming() === FramingBranchResult.Frame(Set(top), turnLeftTwo))
+    assert(new SupersedeFraming(turnRightOne, middle, turnRightTwo).doFraming() === FramingBranchResult.Frame(
+      Set(top),
+      turnLeftTwo
+    ))
     //    assert(SupersedeFraming(turnRightOne, middle, turnRightTwo).doFraming() === FramingBranchResult.DeframeReframe(Set(top), turnRightTwo, turnLeftTwo))
     assert(new Framing(turnLeftTwo, top).doFraming() === FramingBranchResult.FramingBranchEnd)
     //    assert(DeframeReframing(turnRightTwo, top, turnLeftTwo).doFraming() === FramingBranchResult.FramingBranchEnd)
 
     val reevTop = new Reevaluation(turnLeftOne, top)
-    assert(reevTop.processReevaluationResult(Some(Pulse.Value(234).asInstanceOf[reevTop.node.Value])) === NotifyAndNonReadySuccessor(Set(), turnLeftTwo))
+    assert(reevTop.processReevaluationResult(
+      Some(Pulse.Value(234).asInstanceOf[reevTop.node.Value])
+    ) === NotifyAndNonReadySuccessor(Set(), turnLeftTwo))
   }
 }

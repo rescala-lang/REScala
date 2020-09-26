@@ -9,14 +9,10 @@ import rescala.extra.lattices.sequences.{RGA, Vertex}
   * @param initial The initial value of this variable.
   */
 case class PVertexList[A](initial: RGA[A] = RGA.empty[A])
-extends DistributedSignal[List[A], RGA[A]](initial, _.toList) {
+    extends DistributedSignal[List[A], RGA[A]](initial, _.toList) {
   def contains(v: Vertex): Boolean = crdtSignal.readValueOnce.contains(v)
 
-
-  /**
-    *
-    * @return True if the list contains both u and v and u is ordered before v.
-    */
+  /** @return True if the list contains both u and v and u is ordered before v. */
   def before(u: Vertex, v: Vertex): Boolean = crdtSignal.readValueOnce.before(u, v)
 
   def append(value: A): Unit = crdtSignal.transform(_.append(value))
@@ -29,9 +25,8 @@ extends DistributedSignal[List[A], RGA[A]](initial, _.toList) {
 }
 
 object PVertexList {
-  /**
-    * Allows creation of DistributedVertexLists by passing a list of initial values.
-    */
+
+  /** Allows creation of DistributedVertexLists by passing a list of initial values. */
   def apply[A](values: List[A]): PVertexList[A] = {
     val init: RGA[A] = RGA[A](values)
     new PVertexList[A](init)

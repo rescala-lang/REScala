@@ -4,7 +4,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import benchmarks.philosophers.PhilosopherTable._
 import org.openjdk.jmh.infra.Blackhole
-import rescala.core.Struct;import rescala.interface.RescalaInterface
+import rescala.core.Struct; import rescala.interface.RescalaInterface
 import rescala.reactives._
 
 class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(val engine: RescalaInterface[S]) {
@@ -14,7 +14,6 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(val engin
   val seatings = createTable(philosopherCount)
 
   val eaten = new AtomicInteger(0)
-
 
   seatings.foreach { seating =>
     seating.vision.observe { state =>
@@ -56,37 +55,41 @@ object PhilosopherTable {
   def calcFork(leftName: String, rightName: String)(leftState: Philosopher, rightState: Philosopher): Fork =
     (leftState, rightState) match {
       case (Thinking, Thinking) => Free
-      case (Eating, _) => Taken(leftName)
-      case (_, Eating) => Taken(rightName)
+      case (Eating, _)          => Taken(leftName)
+      case (_, Eating)          => Taken(rightName)
     }
 
   def calcVision(ownName: String)(leftFork: Fork, rightFork: Fork): Vision =
     (leftFork, rightFork) match {
-      case (Free, Free) => Ready
+      case (Free, Free)                         => Ready
       case (Taken(`ownName`), Taken(`ownName`)) => Done
-      case (Taken(name), _) => BlockedBy(name)
-      case (_, Taken(name)) => BlockedBy(name)
+      case (Taken(name), _)                     => BlockedBy(name)
+      case (_, Taken(name))                     => BlockedBy(name)
     }
-
 
   // ============================================= Infrastructure ========================================================
 
   sealed trait Philosopher
   case object Thinking extends Philosopher
-  case object Eating extends Philosopher
+  case object Eating   extends Philosopher
 
   sealed trait Fork
-  case object Free extends Fork
+  case object Free               extends Fork
   case class Taken(name: String) extends Fork
 
   sealed trait Vision
-  case object Ready extends Vision
-  case object Done extends Vision
+  case object Ready                  extends Vision
+  case object Done                   extends Vision
   case class BlockedBy(name: String) extends Vision
-
 
   // ============================================ Entity Creation =========================================================
 
-  case class Seating[S <: Struct](placeNumber: Int, philosopher: Var[Philosopher, S], leftFork: Signal[Fork, S], rightFork: Signal[Fork, S], vision: Signal[Vision, S])
+  case class Seating[S <: Struct](
+      placeNumber: Int,
+      philosopher: Var[Philosopher, S],
+      leftFork: Signal[Fork, S],
+      rightFork: Signal[Fork, S],
+      vision: Signal[Vision, S]
+  )
 
 }

@@ -1,6 +1,5 @@
 package reswing
 
-
 import scala.swing.{Component, RootPanel}
 import scala.swing.event.{ComponentAdded, ComponentRemoved}
 
@@ -10,9 +9,11 @@ trait ReRootPanel extends ReUIElement {
   def contents: ReSwingValue[Component]
 
   contents.using(
-      { () => peer.contents.headOption getOrElse null },
-      peer.contents_= _,
-      classOf[ComponentAdded], classOf[ComponentRemoved])
+    { () => peer.contents.headOption getOrElse null },
+    peer.contents_= _,
+    classOf[ComponentAdded],
+    classOf[ComponentRemoved]
+  )
 }
 
 object ReRootPanel {

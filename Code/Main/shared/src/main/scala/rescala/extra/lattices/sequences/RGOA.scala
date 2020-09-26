@@ -10,10 +10,7 @@ object RGOA {
 
   implicit def lattice[A]: Lattice[RGOA[A]] = LatticeSequence.lattice[A, Set[Vertex]]
 
-  def empty[A]: RGOA[A] = LatticeSequence(Set[Vertex](),
-                                          HashMap[Vertex, Vertex](Vertex.start -> Vertex.end),
-                                          Map())
-
+  def empty[A]: RGOA[A] = LatticeSequence(Set[Vertex](), HashMap[Vertex, Vertex](Vertex.start -> Vertex.end), Map())
 
   /** Allows the creation of new CRDTs by passing an initial value.
     *

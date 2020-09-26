@@ -27,18 +27,17 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(val inter
   def calcFork(leftName: String, rightName: String)(leftState: Philosopher, rightState: Philosopher): Fork =
     (leftState, rightState) match {
       case (Thinking, Thinking) => Free
-      case (Hungry, _) => Taken(leftName)
-      case (_, Hungry) => Taken(rightName)
+      case (Hungry, _)          => Taken(leftName)
+      case (_, Hungry)          => Taken(rightName)
     }
 
   def calcVision(ownName: String)(leftFork: Fork, rightFork: Fork): Vision =
     (leftFork, rightFork) match {
-      case (Free, Free) => Ready
+      case (Free, Free)                         => Ready
       case (Taken(`ownName`), Taken(`ownName`)) => Eating
-      case (Taken(name), _) => WaitingFor(name)
-      case (_, Taken(name)) => WaitingFor(name)
+      case (Taken(name), _)                     => WaitingFor(name)
+      case (_, Taken(name))                     => WaitingFor(name)
     }
-
 
   def createTable(tableSize: Int): Seq[Seating[S]] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
@@ -47,12 +46,14 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(val inter
 
     val forks = for (i <- 0 until tableSize) yield {
       val nextCircularIndex = mod(i + 1)
-      interface.Signals.lift(phils(i), phils(nextCircularIndex))(calcFork(i.toString, nextCircularIndex.toString))(s"Fork($i, $nextCircularIndex)")
+      interface.Signals.lift(phils(i), phils(nextCircularIndex))(calcFork(i.toString, nextCircularIndex.toString))(
+        s"Fork($i, $nextCircularIndex)"
+      )
     }
 
     for (i <- 0 until tableSize) yield {
       val previousCircularIndex = mod(i - 1)
-      val vision = interface.Signals.lift(forks(previousCircularIndex), forks(i))(calcVision(i.toString))(s"Vision($i)")
+      val vision                = interface.Signals.lift(forks(previousCircularIndex), forks(i))(calcVision(i.toString))(s"Vision($i)")
       Seating(i, phils(i), forks(previousCircularIndex), forks(i), vision)
     }
   }
@@ -68,14 +69,18 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(val inter
       // }
       forksAreFree
     } /* propagation executes here */ { (forksWereFree, turn) =>
-      if (forksWereFree) assert(turn.now(seating.vision) == Eating, s"philosopher should be done after turn but is ${seating.inspect(turn)}")
+      if (forksWereFree)
+        assert(
+          turn.now(seating.vision) == Eating,
+          s"philosopher should be done after turn but is ${seating.inspect(turn)}"
+        )
       // println(Thread.currentThread().getName + " done " + turn)
       forksWereFree
     }
 
   def eatOnce(seating: Seating[S]): Unit = {
     val bo = new Backoff()
-    while(!tryEat(seating)) {bo.backoff()}
+    while (!tryEat(seating)) { bo.backoff() }
 
     seating.philosopher.set(Thinking)
     // engine.transactionWithWrapup(seating.philosopher){ turn =>
@@ -92,22 +97,28 @@ object PhilosopherTable {
 
   sealed trait Philosopher
   case object Thinking extends Philosopher
-  case object Hungry extends Philosopher
+  case object Hungry   extends Philosopher
 
   sealed trait Fork
-  case object Free extends Fork
+  case object Free               extends Fork
   case class Taken(name: String) extends Fork
 
   sealed trait Vision
-  case object Ready extends Vision
-  case object Eating extends Vision
+  case object Ready                   extends Vision
+  case object Eating                  extends Vision
   case class WaitingFor(name: String) extends Vision
-
 
   // ============================================ Entity Creation =========================================================
 
-  case class Seating[S <: Struct](placeNumber: Int, philosopher: Var[Philosopher, S], leftFork: Signal[Fork, S], rightFork: Signal[Fork, S], vision: Signal[Vision, S]) {
-    def inspect(t: AccessTicket[S]): String = s"Seating(${t.now(philosopher)}, ${t.now(leftFork)}, ${t.now(rightFork)}, ${t.now(vision)})"
+  case class Seating[S <: Struct](
+      placeNumber: Int,
+      philosopher: Var[Philosopher, S],
+      leftFork: Signal[Fork, S],
+      rightFork: Signal[Fork, S],
+      vision: Signal[Vision, S]
+  ) {
+    def inspect(t: AccessTicket[S]): String =
+      s"Seating(${t.now(philosopher)}, ${t.now(leftFork)}, ${t.now(rightFork)}, ${t.now(vision)})"
   }
 
 }

@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
-import rescala.core.{Scheduler, Struct};import rescala.interface.RescalaInterface
+import rescala.core.{Scheduler, Struct}; import rescala.interface.RescalaInterface
 import rescala.reactives.{Signal, Var}
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -19,7 +19,7 @@ class ChainSignalNoChange[S <: Struct] {
 
   var engine: RescalaInterface[S] = _; implicit def scheduler: Scheduler[S] = engine.scheduler
 
-  var source: Var[Int, S] = _
+  var source: Var[Int, S]    = _
   var result: Signal[Int, S] = _
 
   @Setup
@@ -28,7 +28,9 @@ class ChainSignalNoChange[S <: Struct] {
     source = engine.Var(0)
     result = source
     for (_ <- Range(0, size.size)) {
-      result = result.map{v => val r = v + 1; work.consume(); r}
+      result = result.map { v =>
+        val r = v + 1; work.consume(); r
+      }
     }
   }
 

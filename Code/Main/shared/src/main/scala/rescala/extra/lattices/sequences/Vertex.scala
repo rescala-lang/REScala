@@ -6,16 +6,15 @@ import rescala.extra.lattices.sequences.Vertex.Timestamp
 
 import scala.util.Right
 
-
 case class Vertex(timestamp: Timestamp, id: IdUtil.Id)
 
 object Vertex {
   type Timestamp = Long
 
   val start: Vertex = Vertex(-1, "start")
-  val end: Vertex = Vertex(0, "end")
+  val end: Vertex   = Vertex(0, "end")
 
-  def fresh[A](): Vertex = Vertex( IdUtil.genTimestamp(), IdUtil.genId())
+  def fresh[A](): Vertex = Vertex(IdUtil.genTimestamp(), IdUtil.genId())
 
   implicit val vertexEncoder: Encoder[Vertex] =
     Encoder.forProduct2("timestamp", "id")(v => (v.timestamp, v.id))

@@ -9,7 +9,8 @@ trait FullMVAction extends RecursiveAction {
   val turn: FullMVTurn
   val node: ReSource[FullMVStruct]
   override def compute(): Unit = {
-    try { doCompute() } catch {
+    try { doCompute() }
+    catch {
       case t: Throwable =>
         new Exception(this.toString + " failed on " + Thread.currentThread().getName, t).printStackTrace()
     }

@@ -50,25 +50,21 @@ final private[levelbased] class LevelQueue[S <: LevelStruct](evaluator: LevelQue
         if (r.state.level() <= headMinLevel)
           enqueue(headMinLevel + 1, needsEvaluate = false)(r)
       }
-    }
-    else if (reevaluate) {
+    } else if (reevaluate) {
       evaluator.evaluate(head)
     }
   }
 
-  /**
-    * Evaluates all currently queued elements by applying the given evaluator to them.
-    */
+  /** Evaluates all currently queued elements by applying the given evaluator to them. */
   def evaluateQueue(): Unit = {
     var current = elements.poll()
-    var next = elements.peek()
+    var next    = elements.peek()
     while (current != null) {
       // if the current and next reactive are equal, merge the queue entries
       if (next != null && current.reactive == next.reactive) {
         next.minLevel = next.minLevel max current.minLevel
         next.needsEvaluate ||= current.needsEvaluate
-      }
-      else {
+      } else {
         handleElement(current)
       }
       current = elements.poll()
@@ -76,7 +72,6 @@ final private[levelbased] class LevelQueue[S <: LevelStruct](evaluator: LevelQue
     }
 
   }
-
 
   /**
     * Removes a reactive element from the queue
@@ -89,19 +84,23 @@ final private[levelbased] class LevelQueue[S <: LevelStruct](evaluator: LevelQue
   }
 }
 
-
 private[levelbased] object LevelQueue {
 
   trait Evaluator[S <: Struct] {
     def evaluate(r: Derived[S]): Unit
   }
 
-  /** The value to not increase the level of an enqueued [[QueueElement]].*/
+  /** The value to not increase the level of an enqueued [[QueueElement]]. */
   def noLevelIncrease: Int = Int.MinValue
 
-  private final case class QueueElement[S <: Struct](level: Int, reactive: Derived[S], var minLevel: Int, var needsEvaluate: Boolean) extends Comparable[QueueElement[S]] {
+  private final case class QueueElement[S <: Struct](
+      level: Int,
+      reactive: Derived[S],
+      var minLevel: Int,
+      var needsEvaluate: Boolean
+  ) extends Comparable[QueueElement[S]] {
     // order by level, then by reactive
-    val order: Long = (level.toLong << 32) | (reactive.hashCode.toLong & 0x00000000ffffffffL)
+    val order: Long                                 = (level.toLong << 32) | (reactive.hashCode.toLong & 0x00000000ffffffffL)
     override def compareTo(o: QueueElement[S]): Int = java.lang.Long.compare(order, o.order)
   }
 }

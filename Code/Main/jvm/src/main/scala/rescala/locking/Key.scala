@@ -11,14 +11,13 @@ final class Key[InterTurn](val turn: InterTurn) {
    * the lock keychain method ensures correct locking of this field */
   @volatile private[locking] var keychain: Keychain[InterTurn] = new Keychain(this)
 
-  val id: Long = keychain.id
+  val id: Long                  = keychain.id
   override def toString: String = s"Key($id)"
 
   private[this] val semaphore = new Semaphore(0)
 
   private[locking] def continue(): Unit = semaphore.release()
-  private[locking] def await(): Unit = semaphore.acquire()
-
+  private[locking] def await(): Unit    = semaphore.acquire()
 
   def lockKeychain[R](f: Keychain[InterTurn] => R): R = {
     while (true) {
@@ -35,17 +34,18 @@ final class Key[InterTurn](val turn: InterTurn) {
 
   /** contains a list of all locks owned by us. */
   private[this] val heldLocks: ArrayBuffer[ReLock[InterTurn]] = ArrayBuffer[ReLock[InterTurn]]()
-  private[locking] def addLock(lock: ReLock[InterTurn]): Unit = heldLocks.synchronized {heldLocks += lock}
-  private[locking] def grabLocks() = heldLocks.synchronized(heldLocks)
+  private[locking] def addLock(lock: ReLock[InterTurn]): Unit = heldLocks.synchronized { heldLocks += lock }
+  private[locking] def grabLocks()                            = heldLocks.synchronized(heldLocks)
 
   /** release all locks we hold or transfer them to a waiting transaction if there is one
-    * holds the master lock for request */
-  def releaseAll(): Unit = lockKeychain {_.release(this)}
+    * holds the master lock for request
+    */
+  def releaseAll(): Unit = lockKeychain { _.release(this) }
 
-  def reset(): Unit = lockKeychain { kc =>
-    kc.release(this)
-    keychain = new Keychain(this)
-  }
-
+  def reset(): Unit =
+    lockKeychain { kc =>
+      kc.release(this)
+      keychain = new Keychain(this)
+    }
 
 }

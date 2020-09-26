@@ -19,20 +19,22 @@ import reswing.reader.network.Fetcher
 import reswing.reader.network.UrlChecker
 
 object Main extends App {
-  val tick = Evt[Unit]()  //#EVT
+  val tick    = Evt[Unit]() //#EVT
   val checker = new UrlChecker
   val fetcher = new Fetcher(checker.checkedURL.fold(Set.empty[URL])(_ + _))
-  val parser = new XmlParser
-  val store = new FeedStore(parser.channelParsed, parser.itemParsed)
+  val parser  = new XmlParser
+  val store   = new FeedStore(parser.channelParsed, parser.itemParsed)
   val app = new GUI(
-      store,
-      (store.itemAdded map { x: RSSItem => //#EF
-        (x.srcChannel map (_.title) getOrElse "<unknown>") + ": " + x.title }) latest "", //#IF
-      Signal.dynamic { //#SIG
-        val itemCount = (store.channels() map { case (_, items) => items().size }).sum
-        "Channels: " + store.channels().size + " Items: " + itemCount
-      },
-      fetcher.state)
+    store,
+    (store.itemAdded map { x: RSSItem => //#EF
+      (x.srcChannel map (_.title) getOrElse "<unknown>") + ": " + x.title
+    }) latest "",    //#IF
+    Signal.dynamic { //#SIG
+      val itemCount = (store.channels() map { case (_, items) => items().size }).sum
+      "Channels: " + store.channels().size + " Items: " + itemCount
+    },
+    fetcher.state
+  )
 
   setupGuiEvents()
 
@@ -62,8 +64,7 @@ object Main extends App {
   // ---------------------------------------------------------------------------
 
   def defaultURLs: Seq[String] =
-    Seq("http://www.faz.net/aktuell/politik/?rssview=1",
-        "http://feeds.gawker.com/lifehacker/full")
+    Seq("http://www.faz.net/aktuell/politik/?rssview=1", "http://feeds.gawker.com/lifehacker/full")
 
   def showInvalidUrlDialog() =
     Dialog.showMessage(null, "This url is not valid", "Invalid url", Message.Error, EmptyIcon)
@@ -78,7 +79,9 @@ object Main extends App {
 
   private def loadURLs(path: String): Option[Seq[String]] = {
     println("trying to load from " + path)
-    val res = try Some(Source.fromFile(path).getLines().toList) catch { case _: Throwable => None }
+    val res =
+      try Some(Source.fromFile(path).getLines().toList)
+      catch { case _: Throwable => None }
     println("result: " + res)
     res
   }

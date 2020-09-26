@@ -1,6 +1,5 @@
 package reswing
 
-
 import scala.swing.{Component, SequentialContainer}
 import scala.swing.event.{ComponentAdded, ComponentRemoved}
 
@@ -18,8 +17,7 @@ trait ReSequentialContainer extends ReUIElement {
 
   def contents: ReSwingValue[CompList]
 
-  contents.using({() => peerContents}, peerContents_= _,
-                  classOf[ComponentAdded], classOf[ComponentRemoved])
+  contents.using({ () => peerContents }, peerContents_= _, classOf[ComponentAdded], classOf[ComponentRemoved])
 
   protected implicit class AddContent(contents: ReSwingValue[CompList]) {
     def +=(component: Component): Unit = peerContents :+= component

@@ -13,28 +13,29 @@ import scala.concurrent.Future
 
 object LociDist {
 
-  def dfold[T, Res, S <: Struct : Scheduler]
-  (event: Event[T, S])
-  (init: Res)(f: (Res, T) => Res)
-  (registry: Registry, binding: Binding[RGA[T] => Unit] {type RemoteCall = RGA[T] => Future[Unit]})
-  (implicit api: RescalaInterface[S])
-  : Signal[Res, S] = {
+  def dfold[T, Res, S <: Struct: Scheduler](event: Event[T, S])(init: Res)(f: (Res, T) => Res)(
+      registry: Registry,
+      binding: Binding[RGA[T] => Unit] { type RemoteCall = RGA[T] => Future[Unit] }
+  )(implicit api: RescalaInterface[S]): Signal[Res, S] = {
     val fold = api.Events.foldOne(event, RGA.empty[T]) { (acc, occ) =>
       println(s"appending $acc $occ")
-      acc.append(occ) }
+      acc.append(occ)
+    }
 
-    val res = api.Signals.static(fold){st => st.dependStatic(fold).iterator.foldLeft(init){ (acc, occ) =>
-      println(s"folding $acc $occ")
-      f(acc, occ)}}
+    val res = api.Signals.static(fold) { st =>
+      st.dependStatic(fold).iterator.foldLeft(init) { (acc, occ) =>
+        println(s"folding $acc $occ")
+        f(acc, occ)
+      }
+    }
     distribute(fold, registry)(binding)
     res
   }
 
-  def distribute[A: Lattice, S <: Struct : Scheduler]
-  (signal: Signal[A, S],
-   registry: Registry)
-  (binding: Binding[A => Unit] {type RemoteCall = A => Future[Unit]})
-  : Unit = {
+  def distribute[A: Lattice, S <: Struct: Scheduler](
+      signal: Signal[A, S],
+      registry: Registry
+  )(binding: Binding[A => Unit] { type RemoteCall = A => Future[Unit] }): Unit = {
     val signalName = signal.name.str
     println(s"binding $signalName")
     registry.bind(binding) { newValue =>
@@ -48,8 +49,7 @@ object LociDist {
             if (merged != base) {
               writeCallback(merged)
               true
-            }
-            else false
+            } else false
           }
         })
       }
@@ -66,7 +66,6 @@ object LociDist {
         if (remoteRef.connected) remoteUpdate(s)
       })
     }
-
 
     registry.remoteJoined.monitor(registerRemote)
     registry.remotes.foreach(registerRemote)

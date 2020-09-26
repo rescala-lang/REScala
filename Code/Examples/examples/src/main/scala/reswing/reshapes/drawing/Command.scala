@@ -10,9 +10,7 @@ abstract class Command {
   def description: String
 }
 
-/**
- * Deletes a given shape
- */
+/** Deletes a given shape */
 class DeleteShape(shapeToDelete: Shape) extends Command {
   override def execute(shapes: List[Shape]) =
     shapes filterNot (_ == shapeToDelete)
@@ -23,9 +21,7 @@ class DeleteShape(shapeToDelete: Shape) extends Command {
   override def description = "Delete %s".format(shapeToDelete)
 }
 
-/**
- * Creates a new shape
- */
+/** Creates a new shape */
 class CreateShape(shapeToCreate: Shape) extends Command {
   override def execute(shapes: List[Shape]) =
     shapeToCreate :: shapes
@@ -36,9 +32,7 @@ class CreateShape(shapeToCreate: Shape) extends Command {
   override def description = "Create %s".format(shapeToCreate)
 }
 
-/**
- * Edits a shape, i.e. replaces a shape by a new one
- */
+/** Edits a shape, i.e. replaces a shape by a new one */
 class EditShape(shapeBeforeEdit: Shape, shapeAfterEdit: Shape) extends Command {
   override def execute(shapes: List[Shape]) =
     shapeAfterEdit :: shapes filterNot (_ == shapeBeforeEdit)
@@ -49,11 +43,9 @@ class EditShape(shapeBeforeEdit: Shape, shapeAfterEdit: Shape) extends Command {
   override def description = "Edit %s".format(shapeAfterEdit)
 }
 
-/**
- * Adds all shapes of given Events with currently selected Events.
- */
+/** Adds all shapes of given Events with currently selected Events. */
 class MergeDrawingSpaces(eventToMerge: DrawingSpaceState) extends Command {
-  val eventTitle = eventToMerge.fileName
+  val eventTitle  = eventToMerge.fileName
   val otherShapes = eventToMerge.shapes
 
   override def execute(shapes: List[Shape]) =
@@ -64,4 +56,3 @@ class MergeDrawingSpaces(eventToMerge: DrawingSpaceState) extends Command {
 
   override def description = "Merge with %s".format(eventTitle.now)
 }
-

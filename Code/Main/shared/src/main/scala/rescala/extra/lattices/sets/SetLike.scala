@@ -6,8 +6,9 @@ trait SetLike[A, F] {
 }
 
 object SetLike {
-  implicit def setInstance[A]: SetLike[A, Set[A]] = new SetLike[A, Set[A]] {
-    override def add(set: Set[A], value: A): Set[A] = set + value
-    override def contains(set: Set[A], value: A): Boolean = set.contains(value)
-  }
+  implicit def setInstance[A]: SetLike[A, Set[A]] =
+    new SetLike[A, Set[A]] {
+      override def add(set: Set[A], value: A): Set[A]       = set + value
+      override def contains(set: Set[A], value: A): Boolean = set.contains(value)
+    }
 }

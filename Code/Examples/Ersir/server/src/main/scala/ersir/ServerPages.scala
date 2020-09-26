@@ -15,24 +15,28 @@ class ServerPages() {
         link(rel := "manifest", href := "static/manifest.json"),
         link(rel := "icon", href := "static/icon.png", attr("sizes") := "192x192"),
         SeqFrag(ResourcePaths.css.map { css =>
-          link(href := css,
-               rel := "stylesheet",
-               `type` := MediaTypes.`text/css`.toString())
+          link(href := css, rel := "stylesheet", `type` := MediaTypes.`text/css`.toString())
         }),
-        meta(attrname := "viewport",
-             content := "width=device-width, initial-scale=1, user-scalable=yes, minimal-ui"),
-  //      script(raw("""if('serviceWorker' in navigator) {
-  //navigator.serviceWorker
-  //         .register('serviceworker.js')
-  //         .then(function() { console.log('Service Worker Registered'); }); }"""))
-        ))(stuff: _*)
+        meta(attrname := "viewport", content := "width=device-width, initial-scale=1, user-scalable=yes, minimal-ui"),
+        //      script(raw("""if('serviceWorker' in navigator) {
+        //navigator.serviceWorker
+        //         .register('serviceworker.js')
+        //         .then(function() { console.log('Service Worker Registered'); }); }"""))
+      )
+    )(stuff: _*)
 
-  def htmlResponse(tag: Tag): HttpResponse = HttpResponse(entity = HttpEntity(
-    ContentType(MediaTypes.`text/html`, HttpCharsets.`UTF-8`),
-    "<!DOCTYPE html>" + tag.render))
+  def htmlResponse(tag: Tag): HttpResponse =
+    HttpResponse(entity =
+      HttpEntity(
+        ContentType(MediaTypes.`text/html`, HttpCharsets.`UTF-8`),
+        "<!DOCTYPE html>" + tag.render
+      )
+    )
 
-  val fullHtml: Tag = makeHtml(body("if nothing happens, your javascript does not work"),
-                               frag(ResourcePaths.js.map(js => script(src := js))))
+  val fullHtml: Tag = makeHtml(
+    body("if nothing happens, your javascript does not work"),
+    frag(ResourcePaths.js.map(js => script(src := js)))
+  )
 
   val landing: HttpResponse = htmlResponse(fullHtml)
 

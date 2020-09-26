@@ -17,10 +17,10 @@ import rescala.reactives.{Signal, Var}
 @Threads(1)
 @State(Scope.Benchmark)
 class SignalMapGrid[S <: Struct] extends BusyThreads {
-  var engine: RescalaInterface[S] = _
+  var engine: RescalaInterface[S]      = _
   implicit def scheduler: Scheduler[S] = engine.scheduler
-  var source: Var[Int, S] = _
-  var leafs: Seq[Signal[Int, S]] = _
+  var source: Var[Int, S]              = _
+  var leafs: Seq[Signal[Int, S]]       = _
   @Param(Array("1", "4", "16"))
   var width: Int = _
   @Param(Array("1", "4", "16"))

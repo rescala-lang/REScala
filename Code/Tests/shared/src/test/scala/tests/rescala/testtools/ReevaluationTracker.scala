@@ -5,9 +5,10 @@ import org.scalatest.matchers.should.Matchers
 import rescala.core.{CreationTicket, Struct}
 import rescala.reactives.{Event, Signal}
 
-class ReevaluationTracker[A, S <: Struct] private() extends Matchers {
+class ReevaluationTracker[A, S <: Struct] private () extends Matchers {
   var results: List[A] = Nil
-  /* should be private but is unused */ var strongRef: AnyRef = _ // to prevent fake observers from being prematurely gc'd
+  /* should be private but is unused */
+  var strongRef: AnyRef = _ // to prevent fake observers from being prematurely gc'd
   def this(signal: Signal[A, S])(implicit turnSource: CreationTicket[S]) = {
     this()
     strongRef = signal.map(reev)(turnSource)
@@ -24,7 +25,7 @@ class ReevaluationTracker[A, S <: Struct] private() extends Matchers {
     Assertions.assert(results === elements.toList)
   }
   def assertClear(elements: A*)(implicit pos: org.scalactic.source.Position): Unit = {
-    assert(elements:_*)
+    assert(elements: _*)
     results = Nil
   }
 }

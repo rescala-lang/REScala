@@ -19,7 +19,6 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.math.BigDecimal.RoundingMode
 
-
 /** An example of  a BorderPane layout, with placement of children in the top,
   * left, center, right, and bottom positions.
   *
@@ -43,24 +42,26 @@ object DividiApp extends JFXApp {
   }
 
   val onlineGui = BooleanProperty(true)
-  val delayGui = IntegerProperty(0)
+  val delayGui  = IntegerProperty(0)
 
   // define event fired on submit
-  type Title = String
-  type Amount = BigDecimal
-  type Payer = String
+  type Title     = String
+  type Amount    = BigDecimal
+  type Payer     = String
   type Timestamp = Long
   val logger: Logger = Logger("Dividi")
 
   case class Transaction(title: Title, amount: Amount, payer: Payer, sharedBetween: Set[Payer], timestamp: Timestamp) {
     override def toString: String = {
       val sharers = sharedBetween.toList.sorted
-      if (sharers.length > 1) s"$payer paid $amount for $title. Shared between ${sharers.dropRight(1).mkString(", ")} and ${sharers.last}."
+      if (sharers.length > 1)
+        s"$payer paid $amount for $title. Shared between ${sharers.dropRight(1).mkString(", ")} and ${sharers.last}."
       else s"$payer paid $amount for $title. Shared between ${sharers.mkString(",")}."
     }
   }
 
-  implicit val _transmittableGrowOnlyLog: IdenticallyTransmittable[PGrowOnlyLog[Transaction]] = IdenticallyTransmittable()
+  implicit val _transmittableGrowOnlyLog: IdenticallyTransmittable[PGrowOnlyLog[Transaction]] =
+    IdenticallyTransmittable()
 
   // instanciate shared log
   @scala.annotation.nowarn
@@ -74,12 +75,11 @@ object DividiApp extends JFXApp {
       registry.bind(logBinding)(newLog)
 
       (registry, newLog)
-    }
-    else { // client mode
-      val connection: Future[RemoteRef] = registry.connect(WS("ws://localhost:1099/"))
-      val remote: RemoteRef = Await.result(connection, Duration.Inf)
+    } else { // client mode
+      val connection: Future[RemoteRef]                    = registry.connect(WS("ws://localhost:1099/"))
+      val remote: RemoteRef                                = Await.result(connection, Duration.Inf)
       val subscribedLog: Future[PGrowOnlyLog[Transaction]] = registry.lookup(logBinding, remote)
-      val log: PGrowOnlyLog[Transaction] = Await.result(subscribedLog, Duration.Inf)
+      val log: PGrowOnlyLog[Transaction]                   = Await.result(subscribedLog, Duration.Inf)
       (registry, log)
     }
   }
@@ -92,13 +92,14 @@ object DividiApp extends JFXApp {
   // extract all people involved
   val peopleInvolved: Signal[Set[Payer]] = Signal {
     transactionLog().iterator.foldLeft(Set[Payer](username))((people, transaction) =>
-      people + transaction.payer ++ transaction.sharedBetween)
+      people + transaction.payer ++ transaction.sharedBetween
+    )
   }
 
   // calculate a map keeping track of the debts of all users
   val debts: Signal[Map[Payer, Amount]] = Signal {
     transactionLog().iterator.foldLeft(Map[Payer, Amount]().withDefaultValue(0: Amount))((debts, transaction) => {
-      val payer = transaction.payer
+      val payer  = transaction.payer
       val amount = transaction.amount
 
       val share = {
@@ -107,7 +108,6 @@ object DividiApp extends JFXApp {
         else
           0: Amount
       }
-
 
       // map with updated debt for all people involved in transaction
       val updatedDebtorEntries = transaction.sharedBetween.foldLeft(debts)((map, debtor) => {
@@ -122,7 +122,10 @@ object DividiApp extends JFXApp {
   // propose transactions to settle debts
   val howToSettle: Signal[List[(Payer, Payer, Amount)]] = debts.map(resolveDebts(_))
 
-  def resolveDebts(debts: Map[Payer, Amount], neededTransactions: List[(Payer, Payer, Amount)] = List()): List[(Payer, Payer, Amount)] = {
+  def resolveDebts(
+      debts: Map[Payer, Amount],
+      neededTransactions: List[(Payer, Payer, Amount)] = List()
+  ): List[(Payer, Payer, Amount)] = {
     if (!debts.exists(_.getValue < 0))
       neededTransactions
     else {
@@ -131,16 +134,18 @@ object DividiApp extends JFXApp {
       val maxDebtor = debts.minBy(debt => debt.getValue)._1 // find person with maximum debt
       println(s"Max debtor is $maxDebtor")
       // find best person to give money to
-      val lenders = debts.filter(_.getValue > 0).keys // find users without debt (lenders)
+      val lenders  = debts.filter(_.getValue > 0).keys                      // find users without debt (lenders)
       val firstTry = (lenders.head, debts(lenders.head) + debts(maxDebtor)) // try first lender
 
-      val bestChoice = lenders.foldLeft(firstTry: (Payer, Amount))((currentBest, lender) => { // check if other lenders prove better (have payed amount closer to maxDebtor's debt)
-        val thisTry = (lender, debts(lender) + debts(maxDebtor))
-        if (thisTry._2.abs < currentBest._2.abs)
-          thisTry
-        else
-          currentBest
-      })
+      val bestChoice = lenders.foldLeft(firstTry: (Payer, Amount))(
+        (currentBest, lender) => { // check if other lenders prove better (have payed amount closer to maxDebtor's debt)
+          val thisTry = (lender, debts(lender) + debts(maxDebtor))
+          if (thisTry._2.abs < currentBest._2.abs)
+            thisTry
+          else
+            currentBest
+        }
+      )
 
       val lender = bestChoice._1
       val proposedTransaction = {
@@ -150,7 +155,12 @@ object DividiApp extends JFXApp {
           (maxDebtor, lender, debts(lender))
       }
 
-      resolveDebts(debts + (maxDebtor -> (debts(maxDebtor) + proposedTransaction._3)) + (lender -> (debts(lender) - proposedTransaction._3)), neededTransactions :+ proposedTransaction)
+      resolveDebts(
+        debts + (maxDebtor -> (debts(maxDebtor) + proposedTransaction._3)) + (lender -> (debts(
+          lender
+        ) - proposedTransaction._3)),
+        neededTransactions :+ proposedTransaction
+      )
     }
   }
 

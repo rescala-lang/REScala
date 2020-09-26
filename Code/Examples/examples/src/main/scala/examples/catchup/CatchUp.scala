@@ -8,15 +8,14 @@ import rescala.default._
 import scala.swing.event._
 import scala.swing.{MainFrame, Panel, SimpleSwingApplication, Swing}
 
-
 object CatchUp extends SimpleSwingApplication {
   lazy val application = new CatchUp
-  def top = application.frame
+  def top              = application.frame
 
   override def main(args: Array[String]): Unit = {
     super.main(args)
     while (true) {
-      Swing onEDTWait {application.tick.fire()}
+      Swing onEDTWait { application.tick.fire() }
       Thread sleep 50
     }
   }
@@ -29,42 +28,42 @@ class CatchUp {
   val Range = 100
 
   val SizeCatch = 100
-  val SizeUp = 40
-  val SizeY = 32
-
+  val SizeUp    = 40
+  val SizeY     = 32
 
   val tick = Evt[Unit]()
   val time = tick.iterate(0.0) { acc: Double => (acc + 0.1) % (math.Pi * 2) }
 
   // Mouse position
-  val mouse = new Mouse
-  val mouseX = Signal {mouse.position().getX.toInt}
-  val mouseY = Signal {mouse.position().getY.toInt}
+  val mouse  = new Mouse
+  val mouseX = Signal { mouse.position().getX.toInt }
+  val mouseY = Signal { mouse.position().getY.toInt }
 
-  val xOffset = Signal {math.sin(time()) * Range}
-  val yOffset = Signal {math.cos(time()) * Range}
+  val xOffset = Signal { math.sin(time()) * Range }
+  val yOffset = Signal { math.cos(time()) * Range }
 
-  val x = Signal {mouseX() + xOffset().toInt}
-  val y = Signal {mouseY() + yOffset().toInt}
+  val x = Signal { mouseX() + xOffset().toInt }
+  val y = Signal { mouseY() + yOffset().toInt }
 
   // Old mouse position, some time ago
-  val mouseDelayed: Signal[Point] = Signal { mouse.position.changed.last(20).value.headOption.getOrElse(mouse.position.value) }
-  val delayedX = Signal {mouseDelayed().getX.toInt}
-  val delayedY = Signal {mouseDelayed().getY.toInt}
+  val mouseDelayed: Signal[Point] = Signal {
+    mouse.position.changed.last(20).value.headOption.getOrElse(mouse.position.value)
+  }
+  val delayedX = Signal { mouseDelayed().getX.toInt }
+  val delayedY = Signal { mouseDelayed().getY.toInt }
 
-  val catchBox = Signal {new Rectangle(x(), y(), SizeCatch, SizeY)}
-  val upBox = Signal {new Rectangle(delayedX(), delayedY(), SizeUp, SizeY)}
+  val catchBox = Signal { new Rectangle(x(), y(), SizeCatch, SizeY) }
+  val upBox    = Signal { new Rectangle(delayedX(), delayedY(), SizeUp, SizeY) }
 
-  val caught = Signal {catchBox().intersects(upBox())}
-  val hits = caught.changedTo(true)
+  val caught       = Signal { catchBox().intersects(upBox()) }
+  val hits         = caught.changedTo(true)
   val numberOfHits = hits.count()
 
-  val scoreString = Signal {"You caught up " + numberOfHits() + " times."}
+  val scoreString = Signal { "You caught up " + numberOfHits() + " times." }
 
   // GUI redrawing code
-  val stateChanged = mouse.position.changed ||[Any] tick
+  val stateChanged = mouse.position.changed || [Any] tick
   stateChanged += { _ => frame.repaint() }
-
 
   // GUI
   val frame: MainFrame = new MainFrame {
@@ -77,9 +76,9 @@ class CatchUp {
         * Should be replaced once reactive GUI lib is complete
         */
       reactions += {
-        case e: MouseMoved => {CatchUp.this.mouse.mouseMovedE.fire(e.point)}
-        case e: MousePressed => CatchUp.this.mouse.mousePressedE.fire(e.point)
-        case e: MouseDragged => {CatchUp.this.mouse.mouseDraggedE.fire(e.point)}
+        case e: MouseMoved    => { CatchUp.this.mouse.mouseMovedE.fire(e.point) }
+        case e: MousePressed  => CatchUp.this.mouse.mousePressedE.fire(e.point)
+        case e: MouseDragged  => { CatchUp.this.mouse.mouseDraggedE.fire(e.point) }
         case e: MouseReleased => CatchUp.this.mouse.mouseReleasedE.fire(e.point)
       }
 

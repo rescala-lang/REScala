@@ -6,14 +6,16 @@ import org.scalatest.prop.Whenever
 import rescala.core.Pulse
 import tests.rescala.testtools.RETests
 
-class GarbageCollectionTest extends RETests with Whenever { multiEngined { engine => import engine._
+class GarbageCollectionTest extends RETests with Whenever {
+  multiEngined { engine =>
+    import engine._
 
-  "garbage collection for simple signal mappings" in {
+    "garbage collection for simple signal mappings" in {
 
       val q = new ReferenceQueue[Signal[Array[Int]]]()
 
       def makeGarbage() = {
-        val v1 = Var(0)
+        val v1  = Var(0)
         val res = v1.map(_ => new Array[Int](1024 * 1024))
         val obs = res.observe(_ => ())
         obs.remove()
@@ -22,14 +24,14 @@ class GarbageCollectionTest extends RETests with Whenever { multiEngined { engin
         (v1, p)
       }
 
-      var done = false
+      var done  = false
       val start = System.currentTimeMillis()
 
       var `heap of garbage` = List(makeGarbage())
 
       while (!done) {
         `heap of garbage` ::= makeGarbage()
-        engine.transaction(`heap of garbage`.map(_._1):_*){ at =>
+        engine.transaction(`heap of garbage`.map(_._1): _*) { at =>
           `heap of garbage`.iterator.map(_._1).foreach(_.admitPulse(Pulse.Value(1))(at))
         }
         System.gc()
@@ -37,6 +39,7 @@ class GarbageCollectionTest extends RETests with Whenever { multiEngined { engin
         assert(!timeout, "did not GC a signal before timeout")
         if (q.poll() ne null) done = true
       }
-  }
+    }
 
-}}
+  }
+}

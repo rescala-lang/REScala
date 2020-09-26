@@ -24,17 +24,16 @@ class PhilosopherCompetition[S <: Struct] {
   @Benchmark
   def eat(comp: Competition[S], params: ThreadParams, work: Workload): Unit = {
     val myBlock = comp.blocks(params.getThreadIndex % comp.blocks.length)
-    val bo = new Backoff()
-    while ( {
+    val bo      = new Backoff()
+    while ({
       val seating: Seating[S] = myBlock(ThreadLocalRandom.current().nextInt(myBlock.length))
       if (comp.manualLocking)
         manualLocking(comp, seating)
       else
         tryUpdateCycle(comp, seating)
-    }) {bo.backoff()}
+    }) { bo.backoff() }
 
   }
-
 
   def tryUpdateCycle(comp: Competition[S], seating: Seating[S]): Boolean = {
     val res = comp.table.tryEat(seating)
@@ -43,24 +42,26 @@ class PhilosopherCompetition[S <: Struct] {
   }
 
   private def manualLocking(comp: Competition[S], seating: Seating[S]): Boolean = {
-    val pos = Array(seating.placeNumber, (seating.placeNumber + 1) % comp.philosophers, (seating.placeNumber + 2) % comp.philosophers)
+    val pos = Array(
+      seating.placeNumber,
+      (seating.placeNumber + 1) % comp.philosophers,
+      (seating.placeNumber + 2) % comp.philosophers
+    )
     util.Arrays.sort(pos)
-    val firstLock = comp.locks(pos(0))
+    val firstLock  = comp.locks(pos(0))
     val secondLock = comp.locks(pos(1))
-    val thirdLock = comp.locks(pos(2))
+    val thirdLock  = comp.locks(pos(2))
     firstLock.lock()
-    val res = try {
-      secondLock.lock()
+    val res =
       try {
-        thirdLock.lock()
+        secondLock.lock()
         try {
-          comp.table.tryEat(seating)
-        }
-        finally {thirdLock.unlock()}
-      }
-      finally {secondLock.unlock()}
-    }
-    finally {firstLock.unlock()}
+          thirdLock.lock()
+          try {
+            comp.table.tryEat(seating)
+          } finally { thirdLock.unlock() }
+        } finally { secondLock.unlock() }
+      } finally { firstLock.unlock() }
     if (res) {
       firstLock.lock()
       try {
@@ -69,17 +70,13 @@ class PhilosopherCompetition[S <: Struct] {
           thirdLock.lock()
           try {
             seating.philosopher.set(Thinking)(comp.table.engine.scheduler)
-          }
-          finally {thirdLock.unlock()}
-        }
-        finally {secondLock.unlock()}
-      }
-      finally {firstLock.unlock()}
+          } finally { thirdLock.unlock() }
+        } finally { secondLock.unlock() }
+      } finally { firstLock.unlock() }
     }
     !res
   }
 }
-
 
 @State(Scope.Benchmark)
 class Competition[S <: Struct] extends BusyThreads {
@@ -98,7 +95,7 @@ class Competition[S <: Struct] extends BusyThreads {
   var blocks: Array[Array[Seating[S]]] = _
 
   var manualLocking: Boolean = _
-  var locks: Array[Lock] = _
+  var locks: Array[Lock]     = _
 
   @Setup
   def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam[S]) = {
@@ -107,15 +104,15 @@ class Competition[S <: Struct] extends BusyThreads {
       locks = Array.fill(philosophers)(new ReentrantLock())
     }
     table = tableType match {
-      case "static" => new PhilosopherTable(philosophers, work.work)(engineParam.engine)
+      case "static"  => new PhilosopherTable(philosophers, work.work)(engineParam.engine)
       case "dynamic" => new DynamicPhilosopherTable(philosophers, work.work)(engineParam.engine)
-      case "half" => new HalfDynamicPhilosopherTable(philosophers, work.work)(engineParam.engine)
-      case "other" => new OtherHalfDynamicPhilosopherTable(philosophers, work.work)(engineParam.engine)
+      case "half"    => new HalfDynamicPhilosopherTable(philosophers, work.work)(engineParam.engine)
+      case "other"   => new OtherHalfDynamicPhilosopherTable(philosophers, work.work)(engineParam.engine)
     }
     blocks = (layout match {
       case "alternating" => deal(table.seatings.toList, math.min(params.getThreads, philosophers))
-      case "noconflict" => deal(table.seatings.sliding(4, 4).map(_.head).toList, params.getThreads)
-      case "random" => List(table.seatings)
+      case "noconflict"  => deal(table.seatings.sliding(4, 4).map(_.head).toList, params.getThreads)
+      case "random"      => List(table.seatings)
     }).map(_.toArray).toArray
   }
 
@@ -130,7 +127,7 @@ class Competition[S <: Struct] extends BusyThreads {
     @tailrec
     def loop(deck: List[A], hands: List[List[A]]): List[List[A]] =
       deck match {
-        case Nil => hands
+        case Nil          => hands
         case card :: rest => loop(rest, hands.tail :+ (card :: hands.head))
       }
     loop(initialDeck, List.fill(numberOfHands)(Nil))

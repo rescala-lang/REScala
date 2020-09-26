@@ -10,13 +10,13 @@ class ChatServer[S <: Struct]()(val engine: RescalaInterface[S]) {
 
   import engine._
 
-  type Room = Int
-  type Client = Event[String]
-  type Clients = Var[List[Client]]
+  type Room        = Int
+  type Client      = Event[String]
+  type Clients     = Var[List[Client]]
   type NewMessages = Event[List[String]]
-  type History = Signal[LinearSeq[String]]
+  type History     = Signal[LinearSeq[String]]
 
-  val rooms = new java.util.concurrent.ConcurrentHashMap[Room, Clients]()
+  val rooms     = new java.util.concurrent.ConcurrentHashMap[Room, Clients]()
   val histories = new java.util.concurrent.ConcurrentHashMap[Room, History]()
 
   def join(client: Client, room: Room) = {
@@ -34,7 +34,7 @@ class ChatServer[S <: Struct]()(val engine: RescalaInterface[S]) {
     }
 
     rooms.putIfAbsent(room, clients) == null &&
-      histories.put(room, history) == null
+    histories.put(room, history) == null
   }
 
 }

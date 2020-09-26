@@ -4,7 +4,10 @@ import org.scalacheck.Prop.forAll
 import org.scalacheck.Test.PropException
 import org.scalacheck.{Gen, Prop, Test}
 import rescala.core
-import rescala.core.{AccessTicket, Derived, DynamicInitializerLookup, InitialChange, Initializer, Observation, Pulse, ReSource, ReevTicket, Scheduler, Struct}
+import rescala.core.{
+  AccessTicket, Derived, DynamicInitializerLookup, InitialChange, Initializer, Observation, Pulse, ReSource, ReevTicket,
+  Scheduler, Struct
+}
 import rescala.interface.Aliases
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
@@ -177,7 +180,7 @@ object SimpleScheduler
       if (!result.passed) {
         result.status match {
           case PropException(_, e, _) => throw e
-          case _ => throw new RuntimeException("Test failed!")
+          case _                      => throw new RuntimeException("Test failed!")
         }
       }
     }
@@ -193,8 +196,8 @@ object SimpleScheduler
           forAll(gen)(t => customForAll(tail, f, generated :+ ((sig, t))))
       }
 
-    private def findGenerators(): List[(ReSource, Gen[A] forSome { type A})] = {
-      def findGeneratorsRecursive(resource: ReSource): List[(ReSource, Gen[A] forSome { type A})] = {
+    private def findGenerators(): List[(ReSource, Gen[A] forSome { type A })] = {
+      def findGeneratorsRecursive(resource: ReSource): List[(ReSource, Gen[A] forSome { type A })] = {
         if (resource.state.gen != null) {
           List((resource, resource.state.gen))
         } else if (resource.state.incoming == Set.empty) {
@@ -207,7 +210,7 @@ object SimpleScheduler
       }
 
       val gens = findGeneratorsRecursive(this.signal)
-      if(gens.isEmpty) {
+      if (gens.isEmpty) {
         throw NoGeneratorException(s"No generators found in incoming nodes for signal ${this.signal.name}")
       }
       gens

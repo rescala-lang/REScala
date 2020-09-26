@@ -5,9 +5,9 @@ import rescala.collectionsDefault._
   * @since 02.07.19
   */
 object Main {
-  val z = SeqSource[Int]
-  val max = z.max
-  val min = z.min
+  val z    = SeqSource[Int]
+  val max  = z.max
+  val min  = z.min
   val size = z.size
 
   z.add(1)

@@ -2,7 +2,6 @@ package reswing
 
 import javax.swing.Icon
 
-
 import scala.swing.{Alignment, CheckBox, Color, Dimension, Font}
 
 class ReCheckBox(
@@ -25,14 +24,29 @@ class ReCheckBox(
     enabled: ReSwingValue[Boolean] = (),
     minimumSize: ReSwingValue[Dimension] = (),
     maximumSize: ReSwingValue[Dimension] = (),
-    preferredSize: ReSwingValue[Dimension] = ())
-  extends
-    ReToggleButton(text, selected, horizontalAlignment, verticalAlignment,
-                   horizontalTextPosition, verticalTextPosition,
-                   icon, pressedIcon, selectedIcon, disabledIcon,
-                   disabledSelectedIcon, rolloverIcon, rolloverSelectedIcon,
-                   background, foreground, font, enabled,
-                   minimumSize, maximumSize, preferredSize) {
+    preferredSize: ReSwingValue[Dimension] = ()
+) extends ReToggleButton(
+      text,
+      selected,
+      horizontalAlignment,
+      verticalAlignment,
+      horizontalTextPosition,
+      verticalTextPosition,
+      icon,
+      pressedIcon,
+      selectedIcon,
+      disabledIcon,
+      disabledSelectedIcon,
+      rolloverIcon,
+      rolloverSelectedIcon,
+      background,
+      foreground,
+      font,
+      enabled,
+      minimumSize,
+      maximumSize,
+      preferredSize
+    ) {
   override protected lazy val peer = new CheckBox with ComponentMixin
 }
 

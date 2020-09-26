@@ -62,19 +62,20 @@ object EInaccurateNumericCircle extends SimpleSwingApplication {
   val ticks = Evt[Long]()
 
   val shapes = Var[List[Shape]](List.empty)
-  val panel = new ShapesPanel(shapes)
+  val panel  = new ShapesPanel(shapes)
 
-  val angle = nsTime.map( _.toDouble / NanoSecond * math.Pi)
+  val angle = nsTime.map(_.toDouble / NanoSecond * math.Pi)
 
-  val velocity = Signal { Pos(
-    x = (panel.width() / 2 - 50).toDouble * math.sin(angle()) / NanoSecond,
-    y = (panel.height() / 2 - 50).toDouble * math.cos(angle()) / NanoSecond
-  )}
-
+  val velocity = Signal {
+    Pos(
+      x = (panel.width() / 2 - 50).toDouble * math.sin(angle()) / NanoSecond,
+      y = (panel.height() / 2 - 50).toDouble * math.cos(angle()) / NanoSecond
+    )
+  }
 
   val inc = ticks.map(tick => velocity.value * tick.toDouble)
 
-  val pos = inc.fold(Pos(0,0)) { (cur, inc) => cur + inc }
+  val pos = inc.fold(Pos(0, 0)) { (cur, inc) => cur + inc }
 
   shapes.transform(new Circle(pos, Var(50)) :: _)
 
@@ -83,15 +84,15 @@ object EInaccurateNumericCircle extends SimpleSwingApplication {
     new MainFrame {
       title = "REScala Demo"
       contents = panel
-      setLocationRelativeTo(new UIElement {override def peer = null})
+      setLocationRelativeTo(new UIElement { override def peer = null })
     }
   }
 
   override def main(args: Array[String]): Unit = {
     super.main(args)
 
-    while(!top.visible) Thread.sleep(5)
-    while(top.visible) {
+    while (!top.visible) Thread.sleep(5)
+    while (top.visible) {
       Thread.sleep(1)
       tick()
       ticks.fire(1 * NanoSecond / 1000L)

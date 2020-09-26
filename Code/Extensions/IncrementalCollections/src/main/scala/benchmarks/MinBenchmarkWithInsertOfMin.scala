@@ -6,7 +6,6 @@ import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
 import rescala.collectionsDefault._
 
-
 /**
   * @author gerizuna
   * @since 10.10.19
@@ -20,17 +19,17 @@ import rescala.collectionsDefault._
 @State(Scope.Thread)
 class MinBenchmarkWithInsertOfMin {
 
-  @Param(Array("1","5", "10", "50", "100","500", "1000", "5000", "10000"))
+  @Param(Array("1", "5", "10", "50", "100", "500", "1000", "5000", "10000"))
   var arg: Int = _
 
-  var addEvent: Evt[Int] = _
-  var minOfSeq : Signal[Int] = _
+  var addEvent: Evt[Int]    = _
+  var minOfSeq: Signal[Int] = _
 
-  var reactSeq: SeqSource[Int] = _
-  var reactMinOfSeq :Signal[Option[Int]] = _
+  var reactSeq: SeqSource[Int]           = _
+  var reactMinOfSeq: Signal[Option[Int]] = _
 
   @Setup(Level.Invocation)
-  def prepare : Unit = {
+  def prepare: Unit = {
     addEvent = Evt[Int]()
     val seq = addEvent.fold(2 to arg toList)((s, x) => {
       s :+ x
@@ -47,14 +46,14 @@ class MinBenchmarkWithInsertOfMin {
 
   @Benchmark
   def testSeq(blackHole: Blackhole): Unit = {
-    addEvent.fire( 1 )
+    addEvent.fire(1)
     blackHole.consume(addEvent)
     blackHole.consume(minOfSeq)
   }
 
   @Benchmark
   def testReactSeq(blackHole: Blackhole): Unit = {
-    reactSeq.add(1 )
+    reactSeq.add(1)
 
     blackHole.consume(reactSeq)
     blackHole.consume(reactMinOfSeq)

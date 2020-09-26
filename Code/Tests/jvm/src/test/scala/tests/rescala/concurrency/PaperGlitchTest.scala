@@ -11,7 +11,7 @@ import scala.util.Random
 
 class PaperGlitchTest extends AnyFunSuite {
 
-  test("execute paper glitch test"){
+  test("execute paper glitch test") {
     /*val lnOf2 = scala.math.log(2) // natural log of 2*/
     /*def log2(x: Double): Double = scala.math.log(x) / lnOf2*/
     def isPowerOf2(x: Int) = (x & (x - 1)) == 0
@@ -22,10 +22,10 @@ class PaperGlitchTest extends AnyFunSuite {
     val interface = RescalaInterface.interfaceFor(Schedulers.parrp)
     import interface._
 
-    val price = Var(3)
-    val tax = price.map { p => p / 3 }
+    val price    = Var(3)
+    val tax      = price.map { p => p / 3 }
     val quantity = Var(1)
-    val total = Signal.static{ quantity.value * (price.value + tax.value) }
+    val total    = Signal.static { quantity.value * (price.value + tax.value) }
 
     // ============================================================================================================
 

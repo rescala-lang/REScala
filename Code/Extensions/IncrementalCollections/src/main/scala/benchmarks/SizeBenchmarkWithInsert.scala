@@ -7,7 +7,6 @@ import org.openjdk.jmh.infra.Blackhole
 import rescala.collectionsDefault._
 import rescala.parrp.ParRP
 
-
 /**
   * @author gerizuna
   * @since 10.10.19
@@ -19,16 +18,16 @@ import rescala.parrp.ParRP
 @Measurement(iterations = 10, time = 1, timeUnit = TimeUnit.SECONDS)
 @Fork(3)
 @State(Scope.Thread)
-class SizeBenchmarkWithInsert{
+class SizeBenchmarkWithInsert {
 
-  @Param(Array("1","5","10","50","100","500","1000","5000","10000"))
+  @Param(Array("1", "5", "10", "50", "100", "500", "1000", "5000", "10000"))
   var arg: Int = _
 
-  var addEvent: Evt[Int] = _
-  var sizeOfSeq : Signal[Int] = _
+  var addEvent: Evt[Int]     = _
+  var sizeOfSeq: Signal[Int] = _
 
-  var reactSeq: SeqSource[Int] = _
-  var sizeOfReactSeq :Signal[Int] = _
+  var reactSeq: SeqSource[Int]    = _
+  var sizeOfReactSeq: Signal[Int] = _
 
   @Setup(Level.Invocation)
   def prepare: Unit = {

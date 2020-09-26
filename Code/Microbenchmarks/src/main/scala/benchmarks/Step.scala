@@ -13,7 +13,7 @@ class Step {
     count += 1
     count
   }
-  def get(): Int = count
-  def at(): Int = step
+  def get(): Int            = count
+  def at(): Int             = step
   def test(v: Int): Boolean = v % step == 0
 }

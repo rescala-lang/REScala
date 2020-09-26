@@ -20,15 +20,14 @@ class AddWinsSetOBench[S <: Struct] {
   @Param(Array("1", "1000"))
   var setSize: Int = _
 
-  var rep1Set       : AddWinsSetO[String] = _
+  var rep1Set: AddWinsSetO[String]        = _
   var rep1SetPlusOne: AddWinsSetO[String] = _
-  var rep2Set       : AddWinsSetO[String] = _
-  val rep1id                             = "rep1"
-  val rep2id                             = "rep2"
-  var rep2Delta         : AddWinsSetO[String] = _
-  var justSetRep1: Set[String] = _
-  var justSetRep2: Set[String] = _
-
+  var rep2Set: AddWinsSetO[String]        = _
+  val rep1id                              = "rep1"
+  val rep2id                              = "rep2"
+  var rep2Delta: AddWinsSetO[String]      = _
+  var justSetRep1: Set[String]            = _
+  var justSetRep2: Set[String]            = _
 
   private def makeRep(rep: IdUtil.Id): AddWinsSetO[String] = {
     0.until(setSize).foldLeft(AddWinsSetO.empty[String]) { case (s, v) => s.add(v.toString + rep, rep) }
@@ -43,7 +42,6 @@ class AddWinsSetOBench[S <: Struct] {
     justSetRep1 = rep1Set.store.keySet
     justSetRep2 = rep2Set.store.keySet
   }
-
 
   @Benchmark
   def create() = makeRep(rep1id)
@@ -69,7 +67,7 @@ class AddWinsSetOBench[S <: Struct] {
   @Benchmark
   def mergeBaseline() = Lattice.merge(rep1Set.store, rep2Set.store)
 
-    @Benchmark
+  @Benchmark
   def mergeBaselineBaseline() = Lattice.merge(justSetRep1, justSetRep2)
 
   @Benchmark
@@ -78,10 +76,8 @@ class AddWinsSetOBench[S <: Struct] {
   @Benchmark
   def mergeSelfPlusOne() = Lattice.merge(rep1Set, rep1Set)
 
-
   @Benchmark
   def mergeDelta() = Lattice.merge(rep1Set, rep2Delta)
-
 
   @Benchmark
   def serializeUJson() = {
@@ -108,4 +104,3 @@ class AddWinsSetOBench[S <: Struct] {
   }
 
 }
-

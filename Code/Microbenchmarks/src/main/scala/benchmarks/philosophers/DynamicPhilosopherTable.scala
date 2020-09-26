@@ -5,7 +5,7 @@ import rescala.core.Struct
 import rescala.interface.RescalaInterface
 
 class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(override val engine: RescalaInterface[S])
-  extends PhilosopherTable(philosopherCount, work)(engine) {
+    extends PhilosopherTable(philosopherCount, work)(engine) {
 
   import engine._
 
@@ -21,7 +21,7 @@ class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(ov
           case Eating => Taken(i.toString)
           case Thinking =>
             phils(nextCircularIndex)() match {
-              case Eating => Taken(nextCircularIndex.toString)
+              case Eating   => Taken(nextCircularIndex.toString)
               case Thinking => Free
             }
         }
@@ -34,11 +34,11 @@ class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(ov
       val vision = Signal.dynamic {
         forks(i)() match {
           case Taken(name) if name != ownName => BlockedBy(name)
-          case Taken(`ownName`) => Done
+          case Taken(`ownName`)               => Done
           case Free => forks(mod(i - 1))() match {
-            case Free => Ready
-            case Taken(name) => BlockedBy(name)
-          }
+              case Free        => Ready
+              case Taken(name) => BlockedBy(name)
+            }
         }
       }
       Seating(i, phils(i), forks(i), forks(mod(i - 1)), vision)
@@ -47,9 +47,9 @@ class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(ov
 
 }
 
-class HalfDynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)
-                                              (override val engine: RescalaInterface[S])
-  extends PhilosopherTable(philosopherCount, work)(engine) {
+class HalfDynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(
+    override val engine: RescalaInterface[S]
+) extends PhilosopherTable(philosopherCount, work)(engine) {
 
   import engine._
 
@@ -68,11 +68,11 @@ class HalfDynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long
       val vision = Signal.dynamic {
         forks(i)() match {
           case Taken(name) if name != ownName => BlockedBy(name)
-          case Taken(`ownName`) => Done
+          case Taken(`ownName`)               => Done
           case Free => forks(mod(i - 1))() match {
-            case Free => Ready
-            case Taken(name) => BlockedBy(name)
-          }
+              case Free        => Ready
+              case Taken(name) => BlockedBy(name)
+            }
         }
       }
       Seating(i, phils(i), forks(i), forks(mod(i - 1)), vision)
@@ -81,9 +81,9 @@ class HalfDynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long
 
 }
 
-class OtherHalfDynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)
-                                                   (override implicit val engine: RescalaInterface[S])
-  extends PhilosopherTable(philosopherCount, work)(engine) {
+class OtherHalfDynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(
+    override implicit val engine: RescalaInterface[S]
+) extends PhilosopherTable(philosopherCount, work)(engine) {
 
   import engine.{Signal, Signals, Var, implicitScheduler}
 
@@ -99,7 +99,7 @@ class OtherHalfDynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work:
           case Eating => Taken(i.toString)
           case Thinking =>
             phils(nextCircularIndex)() match {
-              case Eating => Taken(nextCircularIndex.toString)
+              case Eating   => Taken(nextCircularIndex.toString)
               case Thinking => Free
             }
         }

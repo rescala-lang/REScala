@@ -22,9 +22,9 @@ class MultiReverseFan[S <: Struct] {
   var engine: RescalaInterface[S] = _
 
   var sources: Array[rescala.reactives.Var[Int, S]] = _
-  var results: Array[Signal[Int, S]] = _
-  var locks: Array[Lock] = null
-  var groupSize: Int = _
+  var results: Array[Signal[Int, S]]                = _
+  var locks: Array[Lock]                            = null
+  var groupSize: Int                                = _
 
   @Setup
   def setup(params: BenchmarkParams, size: Size, step: Step, engineParam: EngineParam[S], work: Workload) = {
@@ -36,7 +36,7 @@ class MultiReverseFan[S <: Struct] {
     sources = Array.fill(threads)(Var(step.get()))
     groupSize = if (threads > size.size) threads / size.size else 1
 
-    val intermediate = sources.map(_.map { v => {work.consume(); v + 1} }).grouped(groupSize)
+    val intermediate = sources.map(_.map { v => { work.consume(); v + 1 } }).grouped(groupSize)
     results = intermediate.map { sigs =>
       Signals.lift(sigs.toSeq) { values => work.consumeSecondary(); values.sum }
     }.toArray
@@ -53,8 +53,7 @@ class MultiReverseFan[S <: Struct] {
       locks(index / groupSize).lock()
       try {
         sources(index).set(step.run())(engine.scheduler)
-      }
-      finally locks(index / groupSize).unlock()
+      } finally locks(index / groupSize).unlock()
     }
   }
 }

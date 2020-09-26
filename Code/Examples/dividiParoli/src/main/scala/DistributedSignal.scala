@@ -3,7 +3,6 @@ import rescala.default._
 import rescala.extra.lattices.Lattice
 import rescala.macros.cutOutOfUserComputation
 
-
 /**
   * Classes implementing this trait can be published and are then synchronized by the DistributionEngine (specified by
   * the implicit val `engine`). Internal changes to the underlying StateCRDT are made by firing an `internalChanges` event
@@ -32,13 +31,11 @@ object DistributedSignal {
     def create(): A = apply()
   }
 
-
-  implicit def DistributedSignalTransmittable
-  [P, Crdt, T, I](implicit
-                     ev: P <:< DistributedSignal[_, Crdt],
-                     pVarFactory: PVarFactory[P],
-                     transmittable: Transmittable[Crdt, I, Crdt])
-  : ConnectedTransmittable[P, I, P] {
+  implicit def DistributedSignalTransmittable[P, Crdt, T, I](implicit
+      ev: P <:< DistributedSignal[_, Crdt],
+      pVarFactory: PVarFactory[P],
+      transmittable: Transmittable[Crdt, I, Crdt]
+  ): ConnectedTransmittable[P, I, P] {
     type Message = transmittable.Type
   } = {
 
@@ -53,8 +50,8 @@ object DistributedSignal {
         signal.merge(value)
         context.endpoint.receive.monitor { signal.merge }
         signal
-      })
+      }
+    )
   }
 
 }
-

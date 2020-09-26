@@ -11,11 +11,11 @@ class OperatorFusionTest extends FunSuite {
 
   test("Event map fusion test") {
 
-    val g = new DataFlowGraph()
+    val g   = new DataFlowGraph()
     val api = new Api.metaApi(g)
 
-    var x = 0
-    val e = api.Evt[Int]()
+    var x  = 0
+    val e  = api.Evt[Int]()
     val e2 = e.map((x: Int) => x * 2)
     val e3 = e2.map((x: Int) => x + 2)
     assert(g.numNodes == 3, "Graph should contain 3 nodes before fusion")
@@ -32,12 +32,12 @@ class OperatorFusionTest extends FunSuite {
 
   test("Event filter fusion test") {
 
-    val g = new DataFlowGraph()
+    val g   = new DataFlowGraph()
     val api = new Api.metaApi(g)
 
-    var x = 0
-    val e = api.Evt[Int]()
-    val e2 = e && (_ % 2 == 0)
+    var x  = 0
+    val e  = api.Evt[Int]()
+    val e2 = e && (_  % 2 == 0)
     val e3 = e2 && (_ % 3 == 0)
     assert(g.numNodes == 3, "Graph should contain 3 nodes before fusion")
 
@@ -57,13 +57,13 @@ class OperatorFusionTest extends FunSuite {
 
   test("Signal map fusion test") {
 
-    val g = new DataFlowGraph()
+    val g   = new DataFlowGraph()
     val api = new Api.metaApi(g)
 
-    val v = api.Var(1)
+    val v  = api.Var(1)
     val v2 = v.map((x: Int) => x * 2)
     val v3 = v2.map((x: Int) => x + 2)
-    val e = v3.changed
+    val e  = v3.changed
     v.set(2)
     assert(g.numNodes == 4, "Graph should contain 4 nodes before fusion")
 
@@ -76,14 +76,14 @@ class OperatorFusionTest extends FunSuite {
   }
 
   test("Multi fusion test") {
-    val g = new DataFlowGraph()
+    val g   = new DataFlowGraph()
     val api = new Api.metaApi(g)
 
-    val v = api.Var(1)
+    val v  = api.Var(1)
     val v2 = v.map((x: Int) => x * 2)
     val v3 = v2.map((x: Int) => x + 2)
     val v4 = v3.map((x: Int) => x * 3)
-    val e = v4.changed
+    val e  = v4.changed
     v.set(2)
     assert(g.numNodes == 5, "Graph should contain 5 nodes before fusion")
 
@@ -96,14 +96,14 @@ class OperatorFusionTest extends FunSuite {
   }
 
   test("No fusion test") {
-    val g = new DataFlowGraph()
+    val g   = new DataFlowGraph()
     val api = new Api.metaApi(g)
 
-    val v = api.Var(1)
+    val v  = api.Var(1)
     val v2 = v.map((x: Int) => x * 2)
     val v3 = v2.map((x: Int) => x + 2)
     val v4 = v2.map((x: Int) => x * 3)
-    val e = v3.changed
+    val e  = v3.changed
     v.set(2)
     assert(g.numNodes == 5, "Graph should contain 5 nodes before fusion")
 

@@ -46,15 +46,15 @@ class FullMVTurnTransitiveReachabilityTest extends AnyFunSuite {
   test("Digraph Reachability is correct for paper graph") {
     // G.F. Italiano 1986. "Amortized Efficiency Of A Path Retrieval Data Structure"
     val edges = Map[Int, Set[Int]](
-      1 -> Set(2, 4, 5, 7),
-      2 -> Set(7, 8, 9, 12),
-      3 -> Set(9),
-      4 -> Set(3, 7),
-      5 -> Set(4, 6),
-      6 -> Set(3, 10),
-      7 -> Set(9),
-      8 -> Set(1, 5, 6, 11),
-      9 -> Set(10),
+      1  -> Set(2, 4, 5, 7),
+      2  -> Set(7, 8, 9, 12),
+      3  -> Set(9),
+      4  -> Set(3, 7),
+      5  -> Set(4, 6),
+      6  -> Set(3, 10),
+      7  -> Set(9),
+      8  -> Set(1, 5, 6, 11),
+      9  -> Set(10),
       10 -> Set(),
       11 -> Set(),
       12 -> Set(11)
@@ -62,34 +62,43 @@ class FullMVTurnTransitiveReachabilityTest extends AnyFunSuite {
 
     val nodes = edges.keySet
 
-    val trees = makeTreesUnderSingleLockedLock(nodes)
+    val trees      = makeTreesUnderSingleLockedLock(nodes)
     var addedEdges = Map[Int, Set[Int]]().withDefaultValue(Set())
     for ((from, tos) <- edges; to <- tos) {
       addedEdges = addEdgeIfPossibleAndVerify(nodes, trees, addedEdges, from, to)
     }
   }
 
-  private def addEdgeIfPossibleAndVerify(nodes: Set[Int], trees: Map[Int, FullMVTurnImpl], addedEdges: Map[Int, Set[Int]], from: Int, to: Int): Map[Int, Set[Int]] = {
+  private def addEdgeIfPossibleAndVerify(
+      nodes: Set[Int],
+      trees: Map[Int, FullMVTurnImpl],
+      addedEdges: Map[Int, Set[Int]],
+      from: Int,
+      to: Int
+  ): Map[Int, Set[Int]] = {
     val fromTree = trees(from)
-    val toTree = trees(to)
+    val toTree   = trees(to)
     val res = if (!fromTree.isTransitivePredecessor(toTree)) {
       Await.result(fromTree.addPredecessor(toTree.selfNode), Duration.Zero)
       addedEdges + (from -> (addedEdges(from) + to))
     } else addedEdges
 
     val transitiveClosure = computeTransitiveClosure(nodes, res)
-    assert(findDisagreements(nodes, trees, transitiveClosure) == Set.empty, "found disagreement after edges " + addedEdges)
+    assert(
+      findDisagreements(nodes, trees, transitiveClosure) == Set.empty,
+      "found disagreement after edges " + addedEdges
+    )
 
     res
   }
 
   test("Random edges") {
-    val SIZE = 31
-    val random = new Random()
-    val nodes = (0 until SIZE).toSet
-    val trees = makeTreesUnderSingleLockedLock(nodes)
+    val SIZE       = 31
+    val random     = new Random()
+    val nodes      = (0 until SIZE).toSet
+    val trees      = makeTreesUnderSingleLockedLock(nodes)
     var addedEdges = Map[Int, Set[Int]]().withDefaultValue(Set())
-    for(_ <- 0 until SIZE*SIZE) {
+    for (_ <- 0 until SIZE * SIZE) {
       val from, to = random.nextInt(SIZE)
       addedEdges = addEdgeIfPossibleAndVerify(nodes, trees, addedEdges, from, to)
     }

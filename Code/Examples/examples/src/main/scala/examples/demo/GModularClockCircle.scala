@@ -24,27 +24,28 @@ object GModularClockCircle extends SimpleSwingApplication {
   object Clock {
     val NanoSecond = 1000000000L
 
-    private val _nsTime = Var(System.nanoTime())
-    def tick() = _nsTime.set(System.nanoTime())
+    private val _nsTime      = Var(System.nanoTime())
+    def tick()               = _nsTime.set(System.nanoTime())
     val nsTime: Signal[Long] = _nsTime
 
-    val ticks = nsTime.change.map{ diff => diff.to.get - diff.from.get }
+    val ticks = nsTime.change.map { diff => diff.to.get - diff.from.get }
   }
 
   val shapes = Var[List[Shape]](List.empty)
-  val panel = new ShapesPanel(shapes)
+  val panel  = new ShapesPanel(shapes)
 
   val angle = Clock.nsTime.map(_.toDouble / Clock.NanoSecond * math.Pi)
 
-  val velocity = Signal { Pos(
-    x = (panel.width() / 2 - 50).toDouble * math.sin(angle()) / Clock.NanoSecond,
-    y = (panel.height() / 2 - 50).toDouble * math.cos(angle()) / Clock.NanoSecond
-  )}
-
+  val velocity = Signal {
+    Pos(
+      x = (panel.width() / 2 - 50).toDouble * math.sin(angle()) / Clock.NanoSecond,
+      y = (panel.height() / 2 - 50).toDouble * math.cos(angle()) / Clock.NanoSecond
+    )
+  }
 
   val inc = Clock.ticks.map(tick => velocity.value * tick.toDouble)
 
-  val pos = inc.fold(Pos(0,0)) { (cur, inc) => cur + inc }
+  val pos = inc.fold(Pos(0, 0)) { (cur, inc) => cur + inc }
 
   shapes.transform(new Circle(pos, Var(50)) :: _)
 
@@ -53,15 +54,15 @@ object GModularClockCircle extends SimpleSwingApplication {
     new MainFrame {
       title = "REScala Demo"
       contents = panel
-      setLocationRelativeTo(new UIElement {override def peer = null})
+      setLocationRelativeTo(new UIElement { override def peer = null })
     }
   }
 
   override def main(args: Array[String]): Unit = {
     super.main(args)
 
-    while(!top.visible) Thread.sleep(5)
-    while(top.visible) {
+    while (!top.visible) Thread.sleep(5)
+    while (top.visible) {
       Thread.sleep(1)
       Clock.tick()
     }

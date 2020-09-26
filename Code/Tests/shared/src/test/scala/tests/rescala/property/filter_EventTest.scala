@@ -3,8 +3,9 @@ package tests.rescala.property
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import tests.rescala.testtools.RETests
 
-
-class filter_EventTest extends RETests with ScalaCheckDrivenPropertyChecks { multiEngined { engine => import engine._
+class filter_EventTest extends RETests with ScalaCheckDrivenPropertyChecks {
+  multiEngined { engine =>
+    import engine._
 
     "filter Is Correctly Applied" in forAll { (nums: List[Int]) =>
       val e = Evt[Int]()
@@ -17,4 +18,5 @@ class filter_EventTest extends RETests with ScalaCheckDrivenPropertyChecks { mul
       assert(s.readValueOnce == evenNums.reverse)
     }
 
-} }
+  }
+}

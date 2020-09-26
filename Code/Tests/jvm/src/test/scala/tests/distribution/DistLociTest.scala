@@ -16,9 +16,7 @@ import scala.concurrent.{Await, Future}
 class DistLociTest extends AnyFreeSpec {
   "very simple fold " ignore {
 
-
     //val messagesBinding = Binding[RGA[String] => Unit]("messages")
-
 
     val serverSource = Evt[String]()
     val (serverRegistry, serverFold) = {
@@ -35,7 +33,7 @@ class DistLociTest extends AnyFreeSpec {
 
     val clientSource = Evt[String]()
     val (clientRegistry, clientFold) = {
-      val registry = new Registry
+      val registry                      = new Registry
       val connection: Future[RemoteRef] = registry.connect(WS("ws://localhost:1099/"))
       Await.result(connection, Duration.Inf)
 
@@ -49,7 +47,6 @@ class DistLociTest extends AnyFreeSpec {
 
     println(clientFold.now)
     println(serverFold.now)
-
 
     Thread.sleep(1000)
     Thread.sleep(1000)
@@ -65,7 +62,10 @@ class DistLociTest extends AnyFreeSpec {
 
   def makeListGraph(clientSource: Evt[String], registry: Registry): Signal[String] = {
     @scala.annotation.nowarn
-    val theList = dfold(clientSource)(List.empty[String])((list, msg) => list :+ msg)(registry, Binding[RGA[String] => Unit]("messages"))
+    val theList = dfold(clientSource)(List.empty[String])((list, msg) => list :+ msg)(
+      registry,
+      Binding[RGA[String] => Unit]("messages")
+    )
     val size = theList.map(l => l.size - 1)
 
     Signal {

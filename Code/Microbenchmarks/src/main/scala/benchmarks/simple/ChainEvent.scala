@@ -18,10 +18,10 @@ import rescala.reactives.{Event, Evt}
 @State(Scope.Thread)
 class ChainEvent[S <: Struct] {
 
-  var engine: RescalaInterface[S] = _
+  var engine: RescalaInterface[S]      = _
   implicit def scheduler: Scheduler[S] = engine.scheduler
 
-  var source: Evt[Int, S] = _
+  var source: Evt[Int, S]   = _
   var result: Event[Int, S] = _
 
   @Setup
@@ -30,7 +30,9 @@ class ChainEvent[S <: Struct] {
     source = engine.Evt[Int]()
     result = source
     for (_ <- Range(0, size.size)) {
-      result = result.map { v => val r = v + 1; work.consume(); r }
+      result = result.map { v =>
+        val r = v + 1; work.consume(); r
+      }
     }
   }
 

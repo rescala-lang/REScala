@@ -17,14 +17,14 @@ import scala.concurrent.duration._
 @Threads(1)
 @State(Scope.Benchmark)
 class RemoteGlitchLoop {
-  var sourceEngine: FullMVEngine = _
-  var source: Var[Int, FullMVStruct] = _
-  var remoteEngine: FullMVEngine = _
+  var sourceEngine: FullMVEngine                = _
+  var source: Var[Int, FullMVStruct]            = _
+  var remoteEngine: FullMVEngine                = _
   var sourceOnRemote: Signal[Int, FullMVStruct] = _
-  var remoteNode: Signal[Int, FullMVStruct] = _
+  var remoteNode: Signal[Int, FullMVStruct]     = _
   var remoteOnSource: Signal[Int, FullMVStruct] = _
-  var sourceMerge: Signal[Int, FullMVStruct] = _
-  var glitchCounter: Int = _
+  var sourceMerge: Signal[Int, FullMVStruct]    = _
+  var glitchCounter: Int                        = _
 
   @Param(Array("50"))
   var msDelay: Int = _
@@ -33,7 +33,7 @@ class RemoteGlitchLoop {
   def setup(): Unit = {
     FakeDelayer.enable()
 
-    sourceEngine = new FullMVEngine(10.seconds,"src")
+    sourceEngine = new FullMVEngine(10.seconds, "src")
     source = {
       val e = sourceEngine
       import e._
@@ -58,7 +58,7 @@ class RemoteGlitchLoop {
       val rmt = remoteOnSource
       Signal {
         val res = src() + rmt()
-        if(res % 2 == 0) glitchCounter += 1
+        if (res % 2 == 0) glitchCounter += 1
         res
       }
     }
@@ -74,6 +74,6 @@ class RemoteGlitchLoop {
       source.admit(newValue)(t)
       newValue
     }
-    if(glitchCounter > 0) throw new IllegalStateException(s"a glitch occurred before or during update $newValue!")
+    if (glitchCounter > 0) throw new IllegalStateException(s"a glitch occurred before or during update $newValue!")
   }
 }

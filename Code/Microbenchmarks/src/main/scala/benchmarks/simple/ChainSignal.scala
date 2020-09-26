@@ -18,10 +18,10 @@ import rescala.reactives.{Signal, Var}
 @State(Scope.Thread)
 class ChainSignal[S <: Struct] {
 
-  var engine: RescalaInterface[S] = _
+  var engine: RescalaInterface[S]      = _
   implicit def scheduler: Scheduler[S] = engine.scheduler
 
-  var source: Var[Int, S] = _
+  var source: Var[Int, S]    = _
   var result: Signal[Int, S] = _
 
   @Setup
@@ -30,7 +30,9 @@ class ChainSignal[S <: Struct] {
     source = engine.Var(step.run())
     result = source
     for (_ <- Range(0, size.size)) {
-      result = result.map{v => val r = v + 1; work.consume(); r}
+      result = result.map { v =>
+        val r = v + 1; work.consume(); r
+      }
     }
   }
 

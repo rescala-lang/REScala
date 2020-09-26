@@ -1,6 +1,5 @@
 package reswing
 
-
 import scala.swing.{Color, Dimension, Font, Panel}
 
 class RePanel(
@@ -10,10 +9,8 @@ class RePanel(
     enabled: ReSwingValue[Boolean] = (),
     minimumSize: ReSwingValue[Dimension] = (),
     maximumSize: ReSwingValue[Dimension] = (),
-    preferredSize: ReSwingValue[Dimension] = ())
-  extends
-    ReComponent(background, foreground, font, enabled,
-                minimumSize, maximumSize, preferredSize) {
+    preferredSize: ReSwingValue[Dimension] = ()
+) extends ReComponent(background, foreground, font, enabled, minimumSize, maximumSize, preferredSize) {
   override protected lazy val peer = new Panel with ComponentMixin
 }
 

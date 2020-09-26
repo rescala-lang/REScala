@@ -19,14 +19,13 @@ import rescala.interface.RescalaInterface
 @State(Scope.Benchmark)
 class SingleVar[S <: Struct] {
 
-  var engine: RescalaInterface[S] = _
-  val engineT = engine
+  var engine: RescalaInterface[S]      = _
+  val engineT                          = engine
   implicit def scheduler: Scheduler[S] = engine.scheduler
 
   var source: engineT.Var[Boolean] = _
-  var current: Boolean = _
-  var lock: ReadWriteLock = _
-
+  var current: Boolean             = _
+  var lock: ReadWriteLock          = _
 
   @Setup
   def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam[S]): Unit = {
@@ -41,14 +40,12 @@ class SingleVar[S <: Struct] {
     if (lock == null) {
       current = !current
       source.set(current)
-    }
-    else {
+    } else {
       lock.writeLock().lock()
       try {
         current = !current
         source.set(current)
-      }
-      finally lock.writeLock().unlock()
+      } finally lock.writeLock().unlock()
     }
   }
 
@@ -56,13 +53,11 @@ class SingleVar[S <: Struct] {
   def read(): Boolean = {
     if (lock == null) {
       source.readValueOnce
-    }
-    else {
+    } else {
       lock.readLock().lock()
       try {
         source.readValueOnce
-      }
-      finally lock.readLock().unlock()
+      } finally lock.readLock().unlock()
     }
   }
 

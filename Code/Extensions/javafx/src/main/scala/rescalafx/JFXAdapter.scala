@@ -5,7 +5,6 @@ import rescala.default._
 import scalafx.application.Platform
 import scalafx.beans.property.{BooleanProperty, DoubleProperty, Property, StringProperty}
 
-
 object JFXAdapter {
 
   implicit class PropertyToSignal[T, J](p: Property[T, J]) {

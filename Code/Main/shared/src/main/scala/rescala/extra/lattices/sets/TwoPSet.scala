@@ -2,9 +2,7 @@ package rescala.extra.lattices.sets
 
 import rescala.extra.lattices.Lattice
 
-/**
-  * Two phase set where elements can be added and removed but never added again.
-  */
+/** Two phase set where elements can be added and removed but never added again. */
 case class TwoPSet[A](entries: Set[A], tombstones: Set[A]) {
 
   def add(e: A): TwoPSet[A] =
@@ -32,7 +30,7 @@ object TwoPSet {
     new Lattice[TwoPSet[A]] with SetLike[A, TwoPSet[A]] {
       override def merge(left: TwoPSet[A], right: TwoPSet[A]): TwoPSet[A] =
         left.add(right.entries).remove(right.tombstones)
-      override def add(set: TwoPSet[A], value: A): TwoPSet[A] = set.add(value)
+      override def add(set: TwoPSet[A], value: A): TwoPSet[A]   = set.add(value)
       override def contains(set: TwoPSet[A], value: A): Boolean = set.contains(value)
     }
 }

@@ -1,10 +1,12 @@
 /** This implementation tries to mirror the formalization
-  * of the corresponding paper as closely as possible */
+  * of the corresponding paper as closely as possible
+  */
 package rescala.extra.research
 
-import rescala.core.{AccessTicket, Derived, DynamicInitializerLookup, Initializer, ReSource, ReevTicket, Scheduler, Struct}
+import rescala.core.{
+  AccessTicket, Derived, DynamicInitializerLookup, Initializer, ReSource, ReevTicket, Scheduler, Struct
+}
 import rescala.interface.Aliases
-
 
 trait FStruct extends Struct {
   override type State[V, S <: Struct] = StoreValue[V, S]
@@ -13,35 +15,36 @@ trait FStruct extends Struct {
 /** The formalization uses a per device store mapping reactives to their
   * inputs, values, and operator.
   * The operator is already handled by the common implementation, so we keep the value and inputs.
-  * The store mapping does not exist as a single object, but instead each reactive has this state. */
+  * The store mapping does not exist as a single object, but instead each reactive has this state.
+  */
 class StoreValue[V, S <: Struct](var value: V) {
-  var inputs: Set[ReSource[S]] = Set.empty
+  var inputs: Set[ReSource[S]]  = Set.empty
   override def toString: String = s""
 }
 
 /** The main task of the initializer is to handle creation of reactives,
   * especially during an ongoing propagation.
-  * The formalization does not support this, to keep the complexity of the proofs in check. */
+  * The formalization does not support this, to keep the complexity of the proofs in check.
+  */
 class SimpleCreation() extends Initializer[FStruct] {
-  override protected[this] def makeDerivedStructState[V](ip: V)
-  : StoreValue[V, FStruct] = new StoreValue[V, FStruct](ip)
+  override protected[this] def makeDerivedStructState[V](ip: V): StoreValue[V, FStruct] = new StoreValue[V, FStruct](ip)
 
-  override def accessTicket(): AccessTicket[FStruct] = new AccessTicket[FStruct] {
-    override private[rescala] def access(reactive: ReSource[FStruct]): reactive.Value = reactive.state.value
-  }
-
+  override def accessTicket(): AccessTicket[FStruct] =
+    new AccessTicket[FStruct] {
+      override private[rescala] def access(reactive: ReSource[FStruct]): reactive.Value = reactive.state.value
+    }
 
   override protected[this] def register(reactive: ReSource[FStruct]): Unit = FScheduler.allReactives += reactive
 
-  override protected[this] def ignite(reactive: Derived[FStruct],
-                                      incoming: Set[ReSource[FStruct]],
-                                      ignitionRequiresReevaluation: Boolean)
-  : Unit = {
+  override protected[this] def ignite(
+      reactive: Derived[FStruct],
+      incoming: Set[ReSource[FStruct]],
+      ignitionRequiresReevaluation: Boolean
+  ): Unit = {
     println(s"creating $reactive $ignitionRequiresReevaluation")
     println(incoming)
 
     reactive.state.inputs = incoming
-
 
     if (ignitionRequiresReevaluation || requiresReev(reactive)) {
       println(s"creation evaluation $reactive")
@@ -52,89 +55,95 @@ class SimpleCreation() extends Initializer[FStruct] {
 
   def requiresReev(reSource: ReSource[FStruct]): Boolean = {
     if (FScheduler.currentPropagation == null) false
-    else FScheduler.currentPropagation.isReady(reSource) &&
-         FScheduler.currentPropagation.isOutdated(reSource)
+    else
+      FScheduler.currentPropagation.isReady(reSource) &&
+      FScheduler.currentPropagation.isOutdated(reSource)
   }
 
 }
 
-
-object FScheduler extends DynamicInitializerLookup[FStruct, SimpleCreation]
-                  with Scheduler[FStruct]
-                  with Aliases[FStruct] {
+object FScheduler
+    extends DynamicInitializerLookup[FStruct, SimpleCreation]
+    with Scheduler[FStruct]
+    with Aliases[FStruct] {
 
   override def schedulerName: String = "FormalizationLike"
 
-  var allReactives = Set.empty[ReSource]
+  var allReactives                    = Set.empty[ReSource]
   var currentPropagation: Propagation = null
 
   var idle = true
 
   /** this corresponds very roughly to the fire rule.
     * The initial writes contains the reactives which change (only one for fire),
-    * and teh admission phase updates their values to the fired values (μ(r).val ← v) */
-  override def forceNewTransaction[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R): R = synchronized {
-    // some broken user code may start a new transaction during an ongoing one
-    // this is not supported by this propagation algorithm,
-    // and is detected here because it leads to weird behaviour otherwise
-    if (!idle) throw new IllegalStateException("Scheduler is not reentrant")
-    idle = false
-    try {
-      println(s"\nexecuting turn from $initialWrites")
-      val creation = new SimpleCreation()
-      withDynamicInitializer(creation) {
-        // admission
-        val admissionTicket = new AdmissionTicket(creation, initialWrites) {
-          override private[rescala] def access(reactive: ReSource): reactive.Value = reactive.state.value
+    * and teh admission phase updates their values to the fired values (μ(r).val ← v)
+    */
+  override def forceNewTransaction[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R): R =
+    synchronized {
+      // some broken user code may start a new transaction during an ongoing one
+      // this is not supported by this propagation algorithm,
+      // and is detected here because it leads to weird behaviour otherwise
+      if (!idle) throw new IllegalStateException("Scheduler is not reentrant")
+      idle = false
+      try {
+        println(s"\nexecuting turn from $initialWrites")
+        val creation = new SimpleCreation()
+        withDynamicInitializer(creation) {
+          // admission
+          val admissionTicket = new AdmissionTicket(creation, initialWrites) {
+            override private[rescala] def access(reactive: ReSource): reactive.Value = reactive.state.value
+          }
+
+          // collect the fired values
+          val admissionResult = admissionPhase(admissionTicket)
+          // write all fired values to the store (r.writeValue)
+          // we collect those where the write is propagated
+          // (non propagation is not supported by the formalization, but is used for filter events,
+          // and signals that do not change their values
+          val sources = admissionTicket.initialChanges.values.collect {
+            case r if r.writeValue(r.source.state.value, r.source.state.value = _) => r.source
+          }.toSet
+
+          println(s"sources: $sources")
+
+          // start a new propagation changes in REScala always have to happen as a side effect
+          val propagation = Propagation(active = sources, processed = sources, allReactives, creation)
+          println(s"starting propagation $propagation")
+          val result = propagation.run()
+          println(s"done propagating")
+
+          // wrapup, this is for a rarely used rescala features, where transactions can
+          // do some cleanup when they complete. Not supported in the formalization
+          if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(creation.accessTicket())
+
+          // commit cleans up some internal state
+          result.commit()
+
+          // transactions return whatever the user code did
+          admissionResult
         }
-
-        // collect the fired values
-        val admissionResult = admissionPhase(admissionTicket)
-        // write all fired values to the store (r.writeValue)
-        // we collect those where the write is propagated
-        // (non propagation is not supported by the formalization, but is used for filter events,
-        // and signals that do not change their values
-        val sources = admissionTicket.initialChanges.values.collect {
-          case r if r.writeValue(r.source.state.value, r.source.state.value = _) => r.source
-        }.toSet
-
-        println(s"sources: $sources")
-
-        // start a new propagation changes in REScala always have to happen as a side effect
-        val propagation = Propagation(active = sources, processed = sources, allReactives, creation)
-        println(s"starting propagation $propagation")
-        val result = propagation.run()
-        println(s"done propagating")
-
-
-        // wrapup, this is for a rarely used rescala features, where transactions can
-        // do some cleanup when they complete. Not supported in the formalization
-        if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(creation.accessTicket())
-
-        // commit cleans up some internal state
-        result.commit()
-
-        // transactions return whatever the user code did
-        admissionResult
+      } finally {
+        currentPropagation = null
+        idle = true
       }
     }
-    finally {
-      currentPropagation = null
-      idle = true
-    }
-  }
   override private[rescala] def singleReadValueOnce[A](reactive: Signal[A]): A =
     reactive.resource.interpret(reactive.resource.state.value)
 }
 
-
-case class Propagation(active: Set[ReSource[FStruct]], processed: Set[ReSource[FStruct]], knownReactives: Set[ReSource[FStruct]], creationTicket: SimpleCreation) {
+case class Propagation(
+    active: Set[ReSource[FStruct]],
+    processed: Set[ReSource[FStruct]],
+    knownReactives: Set[ReSource[FStruct]],
+    creationTicket: SimpleCreation
+) {
 
   // resets the state of all reactives back to whatever it should be after propagation
   // this is used primarily to reset all events back to no value
-  def commit(): Unit = active.foreach { a =>
-    a.state.value = a.commit(a.state.value)
-  }
+  def commit(): Unit =
+    active.foreach { a =>
+      a.state.value = a.commit(a.state.value)
+    }
 
   def run(): Propagation = {
     // make this available, as we may need it to create new reactives
@@ -148,7 +157,7 @@ case class Propagation(active: Set[ReSource[FStruct]], processed: Set[ReSource[F
     // because REScala allows the creation of new reactives during propagation.
     // their correctness is ensured by the creation method
     if (knownReactives == processed) this // snapshots are handled elsewhere
-    else { // reevaluate or skip
+    else {                                // reevaluate or skip
 
       // if there is anything to skip, we just skip all of them at once
       val toSkip = ready -- outdated
@@ -161,7 +170,7 @@ case class Propagation(active: Set[ReSource[FStruct]], processed: Set[ReSource[F
 
         // rule does not specify which reactive to select
         val candidates = ready.intersect(outdated)
-        val r = candidates.head
+        val r          = candidates.head
         // Reevaluate r. Sources are handled differently from derived reactives,
         // as they have no attached operation in REScala
         // in the calculus they just execute the empty operation
@@ -170,7 +179,7 @@ case class Propagation(active: Set[ReSource[FStruct]], processed: Set[ReSource[F
         val (evaluated, propagate) = r match {
           case r: Derived[FStruct] =>
             Reevaluate.evaluate(r, isReady, creationTicket)
-          case _             => (true, false)
+          case _ => (true, false)
         }
 
         val newReactives = FScheduler.allReactives -- knownReactives
@@ -194,7 +203,7 @@ case class Propagation(active: Set[ReSource[FStruct]], processed: Set[ReSource[F
 
   /** Compute the set of all ready reactives. Logic is identical to the paper. */
   lazy val ready: Set[ReSource[FStruct]] = {
-    unprocessed.filter{r =>
+    unprocessed.filter { r =>
       // intersect with all known reactives
       // as there may be new inputs that were created during this propagation
       // which we always consider as processed
@@ -216,8 +225,11 @@ case class Propagation(active: Set[ReSource[FStruct]], processed: Set[ReSource[F
 }
 
 object Reevaluate {
-  def evaluate(reactive: Derived[FStruct], dynamicOk: ReSource[FStruct] => Boolean, creationTicket: SimpleCreation)
-  : (Boolean, Boolean) = {
+  def evaluate(
+      reactive: Derived[FStruct],
+      dynamicOk: ReSource[FStruct] => Boolean,
+      creationTicket: SimpleCreation
+  ): (Boolean, Boolean) = {
     val dt = new ReevTicket[reactive.Value, FStruct](creationTicket, reactive.state.value) {
       override def dynamicAccess(input: ReSource[FStruct]): input.Value = {
         input.state.value
@@ -237,7 +249,7 @@ object Reevaluate {
     }
 
     reev.dependencies() match {
-      case None         => // static reactive
+      case None => // static reactive
         finishReevaluation()
       case Some(inputs) => //dynamic reactive
         reactive.state.inputs = inputs

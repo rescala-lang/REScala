@@ -14,9 +14,9 @@ import scala.util.{Failure, Success, Try}
 
 sealed trait Dynamicity
 object Dynamicity {
-  case object Static extends Dynamicity
+  case object Static     extends Dynamicity
   case object SemiStatic extends Dynamicity
-  case object Dynamic extends Dynamicity
+  case object Dynamic    extends Dynamicity
 }
 abstract class PaperPhilosophers[S <: Struct](val size: Int, val engine: RescalaInterface[S], dynamicity: Dynamicity) {
 
@@ -28,10 +28,9 @@ abstract class PaperPhilosophers[S <: Struct](val size: Int, val engine: Rescala
 
   case object Thinking extends Philosopher
 
-  val phils = for (idx <- 0 until size) yield
-    REName.named(s"phil(${idx+1})") { implicit ! =>
-      Var[Philosopher](Thinking)
-    }
+  val phils = for (idx <- 0 until size) yield REName.named(s"phil(${idx + 1})") { implicit ! =>
+    Var[Philosopher](Thinking)
+  }
 
   sealed trait Fork
 
@@ -39,18 +38,17 @@ abstract class PaperPhilosophers[S <: Struct](val size: Int, val engine: Rescala
 
   case class Taken(by: Int) extends Fork
 
-  val forks = for (idx <- 0 until size) yield
-    REName.named(s"fork(${idx+1})") { implicit ! =>
-      Signal.dynamic[Fork] {
-        val nextIdx = (idx + 1) % size
-        (phils(idx)(), phils(nextIdx)()) match {
-          case (Thinking, Thinking) => Free
-          case (Eating, Thinking) => Taken(idx)
-          case (Thinking, Eating) => Taken(nextIdx)
-          case (Eating, Eating) => throw new AssertionError(s"fork ${idx+1} double use")
-        }
+  val forks = for (idx <- 0 until size) yield REName.named(s"fork(${idx + 1})") { implicit ! =>
+    Signal.dynamic[Fork] {
+      val nextIdx = (idx + 1) % size
+      (phils(idx)(), phils(nextIdx)()) match {
+        case (Thinking, Thinking) => Free
+        case (Eating, Thinking)   => Taken(idx)
+        case (Thinking, Eating)   => Taken(nextIdx)
+        case (Eating, Eating)     => throw new AssertionError(s"fork ${idx + 1} double use")
       }
     }
+  }
 
   sealed trait Sight
 
@@ -61,41 +59,42 @@ abstract class PaperPhilosophers[S <: Struct](val size: Int, val engine: Rescala
   case object Ready extends Sight
 
   // Dynamic Sight
-  val sights = for (avoidStaticOptimization <- 0 until size) yield
-    REName.named(s"sight(${avoidStaticOptimization+1})") { implicit ! =>
-      dynamicity match {
-        case Dynamicity.Dynamic => Signal.dynamic[Sight] {
-          val idx = avoidStaticOptimization
-          val prevIdx = (idx - 1 + size) % size
-          forks(prevIdx)() match {
-            case Free =>
-              forks(idx)() match {
-                case Taken(neighbor) => Blocked(neighbor)
-                case Free => Ready
+  val sights =
+    for (avoidStaticOptimization <- 0 until size) yield REName.named(s"sight(${avoidStaticOptimization + 1})") {
+      implicit ! =>
+        dynamicity match {
+          case Dynamicity.Dynamic => Signal.dynamic[Sight] {
+              val idx     = avoidStaticOptimization
+              val prevIdx = (idx - 1 + size) % size
+              forks(prevIdx)() match {
+                case Free =>
+                  forks(idx)() match {
+                    case Taken(neighbor) => Blocked(neighbor)
+                    case Free            => Ready
+                  }
+                case Taken(by) =>
+                  if (by == idx) {
+                    assert(forks(idx)() == Taken(idx), s"sight ${idx + 1} glitched")
+                    Done
+                  } else {
+                    Blocked(by)
+                  }
               }
-            case Taken(by) =>
-              if (by == idx) {
-                assert(forks(idx)() == Taken(idx), s"sight ${idx+1} glitched")
-                Done
-              } else {
-                Blocked(by)
-              }
-          }
+            }
+          case Dynamicity.SemiStatic => Signal.dynamic[Sight] {
+              val idx     = avoidStaticOptimization
+              val prevIdx = (idx - 1 + size) % size
+              computeForkStatic(idx, (forks(prevIdx)(), forks(idx)()))
+            }
+          case Dynamicity.Static =>
+            val idx       = avoidStaticOptimization
+            val prevIdx   = (idx - 1 + size) % size
+            val leftFork  = forks(prevIdx)
+            val rightFork = forks(idx)
+            Signal.static[Sight] {
+              computeForkStatic(idx, (leftFork(), rightFork()))
+            }
         }
-        case Dynamicity.SemiStatic => Signal.dynamic[Sight] {
-          val idx = avoidStaticOptimization
-          val prevIdx = (idx - 1 + size) % size
-          computeForkStatic(idx, (forks(prevIdx)(), forks(idx)()))
-        }
-        case Dynamicity.Static =>
-          val idx = avoidStaticOptimization
-          val prevIdx = (idx - 1 + size) % size
-          val leftFork = forks(prevIdx)
-          val rightFork = forks(idx)
-          Signal.static[Sight] {
-            computeForkStatic(idx, (leftFork(), rightFork()))
-          }
-      }
 
     }
 
@@ -106,24 +105,23 @@ abstract class PaperPhilosophers[S <: Struct](val size: Int, val engine: Rescala
       case (Taken(left), Taken(right)) if left == idx && right == idx =>
         Done
       case (Taken(by), _) =>
-        assert(by != idx, s"sight ${idx+1} glitched 1")
+        assert(by != idx, s"sight ${idx + 1} glitched 1")
         Blocked(by)
       case (_, Taken(by)) =>
-        assert(by != idx, s"sight ${idx+1} glitched 2")
+        assert(by != idx, s"sight ${idx + 1} glitched 2")
         Blocked(by)
     }
   }
 
   val sightChngs: Seq[Event[Sight]] =
-    for(i <- 0 until size) yield sights(i).changed
-  val successes = for(i <- 0 until size) yield
-    sightChngs(i).filter(_ == Done)
+    for (i <- 0 until size) yield sights(i).changed
+  val successes = for (i <- 0 until size) yield sightChngs(i).filter(_ == Done)
 
   def manuallyLocked[T](idx: Int)(f: => T): T = synchronized { f }
 
   def maybeEat(idx: Int): Unit = {
     transaction(phils(idx)) { implicit t =>
-      if(t.now(sights(idx)) == Ready) phils(idx).admit(Eating)
+      if (t.now(sights(idx)) == Ready) phils(idx).admit(Eating)
     }
   }
   def hasEaten(idx: Int): Boolean = {
@@ -134,7 +132,7 @@ abstract class PaperPhilosophers[S <: Struct](val size: Int, val engine: Rescala
   }
 
   def eatRandomOnce(threadIndex: Int, threadCount: Int): Unit = {
-    val seatsServed = size / threadCount + (if (threadIndex < size % threadCount) 1 else 0)
+    val seatsServed  = size / threadCount + (if (threadIndex < size % threadCount) 1 else 0)
     val seating: Int = threadIndex + ThreadLocalRandom.current().nextInt(seatsServed) * threadCount
     eatOnce(seating)
   }
@@ -173,18 +171,17 @@ trait IndividualCounts[S <: Struct] {
   import engine._
 
   val individualCounts: Seq[Signal[Int]] =
-    for (idx <- 0 until size) yield
-      REName.named(s"count(${idx+1})") { implicit ! =>
-        successes(idx).fold(0) { (acc, _) => acc + 1 }
-      }
+    for (idx <- 0 until size) yield REName.named(s"count(${idx + 1})") { implicit ! =>
+      successes(idx).fold(0) { (acc, _) => acc + 1 }
+    }
 }
 
 trait NoTopper[S <: Struct] extends IndividualCounts[S] {
   self: PaperPhilosophers[S] =>
 
-  val locks = Array.fill(size) {new ReentrantLock()}
+  val locks = Array.fill(size) { new ReentrantLock() }
   override def manuallyLocked[T](idx: Int)(f: => T): T = {
-    val (lock1, lock2, lock3) = if(idx == 0) {
+    val (lock1, lock2, lock3) = if (idx == 0) {
       (locks(0), locks(1), locks(size - 1))
     } else if (idx == size - 1) {
       (locks(0), locks(size - 2), locks(size - 1))
@@ -207,7 +204,7 @@ trait SignalPyramidTopper[S <: Struct] extends IndividualCounts[S] {
   import engine._
 
   val successCount: Signal[Int] =
-    individualCounts.reduce{ (a, b) =>
+    individualCounts.reduce { (a, b) =>
       REName.named(s"sumUpTo($b)") { implicit ! =>
         Signal { a() + b() }
       }
@@ -219,8 +216,8 @@ trait SingleFoldTopper[S <: Struct] {
   self: PaperPhilosophers[S] =>
   import engine._
 
-  val successCount: Signal[Int] = Events.fold(successes.toSet[ReSource], 0){ticket => before => before() + 1}
-  override def total: Int = successCount.readValueOnce
+  val successCount: Signal[Int] = Events.fold(successes.toSet[ReSource], 0) { ticket => before => before() + 1 }
+  override def total: Int       = successCount.readValueOnce
 }
 
 trait ManualLocking[S <: Struct] extends PaperPhilosophers[S] {
@@ -239,18 +236,19 @@ trait ManualLocking[S <: Struct] extends PaperPhilosophers[S] {
 
 object PaperPhilosophers {
   def main(args: Array[String]): Unit = {
-    val tableSize = if(args.length >= 1) Integer.parseInt(args(0)) else 5
-    val threadCount = if(args.length >= 2) Integer.parseInt(args(1)) else tableSize
-    val duration = if(args.length >= 3) Integer.parseInt(args(2)) else 0
+    val tableSize   = if (args.length >= 1) Integer.parseInt(args(0)) else 5
+    val threadCount = if (args.length >= 2) Integer.parseInt(args(1)) else tableSize
+    val duration    = if (args.length >= 3) Integer.parseInt(args(2)) else 0
 
     implicit val engine = new rescala.fullmv.FullMVEngine(Duration.Zero, s"PaperPhilosophers($tableSize,$threadCount)")
-    val table = new PaperPhilosophers(tableSize, engine, Dynamicity.Dynamic) with SignalPyramidTopper[rescala.fullmv.FullMVStruct]
+    val table = new PaperPhilosophers(tableSize, engine, Dynamicity.Dynamic)
+      with SignalPyramidTopper[rescala.fullmv.FullMVStruct]
 //    implicit val engine = rescala.levelbased.LevelBasedPropagationEngines.unmanaged
 //    val table = new PaperPhilosophers(tableSize, engine, Dynamicity.Static) with NoTopper[rescala.levelbased.SimpleStruct] with ManualLocking[rescala.levelbased.SimpleStruct]
 
 //    println("====================================================================================================")
 
-    val continue: () => Boolean = if(duration == 0) {
+    val continue: () => Boolean = if (duration == 0) {
       println("Running in interactive mode: press <Enter> to terminate.")
       () => System.in.available() <= 0
     } else {
@@ -263,47 +261,51 @@ object PaperPhilosophers {
     def driver(idx: Int): Int = {
       try {
         var localCount = 0
-        while(!abort && continue()) {
+        while (!abort && continue()) {
           table.eatRandomOnce(idx, threadCount)
           localCount += 1
         }
         localCount
       } catch {
         case t: Throwable =>
-          println(s"Thread ${idx+1} setting abort after error!")
+          println(s"Thread ${idx + 1} setting abort after error!")
           abort = true
           throw t
       }
     }
 
-    val executor = Executors.newFixedThreadPool(threadCount)
+    val executor    = Executors.newFixedThreadPool(threadCount)
     val execContext = scala.concurrent.ExecutionContext.fromExecutor(executor)
-    val threads = for(i <- 0 until threadCount) yield Future { driver(i) }(execContext)
+    val threads     = for (i <- 0 until threadCount) yield Future { driver(i) }(execContext)
 
-    while(threads.exists(!_.isCompleted) && !abort && continue()) { Thread.sleep(10) }
+    while (threads.exists(!_.isCompleted) && !abort && continue()) { Thread.sleep(10) }
     val timeout = System.currentTimeMillis() + 3000
-    val scores = threads.map{ t =>
-      Try { Await.result(t, (timeout - System.currentTimeMillis()).millis ) }
+    val scores = threads.map { t =>
+      Try { Await.result(t, (timeout - System.currentTimeMillis()).millis) }
     }
     executor.shutdown()
 
-    if(scores.exists(_.isFailure)) {
+    if (scores.exists(_.isFailure)) {
       println("Philosophers done with failures:")
       scores.zipWithIndex.foreach {
         case (Failure(_: TimeoutException), idx) =>
-          System.err.println(f"${idx+1}%4d: timed out")
-        case (f@Failure(ex), idx) =>
-          System.err.print(f"${idx+1}%4d: ")
+          System.err.println(f"${idx + 1}%4d: timed out")
+        case (f @ Failure(ex), idx) =>
+          System.err.print(f"${idx + 1}%4d: ")
           ex.printStackTrace()
         case (Success(_), _) => // ignore
       }
       println("There were failures -> not accessing total score; individual threads summary:")
-      println("\t" + scores.zipWithIndex.map { case (count, idx) => (idx+1).toString + ": " + count }.mkString("\n\t"))
+      println(
+        "\t" + scores.zipWithIndex.map { case (count, idx) => (idx + 1).toString + ": " + count }.mkString("\n\t")
+      )
     } else {
       println("Philosophers done. Individual threads' scores:")
       val individualsSum = scores.map(_.get).sum
-      println("\t" + scores.zipWithIndex.map { case (count, idx) => (idx+1).toString + ": " + count }.mkString("\n\t"))
-      if(table.total == individualsSum){
+      println(
+        "\t" + scores.zipWithIndex.map { case (count, idx) => (idx + 1).toString + ": " + count }.mkString("\n\t")
+      )
+      if (table.total == individualsSum) {
         println("Total score: " + table.total + " (matches individual scores' sum)")
       } else {
         println("Total score: " + table.total + " (differs from individual scores' sum of " + individualsSum + ")")

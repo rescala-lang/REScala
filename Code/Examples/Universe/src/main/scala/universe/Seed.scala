@@ -1,12 +1,11 @@
 package universe
 
-
 import universe.Globals.engine._
 
 class Seed(implicit world: World) extends BoardElement {
 
-  val growTime: Signal[Int] = world.time.hour.changed.iterate(Plant.GrowTime)(_ - 1)
-  val isDead: Signal[Boolean] = growTime map {_ <= 0}
+  val growTime: Signal[Int]   = world.time.hour.changed.iterate(Plant.GrowTime)(_ - 1)
+  val isDead: Signal[Boolean] = growTime map { _ <= 0 }
   //#SIG
   override def isAnimal: Boolean = false
 

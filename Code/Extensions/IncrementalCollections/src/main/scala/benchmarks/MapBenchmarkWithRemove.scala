@@ -10,7 +10,6 @@ import rescala.parrp.ParRP
 
 import scala.util.Random
 
-
 /**
   * @author gerizuna
   * @since 10.10.19
@@ -26,10 +25,10 @@ class MapBenchmarkWithRemove {
   @Param(Array("1", "5", "10", "50", "100", "500", "1000", "5000", "10000"))
   var arg: Int = _
 
-  var removeEvent: Evt[Int] = _
+  var removeEvent: Evt[Int]       = _
   var mappedSeq: Signal[Seq[Int]] = _
 
-  var reactSeq: SeqSource[Int] = _
+  var reactSeq: SeqSource[Int]                     = _
   var reactMappedSeq: ReactiveDeltaSeq[Int, ParRP] = _
 
   @Setup(Level.Invocation)

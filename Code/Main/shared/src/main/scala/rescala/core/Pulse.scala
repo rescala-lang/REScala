@@ -19,10 +19,11 @@ sealed trait Pulse[+P] {
     *
     * @return True if the pulse indicates a change, false if not
     */
-  final def isChange: Boolean = this match {
-    case NoChange => false
-    case _ => true
-  }
+  final def isChange: Boolean =
+    this match {
+      case NoChange => false
+      case _        => true
+    }
 
   /**
     * If the pulse indicates a change: Applies a function to the updated value of the pulse and returns a new pulse
@@ -33,11 +34,12 @@ sealed trait Pulse[+P] {
     * @tparam Q Result type of the applied function
     * @return Pulse indicating the update performed by the applied function or an empty pulse if there is no updated value
     */
-  def map[Q](f: P => Q): Pulse[Q] = this match {
-    case Value(value) => Value(f(value))
-    case NoChange => NoChange
-    case ex@Exceptional(_) => ex
-  }
+  def map[Q](f: P => Q): Pulse[Q] =
+    this match {
+      case Value(value)        => Value(f(value))
+      case NoChange            => NoChange
+      case ex @ Exceptional(_) => ex
+    }
 
   /**
     * If the pulse indicates a change: Applies a function to the updated value. The function has to return a new pulse
@@ -48,11 +50,12 @@ sealed trait Pulse[+P] {
     * @tparam Q Value type of the pulse returned by the applied function
     * @return Pulse returned by the applied function or an empty pulse if there is no updated value
     */
-  def flatMap[Q](f: P => Pulse[Q]): Pulse[Q] = this match {
-    case Value(value) => f(value)
-    case NoChange => NoChange
-    case ex@Exceptional(_) => ex
-  }
+  def flatMap[Q](f: P => Pulse[Q]): Pulse[Q] =
+    this match {
+      case Value(value)        => f(value)
+      case NoChange            => NoChange
+      case ex @ Exceptional(_) => ex
+    }
 
   /**
     * If the pulse indicates a change: Applies a filter function to the updated value of the pulse.
@@ -62,43 +65,49 @@ sealed trait Pulse[+P] {
     * @param p Filter function to be applied to the updated pulse value
     * @return A pulse with the updated pulse value if the filter function returns true, an empty pulse otherwise
     */
-  def filter(p: P => Boolean): Pulse[P] = this match {
-    case c@Value(value) if p(value) => c
-    case Value(_) => NoChange
-    case NoChange => NoChange
-    case ex@Exceptional(_) => ex
-  }
+  def filter(p: P => Boolean): Pulse[P] =
+    this match {
+      case c @ Value(value) if p(value) => c
+      case Value(_)                     => NoChange
+      case NoChange                     => NoChange
+      case ex @ Exceptional(_)          => ex
+    }
 
-  def collect[U](pf: PartialFunction[P, U]): Pulse[U] = this match {
-    case Value(value) => pf.andThen(Pulse.Value(_)).applyOrElse[P, Pulse[U]](value, _ => NoChange)
-    case NoChange => NoChange
-    case ex@Exceptional(_) => ex
-  }
+  def collect[U](pf: PartialFunction[P, U]): Pulse[U] =
+    this match {
+      case Value(value)        => pf.andThen(Pulse.Value(_)).applyOrElse[P, Pulse[U]](value, _ => NoChange)
+      case NoChange            => NoChange
+      case ex @ Exceptional(_) => ex
+    }
 
   /** converts the pulse to an option of try */
-  def toOptionTry: Option[Try[P]] = this match {
-    case Value(up) => Some(Success(up))
-    case NoChange => None
-    case Pulse.empty => None
-    case Exceptional(t) => Some(Failure(t))
-  }
+  def toOptionTry: Option[Try[P]] =
+    this match {
+      case Value(up)      => Some(Success(up))
+      case NoChange       => None
+      case Pulse.empty    => None
+      case Exceptional(t) => Some(Failure(t))
+    }
 
-  def toOption: Option[P] = this match {
-    case Value(update) => Some(update)
-    case NoChange => None
-    case Exceptional(t) => throw t
-  }
+  def toOption: Option[P] =
+    this match {
+      case Value(update)  => Some(update)
+      case NoChange       => None
+      case Exceptional(t) => throw t
+    }
 
-  def get: P = this match {
-    case Value(value) => value
-    case Exceptional(t) => throw t
-    case NoChange => throw new NoSuchElementException("Tried to access the value of a NoChange Pulse")
-  }
+  def get: P =
+    this match {
+      case Value(value)   => value
+      case Exceptional(t) => throw t
+      case NoChange       => throw new NoSuchElementException("Tried to access the value of a NoChange Pulse")
+    }
 
-  def getOrElse[U >: P](default: U): U = this match {
-    case Value(value) => value
-    case _ => default
-  }
+  def getOrElse[U >: P](default: U): U =
+    this match {
+      case Value(value) => value
+      case _            => default
+    }
 }
 
 /** Object containing utility functions for using pulses */
@@ -117,28 +126,33 @@ object Pulse {
   def fromOption[P](opt: Option[P]): Pulse[P] = opt.fold[Pulse[P]](NoChange)(Value.apply)
 
   /** Transforms a Try into a Value or Exceptional Pulse */
-  def fromTry[P](tried: Try[P]): Pulse[P] = tried match {
-    case Success(v) => Pulse.Value(v)
-    case Failure(e) => Pulse.Exceptional(e)
-  }
+  def fromTry[P](tried: Try[P]): Pulse[P] =
+    tried match {
+      case Success(v) => Pulse.Value(v)
+      case Failure(e) => Pulse.Exceptional(e)
+    }
 
   /** Transforms the given pulse and an updated value into a pulse indicating a change from the pulse's value to
-    * the given updated value. */
-  def diffPulse[P](newValue: P, oldPulse: Pulse[P]): Pulse[P] = oldPulse match {
-    case NoChange => Value(newValue)
-    case Value(oldValue) =>
-      if (newValue == oldValue) NoChange
-      else Value(newValue)
-    case ex@Exceptional(t) => Value(newValue)
-  }
+    * the given updated value.
+    */
+  def diffPulse[P](newValue: P, oldPulse: Pulse[P]): Pulse[P] =
+    oldPulse match {
+      case NoChange => Value(newValue)
+      case Value(oldValue) =>
+        if (newValue == oldValue) NoChange
+        else Value(newValue)
+      case ex @ Exceptional(t) => Value(newValue)
+    }
 
   /** wrap a pulse generating function to store eventual exceptions into an exceptional pulse */
-  def tryCatch[P >: Change[Nothing] <: Pulse[_]](f: => P, onEmpty: P = Pulse.empty): P = try f catch {
-    case ufe: ObservedException    => throw ufe
-    case npe: NullPointerException => throw npe
-    case EmptySignalControlThrowable => onEmpty
-    case NonFatal(t) => Exceptional(t)
-  }
+  def tryCatch[P >: Change[Nothing] <: Pulse[_]](f: => P, onEmpty: P = Pulse.empty): P =
+    try f
+    catch {
+      case ufe: ObservedException      => throw ufe
+      case npe: NullPointerException   => throw npe
+      case EmptySignalControlThrowable => onEmpty
+      case NonFatal(t)                 => Exceptional(t)
+    }
 
   /** the pulse representing an empty signal */
   val empty: Pulse.Exceptional = Exceptional(EmptySignalControlThrowable)
@@ -148,7 +162,8 @@ object Pulse {
 
   /** Pulse indicating a change
     *
-    * @param update Updated value stored by the pulse */
+    * @param update Updated value stored by the pulse
+    */
   final case class Value[+P](update: P) extends Change[P]
 
   /** Pulse indicating an exception */

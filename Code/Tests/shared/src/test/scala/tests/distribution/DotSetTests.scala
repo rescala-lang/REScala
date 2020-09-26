@@ -8,19 +8,17 @@ import rescala.extra.lattices.dotstores.{Causal, Dot, DotStoreLattice}
 
 object DotSetGenerator {
   implicit val genDot: Arbitrary[Dot] = Arbitrary(for {
-    id <- Gen.oneOf('a' to 'g')
+    id    <- Gen.oneOf('a' to 'g')
     value <- Gen.oneOf(0 to 100)
   } yield Dot(id.toString, value))
-
 
   implicit val genSet: Arbitrary[Set[Dot]] = Arbitrary(for {
     ids <- Gen.listOf(Gen.oneOf('a' to 'z').map(_.toString)).map(_.toSet)
     if ids.nonEmpty
     value <- Gen.listOfN(ids.size, Gen.oneOf(0 to 100))
-    dots <- ids.zip(value).map(e => Dot(e._1,e._2))
+    dots  <- ids.zip(value).map(e => Dot(e._1, e._2))
   } yield dots)
 }
-
 
 class DotSetTests extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
@@ -62,7 +60,7 @@ class DotSetTests extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     }
 
     val deadElements = c1.filter(!s1.contains(_)) ++ c2.filter(!s2.contains(_))
-    val newElements = (s1 union s2) -- deadElements
+    val newElements  = (s1 union s2) -- deadElements
 
     // check that already deleted elements are not added again
     for (e <- deadElements) yield {

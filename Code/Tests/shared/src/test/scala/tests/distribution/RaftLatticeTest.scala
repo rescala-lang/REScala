@@ -6,11 +6,9 @@ import rescala.extra.lattices.RaftState.Vote
 
 class RaftLatticeTest extends AnyFreeSpec {
 
-
   "basic interaction" in {
 
-    val initial = RaftState[String](Set("a", "b", "c"),
-                                    Set(Vote(0, "a", "a"), Vote(0, "a", "b"), Vote(0, "a", "c")))
+    val initial = RaftState[String](Set("a", "b", "c"), Set(Vote(0, "a", "a"), Vote(0, "a", "b"), Vote(0, "a", "c")))
 
     assert(initial.leader === "a")
     assert(initial.nextProposal === 0)
@@ -30,13 +28,12 @@ class RaftLatticeTest extends AnyFreeSpec {
 
     assert(Lattice.merge(proposaled2, s1).values === List("new proposal", "another proposal"))
     assert(Lattice.merge(proposaled2, s2).values === List("new proposal", "another proposal"))
-    assert(Lattice.merge(Lattice.merge(proposaled2, s2), s1).values === List("new proposal",
-                                                                             "another proposal"))
+    assert(Lattice.merge(Lattice.merge(proposaled2, s2), s1).values === List("new proposal", "another proposal"))
 
   }
 
   "another interaction" in {
-    val participants   = Set("a", "b", "c")
+    val participants = Set("a", "b", "c")
     val afterFirstVote = RaftState[String](participants)
       .becomeCandidate("a")
       .supportLeader("b")
@@ -64,11 +61,9 @@ class RaftLatticeTest extends AnyFreeSpec {
       .propose("b", "Bs proposal after acceptance")
       .supportProposal("c")
 
-
     assert(bsRiseToPower.leader == "b")
     assert(bsRiseToPower.currentTerm == 2)
     assert(bsRiseToPower.values == List("As first proposal", "Bs proposal after acceptance"))
-
 
   }
 

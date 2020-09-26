@@ -1,6 +1,5 @@
 package reswing
 
-
 import scala.swing.BorderPanel.Position
 import scala.swing.{BorderPanel, Color, Component, Dimension, Font}
 
@@ -12,12 +11,9 @@ class ReBorderPanel(
     enabled: ReSwingValue[Boolean] = (),
     minimumSize: ReSwingValue[Dimension] = (),
     maximumSize: ReSwingValue[Dimension] = (),
-    preferredSize: ReSwingValue[Dimension] = ())
-  extends
-    RePanel(background, foreground, font, enabled,
-            minimumSize, maximumSize, preferredSize)
-  with
-    ReLayoutContainer[Position.Value] {
+    preferredSize: ReSwingValue[Dimension] = ()
+) extends RePanel(background, foreground, font, enabled, minimumSize, maximumSize, preferredSize)
+    with ReLayoutContainer[Position.Value] {
   override protected lazy val peer = new BorderPanel with ComponentMixin
 }
 

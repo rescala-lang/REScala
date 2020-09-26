@@ -3,7 +3,6 @@ package rescala.extra.lattices.sequences
 import rescala.extra.lattices.Lattice
 import rescala.extra.lattices.sets.TwoPSet
 
-
 object RGA {
 
   type RGA[A] = LatticeSequence[A, TwoPSet[Vertex]]
@@ -18,13 +17,4 @@ object RGA {
 
   def empty[A]: RGA[A] = LatticeSequence(TwoPSet[Vertex](), Map(Vertex.start -> Vertex.end), Map())
 
-
 }
-
-
-
-
-
-
-
-

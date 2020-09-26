@@ -9,7 +9,7 @@ class ApiTests extends FunSuite {
   import api._
 
   test("basic api use") {
-    val evt = Evt[Int]()
+    val evt    = Evt[Int]()
     val mapped = mapE(evt)(_ * 2)
     val folded = fold(mapped)(0)((acc, v) => acc + v)
 
@@ -23,8 +23,6 @@ class ApiTests extends FunSuite {
 
     assert(now(folded) === 42)
 
-
   }
-
 
 }

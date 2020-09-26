@@ -11,7 +11,6 @@ import rescala.core.{Scheduler, Struct}
 import rescala.interface.RescalaInterface
 import rescala.reactives.Evt
 
-
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @Warmup(iterations = 5, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
@@ -24,9 +23,8 @@ class ChatBench[S <: Struct] {
     implicit def scheduler: Scheduler[S] = benchState.engine.scheduler
     if (benchState.engine.scheduler != Schedulers.unmanaged) {
       benchState.clients(threadParams.getThreadIndex).fire("hello")
-    }
-    else {
-      val ti = threadParams.getThreadIndex
+    } else {
+      val ti    = threadParams.getThreadIndex
       val locks = benchState.locks
       val room1 = math.min(ti % locks.length, (ti + locks.length / 2) % locks.length)
       val room2 = math.max(ti % locks.length, (ti + locks.length / 2) % locks.length)
@@ -34,8 +32,7 @@ class ChatBench[S <: Struct] {
       locks(room2).lock()
       try {
         benchState.clients(threadParams.getThreadIndex).fire("hello")
-      }
-      finally {
+      } finally {
         locks(room2).unlock()
         locks(room1).unlock()
       }
@@ -44,15 +41,13 @@ class ChatBench[S <: Struct] {
 
 }
 
-
 @State(Scope.Benchmark)
 class BenchState[S <: Struct] {
 
-
-  var cs: ChatServer[S] = _
+  var cs: ChatServer[S]              = _
   var clients: Array[Evt[String, S]] = _
-  var locks: Array[Lock] = null
-  var engine: RescalaInterface[S] = _
+  var locks: Array[Lock]             = null
+  var engine: RescalaInterface[S]    = _
 
   @Setup
   def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam[S], size: Size) = {
@@ -66,7 +61,7 @@ class BenchState[S <: Struct] {
 
     clients = Array.fill(threads)(engine.Evt[String]())
     for ((client, i) <- clients.zipWithIndex) {
-      val room1 = i % size.size
+      val room1 = i                   % size.size
       val room2 = (i + size.size / 2) % size.size
       cs.join(client, room1)
       cs.join(client, room2)
@@ -79,6 +74,5 @@ class BenchState[S <: Struct] {
     }
 
   }
-
 
 }

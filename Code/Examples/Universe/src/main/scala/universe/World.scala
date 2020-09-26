@@ -1,6 +1,5 @@
 package universe
 
-
 import universe.Globals.engine._
 
 import scala.util.Random
@@ -13,15 +12,15 @@ class World(val width: Int = 100, val height: Int = 100) {
 
   implicit val world = this
 
-  val board = new Board(width, height)
-  val time = new Time
+  val board      = new Board(width, height)
+  val time       = new Time
   val randomness = new Random(1)
 
   val statusString: Signal[String] = Signals.lift(board.animalsAlive, board.animalsBorn) { (a, b) =>
     s"Animals alive: $a Total born: $b"
   }
   var updates: List[() => Unit] = Nil
-  def status = statusString.readValueOnce
+  def status                    = statusString.readValueOnce
   def tick() = {
     time.tick.fire()
     board.removeDead()
@@ -29,21 +28,23 @@ class World(val width: Int = 100, val height: Int = 100) {
     //pc.tasksupport = Globals.taskSupport
     pc.foreach { case (pos, be) => be.doStep(pos) }
   }
+
   /** batch spawns n Animals and m Plants */
   def batchSpawn(nAnimals: Int, mPlants: Int): Unit = {
     for (_ <- 1 to nAnimals) spawn(newAnimal)
     for (_ <- 1 to mPlants) spawn(new Plant)
   }
+
   /** returns an animal at random */
   def newAnimal: Animal = newAnimal(randomness.nextBoolean(), randomness.nextBoolean())
   def newAnimal(isHerbivore: Boolean, isMale: Boolean): Animal = {
     if (isHerbivore) {
       if (isMale) new MaleHerbivore else new FemaleHerbivore
-    }
-    else {
+    } else {
       if (isMale) new MaleCarnivore else new FemaleCarnivore
     }
   }
+
   /** spawns the given Board element at a free random position in the world */
   def spawn(element: BoardElement): Unit = {
     spawn(element, board.randomFreePosition(randomness))
@@ -58,9 +59,10 @@ class World(val width: Int = 100, val height: Int = 100) {
   time.week.changed += { _ => //#HDL  //#IF
     plan(this spawn newAnimal)
   }
+
   /** spawns the given board element at the given position */
   def spawn(element: BoardElement, pos: Pos) = board.add(element, pos)
-  def plan(f: => Unit) = synchronized(updates ::=  (() => f))
+  def plan(f: => Unit)                       = synchronized(updates ::= (() => f))
   def runPlan() = {
     val pc = updates //.par
     //pc.tasksupport = Globals.taskSupport
@@ -69,7 +71,8 @@ class World(val width: Int = 100, val height: Int = 100) {
         u()
       } catch {
         case e: Throwable => e.printStackTrace()
-    }}
+      }
+    }
     updates = Nil
   }
 }

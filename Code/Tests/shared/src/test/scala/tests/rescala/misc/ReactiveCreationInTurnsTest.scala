@@ -2,58 +2,61 @@ package tests.rescala.misc
 
 import tests.rescala.testtools.RETests
 
+class ReactiveCreationInTurnsTest extends RETests {
+  multiEngined { engine =>
+    import engine._
 
-class ReactiveCreationInTurnsTest extends RETests { multiEngined { engine => import engine._
+    test("evaluations Of Inner Signals") {
 
+      val v1 = Var(5)
+      val c1 = Var(0)
+      val v2 = Signal {
+        val _   = v1.value
+        var res = 0
+        c1.map(x => { res += 1; x })
+        res
+      }
 
+      assert(v2.readValueOnce === 1, "unrelated signal should only be evaluated once on creation")
 
+      v1.set(100)
 
-  test("evaluations Of Inner Signals"){
+      assert(v2.readValueOnce === 1, "unrelated signal should only be evaluated once on change")
 
-    val v1 = Var(5)
-    val c1 = Var(0)
-    val v2 = Signal {
-      val _ = v1.value
-      var res = 0
-      c1.map(x => {res += 1; x})
-      res
     }
 
-    assert(v2.readValueOnce === 1, "unrelated signal should only be evaluated once on creation")
+    test("evaluations Of Inner Related Signals") {
 
-    v1.set(100)
+      val v1 = Var(5)
+      val v2 = Signal {
+        val _   = v1.value
+        var res = 0
+        v1.map(x => { res += 1; x })
+        res
+      }
 
-    assert(v2.readValueOnce === 1, "unrelated signal should only be evaluated once on change")
+      assert(
+        v2.readValueOnce === 1,
+        "related signal is only be evaluated once on creation (this behaviour is actually undefined)"
+      )
 
-  }
+      v1.set(100)
 
-  test("evaluations Of Inner Related Signals"){
+      assert(
+        v2.readValueOnce === 1,
+        "related signal should be evaluated once on change (this behaviour is actually undefined)"
+      )
 
-    val v1 = Var(5)
-    val v2 = Signal {
-      val _ = v1.value
-      var res = 0
-      v1.map(x => {res += 1; x})
-      res
     }
 
-    assert(v2.readValueOnce === 1, "related signal is only be evaluated once on creation (this behaviour is actually undefined)")
+    test("change Of Created Signal") {
 
-    v1.set(100)
-
-    assert(v2.readValueOnce === 1, "related signal should be evaluated once on change (this behaviour is actually undefined)")
-
-  }
-
-
-  test("change Of Created Signal"){
-
-    engine.transaction() { implicit t =>
-      val v1 = engine.Var(0)
-      val v2 = v1.map(_ + 1)
-      v1.change.observe(v => fail(s"created signals should not change, but change was $v"))
-      v2.change.observe(v => fail(s"created mapped signals should not change, but change was $v"))
-    }
+      engine.transaction() { implicit t =>
+        val v1 = engine.Var(0)
+        val v2 = v1.map(_ + 1)
+        v1.change.observe(v => fail(s"created signals should not change, but change was $v"))
+        v2.change.observe(v => fail(s"created mapped signals should not change, but change was $v"))
+      }
 
 //    {
 //      val v1 = Var(0)
@@ -72,21 +75,21 @@ class ReactiveCreationInTurnsTest extends RETests { multiEngined { engine => imp
 //      assert(v2.now == 11)
 //    }
 
-    {
-      val v1 = Var(0)
-      val v2 = v1.map(_ + 1)
-      var o1 = false
-      var o2 = false
-      v1.change.observe(_ => o1 = true)
-      v2.change.observe(_ => o2 = true)
-      assert(!o1, "created signals do not change outside of turn during creation")
-      assert(!o2, "created mapped signals do not change outside of turn during creation")
-      v1.set(10)
-      assert(o1, "created signals do change outside of turn")
-      assert(o2, "created mapped signals do change outside of turn")
-    }
+      {
+        val v1 = Var(0)
+        val v2 = v1.map(_ + 1)
+        var o1 = false
+        var o2 = false
+        v1.change.observe(_ => o1 = true)
+        v2.change.observe(_ => o2 = true)
+        assert(!o1, "created signals do not change outside of turn during creation")
+        assert(!o2, "created mapped signals do not change outside of turn during creation")
+        v1.set(10)
+        assert(o1, "created signals do change outside of turn")
+        assert(o2, "created mapped signals do change outside of turn")
+      }
 
-  }
+    }
 
 //  test("create changes during reevaluation"){
 //    val v = Var(1)
@@ -112,6 +115,5 @@ class ReactiveCreationInTurnsTest extends RETests { multiEngined { engine => imp
 //
 //  }
 
-
-
-} }
+  }
+}

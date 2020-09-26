@@ -13,10 +13,7 @@ import com.typesafe.config.ConfigFactory.parseString
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 
-class Services(val relativeBasedir: Path,
-               val interface: String,
-               val port: Int) {
-
+class Services(val relativeBasedir: Path, val interface: String, val port: Int) {
 
   /* ====== paths ====== */
 
@@ -51,43 +48,47 @@ akka {
 """
 
   lazy val executionContext: ExecutionContextExecutor =
-    ExecutionContext.fromExecutor(new ThreadPoolExecutor(0, 1, 1L,
-                                                         TimeUnit.SECONDS,
-                                                         new LinkedBlockingQueue[Runnable]()))
+    ExecutionContext.fromExecutor(new ThreadPoolExecutor(
+      0,
+      1,
+      1L,
+      TimeUnit.SECONDS,
+      new LinkedBlockingQueue[Runnable]()
+    ))
 
-  lazy val system: ActorSystem = ActorSystem(name = "ersir",
-                                             config = Some(parseString(actorConfig)),
-                                             defaultExecutionContext = Some(executionContext))
+  lazy val system: ActorSystem = ActorSystem(
+    name = "ersir",
+    config = Some(parseString(actorConfig)),
+    defaultExecutionContext = Some(executionContext)
+  )
 
   lazy val materializer: ActorMaterializer = ActorMaterializer()(system)
-  lazy val http        : HttpExt           = Http(system)
-
+  lazy val http: HttpExt                   = Http(system)
 
   /* ====== main webserver ====== */
 
   lazy val webResources = new WebResources(basepath)
   lazy val serverPages  = new ServerPages()
-  lazy val server       = new Server(pages = serverPages,
-                                     system = system,
-                                     webResources
-  )
+  lazy val server       = new Server(pages = serverPages, system = system, webResources)
 
   lazy val serverBinding: Future[ServerBinding] = http.bindAndHandle(
     RouteResult.route2HandlerFlow(server.route)(
       RoutingSettings.default(system),
       ParserSettings.default(system),
       materializer,
-      RoutingLog.fromActorSystem(system)),
-    interface, port)(materializer)
+      RoutingLog.fromActorSystem(system)
+    ),
+    interface,
+    port
+  )(materializer)
 
   def startServer(): Future[ServerBinding] = serverBinding
   def terminateServer(): Unit = {
     serverBinding
-    .flatMap(_.unbind())(system.dispatcher)
-    .onComplete { _ =>
-      system.terminate()
-    }(system.dispatcher)
+      .flatMap(_.unbind())(system.dispatcher)
+      .onComplete { _ =>
+        system.terminate()
+      }(system.dispatcher)
   }
-
 
 }

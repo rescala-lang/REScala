@@ -2,9 +2,7 @@ package rescala.extra.lattices.sets
 
 import rescala.extra.lattices.{IdUtil, Lattice}
 
-/**
-  * Implementation of an Observed-Remove Set similar to the one described by Shapiro et al. (2011)
-  */
+/** Implementation of an Observed-Remove Set similar to the one described by Shapiro et al. (2011) */
 case class ORSet[A](entries: Map[IdUtil.Id, A], tombstones: Set[IdUtil.Id]) {
 
   def add(a: A): ORSet[A] = ORSet(entries.updated(IdUtil.genId(), a), tombstones)
@@ -26,12 +24,12 @@ object ORSet {
 
   def apply[A](values: Set[A]): ORSet[A] = ORSet(values.map(IdUtil.genId() -> _).toMap, Set())
 
-
-  implicit def lattice[A]: Lattice[ORSet[A]] = new Lattice[ORSet[A]] {
-    override def merge(left: ORSet[A], right: ORSet[A]): ORSet[A] = {
-      val lefte = left.entries -- right.tombstones
-      val righte = right.entries -- left.tombstones
-      ORSet(lefte ++ righte, left.tombstones ++ right.tombstones)
+  implicit def lattice[A]: Lattice[ORSet[A]] =
+    new Lattice[ORSet[A]] {
+      override def merge(left: ORSet[A], right: ORSet[A]): ORSet[A] = {
+        val lefte  = left.entries -- right.tombstones
+        val righte = right.entries -- left.tombstones
+        ORSet(lefte ++ righte, left.tombstones ++ right.tombstones)
+      }
     }
-  }
 }

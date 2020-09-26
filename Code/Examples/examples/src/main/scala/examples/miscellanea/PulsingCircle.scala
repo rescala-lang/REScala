@@ -9,7 +9,7 @@ import scala.swing.{MainFrame, Panel, SimpleSwingApplication, Swing}
 
 object PulsingCircle extends SimpleSwingApplication {
   lazy val application = new PulsingCircle
-  def top = application.frame
+  def top              = application.frame
 
   override def main(args: Array[String]): Unit = {
     super.main(args)
@@ -36,31 +36,28 @@ class PulsingCircle {
     override def toString = "Line("+ m + "," + q +")"
   }
 
-  */
+   */
 
   val toDraw = ListBuffer[Function1[Graphics2D, Unit]]()
   type Delta = Point
 
   class Oval(center: Signal[Point], radius: Signal[Int]) {
-    toDraw += ((g: Graphics2D) => {g.fillOval(center.now.x, center.now.y, radius.now, radius.now)})
+    toDraw += ((g: Graphics2D) => { g.fillOval(center.now.x, center.now.y, radius.now, radius.now) })
 
     override def toString = "Circle(" + center + "," + radius + ")"
   }
 
-
   val base = Var(0)
-  val time = Signal {base() % 200} // time is cyclic :)
+  val time = Signal { base() % 200 } // time is cyclic :)
 
-
-  val point1 = Signal {new Point(20 + time(), 20 + time())}
+  val point1 = Signal { new Point(20 + time(), 20 + time()) }
   new Oval(point1, time)
-  val point2 = Signal {new Point(40 + time(), 80 + time())}
+  val point2 = Signal { new Point(40 + time(), 80 + time()) }
   new Oval(point2, time)
-  val point3 = Signal {new Point(80 + time(), 40 + time())}
+  val point3 = Signal { new Point(80 + time(), 40 + time()) }
   new Oval(point3, time)
-  val point4 = Signal {new Point(160 + time(), 160 + time())}
+  val point4 = Signal { new Point(160 + time(), 160 + time()) }
   new Oval(point4, time)
-
 
   // drawing code
   def top = frame

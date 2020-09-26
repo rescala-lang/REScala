@@ -15,38 +15,37 @@ import rescala.default._
 import reswing.reader.common.sequence
 
 /**
-* The XMLParser is responsible for the translation of xml to the
-* internal represantation of the RSS Feed
-*
-*/
+  * The XMLParser is responsible for the translation of xml to the
+  * internal represantation of the RSS Feed
+  */
 class XmlParser {
   val explicitItemParsed = Evt[RSSItem]() //#EVT
 
   // only for clarity in event expressions below
-  private def discardArgument[A](tuple: (Any,A)): A = tuple._2
+  private def discardArgument[A](tuple: (Any, A)): A       = tuple._2
   private def parseSuccessfull[A](res: Option[A]): Boolean = res.isDefined
 
   lazy val itemParsed: Event[RSSItem] = //#EVT
-    ((parseItem.after map discardArgument[Option[RSSItem]]) && //#EF //#EF
-        { parseSuccessfull(_) } map { o: Option[RSSItem] => o.get }) || explicitItemParsed //#EF
+    ((parseItem.after map discardArgument[Option[RSSItem]]) &&                           //#EF //#EF
+      { parseSuccessfull(_) } map { o: Option[RSSItem] => o.get }) || explicitItemParsed //#EF
 
   lazy val channelParsed: Event[RSSChannel] = //#EVT
-    (parseChannel.after map discardArgument[Option[RSSChannel]]) && //#EF //#EF
-        { parseSuccessfull(_) } map { o: Option[RSSChannel] => o.get }  //#EF
+    (parseChannel.after map discardArgument[Option[RSSChannel]]) &&  //#EF //#EF
+      { parseSuccessfull(_) } map { o: Option[RSSChannel] => o.get } //#EF
 
-  lazy val entityParsed  = channelParsed.dropParam || itemParsed.dropParam //#EVT //#EF //#EF
+  lazy val entityParsed = channelParsed.dropParam || itemParsed.dropParam //#EVT //#EF //#EF
 
   val dateFormat = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z", Locale.ENGLISH)
 
   /**
-   * Parses a RSSChannel from the given xml NodeSeq, does NOT set the source url
-   *
-   * @param xmlNode - the xml data to parse
-   *
-   * @return
-   * 	None if the xml could not be parsed
-   * 	Some(RssChannel) otherwise
-   */
+    * Parses a RSSChannel from the given xml NodeSeq, does NOT set the source url
+    *
+    * @param xmlNode - the xml data to parse
+    *
+    * @return
+    *  None if the xml could not be parsed
+    *  Some(RssChannel) otherwise
+    */
   def parseChannelWithoutURL(xmlNode: NodeSeq): Option[RSSChannel] = {
     // version of parseChannel without URL because it is not
     // always guaranteed that we know the URL
@@ -54,15 +53,15 @@ class XmlParser {
   }
 
   /**
-   * Parses a RSSChannel from the given xml NodeSeq and sets the source url
-   *
-   * @param xmlNode - the xml data to parse
-   * @param url     - the url the channel was retrieved from
-   *
-   * @return
-   * 	None if the xml could not be parsed
-   * 	Some(RssChannel) otherwise
-   */
+    * Parses a RSSChannel from the given xml NodeSeq and sets the source url
+    *
+    * @param xmlNode - the xml data to parse
+    * @param url     - the url the channel was retrieved from
+    *
+    * @return
+    *  None if the xml could not be parsed
+    *  Some(RssChannel) otherwise
+    */
   def parseChannelWithURL(xmlNode: NodeSeq, url: URL): Option[RSSChannel] = {
     parseChannel((xmlNode, Some(url)))
   }
@@ -78,22 +77,21 @@ class XmlParser {
 
         val result = RSSChannel(meta(Symbol("title")), link, meta(Symbol("description")), date, url)
         Some(result)
-      }
-      else
+      } else
         None
   }
 
   /**
-   * Parses a RSSItem from the given NodeSeq
-   *
-   * NOTE: does not set the sourceChannel
-   *
-   * @param xmlNode - xml data to parse
-   *
-   * @return
-   * 	None if the xml could not be parsed
-   * 	Some(RssItem) otherwise
-   */
+    * Parses a RSSItem from the given NodeSeq
+    *
+    * NOTE: does not set the sourceChannel
+    *
+    * @param xmlNode - xml data to parse
+    *
+    * @return
+    *  None if the xml could not be parsed
+    *  Some(RssItem) otherwise
+    */
   val parseItem = Observable { //#EVT //#EVT
     (xmlNode: Node) => parseItemSilent(xmlNode)
   }
@@ -112,21 +110,21 @@ class XmlParser {
   }
 
   /**
-  * Parses the given xml into the RSS Channel and RSS Item classes
-  *
-  * @param data - the xml data to parse
-  * @param url  - the source url for the channel
-  *
-  * @return
-  *   On success:
-  *     a tuple of the channel with a sequence of its items
-  *     wrapped in an option
-  *   On failure:
-  *     None
-  */
+    * Parses the given xml into the RSS Channel and RSS Item classes
+    *
+    * @param data - the xml data to parse
+    * @param url  - the source url for the channel
+    *
+    * @return
+    *   On success:
+    *     a tuple of the channel with a sequence of its items
+    *     wrapped in an option
+    *   On failure:
+    *     None
+    */
   def parseRSS(data: NodeSeq, url: URL): Option[(RSSChannel, Seq[RSSItem])] = {
     val channelXML = data \ "channel"
-    val itemXML = channelXML \ "item"
+    val itemXML    = channelXML \ "item"
     // NOTE: we are not using parseItem
     //       because of the call to RSSItem.changeSource below
     val itemsOpt = sequence((itemXML map { parseItemSilent(_) }).toList)
@@ -134,17 +132,16 @@ class XmlParser {
     for {
       channel <- parseChannel((channelXML, Some(url)))
       items <- itemsOpt.map { items =>
-        items.map { i => RSSItem.changeSource(i, Some(channel)) } }
-    }
-    yield {
+        items.map { i => RSSItem.changeSource(i, Some(channel)) }
+      }
+    } yield {
       items foreach { explicitItemParsed.fire(_) }
       (channel, items)
     }
   }
 
   private def tryToCreateURL(s: String): Option[URL] = {
-    try
-      Some(new URL(s))
+    try Some(new URL(s))
     catch {
       case _: MalformedURLException => None
     }
@@ -156,15 +153,16 @@ class XmlParser {
     if (res.isEmpty)
       None
     else
-      try
-        Some(dateFormat parse res.text)
+      try Some(dateFormat parse res.text)
       catch {
         case _: ParseException => None
       }
   }
 
-  private def extractInformation(xml: NodeSeq): Map[Symbol,String] =
-    Map(Symbol("title") -> xml \ "title",
-        Symbol("link") -> xml \ "link",
-        Symbol("description") -> xml \ "description").view.mapValues { _.text }.toMap
+  private def extractInformation(xml: NodeSeq): Map[Symbol, String] =
+    Map(
+      Symbol("title")       -> xml \ "title",
+      Symbol("link")        -> xml \ "link",
+      Symbol("description") -> xml \ "description"
+    ).view.mapValues { _.text }.toMap
 }

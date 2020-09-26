@@ -7,7 +7,6 @@ import rescala.reactives._
 import scala.collection.mutable
 import util.control.Breaks._
 
-
 /**
   * @tparam T Type of values inside Deltas
   * @tparam S Structure of Reactive Sequence source
@@ -48,22 +47,22 @@ trait ReactiveDeltaSeq[T, S <: Struct] extends ReSource[S] {
     * @return
     */
   @cutOutOfUserComputation
-  def foldUndo[A: ReSerializable](initial: A)(fold: (A, Delta[T]) => A)(unfold: (A, Delta[T]) => A)(implicit ticket: CreationTicket[S]): Signal[A, S] = {
+  def foldUndo[A: ReSerializable](initial: A)(fold: (A, Delta[T]) => A)(unfold: (A, Delta[T]) => A)(implicit
+      ticket: CreationTicket[S]
+  ): Signal[A, S] = {
     // first we create an event that fires each time a Delta occurs
     val event = asEvent
 
     // Than we fold the event by applying the fold- or unfold-function respectively
     // In case Nothing Changed we return the old value of fold
     // This will automatically create a Signal whose value is updated each time the event fires
-    Events.foldOne(event, initial)(
-      (x: A, y: Delta[T]) => {
-        y match {
-          case Addition(_) => fold(x, y)
-          case Removal(_) => unfold(x, y)
-          case NoChange() => x
-        }
+    Events.foldOne(event, initial)((x: A, y: Delta[T]) => {
+      y match {
+        case Addition(_) => fold(x, y)
+        case Removal(_)  => unfold(x, y)
+        case NoChange()  => x
       }
-    )
+    })
   }
 
   //  /**
@@ -149,7 +148,11 @@ trait ReactiveDeltaSeq[T, S <: Struct] extends ReSource[S] {
     // The new created Source will be a ConcatenateDeltaSeq which is basically a ReactiveDeltaSeq, which reevaluates differently when changes are propagated
     // ConcatenateDeltaSeq depends on this (ReactiveDeltaSeq) and the one being concatenated (that). It is initialized as an empty sequence.
     // Each time a change on this or that occurs, it is automatically added to ConcatenateDeltaSeq
-    ticket.create[Delta[T], ConcatenateDeltaSeq[T, S]](Set(this, that), CollectionsInitializer.ReactiveEmptyDelta, inite = false) {
+    ticket.create[Delta[T], ConcatenateDeltaSeq[T, S]](
+      Set(this, that),
+      CollectionsInitializer.ReactiveEmptyDelta,
+      inite = false
+    ) {
       state => new ConcatenateDeltaSeq[T, S](this, that)(state, ticket.rename) with DisconnectableImpl[S]
     }
   }
@@ -162,7 +165,8 @@ trait ReactiveDeltaSeq[T, S <: Struct] extends ReSource[S] {
     * @return
     */
   @cutOutOfUserComputation
-  def size(implicit ticket: CreationTicket[S], resInt: ReSerializable[Int]): Signal[Int, S] = foldUndo(0)((counted: Int, _) => counted + 1)((counted: Int, _) => counted - 1)
+  def size(implicit ticket: CreationTicket[S], resInt: ReSerializable[Int]): Signal[Int, S] =
+    foldUndo(0)((counted: Int, _) => counted + 1)((counted: Int, _) => counted - 1)
 
   /**
     * Counts number of elements fulfilling the condition provided
@@ -173,8 +177,13 @@ trait ReactiveDeltaSeq[T, S <: Struct] extends ReSource[S] {
     * @return
     */
   @cutOutOfUserComputation
-  def count(fulfillsCondition: T => Boolean)(implicit ticket: CreationTicket[S], resInt: ReSerializable[Int]): Signal[Int, S] =
-    foldUndo(0) { (counted, x) => if (fulfillsCondition(x.value)) counted + 1 else counted } { (counted, x) => if (fulfillsCondition(x.value)) counted - 1 else counted }
+  def count(fulfillsCondition: T => Boolean)(implicit
+      ticket: CreationTicket[S],
+      resInt: ReSerializable[Int]
+  ): Signal[Int, S] =
+    foldUndo(0) { (counted, x) => if (fulfillsCondition(x.value)) counted + 1 else counted } { (counted, x) =>
+      if (fulfillsCondition(x.value)) counted - 1 else counted
+    }
 
   /**
     * To check if an element is in the sequence
@@ -185,7 +194,11 @@ trait ReactiveDeltaSeq[T, S <: Struct] extends ReSource[S] {
     * @return
     */
   @cutOutOfUserComputation
-  def contains(element: T)(implicit ticket: CreationTicket[S], ord: Ordering[T], resInt: ReSerializable[Int]): Signal[Boolean, S] = {
+  def contains(element: T)(implicit
+      ticket: CreationTicket[S],
+      ord: Ordering[T],
+      resInt: ReSerializable[Int]
+  ): Signal[Boolean, S] = {
     // find all seqElements which equal element
     val instancesNumber = count { seqElement: T => ord.equiv(element, seqElement) } //TODO:test
     // if more than 1 found
@@ -201,24 +214,29 @@ trait ReactiveDeltaSeq[T, S <: Struct] extends ReSource[S] {
     * @return
     */
   @cutOutOfUserComputation
-  def exists(fulfillsCondition: T => Boolean)(implicit ticket: CreationTicket[S], resInt: ReSerializable[Int]): Signal[Boolean, S] = {
+  def exists(fulfillsCondition: T => Boolean)(implicit
+      ticket: CreationTicket[S],
+      resInt: ReSerializable[Int]
+  ): Signal[Boolean, S] = {
     // count all elements fulfilling the condition of existence
     val instancesNumber = count(fulfillsCondition)
     // if more than one found
     instancesNumber.map(x => x > 0)
   }
 
-
   /**
-    *
     * @param ticket used for creation of new sources
     * @param ord    the ordering needed to compare values of deltas for finding the minimum
     * @param res    ...
     * @return Signal holding the optional minimum (as it could be None if the seqeunce is empty)
     */
   @cutOutOfUserComputation
-  def min(implicit ticket: CreationTicket[S], ord: Ordering[T], res: ReSerializable[mutable.IndexedSeq[(T, T)]]): Signal[Option[T], S] = {
-    val minimum = foldUndo (mutable.IndexedSeq.empty[(T, T)])(
+  def min(implicit
+      ticket: CreationTicket[S],
+      ord: Ordering[T],
+      res: ReSerializable[mutable.IndexedSeq[(T, T)]]
+  ): Signal[Option[T], S] = {
+    val minimum = foldUndo(mutable.IndexedSeq.empty[(T, T)])(
       // fold operation
       (trackingSequence: mutable.IndexedSeq[(T, T)], delta: Delta[T]) => {
         if (trackingSequence.isEmpty) {
@@ -228,7 +246,9 @@ trait ReactiveDeltaSeq[T, S <: Struct] extends ReSource[S] {
           if (ord.compare(delta.value, min) < 0) // update if added element is smaller
             min = delta.value
           (delta.value, min) +: trackingSequence // prepend to the tracking-sequence
-        }})(
+        }
+      }
+    )(
       //unfold operation
       (trackingSequence: mutable.IndexedSeq[(T, T)], delta: Delta[T]) => {
         // index of element, being removed
@@ -239,9 +259,10 @@ trait ReactiveDeltaSeq[T, S <: Struct] extends ReSource[S] {
         if (deletionIndex > 0) { // must be more than two elements to make sense to change minimum
           var min = trackingSequence(deletionIndex)._2
           if (deletionIndex == trackingSequence.size - 1) // last element
-            min = trackingSequence(deletionIndex - 1)._1 // new min will be same as the element on the left
+            min = trackingSequence(deletionIndex - 1)._1  // new min will be same as the element on the left
           else
-            min = trackingSequence(deletionIndex + 1)._2 // new min will be same as the min stored in the tuple on the right
+            min =
+              trackingSequence(deletionIndex + 1)._2 // new min will be same as the min stored in the tuple on the right
           breakable {
             for (i <- (deletionIndex - 1) to 0 by -1) {
               val element = trackingSequence(i)
@@ -255,63 +276,61 @@ trait ReactiveDeltaSeq[T, S <: Struct] extends ReSource[S] {
       }
     )
     minimum.map(q => {
-      q.headOption.map( tuple => tuple._2)
+      q.headOption.map(tuple => tuple._2)
     })
   }
 
   /**
-    *
     * @param ticket used for creation of new sources
     * @param ord    the ordering needed to compare values of deltas for finding the minimum
     * @param res    ...
     * @return Signal holding the optional minimum (as it could be None if the seqeunce is empty)
     */
   @cutOutOfUserComputation
-  def max(implicit ticket: CreationTicket[S], ord: Ordering[T], res: ReSerializable[mutable.IndexedSeq[(T, T)]]): Signal[Option[T], S] = {
-    val seqMaximum = foldUndo(mutable.IndexedSeq.empty[(T, T)])(
-      (seq: mutable.IndexedSeq[(T, T)], delta: Delta[T]) => {
-        if (seq.isEmpty) {
-          (delta.value, delta.value) +: seq
-        } else {
-          var max = seq.head._2
-          if (ord.gt(delta.value, max))
-            max = delta.value
-          (delta.value, max) +: seq
-        }
+  def max(implicit
+      ticket: CreationTicket[S],
+      ord: Ordering[T],
+      res: ReSerializable[mutable.IndexedSeq[(T, T)]]
+  ): Signal[Option[T], S] = {
+    val seqMaximum = foldUndo(mutable.IndexedSeq.empty[(T, T)])((seq: mutable.IndexedSeq[(T, T)], delta: Delta[T]) => {
+      if (seq.isEmpty) {
+        (delta.value, delta.value) +: seq
+      } else {
+        var max = seq.head._2
+        if (ord.gt(delta.value, max))
+          max = delta.value
+        (delta.value, max) +: seq
       }
-    )(
-      (trackingSequence: mutable.IndexedSeq[(T, T)], delta: Delta[T]) => {
-        val deletionIndex = trackingSequence.indexWhere(element => ord.equiv(element._1,delta.value))
-        if (deletionIndex < 0)
-          throw new Exception("max: Element not found in the sequence")
+    })((trackingSequence: mutable.IndexedSeq[(T, T)], delta: Delta[T]) => {
+      val deletionIndex = trackingSequence.indexWhere(element => ord.equiv(element._1, delta.value))
+      if (deletionIndex < 0)
+        throw new Exception("max: Element not found in the sequence")
 
-        if (deletionIndex > 0) { // must be more than two elements to make sense to change maxValue
-          var max = trackingSequence(deletionIndex)._2
-          if (deletionIndex == trackingSequence.size - 1) // last element
-            max = trackingSequence(deletionIndex - 1)._1
-          else
-            max = trackingSequence(deletionIndex + 1)._2
+      if (deletionIndex > 0) { // must be more than two elements to make sense to change maxValue
+        var max = trackingSequence(deletionIndex)._2
+        if (deletionIndex == trackingSequence.size - 1) // last element
+          max = trackingSequence(deletionIndex - 1)._1
+        else
+          max = trackingSequence(deletionIndex + 1)._2
 
-          // after setting the new min, update the minimum of the elements on the left till minimum has different value
-          breakable {
-            for (i <- (0 until deletionIndex).reverse) {
-              val element = trackingSequence(i)
-              if (ord.gteq(element._1, max))
-                break
-              trackingSequence.update(i, (element._1, max))
-            }
+        // after setting the new min, update the minimum of the elements on the left till minimum has different value
+        breakable {
+          for (i <- (0 until deletionIndex).reverse) {
+            val element = trackingSequence(i)
+            if (ord.gteq(element._1, max))
+              break
+            trackingSequence.update(i, (element._1, max))
           }
         }
-        trackingSequence.take(deletionIndex) ++ trackingSequence.drop(deletionIndex + 1)
       }
-    )
-    seqMaximum.map(q => {q.headOption.map(tuple => tuple._2)})
+      trackingSequence.take(deletionIndex) ++ trackingSequence.drop(deletionIndex + 1)
+    })
+    seqMaximum.map(q => { q.headOption.map(tuple => tuple._2) })
   }
 
 }
 
 /**
-  *
   * @param left
   * @param right
   * @param initialState
@@ -319,14 +338,13 @@ trait ReactiveDeltaSeq[T, S <: Struct] extends ReSource[S] {
   * @tparam T Type of values in Deltas
   * @tparam S Structure of Source
   */
-class ConcatenateDeltaSeq[T, S <: Struct]
-(left: ReactiveDeltaSeq[T, S], right: ReactiveDeltaSeq[T, S])
-(initialState: IncSeq.SeqState[T, S], name: REName)
-  extends Base[Delta[T], S](initialState, name)
+class ConcatenateDeltaSeq[T, S <: Struct](left: ReactiveDeltaSeq[T, S], right: ReactiveDeltaSeq[T, S])(
+    initialState: IncSeq.SeqState[T, S],
+    name: REName
+) extends Base[Delta[T], S](initialState, name)
     with ReactiveDeltaSeq[T, S] {
 
   /**
-    *
     * @param input
     * @return
     */
@@ -355,14 +373,13 @@ class ConcatenateDeltaSeq[T, S <: Struct]
   * @tparam T Value inside Delta
   * @tparam S Structure of Delta
   */
-class FilterDeltaSeq[T, S <: Struct]
-(in: ReactiveDeltaSeq[T, S], expression: T => Boolean)
-(initialState: IncSeq.SeqState[T, S], name: REName)
-  extends Base[Delta[T], S](initialState, name)
+class FilterDeltaSeq[T, S <: Struct](in: ReactiveDeltaSeq[T, S], expression: T => Boolean)(
+    initialState: IncSeq.SeqState[T, S],
+    name: REName
+) extends Base[Delta[T], S](initialState, name)
     with ReactiveDeltaSeq[T, S] {
 
   /**
-    *
     * @param input Basing ReIn Ticket filters the ReactiveDeltaSeq using the filterExpression define above. That it uses withValue to write the new Sequence
     * @return Returns the new Sequence
     */
@@ -383,14 +400,13 @@ class FilterDeltaSeq[T, S <: Struct]
   * @tparam T Value inside Delta
   * @tparam S Structure of Delta
   */
-class MapDeltaSeq[T, A, S <: Struct]
-(in: ReactiveDeltaSeq[T, S], op: T => A)
-(initialState: IncSeq.SeqState[A, S], name: REName)
-  extends Base[Delta[A], S](initialState, name)
+class MapDeltaSeq[T, A, S <: Struct](in: ReactiveDeltaSeq[T, S], op: T => A)(
+    initialState: IncSeq.SeqState[A, S],
+    name: REName
+) extends Base[Delta[A], S](initialState, name)
     with ReactiveDeltaSeq[A, S] {
 
   /**
-    *
     * @param input Basing ReIn Ticket maps the ReactiveDeltaSeq using the fold defined above. That it uses withValue to write the new Sequence
     * @return Returns the new Sequence
     */
@@ -435,8 +451,9 @@ class MapDeltaSeq[T, A, S <: Struct]
   * @tparam T Type returned when the event fires
   * @tparam S Struct type used for the propagation of the event
   */
-class IncSeq[T, S <: Struct] private[rescala](initialState: IncSeq.SeqState[T, S], name: REName)
-  extends Base[Delta[T], S](initialState, name) with ReactiveDeltaSeq[T, S] {
+class IncSeq[T, S <: Struct] private[rescala] (initialState: IncSeq.SeqState[T, S], name: REName)
+    extends Base[Delta[T], S](initialState, name)
+    with ReactiveDeltaSeq[T, S] {
 
   private val elements: mutable.Map[T, Int] = mutable.HashMap()
 
@@ -486,17 +503,17 @@ class IncSeq[T, S <: Struct] private[rescala](initialState: IncSeq.SeqState[T, S
 
 }
 
-
 object IncSeq {
 
   type SeqState[T, S <: Struct] = S#State[Delta[T], S]
 
-  def apply[T, S <: Struct](implicit ticket: CreationTicket[S]): IncSeq[T, S] = empty[T,S]
+  def apply[T, S <: Struct](implicit ticket: CreationTicket[S]): IncSeq[T, S] = empty[T, S]
 
   def empty[T, S <: Struct](implicit ticket: CreationTicket[S]): IncSeq[T, S] = fromDelta(Delta.noChange[T])
 
   private[this] def fromDelta[T, S <: Struct](init: Delta[T])(implicit ticket: CreationTicket[S]): IncSeq[T, S] =
-    ticket.createSource[Delta[T], IncSeq[T, S]](CollectionsInitializer.ReactiveEmptyDelta)(new IncSeq[T, S](_, ticket.rename))
+    ticket.createSource[Delta[T], IncSeq[T, S]](CollectionsInitializer.ReactiveEmptyDelta)(new IncSeq[T, S](
+      _,
+      ticket.rename
+    ))
 }
-
-

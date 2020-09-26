@@ -17,9 +17,8 @@ import rescala.interface.RescalaInterface
 @State(Scope.Benchmark)
 class TurnCreation[S <: Struct] {
 
-  var engine: RescalaInterface[S] = _
+  var engine: RescalaInterface[S]      = _
   implicit def scheduler: Scheduler[S] = engine.scheduler
-
 
   @Setup
   def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam[S]) = {
@@ -30,6 +29,5 @@ class TurnCreation[S <: Struct] {
   def run(): Any = {
     engine.transaction()(identity)
   }
-
 
 }

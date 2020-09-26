@@ -22,7 +22,7 @@ class NodeVersionHistoryTest extends AnyFunSuite {
     assert(n.incrementFrame(turn1) === Frame(Set.empty, turn1))
     assert(n.incrementFrame(turn1) === FramingBranchEnd)
     turn1.completeFraming()
-    assert(n.notify(turn1, changed = true) === true -> DoNothing)
+    assert(n.notify(turn1, changed = true) === true   -> DoNothing)
     assert(n.notify(turn1, changed = false) === false -> ReevaluationReady)
     assert(n.reevIn(turn1) === 10)
     assert(n.reevOut(turn1, Some(5), identity) === PureNotifyOnly(Set.empty))
@@ -63,7 +63,7 @@ class NodeVersionHistoryTest extends AnyFunSuite {
     assert(n.incrementFrame(turn3) === FramingBranchEnd)
     turn3.completeFraming()
 
-    assert(n.notify(turn3, changed = true) === true -> DoNothing)
+    assert(n.notify(turn3, changed = true) === true  -> DoNothing)
     assert(n.notify(turn2, changed = false) === true -> NotifyAndReevaluationReadySuccessor(Set.empty, turn3))
     assert(n.reevIn(turn3) === 10)
     assert(n.reevOut(turn3, Some(5), identity) === PureNotifyOnly(Set.empty))
@@ -88,8 +88,8 @@ class NodeVersionHistoryTest extends AnyFunSuite {
     val framing2 = engine.newTurn()
     framing2.beginFraming()
     val lock = SerializationGraphTracking.tryLock(framing1, framing2, UnlockedUnknown) match {
-      case x@LockedSameSCC(_) => x
-      case other => fail("not locked: " + other)
+      case x @ LockedSameSCC(_) => x
+      case other                => fail("not locked: " + other)
     }
     framing2.addPredecessor(framing1.selfNode)
     lock.unlock()

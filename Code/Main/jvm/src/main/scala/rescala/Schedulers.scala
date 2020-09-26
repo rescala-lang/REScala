@@ -9,13 +9,14 @@ import rescala.twoversion.TwoVersionScheduler
 
 object Schedulers extends LevelBasedSchedulers {
 
-  def byName[S <: Struct](name: String): Scheduler[S] = name match {
-    case "synchron" => synchron.asInstanceOf[Scheduler[S]]
-    case "unmanaged" => unmanaged.asInstanceOf[Scheduler[S]]
-    case "parrp" => parrp.asInstanceOf[Scheduler[S]]
-    case "simple" => simple.asInstanceOf[Scheduler[S]]
-    case other => throw new IllegalArgumentException(s"unknown engine $other")
-  }
+  def byName[S <: Struct](name: String): Scheduler[S] =
+    name match {
+      case "synchron"  => synchron.asInstanceOf[Scheduler[S]]
+      case "unmanaged" => unmanaged.asInstanceOf[Scheduler[S]]
+      case "parrp"     => parrp.asInstanceOf[Scheduler[S]]
+      case "simple"    => simple.asInstanceOf[Scheduler[S]]
+      case other       => throw new IllegalArgumentException(s"unknown engine $other")
+    }
 
   implicit val parrp: Scheduler[ParRPStruct] = parrpWithBackoff(() => new Backoff)
 
@@ -23,11 +24,12 @@ object Schedulers extends LevelBasedSchedulers {
 
   def parrpWithBackoff(backOff: () => Backoff): Scheduler[ParRPStruct] =
     new TwoVersionScheduler[ParRPStruct, ParRPTransaction] {
-      override protected def makeTurn(priorTurn: Option[ParRPTransaction]): ParRPTransaction = new ParRPTransaction(backOff(), priorTurn)
+      override protected def makeTurn(priorTurn: Option[ParRPTransaction]): ParRPTransaction =
+        new ParRPTransaction(backOff(), priorTurn)
       override def schedulerName: String = "ParRP"
     }
 }
 
 object Interfaces {
-    val parrp = RescalaInterface.interfaceFor(Schedulers.parrp)
+  val parrp = RescalaInterface.interfaceFor(Schedulers.parrp)
 }

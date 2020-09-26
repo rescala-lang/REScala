@@ -11,23 +11,22 @@ import rescala.default._
 
 object Main extends JFXApp {
 
-  private val slider = new Slider(0, 30, 0)
+  private val slider      = new Slider(0, 30, 0)
   private val sliderValue = new Label()
 
   sliderValue.text <== {
     val sliderSignal = slider.value.toSignal
-    val str = sliderSignal.map(v => f"$v%.2f")
+    val str          = sliderSignal.map(v => f"$v%.2f")
     new SignalToStringProperty(str).toProperty
   }
 
-
-
-  def render(): Node = new VBox {
-    children = Seq(
-      slider,
-      sliderValue
-    )
-  }
+  def render(): Node =
+    new VBox {
+      children = Seq(
+        slider,
+        sliderValue
+      )
+    }
 
   stage = new PrimaryStage {
 

@@ -1,6 +1,5 @@
 package reswing
 
-
 import scala.swing.{Component, LayoutContainer}
 import scala.swing.event.{ComponentAdded, ComponentRemoved}
 
@@ -8,7 +7,8 @@ trait ReLayoutContainer[Constraints] extends ReUIElement {
   protected def peer: LayoutContainer
 
   private val peerLayout = peer.layout.asInstanceOf[
-    scala.collection.mutable.Map[Component, Constraints]]
+    scala.collection.mutable.Map[Component, Constraints]
+  ]
 
   private def peerContents = peerLayout.toMap
 
@@ -21,8 +21,7 @@ trait ReLayoutContainer[Constraints] extends ReUIElement {
 
   def contents: ReSwingValue[Map[Component, Constraints]]
 
-  contents.using({() => peerContents}, peerContents_= _,
-                  classOf[ComponentAdded], classOf[ComponentRemoved])
+  contents.using({ () => peerContents }, peerContents_= _, classOf[ComponentAdded], classOf[ComponentRemoved])
 
   object layout {
     def update(component: Component, constraints: Constraints) =

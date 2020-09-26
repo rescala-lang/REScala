@@ -6,7 +6,9 @@ import rescala.default._
 
 class Timer(delay0: Int) {
   val peer: swing.Timer = new swing.Timer(delay0, null) {
-    override def fireActionPerformed(e: java.awt.event.ActionEvent): Unit = { Timer.this.isRunning set isRunning(); fired.fire() }
+    override def fireActionPerformed(e: java.awt.event.ActionEvent): Unit = {
+      Timer.this.isRunning set isRunning(); fired.fire()
+    }
   }
 
   def this(delay: Int, repeating: Boolean) = {
@@ -16,11 +18,11 @@ class Timer(delay0: Int) {
 
   private val isRunning = Var(true)
 
-  val running = Signal { isRunning() }
-  val fired = Evt[Unit]()
-  def delay = peer.getDelay
+  val running             = Signal { isRunning() }
+  val fired               = Evt[Unit]()
+  def delay               = peer.getDelay
   def delay_=(delay: Int) = peer.setDelay(delay)
-  def repeating = peer.isRepeats
+  def repeating           = peer.isRepeats
   def repeating_=(repeating: Boolean): Unit = { peer.setRepeats(repeating); isRunning set peer.isRunning() }
 
   def restart = { peer.restart(); isRunning set peer.isRunning(); this }

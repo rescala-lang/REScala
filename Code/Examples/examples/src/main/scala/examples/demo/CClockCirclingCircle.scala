@@ -25,10 +25,9 @@ object CClockCirclingCircle extends SimpleSwingApplication {
   val nsTime = Var(System.nanoTime())
   def tick() = nsTime.set(System.nanoTime())
 
-  val angle = nsTime.map( _.toDouble / NanoSecond * math.Pi)
+  val angle = nsTime.map(_.toDouble / NanoSecond * math.Pi)
 
   val pos = angle.map(a => Pos(100d * math.sin(a), 100d * math.cos(a)))
-
 
   override lazy val top = {
     val panel = new ShapesPanel(Var(List(
@@ -38,15 +37,15 @@ object CClockCirclingCircle extends SimpleSwingApplication {
     new MainFrame {
       title = "REScala Demo"
       contents = panel
-      setLocationRelativeTo(new UIElement {override def peer = null})
+      setLocationRelativeTo(new UIElement { override def peer = null })
     }
   }
 
   override def main(args: Array[String]): Unit = {
     super.main(args)
 
-    while(!top.visible) Thread.sleep(5)
-    while(top.visible) {
+    while (!top.visible) Thread.sleep(5)
+    while (top.visible) {
       Thread.sleep(1)
       tick()
     }

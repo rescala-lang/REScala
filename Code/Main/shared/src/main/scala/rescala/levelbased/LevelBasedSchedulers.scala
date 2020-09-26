@@ -3,14 +3,11 @@ package rescala.levelbased
 import rescala.core.{AdmissionTicket, ReSource, Scheduler}
 import rescala.twoversion.TwoVersionScheduler
 
-/**
-  * Basic implementations of propagation engines
-  */
+/** Basic implementations of propagation engines */
 trait LevelBasedSchedulers {
 
   private[rescala] class SimpleNoLock extends LevelBasedTransaction[LevelStructImpl] {
-    override protected def makeDerivedStructState[V](ip: V)
-    : LevelState[V, LevelStructImpl] = {
+    override protected def makeDerivedStructState[V](ip: V): LevelState[V, LevelStructImpl] = {
       new LevelState(ip)
     }
     override def releasePhase(): Unit = ()
@@ -21,8 +18,11 @@ trait LevelBasedSchedulers {
   implicit val synchron: Scheduler[LevelStructImpl] = {
     new TwoVersionScheduler[LevelStructImpl, SimpleNoLock] {
       override protected def makeTurn(priorTurn: Option[SimpleNoLock]): SimpleNoLock = new SimpleNoLock
-      override def schedulerName: String = "Synchron"
-      override def forceNewTransaction[R](initialWrites: Set[ReSource[LevelStructImpl]], admissionPhase: AdmissionTicket[LevelStructImpl] => R): R =
+      override def schedulerName: String                                             = "Synchron"
+      override def forceNewTransaction[R](
+          initialWrites: Set[ReSource[LevelStructImpl]],
+          admissionPhase: AdmissionTicket[LevelStructImpl] => R
+      ): R =
         synchronized { super.forceNewTransaction(initialWrites, admissionPhase) }
     }
   }
@@ -30,7 +30,7 @@ trait LevelBasedSchedulers {
   implicit val unmanaged: Scheduler[LevelStructImpl] =
     new TwoVersionScheduler[LevelStructImpl, SimpleNoLock] {
       override protected def makeTurn(priorTurn: Option[SimpleNoLock]): SimpleNoLock = new SimpleNoLock()
-      override def schedulerName: String = "Unmanaged"
+      override def schedulerName: String                                             = "Unmanaged"
     }
 
 }

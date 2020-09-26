@@ -20,7 +20,7 @@ case class AddWinsSet[A](store: Map[A, Set[Dot]], context: Set[Dot]) {
 
   /** Adding an element adds it to the current dot store as well as to the causal context (past). */
   def addΔ(element: A, replicaID: Id): AddWinsSet[A] = {
-    val dot = DotStoreLattice.next(replicaID, context)
+    val dot     = DotStoreLattice.next(replicaID, context)
     val onlyDot = Set(dot)
     AddWinsSet(Map(element -> onlyDot), store.get(element).fold(onlyDot)(_ + dot))
 
@@ -36,7 +36,8 @@ case class AddWinsSet[A](store: Map[A, Set[Dot]], context: Set[Dot]) {
   /** Merging removes all elements the other side should known (based on the causal context),
     * but does not contain.
     * Thus, the delta for removal is the empty map,
-    * with the dot of the removed element in the context. */
+    * with the dot of the removed element in the context.
+    */
   def removeΔ(e: A): AddWinsSet[A] = AddWinsSet[A](Map.empty, store.getOrElse(e, Set.empty))
 
   def clear: AddWinsSet[A] = AddWinsSet[A](Map(), DotStoreLattice[Map[A, Set[Dot]]].dots(store))
@@ -64,7 +65,6 @@ object AddWinsSet {
 
   def empty[A]: AddWinsSet[A] = AddWinsSet[A](Map.empty[A, Set[Dot]], Set.empty[Dot])
 
-
   /* AddWinsSet is isomorphic to the corresponding Causal */
 
   implicit def toCausal[A](addWinsSet: AddWinsSet[A]): Causal[Map[A, Set[Dot]]] =
@@ -72,11 +72,10 @@ object AddWinsSet {
   implicit def fromCausal[A](causal: Causal[Map[A, Set[Dot]]]): AddWinsSet[A] =
     AddWinsSet(causal.store, causal.context)
 
-  implicit def addWinsSetLattice[A]: Lattice[AddWinsSet[A]] = new Lattice[AddWinsSet[A]] {
-    override def merge(left: AddWinsSet[A], right: AddWinsSet[A]): AddWinsSet[A] =
-      DotStoreLattice.DotMapInstance[A, Set[Dot]].merge(left, right)
-  }
-
+  implicit def addWinsSetLattice[A]: Lattice[AddWinsSet[A]] =
+    new Lattice[AddWinsSet[A]] {
+      override def merge(left: AddWinsSet[A], right: AddWinsSet[A]): AddWinsSet[A] =
+        DotStoreLattice.DotMapInstance[A, Set[Dot]].merge(left, right)
+    }
 
 }
-

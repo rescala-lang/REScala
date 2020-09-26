@@ -15,9 +15,8 @@ import scalatags.JsDom.tags2.section
 import scalatags.JsDom.{Attr, TypedTag}
 import rescala.default._
 
-object TodoApp{
-  def apply(taskHandling: TaskHandling)
-  : TodoApp[taskHandling.type] = new TodoApp(taskHandling)
+object TodoApp {
+  def apply(taskHandling: TaskHandling): TodoApp[taskHandling.type] = new TodoApp(taskHandling)
 }
 
 class TodoApp[TH <: TaskHandling](val taskHandling: TH) {
@@ -35,10 +34,10 @@ class TodoApp[TH <: TaskHandling](val taskHandling: TH) {
       id := "newtodo",
       `class` := "new-todo",
       placeholder := "What needs to be done?",
-      autofocus := "autofocus")
+      autofocus := "autofocus"
+    )
 
     val (createTodo, todoInputField) = inputFieldHandler(todoInputTag, onchange)
-
 
     val innerTasks = List(
       maketask(TaskData("walk the dog"), "initdog"),
@@ -46,10 +45,8 @@ class TodoApp[TH <: TaskHandling](val taskHandling: TH) {
       maketask(TaskData("get coffee"), "initcoffe")
     )
 
-
     val removeAll =
       Events.fromCallback[UIEvent](cb => button("remove all done todos", onclick := cb))
-
 
     val createTask = createTodo.map { str => maketask(TaskData(str)) }
 
@@ -57,16 +54,15 @@ class TodoApp[TH <: TaskHandling](val taskHandling: TH) {
 
     val tasksRGA = Events.foldAll(DeltaSequence(dummyId, innerTasks)) { tasks =>
       Seq(
-        createTask >> {tasks.prependDelta(dummyId, _)},
+        createTask >> { tasks.prependDelta(dummyId, _) },
         removeAll.event >>> { dt => _ => tasks.filterDelta(t => !dt.depend(t.contents).done) },
         tasks.toList.map(_.removeClick) >> { t => tasks.filterDelta(_.id != t) }
-        )
+      )
     }("tasklist")
 
-    LociDist.distribute(tasksRGA, Todolist.registry)(Binding("tasklist")  : @scala.annotation.nowarn)
+    LociDist.distribute(tasksRGA, Todolist.registry)(Binding("tasklist"): @scala.annotation.nowarn)
 
     val tasks = tasksRGA.map(_.toList.reverse)
-
 
     val content = div(
       `class` := "todoapp",
@@ -75,34 +71,32 @@ class TodoApp[TH <: TaskHandling](val taskHandling: TH) {
         h1("todos"),
         todoInputField
       ),
-
       section(
         `class` := "main",
-        `style` := Signal {if (tasks().isEmpty) "display:hidden" else ""},
+        `style` := Signal { if (tasks().isEmpty) "display:hidden" else "" },
         toggleAll.value,
         label(`for` := "toggle-all", "Mark all as complete"),
         ul(
           `class` := "todo-list",
           tasks.map(l => l.map(_.listItem)).asModifierL
-          )
+        )
       ),
       div(
         `class` := "footer",
-        `style` := Signal {if (tasks().isEmpty) "display:none" else ""},
-
+        `style` := Signal { if (tasks().isEmpty) "display:none" else "" },
         Signal.dynamic {
           val remainingTasks = tasks.value.count(!_.contents.value.done)
           span(
             `class` := "todo-count",
             strong("" + remainingTasks),
             span(if (remainingTasks == 1)
-                   " item left" else " items left")
+              " item left"
+            else " items left")
           )
         }.asModifier,
-
         removeAll.value(`class` := Signal.dynamic {
           "clear-completed" +
-          (if (!tasks().exists(t => t.contents.value.done)) " hidden" else "")
+            (if (!tasks().exists(t => t.contents.value.done)) " hidden" else "")
         })
       )
     )
@@ -115,12 +109,15 @@ class TodoApp[TH <: TaskHandling](val taskHandling: TH) {
 
     val todoInputField: Input = handler.value.render
 
-    (handler.event.map { e: UIEvent =>
-      e.preventDefault()
-      val res = todoInputField.value.trim
-      todoInputField.value = ""
-      res
-    }, todoInputField)
+    (
+      handler.event.map { e: UIEvent =>
+        e.preventDefault()
+        val res = todoInputField.value.trim
+        todoInputField.value = ""
+        res
+      },
+      todoInputField
+    )
   }
 
 }

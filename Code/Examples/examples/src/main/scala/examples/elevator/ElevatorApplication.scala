@@ -11,14 +11,14 @@ object ElevatorApplication extends SimpleSwingApplication {
   /* Uncomment to enable logging: */
   //react.ReactiveEngine.log.enableAllLogging
 
-  lazy val elevator = new Elevator(3)
+  lazy val elevator    = new Elevator(3)
   lazy val application = new ElevatorApplication(elevator)
-  def top = application.frame
+  def top              = application.frame
 
   override def main(args: Array[String]): Unit = {
     super.main(args)
     while (true) {
-      Swing onEDTWait {elevator.tick.fire()}
+      Swing onEDTWait { elevator.tick.fire() }
       Thread sleep 50
     }
   }
@@ -44,12 +44,11 @@ class ElevatorApplication(val elevator: Elevator) {
   elevator.tick += { _ => frame.repaint() }
 }
 
-
 class ElevatorPainter(e: Elevator) extends Panel {
   val FloorHeight = e.FloorHeight
-  val FloorWidth = (0.9 * e.FloorHeight).toInt
-  val sizeX = FloorWidth + 50
-  val sizeY = FloorHeight * e.nFloors + 50
+  val FloorWidth  = (0.9 * e.FloorHeight).toInt
+  val sizeX       = FloorWidth + 50
+  val sizeY       = FloorHeight * e.nFloors + 50
 
   preferredSize = new Dimension(sizeX, sizeY)
 

@@ -2,7 +2,6 @@ package reswing
 
 import javax.swing.Icon
 
-
 import scala.swing.{Action, Alignment, Color, Dimension, Font, Menu}
 
 class ReMenu(
@@ -27,16 +26,31 @@ class ReMenu(
     enabled: ReSwingValue[Boolean] = (),
     minimumSize: ReSwingValue[Dimension] = (),
     maximumSize: ReSwingValue[Dimension] = (),
-    preferredSize: ReSwingValue[Dimension] = ())
-  extends
-    ReMenuItem(text, action, selected, horizontalAlignment, verticalAlignment,
-               horizontalTextPosition, verticalTextPosition,
-               icon, pressedIcon, selectedIcon, disabledIcon,
-               disabledSelectedIcon, rolloverIcon, rolloverSelectedIcon,
-               background, foreground, font, enabled,
-               minimumSize, maximumSize, preferredSize)
-  with
-    ReSequentialContainer {
+    preferredSize: ReSwingValue[Dimension] = ()
+) extends ReMenuItem(
+      text,
+      action,
+      selected,
+      horizontalAlignment,
+      verticalAlignment,
+      horizontalTextPosition,
+      verticalTextPosition,
+      icon,
+      pressedIcon,
+      selectedIcon,
+      disabledIcon,
+      disabledSelectedIcon,
+      rolloverIcon,
+      rolloverSelectedIcon,
+      background,
+      foreground,
+      font,
+      enabled,
+      minimumSize,
+      maximumSize,
+      preferredSize
+    )
+    with ReSequentialContainer {
   override protected lazy val peer = new Menu(null) with ComponentMixin
 }
 

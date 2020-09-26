@@ -1,11 +1,11 @@
 package reswing.texteditor
 
-
-
 class LineIterator(it: Iterator[Char]) extends Iterator[String] {
-  private var blank = !it.hasNext
+  private var blank            = !it.hasNext
   private var ch: Option[Char] = None
-  private def nextChar = if (ch.nonEmpty) { val c = ch.get; ch = None; c } else it.next()
+  private def nextChar =
+    if (ch.nonEmpty) { val c = ch.get; ch = None; c }
+    else it.next()
 
   def hasNext = blank || !ch.isEmpty || it.hasNext
   def next(): String = {
@@ -18,7 +18,7 @@ class LineIterator(it: Iterator[Char]) extends Iterator[String] {
           if (hasNext)
             it.next() match {
               case '\n' => blank = !hasNext; return sb.toString + "\r\n"
-              case c => ch = Some(c)
+              case c    => ch = Some(c)
             }
           blank = !hasNext; return sb.toString + '\r'
         case '\n' =>
@@ -49,7 +49,7 @@ object LineOffset {
       if (ch != '\n' || prev != '\r')
         ch match {
           case '\n' | '\r' => col = 0; row += 1
-          case _ => col += 1
+          case _           => col += 1
         }
       prev = ch
     }
@@ -69,7 +69,7 @@ object LineOffset {
 
         ch match {
           case '\n' | '\r' => col = 0; row += 1
-          case _ => col += 1
+          case _           => col += 1
         }
       }
       prev = ch

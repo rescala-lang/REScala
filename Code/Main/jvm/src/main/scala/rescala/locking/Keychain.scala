@@ -5,7 +5,7 @@ import java.util.concurrent.ThreadLocalRandom
 
 class Keychain[InterTurn](init: Key[InterTurn]) {
 
-  val id = ThreadLocalRandom.current().nextLong()
+  val id                = ThreadLocalRandom.current().nextLong()
   override def toString = s"Keychain($id)"
 
   /** synchronized on this */
@@ -18,12 +18,14 @@ class Keychain[InterTurn](init: Key[InterTurn]) {
    * we do not know which locks, so at the end we just pass all if there is any fallthrough.
    * we count down one fallthrough, if an added dependency is later removed again. */
   private var fallthrough: Map[Key[InterTurn], Int] = Map.empty
-  def addFallthrough(key: Key[InterTurn], amount: Int = 1): Unit = synchronized { fallthrough = fallthrough.updated(key, fallthrough.getOrElse(key, 0) + amount) }
-  def removeFallthrough(key: Key[InterTurn]): Unit = synchronized {
-    val old = fallthrough.getOrElse(key, 0)
-    if (old <= 1) fallthrough -= key
-    else fallthrough = fallthrough.updated(key, old - 1)
-  }
+  def addFallthrough(key: Key[InterTurn], amount: Int = 1): Unit =
+    synchronized { fallthrough = fallthrough.updated(key, fallthrough.getOrElse(key, 0) + amount) }
+  def removeFallthrough(key: Key[InterTurn]): Unit =
+    synchronized {
+      val old = fallthrough.getOrElse(key, 0)
+      if (old <= 1) fallthrough -= key
+      else fallthrough = fallthrough.updated(key, old - 1)
+    }
 
   def append(other: Keychain[InterTurn]): Unit = {
     assert(this ne other, s"tried to append $this to itself")
@@ -45,8 +47,7 @@ class Keychain[InterTurn](init: Key[InterTurn]) {
     assert(locks.toSet.size == locks.size, s"duplicated locks detected")
     if (keys.isEmpty) {
       locks.foreach(_.transfer(null, key))
-    }
-    else {
+    } else {
       val target = keys.peek()
       locks.foreach(_.transfer(target, key, transferWriteSet = fallthrough.nonEmpty))
       fallthrough -= target
@@ -56,4 +57,3 @@ class Keychain[InterTurn](init: Key[InterTurn]) {
   }
 
 }
-

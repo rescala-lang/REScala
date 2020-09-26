@@ -16,7 +16,8 @@ object Application extends SimpleSwingApplication {
   })
 
   val selectionLabel = new ReLabel(
-    Signal { "Sel " + textArea.selected().size })
+    Signal { "Sel " + textArea.selected().size }
+  )
 
   val charCountLabel = new ReLabel(Signal { "Ch " + textArea.charCount() })
 
@@ -32,22 +33,23 @@ object Application extends SimpleSwingApplication {
   pasteButton.clicked += { _ => textArea.paste(); textArea.requestFocus() }
 
   // layout
-  def top = new MainFrame {
-    title = "TextEditor (signals0)"
-    preferredSize = new Dimension(500, 500)
-    contents = new BorderPanel {
-      layout(new ScrollPane(textArea)) = Position.Center
-      layout(new GridPanel(1, 0) {
-        contents += selectAllButton
-        contents += copyButton
-        contents += pasteButton
-      }) = Position.North
-      layout(new GridPanel(1, 0) {
-        contents += positionLabel
-        contents += selectionLabel
-        contents += charCountLabel
-        contents += wordCountLabel
-      }) = Position.South
+  def top =
+    new MainFrame {
+      title = "TextEditor (signals0)"
+      preferredSize = new Dimension(500, 500)
+      contents = new BorderPanel {
+        layout(new ScrollPane(textArea)) = Position.Center
+        layout(new GridPanel(1, 0) {
+          contents += selectAllButton
+          contents += copyButton
+          contents += pasteButton
+        }) = Position.North
+        layout(new GridPanel(1, 0) {
+          contents += positionLabel
+          contents += selectionLabel
+          contents += charCountLabel
+          contents += wordCountLabel
+        }) = Position.South
+      }
     }
-  }
 }

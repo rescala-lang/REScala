@@ -6,8 +6,6 @@ import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
 import rescala.collectionsDefault._
 
-
-
 /**
   * @author gerizuna
   * @since 10.10.19
@@ -25,11 +23,10 @@ class MinBenchmarkWithRemoveBestCase {
   var arg: Int = _
 
   var removeEvent: Evt[Int] = _
-  var minOfSeq : Signal[Int] = _
+  var minOfSeq: Signal[Int] = _
 
-  var reactSeq: SeqSource[Int] = _
-  var reactMinOfSeq :Signal[Option[Int]] = _
-
+  var reactSeq: SeqSource[Int]           = _
+  var reactMinOfSeq: Signal[Option[Int]] = _
 
   @Setup(Level.Invocation)
   def prepare: Unit = {

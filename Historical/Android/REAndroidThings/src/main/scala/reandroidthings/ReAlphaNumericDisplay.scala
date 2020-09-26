@@ -9,24 +9,24 @@ import rescala.default._
 
 object ReAlphaNumericDisplay {
   protected var peer: AlphanumericDisplay = null
-  private val TAG: String = "ReAlphaNumericDisplay"
-  private var eventObserver: Observe = null
-
+  private val TAG: String                 = "ReAlphaNumericDisplay"
+  private var eventObserver: Observe      = null
 
   def init(inputEvent: Event[Any]): Unit = {
     try {
       peer = new AlphanumericDisplay(BoardDefaults.getI2cBus)
       peer.clear
 
-      eventObserver = inputEvent += { newV => {
-        newV match {
-          case v: Double => peer.display(v)
-          case v: Float => peer.display(v.toDouble)
-          case v: String => peer.display(v)
-          case v: Int => peer.display(v)
-          case v => peer.display(v.toString)
+      eventObserver = inputEvent += { newV =>
+        {
+          newV match {
+            case v: Double => peer.display(v)
+            case v: Float  => peer.display(v.toDouble)
+            case v: String => peer.display(v)
+            case v: Int    => peer.display(v)
+            case v         => peer.display(v.toString)
+          }
         }
-      }
       }
     } catch {
       case e: Exception => {
@@ -38,29 +38,21 @@ object ReAlphaNumericDisplay {
     turnOn()
   }
 
-
-  /**
-    * turns the LEDs on and leaves the connection to the inputEvent untouched
-    */
+  /** turns the LEDs on and leaves the connection to the inputEvent untouched */
   def turnOn(): Unit = {
     if (peer != null) {
       peer.setEnabled(true)
     }
   }
 
-  /**
-    * turns off the LEDs, but leaves the connection to the inputEvent untouched
-    */
+  /** turns off the LEDs, but leaves the connection to the inputEvent untouched */
   def turnOff(): Unit = {
     if (peer != null) {
       peer.setEnabled(false)
     }
   }
 
-
-  /**
-    * removes the inputEvent and turns off the display
-    */
+  /** removes the inputEvent and turns off the display */
   def destroy(): Unit = {
     if (peer != null) try {
       peer.clear

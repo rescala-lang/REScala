@@ -7,7 +7,7 @@ trait MetaOptimization[T] {
   val verbose: Boolean
   protected val protocol: String => Unit
 
-  final def optimize(graph : DataFlowGraph): Unit = {
+  final def optimize(graph: DataFlowGraph): Unit = {
     if (verbose) protocol("Starting optimization " + name)
     var iterate = true
     while (iterate) {
@@ -21,6 +21,6 @@ trait MetaOptimization[T] {
     }
     if (verbose) protocol("Ending optimization " + name)
   }
-  protected def analyze(graph : DataFlowGraph): Option[T]
-  protected def transform(graph : DataFlowGraph, param: T): Boolean
+  protected def analyze(graph: DataFlowGraph): Option[T]
+  protected def transform(graph: DataFlowGraph, param: T): Boolean
 }

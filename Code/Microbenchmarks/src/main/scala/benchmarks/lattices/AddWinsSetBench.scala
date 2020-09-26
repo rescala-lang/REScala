@@ -20,13 +20,12 @@ class AddWinsSetBench[S <: Struct] {
   @Param(Array("0", "1", "10", "100", "1000"))
   var setSize: Int = _
 
-  var rep1Set       : AddWinsSet[String] = _
+  var rep1Set: AddWinsSet[String]        = _
   var rep1SetPlusOne: AddWinsSet[String] = _
-  var rep2Set       : AddWinsSet[String] = _
+  var rep2Set: AddWinsSet[String]        = _
   val rep1id                             = IdUtil.genId()
   val rep2id                             = IdUtil.genId()
-  var rep2Delta         : AddWinsSet[String] = _
-
+  var rep2Delta: AddWinsSet[String]      = _
 
   private def makeRep(rep: IdUtil.Id): AddWinsSet[String] = {
     0.until(setSize).foldLeft(AddWinsSet.empty[String]) { case (s, v) => s.add(v.toString + rep, rep) }
@@ -39,7 +38,6 @@ class AddWinsSetBench[S <: Struct] {
     rep2Delta = rep2Set.addΔ("hallo welt", rep2id)
     rep1SetPlusOne = Lattice.merge(rep1Set, rep2Delta)
   }
-
 
   @Benchmark
   def create() = makeRep(rep1id)
@@ -65,10 +63,8 @@ class AddWinsSetBench[S <: Struct] {
   @Benchmark
   def mergeSelfPlusOne() = Lattice.merge(rep1Set, rep1Set)
 
-
   @Benchmark
   def mergeDelta() = Lattice.merge(rep1Set, rep2Delta)
-
 
   @Benchmark
   def serializeUJson() = {
@@ -104,17 +100,18 @@ object Codecs {
 
   import upickle.default._
 
-  implicit val dotUJsonCodec: upickle.default.ReadWriter[Dot]         = upickle.default.macroRW
+  implicit val dotUJsonCodec: upickle.default.ReadWriter[Dot]          = upickle.default.macroRW
   implicit val itRangeCodec: upickle.default.ReadWriter[IntTree.Range] = upickle.default.macroRW
-  implicit val itTreeCodec: upickle.default.ReadWriter[IntTree.Tree] = upickle.default.macroRW
-  implicit val contextCodec: upickle.default.ReadWriter[Context]      = upickle.default.macroRW
-
+  implicit val itTreeCodec: upickle.default.ReadWriter[IntTree.Tree]   = upickle.default.macroRW
+  implicit val contextCodec: upickle.default.ReadWriter[Context]       = upickle.default.macroRW
 
   implicit val awsOUJsonCodec: upickle.default.ReadWriter[AddWinsSetO[String]] = upickle.default.macroRW
-  implicit val awsUJsonCodec: upickle.default.ReadWriter[AddWinsSet[String]] = upickle.default.macroRW
+  implicit val awsUJsonCodec: upickle.default.ReadWriter[AddWinsSet[String]]   = upickle.default.macroRW
 
   import io.circe.generic.auto._
 
-  implicit val awsOCirceCodec: io.circe.Encoder[AddWinsSetO[String]] = io.circe.generic.semiauto.deriveEncoder: @scala.annotation.nowarn
-  implicit val awsCirceCodec: io.circe.Encoder[AddWinsSet[String]] = io.circe.generic.semiauto.deriveEncoder: @scala.annotation.nowarn
+  implicit val awsOCirceCodec: io.circe.Encoder[AddWinsSetO[String]] =
+    io.circe.generic.semiauto.deriveEncoder: @scala.annotation.nowarn
+  implicit val awsCirceCodec: io.circe.Encoder[AddWinsSet[String]] =
+    io.circe.generic.semiauto.deriveEncoder: @scala.annotation.nowarn
 }

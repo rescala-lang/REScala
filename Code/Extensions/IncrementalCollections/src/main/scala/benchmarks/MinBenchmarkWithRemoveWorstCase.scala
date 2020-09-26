@@ -8,7 +8,6 @@ import rescala.collectionsDefault._
 
 import scala.util.Random
 
-
 /**
   * @author gerizuna
   * @since 10.10.19
@@ -26,11 +25,10 @@ class MinBenchmarkWithRemoveWorstCase {
   var arg: Int = _
 
   var removeEvent: Evt[Int] = _
-  var minOfSeq : Signal[Int] = _
+  var minOfSeq: Signal[Int] = _
 
-  var reactSeq: SeqSource[Int] = _
-  var reactMinOfSeq :Signal[Option[Int]] = _
-
+  var reactSeq: SeqSource[Int]           = _
+  var reactMinOfSeq: Signal[Option[Int]] = _
 
   @Setup(Level.Invocation)
   def prepare: Unit = {

@@ -7,20 +7,20 @@ import scala.collection.immutable.Queue
 
 final class ReLock[InterTurn]() {
 
-  private val owner: AtomicReference[Key[InterTurn]] = new AtomicReference[Key[InterTurn]]()
+  private val owner: AtomicReference[Key[InterTurn]]         = new AtomicReference[Key[InterTurn]]()
   private val shared: AtomicReference[Queue[Key[InterTurn]]] = new AtomicReference[Queue[Key[InterTurn]]](Queue())
-  private var writeLock: Boolean = true
+  private var writeLock: Boolean                             = true
 
   def getOwner: Key[InterTurn] = owner.get()
-  def isWriteLock: Boolean = writeLock
+  def isWriteLock: Boolean     = writeLock
 
   /** returns true if key owns the write lock */
   def isOwner(key: Key[InterTurn]): Boolean = owner.get() eq key
 
   /**
-   * locks this if it is free, returns the current owner (which is key, if locking succeeded)
-   * does not check for shared access.
-   */
+    * locks this if it is free, returns the current owner (which is key, if locking succeeded)
+    * does not check for shared access.
+    */
   @tailrec
   def tryLock(key: Key[InterTurn], write: Boolean = true): Key[InterTurn] = {
     if (owner.compareAndSet(null, key)) {
@@ -34,7 +34,7 @@ final class ReLock[InterTurn]() {
 
   @tailrec
   private def transform[T](v: AtomicReference[T])(f: T => T): Unit = {
-    val old = v.get()
+    val old    = v.get()
     val update = f(old)
     if (!v.compareAndSet(old, update)) transform(v)(f)
   }
@@ -67,4 +67,3 @@ final class ReLock[InterTurn]() {
   }
 
 }
-

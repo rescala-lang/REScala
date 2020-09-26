@@ -15,16 +15,18 @@ import scala.math.BigDecimal
 import scala.math.BigDecimal.RoundingMode
 
 @sfxml(additionalControls = List("com.jfoenix.controls"))
-class DividiPresenter(private val onlineButton: JFXToggleButton,
-                      private val delaySlider: JFXSlider,
-                      private val debtOutputFlow: TextFlow,
-                      private val debtOutput: Text,
-                      private val logOutput: Text,
-                      private val titleField: JFXTextField,
-                      private val amountField: JFXTextField,
-                      private val peopleCheckboxes: VBox,
-                      private val newPersonField: JFXTextField,
-                      private val submitButton: JFXButton) {
+class DividiPresenter(
+    private val onlineButton: JFXToggleButton,
+    private val delaySlider: JFXSlider,
+    private val debtOutputFlow: TextFlow,
+    private val debtOutput: Text,
+    private val logOutput: Text,
+    private val titleField: JFXTextField,
+    private val amountField: JFXTextField,
+    private val peopleCheckboxes: VBox,
+    private val newPersonField: JFXTextField,
+    private val submitButton: JFXButton
+) {
 
   // initialize interface
   //showDebtOutput(false)
@@ -45,47 +47,53 @@ class DividiPresenter(private val onlineButton: JFXToggleButton,
     })
   }
   checkboxes.now.foreach(box => peopleCheckboxes.getChildren().add(box))
-  checkboxes.changed += (boxes => Platform.runLater {{
-    val children = peopleCheckboxes.getChildren()
-    children.clear()
-    boxes.foreach(box => children.add(box))
-  }})
+  checkboxes.changed += (boxes =>
+    Platform.runLater {
+      {
+        val children = peopleCheckboxes.getChildren()
+        children.clear()
+        boxes.foreach(box => children.add(box))
+      }
+    }
+  )
 
   // bind logOutput
   DividiApp.transactionLog.changed += (l => logOutput.text() = l.iterator.mkString("\n\n"))
 
   // bind debtOutput
   val initial = "You are all set!"
-  DividiApp.howToSettle.changed += (newTransactions => Platform.runLater {
-    {
-      val settleTransactions = newTransactions.map(transaction => {
-        val sender = transaction._1
-        val receiver = transaction._2
-        val amount = transaction._3
+  DividiApp.howToSettle.changed += (newTransactions =>
+    Platform.runLater {
+      {
+        val settleTransactions = newTransactions.map(transaction => {
+          val sender   = transaction._1
+          val receiver = transaction._2
+          val amount   = transaction._3
 
-        if (sender == DividiApp.username)
-          s"You owe $receiver $amount. Transfer it!"
-        else if (receiver == DividiApp.username)
-          s"$sender owes you $amount."
+          if (sender == DividiApp.username)
+            s"You owe $receiver $amount. Transfer it!"
+          else if (receiver == DividiApp.username)
+            s"$sender owes you $amount."
+          else
+            s"$sender owes $receiver $amount."
+        }).mkString("\n")
+
+        if (settleTransactions.isEmpty)
+          debtOutput.text() = initial
         else
-          s"$sender owes $receiver $amount."
-      }).mkString("\n")
-
-      if (settleTransactions.isEmpty)
-        debtOutput.text() = initial
-      else
-        debtOutput.text() = settleTransactions
+          debtOutput.text() = settleTransactions
+      }
     }
-  })
+  )
   debtOutput.text() = initial
 
   def handleSubmit(event: ActionEvent) = {
-    val purpose = titleField.getText
-    val amount = amountField.getText()
-    val newPerson = newPersonField.getText()
+    val purpose       = titleField.getText
+    val amount        = amountField.getText()
+    val newPerson     = newPersonField.getText()
     val amountDecimal = BigDecimal(amount).setScale(2, RoundingMode.CEILING)
-    val payer = DividiApp.username
-    val timestamp = System.currentTimeMillis
+    val payer         = DividiApp.username
+    val timestamp     = System.currentTimeMillis
 
     var peopleInvolved: Set[Payer] = Set()
 
@@ -93,9 +101,9 @@ class DividiPresenter(private val onlineButton: JFXToggleButton,
       override def test(t: Node): Boolean = t.isInstanceOf[JFXCheckBox]
     }).forEach(new Consumer[Node] {
       override def accept(t: Node): Unit = {
-      val checkBox = t.asInstanceOf[JFXCheckBox]
-      if (checkBox.isSelected) peopleInvolved += checkBox.getText
-    }
+        val checkBox = t.asInstanceOf[JFXCheckBox]
+        if (checkBox.isSelected) peopleInvolved += checkBox.getText
+      }
     })
 
     if (newPerson != "") peopleInvolved += newPerson

@@ -1,10 +1,9 @@
 package ersirjs
 
-
 import scalatags.JsDom.all.{Modifier, raw}
 
 object Icons {
-  val lamp: Modifier =raw("""
+  val lamp: Modifier = raw("""
 <svg viewBox="0 0 512 512" >
  <def>
 

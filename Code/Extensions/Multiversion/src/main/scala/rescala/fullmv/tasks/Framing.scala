@@ -7,16 +7,16 @@ import rescala.fullmv._
 trait FramingTask extends FullMVAction {
   override def doCompute(): Unit = {
     val branchResult = doFraming()
-    if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this => $branchResult")
+    if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this => $branchResult")
     branchResult match {
       case FramingBranchEnd =>
         turn.activeBranchDifferential(TurnPhase.Framing, -1)
       case Frame(out, maybeOtherTurn) =>
         branchCountDiffOnBranchOut(out, maybeOtherTurn)
-        for(dep <- out) new Framing(maybeOtherTurn, dep).fork
+        for (dep <- out) new Framing(maybeOtherTurn, dep).fork
       case FrameSupersede(out, maybeOtherTurn, supersede) =>
         branchCountDiffOnBranchOut(out, maybeOtherTurn)
-        for(dep <- out) new SupersedeFraming(maybeOtherTurn, dep, supersede).fork
+        for (dep <- out) new SupersedeFraming(maybeOtherTurn, dep, supersede).fork
     }
   }
 
@@ -41,7 +41,8 @@ class Framing(override val turn: FullMVTurn, override val node: ReSource[FullMVS
   override def toString = s"Framing($turn, $node)"
 }
 
-class SupersedeFraming(override val turn: FullMVTurn, override val node: ReSource[FullMVStruct], supersede: FullMVTurn) extends FramingTask {
+class SupersedeFraming(override val turn: FullMVTurn, override val node: ReSource[FullMVStruct], supersede: FullMVTurn)
+    extends FramingTask {
   override def doFraming(): FramingBranchResult[FullMVTurn, ReSource[FullMVStruct]] = {
     assert(turn.phase == TurnPhase.Framing, s"$this cannot increment frame (requires framing phase)")
     assert(supersede.phase == TurnPhase.Framing, s"$supersede cannot have frame superseded (requires framing phase)")

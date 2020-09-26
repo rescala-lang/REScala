@@ -19,8 +19,8 @@ import scala.concurrent.duration._
 @Threads(1)
 @State(Scope.Benchmark)
 class DistributedSignalMapGrid {
-  var sourceEngine: FullMVEngine = _
-  var source: Var[Int, FullMVStruct] = _
+  var sourceEngine: FullMVEngine                                           = _
+  var source: Var[Int, FullMVStruct]                                       = _
   var nodes: Seq[Seq[(FullMVEngine, Seq[Seq[Signal[Int, FullMVStruct]]])]] = _
   @Param(Array("50"))
   var msDelay: Int = _
@@ -39,18 +39,19 @@ class DistributedSignalMapGrid {
   def setup(): Unit = {
     FakeDelayer.enable()
 
-    sourceEngine = new FullMVEngine(10.seconds,"src")
+    sourceEngine = new FullMVEngine(10.seconds, "src")
     source = {
       val e = sourceEngine
       import e._
       sourceEngine.Var(0)
     }
 
-    var result: Seq[(FullMVEngine, Seq[Signal[Int, FullMVStruct]])] = Seq.fill(widthHosts)(sourceEngine -> Seq.fill(widthNodesPerHost)(source))
+    var result: Seq[(FullMVEngine, Seq[Signal[Int, FullMVStruct]])] =
+      Seq.fill(widthHosts)(sourceEngine -> Seq.fill(widthNodesPerHost)(source))
     nodes = for (dh <- 1 to depthHosts) yield {
       val r = for (wh <- 1 to widthHosts) yield {
         val host = new FullMVEngine(10.seconds, s"host-$dh-$wh")
-        var res2 = for(wn <- 1 to widthNodesPerHost) yield {
+        var res2 = for (wn <- 1 to widthNodesPerHost) yield {
           val from = result(wh - 1)._2(wn - 1)
           val name = s"clone-$dh-$wh-0-$wn"
 //          println(s"cloning $name from $from")
@@ -58,8 +59,8 @@ class DistributedSignalMapGrid {
             ReactiveLocalClone(from, host, msDelay.millis)
           }
         }
-        host -> (res2 +: (for(dn <- 1 to depthNodesPerHost) yield {
-          res2 = for(wn <- 1 to widthNodesPerHost) yield {
+        host -> (res2 +: (for (dn <- 1 to depthNodesPerHost) yield {
+          res2 = for (wn <- 1 to widthNodesPerHost) yield {
             val from = res2(wn - 1)
             val name = s"map-$dh-$wh-$dn-$wn"
 //            println(s"transforming $name from $from")

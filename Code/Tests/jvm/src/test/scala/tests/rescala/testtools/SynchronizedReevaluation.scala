@@ -6,9 +6,8 @@ import java.util.concurrent.{CountDownLatch, ForkJoinPool}
 import rescala.core.{CreationTicket, Struct}
 import rescala.reactives.{Event, Signal}
 
-
 class SynchronizedReevaluation extends ManagedBlocker {
-  var latches: List[CountDownLatch] = Nil
+  var latches: List[CountDownLatch]  = Nil
   var notifies: List[CountDownLatch] = Nil
   def reev[X](v1: X): X = {
     latches.foreach { _.countDown() }
@@ -23,7 +22,7 @@ class SynchronizedReevaluation extends ManagedBlocker {
   override def isReleasable: Boolean = !latches.exists(_.getCount > 0)
 
   override def block(): Boolean = {
-    latches.foreach { _.await()  }
+    latches.foreach { _.await() }
     true
   }
 
@@ -37,17 +36,21 @@ class SynchronizedReevaluation extends ManagedBlocker {
 }
 
 object SynchronizedReevaluation {
-  def apply[A, S <: Struct](sig: Signal[A, S])(implicit turnSource: CreationTicket[S]): (SynchronizedReevaluation, Signal[A, S]) = {
+  def apply[A, S <: Struct](sig: Signal[A, S])(implicit
+      turnSource: CreationTicket[S]
+  ): (SynchronizedReevaluation, Signal[A, S]) = {
     val sync = new SynchronizedReevaluation
     (sync, sig.map(sync.reev))
   }
-  def apply[A, S <: Struct](evt: Event[A, S])(implicit turnSource: CreationTicket[S]): (SynchronizedReevaluation, Event[A, S]) = {
+  def apply[A, S <: Struct](evt: Event[A, S])(implicit
+      turnSource: CreationTicket[S]
+  ): (SynchronizedReevaluation, Event[A, S]) = {
     val sync = new SynchronizedReevaluation
     (sync, evt.map(sync.reev))
   }
 
   def autoSyncNextReevaluation(syncs: SynchronizedReevaluation*): CountDownLatch = {
-    val latch = manuallySyncNextReevaluation(syncs:_*)
+    val latch = manuallySyncNextReevaluation(syncs: _*)
     latch.countDown()
     latch
   }

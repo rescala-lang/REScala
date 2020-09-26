@@ -4,7 +4,7 @@ import java.util.concurrent.TimeUnit
 
 import benchmarks.{EngineParam, Step}
 import org.openjdk.jmh.annotations._
-import rescala.core.{Scheduler, Struct};import rescala.interface.RescalaInterface
+import rescala.core.{Scheduler, Struct}; import rescala.interface.RescalaInterface
 import rescala.reactives._
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -25,8 +25,8 @@ class SimplePhil[S <: Struct] {
 
   def buildPhil(): (Var[Philosopher, S], Signal[Vision, S]) = {
     val p: Var[Philosopher, S] = engine.Var(Thinking)
-    val f1, f2 = p.map(s => if (s == Thinking) Free else Taken("me"))
-    val v = engine.Signals.lift(f1, f2) {calcVision("me")}
+    val f1, f2                 = p.map(s => if (s == Thinking) Free else Taken("me"))
+    val v                      = engine.Signals.lift(f1, f2) { calcVision("me") }
     (p, v)
   }
 

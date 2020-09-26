@@ -19,20 +19,27 @@ import rescala.default._
   * horizontal bounce source.
   */
 object ORacketMultiBall extends Main {
-  class Racket(val fieldWidth: Signal[Int], val isRight: Boolean, val fieldHeight: Signal[Int], val inputY: Signal[Int]) {
+  class Racket(
+      val fieldWidth: Signal[Int],
+      val isRight: Boolean,
+      val fieldHeight: Signal[Int],
+      val inputY: Signal[Int]
+  ) {
     val height = Var(100)
-    val width = Var(10)
+    val width  = Var(10)
 
-    val posX = fieldWidth.map(w => (if(isRight) 1 else -1) * (w / 2 - 25))
-    val posY = Signal{ math.max(math.min(inputY(), (fieldHeight() - height()) / 2), - (fieldHeight() - height()) / 2) }
+    val posX = fieldWidth.map(w => (if (isRight) 1 else -1) * (w / 2 - 25))
+    val posY = Signal { math.max(math.min(inputY(), (fieldHeight() - height()) / 2), -(fieldHeight() - height()) / 2) }
 
     def collisionWith(collider: Shape): Event[Unit] = {
-      val collisionBoxHeight = Signal{ height() + collider.hitboxHeight() }
-      val collisionBoxWidth = Signal{ width() + collider.hitboxWidth() }
-      val shapeInsideRacket = Signal{ (posX() - collisionBoxWidth() / 2 < collider.centerX()) &&
+      val collisionBoxHeight = Signal { height() + collider.hitboxHeight() }
+      val collisionBoxWidth  = Signal { width() + collider.hitboxWidth() }
+      val shapeInsideRacket = Signal {
+        (posX() - collisionBoxWidth() / 2 < collider.centerX()) &&
         (posX() + collisionBoxWidth() / 2 > collider.centerX()) &&
         (posY() - collisionBoxHeight() / 2 < collider.centerY()) &&
-        (posY() + collisionBoxHeight() / 2 > collider.centerY())}
+        (posY() + collisionBoxHeight() / 2 > collider.centerY())
+      }
       shapeInsideRacket.changedTo(true)
     }
 
@@ -40,17 +47,18 @@ object ORacketMultiBall extends Main {
   }
 
   val shapes = Var[List[Shape]](List.empty)
-  val panel = new ShapesPanel(shapes)
+  val panel  = new ShapesPanel(shapes)
 
   val playingField = new PlayingField(panel.width.map(_ - 25), panel.height.map(_ - 25))
-  val racket = new Racket(playingField.width, true, playingField.height, panel.Mouse.y)
+  val racket       = new Racket(playingField.width, true, playingField.height, panel.Mouse.y)
   shapes.transform(playingField.shape :: racket.shape :: _)
 
   val balls = List(
     new BouncingBall(200d, 150d, Var(50), panel.Mouse.middleButton.pressed),
-    new BouncingBall(-200d, 100d, Var(50), panel.Mouse.middleButton.pressed))
+    new BouncingBall(-200d, 100d, Var(50), panel.Mouse.middleButton.pressed)
+  )
 
-  for(bouncingBall <- balls) {
+  for (bouncingBall <- balls) {
     shapes.transform(bouncingBall.shape :: _)
 
     val fieldCollisions = playingField.colliders(bouncingBall.shape)

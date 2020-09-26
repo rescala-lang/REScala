@@ -15,7 +15,7 @@ class LockUnionFindTest extends AnyFunSuite {
     turn.beginFraming()
     val lock = turn.subsumableLock.get
 
-    if(SubsumableLock.DEBUG) println(s"single lock gc with $turn using $lock")
+    if (SubsumableLock.DEBUG) println(s"single lock gc with $turn using $lock")
 
     assert(lock.refCount.get === 1)
     assert(engine.getInstance(turn.guid) === Some(turn))
@@ -59,7 +59,7 @@ class LockUnionFindTest extends AnyFunSuite {
     turn2.beginExecuting()
     val lock2 = turn2.subsumableLock.get()
 
-    if(SubsumableLock.DEBUG) println(s"single subsumed gc with $turn1 using $lock1 and $turn2 using $lock2")
+    if (SubsumableLock.DEBUG) println(s"single subsumed gc with $turn1 using $lock1 and $turn2 using $lock2")
 
     val l1 = Await.result(turn1.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
 
@@ -111,16 +111,16 @@ class LockUnionFindTest extends AnyFunSuite {
     }
     val locks = turns.map(_.subsumableLock.get)
 
-    turns.reduce{ (t1, t2) =>
+    turns.reduce { (t1, t2) =>
       val l = Await.result(t2.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
       assert(Await.result(t1.trySubsume(l), Duration.Zero) === Successful)
       l.asyncUnlock()
       t2
     }
 
-    assert(locks(0).refCount.get <= 0) // gc'd
+    assert(locks(0).refCount.get <= 0)  // gc'd
     assert(locks(1).refCount.get === 1) // turn 0
-    for(i <- 2 until maxIdx) {
+    for (i <- 2 until maxIdx) {
       assert(locks(i).refCount.get === 2) // lock(i-1), turn(i-1)
     }
     assert(locks(maxIdx).refCount.get === 3) // lock(count-1), turn(count-1), turn(count)
@@ -129,29 +129,31 @@ class LockUnionFindTest extends AnyFunSuite {
     turns(2).completeExecuting()
     turns(4).completeExecuting()
 
-    assert(locks(0).refCount.get <= 0) // gc'd
+    assert(locks(0).refCount.get <= 0)  // gc'd
     assert(locks(1).refCount.get === 1) // turn 0
     assert(locks(2).refCount.get === 1) // lock 1
     assert(locks(3).refCount.get === 1) // lock 2
     assert(locks(4).refCount.get === 2) // turn 3, lock 3
     assert(locks(5).refCount.get === 1) // lock 4
-    for(i <- 6 until maxIdx) {
+    for (i <- 6 until maxIdx) {
       assert(locks(i).refCount.get === 2) // lock(i-1), turn(i-1)
     }
     assert(locks(maxIdx).refCount.get === 3) // lock(count-1), turn(count-1), turn(count)
 
     Await.result(turns(0).tryLock(), Duration.Zero).asInstanceOf[Locked].lock.asyncUnlock()
 
-    assert(locks(0).refCount.get <= 0) // gc'd
-    assert(locks(1).refCount.get <= 0) // gc'd
-    assert(locks(2).refCount.get <= 0) // gc'd
-    assert(locks(3).refCount.get <= 0) // gc'd
+    assert(locks(0).refCount.get <= 0)  // gc'd
+    assert(locks(1).refCount.get <= 0)  // gc'd
+    assert(locks(2).refCount.get <= 0)  // gc'd
+    assert(locks(3).refCount.get <= 0)  // gc'd
     assert(locks(4).refCount.get === 1) // turn 3
-    assert(locks(5).refCount.get <= 0) // gc'd
-    for(i <- 6 until maxIdx) {
+    assert(locks(5).refCount.get <= 0)  // gc'd
+    for (i <- 6 until maxIdx) {
       assert(locks(i).refCount.get === 1) // turn(i-1)
     }
-    assert(locks(maxIdx).refCount.get === maxIdx - 6 + 4) // lock(4), lock(6) to lock(maxIdx - 1), turn(0), turn(count-1), turn(count)
+    assert(
+      locks(maxIdx).refCount.get === maxIdx - 6 + 4
+    ) // lock(4), lock(6) to lock(maxIdx - 1), turn(0), turn(count-1), turn(count)
   }
 
   test("underLock works") {
@@ -172,7 +174,7 @@ class LockUnionFindTest extends AnyFunSuite {
     assert(
       (lock1.refCount.get === 2 && lock2.refCount.get <= 0)
         ||
-        (lock1.refCount.get <= 0 && lock2.refCount.get === 2)
+          (lock1.refCount.get <= 0 && lock2.refCount.get === 2)
     )
   }
 
@@ -240,7 +242,7 @@ class LockUnionFindTest extends AnyFunSuite {
     turn2.beginExecuting()
     val lock2 = turn2.subsumableLock.get()
 
-    if(SubsumableLock.DEBUG) println(s"single subsume blocked gc with $turn1 using $lock1 and $turn2 using $lock2")
+    if (SubsumableLock.DEBUG) println(s"single subsume blocked gc with $turn1 using $lock1 and $turn2 using $lock2")
 
     val l1 = Await.result(turn1.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
     val l2 = Await.result(turn2.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
@@ -261,7 +263,7 @@ class LockUnionFindTest extends AnyFunSuite {
     assert(Await.result(turn2.trySubsume(l1), Duration.Zero) === Successful)
 
     assert(lock1.refCount.get === 3) // turn2, turn1 and thread
-    assert(lock2.refCount.get <= 0) // none
+    assert(lock2.refCount.get <= 0)  // none
 
     l1.asyncUnlock()
 

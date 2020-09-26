@@ -1,6 +1,5 @@
 package reswing
 
-
 import scala.swing.{Alignment, Color, Dimension, Font, TextField}
 import scala.swing.event.EditDone
 
@@ -25,19 +24,32 @@ class ReTextField(
     minimumSize: ReSwingValue[Dimension] = (),
     maximumSize: ReSwingValue[Dimension] = (),
     preferredSize: ReSwingValue[Dimension] = (),
-    columns: Int = 0)
-  extends
-    ReTextComponent(text, editable, `caret.position`, `caret.markDot`,
-                    `caret.visible`, `caret.selectionVisible`,
-                    `caret.blinkRate`, `caret.color`,
-                    cut, copy, paste, selectAll,
-                    background, foreground, font, enabled,
-                    minimumSize, maximumSize, preferredSize) {
+    columns: Int = 0
+) extends ReTextComponent(
+      text,
+      editable,
+      `caret.position`,
+      `caret.markDot`,
+      `caret.visible`,
+      `caret.selectionVisible`,
+      `caret.blinkRate`,
+      `caret.color`,
+      cut,
+      copy,
+      paste,
+      selectAll,
+      background,
+      foreground,
+      font,
+      enabled,
+      minimumSize,
+      maximumSize,
+      preferredSize
+    ) {
   override protected lazy val peer =
     new TextField(null, columns) with ComponentMixin
 
-  horizontalAlignment.using({() => peer.horizontalAlignment},
-                             peer.horizontalAlignment= _, "horizontalAlignment")
+  horizontalAlignment.using({ () => peer.horizontalAlignment }, peer.horizontalAlignment = _, "horizontalAlignment")
 
   val editDone = ReSwingEvent using classOf[EditDone]
 }

@@ -1,6 +1,5 @@
 package reswing
 
-
 import scala.swing.{Color, ComboBox, Dimension, Font}
 import scala.swing.event.{ListChanged, ListElementsAdded, ListElementsRemoved, SelectionChanged}
 
@@ -14,10 +13,8 @@ class ReComboBox[A](
     enabled: ReSwingValue[Boolean] = (),
     minimumSize: ReSwingValue[Dimension] = (),
     maximumSize: ReSwingValue[Dimension] = (),
-    preferredSize: ReSwingValue[Dimension] = ())
-  extends
-    ReComponent(background, foreground, font, enabled,
-                minimumSize, maximumSize, preferredSize) {
+    preferredSize: ReSwingValue[Dimension] = ()
+) extends ReComponent(background, foreground, font, enabled, minimumSize, maximumSize, preferredSize) {
   override protected lazy val peer = new ComboBox[A](Seq.empty[A]) with ComponentMixin
 
   protected val javaPeer = peer.peer.asInstanceOf[javax.swing.JComboBox[A]]
@@ -26,8 +23,12 @@ class ReComboBox[A](
 
   private val modelListener = new javax.swing.event.ListDataListener {
     def contentsChanged(e: javax.swing.event.ListDataEvent): Unit = { peer publish ListChanged(null) }
-    def intervalRemoved(e: javax.swing.event.ListDataEvent): Unit = { peer publish ListElementsRemoved(null, e.getIndex0 to e.getIndex1) }
-    def intervalAdded(e: javax.swing.event.ListDataEvent): Unit = { peer publish ListElementsAdded(null, e.getIndex0 to e.getIndex1) }
+    def intervalRemoved(e: javax.swing.event.ListDataEvent): Unit = {
+      peer publish ListElementsRemoved(null, e.getIndex0 to e.getIndex1)
+    }
+    def intervalAdded(e: javax.swing.event.ListDataEvent): Unit = {
+      peer publish ListElementsAdded(null, e.getIndex0 to e.getIndex1)
+    }
   }
 
   def modelChanged() = {
@@ -42,35 +43,38 @@ class ReComboBox[A](
   modelChanged()
 
   items.using(
-      { () =>
-        javaPeer.getModel match {
-          case model: ReComboBox.ReComboBoxModel[A] => model.getItems
-          case model => for (i <- 0 until model.getSize) yield model.getElementAt(i)
-        }
-      },
-      { items =>
-        val model = javaPeer.getModel match {
-          case model: ReComboBox.ReComboBoxModel[A] => model
-          case _ =>
-            val model = new ReComboBox.ReComboBoxModel[A]
-            javaPeer setModel model
-            modelChanged()
-            model
-        }
-        model.update(items)
-      },
-      classOf[ListChanged[_]])
+    { () =>
+      javaPeer.getModel match {
+        case model: ReComboBox.ReComboBoxModel[A] => model.getItems
+        case model                                => for (i <- 0 until model.getSize) yield model.getElementAt(i)
+      }
+    },
+    { items =>
+      val model = javaPeer.getModel match {
+        case model: ReComboBox.ReComboBoxModel[A] => model
+        case _ =>
+          val model = new ReComboBox.ReComboBoxModel[A]
+          javaPeer setModel model
+          modelChanged()
+          model
+      }
+      model.update(items)
+    },
+    classOf[ListChanged[_]]
+  )
 
   class ReSelection(
       val index: ReSwingValue[Int],
-      val item: ReSwingValue[Option[A]]) {
+      val item: ReSwingValue[Option[A]]
+  ) {
     protected[ReComboBox] val peer = ReComboBox.this.peer.selection
 
-    index.using({() => peer.index}, peer.index= _, (peer, classOf[SelectionChanged]))
+    index.using({ () => peer.index }, peer.index = _, (peer, classOf[SelectionChanged]))
     item.using(
-        { () => Option(peer.item) },
-        { item => peer.item = item getOrElse null.asInstanceOf[A] },
-        (peer, classOf[SelectionChanged]))
+      { () => Option(peer.item) },
+      { item => peer.item = item getOrElse null.asInstanceOf[A] },
+      (peer, classOf[SelectionChanged])
+    )
 
     val changed = ReSwingEvent.using(peer, classOf[SelectionChanged])
   }
@@ -85,12 +89,11 @@ class ReComboBox[A](
 object ReComboBox {
   implicit def toComboBox[A](component: ReComboBox[A]): ComboBox[A] = component.peer
 
-  class ReComboBoxModel[A]
-      extends javax.swing.AbstractListModel[A] with javax.swing.ComboBoxModel[A] {
+  class ReComboBoxModel[A] extends javax.swing.AbstractListModel[A] with javax.swing.ComboBoxModel[A] {
     private var items: Seq[A] = Seq.empty[A]
 
     def update(listData: Seq[A]): Unit = {
-      val itemsSize: Int = items.size
+      val itemsSize: Int  = items.size
       val additional: Int = listData.size - itemsSize
       items = listData
 
@@ -105,15 +108,17 @@ object ReComboBox {
     }
 
     def getElementAt(n: Int) = items(n)
-    def getSize = items.size
-    def getItems = items
+    def getSize              = items.size
+    def getItems             = items
 
     private var selected: AnyRef = _
-    def getSelectedItem: AnyRef = selected
+    def getSelectedItem: AnyRef  = selected
     def setSelectedItem(item: AnyRef): Unit = {
-      if ((item == null || (items contains item)) &&
-           ((selected != null && selected != item) ||
-            (selected == null && item != null))) {
+      if (
+        (item == null || (items contains item)) &&
+        ((selected != null && selected != item) ||
+        (selected == null && item != null))
+      ) {
         selected = item
         fireContentsChanged(this, -1, -1)
       }

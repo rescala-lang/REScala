@@ -6,24 +6,24 @@ import rescala.extra.lattices.sets.SetLike
 
 import scala.collection.AbstractIterator
 
+case class LatticeSequence[A, VertexSet](vertices: VertexSet, edges: Map[Vertex, Vertex], values: Map[Vertex, A])(
+    implicit val vertexSet: SetLike[Vertex, VertexSet]
+) {
 
-case class LatticeSequence[A, VertexSet](vertices: VertexSet,
-                                         edges: Map[Vertex, Vertex],
-                                         values: Map[Vertex, A]
-                                        )(implicit val vertexSet: SetLike[Vertex, VertexSet]) {
+  def contains(v: Vertex): Boolean =
+    v match {
+      case Vertex.start => true
+      case Vertex.end   => true
+      case v: Vertex    => vertexSet.contains(vertices, v)
+    }
 
-  def contains(v: Vertex): Boolean = v match {
-    case Vertex.start => true
-    case Vertex.end   => true
-    case v: Vertex    => vertexSet.contains(vertices, v)
-  }
-
-  def before(u: Vertex, v: Vertex): Boolean = u match {
-    case Vertex.start => true
-    case Vertex.end   => false
-    case u: Vertex    => edges(u) == v || before(edges(u), v)
-    case _            => throw new IllegalArgumentException(s"CRDTSequence does not contain Vertex $u!")
-  }
+  def before(u: Vertex, v: Vertex): Boolean =
+    u match {
+      case Vertex.start => true
+      case Vertex.end   => false
+      case u: Vertex    => edges(u) == v || before(edges(u), v)
+      case _            => throw new IllegalArgumentException(s"CRDTSequence does not contain Vertex $u!")
+    }
 
   def successor(v: Vertex): Vertex = {
     edges.get(v) match {
@@ -37,12 +37,12 @@ case class LatticeSequence[A, VertexSet](vertices: VertexSet,
   }
 
   /**
-   * This method allows insertions of any type into the RGA. This is used to move the start and end nodes
-   *
-   * @param left     the vertex specifying the position
-   * @param insertee the vertex to be inserted right to position
-   * @return A new RAG containing the inserted element
-   */
+    * This method allows insertions of any type into the RGA. This is used to move the start and end nodes
+    *
+    * @param left     the vertex specifying the position
+    * @param insertee the vertex to be inserted right to position
+    * @return A new RAG containing the inserted element
+    */
   def addRight(left: Vertex, insertee: Vertex, value: A): LatticeSequence[A, VertexSet] = {
     if (left == Vertex.end) throw new IllegalArgumentException("Cannot insert after end node!")
 
@@ -64,32 +64,33 @@ case class LatticeSequence[A, VertexSet](vertices: VertexSet,
 
   def prepend(value: A): LatticeSequence[A, VertexSet] = addRight(Vertex.start, value)
 
-
   def toList: List[A] = iterator.toList
 
   def iterator: Iterator[A] = vertexIterator.map(v => values(v))
 
-  def vertexIterator: Iterator[Vertex] = new AbstractIterator[Vertex] {
-    var lastVertex: Vertex = Vertex.start
+  def vertexIterator: Iterator[Vertex] =
+    new AbstractIterator[Vertex] {
+      var lastVertex: Vertex = Vertex.start
 
-    override def hasNext: Boolean = successor(lastVertex) match {
-      case Vertex.end => false
-      case _          => true
-    }
+      override def hasNext: Boolean =
+        successor(lastVertex) match {
+          case Vertex.end => false
+          case _          => true
+        }
 
-    override def next(): Vertex = {
-      successor(lastVertex) match {
-        case v: Vertex => lastVertex = v; v
-        case _         => throw new NoSuchElementException(
-          "Requesting iterator value after Vertex.end!")
+      override def next(): Vertex = {
+        successor(lastVertex) match {
+          case v: Vertex => lastVertex = v; v
+          case _ => throw new NoSuchElementException(
+              "Requesting iterator value after Vertex.end!"
+            )
+        }
       }
     }
-  }
 }
 
 object LatticeSequence {
-  implicit def lattice[A, VS: Lattice](implicit sl: SetLike[Vertex, VS])
-  : Lattice[LatticeSequence[A, VS]] =
+  implicit def lattice[A, VS: Lattice](implicit sl: SetLike[Vertex, VS]): Lattice[LatticeSequence[A, VS]] =
     new Lattice[LatticeSequence[A, VS]] {
       override def merge(left: LatticeSequence[A, VS], right: LatticeSequence[A, VS]): LatticeSequence[A, VS] = {
         val newVertices = right.vertexIterator.toList.filter(!left.edges.contains(_))
@@ -99,19 +100,20 @@ object LatticeSequence {
           case (m, (u, v)) => if (newVertices.contains(v)) m + (v -> u) else m
         }
 
-        val partialnew = newVertices.foldLeft(left) { case (merged, v) =>
-          merged.addRight(oldPositions(v), v, right.values(v))
+        val partialnew = newVertices.foldLeft(left) {
+          case (merged, v) =>
+            merged.addRight(oldPositions(v), v, right.values(v))
         }
 
         val vertices = Lattice.merge(left.vertices, right.vertices)
 
-        partialnew.copy(vertices = vertices,
-                        edges = partialnew.edges,
-                        values = partialnew.values.view.filterKeys(sl.contains(vertices, _)).toMap
-                        )(partialnew.vertexSet)
+        partialnew.copy(
+          vertices = vertices,
+          edges = partialnew.edges,
+          values = partialnew.values.view.filterKeys(sl.contains(vertices, _)).toMap
+        )(partialnew.vertexSet)
       }
     }
-
 
   implicit class RGAOps[A](rga: RGA[A]) {
     def remove(v: Seq[Vertex]): RGA[A] =

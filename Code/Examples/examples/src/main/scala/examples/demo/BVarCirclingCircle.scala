@@ -42,15 +42,15 @@ object BVarCirclingCircle extends SimpleSwingApplication {
     new MainFrame {
       title = "REScala Demo"
       contents = panel
-      setLocationRelativeTo(new UIElement {override def peer = null})
+      setLocationRelativeTo(new UIElement { override def peer = null })
     }
   }
 
   override def main(args: Array[String]): Unit = {
     super.main(args)
 
-    while(!top.visible) Thread.sleep(5)
-    while(top.visible) {
+    while (!top.visible) Thread.sleep(5)
+    while (top.visible) {
       Thread.sleep(1)
       angle.transform(_ + math.Pi / 1000d)
     }

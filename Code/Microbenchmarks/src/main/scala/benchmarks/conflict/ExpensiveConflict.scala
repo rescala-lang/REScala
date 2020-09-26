@@ -12,7 +12,7 @@ import rescala.reactives._
 @AuxCounters
 @State(Scope.Thread)
 class EvaluationCounter {
-  var tried: Int = _
+  var tried: Int     = _
   var succeeded: Int = _
 
   @Setup(Level.Iteration)
@@ -34,11 +34,11 @@ class ExpensiveConflict[S <: Struct] {
 
   var input: AtomicInteger = new AtomicInteger(0)
 
-  var cheapSource: Var[Int, S] = _
+  var cheapSource: Var[Int, S]     = _
   var expensiveSource: Var[Int, S] = _
-  var result: Signal[Int, S] = _
-  var engine: RescalaInterface[S] = _
-  var tried: Int = _
+  var result: Signal[Int, S]       = _
+  var engine: RescalaInterface[S]  = _
+  var tried: Int                   = _
 
   @Setup(Level.Iteration)
   def setup(engineParam: EngineParam[S], work: Workload) = {
@@ -47,8 +47,10 @@ class ExpensiveConflict[S <: Struct] {
     tried = 0
     cheapSource = engine.Var(input.incrementAndGet())
     expensiveSource = engine.Var(input.incrementAndGet())
-    val expensive = expensiveSource.map{ v => tried += 1; val r =  v + 1; work.consume(); r }
-    result = engine.Signals.lift(expensive, cheapSource)(_ + _).map{v => val r = v + 1; work.consumeSecondary(); r}
+    val expensive = expensiveSource.map { v => tried += 1; val r = v + 1; work.consume(); r }
+    result = engine.Signals.lift(expensive, cheapSource)(_ + _).map { v =>
+      val r = v + 1; work.consumeSecondary(); r
+    }
   }
 
   @Benchmark
@@ -67,6 +69,5 @@ class ExpensiveConflict[S <: Struct] {
     counter.succeeded += 1
     tried = 0
   }
-
 
 }

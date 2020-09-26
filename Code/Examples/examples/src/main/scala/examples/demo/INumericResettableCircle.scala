@@ -44,23 +44,24 @@ import rescala.default._
   */
 object INumericResettableCircle extends Main {
   val shapes = Var[List[Shape]](List.empty)
-  val panel = new ShapesPanel(shapes)
+  val panel  = new ShapesPanel(shapes)
 
-  val angle = Clock.nsTime.map( _.toDouble / Clock.NanoSecond * math.Pi)
+  val angle = Clock.nsTime.map(_.toDouble / Clock.NanoSecond * math.Pi)
 
-  val velocity = Signal { Pos(
-    x = (panel.width() / 2 - 50).toDouble * math.sin(angle()) / Clock.NanoSecond,
-    y = (panel.height() / 2 - 50).toDouble * math.cos(angle()) / Clock.NanoSecond
-  )}
-
+  val velocity = Signal {
+    Pos(
+      x = (panel.width() / 2 - 50).toDouble * math.sin(angle()) / Clock.NanoSecond,
+      y = (panel.height() / 2 - 50).toDouble * math.cos(angle()) / Clock.NanoSecond
+    )
+  }
 
   val inc = Clock.ticks.map(tick => Right[Point, Pos](velocity.value * tick.toDouble))
 
   val reset = panel.Mouse.middleButton.pressed.map(pos => Left[Point, Pos](pos))
 
-  val pos = (reset || inc).fold(Pos(0,0)){
+  val pos = (reset || inc).fold(Pos(0, 0)) {
     case (_, Left(Point(x, y))) => Pos(x.toDouble, y.toDouble)
-    case (pX, Right(inc)) => pX + inc
+    case (pX, Right(inc))       => pX + inc
   }
 
   shapes.transform(new Circle(pos, Var(50)) :: _)

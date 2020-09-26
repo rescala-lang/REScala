@@ -9,17 +9,17 @@ import reswing.reader.Observable
 import rescala.default._
 
 class UrlChecker {
-  type CheckArg = String
+  type CheckArg    = String
   type CheckResult = Either[String, URL]
-  type AfterCheck = (CheckArg, CheckResult)
+  type AfterCheck  = (CheckArg, CheckResult)
 
   /**
-   * Try to increase confidence that the String is a valid feed url
-   * by performing some simple checks.
-   *
-   * @param url The string to check
-   * @return Nothing is returned but events are fired, see below
-   */
+    * Try to increase confidence that the String is a valid feed url
+    * by performing some simple checks.
+    *
+    * @param url The string to check
+    * @return Nothing is returned but events are fired, see below
+    */
   val check = Observable { //#EVT //#EVT
     // Tries to create a url from the string and returns it in Right
     // if not successful, a Left with an error message is returned
@@ -28,25 +28,26 @@ class UrlChecker {
         val u = new URL(url)
         u.getContent
         Right(u)
-      }
-      catch {
-        case e: UnknownHostException => Left(errorMessage(url, e))
+      } catch {
+        case e: UnknownHostException  => Left(errorMessage(url, e))
         case e: MalformedURLException => Left(errorMessage(url, e))
         case e: FileNotFoundException => Left(errorMessage(url, e))
       }
   }
 
   private lazy val checkSuccessful: Event[CheckResult] = //#EVT
-    check.after && { t: AfterCheck => t._2.isRight } map { t: AfterCheck => t._2 }  //#EF //#EF
+    check.after && { t: AfterCheck => t._2.isRight } map { t: AfterCheck => t._2 } //#EF //#EF
 
   private lazy val checkFailed: Event[CheckResult] = //#EVT
-    check.after && { t: AfterCheck => t._2.isLeft } map { t: AfterCheck => t._2 }  //#EF //#EF
+    check.after && { t: AfterCheck => t._2.isLeft } map { t: AfterCheck => t._2 } //#EF //#EF
 
   private lazy val checkedOption: Event[Option[URL]] = //#EVT
-    (checkSuccessful || checkFailed) map { (_: CheckResult) match {  //#EF //#EF
-      case Right(u) => Some(u)
-      case Left(_)  => None
-    }}
+    (checkSuccessful || checkFailed) map {
+      (_: CheckResult) match { //#EF //#EF
+        case Right(u) => Some(u)
+        case Left(_)  => None
+      }
+    }
 
   /** Fired for every valid url checked */
   lazy val checkedURL: Event[URL] = checkedOption && //#EVT //#EF
@@ -56,7 +57,7 @@ class UrlChecker {
   lazy val urlIsValid: Event[Unit] = checkSuccessful.dropParam //#EVT //#EF
 
   /** Only fires if the checked url is invalid */
-  lazy val urlIsInvalid: Event[Unit] = checkFailed.dropParam  //#EVT //#EF
+  lazy val urlIsInvalid: Event[Unit] = checkFailed.dropParam //#EVT //#EF
 
   private def errorMessage(url: String, e: Exception): String =
     "Error while checking '" + url + "' - " + e.getMessage

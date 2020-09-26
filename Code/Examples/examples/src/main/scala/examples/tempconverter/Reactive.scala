@@ -4,13 +4,11 @@ package examples.tempconverter
 
 // Escala lib + behaviour extensions
 
-
 import rescala.default._
 
 // Scala swing events
 import scala.swing._
 import scala.swing.event._
-
 
 // could we actually use Reactive[Any] and use toString?
 trait ReactiveText extends Reactor {
@@ -24,7 +22,7 @@ trait ReactiveText extends Reactor {
     value.changed += { (t: String) => this.text_=(t) }
   }
   // out signal
-  lazy val text_out = Signal {userSet()}
+  lazy val text_out = Signal { userSet() }
   reactions += { case EditDone(_) => userSet set text }
 }
 
@@ -35,6 +33,5 @@ class ReactiveLabel extends Label with ReactiveText
 class ReactiveButton extends Button with ReactiveText {
   // wrap the event to escala
   val clicked = Evt[ButtonClicked]()
-  reactions += { case c@ButtonClicked(_) => clicked.fire(c) }
+  reactions += { case c @ ButtonClicked(_) => clicked.fire(c) }
 }
-

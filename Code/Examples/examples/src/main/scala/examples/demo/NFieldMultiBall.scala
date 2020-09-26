@@ -15,16 +15,17 @@ import rescala.default._
   */
 object NFieldMultiBall extends Main {
   val shapes = Var[List[Shape]](List.empty)
-  val panel = new ShapesPanel(shapes)
+  val panel  = new ShapesPanel(shapes)
 
   val playingField = new PlayingField(panel.width.map(_ - 25), panel.height.map(_ - 25))
   shapes.transform(playingField.shape :: _)
 
   val balls = List(
     new BouncingBall(200d, 150d, Var(50), panel.Mouse.middleButton.pressed),
-    new BouncingBall(-200d, 100d, Var(50), panel.Mouse.middleButton.pressed))
+    new BouncingBall(-200d, 100d, Var(50), panel.Mouse.middleButton.pressed)
+  )
 
-  for(bouncingBall <- balls) {
+  for (bouncingBall <- balls) {
     shapes.transform(bouncingBall.shape :: _)
 
     val fieldCollisions = playingField.colliders(bouncingBall.shape)

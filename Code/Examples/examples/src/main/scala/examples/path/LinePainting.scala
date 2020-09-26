@@ -1,4 +1,3 @@
-
 package examples.path
 
 import java.awt.{Color, Graphics2D, Point, geom}
@@ -6,7 +5,6 @@ import java.awt.{Color, Graphics2D, Point, geom}
 import scala.swing.Swing._
 import scala.swing.event._
 import scala.swing.{MainFrame, Panel, SimpleSwingApplication}
-
 
 object LinePainting extends SimpleSwingApplication {
 
@@ -20,7 +18,7 @@ object LinePainting extends SimpleSwingApplication {
       case e: MousePressed =>
         moveTo(e.point)
         requestFocusInWindow()
-      case e: MouseDragged => lineTo(e.point)
+      case e: MouseDragged  => lineTo(e.point)
       case e: MouseReleased => lineTo(e.point)
       case KeyTyped(_, 'c', _, _) =>
         path = new geom.GeneralPath
@@ -31,21 +29,26 @@ object LinePainting extends SimpleSwingApplication {
     /* records the dragging */
     var path = new geom.GeneralPath
 
-    def lineTo(p: Point): Unit = {path.lineTo(p.x.toFloat, p.y.toFloat); repaint()}
-    def moveTo(p: Point): Unit = {path.moveTo(p.x.toFloat, p.y.toFloat); repaint()}
+    def lineTo(p: Point): Unit = { path.lineTo(p.x.toFloat, p.y.toFloat); repaint() }
+    def moveTo(p: Point): Unit = { path.moveTo(p.x.toFloat, p.y.toFloat); repaint() }
 
     override def paintComponent(g: Graphics2D) = {
       super.paintComponent(g)
       g.setColor(new Color(100, 100, 100))
-      g.drawString("Press left mouse button and drag to paint." +
-        (if (hasFocus) " Press 'c' to clear." else ""), 10, size.height - 10)
+      g.drawString(
+        "Press left mouse button and drag to paint." +
+          (if (hasFocus) " Press 'c' to clear." else ""),
+        10,
+        size.height - 10
+      )
       g.setColor(Color.black)
       g.draw(path)
     }
   }
 
-  def top = new MainFrame {
-    title = "Simple Line Painting Demo"
-    contents = ui
-  }
+  def top =
+    new MainFrame {
+      title = "Simple Line Painting Demo"
+      contents = ui
+    }
 }

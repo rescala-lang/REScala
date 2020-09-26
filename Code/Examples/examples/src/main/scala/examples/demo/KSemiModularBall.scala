@@ -26,21 +26,24 @@ import rescala.default._
   */
 object KSemiModularBall extends Main {
   val shapes = Var[List[Shape]](List.empty)
-  val panel = new ShapesPanel(shapes)
+  val panel  = new ShapesPanel(shapes)
 
   class BouncingBall(val initVx: Double, val initVy: Double, val diameter: Signal[Int], val resetIn: Event[Point]) {
 
-    val velocity = Signal { Pos(
-      x = panel.Mouse.leftButton.pressed.fold(initVx / Clock.NanoSecond) { (old, _) => -old }.value,
-      y = panel.Mouse.rightButton.pressed.fold(initVy / Clock.NanoSecond) { (old, _ ) => -old }.value)}
+    val velocity = Signal {
+      Pos(
+        x = panel.Mouse.leftButton.pressed.fold(initVx / Clock.NanoSecond) { (old, _) => -old }.value,
+        y = panel.Mouse.rightButton.pressed.fold(initVy / Clock.NanoSecond) { (old, _) => -old }.value
+      )
+    }
 
     val inc = Clock.ticks.map(tick => Right[Point, Pos](velocity.value * tick.toDouble))
 
     val reset = resetIn.map(pos => Left[Point, Pos](pos))
 
-    val pos = (reset || inc).fold(Pos(0,0)){
+    val pos = (reset || inc).fold(Pos(0, 0)) {
       case (_, Left(Point(x, y))) => Pos(x.toDouble, y.toDouble)
-      case (pX, Right(inc)) => pX + inc
+      case (pX, Right(inc))       => pX + inc
     }
 
     val shape = new Circle(pos, diameter)

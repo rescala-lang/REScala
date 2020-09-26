@@ -18,20 +18,25 @@ class PhiloTest extends AnyFunSuite {
 
     @volatile var cancel = false
 
-    val threads = for (threadIndex <- Range(0, size)) yield Spawn(desiredName = Some(s"Worker $threadIndex"), f = {
-      while (!cancel) {
-        table.eatOnce(table.seatings(threadIndex))
-      }
-      // println(Thread.currentThread() + " terminated.")
-    })
+    val threads =
+      for (threadIndex <- Range(0, size))
+        yield Spawn(
+          desiredName = Some(s"Worker $threadIndex"),
+          f = {
+            while (!cancel) {
+              table.eatOnce(table.seatings(threadIndex))
+            }
+            // println(Thread.currentThread() + " terminated.")
+          }
+        )
 
     println(s"philo party sleeping on $engine (dynamic $dynamic)")
     Thread.sleep(1000)
     cancel = true
-    val threadResults = threads.map(t => (t, t.awaitTry(1000) ))
+    val threadResults = threads.map(t => (t, t.awaitTry(1000)))
     println(s"philo party done sleeping on $engine (dynamic $dynamic), score: ${table.eaten.get()}")
 
-    val threadFailures = threadResults.filter{
+    val threadFailures = threadResults.filter {
       case (thread, Failure(e: TimeoutException)) =>
         System.err.println(s"Thread $thread timed out.")
         true
@@ -44,7 +49,7 @@ class PhiloTest extends AnyFunSuite {
     assert(threadFailures.isEmpty, threadFailures.size.toString + " threads failed.")
   }
 
-  test("eating Contests Spinning") {`eat!`(Interfaces.parrp, dynamic = false)}
-  test("eating Contests Spinning Dynamic") {`eat!`(Interfaces.parrp, dynamic = true)}
+  test("eating Contests Spinning") { `eat!`(Interfaces.parrp, dynamic = false) }
+  test("eating Contests Spinning Dynamic") { `eat!`(Interfaces.parrp, dynamic = true) }
 
 }

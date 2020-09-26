@@ -29,17 +29,17 @@ class Remerge {
   @Param(Array("1", "2", "3", "5"))
   var mergeAt: Int = _
 
-  var sources: Seq[(FullMVEngine, Var[Int, FullMVStruct])] = _
-  var instantMergeHost: FullMVEngine = _
-  var remotesOnInstantMerge: Seq[Signal[Int, FullMVStruct]] = _
-  var instantMerge: Signal[Int, FullMVStruct] = _
+  var sources: Seq[(FullMVEngine, Var[Int, FullMVStruct])]                  = _
+  var instantMergeHost: FullMVEngine                                        = _
+  var remotesOnInstantMerge: Seq[Signal[Int, FullMVStruct]]                 = _
+  var instantMerge: Signal[Int, FullMVStruct]                               = _
   var preMergeDistance: Seq[Seq[(FullMVEngine, Signal[Int, FullMVStruct])]] = _
-  var mergeHost: FullMVEngine = _
-  var remotesOnMerge: Seq[Signal[Int, FullMVStruct]] = _
-  var merge: Signal[Int, FullMVStruct] = _
-  var postMergeDistance: Seq[(FullMVEngine, Signal[Int, FullMVStruct])] = _
+  var mergeHost: FullMVEngine                                               = _
+  var remotesOnMerge: Seq[Signal[Int, FullMVStruct]]                        = _
+  var merge: Signal[Int, FullMVStruct]                                      = _
+  var postMergeDistance: Seq[(FullMVEngine, Signal[Int, FullMVStruct])]     = _
 
-  var barrier: CyclicBarrier = _
+  var barrier: CyclicBarrier      = _
   var threadpool: ExecutorService = _
 
   @Param(Array("50"))
@@ -69,7 +69,7 @@ class Remerge {
     instantMerge = {
       val e = instantMergeHost
       import e._
-      Signals.static(remotesOnInstantMerge:_*) { t =>
+      Signals.static(remotesOnInstantMerge: _*) { t =>
         remotesOnInstantMerge.map(t.dependStatic).sum
       }
     }
@@ -94,7 +94,7 @@ class Remerge {
     merge = {
       val e = mergeHost
       import e._
-      Signals.static(remotesOnMerge:_*) { t =>
+      Signals.static(remotesOnMerge: _*) { t =>
         remotesOnMerge.map(t.dependStatic).sum
       }
     }
@@ -118,13 +118,13 @@ class Remerge {
 
   @Benchmark
   def run(): Unit = {
-    val results = for(i <- 1 to threads) yield {
+    val results = for (i <- 1 to threads) yield {
       val p = Promise[Unit]()
-      threadpool.submit(new Runnable(){
+      threadpool.submit(new Runnable() {
         override def run(): Unit = {
-          p.complete(Try{
+          p.complete(Try {
             val (engine, source) = sources(i - 1)
-            engine.transactionWithWrapup(source)({ticket =>
+            engine.transactionWithWrapup(source)({ ticket =>
               val before = ticket.now(source)
               source.admit(before + 1)(ticket)
             })({ (_, ticket) =>

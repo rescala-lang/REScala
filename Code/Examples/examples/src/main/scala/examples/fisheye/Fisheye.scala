@@ -9,31 +9,31 @@ import scala.swing.{MainFrame, Panel, SimpleSwingApplication}
 
 object Fisheye extends SimpleSwingApplication {
   lazy val application = new Fisheye
-  def top = application.frame
+  def top              = application.frame
 }
 
 object Box {
   val NormalSize = 50
-  val HoverSize = 80
-  val DeltaSize = HoverSize - NormalSize
-  val YPos = 20
-  val Margin = 10
+  val HoverSize  = 80
+  val DeltaSize  = HoverSize - NormalSize
+  val YPos       = 20
+  val Margin     = 10
 }
 
 class Box(val color: java.awt.Color, val xOffset: Signal[Int])(implicit val mouse: Mouse) {
 
   private def interpolation(d: Double) = math.max(0, math.min(1, 5 - math.log(d)))
 
-  val lowerLeft = Signal {new java.awt.Point(xOffset() + Box.Margin, Box.YPos)}
-  val mouseDistance = Signal {mouse.position().distance(lowerLeft())}
-  val interpolationValue = Signal {interpolation(mouseDistance())}
-  val effectiveSize = Signal {(Box.NormalSize + interpolationValue() * Box.DeltaSize).toInt}
-  val rightmostPoint = Signal {lowerLeft().getX.toInt + effectiveSize()}
+  val lowerLeft          = Signal { new java.awt.Point(xOffset() + Box.Margin, Box.YPos) }
+  val mouseDistance      = Signal { mouse.position().distance(lowerLeft()) }
+  val interpolationValue = Signal { interpolation(mouseDistance()) }
+  val effectiveSize      = Signal { (Box.NormalSize + interpolationValue() * Box.DeltaSize).toInt }
+  val rightmostPoint     = Signal { lowerLeft().getX.toInt + effectiveSize() }
 
   // add some saturation
-  val components = color.getRGBColorComponents(null).map(_.toInt * 255)
-  val hsv = Color.RGBtoHSB(components(0), components(1), components(2), null)
-  val effectiveColor = Signal {Color.getHSBColor(hsv(0), 0.6f + 0.4f * interpolationValue().toFloat, hsv(2))}
+  val components     = color.getRGBColorComponents(null).map(_.toInt * 255)
+  val hsv            = Color.RGBtoHSB(components(0), components(1), components(2), null)
+  val effectiveColor = Signal { Color.getHSBColor(hsv(0), 0.6f + 0.4f * interpolationValue().toFloat, hsv(2)) }
 
   // define the box
   val area = Signal {
@@ -43,9 +43,9 @@ class Box(val color: java.awt.Color, val xOffset: Signal[Int])(implicit val mous
 
 class Fisheye {
 
-  val Max_X = 500
-  val Max_Y = 200
-  val initPoint = Signal {30}
+  val Max_X     = 500
+  val Max_Y     = 200
+  val initPoint = Signal { 30 }
 
   implicit val mouse = new Mouse
 

@@ -21,12 +21,10 @@ import reswing.reshapes.figures.Resizable
 import reswing.reshapes.figures.Shape
 import reswing.reshapes.util.MathUtil
 
-/**
- * Represents the panel where all shapes are drawn onto
- */
+/** Represents the panel where all shapes are drawn onto */
 class DrawingPanel(val state: DrawingSpaceState) extends Panel {
-  private var point: Point = null
-  private var currentShape: Shape = null
+  private var point: Point          = null
+  private var currentShape: Shape   = null
   private var resizingMode: Boolean = false
 
   override def paint(g: Graphics2D): Unit = {
@@ -39,13 +37,12 @@ class DrawingPanel(val state: DrawingSpaceState) extends Panel {
       for (shape <- state.shapes.now)
         if (!shape.selected)
           shape.draw(g)
-    }
-    else
+    } else
       for (shape <- state.shapes.now)
         shape.draw(g)
   }
 
-  lazy val drawn = Evt[Command]()  //#EVT
+  lazy val drawn = Evt[Command]() //#EVT
 
   listenTo(mouse.clicks, mouse.moves)
 
@@ -55,14 +52,15 @@ class DrawingPanel(val state: DrawingSpaceState) extends Panel {
       state.selectedShape.now match {
         case null =>
           currentShape = state.nextShape.now.copy(
-              path = List(point),
-              strokeWidth = state.strokeWidth.now,
-              color = state.color.now,
-              current = {Shape.current += 1; Shape.current})
+            path = List(point),
+            strokeWidth = state.strokeWidth.now,
+            color = state.color.now,
+            current = { Shape.current += 1; Shape.current }
+          )
         case selectedShape =>
           currentShape = selectedShape.copy()
           resizingMode = MathUtil.isInCircle(currentShape.start, 6, e.point) ||
-                         MathUtil.isInCircle(currentShape.end, 6, e.point)
+            MathUtil.isInCircle(currentShape.end, 6, e.point)
       }
     case e: MouseDragged =>
       state.selectedShape.now match {
@@ -88,17 +86,15 @@ class DrawingPanel(val state: DrawingSpaceState) extends Panel {
       repaint()
   }
 
-  (state.selectedShape.changed ||  //#IF //#EF
-  state.shapes.changed ||   //#IF //#EF
-  state.strokeWidth.changed ||   //#IF //#EF
-  state.color.changed) += canvasChange   //#IF //#HDL
+  (state.selectedShape.changed ||        //#IF //#EF
+    state.shapes.changed ||              //#IF //#EF
+    state.strokeWidth.changed ||         //#IF //#EF
+    state.color.changed) += canvasChange //#IF //#HDL
 
   def canvasChange(x: Any) = repaint()
 }
 
-/**
- * This trait draws intersection points between all drawn shapes
- */
+/** This trait draws intersection points between all drawn shapes */
 trait ShowIntersection extends DrawingPanel {
   override def paint(g: Graphics2D): Unit = {
     super.paint(g)
@@ -125,9 +121,7 @@ trait ShowIntersection extends DrawingPanel {
   }
 }
 
-/**
- * Draws a coordinate System onto the panel
- */
+/** Draws a coordinate System onto the panel */
 trait ShowCoordinateSystem extends DrawingPanel {
   override def paint(g: Graphics2D): Unit = {
     super.paint(g)
@@ -147,9 +141,7 @@ trait ShowCoordinateSystem extends DrawingPanel {
   }
 }
 
-/**
- * Writes the name of the shape besides them on drawing panel
- */
+/** Writes the name of the shape besides them on drawing panel */
 trait ShowNameLabels extends DrawingPanel {
   override def paint(g: Graphics2D): Unit = {
     super.paint(g)
@@ -161,4 +153,3 @@ trait ShowNameLabels extends DrawingPanel {
       g.drawString(shape.toString, shape.start.x, shape.start.y)
   }
 }
-

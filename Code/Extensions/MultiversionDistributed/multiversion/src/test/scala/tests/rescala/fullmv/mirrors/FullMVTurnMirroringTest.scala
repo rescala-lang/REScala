@@ -9,7 +9,7 @@ import scala.concurrent.duration.Duration
 
 class FullMVTurnMirroringTest extends AnyFunSuite {
 
-  test("instance lookup"){
+  test("instance lookup") {
     val host0 = new FullMVEngine(Duration.Zero, "0")
     val hostA = new FullMVEngine(Duration.Zero, "A")
     val hostB = new FullMVEngine(Duration.Zero, "B")
@@ -117,7 +117,8 @@ class FullMVTurnMirroringTest extends AnyFunSuite {
     val turnOneRoot = host0.newTurn()
     turnOneRoot.beginExecuting()
     val turnOne: FullMVTurn = turnOneRoot
-    if(FullMVEngine.DEBUG) println(s"turnOne on host0: $turnOne with ${turnOne.asInstanceOf[FullMVTurnImpl].subsumableLock.get()}")
+    if (FullMVEngine.DEBUG)
+      println(s"turnOne on host0: $turnOne with ${turnOne.asInstanceOf[FullMVTurnImpl].subsumableLock.get()}")
     val turnOneA = FullMVTurnLocalClone.withPredecessorReplication(turnOne, hostA)
     val turnOneB = FullMVTurnLocalClone.withPredecessorReplication(turnOneA, hostB)
 
@@ -125,17 +126,19 @@ class FullMVTurnMirroringTest extends AnyFunSuite {
     val turnTwoRoot = hostA.newTurn()
     turnTwoRoot.beginExecuting()
     val turnTwoA: FullMVTurn = turnTwoRoot
-    if(FullMVEngine.DEBUG) println(s"turnTwo on hostA: $turnTwoA with ${turnTwoA.asInstanceOf[FullMVTurnImpl].subsumableLock.get()}")
-    val turnTwo = FullMVTurnLocalClone.withPredecessorReplication(turnTwoA, host0)
+    if (FullMVEngine.DEBUG)
+      println(s"turnTwo on hostA: $turnTwoA with ${turnTwoA.asInstanceOf[FullMVTurnImpl].subsumableLock.get()}")
+    val turnTwo  = FullMVTurnLocalClone.withPredecessorReplication(turnTwoA, host0)
     val turnTwoB = FullMVTurnLocalClone.withPredecessorReplication(turnTwo, hostB)
 
     // B -> A -> 0
     val turnThreeRoot = hostB.newTurn()
     turnThreeRoot.beginExecuting()
     val turnThreeB: FullMVTurn = turnThreeRoot
-    if(FullMVEngine.DEBUG) println(s"turnThree on hostB: $turnThreeB with ${turnThreeB.asInstanceOf[FullMVTurnImpl].subsumableLock.get()}")
+    if (FullMVEngine.DEBUG)
+      println(s"turnThree on hostB: $turnThreeB with ${turnThreeB.asInstanceOf[FullMVTurnImpl].subsumableLock.get()}")
     val turnThreeA = FullMVTurnLocalClone.withPredecessorReplication(turnThreeB, hostA)
-    val turnThree = FullMVTurnLocalClone.withPredecessorReplication(turnThreeA, host0)
+    val turnThree  = FullMVTurnLocalClone.withPredecessorReplication(turnThreeA, host0)
 
     assert(turnOne.isTransitivePredecessor(turnTwo) === false)
     assert(turnOne.isTransitivePredecessor(turnThree) === false)
@@ -158,7 +161,8 @@ class FullMVTurnMirroringTest extends AnyFunSuite {
     assert(turnThreeB.isTransitivePredecessor(turnOneB) === false)
     assert(turnThreeB.isTransitivePredecessor(turnTwoB) === false)
 
-    val locked = SerializationGraphTracking.tryLock(turnOneB, turnTwoB, UnlockedUnknown).asInstanceOf[LockedSameSCC].lock
+    val locked =
+      SerializationGraphTracking.tryLock(turnOneB, turnTwoB, UnlockedUnknown).asInstanceOf[LockedSameSCC].lock
     Await.result(turnTwoB.addPredecessor(turnOneB.selfNode), Duration.Zero)
     locked.asyncUnlock()
 
@@ -183,9 +187,9 @@ class FullMVTurnMirroringTest extends AnyFunSuite {
     assert(turnThreeB.isTransitivePredecessor(turnOneB) === false)
     assert(turnThreeB.isTransitivePredecessor(turnTwoB) === false)
 
-    val hostC = new FullMVEngine(Duration.Zero, "C")
-    val turnOneC = FullMVTurnLocalClone.withPredecessorReplication(turnOneA, hostC)
-    val turnTwoC = FullMVTurnLocalClone.withPredecessorReplication(turnTwoA, hostC)
+    val hostC      = new FullMVEngine(Duration.Zero, "C")
+    val turnOneC   = FullMVTurnLocalClone.withPredecessorReplication(turnOneA, hostC)
+    val turnTwoC   = FullMVTurnLocalClone.withPredecessorReplication(turnTwoA, hostC)
     val turnThreeC = FullMVTurnLocalClone.withPredecessorReplication(turnThreeA, hostC)
 
     assert(turnOneC.isTransitivePredecessor(turnTwoC) === false)
@@ -195,7 +199,8 @@ class FullMVTurnMirroringTest extends AnyFunSuite {
     assert(turnThreeC.isTransitivePredecessor(turnOneC) === false)
     assert(turnThreeC.isTransitivePredecessor(turnTwoC) === false)
 
-    val locked2 = SerializationGraphTracking.tryLock(turnThreeC, turnTwoC, UnlockedUnknown).asInstanceOf[LockedSameSCC].lock
+    val locked2 =
+      SerializationGraphTracking.tryLock(turnThreeC, turnTwoC, UnlockedUnknown).asInstanceOf[LockedSameSCC].lock
     Await.result(turnThreeC.addPredecessor(turnTwoC.selfNode), Duration.Zero)
     locked2.asyncUnlock()
 

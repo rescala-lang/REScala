@@ -36,7 +36,6 @@ case object ConcurrentDeallocation extends LockStateResult0 {
   val futured = Future.successful(this)
 }
 
-
 trait SubsumableLockEntryPoint {
   def getLockedRoot: Future[LockStateResult]
   // result has one thread reference counted
@@ -71,10 +70,10 @@ trait SubsumableLock extends SubsumableLockProxy with Hosted[SubsumableLock] {
   def asyncUnlock0(): Unit
 
   def asyncUnlock(): Unit = {
-    asyncUnlock0()//.onComplete {
+    asyncUnlock0() //.onComplete {
 //      case Success(()) =>
 //        if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this dropping temporary thread reference after unlock")
-        localSubRefs(1)
+    localSubRefs(1)
 //      case Failure(t) =>
 //        new Exception("remote async unlock failed", t).printStackTrace()
 //    }(FullMVEngine.notWorthToMoveToTaskpool)
@@ -82,9 +81,9 @@ trait SubsumableLock extends SubsumableLockProxy with Hosted[SubsumableLock] {
 
   @tailrec final def tryLocalAddRefs(refs: Int): Boolean = {
     val before = refCount.get()
-    if(before == 0) {
+    if (before == 0) {
       false
-    } else if(refCount.compareAndSet(before, before + refs)) {
+    } else if (refCount.compareAndSet(before, before + refs)) {
       true
     } else {
       tryLocalAddRefs(refs)
@@ -95,13 +94,13 @@ trait SubsumableLock extends SubsumableLockProxy with Hosted[SubsumableLock] {
     assert(refs > 0)
     val before = refCount.get()
     assert(before > 0, s"cannot add refs on gc'd $this")
-    if(!refCount.compareAndSet(before, before + refs)) localAddRefs(refs)
+    if (!refCount.compareAndSet(before, before + refs)) localAddRefs(refs)
   }
 
   def localSubRefs(refs: Int): Unit = {
     assert(refs > 0)
     val remaining = refCount.addAndGet(-refs)
-    if(remaining == 0) {
+    if (remaining == 0) {
       host.dropInstance(guid, this)
       dumped()
     } else {
@@ -110,7 +109,7 @@ trait SubsumableLock extends SubsumableLockProxy with Hosted[SubsumableLock] {
   }
 
   override def asyncRemoteRefDropped(): Unit = {
-    if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this dropping remote reference")
+    if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this dropping remote reference")
     localSubRefs(1)
   }
 
@@ -126,13 +125,16 @@ object SubsumableLock {
     @tailrec def reTryLock(): SubsumableLock = {
       FullMVEngine.myAwait(contender.tryLock(), timeout) match {
         case Locked(lockedRoot) =>
-          if (DEBUG) System.out.println(s"[${Thread.currentThread().getName}] now owns SCC of $contender under $lockedRoot")
+          if (DEBUG)
+            System.out.println(s"[${Thread.currentThread().getName}] now owns SCC of $contender under $lockedRoot")
           lockedRoot
         case Blocked =>
           bo.backoff()
           reTryLock()
         case Deallocated =>
-          throw new AssertionError("this should be impossible we're calling tryLock on the contender only, which cannot deallocate concurrently.")
+          throw new AssertionError(
+            "this should be impossible we're calling tryLock on the contender only, which cannot deallocate concurrently."
+          )
       }
     }
     reTryLock()
@@ -140,21 +142,26 @@ object SubsumableLock {
 
   def acquireLock[R](defender: FullMVTurn, contender: FullMVTurn, timeout: Duration): Option[SubsumableLock] = {
     assert(defender.host == contender.host, s"trying to sync $defender and $contender from different hosts")
-    if (DEBUG) System.out.println(s"[${Thread.currentThread().getName}] syncing $defender and $contender into a common SCC")
+    if (DEBUG)
+      System.out.println(s"[${Thread.currentThread().getName}] syncing $defender and $contender into a common SCC")
     val bo = new Backoff()
     @tailrec def reTryLock(): Option[SubsumableLock] = {
       FullMVEngine.myAwait(contender.tryLock(), timeout) match {
         case Locked(lockedRoot) =>
           FullMVEngine.myAwait(defender.trySubsume(lockedRoot), timeout) match {
             case Successful =>
-              if (DEBUG) System.out.println(s"[${Thread.currentThread().getName}] now owns SCC of $defender and $contender under $lockedRoot")
+              if (DEBUG)
+                System.out.println(
+                  s"[${Thread.currentThread().getName}] now owns SCC of $defender and $contender under $lockedRoot"
+                )
               Some(lockedRoot)
             case Blocked =>
               lockedRoot.asyncUnlock()
               bo.backoff()
               reTryLock()
             case Deallocated =>
-              if (DEBUG) System.out.println(s"[${Thread.currentThread().getName}] aborting sync due to deallocation contention")
+              if (DEBUG)
+                System.out.println(s"[${Thread.currentThread().getName}] aborting sync due to deallocation contention")
               lockedRoot.asyncUnlock()
               None
           }
@@ -162,7 +169,9 @@ object SubsumableLock {
           bo.backoff()
           reTryLock()
         case Deallocated =>
-          throw new AssertionError("this should be impossible we're calling tryLock on the contender only, which cannot deallocate concurrently.")
+          throw new AssertionError(
+            "this should be impossible we're calling tryLock on the contender only, which cannot deallocate concurrently."
+          )
       }
     }
     reTryLock()

@@ -6,7 +6,6 @@ import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
 import rescala.collectionsDefault._
 
-
 /**
   * @author gerizuna
   * @since 10.10.19
@@ -20,14 +19,14 @@ import rescala.collectionsDefault._
 @State(Scope.Thread)
 class SizeBenchmarkWithRemove {
 
-  @Param(Array("1","5","10","50","100","500","1000","5000","10000"))
+  @Param(Array("1", "5", "10", "50", "100", "500", "1000", "5000", "10000"))
   var arg: Int = _
 
-  var removeEvent: Evt[Int] = _
-  var sizeOfSeq : Signal[Int] = _
+  var removeEvent: Evt[Int]  = _
+  var sizeOfSeq: Signal[Int] = _
 
-  var reactSeq: SeqSource[Int] = _
-  var sizeOfReactSeq :Signal[Int] = _
+  var reactSeq: SeqSource[Int]    = _
+  var sizeOfReactSeq: Signal[Int] = _
 
   @Setup(Level.Invocation)
   def prepare: Unit = {

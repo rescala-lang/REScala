@@ -19,16 +19,18 @@ trait LevelBasedTransaction[S <: LevelStruct] extends TwoVersionTransactionImpl[
   val levelQueue = new LevelQueue[S](this)
 
   /** Store a single resettable ticket for the whole evaluation.
-    * This optimization drastically reduces garbage generation of a relatively expensive object */
+    * This optimization drastically reduces garbage generation of a relatively expensive object
+    */
   private val reevaluationTicket: ReevTicket[_, S] = makeDynamicReevaluationTicket(null)
+
   /** Overrides [[LevelQueue.Evaluator]], this is essentially an inlined callback */
   override def evaluate(r: Derived[S]): Unit = evaluateIn(r)(reevaluationTicket.reset(r.state.base(token)))
   def evaluateIn(head: Derived[S])(dt: ReevTicket[head.Value, S]): Unit = {
     val reevRes = head.reevaluate(dt)
 
     val dependencies: Option[Set[ReSource[S]]] = reevRes.dependencies()
-    val minimalLevel = dependencies.fold(0)(nextLevel)
-    val redo = head.state.level() < minimalLevel
+    val minimalLevel                           = dependencies.fold(0)(nextLevel)
+    val redo                                   = head.state.level() < minimalLevel
     if (redo) {
       levelQueue.enqueue(minimalLevel)(head)
     } else {
@@ -47,7 +49,11 @@ trait LevelBasedTransaction[S <: LevelStruct] extends TwoVersionTransactionImpl[
   private def nextLevel(dependencies: Set[ReSource[S]]): Int =
     if (dependencies.isEmpty) 0 else dependencies.map(_.state.level()).max + 1
 
-  override protected def ignite(reactive: Derived[S], incoming: Set[ReSource[S]], ignitionRequiresReevaluation: Boolean): Unit = {
+  override protected def ignite(
+      reactive: Derived[S],
+      incoming: Set[ReSource[S]],
+      ignitionRequiresReevaluation: Boolean
+  ): Unit = {
     val level = nextLevel(incoming)
     reactive.state.updateLevel(level)
 

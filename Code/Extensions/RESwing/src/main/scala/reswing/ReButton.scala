@@ -2,7 +2,6 @@ package reswing
 
 import javax.swing.Icon
 
-
 import scala.swing.{Action, Alignment, Button, Color, Dimension, Font}
 
 class ReButton(
@@ -26,14 +25,29 @@ class ReButton(
     enabled: ReSwingValue[Boolean] = (),
     minimumSize: ReSwingValue[Dimension] = (),
     maximumSize: ReSwingValue[Dimension] = (),
-    preferredSize: ReSwingValue[Dimension] = ())
-  extends
-    ReAbstractButton(text, selected, horizontalAlignment, verticalAlignment,
-                     horizontalTextPosition, verticalTextPosition,
-                     icon, pressedIcon, selectedIcon, disabledIcon,
-                     disabledSelectedIcon, rolloverIcon, rolloverSelectedIcon,
-                     background, foreground, font, enabled,
-                     minimumSize, maximumSize, preferredSize) {
+    preferredSize: ReSwingValue[Dimension] = ()
+) extends ReAbstractButton(
+      text,
+      selected,
+      horizontalAlignment,
+      verticalAlignment,
+      horizontalTextPosition,
+      verticalTextPosition,
+      icon,
+      pressedIcon,
+      selectedIcon,
+      disabledIcon,
+      disabledSelectedIcon,
+      rolloverIcon,
+      rolloverSelectedIcon,
+      background,
+      foreground,
+      font,
+      enabled,
+      minimumSize,
+      maximumSize,
+      preferredSize
+    ) {
   override protected lazy val peer = new Button with ComponentMixin
 
   if (action != null)

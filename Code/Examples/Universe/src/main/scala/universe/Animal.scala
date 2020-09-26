@@ -33,25 +33,22 @@ object Animal {
 
   /** An animal is in a state */
   sealed trait AnimalState
-  case object Idling extends AnimalState
-  case class Eating(plant: Plant) extends AnimalState
-  case class Attacking(other: Animal) extends AnimalState
-  case class Moving(dir: Pos) extends AnimalState
+  case object Idling                     extends AnimalState
+  case class Eating(plant: Plant)        extends AnimalState
+  case class Attacking(other: Animal)    extends AnimalState
+  case class Moving(dir: Pos)            extends AnimalState
   case class Procreating(female: Animal) extends AnimalState
-  case object FallPrey extends AnimalState
-  case object Sleeping extends AnimalState
+  case object FallPrey                   extends AnimalState
+  case object Sleeping                   extends AnimalState
 }
-
 
 abstract class Animal(implicit world: World) extends BoardElement {
 
-
   final override def isAnimal: Boolean = true
-
 
   final val step: Evt[(Pos, Boolean)] = Evt[(Pos, Boolean)]()
 
-  private val statePos: Signal[(AnimalState, Pos)] = step.fold((Idling: AnimalState, Pos(0,0))) { (p1, p2) =>
+  private val statePos: Signal[(AnimalState, Pos)] = step.fold((Idling: AnimalState, Pos(0, 0))) { (p1, p2) =>
     (p1, p2) match {
       case ((oldState, oldPos), (newPos, prey)) =>
         if (prey) (FallPrey, oldPos)
@@ -61,23 +58,23 @@ abstract class Animal(implicit world: World) extends BoardElement {
 
   private val state: Signal[AnimalState] = statePos.map(_._1)
 
-  statePos.observe { case (cstate, pos) =>
-    world.plan {
-      cstate match {
-        case Moving(dir) => world.board.moveIfPossible(pos, dir)
-        case Eating(plant) => plant.takeEnergy(energyGain.readValueOnce)
-        case Attacking(prey) => prey.savage()
-        case Procreating(female: Female) => female.procreate(this)
-        case _ =>
+  statePos.observe {
+    case (cstate, pos) =>
+      world.plan {
+        cstate match {
+          case Moving(dir)                 => world.board.moveIfPossible(pos, dir)
+          case Eating(plant)               => plant.takeEnergy(energyGain.readValueOnce)
+          case Attacking(prey)             => prey.savage()
+          case Procreating(female: Female) => female.procreate(this)
+          case _                           =>
+        }
       }
-    }
   }
 
   /** Some imperative code that is called each tick */
   final override def doStep(pos: Pos): Unit = step.fire((pos, false))
 
   private def savage() = step.fire((Pos(0, 0), true))
-
 
   // partial function for collecting food, dependant on state of the object
   val findFood: Signal[PartialFunction[BoardElement, BoardElement]] // Abstract (//#SIG)
@@ -87,7 +84,7 @@ abstract class Animal(implicit world: World) extends BoardElement {
 
   protected def nextAction(pos: Pos): AnimalState = {
     val neighbors = world.board.neighbors(pos)
-    val food = neighbors.collectFirst(findFood.readValueOnce)
+    val food      = neighbors.collectFirst(findFood.readValueOnce)
     val nextAction: AnimalState = food match {
       case Some(target) => reachedState(target) // I'm near food, eat it!
       case None => // I have to look for food nearby
@@ -110,7 +107,6 @@ abstract class Animal(implicit world: World) extends BoardElement {
     Moving(Pos(randx, randy))
   }
 
-
   final val age: Signal[Int] = world.time.day.changed.count() //#SIG //#IF //#IF
 
   final val isAdult: Signal[Boolean] = age.map(_ > Animal.FertileAge)(CreationTicket.fromSchedulerImplicit)
@@ -122,25 +118,27 @@ abstract class Animal(implicit world: World) extends BoardElement {
       (world.board.animalsAlive.value / (world.board.width + world.board.height)) +
         (age.value / 2) +
         (state.value match {
-          case Moving(_) => Animal.MoveCost
+          case Moving(_)      => Animal.MoveCost
           case Procreating(_) => Animal.ProcreateCost
-          case FallPrey => Animal.AttackAmount
-          case _ => 0
+          case FallPrey       => Animal.AttackAmount
+          case _              => 0
         })
     }
 
   private val energyGain: Signal[Int] =
     state map {
-      case Eating(_) => Animal.PlantEatRate
-      case Sleeping => Animal.SleepRate
+      case Eating(_)       => Animal.PlantEatRate
+      case Sleeping        => Animal.SleepRate
       case Attacking(prey) => Animal.AttackAmount
-      case _ => 0
+      case _               => 0
     }
 
   // we do not have a built in method for this kind of “fold some snapshot” but its not that hard to write one
-  final protected val energy: Signal[Int] = Event { world.time.tick().map(_ => energyGain() - energyDrain()) }.fold(Animal.StartEnergy)((current, change) => current + change)
+  final protected val energy: Signal[Int] =
+    Event { world.time.tick().map(_ => energyGain() - energyDrain()) }.fold(Animal.StartEnergy)((current, change) =>
+      current + change
+    )
 
   final override val isDead = Signals.lift(age, energy) { (a, e) => a > Animal.MaxAge || e < 0 }
-
 
 }

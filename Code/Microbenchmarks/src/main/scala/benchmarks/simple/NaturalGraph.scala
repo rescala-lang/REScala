@@ -8,7 +8,6 @@ import org.openjdk.jmh.infra.BenchmarkParams
 import rescala.core.Struct
 import rescala.interface.RescalaInterface
 
-
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @Warmup(iterations = 5, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
@@ -20,7 +19,7 @@ class NaturalGraph[S <: Struct] {
 
   var engine: RescalaInterface[S] = _
 
-  var source: rescala.reactives.Var[Int, S] = _
+  var source: rescala.reactives.Var[Int, S]          = _
   var result: List[rescala.reactives.Signal[Int, S]] = _
 
   @Setup
@@ -29,8 +28,14 @@ class NaturalGraph[S <: Struct] {
     val localEngine = engine
     import localEngine._
 
-    def inc(source: Signal[Int]): Signal[Int] = source.map { v => val r = v + 1; work.consume(); r}
-    def sum(s1: Signal[Int], s2: Signal[Int]): Signal[Int] = Signals.lift(s1, s2) { (s1, s2) => val r =  s1 + s2; work.consume(); r}
+    def inc(source: Signal[Int]): Signal[Int] =
+      source.map { v =>
+        val r = v + 1; work.consume(); r
+      }
+    def sum(s1: Signal[Int], s2: Signal[Int]): Signal[Int] =
+      Signals.lift(s1, s2) { (s1, s2) =>
+        val r = s1 + s2; work.consume(); r
+      }
     def noc(sources: Signal[Int]*): Signal[Int] = Signals.lift(sources) { _ => work.consume(); 0 }
 
     source = Var(step.get())
@@ -77,7 +82,7 @@ class NaturalGraph[S <: Struct] {
     val e6 = inc(c2)
     val e7 = sum(e6, d1)
 
-    result = List(c5,e5,e7)
+    result = List(c5, e5, e7)
   }
 
   @Benchmark

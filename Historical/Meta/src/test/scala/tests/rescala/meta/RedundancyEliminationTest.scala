@@ -11,16 +11,16 @@ class RedundancyEliminationTest extends FunSuite {
 
   test("Redundancy elimination test") {
 
-    val g = new DataFlowGraph()
+    val g   = new DataFlowGraph()
     val api = new Api.metaApi(g)
 
-    var x = 0
-    val v1 = api.Var(0)
+    var x   = 0
+    val v1  = api.Var(0)
     val fun = (x: Int) => x + 1
-    val v2 = v1.map(fun)
-    val v3 = v1.map(fun)
-    val e1 = v2.changed
-    val e2 = v3.changed
+    val v2  = v1.map(fun)
+    val v3  = v1.map(fun)
+    val e1  = v2.changed
+    val e2  = v3.changed
     assert(g.numNodes == 5, "Graph should contain 5 nodes before redundancy elimination")
     RedundancyElimination.optimize(g)
     assert(g.numNodes == 3, "Graph should contain 3 nodes after redundancy elimination")
@@ -34,17 +34,17 @@ class RedundancyEliminationTest extends FunSuite {
 
   test("No redundancy elimination test") {
 
-    val g = new DataFlowGraph()
+    val g   = new DataFlowGraph()
     val api = new Api.metaApi(g)
 
-    var x = 0
-    val v1 = api.Var(0)
-    val v2 = api.Var(0)
+    var x   = 0
+    val v1  = api.Var(0)
+    val v2  = api.Var(0)
     val fun = (x: Int) => x + 1
-    val v3 = v1.map(fun)
-    val v4 = v2.map(fun)
-    val e1 = v3.changed
-    val e2 = v4.changed
+    val v3  = v1.map(fun)
+    val v4  = v2.map(fun)
+    val e1  = v3.changed
+    val e2  = v4.changed
     assert(g.numNodes == 6, "Graph should contain 6 nodes before redundancy elimination")
     RedundancyElimination.optimize(g)
     assert(g.numNodes == 6, "Graph should contain 6 nodes after redundancy elimination")
@@ -59,15 +59,15 @@ class RedundancyEliminationTest extends FunSuite {
 
   test("Redundancy elimination diamond test") {
 
-    val g = new DataFlowGraph()
+    val g   = new DataFlowGraph()
     val api = new Api.metaApi(g)
 
-    var x = 0
-    val v1 = api.Var(0)
+    var x   = 0
+    val v1  = api.Var(0)
     val fun = (x: Int) => x + 1
-    val v2 = v1.map(fun)
-    val v3 = v1.map(fun)
-    val e = v2.changed || v3.changed
+    val v2  = v1.map(fun)
+    val v3  = v1.map(fun)
+    val e   = v2.changed || v3.changed
     assert(g.numNodes == 6, "Graph should contain 6 nodes before redundancy elimination")
     RedundancyElimination.optimize(g)
     assert(g.numNodes == 4, "Graph should contain 4 nodes after redundancy elimination")

@@ -8,14 +8,14 @@ import tests.rescala.testtools.{IgnoreOnGithubCiBecause, Spawn}
 class PipeliningTest extends AnyFunSuite {
   test("pipelining works", IgnoreOnGithubCiBecause("pipelining does not work")) {
     val millisecondsPerNode = 10L
-    val pipelineLength = 20
-    val numberOfUpdates = 10
+    val pipelineLength      = 20
+    val numberOfUpdates     = 10
 
-    val input = Var(0)
+    val input                       = Var(0)
     val derived: Array[Signal[Int]] = new Array(pipelineLength)
-    for(i <- 0 until pipelineLength) {
-      val from = if(i == 0) input else derived(i - 1)
-      derived(i) = REName.named("pipeline-"+i) { implicit! =>
+    for (i <- 0 until pipelineLength) {
+      val from = if (i == 0) input else derived(i - 1)
+      derived(i) = REName.named("pipeline-" + i) { implicit ! =>
         from.map { v =>
           Thread.sleep(millisecondsPerNode)
           v + 1
@@ -28,8 +28,8 @@ class PipeliningTest extends AnyFunSuite {
     val leastPossibleMillisecondsWithoutPipelining = pipelineLength * numberOfUpdates * millisecondsPerNode
 
     val startTime = System.currentTimeMillis()
-    val spawned = for (_ <- 1 to numberOfUpdates) yield Spawn(input.transform(_ + 1))
-    val timeout = System.currentTimeMillis() + leastPossibleMillisecondsWithoutPipelining + 1000
+    val spawned   = for (_ <- 1 to numberOfUpdates) yield Spawn(input.transform(_ + 1))
+    val timeout   = System.currentTimeMillis() + leastPossibleMillisecondsWithoutPipelining + 1000
     spawned.foreach(_.await(math.max(0, timeout - System.currentTimeMillis())))
     val endTime = System.currentTimeMillis()
 

@@ -26,90 +26,98 @@ object Signal {
 }
 trait Signal[+T, S <: Struct] extends MacroAccess[T, Interp[T, S]] with Disconnectable[S] {
 
-
   val rescalaAPI: RescalaInterface[S]
   import rescalaAPI.{scheduler, Observe, CreationTicket, Signal => Sig}
 
-
   override def disconnect()(implicit engine: Scheduler[S]): Unit = resource.disconnect()(engine)
   override val resource: SignalResource[T, S]
-
 
   /** Returns the current value of the signal
     * However, using now is in most cases not what you want.
     * It does not build dependencies, does not integrate into transactions.
     * Use only for examples and debug output.
-    * @group accessor */
+    * @group accessor
+    */
   final def now: T = readValueOnce
+
   /** Returns the current value of the signal
-    * @group accessor */
+    * @group accessor
+    */
   final def readValueOnce: T = {
     RExceptions.toExternalReadException(this, scheduler.singleReadValueOnce(this))
   }
 
-
   /** add an observer
     *
-    * @group accessor */
-  final def observe(onValue: T => Unit,
-                    onError: Throwable => Unit = null,
-                    fireImmediately: Boolean = true)
-                   (implicit ticket: CreationTicket)
-  : Observe = Observe.strong(resource, fireImmediately) { reevalVal =>
-    new ObserveInteract {
-      override def checkExceptionAndRemoval(): Boolean = {
-        reevalVal match {
-          case Pulse.empty                             => ()
-          case Pulse.Exceptional(f) if onError == null =>
-            throw ObservedException(Signal.this.resource, "observed", f)
-          case _                                       => ()
+    * @group accessor
+    */
+  final def observe(onValue: T => Unit, onError: Throwable => Unit = null, fireImmediately: Boolean = true)(implicit
+      ticket: CreationTicket
+  ): Observe =
+    Observe.strong(resource, fireImmediately) { reevalVal =>
+      new ObserveInteract {
+        override def checkExceptionAndRemoval(): Boolean = {
+          reevalVal match {
+            case Pulse.empty => ()
+            case Pulse.Exceptional(f) if onError == null =>
+              throw ObservedException(Signal.this.resource, "observed", f)
+            case _ => ()
+          }
+          false
         }
-        false
-      }
 
-      override def execute(): Unit = reevalVal match {
-        case Pulse.empty => ()
-        case Pulse.Value(v) => onValue(v)
-        case Pulse.Exceptional(f) => onError(f)
+        override def execute(): Unit =
+          reevalVal match {
+            case Pulse.empty          => ()
+            case Pulse.Value(v)       => onValue(v)
+            case Pulse.Exceptional(f) => onError(f)
+          }
       }
     }
-  }
 
   /** Uses a partial function `onFailure` to recover an error carried by the event into a value. */
   @cutOutOfUserComputation
-  final def recover[R >: T](onFailure: PartialFunction[Throwable, R])
-                           (implicit ticket: CreationTicket)
-  : Sig[R] = rescalaAPI.Signals.static(this.resource) { st =>
-    try st.dependStatic(this.resource) catch {
-      case NonFatal(e) => onFailure.applyOrElse[Throwable, R](e, throw _)
+  final def recover[R >: T](onFailure: PartialFunction[Throwable, R])(implicit ticket: CreationTicket): Sig[R] =
+    rescalaAPI.Signals.static(this.resource) { st =>
+      try st.dependStatic(this.resource)
+      catch {
+        case NonFatal(e) => onFailure.applyOrElse[Throwable, R](e, throw _)
+      }
     }
-  }
 
   // ================== Derivations ==================
 
   //final def recover[R >: A](onFailure: Throwable => R)(implicit ticket: TurnSource[S]): Signal[R, S = recover(PartialFunction(onFailure))
 
   @cutOutOfUserComputation
-  final def abortOnError(message: String)(implicit ticket: CreationTicket): Sig[T]
-  = recover{case t => throw ObservedException(this.resource, s"forced abort ($message)", t)}
+  final def abortOnError(message: String)(implicit ticket: CreationTicket): Sig[T] =
+    recover { case t => throw ObservedException(this.resource, s"forced abort ($message)", t) }
 
   @cutOutOfUserComputation
-  final def withDefault[R >: T](value: R)(implicit ticket: CreationTicket)
-  : Sig[R] = rescalaAPI.Signals.static(this.resource) { st =>
-    try st.dependStatic(this.resource) catch {
-      case EmptySignalControlThrowable => value
+  final def withDefault[R >: T](value: R)(implicit ticket: CreationTicket): Sig[R] =
+    rescalaAPI.Signals.static(this.resource) { st =>
+      try st.dependStatic(this.resource)
+      catch {
+        case EmptySignalControlThrowable => value
+      }
     }
-  }
 
   /** Return a Signal with f applied to the value
-    * @group operator */
+    * @group operator
+    */
   @cutOutOfUserComputation
-  final def map[B](expression: T => B)(implicit ticket: CreationTicket): Sig[B]
-  = macro rescala.macros.ReactiveMacros.ReactiveUsingFunctionMacro[T, B, S, rescala.reactives.Signals.MapFuncImpl.type, Signals.type]
-
+  final def map[B](expression: T => B)(implicit ticket: CreationTicket): Sig[B] =
+    macro rescala.macros.ReactiveMacros.ReactiveUsingFunctionMacro[
+      T,
+      B,
+      S,
+      rescala.reactives.Signals.MapFuncImpl.type,
+      Signals.type
+    ]
 
   /** Flattens the inner value.
-    * @group operator */
+    * @group operator
+    */
   @cutOutOfUserComputation
   final def flatten[R](implicit flatten: Flatten[Sig[T], R]): R = flatten.apply(this)
 
@@ -119,30 +127,33 @@ trait Signal[+T, S <: Struct] extends MacroAccess[T, Interp[T, S]] with Disconne
 
   /** Create an event that fires every time the signal changes. It fires the tuple (oldVal, newVal) for the signal.
     * Be aware that no change will be triggered when the signal changes to or from empty
-    * @group conversion */
+    * @group conversion
+    */
   @cutOutOfUserComputation
   final def change(implicit ticket: CreationTicket): Event[Diff[T], S] = rescalaAPI.Events.change(this)(ticket)
 
   /** Create an event that fires every time the signal changes. The value associated
     * to the event is the new value of the signal
     *
-    * @group conversion */
+    * @group conversion
+    */
   @cutOutOfUserComputation
-  final def changed(implicit ticket: CreationTicket): Event[T, S]
-  = rescalaAPI.Events.staticNamed(s"(changed $this)", this.resource) { st =>
-    st.collectStatic(this.resource) match {
-      case Pulse.empty => Pulse.NoChange
-      case other => other
+  final def changed(implicit ticket: CreationTicket): Event[T, S] =
+    rescalaAPI.Events.staticNamed(s"(changed $this)", this.resource) { st =>
+      st.collectStatic(this.resource) match {
+        case Pulse.empty => Pulse.NoChange
+        case other       => other
+      }
     }
-  }
 
   /** Convenience function filtering to events which change this reactive to value
-    * @group conversion */
+    * @group conversion
+    */
   @cutOutOfUserComputation
-  final def changedTo[V >: T](value: V)(implicit ticket: CreationTicket): Event[Unit, S]
-  = rescalaAPI.Events.staticNamed(s"(filter $this)", this.resource) { st =>
-    st.collectStatic(this.resource).filter(_ == value) }
-    .dropParam
-
+  final def changedTo[V >: T](value: V)(implicit ticket: CreationTicket): Event[Unit, S] =
+    rescalaAPI.Events.staticNamed(s"(filter $this)", this.resource) { st =>
+      st.collectStatic(this.resource).filter(_ == value)
+    }
+      .dropParam
 
 }

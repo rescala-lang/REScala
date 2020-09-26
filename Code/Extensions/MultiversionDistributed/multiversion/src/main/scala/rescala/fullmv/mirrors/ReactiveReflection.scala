@@ -75,23 +75,29 @@ trait ReactiveReflection[-P] extends Derived[FullMVStruct] with ReactiveReflecti
   }
 }
 
-class ReactiveReflectionImpl[P](override val host: FullMVEngine, var ignoreTurn: Option[FullMVTurn], initialState: FullMVState[P, FullMVTurn, ReSource[FullMVStruct], Derived[FullMVStruct]], rename: REName) extends Base[P, FullMVStruct](initialState, rename) with ReactiveReflection[P] {
-  val _buffer = new ConcurrentHashMap[FullMVTurn, P]()
+class ReactiveReflectionImpl[P](
+    override val host: FullMVEngine,
+    var ignoreTurn: Option[FullMVTurn],
+    initialState: FullMVState[P, FullMVTurn, ReSource[FullMVStruct], Derived[FullMVStruct]],
+    rename: REName
+) extends Base[P, FullMVStruct](initialState, rename)
+    with ReactiveReflection[P] {
+  val _buffer                                           = new ConcurrentHashMap[FullMVTurn, P]()
   override def buffer(turn: FullMVTurn, value: P): Unit = _buffer.put(turn, value)
-  override def submit(action: FullMVAction): Unit = host.threadPool.submit(action)
+  override def submit(action: FullMVAction): Unit       = host.threadPool.submit(action)
 
   override protected[rescala] def reevaluate(input: ReIn): ReevTicket[P, FullMVStruct] = {
-    val turn = input.initializer
+    val turn  = input.initializer
     val value = _buffer.remove(turn)
-    if(value == null) {
-      if(ignoreTurn.contains(turn)){
+    if (value == null) {
+      if (ignoreTurn.contains(turn)) {
         ignoreTurn = None
       } else {
         throw new AssertionError(s"$this was reevaluated for $turn but no value was buffered.")
       }
       input
     } else {
-      if(ignoreTurn.contains(turn)) ignoreTurn = None
+      if (ignoreTurn.contains(turn)) ignoreTurn = None
       input.withValue(value)
     }
   }

@@ -22,8 +22,8 @@ class ReverseFan[S <: Struct] {
   var engine: RescalaInterface[S] = _
 
   var sources: Array[rescala.reactives.Var[Int, S]] = _
-  var result: Signal[Int, S] = _
-  var isManual: Boolean = false
+  var result: Signal[Int, S]                        = _
+  var isManual: Boolean                             = false
 
   @Setup
   def setup(params: BenchmarkParams, size: Size, step: Step, engineParam: EngineParam[S], work: Workload) = {
@@ -31,7 +31,7 @@ class ReverseFan[S <: Struct] {
     val localEngine = engine
     import localEngine._
     sources = Array.fill(16)(Var(step.get()))
-    val intermediate = sources.map(_.map { v => {work.consume(); v + 1} })
+    val intermediate = sources.map(_.map { v => { work.consume(); v + 1 } })
     result = Signals.lift(intermediate.toSeq) { values => work.consumeSecondary(); values.sum }
     if (engine.scheduler == Schedulers.unmanaged) isManual = true
 
@@ -39,6 +39,6 @@ class ReverseFan[S <: Struct] {
 
   @Benchmark
   def run(step: Step, params: ThreadParams): Unit =
-    if (isManual) synchronized {sources(params.getThreadIndex).set(step.run())(engine.scheduler)}
+    if (isManual) synchronized { sources(params.getThreadIndex).set(step.run())(engine.scheduler) }
     else sources(params.getThreadIndex).set(step.run())(engine.scheduler)
 }

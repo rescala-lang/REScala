@@ -56,29 +56,35 @@ import rescala.reactives.Flatten.firstFiringEvent
 object LFullyModularBall extends Main {
   class BouncingBall(val initVx: Double, val initVy: Double, val diameter: Signal[Int], val reset: Event[Point]) {
     val horizontalBounceSources: Var[List[Event[Any]]] = Var(List())
-    val verticalBounceSources: Var[List[Event[Any]]] = Var(List())
-    val filteredHorizontalBounceSources = horizontalBounceSources.map(_.map(_.recover{case _: IllegalArgumentException => None}))
+    val verticalBounceSources: Var[List[Event[Any]]]   = Var(List())
+    val filteredHorizontalBounceSources = horizontalBounceSources.map(_.map(_.recover {
+      case _: IllegalArgumentException => None
+    }))
 
-    val velocity = Signal { Pos(
-      x = horizontalBounceSources.flatten[Event[Any]](firstFiringEvent)
-        .fold(initVx / Clock.NanoSecond) { (old, _) => -old }.value,
-      y = verticalBounceSources.flatten[Event[Any]](firstFiringEvent)
-        .fold(initVy / Clock.NanoSecond) { (old, _ ) => -old }.value)
+    val velocity = Signal {
+      Pos(
+        x = horizontalBounceSources.flatten[Event[Any]](firstFiringEvent)
+          .fold(initVx / Clock.NanoSecond) { (old, _) => -old }.value,
+        y = verticalBounceSources.flatten[Event[Any]](firstFiringEvent)
+          .fold(initVy / Clock.NanoSecond) { (old, _) => -old }.value
+      )
     }
 
     //TODO: using now to remove cycle …
     val inc = Clock.ticks.map(tick => velocity.readValueOnce * tick.toDouble)
 
-    val pos = Events.foldAll(Pos(0,0))( acc => Events.Match(
-      reset >> { case Point(x, y) => Pos(x.toDouble, y.toDouble) },
-      inc >>  { inc => acc + inc }
-    ))
+    val pos = Events.foldAll(Pos(0, 0))(acc =>
+      Events.Match(
+        reset >> { case Point(x, y) => Pos(x.toDouble, y.toDouble) },
+        inc >> { inc => acc + inc }
+      )
+    )
 
     val shape = new Circle(pos, diameter)
   }
 
   val shapes = Var[List[Shape]](List.empty)
-  val panel = new ShapesPanel(shapes)
+  val panel  = new ShapesPanel(shapes)
 
   val bouncingBall = new BouncingBall(200d, 150d, Var(50), panel.Mouse.middleButton.pressed)
   shapes.transform(bouncingBall.shape :: _)

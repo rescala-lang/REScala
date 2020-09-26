@@ -19,12 +19,12 @@ class ContextBench[S <: Struct] {
   @Param(Array("1", "1000"))
   var setSize: Int = _
 
-  var rep1Set       : Context = _
+  var rep1Set: Context        = _
   var rep1SetPlusOne: Context = _
-  var rep2Set       : Context = _
+  var rep2Set: Context        = _
   val rep1id                  = IdUtil.genId()
   val rep2id                  = IdUtil.genId()
-  var rep1single    : Context = _
+  var rep1single: Context     = _
 
   private def makeRep(rep: IdUtil.Id): Context = {
     Context(Map(rep -> IntTree.fromIterator((0 until setSize).iterator)))
@@ -63,4 +63,3 @@ class ContextBench[S <: Struct] {
   def intersectOther() = rep1Set.intersect(rep2Set)
 
 }
-

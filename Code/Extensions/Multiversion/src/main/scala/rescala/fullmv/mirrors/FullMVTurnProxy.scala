@@ -12,7 +12,10 @@ trait FullMVTurnProxy {
   def acquireRemoteBranchIfPhaseAtMost(maxPhase: TurnPhase.Type): Future[TurnPhase.Type]
   def addPredecessor(tree: TransactionSpanningTreeNode[FullMVTurn]): Future[Boolean]
 
-  def maybeNewReachableSubtree(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit]
+  def maybeNewReachableSubtree(
+      attachBelow: FullMVTurn,
+      spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]
+  ): Future[Unit]
   def newSuccessor(successor: FullMVTurn): Future[Unit]
 
   def getLockedRoot: Future[LockStateResult]
@@ -22,5 +25,9 @@ trait FullMVTurnProxy {
   def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult]
 
   def asyncAddPhaseReplicator(replicator: FullMVTurnPhaseReflectionProxy, knownPhase: TurnPhase.Type): Unit
-  def asyncAddPredecessorReplicator(replicator: FullMVTurnPredecessorReflectionProxy, startAt: TransactionSpanningTreeNode[FullMVTurn], clock: Int): Unit
+  def asyncAddPredecessorReplicator(
+      replicator: FullMVTurnPredecessorReflectionProxy,
+      startAt: TransactionSpanningTreeNode[FullMVTurn],
+      clock: Int
+  ): Unit
 }

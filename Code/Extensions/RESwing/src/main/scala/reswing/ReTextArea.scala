@@ -1,6 +1,5 @@
 package reswing
 
-
 import scala.swing.{Color, Dimension, Font, TextArea}
 import scala.swing.event.ValueChanged
 
@@ -28,22 +27,36 @@ class ReTextArea(
     maximumSize: ReSwingValue[Dimension] = (),
     preferredSize: ReSwingValue[Dimension] = (),
     rows: Int = 0,
-    columns: Int = 0)
-  extends
-    ReTextComponent(text, editable, `caret.position`, `caret.markDot`,
-                    `caret.visible`, `caret.selectionVisible`,
-                    `caret.blinkRate`, `caret.color`,
-                    cut, copy, paste, selectAll,
-                    background, foreground, font, enabled,
-                    minimumSize, maximumSize, preferredSize) {
+    columns: Int = 0
+) extends ReTextComponent(
+      text,
+      editable,
+      `caret.position`,
+      `caret.markDot`,
+      `caret.visible`,
+      `caret.selectionVisible`,
+      `caret.blinkRate`,
+      `caret.color`,
+      cut,
+      copy,
+      paste,
+      selectAll,
+      background,
+      foreground,
+      font,
+      enabled,
+      minimumSize,
+      maximumSize,
+      preferredSize
+    ) {
   override protected lazy val peer =
     new TextArea(null, rows, columns) with ComponentMixin
 
-  tabSize.using({() => peer.tabSize}, peer.tabSize_= _, "tabSize")
-  lineWrap.using({() => peer.lineWrap}, peer.lineWrap_= _, "lineWrap")
-  charWrap.using({() => peer.charWrap}, peer.charWrap_= _, "wrapStyleWord")
+  tabSize.using({ () => peer.tabSize }, peer.tabSize_= _, "tabSize")
+  lineWrap.using({ () => peer.lineWrap }, peer.lineWrap_= _, "lineWrap")
+  charWrap.using({ () => peer.charWrap }, peer.charWrap_= _, "wrapStyleWord")
 
-  val lineCount = ReSwingValue.using({() => peer.lineCount}, classOf[ValueChanged])
+  val lineCount = ReSwingValue.using({ () => peer.lineCount }, classOf[ValueChanged])
 }
 
 object ReTextArea {

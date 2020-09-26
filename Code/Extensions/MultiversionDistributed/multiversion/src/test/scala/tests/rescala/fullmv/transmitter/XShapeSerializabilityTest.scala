@@ -24,12 +24,12 @@ object XShapeSerializabilityTest {
   def isGlitched(v: Merge[Data[Merge[_]]]): Boolean = v.left.data != v.right.data
 
   class Host(name: String) extends FullMVEngine(10.second, name) {
-    val registry = new Registry
+    val registry   = new Registry
     def shutdown() = registry.terminate()
     import ReactiveTransmittable._
     import io.circe.generic.auto._
     import rescala.fullmv.transmitter.CirceSerialization._
-    implicit val host = this
+    implicit val host  = this
     val derivedBinding = Binding[Signal[Data[Merge[Data[Int]]]]]("derived")
   }
 
@@ -43,7 +43,7 @@ object XShapeSerializabilityTest {
 
     val sourceBinding = Binding[Signal[Data[Int]]]("source")
 
-    val source = Var(0)
+    val source       = Var(0)
     val taggedSource = source.map(Data(name, _))
     registry.bind(sourceBinding)(taggedSource)
 
@@ -57,18 +57,18 @@ object XShapeSerializabilityTest {
       try {
         val leftMerge = {
           import leftHost._
-          val remoteRight = Await.result(registry.connect(TCP("localhost", rightHost.port)), timeout)
+          val remoteRight     = Await.result(registry.connect(TCP("localhost", rightHost.port)), timeout)
           val sourceFromRight = Await.result(registry.lookup(sourceBinding, remoteRight), timeout)
-          val merge = Signal{ Data("lmerge", Merge(taggedSource(), sourceFromRight())) }
+          val merge           = Signal { Data("lmerge", Merge(taggedSource(), sourceFromRight())) }
           registry.bind(derivedBinding)(merge)
           merge
         }
 
         val rightMerge = {
           import rightHost._
-          val remoteLeft = Await.result(registry.connect(TCP("localhost", leftHost.port)), timeout)
+          val remoteLeft     = Await.result(registry.connect(TCP("localhost", leftHost.port)), timeout)
           val sourceFromLeft = Await.result(registry.lookup(sourceBinding, remoteLeft), timeout)
-          val merge = Signal{ Data("rmerge", Merge(sourceFromLeft(), taggedSource())) }
+          val merge          = Signal { Data("rmerge", Merge(sourceFromLeft(), taggedSource())) }
           registry.bind(derivedBinding)(merge)
           merge
         }
@@ -77,14 +77,14 @@ object XShapeSerializabilityTest {
         try {
           import topHost._
 
-          val remoteLeft = Await.result(registry.connect(TCP("localhost", leftHost.port)), timeout)
-          val mergeFromLeft = Await.result(registry.lookup(derivedBinding, remoteLeft), timeout)
-          val remoteRight = Await.result(registry.connect(TCP("localhost", rightHost.port)), timeout)
+          val remoteLeft     = Await.result(registry.connect(TCP("localhost", leftHost.port)), timeout)
+          val mergeFromLeft  = Await.result(registry.lookup(derivedBinding, remoteLeft), timeout)
+          val remoteRight    = Await.result(registry.connect(TCP("localhost", rightHost.port)), timeout)
           val mergeFromRight = Await.result(registry.lookup(derivedBinding, remoteRight), timeout)
-          val merge = Signal{ Merge(mergeFromLeft(), mergeFromRight()) }
+          val merge          = Signal { Merge(mergeFromLeft(), mergeFromRight()) }
 
           @volatile var violations: List[Merge[Data[Merge[Data[Int]]]]] = Nil
-          merge.observe { v => if(isGlitched(v)) violations = v :: violations }
+          merge.observe { v => if (isGlitched(v)) violations = v :: violations }
 
 //          assert(violations.isEmpty)
 //          assert(merge.readValueOnce === Merge(
@@ -108,53 +108,63 @@ object XShapeSerializabilityTest {
 //            Data("rmerge", Merge(Data("left", 1), Data("right", 1)))
 //          ))
 
-          println(s"starting X-Shape distributed Serializability stress test " + (if(runForMillis == 0) "until key press" else s"for ${runForMillis / 1000} seconds..."))
+          println(
+            s"starting X-Shape distributed Serializability stress test " + (if (runForMillis == 0) "until key press"
+                                                                            else
+                                                                              s"for ${runForMillis / 1000} seconds...")
+          )
           @volatile var running: Boolean = true
-          def worker(host: SideHost) = Spawn {
-            try {
-              var iterations = 0
-              while(running) {
-                host.step()
-                iterations += 1
-                if(violations.nonEmpty) throw new RuntimeException(s"Found Violations after iteration $iterations")
+          def worker(host: SideHost) =
+            Spawn {
+              try {
+                var iterations = 0
+                while (running) {
+                  host.step()
+                  iterations += 1
+                  if (violations.nonEmpty) throw new RuntimeException(s"Found Violations after iteration $iterations")
+                }
+                iterations
+              } catch {
+                case t: Throwable =>
+                  running = false
+                  throw t
               }
-              iterations
-            } catch {
-              case t: Throwable =>
-                running = false
-                throw t
             }
-          }
-          val workerLeft = worker(leftHost)
+          val workerLeft  = worker(leftHost)
           val workerRight = worker(rightHost)
 
           val workerTimeout = System.currentTimeMillis() + runForMillis
-          while(running && (if(runForMillis == 0) System.in.available() == 0 else System.currentTimeMillis() < workerTimeout)) {
+          while (
+            running && (if (runForMillis == 0) System.in.available() == 0
+                        else System.currentTimeMillis() < workerTimeout)
+          ) {
             Thread.sleep(50)
           }
-          if(!running) {
-            println(s"Premature termination after ${(runForMillis - (workerTimeout - System.currentTimeMillis())) / 1000} seconds")
+          if (!running) {
+            println(
+              s"Premature termination after ${(runForMillis - (workerTimeout - System.currentTimeMillis())) / 1000} seconds"
+            )
           } else {
             println(s"Ran for ${(runForMillis - (workerTimeout - System.currentTimeMillis())) / 1000} seconds")
           }
           running = false
 
-          val scoreLeft = workerLeft.awaitTry(1000)
+          val scoreLeft  = workerLeft.awaitTry(1000)
           val scoreRight = workerRight.awaitTry(1000)
-          val scores = Array(scoreLeft, scoreRight)
+          val scores     = Array(scoreLeft, scoreRight)
           println("X-Shape distributed Serializability stress test thread results:")
           println("\t" + scores.zipWithIndex.map { case (count, idx) => idx + ": " + count }.mkString("\n\t"))
           scores.find {
             case Failure(ex: TimeoutException) => false
-            case Failure(_) => true
-            case Success(_) => false
+            case Failure(_)                    => true
+            case Success(_)                    => false
           }.asInstanceOf[Option[Failure[_]]].foreach {
             case Failure(ex) =>
               ex.printStackTrace()
           }
           scores.foldLeft(Option(0L)) {
-            case (None, _) => None
-            case (Some(score), Failure(_)) => None
+            case (None, _)                         => None
+            case (Some(score), Failure(_))         => None
             case (Some(score), Success(moreScore)) => Some(score + moreScore)
           } match {
             case None =>
@@ -164,9 +174,11 @@ object XShapeSerializabilityTest {
               println(s"top merge: ${merge.readValueOnce}")
               "there were errors"
             case Some(sum) =>
-              println(s"X-Shape distributed Serializability stress test totaled $sum iterations (individual scores: ${scores.mkString(", ")}")
-              if(violations.nonEmpty) {
-                "There were violations:\r\n\t"+violations.mkString("\r\n\t")
+              println(
+                s"X-Shape distributed Serializability stress test totaled $sum iterations (individual scores: ${scores.mkString(", ")}"
+              )
+              if (violations.nonEmpty) {
+                "There were violations:\r\n\t" + violations.mkString("\r\n\t")
               } else {
                 val expected = Merge(
                   Data("lmerge", Merge(Data("left", scoreLeft.get), Data("right", scoreRight.get))),
@@ -181,7 +193,7 @@ object XShapeSerializabilityTest {
 
                   println(" == Orphan listing == ")
                   val ok = hosts.foldLeft(true) { (ok, host) =>
-                    if(host.instances.isEmpty && host.lockHost.instances.isEmpty) {
+                    if (host.instances.isEmpty && host.lockHost.instances.isEmpty) {
                       ok
                     } else {
                       println(s"orphans on $host:")
@@ -192,7 +204,7 @@ object XShapeSerializabilityTest {
                       false
                     }
                   }
-                  if(ok) null else "There were orphaned turn and/or lock instances."
+                  if (ok) null else "There were orphaned turn and/or lock instances."
                 }
               }
           }

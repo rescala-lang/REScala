@@ -7,7 +7,7 @@ import rescala.core.{AdmissionTicket, InitialChange, ReSource, Struct}
   *
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
-trait TwoVersionTransaction[S <: Struct]  {
+trait TwoVersionTransaction[S <: Struct] {
 
   /**
     * Schedules a temporarily written change to be committed by the turn.
@@ -29,24 +29,16 @@ trait TwoVersionTransaction[S <: Struct]  {
     */
   def initializationPhase(initialChanges: Map[ReSource[S], InitialChange[S]]): Unit
 
-  /**
-    * Performs the actual propagation, setting the new (not yet committed) values for each reactive element.
-    */
+  /** Performs the actual propagation, setting the new (not yet committed) values for each reactive element. */
   def propagationPhase(): Unit
 
-  /**
-    * Commits all uncommitted changes to the reactive element.
-    */
+  /** Commits all uncommitted changes to the reactive element. */
   def commitPhase(): Unit
 
-  /**
-    * Reverts all uncommitted changes to the reactive element.
-    */
+  /** Reverts all uncommitted changes to the reactive element. */
   def rollbackPhase(): Unit
 
-  /**
-    * Call all registered after-commit obverser functions.
-    */
+  /** Call all registered after-commit obverser functions. */
   def observerPhase(): Unit
 
   /**
@@ -56,6 +48,5 @@ trait TwoVersionTransaction[S <: Struct]  {
   def releasePhase(): Unit
 
   private[rescala] def makeAdmissionPhaseTicket(initialWrites: Set[ReSource[S]]): AdmissionTicket[S]
-
 
 }

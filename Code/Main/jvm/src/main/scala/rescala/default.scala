@@ -8,7 +8,7 @@ import rescala.parrp.ParRPStruct
   *
   * Events and signals can be created from other reactives by using combinators,
   * signals additionally can be created using [[rescala.default.Signal]] expressions.
-  **/
+  */
 object default extends interface.RescalaInterface[ParRPStruct] {
   override def scheduler: Scheduler[ParRPStruct] = rescala.Schedulers.parrp
 }

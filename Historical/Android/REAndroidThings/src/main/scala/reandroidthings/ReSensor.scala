@@ -7,22 +7,16 @@ import rescala.default._
 
 import scala.reflect.ClassTag
 
-/**
-  * The SensorManager associated with this Sensor
-  */
+/** The SensorManager associated with this Sensor */
 
 abstract class ReSensor[E](initialValue: E) {
   initialize()
 
-  /**
-    * The underlying Android peer
-    */
+  /** The underlying Android peer */
   protected var peer: Sensor = null
 
-  /**
-    * The current value and accuracy (as ReScala Vars, Signals and Events)
-    */
-  protected val valueVar: Var[E] = Var(initialValue)
+  /** The current value and accuracy (as ReScala Vars, Signals and Events) */
+  protected val valueVar: Var[E]      = Var(initialValue)
   protected val accuracyVar: Var[Int] = Var(Int.MinValue)
 
   def valueChanged(): Event[E] = {
@@ -33,7 +27,7 @@ abstract class ReSensor[E](initialValue: E) {
     accuracyChangedEvt
   }
 
-  private val valueChangedEvt: Evt[E] = Evt[E]()
+  private val valueChangedEvt: Evt[E]      = Evt[E]()
   private val accuracyChangedEvt: Evt[Int] = Evt[Int]()
 
   /**
@@ -78,9 +72,7 @@ abstract class ReSensor[E](initialValue: E) {
 
   protected def sensorType: Int
 
-  /**
-    * its methods
-    */
+  /** its methods */
   def name: String = peer.getName
 
   def vendor: String = peer.getVendor
@@ -171,96 +163,94 @@ class ReGyroscopeSensor extends ReSensor[(Float, Float, Float)]((0, 0, 0)) {
   override def parseSensorValues(values: Array[Float]): (Float, Float, Float) = (values(0), values(1), values(2))
 }
 
-case class ReSensorDescriptor[T](sensorType: Int) {
-}
+case class ReSensorDescriptor[T](sensorType: Int) {}
 
 object ReSensor {
-  val TypeAccelerometer = Sensor.TYPE_ACCELEROMETER
+  val TypeAccelerometer       = Sensor.TYPE_ACCELEROMETER
   val StringTypeAccelerometer = Sensor.STRING_TYPE_ACCELEROMETER
 
-  val TypeMagneticField = Sensor.TYPE_MAGNETIC_FIELD
+  val TypeMagneticField       = Sensor.TYPE_MAGNETIC_FIELD
   val StringTypeMagneticField = Sensor.STRING_TYPE_MAGNETIC_FIELD
 
-  val TypeMagneticFieldUncalibrated = Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED
+  val TypeMagneticFieldUncalibrated       = Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED
   val StringTypeMagneticFieldUncalibrated = Sensor.STRING_TYPE_MAGNETIC_FIELD_UNCALIBRATED
 
-  val TypeGyroscope = Sensor.TYPE_GYROSCOPE
+  val TypeGyroscope       = Sensor.TYPE_GYROSCOPE
   val StringTypeGyroscope = Sensor.STRING_TYPE_GYROSCOPE
 
-  val TypeLight = Sensor.TYPE_LIGHT
+  val TypeLight       = Sensor.TYPE_LIGHT
   val StringTypeLight = Sensor.STRING_TYPE_LIGHT
 
-  val TypePressure = Sensor.TYPE_PRESSURE
+  val TypePressure       = Sensor.TYPE_PRESSURE
   val StringTypePressure = Sensor.STRING_TYPE_PRESSURE
 
-  val TypeProximity = Sensor.TYPE_PROXIMITY
+  val TypeProximity       = Sensor.TYPE_PROXIMITY
   val StringTypeProximity = Sensor.STRING_TYPE_PROXIMITY
 
-  val TypeGravity = Sensor.TYPE_GRAVITY
+  val TypeGravity       = Sensor.TYPE_GRAVITY
   val StringTypeGravity = Sensor.STRING_TYPE_GRAVITY
 
-  val TypeLinearAcceleration = Sensor.TYPE_LINEAR_ACCELERATION
+  val TypeLinearAcceleration       = Sensor.TYPE_LINEAR_ACCELERATION
   val StringTypeLinearAcceleration = Sensor.STRING_TYPE_LINEAR_ACCELERATION
 
-  val TypeRotationVector = Sensor.TYPE_ROTATION_VECTOR
+  val TypeRotationVector       = Sensor.TYPE_ROTATION_VECTOR
   val StringTypeRotationVector = Sensor.STRING_TYPE_ROTATION_VECTOR
 
-  val TypeGameRotationVector = Sensor.TYPE_GAME_ROTATION_VECTOR
+  val TypeGameRotationVector       = Sensor.TYPE_GAME_ROTATION_VECTOR
   val StringTypeGameRotationVector = Sensor.STRING_TYPE_GAME_ROTATION_VECTOR
 
-  val TypeRelativeHumidity = Sensor.TYPE_RELATIVE_HUMIDITY
+  val TypeRelativeHumidity       = Sensor.TYPE_RELATIVE_HUMIDITY
   val StringTypeRelativeHumidity = Sensor.STRING_TYPE_RELATIVE_HUMIDITY
 
-  val TypeAmbientTemperature = Sensor.TYPE_AMBIENT_TEMPERATURE
+  val TypeAmbientTemperature       = Sensor.TYPE_AMBIENT_TEMPERATURE
   val StringTypeAmbientTemperature = Sensor.STRING_TYPE_AMBIENT_TEMPERATURE
 
-  val TypeGyroscopeUncalibrated = Sensor.TYPE_GYROSCOPE_UNCALIBRATED
+  val TypeGyroscopeUncalibrated       = Sensor.TYPE_GYROSCOPE_UNCALIBRATED
   val StringTypeGyroscopeUncalibrated = Sensor.STRING_TYPE_GYROSCOPE_UNCALIBRATED
 
-  val TypeSignificantMotion = Sensor.TYPE_SIGNIFICANT_MOTION
+  val TypeSignificantMotion       = Sensor.TYPE_SIGNIFICANT_MOTION
   val StringTypeSignificantMotion = Sensor.STRING_TYPE_SIGNIFICANT_MOTION
 
-  val TypeStepDetector = Sensor.TYPE_STEP_DETECTOR
+  val TypeStepDetector       = Sensor.TYPE_STEP_DETECTOR
   val StringTypeStepDetector = Sensor.STRING_TYPE_STEP_DETECTOR
 
-  val TypeStepCounter = Sensor.TYPE_STEP_COUNTER
+  val TypeStepCounter       = Sensor.TYPE_STEP_COUNTER
   val StringTypeStepCounter = Sensor.STRING_TYPE_STEP_COUNTER
 
-  val TypeGeomagneticRotationVector = Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR
+  val TypeGeomagneticRotationVector       = Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR
   val StringTypeGeomagneticRotationVector = Sensor.STRING_TYPE_GEOMAGNETIC_ROTATION_VECTOR
 
-  val TypeHeartRate = Sensor.TYPE_HEART_RATE
+  val TypeHeartRate       = Sensor.TYPE_HEART_RATE
   val StringTypeHeartRate = Sensor.STRING_TYPE_HEART_RATE
 
-  val TypePose6DOF = Sensor.TYPE_POSE_6DOF
+  val TypePose6DOF       = Sensor.TYPE_POSE_6DOF
   val StringTypePose6DOF = Sensor.STRING_TYPE_POSE_6DOF
 
-  val TypeStationaryDetect = Sensor.TYPE_STATIONARY_DETECT
+  val TypeStationaryDetect       = Sensor.TYPE_STATIONARY_DETECT
   val StringTypeStationaryDetect = Sensor.STRING_TYPE_STATIONARY_DETECT
 
-  val TypeMotionDetect = Sensor.TYPE_MOTION_DETECT
+  val TypeMotionDetect       = Sensor.TYPE_MOTION_DETECT
   val StringTypeMotionDetect = Sensor.STRING_TYPE_MOTION_DETECT
 
-  val TypeHeartBeat = Sensor.TYPE_HEART_BEAT
+  val TypeHeartBeat       = Sensor.TYPE_HEART_BEAT
   val StringTypeHeartBeat = Sensor.STRING_TYPE_HEART_BEAT
 
   // need to be accessed via reflection, because they are usually hidden
   val TypeDynamicSensorMeta = classOf[Sensor].getDeclaredField("TYPE_DYNAMIC_SENSOR_META").getInt(null)
-  val StringTypeDynamicSensorMeta = classOf[Sensor].getDeclaredField("STRING_TYPE_DYNAMIC_SENSOR_META").get(null).toString
+  val StringTypeDynamicSensorMeta =
+    classOf[Sensor].getDeclaredField("STRING_TYPE_DYNAMIC_SENSOR_META").get(null).toString
 
   // special Sensor-types present in the RPi3 Rainbow-Head (a dynamic temperature and pressure sensor)
-  val TypeDynamicSensorMetaPressure = /*ReSensorDescriptor[RePressureSensor](*/40/*)*/
-  val TypeDynamicSensorMetaTemperature = /*ReSensorDescriptor[ReTemperatureSensor](*/41/*)*/
+  val TypeDynamicSensorMetaPressure    = /*ReSensorDescriptor[RePressureSensor](*/ 40 /*)*/
+  val TypeDynamicSensorMetaTemperature = /*ReSensorDescriptor[ReTemperatureSensor](*/ 41 /*)*/
 
-  val TypeDynamicSensorMetaPressureDescriptor = ReSensorDescriptor[Float](40)
+  val TypeDynamicSensorMetaPressureDescriptor    = ReSensorDescriptor[Float](40)
   val TypeDynamicSensorMetaTemperatureDescriptor = ReSensorDescriptor[Float](41)
 
-  val TypeAll = Sensor.TYPE_ALL
-  val TypeDevicePrivateBase = Sensor.TYPE_DEVICE_PRIVATE_BASE
-  val ReportingModeContinuous = Sensor.REPORTING_MODE_CONTINUOUS
-  val ReportingModeOnChange = Sensor.REPORTING_MODE_ON_CHANGE
-  val ReportingModeOneShot = Sensor.REPORTING_MODE_ONE_SHOT
+  val TypeAll                     = Sensor.TYPE_ALL
+  val TypeDevicePrivateBase       = Sensor.TYPE_DEVICE_PRIVATE_BASE
+  val ReportingModeContinuous     = Sensor.REPORTING_MODE_CONTINUOUS
+  val ReportingModeOnChange       = Sensor.REPORTING_MODE_ON_CHANGE
+  val ReportingModeOneShot        = Sensor.REPORTING_MODE_ONE_SHOT
   val ReportingModeSpecialTrigger = Sensor.REPORTING_MODE_SPECIAL_TRIGGER
 }
-
-

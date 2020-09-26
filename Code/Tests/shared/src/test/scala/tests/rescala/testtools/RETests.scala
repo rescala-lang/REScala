@@ -19,7 +19,7 @@ abstract class RETests extends AnyFreeSpec with TableDrivenPropertyChecks {
       val testEngine = e.asInstanceOf[RescalaInterface[TestStruct]]
       s"Testing $testEngine" - (tags match {
         case Nil          => text in testCase(testEngine)
-        case head :: tail => text.taggedAs (head, tail: _*) in testCase(testEngine)
+        case head :: tail => text.taggedAs(head, tail: _*) in testCase(testEngine)
       })
     }
   }

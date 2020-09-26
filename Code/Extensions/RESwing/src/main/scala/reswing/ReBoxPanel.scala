@@ -1,6 +1,5 @@
 package reswing
 
-
 import scala.swing.{BoxPanel, Color, Dimension, Font, Orientation}
 
 class ReBoxPanel(
@@ -12,12 +11,9 @@ class ReBoxPanel(
     enabled: ReSwingValue[Boolean] = (),
     minimumSize: ReSwingValue[Dimension] = (),
     maximumSize: ReSwingValue[Dimension] = (),
-    preferredSize: ReSwingValue[Dimension] = ())
-  extends
-    RePanel(background, foreground, font, enabled,
-            minimumSize, maximumSize, preferredSize)
-  with
-    ReSequentialContainer {
+    preferredSize: ReSwingValue[Dimension] = ()
+) extends RePanel(background, foreground, font, enabled, minimumSize, maximumSize, preferredSize)
+    with ReSequentialContainer {
   override protected lazy val peer = new BoxPanel(orientation) with ComponentMixin
 }
 

@@ -1,4 +1,3 @@
-
 import com.typesafe.config.ConfigFactory
 import akka.actor._
 import akka.actor.Props
@@ -29,12 +28,10 @@ class ParoliMemberListener extends Actor with ActorLogging {
       }
     case MemberUp(member) =>
       nodes += member.address
-      log.info("Member is Up: {}. {} nodes in cluster",
-        member.address, nodes.size)
+      log.info("Member is Up: {}. {} nodes in cluster", member.address, nodes.size)
     case MemberRemoved(member, _) =>
       nodes -= member.address
-      log.info("Member is Removed: {}. {} nodes cluster",
-        member.address, nodes.size)
+      log.info("Member is Removed: {}. {} nodes cluster", member.address, nodes.size)
     case _: MemberEvent => // ignore
   }
 }
@@ -46,36 +43,34 @@ class DistributionEngine extends Actor {
 }
 
 object DistributionEngine {
-    def props(hostName: String) = Props(new DistributionEngine())
+  def props(hostName: String) = Props(new DistributionEngine())
 }
 
-/**
-  * Created by julian on 26.07.17.
-  */
+/** Created by julian on 26.07.17. */
 object ParoliChatApp {
   val console = new jline.console.ConsoleReader()
 
-  def main(args: Array[String]): Unit = if (args.length >= 1) args(0) match {
-    case "Alice" => startup("Alice", "2550")
-    case "Bob" => startup("Bob", "2551")
-    case "Charlie" => startup("Charlie", "2552")
-  }
-  else {
-    val config = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + 2553).
-      withFallback(ConfigFactory.load())
-    val system = ActorSystem("ClusterSystem", config)
-    val joinAddress = Cluster(system).selfAddress
-    Cluster(system).join(joinAddress)
+  def main(args: Array[String]): Unit =
+    if (args.length >= 1) args(0) match {
+      case "Alice"   => startup("Alice", "2550")
+      case "Bob"     => startup("Bob", "2551")
+      case "Charlie" => startup("Charlie", "2552")
+    }
+    else {
+      val config      = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + 2553).withFallback(ConfigFactory.load())
+      val system      = ActorSystem("ClusterSystem", config)
+      val joinAddress = Cluster(system).selfAddress
+      Cluster(system).join(joinAddress)
 
-    /*val logActor =*/ system.actorOf(Props[ParoliMemberListener](), "memberListener")
-  }
+      /*val logActor =*/
+      system.actorOf(Props[ParoliMemberListener](), "memberListener")
+    }
 
   def startup(name: String, port: String): Unit = {
-    val config = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + port).
-      withFallback(ConfigFactory.load())
+    val config = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + port).withFallback(ConfigFactory.load())
 
     // Create an Akka system
-    val system = ActorSystem("ClusterSystem", config)
+    val system           = ActorSystem("ClusterSystem", config)
     val engine: ActorRef = system.actorOf(DistributionEngine.props(name), name)
 
     run(name, engine)
@@ -87,11 +82,12 @@ object ParoliChatApp {
     //history.publish("ChatHistory")
 
     // redraw interface every time the history changes:
-    history.crdtSignal.observe { value => {
-      val safeLine = console.getCursorBuffer().copy()
-      drawInterface(name, value.iterator.toList)
-      console.resetPromptLine(console.getPrompt(), safeLine.toString, safeLine.cursor)
-    }
+    history.crdtSignal.observe { value =>
+      {
+        val safeLine = console.getCursorBuffer().copy()
+        drawInterface(name, value.iterator.toList)
+        console.resetPromptLine(console.getPrompt(), safeLine.toString, safeLine.cursor)
+      }
     }
 
     history.append(s"System: Hello $name!")
@@ -109,10 +105,10 @@ object ParoliChatApp {
       (0 to 50).foreach(_ => println())
       console.clearScreen()
 
-      val terminalWidth = jline.TerminalFactory.get.getWidth
+      val terminalWidth  = jline.TerminalFactory.get.getWidth
       val terminalHeight = jline.TerminalFactory.get.getHeight
-      val header = (1 to terminalWidth).map(_ => "_").mkString
-      val footer = (1 to terminalWidth).map(_ => "_").mkString
+      val header         = (1 to terminalWidth).map(_ => "_").mkString
+      val footer         = (1 to terminalWidth).map(_ => "_").mkString
 
       var outputLines = 3
 
@@ -128,8 +124,7 @@ object ParoliChatApp {
               println(slice)
               outputLines += 1
             })
-          }
-          else {
+          } else {
             println(s)
             outputLines += 1
           }

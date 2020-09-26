@@ -17,12 +17,7 @@ import rescala.reactives.Signals.Diff
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
 
-
-
-class Server(pages: ServerPages,
-             system: ActorSystem,
-             webResources: WebResources
-            ) {
+class Server(pages: ServerPages, system: ActorSystem, webResources: WebResources) {
 
   val manualAddPostings: Evt[List[Posting]] = Evt[List[Posting]]()
 
@@ -38,31 +33,29 @@ class Server(pages: ServerPages,
   scribe.info("test")
   LociDist.distribute(serverSideEntries, registry)(Bindings.crdtDescriptions)
 
-  serverSideEntries.observe{sse =>
+  serverSideEntries.observe { sse =>
     scribe.trace(s"new postings ${sse.value.toList}")
   }
 
-  serverSideEntries.change.observe { case Diff(from, to) =>
-    if (from.sequence < to.sequence) Future{
-      addNewsFeed()
-    }(system.getDispatcher)
+  serverSideEntries.change.observe {
+    case Diff(from, to) =>
+      if (from.sequence < to.sequence) Future {
+        addNewsFeed()
+      }(system.getDispatcher)
   }
 
   def addNewsFeed(): Unit = {
-    val doc = Jsoup.connect("https://www.digitalstadt-darmstadt.de/news/feed/").get()
+    val doc    = Jsoup.connect("https://www.digitalstadt-darmstadt.de/news/feed/").get()
     val titles = doc.select("channel item").iterator().asScala.toList
     scribe.info(s"found ${titles.size} rss entries")
     val posts = titles.map { e =>
-      val image = Jsoup.parse(e.selectFirst("content|encoded").text(),
-                              "https://www.digitalstadt-darmstadt.de/news/feed/")
-                  .selectFirst("img.attachment-full").absUrl("src")
-      Posting(e.selectFirst("title").text(),
-              Jsoup.parse(e.selectFirst("description").text(), "").text(),
-              image)
+      val image =
+        Jsoup.parse(e.selectFirst("content|encoded").text(), "https://www.digitalstadt-darmstadt.de/news/feed/")
+          .selectFirst("img.attachment-full").absUrl("src")
+      Posting(e.selectFirst("title").text(), Jsoup.parse(e.selectFirst("description").text(), "").text(), image)
     }
     manualAddPostings.fire(posts)
   }
-
 
   val userSocket: Route = {
     val webSocket = WebSocketListener()
@@ -77,7 +70,7 @@ class Server(pages: ServerPages,
     extractRequest { request =>
       request.headers.find(h => h.is("x-path-prefix")) match {
         case None         => continueRoute
-        case Some(prefix) => pathPrefix(prefix.value()) {continueRoute}
+        case Some(prefix) => pathPrefix(prefix.value()) { continueRoute }
       }
     }
 
@@ -85,18 +78,17 @@ class Server(pages: ServerPages,
     path("") {
       complete(pages.landing)
     } ~
-    webResources.routes ~
-    pathPrefix("static") {
-      getFromResourceDirectory("static")
-    } ~
-    path("add-entry") {
-      formFields((Symbol("title"), Symbol("description"), Symbol("imageUrl"))).as(Posting.apply _) { em =>
-        manualAddPostings.fire(List(em))
-        complete("ok")
-      }
-    } ~
-    userSocket
+      webResources.routes ~
+      pathPrefix("static") {
+        getFromResourceDirectory("static")
+      } ~
+      path("add-entry") {
+        formFields((Symbol("title"), Symbol("description"), Symbol("imageUrl"))).as(Posting.apply _) { em =>
+          manualAddPostings.fire(List(em))
+          complete("ok")
+        }
+      } ~
+      userSocket
   }
-
 
 }

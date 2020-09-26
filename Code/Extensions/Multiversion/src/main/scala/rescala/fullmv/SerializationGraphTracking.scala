@@ -17,7 +17,7 @@ case object UnlockedSameSCC extends SCCConnectivity {
 }
 case class LockedSameSCC(lock: SubsumableLock) extends SCCState {
   override def unlockedIfLocked(): UnlockedSameSCC.type = unlock()
-  override def known: this.type = this
+  override def known: this.type                         = this
   def unlock(): UnlockedSameSCC.type = {
 //    SerializationGraphTracking.released()
     lock.asyncUnlock()
@@ -29,7 +29,7 @@ object SerializationGraphTracking /*extends LockContentionTimer*/ {
   def tryLock(defender: FullMVTurn, contender: FullMVTurn, sccState: SCCState): SCCState = {
     assert(defender.host == contender.host, s"locking two turns from different engines")
     sccState match {
-      case x@LockedSameSCC(_) =>
+      case x @ LockedSameSCC(_) =>
 //        entered()
         x
       case UnlockedSameSCC =>

@@ -17,10 +17,10 @@ object ReSensorManager {
 
   def getSensor[E](sensorDescriptor: ReSensorDescriptor[E]): ReSensor[E] = {
     val reSensor: ReSensor[_] = sensorDescriptor.sensorType match {
-      case ReSensor.TypeDynamicSensorMetaPressure => new RePressureSensor()
+      case ReSensor.TypeDynamicSensorMetaPressure    => new RePressureSensor()
       case ReSensor.TypeDynamicSensorMetaTemperature => new ReTemperatureSensor()
-      case ReSensor.TypeGyroscope => new ReGyroscopeSensor()
-      case _ => throw new RuntimeException("not implemented")
+      case ReSensor.TypeGyroscope                    => new ReGyroscopeSensor()
+      case _                                         => throw new RuntimeException("not implemented")
     }
 
     return reSensor.asInstanceOf[ReSensor[E]]
@@ -28,7 +28,9 @@ object ReSensorManager {
 
   def getSensorManager(): SensorManager = {
     if (context == null) {
-      throw new IllegalStateException("ReSensorManager has not yet been initialized, call 'ReSensorManager.init' first.")
+      throw new IllegalStateException(
+        "ReSensorManager has not yet been initialized, call 'ReSensorManager.init' first."
+      )
     }
 
     // get sensorManager, when needed
@@ -58,7 +60,6 @@ object ReSensorManager {
   def removeSensors(): Unit = {
     // TODO: remove all SensorListeners
   }
-
 
   /** Standard gravity (g) on Earth. This value is equivalent to 1G */
   final val StandardGravity = SensorManager.STANDARD_GRAVITY
@@ -141,7 +142,7 @@ object ReSensorManager {
   /** rate suitable for games */
   final val SensorDelayGame = SensorManager.SENSOR_DELAY_GAME
 
-  /** rate suitable for the user interface  */
+  /** rate suitable for the user interface */
   final val SensorDelayUi = SensorManager.SENSOR_DELAY_UI
 
   /** rate (default) suitable for screen orientation changes */

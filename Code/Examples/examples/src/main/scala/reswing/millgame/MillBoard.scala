@@ -19,7 +19,7 @@ object MillBoard {
     val i = from.index
     val j = to.index
     (math.abs(i - j) == 1 && math.max(i, j) % 8 != 0) ||
-    (math.abs(i - j) == 8 && i % 2 != 0) ||
+    (math.abs(i - j) == 8 && i              % 2 != 0) ||
     (math.abs(i - j) == 7 && math.min(i, j) % 8 == 0)
   }
 }

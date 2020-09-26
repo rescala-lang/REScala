@@ -12,7 +12,7 @@ class LockUnionFindMirrorTest extends AnyFunSuite {
   test("double remote direct lock/block/unlock works") {
     val host1a = new FullMVEngine(Duration.Zero, "host1a")
     val host1b = new FullMVEngine(Duration.Zero, "host1b")
-    val hostX = new FullMVEngine(Duration.Zero, "hostX")
+    val hostX  = new FullMVEngine(Duration.Zero, "hostX")
 
     val turn1 = host1a.newTurn()
     val lock1 = turn1.subsumableLock.get
@@ -93,7 +93,7 @@ class LockUnionFindMirrorTest extends AnyFunSuite {
   test("blocked remote direct subsume leaves reference counts intact") {
     val host1a = new FullMVEngine(Duration.Zero, "host1a")
     val host1b = new FullMVEngine(Duration.Zero, "host1b")
-    val hostX = new FullMVEngine(Duration.Zero, "hostX")
+    val hostX  = new FullMVEngine(Duration.Zero, "hostX")
 
     val turn1 = host1a.newTurn()
     val lock1 = turn1.subsumableLock.get
@@ -128,7 +128,7 @@ class LockUnionFindMirrorTest extends AnyFunSuite {
     assert(lock1onB.refCount.get === 1) // lock1onX
     assert(hostX.lockHost.getInstance(lock1.guid).get === lock1onX)
     assert(lock1onX.refCount.get === 1) // thread
-    assert(l2.refCount.get === 2) // turn2, thread
+    assert(l2.refCount.get === 2)       // turn2, thread
   }
 
   test("single remote direct subsume and gc works") {
@@ -138,14 +138,14 @@ class LockUnionFindMirrorTest extends AnyFunSuite {
     turn1.beginExecuting()
     val lock1 = turn1.subsumableLock.get
 
-    val host2 = new FullMVEngine(Duration.Zero, "host2")
+    val host2    = new FullMVEngine(Duration.Zero, "host2")
     val turn1on2 = FullMVTurnLocalClone(turn1, host2)
     val lock1on2 = Await.result(turn1on2.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
 
     assert(lock1on2.remotelyEquals(lock1))
     assert(lock1on2 !== lock1)
 
-    assert(lock1.refCount.get === 2) // turn1, lock1on2
+    assert(lock1.refCount.get === 2)    // turn1, lock1on2
     assert(lock1on2.refCount.get === 1) // thread
 
     val turn2 = host2.newTurn()
@@ -154,17 +154,17 @@ class LockUnionFindMirrorTest extends AnyFunSuite {
 
     assert(Await.result(turn2.trySubsume(lock1on2), Duration.Zero) === Successful)
 
-    assert(lock1.refCount.get === 2) // turn1, lock1on2
+    assert(lock1.refCount.get === 2)    // turn1, lock1on2
     assert(lock1on2.refCount.get === 2) // thread, turn2
     assert(lock2.refCount.get <= 0)
 
     lock1on2.asyncUnlock()
-    assert(lock1.refCount.get === 2) // turn1, lock1on2
+    assert(lock1.refCount.get === 2)    // turn1, lock1on2
     assert(lock1on2.refCount.get === 1) // turn2
     assert(lock2.refCount.get <= 0)
 
     turn1.completeExecuting()
-    assert(lock1.refCount.get === 1) // lock1on2
+    assert(lock1.refCount.get === 1)    // lock1on2
     assert(lock1on2.refCount.get === 1) // turn2
     assert(lock2.refCount.get <= 0)
 
@@ -179,7 +179,7 @@ class LockUnionFindMirrorTest extends AnyFunSuite {
     val host1b = new FullMVEngine(Duration.Zero, "host1b")
     val host2a = new FullMVEngine(Duration.Zero, "host2a")
     val host2b = new FullMVEngine(Duration.Zero, "host2b")
-    val hostX = new FullMVEngine(Duration.Zero, "hostX")
+    val hostX  = new FullMVEngine(Duration.Zero, "hostX")
 
     val turn1 = host1a.newTurn()
     val lock1 = turn1.subsumableLock.get
@@ -238,7 +238,7 @@ class LockUnionFindMirrorTest extends AnyFunSuite {
     assert(lock1on2a.refCount.get === 1) // turn2
     val lock1on2b = host2b.lockHost.getInstance(lock1.guid).get
     assert(lock1on2b.refCount.get === 1) // lock1on2a
-    assert(lock1onX.refCount.get === 2) // thread, lock1on2b
+    assert(lock1onX.refCount.get === 2)  // thread, lock1on2b
     assert(hostX.lockHost.getInstance(lock1.guid).get === lock1onX)
 
     assert(lock2.refCount.get <= 0)
@@ -291,12 +291,12 @@ class LockUnionFindMirrorTest extends AnyFunSuite {
   test("direct reentrant tryLock works") {
     val host1a = new FullMVEngine(Duration.Zero, "host1a")
     val host1b = new FullMVEngine(Duration.Zero, "host1b")
-    val hostX = new FullMVEngine(Duration.Zero, "hostX")
-    val turn1 = host1a.newTurn()
+    val hostX  = new FullMVEngine(Duration.Zero, "hostX")
+    val turn1  = host1a.newTurn()
     turn1.beginExecuting()
     val lock1 = turn1.subsumableLock.get()
 
-    if(SubsumableLock.DEBUG) println(s"reentrant trylock with $turn1 under $lock1")
+    if (SubsumableLock.DEBUG) println(s"reentrant trylock with $turn1 under $lock1")
     val turn1onB = FullMVTurnLocalClone(turn1, host1b)
     val turn1onX = FullMVTurnLocalClone(turn1onB, hostX)
 
@@ -353,14 +353,14 @@ class LockUnionFindMirrorTest extends AnyFunSuite {
     turn3.beginExecuting()
     val lock3 = turn3.subsumableLock.get()
 
-    val l3 = Await.result(turn3.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
+    val l3       = Await.result(turn3.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
     val turn1on2 = FullMVTurnLocalClone(turn1, host2)
     val lock1on2 = Await.result(turn1on2.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
     assert(Await.result(turn2.trySubsume(lock1on2), Duration.Zero) === Successful)
 
     assert(lock1on2.remotelyEquals(lock1))
     assert(lock1on2 !== lock1)
-    assert(lock1.refCount.get === 2) // turn1, lock1on2
+    assert(lock1.refCount.get === 2)    // turn1, lock1on2
     assert(lock1on2.refCount.get === 2) // turn2, thread
     assert(lock2.refCount.get <= 0)
     assert(lock3.refCount.get === 2) // turn3, thread
@@ -368,14 +368,14 @@ class LockUnionFindMirrorTest extends AnyFunSuite {
 
     assert(Await.result(turn2.trySubsume(l3), Duration.Zero) === Blocked)
 
-    assert(lock1.refCount.get === 2) // turn1, lock1on2
+    assert(lock1.refCount.get === 2)    // turn1, lock1on2
     assert(lock1on2.refCount.get === 2) // turn2, thread
-    assert(lock3.refCount.get === 2) // turn3, thread
+    assert(lock3.refCount.get === 2)    // turn3, thread
     assert(host1.lockHost.getInstance(lock3.guid).isEmpty)
 
     lock1on2.asyncUnlock()
 
-    assert(lock1.refCount.get === 2) // turn1, lock1on2
+    assert(lock1.refCount.get === 2)    // turn1, lock1on2
     assert(lock1on2.refCount.get === 1) // turn2
     assert(host2.lockHost.getInstance(lock1.guid).get === lock1on2)
     assert(lock3.refCount.get === 2) // turn3, thread
@@ -383,7 +383,7 @@ class LockUnionFindMirrorTest extends AnyFunSuite {
 
     assert(Await.result(turn2.trySubsume(l3), Duration.Zero) === Successful)
 
-    assert(lock1.refCount.get === 1) // turn1
+    assert(lock1.refCount.get === 1)   // turn1
     assert(lock1on2.refCount.get <= 0) // turn2
     assert(host2.lockHost.getInstance(lock1.guid).isEmpty)
     assert(lock3.refCount.get === 4) // turn2, turn3, thread, lock3on1
@@ -421,27 +421,27 @@ class LockUnionFindMirrorTest extends AnyFunSuite {
     assert(lock1on2 !== lock1)
     assert(lock3on1.remotelyEquals(lock3))
     assert(lock3on1 !== lock3)
-    assert(lock1.refCount.get === 1) // lock1on2
+    assert(lock1.refCount.get === 1)    // lock1on2
     assert(lock1on2.refCount.get === 1) // turn2
     assert(lock2.refCount.get <= 0)
-    assert(lock3.refCount.get === 2) // turn3, lock3on1
+    assert(lock3.refCount.get === 2)    // turn3, lock3on1
     assert(lock3on1.refCount.get === 3) // turn1, lock1, thread
 
     val turn4 = host2.newTurn()
     turn4.beginExecuting()
     val lock4 = turn3.subsumableLock.get()
-    val l4 = Await.result(turn4.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
+    val l4    = Await.result(turn4.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
     assert(lock4.refCount.get === 2) // turn4, thread
 
     assert(Await.result(turn2.trySubsume(l4), Duration.Zero) === Blocked)
 
     assert(lock1.refCount.get <= 0)
     assert(lock1on2.refCount.get <= 0)
-    assert(lock3.refCount.get === 2) // turn3, lock3on1
+    assert(lock3.refCount.get === 2)    // turn3, lock3on1
     assert(lock3on1.refCount.get === 3) // turn1, lock3on2, thread
     val lock3on2 = host2.lockHost.getInstance(lock3.guid).get
     assert(lock3on2.refCount.get === 1) // turn2
-    assert(lock4.refCount.get === 2) // turn4, thread
+    assert(lock4.refCount.get === 2)    // turn4, thread
   }
 
   test("remote indirect and direct other trySubsume works") {
@@ -475,25 +475,25 @@ class LockUnionFindMirrorTest extends AnyFunSuite {
     assert(lock1on2 !== lock1)
     assert(lock3on1.remotelyEquals(lock3))
     assert(lock3on1 !== lock3)
-    assert(lock1.refCount.get === 1) // lock1on2
+    assert(lock1.refCount.get === 1)    // lock1on2
     assert(lock1on2.refCount.get === 1) // turn2
     assert(lock2.refCount.get <= 0)
-    assert(lock3.refCount.get === 2) // turn3, lock3on1
+    assert(lock3.refCount.get === 2)    // turn3, lock3on1
     assert(lock3on1.refCount.get === 2) // turn1, lock1
 
     val turn4 = host2.newTurn()
     turn4.beginExecuting()
     val lock4 = turn4.subsumableLock.get()
-    val l4 = Await.result(turn4.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
+    val l4    = Await.result(turn4.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
     assert(lock4.refCount.get === 2) // turn4, thread
 
     assert(Await.result(turn2.trySubsume(l4), Duration.Zero) === Successful)
 
     assert(lock1.refCount.get <= 0)
     assert(lock1on2.refCount.get <= 0)
-    assert(lock3.refCount.get === 2) // turn3, lock3on1
+    assert(lock3.refCount.get === 2)    // turn3, lock3on1
     assert(lock3on1.refCount.get === 1) // turn1
-    assert(lock4.refCount.get === 4) // turn2, turn4, lock4on1, thread
+    assert(lock4.refCount.get === 4)    // turn2, turn4, lock4on1, thread
     val lock4on1 = host1.lockHost.getInstance(lock4.guid).get
     assert(lock4on1.refCount.get === 1) // lock4on3
     val lock4on3 = host3.lockHost.getInstance(lock4.guid).get
@@ -513,7 +513,7 @@ class LockUnionFindMirrorTest extends AnyFunSuite {
     val lock2 = turn2.subsumableLock.get
 
     val turn1on2 = FullMVTurnLocalClone(turn1, host2)
-    val l2 = Await.result(turn2.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
+    val l2       = Await.result(turn2.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
     assert(Await.result(turn1on2.trySubsume(l2), Duration.Zero) === Successful)
     l2.asyncUnlock()
 
@@ -527,8 +527,8 @@ class LockUnionFindMirrorTest extends AnyFunSuite {
     assert(lock1.refCount.get <= 0)
     val lock2on1 = host1.lockHost.getInstance(lock2.guid).get
     assert(lock2on1.refCount.get === 1) // turn1
-    assert(lock2.refCount.get === 1) // lock2on1
-    assert(lock3.refCount.get === 4) // turn2, turn3, lock2, thread
+    assert(lock2.refCount.get === 1)    // lock2on1
+    assert(lock3.refCount.get === 4)    // turn2, turn3, lock2, thread
 
     assert(Await.result(turn1.tryLock(), Duration.Zero) === Blocked)
 
@@ -537,7 +537,7 @@ class LockUnionFindMirrorTest extends AnyFunSuite {
     assert(lock2.refCount.get <= 0)
     val lock3on1 = host1.lockHost.getInstance(lock3.guid).get
     assert(lock3on1.refCount.get === 1) // turn1
-    assert(lock3.refCount.get === 4) // turn2, turn3, lock3on1, thread
+    assert(lock3.refCount.get === 4)    // turn2, turn3, lock3on1, thread
   }
 
   test("remote indirect trylock success works") {
@@ -553,7 +553,7 @@ class LockUnionFindMirrorTest extends AnyFunSuite {
     val lock2 = turn2.subsumableLock.get
 
     val turn1on2 = FullMVTurnLocalClone(turn1, host2)
-    val l2 = Await.result(turn2.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
+    val l2       = Await.result(turn2.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
     assert(Await.result(turn1on2.trySubsume(l2), Duration.Zero) === Successful)
     l2.asyncUnlock()
 
@@ -568,8 +568,8 @@ class LockUnionFindMirrorTest extends AnyFunSuite {
     assert(lock1.refCount.get <= 0)
     val lock2on1 = host1.lockHost.getInstance(lock2.guid).get
     assert(lock2on1.refCount.get === 1) // turn1
-    assert(lock2.refCount.get === 1) // lock2on1
-    assert(lock3.refCount.get === 3) // turn2, turn3, lock2
+    assert(lock2.refCount.get === 1)    // lock2on1
+    assert(lock3.refCount.get === 3)    // turn2, turn3, lock2
 
     Await.result(turn1.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
 
@@ -578,6 +578,6 @@ class LockUnionFindMirrorTest extends AnyFunSuite {
     assert(lock2.refCount.get <= 0)
     val lock3on1 = host1.lockHost.getInstance(lock3.guid).get
     assert(lock3on1.refCount.get === 2) // turn1, thread
-    assert(lock3.refCount.get === 3) // turn2, turn3, lock3on1
+    assert(lock3.refCount.get === 3)    // turn2, turn3, lock3on1
   }
 }

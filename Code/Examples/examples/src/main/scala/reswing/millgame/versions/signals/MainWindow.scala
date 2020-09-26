@@ -16,31 +16,33 @@ object MainWindow extends SimpleSwingApplication {
 
   val game = new MillGame
 
-  def top = new MainFrame {
-    import scala.language.reflectiveCalls
+  def top =
+    new MainFrame {
+      import scala.language.reflectiveCalls
 
-    game.gameWon += { winner => //#HDL
-       Dialog.showMessage(ui, "Game won by " + winner, "Game ended", Dialog.Message.Info)
+      game.gameWon += { winner => //#HDL
+        Dialog.showMessage(ui, "Game won by " + winner, "Game ended", Dialog.Message.Info)
+      }
+
+      game.remainCountChanged += { count => //#HDL
+        ui.counterBar.text =
+          "White: " + count(White) + " / " +
+            "Black: " + count(Black)
+      }
+
+      setSystemLookAndFeel()
+      minimumSize = new Dimension(400, 400)
+      preferredSize = new Dimension(800, 600)
+      title = "Nine Men's Mill game"
+      contents = ui
     }
-
-    game.remainCountChanged += { count => //#HDL
-      ui.counterBar.text =
-        "White: " + count(White) + " / " +
-        "Black: " + count(Black)
-    }
-
-    setSystemLookAndFeel()
-    minimumSize = new Dimension(400, 400)
-    preferredSize = new Dimension(800, 600)
-    title = "Nine Men's Mill game"
-    contents = ui
-  }
 
   lazy val ui = new BoxPanel(Orientation.Vertical) {
     val statusBar = new ReLabel(
-        text = Signal { game.stateVar().text }, // #SIG
-        preferredSize = ReSwingValue(new Dimension(Integer.MAX_VALUE, 64)),
-        font = ReSwingValue(new Font("Tahoma", Font.PLAIN, 32)))
+      text = Signal { game.stateVar().text }, // #SIG
+      preferredSize = ReSwingValue(new Dimension(Integer.MAX_VALUE, 64)),
+      font = ReSwingValue(new Font("Tahoma", Font.PLAIN, 32))
+    )
 
     val counterBar = new Label("White: 9 / Black: 9") {
       preferredSize = new Dimension(Integer.MAX_VALUE, 32)
@@ -58,26 +60,25 @@ object MainWindow extends SimpleSwingApplication {
   }
 }
 
-class MillDrawer(val game: MillGame)
-    extends ReComponent(preferredSize = new Dimension(500, 500)) {
-  val DotRadius = 5
-  val StoneRadius = 15
-  val ClickArea = 50
-  val SizePercent = 0.8
+class MillDrawer(val game: MillGame) extends ReComponent(preferredSize = new Dimension(500, 500)) {
+  val DotRadius     = 5
+  val StoneRadius   = 15
+  val ClickArea     = 50
+  val SizePercent   = 0.8
   val MiddlePercent = 2f / 3
-  val InnerPercent = 1f / 3
+  val InnerPercent  = 1f / 3
 
   val squareSize: Signal[Int] = Signal { //#SIG
     (math.min(size().width, size().height) * SizePercent).toInt
   }
 
   val coordinates = Signal { //#SIG
-    val midX = size().width / 2
-    val midY = size().height / 2
+    val midX     = size().width / 2
+    val midY     = size().height / 2
     val xFactors = List.fill(3)(List(-1, -1, -1, 0, 1, 1, 1, 0)).flatten
     val yFactors = List.fill(3)(List(-1, 0, 1, 1, 1, 0, -1, -1)).flatten
 
-    for(((xF, yF), i) <- (xFactors zip yFactors).zipWithIndex) yield {
+    for (((xF, yF), i) <- (xFactors zip yFactors).zipWithIndex) yield {
       val distance: Int = (i / 8 match {
         case 0 => InnerPercent * squareSize().toFloat
         case 1 => MiddlePercent * squareSize().toFloat
@@ -89,28 +90,29 @@ class MillDrawer(val game: MillGame)
 
   val board = Signal { //#SIG
     val offset = (2 * StoneRadius, 2 * StoneRadius)
-    val size = squareSize() + 4 * StoneRadius
+    val size   = squareSize() + 4 * StoneRadius
     Rect(coordinates()(16) - offset, size, size)
   }
 
   val lines = Signal { //#SIG
     MillBoard.lines map { indices =>
-      Line(coordinates()(indices.head.index), coordinates()(indices.last.index)) }
+      Line(coordinates()(indices.head.index), coordinates()(indices.last.index))
+    }
   }
 
   val selectedIndex = Signal { //#SIG
     game.stateVar() match {
       case MoveStoneDrop(_, index) => index
       case JumpStoneDrop(_, index) => index
-      case _ => SlotIndex(-1)
+      case _                       => SlotIndex(-1)
     }
   }
 
   val highlightedIndex = Signal { //#SIG
     val index = mouse.moves.moved.latestOption().apply() match {
       case Some(e) => coordinates() indexWhere {
-        p => (p.distance((e.point.x, e.point.y))) < ClickArea
-      }
+          p => (p.distance((e.point.x, e.point.y))) < ClickArea
+        }
       case _ => -1
     }
     SlotIndex(index)
@@ -125,11 +127,13 @@ class MillDrawer(val game: MillGame)
       else
         game.possibleNextMoves() filter (_ == ((selectedIndex(), highlightedIndex()))) match {
           case Nil => game.possibleMoves filter (_._1 == selectedIndex())
-          case l => l
+          case l   => l
         }
 
-    possibleMoves map { case(from, to) =>
-      Line(coordinates()(from.index), coordinates()(to.index)) }
+    possibleMoves map {
+      case (from, to) =>
+        Line(coordinates()(from.index), coordinates()(to.index))
+    }
   }
 
   val indexClicked = (mouse.clicks.released map { e: MouseReleased => //#EF
@@ -147,19 +151,20 @@ class MillDrawer(val game: MillGame)
       Presentation(backgroundRect(), color = Color.GRAY),
       Presentation(board(), color = new Color(239, 228, 176))
     ) ++
-    // possible moves
-    (moveLines() map { Presentation(_, color = new Color(0, 0, 0, 80), width = 5) }) ++
-    // lines on the board
-    (lines() map { Presentation(_) }) ++
-    // dots on the lines
-    (coordinates() map { p => Presentation(Circle(p, DotRadius)) }) ++
-    // stones
-    (game.board.stonesVar().zipWithIndex collect {
-      case (color, i) if color != Empty =>
-        Presentation(
-          Circle(coordinates()(i), StoneRadius),
-          color = if (color == Black) Color.BLACK else Color.WHITE)
-    })
+      // possible moves
+      (moveLines() map { Presentation(_, color = new Color(0, 0, 0, 80), width = 5) }) ++
+      // lines on the board
+      (lines() map { Presentation(_) }) ++
+      // dots on the lines
+      (coordinates() map { p => Presentation(Circle(p, DotRadius)) }) ++
+      // stones
+      (game.board.stonesVar().zipWithIndex collect {
+        case (color, i) if color != Empty =>
+          Presentation(
+            Circle(coordinates()(i), StoneRadius),
+            color = if (color == Black) Color.BLACK else Color.WHITE
+          )
+      })
   }
 
   indexClicked += { index => game.playerInput(index) } //#HDL
@@ -168,7 +173,9 @@ class MillDrawer(val game: MillGame)
 
   override def paintComponent(g: Graphics2D): Unit = {
     g.setRenderingHint(
-        RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+      RenderingHints.KEY_ANTIALIASING,
+      RenderingHints.VALUE_ANTIALIAS_ON
+    )
 
     for (p <- presentation.now)
       p match {

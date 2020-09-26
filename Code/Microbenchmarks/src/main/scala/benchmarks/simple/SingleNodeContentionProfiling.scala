@@ -19,13 +19,13 @@ import rescala.reactives.{Signal, Var}
 class SingleNodeContentionProfiling[S <: Struct] extends BusyThreads {
   var engine: RescalaInterface[S] = _; implicit def scheduler: Scheduler[S] = engine.scheduler
   var sources: Array[Var[Int, S]] = _
-  var node: Signal[Unit, S] = _
+  var node: Signal[Unit, S]       = _
 
   @Setup(Level.Iteration)
   def setup(params: BenchmarkParams, step: Step, engineParam: EngineParam[S], work: Workload) = {
     engine = engineParam.engine
     sources = Array.fill(params.getThreads)(engine.Var(step.run()))
-    node = engine.Signals.static(sources.toSeq:_*)(_ => work.consume())
+    node = engine.Signals.static(sources.toSeq: _*)(_ => work.consume())
   }
 
   @Benchmark

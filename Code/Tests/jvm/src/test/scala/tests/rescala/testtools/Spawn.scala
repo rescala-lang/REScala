@@ -6,7 +6,7 @@ import scala.concurrent.{Await, Future, Promise, TimeoutException}
 import scala.concurrent.duration._
 import scala.util.{Failure, Try}
 
-class Spawn[T] private(thread: Thread, future: Future[T]) {
+class Spawn[T] private (thread: Thread, future: Future[T]) {
   def await(millis: Long): T = {
     Await.result(future, millis.millisecond)
   }
@@ -22,7 +22,7 @@ class Spawn[T] private(thread: Thread, future: Future[T]) {
 object Spawn {
   def apply[T](f: => T, desiredName: Option[String] = None): Spawn[T] = {
     val promise = Promise[T]()
-    val latch = new CountDownLatch(1)
+    val latch   = new CountDownLatch(1)
     val runnable = new Runnable {
       override def run(): Unit = {
         latch.countDown()

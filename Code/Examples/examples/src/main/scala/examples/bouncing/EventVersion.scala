@@ -1,6 +1,5 @@
 package examples.bouncing
 
-
 import java.awt.{Dimension, Graphics2D, Point}
 
 import rescala.default._
@@ -9,26 +8,26 @@ import scala.swing.{MainFrame, Panel, SimpleSwingApplication, Swing}
 
 object EventVersion extends SimpleSwingApplication {
   lazy val application = new EventVersion
-  def top = application.frame
+  def top              = application.frame
 
   override def main(args: Array[String]): Unit = {
     super.main(args)
     while (true) {
-      Swing onEDTWait {application.tick()}
+      Swing onEDTWait { application.tick() }
       Thread sleep 20
     }
   }
 }
 
 class EventVersion {
-  val Size = 50
+  val Size  = 50
   val Max_X = 600
   val Max_Y = 600
   val speed = new Point(10, 8)
 
   class Coord(private var _n: Int) {
     val changed = Evt[Int]()
-    def n: Int = _n
+    def n: Int  = _n
     def n_=(newVal: Int): Unit = {
       _n = newVal
       changed.fire(n)
@@ -54,7 +53,6 @@ class EventVersion {
 
   // handle repaint
   hasTicked += { _ => frame.repaint() }
-
 
   // drawing code
   val frame = new MainFrame {

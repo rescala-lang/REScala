@@ -1,16 +1,20 @@
 package rescala.core
 
-
 trait Result[T, S <: Struct] {
+
   /** True iff outputs must also be reevaluated, false iff the propagation ends here. */
   def propagate: Boolean
+
   /** No-allocation accessor for the optional new value. */
   def forValue(f: T => Unit): Unit
+
   /** No-allocation accessor for the effect caused by the reevaluation. */
   def forEffect(f: Observation => Unit): Unit
+
   /** New dependencies.
-   * None for static reactives.
-   * Otherwise a list of all static reactives, and accessed dynamic reactives. */
+    * None for static reactives.
+    * Otherwise a list of all static reactives, and accessed dynamic reactives.
+    */
   def dependencies(): Option[Set[ReSource[S]]]
 }
 
@@ -22,7 +26,6 @@ trait Disconnectable[S <: Struct] {
   def disconnect()(implicit engine: Scheduler[S]): Unit
 }
 
-
 trait DisconnectableImpl[S <: Struct] extends Derived[S] with Disconnectable[S] {
   @volatile private var disconnected = false
   final def disconnect()(implicit engine: Scheduler[S]): Unit = {
@@ -33,8 +36,7 @@ trait DisconnectableImpl[S <: Struct] extends Derived[S] with Disconnectable[S] 
     if (disconnected) {
       rein.trackDependencies(Set.empty)
       rein
-    }
-    else {
+    } else {
       normalEval
     }
   }

@@ -15,29 +15,35 @@ import scala.concurrent.duration._
 object CostAssessment {
   def merge(maps: Map[String, Set[Int]]*): Map[String, Set[Int]] = {
     maps.reduce { (m1, m2) =>
-      m2.foldLeft(m1){ case (map, (key, values)) =>
-        map + (key -> (map.get(key) match {
-          case Some(values2) => values ++ values2
-          case None => values
-        }))
+      m2.foldLeft(m1) {
+        case (map, (key, values)) =>
+          map + (key -> (map.get(key) match {
+            case Some(values2) => values ++ values2
+            case None          => values
+          }))
       }
     }
   }
   def isGlitched(v: Map[String, Set[Int]]): Boolean = v.exists(_._2.size > 1)
 
   case class Side(host: FullMVEngine, step: () => Unit)
-  case class Graph(left: Side, right: Side, topHost: FullMVEngine, topMerge: Signal[Map[String, Set[Int]], FullMVStruct])
+  case class Graph(
+      left: Side,
+      right: Side,
+      topHost: FullMVEngine,
+      topMerge: Signal[Map[String, Set[Int]], FullMVStruct]
+  )
   type GraphRunner[R] = (Int, Graph => R) => (R, List[Map[String, Set[Int]]])
 
   def distributedRunner[R]: GraphRunner[R] = { (length: Int, run: (Graph => R)) =>
     class Host(name: String) extends FullMVEngine(10.second, name) {
-      val registry = new Registry
+      val registry   = new Registry
       def shutdown() = registry.terminate()
 
       import ReactiveTransmittable._
       import io.circe.generic.auto._
       import rescala.fullmv.transmitter.CirceSerialization._
-      implicit val host = this
+      implicit val host   = this
       def binding(i: Int) = Binding[Signal[Map[String, Set[Int]]]](s"binding-$i")
     }
 
@@ -45,7 +51,7 @@ object CostAssessment {
       val port: Int = TransmitterTestsPortManagement.getFreePort()
       registry.listen(TCP(port))
 
-      val source: Var[Int] = Var(0)
+      val source: Var[Int]                            = Var(0)
       val taggedSource: Signal[Map[String, Set[Int]]] = source.map(v => Map(name -> Set(v)))
       registry.bind(binding(0))(taggedSource)
 
@@ -57,27 +63,27 @@ object CostAssessment {
       val rightHost = new SideHost("right-retiercomm")
       try {
 
-        var leftOutput = leftHost.taggedSource
+        var leftOutput  = leftHost.taggedSource
         var rightOutput = rightHost.taggedSource
 
-        for(i <- 1 to length) {
-          val leftOutputStatic = leftOutput
+        for (i <- 1 to length) {
+          val leftOutputStatic  = leftOutput
           val rightOutputStatic = rightOutput
 
           leftOutput = {
             import leftHost._
-            val remoteRight = Await.result(registry.connect(TCP("localhost", rightHost.port)), timeout)
+            val remoteRight     = Await.result(registry.connect(TCP("localhost", rightHost.port)), timeout)
             val outputFromRight = Await.result(registry.lookup(binding(i - 1), remoteRight), timeout)
-            val merged = Signal { merge(leftOutputStatic(), outputFromRight()) }
+            val merged          = Signal { merge(leftOutputStatic(), outputFromRight()) }
             registry.bind(binding(i))(merged)
             merged
           }
 
           rightOutput = {
             import rightHost._
-            val remoteLeft = Await.result(registry.connect(TCP("localhost", leftHost.port)), timeout)
+            val remoteLeft     = Await.result(registry.connect(TCP("localhost", leftHost.port)), timeout)
             val outputFromLeft = Await.result(registry.lookup(binding(i - 1), remoteLeft), timeout)
-            val merged = Signal { merge(outputFromLeft(), rightOutputStatic()) }
+            val merged         = Signal { merge(outputFromLeft(), rightOutputStatic()) }
             registry.bind(binding(i))(merged)
             merged
           }
@@ -87,17 +93,17 @@ object CostAssessment {
         try {
           import topHost._
 
-          val remoteLeft = Await.result(registry.connect(TCP("localhost", leftHost.port)), timeout)
-          val mergeFromLeft = Await.result(registry.lookup(binding(length), remoteLeft), timeout)
-          val remoteRight = Await.result(registry.connect(TCP("localhost", rightHost.port)), timeout)
-          val mergeFromRight = Await.result(registry.lookup(binding(length), remoteRight), timeout)
+          val remoteLeft                                      = Await.result(registry.connect(TCP("localhost", leftHost.port)), timeout)
+          val mergeFromLeft                                   = Await.result(registry.lookup(binding(length), remoteLeft), timeout)
+          val remoteRight                                     = Await.result(registry.connect(TCP("localhost", rightHost.port)), timeout)
+          val mergeFromRight                                  = Await.result(registry.lookup(binding(length), remoteRight), timeout)
           val topMerge: topHost.Signal[Map[String, Set[Int]]] = Signal { merge(mergeFromLeft(), mergeFromRight()) }
 
           var violations: List[Map[String, Set[Int]]] = Nil
           topMerge.observe { v => if (isGlitched(v)) violations = v :: violations }
 
-          val left = Side(leftHost, () => leftHost.step())
-          val right = Side(rightHost, () => rightHost.step())
+          val left   = Side(leftHost, () => leftHost.step())
+          val right  = Side(rightHost, () => rightHost.step())
           val result = run(Graph(left, right, topHost, topMerge))
           (result, violations)
         } finally {
@@ -113,19 +119,19 @@ object CostAssessment {
 
   def localmirrorRunner[R]: GraphRunner[R] = { (length: Int, run: (Graph => R)) =>
     class SideHost(name: String) extends FullMVEngine(Duration.Zero, name) {
-      val source: Var[Int] = Var(0)
+      val source: Var[Int]                            = Var(0)
       val taggedSource: Signal[Map[String, Set[Int]]] = source.map(v => Map(name -> Set(v)))
-      def step(): Unit = source.transform(_ + 1)
+      def step(): Unit                                = source.transform(_ + 1)
     }
 
-    val leftHost = new SideHost("left-localmirror")
+    val leftHost  = new SideHost("left-localmirror")
     val rightHost = new SideHost("right-localmirror")
 
-    var leftOutput = leftHost.taggedSource
+    var leftOutput  = leftHost.taggedSource
     var rightOutput = rightHost.taggedSource
 
-    for(i <- 1 to length) {
-      val leftOutputStatic = leftOutput
+    for (i <- 1 to length) {
+      val leftOutputStatic  = leftOutput
       val rightOutputStatic = rightOutput
       leftOutput = {
         import leftHost._
@@ -143,15 +149,15 @@ object CostAssessment {
     val topHost = new FullMVEngine(Duration.Zero, "top-localmirror")
     import topHost._
 
-    val mergeFromLeft = ReactiveLocalClone(leftOutput, topHost)
-    val mergeFromRight = ReactiveLocalClone(rightOutput, topHost)
+    val mergeFromLeft                                   = ReactiveLocalClone(leftOutput, topHost)
+    val mergeFromRight                                  = ReactiveLocalClone(rightOutput, topHost)
     val topMerge: topHost.Signal[Map[String, Set[Int]]] = Signal { merge(mergeFromLeft(), mergeFromRight()) }
 
     var violations: List[Map[String, Set[Int]]] = Nil
     topMerge.observe { v => if (isGlitched(v)) violations = v :: violations }
 
-    val left = Side(leftHost, () => leftHost.step())
-    val right = Side(rightHost, () => rightHost.step())
+    val left   = Side(leftHost, () => leftHost.step())
+    val right  = Side(rightHost, () => rightHost.step())
     val result = run(Graph(left, right, topHost, topMerge))
     (result, violations)
   }
@@ -161,13 +167,13 @@ object CostAssessment {
     import engine._
 
     val leftSource: Var[Int] = Var(0)
-    var leftOutput = leftSource.map(v => Map("local-left" -> Set(v)))
+    var leftOutput           = leftSource.map(v => Map("local-left" -> Set(v)))
 
     val rightSource: Var[Int] = Var(0)
-    var rightOutput = rightSource.map(v => Map("local-right" -> Set(v)))
+    var rightOutput           = rightSource.map(v => Map("local-right" -> Set(v)))
 
-    for(i <- 1 to length) {
-      val leftOutputStatic = leftOutput
+    for (i <- 1 to length) {
+      val leftOutputStatic  = leftOutput
       val rightOutputStatic = rightOutput
 
       val fakeMirrorRightOutput = rightOutputStatic.map(identity)
@@ -177,31 +183,35 @@ object CostAssessment {
       rightOutput = Signal { merge(fakeMirrorLeftOutput(), rightOutputStatic()) }
     }
 
-    val fakeMirrorLeftMerge = leftOutput.map(identity)
-    val fakeMirrorRightMerge = rightOutput.map(identity)
+    val fakeMirrorLeftMerge                            = leftOutput.map(identity)
+    val fakeMirrorRightMerge                           = rightOutput.map(identity)
     val topMerge: engine.Signal[Map[String, Set[Int]]] = Signal { merge(fakeMirrorLeftMerge(), fakeMirrorRightMerge()) }
 
     var violations: List[Map[String, Set[Int]]] = Nil
     topMerge.observe { v => if (isGlitched(v)) violations = v :: violations }
 
-    val left = Side(engine, () => leftSource.transform(_ + 1))
-    val right = Side(engine, () => rightSource.transform(_ + 1))
+    val left   = Side(engine, () => leftSource.transform(_ + 1))
+    val right  = Side(engine, () => rightSource.transform(_ + 1))
     val result = run(Graph(left, right, engine, topMerge))
     (result, violations)
   }
 
   def harness(runner: (Long, Graph) => (Int, Int)) = { graph: Graph =>
     (1 to 10).foreach { i =>
-      val counts@(left, right) = runner(System.currentTimeMillis() + 1000L, graph)
-      val leftTime = 1000d / left
-      val rightTime = 1000d / right
-      println(f"warmup $i%3d: $counts%s iterations ($leftTime%.4f ms/op and $rightTime%.4f ms/op, avg ${(leftTime + rightTime) / 2}%.4f)")
+      val counts @ (left, right) = runner(System.currentTimeMillis() + 1000L, graph)
+      val leftTime               = 1000d / left
+      val rightTime              = 1000d / right
+      println(
+        f"warmup $i%3d: $counts%s iterations ($leftTime%.4f ms/op and $rightTime%.4f ms/op, avg ${(leftTime + rightTime) / 2}%.4f)"
+      )
     }
     val iterations = (1 to 20).flatMap { i =>
-      val counts@(left, right) = runner(System.currentTimeMillis() + 1000L, graph)
-      val leftTime = 1000d / left
-      val rightTime = 1000d / right
-      println(f"iteration $i%3d: $counts%s iterations ($leftTime%.4f ms/op and $rightTime%.4f ms/op, avg ${(leftTime + rightTime) / 2}%.4f)")
+      val counts @ (left, right) = runner(System.currentTimeMillis() + 1000L, graph)
+      val leftTime               = 1000d / left
+      val rightTime              = 1000d / right
+      println(
+        f"iteration $i%3d: $counts%s iterations ($leftTime%.4f ms/op and $rightTime%.4f ms/op, avg ${(leftTime + rightTime) / 2}%.4f)"
+      )
       Seq(leftTime, rightTime)
     }
     iterations.sum / iterations.size
@@ -210,7 +220,7 @@ object CostAssessment {
   def conflictFree(until: Long, graph: Graph): (Int, Int) = {
     val res = Spawn {
       var count = 0
-      while(System.currentTimeMillis() < until) {
+      while (System.currentTimeMillis() < until) {
         graph.left.step()
         graph.right.step()
         count += 2
@@ -223,7 +233,7 @@ object CostAssessment {
   def conflicting(until: Long, graph: Graph): (Int, Int) = {
     val left = Spawn {
       var count = 0
-      while(System.currentTimeMillis() < until) {
+      while (System.currentTimeMillis() < until) {
         graph.left.step()
         count += 1
       }
@@ -231,7 +241,7 @@ object CostAssessment {
     }
     val right = Spawn {
       var count = 0
-      while(System.currentTimeMillis() < until) {
+      while (System.currentTimeMillis() < until) {
         graph.right.step()
         count += 1
       }
@@ -241,7 +251,7 @@ object CostAssessment {
   }
 
   def main(args: Array[String]): Unit = {
-    val length = if(args.length == 0) {
+    val length = if (args.length == 0) {
       println("using default length 1")
       1
     } else {
@@ -252,7 +262,7 @@ object CostAssessment {
     def measure[R](rowId: String, run: => (R, List[Map[String, Set[Int]]])): (String, R) = {
       println(s"Running $rowId...")
       val (result, violations) = run
-      if(violations.isEmpty) {
+      if (violations.isEmpty) {
         println("no violations => OK")
       } else {
         println("there were violations:")
@@ -261,17 +271,18 @@ object CostAssessment {
       rowId -> result
     }
     val results = Seq(
-        measure("simple local\tsequential", localRunner(length, harness(conflictFree))),
-        measure("simple local\tconcurrent", localRunner(length, harness(conflicting))),
+      measure("simple local\tsequential", localRunner(length, harness(conflictFree))),
+      measure("simple local\tconcurrent", localRunner(length, harness(conflicting))),
 //        measure("local mirror\tsequential", localmirrorRunner(length, harness(conflictFree))),
 //        measure("local mirror\tconcurrent", localmirrorRunner(length, harness(conflicting))),
-        measure("distributed\tsequential", distributedRunner(length, harness(conflictFree))),
-        measure("distributed\tconcurrent", distributedRunner(length, harness(conflicting)))
+      measure("distributed\tsequential", distributedRunner(length, harness(conflictFree))),
+      measure("distributed\tconcurrent", distributedRunner(length, harness(conflicting)))
     )
     println(" === RESULTS === ")
     println("graph origin\tconflicts\tavg ms/op")
-    results.foreach { case (rowId, result) =>
-      println(f"$rowId%s\t$result%.4f")
+    results.foreach {
+      case (rowId, result) =>
+        println(f"$rowId%s\t$result%.4f")
     }
   }
 }

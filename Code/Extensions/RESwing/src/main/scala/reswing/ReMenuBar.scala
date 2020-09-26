@@ -1,6 +1,5 @@
 package reswing
 
-
 import scala.swing.{Color, Dimension, Font, MenuBar}
 
 class ReMenuBar(
@@ -11,12 +10,9 @@ class ReMenuBar(
     enabled: ReSwingValue[Boolean] = (),
     minimumSize: ReSwingValue[Dimension] = (),
     maximumSize: ReSwingValue[Dimension] = (),
-    preferredSize: ReSwingValue[Dimension] = ())
-  extends
-    ReComponent(background, foreground, font, enabled,
-                minimumSize, maximumSize, preferredSize)
-  with
-    ReSequentialContainer {
+    preferredSize: ReSwingValue[Dimension] = ()
+) extends ReComponent(background, foreground, font, enabled, minimumSize, maximumSize, preferredSize)
+    with ReSequentialContainer {
   override protected lazy val peer = new MenuBar with ComponentMixin
 }
 

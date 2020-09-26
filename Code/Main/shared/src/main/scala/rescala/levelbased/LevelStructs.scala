@@ -3,17 +3,13 @@ package rescala.levelbased
 import rescala.core.Struct
 import rescala.twoversion._
 
-
-
 trait LevelStruct extends TwoVersionStruct {
   override type State[V, S <: Struct] <: LevelState[V, S]
 }
 
-
 trait LevelStructImpl extends LevelStruct {
   override type State[V, S <: Struct] = LevelState[V, S]
 }
-
 
 class LevelState[V, S <: Struct](ip: V) extends TwoVersionState[V, S](ip) {
 
@@ -27,4 +23,3 @@ class LevelState[V, S <: Struct](ip: V) extends TwoVersionState[V, S](ip) {
     max
   }
 }
-

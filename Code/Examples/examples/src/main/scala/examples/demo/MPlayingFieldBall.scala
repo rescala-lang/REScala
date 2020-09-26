@@ -30,21 +30,21 @@ object MPlayingFieldBall extends Main {
   class PlayingField(val width: Signal[Int], val height: Signal[Int]) {
     case class Collisions(left: Event[Any], right: Event[Any], top: Event[Any], bottom: Event[Any])
     def colliders(shape: Shape): Collisions = {
-      val horizontalHalfDistance = Signal{ (width() - shape.hitboxWidth()) / 2 }
-      val verticalHalfDistance = Signal{ (height() - shape.hitboxHeight()) / 2 }
+      val horizontalHalfDistance = Signal { (width() - shape.hitboxWidth()) / 2 }
+      val verticalHalfDistance   = Signal { (height() - shape.hitboxHeight()) / 2 }
 
       Collisions(
-        Signal{ shape.centerX() < -horizontalHalfDistance() }.changed.filter(_ == true),
-        Signal{ shape.centerX() > horizontalHalfDistance() }.changedTo(true),
-        Signal{ shape.centerY() < -verticalHalfDistance() }.changedTo(true),
-        Signal{ shape.centerY() > verticalHalfDistance() }.changedTo(true)
+        Signal { shape.centerX() < -horizontalHalfDistance() }.changed.filter(_ == true),
+        Signal { shape.centerX() > horizontalHalfDistance() }.changedTo(true),
+        Signal { shape.centerY() < -verticalHalfDistance() }.changedTo(true),
+        Signal { shape.centerY() > verticalHalfDistance() }.changedTo(true)
       )
     }
     val shape = new Rectangle(Var(0), Var(0), width, height)
   }
 
   val shapes = Var[List[Shape]](List.empty)
-  val panel = new ShapesPanel(shapes)
+  val panel  = new ShapesPanel(shapes)
 
   val playingField = new PlayingField(panel.width.map(_ - 25), panel.height.map(_ - 25))
   shapes.transform(playingField.shape :: _)
