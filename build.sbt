@@ -60,6 +60,8 @@ lazy val rescalaJS = rescala.js
 
 //lazy val rescalaNative = rescala.native
 
+val loci = Loci()
+
 lazy val tests = crossProject(JSPlatform, JVMPlatform).in(file("Code/Tests"))
   .settings(
     name := "rescala-tests",
@@ -67,7 +69,7 @@ lazy val tests = crossProject(JSPlatform, JVMPlatform).in(file("Code/Tests"))
     cfg.base,
     cfg.test,
     scalatestpluscheck,
-    Dependencies.loci.wsAkka,
+    loci.wsAkka,
     lib.lociTransmitterDependencies,
     circe,
     lib.lociTransmitterDependencies,
