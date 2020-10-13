@@ -3,7 +3,7 @@ package rescala.extra.lattices
 /** Well, its technically a semilattice, but that is just more to type. */
 trait Lattice[A] {
 
-  /** Associative, commutative, idempotent. * */
+  /** By assumption: associative, commutative, idempotent. */
   def merge(left: A, right: A): A
 }
 
