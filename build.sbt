@@ -37,7 +37,7 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Code/Main"))
     lib.reflectionForMacroDefinitions,
     // for reactive streams api
     lib.reactivestreams,
-    // for restoration
+    // built in serializability of lattice vertices
     libraryDependencies ++= List(
       "io.circe" %%% s"circe-core"   % "[0.11.0,)" % "provided",
       "io.circe" %%% s"circe-parser" % "[0.11.0,)" % "provided"
