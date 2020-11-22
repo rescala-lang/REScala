@@ -1,10 +1,10 @@
 package rescala
 
 import rescala.core.{Scheduler, Struct}
+import rescala.extra.scheduler.SimpleScheduler
 import rescala.interface.RescalaInterface
 import rescala.levelbased.LevelBasedSchedulers
 import rescala.parrp._
-import rescala.extra.scheduler.SimpleScheduler
 import rescala.twoversion.TwoVersionScheduler
 
 object Schedulers extends LevelBasedSchedulers {
@@ -24,8 +24,8 @@ object Schedulers extends LevelBasedSchedulers {
 
   def parrpWithBackoff(backOff: () => Backoff): Scheduler[ParRPStruct] =
     new TwoVersionScheduler[ParRPStruct, ParRPTransaction] {
-      override protected def makeTurn(priorTurn: Option[ParRPTransaction]): ParRPTransaction =
-        new ParRPTransaction(backOff(), priorTurn)
+      override protected def makeTransaction(priorTx: Option[ParRPTransaction]): ParRPTransaction =
+        new ParRPTransaction(backOff(), priorTx)
       override def schedulerName: String = "ParRP"
     }
 }

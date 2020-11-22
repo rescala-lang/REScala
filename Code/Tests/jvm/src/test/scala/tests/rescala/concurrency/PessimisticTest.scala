@@ -138,7 +138,7 @@ class PessimisticTest extends RETests {
 
     val mockFac = new TwoVersionScheduler[ParRPStruct, ParRPTransaction] {
       override def schedulerName: String = "Reg/Unreg counting ParRP"
-      override protected def makeTurn(priorTurn: Option[ParRPTransaction]): ParRPTransaction =
+      override protected def makeTransaction(priorTx: Option[ParRPTransaction]): ParRPTransaction =
         new ParRPTransaction(new Backoff(), None) {
           override def discover(source: ReSource, sink: Reactive): Unit = {
             if (source eq i0) regs += 1

@@ -1,10 +1,9 @@
 package rescala.twoversion
 
-import rescala.core.{AdmissionTicket, Initializer, ReSource, DynamicInitializerLookup}
+import rescala.core.{AdmissionTicket, DynamicInitializerLookup, Initializer, ReSource}
 import rescala.reactives.Signal
 
-/**
-  * Implementation of the turn handling defined in the Engine trait
+/** Implementation of the turn handling defined in the Engine trait
   *
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   * @tparam Tx Transaction type used by the scheduler
@@ -32,32 +31,32 @@ trait TwoVersionScheduler[S <: TwoVersionStruct, Tx <: TwoVersionTransaction[S] 
     *   - not yet implemented
     */
   override def forceNewTransaction[R](initialWrites: Set[ReSource[S]], admissionPhase: AdmissionTicket[S] => R): R = {
-    val turn = makeTurn(_currentTurn.value)
+    val tx = makeTransaction(_currentInitializer.value)
 
     val result =
       try {
-        turn.preparationPhase(initialWrites)
-        val result = withDynamicInitializer(turn) {
-          val admissionTicket = turn.makeAdmissionPhaseTicket(initialWrites)
+        tx.preparationPhase(initialWrites)
+        val result = withDynamicInitializer(tx) {
+          val admissionTicket = tx.makeAdmissionPhaseTicket(initialWrites)
           val admissionResult = admissionPhase(admissionTicket)
-          turn.initializationPhase(admissionTicket.initialChanges)
-          turn.propagationPhase()
-          if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(turn.accessTicket())
+          tx.initializationPhase(admissionTicket.initialChanges)
+          tx.propagationPhase()
+          if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(tx.accessTicket())
           admissionResult
         }
-        turn.commitPhase()
+        tx.commitPhase()
         result
       } catch {
         case e: Throwable =>
-          turn.rollbackPhase()
+          tx.rollbackPhase()
           throw e
       } finally {
-        turn.releasePhase()
+        tx.releasePhase()
       }
-    turn.observerPhase()
+    tx.observerPhase()
     result
   }
 
-  protected def makeTurn(priorTurn: Option[Tx]): Tx
+  protected def makeTransaction(priorTx: Option[Tx]): Tx
 
 }
