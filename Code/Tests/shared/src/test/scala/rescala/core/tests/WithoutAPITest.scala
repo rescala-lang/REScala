@@ -19,7 +19,7 @@ class WithoutAPITest extends RETests {
       def makeChange(newValue: T) =
         new InitialChange[ReStructure] {
           override val source = outer
-          override def writeValue(base: T, writeCallback: T => Unit): Boolean = {
+          override def writeValue(base: source.Value, writeCallback: source.Value => Unit): Boolean = {
             if (base != newValue) {
               writeCallback(newValue)
               true
