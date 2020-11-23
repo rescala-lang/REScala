@@ -27,7 +27,7 @@ object Signal {
 trait Signal[+T, S <: Struct] extends MacroAccess[T, Interp[T, S]] with Disconnectable[S] {
 
   val rescalaAPI: RescalaInterface[S]
-  import rescalaAPI.{scheduler, Observe, CreationTicket, Signal => Sig}
+  import rescalaAPI.{CreationTicket, Observe, scheduler, Signal => Sig}
 
   override def disconnect()(implicit engine: Scheduler[S]): Unit = resource.disconnect()(engine)
   override val resource: SignalResource[T, S]
@@ -67,10 +67,11 @@ trait Signal[+T, S <: Struct] extends MacroAccess[T, Interp[T, S]] with Disconne
         }
 
         override def execute(): Unit =
-          reevalVal match {
+          (reevalVal: Pulse[T]) match {
             case Pulse.empty          => ()
             case Pulse.Value(v)       => onValue(v)
             case Pulse.Exceptional(f) => onError(f)
+            case Pulse.NoChange       => ()
           }
       }
     }

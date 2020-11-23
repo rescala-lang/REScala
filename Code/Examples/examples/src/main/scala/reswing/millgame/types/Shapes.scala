@@ -19,7 +19,7 @@ case class Presentation[T, +S](
 //
 // shape
 //
-abstract class Shape[T: Numeric] {
+sealed abstract class Shape[T: Numeric] {
   def toDouble: Shape[Double]
   def toInt: Shape[Int]
 }
@@ -38,7 +38,7 @@ case class Point[@specialized(Int, Double) T: Numeric](x: T, y: T) extends Shape
 
   def +(p: Point[T]) = Point(x + p.x, y + p.y)
   def -(p: Point[T]) = Point(x - p.x, y - p.y)
-  def unary_-()      = Point(-x, -y)
+  def unary_-      = Point(-x, -y)
   def *(d: T)        = Point(x * d, y * d)
   def /(d: Double)   = Point(x.toDouble / d, y.toDouble / d)
 

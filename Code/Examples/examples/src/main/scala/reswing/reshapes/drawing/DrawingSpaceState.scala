@@ -43,7 +43,7 @@ class DrawingSpaceState {
   final lazy val clear   = Evt[Unit]()    //#EVT
   final lazy val select  = Evt[Shape]()   //#EVT
 
-  private abstract class CommandType
+  private sealed abstract class CommandType
   private case class Execute(command: Command) extends CommandType
   private case class Revert(command: Command)  extends CommandType
   private case class Clear()                   extends CommandType

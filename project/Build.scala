@@ -9,7 +9,7 @@ object Settings {
 
   private val sv11    = "2.11.12"
   private val sv12    = "2.12.11"
-  private val sv13    = "2.13.3"
+  private val sv13    = "2.13.4"
   private val svDotty = "0.24.0-RC1"
 
   val commonCrossBuildVersions = crossScalaVersions := Seq(sv11, sv12, sv13)

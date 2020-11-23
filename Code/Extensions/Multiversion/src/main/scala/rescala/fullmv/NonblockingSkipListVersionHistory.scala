@@ -444,6 +444,7 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init:
             } finally {
               txn.asyncRemoteBranchComplete(TurnPhase.Framing)
             })
+          case other => throw new IllegalStateException(s"$other is not a phase")
         })
       ) {
         val v = tryInsertVersion(txn, current, next, null, NotFinal)

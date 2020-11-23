@@ -3,7 +3,7 @@ package rescala.reactives
 import rescala.core.Pulse
 import rescala.reactives.RExceptions.EmptySignalControlThrowable
 
-class Diff[+A](val from: Pulse[A], val to: Pulse[A]) {
+final class Diff[+A](val from: Pulse[A], val to: Pulse[A]) {
 
   def _1: A = from.get
   def _2: A = to.get

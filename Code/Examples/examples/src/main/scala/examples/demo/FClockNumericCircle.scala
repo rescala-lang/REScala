@@ -8,8 +8,7 @@ import rescala.reactives.Diff
 
 import scala.swing.{MainFrame, SimpleSwingApplication, UIElement}
 
-/**
-  * As with the initial arithmetic trajectory, the numeric integration so far
+/** As with the initial arithmetic trajectory, the numeric integration so far
   * is vulnerable to clock drift. To fix this, we derive integration ticks from
   * the accurately system clock-based nsTime Signal, using a conversion in the
   * other direction, from Signals to Events. Signal provide a change method,
@@ -26,7 +25,7 @@ object FClockNumericCircle extends SimpleSwingApplication {
   val nsTime = Var(System.nanoTime())
   def tick() = nsTime.set(System.nanoTime())
 
-  val ticks = nsTime.change.map { case Diff(from, to) => to - from }
+  val ticks = nsTime.change.collect { case Diff(from, to) => to - from }
 
   val shapes = Var[List[Shape]](List.empty)
   val panel  = new ShapesPanel(shapes)
