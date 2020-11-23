@@ -30,9 +30,10 @@ our $FONTSIZE = "30";
 our $NAME_FINE = "Handcrafted";
 our $NAME_COARSE = "G-Lock";
 our $NAME_FULLMV = "FullMV";
-our $NAME_PARRP = "MV-RP";
+our $NAME_PARRP = "ParRP";
 our $NAME_STM = "STM-RP";
 our $NAME_RESTORING = "Snapshots";
+our $NAME_SIMPLE = "Simple";
 
 our $YTIC_COUNT = 4;
 our $YRANGE_ROUND = 100;
@@ -63,18 +64,20 @@ sub prettyName($name) {
   $name =~ s/synchron|REScalaSynchron/$NAME_COARSE/;
   $name =~ s/unmanaged/$NAME_FINE/;
   $name =~ s/restoring/$NAME_RESTORING/;
+  $name =~ s/simple/$NAME_SIMPLE/;
   return $name;
 }
 
 sub styleByName($name) {
   given($name) {
-    when (/$NAME_PARRP/)     { 'linecolor "dark-green" lt 2 lw 2 pt 7  ps 1' }
-    when (/$NAME_STM/)       { 'linecolor "dark-green"       lt 2 lw 2 pt 7  ps 1' }
-    when (/$NAME_COARSE|Restore/)    { 'linecolor "red"       lt 2 lw 2 pt 9  ps 1' }
-    when (/fair/)            { 'linecolor "light-blue" lt 2 lw 2 pt 8  ps 1' }
-    when (/$NAME_FULLMV/) { 'linecolor "blue" lt 2 lw 2 pt 5  ps 1' }
-    when (/$NAME_FINE/)      { 'linecolor "black"      lt 2 lw 2 pt 11 ps 1' }
-    when (/$NAME_RESTORING|Derive/) { 'linecolor "dark-green" lt 2 lw 2 pt 6  ps 1' }
+    when (/$NAME_PARRP/)             { 'linecolor "dark-green"  lt 2 lw 2 pt 7  ps 1' }
+    when (/$NAME_STM/)               { 'linecolor "blue"        lt 2 lw 2 pt 5  ps 1' }
+    when (/$NAME_COARSE|Restore/)    { 'linecolor "red"         lt 2 lw 2 pt 9  ps 1' }
+    when (/$NAME_SIMPLE/)            { 'linecolor "light-red"   lt 2 lw 2 pt 8  ps 1' }
+    when (/fair/)                    { 'linecolor "light-blue"  lt 2 lw 2 pt 8  ps 1' }
+    when (/$NAME_FULLMV/)            { 'linecolor "light-green" lt 2 lw 2 pt 5  ps 1' }
+    when (/$NAME_FINE/)              { 'linecolor "black"       lt 2 lw 2 pt 11 ps 1' }
+    when (/$NAME_RESTORING|Derive/)  { 'linecolor "dark-green"  lt 2 lw 2 pt 6  ps 1' }
     default { '' }
   }
 }
@@ -92,9 +95,10 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
   chdir $OUTDIR;
 
   makeLegend();
-#  miscBenchmarks();
-#  restorationBenchmarks();
-  mvrpBenchmarks();
+  # miscBenchmarks();
+  # restorationBenchmarks();
+  # mvrpBenchmarks();
+  universeBenchmark();
 
   $DBH->commit();
 }
@@ -174,14 +178,17 @@ sub mvrpBenchmarks() {
     }
   }
 
-  { # universe
-    #local $YRANGE = "[5:24] reverse";
-    local $YRANGE_ROUND = 10;
-    $DBH->do(qq[UPDATE $TABLE SET Score = 60 / Score WHERE Benchmark = "UniverseCaseStudy"]);
-    plotBenchmarksFor("Universe", "Universe",
-      (map {{Title => $_, "Param: engineName" => $_ , Benchmark => "UniverseCaseStudy" }}
-          queryChoices("Param: engineName", Benchmark => "UniverseCaseStudy")));
-  }
+
+}
+
+sub universeBenchmark() {
+  # universe
+  #local $YRANGE = "[5:24] reverse";
+  local $YRANGE_ROUND = 10;
+  $DBH->do(qq[UPDATE $TABLE SET Score = 60 / Score WHERE Benchmark = "UniverseCaseStudy"]);
+  plotBenchmarksFor("Universe", "Universe",
+    (map {{Title => $_, "Param: engineName" => $_ , Benchmark => "UniverseCaseStudy" }}
+        queryChoices("Param: engineName", Benchmark => "UniverseCaseStudy")));
 }
 
 sub miscBenchmarks() {
