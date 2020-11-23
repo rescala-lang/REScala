@@ -1,6 +1,6 @@
 package tests.rescala.concurrency.philosophers
 
-import rescala.core.{REName, Struct}
+import rescala.core.{ReName, Struct}
 import rescala.interface.RescalaInterface
 import tests.rescala.concurrency.philosophers.PhilosopherTable._
 
@@ -15,7 +15,7 @@ class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(ri
 
     val forks = for (i <- 0 until tableSize) yield {
       val nextCircularIndex     = mod(i + 1)
-      implicit val name: REName = s"Fork($i, $nextCircularIndex)"
+      implicit val name: ReName = s"Fork($i, $nextCircularIndex)"
       val left                  = phils(i)
       val right                 = phils(nextCircularIndex)
       Signal {
@@ -34,7 +34,7 @@ class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(ri
       val ownName               = i.toString
       val fork1                 = forks(i)
       val fork2                 = forks(mod(i - 1))
-      implicit val name: REName = s"Vision($i)"
+      implicit val name: ReName = s"Vision($i)"
       val vision = Signal {
         fork1() match {
           case Taken(name) if name != ownName => WaitingFor(name)

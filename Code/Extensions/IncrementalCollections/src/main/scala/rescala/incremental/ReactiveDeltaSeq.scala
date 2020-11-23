@@ -340,7 +340,7 @@ trait ReactiveDeltaSeq[T, S <: Struct] extends ReSource[S] {
   */
 class ConcatenateDeltaSeq[T, S <: Struct](left: ReactiveDeltaSeq[T, S], right: ReactiveDeltaSeq[T, S])(
     initialState: IncSeq.SeqState[T, S],
-    name: REName
+    name: ReName
 ) extends Base[Delta[T], S](initialState, name)
     with ReactiveDeltaSeq[T, S] {
 
@@ -375,7 +375,7 @@ class ConcatenateDeltaSeq[T, S <: Struct](left: ReactiveDeltaSeq[T, S], right: R
   */
 class FilterDeltaSeq[T, S <: Struct](in: ReactiveDeltaSeq[T, S], expression: T => Boolean)(
     initialState: IncSeq.SeqState[T, S],
-    name: REName
+    name: ReName
 ) extends Base[Delta[T], S](initialState, name)
     with ReactiveDeltaSeq[T, S] {
 
@@ -402,7 +402,7 @@ class FilterDeltaSeq[T, S <: Struct](in: ReactiveDeltaSeq[T, S], expression: T =
   */
 class MapDeltaSeq[T, A, S <: Struct](in: ReactiveDeltaSeq[T, S], op: T => A)(
     initialState: IncSeq.SeqState[A, S],
-    name: REName
+    name: ReName
 ) extends Base[Delta[A], S](initialState, name)
     with ReactiveDeltaSeq[A, S] {
 
@@ -429,7 +429,7 @@ class MapDeltaSeq[T, A, S <: Struct](in: ReactiveDeltaSeq[T, S], op: T => A)(
 //  */
 //class FlatMapDeltaSeq[T, A, S <: Struct]
 //(in: ReactiveDeltaSeq[T, S], f: T => ReactiveDeltaSeq[A,S])
-//(initialState: IncSeq.SeqState[A, S], name: REName)
+//(initialState: IncSeq.SeqState[A, S], name: ReName)
 //  extends Base[Delta[A], S](initialState, name)
 //    with ReactiveDeltaSeq[A, S] {
 //
@@ -451,7 +451,7 @@ class MapDeltaSeq[T, A, S <: Struct](in: ReactiveDeltaSeq[T, S], op: T => A)(
   * @tparam T Type returned when the event fires
   * @tparam S Struct type used for the propagation of the event
   */
-class IncSeq[T, S <: Struct] private[rescala] (initialState: IncSeq.SeqState[T, S], name: REName)
+class IncSeq[T, S <: Struct] private[rescala] (initialState: IncSeq.SeqState[T, S], name: ReName)
     extends Base[Delta[T], S](initialState, name)
     with ReactiveDeltaSeq[T, S] {
 

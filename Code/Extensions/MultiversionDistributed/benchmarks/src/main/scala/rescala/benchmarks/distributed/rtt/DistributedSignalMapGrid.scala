@@ -4,7 +4,7 @@ import java.util.concurrent.TimeUnit
 
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
-import rescala.core.{CreationTicket, REName}
+import rescala.core.{CreationTicket, ReName}
 import rescala.fullmv.mirrors.localcloning.{FakeDelayer, ReactiveLocalClone}
 import rescala.fullmv.{FullMVEngine, FullMVStruct}
 import rescala.reactives.{Signal, Var}
@@ -55,7 +55,7 @@ class DistributedSignalMapGrid {
           val from = result(wh - 1)._2(wn - 1)
           val name = s"clone-$dh-$wh-0-$wn"
 //          println(s"cloning $name from $from")
-          REName.named(name) { implicit ! =>
+          ReName.named(name) { implicit ! =>
             ReactiveLocalClone(from, host, msDelay.millis)
           }
         }
@@ -64,7 +64,7 @@ class DistributedSignalMapGrid {
             val from = res2(wn - 1)
             val name = s"map-$dh-$wh-$dn-$wn"
 //            println(s"transforming $name from $from")
-            REName.named(name) { implicit ! =>
+            ReName.named(name) { implicit ! =>
               from.map { v => Blackhole.consumeCPU(work); v + 1 }(CreationTicket.fromEngine(host))
             }
           }

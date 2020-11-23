@@ -21,7 +21,7 @@ trait ReSource[S <: Struct] {
   type Value
   final type State = S#State[Value, S]
   protected[rescala] def state: State
-  protected[rescala] def name: REName
+  protected[rescala] def name: ReName
   protected[rescala] def commit(base: Value): Value
 }
 
@@ -38,12 +38,12 @@ trait Derived[S <: Struct] extends ReSource[S] {
 }
 
 /** Base implementation for reactives, with [[Derived]] for scheduling,
-  * together with a [[REName]] and asking for a [[Struct.State]]
+  * together with a [[ReName]] and asking for a [[Struct.State]]
   *
   * @param state the initial state passed by the scheduler
   * @param name the name of the reactive, useful for debugging as it often contains positional information
   */
-abstract class Base[V, S <: Struct](override protected[rescala] val state: S#State[V, S], override val name: REName)
+abstract class Base[V, S <: Struct](override protected[rescala] val state: S#State[V, S], override val name: ReName)
     extends ReSource[S] {
   override type Value = V
   override def toString: String = s"${name.str}($state)"

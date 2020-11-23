@@ -1,6 +1,6 @@
 package rescala.core.tests
 
-import rescala.core.{InitialChange, Interp, REName, CreationTicket => Ticket}
+import rescala.core.{InitialChange, Interp, ReName, CreationTicket => Ticket}
 import tests.rescala.testtools.RETests
 
 class WithoutAPITest extends RETests {
@@ -12,7 +12,7 @@ class WithoutAPITest extends RETests {
 
       override type Value = T
       override protected[rescala] def state: State               = initState
-      override protected[rescala] def name: REName               = "I am a source name"
+      override protected[rescala] def name: ReName               = "I am a source name"
       override def interpret(v: Value): T                        = v
       override protected[rescala] def commit(base: Value): Value = base
 
@@ -35,7 +35,7 @@ class WithoutAPITest extends RETests {
         with Interp[String, ReStructure] {
       override type Value = String
       override protected[rescala] def state: State               = initState
-      override protected[rescala] def name: REName               = "I am a name"
+      override protected[rescala] def name: ReName               = "I am a name"
       override protected[rescala] def commit(base: Value): Value = base
 
       override protected[rescala] def reevaluate(input: ReIn): Rout = {

@@ -131,7 +131,7 @@ trait AccessTicket[S <: Struct] {
 
 /** Enables the creation of other reactives */
 @implicitNotFound(msg = "Could not find capability to create reactives. Maybe a missing import?")
-final case class CreationTicket[S <: Struct](self: Either[Initializer[S], Scheduler[S]], rename: REName) {
+final case class CreationTicket[S <: Struct](self: Either[Initializer[S], Scheduler[S]], rename: ReName) {
 
   private[rescala] def create[V, T <: Derived[S]](
       incoming: Set[ReSource[S]],
@@ -158,14 +158,14 @@ final case class CreationTicket[S <: Struct](self: Either[Initializer[S], Schedu
 
 /** As reactives can be created during propagation, any [[InnerTicket]] can be converted to a creation ticket. */
 object CreationTicket extends LowPriorityCreationImplicits {
-  implicit def fromTicketImplicit[S <: Struct](implicit ticket: InnerTicket[S], line: REName): CreationTicket[S] =
+  implicit def fromTicketImplicit[S <: Struct](implicit ticket: InnerTicket[S], line: ReName): CreationTicket[S] =
     CreationTicket(Left(ticket.initializer), line)
 
   implicit def fromInitializerImplicit[S <: Struct](implicit
       initializer: Initializer[S],
-      line: REName
+      line: ReName
   ): CreationTicket[S] = CreationTicket(Left(initializer), line)
-  implicit def fromInitializer[S <: Struct](creation: Initializer[S])(implicit line: REName): CreationTicket[S] =
+  implicit def fromInitializer[S <: Struct](creation: Initializer[S])(implicit line: ReName): CreationTicket[S] =
     CreationTicket(Left(creation), line)
 }
 
@@ -173,9 +173,9 @@ object CreationTicket extends LowPriorityCreationImplicits {
   * creating the reactives outside of any turn.
   */
 sealed trait LowPriorityCreationImplicits {
-  implicit def fromSchedulerImplicit[S <: Struct](implicit factory: Scheduler[S], line: REName): CreationTicket[S] =
+  implicit def fromSchedulerImplicit[S <: Struct](implicit factory: Scheduler[S], line: ReName): CreationTicket[S] =
     CreationTicket(Right(factory), line)
-  implicit def fromScheduler[S <: Struct](factory: Scheduler[S])(implicit line: REName): CreationTicket[S] =
+  implicit def fromScheduler[S <: Struct](factory: Scheduler[S])(implicit line: ReName): CreationTicket[S] =
     CreationTicket(Right(factory), line)
   implicit def fromNameImplicit[S <: Struct](line: String)(implicit outer: CreationTicket[S]): CreationTicket[S] =
     CreationTicket(outer.self, line)

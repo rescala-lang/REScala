@@ -79,7 +79,7 @@ class ReactiveReflectionImpl[P](
     override val host: FullMVEngine,
     var ignoreTurn: Option[FullMVTurn],
     initialState: FullMVState[P, FullMVTurn, ReSource[FullMVStruct], Derived[FullMVStruct]],
-    rename: REName
+    rename: ReName
 ) extends Base[P, FullMVStruct](initialState, rename)
     with ReactiveReflection[P] {
   val _buffer                                           = new ConcurrentHashMap[FullMVTurn, P]()

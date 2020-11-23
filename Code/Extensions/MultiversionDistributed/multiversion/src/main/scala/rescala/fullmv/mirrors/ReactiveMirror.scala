@@ -7,7 +7,7 @@ import rescala.fullmv._
 import scala.concurrent.duration.Duration
 
 object ReactiveMirror {
-  def apply[A](reactive: ReSource[FullMVStruct], turn: FullMVTurn, reflectionIsTransient: Boolean, rename: REName)(
+  def apply[A](reactive: ReSource[FullMVStruct], turn: FullMVTurn, reflectionIsTransient: Boolean, rename: ReName)(
       toPulse: reactive.Value => A,
       reflectionProxy: ReactiveReflectionProxy[A]
   ): (List[(FullMVTurn, A)], Option[FullMVTurn]) = {
@@ -33,7 +33,7 @@ class ReactiveMirror[A](
     val getValue: FullMVTurn => A,
     val reflectionProxy: ReactiveReflectionProxy[A],
     val timeout: Duration,
-    override val name: REName
+    override val name: ReName
 ) extends Derived[FullMVStruct]
     with FullMVState[Nothing, FullMVTurn, ReSource[FullMVStruct], Derived[FullMVStruct]] {
   override type Value = Nothing

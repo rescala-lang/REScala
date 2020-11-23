@@ -1,7 +1,7 @@
 package rescala.extra.reactivestreams
 
 import org.reactivestreams.{Publisher, Subscriber, Subscription}
-import rescala.core.{Base, CreationTicket, Derived, Interp, Pulse, REName, Scheduler, Struct}
+import rescala.core.{Base, CreationTicket, Derived, Interp, Pulse, ReName, Scheduler, Struct}
 
 import scala.util.{Failure, Success}
 
@@ -24,7 +24,7 @@ object REPublisher {
       dependency: Interp[Pulse[T], S],
       subscriber: Subscriber[_ >: T],
       fac: Scheduler[S],
-      name: REName
+      name: ReName
   ) extends Base[Pulse[T], S](bud, name)
       with Derived[S]
       with Subscription {
@@ -80,7 +80,7 @@ object REPublisher {
       fac: Scheduler[S]
   ): SubscriptionReactive[T, S] = {
     fac.forceNewTransaction() { ticket =>
-      val name: REName = s"forSubscriber($subscriber)"
+      val name: ReName = s"forSubscriber($subscriber)"
       ticket.initializer.create[Pulse[T], SubscriptionReactive[T, S]](
         Set(dependency),
         Pulse.empty,

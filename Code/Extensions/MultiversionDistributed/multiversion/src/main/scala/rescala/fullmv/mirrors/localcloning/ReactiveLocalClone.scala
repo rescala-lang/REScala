@@ -8,10 +8,10 @@ import rescala.reactives.{Event, Signal}
 import scala.concurrent.duration.Duration
 
 object ReactiveLocalClone {
-  def apply[A](signal: Signal[A, FullMVStruct], host: FullMVEngine)(implicit name: REName): Signal[A, FullMVStruct] =
+  def apply[A](signal: Signal[A, FullMVStruct], host: FullMVEngine)(implicit name: ReName): Signal[A, FullMVStruct] =
     apply(signal, host, Duration.Zero)(name)
   def apply[A](signal: Signal[A, FullMVStruct], host: FullMVEngine, fakeDelay: Duration)(implicit
-      name: REName
+      name: ReName
   ): Signal[A, FullMVStruct] = apply(signal, fakeDelay)(CreationTicket.fromEngine(host)(name))
   def apply[A](signal: Signal[A, FullMVStruct])(implicit
       ticket: CreationTicket[FullMVStruct]
@@ -36,10 +36,10 @@ object ReactiveLocalClone {
     }
   }
 
-  def apply[P](event: Event[P, FullMVStruct], host: FullMVEngine)(implicit name: REName): Event[P, FullMVStruct] =
+  def apply[P](event: Event[P, FullMVStruct], host: FullMVEngine)(implicit name: ReName): Event[P, FullMVStruct] =
     apply(event, host, Duration.Zero)(name)
   def apply[P](event: Event[P, FullMVStruct], host: FullMVEngine, fakeDelay: Duration)(implicit
-      name: REName
+      name: ReName
   ): Event[P, FullMVStruct] = apply(event, fakeDelay)(CreationTicket.fromEngine(host)(name))
   def apply[P](event: Event[P, FullMVStruct])(implicit ticket: CreationTicket[FullMVStruct]): Event[P, FullMVStruct] =
     apply(event, Duration.Zero)(ticket)
@@ -72,7 +72,7 @@ object ReactiveLocalClone {
       reactive: ReSource[FullMVStruct],
       connectTurn: FullMVTurn,
       reflectionIsTransient: Boolean,
-      rename: REName
+      rename: ReName
   )(toPulse: reactive.Value => A, reflection: ReactiveReflectionImpl[A]): Unit = {
     if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $connectTurn creating clone of $reactive")
     val mirrorHost     = reactive.state.host

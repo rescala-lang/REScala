@@ -3,7 +3,7 @@ package benchmarks.philosophers
 import java.util.concurrent.locks.ReentrantLock
 import java.util.concurrent.{Executors, ThreadLocalRandom}
 
-import rescala.core.{REName, Struct}
+import rescala.core.{ReName, Struct}
 import rescala.interface.RescalaInterface
 import rescala.parrp.Backoff
 
@@ -28,7 +28,7 @@ abstract class PaperPhilosophers[S <: Struct](val size: Int, val engine: Rescala
 
   case object Thinking extends Philosopher
 
-  val phils = for (idx <- 0 until size) yield REName.named(s"phil(${idx + 1})") { implicit ! =>
+  val phils = for (idx <- 0 until size) yield ReName.named(s"phil(${idx + 1})") { implicit ! =>
     Var[Philosopher](Thinking)
   }
 
@@ -38,7 +38,7 @@ abstract class PaperPhilosophers[S <: Struct](val size: Int, val engine: Rescala
 
   case class Taken(by: Int) extends Fork
 
-  val forks = for (idx <- 0 until size) yield REName.named(s"fork(${idx + 1})") { implicit ! =>
+  val forks = for (idx <- 0 until size) yield ReName.named(s"fork(${idx + 1})") { implicit ! =>
     Signal.dynamic[Fork] {
       val nextIdx = (idx + 1) % size
       (phils(idx)(), phils(nextIdx)()) match {
@@ -60,7 +60,7 @@ abstract class PaperPhilosophers[S <: Struct](val size: Int, val engine: Rescala
 
   // Dynamic Sight
   val sights =
-    for (avoidStaticOptimization <- 0 until size) yield REName.named(s"sight(${avoidStaticOptimization + 1})") {
+    for (avoidStaticOptimization <- 0 until size) yield ReName.named(s"sight(${avoidStaticOptimization + 1})") {
       implicit ! =>
         dynamicity match {
           case Dynamicity.Dynamic => Signal.dynamic[Sight] {
@@ -160,7 +160,7 @@ trait EventPyramidTopper[S <: Struct] {
 
   val anySuccess = successes.reduce(_ || _)
   val successCount: Signal[Int] =
-    REName.named(s"successCount") { implicit ! =>
+    ReName.named(s"successCount") { implicit ! =>
       anySuccess.fold(0) { (acc, _) => acc + 1 }
     }
   override def total: Int = successCount.readValueOnce
@@ -171,7 +171,7 @@ trait IndividualCounts[S <: Struct] {
   import engine._
 
   val individualCounts: Seq[Signal[Int]] =
-    for (idx <- 0 until size) yield REName.named(s"count(${idx + 1})") { implicit ! =>
+    for (idx <- 0 until size) yield ReName.named(s"count(${idx + 1})") { implicit ! =>
       successes(idx).fold(0) { (acc, _) => acc + 1 }
     }
 }
@@ -205,7 +205,7 @@ trait SignalPyramidTopper[S <: Struct] extends IndividualCounts[S] {
 
   val successCount: Signal[Int] =
     individualCounts.reduce { (a, b) =>
-      REName.named(s"sumUpTo($b)") { implicit ! =>
+      ReName.named(s"sumUpTo($b)") { implicit ! =>
         Signal { a() + b() }
       }
     }

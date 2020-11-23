@@ -187,7 +187,7 @@ class ReactiveMacros(val c: blackbox.Context) {
             ] =>
           q"""${termNames.ROOTPKG}.rescala.core.CreationTicket(
                   ${termNames.ROOTPKG}.scala.Left($ticketIdent.initializer),
-                  ${termNames.ROOTPKG}.rescala.core.REName.create)"""
+                  ${termNames.ROOTPKG}.rescala.core.ReName.create)"""
 
         case tree @ Select(reactive, TermName("now")) =>
           c.warning(

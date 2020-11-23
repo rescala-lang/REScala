@@ -1,6 +1,6 @@
 package rescala.interface
 
-import rescala.core.{Base, Pulse, REName, Scheduler, Struct}
+import rescala.core.{Base, Pulse, ReName, Scheduler, Struct}
 import rescala.macros.MacroTags.{Dynamic, Static}
 import rescala.reactives
 import rescala.reactives.Signals.SignalResource
@@ -60,7 +60,7 @@ trait RescalaInterface[S <: Struct] extends Aliases[S] {
     * @group create
     */
   object Var {
-    abstract class VarImpl[A] private[rescala] (initialState: rescala.reactives.Signals.Sstate[A, S], name: REName)
+    abstract class VarImpl[A] private[rescala] (initialState: rescala.reactives.Signals.Sstate[A, S], name: ReName)
         extends Base[Pulse[A], S](initialState, name)
         with Var[A]
         with SignalResource[A, S] {

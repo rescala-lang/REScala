@@ -3,7 +3,7 @@ package rescala.benchmarks.distributed.rtt
 import java.util.concurrent._
 
 import org.openjdk.jmh.annotations._
-import rescala.core.REName
+import rescala.core.ReName
 import rescala.fullmv.mirrors.localcloning.{FakeDelayer, ReactiveLocalClone}
 import rescala.fullmv.{FullMVEngine, FullMVStruct}
 import rescala.reactives.{Signal, Var}
@@ -61,7 +61,7 @@ class ConflictDistances {
     preMergeDistance = for (d <- 1 until mergeAt) yield {
       preMerge = for (i <- 1 to threads) yield {
         val host = new FullMVEngine(10.seconds, s"premerge-$d-$i")
-        host -> REName.named(s"clone-premerge-$d-$i") { implicit ! =>
+        host -> ReName.named(s"clone-premerge-$d-$i") { implicit ! =>
           ReactiveLocalClone(preMerge(i - 1)._2, host, msDelay.millis)
         }
       }
@@ -70,7 +70,7 @@ class ConflictDistances {
 
     mergeHost = new FullMVEngine(10.seconds, "merge")
     remotesOnMerge = for (i <- 1 to threads) yield {
-      REName.named(s"clone-merge-$i") { implicit ! =>
+      ReName.named(s"clone-merge-$i") { implicit ! =>
         ReactiveLocalClone(preMerge(i - 1)._2, mergeHost, msDelay.millis)
       }
     }
@@ -85,7 +85,7 @@ class ConflictDistances {
     var postMerge: (FullMVEngine, Signal[Int, FullMVStruct]) = mergeHost -> merge
     postMergeDistance = for (i <- 1 to totalLength - mergeAt) yield {
       val host = new FullMVEngine(10.seconds, s"host-$i")
-      postMerge = host -> REName.named(s"clone-$i") { implicit ! =>
+      postMerge = host -> ReName.named(s"clone-$i") { implicit ! =>
         ReactiveLocalClone(postMerge._2, host, msDelay.millis)
       }
       postMerge

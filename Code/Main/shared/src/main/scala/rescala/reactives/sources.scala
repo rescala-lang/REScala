@@ -14,7 +14,7 @@ trait Source[S <: Struct, T] extends ReSource[S] {
   * @tparam T Type returned when the event fires
   * @tparam S Struct type used for the propagation of the event
   */
-abstract class Evt[T, S <: Struct] private[rescala] (initialState: Estate[S, T], name: REName)
+abstract class Evt[T, S <: Struct] private[rescala] (initialState: Estate[S, T], name: ReName)
     extends Base[Pulse[T], S](initialState, name)
     with Source[S, T]
     with Event[T, S] {
