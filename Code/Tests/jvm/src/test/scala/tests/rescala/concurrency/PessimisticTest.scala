@@ -140,11 +140,11 @@ class PessimisticTest extends RETests {
       override def schedulerName: String = "Reg/Unreg counting ParRP"
       override protected def makeTransaction(priorTx: Option[ParRPTransaction]): ParRPTransaction =
         new ParRPTransaction(new Backoff(), None) {
-          override def discover(source: ReSource, sink: Reactive): Unit = {
+          override def discover(source: ReSource, sink: Derived): Unit = {
             if (source eq i0) regs += 1
             super.discover(source, sink)
           }
-          override def drop(source: ReSource, sink: Reactive): Unit = {
+          override def drop(source: ReSource, sink: Derived): Unit = {
             if (source eq i0) unregs += 1
             super.drop(source, sink)
           }
@@ -192,7 +192,7 @@ class PessimisticTest extends RETests {
     val il0                  = Var(11)
     val (syncI1, il1)        = SynchronizedReevaluation(il0)
 
-    var reeval = List.empty[engine.Creation]
+    var reeval = List.empty[engine.Initializer]
     // this starts on level 2. when bl0 becomes true bl1 becomes true on level 1
     // at that point both bl1 and bl3 are true which causes il1 to be added as a dependency
     // but then bl3 becomes false at level 3, causing il1 to be removed again
@@ -269,7 +269,7 @@ class PessimisticTest extends RETests {
     val il0                  = Var(11)
     val (syncI1, il1)        = SynchronizedReevaluation(il0)
 
-    var reeval = List.empty[Creation]
+    var reeval = List.empty[Initializer]
     // this starts on level 2. when bl0 becomes true bl1 becomes true on level 1
     // at that point both bl1 and bl3 are true which causes il1 and il0 to be added as a dependency
     // but then bl3 becomes false at level 3, causing il1 to be removed again (but il0 is still a dependency)

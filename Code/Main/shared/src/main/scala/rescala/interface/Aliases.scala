@@ -40,10 +40,10 @@ trait Aliases[S <: Struct] {
   final type CreationTicket = rescala.core.CreationTicket[S]
 
   /** @group internal */
-  final type Creation = rescala.core.Initializer[S]
+  final type Initializer = rescala.core.Initializer[S]
 
   /** @group internal */
-  final type Reactive = rescala.core.Derived[S]
+  final type Derived = rescala.core.Derived[S]
 
   /** @group internal */
   final type ReSource = rescala.core.ReSource[S]
