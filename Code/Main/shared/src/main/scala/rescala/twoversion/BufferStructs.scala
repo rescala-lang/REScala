@@ -38,7 +38,7 @@ abstract class TwoVersionState[V, S <: Struct](protected[rescala] var current: V
   /* incoming and outgoing changes */
 
   var incoming: Set[ReSource[S]]                              = Set.empty
-  protected var _outgoing: mutable.Map[Derived[S], None.type] = mutable.HashMap()
+  protected var _outgoing: mutable.Map[Derived[S], None.type] = mutable.HashMap.empty
 
   def updateIncoming(reactives: Set[ReSource[S]]): Unit = incoming = reactives
   def outgoing(): Iterable[Derived[S]]                  = _outgoing.keys
