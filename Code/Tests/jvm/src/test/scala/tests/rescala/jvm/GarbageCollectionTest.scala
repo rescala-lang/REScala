@@ -5,15 +5,12 @@ import java.lang.ref.{PhantomReference, ReferenceQueue}
 import org.scalatest.prop.Whenever
 import rescala.core.Pulse
 import tests.rescala.testtools.RETests
-import tests.rescala.testtools.IgnoreOnGithubWindowsCiBecause
 
 class GarbageCollectionTest extends RETests with Whenever {
   multiEngined { engine =>
     import engine._
 
-    "garbage collection for simple signal mappings" taggedAs (IgnoreOnGithubWindowsCiBecause(
-      "it sometimes times out"
-    )) in {
+    "garbage collection for simple signal mappings" in {
 
       val q = new ReferenceQueue[Signal[Array[Int]]]()
 
@@ -38,7 +35,7 @@ class GarbageCollectionTest extends RETests with Whenever {
           `heap of garbage`.iterator.map(_._1).foreach(_.admitPulse(Pulse.Value(1))(at))
         }
         System.gc()
-        val timeout = !(System.currentTimeMillis() < start + 10000)
+        val timeout = !(System.currentTimeMillis() < start + 100_000)
         assert(!timeout, "did not GC a signal before timeout")
         if (q.poll() ne null) done = true
       }
