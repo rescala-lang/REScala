@@ -5,12 +5,14 @@ import java.lang.ref.{PhantomReference, ReferenceQueue}
 import org.scalatest.prop.Whenever
 import rescala.core.Pulse
 import tests.rescala.testtools.RETests
+import tests.rescala.testtools.IgnoreOnGithubWindowsCiBecause
+
 
 class GarbageCollectionTest extends RETests with Whenever {
   multiEngined { engine =>
     import engine._
 
-    "garbage collection for simple signal mappings" in {
+    "garbage collection for simple signal mappings" taggedAs(IgnoreOnGithubWindowsCiBecause("it sometimes times out")) in {
 
       val q = new ReferenceQueue[Signal[Array[Int]]]()
 
