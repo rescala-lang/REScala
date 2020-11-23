@@ -3,8 +3,7 @@ package rescala
 import rescala.core.Scheduler
 import rescala.parrp.ParRP
 
-/**
-  * @author gerizuna
+/** @author gerizuna
   * @since 07.07.19
   */
 object collectionsDefault extends interface.RescalaInterface[ParRP] {

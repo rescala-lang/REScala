@@ -7,8 +7,7 @@ import org.openjdk.jmh.infra.Blackhole
 import rescala.collectionsDefault._
 import rescala.parrp.ParRP
 
-/**
-  * @author gerizuna
+/** @author gerizuna
   * @since 10.10.19
   */
 

@@ -117,7 +117,7 @@ object ReComboBox {
       if (
         (item == null || (items contains item)) &&
         ((selected != null && selected != item) ||
-        (selected == null && item != null))
+          (selected == null && item != null))
       ) {
         selected = item
         fireContentsChanged(this, -1, -1)

@@ -3,8 +3,7 @@ package reswing.reader.data
 import java.net.URL
 import java.util.Date
 
-/**
-  * Represents an RSSChannel with its metadata
+/** Represents an RSSChannel with its metadata
   *
   * @param title       - name of the channel
   * @param link        - URL to the website corresponding to the channel

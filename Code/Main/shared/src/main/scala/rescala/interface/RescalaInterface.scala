@@ -134,8 +134,7 @@ trait RescalaInterface[S <: Struct] extends Aliases[S] {
 
   object Impls extends DefaultImplementations[S]
 
-  /**
-    * Executes a transaction.
+  /** Executes a transaction.
     *
     * @param initialWrites  All inputs that might be changed by the transaction
     * @param admissionPhase An admission function that may perform arbitrary [[rescala.reactives.Signal.readValueOnce]] reads
@@ -149,8 +148,7 @@ trait RescalaInterface[S <: Struct] extends Aliases[S] {
     scheduler.forceNewTransaction(initialWrites: _*)(admissionPhase)
   }
 
-  /**
-    * Executes a transaction with WrapUpPhase.
+  /** Executes a transaction with WrapUpPhase.
     *
     * @param initialWrites  All inputs that might be changed by the transaction
     * @param admissionPhase An admission function that may perform arbitrary [[rescala.reactives.Signal.readValueOnce]] reads
@@ -177,8 +175,7 @@ trait RescalaInterface[S <: Struct] extends Aliases[S] {
     res.get
   }
 
-  /**
-    * Atomically changes multiple inputs in a single [[transaction]]
+  /** Atomically changes multiple inputs in a single [[transaction]]
     *
     * @param changes the changes to perform, i.e., (i1 -> v1, i2 -> v2, ...)
     * @return Result of the admission function

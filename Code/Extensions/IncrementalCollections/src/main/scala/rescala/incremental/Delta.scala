@@ -1,13 +1,11 @@
 package rescala.incremental
 
-/**
-  * Deltas represent a change that will happen on reactive sequences. This could be adding, removing or no change at all
+/** Deltas represent a change that will happen on reactive sequences. This could be adding, removing or no change at all
   * @tparam T type of the value the Delta holds
   */
 trait Delta[+T] {
 
-  /**
-    * Filters the value of the Delta.
+  /** Filters the value of the Delta.
     * If accepted by the filter function the Delta is returned, otherwise NoChange is returned
     *
     * @param accept is the function used to filter.
@@ -20,8 +18,7 @@ trait Delta[+T] {
       case _                                    => Delta.noChange[T]
     }
 
-  /**
-    * Maps the value of the Delta.
+  /** Maps the value of the Delta.
     * This will happen for an Addition or Removal only
     * @param mapOperation maps the value of Delta by returning a new one with type A
     * @tparam A the type of the mapped value
@@ -44,14 +41,12 @@ trait Delta[+T] {
 
 }
 
-/**
-  * @param v the value that is added
+/** @param v the value that is added
   * @tparam T type of the value the Delta holds
   */
 case class Addition[T](v: T) extends Delta[T]
 
-/**
-  * @param v the value that is removed
+/** @param v the value that is removed
   * @tparam T type of the value the Delta holds
   */
 case class Removal[T](v: T) extends Delta[T]

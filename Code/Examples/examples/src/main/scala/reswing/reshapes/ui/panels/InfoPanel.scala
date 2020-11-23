@@ -6,8 +6,7 @@ import rescala.default._
 import reswing.reshapes.ReShapes
 import reswing.ReLabel
 
-/**
-  * Small info panel which displays information like how many shapes are drawn
+/** Small info panel which displays information like how many shapes are drawn
   * or which shape is currently selected
   */
 class InfoPanel extends FlowPanel {

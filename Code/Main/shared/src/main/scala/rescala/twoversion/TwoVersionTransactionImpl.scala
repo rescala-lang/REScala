@@ -5,8 +5,7 @@ import rescala.core._
 import scala.collection.mutable.ArrayBuffer
 import scala.util.control.NonFatal
 
-/**
-  * Basic implementation of the most fundamental propagation steps as defined by AbstractPropagation.
+/** Basic implementation of the most fundamental propagation steps as defined by AbstractPropagation.
   * Only compatible with spore definitions that store a pulse value and support graph operations.
   *
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation

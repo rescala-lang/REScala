@@ -5,8 +5,7 @@ import examples.demo.ui.{Circle, Point, Shape, ShapesPanel}
 import rescala.default._
 import rescala.reactives.Flatten.firstFiringEvent
 
-/**
-  * To resolve this circular initialization order, we introduce
+/** To resolve this circular initialization order, we introduce
   * higher-order reactives. Higher-order reactives are Signals
   * or Events, whose values contain references to other Signals
   * or Events. We have already been using a higher-order

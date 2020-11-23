@@ -4,8 +4,7 @@ import universe.Globals.engine._
 
 import scala.util.Random
 
-/**
-  * A World object unites a space (Board object), time (Time object), and a random object
+/** A World object unites a space (Board object), time (Time object), and a random object
   * It also defines all repetitive actions, such as spawning new Animals and Plants
   */
 class World(val width: Int = 100, val height: Int = 100) {

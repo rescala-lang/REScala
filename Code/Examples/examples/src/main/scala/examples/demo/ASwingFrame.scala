@@ -9,8 +9,7 @@ import examples.demo.ui.Shape
 
 import scala.swing.{MainFrame, SimpleSwingApplication, UIElement}
 
-/**
-  * This is a static display of two circles and a rectangle.
+/** This is a static display of two circles and a rectangle.
   * It demonstrates, how to display Shapes using our custom
   * ShapesPanel. The only REScala Feature used here are Vars,
   * which we explain in the next step.

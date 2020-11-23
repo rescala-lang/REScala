@@ -9,8 +9,7 @@ object MathUtil {
     math.sqrt((dx * dx + dy * dy).toDouble) <= radius
   }
 
-  /**
-    * returns the intersection points of two finite lines.
+  /** returns the intersection points of two finite lines.
     * return null if the lines do not cross
     * algorithm/formular copied from 'http://mathworld.wolfram.com/Line-LineIntersection.html'
     */
@@ -63,8 +62,7 @@ object MathUtil {
     }
   }
 
-  /**
-    * Calculates the determinant of:
+  /** Calculates the determinant of:
     * | a b |
     * | c d |
     */

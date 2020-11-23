@@ -7,8 +7,7 @@ import rescala.default._
 
 import scala.swing.{MainFrame, SimpleSwingApplication, UIElement}
 
-/**
-  * We define a new Var angle. We modify the main method
+/** We define a new Var angle. We modify the main method
   * to repeatedly assign a new value to angle. Angle changes
   * by about 1 Pi per second, although this is obviously
   * inaccurate.

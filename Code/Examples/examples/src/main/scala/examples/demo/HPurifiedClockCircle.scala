@@ -4,8 +4,7 @@ import examples.demo.GModularClockCircle.Clock
 import examples.demo.ui.{Circle, Shape, ShapesPanel}
 import rescala.default._
 
-/**
-  * As Clock is now a closed module, we can move it to an external
+/** As Clock is now a closed module, we can move it to an external
   * file and simply use it externally. Unlike purely object-oriented
   * designs, RP abstractions remain reactive across such module
   * separations without implementing callback-based listener

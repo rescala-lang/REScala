@@ -8,8 +8,7 @@ import rescala.default._
 
 import scala.swing.{MainFrame, Panel, SimpleSwingApplication, Swing}
 
-/**
-  * Exercise note: Do not edit any code in this file.
+/** Exercise note: Do not edit any code in this file.
   * Only the file Pong.scala needs to be changed.
   */
 

@@ -2,29 +2,25 @@ package rescala.twoversion
 
 import rescala.core.{AdmissionTicket, InitialChange, ReSource, Struct}
 
-/**
-  * Abstract propagation definition that defines phases for reactive propagation through dependent reactive elements.
+/** Abstract propagation definition that defines phases for reactive propagation through dependent reactive elements.
   *
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
 trait TwoVersionTransaction[S <: Struct] {
 
-  /**
-    * Schedules a temporarily written change to be committed by the turn.
+  /** Schedules a temporarily written change to be committed by the turn.
     *
     * @param committable Commitable element to be scheduled
     */
   def schedule(committable: ReSource[S]): Unit
 
-  /**
-    * Locks (and potentially otherwise prepares) all affected reactive values to prevent interfering changes.
+  /** Locks (and potentially otherwise prepares) all affected reactive values to prevent interfering changes.
     *
     * @param initialWrites List of affected reactive values
     */
   def preparationPhase(initialWrites: Set[ReSource[S]]): Unit
 
-  /**
-    * Starts the propagation by applying the initial changes
+  /** Starts the propagation by applying the initial changes
     * @param initialChanges
     */
   def initializationPhase(initialChanges: Map[ReSource[S], InitialChange[S]]): Unit
@@ -41,8 +37,7 @@ trait TwoVersionTransaction[S <: Struct] {
   /** Call all registered after-commit obverser functions. */
   def observerPhase(): Unit
 
-  /**
-    * Unlocks (and potentially otherwise reverts the propagation preparations for) each reactive value to allow future
+  /** Unlocks (and potentially otherwise reverts the propagation preparations for) each reactive value to allow future
     * turns to run on them.
     */
   def releasePhase(): Unit

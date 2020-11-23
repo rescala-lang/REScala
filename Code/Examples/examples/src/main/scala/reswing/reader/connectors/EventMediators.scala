@@ -11,8 +11,7 @@ trait EventMediator {
   def mediate(fetcher: Fetcher, parser: XmlParser, store: FeedStore, checker: UrlChecker): Unit
 }
 
-/**
-  * The CentralizedEvents class connects the fetcher, parser and the feed store,
+/** The CentralizedEvents class connects the fetcher, parser and the feed store,
   * as they have no knowledge about each other.
   * CentralizedEvents in specific uses the classses as follows:
   *   1. the fetcher fetches a xml feed

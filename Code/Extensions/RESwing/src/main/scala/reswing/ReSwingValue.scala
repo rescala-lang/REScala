@@ -60,8 +60,7 @@ object ReSwingValue {
   /** Does not cause the `Swing` library to use a specific value. */
   implicit def apply[T](value: Unit): ReSwingNoValue[T] = ReSwingNoValue[T]()
 
-  /**
-    * Sets the given value once.
+  /** Sets the given value once.
     * After this, does not cause the `Swing` library to use a specific value.
     */
   implicit def apply[T](value: T): ReSwingValueValue[T] = ReSwingValueValue(value)
@@ -69,8 +68,7 @@ object ReSwingValue {
   /** Sets the value whenever the given Event changes. */
   implicit def apply[T](value: => Event[T]): ReSwingEventValue[T] = ReSwingEventValue(Lazy { value })
 
-  /**
-    * Sets the value to the value of the given Signal and causes
+  /** Sets the value to the value of the given Signal and causes
     * the `Swing` library to always use the current `Signal` value.
     */
   implicit def apply[T](value: => Signal[T]): ReSwingSignalValue[T] = ReSwingSignalValue(Lazy { value })

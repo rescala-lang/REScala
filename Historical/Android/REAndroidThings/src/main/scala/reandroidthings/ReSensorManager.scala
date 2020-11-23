@@ -148,27 +148,23 @@ object ReSensorManager {
   /** rate (default) suitable for screen orientation changes */
   final val SensorDelayNormal = SensorManager.SENSOR_DELAY_NORMAL
 
-  /**
-    * The values returned by this sensor cannot be trusted because the sensor
+  /** The values returned by this sensor cannot be trusted because the sensor
     * had no contact with what it was measuring (for example, the heart rate
     * monitor is not in contact with the user).
     */
   final val SensorStatusNoContact = SensorManager.SENSOR_STATUS_NO_CONTACT
 
-  /**
-    * The values returned by this sensor cannot be trusted, calibration is
+  /** The values returned by this sensor cannot be trusted, calibration is
     * needed or the environment doesn't allow readings
     */
   final val SensorStatusUnreliable = SensorManager.SENSOR_STATUS_UNRELIABLE
 
-  /**
-    * This sensor is reporting data with low accuracy, calibration with the
+  /** This sensor is reporting data with low accuracy, calibration with the
     * environment is needed
     */
   final val SensorStatusAccuracyLow = SensorManager.SENSOR_STATUS_ACCURACY_LOW
 
-  /**
-    * This sensor is reporting data with an average level of accuracy,
+  /** This sensor is reporting data with an average level of accuracy,
     * calibration with the environment may improve the readings
     */
   final val SensorStatusAccuracyMedium = SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM

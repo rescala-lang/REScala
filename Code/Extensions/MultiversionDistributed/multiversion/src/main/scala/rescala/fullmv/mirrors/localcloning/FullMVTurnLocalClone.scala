@@ -119,29 +119,26 @@ object FullMVTurnLocalClone {
               FakeDelayer.async(
                 reflectionHost,
                 mirrorHost,
-                fakeDelay, {
-                  localMirror.asyncAddPredecessorReplicator(
-                    new FullMVTurnPredecessorReflectionProxy {
-                      override def newPredecessors(
-                          predecessors: TransactionSpanningTreeNode[FullMVTurn],
-                          clock: Int
-                      ): Future[Unit] =
-                        FakeDelayer.requestReply(
-                          mirrorHost,
-                          reflectionHost,
-                          fakeDelay,
-                          replicator.newPredecessors(
-                            predecessors.map((turn: FullMVTurn) =>
-                              FullMVTurnLocalClone(turn, reflectionHost, fakeDelay)
-                            ),
-                            clock
-                          )
+                fakeDelay,
+                localMirror.asyncAddPredecessorReplicator(
+                  new FullMVTurnPredecessorReflectionProxy {
+                    override def newPredecessors(
+                        predecessors: TransactionSpanningTreeNode[FullMVTurn],
+                        clock: Int
+                    ): Future[Unit] =
+                      FakeDelayer.requestReply(
+                        mirrorHost,
+                        reflectionHost,
+                        fakeDelay,
+                        replicator.newPredecessors(
+                          predecessors.map((turn: FullMVTurn) => FullMVTurnLocalClone(turn, reflectionHost, fakeDelay)),
+                          clock
                         )
-                    },
-                    startAt.map(FullMVTurnLocalClone(_, mirrorHost, fakeDelay)),
-                    clock
-                  )
-                }
+                      )
+                  },
+                  startAt.map(FullMVTurnLocalClone(_, mirrorHost, fakeDelay)),
+                  clock
+                )
               )
           }
           new FullMVTurnReflection(reflectionHost, turn.guid, phase, mirrorProxy)

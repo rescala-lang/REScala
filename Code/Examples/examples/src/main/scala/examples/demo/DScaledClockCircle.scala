@@ -7,8 +7,7 @@ import rescala.default._
 
 import scala.swing.{MainFrame, SimpleSwingApplication, UIElement}
 
-/**
-  * So far, we showed Vars and Signals defined as a transformation
+/** So far, we showed Vars and Signals defined as a transformation
   * of one other Var or Signal. Signals can, however, also be derived
   * from a combination of multiple other Vars and Signals through
   * Signal expressions. To demonstrate Signal expressions, we extend

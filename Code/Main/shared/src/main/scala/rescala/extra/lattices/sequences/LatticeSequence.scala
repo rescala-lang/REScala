@@ -36,8 +36,7 @@ case class LatticeSequence[A, VertexSet](vertices: VertexSet, edges: Map[Vertex,
     addRight(position, Vertex.fresh(), a)
   }
 
-  /**
-    * This method allows insertions of any type into the RGA. This is used to move the start and end nodes
+  /** This method allows insertions of any type into the RGA. This is used to move the start and end nodes
     *
     * @param left     the vertex specifying the position
     * @param insertee the vertex to be inserted right to position

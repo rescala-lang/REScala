@@ -1,7 +1,6 @@
 import rescala.collectionsDefault._
 
-/**
-  * @author gerizuna
+/** @author gerizuna
   * @since 02.07.19
   */
 object Main {

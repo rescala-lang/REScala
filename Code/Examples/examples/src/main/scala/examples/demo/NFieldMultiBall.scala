@@ -5,8 +5,7 @@ import examples.demo.MPlayingFieldBall.PlayingField
 import examples.demo.ui.{Shape, ShapesPanel}
 import rescala.default._
 
-/**
-  * Because we implemented the collision events inside a method, with each
+/** Because we implemented the collision events inside a method, with each
   * derived from parameters to the method, this method implements a blueprint
   * pattern of several Signals, that can be instantiated multiple times for
   * different input parameters. We exploit this here by wrapping our ball

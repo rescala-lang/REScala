@@ -18,7 +18,7 @@ trait LevelBasedSchedulers {
   implicit val synchron: Scheduler[LevelStructImpl] = {
     new TwoVersionScheduler[LevelStructImpl, SimpleNoLock] {
       override protected def makeTransaction(priorTx: Option[SimpleNoLock]): SimpleNoLock = new SimpleNoLock
-      override def schedulerName: String                                             = "Synchron"
+      override def schedulerName: String                                                  = "Synchron"
       override def forceNewTransaction[R](
           initialWrites: Set[ReSource[LevelStructImpl]],
           admissionPhase: AdmissionTicket[LevelStructImpl] => R
@@ -30,7 +30,7 @@ trait LevelBasedSchedulers {
   implicit val unmanaged: Scheduler[LevelStructImpl] =
     new TwoVersionScheduler[LevelStructImpl, SimpleNoLock] {
       override protected def makeTransaction(priorTx: Option[SimpleNoLock]): SimpleNoLock = new SimpleNoLock()
-      override def schedulerName: String                                             = "Unmanaged"
+      override def schedulerName: String                                                  = "Unmanaged"
     }
 
 }

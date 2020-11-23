@@ -8,8 +8,7 @@ import rescala.collectionsDefault._
 
 import scala.util.Random
 
-/**
-  * @author gerizuna
+/** @author gerizuna
   * @since 10.10.19
   */
 

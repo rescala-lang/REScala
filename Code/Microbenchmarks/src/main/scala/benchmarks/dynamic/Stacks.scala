@@ -11,8 +11,7 @@ import rescala.reactives._
 
 import scala.collection.immutable.Range
 
-/**
-  * creates a chain per thread, and connects the result dynamically with the chain of another
+/** creates a chain per thread, and connects the result dynamically with the chain of another
   * sources -> chain … chain -> result <- dynamically chain of other source
   */
 @State(Scope.Benchmark)

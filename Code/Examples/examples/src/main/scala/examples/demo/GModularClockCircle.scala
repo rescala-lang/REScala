@@ -7,8 +7,7 @@ import rescala.default._
 
 import scala.swing.{MainFrame, SimpleSwingApplication, UIElement}
 
-/**
-  * We refactor nsTime and ticks into a reusable framework Clock
+/** We refactor nsTime and ticks into a reusable framework Clock
   * object. To prevent user errors or even malicious attempts at
   * manipulating the time value, Clock should however publish only
   * a Signal[Long], not a Var[Long]. For this purpose, we refactor

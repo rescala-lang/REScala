@@ -79,11 +79,12 @@ class MillDrawer(val game: MillGame) extends ReComponent(preferredSize = new Dim
     val yFactors = List.fill(3)(List(-1, 0, 1, 1, 1, 0, -1, -1)).flatten
 
     for (((xF, yF), i) <- (xFactors zip yFactors).zipWithIndex) yield {
-      val distance: Int = (i / 8 match {
-        case 0 => InnerPercent * squareSize().toFloat
-        case 1 => MiddlePercent * squareSize().toFloat
-        case 2 => squareSize().toFloat
-      }).toInt / 2
+      val distance: Int =
+        (i / 8 match {
+          case 0 => InnerPercent * squareSize().toFloat
+          case 1 => MiddlePercent * squareSize().toFloat
+          case 2 => squareSize().toFloat
+        }).toInt / 2
       Point(midX + xF * distance, midY + yF * distance)
     }
   }
@@ -136,12 +137,13 @@ class MillDrawer(val game: MillGame) extends ReComponent(preferredSize = new Dim
     }
   }
 
-  val indexClicked = (mouse.clicks.released map { e: MouseReleased => //#EF
-    val index = coordinates.value.indexWhere {
-      p => (p distance ((e.point.x, e.point.y))) < ClickArea
-    }
-    SlotIndex(index)
-  }) && (_ != SlotIndex(-1)) //#EF
+  val indexClicked =
+    (mouse.clicks.released map { e: MouseReleased => //#EF
+      val index = coordinates.value.indexWhere {
+        p => (p distance ((e.point.x, e.point.y))) < ClickArea
+      }
+      SlotIndex(index)
+    }) && (_ != SlotIndex(-1)) //#EF
 
   val backgroundRect = Signal { Rect(0, 0, bounds().width, bounds().height) } // #SIG
 

@@ -7,8 +7,7 @@ import rescala.default._
 
 import scala.swing.{MainFrame, SimpleSwingApplication, UIElement}
 
-/**
-  * So far, we demonstrated the Signal abstraction, which allows modular,
+/** So far, we demonstrated the Signal abstraction, which allows modular,
   * yet declarative implementation of interactive applications through
   * deriving state with constraints. The persistent values of Signals
   * are complemented by briefly occurring, transient values of Events,

@@ -4,8 +4,7 @@ import rescala.default._
 
 import scala.collection.immutable.Queue
 
-/**
-  * A mutable Queue working with Signals
+/** A mutable Queue working with Signals
   * (wraps scala.collection.immutable.Queue)
   */
 class SQueue[T] {

@@ -6,16 +6,14 @@ import rescala.reactives.RExceptions.{EmptySignalControlThrowable, ObservedExcep
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
-/**
-  * Pulse that stores a current value and can also indicate a potentially change to an updated value.
+/** Pulse that stores a current value and can also indicate a potentially change to an updated value.
   * A pulse may indicate that no current value has been set yet but updates must always contain a value.
   *
   * @tparam P Stored value type of the Pulse
   */
 sealed trait Pulse[+P] {
 
-  /**
-    * Checks if the pulse indicates a change
+  /** Checks if the pulse indicates a change
     *
     * @return True if the pulse indicates a change, false if not
     */
@@ -25,8 +23,7 @@ sealed trait Pulse[+P] {
       case _        => true
     }
 
-  /**
-    * If the pulse indicates a change: Applies a function to the updated value of the pulse and returns a new pulse
+  /** If the pulse indicates a change: Applies a function to the updated value of the pulse and returns a new pulse
     * indicating a change to this updated value.
     * If the pulse doesn't indicate a change: Returns an empty pulse indicating no change.
     *
@@ -41,8 +38,7 @@ sealed trait Pulse[+P] {
       case ex @ Exceptional(_) => ex
     }
 
-  /**
-    * If the pulse indicates a change: Applies a function to the updated value. The function has to return a new pulse
+  /** If the pulse indicates a change: Applies a function to the updated value. The function has to return a new pulse
     * that is returned by this function.
     * If the pulse doesn't indicate a change: Returns an empty pulse indicating no change.
     *
@@ -57,8 +53,7 @@ sealed trait Pulse[+P] {
       case ex @ Exceptional(_) => ex
     }
 
-  /**
-    * If the pulse indicates a change: Applies a filter function to the updated value of the pulse.
+  /** If the pulse indicates a change: Applies a filter function to the updated value of the pulse.
     * Based on the filter function, the updated value is retained or an empty pulse is returned.
     * If the pulse doesn't indicate a change: Returns an empty pulse indicating no change.
     *
@@ -115,8 +110,7 @@ object Pulse {
 
   sealed trait Change[+P] extends Pulse[P]
 
-  /**
-    * Transforms an optional value into a pulse. If the option doesn't contain a value, an empty pulse indicating no
+  /** Transforms an optional value into a pulse. If the option doesn't contain a value, an empty pulse indicating no
     * change is returned. Otherwise, a pulse with the option's value set as updated value is returned.
     *
     * @param opt Option to transform into a pulse

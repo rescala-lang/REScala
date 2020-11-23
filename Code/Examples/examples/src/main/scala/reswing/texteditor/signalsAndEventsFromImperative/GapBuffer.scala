@@ -2,8 +2,7 @@ package reswing.texteditor.signalsAndEventsFromImperative
 
 import rescala.default._
 
-/**
-  * Iterates over `array` whose content has the size of `count`.
+/** Iterates over `array` whose content has the size of `count`.
   * If `count` is less than the length of `array`, there is assumed to be a
   * gap (a character sequence that does not count as content) in the array,
   * that starts at the position `caret`.
@@ -27,8 +26,7 @@ class CharacterIterator(buf: Array[Char], count: Int, caret: Int) extends Iterat
   }
 }
 
-/**
-  * Implements a gap buffer that allows for efficient character insertion and
+/** Implements a gap buffer that allows for efficient character insertion and
   * deletion at the current caret position.
   *
   * The content is located in two contiguous segments inside an array.

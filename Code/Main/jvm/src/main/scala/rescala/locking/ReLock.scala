@@ -17,8 +17,7 @@ final class ReLock[InterTurn]() {
   /** returns true if key owns the write lock */
   def isOwner(key: Key[InterTurn]): Boolean = owner.get() eq key
 
-  /**
-    * locks this if it is free, returns the current owner (which is key, if locking succeeded)
+  /** locks this if it is free, returns the current owner (which is key, if locking succeeded)
     * does not check for shared access.
     */
   @tailrec

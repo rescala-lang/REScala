@@ -7,8 +7,7 @@ import rescala.reactives._
 import scala.collection.mutable
 import util.control.Breaks._
 
-/**
-  * @tparam T Type of values inside Deltas
+/** @tparam T Type of values inside Deltas
   * @tparam S Structure of Reactive Sequence source
   */
 trait ReactiveDeltaSeq[T, S <: Struct] extends ReSource[S] {
@@ -16,8 +15,7 @@ trait ReactiveDeltaSeq[T, S <: Struct] extends ReSource[S] {
   /** the value of deltas send through the set */
   override type Value = Delta[T]
 
-  /**
-    * Returns current ReactiveDeltaSeq as an Event
+  /** Returns current ReactiveDeltaSeq as an Event
     *
     * @param ticket a creation ticket as a new event will be created which has the ReactiveDeltaSeq as dependency
     * @return
@@ -35,8 +33,7 @@ trait ReactiveDeltaSeq[T, S <: Struct] extends ReSource[S] {
     }
   }
 
-  /**
-    * Based on the concept of reversible Folds
+  /** Based on the concept of reversible Folds
     * Used to fold the deltas basing on fold for Addition-Delta and unfold for Removal-Delta
     *
     * @param initial is the initial value the foldUndo folds to
@@ -95,8 +92,7 @@ trait ReactiveDeltaSeq[T, S <: Struct] extends ReSource[S] {
   //    )
   //  }
 
-  /**
-    * Filters the sequence , basing on filterExpression and returns the new filtered sequence
+  /** Filters the sequence , basing on filterExpression and returns the new filtered sequence
     *
     * @param filterOperation the operation used for filtering
     * @param ticket          for creating the new source
@@ -114,8 +110,7 @@ trait ReactiveDeltaSeq[T, S <: Struct] extends ReSource[S] {
     }
   }
 
-  /**
-    * Maps the elements of ReactiveDeltaSeq and returns a new ReactiveDeltaSeq with the mapped deltas with the old ReactiveDeltaSeq as dependency
+  /** Maps the elements of ReactiveDeltaSeq and returns a new ReactiveDeltaSeq with the mapped deltas with the old ReactiveDeltaSeq as dependency
     *
     * @param mapOperation the operation used for mapping the values of ReactiveDeltaSeq to MapDeltaSeq
     * @param ticket       Ticket for creating the new ReactiveDeltaSeq
@@ -134,8 +129,7 @@ trait ReactiveDeltaSeq[T, S <: Struct] extends ReSource[S] {
     }
   }
 
-  /**
-    * Concatenates the ReactiveDeltaSeq with another (that) ReactiveDeltaSeq by returning a new ReactiveDeltaSeq (ConcatenateDeltaSeq)
+  /** Concatenates the ReactiveDeltaSeq with another (that) ReactiveDeltaSeq by returning a new ReactiveDeltaSeq (ConcatenateDeltaSeq)
     *
     * @param that   the ReactiveDeltaSeq which will be concatenated with this
     * @param ticket used for the creation of the concatenated ReactiveDeltaSeq
@@ -157,8 +151,7 @@ trait ReactiveDeltaSeq[T, S <: Struct] extends ReSource[S] {
     }
   }
 
-  /**
-    * Returns the sizeOfSeq of the ReactiveDeltaSeq
+  /** Returns the sizeOfSeq of the ReactiveDeltaSeq
     *
     * @param ticket for creating the Signal holding the value of sizeOfSeq
     * @param resInt needed by REScala API for Signal/Event holding Ints //TODO check
@@ -168,8 +161,7 @@ trait ReactiveDeltaSeq[T, S <: Struct] extends ReSource[S] {
   def size(implicit ticket: CreationTicket[S], resInt: ReSerializable[Int]): Signal[Int, S] =
     foldUndo(0)((counted: Int, _) => counted + 1)((counted: Int, _) => counted - 1)
 
-  /**
-    * Counts number of elements fulfilling the condition provided
+  /** Counts number of elements fulfilling the condition provided
     *
     * @param fulfillsCondition the condition values of deltas have to fulfill to be taken in consideration
     * @param ticket            for creating the Signal holding the value of counted elements
@@ -185,8 +177,7 @@ trait ReactiveDeltaSeq[T, S <: Struct] extends ReSource[S] {
       if (fulfillsCondition(x.value)) counted - 1 else counted
     }
 
-  /**
-    * To check if an element is in the sequence
+  /** To check if an element is in the sequence
     *
     * @param element element to search for
     * @param ticket  for creating the Signal holding the boolean value
@@ -205,8 +196,7 @@ trait ReactiveDeltaSeq[T, S <: Struct] extends ReSource[S] {
     instancesNumber.map(x => x > 0)
   }
 
-  /**
-    * To check if elements fulfilling the condition exists
+  /** To check if elements fulfilling the condition exists
     *
     * @param fulfillsCondition the condition values of deltas have to fulfill to be taken in consideration
     * @param ticket            for creating the Signal holding the boolean value
@@ -224,8 +214,7 @@ trait ReactiveDeltaSeq[T, S <: Struct] extends ReSource[S] {
     instancesNumber.map(x => x > 0)
   }
 
-  /**
-    * @param ticket used for creation of new sources
+  /** @param ticket used for creation of new sources
     * @param ord    the ordering needed to compare values of deltas for finding the minimum
     * @param res    ...
     * @return Signal holding the optional minimum (as it could be None if the seqeunce is empty)
@@ -280,8 +269,7 @@ trait ReactiveDeltaSeq[T, S <: Struct] extends ReSource[S] {
     })
   }
 
-  /**
-    * @param ticket used for creation of new sources
+  /** @param ticket used for creation of new sources
     * @param ord    the ordering needed to compare values of deltas for finding the minimum
     * @param res    ...
     * @return Signal holding the optional minimum (as it could be None if the seqeunce is empty)
@@ -330,8 +318,7 @@ trait ReactiveDeltaSeq[T, S <: Struct] extends ReSource[S] {
 
 }
 
-/**
-  * @param left
+/** @param left
   * @param right
   * @param initialState
   * @param name
@@ -344,8 +331,7 @@ class ConcatenateDeltaSeq[T, S <: Struct](left: ReactiveDeltaSeq[T, S], right: R
 ) extends Base[Delta[T], S](initialState, name)
     with ReactiveDeltaSeq[T, S] {
 
-  /**
-    * @param input
+  /** @param input
     * @return
     */
   override protected[rescala] def reevaluate(input: ReIn): Rout = {
@@ -363,8 +349,7 @@ class ConcatenateDeltaSeq[T, S <: Struct](left: ReactiveDeltaSeq[T, S], right: R
   }
 }
 
-/**
-  * Class used for filtering ReactiveDeltaSeq
+/** Class used for filtering ReactiveDeltaSeq
   *
   * @param in           the ReactiveDeltaSeq to filter
   * @param expression   filterExpression with return type boolean used for filtering elements inside the sequence
@@ -379,8 +364,7 @@ class FilterDeltaSeq[T, S <: Struct](in: ReactiveDeltaSeq[T, S], expression: T =
 ) extends Base[Delta[T], S](initialState, name)
     with ReactiveDeltaSeq[T, S] {
 
-  /**
-    * @param input Basing ReIn Ticket filters the ReactiveDeltaSeq using the filterExpression define above. That it uses withValue to write the new Sequence
+  /** @param input Basing ReIn Ticket filters the ReactiveDeltaSeq using the filterExpression define above. That it uses withValue to write the new Sequence
     * @return Returns the new Sequence
     */
   override protected[rescala] def reevaluate(input: ReIn): Rout = {
@@ -390,8 +374,7 @@ class FilterDeltaSeq[T, S <: Struct](in: ReactiveDeltaSeq[T, S], expression: T =
   }
 }
 
-/**
-  * Class used for filtering ReactiveDeltaSeq
+/** Class used for filtering ReactiveDeltaSeq
   *
   * @param in           the ReactiveDeltaSeq to filter
   * @param op           mapOperation to map sequence
@@ -406,8 +389,7 @@ class MapDeltaSeq[T, A, S <: Struct](in: ReactiveDeltaSeq[T, S], op: T => A)(
 ) extends Base[Delta[A], S](initialState, name)
     with ReactiveDeltaSeq[A, S] {
 
-  /**
-    * @param input Basing ReIn Ticket maps the ReactiveDeltaSeq using the fold defined above. That it uses withValue to write the new Sequence
+  /** @param input Basing ReIn Ticket maps the ReactiveDeltaSeq using the fold defined above. That it uses withValue to write the new Sequence
     * @return Returns the new Sequence
     */
   override protected[rescala] def reevaluate(input: ReIn): Rout = {

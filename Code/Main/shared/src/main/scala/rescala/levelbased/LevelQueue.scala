@@ -5,8 +5,7 @@ import java.util.PriorityQueue
 import rescala.core.{Derived, Struct}
 import rescala.levelbased.LevelQueue.QueueElement
 
-/**
-  * Level-based queue used the determine an evaluation order for reactive elements
+/** Level-based queue used the determine an evaluation order for reactive elements
   *
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
@@ -14,8 +13,7 @@ final private[levelbased] class LevelQueue[S <: LevelStruct](evaluator: LevelQue
 
   private val elements = new PriorityQueue[QueueElement[S]]()
 
-  /**
-    * Gets the level of the current head element of the queue (if existing).
+  /** Gets the level of the current head element of the queue (if existing).
     * Used to determine if newly created reactives have to be evaluated.
     *
     * @return Level of the current queue head
@@ -24,8 +22,7 @@ final private[levelbased] class LevelQueue[S <: LevelStruct](evaluator: LevelQue
     if (elements.peek() == null) Int.MaxValue
     else elements.peek().level
 
-  /**
-    * Adds a new reactive element to the queue
+  /** Adds a new reactive element to the queue
     *
     * @param minLevel      Minimum level to assign the the element (overrides the elements original level if larger)
     * @param needsEvaluate Indicates if the element needs re-evaluation itself, otherwise it is just a level change
@@ -35,8 +32,7 @@ final private[levelbased] class LevelQueue[S <: LevelStruct](evaluator: LevelQue
     elements.offer(QueueElement[S](dep.state.level(), dep, minLevel, needsEvaluate))
   }
 
-  /**
-    * Handles a queue element by applying the given evaluator to it and scheduling the next elements for evaluation
+  /** Handles a queue element by applying the given evaluator to it and scheduling the next elements for evaluation
     *
     * @param queueElement Element to evaluate
     */
@@ -73,8 +69,7 @@ final private[levelbased] class LevelQueue[S <: LevelStruct](evaluator: LevelQue
 
   }
 
-  /**
-    * Removes a reactive element from the queue
+  /** Removes a reactive element from the queue
     *
     * @param reactive Element to remove from the queue
     */

@@ -3,8 +3,7 @@ package rescala.core
 import rescala.core.Initializer.{InitValues, Unchange}
 import rescala.incremental.Delta
 
-/**
-  * @author gerizuna
+/** @author gerizuna
   * @since 04.07.19
   */
 object CollectionsInitializer {

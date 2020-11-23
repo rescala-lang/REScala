@@ -38,8 +38,7 @@ trait Initializer[S <: Struct] {
   protected[this] def makeSourceStructState[V](valuePersistency: V): S#State[V, S] =
     makeDerivedStructState[V](valuePersistency)
 
-  /**
-    * to be implemented by the propagation algorithm, called when a new reactive has been instantiated and needs to be connected to the graph and potentially reevaluated.
+  /** to be implemented by the propagation algorithm, called when a new reactive has been instantiated and needs to be connected to the graph and potentially reevaluated.
     *
     * @param reactive                     the newly instantiated reactive
     * @param incoming                     a set of incoming dependencies

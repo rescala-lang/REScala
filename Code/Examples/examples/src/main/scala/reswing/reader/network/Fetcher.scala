@@ -11,8 +11,7 @@ import scala.xml.NodeSeq
 import scala.xml.XML
 import rescala.default._
 
-/**
-  * The Fetcher is responsible to fetch the xml data
+/** The Fetcher is responsible to fetch the xml data
   * After fetching the data an event is triggered
   */
 class Fetcher(val urls: Signal[Set[URL]]) {

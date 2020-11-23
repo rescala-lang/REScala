@@ -3,8 +3,7 @@ import rescala.default._
 import rescala.extra.lattices.sequences.RGA.RGA
 import rescala.extra.lattices.sequences.{RGA, Vertex}
 
-/**
-  * DistributedVertexLists are LinkedLists operating on so called Vertices. Vertices store a value of type `A`.
+/** DistributedVertexLists are LinkedLists operating on so called Vertices. Vertices store a value of type `A`.
   *
   * @param initial The initial value of this variable.
   */

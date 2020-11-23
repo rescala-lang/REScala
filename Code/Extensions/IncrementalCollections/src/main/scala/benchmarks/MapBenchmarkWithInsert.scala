@@ -10,8 +10,7 @@ import rescala.parrp.ParRP
 
 import scala.util.Random
 
-/**
-  * @author gerizuna
+/** @author gerizuna
   * @since 10.10.19
   */
 @BenchmarkMode(Array(Mode.AverageTime))

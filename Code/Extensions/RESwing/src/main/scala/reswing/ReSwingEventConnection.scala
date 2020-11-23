@@ -6,8 +6,7 @@ import rescala.default._
 import scala.collection.mutable.ListBuffer
 import scala.swing.{Publisher, Reactor, UIElement}
 
-/**
-  * Introduces methods to connect a [[ReSwingEvent]] to the corresponding
+/** Introduces methods to connect a [[ReSwingEvent]] to the corresponding
   * `Swing` reaction of the underlying `Swing` component.
   *
   * Classes that extend this trait can use a declarative syntax to specify

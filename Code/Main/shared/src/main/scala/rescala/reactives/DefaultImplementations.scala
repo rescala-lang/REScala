@@ -9,10 +9,10 @@ import rescala.reactives.Signals.{SignalResource, Sstate}
 
 trait DefaultImplementations[S <: Struct] {
   class SignalImpl[T](
-                       initial: Sstate[T, S],
-                       expr: (DynamicTicket[S], () => T) => T,
-                       name: ReName,
-                       isDynamicWithStaticDeps: Option[Set[ReSource[S]]]
+      initial: Sstate[T, S],
+      expr: (DynamicTicket[S], () => T) => T,
+      name: ReName,
+      isDynamicWithStaticDeps: Option[Set[ReSource[S]]]
   ) extends DerivedImpl[T](initial, name, isDynamicWithStaticDeps)
       with SignalResource[T, S] {
 
@@ -36,12 +36,12 @@ trait DefaultImplementations[S <: Struct] {
   }
 
   class EventImpl[T](
-                      initial: Estate[S, T],
-                      expr: DynamicTicket[S] => Pulse[T],
-                      name: ReName,
-                      /** If this is None, the event is static. Else, it is dynamic with the set of static dependencies */
-                      isDynamicWithStaticDeps: Option[Set[ReSource[S]]],
-                      override val rescalaAPI: RescalaInterface[S]
+      initial: Estate[S, T],
+      expr: DynamicTicket[S] => Pulse[T],
+      name: ReName,
+      /** If this is None, the event is static. Else, it is dynamic with the set of static dependencies */
+      isDynamicWithStaticDeps: Option[Set[ReSource[S]]],
+      override val rescalaAPI: RescalaInterface[S]
   ) extends DerivedImpl[T](initial, name, isDynamicWithStaticDeps)
       with Event[T, S] {
 
@@ -52,10 +52,10 @@ trait DefaultImplementations[S <: Struct] {
   }
 
   class ChangeEventImpl[T](
-                            _bud: S#State[(Pulse[T], Pulse[Diff[T]]), S],
-                            signal: reactives.Signal[T, S],
-                            name: ReName,
-                            override val rescalaAPI: RescalaInterface[S]
+      _bud: S#State[(Pulse[T], Pulse[Diff[T]]), S],
+      signal: reactives.Signal[T, S],
+      name: ReName,
+      override val rescalaAPI: RescalaInterface[S]
   ) extends Base[(Pulse[T], Pulse[Diff[T]]), S](_bud, name)
       with Derived[S]
       with Event[Diff[T], S]

@@ -3,8 +3,7 @@ package reswing
 import rescala.macros.cutOutOfUserComputation
 import rescala.default.{Event, Evt, implicitScheduler}
 
-/**
-  * Represents `Swing` events that are fired by the library or passed to the
+/** Represents `Swing` events that are fired by the library or passed to the
   * library.
   */
 sealed abstract class ReSwingEvent[T] {

@@ -2,8 +2,7 @@ package tests.rescala.static.events
 
 import tests.rescala.testtools.RETests
 
-/**
-  * Demonstrates some of the features and of the limitations of the
+/** Demonstrates some of the features and of the limitations of the
   * current implementation w.r.t. OO design, like inheritance,
   * polymorphism, overriding, etc...
   */

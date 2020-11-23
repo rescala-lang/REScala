@@ -4,8 +4,7 @@ import examples.demo.GModularClockCircle.Clock
 import examples.demo.ui.{Circle, Point, Shape, ShapesPanel}
 import rescala.default._
 
-/**
-  * We now convert our BouncingBall into an external Module, similar
+/** We now convert our BouncingBall into an external Module, similar
   * to Clock earlier. We begin by wrapping the movement code into
   * a class. We leave the ball diameter and position reset Event as
   * a Signal and Event that are passed in at instantiation. We make

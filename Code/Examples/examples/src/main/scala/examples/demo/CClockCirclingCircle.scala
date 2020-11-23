@@ -7,8 +7,7 @@ import rescala.default._
 
 import scala.swing.{MainFrame, SimpleSwingApplication, UIElement}
 
-/**
-  * In an effort to make the animation's timing more accurate,
+/** In an effort to make the animation's timing more accurate,
   * we refactor the application to use the actual System's time.
   * We introduce a Var nsTime, which we assign the System's
   * current timestamp. We add a tick() method, which re-assigns

@@ -54,15 +54,16 @@ object ReAlphaNumericDisplay {
 
   /** removes the inputEvent and turns off the display */
   def destroy(): Unit = {
-    if (peer != null) try {
-      peer.clear
-      peer.setEnabled(false)
+    if (peer != null)
+      try {
+        peer.clear
+        peer.setEnabled(false)
 
-      eventObserver.remove
-      peer.close
-    } catch {
-      case e: IOException =>
-        Log.e(TAG, "Error disabling display", e)
-    }
+        eventObserver.remove
+        peer.close
+      } catch {
+        case e: IOException =>
+          Log.e(TAG, "Error disabling display", e)
+      }
   }
 }

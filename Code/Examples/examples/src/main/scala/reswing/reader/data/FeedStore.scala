@@ -2,8 +2,7 @@ package reswing.reader.data
 
 import rescala.default._
 
-/**
-  * The FeedStore stores RSSChannels and RSSItems.
+/** The FeedStore stores RSSChannels and RSSItems.
   * More specifically, it stores the relation between an RSS Item and its channel
   * to enable clients to ask e.g. for all items stored related to a specific channel.
   */

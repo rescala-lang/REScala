@@ -251,13 +251,14 @@ object CostAssessment {
   }
 
   def main(args: Array[String]): Unit = {
-    val length = if (args.length == 0) {
-      println("using default length 1")
-      1
-    } else {
-      println("using length " + args(0))
-      Integer.parseInt(args(0))
-    }
+    val length =
+      if (args.length == 0) {
+        println("using default length 1")
+        1
+      } else {
+        println("using length " + args(0))
+        Integer.parseInt(args(0))
+      }
 
     def measure[R](rowId: String, run: => (R, List[Map[String, Set[Int]]])): (String, R) = {
       println(s"Running $rowId...")

@@ -2,8 +2,7 @@ package rescala.reactives
 
 import rescala.core._
 
-/**
-  * Generic interface for observers that represent a function registered to trigger for every reevaluation of a reactive value.
+/** Generic interface for observers that represent a function registered to trigger for every reevaluation of a reactive value.
   * Currently this interface is only used to allow a removal of registered observer functions.
   *
   * @tparam S Struct type used for the propagation of the signal

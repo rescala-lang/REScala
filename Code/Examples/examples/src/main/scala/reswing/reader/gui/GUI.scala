@@ -9,8 +9,7 @@ import reswing._
 
 import scala.swing._
 
-/**
-  * Responsible for displaying the content of the given FeedStore
+/** Responsible for displaying the content of the given FeedStore
   * The connections between the displayed content is mainly coordinated
   * by an initialized content mediator
   */

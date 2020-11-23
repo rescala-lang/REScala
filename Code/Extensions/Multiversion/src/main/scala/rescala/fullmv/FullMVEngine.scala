@@ -81,16 +81,17 @@ class FullMVEngine(val timeout: Duration, val schedulerName: String)
       turn.completeExecuting()
 
       // wrap-up "phase"
-      val transactionResult = if (admissionTicket.wrapUp == null) {
-        admissionResult
-      } else {
-        val wrapUpTicket = turn.accessTicket()
-        admissionResult.map { i =>
-          // executed in map call so that exceptions in wrapUp make the transaction result a Failure
-          admissionTicket.wrapUp(wrapUpTicket)
-          i
+      val transactionResult =
+        if (admissionTicket.wrapUp == null) {
+          admissionResult
+        } else {
+          val wrapUpTicket = turn.accessTicket()
+          admissionResult.map { i =>
+            // executed in map call so that exceptions in wrapUp make the transaction result a Failure
+            admissionTicket.wrapUp(wrapUpTicket)
+            i
+          }
         }
-      }
 
       // result
       transactionResult.get

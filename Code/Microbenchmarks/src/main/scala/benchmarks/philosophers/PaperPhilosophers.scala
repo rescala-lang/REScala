@@ -28,9 +28,10 @@ abstract class PaperPhilosophers[S <: Struct](val size: Int, val engine: Rescala
 
   case object Thinking extends Philosopher
 
-  val phils = for (idx <- 0 until size) yield ReName.named(s"phil(${idx + 1})") { implicit ! =>
-    Var[Philosopher](Thinking)
-  }
+  val phils =
+    for (idx <- 0 until size) yield ReName.named(s"phil(${idx + 1})") { implicit ! =>
+      Var[Philosopher](Thinking)
+    }
 
   sealed trait Fork
 
@@ -38,17 +39,18 @@ abstract class PaperPhilosophers[S <: Struct](val size: Int, val engine: Rescala
 
   case class Taken(by: Int) extends Fork
 
-  val forks = for (idx <- 0 until size) yield ReName.named(s"fork(${idx + 1})") { implicit ! =>
-    Signal.dynamic[Fork] {
-      val nextIdx = (idx + 1) % size
-      (phils(idx)(), phils(nextIdx)()) match {
-        case (Thinking, Thinking) => Free
-        case (Eating, Thinking)   => Taken(idx)
-        case (Thinking, Eating)   => Taken(nextIdx)
-        case (Eating, Eating)     => throw new AssertionError(s"fork ${idx + 1} double use")
+  val forks =
+    for (idx <- 0 until size) yield ReName.named(s"fork(${idx + 1})") { implicit ! =>
+      Signal.dynamic[Fork] {
+        val nextIdx = (idx + 1) % size
+        (phils(idx)(), phils(nextIdx)()) match {
+          case (Thinking, Thinking) => Free
+          case (Eating, Thinking)   => Taken(idx)
+          case (Thinking, Eating)   => Taken(nextIdx)
+          case (Eating, Eating)     => throw new AssertionError(s"fork ${idx + 1} double use")
+        }
       }
     }
-  }
 
   sealed trait Sight
 
@@ -181,13 +183,14 @@ trait NoTopper[S <: Struct] extends IndividualCounts[S] {
 
   val locks = Array.fill(size) { new ReentrantLock() }
   override def manuallyLocked[T](idx: Int)(f: => T): T = {
-    val (lock1, lock2, lock3) = if (idx == 0) {
-      (locks(0), locks(1), locks(size - 1))
-    } else if (idx == size - 1) {
-      (locks(0), locks(size - 2), locks(size - 1))
-    } else {
-      (locks(idx - 1), locks(idx), locks(idx + 1))
-    }
+    val (lock1, lock2, lock3) =
+      if (idx == 0) {
+        (locks(0), locks(1), locks(size - 1))
+      } else if (idx == size - 1) {
+        (locks(0), locks(size - 2), locks(size - 1))
+      } else {
+        (locks(idx - 1), locks(idx), locks(idx + 1))
+      }
     lock1.lock(); lock2.lock(); lock3.lock()
     try {
       f
@@ -241,21 +244,22 @@ object PaperPhilosophers {
     val duration    = if (args.length >= 3) Integer.parseInt(args(2)) else 0
 
     implicit val engine = new rescala.fullmv.FullMVEngine(Duration.Zero, s"PaperPhilosophers($tableSize,$threadCount)")
-    val table = new PaperPhilosophers(tableSize, engine, Dynamicity.Dynamic)
-      with SignalPyramidTopper[rescala.fullmv.FullMVStruct]
+    val table =
+      new PaperPhilosophers(tableSize, engine, Dynamicity.Dynamic) with SignalPyramidTopper[rescala.fullmv.FullMVStruct]
 //    implicit val engine = rescala.levelbased.LevelBasedPropagationEngines.unmanaged
 //    val table = new PaperPhilosophers(tableSize, engine, Dynamicity.Static) with NoTopper[rescala.levelbased.SimpleStruct] with ManualLocking[rescala.levelbased.SimpleStruct]
 
 //    println("====================================================================================================")
 
-    val continue: () => Boolean = if (duration == 0) {
-      println("Running in interactive mode: press <Enter> to terminate.")
-      () => System.in.available() <= 0
-    } else {
-      println(s"Running for ${duration / 1000} seconds...")
-      val end = System.currentTimeMillis() + duration
-      () => System.currentTimeMillis() < end
-    }
+    val continue: () => Boolean =
+      if (duration == 0) {
+        println("Running in interactive mode: press <Enter> to terminate.")
+        () => System.in.available() <= 0
+      } else {
+        println(s"Running for ${duration / 1000} seconds...")
+        val end = System.currentTimeMillis() + duration
+        () => System.currentTimeMillis() < end
+      }
 
     @volatile var abort: Boolean = false
     def driver(idx: Int): Int = {

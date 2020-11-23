@@ -78,10 +78,11 @@ class FullMVTurnTransitiveReachabilityTest extends AnyFunSuite {
   ): Map[Int, Set[Int]] = {
     val fromTree = trees(from)
     val toTree   = trees(to)
-    val res = if (!fromTree.isTransitivePredecessor(toTree)) {
-      Await.result(fromTree.addPredecessor(toTree.selfNode), Duration.Zero)
-      addedEdges + (from -> (addedEdges(from) + to))
-    } else addedEdges
+    val res =
+      if (!fromTree.isTransitivePredecessor(toTree)) {
+        Await.result(fromTree.addPredecessor(toTree.selfNode), Duration.Zero)
+        addedEdges + (from -> (addedEdges(from) + to))
+      } else addedEdges
 
     val transitiveClosure = computeTransitiveClosure(nodes, res)
     assert(

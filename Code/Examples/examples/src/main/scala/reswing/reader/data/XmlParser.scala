@@ -14,8 +14,7 @@ import scala.xml.NodeSeq
 import rescala.default._
 import reswing.reader.common.sequence
 
-/**
-  * The XMLParser is responsible for the translation of xml to the
+/** The XMLParser is responsible for the translation of xml to the
   * internal represantation of the RSS Feed
   */
 class XmlParser {
@@ -37,8 +36,7 @@ class XmlParser {
 
   val dateFormat = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z", Locale.ENGLISH)
 
-  /**
-    * Parses a RSSChannel from the given xml NodeSeq, does NOT set the source url
+  /** Parses a RSSChannel from the given xml NodeSeq, does NOT set the source url
     *
     * @param xmlNode - the xml data to parse
     *
@@ -52,8 +50,7 @@ class XmlParser {
     parseChannel((xmlNode, None))
   }
 
-  /**
-    * Parses a RSSChannel from the given xml NodeSeq and sets the source url
+  /** Parses a RSSChannel from the given xml NodeSeq and sets the source url
     *
     * @param xmlNode - the xml data to parse
     * @param url     - the url the channel was retrieved from
@@ -81,8 +78,7 @@ class XmlParser {
         None
   }
 
-  /**
-    * Parses a RSSItem from the given NodeSeq
+  /** Parses a RSSItem from the given NodeSeq
     *
     * NOTE: does not set the sourceChannel
     *
@@ -109,8 +105,7 @@ class XmlParser {
     Some(result)
   }
 
-  /**
-    * Parses the given xml into the RSS Channel and RSS Item classes
+  /** Parses the given xml into the RSS Channel and RSS Item classes
     *
     * @param data - the xml data to parse
     * @param url  - the source url for the channel

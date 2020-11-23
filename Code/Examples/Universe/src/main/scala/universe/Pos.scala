@@ -6,7 +6,7 @@ case class Pos(x: Int, y: Int) {
   def directionTo(target: Pos): Pos = (target - this).normalize
   def -(other: Pos): Pos            = this + (other.unary_-)
   def +(other: Pos): Pos            = Pos(x + other.x, y + other.y)
-  def unary_- : Pos                = Pos(-x, -y)
+  def unary_- : Pos                 = Pos(-x, -y)
   def normalize: Pos                = /(euclidianNorm)
   def /(scalar: Double): Pos =
     Pos(scala.math.round(x / scalar).asInstanceOf[Int], scala.math.round(y / scalar).asInstanceOf[Int])

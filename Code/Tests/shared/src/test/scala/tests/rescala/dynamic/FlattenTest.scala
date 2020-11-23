@@ -361,7 +361,7 @@ class FlattenTest extends RETests {
       val joined = Evt[String]()
       import scala.concurrent.ExecutionContext.Implicits.global
       val res = (joined.map(str => engine.Signals.fromFuture(Future.successful(str)))
-             .latest(Signal { "unknown" })).flatten
+        .latest(Signal { "unknown" })).flatten
 
       joined.fire("test")
 

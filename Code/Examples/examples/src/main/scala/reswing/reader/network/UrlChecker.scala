@@ -13,8 +13,7 @@ class UrlChecker {
   type CheckResult = Either[String, URL]
   type AfterCheck  = (CheckArg, CheckResult)
 
-  /**
-    * Try to increase confidence that the String is a valid feed url
+  /** Try to increase confidence that the String is a valid feed url
     * by performing some simple checks.
     *
     * @param url The string to check

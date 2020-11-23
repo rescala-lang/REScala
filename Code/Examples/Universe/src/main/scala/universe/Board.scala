@@ -11,8 +11,7 @@ object Board {
   def square(range: Int): IndexedSeq[Pos]              = for (x <- -range to range; y <- -range to range) yield Pos(x, y)
 }
 
-/**
-  * Mutable data structure which stores board elements in 2-dimensional coordinates.
+/** Mutable data structure which stores board elements in 2-dimensional coordinates.
   * A Board is infinite, but width and height specify the area being displayed.
   */
 class Board(val width: Int, val height: Int) {

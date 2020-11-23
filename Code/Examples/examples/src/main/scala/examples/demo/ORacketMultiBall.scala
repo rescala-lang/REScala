@@ -7,8 +7,7 @@ import examples.demo.MPlayingFieldBall.PlayingField
 import examples.demo.ui.{Rectangle, Shape, ShapesPanel}
 import rescala.default._
 
-/**
-  * Lastly, we implement a Racket module, that implements a Rectangle
+/** Lastly, we implement a Racket module, that implements a Rectangle
   * positioned on either the left or right side of the field, and moving
   * vertically to a desired position, but bound by the playing field height.
   * We instantiate one for the left side, controlled by the Mouse.y position,

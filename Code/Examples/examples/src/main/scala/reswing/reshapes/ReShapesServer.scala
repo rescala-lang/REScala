@@ -53,8 +53,7 @@ object ReShapesServer {
         removeClient(client)
   }
 
-  /**
-    * Sends shapes to a client.
+  /** Sends shapes to a client.
     * returns true if shapes where successfully send, false otherwise (connection refused to client)
     */
   def sendToClient(client: (InetAddress, Int)) = {
@@ -73,8 +72,7 @@ object ReShapesServer {
   }
 }
 
-/**
-  * Listens to string commands:
+/** Listens to string commands:
   *  register [port] - registers a new client
   */
 class CommandThread(port: Int) extends Runnable {

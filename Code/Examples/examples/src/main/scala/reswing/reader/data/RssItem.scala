@@ -3,8 +3,7 @@ package reswing.reader.data
 import java.net.URL
 import java.util.Date
 
-/**
-  * A channel may contain any number of <item>s. An item may represent a
+/** A channel may contain any number of <item>s. An item may represent a
   * "story" -- much like a story in a newspaper or magazine; if so its
   * description is a synopsis of the story, and the link points to the
   * full story. An item may also be complete in itself, if so, the

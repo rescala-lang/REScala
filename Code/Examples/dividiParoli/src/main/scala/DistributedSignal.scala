@@ -3,8 +3,7 @@ import rescala.default._
 import rescala.extra.lattices.Lattice
 import rescala.macros.cutOutOfUserComputation
 
-/**
-  * Classes implementing this trait can be published and are then synchronized by the DistributionEngine (specified by
+/** Classes implementing this trait can be published and are then synchronized by the DistributionEngine (specified by
   * the implicit val `engine`). Internal changes to the underlying StateCRDT are made by firing an `internalChanges` event
   * containing the new StateCRDT. Similarly external changes recognized by the DistributionEngine fire an
   * `externalChanges` event.

@@ -6,8 +6,7 @@ import rescala.twoversion.TwoVersionTransactionImpl
 
 import scala.collection.mutable.ArrayBuffer
 
-/**
-  * Further implementation of level-based propagation based on the common propagation implementation.
+/** Further implementation of level-based propagation based on the common propagation implementation.
   *
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */

@@ -30,8 +30,7 @@ abstract class ReSensor[E](initialValue: E) {
   private val valueChangedEvt: Evt[E]      = Evt[E]()
   private val accuracyChangedEvt: Evt[Int] = Evt[Int]()
 
-  /**
-    * initializes the Sensor Manager, conducts the pre and post initialize routine and assigns
+  /** initializes the Sensor Manager, conducts the pre and post initialize routine and assigns
     * the peer
     */
   private def initialize(): Unit = {
@@ -51,8 +50,7 @@ abstract class ReSensor[E](initialValue: E) {
     sensorManager.registerListener(sensorListener, peer, SensorManager.SENSOR_DELAY_NORMAL)
   }
 
-  /**
-    * the sensorListener simply assigns any new value given by the SensorEvent
+  /** the sensorListener simply assigns any new value given by the SensorEvent
     * to the according rescala.Var
     */
   protected val sensorListener: SensorEventListener = new SensorEventListener {
@@ -109,8 +107,7 @@ abstract class ReSensor[E](initialValue: E) {
 
 }
 
-/**
-  * Bmx280 sensor deals with the Bmx280 driver, that requires special treatment
+/** Bmx280 sensor deals with the Bmx280 driver, that requires special treatment
   * (dynamic sensor callback)
   */
 abstract class ReBmx280Sensor extends ReSensor[Float](Float.MinValue) {

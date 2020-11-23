@@ -7,8 +7,7 @@ import scala.collection.mutable.{ListBuffer, Map}
 import scala.swing.{Publisher, Reactor, Swing, UIElement}
 import scala.swing.event.Event
 
-/**
-  * Introduces methods to connect a ''Reactive Swing'' value ([[ReSwingValue]])
+/** Introduces methods to connect a ''Reactive Swing'' value ([[ReSwingValue]])
   * to the corresponding properties and events of the underlying `Swing` component.
   *
   * For each `ReSwing` value, you can specify
@@ -59,8 +58,7 @@ private[reswing] trait ReSwingValueConnection {
 
   protected def ReSwingValue[T] = (): ReSwingValue[T]
 
-  /**
-    * Represents a `Swing` property that is used to react on value changes
+  /** Represents a `Swing` property that is used to react on value changes
     * to update the reactive value accordingly.
     * This can be either a String representing a bound property
     * (java.awt.Component#addPropertyChangeListener) or
@@ -71,16 +69,14 @@ private[reswing] trait ReSwingValueConnection {
 
   final protected class ReSwingValueConnector[T] private[ReSwingValueConnection] (value: ReSwingValue[T]) {
 
-    /**
-      * Connects the [[ReSwingValue]] object to the given `Swing` getter.
+    /** Connects the [[ReSwingValue]] object to the given `Swing` getter.
       * The value will be updated when any of the given properties change.
       * This can be used for `Swing` properties that are read-only.
       */
     def using(getter: () => T, names: ChangingProperty*): ReSwingValue[T] =
       using(getter, None, names)
 
-    /**
-      * Connects the [[ReSwingValue]] object to the given `Swing` getter and setter.
+    /** Connects the [[ReSwingValue]] object to the given `Swing` getter and setter.
       * The value will be updated when any of the given properties change and
       * value changes will be propagated to the `Swing` library.
       * This can be used for `Swing` properties that can be read and written.
@@ -148,8 +144,7 @@ private[reswing] trait ReSwingValueConnection {
       value
     }
 
-    /**
-      * Forces the property given by `name` the keep the given value using the
+    /** Forces the property given by `name` the keep the given value using the
       * given setter, if the [[ReSwingValue]] is set to hold a fixed value,
       * i.e. a value that should not be changed by the library.
       */

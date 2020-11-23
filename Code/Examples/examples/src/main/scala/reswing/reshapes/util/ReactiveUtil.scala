@@ -26,8 +26,7 @@ object ReactiveUtil {
     }
   }
 
-  /**
-    * Enables two or more objects that are using event streams from each other
+  /** Enables two or more objects that are using event streams from each other
     * to establish a connection of these streams.
     * This solves a problem that arises in situations of the following kind:
     *
@@ -81,8 +80,7 @@ object ReactiveUtil {
     res
   }
 
-  /**
-    * Creates an [[rescala.Event]] that fires whenever
+  /** Creates an [[rescala.Event]] that fires whenever
     * any event in the given event list fires, where the list itself
     * is wrapped in a [[rescala.Signal]].
     */
