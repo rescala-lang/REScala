@@ -1,12 +1,3 @@
-# fork notes
-
-this fork adds compatibility for scala 2.11.5 as well as newer versions of REScala.
-note that this needs a checkout of rescala in `../REScala` to compile.
-this should be improved when the used version of rescala becomes public,
-but i will probably forget …
-
-i also kinda ragedeleted most of the original code and only kept the console signal version
-
 # Simplified Animal rules
 
 	- Elements on a board, integer positions (x, y)
