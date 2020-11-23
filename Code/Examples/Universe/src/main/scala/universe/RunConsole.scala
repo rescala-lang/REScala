@@ -9,7 +9,7 @@ object RunConsole {
     val width        = 100
     val height       = 100
     val repetitions  = 10
-    val threadCounts = Range.inclusive(1, 16)
+    val threadCounts = Range.inclusive(1, 8)
 
     val outfile = s"universe-${Globals.engineName}.csv"
 
@@ -23,11 +23,10 @@ object RunConsole {
     for (repetition <- 0 to repetitions; threads <- threadCounts) {
       println(s"rep: $repetition, threads: $threads")
 
-      println(s"WARN: not sure why the next call was here, not sure what removing it broke, " +
-        s"but observers … work differently now")
+      // WARN: not sure why the next call was here, not sure what removing it broke, but observers … work differently now
       //Observe.dereferenceAllStrongObserversWARNINGonlyUseThisIfYouKnowWhatYouAreDoing()
       System.gc()
-      //Globals.setParallelism(threads)
+      Globals.setParallelism(threads)
 
       val world = new World(width, height)
 
@@ -60,8 +59,7 @@ object RunPrinting {
     val width    = 70
     val height   = 20
 
-    println(s"WARN: not sure why the next call was here, not sure what removing it broke, " +
-      s"but observers … work differently now")
+    //WARN: not sure why the next call was here, not sure what removing it broke, but observers … work differently now
     // Observe.dereferenceAllStrongObserversWARNINGonlyUseThisIfYouKnowWhatYouAreDoing()
     System.gc()
     //Globals.setParallelism(1)

@@ -2,6 +2,7 @@ package universe
 
 import universe.Globals.engine._
 
+import scala.collection.parallel.CollectionConverters._
 import scala.util.Random
 
 /** A World object unites a space (Board object), time (Time object), and a random object
@@ -23,8 +24,8 @@ class World(val width: Int = 100, val height: Int = 100) {
   def tick() = {
     time.tick.fire()
     board.removeDead()
-    val pc = board.elements //.par
-    //pc.tasksupport = Globals.taskSupport
+    val pc = board.elements.par
+    pc.tasksupport = Globals.taskSupport
     pc.foreach { case (pos, be) => be.doStep(pos) }
   }
 

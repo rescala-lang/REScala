@@ -1,8 +1,12 @@
 package universe
 
+import java.util.concurrent.ForkJoinPool
+
 import rescala.Schedulers
 import rescala.core.{Scheduler, Struct}
 import rescala.interface.RescalaInterface
+
+import scala.collection.parallel.ForkJoinTaskSupport
 
 object Globals {
   val engineName: String = System.getProperty("engineName", "parrp")
@@ -14,12 +18,12 @@ object Globals {
     case _ => Schedulers.byName[Struct](engineName)
   })
 
-  //var taskSupport: ForkJoinTaskSupport = _
-  //def setParallelism(n: Int): Unit = {
-  //  if (taskSupport != null) taskSupport.environment.shutdown()
-  //  taskSupport = {
-  //    new ForkJoinTaskSupport(new ForkJoinPool(n))
-  //  }
-  //}
+  var taskSupport: ForkJoinTaskSupport = _
+  def setParallelism(n: Int): Unit = {
+    if (taskSupport != null) taskSupport.environment.shutdown()
+    taskSupport = {
+      new ForkJoinTaskSupport(new ForkJoinPool(n))
+    }
+  }
 
 }
