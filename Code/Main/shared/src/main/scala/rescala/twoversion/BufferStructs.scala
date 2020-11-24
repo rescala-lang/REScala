@@ -2,8 +2,6 @@ package rescala.twoversion
 
 import rescala.core.{Derived, ReSource, Struct}
 
-import scala.collection.mutable
-
 trait TwoVersionStruct extends Struct {
   override type State[V, S <: Struct] <: TwoVersionState[V, S]
 }
@@ -37,11 +35,11 @@ abstract class TwoVersionState[V, S <: Struct](protected[rescala] var current: V
 
   /* incoming and outgoing changes */
 
-  var incoming: Set[ReSource[S]]                              = Set.empty
-  protected var _outgoing: mutable.Map[Derived[S], None.type] = mutable.HashMap.empty
+  var incoming: Set[ReSource[S]]           = Set.empty
+  protected var _outgoing: Set[Derived[S]] = Set.empty
 
   def updateIncoming(reactives: Set[ReSource[S]]): Unit = incoming = reactives
-  def outgoing(): Iterable[Derived[S]]                  = _outgoing.keys
-  def discoveredBy(reactive: Derived[S]): Unit          = _outgoing.put(reactive, None)
+  def outgoing(): Iterable[Derived[S]]                  = _outgoing
+  def discoveredBy(reactive: Derived[S]): Unit          = _outgoing += reactive
   def droppedBy(reactive: Derived[S]): Unit             = _outgoing -= reactive
 }
