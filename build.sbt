@@ -32,7 +32,6 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Code/Main"))
     cfg.base,
     lib.retypecheck,
     sourcecode,
-    cfg.snapshotAssertions,
     cfg.bintray,
     lib.reflectionForMacroDefinitions,
     // for reactive streams api
@@ -239,15 +238,11 @@ lazy val cfg = new {
     "-feature",
     "-Xlint",
     //"-Xfuture",
-//    "-Xdisable-assertions"
+    "-Xdisable-assertions"
   )
 
   lazy val strictScalac = List() //strictCompile
 
-  lazy val snapshotAssertions = scalacOptions ++= (
-    if (!version.value.endsWith("-SNAPSHOT")) List("-Xdisable-assertions", "-Xelide-below", "9999999")
-    else Nil
-  )
 
   val mappingFilters = Seq(
     mappings in (Compile, packageBin) ~= { _.filter(!_._1.getName.endsWith(".conf")) },
