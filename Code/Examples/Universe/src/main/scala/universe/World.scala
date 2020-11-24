@@ -64,8 +64,8 @@ class World(val width: Int = 100, val height: Int = 100) {
   def spawn(element: BoardElement, pos: Pos) = board.add(element, pos)
   def plan(f: => Unit)                       = synchronized(updates ::= (() => f))
   def runPlan() = {
-    val pc = updates //.par
-    //pc.tasksupport = Globals.taskSupport
+    val pc = updates.par
+    pc.tasksupport = Globals.taskSupport
     pc.foreach { u =>
       try {
         u()
