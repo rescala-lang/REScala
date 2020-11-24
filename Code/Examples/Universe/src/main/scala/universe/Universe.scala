@@ -9,7 +9,7 @@ object Universe {
     val nPlants      = 300
     val width        = 100
     val height       = 100
-    val repetitions  = 10
+    val repetitions  = 5
     val threadCounts = Range.inclusive(1, 8)
 
     val genCsv = !args.headOption.contains("nocsv")
