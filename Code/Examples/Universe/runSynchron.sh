@@ -37,5 +37,5 @@ echo "---------------------------------------------"
 
 export LANG=en_US.UTF-8
 export JAVA_OPTS="-Xmx1024m -Xms1024m -DengineName=synchron"
-./target/universal/stage/bin/run-console
+./target/universal/stage/bin/rescala-universe
 
