@@ -36,6 +36,7 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Code/Main"))
       sourcecode.value,
       retypecheck.value,
       reactiveStreams.value,
+      "org.typelevel" %% "cats-collections-core" % "0.9.0",
       scalaOrganization.value % "scala-reflect" % scalaVersion.value % "provided",
     ) ++ (
       jsoniterScalaAll.value ++
