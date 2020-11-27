@@ -20,12 +20,12 @@ case class DeltaCRDT[D: DotStore, C: CContext](replicaID: String, state: D, cc: 
     case SetDelta(deltaState, dots) => applyDelta(CausalDelta(deltaState, CContext[C].fromSet(dots)), save = true)
   }
 
-  def joinedDeltaBuffer[A: CContext]: CausalDelta[D, A] = deltaBuffer.fold(CausalDelta(DotStore[D].bottom, CContext[C].empty)) {
+  def joinedDeltaBuffer: CausalDelta[D, C] = deltaBuffer.fold(CausalDelta(DotStore[D].bottom, CContext[C].empty)) {
     case (CausalDelta(flagLeft, ccLeft), CausalDelta(flagRight, ccRight)) =>
       val (flagMerged, ccMerged) = merge(flagLeft, ccLeft, flagRight, ccRight)
       CausalDelta(flagMerged, ccMerged)
   } match {
-    case CausalDelta(flag, cc) => CausalDelta(flag, CContext[C].convert[A](cc))
+    case CausalDelta(flag, cc) => CausalDelta(flag, cc)
   }
 
   def query[A](q: DeltaQuery[D, A]): A = q(state)
