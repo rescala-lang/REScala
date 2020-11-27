@@ -1,10 +1,13 @@
 package rescala.extra.lattices.delta.crdt
 
 import rescala.extra.lattices.delta.DeltaCRDT._
-import rescala.extra.lattices.delta.{DotStore, SetDelta}
+import rescala.extra.lattices.delta.{CContext, DeltaCRDT, DotStore, SetDelta}
 import rescala.extra.lattices.delta.DotStore._
 
 object ORMap {
+  def apply[K, V: DotStore, C: CContext](replicaID: String): DeltaCRDT[DotMap[K, V], C] =
+    DeltaCRDT(replicaID, DotMap[K, V].bottom, CContext[C].empty, List())
+
   def mutateKey[K, V: DotStore](k: K, deltaMutator: DeltaDotMutator[V]): DeltaDotMutator[DotMap[K, V]] = (dm, nextDot) =>
     deltaMutator(dm.getOrElse(k, DotStore[V].bottom), nextDot) match {
       case SetDelta(state, dots) =>
