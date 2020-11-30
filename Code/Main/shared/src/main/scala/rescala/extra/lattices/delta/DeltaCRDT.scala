@@ -7,7 +7,7 @@ import rescala.extra.lattices.delta.DotStore._
 case class DeltaCRDT[D: DotStore, C: CContext](replicaID: String, state: D, cc: C, deltaBuffer: List[CausalDelta[D, C]]) {
   def applyDelta[A: CContext](delta: CausalDelta[D, A], save: Boolean = false): DeltaCRDT[D, C] = delta match {
     case CausalDelta(deltaState, deltaCC) =>
-      val (stateMerged, ccMerged) = merge(state, cc, deltaState, deltaCC)
+      val (stateMerged, ccMerged) = DotStore[D].merge(state, cc, deltaState, deltaCC)
       if (save) {
         val newBuffer = deltaBuffer :+ CausalDelta(deltaState, CContext[A].convert[C](deltaCC))
         DeltaCRDT(replicaID, stateMerged, ccMerged, newBuffer)
@@ -22,7 +22,7 @@ case class DeltaCRDT[D: DotStore, C: CContext](replicaID: String, state: D, cc: 
 
   def joinedDeltaBuffer: CausalDelta[D, C] = deltaBuffer.fold(CausalDelta(DotStore[D].bottom, CContext[C].empty)) {
     case (CausalDelta(flagLeft, ccLeft), CausalDelta(flagRight, ccRight)) =>
-      val (flagMerged, ccMerged) = merge(flagLeft, ccLeft, flagRight, ccRight)
+      val (flagMerged, ccMerged) = DotStore[D].merge(flagLeft, ccLeft, flagRight, ccRight)
       CausalDelta(flagMerged, ccMerged)
   } match {
     case CausalDelta(flag, cc) => CausalDelta(flag, cc)
@@ -30,7 +30,7 @@ case class DeltaCRDT[D: DotStore, C: CContext](replicaID: String, state: D, cc: 
 
   def query[A](q: DeltaQuery[D, A]): A = q(state)
 
-  def mutate(m: DeltaDotMutator[D]): DeltaCRDT[D, C] = handleDelta(m(state, nextDot(cc, replicaID)))
+  def mutate(m: DeltaDotMutator[D]): DeltaCRDT[D, C] = handleDelta(m(state, CContext[C].nextDot(cc, replicaID)))
 
   def mutate(m: DeltaMutator[D]): DeltaCRDT[D, C] = handleDelta(m(state))
 }

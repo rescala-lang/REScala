@@ -29,20 +29,6 @@ trait CContext[A] {
 object CContext {
   def apply[A](implicit cc: CContext[A]): CContext[A] = cc
 
-  def contains[A: CContext](cc: A, d: Dot): Boolean = CContext[A].contains(cc, d)
-
-  def fromSet[A: CContext](dots: Set[Dot]): A = CContext[A].fromSet(dots)
-
-  def toSet[A: CContext](cc: A): Set[Dot] = CContext[A].toSet(cc)
-
-  def union[A: CContext, B: CContext](left: A, right: B): A = CContext[A].union(left, right)
-
-  def nextDot[A: CContext](cc: A, replicaID: String): Dot = CContext[A].nextDot(cc, replicaID)
-
-  def empty[A: CContext]: A = CContext[A].empty
-
-  def convert[A: CContext, B: CContext](cc: A): B = CContext[A].convert[B](cc)
-
   type SetCContext = Set[Dot]
   implicit def SetCContext: CContext[Set[Dot]] = new CContext[Set[Dot]] {
     override def contains(cc: Set[Dot], d: Dot): Boolean = cc.contains(d)
@@ -51,7 +37,7 @@ object CContext {
 
     override def toSet(cc: Set[Dot]): Set[Dot] = cc
 
-    override def union[B: CContext](left: Set[Dot], right: B): Set[Dot] = left union CContext.toSet(right)
+    override def union[B: CContext](left: Set[Dot], right: B): Set[Dot] = left union CContext[B].toSet(right)
 
     override protected def max(cc: Set[Dot], replicaID: String): Option[Dot] =
       cc.filter(_.replicaID == replicaID).maxByOption(_.counter)
@@ -80,7 +66,7 @@ object CContext {
         yield Dot(replicaID, counter)
 
     override def union[B: CContext](left: Map[String, Diet[Int]], right: B): Map[String, Diet[Int]] =
-      CContext.toSet(right).foldLeft(left)(addDot)
+      CContext[B].toSet(right).foldLeft(left)(addDot)
 
     override protected def max(cc: Map[String, Diet[Int]], replicaID: String): Option[Dot] =
       cc.getOrElse(replicaID, Diet.empty[Int]).max.map(Dot(replicaID, _))

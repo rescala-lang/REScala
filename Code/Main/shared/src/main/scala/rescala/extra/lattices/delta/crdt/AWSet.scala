@@ -19,5 +19,5 @@ object AWSet {
     SetDelta(DotMap[E, DotSet].bottom, dm.getOrElse(e, DotSet.bottom))
 
   def clear[E]: DeltaMutator[Store[E]] = dm =>
-    SetDelta(DotMap[E, DotSet].bottom, dots(dm))
+    SetDelta(DotMap[E, DotSet].bottom, DotMap[E, DotSet].dots(dm))
 }

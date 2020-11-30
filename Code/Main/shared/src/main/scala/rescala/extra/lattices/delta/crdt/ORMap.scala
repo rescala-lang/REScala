@@ -24,8 +24,8 @@ object ORMap {
     q(dm.getOrElse(k, DotStore[V].bottom))
 
   def remove[K, V: DotStore](k: K): DeltaMutator[DotMap[K, V]] = dm =>
-    SetDelta(DotMap[K, V].bottom, dots(dm.getOrElse(k, DotStore[V].bottom)))
+    SetDelta(DotMap[K, V].bottom, DotStore[V].dots(dm.getOrElse(k, DotStore[V].bottom)))
 
   def clear[K, V: DotStore]: DeltaMutator[DotMap[K, V]] = dm =>
-    SetDelta(DotMap[K, V].bottom, dots(dm))
+    SetDelta(DotMap[K, V].bottom, DotMap[K, V].dots(dm))
 }
