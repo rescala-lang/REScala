@@ -45,7 +45,7 @@ class ContextBench[S <: Struct] {
   def mergeSelf() = Lattice.merge(rep1Set, rep1Set)
 
   @Benchmark
-  def mergeSelfPlusOne() = Lattice.merge(rep1Set, rep1Set)
+  def mergeSelfPlusOne() = Lattice.merge(rep1Set, rep1SetPlusOne)
 
   @Benchmark
   def diffSelf() = rep1Set.diff(rep1Set)
