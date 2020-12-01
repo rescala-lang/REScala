@@ -1,11 +1,11 @@
-package rescala.reactives
+package rescala.operator
 
 import rescala.core.Pulse.{Exceptional, NoChange, Value}
 import rescala.core._
 import rescala.interface.RescalaInterface
 import rescala.macros.cutOutOfUserComputation
-import rescala.reactives.Observe.ObserveInteract
-import rescala.reactives.RExceptions.ObservedException
+import rescala.operator.Observe.ObserveInteract
+import rescala.operator.RExceptions.ObservedException
 
 import scala.collection.immutable.{LinearSeq, Queue}
 

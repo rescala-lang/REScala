@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import rescala.core.{AccessTicket, Struct}
 import rescala.interface.RescalaInterface
 import rescala.parrp.Backoff
-import rescala.reactives.{Signal, Var}
+import rescala.operator.{Signal, Var}
 
 class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(val interface: RescalaInterface[S]) {
   import interface.Var

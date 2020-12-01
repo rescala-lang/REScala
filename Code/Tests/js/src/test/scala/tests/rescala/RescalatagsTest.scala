@@ -30,7 +30,7 @@ class RescalatagsTest extends RETests {
     }
 
     test("put style into dom") {
-      val v: rescala.reactives.Var[String, engine.ReStructure] = Var.empty[String]
+      val v: rescala.operator.Var[String, engine.ReStructure] = Var.empty[String]
 
       val ourTag: Span = span(backgroundColor := v).render
 

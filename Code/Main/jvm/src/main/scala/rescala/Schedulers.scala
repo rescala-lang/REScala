@@ -3,9 +3,9 @@ package rescala
 import rescala.core.{Scheduler, Struct}
 import rescala.extra.scheduler.SimpleScheduler
 import rescala.interface.RescalaInterface
-import rescala.levelbased.LevelBasedSchedulers
+import rescala.scheduler.levelbased.LevelBasedSchedulers
 import rescala.parrp._
-import rescala.twoversion.TwoVersionScheduler
+import rescala.scheduler.twoversion.TwoVersionScheduler
 
 object Schedulers extends LevelBasedSchedulers {
 

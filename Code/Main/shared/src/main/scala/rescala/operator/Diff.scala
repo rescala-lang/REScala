@@ -1,7 +1,7 @@
-package rescala.reactives
+package rescala.operator
 
 import rescala.core.Pulse
-import rescala.reactives.RExceptions.EmptySignalControlThrowable
+import rescala.operator.RExceptions.EmptySignalControlThrowable
 
 final class Diff[+A](val from: Pulse[A], val to: Pulse[A]) {
 

@@ -5,7 +5,7 @@ import java.awt.{Event => _, _}
 import java.util.NoSuchElementException
 
 import rescala.default._
-import rescala.reactives.Flatten
+import rescala.operator.Flatten
 import examples.demo.ui.Shape
 
 import scala.swing.Panel

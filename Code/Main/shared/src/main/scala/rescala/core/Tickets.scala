@@ -1,6 +1,6 @@
 package rescala.core
 
-import rescala.reactives.RExceptions
+import rescala.operator.RExceptions
 
 import scala.annotation.implicitNotFound
 

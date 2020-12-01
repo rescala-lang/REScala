@@ -8,7 +8,7 @@ import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
 import rescala.Schedulers
 import rescala.core.Struct
 import rescala.interface.RescalaInterface
-import rescala.reactives.Signal
+import rescala.operator.Signal
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -21,8 +21,8 @@ class ReverseFan[S <: Struct] {
 
   var engine: RescalaInterface[S] = _
 
-  var sources: Array[rescala.reactives.Var[Int, S]] = _
-  var result: Signal[Int, S]                        = _
+  var sources: Array[rescala.operator.Var[Int, S]] = _
+  var result: Signal[Int, S]                       = _
   var isManual: Boolean                             = false
 
   @Setup

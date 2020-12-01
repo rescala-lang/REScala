@@ -1,7 +1,7 @@
 package tests.rescala.misc
 
 import tests.rescala.testtools.RETests
-import rescala.reactives.UserDefinedFunction
+import rescala.operator.UserDefinedFunction
 
 class UDFSyntaxTest extends RETests {
   multiEngined { engine =>

@@ -1,4 +1,4 @@
-package rescala.twoversion
+package rescala.scheduler.twoversion
 
 import rescala.core.{AdmissionTicket, InitialChange, ReSource, Struct}
 

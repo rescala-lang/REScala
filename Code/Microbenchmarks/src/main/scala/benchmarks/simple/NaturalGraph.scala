@@ -19,8 +19,8 @@ class NaturalGraph[S <: Struct] {
 
   var engine: RescalaInterface[S] = _
 
-  var source: rescala.reactives.Var[Int, S]          = _
-  var result: List[rescala.reactives.Signal[Int, S]] = _
+  var source: rescala.operator.Var[Int, S]          = _
+  var result: List[rescala.operator.Signal[Int, S]] = _
 
   @Setup
   def setup(params: BenchmarkParams, step: Step, engineParam: EngineParam[S], work: Workload): Unit = {

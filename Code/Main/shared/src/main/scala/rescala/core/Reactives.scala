@@ -73,7 +73,7 @@ trait MacroAccess[+A, +T] {
 
 }
 
-/** Common macro accessors for [[rescala.reactives.Signal]] and [[rescala.reactives.Event]]
+/** Common macro accessors for [[rescala.operator.Signal]] and [[rescala.operator.Event]]
   * @tparam A return type of the accessor
   * @groupname accessor Accessor and observers
   */

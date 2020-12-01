@@ -1,7 +1,7 @@
-package rescala.levelbased
+package rescala.scheduler.levelbased
 
 import rescala.core.Struct
-import rescala.twoversion._
+import rescala.scheduler.twoversion._
 
 trait LevelStruct extends TwoVersionStruct {
   override type State[V, S <: Struct] <: LevelState[V, S]

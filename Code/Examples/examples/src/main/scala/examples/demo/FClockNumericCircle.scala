@@ -4,7 +4,7 @@ import java.awt.Dimension
 
 import examples.demo.ui.{Circle, Shape, ShapesPanel}
 import rescala.default._
-import rescala.reactives.Diff
+import rescala.operator.Diff
 
 import scala.swing.{MainFrame, SimpleSwingApplication, UIElement}
 

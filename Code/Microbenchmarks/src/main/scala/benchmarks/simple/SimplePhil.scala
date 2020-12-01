@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 import benchmarks.{EngineParam, Step}
 import org.openjdk.jmh.annotations._
 import rescala.core.{Scheduler, Struct}; import rescala.interface.RescalaInterface
-import rescala.reactives._
+import rescala.operator._
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)

@@ -12,7 +12,7 @@ import rescala.extra.distributables.LociDist
 import rescala.extra.lattices.Lattice
 import rescala.extra.lattices.sequences.RGOA
 import rescala.extra.lattices.sequences.RGOA.RGOA
-import rescala.reactives.Signals.Diff
+import rescala.operator.Signals.Diff
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future

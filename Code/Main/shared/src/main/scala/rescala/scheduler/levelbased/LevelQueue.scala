@@ -1,9 +1,9 @@
-package rescala.levelbased
+package rescala.scheduler.levelbased
 
 import java.util.PriorityQueue
 
 import rescala.core.{Derived, Struct}
-import rescala.levelbased.LevelQueue.QueueElement
+import rescala.scheduler.levelbased.LevelQueue.QueueElement
 
 /** Level-based queue used the determine an evaluation order for reactive elements
   *

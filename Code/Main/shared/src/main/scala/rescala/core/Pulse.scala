@@ -1,7 +1,7 @@
 package rescala.core
 
 import rescala.core.Pulse._
-import rescala.reactives.RExceptions.{EmptySignalControlThrowable, ObservedException}
+import rescala.operator.RExceptions.{EmptySignalControlThrowable, ObservedException}
 
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}

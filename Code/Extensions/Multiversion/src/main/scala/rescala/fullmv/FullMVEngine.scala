@@ -38,7 +38,7 @@ class FullMVEngine(val timeout: Duration, val schedulerName: String)
     override def reportFailure(cause: Throwable): Unit = cause.printStackTrace()
   }
 
-  override private[rescala] def singleReadValueOnce[A](reactive: rescala.reactives.Signal[A, FullMVStruct]) =
+  override private[rescala] def singleReadValueOnce[A](reactive: rescala.operator.Signal[A, FullMVStruct]) =
     reactive.state.latestValue.get
 
   override def forceNewTransaction[R](declaredWrites: Set[ReSource], admissionPhase: (AdmissionTicket) => R): R = {

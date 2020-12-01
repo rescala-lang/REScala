@@ -1,8 +1,8 @@
-package rescala.levelbased
+package rescala.scheduler.levelbased
 
 import rescala.core.{InitialChange, ReSource, Derived, ReevTicket}
-import rescala.levelbased.LevelQueue.noLevelIncrease
-import rescala.twoversion.TwoVersionTransactionImpl
+import rescala.scheduler.levelbased.LevelQueue.noLevelIncrease
+import rescala.scheduler.twoversion.TwoVersionTransactionImpl
 
 import scala.collection.mutable.ArrayBuffer
 

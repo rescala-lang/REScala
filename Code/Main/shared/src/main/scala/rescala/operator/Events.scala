@@ -1,4 +1,4 @@
-package rescala.reactives
+package rescala.operator
 
 import rescala.core._
 import rescala.interface.RescalaInterface
@@ -67,7 +67,7 @@ trait Events[S <: Struct] {
 
   /** Creates change events */
   @cutOutOfUserComputation
-  def change[T](signal: rescala.reactives.Signal[T, S])(implicit ticket: CreationTicket[S]): Event[Diff[T], S] =
+  def change[T](signal: rescala.operator.Signal[T, S])(implicit ticket: CreationTicket[S]): Event[Diff[T], S] =
     ticket.transaction { initTurn =>
       val internal = initTurn.create[(Pulse[T], Pulse[Diff[T]]), ChangeEventImpl[T]](
         Set[ReSource[S]](signal),
@@ -92,7 +92,7 @@ trait Events[S <: Struct] {
 
   /** Folds events with a given operation to create a Signal.
     *
-    * @see [[rescala.reactives.Event.fold]]
+    * @see [[rescala.operator.Event.fold]]
     */
   @cutOutOfUserComputation
   def fold[T](dependencies: Set[ReSource[S]], init: T)(expr: StaticTicket[S] => (() => T) => T)(implicit

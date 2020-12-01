@@ -3,9 +3,9 @@ package rescala.extra
 import org.scalajs.dom
 import org.scalajs.dom.{Element, Node}
 import rescala.core.{CreationTicket, Pulse, Scheduler, Struct}
-import rescala.reactives.Observe.ObserveInteract
-import rescala.reactives.RExceptions.ObservedException
-import rescala.reactives.{Evt, Observe, Signal, Var}
+import rescala.operator.Observe.ObserveInteract
+import rescala.operator.RExceptions.ObservedException
+import rescala.operator.{Evt, Observe, Signal, Var}
 import scalatags.JsDom.all.{Attr, AttrValue, Modifier, Style, StyleValue}
 import scalatags.JsDom.{StringFrag, TypedTag}
 import scalatags.generic
@@ -177,8 +177,8 @@ object Tags {
     genericReactiveStyleValue[T, S, ({ type λ[T2] = Signal[T2, S] })#λ]
 
   implicit def bindEvt[T, S <: Struct](implicit scheduler: Scheduler[S]): generic.AttrValue[Element, Evt[T, S]] =
-    new generic.AttrValue[dom.Element, rescala.reactives.Evt[T, S]] {
-      def apply(t: dom.Element, a: generic.Attr, v: rescala.reactives.Evt[T, S]): Unit = {
+    new generic.AttrValue[dom.Element, rescala.operator.Evt[T, S]] {
+      def apply(t: dom.Element, a: generic.Attr, v: rescala.operator.Evt[T, S]): Unit = {
         t.asInstanceOf[js.Dynamic].updateDynamic(a.name)((e: T) => v.fire(e))
       }
     }

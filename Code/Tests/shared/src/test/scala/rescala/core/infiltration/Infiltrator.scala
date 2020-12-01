@@ -2,7 +2,7 @@ package rescala.core.infiltration
 
 import rescala.core
 import rescala.core.{Scheduler, Struct}
-import rescala.levelbased.LevelState
+import rescala.scheduler.levelbased.LevelState
 
 /** Accesses private[rescala] values for some low level tests */
 object Infiltrator {

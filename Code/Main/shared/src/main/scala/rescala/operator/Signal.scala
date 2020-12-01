@@ -1,11 +1,11 @@
-package rescala.reactives
+package rescala.operator
 
 import rescala.core._
 import rescala.interface.RescalaInterface
 import rescala.macros.cutOutOfUserComputation
-import rescala.reactives.Observe.ObserveInteract
-import rescala.reactives.RExceptions.{EmptySignalControlThrowable, ObservedException}
-import rescala.reactives.Signals.SignalResource
+import rescala.operator.Observe.ObserveInteract
+import rescala.operator.RExceptions.{EmptySignalControlThrowable, ObservedException}
+import rescala.operator.Signals.SignalResource
 
 import scala.util.control.NonFatal
 
@@ -112,7 +112,7 @@ trait Signal[+T, S <: Struct] extends MacroAccess[T, Interp[T, S]] with Disconne
       T,
       B,
       S,
-      rescala.reactives.Signals.MapFuncImpl.type,
+      rescala.operator.Signals.MapFuncImpl.type,
       Signals.type
     ]
 

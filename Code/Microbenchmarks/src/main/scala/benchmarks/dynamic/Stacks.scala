@@ -7,7 +7,7 @@ import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
 import rescala.Schedulers
 import rescala.core.{Scheduler, Struct}; import rescala.interface.RescalaInterface
-import rescala.reactives._
+import rescala.operator._
 
 import scala.collection.immutable.Range
 

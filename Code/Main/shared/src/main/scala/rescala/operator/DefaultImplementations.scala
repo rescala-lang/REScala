@@ -1,11 +1,11 @@
-package rescala.reactives
+package rescala.operator
 
 import rescala.core.Pulse.NoChange
 import rescala.core._
 import rescala.interface.RescalaInterface
-import rescala.reactives
-import rescala.reactives.Events.Estate
-import rescala.reactives.Signals.{SignalResource, Sstate}
+import rescala.operator
+import rescala.operator.Events.Estate
+import rescala.operator.Signals.{SignalResource, Sstate}
 
 trait DefaultImplementations[S <: Struct] {
   class SignalImpl[T](
@@ -52,10 +52,10 @@ trait DefaultImplementations[S <: Struct] {
   }
 
   class ChangeEventImpl[T](
-      _bud: S#State[(Pulse[T], Pulse[Diff[T]]), S],
-      signal: reactives.Signal[T, S],
-      name: ReName,
-      override val rescalaAPI: RescalaInterface[S]
+                            _bud: S#State[(Pulse[T], Pulse[Diff[T]]), S],
+                            signal: operator.Signal[T, S],
+                            name: ReName,
+                            override val rescalaAPI: RescalaInterface[S]
   ) extends Base[(Pulse[T], Pulse[Diff[T]]), S](_bud, name)
       with Derived[S]
       with Event[Diff[T], S]

@@ -1,7 +1,7 @@
 package tests.rescala.errors
 
 import rescala.core.Pulse
-import rescala.reactives.RExceptions.ObservedException
+import rescala.operator.RExceptions.ObservedException
 import tests.rescala.testtools.RETests
 
 import scala.util.{Failure, Success, Try}
@@ -59,7 +59,7 @@ class ExceptionPropagationTestSuite extends RETests {
       val folded     = toInted.fold(100)((acc, v) => div2(v, acc))
       val `change'd` = folded.change
 
-      var res: rescala.reactives.Diff[Int] = null
+      var res: rescala.operator.Diff[Int] = null
       `change'd`.observe(res = _)
 
       assert(folded.readValueOnce === 100)
@@ -92,7 +92,7 @@ class ExceptionPropagationTestSuite extends RETests {
       val folded     = trimmed.map(_.toInt)
       val `change'd` = folded.change
 
-      var res: rescala.reactives.Diff[Int] = null
+      var res: rescala.operator.Diff[Int] = null
 
       `change'd`.observe(res = _)
 

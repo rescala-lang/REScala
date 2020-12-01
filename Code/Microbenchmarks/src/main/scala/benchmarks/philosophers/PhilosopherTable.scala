@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import benchmarks.philosophers.PhilosopherTable._
 import org.openjdk.jmh.infra.Blackhole
 import rescala.core.Struct; import rescala.interface.RescalaInterface
-import rescala.reactives._
+import rescala.operator._
 
 class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(val engine: RescalaInterface[S]) {
 

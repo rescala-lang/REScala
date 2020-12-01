@@ -1,6 +1,6 @@
 package rescala
 import rescala.core.Scheduler
-import rescala.levelbased.LevelStructImpl
+import rescala.scheduler.levelbased.LevelStructImpl
 
 /** REScala has two main abstractions. [[rescala.default.Event]] and [[rescala.default.Signal]] commonly referred to as reactives.
   * Use [[rescala.default.Var]] to create signal sources and [[rescala.default.Evt]] to create event sources.

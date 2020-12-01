@@ -72,7 +72,7 @@ class ReactiveMacros(val c: blackbox.Context) {
     val ticketType   = weakTypeOf[Capability]
 
     val body =
-      q"""_root_.rescala.reactives.UserDefinedFunction[${weakTypeOf[T]}, ${weakTypeOf[DependencyType]}, ${ticketType}](
+      q"""_root_.rescala.operator.UserDefinedFunction[${weakTypeOf[T]}, ${weakTypeOf[DependencyType]}, ${ticketType}](
          _root_.scala.collection.immutable.Set[${weakTypeOf[DependencyType]}](..$dependencies),
          ${lego.contextualizedExpression(ticketType)},
          ${isStatic}
@@ -124,9 +124,9 @@ class ReactiveMacros(val c: blackbox.Context) {
   ) => A])(ticket: c.Expr[rescala.core.CreationTicket[S]]): c.Tree = {
     if (c.hasErrors) return compileErrorsAst
 
-    val eventsSymbol = weakTypeOf[rescala.reactives.Events.type].termSymbol.asTerm.name
+    val eventsSymbol = weakTypeOf[rescala.operator.Events.type].termSymbol.asTerm.name
     val ticketType   = weakTypeOf[StaticTicket[S]]
-    val funcImpl     = weakTypeOf[rescala.reactives.Events.FoldFuncImpl.type].typeSymbol.asClass.module
+    val funcImpl     = weakTypeOf[rescala.operator.Events.FoldFuncImpl.type].typeSymbol.asClass.module
     val pm           = new PrefixManipulation()
     val computation  = q"""$funcImpl.apply[${weakTypeOf[T]}, ${weakTypeOf[A]}](_, ${pm.prefixValue}, $op)"""
     fixNullTypes(computation)

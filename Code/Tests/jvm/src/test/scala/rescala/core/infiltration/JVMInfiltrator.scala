@@ -1,7 +1,7 @@
 package rescala.core.infiltration
 
 import rescala.parrp.ParRPStruct
-import rescala.reactives.Signal
+import rescala.operator.Signal
 
 /** Accesses private[rescala] values for some low level tests */
 object JVMInfiltrator {

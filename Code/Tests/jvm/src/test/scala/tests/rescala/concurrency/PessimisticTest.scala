@@ -5,7 +5,7 @@ import java.util.concurrent.{CountDownLatch, TimeUnit}
 import rescala.Interfaces
 import rescala.core.infiltration.JVMInfiltrator
 import rescala.parrp.{Backoff, ParRPStruct, ParRPTransaction}
-import rescala.twoversion.TwoVersionScheduler
+import rescala.scheduler.twoversion.TwoVersionScheduler
 import tests.rescala.testtools.{RETests, ReevaluationTracker, SetAndExtractTransactionHandle, _}
 
 import scala.concurrent.ExecutionContext.Implicits.global

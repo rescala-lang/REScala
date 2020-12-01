@@ -4,7 +4,7 @@ import java.util.concurrent.ForkJoinPool.ManagedBlocker
 import java.util.concurrent.{CountDownLatch, ForkJoinPool}
 
 import rescala.core.{CreationTicket, Struct}
-import rescala.reactives.{Event, Signal}
+import rescala.operator.{Event, Signal}
 
 class SynchronizedReevaluation extends ManagedBlocker {
   var latches: List[CountDownLatch]  = Nil

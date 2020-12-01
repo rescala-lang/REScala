@@ -1,7 +1,7 @@
-package rescala.levelbased
+package rescala.scheduler.levelbased
 
 import rescala.core.{AdmissionTicket, ReSource, Scheduler}
-import rescala.twoversion.TwoVersionScheduler
+import rescala.scheduler.twoversion.TwoVersionScheduler
 
 /** Basic implementations of propagation engines */
 trait LevelBasedSchedulers {

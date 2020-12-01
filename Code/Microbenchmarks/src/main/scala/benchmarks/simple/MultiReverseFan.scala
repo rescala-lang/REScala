@@ -8,7 +8,7 @@ import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
 import rescala.core.Struct
 import rescala.interface.RescalaInterface
-import rescala.reactives.Signal
+import rescala.operator.Signal
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -21,8 +21,8 @@ class MultiReverseFan[S <: Struct] {
 
   var engine: RescalaInterface[S] = _
 
-  var sources: Array[rescala.reactives.Var[Int, S]] = _
-  var results: Array[Signal[Int, S]]                = _
+  var sources: Array[rescala.operator.Var[Int, S]] = _
+  var results: Array[Signal[Int, S]]               = _
   var locks: Array[Lock]                            = null
   var groupSize: Int                                = _
 

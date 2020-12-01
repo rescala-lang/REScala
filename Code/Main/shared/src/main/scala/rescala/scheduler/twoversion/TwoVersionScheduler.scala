@@ -1,7 +1,7 @@
-package rescala.twoversion
+package rescala.scheduler.twoversion
 
 import rescala.core.{AdmissionTicket, DynamicInitializerLookup, Initializer, ReSource}
-import rescala.reactives.Signal
+import rescala.operator.Signal
 
 /** Implementation of the turn handling defined in the Engine trait
   *

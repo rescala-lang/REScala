@@ -1,6 +1,6 @@
 package rescala.core
 
-import rescala.reactives.Signal
+import rescala.operator.Signal
 
 import scala.annotation.implicitNotFound
 

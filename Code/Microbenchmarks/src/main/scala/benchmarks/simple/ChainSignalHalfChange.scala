@@ -7,7 +7,7 @@ import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
 import rescala.core.{Scheduler, Struct}
 import rescala.interface.RescalaInterface
-import rescala.reactives.{Signal, Var}
+import rescala.operator.{Signal, Var}
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)

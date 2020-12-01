@@ -3,7 +3,7 @@ package tests.rescala.testtools
 import org.scalatest.{Assertions}
 import org.scalatest.matchers.should.Matchers
 import rescala.core.{CreationTicket, Struct}
-import rescala.reactives.{Event, Signal}
+import rescala.operator.{Event, Signal}
 
 class ReevaluationTracker[A, S <: Struct] private () extends Matchers {
   var results: List[A] = Nil

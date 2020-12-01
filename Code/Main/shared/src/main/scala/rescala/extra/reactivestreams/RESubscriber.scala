@@ -5,7 +5,7 @@ import java.util.Objects
 import org.reactivestreams.{Subscriber, Subscription}
 import rescala.core.{Scheduler, Pulse, Struct}
 
-import rescala.reactives.Evt
+import rescala.operator.Evt
 
 class RESubscriber[T, S <: Struct](evt: Evt[T, S], fac: Scheduler[S]) extends Subscriber[T] {
 

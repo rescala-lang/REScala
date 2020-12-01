@@ -2,7 +2,7 @@ package rescala.compat
 
 import rescala.core.{CreationTicket, Struct}
 import rescala.interface.RescalaInterface
-import rescala.reactives.{Event, Flatten, Signal}
+import rescala.operator.{Event, Flatten, Signal}
 
 import scala.collection.IterableOps
 

@@ -1,7 +1,7 @@
-package rescala.reactives
+package rescala.operator
 
 import rescala.core._
-import rescala.reactives.Events.Estate
+import rescala.operator.Events.Estate
 
 trait Source[S <: Struct, T] extends ReSource[S] {
   final def admit(value: T)(implicit ticket: AdmissionTicket[S]): Unit = admitPulse(Pulse.Value(value))

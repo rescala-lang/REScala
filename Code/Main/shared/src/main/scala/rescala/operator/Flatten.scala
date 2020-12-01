@@ -1,4 +1,4 @@
-package rescala.reactives
+package rescala.operator
 
 import rescala.core.{CreationTicket, Struct}
 import rescala.interface.RescalaInterface

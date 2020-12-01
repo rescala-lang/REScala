@@ -2,9 +2,9 @@ package rescala.interface
 
 import rescala.core.{Base, Pulse, ReName, Scheduler, Struct}
 import rescala.macros.MacroTags.{Dynamic, Static}
-import rescala.reactives
-import rescala.reactives.Signals.SignalResource
-import rescala.reactives.{DefaultImplementations, Source}
+import rescala.operator
+import rescala.operator.Signals.SignalResource
+import rescala.operator.{DefaultImplementations, Source}
 
 object RescalaInterface {
   def interfaceFor[S <: Struct](someScheduler: Scheduler[S]): RescalaInterface[S] =
@@ -49,7 +49,7 @@ trait RescalaInterface[S <: Struct] extends Aliases[S] {
   final def Evt[A]()(implicit ticket: CreationTicket): Evt[A] = {
     ticket.createSource[Pulse[A], Evt[A]](Pulse.NoChange)(init =>
       {
-        new reactives.Evt[A, S](init, ticket.rename) {
+        new operator.Evt[A, S](init, ticket.rename) {
           override val rescalaAPI: RescalaInterface[S] = RescalaInterface.this
         }
       }: Evt[A]
@@ -60,7 +60,7 @@ trait RescalaInterface[S <: Struct] extends Aliases[S] {
     * @group create
     */
   object Var {
-    abstract class VarImpl[A] private[rescala] (initialState: rescala.reactives.Signals.Sstate[A, S], name: ReName)
+    abstract class VarImpl[A] private[rescala] (initialState: rescala.operator.Signals.Sstate[A, S], name: ReName)
         extends Base[Pulse[A], S](initialState, name)
         with Var[A]
         with SignalResource[A, S] {
@@ -91,11 +91,11 @@ trait RescalaInterface[S <: Struct] extends Aliases[S] {
   object Signal {
     def rescalaAPI: RescalaInterface.this.type = RescalaInterface.this
     final def apply[A](expression: A)(implicit ticket: CreationTicket): Signal[A] =
-      macro rescala.macros.ReactiveMacros.ReactiveExpression[A, S, Static, rescala.reactives.Signals.type]
+      macro rescala.macros.ReactiveMacros.ReactiveExpression[A, S, Static, rescala.operator.Signals.type]
     final def static[A](expression: A)(implicit ticket: CreationTicket): Signal[A] =
-      macro rescala.macros.ReactiveMacros.ReactiveExpression[A, S, Static, rescala.reactives.Signals.type]
+      macro rescala.macros.ReactiveMacros.ReactiveExpression[A, S, Static, rescala.operator.Signals.type]
     final def dynamic[A](expression: A)(implicit ticket: CreationTicket): Signal[A] =
-      macro rescala.macros.ReactiveMacros.ReactiveExpression[A, S, Dynamic, rescala.reactives.Signals.type]
+      macro rescala.macros.ReactiveMacros.ReactiveExpression[A, S, Dynamic, rescala.operator.Signals.type]
   }
 
   /** Similar to [[Signal]] expressions, but resulting in an event.
@@ -108,11 +108,11 @@ trait RescalaInterface[S <: Struct] extends Aliases[S] {
   object Event {
     def rescalaAPI: RescalaInterface.this.type = RescalaInterface.this
     final def apply[A](expression: Option[A])(implicit ticket: CreationTicket): Event[A] =
-      macro rescala.macros.ReactiveMacros.ReactiveExpression[A, S, Static, rescala.reactives.Events.type]
+      macro rescala.macros.ReactiveMacros.ReactiveExpression[A, S, Static, rescala.operator.Events.type]
     final def static[A](expression: Option[A])(implicit ticket: CreationTicket): Event[A] =
-      macro rescala.macros.ReactiveMacros.ReactiveExpression[A, S, Static, rescala.reactives.Events.type]
+      macro rescala.macros.ReactiveMacros.ReactiveExpression[A, S, Static, rescala.operator.Events.type]
     final def dynamic[A](expression: Option[A])(implicit ticket: CreationTicket): Event[A] =
-      macro rescala.macros.ReactiveMacros.ReactiveExpression[A, S, Dynamic, rescala.reactives.Events.type]
+      macro rescala.macros.ReactiveMacros.ReactiveExpression[A, S, Dynamic, rescala.operator.Events.type]
   }
 
   implicit def EventOps[T](e: Event[T]): Events.EOps[T]               = new Events.EOps[T](e)
@@ -121,14 +121,14 @@ trait RescalaInterface[S <: Struct] extends Aliases[S] {
   /** Contains static methods to create Events
     * @group create
     */
-  object Events extends reactives.Events[S] {
+  object Events extends operator.Events[S] {
     override val rescalaAPI: RescalaInterface.this.type = RescalaInterface.this
   }
 
   /** Contains static methods to create Signals
     * @group create
     */
-  object Signals extends reactives.Signals[S] {
+  object Signals extends operator.Signals[S] {
     override val rescalaAPI: RescalaInterface.this.type = RescalaInterface.this
   }
 
@@ -137,8 +137,8 @@ trait RescalaInterface[S <: Struct] extends Aliases[S] {
   /** Executes a transaction.
     *
     * @param initialWrites  All inputs that might be changed by the transaction
-    * @param admissionPhase An admission function that may perform arbitrary [[rescala.reactives.Signal.readValueOnce]] reads
-    *                       to [[rescala.reactives.Evt.admit]] / [[rescala.reactives.Var.admit]] arbitrary
+    * @param admissionPhase An admission function that may perform arbitrary [[rescala.operator.Signal.readValueOnce]] reads
+    *                       to [[rescala.operator.Evt.admit]] / [[rescala.operator.Var.admit]] arbitrary
     *                       input changes that will be applied as an atomic transaction at the end.
     * @tparam R Result type of the admission function
     * @return Result of the admission function
@@ -151,12 +151,12 @@ trait RescalaInterface[S <: Struct] extends Aliases[S] {
   /** Executes a transaction with WrapUpPhase.
     *
     * @param initialWrites  All inputs that might be changed by the transaction
-    * @param admissionPhase An admission function that may perform arbitrary [[rescala.reactives.Signal.readValueOnce]] reads
-    *                       to [[rescala.reactives.Evt.admit]] / [[rescala.reactives.Var.admit]] arbitrary
+    * @param admissionPhase An admission function that may perform arbitrary [[rescala.operator.Signal.readValueOnce]] reads
+    *                       to [[rescala.operator.Evt.admit]] / [[rescala.operator.Var.admit]] arbitrary
     *                       input changes that will be applied as an atomic transaction at the end.
     *                       The return value of this phase will be passed to the wrapUpPhase
     * @param wrapUpPhase    A wrap-up function that receives the admissionPhase result and may perform arbitrary
-    *                       [[rescala.reactives.Signal.readValueOnce]] reads which are
+    *                       [[rescala.operator.Signal.readValueOnce]] reads which are
     *                       executed after the update propagation.
     * @tparam I Intermediate Result type passed from admission to wrapup phase
     * @tparam R Final Result type of the wrapup phase
