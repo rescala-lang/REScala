@@ -44,7 +44,7 @@ abstract class ReevTicket[V, S <: Struct](initializer: Initializer[S], private v
   private var _propagate              = false
   private var value: V                = _
   private var effect: Observation     = null
-  override final def toString: String = s"Result(value = $value, propagate = $propagate, deps = $collectedDependencies)"
+  override final def toString: String = s"Result(value = $value, propagate = $activate, deps = $collectedDependencies)"
   final def before: V                 = _before
 
   /** Advises the ticket to track dynamic dependencies.
@@ -59,10 +59,10 @@ abstract class ReevTicket[V, S <: Struct](initializer: Initializer[S], private v
   }
   final def withEffect(v: Observation): ReevTicket[V, S] = { effect = v; this }
 
-  final override def propagate: Boolean                       = _propagate
+  final override def activate: Boolean                       = _propagate
   final override def forValue(f: V => Unit): Unit             = if (value != null) f(value)
   final override def forEffect(f: Observation => Unit): Unit  = if (effect != null) f(effect)
-  final override def dependencies(): Option[Set[ReSource[S]]] = Option(collectedDependencies)
+  final override def inputs(): Option[Set[ReSource[S]]] = Option(collectedDependencies)
 
   final def reset[NT](nb: NT): ReevTicket[NT, S] = {
     _propagate = false

@@ -199,7 +199,7 @@ object Util {
       override def staticAccess(input: ReSource[SimpleStruct]): input.Value = input.state.value
     }
     val reev = reactive.reevaluate(dt)
-    reev.dependencies().foreach { newDeps =>
+    reev.inputs().foreach { newDeps =>
       val incoming = reactive.state.incoming
       reactive.state.incoming = newDeps
       val added   = newDeps diff incoming
@@ -214,7 +214,7 @@ object Util {
 
     if (potentialGlitch) true
     else {
-      if (reev.propagate) reactive.state.outgoing.foreach(_.state.dirty = true)
+      if (reev.activate) reactive.state.outgoing.foreach(_.state.dirty = true)
       reev.forValue(reactive.state.value = _)
       reev.forEffect(o => afterCommitObservers.append(o))
       reactive.state.done = true

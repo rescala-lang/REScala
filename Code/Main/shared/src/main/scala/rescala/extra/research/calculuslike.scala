@@ -245,16 +245,16 @@ object Reevaluate {
       // and execute observers (not covered in the formalization)
       // real schedulers may want to postpone these to the the commit
       reev.forEffect(_.execute())
-      (true, reev.propagate)
+      (true, reev.activate)
     }
 
-    reev.dependencies() match {
+    reev.inputs() match {
       case None => // static reactive
         finishReevaluation()
       case Some(inputs) => //dynamic reactive
         reactive.state.inputs = inputs
         if (dynamicOk(reactive)) finishReevaluation()
-        else (false, reev.propagate)
+        else (false, reev.activate)
 
     }
   }
