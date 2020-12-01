@@ -1,6 +1,6 @@
 package tests.rescala.errors
 
-import rescala.core.Pulse
+import rescala.operator.Pulse
 import rescala.operator.RExceptions.ObservedException
 import tests.rescala.testtools.RETests
 

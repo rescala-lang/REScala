@@ -3,7 +3,7 @@ package tests.rescala.jvm
 import java.lang.ref.{PhantomReference, ReferenceQueue}
 
 import org.scalatest.prop.Whenever
-import rescala.core.Pulse
+import rescala.operator.Pulse
 import tests.rescala.testtools.RETests
 
 class GarbageCollectionTest extends RETests with Whenever {

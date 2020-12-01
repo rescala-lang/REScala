@@ -2,7 +2,7 @@ package tests.rescala.static.events
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import rescala.core.Pulse
+import rescala.operator.Pulse
 import rescala.operator.RExceptions.ObservedException
 import tests.rescala.testtools.RETests
 

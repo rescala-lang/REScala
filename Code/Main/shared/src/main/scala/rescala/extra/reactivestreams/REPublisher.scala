@@ -1,7 +1,8 @@
 package rescala.extra.reactivestreams
 
 import org.reactivestreams.{Publisher, Subscriber, Subscription}
-import rescala.core.{Base, CreationTicket, Derived, Interp, Pulse, ReName, Scheduler, Struct}
+import rescala.core.{Base, CreationTicket, Derived, Interp, ReName, Scheduler, Struct}
+import rescala.operator.Pulse
 
 import scala.util.{Failure, Success}
 

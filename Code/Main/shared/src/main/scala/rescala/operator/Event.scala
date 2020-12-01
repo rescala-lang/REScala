@@ -1,6 +1,6 @@
 package rescala.operator
 
-import rescala.core.Pulse.{Exceptional, NoChange, Value}
+import rescala.operator.Pulse.{Exceptional, NoChange, Value}
 import rescala.core._
 import rescala.interface.RescalaInterface
 import rescala.macros.cutOutOfUserComputation

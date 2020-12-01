@@ -1,10 +1,10 @@
 package rescala.interface
 
-import rescala.core.{Base, Pulse, ReName, Scheduler, Struct}
+import rescala.core.{Base, ReName, Scheduler, Struct}
 import rescala.macros.MacroTags.{Dynamic, Static}
 import rescala.operator
 import rescala.operator.Signals.SignalResource
-import rescala.operator.{DefaultImplementations, Source}
+import rescala.operator.{DefaultImplementations, Pulse, Source}
 
 object RescalaInterface {
   def interfaceFor[S <: Struct](someScheduler: Scheduler[S]): RescalaInterface[S] =

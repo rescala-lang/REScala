@@ -2,10 +2,10 @@ package rescala.extra
 
 import org.scalajs.dom
 import org.scalajs.dom.{Element, Node}
-import rescala.core.{CreationTicket, Pulse, Scheduler, Struct}
+import rescala.core.{CreationTicket, Scheduler, Struct}
 import rescala.operator.Observe.ObserveInteract
 import rescala.operator.RExceptions.ObservedException
-import rescala.operator.{Evt, Observe, Signal, Var}
+import rescala.operator.{Evt, Observe, Pulse, Signal, Var}
 import scalatags.JsDom.all.{Attr, AttrValue, Modifier, Style, StyleValue}
 import scalatags.JsDom.{StringFrag, TypedTag}
 import scalatags.generic

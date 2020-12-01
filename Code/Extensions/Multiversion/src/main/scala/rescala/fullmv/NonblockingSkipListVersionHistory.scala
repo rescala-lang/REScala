@@ -5,7 +5,7 @@ import java.util.concurrent.ForkJoinPool.ManagedBlocker
 import java.util.concurrent.atomic.{AtomicIntegerFieldUpdater, AtomicReference, AtomicReferenceFieldUpdater}
 import java.util.concurrent.locks.LockSupport
 
-import rescala.core.Pulse
+import rescala.operator.Pulse
 
 import scala.annotation.{elidable, tailrec}
 

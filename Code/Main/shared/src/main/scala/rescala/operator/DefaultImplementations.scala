@@ -1,10 +1,10 @@
 package rescala.operator
 
-import rescala.core.Pulse.NoChange
 import rescala.core._
 import rescala.interface.RescalaInterface
 import rescala.operator
 import rescala.operator.Events.Estate
+import rescala.operator.Pulse.NoChange
 import rescala.operator.Signals.{SignalResource, Sstate}
 
 trait DefaultImplementations[S <: Struct] {

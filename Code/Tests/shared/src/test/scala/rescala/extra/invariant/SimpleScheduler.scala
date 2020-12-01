@@ -4,8 +4,9 @@ import org.scalacheck.Prop.forAll
 import org.scalacheck.Test.PropException
 import org.scalacheck.{Gen, Prop, Test}
 import rescala.core
+import rescala.operator.Pulse
 import rescala.core.{
-  AccessTicket, Derived, DynamicInitializerLookup, InitialChange, Initializer, Observation, Pulse, ReSource, ReevTicket,
+  AccessTicket, Derived, DynamicInitializerLookup, InitialChange, Initializer, Observation, ReSource, ReevTicket,
   Scheduler, Struct
 }
 import rescala.interface.Aliases
