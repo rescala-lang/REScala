@@ -137,6 +137,7 @@ object Dependencies {
 
   def ld            = libraryDependencies
   val scribeVersion = "[2.7.0,2.8.0)"
+  val scalaJavaTimeVersion = "2.0.0"
 
   val betterFiles   = ld += "com.github.pathikrit" %% "better-files"    % "3.9.1"
   val cats          = ld += "org.typelevel"       %%% "cats-core"       % "2.2.0"
@@ -149,7 +150,7 @@ object Dependencies {
   val okHttp        = ld += "com.squareup.okhttp3"  % "okhttp"          % "4.9.0"
   val pprint        = ld += "com.lihaoyi"         %%% "pprint"          % "0.6.0"
   val scalactic     = ld += "org.scalactic"        %% "scalactic"       % "3.0.7"
-  val scalaJavaTime = ld += "io.github.cquiroz"   %%% "scala-java-time" % "2.0.0"
+  val scalaJavaTime = ld += "io.github.cquiroz"   %%% "scala-java-time" % scalaJavaTimeVersion
   val scribe        = ld += "com.outr"            %%% "scribe"          % scribeVersion
   val scribeSlf4j   = ld += "com.outr"             %% "scribe-slf4j"    % scribeVersion
   val sourcecode    = ld += "com.lihaoyi"         %%% "sourcecode"      % "0.2.1"
@@ -191,7 +192,8 @@ object Dependencies {
   val scalaXml   = ld += "org.scala-lang.modules" %% "scala-xml"   % "1.3.0"
   val scalaswing = ld += "org.scala-lang.modules" %% "scala-swing" % "3.0.0"
 
-  case class Loci(version: String = "0.4.0") {
+  val lociVersion = "0.4.0"
+  case class Loci(version: String = lociVersion) {
 
     def generic(n: String) =
       Def.settings(

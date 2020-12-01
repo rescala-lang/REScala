@@ -18,8 +18,6 @@ lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
   rescalaJVM,
   rescalafx,
   reswing,
-  testsJS,
-  testsJVM,
   todolist,
   universe
 )
@@ -30,6 +28,8 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Code/Main"))
     name := "rescala",
     strictCompile,
     cfg.base,
+    cfg.test,
+    scalatestpluscheck,
     lib.retypecheck,
     sourcecode,
     cfg.bintray,
@@ -38,16 +38,27 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Code/Main"))
     lib.reactivestreams,
     // built in serializability of lattice vertices
     libraryDependencies ++= List(
-      "io.circe" %%% s"circe-core"   % "[0.11.0,)" % "provided",
-      "io.circe" %%% s"circe-parser" % "[0.11.0,)" % "provided"
+      "io.circe" %%% s"circe-core"   % circeVersion % "provided,test",
+      "io.circe" %%% s"circe-parser" % circeVersion % "provided,test",
+      "de.tuda.stg" %%% s"scala-loci-communicator-ws-akka" % lociVersion % "test",
+      "de.tuda.stg" %%% s"scala-loci-serializer-circe" % lociVersion % "test",
+      "de.tuda.stg" %%% s"scala-loci-serializer-upickle" % lociVersion % "test",
+      "de.tuda.stg" %%% s"scala-loci-communication" % lociVersion % "test",
+      "io.github.cquiroz" %%% "scala-java-time" % scalaJavaTimeVersion % "test",
     )
   )
-  .jvmSettings()
+  .jvmSettings(
+    libraryDependencies ++= (Seq("akka-http-core", "akka-http")
+    .map(n => "com.typesafe.akka" %% n % "10.1.+" % "test") ++
+    Seq("com.typesafe.akka" %% "akka-stream" % akkaVersion % "test"))
+  )
   .jsSettings(
     // for restoration
     libraryDependencies += "org.scala-js" %%% "scalajs-dom" % scalajsdomVersion % "provided",
     // for rescalatags
-    libraryDependencies += "com.lihaoyi" %%% "scalatags" % scalatagsVersion % "provided"
+    libraryDependencies += "com.lihaoyi" %%% "scalatags" % scalatagsVersion % "provided,test",
+    // dom envirnoment
+    jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
   )
 //  .nativeSettings(
 //    crossScalaVersions := Seq("2.11.8"),
@@ -60,28 +71,6 @@ lazy val rescalaJS = rescala.js
 //lazy val rescalaNative = rescala.native
 
 val loci = Loci()
-
-lazy val tests = crossProject(JSPlatform, JVMPlatform).in(file("Code/Tests"))
-  .settings(
-    name := "rescala-tests",
-    cfg.noPublish,
-    cfg.base,
-    cfg.test,
-    scalatestpluscheck,
-    loci.wsAkka,
-    lib.lociTransmitterDependencies,
-    circe,
-    lib.lociTransmitterDependencies,
-    scalatags,
-    scalaJavaTime
-  )
-  .dependsOn(rescala)
-  .dependsOn(locidistribution)
-  .jvmSettings(Dependencies.akkaHttp).jsSettings(
-    jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
-  )
-lazy val testsJVM = tests.jvm
-lazy val testsJS  = tests.js
 
 lazy val documentation = project.in(file("Documentation/DocumentationProject"))
   .settings(cfg.base, cfg.noPublish, scalacOptions += "-Xlint:-unused")
@@ -100,7 +89,7 @@ lazy val rescalafx = project.in(file("Code/Extensions/javafx"))
 
 lazy val locidistribution = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure)
   .in(file("Code/Extensions/LociDistribution"))
-  .dependsOn(rescala)
+  .dependsOn(rescala % "compile->compile;test->test")
   .settings(name := "loci-distribution", cfg.base, cfg.noPublish, lib.lociTransmitterDependencies)
 
 lazy val locidistributionJS  = locidistribution.js
@@ -157,7 +146,7 @@ lazy val dividiParoli = project.in(file("Code/Examples/dividiParoli"))
 
 lazy val fullmv = project.in(file("Code/Extensions/Multiversion"))
   .settings(cfg.base, name := "rescala-multiversion", cfg.test, cfg.noPublish)
-  .dependsOn(rescalaJVM, testsJVM % "test->test")
+  .dependsOn(rescalaJVM % "compile->compile;test->test")
 
 //lazy val distributedFullmv = project.in(file("Code/Extensions/distributed/multiversion"))
 //  .settings( cfg.base, name := "rescala-distributed-multiversion",

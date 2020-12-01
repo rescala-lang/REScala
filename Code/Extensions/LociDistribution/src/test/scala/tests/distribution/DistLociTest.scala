@@ -1,14 +1,7 @@
 package tests.distribution
 
-import io.circe.generic.auto._
-import loci.communicator.ws.akka.WS
 import loci.registry.{Binding, Registry}
-import loci.serializer.circe._
 import loci.transmitter.{IdenticallyTransmittable, RemoteRef}
-import org.scalatest.freespec.AnyFreeSpec
-import rescala.default._
-import rescala.extra.distributables.LociDist.dfold
-import rescala.extra.lattices.sequences.RGA.RGA
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
