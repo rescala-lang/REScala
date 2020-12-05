@@ -1,8 +1,6 @@
 package rescala.extra.lattices.delta
 
-import rescala.extra.lattices.delta.CContext._
 import rescala.extra.lattices.delta.DeltaCRDT._
-import rescala.extra.lattices.delta.DotStore._
 
 case class DeltaCRDT[D: DotStore, C: CContext](replicaID: String, state: D, cc: C, deltaBuffer: List[CausalDelta[D, C]]) {
   def applyDelta[A: CContext](delta: CausalDelta[D, A], save: Boolean = false): DeltaCRDT[D, C] = delta match {

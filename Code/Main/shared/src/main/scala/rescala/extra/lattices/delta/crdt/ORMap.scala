@@ -11,13 +11,13 @@ object ORMap {
   def mutateKey[K, V: DotStore](k: K, deltaMutator: DeltaDotMutator[V]): DeltaDotMutator[DotMap[K, V]] = (dm, nextDot) =>
     deltaMutator(dm(k), nextDot) match {
       case SetDelta(state, dots) =>
-        SetDelta(Map(k -> state), dots)
+        SetDelta(DotMap[K, V].bottom.updated(k, state), dots)
     }
 
   def mutateKey[K, V: DotStore](k: K, deltaMutator: DeltaMutator[V]): DeltaMutator[DotMap[K, V]] = dm =>
     deltaMutator(dm(k)) match {
       case SetDelta(state, dots) =>
-        SetDelta(Map(k -> state), dots)
+        SetDelta(DotMap[K, V].bottom.updated(k, state), dots)
     }
 
   def queryKey[K, V: DotStore, A](k: K, q: DeltaQuery[V, A]): DeltaQuery[DotMap[K, V], A] = dm =>
