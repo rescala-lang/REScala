@@ -1,6 +1,5 @@
 package rescala.extra.lattices.delta
 
-import rescala.extra.lattices.delta.CContext._
 import rescala.extra.lattices.Lattice
 
 trait DotStore[A] {
@@ -44,20 +43,20 @@ object DotStore {
     override def bottom: Map[Dot, A] = Map.empty[Dot, A]
   }
 
-  type DotMap[K, V] = Map[K, V]
-  implicit def DotMap[K, V: DotStore]: DotStore[Map[K, V]] = new DotStore[Map[K, V]] {
-    override def dots(ds: Map[K, V]): Set[Dot] = ds.values.flatMap(DotStore[V].dots(_)).toSet
+  type DotMap[K, V] = Map.WithDefault[K, V]
+  implicit def DotMap[K, V: DotStore]: DotStore[Map.WithDefault[K, V]] = new DotStore[Map.WithDefault[K, V]] {
+    override def dots(ds: Map.WithDefault[K, V]): Set[Dot] = ds.values.flatMap(DotStore[V].dots(_)).toSet
 
-    override def merge[C: CContext, D: CContext](left: Map[K, V], leftContext: C, right: Map[K, V], rightContext: D): (Map[K, V], C) = {
+    override def merge[C: CContext, D: CContext](left: Map.WithDefault[K, V], leftContext: C, right: Map.WithDefault[K, V], rightContext: D): (Map.WithDefault[K, V], C) = {
       val allKeys = left.keySet union right.keySet
       val mergedValues = allKeys map { k =>
-        val (mergedVal, _) = DotStore[V].merge(left.getOrElse(k, DotStore[V].bottom), leftContext, right.getOrElse(k, DotStore[V].bottom), rightContext)
+        val (mergedVal, _) = DotStore[V].merge(left(k), leftContext, right(k), rightContext)
         k -> mergedVal
       } filter { case (_, v) => v != DotStore[V].bottom }
 
-      (mergedValues.toMap, CContext[C].union(leftContext, rightContext))
+      (new Map.WithDefault(mergedValues.toMap, _ => DotStore[V].bottom), CContext[C].union(leftContext, rightContext))
     }
 
-    override def bottom: Map[K, V] = Map.empty[K, V]
+    override def bottom: Map.WithDefault[K, V] = new Map.WithDefault(Map.empty[K, V], _ => DotStore[V].bottom)
   }
 }

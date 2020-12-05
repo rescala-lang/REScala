@@ -13,10 +13,10 @@ object AWSet {
   def elements[E]: DeltaQuery[Store[E], Set[E]] = dm => dm.keySet
 
   def add[E](e: E): DeltaDotMutator[Store[E]] = (dm, nextDot) =>
-    SetDelta(Map(e -> Set(nextDot)), dm.getOrElse(e, DotSet.bottom) + nextDot)
+    SetDelta(Map(e -> Set(nextDot)), dm(e) + nextDot)
 
   def remove[E](e: E): DeltaMutator[Store[E]] = dm =>
-    SetDelta(DotMap[E, DotSet].bottom, dm.getOrElse(e, DotSet.bottom))
+    SetDelta(DotMap[E, DotSet].bottom, dm(e))
 
   def clear[E]: DeltaMutator[Store[E]] = dm =>
     SetDelta(DotMap[E, DotSet].bottom, DotMap[E, DotSet].dots(dm))

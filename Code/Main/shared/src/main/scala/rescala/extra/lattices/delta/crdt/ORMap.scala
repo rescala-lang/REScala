@@ -9,22 +9,22 @@ object ORMap {
     DeltaCRDT(replicaID, DotMap[K, V].bottom, CContext[C].empty, List())
 
   def mutateKey[K, V: DotStore](k: K, deltaMutator: DeltaDotMutator[V]): DeltaDotMutator[DotMap[K, V]] = (dm, nextDot) =>
-    deltaMutator(dm.getOrElse(k, DotStore[V].bottom), nextDot) match {
+    deltaMutator(dm(k), nextDot) match {
       case SetDelta(state, dots) =>
         SetDelta(Map(k -> state), dots)
     }
 
   def mutateKey[K, V: DotStore](k: K, deltaMutator: DeltaMutator[V]): DeltaMutator[DotMap[K, V]] = dm =>
-    deltaMutator(dm.getOrElse(k, DotStore[V].bottom)) match {
+    deltaMutator(dm(k)) match {
       case SetDelta(state, dots) =>
         SetDelta(Map(k -> state), dots)
     }
 
   def queryKey[K, V: DotStore, A](k: K, q: DeltaQuery[V, A]): DeltaQuery[DotMap[K, V], A] = dm =>
-    q(dm.getOrElse(k, DotStore[V].bottom))
+    q(dm(k))
 
   def remove[K, V: DotStore](k: K): DeltaMutator[DotMap[K, V]] = dm =>
-    SetDelta(DotMap[K, V].bottom, DotStore[V].dots(dm.getOrElse(k, DotStore[V].bottom)))
+    SetDelta(DotMap[K, V].bottom, DotStore[V].dots(dm(k)))
 
   def clear[K, V: DotStore]: DeltaMutator[DotMap[K, V]] = dm =>
     SetDelta(DotMap[K, V].bottom, DotMap[K, V].dots(dm))
