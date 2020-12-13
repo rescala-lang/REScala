@@ -4,6 +4,7 @@ import java.nio.file.Files
 import sbtcrossproject.CrossPlugin.autoImport.{CrossType, crossProject}
 import Settings._
 import Dependencies._
+import Dependencies.{Versions => V}
 
 ThisBuild / incOptions := (ThisBuild / incOptions).value.withLogRecompileOnMacro(false)
 cfg.noPublish
@@ -29,34 +30,34 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Code/Main"))
     strictCompile,
     cfg.base,
     cfg.test,
-    scalatestpluscheck,
+    libraryDependencies += scalatestpluscheck.value,
     lib.retypecheck,
-    sourcecode,
     cfg.bintray,
     lib.reflectionForMacroDefinitions,
     // for reactive streams api
     lib.reactivestreams,
     // built in serializability of lattice vertices
     libraryDependencies ++= List(
-      "io.circe" %%% s"circe-core"   % circeVersion % "provided,test",
-      "io.circe" %%% s"circe-parser" % circeVersion % "provided,test",
-      "de.tuda.stg" %%% s"scala-loci-communicator-ws-akka" % lociVersion % "test",
-      "de.tuda.stg" %%% s"scala-loci-serializer-circe" % lociVersion % "test",
-      "de.tuda.stg" %%% s"scala-loci-serializer-upickle" % lociVersion % "test",
-      "de.tuda.stg" %%% s"scala-loci-communication" % lociVersion % "test",
-      "io.github.cquiroz" %%% "scala-java-time" % scalaJavaTimeVersion % "test",
+      sourcecode.value,
+      "io.circe" %%% s"circe-core"   % V.circeCore % "provided,test",
+      "io.circe" %%% s"circe-parser" % V.circeCore % "provided,test",
+      "de.tuda.stg" %%% s"scala-loci-communicator-ws-akka" % V.scalaLociCommunication % "test",
+      "de.tuda.stg" %%% s"scala-loci-serializer-circe" % V.scalaLociCommunication % "test",
+      "de.tuda.stg" %%% s"scala-loci-serializer-upickle" % V.scalaLociCommunication % "test",
+      "de.tuda.stg" %%% s"scala-loci-communication" % V.scalaLociCommunication % "test",
+      "io.github.cquiroz" %%% "scala-java-time" % V.scalaJavaTime % "test",
     )
   )
   .jvmSettings(
     libraryDependencies ++= (Seq("akka-http-core", "akka-http")
     .map(n => "com.typesafe.akka" %% n % "10.1.+" % "test") ++
-    Seq("com.typesafe.akka" %% "akka-stream" % akkaVersion % "test"))
+    Seq("com.typesafe.akka" %% "akka-stream" % V.akkaActors % "test"))
   )
   .jsSettings(
     // for restoration
-    libraryDependencies += "org.scala-js" %%% "scalajs-dom" % scalajsdomVersion % "provided",
+    libraryDependencies += "org.scala-js" %%% "scalajs-dom" % V.scalajsDom % "provided",
     // for rescalatags
-    libraryDependencies += "com.lihaoyi" %%% "scalatags" % scalatagsVersion % "provided,test",
+    libraryDependencies += "com.lihaoyi" %%% "scalatags" % V.scalatags % "provided,test",
     // dom envirnoment
     jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
   )
@@ -70,8 +71,6 @@ lazy val rescalaJS = rescala.js
 
 //lazy val rescalaNative = rescala.native
 
-val loci = Loci()
-
 lazy val documentation = project.in(file("Documentation/DocumentationProject"))
   .settings(cfg.base, cfg.noPublish, scalacOptions += "-Xlint:-unused")
   .enablePlugins(TutPlugin)
@@ -80,7 +79,7 @@ lazy val documentation = project.in(file("Documentation/DocumentationProject"))
 // ===================================================================================== Extensions
 
 lazy val reswing = project.in(file("Code/Extensions/RESwing"))
-  .settings(name := "reswing", cfg.base, cfg.noPublish, cfg.strictScalac, scalaswing)
+  .settings(name := "reswing", cfg.base, cfg.noPublish, cfg.strictScalac, libraryDependencies += scalaSwing.value)
   .dependsOn(rescalaJVM)
 
 lazy val rescalafx = project.in(file("Code/Extensions/javafx"))
@@ -99,7 +98,9 @@ lazy val locidistributionJVM = locidistribution.jvm
 
 lazy val examples = project.in(file("Code/Examples/examples"))
   .dependsOn(rescalaJVM, reswing)
-  .settings(name := "rescala-examples", cfg.base, cfg.noPublish, scalaswing, scalaXml)
+  .settings(name := "rescala-examples", cfg.base, cfg.noPublish, libraryDependencies ++= Seq(
+    scalaXml.value,
+    scalaSwing.value))
 
 lazy val universe = project.in(file("Code/Examples/Universe"))
   .dependsOn(rescalaJVM, fullmv)
@@ -114,12 +115,13 @@ lazy val todolist = project.in(file("Code/Examples/Todolist"))
     cfg.base,
     cfg.noPublish,
     name := "todolist",
-    circe,
-    scalatags,
+    libraryDependencies ++= circe.value ++ Seq(
+    loci.circe.value,
+    scalatags.value,
+    loci.webrtc.value,
+  ),
     scalaSource in Compile := baseDirectory.value,
     scalaJSUseMainModuleInitializer := true,
-    loci.webrtc,
-    loci.circe
   )
 
 lazy val dividiParoli = project.in(file("Code/Examples/dividiParoli"))
@@ -131,14 +133,14 @@ lazy val dividiParoli = project.in(file("Code/Examples/dividiParoli"))
     cfg.mappingFilters,
     lib.scalaLogback,
     lib.scalafx,
-    circe,
-    loci.communication,
-    loci.circe,
-    loci.wsAkka,
-    lib.scalafxExtras,
-    lib.jline,
+    libraryDependencies ++= circe.value ++     akkaHttp.value ++ Seq(
+    loci.communication.value,
+    loci.circe.value,
+    loci.wsAkka.value,
+  ),
     lib.oldAkkaCluster,
-    akkaHttp,
+    lib.jline,
+    lib.scalafxExtras,
     cfg.noWarnings,
     fork := true
   )
@@ -174,8 +176,7 @@ lazy val microbench = project.in(file("Code/Microbenchmarks"))
     cfg.base,
     cfg.noPublish,
     mainClass in Compile := Some("org.openjdk.jmh.Main"),
-    circe,
-    upickle,
+    libraryDependencies ++= circe.value :+ upickle.value,
     TaskKey[Unit]("compileJmh") := Seq(compile in pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh).dependOn.value
   )
   .enablePlugins(JavaAppPackaging)
@@ -197,7 +198,7 @@ lazy val cfg = new {
   val test = List(
     testOptions in Test += Tests.Argument("-oICN"),
     parallelExecution in Test := true,
-    scalatest
+    libraryDependencies += scalatest.value
   )
 
   val noWarnings = scalacOptions += "--no-warnings"
@@ -238,11 +239,11 @@ lazy val lib = new {
 
   lazy val rss = Def.settings(
     libraryDependencies ++= Seq(
+      scalaXml.value,
       "joda-time"                  % "joda-time"    % "2.10.3",
       "org.joda"                   % "joda-convert" % "2.2.1",
       "org.codehaus.jsr166-mirror" % "jsr166y"      % "1.7.0"
-    ),
-    scalaXml
+    )
   )
 
   val reactivestreams = libraryDependencies ++= List(
@@ -258,10 +259,10 @@ lazy val lib = new {
   val reflectionForMacroDefinitions =
     libraryDependencies += scalaOrganization.value % "scala-reflect" % scalaVersion.value % "provided"
 
-  val lociTransmitterDependencies = Def.settings(
-    loci.communication,
-    loci.circe,
-    loci.upickle
+  val lociTransmitterDependencies = libraryDependencies ++= Seq(
+    loci.communication.value,
+    loci.circe.value,
+    loci.upickle.value
   )
 
   ///// Historic dependencies
@@ -287,9 +288,11 @@ lazy val lib = new {
   val javafx             = libraryDependencies ++= javaFXModules.map(m => "org.openjfx" % s"javafx-$m" % "15.0.1" classifier osName)
 
   val scalafx = Seq(
-    libraryDependencies += "org.scalafx" %% "scalafx" % "15.0.1-R20",
-    javafx,
-    scalaswing,
+    libraryDependencies ++= Seq(
+      "org.scalafx" %% "scalafx" % "15.0.1-R20",
+      scalaSwing.value,
+    ),
+    javafx
     // unmanagedJars in Compile += Attributed.blank(file(System.getenv("JAVA_HOME") + "/lib/ext/jfxrt.jar"))
   )
 
@@ -322,13 +325,13 @@ lazy val lib = new {
   val oldAkkaCluster = {
 
     libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-slf4j"              % akkaVersion,
-      "com.typesafe.akka" %% "akka-actor"              % akkaVersion,
-      "com.typesafe.akka" %% "akka-remote"             % akkaVersion,
-      "com.typesafe.akka" %% "akka-cluster"            % akkaVersion,
-      "com.typesafe.akka" %% "akka-cluster-metrics"    % akkaVersion,
-      "com.typesafe.akka" %% "akka-cluster-tools"      % akkaVersion,
-      "com.typesafe.akka" %% "akka-multi-node-testkit" % akkaVersion
+      "com.typesafe.akka" %% "akka-slf4j"              % V.akkaActors,
+      "com.typesafe.akka" %% "akka-actor"              % V.akkaActors,
+      "com.typesafe.akka" %% "akka-remote"             % V.akkaActors,
+      "com.typesafe.akka" %% "akka-cluster"            % V.akkaActors,
+      "com.typesafe.akka" %% "akka-cluster-metrics"    % V.akkaActors,
+      "com.typesafe.akka" %% "akka-cluster-tools"      % V.akkaActors,
+      "com.typesafe.akka" %% "akka-multi-node-testkit" % V.akkaActors
     )
   }
 }
@@ -364,9 +367,11 @@ lazy val ersirServer = project.in(file("Code/Examples/Ersir/server"))
     name := "server",
     fork := true,
     cfg.base,
-    jsoup,
-    betterFiles,
-    decline,
+    libraryDependencies ++= Seq(
+    jsoup.value,
+    betterFiles.value,
+    decline.value,
+    ),
     vbundleDef,
     (Compile / compile) := ((Compile / compile) dependsOn vbundle).value
   )
@@ -379,9 +384,11 @@ lazy val ersirWeb = project.in(file("Code/Examples/Ersir/web"))
   .settings(
     name := "web",
     cfg.base,
-    scalajsdom,
     npmDependencies in Compile ++= Seq("mqtt" -> "2.18.2"),
-    normalizecss,
+    libraryDependencies ++= Seq(
+    scalajsDom.value,
+    normalizecss.value,
+  ),
     scalaJSUseMainModuleInitializer := true,
     webpackBundlingMode := BundlingMode.LibraryOnly()
     //scalacOptions += "-P:scalajs:sjsDefinedByDefault"
@@ -396,13 +403,13 @@ lazy val ersirShared = crossProject(JSPlatform, JVMPlatform)
   .settings(
     name := "shared",
     cfg.base,
-    scalatags,
-    loci.communication,
-    loci.wsAkka,
-    circe,
-    scribe,
-    loci.circe,
-    akkaHttp
+    libraryDependencies ++= circe.value ++ akkaHttp.value ++ Seq(
+    scalatags.value,
+    loci.communication.value,
+    loci.wsAkka.value,
+    scribe.value,
+    loci.circe.value,
+    )
   )
   .dependsOn(rescala)
   .dependsOn(locidistribution)
