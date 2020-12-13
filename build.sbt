@@ -202,15 +202,6 @@ lazy val cfg = new {
 
   val noWarnings = scalacOptions += "--no-warnings"
 
-  /*
-   * publish procedure copied from:
-   *   https://github.com/portable-scala/sbt-crossproject/commit/fbe10fe5cee1f545be75a310612b30e520729a0d#diff-6a3371457528722a734f3c51d9238c13
-   * Have your Bintray credentials stored as
-    [documented here](http://www.scala-sbt.org/1.0/docs/Publishing.html#Credentials),
-    using realm `Bintray API Realm` and host `api.bintray.com`
-   * Use `publish` from sbt
-   * Log in to Bintray and publish the files that were sent
-   */
   lazy val bintray = Resolvers.bintrayPublish("stg-tud", "rescala-lang", "REScala")
 
   lazy val noPublish = Seq(

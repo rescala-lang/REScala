@@ -104,6 +104,15 @@ object Settings {
 object Resolvers {
   val stg = resolvers += Resolver.bintrayRepo("stg-tud", "maven")
 
+  /*
+   * publish procedure copied and adapted from:
+   *   https://github.com/portable-scala/sbt-crossproject/commit/fbe10fe5cee1f545be75a310612b30e520729a0d#diff-6a3371457528722a734f3c51d9238c13
+   * Have your Bintray credentials stored as
+    [documented here](http://www.scala-sbt.org/1.0/docs/Publishing.html#Credentials),
+    using realm `Bintray API Realm` and host `api.bintray.com`
+   * Use `publish` from sbt
+   * Log in to Bintray and publish the files that were sent
+   */
   def bintrayPublish(bintrayOrganization: String, githubOrganization: String, githubReponame: String) =
     Seq(
       publishArtifact in Compile := true,
