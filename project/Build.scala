@@ -165,9 +165,9 @@ object Dependencies {
     )
   }
 
-  val akkaVersion = "[2.5.31, 2.6.5]"
+  val akkaVersion = "2.5.32"
   val akkaHttp = ld ++= (Seq("akka-http-core", "akka-http")
-    .map(n => "com.typesafe.akka" %% n % "10.1.+") ++
+    .map(n => "com.typesafe.akka" %% n % "10.2.2") ++
     Seq("com.typesafe.akka" %% "akka-stream" % akkaVersion))
 
   val circeVersion = "[0.11.2, 0.13.0]"

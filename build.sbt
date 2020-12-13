@@ -139,7 +139,8 @@ lazy val dividiParoli = project.in(file("Code/Examples/dividiParoli"))
     lib.jline,
     lib.oldAkkaCluster,
     akkaHttp,
-    cfg.noWarnings
+    cfg.noWarnings,
+    fork := true
   )
 
 // ===================================================================================== Research
@@ -292,13 +293,13 @@ lazy val lib = new {
   // https://www.scalafx.org/news/releases/
   // then again, the announcement for 12.0.2 seems incorrect …
   lazy val javaFXModules = Seq("base", "controls", "fxml", "graphics", "media", "swing", "web")
-  val javafx             = libraryDependencies ++= javaFXModules.map(m => "org.openjfx" % s"javafx-$m" % "12.0.2" classifier osName)
+  val javafx             = libraryDependencies ++= javaFXModules.map(m => "org.openjfx" % s"javafx-$m" % "15.0.1" classifier osName)
 
   val scalafx = Seq(
-    libraryDependencies += "org.scalafx" %% "scalafx" % "12.0.2-R18",
+    libraryDependencies += "org.scalafx" %% "scalafx" % "15.0.1-R20",
     javafx,
     scalaswing,
-    unmanagedJars in Compile += Attributed.blank(file(System.getenv("JAVA_HOME") + "/lib/ext/jfxrt.jar"))
+    // unmanagedJars in Compile += Attributed.blank(file(System.getenv("JAVA_HOME") + "/lib/ext/jfxrt.jar"))
   )
 
   def `is 2.12+`(scalaVersion: String): Boolean =

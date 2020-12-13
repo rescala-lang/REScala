@@ -1,5 +1,4 @@
 import java.io.IOException
-
 import com.typesafe.scalalogging.Logger
 import io.circe.generic.auto._
 import javafx.fxml.FXMLLoader
@@ -14,6 +13,7 @@ import scalafx.application.JFXApp.PrimaryStage
 import scalafx.beans.property._
 import scalafx.scene.Scene
 import scalafx.scene.control._
+import scalafxml.core.{FXMLView, NoDependencyResolver}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
@@ -165,7 +165,7 @@ object DividiApp extends JFXApp {
   }
 
   // render FXML
-  val root = FXMLLoader.load[Scene](resource)
+  val root = FXMLView(resource, NoDependencyResolver)
   stage = new PrimaryStage() {
     title = s"Dividi: $username"
     scene = new Scene(root)

@@ -57,7 +57,7 @@ object ParoliChatApp {
       case "Charlie" => startup("Charlie", "2552")
     }
     else {
-      val config      = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + 2553).withFallback(ConfigFactory.load())
+      val config      = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + 2553).withFallback(ConfigFactory.parseString(ConfigString.value))
       val system      = ActorSystem("ClusterSystem", config)
       val joinAddress = Cluster(system).selfAddress
       Cluster(system).join(joinAddress)

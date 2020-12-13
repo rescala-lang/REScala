@@ -1,4 +1,5 @@
-akka {
+object ConfigString {
+  val value = """akka {
   loggers = ["akka.event.slf4j.Slf4jLogger"]
   loglevel = "WARNING"
   logging-filter = "akka.event.slf4j.Slf4jLoggingFilter"
@@ -36,3 +37,5 @@ akka.cluster.metrics.enabled = off
 # Sigar native library extract location during tests.
 # Note: use per-jvm-instance folder when running multiple jvm on one host.
 # akka.cluster.metrics.native-library-extract-folder = ${user.dir}/target/native
+"""
+}
