@@ -155,7 +155,7 @@ object Dependencies {
   val scribeSlf4j   = ld += "com.outr"             %% "scribe-slf4j"    % scribeVersion
   val sourcecode    = ld += "com.lihaoyi"         %%% "sourcecode"      % "0.2.1"
   val toml          = ld += "tech.sparse"         %%% "toml-scala"      % "0.2.2"
-  val upickle       = ld += "com.lihaoyi"          %% "upickle"         % "[0.7.4,1.1.0]"
+  val upickle       = ld += "com.lihaoyi"          %% "upickle"         % "1.2.2"
 
   val jsoniter = {
     val jsoniterVersion = "2.6.2"
@@ -170,14 +170,14 @@ object Dependencies {
     .map(n => "com.typesafe.akka" %% n % "10.2.2") ++
     Seq("com.typesafe.akka" %% "akka-stream" % akkaVersion))
 
-  val circeVersion = "[0.11.2, 0.13.0]"
+  val circeVersion = "0.13.0"
 
   val circe = ld ++= Seq("core", "generic", "generic-extras", "parser")
     .map(n => "io.circe" %%% s"circe-$n" % circeVersion)
 
   // frontend
   val normalizecss      = ld += "org.webjars.npm" % "normalize.css" % "8.0.1"
-  val scalatagsVersion  = "[0.6.8,0.10.0)"
+  val scalatagsVersion  = "0.9.2"
   val scalatags         = ld += "com.lihaoyi"   %%% "scalatags"     % scalatagsVersion
   val scalajsdomVersion = "1.1.0"
   val scalajsdom        = ld += "org.scala-js"  %%% "scalajs-dom"   % scalajsdomVersion
