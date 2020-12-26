@@ -8,7 +8,7 @@ object Dependencies {
   // format: off
   object Versions {
     val akkaActors = "2.6.10"
-    val akkaHttp = "10.2.1"
+    val akkaHttp = "10.2.2"
     val betterFiles = "3.9.1"
     val cats = "2.3.0"
     val circeCore = "0.13.0"
@@ -32,7 +32,7 @@ object Dependencies {
     val scala212 = "2.12.4"
     val scala213 = "2.13.4"
     val scala300 = "3.0.0-M3"
-    val scalaJavaTime = "2.0.0"
+    val scalaJavaTime = "2.1.0"
     val scalaLociCommunication = "0.4.0"
     val scalaParallelCollections = "1.0.0"
     val scalaSwing = "3.0.0"
