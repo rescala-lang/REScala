@@ -1,7 +1,9 @@
 package rescala.fullmv.tasks
 
 import rescala.core._
-import rescala.fullmv.NotificationBranchResult.ReevOutBranchResult.{NotifyAndNonReadySuccessor, NotifyAndReevaluationReadySuccessor, PureNotifyOnly}
+import rescala.fullmv.NotificationBranchResult.ReevOutBranchResult.{
+  NotifyAndNonReadySuccessor, NotifyAndReevaluationReadySuccessor, PureNotifyOnly
+}
 import rescala.fullmv.NotificationBranchResult.ReevOutBranchResult
 import rescala.fullmv._
 import rescala.operator.Pulse

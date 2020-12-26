@@ -60,9 +60,9 @@ abstract class ReevTicket[V, S <: Struct](initializer: Initializer[S], private v
   final def withEffect(v: Observation): ReevTicket[V, S] = { effect = v; this }
 
   final override def activate: Boolean                       = _propagate
-  final override def forValue(f: V => Unit): Unit             = if (value != null) f(value)
-  final override def forEffect(f: Observation => Unit): Unit  = if (effect != null) f(effect)
-  final override def inputs(): Option[Set[ReSource[S]]] = Option(collectedDependencies)
+  final override def forValue(f: V => Unit): Unit            = if (value != null) f(value)
+  final override def forEffect(f: Observation => Unit): Unit = if (effect != null) f(effect)
+  final override def inputs(): Option[Set[ReSource[S]]]      = Option(collectedDependencies)
 
   final def reset[NT](nb: NT): ReevTicket[NT, S] = {
     _propagate = false

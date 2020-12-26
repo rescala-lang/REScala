@@ -52,10 +52,10 @@ trait DefaultImplementations[S <: Struct] {
   }
 
   class ChangeEventImpl[T](
-                            _bud: S#State[(Pulse[T], Pulse[Diff[T]]), S],
-                            signal: operator.Signal[T, S],
-                            name: ReName,
-                            override val rescalaAPI: RescalaInterface[S]
+      _bud: S#State[(Pulse[T], Pulse[Diff[T]]), S],
+      signal: operator.Signal[T, S],
+      name: ReName,
+      override val rescalaAPI: RescalaInterface[S]
   ) extends Base[(Pulse[T], Pulse[Diff[T]]), S](_bud, name)
       with Derived[S]
       with Event[Diff[T], S]

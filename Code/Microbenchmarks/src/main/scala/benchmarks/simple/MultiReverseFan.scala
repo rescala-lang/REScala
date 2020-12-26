@@ -23,8 +23,8 @@ class MultiReverseFan[S <: Struct] {
 
   var sources: Array[rescala.operator.Var[Int, S]] = _
   var results: Array[Signal[Int, S]]               = _
-  var locks: Array[Lock]                            = null
-  var groupSize: Int                                = _
+  var locks: Array[Lock]                           = null
+  var groupSize: Int                               = _
 
   @Setup
   def setup(params: BenchmarkParams, size: Size, step: Step, engineParam: EngineParam[S], work: Workload) = {

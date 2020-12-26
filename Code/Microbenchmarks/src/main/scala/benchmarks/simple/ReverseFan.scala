@@ -23,7 +23,7 @@ class ReverseFan[S <: Struct] {
 
   var sources: Array[rescala.operator.Var[Int, S]] = _
   var result: Signal[Int, S]                       = _
-  var isManual: Boolean                             = false
+  var isManual: Boolean                            = false
 
   @Setup
   def setup(params: BenchmarkParams, size: Size, step: Step, engineParam: EngineParam[S], work: Workload) = {

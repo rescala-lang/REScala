@@ -50,45 +50,46 @@ object Dependencies {
   }
   // format: on
 
-  import Dependencies.{ Versions => V }
+  import Dependencies.{Versions => V}
 
-  val betterFiles = Def.setting("com.github.pathikrit" %% "better-files" % V.betterFiles)
-  val cats = Def.setting("org.typelevel" %%% "cats-core" % V.cats)
-  val decline = Def.setting("com.monovore" %%% "decline" % V.decline)
-  val fastparse = Def.setting("com.lihaoyi" %%% "fastparse" % V.fastparse)
-  val javalin = Def.setting("io.javalin" % "javalin" % V.javalin)
-  val jline = Def.setting("jline" % "jline" % V.jline)
-  val jodaConvert = Def.setting("org.joda" % "joda-convert" % V.jodaConvert)
-  val jodaTime = Def.setting("joda-time" % "joda-time" % V.jodaTime)
-  val jsoup = Def.setting("org.jsoup" % "jsoup" % V.jsoup)
-  val jsr166y = Def.setting("org.codehaus.jsr166-mirror" % "jsr166y" % V.jsr166y)
-  val kaleidoscope = Def.setting("com.propensive" %%% "kaleidoscope" % V.kaleidoscope)
-  val magnolia = Def.setting("com.propensive" %%% "magnolia" % V.magnolia)
-  val normalizecss = Def.setting("org.webjars.npm" % "normalize.css" % V.normalizecss)
-  val okHttp = Def.setting("com.squareup.okhttp3" % "okhttp" % V.okHttp)
-  val pprint = Def.setting("com.lihaoyi" %%% "pprint" % V.pprint)
+  val betterFiles     = Def.setting("com.github.pathikrit" %% "better-files" % V.betterFiles)
+  val cats            = Def.setting("org.typelevel" %%% "cats-core" % V.cats)
+  val decline         = Def.setting("com.monovore" %%% "decline" % V.decline)
+  val fastparse       = Def.setting("com.lihaoyi" %%% "fastparse" % V.fastparse)
+  val javalin         = Def.setting("io.javalin" % "javalin" % V.javalin)
+  val jline           = Def.setting("jline" % "jline" % V.jline)
+  val jodaConvert     = Def.setting("org.joda" % "joda-convert" % V.jodaConvert)
+  val jodaTime        = Def.setting("joda-time" % "joda-time" % V.jodaTime)
+  val jsoup           = Def.setting("org.jsoup" % "jsoup" % V.jsoup)
+  val jsr166y         = Def.setting("org.codehaus.jsr166-mirror" % "jsr166y" % V.jsr166y)
+  val kaleidoscope    = Def.setting("com.propensive" %%% "kaleidoscope" % V.kaleidoscope)
+  val magnolia        = Def.setting("com.propensive" %%% "magnolia" % V.magnolia)
+  val normalizecss    = Def.setting("org.webjars.npm" % "normalize.css" % V.normalizecss)
+  val okHttp          = Def.setting("com.squareup.okhttp3" % "okhttp" % V.okHttp)
+  val pprint          = Def.setting("com.lihaoyi" %%% "pprint" % V.pprint)
   val reactiveStreams = Def.setting("org.reactivestreams" % "reactive-streams" % V.reactiveStreams)
-  val retypecheck = Def.setting("de.tuda.stg" %% "retypecheck" % V.retypecheck)
-  val scalacheck = Def.setting("org.scalacheck" %%% "scalacheck" % V.scalacheck % "test")
-  val scalactic = Def.setting("org.scalactic" %% "scalactic" % V.scalactic)
-  val scalaJavaTime = Def.setting("io.github.cquiroz" %%% "scala-java-time" % V.scalaJavaTime)
-  val scalajsDom = Def.setting("org.scala-js" %%% "scalajs-dom" % V.scalajsDom)
+  val retypecheck     = Def.setting("de.tuda.stg" %% "retypecheck" % V.retypecheck)
+  val scalacheck      = Def.setting("org.scalacheck" %%% "scalacheck" % V.scalacheck % "test")
+  val scalactic       = Def.setting("org.scalactic" %% "scalactic" % V.scalactic)
+  val scalaJavaTime   = Def.setting("io.github.cquiroz" %%% "scala-java-time" % V.scalaJavaTime)
+  val scalajsDom      = Def.setting("org.scala-js" %%% "scalajs-dom" % V.scalajsDom)
   val scalaParallelCollections =
     Def.setting("org.scala-lang.modules" %% "scala-parallel-collections" % V.scalaParallelCollections)
-  val scalaSwing = Def.setting("org.scala-lang.modules" %% "scala-swing" % V.scalaSwing)
-  val scalatags = Def.setting("com.lihaoyi" %%% "scalatags" % V.scalatags)
-  val scalatest = Def.setting("org.scalatest" %%% "scalatest" % V.scalatest % "test")
+  val scalaSwing         = Def.setting("org.scala-lang.modules" %% "scala-swing" % V.scalaSwing)
+  val scalatags          = Def.setting("com.lihaoyi" %%% "scalatags" % V.scalatags)
+  val scalatest          = Def.setting("org.scalatest" %%% "scalatest" % V.scalatest % "test")
   val scalatestpluscheck = Def.setting("org.scalatestplus" %%% "scalacheck-1-14" % V.scalatestpluscheck % "test")
-  val scalaXml = Def.setting("org.scala-lang.modules" %% "scala-xml" % V.scalaXml)
-  val scribe = Def.setting("com.outr" %%% "scribe" % V.scribe)
-  val scribeSlf4j = Def.setting("com.outr" %% "scribe-slf4j" % V.scribe)
-  val sourcecode = Def.setting("com.lihaoyi" %%% "sourcecode" % V.sourcecode)
-  val tomlScala = Def.setting("tech.sparse" %%% "toml-scala" % V.tomlScala)
-  val upickle = Def.setting("com.lihaoyi" %% "upickle" % V.upickle)
+  val scalaXml           = Def.setting("org.scala-lang.modules" %% "scala-xml" % V.scalaXml)
+  val scribe             = Def.setting("com.outr" %%% "scribe" % V.scribe)
+  val scribeSlf4j        = Def.setting("com.outr" %% "scribe-slf4j" % V.scribe)
+  val sourcecode         = Def.setting("com.lihaoyi" %%% "sourcecode" % V.sourcecode)
+  val tomlScala          = Def.setting("tech.sparse" %%% "toml-scala" % V.tomlScala)
+  val upickle            = Def.setting("com.lihaoyi" %% "upickle" % V.upickle)
 
   val jsoniterScalaAll = Def.setting(Seq(
-    ("com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % V.jsoniterScalaCore exclude ("io.github.cquiroz", s"scala-java-time-tzdb_sjs1_${scalaVersion.value.substring(0, 4)}")),
-    "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % V.jsoniterScalaCore % "provided"))
+    ("com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core"   % V.jsoniterScalaCore exclude ("io.github.cquiroz", s"scala-java-time-tzdb_sjs1_${scalaVersion.value.substring(0, 4)}")),
+    "com.github.plokhotnyuk.jsoniter-scala"   %% "jsoniter-scala-macros" % V.jsoniterScalaCore % "provided"
+  ))
 
   val akkaHttpAll = Def.setting(Seq("akka-http-core", "akka-http")
     .map(n => "com.typesafe.akka" %% n % V.akkaHttp) ++
@@ -102,11 +103,11 @@ object Dependencies {
 
     val communication = generic("communication")
 
-    val circe = generic("serializer-circe")
-    val tcp = generic("communicator-tcp")
-    val upickle = generic("serializer-upickle")
-    val webrtc = generic("communicator-webrtc")
-    val wsAkka = generic("communicator-ws-akka")
+    val circe     = generic("serializer-circe")
+    val tcp       = generic("communicator-tcp")
+    val upickle   = generic("serializer-upickle")
+    val webrtc    = generic("communicator-webrtc")
+    val wsAkka    = generic("communicator-ws-akka")
     val wsJavalin = generic("communicator-ws-javalin")
   }
 

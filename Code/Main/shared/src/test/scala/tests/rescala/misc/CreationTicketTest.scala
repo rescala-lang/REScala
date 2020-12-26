@@ -40,7 +40,7 @@ class CreationTicketTest extends RETests {
 
       test("implicit In Closures") {
         val closureDefinition: Initializer = getTurn(engine.scheduler)
-        val closure                        = {
+        val closure = {
           implicit def it: Initializer = closureDefinition
           () => implicitly[CreationTicket]
         }

@@ -32,7 +32,7 @@ class WithoutAPITest extends RETests {
         initState: ReStructure#State[String, ReStructure],
         inputSource: Interp[String, ReStructure]
     ) extends Derived
-      with Interp[String, ReStructure] {
+        with Interp[String, ReStructure] {
       override type Value = String
       override protected[rescala] def state: State               = initState
       override protected[rescala] def name: ReName               = "I am a name"
