@@ -24,7 +24,7 @@ addSbtPlugin("org.tpolecat"       % "tut-plugin" % "0.6.13")
 addSbtPlugin("pl.project13.scala" % "sbt-jmh"    % "0.4.0")
 
 // dotty?
-addSbtPlugin("ch.epfl.lamp" % "sbt-dotty" % "0.4.6")
+addSbtPlugin("ch.epfl.lamp" % "sbt-dotty" % "0.5.1")
 
 // https://github.com/scalameta/sbt-native-image
 addSbtPlugin("org.scalameta" % "sbt-native-image" % "0.2.2")

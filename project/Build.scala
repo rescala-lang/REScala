@@ -9,8 +9,6 @@ object Settings {
 
   import Dependencies.{Versions => V}
 
-  private val svDotty = "0.24.0-RC1"
-
   val commonCrossBuildVersions = crossScalaVersions := Seq(V.scala211, V.scala212, V.scala212)
 
   val scalaVersion_211 = Def.settings(
@@ -26,17 +24,17 @@ object Settings {
     scalacOptions ++= settingsFor(scalaVersion.value)
   )
   val scalaVersion_Dotty = Def.settings(
-    scalaVersion := svDotty,
+    scalaVersion := V.scala300,
     scalacOptions ++= settingsFor(scalaVersion.value)
   )
 
   def settingsFor(version: String) =
     (
       version match {
-        case a if a.startsWith("2.11") => scalacOptionsCommon ++ scalaOptions12minus
-        case a if a.startsWith("2.12") => scalacOptionsCommon ++ scalacOptions12plus ++ scalaOptions12minus
-        case a if a.startsWith("2.13") => scalacOptionsCommon ++ scalacOptions12plus ++ scalaOptions13
-        case a if a.startsWith("0.")   => Seq("-language:Scala2Compat,implicitConversions")
+        case a if a.startsWith("2.11")                      => scalacOptionsCommon ++ scalaOptions12minus
+        case a if a.startsWith("2.12")                      => scalacOptionsCommon ++ scalacOptions12plus ++ scalaOptions12minus
+        case a if a.startsWith("2.13")                      => scalacOptionsCommon ++ scalacOptions12plus ++ scalaOptions13
+        case a if a.startsWith("0.") || a.startsWith("3.0") => Seq("-language:Scala2Compat,implicitConversions")
       }
     )
 
