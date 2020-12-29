@@ -15,7 +15,7 @@ object AWTestHelper {
   }
 }
 
-class CausalCRDTTests extends AnyFreeSpec with ScalaCheckPropertyChecks {
+class AddWinsSetTest extends AnyFreeSpec with ScalaCheckPropertyChecks {
   implicit lazy val addWinsSetWithStrings: Arbitrary[AddWinsSet[String]] = Arbitrary(for {
     values <- Arbitrary.arbitrary[Set[String]]
   } yield values.foldLeft(AddWinsSet.empty[String])((set, value) => AWTestHelper.merge(set, set.addRandom(value))))

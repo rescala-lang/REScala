@@ -37,7 +37,7 @@ class IntRangeTests extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
 }
 
-class AddWinsSetOTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
+class AddWinsSetOShortTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
   implicit val shortlists: Arbitrary[Seq[Int]] = Arbitrary(Gen.someOf(0 to 20))
 

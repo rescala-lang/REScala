@@ -33,6 +33,8 @@ case class AddWinsSetO[A](store: Map[A, Context], context: Context) {
 
   def toSet: Set[A] = store.keySet
 
+  def clear: AddWinsSetO[A] = AddWinsSetO[A](Map.empty, context)
+
   def contains(e: A): Boolean = store.contains(e)
 
 }
