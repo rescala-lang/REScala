@@ -27,7 +27,7 @@ object Dependencies {
     val okHttp = "4.9.0"
     val pprint = "0.6.0"
     val reactiveStreams = "1.0.3"
-    val retypecheck = "0.7.0"
+    val retypecheck = "0.8.0"
     val scala211 = "2.11.11"
     val scala212 = "2.12.4"
     val scala213 = "2.13.4"
