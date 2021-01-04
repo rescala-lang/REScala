@@ -3,8 +3,6 @@ package rescala.extra.lattices.delta
 import cats.implicits._
 import cats.collections._
 
-
-
 trait CContext[A] {
   def contains(cc: A, d: Dot): Boolean
 

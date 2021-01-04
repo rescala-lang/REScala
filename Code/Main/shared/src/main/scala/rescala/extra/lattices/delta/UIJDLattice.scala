@@ -71,7 +71,7 @@ object UIJDLattice {
   implicit def MapAsUIJDLattice[K, V: UIJDLattice]: UIJDLattice[Map[K, V]] = new UIJDLattice[Map[K, V]] {
     override def leq(left: Map[K, V], right: Map[K, V]): Boolean =
       left.keySet.forall { k =>
-        UIJDLattice[Option[V]].leq(left.get(k), right.get(k))
+        OptionAsUIJDLattice[V].leq(left.get(k), right.get(k))
       }
 
     /**
@@ -83,5 +83,27 @@ object UIJDLattice {
 
     /** By assumption: associative, commutative, idempotent. */
     override def merge(left: Map[K, V], right: Map[K, V]): Map[K, V] = mapLattice[K, V].merge(left, right)
+  }
+}
+
+trait UIJDLatticeWithBottom[A] extends UIJDLattice[A] {
+  def bottom: A
+}
+
+object UIJDLatticeWithBottom {
+  def apply[A](implicit l: UIJDLatticeWithBottom[A]): UIJDLatticeWithBottom[A] = l
+
+  implicit def UIntAsUIJDLattice: UIJDLatticeWithBottom[Int] = new UIJDLatticeWithBottom[Int] {
+    override def leq(left: Int, right: Int): Boolean = left <= right
+
+    /**
+      * Decomposes a lattice state into its unique irredundant join decomposition of join-irreducable states
+      */
+    override def decompose(state: Int): Set[Int] = Set(state)
+
+    /** By assumption: associative, commutative, idempotent. */
+    override def merge(left: Int, right: Int): Int = left max right
+
+    override def bottom: Int = 0
   }
 }

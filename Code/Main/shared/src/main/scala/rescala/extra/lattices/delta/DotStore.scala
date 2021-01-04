@@ -115,4 +115,58 @@ object DotStore {
       added union removed
     }
   }
+
+  type DotStorePair[A, B] = (A, B)
+  implicit def DotStorePair[A: DotStore, B: DotStore]: DotStore[DotStorePair[A, B]] = new DotStore[(A, B)] {
+    override def dots(ds: (A, B)): Set[Dot] = ds match {
+      case (ds1, ds2) => DotStore[A].dots(ds1) union DotStore[B].dots(ds2)
+    }
+
+    override def merge[C: CContext, D: CContext](left: (A, B), leftContext: C, right: (A, B), rightContext: D): ((A, B), C) = (left, right) match {
+      case ((left1, left2), (right1, right2)) =>
+        val (stateMerged1, ccMerged1) = DotStore[A].merge(left1, leftContext, right1, rightContext)
+        val (stateMerged2, ccMerged2) = DotStore[B].merge(left2, leftContext, right2, rightContext)
+        ((stateMerged1, stateMerged2), CContext[C].union(ccMerged1, ccMerged2))
+    }
+
+    override def leq[C: CContext](left: (A, B), leftContext: C, right: (A, B), rightContext: C): Boolean = (left, right) match {
+      case ((left1, left2), (right1, right2)) =>
+        DotStore[A].leq(left1, leftContext, right1, rightContext) &&
+          DotStore[B].leq(left2, leftContext, right2, rightContext)
+    }
+
+    override def decompose[C: CContext](state: (A, B), cc: C): Set[((A, B), C)] = state match {
+      case (state1, state2) =>
+        val decomposed1 = DotStore[A].decompose(state1, cc).map{
+          case (atomicState, atomicCC) =>
+          ((atomicState, DotStore[B].bottom), atomicCC)
+        }
+
+        val decomposed2 = DotStore[B].decompose(state2, cc).map{
+          case (atomicState, atomicCC) =>
+            ((DotStore[A].bottom, atomicState), atomicCC)
+        }
+
+        decomposed1 union decomposed2
+    }
+
+    override def bottom: (A, B) = (DotStore[A].bottom, DotStore[B].bottom)
+  }
+
+  type DotLess[A] = A
+  implicit def DotLess[A: UIJDLatticeWithBottom]: DotStore[A] = new DotStore[A] {
+    override def dots(ds: A): Set[Dot] = Set.empty[Dot]
+
+    override def merge[C: CContext, D: CContext](left: A, leftContext: C, right: A, rightContext: D): (A, C) =
+      (Lattice[A].merge(left, right), CContext[C].union[D](leftContext, rightContext))
+
+    override def leq[C: CContext](left: A, leftContext: C, right: A, rightContext: C): Boolean =
+      UIJDLattice[A].leq(left, right)
+
+    override def decompose[C: CContext](state: A, cc: C): Set[(A, C)] = {
+      UIJDLattice[A].decompose(state).map( (_, CContext[C].empty) )
+    }
+
+    override def bottom: A = UIJDLatticeWithBottom[A].bottom
+  }
 }
