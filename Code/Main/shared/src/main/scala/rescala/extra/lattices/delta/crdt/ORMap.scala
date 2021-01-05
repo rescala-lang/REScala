@@ -1,31 +1,53 @@
 package rescala.extra.lattices.delta.crdt
 
 import rescala.extra.lattices.delta.DeltaCRDT._
-import rescala.extra.lattices.delta.{CContext, DeltaCRDT, DotStore, SetDelta}
+import rescala.extra.lattices.delta.{CContext, Causal, Delta, DeltaCRDT, DotStore, UIJDLatticeWithBottom}
 import rescala.extra.lattices.delta.DotStore._
 
 object ORMap {
-  def apply[K, V: DotStore, C: CContext](replicaID: String): DeltaCRDT[DotMap[K, V], C] =
-    DeltaCRDT(replicaID, DotMap[K, V].bottom, CContext[C].empty, List())
+  type State[K, V, C] = Causal[DotMap[K, V], C]
 
-  def mutateKey[K, V: DotStore](k: K, deltaMutator: DeltaDotMutator[V]): DeltaDotMutator[DotMap[K, V]] = (dm, nextDot) =>
-    deltaMutator(dm(k), nextDot) match {
-      case SetDelta(state, dots) =>
-        SetDelta(DotMap[K, V].bottom.updated(k, state), dots)
+  def apply[K, V: DotStore, C: CContext](replicaID: String): DeltaCRDT[State[K, V, C]] =
+    DeltaCRDT(replicaID, UIJDLatticeWithBottom[State[K, V, C]].bottom, List())
+
+  def mutateKey[K, V: DotStore, C: CContext](k: K, deltaMutator: DeltaMutator[Causal[V, C]]): DeltaMutator[State[K, V, C]] = {
+    case (replicaID, Causal(dm, cc)) =>
+      deltaMutator(replicaID, Causal(dm(k), cc)) match {
+      case Delta(_, Causal(stateDelta, ccDelta)) =>
+        Delta(
+          replicaID,
+          Causal(
+            DotMap[K, V].empty.updated(k, stateDelta),
+            ccDelta
+          )
+        )
     }
+  }
 
-  def mutateKey[K, V: DotStore](k: K, deltaMutator: DeltaMutator[V]): DeltaMutator[DotMap[K, V]] = dm =>
-    deltaMutator(dm(k)) match {
-      case SetDelta(state, dots) =>
-        SetDelta(DotMap[K, V].bottom.updated(k, state), dots)
-    }
+  def queryKey[K, V: DotStore, A, C: CContext](k: K, q: DeltaQuery[Causal[V, C], A]): DeltaQuery[State[K, V, C], A] = {
+    case Causal(dm, cc) =>
+      q(Causal(dm(k), cc))
+  }
 
-  def queryKey[K, V: DotStore, A](k: K, q: DeltaQuery[V, A]): DeltaQuery[DotMap[K, V], A] = dm =>
-    q(dm(k))
+  def remove[K, V: DotStore, C: CContext](k: K): DeltaMutator[State[K, V, C]] = {
+    case (replicaID, Causal(dm, _)) =>
+      Delta(
+        replicaID,
+        Causal(
+          DotMap[K, V].empty,
+          CContext[C].fromSet(DotStore[V].dots(dm(k)))
+        )
+      )
+  }
 
-  def remove[K, V: DotStore](k: K): DeltaMutator[DotMap[K, V]] = dm =>
-    SetDelta(DotMap[K, V].bottom, DotStore[V].dots(dm(k)))
-
-  def clear[K, V: DotStore]: DeltaMutator[DotMap[K, V]] = dm =>
-    SetDelta(DotMap[K, V].bottom, DotMap[K, V].dots(dm))
+  def clear[K, V: DotStore, C: CContext]: DeltaMutator[State[K, V, C]] = {
+    case (replicaID, Causal(dm, _)) =>
+      Delta(
+        replicaID,
+        Causal(
+          DotMap[K, V].empty,
+          CContext[C].fromSet(DotMap[K, V].dots(dm))
+        )
+      )
+  }
 }

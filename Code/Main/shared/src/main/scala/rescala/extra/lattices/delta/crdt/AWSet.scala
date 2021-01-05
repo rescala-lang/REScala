@@ -2,22 +2,50 @@ package rescala.extra.lattices.delta.crdt
 
 import rescala.extra.lattices.delta.DeltaCRDT._
 import rescala.extra.lattices.delta.DotStore._
-import rescala.extra.lattices.delta.{CContext, DeltaCRDT, SetDelta}
+import rescala.extra.lattices.delta.{CContext, Causal, Delta, DeltaCRDT, UIJDLatticeWithBottom}
 
 object AWSet {
-  type Store[E] = DotMap[E, DotSet]
+  type State[E, C] = Causal[DotMap[E, DotSet], C]
 
-  def apply[E, C: CContext](replicaID: String): DeltaCRDT[Store[E], C] =
-    DeltaCRDT(replicaID, DotMap[E, DotSet].bottom, CContext[C].empty, List())
+  def apply[E, C: CContext](replicaID: String): DeltaCRDT[State[E, C]] =
+    DeltaCRDT(replicaID, UIJDLatticeWithBottom[State[E, C]].bottom, List())
 
-  def elements[E]: DeltaQuery[Store[E], Set[E]] = dm => dm.keySet
+  def elements[E, C: CContext]: DeltaQuery[State[E, C], Set[E]] = {
+    case Causal(dm, _) => dm.keySet
+  }
 
-  def add[E](e: E): DeltaDotMutator[Store[E]] = (dm, nextDot) =>
-    SetDelta(DotMap[E, DotSet].bottom.updated(e, Set(nextDot)), dm(e) + nextDot)
+  def add[E, C: CContext](e: E): DeltaMutator[State[E, C]] = {
+    case (replicaID, Causal(dm, cc)) =>
+      val nextDot = CContext[C].nextDot(cc, replicaID)
 
-  def remove[E](e: E): DeltaMutator[Store[E]] = dm =>
-    SetDelta(DotMap[E, DotSet].bottom, dm(e))
+      Delta(
+        replicaID,
+        Causal(
+          DotMap[E, DotSet].empty.updated(e, Set(nextDot)),
+          CContext[C].fromSet(dm(e) + nextDot)
+        )
+      )
+  }
 
-  def clear[E]: DeltaMutator[Store[E]] = dm =>
-    SetDelta(DotMap[E, DotSet].bottom, DotMap[E, DotSet].dots(dm))
+  def remove[E, C: CContext](e: E): DeltaMutator[State[E, C]] = {
+    case (replicaID, Causal(dm, cc)) =>
+      Delta(
+        replicaID,
+        Causal(
+          DotMap[E, DotSet].empty,
+          CContext[C].fromSet(dm(e))
+        )
+      )
+  }
+
+  def clear[E, C: CContext](e: E): DeltaMutator[State[E, C]] = {
+    case (replicaID, Causal(dm, cc)) =>
+      Delta(
+        replicaID,
+        Causal(
+          DotMap[E, DotSet].empty,
+          CContext[C].fromSet(DotMap[E, DotSet].dots(dm))
+        )
+      )
+  }
 }

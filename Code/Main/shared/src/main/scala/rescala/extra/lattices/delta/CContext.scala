@@ -12,7 +12,7 @@ trait CContext[A] {
 
   def union[B: CContext](left: A, right: B): A
 
-  protected def max(cc: A, replicaID: String): Option[Dot]
+  def max(cc: A, replicaID: String): Option[Dot]
 
   def nextDot(cc: A, replicaID: String): Dot = max(cc, replicaID) match {
     case Some(dot) => dot.next
@@ -37,7 +37,7 @@ object CContext {
 
     override def union[B: CContext](left: Set[Dot], right: B): Set[Dot] = left union CContext[B].toSet(right)
 
-    override protected def max(cc: Set[Dot], replicaID: String): Option[Dot] =
+    override def max(cc: Set[Dot], replicaID: String): Option[Dot] =
       cc.filter(_.replicaID == replicaID).maxByOption(_.counter)
 
     override def empty: Set[Dot] = Set.empty[Dot]
@@ -66,7 +66,7 @@ object CContext {
     override def union[B: CContext](left: Map[String, Diet[Int]], right: B): Map[String, Diet[Int]] =
       CContext[B].toSet(right).foldLeft(left)(addDot)
 
-    override protected def max(cc: Map[String, Diet[Int]], replicaID: String): Option[Dot] =
+    override def max(cc: Map[String, Diet[Int]], replicaID: String): Option[Dot] =
       cc.getOrElse(replicaID, Diet.empty[Int]).max.map(Dot(replicaID, _))
 
     override def empty: Map[String, Diet[Int]] = Map.empty[String, Diet[Int]]

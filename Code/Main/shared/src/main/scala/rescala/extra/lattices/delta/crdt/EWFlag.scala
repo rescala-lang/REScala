@@ -1,15 +1,40 @@
 package rescala.extra.lattices.delta.crdt
 
 import rescala.extra.lattices.delta.DeltaCRDT._
-import rescala.extra.lattices.delta.DotStore.DotSet
-import rescala.extra.lattices.delta.{CContext, DeltaCRDT, SetDelta}
+import rescala.extra.lattices.delta.DotStore._
+import rescala.extra.lattices.delta._
 
 object EWFlag {
-  def apply[C: CContext](replicaID: String): DeltaCRDT[DotSet, C] = DeltaCRDT(replicaID, DotSet.bottom, CContext[C].empty, List())
+  type State[C] = Causal[DotSet, C]
 
-  def read: DeltaQuery[DotSet, Boolean] = ds => ds.nonEmpty
+  def apply[C: CContext](replicaID: String): DeltaCRDT[State[C]] =
+    DeltaCRDT(replicaID, UIJDLatticeWithBottom[State[C]].bottom, List())
 
-  def enable: DeltaDotMutator[DotSet] = (ds, nextDot) => SetDelta(Set(nextDot), ds + nextDot)
+  def read[C: CContext]: DeltaQuery[State[C], Boolean] = {
+    case Causal(ds, _) => ds.nonEmpty
+  }
 
-  def disable: DeltaMutator[DotSet] = ds => SetDelta(DotSet.bottom, ds)
+  def enable[C: CContext]: DeltaMutator[State[C]] = {
+    case (replicaID, Causal(ds, cc)) =>
+      val nextDot = CContext[C].nextDot(cc, replicaID)
+
+      Delta(
+        replicaID,
+        Causal(
+          Set(nextDot),
+          CContext[C].fromSet(ds + nextDot)
+        )
+      )
+  }
+
+  def disable[C: CContext]: DeltaMutator[State[C]] = {
+    case (replicaID, Causal(ds, _)) =>
+      Delta(
+        replicaID,
+        Causal(
+          DotSet.empty,
+          CContext[C].fromSet(ds)
+        )
+      )
+  }
 }

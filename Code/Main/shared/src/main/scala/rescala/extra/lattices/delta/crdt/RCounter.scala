@@ -2,7 +2,7 @@ package rescala.extra.lattices.delta.crdt
 
 import rescala.extra.lattices.delta.DeltaCRDT._
 import rescala.extra.lattices.delta.DotStore._
-import rescala.extra.lattices.delta.{CContext, DeltaCRDT, Dot, SetDelta, UIJDLattice}
+import rescala.extra.lattices.delta.{CContext, Causal, Delta, DeltaCRDT, Dot, UIJDLattice, UIJDLatticeWithBottom}
 
 object RCounter {
   implicit def IntPairAsUIJDLattice: UIJDLattice[(Int, Int)] = new UIJDLattice[(Int, Int)] {
@@ -25,40 +25,75 @@ object RCounter {
     }
   }
 
-  type Store = DotFun[(Int, Int)]
+  type State[C] = Causal[DotFun[(Int, Int)], C]
 
-  def apply[C: CContext](replicaID: String): DeltaCRDT[Store, C] =
-    DeltaCRDT(replicaID, DotFun[(Int, Int)].bottom, CContext[C].empty, List())
+  def apply[C: CContext](replicaID: String): DeltaCRDT[State[C]] =
+    DeltaCRDT(replicaID, UIJDLatticeWithBottom[State[C]].bottom, List())
 
-  def value: DeltaQuery[Store, Int] = df =>
-    df.values.foldLeft(0) {
-      case (counter, (inc, dec)) => counter + inc - dec
-    }
+  def value[C: CContext]: DeltaQuery[State[C], Int] = {
+    case Causal(df, _) =>
+      df.values.foldLeft(0) {
+        case (counter, (inc, dec)) => counter + inc - dec
+      }
+  }
 
   /**
    * Without using fresh, reset wins over concurrent increments/decrements
    * When using fresh after every time deltas are shipped to other replicas, increments/decrements win over concurrent resets
    */
-  def fresh: DeltaDotMutator[Store] = (_, nextDot) =>
-    SetDelta(DotFun[(Int, Int)].bottom + (nextDot -> ((0, 0))), Set(nextDot))
+  def fresh[C: CContext]: DeltaMutator[State[C]] = {
+    case (replicaID, Causal(_, cc)) =>
+      val nextDot = CContext[C].nextDot(cc, replicaID)
 
-  private def update(u: (Int, Int)): DeltaDotMutator[Store] = (df, nextDot) => nextDot match {
-    case Dot(replicaID, counter) =>
-      val currentDot = Dot(replicaID, counter - 1)
-
-      if (df.contains(currentDot)) {
-        val newCounter = (df(currentDot), u) match {
-          case ((linc, ldec), (rinc, rdec)) => (linc + rinc, ldec + rdec)
-        }
-
-        SetDelta(df + (currentDot -> newCounter), Set(currentDot))
-      } else
-        SetDelta(DotFun[(Int, Int)].bottom + (nextDot -> u), Set(nextDot))
+      Delta(
+        replicaID,
+        Causal(
+          DotFun[(Int, Int)].empty + (nextDot -> ((0, 0))),
+          CContext[C].fromSet(Set(nextDot))
+        )
+      )
   }
 
-  def increment: DeltaDotMutator[Store] = update((1, 0))
+  private def update[C: CContext](u: (Int, Int)): DeltaMutator[State[C]] = {
+    case (replicaID, Causal(df, cc)) =>
+      CContext[C].max(cc, replicaID) match {
+        case Some(currentDot@Dot(_, counter)) if df.contains(currentDot) =>
+          val newCounter = (df(currentDot), u) match {
+            case ((linc, ldec), (rinc, rdec)) => (linc + rinc, ldec + rdec)
+          }
 
-  def decrement: DeltaDotMutator[Store] = update((0, 1))
+          Delta(
+            replicaID,
+            Causal(
+              df + (currentDot -> newCounter),
+              CContext[C].fromSet(Set(currentDot))
+            )
+          )
+        case _ =>
+          val nextDot = CContext[C].nextDot(cc, replicaID)
 
-  def reset: DeltaMutator[Store] = df => SetDelta(DotFun[(Int, Int)].bottom, df.keySet)
+          Delta(
+            replicaID,
+            Causal(
+              DotFun[(Int, Int)].empty + (nextDot -> u),
+              CContext[C].fromSet(Set(nextDot))
+            )
+          )
+      }
+  }
+
+  def increment[C: CContext]: DeltaMutator[State[C]] = update((1, 0))
+
+  def decrement[C: CContext]: DeltaMutator[State[C]] = update((0, 1))
+
+  def reset[C: CContext]: DeltaMutator[State[C]] = {
+    case (replicaID, Causal(df, _)) =>
+      Delta(
+        replicaID,
+        Causal(
+          DotFun[(Int, Int)].empty,
+          CContext[C].fromSet(df.keySet)
+        )
+      )
+  }
 }
