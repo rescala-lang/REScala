@@ -5,7 +5,7 @@ import rescala.extra.lattices.delta.DeltaCRDT.{DeltaMutator, DeltaQuery}
 import rescala.extra.lattices.delta.UIJDLatticeWithBottom.PairAsUIJDLattice
 
 
-object TwoPSet {
+object TwoPSetCRDT {
   type State[E] = (Set[E], Set[E])
 
   def apply[E](replicaID: String): DeltaCRDT[State[E]] =
@@ -20,4 +20,16 @@ object TwoPSet {
 
   def remove[E](element: E): DeltaMutator[State[E]] = (_, _) =>
     (Set.empty[E], Set(element))
+}
+
+class TwoPSet[E](crdt: DeltaCRDT[TwoPSetCRDT.State[E]]) {
+  def elements: Set[E] = crdt.query(TwoPSetCRDT.elements)
+
+  def insert(element: E): TwoPSet[E] = new TwoPSet(crdt.mutate(TwoPSetCRDT.insert(element)))
+
+  def remove(element: E): TwoPSet[E] = new TwoPSet(crdt.mutate(TwoPSetCRDT.remove(element)))
+}
+
+object TwoPSet {
+  def apply[E](replicaID: String): TwoPSet[E] = new TwoPSet(TwoPSetCRDT[E](replicaID))
 }

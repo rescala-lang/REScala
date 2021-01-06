@@ -4,23 +4,35 @@ import rescala.extra.lattices.delta.DeltaCRDT._
 import rescala.extra.lattices.delta.UIJDLatticeWithBottom.PairAsUIJDLattice
 import rescala.extra.lattices.delta.{DeltaCRDT, UIJDLatticeWithBottom}
 
-object PNCounter {
-  type State = (GCounter.State, GCounter.State)
+object PNCounterCRDT {
+  type State = (GCounterCRDT.State, GCounterCRDT.State)
 
   def apply(replicaID: String): DeltaCRDT[State] =
     DeltaCRDT.empty[State](replicaID)
 
   def value: DeltaQuery[State, Int] = {
-    case (incCounter, decCounter) => GCounter.value(incCounter) - GCounter.value(decCounter)
+    case (incCounter, decCounter) => GCounterCRDT.value(incCounter) - GCounterCRDT.value(decCounter)
   }
 
   def inc: DeltaMutator[State] = {
     case (replicaID, (incCounter, _)) =>
-      (GCounter.inc(replicaID, incCounter), UIJDLatticeWithBottom[GCounter.State].bottom)
+      (GCounterCRDT.inc(replicaID, incCounter), UIJDLatticeWithBottom[GCounterCRDT.State].bottom)
   }
 
   def dec: DeltaMutator[State] = {
     case (replicaID, (_, decCounter)) =>
-       (UIJDLatticeWithBottom[GCounter.State].bottom, GCounter.inc(replicaID, decCounter))
+       (UIJDLatticeWithBottom[GCounterCRDT.State].bottom, GCounterCRDT.inc(replicaID, decCounter))
   }
+}
+
+class PNCounter(crdt: DeltaCRDT[PNCounterCRDT.State]) {
+  def value: Int = crdt.query(PNCounterCRDT.value)
+
+  def inc(): PNCounter = new PNCounter(crdt.mutate(PNCounterCRDT.inc))
+
+  def dec(): PNCounter = new PNCounter(crdt.mutate(PNCounterCRDT.dec))
+}
+
+object PNCounter {
+  def apply(replicaID: String): PNCounter = new PNCounter(PNCounterCRDT(replicaID))
 }

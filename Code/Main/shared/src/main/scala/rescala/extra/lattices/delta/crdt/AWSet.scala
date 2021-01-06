@@ -4,7 +4,7 @@ import rescala.extra.lattices.delta.DeltaCRDT._
 import rescala.extra.lattices.delta.DotStore._
 import rescala.extra.lattices.delta.{CContext, Causal, DeltaCRDT}
 
-object AWSet {
+object AWSetCRDT {
   type State[E, C] = Causal[DotMap[E, DotSet], C]
 
   def apply[E, C: CContext](replicaID: String): DeltaCRDT[State[E, C]] =
@@ -39,4 +39,18 @@ object AWSet {
         CContext[C].fromSet(DotMap[E, DotSet].dots(dm))
       )
   }
+}
+
+class AWSet[E, C: CContext](crdt: DeltaCRDT[AWSetCRDT.State[E, C]]) {
+  def elements: Set[E] = crdt.query(AWSetCRDT.elements)
+
+  def add(e: E): AWSet[E, C] = new AWSet(crdt.mutate(AWSetCRDT.add(e)))
+
+  def remove(e: E): AWSet[E, C] = new AWSet(crdt.mutate(AWSetCRDT.remove(e)))
+
+  def clear(): AWSet[E, C] = new AWSet(crdt.mutate(AWSetCRDT.clear))
+}
+
+object AWSet {
+  def apply[E, C: CContext](replicaID: String): AWSet[E, C] = new AWSet(AWSetCRDT[E, C](replicaID))
 }

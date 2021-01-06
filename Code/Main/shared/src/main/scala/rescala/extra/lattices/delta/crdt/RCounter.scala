@@ -4,7 +4,7 @@ import rescala.extra.lattices.delta.DeltaCRDT._
 import rescala.extra.lattices.delta.DotStore._
 import rescala.extra.lattices.delta.{CContext, Causal, DeltaCRDT, UIJDLattice}
 
-object RCounter {
+object RCounterCRDT {
   implicit def IntPairAsUIJDLattice: UIJDLattice[(Int, Int)] = new UIJDLattice[(Int, Int)] {
     override def leq(left: (Int, Int), right: (Int, Int)): Boolean = (left, right) match {
       case ((linc, ldec), (rinc, rdec)) =>
@@ -84,4 +84,20 @@ object RCounter {
         CContext[C].fromSet(df.keySet)
       )
   }
+}
+
+class RCounter[C: CContext](crdt: DeltaCRDT[RCounterCRDT.State[C]]) {
+  def value: Int = crdt.query(RCounterCRDT.value)
+
+  def fresh(): RCounter[C] = new RCounter(crdt.mutate(RCounterCRDT.fresh))
+
+  def increment(): RCounter[C] = new RCounter(crdt.mutate(RCounterCRDT.increment))
+
+  def decrement(): RCounter[C] = new RCounter(crdt.mutate(RCounterCRDT.decrement))
+
+  def reset(): RCounter[C] = new RCounter(crdt.mutate(RCounterCRDT.reset))
+}
+
+object RCounter {
+  def apply[C: CContext](replicaID: String): RCounter[C] = new RCounter(RCounterCRDT[C](replicaID))
 }
