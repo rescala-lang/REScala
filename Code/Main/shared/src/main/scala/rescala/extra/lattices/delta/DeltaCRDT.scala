@@ -1,6 +1,5 @@
 package rescala.extra.lattices.delta
 
-import rescala.extra.lattices.Lattice
 import rescala.extra.lattices.delta.DeltaCRDT._
 
 case class DeltaCRDT[A: UIJDLattice](
@@ -49,9 +48,8 @@ case class DeltaCRDT[A: UIJDLattice](
     else {
       deltaBuffer.collect {
         case (n, deltaState) if ackMap(to) until seqNum contains n => deltaState
-      } reduceOption {
-        case (Delta(_, stateLeft), Delta(_, stateRight)) =>
-          Delta(replicaID, Lattice[A].merge(stateLeft, stateRight))
+      } reduceOption { (left: Delta[A], right: Delta[A]) =>
+        Delta(replicaID, UIJDLattice[A].merge(left.deltaState, right.deltaState))
       }
     }
   }
