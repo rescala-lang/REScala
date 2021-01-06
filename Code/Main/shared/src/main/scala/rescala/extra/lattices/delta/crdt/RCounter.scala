@@ -2,7 +2,7 @@ package rescala.extra.lattices.delta.crdt
 
 import rescala.extra.lattices.delta.DeltaCRDT._
 import rescala.extra.lattices.delta.DotStore._
-import rescala.extra.lattices.delta.{CContext, Causal, Delta, DeltaCRDT, Dot, UIJDLattice, UIJDLatticeWithBottom}
+import rescala.extra.lattices.delta._
 
 object RCounter {
   implicit def IntPairAsUIJDLattice: UIJDLattice[(Int, Int)] = new UIJDLattice[(Int, Int)] {
@@ -28,7 +28,7 @@ object RCounter {
   type State[C] = Causal[DotFun[(Int, Int)], C]
 
   def apply[C: CContext](replicaID: String): DeltaCRDT[State[C]] =
-    DeltaCRDT(replicaID, UIJDLatticeWithBottom[State[C]].bottom, List())
+    DeltaCRDT.empty[State[C]](replicaID)
 
   def value[C: CContext]: DeltaQuery[State[C], Int] = {
     case Causal(df, _) =>

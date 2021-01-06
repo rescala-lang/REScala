@@ -8,7 +8,7 @@ object EWFlag {
   type State[C] = Causal[DotSet, C]
 
   def apply[C: CContext](replicaID: String): DeltaCRDT[State[C]] =
-    DeltaCRDT(replicaID, UIJDLatticeWithBottom[State[C]].bottom, List())
+    DeltaCRDT.empty[State[C]](replicaID)
 
   def read[C: CContext]: DeltaQuery[State[C], Boolean] = {
     case Causal(ds, _) => ds.nonEmpty

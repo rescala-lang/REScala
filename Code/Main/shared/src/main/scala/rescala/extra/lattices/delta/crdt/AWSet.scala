@@ -2,13 +2,13 @@ package rescala.extra.lattices.delta.crdt
 
 import rescala.extra.lattices.delta.DeltaCRDT._
 import rescala.extra.lattices.delta.DotStore._
-import rescala.extra.lattices.delta.{CContext, Causal, Delta, DeltaCRDT, UIJDLatticeWithBottom}
+import rescala.extra.lattices.delta.{CContext, Causal, Delta, DeltaCRDT}
 
 object AWSet {
   type State[E, C] = Causal[DotMap[E, DotSet], C]
 
   def apply[E, C: CContext](replicaID: String): DeltaCRDT[State[E, C]] =
-    DeltaCRDT(replicaID, UIJDLatticeWithBottom[State[E, C]].bottom, List())
+    DeltaCRDT.empty[State[E, C]](replicaID)
 
   def elements[E, C: CContext]: DeltaQuery[State[E, C], Set[E]] = {
     case Causal(dm, _) => dm.keySet

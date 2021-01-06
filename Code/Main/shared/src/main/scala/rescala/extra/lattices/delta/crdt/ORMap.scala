@@ -1,14 +1,14 @@
 package rescala.extra.lattices.delta.crdt
 
 import rescala.extra.lattices.delta.DeltaCRDT._
-import rescala.extra.lattices.delta.{CContext, Causal, Delta, DeltaCRDT, DotStore, UIJDLatticeWithBottom}
 import rescala.extra.lattices.delta.DotStore._
+import rescala.extra.lattices.delta._
 
 object ORMap {
   type State[K, V, C] = Causal[DotMap[K, V], C]
 
   def apply[K, V: DotStore, C: CContext](replicaID: String): DeltaCRDT[State[K, V, C]] =
-    DeltaCRDT(replicaID, UIJDLatticeWithBottom[State[K, V, C]].bottom, List())
+    DeltaCRDT.empty[State[K, V, C]](replicaID)
 
   def mutateKey[K, V: DotStore, C: CContext](k: K, deltaMutator: DeltaMutator[Causal[V, C]]): DeltaMutator[State[K, V, C]] = {
     case (replicaID, Causal(dm, cc)) =>
