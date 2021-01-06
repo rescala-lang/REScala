@@ -1,7 +1,7 @@
 package rescala.extra.lattices.delta.crdt
 
-import rescala.extra.lattices.delta.{Delta, DeltaCRDT}
-import rescala.extra.lattices.delta.DeltaCRDT.{DeltaMutator, DeltaQuery}
+import rescala.extra.lattices.delta.DeltaCRDT
+import rescala.extra.lattices.delta.DeltaCRDT._
 import rescala.extra.lattices.delta.UIJDLatticeWithBottom.SetAsUIJDLattice
 
 object GSet {
@@ -12,9 +12,5 @@ object GSet {
 
   def elements[E]: DeltaQuery[State[E], Set[E]] = state => state
 
-  def insert[E](element: E): DeltaMutator[State[E]] = (replicaID, _) =>
-    Delta(
-      replicaID,
-      Set(element)
-    )
+  def insert[E](element: E): DeltaMutator[State[E]] = (_, _) => Set(element)
 }

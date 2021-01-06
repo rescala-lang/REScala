@@ -2,7 +2,7 @@ package rescala.extra.lattices.delta.crdt
 
 import rescala.extra.lattices.delta.DeltaCRDT._
 import rescala.extra.lattices.delta.DotStore._
-import rescala.extra.lattices.delta._
+import rescala.extra.lattices.delta.{CContext, Causal, DeltaCRDT, UIJDLattice}
 
 object RCounter {
   implicit def IntPairAsUIJDLattice: UIJDLattice[(Int, Int)] = new UIJDLattice[(Int, Int)] {
@@ -45,39 +45,30 @@ object RCounter {
     case (replicaID, Causal(_, cc)) =>
       val nextDot = CContext[C].nextDot(cc, replicaID)
 
-      Delta(
-        replicaID,
-        Causal(
-          DotFun[(Int, Int)].empty + (nextDot -> ((0, 0))),
-          CContext[C].fromSet(Set(nextDot))
-        )
+      Causal(
+        DotFun[(Int, Int)].empty + (nextDot -> ((0, 0))),
+        CContext[C].fromSet(Set(nextDot))
       )
   }
 
   private def update[C: CContext](u: (Int, Int)): DeltaMutator[State[C]] = {
     case (replicaID, Causal(df, cc)) =>
       CContext[C].max(cc, replicaID) match {
-        case Some(currentDot@Dot(_, counter)) if df.contains(currentDot) =>
+        case Some(currentDot) if df.contains(currentDot) =>
           val newCounter = (df(currentDot), u) match {
             case ((linc, ldec), (rinc, rdec)) => (linc + rinc, ldec + rdec)
           }
 
-          Delta(
-            replicaID,
-            Causal(
-              df + (currentDot -> newCounter),
-              CContext[C].fromSet(Set(currentDot))
-            )
+          Causal(
+            df + (currentDot -> newCounter),
+            CContext[C].fromSet(Set(currentDot))
           )
         case _ =>
           val nextDot = CContext[C].nextDot(cc, replicaID)
 
-          Delta(
-            replicaID,
-            Causal(
-              DotFun[(Int, Int)].empty + (nextDot -> u),
-              CContext[C].fromSet(Set(nextDot))
-            )
+          Causal(
+            DotFun[(Int, Int)].empty + (nextDot -> u),
+            CContext[C].fromSet(Set(nextDot))
           )
       }
   }
@@ -87,13 +78,10 @@ object RCounter {
   def decrement[C: CContext]: DeltaMutator[State[C]] = update((0, 1))
 
   def reset[C: CContext]: DeltaMutator[State[C]] = {
-    case (replicaID, Causal(df, _)) =>
-      Delta(
-        replicaID,
-        Causal(
-          DotFun[(Int, Int)].empty,
-          CContext[C].fromSet(df.keySet)
-        )
+    case (_, Causal(df, _)) =>
+      Causal(
+        DotFun[(Int, Int)].empty,
+        CContext[C].fromSet(df.keySet)
       )
   }
 }

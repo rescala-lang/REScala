@@ -12,7 +12,7 @@ case class DeltaCRDT[A: UIJDLattice](
 
   def query[B](q: DeltaQuery[A, B]): B = q(state)
 
-  def mutate(m: DeltaMutator[A]): DeltaCRDT[A] = applyDelta(m(replicaID, state))
+  def mutate(m: DeltaMutator[A]): DeltaCRDT[A] = applyDelta(Delta(replicaID, m(replicaID, state)))
 
   def applyDelta(delta: Delta[A]): DeltaCRDT[A] = delta match {
     case Delta(origin, deltaState) =>
@@ -64,7 +64,7 @@ case class DeltaCRDT[A: UIJDLattice](
 }
 
 case object DeltaCRDT {
-  type DeltaMutator[A] = (String, A) => Delta[A]
+  type DeltaMutator[A] = (String, A) => A
   type DeltaQuery[A, B] = A => B
 
   def empty[A: UIJDLattice](replicaID: String, state: A): DeltaCRDT[A] =

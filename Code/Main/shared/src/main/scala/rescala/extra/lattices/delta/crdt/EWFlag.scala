@@ -1,8 +1,8 @@
 package rescala.extra.lattices.delta.crdt
 
+import rescala.extra.lattices.delta.{CContext, Causal, DeltaCRDT}
 import rescala.extra.lattices.delta.DeltaCRDT._
 import rescala.extra.lattices.delta.DotStore._
-import rescala.extra.lattices.delta._
 
 object EWFlag {
   type State[C] = Causal[DotSet, C]
@@ -18,23 +18,17 @@ object EWFlag {
     case (replicaID, Causal(ds, cc)) =>
       val nextDot = CContext[C].nextDot(cc, replicaID)
 
-      Delta(
-        replicaID,
-        Causal(
-          Set(nextDot),
-          CContext[C].fromSet(ds + nextDot)
-        )
+      Causal(
+        Set(nextDot),
+        CContext[C].fromSet(ds + nextDot)
       )
   }
 
   def disable[C: CContext]: DeltaMutator[State[C]] = {
-    case (replicaID, Causal(ds, _)) =>
-      Delta(
-        replicaID,
-        Causal(
-          DotSet.empty,
-          CContext[C].fromSet(ds)
-        )
+    case (_, Causal(ds, _)) =>
+      Causal(
+        DotSet.empty,
+        CContext[C].fromSet(ds)
       )
   }
 }

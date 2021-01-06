@@ -1,8 +1,8 @@
 package rescala.extra.lattices.delta.crdt
 
+import rescala.extra.lattices.delta.{CContext, Causal, DeltaCRDT, DotStore}
 import rescala.extra.lattices.delta.DeltaCRDT._
 import rescala.extra.lattices.delta.DotStore._
-import rescala.extra.lattices.delta._
 
 object ORMap {
   type State[K, V, C] = Causal[DotMap[K, V], C]
@@ -13,13 +13,10 @@ object ORMap {
   def mutateKey[K, V: DotStore, C: CContext](k: K, deltaMutator: DeltaMutator[Causal[V, C]]): DeltaMutator[State[K, V, C]] = {
     case (replicaID, Causal(dm, cc)) =>
       deltaMutator(replicaID, Causal(dm(k), cc)) match {
-      case Delta(_, Causal(stateDelta, ccDelta)) =>
-        Delta(
-          replicaID,
-          Causal(
-            DotMap[K, V].empty.updated(k, stateDelta),
-            ccDelta
-          )
+      case Causal(stateDelta, ccDelta) =>
+        Causal(
+          DotMap[K, V].empty.updated(k, stateDelta),
+          ccDelta
         )
     }
   }
@@ -30,24 +27,18 @@ object ORMap {
   }
 
   def remove[K, V: DotStore, C: CContext](k: K): DeltaMutator[State[K, V, C]] = {
-    case (replicaID, Causal(dm, _)) =>
-      Delta(
-        replicaID,
-        Causal(
-          DotMap[K, V].empty,
-          CContext[C].fromSet(DotStore[V].dots(dm(k)))
-        )
+    case (_, Causal(dm, _)) =>
+      Causal(
+        DotMap[K, V].empty,
+        CContext[C].fromSet(DotStore[V].dots(dm(k)))
       )
   }
 
   def clear[K, V: DotStore, C: CContext]: DeltaMutator[State[K, V, C]] = {
-    case (replicaID, Causal(dm, _)) =>
-      Delta(
-        replicaID,
-        Causal(
-          DotMap[K, V].empty,
-          CContext[C].fromSet(DotMap[K, V].dots(dm))
-        )
+    case (_, Causal(dm, _)) =>
+      Causal(
+        DotMap[K, V].empty,
+        CContext[C].fromSet(DotMap[K, V].dots(dm))
       )
   }
 }
