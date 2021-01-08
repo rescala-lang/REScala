@@ -23,6 +23,8 @@ object RCounterCRDT {
       case ((linc, ldec), (rinc, rdec)) =>
         if ((linc - ldec) > (rinc - rdec)) left else right
     }
+
+    override def bottom: (Int, Int) = (0, 0)
   }
 
   type State[C] = Causal[DotFun[(Int, Int)], C]

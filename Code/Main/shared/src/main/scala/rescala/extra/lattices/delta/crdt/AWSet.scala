@@ -2,13 +2,13 @@ package rescala.extra.lattices.delta.crdt
 
 import rescala.extra.lattices.delta.DeltaCRDT._
 import rescala.extra.lattices.delta.DotStore._
-import rescala.extra.lattices.delta.{CContext, Causal, DeltaCRDT}
+import rescala.extra.lattices.delta.{AntiEntropy, CContext, Causal, DeltaCRDT}
 
 object AWSetCRDT {
   type State[E, C] = Causal[DotMap[E, DotSet], C]
 
-  def apply[E, C: CContext](replicaID: String): DeltaCRDT[State[E, C]] =
-    DeltaCRDT.empty[State[E, C]](replicaID)
+  def apply[E, C: CContext](replicaID: String, antiEntropy: AntiEntropy[State[E, C]]): DeltaCRDT[State[E, C]] =
+    DeltaCRDT.empty[State[E, C]](replicaID, antiEntropy)
 
   def elements[E, C: CContext]: DeltaQuery[State[E, C], Set[E]] = {
     case Causal(dm, _) => dm.keySet
@@ -49,8 +49,13 @@ class AWSet[E, C: CContext](crdt: DeltaCRDT[AWSetCRDT.State[E, C]]) {
   def remove(e: E): AWSet[E, C] = new AWSet(crdt.mutate(AWSetCRDT.remove(e)))
 
   def clear(): AWSet[E, C] = new AWSet(crdt.mutate(AWSetCRDT.clear))
+
+  def state: AWSetCRDT.State[E, C] = crdt.state
+
+  def processReceivedDeltas(): AWSet[E, C] = new AWSet(crdt.processReceivedDeltas())
 }
 
 object AWSet {
-  def apply[E, C: CContext](replicaID: String): AWSet[E, C] = new AWSet(AWSetCRDT[E, C](replicaID))
+  def apply[E, C: CContext](replicaID: String, antiEntropy: AntiEntropy[AWSetCRDT.State[E, C]]): AWSet[E, C] =
+    new AWSet(AWSetCRDT[E, C](replicaID, antiEntropy))
 }

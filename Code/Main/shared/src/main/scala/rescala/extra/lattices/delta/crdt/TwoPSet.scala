@@ -2,7 +2,6 @@ package rescala.extra.lattices.delta.crdt
 
 import rescala.extra.lattices.delta.DeltaCRDT
 import rescala.extra.lattices.delta.DeltaCRDT.{DeltaMutator, DeltaQuery}
-import rescala.extra.lattices.delta.UIJDLatticeWithBottom.PairAsUIJDLattice
 
 
 object TwoPSetCRDT {

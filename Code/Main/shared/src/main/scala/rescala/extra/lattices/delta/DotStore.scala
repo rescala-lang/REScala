@@ -142,7 +142,7 @@ object DotStore {
   }
 
   type DotLess[A] = A
-  implicit def DotLess[A: UIJDLatticeWithBottom]: DotStore[A] = new DotStore[A] {
+  implicit def DotLess[A: UIJDLattice]: DotStore[A] = new DotStore[A] {
     override def dots(ds: A): Set[Dot] = Set.empty[Dot]
 
     override def merge[C: CContext, D: CContext](left: A, leftContext: C, right: A, rightContext: D): (A, C) =
@@ -155,6 +155,6 @@ object DotStore {
       UIJDLattice[A].decompose(state).map( (_, CContext[C].empty) )
     }
 
-    override def empty: A = UIJDLatticeWithBottom[A].bottom
+    override def empty: A = UIJDLattice[A].bottom
   }
 }

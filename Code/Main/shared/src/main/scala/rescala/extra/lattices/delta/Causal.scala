@@ -3,7 +3,7 @@ package rescala.extra.lattices.delta
 case class Causal[D: DotStore, C: CContext](dotStore: D, cc: C)
 
 case object Causal {
-  implicit def CausalAsUIJDLattice[D: DotStore, C: CContext]: UIJDLatticeWithBottom[Causal[D, C]] = new UIJDLatticeWithBottom[Causal[D, C]] {
+  implicit def CausalAsUIJDLattice[D: DotStore, C: CContext]: UIJDLattice[Causal[D, C]] = new UIJDLattice[Causal[D, C]] {
     override def leq(left: Causal[D, C], right: Causal[D, C]): Boolean =
       DotStore[D].leq[C, C](left.dotStore, left.cc, right.dotStore, right.cc)
 

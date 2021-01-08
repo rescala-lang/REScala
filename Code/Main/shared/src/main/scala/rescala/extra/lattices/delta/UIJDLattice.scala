@@ -15,11 +15,10 @@ trait UIJDLattice[A] extends Lattice[A] {
   def decompose(state: A): Set[A]
 
   def diff(state: A, delta: A): Option[A] = {
-    decompose(delta).filter(!leq(_, state)).foldLeft(Option.empty[A]) {
-      case (None, right) => Some(right)
-      case (Some(left), right) => Some(merge(left, right))
-    }
+    decompose(delta).filter(!leq(_, state)).reduceOption(merge)
   }
+
+  def bottom: A
 }
 
 object UIJDLattice {
@@ -35,31 +34,11 @@ object UIJDLattice {
 
     /** By assumption: associative, commutative, idempotent. */
     override def merge(left: Int, right: Int): Int = left max right
-  }
-}
-
-trait UIJDLatticeWithBottom[A] extends UIJDLattice[A] {
-  def bottom: A
-}
-
-object UIJDLatticeWithBottom {
-  def apply[A](implicit l: UIJDLatticeWithBottom[A]): UIJDLatticeWithBottom[A] = l
-
-  implicit def IntAsUIJDLattice: UIJDLatticeWithBottom[Int] = new UIJDLatticeWithBottom[Int] {
-    override def leq(left: Int, right: Int): Boolean = left <= right
-
-    /**
-      * Decomposes a lattice state into its unique irredundant join decomposition of join-irreducable states
-      */
-    override def decompose(state: Int): Set[Int] = Set(state)
-
-    /** By assumption: associative, commutative, idempotent. */
-    override def merge(left: Int, right: Int): Int = left max right
 
     override def bottom: Int = 0
   }
 
-  implicit def SetAsUIJDLattice[A]: UIJDLatticeWithBottom[Set[A]] = new UIJDLatticeWithBottom[Set[A]] {
+  implicit def SetAsUIJDLattice[A]: UIJDLattice[Set[A]] = new UIJDLattice[Set[A]] {
     override def leq(left: Set[A], right: Set[A]): Boolean = left subsetOf right
 
     /**
@@ -73,7 +52,7 @@ object UIJDLatticeWithBottom {
     override def bottom: Set[A] = Set.empty[A]
   }
 
-  implicit def OptionAsUIJDLattice[A: UIJDLattice]: UIJDLatticeWithBottom[Option[A]] = new UIJDLatticeWithBottom[Option[A]] {
+  implicit def OptionAsUIJDLattice[A: UIJDLattice]: UIJDLattice[Option[A]] = new UIJDLattice[Option[A]] {
     override def leq(left: Option[A], right: Option[A]): Boolean = (left, right) match {
       case (None, _) => true
       case (Some(_), None) => false
@@ -94,7 +73,7 @@ object UIJDLatticeWithBottom {
     override def bottom: Option[A] = Option.empty[A]
   }
 
-  implicit def MapAsUIJDLattice[K, V: UIJDLattice]: UIJDLatticeWithBottom[Map[K, V]] = new UIJDLatticeWithBottom[Map[K, V]] {
+  implicit def MapAsUIJDLattice[K, V: UIJDLattice]: UIJDLattice[Map[K, V]] = new UIJDLattice[Map[K, V]] {
     override def leq(left: Map[K, V], right: Map[K, V]): Boolean =
       left.keySet.forall { k =>
         OptionAsUIJDLattice[V].leq(left.get(k), right.get(k))
@@ -113,12 +92,12 @@ object UIJDLatticeWithBottom {
     override def bottom: Map[K, V] = Map.empty[K, V]
   }
 
-  implicit def PairAsUIJDLattice[A: UIJDLatticeWithBottom, B: UIJDLatticeWithBottom]: UIJDLatticeWithBottom[(A, B)] = new UIJDLatticeWithBottom[(A, B)] {
-    override def bottom: (A, B) = (UIJDLatticeWithBottom[A].bottom, UIJDLatticeWithBottom[B].bottom)
+  implicit def PairAsUIJDLattice[A: UIJDLattice, B: UIJDLattice]: UIJDLattice[(A, B)] = new UIJDLattice[(A, B)] {
+    override def bottom: (A, B) = (UIJDLattice[A].bottom, UIJDLattice[B].bottom)
 
     override def leq(left: (A, B), right: (A, B)): Boolean = (left, right) match {
       case ((ll, lr), (rl, rr)) =>
-        UIJDLatticeWithBottom[A].leq(ll, rl) && UIJDLatticeWithBottom[B].leq(lr, rr)
+        UIJDLattice[A].leq(ll, rl) && UIJDLattice[B].leq(lr, rr)
     }
 
     /**
@@ -126,15 +105,15 @@ object UIJDLatticeWithBottom {
      */
     override def decompose(state: (A, B)): Set[(A, B)] = state match {
       case (left, right) =>
-        val leftDecomposed = UIJDLatticeWithBottom[A].decompose(left) map { (_, UIJDLatticeWithBottom[B].bottom) }
-        val rightDecomposed = UIJDLatticeWithBottom[B].decompose(right) map { (UIJDLatticeWithBottom[A].bottom, _) }
+        val leftDecomposed = UIJDLattice[A].decompose(left) map { (_, UIJDLattice[B].bottom) }
+        val rightDecomposed = UIJDLattice[B].decompose(right) map { (UIJDLattice[A].bottom, _) }
         leftDecomposed union rightDecomposed
     }
 
     /** By assumption: associative, commutative, idempotent. */
     override def merge(left: (A, B), right: (A, B)): (A, B) = (left, right) match {
       case ((ll, lr), (rl, rr)) =>
-        (UIJDLatticeWithBottom[A].merge(ll, rl), UIJDLatticeWithBottom[B].merge(lr, rr))
+        (UIJDLattice[A].merge(ll, rl), UIJDLattice[B].merge(lr, rr))
     }
   }
 }

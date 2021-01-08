@@ -1,8 +1,7 @@
 package rescala.extra.lattices.delta.crdt
 
 import rescala.extra.lattices.delta.DeltaCRDT._
-import rescala.extra.lattices.delta.UIJDLatticeWithBottom.PairAsUIJDLattice
-import rescala.extra.lattices.delta.{DeltaCRDT, UIJDLatticeWithBottom}
+import rescala.extra.lattices.delta.{DeltaCRDT, UIJDLattice}
 
 object PNCounterCRDT {
   type State = (GCounterCRDT.State, GCounterCRDT.State)
@@ -16,12 +15,12 @@ object PNCounterCRDT {
 
   def inc: DeltaMutator[State] = {
     case (replicaID, (incCounter, _)) =>
-      (GCounterCRDT.inc(replicaID, incCounter), UIJDLatticeWithBottom[GCounterCRDT.State].bottom)
+      (GCounterCRDT.inc(replicaID, incCounter), UIJDLattice[GCounterCRDT.State].bottom)
   }
 
   def dec: DeltaMutator[State] = {
     case (replicaID, (_, decCounter)) =>
-       (UIJDLatticeWithBottom[GCounterCRDT.State].bottom, GCounterCRDT.inc(replicaID, decCounter))
+       (UIJDLattice[GCounterCRDT.State].bottom, GCounterCRDT.inc(replicaID, decCounter))
   }
 }
 

@@ -1,7 +1,6 @@
 package rescala.extra.lattices.delta.crdt
 
 import rescala.extra.lattices.delta.DeltaCRDT._
-import rescala.extra.lattices.delta.UIJDLatticeWithBottom.MapAsUIJDLattice
 import rescala.extra.lattices.delta.{DeltaCRDT, LexPair}
 
 object LexCounterCRDT {

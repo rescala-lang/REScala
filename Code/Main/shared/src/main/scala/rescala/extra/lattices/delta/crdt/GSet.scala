@@ -2,7 +2,6 @@ package rescala.extra.lattices.delta.crdt
 
 import rescala.extra.lattices.delta.DeltaCRDT
 import rescala.extra.lattices.delta.DeltaCRDT._
-import rescala.extra.lattices.delta.UIJDLatticeWithBottom.SetAsUIJDLattice
 
 object GSetCRDT {
   type State[E] = Set[E]
