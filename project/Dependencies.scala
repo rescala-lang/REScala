@@ -10,7 +10,7 @@ object Dependencies {
     val akkaActors = "2.6.10"
     val akkaHttp = "10.2.2"
     val betterFiles = "3.9.1"
-    val cats = "2.3.0"
+    val catsCore = "2.3.1"
     val circeCore = "0.13.0"
     val decline = "1.3.0"
     val fastparse = "2.3.0"
@@ -37,13 +37,13 @@ object Dependencies {
     val scalaParallelCollections = "1.0.0"
     val scalaSwing = "3.0.0"
     val scalaXml = "1.3.0"
-    val scalacheck = "1.15.1"
+    val scalacheck = "1.15.2"
     val scalactic = "3.0.0"
     val scalajsDom = "1.1.0"
     val scalatags = "0.9.2"
     val scalatest = "3.2.3"
     val scalatestpluscheck = "3.2.2.0"
-    val scribe = "3.1.8"
+    val scribe = "3.2.1"
     val sourcecode = "0.2.1"
     val tomlScala = "0.2.2"
     val upickle = "1.2.2"
@@ -53,7 +53,7 @@ object Dependencies {
   import Dependencies.{Versions => V}
 
   val betterFiles     = Def.setting("com.github.pathikrit" %% "better-files" % V.betterFiles)
-  val cats            = Def.setting("org.typelevel" %%% "cats-core" % V.cats)
+  val catsCore        = Def.setting("org.typelevel" %%% "cats-core" % V.catsCore)
   val decline         = Def.setting("com.monovore" %%% "decline" % V.decline)
   val fastparse       = Def.setting("com.lihaoyi" %%% "fastparse" % V.fastparse)
   val javalin         = Def.setting("io.javalin" % "javalin" % V.javalin)
