@@ -19,11 +19,15 @@ object AWOTestHelper {
 class AddWinsSetOTest extends AnyFreeSpec with ScalaCheckPropertyChecks {
   implicit lazy val AddWinsSetOWithStrings: Arbitrary[AddWinsSetO[String]] = Arbitrary(for {
     values <- Arbitrary.arbitrary[Set[String]]
-  } yield values.foldLeft(AddWinsSetO.empty[String])((set, value) => AWOTestHelper.merge(set, set.add(value, IdUtil.genId()))))
+  } yield values.foldLeft(AddWinsSetO.empty[String])((set, value) =>
+    AWOTestHelper.merge(set, set.add(value, IdUtil.genId()))
+  ))
 
   implicit lazy val AddWinsSetOWithInts: Arbitrary[AddWinsSetO[Int]] = Arbitrary(for {
     values <- Arbitrary.arbitrary[Set[Int]]
-  } yield values.foldLeft(AddWinsSetO.empty[Int])((set, value) => AWOTestHelper.merge(set, set.add(value, IdUtil.genId()))))
+  } yield values.foldLeft(AddWinsSetO.empty[Int])((set, value) =>
+    AWOTestHelper.merge(set, set.add(value, IdUtil.genId()))
+  ))
 
   "An AddWinsSetO should support" - {
     val initial = AddWinsSetO[String](Map(), Context(Map.empty))
@@ -32,8 +36,8 @@ class AddWinsSetOTest extends AnyFreeSpec with ScalaCheckPropertyChecks {
 
     "adding elements" - {
       "manual tests" ignore {
-        val id1 = IdUtil.genId()
-        val id2 = IdUtil.genId()
+        val id1       = IdUtil.genId()
+        val id2       = IdUtil.genId()
         val d1        = initial.add(elem, id1)
         val d2        = initial.add(elem2, id2)
         val bothAdded = AWOTestHelper.merge(AWOTestHelper.merge(initial, d1), d2)
@@ -57,10 +61,10 @@ class AddWinsSetOTest extends AnyFreeSpec with ScalaCheckPropertyChecks {
 
     "removing elements" - {
       "manual tests" ignore {
-        val d1                        = initial.add(elem, IdUtil.genId())
+        val d1                         = initial.add(elem, IdUtil.genId())
         val added: AddWinsSetO[String] = AWOTestHelper.merge(initial, d1)
 
-        val d2                          = added.removeΔ(elem)
+        val d2                           = added.removeΔ(elem)
         val removed: AddWinsSetO[String] = AWOTestHelper.merge(added, d2)
         assert(!removed.contains(elem))
       }
@@ -68,8 +72,8 @@ class AddWinsSetOTest extends AnyFreeSpec with ScalaCheckPropertyChecks {
         "with strings" ignore forAll { s: AddWinsSetO[String] =>
           whenever(s.toSet.nonEmpty) {
             // randomly pick one element:
-            val elem: String                = Random.shuffle(s.toSet.toList).head
-            val delta                       = s.removeΔ(elem)
+            val elem: String                 = Random.shuffle(s.toSet.toList).head
+            val delta                        = s.removeΔ(elem)
             val removed: AddWinsSetO[String] = AWOTestHelper.merge(s, delta)
             assert(!removed.contains(elem))
           }
@@ -77,8 +81,8 @@ class AddWinsSetOTest extends AnyFreeSpec with ScalaCheckPropertyChecks {
         "with integers" ignore forAll { s: AddWinsSetO[Int] =>
           whenever(s.toSet.nonEmpty) {
             // randomly pick one element:
-            val elem: Int                = Random.shuffle(s.toSet.toList).head
-            val delta                    = s.removeΔ(elem)
+            val elem: Int                 = Random.shuffle(s.toSet.toList).head
+            val delta                     = s.removeΔ(elem)
             val removed: AddWinsSetO[Int] = AWOTestHelper.merge(s, delta)
             assert(!removed.contains(elem))
           }

@@ -9,9 +9,15 @@
 
 // scalajs 1.0
 addSbtPlugin("ch.epfl.scala"           % "sbt-scalajs-bundler"      % "0.20.0") // https://github.com/scalacenter/scalajs-bundler
-addSbtPlugin("org.portable-scala"      % "sbt-scalajs-crossproject" % "1.0.0")
 addSbtPlugin("org.scala-js"            % "sbt-scalajs"              % "1.3.1")
 libraryDependencies += "org.scala-js" %% "scalajs-env-jsdom-nodejs" % "1.1.0"
+
+// scalanative
+addSbtPlugin("org.scala-native" % "sbt-scala-native" % "0.4.0")
+
+// crossbuilding
+addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject"      % "1.0.0")
+addSbtPlugin("org.portable-scala" % "sbt-scala-native-crossproject" % "1.0.0")
 
 addSbtPlugin("org.irundaia.sbt" % "sbt-sassify" % "1.5.1")
 
