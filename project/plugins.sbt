@@ -10,7 +10,7 @@
 // scalajs 1.0
 addSbtPlugin("ch.epfl.scala"           % "sbt-scalajs-bundler"      % "0.20.0") // https://github.com/scalacenter/scalajs-bundler
 addSbtPlugin("org.portable-scala"      % "sbt-scalajs-crossproject" % "1.0.0")
-addSbtPlugin("org.scala-js"            % "sbt-scalajs"              % "1.3.1")
+addSbtPlugin("org.scala-js"            % "sbt-scalajs"              % "1.4.0")
 libraryDependencies += "org.scala-js" %% "scalajs-env-jsdom-nodejs" % "1.1.0"
 
 // scalanative
@@ -31,7 +31,7 @@ addSbtPlugin("org.tpolecat"       % "tut-plugin" % "0.6.13")
 addSbtPlugin("pl.project13.scala" % "sbt-jmh"    % "0.4.0")
 
 // dotty?
-addSbtPlugin("ch.epfl.lamp" % "sbt-dotty" % "0.5.1")
+addSbtPlugin("ch.epfl.lamp" % "sbt-dotty" % "0.5.2")
 
 // https://github.com/scalameta/sbt-native-image
 addSbtPlugin("org.scalameta" % "sbt-native-image" % "0.3.0")
