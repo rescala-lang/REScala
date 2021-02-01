@@ -1,13 +1,15 @@
 package rescala.extra.lattices.delta.crdt
 
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import rescala.extra.lattices.delta.DeltaCRDT._
-import rescala.extra.lattices.delta.{DeltaCRDT, UIJDLattice}
+import rescala.extra.lattices.delta.{AntiEntropy, DeltaCRDT, UIJDLattice}
 
 object PNCounterCRDT {
   type State = (GCounterCRDT.State, GCounterCRDT.State)
 
-  def apply(replicaID: String): DeltaCRDT[State] =
-    DeltaCRDT.empty[State](replicaID)
+  def apply(antiEntropy: AntiEntropy[State]): DeltaCRDT[State] =
+    DeltaCRDT.empty[State](antiEntropy)
 
   def value: DeltaQuery[State, Int] = {
     case (incCounter, decCounter) => GCounterCRDT.value(incCounter) - GCounterCRDT.value(decCounter)
@@ -30,8 +32,15 @@ class PNCounter(crdt: DeltaCRDT[PNCounterCRDT.State]) {
   def inc(): PNCounter = new PNCounter(crdt.mutate(PNCounterCRDT.inc))
 
   def dec(): PNCounter = new PNCounter(crdt.mutate(PNCounterCRDT.dec))
+
+  def processReceivedDeltas(): PNCounter = new PNCounter(crdt.processReceivedDeltas())
 }
 
 object PNCounter {
-  def apply(replicaID: String): PNCounter = new PNCounter(PNCounterCRDT(replicaID))
+  type State = PNCounterCRDT.State
+
+  def apply(antiEntropy: AntiEntropy[PNCounterCRDT.State]): PNCounter =
+    new PNCounter(PNCounterCRDT(antiEntropy))
+
+  implicit def PNCounterStateCodec: JsonValueCodec[(Map[String, Int], Map[String, Int])] = JsonCodecMaker.make
 }

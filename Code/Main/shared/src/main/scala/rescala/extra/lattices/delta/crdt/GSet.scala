@@ -1,13 +1,15 @@
 package rescala.extra.lattices.delta.crdt
 
-import rescala.extra.lattices.delta.DeltaCRDT
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import rescala.extra.lattices.delta.DeltaCRDT._
+import rescala.extra.lattices.delta.{AntiEntropy, DeltaCRDT}
 
 object GSetCRDT {
   type State[E] = Set[E]
 
-  def apply[E](replicaID: String): DeltaCRDT[State[E]] =
-    DeltaCRDT.empty[Set[E]](replicaID)
+  def apply[E](antiEntropy: AntiEntropy[State[E]]): DeltaCRDT[State[E]] =
+    DeltaCRDT.empty[Set[E]](antiEntropy)
 
   def elements[E]: DeltaQuery[State[E], Set[E]] = state => state
 
@@ -18,8 +20,15 @@ class GSet[E](crdt: DeltaCRDT[GSetCRDT.State[E]]) {
   def elements: Set[E] = crdt.query(GSetCRDT.elements)
 
   def insert(element: E): GSet[E] = new GSet(crdt.mutate(GSetCRDT.insert(element)))
+
+  def processReceivedDeltas(): GSet[E] = new GSet(crdt.processReceivedDeltas())
 }
 
 object GSet {
-  def apply[E](replicaID: String): GSet[E] = new GSet(GSetCRDT[E](replicaID))
+  type State[E] = GSetCRDT.State[E]
+
+  def apply[E](antiEntropy: AntiEntropy[State[E]]): GSet[E] =
+    new GSet(GSetCRDT[E](antiEntropy))
+
+  implicit def GSetStateCodec[E: JsonValueCodec]: JsonValueCodec[Set[E]] = JsonCodecMaker.make
 }

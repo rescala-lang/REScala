@@ -1,14 +1,16 @@
 package rescala.extra.lattices.delta.crdt
 
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import rescala.extra.lattices.delta.DeltaCRDT._
 import rescala.extra.lattices.delta.DotStore._
-import rescala.extra.lattices.delta.{CContext, Causal, DeltaCRDT, UIJDLattice}
+import rescala.extra.lattices.delta.{AntiEntropy, CContext, Causal, DeltaCRDT, Dot, UIJDLattice}
 
 object RCounterCRDT {
   implicit def IntPairAsUIJDLattice: UIJDLattice[(Int, Int)] = new UIJDLattice[(Int, Int)] {
     override def leq(left: (Int, Int), right: (Int, Int)): Boolean = (left, right) match {
       case ((linc, ldec), (rinc, rdec)) =>
-        (linc - ldec) > (rinc - rdec)
+        linc <= rinc && ldec <= rdec
     }
 
     /**
@@ -21,7 +23,7 @@ object RCounterCRDT {
     /** By assumption: associative, commutative, idempotent. */
     override def merge(left: (Int, Int), right: (Int, Int)): (Int, Int) = (left, right) match {
       case ((linc, ldec), (rinc, rdec)) =>
-        if ((linc - ldec) > (rinc - rdec)) left else right
+        (linc max rinc, ldec max rdec)
     }
 
     override def bottom: (Int, Int) = (0, 0)
@@ -29,8 +31,8 @@ object RCounterCRDT {
 
   type State[C] = Causal[DotFun[(Int, Int)], C]
 
-  def apply[C: CContext](replicaID: String): DeltaCRDT[State[C]] =
-    DeltaCRDT.empty[State[C]](replicaID)
+  def apply[C: CContext](antiEntropy: AntiEntropy[State[C]]): DeltaCRDT[State[C]] =
+    DeltaCRDT.empty[State[C]](antiEntropy)
 
   def value[C: CContext]: DeltaQuery[State[C], Int] = {
     case Causal(df, _) =>
@@ -98,8 +100,20 @@ class RCounter[C: CContext](crdt: DeltaCRDT[RCounterCRDT.State[C]]) {
   def decrement(): RCounter[C] = new RCounter(crdt.mutate(RCounterCRDT.decrement))
 
   def reset(): RCounter[C] = new RCounter(crdt.mutate(RCounterCRDT.reset))
+
+  def processReceivedDeltas(): RCounter[C] = new RCounter(crdt.processReceivedDeltas())
 }
 
 object RCounter {
-  def apply[C: CContext](replicaID: String): RCounter[C] = new RCounter(RCounterCRDT[C](replicaID))
+  type State[C] = RCounterCRDT.State[C]
+  type Embedded = DotFun[(Int, Int)]
+
+  def apply[C: CContext](antiEntropy: AntiEntropy[State[C]]): RCounter[C] =
+    new RCounter(RCounterCRDT[C](antiEntropy))
+
+  implicit def RCounterStateCodec[C: JsonValueCodec]: JsonValueCodec[Causal[Map[Dot, (Int, Int)], C]] =
+    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
+
+  implicit def RCounterEmbeddedCodec: JsonValueCodec[Map[Dot, (Int, Int)]] =
+    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 }

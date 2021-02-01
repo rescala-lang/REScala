@@ -1,6 +1,6 @@
 package rescala.extra.lattices.delta
 
-case class Causal[D: DotStore, C: CContext](dotStore: D, cc: C)
+case class Causal[D, C](dotStore: D, cc: C)
 
 case object Causal {
   implicit def CausalAsUIJDLattice[D: DotStore, C: CContext]: UIJDLattice[Causal[D, C]] = new UIJDLattice[Causal[D, C]] {

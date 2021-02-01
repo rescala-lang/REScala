@@ -72,40 +72,51 @@ object DotStore {
     }
   }
 
-  type DotMap[K, V] = Map.WithDefault[K, V]
+  type DotMap[K, V] = Map[K, V]
   implicit def DotMap[K, V: DotStore]: DotStore[DotMap[K, V]] = new DotStore[DotMap[K, V]] {
     override def dots(ds: DotMap[K, V]): Set[Dot] = ds.values.flatMap(DotStore[V].dots(_)).toSet
 
     override def merge[C: CContext, D: CContext](left: DotMap[K, V], leftContext: C, right: DotMap[K, V], rightContext: D): (DotMap[K, V], C) = {
       val allKeys = left.keySet union right.keySet
       val mergedValues = allKeys map { k =>
-        val (mergedVal, _) = DotStore[V].merge(left(k), leftContext, right(k), rightContext)
+        val leftV = left.getOrElse(k, DotStore[V].empty)
+        val rightV = right.getOrElse(k, DotStore[V].empty)
+        val (mergedVal, _) = DotStore[V].merge(leftV, leftContext, rightV, rightContext)
+
         k -> mergedVal
       } filter { case (_, v) => v != DotStore[V].empty }
 
-      (new DotMap(mergedValues.toMap, _ => DotStore[V].empty), CContext[C].union(leftContext, rightContext))
+      (mergedValues.toMap, CContext[C].union(leftContext, rightContext))
     }
 
-    override def empty: DotMap[K, V] = new DotMap(Map.empty[K, V], _ => DotStore[V].empty)
+    override def empty: DotMap[K, V] = Map.empty[K, V]
 
     override def leq[C: CContext, D: CContext](left: DotMap[K, V], leftContext: C, right: DotMap[K, V], rightContext: D): Boolean = {
       val firstCondition = CContext[C].toSet(leftContext).forall(CContext[D].contains(rightContext, _))
-      val secondCondition = (left.keySet union right.keySet).forall(k => DotStore[V].leq[C, D](left(k), leftContext, right(k), rightContext))
+      val secondCondition = (left.keySet union right.keySet).forall { k =>
+        val leftV = left.getOrElse(k, DotStore[V].empty)
+        val rightV = right.getOrElse(k, DotStore[V].empty)
+
+        DotStore[V].leq[C, D](leftV, leftContext, rightV, rightContext)
+      }
       firstCondition && secondCondition
     }
 
     override def decompose[C: CContext](state: DotMap[K, V], cc: C): Set[(DotMap[K, V], C)] = {
       val added = for (
         k <- state.keySet;
-        (atomicV, atomicCC) <- DotStore[V].decompose(state(k), CContext[C].fromSet(DotStore[V].dots(state(k))))
+        (atomicV, atomicCC) <- {
+          val v = state.getOrElse(k, DotStore[V].empty)
+          DotStore[V].decompose(v, CContext[C].fromSet(DotStore[V].dots(v)))
+        }
       ) yield (DotMap[K, V].empty.updated(k, atomicV), atomicCC)
       val removed = for (d <- CContext[C].toSet(cc) diff DotMap[K, V].dots(state)) yield (DotMap[K, V].empty, CContext[C].fromSet(Set(d)))
       added union removed
     }
   }
 
-  type DotStorePair[A, B] = (A, B)
-  implicit def DotStorePair[A: DotStore, B: DotStore]: DotStore[DotStorePair[A, B]] = new DotStore[(A, B)] {
+  type DotPair[A, B] = (A, B)
+  implicit def DotPair[A: DotStore, B: DotStore]: DotStore[DotPair[A, B]] = new DotStore[(A, B)] {
     override def dots(ds: (A, B)): Set[Dot] = ds match {
       case (ds1, ds2) => DotStore[A].dots(ds1) union DotStore[B].dots(ds2)
     }
