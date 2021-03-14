@@ -37,11 +37,13 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Code/Main"))
       sourcecode.value,
       retypecheck.value,
       reactiveStreams.value,
-      scalaOrganization.value % "scala-reflect" % scalaVersion.value % "provided"
+      scalaOrganization.value % "scala-reflect" % scalaVersion.value % "provided",
+      jsoniterScalaAll.value(1),
     ) ++ (
       // built in serializability of lattice vertices
       circeAll.value.map(_ % "provided,test") ++
         Seq(
+          jsoniterScalaAll.value.head,
           loci.wsAkka.value,
           loci.circe.value,
           loci.upickle.value,
