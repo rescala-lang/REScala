@@ -27,7 +27,6 @@ lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
 lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Code/Main"))
   .settings(
     name := "rescala",
-    strictCompile,
     cfg.base,
     cfg.test,
     cfg.bintray,
@@ -83,7 +82,7 @@ lazy val documentation = project.in(file("Documentation/DocumentationProject"))
 // ===================================================================================== Extensions
 
 lazy val reswing = project.in(file("Code/Extensions/RESwing"))
-  .settings(name := "reswing", cfg.base, cfg.noPublish, cfg.strictScalac, libraryDependencies += scalaSwing.value)
+  .settings(name := "reswing", cfg.base, cfg.noPublish, libraryDependencies += scalaSwing.value)
   .dependsOn(rescalaJVM)
 
 lazy val rescalafx = project.in(file("Code/Extensions/javafx"))
@@ -307,8 +306,6 @@ lazy val cfg = new {
     //"-Xfuture",
     "-Xdisable-assertions"
   )
-
-  lazy val strictScalac = List() //strictCompile
 
   val mappingFilters = Seq(
     mappings in (Compile, packageBin) ~= { _.filter(!_._1.getName.endsWith(".conf")) },
