@@ -55,8 +55,6 @@ class AWSet[E, C: CContext](crdt: DeltaCRDT[AWSetCRDT.State[E, C]]) {
 
   def clear(): AWSet[E, C] = new AWSet(crdt.mutate(AWSetCRDT.clear))
 
-  def state: AWSetCRDT.State[E, C] = crdt.state
-
   def processReceivedDeltas(): AWSet[E, C] = new AWSet(crdt.processReceivedDeltas())
 }
 

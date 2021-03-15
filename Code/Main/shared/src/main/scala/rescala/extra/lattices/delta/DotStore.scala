@@ -3,7 +3,7 @@ package rescala.extra.lattices.delta
 import rescala.extra.lattices.Lattice
 
 trait DotStore[A] {
-  def dots(ds: A): Set[Dot]
+  def dots(state: A): Set[Dot]
 
   def merge[C: CContext, D: CContext](left: A, leftContext: C, right: A, rightContext: D): (A, C)
 
@@ -103,13 +103,13 @@ object DotStore {
     }
 
     override def decompose[C: CContext](state: DotMap[K, V], cc: C): Set[(DotMap[K, V], C)] = {
-      val added = for (
-        k <- state.keySet;
+      val added = for {
+        k <- state.keySet
         (atomicV, atomicCC) <- {
           val v = state.getOrElse(k, DotStore[V].empty)
           DotStore[V].decompose(v, CContext[C].fromSet(DotStore[V].dots(v)))
         }
-      ) yield (DotMap[K, V].empty.updated(k, atomicV), atomicCC)
+      } yield (DotMap[K, V].empty.updated(k, atomicV), atomicCC)
       val removed = for (d <- CContext[C].toSet(cc) diff DotMap[K, V].dots(state)) yield (DotMap[K, V].empty, CContext[C].fromSet(Set(d)))
       added union removed
     }

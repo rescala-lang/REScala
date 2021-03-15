@@ -20,7 +20,7 @@ class Network (val lossChance: Double, val duplicateChance: Double, val delayCha
     reliablePhase = false
   }
 
-  def selectRandom(l: List[Array[Byte]], removeChance: Double): List[Array[Byte]] =
+  private def selectRandom(l: List[Array[Byte]], removeChance: Double): List[Array[Byte]] =
     l.zip(List.fill(l.length)(Random.between(0.0, 1.0))).collect {
       case (msg, ran) if ran > removeChance => msg
     }
