@@ -106,3 +106,10 @@ class AntiEntropy[A: UIJDLattice]
     }
   }
 }
+
+object AntiEntropy {
+  def sync[A: UIJDLattice](ae: AntiEntropy[A]*): Unit = {
+    ae.foreach(_.sendChangesToAllNeighbors())
+    ae.foreach(_.receiveFromNetwork())
+  }
+}

@@ -74,6 +74,8 @@ object CContext {
     override def empty: Map[String, Diet[Int]] = Map.empty[String, Diet[Int]]
   }
 
+  implicit val SetCContextCodec: JsonValueCodec[Set[Dot]] = JsonCodecMaker.make
+
   implicit val DietCodec: JsonValueCodec[Diet[Int]] = new JsonValueCodec[Diet[Int]] {
     override def decodeValue(in: JsonReader, default: Diet[Int]): Diet[Int] = {
       var result = Diet.empty[Int]
