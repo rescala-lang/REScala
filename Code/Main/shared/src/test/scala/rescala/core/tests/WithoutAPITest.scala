@@ -46,7 +46,7 @@ class WithoutAPITest extends RETests {
       override def interpret(v: Value): String = v
     }
 
-    test("simple usage of core recsala without signals or events") {
+    test("simple usage of core rescala without signals or events") {
 
       val customSource: CustomSource[String] =
         Ticket.fromScheduler(scheduler)
