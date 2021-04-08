@@ -54,7 +54,7 @@ class WithoutAPITest extends RETests {
             new CustomSource[String](createdState)
           }
 
-      assert("Hi!" === transaction(customSource) { _.now(customSource) })
+      assert(transaction(customSource) { _.now(customSource) } === "Hi!")
 
       val customDerived: Interp[String, ReStructure] =
         Ticket.fromScheduler(scheduler)
@@ -66,14 +66,13 @@ class WithoutAPITest extends RETests {
             new CustomDerivedString(createdState, customSource)
           }
 
-      assert("Hi!" === transaction(customSource) { _.now(customSource) })
-      assert("Well, this is an initial value" === transaction(customDerived) { _.now(customDerived) })
+      assert(transaction(customSource) { _.now(customSource) } === "Hi!")
+      assert(transaction(customDerived) { _.now(customDerived) } === "Well, this is an initial value")
 
       transaction(customSource) { _.recordChange(customSource.makeChange("Hello!")) }
 
-      assert("Hello!" === transaction(customSource) { _.now(customSource) })
-      assert("Hello! :D" === transaction(customDerived) { _.now(customDerived) })
-
+      assert(transaction(customSource) { _.now(customSource) } === "Hello!")
+      assert(transaction(customDerived) { _.now(customDerived) } === "Hello! :D")
     }
   }
 }
