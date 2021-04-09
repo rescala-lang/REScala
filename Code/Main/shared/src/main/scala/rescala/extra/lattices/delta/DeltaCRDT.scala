@@ -1,36 +1,37 @@
 package rescala.extra.lattices.delta
 
 import rescala.extra.lattices.delta.DeltaCRDT._
+import rescala.extra.lattices.delta.DotStore._
 
 case class DeltaCRDT[D: DotStore, C: CContext](replicaID: String, state: D, cc: C, deltaBuffer: List[CausalDelta[D, C]]) {
-  def applyDelta[A: CContext](delta: CausalDelta[D, A], save: Boolean = false): DeltaCRDT[D, C] = delta match {
-    case CausalDelta(deltaState, deltaCC) =>
-      val (stateMerged, ccMerged) = DotStore[D].merge(state, cc, deltaState, deltaCC)
-      if (save) {
-        val newBuffer = deltaBuffer :+ CausalDelta(deltaState, CContext[A].convert[C](deltaCC))
-        DeltaCRDT(replicaID, stateMerged, ccMerged, newBuffer)
-      } else {
-        DeltaCRDT(replicaID, stateMerged, ccMerged, deltaBuffer)
+  def applyDelta[A: CContext](delta: CausalDelta[D, A]): DeltaCRDT[D, C] = delta match {
+    case CausalDelta(origin, deltaState, deltaCC) =>
+      DotStoreAsUIJDLattice[D, C].diff((state, cc), (deltaState, CContext[A].convert[C](deltaCC))) match {
+        case Some((stateDiff, ccDiff)) =>
+          val (stateMerged, ccMerged) = DotStore[D].merge(state, cc, stateDiff, ccDiff)
+          val newBuffer = deltaBuffer :+ CausalDelta(origin, stateDiff, ccDiff)
+          DeltaCRDT(replicaID, stateMerged, ccMerged, newBuffer)
+        case None => this
       }
   }
 
-  def handleDelta(delta: SetDelta[D]): DeltaCRDT[D, C] = delta match {
-    case SetDelta(deltaState, dots) => applyDelta(CausalDelta(deltaState, CContext[C].fromSet(dots)), save = true)
+  def handleSetDelta(delta: SetDelta[D]): DeltaCRDT[D, C] = delta match {
+    case SetDelta(state, dots) => applyDelta(CausalDelta(replicaID, state, CContext[C].fromSet(dots)))
   }
 
-  def joinedDeltaBuffer: CausalDelta[D, C] = deltaBuffer.fold(CausalDelta(DotStore[D].bottom, CContext[C].empty)) {
-    case (CausalDelta(flagLeft, ccLeft), CausalDelta(flagRight, ccRight)) =>
+  def joinedDeltaBuffer(target: String): CausalDelta[D, C] = deltaBuffer.filter {
+    case CausalDelta(origin, _, _) => origin != target
+  }.fold(CausalDelta(replicaID, DotStore[D].bottom, CContext[C].empty)) {
+    case (CausalDelta(_, flagLeft, ccLeft), CausalDelta(_, flagRight, ccRight)) =>
       val (flagMerged, ccMerged) = DotStore[D].merge(flagLeft, ccLeft, flagRight, ccRight)
-      CausalDelta(flagMerged, ccMerged)
-  } match {
-    case CausalDelta(flag, cc) => CausalDelta(flag, cc)
+      CausalDelta(replicaID, flagMerged, ccMerged)
   }
 
   def query[A](q: DeltaQuery[D, A]): A = q(state)
 
-  def mutate(m: DeltaDotMutator[D]): DeltaCRDT[D, C] = handleDelta(m(state, CContext[C].nextDot(cc, replicaID)))
+  def mutate(m: DeltaDotMutator[D]): DeltaCRDT[D, C] = handleSetDelta(m(state, CContext[C].nextDot(cc, replicaID)))
 
-  def mutate(m: DeltaMutator[D]): DeltaCRDT[D, C] = handleDelta(m(state))
+  def mutate(m: DeltaMutator[D]): DeltaCRDT[D, C] = handleSetDelta(m(state))
 }
 
 object DeltaCRDT {

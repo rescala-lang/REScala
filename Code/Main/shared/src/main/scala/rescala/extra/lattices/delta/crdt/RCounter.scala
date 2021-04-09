@@ -1,16 +1,29 @@
 package rescala.extra.lattices.delta.crdt
 
-import rescala.extra.lattices.Lattice
 import rescala.extra.lattices.delta.DeltaCRDT._
 import rescala.extra.lattices.delta.DotStore._
-import rescala.extra.lattices.delta.{CContext, DeltaCRDT, Dot, SetDelta}
+import rescala.extra.lattices.delta.{CContext, DeltaCRDT, Dot, SetDelta, UIJDLattice}
 
 object RCounter {
-  implicit def IntPairAsLattice: Lattice[(Int, Int)] =
-    (left: (Int, Int), right: (Int, Int)) => (left, right) match {
+  implicit def IntPairAsUIJDLattice: UIJDLattice[(Int, Int)] = new UIJDLattice[(Int, Int)] {
+    override def leq(left: (Int, Int), right: (Int, Int)): Boolean = (left, right) match {
+      case ((linc, ldec), (rinc, rdec)) =>
+        (linc - ldec) > (rinc - rdec)
+    }
+
+    /**
+     * Decomposes a lattice state into its unique irredundant join decomposition of join-irreducable states
+     */
+    override def decompose(state: (Int, Int)): Set[(Int, Int)] = state match {
+      case (inc, dec) => Set((inc, 0), (0, dec))
+    }
+
+    /** By assumption: associative, commutative, idempotent. */
+    override def merge(left: (Int, Int), right: (Int, Int)): (Int, Int) = (left, right) match {
       case ((linc, ldec), (rinc, rdec)) =>
         if ((linc - ldec) > (rinc - rdec)) left else right
     }
+  }
 
   type Store = DotFun[(Int, Int)]
 
