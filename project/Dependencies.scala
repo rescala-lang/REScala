@@ -9,6 +9,7 @@ object Dependencies {
     val akkaHttp                 = "10.2.2"
     val betterFiles              = "3.9.1"
     val catsCore                 = "2.5.0"
+    val catsCollection           = "0.9.2"
     val circeCore                = "0.13.0"
     val decline                  = "2.0.0"
     val fastparse                = "2.3.2"
@@ -51,6 +52,7 @@ object Dependencies {
 
   val betterFiles     = Def.setting("com.github.pathikrit" %% "better-files" % V.betterFiles)
   val catsCore        = Def.setting("org.typelevel" %%% "cats-core" % V.catsCore)
+  val catsCollection  = Def.setting("org.typelevel" %%% "cats-collections-core" % V.catsCollection)
   val decline         = Def.setting("com.monovore" %%% "decline" % V.decline)
   val fastparse       = Def.setting("com.lihaoyi" %%% "fastparse" % V.fastparse)
   val javalin         = Def.setting("io.javalin" % "javalin" % V.javalin)

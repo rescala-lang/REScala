@@ -27,6 +27,7 @@ lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
 lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Code/Main"))
   .settings(
     name := "rescala",
+    strictCompile,
     cfg.base,
     cfg.test,
     cfg.bintray,
@@ -36,12 +37,11 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Code/Main"))
       sourcecode.value,
       retypecheck.value,
       reactiveStreams.value,
-      "org.typelevel" %%% "cats-collections-core" % "0.9.2",
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"   % "2.6.2",
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "2.6.2" % "provided",
       scalaOrganization.value % "scala-reflect" % scalaVersion.value % "provided",
+      catsCollection.value % "provided,test",
+      jsoniterScalaAll.value(0) % "provided,test",
+      jsoniterScalaAll.value(1),
     ) ++ (
-      jsoniterScalaAll.value ++
       // built in serializability of lattice vertices
       circeAll.value.map(_ % "provided,test") ++
         Seq(
@@ -262,7 +262,7 @@ lazy val microbench = project.in(file("Code/Microbenchmarks"))
     cfg.base,
     cfg.noPublish,
     (Compile / mainClass) := Some("org.openjdk.jmh.Main"),
-    libraryDependencies ++= circeAll.value :+ upickle.value,
+    libraryDependencies ++= circeAll.value :+ catsCollection.value :+ upickle.value,
     TaskKey[Unit]("compileJmh") := Seq(pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh / compile).dependOn.value
   )
   .enablePlugins(JavaAppPackaging)
