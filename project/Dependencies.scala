@@ -4,51 +4,48 @@ import sbt.Keys._
 
 object Dependencies {
 
-  // define versions, The variable name must be camel case by module name
-  // format: off
   object Versions {
-    val akkaActors = "2.6.10"
-    val akkaHttp = "10.2.2"
-    val betterFiles = "3.9.1"
-    val catsCore = "2.3.1"
-    val circeCore = "0.13.0"
-    val decline = "1.4.0"
-    val fastparse = "2.3.0"
-    val javalin = "3.13.3"
-    val jline = "2.14.6"
-    val jodaConvert = "2.2.1"
-    val jodaTime = "2.10.3"
-    val jsoniterScalaCore = "2.6.4"
-    val jsoup = "1.13.1"
-    val jsr166y = "1.7.0"
-    val kaleidoscope = "0.1.0"
-    val magnolia = "0.15.0"
-    val normalizecss = "8.0.1"
-    val okHttp = "4.9.1"
-    val pprint = "0.6.0"
-    val reactiveStreams = "1.0.3"
-    val retypecheck = "0.8.0"
-    val scala211 = "2.11.11"
-    val scala212 = "2.12.13"
-    val scala213 = "2.13.5"
-    val scala300 = "3.0.0-M3"
-    val scalaJavaTime = "2.1.0"
-    val scalaLociCommunication = "0.4.0"
+    val akkaActors               = "2.6.10"
+    val akkaHttp                 = "10.2.2"
+    val betterFiles              = "3.9.1"
+    val catsCore                 = "2.5.0"
+    val circeCore                = "0.13.0"
+    val decline                  = "2.0.0"
+    val fastparse                = "2.3.2"
+    val javalin                  = "3.13.4"
+    val jline                    = "2.14.6"
+    val jodaConvert              = "2.2.1"
+    val jodaTime                 = "2.10.3"
+    val jsoniterScalaCore        = "2.7.1"
+    val jsoup                    = "1.13.1"
+    val jsr166y                  = "1.7.0"
+    val kaleidoscope             = "0.1.0"
+    val magnolia                 = "0.15.0"
+    val normalizecss             = "8.0.1"
+    val okHttp                   = "4.9.1"
+    val pprint                   = "0.6.4"
+    val reactiveStreams          = "1.0.3"
+    val retypecheck              = "0.8.0"
+    val scala211                 = "2.11.11"
+    val scala212                 = "2.12.13"
+    val scala213                 = "2.13.5"
+    val scala300                 = "3.0.0-M3"
+    val scalaJavaTime            = "2.2.1"
+    val scalaLociCommunication   = "0.4.0"
     val scalaParallelCollections = "1.0.0"
-    val scalaSwing = "3.0.0"
-    val scalaXml = "1.3.0"
-    val scalacheck = "1.15.3"
-    val scalactic = "3.0.0"
-    val scalajsDom = "1.1.0"
-    val scalatags = "0.9.3"
-    val scalatest = "3.2.6"
-    val scalatestpluscheck = "3.2.2.0"
-    val scribe = "3.5.0"
-    val sourcecode = "0.2.1"
-    val tomlScala = "0.2.2"
-    val upickle = "1.2.2"
+    val scalaSwing               = "3.0.0"
+    val scalaXml                 = "1.3.0"
+    val scalacheck               = "1.15.3"
+    val scalactic                = "3.0.0"
+    val scalajsDom               = "1.1.0"
+    val scalatags                = "0.9.4"
+    val scalatest                = "3.2.7"
+    val scalatestpluscheck       = "3.2.2.0"
+    val scribe                   = "3.5.1"
+    val sourcecode               = "0.2.5"
+    val tomlScala                = "0.2.2"
+    val upickle                  = "1.3.11"
   }
-  // format: on
 
   import Dependencies.{Versions => V}
 
@@ -88,7 +85,7 @@ object Dependencies {
 
   val jsoniterScalaAll = Def.setting(Seq(
     ("com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core"   % V.jsoniterScalaCore exclude ("io.github.cquiroz", s"scala-java-time-tzdb_sjs1_${scalaVersion.value.substring(0, 4)}")),
-    "com.github.plokhotnyuk.jsoniter-scala"   %% "jsoniter-scala-macros" % V.jsoniterScalaCore
+    "com.github.plokhotnyuk.jsoniter-scala"   %% "jsoniter-scala-macros" % V.jsoniterScalaCore % "provided"
   ))
 
   val akkaHttpAll = Def.setting(Seq("akka-http-core", "akka-http")

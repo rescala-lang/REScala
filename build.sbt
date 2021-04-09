@@ -139,7 +139,7 @@ lazy val todolist = project.in(file("Code/Examples/Todolist"))
       scalatags.value,
       loci.webrtc.value,
     ),
-    scalaSource in Compile := baseDirectory.value,
+    (Compile / scalaSource) := baseDirectory.value,
     scalaJSUseMainModuleInitializer := true,
   )
 
@@ -195,7 +195,7 @@ lazy val ersirWeb = project.in(file("Code/Examples/Ersir/web"))
   .settings(
     name := "web",
     cfg.base,
-    npmDependencies in Compile ++= Seq("mqtt" -> "2.18.2"),
+    (Compile / npmDependencies) ++= Seq("mqtt" -> "2.18.2"),
     libraryDependencies ++= Seq(
       scalajsDom.value,
       normalizecss.value,
@@ -250,7 +250,7 @@ lazy val fullmv = project.in(file("Code/Extensions/Multiversion"))
 //
 //lazy val distributedBenchmarks = project.in(file("Code/Extensions/distributed/benchmarks"))
 //  .enablePlugins(JmhPlugin)
-//  .settings(name := "rescala-distributed-benchmarks", cfg.base, cfg.noPublish, mainClass in Compile := Some("org.openjdk.jmh.Main"),
+//  .settings(name := "rescala-distributed-benchmarks", cfg.base, cfg.noPublish, (Compile / mainClass) := Some("org.openjdk.jmh.Main"),
 //    TaskKey[Unit]("compileJmh") := Seq(compile in pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh).dependOn.value)
 //  .dependsOn(distributedFullmv % "compile->test")
 //  .enablePlugins(JavaAppPackaging)
@@ -261,9 +261,9 @@ lazy val microbench = project.in(file("Code/Microbenchmarks"))
     name := "microbenchmarks",
     cfg.base,
     cfg.noPublish,
-    mainClass in Compile := Some("org.openjdk.jmh.Main"),
+    (Compile / mainClass) := Some("org.openjdk.jmh.Main"),
     libraryDependencies ++= circeAll.value :+ upickle.value,
-    TaskKey[Unit]("compileJmh") := Seq(compile in pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh).dependOn.value
+    TaskKey[Unit]("compileJmh") := Seq(pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh / compile).dependOn.value
   )
   .enablePlugins(JavaAppPackaging)
   .dependsOn(fullmv, rescalaJVM)
@@ -282,8 +282,8 @@ lazy val cfg = new {
   ) ++ scalaVersion_213
 
   val test = List(
-    testOptions in Test += Tests.Argument("-oICN"),
-    parallelExecution in Test := true,
+    (Test / testOptions) += Tests.Argument("-oICN"),
+    (Test / parallelExecution) := true,
     libraryDependencies += scalatest.value
   )
 
@@ -310,8 +310,8 @@ lazy val cfg = new {
   )
 
   val mappingFilters = Seq(
-    mappings in (Compile, packageBin) ~= { _.filter(!_._1.getName.endsWith(".conf")) },
-    mappings in (Compile, packageBin) ~= { _.filter(!_._1.getName.endsWith(".xml")) }
+    (Compile / packageBin / mappings) ~= { _.filter(!_._1.getName.endsWith(".conf")) },
+    (Compile / packageBin / mappings) ~= { _.filter(!_._1.getName.endsWith(".xml")) }
   )
 
 }
@@ -333,13 +333,13 @@ lazy val lib = new {
   // then again, the announcement for 12.0.2 seems incorrect …
   val scalafx = Seq(
     libraryDependencies ++= Seq(
-      "org.scalafx" %% "scalafx" % "15.0.1-R20",
+      "org.scalafx" %% "scalafx" % "15.0.1-R21",
       scalaSwing.value,
     ),
     libraryDependencies ++= Seq("base", "controls", "fxml", "graphics", "media", "swing", "web").map(m =>
       "org.openjfx" % s"javafx-$m" % "15.0.1" classifier osName
     )
-    // unmanagedJars in Compile += Attributed.blank(file(System.getenv("JAVA_HOME") + "/lib/ext/jfxrt.jar"))
+    // (Compile / unmanagedJars) += Attributed.blank(file(System.getenv("JAVA_HOME") + "/lib/ext/jfxrt.jar"))
   )
 
   def `is 2.12+`(scalaVersion: String): Boolean =
