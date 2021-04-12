@@ -82,16 +82,16 @@ class LexCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     val aea = new AntiEntropy[LexCounter.State]("a", network, mutable.Buffer("b"))
     val aeb = new AntiEntropy[LexCounter.State]("b", network, mutable.Buffer("a"))
 
-    val incedA = (0 until incA).foldLeft(LexCounter(aea)) {
+    val incedA = (0 until incA.toInt).foldLeft(LexCounter(aea)) {
       case (c, _) => c.inc()
     }
-    val ca0 = (0 until decA).foldLeft(incedA) {
+    val ca0 = (0 until decA.toInt).foldLeft(incedA) {
       case (c, _) => c.dec()
     }
-    val incedB = (0 until incB).foldLeft(LexCounter(aeb)) {
+    val incedB = (0 until incB.toInt).foldLeft(LexCounter(aeb)) {
       case (c, _) => c.inc()
     }
-    val cb0 = (0 until decB).foldLeft(incedB) {
+    val cb0 = (0 until decB.toInt).foldLeft(incedB) {
       case (c, _) => c.dec()
     }
 

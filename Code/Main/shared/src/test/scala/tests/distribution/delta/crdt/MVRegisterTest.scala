@@ -22,7 +22,7 @@ object MVRegisterGenerators {
     val network = new Network(0, 0, 0)
     val ae = new AntiEntropy[MVRegister.State[A, C]]("a", network, mutable.Buffer())
 
-    val ops = Random.shuffle(values.indices ++ List.fill(nClear)(-1))
+    val ops = Random.shuffle(values.indices ++ List.fill(nClear.toInt)(-1))
 
     ops.foldLeft(MVRegister(ae)) {
       case (r, -1) => r.clear()
@@ -109,8 +109,8 @@ class MVRegisterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     val aea = new AntiEntropy[MVRegister.State[Int, DietMapCContext]]("a", network, mutable.Buffer("b"))
     val aeb = new AntiEntropy[MVRegister.State[Int, DietMapCContext]]("b", network, mutable.Buffer("a"))
 
-    val opsA = Random.shuffle(valuesA.indices ++ List.fill(nClearA)(-1))
-    val opsB = Random.shuffle(valuesB.indices ++ List.fill(nClearB)(-1))
+    val opsA = Random.shuffle(valuesA.indices ++ List.fill(nClearA.toInt)(-1))
+    val opsB = Random.shuffle(valuesB.indices ++ List.fill(nClearB.toInt)(-1))
 
     val ra0 = opsA.foldLeft(MVRegister(aea)) {
       case (r, -1) => r.clear()

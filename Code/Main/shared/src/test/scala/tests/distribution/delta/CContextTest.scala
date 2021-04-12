@@ -63,7 +63,7 @@ class SetCContextTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
     ids.foreach { id =>
       val counterVals = asSet.collect {
-        case Dot(id, n) if randId == id => n
+        case Dot(i, n) if i == id => n
       }
 
       SetCContext.max(cc, id) match {
@@ -156,7 +156,7 @@ class DietMapCContextTest extends AnyFreeSpec with ScalaCheckDrivenPropertyCheck
 
     ids.foreach { id =>
       val counterVals = asSet.collect {
-        case Dot(id, n) if randId == id => n
+        case Dot(i, n) if i == id => n
       }
 
       DietMapCContext.max(cc, id) match {

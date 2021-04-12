@@ -26,6 +26,8 @@ object EWFlagGenerators {
     ops.foldLeft(EWFlag(ae)) {
       case (f, 0) => f.disable()
       case (f, 1) => f.enable()
+      // default case is only needed to stop the compiler from complaining about non-exhaustive match
+      case (f, _) => f
     }
   }
 
@@ -132,16 +134,20 @@ class EWFlagTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     val aea = new AntiEntropy[EWFlag.State[DietMapCContext]]("a", network, mutable.Buffer("b"))
     val aeb = new AntiEntropy[EWFlag.State[DietMapCContext]]("b", network, mutable.Buffer("a"))
 
-    val opsA = Random.shuffle(List.fill(enableA)(1) ++ List.fill(disableA)(0))
-    val opsB = Random.shuffle(List.fill(enableB)(1) ++ List.fill(disableB)(0))
+    val opsA = Random.shuffle(List.fill(enableA.toInt)(1) ++ List.fill(disableA.toInt)(0))
+    val opsB = Random.shuffle(List.fill(enableB.toInt)(1) ++ List.fill(disableB.toInt)(0))
 
     val fa0 = opsA.foldLeft(EWFlag(aea)) {
       case (f, 0) => f.disable()
       case (f, 1) => f.enable()
+      // default case is only needed to stop the compiler from complaining about non-exhaustive match
+      case (f, _) => f
     }
     val fb0 = opsB.foldLeft(EWFlag(aeb)) {
       case (f, 0) => f.disable()
       case (f, 1) => f.enable()
+      // default case is only needed to stop the compiler from complaining about non-exhaustive match
+      case (f, _) => f
     }
 
     AntiEntropy.sync(aea, aeb)

@@ -65,10 +65,10 @@ class GCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     val aea = new AntiEntropy[GCounter.State]("a", network, mutable.Buffer("b"))
     val aeb = new AntiEntropy[GCounter.State]("b", network, mutable.Buffer("a"))
 
-    val ca0 = (0 until incA).foldLeft(GCounter(aea)) {
+    val ca0 = (0 until incA.toInt).foldLeft(GCounter(aea)) {
       case (c, _) => c.inc()
     }
-    val cb0 = (0 until incB).foldLeft(GCounter(aeb)) {
+    val cb0 = (0 until incB.toInt).foldLeft(GCounter(aeb)) {
       case (c, _) => c.inc()
     }
 

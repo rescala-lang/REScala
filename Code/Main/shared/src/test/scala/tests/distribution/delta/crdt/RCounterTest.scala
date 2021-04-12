@@ -30,6 +30,8 @@ object RCounterGenerators {
       case (c, 1) => c.decrement()
       case (c, 2) => c.reset()
       case (c, 3) => c.fresh()
+      // default case is only needed to stop the compiler from complaining about non-exhaustive match
+      case (c, _) => c
     }
   }
 
@@ -182,10 +184,10 @@ class RCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
       val aea = new AntiEntropy[RCounter.State[DietMapCContext]]("a", network, mutable.Buffer("b"))
       val aeb = new AntiEntropy[RCounter.State[DietMapCContext]]("b", network, mutable.Buffer("a"))
 
-      val opsA1 = Random.shuffle(List.fill(nOpsA1._1)(0) ++ List.fill(nOpsA1._2)(1)++ List.fill(nOpsA1._3)(2)++ List.fill(nOpsA1._4)(3))
-      val opsB1 = Random.shuffle(List.fill(nOpsB1._1)(0) ++ List.fill(nOpsB1._2)(1)++ List.fill(nOpsB1._3)(2)++ List.fill(nOpsB1._4)(3))
-      val opsA2 = Random.shuffle(List.fill(nOpsA2._1)(0) ++ List.fill(nOpsA2._2)(1)++ List.fill(nOpsA2._3)(2)++ List.fill(nOpsA2._4)(3))
-      val opsB2 = Random.shuffle(List.fill(nOpsB2._1)(0) ++ List.fill(nOpsB2._2)(1)++ List.fill(nOpsB2._3)(2)++ List.fill(nOpsB2._4)(3))
+      val opsA1 = Random.shuffle(List.fill(nOpsA1._1.toInt)(0) ++ List.fill(nOpsA1._2.toInt)(1) ++ List.fill(nOpsA1._3.toInt)(2) ++ List.fill(nOpsA1._4.toInt)(3))
+      val opsB1 = Random.shuffle(List.fill(nOpsB1._1.toInt)(0) ++ List.fill(nOpsB1._2.toInt)(1) ++ List.fill(nOpsB1._3.toInt)(2) ++ List.fill(nOpsB1._4.toInt)(3))
+      val opsA2 = Random.shuffle(List.fill(nOpsA2._1.toInt)(0) ++ List.fill(nOpsA2._2.toInt)(1) ++ List.fill(nOpsA2._3.toInt)(2) ++ List.fill(nOpsA2._4.toInt)(3))
+      val opsB2 = Random.shuffle(List.fill(nOpsB2._1.toInt)(0) ++ List.fill(nOpsB2._2.toInt)(1) ++ List.fill(nOpsB2._3.toInt)(2) ++ List.fill(nOpsB2._4.toInt)(3))
 
       def applyOps(counter: RCounter[DietMapCContext], ops: List[Int]): RCounter[DietMapCContext] = {
         ops.foldLeft(counter) {
@@ -193,6 +195,8 @@ class RCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
           case (c, 1) => c.decrement()
           case (c, 2) => c.reset()
           case (c, 3) => c.fresh()
+          // default case is only needed to stop the compiler from complaining about non-exhaustive match
+          case (c, _) => c
         }
       }
 

@@ -82,16 +82,16 @@ class PNCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     val aea = new AntiEntropy[PNCounter.State]("a", network, mutable.Buffer("b"))
     val aeb = new AntiEntropy[PNCounter.State]("b", network, mutable.Buffer("a"))
 
-    val incedA = (0 until incA).foldLeft(PNCounter(aea)) {
+    val incedA = (0 until incA.toInt).foldLeft(PNCounter(aea)) {
       case (c, _) => c.inc()
     }
-    val ca0 = (0 until decA).foldLeft(incedA) {
+    val ca0 = (0 until decA.toInt).foldLeft(incedA) {
       case (c, _) => c.dec()
     }
-    val incedB = (0 until incB).foldLeft(PNCounter(aeb)) {
+    val incedB = (0 until incB.toInt).foldLeft(PNCounter(aeb)) {
       case (c, _) => c.inc()
     }
-    val cb0 = (0 until decB).foldLeft(incedB) {
+    val cb0 = (0 until decB.toInt).foldLeft(incedB) {
       case (c, _) => c.dec()
     }
 
