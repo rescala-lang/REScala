@@ -5,6 +5,7 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodec
 import rescala.extra.lattices.delta.DeltaCRDT._
 import rescala.extra.lattices.delta.DotStore.DotFun
 import rescala.extra.lattices.delta._
+import rescala.extra.lattices.delta.crdt.MVRegisterCRDT.State
 
 object MVRegisterCRDT {
   type State[A, C] = Causal[DotFun[A], C]
@@ -57,4 +58,50 @@ object MVRegister {
 
   implicit def MVRegisterEmbeddedCodec[A: JsonValueCodec]: JsonValueCodec[Map[Dot, A]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
+}
+
+class RMVRegister[A: UIJDLattice, C: CContext](val crdt: RDeltaCRDT[MVRegisterCRDT.State[A, C]]) extends CRDTInterface[MVRegisterCRDT.State[A, C]] {
+  def read: Set[A] = crdt.query(MVRegisterCRDT.read)
+
+  def write(v: A): RMVRegister[A, C] = new RMVRegister(crdt.mutate(MVRegisterCRDT.write(v)))
+
+  def clear(): RMVRegister[A, C] = new RMVRegister(crdt.mutate(MVRegisterCRDT.clear))
+
+  def applyDelta(delta: Delta[State[A, C]]): CRDTInterface[State[A, C]] = {
+    val newCRDT = crdt.applyDelta(delta)
+    if (newCRDT == crdt) this else new RMVRegister(newCRDT)
+  }
+}
+
+object RMVRegister {
+  type State[A, C] = MVRegisterCRDT.State[A, C]
+  type Embedded[A] = DotFun[A]
+
+  def apply[A: UIJDLattice, C: CContext](replicaID: String): RMVRegister[A, C] =
+    new RMVRegister(RDeltaCRDT.empty[State[A, C]](replicaID))
+
+  implicit def MVRegisterStateCodec[A: JsonValueCodec, C: JsonValueCodec]: JsonValueCodec[Causal[Map[Dot, A], C]] =
+    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
+
+  implicit def MVRegisterEmbeddedCodec[A: JsonValueCodec]: JsonValueCodec[Map[Dot, A]] =
+    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
+
+  def AtomicUIJDLattice[A]: UIJDLattice[A] = new UIJDLattice[A] {
+    override def leq(left: A, right: A): Boolean = false
+
+    /**
+      * Decomposes a lattice state into its unique irredundant join decomposition of join-irreducable states
+      */
+    override def decompose(state: A): Set[A] = Set(state)
+
+    override def bottom: A = throw new UnsupportedOperationException("Can't compute bottom of atomic type A")
+
+    /** By assumption: associative, commutative, idempotent. */
+    override def merge(left: A, right: A): A =
+      if (left == right) {
+        left
+      } else {
+        throw new UnsupportedOperationException(s"Can't merge atomic type A, left: $left, right: $right")
+      }
+  }
 }

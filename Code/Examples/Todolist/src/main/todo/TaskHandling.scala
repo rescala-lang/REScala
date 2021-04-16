@@ -1,130 +1,81 @@
 package todo
 
-import java.util.concurrent.ThreadLocalRandom
-
-import io.circe.generic.auto._
 import io.circe.generic.semiauto
 import io.circe.{Decoder, Encoder}
-import loci.registry.{Binding, BindingBuilder}
-import loci.serializer.circe._
-import loci.transmitter.IdenticallyTransmittable
 import org.scalajs.dom.UIEvent
 import org.scalajs.dom.html.{Input, LI}
+import rescala.default._
 import rescala.extra.Tags._
-import rescala.extra.distributables.LociDist
-import rescala.extra.lattices.primitives.LastWriterWins
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all._
 
+import java.util.concurrent.ThreadLocalRandom
 import scala.Function.const
-import scala.collection.mutable
-import scala.concurrent.Future
 import scala.scalajs.js.timers.setTimeout
 
-import rescala.default._
-
-case class TaskData(desc: String, done: Boolean = false) {
-  def toggle(): TaskData = copy(done = !done)
-  def edit(str: String)  = copy(desc = str)
+case class TodoTask(id: String = s"Task(${ThreadLocalRandom.current().nextLong().toHexString})", desc: String, done: Boolean = false) {
+  def toggle(): TodoTask = copy(done = !done)
+  def edit(str: String): TodoTask = copy(desc = str)
 }
 
-object TaskData {
-  implicit val taskDataDecoder: Decoder[TaskData] = semiauto.deriveDecoder: @scala.annotation.nowarn
-  implicit val taskDataEncoder: Encoder[TaskData] = semiauto.deriveEncoder: @scala.annotation.nowarn
+object TodoTask {
+  implicit val todoTaskDecoder: Decoder[TodoTask] = semiauto.deriveDecoder: @scala.annotation.nowarn
+  implicit val todoTaskEncoder: Encoder[TodoTask] = semiauto.deriveEncoder: @scala.annotation.nowarn
 }
 
-class TaskHandling() {
+case class TodoTaskView(tag: TypedTag[LI], removeEvt: Event[String], writeEvt: Event[TodoTask])
 
-  class Taskref(
-      val id: String,
-      val listItem: TypedTag[LI],
-      val contents: Signal[TaskData],
-      val initial: TaskData,
-      val removeClick: Event[String]
-  )
+object TodoTaskView {
+  def fromTask(task: TodoTask): TodoTaskView = {
+    val edittext = Events.fromCallback[UIEvent] { inputChange =>
+      input(`class` := "edit", `type` := "text", onchange := inputChange, onblur := inputChange)
+    }
 
-  object Taskref {
-    implicit val taskDecoder: Decoder[Taskref] =
-      Decoder.decodeTuple2[String, TaskData].map { case (s, td) => maketask(td, s) }
-    implicit val taskEncoder: Encoder[Taskref] =
-      Encoder.encodeTuple2[String, TaskData].contramap[Taskref](tr => (tr.id, tr.initial))
-  }
+    val edittextStr = edittext.event.map { e: UIEvent =>
+      val myinput = e.target.asInstanceOf[Input]
+      myinput.value.trim
+    }
 
-  val toggleAll = Events.fromCallback[UIEvent] { cb =>
-    input(id := "toggle-all", name := "toggle-all", `class` := "toggle-all", `type` := "checkbox", onchange := cb)
-  }
+    val editDiv = Events.fromCallback[UIEvent] { cb =>
+      div(`class` := "view", ondblclick := cb)
+    }
 
-  val knownTasks: mutable.Map[String, Taskref] = mutable.Map()
+    val changeEditing = (edittextStr map const(false)) || (editDiv.event map const(true))
+    val editingV      = changeEditing.latest(init = false)(implicitly)
 
-  implicit val transmittableLWWTD: IdenticallyTransmittable[LastWriterWins[TaskData]] = IdenticallyTransmittable()
+    val doneClick = Events.fromCallback[UIEvent](onchange := _)
 
-  @scala.annotation.nowarn // Auto-application to `()`
-  val bindingBuilder: BindingBuilder[LastWriterWins[TaskData] => Unit] {
-    type RemoteCall = LastWriterWins[TaskData] => Future[Unit]
-  } = implicitly
+    val writeEvt = doneClick.event.map(_ => task.toggle()) || edittextStr.map(str => task.edit(str))
 
-  def maketask(
-      initial: TaskData,
-      uniqueId: String = s"Task(${ThreadLocalRandom.current().nextLong().toHexString})"
-  ): Taskref =
-    knownTasks.getOrElseUpdate(
-      uniqueId, {
-        println(s"make new task: $initial, $uniqueId")
+    writeEvt observe { _ =>
+      println(s"writeEvt was fired for task $task")
+    }
 
-        val edittext = Events.fromCallback[UIEvent] { inputChange =>
-          input(`class` := "edit", `type` := "text", onchange := inputChange, onblur := inputChange)
-        }
+    val removeButton =
+      Events.fromCallback[UIEvent](cb => button(`class` := "destroy", onclick := cb))
 
-        val edittextStr = edittext.event.map { e: UIEvent =>
-          val myinput = e.target.asInstanceOf[Input]
-          myinput.value.trim
-        }
+    removeButton.event observe { _ =>
+      println(s"removeEvt was fired for task $task")
+    }
 
-        val editDiv = Events.fromCallback[UIEvent] { cb =>
-          div(`class` := "view", ondblclick := cb)
-        }
+    val editInput = edittext.value(value := task.desc).render
+    editDiv.event.observe(_ => setTimeout(0) { editInput.focus() })
 
-        val changeEditing = (edittextStr map const(false)) || (editDiv.event map const(true))
-        val editingV      = changeEditing.latest(init = false)(implicitly)
-
-        val doneClick = Events.fromCallback[UIEvent](onchange := _)
-
-        val doneEv = toggleAll.event || doneClick.event
-
-        val taskDataL = Events.foldAll(LastWriterWins(initial))(current =>
-          Seq(
-            doneEv >> { _ => current.map(_.toggle()) },
-            edittextStr >> { v => current.map(_.edit(v)) }
-          )
-        )(uniqueId)
-
-        LociDist.distribute(taskDataL, Todolist.registry)(Binding(uniqueId)(bindingBuilder))
-
-        val taskData = taskDataL.map(_.payload)
-
-        val removeButton =
-          Events.fromCallback[UIEvent](cb => button(`class` := "destroy", onclick := cb))
-
-        val editInput = edittext.value(value := taskData.map(_.desc)).render
-        editDiv.event.observe(_ => setTimeout(0) { editInput.focus() })
-
-        val listItem = li(
-          `class` := editingV.map(if (_) "editing" else "no-editing"),
-          editDiv.value(
-            input(
-              `class` := "toggle",
-              `type` := "checkbox",
-              doneClick.value,
-              checked := taskData.map(c => if (c.done) Some(checked.v) else None)
-            ),
-            label(taskData.map(c => stringFrag(c.desc)).asModifier),
-            removeButton.value
-          ),
-          editInput
-        )
-
-        new Taskref(uniqueId, listItem, taskData, initial, removeButton.event.map(_ => uniqueId))
-      }
+    val listItem = li(
+      `class` := editingV.map(if (_) "editing" else "no-editing"),
+      editDiv.value(
+        input(
+          `class` := "toggle",
+          `type` := "checkbox",
+          doneClick.value,
+          checked := (if (task.done) Some(checked.v) else None)
+        ),
+        label(stringFrag(task.desc)),
+        removeButton.value
+      ),
+      editInput
     )
 
+    TodoTaskView(listItem, removeButton.event.map(_ => task.id), writeEvt)
+  }
 }

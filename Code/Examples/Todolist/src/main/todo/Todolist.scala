@@ -6,7 +6,6 @@ import loci.communicator.experimental.webrtc.WebRTC.ConnectorFactory
 import loci.communicator.experimental.webrtc._
 import loci.registry.Registry
 import org.scalajs.dom.{UIEvent, document}
-import rescala.extra.lattices.sequences.RGA.RGA
 import scalatags.JsDom.all._
 import scalatags.JsDom.tags2.section
 
@@ -15,10 +14,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 object Todolist {
 
-  type TodoTransfer = RGA[taskHandling.Taskref]
-
-  val taskHandling = new TaskHandling
-  val todoApp      = TodoApp(taskHandling)
+  val todoApp = new TodoApp()
 
   val registry = new Registry
 

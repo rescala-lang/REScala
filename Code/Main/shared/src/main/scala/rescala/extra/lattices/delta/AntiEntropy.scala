@@ -80,10 +80,10 @@ class AntiEntropy[A: UIJDLattice]
       Some(DeltaMsg(Delta(replicaID, fullState), nextSeqNum))
     else {
       deltaBufferOut.collect {
-        case (n, deltaState) if ackMap(to) until nextSeqNum contains n => deltaState
-      } reduceOption { (left: Delta[A], right: Delta[A]) =>
-        Delta(replicaID, UIJDLattice[A].merge(left.deltaState, right.deltaState))
-      } map { DeltaMsg(_, nextSeqNum) }
+        case (n, Delta(origin, deltaState)) if n >= ackMap(to) && origin != to => deltaState
+      } reduceOption { (left: A, right: A) =>
+        UIJDLattice[A].merge(left, right)
+      } map { deltaState => DeltaMsg(Delta(replicaID, deltaState), nextSeqNum) }
     }
   }
 
