@@ -16,8 +16,8 @@ import tests.distribution.delta.NetworkGenerators.arbNetwork
 import scala.collection.mutable
 
 object AWSetGenerators {
-  def genAWSet[A: JsonValueCodec, C: CContext](implicit a: Gen[A], codec: JsonValueCodec[C]): Gen[AWSet[A, C]] = for {
-    added <- Gen.containerOf[List, A](a)
+  def genAWSet[A: JsonValueCodec, C: CContext](implicit a: Arbitrary[A], codec: JsonValueCodec[C]): Gen[AWSet[A, C]] = for {
+    added <- Gen.containerOf[List, A](a.arbitrary)
     n <- Gen.choose(0, added.size)
     removed <- Gen.pick(n, added)
   } yield {
@@ -32,15 +32,14 @@ object AWSetGenerators {
     }
   }
 
-  def arbAWSet[A: JsonValueCodec, C: CContext](implicit a: Gen[A], codec: JsonValueCodec[C]): Arbitrary[AWSet[A, C]] =
+  implicit def arbAWSet[A: JsonValueCodec, C: CContext](implicit a: Arbitrary[A], codec: JsonValueCodec[C]): Arbitrary[AWSet[A, C]] =
     Arbitrary(genAWSet[A, C])
 }
 
 class AWSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   import AWSetGenerators._
 
-  implicit val arb: Arbitrary[AWSet[Int, SetCContext]] =
-    arbAWSet[Int, SetCContext](JsonCodecMaker.make, SetCContext, Arbitrary.arbitrary[Int], JsonCodecMaker.make)
+  implicit val IntCodec: JsonValueCodec[Int] = JsonCodecMaker.make
 
   "add" in forAll { (set: AWSet[Int, SetCContext], e: Int) =>
     val added = set.add(e)
@@ -75,8 +74,6 @@ class AWSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
       s"After clearing the set it should be empty, but ${cleared.elements} is not empty"
     )
   }
-
-  implicit val intCodec: JsonValueCodec[Int] = JsonCodecMaker.make
 
   "concurrent add" in forAll { (e: Int, e1: Int, e2: Int) =>
     val network = new Network(0, 0, 0)

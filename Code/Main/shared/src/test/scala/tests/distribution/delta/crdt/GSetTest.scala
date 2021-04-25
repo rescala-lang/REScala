@@ -24,7 +24,7 @@ object GSetGenerators {
     }
   }
 
-  implicit def arbGSet[E: JsonValueCodec](implicit e: Arbitrary[E]):Arbitrary[GSet[E]] = Arbitrary(genGSet)
+  implicit def arbGSet[E: JsonValueCodec](implicit e: Arbitrary[E]): Arbitrary[GSet[E]] = Arbitrary(genGSet)
 }
 
 class GSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {

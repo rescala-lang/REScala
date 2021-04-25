@@ -14,9 +14,9 @@ import rescala.extra.Tags._
 import rescala.extra.distributables.LociDist
 import rescala.extra.lattices.delta.CContext._
 import rescala.extra.lattices.delta.DotStore.DotFun
-import rescala.extra.lattices.delta.crdt.RMVRegister.AtomicUIJDLattice
-import rescala.extra.lattices.delta.crdt.{LastWriterWins, LastWriterWinsCRDT, RORMap, TimedVal}
-import rescala.extra.lattices.delta.{Delta, Dot, UIJDLattice}
+import rescala.extra.lattices.delta.crdt.GOListCRDT.GOListAsUIJDLattice
+import rescala.extra.lattices.delta.crdt.{Elem, GOList, GOListNode, RGANode, RRGA}
+import rescala.extra.lattices.delta.{Causal, Delta, Dot, TimedVal}
 import scalatags.JsDom
 import scalatags.JsDom.all._
 import scalatags.JsDom.tags2.section
@@ -26,7 +26,7 @@ import java.util.concurrent.ThreadLocalRandom
 
 class TodoApp() {
 
-  implicit val transmittableTaskMap: IdenticallyTransmittable[RORMap.State[String, LastWriterWins.Embedded[TodoTask], DietMapCContext]] = IdenticallyTransmittable()
+  implicit val transmittableTaskList: IdenticallyTransmittable[RRGA.State[TodoTask, DietMapCContext]] = IdenticallyTransmittable()
 
   implicit val DotDecoder: Decoder[Dot] = semiauto.deriveDecoder: @scala.annotation.nowarn
   implicit val DotEncoder: Encoder[Dot] = semiauto.deriveEncoder: @scala.annotation.nowarn
@@ -44,19 +44,35 @@ class TodoApp() {
       (l, r) => r :: l
   })
 
-  implicit val DotFunDecoder: Decoder[DotFun[TodoTask]] = Decoder.decodeList[(Dot, TodoTask)].map(_.toMap)
-  implicit val DotFunEncoder: Encoder[DotFun[TodoTask]] = Encoder.encodeList[(Dot, TodoTask)].contramap(_.toList)
+  implicit val GOListNodeDecoder: Decoder[GOListNode[TimedVal[Dot]]] = semiauto.deriveDecoder: @scala.annotation.nowarn
+  implicit val GOListNodeEncoder: Encoder[GOListNode[TimedVal[Dot]]] = semiauto.deriveEncoder: @scala.annotation.nowarn
 
-  implicit val TimedValDecoder: Decoder[TimedVal[TodoTask]] = semiauto.deriveDecoder: @scala.annotation.nowarn
-  implicit val TimedValEncoder: Encoder[TimedVal[TodoTask]] = semiauto.deriveEncoder: @scala.annotation.nowarn
+  implicit val DotTimedValDecoder: Decoder[TimedVal[Dot]] = semiauto.deriveDecoder: @scala.annotation.nowarn
+  implicit val DotTimedValEncoder: Encoder[TimedVal[Dot]] = semiauto.deriveEncoder: @scala.annotation.nowarn
 
-  implicit val AnotherDotFunDecoder: Decoder[DotFun[TimedVal[TodoTask]]] = Decoder.decodeList[(Dot, TimedVal[TodoTask])].map(_.toMap)
-  implicit val AnotherDotFunEncoder: Encoder[DotFun[TimedVal[TodoTask]]] = Encoder.encodeList[(Dot, TimedVal[TodoTask])].contramap(_.toList)
+  implicit val ElemDecoder: Decoder[Elem[TimedVal[Dot]]] = semiauto.deriveDecoder: @scala.annotation.nowarn
+  implicit val ElemEncoder: Encoder[Elem[TimedVal[Dot]]] = semiauto.deriveEncoder: @scala.annotation.nowarn
 
-  implicit val RORMapDecoder: Decoder[RORMap.State[String, LastWriterWins.Embedded[TodoTask], DietMapCContext]] = semiauto.deriveDecoder: @scala.annotation.nowarn
-  implicit val RORMapEncoder: Encoder[RORMap.State[String, LastWriterWins.Embedded[TodoTask], DietMapCContext]] = semiauto.deriveEncoder: @scala.annotation.nowarn
+  implicit val GOListDecoder: Decoder[GOList.State[Dot]] = Decoder.decodeList[(GOListNode[TimedVal[Dot]], Elem[TimedVal[Dot]])].map(_.toMap)
+  implicit val GOListEncoder: Encoder[GOList.State[Dot]] = Encoder.encodeList[(GOListNode[TimedVal[Dot]], Elem[TimedVal[Dot]])].contramap(_.toList)
 
-  case class TodoRes(div: TypedTag[Div], tasklist: Signal[RORMap[String, LastWriterWins.Embedded[TodoTask], DietMapCContext]])
+  implicit val TodoTaskTimedValDecoder: Decoder[TimedVal[TodoTask]] = semiauto.deriveDecoder: @scala.annotation.nowarn
+  implicit val TodoTaskTimedValEncoder: Encoder[TimedVal[TodoTask]] = semiauto.deriveEncoder: @scala.annotation.nowarn
+
+  implicit val RGANodeDecoder: Decoder[RGANode[TodoTask]] = semiauto.deriveDecoder: @scala.annotation.nowarn
+  implicit val RGANodeEncoder: Encoder[RGANode[TodoTask]] = semiauto.deriveEncoder: @scala.annotation.nowarn
+
+  implicit val DotFunDecoder: Decoder[DotFun[RGANode[TodoTask]]] = Decoder.decodeList[(Dot, RGANode[TodoTask])].map(_.toMap)
+  implicit val DotFunEncoder: Encoder[DotFun[RGANode[TodoTask]]] = Encoder.encodeList[(Dot, RGANode[TodoTask])].contramap(_.toList)
+
+  implicit val CausalDecoder: Decoder[Causal[DotFun[RGANode[TodoTask]], DietMapCContext]] = semiauto.deriveDecoder: @scala.annotation.nowarn
+  implicit val CausalEncoder: Encoder[Causal[DotFun[RGANode[TodoTask]], DietMapCContext]] = semiauto.deriveEncoder: @scala.annotation.nowarn
+
+  implicit val RRGADecoder: Decoder[RRGA.State[TodoTask, DietMapCContext]] = semiauto.deriveDecoder: @scala.annotation.nowarn
+  implicit val RRGAEncoder: Encoder[RRGA.State[TodoTask, DietMapCContext]] = semiauto.deriveEncoder: @scala.annotation.nowarn
+
+  case class TodoRes(div: TypedTag[Div], tasklist: Signal[RRGA[TodoTask, DietMapCContext]])
+  case class ViewDataPair(view: Map[String, TodoTaskView], data: RRGA[TodoTask, DietMapCContext])
 
   @scala.annotation.nowarn // Auto-application to `()`
   def getContents(): TodoRes = {
@@ -78,80 +94,62 @@ class TodoApp() {
 
     val myID = ThreadLocalRandom.current().nextLong().toHexString
 
-    implicit val lattice: UIJDLattice[TodoTask] = AtomicUIJDLattice[TodoTask]
+    val deltaEvt: Evt[Delta[RRGA.State[TodoTask, DietMapCContext]]] = Evt()
 
-    def mapToList(m: RORMap[String, LastWriterWins.Embedded[TodoTask], DietMapCContext]): List[Option[TodoTask]] =
-      m.queryAllEntries(LastWriterWinsCRDT.read).toList
 
-    val deltaEvt: Evt[Delta[RORMap.State[String, LastWriterWins.Embedded[TodoTask], DietMapCContext]]] = Evt()
-
-    case class ViewDataPair(view: Map[String, TodoTaskView], data: RORMap[String, LastWriterWins.Embedded[TodoTask], DietMapCContext])
-
-    val initial = ViewDataPair(Map.empty[String, TodoTaskView], RORMap[String, LastWriterWins.Embedded[TodoTask], DietMapCContext](myID))
+    val initial = ViewDataPair(Map.empty[String, TodoTaskView], RRGA[TodoTask, DietMapCContext](myID))
 
     val dataPlusUI = Events.foldAll(initial) { p =>
       Seq(
         createTodo >> { str =>
           val task = TodoTask(desc = str)
-          val newMap = p.data.mutateKey(task.id, LastWriterWinsCRDT.write(task))
-          println(s"Before createTodo: ${mapToList(p.data)}")
-          println(s"After createTodo: ${mapToList(newMap)}")
+          val newList = p.data.insert(0, task)
           val ui = TodoTaskView.fromTask(task)
-          ViewDataPair(p.view + (task.id -> ui), newMap)
+
+          ViewDataPair(p.view + (task.id -> ui), newList)
         },
         removeAll.event >> { _ =>
-          println("processing removeAll")
-
-          val doneIDs = p.data.queryAllEntries(LastWriterWinsCRDT.read).collect {
-            case Some(TodoTask(id, _, true)) => id
+          val doneIDs = p.data.toList.collect {
+            case TodoTask(id, _, true) => id
           }
 
-          ViewDataPair(p.view.removedAll(doneIDs), p.data.removeAll(doneIDs))
+          ViewDataPair(p.view.removedAll(doneIDs), p.data.deleteBy(_.done))
         },
         EventSeqOps(p.view.values.toList.map(_.removeEvt)) >> { id =>
-          println(s"removing task with id $id")
-          ViewDataPair(p.view.removed(id), p.data.remove(id))
+          ViewDataPair(p.view.removed(id), p.data.deleteBy(_.id == id))
         },
         EventSeqOps(p.view.values.toList.map(_.writeEvt)) >> { task =>
-          println(s"writing task $task")
-          val newMap = p.data.mutateKey(task.id, LastWriterWinsCRDT.write(task))
+          val newList = p.data.updateBy(_.id == task.id, task)
+
           val ui = TodoTaskView.fromTask(task)
-          ViewDataPair(p.view.updated(task.id, ui), newMap)
+
+          ViewDataPair(p.view.updated(task.id, ui), newList)
         },
         deltaEvt >> { delta =>
-          val newMap = p.data.applyDelta(delta)
+          val newList = p.data.applyDelta(delta)
 
-          val oldTasks = p.data.queryAllEntries(LastWriterWinsCRDT.read).toList.flatten
-          val newTasks = newMap.queryAllEntries(LastWriterWinsCRDT.read).toList.flatten
+          val oldTasks = p.data.toList
+          val newTasks = newList.toList
 
           val uiMap = newTasks.map { t =>
             if (oldTasks.contains(t)) t.id -> p.view(t.id)
             else t.id -> TodoTaskView.fromTask(t)
           }.toMap
 
-          ViewDataPair(uiMap, newMap)
+          ViewDataPair(uiMap, newList)
         }
       )
     }
 
-    val taskMap = dataPlusUI.map(_.data)
 
-    dataPlusUI observe { p =>
-      println(s"observed change on dataPlusUI: ${mapToList(p.data)}, view: ${p.view}")
-    }
+    val taskList = dataPlusUI.map(_.data)
 
-    LociDist.distributeDeltaCRDT(taskMap, deltaEvt, Todolist.registry)(Binding("taskmap"): @scala.annotation.nowarn)
+    LociDist.distributeDeltaCRDT(taskList, deltaEvt, Todolist.registry)(Binding("tasklist"): @scala.annotation.nowarn)
 
-    val tasks = dataPlusUI.map {
-      _.data.queryAllEntries(
-        v => LastWriterWinsCRDT.read[TodoTask, DietMapCContext](implicitly)(v)
-      ).toList.flatten
-    }
+    val tasks = taskList.map(_.toList)
 
-    val listItems = dataPlusUI.map(_.view.values.toList.map(ui => ui.tag))
-
-    listItems observe { l =>
-      println(s"listItems changed, new length: ${l.length}")
+    val listItems = dataPlusUI.map { p =>
+      p.data.toList.map(t => p.view(t.id).tag)
     }
 
     val content = div(
@@ -190,7 +188,7 @@ class TodoApp() {
       )
     )
 
-    TodoRes(content, taskMap)
+    TodoRes(content, taskList)
   }
 
   def inputFieldHandler(tag: TypedTag[Input], attr: Attr): (Event[String], Input) = {
