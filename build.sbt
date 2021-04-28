@@ -9,6 +9,32 @@ import Dependencies.{Versions => V}
 ThisBuild / incOptions := (ThisBuild / incOptions).value.withLogRecompileOnMacro(false)
 cfg.noPublish
 
+lazy val cfg = new {
+  val base: Def.SettingsDefinition = List(
+    organization := "de.tuda.stg",
+    scalacOptions += "-Xdisable-assertions",
+    // scaladoc
+    autoAPIMappings := true,
+    Compile / doc / scalacOptions += "-groups",
+    commonCrossBuildVersions
+  ) ++ scalaVersion_213
+
+  val test = List(
+    (Test / testOptions) += Tests.Argument("-oICN"),
+    (Test / parallelExecution) := true,
+    libraryDependencies += scalatest.value
+  )
+
+  lazy val bintray = Resolvers.bintrayPublish("stg-tud", "rescala-lang", "REScala")
+
+  lazy val noPublish = Seq(
+    publishArtifact := false,
+    packagedArtifacts := Map.empty,
+    publish := {},
+    publishLocal := {}
+  )
+}
+
 lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
   dividiParoli,
   documentation,
@@ -37,8 +63,8 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Code/Main"))
       sourcecode.value,
       retypecheck.value,
       reactiveStreams.value,
-      scalaOrganization.value % "scala-reflect" % scalaVersion.value % "provided",
-      catsCollection.value % "provided,test",
+      scalaOrganization.value   % "scala-reflect" % scalaVersion.value % "provided",
+      catsCollection.value      % "provided,test",
       jsoniterScalaAll.value(0) % "provided,test",
       jsoniterScalaAll.value(1),
     ) ++ (
@@ -81,34 +107,8 @@ lazy val documentation = project.in(file("Documentation/DocumentationProject"))
   .enablePlugins(TutPlugin)
   .dependsOn(rescalaJVM, rescalaJS)
 
-// ===================================================================================== Extensions
-
-lazy val reswing = project.in(file("Code/Extensions/RESwing"))
-  .settings(name := "reswing", cfg.base, cfg.noPublish, libraryDependencies += scalaSwing.value)
-  .dependsOn(rescalaJVM)
-
-lazy val rescalafx = project.in(file("Code/Extensions/javafx"))
-  .dependsOn(rescalaJVM)
-  .settings(name := "rescalafx", cfg.base, cfg.noPublish, lib.scalafx)
-
-lazy val locidistribution = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure)
-  .in(file("Code/Extensions/LociDistribution"))
-  .dependsOn(rescala % "compile->compile;test->test")
-  .settings(
-    name := "loci-distribution",
-    cfg.base,
-    cfg.noPublish,
-    libraryDependencies ++= Seq(
-      loci.communication.value,
-      loci.circe.value,
-      loci.upickle.value
-    )
-  )
-
-lazy val locidistributionJS  = locidistribution.js
-lazy val locidistributionJVM = locidistribution.jvm
-
-// ===================================================================================== Examples
+// =====================================================================================
+// Examples
 
 lazy val examples = project.in(file("Code/Examples/examples"))
   .dependsOn(rescalaJVM, reswing)
@@ -152,8 +152,9 @@ lazy val dividiParoli = project.in(file("Code/Examples/dividiParoli"))
     name := "dividi and paroli",
     cfg.base,
     cfg.noPublish,
-    cfg.mappingFilters,
-    lib.scalafx,
+    (Compile / packageBin / mappings) ~= { _.filter(!_._1.getName.endsWith(".conf")) },
+    (Compile / packageBin / mappings) ~= { _.filter(!_._1.getName.endsWith(".xml")) },
+    addScalafxDependencies,
     libraryDependencies ++= circeAll.value ++ akkaHttpAll.value ++ Seq(
       loci.communication.value,
       loci.circe.value,
@@ -170,9 +171,25 @@ lazy val dividiParoli = project.in(file("Code/Examples/dividiParoli"))
       "com.typesafe.akka"          %% "akka-cluster-metrics"    % V.akkaActors,
       "com.typesafe.akka"          %% "akka-cluster-tools"      % V.akkaActors,
       "com.typesafe.akka"          %% "akka-multi-node-testkit" % V.akkaActors,
-    ),
-    lib.macroparadise,
-    cfg.noWarnings,
+    ), { // include correct macroparadise version
+      def `is 2.13+`(scalaVersion: String): Boolean =
+        CrossVersion.partialVersion(scalaVersion) collect { case (2, n) => n >= 13 } getOrElse false
+      Seq(
+        scalacOptions ++= {
+          if (`is 2.13+`(scalaVersion.value))
+            Seq("-Ymacro-annotations")
+          else
+            Seq.empty
+        },
+        libraryDependencies ++= {
+          if (`is 2.13+`(scalaVersion.value))
+            Seq.empty
+          else
+            Seq(compilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.patch))
+        }
+      )
+    },
+    scalacOptions += "--no-warnings",
     fork := true
   )
 
@@ -230,7 +247,33 @@ lazy val ersirShared = crossProject(JSPlatform, JVMPlatform)
 lazy val ersirSharedJVM = ersirShared.jvm
 lazy val ersirSharedJS  = ersirShared.js
 
-// ===================================================================================== Research
+// =====================================================================================
+// Extensions
+
+lazy val reswing = project.in(file("Code/Extensions/RESwing"))
+  .settings(name := "reswing", cfg.base, cfg.noPublish, libraryDependencies += scalaSwing.value)
+  .dependsOn(rescalaJVM)
+
+lazy val rescalafx = project.in(file("Code/Extensions/javafx"))
+  .dependsOn(rescalaJVM)
+  .settings(name := "rescalafx", cfg.base, cfg.noPublish, addScalafxDependencies)
+
+lazy val locidistribution = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure)
+  .in(file("Code/Extensions/LociDistribution"))
+  .dependsOn(rescala % "compile->compile;test->test")
+  .settings(
+    name := "loci-distribution",
+    cfg.base,
+    cfg.noPublish,
+    libraryDependencies ++= Seq(
+      loci.communication.value,
+      loci.circe.value,
+      loci.upickle.value
+    )
+  )
+
+lazy val locidistributionJS  = locidistribution.js
+lazy val locidistributionJVM = locidistribution.jvm
 
 lazy val fullmv = project.in(file("Code/Extensions/Multiversion"))
   .settings(cfg.base, name := "rescala-multiversion", cfg.test, cfg.noPublish)
@@ -271,70 +314,21 @@ lazy val microbench = project.in(file("Code/Microbenchmarks"))
   .enablePlugins(JavaAppPackaging)
   .dependsOn(fullmv, rescalaJVM)
 
-// ===================================================================================== Settings
+// =====================================================================================
+// custom tasks
 
-lazy val cfg = new {
-
-  val base: Def.SettingsDefinition = List(
-    organization := "de.tuda.stg",
-    baseScalac,
-    // scaladoc
-    autoAPIMappings := true,
-    Compile / doc / scalacOptions += "-groups",
-    commonCrossBuildVersions
-  ) ++ scalaVersion_213
-
-  val test = List(
-    (Test / testOptions) += Tests.Argument("-oICN"),
-    (Test / parallelExecution) := true,
-    libraryDependencies += scalatest.value
-  )
-
-  val noWarnings = scalacOptions += "--no-warnings"
-
-  lazy val bintray = Resolvers.bintrayPublish("stg-tud", "rescala-lang", "REScala")
-
-  lazy val noPublish = Seq(
-    publishArtifact := false,
-    packagedArtifacts := Map.empty,
-    publish := {},
-    publishLocal := {}
-  )
-
-  lazy val baseScalac = scalacOptions ++= List(
-    "-deprecation",
-    "-encoding",
-    "UTF-8",
-    "-unchecked",
-    "-feature",
-    "-Xlint",
-    //"-Xfuture",
-    "-Xdisable-assertions"
-  )
-
-  val mappingFilters = Seq(
-    (Compile / packageBin / mappings) ~= { _.filter(!_._1.getName.endsWith(".conf")) },
-    (Compile / packageBin / mappings) ~= { _.filter(!_._1.getName.endsWith(".xml")) }
-  )
-
-}
-
-// ================================ dependencies
-
-lazy val lib = new {
-
+// Add JavaFX dependencies, should probably match whatever the scalafx version was tested against:
+// https://www.scalafx.org/news/releases/
+// then again, the announcement for 12.0.2 seems incorrect …
+lazy val addScalafxDependencies = {
   // Determine OS version of JavaFX binaries
-  lazy val osName = System.getProperty("os.name") match {
+  val osName = System.getProperty("os.name") match {
     case n if n.startsWith("Linux")   => "linux"
     case n if n.startsWith("Mac")     => "mac"
     case n if n.startsWith("Windows") => "win"
     case _                            => throw new Exception("Unknown platform!")
   }
-
-  // Add JavaFX dependencies, should probably match whatever the scalafx version was tested against:
-  // https://www.scalafx.org/news/releases/
-  // then again, the announcement for 12.0.2 seems incorrect …
-  val scalafx = Seq(
+  Seq(
     libraryDependencies ++= Seq(
       "org.scalafx" %% "scalafx" % "15.0.1-R21",
       scalaSwing.value,
@@ -343,27 +337,6 @@ lazy val lib = new {
       "org.openjfx" % s"javafx-$m" % "15.0.1" classifier osName
     )
     // (Compile / unmanagedJars) += Attributed.blank(file(System.getenv("JAVA_HOME") + "/lib/ext/jfxrt.jar"))
-  )
-
-  def `is 2.12+`(scalaVersion: String): Boolean =
-    CrossVersion.partialVersion(scalaVersion) collect { case (2, n) => n >= 12 } getOrElse false
-
-  def `is 2.13+`(scalaVersion: String): Boolean =
-    CrossVersion.partialVersion(scalaVersion) collect { case (2, n) => n >= 13 } getOrElse false
-
-  val macroparadise = Seq(
-    scalacOptions ++= {
-      if (`is 2.13+`(scalaVersion.value))
-        Seq("-Ymacro-annotations")
-      else
-        Seq.empty
-    },
-    libraryDependencies ++= {
-      if (`is 2.13+`(scalaVersion.value))
-        Seq.empty
-      else
-        Seq(compilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.patch))
-    }
   )
 }
 
