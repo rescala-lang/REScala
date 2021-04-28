@@ -39,7 +39,6 @@ lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
   dividiParoli,
   documentation,
   examples,
-  fullmv,
   microbench,
   rescalaJS,
   rescalaJVM,
@@ -123,7 +122,7 @@ lazy val examples = project.in(file("Code/Examples/examples"))
   )
 
 lazy val universe = project.in(file("Code/Examples/Universe"))
-  .dependsOn(rescalaJVM, fullmv)
+  .dependsOn(rescalaJVM)
   .settings(cfg.base, cfg.noPublish, name := "rescala-universe", libraryDependencies += scalaParallelCollections.value)
   .enablePlugins(JavaAppPackaging)
 
@@ -275,10 +274,6 @@ lazy val locidistribution = crossProject(JSPlatform, JVMPlatform).crossType(Cros
 lazy val locidistributionJS  = locidistribution.js
 lazy val locidistributionJVM = locidistribution.jvm
 
-lazy val fullmv = project.in(file("Code/Extensions/Multiversion"))
-  .settings(cfg.base, name := "rescala-multiversion", cfg.test, cfg.noPublish)
-  .dependsOn(rescalaJVM % "compile->compile;test->test")
-
 //lazy val distributedFullmv = project.in(file("Code/Extensions/distributed/multiversion"))
 //  .settings( cfg.base, name := "rescala-distributed-multiversion",
 //    cfg.test, cfg.noPublish, circe, libraryDependencies ++= Seq(
@@ -286,7 +281,7 @@ lazy val fullmv = project.in(file("Code/Extensions/Multiversion"))
 //   loci.circe.value,
 //   loci.upickle.value
 // ))
-//  .dependsOn(fullmv, testsJVM % "test->test")
+//  .dependsOn(rescalaJVM, testsJVM % "test->test")
 //
 //lazy val distributedExamples = project.in(file("Code/Extensions/distributed/examples"))
 //  .enablePlugins(JmhPlugin)
@@ -312,7 +307,7 @@ lazy val microbench = project.in(file("Code/Microbenchmarks"))
     TaskKey[Unit]("compileJmh") := Seq(pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh / compile).dependOn.value
   )
   .enablePlugins(JavaAppPackaging)
-  .dependsOn(fullmv, rescalaJVM)
+  .dependsOn(rescalaJVM)
 
 // =====================================================================================
 // custom tasks
