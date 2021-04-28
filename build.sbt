@@ -101,11 +101,6 @@ lazy val rescalaJS = rescala.js
 
 //lazy val rescalaNative = rescala.native
 
-lazy val documentation = project.in(file("Documentation/DocumentationProject"))
-  .settings(cfg.base, cfg.noPublish, scalacOptions += "-Xlint:-unused")
-  .enablePlugins(TutPlugin)
-  .dependsOn(rescalaJVM, rescalaJS)
-
 // =====================================================================================
 // Examples
 
