@@ -1,10 +1,3 @@
----
-version: 0.5
-title: Manual
-nav: 2
-class: sidebar
-toc: true
----
 
 # REScala Manual
 
@@ -38,7 +31,7 @@ Most code blocks can be executed on their own when adding this import,
 but some require definitions from the prior blocks.
 To use all features of *REScala* the only required import is:
 
-```tut:silent
+```scala mdoc:silent
 import rescala.default._
 ```
 
@@ -52,7 +45,7 @@ A `Var[T]` holds a value of type `T`.
 `Var[T]` is a subtype of `Signal[T]`. See also the chapter about Signals.
 In contrast to declarative signals, `Var`s can be read and written to.
 
-```tut:silent
+```scala mdoc:silent
 val a = Var(0)
 val b = Var("Hello World")
 val c = Var(List(1,2,3))
@@ -62,7 +55,7 @@ val d = Var((x: Int) => x * 2)
 Vars enable the framework to track changes of input values.
 Vars can be changed directly, via set and transform, which will trigger a propagation:
 
-```tut:silent
+```scala mdoc:silent
 a.set(10)
 a.transform( value => value + 1 )
 c.transform( list => 0 :: list )
@@ -81,7 +74,7 @@ If you do not care about the value, you can use an `Evt[Unit]`.
 If you need more than one value to the same event, you can use tuples.
 The following code snippet shows some valid events definitions:
 
-```tut:silent
+```scala mdoc:silent
 val e1 = Evt[Int]()
 val e2 = Evt[Unit]()
 val e3 = Evt[(Boolean, String, Int)]()
@@ -90,7 +83,7 @@ val e4 = Evt[String]()
 
 Events can be fired with the method `fire`, which will start a propagation.
 
-```tut:silent
+```scala mdoc:silent
 e1.fire(5)
 e2.fire(())
 e3.fire((false, "Hallo", 5))
@@ -102,7 +95,7 @@ The current value of a signal can be accessed using the ```now``` method.
 It is useful for debugging and testing, and sometimes inside onclick handlers.
 If possible, use observers or even better combinators instead.
 
-```tut:silent
+```scala mdoc:silent
 assert(a.now == 11)
 assert(b.now == "Hello World")
 assert(c.now == List(0,1,2,3))
@@ -111,14 +104,14 @@ assert(c.now == List(0,1,2,3))
 The `observe` attaches a handler function to the event.
 Every time the event is fired, the handler function is applied to the current value of the event.
 
-```tut:silent
+```scala mdoc:silent
 val e = Evt[String]()
 val o1 = e.observe({ x =>
   val string = "hello " + x + "!"
   println(string)
 })
 ```
-```tut:book
+```scala mdoc
 e.fire("annette")
 e.fire("tom")
 ```
@@ -126,48 +119,50 @@ e.fire("tom")
 If multiple handlers are registered, all of them are executed when the event is fired.
 Applications should not rely on the order of handler execution.
 
-```tut:silent
-val e = Evt[Int]()
-val o1 = e observe { x => println(x) }
-val o2 = e observe { x => println(f"n: $x") }
+```scala mdoc:silent
+val e5 = Evt[Int]()
+val o2 = e observe { x => println(x) }
+val o3 = e observe { x => println(f"n: $x") }
 ```
-```tut:book
-e.fire(10)
-e.fire(10)
+```scala mdoc
+e5.fire(10)
+e5.fire(10)
 ```
 
 Note that unit-type events still need an argument in the handler.
 
-```tut:silent
-val e = Evt[Unit]()
-e observe { x => println("ping") }
-e observe { _ => println("pong") }
+```scala mdoc:silent
+{
+  val e = Evt[Unit]()
+  e observe { x => println("ping") }
+  e observe { _ => println("pong") }
+}
 ```
 
 Scala allows one to refer to a method using the partially applied function syntax.
 This approach can be used to directly register a method as an event handler.
 
-```tut:silent
+```scala mdoc:silent
 def m1(x: Int) = {
   val y = x + 1
   println(y)
 }
-val e = Evt[Int]()
-val o1 = e observe m1 _
+val e6 = Evt[Int]()
+val o4 = e observe m1 _
 ```
-```tut:book
-e.fire(10)
+```scala mdoc
+e6.fire(10)
 ```
 
 Handlers can be unregistered from events with the `remove` operator.
 When a handler is unregistered, it is not executed when the event is fired.
 If you create handlers, you should also think about removing them, when they are no longer needed.
 
-```tut:silent
+```scala mdoc:silent
 val e = Evt[Int]()
 val handler = e observe println
 ```
-```tut:book
+```scala mdoc
 e.fire(10) // println reaction
 handler.remove()
 e.fire(10) // no reaction
@@ -182,12 +177,12 @@ Inside a signal expression other signals should be accessed with the ```()``` op
 In the following code, the signal `c` is defined to be `a + b`.
 When `a` or `b` are updated, the value of `c` is updated as well.
 
-```tut:silent
+```scala mdoc:silent
 val a = Var(2)
 val b = Var(3)
 val c = Signal { a() + b() }
 ```
-```tut:book
+```scala mdoc
 println((a.now, b.now, c.now))
 a set 4; println((a.now, b.now, c.now))
 b set 5; println((a.now, b.now, c.now))
@@ -197,7 +192,7 @@ The signal ```c``` is a dependent / derivative of the vars ```a``` and ```b```, 
 
 Here are some more example of using signal expressions:
 
-```tut:silent
+```scala mdoc:silent
 val a = Var(0)
 val b = Var(2)
 val c = Var(true)
@@ -220,13 +215,13 @@ Now, we have introduced enough features of *REScala* to give a simple example.
 The following example computes the displacement `space` of a particle that is moving at constant speed `SPEED`.
 The application prints all the values associated to the displacement over time.
 
-```tut:silent
+```scala mdoc:silent
 val SPEED = 10
 val time = Var(0)
 val space = Signal{ SPEED * time() }
 val o1 = space observe ((x: Int) => println(x))
 ```
-```tut:book
+```scala mdoc
 while (time.now < 5) {
   Thread sleep 20
   time set time.now + 1
@@ -282,7 +277,7 @@ The initial value of the signal is set to `init`.
 
 Example:
 
-```tut:silent
+```scala mdoc:silent
 val e = Evt[Int]()
 val s: Signal[Int] = e.latest(10)
 assert(s.now == 10)
@@ -304,7 +299,7 @@ that is fired every time the signal changes its value.
 
 Example:
 
-```tut:silent
+```scala mdoc:silent
 var test = 0
 val v =  Var(1)
 val s = Signal{ v() + 1 }
@@ -327,7 +322,7 @@ The return type of the map function is the type parameter value of the resulting
 If `r` is a signal, then `r map f` is also a signal.
 If `r` is an event, then `r map f` is also an event.
 
-```tut:silent
+```scala mdoc:silent
 val s = Var[Int](0)
 val s_MAP: Signal[String] = s map ((x: Int) => x.toString)
 val o1 = s_MAP observe ((x: String) => println(s"Here: $x"))
@@ -336,7 +331,7 @@ val e = Evt[Int]()
 val e_MAP: Event[String] = e map ((x: Int) => x.toString)
 val o1 = e_MAP observe ((x: String) => println(s"Here: $x"))
 ```
-```tut:book
+```scala mdoc
 s set 5
 s set 15
 e fire 2
@@ -356,7 +351,7 @@ associated to the event. The result is the new value of the signal.
 
 Example:
 
-```tut:silent
+```scala mdoc:silent
 val e = Evt[Int]()
 val f = (x:Int,y:Int) => x+y
 val s: Signal[Int] = e.fold(10)(f)
@@ -375,13 +370,13 @@ must have the same parameter type (`Int` in the next example).
 The or combinator is left-biased, so if both e_1 and e_2 fire in the same
 transaction, the left value is returned.
 
-```tut:silent
+```scala mdoc:silent
 val e1 = Evt[Int]()
 val e2 = Evt[Int]()
 val e1_OR_e2 = e1 || e2
 val o1 = e1_OR_e2 observe ((x: Int) => println(x))
 ```
-```tut:book
+```scala mdoc
 e1.fire(1)
 e2.fire(2)
 ```
@@ -390,12 +385,12 @@ The event `e && p` (or the alternative syntax `e filter p`) is fired if `e` occu
 The predicate is a function that accepts the event parameter as a formal parameter and returns `Boolean`.
 In other words the filter operator filters the events according to their parameter and a predicate.
 
-```tut:silent
+```scala mdoc:silent
 val e = Evt[Int]()
 val e_AND: Event[Int] = e filter ((x: Int) => x>10)
 val o1 = e_AND observe ((x: Int) => println(x))
 ```
-```tut:book
+```scala mdoc
 e fire 5
 e fire 3
 e fire 15
@@ -415,7 +410,7 @@ The argument of the event is simply discarded.
 
 `count(e: Event[_]): Signal[Int]`
 
-```tut:silent
+```scala mdoc:silent
 val e = Evt[Int]()
 val s: Signal[Int] = e.count
 
@@ -436,12 +431,12 @@ Initially, an empty list is returned. Then the values are
 progressively filled up to the size specified by the
 programmer. Example:
 
-```tut:silent
+```scala mdoc:silent
 val e = Evt[Int]()
 val s: Signal[scala.collection.LinearSeq[Int]] = e.last(5)
 val o1 = s observe println
 ```
-```tut:book
+```scala mdoc
 e.fire(1)
 e.fire(2)
 e.fire(3);e.fire(4);e.fire(5)
@@ -468,7 +463,7 @@ as `Some(val)` or `None`.
 
 Example:
 
-```tut:silent
+```scala mdoc:silent
 val e = Evt[Int]()
 val s: Signal[Option[Int]] = e.latestOption()
 assert(s.now == None)
@@ -490,7 +485,7 @@ If multiple events fire at the same time,
 the handlers are executed in order.
 The acc parameter reflects the current state.
 
-```tut:silent
+```scala mdoc:silent
 val word = Evt[String]()
 val count = Evt[Int]()
 val reset = Evt[Unit]()
@@ -501,7 +496,7 @@ val result = Events.foldAll(""){ acc => Events.Match(
 )}
 val o1 = result.observe(r => println(r))
 ```
-```tut:book
+```scala mdoc
 count.fire(10)
 reset.fire()
 word.fire("hello")
@@ -521,7 +516,7 @@ current value but only on the accumulated value.
 
 Example:
 
-```tut:silent
+```scala mdoc:silent
 var test: Int = 0
 val e = Evt[Int]()
 val f = (x:Int) => { test=x; x+1 }
@@ -550,12 +545,12 @@ provides both the old and the new value of the signal in a tuple.
 
 Example:
 
-```tut:silent
+```scala mdoc:silent
 val s = Var(5)
 val e = s.change
 val o1 = e observe println
 ```
-```tut:book
+```scala mdoc
 s.set(10)
 s.set(20)
 ```
@@ -569,7 +564,7 @@ value.
 
 ```changedTo[V](value: V): Event[Unit]```
 
-```tut:silent
+```scala mdoc:silent
 var test = 0
 val v =  Var(1)
 val s = Signal{ v() + 1 }
@@ -589,7 +584,7 @@ The ```flatten``` function is used to ``flatten'' nested reactives.
 It can, for instance, be used to detect if any signal within a collection of signals
 fired a changed event:
 
-```tut:silent
+```scala mdoc:silent
 val v1 = Var(1)
 val v2 = Var("Test")
 val v3 = Var(true)
@@ -598,7 +593,7 @@ val innerChanges = Signal {collection.map(_.changed).reduce((a, b) => a || b)}
 val anyChanged = innerChanges.flatten
 val o1 = anyChanged observe println
 ```
-```tut:book
+```scala mdoc
 v1.set(10)
 v2.set("Changed")
 v3.set(false)
@@ -616,7 +611,7 @@ To tackle those shortcomings `rescala.extra.invarariant.SimpleScheduler` inside 
 Invariants can be directly attached to `Vars` and `Signals` to define functions that shall be true after every change.
 Each node can have multiple invariants and they can be attached using `specify`.
 
-```tut:silent
+```scala mdoc:silent
 val v = Var { 42 }
 
 v.specify(
@@ -627,7 +622,7 @@ v.specify(
 
 Invariants can be named, to make them more expressive.
 
-```tut:silent
+```scala mdoc:silent
 v.specify(
   new Invariant("always_positive", { value => value > 0} )
 )
@@ -657,7 +652,7 @@ Please check the [Scalacheck UserGuide](https://github.com/typelevel/scalacheck/
 Calling `test` on a signal will traverse its dependencies, find the closest generator on each branch
 and then use property based testing to find inputs that violate specified invariants.
 
-```tut:silent
+```scala mdoc:silent
 val a = Var(42)
 val b = Var(42)
 val c = Signal { a() + b() }
@@ -675,7 +670,7 @@ c.test()
 The following is a complete example that demonstrates the example above in a working test environment.
 Note that you have to manually import the engine for `rescala.extra.invariant.SimpleScheduler` as testing using _invariants_ and _generators_ is currently only supported using this scheduler.
 
-```tut:silent
+```scala
 package tests.rescala.property
 
 import org.scalacheck.Gen
@@ -717,14 +712,14 @@ returns the signal/var value *and* creates a dependency.
 The ```now``` operator returns the current value but does *not* create a dependency.
 For example the following signal declaration creates a dependency between ```a``` and ```s```, and a dependency between ```b``` and ```s```.
 
-```tut:silent
+```scala mdoc:silent
 val s = Signal{ a() + b() }
 ```
 
 The following code instead establishes only a dependency between
 ```b``` and ```s```.
 
-```tut:silent
+```scala mdoc:silent
 val s = Signal{ a.now + b() }
 ```
 
@@ -749,7 +744,7 @@ Signal expressions should be pure. i.e. they should not modify external variable
 For example the following code is conceptually wrong because the variable
 ```c``` is imperatively assigned form inside the signal expression (Line 4).
 
-```tut:silent
+```scala mdoc:silent
 var c = 0
 val s = Signal{
   val sum = a() + b();
@@ -761,7 +756,7 @@ assert(c == 4)
 A possible solution is to refactor the code above to a more functional style.
 For example, by removing the variable ```c``` and replacing it directly with the signal.
 
-```tut:silent
+```scala mdoc:silent
 val c = Signal{
   val sum = a() + b();
   sum * 2
@@ -793,7 +788,7 @@ Similarly, indirect cyclic dependencies must be avoided.
 Vars and signals may behave unexpectedly with mutable objects.
 Consider the following example.
 
-```tut:book:nofail
+```scala
 /* WRONG - DON'T DO THIS */
 class Foo(init: Int) { var x = init }
 val foo = new Foo(1)
@@ -813,7 +808,7 @@ A solution to this problem is to use immutable objects.
 Since the objects cannot be modified, the only way to change a filed is to create an entirely new object and assign it to the var.
 As a result, the var is reevaluated.
 
-```tut:book
+```scala mdoc
 class Foo(val x: Int){}
 val foo = new Foo(1)
 val varFoo = Var(foo)
@@ -826,7 +821,7 @@ println(s.now)
 Alternatively, one can still use mutable objects but assign again the var to force the reevaluation.
 However this style of programming is confusing for the reader and should be avoided when possible.
 
-```tut:book
+```scala mdoc
 /* WRONG - DON'T DO THIS */
 class Foo(init: Int) { var x = init }
 val foo = new Foo(1)
@@ -844,14 +839,14 @@ println(s.now)
 Functions that operate on traditional values are not automatically transformed to operate on signals.
 For example consider the following functions:
 
-```tut:silent
+```scala mdoc:silent
 def increment(x: Int): Int = x + 1
 ```
 
 The following code does not compile because the compiler expects an integer, not a var as a parameter of the ```increment``` function.
 In addition, since the ```increment``` function returns an integer, ```b``` has type ```Int```, and the call ```b()``` in the signal expression is also rejected by the compiler.
 
-```tut:book:nofail
+```scala
 val a = Var(1)
 val b = increment(a)     /* WRONG - DON'T DO THIS */
 val s = Signal{ b() + 1 }
@@ -859,7 +854,7 @@ val s = Signal{ b() + 1 }
 
 The following code snippet is syntactically correct, but the signal has a constant value 2 and is not updated when the var changes.
 
-```tut:book:nofail
+```scala mdoc
 val a = Var(1)
 val b: Int = increment(a.now) // b is not reactive!
 val s = Signal{ b + 1 } // s is a constant signal with value 2
@@ -867,7 +862,7 @@ val s = Signal{ b + 1 } // s is a constant signal with value 2
 
 The following solution is syntactically correct and the signal ```s``` is updated every time the var ```a``` is updated.
 
-```tut:silent
+```scala mdoc:silent
 val a = Var(1)
 val s = Signal{ increment(a()) + 1 }
 ```
