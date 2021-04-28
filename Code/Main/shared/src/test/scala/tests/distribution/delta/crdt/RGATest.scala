@@ -56,7 +56,7 @@ class RGATest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
     assert(
       rga.size == listInitial.size,
-      s"The size of the rga should equal the size of the list returned by toList, but ${rga.size} does not equal ${listInitial.size}\n  ${rga.crdt.state}"
+      s"The size of the rga should equal the size of the list returned by toList, but ${rga.size} does not equal ${listInitial.size}"
     )
 
     assert(
