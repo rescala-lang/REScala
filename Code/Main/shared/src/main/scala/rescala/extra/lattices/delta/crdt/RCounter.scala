@@ -13,9 +13,7 @@ object RCounterCRDT {
         linc <= rinc && ldec <= rdec
     }
 
-    /**
-     * Decomposes a lattice state into its unique irredundant join decomposition of join-irreducable states
-     */
+    /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducable states */
     override def decompose(state: (Int, Int)): Set[(Int, Int)] = state match {
       case (inc, dec) => Set((inc, 0), (0, dec))
     }
@@ -41,10 +39,9 @@ object RCounterCRDT {
       }
   }
 
-  /**
-   * Without using fresh, reset wins over concurrent increments/decrements
-   * When using fresh after every time deltas are shipped to other replicas, increments/decrements win over concurrent resets
-   */
+  /** Without using fresh, reset wins over concurrent increments/decrements
+    * When using fresh after every time deltas are shipped to other replicas, increments/decrements win over concurrent resets
+    */
   def fresh[C: CContext]: DeltaMutator[State[C]] = {
     case (replicaID, Causal(_, cc)) =>
       val nextDot = CContext[C].nextDot(cc, replicaID)

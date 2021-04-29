@@ -7,9 +7,9 @@ import rescala.extra.lattices.delta.Network
 
 object NetworkGenerators {
   val genNetwork: Gen[Network] = for {
-    lossChance <- Gen.choose(0.0, 1.0)
+    lossChance      <- Gen.choose(0.0, 1.0)
     duplicateChance <- Gen.choose(0.0, 1.0)
-    delayChance <- Gen.choose(0.0, 1.0)
+    delayChance     <- Gen.choose(0.0, 1.0)
   } yield new Network(lossChance, duplicateChance, delayChance)
 
   implicit val arbNetwork: Arbitrary[Network] = Arbitrary(genNetwork)
@@ -34,7 +34,11 @@ class NetworkTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     msgs.foreach { msg =>
       assert(
         rcvd.contains(msg),
-        s"""For id "a" the sent messages should be received, but $rcvd does not contain ${msg.mkString("Array(", ", ", ")")}"""
+        s"""For id "a" the sent messages should be received, but $rcvd does not contain ${msg.mkString(
+          "Array(",
+          ", ",
+          ")"
+        )}"""
       )
     }
 

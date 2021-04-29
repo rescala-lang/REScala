@@ -19,7 +19,7 @@ object AWSetCRDT {
   def add[E, C: CContext](e: E): DeltaMutator[State[E, C]] = {
     case (replicaID, Causal(dm, cc)) =>
       val nextDot = CContext[C].nextDot(cc, replicaID)
-      val v = dm.getOrElse(e, DotSet.empty)
+      val v       = dm.getOrElse(e, DotSet.empty)
 
       Causal(
         DotMap[E, DotSet].empty.updated(e, Set(nextDot)),

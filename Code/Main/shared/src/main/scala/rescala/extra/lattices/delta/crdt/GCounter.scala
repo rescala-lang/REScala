@@ -16,8 +16,7 @@ object GCounterCRDT {
 
   def value: DeltaQuery[State, Int] = state => state.values.sum
 
-  def inc: DeltaMutator[State] = (replicaID, state) =>
-      Map(replicaID -> (state.getOrElse(replicaID, 0) + 1))
+  def inc: DeltaMutator[State] = (replicaID, state) => Map(replicaID -> (state.getOrElse(replicaID, 0) + 1))
 }
 
 class GCounter(crdt: DeltaCRDT[GCounterCRDT.State]) {

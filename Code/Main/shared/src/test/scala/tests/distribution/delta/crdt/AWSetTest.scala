@@ -16,23 +16,27 @@ import tests.distribution.delta.NetworkGenerators.arbNetwork
 import scala.collection.mutable
 
 object AWSetGenerators {
-  def genAWSet[A: JsonValueCodec, C: CContext](implicit a: Arbitrary[A], codec: JsonValueCodec[C]): Gen[AWSet[A, C]] = for {
-    added <- Gen.containerOf[List, A](a.arbitrary)
-    n <- Gen.choose(0, added.size)
-    removed <- Gen.pick(n, added)
-  } yield {
-    val network = new Network(0, 0, 0)
-    val ae = new AntiEntropy[AWSet.State[A, C]]("a", network, mutable.Buffer())
+  def genAWSet[A: JsonValueCodec, C: CContext](implicit a: Arbitrary[A], codec: JsonValueCodec[C]): Gen[AWSet[A, C]] =
+    for {
+      added   <- Gen.containerOf[List, A](a.arbitrary)
+      n       <- Gen.choose(0, added.size)
+      removed <- Gen.pick(n, added)
+    } yield {
+      val network = new Network(0, 0, 0)
+      val ae      = new AntiEntropy[AWSet.State[A, C]]("a", network, mutable.Buffer())
 
-    val setAdded = added.foldLeft(AWSet(ae)) {
-      case (set, e) => set.add(e)
+      val setAdded = added.foldLeft(AWSet(ae)) {
+        case (set, e) => set.add(e)
+      }
+      removed.foldLeft(setAdded) {
+        case (set, e) => set.remove(e)
+      }
     }
-    removed.foldLeft(setAdded) {
-      case (set, e) => set.remove(e)
-    }
-  }
 
-  implicit def arbAWSet[A: JsonValueCodec, C: CContext](implicit a: Arbitrary[A], codec: JsonValueCodec[C]): Arbitrary[AWSet[A, C]] =
+  implicit def arbAWSet[A: JsonValueCodec, C: CContext](implicit
+      a: Arbitrary[A],
+      codec: JsonValueCodec[C]
+  ): Arbitrary[AWSet[A, C]] =
     Arbitrary(genAWSet[A, C])
 }
 
@@ -52,8 +56,8 @@ class AWSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
   "remove" in forAll { (set: AWSet[Int, SetCContext], e: Int) =>
     val removedNotContained = set.remove(e)
-    val added = set.add(e)
-    val removed = added.remove(e)
+    val added               = set.add(e)
+    val removed             = added.remove(e)
 
     assert(
       set.elements.contains(e) || removedNotContained.elements == set.elements,
@@ -239,34 +243,35 @@ class AWSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     )
   }
 
-  "convergence" in forAll { (addedA: List[Int], removedA: List[Int], addedB: List[Int], removedB: List[Int], network: Network) =>
-    val aea = new AntiEntropy[AWSet.State[Int, SetCContext]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[AWSet.State[Int, SetCContext]]("b", network, mutable.Buffer("a"))
+  "convergence" in forAll {
+    (addedA: List[Int], removedA: List[Int], addedB: List[Int], removedB: List[Int], network: Network) =>
+      val aea = new AntiEntropy[AWSet.State[Int, SetCContext]]("a", network, mutable.Buffer("b"))
+      val aeb = new AntiEntropy[AWSet.State[Int, SetCContext]]("b", network, mutable.Buffer("a"))
 
-    val setaAdded = addedA.foldLeft(AWSet(aea)) {
-      case (set, e) => set.add(e)
-    }
-    val seta0 = removedA.foldLeft(setaAdded) {
-      case (set, e) => set.remove(e)
-    }
+      val setaAdded = addedA.foldLeft(AWSet(aea)) {
+        case (set, e) => set.add(e)
+      }
+      val seta0 = removedA.foldLeft(setaAdded) {
+        case (set, e) => set.remove(e)
+      }
 
-    val setbAdded = addedB.foldLeft(AWSet(aeb)) {
-      case (set, e) => set.add(e)
-    }
-    val setb0 = removedB.foldLeft(setbAdded) {
-      case (set, e) => set.remove(e)
-    }
+      val setbAdded = addedB.foldLeft(AWSet(aeb)) {
+        case (set, e) => set.add(e)
+      }
+      val setb0 = removedB.foldLeft(setbAdded) {
+        case (set, e) => set.remove(e)
+      }
 
-    AntiEntropy.sync(aea, aeb)
-    network.startReliablePhase()
-    AntiEntropy.sync(aea, aeb)
+      AntiEntropy.sync(aea, aeb)
+      network.startReliablePhase()
+      AntiEntropy.sync(aea, aeb)
 
-    val seta1 = seta0.processReceivedDeltas()
-    val setb1 = setb0.processReceivedDeltas()
+      val seta1 = seta0.processReceivedDeltas()
+      val setb1 = setb0.processReceivedDeltas()
 
-    assert(
-      seta1.elements == setb1.elements,
-      s"After synchronization messages were reliably exchanged all replicas should converge, but ${seta1.elements} does not equal ${setb1.elements}"
-    )
+      assert(
+        seta1.elements == setb1.elements,
+        s"After synchronization messages were reliably exchanged all replicas should converge, but ${seta1.elements} does not equal ${setb1.elements}"
+      )
   }
 }

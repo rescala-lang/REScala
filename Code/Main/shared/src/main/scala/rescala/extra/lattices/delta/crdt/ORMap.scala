@@ -19,7 +19,8 @@ object ORMapCRDT {
       q(Causal(v, cc))
   }
 
-  def queryAllEntries[K, V: DotStore, A, C: CContext](q: DeltaQuery[Causal[V, C], A]): DeltaQuery[State[K, V, C], Iterable[A]] = {
+  def queryAllEntries[K, V: DotStore, A, C: CContext](q: DeltaQuery[Causal[V, C], A])
+      : DeltaQuery[State[K, V, C], Iterable[A]] = {
     case Causal(dm, cc) =>
       dm.values.map(v => q(Causal(v, cc)))
   }
@@ -29,12 +30,12 @@ object ORMapCRDT {
       val v = dm.getOrElse(k, DotStore[V].empty)
 
       m(replicaID, Causal(v, cc)) match {
-      case Causal(stateDelta, ccDelta) =>
-        Causal(
-          DotMap[K, V].empty.updated(k, stateDelta),
-          ccDelta
-        )
-    }
+        case Causal(stateDelta, ccDelta) =>
+          Causal(
+            DotMap[K, V].empty.updated(k, stateDelta),
+            ccDelta
+          )
+      }
   }
 
   def remove[K, V: DotStore, C: CContext](k: K): DeltaMutator[State[K, V, C]] = {
@@ -100,25 +101,29 @@ object ORMap {
   def apply[K, V: DotStore, C: CContext](antiEntropy: AntiEntropy[State[K, V, C]]): ORMap[K, V, C] =
     new ORMap(ORMapCRDT[K, V, C](antiEntropy))
 
-  implicit def ORMapStateCodec[K: JsonValueCodec, V: JsonValueCodec, C: JsonValueCodec]: JsonValueCodec[Causal[Map[K, V], C]] =
+  implicit def ORMapStateCodec[K: JsonValueCodec, V: JsonValueCodec, C: JsonValueCodec]
+      : JsonValueCodec[Causal[Map[K, V], C]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   implicit def ORMapEmbeddedCodec[K: JsonValueCodec, V: JsonValueCodec]: JsonValueCodec[Map[K, V]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 }
 
-class RORMap[K, V: DotStore, C: CContext](val crdt: RDeltaCRDT[ORMapCRDT.State[K, V, C]]) extends CRDTInterface[ORMapCRDT.State[K, V, C]] {
+class RORMap[K, V: DotStore, C: CContext](val crdt: RDeltaCRDT[ORMapCRDT.State[K, V, C]])
+    extends CRDTInterface[ORMapCRDT.State[K, V, C]] {
   def queryKey[A](k: K, q: DeltaQuery[Causal[V, C], A]): A = crdt.query(ORMapCRDT.queryKey(k, q))
 
   def queryAllEntries[A](q: DeltaQuery[Causal[V, C], A]): Iterable[A] = crdt.query(ORMapCRDT.queryAllEntries(q))
 
-  def mutateKey(k: K, m: DeltaMutator[Causal[V, C]]): RORMap[K, V, C] = new RORMap(crdt.mutate(ORMapCRDT.mutateKey(k, m)))
+  def mutateKey(k: K, m: DeltaMutator[Causal[V, C]]): RORMap[K, V, C] =
+    new RORMap(crdt.mutate(ORMapCRDT.mutateKey(k, m)))
 
   def remove(k: K): RORMap[K, V, C] = new RORMap(crdt.mutate(ORMapCRDT.remove(k)))
 
   def removeAll(keys: Iterable[K]): RORMap[K, V, C] = new RORMap(crdt.mutate(ORMapCRDT.removeAll(keys)))
 
-  def removeByValue(cond: Causal[V, C] => Boolean): RORMap[K, V, C] = new RORMap(crdt.mutate(ORMapCRDT.removeByValue(cond)))
+  def removeByValue(cond: Causal[V, C] => Boolean): RORMap[K, V, C] =
+    new RORMap(crdt.mutate(ORMapCRDT.removeByValue(cond)))
 
   def clear(): RORMap[K, V, C] = new RORMap(crdt.mutate(ORMapCRDT.clear))
 

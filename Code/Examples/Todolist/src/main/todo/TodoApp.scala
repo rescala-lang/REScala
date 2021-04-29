@@ -26,7 +26,8 @@ import java.util.concurrent.ThreadLocalRandom
 
 class TodoApp() {
 
-  implicit val transmittableTaskList: IdenticallyTransmittable[RRGA.State[TodoTask, DietMapCContext]] = IdenticallyTransmittable()
+  implicit val transmittableTaskList: IdenticallyTransmittable[RRGA.State[TodoTask, DietMapCContext]] =
+    IdenticallyTransmittable()
 
   implicit val DotDecoder: Decoder[Dot] = semiauto.deriveDecoder: @scala.annotation.nowarn
   implicit val DotEncoder: Encoder[Dot] = semiauto.deriveEncoder: @scala.annotation.nowarn
@@ -42,7 +43,7 @@ class TodoApp() {
   implicit val DietEncoder: Encoder[Diet[Int]] =
     Encoder.encodeList[cats.collections.Range[Int]].contramap(_.foldLeftRange(List.empty[cats.collections.Range[Int]]) {
       (l, r) => r :: l
-  })
+    })
 
   implicit val GOListNodeDecoder: Decoder[GOListNode[TimedVal[Dot]]] = semiauto.deriveDecoder: @scala.annotation.nowarn
   implicit val GOListNodeEncoder: Encoder[GOListNode[TimedVal[Dot]]] = semiauto.deriveEncoder: @scala.annotation.nowarn
@@ -53,8 +54,10 @@ class TodoApp() {
   implicit val ElemDecoder: Decoder[Elem[TimedVal[Dot]]] = semiauto.deriveDecoder: @scala.annotation.nowarn
   implicit val ElemEncoder: Encoder[Elem[TimedVal[Dot]]] = semiauto.deriveEncoder: @scala.annotation.nowarn
 
-  implicit val GOListDecoder: Decoder[GOList.State[Dot]] = Decoder.decodeList[(GOListNode[TimedVal[Dot]], Elem[TimedVal[Dot]])].map(_.toMap)
-  implicit val GOListEncoder: Encoder[GOList.State[Dot]] = Encoder.encodeList[(GOListNode[TimedVal[Dot]], Elem[TimedVal[Dot]])].contramap(_.toList)
+  implicit val GOListDecoder: Decoder[GOList.State[Dot]] =
+    Decoder.decodeList[(GOListNode[TimedVal[Dot]], Elem[TimedVal[Dot]])].map(_.toMap)
+  implicit val GOListEncoder: Encoder[GOList.State[Dot]] =
+    Encoder.encodeList[(GOListNode[TimedVal[Dot]], Elem[TimedVal[Dot]])].contramap(_.toList)
 
   implicit val TodoTaskTimedValDecoder: Decoder[TimedVal[TodoTask]] = semiauto.deriveDecoder: @scala.annotation.nowarn
   implicit val TodoTaskTimedValEncoder: Encoder[TimedVal[TodoTask]] = semiauto.deriveEncoder: @scala.annotation.nowarn
@@ -62,14 +65,20 @@ class TodoApp() {
   implicit val RGANodeDecoder: Decoder[RGANode[TodoTask]] = semiauto.deriveDecoder: @scala.annotation.nowarn
   implicit val RGANodeEncoder: Encoder[RGANode[TodoTask]] = semiauto.deriveEncoder: @scala.annotation.nowarn
 
-  implicit val DotFunDecoder: Decoder[DotFun[RGANode[TodoTask]]] = Decoder.decodeList[(Dot, RGANode[TodoTask])].map(_.toMap)
-  implicit val DotFunEncoder: Encoder[DotFun[RGANode[TodoTask]]] = Encoder.encodeList[(Dot, RGANode[TodoTask])].contramap(_.toList)
+  implicit val DotFunDecoder: Decoder[DotFun[RGANode[TodoTask]]] =
+    Decoder.decodeList[(Dot, RGANode[TodoTask])].map(_.toMap)
+  implicit val DotFunEncoder: Encoder[DotFun[RGANode[TodoTask]]] =
+    Encoder.encodeList[(Dot, RGANode[TodoTask])].contramap(_.toList)
 
-  implicit val CausalDecoder: Decoder[Causal[DotFun[RGANode[TodoTask]], DietMapCContext]] = semiauto.deriveDecoder: @scala.annotation.nowarn
-  implicit val CausalEncoder: Encoder[Causal[DotFun[RGANode[TodoTask]], DietMapCContext]] = semiauto.deriveEncoder: @scala.annotation.nowarn
+  implicit val CausalDecoder: Decoder[Causal[DotFun[RGANode[TodoTask]], DietMapCContext]] =
+    semiauto.deriveDecoder: @scala.annotation.nowarn
+  implicit val CausalEncoder: Encoder[Causal[DotFun[RGANode[TodoTask]], DietMapCContext]] =
+    semiauto.deriveEncoder: @scala.annotation.nowarn
 
-  implicit val RRGADecoder: Decoder[RRGA.State[TodoTask, DietMapCContext]] = semiauto.deriveDecoder: @scala.annotation.nowarn
-  implicit val RRGAEncoder: Encoder[RRGA.State[TodoTask, DietMapCContext]] = semiauto.deriveEncoder: @scala.annotation.nowarn
+  implicit val RRGADecoder: Decoder[RRGA.State[TodoTask, DietMapCContext]] =
+    semiauto.deriveDecoder: @scala.annotation.nowarn
+  implicit val RRGAEncoder: Encoder[RRGA.State[TodoTask, DietMapCContext]] =
+    semiauto.deriveEncoder: @scala.annotation.nowarn
 
   case class TodoRes(div: TypedTag[Div], tasklist: Signal[RRGA[TodoTask, DietMapCContext]])
   case class ViewDataPair(view: Map[String, TodoTaskView], data: RRGA[TodoTask, DietMapCContext])
@@ -86,7 +95,7 @@ class TodoApp() {
 
     val (createTodo, todoInputField) = inputFieldHandler(todoInputTag, onchange)
 
-    val removeAll =  Events.fromCallback[UIEvent](cb => button("remove all done todos", onclick := cb))
+    val removeAll = Events.fromCallback[UIEvent](cb => button("remove all done todos", onclick := cb))
 
     val toggleAll = Events.fromCallback[UIEvent] { cb =>
       input(id := "toggle-all", name := "toggle-all", `class` := "toggle-all", `type` := "checkbox", onchange := cb)
@@ -96,15 +105,14 @@ class TodoApp() {
 
     val deltaEvt: Evt[Delta[RRGA.State[TodoTask, DietMapCContext]]] = Evt()
 
-
     val initial = ViewDataPair(Map.empty[String, TodoTaskView], RRGA[TodoTask, DietMapCContext](myID))
 
     val dataPlusUI = Events.foldAll(initial) { p =>
       Seq(
         createTodo >> { str =>
-          val task = TodoTask(desc = str)
+          val task    = TodoTask(desc = str)
           val newList = p.data.insert(0, task)
-          val ui = TodoTaskView.fromTask(task)
+          val ui      = TodoTaskView.fromTask(task)
 
           ViewDataPair(p.view + (task.id -> ui), newList)
         },
@@ -133,14 +141,13 @@ class TodoApp() {
 
           val uiMap = newTasks.map { t =>
             if (oldTasks.contains(t)) t.id -> p.view(t.id)
-            else t.id -> TodoTaskView.fromTask(t)
+            else t.id                      -> TodoTaskView.fromTask(t)
           }.toMap
 
           ViewDataPair(uiMap, newList)
         }
       )
     }
-
 
     val taskList = dataPlusUI.map(_.data)
 

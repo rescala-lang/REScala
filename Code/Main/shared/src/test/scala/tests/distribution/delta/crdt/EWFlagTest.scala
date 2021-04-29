@@ -15,11 +15,11 @@ import scala.util.Random
 
 object EWFlagGenerators {
   def genEWFlag[C: CContext](implicit c: JsonValueCodec[C]): Gen[EWFlag[C]] = for {
-    nEnable <- Gen.posNum[Int]
+    nEnable  <- Gen.posNum[Int]
     nDisable <- Gen.posNum[Int]
   } yield {
     val network = new Network(0, 0, 0)
-    val ae = new AntiEntropy[EWFlag.State[C]]("a", network, mutable.Buffer())
+    val ae      = new AntiEntropy[EWFlag.State[C]]("a", network, mutable.Buffer())
 
     val ops = Random.shuffle(List.fill(nEnable)(1) ++ List.fill(nDisable)(0))
 

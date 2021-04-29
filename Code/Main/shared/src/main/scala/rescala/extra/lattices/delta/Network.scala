@@ -3,7 +3,7 @@ package rescala.extra.lattices.delta
 import scala.collection.mutable
 import scala.util.Random
 
-class Network (val lossChance: Double, val duplicateChance: Double, val delayChance: Double) {
+class Network(val lossChance: Double, val duplicateChance: Double, val delayChance: Double) {
   private var reliablePhase: Boolean = false
 
   private val reliablyTransferred: mutable.Map.WithDefault[String, List[Array[Byte]]] =
@@ -41,7 +41,11 @@ class Network (val lossChance: Double, val duplicateChance: Double, val delayCha
     received
   }
 
-  private def insertMessage(recipient: String, message: Array[Byte], into: mutable.Map[String, List[Array[Byte]]]): Unit = {
+  private def insertMessage(
+      recipient: String,
+      message: Array[Byte],
+      into: mutable.Map[String, List[Array[Byte]]]
+  ): Unit = {
     into.update(recipient, into(recipient) :+ message)
   }
 

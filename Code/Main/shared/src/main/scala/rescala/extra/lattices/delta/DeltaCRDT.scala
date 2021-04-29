@@ -26,7 +26,7 @@ case class DeltaCRDT[A: UIJDLattice](state: A, antiEntropy: AntiEntropy[A]) {
 }
 
 case object DeltaCRDT {
-  type DeltaMutator[A] = (String, A) => A
+  type DeltaMutator[A]  = (String, A) => A
   type DeltaQuery[A, B] = A => B
 
   def empty[A: UIJDLattice](antiEntropy: AntiEntropy[A]): DeltaCRDT[A] =
@@ -50,7 +50,7 @@ case class RDeltaCRDT[A: UIJDLattice](state: A, replicaID: String, lastDelta: Op
 }
 
 case object RDeltaCRDT {
-  type DeltaMutator[A] = (String, A) => A
+  type DeltaMutator[A]  = (String, A) => A
   type DeltaQuery[A, B] = A => B
 
   def empty[A: UIJDLattice](replicaID: String): RDeltaCRDT[A] =

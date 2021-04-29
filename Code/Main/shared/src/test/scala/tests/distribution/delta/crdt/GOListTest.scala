@@ -18,7 +18,7 @@ object GOListGenerators {
     elems <- Gen.containerOf[List, E](e.arbitrary)
   } yield {
     val network = new Network(0, 0, 0)
-    val ae = new AntiEntropy[GOList.State[E]]("a", network, mutable.Buffer())
+    val ae      = new AntiEntropy[GOList.State[E]]("a", network, mutable.Buffer())
 
     elems.foldLeft(GOList(ae)) {
       case (list, el) => list.insert(0, el)

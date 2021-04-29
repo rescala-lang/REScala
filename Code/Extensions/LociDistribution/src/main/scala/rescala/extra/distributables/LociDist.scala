@@ -22,7 +22,7 @@ object LociDist {
       deltaEvt.fire(Delta(remoteRef.toString, deltaState))
     }
 
-    var observers = Map[RemoteRef, Observe[S]]()
+    var observers    = Map[RemoteRef, Observe[S]]()
     var resendBuffer = Map[RemoteRef, A]()
 
     def registerRemote(remoteRef: RemoteRef): Unit = {
@@ -38,16 +38,17 @@ object LociDist {
         s.lastDelta foreach { delta =>
           val buffered = resendBuffer.get(remoteRef)
 
-          val combinedState = if (delta.replicaID == remoteRef.toString)
-            buffered
-          else
-            Some(buffered.fold(delta.deltaState) {
-              UIJDLattice[A].merge(_, delta.deltaState)
-            })
+          val combinedState =
+            if (delta.replicaID == remoteRef.toString)
+              buffered
+            else
+              Some(buffered.fold(delta.deltaState) {
+                UIJDLattice[A].merge(_, delta.deltaState)
+              })
 
           combinedState.foreach { s =>
             val mergedResendBuffer = resendBuffer.updatedWith(remoteRef) {
-              case None => Some(s)
+              case None       => Some(s)
               case Some(prev) => Some(UIJDLattice[A].merge(prev, s))
             }
 

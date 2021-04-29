@@ -9,76 +9,87 @@ import rescala.extra.lattices.delta.{AntiEntropy, Delta, DeltaCRDT, RDeltaCRDT, 
 import scala.annotation.tailrec
 
 sealed trait GOListNode[E]
-case class Head[E]() extends GOListNode[E]
+case class Head[E]()         extends GOListNode[E]
 case class Elem[E](value: E) extends GOListNode[E]
 
 object GOListCRDT {
   type State[E] = Map[GOListNode[TimedVal[E]], Elem[TimedVal[E]]]
 
-  implicit def GOListAsUIJDLattice[E]: UIJDLattice[State[E]] = new UIJDLattice[Map[GOListNode[TimedVal[E]], Elem[TimedVal[E]]]] {
-    override def leq(left: Map[GOListNode[TimedVal[E]], Elem[TimedVal[E]]], right: Map[GOListNode[TimedVal[E]], Elem[TimedVal[E]]]): Boolean =
-      left.toSet.subsetOf(right.toSet)
+  implicit def GOListAsUIJDLattice[E]: UIJDLattice[State[E]] =
+    new UIJDLattice[Map[GOListNode[TimedVal[E]], Elem[TimedVal[E]]]] {
+      override def leq(
+          left: Map[GOListNode[TimedVal[E]], Elem[TimedVal[E]]],
+          right: Map[GOListNode[TimedVal[E]], Elem[TimedVal[E]]]
+      ): Boolean =
+        left.toSet.subsetOf(right.toSet)
 
-    /**
-      * Decomposes a lattice state into its unique irredundant join decomposition of join-irreducable states
-      */
-    override def decompose(state: Map[GOListNode[TimedVal[E]], Elem[TimedVal[E]]]): Set[Map[GOListNode[TimedVal[E]], Elem[TimedVal[E]]]] =
-      state.toSet.map((edge: (GOListNode[TimedVal[E]], Elem[TimedVal[E]])) => Map(edge))
+      /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducable states */
+      override def decompose(state: Map[GOListNode[TimedVal[E]], Elem[TimedVal[E]]])
+          : Set[Map[GOListNode[TimedVal[E]], Elem[TimedVal[E]]]] =
+        state.toSet.map((edge: (GOListNode[TimedVal[E]], Elem[TimedVal[E]])) => Map(edge))
 
-    override def bottom: Map[GOListNode[TimedVal[E]], Elem[TimedVal[E]]] = Map.empty
+      override def bottom: Map[GOListNode[TimedVal[E]], Elem[TimedVal[E]]] = Map.empty
 
-    @tailrec
-    private def insertEdge(state: Map[GOListNode[TimedVal[E]], Elem[TimedVal[E]]], edge: (GOListNode[TimedVal[E]], Elem[TimedVal[E]])): Map[GOListNode[TimedVal[E]], Elem[TimedVal[E]]] =
-      edge match {
-        case (l, r@Elem(e1)) =>
-          state.get(l) match {
-            case None => state + edge
-            case Some(next@Elem(e2)) =>
-              if (e1.laterThan(e2)) state + edge + (r -> next)
-              else insertEdge(state, next -> r)
-          }
-      }
+      @tailrec
+      private def insertEdge(
+          state: Map[GOListNode[TimedVal[E]], Elem[TimedVal[E]]],
+          edge: (GOListNode[TimedVal[E]], Elem[TimedVal[E]])
+      ): Map[GOListNode[TimedVal[E]], Elem[TimedVal[E]]] =
+        edge match {
+          case (l, r @ Elem(e1)) =>
+            state.get(l) match {
+              case None => state + edge
+              case Some(next @ Elem(e2)) =>
+                if (e1.laterThan(e2)) state + edge + (r -> next)
+                else insertEdge(state, next -> r)
+            }
+        }
 
-    @tailrec
-    private def insertRec(left: State[E], right: State[E], current: GOListNode[TimedVal[E]]): State[E] =
-      right.get(current) match {
-        case None => left
-        case Some(next) =>
-          val leftMerged =
-            if (left.contains(current) && left.values.toSet.contains(next))
-              left
-            else
-              insertEdge(left, (current, next))
+      @tailrec
+      private def insertRec(left: State[E], right: State[E], current: GOListNode[TimedVal[E]]): State[E] =
+        right.get(current) match {
+          case None => left
+          case Some(next) =>
+            val leftMerged =
+              if (left.contains(current) && left.values.toSet.contains(next))
+                left
+              else
+                insertEdge(left, (current, next))
 
-          insertRec(leftMerged, right, next)
-      }
+            insertRec(leftMerged, right, next)
+        }
 
-    /** By assumption: associative, commutative, idempotent. */
-    override def merge(left: Map[GOListNode[TimedVal[E]], Elem[TimedVal[E]]], right: Map[GOListNode[TimedVal[E]], Elem[TimedVal[E]]]): Map[GOListNode[TimedVal[E]], Elem[TimedVal[E]]] =
-      (right.keySet -- right.values).foldLeft(left) { (state, startNode) =>
-        insertRec(state, right, startNode)
-      }
-  }
+      /** By assumption: associative, commutative, idempotent. */
+      override def merge(
+          left: Map[GOListNode[TimedVal[E]], Elem[TimedVal[E]]],
+          right: Map[GOListNode[TimedVal[E]], Elem[TimedVal[E]]]
+      ): Map[GOListNode[TimedVal[E]], Elem[TimedVal[E]]] =
+        (right.keySet -- right.values).foldLeft(left) { (state, startNode) =>
+          insertRec(state, right, startNode)
+        }
+    }
 
   @tailrec
   private def findNth[E](state: State[E], current: GOListNode[TimedVal[E]], i: Int): Option[GOListNode[TimedVal[E]]] = {
     if (i == 0) Some(current)
     else state.get(current) match {
-      case None => None
+      case None       => None
       case Some(elem) => findNth(state, elem, i - 1)
     }
   }
 
-  def read[E](i: Int): DeltaQuery[State[E], Option[E]] = state => findNth(state, Head[TimedVal[E]](), i + 1).flatMap {
-    case Head() => None
-    case Elem(e) => Some(e.value)
-  }
+  def read[E](i: Int): DeltaQuery[State[E], Option[E]] = state =>
+    findNth(state, Head[TimedVal[E]](), i + 1).flatMap {
+      case Head()  => None
+      case Elem(e) => Some(e.value)
+    }
 
   @tailrec
-  private def toListRec[E](state: State[E], current: GOListNode[TimedVal[E]], acc: List[E]): List[E] = state.get(current) match {
-    case None => acc
-    case Some(next@Elem(tv)) => toListRec(state, next, acc.appended(tv.value))
-  }
+  private def toListRec[E](state: State[E], current: GOListNode[TimedVal[E]], acc: List[E]): List[E] =
+    state.get(current) match {
+      case None                  => acc
+      case Some(next @ Elem(tv)) => toListRec(state, next, acc.appended(tv.value))
+    }
 
   def toList[E]: DeltaQuery[State[E], List[E]] = state => toListRec(state, Head[TimedVal[E]](), List.empty[E])
 
@@ -86,7 +97,7 @@ object GOListCRDT {
 
   def insert[E](i: Int, e: E): DeltaMutator[State[E]] = (replicaID, state) => {
     findNth(state, Head[TimedVal[E]](), i) match {
-      case None => Map.empty
+      case None        => Map.empty
       case Some(after) => Map(after -> Elem(TimedVal(e, replicaID, state.size)))
     }
   }

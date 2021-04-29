@@ -18,7 +18,7 @@ trait CContext[A] {
 
   def nextDot(cc: A, replicaID: String): Dot = max(cc, replicaID) match {
     case Some(dot) => dot.next
-    case None => Dot(replicaID, 0)
+    case None      => Dot(replicaID, 0)
   }
 
   def empty: A
@@ -61,8 +61,10 @@ object CContext {
     override def fromSet(dots: Set[Dot]): Map[String, Diet[Int]] = dots.foldLeft(Map[String, Diet[Int]]())(addDot)
 
     override def toSet(cc: Map[String, Diet[Int]]): Set[Dot] =
-      for (replicaID <- cc.keySet;
-           counter <- cc.getOrElse(replicaID, Diet.empty[Int]).toList)
+      for (
+        replicaID <- cc.keySet;
+        counter   <- cc.getOrElse(replicaID, Diet.empty[Int]).toList
+      )
         yield Dot(replicaID, counter)
 
     override def union[B: CContext](left: Map[String, Diet[Int]], right: B): Map[String, Diet[Int]] =

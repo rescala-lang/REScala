@@ -8,9 +8,11 @@ import scala.collection.mutable
 case class DeltaMsg[A](delta: Delta[A], seqNum: Int)
 case class AckMsg(from: String, seqNum: Int)
 
-class AntiEntropy[A: UIJDLattice]
-(val replicaID: String, network: Network, neighbors: mutable.Buffer[String] = mutable.Buffer())
-(implicit val codec: JsonValueCodec[A]) {
+class AntiEntropy[A: UIJDLattice](
+    val replicaID: String,
+    network: Network,
+    neighbors: mutable.Buffer[String] = mutable.Buffer()
+)(implicit val codec: JsonValueCodec[A]) {
 
   private val deltaBufferOut: mutable.Map[Int, Delta[A]] = mutable.Map()
 
@@ -63,7 +65,7 @@ class AntiEntropy[A: UIJDLattice]
   def receiveFromNetwork(): Unit = {
     try {
       network.receiveMessages(replicaID).map(readFromArray[Message](_)).foreach {
-        case Left(ackMsg) => receiveAck(ackMsg)
+        case Left(ackMsg)    => receiveAck(ackMsg)
         case Right(deltaMsg) => receiveDelta(deltaMsg)
       }
     } catch {

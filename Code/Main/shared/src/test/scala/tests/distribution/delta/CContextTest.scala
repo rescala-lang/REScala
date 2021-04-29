@@ -47,8 +47,8 @@ class SetCContextTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "union" in forAll { (cca: SetCContext, ccb: SetCContext) =>
     val ccunion = SetCContext.union(cca, ccb)
 
-    val seta = SetCContext.toSet(cca)
-    val setb = SetCContext.toSet(ccb)
+    val seta     = SetCContext.toSet(cca)
+    val setb     = SetCContext.toSet(ccb)
     val setunion = SetCContext.toSet(ccunion)
 
     assert(
@@ -59,7 +59,7 @@ class SetCContextTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
   "max" in forAll { (cc: SetCContext, randId: String) =>
     val asSet = SetCContext.toSet(cc)
-    val ids = asSet.map(_.replicaID) + randId
+    val ids   = asSet.map(_.replicaID) + randId
 
     ids.foreach { id =>
       val counterVals = asSet.collect {
@@ -87,7 +87,7 @@ class SetCContextTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
   "nextDot" in forAll { (cc: SetCContext, randId: String) =>
     val asSet = SetCContext.toSet(cc)
-    val ids = asSet.map(_.replicaID) + randId
+    val ids   = asSet.map(_.replicaID) + randId
 
     ids.foreach { id =>
       val nd = SetCContext.nextDot(cc, id)
@@ -125,7 +125,7 @@ class DietMapCContextTest extends AnyFreeSpec with ScalaCheckDrivenPropertyCheck
     DietMapCContext.toSet(cc).foreach { d =>
       assert(
         DietMapCContext.contains(cc, d),
-      s"DietMapCContext.contains should return true for every dot in the context, but returns false when applied to ($cc, $d)"
+        s"DietMapCContext.contains should return true for every dot in the context, but returns false when applied to ($cc, $d)"
       )
     }
   }
@@ -140,8 +140,8 @@ class DietMapCContextTest extends AnyFreeSpec with ScalaCheckDrivenPropertyCheck
   "union" in forAll { (cca: DietMapCContext, ccb: DietMapCContext) =>
     val ccunion = DietMapCContext.union(cca, ccb)
 
-    val seta = DietMapCContext.toSet(cca)
-    val setb = DietMapCContext.toSet(ccb)
+    val seta     = DietMapCContext.toSet(cca)
+    val setb     = DietMapCContext.toSet(ccb)
     val setunion = DietMapCContext.toSet(ccunion)
 
     assert(
@@ -152,7 +152,7 @@ class DietMapCContextTest extends AnyFreeSpec with ScalaCheckDrivenPropertyCheck
 
   "max" in forAll { (cc: DietMapCContext, randId: String) =>
     val asSet = DietMapCContext.toSet(cc)
-    val ids = asSet.map(_.replicaID) + randId
+    val ids   = asSet.map(_.replicaID) + randId
 
     ids.foreach { id =>
       val counterVals = asSet.collect {
@@ -180,7 +180,7 @@ class DietMapCContextTest extends AnyFreeSpec with ScalaCheckDrivenPropertyCheck
 
   "nextDot" in forAll { (cc: DietMapCContext, randId: String) =>
     val asSet = DietMapCContext.toSet(cc)
-    val ids = asSet.map(_.replicaID) + randId
+    val ids   = asSet.map(_.replicaID) + randId
 
     ids.foreach { id =>
       val nd = DietMapCContext.nextDot(cc, id)
@@ -213,8 +213,8 @@ class MixedCContextTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks 
     val ccuniona = SetCContext.union(cca, ccb)
     val ccunionb = DietMapCContext.union(ccb, cca)
 
-    val seta = SetCContext.toSet(cca)
-    val setb = DietMapCContext.toSet(ccb)
+    val seta      = SetCContext.toSet(cca)
+    val setb      = DietMapCContext.toSet(ccb)
     val setuniona = SetCContext.toSet(ccuniona)
     val setunionb = DietMapCContext.toSet(ccunionb)
 
@@ -229,9 +229,9 @@ class MixedCContextTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks 
   }
 
   "convert" in forAll { cc: SetCContext =>
-    val asSet = SetCContext.toSet(cc)
-    val ccConverted = SetCContext.convert[DietMapCContext](cc)
-    val convertedAsSet = DietMapCContext.toSet(ccConverted)
+    val asSet             = SetCContext.toSet(cc)
+    val ccConverted       = SetCContext.convert[DietMapCContext](cc)
+    val convertedAsSet    = DietMapCContext.toSet(ccConverted)
     val ccDoubleConverted = DietMapCContext.convert[SetCContext](ccConverted)
 
     assert(

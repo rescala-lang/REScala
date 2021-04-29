@@ -16,7 +16,7 @@ object LexCounterGenerators {
     nDec <- Gen.posNum[Int]
   } yield {
     val network = new Network(0, 0, 0)
-    val ae = new AntiEntropy[LexCounter.State]("a", network, mutable.Buffer())
+    val ae      = new AntiEntropy[LexCounter.State]("a", network, mutable.Buffer())
 
     val inced = (0 to nInc).foldLeft(LexCounter(ae)) {
       case (c, _) => c.inc()
@@ -57,15 +57,15 @@ class LexCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     val aea = new AntiEntropy[LexCounter.State]("a", network, mutable.Buffer("b"))
     val aeb = new AntiEntropy[LexCounter.State]("b", network, mutable.Buffer("a"))
 
-    val ca0 = if(incOrDecA) LexCounter(aea).inc() else LexCounter(aea).dec()
-    val cb0 = if(incOrDecB) LexCounter(aeb).inc() else LexCounter(aeb).dec()
+    val ca0 = if (incOrDecA) LexCounter(aea).inc() else LexCounter(aea).dec()
+    val cb0 = if (incOrDecB) LexCounter(aeb).inc() else LexCounter(aeb).dec()
 
     AntiEntropy.sync(aea, aeb)
 
     val ca1 = ca0.processReceivedDeltas()
     val cb1 = cb0.processReceivedDeltas()
 
-    val sequential = if(incOrDecB) ca0.inc() else ca0.dec()
+    val sequential = if (incOrDecB) ca0.inc() else ca0.dec()
 
     assert(
       ca1.value == sequential.value,

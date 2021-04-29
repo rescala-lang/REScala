@@ -15,13 +15,13 @@ import scala.util.Random
 
 object RCounterGenerators {
   def genRCounter[C: CContext](implicit c: JsonValueCodec[C]): Gen[RCounter[C]] = for {
-    nInc <- Gen.posNum[Int]
-    nDec <- Gen.posNum[Int]
+    nInc   <- Gen.posNum[Int]
+    nDec   <- Gen.posNum[Int]
     nReset <- Gen.posNum[Int]
     nFresh <- Gen.posNum[Int]
   } yield {
     val network = new Network(0, 0, 0)
-    val ae = new AntiEntropy[RCounter.State[C]]("a", network, mutable.Buffer())
+    val ae      = new AntiEntropy[RCounter.State[C]]("a", network, mutable.Buffer())
 
     val ops = Random.shuffle(List.fill(nInc)(0) ++ List.fill(nDec)(1) ++ List.fill(nReset)(2) ++ List.fill(nFresh)(3))
 
@@ -84,14 +84,14 @@ class RCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     val aeb = new AntiEntropy[RCounter.State[DietMapCContext]]("b", network, mutable.Buffer("a"))
 
     val ca0 = opA match {
-      case Left(_) => RCounter[DietMapCContext](aea).increment()
+      case Left(_)      => RCounter[DietMapCContext](aea).increment()
       case Right(false) => RCounter[DietMapCContext](aea).decrement()
-      case Right(true) => RCounter[DietMapCContext](aea).fresh()
+      case Right(true)  => RCounter[DietMapCContext](aea).fresh()
     }
     val cb0 = opB match {
-      case Left(_) => RCounter[DietMapCContext](aeb).increment()
+      case Left(_)      => RCounter[DietMapCContext](aeb).increment()
       case Right(false) => RCounter[DietMapCContext](aeb).decrement()
-      case Right(true) => RCounter[DietMapCContext](aeb).fresh()
+      case Right(true)  => RCounter[DietMapCContext](aeb).fresh()
     }
 
     AntiEntropy.sync(aea, aeb)
@@ -100,9 +100,9 @@ class RCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     val cb1 = cb0.processReceivedDeltas()
 
     val sequential = opB match {
-      case Left(_) => ca0.increment()
+      case Left(_)      => ca0.increment()
       case Right(false) => ca0.decrement()
-      case Right(true) => ca0.fresh()
+      case Right(true)  => ca0.fresh()
     }
 
     assert(
@@ -175,50 +175,59 @@ class RCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
   "convergence" in forAll {
     (
-      nOpsA1: (Byte, Byte, Byte, Byte),
-      nOpsB1: (Byte, Byte, Byte, Byte),
-      nOpsA2: (Byte, Byte, Byte, Byte),
-      nOpsB2: (Byte, Byte, Byte, Byte),
-      network: Network
-    ) => {
-      val aea = new AntiEntropy[RCounter.State[DietMapCContext]]("a", network, mutable.Buffer("b"))
-      val aeb = new AntiEntropy[RCounter.State[DietMapCContext]]("b", network, mutable.Buffer("a"))
+        nOpsA1: (Byte, Byte, Byte, Byte),
+        nOpsB1: (Byte, Byte, Byte, Byte),
+        nOpsA2: (Byte, Byte, Byte, Byte),
+        nOpsB2: (Byte, Byte, Byte, Byte),
+        network: Network
+    ) =>
+      {
+        val aea = new AntiEntropy[RCounter.State[DietMapCContext]]("a", network, mutable.Buffer("b"))
+        val aeb = new AntiEntropy[RCounter.State[DietMapCContext]]("b", network, mutable.Buffer("a"))
 
-      val opsA1 = Random.shuffle(List.fill(nOpsA1._1.toInt)(0) ++ List.fill(nOpsA1._2.toInt)(1) ++ List.fill(nOpsA1._3.toInt)(2) ++ List.fill(nOpsA1._4.toInt)(3))
-      val opsB1 = Random.shuffle(List.fill(nOpsB1._1.toInt)(0) ++ List.fill(nOpsB1._2.toInt)(1) ++ List.fill(nOpsB1._3.toInt)(2) ++ List.fill(nOpsB1._4.toInt)(3))
-      val opsA2 = Random.shuffle(List.fill(nOpsA2._1.toInt)(0) ++ List.fill(nOpsA2._2.toInt)(1) ++ List.fill(nOpsA2._3.toInt)(2) ++ List.fill(nOpsA2._4.toInt)(3))
-      val opsB2 = Random.shuffle(List.fill(nOpsB2._1.toInt)(0) ++ List.fill(nOpsB2._2.toInt)(1) ++ List.fill(nOpsB2._3.toInt)(2) ++ List.fill(nOpsB2._4.toInt)(3))
+        val opsA1 = Random.shuffle(List.fill(nOpsA1._1.toInt)(0) ++ List.fill(nOpsA1._2.toInt)(1) ++ List.fill(
+          nOpsA1._3.toInt
+        )(2) ++ List.fill(nOpsA1._4.toInt)(3))
+        val opsB1 = Random.shuffle(List.fill(nOpsB1._1.toInt)(0) ++ List.fill(nOpsB1._2.toInt)(1) ++ List.fill(
+          nOpsB1._3.toInt
+        )(2) ++ List.fill(nOpsB1._4.toInt)(3))
+        val opsA2 = Random.shuffle(List.fill(nOpsA2._1.toInt)(0) ++ List.fill(nOpsA2._2.toInt)(1) ++ List.fill(
+          nOpsA2._3.toInt
+        )(2) ++ List.fill(nOpsA2._4.toInt)(3))
+        val opsB2 = Random.shuffle(List.fill(nOpsB2._1.toInt)(0) ++ List.fill(nOpsB2._2.toInt)(1) ++ List.fill(
+          nOpsB2._3.toInt
+        )(2) ++ List.fill(nOpsB2._4.toInt)(3))
 
-      def applyOps(counter: RCounter[DietMapCContext], ops: List[Int]): RCounter[DietMapCContext] = {
-        ops.foldLeft(counter) {
-          case (c, 0) => c.increment()
-          case (c, 1) => c.decrement()
-          case (c, 2) => c.reset()
-          case (c, 3) => c.fresh()
-          // default case is only needed to stop the compiler from complaining about non-exhaustive match
-          case (c, _) => c
+        def applyOps(counter: RCounter[DietMapCContext], ops: List[Int]): RCounter[DietMapCContext] = {
+          ops.foldLeft(counter) {
+            case (c, 0) => c.increment()
+            case (c, 1) => c.decrement()
+            case (c, 2) => c.reset()
+            case (c, 3) => c.fresh()
+            // default case is only needed to stop the compiler from complaining about non-exhaustive match
+            case (c, _) => c
+          }
         }
+
+        val ca0 = applyOps(RCounter[DietMapCContext](aea), opsA1)
+        val cb0 = applyOps(RCounter[DietMapCContext](aeb), opsB1)
+
+        AntiEntropy.sync(aea, aeb)
+
+        val ca1 = applyOps(ca0.processReceivedDeltas(), opsA2)
+        val cb1 = applyOps(cb0.processReceivedDeltas(), opsB2)
+
+        AntiEntropy.sync(aea, aeb)
+        network.startReliablePhase()
+        AntiEntropy.sync(aea, aeb)
+
+        val ca2 = ca1.processReceivedDeltas()
+        val cb2 = cb1.processReceivedDeltas()
+
+        assert(
+          ca2.value == cb2.value,
+          s"After synchronization messages were reliably exchanged all replicas should converge, but ${ca2.value} does not equal ${cb2.value}"
+        )
       }
-
-      val ca0 = applyOps(RCounter[DietMapCContext](aea), opsA1)
-      val cb0 = applyOps(RCounter[DietMapCContext](aeb), opsB1)
-
-      AntiEntropy.sync(aea, aeb)
-
-      val ca1 = applyOps(ca0.processReceivedDeltas(), opsA2)
-      val cb1 = applyOps(cb0.processReceivedDeltas(), opsB2)
-
-      AntiEntropy.sync(aea, aeb)
-      network.startReliablePhase()
-      AntiEntropy.sync(aea, aeb)
-
-      val ca2 = ca1.processReceivedDeltas()
-      val cb2 = cb1.processReceivedDeltas()
-
-      assert(
-        ca2.value == cb2.value,
-        s"After synchronization messages were reliably exchanged all replicas should converge, but ${ca2.value} does not equal ${cb2.value}"
-      )
-    }
   }
 }

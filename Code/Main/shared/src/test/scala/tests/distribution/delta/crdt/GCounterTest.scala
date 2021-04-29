@@ -15,7 +15,7 @@ object GCounterGenerators {
     n <- Gen.posNum[Int]
   } yield {
     val network = new Network(0, 0, 0)
-    val ae = new AntiEntropy[GCounter.State]("a", network, mutable.Buffer())
+    val ae      = new AntiEntropy[GCounter.State]("a", network, mutable.Buffer())
 
     (0 until n).foldLeft(GCounter(ae)) {
       case (c, _) => c.inc()

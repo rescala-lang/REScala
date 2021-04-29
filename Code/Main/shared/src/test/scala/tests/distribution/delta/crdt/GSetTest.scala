@@ -17,7 +17,7 @@ object GSetGenerators {
     elements <- Gen.containerOf[List, E](e.arbitrary)
   } yield {
     val network = new Network(0, 0, 0)
-    val ae = new AntiEntropy[GSet.State[E]]("a", network, mutable.Buffer())
+    val ae      = new AntiEntropy[GSet.State[E]]("a", network, mutable.Buffer())
 
     elements.foldLeft(GSet[E](ae)) {
       case (set, e) => set.insert(e)

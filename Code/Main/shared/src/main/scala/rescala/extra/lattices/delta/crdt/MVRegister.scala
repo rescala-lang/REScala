@@ -60,7 +60,8 @@ object MVRegister {
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 }
 
-class RMVRegister[A: UIJDLattice, C: CContext](val crdt: RDeltaCRDT[MVRegisterCRDT.State[A, C]]) extends CRDTInterface[MVRegisterCRDT.State[A, C]] {
+class RMVRegister[A: UIJDLattice, C: CContext](val crdt: RDeltaCRDT[MVRegisterCRDT.State[A, C]])
+    extends CRDTInterface[MVRegisterCRDT.State[A, C]] {
   def read: Set[A] = crdt.query(MVRegisterCRDT.read)
 
   def write(v: A): RMVRegister[A, C] = new RMVRegister(crdt.mutate(MVRegisterCRDT.write(v)))
@@ -89,9 +90,7 @@ object RMVRegister {
   def AtomicUIJDLattice[A]: UIJDLattice[A] = new UIJDLattice[A] {
     override def leq(left: A, right: A): Boolean = false
 
-    /**
-      * Decomposes a lattice state into its unique irredundant join decomposition of join-irreducable states
-      */
+    /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducable states */
     override def decompose(state: A): Set[A] = Set(state)
 
     override def bottom: A = throw new UnsupportedOperationException("Can't compute bottom of atomic type A")

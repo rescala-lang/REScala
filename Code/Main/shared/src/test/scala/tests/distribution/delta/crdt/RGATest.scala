@@ -30,10 +30,10 @@ object RGAGenerators {
   }
 
   def genRGA[E: JsonValueCodec, C: CContext](implicit e: Arbitrary[E], codec: JsonValueCodec[C]): Gen[RGA[E, C]] = for {
-    nInserted <- Arbitrary.arbitrary[Byte]
+    nInserted       <- Arbitrary.arbitrary[Byte]
     insertedIndices <- Gen.containerOfN[List, Int](nInserted.toInt, Arbitrary.arbitrary[Int])
-    insertedValues <- Gen.containerOfN[List, E](nInserted.toInt, e.arbitrary)
-    removed <- Gen.containerOf[List, Int](Arbitrary.arbitrary[Int])
+    insertedValues  <- Gen.containerOfN[List, E](nInserted.toInt, e.arbitrary)
+    removed         <- Gen.containerOf[List, Int](Arbitrary.arbitrary[Int])
   } yield {
     val network = new Network(0, 0, 0)
 
@@ -42,7 +42,10 @@ object RGAGenerators {
     makeRGA(insertedIndices zip insertedValues, removed, ae)
   }
 
-  implicit def arbRGA[E: JsonValueCodec, C: CContext](implicit e: Arbitrary[E], codec: JsonValueCodec[C]): Arbitrary[RGA[E, C]] =
+  implicit def arbRGA[E: JsonValueCodec, C: CContext](implicit
+      e: Arbitrary[E],
+      codec: JsonValueCodec[C]
+  ): Arbitrary[RGA[E, C]] =
     Arbitrary(genRGA)
 }
 
@@ -108,39 +111,40 @@ class RGATest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     )
   }
 
-  "concurrent insert" in forAll { (inserted: List[(Int, Int)], removed: List[Int], n1: Int, e1: Int, n2: Int, e2: Int) =>
-    val network = new Network(0, 0, 0)
+  "concurrent insert" in forAll {
+    (inserted: List[(Int, Int)], removed: List[Int], n1: Int, e1: Int, n2: Int, e2: Int) =>
+      val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropy[RGA.State[Int, DietMapCContext]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[RGA.State[Int, DietMapCContext]]("b", network, mutable.Buffer("a"))
+      val aea = new AntiEntropy[RGA.State[Int, DietMapCContext]]("a", network, mutable.Buffer("b"))
+      val aeb = new AntiEntropy[RGA.State[Int, DietMapCContext]]("b", network, mutable.Buffer("a"))
 
-    val la0 = makeRGA(inserted, removed, aea)
-    AntiEntropy.sync(aea, aeb)
-    val lb0 = RGA(aeb).processReceivedDeltas()
+      val la0 = makeRGA(inserted, removed, aea)
+      AntiEntropy.sync(aea, aeb)
+      val lb0 = RGA(aeb).processReceivedDeltas()
 
-    val size = la0.size
-    val idx1 = if (size == 0) 0 else math.floorMod(n1, size)
-    val idx2 = if (size == 0) 0 else Math.floorMod(n2, size)
+      val size = la0.size
+      val idx1 = if (size == 0) 0 else math.floorMod(n1, size)
+      val idx2 = if (size == 0) 0 else Math.floorMod(n2, size)
 
-    val la1 = la0.insert(idx1, e1)
-    lb0.insert(idx2, e2)
+      val la1 = la0.insert(idx1, e1)
+      lb0.insert(idx2, e2)
 
-    AntiEntropy.sync(aea, aeb)
+      AntiEntropy.sync(aea, aeb)
 
-    val la2 = la1.processReceivedDeltas()
+      val la2 = la1.processReceivedDeltas()
 
-    assert(
-      idx1 < idx2 && la2.read(idx1).contains(e1) ||
-        idx1 > idx2 && la2.read(idx1 + 1).contains(e1) ||
-        idx1 == idx2 && (la2.read(idx1).contains(e1) || la2.read(idx1 + 1).contains(e1)),
-      s"After synchronization $e1 was not found at its expected location in ${la2.toList}"
-    )
-    assert(
-      idx1 < idx2 && la2.read(idx2 + 1).contains(e2) ||
-        idx1 > idx2 && la2.read(idx2).contains(e2) ||
-        idx1 == idx2 && (la2.read(idx2).contains(e2) || la2.read(idx2 + 1).contains(e2)),
-      s"After synchronization $e2 was not found at its expected location in ${la2.toList}"
-    )
+      assert(
+        idx1 < idx2 && la2.read(idx1).contains(e1) ||
+          idx1 > idx2 && la2.read(idx1 + 1).contains(e1) ||
+          idx1 == idx2 && (la2.read(idx1).contains(e1) || la2.read(idx1 + 1).contains(e1)),
+        s"After synchronization $e1 was not found at its expected location in ${la2.toList}"
+      )
+      assert(
+        idx1 < idx2 && la2.read(idx2 + 1).contains(e2) ||
+          idx1 > idx2 && la2.read(idx2).contains(e2) ||
+          idx1 == idx2 && (la2.read(idx2).contains(e2) || la2.read(idx2 + 1).contains(e2)),
+        s"After synchronization $e2 was not found at its expected location in ${la2.toList}"
+      )
   }
 
   "concurrent delete" in forAll { (inserted: List[(Int, Int)], removed: List[Int], n: Int, n1: Int, n2: Int) =>
@@ -179,11 +183,12 @@ class RGATest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
     val la4 = la3.processReceivedDeltas()
 
-    val sequential = if (idx1 > idx2) {
-      la2.delete(idx1).delete(idx2)
-    } else {
-      la2.delete(idx2).delete(idx1)
-    }
+    val sequential =
+      if (idx1 > idx2) {
+        la2.delete(idx1).delete(idx2)
+      } else {
+        la2.delete(idx2).delete(idx1)
+      }
 
     assert(
       idx1 == idx2 || la4.toList == sequential.toList,
@@ -274,61 +279,62 @@ class RGATest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
   "convergence" in forAll {
     (
-      inserted: List[(Int, Int)],
-      removed: List[Int],
-      insertedAB: (List[(Int, Int)], List[(Int, Int)]),
-      removedAB: (List[Int], List[Int]),
-      updatedAB: (List[(Int, Int)], List[(Int, Int)]),
-      network: Network
-    ) => {
-      val aea = new AntiEntropy[RGA.State[Int, DietMapCContext]]("a", network, mutable.Buffer("b"))
-      val aeb = new AntiEntropy[RGA.State[Int, DietMapCContext]]("b", network, mutable.Buffer("a"))
+        inserted: List[(Int, Int)],
+        removed: List[Int],
+        insertedAB: (List[(Int, Int)], List[(Int, Int)]),
+        removedAB: (List[Int], List[Int]),
+        updatedAB: (List[(Int, Int)], List[(Int, Int)]),
+        network: Network
+    ) =>
+      {
+        val aea = new AntiEntropy[RGA.State[Int, DietMapCContext]]("a", network, mutable.Buffer("b"))
+        val aeb = new AntiEntropy[RGA.State[Int, DietMapCContext]]("b", network, mutable.Buffer("a"))
 
-      val la0 = makeRGA(inserted, removed, aea)
-      network.startReliablePhase()
-      AntiEntropy.sync(aea, aeb)
-      network.endReliablePhase()
-      val lb0 = RGA(aeb).processReceivedDeltas()
+        val la0 = makeRGA(inserted, removed, aea)
+        network.startReliablePhase()
+        AntiEntropy.sync(aea, aeb)
+        network.endReliablePhase()
+        val lb0 = RGA(aeb).processReceivedDeltas()
 
-      val la1 = {
-        val inserted = insertedAB._1.foldLeft(la0) {
-          case (rga, (i, e)) => rga.insert(i, e)
+        val la1 = {
+          val inserted = insertedAB._1.foldLeft(la0) {
+            case (rga, (i, e)) => rga.insert(i, e)
+          }
+
+          val deleted = removedAB._1.foldLeft(inserted) {
+            case (rga, i) => rga.delete(i)
+          }
+
+          updatedAB._1.foldLeft(deleted) {
+            case (rga, (i, e)) => rga.update(i, e)
+          }
         }
 
-        val deleted = removedAB._1.foldLeft(inserted) {
-          case (rga, i) => rga.delete(i)
+        val lb1 = {
+          val inserted = insertedAB._2.foldLeft(lb0) {
+            case (rga, (i, e)) => rga.insert(i, e)
+          }
+
+          val deleted = removedAB._2.foldLeft(inserted) {
+            case (rga, i) => rga.delete(i)
+          }
+
+          updatedAB._2.foldLeft(deleted) {
+            case (rga, (i, e)) => rga.update(i, e)
+          }
         }
 
-        updatedAB._1.foldLeft(deleted) {
-          case (rga, (i, e)) => rga.update(i, e)
-        }
+        AntiEntropy.sync(aea, aeb)
+        network.startReliablePhase()
+        AntiEntropy.sync(aea, aeb)
+
+        val la2 = la1.processReceivedDeltas()
+        val lb2 = lb1.processReceivedDeltas()
+
+        assert(
+          la2.toList == lb2.toList,
+          s"After synchronization messages were reliably exchanged all replicas should converge, but ${la2.toList} does not equal ${lb2.toList}"
+        )
       }
-
-      val lb1 = {
-        val inserted = insertedAB._2.foldLeft(lb0) {
-          case (rga, (i, e)) => rga.insert(i, e)
-        }
-
-        val deleted = removedAB._2.foldLeft(inserted) {
-          case (rga, i) => rga.delete(i)
-        }
-
-        updatedAB._2.foldLeft(deleted) {
-          case (rga, (i, e)) => rga.update(i, e)
-        }
-      }
-
-      AntiEntropy.sync(aea, aeb)
-      network.startReliablePhase()
-      AntiEntropy.sync(aea, aeb)
-
-      val la2 = la1.processReceivedDeltas()
-      val lb2 = lb1.processReceivedDeltas()
-
-      assert(
-        la2.toList == lb2.toList,
-        s"After synchronization messages were reliably exchanged all replicas should converge, but ${la2.toList} does not equal ${lb2.toList}"
-      )
-    }
   }
 }

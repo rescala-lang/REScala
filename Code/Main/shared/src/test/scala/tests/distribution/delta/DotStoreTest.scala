@@ -9,7 +9,7 @@ import rescala.extra.lattices.delta.{Dot, DotStore, UIJDLattice}
 object DotStoreGenerators {
   val genDot: Gen[Dot] = for {
     replicaID <- Gen.alphaNumStr
-    counter <- Gen.posNum[Int]
+    counter   <- Gen.posNum[Int]
   } yield Dot(replicaID, counter)
 
   implicit val arbDot: Arbitrary[Dot] = Arbitrary(genDot)
@@ -19,20 +19,20 @@ object DotStoreGenerators {
   implicit val arbDotSet: Arbitrary[DotSet] = Arbitrary(genDotSet)
 
   def genDotFun[A: UIJDLattice](implicit g: Gen[A]): Gen[DotFun[A]] = for {
-    n <- Gen.posNum[Int]
-    dots <- Gen.containerOfN[List, Dot](n, genDot)
+    n      <- Gen.posNum[Int]
+    dots   <- Gen.containerOfN[List, Dot](n, genDot)
     values <- Gen.containerOfN[List, A](n, g)
   } yield (dots zip values).toMap
 
   implicit def arbDotFun[A: UIJDLattice](implicit g: Gen[A]): Arbitrary[DotFun[A]] = Arbitrary(genDotFun)
 
   def genDotMap[K, V: DotStore](implicit gk: Gen[K], gv: Gen[V]): Gen[DotMap[K, V]] = (for {
-    n <- Gen.posNum[Int]
-    keys <- Gen.containerOfN[List, K](n, gk)
+    n      <- Gen.posNum[Int]
+    keys   <- Gen.containerOfN[List, K](n, gk)
     values <- Gen.containerOfN[List, V](n, gv)
   } yield (keys zip values).toMap).suchThat { m =>
     val dotsIter = m.values.flatMap(DotStore[V].dots)
-    val dotsSet = dotsIter.toSet
+    val dotsSet  = dotsIter.toSet
     dotsIter.size == dotsSet.size
   }
 
@@ -105,7 +105,7 @@ class DotSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
     val decomposed = DotSet.decompose(ds, cc)
     val (dsMerged, ccMerged) = decomposed.foldLeft((Set.empty[Dot], Set.empty[Dot])) {
-        case ((dsA, ccA), (dsB, ccB)) => DotSet.merge(dsA, ccA, dsB, ccB)
+      case ((dsA, ccA), (dsB, ccB)) => DotSet.merge(dsA, ccA, dsB, ccB)
     }
 
     assert(
@@ -137,11 +137,11 @@ class DotFunTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "merge" in forAll { (dfA: DotFun[Int], deletedA: Set[Dot], dfB: DotFun[Int], deletedB: Set[Dot]) =>
     val dotsA = DotFun[Int].dots(dfA)
     val dotsB = DotFun[Int].dots(dfB)
-    val ccA = dotsA union deletedA
-    val ccB = dotsB union deletedB
+    val ccA   = dotsA union deletedA
+    val ccB   = dotsB union deletedB
 
     val (dfMerged, ccMerged) = DotFun[Int].merge(dfA, ccA, dfB, ccB)
-    val dotsMerged = DotFun[Int].dots(dfMerged)
+    val dotsMerged           = DotFun[Int].dots(dfMerged)
 
     assert(
       ccMerged == (ccA union ccB),
@@ -163,7 +163,9 @@ class DotFunTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     (dotsA intersect dotsB).foreach { d =>
       assert(
         dfMerged(d) == UIJDLattice[Int].merge(dfA(d), dfB(d)),
-        s"If a dot is used as key in both DotFuns then the corresponding values should be merged in the result of DotFun.merge, but ${dfMerged(d)} does not equal ${UIJDLattice[Int].merge(dfA(d), dfB(d))}"
+        s"If a dot is used as key in both DotFuns then the corresponding values should be merged in the result of DotFun.merge, but ${dfMerged(
+          d
+        )} does not equal ${UIJDLattice[Int].merge(dfA(d), dfB(d))}"
       )
     }
 
@@ -240,11 +242,11 @@ class DotMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "merge" in forAll { (dmA: DotMap[Int, DotSet], deletedA: Set[Dot], dmB: DotMap[Int, DotSet], deletedB: Set[Dot]) =>
     val dotsA = DotMap[Int, DotSet].dots(dmA)
     val dotsB = DotMap[Int, DotSet].dots(dmB)
-    val ccA = dotsA union deletedA
-    val ccB = dotsB union deletedB
+    val ccA   = dotsA union deletedA
+    val ccB   = dotsB union deletedB
 
     val (dmMerged, ccMerged) = DotMap[Int, DotSet].merge(dmA, ccA, dmB, ccB)
-    val dotsMerged = DotMap[Int, DotSet].dots(dmMerged)
+    val dotsMerged           = DotMap[Int, DotSet].dots(dmMerged)
 
     assert(
       ccMerged == (ccA union ccB),
@@ -264,12 +266,12 @@ class DotMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     )
 
     (dmA.keySet union dmB.keySet).foreach { k =>
-        val (vMerged, _) = DotSet.merge(dmA.getOrElse(k, DotSet.empty), ccA, dmB.getOrElse(k, DotSet.empty), ccB)
+      val (vMerged, _) = DotSet.merge(dmA.getOrElse(k, DotSet.empty), ccA, dmB.getOrElse(k, DotSet.empty), ccB)
 
-        assert(
-          vMerged.isEmpty || dmMerged(k) == vMerged,
-          s"For all keys that are in both DotMaps the result of DotMap.merge should map these to the merged values, but ${dmMerged.get(k)} does not equal $vMerged"
-        )
+      assert(
+        vMerged.isEmpty || dmMerged(k) == vMerged,
+        s"For all keys that are in both DotMaps the result of DotMap.merge should map these to the merged values, but ${dmMerged.get(k)} does not equal $vMerged"
+      )
     }
   }
 
@@ -302,8 +304,8 @@ class DotMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
       case ((dmA, ccA), (dmB, ccB)) => DotMap[Int, DotSet].merge(dmA, ccA, dmB, ccB)
     }
 
-    val dotsIter = dm.values.flatMap(DotSet.dots)
-    val dotsSet = dotsIter.toSet
+    val dotsIter      = dm.values.flatMap(DotSet.dots)
+    val dotsSet       = dotsIter.toSet
     val duplicateDots = dotsIter.size != dotsSet.size
 
     assert(

@@ -5,7 +5,6 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import rescala.extra.lattices.delta.DeltaCRDT.{DeltaMutator, DeltaQuery}
 import rescala.extra.lattices.delta.{AntiEntropy, DeltaCRDT}
 
-
 object TwoPSetCRDT {
   type State[E] = (Set[E], Set[E])
 
@@ -16,11 +15,9 @@ object TwoPSetCRDT {
     case (add, remove) => add diff remove
   }
 
-  def insert[E](element: E): DeltaMutator[State[E]] = (_, _) =>
-    (Set(element), Set.empty[E])
+  def insert[E](element: E): DeltaMutator[State[E]] = (_, _) => (Set(element), Set.empty[E])
 
-  def remove[E](element: E): DeltaMutator[State[E]] = (_, _) =>
-    (Set.empty[E], Set(element))
+  def remove[E](element: E): DeltaMutator[State[E]] = (_, _) => (Set.empty[E], Set(element))
 }
 
 class TwoPSet[E](crdt: DeltaCRDT[TwoPSetCRDT.State[E]]) {

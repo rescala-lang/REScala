@@ -11,19 +11,17 @@ import scala.annotation.tailrec
 
 sealed trait RGANode[A]
 case class Alive[A](v: TimedVal[A]) extends RGANode[A]
-case class Dead[A]() extends RGANode[A]
+case class Dead[A]()                extends RGANode[A]
 
 object RGANode {
   implicit def RGANodeAsUIJDLattice[A]: UIJDLattice[RGANode[A]] = new UIJDLattice[RGANode[A]] {
     override def leq(left: RGANode[A], right: RGANode[A]): Boolean = (left, right) match {
-      case (Dead(), _) => false
-      case (_, Dead()) => true
+      case (Dead(), _)            => false
+      case (_, Dead())            => true
       case (Alive(lv), Alive(rv)) => rv.laterThan(lv)
     }
 
-    /**
-      * Decomposes a lattice state into its unique irredundant join decomposition of join-irreducable states
-      */
+    /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducable states */
     override def decompose(state: RGANode[A]): Set[RGANode[A]] = Set(state)
 
     override def bottom: RGANode[A] = throw new UnsupportedOperationException("RGANode does not have a bottom value")
@@ -31,7 +29,7 @@ object RGANode {
     /** By assumption: associative, commutative, idempotent. */
     override def merge(left: RGANode[A], right: RGANode[A]): RGANode[A] = (left, right) match {
       case (Alive(lv), Alive(rv)) => Alive(UIJDLattice[TimedVal[A]].merge(lv, rv))
-      case _ => Dead()
+      case _                      => Dead()
     }
   }
 }
@@ -39,24 +37,25 @@ object RGANode {
 object RGACRDT {
   type State[E, C] = (GOList.State[Dot], Causal[DotFun[RGANode[E]], C])
 
-  private def readRec[E, C: CContext](state: State[E, C], target: Int, counted: Int, skipped: Int): Option[E] = state match {
-    case (golist, Causal(df, _)) =>
-      GOListCRDT.read(counted + skipped)(golist).flatMap { d =>
-        df(d) match {
-          case Dead() => readRec(state, target, counted, skipped + 1)
-          case Alive(tv) =>
-            if (counted == target) Some(tv.value)
-            else readRec(state, target, counted + 1, skipped)
+  private def readRec[E, C: CContext](state: State[E, C], target: Int, counted: Int, skipped: Int): Option[E] =
+    state match {
+      case (golist, Causal(df, _)) =>
+        GOListCRDT.read(counted + skipped)(golist).flatMap { d =>
+          df(d) match {
+            case Dead() => readRec(state, target, counted, skipped + 1)
+            case Alive(tv) =>
+              if (counted == target) Some(tv.value)
+              else readRec(state, target, counted + 1, skipped)
+          }
         }
-      }
-  }
+    }
 
   def read[E, C: CContext](i: Int): DeltaQuery[State[E, C], Option[E]] = readRec(_, i, 0, 0)
 
   def size[E, C: CContext]: DeltaQuery[State[E, C], Int] = {
     case (_, Causal(df, _)) =>
       df.values.count {
-        case Dead() => false
+        case Dead()   => false
         case Alive(_) => true
       }
   }
@@ -68,7 +67,13 @@ object RGACRDT {
       }
   }
 
-  def insertRec[E, C: CContext](replicaID: String, state: State[E, C], target: Int, counted: Int, skipped: Int): Option[GOList.State[Dot]] =
+  def insertRec[E, C: CContext](
+      replicaID: String,
+      state: State[E, C],
+      target: Int,
+      counted: Int,
+      skipped: Int
+  ): Option[GOList.State[Dot]] =
     state match {
       case (golist, Causal(df, cc)) =>
         if (target == counted)
@@ -76,7 +81,7 @@ object RGACRDT {
         else {
           GOListCRDT.read(counted + skipped)(golist) flatMap { d =>
             df(d) match {
-              case Dead() => insertRec(replicaID, state, target, counted, skipped + 1)
+              case Dead()   => insertRec(replicaID, state, target, counted, skipped + 1)
               case Alive(_) => insertRec(replicaID, state, target, counted + 1, skipped)
             }
           }
@@ -84,7 +89,7 @@ object RGACRDT {
     }
 
   def insert[E, C: CContext](i: Int, e: E): DeltaMutator[State[E, C]] = {
-    case (replicaID, state@(golist, Causal(_, cc))) =>
+    case (replicaID, state @ (golist, Causal(_, cc))) =>
       val nextDot = CContext[C].nextDot(cc, replicaID)
 
       insertRec(replicaID, state, i, 0, 0) match {
@@ -97,7 +102,13 @@ object RGACRDT {
   }
 
   @tailrec
-  private def updateRGANodeRec[E, C: CContext](state: State[E, C], i: Int, newNode: RGANode[E], counted: Int, skipped: Int): State[E, C] =
+  private def updateRGANodeRec[E, C: CContext](
+      state: State[E, C],
+      i: Int,
+      newNode: RGANode[E],
+      counted: Int,
+      skipped: Int
+  ): State[E, C] =
     state match {
       case (golist, Causal(df, _)) =>
         GOListCRDT.read(counted + skipped)(golist) match {
@@ -107,7 +118,10 @@ object RGACRDT {
               case Dead() => updateRGANodeRec(state, i, newNode, counted, skipped + 1)
               case Alive(_) =>
                 if (counted == i)
-                  (UIJDLattice[GOList.State[Dot]].bottom, Causal(DotFun[RGANode[E]].empty + (d -> newNode), CContext[C].empty))
+                  (
+                    UIJDLattice[GOList.State[Dot]].bottom,
+                    Causal(DotFun[RGANode[E]].empty + (d -> newNode), CContext[C].empty)
+                  )
                 else
                   updateRGANodeRec(state, i, newNode, counted + 1, skipped)
             }
@@ -122,10 +136,13 @@ object RGACRDT {
     // Otherwise, one would have to derive some counter value that increases each time an element is updated
     updateRGANode(state, i, Alive(TimedVal(e, replicaID, 0)))
 
-  def delete[E, C: CContext](i: Int): DeltaMutator[State[E, C]] = (_, state) =>
-    updateRGANode(state, i, Dead[E]())
+  def delete[E, C: CContext](i: Int): DeltaMutator[State[E, C]] = (_, state) => updateRGANode(state, i, Dead[E]())
 
-  private def updateRGANodeBy[E, C: CContext](state: State[E, C], cond: E => Boolean, newNode: RGANode[E]): State[E, C] =
+  private def updateRGANodeBy[E, C: CContext](
+      state: State[E, C],
+      cond: E => Boolean,
+      newNode: RGANode[E]
+  ): State[E, C] =
     state match {
       case (_, Causal(df, _)) =>
         val toUpdate = df.toList.collect {
@@ -135,13 +152,13 @@ object RGACRDT {
         val dfDelta = DotFun[RGANode[E]].empty ++ toUpdate.map(_ -> newNode)
 
         (UIJDLattice[GOList.State[Dot]].bottom, Causal(dfDelta, CContext[C].empty))
-  }
+    }
 
-  def updateBy[E, C: CContext](cond: E => Boolean, e: E): DeltaMutator[State[E, C]] = (replicaID, state) =>
-    updateRGANodeBy(state, cond, Alive(TimedVal(e, replicaID, 0)))
+  def updateBy[E, C: CContext](cond: E => Boolean, e: E): DeltaMutator[State[E, C]] =
+    (replicaID, state) => updateRGANodeBy(state, cond, Alive(TimedVal(e, replicaID, 0)))
 
-  def deleteBy[E, C: CContext](cond: E => Boolean): DeltaMutator[State[E, C]] = (_, state) =>
-    updateRGANodeBy(state, cond, Dead[E]())
+  def deleteBy[E, C: CContext](cond: E => Boolean): DeltaMutator[State[E, C]] =
+    (_, state) => updateRGANodeBy(state, cond, Dead[E]())
 }
 
 class RGA[E, C: CContext](crdt: DeltaCRDT[RGACRDT.State[E, C]]) {
@@ -168,7 +185,8 @@ object RGA {
   def apply[E, C: CContext](antiEntropy: AntiEntropy[State[E, C]]): RGA[E, C] =
     new RGA(DeltaCRDT.empty[State[E, C]](antiEntropy))
 
-  implicit def RGAStateCodec[E: JsonValueCodec, C: JsonValueCodec]: JsonValueCodec[(Map[GOListNode[TimedVal[Dot]], Elem[TimedVal[Dot]]], Causal[Map[Dot, RGANode[E]], C])] =
+  implicit def RGAStateCodec[E: JsonValueCodec, C: JsonValueCodec]
+      : JsonValueCodec[(Map[GOListNode[TimedVal[Dot]], Elem[TimedVal[Dot]]], Causal[Map[Dot, RGANode[E]], C])] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true).withTransientDefault(false))
 }
 
@@ -204,5 +222,3 @@ object RRGA {
   def apply[E, C: CContext](replicaID: String): RRGA[E, C] =
     new RRGA(RDeltaCRDT.empty[State[E, C]](replicaID))
 }
-
-

@@ -22,7 +22,7 @@ object PNCounterCRDT {
 
   def dec: DeltaMutator[State] = {
     case (replicaID, (_, decCounter)) =>
-       (UIJDLattice[GCounterCRDT.State].bottom, GCounterCRDT.inc(replicaID, decCounter))
+      (UIJDLattice[GCounterCRDT.State].bottom, GCounterCRDT.inc(replicaID, decCounter))
   }
 }
 
