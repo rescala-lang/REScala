@@ -37,7 +37,6 @@ lazy val cfg = new {
 
 lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
   dividiParoli,
-  documentation,
   examples,
   microbench,
   rescalaJS,
