@@ -8,6 +8,7 @@ import Dependencies.{Versions => V}
 
 ThisBuild / incOptions := (ThisBuild / incOptions).value.withLogRecompileOnMacro(false)
 cfg.noPublish
+ThisBuild / resolvers += ("STG old bintray repo" at "http://www.st.informatik.tu-darmstadt.de/maven/").withAllowInsecureProtocol(true)
 
 lazy val cfg = new {
   val base: Def.SettingsDefinition = List(
