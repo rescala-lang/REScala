@@ -15,10 +15,10 @@ class ReactorWithoutAPITest extends RETests {
   class ReactorStage {
     private var observer = None: Option[Observe]
 
-    def next[A](event: Evt[A])(callback: A => Unit): Unit = {
+    def next[A](event: Evt[A])(callback: (ReactorStage, A) => Unit): Unit = {
       observer = Some(event.observe({ x =>
         removeObserver()
-        callback(x)
+        callback(new ReactorStage, x)
       }))
     }
 
@@ -38,7 +38,7 @@ class ReactorWithoutAPITest extends RETests {
 
     CustomReactor.once { self =>
       state.set(1)
-      self.next(e1) { _ =>
+      self.next(e1) { (_, _) =>
         state.set(2)
       }
     }
@@ -55,7 +55,7 @@ class ReactorWithoutAPITest extends RETests {
     assert(state.now === 0)
 
     CustomReactor.once( self =>
-      self.next(e1) { res =>
+      self.next(e1) { (_, res) =>
         state.set(res)
       }
     )
@@ -72,7 +72,7 @@ class ReactorWithoutAPITest extends RETests {
     assert(state.now === 0)
 
     CustomReactor.once( self =>
-      self.next(e1) { _ =>
+      self.next(e1) { (_, _) =>
         state.set(1)
       }
     )
@@ -84,5 +84,29 @@ class ReactorWithoutAPITest extends RETests {
     assert(state.now === 42)
     e1.fire()
     assert(state.now === 42)
+  }
+
+  test("ReactorStages can be nested") {
+    val state = Var(0)
+    val e1 = Evt[Unit]()
+
+    assert(state.now === 0)
+
+    CustomReactor.once { self =>
+      state.set(1)
+
+      self.next(e1) { (self, _) =>
+        state.set(2)
+        self.next(e1) { (_,_) =>
+          state.set(3)
+        }
+      }
+    }
+
+    assert(state.now === 1)
+    e1.fire()
+    assert(state.now === 2)
+    e1.fire()
+    assert(state.now === 3)
   }
 }
