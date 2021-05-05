@@ -13,10 +13,20 @@ class ReactorWithoutAPITest extends RETests {
   }
 
   class ReactorStage {
+    private var observer = None: Option[Observe]
+
     def next[A](event: Evt[A])(callback: A => Unit): Unit = {
-      event.observe({ x =>
+      observer = Some(event.observe({ x =>
+        removeObserver()
         callback(x)
-      })
+      }))
+    }
+
+    private[this] def removeObserver(): Unit = {
+      observer.foreach( obs =>
+        obs.remove()
+      )
+      observer = None
     }
   }
 
@@ -52,6 +62,27 @@ class ReactorWithoutAPITest extends RETests {
 
     assert(state.now === 0)
     e1.fire(42)
+    assert(state.now === 42)
+  }
+
+  test("ReactorStage next only gets triggered once") {
+    val state = Var(0)
+    val e1 = Evt[Unit]()
+
+    assert(state.now === 0)
+
+    CustomReactor.once( self =>
+      self.next(e1) { _ =>
+        state.set(1)
+      }
+    )
+
+    assert(state.now === 0)
+    e1.fire()
+    assert(state.now === 1)
+    state.set(42)
+    assert(state.now === 42)
+    e1.fire()
     assert(state.now === 42)
   }
 }
