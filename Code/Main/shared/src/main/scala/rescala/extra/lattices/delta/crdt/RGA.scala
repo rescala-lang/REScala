@@ -187,7 +187,7 @@ object RGA {
 
   implicit def RGAStateCodec[E: JsonValueCodec, C: JsonValueCodec]
       : JsonValueCodec[(Map[GOListNode[TimedVal[Dot]], Elem[TimedVal[Dot]]], Causal[Map[Dot, RGANode[E]], C])] =
-    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true).withTransientDefault(false))
+    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 }
 
 class RRGA[E, C: CContext](val crdt: RDeltaCRDT[RGACRDT.State[E, C]]) extends CRDTInterface[RGACRDT.State[E, C]] {

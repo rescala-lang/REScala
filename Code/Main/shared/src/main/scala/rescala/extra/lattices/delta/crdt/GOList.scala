@@ -122,7 +122,7 @@ object GOList {
     new GOList(DeltaCRDT.empty[State[E]](antiEntropy))
 
   implicit def GOListStateCodec[E: JsonValueCodec]: JsonValueCodec[Map[GOListNode[TimedVal[E]], Elem[TimedVal[E]]]] =
-    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true).withTransientDefault(false))
+    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 }
 
 class RGOList[E](val crdt: RDeltaCRDT[GOListCRDT.State[E]]) extends CRDTInterface[GOListCRDT.State[E]] {
