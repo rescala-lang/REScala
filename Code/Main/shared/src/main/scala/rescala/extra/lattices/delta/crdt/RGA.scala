@@ -95,7 +95,7 @@ object RGACRDT {
       insertRec(replicaID, state, i, 0, 0) match {
         case None => UIJDLattice[State[E, C]].bottom
         case Some(golistDelta) =>
-          val dfDelta = DotFun[RGANode[E]].empty + (nextDot -> Alive(TimedVal(e, replicaID, golist.size)))
+          val dfDelta = DotFun[RGANode[E]].empty + (nextDot -> Alive(TimedVal(e, replicaID)))
 
           (golistDelta, Causal(dfDelta, CContext[C].fromSet(Set(nextDot))))
       }
@@ -131,10 +131,8 @@ object RGACRDT {
   private def updateRGANode[E, C: CContext](state: State[E, C], i: Int, newNode: RGANode[E]): State[E, C] =
     updateRGANodeRec(state, i, newNode, 0, 0)
 
-  def update[E, C: CContext](i: Int, e: E): DeltaMutator[State[E, C]] = (replicaID, state) =>
-    // Assume that a replica never updates the element twice in the same time unit
-    // Otherwise, one would have to derive some counter value that increases each time an element is updated
-    updateRGANode(state, i, Alive(TimedVal(e, replicaID, 0)))
+  def update[E, C: CContext](i: Int, e: E): DeltaMutator[State[E, C]] =
+    (replicaID, state) => updateRGANode(state, i, Alive(TimedVal(e, replicaID)))
 
   def delete[E, C: CContext](i: Int): DeltaMutator[State[E, C]] = (_, state) => updateRGANode(state, i, Dead[E]())
 
@@ -155,10 +153,15 @@ object RGACRDT {
     }
 
   def updateBy[E, C: CContext](cond: E => Boolean, e: E): DeltaMutator[State[E, C]] =
-    (replicaID, state) => updateRGANodeBy(state, cond, Alive(TimedVal(e, replicaID, 0)))
+    (replicaID, state) => updateRGANodeBy(state, cond, Alive(TimedVal(e, replicaID)))
 
   def deleteBy[E, C: CContext](cond: E => Boolean): DeltaMutator[State[E, C]] =
     (_, state) => updateRGANodeBy(state, cond, Dead[E]())
+
+//  def purgeTombstones[E, C: CContext](state: State[E, C]): State[E, C] = state match {
+//    case (golist, Causal(df, cc)) =>
+//
+//  }
 }
 
 class RGA[E, C: CContext](crdt: DeltaCRDT[RGACRDT.State[E, C]]) {

@@ -1,18 +1,18 @@
 package rescala.extra.lattices.delta
 
-case class TimedVal[A](value: A, replicaID: String, localCounter: Int, timestamp: Long) {
+case class TimedVal[A](value: A, replicaID: String, nanoTime: Long, timestamp: Long) {
   def laterThan(other: TimedVal[A]): Boolean =
     this.timestamp > other.timestamp ||
       this.timestamp == other.timestamp &&
       (
         this.replicaID > other.replicaID ||
-          this.replicaID == other.replicaID && this.localCounter > other.localCounter
+          this.replicaID == other.replicaID && this.nanoTime > other.nanoTime
       )
 }
 
 object TimedVal {
-  def apply[A](value: A, replicaID: String, localCounter: Int): TimedVal[A] =
-    TimedVal(value, replicaID, localCounter, System.currentTimeMillis())
+  def apply[A](value: A, replicaID: String): TimedVal[A] =
+    TimedVal(value, replicaID, System.nanoTime(), System.currentTimeMillis())
 
   implicit def TimedValAsUIJDLattice[A]: UIJDLattice[TimedVal[A]] = new UIJDLattice[TimedVal[A]] {
     override def leq(left: TimedVal[A], right: TimedVal[A]): Boolean = left.timestamp <= right.timestamp

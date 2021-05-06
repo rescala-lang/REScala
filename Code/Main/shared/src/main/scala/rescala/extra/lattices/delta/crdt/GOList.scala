@@ -98,7 +98,7 @@ object GOListCRDT {
   def insert[E](i: Int, e: E): DeltaMutator[State[E]] = (replicaID, state) => {
     findNth(state, Head[TimedVal[E]](), i) match {
       case None        => Map.empty
-      case Some(after) => Map(after -> Elem(TimedVal(e, replicaID, state.size)))
+      case Some(after) => Map(after -> Elem(TimedVal(e, replicaID)))
     }
   }
 }
