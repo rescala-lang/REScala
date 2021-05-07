@@ -23,7 +23,7 @@ object GOListCRDT {
       ): Boolean =
         left.toSet.subsetOf(right.toSet)
 
-      /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducable states */
+      /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
       override def decompose(state: Map[GOListNode[TimedVal[E]], Elem[TimedVal[E]]])
           : Set[Map[GOListNode[TimedVal[E]], Elem[TimedVal[E]]]] =
         state.toSet.map((edge: (GOListNode[TimedVal[E]], Elem[TimedVal[E]])) => Map(edge))
@@ -101,6 +101,22 @@ object GOListCRDT {
       case Some(after) => Map(after -> Elem(TimedVal(e, replicaID)))
     }
   }
+
+  @tailrec
+  private def withoutRec[E](state: State[E], current: GOListNode[TimedVal[E]], elems: Set[E]): State[E] =
+    state.get(current) match {
+      case None => state
+      case Some(next @ Elem(tv)) if elems.contains(tv.value) =>
+        val edgeRemoved = state.get(next) match {
+          case Some(nextnext) => state.removed(current).removed(next) + (current -> nextnext)
+          case None           => state.removed(current).removed(next)
+        }
+
+        withoutRec(edgeRemoved, current, elems)
+      case Some(next) => withoutRec(state, next, elems)
+    }
+
+  def without[E](state: State[E], elems: Set[E]): State[E] = withoutRec(state, Head[TimedVal[E]](), elems)
 }
 
 class GOList[E](crdt: DeltaCRDT[GOListCRDT.State[E]]) {

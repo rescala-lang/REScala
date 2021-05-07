@@ -11,7 +11,7 @@ object LastWriterWinsCRDT {
     ORValueCRDT.read[TimedVal[A], C].andThen(_.map(tv => tv.value))
 
   def write[A, C: CContext](v: A): DeltaMutator[State[A, C]] = (replicaID, state) => {
-    val m = ORValueCRDT.write[TimedVal[A], C](TimedVal(v, replicaID))
+    val m = ORValueCRDT.write(TimedVal(v, replicaID))
     m(replicaID, state)
   }
 

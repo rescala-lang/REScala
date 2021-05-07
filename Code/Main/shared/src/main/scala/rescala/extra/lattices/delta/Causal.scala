@@ -8,7 +8,7 @@ case object Causal {
       override def leq(left: Causal[D, C], right: Causal[D, C]): Boolean =
         DotStore[D].leq[C, C](left.dotStore, left.cc, right.dotStore, right.cc)
 
-      /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducable states */
+      /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
       override def decompose(state: Causal[D, C]): Set[Causal[D, C]] =
         DotStore[D].decompose[C](state.dotStore, state.cc) map {
           case (dotStore, cc) => Causal(dotStore, cc)

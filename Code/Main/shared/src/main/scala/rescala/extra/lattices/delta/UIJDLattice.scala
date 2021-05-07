@@ -7,7 +7,7 @@ import rescala.extra.lattices.Lattice._
 trait UIJDLattice[A] extends Lattice[A] {
   def leq(left: A, right: A): Boolean
 
-  /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducable states */
+  /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
   def decompose(state: A): Set[A]
 
   def diff(state: A, delta: A): Option[A] = {
@@ -23,7 +23,7 @@ object UIJDLattice {
   implicit def IntAsUIJDLattice: UIJDLattice[Int] = new UIJDLattice[Int] {
     override def leq(left: Int, right: Int): Boolean = left <= right
 
-    /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducable states */
+    /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
     override def decompose(state: Int): Set[Int] = Set(state)
 
     /** By assumption: associative, commutative, idempotent. */
@@ -35,7 +35,7 @@ object UIJDLattice {
   implicit def SetAsUIJDLattice[A]: UIJDLattice[Set[A]] = new UIJDLattice[Set[A]] {
     override def leq(left: Set[A], right: Set[A]): Boolean = left subsetOf right
 
-    /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducable states */
+    /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
     override def decompose(state: Set[A]): Set[Set[A]] = state.map(Set(_))
 
     /** By assumption: associative, commutative, idempotent. */
@@ -51,7 +51,7 @@ object UIJDLattice {
       case (Some(l), Some(r)) => UIJDLattice[A].leq(l, r)
     }
 
-    /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducable states */
+    /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
     override def decompose(state: Option[A]): Set[Option[A]] = state match {
       case None    => Set(None)
       case Some(v) => UIJDLattice[A].decompose(v).map(Some(_))
@@ -69,7 +69,7 @@ object UIJDLattice {
         OptionAsUIJDLattice[V].leq(left.get(k), right.get(k))
       }
 
-    /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducable states */
+    /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
     override def decompose(state: Map[K, V]): Set[Map[K, V]] = state.keySet.flatMap { k =>
       UIJDLattice[V].decompose(state(k)).map(v => Map(k -> v))
     }
@@ -88,7 +88,7 @@ object UIJDLattice {
         UIJDLattice[A].leq(ll, rl) && UIJDLattice[B].leq(lr, rr)
     }
 
-    /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducable states */
+    /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
     override def decompose(state: (A, B)): Set[(A, B)] = state match {
       case (left, right) =>
         val leftDecomposed  = UIJDLattice[A].decompose(left) map { (_, UIJDLattice[B].bottom) }

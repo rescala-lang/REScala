@@ -17,7 +17,7 @@ object TimedVal {
   implicit def TimedValAsUIJDLattice[A]: UIJDLattice[TimedVal[A]] = new UIJDLattice[TimedVal[A]] {
     override def leq(left: TimedVal[A], right: TimedVal[A]): Boolean = left.timestamp <= right.timestamp
 
-    /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducable states */
+    /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
     override def decompose(state: TimedVal[A]): Set[TimedVal[A]] = Set(state)
 
     override def bottom: TimedVal[A] = throw new UnsupportedOperationException("TimedVal does not have a bottom value")

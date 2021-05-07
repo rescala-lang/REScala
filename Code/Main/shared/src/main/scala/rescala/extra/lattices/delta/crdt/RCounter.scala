@@ -13,7 +13,7 @@ object RCounterCRDT {
         linc <= rinc && ldec <= rdec
     }
 
-    /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducable states */
+    /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
     override def decompose(state: (Int, Int)): Set[(Int, Int)] = state match {
       case (inc, dec) => Set((inc, 0), (0, dec))
     }

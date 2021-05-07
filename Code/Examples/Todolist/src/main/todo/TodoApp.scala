@@ -14,7 +14,7 @@ import rescala.extra.Tags._
 import rescala.extra.distributables.LociDist
 import rescala.extra.lattices.delta.CContext._
 import rescala.extra.lattices.delta.DotStore.DotFun
-import rescala.extra.lattices.delta.crdt.GOListCRDT.GOListAsUIJDLattice
+import rescala.extra.lattices.delta.crdt.RRGA._
 import rescala.extra.lattices.delta.crdt.{Elem, GOList, GOListNode, RGANode, RRGA}
 import rescala.extra.lattices.delta.{Causal, Delta, Dot, TimedVal}
 import scalatags.JsDom

@@ -12,7 +12,7 @@ case object LexPair {
           !UIJDLattice[A].leq(right.fst, left.fst) || UIJDLattice[B].leq(left.snd, right.snd)
         )
 
-      /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducable states */
+      /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
       override def decompose(state: LexPair[A, B]): Set[LexPair[A, B]] =
         UIJDLattice[B].decompose(state.snd).map(LexPair(state.fst, _))
 
