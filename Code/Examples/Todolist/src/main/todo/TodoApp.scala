@@ -29,11 +29,11 @@ class TodoApp() {
   implicit val transmittableTaskList: IdenticallyTransmittable[RRGA.State[TodoTask, DietMapCContext]] =
     IdenticallyTransmittable()
 
-  implicit val DotDecoder: Decoder[Dot] = semiauto.deriveDecoder: @scala.annotation.nowarn
-  implicit val DotEncoder: Encoder[Dot] = semiauto.deriveEncoder: @scala.annotation.nowarn
+  implicit val DotDecoder: Decoder[Dot] = semiauto.deriveDecoder
+  implicit val DotEncoder: Encoder[Dot] = semiauto.deriveEncoder
 
-  implicit val RangeDecoder: Decoder[cats.collections.Range[Int]] = semiauto.deriveDecoder: @scala.annotation.nowarn
-  implicit val RangeEncoder: Encoder[cats.collections.Range[Int]] = semiauto.deriveEncoder: @scala.annotation.nowarn
+  implicit val RangeDecoder: Decoder[cats.collections.Range[Int]] = semiauto.deriveDecoder
+  implicit val RangeEncoder: Encoder[cats.collections.Range[Int]] = semiauto.deriveEncoder
 
   implicit val DietDecoder: Decoder[Diet[Int]] = Decoder.decodeList[cats.collections.Range[Int]].map {
     _.foldLeft(Diet.empty[Int]) {
@@ -45,25 +45,25 @@ class TodoApp() {
       (l, r) => r :: l
     })
 
-  implicit val GOListNodeDecoder: Decoder[GOListNode[TimedVal[Dot]]] = semiauto.deriveDecoder: @scala.annotation.nowarn
-  implicit val GOListNodeEncoder: Encoder[GOListNode[TimedVal[Dot]]] = semiauto.deriveEncoder: @scala.annotation.nowarn
+  implicit val GOListNodeDecoder: Decoder[GOListNode[TimedVal[Dot]]] = semiauto.deriveDecoder
+  implicit val GOListNodeEncoder: Encoder[GOListNode[TimedVal[Dot]]] = semiauto.deriveEncoder
 
-  implicit val DotTimedValDecoder: Decoder[TimedVal[Dot]] = semiauto.deriveDecoder: @scala.annotation.nowarn
-  implicit val DotTimedValEncoder: Encoder[TimedVal[Dot]] = semiauto.deriveEncoder: @scala.annotation.nowarn
+  implicit val DotTimedValDecoder: Decoder[TimedVal[Dot]] = semiauto.deriveDecoder
+  implicit val DotTimedValEncoder: Encoder[TimedVal[Dot]] = semiauto.deriveEncoder
 
-  implicit val ElemDecoder: Decoder[Elem[TimedVal[Dot]]] = semiauto.deriveDecoder: @scala.annotation.nowarn
-  implicit val ElemEncoder: Encoder[Elem[TimedVal[Dot]]] = semiauto.deriveEncoder: @scala.annotation.nowarn
+  implicit val ElemDecoder: Decoder[Elem[TimedVal[Dot]]] = semiauto.deriveDecoder
+  implicit val ElemEncoder: Encoder[Elem[TimedVal[Dot]]] = semiauto.deriveEncoder
 
   implicit val GOListDecoder: Decoder[GOList.State[Dot]] =
     Decoder.decodeList[(GOListNode[TimedVal[Dot]], Elem[TimedVal[Dot]])].map(_.toMap)
   implicit val GOListEncoder: Encoder[GOList.State[Dot]] =
     Encoder.encodeList[(GOListNode[TimedVal[Dot]], Elem[TimedVal[Dot]])].contramap(_.toList)
 
-  implicit val TodoTaskTimedValDecoder: Decoder[TimedVal[TodoTask]] = semiauto.deriveDecoder: @scala.annotation.nowarn
-  implicit val TodoTaskTimedValEncoder: Encoder[TimedVal[TodoTask]] = semiauto.deriveEncoder: @scala.annotation.nowarn
+  implicit val TodoTaskTimedValDecoder: Decoder[TimedVal[TodoTask]] = semiauto.deriveDecoder
+  implicit val TodoTaskTimedValEncoder: Encoder[TimedVal[TodoTask]] = semiauto.deriveEncoder
 
-  implicit val RGANodeDecoder: Decoder[RGANode[TodoTask]] = semiauto.deriveDecoder: @scala.annotation.nowarn
-  implicit val RGANodeEncoder: Encoder[RGANode[TodoTask]] = semiauto.deriveEncoder: @scala.annotation.nowarn
+  implicit val RGANodeDecoder: Decoder[RGANode[TodoTask]] = semiauto.deriveDecoder
+  implicit val RGANodeEncoder: Encoder[RGANode[TodoTask]] = semiauto.deriveEncoder
 
   implicit val DotFunDecoder: Decoder[DotFun[RGANode[TodoTask]]] =
     Decoder.decodeList[(Dot, RGANode[TodoTask])].map(_.toMap)
@@ -71,14 +71,14 @@ class TodoApp() {
     Encoder.encodeList[(Dot, RGANode[TodoTask])].contramap(_.toList)
 
   implicit val CausalDecoder: Decoder[Causal[DotFun[RGANode[TodoTask]], DietMapCContext]] =
-    semiauto.deriveDecoder: @scala.annotation.nowarn
+    semiauto.deriveDecoder
   implicit val CausalEncoder: Encoder[Causal[DotFun[RGANode[TodoTask]], DietMapCContext]] =
-    semiauto.deriveEncoder: @scala.annotation.nowarn
+    semiauto.deriveEncoder
 
   implicit val RRGADecoder: Decoder[RRGA.State[TodoTask, DietMapCContext]] =
-    semiauto.deriveDecoder: @scala.annotation.nowarn
+    semiauto.deriveDecoder
   implicit val RRGAEncoder: Encoder[RRGA.State[TodoTask, DietMapCContext]] =
-    semiauto.deriveEncoder: @scala.annotation.nowarn
+    semiauto.deriveEncoder
 
   case class TodoRes(div: TypedTag[Div], tasklist: Signal[RRGA[TodoTask, DietMapCContext]])
   case class ViewDataPair(view: Map[String, TodoTaskView], data: RRGA[TodoTask, DietMapCContext])
@@ -151,7 +151,7 @@ class TodoApp() {
 
     val taskList = dataPlusUI.map(_.data)
 
-    LociDist.distributeDeltaCRDT(taskList, deltaEvt, Todolist.registry)(Binding("tasklist"): @scala.annotation.nowarn)
+    LociDist.distributeDeltaCRDT(taskList, deltaEvt, Todolist.registry)(Binding("tasklist"))
 
     val tasks = taskList.map(_.toList)
 

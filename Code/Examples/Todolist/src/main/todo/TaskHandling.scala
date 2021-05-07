@@ -19,8 +19,8 @@ case class TodoTask(id: String = s"Task(${ThreadLocalRandom.current().nextLong()
 }
 
 object TodoTask {
-  implicit val todoTaskDecoder: Decoder[TodoTask] = semiauto.deriveDecoder: @scala.annotation.nowarn
-  implicit val todoTaskEncoder: Encoder[TodoTask] = semiauto.deriveEncoder: @scala.annotation.nowarn
+  implicit val todoTaskDecoder: Decoder[TodoTask] = semiauto.deriveDecoder
+  implicit val todoTaskEncoder: Encoder[TodoTask] = semiauto.deriveEncoder
 }
 
 case class TodoTaskView(tag: TypedTag[LI], removeEvt: Event[String], writeEvt: Event[TodoTask])
