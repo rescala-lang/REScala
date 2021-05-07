@@ -109,31 +109,31 @@ class TodoApp() {
 
     val dataPlusUI = Events.foldAll(initial) { p =>
       Seq(
-        createTodo >> { str =>
+        createTodo act { str =>
           val task    = TodoTask(desc = str)
           val newList = p.data.insert(0, task)
           val ui      = TodoTaskView.fromTask(task)
 
           ViewDataPair(p.view + (task.id -> ui), newList)
         },
-        removeAll.event >> { _ =>
+        removeAll.event act { _ =>
           val doneIDs = p.data.toList.collect {
             case TodoTask(id, _, true) => id
           }
 
           ViewDataPair(p.view.removedAll(doneIDs), p.data.deleteBy(_.done))
         },
-        EventSeqOps(p.view.values.toList.map(_.removeEvt)) >> { id =>
+        OnEvs(p.view.values.toList.map(_.removeEvt)) act { id =>
           ViewDataPair(p.view.removed(id), p.data.deleteBy(_.id == id))
         },
-        EventSeqOps(p.view.values.toList.map(_.writeEvt)) >> { task =>
+        OnEvs(p.view.values.toList.map(_.writeEvt)) act { task =>
           val newList = p.data.updateBy(_.id == task.id, task)
 
           val ui = TodoTaskView.fromTask(task)
 
           ViewDataPair(p.view.updated(task.id, ui), newList)
         },
-        deltaEvt >> { delta =>
+        deltaEvt act { delta =>
           val newList = p.data.applyDelta(delta)
 
           val oldTasks = p.data.toList

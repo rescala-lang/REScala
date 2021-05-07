@@ -115,8 +115,8 @@ trait RescalaInterface[S <: Struct] extends Aliases[S] {
       macro rescala.macros.ReactiveMacros.ReactiveExpression[A, S, Dynamic, rescala.operator.Events.type]
   }
 
-  implicit def EventOps[T](e: Event[T]): Events.EOps[T]               = new Events.EOps[T](e)
-  implicit def EventSeqOps[T](e: => Seq[Event[T]]): Events.ESeqOps[T] = new Events.ESeqOps[T](e)
+  implicit def OnEv[T](e: Event[T]): Events.OnEv[T]           = new Events.OnEv[T](e)
+  implicit def OnEvs[T](e: => Seq[Event[T]]): Events.OnEvs[T] = new Events.OnEvs[T](e)
 
   /** Contains static methods to create Events
     * @group create

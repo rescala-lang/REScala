@@ -159,16 +159,16 @@ trait Events[S <: Struct] {
   case class StaticFoldMatchDynamic[T, +A](event: Event[T, S], f: DynamicTicket[S] => T => A) extends FoldMatch[A]
   case class DynamicFoldMatch[T, +A](event: () => Seq[Event[T, S]], f: T => A)                extends FoldMatch[A]
 
-  class EOps[T](e: Event[T, S]) {
+  class OnEv[T](e: Event[T, S]) {
 
     /** Constructs a pair similar to ->, however this one is compatible with type inference for [[fold]] */
-    final def >>[A](fun: T => A): FoldMatch[A]                      = StaticFoldMatch(e, fun)
-    final def >>>[A](fun: DynamicTicket[S] => T => A): FoldMatch[A] = StaticFoldMatchDynamic(e, fun)
+    final def act[A](fun: T => A): FoldMatch[A]                     = StaticFoldMatch(e, fun)
+    final def dyn[A](fun: DynamicTicket[S] => T => A): FoldMatch[A] = StaticFoldMatchDynamic(e, fun)
   }
-  class ESeqOps[T](e: => Seq[Event[T, S]]) {
+  class OnEvs[T](e: => Seq[Event[T, S]]) {
 
     /** Constructs a pair similar to ->, however this one is compatible with type inference for [[fold]] */
-    final def >>[A](fun: T => A): FoldMatch[A] = DynamicFoldMatch(() => e, fun)
+    final def act[A](fun: T => A): FoldMatch[A] = DynamicFoldMatch(() => e, fun)
   }
 
   case class CBResult[T, R](event: Event[T, S], value: R)
