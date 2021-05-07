@@ -8,6 +8,8 @@ import rescala.operator.Pulse.NoChange
 import rescala.operator.Signals.{SignalResource, Sstate}
 
 trait DefaultImplementations[S <: Struct] {
+  /** @param isDynamicWithStaticDeps [[None]] means static dependencies only,
+    *                                [[Some]] means dynamic with the given static ones for optimization */
   class SignalImpl[T](
       initial: Sstate[T, S],
       expr: (DynamicTicket[S], () => T) => T,
