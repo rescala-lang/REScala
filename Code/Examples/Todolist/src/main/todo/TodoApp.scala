@@ -151,7 +151,9 @@ class TodoApp() {
 
     val taskList = dataPlusUI.map(_.data)
 
-    LociDist.distributeDeltaCRDT(taskList, deltaEvt, Todolist.registry)(Binding[RRGA.State[TodoTask, DietMapCContext]=> Unit]("tasklist"))
+    LociDist.distributeDeltaCRDT(taskList, deltaEvt, Todolist.registry)(
+      Binding[RRGA.State[TodoTask, DietMapCContext] => Unit]("tasklist")
+    )
 
     val tasks = taskList.map(_.toList)
 
