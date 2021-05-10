@@ -65,7 +65,7 @@ class Index(connected: Signal[String]) {
   def gen(list: Signal[Postings]): JsDom.TypedTag[html.Body] = {
 
     val articles = list.map { itemsToDisplay =>
-      itemsToDisplay.value.toList.map { emergentcy =>
+      itemsToDisplay.toList.map { emergentcy =>
         article(
           lang := "de",
           if (emergentcy.img.isEmpty) frag()

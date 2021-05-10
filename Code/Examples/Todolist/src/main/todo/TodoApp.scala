@@ -111,7 +111,7 @@ class TodoApp() {
       Seq(
         createTodo act { str =>
           val task    = TodoTask(desc = str)
-          val newList = p.data.insert(0, task)
+          val newList = p.data.prepend(task)
           val ui      = TodoTaskView.fromTask(task)
 
           ViewDataPair(p.view + (task.id -> ui), newList)

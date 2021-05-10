@@ -71,6 +71,10 @@ object RGACRDT {
         }
     }
 
+  def sequence[E, C: CContext]: DeltaQuery[State[E, C], Long] = {
+    case Causal(((c, _), _), _) => c
+  }
+
   def insertRec[E, C: CContext](
       replicaID: String,
       state: State[E, C],
@@ -105,6 +109,48 @@ object RGACRDT {
           val dfDelta = DotFun[RGANode[E]].empty + (nextDot -> Alive(TimedVal(e, replicaID)))
 
           Causal((golistDelta, dfDelta), CContext[C].fromSet(Set(nextDot)))
+      }
+  }
+
+  def insertAllRec[E, C: CContext](
+      replicaID: String,
+      state: State[E, C],
+      target: Int,
+      counted: Int,
+      skipped: Int,
+      dots: Iterable[Dot]
+  ): Option[ForcedWrite.State[GOList.State[Dot]]] =
+    (state: @unchecked) match {
+      case Causal((fw @ FW(golist), df), cc) =>
+        if (target == counted) {
+          val m = GOListCRDT.insertAll(counted + skipped, dots)
+          Some(
+            ForcedWriteCRDT.mutate(m)(replicaID, fw)
+          )
+        } else {
+          GOListCRDT.read(counted + skipped)(golist) flatMap { d =>
+            df(d) match {
+              case Dead()   => insertAllRec(replicaID, state, target, counted, skipped + 1, dots)
+              case Alive(_) => insertAllRec(replicaID, state, target, counted + 1, skipped, dots)
+            }
+          }
+        }
+    }
+
+  def insertAll[E, C: CContext](i: Int, elems: Iterable[E]): DeltaMutator[State[E, C]] = {
+    case (replicaID, state @ Causal(_, cc)) =>
+      val nextDot = CContext[C].nextDot(cc, replicaID)
+
+      val nextDots = List.iterate(nextDot, elems.size) {
+        case Dot(c, r) => Dot(c + 1, r)
+      }
+
+      insertAllRec(replicaID, state, i, 0, 0, nextDots) match {
+        case None => UIJDLattice[State[E, C]].bottom
+        case Some(golistDelta) =>
+          val dfDelta = DotFun[RGANode[E]].empty ++ (nextDots zip (elems.map(e => Alive(TimedVal(e, replicaID)))))
+
+          Causal((golistDelta, dfDelta), CContext[C].fromSet(nextDots.toSet))
       }
   }
 
@@ -188,6 +234,14 @@ object RGACRDT {
           CContext[C].fromSet(toRemove)
         )
     }
+
+  def clear[E, C: CContext](): DeltaMutator[State[E, C]] = {
+    case (_, Causal(_, cc)) =>
+      Causal(
+        (UIJDLattice[ForcedWrite.State[GOList.State[Dot]]].bottom, DotFun[RGANode[E]].empty),
+        cc
+      )
+  }
 }
 
 class RGA[E, C: CContext](crdt: DeltaCRDT[RGACRDT.State[E, C]]) {
@@ -199,11 +253,23 @@ class RGA[E, C: CContext](crdt: DeltaCRDT[RGACRDT.State[E, C]]) {
 
   def insert(i: Int, e: E): RGA[E, C] = new RGA(crdt.mutate(RGACRDT.insert(i, e)))
 
+  def prepend(e: E): RGA[E, C] = insert(0, e)
+
+  def append(e: E): RGA[E, C] = insert(size, e)
+
+  def insertAll(i: Int, elems: Iterable[E]): RGA[E, C] = new RGA(crdt.mutate(RGACRDT.insertAll(i, elems)))
+
+  def prependAll(elems: Iterable[E]): RGA[E, C] = insertAll(0, elems)
+
+  def appendAll(elems: Iterable[E]): RGA[E, C] = insertAll(size, elems)
+
   def update(i: Int, e: E): RGA[E, C] = new RGA(crdt.mutate(RGACRDT.update(i, e)))
 
   def delete(i: Int): RGA[E, C] = new RGA(crdt.mutate(RGACRDT.delete(i)))
 
   def purgeTombstones(): RGA[E, C] = new RGA(crdt.mutate(RGACRDT.purgeTombstones()))
+
+  def clear(): RGA[E, C] = new RGA(crdt.mutate(RGACRDT.clear()))
 
   def processReceivedDeltas(): RGA[E, C] = new RGA(crdt.processReceivedDeltas())
 }
@@ -230,7 +296,19 @@ class RRGA[E, C: CContext](val crdt: RDeltaCRDT[RGACRDT.State[E, C]]) extends CR
 
   def toList: List[E] = crdt.query(RGACRDT.toList)
 
+  def sequence: Long = crdt.query(RGACRDT.sequence)
+
   def insert(i: Int, e: E): RRGA[E, C] = new RRGA(crdt.mutate(RGACRDT.insert(i, e)))
+
+  def prepend(e: E): RRGA[E, C] = insert(0, e)
+
+  def append(e: E): RRGA[E, C] = insert(size, e)
+
+  def insertAll(i: Int, elems: Iterable[E]): RRGA[E, C] = new RRGA(crdt.mutate(RGACRDT.insertAll(i, elems)))
+
+  def prependAll(elems: Iterable[E]): RRGA[E, C] = insertAll(0, elems)
+
+  def appendAll(elems: Iterable[E]): RRGA[E, C] = insertAll(size, elems)
 
   def update(i: Int, e: E): RRGA[E, C] = new RRGA(crdt.mutate(RGACRDT.update(i, e)))
 
@@ -239,6 +317,10 @@ class RRGA[E, C: CContext](val crdt: RDeltaCRDT[RGACRDT.State[E, C]]) extends CR
   def updateBy(cond: E => Boolean, e: E): RRGA[E, C] = new RRGA(crdt.mutate(RGACRDT.updateBy(cond, e)))
 
   def deleteBy(cond: E => Boolean): RRGA[E, C] = new RRGA(crdt.mutate(RGACRDT.deleteBy(cond)))
+
+  def purgeTombstones(): RRGA[E, C] = new RRGA(crdt.mutate(RGACRDT.purgeTombstones()))
+
+  def clear(): RRGA[E, C] = new RRGA(crdt.mutate(RGACRDT.clear()))
 
   def applyDelta(delta: Delta[RGACRDT.State[E, C]]): RRGA[E, C] = {
     val newCRDT = crdt.applyDelta(delta)

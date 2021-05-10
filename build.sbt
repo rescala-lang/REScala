@@ -196,6 +196,9 @@ lazy val ersirServer = project.in(file("Code/Examples/Ersir/server"))
       jsoup.value,
       betterFiles.value,
       decline.value,
+      catsCollection.value,
+      jsoniterScalaAll.value(0) % "provided,test",
+      jsoniterScalaAll.value(1),
     ),
     vbundleDef,
     (Compile / compile) := ((Compile / compile) dependsOn vbundle).value
@@ -213,6 +216,9 @@ lazy val ersirWeb = project.in(file("Code/Examples/Ersir/web"))
     libraryDependencies ++= Seq(
       scalajsDom.value,
       normalizecss.value,
+      catsCollection.value,
+      jsoniterScalaAll.value(0) % "provided,test",
+      jsoniterScalaAll.value(1),
     ),
     scalaJSUseMainModuleInitializer := true,
     webpackBundlingMode := BundlingMode.LibraryOnly()
@@ -234,6 +240,9 @@ lazy val ersirShared = crossProject(JSPlatform, JVMPlatform)
       loci.wsAkka.value,
       scribe.value,
       loci.circe.value,
+      catsCollection.value,
+      jsoniterScalaAll.value(0) % "provided,test",
+      jsoniterScalaAll.value(1),
     )
   )
   .dependsOn(rescala)

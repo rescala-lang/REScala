@@ -102,6 +102,15 @@ object GOListCRDT {
     }
   }
 
+  def insertAll[E](i: Int, elems: Iterable[E]): DeltaMutator[State[E]] = (replicaID, state) => {
+    findNth(state, Head[TimedVal[E]](), i) match {
+      case None => Map.empty
+      case Some(after) =>
+        val order = elems.map(e => Elem(TimedVal(e, replicaID)))
+        Map((List(after) ++ order.init) zip order: _*)
+    }
+  }
+
   @tailrec
   private def withoutRec[E](state: State[E], current: GOListNode[TimedVal[E]], elems: Set[E]): State[E] =
     state.get(current) match {

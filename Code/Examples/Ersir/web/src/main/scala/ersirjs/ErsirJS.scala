@@ -7,39 +7,47 @@ import loci.transmitter.RemoteRef
 import org.scalajs.dom
 import rescala.default._
 import rescala.extra.distributables.LociDist
-import rescala.extra.lattices.sequences.RGOA
-import rescala.extra.lattices.sequences.RGOA.RGOA
+import rescala.extra.lattices.delta.CContext.DietMapCContext
+import rescala.extra.lattices.delta.Delta
+import rescala.extra.lattices.delta.crdt.RRGA
+import rescala.extra.lattices.delta.crdt.RRGA._
 
+import java.util.concurrent.ThreadLocalRandom
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 object ErsirJS {
 
-  type Postings = Epoche[RGOA[Posting]]
+  type Postings = RRGA[Posting, DietMapCContext]
 
-  val connectionSignal = Var(false)
+  val connectionSignal: Var[Boolean] = Var(false)
 
-  val connectClass = Signal {
+  val connectClass: Signal[String] = Signal {
     val internet = connectionSignal.value
     s"${if (internet) " hideConnectionIssues" else ""}"
   }
 
   val index = new Index(connectClass)
 
-  val addPost = index.addPost.event
+  val addPost: Event[Posting] = index.addPost.event
     .filter(p => p.title.nonEmpty || p.img.nonEmpty)
 
+  val deltaEvt: Evt[Delta[RRGA.State[Posting, DietMapCContext]]] = Evt()
+
+  val myID: String = ThreadLocalRandom.current().nextLong().toHexString
+
   val postings: Signal[Postings] =
-    Events.foldAll(Epoche(RGOA(List.empty[Posting])))(state =>
+    Events.foldAll(RRGA[Posting, DietMapCContext](myID)) { rga =>
       Seq(
-        addPost act { post => state.map(_.prepend(post)) },
-        index.reset.event act { rs => state.next(RGOA(Nil)) }
-        )
-    )("postings")
+        addPost act rga.prepend,
+        index.reset.event act { _ => rga.clear() },
+        deltaEvt act rga.applyDelta
+      )
+    }
 
   val registry = new Registry
 
-  LociDist.distribute(postings, registry)(Bindings.crdtDescriptions)
+  LociDist.distributeDeltaCRDT(postings, deltaEvt, registry)(Bindings.crdtDescriptions)
 
   def main(args: Array[String]): Unit = {
     dom.window.document.title = "Emergencity RSS Reader"
@@ -49,7 +57,7 @@ object ErsirJS {
       if (!connecting && !registry.remotes.exists(_.connected)) {
         connecting = true
         lociConnect().onComplete { res =>
-          scribe.trace(s"loci connection try finished: $res")
+          // scribe.trace(s"loci connection try finished: $res")
           connecting = false
         }
       }
@@ -63,12 +71,12 @@ object ErsirJS {
     }
 
     val connection: Future[RemoteRef] = registry.connect(WS(wsUri))
-    scribe.debug(s"connecting loci to $wsUri …")
+    // scribe.debug(s"connecting loci to $wsUri …")
     connection.foreach { remote =>
       connectionSignal.set(true)
       remote.disconnected.foreach { _ =>
         connectionSignal.set(false)
-        scribe.debug(s"loci reconnect")
+      // scribe.debug(s"loci reconnect")
       }
     }
     connection

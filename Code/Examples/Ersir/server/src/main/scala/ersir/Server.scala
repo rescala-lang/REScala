@@ -3,38 +3,47 @@ package ersir
 import akka.actor.ActorSystem
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
-import ersir.shared.{Bindings, Epoche, Posting}
+import ersir.shared.{Bindings, Posting}
 import loci.communicator.ws.akka._
 import loci.registry.Registry
 import org.jsoup.Jsoup
 import rescala.default._
 import rescala.extra.distributables.LociDist
-import rescala.extra.lattices.Lattice
-import rescala.extra.lattices.sequences.RGOA
-import rescala.extra.lattices.sequences.RGOA.RGOA
-import rescala.reactives.Diff
+import rescala.extra.lattices.delta.CContext.DietMapCContext
+import rescala.extra.lattices.delta.Delta
+import rescala.extra.lattices.delta.crdt.RRGA
+import rescala.extra.lattices.delta.crdt.RRGA._
+import rescala.operator.Diff
 
+import java.util.concurrent.ThreadLocalRandom
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
 
 class Server(pages: ServerPages, system: ActorSystem, webResources: WebResources) {
 
-  val manualAddPostings: Evt[List[Posting]] = Evt[List[Posting]]()
+  val manualAddPostings: Evt[List[Posting]] = Evt()
 
-  val serverSideEntries: Signal[Epoche[RGOA[Posting]]] =
-    manualAddPostings.fold(Epoche(RGOA(List.empty[Posting]))) { (state, added) =>
-      state.map(ps => Lattice.merge(ps, RGOA(added)))
-    }("postings")
+  val deltaEvt: Evt[Delta[RRGA.State[Posting, DietMapCContext]]] = Evt()
+
+  val myID: String = ThreadLocalRandom.current().nextLong().toHexString
+
+  val serverSideEntries: Signal[RRGA[Posting, DietMapCContext]] =
+    Events.foldAll(RRGA[Posting, DietMapCContext](myID)) { rga =>
+      Seq(
+        manualAddPostings act rga.prependAll,
+        deltaEvt act rga.applyDelta
+      )
+    }
 
   val registry = new Registry
 
   addNewsFeed()
 
   scribe.info("test")
-  LociDist.distribute(serverSideEntries, registry)(Bindings.crdtDescriptions)
+  LociDist.distributeDeltaCRDT(serverSideEntries, deltaEvt, registry)(Bindings.crdtDescriptions)
 
   serverSideEntries.observe { sse =>
-    scribe.trace(s"new postings ${sse.value.toList}")
+    scribe.trace(s"new postings ${sse.toList}")
   }
 
   serverSideEntries.change.observe {
@@ -83,7 +92,7 @@ class Server(pages: ServerPages, system: ActorSystem, webResources: WebResources
         getFromResourceDirectory("static")
       } ~
       path("add-entry") {
-        formFields((Symbol("title"), Symbol("description"), Symbol("imageUrl"))).as(Posting.apply _) { em =>
+        formFields("title", "description", "imageUrl").as(Posting.apply _) { em =>
           manualAddPostings.fire(List(em))
           complete("ok")
         }
