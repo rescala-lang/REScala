@@ -57,6 +57,7 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Code/Main"))
     cfg.test,
     cfg.bintray,
     Resolvers.stg,
+    Resolvers.jitpack,
     libraryDependencies ++= Seq(
       scalatestpluscheck.value,
       sourcecode.value,
@@ -128,6 +129,7 @@ lazy val todolist = project.in(file("Code/Examples/Todolist"))
     cfg.base,
     cfg.noPublish,
     name := "todolist",
+    Resolvers.jitpack,
     libraryDependencies ++= circeAll.value ++ Seq(
       loci.circe.value,
       scalatags.value,
@@ -234,6 +236,7 @@ lazy val ersirShared = crossProject(JSPlatform, JVMPlatform)
   .settings(
     name := "shared",
     cfg.base,
+    Resolvers.jitpack,
     libraryDependencies ++= circeAll.value ++ akkaHttpAll.value ++ Seq(
       scalatags.value,
       loci.communication.value,

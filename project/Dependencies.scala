@@ -32,7 +32,7 @@ object Dependencies {
     val scala213                 = "2.13.5"
     val scala300                 = "3.0.0-M3"
     val scalaJavaTime            = "2.2.2"
-    val scalaLociCommunication   = "0.4.0"
+    val scalaLociCommunication   = "55433d73db8c49fd8b4292e5b9f20fe535e761c0"
     val scalaParallelCollections = "1.0.0"
     val scalaSwing               = "3.0.0"
     val scalaXml                 = "1.3.0"
@@ -42,7 +42,7 @@ object Dependencies {
     val scalatags                = "0.9.4"
     val scalatest                = "3.2.8"
     val scalatestpluscheck       = "3.2.2.0"
-    val scribe                   = "3.5.3"
+    val scribe                   = "3.1.7"
     val sourcecode               = "0.2.6"
     val tomlScala                = "0.2.2"
     val upickle                  = "1.3.11"
@@ -98,7 +98,7 @@ object Dependencies {
     .map(n => "io.circe" %%% s"circe-$n" % V.circeCore))
 
   object loci {
-    def generic(n: String) = Def.setting("de.tuda.stg" %%% s"scala-loci-$n" % V.scalaLociCommunication)
+    def generic(n: String) = Def.setting("com.github.scala-loci.scala-loci" %%% s"scala-loci-$n" % V.scalaLociCommunication)
 
     val communication = generic("communication")
 

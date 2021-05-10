@@ -100,6 +100,7 @@ object Settings {
 
 object Resolvers {
   val stg = resolvers += Resolver.bintrayRepo("stg-tud", "maven")
+  val jitpack = resolvers += "jitpack" at "https://jitpack.io"
 
   /*
    * publish procedure copied and adapted from:
