@@ -6,7 +6,7 @@ import io.circe._
 import io.circe.generic.semiauto
 import loci.registry.Binding
 import loci.serializer.circe.circeBasedSerializable
-import loci.transmitter.IdenticallyTransmittable
+import loci.transmitter.transmittable.IdenticallyTransmittable
 import org.scalajs.dom.UIEvent
 import org.scalajs.dom.html.{Div, Input}
 import rescala.default._
@@ -151,7 +151,7 @@ class TodoApp() {
 
     val taskList = dataPlusUI.map(_.data)
 
-    LociDist.distributeDeltaCRDT(taskList, deltaEvt, Todolist.registry)(Binding("tasklist"))
+    LociDist.distributeDeltaCRDT(taskList, deltaEvt, Todolist.registry)(Binding[RRGA.State[TodoTask, DietMapCContext]=> Unit]("tasklist"))
 
     val tasks = taskList.map(_.toList)
 

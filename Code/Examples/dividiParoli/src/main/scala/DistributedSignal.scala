@@ -1,4 +1,5 @@
 import loci.transmitter._
+import loci.transmitter.transmittable._
 import rescala.default._
 import rescala.extra.lattices.Lattice
 import rescala.macros.cutOutOfUserComputation

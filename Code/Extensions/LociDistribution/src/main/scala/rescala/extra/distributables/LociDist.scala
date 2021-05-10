@@ -17,8 +17,8 @@ object LociDist {
       signal: Signal[CRDTInterface[A], S],
       deltaEvt: Evt[Delta[A], S],
       registry: Registry
-  )(binding: Binding[A => Unit] { type RemoteCall = A => Future[Unit] }): Unit = {
-    registry.bindPerRemote(binding) { remoteRef => deltaState =>
+  )(binding: Binding[A => Unit, A => Future[Unit]]): Unit = {
+    registry.bindSbj(binding) { (remoteRef: RemoteRef, deltaState: A) =>
       deltaEvt.fire(Delta(remoteRef.toString, deltaState))
     }
 

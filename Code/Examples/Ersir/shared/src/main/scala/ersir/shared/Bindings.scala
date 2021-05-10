@@ -6,8 +6,8 @@ import io.circe.generic.semiauto._
 import io.circe.{Decoder, Encoder}
 import loci.registry.Binding
 import loci.serializer.circe._
-import loci.transmitter.IdenticallyTransmittable
-import rescala.extra.lattices.delta.{CContext, Causal, Dot, TimedVal}
+import loci.transmitter.transmittable.IdenticallyTransmittable
+import rescala.extra.lattices.delta.{Causal, Dot, TimedVal}
 import rescala.extra.lattices.delta.CContext.DietMapCContext
 import rescala.extra.lattices.delta.DotStore.DotFun
 import rescala.extra.lattices.delta.crdt.{Elem, GOList, GOListNode, RGANode, RRGA}
@@ -82,7 +82,5 @@ object Bindings {
 
   implicit val _Tbm: IdenticallyTransmittable[RRGA.State[Posting, DietMapCContext]] = IdenticallyTransmittable()
 
-  val crdtDescriptions: Binding[RRGA.State[Posting, DietMapCContext] => Unit] {
-    type RemoteCall = RRGA.State[Posting, DietMapCContext] => Future[Unit]
-  } = Binding("postings"): @scala.annotation.nowarn
+  val crdtDescriptions: Binding[RRGA.State[Posting, DietMapCContext] => Unit, RRGA.State[Posting, DietMapCContext] => Future[Unit]] = Binding[RRGA.State[Posting, DietMapCContext] => Unit]("postings"): @scala.annotation.nowarn
 }

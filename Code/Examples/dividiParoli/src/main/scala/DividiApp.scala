@@ -5,7 +5,8 @@ import javafx.fxml.FXMLLoader
 import loci.communicator.ws.akka.WS
 import loci.registry.{Binding, Registry}
 import loci.serializer.circe._
-import loci.transmitter.{IdenticallyTransmittable, RemoteRef}
+import loci.transmitter.RemoteRef
+import loci.transmitter.transmittable.IdenticallyTransmittable
 import rescala.default._
 import scalafx.Includes._
 import scalafx.application.JFXApp

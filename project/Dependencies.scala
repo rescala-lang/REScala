@@ -17,7 +17,7 @@ object Dependencies {
     val jline                    = "2.14.6"
     val jodaConvert              = "2.2.1"
     val jodaTime                 = "2.10.3"
-    val jsoniterScalaCore        = "2.7.3"
+    val jsoniterScalaCore        = "2.8.0"
     val jsoup                    = "1.13.1"
     val jsr166y                  = "1.7.0"
     val kaleidoscope             = "0.1.0"
@@ -32,7 +32,7 @@ object Dependencies {
     val scala213                 = "2.13.5"
     val scala300                 = "3.0.0-M3"
     val scalaJavaTime            = "2.2.2"
-    val scalaLociCommunication   = "55433d73db8c49fd8b4292e5b9f20fe535e761c0"
+    val scalaLociCommunication   = "8778bfc575813bfb223ae36f376b83ffef63a96d"
     val scalaParallelCollections = "1.0.0"
     val scalaSwing               = "3.0.0"
     val scalaXml                 = "1.3.0"
@@ -42,10 +42,10 @@ object Dependencies {
     val scalatags                = "0.9.4"
     val scalatest                = "3.2.8"
     val scalatestpluscheck       = "3.2.2.0"
-    val scribe                   = "3.1.7"
+    val scribe                   = "3.5.4"
     val sourcecode               = "0.2.6"
     val tomlScala                = "0.2.2"
-    val upickle                  = "1.3.11"
+    val upickle                  = "1.3.12"
   }
 
   import Dependencies.{Versions => V}
