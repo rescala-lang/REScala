@@ -1,18 +1,17 @@
 package ersir.shared
 
-import cats.collections.Diet
-import cats.implicits._
-import io.circe.generic.semiauto._
-import io.circe.{Decoder, Encoder}
+import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromString, writeToString}
+import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
+import loci.MessageBuffer
 import loci.registry.Binding
-import loci.serializer.circe._
+import loci.transmitter.Serializable
 import loci.transmitter.transmittable.IdenticallyTransmittable
-import rescala.extra.lattices.delta.{Causal, Dot, TimedVal}
-import rescala.extra.lattices.delta.CContext.DietMapCContext
-import rescala.extra.lattices.delta.DotStore.DotFun
-import rescala.extra.lattices.delta.crdt.{Elem, GOList, GOListNode, RGANode, RRGA}
+import rescala.extra.lattices.delta.CContext._
+import rescala.extra.lattices.delta.crdt.RRGA
+import rescala.extra.lattices.delta.crdt.RRGA._
 
 import scala.concurrent.Future
+import scala.util.Try
 
 case class Posting(title: String, desc: String, img: String)
 
@@ -23,64 +22,19 @@ object Posting {
     Posting(title, desc, url)
   }
 
-  implicit val postingEncoder: Encoder[Posting] = deriveEncoder[Posting]
-  implicit val postingDecoder: Decoder[Posting] = deriveDecoder[Posting]
-
+  implicit val PostingCodec: JsonValueCodec[Posting] = JsonCodecMaker.make
 }
 
 object Bindings {
-  implicit val DotDecoder: Decoder[Dot] = deriveDecoder
-  implicit val DotEncoder: Encoder[Dot] = deriveEncoder
+  implicit def jsoniterBasedSerializable[T](implicit codec: JsonValueCodec[T]): Serializable[T] = new Serializable[T] {
+    override def serialize(value: T): MessageBuffer = MessageBuffer.encodeString(writeToString(value))
 
-  implicit val RangeDecoder: Decoder[cats.collections.Range[Int]] = deriveDecoder
-  implicit val RangeEncoder: Encoder[cats.collections.Range[Int]] = deriveEncoder
-
-  implicit val DietDecoder: Decoder[Diet[Int]] = Decoder.decodeList[cats.collections.Range[Int]].map {
-    _.foldLeft(Diet.empty[Int]) {
-      (d, r) => d.addRange(r)
-    }
+    override def deserialize(value: MessageBuffer): Try[T] = Try(readFromString[T](value.decodeString))
   }
-  implicit val DietEncoder: Encoder[Diet[Int]] =
-    Encoder.encodeList[cats.collections.Range[Int]].contramap(_.foldLeftRange(List.empty[cats.collections.Range[Int]]) {
-      (l, r) => r :: l
-    })
-
-  implicit val GOListNodeDecoder: Decoder[GOListNode[TimedVal[Dot]]] = deriveDecoder
-  implicit val GOListNodeEncoder: Encoder[GOListNode[TimedVal[Dot]]] = deriveEncoder
-
-  implicit val DotTimedValDecoder: Decoder[TimedVal[Dot]] = deriveDecoder
-  implicit val DotTimedValEncoder: Encoder[TimedVal[Dot]] = deriveEncoder
-
-  implicit val ElemDecoder: Decoder[Elem[TimedVal[Dot]]] = deriveDecoder
-  implicit val ElemEncoder: Encoder[Elem[TimedVal[Dot]]] = deriveEncoder
-
-  implicit val GOListDecoder: Decoder[GOList.State[Dot]] =
-    Decoder.decodeList[(GOListNode[TimedVal[Dot]], Elem[TimedVal[Dot]])].map(_.toMap)
-  implicit val GOListEncoder: Encoder[GOList.State[Dot]] =
-    Encoder.encodeList[(GOListNode[TimedVal[Dot]], Elem[TimedVal[Dot]])].contramap(_.toList)
-
-  implicit val TodoTaskTimedValDecoder: Decoder[TimedVal[Posting]] = deriveDecoder
-  implicit val TodoTaskTimedValEncoder: Encoder[TimedVal[Posting]] = deriveEncoder
-
-  implicit val RGANodeDecoder: Decoder[RGANode[Posting]] = deriveDecoder
-  implicit val RGANodeEncoder: Encoder[RGANode[Posting]] = deriveEncoder
-
-  implicit val DotFunDecoder: Decoder[DotFun[RGANode[Posting]]] =
-    Decoder.decodeList[(Dot, RGANode[Posting])].map(_.toMap)
-  implicit val DotFunEncoder: Encoder[DotFun[RGANode[Posting]]] =
-    Encoder.encodeList[(Dot, RGANode[Posting])].contramap(_.toList)
-
-  implicit val CausalDecoder: Decoder[Causal[DotFun[RGANode[Posting]], DietMapCContext]] =
-    deriveDecoder
-  implicit val CausalEncoder: Encoder[Causal[DotFun[RGANode[Posting]], DietMapCContext]] =
-    deriveEncoder
-
-  implicit val rrgaEncoder: Encoder[RRGA.State[Posting, DietMapCContext]] =
-    deriveEncoder[RRGA.State[Posting, DietMapCContext]]
-  implicit val rrgaDecoder: Decoder[RRGA.State[Posting, DietMapCContext]] =
-    deriveDecoder[RRGA.State[Posting, DietMapCContext]]
 
   implicit val _Tbm: IdenticallyTransmittable[RRGA.State[Posting, DietMapCContext]] = IdenticallyTransmittable()
 
-  val crdtDescriptions: Binding[RRGA.State[Posting, DietMapCContext] => Unit, RRGA.State[Posting, DietMapCContext] => Future[Unit]] = Binding[RRGA.State[Posting, DietMapCContext] => Unit]("postings"): @scala.annotation.nowarn
+  val crdtDescriptions
+      : Binding[RRGA.State[Posting, DietMapCContext] => Unit, RRGA.State[Posting, DietMapCContext] => Future[Unit]] =
+    Binding[RRGA.State[Posting, DietMapCContext] => Unit]("postings"): @scala.annotation.nowarn
 }

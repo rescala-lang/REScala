@@ -38,7 +38,8 @@ object RGANode {
 object RGACRDT {
   type State[E, C] = Causal[DotPair[ForcedWrite.State[GOList.State[Dot]], DotFun[RGANode[E]]], C]
 
-  val GOListDefaultDot: Dot = Dot("", -1)
+  implicit val ForcedWriteAsUIJDLattice: UIJDLattice[ForcedWrite.State[GOList.State[Dot]]] =
+    ForcedWriteCRDT.ForcedWriteAsUIJDLattice[GOList.State[Dot]]
 
   private def readRec[E, C: CContext](state: State[E, C], target: Int, counted: Int, skipped: Int): Option[E] =
     (state: @unchecked) match {
@@ -278,9 +279,6 @@ object RGA {
   type State[E, C] = RGACRDT.State[E, C]
   type Embedded[E] = DotPair[ForcedWrite.State[GOList.State[Dot]], DotFun[RGANode[E]]]
 
-  implicit val ForcedWriteAsUIJDLattice: UIJDLattice[ForcedWrite.State[GOList.State[Dot]]] =
-    ForcedWriteCRDT.ForcedWriteAsUIJDLattice[GOList.State[Dot]]
-
   def apply[E, C: CContext](antiEntropy: AntiEntropy[State[E, C]]): RGA[E, C] =
     new RGA(DeltaCRDT.empty[State[E, C]](antiEntropy))
 
@@ -333,9 +331,10 @@ object RRGA {
   type State[E, C] = RGACRDT.State[E, C]
   type Embedded[E] = DotPair[ForcedWrite.State[GOList.State[Dot]], DotFun[RGANode[E]]]
 
-  implicit val ForcedWriteAsUIJDLattice: UIJDLattice[ForcedWrite.State[GOList.State[Dot]]] =
-    ForcedWriteCRDT.ForcedWriteAsUIJDLattice[GOList.State[Dot]]
-
   def apply[E, C: CContext](replicaID: String): RRGA[E, C] =
     new RRGA(RDeltaCRDT.empty[State[E, C]](replicaID))
+
+  implicit def RGAStateCodec[E: JsonValueCodec, C: JsonValueCodec]
+      : JsonValueCodec[Causal[((Long, Map[GOListNode[TimedVal[Dot]], Elem[TimedVal[Dot]]]), Map[Dot, RGANode[E]]), C]] =
+    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 }

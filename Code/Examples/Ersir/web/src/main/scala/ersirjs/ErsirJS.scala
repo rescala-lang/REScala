@@ -10,7 +10,7 @@ import rescala.extra.distributables.LociDist
 import rescala.extra.lattices.delta.CContext.DietMapCContext
 import rescala.extra.lattices.delta.Delta
 import rescala.extra.lattices.delta.crdt.RRGA
-import rescala.extra.lattices.delta.crdt.RRGA._
+import rescala.extra.lattices.delta.crdt.RGACRDT._
 
 import java.util.concurrent.ThreadLocalRandom
 import scala.concurrent.Future
