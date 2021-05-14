@@ -80,7 +80,12 @@ class Index(connected: Signal[String]) {
 
     body(
       id := "index",
-      header(cls := connected, Icons.disconnected, img(cls := "logo", src := "static/logo-small.svg"), Icons.lamp),
+      header(
+        cls := connected,
+        Icons.disconnected,
+        img(cls := "logo", src := "static/logo-small.svg"),
+        Icons.lamp
+      ),
       article(cls := "controls", textinput, imageinput, button("Post", addPost.value)),
       main(articles.asModifierL),
       article(

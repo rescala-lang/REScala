@@ -55,7 +55,6 @@ object LociDist {
             if (remoteRef.connected) {
               remoteUpdate(s).onComplete {
                 case Success(_) =>
-                  println(s"successfully sent delta: $s")
                   resendBuffer = resendBuffer.removed(remoteRef)
                 case Failure(_) =>
                   resendBuffer = mergedResendBuffer

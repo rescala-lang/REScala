@@ -24,7 +24,7 @@ object ErsirJS {
 
   val connectClass: Signal[String] = Signal {
     val internet = connectionSignal.value
-    s"${if (internet) " hideConnectionIssues" else ""}"
+    if (internet) "hideConnectionIssues" else "showConnectionIssues"
   }
 
   val index = new Index(connectClass)
@@ -57,7 +57,7 @@ object ErsirJS {
       if (!connecting && !registry.remotes.exists(_.connected)) {
         connecting = true
         lociConnect().onComplete { res =>
-          // scribe.trace(s"loci connection try finished: $res")
+          scribe.trace(s"loci connection try finished: $res")
           connecting = false
         }
       }
@@ -71,12 +71,12 @@ object ErsirJS {
     }
 
     val connection: Future[RemoteRef] = registry.connect(WS(wsUri))
-    // scribe.debug(s"connecting loci to $wsUri …")
+    scribe.debug(s"connecting loci to $wsUri …")
     connection.foreach { remote =>
       connectionSignal.set(true)
       remote.disconnected.foreach { _ =>
         connectionSignal.set(false)
-      // scribe.debug(s"loci reconnect")
+        scribe.debug(s"loci reconnect")
       }
     }
     connection

@@ -16,7 +16,7 @@ import rescala.extra.lattices.delta.crdt.RRGA._
 import rescala.operator.Diff
 
 import java.util.concurrent.ThreadLocalRandom
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.Future
 
 class Server(pages: ServerPages, system: ActorSystem, webResources: WebResources) {
@@ -39,7 +39,6 @@ class Server(pages: ServerPages, system: ActorSystem, webResources: WebResources
 
   addNewsFeed()
 
-  scribe.info("test")
   LociDist.distributeDeltaCRDT(serverSideEntries, deltaEvt, registry)(Bindings.crdtDescriptions)
 
   serverSideEntries.observe { sse =>
@@ -57,11 +56,16 @@ class Server(pages: ServerPages, system: ActorSystem, webResources: WebResources
     val doc    = Jsoup.connect("https://www.digitalstadt-darmstadt.de/news/feed/").get()
     val titles = doc.select("channel item").iterator().asScala.toList
     scribe.info(s"found ${titles.size} rss entries")
-    val posts = titles.map { e =>
-      val image =
-        Jsoup.parse(e.selectFirst("content|encoded").text(), "https://www.digitalstadt-darmstadt.de/news/feed/")
-          .selectFirst("img.attachment-full").absUrl("src")
-      Posting(e.selectFirst("title").text(), Jsoup.parse(e.selectFirst("description").text(), "").text(), image)
+    val posts = titles.flatMap { e =>
+      Jsoup.parse(e.selectFirst("content|encoded").text(), "https://www.digitalstadt-darmstadt.de/news/feed/")
+        .select("img.attachment-full").iterator().asScala.toList.map {
+          _.absUrl("src")
+        }.headOption match {
+        case None => None
+        case Some(image) => Some(
+            Posting(e.selectFirst("title").text(), Jsoup.parse(e.selectFirst("description").text(), "").text(), image)
+          )
+      }
     }
     manualAddPostings.fire(posts)
   }

@@ -87,7 +87,7 @@ object Dependencies {
 
   val jsoniterScalaAll = Def.setting(Seq(
     ("com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core"   % V.jsoniterScalaCore exclude ("io.github.cquiroz", s"scala-java-time-tzdb_sjs1_${scalaVersion.value.substring(0, 4)}")),
-    "com.github.plokhotnyuk.jsoniter-scala"   %% "jsoniter-scala-macros" % V.jsoniterScalaCore % "provided"
+    "com.github.plokhotnyuk.jsoniter-scala"   %% "jsoniter-scala-macros" % V.jsoniterScalaCore
   ))
 
   val akkaHttpAll = Def.setting(Seq("akka-http-core", "akka-http")
@@ -98,7 +98,8 @@ object Dependencies {
     .map(n => "io.circe" %%% s"circe-$n" % V.circeCore))
 
   object loci {
-    def generic(n: String) = Def.setting("com.github.scala-loci.scala-loci" %%% s"scala-loci-$n" % V.scalaLociCommunication)
+    def generic(n: String) =
+      Def.setting("com.github.scala-loci.scala-loci" %%% s"scala-loci-$n" % V.scalaLociCommunication)
 
     val communication = generic("communication")
 

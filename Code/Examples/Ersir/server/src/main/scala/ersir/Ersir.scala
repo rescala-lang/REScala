@@ -19,7 +19,7 @@ object Ersir {
     help = "Base directory to store settings and data."
   )
     .withDefault(
-      Paths.get("./")
+      Paths.get("target/universal/stage/resources/")
     )
 
   val command: Command[Services] = Command(name = "ersir", header = "Start server!") {
