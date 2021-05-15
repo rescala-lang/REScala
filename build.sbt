@@ -49,6 +49,21 @@ lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
 )
   .settings(cfg.noPublish)
 
+lazy val transactives = crossProject(JSPlatform, JVMPlatform).in(file("Code/Core"))
+  .settings(
+    name := "transactives",
+    strictCompile,
+    organization := "de.tuda.stg",
+    scalaVersion_3,
+    libraryDependencies ++= List(
+      sourcecode.value,
+      catsCollection.value.cross(CrossVersion.for3Use2_13),
+      jsoniterScalaAll.value(0).cross(CrossVersion.for3Use2_13),
+    )
+  )
+lazy val transactivesJVM = transactives.jvm
+lazy val transactivesJS = transactives.js
+
 lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Code/Main"))
   .settings(
     name := "rescala",

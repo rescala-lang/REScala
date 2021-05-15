@@ -43,7 +43,7 @@ object Dependencies {
     val scalatest                = "3.2.8"
     val scalatestpluscheck       = "3.2.2.0"
     val scribe                   = "3.5.4"
-    val sourcecode               = "0.2.6"
+    val sourcecode               = "0.2.7"
     val tomlScala                = "0.2.2"
     val upickle                  = "1.3.12"
   }
@@ -87,7 +87,7 @@ object Dependencies {
 
   val jsoniterScalaAll = Def.setting(Seq(
     ("com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core"   % V.jsoniterScalaCore exclude ("io.github.cquiroz", s"scala-java-time-tzdb_sjs1_${scalaVersion.value.substring(0, 4)}")),
-    "com.github.plokhotnyuk.jsoniter-scala"   %% "jsoniter-scala-macros" % V.jsoniterScalaCore % "provided"
+    "com.github.plokhotnyuk.jsoniter-scala"   %% "jsoniter-scala-macros" % V.jsoniterScalaCore
   ))
 
   val akkaHttpAll = Def.setting(Seq("akka-http-core", "akka-http")
