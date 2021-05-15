@@ -23,8 +23,8 @@ object Settings {
     scalaVersion := V.scala213,
     scalacOptions ++= settingsFor(scalaVersion.value)
   )
-  val scalaVersion_Dotty = Def.settings(
-    scalaVersion := V.scala300,
+  val scalaVersion_3 = Def.settings(
+    scalaVersion := V.scala3,
     scalacOptions ++= settingsFor(scalaVersion.value)
   )
 
@@ -99,7 +99,10 @@ object Settings {
 }
 
 object Resolvers {
-  val stg = resolvers += Resolver.bintrayRepo("stg-tud", "maven")
+  val stg =
+    resolvers += ("STG old bintray repo" at "http://www.st.informatik.tu-darmstadt.de/maven/").withAllowInsecureProtocol(
+      true
+    )
   val jitpack = resolvers += "jitpack" at "https://jitpack.io"
 
   /*
