@@ -7,6 +7,21 @@ class ReactorWithoutAPITest extends RETests {
 
   import rescala.default._
 
+  abstract class ReactorStage[T](initialValue: T) {
+    protected var value: T                                   = initialValue
+    protected[reactor] var nextStage: Option[NestedStage[T]] = None
+
+    def next(event: Evt[Unit])(callback: NestedStage[T] => Unit): Unit = {
+      nextStage = Some(new NestedStage[T](event, value)(callback))
+    }
+
+    def set(newValue: T): Unit = {
+      value = newValue
+    }
+
+    private[reactor] def run(): T
+  }
+
   class CustomReactorReactive[T](initState: ReStructure#State[ReactorStage[T], ReStructure])
       extends Derived
       with Interp[T, ReStructure] {
@@ -45,7 +60,7 @@ class ReactorWithoutAPITest extends RETests {
 
       // Should never be None. Every stage except the
       // initial Stage has a trigger.
-      val trigger   = nextStage.trigger.get
+      val trigger = nextStage.trigger
 
       val triggered = input.dependStatic(trigger)
       if (triggered.isEmpty) {
@@ -55,20 +70,17 @@ class ReactorWithoutAPITest extends RETests {
       input.withValue(nextStage)
     }
 
-    override protected[rescala] def state: State = initState
+    override protected[rescala] def state: State = initState: State
   }
 
-  class ReactorStage[T](var trigger: Option[Evt[Unit]], initialValue: T)(body: ReactorStage[T] => Unit) {
-    private var value: T                                    = initialValue
-    private[reactor] var nextStage: Option[ReactorStage[T]] = None
-
-    def next(event: Evt[Unit])(callback: ReactorStage[T] => Unit): Unit = {
-      nextStage = Some(new ReactorStage[T](Some(event), value)(callback))
+  class InitialStage[T](val initialValue: T)(body: InitialStage[T] => Unit) extends ReactorStage[T](initialValue) {
+    override private[reactor] def run(): T = {
+      body(this)
+      value
     }
-
-    def set(newValue: T): Unit = {
-      value = newValue
-    }
+  }
+  class NestedStage[T](val trigger: Evt[Unit], initialValue: T)(body: NestedStage[T] => Unit)
+      extends ReactorStage[T](initialValue) {
 
     private[reactor] def run(): T = {
       body(this)
@@ -80,21 +92,24 @@ class ReactorWithoutAPITest extends RETests {
     def once[T](initialValue: T, inputs: Set[ReSource])(body: ReactorStage[T] => Unit)(implicit
         fac: Scheduler[ReStructure]
     ): CustomReactorReactive[T] = {
-      val customReactor =
-        CreationTicket.fromScheduler(scheduler)
-          .create(
-            inputs,
-            new ReactorStage[T](None, initialValue)(body),
-            inite = true
-          ) { createdState =>
-            new CustomReactorReactive[T](createdState)
-          }
-
-      customReactor
+      CreationTicket.fromScheduler(scheduler)
+        .create(
+          inputs,
+          new InitialStage[T](initialValue)(body): ReactorStage[T],
+          inite = true
+        ) { createdState: ReStructure#State[ReactorStage[T], ReStructure] =>
+          new CustomReactorReactive[T](createdState)
+        }
     }
   }
 
-  test("Reactor has value") {
+  test("Reactor has initial value") {
+    val reactor = CustomReactorReactive.once("Initial Value", Set()) { _ => }
+
+    assert(transaction(reactor) { _.now(reactor) } === "Initial Value")
+  }
+
+  test("Reactor executes body instantly") {
     val reactor = CustomReactorReactive.once("Initial Value", Set()) { self =>
       self.set("Value Set!")
     }
