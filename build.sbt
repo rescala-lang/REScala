@@ -57,8 +57,6 @@ lazy val transactives = crossProject(JSPlatform, JVMPlatform).in(file("Code/Core
     scalaVersion_3,
     libraryDependencies ++= List(
       sourcecode.value,
-      catsCollection.value.cross(CrossVersion.for3Use2_13),
-      jsoniterScalaAll.value(0).cross(CrossVersion.for3Use2_13),
     )
   )
 lazy val transactivesJVM = transactives.jvm
