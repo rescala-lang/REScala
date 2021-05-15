@@ -20,7 +20,7 @@ class SimpleState[V](var value: V) {
   override def toString: String = s"State(outgoing = $outgoing, discovered = $discovered, dirty = $dirty, done = $done)"
 }
 
-object SimpleScheduler extends Transactives[SimpleState]:
+object SimpleScheduler extends Core[SimpleState]:
 
   class SimpleInitializer(afterCommitObservers: ListBuffer[Observation]) extends Initializer {
     override protected[this] def makeDerivedStructState[V](ip: V): SimpleState[V] = new SimpleState[V](ip)

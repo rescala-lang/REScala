@@ -1,6 +1,6 @@
 package transactives
 
-trait Observing[State[_]] extends Transactives[State]:
+trait Observing[State[_]] extends Core[State]:
   /** Generic interface for observers that represent a function registered to trigger for every reevaluation of a reactive value.
     * Currently this interface is only used to allow a removal of registered observer functions.
     *

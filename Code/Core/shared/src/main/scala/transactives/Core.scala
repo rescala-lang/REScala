@@ -3,7 +3,7 @@ package transactives
 import scala.annotation.implicitNotFound
 import scala.util.DynamicVariable
 
-trait Transactives[State[_]]:
+trait Core[State[_]]:
 
   /** Source of (reactive) values, the [[Struct]] defines how the state is stored internally,
     * and how dependencies are managed.
