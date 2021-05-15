@@ -6,7 +6,7 @@ object TestAPI:
 
   type State[T] = SimpleState[T]
 
-  class CustomSource[T](initState: SimpleState[T]) extends ReSource with Interp[T] {
+  class ProtoVar[T](initState: SimpleState[T]) extends ReSource with Interp[T]:
     outer =>
 
     override type Value = T
@@ -20,33 +20,63 @@ object TestAPI:
         override val source = outer
         override def writeValue(base: source.Value, writeCallback: source.Value => Unit): Boolean = {
           if (base != newValue) {
-            writeCallback(newValue)
+            writeCallback(newValue.asInstanceOf[source.Value])
             true
           } else false
         }
       }
-  }
 
-  class CustomDerivedString(
-      initState: State[String],
-      inputSource: Interp[String]
-  ) extends Derived
-      with Interp[String] {
-    override type Value = String
-    override protected[transactives] def state: State               = initState
+    def set(value: T) =
+      SimpleScheduler.forceNewTransaction(this) { _.recordChange(this.makeChange(value)) }
+
+    def map[A](f: T => A): ProtoSignal[A, T] =
+      CreationTicket.fromScheduler(scheduler)
+        .create[A, ProtoSignal[A, T]](
+          Set(this),
+          f(state.value),
+          inite = false
+        ) { createdState =>
+          new ProtoSignal(createdState, this, f)
+        }
+
+  object ProtoVar:
+    def apply[V](value: V) =
+      CreationTicket.fromScheduler(SimpleScheduler)
+        .createSource(value) { createdState =>
+          new ProtoVar[V](createdState)
+        }
+
+  class ProtoSignal[A, B](
+      initState: State[A],
+      inputSource: Interp[B],
+      fun: B => A
+  ) extends Derived with Interp[A]:
+    override type Value = A
+    override protected[transactives] def state: State[Value]        = initState
     override protected[transactives] def name: ReName               = "I am a name"
     override protected[transactives] def commit(base: Value): Value = base
 
     override protected[transactives] def reevaluate(input: ReIn): Rout = {
       val sourceVal = input.dependStatic(inputSource)
-      input.withValue(sourceVal + " :D")
+      input.withValue(fun(sourceVal))
     }
 
-    override def interpret(v: Value): String = v
-  }
+    override def interpret(v: Value): A = v
 
-object Test {
+    def now = SimpleScheduler.forceNewTransaction(this) { _.now(this) }
 
-  @main def main(): Unit = {}
+    def observe(f: A => Unit) = Observe.strong(this, true)(value => new Observe.ObserveInteract {
+      override def checkExceptionAndRemoval(): Boolean = false
+      override def execute(): Unit = f(value)
+    })(CreationTicket.fromScheduler(SimpleScheduler))
 
-}
+
+import TestAPI._
+import SimpleScheduler._
+
+object Test:
+  @main def main(): Unit =
+    val a = ProtoVar("Hello World!")
+    val b = a.map(x => x + " appendage")
+    b.observe(println)
+    a.set("ahahaha")
