@@ -139,4 +139,11 @@ object RORMap {
 
   def apply[K, V: DotStore, C: CContext](replicaID: String): RORMap[K, V, C] =
     new RORMap(RDeltaCRDT.empty[State[K, V, C]](replicaID))
+
+  implicit def ORMapStateCodec[K: JsonValueCodec, V: JsonValueCodec, C: JsonValueCodec]
+      : JsonValueCodec[Causal[Map[K, V], C]] =
+    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
+
+  implicit def ORMapEmbeddedCodec[K: JsonValueCodec, V: JsonValueCodec]: JsonValueCodec[Map[K, V]] =
+    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 }

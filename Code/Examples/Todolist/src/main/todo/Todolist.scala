@@ -20,9 +20,9 @@ object Todolist {
 
   def main(args: Array[String]): Unit = {
 
-    val todores = todoApp.getContents()
+    val div = todoApp.getContents()
 
-    document.body.replaceChild(todores.div.render, document.body.firstElementChild)
+    document.body.replaceChild(div.render, document.body.firstElementChild)
     document.body.appendChild(webrtcHandlingArea.render)
 
   }
