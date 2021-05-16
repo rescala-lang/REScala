@@ -4,8 +4,7 @@ import java.util.PriorityQueue
 import scala.collection.mutable.ArrayBuffer
 import rescala.core.Core
 
-
-trait Levelbased extends Twoversion:
+trait Levelbased extends Twoversion {
 
   type State[V] <: LevelState[V]
 
@@ -41,8 +40,8 @@ trait Levelbased extends Twoversion:
       val reevRes = head.reevaluate(dt)
 
       val dependencies: Option[Set[ReSource]] = reevRes.inputs()
-      val minimalLevel                           = dependencies.fold(0)(nextLevel)
-      val redo                                   = head.state.level() < minimalLevel
+      val minimalLevel                        = dependencies.fold(0)(nextLevel)
+      val redo                                = head.state.level() < minimalLevel
       if (redo) {
         levelQueue.enqueue(minimalLevel)(head)
       } else {
@@ -91,10 +90,6 @@ trait Levelbased extends Twoversion:
 
     def propagationPhase(): Unit = levelQueue.evaluateQueue()
   }
-
-
-
-
 
   /** Level-based queue used the determine an evaluation order for reactive elements
     *
@@ -188,7 +183,8 @@ trait Levelbased extends Twoversion:
         var needsEvaluate: Boolean
     ) extends Comparable[QueueElement] {
       // order by level, then by reactive
-      val order: Long                                 = (level.toLong << 32) | (reactive.hashCode.toLong & 0x00000000ffffffffL)
+      val order: Long                              = (level.toLong << 32) | (reactive.hashCode.toLong & 0x00000000ffffffffL)
       override def compareTo(o: QueueElement): Int = java.lang.Long.compare(order, o.order)
     }
   }
+}

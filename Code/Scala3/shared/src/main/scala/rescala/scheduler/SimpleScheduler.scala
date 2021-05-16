@@ -22,7 +22,7 @@ class SimpleState[V](var value: V) {
   override def toString: String = s"State(outgoing = $outgoing, discovered = $discovered, dirty = $dirty, done = $done)"
 }
 
-object SimpleScheduler extends Core with Observing:
+object SimpleScheduler extends Core with Observing {
   type State[V] = SimpleState[V]
   def scheduler = SimpleScheduler
 
@@ -219,3 +219,4 @@ object SimpleScheduler extends Core with Observing:
 
     }
   }
+}

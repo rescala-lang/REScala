@@ -4,7 +4,7 @@ import rescala.scheduler.SimpleScheduler._
 import rescala.scheduler.SimpleState
 import rescala.core.ReName
 
-object TestAPI:
+object TestAPI {
 
   type State[T] = SimpleState[T]
 
@@ -73,15 +73,18 @@ object TestAPI:
         override def execute(): Unit                     = f(value)
       }
     )(CreationTicket.fromScheduler(SimpleScheduler))
+}
 
 import rescala.TestAPI._
 import rescala.core.ReName
 import rescala.scheduler.SimpleScheduler._
 import rescala.scheduler.SimpleState
 
-object Test:
-  @main def main(): Unit =
+object Test {
+  def main(args: Array[String]): Unit = {
     val a = ProtoVar("Hello World!")
     val b = a.map(x => x + " appendage")
     b.observe(println)
     a.set("ahahaha")
+  }
+}

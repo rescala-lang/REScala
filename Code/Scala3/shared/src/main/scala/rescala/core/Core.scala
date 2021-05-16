@@ -5,7 +5,7 @@ import rescala.operator.RExceptions
 import scala.annotation.implicitNotFound
 import scala.util.DynamicVariable
 
-trait Core:
+open trait Core {
   type State[_]
 
   /** Source of (reactive) values, the [[Struct]] defines how the state is stored internally,
@@ -37,7 +37,7 @@ trait Core:
     * together with a [[ReName]] and asking for a [[Struct.State]]
     *
     * @param state the initial state passed by the scheduler
-    * @param name the name of the reactive, useful for debugging as it often contains positional information
+    * @param name  the name of the reactive, useful for debugging as it often contains positional information
     */
   abstract class Base[V](override protected[rescala] val state: State[V], override val name: ReName)
       extends ReSource {
@@ -46,18 +46,18 @@ trait Core:
   }
 
   /** Common macro accessors for [[rescala.operator.Signal]] and [[rescala.operator.Event]]
+    *
     * @tparam A return type of the accessor
     * @groupname accessor Accessor and observers
     */
   trait Interp[+A] extends ReSource {
 
     /** Interprets the internal type to the external type
+      *
       * @group internal
       */
     def interpret(v: Value): A
   }
-
-
 
   trait Initializer {
 
@@ -111,8 +111,6 @@ trait Core:
 
   }
 
-
-
   /** [[InnerTicket]]s are used in Rescala to give capabilities to contexts during propagation.
     * [[ReevTicket]] is used during reevaluation, and [[AdmissionTicket]] during the initialization.
     */
@@ -150,11 +148,12 @@ trait Core:
     // inline result into ticket, to reduce the amount of garbage during reevaluation
     private var collectedDependencies: Set[ReSource] = null
 
-    private var _propagate              = false
-    private var value: V                = _
-    private var effect: Observation     = null
-    override final def toString: String = s"Result(value = $value, propagate = $activate, deps = $collectedDependencies)"
-    final def before: V                 = _before
+    private var _propagate          = false
+    private var value: V            = _
+    private var effect: Observation = null
+    override final def toString: String =
+      s"Result(value = $value, propagate = $activate, deps = $collectedDependencies)"
+    final def before: V = _before
 
     /** Advises the ticket to track dynamic dependencies.
       * The passed initial set of dependencies may be processed as if they were static,
@@ -164,14 +163,17 @@ trait Core:
     final def trackStatic(): ReevTicket[V] = { collectedDependencies = null; this }
     final def withPropagate(p: Boolean): ReevTicket[V] = { _propagate = p; this }
     final def withValue(v: V): ReevTicket[V] = {
-      require(v != null, "value must not be null"); value = v; _propagate = true; this
+      require(v != null, "value must not be null");
+      value = v;
+      _propagate = true;
+      this
     }
     final def withEffect(v: Observation): ReevTicket[V] = { effect = v; this }
 
     final override def activate: Boolean                       = _propagate
     final override def forValue(f: V => Unit): Unit            = if (value != null) f(value)
     final override def forEffect(f: Observation => Unit): Unit = if (effect != null) f(effect)
-    final override def inputs(): Option[Set[ReSource]]      = Option(collectedDependencies)
+    final override def inputs(): Option[Set[ReSource]]         = Option(collectedDependencies)
 
     final def reset[NT](nb: NT): ReevTicket[NT] = {
       _propagate = false
@@ -203,7 +205,7 @@ trait Core:
     /** The source to be changed. */
     val source: ReSource
 
-    /** @param base the current (old) value of the source.
+    /** @param base         the current (old) value of the source.
       * @param writeCallback callback to apply the new value, executed only if the action is approved by the source.
       * @return the propagation status of the source (whether or not to reevaluate output reactives).
       */
@@ -217,7 +219,7 @@ trait Core:
       extends InnerTicket(initializer)
       with AccessTicket {
 
-    private var _initialChanges                                             = Map[ReSource, InitialChange]()
+    private var _initialChanges                                       = Map[ReSource, InitialChange]()
     private[rescala] def initialChanges: Map[ReSource, InitialChange] = _initialChanges
     private[rescala] def recordChange[T](ic: InitialChange): Unit = {
       assert(
@@ -290,7 +292,6 @@ trait Core:
       CreationTicket(outer.self, line)
   }
 
-
   trait Result[T] {
 
     /** True iff outputs must also be reevaluated, false iff the propagation ends here. */
@@ -356,9 +357,6 @@ trait Core:
     def apply(implicit scheduler: Scheduler): Scheduler = scheduler
   }
 
-
-
-
   trait DynamicInitializerLookup[ExactInitializer <: Initializer] extends Scheduler {
 
     final override private[rescala] def initializerDynamicLookup[T](f: Initializer => T): T = {
@@ -373,3 +371,4 @@ trait Core:
     final private[rescala] def withDynamicInitializer[R](init: ExactInitializer)(thunk: => R): R =
       _currentInitializer.withValue(Some(init))(thunk)
   }
+}
