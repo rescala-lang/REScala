@@ -344,6 +344,7 @@ trait Core:
       forceNewTransaction(initialWrites.toSet, admissionPhase)
     }
     def forceNewTransaction[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R): R
+    private[rescala] def singleReadValueOnce[A](reactive: Interp[A]): A
     private[rescala] def initializerDynamicLookup[T](f: Initializer => T): T
 
     /** Name of the scheduler, used for helpful error messages. */

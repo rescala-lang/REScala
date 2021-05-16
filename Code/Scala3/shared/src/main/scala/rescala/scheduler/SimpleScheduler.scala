@@ -132,6 +132,11 @@ object SimpleScheduler extends Core with Observing:
         afterCommitObservers.foreach(_.execute())
         res
       }
+
+    override private[rescala] def singleReadValueOnce[A](reactive: Interp[A]): A = {
+      val id = reactive
+      id.interpret(id.state.value)
+    }
   }
 
   object Util {
