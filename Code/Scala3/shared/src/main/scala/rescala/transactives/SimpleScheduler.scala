@@ -1,4 +1,4 @@
-package transactives
+package rescala.transactives
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 

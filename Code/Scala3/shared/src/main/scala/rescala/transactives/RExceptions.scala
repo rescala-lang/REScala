@@ -1,4 +1,4 @@
-package transactives
+package rescala.transactives
 
 import scala.util.control.ControlThrowable
 

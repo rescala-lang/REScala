@@ -1,4 +1,4 @@
-package transactives
+package rescala.transactives
 
 /** Provides names for dynamic dependencies based on their definition position to allow easier debugging */
 case class ReName(str: String) {

@@ -1,4 +1,4 @@
-package transactives
+package rescala.transactives
 
 trait Observing[State[_]] extends Core[State]:
   /** Generic interface for observers that represent a function registered to trigger for every reevaluation of a reactive value.

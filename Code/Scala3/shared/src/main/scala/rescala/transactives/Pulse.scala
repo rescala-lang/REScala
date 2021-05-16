@@ -1,7 +1,7 @@
-package transactives
+package rescala.transactives
 
-import transactives.Pulse.{Exceptional, NoChange, Value}
-import transactives.RExceptions.{EmptySignalControlThrowable, ObservedException}
+import rescala.transactives.Pulse.{Exceptional, NoChange, Value}
+import rescala.transactives.RExceptions.{EmptySignalControlThrowable, ObservedException}
 
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
