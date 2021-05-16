@@ -1,4 +1,4 @@
-package rescala.transactives
+package rescala.core
 
 import scala.annotation.implicitNotFound
 import scala.util.DynamicVariable

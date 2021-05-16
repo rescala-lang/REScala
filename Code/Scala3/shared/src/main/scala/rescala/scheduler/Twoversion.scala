@@ -2,7 +2,7 @@ package rescala.scheduler
 
 import scala.collection.mutable.ArrayBuffer
 import scala.util.control.NonFatal
-import rescala.transactives.Core
+import rescala.core.Core
 
 case class Token(payload: AnyRef = null)
 

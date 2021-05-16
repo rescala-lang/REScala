@@ -1,4 +1,4 @@
-package rescala.transactives
+package rescala.core
 
 object TestAPI:
 

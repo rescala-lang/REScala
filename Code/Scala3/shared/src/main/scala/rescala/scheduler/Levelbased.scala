@@ -2,10 +2,7 @@ package rescala.scheduler
 
 import java.util.PriorityQueue
 import scala.collection.mutable.ArrayBuffer
-import rescala.transactives.Core
-
-
-
+import rescala.core.Core
 
 
 trait Levelbased extends Twoversion:
