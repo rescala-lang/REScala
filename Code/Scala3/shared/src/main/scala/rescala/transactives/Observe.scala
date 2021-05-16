@@ -1,6 +1,6 @@
 package rescala.transactives
 
-trait Observing[State[_]] extends Core[State]:
+trait Observing extends Core:
   /** Generic interface for observers that represent a function registered to trigger for every reevaluation of a reactive value.
     * Currently this interface is only used to allow a removal of registered observer functions.
     *
@@ -27,9 +27,9 @@ trait Observing[State[_]] extends Core[State]:
             with Observe
             with DisconnectableImpl {
 
-          override protected[transactives] def commit(base: Obs.this.Value): Obs.this.Value = Pulse.NoChange
+          override protected[rescala] def commit(base: Obs.this.Value): Obs.this.Value = Pulse.NoChange
 
-          override protected[transactives] def reevaluate(dt: ReIn): Rout =
+          override protected[rescala] def reevaluate(dt: ReIn): Rout =
             guardReevaluate(dt) {
               val v  = dt.collectStatic(dependency)
               val oi = fun(v)

@@ -3,7 +3,8 @@ package rescala.transactives
 import scala.annotation.implicitNotFound
 import scala.util.DynamicVariable
 
-trait Core[State[_]]:
+trait Core:
+  type State[_]
 
   /** Source of (reactive) values, the [[Struct]] defines how the state is stored internally,
     * and how dependencies are managed.
@@ -13,9 +14,9 @@ trait Core[State[_]]:
     */
   trait ReSource {
     type Value
-    protected[transactives] def state: State[Value]
-    protected[transactives] def name: ReName
-    protected[transactives] def commit(base: Value): Value
+    protected[rescala] def state: State[Value]
+    protected[rescala] def name: ReName
+    protected[rescala] def commit(base: Value): Value
   }
 
   /** A reactive value is something that can be reevaluated */
@@ -27,7 +28,7 @@ trait Core[State[_]]:
     /** called if any of the dependencies ([[ReSource]]s) changed in the current update turn,
       * after all (known) dependencies are updated
       */
-    protected[transactives] def reevaluate(input: ReIn): Rout
+    protected[rescala] def reevaluate(input: ReIn): Rout
   }
 
   /** Base implementation for reactives, with [[Derived]] for scheduling,
@@ -36,7 +37,7 @@ trait Core[State[_]]:
     * @param state the initial state passed by the scheduler
     * @param name the name of the reactive, useful for debugging as it often contains positional information
     */
-  abstract class Base[V](override protected[transactives] val state: State[V], override val name: ReName)
+  abstract class Base[V](override protected[rescala] val state: State[V], override val name: ReName)
       extends ReSource {
     override type Value = V
     override def toString: String = s"${name.str}($state)"
@@ -59,7 +60,7 @@ trait Core[State[_]]:
   trait Initializer {
 
     /** Creates and correctly initializes new [[rescala.core.Derived]]s */
-    final private[transactives] def create[V, T <: Derived](
+    final private[rescala] def create[V, T <: Derived](
         incoming: Set[ReSource],
         initv: V,
         inite: Boolean,
@@ -77,7 +78,7 @@ trait Core[State[_]]:
     protected[this] def register(reactive: ReSource): Unit = ()
 
     /** Correctly initializes [[ReSource]]s */
-    final private[transactives] def createSource[V, T <: ReSource](
+    final private[rescala] def createSource[V, T <: ReSource](
         intv: V,
         creationTicket: CreationTicket
     )(instantiateReactive: State[V] => T): T = {
@@ -128,12 +129,12 @@ trait Core[State[_]]:
     protected def dynamicAccess(reactive: ReSource): reactive.Value
 
     // dependency tracking accesses
-    private[transactives] final override def collectStatic(reactive: ReSource): reactive.Value = {
+    private[rescala] final override def collectStatic(reactive: ReSource): reactive.Value = {
       assert(collectedDependencies == null || collectedDependencies.contains(reactive))
       staticAccess(reactive)
     }
 
-    private[transactives] final override def collectDynamic(reactive: ReSource): reactive.Value = {
+    private[rescala] final override def collectDynamic(reactive: ReSource): reactive.Value = {
       assert(collectedDependencies != null, "may not access dynamic dependencies without tracking dependencies")
       val updatedDeps = collectedDependencies + reactive
       if (updatedDeps eq collectedDependencies) {
@@ -184,13 +185,13 @@ trait Core[State[_]]:
 
   /** User facing low level API to access values in a dynamic context. */
   abstract class DynamicTicket(creation: Initializer) extends StaticTicket(creation) {
-    private[transactives] def collectDynamic(reactive: ReSource): reactive.Value
+    private[rescala] def collectDynamic(reactive: ReSource): reactive.Value
     final def depend[A](reactive: Interp[A]): A = reactive.interpret(collectDynamic(reactive))
   }
 
   /** User facing low level API to access values in a static context. */
   sealed abstract class StaticTicket(creation: Initializer) extends InnerTicket(creation) {
-    private[transactives] def collectStatic(reactive: ReSource): reactive.Value
+    private[rescala] def collectStatic(reactive: ReSource): reactive.Value
     final def dependStatic[A](reactive: Interp[A]): A = reactive.interpret(collectStatic(reactive))
   }
 
@@ -215,8 +216,8 @@ trait Core[State[_]]:
       with AccessTicket {
 
     private var _initialChanges                                             = Map[ReSource, InitialChange]()
-    private[transactives] def initialChanges: Map[ReSource, InitialChange] = _initialChanges
-    private[transactives] def recordChange[T](ic: InitialChange): Unit = {
+    private[rescala] def initialChanges: Map[ReSource, InitialChange] = _initialChanges
+    private[rescala] def recordChange[T](ic: InitialChange): Unit = {
       assert(
         declaredWrites.contains(ic.source),
         "must not set a source that has not been pre-declared for the transaction"
@@ -225,11 +226,11 @@ trait Core[State[_]]:
       _initialChanges += ic.source -> ic
     }
 
-    private[transactives] var wrapUp: AccessTicket => Unit = null
+    private[rescala] var wrapUp: AccessTicket => Unit = null
   }
 
   trait AccessTicket {
-    private[transactives] def access(reactive: ReSource): reactive.Value
+    private[rescala] def access(reactive: ReSource): reactive.Value
     final def now[A](reactive: Interp[A]): A = {
       RExceptions.toExternalReadException(reactive, reactive.interpret(access(reactive)))
     }
@@ -239,14 +240,14 @@ trait Core[State[_]]:
   @implicitNotFound(msg = "Could not find capability to create reactives. Maybe a missing import?")
   final case class CreationTicket(self: Either[Initializer, Scheduler], rename: ReName) {
 
-    private[transactives] def create[V, T <: Derived](
+    private[rescala] def create[V, T <: Derived](
         incoming: Set[ReSource],
         initv: V,
         inite: Boolean
     )(instantiateReactive: State[V] => T): T = {
       transaction(_.create(incoming, initv, inite, this)(instantiateReactive))
     }
-    private[transactives] def createSource[V, T <: ReSource](intv: V)(instantiateReactive: State[V] => T): T = {
+    private[rescala] def createSource[V, T <: ReSource](intv: V)(instantiateReactive: State[V] => T): T = {
 
       transaction(_.createSource(intv, this)(instantiateReactive))
     }
@@ -341,7 +342,7 @@ trait Core[State[_]]:
       forceNewTransaction(initialWrites.toSet, admissionPhase)
     }
     def forceNewTransaction[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R): R
-    private[transactives] def initializerDynamicLookup[T](f: Initializer => T): T
+    private[rescala] def initializerDynamicLookup[T](f: Initializer => T): T
 
     /** Name of the scheduler, used for helpful error messages. */
     def schedulerName: String
@@ -357,7 +358,7 @@ trait Core[State[_]]:
 
   trait DynamicInitializerLookup[ExactInitializer <: Initializer] extends Scheduler {
 
-    final override private[transactives] def initializerDynamicLookup[T](f: Initializer => T): T = {
+    final override private[rescala] def initializerDynamicLookup[T](f: Initializer => T): T = {
       _currentInitializer.value match {
         case Some(turn) => f(turn)
         case None       => forceNewTransaction(Set.empty, ticket => f(ticket.initializer))
@@ -366,6 +367,6 @@ trait Core[State[_]]:
 
     final protected val _currentInitializer: DynamicVariable[Option[ExactInitializer]] =
       new DynamicVariable[Option[ExactInitializer]](None)
-    final private[transactives] def withDynamicInitializer[R](init: ExactInitializer)(thunk: => R): R =
+    final private[rescala] def withDynamicInitializer[R](init: ExactInitializer)(thunk: => R): R =
       _currentInitializer.withValue(Some(init))(thunk)
   }

@@ -20,7 +20,8 @@ class SimpleState[V](var value: V) {
   override def toString: String = s"State(outgoing = $outgoing, discovered = $discovered, dirty = $dirty, done = $done)"
 }
 
-object SimpleScheduler extends Core[SimpleState] with Observing[SimpleState]:
+object SimpleScheduler extends Core with Observing:
+  type State[V] = SimpleState[V]
   def scheduler = SimpleScheduler
 
   class SimpleInitializer(afterCommitObservers: ListBuffer[Observation]) extends Initializer {
@@ -30,7 +31,7 @@ object SimpleScheduler extends Core[SimpleState] with Observing[SimpleState]:
 
     override def accessTicket(): AccessTicket =
       new AccessTicket {
-        override private[transactives] def access(reactive: ReSource): reactive.Value = reactive.state.value
+        override private[rescala] def access(reactive: ReSource): reactive.Value = reactive.state.value
       }
 
     def drainCreated(): Seq[Derived] = {
@@ -85,7 +86,7 @@ object SimpleScheduler extends Core[SimpleState] with Observing[SimpleState]:
             withDynamicInitializer(creation) {
               // admission
               val admissionTicket: AdmissionTicket = new AdmissionTicket(creation, initialWrites) {
-                override private[transactives] def access(reactive: ReSource): reactive.Value = reactive.state.value
+                override private[rescala] def access(reactive: ReSource): reactive.Value = reactive.state.value
               }
               val admissionResult                  = admissionPhase(admissionTicket)
               val sources                          = admissionTicket.initialChanges.values.collect {

@@ -10,10 +10,10 @@ object TestAPI:
     outer =>
 
     override type Value = T
-    override protected[transactives] def state: State[Value]        = initState
-    override protected[transactives] def name: ReName               = "I am a source name"
+    override protected[rescala] def state: State[Value]        = initState
+    override protected[rescala] def name: ReName               = "I am a source name"
     override def interpret(v: Value): T                             = v
-    override protected[transactives] def commit(base: Value): Value = base
+    override protected[rescala] def commit(base: Value): Value = base
 
     def makeChange(newValue: T) =
       new InitialChange {
@@ -52,11 +52,11 @@ object TestAPI:
       fun: B => A
   ) extends Derived with Interp[A]:
     override type Value = A
-    override protected[transactives] def state: State[Value]        = initState
-    override protected[transactives] def name: ReName               = "I am a name"
-    override protected[transactives] def commit(base: Value): Value = base
+    override protected[rescala] def state: State[Value]        = initState
+    override protected[rescala] def name: ReName               = "I am a name"
+    override protected[rescala] def commit(base: Value): Value = base
 
-    override protected[transactives] def reevaluate(input: ReIn): Rout = {
+    override protected[rescala] def reevaluate(input: ReIn): Rout = {
       val sourceVal = input.dependStatic(inputSource)
       input.withValue(fun(sourceVal))
     }
