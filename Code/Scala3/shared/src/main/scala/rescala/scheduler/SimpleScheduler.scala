@@ -1,15 +1,17 @@
-package rescala.core
+package rescala.scheduler
+
+import rescala.core.Core
+import rescala.operator.Observing
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
-
 
 class SimpleState[V](var value: V) {
 
   var outgoing: Set[SimpleScheduler.Derived]  = Set.empty
   var incoming: Set[SimpleScheduler.ReSource] = Set.empty
-  var discovered                            = false
-  var dirty                                 = false
-  var done                                  = false
+  var discovered                              = false
+  var dirty                                   = false
+  var done                                    = false
   def reset(v: V): Unit = {
     discovered = false
     dirty = false
@@ -88,8 +90,8 @@ object SimpleScheduler extends Core with Observing:
               val admissionTicket: AdmissionTicket = new AdmissionTicket(creation, initialWrites) {
                 override private[rescala] def access(reactive: ReSource): reactive.Value = reactive.state.value
               }
-              val admissionResult                  = admissionPhase(admissionTicket)
-              val sources                          = admissionTicket.initialChanges.values.collect {
+              val admissionResult = admissionPhase(admissionTicket)
+              val sources = admissionTicket.initialChanges.values.collect {
                 case iv if iv.writeValue(iv.source.state.value, iv.source.state.value = _) => iv.source
               }.toSeq
 

@@ -1,8 +1,10 @@
-package rescala.core
+package rescala
+
+import rescala.scheduler.SimpleScheduler._
+import rescala.scheduler.SimpleState
+import rescala.core.ReName
 
 object TestAPI:
-
-  import SimpleScheduler._
 
   type State[T] = SimpleState[T]
 
@@ -12,7 +14,7 @@ object TestAPI:
     override type Value = T
     override protected[rescala] def state: State[Value]        = initState
     override protected[rescala] def name: ReName               = "I am a source name"
-    override def interpret(v: Value): T                             = v
+    override def interpret(v: Value): T                        = v
     override protected[rescala] def commit(base: Value): Value = base
 
     def makeChange(newValue: T) =
@@ -65,14 +67,17 @@ object TestAPI:
 
     def now = SimpleScheduler.forceNewTransaction(this) { _.now(this) }
 
-    def observe(f: A => Unit) = Observe.strong(this, true)(value => new Observe.ObserveInteract {
-      override def checkExceptionAndRemoval(): Boolean = false
-      override def execute(): Unit = f(value)
-    })(CreationTicket.fromScheduler(SimpleScheduler))
+    def observe(f: A => Unit) = Observe.strong(this, true)(value =>
+      new Observe.ObserveInteract {
+        override def checkExceptionAndRemoval(): Boolean = false
+        override def execute(): Unit                     = f(value)
+      }
+    )(CreationTicket.fromScheduler(SimpleScheduler))
 
-
-import TestAPI._
-import SimpleScheduler._
+import rescala.TestAPI._
+import rescala.core.ReName
+import rescala.scheduler.SimpleScheduler._
+import rescala.scheduler.SimpleState
 
 object Test:
   @main def main(): Unit =

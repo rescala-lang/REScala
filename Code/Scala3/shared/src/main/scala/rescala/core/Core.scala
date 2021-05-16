@@ -1,5 +1,7 @@
 package rescala.core
 
+import rescala.operator.RExceptions
+
 import scala.annotation.implicitNotFound
 import scala.util.DynamicVariable
 

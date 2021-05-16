@@ -1,4 +1,4 @@
-package rescala.core
+package rescala.operator
 
 import scala.util.control.ControlThrowable
 

@@ -1,4 +1,7 @@
-package rescala.core
+package rescala.operator
+
+import rescala.core.{Core}
+import rescala.operator.Pulse
 
 trait Observing extends Core:
   /** Generic interface for observers that represent a function registered to trigger for every reevaluation of a reactive value.
