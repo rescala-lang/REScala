@@ -45,7 +45,9 @@ lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
   rescalafx,
   reswing,
   todolist,
-  universe
+  universe,
+  transactivesJS,
+  transactivesJVM,
 )
   .settings(cfg.noPublish)
 
