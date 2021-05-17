@@ -8,8 +8,8 @@ import rescala.operator.DefaultImplementations
 
 import scala.collection.immutable.{LinearSeq, Queue}
 
-trait EventApi extends Core with Observing {
-  self: SignalApi with DefaultImplementations with RescalaInterface with Sources =>
+trait EventApi {
+  self: RescalaInterface =>
 
   /** Events only propagate a value when they are changing,
     * when the system is at rest, events have no values.

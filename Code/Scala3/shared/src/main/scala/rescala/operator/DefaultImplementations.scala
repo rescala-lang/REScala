@@ -4,8 +4,8 @@ import rescala.core._
 import rescala.interface.RescalaInterface
 import rescala.operator.Pulse.NoChange
 
-trait DefaultImplementations extends Core {
-  self : EventApi with SignalApi with Sources with RescalaInterface =>
+trait DefaultImplementations  {
+  self : RescalaInterface =>
   /** @param isDynamicWithStaticDeps [[None]] means static dependencies only,
     *                                [[Some]] means dynamic with the given static ones for optimization */
   class SignalImpl[T](

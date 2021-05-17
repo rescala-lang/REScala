@@ -4,7 +4,7 @@ import rescala.core._
 import rescala.interface.RescalaInterface
 
 trait Sources {
-  self : EventApi with SignalApi with RescalaInterface with DefaultImplementations =>
+  self : RescalaInterface =>
 
   trait Source[T] extends ReSource {
     final def admit(value: T)(implicit ticket: AdmissionTicket): Unit = admitPulse(Pulse.Value(value))

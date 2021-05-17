@@ -7,8 +7,8 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
 import scala.util.control.NonFatal
 
-trait SignalApi extends Observing {
-  self : DefaultImplementations with EventApi with RescalaInterface with Sources =>
+trait SignalApi {
+  self : RescalaInterface =>
 
   import Signals.SignalResource
 
