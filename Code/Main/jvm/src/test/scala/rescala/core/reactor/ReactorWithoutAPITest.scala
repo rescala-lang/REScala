@@ -1,6 +1,7 @@
 package rescala.core.reactor
 
-import rescala.core.{CreationTicket, Interp, ReName}
+import rescala.core.{CreationTicket, Interp, MacroAccess, ReName}
+import rescala.default
 import tests.rescala.testtools.RETests
 
 class ReactorWithoutAPITest extends RETests {
@@ -10,7 +11,8 @@ class ReactorWithoutAPITest extends RETests {
   class CustomReactorReactive[T](
       initState: ReStructure#State[ReactorStage[T], ReStructure]
   ) extends Derived
-      with Interp[T, ReStructure] {
+      with Interp[T, ReStructure]
+  with MacroAccess[T, Interp[T, ReStructure]]{
 
     override type Value = ReactorStage[T]
 
@@ -38,6 +40,8 @@ class ReactorWithoutAPITest extends RETests {
       * @return the reactor's state after the transaction is finished.
       */
     override protected[rescala] def commit(base: ReactorStage[T]): ReactorStage[T] = base
+
+    override def resource: Interp[T, default.ReStructure] = this
   }
 
   /** A class that manages a single stage of the reactor body.
@@ -238,5 +242,27 @@ class ReactorWithoutAPITest extends RETests {
     assert(transaction(reactor) { _.now(reactor) } === 1)
     e1.fire()
     assert(transaction(reactor) { _.now(reactor) } === 2)
+  }
+
+  test("Reactor has no glitches") {
+    val e1 = Evt[String]()
+
+    val reactor: CustomReactorReactive[String] = CustomReactorReactive.once("Initial Value", Set(e1)) { self =>
+      self.set("Not Reacted")
+      self.next(e1) { (self, _) =>
+        self.set("Reacted")
+      }
+    }
+
+    val tuple = Signal { (e1.latest("Init").value, reactor.value)}
+    val history = tuple.changed.last(5)
+
+    assert(tuple.now === (("Init", "Not Reacted")))
+    assert(history.now === Nil)
+
+    e1.fire("Fire")
+
+    assert(tuple.now === (("Fire", "Reacted")))
+    assert(history.now === List(("Fire", "Reacted")))
   }
 }
