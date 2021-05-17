@@ -12,7 +12,7 @@ class ReactorWithoutAPITest extends RETests {
       initState: ReStructure#State[ReactorStage[T], ReStructure]
   ) extends Derived
       with Interp[T, ReStructure]
-  with MacroAccess[T, Interp[T, ReStructure]]{
+      with MacroAccess[T, Interp[T, ReStructure]] {
 
     override type Value = ReactorStage[T]
 
@@ -29,7 +29,7 @@ class ReactorWithoutAPITest extends RETests {
       * after all (known) dependencies are updated
       */
     override protected[rescala] def reevaluate(input: ReIn): Rout = {
-      input.withValue(state.current.eval(input))
+      input.withValue(state.current.progress(input))
     }
 
     /** Defines how the state is modified on commit.
@@ -52,26 +52,26 @@ class ReactorWithoutAPITest extends RETests {
     * @param reactor the reactor housing the stage.
     * @tparam T the value type of the reactor.
     */
-  class ReactorStage[T](initialValue: T, reactor: CustomReactorReactive[T]) {
+  class ReactorStage[T](initialValue: T, protected val reactor: CustomReactorReactive[T]) {
 
     /** The value of the stage.
       *
       * Because the value of the reactor equals to the value of its current
       * ReactorStage this is subsequently also the value of the reactor.
       */
-    var value: T                                                     = initialValue
+    var value: T = initialValue
 
     /** A function that returns the reactor stage resulting of a reevaluation. */
     private var stageProgressor: Option[reactor.ReIn => ReactorStage[T]] = None
 
-    /** Reevaluates the stage, if it can progress.
+    /** Tries to progress the stage.
       *
       * @param input a [[rescala.core.ReevTicket]] of the reactor.
       * @return the progressed [[ReactorStage]].
       *         If the next stage isn't triggered yet, it returns the
       *         current stage.
       */
-    def eval(input: reactor.ReIn): ReactorStage[T] = {
+    def progress(input: reactor.ReIn): ReactorStage[T] = {
       stageProgressor.foreach { progressor =>
         return progressor(input)
       }
@@ -139,8 +139,6 @@ class ReactorWithoutAPITest extends RETests {
     */
   class ConstructionStage[T](initialValue: T) extends ReactorStage(initialValue, null) {
 
-    // TODO: Throw errors if other methods are called. Probably UnsupportedOperationExceptions
-
     /** Constructs a real ReactorStage.
       *
       * This function merges the state of this ConstructionStage
@@ -152,6 +150,24 @@ class ReactorWithoutAPITest extends RETests {
       */
     def upgrade(reactor: CustomReactorReactive[T]): ReactorStage[T] = {
       new ReactorStage[T](value, reactor)
+    }
+
+    override def progress(input: ConstructionStage.this.reactor.ReIn): ReactorStage[T] = {
+      throw new UnsupportedOperationException(
+        "ConstructionStage can't be progressed. Upgrade the stage before real use."
+      )
+    }
+
+    override def next[E](event: default.Evt[E])(body: (ReactorStage[T], E) => Unit): Unit = {
+      throw new UnsupportedOperationException(
+        "ConstructionStages should not be used for anything other than initialization. Upgrade the stage before real use."
+      )
+    }
+
+    override def set(newValue: T): Unit = {
+      throw new UnsupportedOperationException(
+        "ConstructionStages should not be used for anything other than initialization. Upgrade the stage before real use."
+      )
     }
   }
 
@@ -165,7 +181,10 @@ class ReactorWithoutAPITest extends RETests {
       * @tparam T the reactor's value type.
       * @return the resulting reactor object.
       */
-    def once[T](initialValue: T, dependencies: Set[ReSource])(body: ReactorStage[T] => Unit): CustomReactorReactive[T] = {
+    def once[T](
+        initialValue: T,
+        dependencies: Set[ReSource]
+    )(body: ReactorStage[T] => Unit): CustomReactorReactive[T] = {
       val initialStage = new ConstructionStage[T](initialValue)
       val reactor: CustomReactorReactive[T] = CreationTicket.fromScheduler(scheduler)
         .create(
@@ -254,7 +273,7 @@ class ReactorWithoutAPITest extends RETests {
       }
     }
 
-    val tuple = Signal { (e1.latest("Init").value, reactor.value)}
+    val tuple   = Signal { (e1.latest("Init").value, reactor.value) }
     val history = tuple.changed.last(5)
 
     assert(tuple.now === (("Init", "Not Reacted")))
