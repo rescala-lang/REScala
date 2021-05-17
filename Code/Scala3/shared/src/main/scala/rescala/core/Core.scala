@@ -5,7 +5,7 @@ import rescala.operator.RExceptions
 import scala.annotation.implicitNotFound
 import scala.util.DynamicVariable
 
-open trait Core {
+trait Core {
   type State[_]
 
   /** Source of (reactive) values, the [[Struct]] defines how the state is stored internally,
@@ -242,6 +242,7 @@ open trait Core {
 
   /** Enables the creation of other reactives */
   @implicitNotFound(msg = "Could not find capability to create reactives. Maybe a missing import?")
+  @scala.annotation.nowarn("msg=The outer reference in this type test cannot be checked at run time.")
   final case class CreationTicket(self: Either[Initializer, Scheduler], rename: ReName) {
 
     private[rescala] def create[V, T <: Derived](

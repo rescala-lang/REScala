@@ -8,7 +8,7 @@ object TestAPI {
 
   type State[T] = SimpleState[T]
 
-  class ProtoVar[T](initState: SimpleState[T]) extends ReSource with Interp[T]:
+  class ProtoVar[T](initState: SimpleState[T]) extends ReSource with Interp[T] {
     outer =>
 
     override type Value = T
@@ -40,19 +40,21 @@ object TestAPI {
         ) { createdState =>
           new ProtoSignal(createdState, this, f)
         }
+  }
 
-  object ProtoVar:
+  object ProtoVar {
     def apply[V](value: V) =
       CreationTicket.fromScheduler(SimpleScheduler)
         .createSource(value) { createdState =>
           new ProtoVar[V](createdState)
         }
+  }
 
   class ProtoSignal[A, B](
       initState: State[A],
       inputSource: Interp[B],
       fun: B => A
-  ) extends Derived with Interp[A]:
+  ) extends Derived with Interp[A] {
     override type Value = A
     override protected[rescala] def state: State[Value]        = initState
     override protected[rescala] def name: ReName               = "I am a name"
@@ -73,12 +75,10 @@ object TestAPI {
         override def execute(): Unit                     = f(value)
       }
     )(CreationTicket.fromScheduler(SimpleScheduler))
+  }
 }
 
 import rescala.TestAPI._
-import rescala.core.ReName
-import rescala.scheduler.SimpleScheduler._
-import rescala.scheduler.SimpleState
 
 object Test {
   def main(args: Array[String]): Unit = {
