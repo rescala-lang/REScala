@@ -1,6 +1,5 @@
 package rescalafx
 
-import scalafx.Includes.handle
 import scalafx.application.JFXApp.PrimaryStage
 import scalafx.application.{JFXApp, Platform}
 import scalafx.scene.{Node, Scene}
@@ -38,7 +37,7 @@ object Main extends JFXApp {
       content = render()
     }
 
-    onCloseRequest = handle {
+    onCloseRequest = _ => {
       Platform.exit()
     }
   }
