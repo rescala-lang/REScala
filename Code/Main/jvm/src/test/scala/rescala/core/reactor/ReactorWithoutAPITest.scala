@@ -108,18 +108,16 @@ class ReactorWithoutAPITest extends RETests {
         event: Evt[E],
         body: (ReactorStage[T], E) => Unit
     )(input: reactor.ReIn): ReactorStage[T] = {
-      val eventDepend = input.dependStatic(event)
+      val eventValue = input.dependStatic(event)
 
-      if (eventDepend.isEmpty) {
-        return this
+      eventValue.foreach { eventValue =>
+        val nextStage = new ReactorStage[T](this.value, reactor)
+        body(nextStage, eventValue)
+
+        return nextStage
       }
 
-      val eventValue = eventDepend.get
-
-      val nextStage = new ReactorStage[T](value, reactor)
-      body(nextStage, eventValue)
-
-      nextStage
+      this
     }
   }
 
