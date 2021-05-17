@@ -1,10 +1,12 @@
 package rescala.scheduler.levelbased
 
-import rescala.scheduler.Levelbased
+import rescala.scheduler.{Levelbased, levelbased}
+import rescala.interface.RescalaInterface
+import rescala.scheduler.levelbased.LevelBasedSchedulers
 
 
-/** Basic implementations of propagation engines */
-trait LevelBasedSchedulers extends Levelbased {
+object LevelBasedSchedulers extends RescalaInterface with Levelbased {
+
   type State[V] = LevelState[V]
 
   private[rescala] class SimpleNoLock extends LevelBasedTransaction {
@@ -16,24 +18,13 @@ trait LevelBasedSchedulers extends Levelbased {
     override def beforeDynamicDependencyInteraction(dependency: ReSource): Unit = {}
   }
 
-  implicit val synchron: Scheduler = {
-    new TwoVersionScheduler[SimpleNoLock] {
-      override protected def makeTransaction(priorTx: Option[SimpleNoLock]): SimpleNoLock = new SimpleNoLock
-      override def schedulerName: String                                                  = "Synchron"
-      override def forceNewTransaction[R](
-          initialWrites: Set[ReSource],
-          admissionPhase: AdmissionTicket => R
-      ): R =
-        synchronized { super.forceNewTransaction(initialWrites, admissionPhase) }
-    }
+  override def scheduler: Scheduler = new TwoVersionScheduler[SimpleNoLock] {
+    override protected def makeTransaction(priorTx: Option[SimpleNoLock]): SimpleNoLock = new SimpleNoLock
+    override def schedulerName: String                                                  = "Synchron"
+    override def forceNewTransaction[R](
+        initialWrites: Set[ReSource],
+        admissionPhase: AdmissionTicket => R
+    ): R =
+      synchronized { super.forceNewTransaction(initialWrites, admissionPhase) }
   }
-
-  implicit val unmanaged: Scheduler =
-    new TwoVersionScheduler[SimpleNoLock] {
-      override protected def makeTransaction(priorTx: Option[SimpleNoLock]): SimpleNoLock = new SimpleNoLock()
-      override def schedulerName: String                                                  = "Unmanaged"
-    }
-
 }
-
-object LevelBasedSchedulers extends LevelBasedSchedulers
