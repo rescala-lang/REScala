@@ -35,9 +35,9 @@ trait Sources {
     override def disconnect()(implicit engine: Scheduler): Unit = ()
     def admitPulse(pulse: Pulse[T])(implicit ticket: AdmissionTicket): Unit = {
       ticket.recordChange(new InitialChange {
-        override val source = Evt.this
-        override def writeValue(base: source.Value, writeCallback: source.Value => Unit): Boolean = {
-          writeCallback(pulse.asInstanceOf[source.Value]); true
+        override val source: Evt.this.type = Evt.this
+        override def writeValue(base: Pulse[T], writeCallback: Pulse[T] => Unit): Boolean = {
+          writeCallback(pulse); true
         }
       })
     }
