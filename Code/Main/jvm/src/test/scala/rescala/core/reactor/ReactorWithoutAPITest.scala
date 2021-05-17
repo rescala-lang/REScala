@@ -14,13 +14,14 @@ class ReactorWithoutAPITest extends RETests {
 
     override type Value = ReactorStage[T]
 
+    override protected[rescala] def state: State = initState
+    override protected[rescala] def name: ReName = "Custom Reactor"
+
     /** Interprets the internal type to the external type
       *
       * @group internal
       */
     override def interpret(v: ReactorStage[T]): T = v.value
-
-    override protected[rescala] def name: ReName = "Custom Reactor"
 
     /** called if any of the dependencies ([[ReSource]]s) changed in the current update turn,
       * after all (known) dependencies are updated
@@ -29,18 +30,46 @@ class ReactorWithoutAPITest extends RETests {
       input.withValue(state.current.eval(input))
     }
 
-    override protected[rescala] def state: State = initState
-
+    /** Defines how the state is modified on commit.
+      *
+      * Reactors don't change their state at the end of a transaction.
+      *
+      * @param base the reactor's state at the end of the transaction.
+      * @return the reactor's state after the transaction is finished.
+      */
     override protected[rescala] def commit(base: ReactorStage[T]): ReactorStage[T] = base
   }
 
+  /** A class that manages a single stage of the reactor body.
+    *
+    * A stage is a body of code, that gets executed in the same transaction.
+    *
+    * @param initialValue the value the reactor is initialized with.
+    * @param reactor the reactor housing the stage.
+    * @tparam T the value type of the reactor.
+    */
   class ReactorStage[T](initialValue: T, reactor: CustomReactorReactive[T]) {
-    var value: T                                                     = initialValue
-    private var stageHolder: Option[reactor.ReIn => ReactorStage[T]] = None
 
+    /** The value of the stage.
+      *
+      * Because the value of the reactor equals to the value of its current
+      * ReactorStage this is subsequently also the value of the reactor.
+      */
+    var value: T                                                     = initialValue
+
+    /** A function that returns the reactor stage resulting of a reevaluation. */
+    private var stageProgressor: Option[reactor.ReIn => ReactorStage[T]] = None
+
+    /** Reevaluates the stage, if it can progress.
+      *
+      * @param input a [[rescala.core.ReevTicket]] of the reactor.
+      * @return the progressed [[ReactorStage]].
+      *         If the next stage isn't triggered yet, it returns the
+      *         current stage.
+      */
     def eval(input: reactor.ReIn): ReactorStage[T] = {
-      stageHolder.foreach { holder =>
-        return holder(input)
+      stageProgressor.foreach { progressor =>
+        return progressor(input)
       }
 
       this
@@ -50,11 +79,32 @@ class ReactorWithoutAPITest extends RETests {
       value = newValue
     }
 
+    /** Waits until the event is triggered.
+      *
+      * When the event is triggered the given body is executed in the
+      * same transaction.
+      *
+      * @param event the event to wait for.
+      * @param body the code to execute when the event is triggered.
+      * @tparam E the event's type.
+      */
     def next[E](event: Evt[E])(body: (ReactorStage[T], E) => Unit): Unit = {
-      stageHolder = Some(stageHolder(event, body)(_: reactor.ReIn))
+      stageProgressor = Some(stageProgressor(event, body)(_: reactor.ReIn))
     }
 
-    private def stageHolder[E](
+    /** Encapsulates a stage that is waiting for progression.
+      *
+      * The function can be used to hide the event's type from the
+      * external API.
+      *
+      * @param event the event that triggers the next stage.
+      * @param body the body of the next stage.
+      * @param input a [[rescala.core.ReevTicket]] of the reactor.
+      * @tparam E the event's type.
+      * @return the next stage, if the event is triggered.
+      *         Otherwise returns the current stage.
+      */
+    private def stageProgressor[E](
         event: Evt[E],
         body: (ReactorStage[T], E) => Unit
     )(input: reactor.ReIn): ReactorStage[T] = {
@@ -73,21 +123,51 @@ class ReactorWithoutAPITest extends RETests {
     }
   }
 
-  class BasicReactorStage[T](initialValue: T) extends ReactorStage(initialValue, null) {
+  /** A ReactorStage that can be used for stage construction.
+    *
+    * This special stage is stripped off of all capabilities that
+    * aren't known during initialization. Especially it doesn't need
+    * to have a reactor.
+    *
+    * Therefore this stage is highly limited in its capabilities.
+    * Its only purpose is to be upgraded into a real stage later.
+    *
+    * @param initialValue the value the reactor is initialized with.
+    * @tparam T the value type of the reactor.
+    */
+  class ConstructionStage[T](initialValue: T) extends ReactorStage(initialValue, null) {
 
     // TODO: Throw errors if other methods are called. Probably UnsupportedOperationExceptions
 
+    /** Constructs a real ReactorStage.
+      *
+      * This function merges the state of this ConstructionStage
+      * with the given reactor and returns a real ReactorStage,
+      * holding the state of the current stage.
+      *
+      * @param reactor the reactor holding the stage.
+      * @return the resulting [[ReactorStage]].
+      */
     def upgrade(reactor: CustomReactorReactive[T]): ReactorStage[T] = {
       new ReactorStage[T](value, reactor)
     }
   }
 
   object CustomReactorReactive {
-    def once[T](initialValue: T, inputs: Set[ReSource])(body: ReactorStage[T] => Unit): CustomReactorReactive[T] = {
-      val initialStage = new BasicReactorStage[T](initialValue)
+
+    /** Returns a reactor that is executed once.
+      *
+      * @param initialValue the value the reactor has after initializaiton.
+      * @param dependencies all events the reactor stages depend on.
+      * @param body the reactor's body.
+      * @tparam T the reactor's value type.
+      * @return the resulting reactor object.
+      */
+    def once[T](initialValue: T, dependencies: Set[ReSource])(body: ReactorStage[T] => Unit): CustomReactorReactive[T] = {
+      val initialStage = new ConstructionStage[T](initialValue)
       val reactor: CustomReactorReactive[T] = CreationTicket.fromScheduler(scheduler)
         .create(
-          inputs,
+          dependencies,
           initialStage: ReactorStage[T],
           inite = false
         ) { createdState: ReStructure#State[ReactorStage[T], ReStructure] =>
