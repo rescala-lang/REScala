@@ -1,4 +1,4 @@
-package rescala.scheduler.twoversion
+package rescala.scheduler
 
 /** Indicates that a class stores buffered changes that can be committed or reverted */
 trait Committable[V] {

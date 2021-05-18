@@ -1,9 +1,8 @@
 package rescala.macros
 
-import rescala.core.{CreationTicket, DynamicTicket, LowPriorityCreationImplicits, StaticTicket, Struct}
 import retypecheck._
 
-import scala.annotation.StaticAnnotation
+import scala.annotation.{StaticAnnotation, compileTimeOnly}
 import scala.reflect.macros.blackbox
 
 object MacroTags {
@@ -17,7 +16,37 @@ object MacroTags {
   */
 class cutOutOfUserComputation extends StaticAnnotation
 
+trait MacroAccess[+A, +T] {
+
+  /** Makes the enclosing reactive expression depend on the current value of the reactive.
+    * Is an alias for [[value]].
+    *
+    * @group accessor
+    * @see value
+    */
+  @compileTimeOnly(s"${this} apply can only be used inside of reactive expressions")
+  final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of acro")
+
+  /** Makes the enclosing reactive expression depend on the current value of the reactive.
+    * Is an alias for [[apply]].
+    *
+    * @group accessor
+    * @see apply
+    */
+  @compileTimeOnly("value can only be used inside of reactive expressions")
+  final def value: A = throw new IllegalAccessException(s"$this.value called outside of macro")
+
+  def resource: T
+
+}
+
 class ReactiveMacros(val c: blackbox.Context) {
+
+  type CreationTicket
+  type DynamicTicket
+  type LowPriorityCreationImplicits
+  type StaticTicket
+
 
   import c.universe._
 
@@ -26,16 +55,14 @@ class ReactiveMacros(val c: blackbox.Context) {
 
   def ReactiveExpression[
       A: c.WeakTypeTag,
-      S <: Struct: c.WeakTypeTag,
       IsStatic <: MacroTags.Staticism: c.WeakTypeTag,
       ReactiveType: c.WeakTypeTag
   ](expression: Tree)(ticket: c.Tree): c.Tree = {
-    ReactiveExpressionWithAPI[A, S, IsStatic, ReactiveType](expression)(ticket)(q"(${c.prefix.tree}).rescalaAPI", None)
+    ReactiveExpressionWithAPI[A, IsStatic, ReactiveType](expression)(ticket)(q"(${c.prefix.tree}).rescalaAPI", None)
   }
 
   def ReactiveExpressionWithAPI[
       A: c.WeakTypeTag,
-      S <: Struct: c.WeakTypeTag,
       IsStatic <: MacroTags.Staticism: c.WeakTypeTag,
       ReactiveType: c.WeakTypeTag
   ](expression: Tree)(ticket: c.Tree)(rescalaAPI: Tree, prefixManipulation: Option[PrefixManipulation]): c.Tree = {
@@ -48,7 +75,7 @@ class ReactiveMacros(val c: blackbox.Context) {
     val dependencies    = lego.detections.detectedStaticReactives
     val isStatic        = lego.detections.detectedDynamicReactives.isEmpty
     val creationMethod  = TermName(if (isStatic) "static" else "dynamic")
-    val ticketType      = if (isStatic) weakTypeOf[StaticTicket[S]] else weakTypeOf[DynamicTicket[S]]
+    val ticketType      = if (isStatic) weakTypeOf[StaticTicket] else weakTypeOf[DynamicTicket]
 
     val body = q"""$rescalaAPI.$signalsOrEvents.$creationMethod[${weakTypeOf[A]}](
          ..$dependencies
@@ -64,7 +91,7 @@ class ReactiveMacros(val c: blackbox.Context) {
   ](expression: Tree): c.Tree = {
     if (c.hasErrors) return compileErrorsAst
 
-    val forceStatic = !(weakTypeOf[Capability] <:< weakTypeOf[DynamicTicket[_]])
+    val forceStatic = !(weakTypeOf[Capability] <:< weakTypeOf[DynamicTicket])
     val lego        = new MacroLego(expression, forceStatic)
 
     val dependencies = lego.detections.detectedStaticReactives
@@ -102,7 +129,6 @@ class ReactiveMacros(val c: blackbox.Context) {
   def ReactiveUsingFunctionMacro[
       T: c.WeakTypeTag,
       A: c.WeakTypeTag,
-      S <: Struct: c.WeakTypeTag,
       FuncImpl: c.WeakTypeTag,
       ReactiveType: c.WeakTypeTag
   ](expression: c.Tree)(ticket: c.Tree): c.Tree = {
@@ -112,21 +138,19 @@ class ReactiveMacros(val c: blackbox.Context) {
     val pm                = new PrefixManipulation
     val computation: Tree = q"""$funcImpl.apply[${weakTypeOf[T]}, ${weakTypeOf[A]}](${pm.prefixValue}, $expression)"""
     fixNullTypes(computation)
-    ReactiveExpressionWithAPI[A, S, MacroTags.Dynamic, ReactiveType](computation)(ticket)(
+    ReactiveExpressionWithAPI[A, MacroTags.Dynamic, ReactiveType](computation)(ticket)(
       q"${pm.prefixIdent}.rescalaAPI",
       Some(pm)
     )
   }
 
-  def EventFoldMacro[T: c.WeakTypeTag, A: c.WeakTypeTag, S <: Struct: c.WeakTypeTag](init: c.Expr[A])(op: c.Expr[(
-      A,
-      T
-  ) => A])(ticket: c.Expr[rescala.core.CreationTicket[S]]): c.Tree = {
+  def EventFoldMacro[T: c.WeakTypeTag, A: c.WeakTypeTag, CT: c.WeakTypeTag](init: c.Expr[A])(op: c.Expr[(A, T) => A])(ticket: c.Expr[CT]): c.Tree = {
     if (c.hasErrors) return compileErrorsAst
 
-    val eventsSymbol = weakTypeOf[rescala.operator.Events.type].termSymbol.asTerm.name
-    val ticketType   = weakTypeOf[StaticTicket[S]]
-    val funcImpl     = weakTypeOf[rescala.operator.Events.FoldFuncImpl.type].typeSymbol.asClass.module
+    // TODO: placeholder symbol
+    val eventsSymbol = weakTypeOf[rescala.operator.EventsMacroImpl.type].termSymbol.asTerm.name
+    val ticketType   = weakTypeOf[StaticTicket]
+    val funcImpl     = weakTypeOf[rescala.operator.EventsMacroImpl.FoldFuncImpl.type].typeSymbol.asClass.module
     val pm           = new PrefixManipulation()
     val computation  = q"""$funcImpl.apply[${weakTypeOf[T]}, ${weakTypeOf[A]}](_, ${pm.prefixValue}, $op)"""
     fixNullTypes(computation)
@@ -144,14 +168,14 @@ class ReactiveMacros(val c: blackbox.Context) {
 
   // here be dragons
 
-  class MacroLego[S <: Struct: c.WeakTypeTag](tree: Tree, forceStatic: Boolean) {
+  class MacroLego(tree: Tree, forceStatic: Boolean) {
     private val ticketTermName: TermName = TermName(c.freshName("ticket$"))
     val ticketIdent: Ident               = Ident(ticketTermName)
 
     val weAnalysis    = new WholeExpressionAnalysis(tree)
     val cutOut        = new CutOutTransformer(weAnalysis)
     val cutOutTree    = cutOut.transform(tree)
-    val detections    = new RewriteTransformer[S](weAnalysis, ticketIdent, forceStatic)
+    val detections    = new RewriteTransformer(weAnalysis, ticketIdent, forceStatic)
     val rewrittenTree = detections transform cutOutTree
 
     def contextualizedExpression(contextType: Type) =
@@ -167,7 +191,7 @@ class ReactiveMacros(val c: blackbox.Context) {
 
   object IsCutOut
 
-  class RewriteTransformer[S <: Struct: WeakTypeTag](
+  class RewriteTransformer(
       weAnalysis: WholeExpressionAnalysis,
       ticketIdent: Ident,
       requireStatic: Boolean
@@ -182,7 +206,7 @@ class ReactiveMacros(val c: blackbox.Context) {
         // replace any used CreationTicket in a Signal expression with the correct turn source for the current turn
         //q"$_.fromSchedulerImplicit[..$_](...$_)"
         case turnSource @ Apply(TypeApply(Select(_, TermName("fromSchedulerImplicit")), _), _)
-            if turnSource.tpe =:= weakTypeOf[CreationTicket[S]] && turnSource.symbol.owner == symbolOf[
+            if turnSource.tpe =:= weakTypeOf[CreationTicket] && turnSource.symbol.owner == symbolOf[
               LowPriorityCreationImplicits
             ] =>
           q"""${termNames.ROOTPKG}.rescala.core.CreationTicket(
@@ -384,7 +408,7 @@ class ReactiveMacros(val c: blackbox.Context) {
     }).flatten.toSet
   }
 
-  def checkForPotentialSideEffects[A: c.WeakTypeTag, S <: Struct: c.WeakTypeTag](
+  def checkForPotentialSideEffects[A: c.WeakTypeTag](
       expression: Tree,
       uncheckedExpressions: Set[c.universe.Tree]
   ): Unit = {

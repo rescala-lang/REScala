@@ -2,18 +2,19 @@ package rescala.extra
 
 import org.scalajs.dom
 import org.scalajs.dom.{Element, Node}
-import rescala.core.{CreationTicket, Scheduler, Struct}
-import rescala.operator.Observe.ObserveInteract
-import rescala.operator.RExceptions.ObservedException
-import rescala.operator.{Evt, Observe, Pulse, Signal, Var}
+import rescala.interface.RescalaInterface
 import scalatags.JsDom.all.{Attr, AttrValue, Modifier, Style, StyleValue}
 import scalatags.JsDom.{StringFrag, TypedTag}
 import scalatags.generic
 import scalatags.jsdom.Frag
+import rescala.operator.Pulse
+import rescala.operator.RExceptions.ObservedException
+
 
 import scala.scalajs.js
 
-object Tags {
+class Tags(val api: RescalaInterface) {
+  import api._
 
   def isInDocument(element: Element): Boolean = {
     js.Dynamic.global.document.contains(element).asInstanceOf[Boolean]
@@ -31,32 +32,32 @@ object Tags {
     }
   }
 
-  implicit class SignalToScalatags[S <: Struct](val signal: Signal[TypedTag[Element], S]) extends AnyVal {
+  implicit class SignalToScalatags(val signal: Signal[TypedTag[Element]]) {
 
     /** converts a Signal of a scalatags Tag to a scalatags Frag which automatically reflects changes to the signal in the dom */
-    def asModifier(implicit engine: Scheduler[S]): Modifier = {
-      new REFragModifier[S](signal, engine)
+    def asModifier(implicit engine: Scheduler): Modifier = {
+      new REFragModifier(signal, engine)
     }
   }
 
-  implicit class SignalStrToScalatags[S <: Struct](val signal: Signal[StringFrag, S]) extends AnyVal {
+  implicit class SignalStrToScalatags(val signal: Signal[StringFrag]) {
 
     /** converts a Signal of a scalatags Tag to a scalatags Frag which automatically reflects changes to the signal in the dom */
-    def asModifier(implicit engine: Scheduler[S]): Modifier = {
-      new REFragModifier[S](signal, engine)
+    def asModifier(implicit engine: Scheduler): Modifier = {
+      new REFragModifier(signal, engine)
     }
   }
 
-  implicit class SignalTagListToScalatags[S <: Struct](val signal: Signal[Seq[TypedTag[Element]], S]) extends AnyVal {
+  implicit class SignalTagListToScalatags(val signal: Signal[Seq[TypedTag[Element]]]) {
 
     /** converts a Signal of a scalatags Tag to a scalatags Frag which automatically reflects changes to the signal in the dom */
-    def asModifierL(implicit engine: Scheduler[S]): Modifier = {
-      new RETagListModifier[S](signal.withDefault(Nil), engine)
+    def asModifierL(implicit engine: Scheduler): Modifier = {
+      new RETagListModifier(signal.withDefault(Nil)(engine), engine)
     }
   }
 
-  private class REFragModifier[S <: Struct](rendered: Signal[Frag, S], engine: Scheduler[S]) extends Modifier {
-    var observe: Observe[S] = null
+  private class REFragModifier(rendered: Signal[Frag], engine: Scheduler) extends Modifier {
+    var observe: Observe = null
     var currentNode: Node   = null
     override def applyTo(parent: Element): Unit = {
       CreationTicket.fromScheduler(engine).transaction { init =>
@@ -69,7 +70,7 @@ object Tags {
         }
 
         observe = Observe.strong(rendered, fireImmediately = true)(
-          tagObserver[Frag, S](parent, rendered) { newTag =>
+          tagObserver[Frag](parent, rendered) { newTag =>
             //println(s"$rendered parent $parent")
             if (parent != null && !scalajs.js.isUndefined(parent)) {
               val newNode = newTag.render
@@ -84,9 +85,9 @@ object Tags {
     }
   }
 
-  def tagObserver[A, S <: Struct](
+  def tagObserver[A](
       parent: dom.Element,
-      rendered: Signal[A, S]
+      rendered: Signal[A]
   )(fun: A => Unit)(reevalVal: Pulse[A]): ObserveInteract =
     new ObserveInteract {
       override def checkExceptionAndRemoval(): Boolean = {
@@ -109,9 +110,9 @@ object Tags {
         }
     }
 
-  private class RETagListModifier[S <: Struct](rendered: Signal[Seq[TypedTag[Element]], S], engine: Scheduler[S])
+  private class RETagListModifier(rendered: Signal[Seq[TypedTag[Element]]], engine: Scheduler)
       extends Modifier {
-    var observe: Observe[S]                 = null
+    var observe: Observe                 = null
     var currentNodes: Seq[Element]          = Nil
     var currentTags: Seq[TypedTag[Element]] = Nil
     override def applyTo(parent: Element): Unit = {
@@ -141,44 +142,44 @@ object Tags {
     }
   }
 
-  implicit def genericReactiveAttrValue[T: AttrValue, S <: Struct, Sig[T2] <: Signal[T2, S]](implicit
-      engine: Scheduler[S]
+  implicit def genericReactiveAttrValue[T: AttrValue, Sig[T2] <: Signal[T2]](implicit
+      engine: Scheduler
   ): AttrValue[Sig[T]] =
     new AttrValue[Sig[T]] {
       def apply(t: dom.Element, a: Attr, signal: Sig[T]): Unit = {
         Observe.strong(signal, fireImmediately = true)(tagObserver(t, signal) { value =>
           implicitly[AttrValue[T]].apply(t, a, value)
-        })
+        })(engine)
       }
     }
 
-  //implicit def varAttrValue[T: AttrValue, S <: Struct](implicit engine: Scheduler[S])
-  //: AttrValue[Var[T, S]] = genericReactiveAttrValue[T, S, ({type λ[T2] = Var[T2, S]})#λ]
+  //implicit def varAttrValue[T: AttrValue](implicit engine: Scheduler)
+  //: AttrValue[Var[T]] = genericReactiveAttrValue[T, S, ({type λ[T2] = Var[T2]})#λ]
   //
-  //implicit def signalAttrValue[T: AttrValue, S <: Struct](implicit engine: Scheduler[S])
-  //: AttrValue[Signal[T, S]] = genericReactiveAttrValue[T, S, ({type λ[T2] = Signal[T2, S]})#λ]
+  //implicit def signalAttrValue[T: AttrValue](implicit engine: Scheduler)
+  //: AttrValue[Signal[T]] = genericReactiveAttrValue[T, S, ({type λ[T2] = Signal[T2]})#λ]
 
-  def genericReactiveStyleValue[T, S <: Struct, Sig[T2] <: Signal[T2, S]](implicit
-      engine: Scheduler[S],
+  def genericReactiveStyleValue[T, Sig[T2] <: Signal[T2]](implicit
+      engine: Scheduler,
       tstyle: StyleValue[T]
   ): StyleValue[Sig[T]] =
     new StyleValue[Sig[T]] {
       def apply(t: dom.Element, s: Style, signal: Sig[T]): Unit = {
         Observe.strong(signal, fireImmediately = true)(tagObserver(t, signal)({ value =>
           tstyle.apply(t, s, value)
-        }))
+        }))(engine)
       }
     }
 
-  implicit def varStyleValue[T: StyleValue, S <: Struct](implicit engine: Scheduler[S]): StyleValue[Var[T, S]] =
-    genericReactiveStyleValue[T, S, ({ type λ[T2] = Var[T2, S] })#λ]
+  implicit def varStyleValue[T: StyleValue]: StyleValue[Var[T]] =
+    genericReactiveStyleValue[T, ({ type λ[T2] = Var[T2] })#λ]
 
-  implicit def signalStyleValue[T: StyleValue, S <: Struct](implicit engine: Scheduler[S]): StyleValue[Signal[T, S]] =
-    genericReactiveStyleValue[T, S, ({ type λ[T2] = Signal[T2, S] })#λ]
+  implicit def signalStyleValue[T: StyleValue]: StyleValue[Signal[T]] =
+    genericReactiveStyleValue[T, ({ type λ[T2] = Signal[T2] })#λ]
 
-  implicit def bindEvt[T, S <: Struct](implicit scheduler: Scheduler[S]): generic.AttrValue[Element, Evt[T, S]] =
-    new generic.AttrValue[dom.Element, rescala.operator.Evt[T, S]] {
-      def apply(t: dom.Element, a: generic.Attr, v: rescala.operator.Evt[T, S]): Unit = {
+  implicit def bindEvt[T]: generic.AttrValue[Element, Evt[T]] =
+    new generic.AttrValue[dom.Element, Evt[T]] {
+      def apply(t: dom.Element, a: generic.Attr, v: Evt[T]): Unit = {
         t.asInstanceOf[js.Dynamic].updateDynamic(a.name)((e: T) => v.fire(e))
       }
     }

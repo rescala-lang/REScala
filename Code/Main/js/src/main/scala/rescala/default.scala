@@ -1,6 +1,5 @@
 package rescala
-import rescala.core.Scheduler
-import rescala.scheduler.levelbased.LevelStructImpl
+import rescala.interface.RescalaInterface
 
 /** REScala has two main abstractions. [[rescala.default.Event]] and [[rescala.default.Signal]] commonly referred to as reactives.
   * Use [[rescala.default.Var]] to create signal sources and [[rescala.default.Evt]] to create event sources.
@@ -8,6 +7,4 @@ import rescala.scheduler.levelbased.LevelStructImpl
   * Events and signals can be created from other reactives by using combinators,
   * signals additionally can be created using [[rescala.default.Signal]] expressions.
   */
-object default extends rescala.interface.RescalaInterface[LevelStructImpl] {
-  override implicit def scheduler: Scheduler[LevelStructImpl] = rescala.Schedulers.synchron
-}
+object default extends RescalaInterface with rescala.scheduler.Unmanaged

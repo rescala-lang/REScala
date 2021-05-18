@@ -1,18 +1,7 @@
 package rescala.interface
 
-import rescala.core.{Base, ReName, Scheduler, Struct}
-import rescala.macros.MacroTags.{Dynamic, Static}
-import rescala.operator
-import rescala.operator.Signals.SignalResource
-import rescala.operator.{DefaultImplementations, Pulse, Source}
-
-object RescalaInterface {
-  def interfaceFor[S <: Struct](someScheduler: Scheduler[S]): RescalaInterface[S] =
-    new RescalaInterface[S] {
-      override def scheduler: Scheduler[S] = someScheduler
-      override def toString: String        = s"Interface($scheduler)"
-    }
-}
+import rescala.core.Core
+import rescala.operator.{DefaultImplementations, EventApi, FlattenApi, Observing, SignalApi, Sources}
 
 /** Rescala has two main abstractions. [[Event]] and [[Signal]] commonly referred to as reactives.
   * Use [[Var]] to create signal sources and [[Evt]] to create event sources.
@@ -34,105 +23,17 @@ object RescalaInterface {
   * @groupdesc internal Methods and type aliases for advanced usages, these are most relevant to abstract
   *           over multiple scheduler implementations.
   */
-trait RescalaInterface[S <: Struct] extends Aliases[S] {
+trait RescalaInterface extends EventApi with SignalApi with FlattenApi with Sources with DefaultImplementations with Observing with Core {
 
   /** @group internal */
-  def scheduler: rescala.core.Scheduler[S]
+  def scheduler: Scheduler
 
   /** @group internal */
-  implicit def implicitScheduler: rescala.core.Scheduler[S] = scheduler
+  implicit def implicitScheduler: Scheduler = scheduler
 
-  /** @group internal */
-  implicit def rescalaAPI: RescalaInterface[S] = this
-
-  /** @group create */
-  final def Evt[A]()(implicit ticket: CreationTicket): Evt[A] = {
-    ticket.createSource[Pulse[A], Evt[A]](Pulse.NoChange)(init =>
-      {
-        new operator.Evt[A, S](init, ticket.rename) {
-          override val rescalaAPI: RescalaInterface[S] = RescalaInterface.this
-        }
-      }: Evt[A]
-    )
-  }
-
-  /** Creates new [[Var]]s
-    * @group create
-    */
-  object Var {
-    abstract class VarImpl[A] private[rescala] (initialState: rescala.operator.Signals.Sstate[A, S], name: ReName)
-        extends Base[Pulse[A], S](initialState, name)
-        with Var[A]
-        with SignalResource[A, S] {
-      override val resource: SignalResource[A, S] = this
-    }
-
-    def apply[T](initval: T)(implicit ticket: CreationTicket): VarImpl[T] = fromChange(Pulse.Value(initval))
-    def empty[T](implicit ticket: CreationTicket): VarImpl[T]             = fromChange(Pulse.empty)
-    private[this] def fromChange[T](change: Pulse[T])(implicit ticket: CreationTicket): VarImpl[T] = {
-      ticket.createSource[Pulse[T], VarImpl[T]](change)(s =>
-        new VarImpl[T](s, ticket.rename) {
-          override val rescalaAPI: RescalaInterface[S] = RescalaInterface.this
-          override val resource                        = this
-        }
-      )
-    }
-  }
-
-  /** A signal expression can be used to create signals accessing arbitrary other signals.
-    * Use the apply method on a signal to access its value inside of a signal expression.
-    * {{{
-    * val a: Signal[Int]
-    * val b: Signal[Int]
-    * val result: Signal[String] = Signal { a().toString + b().toString}
-    * }}}
-    * @group create
-    */
-  object Signal {
-    def rescalaAPI: RescalaInterface.this.type = RescalaInterface.this
-    final def apply[A](expression: A)(implicit ticket: CreationTicket): Signal[A] =
-      macro rescala.macros.ReactiveMacros.ReactiveExpression[A, S, Static, rescala.operator.Signals.type]
-    final def static[A](expression: A)(implicit ticket: CreationTicket): Signal[A] =
-      macro rescala.macros.ReactiveMacros.ReactiveExpression[A, S, Static, rescala.operator.Signals.type]
-    final def dynamic[A](expression: A)(implicit ticket: CreationTicket): Signal[A] =
-      macro rescala.macros.ReactiveMacros.ReactiveExpression[A, S, Dynamic, rescala.operator.Signals.type]
-  }
-
-  /** Similar to [[Signal]] expressions, but resulting in an event.
-    * Accessed events return options depending on whether they fire or not,
-    * and the complete result of the expression is an event as well.
-    *
-    * @see [[Signal]]
-    * @group create
-    */
-  object Event {
-    def rescalaAPI: RescalaInterface.this.type = RescalaInterface.this
-    final def apply[A](expression: Option[A])(implicit ticket: CreationTicket): Event[A] =
-      macro rescala.macros.ReactiveMacros.ReactiveExpression[A, S, Static, rescala.operator.Events.type]
-    final def static[A](expression: Option[A])(implicit ticket: CreationTicket): Event[A] =
-      macro rescala.macros.ReactiveMacros.ReactiveExpression[A, S, Static, rescala.operator.Events.type]
-    final def dynamic[A](expression: Option[A])(implicit ticket: CreationTicket): Event[A] =
-      macro rescala.macros.ReactiveMacros.ReactiveExpression[A, S, Dynamic, rescala.operator.Events.type]
-  }
 
   implicit def OnEv[T](e: Event[T]): Events.OnEv[T]           = new Events.OnEv[T](e)
   implicit def OnEvs[T](e: => Seq[Event[T]]): Events.OnEvs[T] = new Events.OnEvs[T](e)
-
-  /** Contains static methods to create Events
-    * @group create
-    */
-  object Events extends operator.Events[S] {
-    override val rescalaAPI: RescalaInterface.this.type = RescalaInterface.this
-  }
-
-  /** Contains static methods to create Signals
-    * @group create
-    */
-  object Signals extends operator.Signals[S] {
-    override val rescalaAPI: RescalaInterface.this.type = RescalaInterface.this
-  }
-
-  object Impls extends DefaultImplementations[S]
 
   /** Executes a transaction.
     *
@@ -173,29 +74,5 @@ trait RescalaInterface[S <: Struct] extends Aliases[S] {
       at.wrapUp = wut => { res = Some(wrapUpPhase(apr, wut)) }
     })
     res.get
-  }
-
-  /** Atomically changes multiple inputs in a single [[transaction]]
-    *
-    * @param changes the changes to perform, i.e., (i1 -> v1, i2 -> v2, ...)
-    * @return Result of the admission function
-    * @group update
-    */
-  def update(changes: (Source[S, A], A) forSome { type A }*): Unit = {
-    def admit[A](t: AdmissionTicket, change: (Source[S, A], A)): Unit = change._1.admit(change._2)(t)
-
-    scheduler.forceNewTransaction(
-      changes.foldLeft(Set.empty[ReSource]) {
-        case (accu, (source, _)) =>
-          assert(
-            !accu.contains(source),
-            s"must not admit multiple values for the same source ($source was assigned multiple times)"
-          )
-          accu + source
-      },
-      { t =>
-        for (change <- changes) admit(t, change)
-      }
-    )
   }
 }

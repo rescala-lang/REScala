@@ -1,6 +1,5 @@
 package rescala.parrp
 
-import rescala.core._
 import rescala.locking._
 import rescala.scheduler.Levelbased
 

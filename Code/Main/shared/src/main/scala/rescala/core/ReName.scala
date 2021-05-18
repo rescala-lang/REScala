@@ -9,7 +9,7 @@ abstract class ReNamed(val rename: ReName) {
   override def toString: String = rename.str
 }
 
-//  implicit def fromCreation[S <: Struct](implicit ct: CreationTicket[S]): ReName = ct.rename
+//  implicit def fromCreation[S : Struct](implicit ct: CreationTicket[S]): ReName = ct.rename
 object ReName extends LowPriorityReName {
   implicit def fromString(s: String): ReName                = ReName(s)
   def named[T](name: String)(f: /* implicit */ ReName => T) = f(ReName(name))

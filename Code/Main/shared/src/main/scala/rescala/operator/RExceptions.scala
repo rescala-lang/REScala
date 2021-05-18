@@ -1,21 +1,18 @@
 package rescala.operator
 
-import rescala.core.{ReSource, Struct}
-
 import scala.util.control.ControlThrowable
 
 object RExceptions {
   object EmptySignalControlThrowable extends ControlThrowable
 
-  case class ObservedException(location: ReSource[_ <: Struct], details: String, cause: Throwable)
-      extends RuntimeException(cause) {
+  case class ObservedException(location: Any, details: String, cause: Throwable) extends RuntimeException(cause) {
     override def getMessage: String = {
       val nestedMessage = Option(cause.getMessage).fold("") { msg => s" $msg" }
       s"»$location« $details: ${cause}$nestedMessage"
     }
   }
 
-  def toExternalReadException[R](r: ReSource[_ <: Struct], f: => R): R = {
+  def toExternalReadException[R](r: Any, f: => R): R = {
     try { f }
     catch {
       case EmptySignalControlThrowable => throw new NoSuchElementException(s"$r is empty")

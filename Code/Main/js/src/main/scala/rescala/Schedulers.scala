@@ -1,8 +1,8 @@
 package rescala
 
-import rescala.core.Scheduler
-import rescala.scheduler.levelbased.{LevelBasedSchedulers, LevelStructImpl}
+import rescala.interface.RescalaInterface
 
-object Schedulers extends LevelBasedSchedulers {
-  val all: List[Scheduler[LevelStructImpl]] = List(synchron, unmanaged)
+
+object Schedulers {
+  val all: List[RescalaInterface] = List(default)
 }

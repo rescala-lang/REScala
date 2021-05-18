@@ -2,31 +2,29 @@ package rescala.operator
 
 import rescala.core._
 import rescala.interface.RescalaInterface
-import rescala.operator
-import rescala.operator.Events.Estate
 import rescala.operator.Pulse.NoChange
-import rescala.operator.Signals.{SignalResource, Sstate}
 
-trait DefaultImplementations[S <: Struct] {
+trait DefaultImplementations  {
+  self : RescalaInterface with EventApi with SignalApi with Sources with DefaultImplementations with Observing with Core =>
   /** @param isDynamicWithStaticDeps [[None]] means static dependencies only,
     *                                [[Some]] means dynamic with the given static ones for optimization */
   class SignalImpl[T](
-      initial: Sstate[T, S],
-      expr: (DynamicTicket[S], () => T) => T,
+      initial: State[Pulse[T]],
+      expr: (DynamicTicket, () => T) => T,
       name: ReName,
-      isDynamicWithStaticDeps: Option[Set[ReSource[S]]]
+      isDynamicWithStaticDeps: Option[Set[ReSource]]
   ) extends DerivedImpl[T](initial, name, isDynamicWithStaticDeps)
-      with SignalResource[T, S] {
+      with Signals.SignalResource[T] {
 
-    protected[this] def computePulse(rein: ReevTicket[Pulse[T], S]): Pulse[T] = {
+    protected[this] def computePulse(rein: ReevTicket[Pulse[T]]): Pulse[T] = {
       Pulse.tryCatch(Pulse.diffPulse(expr(rein, () => rein.before.get), rein.before))
     }
   }
 
-  abstract class DerivedImpl[T](initial: Sstate[T, S], name: ReName, isDynamicWithStaticDeps: Option[Set[ReSource[S]]])
-      extends Base[Pulse[T], S](initial, name)
-      with Derived[S]
-      with DisconnectableImpl[S] {
+  abstract class DerivedImpl[T](initial: State[Pulse[T]], name: ReName, isDynamicWithStaticDeps: Option[Set[ReSource]])
+      extends Base[Pulse[T]](initial, name)
+      with Derived
+      with DisconnectableImpl {
 
     override protected[rescala] def reevaluate(rein: ReIn): Rout =
       guardReevaluate(rein) {
@@ -34,34 +32,32 @@ trait DefaultImplementations[S <: Struct] {
         val newPulse = computePulse(rein2)
         if (newPulse.isChange) rein2.withValue(newPulse) else rein2
       }
-    protected[this] def computePulse(rein: ReevTicket[Pulse[T], S]): Pulse[T]
+    protected[this] def computePulse(rein: ReevTicket[Pulse[T]]): Pulse[T]
   }
 
   class EventImpl[T](
-      initial: Estate[S, T],
-      expr: DynamicTicket[S] => Pulse[T],
+      initial: State[Pulse[T]],
+      expr: DynamicTicket => Pulse[T],
       name: ReName,
       /** If this is None, the event is static. Else, it is dynamic with the set of static dependencies */
-      isDynamicWithStaticDeps: Option[Set[ReSource[S]]],
-      override val rescalaAPI: RescalaInterface[S]
+      isDynamicWithStaticDeps: Option[Set[ReSource]]
   ) extends DerivedImpl[T](initial, name, isDynamicWithStaticDeps)
-      with Event[T, S] {
+    with Event[T] {
 
     override protected[rescala] def commit(base: Pulse[T]): Pulse[T] = Pulse.NoChange
     override def internalAccess(v: Pulse[T]): Pulse[T]               = v
-    override protected[this] def computePulse(rein: ReevTicket[Pulse[T], S]): Pulse[T] =
+    override protected[this] def computePulse(rein: ReevTicket[Pulse[T]]): Pulse[T] =
       Pulse.tryCatch(expr(rein), onEmpty = NoChange)
   }
 
   class ChangeEventImpl[T](
-      _bud: S#State[(Pulse[T], Pulse[Diff[T]]), S],
-      signal: operator.Signal[T, S],
-      name: ReName,
-      override val rescalaAPI: RescalaInterface[S]
-  ) extends Base[(Pulse[T], Pulse[Diff[T]]), S](_bud, name)
-      with Derived[S]
-      with Event[Diff[T], S]
-      with DisconnectableImpl[S] {
+      _bud: State[(Pulse[T], Pulse[Diff[T]])],
+      signal: Signal[T],
+      name: ReName
+  ) extends Base[(Pulse[T], Pulse[Diff[T]])](_bud, name)
+      with Derived
+      with Event[Diff[T]]
+      with DisconnectableImpl {
 
     override type Value = (Pulse[T], Pulse[Diff[T]])
 
@@ -72,7 +68,7 @@ trait DefaultImplementations[S <: Struct] {
 
     override protected[rescala] def reevaluate(rein: ReIn): Rout =
       guardReevaluate(rein) {
-        val to: Pulse[T]   = rein.collectStatic(signal.resource)
+        val to: Pulse[T]   = rein.collectStatic(signal)
         val from: Pulse[T] = rein.before._1
         if (to == Pulse.empty) rein // ignore empty propagations
         else if (from != Pulse.NoChange) rein.withValue((to, Pulse.Value(Diff(from, to))))
