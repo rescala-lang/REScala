@@ -2,9 +2,8 @@ package rescala.fullmv.mirrors
 
 import java.util.concurrent.{ConcurrentHashMap, ConcurrentMap, ThreadLocalRandom}
 
-import rescala.fullmv.FullMVTurn
 import rescala.fullmv.mirrors.Host.GUID
-import rescala.fullmv.sgt.synchronization.{SubsumableLock, SubsumableLockImpl}
+import rescala.fullmv.sgt.synchronization.{SubsumableLock}
 
 import scala.annotation.tailrec
 
@@ -19,7 +18,7 @@ trait Hosted[R] {
 object Host {
   type GUID = Long
   val dummyGuid: GUID = 0L
-  val DEBUG           = SubsumableLock.DEBUG
+  val DEBUG           = false
 }
 sealed trait CacheResult[T, +U <: T] { val instance: T }
 case class Found[T](instance: T)                extends CacheResult[T, Nothing]
@@ -91,14 +90,14 @@ trait SubsumableLockHost extends Host[SubsumableLock] {
           instance
         case Found(instance) =>
           if (instance.tryLocalAddRefs(1)) {
-            if (SubsumableLock.DEBUG)
+            if (Host.DEBUG)
               println(
                 s"[${Thread.currentThread().getName}] $this secured new local ref on cached $instance, dropping connection establishment remote reference."
               )
             remoteProxy.asyncRemoteRefDropped()
             instance
           } else {
-            if (SubsumableLock.DEBUG)
+            if (Host.DEBUG)
               println(
                 s"[${Thread.currentThread().getName}] $this remotely received $instance cache hit was concurrently deallocated; retrying cache lookup."
               )
@@ -110,13 +109,3 @@ trait SubsumableLockHost extends Host[SubsumableLock] {
   }
 }
 
-class SubsumableLockHostImpl extends SubsumableLockHost with HostImpl[SubsumableLock] {
-  override val dummy = new SubsumableLockImpl(this, Host.dummyGuid)
-  instances.put(0, dummy)
-  dummy.localSubRefs(1)
-  if (Host.DEBUG || SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this SETUP COMPLETE")
-  def newLock(): SubsumableLockImpl = createLocal(new SubsumableLockImpl(this, _))
-}
-trait FullMVTurnHost extends Host[FullMVTurn] {
-  val lockHost: SubsumableLockHost
-}

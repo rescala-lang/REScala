@@ -25,27 +25,6 @@ case class LockedSameSCC(lock: SubsumableLock) extends SCCState {
   }
 }
 
-object SerializationGraphTracking /*extends LockContentionTimer*/ {
-  def tryLock(defender: FullMVTurn, contender: FullMVTurn, sccState: SCCState): SCCState = {
-    assert(defender.host == contender.host, s"locking two turns from different engines")
-    sccState match {
-      case x @ LockedSameSCC(_) =>
-//        entered()
-        x
-      case UnlockedSameSCC =>
-        LockedSameSCC(SubsumableLock.acquireLock(contender, contender.host.timeout))
-//        entered()
-      case UnlockedUnknown =>
-        SubsumableLock.acquireLock(defender, contender, contender.host.timeout) match {
-          case Some(lock) =>
-//            entered()
-            LockedSameSCC(lock)
-          case None =>
-            UnlockedUnknown
-        }
-    }
-  }
-}
 //
 //trait LockContentionTimer {
 //  var contendedAcquiredDuration: Long = 0L

@@ -1,14 +1,10 @@
 package rescala.fullmv.sgt.synchronization
 
-import java.util.concurrent.atomic.AtomicInteger
-
-import rescala.fullmv.{FullMVEngine, FullMVTurn}
 import rescala.fullmv.mirrors._
-import rescala.parrp.Backoff
 
+import java.util.concurrent.atomic.AtomicInteger
 import scala.annotation.tailrec
 import scala.concurrent.Future
-import scala.concurrent.duration.Duration
 
 sealed trait TryLockResult
 case class Locked(lock: SubsumableLock) extends TryLockResult
@@ -109,97 +105,9 @@ trait SubsumableLock extends SubsumableLockProxy with Hosted[SubsumableLock] {
   }
 
   override def asyncRemoteRefDropped(): Unit = {
-    if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this dropping remote reference")
+    //if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this dropping remote reference")
     localSubRefs(1)
   }
 
   protected def dumped(): Unit
-}
-
-object SubsumableLock {
-  val DEBUG = false
-
-  def acquireLock[R](contender: FullMVTurn, timeout: Duration): SubsumableLock = {
-    if (DEBUG) System.out.println(s"[${Thread.currentThread().getName}] syncing on SCC of $contender")
-    val bo = new Backoff()
-    @tailrec def reTryLock(): SubsumableLock = {
-      FullMVEngine.myAwait(contender.tryLock(), timeout) match {
-        case Locked(lockedRoot) =>
-          if (DEBUG)
-            System.out.println(s"[${Thread.currentThread().getName}] now owns SCC of $contender under $lockedRoot")
-          lockedRoot
-        case Blocked =>
-          bo.backoff()
-          reTryLock()
-        case Deallocated =>
-          throw new AssertionError(
-            "this should be impossible we're calling tryLock on the contender only, which cannot deallocate concurrently."
-          )
-      }
-    }
-    reTryLock()
-  }
-
-  def acquireLock[R](defender: FullMVTurn, contender: FullMVTurn, timeout: Duration): Option[SubsumableLock] = {
-    assert(defender.host == contender.host, s"trying to sync $defender and $contender from different hosts")
-    if (DEBUG)
-      System.out.println(s"[${Thread.currentThread().getName}] syncing $defender and $contender into a common SCC")
-    val bo = new Backoff()
-    @tailrec def reTryLock(): Option[SubsumableLock] = {
-      FullMVEngine.myAwait(contender.tryLock(), timeout) match {
-        case Locked(lockedRoot) =>
-          FullMVEngine.myAwait(defender.trySubsume(lockedRoot), timeout) match {
-            case Successful =>
-              if (DEBUG)
-                System.out.println(
-                  s"[${Thread.currentThread().getName}] now owns SCC of $defender and $contender under $lockedRoot"
-                )
-              Some(lockedRoot)
-            case Blocked =>
-              lockedRoot.asyncUnlock()
-              bo.backoff()
-              reTryLock()
-            case Deallocated =>
-              if (DEBUG)
-                System.out.println(s"[${Thread.currentThread().getName}] aborting sync due to deallocation contention")
-              lockedRoot.asyncUnlock()
-              None
-          }
-        case Blocked =>
-          bo.backoff()
-          reTryLock()
-        case Deallocated =>
-          throw new AssertionError(
-            "this should be impossible we're calling tryLock on the contender only, which cannot deallocate concurrently."
-          )
-      }
-    }
-    reTryLock()
-  }
-
-//  def tryLock[R](defender: FullMVTurn, contender: FullMVTurn, timeout: Duration): TryLockResult = {
-//    assert(defender.host == contender.host)
-//    if (DEBUG) System.out.println(s"[${Thread.currentThread().getName}] syncing $defender and $contender into a common SCC")
-//    Await.result(contender.tryLock(), timeout) match {
-//      case Locked(lockedRoot) =>
-//        Await.result(defender.trySubsume(lockedRoot), timeout) match {
-//          case Successful =>
-//            if (DEBUG) System.out.println(s"[${Thread.currentThread().getName}] now owns SCC of $defender and $contender")
-//            Locked(lockedRoot)
-//          case Blocked =>
-//            lockedRoot.asyncUnlock()
-//            Blocked
-//          case Deallocated =>
-//            if (DEBUG) System.out.println(s"[${Thread.currentThread().getName}] aborting sync due to deallocation contention")
-//            lockedRoot.asyncUnlock()
-//            Deallocated
-//        }
-//      case Blocked =>
-//        Blocked
-//      case Deallocated =>
-//        throw new AssertionError("this should be impossible we're calling tryLock on the contender only, which cannot deallocate concurrently.")
-//    }
-//  }
-
-  val futureNone: Future[None.type] = Future.successful(None)
 }
