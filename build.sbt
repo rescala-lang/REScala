@@ -60,6 +60,7 @@ lazy val transactives = crossProject(JSPlatform, JVMPlatform).in(file("Code/Scal
     libraryDependencies ++= List(
       sourcecode.value,
       scalatestpluscheck.value,
+      scalatest.value,
     )
   )
   .jsSettings(
