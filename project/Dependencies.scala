@@ -31,7 +31,7 @@ object Dependencies {
     val scala212                 = "2.12.13"
     val scala213                 = "2.13.6"
     val scala3                   = "3.0.0"
-    val scalaJavaTime            = "2.2.2"
+    val scalaJavaTime            = "2.3.0"
     val scalaLociCommunication   = "8778bfc575813bfb223ae36f376b83ffef63a96d"
     val scalaParallelCollections = "1.0.0"
     val scalaSwing               = "3.0.0"
@@ -40,8 +40,8 @@ object Dependencies {
     val scalactic                = "3.0.0"
     val scalajsDom               = "1.1.0"
     val scalatags                = "0.9.4"
-    val scalatest                = "3.2.8"
-    val scalatestpluscheck       = "3.2.2.0"
+    val scalatest                = "3.2.9"
+    val scalatestpluscheck       = "3.2.9.0"
     val scribe                   = "3.5.4"
     val sourcecode               = "0.2.7"
     val tomlScala                = "0.2.2"
@@ -77,7 +77,7 @@ object Dependencies {
   val scalaSwing         = Def.setting("org.scala-lang.modules" %% "scala-swing" % V.scalaSwing)
   val scalatags          = Def.setting("com.lihaoyi" %%% "scalatags" % V.scalatags)
   val scalatest          = Def.setting("org.scalatest" %%% "scalatest" % V.scalatest % "test")
-  val scalatestpluscheck = Def.setting("org.scalatestplus" %%% "scalacheck-1-14" % V.scalatestpluscheck % "test")
+  val scalatestpluscheck = Def.setting("org.scalatestplus" %%% "scalacheck-1-15" % V.scalatestpluscheck % "test")
   val scalaXml           = Def.setting("org.scala-lang.modules" %% "scala-xml" % V.scalaXml)
   val scribe             = Def.setting("com.outr" %%% "scribe" % V.scribe)
   val scribeSlf4j        = Def.setting("com.outr" %% "scribe-slf4j" % V.scribe)
