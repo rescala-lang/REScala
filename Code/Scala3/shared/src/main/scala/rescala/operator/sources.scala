@@ -43,6 +43,13 @@ trait Sources {
     }
   }
 
+  /** @group create */
+  final def Evt[A]()(implicit ticket: CreationTicket): Evt[A] = {
+    ticket.createSource[Pulse[A], Evt[A]](Pulse.NoChange)(init =>
+      {new Evt[A](init, ticket.rename)}: Evt[A]
+    )
+  }
+
   /** Source signals with imperatively updates.
     *
     * @tparam A Type stored by the signal

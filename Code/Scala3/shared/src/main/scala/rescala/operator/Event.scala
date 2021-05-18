@@ -56,7 +56,7 @@ trait EventApi {
     ): Observe =
       Observe.strong(this, fireImmediately) { reevalVal =>
         val internalVal = internalAccess(reevalVal)
-        new Observe.ObserveInteract {
+        new ObserveInteract {
           override def checkExceptionAndRemoval(): Boolean = {
             reevalVal match {
               case Pulse.Exceptional(f) if onError == null =>

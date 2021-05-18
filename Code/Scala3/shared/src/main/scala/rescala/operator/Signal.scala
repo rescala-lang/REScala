@@ -58,7 +58,7 @@ trait SignalApi {
         ticket: CreationTicket
     ): Observe =
       Observe.strong(resource, fireImmediately) { reevalVal =>
-        new Observe.ObserveInteract {
+        new ObserveInteract {
           override def checkExceptionAndRemoval(): Boolean = {
             reevalVal match {
               case Pulse.empty => ()

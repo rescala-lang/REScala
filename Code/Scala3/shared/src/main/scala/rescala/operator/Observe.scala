@@ -13,12 +13,11 @@ trait Observing extends Core {
     def remove()(implicit fac: Scheduler): Unit
   }
 
+  trait ObserveInteract extends Observation {
+    def checkExceptionAndRemoval(): Boolean
+  }
+
   object Observe {
-
-    trait ObserveInteract extends Observation {
-      def checkExceptionAndRemoval(): Boolean
-    }
-
     def strong[T](
         dependency: ReSource,
         fireImmediately: Boolean

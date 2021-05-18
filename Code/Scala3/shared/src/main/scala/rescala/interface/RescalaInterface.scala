@@ -24,21 +24,13 @@ import rescala.operator.DefaultImplementations
   * @groupdesc internal Methods and type aliases for advanced usages, these are most relevant to abstract
   *           over multiple scheduler implementations.
   */
-trait RescalaInterface {
-  self: EventApi with SignalApi with Sources with DefaultImplementations with Observing with Core =>
+trait RescalaInterface extends EventApi with SignalApi with Sources with DefaultImplementations with Observing with Core {
 
   /** @group internal */
   def scheduler: Scheduler
 
   /** @group internal */
   implicit def implicitScheduler: Scheduler = scheduler
-
-  /** @group create */
-  final def Evt[A]()(implicit ticket: CreationTicket): Evt[A] = {
-    ticket.createSource[Pulse[A], Evt[A]](Pulse.NoChange)(init =>
-      {new Evt[A](init, ticket.rename)}: Evt[A]
-    )
-  }
 
 
   implicit def OnEv[T](e: Event[T]): Events.OnEv[T]           = new Events.OnEv[T](e)
