@@ -1,19 +1,19 @@
 package rescala.core.infiltration
 
-import rescala.core
-import rescala.core.{Scheduler, Struct}
-import rescala.scheduler.levelbased.LevelState
+import rescala.interface.RescalaInterface
+import rescala.scheduler.Levelbased
 
 /** Accesses private[rescala] values for some low level tests */
-object Infiltrator {
+class Infiltrator(val api: RescalaInterface with Levelbased) {
+  import api._
   //final def getLevel[S <: LevelStruct](reactive: graph.Reactive[S])(implicit maybe: CreationTicket[S]) = maybe {t => reactive.state.level(t.turn)}
-  final def assertLevel[S <: Struct](
-      reactive: core.ReSource[S],
+  final def assertLevel(
+      reactive: ReSource,
       level: Int,
       text: String = "level did not match"
-  )(implicit maybe: Scheduler[S]) =
+  )(implicit maybe: Scheduler) =
     reactive.state match {
-      case rb: LevelState[_, S @unchecked] => {
+      case rb: LevelState[_] => {
         val rblevel = maybe.forceNewTransaction() { at =>
           rb.level()
         }

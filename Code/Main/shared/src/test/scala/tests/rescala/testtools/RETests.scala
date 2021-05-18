@@ -4,19 +4,16 @@ import org.scalactic.source
 import org.scalatest.Tag
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.prop.TableDrivenPropertyChecks
-import rescala.core.Struct
 import rescala.interface.RescalaInterface
 
 abstract class RETests extends AnyFreeSpec with TableDrivenPropertyChecks {
 
-  type TestStruct <: Struct
-
-  def engines(es: RescalaInterface[_ <: Struct]*)(
+  def engines(es: RescalaInterface*)(
       text: String,
       tags: List[Tag] = Nil
-  )(testCase: RescalaInterface[TestStruct] => Any)(implicit pos: source.Position): Unit = {
+  )(testCase: RescalaInterface => Any)(implicit pos: source.Position): Unit = {
     forAll(Table("engine", es: _*)) { e =>
-      val testEngine = e.asInstanceOf[RescalaInterface[TestStruct]]
+      val testEngine = e.asInstanceOf[RescalaInterface]
       s"Testing $testEngine" - (tags match {
         case Nil          => text in testCase(testEngine)
         case head :: tail => text.taggedAs(head, tail: _*) in testCase(testEngine)
@@ -24,13 +21,13 @@ abstract class RETests extends AnyFreeSpec with TableDrivenPropertyChecks {
     }
   }
 
-  def allEngines(text: String)(testCase: RescalaInterface[TestStruct] => Any)(implicit pos: source.Position): Unit = {
+  def allEngines(text: String)(testCase: RescalaInterface => Any)(implicit pos: source.Position): Unit = {
     engines(tests.rescala.testtools.TestEngines.all: _*)(text)(testCase)(pos)
   }
 
-  def multiEngined(block: RescalaInterface[TestStruct] => Any): Unit = {
+  def multiEngined(block: RescalaInterface => Any): Unit = {
     for (engine <- tests.rescala.testtools.TestEngines.all) yield {
-      s"Testing $engine" - block(engine.asInstanceOf[RescalaInterface[TestStruct]])
+      s"Testing $engine" - block(engine.asInstanceOf[RescalaInterface])
     }
   }
 

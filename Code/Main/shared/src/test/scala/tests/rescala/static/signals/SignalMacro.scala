@@ -212,37 +212,37 @@ class SignalMacro extends RETests {
       assert(s.readValueOnce == 27)
     }
 
-    test("function As Getter For Signal") {
+    //test("function As Getter For Signal") {
+    //
+    //  import scala.language.reflectiveCalls
+    //
+    //  def getSignal(obj: { def signal: Signal[Int] }) = obj.signal
+    //
+    //  val v = Var { 20 }
+    //  val o = new { val signal = Signal { v() } }
+    //
+    //  val sig = Signal.dynamic { getSignal(o)() }
+    //
+    //  assert(sig.readValueOnce === 20)
+    //  v set 30
+    //  assert(sig.readValueOnce === 30)
+    //}
 
-      import scala.language.reflectiveCalls
-
-      def getSignal(obj: { def signal: Signal[Int] }) = obj.signal
-
-      val v = Var { 20 }
-      val o = new { val signal = Signal { v() } }
-
-      val sig = Signal.dynamic { getSignal(o)() }
-
-      assert(sig.readValueOnce === 20)
-      v set 30
-      assert(sig.readValueOnce === 30)
-    }
-
-    test("function As Getter For Event And Conversion Function") {
-
-      import scala.language.reflectiveCalls
-
-      def getSignal(obj: { def evt: Event[Int] }) = obj.evt
-
-      val e = Evt[Int]()
-      val o = new { val evt = e }
-
-      val sig = Signal { getSignal(o).latestOption().apply() }
-
-      assert(sig.readValueOnce === None)
-      e.fire(30)
-      assert(sig.readValueOnce === Some(30))
-    }
+    //test("function As Getter For Event And Conversion Function") {
+    //
+    //  import scala.language.reflectiveCalls
+    //
+    //  def getSignal(obj: { def evt: Event[Int] }) = obj.evt
+    //
+    //  val e = Evt[Int]()
+    //  val o = new { val evt = e }
+    //
+    //  val sig = Signal { getSignal(o).latestOption().apply() }
+    //
+    //  assert(sig.readValueOnce === None)
+    //  e.fire(30)
+    //  assert(sig.readValueOnce === Some(30))
+    //}
 
     test("correctly replace ticket during macro expansion") {
 
@@ -300,7 +300,7 @@ class SignalMacro extends RETests {
       val source  = Evt[String]()
       val mapping = Map("Hallo" -> Var("Welt"), "Test" -> Var("String"))
 
-      val selected = source.map(mapping.get).flatten.latest().flatten(rescala.operator.Flatten.signal)
+      val selected = source.map(mapping.get).flatten.latest().flatten(Flatten.signal)
 
       source.fire("Hallo")
 

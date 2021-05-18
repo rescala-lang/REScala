@@ -1,24 +1,24 @@
 package rescala.core.tests
 
-import rescala.core.{InitialChange, Interp, ReName, CreationTicket => Ticket}
+import rescala.core.ReName
 import tests.rescala.testtools.RETests
 
 class WithoutAPITest extends RETests {
   multiEngined { engine =>
     import engine._
 
-    class CustomSource[T](initState: ReStructure#State[T, ReStructure]) extends ReSource with Interp[T, ReStructure] {
+    class CustomSource[T](initState: State[T]) extends ReSource with Interp[T] {
       outer =>
 
       override type Value = T
-      override protected[rescala] def state: State               = initState
+      override protected[rescala] def state: State[T]               = initState
       override protected[rescala] def name: ReName               = "I am a source name"
       override def interpret(v: Value): T                        = v
       override protected[rescala] def commit(base: Value): Value = base
 
       def makeChange(newValue: T) =
-        new InitialChange[ReStructure] {
-          override val source = outer
+        new InitialChange {
+          override val source: CustomSource.this.type = outer
           override def writeValue(base: source.Value, writeCallback: source.Value => Unit): Boolean = {
             if (base != newValue) {
               writeCallback(newValue)
@@ -29,12 +29,12 @@ class WithoutAPITest extends RETests {
     }
 
     class CustomDerivedString(
-        initState: ReStructure#State[String, ReStructure],
-        inputSource: Interp[String, ReStructure]
+        initState: State[String],
+        inputSource: Interp[String]
     ) extends Derived
-        with Interp[String, ReStructure] {
+        with Interp[String] {
       override type Value = String
-      override protected[rescala] def state: State               = initState
+      override protected[rescala] def state: State[Value]               = initState
       override protected[rescala] def name: ReName               = "I am a name"
       override protected[rescala] def commit(base: Value): Value = base
 
@@ -49,15 +49,15 @@ class WithoutAPITest extends RETests {
     test("simple usage of core rescala without signals or events") {
 
       val customSource: CustomSource[String] =
-        Ticket.fromScheduler(scheduler)
+        CreationTicket.fromScheduler(scheduler)
           .createSource("Hi!") { createdState =>
             new CustomSource[String](createdState)
           }
 
       assert(transaction(customSource) { _.now(customSource) } === "Hi!")
 
-      val customDerived: Interp[String, ReStructure] =
-        Ticket.fromScheduler(scheduler)
+      val customDerived: Interp[String] =
+        CreationTicket.fromScheduler(scheduler)
           .create(
             Set(customSource),
             "Well, this is an initial value",

@@ -308,7 +308,7 @@ class FlattenTest extends RETests {
       val mod2    = count.map(_ % 2)
 
       val listOfSignals: Signal[List[Signal[Int]]] = Signals.static() { t => List(doubled, count) }
-      val selected: Signal[Signal[Int]]            = Signal { listOfSignals()(mod2()) }
+      val selected: Signal[Signal[Int]]            = Signal { listOfSignals.value.apply(mod2()) }
       val dereferenced                             = selected.flatten
 
       var dereferencedChanged = false

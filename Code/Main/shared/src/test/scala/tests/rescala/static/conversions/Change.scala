@@ -152,7 +152,10 @@ class Change extends RETests {
       v2.set("three")
       assert(log.readValueOnce === List("two" -> "three", "constant" -> "one"))
 
-      update(v1 -> "four a", v2 -> "four b")
+      transaction (v1, v2) { at =>
+        v1.admit("four a")(at)
+        v2.admit("four b")(at)
+      }
 
       assert(log.readValueOnce === List("constant" -> "four a", "two" -> "three", "constant" -> "one"))
 

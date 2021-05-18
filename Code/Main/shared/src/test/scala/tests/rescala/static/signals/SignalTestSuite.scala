@@ -2,12 +2,17 @@ package tests.rescala.static.signals
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import rescala.core.infiltration.Infiltrator.assertLevel
+import rescala.core.infiltration.Infiltrator
 import tests.rescala.testtools.RETests
+import rescala.interface.RescalaInterface
+import rescala.scheduler.Levelbased
+
 
 class SignalTestSuite extends RETests {
   multiEngined { engine =>
-    import engine._
+    val ie = Infiltrator(engine.asInstanceOf[RescalaInterface with Levelbased])
+    import ie.api._
+    import ie.assertLevel
 
     test("handler Is Called When Change Occurs") {
 

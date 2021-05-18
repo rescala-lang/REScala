@@ -138,7 +138,7 @@ class ExceptionPropagationTestSuite extends RETests {
 
       intercept[ObservedException] { v.set(0) }
       assert(res === 100 / 42, "observers are not triggered on failure")
-      if (engine.scheduler != rescala.extra.scheduler.SimpleScheduler) {
+      if (engine.scheduler != rescala.extra.scheduler.SimpleScheduler.scheduler) {
         assert(v.readValueOnce === 42, "transaction is aborted on failure")
       }
     }

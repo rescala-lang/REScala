@@ -3,16 +3,22 @@ package tests.rescala.property
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import rescala.core.infiltration.Infiltrator.assertLevel
+import rescala.core.infiltration.Infiltrator
 import tests.rescala.testtools.RETests
 
 import scala.collection.Seq
 import scala.collection.mutable.ListBuffer
 import scala.util.Random
+import rescala.interface.RescalaInterface
+import rescala.scheduler.Levelbased
+
+
 
 class SignalTestSuite extends RETests with ScalaCheckDrivenPropertyChecks with Matchers {
   multiEngined { engine =>
-    import engine._
+    val ie = Infiltrator(engine.asInstanceOf[RescalaInterface with Levelbased])
+    import ie.api._
+    import ie.assertLevel
 
     implicit val shortlists: Arbitrary[Seq[Int]]  = Arbitrary(Gen.someOf(0 to 1000))
     implicit val positiveIntegers: Arbitrary[Int] = Arbitrary(Gen.posNum[Int])

@@ -56,7 +56,10 @@ class OR_EventTest extends RETests {
       e2.fire("two")
       assert(log.readValueOnce === List("two", "one"))
 
-      update(e1 -> "three a", e2 -> "three b")
+      transaction(e1, e2) { implicit turn =>
+        e1.admit("three a")
+        e2.admit("three b")
+      }
 
       assert(log.readValueOnce === List("three a", "two", "one"))
 
