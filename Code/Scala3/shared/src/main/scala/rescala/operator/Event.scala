@@ -2,13 +2,20 @@ package rescala.operator
 
 import rescala.core._
 import rescala.interface.RescalaInterface
+import rescala.macros.cutOutOfUserComputation
 import rescala.operator.Pulse.{Exceptional, NoChange, Value}
 import rescala.operator.RExceptions.ObservedException
 
 import scala.collection.immutable.{LinearSeq, Queue}
 
 trait EventApi {
-  self : RescalaInterface with EventApi with SignalApi with Sources with DefaultImplementations with Observing with Core =>
+  self: RescalaInterface with EventApi with SignalApi with Sources with DefaultImplementations with Observing
+    with Core =>
+
+  object Event {
+    def apply[T](expr: DynamicTicket ?=> Option[T]): Event[T]   = Events.dynamic()(expr(using _))
+    def dynamic[T](expr: DynamicTicket ?=> Option[T]): Event[T] = Events.dynamic()(expr(using _))
+  }
 
   /** Events only propagate a value when they are changing,
     * when the system is at rest, events have no values.
@@ -30,6 +37,9 @@ trait EventApi {
     * @groupprio accessor 5
     */
   trait Event[+T] extends ReSource with Interp[Option[T]] with Disconnectable {
+
+    def apply()(implicit dt: DynamicTicket): Option[T] = dt.depend(this)
+    def value(implicit dt: DynamicTicket): Option[T]   = dt.depend(this)
 
     implicit def internalAccess(v: Value): Pulse[T]
 
@@ -74,6 +84,14 @@ trait EventApi {
         }
       }
 
+    /** Filters the event, only propagating the value when the filter is true.
+      * @usecase def filter(pred: T => Boolean): rescala.default.Event[T]
+      * @group operator
+      */
+    @cutOutOfUserComputation
+    final def filter(expression: T => Boolean)(implicit ticket: CreationTicket): Event[T] =
+      Events.staticNamed(s"(filter $this)", this)(st => st.collectStatic(this).filter(expression))
+
     /** Uses a partial function `onFailure` to recover an error carried by the event into a value when returning Some(value),
       * or filters the error when returning None
       * @usecase def recover[R >: T](onFailure: PartialFunction[Throwable, Option[R]]): rescala.default.Event[R]
@@ -109,8 +127,6 @@ trait EventApi {
         if (tp.isChange) tp else other.internalAccess(st.collectStatic(other))
       }
     }
-
-
 
     /** Propagates the event only when except does not fire.
       * @usecase def \[U](except: rescala.default.Event[U]): rescala.default.Event[T]
@@ -162,6 +178,19 @@ trait EventApi {
       }
     }
 
+    /** Transform the event.
+      * @usecase def map[A](expression: T => A): rescala.default.Event[A]
+      * @group operator
+      */
+    @cutOutOfUserComputation
+    final def map[A](expression: T => A)(implicit ticket: CreationTicket): Event[A] =
+      Events.staticNamed(s"(map $this)", this)(st => st.collectStatic(this).map(expression))
+
+    /** Flattens the inner value.
+      * @group operator
+      */
+    @cutOutOfUserComputation
+    final def flatten[R](implicit flatten: Flatten[Event[T], R]): R = flatten.apply(this)
 
     /** Drop the event parameter; equivalent to map((_: Any) => ())
       * @usecase def dropParam(implicit ticket: CreationTicket): rescala.default.Event[Unit]
@@ -171,6 +200,14 @@ trait EventApi {
     final def dropParam(implicit ticket: CreationTicket): Event[Unit] =
       Events.static(this)(_ => Some(()))
 
+    /** Folds events with a given operation to create a Signal.
+      * @group conversion
+      * @usecase def fold[A](init: A)(op: (A, T) => A): rescala.default.Signal[A]
+      * @inheritdoc
+      */
+    @cutOutOfUserComputation
+    final def fold[A](init: A)(op: (A, T) => A)(implicit ticket: CreationTicket): Signal[A] =
+      Events.foldOne(this, init)(op)
 
     /** reduces events with a given reduce function to create a Signal
       *
@@ -355,7 +392,7 @@ trait EventApi {
       var acc = () => init
       val ops = accthingy(acc())
       val staticInputs = ops.collect {
-        case fm : StaticFoldMatch[_, _]  => fm.event
+        case fm: StaticFoldMatch[_, _]        => fm.event
         case fm: StaticFoldMatchDynamic[_, _] => fm.event
       }.toSet
 
@@ -370,11 +407,11 @@ trait EventApi {
         }
 
         ops.foreach {
-          case fm : StaticFoldMatch[_, A] =>
+          case fm: StaticFoldMatch[_, A] =>
             applyToAcc(fm.f, dt.dependStatic(fm.event))
           case fm: StaticFoldMatchDynamic[_, A] =>
             applyToAcc(fm.f(dt), dt.dependStatic(fm.event))
-          case fm : DynamicFoldMatch[_, A] =>
+          case fm: DynamicFoldMatch[_, A] =>
             fm.event().map(dt.depend).foreach { applyToAcc(fm.f, _) }
         }
         acc()
@@ -410,11 +447,11 @@ trait EventApi {
       final def act[A](fun: T => A): FoldMatch[A] = new DynamicFoldMatch(() => e, fun)
     }
 
-    class CBResult[T, R](event: Event[T], value: R)
+    class CBResult[T, R](val event: Event[T], val value: R)
     final class FromCallbackT[T] private[Events] (val dummy: Boolean = true) {
       def apply[R](body: (T => Unit) => R)(implicit ct: CreationTicket, s: Scheduler): CBResult[T, R] = {
         val evt: self.Evt[T] = self.Evt[T]()(ct)
-        val res = body(evt.fire(_)(s))
+        val res              = body(evt.fire(_)(s))
         new CBResult(evt, res)
       }
     }

@@ -3,13 +3,15 @@ package rescala.operator
 import rescala.interface.RescalaInterface
 import rescala.operator.RExceptions.{EmptySignalControlThrowable, ObservedException}
 import rescala.core.Core
+import rescala.macros.cutOutOfUserComputation
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
 import scala.util.control.NonFatal
 
 trait SignalApi {
-  self : RescalaInterface with EventApi with SignalApi with Sources with DefaultImplementations with Observing with Core =>
+  self: RescalaInterface with EventApi with SignalApi with Sources with DefaultImplementations with Observing
+    with Core =>
 
   import Signals.SignalResource
 
@@ -26,9 +28,16 @@ trait SignalApi {
     */
   object Signal {
     implicit def signalResource[T](signal: Signal[T]): SignalResource[T] = signal.resource
+
+    def apply[T](expr: DynamicTicket ?=> T): Signal[T] = Signals.dynamic()(expr(using _))
+    def dynamic[T](expr: DynamicTicket ?=> T): Signal[T] = Signals.dynamic()(expr(using _))
+
   }
 
   trait Signal[+T] extends Disconnectable {
+
+    def apply()(implicit dt: DynamicTicket): T = dt.depend(this)
+    def value(implicit dt: DynamicTicket): T   = dt.depend(this)
 
     override def disconnect()(implicit engine: Scheduler): Unit = resource.disconnect()(engine)
     val resource: SignalResource[T]
@@ -106,6 +115,18 @@ trait SignalApi {
         }
       }
 
+    /** Return a Signal with f applied to the value
+      * @group operator
+      */
+    @cutOutOfUserComputation
+    final def map[B](expression: T => B)(implicit ticket: CreationTicket): Signal[B] =
+      Signals.static(this)(st => expression(st.collectStatic(this).get))
+
+    /** Flattens the inner value.
+      * @group operator
+      */
+    @cutOutOfUserComputation
+    final def flatten[R](implicit flatten: Flatten[Signal[T], R]): R = flatten.apply(this)
 
 //  /** Delays this signal by n occurrences */
 //  final def delay[A1 >: A](n: Int)(implicit ticket: CreationTicket], ev: ReSerializable[Queue[A1]]): Signal[A1] =
@@ -145,7 +166,6 @@ trait SignalApi {
 
   }
 
-
   class UserDefinedFunction[+T, Dep, Cap](
       val staticDependencies: Set[Dep],
       val expression: Cap => T,
@@ -158,7 +178,7 @@ trait SignalApi {
     trait SignalResource[+T] extends ReSource with Interp[T] with Disconnectable {
       override type Value <: Pulse[T]
       override def interpret(v: Value): T                        = v.get
-      def resource: Interp[T]                           = this
+      def resource: Interp[T]                                    = this
       override protected[rescala] def commit(base: Value): Value = base
     }
 

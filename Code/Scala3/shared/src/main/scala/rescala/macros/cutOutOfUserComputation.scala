@@ -1,4 +1,4 @@
-package rescala.operator
+package rescala.macros
 
 import scala.annotation.StaticAnnotation
 

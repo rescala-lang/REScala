@@ -1,4 +1,4 @@
-package rescala.scheduler
+package rescala.extra.scheduler
 
 import rescala.core.Core
 import rescala.operator.Observing

@@ -1,7 +1,7 @@
 package rescala.interface
 
 import rescala.core.{ReName, Core}
-import rescala.operator.{EventApi, Pulse, SignalApi, Sources, Observing}
+import rescala.operator.{EventApi, Pulse, SignalApi, Sources, Observing, FlattenApi}
 import rescala.operator.DefaultImplementations
 
 /** Rescala has two main abstractions. [[Event]] and [[Signal]] commonly referred to as reactives.
@@ -24,7 +24,7 @@ import rescala.operator.DefaultImplementations
   * @groupdesc internal Methods and type aliases for advanced usages, these are most relevant to abstract
   *           over multiple scheduler implementations.
   */
-trait RescalaInterface extends EventApi with SignalApi with Sources with DefaultImplementations with Observing with Core {
+trait RescalaInterface extends EventApi with SignalApi with FlattenApi with Sources with DefaultImplementations with Observing with Core {
 
   /** @group internal */
   def scheduler: Scheduler
