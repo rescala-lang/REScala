@@ -61,6 +61,14 @@ lazy val transactives = crossProject(JSPlatform, JVMPlatform).in(file("Code/Scal
       sourcecode.value,
     )
   )
+  .jsSettings(
+    libraryDependencies ++= Seq(
+      // for rescalatags
+      scalatags.value.cross(CrossVersion.for3Use2_13) % "provided,test",
+    ),
+    // dom envirnoment
+    jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
+  )
 lazy val transactivesJVM = transactives.jvm
 lazy val transactivesJS = transactives.js
 
