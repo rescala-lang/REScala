@@ -2,10 +2,10 @@ package rescala.scheduler.levelbased
 
 import rescala.scheduler.{Levelbased, levelbased}
 import rescala.interface.RescalaInterface
-import rescala.scheduler.levelbased.LevelBasedSchedulers
+import rescala.operator._
+import rescala.core.Core
 
-
-object LevelBasedSchedulers extends RescalaInterface with Levelbased {
+object LevelBasedSchedulers extends RescalaInterface with Levelbased with EventApi with SignalApi with Sources with DefaultImplementations with Observing with Core {
 
   type State[V] = LevelState[V]
 

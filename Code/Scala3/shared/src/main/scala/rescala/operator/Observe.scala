@@ -1,7 +1,6 @@
 package rescala.operator
 
-import rescala.core.{Core}
-import rescala.operator.Pulse
+import rescala.core.Core
 
 trait Observing extends Core {
 

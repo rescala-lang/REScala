@@ -5,7 +5,7 @@ import rescala.interface.RescalaInterface
 import rescala.operator.Pulse.NoChange
 
 trait DefaultImplementations  {
-  self : RescalaInterface =>
+  self : RescalaInterface with EventApi with SignalApi with Sources with DefaultImplementations with Observing with Core =>
   /** @param isDynamicWithStaticDeps [[None]] means static dependencies only,
     *                                [[Some]] means dynamic with the given static ones for optimization */
   class SignalImpl[T](
@@ -40,7 +40,7 @@ trait DefaultImplementations  {
       expr: DynamicTicket => Pulse[T],
       name: ReName,
       /** If this is None, the event is static. Else, it is dynamic with the set of static dependencies */
-      isDynamicWithStaticDeps: Option[Set[ReSource]],
+      isDynamicWithStaticDeps: Option[Set[ReSource]]
   ) extends DerivedImpl[T](initial, name, isDynamicWithStaticDeps)
       with Event[T] {
 
@@ -53,7 +53,7 @@ trait DefaultImplementations  {
   class ChangeEventImpl[T](
       _bud: State[(Pulse[T], Pulse[Diff[T]])],
       signal: Signal[T],
-      name: ReName,
+      name: ReName
   ) extends Base[(Pulse[T], Pulse[Diff[T]])](_bud, name)
       with Derived
       with Event[Diff[T]]

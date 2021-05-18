@@ -2,13 +2,14 @@ package rescala.operator
 
 import rescala.interface.RescalaInterface
 import rescala.operator.RExceptions.{EmptySignalControlThrowable, ObservedException}
+import rescala.core.Core
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
 import scala.util.control.NonFatal
 
 trait SignalApi {
-  self : RescalaInterface =>
+  self : RescalaInterface with EventApi with SignalApi with Sources with DefaultImplementations with Observing with Core =>
 
   import Signals.SignalResource
 
@@ -145,10 +146,10 @@ trait SignalApi {
   }
 
 
-  case class UserDefinedFunction[+T, Dep, Cap](
-      staticDependencies: Set[Dep],
-      expression: Cap => T,
-      isStatic: Boolean = true
+  class UserDefinedFunction[+T, Dep, Cap](
+      val staticDependencies: Set[Dep],
+      val expression: Cap => T,
+      val isStatic: Boolean = true
   )
 
   /** Functions to construct signals, you probably want to use signal expressions in [[rescala.interface.RescalaInterface.Signal]] for a nicer API. */

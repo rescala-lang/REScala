@@ -242,8 +242,8 @@ trait Core {
 
   /** Enables the creation of other reactives */
   @implicitNotFound(msg = "Could not find capability to create reactives. Maybe a missing import?")
-  @scala.annotation.nowarn("msg=The outer reference in this type test cannot be checked at run time.")
-  final case class CreationTicket(self: Either[Initializer, Scheduler], rename: ReName) {
+  //@scala.annotation.nowarn("msg=The outer reference in this type test cannot be checked at run time.")
+  final class CreationTicket(val self: Either[Initializer, Scheduler], val rename: ReName) {
 
     private[rescala] def create[V, T <: Derived](
         incoming: Set[ReSource],
@@ -271,14 +271,14 @@ trait Core {
   /** As reactives can be created during propagation, any [[InnerTicket]] can be converted to a creation ticket. */
   object CreationTicket extends LowPriorityCreationImplicits {
     implicit def fromTicketImplicit(implicit ticket: InnerTicket, line: ReName): CreationTicket =
-      CreationTicket(Left(ticket.initializer), line)
+      new CreationTicket(Left(ticket.initializer), line)
 
     implicit def fromInitializerImplicit(implicit
         initializer: Initializer,
         line: ReName
-    ): CreationTicket = CreationTicket(Left(initializer), line)
+    ): CreationTicket = new CreationTicket(Left(initializer), line)
     implicit def fromInitializer(creation: Initializer)(implicit line: ReName): CreationTicket =
-      CreationTicket(Left(creation), line)
+      new CreationTicket(Left(creation), line)
   }
 
   /** If no [[InnerTicket]] is found, then these implicits will search for a [[Scheduler]],
@@ -286,11 +286,11 @@ trait Core {
     */
   sealed trait LowPriorityCreationImplicits {
     implicit def fromSchedulerImplicit(implicit factory: Scheduler, line: ReName): CreationTicket =
-      CreationTicket(Right(factory), line)
+      new CreationTicket(Right(factory), line)
     implicit def fromScheduler(factory: Scheduler)(implicit line: ReName): CreationTicket =
-      CreationTicket(Right(factory), line)
+      new CreationTicket(Right(factory), line)
     implicit def fromNameImplicit(line: String)(implicit outer: CreationTicket): CreationTicket =
-      CreationTicket(outer.self, line)
+      new CreationTicket(outer.self, line)
   }
 
   trait Result[T] {

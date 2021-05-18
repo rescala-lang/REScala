@@ -4,7 +4,7 @@ import rescala.core._
 import rescala.interface.RescalaInterface
 
 trait Sources {
-  self : RescalaInterface =>
+  self : RescalaInterface with EventApi with SignalApi with Sources with DefaultImplementations with Observing with Core =>
 
   trait Source[T] extends ReSource {
     final def admit(value: T)(implicit ticket: AdmissionTicket): Unit = admitPulse(Pulse.Value(value))
@@ -29,7 +29,7 @@ trait Sources {
 
     /** Trigger the event */
     @deprecated("use .fire instead of apply", "0.21.0")
-    def apply(value: T)(implicit fac: Scheduler): Unit          = fire(value)
+    def apply(value: T)(implicit fac: Scheduler): Unit          = fire(value)(fac)
     def fire()(implicit fac: Scheduler, ev: Unit =:= T): Unit   = fire(ev(()))(fac)
     def fire(value: T)(implicit fac: Scheduler): Unit           = fac.forceNewTransaction(this) { admit(value)(_) }
     override def disconnect()(implicit engine: Scheduler): Unit = ()
@@ -70,4 +70,27 @@ trait Sources {
       })
     }
   }
+
+  /** Creates new [[Var]]s
+    * @group create
+    */
+  object Var {
+    abstract class VarImpl[A] private[rescala] (initialState: State[Pulse[A]], name: ReName)
+        extends Base[Pulse[A]](initialState, name)
+        with Var[A]
+        with Signals.SignalResource[A] {
+      override val resource: Signals.SignalResource[A] = this
+    }
+
+    def apply[T](initval: T)(implicit ticket: CreationTicket): VarImpl[T] = fromChange(Pulse.Value(initval))
+    def empty[T](implicit ticket: CreationTicket): VarImpl[T]             = fromChange(Pulse.empty)
+    private[this] def fromChange[T](change: Pulse[T])(implicit ticket: CreationTicket): VarImpl[T] = {
+      ticket.createSource[Pulse[T], VarImpl[T]](change)(s =>
+        new VarImpl[T](s, ticket.rename) {
+          override val resource                     = this
+        }
+      )
+    }
+  }
+
 }

@@ -4,12 +4,11 @@ import rescala.core._
 import rescala.interface.RescalaInterface
 import rescala.operator.Pulse.{Exceptional, NoChange, Value}
 import rescala.operator.RExceptions.ObservedException
-import rescala.operator.DefaultImplementations
 
 import scala.collection.immutable.{LinearSeq, Queue}
 
 trait EventApi {
-  self: RescalaInterface =>
+  self : RescalaInterface with EventApi with SignalApi with Sources with DefaultImplementations with Observing with Core =>
 
   /** Events only propagate a value when they are changing,
     * when the system is at rest, events have no values.
@@ -356,8 +355,8 @@ trait EventApi {
       var acc = () => init
       val ops = accthingy(acc())
       val staticInputs = ops.collect {
-        case StaticFoldMatch(ev, _)        => ev
-        case StaticFoldMatchDynamic(ev, _) => ev
+        case fm : StaticFoldMatch[_, _]  => fm.event
+        case fm: StaticFoldMatchDynamic[_, _] => fm.event
       }.toSet
 
       def operator(dt: DynamicTicket, oldValue: () => A): A = {
@@ -371,12 +370,12 @@ trait EventApi {
         }
 
         ops.foreach {
-          case StaticFoldMatch(ev, f) =>
-            applyToAcc(f, dt.dependStatic(ev))
-          case StaticFoldMatchDynamic(ev, f) =>
-            applyToAcc(f(dt), dt.dependStatic(ev))
-          case DynamicFoldMatch(evs, f) =>
-            evs().map(dt.depend).foreach { applyToAcc(f, _) }
+          case fm : StaticFoldMatch[_, A] =>
+            applyToAcc(fm.f, dt.dependStatic(fm.event))
+          case fm: StaticFoldMatchDynamic[_, A] =>
+            applyToAcc(fm.f(dt), dt.dependStatic(fm.event))
+          case fm : DynamicFoldMatch[_, A] =>
+            fm.event().map(dt.depend).foreach { applyToAcc(fm.f, _) }
         }
         acc()
       }
@@ -395,28 +394,28 @@ trait EventApi {
     val Match = Seq
 
     sealed trait FoldMatch[+A]
-    case class StaticFoldMatch[T, +A](event: Event[T], f: T => A)                         extends FoldMatch[A]
-    case class StaticFoldMatchDynamic[T, +A](event: Event[T], f: DynamicTicket => T => A) extends FoldMatch[A]
-    case class DynamicFoldMatch[T, +A](event: () => Seq[Event[T]], f: T => A)             extends FoldMatch[A]
+    class StaticFoldMatch[T, +A](val event: Event[T], val f: T => A)                         extends FoldMatch[A]
+    class StaticFoldMatchDynamic[T, +A](val event: Event[T], val f: DynamicTicket => T => A) extends FoldMatch[A]
+    class DynamicFoldMatch[T, +A](val event: () => Seq[Event[T]], val f: T => A)             extends FoldMatch[A]
 
     class OnEv[T](e: Event[T]) {
 
       /** Constructs a pair similar to ->, however this one is compatible with type inference for [[fold]] */
-      final def act[A](fun: T => A): FoldMatch[A]                  = StaticFoldMatch(e, fun)
-      final def dyn[A](fun: DynamicTicket => T => A): FoldMatch[A] = StaticFoldMatchDynamic(e, fun)
+      final def act[A](fun: T => A): FoldMatch[A]                  = new StaticFoldMatch(e, fun)
+      final def dyn[A](fun: DynamicTicket => T => A): FoldMatch[A] = new StaticFoldMatchDynamic(e, fun)
     }
     class OnEvs[T](e: => Seq[Event[T]]) {
 
       /** Constructs a pair similar to ->, however this one is compatible with type inference for [[fold]] */
-      final def act[A](fun: T => A): FoldMatch[A] = DynamicFoldMatch(() => e, fun)
+      final def act[A](fun: T => A): FoldMatch[A] = new DynamicFoldMatch(() => e, fun)
     }
 
-    case class CBResult[T, R](event: Event[T], value: R)
+    class CBResult[T, R](event: Event[T], value: R)
     final class FromCallbackT[T] private[Events] (val dummy: Boolean = true) {
       def apply[R](body: (T => Unit) => R)(implicit ct: CreationTicket, s: Scheduler): CBResult[T, R] = {
         val evt: self.Evt[T] = self.Evt[T]()(ct)
         val res = body(evt.fire(_)(s))
-        CBResult(evt, res)
+        new CBResult(evt, res)
       }
     }
 
