@@ -8,7 +8,7 @@ class ReactorWithoutAPITest extends RETests {
 
   import rescala.default._
 
-  class CustomReactorReactive[T](
+  class Reactor[T](
       initState: ReStructure#State[ReactorStage[T], ReStructure]
   ) extends Derived
       with Interp[T, ReStructure]
@@ -52,7 +52,7 @@ class ReactorWithoutAPITest extends RETests {
     * @param reactor the reactor housing the stage.
     * @tparam T the value type of the reactor.
     */
-  class ReactorStage[T](initialValue: T, protected val reactor: CustomReactorReactive[T]) {
+  class ReactorStage[T](initialValue: T, protected val reactor: Reactor[T]) {
 
     /** The value of the stage.
       *
@@ -148,7 +148,7 @@ class ReactorWithoutAPITest extends RETests {
       * @param reactor the reactor holding the stage.
       * @return the resulting [[ReactorStage]].
       */
-    def upgrade(reactor: CustomReactorReactive[T]): ReactorStage[T] = {
+    def upgrade(reactor: Reactor[T]): ReactorStage[T] = {
       new ReactorStage[T](value, reactor)
     }
 
@@ -171,7 +171,7 @@ class ReactorWithoutAPITest extends RETests {
     }
   }
 
-  object CustomReactorReactive {
+  object Reactor {
 
     /** Returns a reactor that is executed once.
       *
@@ -184,15 +184,15 @@ class ReactorWithoutAPITest extends RETests {
     def once[T](
         initialValue: T,
         dependencies: Set[ReSource]
-    )(body: ReactorStage[T] => Unit): CustomReactorReactive[T] = {
+    )(body: ReactorStage[T] => Unit): Reactor[T] = {
       val initialStage = new ConstructionStage[T](initialValue)
-      val reactor: CustomReactorReactive[T] = CreationTicket.fromScheduler(scheduler)
+      val reactor: Reactor[T] = CreationTicket.fromScheduler(scheduler)
         .create(
           dependencies,
           initialStage: ReactorStage[T],
           inite = false
         ) { createdState: ReStructure#State[ReactorStage[T], ReStructure] =>
-          new CustomReactorReactive[T](createdState)
+          new Reactor[T](createdState)
         }
 
       val reactorStage = initialStage.upgrade(reactor)
@@ -204,13 +204,13 @@ class ReactorWithoutAPITest extends RETests {
   }
 
   test("Reactor has initial value") {
-    val reactor = CustomReactorReactive.once("Initial Value", Set()) { _ => }
+    val reactor = Reactor.once("Initial Value", Set()) { _ => }
 
     assert(transaction(reactor) { _.now(reactor) } === "Initial Value")
   }
 
   test("Reactor executes body instantly") {
-    val reactor = CustomReactorReactive.once("Initial Value", Set()) { self =>
+    val reactor = Reactor.once("Initial Value", Set()) { self =>
       self.set("Value Set!")
     }
 
@@ -219,7 +219,7 @@ class ReactorWithoutAPITest extends RETests {
 
   test("Reactor waits for event when using next") {
     val e1 = Evt[Unit]()
-    val reactor = CustomReactorReactive.once(42, Set(e1)) { self =>
+    val reactor = Reactor.once(42, Set(e1)) { self =>
       self.next(e1) { (self, _) =>
         self.set(1)
       }
@@ -233,7 +233,7 @@ class ReactorWithoutAPITest extends RETests {
   test("ReactorStage callback passes event value") {
     val e1 = Evt[Int]()
 
-    val reactor = CustomReactorReactive.once(0, Set(e1)) { self =>
+    val reactor = Reactor.once(0, Set(e1)) { self =>
       self.next(e1) { (self, e) =>
         self.set(e)
       }
@@ -247,7 +247,7 @@ class ReactorWithoutAPITest extends RETests {
   test("ReactorStages can be nested") {
     val e1 = Evt[Unit]()
 
-    val reactor = CustomReactorReactive.once(0, Set(e1)) { self =>
+    val reactor = Reactor.once(0, Set(e1)) { self =>
       self.next(e1) { (self, _) =>
         self.set(1)
         self.next(e1) { (self, _) =>
@@ -266,7 +266,7 @@ class ReactorWithoutAPITest extends RETests {
   test("Reactor has no glitches") {
     val e1 = Evt[String]()
 
-    val reactor: CustomReactorReactive[String] = CustomReactorReactive.once("Initial Value", Set(e1)) { self =>
+    val reactor: Reactor[String] = Reactor.once("Initial Value", Set(e1)) { self =>
       self.set("Not Reacted")
       self.next(e1) { (self, _) =>
         self.set("Reacted")
