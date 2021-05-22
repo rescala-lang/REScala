@@ -1,10 +1,10 @@
 package tests.rescala.testtools
 
+import rescala.interface.RescalaInterface
+import rescala.parrp.ParRP
+
 import java.util.concurrent.ForkJoinPool.ManagedBlocker
 import java.util.concurrent.{CountDownLatch, ForkJoinPool}
-
-import rescala.core.{CreationTicket, Struct}
-import rescala.operator.{Event, Signal}
 
 class SynchronizedReevaluation extends ManagedBlocker {
   var latches: List[CountDownLatch]  = Nil
@@ -35,16 +35,19 @@ class SynchronizedReevaluation extends ManagedBlocker {
   }
 }
 
-object SynchronizedReevaluation {
-  def apply[A, S <: Struct](sig: Signal[A, S])(implicit
-      turnSource: CreationTicket[S]
-  ): (SynchronizedReevaluation, Signal[A, S]) = {
+class SynchronizedReevaluationApi(val api: RescalaInterface)  {
+  import api._
+
+
+  def apply[A](sig: Signal[A])(implicit
+      turnSource: CreationTicket
+  ): (SynchronizedReevaluation, Signal[A]) = {
     val sync = new SynchronizedReevaluation
     (sync, sig.map(sync.reev))
   }
-  def apply[A, S <: Struct](evt: Event[A, S])(implicit
-      turnSource: CreationTicket[S]
-  ): (SynchronizedReevaluation, Event[A, S]) = {
+  def apply[A](evt: Event[A])(implicit
+      turnSource: CreationTicket
+  ): (SynchronizedReevaluation, Event[A]) = {
     val sync = new SynchronizedReevaluation
     (sync, evt.map(sync.reev))
   }

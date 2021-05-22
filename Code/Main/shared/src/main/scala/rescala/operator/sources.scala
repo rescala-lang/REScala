@@ -55,8 +55,12 @@ trait Sources {
     * @tparam A Type stored by the signal
     * @tparam S Struct type used for the propagation of the signal
     */
-  trait Var[A] extends Source[A] with Signal[A] with Interp[A] {
+  class Var[A] private[rescala] (initialState: State[Pulse[A]], name: ReName) extends Base[Pulse[A]](initialState, name) with Source[A] with Signal[A] with Interp[A] {
     override type Value = Pulse[A]
+
+
+      override val resource: Signal[A] = this
+      override def disconnect()(implicit engine: Scheduler): Unit = ()
 
     //def update(value: A)(implicit fac: Engine): Unit = set(value)
     def set(value: A)(implicit fac: Scheduler): Unit = fac.forceNewTransaction(this) { admit(value)(_) }
@@ -82,19 +86,11 @@ trait Sources {
     * @group create
     */
   object Var {
-    class VarImpl[A] private[rescala] (initialState: State[Pulse[A]], name: ReName)
-        extends Base[Pulse[A]](initialState, name)
-        with Var[A]
-        with Signal[A] {
-      override val resource: Signal[A] = this
-      override def disconnect()(implicit engine: Scheduler): Unit = ()
-    }
-
-    def apply[T](initval: T)(implicit ticket: CreationTicket): VarImpl[T] = fromChange(Pulse.Value(initval))
-    def empty[T](implicit ticket: CreationTicket): VarImpl[T]             = fromChange(Pulse.empty)
-    private[this] def fromChange[T](change: Pulse[T])(implicit ticket: CreationTicket): VarImpl[T] = {
-      ticket.createSource[Pulse[T], VarImpl[T]](change)(s =>
-        new VarImpl[T](s, ticket.rename)
+    def apply[T](initval: T)(implicit ticket: CreationTicket): Var[T] = fromChange(Pulse.Value(initval))
+    def empty[T](implicit ticket: CreationTicket): Var[T]             = fromChange(Pulse.empty)
+    private[this] def fromChange[T](change: Pulse[T])(implicit ticket: CreationTicket): Var[T] = {
+      ticket.createSource[Pulse[T], Var[T]](change)(s =>
+        new Var[T](s, ticket.rename)
       )
     }
   }

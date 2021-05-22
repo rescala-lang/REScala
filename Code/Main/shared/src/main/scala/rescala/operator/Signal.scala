@@ -3,7 +3,8 @@ package rescala.operator
 import rescala.interface.RescalaInterface
 import rescala.operator.RExceptions.{EmptySignalControlThrowable, ObservedException}
 import rescala.core.Core
-import rescala.macros.{cutOutOfUserComputation}
+import rescala.macros.MacroTags.{Static, Dynamic}
+import rescala.macros.cutOutOfUserComputation
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
@@ -14,7 +15,7 @@ object SignalMacroImpl {
 }
 
 trait SignalApi {
-  self: RescalaInterface with EventApi with SignalApi with Sources with DefaultImplementations with Observing
+  selfType: RescalaInterface with EventApi with SignalApi with Sources with DefaultImplementations with Observing
     with Core =>
 
   /** Time changing value derived from the dependencies.
@@ -32,7 +33,7 @@ trait SignalApi {
     override type Value <: Pulse[T]
     override def interpret(v: Value): T                        = v.get
     override protected[rescala] def commit(base: Value): Value = base
-    override def resource: Interp[T] = this
+    override def resource: Interp[T]                           = this
 
     /** Returns the current value of the signal
       * However, using now is in most cases not what you want.
@@ -116,7 +117,9 @@ trait SignalApi {
         T,
         B,
         rescala.operator.SignalMacroImpl.MapFuncImpl.type,
-        Signals.type
+        Signals.type,
+        StaticTicket,
+        DynamicTicket
       ]
 
     /** Flattens the inner value.
@@ -161,6 +164,25 @@ trait SignalApi {
         st.collectStatic(this).filter(_ == value)
       }.dropParam
 
+  }
+
+  /** A signal expression can be used to create signals accessing arbitrary other signals.
+    * Use the apply method on a signal to access its value inside of a signal expression.
+    * {{{
+    * val a: Signal[Int]
+    * val b: Signal[Int]
+    * val result: Signal[String] = Signal { a().toString + b().toString}
+    * }}}
+    * @group create
+    */
+  object Signal {
+    def rescalaAPI = selfType
+    final def apply[A](expression: A)(implicit ticket: CreationTicket): Signal[A] =
+      macro rescala.macros.ReactiveMacros.ReactiveExpression[A, Static, Signals.type, StaticTicket, DynamicTicket]
+    final def static[A](expression: A)(implicit ticket: CreationTicket): Signal[A] =
+      macro rescala.macros.ReactiveMacros.ReactiveExpression[A, Static, Signals.type, StaticTicket, DynamicTicket]
+    final def dynamic[A](expression: A)(implicit ticket: CreationTicket): Signal[A] =
+      macro rescala.macros.ReactiveMacros.ReactiveExpression[A, Dynamic, Signals.type, StaticTicket, DynamicTicket]
   }
 
   class UserDefinedFunction[+T, Dep, Cap](
@@ -216,7 +238,7 @@ trait SignalApi {
       fut.value match {
         case Some(Success(value)) => Var(value)(scheduler)
         case _ =>
-          val v: self.Var[A] = Var.empty[A](scheduler)
+          val v: Var[A] = Var.empty[A](scheduler)
           fut.onComplete { res =>
             fac.forceNewTransaction(v)(t => v.admitPulse(Pulse.tryCatch(Pulse.Value(res.get)))(t))
           }

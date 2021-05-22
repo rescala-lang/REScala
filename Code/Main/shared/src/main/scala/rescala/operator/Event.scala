@@ -2,6 +2,7 @@ package rescala.operator
 
 import rescala.core._
 import rescala.interface.RescalaInterface
+import rescala.macros.MacroTags.{Static, Dynamic}
 import rescala.macros.cutOutOfUserComputation
 import rescala.operator.Pulse.{Exceptional, NoChange, Value}
 import rescala.operator.RExceptions.ObservedException
@@ -32,7 +33,7 @@ object EventsMacroImpl {
 }
 
 trait EventApi {
-  self: RescalaInterface with EventApi with SignalApi with Sources with DefaultImplementations with Observing
+  selfType: RescalaInterface with EventApi with SignalApi with Sources with DefaultImplementations with Observing
     with Core =>
 
   /** Events only propagate a value when they are changing,
@@ -60,7 +61,7 @@ trait EventApi {
     override def resource: Interp[Option[T]] = this
 
     /** Interprets the pulse of the event by converting to an option
- *
+      *
       * @group internal
       */
     override def interpret(v: Value): Option[T] = v.toOption
@@ -126,7 +127,9 @@ trait EventApi {
         T,
         U,
         EventsMacroImpl.CollectFuncImpl.type,
-        Events.type
+        Events.type,
+        StaticTicket,
+        DynamicTicket
       ]
     //Events.staticNamed(s"(collect $this)", this) { st => st.collectStatic(this).collect(pf) }
 
@@ -154,7 +157,9 @@ trait EventApi {
         T,
         T,
         EventsMacroImpl.FilterFuncImpl.type,
-        Events.type
+        Events.type,
+        StaticTicket,
+        DynamicTicket
       ]
 
     /** Filters the event, only propagating the value when the filter is true.
@@ -168,7 +173,9 @@ trait EventApi {
         T,
         T,
         EventsMacroImpl.FilterFuncImpl.type,
-        Events.type
+        Events.type,
+        StaticTicket,
+        DynamicTicket
       ]
 
     /** Propagates the event only when except does not fire.
@@ -231,7 +238,9 @@ trait EventApi {
         T,
         A,
         EventsMacroImpl.MapFuncImpl.type,
-        Events.type
+        Events.type,
+        StaticTicket,
+        DynamicTicket
       ]
 
     /** Flattens the inner value.
@@ -255,7 +264,7 @@ trait EventApi {
       */
     @cutOutOfUserComputation
     final def fold[A](init: A)(op: (A, T) => A)(implicit ticket: CreationTicket): Signal[A] =
-      macro rescala.macros.ReactiveMacros.EventFoldMacro[T, A, CreationTicket]
+      macro rescala.macros.ReactiveMacros.EventFoldMacro[T, A, CreationTicket, StaticTicket]
 
     /** reduces events with a given reduce function to create a Signal
       *
@@ -264,7 +273,7 @@ trait EventApi {
       */
     @cutOutOfUserComputation
     final def reduce[A](reducer: (=> A, => T) => A)(implicit ticket: CreationTicket): Signal[A] = {
-       ticket.create(
+      ticket.create(
         Set(this),
         Pulse.empty: Pulse[A],
         inite = false
@@ -356,6 +365,23 @@ trait EventApi {
         Signals.dynamic(switched, a, b) { s => if (s.depend(switched)) s.depend(b) else s.depend(a) }(ict)
       }
 
+  }
+
+  /** Similar to [[Signal]] expressions, but resulting in an event.
+    * Accessed events return options depending on whether they fire or not,
+    * and the complete result of the expression is an event as well.
+    *
+    * @see [[Signal]]
+    * @group create
+    */
+  object Event {
+    def rescalaAPI = selfType
+    final def apply[A](expression: Option[A])(implicit ticket: CreationTicket): Event[A] =
+      macro rescala.macros.ReactiveMacros.ReactiveExpression[A, Static, Events.type, StaticTicket, DynamicTicket]
+    final def static[A](expression: Option[A])(implicit ticket: CreationTicket): Event[A] =
+      macro rescala.macros.ReactiveMacros.ReactiveExpression[A, Static, Events.type, StaticTicket, DynamicTicket]
+    final def dynamic[A](expression: Option[A])(implicit ticket: CreationTicket): Event[A] =
+      macro rescala.macros.ReactiveMacros.ReactiveExpression[A, Dynamic, Events.type, StaticTicket, DynamicTicket]
   }
 
   object Events {
@@ -494,7 +520,7 @@ trait EventApi {
     class CBResult[T, R](val event: Event[T], val value: R)
     final class FromCallbackT[T] private[Events] (val dummy: Boolean = true) {
       def apply[R](body: (T => Unit) => R)(implicit ct: CreationTicket, s: Scheduler): CBResult[T, R] = {
-        val evt: self.Evt[T] = self.Evt[T]()(ct)
+        val evt: Evt[T] = Evt[T]()(ct)
         val res              = body(evt.fire(_)(s))
         new CBResult(evt, res)
       }

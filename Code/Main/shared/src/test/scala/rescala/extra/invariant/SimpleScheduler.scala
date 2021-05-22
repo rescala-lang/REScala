@@ -5,10 +5,12 @@ import org.scalacheck.Test.PropException
 import org.scalacheck.{Gen, Prop, Test}
 import rescala.core
 import rescala.operator.Pulse
+import rescala.interface.RescalaInterface
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 trait InvariantBundle extends rescala.core.Core {
+  selfType : RescalaInterface =>
 
   type State[V] = SimpleState[V]
 
@@ -238,8 +240,8 @@ trait InvariantBundle extends rescala.core.Core {
         gens
       }
 
-      private def forceValues(changes: (ReSource, A) forSome { type A }*): Set[core.ReSource] = {
-        val asReSource = changes.foldLeft(Set.empty[core.ReSource]) {
+      private def forceValues(changes: (ReSource, A) forSome { type A }*): Set[ReSource] = {
+        val asReSource = changes.foldLeft(Set.empty[ReSource]) {
           case (acc, (source, _)) => acc + source
         }
 

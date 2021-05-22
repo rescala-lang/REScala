@@ -1,2 +1,0 @@
-package rescala.fullmv.mirrors
-

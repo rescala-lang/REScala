@@ -42,12 +42,6 @@ trait MacroAccess[+A, +T] {
 
 class ReactiveMacros(val c: blackbox.Context) {
 
-  type CreationTicket
-  type DynamicTicket
-  type LowPriorityCreationImplicits
-  type StaticTicket
-
-
   import c.universe._
 
   private def compileErrorsAst: Tree =
@@ -56,15 +50,19 @@ class ReactiveMacros(val c: blackbox.Context) {
   def ReactiveExpression[
       A: c.WeakTypeTag,
       IsStatic <: MacroTags.Staticism: c.WeakTypeTag,
-      ReactiveType: c.WeakTypeTag
+      ReactiveType: c.WeakTypeTag,
+      StaticTicket: c.WeakTypeTag,
+      DynamicTicket: c.WeakTypeTag
   ](expression: Tree)(ticket: c.Tree): c.Tree = {
-    ReactiveExpressionWithAPI[A, IsStatic, ReactiveType](expression)(ticket)(q"(${c.prefix.tree}).rescalaAPI", None)
+    ReactiveExpressionWithAPI[A, IsStatic, ReactiveType, StaticTicket, DynamicTicket](expression)(ticket)(q"(${c.prefix.tree}).rescalaAPI", None)
   }
 
   def ReactiveExpressionWithAPI[
       A: c.WeakTypeTag,
       IsStatic <: MacroTags.Staticism: c.WeakTypeTag,
-      ReactiveType: c.WeakTypeTag
+      ReactiveType: c.WeakTypeTag,
+      StaticTicket: c.WeakTypeTag,
+      DynamicTicket: c.WeakTypeTag
   ](expression: Tree)(ticket: c.Tree)(rescalaAPI: Tree, prefixManipulation: Option[PrefixManipulation]): c.Tree = {
     if (c.hasErrors) return compileErrorsAst
 
@@ -77,36 +75,36 @@ class ReactiveMacros(val c: blackbox.Context) {
     val creationMethod  = TermName(if (isStatic) "static" else "dynamic")
     val ticketType      = if (isStatic) weakTypeOf[StaticTicket] else weakTypeOf[DynamicTicket]
 
-    val body = q"""$rescalaAPI.$signalsOrEvents.$creationMethod[${weakTypeOf[A]}](
+    val body = q"""$signalsOrEvents.$creationMethod[${weakTypeOf[A]}](
          ..$dependencies
          ){${lego.contextualizedExpression(ticketType)}}($ticket)"""
 
     lego.wrapFinalize(body, prefixManipulation)
   }
 
-  def UDFExpressionWithAPI[
-      T: c.WeakTypeTag,
-      DependencyType: c.WeakTypeTag,
-      Capability: c.WeakTypeTag
-  ](expression: Tree): c.Tree = {
-    if (c.hasErrors) return compileErrorsAst
-
-    val forceStatic = !(weakTypeOf[Capability] <:< weakTypeOf[DynamicTicket])
-    val lego        = new MacroLego(expression, forceStatic)
-
-    val dependencies = lego.detections.detectedStaticReactives
-    val isStatic     = lego.detections.detectedDynamicReactives.isEmpty
-    val ticketType   = weakTypeOf[Capability]
-
-    val body =
-      q"""_root_.rescala.operator.UserDefinedFunction[${weakTypeOf[T]}, ${weakTypeOf[DependencyType]}, ${ticketType}](
-         _root_.scala.collection.immutable.Set[${weakTypeOf[DependencyType]}](..$dependencies),
-         ${lego.contextualizedExpression(ticketType)},
-         ${isStatic}
-         )"""
-
-    lego.wrapFinalize(body, None)
-  }
+  //def UDFExpressionWithAPI[
+  //    T: c.WeakTypeTag,
+  //    DependencyType: c.WeakTypeTag,
+  //    Capability: c.WeakTypeTag
+  //](expression: Tree): c.Tree = {
+  //  if (c.hasErrors) return compileErrorsAst
+  //
+  //  val forceStatic = !(weakTypeOf[Capability] <:< weakTypeOf[DynamicTicket])
+  //  val lego        = new MacroLego(expression, forceStatic)
+  //
+  //  val dependencies = lego.detections.detectedStaticReactives
+  //  val isStatic     = lego.detections.detectedDynamicReactives.isEmpty
+  //  val ticketType   = weakTypeOf[Capability]
+  //
+  //  val body =
+  //    q"""_root_.rescala.operator.UserDefinedFunction[${weakTypeOf[T]}, ${weakTypeOf[DependencyType]}, ${ticketType}](
+  //       _root_.scala.collection.immutable.Set[${weakTypeOf[DependencyType]}](..$dependencies),
+  //       ${lego.contextualizedExpression(ticketType)},
+  //       ${isStatic}
+  //       )"""
+  //
+  //  lego.wrapFinalize(body, None)
+  //}
 
   def fixNullTypes(tree: Tree): Unit =
     tree.foreach(t => if (t.tpe == null) internal.setType(t, NoType))
@@ -130,7 +128,9 @@ class ReactiveMacros(val c: blackbox.Context) {
       T: c.WeakTypeTag,
       A: c.WeakTypeTag,
       FuncImpl: c.WeakTypeTag,
-      ReactiveType: c.WeakTypeTag
+      ReactiveType: c.WeakTypeTag,
+      StaticTicket: c.WeakTypeTag,
+      DynamicTicket: c.WeakTypeTag
   ](expression: c.Tree)(ticket: c.Tree): c.Tree = {
     if (c.hasErrors) return compileErrorsAst
 
@@ -138,13 +138,15 @@ class ReactiveMacros(val c: blackbox.Context) {
     val pm                = new PrefixManipulation
     val computation: Tree = q"""$funcImpl.apply[${weakTypeOf[T]}, ${weakTypeOf[A]}](${pm.prefixValue}, $expression)"""
     fixNullTypes(computation)
-    ReactiveExpressionWithAPI[A, MacroTags.Dynamic, ReactiveType](computation)(ticket)(
+    ReactiveExpressionWithAPI[A, MacroTags.Dynamic, ReactiveType, StaticTicket, DynamicTicket](computation)(ticket)(
       q"${pm.prefixIdent}.rescalaAPI",
       Some(pm)
     )
   }
 
-  def EventFoldMacro[T: c.WeakTypeTag, A: c.WeakTypeTag, CT: c.WeakTypeTag](init: c.Expr[A])(op: c.Expr[(A, T) => A])(ticket: c.Expr[CT]): c.Tree = {
+  def EventFoldMacro[T: c.WeakTypeTag, A: c.WeakTypeTag, CT: c.WeakTypeTag, StaticTicket: c.WeakTypeTag](
+      init: c.Expr[A]
+  )(op: c.Expr[(A, T) => A])(ticket: c.Expr[CT]): c.Tree = {
     if (c.hasErrors) return compileErrorsAst
 
     // TODO: placeholder symbol
@@ -205,13 +207,13 @@ class ReactiveMacros(val c: blackbox.Context) {
       tree match {
         // replace any used CreationTicket in a Signal expression with the correct turn source for the current turn
         //q"$_.fromSchedulerImplicit[..$_](...$_)"
-        case turnSource @ Apply(TypeApply(Select(_, TermName("fromSchedulerImplicit")), _), _)
-            if turnSource.tpe =:= weakTypeOf[CreationTicket] && turnSource.symbol.owner == symbolOf[
-              LowPriorityCreationImplicits
-            ] =>
-          q"""${termNames.ROOTPKG}.rescala.core.CreationTicket(
-                  ${termNames.ROOTPKG}.scala.Left($ticketIdent.initializer),
-                  ${termNames.ROOTPKG}.rescala.core.ReName.create)"""
+        // TODO: this was disabled because of the bundle hack, need to figure out how to access creation ticket again
+        //case turnSource @ Apply(TypeApply(Select(_, TermName("fromSchedulerImplicit")), _), _)
+        //    if turnSource.tpe =:= weakTypeOf[CreationTicket]
+        //      && turnSource.symbol.owner == symbolOf[LowPriorityCreationImplicits] =>
+        //  q"""${termNames.ROOTPKG}.rescala.core.CreationTicket(
+        //          ${termNames.ROOTPKG}.scala.Left($ticketIdent.initializer),
+        //          ${termNames.ROOTPKG}.rescala.core.ReName.create)"""
 
         case tree @ Select(reactive, TermName("now")) =>
           c.warning(
@@ -366,7 +368,7 @@ class ReactiveMacros(val c: blackbox.Context) {
     )
 
   def isInterpretable(tree: Tree): Boolean = {
-    val staticInterpClass = c.mirror staticClass "_root_.rescala.core.MacroAccess"
+    val staticInterpClass = c.mirror staticClass "_root_.rescala.macros.MacroAccess"
 
     if (tree.tpe == null) { treeTypeNullWarning(tree); false }
     else
@@ -375,7 +377,7 @@ class ReactiveMacros(val c: blackbox.Context) {
       (tree.tpe.baseClasses contains staticInterpClass)
   }
 
-  /** detects variants to access reactives using [[rescala.core.MacroAccess]] */
+  /** detects variants to access reactives using [[rescala.macros.MacroAccess]] */
   object MacroInterpretable {
     def unapply(arg: Tree): Option[Tree] =
       arg match {
