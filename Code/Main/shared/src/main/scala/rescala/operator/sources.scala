@@ -82,20 +82,19 @@ trait Sources {
     * @group create
     */
   object Var {
-    abstract class VarImpl[A] private[rescala] (initialState: State[Pulse[A]], name: ReName)
+    class VarImpl[A] private[rescala] (initialState: State[Pulse[A]], name: ReName)
         extends Base[Pulse[A]](initialState, name)
         with Var[A]
-        with Signals.SignalResource[A] {
-      override val resource: Signals.SignalResource[A] = this
+        with Signal[A] {
+      override val resource: Signal[A] = this
+      override def disconnect()(implicit engine: Scheduler): Unit = ()
     }
 
     def apply[T](initval: T)(implicit ticket: CreationTicket): VarImpl[T] = fromChange(Pulse.Value(initval))
     def empty[T](implicit ticket: CreationTicket): VarImpl[T]             = fromChange(Pulse.empty)
     private[this] def fromChange[T](change: Pulse[T])(implicit ticket: CreationTicket): VarImpl[T] = {
       ticket.createSource[Pulse[T], VarImpl[T]](change)(s =>
-        new VarImpl[T](s, ticket.rename) {
-          override val resource                     = this
-        }
+        new VarImpl[T](s, ticket.rename)
       )
     }
   }

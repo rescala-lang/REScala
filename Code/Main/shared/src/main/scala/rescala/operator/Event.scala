@@ -264,7 +264,7 @@ trait EventApi {
       */
     @cutOutOfUserComputation
     final def reduce[A](reducer: (=> A, => T) => A)(implicit ticket: CreationTicket): Signal[A] = {
-      val res = ticket.create(
+       ticket.create(
         Set(this),
         Pulse.empty: Pulse[A],
         inite = false
@@ -276,7 +276,6 @@ trait EventApi {
           isDynamicWithStaticDeps = None
         )
       }
-      Signals.wrapWithSignalAPI(res)
     }
 
     /** Applies a function on the current value of the signal every time the event occurs,
@@ -422,14 +421,13 @@ trait EventApi {
     def fold[T](dependencies: Set[ReSource], init: T)(expr: StaticTicket => (() => T) => T)(implicit
         ticket: CreationTicket
     ): Signal[T] = {
-      val res = ticket.create(
+      ticket.create(
         dependencies,
         Pulse.tryCatch[Pulse[T]](Pulse.Value(init)),
         inite = false
       ) {
         state => new SignalImpl[T](state, (st, v) => expr(st)(v), ticket.rename, None)
       }
-      Signals.wrapWithSignalAPI(res)
     }
 
     /** Folds when any one of a list of events occurs, if multiple events occur, every fold is executed in order. */
@@ -465,15 +463,13 @@ trait EventApi {
         acc()
       }
 
-      val res = ticket.create(
+      ticket.create(
         staticInputs.toSet[ReSource],
         Pulse.tryCatch[Pulse[A]](Pulse.Value(init)),
         inite = true
       ) {
         state => new SignalImpl[A](state, operator, ticket.rename, Some(staticInputs.toSet[ReSource]))
       }
-      Signals.wrapWithSignalAPI(res)
-
     }
 
     val Match = Seq

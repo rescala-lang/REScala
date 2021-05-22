@@ -13,8 +13,7 @@ trait DefaultImplementations  {
       expr: (DynamicTicket, () => T) => T,
       name: ReName,
       isDynamicWithStaticDeps: Option[Set[ReSource]]
-  ) extends DerivedImpl[T](initial, name, isDynamicWithStaticDeps)
-      with Signals.SignalResource[T] {
+  ) extends DerivedImpl[T](initial, name, isDynamicWithStaticDeps) with Signal[T] {
 
     protected[this] def computePulse(rein: ReevTicket[Pulse[T]]): Pulse[T] = {
       Pulse.tryCatch(Pulse.diffPulse(expr(rein, () => rein.before.get), rein.before))
