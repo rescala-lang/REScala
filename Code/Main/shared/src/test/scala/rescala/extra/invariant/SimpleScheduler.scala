@@ -5,368 +5,394 @@ import org.scalacheck.Test.PropException
 import org.scalacheck.{Gen, Prop, Test}
 import rescala.core
 import rescala.operator.Pulse
-import rescala.core.{
-  AccessTicket, Derived, DynamicInitializerLookup, InitialChange, Initializer, Observation, ReSource, ReevTicket,
-  Scheduler, Struct
-}
-import rescala.interface.Aliases
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
-trait SimpleStruct extends Struct {
-  override type State[V, S <: Struct] = SimpleState[V]
-}
+trait InvariantBundle extends rescala.core.Core {
 
-class SimpleState[V](var value: V) {
-  var outgoing: Set[Derived[SimpleStruct]]  = Set.empty
-  var incoming: Set[ReSource[SimpleStruct]] = Set.empty
-  var discovered                            = false
-  var dirty                                 = false
-  var done                                  = false
-  var invariants: Seq[Invariant[V]]         = Seq.empty
-  var gen: Gen[_]                           = _
+  type State[V] = SimpleState[V]
 
-  def reset(v: V): Unit = {
-    discovered = false
-    dirty = false
-    done = false
-    value = v
-  }
+  sealed trait InvariantException extends RuntimeException
 
-  override def toString: String = s"State(outgoing = $outgoing, discovered = $discovered, dirty = $dirty, done = $done)"
-}
+  case class InvariantViolationException(
+      t: Throwable,
+      reactive: ReSource,
+      causalErrorChains: Seq[Seq[ReSource]]
+  ) extends InvariantException {
 
-class SimpleInitializer(afterCommitObservers: ListBuffer[Observation]) extends Initializer[SimpleStruct] {
-  override protected[this] def makeDerivedStructState[V](ip: V): SimpleState[V] = new SimpleState[V](ip)
+    override val getMessage: String = {
+      val chainErrorMessage =
+        if (causalErrorChains.nonEmpty)
+          "The error was caused by these update chains:\n\n" ++ causalErrorChains.map(_.map(r =>
+            s"${r.name.str} with value: ${r.state.value}"
+          ).mkString("\n↓\n")).mkString("\n---\n")
+        else "The error was not triggered by a change."
 
-  private var createdReactives: Seq[Derived[SimpleStruct]] = Seq.empty
-
-  override def accessTicket(): AccessTicket[SimpleStruct] =
-    new AccessTicket[SimpleStruct] {
-      override private[rescala] def access(reactive: ReSource[SimpleStruct]): reactive.Value = reactive.state.value
+      s"${t.getMessage} in reactive ${reactive.name.str}\n$chainErrorMessage\n"
     }
 
-  def drainCreated(): Seq[Derived[SimpleStruct]] = {
-    val tmp = createdReactives
-    createdReactives = Seq.empty
-    tmp
+    override def fillInStackTrace(): InvariantViolationException = this
   }
 
-  override protected[this] def ignite(
-      reactive: Derived[SimpleStruct],
-      incoming: Set[ReSource[SimpleStruct]],
-      ignitionRequiresReevaluation: Boolean
-  ): Unit = {
-    incoming.foreach { dep =>
-      dep.state.outgoing += reactive
+  case class NoGeneratorException(message: String) extends InvariantException {
+    override val getMessage: String = message
+  }
+
+  class SimpleState[V](var value: V) {
+    var outgoing: Set[Derived]  = Set.empty
+    var incoming: Set[ReSource] = Set.empty
+    var discovered                            = false
+    var dirty                                 = false
+    var done                                  = false
+    var invariants: Seq[Invariant[V]]         = Seq.empty
+    var gen: Gen[_]                           = _
+
+    def reset(v: V): Unit = {
+      discovered = false
+      dirty = false
+      done = false
+      value = v
     }
-    reactive.state.incoming = incoming
-    reactive.state.discovered = ignitionRequiresReevaluation
-    reactive.state.dirty = ignitionRequiresReevaluation
-    createdReactives :+= reactive
 
-    val predecessorsDone = incoming.forall(r => !r.state.discovered || r.state.done)
-    // requires reev, any predecessor is dirty, but all discovered predecessors are already done
-    val requiresReev = incoming.exists(_.state.dirty) && predecessorsDone
-    // if discovered, we are mid reevaluation
-    val discovered = incoming.exists(_.state.discovered)
-    if (discovered && !predecessorsDone) {
-      // do nothing, this reactive is reached by normal propagation later
-    } else if (ignitionRequiresReevaluation || requiresReev) {
-      Util.evaluate(reactive, this, afterCommitObservers)
-    } else if (predecessorsDone) reactive.state.done = true
+    override def toString: String =
+      s"State(outgoing = $outgoing, discovered = $discovered, dirty = $dirty, done = $done)"
   }
 
-}
+  class SimpleInitializer(afterCommitObservers: ListBuffer[Observation]) extends Initializer {
+    override protected[this] def makeDerivedStructState[V](ip: V): SimpleState[V] = new SimpleState[V](ip)
 
-object SimpleScheduler
-    extends DynamicInitializerLookup[SimpleStruct, SimpleInitializer]
-    with Scheduler[SimpleStruct]
-    with Aliases[SimpleStruct] {
+    private var createdReactives: Seq[Derived] = Seq.empty
 
-  override def schedulerName: String = "SimpleWithInvariantSupport"
+    override def accessTicket(): AccessTicket =
+      new AccessTicket {
+        override private[rescala] def access(reactive: ReSource): reactive.Value = reactive.state.value
+      }
 
-  var idle = true
+    def drainCreated(): Seq[Derived] = {
+      val tmp = createdReactives
+      createdReactives = Seq.empty
+      tmp
+    }
 
-  def reset(r: ReSource) = r.state.reset(r.commit(r.state.value))
+    override protected[this] def ignite(
+        reactive: Derived,
+        incoming: Set[ReSource],
+        ignitionRequiresReevaluation: Boolean
+    ): Unit = {
+      incoming.foreach { dep =>
+        dep.state.outgoing += reactive
+      }
+      reactive.state.incoming = incoming
+      reactive.state.discovered = ignitionRequiresReevaluation
+      reactive.state.dirty = ignitionRequiresReevaluation
+      createdReactives :+= reactive
 
-  override def forceNewTransaction[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R): R =
-    synchronized {
-      if (!idle) throw new IllegalStateException("Scheduler is not reentrant")
-      idle = false
-      val afterCommitObservers: ListBuffer[Observation] = ListBuffer.empty
-      val res =
-        try {
-          val creation = new SimpleInitializer(afterCommitObservers)
-          withDynamicInitializer(creation) {
-            // admission
-            val admissionTicket: AdmissionTicket = new AdmissionTicket(creation, initialWrites) {
-              override private[rescala] def access(reactive: ReSource): reactive.Value = reactive.state.value
+      val predecessorsDone = incoming.forall(r => !r.state.discovered || r.state.done)
+      // requires reev, any predecessor is dirty, but all discovered predecessors are already done
+      val requiresReev = incoming.exists(_.state.dirty) && predecessorsDone
+      // if discovered, we are mid reevaluation
+      val discovered = incoming.exists(_.state.discovered)
+      if (discovered && !predecessorsDone) {
+        // do nothing, this reactive is reached by normal propagation later
+      } else if (ignitionRequiresReevaluation || requiresReev) {
+        Util.evaluate(reactive, this, afterCommitObservers)
+      } else if (predecessorsDone) reactive.state.done = true
+    }
+
+  }
+
+  object SimpleScheduler
+      extends DynamicInitializerLookup[SimpleInitializer]
+      with Scheduler {
+
+    override def schedulerName: String = "SimpleWithInvariantSupport"
+
+    var idle = true
+
+    def reset(r: ReSource) = r.state.reset(r.commit(r.state.value))
+
+    override def forceNewTransaction[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R): R =
+      synchronized {
+        if (!idle) throw new IllegalStateException("Scheduler is not reentrant")
+        idle = false
+        val afterCommitObservers: ListBuffer[Observation] = ListBuffer.empty
+        val res =
+          try {
+            val creation = new SimpleInitializer(afterCommitObservers)
+            withDynamicInitializer(creation) {
+              // admission
+              val admissionTicket: AdmissionTicket = new AdmissionTicket(creation, initialWrites) {
+                override private[rescala] def access(reactive: ReSource): reactive.Value = reactive.state.value
+              }
+              val admissionResult = admissionPhase(admissionTicket)
+              val sources = admissionTicket.initialChanges.values.collect {
+                case iv if iv.writeValue(iv.source.state.value, iv.source.state.value = _) => iv.source
+              }.toSeq
+
+              creation.drainCreated().foreach(reset)
+
+              val initial = sources.flatMap { s =>
+                s.state.dirty = true
+                s.state.done = true
+                s.state.discovered = true
+                s.state.outgoing
+              }
+
+              initial.foreach { r =>
+                r.state.dirty = true
+              }
+
+              // propagation
+              val sorted = Util.toposort(initial)
+              Util.evaluateAll(sorted, creation, afterCommitObservers).foreach(reset)
+              // evaluate everything that was created, but not accessed, and requires ignition
+              val created = creation.drainCreated()
+              Util.evaluateAll(created, creation, afterCommitObservers).foreach(reset)
+              assert(creation.drainCreated().isEmpty)
+
+              Util.evaluateInvariants(created ++ sorted ++ initialWrites, initialWrites)
+
+              //cleanup
+              initial.foreach(reset)
+              created.foreach(reset)
+              sources.foreach(reset)
+              sorted.foreach(reset)
+
+              //wrapup
+              if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(creation.accessTicket())
+              admissionResult
             }
-            val admissionResult = admissionPhase(admissionTicket)
-            val sources = admissionTicket.initialChanges.values.collect {
-              case iv if iv.writeValue(iv.source.state.value, iv.source.state.value = _) => iv.source
-            }.toSeq
-
-            creation.drainCreated().foreach(reset)
-
-            val initial = sources.flatMap { s =>
-              s.state.dirty = true
-              s.state.done = true
-              s.state.discovered = true
-              s.state.outgoing
-            }
-
-            initial.foreach { r =>
-              r.state.dirty = true
-            }
-
-            // propagation
-            val sorted = Util.toposort(initial)
-            Util.evaluateAll(sorted, creation, afterCommitObservers).foreach(reset)
-            // evaluate everything that was created, but not accessed, and requires ignition
-            val created = creation.drainCreated()
-            Util.evaluateAll(created, creation, afterCommitObservers).foreach(reset)
-            assert(creation.drainCreated().isEmpty)
-
-            Util.evaluateInvariants(created ++ sorted ++ initialWrites, initialWrites)
-
-            //cleanup
-            initial.foreach(reset)
-            created.foreach(reset)
-            sources.foreach(reset)
-            sorted.foreach(reset)
-
-            //wrapup
-            if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(creation.accessTicket())
-            admissionResult
+          } finally {
+            idle = true
           }
-        } finally {
-          idle = true
+        afterCommitObservers.foreach(_.execute())
+        res
+      }
+
+    override private[rescala] def singleReadValueOnce[A](reactive: Signal[A]): A = {
+      val id = reactive.resource
+      id.interpret(id.state.value)
+    }
+
+    def specify[T](inv: Seq[Invariant[T]], signal: Signal[T]): Unit = {
+      signal.state.invariants = inv.map(inv => new Invariant(inv.description, (invp: Pulse[T]) => inv.inv(invp.get)))
+    }
+
+    implicit class SignalWithInvariants[T](val signal: Signal[T]) extends AnyVal {
+
+      def specify(inv: Invariant[T]*): Unit = {
+        SimpleScheduler.this.specify(inv, signal)
+      }
+
+      def setValueGenerator(gen: Gen[T]): Unit = {
+        this.signal.state.gen = gen
+      }
+
+      def test(): Unit = {
+        val result = Test.check(
+          Test.Parameters.default,
+          customForAll(
+            findGenerators(),
+            changes => {
+              forceValues(changes.map(pair => (pair._1, Pulse.Value(pair._2))): _*)
+              true
+            }
+          )
+        )
+        if (!result.passed) {
+          result.status match {
+            case PropException(_, e, _) => throw e
+            case _                      => throw new RuntimeException("Test failed!")
+          }
         }
-      afterCommitObservers.foreach(_.execute())
-      res
-    }
+      }
 
-  override private[rescala] def singleReadValueOnce[A](reactive: Signal[A]): A = {
-    val id = reactive.resource
-    id.interpret(id.state.value)
-  }
+      private def customForAll[P](
+          signalGeneratorPairs: List[(ReSource, Gen[A] forSome { type A })],
+          f: List[(ReSource, Any)] => Boolean,
+          generated: List[(ReSource, Any)] = List.empty
+      ): Prop =
+        signalGeneratorPairs match {
+          case Nil => Prop(f(generated))
+          case (sig, gen) :: tail =>
+            forAll(gen)(t => customForAll(tail, f, generated :+ ((sig, t))))
+        }
 
-  def specify[T](inv: Seq[Invariant[T]], signal: Signal[T]): Unit = {
-    signal.state.invariants = inv.map(inv => new Invariant(inv.description, (invp: Pulse[T]) => inv.inv(invp.get)))
-  }
+      private def findGenerators(): List[(ReSource, Gen[A] forSome { type A })] = {
+        def findGeneratorsRecursive(resource: ReSource): List[(ReSource, Gen[A] forSome { type A })] = {
+          if (resource.state.gen != null) {
+            List((resource, resource.state.gen))
+          } else if (resource.state.incoming == Set.empty) {
+            List()
+          } else {
+            resource.state.incoming
+              .flatMap { incoming => findGeneratorsRecursive(incoming) }
+              .toList
+          }
+        }
 
-  implicit class SignalWithInvariants[T](val signal: Signal[T]) extends AnyVal {
+        val gens = findGeneratorsRecursive(this.signal)
+        if (gens.isEmpty) {
+          throw NoGeneratorException(s"No generators found in incoming nodes for signal ${this.signal.name}")
+        }
+        gens
+      }
 
-    def specify(inv: Invariant[T]*): Unit = {
-      SimpleScheduler.this.specify(inv, signal)
-    }
+      private def forceValues(changes: (ReSource, A) forSome { type A }*): Set[core.ReSource] = {
+        val asReSource = changes.foldLeft(Set.empty[core.ReSource]) {
+          case (acc, (source, _)) => acc + source
+        }
 
-    def setValueGenerator(gen: Gen[T]): Unit = {
-      this.signal.state.gen = gen
-    }
+        forceNewTransaction(
+          asReSource,
+          {
+            admissionTicket =>
+              changes.foreach {
+                change =>
+                  val initialChange: InitialChange = new InitialChange {
+                    override val source: core.ReSource = change._1
 
-    def test(): Unit = {
-      val result = Test.check(
-        Test.Parameters.default,
-        customForAll(
-          findGenerators(),
-          changes => {
-            forceValues(changes.map(pair => (pair._1, Pulse.Value(pair._2))): _*)
-            true
+                    override def writeValue(b: source.Value, v: source.Value => Unit): Boolean = {
+                      val casted = change._2.asInstanceOf[source.Value]
+                      if (casted != b) {
+                        v(casted)
+                        return true
+                      }
+                      false
+                    }
+                  }
+                  admissionTicket.recordChange(initialChange)
+              }
           }
         )
-      )
-      if (!result.passed) {
-        result.status match {
-          case PropException(_, e, _) => throw e
-          case _                      => throw new RuntimeException("Test failed!")
-        }
+
+        asReSource
       }
     }
 
-    private def customForAll[P](
-        signalGeneratorPairs: List[(ReSource, Gen[A] forSome { type A })],
-        f: List[(ReSource, Any)] => Boolean,
-        generated: List[(ReSource, Any)] = List.empty
-    ): Prop =
-      signalGeneratorPairs match {
-        case Nil => Prop(f(generated))
-        case (sig, gen) :: tail =>
-          forAll(gen)(t => customForAll(tail, f, generated :+ ((sig, t))))
-      }
-
-    private def findGenerators(): List[(ReSource, Gen[A] forSome { type A })] = {
-      def findGeneratorsRecursive(resource: ReSource): List[(ReSource, Gen[A] forSome { type A })] = {
-        if (resource.state.gen != null) {
-          List((resource, resource.state.gen))
-        } else if (resource.state.incoming == Set.empty) {
-          List()
-        } else {
-          resource.state.incoming
-            .flatMap { incoming => findGeneratorsRecursive(incoming) }
-            .toList
-        }
-      }
-
-      val gens = findGeneratorsRecursive(this.signal)
-      if (gens.isEmpty) {
-        throw NoGeneratorException(s"No generators found in incoming nodes for signal ${this.signal.name}")
-      }
-      gens
-    }
-
-    private def forceValues(changes: (ReSource, A) forSome { type A }*): Set[core.ReSource[SimpleStruct]] = {
-      val asReSource = changes.foldLeft(Set.empty[core.ReSource[SimpleStruct]]) {
-        case (acc, (source, _)) => acc + source
-      }
-
-      forceNewTransaction(
-        asReSource,
-        {
-          admissionTicket =>
-            changes.foreach {
-              change =>
-                val initialChange: InitialChange[SimpleStruct] = new InitialChange[SimpleStruct] {
-                  override val source: core.ReSource[SimpleStruct] = change._1
-
-                  override def writeValue(b: source.Value, v: source.Value => Unit): Boolean = {
-                    val casted = change._2.asInstanceOf[source.Value]
-                    if (casted != b) {
-                      v(casted)
-                      return true
-                    }
-                    false
-                  }
-                }
-                admissionTicket.recordChange(initialChange)
-            }
-        }
-      )
-
-      asReSource
-    }
   }
 
-}
+  object Util {
+    def toposort(rem: Seq[Derived]): Seq[Derived] = {
+      val sorted = ArrayBuffer[Derived]()
 
-object Util {
-  def toposort(rem: Seq[Derived[SimpleStruct]]): Seq[Derived[SimpleStruct]] = {
-    val sorted = ArrayBuffer[Derived[SimpleStruct]]()
+      def _toposort(rem: Derived): Unit = {
+        if (rem.state.discovered) ()
+        else {
+          rem.state.discovered = true
+          rem.state.outgoing.foreach(_toposort)
+          sorted += rem
+        }
+      }
 
-    def _toposort(rem: Derived[SimpleStruct]): Unit = {
-      if (rem.state.discovered) ()
+      rem.foreach(_toposort)
+      // need toSeq for 2.13, where Seq is immutable
+      sorted.toSeq
+    }
+
+    @scala.annotation.tailrec
+    def evaluateAll(
+        evaluatees: Seq[Derived],
+        creation: SimpleInitializer,
+        afterCommitObservers: ListBuffer[Observation]
+    ): Seq[Derived] = {
+      // first one where evaluation detects glitch
+      val glitched = evaluatees.reverseIterator.find { r =>
+        if (r.state.done) false
+        else if (r.state.dirty) {
+          Util.evaluate(r, creation, afterCommitObservers)
+        } else false
+      }
+      glitched match {
+        case None => evaluatees
+        case Some(reactive) =>
+          val evaluateNext = evaluatees.filterNot(_.state.done) ++ creation.drainCreated()
+          evaluateNext.foreach(_.state.discovered = false)
+          evaluateAll(Util.toposort(evaluateNext), creation, afterCommitObservers)
+      }
+    }
+
+    def evaluate(
+        reactive: Derived,
+        creationTicket: SimpleInitializer,
+        afterCommitObservers: ListBuffer[Observation]
+    ): Boolean = {
+      var potentialGlitch = false
+      val dt = new ReevTicket[reactive.Value, SimpleStruct](creationTicket, reactive.state.value) {
+        override def dynamicAccess(input: ReSource): input.Value = {
+          if (input.state.discovered && !input.state.done) {
+            potentialGlitch = true
+          }
+          input.state.value
+        }
+
+        override def staticAccess(input: ReSource): input.Value = input.state.value
+      }
+      val reev = reactive.reevaluate(dt)
+      reev.inputs().foreach { newDeps =>
+        val incoming = reactive.state.incoming
+        reactive.state.incoming = newDeps
+        val added   = newDeps diff incoming
+        val removed = incoming diff newDeps
+        added.foreach { input =>
+          input.state.outgoing = input.state.outgoing + reactive
+        }
+        removed.foreach { input =>
+          input.state.outgoing = input.state.outgoing - reactive
+        }
+      }
+
+      if (potentialGlitch) true
       else {
-        rem.state.discovered = true
-        rem.state.outgoing.foreach(_toposort)
-        sorted += rem
+        if (reev.activate) reactive.state.outgoing.foreach(_.state.dirty = true)
+        reev.forValue(reactive.state.value = _)
+        reev.forEffect(o => afterCommitObservers.append(o))
+        reactive.state.done = true
+        false
+      }
+
+    }
+
+    def evaluateInvariants(reactives: Seq[ReSource], initialWrites: Set[ReSource]): Unit = {
+      for {
+        reactive <- reactives
+        inv      <- reactive.state.invariants
+        if !inv.validate(reactive.state.value)
+      } {
+        throw new InvariantViolationException(
+          new IllegalArgumentException(s"${reactive.state.value} violates invariant ${inv.description}"),
+          reactive,
+          Util.getCausalErrorChains(reactive, initialWrites)
+        )
       }
     }
 
-    rem.foreach(_toposort)
-    // need toSeq for 2.13, where Seq is immutable
-    sorted.toSeq
-  }
+    def getCausalErrorChains(
+        errorNode: ReSource,
+        initialWrites: Set[ReSource]
+    ): Seq[Seq[ReSource]] = {
+      import scala.collection.mutable.ListBuffer
 
-  @scala.annotation.tailrec
-  def evaluateAll(
-      evaluatees: Seq[Derived[SimpleStruct]],
-      creation: SimpleInitializer,
-      afterCommitObservers: ListBuffer[Observation]
-  ): Seq[Derived[SimpleStruct]] = {
-    // first one where evaluation detects glitch
-    val glitched = evaluatees.reverseIterator.find { r =>
-      if (r.state.done) false
-      else if (r.state.dirty) {
-        Util.evaluate(r, creation, afterCommitObservers)
-      } else false
-    }
-    glitched match {
-      case None => evaluatees
-      case Some(reactive) =>
-        val evaluateNext = evaluatees.filterNot(_.state.done) ++ creation.drainCreated()
-        evaluateNext.foreach(_.state.discovered = false)
-        evaluateAll(Util.toposort(evaluateNext), creation, afterCommitObservers)
-    }
-  }
+      val initialNames = initialWrites.map(_.name)
 
-  def evaluate(
-      reactive: Derived[SimpleStruct],
-      creationTicket: SimpleInitializer,
-      afterCommitObservers: ListBuffer[Observation]
-  ): Boolean = {
-    var potentialGlitch = false
-    val dt = new ReevTicket[reactive.Value, SimpleStruct](creationTicket, reactive.state.value) {
-      override def dynamicAccess(input: ReSource[SimpleStruct]): input.Value = {
-        if (input.state.discovered && !input.state.done) {
-          potentialGlitch = true
+      def traverse(
+          node: ReSource,
+          path: Seq[ReSource]
+      ): Seq[Seq[ReSource]] = {
+        val paths = new ListBuffer[Seq[ReSource]]()
+        for (incoming <- node.state.incoming) {
+          val incName = incoming.name
+          if (initialNames.contains(incName)) {
+            paths += path :+ incoming
+          } else {
+            paths ++= traverse(incoming, path :+ incoming)
+          }
         }
-        input.state.value
+        paths.toList
       }
 
-      override def staticAccess(input: ReSource[SimpleStruct]): input.Value = input.state.value
-    }
-    val reev = reactive.reevaluate(dt)
-    reev.inputs().foreach { newDeps =>
-      val incoming = reactive.state.incoming
-      reactive.state.incoming = newDeps
-      val added   = newDeps diff incoming
-      val removed = incoming diff newDeps
-      added.foreach { input =>
-        input.state.outgoing = input.state.outgoing + reactive
-      }
-      removed.foreach { input =>
-        input.state.outgoing = input.state.outgoing - reactive
-      }
-    }
-
-    if (potentialGlitch) true
-    else {
-      if (reev.activate) reactive.state.outgoing.foreach(_.state.dirty = true)
-      reev.forValue(reactive.state.value = _)
-      reev.forEffect(o => afterCommitObservers.append(o))
-      reactive.state.done = true
-      false
-    }
-
-  }
-
-  def evaluateInvariants(reactives: Seq[ReSource[SimpleStruct]], initialWrites: Set[ReSource[SimpleStruct]]): Unit = {
-    for {
-      reactive <- reactives
-      inv      <- reactive.state.invariants
-      if !inv.validate(reactive.state.value)
-    } {
-      throw new InvariantViolationException(
-        new IllegalArgumentException(s"${reactive.state.value} violates invariant ${inv.description}"),
-        reactive,
-        Util.getCausalErrorChains(reactive, initialWrites)
-      )
+      traverse(errorNode, Seq(errorNode))
     }
   }
 
-  def getCausalErrorChains(
-      errorNode: ReSource[SimpleStruct],
-      initialWrites: Set[ReSource[SimpleStruct]]
-  ): Seq[Seq[ReSource[SimpleStruct]]] = {
-    import scala.collection.mutable.ListBuffer
-
-    val initialNames = initialWrites.map(_.name)
-
-    def traverse(node: ReSource[SimpleStruct], path: Seq[ReSource[SimpleStruct]]): Seq[Seq[ReSource[SimpleStruct]]] = {
-      val paths = new ListBuffer[Seq[ReSource[SimpleStruct]]]()
-      for (incoming <- node.state.incoming) {
-        val incName = incoming.name
-        if (initialNames.contains(incName)) {
-          paths += path :+ incoming
-        } else {
-          paths ++= traverse(incoming, path :+ incoming)
-        }
-      }
-      paths.toList
-    }
-
-    traverse(errorNode, Seq(errorNode))
-  }
 }

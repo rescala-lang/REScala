@@ -1,11 +1,12 @@
 package rescala.core.infiltration
 
-import rescala.parrp.ParRPStruct
-import rescala.operator.Signal
+import rescala.interface.RescalaInterface
+import rescala.parrp.ParRP
 
 /** Accesses private[rescala] values for some low level tests */
-object JVMInfiltrator {
-  def unsafeNow[T](s: Signal[T, ParRPStruct]): T = {
+class JVMInfiltrator(val api: RescalaInterface with ParRP) {
+  import api._
+  def unsafeNow[T](s: Signal[T]): T = {
     s.state.current.get
   }
 }

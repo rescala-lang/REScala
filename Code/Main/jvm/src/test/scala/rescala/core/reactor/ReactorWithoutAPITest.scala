@@ -1,7 +1,8 @@
 package rescala.core.reactor
 
-import rescala.core.{CreationTicket, Interp, MacroAccess, ReName}
+import rescala.core.ReName
 import rescala.default
+import rescala.macros.MacroAccess
 import tests.rescala.testtools.RETests
 
 import scala.annotation.tailrec
@@ -12,14 +13,14 @@ class ReactorWithoutAPITest extends RETests {
   import ReactorAction._
 
   class Reactor[T](
-      initState: ReStructure#State[ReactorStage[T], ReStructure]
+      initState: State[ReactorStage[T]]
   ) extends Derived
-      with Interp[T, ReStructure]
-      with MacroAccess[T, Interp[T, ReStructure]] {
+      with Interp[T]
+      with MacroAccess[T, Interp[T]] {
 
     override type Value = ReactorStage[T]
 
-    override protected[rescala] def state: State = initState
+    override protected[rescala] def state: State[ReactorStage[T]] = initState
     override protected[rescala] def name: ReName = "Custom Reactor"
 
     /** Interprets the internal type to the external type
@@ -65,7 +66,7 @@ class ReactorWithoutAPITest extends RETests {
       */
     override protected[rescala] def commit(base: ReactorStage[T]): ReactorStage[T] = base
 
-    override def resource: Interp[T, default.ReStructure] = this
+    override def resource: Interp[T] = this
 
     def now: T = scheduler.forceNewTransaction(this)(at => at.now(this))
   }
@@ -131,7 +132,7 @@ class ReactorWithoutAPITest extends RETests {
           dependencies,
           new ReactorStage[T](initialValue, stageBuilder),
           inite = true
-        ) { createdState: ReStructure#State[ReactorStage[T], ReStructure] =>
+        ) { createdState: State[ReactorStage[T]] =>
           new Reactor[T](createdState)
         }
     }

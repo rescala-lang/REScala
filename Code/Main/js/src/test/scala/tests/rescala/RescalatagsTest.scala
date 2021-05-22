@@ -2,14 +2,16 @@ package tests.rescala
 
 import org.scalajs.dom.{Element, Node}
 import org.scalajs.dom.html.Span
-import rescala.extra.Tags._
+import rescala.extra.Tags
 import scalatags.JsDom.all._
 import scalatags.JsDom.TypedTag
 import tests.rescala.testtools.RETests
 
 class RescalatagsTest extends RETests {
   multiEngined { engine =>
-    import engine._
+    val te = new Tags(engine)
+    import te._
+    import te.api._
 
     test("put var into dom") {
       val v              = Var.empty[TypedTag[Element]]
@@ -30,7 +32,7 @@ class RescalatagsTest extends RETests {
     }
 
     test("put style into dom") {
-      val v: rescala.operator.Var[String, engine.ReStructure] = Var.empty[String]
+      val v: Var[String] = Var.empty[String]
 
       val ourTag: Span = span(backgroundColor := v).render
 
