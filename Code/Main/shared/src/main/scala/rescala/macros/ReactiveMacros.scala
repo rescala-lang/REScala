@@ -181,7 +181,7 @@ class ReactiveMacros(val c: blackbox.Context) {
     val rewrittenTree = detections transform cutOutTree
 
     def contextualizedExpression(contextType: Type) =
-      q"{$ticketTermName: $contextType => $rewrittenTree }"
+      q"{$ticketTermName: ${contextType.typeSymbol.name.asInstanceOf[TypeName]} => $rewrittenTree }"
 
     def wrapFinalize(body: Tree, prefixManipulation: Option[PrefixManipulation]): Tree = {
       val valDefs                = prefixManipulation.map(_.prefixValDef).toList ::: cutOut.cutOutReactivesVals.reverse
