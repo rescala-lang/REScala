@@ -52,9 +52,22 @@ class ReactiveMacros(val c: blackbox.Context) {
       IsStatic <: MacroTags.Staticism: c.WeakTypeTag,
       ReactiveType: c.WeakTypeTag,
       StaticTicket: c.WeakTypeTag,
-      DynamicTicket: c.WeakTypeTag
+      DynamicTicket: c.WeakTypeTag,
+      CreationTicket: c.WeakTypeTag,
+      LowPriorityCreationImplicits: c.WeakTypeTag
   ](expression: Tree)(ticket: c.Tree): c.Tree = {
-    ReactiveExpressionWithAPI[A, IsStatic, ReactiveType, StaticTicket, DynamicTicket](expression)(ticket)(q"(${c.prefix.tree}).rescalaAPI", None)
+    ReactiveExpressionWithAPI[
+      A,
+      IsStatic,
+      ReactiveType,
+      StaticTicket,
+      DynamicTicket,
+      CreationTicket,
+      LowPriorityCreationImplicits
+    ](expression)(ticket)(
+      q"(${c.prefix.tree}).rescalaAPI",
+      None
+    )
   }
 
   def ReactiveExpressionWithAPI[
@@ -62,12 +75,14 @@ class ReactiveMacros(val c: blackbox.Context) {
       IsStatic <: MacroTags.Staticism: c.WeakTypeTag,
       ReactiveType: c.WeakTypeTag,
       StaticTicket: c.WeakTypeTag,
-      DynamicTicket: c.WeakTypeTag
+      DynamicTicket: c.WeakTypeTag,
+      CreationTicket: c.WeakTypeTag,
+      LowPriorityCreationImplicits: c.WeakTypeTag
   ](expression: Tree)(ticket: c.Tree)(rescalaAPI: Tree, prefixManipulation: Option[PrefixManipulation]): c.Tree = {
     if (c.hasErrors) return compileErrorsAst
 
     val forceStatic = !(weakTypeOf[IsStatic] <:< weakTypeOf[MacroTags.Dynamic])
-    val lego        = new MacroLego(expression, forceStatic)
+    val lego        = new MacroLego[CreationTicket, LowPriorityCreationImplicits](expression, forceStatic)
 
     val signalsOrEvents = weakTypeOf[ReactiveType].typeSymbol.asClass.module.asTerm.name
     val dependencies    = lego.detections.detectedStaticReactives
@@ -130,7 +145,9 @@ class ReactiveMacros(val c: blackbox.Context) {
       FuncImpl: c.WeakTypeTag,
       ReactiveType: c.WeakTypeTag,
       StaticTicket: c.WeakTypeTag,
-      DynamicTicket: c.WeakTypeTag
+      DynamicTicket: c.WeakTypeTag,
+      CreationTicket: c.WeakTypeTag,
+      LowPriorityCreationImplicits: c.WeakTypeTag
   ](expression: c.Tree)(ticket: c.Tree): c.Tree = {
     if (c.hasErrors) return compileErrorsAst
 
@@ -138,26 +155,41 @@ class ReactiveMacros(val c: blackbox.Context) {
     val pm                = new PrefixManipulation
     val computation: Tree = q"""$funcImpl.apply[${weakTypeOf[T]}, ${weakTypeOf[A]}](${pm.prefixValue}, $expression)"""
     fixNullTypes(computation)
-    ReactiveExpressionWithAPI[A, MacroTags.Dynamic, ReactiveType, StaticTicket, DynamicTicket](computation)(ticket)(
+    ReactiveExpressionWithAPI[
+      A,
+      MacroTags.Dynamic,
+      ReactiveType,
+      StaticTicket,
+      DynamicTicket,
+      CreationTicket,
+      LowPriorityCreationImplicits
+    ](computation)(ticket)(
       q"${pm.prefixIdent}.rescalaAPI",
       Some(pm)
     )
   }
 
-  def EventFoldMacro[T: c.WeakTypeTag, A: c.WeakTypeTag, CT: c.WeakTypeTag, StaticTicket: c.WeakTypeTag](
+  def EventFoldMacro[
+      T: c.WeakTypeTag,
+      A: c.WeakTypeTag,
+      CT: c.WeakTypeTag,
+      StaticTicket: c.WeakTypeTag,
+      CreationTicket: c.WeakTypeTag,
+      LowPriorityCreationImplicits: c.WeakTypeTag
+  ](
       init: c.Expr[A]
   )(op: c.Expr[(A, T) => A])(ticket: c.Expr[CT]): c.Tree = {
     if (c.hasErrors) return compileErrorsAst
 
     // TODO: placeholder symbol
     //val eventsSymbol = weakTypeOf[rescala.operator.EventsMacroImpl.type].termSymbol.asTerm.name
-    val ticketType   = weakTypeOf[StaticTicket]
-    val funcImpl     = weakTypeOf[rescala.operator.EventsMacroImpl.FoldFuncImpl.type].typeSymbol.asClass.module
-    val pm           = new PrefixManipulation()
-    val computation  = q"""$funcImpl.apply[${weakTypeOf[T]}, ${weakTypeOf[A]}](_, ${pm.prefixValue}, $op)"""
+    val ticketType  = weakTypeOf[StaticTicket]
+    val funcImpl    = weakTypeOf[rescala.operator.EventsMacroImpl.FoldFuncImpl.type].typeSymbol.asClass.module
+    val pm          = new PrefixManipulation()
+    val computation = q"""$funcImpl.apply[${weakTypeOf[T]}, ${weakTypeOf[A]}](_, ${pm.prefixValue}, $op)"""
     fixNullTypes(computation)
 
-    val lego       = new MacroLego(computation, forceStatic = true)
+    val lego       = new MacroLego[CreationTicket, LowPriorityCreationImplicits](computation, forceStatic = true)
     val detections = lego.detections.detectedStaticReactives
 
     val body =
@@ -170,14 +202,18 @@ class ReactiveMacros(val c: blackbox.Context) {
 
   // here be dragons
 
-  class MacroLego(tree: Tree, forceStatic: Boolean) {
+  class MacroLego[CreationTicket: c.WeakTypeTag, LowPriorityCreationImplicits: c.WeakTypeTag](
+      tree: Tree,
+      forceStatic: Boolean
+  ) {
     private val ticketTermName: TermName = TermName(c.freshName("ticket$"))
     val ticketIdent: Ident               = Ident(ticketTermName)
 
-    val weAnalysis    = new WholeExpressionAnalysis(tree)
-    val cutOut        = new CutOutTransformer(weAnalysis)
-    val cutOutTree    = cutOut.transform(tree)
-    val detections    = new RewriteTransformer(weAnalysis, ticketIdent, forceStatic)
+    val weAnalysis = new WholeExpressionAnalysis(tree)
+    val cutOut     = new CutOutTransformer(weAnalysis)
+    val cutOutTree = cutOut.transform(tree)
+    val detections =
+      new RewriteTransformer[CreationTicket, LowPriorityCreationImplicits](weAnalysis, ticketIdent, forceStatic)
     val rewrittenTree = detections transform cutOutTree
 
     def contextualizedExpression(contextType: Type) =
@@ -193,7 +229,7 @@ class ReactiveMacros(val c: blackbox.Context) {
 
   object IsCutOut
 
-  class RewriteTransformer(
+  class RewriteTransformer[CreationTicket: c.WeakTypeTag, LowPriorityCreationImplicits: c.WeakTypeTag](
       weAnalysis: WholeExpressionAnalysis,
       ticketIdent: Ident,
       requireStatic: Boolean
@@ -208,12 +244,12 @@ class ReactiveMacros(val c: blackbox.Context) {
         // replace any used CreationTicket in a Signal expression with the correct turn source for the current turn
         //q"$_.fromSchedulerImplicit[..$_](...$_)"
         // TODO: this was disabled because of the bundle hack, need to figure out how to access creation ticket again
-        //case turnSource @ Apply(TypeApply(Select(_, TermName("fromSchedulerImplicit")), _), _)
-        //    if turnSource.tpe =:= weakTypeOf[CreationTicket]
-        //      && turnSource.symbol.owner == symbolOf[LowPriorityCreationImplicits] =>
-        //  q"""${termNames.ROOTPKG}.rescala.core.CreationTicket(
-        //          ${termNames.ROOTPKG}.scala.Left($ticketIdent.initializer),
-        //          ${termNames.ROOTPKG}.rescala.core.ReName.create)"""
+        case turnSource @ Apply(Select(ctleft, TermName("fromSchedulerImplicit")), _)
+            if turnSource.tpe.typeSymbol.name == weakTypeOf[CreationTicket].typeSymbol.name
+              && turnSource.symbol.owner == symbolOf[LowPriorityCreationImplicits] =>
+          q"""new CreationTicket(
+                  ${termNames.ROOTPKG}.scala.Left($ticketIdent.initializer),
+                  ${termNames.ROOTPKG}.rescala.core.ReName.create)"""
 
         case tree @ Select(reactive, TermName("now")) =>
           c.warning(

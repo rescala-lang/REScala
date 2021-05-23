@@ -129,7 +129,9 @@ trait EventApi {
         EventsMacroImpl.CollectFuncImpl.type,
         Events.type,
         StaticTicket,
-        DynamicTicket
+        DynamicTicket,
+        CreationTicket,
+        LowPriorityCreationImplicits
       ]
     //Events.staticNamed(s"(collect $this)", this) { st => st.collectStatic(this).collect(pf) }
 
@@ -159,7 +161,9 @@ trait EventApi {
         EventsMacroImpl.FilterFuncImpl.type,
         Events.type,
         StaticTicket,
-        DynamicTicket
+        DynamicTicket,
+        CreationTicket,
+        LowPriorityCreationImplicits
       ]
 
     /** Filters the event, only propagating the value when the filter is true.
@@ -175,7 +179,9 @@ trait EventApi {
         EventsMacroImpl.FilterFuncImpl.type,
         Events.type,
         StaticTicket,
-        DynamicTicket
+        DynamicTicket,
+        CreationTicket,
+        LowPriorityCreationImplicits
       ]
 
     /** Propagates the event only when except does not fire.
@@ -240,7 +246,9 @@ trait EventApi {
         EventsMacroImpl.MapFuncImpl.type,
         Events.type,
         StaticTicket,
-        DynamicTicket
+        DynamicTicket,
+        CreationTicket,
+        LowPriorityCreationImplicits
       ]
 
     /** Flattens the inner value.
@@ -264,7 +272,14 @@ trait EventApi {
       */
     @cutOutOfUserComputation
     final def fold[A](init: A)(op: (A, T) => A)(implicit ticket: CreationTicket): Signal[A] =
-      macro rescala.macros.ReactiveMacros.EventFoldMacro[T, A, CreationTicket, StaticTicket]
+      macro rescala.macros.ReactiveMacros.EventFoldMacro[
+        T,
+        A,
+        CreationTicket,
+        StaticTicket,
+        CreationTicket,
+        LowPriorityCreationImplicits
+      ]
 
     /** reduces events with a given reduce function to create a Signal
       *
@@ -377,11 +392,35 @@ trait EventApi {
   object Event {
     def rescalaAPI = selfType
     final def apply[A](expression: Option[A])(implicit ticket: CreationTicket): Event[A] =
-      macro rescala.macros.ReactiveMacros.ReactiveExpression[A, Static, Events.type, StaticTicket, DynamicTicket]
+      macro rescala.macros.ReactiveMacros.ReactiveExpression[
+        A,
+        Static,
+        Events.type,
+        StaticTicket,
+        DynamicTicket,
+        CreationTicket,
+        LowPriorityCreationImplicits
+      ]
     final def static[A](expression: Option[A])(implicit ticket: CreationTicket): Event[A] =
-      macro rescala.macros.ReactiveMacros.ReactiveExpression[A, Static, Events.type, StaticTicket, DynamicTicket]
+      macro rescala.macros.ReactiveMacros.ReactiveExpression[
+        A,
+        Static,
+        Events.type,
+        StaticTicket,
+        DynamicTicket,
+        CreationTicket,
+        LowPriorityCreationImplicits
+      ]
     final def dynamic[A](expression: Option[A])(implicit ticket: CreationTicket): Event[A] =
-      macro rescala.macros.ReactiveMacros.ReactiveExpression[A, Dynamic, Events.type, StaticTicket, DynamicTicket]
+      macro rescala.macros.ReactiveMacros.ReactiveExpression[
+        A,
+        Dynamic,
+        Events.type,
+        StaticTicket,
+        DynamicTicket,
+        CreationTicket,
+        LowPriorityCreationImplicits
+      ]
   }
 
   object Events {
@@ -521,7 +560,7 @@ trait EventApi {
     final class FromCallbackT[T] private[Events] (val dummy: Boolean = true) {
       def apply[R](body: (T => Unit) => R)(implicit ct: CreationTicket, s: Scheduler): CBResult[T, R] = {
         val evt: Evt[T] = Evt[T]()(ct)
-        val res              = body(evt.fire(_)(s))
+        val res         = body(evt.fire(_)(s))
         new CBResult(evt, res)
       }
     }

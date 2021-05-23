@@ -119,7 +119,9 @@ trait SignalApi {
         rescala.operator.SignalMacroImpl.MapFuncImpl.type,
         Signals.type,
         StaticTicket,
-        DynamicTicket
+        DynamicTicket,
+        CreationTicket,
+        LowPriorityCreationImplicits
       ]
 
     /** Flattens the inner value.
@@ -178,11 +180,35 @@ trait SignalApi {
   object Signal {
     def rescalaAPI = selfType
     final def apply[A](expression: A)(implicit ticket: CreationTicket): Signal[A] =
-      macro rescala.macros.ReactiveMacros.ReactiveExpression[A, Static, Signals.type, StaticTicket, DynamicTicket]
+      macro rescala.macros.ReactiveMacros.ReactiveExpression[
+        A,
+        Static,
+        Signals.type,
+        StaticTicket,
+        DynamicTicket,
+        CreationTicket,
+        LowPriorityCreationImplicits
+      ]
     final def static[A](expression: A)(implicit ticket: CreationTicket): Signal[A] =
-      macro rescala.macros.ReactiveMacros.ReactiveExpression[A, Static, Signals.type, StaticTicket, DynamicTicket]
+      macro rescala.macros.ReactiveMacros.ReactiveExpression[
+        A,
+        Static,
+        Signals.type,
+        StaticTicket,
+        DynamicTicket,
+        CreationTicket,
+        LowPriorityCreationImplicits
+      ]
     final def dynamic[A](expression: A)(implicit ticket: CreationTicket): Signal[A] =
-      macro rescala.macros.ReactiveMacros.ReactiveExpression[A, Dynamic, Signals.type, StaticTicket, DynamicTicket]
+      macro rescala.macros.ReactiveMacros.ReactiveExpression[
+        A,
+        Dynamic,
+        Signals.type,
+        StaticTicket,
+        DynamicTicket,
+        CreationTicket,
+        LowPriorityCreationImplicits
+      ]
   }
 
   class UserDefinedFunction[+T, Dep, Cap](
