@@ -9,6 +9,10 @@ import rescala.interface.RescalaInterface
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
+object InvariantApi extends InvariantBundle with RescalaInterface {
+  def scheduler = SimpleScheduler
+}
+
 trait InvariantBundle extends rescala.core.Core {
   selfType : RescalaInterface =>
 
@@ -171,16 +175,15 @@ trait InvariantBundle extends rescala.core.Core {
         res
       }
 
-    override private[rescala] def singleReadValueOnce[A](reactive: Signal[A]): A = {
-      val id = reactive.resource
-      id.interpret(id.state.value)
+    override private[rescala] def singleReadValueOnce[A](reactive: Interp[A]): A = {
+      reactive.interpret(reactive.state.value)
     }
 
     def specify[T](inv: Seq[Invariant[T]], signal: Signal[T]): Unit = {
       signal.state.invariants = inv.map(inv => new Invariant(inv.description, (invp: Pulse[T]) => inv.inv(invp.get)))
     }
 
-    implicit class SignalWithInvariants[T](val signal: Signal[T]) extends AnyVal {
+    implicit class SignalWithInvariants[T](val signal: Signal[T]) {
 
       def specify(inv: Invariant[T]*): Unit = {
         SimpleScheduler.this.specify(inv, signal)
@@ -252,7 +255,7 @@ trait InvariantBundle extends rescala.core.Core {
               changes.foreach {
                 change =>
                   val initialChange: InitialChange = new InitialChange {
-                    override val source: core.ReSource = change._1
+                    override val source: ReSource = change._1
 
                     override def writeValue(b: source.Value, v: source.Value => Unit): Boolean = {
                       val casted = change._2.asInstanceOf[source.Value]
@@ -320,7 +323,7 @@ trait InvariantBundle extends rescala.core.Core {
         afterCommitObservers: ListBuffer[Observation]
     ): Boolean = {
       var potentialGlitch = false
-      val dt = new ReevTicket[reactive.Value, SimpleStruct](creationTicket, reactive.state.value) {
+      val dt = new ReevTicket[reactive.Value](creationTicket, reactive.state.value) {
         override def dynamicAccess(input: ReSource): input.Value = {
           if (input.state.discovered && !input.state.done) {
             potentialGlitch = true

@@ -3,15 +3,15 @@ package tests.rescala.property
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import rescala.extra.invariant.SimpleScheduler.SignalWithInvariants
-import rescala.extra.invariant.{Invariant, InvariantViolationException, NoGeneratorException, SimpleStruct}
-import rescala.interface.RescalaInterface
+import rescala.extra.invariant._
 import tests.rescala.testtools.RETests
 
 class InvariantsTest extends RETests with ScalaCheckDrivenPropertyChecks with Matchers {
-  val engine: RescalaInterface[SimpleStruct] = RescalaInterface.interfaceFor(rescala.extra.invariant.SimpleScheduler)
 
-  import engine._
+  import InvariantApi._
+  val sched = InvariantApi.scheduler
+  import sched._
+
 
   "expect invalid invariants to fail" in forAll(Gen.posNum[Int]) { (n: Int) =>
     assertThrows[InvariantViolationException] {

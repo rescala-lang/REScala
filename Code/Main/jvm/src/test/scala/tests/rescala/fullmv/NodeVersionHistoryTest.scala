@@ -10,7 +10,9 @@ import scala.concurrent.duration.Duration
 
 class NodeVersionHistoryTest extends AnyFunSuite {
   test("Frame Notify Reevout") {
-    val engine = new FullMVEngine(Duration.Zero, "fnr")
+    val api = new FullMVApi(Duration.Zero, "fnr")
+    val engine = api.scheduler
+    import api._
 
     val createN = engine.newTurn()
     createN.beginExecuting()
@@ -39,7 +41,9 @@ class NodeVersionHistoryTest extends AnyFunSuite {
   }
 
   test("Unchanged") {
-    val engine = new FullMVEngine(Duration.Zero, "nochange")
+    object api extends FullMVApi(Duration.Zero, "nochange")
+    val engine = api.scheduler
+    import api._
 
     val createN = engine.newTurn()
     createN.beginExecuting()
@@ -71,7 +75,9 @@ class NodeVersionHistoryTest extends AnyFunSuite {
   }
 
   test("SupersedeFraming into double marker trailer") {
-    val engine = new FullMVEngine(Duration.Zero, "asd")
+    object api extends FullMVApi(Duration.Zero, "asd")
+    val engine = api.scheduler
+    import api._
 
     val createN = engine.newTurn()
     createN.beginExecuting()

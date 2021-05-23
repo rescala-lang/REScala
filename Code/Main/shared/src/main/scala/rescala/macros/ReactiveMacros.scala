@@ -150,7 +150,7 @@ class ReactiveMacros(val c: blackbox.Context) {
     if (c.hasErrors) return compileErrorsAst
 
     // TODO: placeholder symbol
-    val eventsSymbol = weakTypeOf[rescala.operator.EventsMacroImpl.type].termSymbol.asTerm.name
+    //val eventsSymbol = weakTypeOf[rescala.operator.EventsMacroImpl.type].termSymbol.asTerm.name
     val ticketType   = weakTypeOf[StaticTicket]
     val funcImpl     = weakTypeOf[rescala.operator.EventsMacroImpl.FoldFuncImpl.type].typeSymbol.asClass.module
     val pm           = new PrefixManipulation()
@@ -161,7 +161,7 @@ class ReactiveMacros(val c: blackbox.Context) {
     val detections = lego.detections.detectedStaticReactives
 
     val body =
-      q"""${pm.prefixIdent}.rescalaAPI.$eventsSymbol.fold[${weakTypeOf[A]}](Set(..$detections), $init)(
+      q"""Events.fold[${weakTypeOf[A]}](Set(..$detections), $init)(
            ${lego.contextualizedExpression(ticketType)}
           )($ticket)"""
 

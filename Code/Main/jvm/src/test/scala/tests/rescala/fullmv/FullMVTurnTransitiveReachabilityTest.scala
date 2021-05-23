@@ -1,7 +1,7 @@
 package tests.rescala.fullmv
 
 import org.scalatest.funsuite.AnyFunSuite
-import rescala.fullmv.FullMVTurnImpl
+
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -30,7 +30,7 @@ class FullMVTurnTransitiveReachabilityTest extends AnyFunSuite {
   }
 
   private def makeTreesUnderSingleLockedLock(nodes: Set[Int]) = {
-    val trees: Map[Int, FullMVTurnImpl] = nodes.map(e => (e, newTurn())).toMap
+    val trees: Map[Int, FullMVTurnImpl] = nodes.map(e => (e, scheduler.newTurn())).toMap
     // put all transactions under a common locked lock, so that all locking assertions hold
     trees.values.foreach(_.beginExecuting())
     trees.values.reduce { (tA, tB) =>

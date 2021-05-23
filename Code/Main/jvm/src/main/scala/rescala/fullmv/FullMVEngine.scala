@@ -10,11 +10,14 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 
 class FullMVApi(val timeout: Duration, val schedulerName: String) extends RescalaInterface with FullMVBundle with Mirror with TurnImplBundle with TaskBundle with FullMvStateBundle with SubsumableLockBundle {
-  override def scheduler: Scheduler = new FullMVEngine(timeout, schedulerName)
+  override def scheduler: FullMVEngine = new FullMVEngine(timeout, schedulerName)
 }
 
 object FullMVEngine {
   val DEBUG = false
+
+  object default extends FullMVApi(Duration.Zero, "FullMV-default-engine")
+
 
   object notWorthToMoveToTaskpool extends ExecutionContext {
     override def execute(runnable: Runnable): Unit =

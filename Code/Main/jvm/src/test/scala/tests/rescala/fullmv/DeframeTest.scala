@@ -8,13 +8,13 @@ import rescala.operator.Pulse
 
 import scala.concurrent.duration.Duration
 
-object FullMVTest extends FullMVApi(Duration.Zero, "deframe-test")
 
 
 class DeframeTest extends AnyFunSuite {
   test("deframe") {
+    object FullMVTest extends FullMVApi(Duration.Zero, "deframe-test")
     import FullMVTest._
-    val engine = scheduler
+    val engine = FullMVTest.scheduler
 
     val dummy = Signal { -1 }.resource.asInstanceOf[Derived]
 
@@ -82,8 +82,9 @@ class DeframeTest extends AnyFunSuite {
   }
 
   test("deframe-reframe") {
-    val engine = new FullMVEngine(Duration.Zero, "deframe-reframe-test")
-    import engine._
+    object FullMVTest extends FullMVApi(Duration.Zero, "deframe-reframe-test")
+    import FullMVTest._
+    val engine = FullMVTest.scheduler
 
     val dummy = Signal { -1 }.resource.asInstanceOf[Derived]
 

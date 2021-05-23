@@ -13,12 +13,12 @@ import scala.util.{Failure, Random, Success}
 
 class LockStressTest extends AnyFunSuite {
   test("stress", IgnoreOnWindowsBecause("this stackoverlfows in subsumable lock")) {
-    val host = new FullMVEngine(Duration.Zero, "lockStressTest")
+    val host = new FullMVApi(Duration.Zero, "lockStressTest")
 
     val numWorkers = 4
 
     val turns = Array.fill(numWorkers) {
-      val turn = host.newTurn()
+      val turn = host.scheduler.newTurn()
       turn.beginExecuting()
       new AtomicReference(turn)
     }
@@ -34,13 +34,13 @@ class LockStressTest extends AnyFunSuite {
           while (running) {
             if (random.nextInt(5) == 0) {
               ownTurn.completeExecuting()
-              ownTurn = host.newTurn()
+              ownTurn = host.scheduler.newTurn()
               ownTurn.beginExecuting()
               turns(i).set(ownTurn)
             } else {
               val pick = random.nextInt(numWorkers)
               @tailrec def reTryLock(): Unit = {
-                if (running) SerializationGraphTracking.tryLock(turns(pick).get, ownTurn, UnlockedUnknown) match {
+                if (running) host.SerializationGraphTracking.tryLock(turns(pick).get, ownTurn, UnlockedUnknown) match {
                   case LockedSameSCC(lock) => lock.asyncUnlock()
                   case _                   => reTryLock()
                 }
@@ -88,16 +88,16 @@ class LockStressTest extends AnyFunSuite {
         println(turns.zipWithIndex.map {
           case (t, idx) =>
             val turn = t.get
-            s"$idx: $turn with ${turn.asInstanceOf[FullMVTurnImpl].subsumableLock.get}"
+            s"$idx: $turn with ${turn.asInstanceOf[host.FullMVTurnImpl].subsumableLock.get}"
         }.mkString("\n"))
         fail("there were errors")
       case Some(sum) =>
         println(s"lock stress test totaled $sum iterations (individual scores: ${scores.mkString(", ")}")
         turns.foreach(_.get.completeExecuting())
         println(
-          s"garbage stats: ${host.instances.size()} orphan turn instances and ${host.lockHost.instances.size()} orphan lock instances"
+          s"garbage stats: ${host.scheduler.instances.size()} orphan turn instances and ${host.scheduler.lockHost.instances.size()} orphan lock instances"
         )
-        assert(host.instances.size() + host.lockHost.instances.size() === 0)
+        assert(host.scheduler.instances.size() + host.scheduler.lockHost.instances.size() === 0)
     }
   }
 }

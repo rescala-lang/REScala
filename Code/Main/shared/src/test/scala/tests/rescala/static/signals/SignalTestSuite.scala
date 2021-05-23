@@ -10,7 +10,7 @@ import rescala.scheduler.Levelbased
 
 class SignalTestSuite extends RETests {
   multiEngined { engine =>
-    val ie = Infiltrator(engine.asInstanceOf[RescalaInterface with Levelbased])
+    val ie = new Infiltrator(engine.asInstanceOf[RescalaInterface with Levelbased])
     import ie.api._
     import ie.assertLevel
 

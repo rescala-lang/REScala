@@ -8,14 +8,15 @@ import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
 class LockUnionFindTest extends AnyFunSuite {
-  val engine = new FullMVEngine(Duration.Zero, "LockUnionFindTest")
+  object FullMv extends FullMVApi(Duration.Zero, "LockUnionFindTest")
+  val engine = FullMv.scheduler
 
   test("single lock gc works") {
     val turn = engine.newTurn()
     turn.beginFraming()
     val lock = turn.subsumableLock.get
 
-    if (SubsumableLock.DEBUG) println(s"single lock gc with $turn using $lock")
+    if (FullMv.SubsumableLock.DEBUG) println(s"single lock gc with $turn using $lock")
 
     assert(lock.refCount.get === 1)
     assert(engine.getInstance(turn.guid) === Some(turn))
@@ -59,7 +60,7 @@ class LockUnionFindTest extends AnyFunSuite {
     turn2.beginExecuting()
     val lock2 = turn2.subsumableLock.get()
 
-    if (SubsumableLock.DEBUG) println(s"single subsumed gc with $turn1 using $lock1 and $turn2 using $lock2")
+    if (FullMv.SubsumableLock.DEBUG) println(s"single subsumed gc with $turn1 using $lock1 and $turn2 using $lock2")
 
     val l1 = Await.result(turn1.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
 
@@ -168,7 +169,7 @@ class LockUnionFindTest extends AnyFunSuite {
     assert(lock1.refCount.get === 1)
     assert(lock2.refCount.get === 1)
 
-    val locked = SerializationGraphTracking.tryLock(turn1, turn2, UnlockedUnknown).asInstanceOf[LockedSameSCC]
+    val locked = FullMv.SerializationGraphTracking.tryLock(turn1, turn2, UnlockedUnknown).asInstanceOf[LockedSameSCC]
     locked.unlock()
 
     assert(
@@ -242,7 +243,7 @@ class LockUnionFindTest extends AnyFunSuite {
     turn2.beginExecuting()
     val lock2 = turn2.subsumableLock.get()
 
-    if (SubsumableLock.DEBUG) println(s"single subsume blocked gc with $turn1 using $lock1 and $turn2 using $lock2")
+    if (FullMv.SubsumableLock.DEBUG) println(s"single subsume blocked gc with $turn1 using $lock1 and $turn2 using $lock2")
 
     val l1 = Await.result(turn1.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
     val l2 = Await.result(turn2.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
