@@ -33,7 +33,7 @@ case object DeltaCRDT {
     DeltaCRDT[A](UIJDLattice[A].bottom, antiEntropy)
 }
 
-case class RDeltaCRDT[A: UIJDLattice](state: A, replicaID: String, lastDelta: Option[Delta[A]] = None) {
+case class RDeltaCRDT[A: UIJDLattice](state: A, replicaID: String, deltaBuffer: List[Delta[A]] = List()) {
   def query[B](q: DeltaQuery[A, B]): B = q(state)
 
   def mutate(m: DeltaMutator[A]): RDeltaCRDT[A] = applyDelta(Delta(replicaID, m(replicaID, state)))
@@ -43,10 +43,12 @@ case class RDeltaCRDT[A: UIJDLattice](state: A, replicaID: String, lastDelta: Op
       UIJDLattice[A].diff(state, deltaState) match {
         case Some(stateDiff) =>
           val stateMerged = UIJDLattice[A].merge(state, stateDiff)
-          this.copy(state = stateMerged, lastDelta = Some(Delta(origin, stateDiff)))
+          this.copy(state = stateMerged, deltaBuffer = Delta(origin, stateDiff) :: deltaBuffer)
         case None => this
       }
   }
+
+  def resetDeltaBuffer(): RDeltaCRDT[A] = this.copy(deltaBuffer = List())
 }
 
 case object RDeltaCRDT {

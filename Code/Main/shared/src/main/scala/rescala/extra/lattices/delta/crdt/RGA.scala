@@ -324,6 +324,8 @@ class RRGA[E, C: CContext](val crdt: RDeltaCRDT[RGACRDT.State[E, C]]) extends CR
     if (newCRDT == crdt) this
     else new RRGA(newCRDT)
   }
+
+  def resetDeltaBuffer(): RRGA[E, C] = new RRGA(crdt.resetDeltaBuffer())
 }
 
 object RRGA {

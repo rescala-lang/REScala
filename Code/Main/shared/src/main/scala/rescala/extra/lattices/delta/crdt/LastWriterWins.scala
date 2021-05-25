@@ -17,6 +17,12 @@ object LastWriterWinsCRDT {
   def write[A, C: CContext](v: A): DeltaMutator[State[A, C]] =
     (replicaID, state) => MVRegisterCRDT.write(TimedVal(v, replicaID)).apply(replicaID, state)
 
+  def map[A, C: CContext](f: A => A): DeltaMutator[State[A, C]] = (replicaID, state) =>
+    read[A, C].apply(state).map(f) match {
+      case None    => UIJDLattice[State[A, C]].bottom
+      case Some(v) => write(v).apply(replicaID, state)
+    }
+
   def clear[A, C: CContext](): DeltaMutator[State[A, C]] = MVRegisterCRDT.clear
 }
 
@@ -51,12 +57,16 @@ class RLastWriterWins[A, C: CContext](val crdt: RDeltaCRDT[RLastWriterWins.State
 
   def write(v: A): RLastWriterWins[A, C] = new RLastWriterWins(crdt.mutate(LastWriterWinsCRDT.write(v)))
 
+  def map(f: A => A): RLastWriterWins[A, C] = new RLastWriterWins(crdt.mutate(LastWriterWinsCRDT.map(f)))
+
   def clear(): RLastWriterWins[A, C] = new RLastWriterWins(crdt.mutate(LastWriterWinsCRDT.clear()))
 
   def applyDelta(delta: Delta[RLastWriterWins.State[A, C]]): RLastWriterWins[A, C] = {
     val newCRDT = crdt.applyDelta(delta)
     if (newCRDT == crdt) this else new RLastWriterWins(newCRDT)
   }
+
+  def resetDeltaBuffer(): RLastWriterWins[A, C] = new RLastWriterWins(crdt.resetDeltaBuffer())
 }
 
 object RLastWriterWins {

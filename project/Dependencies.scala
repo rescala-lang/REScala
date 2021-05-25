@@ -103,12 +103,13 @@ object Dependencies {
 
     val communication = generic("communication")
 
-    val circe     = generic("serializer-circe")
-    val tcp       = generic("communicator-tcp")
-    val upickle   = generic("serializer-upickle")
-    val webrtc    = generic("communicator-webrtc")
-    val wsAkka    = generic("communicator-ws-akka")
-    val wsJavalin = generic("communicator-ws-javalin")
+    val circe         = generic("serializer-circe")
+    val tcp           = generic("communicator-tcp")
+    val upickle       = generic("serializer-upickle")
+    val jsoniterScala = generic("serializer-jsoniter-scala")
+    val webrtc        = generic("communicator-webrtc")
+    val wsAkka        = generic("communicator-ws-akka")
+    val wsJavalin     = generic("communicator-ws-javalin")
   }
 
 }

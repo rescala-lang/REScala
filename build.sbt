@@ -8,7 +8,9 @@ import Dependencies.{Versions => V}
 
 ThisBuild / incOptions := (ThisBuild / incOptions).value.withLogRecompileOnMacro(false)
 cfg.noPublish
-ThisBuild / resolvers += ("STG old bintray repo" at "http://www.st.informatik.tu-darmstadt.de/maven/").withAllowInsecureProtocol(true)
+ThisBuild / resolvers += ("STG old bintray repo" at "http://www.st.informatik.tu-darmstadt.de/maven/").withAllowInsecureProtocol(
+  true
+)
 
 lazy val cfg = new {
   val base: Def.SettingsDefinition = List(
@@ -159,6 +161,7 @@ lazy val todolist = project.in(file("Code/Examples/Todolist"))
       loci.circe.value,
       scalatags.value,
       loci.webrtc.value,
+      loci.jsoniterScala.value,
       catsCollection.value,
       jsoniterScalaAll.value(0) % "provided,test",
       jsoniterScalaAll.value(1),

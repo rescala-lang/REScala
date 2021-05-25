@@ -90,8 +90,6 @@ abstract class CRDTInterface[A: UIJDLattice] {
   val crdt: RDeltaCRDT[A]
 
   def applyDelta(delta: Delta[A]): CRDTInterface[A]
-
-  def lastDelta: Option[Delta[A]] = crdt.lastDelta
 }
 
 class RAWSet[E, C: CContext](val crdt: RDeltaCRDT[AWSetCRDT.State[E, C]]) extends CRDTInterface[AWSetCRDT.State[E, C]] {

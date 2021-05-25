@@ -1,4 +1,4 @@
-package todo
+package src.main.todo
 
 import io.circe.generic.auto._
 import io.circe.syntax._

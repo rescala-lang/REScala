@@ -1,53 +1,33 @@
-package todo
+package src.main.todo
 
-import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromString, writeToString}
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import loci.MessageBuffer
 import loci.registry.Binding
 import loci.transmitter.transmittable.IdenticallyTransmittable
-import loci.transmitter.Serializable
+import loci.serializer.jsoniterScala.jsoniteScalaBasedSerializable
 import org.scalajs.dom.UIEvent
-import org.scalajs.dom.html.{Div, Input}
+import org.scalajs.dom.html.{Div, Input, LI}
 import rescala.default._
 import rescala.extra.Tags._
 import rescala.extra.distributables.LociDist
 import rescala.extra.lattices.delta.CContext._
 import rescala.extra.lattices.delta.Delta
-import rescala.extra.lattices.delta.crdt.{LastWriterWins, LastWriterWinsCRDT, RORMap, RRGA}
+import rescala.extra.lattices.delta.crdt.{RLastWriterWins, RRGA}
 import rescala.extra.lattices.delta.crdt.RRGA._
 import rescala.extra.lattices.delta.crdt.RGACRDT._
-import rescala.extra.lattices.delta.crdt.RORMap._
-import rescala.extra.lattices.delta.crdt.LastWriterWins._
 import scalatags.JsDom
 import scalatags.JsDom.all._
 import scalatags.JsDom.tags2.section
 import scalatags.JsDom.{Attr, TypedTag}
 
 import java.util.concurrent.ThreadLocalRandom
-import scala.util.Try
 
 class TodoApp() {
 
-  implicit def jsoniterBasedSerializable[T](implicit codec: JsonValueCodec[T]): Serializable[T] = new Serializable[T] {
-    override def serialize(value: T): MessageBuffer = MessageBuffer.encodeString(writeToString(value))
-
-    override def deserialize(value: MessageBuffer): Try[T] = Try(readFromString[T](value.decodeString))
-  }
-
-  implicit val todoTaskCodec: JsonValueCodec[TodoTask] = JsonCodecMaker.make
-  implicit val stringCodec: JsonValueCodec[String]     = JsonCodecMaker.make
-
-//  implicit val transmittableTaskList: IdenticallyTransmittable[RRGA.State[TodoTask, DietMapCContext]] =
-//    IdenticallyTransmittable()
+  implicit val stringCodec: JsonValueCodec[String] = JsonCodecMaker.make
 
   implicit val transmittableList: IdenticallyTransmittable[RRGA.State[String, DietMapCContext]] =
     IdenticallyTransmittable()
-
-  implicit val transmittableTaskMap
-      : IdenticallyTransmittable[RORMap.State[String, LastWriterWins.Embedded[TodoTask], DietMapCContext]] =
-    IdenticallyTransmittable()
-
-  case class ViewDataPair(view: Map[String, TodoTaskView], data: RRGA[TodoTask, DietMapCContext])
 
   @scala.annotation.nowarn // Auto-application to `()`
   def getContents(): TypedTag[Div] = {
@@ -61,181 +41,110 @@ class TodoApp() {
 
     val (createTodo, todoInputField) = inputFieldHandler(todoInputTag, onchange)
 
-    val newTask = createTodo.map { desc =>
-      TodoTask(s"Task(${ThreadLocalRandom.current().nextLong().toHexString})", desc)
-    }
-
     val removeAll = Events.fromCallback[UIEvent](cb => button("remove all done todos", onclick := cb))
 
     val toggleAll = Events.fromCallback[UIEvent] { cb =>
       input(id := "toggle-all", name := "toggle-all", `class` := "toggle-all", `type` := "checkbox", onchange := cb)
     }
 
+    val deltaEvt = Evt[Delta[RRGA.State[String, DietMapCContext]]]
+
+    val resetDeltaBuffer = Evt[Unit]
+
     val myID = ThreadLocalRandom.current().nextLong().toHexString
 
-//    val deltaEvt: Evt[Delta[RRGA.State[TodoTask, DietMapCContext]]] = Evt()
-
-    val listDeltaEvt: Evt[Delta[RRGA.State[String, DietMapCContext]]] = Evt()
-
-    val mapDeltaEvt: Evt[Delta[RORMap.State[String, LastWriterWins.Embedded[TodoTask], DietMapCContext]]] = Evt()
-
-//    val initial = ViewDataPair(Map.empty[String, TodoTaskView], RRGA[TodoTask, DietMapCContext](myID))
+    case class State(
+        list: RRGA[String, DietMapCContext],
+        signalMap: Map[String, Signal[RLastWriterWins[TodoTask, DietMapCContext]]],
+        uiMap: Map[String, TypedTag[LI]],
+        evtMap: Map[String, Event[String]]
+    )
 
     val listInitial = RRGA[String, DietMapCContext](myID)
 
-    case class VDP(
-        view: Map[String, TodoTaskView],
-        data: RORMap[String, LastWriterWins.Embedded[TodoTask], DietMapCContext]
-    )
+    val signalMapInitial = Map[String, Signal[RLastWriterWins[TodoTask, DietMapCContext]]]()
 
-    val pairInitial = VDP(
-      Map.empty[String, TodoTaskView],
-      RORMap[String, LastWriterWins.Embedded[TodoTask], DietMapCContext](myID)
-    )
+    val uiMapInitial = Map[String, TypedTag[LI]]()
 
-    val pair = Events.foldAll(pairInitial) { p =>
-      Seq(
-        newTask act { task =>
-          val newMap = p.data.mutateKey(task.id, LastWriterWinsCRDT.write(task))
-          val newUI  = p.view + (task.id -> TodoTaskView.fromTask(task))
+    val evtMapInitial = Map[String, Event[String]]()
 
-          VDP(newUI, newMap)
-        },
-        removeAll.event act { _ =>
-          val doneIDs = p.data.queryAllEntries(LastWriterWinsCRDT.read).collect {
+    def handleCreateTodo(s: => State)(desc: String): State = s match {
+      case State(list, signalMap, uiMap, evtMap) =>
+        val newTask = TodoTask(desc = desc)
+
+        val (signal, ui, evt) = TodoTaskView.signalAndUI(myID, newTask.id, Some(newTask), toggleAll.event)
+
+        val newList = list.resetDeltaBuffer().prepend(newTask.id)
+
+        State(newList, signalMap + (newTask.id -> signal), uiMap + (newTask.id -> ui), evtMap + (newTask.id -> evt))
+    }
+
+    def handleRemoveAll(s: => State): State = s match {
+      case State(list, signalMap, uiMap, evtMap) =>
+        val removeIDs = signalMap.values.collect { sig =>
+          sig.readValueOnce.read match {
             case Some(TodoTask(id, _, true)) => id
           }
+        }.toSet
 
-          VDP(p.view.removedAll(doneIDs), p.data.removeAll(doneIDs))
-        },
-        OnEvs(p.view.values.toList.map(_.removeEvt)) act { id =>
-          val newMap = p.data.removeByValue { v =>
-            LastWriterWinsCRDT.read[TodoTask, DietMapCContext].apply(v) match {
-              case None                    => false
-              case Some(TodoTask(i, _, _)) => i == id
-            }
-          }
+        val newList = list.resetDeltaBuffer().deleteBy(removeIDs.contains)
 
-          VDP(p.view.removed(id), newMap)
-        },
-        OnEvs(p.view.values.toList.map(_.writeEvt)) act { task =>
-          val newMap = p.data.mutateKey(task.id, LastWriterWinsCRDT.write(task))
+        removeIDs.foreach { signalMap(_).disconnect() }
 
-          val newUI = p.view.updated(task.id, TodoTaskView.fromTask(task))
-
-          VDP(newUI, newMap)
-        },
-        mapDeltaEvt act { delta =>
-          val newMap = p.data.applyDelta(delta)
-
-          val oldTasks = p.data.queryAllEntries(LastWriterWinsCRDT.read).flatten.toSet
-          val newTasks = newMap.queryAllEntries(LastWriterWinsCRDT.read).flatten
-
-          val newUI = newTasks.map { t =>
-            if (oldTasks.contains(t)) t.id -> p.view(t.id)
-            else t.id                      -> TodoTaskView.fromTask(t)
-          }.toMap
-
-          VDP(newUI, newMap)
-        }
-      )
+        State(newList, signalMap -- removeIDs, uiMap -- removeIDs, evtMap -- removeIDs)
     }
 
-    val view    = pair.map(_.view)
-    val taskMap = pair.map(_.data)
+    def handleRemove(s: => State)(id: String): State = s match {
+      case State(list, signalMap, uiMap, evtMap) =>
+        val newList = list.resetDeltaBuffer().deleteBy(_ == id)
+        signalMap(id).disconnect()
 
-    LociDist.distributeDeltaCRDT(taskMap, mapDeltaEvt, Todolist.registry)(
-      Binding[RORMap.State[String, LastWriterWins.Embedded[TodoTask], DietMapCContext] => Unit]("taskMap")
-    )
+        State(newList, signalMap - id, uiMap - id, evtMap - id)
+    }
 
-    val mapChanged = pair.map(_.data).changed
+    def handleDelta(s: => State)(delta: Delta[RRGA.State[String, DietMapCContext]]): State = s match {
+      case State(list, signalMap, uiMap, evtMap) =>
+        val newList = list.resetDeltaBuffer().applyDelta(delta)
 
-    val list = Events.foldAll(listInitial) { state =>
+        val oldIDs = list.toList.toSet
+        val newIDs = newList.toList.toSet
+
+        val added   = (newIDs -- oldIDs).toList
+        val removed = oldIDs -- newIDs
+
+        val (addedSignals, addedUIs, addedEvts) = added.map { id =>
+          TodoTaskView.signalAndUI(myID, id, None, toggleAll.event)
+        }.unzip3
+
+        val newSignalMap = signalMap -- removed ++ (added zip addedSignals)
+        val newUIMap     = uiMap -- removed ++ (added zip addedUIs)
+        val newEvtMap    = evtMap -- removed ++ (added zip addedEvts)
+
+        State(newList, newSignalMap, newUIMap, newEvtMap)
+    }
+
+    val state = Events.foldAll(State(listInitial, signalMapInitial, uiMapInitial, evtMapInitial)) { s =>
       Seq(
-        newTask act {
-          case TodoTask(id, _, _) => state.prepend(id)
-        },
-        mapChanged act { m =>
-          state.deleteBy { s =>
-            m.queryKey(s, LastWriterWinsCRDT.read[TodoTask, DietMapCContext]) match {
-              case None    => true
-              case Some(_) => false
-            }
-          }
-        },
-        listDeltaEvt act state.applyDelta
+        createTodo act handleCreateTodo(s),
+        removeAll.event act { _ => handleRemoveAll(s) },
+        OnEvs(s.evtMap.values.toList) act handleRemove(s),
+        deltaEvt act handleDelta(s)
       )
     }
 
-    LociDist.distributeDeltaCRDT(list, listDeltaEvt, Todolist.registry)(
-      Binding[RRGA.State[String, DietMapCContext] => Unit]("list")
+    val list = state.map(_.list)
+
+    LociDist.distributeDeltaCRDT(list, deltaEvt, Todolist.registry)(
+      Binding[RRGA.State[String, DietMapCContext] => Unit]("tasklist")
     )
 
-    val tasks = list.map {
-      _.toList.flatMap { id =>
-        taskMap().queryKey(id, LastWriterWinsCRDT.read)
-      }
+    val tasks = state.map { s =>
+      s.list.toList.flatMap(id => s.signalMap(id)().read)
     }
 
-    val listItems = list.map {
-      _.toList.flatMap { id =>
-        view().get(id).map(_.tag)
-      }
+    val listItems = state.map { s =>
+      s.list.toList.map(id => s.uiMap(id))
     }
-
-//    val dataPlusUI = Events.foldAll(initial) { p =>
-//      Seq(
-//        createTodo act { str =>
-//          val task    = TodoTask(desc = str)
-//          val newList = p.data.prepend(task)
-//          val ui      = TodoTaskView.fromTask(task)
-//
-//          ViewDataPair(p.view + (task.id -> ui), newList)
-//        },
-//        removeAll.event act { _ =>
-//          val doneIDs = p.data.toList.collect {
-//            case TodoTask(id, _, true) => id
-//          }
-//
-//          ViewDataPair(p.view.removedAll(doneIDs), p.data.deleteBy(_.done))
-//        },
-//        OnEvs(p.view.values.toList.map(_.removeEvt)) act { id =>
-//          ViewDataPair(p.view.removed(id), p.data.deleteBy(_.id == id))
-//        },
-//        OnEvs(p.view.values.toList.map(_.writeEvt)) act { task =>
-//          val newList = p.data.updateBy(_.id == task.id, task)
-//
-//          val ui = TodoTaskView.fromTask(task)
-//
-//          ViewDataPair(p.view.updated(task.id, ui), newList)
-//        },
-//        deltaEvt act { delta =>
-//          val newList = p.data.applyDelta(delta)
-//
-//          val oldTasks = p.data.toList
-//          val newTasks = newList.toList
-//
-//          val uiMap = newTasks.map { t =>
-//            if (oldTasks.contains(t)) t.id -> p.view(t.id)
-//            else t.id                      -> TodoTaskView.fromTask(t)
-//          }.toMap
-//
-//          ViewDataPair(uiMap, newList)
-//        }
-//      )
-//    }
-//
-//    val taskList = dataPlusUI.map(_.data)
-//
-//    LociDist.distributeDeltaCRDT(taskList, deltaEvt, Todolist.registry)(
-//      Binding[RRGA.State[TodoTask, DietMapCContext] => Unit]("tasklist")
-//    )
-//
-//    val tasks = taskList.map(_.toList)
-//
-//    val listItems = dataPlusUI.map { p =>
-//      p.data.toList.map(t => p.view(t.id).tag)
-//    }
 
     div(
       `class` := "todoapp",
