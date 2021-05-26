@@ -55,7 +55,10 @@ object UIJDLattice {
         OptionAsUIJDLattice[V].leq(left.get(k), right.get(k))
       }
     override def decompose(state: Map[K, V]): Set[Map[K, V]] = state.keySet.flatMap { k =>
-      UIJDLattice[V].decompose(state(k)).map(v => Map(k -> v))
+      UIJDLattice[V].decompose(state(k)).map(v => Map(k -> v)) match {
+        case s if s.isEmpty => Set(Map(k -> state(k)))
+        case s              => s
+      }
     }
     override def merge(left: Map[K, V], right: Map[K, V]): Map[K, V] = mapLattice[K, V].merge(left, right)
     override def bottom: Map[K, V]                                   = Map.empty[K, V]
@@ -78,4 +81,27 @@ object UIJDLattice {
         (UIJDLattice[A].merge(ll, rl), UIJDLattice[B].merge(lr, rr))
     }
   }
+
+  implicit def TripleAsUIJDLattice[A: UIJDLattice, B: UIJDLattice, C: UIJDLattice]: UIJDLattice[(A, B, C)] =
+    new UIJDLattice[(A, B, C)] {
+      override def leq(left: (A, B, C), right: (A, B, C)): Boolean = (left, right) match {
+        case ((la, lb, lc), (ra, rb, rc)) =>
+          UIJDLattice[A].leq(la, ra) && UIJDLattice[B].leq(lb, rb) && UIJDLattice[C].leq(lc, rc)
+      }
+
+      override def decompose(state: (A, B, C)): Set[(A, B, C)] = state match {
+        case (a, b, c) =>
+          val aDecomposed = UIJDLattice[A].decompose(a) map { (_, UIJDLattice[B].bottom, UIJDLattice[C].bottom) }
+          val bDecomposed = UIJDLattice[B].decompose(b) map { (UIJDLattice[A].bottom, _, UIJDLattice[C].bottom) }
+          val cDecomposed = UIJDLattice[C].decompose(c) map { (UIJDLattice[A].bottom, UIJDLattice[B].bottom, _) }
+          aDecomposed union bDecomposed union cDecomposed
+      }
+
+      override def bottom: (A, B, C) = (UIJDLattice[A].bottom, UIJDLattice[B].bottom, UIJDLattice[C].bottom)
+
+      override def merge(left: (A, B, C), right: (A, B, C)): (A, B, C) = (left, right) match {
+        case ((la, lb, lc), (ra, rb, rc)) =>
+          (UIJDLattice[A].merge(la, ra), UIJDLattice[B].merge(lb, rb), UIJDLattice[C].merge(lc, rc))
+      }
+    }
 }

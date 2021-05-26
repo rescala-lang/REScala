@@ -13,6 +13,10 @@ object ORMapCRDT {
   def apply[K, V: DotStore, C: CContext](antiEntropy: AntiEntropy[State[K, V, C]]): DeltaCRDT[State[K, V, C]] =
     DeltaCRDT.empty[State[K, V, C]](antiEntropy)
 
+  def contains[K, V: DotStore, C: CContext](k: K): DeltaQuery[State[K, V, C], Boolean] = {
+    case Causal(dm, _) => dm.contains(k)
+  }
+
   def queryKey[K, V: DotStore, A, C: CContext](k: K, q: DeltaQuery[Causal[V, C], A]): DeltaQuery[State[K, V, C], A] = {
     case Causal(dm, cc) =>
       val v = dm.getOrElse(k, DotStore[V].empty)
@@ -85,6 +89,8 @@ object ORMapCRDT {
 class ORMap[K, V: DotStore, C: CContext](crdt: DeltaCRDT[ORMapCRDT.State[K, V, C]]) {
   def queryKey[A](k: K, q: DeltaQuery[Causal[V, C], A]): A = crdt.query(ORMapCRDT.queryKey(k, q))
 
+  def contains(k: K): Boolean = crdt.query(ORMapCRDT.contains(k))
+
   def mutateKey(k: K, m: DeltaMutator[Causal[V, C]]): ORMap[K, V, C] = new ORMap(crdt.mutate(ORMapCRDT.mutateKey(k, m)))
 
   def remove(k: K): ORMap[K, V, C] = new ORMap(crdt.mutate(ORMapCRDT.remove(k)))
@@ -112,6 +118,8 @@ object ORMap {
 class RORMap[K, V: DotStore, C: CContext](val crdt: RDeltaCRDT[ORMapCRDT.State[K, V, C]])
     extends CRDTInterface[ORMapCRDT.State[K, V, C]] {
   def queryKey[A](k: K, q: DeltaQuery[Causal[V, C], A]): A = crdt.query(ORMapCRDT.queryKey(k, q))
+
+  def contains(k: K): Boolean = crdt.query(ORMapCRDT.contains(k))
 
   def queryAllEntries[A](q: DeltaQuery[Causal[V, C], A]): Iterable[A] = crdt.query(ORMapCRDT.queryAllEntries(q))
 
