@@ -178,7 +178,6 @@ trait SignalApi {
     * @group create
     */
   object Signal {
-    def rescalaAPI = selfType
     final def apply[A](expression: A)(implicit ticket: CreationTicket): Signal[A] =
       macro rescala.macros.ReactiveMacros.ReactiveExpression[
         A,
