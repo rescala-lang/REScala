@@ -6,8 +6,6 @@ import rescala.scheduler.Levelbased
 trait ParRP extends Levelbased {
   override type State[V] = ParRPState[V]
 
-  def scheduler: Scheduler = parrpWithBackoff(() => new Backoff())
-
   def parrpWithBackoff(backOff: () => Backoff): Scheduler =
     new TwoVersionScheduler[ParRPTransaction] {
       override protected def makeTransaction(priorTx: Option[ParRPTransaction]): ParRPTransaction =
