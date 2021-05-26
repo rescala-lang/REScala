@@ -28,6 +28,8 @@ trait RescalaInterface extends EventApi with SignalApi with FlattenApi with Sour
   /** @group internal */
   def scheduler: Scheduler
 
+  override def toString: String = s"Api»${scheduler.schedulerName}«"
+
   /** @group internal */
   implicit def implicitScheduler: Scheduler = scheduler
 

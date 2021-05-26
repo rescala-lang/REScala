@@ -8,9 +8,7 @@ import Dependencies.{Versions => V}
 
 ThisBuild / incOptions := (ThisBuild / incOptions).value.withLogRecompileOnMacro(false)
 cfg.noPublish
-ThisBuild / resolvers += ("STG old bintray repo" at "http://www.st.informatik.tu-darmstadt.de/maven/").withAllowInsecureProtocol(
-  true
-)
+ThisBuild / resolvers += ("STG old bintray repo" at "http://www.st.informatik.tu-darmstadt.de/maven/").withAllowInsecureProtocol(true)
 
 lazy val cfg = new {
   val base: Def.SettingsDefinition = List(
@@ -25,10 +23,9 @@ lazy val cfg = new {
   val test = List(
     (Test / testOptions) += Tests.Argument("-oICN"),
     (Test / parallelExecution) := true,
-    libraryDependencies += scalatest.value
+    libraryDependencies += scalatest.value,
+    Test / javaOptions += "-Xmx8G"
   )
-
-  lazy val bintray = Resolvers.bintrayPublish("stg-tud", "rescala-lang", "REScala")
 
   lazy val noPublish = Seq(
     publishArtifact := false,
@@ -57,7 +54,6 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Code/Main"))
     strictCompile,
     cfg.base,
     cfg.test,
-    cfg.bintray,
     Resolvers.stg,
     Resolvers.jitpack,
     libraryDependencies ++= Seq(

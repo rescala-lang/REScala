@@ -13,7 +13,7 @@ trait NoLock extends Levelbased {
 
 /** Basic implementations of propagation engines */
 trait Unmanaged extends NoLock {
-  def scheduler: Scheduler =
+  val scheduler: Scheduler =
     new TwoVersionScheduler[SimpleNoLock] {
       override protected def makeTransaction(priorTx: Option[SimpleNoLock]): SimpleNoLock = new SimpleNoLock()
       override def schedulerName: String                                                  = "Unmanaged"
@@ -22,8 +22,7 @@ trait Unmanaged extends NoLock {
 }
 
 trait Synchron extends NoLock {
-
-  def scheduler: Scheduler = new TwoVersionScheduler[SimpleNoLock] {
+  val scheduler: Scheduler = new TwoVersionScheduler[SimpleNoLock] {
     override protected def makeTransaction(priorTx: Option[SimpleNoLock]): SimpleNoLock = new SimpleNoLock
     override def schedulerName: String                                                  = "Synchron"
     override def forceNewTransaction[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R): R =
