@@ -6,8 +6,7 @@ import benchmarks.{EngineParam, Step}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
 import rescala.Schedulers
-import rescala.core.{Scheduler, Struct}; import rescala.interface.RescalaInterface
-import rescala.operator.Var
+import rescala.interface.RescalaInterface
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -16,28 +15,27 @@ import rescala.operator.Var
 @Fork(1)
 @Threads(1)
 @State(Scope.Benchmark)
-class SingleSwitch[S <: Struct] {
+class SingleSwitch {
 
-  var engine: RescalaInterface[S]      = _
-  implicit def scheduler: Scheduler[S] = engine.scheduler
+  var engine: RescalaInterface = _
+  lazy val stableEngine = engine
+  import stableEngine._
 
-  var source: Var[Int, S] = _
+  var source: Var[Int] = _
 
   var isManual: Boolean = false
 
   @Setup
-  def setup(params: BenchmarkParams, step: Step, engineParam: EngineParam[S]): Unit = {
+  def setup(params: BenchmarkParams, step: Step, engineParam: EngineParam): Unit = {
     engine = engineParam.engine
-    val e = engine
-    import e._
     source = Var(step.get())
     val d1 = Var("true")
     val d2 = Var("false")
-    engine.Signal.dynamic {
+    Signal.dynamic {
       if (step.test(source())) d1() else d2()
     }
 
-    if (engine.scheduler == Schedulers.unmanaged) isManual = true
+    if (engine == Schedulers.unmanaged) isManual = true
 
   }
 

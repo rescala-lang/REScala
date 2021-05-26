@@ -3,7 +3,6 @@ package benchmarks.lattices
 import java.util.concurrent.TimeUnit
 
 import org.openjdk.jmh.annotations._
-import rescala.core.Struct
 import rescala.extra.lattices.dotstores.{Context, Dot, IntTree}
 import rescala.extra.lattices.{IdUtil, Lattice}
 import rescala.extra.lattices.sets.{AddWinsSet, AddWinsSetO}
@@ -15,7 +14,7 @@ import rescala.extra.lattices.sets.{AddWinsSet, AddWinsSetO}
 @Fork(3)
 @Threads(1)
 @State(Scope.Thread)
-class AddWinsSetBench[S <: Struct] {
+class AddWinsSetBench {
 
   @Param(Array("0", "1", "10", "100", "1000"))
   var setSize: Int = _

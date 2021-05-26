@@ -7,7 +7,6 @@ import benchmarks.{EngineParam, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
 import rescala.Schedulers
-import rescala.core.{Scheduler, Struct};
 import rescala.interface.RescalaInterface
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -17,18 +16,18 @@ import rescala.interface.RescalaInterface
 @Fork(3)
 @Threads(1)
 @State(Scope.Benchmark)
-class SingleVar[S <: Struct] {
+class SingleVar {
 
-  var engine: RescalaInterface[S]      = _
-  val engineT                          = engine
-  implicit def scheduler: Scheduler[S] = engine.scheduler
+  var engine: RescalaInterface      = _
+  lazy val engineT                        = engine
+  implicit def scheduler: engineT.Scheduler = engineT.scheduler
 
   var source: engineT.Var[Boolean] = _
   var current: Boolean             = _
   var lock: ReadWriteLock          = _
 
   @Setup
-  def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam[S]): Unit = {
+  def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam): Unit = {
     engine = engineParam.engine
     current = false
     source = engineT.Var(current)

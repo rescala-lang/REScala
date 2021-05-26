@@ -5,8 +5,7 @@ import java.util.concurrent.TimeUnit
 import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
-import rescala.core.{Scheduler, Struct}; import rescala.interface.RescalaInterface
-import rescala.operator.Event
+import rescala.interface.RescalaInterface
 
 import scala.util.Try
 
@@ -17,23 +16,24 @@ import scala.util.Try
 @Fork(3)
 @Threads(1)
 @State(Scope.Thread)
-class MonadicErrors[S <: Struct] {
+class MonadicErrors {
 
-  var engine: RescalaInterface[S]      = _
-  implicit def scheduler: Scheduler[S] = engine.scheduler
+  var engine: RescalaInterface = _
+  lazy val stableEngine = engine
+  import stableEngine._
 
   var fire: Int => Unit          = _
-  var finalresult: Event[Any, S] = _
+  var finalresult: Event[Any] = _
 
   @Param(Array("true", "false"))
   var isMonadic: Boolean = _
 
   @Setup
-  def setup(params: BenchmarkParams, size: Size, engineParam: EngineParam[S], work: Workload) = {
+  def setup(params: BenchmarkParams, size: Size, engineParam: EngineParam, work: Workload) = {
     engine = engineParam.engine
     if (isMonadic) {
-      val source                     = engine.Evt[Try[Int]]()
-      var result: Event[Try[Int], S] = source
+      val source                     = Evt[Try[Int]]()
+      var result: Event[Try[Int]] = source
       for (_ <- Range(1, size.size)) {
         result = result.map { t: Try[Int] =>
           t.map { v =>
@@ -44,8 +44,8 @@ class MonadicErrors[S <: Struct] {
       finalresult = result
       fire = i => source.fire(Try { i })
     } else {
-      val source                = engine.Evt[Int]()
-      var result: Event[Int, S] = source
+      val source                = Evt[Int]()
+      var result: Event[Int] = source
       for (_ <- Range(1, size.size)) {
         result = result.map { v =>
           val r = v + 1; work.consume(); r

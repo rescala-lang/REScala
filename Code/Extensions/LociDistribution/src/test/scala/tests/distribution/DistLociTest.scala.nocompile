@@ -1,12 +1,21 @@
 package tests.distribution
 
+import loci.communicator.ws.akka.WS
 import loci.registry.{Binding, Registry}
-import loci.transmitter.{IdenticallyTransmittable, RemoteRef}
+import loci.transmitter.RemoteRef
+import loci.transmitter.transmittable.IdenticallyTransmittable
+import org.scalatest.freespec.AnyFreeSpec
+import rescala.extra.lattices.sequences.RGA._
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
+import rescala.default._
+import rescala.extra.distributables.LociDist
 
 class DistLociTest extends AnyFreeSpec {
+  val ld = new LociDist[rescala.default.type ](rescala.default)
+  import ld._
+
   "very simple fold " ignore {
 
     //val messagesBinding = Binding[RGA[String] => Unit]("messages")

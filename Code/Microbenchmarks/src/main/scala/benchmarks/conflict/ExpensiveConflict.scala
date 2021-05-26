@@ -5,7 +5,6 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import benchmarks.{EngineParam, Workload}
 import org.openjdk.jmh.annotations._
-import rescala.core.{Scheduler, Struct};
 import rescala.interface.RescalaInterface
 import rescala.operator._
 
@@ -30,25 +29,27 @@ class EvaluationCounter {
 @Measurement(iterations = 5, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
 @Fork(1)
 @Threads(2)
-class ExpensiveConflict[S <: Struct] {
+class ExpensiveConflict {
 
   var input: AtomicInteger = new AtomicInteger(0)
 
-  var cheapSource: Var[Int, S]     = _
-  var expensiveSource: Var[Int, S] = _
-  var result: Signal[Int, S]       = _
-  var engine: RescalaInterface[S]  = _
+  var engine: RescalaInterface = _
+  lazy val stableEngine = engine
+  import stableEngine._
+
+  var cheapSource: Var[Int]     = _
+  var expensiveSource: Var[Int] = _
+  var result: Signal[Int]       = _
   var tried: Int                   = _
 
   @Setup(Level.Iteration)
-  def setup(engineParam: EngineParam[S], work: Workload) = {
+  def setup(engineParam: EngineParam, work: Workload) = {
     this.engine = engineParam.engine
-    implicit def scheduler: Scheduler[S] = this.engine.scheduler
     tried = 0
-    cheapSource = engine.Var(input.incrementAndGet())
-    expensiveSource = engine.Var(input.incrementAndGet())
+    cheapSource = Var(input.incrementAndGet())
+    expensiveSource = Var(input.incrementAndGet())
     val expensive = expensiveSource.map { v => tried += 1; val r = v + 1; work.consume(); r }
-    result = engine.Signals.lift(expensive, cheapSource)(_ + _).map { v =>
+    result = Signals.lift(expensive, cheapSource)(_ + _).map { v =>
       val r = v + 1; work.consumeSecondary(); r
     }
   }
@@ -57,14 +58,14 @@ class ExpensiveConflict[S <: Struct] {
   @Group("g")
   @GroupThreads(1)
   def cheap() = {
-    cheapSource.set(input.incrementAndGet())(engine.scheduler)
+    cheapSource.set(input.incrementAndGet())(scheduler)
   }
 
   @Benchmark
   @Group("g")
   @GroupThreads(1)
   def expensive(counter: EvaluationCounter) = {
-    expensiveSource.set(input.incrementAndGet())(engine.scheduler)
+    expensiveSource.set(input.incrementAndGet())(scheduler)
     counter.tried += tried
     counter.succeeded += 1
     tried = 0

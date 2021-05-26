@@ -2,27 +2,29 @@ package rescala.extra.distributables
 
 import loci.registry.{Binding, Registry}
 import loci.transmitter.RemoteRef
-import rescala.core.{Scheduler, Struct}
 import rescala.extra.lattices.delta.crdt.CRDTInterface
 import rescala.extra.lattices.delta.{Delta, UIJDLattice}
-import rescala.operator.{Evt, Observe, Signal}
+import rescala.interface.RescalaInterface
 import scribe.Execution.global
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
-object LociDist {
+object LociDist extends LociDist[rescala.default.type](rescala.default)
 
-  def distributeDeltaCRDT[A: UIJDLattice, S <: Struct: Scheduler](
-      signal: Signal[CRDTInterface[A], S],
-      deltaEvt: Evt[Delta[A], S],
+class LociDist[Api <: RescalaInterface](val api: Api) {
+  import api._
+
+  def distributeDeltaCRDT[A: UIJDLattice](
+      signal: Signal[CRDTInterface[A]],
+      deltaEvt: Evt[Delta[A]],
       registry: Registry
   )(binding: Binding[A => Unit, A => Future[Unit]]): Unit = {
     registry.bindSbj(binding) { (remoteRef: RemoteRef, deltaState: A) =>
       deltaEvt.fire(Delta(remoteRef.toString, deltaState))
     }
 
-    var observers    = Map[RemoteRef, Observe[S]]()
+    var observers    = Map[RemoteRef, Observe]()
     var resendBuffer = Map[RemoteRef, A]()
 
     def registerRemote(remoteRef: RemoteRef): Unit = {

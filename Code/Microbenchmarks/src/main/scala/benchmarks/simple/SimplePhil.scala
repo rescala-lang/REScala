@@ -4,7 +4,7 @@ import java.util.concurrent.TimeUnit
 
 import benchmarks.{EngineParam, Step}
 import org.openjdk.jmh.annotations._
-import rescala.core.{Scheduler, Struct}; import rescala.interface.RescalaInterface
+import rescala.interface.RescalaInterface
 import rescala.operator._
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -14,24 +14,27 @@ import rescala.operator._
 @Fork(1)
 @Threads(1)
 @State(Scope.Thread)
-class SimplePhil[S <: Struct] {
+class SimplePhil {
 
   import benchmarks.philosophers.PhilosopherTable._
 
-  var engine: RescalaInterface[S] = _; implicit def scheduler: Scheduler[S] = engine.scheduler
+    var engine: RescalaInterface = _
+  lazy val stableEngine = engine
+  import stableEngine._
 
-  var phil: Var[Philosopher, S] = _
-  var vision: Signal[Vision, S] = _
 
-  def buildPhil(): (Var[Philosopher, S], Signal[Vision, S]) = {
-    val p: Var[Philosopher, S] = engine.Var(Thinking)
+  var phil: Var[Philosopher] = _
+  var vision: Signal[Vision] = _
+
+  def buildPhil(): (Var[Philosopher], Signal[Vision]) = {
+    val p: Var[Philosopher] = Var(Thinking)
     val f1, f2                 = p.map(s => if (s == Thinking) Free else Taken("me"))
-    val v                      = engine.Signals.lift(f1, f2) { calcVision("me") }
+    val v                      = Signals.lift(f1, f2) { calcVision("me") }
     (p, v)
   }
 
   @Setup
-  def setup(engineParam: EngineParam[S]) = {
+  def setup(engineParam: EngineParam) = {
     engine = engineParam.engine
     val (p, v) = build()
     phil = p
@@ -45,7 +48,7 @@ class SimplePhil[S <: Struct] {
   }
 
   @Benchmark
-  def build(): (Var[Philosopher, S], Signal[Vision, S]) = buildPhil()
+  def build(): (Var[Philosopher], Signal[Vision]) = buildPhil()
 
   @Benchmark
   def buildAndPropagate(step: Step): Unit = {

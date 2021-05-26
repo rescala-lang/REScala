@@ -4,10 +4,10 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import benchmarks.philosophers.PhilosopherTable._
 import org.openjdk.jmh.infra.Blackhole
-import rescala.core.Struct; import rescala.interface.RescalaInterface
+; import rescala.interface.RescalaInterface
 import rescala.operator._
 
-class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(val engine: RescalaInterface[S]) {
+class PhilosopherTable(philosopherCount: Int, work: Long)(val engine: RescalaInterface) {
 
   import engine._
 
@@ -23,7 +23,7 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(val engin
     }
   }
 
-  def createTable(tableSize: Int): Seq[Seating[S]] = {
+  def createTable(tableSize: Int): Seq[Seating] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
 
     val phils = for (i <- 0 until tableSize) yield Var[Philosopher](Thinking)
@@ -39,7 +39,7 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(val engin
     }
   }
 
-  def tryEat(seating: Seating[S]): Boolean =
+  def tryEat(seating: Seating): Boolean =
     engine.transactionWithWrapup(seating.philosopher) { t =>
       val forksAreFree = t.now(seating.vision) == Ready
       if (forksAreFree) seating.philosopher.admit(Eating)(t)
@@ -48,6 +48,16 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(val engin
       if (forksWereFree) assert(t.now(seating.vision) == Done, s"philosopher should be done after turn")
       forksWereFree
     }
+
+    // ============================================ Entity Creation =========================================================
+
+  case class Seating(
+      placeNumber: Int,
+      philosopher: Var[Philosopher],
+      leftFork: Signal[Fork],
+      rightFork: Signal[Fork],
+      vision: Signal[Vision]
+  )
 }
 
 object PhilosopherTable {
@@ -82,14 +92,6 @@ object PhilosopherTable {
   case object Done                   extends Vision
   case class BlockedBy(name: String) extends Vision
 
-  // ============================================ Entity Creation =========================================================
 
-  case class Seating[S <: Struct](
-      placeNumber: Int,
-      philosopher: Var[Philosopher, S],
-      leftFork: Signal[Fork, S],
-      rightFork: Signal[Fork, S],
-      vision: Signal[Vision, S]
-  )
 
 }

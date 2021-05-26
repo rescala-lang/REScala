@@ -1,15 +1,15 @@
 package benchmarks.philosophers
 
 import benchmarks.philosophers.PhilosopherTable._
-import rescala.core.Struct
+
 import rescala.interface.RescalaInterface
 
-class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(override val engine: RescalaInterface[S])
+class DynamicPhilosopherTable(philosopherCount: Int, work: Long)(override val engine: RescalaInterface)
     extends PhilosopherTable(philosopherCount, work)(engine) {
 
   import engine._
 
-  override def createTable(tableSize: Int): Seq[Seating[S]] = {
+  override def createTable(tableSize: Int): Seq[Seating] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
 
     val phils = for (i <- 0 until tableSize) yield Var[Philosopher](Thinking)(engine.implicitScheduler)
@@ -47,13 +47,13 @@ class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(ov
 
 }
 
-class HalfDynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(
-    override val engine: RescalaInterface[S]
+class HalfDynamicPhilosopherTable(philosopherCount: Int, work: Long)(
+    override val engine: RescalaInterface
 ) extends PhilosopherTable(philosopherCount, work)(engine) {
 
   import engine._
 
-  override def createTable(tableSize: Int): Seq[Seating[S]] = {
+  override def createTable(tableSize: Int): Seq[Seating] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
 
     val phils = for (i <- 0 until tableSize) yield Var[Philosopher](Thinking)
@@ -81,13 +81,13 @@ class HalfDynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long
 
 }
 
-class OtherHalfDynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(
-    override implicit val engine: RescalaInterface[S]
+class OtherHalfDynamicPhilosopherTable(philosopherCount: Int, work: Long)(
+    override implicit val engine: RescalaInterface
 ) extends PhilosopherTable(philosopherCount, work)(engine) {
 
   import engine.{Signal, Signals, Var, implicitScheduler}
 
-  override def createTable(tableSize: Int): Seq[Seating[S]] = {
+  override def createTable(tableSize: Int): Seq[Seating] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
 
     val phils = for (i <- 0 until tableSize) yield Var[Philosopher](Thinking)

@@ -5,8 +5,7 @@ import java.util.concurrent.TimeUnit
 import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
-import rescala.core.{Scheduler, Struct}; import rescala.interface.RescalaInterface
-import rescala.operator.{Signal, Var}
+import rescala.interface.RescalaInterface
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -15,17 +14,20 @@ import rescala.operator.{Signal, Var}
 @Fork(3)
 @Threads(1)
 @State(Scope.Thread)
-class ChainSignalNoChange[S <: Struct] {
+class ChainSignalNoChange {
 
-  var engine: RescalaInterface[S] = _; implicit def scheduler: Scheduler[S] = engine.scheduler
+    var engine: RescalaInterface = _
+  lazy val stableEngine = engine
+  import stableEngine._
 
-  var source: Var[Int, S]    = _
-  var result: Signal[Int, S] = _
+
+  var source: Var[Int]    = _
+  var result: Signal[Int] = _
 
   @Setup
-  def setup(params: BenchmarkParams, size: Size, engineParam: EngineParam[S], work: Workload) = {
+  def setup(params: BenchmarkParams, size: Size, engineParam: EngineParam, work: Workload) = {
     engine = engineParam.engine
-    source = engine.Var(0)
+    source = Var(0)
     result = source
     for (_ <- Range(0, size.size)) {
       result = result.map { v =>

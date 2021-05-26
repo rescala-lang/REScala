@@ -13,7 +13,9 @@ import rescala.operator.RExceptions.ObservedException
 
 import scala.scalajs.js
 
-class Tags(val api: RescalaInterface) {
+object Tags extends Tags[rescala.default.type](rescala.default)
+
+class Tags[Api <: RescalaInterface](val api: Api) {
   import api._
 
   def isInDocument(element: Element): Boolean = {

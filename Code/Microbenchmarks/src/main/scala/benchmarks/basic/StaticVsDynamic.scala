@@ -1,16 +1,12 @@
 package benchmarks.basic
 
+import benchmarks.{EngineParam, Step, Workload}
+import org.openjdk.jmh.annotations._
+import org.openjdk.jmh.infra.BenchmarkParams
+import rescala.interface.RescalaInterface
+
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReadWriteLock
-
-import benchmarks.{EngineParam, Step, Workload}
-import org.openjdk.jmh.annotations.{
-  Benchmark, BenchmarkMode, Fork, Measurement, Mode, OutputTimeUnit, Param, Scope, Setup, State, Threads, Warmup
-}
-import org.openjdk.jmh.infra.BenchmarkParams
-import rescala.core.{Scheduler, Struct}
-import rescala.interface.RescalaInterface
-import rescala.operator.{Signal}
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -19,13 +15,11 @@ import rescala.operator.{Signal}
 @Fork(3)
 @Threads(1)
 @State(Scope.Thread)
-class StaticVsDynamic[S <: Struct] {
+class StaticVsDynamic {
 
-  var engine: RescalaInterface[S]      = _
-  implicit def scheduler: Scheduler[S] = engine.scheduler
-
-  val engineT = engine
-  import engineT.Var
+  var engine: RescalaInterface = _
+  lazy val stableEngine = engine
+  import stableEngine._
 
   @Param(Array("true", "false"))
   var static: Boolean = _
@@ -35,22 +29,20 @@ class StaticVsDynamic[S <: Struct] {
   var lock: ReadWriteLock  = _
   var a: Var[Int]          = _
   var b: Var[Int]          = _
-  var res: Signal[Int, S]  = _
+  var res: Signal[Int]     = _
 
   @Setup
-  def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam[S]): Unit = {
+  def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam): Unit = {
     engine = engineParam.engine
     current = true
-    source = engineT.Var(current)
-    a = engineT.Var { 10 }
-    b = engineT.Var { 20 }
+    source = stableEngine.Var(current)
+    a = stableEngine.Var { 10 }
+    b = stableEngine.Var { 20 }
 
-    val e = engine
-    import e._
-    if (static) engine.Signals.static(source, a, b) { st =>
+    if (static) Signals.static(source, a, b) { st =>
       if (st.dependStatic(source)) st.dependStatic(a) else st.dependStatic(b)
     }
-    else engine.Signal.dynamic { if (source()) a() else b() }
+    else Signal.dynamic { if (source()) a() else b() }
 
   }
 

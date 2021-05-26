@@ -3,7 +3,6 @@ package benchmarks.lattices
 import java.util.concurrent.TimeUnit
 
 import org.openjdk.jmh.annotations._
-import rescala.core.Struct
 import rescala.extra.lattices.dotstores.{Context, IntTree}
 import rescala.extra.lattices.{IdUtil, Lattice}
 
@@ -14,7 +13,7 @@ import rescala.extra.lattices.{IdUtil, Lattice}
 @Fork(3)
 @Threads(1)
 @State(Scope.Thread)
-class ContextBench[S <: Struct] {
+class ContextBench {
 
   @Param(Array("1", "1000"))
   var setSize: Int = _

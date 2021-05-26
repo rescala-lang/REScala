@@ -275,6 +275,7 @@ trait EventApi {
       macro rescala.macros.ReactiveMacros.EventFoldMacro[
         T,
         A,
+        Events.type,
         CreationTicket,
         StaticTicket,
         CreationTicket,

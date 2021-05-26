@@ -5,9 +5,8 @@ import java.util.concurrent.TimeUnit
 import benchmarks._
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
-import rescala.core.{ReName, Scheduler, Struct}
+import rescala.core.{ReName}
 import rescala.interface.RescalaInterface
-import rescala.operator.{Signal, Var}
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -16,22 +15,24 @@ import rescala.operator.{Signal, Var}
 @Fork(1)
 @Threads(1)
 @State(Scope.Benchmark)
-class SignalMapGrid[S <: Struct] extends BusyThreads {
-  var engine: RescalaInterface[S]      = _
-  implicit def scheduler: Scheduler[S] = engine.scheduler
-  var source: Var[Int, S]              = _
-  var leafs: Seq[Signal[Int, S]]       = _
+class SignalMapGrid extends BusyThreads {
+  var engine: RescalaInterface = _
+  lazy val stableEngine = engine
+  import stableEngine._
+
+  var source: Var[Int]              = _
+  var leafs: Seq[Signal[Int]]       = _
   @Param(Array("1", "4", "16"))
   var width: Int = _
   @Param(Array("1", "4", "16"))
   var depth: Int = _
 
   @Setup(Level.Iteration)
-  def setup(params: BenchmarkParams, engineParam: EngineParam[S], work: Workload) = {
+  def setup(params: BenchmarkParams, engineParam: EngineParam, work: Workload) = {
     engine = engineParam.engine
-    source = engine.Var(0)
+    source = Var(0)
     leafs = for (w <- 1 to width) yield {
-      var result: Signal[Int, S] = source
+      var result: Signal[Int] = source
       for (d <- 1 to depth) {
         result = ReName.named(s"map-$w-$d") { implicit ! =>
           result.map { v => work.consume(); v + 1 }

@@ -84,14 +84,14 @@ class ReactiveMacros(val c: blackbox.Context) {
     val forceStatic = !(weakTypeOf[IsStatic] <:< weakTypeOf[MacroTags.Dynamic])
     val lego        = new MacroLego[CreationTicket, LowPriorityCreationImplicits](expression, forceStatic)
 
-    val dependencies    = lego.detections.detectedStaticReactives
-    val isStatic        = lego.detections.detectedDynamicReactives.isEmpty
-    val creationMethod  = TermName(if (isStatic) "static" else "dynamic")
-    val ticketType      = if (isStatic) weakTypeOf[StaticTicket] else weakTypeOf[DynamicTicket]
+    val dependencies   = lego.detections.detectedStaticReactives
+    val isStatic       = lego.detections.detectedDynamicReactives.isEmpty
+    val creationMethod = TermName(if (isStatic) "static" else "dynamic")
+    val ticketType     = if (isStatic) weakTypeOf[StaticTicket] else weakTypeOf[DynamicTicket]
 
     val wrt = weakTypeOf[ReactiveType]
 
-    val resolved = wrt.asSeenFrom(getBundle, wrt.typeSymbol.owner)
+    val resolved                       = wrt.asSeenFrom(getBundle, wrt.typeSymbol.owner)
     val tq"$resolvedTree.$tpname.type" = ReTyper(c).createTypeTree(resolved, c.enclosingPosition)
 
     val body = q"""$resolvedTree.${tpname.toTermName}.$creationMethod[${weakTypeOf[A]}](
@@ -179,6 +179,7 @@ class ReactiveMacros(val c: blackbox.Context) {
   def EventFoldMacro[
       T: c.WeakTypeTag,
       A: c.WeakTypeTag,
+      ReactiveType: c.WeakTypeTag,
       CT: c.WeakTypeTag,
       StaticTicket: c.WeakTypeTag,
       CreationTicket: c.WeakTypeTag,
@@ -199,8 +200,12 @@ class ReactiveMacros(val c: blackbox.Context) {
     val lego       = new MacroLego[CreationTicket, LowPriorityCreationImplicits](computation, forceStatic = true)
     val detections = lego.detections.detectedStaticReactives
 
-    val body =
-      q"""Events.fold[${weakTypeOf[A]}](Set(..$detections), $init)(
+    val wrt = weakTypeOf[ReactiveType]
+
+    val resolved                       = wrt.asSeenFrom(getBundle, wrt.typeSymbol.owner)
+    val tq"$resolvedTree.$tpname.type" = ReTyper(c).createTypeTree(resolved, c.enclosingPosition)
+
+    val body = q"""$resolvedTree.${tpname.toTermName}.fold[${weakTypeOf[A]}](Set(..$detections), $init)(
            ${lego.contextualizedExpression(ticketType)}
           )($ticket)"""
 
@@ -209,6 +214,14 @@ class ReactiveMacros(val c: blackbox.Context) {
 
   // here be dragons
 
+  def underlying(tpe: Type): Type =
+    if (tpe ne tpe.dealias)
+      underlying(tpe.dealias)
+    else if (tpe ne tpe.widen)
+      underlying(tpe.widen)
+    else
+      tpe
+
   def doMagic(tpe: Type) = {
     val tn = getBundle
     tpe.asSeenFrom(tn, tpe.typeSymbol.owner).dealias
@@ -216,7 +229,7 @@ class ReactiveMacros(val c: blackbox.Context) {
 
   def getBundle: Type = {
     val ntype = c.prefix.tree.tpe
-    ntype.widen match {
+    underlying(ntype) match {
       case TypeRef(tn, _, _) => tn: Type
     }
   }

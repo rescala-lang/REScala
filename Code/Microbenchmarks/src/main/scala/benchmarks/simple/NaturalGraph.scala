@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 import benchmarks.{EngineParam, Step, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
-import rescala.core.Struct
+
 import rescala.interface.RescalaInterface
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -15,18 +15,19 @@ import rescala.interface.RescalaInterface
 @Fork(3)
 @Threads(1)
 @State(Scope.Thread)
-class NaturalGraph[S <: Struct] {
+class NaturalGraph {
 
-  var engine: RescalaInterface[S] = _
+  var engine: RescalaInterface = _
+  lazy val stableEngine = engine
+  import stableEngine._
 
-  var source: rescala.operator.Var[Int, S]          = _
-  var result: List[rescala.operator.Signal[Int, S]] = _
+
+  var source: Var[Int]          = _
+  var result: List[Signal[Int]] = _
 
   @Setup
-  def setup(params: BenchmarkParams, step: Step, engineParam: EngineParam[S], work: Workload): Unit = {
+  def setup(params: BenchmarkParams, step: Step, engineParam: EngineParam, work: Workload): Unit = {
     engine = engineParam.engine
-    val localEngine = engine
-    import localEngine._
 
     def inc(source: Signal[Int]): Signal[Int] =
       source.map { v =>
@@ -86,6 +87,6 @@ class NaturalGraph[S <: Struct] {
   }
 
   @Benchmark
-  def run(step: Step): Unit = source.set(step.run())(engine.scheduler)
+  def run(step: Step): Unit = source.set(step.run())(scheduler)
 
 }

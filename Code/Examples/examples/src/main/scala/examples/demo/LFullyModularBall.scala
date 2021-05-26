@@ -3,7 +3,6 @@ package examples.demo
 import examples.demo.GModularClockCircle.Clock
 import examples.demo.ui.{Circle, Point, Shape, ShapesPanel}
 import rescala.default._
-import rescala.operator.Flatten.firstFiringEvent
 
 /** To resolve this circular initialization order, we introduce
   * higher-order reactives. Higher-order reactives are Signals

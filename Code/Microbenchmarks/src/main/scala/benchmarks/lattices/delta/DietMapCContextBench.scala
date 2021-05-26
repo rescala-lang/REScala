@@ -3,7 +3,6 @@ package benchmarks.lattices.delta
 import java.util.concurrent.TimeUnit
 
 import org.openjdk.jmh.annotations._
-import rescala.core.Struct
 import rescala.extra.lattices.delta.CContext.DietMapCContext
 import rescala.extra.lattices.delta.Dot
 
@@ -14,7 +13,7 @@ import rescala.extra.lattices.delta.Dot
 @Fork(3)
 @Threads(1)
 @State(Scope.Thread)
-class DietMapCContextBench[S <: Struct] {
+class DietMapCContextBench {
 
   @Param(Array("1", "1000"))
   var size: Int = _

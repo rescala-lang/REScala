@@ -1,27 +1,25 @@
 package benchmarks.chatserver
 
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.locks.{Lock, ReentrantLock}
-
 import benchmarks.{EngineParam, Size, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
 import rescala.Schedulers
-import rescala.core.{Scheduler, Struct}
 import rescala.interface.RescalaInterface
-import rescala.operator.Evt
+
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.{Lock, ReentrantLock}
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @Warmup(iterations = 5, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
 @Measurement(iterations = 5, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
 @Fork(1)
-class ChatBench[S <: Struct] {
+class ChatBench {
 
   @Benchmark
-  def chat(benchState: BenchState[S], threadParams: ThreadParams) = {
-    implicit def scheduler: Scheduler[S] = benchState.engine.scheduler
-    if (benchState.engine.scheduler != Schedulers.unmanaged) {
+  def chat(benchState: BenchState, threadParams: ThreadParams) = {
+    import benchState.stableEngine._
+    if (scheduler != Schedulers.unmanaged.scheduler) {
       benchState.clients(threadParams.getThreadIndex).fire("hello")
     } else {
       val ti    = threadParams.getThreadIndex
@@ -42,32 +40,34 @@ class ChatBench[S <: Struct] {
 }
 
 @State(Scope.Benchmark)
-class BenchState[S <: Struct] {
+class BenchState {
 
-  var cs: ChatServer[S]              = _
-  var clients: Array[Evt[String, S]] = _
-  var locks: Array[Lock]             = null
-  var engine: RescalaInterface[S]    = _
+  var engine: RescalaInterface = _
+  lazy val stableEngine        = engine
+  import stableEngine._
+
+  var cs: ChatServer[stableEngine.type] = _
+  var clients: Array[Evt[String]]       = _
+  var locks: Array[Lock]                = null
 
   @Setup
-  def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam[S], size: Size) = {
+  def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam, size: Size) = {
     engine = engineParam.engine
-    implicit def scheduler: Scheduler[S] = engine.scheduler
 
     val threads = params.getThreads
 
-    cs = new ChatServer[S]()(engine)
+    cs = new ChatServer[stableEngine.type]()(stableEngine)
     Range(0, size.size).foreach(cs.create)
 
-    clients = Array.fill(threads)(engine.Evt[String]())
-    for ((client, i) <- clients.zipWithIndex) {
-      val room1 = i                   % size.size
-      val room2 = (i + size.size / 2) % size.size
-      cs.join(client, room1)
-      cs.join(client, room2)
-      cs.histories.get(room1).observe(v => work.consume())
-      cs.histories.get(room2).observe(v => work.consume())
-    }
+    clients = Array.fill(threads)(Evt[String]())
+    //for ((client, i) <- clients.zipWithIndex) {
+    //  val room1 = i                   % size.size
+    //  val room2 = (i + size.size / 2) % size.size
+    //  cs.join(client, room1)
+    //  cs.join(client, room2)
+    //  cs.histories.get(room1).observe(v => work.consume())
+    //  cs.histories.get(room2).observe(v => work.consume())
+    //}
 
     if (engine.scheduler == Schedulers.unmanaged) {
       locks = Array.fill(size.size)(new ReentrantLock())

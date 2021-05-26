@@ -1,6 +1,5 @@
 package universe
 
-import rescala.core.CreationTicket
 import universe.Animal._
 import universe.Globals.engine._
 

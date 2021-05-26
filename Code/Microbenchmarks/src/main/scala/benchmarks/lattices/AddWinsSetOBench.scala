@@ -4,7 +4,6 @@ import java.util.concurrent.TimeUnit
 
 import benchmarks.lattices.Codecs._
 import org.openjdk.jmh.annotations._
-import rescala.core.Struct
 import rescala.extra.lattices.sets.AddWinsSetO
 import rescala.extra.lattices.{IdUtil, Lattice}
 
@@ -15,7 +14,7 @@ import rescala.extra.lattices.{IdUtil, Lattice}
 @Fork(3)
 @Threads(1)
 @State(Scope.Thread)
-class AddWinsSetOBench[S <: Struct] {
+class AddWinsSetOBench {
 
   @Param(Array("1", "1000"))
   var setSize: Int = _

@@ -5,7 +5,6 @@ import java.util.concurrent.TimeUnit
 import benchmarks.{EngineParam, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
-import rescala.core.{Scheduler, Struct}
 import rescala.interface.RescalaInterface
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -15,13 +14,14 @@ import rescala.interface.RescalaInterface
 @Fork(1)
 @Threads(1)
 @State(Scope.Benchmark)
-class TurnCreation[S <: Struct] {
+class TurnCreation {
 
-  var engine: RescalaInterface[S]      = _
-  implicit def scheduler: Scheduler[S] = engine.scheduler
+  var engine: RescalaInterface = _
+  lazy val stableEngine = engine
+  import stableEngine._
 
   @Setup
-  def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam[S]) = {
+  def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam) = {
     engine = engineParam.engine
   }
 

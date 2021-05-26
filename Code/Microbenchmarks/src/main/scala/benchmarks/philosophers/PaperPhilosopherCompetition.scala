@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 import benchmarks.{BusyThreads, EngineParam, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
-import rescala.core.Struct
+
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -14,9 +14,9 @@ import rescala.core.Struct
 //@Fork(value=1, jvmArgsPrepend = Array("-XX:+PrintCompilation", "-XX:+PrintGCDetails"))
 @Fork(1)
 @Threads(2)
-class PaperPhilosopherCompetition[S <: Struct] {
+class PaperPhilosopherCompetition {
   @Benchmark
-  def eatOnce(comp: PaperCompetition[S], params: ThreadParams, work: Workload): Unit = {
+  def eatOnce(comp: PaperCompetition, params: ThreadParams, work: Workload): Unit = {
     if (comp.philosophers > 0) {
       comp.table.eatRandomOnce(params.getThreadIndex, params.getThreadCount)
     } else {
@@ -26,7 +26,7 @@ class PaperPhilosopherCompetition[S <: Struct] {
 }
 
 @State(Scope.Benchmark)
-class PaperCompetition[S <: Struct] extends BusyThreads {
+class PaperCompetition extends BusyThreads {
   @Param(Array("dynamic", "semi-static", "static"))
   var dynamicity: String = _
 
@@ -39,7 +39,7 @@ class PaperCompetition[S <: Struct] extends BusyThreads {
   var philosophers: Int = _
   @Param(Array("event", "signal", "none", "singleFold"))
   var topper: String              = _
-  var table: PaperPhilosophers[S] = _
+  var table: PaperPhilosophers = _
 
   @Setup(Level.Trial)
   def printSystemStats() = {
@@ -56,7 +56,7 @@ class PaperCompetition[S <: Struct] extends BusyThreads {
 
 //  var stream: PrintStream = _
   @Setup(Level.Iteration)
-  def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam[S]) = {
+  def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam) = {
     val dynamic = dynamicity match {
       case "dynamic"     => Dynamicity.Dynamic
       case "semi-static" => Dynamicity.SemiStatic
@@ -68,20 +68,20 @@ class PaperCompetition[S <: Struct] extends BusyThreads {
       if (engineParam.engineName == "unmanaged") {
         topper match {
           case "event" =>
-            new PaperPhilosophers(size, engineParam.engine, dynamic) with EventPyramidTopper[S] with ManualLocking[S]
+            new PaperPhilosophers(size, engineParam.engine, dynamic) with EventPyramidTopper with ManualLocking
           case "signal" =>
-            new PaperPhilosophers(size, engineParam.engine, dynamic) with SignalPyramidTopper[S] with ManualLocking[S]
+            new PaperPhilosophers(size, engineParam.engine, dynamic) with SignalPyramidTopper with ManualLocking
           case "singleFold" =>
-            new PaperPhilosophers(size, engineParam.engine, dynamic) with SingleFoldTopper[S] with ManualLocking[S]
-          case "none"    => new PaperPhilosophers(size, engineParam.engine, dynamic) with NoTopper[S] with ManualLocking[S]
+            new PaperPhilosophers(size, engineParam.engine, dynamic) with SingleFoldTopper with ManualLocking
+          case "none"    => new PaperPhilosophers(size, engineParam.engine, dynamic) with NoTopper with ManualLocking
           case otherwise => throw new IllegalArgumentException("not a valid topper: " + otherwise)
         }
       } else {
         topper match {
-          case "event"      => new PaperPhilosophers(size, engineParam.engine, dynamic) with EventPyramidTopper[S]
-          case "signal"     => new PaperPhilosophers(size, engineParam.engine, dynamic) with SignalPyramidTopper[S]
-          case "singleFold" => new PaperPhilosophers(size, engineParam.engine, dynamic) with SingleFoldTopper[S]
-          case "none"       => new PaperPhilosophers(size, engineParam.engine, dynamic) with NoTopper[S]
+          case "event"      => new PaperPhilosophers(size, engineParam.engine, dynamic) with EventPyramidTopper
+          case "signal"     => new PaperPhilosophers(size, engineParam.engine, dynamic) with SignalPyramidTopper
+          case "singleFold" => new PaperPhilosophers(size, engineParam.engine, dynamic) with SingleFoldTopper
+          case "none"       => new PaperPhilosophers(size, engineParam.engine, dynamic) with NoTopper
           case otherwise    => throw new IllegalArgumentException("not a valid topper: " + otherwise)
         }
       }

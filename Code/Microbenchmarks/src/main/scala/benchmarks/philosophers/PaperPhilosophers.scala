@@ -3,7 +3,7 @@ package benchmarks.philosophers
 import java.util.concurrent.locks.ReentrantLock
 import java.util.concurrent.{Executors, ThreadLocalRandom}
 
-import rescala.core.{ReName, Struct}
+import rescala.core.{ReName}
 import rescala.interface.RescalaInterface
 import rescala.parrp.Backoff
 
@@ -18,7 +18,7 @@ object Dynamicity {
   case object SemiStatic extends Dynamicity
   case object Dynamic    extends Dynamicity
 }
-abstract class PaperPhilosophers[S <: Struct](val size: Int, val engine: RescalaInterface[S], dynamicity: Dynamicity) {
+abstract class PaperPhilosophers(val size: Int, val engine: RescalaInterface, dynamicity: Dynamicity) {
 
   import engine._
 
@@ -156,8 +156,8 @@ abstract class PaperPhilosophers[S <: Struct](val size: Int, val engine: Rescala
   def total: Int
 }
 
-trait EventPyramidTopper[S <: Struct] {
-  self: PaperPhilosophers[S] =>
+trait EventPyramidTopper {
+  self: PaperPhilosophers =>
   import engine._
 
   val anySuccess = successes.reduce(_ || _)
@@ -168,8 +168,8 @@ trait EventPyramidTopper[S <: Struct] {
   override def total: Int = successCount.readValueOnce
 }
 
-trait IndividualCounts[S <: Struct] {
-  self: PaperPhilosophers[S] =>
+trait IndividualCounts {
+  self: PaperPhilosophers =>
   import engine._
 
   val individualCounts: Seq[Signal[Int]] =
@@ -178,8 +178,8 @@ trait IndividualCounts[S <: Struct] {
     }
 }
 
-trait NoTopper[S <: Struct] extends IndividualCounts[S] {
-  self: PaperPhilosophers[S] =>
+trait NoTopper extends IndividualCounts {
+  self: PaperPhilosophers =>
 
   val locks = Array.fill(size) { new ReentrantLock() }
   override def manuallyLocked[T](idx: Int)(f: => T): T = {
@@ -202,8 +202,8 @@ trait NoTopper[S <: Struct] extends IndividualCounts[S] {
   override def total: Int = individualCounts.map(_.readValueOnce).sum
 }
 
-trait SignalPyramidTopper[S <: Struct] extends IndividualCounts[S] {
-  self: PaperPhilosophers[S] =>
+trait SignalPyramidTopper extends IndividualCounts {
+  self: PaperPhilosophers =>
   import engine._
 
   val successCount: Signal[Int] =
@@ -215,15 +215,15 @@ trait SignalPyramidTopper[S <: Struct] extends IndividualCounts[S] {
   override def total: Int = successCount.readValueOnce
 }
 
-trait SingleFoldTopper[S <: Struct] {
-  self: PaperPhilosophers[S] =>
+trait SingleFoldTopper {
+  self: PaperPhilosophers =>
   import engine._
 
   val successCount: Signal[Int] = Events.fold(successes.toSet[ReSource], 0) { ticket => before => before() + 1 }
   override def total: Int       = successCount.readValueOnce
 }
 
-trait ManualLocking[S <: Struct] extends PaperPhilosophers[S] {
+trait ManualLocking extends PaperPhilosophers {
   override def maybeEat(idx: Int): Unit = {
     manuallyLocked(idx) {
       super.maybeEat(idx)
@@ -243,9 +243,9 @@ object PaperPhilosophers {
     val threadCount = if (args.length >= 2) Integer.parseInt(args(1)) else tableSize
     val duration    = if (args.length >= 3) Integer.parseInt(args(2)) else 0
 
-    implicit val engine = new rescala.fullmv.FullMVEngine(Duration.Zero, s"PaperPhilosophers($tableSize,$threadCount)")
+    object engine extends rescala.fullmv.FullMVApi(Duration.Zero, s"PaperPhilosophers($tableSize,$threadCount)")
     val table =
-      new PaperPhilosophers(tableSize, engine, Dynamicity.Dynamic) with SignalPyramidTopper[rescala.fullmv.FullMVStruct]
+      new PaperPhilosophers(tableSize, engine, Dynamicity.Dynamic) with SignalPyramidTopper
 //    implicit val engine = rescala.levelbased.LevelBasedPropagationEngines.unmanaged
 //    val table = new PaperPhilosophers(tableSize, engine, Dynamicity.Static) with NoTopper[rescala.levelbased.SimpleStruct] with ManualLocking[rescala.levelbased.SimpleStruct]
 

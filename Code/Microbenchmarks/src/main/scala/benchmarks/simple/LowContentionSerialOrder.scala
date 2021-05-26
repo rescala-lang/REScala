@@ -1,12 +1,11 @@
 package benchmarks.simple
 
-import java.util.concurrent.TimeUnit
-
 import benchmarks._
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
-import rescala.core.{Scheduler, Struct}; import rescala.interface.RescalaInterface
-import rescala.operator.{Signal, Var}
+import rescala.interface.RescalaInterface
+
+import java.util.concurrent.TimeUnit
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -15,21 +14,23 @@ import rescala.operator.{Signal, Var}
 @Fork(1)
 @Threads(1)
 @State(Scope.Benchmark)
-class LowContentionSerialOrder[S <: Struct] extends BusyThreads {
-  var engine: RescalaInterface[S]        = _; implicit def scheduler: Scheduler[S] = engine.scheduler
-  var sources: Array[Var[Int, S]]        = _
-  var grid: Array[Array[Signal[Int, S]]] = _
+class LowContentionSerialOrder extends BusyThreads {
+  var engine: RescalaInterface = _
+  lazy val stableEngine        = engine
+  import stableEngine._
+  var sources: Array[Var[Int]]        = _
+  var grid: Array[Array[Signal[Int]]] = _
   @Param(Array("16"))
   var size: Int = _
 
   @Setup(Level.Iteration)
-  def setup(params: BenchmarkParams, engineParam: EngineParam[S], work: Workload) = {
+  def setup(params: BenchmarkParams, engineParam: EngineParam, work: Workload) = {
     engine = engineParam.engine
-    sources = Array.fill(size)(engine.Var(0))
+    sources = Array.fill(size)(Var(0))
     grid = Array.tabulate(size - 1) { t =>
       val a = size - 1 - t
       Array.tabulate(a) { b =>
-        engine.Signals.lift(sources(a), sources(b)) { (va, vb) => work.consume(); va + vb }
+        Signals.lift(sources(a), sources(b)) { (va, vb) => work.consume(); va + vb }
       }
     }
   }

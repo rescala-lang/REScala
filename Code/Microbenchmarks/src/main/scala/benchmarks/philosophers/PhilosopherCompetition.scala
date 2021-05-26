@@ -4,11 +4,11 @@ import java.util
 import java.util.concurrent.locks.{Lock, ReentrantLock}
 import java.util.concurrent.{ThreadLocalRandom, TimeUnit}
 
-import benchmarks.philosophers.PhilosopherTable.{Seating, Thinking}
+import benchmarks.philosophers.PhilosopherTable.{Thinking}
 import benchmarks.{BusyThreads, EngineParam, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
-import rescala.core.Struct
+
 import rescala.parrp.Backoff
 
 import scala.annotation.tailrec
@@ -19,29 +19,30 @@ import scala.annotation.tailrec
 @Measurement(iterations = 5, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
 @Fork(1)
 @Threads(2)
-class PhilosopherCompetition[S <: Struct] {
+class PhilosopherCompetition {
 
   @Benchmark
-  def eat(comp: Competition[S], params: ThreadParams, work: Workload): Unit = {
+  def eat(comp: Competition, params: ThreadParams, work: Workload): Unit = {
+    import comp.stableTable.Seating
     val myBlock = comp.blocks(params.getThreadIndex % comp.blocks.length)
     val bo      = new Backoff()
     while ({
-      val seating: Seating[S] = myBlock(ThreadLocalRandom.current().nextInt(myBlock.length))
+      val seating: Seating = myBlock(ThreadLocalRandom.current().nextInt(myBlock.length))
       if (comp.manualLocking)
-        manualLocking(comp, seating)
+        manualLocking(comp)(seating)
       else
-        tryUpdateCycle(comp, seating)
+        tryUpdateCycle(comp)(seating)
     }) { bo.backoff() }
 
   }
 
-  def tryUpdateCycle(comp: Competition[S], seating: Seating[S]): Boolean = {
-    val res = comp.table.tryEat(seating)
-    if (res) seating.philosopher.set(Thinking)(comp.table.engine.scheduler)
+  def tryUpdateCycle(comp: Competition)(seating: comp.stableTable.Seating): Boolean = {
+    val res = comp.table.tryEat(seating.asInstanceOf)
+    if (res) seating.philosopher.set(Thinking)(comp.table.engine.scheduler.asInstanceOf)
     !res
   }
 
-  private def manualLocking(comp: Competition[S], seating: Seating[S]): Boolean = {
+  private def manualLocking(comp: Competition)(seating: comp.stableTable.Seating): Boolean = {
     val pos = Array(
       seating.placeNumber,
       (seating.placeNumber + 1) % comp.philosophers,
@@ -58,7 +59,7 @@ class PhilosopherCompetition[S <: Struct] {
         try {
           thirdLock.lock()
           try {
-            comp.table.tryEat(seating)
+            comp.table.tryEat(seating.asInstanceOf)
           } finally { thirdLock.unlock() }
         } finally { secondLock.unlock() }
       } finally { firstLock.unlock() }
@@ -69,7 +70,7 @@ class PhilosopherCompetition[S <: Struct] {
         try {
           thirdLock.lock()
           try {
-            seating.philosopher.set(Thinking)(comp.table.engine.scheduler)
+            seating.philosopher.set(Thinking)(comp.table.engine.scheduler.asInstanceOf)
           } finally { thirdLock.unlock() }
         } finally { secondLock.unlock() }
       } finally { firstLock.unlock() }
@@ -79,7 +80,7 @@ class PhilosopherCompetition[S <: Struct] {
 }
 
 @State(Scope.Benchmark)
-class Competition[S <: Struct] extends BusyThreads {
+class Competition extends BusyThreads {
 
   @Param(Array("16", "32"))
   var philosophers: Int = _
@@ -90,15 +91,18 @@ class Competition[S <: Struct] extends BusyThreads {
   @Param(Array("static", "dynamic"))
   var tableType: String = _
 
-  var table: PhilosopherTable[S] = _
+  var table: PhilosopherTable = _
 
-  var blocks: Array[Array[Seating[S]]] = _
+  lazy val stableTable = table
+  import stableTable.Seating
+
+  var blocks: Array[Array[Seating]] = _
 
   var manualLocking: Boolean = _
   var locks: Array[Lock]     = _
 
   @Setup
-  def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam[S]) = {
+  def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam) = {
     manualLocking = engineParam.engineName == "unmanaged" && layout != "noconflict"
     if (manualLocking) {
       locks = Array.fill(philosophers)(new ReentrantLock())
@@ -113,14 +117,14 @@ class Competition[S <: Struct] extends BusyThreads {
       case "alternating" => deal(table.seatings.toList, math.min(params.getThreads, philosophers))
       case "noconflict"  => deal(table.seatings.sliding(4, 4).map(_.head).toList, params.getThreads)
       case "random"      => List(table.seatings)
-    }).map(_.toArray).toArray
+    }).map(_.toArray).toArray.asInstanceOf
   }
 
   @TearDown(Level.Iteration)
   def cleanEating(): Unit = {
     //print(s"actually eaten: ${ table.eaten.get() } measured: ")
     table.eaten.set(0)
-    table.seatings.foreach(_.philosopher.set(Thinking)(table.engine.scheduler))
+    table.seatings.foreach(_.philosopher.set(Thinking)(table.engine.scheduler.asInstanceOf))
   }
 
   final def deal[A](initialDeck: List[A], numberOfHands: Int): List[List[A]] = {

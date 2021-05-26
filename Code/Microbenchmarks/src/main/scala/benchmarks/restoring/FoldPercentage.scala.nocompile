@@ -14,19 +14,19 @@ import rescala.operator.{Evt, Var}
 @Fork(3)
 @Threads(1)
 @State(Scope.Thread)
-class RestoringSimple[S <: Struct] {
+class RestoringSimple {
 
-  var engine: RescalaInterface[S] = _
+  var engine: RescalaInterface = _
   implicit def scheduler = engine.scheduler
 
-  var source: Evt[Int, S] = _
+  var source: Evt[Int] = _
   var result: List[Any] = _
 
   @Param(Array("0", "0.2", "1"))
   var foldPercent: Float = _
 
   @Setup
-  def setup(size: Size, engineParam: EngineParam[S]) = {
+  def setup(size: Size, engineParam: EngineParam) = {
     engine = engineParam.engine
     source = engine.Evt[Int]()
     result = Nil
@@ -53,14 +53,14 @@ class RestoringSimple[S <: Struct] {
 @Fork(3)
 @Threads(1)
 @State(Scope.Thread)
-class RestoringVar[S <: Struct] {
+class RestoringVar {
 
-  var engine: RescalaInterface[S] = _
+  var engine: RescalaInterface = _
   implicit def scheduler = engine.scheduler
-  var sourceVar: Var[Int, S] = _
+  var sourceVar: Var[Int] = _
 
   @Setup
-  def setup(engineParam: EngineParam[S]) = {
+  def setup(engineParam: EngineParam) = {
     engine = engineParam.engine
     sourceVar = engine.Var(-1)
   }
@@ -80,7 +80,7 @@ class RestoringSnapshotVsInitial {
 
   var snapshot: scala.collection.mutable.Map[String, String] = _
 
-  def build[S <: Struct](engine: RescalaInterface[S], size: Int) = {
+  def build(engine: RescalaInterface, size: Int) = {
     import engine.implicitScheduler
     val source = engine.Evt[Int]()
     val res = for (i <- 1 to size) yield {
@@ -122,7 +122,7 @@ class RestoringSnapshotVsInitial {
 @Fork(3)
 @Threads(1)
 @State(Scope.Thread)
-class RestoringSnapshotVsRecomputationA[S <: Struct] {
+class RestoringSnapshotVsRecomputationA {
 
   var snapshot: scala.collection.mutable.Map[String, String] = _
 
@@ -154,7 +154,7 @@ class RestoringSnapshotVsRecomputationA[S <: Struct] {
 @Fork(3)
 @Threads(1)
 @State(Scope.Thread)
-class RestoringSnapshotVsRecomputationB[S <: Struct] {
+class RestoringSnapshotVsRecomputationB {
 
   var snapshot: scala.collection.mutable.Map[String, String] = _
 

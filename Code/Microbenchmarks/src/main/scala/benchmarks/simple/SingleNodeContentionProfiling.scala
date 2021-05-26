@@ -5,9 +5,7 @@ import java.util.concurrent.TimeUnit
 import benchmarks._
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
-import rescala.core.{Scheduler, Struct}
 import rescala.interface.RescalaInterface
-import rescala.operator.{Signal, Var}
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -16,16 +14,19 @@ import rescala.operator.{Signal, Var}
 @Fork(1)
 @Threads(1)
 @State(Scope.Benchmark)
-class SingleNodeContentionProfiling[S <: Struct] extends BusyThreads {
-  var engine: RescalaInterface[S] = _; implicit def scheduler: Scheduler[S] = engine.scheduler
-  var sources: Array[Var[Int, S]] = _
-  var node: Signal[Unit, S]       = _
+class SingleNodeContentionProfiling extends BusyThreads {
+    var engine: RescalaInterface = _
+  lazy val stableEngine = engine
+  import stableEngine._
+
+  var sources: Array[Var[Int]] = _
+  var node: Signal[Unit]       = _
 
   @Setup(Level.Iteration)
-  def setup(params: BenchmarkParams, step: Step, engineParam: EngineParam[S], work: Workload) = {
+  def setup(params: BenchmarkParams, step: Step, engineParam: EngineParam, work: Workload) = {
     engine = engineParam.engine
-    sources = Array.fill(params.getThreads)(engine.Var(step.run()))
-    node = engine.Signals.static(sources.toSeq: _*)(_ => work.consume())
+    sources = Array.fill(params.getThreads)(Var(step.run()))
+    node = Signals.static(sources.toSeq: _*)(_ => work.consume())
   }
 
   @Benchmark
