@@ -5,26 +5,26 @@ import rescala.operator.Observing
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
-class SimpleState[V](var value: V) {
 
-  var outgoing: Set[SimpleScheduler.Derived]  = Set.empty
-  var incoming: Set[SimpleScheduler.ReSource] = Set.empty
-  var discovered                              = false
-  var dirty                                   = false
-  var done                                    = false
-  def reset(v: V): Unit = {
-    discovered = false
-    dirty = false
-    done = false
-    value = v
-  }
-
-  override def toString: String = s"State(outgoing = $outgoing, discovered = $discovered, dirty = $dirty, done = $done)"
-}
-
-object SimpleScheduler extends Core with Observing {
+trait SimpleBundle extends Core with Observing {
   type State[V] = SimpleState[V]
-  def scheduler = SimpleScheduler
+
+  class SimpleState[V](var value: V) {
+
+    var outgoing: Set[Derived]  = Set.empty
+    var incoming: Set[ReSource] = Set.empty
+    var discovered                              = false
+    var dirty                                   = false
+    var done                                    = false
+    def reset(v: V): Unit = {
+      discovered = false
+      dirty = false
+      done = false
+      value = v
+    }
+
+    override def toString: String = s"State(outgoing = $outgoing, discovered = $discovered, dirty = $dirty, done = $done)"
+  }
 
   class SimpleInitializer(afterCommitObservers: ListBuffer[Observation]) extends Initializer {
     override protected[this] def makeDerivedStructState[V](ip: V): SimpleState[V] = new SimpleState[V](ip)

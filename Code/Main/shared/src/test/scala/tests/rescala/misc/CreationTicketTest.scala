@@ -6,7 +6,7 @@ class CreationTicketTest extends RETests {
   multiEngined { engine =>
     import engine._
 
-    if (engine.scheduler != rescala.extra.scheduler.SimpleScheduler) {
+    if (engine.scheduler != rescala.Schedulers.simple) {
       /* this test uses some shady planned()(identity) to get the turn object out of the transaction
        * you should not do this. */
       def getTurn(implicit engine: Scheduler): Initializer =

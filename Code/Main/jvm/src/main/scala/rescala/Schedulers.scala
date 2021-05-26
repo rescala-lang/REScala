@@ -1,32 +1,31 @@
-//package rescala
-//
-//import rescala.extra.scheduler.SimpleScheduler
-//import rescala.interface.RescalaInterface
-//import rescala.parrp._
-//
-//object Schedulers extends LevelBasedSchedulers {
-//
-//  def byName[S <: Struct](name: String): Scheduler[S] =
-//    name match {
-//      case "synchron"  => synchron.asInstanceOf[Scheduler[S]]
-//      case "unmanaged" => unmanaged.asInstanceOf[Scheduler[S]]
-//      case "parrp"     => parrp.asInstanceOf[Scheduler[S]]
-//      case "simple"    => simple.asInstanceOf[Scheduler[S]]
-//      case other       => throw new IllegalArgumentException(s"unknown engine $other")
-//    }
-//
-//  implicit val parrp: Scheduler[ParRPStruct] = parrpWithBackoff(() => new Backoff)
-//
-//  implicit val simple: SimpleScheduler.type = SimpleScheduler
-//
-//  def parrpWithBackoff(backOff: () => Backoff): Scheduler[ParRPStruct] =
-//    new TwoVersionScheduler[ParRPStruct, ParRPTransaction] {
-//      override protected def makeTransaction(priorTx: Option[ParRPTransaction]): ParRPTransaction =
-//        new ParRPTransaction(backOff(), priorTx)
-//      override def schedulerName: String = "ParRP"
-//    }
-//}
-//
-//object Interfaces {
-//  val parrp = RescalaInterface.interfaceFor(Schedulers.parrp)
-//}
+package rescala
+
+import rescala.extra.scheduler.SimpleBundle
+import rescala.interface.RescalaInterface
+import rescala.parrp.{Backoff, ParRP}
+import rescala.scheduler.{Synchron, Unmanaged}
+
+object Schedulers {
+
+  object parrp extends interface.RescalaInterface with ParRP {
+    override val scheduler: Scheduler = parrpWithBackoff(() => new Backoff())
+  }
+
+  object unmanaged extends Unmanaged with RescalaInterface
+
+  object synchron extends Synchron with RescalaInterface
+
+  object simple extends SimpleBundle with RescalaInterface {
+    override def scheduler: simple.Scheduler = SimpleScheduler
+  }
+
+  def byName(name: String): RescalaInterface =
+    name match {
+      case "synchron"  => synchron
+      case "unmanaged" => unmanaged
+      case "parrp"     => parrp
+      case "simple"    => simple
+      case other       => throw new IllegalArgumentException(s"unknown engine $other")
+    }
+
+}

@@ -92,7 +92,6 @@ class ReactiveMacros(val c: blackbox.Context) {
     val wrt = weakTypeOf[ReactiveType]
 
     val resolved = wrt.asSeenFrom(getBundle, wrt.typeSymbol.owner)
-
     val tq"$resolvedTree.$tpname.type" = ReTyper(c).createTypeTree(resolved, c.enclosingPosition)
 
     val body = q"""$resolvedTree.${tpname.toTermName}.$creationMethod[${weakTypeOf[A]}](
@@ -102,29 +101,32 @@ class ReactiveMacros(val c: blackbox.Context) {
     lego.wrapFinalize(body, prefixManipulation)
   }
 
-  //def UDFExpressionWithAPI[
-  //    T: c.WeakTypeTag,
-  //    DependencyType: c.WeakTypeTag,
-  //    Capability: c.WeakTypeTag
-  //](expression: Tree): c.Tree = {
-  //  if (c.hasErrors) return compileErrorsAst
-  //
-  //  val forceStatic = !(weakTypeOf[Capability] <:< weakTypeOf[DynamicTicket])
-  //  val lego        = new MacroLego(expression, forceStatic)
-  //
-  //  val dependencies = lego.detections.detectedStaticReactives
-  //  val isStatic     = lego.detections.detectedDynamicReactives.isEmpty
-  //  val ticketType   = weakTypeOf[Capability]
-  //
-  //  val body =
-  //    q"""_root_.rescala.operator.UserDefinedFunction[${weakTypeOf[T]}, ${weakTypeOf[DependencyType]}, ${ticketType}](
-  //       _root_.scala.collection.immutable.Set[${weakTypeOf[DependencyType]}](..$dependencies),
-  //       ${lego.contextualizedExpression(ticketType)},
-  //       ${isStatic}
-  //       )"""
-  //
-  //  lego.wrapFinalize(body, None)
-  //}
+  def UDFExpressionWithAPI[
+      T: c.WeakTypeTag,
+      DependencyType: c.WeakTypeTag,
+      Capability: c.WeakTypeTag,
+      DynamicTicket: c.WeakTypeTag,
+      CreationTicket: c.WeakTypeTag,
+      LowPriorityCreationImplicits: c.WeakTypeTag
+  ](expression: Tree): c.Tree = {
+    if (c.hasErrors) return compileErrorsAst
+
+    val forceStatic = !(weakTypeOf[Capability] <:< weakTypeOf[DynamicTicket])
+    val lego        = new MacroLego[CreationTicket, LowPriorityCreationImplicits](expression, forceStatic)
+
+    val dependencies = lego.detections.detectedStaticReactives
+    val isStatic     = lego.detections.detectedDynamicReactives.isEmpty
+    val ticketType   = weakTypeOf[Capability]
+
+    val body =
+      q"""new UserDefinedFunction[${weakTypeOf[T]}, ${weakTypeOf[DependencyType]}, ${ticketType}](
+         _root_.scala.collection.immutable.Set[${weakTypeOf[DependencyType]}](..$dependencies),
+         ${lego.contextualizedExpression(ticketType)},
+         ${isStatic}
+         )"""
+
+    lego.wrapFinalize(body, None)
+  }
 
   def fixNullTypes(tree: Tree): Unit =
     tree.foreach(t => if (t.tpe == null) internal.setType(t, NoType))

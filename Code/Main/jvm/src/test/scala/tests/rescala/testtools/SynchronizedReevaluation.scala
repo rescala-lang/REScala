@@ -35,17 +35,17 @@ class SynchronizedReevaluation extends ManagedBlocker {
   }
 }
 
-class SynchronizedReevaluationApi(val api: RescalaInterface)  {
+class SynchronizedReevaluationApi[Api <: RescalaInterface](val api: Api)  {
   import api._
 
 
-  def apply[A](sig: Signal[A])(implicit
+  def SynchronizedReevaluation[A](sig: Signal[A])(implicit
       turnSource: CreationTicket
   ): (SynchronizedReevaluation, Signal[A]) = {
     val sync = new SynchronizedReevaluation
     (sync, sig.map(sync.reev))
   }
-  def apply[A](evt: Event[A])(implicit
+  def SynchronizedReevaluation[A](evt: Event[A])(implicit
       turnSource: CreationTicket
   ): (SynchronizedReevaluation, Event[A]) = {
     val sync = new SynchronizedReevaluation

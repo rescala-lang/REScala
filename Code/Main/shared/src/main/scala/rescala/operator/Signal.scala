@@ -1,10 +1,10 @@
 package rescala.operator
 
-import rescala.interface.RescalaInterface
-import rescala.operator.RExceptions.{EmptySignalControlThrowable, ObservedException}
 import rescala.core.Core
-import rescala.macros.MacroTags.{Static, Dynamic}
+import rescala.interface.RescalaInterface
+import rescala.macros.MacroTags.{Dynamic, Static}
 import rescala.macros.cutOutOfUserComputation
+import rescala.operator.RExceptions.{EmptySignalControlThrowable, ObservedException}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
@@ -216,6 +216,11 @@ trait SignalApi {
       val isStatic: Boolean = true
   )
 
+  object UserDefinedFunction {
+    implicit def fromExpression[T, Dep, Cap](expression: => T): UserDefinedFunction[T, Dep, Cap] =
+    macro rescala.macros.ReactiveMacros.UDFExpressionWithAPI[T, Dep, Cap, DynamicTicket, CreationTicket, LowPriorityCreationImplicits]
+  }
+
   /** Functions to construct signals, you probably want to use signal expressions in [[rescala.interface.RescalaInterface.Signal]] for a nicer API. */
   object Signals {
 
@@ -223,7 +228,7 @@ trait SignalApi {
 
     @cutOutOfUserComputation
     def ofUDF[T](udf: UserDefinedFunction[T, ReSource, DynamicTicket])(implicit
-        ct: CreationTicket
+                                                                       ct: CreationTicket
     ): Signal[T] = {
       ct.create[Pulse[T], SignalImpl[T]](udf.staticDependencies, Pulse.empty, inite = true) {
         state =>
