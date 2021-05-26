@@ -84,13 +84,18 @@ class ReactiveMacros(val c: blackbox.Context) {
     val forceStatic = !(weakTypeOf[IsStatic] <:< weakTypeOf[MacroTags.Dynamic])
     val lego        = new MacroLego[CreationTicket, LowPriorityCreationImplicits](expression, forceStatic)
 
-    val signalsOrEvents = weakTypeOf[ReactiveType].typeSymbol.asClass.module.asTerm.name
     val dependencies    = lego.detections.detectedStaticReactives
     val isStatic        = lego.detections.detectedDynamicReactives.isEmpty
     val creationMethod  = TermName(if (isStatic) "static" else "dynamic")
     val ticketType      = if (isStatic) weakTypeOf[StaticTicket] else weakTypeOf[DynamicTicket]
 
-    val body = q"""$signalsOrEvents.$creationMethod[${weakTypeOf[A]}](
+    val wrt = weakTypeOf[ReactiveType]
+
+    val resolved = wrt.asSeenFrom(getBundle, wrt.typeSymbol.owner)
+
+    val tq"$resolvedTree.$tpname.type" = ReTyper(c).createTypeTree(resolved, c.enclosingPosition)
+
+    val body = q"""$resolvedTree.${tpname.toTermName}.$creationMethod[${weakTypeOf[A]}](
          ..$dependencies
          ){${lego.contextualizedExpression(ticketType)}}($ticket)"""
 
@@ -202,6 +207,27 @@ class ReactiveMacros(val c: blackbox.Context) {
 
   // here be dragons
 
+  def doMagic(tpe: Type) = {
+    val tn = getBundle
+    tpe.asSeenFrom(tn, tpe.typeSymbol.owner).dealias
+  }
+
+  def getBundle: Type = {
+    val ntype = c.prefix.tree.tpe
+    ntype.widen match {
+      case TypeRef(tn, _, _) => tn: Type
+    }
+  }
+
+  def getMember(name: String) = {
+    val tn = getBundle
+    tn.member(TypeName(name))
+  }
+
+  def getBundledClass(tpe: Type) = {
+    doMagic(getMember(tpe.typeSymbol.name.toString).asType.toType)
+  }
+
   class MacroLego[CreationTicket: c.WeakTypeTag, LowPriorityCreationImplicits: c.WeakTypeTag](
       tree: Tree,
       forceStatic: Boolean
@@ -216,8 +242,10 @@ class ReactiveMacros(val c: blackbox.Context) {
       new RewriteTransformer[CreationTicket, LowPriorityCreationImplicits](weAnalysis, ticketIdent, forceStatic)
     val rewrittenTree = detections transform cutOutTree
 
-    def contextualizedExpression(contextType: Type) =
-      q"{$ticketTermName: ${contextType.typeSymbol.name.asInstanceOf[TypeName]} => $rewrittenTree }"
+    def contextualizedExpression(contextType: Type) = {
+
+      q"{$ticketTermName: ${getBundledClass(contextType)} => $rewrittenTree }"
+    }
 
     def wrapFinalize(body: Tree, prefixManipulation: Option[PrefixManipulation]): Tree = {
       val valDefs                = prefixManipulation.map(_.prefixValDef).toList ::: cutOut.cutOutReactivesVals.reverse
@@ -247,7 +275,8 @@ class ReactiveMacros(val c: blackbox.Context) {
         case turnSource @ Apply(Select(ctleft, TermName("fromSchedulerImplicit")), _)
             if turnSource.tpe.typeSymbol.name == weakTypeOf[CreationTicket].typeSymbol.name
               && turnSource.symbol.owner == symbolOf[LowPriorityCreationImplicits] =>
-          q"""new CreationTicket(
+          val ct = getBundledClass(weakTypeOf[CreationTicket])
+          q"""new $ct(
                   ${termNames.ROOTPKG}.scala.Left($ticketIdent.initializer),
                   ${termNames.ROOTPKG}.rescala.core.ReName.create)"""
 
