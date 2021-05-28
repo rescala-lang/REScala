@@ -123,7 +123,7 @@ lazy val universe = project.in(file("Code/Examples/Universe"))
 
 lazy val todolist = project.in(file("Code/Examples/Todolist"))
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(rescalaJS, locidistributionJS)
+  .dependsOn(rescalaJS, replicationJS)
   .settings(
     cfg.base,
     cfg.noPublish,
@@ -239,7 +239,7 @@ lazy val ersirShared = crossProject(JSPlatform, JVMPlatform)
     )
   )
   .dependsOn(rescala)
-  .dependsOn(locidistribution)
+  .dependsOn(replication)
 lazy val ersirSharedJVM = ersirShared.jvm
 lazy val ersirSharedJS  = ersirShared.js
 
@@ -254,7 +254,7 @@ lazy val rescalafx = project.in(file("Code/Extensions/javafx"))
   .dependsOn(rescalaJVM)
   .settings(name := "rescalafx", cfg.base, cfg.noPublish, addScalafxDependencies)
 
-lazy val locidistribution = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure)
+lazy val replication = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure)
   .in(file("Code/Extensions/LociDistribution"))
   .dependsOn(rescala % "compile->compile;test->test")
   .settings(
@@ -268,8 +268,8 @@ lazy val locidistribution = crossProject(JSPlatform, JVMPlatform).crossType(Cros
     )
   )
 
-lazy val locidistributionJS  = locidistribution.js
-lazy val locidistributionJVM = locidistribution.jvm
+lazy val replicationJS  = replication.js
+lazy val replicationJVM = replication.jvm
 
 //lazy val distributedFullmv = project.in(file("Code/Extensions/distributed/multiversion"))
 //  .settings( cfg.base, name := "rescala-distributed-multiversion",
