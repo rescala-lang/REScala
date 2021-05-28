@@ -1,14 +1,15 @@
 import java.nio.file.Files
 
 // shadow sbt-scalajs' crossProject and CrossType from Scala.js 0.6.x
-import sbtcrossproject.CrossPlugin.autoImport.{CrossType, crossProject}
+import Dependencies.{Versions => V, _}
 import Settings._
-import Dependencies._
-import Dependencies.{Versions => V}
+import sbtcrossproject.CrossPlugin.autoImport.{CrossType, crossProject}
 
 ThisBuild / incOptions := (ThisBuild / incOptions).value.withLogRecompileOnMacro(false)
 cfg.noPublish
-ThisBuild / resolvers += ("STG old bintray repo" at "http://www.st.informatik.tu-darmstadt.de/maven/").withAllowInsecureProtocol(true)
+ThisBuild / resolvers += ("STG old bintray repo" at "http://www.st.informatik.tu-darmstadt.de/maven/").withAllowInsecureProtocol(
+  true
+)
 
 lazy val cfg = new {
   val base: Def.SettingsDefinition = List(
@@ -128,14 +129,12 @@ lazy val todolist = project.in(file("Code/Examples/Todolist"))
     cfg.noPublish,
     name := "todolist",
     Resolvers.jitpack,
-    libraryDependencies ++= circeAll.value ++ Seq(
+    libraryDependencies ++= circeAll.value ++ jsoniterScalaAll.value ++ Seq(
       loci.circe.value,
       scalatags.value,
       loci.webrtc.value,
       loci.jsoniterScala.value,
       catsCollection.value,
-      jsoniterScalaAll.value(0) % "provided,test",
-      jsoniterScalaAll.value(1),
     ),
     (Compile / scalaSource) := baseDirectory.value,
     scalaJSUseMainModuleInitializer := true,
@@ -197,9 +196,6 @@ lazy val ersirServer = project.in(file("Code/Examples/Ersir/server"))
       jsoup.value,
       betterFiles.value,
       decline.value,
-      catsCollection.value,
-      jsoniterScalaAll.value(0) % "provided,test",
-      jsoniterScalaAll.value(1),
     ),
     vbundleDef,
     (Compile / compile) := ((Compile / compile) dependsOn vbundle).value
@@ -217,9 +213,6 @@ lazy val ersirWeb = project.in(file("Code/Examples/Ersir/web"))
     libraryDependencies ++= Seq(
       scalajsDom.value,
       normalizecss.value,
-      catsCollection.value,
-      jsoniterScalaAll.value(0) % "provided,test",
-      jsoniterScalaAll.value(1),
     ),
     scalaJSUseMainModuleInitializer := true,
     webpackBundlingMode := BundlingMode.LibraryOnly()
@@ -236,15 +229,13 @@ lazy val ersirShared = crossProject(JSPlatform, JVMPlatform)
     name := "shared",
     cfg.base,
     Resolvers.jitpack,
-    libraryDependencies ++= circeAll.value ++ akkaHttpAll.value ++ Seq(
+    libraryDependencies ++= circeAll.value ++ akkaHttpAll.value ++ jsoniterScalaAll.value ++ Seq(
       scalatags.value,
       loci.communication.value,
       loci.wsAkka.value,
       scribe.value,
       loci.circe.value,
       catsCollection.value,
-      jsoniterScalaAll.value(0) % "provided,test",
-      jsoniterScalaAll.value(1),
     )
   )
   .dependsOn(rescala)
