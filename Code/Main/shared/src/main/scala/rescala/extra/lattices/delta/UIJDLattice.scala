@@ -104,4 +104,19 @@ object UIJDLattice {
           (UIJDLattice[A].merge(la, ra), UIJDLattice[B].merge(lb, rb), UIJDLattice[C].merge(lc, rc))
       }
     }
+
+  def AtomicUIJDLattice[A]: UIJDLattice[A] = new UIJDLattice[A] {
+    override def leq(left: A, right: A): Boolean = false
+
+    override def decompose(state: A): Set[A] = Set(state)
+
+    override def bottom: A = throw new UnsupportedOperationException("Can't compute bottom of atomic type A")
+
+    override def merge(left: A, right: A): A =
+      if (left == right) {
+        left
+      } else {
+        throw new UnsupportedOperationException(s"Can't merge atomic type A, left: $left, right: $right")
+      }
+  }
 }

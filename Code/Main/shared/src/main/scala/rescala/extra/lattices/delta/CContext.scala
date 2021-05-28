@@ -1,7 +1,6 @@
 package rescala.extra.lattices.delta
 
 import cats.collections._
-import cats.implicits._
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 
