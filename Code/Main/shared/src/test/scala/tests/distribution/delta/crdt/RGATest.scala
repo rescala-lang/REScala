@@ -30,9 +30,9 @@ object RGAGenerators {
   }
 
   def genRGA[E: JsonValueCodec, C: CContext](implicit e: Arbitrary[E], codec: JsonValueCodec[C]): Gen[RGA[E, C]] = for {
-    nInserted       <- Arbitrary.arbitrary[Byte]
-    insertedIndices <- Gen.containerOfN[List, Int](nInserted.toInt, Arbitrary.arbitrary[Int])
-    insertedValues  <- Gen.containerOfN[List, E](nInserted.toInt, e.arbitrary)
+    nInserted       <- Arbitrary.arbitrary[Byte].map(_.toInt.abs)
+    insertedIndices <- Gen.containerOfN[List, Int](nInserted, Arbitrary.arbitrary[Int])
+    insertedValues  <- Gen.containerOfN[List, E](nInserted, e.arbitrary)
     removed         <- Gen.containerOf[List, Int](Arbitrary.arbitrary[Int])
   } yield {
     val network = new Network(0, 0, 0)
