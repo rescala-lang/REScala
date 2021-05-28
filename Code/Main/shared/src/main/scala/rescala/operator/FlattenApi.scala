@@ -43,7 +43,7 @@ trait FlattenApi extends FlattenCollectionCompat{
 
   /** Flatten a Signal[Event[B]]\] into a Event[B] where the new Event fires whenever the current inner event fires */
   implicit def flattenImplicitForevent[A, B, Evnt[A1] <: Event[A1]](implicit
-      ticket: CreationTicket,
+      ticket: CreationTicket
   ): Flatten[Signal[Evnt[B]], Event[B]] =
     new Flatten[Signal[Evnt[B]], Event[B]] {
       def apply(sig: Signal[Evnt[B]]): Event[B] = Events.dynamic(sig) { t => t.depend(t.depend(sig)) }

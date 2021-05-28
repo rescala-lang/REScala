@@ -224,11 +224,11 @@ object DotStoreLattice {
     new DotStoreLattice[Map[Key, A]] {
       type Store = Map[Key, A]
 
-      override def add(a: Store, d: Dot): Store = a.view.mapValues(v => dsl.add(v, d)).toMap
+      override def add(a: Store, d: Dot): Store = a.mapValues(v => dsl.add(v, d)).toMap : @scala.annotation.nowarn()
 
       override def dots(a: Store): Set[Dot] = a.valuesIterator.flatMap(dsl.dots).toSet
 
-      override def compress(a: Store): Store = a.view.mapValues(dsl.compress).toMap
+      override def compress(a: Store): Store = a.mapValues(dsl.compress).toMap : @scala.annotation.nowarn()
 
       override def empty: Store = Map.empty
 

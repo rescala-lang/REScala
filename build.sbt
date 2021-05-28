@@ -1,8 +1,8 @@
 import java.nio.file.Files
 
-// shadow sbt-scalajs' crossProject and CrossType from Scala.js 0.6.x
 import Dependencies.{Versions => V, _}
 import Settings._
+// shadow sbt-scalajs' crossProject and CrossType from Scala.js 0.6.x
 import sbtcrossproject.CrossPlugin.autoImport.{CrossType, crossProject}
 
 ThisBuild / incOptions := (ThisBuild / incOptions).value.withLogRecompileOnMacro(false)
@@ -58,21 +58,23 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Code/Main"))
     Resolvers.stg,
     Resolvers.jitpack,
     libraryDependencies ++= Seq(
-      scalatestpluscheck.value,
       sourcecode.value,
       retypecheck.value,
       reactiveStreams.value,
-      scalaOrganization.value   % "scala-reflect" % scalaVersion.value % "provided"
-    ) ++ (
-      // built in serializability of lattice vertices
-        Seq(
-          loci.wsAkka.value,
-          loci.circe.value,
-          loci.upickle.value,
-          loci.communication.value,
-          scalaJavaTime.value,
-        ).map(_ % "test")
-    )
+      scalaOrganization.value % "scala-reflect" % scalaVersion.value % "provided"
+    ),
+    libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, 13)) =>
+        scalatestpluscheck.value +:
+          Seq(
+            loci.wsAkka.value,
+            loci.circe.value,
+            loci.upickle.value,
+            loci.communication.value,
+            scalaJavaTime.value,
+          ).map(_ % "test")
+      case _ => List.empty
+    })
   )
   .jvmSettings(
     libraryDependencies ++= akkaHttpAll.value.map(_ % "test")
@@ -82,7 +84,7 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Code/Main"))
       // for restoration
       scalajsDom.value % "provided",
       // for rescalatags
-      scalatags.value % "provided,test",
+      (scalatags.value % "provided,test").cross(CrossVersion.for3Use2_13),
     ),
     // dom envirnoment
     jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
@@ -137,7 +139,7 @@ lazy val todolist = project.in(file("Code/Examples/Todolist"))
   )
 
 lazy val dividiParoli = project.in(file("Code/Examples/dividiParoli"))
-  .dependsOn(rescalaJVM,replicationJVM)
+  .dependsOn(rescalaJVM, replicationJVM)
   .settings(
     name := "dividi and paroli",
     cfg.base,

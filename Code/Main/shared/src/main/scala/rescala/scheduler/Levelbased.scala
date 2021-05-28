@@ -175,8 +175,7 @@ trait Levelbased extends Twoversion {
     /** The value to not increase the level of an enqueued [[QueueElement]]. */
     def noLevelIncrease: Int = Int.MinValue
 
-    @scala.annotation.nowarn("msg=The outer reference in this type test cannot be checked at run time.")
-    private final case class QueueElement(
+    private case class QueueElement(
         level: Int,
         reactive: Derived,
         var minLevel: Int,

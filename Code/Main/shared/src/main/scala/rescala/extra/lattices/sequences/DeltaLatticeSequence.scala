@@ -119,7 +119,7 @@ object DeltaSequence {
         val vertices = Lattice.merge(left.vertices, right.vertices)
         val values   = Lattice.merge(left.values, right.values)(Lattice.mapLattice(noMapConflictsLattice))
 
-        DeltaSequence(vertices = vertices, edges = newEdges, values = values.view.filterKeys(vertices.contains).toMap)
+        DeltaSequence(vertices = vertices, edges = newEdges, values = values.filterKeys(vertices.contains).toMap: @scala.annotation.nowarn())
       }
     }
 }
