@@ -10,8 +10,17 @@ import rescala.extra.lattices.delta.crdt.ORMapCRDT.State
 object ORMapCRDT {
   type State[K, V, C] = Causal[DotMap[K, V], C]
 
-  def apply[K, V: DotStore, C: CContext](antiEntropy: AntiEntropy[State[K, V, C]]): DeltaCRDT[State[K, V, C]] =
-    DeltaCRDT.empty[State[K, V, C]](antiEntropy)
+  private def deltaState[K, V: DotStore, C: CContext](
+      dm: Option[DotMap[K, V]] = None,
+      cc: C
+  ): State[K, V, C] = {
+    val bottom = UIJDLattice[State[K, V, C]].bottom
+
+    Causal(
+      dm.getOrElse(bottom.dotStore),
+      cc
+    )
+  }
 
   def contains[K, V: DotStore, C: CContext](k: K): DeltaQuery[State[K, V, C], Boolean] = {
     case Causal(dm, _) => dm.contains(k)
@@ -35,9 +44,9 @@ object ORMapCRDT {
 
       m(replicaID, Causal(v, cc)) match {
         case Causal(stateDelta, ccDelta) =>
-          Causal(
-            DotMap[K, V].empty.updated(k, stateDelta),
-            ccDelta
+          deltaState(
+            dm = Some(DotMap[K, V].empty.updated(k, stateDelta)),
+            cc = ccDelta
           )
       }
   }
@@ -46,9 +55,8 @@ object ORMapCRDT {
     case (_, Causal(dm, _)) =>
       val v = dm.getOrElse(k, DotStore[V].empty)
 
-      Causal(
-        DotMap[K, V].empty,
-        CContext[C].fromSet(DotStore[V].dots(v))
+      deltaState(
+        cc = CContext[C].fromSet(DotStore[V].dots(v))
       )
   }
 
@@ -59,9 +67,8 @@ object ORMapCRDT {
         case (set, v) => set union DotStore[V].dots(v)
       }
 
-      Causal(
-        DotMap[K, V].empty,
-        CContext[C].fromSet(dots)
+      deltaState(
+        cc = CContext[C].fromSet(dots)
       )
   }
 
@@ -71,17 +78,15 @@ object ORMapCRDT {
         case v if cond(Causal(v, cc)) => DotStore[V].dots(v)
       }.fold(Set())(_ union _)
 
-      Causal(
-        DotMap[K, V].empty,
-        CContext[C].fromSet(toRemove)
+      deltaState(
+        cc = CContext[C].fromSet(toRemove)
       )
   }
 
   def clear[K, V: DotStore, C: CContext]: DeltaMutator[State[K, V, C]] = {
     case (_, Causal(dm, _)) =>
-      Causal(
-        DotMap[K, V].empty,
-        CContext[C].fromSet(DotMap[K, V].dots(dm))
+      deltaState(
+        cc = CContext[C].fromSet(DotMap[K, V].dots(dm))
       )
   }
 }
@@ -105,7 +110,7 @@ object ORMap {
   type Embedded[K, V] = DotMap[K, V]
 
   def apply[K, V: DotStore, C: CContext](antiEntropy: AntiEntropy[State[K, V, C]]): ORMap[K, V, C] =
-    new ORMap(ORMapCRDT[K, V, C](antiEntropy))
+    new ORMap(DeltaCRDT.empty(antiEntropy))
 
   implicit def ORMapStateCodec[K: JsonValueCodec, V: JsonValueCodec, C: JsonValueCodec]
       : JsonValueCodec[Causal[Map[K, V], C]] =
@@ -146,7 +151,7 @@ object RORMap {
   type Embedded[K, V] = DotMap[K, V]
 
   def apply[K, V: DotStore, C: CContext](replicaID: String): RORMap[K, V, C] =
-    new RORMap(RDeltaCRDT.empty[State[K, V, C]](replicaID))
+    new RORMap(RDeltaCRDT.empty(replicaID))
 
   implicit def ORMapStateCodec[K: JsonValueCodec, V: JsonValueCodec, C: JsonValueCodec]
       : JsonValueCodec[Causal[Map[K, V], C]] =

@@ -4,7 +4,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import rescala.extra.lattices.delta.DeltaCRDT.{DeltaMutator, DeltaQuery}
 import rescala.extra.lattices.delta.crdt.GOListCRDT.GOListAsUIJDLattice
-import rescala.extra.lattices.delta.{AntiEntropy, Delta, DeltaCRDT, RDeltaCRDT, TimedVal, UIJDLattice}
+import rescala.extra.lattices.delta.{AntiEntropy, CRDTInterface, Delta, DeltaCRDT, RDeltaCRDT, TimedVal, UIJDLattice}
 
 import scala.annotation.tailrec
 
@@ -144,7 +144,7 @@ object GOList {
   type State[E] = GOListCRDT.State[E]
 
   def apply[E](antiEntropy: AntiEntropy[State[E]]): GOList[E] =
-    new GOList(DeltaCRDT.empty[State[E]](antiEntropy))
+    new GOList(DeltaCRDT.empty(antiEntropy))
 
   implicit def GOListStateCodec[E: JsonValueCodec]: JsonValueCodec[Map[GOListNode[TimedVal[E]], Elem[TimedVal[E]]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
@@ -171,5 +171,5 @@ object RGOList {
   type State[E] = GOListCRDT.State[E]
 
   def apply[E](replicaID: String): RGOList[E] =
-    new RGOList(RDeltaCRDT.empty[State[E]](replicaID))
+    new RGOList(RDeltaCRDT.empty(replicaID))
 }

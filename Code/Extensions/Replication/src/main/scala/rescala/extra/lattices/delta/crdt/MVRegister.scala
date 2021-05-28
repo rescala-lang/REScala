@@ -10,10 +10,19 @@ import rescala.extra.lattices.delta.crdt.MVRegisterCRDT.State
 object MVRegisterCRDT {
   type State[A, C] = Causal[DotFun[A], C]
 
-  def apply[A: UIJDLattice, C: CContext](antiEntropy: AntiEntropy[State[A, C]]): DeltaCRDT[State[A, C]] =
-    DeltaCRDT.empty[State[A, C]](antiEntropy)
+  private def deltaState[A: UIJDLattice, C: CContext](
+      df: Option[DotFun[A]] = None,
+      cc: Option[C]
+  ): State[A, C] = {
+    val bottom = UIJDLattice[State[A, C]].bottom
 
-  def read[A, C: CContext]: DeltaQuery[State[A, C], Set[A]] = {
+    Causal(
+      df.getOrElse(bottom.dotStore),
+      cc.getOrElse(bottom.cc)
+    )
+  }
+
+  def read[A: UIJDLattice, C: CContext]: DeltaQuery[State[A, C], Set[A]] = {
     case Causal(df, _) => df.values.toSet
   }
 
@@ -21,17 +30,16 @@ object MVRegisterCRDT {
     case (replicaID, Causal(df, cc)) =>
       val nextDot = CContext[C].nextDot(cc, replicaID)
 
-      Causal(
-        Map(nextDot -> v),
-        CContext[C].fromSet(df.keySet + nextDot)
+      deltaState(
+        df = Some(Map(nextDot -> v)),
+        cc = Some(CContext[C].fromSet(df.keySet + nextDot))
       )
   }
 
   def clear[A: UIJDLattice, C: CContext]: DeltaMutator[State[A, C]] = {
     case (_, Causal(df, _)) =>
-      Causal(
-        DotFun[A].empty,
-        CContext[C].fromSet(df.keySet)
+      deltaState(
+        cc = Some(CContext[C].fromSet(df.keySet))
       )
   }
 }
@@ -51,7 +59,7 @@ object MVRegister {
   type Embedded[A] = DotFun[A]
 
   def apply[A: UIJDLattice, C: CContext](antiEntropy: AntiEntropy[State[A, C]]): MVRegister[A, C] =
-    new MVRegister(MVRegisterCRDT[A, C](antiEntropy))
+    new MVRegister(DeltaCRDT.empty[State[A, C]](antiEntropy))
 
   implicit def MVRegisterStateCodec[A: JsonValueCodec, C: JsonValueCodec]: JsonValueCodec[Causal[Map[Dot, A], C]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
@@ -86,21 +94,4 @@ object RMVRegister {
 
   implicit def MVRegisterEmbeddedCodec[A: JsonValueCodec]: JsonValueCodec[Map[Dot, A]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
-
-  def AtomicUIJDLattice[A]: UIJDLattice[A] = new UIJDLattice[A] {
-    override def leq(left: A, right: A): Boolean = false
-
-    /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducable states */
-    override def decompose(state: A): Set[A] = Set(state)
-
-    override def bottom: A = throw new UnsupportedOperationException("Can't compute bottom of atomic type A")
-
-    /** By assumption: associative, commutative, idempotent. */
-    override def merge(left: A, right: A): A =
-      if (left == right) {
-        left
-      } else {
-        throw new UnsupportedOperationException(s"Can't merge atomic type A, left: $left, right: $right")
-      }
-  }
 }

@@ -2,8 +2,7 @@ package rescala.extra.distributables
 
 import loci.registry.{Binding, Registry}
 import loci.transmitter.RemoteRef
-import rescala.extra.lattices.delta.crdt.CRDTInterface
-import rescala.extra.lattices.delta.{Delta, UIJDLattice}
+import rescala.extra.lattices.delta.{CRDTInterface, Delta, UIJDLattice}
 import rescala.interface.RescalaInterface
 import scribe.Execution.global
 

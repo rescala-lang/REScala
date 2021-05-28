@@ -11,18 +11,15 @@ object GCounterCRDT {
 
   implicit val StateUIJDLattice: UIJDLattice[State] = MapAsUIJDLattice[String, Int]
 
-  def apply(antiEntropy: AntiEntropy[State]): DeltaCRDT[State] =
-    DeltaCRDT.empty[State](antiEntropy)
-
   def value: DeltaQuery[State, Int] = state => state.values.sum
 
-  def inc: DeltaMutator[State] = (replicaID, state) => Map(replicaID -> (state.getOrElse(replicaID, 0) + 1))
+  def inc(): DeltaMutator[State] = (replicaID, state) => Map(replicaID -> (state.getOrElse(replicaID, 0) + 1))
 }
 
 class GCounter(crdt: DeltaCRDT[GCounterCRDT.State]) {
   def value: Int = crdt.query(GCounterCRDT.value)
 
-  def inc(): GCounter = new GCounter(crdt.mutate(GCounterCRDT.inc))
+  def inc(): GCounter = new GCounter(crdt.mutate(GCounterCRDT.inc()))
 
   def processReceivedDeltas(): GCounter = new GCounter(crdt.processReceivedDeltas())
 }
@@ -31,7 +28,7 @@ object GCounter {
   type State = GCounterCRDT.State
 
   def apply(antiEntropy: AntiEntropy[State]): GCounter =
-    new GCounter(GCounterCRDT(antiEntropy))
+    new GCounter(DeltaCRDT.empty(antiEntropy))
 
   implicit def GCounterStateCodec: JsonValueCodec[Map[String, Int]] = JsonCodecMaker.make
 }

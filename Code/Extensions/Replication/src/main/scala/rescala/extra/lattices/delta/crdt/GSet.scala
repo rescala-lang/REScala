@@ -8,9 +8,6 @@ import rescala.extra.lattices.delta.{AntiEntropy, DeltaCRDT}
 object GSetCRDT {
   type State[E] = Set[E]
 
-  def apply[E](antiEntropy: AntiEntropy[State[E]]): DeltaCRDT[State[E]] =
-    DeltaCRDT.empty[Set[E]](antiEntropy)
-
   def elements[E]: DeltaQuery[State[E], Set[E]] = state => state
 
   def insert[E](element: E): DeltaMutator[State[E]] = (_, _) => Set(element)
@@ -28,7 +25,7 @@ object GSet {
   type State[E] = GSetCRDT.State[E]
 
   def apply[E](antiEntropy: AntiEntropy[State[E]]): GSet[E] =
-    new GSet(GSetCRDT[E](antiEntropy))
+    new GSet(DeltaCRDT.empty(antiEntropy))
 
   implicit def GSetStateCodec[E: JsonValueCodec]: JsonValueCodec[Set[E]] = JsonCodecMaker.make
 }

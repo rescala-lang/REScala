@@ -32,7 +32,11 @@ case object Bid {
   type User = String
 }
 
-case class AuctionData(bids: GSet.State[Bid], status: Status, winner: Option[User])
+case class AuctionData(
+    bids: GSet.State[Bid] = UIJDLattice[GSet.State[Bid]].bottom,
+    status: Status = UIJDLattice[Status].bottom,
+    winner: Option[User] = None
+)
 
 case object AuctionData {
   implicit val AuctionDataAsUIJDLattice: UIJDLattice[AuctionData] = new UIJDLattice[AuctionData] {
@@ -44,15 +48,14 @@ case object AuctionData {
     override def decompose(state: AuctionData): Set[AuctionData] = state match {
       case AuctionData(bids, status, _) =>
         bids.map(b =>
-          AuctionData(GSetCRDT.insert(b)("", UIJDLattice[GSet.State[Bid]].bottom), UIJDLattice[Status].bottom, None)
+          AuctionData(bids = GSetCRDT.insert(b)("", UIJDLattice[GSet.State[Bid]].bottom))
         ) ++ (status match {
           case Open   => Set()
-          case Closed => Set(AuctionData(UIJDLattice[GSet.State[Bid]].bottom, Closed, None))
+          case Closed => Set(AuctionData(status = Closed))
         })
     }
 
-    override def bottom: AuctionData =
-      AuctionData(UIJDLattice[GSet.State[Bid]].bottom, UIJDLattice[Status].bottom, None)
+    override def bottom: AuctionData = AuctionData()
 
     override def merge(left: AuctionData, right: AuctionData): AuctionData = (left, right) match {
       case (AuctionData(lb, ls, _), AuctionData(rb, rs, _)) =>
@@ -73,14 +76,10 @@ object AuctionCRDT {
 
   def bid(userId: User, price: Int): DeltaMutator[State] = {
     case (replicaID, AuctionData(bids, _, _)) =>
-      AuctionData(
-        GSetCRDT.insert(Bid(userId, price))(replicaID, bids),
-        UIJDLattice[Status].bottom,
-        None
-      )
+      AuctionData(bids = GSetCRDT.insert(Bid(userId, price))(replicaID, bids))
   }
 
-  def close(): DeltaMutator[State] = (_, _) => AuctionData(UIJDLattice[GSet.State[Bid]].bottom, Closed, None)
+  def close(): DeltaMutator[State] = (_, _) => AuctionData(status = Closed)
 }
 
 object Auction {

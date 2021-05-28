@@ -8,16 +8,18 @@ import rescala.extra.lattices.delta.{AntiEntropy, DeltaCRDT}
 object TwoPSetCRDT {
   type State[E] = (Set[E], Set[E])
 
-  def apply[E](antiEntropy: AntiEntropy[State[E]]): DeltaCRDT[State[E]] =
-    DeltaCRDT.empty[State[E]](antiEntropy)
+  private def deltaState[E](
+      add: Set[E] = Set.empty[E],
+      remove: Set[E] = Set.empty[E]
+  ): State[E] = (add, remove)
 
   def elements[E]: DeltaQuery[State[E], Set[E]] = {
     case (add, remove) => add diff remove
   }
 
-  def insert[E](element: E): DeltaMutator[State[E]] = (_, _) => (Set(element), Set.empty[E])
+  def insert[E](element: E): DeltaMutator[State[E]] = (_, _) => deltaState(add = Set(element))
 
-  def remove[E](element: E): DeltaMutator[State[E]] = (_, _) => (Set.empty[E], Set(element))
+  def remove[E](element: E): DeltaMutator[State[E]] = (_, _) => deltaState(remove = Set(element))
 }
 
 class TwoPSet[E](crdt: DeltaCRDT[TwoPSetCRDT.State[E]]) {
@@ -34,7 +36,7 @@ object TwoPSet {
   type State[E] = TwoPSetCRDT.State[E]
 
   def apply[E](antiEntropy: AntiEntropy[State[E]]): TwoPSet[E] =
-    new TwoPSet(TwoPSetCRDT[E](antiEntropy))
+    new TwoPSet(DeltaCRDT.empty(antiEntropy))
 
   implicit def TwoPSetStateCodec[E: JsonValueCodec]: JsonValueCodec[(Set[E], Set[E])] = JsonCodecMaker.make
 }

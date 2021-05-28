@@ -29,8 +29,17 @@ object RCounterCRDT {
 
   type State[C] = Causal[DotFun[(Int, Int)], C]
 
-  def apply[C: CContext](antiEntropy: AntiEntropy[State[C]]): DeltaCRDT[State[C]] =
-    DeltaCRDT.empty[State[C]](antiEntropy)
+  private def deltaState[C: CContext](
+      df: Option[DotFun[(Int, Int)]] = None,
+      cc: C
+  ): State[C] = {
+    val bottom = UIJDLattice[State[C]].bottom
+
+    Causal(
+      df.getOrElse(bottom.dotStore),
+      cc
+    )
+  }
 
   def value[C: CContext]: DeltaQuery[State[C], Int] = {
     case Causal(df, _) =>
@@ -46,9 +55,9 @@ object RCounterCRDT {
     case (replicaID, Causal(_, cc)) =>
       val nextDot = CContext[C].nextDot(cc, replicaID)
 
-      Causal(
-        DotFun[(Int, Int)].empty + (nextDot -> ((0, 0))),
-        CContext[C].fromSet(Set(nextDot))
+      deltaState(
+        df = Some(DotFun[(Int, Int)].empty + (nextDot -> ((0, 0)))),
+        cc = CContext[C].fromSet(Set(nextDot))
       )
   }
 
@@ -60,16 +69,16 @@ object RCounterCRDT {
             case ((linc, ldec), (rinc, rdec)) => (linc + rinc, ldec + rdec)
           }
 
-          Causal(
-            df + (currentDot -> newCounter),
-            CContext[C].fromSet(Set(currentDot))
+          deltaState(
+            df = Some(df + (currentDot -> newCounter)),
+            cc = CContext[C].fromSet(Set(currentDot))
           )
         case _ =>
           val nextDot = CContext[C].nextDot(cc, replicaID)
 
-          Causal(
-            DotFun[(Int, Int)].empty + (nextDot -> u),
-            CContext[C].fromSet(Set(nextDot))
+          deltaState(
+            df = Some(DotFun[(Int, Int)].empty + (nextDot -> u)),
+            cc = CContext[C].fromSet(Set(nextDot))
           )
       }
   }
@@ -80,9 +89,8 @@ object RCounterCRDT {
 
   def reset[C: CContext]: DeltaMutator[State[C]] = {
     case (_, Causal(df, _)) =>
-      Causal(
-        DotFun[(Int, Int)].empty,
-        CContext[C].fromSet(df.keySet)
+      deltaState(
+        cc = CContext[C].fromSet(df.keySet)
       )
   }
 }
@@ -106,7 +114,7 @@ object RCounter {
   type Embedded = DotFun[(Int, Int)]
 
   def apply[C: CContext](antiEntropy: AntiEntropy[State[C]]): RCounter[C] =
-    new RCounter(RCounterCRDT[C](antiEntropy))
+    new RCounter(DeltaCRDT.empty(antiEntropy))
 
   implicit def RCounterStateCodec[C: JsonValueCodec]: JsonValueCodec[Causal[Map[Dot, (Int, Int)], C]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))

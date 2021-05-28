@@ -5,7 +5,7 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodec
 import rescala.extra.lattices.delta.DeltaCRDT.{DeltaMutator, DeltaQuery}
 import rescala.extra.lattices.delta.DotStore.DotFun
 import rescala.extra.lattices.delta.{
-  AntiEntropy, CContext, Causal, Delta, DeltaCRDT, Dot, RDeltaCRDT, TimedVal, UIJDLattice
+  AntiEntropy, CContext, CRDTInterface, Causal, Delta, DeltaCRDT, Dot, RDeltaCRDT, TimedVal, UIJDLattice
 }
 
 object LastWriterWinsCRDT {
@@ -41,7 +41,7 @@ object LastWriterWins {
   type Embedded[A] = DotFun[TimedVal[A]]
 
   def apply[A, C: CContext](ae: AntiEntropy[State[A, C]]): LastWriterWins[A, C] =
-    new LastWriterWins(DeltaCRDT.empty[State[A, C]](ae))
+    new LastWriterWins(DeltaCRDT.empty(ae))
 
   implicit def LastWriterWinsStateCodec[A: JsonValueCodec, C: JsonValueCodec]
       : JsonValueCodec[Causal[Map[Dot, TimedVal[A]], C]] =
@@ -74,7 +74,7 @@ object RLastWriterWins {
   type Embedded[A] = DotFun[TimedVal[A]]
 
   def apply[A, C: CContext](replicaID: String): RLastWriterWins[A, C] =
-    new RLastWriterWins(RDeltaCRDT.empty[State[A, C]](replicaID))
+    new RLastWriterWins(RDeltaCRDT.empty(replicaID))
 
   implicit def LastWriterWinsStateCodec[A: JsonValueCodec, C: JsonValueCodec]
       : JsonValueCodec[Causal[Map[Dot, TimedVal[A]], C]] =

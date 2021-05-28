@@ -9,28 +9,36 @@ import rescala.extra.lattices.delta._
 object EWFlagCRDT {
   type State[C] = Causal[DotSet, C]
 
-  def apply[C: CContext](antiEntropy: AntiEntropy[State[C]]): DeltaCRDT[State[C]] =
-    DeltaCRDT.empty[State[C]](antiEntropy)
+  private def deltaState[C: CContext](
+      ds: Option[DotSet] = None,
+      cc: C
+  ): State[C] = {
+    val bottom = UIJDLattice[State[C]].bottom
+
+    Causal(
+      ds.getOrElse(bottom.dotStore),
+      cc
+    )
+  }
 
   def read[C: CContext]: DeltaQuery[State[C], Boolean] = {
     case Causal(ds, _) => ds.nonEmpty
   }
 
-  def enable[C: CContext]: DeltaMutator[State[C]] = {
+  def enable[C: CContext](): DeltaMutator[State[C]] = {
     case (replicaID, Causal(ds, cc)) =>
       val nextDot = CContext[C].nextDot(cc, replicaID)
 
-      Causal(
-        Set(nextDot),
-        CContext[C].fromSet(ds + nextDot)
+      deltaState(
+        ds = Some(Set(nextDot)),
+        cc = CContext[C].fromSet(ds + nextDot)
       )
   }
 
-  def disable[C: CContext]: DeltaMutator[State[C]] = {
+  def disable[C: CContext](): DeltaMutator[State[C]] = {
     case (_, Causal(ds, _)) =>
-      Causal(
-        DotSet.empty,
-        CContext[C].fromSet(ds)
+      deltaState(
+        cc = CContext[C].fromSet(ds)
       )
   }
 }
@@ -38,9 +46,9 @@ object EWFlagCRDT {
 class EWFlag[C: CContext](crdt: DeltaCRDT[EWFlagCRDT.State[C]]) {
   def read: Boolean = crdt.query(EWFlagCRDT.read)
 
-  def enable(): EWFlag[C] = new EWFlag(crdt.mutate(EWFlagCRDT.enable))
+  def enable(): EWFlag[C] = new EWFlag(crdt.mutate(EWFlagCRDT.enable()))
 
-  def disable(): EWFlag[C] = new EWFlag(crdt.mutate(EWFlagCRDT.disable))
+  def disable(): EWFlag[C] = new EWFlag(crdt.mutate(EWFlagCRDT.disable()))
 
   def processReceivedDeltas(): EWFlag[C] = new EWFlag(crdt.processReceivedDeltas())
 }
@@ -50,7 +58,7 @@ object EWFlag {
   type Embedded = DotSet
 
   def apply[C: CContext](antiEntropy: AntiEntropy[EWFlagCRDT.State[C]]): EWFlag[C] =
-    new EWFlag(EWFlagCRDT(antiEntropy))
+    new EWFlag(DeltaCRDT.empty(antiEntropy))
 
   implicit def EWFlagStateCodec[C: JsonValueCodec]: JsonValueCodec[Causal[Set[Dot], C]] = JsonCodecMaker.make
 

@@ -75,7 +75,7 @@ object RubisCRDT {
       }
 
       deltaState(
-        userRequests = Some(AWSetCRDT.clear[(User, String), C].apply(replicaID, req)),
+        userRequests = Some(AWSetCRDT.clear[(User, String), C]().apply(replicaID, req)),
         users = Some(newUsers)
       )
   }
@@ -104,7 +104,7 @@ object Rubis {
   implicit val UserAsUIJDLattice: UIJDLattice[User] = UIJDLattice.AtomicUIJDLattice[User]
 
   def apply[C: CContext](ae: AntiEntropy[State[C]]): Rubis[C] =
-    new Rubis(DeltaCRDT.empty[State[C]](ae))
+    new Rubis(DeltaCRDT.empty(ae))
 
   implicit def RubisStateCodec[C: JsonValueCodec]: JsonValueCodec[(
       Causal[Map[(String, String), Set[Dot]], C],

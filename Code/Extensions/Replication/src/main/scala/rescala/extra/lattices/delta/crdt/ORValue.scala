@@ -7,6 +7,18 @@ import rescala.extra.lattices.delta.{CContext, Causal, UIJDLattice}
 object ORValueCRDT {
   type State[A, C] = Causal[DotFun[A], C]
 
+  private def deltaState[A: UIJDLattice, C: CContext](
+      df: Option[DotFun[A]] = None,
+      cc: C
+  ): State[A, C] = {
+    val bottom = UIJDLattice[State[A, C]].bottom
+
+    Causal(
+      df.getOrElse(bottom.dotStore),
+      cc
+    )
+  }
+
   def read[A: UIJDLattice, C: CContext]: DeltaQuery[State[A, C], Option[A]] = {
     case Causal(df, _) => df.values.headOption
   }
@@ -15,17 +27,16 @@ object ORValueCRDT {
     case (replicaID, Causal(df, cc)) =>
       val nextDot = CContext[C].nextDot(cc, replicaID)
 
-      Causal(
-        Map(nextDot -> v),
-        CContext[C].fromSet(DotFun[A].dots(df))
+      deltaState(
+        df = Some(Map(nextDot -> v)),
+        cc = CContext[C].fromSet(DotFun[A].dots(df))
       )
   }
 
   def clear[A: UIJDLattice, C: CContext](): DeltaMutator[State[A, C]] = {
     case (_, Causal(df, _)) =>
-      Causal(
-        DotFun[A].empty,
-        CContext[C].fromSet(DotFun[A].dots(df))
+      deltaState(
+        cc = CContext[C].fromSet(DotFun[A].dots(df))
       )
   }
 }
