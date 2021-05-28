@@ -14,7 +14,7 @@ trait TaskBundle {
   trait FramingTask extends FullMVAction {
     override def doCompute(): Unit = {
       val branchResult = doFraming()
-      if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this => $branchResult")
+      if (FullMVUtil.DEBUG) println(s"[${Thread.currentThread().getName}] $this => $branchResult")
       branchResult match {
         case FramingBranchEnd =>
           turn.activeBranchDifferential(TurnPhase.Framing, -1)
@@ -75,7 +75,7 @@ trait TaskBundle {
     val changed: Boolean
     override def doCompute(): Unit = {
       val (retainBranch, notificationResultAction) = deliverNotification()
-      if (FullMVEngine.DEBUG)
+      if (FullMVUtil.DEBUG)
         println(s"[${Thread.currentThread().getName}] $this => $retainBranch, $notificationResultAction")
       processNotificationResult(retainBranch, notificationResultAction)
     }
@@ -219,13 +219,13 @@ trait TaskBundle {
 
     def processReevaluationResult(maybeChange: Option[node.Value]): ReevOutBranchResult[FullMVTurn, Derived] = {
       val reevOutResult = node.state.reevOut(turn, maybeChange, node.commit)
-      if (FullMVEngine.DEBUG && maybeChange.isDefined && maybeChange.get.isInstanceOf[Pulse.Exceptional]) {
+      if (FullMVUtil.DEBUG && maybeChange.isDefined && maybeChange.get.isInstanceOf[Pulse.Exceptional]) {
         // could be a framework exception that is relevant to debugging, but was eaten by reactive's
         // exception propagation and thus wouldn't be reported otherwise..
         println(s"[${Thread.currentThread().getName}] WARNING: $this glitch-free result is exceptional:")
         maybeChange.get.asInstanceOf[Pulse.Exceptional].throwable.printStackTrace()
       }
-      if (FullMVEngine.DEBUG)
+      if (FullMVUtil.DEBUG)
         println(
           s"[${Thread.currentThread().getName}] Reevaluation($turn,$node) => ${if (maybeChange.isDefined) "changed"
           else "unchanged"} $reevOutResult"

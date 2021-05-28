@@ -1,6 +1,6 @@
 package rescala.fullmv.mirrors
 
-import rescala.fullmv.FullMVEngine
+import rescala.fullmv.FullMVUtil
 import rescala.fullmv.mirrors.Host.DEBUG
 import rescala.fullmv.sgt.synchronization._
 
@@ -49,7 +49,7 @@ class SubsumableLockReflection(
       case RemoteGCd =>
         assert(this.refCount.get <= 0, s"remote was gc'd while $this still holds a reference")
         GarbageCollected0
-    }(FullMVEngine.notWorthToMoveToTaskpool)
+    }(FullMVUtil.notWorthToMoveToTaskpool)
   }
 
   override def trySubsume0(hopCount: Int, lockedNewParent: SubsumableLock): Future[TrySubsumeResult0] = {
@@ -97,7 +97,7 @@ class SubsumableLockReflection(
         case RemoteGCd =>
           assert(this.refCount.get <= 0, s"remote was gc'd while $this still holds a reference")
           GarbageCollected0
-      }(FullMVEngine.notWorthToMoveToTaskpool)
+      }(FullMVUtil.notWorthToMoveToTaskpool)
     }
   }
 
@@ -115,7 +115,7 @@ class SubsumableLockReflection(
       if (Host.DEBUG)
         println(s"[${Thread.currentThread().getName}] $this passing through tryLock result $res")
       res
-    }(FullMVEngine.notWorthToMoveToTaskpool)
+    }(FullMVUtil.notWorthToMoveToTaskpool)
   }
   override def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[RemoteTrySubsumeResult] = {
     if (Host.DEBUG)
@@ -126,7 +126,7 @@ class SubsumableLockReflection(
       if (Host.DEBUG)
         println(s"[${Thread.currentThread().getName}] $this passing through trySubsume $lockedNewParent result $res")
       res
-    }(FullMVEngine.notWorthToMoveToTaskpool)
+    }(FullMVUtil.notWorthToMoveToTaskpool)
   }
 
   override protected def dumped(): Unit = {

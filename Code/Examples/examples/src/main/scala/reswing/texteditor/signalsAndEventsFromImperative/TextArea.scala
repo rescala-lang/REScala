@@ -2,9 +2,8 @@ package reswing.texteditor.signalsAndEventsFromImperative
 
 import java.awt.{Dimension, Graphics2D, Point, Rectangle, SystemColor, Toolkit}
 import java.awt.datatransfer.{DataFlavor, StringSelection}
-
 import rescala.default._
-import rescala.macros.cutOutOfUserComputation
+import rescala.operator.cutOutOfUserComputation
 import reswing.{ReComponent, ReSwingValue}
 import reswing.texteditor.{JScrollableComponent, LineIterator, LineOffset, Position}
 

@@ -3,7 +3,6 @@ package tests.rescala.property
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import rescala.extra.invariant._
 import tests.rescala.testtools.RETests
 
 class InvariantsTest extends RETests with ScalaCheckDrivenPropertyChecks with Matchers {

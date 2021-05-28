@@ -13,7 +13,7 @@ class FullMVApi(val timeout: Duration, val schedulerName: String) extends Rescal
   override def scheduler: FullMVEngine = new FullMVEngine(timeout, schedulerName)
 }
 
-object FullMVEngine {
+object FullMVUtil {
   val DEBUG = false
 
   object default extends FullMVApi(Duration.Zero, "FullMV-default-engine")

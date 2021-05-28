@@ -1,9 +1,8 @@
 package rescala.operator
 
+import rescala.compat.EventCompatApi
 import rescala.core._
 import rescala.interface.RescalaInterface
-import rescala.macros.MacroTags.{Static, Dynamic}
-import rescala.macros.cutOutOfUserComputation
 import rescala.operator.Pulse.{Exceptional, NoChange, Value}
 import rescala.operator.RExceptions.ObservedException
 
@@ -32,8 +31,8 @@ object EventsMacroImpl {
 
 }
 
-trait EventApi {
-  selfType: RescalaInterface with EventApi with SignalApi with Sources with DefaultImplementations with Observing
+trait EventApi extends EventCompatApi {
+  selfType: RescalaInterface with SignalApi with Sources with DefaultImplementations with Observing
     with Core =>
 
   /** Events only propagate a value when they are changing,
@@ -55,10 +54,10 @@ trait EventApi {
     * @groupname accessors Accessors and observers
     * @groupprio accessor 5
     */
-  trait Event[+T] extends ReSource with InterpMacro[Option[T]] with Disconnectable {
+  trait Event[+T] extends ReSource with EventCompat[T] with Disconnectable {
 
     implicit def internalAccess(v: Value): Pulse[T]
-    override def resource: Interp[Option[T]] = this
+    def resource: Interp[Option[T]] = this
 
     /** Interprets the pulse of the event by converting to an option
       *
@@ -117,23 +116,7 @@ trait EventApi {
         }
       }
 
-    /** Collects the results from a partial function
-      * @usecase def collect[U](pf: PartialFunction[T, U]): rescala.default.Event[U]
-      * @group operator
-      */
-    @cutOutOfUserComputation
-    final def collect[U](expression: PartialFunction[T, U])(implicit ticket: CreationTicket): Event[U] =
-      macro rescala.macros.ReactiveMacros.ReactiveUsingFunctionMacro[
-        T,
-        U,
-        EventsMacroImpl.CollectFuncImpl.type,
-        Events.type,
-        StaticTicket,
-        DynamicTicket,
-        CreationTicket,
-        LowPriorityCreationImplicits
-      ]
-    //Events.staticNamed(s"(collect $this)", this) { st => st.collectStatic(this).collect(pf) }
+
 
     /** Events disjunction.
       * Propagates the values if any of the events fires.
@@ -149,40 +132,7 @@ trait EventApi {
       }
     }
 
-    /** Filters the event, only propagating the value when the filter is true.
-      * @usecase def filter(pred: T => Boolean): rescala.default.Event[T]
-      * @group operator
-      */
-    @cutOutOfUserComputation
-    final def filter(expression: T => Boolean)(implicit ticket: CreationTicket): Event[T] =
-      macro rescala.macros.ReactiveMacros.ReactiveUsingFunctionMacro[
-        T,
-        T,
-        EventsMacroImpl.FilterFuncImpl.type,
-        Events.type,
-        StaticTicket,
-        DynamicTicket,
-        CreationTicket,
-        LowPriorityCreationImplicits
-      ]
 
-    /** Filters the event, only propagating the value when the filter is true.
-      * @usecase def &&(pred: T => Boolean): rescala.default.Event[T]
-      * @see filter
-      * @group operator
-      */
-    @cutOutOfUserComputation
-    final def &&(expression: T => Boolean)(implicit ticket: CreationTicket): Event[T] =
-      macro rescala.macros.ReactiveMacros.ReactiveUsingFunctionMacro[
-        T,
-        T,
-        EventsMacroImpl.FilterFuncImpl.type,
-        Events.type,
-        StaticTicket,
-        DynamicTicket,
-        CreationTicket,
-        LowPriorityCreationImplicits
-      ]
 
     /** Propagates the event only when except does not fire.
       * @usecase def \[U](except: rescala.default.Event[U]): rescala.default.Event[T]
@@ -234,22 +184,6 @@ trait EventApi {
       }
     }
 
-    /** Transform the event.
-      * @usecase def map[A](expression: T => A): rescala.default.Event[A]
-      * @group operator
-      */
-    @cutOutOfUserComputation
-    final def map[A](expression: T => A)(implicit ticket: CreationTicket): Event[A] =
-      macro rescala.macros.ReactiveMacros.ReactiveUsingFunctionMacro[
-        T,
-        A,
-        EventsMacroImpl.MapFuncImpl.type,
-        Events.type,
-        StaticTicket,
-        DynamicTicket,
-        CreationTicket,
-        LowPriorityCreationImplicits
-      ]
 
     /** Flattens the inner value.
       * @group operator
@@ -264,23 +198,6 @@ trait EventApi {
     @cutOutOfUserComputation
     final def dropParam(implicit ticket: CreationTicket): Event[Unit] =
       Events.static(this)(_ => Some(()))
-
-    /** Folds events with a given operation to create a Signal.
-      * @group conversion
-      * @usecase def fold[A](init: A)(op: (A, T) => A): rescala.default.Signal[A]
-      * @inheritdoc
-      */
-    @cutOutOfUserComputation
-    final def fold[A](init: A)(op: (A, T) => A)(implicit ticket: CreationTicket): Signal[A] =
-      macro rescala.macros.ReactiveMacros.EventFoldMacro[
-        T,
-        A,
-        Events.type,
-        CreationTicket,
-        StaticTicket,
-        CreationTicket,
-        LowPriorityCreationImplicits
-      ]
 
     /** reduces events with a given reduce function to create a Signal
       *
@@ -383,46 +300,6 @@ trait EventApi {
 
   }
 
-  /** Similar to [[Signal]] expressions, but resulting in an event.
-    * Accessed events return options depending on whether they fire or not,
-    * and the complete result of the expression is an event as well.
-    *
-    * @see [[Signal]]
-    * @group create
-    */
-  object Event {
-    def rescalaAPI = selfType
-    final def apply[A](expression: Option[A])(implicit ticket: CreationTicket): Event[A] =
-      macro rescala.macros.ReactiveMacros.ReactiveExpression[
-        A,
-        Static,
-        Events.type,
-        StaticTicket,
-        DynamicTicket,
-        CreationTicket,
-        LowPriorityCreationImplicits
-      ]
-    final def static[A](expression: Option[A])(implicit ticket: CreationTicket): Event[A] =
-      macro rescala.macros.ReactiveMacros.ReactiveExpression[
-        A,
-        Static,
-        Events.type,
-        StaticTicket,
-        DynamicTicket,
-        CreationTicket,
-        LowPriorityCreationImplicits
-      ]
-    final def dynamic[A](expression: Option[A])(implicit ticket: CreationTicket): Event[A] =
-      macro rescala.macros.ReactiveMacros.ReactiveExpression[
-        A,
-        Dynamic,
-        Events.type,
-        StaticTicket,
-        DynamicTicket,
-        CreationTicket,
-        LowPriorityCreationImplicits
-      ]
-  }
 
   object Events {
 

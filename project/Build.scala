@@ -9,7 +9,7 @@ object Settings {
 
   import Dependencies.{Versions => V}
 
-  val commonCrossBuildVersions = crossScalaVersions := Seq(V.scala211, V.scala212, V.scala212)
+  val commonCrossBuildVersions = crossScalaVersions := Seq(V.scala211, V.scala212, V.scala212, V.scala3)
 
   val scalaVersion_211 = Def.settings(
     scalaVersion := V.scala211,

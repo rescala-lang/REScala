@@ -1,5 +1,6 @@
 package rescala.interface
 
+import rescala.compat.{EventCompatApi, SignalCompatApi}
 import rescala.core.Core
 import rescala.operator.{DefaultImplementations, EventApi, FlattenApi, Observing, SignalApi, Sources}
 
@@ -23,7 +24,7 @@ import rescala.operator.{DefaultImplementations, EventApi, FlattenApi, Observing
   * @groupdesc internal Methods and type aliases for advanced usages, these are most relevant to abstract
   *           over multiple scheduler implementations.
   */
-trait RescalaInterface extends EventApi with SignalApi with FlattenApi with Sources with DefaultImplementations with Observing with Core {
+trait RescalaInterface extends EventApi with SignalApi with FlattenApi with Sources with DefaultImplementations with Observing with Core with SignalCompatApi with EventCompatApi {
 
   /** @group internal */
   def scheduler: Scheduler

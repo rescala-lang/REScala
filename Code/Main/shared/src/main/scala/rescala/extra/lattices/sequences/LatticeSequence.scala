@@ -22,7 +22,7 @@ case class LatticeSequence[A, VertexSet](vertices: VertexSet, edges: Map[Vertex,
       case Vertex.start => true
       case Vertex.end   => false
       case u: Vertex    => edges(u) == v || before(edges(u), v)
-      case _            => throw new IllegalArgumentException(s"CRDTSequence does not contain Vertex $u!")
+      case null            => throw new IllegalArgumentException(s"CRDTSequence does not contain Vertex $u!")
     }
 
   def successor(v: Vertex): Vertex = {
@@ -80,7 +80,7 @@ case class LatticeSequence[A, VertexSet](vertices: VertexSet, edges: Map[Vertex,
       override def next(): Vertex = {
         successor(lastVertex) match {
           case v: Vertex => lastVertex = v; v
-          case _ => throw new NoSuchElementException(
+          case null => throw new NoSuchElementException(
               "Requesting iterator value after Vertex.end!"
             )
         }

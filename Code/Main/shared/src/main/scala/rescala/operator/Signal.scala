@@ -1,9 +1,8 @@
 package rescala.operator
 
+import rescala.compat.SignalCompatApi
 import rescala.core.Core
 import rescala.interface.RescalaInterface
-import rescala.macros.MacroTags.{Dynamic, Static}
-import rescala.macros.cutOutOfUserComputation
 import rescala.operator.RExceptions.{EmptySignalControlThrowable, ObservedException}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -15,8 +14,8 @@ object SignalMacroImpl {
 }
 
 trait SignalApi {
-  selfType: RescalaInterface with EventApi with SignalApi with Sources with DefaultImplementations with Observing
-    with Core =>
+  selfType: RescalaInterface with SignalCompatApi with EventApi with SignalApi with Sources with DefaultImplementations
+    with Observing with Core =>
 
   /** Time changing value derived from the dependencies.
     *
@@ -29,11 +28,11 @@ trait SignalApi {
     * @groupname accessors Accessors and observers
     * @groupprio accessor 5
     */
-  trait Signal[+T] extends Disconnectable with InterpMacro[T] {
+  trait Signal[+T] extends Disconnectable with SignalCompat[T] {
     override type Value <: Pulse[T]
     override def interpret(v: Value): T                        = v.get
     override protected[rescala] def commit(base: Value): Value = base
-    override def resource: Interp[T]                           = this
+    def resource: Interp[T]                           = this
 
     /** Returns the current value of the signal
       * However, using now is in most cases not what you want.
@@ -108,31 +107,11 @@ trait SignalApi {
         }
       }
 
-    /** Return a Signal with f applied to the value
-      * @group operator
-      */
-    @cutOutOfUserComputation
-    final def map[B](expression: T => B)(implicit ticket: CreationTicket): Signal[B] =
-      macro rescala.macros.ReactiveMacros.ReactiveUsingFunctionMacro[
-        T,
-        B,
-        rescala.operator.SignalMacroImpl.MapFuncImpl.type,
-        Signals.type,
-        StaticTicket,
-        DynamicTicket,
-        CreationTicket,
-        LowPriorityCreationImplicits
-      ]
-
     /** Flattens the inner value.
       * @group operator
       */
     @cutOutOfUserComputation
     final def flatten[R](implicit flatten: Flatten[Signal[T], R]): R = flatten.apply(this)
-
-//  /** Delays this signal by n occurrences */
-//  final def delay[A1 >: A](n: Int)(implicit ticket: CreationTicket], ev: ReSerializable[Queue[A1]]): Signal[A1] =
-//    ticket { implicit ict => changed.delay[A1](ict.turn.staticBefore(this).get, n) }
 
     /** Create an event that fires every time the signal changes. It fires the tuple (oldVal, newVal) for the signal.
       * Be aware that no change will be triggered when the signal changes to or from empty
@@ -168,58 +147,7 @@ trait SignalApi {
 
   }
 
-  /** A signal expression can be used to create signals accessing arbitrary other signals.
-    * Use the apply method on a signal to access its value inside of a signal expression.
-    * {{{
-    * val a: Signal[Int]
-    * val b: Signal[Int]
-    * val result: Signal[String] = Signal { a().toString + b().toString}
-    * }}}
-    * @group create
-    */
-  object Signal {
-    final def apply[A](expression: A)(implicit ticket: CreationTicket): Signal[A] =
-      macro rescala.macros.ReactiveMacros.ReactiveExpression[
-        A,
-        Static,
-        Signals.type,
-        StaticTicket,
-        DynamicTicket,
-        CreationTicket,
-        LowPriorityCreationImplicits
-      ]
-    final def static[A](expression: A)(implicit ticket: CreationTicket): Signal[A] =
-      macro rescala.macros.ReactiveMacros.ReactiveExpression[
-        A,
-        Static,
-        Signals.type,
-        StaticTicket,
-        DynamicTicket,
-        CreationTicket,
-        LowPriorityCreationImplicits
-      ]
-    final def dynamic[A](expression: A)(implicit ticket: CreationTicket): Signal[A] =
-      macro rescala.macros.ReactiveMacros.ReactiveExpression[
-        A,
-        Dynamic,
-        Signals.type,
-        StaticTicket,
-        DynamicTicket,
-        CreationTicket,
-        LowPriorityCreationImplicits
-      ]
-  }
 
-  class UserDefinedFunction[+T, Dep, Cap](
-      val staticDependencies: Set[Dep],
-      val expression: Cap => T,
-      val isStatic: Boolean = true
-  )
-
-  object UserDefinedFunction {
-    implicit def fromExpression[T, Dep, Cap](expression: => T): UserDefinedFunction[T, Dep, Cap] =
-    macro rescala.macros.ReactiveMacros.UDFExpressionWithAPI[T, Dep, Cap, DynamicTicket, CreationTicket, LowPriorityCreationImplicits]
-  }
 
   /** Functions to construct signals, you probably want to use signal expressions in [[rescala.interface.RescalaInterface.Signal]] for a nicer API. */
   object Signals {
@@ -227,9 +155,7 @@ trait SignalApi {
     private def ignore2[Tick, Current, Res](f: Tick => Res): (Tick, Current) => Res = (ticket, _) => f(ticket)
 
     @cutOutOfUserComputation
-    def ofUDF[T](udf: UserDefinedFunction[T, ReSource, DynamicTicket])(implicit
-                                                                       ct: CreationTicket
-    ): Signal[T] = {
+    def ofUDF[T](udf: UserDefinedFunction[T, ReSource, DynamicTicket])(implicit ct: CreationTicket): Signal[T] = {
       ct.create[Pulse[T], SignalImpl[T]](udf.staticDependencies, Pulse.empty, inite = true) {
         state =>
           new SignalImpl[T](

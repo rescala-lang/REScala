@@ -75,7 +75,7 @@ trait FullMvStateBundle extends FullMVBundle {
 
       @tailrec def wakeAll(threads: List[Thread], reason: String): Unit = {
         if (threads != null && threads != Nil) {
-          if (NonblockingSkipListVersionHistory.DEBUG || FullMVEngine.DEBUG)
+          if (NonblockingSkipListVersionHistory.DEBUG || FullMVUtil.DEBUG)
             println(s"[${Thread.currentThread().getName}] $reason $this, unparking ${threads.head}.")
           LockSupport.unpark(threads.head)
           wakeAll(threads.tail, reason)
@@ -439,7 +439,7 @@ trait FullMvStateBundle extends FullMVBundle {
             case TurnPhase.Executing =>
               NonblockingSkipListVersionHistory.tryRecordRelationship(current.txn, txn, current.txn, txn)
             case TurnPhase.Framing   => /* and only if still Framing becomes relevant, ensure that we still are */
-              FullMVEngine.myAwait(
+              FullMVUtil.myAwait(
                 txn.acquireRemoteBranchIfPhaseAtMost(TurnPhase.Framing),
                 txn.host.timeout
                 ) <= TurnPhase.Framing && (try {
@@ -564,7 +564,7 @@ trait FullMvStateBundle extends FullMVBundle {
         version.changed > 0 || (version.changed == 0 && maybeValue.isEmpty),
         s"$turn cannot write changed=${maybeValue.isDefined} in $this"
         )
-      if (NonblockingSkipListVersionHistory.DEBUG || FullMVEngine.DEBUG) maybeValue match {
+      if (NonblockingSkipListVersionHistory.DEBUG || FullMVUtil.DEBUG) maybeValue match {
         case Some(Pulse.Exceptional(t)) =>
           throw new Exception(
             s"Glitch-free reevaluation result for $version is exceptional",
@@ -873,7 +873,7 @@ trait FullMvStateBundle extends FullMVBundle {
         ForkJoinPool.managedBlock(new ManagedBlocker() {
           override def isReleasable: Boolean = check(version)
           override def block(): Boolean = {
-            if (NonblockingSkipListVersionHistory.DEBUG || FullMVEngine.DEBUG)
+            if (NonblockingSkipListVersionHistory.DEBUG || FullMVUtil.DEBUG)
               println(s"[${Thread.currentThread().getName}] parking for $label $version.")
             val timeBefore = System.nanoTime()
             LockSupport.parkNanos(NonblockingSkipListVersionHistory.this, 3000L * 1000 * 1000)
@@ -897,7 +897,7 @@ trait FullMvStateBundle extends FullMVBundle {
             res
           }
         })
-        if (NonblockingSkipListVersionHistory.DEBUG || FullMVEngine.DEBUG)
+        if (NonblockingSkipListVersionHistory.DEBUG || FullMVUtil.DEBUG)
           println(s"[${Thread.currentThread().getName}] unparked on $label $version")
       } else {
         assert(check(version), s"$label sleeper addition failed, but not $label: $version")
@@ -1263,7 +1263,7 @@ trait FullMvStateBundle extends FullMVBundle {
                 // relation no longer needs recording because predecessor completed concurrently
                 true
               } else {
-                FullMVEngine.myAwait(succToRecord.addPredecessor(tree), contender.host.timeout)
+                FullMVUtil.myAwait(succToRecord.addPredecessor(tree), contender.host.timeout)
                 // relation newly recorded
                 true
               }
@@ -1295,7 +1295,7 @@ trait FullMvStateBundle extends FullMVBundle {
      */
     def tryFixSuccessorOrderIfNotFixedYet(txn: FullMVTurn, succ: FullMVTurn): Boolean = {
       succ.isTransitivePredecessor(txn) || {
-        val res = FullMVEngine.myAwait(
+        val res = FullMVUtil.myAwait(
           succ.acquireRemoteBranchIfPhaseAtMost(TurnPhase.Framing),
           txn.host.timeout
           ) < TurnPhase.Executing

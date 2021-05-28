@@ -1,7 +1,7 @@
 package reswing
 
 import rescala.default._
-import rescala.macros.cutOutOfUserComputation
+import rescala.operator.cutOutOfUserComputation
 
 /** Combines reactive values from the application and from the `Swing` library */
 sealed abstract class ReSwingValue[T] {

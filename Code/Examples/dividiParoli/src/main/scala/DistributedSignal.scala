@@ -2,7 +2,7 @@ import loci.transmitter._
 import loci.transmitter.transmittable._
 import rescala.default._
 import rescala.extra.lattices.Lattice
-import rescala.macros.cutOutOfUserComputation
+import rescala.operator.cutOutOfUserComputation
 
 /** Classes implementing this trait can be published and are then synchronized by the DistributionEngine (specified by
   * the implicit val `engine`). Internal changes to the underlying StateCRDT are made by firing an `internalChanges` event

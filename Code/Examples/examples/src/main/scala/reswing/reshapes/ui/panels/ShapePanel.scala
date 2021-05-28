@@ -7,7 +7,7 @@ import scala.swing.Label
 import scala.swing.Orientation
 import scala.swing.ScrollPane
 import rescala.default._
-import rescala.macros.cutOutOfUserComputation
+import rescala.operator.cutOutOfUserComputation
 import reswing.reshapes.ReShapes
 import reswing.reshapes.drawing.DeleteShape
 import reswing.reshapes.drawing.DrawingSpaceState

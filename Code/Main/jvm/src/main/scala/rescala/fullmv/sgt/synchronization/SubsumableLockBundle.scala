@@ -2,7 +2,7 @@ package rescala.fullmv.sgt.synchronization
 
 import rescala.fullmv.mirrors._
 import rescala.fullmv.tasks.TaskBundle
-import rescala.fullmv.{FullMVBundle, FullMVEngine, FullMvStateBundle, TurnImplBundle}
+import rescala.fullmv.{FullMVBundle, FullMVUtil, FullMvStateBundle, TurnImplBundle}
 import rescala.parrp.Backoff
 
 import java.util.concurrent.atomic.AtomicReference
@@ -28,7 +28,7 @@ trait SubsumableLockBundle extends FullMVBundle {
       if (DEBUG) System.out.println(s"[${Thread.currentThread().getName}] syncing on SCC of $contender")
       val bo = new Backoff()
       @tailrec def reTryLock(): SubsumableLock = {
-        FullMVEngine.myAwait(contender.tryLock(), timeout) match {
+        FullMVUtil.myAwait(contender.tryLock(), timeout) match {
           case Locked(lockedRoot) =>
             if (DEBUG)
               System.out.println(s"[${Thread.currentThread().getName}] now owns SCC of $contender under $lockedRoot")
@@ -51,9 +51,9 @@ trait SubsumableLockBundle extends FullMVBundle {
         System.out.println(s"[${Thread.currentThread().getName}] syncing $defender and $contender into a common SCC")
       val bo = new Backoff()
       @tailrec def reTryLock(): Option[SubsumableLock] = {
-        FullMVEngine.myAwait(contender.tryLock(), timeout) match {
+        FullMVUtil.myAwait(contender.tryLock(), timeout) match {
           case Locked(lockedRoot) =>
-            FullMVEngine.myAwait(defender.trySubsume(lockedRoot), timeout) match {
+            FullMVUtil.myAwait(defender.trySubsume(lockedRoot), timeout) match {
               case Successful =>
                 if (DEBUG)
                   System.out.println(
@@ -171,7 +171,7 @@ trait SubsumableLockBundle extends FullMVBundle {
                   s"[${Thread.currentThread().getName}] retrying tryLock $this after parent was concurrently deallocated"
                 )
               this.asInstanceOf[SubsumableLock].tryLock0(hopCount)
-          }(FullMVEngine.notWorthToMoveToTaskpool)
+          }(FullMVUtil.notWorthToMoveToTaskpool)
       }
     }
 
@@ -252,7 +252,7 @@ trait SubsumableLockBundle extends FullMVBundle {
                     s"[${Thread.currentThread().getName}] retrying trySubsume $this after parent was concurrently deallocated"
                   )
                 this.asInstanceOf[SubsumableLock].trySubsume0(hopCount, lockedNewParent)
-            }(FullMVEngine.notWorthToMoveToTaskpool)
+            }(FullMVUtil.notWorthToMoveToTaskpool)
         }
       }
     }
@@ -367,7 +367,7 @@ trait SubsumableLockBundle extends FullMVBundle {
                   s"[${Thread.currentThread().getName}] retrying remote tryLock $this after parent was concurrently deallocated"
                 )
               this.asInstanceOf[SubsumableLock].remoteTryLock()
-          }(FullMVEngine.notWorthToMoveToTaskpool)
+          }(FullMVUtil.notWorthToMoveToTaskpool)
       }
     }
 
@@ -444,7 +444,7 @@ trait SubsumableLockBundle extends FullMVBundle {
                   s"[${Thread.currentThread().getName}] retrying remote trySubsume $this after parent was concurrently deallocated"
                 )
               this.asInstanceOf[SubsumableLock].remoteTrySubsume(lockedNewParent)
-          }(FullMVEngine.notWorthToMoveToTaskpool)
+          }(FullMVUtil.notWorthToMoveToTaskpool)
       }
     }
 

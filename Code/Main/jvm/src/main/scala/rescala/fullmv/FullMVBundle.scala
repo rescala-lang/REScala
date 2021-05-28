@@ -123,7 +123,7 @@ trait FullMVBundle extends Core {
       instances.put(Host.dummyGuid, dummy)
       dummy.beginExecuting()
       dummy.completeExecuting()
-      if (Host.DEBUG || SubsumableLock.DEBUG || FullMVEngine.DEBUG)
+      if (Host.DEBUG || SubsumableLock.DEBUG || FullMVUtil.DEBUG)
         println(s"[${Thread.currentThread().getName}] $this SETUP COMPLETE")
       dummy
     }
@@ -154,7 +154,7 @@ trait FullMVBundle extends Core {
           override private[rescala] def access(reactive: ReSource): reactive.Value = turn.dynamicBefore(reactive)
         }
         val admissionResult = Try { admissionPhase(admissionTicket) }
-        if (FullMVEngine.DEBUG) admissionResult match {
+        if (FullMVUtil.DEBUG) admissionResult match {
           case scala.util.Failure(e) => e.printStackTrace()
           case _                     =>
         }
@@ -217,7 +217,7 @@ trait FullMVBundle extends Core {
       val it = waiters.entrySet().iterator()
       while (it.hasNext) {
         val waiter = it.next()
-        if (FullMVEngine.DEBUG)
+        if (FullMVUtil.DEBUG)
           println(s"[${Thread.currentThread().getName}] $this phase switch unparking ${waiter.getKey.getName}.")
         if (waiter.getValue <= newPhase) LockSupport.unpark(waiter.getKey)
       }
@@ -312,7 +312,7 @@ trait FullMVBundle extends Core {
         ignitionRequiresReevaluation: Boolean
     ): Unit = {
 //    assert(Thread.currentThread() == userlandThread, s"$this ignition of $reactive on different thread ${Thread.currentThread().getName}")
-      if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this igniting $reactive on $incoming")
+      if (FullMVUtil.DEBUG) println(s"[${Thread.currentThread().getName}] $this igniting $reactive on $incoming")
       incoming.foreach { discover =>
         discover.state.dynamicAfter(this) // TODO should we get rid of this?
         val (successorWrittenVersions, maybeFollowFrame) = discover.state.discover(this, reactive)
@@ -330,20 +330,20 @@ trait FullMVBundle extends Core {
       val ignitionNotification = new Notification(this, reactive, changed = ignitionRequiresReevaluation)
       ignitionNotification.deliverNotification() match {
         case (true, DoNothing) =>
-          if (FullMVEngine.DEBUG)
+          if (FullMVUtil.DEBUG)
             println(s"[${Thread.currentThread().getName}] $this ignite $reactive spawned a branch.")
         case (false, DoNothing) =>
-          if (FullMVEngine.DEBUG)
+          if (FullMVUtil.DEBUG)
             println(
               s"[${Thread.currentThread().getName}] $this ignite $reactive did not spawn a branch or reevaluation."
             )
           activeBranchDifferential(TurnPhase.Executing, -1)
         case (retainBranch, ReevaluationReady) =>
-          if (FullMVEngine.DEBUG)
+          if (FullMVUtil.DEBUG)
             println(s"[${Thread.currentThread().getName}] $this ignite $reactive spawned reevaluation.")
           new Reevaluation(this, reactive).doReevaluation(retainBranch)
         case (true, NotifyAndReevaluationReadySuccessor(out, succTxn)) if out.isEmpty =>
-          if (FullMVEngine.DEBUG)
+          if (FullMVUtil.DEBUG)
             println(
               s"[${Thread.currentThread().getName}] $this ignite $reactive spawned reevaluation for successor $succTxn."
             )
@@ -366,7 +366,7 @@ trait FullMVBundle extends Core {
     def discover(node: ReSource, addOutgoing: Derived): Unit = {
       val r @ (successorWrittenVersions, maybeFollowFrame) = node.state.discover(this, addOutgoing)
 //    assert((successorWrittenVersions ++ maybeFollowFrame).forall(retrofit => retrofit == this || retrofit.isTransitivePredecessor(this)), s"$this retrofitting contains predecessors: discover $node -> $addOutgoing retrofits $r from ${node.state}")
-      if (FullMVEngine.DEBUG)
+      if (FullMVUtil.DEBUG)
         println(
           s"[${Thread.currentThread().getName}] Reevaluation($this,$addOutgoing) discovering $node -> $addOutgoing re-queueing $successorWrittenVersions and re-framing $maybeFollowFrame"
         )
@@ -377,7 +377,7 @@ trait FullMVBundle extends Core {
     def drop(node: ReSource, removeOutgoing: Derived): Unit = {
       val r @ (successorWrittenVersions, maybeFollowFrame) = node.state.drop(this, removeOutgoing)
 //    assert((successorWrittenVersions ++ maybeFollowFrame).forall(retrofit => retrofit == this || retrofit.isTransitivePredecessor(this)), s"$this retrofitting contains predecessors: drop $node -> $removeOutgoing retrofits $r from ${node.state}")
-      if (FullMVEngine.DEBUG)
+      if (FullMVUtil.DEBUG)
         println(
           s"[${Thread.currentThread().getName}] Reevaluation($this,$removeOutgoing) dropping $node -> $removeOutgoing de-queueing $successorWrittenVersions and de-framing $maybeFollowFrame"
         )

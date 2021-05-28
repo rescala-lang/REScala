@@ -1,8 +1,9 @@
 package rescala.macros
 
+import rescala.operator.cutOutOfUserComputation
 import retypecheck._
 
-import scala.annotation.{StaticAnnotation, compileTimeOnly}
+import scala.annotation.compileTimeOnly
 import scala.reflect.macros.blackbox
 
 object MacroTags {
@@ -10,11 +11,6 @@ object MacroTags {
   type Static <: Staticism
   type Dynamic <: Staticism
 }
-
-/** Annotated definitions are cut out of any reactive macro and only evaluated once when the reactive is created.
-  * This causes more dependencies to be static and reduces the number of unnecessarily created reactives.
-  */
-class cutOutOfUserComputation extends StaticAnnotation
 
 trait MacroAccess[+A, +T] {
 

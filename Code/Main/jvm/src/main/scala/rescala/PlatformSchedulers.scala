@@ -1,6 +1,6 @@
 package rescala
 
-import rescala.fullmv.FullMVEngine
+import rescala.fullmv.FullMVUtil
 import rescala.interface.RescalaInterface
 import rescala.parrp.{Backoff, ParRP}
 
@@ -10,7 +10,7 @@ trait PlatformSchedulers {
     override val scheduler: Scheduler = parrpWithBackoff(() => new Backoff())
   }
 
-  val fullmv: FullMVEngine.default.type = FullMVEngine.default
+  val fullmv: FullMVUtil.default.type = FullMVUtil.default
 
   def byName(name: String): RescalaInterface =
     name match {

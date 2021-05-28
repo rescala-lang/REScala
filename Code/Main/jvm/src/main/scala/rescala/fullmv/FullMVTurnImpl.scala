@@ -42,7 +42,7 @@ trait TurnImplBundle extends FullMVBundle {
     }
 
     override def asyncRemoteBranchComplete(forPhase: TurnPhase.Type): Unit = {
-      if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this branch on some remote completed")
+      if (FullMVUtil.DEBUG) println(s"[${Thread.currentThread().getName}] $this branch on some remote completed")
       activeBranchDifferential(forPhase, -1)
     }
 
@@ -58,14 +58,14 @@ trait TurnImplBundle extends FullMVBundle {
 
     override def newBranchFromRemote(forPhase: TurnPhase.Type): Unit = {
       assert(phase == forPhase, s"$this received branch differential for wrong state ${TurnPhase.toString(forPhase)}")
-      if (FullMVEngine.DEBUG)
+      if (FullMVUtil.DEBUG)
         println(s"[${Thread.currentThread().getName}] $this new branch on remote is actually loop-back to local")
       // technically, move one remote branch to a local branch, but as we don't count these separately, currently doing nothing.
     }
 
     override def addRemoteBranch(forPhase: TurnPhase.Type): Future[Unit] = {
       assert(phase == forPhase, s"$this received branch differential for wrong state ${TurnPhase.toString(forPhase)}")
-      if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this new branch on some remote")
+      if (FullMVUtil.DEBUG) println(s"[${Thread.currentThread().getName}] $this new branch on some remote")
       activeBranches.getAndIncrement()
       Future.successful(())
     }
@@ -153,7 +153,7 @@ trait TurnImplBundle extends FullMVBundle {
           val currentUnknownPredecessor = selfNode.children(firstUnknownPredecessorIndex).txn
           if (currentUnknownPredecessor.phase < newPhase) {
             if (registeredForWaiting != null) {
-              if (FullMVEngine.DEBUG)
+              if (FullMVUtil.DEBUG)
                 println(s"[${Thread.currentThread().getName}] $this parking for $currentUnknownPredecessor.")
               val timeBefore = System.nanoTime()
               LockSupport.parkNanos(currentUnknownPredecessor, 10000L * 1000 * 1000)
@@ -164,7 +164,7 @@ trait TurnImplBundle extends FullMVBundle {
                   s"${Thread.currentThread().getName} $this stalled due do missing wake-up after transition to ${TurnPhase.toString(newPhase)} of $currentUnknownPredecessor"
                 })
               }
-              if (FullMVEngine.DEBUG)
+              if (FullMVUtil.DEBUG)
                 println(
                   s"[${Thread.currentThread().getName}] $this unparked with ${activeBranches.get} tasks in queue."
                 )
@@ -197,7 +197,7 @@ trait TurnImplBundle extends FullMVBundle {
       wakeWaitersAfterPhaseSwitch(newPhase)
       phaseReplicators.get.foreach(_.asyncNewPhase(newPhase))
 
-      if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this switched phase.")
+      if (FullMVUtil.DEBUG) println(s"[${Thread.currentThread().getName}] $this switched phase.")
     }
 
     private def awaitBranchCountZero(): Unit = {
@@ -211,7 +211,7 @@ trait TurnImplBundle extends FullMVBundle {
       assert(activeBranches.get() == 0, s"$this cannot begin $phase: ${activeBranches.get()} branches active!")
       assert(selfNode.size == 0, s"$this cannot begin $phase: already has predecessors!")
       this.phase = phase
-      if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this begun.")
+      if (FullMVUtil.DEBUG) println(s"[${Thread.currentThread().getName}] $this begun.")
     }
 
     def beginFraming(): Unit   = beginPhase(TurnPhase.Framing)
@@ -326,7 +326,7 @@ trait TurnImplBundle extends FullMVBundle {
     def addPredecessor(predecessorSpanningTree: TransactionSpanningTreeNode[FullMVTurn]): Future[Boolean] = {
       val predecessor = predecessorSpanningTree.txn
       if (predecessor.phase == TurnPhase.Completed) {
-        if (FullMVEngine.DEBUG)
+        if (FullMVUtil.DEBUG)
           println(
             s"[${Thread.currentThread().getName}] $this aborting predecessor addition of known completed $predecessor"
           )
@@ -338,11 +338,11 @@ trait TurnImplBundle extends FullMVBundle {
           !isTransitivePredecessor(predecessor),
           s"attempted to establish already existing predecessor relation $predecessor -> $this"
         )
-        if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this adding predecessor $predecessor.")
+        if (FullMVUtil.DEBUG) println(s"[${Thread.currentThread().getName}] $this adding predecessor $predecessor.")
 
-        FullMVEngine.broadcast(successorsIncludingSelf)(_.maybeNewReachableSubtree(this, predecessorSpanningTree)).map(
+        FullMVUtil.broadcast(successorsIncludingSelf)(_.maybeNewReachableSubtree(this, predecessorSpanningTree)).map(
           _ => predecessor.phase == TurnPhase.Completed
-        )(FullMVEngine.notWorthToMoveToTaskpool)
+        )(FullMVUtil.notWorthToMoveToTaskpool)
       }
     }
 
@@ -352,7 +352,7 @@ trait TurnImplBundle extends FullMVBundle {
         spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]
     ): Future[Unit] = {
       if (!isTransitivePredecessor(spanningSubTreeRoot.txn)) {
-        val incompleteCallsAccumulator = FullMVEngine.newAccumulator()
+        val incompleteCallsAccumulator = FullMVUtil.newAccumulator()
 
         // accumulate all changes offline and then batch-publish them in a single volatile write.
         // this prevents concurrent threads from seeing some of the newly established relations,
@@ -368,10 +368,10 @@ trait TurnImplBundle extends FullMVBundle {
 
         val clock = predecessorReplicationClock + 1
         predecessorReplicationClock = clock
-        val updated2Accu = FullMVEngine.accumulateBroadcastFutures(updatedAccu, predecessorReplicators.get) {
+        val updated2Accu = FullMVUtil.accumulateBroadcastFutures(updatedAccu, predecessorReplicators.get) {
           _.newPredecessors(selfNode, clock)
         }
-        FullMVEngine.condenseCallResults(updated2Accu)
+        FullMVUtil.condenseCallResults(updated2Accu)
       } else {
         Future.successful(())
       }
@@ -383,8 +383,8 @@ trait TurnImplBundle extends FullMVBundle {
         bufferPredecessorSpanningTreeNodes: Map[FullMVTurn, MutableTransactionSpanningTreeNode[FullMVTurn]],
         attachBelow: FullMVTurn,
         spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn],
-        newSuccessorCallsAccumulator: FullMVEngine.CallAccumulator[Unit]
-    ): (Map[FullMVTurn, MutableTransactionSpanningTreeNode[FullMVTurn]], FullMVEngine.CallAccumulator[Unit]) = {
+        newSuccessorCallsAccumulator: FullMVUtil.CallAccumulator[Unit]
+    ): (Map[FullMVTurn, MutableTransactionSpanningTreeNode[FullMVTurn]], FullMVUtil.CallAccumulator[Unit]) = {
       val newTransitivePredecessor = spanningSubTreeRoot.txn
       assert(
         newTransitivePredecessor.host == host,
@@ -393,7 +393,7 @@ trait TurnImplBundle extends FullMVBundle {
       // last chance to check if predecessor completed concurrently
       if (newTransitivePredecessor.phase != TurnPhase.Completed) {
         val newSuccessorCall = newTransitivePredecessor.newSuccessor(this)
-        var updatedAccu      = FullMVEngine.accumulateFuture(newSuccessorCallsAccumulator, newSuccessorCall)
+        var updatedAccu      = FullMVUtil.accumulateFuture(newSuccessorCallsAccumulator, newSuccessorCall)
 
         val copiedSpanningTreeNode = new MutableTransactionSpanningTreeNode(newTransitivePredecessor)
         var updatedBufferPredecessorSpanningTreeNodes =
@@ -448,7 +448,7 @@ trait TurnImplBundle extends FullMVBundle {
           case x @ LockedState(lock)  => Future.successful(x)
           case UnlockedState          => UnlockedState.futured
           case ConcurrentDeallocation => getLockedRoot
-        }(FullMVEngine.notWorthToMoveToTaskpool)
+        }(FullMVUtil.notWorthToMoveToTaskpool)
       }
     }
     override def tryLock(): Future[TryLockResult] = {
@@ -481,7 +481,7 @@ trait TurnImplBundle extends FullMVBundle {
           case GarbageCollected0 =>
             assert(subsumableLock.get() != l, s"$l tryLock returned GC'd although it is still referenced")
             tryLock0(hopCount)
-        }(FullMVEngine.notWorthToMoveToTaskpool)
+        }(FullMVUtil.notWorthToMoveToTaskpool)
       }
     }
 
@@ -516,7 +516,7 @@ trait TurnImplBundle extends FullMVBundle {
           case GarbageCollected0 =>
             assert(subsumableLock.get() != l, s"$l trySubsume returned GC'd although it is still referenced")
             trySubsume0(hopCount, lockedNewParent)
-        }(FullMVEngine.notWorthToMoveToTaskpool)
+        }(FullMVUtil.notWorthToMoveToTaskpool)
       }
     }
 
@@ -528,7 +528,7 @@ trait TurnImplBundle extends FullMVBundle {
             s"[${Thread.currentThread().getName}] $this returning tryLock result $res to remote (retaining thread reference as remote transfer reference)"
           )
         res
-      }(FullMVEngine.notWorthToMoveToTaskpool)
+      }(FullMVUtil.notWorthToMoveToTaskpool)
     }
     override def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult] = {
       if (SubsumableLock.DEBUG)
@@ -540,7 +540,7 @@ trait TurnImplBundle extends FullMVBundle {
           )
         lockedNewParent.localSubRefs(1)
         res
-      }(FullMVEngine.notWorthToMoveToTaskpool)
+      }(FullMVUtil.notWorthToMoveToTaskpool)
     }
 
     private def trySwap(from: SubsumableLock, to: SubsumableLock): Int = {

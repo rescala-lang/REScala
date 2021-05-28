@@ -1,9 +1,9 @@
 package tests.rescala.dynamic
 
-import rescala.macros.cutOutOfUserComputation
 import tests.rescala.testtools.RETests
 import rescala.core.infiltration.Infiltrator
 import rescala.interface.RescalaInterface
+import rescala.operator.cutOutOfUserComputation
 import rescala.scheduler.Levelbased
 
 class TrueDynamicSignals extends RETests {

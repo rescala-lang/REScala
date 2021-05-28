@@ -63,7 +63,7 @@ object AddWinsSetO {
 
         // The new store is everything both sides have seen and everything that is new.
         // If something is missing from the store (but in the context) it has been deleted.
-        val newStore = (left.store.keys ++ right.store.keys).toSet.map { keyValue: A =>
+        val newStore = (left.store.keys ++ right.store.keys).toSet.map { (keyValue: A) =>
           val leftDots: Context  = left.store.getOrElse(keyValue, Context.empty)
           val rightDots: Context = right.store.getOrElse(keyValue, Context.empty)
 

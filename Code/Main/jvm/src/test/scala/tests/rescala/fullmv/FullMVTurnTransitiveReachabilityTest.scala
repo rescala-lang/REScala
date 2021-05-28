@@ -5,7 +5,7 @@ import org.scalatest.funsuite.AnyFunSuite
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
-import rescala.fullmv.FullMVEngine.default._
+import rescala.fullmv.FullMVUtil.default._
 import rescala.fullmv.sgt.synchronization.{Locked, Successful}
 
 import scala.util.Random

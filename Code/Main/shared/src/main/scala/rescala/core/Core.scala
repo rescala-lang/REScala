@@ -1,6 +1,5 @@
 package rescala.core
 
-import rescala.macros.MacroAccess
 import rescala.operator.RExceptions
 
 import scala.annotation.implicitNotFound
@@ -373,7 +372,4 @@ trait Core {
     final private[rescala] def withDynamicInitializer[R](init: ExactInitializer)(thunk: => R): R =
       _currentInitializer.withValue(Some(init))(thunk)
   }
-
-  trait InterpMacro[+A] extends Interp[A] with MacroAccess[A, Interp[A]]
-
 }
