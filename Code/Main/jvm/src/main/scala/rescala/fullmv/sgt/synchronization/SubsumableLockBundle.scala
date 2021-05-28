@@ -160,7 +160,7 @@ trait SubsumableLockBundle extends FullMVBundle {
         case host.dummy =>
           GarbageCollected0.futured
         case parent =>
-          parent.tryLock0(hopCount + 1).flatMap {
+          parent.tryLock0NoTail(hopCount + 1).flatMap {
             case Locked0(failedRefChanges, newRoot) =>
               Future.successful(Locked0(failedRefChanges + trySwap(parent, newRoot), newRoot))
             case Blocked0(failedRefChanges, newRoot) =>
@@ -170,7 +170,7 @@ trait SubsumableLockBundle extends FullMVBundle {
                 println(
                   s"[${Thread.currentThread().getName}] retrying tryLock $this after parent was concurrently deallocated"
                 )
-              this.asInstanceOf[SubsumableLock].tryLock0(hopCount)
+              tryLock0NoTail(hopCount)
           }(FullMVUtil.notWorthToMoveToTaskpool)
       }
     }
@@ -241,7 +241,7 @@ trait SubsumableLockBundle extends FullMVBundle {
           case host.dummy =>
             GarbageCollected0.futured
           case parent =>
-            parent.trySubsume0(hopCount + 1, lockedNewParent).flatMap {
+            parent.trySubsume0NoTail(hopCount + 1, lockedNewParent).flatMap {
               case Successful0(failedRefChanges) =>
                 Future.successful(Successful0(failedRefChanges + trySwap(parent, lockedNewParent)))
               case Blocked0(failedRefChanges, newParent) =>
@@ -251,7 +251,7 @@ trait SubsumableLockBundle extends FullMVBundle {
                   println(
                     s"[${Thread.currentThread().getName}] retrying trySubsume $this after parent was concurrently deallocated"
                   )
-                this.asInstanceOf[SubsumableLock].trySubsume0(hopCount, lockedNewParent)
+                trySubsume0NoTail(hopCount, lockedNewParent)
             }(FullMVUtil.notWorthToMoveToTaskpool)
         }
       }
@@ -366,7 +366,7 @@ trait SubsumableLockBundle extends FullMVBundle {
                 println(
                   s"[${Thread.currentThread().getName}] retrying remote tryLock $this after parent was concurrently deallocated"
                 )
-              this.asInstanceOf[SubsumableLock].remoteTryLock()
+              remoteTryLockNoTail()
           }(FullMVUtil.notWorthToMoveToTaskpool)
       }
     }
@@ -443,7 +443,7 @@ trait SubsumableLockBundle extends FullMVBundle {
                 println(
                   s"[${Thread.currentThread().getName}] retrying remote trySubsume $this after parent was concurrently deallocated"
                 )
-              this.asInstanceOf[SubsumableLock].remoteTrySubsume(lockedNewParent)
+              this.remoteTrySubsumeNoTail(lockedNewParent)
           }(FullMVUtil.notWorthToMoveToTaskpool)
       }
     }

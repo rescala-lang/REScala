@@ -59,10 +59,12 @@ trait SubsumableLock extends SubsumableLockProxy with Hosted[SubsumableLock] {
   // result will have one thread reference to present a uniform interface for remote calls
   // (a result received from remote would immediately be deallocated if the thread receiving it doesn't hold a reference)
   def tryLock0(hopCount: Int): Future[TryLockResult0]
+  final def tryLock0NoTail(hopCount: Int): Future[TryLockResult0] = tryLock0(hopCount)
   // result will have one thread reference to present a uniform interface for remote calls
   // (a result received from remote would immediately be deallocated if the thread receiving it doesn't hold a reference)
   // parameter does have a thread reference counted from being locked, but this must be retained to be released upon unlock.
   def trySubsume0(hopCount: Int, lockedNewParent: SubsumableLock): Future[TrySubsumeResult0]
+  def trySubsume0NoTail(hopCount: Int, lockedNewParent: SubsumableLock): Future[TrySubsumeResult0] = trySubsume0(hopCount, lockedNewParent)
   def asyncUnlock0(): Unit
 
   def asyncUnlock(): Unit = {

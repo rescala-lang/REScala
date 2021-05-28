@@ -20,9 +20,11 @@ trait SubsumableLockProxy {
   def getLockedRoot: Future[LockStateResult0]
   // result will have one temporary remote parameter reference for the caller to receive.
   def remoteTryLock(): Future[RemoteTryLockResult]
+  final def remoteTryLockNoTail(): Future[RemoteTryLockResult] = remoteTryLock()
   // parameter has one temporary remote parameter reference counted, which will be cleared by this call.
   // result will have one temporary remote parameter reference for the caller to receive.
   def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[RemoteTrySubsumeResult]
+  final def remoteTrySubsumeNoTail(lockedNewParent: SubsumableLock): Future[RemoteTrySubsumeResult] = remoteTrySubsume(lockedNewParent)
   def remoteUnlock(): Unit
   def asyncRemoteRefDropped(): Unit
 }

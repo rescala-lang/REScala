@@ -1,16 +1,16 @@
 package rescala.fullmv
 
-import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
-import java.util.concurrent.locks.LockSupport
 import rescala.fullmv.mirrors.{Host, Mirror}
 import rescala.fullmv.sgt.synchronization._
 import rescala.fullmv.tasks.TaskBundle
 
+import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
+import java.util.concurrent.locks.LockSupport
 import scala.annotation.tailrec
 import scala.concurrent.Future
 
 trait TurnImplBundle extends FullMVBundle {
-  selfType : Mirror with TaskBundle with FullMvStateBundle with SubsumableLockBundle =>
+  selfType: Mirror with TaskBundle with FullMvStateBundle with SubsumableLockBundle =>
 
   class FullMVTurnImpl(
       override val host: FullMVEngine,
@@ -33,7 +33,8 @@ trait TurnImplBundle extends FullMVBundle {
 
     val subsumableLock: AtomicReference[SubsumableLock] = new AtomicReference(initialLock)
     var successorsIncludingSelf: List[FullMVTurn]       = this :: Nil // this is implicitly a set
-    @volatile var selfNode = new MutableTransactionSpanningTreeNode[FullMVTurn](this) // this is also implicitly a set
+    @volatile var selfNode: MutableTransactionSpanningTreeNode[FullMVTurn] =
+      new MutableTransactionSpanningTreeNode[FullMVTurn](this) // this is also implicitly a set
     @volatile var predecessorSpanningTreeNodes: Map[FullMVTurn, MutableTransactionSpanningTreeNode[FullMVTurn]] =
       new scala.collection.immutable.Map.Map1(this, selfNode)
 
@@ -580,27 +581,26 @@ trait TurnImplBundle extends FullMVBundle {
 //  val parkRestartStatsExecuting = new java.util.HashMap[String, java.lang.Long]()
   }
 
-
-object SerializationGraphTracking /*extends LockContentionTimer*/ {
-  def tryLock(defender: FullMVTurn, contender: FullMVTurn, sccState: SCCState): SCCState = {
-    assert(defender.host == contender.host, s"locking two turns from different engines")
-    sccState match {
-      case x @ LockedSameSCC(_) =>
+  object SerializationGraphTracking /*extends LockContentionTimer*/ {
+    def tryLock(defender: FullMVTurn, contender: FullMVTurn, sccState: SCCState): SCCState = {
+      assert(defender.host == contender.host, s"locking two turns from different engines")
+      sccState match {
+        case x @ LockedSameSCC(_) =>
 //        entered()
-        x
-      case UnlockedSameSCC =>
-        LockedSameSCC(SubsumableLock.acquireLock(contender, contender.host.timeout))
+          x
+        case UnlockedSameSCC =>
+          LockedSameSCC(SubsumableLock.acquireLock(contender, contender.host.timeout))
 //        entered()
-      case UnlockedUnknown =>
-        SubsumableLock.acquireLock(defender, contender, contender.host.timeout) match {
-          case Some(lock) =>
+        case UnlockedUnknown =>
+          SubsumableLock.acquireLock(defender, contender, contender.host.timeout) match {
+            case Some(lock) =>
 //            entered()
-            LockedSameSCC(lock)
-          case None =>
-            UnlockedUnknown
-        }
+              LockedSameSCC(lock)
+            case None =>
+              UnlockedUnknown
+          }
+      }
     }
   }
-}
 
 }

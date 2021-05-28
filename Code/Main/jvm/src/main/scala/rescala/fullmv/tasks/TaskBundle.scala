@@ -3,13 +3,15 @@ package rescala.fullmv.tasks
 import rescala.fullmv.FramingBranchResult._
 import rescala.fullmv.NotificationBranchResult.ReevOutBranchResult.{NotifyAndNonReadySuccessor, NotifyAndReevaluationReadySuccessor, PureNotifyOnly}
 import rescala.fullmv.NotificationBranchResult.{ReevOutBranchResult, _}
+import rescala.fullmv.mirrors.Mirror
+import rescala.fullmv.sgt.synchronization.SubsumableLockBundle
 import rescala.fullmv.{FullMVBundle, _}
 import rescala.operator.Pulse
 
 import java.util.concurrent.RecursiveAction
 
-trait TaskBundle {
-  selfType: FullMVBundle with TurnImplBundle =>
+trait TaskBundle extends FullMVBundle {
+  selfType: Mirror with TurnImplBundle with FullMvStateBundle with SubsumableLockBundle =>
 
   trait FramingTask extends FullMVAction {
     override def doCompute(): Unit = {
@@ -18,10 +20,10 @@ trait TaskBundle {
       branchResult match {
         case FramingBranchEnd =>
           turn.activeBranchDifferential(TurnPhase.Framing, -1)
-        case Frame(out, maybeOtherTurn) =>
+        case Frame(out: Set[ReSource], maybeOtherTurn) =>
           branchCountDiffOnBranchOut(out, maybeOtherTurn)
           for (dep <- out) new Framing(maybeOtherTurn, dep).fork
-        case FrameSupersede(out, maybeOtherTurn, supersede) =>
+        case FrameSupersede(out: Set[ReSource], maybeOtherTurn, supersede) =>
           branchCountDiffOnBranchOut(out, maybeOtherTurn)
           for (dep <- out) new SupersedeFraming(maybeOtherTurn, dep, supersede).fork
       }
@@ -89,7 +91,7 @@ trait TaskBundle {
           if (!retainBranch) turn.activeBranchDifferential(TurnPhase.Executing, -1)
         case ReevaluationReady =>
           doReevaluation(retainBranch)
-        case outAndSucc: ReevOutBranchResult[FullMVTurn, Derived] =>
+        case outAndSucc: ReevOutBranchResult[FullMVTurn @unchecked, Derived @unchecked] =>
           processReevOutResult(retainBranch, outAndSucc, changed = false)
       }
     }
