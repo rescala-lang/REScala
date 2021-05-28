@@ -45,7 +45,7 @@ object Dependencies {
     val scribe                   = "3.5.4"
     val sourcecode               = "0.2.7"
     val tomlScala                = "0.2.2"
-    val upickle                  = "1.3.12"
+    val upickle                  = "1.3.15"
   }
 
   import Dependencies.{Versions => V}
