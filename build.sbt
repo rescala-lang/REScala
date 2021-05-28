@@ -68,7 +68,6 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Code/Main"))
       jsoniterScalaAll.value(1),
     ) ++ (
       // built in serializability of lattice vertices
-      circeAll.value.map(_ % "provided,test") ++
         Seq(
           loci.wsAkka.value,
           loci.circe.value,
@@ -141,7 +140,7 @@ lazy val todolist = project.in(file("Code/Examples/Todolist"))
   )
 
 lazy val dividiParoli = project.in(file("Code/Examples/dividiParoli"))
-  .dependsOn(rescalaJVM)
+  .dependsOn(rescalaJVM,replicationJVM)
   .settings(
     name := "dividi and paroli",
     cfg.base,
@@ -255,7 +254,7 @@ lazy val rescalafx = project.in(file("Code/Extensions/javafx"))
   .settings(name := "rescalafx", cfg.base, cfg.noPublish, addScalafxDependencies)
 
 lazy val replication = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure)
-  .in(file("Code/Extensions/LociDistribution"))
+  .in(file("Code/Extensions/Replication"))
   .dependsOn(rescala % "compile->compile;test->test")
   .settings(
     name := "loci-distribution",

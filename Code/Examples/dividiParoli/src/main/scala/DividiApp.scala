@@ -20,6 +20,8 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.math.BigDecimal.RoundingMode
 
+import rescala.extra.replication.CirceCodecs._
+
 /** An example of  a BorderPane layout, with placement of children in the top,
   * left, center, right, and bottom positions.
   *
