@@ -28,7 +28,7 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.8.1") // https://gi
 
 // tooling
 addSbtPlugin("org.tpolecat"       % "tut-plugin" % "0.6.13")
-addSbtPlugin("pl.project13.scala" % "sbt-jmh"    % "0.4.0")
+addSbtPlugin("pl.project13.scala" % "sbt-jmh"    % "0.4.2")
 
 // https://github.com/scalameta/sbt-native-image
 addSbtPlugin("org.scalameta" % "sbt-native-image" % "0.3.0")

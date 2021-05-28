@@ -59,7 +59,7 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Code/Main"))
     Resolvers.jitpack,
     libraryDependencies ++= Seq(
       sourcecode.value,
-      retypecheck.value,
+      retypecheck.value.cross(CrossVersion.for3Use2_13),
       reactiveStreams.value,
       scalaOrganization.value % "scala-reflect" % scalaVersion.value % "provided"
     ),
@@ -77,7 +77,10 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Code/Main"))
     })
   )
   .jvmSettings(
-    libraryDependencies ++= akkaHttpAll.value.map(_ % "test")
+    libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, n)) if n <= 12 => Nil
+      case _ => akkaHttpAll.value.map(d => (d % "test").cross(CrossVersion.for3Use2_13))
+    })
   )
   .jsSettings(
     libraryDependencies ++= Seq(
