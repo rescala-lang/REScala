@@ -9,6 +9,7 @@ import rescala.extra.lattices.delta.CContext._
 import rescala.extra.lattices.delta.crdt.MVRegister
 import rescala.extra.lattices.delta.crdt.MVRegister._
 import rescala.extra.lattices.delta.{AntiEntropy, CContext, Network, UIJDLattice}
+import tests.distribution.delta.NetworkGenerators._
 
 import scala.collection.mutable
 import scala.util.Random

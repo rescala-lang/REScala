@@ -8,6 +8,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.lattices.delta.{AntiEntropy, Network}
 import rescala.extra.lattices.delta.crdt.GSet
 import rescala.extra.lattices.delta.crdt.GSet._
+import tests.distribution.delta.NetworkGenerators._
 
 import scala.collection.mutable
 

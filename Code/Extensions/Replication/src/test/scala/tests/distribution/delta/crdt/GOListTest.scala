@@ -9,6 +9,7 @@ import rescala.extra.lattices.delta.crdt.GOList
 import rescala.extra.lattices.delta.crdt.GOList.GOListStateCodec
 import rescala.extra.lattices.delta.crdt.GOListCRDT.GOListAsUIJDLattice
 import rescala.extra.lattices.delta.{AntiEntropy, Network}
+import tests.distribution.delta.NetworkGenerators._
 
 import scala.collection.mutable
 
