@@ -11,7 +11,6 @@ import rescala.extra.lattices.delta.CContext._
 import rescala.extra.lattices.delta.DotStore._
 import rescala.extra.lattices.delta.crdt.AWSet._
 import rescala.extra.lattices.delta.crdt._
-import tests.distribution.delta.NetworkGenerators.arbNetwork
 
 import scala.collection.mutable
 

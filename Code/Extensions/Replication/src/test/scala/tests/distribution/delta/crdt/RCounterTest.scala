@@ -8,7 +8,6 @@ import rescala.extra.lattices.delta.CContext._
 import rescala.extra.lattices.delta.{AntiEntropy, CContext, Network}
 import rescala.extra.lattices.delta.crdt.RCounter
 import rescala.extra.lattices.delta.crdt.RCounter._
-import tests.distribution.delta.NetworkGenerators.arbNetwork
 
 import scala.collection.mutable
 import scala.util.Random

@@ -62,10 +62,7 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Code/Main"))
       sourcecode.value,
       retypecheck.value,
       reactiveStreams.value,
-      scalaOrganization.value   % "scala-reflect" % scalaVersion.value % "provided",
-      catsCollection.value      % "provided,test",
-      jsoniterScalaAll.value(0) % "provided,test",
-      jsoniterScalaAll.value(1),
+      scalaOrganization.value   % "scala-reflect" % scalaVersion.value % "provided"
     ) ++ (
       // built in serializability of lattice vertices
         Seq(
@@ -260,10 +257,11 @@ lazy val replication = crossProject(JSPlatform, JVMPlatform).crossType(CrossType
     name := "loci-distribution",
     cfg.base,
     cfg.noPublish,
-    libraryDependencies ++= Seq(
+    libraryDependencies ++= jsoniterScalaAll.value ++ Seq(
       loci.communication.value,
       loci.circe.value,
-      loci.upickle.value
+      loci.upickle.value,
+      catsCollection.value
     )
   )
 
@@ -303,7 +301,7 @@ lazy val microbench = project.in(file("Code/Microbenchmarks"))
     TaskKey[Unit]("compileJmh") := Seq(pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh / compile).dependOn.value
   )
   .enablePlugins(JavaAppPackaging)
-  .dependsOn(rescalaJVM)
+  .dependsOn(rescalaJVM, replicationJVM)
 
 // =====================================================================================
 // custom tasks

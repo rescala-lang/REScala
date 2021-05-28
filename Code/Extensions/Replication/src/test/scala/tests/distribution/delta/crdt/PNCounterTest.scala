@@ -4,21 +4,20 @@ import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.lattices.delta.{AntiEntropy, Network}
-import rescala.extra.lattices.delta.crdt.LexCounter
-import rescala.extra.lattices.delta.crdt.LexCounter._
-import tests.distribution.delta.NetworkGenerators.arbNetwork
+import rescala.extra.lattices.delta.crdt.PNCounter
+import rescala.extra.lattices.delta.crdt.PNCounter._
 
 import scala.collection.mutable
 
-object LexCounterGenerators {
-  val genLexCounter: Gen[LexCounter] = for {
+object PNCounterGenerator {
+  val genPNCounter: Gen[PNCounter] = for {
     nInc <- Gen.posNum[Int]
     nDec <- Gen.posNum[Int]
   } yield {
     val network = new Network(0, 0, 0)
-    val ae      = new AntiEntropy[LexCounter.State]("a", network, mutable.Buffer())
+    val ae      = new AntiEntropy[PNCounter.State]("a", network, mutable.Buffer())
 
-    val inced = (0 to nInc).foldLeft(LexCounter(ae)) {
+    val inced = (0 to nInc).foldLeft(PNCounter(ae)) {
       case (c, _) => c.inc()
     }
 
@@ -27,13 +26,13 @@ object LexCounterGenerators {
     }
   }
 
-  implicit val arbLexCounter: Arbitrary[LexCounter] = Arbitrary(genLexCounter)
+  implicit val arbPNCounter: Arbitrary[PNCounter] = Arbitrary(genPNCounter)
 }
 
-class LexCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
-  import LexCounterGenerators._
+class PNCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
+  import PNCounterGenerator._
 
-  "inc" in forAll { counter: LexCounter =>
+  "inc" in forAll { counter: PNCounter =>
     val inced = counter.inc()
 
     assert(
@@ -42,7 +41,7 @@ class LexCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     )
   }
 
-  "dec" in forAll { counter: LexCounter =>
+  "dec" in forAll { counter: PNCounter =>
     val deced = counter.dec()
 
     assert(
@@ -54,11 +53,11 @@ class LexCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent" in forAll { (incOrDecA: Boolean, incOrDecB: Boolean) =>
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropy[LexCounter.State]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[LexCounter.State]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[PNCounter.State]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[PNCounter.State]("b", network, mutable.Buffer("a"))
 
-    val ca0 = if (incOrDecA) LexCounter(aea).inc() else LexCounter(aea).dec()
-    val cb0 = if (incOrDecB) LexCounter(aeb).inc() else LexCounter(aeb).dec()
+    val ca0 = if (incOrDecA) PNCounter(aea).inc() else PNCounter(aea).dec()
+    val cb0 = if (incOrDecB) PNCounter(aeb).inc() else PNCounter(aeb).dec()
 
     AntiEntropy.sync(aea, aeb)
 
@@ -79,16 +78,16 @@ class LexCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   }
 
   "convergence" in forAll { (incA: Short, decA: Short, incB: Short, decB: Short, network: Network) =>
-    val aea = new AntiEntropy[LexCounter.State]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[LexCounter.State]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[PNCounter.State]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[PNCounter.State]("b", network, mutable.Buffer("a"))
 
-    val incedA = (0 until incA.toInt).foldLeft(LexCounter(aea)) {
+    val incedA = (0 until incA.toInt).foldLeft(PNCounter(aea)) {
       case (c, _) => c.inc()
     }
     val ca0 = (0 until decA.toInt).foldLeft(incedA) {
       case (c, _) => c.dec()
     }
-    val incedB = (0 until incB.toInt).foldLeft(LexCounter(aeb)) {
+    val incedB = (0 until incB.toInt).foldLeft(PNCounter(aeb)) {
       case (c, _) => c.inc()
     }
     val cb0 = (0 until decB.toInt).foldLeft(incedB) {
