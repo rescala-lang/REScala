@@ -1,7 +1,5 @@
 package rescala.extra.lattices.delta.crdt
 
-import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
-import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import rescala.extra.lattices.delta.DeltaCRDT._
 import rescala.extra.lattices.delta.DotStore._
 import rescala.extra.lattices.delta._
@@ -59,8 +57,4 @@ object EWFlag {
 
   def apply[C: CContext](antiEntropy: AntiEntropy[EWFlagCRDT.State[C]]): EWFlag[C] =
     new EWFlag(DeltaCRDT.empty(antiEntropy))
-
-  implicit def EWFlagStateCodec[C: JsonValueCodec]: JsonValueCodec[Causal[Set[Dot], C]] = JsonCodecMaker.make
-
-  //implicit def EWFlagEmbeddedCodec: JsonValueCodec[Set[Dot]] = JsonCodecMaker.make
 }

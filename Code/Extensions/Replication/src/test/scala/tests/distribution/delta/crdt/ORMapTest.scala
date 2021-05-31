@@ -6,8 +6,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.lattices.delta.CContext._
 import rescala.extra.lattices.delta.crdt.{AWSet, AWSetCRDT, ORMap}
-import rescala.extra.lattices.delta.crdt.ORMap._
-import rescala.extra.lattices.delta.crdt.AWSet._
+import rescala.extra.lattices.delta.Codecs._
 import rescala.extra.lattices.delta.{AntiEntropy, Network}
 
 import scala.collection.mutable
@@ -17,8 +16,8 @@ class ORMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
   "mutateKey/queryKey" in { (add: List[Int], remove: List[Int], k: Int) =>
     val network = new Network(0, 0, 0)
-    val aea     = new AntiEntropy[ORMap.State[Int, AWSet.Embedded[Int], DietMapCContext]]("a", network, mutable.Buffer())
-    val aeb     = new AntiEntropy[AWSet.State[Int, DietMapCContext]]("b", network, mutable.Buffer())
+    val aea = new AntiEntropy[ORMap.State[Int, AWSet.Embedded[Int], DietMapCContext]]("a", network, mutable.Buffer())
+    val aeb = new AntiEntropy[AWSet.State[Int, DietMapCContext]]("b", network, mutable.Buffer())
 
     val set = {
       val added = add.foldLeft(AWSet[Int, DietMapCContext](aeb)) {
@@ -50,8 +49,8 @@ class ORMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
   "remove" in { (add: List[Int], remove: List[Int], k: Int) =>
     val network = new Network(0, 0, 0)
-    val aea     = new AntiEntropy[ORMap.State[Int, AWSet.Embedded[Int], DietMapCContext]]("a", network, mutable.Buffer())
-    val aeb     = new AntiEntropy[AWSet.State[Int, DietMapCContext]]("b", network, mutable.Buffer())
+    val aea = new AntiEntropy[ORMap.State[Int, AWSet.Embedded[Int], DietMapCContext]]("a", network, mutable.Buffer())
+    val aeb = new AntiEntropy[AWSet.State[Int, DietMapCContext]]("b", network, mutable.Buffer())
 
     val empty = AWSet[Int, DietMapCContext](aeb)
 

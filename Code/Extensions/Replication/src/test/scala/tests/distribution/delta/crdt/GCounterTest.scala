@@ -5,7 +5,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.lattices.delta.{AntiEntropy, Network}
 import rescala.extra.lattices.delta.crdt.GCounter
-import rescala.extra.lattices.delta.crdt.GCounter._
+import rescala.extra.lattices.delta.Codecs._
 import tests.distribution.delta.NetworkGenerators._
 
 import scala.collection.mutable

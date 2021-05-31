@@ -1,10 +1,8 @@
 package rescala.extra.lattices.delta.crdt
 
-import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
-import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import rescala.extra.lattices.delta.DeltaCRDT._
 import rescala.extra.lattices.delta.DotStore._
-import rescala.extra.lattices.delta.{AntiEntropy, CContext, Causal, DeltaCRDT, Dot, UIJDLattice}
+import rescala.extra.lattices.delta._
 
 object RCounterCRDT {
   implicit def IntPairAsUIJDLattice: UIJDLattice[(Int, Int)] = new UIJDLattice[(Int, Int)] {
@@ -115,10 +113,4 @@ object RCounter {
 
   def apply[C: CContext](antiEntropy: AntiEntropy[State[C]]): RCounter[C] =
     new RCounter(DeltaCRDT.empty(antiEntropy))
-
-  implicit def RCounterStateCodec[C: JsonValueCodec]: JsonValueCodec[Causal[Map[Dot, (Int, Int)], C]] =
-    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
-
-  implicit def RCounterEmbeddedCodec: JsonValueCodec[Map[Dot, (Int, Int)]] =
-    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 }

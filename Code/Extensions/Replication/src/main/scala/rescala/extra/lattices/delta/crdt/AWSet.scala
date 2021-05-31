@@ -1,7 +1,5 @@
 package rescala.extra.lattices.delta.crdt
 
-import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
-import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import rescala.extra.lattices.delta.DeltaCRDT._
 import rescala.extra.lattices.delta.DotStore._
 import rescala.extra.lattices.delta._
@@ -84,12 +82,6 @@ object AWSet {
 
   def apply[E, C: CContext](antiEntropy: AntiEntropy[State[E, C]]): AWSet[E, C] =
     new AWSet(DeltaCRDT.empty(antiEntropy))
-
-  implicit def AWSetStateCodec[E: JsonValueCodec, C: JsonValueCodec]: JsonValueCodec[Causal[Map[E, Set[Dot]], C]] =
-    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
-
-  implicit def AWSetEmbeddedCodec[E: JsonValueCodec]: JsonValueCodec[Map[E, Set[Dot]]] =
-    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 }
 
 class RAWSet[E, C: CContext](val crdt: RDeltaCRDT[AWSetCRDT.State[E, C]]) extends CRDTInterface[AWSetCRDT.State[E, C]] {
@@ -115,10 +107,4 @@ object RAWSet {
 
   def apply[E, C: CContext](replicaID: String): RAWSet[E, C] =
     new RAWSet(RDeltaCRDT.empty(replicaID))
-
-  implicit def AWSetStateCodec[E: JsonValueCodec, C: JsonValueCodec]: JsonValueCodec[Causal[Map[E, Set[Dot]], C]] =
-    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
-
-  implicit def AWSetEmbeddedCodec[E: JsonValueCodec]: JsonValueCodec[Map[E, Set[Dot]]] =
-    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 }

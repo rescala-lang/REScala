@@ -13,7 +13,7 @@ import rescala.extra.distributables.LociDist
 import rescala.extra.lattices.delta.CContext._
 import rescala.extra.lattices.delta.Delta
 import rescala.extra.lattices.delta.crdt.{LastWriterWins, RLastWriterWins}
-import rescala.extra.lattices.delta.crdt.RLastWriterWins._
+import rescala.extra.lattices.delta.Codecs._
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all._
 

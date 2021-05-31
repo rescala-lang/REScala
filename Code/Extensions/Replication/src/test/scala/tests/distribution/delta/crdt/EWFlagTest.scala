@@ -6,7 +6,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.lattices.delta.CContext._
 import rescala.extra.lattices.delta.crdt.EWFlag
-import rescala.extra.lattices.delta.crdt.EWFlag._
+import rescala.extra.lattices.delta.Codecs._
 import rescala.extra.lattices.delta.{AntiEntropy, CContext, Network}
 import tests.distribution.delta.NetworkGenerators._
 

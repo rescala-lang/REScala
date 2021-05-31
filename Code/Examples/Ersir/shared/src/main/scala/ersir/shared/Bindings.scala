@@ -8,7 +8,7 @@ import loci.transmitter.Serializable
 import loci.transmitter.transmittable.IdenticallyTransmittable
 import rescala.extra.lattices.delta.CContext._
 import rescala.extra.lattices.delta.crdt.RRGA
-import rescala.extra.lattices.delta.crdt.RRGA._
+import rescala.extra.lattices.delta.Codecs._
 
 import scala.concurrent.Future
 import scala.util.Try

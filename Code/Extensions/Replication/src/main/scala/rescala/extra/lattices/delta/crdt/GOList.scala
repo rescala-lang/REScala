@@ -1,7 +1,5 @@
 package rescala.extra.lattices.delta.crdt
 
-import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
-import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import rescala.extra.lattices.delta.DeltaCRDT.{DeltaMutator, DeltaQuery}
 import rescala.extra.lattices.delta.crdt.GOListCRDT.GOListAsUIJDLattice
 import rescala.extra.lattices.delta.{AntiEntropy, CRDTInterface, Delta, DeltaCRDT, RDeltaCRDT, TimedVal, UIJDLattice}
@@ -145,9 +143,6 @@ object GOList {
 
   def apply[E](antiEntropy: AntiEntropy[State[E]]): GOList[E] =
     new GOList(DeltaCRDT.empty(antiEntropy))
-
-  implicit def GOListStateCodec[E: JsonValueCodec]: JsonValueCodec[Map[GOListNode[TimedVal[E]], Elem[TimedVal[E]]]] =
-    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 }
 
 class RGOList[E](val crdt: RDeltaCRDT[GOListCRDT.State[E]]) extends CRDTInterface[GOListCRDT.State[E]] {

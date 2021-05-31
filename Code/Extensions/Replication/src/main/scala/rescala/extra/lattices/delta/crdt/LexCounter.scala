@@ -1,7 +1,5 @@
 package rescala.extra.lattices.delta.crdt
 
-import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
-import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import rescala.extra.lattices.delta.DeltaCRDT._
 import rescala.extra.lattices.delta.UIJDLattice._
 import rescala.extra.lattices.delta._
@@ -39,6 +37,4 @@ object LexCounter {
 
   def apply(antiEntropy: AntiEntropy[State]): LexCounter =
     new LexCounter(DeltaCRDT.empty(antiEntropy))
-
-  implicit def LexCounterStateCodec: JsonValueCodec[State] = JsonCodecMaker.make
 }

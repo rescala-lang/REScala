@@ -1,8 +1,6 @@
 package rescala.extra.lattices.delta
 
 import cats.collections._
-import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter}
-import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 
 trait CContext[A] {
   def contains(cc: A, d: Dot): Boolean
@@ -74,39 +72,4 @@ object CContext {
 
     override def empty: Map[String, Diet[Int]] = Map.empty[String, Diet[Int]]
   }
-
-  implicit val SetCContextCodec: JsonValueCodec[Set[Dot]] = JsonCodecMaker.make
-
-  implicit val DietCodec: JsonValueCodec[Diet[Int]] = new JsonValueCodec[Diet[Int]] {
-    override def decodeValue(in: JsonReader, default: Diet[Int]): Diet[Int] = {
-      var result = Diet.empty[Int]
-
-      in.isNextToken('"')
-
-      while (!in.isNextToken('"')) {
-        in.rollbackToken()
-
-        in.nextToken() match {
-          case 'R' =>
-            while (!in.isNextToken('(')) {}
-            val lower = in.readInt()
-            in.isNextToken(',')
-            val upper = in.readInt()
-            result = result + cats.collections.Range(lower, upper)
-            in.isNextToken(')')
-          case _ =>
-        }
-      }
-
-      result
-    }
-
-    override def encodeValue(x: Diet[Int], out: JsonWriter): Unit = {
-      out.writeVal(x.toString)
-    }
-
-    override def nullValue: Diet[Int] = null
-  }
-
-  implicit val DietMapCContextCodec: JsonValueCodec[DietMapCContext] = JsonCodecMaker.make
 }

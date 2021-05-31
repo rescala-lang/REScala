@@ -1,7 +1,5 @@
 package rescala.extra.lattices.delta.crdt
 
-import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
-import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import rescala.extra.lattices.delta.DeltaCRDT._
 import rescala.extra.lattices.delta.UIJDLattice._
 import rescala.extra.lattices.delta._
@@ -29,6 +27,4 @@ object GCounter {
 
   def apply(antiEntropy: AntiEntropy[State]): GCounter =
     new GCounter(DeltaCRDT.empty(antiEntropy))
-
-  implicit def GCounterStateCodec: JsonValueCodec[Map[String, Int]] = JsonCodecMaker.make
 }

@@ -1,7 +1,5 @@
 package rescala.extra.lattices.delta.crdt
 
-import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
-import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import rescala.extra.lattices.delta.DeltaCRDT._
 import rescala.extra.lattices.delta.DotStore._
 import rescala.extra.lattices.delta._
@@ -111,13 +109,6 @@ object ORMap {
 
   def apply[K, V: DotStore, C: CContext](antiEntropy: AntiEntropy[State[K, V, C]]): ORMap[K, V, C] =
     new ORMap(DeltaCRDT.empty(antiEntropy))
-
-  implicit def ORMapStateCodec[K: JsonValueCodec, V: JsonValueCodec, C: JsonValueCodec]
-      : JsonValueCodec[Causal[Map[K, V], C]] =
-    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
-
-  implicit def ORMapEmbeddedCodec[K: JsonValueCodec, V: JsonValueCodec]: JsonValueCodec[Map[K, V]] =
-    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 }
 
 class RORMap[K, V: DotStore, C: CContext](val crdt: RDeltaCRDT[ORMapCRDT.State[K, V, C]])
@@ -152,11 +143,4 @@ object RORMap {
 
   def apply[K, V: DotStore, C: CContext](replicaID: String): RORMap[K, V, C] =
     new RORMap(RDeltaCRDT.empty(replicaID))
-
-  implicit def ORMapStateCodec[K: JsonValueCodec, V: JsonValueCodec, C: JsonValueCodec]
-      : JsonValueCodec[Causal[Map[K, V], C]] =
-    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
-
-  implicit def ORMapEmbeddedCodec[K: JsonValueCodec, V: JsonValueCodec]: JsonValueCodec[Map[K, V]] =
-    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 }

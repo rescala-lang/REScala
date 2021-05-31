@@ -1,7 +1,5 @@
 package rescala.extra.lattices.delta.crdt
 
-import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
-import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import rescala.extra.lattices.delta.DeltaCRDT.{DeltaMutator, DeltaQuery}
 import rescala.extra.lattices.delta.DotStore.{DotFun, DotLess, DotPair}
 import rescala.extra.lattices.delta._
@@ -291,10 +289,6 @@ object RGA {
 
   def apply[E, C: CContext](antiEntropy: AntiEntropy[State[E, C]]): RGA[E, C] =
     new RGA(DeltaCRDT.empty(antiEntropy))
-
-  implicit def RGAStateCodec[E: JsonValueCodec, C: JsonValueCodec]
-      : JsonValueCodec[Causal[(FW[Map[GOListNode[TimedVal[Dot]], Elem[TimedVal[Dot]]]], Map[Dot, RGANode[E]]), C]] =
-    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 }
 
 class RRGA[E, C: CContext](val crdt: RDeltaCRDT[RGACRDT.State[E, C]]) extends CRDTInterface[RGACRDT.State[E, C]] {
@@ -345,8 +339,4 @@ object RRGA {
 
   def apply[E, C: CContext](replicaID: String): RRGA[E, C] =
     new RRGA(RDeltaCRDT.empty(replicaID))
-
-  implicit def RGAStateCodec[E: JsonValueCodec, C: JsonValueCodec]
-      : JsonValueCodec[Causal[(FW[Map[GOListNode[TimedVal[Dot]], Elem[TimedVal[Dot]]]], Map[Dot, RGANode[E]]), C]] =
-    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 }

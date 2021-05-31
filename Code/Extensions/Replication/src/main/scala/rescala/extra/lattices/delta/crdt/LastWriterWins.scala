@@ -1,12 +1,8 @@
 package rescala.extra.lattices.delta.crdt
 
-import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
-import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import rescala.extra.lattices.delta.DeltaCRDT.{DeltaMutator, DeltaQuery}
 import rescala.extra.lattices.delta.DotStore.DotFun
-import rescala.extra.lattices.delta.{
-  AntiEntropy, CContext, CRDTInterface, Causal, Delta, DeltaCRDT, Dot, RDeltaCRDT, TimedVal, UIJDLattice
-}
+import rescala.extra.lattices.delta._
 
 object LastWriterWinsCRDT {
   type State[A, C] = MVRegister.State[TimedVal[A], C]
@@ -42,13 +38,6 @@ object LastWriterWins {
 
   def apply[A, C: CContext](ae: AntiEntropy[State[A, C]]): LastWriterWins[A, C] =
     new LastWriterWins(DeltaCRDT.empty(ae))
-
-  implicit def LastWriterWinsStateCodec[A: JsonValueCodec, C: JsonValueCodec]
-      : JsonValueCodec[Causal[Map[Dot, TimedVal[A]], C]] =
-    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
-
-  implicit def LastWriterWinsEmbeddedCodec[A: JsonValueCodec]: JsonValueCodec[Map[Dot, TimedVal[A]]] =
-    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 }
 
 class RLastWriterWins[A, C: CContext](val crdt: RDeltaCRDT[RLastWriterWins.State[A, C]])
@@ -75,11 +64,4 @@ object RLastWriterWins {
 
   def apply[A, C: CContext](replicaID: String): RLastWriterWins[A, C] =
     new RLastWriterWins(RDeltaCRDT.empty(replicaID))
-
-  implicit def LastWriterWinsStateCodec[A: JsonValueCodec, C: JsonValueCodec]
-      : JsonValueCodec[Causal[Map[Dot, TimedVal[A]], C]] =
-    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
-
-  implicit def LastWriterWinsEmbeddedCodec[A: JsonValueCodec]: JsonValueCodec[Map[Dot, TimedVal[A]]] =
-    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 }

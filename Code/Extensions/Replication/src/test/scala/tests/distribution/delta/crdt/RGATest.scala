@@ -8,7 +8,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.lattices.delta.CContext._
 import rescala.extra.lattices.delta.{AntiEntropy, CContext, Network}
 import rescala.extra.lattices.delta.crdt.RGA
-import rescala.extra.lattices.delta.crdt.RGA._
+import rescala.extra.lattices.delta.Codecs._
 import rescala.extra.lattices.delta.crdt.RGACRDT._
 import tests.distribution.delta.NetworkGenerators._
 

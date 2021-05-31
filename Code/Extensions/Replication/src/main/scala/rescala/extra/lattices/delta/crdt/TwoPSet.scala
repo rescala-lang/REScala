@@ -1,7 +1,5 @@
 package rescala.extra.lattices.delta.crdt
 
-import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
-import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import rescala.extra.lattices.delta.DeltaCRDT.{DeltaMutator, DeltaQuery}
 import rescala.extra.lattices.delta.{AntiEntropy, DeltaCRDT}
 
@@ -37,6 +35,4 @@ object TwoPSet {
 
   def apply[E](antiEntropy: AntiEntropy[State[E]]): TwoPSet[E] =
     new TwoPSet(DeltaCRDT.empty(antiEntropy))
-
-  implicit def TwoPSetStateCodec[E: JsonValueCodec]: JsonValueCodec[(Set[E], Set[E])] = JsonCodecMaker.make
 }

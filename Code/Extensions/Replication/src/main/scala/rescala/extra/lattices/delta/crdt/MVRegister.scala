@@ -1,7 +1,5 @@
 package rescala.extra.lattices.delta.crdt
 
-import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
-import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import rescala.extra.lattices.delta.DeltaCRDT._
 import rescala.extra.lattices.delta.DotStore.DotFun
 import rescala.extra.lattices.delta._
@@ -60,12 +58,6 @@ object MVRegister {
 
   def apply[A: UIJDLattice, C: CContext](antiEntropy: AntiEntropy[State[A, C]]): MVRegister[A, C] =
     new MVRegister(DeltaCRDT.empty[State[A, C]](antiEntropy))
-
-  implicit def MVRegisterStateCodec[A: JsonValueCodec, C: JsonValueCodec]: JsonValueCodec[Causal[Map[Dot, A], C]] =
-    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
-
-  implicit def MVRegisterEmbeddedCodec[A: JsonValueCodec]: JsonValueCodec[Map[Dot, A]] =
-    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 }
 
 class RMVRegister[A: UIJDLattice, C: CContext](val crdt: RDeltaCRDT[MVRegisterCRDT.State[A, C]])
@@ -88,10 +80,4 @@ object RMVRegister {
 
   def apply[A: UIJDLattice, C: CContext](replicaID: String): RMVRegister[A, C] =
     new RMVRegister(RDeltaCRDT.empty[State[A, C]](replicaID))
-
-  implicit def MVRegisterStateCodec[A: JsonValueCodec, C: JsonValueCodec]: JsonValueCodec[Causal[Map[Dot, A], C]] =
-    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
-
-  implicit def MVRegisterEmbeddedCodec[A: JsonValueCodec]: JsonValueCodec[Map[Dot, A]] =
-    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 }

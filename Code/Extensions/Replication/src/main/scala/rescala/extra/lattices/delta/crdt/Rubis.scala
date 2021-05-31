@@ -1,11 +1,9 @@
 package rescala.extra.lattices.delta.crdt
 
-import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
-import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import rescala.extra.lattices.delta.DeltaCRDT.DeltaMutator
-import rescala.extra.lattices.delta.{AntiEntropy, CContext, Causal, DeltaCRDT, Dot, UIJDLattice}
 import rescala.extra.lattices.delta.crdt.Bid.User
 import rescala.extra.lattices.delta.crdt.RubisCRDT.AID
+import rescala.extra.lattices.delta.{AntiEntropy, CContext, DeltaCRDT, UIJDLattice}
 
 object RubisCRDT {
   type AID = String
@@ -105,11 +103,4 @@ object Rubis {
 
   def apply[C: CContext](ae: AntiEntropy[State[C]]): Rubis[C] =
     new Rubis(DeltaCRDT.empty(ae))
-
-  implicit def RubisStateCodec[C: JsonValueCodec]: JsonValueCodec[(
-      Causal[Map[(String, String), Set[Dot]], C],
-      Map[String, String],
-      Map[String, AuctionData]
-  )] =
-    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 }
