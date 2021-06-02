@@ -57,7 +57,7 @@ lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
 )
   .settings(cfg.noPublish)
 
-lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Code/Main"))
+lazy val rescala = crossProject(JSPlatform, JVMPlatform, NativePlatform).in(file("Code/Main"))
   .settings(
     name := "rescala",
     strictCompile,
@@ -81,9 +81,10 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Code/Main"))
           ).map(_ % "test")
       val only2 = Seq(scalaOrganization.value % "scala-reflect" % scalaVersion.value % "provided")
 
-    CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, 13)) => only213 ++ only2
-      case Some((2, _)) => only2
+      (CrossVersion.partialVersion(scalaVersion.value), crossProjectPlatform.value) match {
+        case (_, NativePlatform) => List.empty
+      case (Some((2, 13)), _) => only213 ++ only2
+      case (Some((2, _)), _) => only2
       case _ => List.empty
     }},
     Compile / unmanagedSourceDirectories ++= byVersion(scalaVersion.value, v2 = Some(sourceDirectory.value.getParentFile.getParentFile / "shared/src/main/scala-2"), v3 = None)
