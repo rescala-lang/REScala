@@ -35,8 +35,10 @@ trait SignalCompatApi {
     * @group create
     */
   object Signal {
-    def apply[T](expr: DynamicTicket ?=> T)(implicit ticket: CreationTicket): Signal[T]   = Signals.dynamic()(expr(using _))
-    def dynamic[T](expr: DynamicTicket ?=> T)(implicit ticket: CreationTicket): Signal[T] = Signals.dynamic()(expr(using _))
+    def apply[T](expr: DynamicTicket ?=> T)(implicit ticket: CreationTicket): Signal[T] =
+      Signals.dynamic()(expr(using _))
+    def dynamic[T](expr: DynamicTicket ?=> T)(implicit ticket: CreationTicket): Signal[T] =
+      Signals.dynamic()(expr(using _))
   }
 
 }

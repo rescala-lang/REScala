@@ -14,7 +14,7 @@ ThisBuild / resolvers += ("STG old bintray repo" at "http://www.st.informatik.tu
 def byVersion[T](version: String, v2: T, v3: T) = {
   CrossVersion.partialVersion(version) match {
     case Some((3, _)) => v3
-    case _ => v2
+    case _            => v2
   }
 
 }
@@ -72,27 +72,32 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform, NativePlatform).in(file
     ),
     libraryDependencies ++= {
       val only213 = scalatestpluscheck.value +:
-          Seq(
-            loci.wsAkka.value,
-            loci.circe.value,
-            loci.upickle.value,
-            loci.communication.value,
-            scalaJavaTime.value,
-          ).map(_ % "test")
+        Seq(
+          loci.wsAkka.value,
+          loci.circe.value,
+          loci.upickle.value,
+          loci.communication.value,
+          scalaJavaTime.value,
+        ).map(_ % "test")
       val only2 = Seq(scalaOrganization.value % "scala-reflect" % scalaVersion.value % "provided")
 
       (CrossVersion.partialVersion(scalaVersion.value), crossProjectPlatform.value) match {
         case (_, NativePlatform) => List.empty
-      case (Some((2, 13)), _) => only213 ++ only2
-      case (Some((2, _)), _) => only2
-      case _ => List.empty
-    }},
-    Compile / unmanagedSourceDirectories ++= byVersion(scalaVersion.value, v2 = Some(sourceDirectory.value.getParentFile.getParentFile / "shared/src/main/scala-2"), v3 = None)
+        case (Some((2, 13)), _)  => only213 ++ only2
+        case (Some((2, _)), _)   => only2
+        case _                   => List.empty
+      }
+    },
+    Compile / unmanagedSourceDirectories ++= byVersion(
+      scalaVersion.value,
+      v2 = Some(sourceDirectory.value.getParentFile.getParentFile / "shared/src/main/scala-2"),
+      v3 = None
+    )
   )
   .jvmSettings(
     libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, n)) if n <= 12 => Nil
-      case _ => akkaHttpAll.value.map(d => (d % "test").cross(CrossVersion.for3Use2_13))
+      case _                       => akkaHttpAll.value.map(d => (d % "test").cross(CrossVersion.for3Use2_13))
     })
   )
   .jsSettings(

@@ -19,10 +19,10 @@ import scala.util.Try
 class MonadicErrors {
 
   var engine: RescalaInterface = _
-  lazy val stableEngine = engine
+  lazy val stableEngine        = engine
   import stableEngine._
 
-  var fire: Int => Unit          = _
+  var fire: Int => Unit       = _
   var finalresult: Event[Any] = _
 
   @Param(Array("true", "false"))
@@ -32,7 +32,7 @@ class MonadicErrors {
   def setup(params: BenchmarkParams, size: Size, engineParam: EngineParam, work: Workload) = {
     engine = engineParam.engine
     if (isMonadic) {
-      val source                     = Evt[Try[Int]]()
+      val source                  = Evt[Try[Int]]()
       var result: Event[Try[Int]] = source
       for (_ <- Range(1, size.size)) {
         result = result.map { t: Try[Int] =>
@@ -44,7 +44,7 @@ class MonadicErrors {
       finalresult = result
       fire = i => source.fire(Try { i })
     } else {
-      val source                = Evt[Int]()
+      val source             = Evt[Int]()
       var result: Event[Int] = source
       for (_ <- Range(1, size.size)) {
         result = result.map { v =>

@@ -16,10 +16,9 @@ import rescala.interface.RescalaInterface
 @State(Scope.Thread)
 class ChainSignalNoChange {
 
-    var engine: RescalaInterface = _
-  lazy val stableEngine = engine
+  var engine: RescalaInterface = _
+  lazy val stableEngine        = engine
   import stableEngine._
-
 
   var source: Var[Int]    = _
   var result: Signal[Int] = _

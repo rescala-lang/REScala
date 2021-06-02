@@ -100,13 +100,13 @@ class EngineReifier[S <: Struct]()(implicit val engine: Engine[S]) extends Reifi
         removed += f
         reifiedCache.getOrElse(node, throw new IllegalArgumentException("Cannot fire a non-reified event!")) match {
           case Reification(e: Evt[Any, S] @unchecked, _) => e.fire(value)
-          case other                                     => throw new IllegalStateException(s"expected Reification(Evt) but got $other")
+          case other => throw new IllegalStateException(s"expected Reification(Evt) but got $other")
         }
       case s @ LoggedSet(DataFlowRef(node), value) =>
         removed += s
         reifiedCache.getOrElse(node, throw new IllegalArgumentException("Cannot set a non-reified var!")) match {
           case Reification(v: Var[Any, S] @unchecked, _) => v.set(value)
-          case other                                     => throw new IllegalStateException(s"expected Reification(Evt) but got $other")
+          case other => throw new IllegalStateException(s"expected Reification(Evt) but got $other")
         }
       case LoggedObserve(DataFlowRef(node), od @ ObserverData(onSuccess, onFailure, ticket)) =>
         reifiedCache.getOrElse(

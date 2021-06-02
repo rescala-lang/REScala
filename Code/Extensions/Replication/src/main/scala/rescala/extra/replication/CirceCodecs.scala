@@ -1,14 +1,11 @@
 package rescala.extra.replication
 
-
 import io.circe._
 import rescala.extra.lattices.sequences.Vertex
 
 import scala.util.Right
 
-
 object CirceCodecs {
-
 
   implicit val vertexEncoder: Encoder[Vertex] =
     Encoder.forProduct2("timestamp", "id")(v => (v.timestamp, v.id))

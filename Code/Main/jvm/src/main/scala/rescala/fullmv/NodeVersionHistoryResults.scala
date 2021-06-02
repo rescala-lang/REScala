@@ -15,8 +15,8 @@ object NotificationBranchResult {
     val out: Set[R]
   }
   object ReevOutBranchResult {
-    case class PureNotifyOnly[R](out: Set[R])                                     extends ReevOutBranchResult[Nothing, R]
-    case class NotifyAndNonReadySuccessor[T, R](out: Set[R], succTxn: T)          extends ReevOutBranchResult[T, R]
+    case class PureNotifyOnly[R](out: Set[R])                            extends ReevOutBranchResult[Nothing, R]
+    case class NotifyAndNonReadySuccessor[T, R](out: Set[R], succTxn: T) extends ReevOutBranchResult[T, R]
     case class NotifyAndReevaluationReadySuccessor[T, R](out: Set[R], succTxn: T) extends ReevOutBranchResult[T, R]
   }
 }

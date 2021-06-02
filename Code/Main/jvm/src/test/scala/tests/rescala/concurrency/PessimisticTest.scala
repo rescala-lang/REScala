@@ -198,7 +198,7 @@ class PessimisticTest extends RETests {
     import sra._
     val rta = new ReevaluationBundle[engine.type](engine)
     import rta._
-    val saea = new SetAndExtractTransactionHandle[engine.type ](engine)
+    val saea = new SetAndExtractTransactionHandle[engine.type](engine)
     import saea._
 
     val bl0                  = Var(false)
@@ -281,7 +281,7 @@ class PessimisticTest extends RETests {
     import sra._
     val rta = new ReevaluationBundle[engine.type](engine)
     import rta._
-    val saea = new SetAndExtractTransactionHandle[engine.type ](engine)
+    val saea = new SetAndExtractTransactionHandle[engine.type](engine)
     import saea._
     val bl0                  = Var(false)
     val (syncB1, bl1)        = SynchronizedReevaluation(bl0)

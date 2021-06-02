@@ -17,34 +17,33 @@ case object NotFinal                                      extends MaybeWritten[N
 case object Unwritten                                     extends MaybeWritten[Nothing]
 case class Written[V](valueForSelf: V, valueForFuture: V) extends MaybeWritten[V]
 
-
 trait FullMvStateBundle extends FullMVBundle {
-  selfType : Mirror with TurnImplBundle with TaskBundle with SubsumableLockBundle =>
+  selfType: Mirror with TurnImplBundle with TaskBundle with SubsumableLockBundle =>
 
   /** A node version history datastructure
-   *
-   * @param init             the initial creating transaction
-   * @param valuePersistency the value persistency descriptor
-   * @tparam V      the type of stored values
-   * @tparam T      the type of transactions
-   * @tparam InDep  the type of incoming dependency nodes
-   * @tparam OutDep the type of outgoing dependency nodes
-   */
+    *
+    * @param init             the initial creating transaction
+    * @param valuePersistency the value persistency descriptor
+    * @tparam V      the type of stored values
+    * @tparam T      the type of transactions
+    * @tparam InDep  the type of incoming dependency nodes
+    * @tparam OutDep the type of outgoing dependency nodes
+    */
   class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePersistency: V)
-    extends FullMVState[V, T, InDep, OutDep] {
+      extends FullMVState[V, T, InDep, OutDep] {
     override val host = init.host
 
     /** @param txn                  the transaction to which this version belongs
-     * @param previousWriteIfStable if set, this version is guaranteed to be stable. if null, stable must be verified by comparing firstFrame and possibly traversing the history.
-     * @param value                 current state of this version
-     * @param next                  the successor version; the chain of next links forms the ground truth for which versions are contained in which order in the node's history.
-     */
+      * @param previousWriteIfStable if set, this version is guaranteed to be stable. if null, stable must be verified by comparing firstFrame and possibly traversing the history.
+      * @param value                 current state of this version
+      * @param next                  the successor version; the chain of next links forms the ground truth for which versions are contained in which order in the node's history.
+      */
     final class QueuedVersion(
-                               val txn: T,
-                               @volatile var previousWriteIfStable: QueuedVersion,
-                               @volatile var value: MaybeWritten[V],
-                               next: QueuedVersion
-                             ) extends LinkWithCounters[QueuedVersion](next) {
+        val txn: T,
+        @volatile var previousWriteIfStable: QueuedVersion,
+        @volatile var value: MaybeWritten[V],
+        next: QueuedVersion
+    ) extends LinkWithCounters[QueuedVersion](next) {
       def incrementPending(): Int =
         NonblockingSkipListVersionHistory.pendingUpdate.incrementAndGet(this.asInstanceOf[LinkWithCounters[Any]])
       def decrementPending(): Int =
@@ -61,12 +60,12 @@ trait FullMvStateBundle extends FullMVBundle {
         if (before == null) {
           false
         } else if (
-                 atomicReferenceFieldUpdater.compareAndSet(
-                   this.asInstanceOf[LinkWithCounters[Any]],
-                   before,
-                   Thread.currentThread() :: before
-                   )
-               ) {
+          atomicReferenceFieldUpdater.compareAndSet(
+            this.asInstanceOf[LinkWithCounters[Any]],
+            before,
+            Thread.currentThread() :: before
+          )
+        ) {
           true
         } else {
           addSleeper(atomicReferenceFieldUpdater)
@@ -98,7 +97,7 @@ trait FullMvStateBundle extends FullMVBundle {
           assert(
             write == previousWriteIfStable,
             s"attempt to stabilize $this to different $write (last written predecessor *should* be unambigous)"
-            )
+          )
           if (!isFinal && isZeroCounters) finalize(Unwritten)
         }
       }
@@ -116,7 +115,7 @@ trait FullMvStateBundle extends FullMVBundle {
       }
 
       def isZeroCounters: Boolean = pending == 0 && changed == 0
-      def isStable: Boolean = previousWriteIfStable != null
+      def isStable: Boolean       = previousWriteIfStable != null
       def isFinal: Boolean =
         value match {
           case Unwritten     => true
@@ -144,14 +143,14 @@ trait FullMvStateBundle extends FullMVBundle {
       }
     }
 
-    val laggingLatestStable      = new AtomicReference(new QueuedVersion(
-    init,
-    null, {
-      val iv = valuePersistency
-      //TODO: this SHOULD be Written(iv, unchange(iv)), but unchange is no longer available at this point …
-      Written(iv, iv)
-    },
-    null
+    val laggingLatestStable = new AtomicReference(new QueuedVersion(
+      init,
+      null, {
+        val iv = valuePersistency
+        //TODO: this SHOULD be Written(iv, unchange(iv)), but unchange is no longer available at this point …
+        Written(iv, iv)
+      },
+      null
     ))
     // synchronized, written sequentially only if firstFrame.txn.phase == Executing && queueHead == firstFrame by notify/reevOut
     @volatile var latestValue: V = laggingLatestStable.get.readForFuture
@@ -159,18 +158,18 @@ trait FullMvStateBundle extends FullMVBundle {
     // =================== STORAGE ====================
 
     /** pointer that reflects, which firstFrame is currently communicated to all successor nodes.
-     * writes are sequentialized and synchronized with outgoings changes through the object monitor (this.synchronized)
-     */
+      * writes are sequentialized and synchronized with outgoings changes through the object monitor (this.synchronized)
+      */
     @volatile var firstFrame: QueuedVersion = null
 
     /** a pointer to some random version at or behind latestStable, used for periodic O(1) gc support
-     * accesses are executed only inside reevOut, and are therefore sequential by nature.
-     */
+      * accesses are executed only inside reevOut, and are therefore sequential by nature.
+      */
     var lazyPeriodicGC: QueuedVersion = laggingLatestStable.get
 
     /** successor nodes that are currently sbuscribed for cange notifications.
-     * accesses are sequentialized and synchronized with firstFrame changes through the object monitor (this.synchronized)
-     */
+      * accesses are sequentialized and synchronized with firstFrame changes through the object monitor (this.synchronized)
+      */
     var outgoings: Set[OutDep] = Set.empty
 
     protected def casLatestStable(from: QueuedVersion, to: QueuedVersion): Unit = {
@@ -214,23 +213,23 @@ trait FullMvStateBundle extends FullMVBundle {
     }
 
     /** entry point for regular framing
-     *
-     * @param txn the transaction visiting the node for framing
-     */
+      *
+      * @param txn the transaction visiting the node for framing
+      */
     def incrementFrame(txn: T): FramingBranchResult[T, OutDep] = {
       var version: QueuedVersion = null
       while (version == null) version = enqueueFraming(txn, laggingLatestStable.get)
-      val result = synchronized {incrementFrame0(version)}
+      val result = synchronized { incrementFrame0(version) }
       if (NonblockingSkipListVersionHistory.DEBUG)
         println(s"[${Thread.currentThread().getName}] incrementFrame $txn => $result.")
       result
     }
 
     /** entry point for superseding framing
-     *
-     * @param txn       the transaction visiting the node for framing
-     * @param supersede the transaction whose frame was superseded by the visiting transaction at the previous node
-     */
+      *
+      * @param txn       the transaction visiting the node for framing
+      * @param supersede the transaction whose frame was superseded by the visiting transaction at the previous node
+      */
     def incrementSupersedeFrame(txn: T, supersede: T): FramingBranchResult[T, OutDep] = {
       var version: QueuedVersion = null
       while (version == null) version = enqueueFraming(txn, laggingLatestStable.get)
@@ -280,8 +279,8 @@ trait FullMvStateBundle extends FullMVBundle {
     }
 
     /*
-   * =================== NOTIFICATIONS/ / REEVALUATION ====================
-   */
+     * =================== NOTIFICATIONS/ / REEVALUATION ====================
+     */
 
     @tailrec private def enqueueNotifying(txn: T, current: QueuedVersion): QueuedVersion = {
       val next = current.get
@@ -305,7 +304,9 @@ trait FullMvStateBundle extends FullMVBundle {
           }
         } else {
           if (NonblockingSkipListVersionHistory.DEBUG)
-            println(s"[${Thread.currentThread().getName}] enqueueExecuting failed speculative ordering $current < $txn.")
+            println(
+              s"[${Thread.currentThread().getName}] enqueueExecuting failed speculative ordering $current < $txn."
+            )
           null
         }
       } else {
@@ -343,19 +344,19 @@ trait FullMvStateBundle extends FullMVBundle {
     }
 
     @tailrec private def ensureStableOnInsertedExecuting(
-                                                          current: QueuedVersion,
-                                                          trackedStable: QueuedVersion,
-                                                          self: QueuedVersion,
-                                                          assertSelfMayBeDropped: Boolean
-                                                        ): QueuedVersion = {
+        current: QueuedVersion,
+        trackedStable: QueuedVersion,
+        self: QueuedVersion,
+        assertSelfMayBeDropped: Boolean
+    ): QueuedVersion = {
       assert(
         assertSelfMayBeDropped || current != null,
         s"$self was supposed to not become final, but everthing is final because there are no more frames."
-        )
+      )
       assert(
         assertSelfMayBeDropped || current == self || self.txn.isTransitivePredecessor(current.txn),
         s"$self was supposed to not become final, but fell before firstFrame $current"
-        )
+      )
       if (current == null || current == self || lessThanAssumingNoRaceConditions(self.txn, current.txn)) {
         val stable =
           if (trackedStable != null) {
@@ -394,10 +395,10 @@ trait FullMvStateBundle extends FullMVBundle {
     }
 
     /** entry point for change/nochange notification reception
-     *
-     * @param txn     the transaction sending the notification
-     * @param changed whether or not the dependency changed
-     */
+      *
+      * @param txn     the transaction sending the notification
+      * @param changed whether or not the dependency changed
+      */
     def notify(txn: T, changed: Boolean): (Boolean, NotificationBranchResult[T, OutDep]) = {
       val version = enqueueNotifying(txn)
       val result  = notify0(version, changed)
@@ -411,7 +412,7 @@ trait FullMvStateBundle extends FullMVBundle {
         if (NonblockingSkipListVersionHistory.DEBUG)
           println(
             s"[${Thread.currentThread().getName}] enqueueFollowFraming delegating to enqueueNotifying for executing $txn."
-            )
+          )
         enqueueNotifying(txn, current)
       } else {
         enqueueFollowFramingFraming(txn, current)
@@ -423,37 +424,39 @@ trait FullMvStateBundle extends FullMVBundle {
       assert(
         next != current,
         s"notifying found $next fell off the list, which should be impossible because notify happens behind firstFrame, but only before firstFrame can fall of the list"
-        )
+      )
       if (next != null && next.txn == txn) {
         if (NonblockingSkipListVersionHistory.DEBUG)
           println(s"[${Thread.currentThread().getName}] enqueueFollowFraming found target $next.")
         next
       } else if (
-               next == null || next.txn.isTransitivePredecessor(
-                 txn
-                 ) /* assuming we are still Framing, always go as far back as possible */
-             ) {
+        next == null || next.txn.isTransitivePredecessor(
+          txn
+        ) /* assuming we are still Framing, always go as far back as possible */
+      ) {
         if (
           txn.isTransitivePredecessor(current.txn) || (current.txn.phase match {
             case TurnPhase.Completed => true
             case TurnPhase.Executing =>
               NonblockingSkipListVersionHistory.tryRecordRelationship(current.txn, txn, current.txn, txn)
-            case TurnPhase.Framing   => /* and only if still Framing becomes relevant, ensure that we still are */
+            case TurnPhase.Framing => /* and only if still Framing becomes relevant, ensure that we still are */
               FullMVUtil.myAwait(
                 txn.acquireRemoteBranchIfPhaseAtMost(TurnPhase.Framing),
                 txn.host.timeout
-                ) <= TurnPhase.Framing && (try {
+              ) <= TurnPhase.Framing && (try {
                 NonblockingSkipListVersionHistory.tryRecordRelationship(current.txn, txn, current.txn, txn)
               } finally {
                 txn.asyncRemoteBranchComplete(TurnPhase.Framing)
               })
-            case other               => throw new IllegalStateException(s"$other is not a phase")
+            case other => throw new IllegalStateException(s"$other is not a phase")
           })
         ) {
           val v = tryInsertVersion(txn, current, next, null, NotFinal)
           if (v != null) {
             if (NonblockingSkipListVersionHistory.DEBUG)
-              println(s"[${Thread.currentThread().getName}] enqueueFollowFraming created $v between $current and $next.")
+              println(
+                s"[${Thread.currentThread().getName}] enqueueFollowFraming created $v between $current and $next."
+              )
             v
           } else {
             enqueueFollowFramingFraming(txn, current)
@@ -462,7 +465,7 @@ trait FullMvStateBundle extends FullMVBundle {
           if (NonblockingSkipListVersionHistory.DEBUG)
             println(
               s"[${Thread.currentThread().getName}] enqueueFollowFraming failed speculative ordering $current < $txn."
-              )
+            )
           null
         }
       } else {
@@ -471,13 +474,13 @@ trait FullMvStateBundle extends FullMVBundle {
     }
 
     /** entry point for change/nochange notification reception with follow-up framing
-     *
-     * @param txn         the transaction sending the notification
-     * @param changed     whether or not the dependency changed
-     * @param followFrame a transaction for which to create a subsequent frame, furthering its partial framing.
-     */
+      *
+      * @param txn         the transaction sending the notification
+      * @param changed     whether or not the dependency changed
+      * @param followFrame a transaction for which to create a subsequent frame, furthering its partial framing.
+      */
     def notifyFollowFrame(txn: T, changed: Boolean, followFrame: T): (Boolean, NotificationBranchResult[T, OutDep]) = {
-      val version      : QueuedVersion = enqueueNotifying(txn)
+      val version: QueuedVersion       = enqueueNotifying(txn)
       var followVersion: QueuedVersion = null
       while (followVersion == null) followVersion = enqueueFollowFraming(followFrame, version)
       followVersion.incrementPending()
@@ -485,7 +488,7 @@ trait FullMvStateBundle extends FullMVBundle {
       if (NonblockingSkipListVersionHistory.DEBUG)
         println(
           s"[${Thread.currentThread().getName}] notify $txn with change=$changed and followFrame $followFrame => $result."
-          )
+        )
       result
     }
 
@@ -517,7 +520,7 @@ trait FullMvStateBundle extends FullMVBundle {
             assert(
               !retainBranch,
               s"On second thought, I think this *can* happen, because drops are non-blocking and may drop the 0->1 change back to 0 between above and here, but it hasn't yet, so let's see if it actually fails at some point."
-              )
+            )
             version.value = Unwritten
             (true, findNextAndUpdateFirstFrame(version, version, version.previousWriteIfStable))
           }
@@ -530,7 +533,7 @@ trait FullMvStateBundle extends FullMVBundle {
       assert(
         laggingLatestStable.get == firstFrame,
         s"reevIn by $txn: latestStable ${laggingLatestStable.get} != firstFrame $firstFrame"
-        )
+      )
       assert(firstFrame.txn == txn, s"$txn called reevIn, but firstFrame is $firstFrame")
       assert(firstFrame.pending == 0, s"still pending notifications: $firstFrame")
       assert(firstFrame.changed > 0, s"should not reevaluate without change: $firstFrame")
@@ -538,39 +541,39 @@ trait FullMvStateBundle extends FullMVBundle {
     }
 
     def reevOut(
-                 turn: T,
-                 maybeValue: Option[V],
-                 unchange: V => V
-               ): NotificationBranchResult.ReevOutBranchResult[T, OutDep] = {
+        turn: T,
+        maybeValue: Option[V],
+        unchange: V => V
+    ): NotificationBranchResult.ReevOutBranchResult[T, OutDep] = {
       val version = firstFrame
       assert(
         laggingLatestStable.get == version,
         s"reevOut by $turn: latestStable ${laggingLatestStable.get} != firstFrame $version"
-        )
+      )
       assert(version.txn == turn, s"$turn called reevDone, but first frame is $version (different transaction)")
       assert(version.pending >= 0, s"firstFrame with pending < 0 should be impossible")
       assert(version.changed >= 0, s"firstFrame with changed < 0 should be impossible")
       assert(
         !version.isZeroCounters || maybeValue.isEmpty,
         s"$turn cannot write change to ${maybeValue.get} into non-frame $version"
-        )
+      )
       assert(!version.isFinal, s"$turn cannot write twice: $version")
 
       assert(
         version.pending == 0,
         s"$turn completed reevaluation, but first frame $version is no longer glitch free ready -- retrofitting during reevaluation could cause this, but dynamicAfter should be implemented to suspend for final, which should make such a retrofitting case impossible."
-        )
+      )
       assert(
         version.changed > 0 || (version.changed == 0 && maybeValue.isEmpty),
         s"$turn cannot write changed=${maybeValue.isDefined} in $this"
-        )
+      )
       if (NonblockingSkipListVersionHistory.DEBUG || FullMVUtil.DEBUG) maybeValue match {
         case Some(Pulse.Exceptional(t)) =>
           throw new Exception(
             s"Glitch-free reevaluation result for $version is exceptional",
             maybeValue.get.asInstanceOf[Pulse.Exceptional].throwable
-            )
-        case _                          => // ignore
+          )
+        case _ => // ignore
       }
       synchronized {
         val stabilizeTo =
@@ -602,10 +605,10 @@ trait FullMvStateBundle extends FullMVBundle {
     }
 
     @tailrec private def findNextAndUpdateFirstFrame(
-                                                      finalizedVersion: QueuedVersion,
-                                                      current: QueuedVersion,
-                                                      stabilizeTo: QueuedVersion
-                                                    ): NotificationBranchResult.ReevOutBranchResult[T, OutDep] = {
+        finalizedVersion: QueuedVersion,
+        current: QueuedVersion,
+        stabilizeTo: QueuedVersion
+    ): NotificationBranchResult.ReevOutBranchResult[T, OutDep] = {
       assert(current.isStable, s"pushStable from $current must be final, which implies stable, but not set stable.")
       assert(current.pending == 0, s"pushStable from $current must be final (pending)")
       assert(current.changed == 0, s"pushStable from $current must be final (changed)")
@@ -642,7 +645,7 @@ trait FullMvStateBundle extends FullMVBundle {
     }
 
     private def decideSuccessorOperation(newFirstFrame: QueuedVersion)
-    : NotificationBranchResult.ReevOutBranchResult[T, OutDep] = {
+        : NotificationBranchResult.ReevOutBranchResult[T, OutDep] = {
       if (newFirstFrame != null) {
         if (newFirstFrame.pending == 0) {
           NotificationBranchResult.ReevOutBranchResult.NotifyAndReevaluationReadySuccessor(outgoings, newFirstFrame.txn)
@@ -650,8 +653,8 @@ trait FullMvStateBundle extends FullMVBundle {
           NotificationBranchResult.ReevOutBranchResult.NotifyAndNonReadySuccessor(outgoings, newFirstFrame.txn)
         } else
           /* if(maybeNewFirstFrame.pending < 0) */ {
-          NotificationBranchResult.ReevOutBranchResult.PureNotifyOnly(outgoings)
-        }
+            NotificationBranchResult.ReevOutBranchResult.PureNotifyOnly(outgoings)
+          }
       } else {
         NotificationBranchResult.ReevOutBranchResult.PureNotifyOnly(outgoings)
       }
@@ -660,22 +663,22 @@ trait FullMvStateBundle extends FullMVBundle {
     // =================== READ OPERATIONS ====================
 
     /** check whether txn < succ, knowing that either txn < succ or succ < txn must be the case, unless the given planned
-     * CAS comparison becomes invalid.
-     *
-     * @param txn             is expected to be executing
-     * @param succ
-     * @param casReference    the atomic refenence to be CAS'd
-     * @param casVerify       the CAS comparison value
-     * @param casInvalidValue the value to return if the CAS condition is no longer valid
-     * @return true if txn < succ, false if succ < txn (or succ completed), may stall briefly if racing order establishment
-     */
+      * CAS comparison becomes invalid.
+      *
+      * @param txn             is expected to be executing
+      * @param succ
+      * @param casReference    the atomic refenence to be CAS'd
+      * @param casVerify       the CAS comparison value
+      * @param casInvalidValue the value to return if the CAS condition is no longer valid
+      * @return true if txn < succ, false if succ < txn (or succ completed), may stall briefly if racing order establishment
+      */
     @tailrec private def lessThanRaceConditionSafe(
-                                                    txn: T,
-                                                    succ: QueuedVersion,
-                                                    casReference: QueuedVersion,
-                                                    casVerify: QueuedVersion,
-                                                    casInvalidValue: Boolean
-                                                  ): Boolean = {
+        txn: T,
+        succ: QueuedVersion,
+        casReference: QueuedVersion,
+        casVerify: QueuedVersion,
+        casInvalidValue: Boolean
+    ): Boolean = {
       if (succ.txn.phase == TurnPhase.Framing || succ.txn.isTransitivePredecessor(txn)) {
         true
       } else if (succ.txn.phase == TurnPhase.Completed || txn.isTransitivePredecessor(succ.txn)) {
@@ -696,7 +699,7 @@ trait FullMvStateBundle extends FullMVBundle {
       assert(
         res || txn.isTransitivePredecessor(succ) || succ.phase == TurnPhase.Completed,
         s"apparently this check is NOT safe against racing order establishments and must be replaced by a looped check\r\n\tsearching for: $txn\r\n\tfound unordered: $succ\r\n\treadTracker disabled..\r\nstate: $this"
-        )
+      )
       res
     }
 
@@ -705,11 +708,11 @@ trait FullMvStateBundle extends FullMVBundle {
     //  }
 
     @tailrec private def enqueueReading(
-                                         txn: T,
-                                         ls: QueuedVersion,
-                                         current: QueuedVersion,
-                                         assertInsertAllowed: Boolean
-                                       ): QueuedVersion = {
+        txn: T,
+        ls: QueuedVersion,
+        current: QueuedVersion,
+        assertInsertAllowed: Boolean
+    ): QueuedVersion = {
       val next = current.get
       if (next == current) {
         if (NonblockingSkipListVersionHistory.DEBUG)
@@ -739,7 +742,7 @@ trait FullMvStateBundle extends FullMVBundle {
             if (NonblockingSkipListVersionHistory.DEBUG)
               println(
                 s"[${Thread.currentThread().getName}] enqueueReading computing stable for insert was raced target having been created as firstFrame $ff."
-                )
+              )
             ff // -> "raced ff"
           } else {
             val stable =
@@ -747,7 +750,7 @@ trait FullMvStateBundle extends FullMVBundle {
                 assert(
                   ff == null || ff.txn.isTransitivePredecessor(txn) || current.get() != next,
                   s"this is what above checks *should* ensure.."
-                  )
+                )
                 var stable = laggingLatestStable.get()
                 if (!stable.isWritten) stable = stable.previousWriteIfStable
                 while (
@@ -758,10 +761,11 @@ trait FullMvStateBundle extends FullMVBundle {
               } else {
                 null
               }
-            val v      = tryInsertVersion(txn, current, next, stable, if (stable == null) NotFinal else Unwritten)
+            val v = tryInsertVersion(txn, current, next, stable, if (stable == null) NotFinal else Unwritten)
             if (v != null) {
               if (stable == null) {
-                if (ff.isZeroCounters) ensureStableOnInsertedExecuting(firstFrame, null, v, assertSelfMayBeDropped = true)
+                if (ff.isZeroCounters)
+                  ensureStableOnInsertedExecuting(firstFrame, null, v, assertSelfMayBeDropped = true)
               } else {
                 casLatestStable(ls, v)
               }
@@ -798,10 +802,10 @@ trait FullMvStateBundle extends FullMVBundle {
     }
 
     @tailrec private def ensureDynamicReadVersion(
-                                                   txn: T,
-                                                   assertSleepingAllowed: Boolean = true,
-                                                   assertInsertAllowed: Boolean = true
-                                                 ): QueuedVersion = {
+        txn: T,
+        assertSleepingAllowed: Boolean = true,
+        assertInsertAllowed: Boolean = true
+    ): QueuedVersion = {
       val ls = laggingLatestStable.get()
       if (ls.txn == txn) {
         ls
@@ -813,7 +817,7 @@ trait FullMvStateBundle extends FullMVBundle {
         while (
           ownOrPredecessor.txn != txn && (ownOrPredecessor.txn.isTransitivePredecessor(
             txn
-            ) || !NonblockingSkipListVersionHistory.tryFixPredecessorOrderIfNotFixedYet(ownOrPredecessor.txn, txn))
+          ) || !NonblockingSkipListVersionHistory.tryFixPredecessorOrderIfNotFixedYet(ownOrPredecessor.txn, txn))
         )
           ownOrPredecessor = ownOrPredecessor.previousWriteIfStable
         ownOrPredecessor
@@ -828,22 +832,22 @@ trait FullMvStateBundle extends FullMVBundle {
     }
 
     /** entry point for before(this); may suspend.
-     *
-     * @param txn the executing transaction
-     * @return the corresponding value from before this transaction, i.e., ignoring the transaction's
-     *         own writes.
-     */
+      *
+      * @param txn the executing transaction
+      * @return the corresponding value from before this transaction, i.e., ignoring the transaction's
+      *         own writes.
+      */
     def dynamicBefore(txn: T): V =
       try {
         val selfOrFinalPredecessor = ensureDynamicReadVersion(txn)
-        val res                    =
+        val res =
           if (!selfOrFinalPredecessor.isStable) {
             sleepForVersionProperty(
               NonblockingSkipListVersionHistory.stableSleeperUpdate,
               _.isStable,
               selfOrFinalPredecessor,
               "stable"
-              )
+            )
             selfOrFinalPredecessor.previousWriteIfStable.readForFuture
           } else if (selfOrFinalPredecessor.txn == txn) {
             selfOrFinalPredecessor.previousWriteIfStable.readForFuture
@@ -853,7 +857,7 @@ trait FullMvStateBundle extends FullMVBundle {
         if (NonblockingSkipListVersionHistory.TRACE_VALUES)
           println(
             s"[${Thread.currentThread().getName}] dynamicBefore for $txn ended on $selfOrFinalPredecessor, returning $res"
-            )
+          )
 //    perThreadReadTracker.set(() => s"dynamicBefore for $txn ended on $stableOwnOrPredecessor, returning $res")
         res
       } catch {
@@ -864,11 +868,11 @@ trait FullMvStateBundle extends FullMVBundle {
       }
 
     private def sleepForVersionProperty(
-                                         sleeperUpdater: AtomicReferenceFieldUpdater[LinkWithCounters[Any], List[Thread]],
-                                         check: QueuedVersion => Boolean,
-                                         version: QueuedVersion,
-                                         label: String
-                                       ): Unit = {
+        sleeperUpdater: AtomicReferenceFieldUpdater[LinkWithCounters[Any], List[Thread]],
+        check: QueuedVersion => Boolean,
+        version: QueuedVersion,
+        label: String
+    ): Unit = {
       if (version.addSleeper(sleeperUpdater)) {
         ForkJoinPool.managedBlock(new ManagedBlocker() {
           override def isReleasable: Boolean = check(version)
@@ -884,14 +888,14 @@ trait FullMvStateBundle extends FullMVBundle {
                 if (ff != version && (ff == null || ff.txn.isTransitivePredecessor(version.txn))) {
                   throw new Exception(
                     s"${Thread.currentThread().getName} got stuck on $version -> dropped without $label $version with state $this"
-                    )
+                  )
                 } else {
 //                System.err.println(s"[WARNING] ${Thread.currentThread().getName} stalled waiting for transition to stable of $version\r\n[WARNING] with state $this\r\n[WARNING]\tat ${Thread.currentThread().getStackTrace.mkString("\r\n[WARNING]\tat ")}")
                 }
               } else {
                 new Exception(
                   s"${Thread.currentThread().getName} did not receive wake-up call after transition to $label of $version with state $this"
-                  ).printStackTrace()
+                ).printStackTrace()
               }
             }
             res
@@ -926,15 +930,15 @@ trait FullMvStateBundle extends FullMVBundle {
       }
 
     /** entry point for after(this); may suspend.
-     *
-     * @param txn the executing transaction
-     * @return the corresponding value from after this transaction, i.e., awaiting and returning the
-     *         transaction's own write if one has occurred or will occur.
-     */
+      *
+      * @param txn the executing transaction
+      * @return the corresponding value from after this transaction, i.e., awaiting and returning the
+      *         transaction's own write if one has occurred or will occur.
+      */
     def dynamicAfter(txn: T): V =
       try {
         val selfOrFinalPredecessor = ensureDynamicReadVersion(txn)
-        val res                    =
+        val res =
           if (selfOrFinalPredecessor.txn == txn) {
             if (!selfOrFinalPredecessor.isFinal) {
               sleepForVersionProperty(
@@ -942,7 +946,7 @@ trait FullMvStateBundle extends FullMVBundle {
                 _.isFinal,
                 selfOrFinalPredecessor,
                 "final"
-                )
+              )
             }
             if (selfOrFinalPredecessor.isWritten) {
               selfOrFinalPredecessor.readForSelf
@@ -955,7 +959,7 @@ trait FullMvStateBundle extends FullMVBundle {
         if (NonblockingSkipListVersionHistory.TRACE_VALUES)
           println(
             s"[${Thread.currentThread().getName}] dynamicAfter for $txn ended on $selfOrFinalPredecessor, returning $res"
-            )
+          )
 //    perThreadReadTracker.set(() => s"dynamicAfter for $txn ended on $stableOwnOrPredecessor, returning $res")
         res
       } catch {
@@ -983,7 +987,9 @@ trait FullMvStateBundle extends FullMVBundle {
             ownOrPredecessor.readForFuture
           }
         if (NonblockingSkipListVersionHistory.TRACE_VALUES)
-          println(s"[${Thread.currentThread().getName}] staticAfter for $txn ended at $ownOrPredecessor, returning $res")
+          println(
+            s"[${Thread.currentThread().getName}] staticAfter for $txn ended at $ownOrPredecessor, returning $res"
+          )
 //    perThreadReadTracker.set(() => s"staticAfter for $txn ended on $ownOrPredecessor, returning $res")
         res
       } catch {
@@ -1007,7 +1013,7 @@ trait FullMvStateBundle extends FullMVBundle {
           assert(
             ls.txn.isTransitivePredecessor(txn),
             s"trying to look for $txn encountered unordered latestStable $ls; read tracker disabled..."
-            )
+          )
         }
       } else if (current.txn == txn) {
 //      assert(current.isFinal, s"found non-final $current; read tracker says ${perThreadReadTracker.get()()}")
@@ -1018,11 +1024,11 @@ trait FullMvStateBundle extends FullMVBundle {
         assert(
           !current.txn.isTransitivePredecessor(txn),
           s"while looking for $txn, encountered successor $current; read tracker disabled..."
-          )
+        )
         assert(
           txn.isTransitivePredecessor(current.txn) || current.txn.phase == TurnPhase.Completed,
           s"while looking for $txn, encountered unordered $current; read tracker disabled..."
-          )
+        )
         val next = current.get
         if (next == current) {
           // search fell off the list, restart
@@ -1049,7 +1055,7 @@ trait FullMvStateBundle extends FullMVBundle {
           outgoings += add
           (laggingLatestStable.get, firstFrame)
         }
-        )
+      )
     }
 
     def drop(txn: T, remove: OutDep): (List[T], Option[T]) = {
@@ -1063,23 +1069,23 @@ trait FullMvStateBundle extends FullMVBundle {
           outgoings -= remove
           (laggingLatestStable.get, firstFrame)
         }
-        )
+      )
     }
 
     private def computeRetrofit(
-                                 txn: T,
-                                 sink: OutDep,
-                                 latestStableAndFirstFrame: (QueuedVersion, QueuedVersion)
-                               ): (List[T], Option[T]) = {
+        txn: T,
+        sink: OutDep,
+        latestStableAndFirstFrame: (QueuedVersion, QueuedVersion)
+    ): (List[T], Option[T]) = {
       val maybeFirstFrame = latestStableAndFirstFrame._2
-      val frame           =
+      val frame =
         if (maybeFirstFrame != null) {
           // TODO in distributed, test if we can turn this into a positive lessThanAssumingNoRaceConditions(txn, maybeFirstFrame.txn).
 //      assert(txn != maybeFirstFrame.txn && !txn.isTransitivePredecessor(maybeFirstFrame.txn), s"$txn must not retrofit in the future (firstFrame was $maybeFirstFrame).\r\nSource (this) state is: $this\r\nSink $sink state is: ${sink.asInstanceOf[rescala.core.Reactive[FullMVStruct]].state}\r\n, readTracker says ${perThreadReadTracker.get()}")
           assert(
             txn != maybeFirstFrame.txn && !txn.isTransitivePredecessor(maybeFirstFrame.txn),
             s"$txn must not retrofit in the future (firstFrame was $maybeFirstFrame).\r\nSource (this) state is: $this\r\nSink $sink state is: ${sink.asInstanceOf[Derived].state}\r\n, readTracker disabled..."
-            )
+          )
           Some(maybeFirstFrame.txn)
         } else {
           None
@@ -1096,11 +1102,11 @@ trait FullMvStateBundle extends FullMVBundle {
     }
 
     /** performs the reframings on the sink of a discover(n, this) with arity +1, or drop(n, this) with arity -1
-     *
-     * @param successorWrittenVersions the reframings to perform for successor written versions
-     * @param maybeSuccessorFrame      maybe a reframing to perform for the first successor frame
-     * @param arity                    +1 for discover adding frames, -1 for drop removing frames.
-     */
+      *
+      * @param successorWrittenVersions the reframings to perform for successor written versions
+      * @param maybeSuccessorFrame      maybe a reframing to perform for the first successor frame
+      * @param arity                    +1 for discover adding frames, -1 for drop removing frames.
+      */
     def retrofitSinkFrames(successorWrittenVersions: Seq[T], maybeSuccessorFrame: Option[T], arity: Int): Seq[T] = {
       require(math.abs(arity) == 1)
 //    @tailrec def checkFrames(current: List[T]): Unit = {
@@ -1118,7 +1124,7 @@ trait FullMvStateBundle extends FullMVBundle {
 //    checkFrames(successorWrittenVersions)
 
       var current = firstFrame
-      val res     = successorWrittenVersions.filter { txn =>
+      val res = successorWrittenVersions.filter { txn =>
         val version =
           if (current.txn == txn) {
             // can only occur for successorWrittenVersions.head
@@ -1127,7 +1133,7 @@ trait FullMvStateBundle extends FullMVBundle {
             assert(
               !current.txn.isTransitivePredecessor(txn),
               s"somehow, current $current > next retrofit $txn (write retrofits are $successorWrittenVersions)"
-              )
+            )
             var version: QueuedVersion = null
             while (version == null) version = enqueueNotifying(txn, current)
             current = version
@@ -1142,7 +1148,7 @@ trait FullMvStateBundle extends FullMVBundle {
       }
 
       if (maybeSuccessorFrame.isDefined) {
-        val txn     = maybeSuccessorFrame.get
+        val txn = maybeSuccessorFrame.get
         val version =
           if (current.txn == txn) {
             // can only occur if successorWrittenVersions.isEmpty
@@ -1151,7 +1157,7 @@ trait FullMvStateBundle extends FullMVBundle {
             assert(
               !current.txn.isTransitivePredecessor(txn),
               s"somehow, current $current > frame retrofit $txn (write retrofits are $successorWrittenVersions)"
-              )
+            )
             var version: QueuedVersion = null
             while (version == null) version = enqueueFollowFraming(txn, current)
             version
@@ -1171,23 +1177,26 @@ trait FullMvStateBundle extends FullMVBundle {
     }
 
     private def tryInsertVersion(
-                                  txn: T,
-                                  current: QueuedVersion,
-                                  next: QueuedVersion,
-                                  previousWriteIfStable: QueuedVersion,
-                                  value: MaybeWritten[V]
-                                ): QueuedVersion = {
+        txn: T,
+        current: QueuedVersion,
+        next: QueuedVersion,
+        previousWriteIfStable: QueuedVersion,
+        value: MaybeWritten[V]
+    ): QueuedVersion = {
       assert(current.txn != txn, s"trying to insert duplicate after $current!")
       assert(next == null || next.txn != txn, s"trying to insert duplicate before $current!")
       assert(
         previousWriteIfStable == null || previousWriteIfStable.isWritten,
         s"cannot set unwritten stable $previousWriteIfStable"
-        )
+      )
       assert(
         txn.isTransitivePredecessor(current.txn) || current.txn.phase == TurnPhase.Completed,
         s"inserting version for $txn after unordered $current"
-        )
-      assert(next == null || next.txn.isTransitivePredecessor(txn), s"inserting version for $txn before unordered $next")
+      )
+      assert(
+        next == null || next.txn.isTransitivePredecessor(txn),
+        s"inserting version for $txn before unordered $next"
+      )
       val waiting = new QueuedVersion(txn, previousWriteIfStable, value, next)
       if (current.compareAndSet(next, waiting)) {
         waiting
@@ -1206,7 +1215,7 @@ trait FullMvStateBundle extends FullMVBundle {
       } else if (current == null) {
         builder.append("\r\n[After] firstFrame = ").append(firstFrame).append(", outgoings = ").append(
           outgoings
-          ).toString()
+        ).toString()
       } else {
         builder.append("\r\n\t")
         builder.append(current)
@@ -1225,25 +1234,25 @@ trait FullMvStateBundle extends FullMVBundle {
     val DEBUG        = false
     val TRACE_VALUES = false
 
-    val pendingUpdate       = AtomicIntegerFieldUpdater.newUpdater(classOf[LinkWithCounters[Any]], "pending")
-    val changedUpdate       = AtomicIntegerFieldUpdater.newUpdater(classOf[LinkWithCounters[Any]], "changed")
+    val pendingUpdate = AtomicIntegerFieldUpdater.newUpdater(classOf[LinkWithCounters[Any]], "pending")
+    val changedUpdate = AtomicIntegerFieldUpdater.newUpdater(classOf[LinkWithCounters[Any]], "changed")
     val stableSleeperUpdate =
       AtomicReferenceFieldUpdater.newUpdater(classOf[LinkWithCounters[Any]], classOf[List[Thread]], "stableSleepers")
-    val finalSleeperUpdate  =
+    val finalSleeperUpdate =
       AtomicReferenceFieldUpdater.newUpdater(classOf[LinkWithCounters[Any]], classOf[List[Thread]], "finalSleepers")
 
     /** @param attemptPredecessor intended predecessor transaction
-     * @param succToRecord        intended successor transactoin
-     * @param defender            encountered transaction
-     * @param contender           processing (and thus phase-locked) transaction
-     * @return success if relation was established, false if reverse relation was established concurrently
-     */
+      * @param succToRecord        intended successor transactoin
+      * @param defender            encountered transaction
+      * @param contender           processing (and thus phase-locked) transaction
+      * @return success if relation was established, false if reverse relation was established concurrently
+      */
     def tryRecordRelationship(
-                               attemptPredecessor: FullMVTurn,
-                               succToRecord: FullMVTurn,
-                               defender: FullMVTurn,
-                               contender: FullMVTurn
-                             ): Boolean = {
+        attemptPredecessor: FullMVTurn,
+        succToRecord: FullMVTurn,
+        defender: FullMVTurn,
+        contender: FullMVTurn
+    ): Boolean = {
       SerializationGraphTracking.tryLock(defender, contender, UnlockedUnknown) match {
         case x: LockedSameSCC =>
           try {
@@ -1259,7 +1268,7 @@ trait FullMvStateBundle extends FullMVBundle {
                 assert(
                   attemptPredecessor.phase == TurnPhase.Completed,
                   s"$attemptPredecessor selfNode was null but isn't completed?"
-                  )
+                )
                 // relation no longer needs recording because predecessor completed concurrently
                 true
               } else {
@@ -1271,7 +1280,7 @@ trait FullMvStateBundle extends FullMVBundle {
           } finally {
             x.unlock()
           }
-        case otherwise        =>
+        case otherwise =>
           Thread.`yield`()
           if (attemptPredecessor.phase == TurnPhase.Completed) {
             // relation no longer needs recording because predecessor completed concurrently
@@ -1290,15 +1299,15 @@ trait FullMvStateBundle extends FullMVBundle {
     }
 
     /** @param txn must be executing
-     * @param succ is attempted to be phase-locked in framing, if not already ordered behind txn
-     * @return success if order was or became established, failure if it wasn't and succ started executing
-     */
+      * @param succ is attempted to be phase-locked in framing, if not already ordered behind txn
+      * @return success if order was or became established, failure if it wasn't and succ started executing
+      */
     def tryFixSuccessorOrderIfNotFixedYet(txn: FullMVTurn, succ: FullMVTurn): Boolean = {
       succ.isTransitivePredecessor(txn) || {
         val res = FullMVUtil.myAwait(
           succ.acquireRemoteBranchIfPhaseAtMost(TurnPhase.Framing),
           txn.host.timeout
-          ) < TurnPhase.Executing
+        ) < TurnPhase.Executing
         if (res)
           try {
             val established = tryRecordRelationship(txn, succ, succ, txn)
@@ -1311,16 +1320,16 @@ trait FullMvStateBundle extends FullMVBundle {
     }
 
     /** @param pred may be framing or executing
-     * @param txn   must be phase-locked to framing if pred can be framing
-     * @return success if order was or became established, failure if reverse order was or became established concurrently
-     */
+      * @param txn   must be phase-locked to framing if pred can be framing
+      * @return success if order was or became established, failure if reverse order was or became established concurrently
+      */
     def tryFixPredecessorOrderIfNotFixedYet(pred: FullMVTurn, txn: FullMVTurn): Boolean = {
       txn.isTransitivePredecessor(pred) || pred.phase == TurnPhase.Completed || tryRecordRelationship(
         pred,
         txn,
         pred,
         txn
-        )
+      )
     }
   }
 }

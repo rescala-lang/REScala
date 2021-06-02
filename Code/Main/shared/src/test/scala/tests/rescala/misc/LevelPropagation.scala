@@ -7,7 +7,6 @@ import rescala.scheduler.Levelbased
 
 class LevelPropagation extends RETests {
   multiEngined { engine =>
-
     val ie = new Infiltrator(engine.asInstanceOf[RescalaInterface with Levelbased])
     import ie.api._
     import ie.assertLevel
@@ -26,7 +25,7 @@ class LevelPropagation extends RETests {
       }
       assert(level_1_to_4.readValueOnce === 42)
       var evaluatesOnlyOncePerTurn = 0
-      val level_2_to_5             = Signals.lift(level0, level_1_to_4) { (x, y) => evaluatesOnlyOncePerTurn += 1; x + y }
+      val level_2_to_5 = Signals.lift(level0, level_1_to_4) { (x, y) => evaluatesOnlyOncePerTurn += 1; x + y }
       assert(level_2_to_5.readValueOnce === 0 + 42)
 
       assertLevel(level3, 3)

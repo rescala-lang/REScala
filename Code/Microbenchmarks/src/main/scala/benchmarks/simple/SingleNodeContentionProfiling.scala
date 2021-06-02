@@ -15,8 +15,8 @@ import rescala.interface.RescalaInterface
 @Threads(1)
 @State(Scope.Benchmark)
 class SingleNodeContentionProfiling extends BusyThreads {
-    var engine: RescalaInterface = _
-  lazy val stableEngine = engine
+  var engine: RescalaInterface = _
+  lazy val stableEngine        = engine
   import stableEngine._
 
   var sources: Array[Var[Int]] = _

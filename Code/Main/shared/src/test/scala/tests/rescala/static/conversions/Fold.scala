@@ -217,7 +217,7 @@ class Fold extends RETests {
       assert(res.readValueOnce == "hellohello")
       word.fire("world")
       assert(res.readValueOnce == "world")
-      transaction(count, word, reset){ implicit at =>
+      transaction(count, word, reset) { implicit at =>
         count.admit(2)
         word.admit("do them all!")
         reset.admit(())
@@ -243,14 +243,14 @@ class Fold extends RETests {
       assert(res.readValueOnce == Some(2))
     }
 
-    //test("changing only a signal when folding") {
-    //  val e = Evt[Int]()
-    //  val v = Var(0)
-    //  val f = e.fold(0) { (_, _) => v.value }
-    //  f observe identity
-    //
-    //  v.set(1)
-    //}
+  //test("changing only a signal when folding") {
+  //  val e = Evt[Int]()
+  //  val v = Var(0)
+  //  val f = e.fold(0) { (_, _) => v.value }
+  //  f observe identity
+  //
+  //  v.set(1)
+  //}
 
   }
 }

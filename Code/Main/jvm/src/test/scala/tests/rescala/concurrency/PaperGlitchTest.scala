@@ -5,8 +5,7 @@ import java.util.concurrent.{ConcurrentLinkedQueue, CountDownLatch}
 import org.scalatest.funsuite.AnyFunSuite
 import tests.rescala.testtools.Spawn
 
-
-  // change here for FUN
+// change here for FUN
 import rescala.default._
 
 import scala.util.Random
@@ -19,8 +18,6 @@ class PaperGlitchTest extends AnyFunSuite {
     def isPowerOf2(x: Int) = (x & (x - 1)) == 0
 
     // ============================================================================================================
-
-
 
     val price    = Var(3)
     val tax      = price.map { p => p / 3 }

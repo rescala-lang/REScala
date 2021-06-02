@@ -18,18 +18,17 @@ class SimplePhil {
 
   import benchmarks.philosophers.PhilosopherTable._
 
-    var engine: RescalaInterface = _
-  lazy val stableEngine = engine
+  var engine: RescalaInterface = _
+  lazy val stableEngine        = engine
   import stableEngine._
-
 
   var phil: Var[Philosopher] = _
   var vision: Signal[Vision] = _
 
   def buildPhil(): (Var[Philosopher], Signal[Vision]) = {
     val p: Var[Philosopher] = Var(Thinking)
-    val f1, f2                 = p.map(s => if (s == Thinking) Free else Taken("me"))
-    val v                      = Signals.lift(f1, f2) { calcVision("me") }
+    val f1, f2              = p.map(s => if (s == Thinking) Free else Taken("me"))
+    val v                   = Signals.lift(f1, f2) { calcVision("me") }
     (p, v)
   }
 

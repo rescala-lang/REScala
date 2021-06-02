@@ -108,4 +108,3 @@ trait SubsumableLockHost extends Host[SubsumableLock] {
     retry()
   }
 }
-

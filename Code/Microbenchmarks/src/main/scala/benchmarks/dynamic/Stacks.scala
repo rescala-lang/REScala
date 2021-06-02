@@ -27,7 +27,7 @@ class StackState {
   @Setup(Level.Iteration)
   def setup(params: BenchmarkParams, eParam: EngineParam, work: Workload, size: Size, step: Step) = {
     engine = eParam.engine
-    val threads                       = params.getThreads
+    val threads = params.getThreads
     if (scheduler == Schedulers.unmanaged.scheduler) { isManual = true }
     sources = Range(0, threads).map(_ => Var(0)).toArray
     results = sources.map { source =>

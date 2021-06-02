@@ -75,7 +75,7 @@ object LFullyModularBall extends Main {
       Events.Match(
         reset act { case Point(x, y) => Pos(x.toDouble, y.toDouble) },
         inc act { inc => acc + inc }
-        )
+      )
     )
 
     val shape = new Circle(pos, diameter)

@@ -243,7 +243,8 @@ class LockUnionFindTest extends AnyFunSuite {
     turn2.beginExecuting()
     val lock2 = turn2.subsumableLock.get()
 
-    if (FullMv.SubsumableLock.DEBUG) println(s"single subsume blocked gc with $turn1 using $lock1 and $turn2 using $lock2")
+    if (FullMv.SubsumableLock.DEBUG)
+      println(s"single subsume blocked gc with $turn1 using $lock1 and $turn2 using $lock2")
 
     val l1 = Await.result(turn1.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
     val l2 = Await.result(turn2.tryLock(), Duration.Zero).asInstanceOf[Locked].lock

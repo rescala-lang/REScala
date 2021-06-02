@@ -182,7 +182,7 @@ trait Levelbased extends Twoversion {
         var needsEvaluate: Boolean
     ) extends Comparable[QueueElement] {
       // order by level, then by reactive
-      val order: Long                              = (level.toLong << 32) | (reactive.hashCode.toLong & 0x00000000ffffffffL)
+      val order: Long = (level.toLong << 32) | (reactive.hashCode.toLong & 0x00000000ffffffffL)
       override def compareTo(o: QueueElement): Int = java.lang.Long.compare(order, o.order)
     }
   }

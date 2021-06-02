@@ -10,7 +10,7 @@ import scala.concurrent.duration.Duration
 
 class NodeVersionHistoryTest extends AnyFunSuite {
   test("Frame Notify Reevout") {
-    val api = new FullMVApi(Duration.Zero, "fnr")
+    val api    = new FullMVApi(Duration.Zero, "fnr")
     val engine = api.scheduler
     import api._
 

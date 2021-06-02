@@ -197,8 +197,6 @@ trait FullMVBundle extends Core {
     def cacheStatus: String = s"${instances.size()} turn instances and ${lockHost.instances.size()} lock instances"
   }
 
-
-
   trait FullMVTurn
       extends Initializer
       with FullMVTurnProxy

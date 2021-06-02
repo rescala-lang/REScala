@@ -12,8 +12,6 @@ import scala.util.Random
 import rescala.interface.RescalaInterface
 import rescala.scheduler.Levelbased
 
-
-
 class SignalTestSuite extends RETests with ScalaCheckDrivenPropertyChecks with Matchers {
   multiEngined { engine =>
     val ie = new Infiltrator(engine.asInstanceOf[RescalaInterface with Levelbased])

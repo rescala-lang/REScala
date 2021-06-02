@@ -18,7 +18,7 @@ import java.util.concurrent.locks.ReadWriteLock
 class StaticVsDynamic {
 
   var engine: RescalaInterface = _
-  lazy val stableEngine = engine
+  lazy val stableEngine        = engine
   import stableEngine._
 
   @Param(Array("true", "false"))

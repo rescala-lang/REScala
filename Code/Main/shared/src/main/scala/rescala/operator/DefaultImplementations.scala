@@ -4,10 +4,13 @@ import rescala.core._
 import rescala.interface.RescalaInterface
 import rescala.operator.Pulse.NoChange
 
-trait DefaultImplementations  {
-  self : RescalaInterface with EventApi with SignalApi with Sources with DefaultImplementations with Observing with Core =>
+trait DefaultImplementations {
+  self: RescalaInterface with EventApi with SignalApi with Sources with DefaultImplementations with Observing
+    with Core =>
+
   /** @param isDynamicWithStaticDeps [[None]] means static dependencies only,
-    *                                [[Some]] means dynamic with the given static ones for optimization */
+    *                                [[Some]] means dynamic with the given static ones for optimization
+    */
   class SignalImpl[T](
       initial: State[Pulse[T]],
       expr: (DynamicTicket, () => T) => T,
@@ -41,7 +44,7 @@ trait DefaultImplementations  {
       /** If this is None, the event is static. Else, it is dynamic with the set of static dependencies */
       isDynamicWithStaticDeps: Option[Set[ReSource]]
   ) extends DerivedImpl[T](initial, name, isDynamicWithStaticDeps)
-    with Event[T] {
+      with Event[T] {
 
     override protected[rescala] def commit(base: Pulse[T]): Pulse[T] = Pulse.NoChange
     override def internalAccess(v: Pulse[T]): Pulse[T]               = v

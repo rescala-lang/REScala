@@ -24,7 +24,8 @@ import rescala.operator.{DefaultImplementations, EventApi, FlattenApi, Observing
   * @groupdesc internal Methods and type aliases for advanced usages, these are most relevant to abstract
   *           over multiple scheduler implementations.
   */
-trait RescalaInterface extends EventApi with SignalApi with FlattenApi with Sources with DefaultImplementations with Observing with Core with SignalCompatApi with EventCompatApi {
+trait RescalaInterface extends EventApi with SignalApi with FlattenApi with Sources with DefaultImplementations
+    with Observing with Core with SignalCompatApi with EventCompatApi {
 
   /** @group internal */
   def scheduler: Scheduler
@@ -33,7 +34,6 @@ trait RescalaInterface extends EventApi with SignalApi with FlattenApi with Sour
 
   /** @group internal */
   implicit def implicitScheduler: Scheduler = scheduler
-
 
   implicit def OnEv[T](e: Event[T]): Events.OnEv[T]           = new Events.OnEv[T](e)
   implicit def OnEvs[T](e: => Seq[Event[T]]): Events.OnEvs[T] = new Events.OnEvs[T](e)

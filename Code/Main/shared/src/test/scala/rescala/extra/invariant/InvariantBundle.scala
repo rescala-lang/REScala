@@ -14,7 +14,7 @@ object InvariantApi extends InvariantBundle with RescalaInterface {
 }
 
 trait InvariantBundle extends rescala.core.Core {
-  selfType : RescalaInterface =>
+  selfType: RescalaInterface =>
 
   type State[V] = SimpleState[V]
 
@@ -45,13 +45,13 @@ trait InvariantBundle extends rescala.core.Core {
   }
 
   class SimpleState[V](var value: V) {
-    var outgoing: Set[Derived]  = Set.empty
-    var incoming: Set[ReSource] = Set.empty
-    var discovered                            = false
-    var dirty                                 = false
-    var done                                  = false
-    var invariants: Seq[Invariant[V]]         = Seq.empty
-    var gen: Gen[_]                           = _
+    var outgoing: Set[Derived]        = Set.empty
+    var incoming: Set[ReSource]       = Set.empty
+    var discovered                    = false
+    var dirty                         = false
+    var done                          = false
+    var invariants: Seq[Invariant[V]] = Seq.empty
+    var gen: Gen[_]                   = _
 
     def reset(v: V): Unit = {
       discovered = false

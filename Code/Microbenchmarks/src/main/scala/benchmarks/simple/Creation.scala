@@ -17,10 +17,9 @@ import rescala.operator._
 @State(Scope.Thread)
 class Creation {
 
-    var engine: RescalaInterface = _
-  lazy val stableEngine = engine
+  var engine: RescalaInterface = _
+  lazy val stableEngine        = engine
   import stableEngine._
-
 
   @Setup
   def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam) = {

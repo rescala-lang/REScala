@@ -5,7 +5,6 @@ import rescala.operator.Observing
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
-
 trait SimpleBundle extends Core with Observing {
   type State[V] = SimpleState[V]
 
@@ -13,9 +12,9 @@ trait SimpleBundle extends Core with Observing {
 
     var outgoing: Set[Derived]  = Set.empty
     var incoming: Set[ReSource] = Set.empty
-    var discovered                              = false
-    var dirty                                   = false
-    var done                                    = false
+    var discovered              = false
+    var dirty                   = false
+    var done                    = false
     def reset(v: V): Unit = {
       discovered = false
       dirty = false
@@ -23,7 +22,8 @@ trait SimpleBundle extends Core with Observing {
       value = v
     }
 
-    override def toString: String = s"State(outgoing = $outgoing, discovered = $discovered, dirty = $dirty, done = $done)"
+    override def toString: String =
+      s"State(outgoing = $outgoing, discovered = $discovered, dirty = $dirty, done = $done)"
   }
 
   class SimpleInitializer(afterCommitObservers: ListBuffer[Observation]) extends Initializer {

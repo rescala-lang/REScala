@@ -50,7 +50,7 @@ class PhilosopherTable(philosopherCount: Int, work: Long)(val interface: Rescala
 
     for (i <- 0 until tableSize) yield {
       val previousCircularIndex = mod(i - 1)
-      val vision                = interface.Signals.lift(forks(previousCircularIndex), forks(i))(calcVision(i.toString))(s"Vision($i)")
+      val vision = interface.Signals.lift(forks(previousCircularIndex), forks(i))(calcVision(i.toString))(s"Vision($i)")
       Seating(i, phils(i), forks(previousCircularIndex), forks(i), vision)
     }
   }
@@ -88,7 +88,7 @@ class PhilosopherTable(philosopherCount: Int, work: Long)(val interface: Rescala
     // }
   }
 
-    // ============================================ Entity Creation =========================================================
+  // ============================================ Entity Creation =========================================================
 
   case class Seating(
       placeNumber: Int,

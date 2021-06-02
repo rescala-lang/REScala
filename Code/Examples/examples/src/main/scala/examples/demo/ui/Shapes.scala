@@ -24,9 +24,9 @@ class Circle(
     this(Signal { Pos(cx.value.toDouble, cy.value.toDouble) }, dia)
   override val centerX: Signal[Int] = center.map(_.x.toInt)
   override val centerY: Signal[Int] = center.map(_.y.toInt)
-  override val changed              = centerX.changed || centerY.changed || diameter.changed || border.changed || fill.changed
-  override val hitboxWidth          = diameter
-  override val hitboxHeight         = diameter
+  override val changed      = centerX.changed || centerY.changed || diameter.changed || border.changed || fill.changed
+  override val hitboxWidth  = diameter
+  override val hitboxHeight = diameter
   override def drawSnapshot(g: Graphics2D)(implicit turn: AdmissionTicket): Unit = {
     val d = turn.now(diameter)
     val x = turn.now(centerX) - d / 2

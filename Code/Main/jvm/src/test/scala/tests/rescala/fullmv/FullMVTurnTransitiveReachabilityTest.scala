@@ -2,7 +2,6 @@ package tests.rescala.fullmv
 
 import org.scalatest.funsuite.AnyFunSuite
 
-
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import rescala.fullmv.FullMVUtil.default._

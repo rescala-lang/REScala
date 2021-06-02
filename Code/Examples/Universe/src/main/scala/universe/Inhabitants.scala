@@ -52,7 +52,7 @@ trait Female extends Animal {
     Events.Match(
       becomePregnant act { _ => Animal.PregnancyTime },
       world.time.hour.changed act { _ => acc - (if (isPregnant.readValueOnce) 1 else 0) }
-      )
+    )
   )
   private val giveBirth: Event[Unit] = pregnancyTime.changedTo(0)                    //#EVT //#IF
   final override val isFertile       = Signals.lift(isAdult, isPregnant) { _ && !_ } //#SIG

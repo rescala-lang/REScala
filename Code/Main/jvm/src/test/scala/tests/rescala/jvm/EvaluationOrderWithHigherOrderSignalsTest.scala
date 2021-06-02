@@ -30,10 +30,10 @@ class EvaluationOrderWithHigherOrderSignalsTest extends RETests {
 
       changeX match {
         case DontSet => ho.set(x4)
-        case _       => transaction(x, ho) { implicit tx =>
-          x.admit(newX)
-          ho.admit(x4)
-        }
+        case _ => transaction(x, ho) { implicit tx =>
+            x.admit(newX)
+            ho.admit(x4)
+          }
       }
 
       // final value should be correct

@@ -15,8 +15,6 @@ trait ParRP extends Levelbased {
 
   class ParRPState[V](ip: V, val lock: ReLock[ParRPInterTurn]) extends LevelState[V](ip)
 
-
-
   trait ParRPInterTurn {
 
     def discover(sink: ReSource, source: Derived): Unit
@@ -28,18 +26,18 @@ trait ParRP extends Levelbased {
   }
 
   class ParRPTransaction(backoff: Backoff, priorTurn: Option[ParRPTransaction])
-    extends LevelBasedTransaction
-    with ParRPInterTurn {
+      extends LevelBasedTransaction
+      with ParRPInterTurn {
 
     override def writeState(pulsing: ReSource)(value: pulsing.Value): Unit = {
       assert(
-      {
-        val wlo: Option[Key[ParRPInterTurn]] = Option(pulsing.state.lock.getOwner)
-        wlo.fold(true)(_ eq key)
-      },
-       s"buffer ${pulsing.state}, controlled by ${pulsing.state.lock} with owner ${pulsing.state.lock.getOwner}" +
-       s" was written by $this who locks with $key, by now the owner is ${pulsing.state.lock.getOwner}"
-       )
+        {
+          val wlo: Option[Key[ParRPInterTurn]] = Option(pulsing.state.lock.getOwner)
+          wlo.fold(true)(_ eq key)
+        },
+        s"buffer ${pulsing.state}, controlled by ${pulsing.state.lock} with owner ${pulsing.state.lock.getOwner}" +
+          s" was written by $this who locks with $key, by now the owner is ${pulsing.state.lock.getOwner}"
+      )
       super.writeState(pulsing)(value)
     }
 
@@ -61,10 +59,10 @@ trait ParRP extends Levelbased {
     override def beforeDynamicDependencyInteraction(dependency: ReSource): Unit = acquireShared(dependency)
 
     /** lock all reactives reachable from the initial sources
-     * retry when acquire returns false
-     */
+      * retry when acquire returns false
+      */
     override def preparationPhase(initialWrites: Set[ReSource]): Unit = {
-      val toVisit                         = new java.util.ArrayDeque[ReSource](10)
+      val toVisit                 = new java.util.ArrayDeque[ReSource](10)
       val offer: ReSource => Unit = toVisit.offer
       initialWrites.foreach(offer)
       val priorKey = priorTurn.fold[Key[ParRPInterTurn]](null)(_.key)
@@ -76,7 +74,7 @@ trait ParRP extends Levelbased {
           throw new IllegalStateException(s"$this tried to lock reactive $reactive owned by its parent $priorKey")
         if (owner ne key) {
           if (reactive.state.lock.tryLock(key) eq key)
-            reactive.state.outgoing().foreach {offer}
+            reactive.state.outgoing().foreach { offer }
           else {
             key.reset()
             backoff.backoff()
@@ -88,20 +86,20 @@ trait ParRP extends Levelbased {
     }
 
     override def forget(reactive: Derived): Unit = levelQueue.remove(reactive)
-    override def admit(reactive: Derived): Unit = levelQueue.enqueue(reactive.state.level())(reactive)
+    override def admit(reactive: Derived): Unit  = levelQueue.enqueue(reactive.state.level())(reactive)
 
     /** registering a dependency on a node we do not personally own does require some additional care.
-     * we let the other turn update the dependency and admit the dependent into the propagation queue
-     * so that it gets updated when that turn continues
-     * the responsibility for correctly passing the locks is moved to the commit phase
-     */
+      * we let the other turn update the dependency and admit the dependent into the propagation queue
+      * so that it gets updated when that turn continues
+      * the responsibility for correctly passing the locks is moved to the commit phase
+      */
     override def discover(source: ReSource, sink: Derived): Unit = {
       val owner = acquireShared(source)
       if (owner ne key) {
         owner.turn.discover(source, sink)
         if (source.state.lock.isWriteLock) {
           owner.turn.admit(sink)
-          key.lockKeychain {_.addFallthrough(owner)}
+          key.lockKeychain { _.addFallthrough(owner) }
         }
       } else {
         super.discover(source, sink)

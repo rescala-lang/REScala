@@ -127,7 +127,7 @@ object ReactiveTransmittable {
           allEmpty("LockStateLockedResponse").copy(_2 = (guid, TurnPhase.Uninitialized, None, None) :: Nil)
         case LockStateUnlockedResponse  => allEmpty("LockStateUnlockedResponse")
         case LockStateContendedResponse => allEmpty("LockStateContendedResponse")
-        case TurnTryLock(turn)          => allEmpty("TurnTryLock").copy(_2 = (turn, TurnPhase.Uninitialized, None, None) :: Nil)
+        case TurnTryLock(turn) => allEmpty("TurnTryLock").copy(_2 = (turn, TurnPhase.Uninitialized, None, None) :: Nil)
         case TurnLockedResponse(lock) =>
           allEmpty("TurnLockedResponse").copy(_2 = (lock, TurnPhase.Uninitialized, None, None) :: Nil)
         case TurnTrySubsume(turn, lockedNewParent) =>
@@ -139,7 +139,7 @@ object ReactiveTransmittable {
         case TurnDeallocatedResponse => allEmpty("TurnDeallocatedResponse")
         case LockGetLockedRoot(lock) =>
           allEmpty("LockGetLockedRoot").copy(_2 = (lock, TurnPhase.Uninitialized, None, None) :: Nil)
-        case LockTryLock(lock)      => allEmpty("LockTryLock").copy(_2 = (lock, TurnPhase.Uninitialized, None, None) :: Nil)
+        case LockTryLock(lock) => allEmpty("LockTryLock").copy(_2 = (lock, TurnPhase.Uninitialized, None, None) :: Nil)
         case LockSuccessfulResponse => allEmpty("LockSuccessfulResponse")
         case LockLockedResponse(newParent) =>
           allEmpty("LockLockedResponse").copy(_2 = (newParent, TurnPhase.Uninitialized, None, None) :: Nil)

@@ -8,8 +8,6 @@ import rescala.operator.Pulse
 
 import scala.concurrent.duration.Duration
 
-
-
 class DeframeTest extends AnyFunSuite {
   test("deframe") {
     object FullMVTest extends FullMVApi(Duration.Zero, "deframe-test")

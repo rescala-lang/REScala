@@ -17,9 +17,8 @@ import rescala.interface.RescalaInterface
 class ChainEvent {
 
   var engine: RescalaInterface = _
-  lazy val stableEngine = engine
+  lazy val stableEngine        = engine
   import stableEngine._
-
 
   var source: Evt[Int]   = _
   var result: Event[Int] = _

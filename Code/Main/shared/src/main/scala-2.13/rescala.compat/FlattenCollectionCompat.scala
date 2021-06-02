@@ -5,7 +5,7 @@ import rescala.interface.RescalaInterface
 import scala.collection.IterableOps
 
 trait FlattenCollectionCompat {
-    self : RescalaInterface =>
+  self: RescalaInterface =>
 
   /** Flatten a Signal[Traversable[Signal[B]\]\] into a Signal[Traversable[B]\] where the new Signal updates whenever any of the inner or the outer signal updates */
   implicit def flattenImplicitFortraversableSignals[B, T[U] <: IterableOps[U, T, T[U]], Sig[A1] <: Signal[A1]](implicit
@@ -20,8 +20,7 @@ trait FlattenCollectionCompat {
     * If multiple inner Events fire, the first one in iteration order is selected.
     */
   def firstFiringEvent[B, T[U] <: IterableOps[U, T, T[U]], Evnt[A1] <: Event[A1]](
-      implicit
-      ticket: CreationTicket
+      implicit ticket: CreationTicket
   ): Flatten[Signal[T[Evnt[B]]], Event[B]] =
     new Flatten[Signal[T[Evnt[B]]], Event[B]] {
       def apply(sig: Signal[T[Evnt[B]]]): Event[B] =

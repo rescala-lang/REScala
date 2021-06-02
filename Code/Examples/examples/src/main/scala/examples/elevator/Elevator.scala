@@ -56,7 +56,7 @@ class Elevator(val nFloors: Int) {
     Events.Match(
       reachedFloor act { _ => WaitingTime },
       tick act { _ => if (isWaiting.now) acc - 1 else acc }
-      )
+    )
   )
 
   val stoppedWaiting = waitingTime.changedTo(0)

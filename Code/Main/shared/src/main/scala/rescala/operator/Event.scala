@@ -116,8 +116,6 @@ trait EventApi extends EventCompatApi {
         }
       }
 
-
-
     /** Events disjunction.
       * Propagates the values if any of the events fires.
       * Only propagates the left event if both fire.
@@ -131,8 +129,6 @@ trait EventApi extends EventCompatApi {
         if (tp.isChange) tp else other.internalAccess(st.collectStatic(other))
       }
     }
-
-
 
     /** Propagates the event only when except does not fire.
       * @usecase def \[U](except: rescala.default.Event[U]): rescala.default.Event[T]
@@ -183,7 +179,6 @@ trait EventApi extends EventCompatApi {
         if (right.isChange || left.isChange) Value(left.toOption -> right.toOption) else NoChange
       }
     }
-
 
     /** Flattens the inner value.
       * @group operator
@@ -299,7 +294,6 @@ trait EventApi extends EventCompatApi {
       }
 
   }
-
 
   object Events {
 

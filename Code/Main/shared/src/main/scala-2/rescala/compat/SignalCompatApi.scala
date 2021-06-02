@@ -8,7 +8,6 @@ import rescala.operator.{SignalApi, cutOutOfUserComputation}
 trait SignalCompatApi extends InterpBundle {
   selfType: SignalApi with Core =>
 
-
   trait SignalCompat[+T] extends InterpMacro[T] {
 
     /** Return a Signal with f applied to the value

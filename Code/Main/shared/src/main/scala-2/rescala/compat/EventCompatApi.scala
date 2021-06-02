@@ -6,7 +6,7 @@ import rescala.macros.InterpBundle
 import rescala.macros.MacroTags.{Dynamic, Static}
 import rescala.operator.{EventsMacroImpl, cutOutOfUserComputation}
 
-trait EventCompatApi extends InterpBundle{
+trait EventCompatApi extends InterpBundle {
   selfType: RescalaInterface with Core =>
 
   trait EventCompat[+T] extends InterpMacro[Option[T]] {

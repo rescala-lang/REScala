@@ -73,7 +73,7 @@ trait EventNode[+T] extends ReactiveNode[T] {
 
   def +=[S <: Struct](react: T => Unit)(implicit ticket: CreationTicket[S]): Unit = observe(react)
 
-  def ||[U >: T](others: EventNode[U]*): OrEventNode[T, U]      = OrEventNode(graph, newRef(), others.map(_.newRef()): _*)
+  def ||[U >: T](others: EventNode[U]*): OrEventNode[T, U] = OrEventNode(graph, newRef(), others.map(_.newRef()): _*)
   def &&[U >: T](pred: (U) => Boolean): FilteredEventNode[U, U] = FilteredEventNode[U, U](graph, newRef(), pred)
   def \[U](other: EventNode[U]): ExceptEventNode[T, U]          = ExceptEventNode(graph, newRef(), other.newRef())
   def and[X >: T, U, R](other: EventNode[U])(merger: (X, U) => R): AndEventNode[X, U, R] =

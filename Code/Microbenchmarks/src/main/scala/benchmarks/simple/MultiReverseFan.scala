@@ -19,14 +19,13 @@ import rescala.interface.RescalaInterface
 class MultiReverseFan {
 
   var engine: RescalaInterface = _
-  lazy val stableEngine = engine
+  lazy val stableEngine        = engine
   import stableEngine._
 
-
-  var sources: Array[Var[Int]] = _
-  var results: Array[Signal[Int]]               = _
-  var locks: Array[Lock]                           = null
-  var groupSize: Int                               = _
+  var sources: Array[Var[Int]]    = _
+  var results: Array[Signal[Int]] = _
+  var locks: Array[Lock]          = null
+  var groupSize: Int              = _
 
   @Setup
   def setup(params: BenchmarkParams, size: Size, step: Step, engineParam: EngineParam, work: Workload) = {

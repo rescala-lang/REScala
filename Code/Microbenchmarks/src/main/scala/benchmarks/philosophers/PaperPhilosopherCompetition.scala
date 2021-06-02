@@ -6,7 +6,6 @@ import benchmarks.{BusyThreads, EngineParam, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
 
-
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @Warmup(iterations = 5, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
@@ -38,7 +37,7 @@ class PaperCompetition extends BusyThreads {
   @Param(Array("-4", "-3", "-2", "-1", "0", "16", "32", "64", "128"))
   var philosophers: Int = _
   @Param(Array("event", "signal", "none", "singleFold"))
-  var topper: String              = _
+  var topper: String           = _
   var table: PaperPhilosophers = _
 
   @Setup(Level.Trial)

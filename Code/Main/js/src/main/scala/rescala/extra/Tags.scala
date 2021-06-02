@@ -10,7 +10,6 @@ import scalatags.jsdom.Frag
 import rescala.operator.Pulse
 import rescala.operator.RExceptions.ObservedException
 
-
 import scala.scalajs.js
 
 object Tags extends Tags[rescala.default.type](rescala.default)
@@ -59,8 +58,8 @@ class Tags[Api <: RescalaInterface](val api: Api) {
   }
 
   private class REFragModifier(rendered: Signal[Frag], engine: Scheduler) extends Modifier {
-    var observe: Observe = null
-    var currentNode: Node   = null
+    var observe: Observe  = null
+    var currentNode: Node = null
     override def applyTo(parent: Element): Unit = {
       CreationTicket.fromScheduler(engine).transaction { init =>
         if (observe != null) {
@@ -114,7 +113,7 @@ class Tags[Api <: RescalaInterface](val api: Api) {
 
   private class RETagListModifier(rendered: Signal[Seq[TypedTag[Element]]], engine: Scheduler)
       extends Modifier {
-    var observe: Observe                 = null
+    var observe: Observe                    = null
     var currentNodes: Seq[Element]          = Nil
     var currentTags: Seq[TypedTag[Element]] = Nil
     override def applyTo(parent: Element): Unit = {

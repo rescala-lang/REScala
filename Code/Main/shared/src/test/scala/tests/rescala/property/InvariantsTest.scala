@@ -12,7 +12,6 @@ class InvariantsTest extends RETests with ScalaCheckDrivenPropertyChecks with Ma
   val sched = InvariantApi.scheduler
   import sched._
 
-
   "expect invalid invariants to fail" in forAll(Gen.posNum[Int]) { (n: Int) =>
     assertThrows[InvariantViolationException] {
       val e              = Evt[Int]()

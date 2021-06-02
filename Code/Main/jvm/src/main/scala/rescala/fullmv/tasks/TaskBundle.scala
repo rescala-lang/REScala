@@ -1,7 +1,9 @@
 package rescala.fullmv.tasks
 
 import rescala.fullmv.FramingBranchResult._
-import rescala.fullmv.NotificationBranchResult.ReevOutBranchResult.{NotifyAndNonReadySuccessor, NotifyAndReevaluationReadySuccessor, PureNotifyOnly}
+import rescala.fullmv.NotificationBranchResult.ReevOutBranchResult.{
+  NotifyAndNonReadySuccessor, NotifyAndReevaluationReadySuccessor, PureNotifyOnly
+}
 import rescala.fullmv.NotificationBranchResult.{ReevOutBranchResult, _}
 import rescala.fullmv.mirrors.Mirror
 import rescala.fullmv.sgt.synchronization.SubsumableLockBundle

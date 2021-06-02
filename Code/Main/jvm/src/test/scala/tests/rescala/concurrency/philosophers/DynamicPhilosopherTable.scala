@@ -4,7 +4,7 @@ import rescala.core.{ReName}
 import rescala.interface.RescalaInterface
 import tests.rescala.concurrency.philosophers.PhilosopherTable._
 
-class DynamicPhilosopherTable[S ](philosopherCount: Int, work: Long)(ri: RescalaInterface)
+class DynamicPhilosopherTable[S](philosopherCount: Int, work: Long)(ri: RescalaInterface)
     extends PhilosopherTable(philosopherCount, work)(ri) {
   import interface.{Var, Signal, implicitScheduler}
 

@@ -6,7 +6,7 @@ import scala.collection.TraversableLike
 import scala.collection.generic.CanBuildFrom
 
 trait FlattenCollectionCompat {
-    self : RescalaInterface =>
+  self: RescalaInterface =>
 
   /** Flatten a Signal[Traversable[Signal[B]\]\] into a Signal[Traversable[B]\] where the new Signal updates whenever any of the inner or the outer signal updates */
   implicit def traversableSignals[B, T[U] <: TraversableLike[U, T[U]], Sig[A1] <: Signal[A1]](implicit

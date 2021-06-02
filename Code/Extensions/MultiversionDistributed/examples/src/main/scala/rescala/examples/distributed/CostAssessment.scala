@@ -93,10 +93,10 @@ object CostAssessment {
         try {
           import topHost._
 
-          val remoteLeft                                      = Await.result(registry.connect(TCP("localhost", leftHost.port)), timeout)
-          val mergeFromLeft                                   = Await.result(registry.lookup(binding(length), remoteLeft), timeout)
-          val remoteRight                                     = Await.result(registry.connect(TCP("localhost", rightHost.port)), timeout)
-          val mergeFromRight                                  = Await.result(registry.lookup(binding(length), remoteRight), timeout)
+          val remoteLeft     = Await.result(registry.connect(TCP("localhost", leftHost.port)), timeout)
+          val mergeFromLeft  = Await.result(registry.lookup(binding(length), remoteLeft), timeout)
+          val remoteRight    = Await.result(registry.connect(TCP("localhost", rightHost.port)), timeout)
+          val mergeFromRight = Await.result(registry.lookup(binding(length), remoteRight), timeout)
           val topMerge: topHost.Signal[Map[String, Set[Int]]] = Signal { merge(mergeFromLeft(), mergeFromRight()) }
 
           var violations: List[Map[String, Set[Int]]] = Nil

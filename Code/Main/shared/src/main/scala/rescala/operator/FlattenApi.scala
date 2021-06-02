@@ -6,7 +6,7 @@ import scala.annotation.implicitNotFound
 import scala.reflect.ClassTag
 import rescala.interface.RescalaInterface
 
-trait FlattenApi extends FlattenCollectionCompat{
+trait FlattenApi extends FlattenCollectionCompat {
   self: RescalaInterface =>
   @implicitNotFound(msg =
     "Could not flatten ${A}. Try to select a specific flatten strategy from rescala.reactives.Flatten.")

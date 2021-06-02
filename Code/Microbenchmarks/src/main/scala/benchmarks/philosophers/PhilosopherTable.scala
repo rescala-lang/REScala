@@ -3,8 +3,7 @@ package benchmarks.philosophers
 import java.util.concurrent.atomic.AtomicInteger
 
 import benchmarks.philosophers.PhilosopherTable._
-import org.openjdk.jmh.infra.Blackhole
-; import rescala.interface.RescalaInterface
+import org.openjdk.jmh.infra.Blackhole; import rescala.interface.RescalaInterface
 import rescala.operator._
 
 class PhilosopherTable(philosopherCount: Int, work: Long)(val engine: RescalaInterface) {
@@ -49,7 +48,7 @@ class PhilosopherTable(philosopherCount: Int, work: Long)(val engine: RescalaInt
       forksWereFree
     }
 
-    // ============================================ Entity Creation =========================================================
+  // ============================================ Entity Creation =========================================================
 
   case class Seating(
       placeNumber: Int,
@@ -91,7 +90,5 @@ object PhilosopherTable {
   case object Ready                  extends Vision
   case object Done                   extends Vision
   case class BlockedBy(name: String) extends Vision
-
-
 
 }

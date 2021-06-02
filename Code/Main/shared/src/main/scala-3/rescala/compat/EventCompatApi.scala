@@ -7,9 +7,8 @@ import rescala.operator.{cutOutOfUserComputation}
 trait EventCompatApi {
   selfType: RescalaInterface with Core =>
 
-
   trait EventCompat[+T] extends Interp[Option[T]] {
-    selfType :Event[T] =>
+    selfType: Event[T] =>
 
     /** Filters the event, only propagating the value when the filter is true.
       * @usecase def filter(pred: T => Boolean): rescala.default.Event[T]
@@ -25,7 +24,6 @@ trait EventCompatApi {
       */
     final def collect[U](expression: PartialFunction[T, U])(implicit ticket: CreationTicket): Event[U] =
       Events.staticNamed(s"(collect $this)", this) { st => st.collectStatic(this).collect(expression) }
-
 
     /** Transform the event.
       * @usecase def map[A](expression: T => A): rescala.default.Event[A]

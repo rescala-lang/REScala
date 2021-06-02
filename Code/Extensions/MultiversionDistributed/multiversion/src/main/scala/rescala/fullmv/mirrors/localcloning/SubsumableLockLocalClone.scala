@@ -15,7 +15,7 @@ object SubsumableLockLocalClone {
   ): SubsumableLock = {
     val mirrorHost                      = subsumableLock.host
     val localProxy: SubsumableLockProxy = subsumableLock
-    val remoteProxy                     = new SubsumableLockLocalCloneProxy(fakeDelay, mirrorHost, localProxy, reflectionHost)
+    val remoteProxy = new SubsumableLockLocalCloneProxy(fakeDelay, mirrorHost, localProxy, reflectionHost)
     reflectionHost.getCachedOrReceiveRemoteWithReference(subsumableLock.guid, remoteProxy)
   }
 }

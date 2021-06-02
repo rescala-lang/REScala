@@ -8,7 +8,7 @@ import scala.util.Random
 
 object Board {
   def proximity(pos: Pos, range: Int): IndexedSeq[Pos] = square(range).map(pos + _).sortBy(pos.distance)
-  def square(range: Int): IndexedSeq[Pos]              = for (x <- -range to range; y <- -range to range) yield Pos(x, y)
+  def square(range: Int): IndexedSeq[Pos] = for (x <- -range to range; y <- -range to range) yield Pos(x, y)
 }
 
 /** Mutable data structure which stores board elements in 2-dimensional coordinates.

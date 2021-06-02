@@ -17,11 +17,11 @@ import rescala.interface.RescalaInterface
 @State(Scope.Benchmark)
 class SignalMapGrid extends BusyThreads {
   var engine: RescalaInterface = _
-  lazy val stableEngine = engine
+  lazy val stableEngine        = engine
   import stableEngine._
 
-  var source: Var[Int]              = _
-  var leafs: Seq[Signal[Int]]       = _
+  var source: Var[Int]        = _
+  var leafs: Seq[Signal[Int]] = _
   @Param(Array("1", "4", "16"))
   var width: Int = _
   @Param(Array("1", "4", "16"))

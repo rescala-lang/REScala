@@ -18,8 +18,8 @@ import rescala.interface.RescalaInterface
 @State(Scope.Benchmark)
 class SingleVar {
 
-  var engine: RescalaInterface      = _
-  lazy val engineT                        = engine
+  var engine: RescalaInterface              = _
+  lazy val engineT                          = engine
   implicit def scheduler: engineT.Scheduler = engineT.scheduler
 
   var source: engineT.Var[Boolean] = _

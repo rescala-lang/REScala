@@ -32,7 +32,7 @@ trait SignalApi {
     override type Value <: Pulse[T]
     override def interpret(v: Value): T                        = v.get
     override protected[rescala] def commit(base: Value): Value = base
-    def resource: Interp[T]                           = this
+    def resource: Interp[T]                                    = this
 
     /** Returns the current value of the signal
       * However, using now is in most cases not what you want.
@@ -146,8 +146,6 @@ trait SignalApi {
       }.dropParam
 
   }
-
-
 
   /** Functions to construct signals, you probably want to use signal expressions in [[rescala.interface.RescalaInterface.Signal]] for a nicer API. */
   object Signals {

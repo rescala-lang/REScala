@@ -19,12 +19,12 @@ import rescala.interface.RescalaInterface
 class ReverseFan {
 
   var engine: RescalaInterface = _
-  lazy val stableEngine = engine
+  lazy val stableEngine        = engine
   import stableEngine._
 
   var sources: Array[Var[Int]] = _
-  var result: Signal[Int]                       = _
-  var isManual: Boolean                            = false
+  var result: Signal[Int]      = _
+  var isManual: Boolean        = false
 
   @Setup
   def setup(params: BenchmarkParams, size: Size, step: Step, engineParam: EngineParam, work: Workload) = {

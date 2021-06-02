@@ -17,7 +17,7 @@ import rescala.interface.RescalaInterface
 class TurnCreation {
 
   var engine: RescalaInterface = _
-  lazy val stableEngine = engine
+  lazy val stableEngine        = engine
   import stableEngine._
 
   @Setup

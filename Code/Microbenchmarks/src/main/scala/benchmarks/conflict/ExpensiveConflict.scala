@@ -34,13 +34,13 @@ class ExpensiveConflict {
   var input: AtomicInteger = new AtomicInteger(0)
 
   var engine: RescalaInterface = _
-  lazy val stableEngine = engine
+  lazy val stableEngine        = engine
   import stableEngine._
 
   var cheapSource: Var[Int]     = _
   var expensiveSource: Var[Int] = _
   var result: Signal[Int]       = _
-  var tried: Int                   = _
+  var tried: Int                = _
 
   @Setup(Level.Iteration)
   def setup(engineParam: EngineParam, work: Workload) = {

@@ -11,7 +11,7 @@ class WithoutAPITest extends RETests {
       outer =>
 
       override type Value = T
-      override protected[rescala] def state: State[T]               = initState
+      override protected[rescala] def state: State[T]            = initState
       override protected[rescala] def name: ReName               = "I am a source name"
       override def interpret(v: Value): T                        = v
       override protected[rescala] def commit(base: Value): Value = base
@@ -34,7 +34,7 @@ class WithoutAPITest extends RETests {
     ) extends Derived
         with Interp[String] {
       override type Value = String
-      override protected[rescala] def state: State[Value]               = initState
+      override protected[rescala] def state: State[Value]        = initState
       override protected[rescala] def name: ReName               = "I am a name"
       override protected[rescala] def commit(base: Value): Value = base
 
