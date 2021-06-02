@@ -179,7 +179,7 @@ class ReactorWithoutAPITest extends RETests {
     assert(transaction(reactor) { _.now(reactor) } === 1)
   }
 
-  test("ReactorStages can be nested") {
+  "ReactorStages can be nested" ignore {
     val e1 = Evt[Unit]()
 
     val reactor = Reactor.once(0, Set(e1)) {
