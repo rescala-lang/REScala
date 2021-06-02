@@ -1,6 +1,4 @@
-jdk:
-  - openjdk11
 install:
-  - sbt +publishLocal
+  - sbt -Dsbt.log.noformat=true +publishM2
 env:
-  SBT_OPTS: "-XX:MaxPermSize=2G"
+  SBT_OPTS: "-Xms1024m -Xmx1024m -XX:ReservedCodeCacheSize=128m -XX:MaxMetaspaceSize=256m"
