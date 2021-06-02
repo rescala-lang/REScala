@@ -69,7 +69,7 @@ class BenchState {
     //  cs.histories.get(room2).observe(v => work.consume())
     //}
 
-    if (engine.scheduler == Schedulers.unmanaged) {
+    if (engine == Schedulers.unmanaged) {
       locks = Array.fill(size.size)(new ReentrantLock())
     }
 

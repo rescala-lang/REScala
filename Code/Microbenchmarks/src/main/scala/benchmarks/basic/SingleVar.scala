@@ -31,7 +31,7 @@ class SingleVar {
     engine = engineParam.engine
     current = false
     source = engineT.Var(current)
-    if (engineParam.engine.scheduler == Schedulers.unmanaged) lock = new ReentrantReadWriteLock()
+    if (engineParam.engine == Schedulers.unmanaged) lock = new ReentrantReadWriteLock()
   }
 
   @Benchmark
