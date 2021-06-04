@@ -7,7 +7,7 @@ import loci.registry.Binding
 import loci.transmitter.Serializable
 import loci.transmitter.transmittable.IdenticallyTransmittable
 import rescala.extra.lattices.delta.CContext._
-import rescala.extra.lattices.delta.crdt.RRGA
+import rescala.extra.lattices.delta.impl.reactive.RGA
 import rescala.extra.lattices.delta.Codecs._
 
 import scala.concurrent.Future
@@ -32,9 +32,9 @@ object Bindings {
     override def deserialize(value: MessageBuffer): Try[T] = Try(readFromString[T](value.decodeString))
   }
 
-  implicit val _Tbm: IdenticallyTransmittable[RRGA.State[Posting, DietMapCContext]] = IdenticallyTransmittable()
+  implicit val _Tbm: IdenticallyTransmittable[RGA.State[Posting, DietMapCContext]] = IdenticallyTransmittable()
 
   val crdtDescriptions
-      : Binding[RRGA.State[Posting, DietMapCContext] => Unit, RRGA.State[Posting, DietMapCContext] => Future[Unit]] =
-    Binding[RRGA.State[Posting, DietMapCContext] => Unit]("postings"): @scala.annotation.nowarn
+      : Binding[RGA.State[Posting, DietMapCContext] => Unit, RGA.State[Posting, DietMapCContext] => Future[Unit]] =
+    Binding[RGA.State[Posting, DietMapCContext] => Unit]("postings"): @scala.annotation.nowarn
 }

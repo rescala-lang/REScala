@@ -12,7 +12,7 @@ import rescala.extra.Tags._
 import rescala.extra.distributables.LociDist
 import rescala.extra.lattices.delta.CContext._
 import rescala.extra.lattices.delta.Delta
-import rescala.extra.lattices.delta.crdt.{LastWriterWins, RLastWriterWins}
+import rescala.extra.lattices.delta.impl.reactive.LastWriterWins
 import rescala.extra.lattices.delta.Codecs._
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all._
@@ -37,7 +37,7 @@ object TodoTask {
 case class TodoTaskView(tag: TypedTag[LI], removeEvt: Event[String], writeEvt: Event[TodoTask])
 
 object TodoTaskView {
-  implicit val transmittableLWW: IdenticallyTransmittable[RLastWriterWins.State[TodoTask, DietMapCContext]] =
+  implicit val transmittableLWW: IdenticallyTransmittable[LastWriterWins.State[TodoTask, DietMapCContext]] =
     IdenticallyTransmittable()
 
   def signalAndUI(
@@ -45,8 +45,8 @@ object TodoTaskView {
       taskID: String,
       task: Option[TodoTask],
       toggleAll: Event[UIEvent]
-  ): (Signal[RLastWriterWins[TodoTask, DietMapCContext]], TypedTag[LI], Event[String]) = {
-    val lwwInit = RLastWriterWins[TodoTask, DietMapCContext](replicaID)
+  ): (Signal[LastWriterWins[TodoTask, DietMapCContext]], TypedTag[LI], Event[String]) = {
+    val lwwInit = LastWriterWins[TodoTask, DietMapCContext](replicaID)
 
     val lww = task match {
       case None    => lwwInit
@@ -84,7 +84,7 @@ object TodoTaskView {
     )
 
     LociDist.distributeDeltaCRDT(crdt, deltaEvt, Todolist.registry)(
-      Binding[RLastWriterWins.State[TodoTask, DietMapCContext] => Unit](taskID)
+      Binding[LastWriterWins.State[TodoTask, DietMapCContext] => Unit](taskID)
     )
 
     val taskData = crdt.map(_.read.getOrElse(TodoTask(desc = "LWW Empty")))

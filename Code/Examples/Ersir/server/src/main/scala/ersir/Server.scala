@@ -11,7 +11,7 @@ import rescala.default._
 import rescala.extra.distributables.LociDist
 import rescala.extra.lattices.delta.CContext.DietMapCContext
 import rescala.extra.lattices.delta.Delta
-import rescala.extra.lattices.delta.crdt.RRGA
+import rescala.extra.lattices.delta.impl.reactive.RGA
 import rescala.extra.lattices.delta.crdt.RGACRDT._
 import rescala.operator.Diff
 
@@ -23,12 +23,12 @@ class Server(pages: ServerPages, system: ActorSystem, webResources: WebResources
 
   val manualAddPostings: Evt[List[Posting]] = Evt()
 
-  val deltaEvt: Evt[Delta[RRGA.State[Posting, DietMapCContext]]] = Evt()
+  val deltaEvt: Evt[Delta[RGA.State[Posting, DietMapCContext]]] = Evt()
 
   val myID: String = ThreadLocalRandom.current().nextLong().toHexString
 
-  val serverSideEntries: Signal[RRGA[Posting, DietMapCContext]] =
-    Events.foldAll(RRGA[Posting, DietMapCContext](myID)) { rga =>
+  val serverSideEntries: Signal[RGA[Posting, DietMapCContext]] =
+    Events.foldAll(RGA[Posting, DietMapCContext](myID)) { rga =>
       Seq(
         manualAddPostings act rga.prependAll,
         deltaEvt act rga.applyDelta

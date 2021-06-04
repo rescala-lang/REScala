@@ -9,7 +9,7 @@ import rescala.default._
 import rescala.extra.distributables.LociDist
 import rescala.extra.lattices.delta.CContext.DietMapCContext
 import rescala.extra.lattices.delta.Delta
-import rescala.extra.lattices.delta.crdt.RRGA
+import rescala.extra.lattices.delta.impl.reactive.RGA
 import rescala.extra.lattices.delta.crdt.RGACRDT._
 
 import java.util.concurrent.ThreadLocalRandom
@@ -18,7 +18,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 object ErsirJS {
 
-  type Postings = RRGA[Posting, DietMapCContext]
+  type Postings = RGA[Posting, DietMapCContext]
 
   val connectionSignal: Var[Boolean] = Var(false)
 
@@ -32,12 +32,12 @@ object ErsirJS {
   val addPost: Event[Posting] = index.addPost.event
     .filter(p => p.title.nonEmpty || p.img.nonEmpty)
 
-  val deltaEvt: Evt[Delta[RRGA.State[Posting, DietMapCContext]]] = Evt()
+  val deltaEvt: Evt[Delta[RGA.State[Posting, DietMapCContext]]] = Evt()
 
   val myID: String = ThreadLocalRandom.current().nextLong().toHexString
 
   val postings: Signal[Postings] =
-    Events.foldAll(RRGA[Posting, DietMapCContext](myID)) { rga =>
+    Events.foldAll(RGA[Posting, DietMapCContext](myID)) { rga =>
       Seq(
         addPost act rga.prepend,
         index.reset.event act { _ => rga.clear() },

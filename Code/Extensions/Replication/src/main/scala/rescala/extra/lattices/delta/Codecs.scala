@@ -4,7 +4,7 @@ import cats.collections.Diet
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import rescala.extra.lattices.delta.CContext.DietMapCContext
-import rescala.extra.lattices.delta.crdt.{AuctionData, Elem, FW, GOListNode, RGANode}
+import rescala.extra.lattices.delta.crdt.{AuctionData, Elem, FW, GListNode, RGANode}
 
 object Codecs {
 
@@ -63,9 +63,9 @@ object Codecs {
 
   implicit def GCounterStateCodec: JsonValueCodec[Map[String, Int]] = JsonCodecMaker.make
 
-  /** GOList */
+  /** GList */
 
-  implicit def GOListStateCodec[E: JsonValueCodec]: JsonValueCodec[Map[GOListNode[TimedVal[E]], Elem[TimedVal[E]]]] =
+  implicit def GListStateCodec[E: JsonValueCodec]: JsonValueCodec[Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   /** GSet */
@@ -117,7 +117,7 @@ object Codecs {
   /** RGA */
 
   implicit def RGAStateCodec[E: JsonValueCodec, C: JsonValueCodec]
-      : JsonValueCodec[Causal[(FW[Map[GOListNode[TimedVal[Dot]], Elem[TimedVal[Dot]]]], Map[Dot, RGANode[E]]), C]] =
+      : JsonValueCodec[Causal[(FW[Map[GListNode[TimedVal[Dot]], Elem[TimedVal[Dot]]]], Map[Dot, RGANode[E]]), C]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   /** Rubis */

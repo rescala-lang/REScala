@@ -8,13 +8,12 @@ import loci.serializer.jsoniterScala.jsoniteScalaBasedSerializable
 import org.scalajs.dom.UIEvent
 import org.scalajs.dom.html.{Div, Input, LI}
 import rescala.default._
-import rescala.extra.Tags._
 import rescala.extra.distributables.LociDist
 import rescala.extra.lattices.delta.CContext._
 import rescala.extra.lattices.delta.Delta
-import rescala.extra.lattices.delta.crdt.{RLastWriterWins, RRGA}
+import rescala.extra.lattices.delta.impl.reactive.{LastWriterWins, RGA}
+import rescala.extra.lattices.delta.crdt.RGACRDT.ForcedWriteAsUIJDLattice
 import rescala.extra.lattices.delta.Codecs._
-import rescala.extra.lattices.delta.crdt.RGACRDT._
 import scalatags.JsDom
 import scalatags.JsDom.all._
 import scalatags.JsDom.tags2.section
@@ -26,7 +25,7 @@ class TodoApp() {
 
   implicit val stringCodec: JsonValueCodec[String] = JsonCodecMaker.make
 
-  implicit val transmittableList: IdenticallyTransmittable[RRGA.State[String, DietMapCContext]] =
+  implicit val transmittableList: IdenticallyTransmittable[RGA.State[String, DietMapCContext]] =
     IdenticallyTransmittable()
 
   @scala.annotation.nowarn // Auto-application to `()`
@@ -47,22 +46,20 @@ class TodoApp() {
       input(id := "toggle-all", name := "toggle-all", `class` := "toggle-all", `type` := "checkbox", onchange := cb)
     }
 
-    val deltaEvt = Evt[Delta[RRGA.State[String, DietMapCContext]]]
-
-    val resetDeltaBuffer = Evt[Unit]
+    val deltaEvt = Evt[Delta[RGA.State[String, DietMapCContext]]]
 
     val myID = ThreadLocalRandom.current().nextLong().toHexString
 
     case class State(
-        list: RRGA[String, DietMapCContext],
-        signalMap: Map[String, Signal[RLastWriterWins[TodoTask, DietMapCContext]]],
+        list: RGA[String, DietMapCContext],
+        signalMap: Map[String, Signal[LastWriterWins[TodoTask, DietMapCContext]]],
         uiMap: Map[String, TypedTag[LI]],
         evtMap: Map[String, Event[String]]
     )
 
-    val listInitial = RRGA[String, DietMapCContext](myID)
+    val listInitial = RGA[String, DietMapCContext](myID)
 
-    val signalMapInitial = Map[String, Signal[RLastWriterWins[TodoTask, DietMapCContext]]]()
+    val signalMapInitial = Map[String, Signal[LastWriterWins[TodoTask, DietMapCContext]]]()
 
     val uiMapInitial = Map[String, TypedTag[LI]]()
 
@@ -102,7 +99,7 @@ class TodoApp() {
         State(newList, signalMap - id, uiMap - id, evtMap - id)
     }
 
-    def handleDelta(s: => State)(delta: Delta[RRGA.State[String, DietMapCContext]]): State = s match {
+    def handleDelta(s: => State)(delta: Delta[RGA.State[String, DietMapCContext]]): State = s match {
       case State(list, signalMap, uiMap, evtMap) =>
         val newList = list.resetDeltaBuffer().applyDelta(delta)
 
@@ -132,19 +129,22 @@ class TodoApp() {
       )
     }
 
-    val list = state.map(_.list)
+    val rga = state.map(_.list)
 
-    LociDist.distributeDeltaCRDT(list, deltaEvt, Todolist.registry)(
-      Binding[RRGA.State[String, DietMapCContext] => Unit]("tasklist")
+    LociDist.distributeDeltaCRDT(rga, deltaEvt, Todolist.registry)(
+      Binding[RGA.State[String, DietMapCContext] => Unit]("tasklist")
     )
 
-    val tasks = state.map { s =>
-      s.list.toList.flatMap(id => s.signalMap(id)().read)
+    val tasksAndListItems = state.map { s =>
+      val list      = s.list.toList
+      val tasks     = list.flatMap(id => s.signalMap(id)().read)
+      val listItems = list.map(id => s.uiMap(id))
+      (tasks, listItems)
     }
 
-    val listItems = state.map { s =>
-      s.list.toList.map(id => s.uiMap(id))
-    }
+    val tasks = tasksAndListItems.map(_._1)
+
+    val listItems = tasksAndListItems.map(_._2)
 
     div(
       `class` := "todoapp",
