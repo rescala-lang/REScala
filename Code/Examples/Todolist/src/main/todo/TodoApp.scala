@@ -8,6 +8,7 @@ import loci.serializer.jsoniterScala.jsoniteScalaBasedSerializable
 import org.scalajs.dom.UIEvent
 import org.scalajs.dom.html.{Div, Input, LI}
 import rescala.default._
+import rescala.extra.Tags._
 import rescala.extra.distributables.LociDist
 import rescala.extra.lattices.delta.CContext._
 import rescala.extra.lattices.delta.Delta
