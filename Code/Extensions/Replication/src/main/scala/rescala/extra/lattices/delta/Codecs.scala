@@ -4,7 +4,10 @@ import cats.collections.Diet
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import rescala.extra.lattices.delta.CContext.DietMapCContext
-import rescala.extra.lattices.delta.crdt.{AuctionData, Elem, FW, GListNode, RGANode}
+import rescala.extra.lattices.delta.interfaces.AuctionInterface.AuctionData
+import rescala.extra.lattices.delta.interfaces.ForcedWriteInterface.FW
+import rescala.extra.lattices.delta.interfaces.GListInterface.{Elem, GListNode}
+import rescala.extra.lattices.delta.interfaces.RGAInterface.RGANode
 
 object Codecs {
 

@@ -2,7 +2,7 @@ package rescala.extra.distributables
 
 import loci.registry.{Binding, Registry}
 import loci.transmitter.RemoteRef
-import rescala.extra.lattices.delta.impl.reactive.CRDTInterface
+import rescala.extra.lattices.delta.crdt.reactive.ReactiveCRDT
 import rescala.extra.lattices.delta.{Delta, UIJDLattice}
 import rescala.interface.RescalaInterface
 import scribe.Execution.global
@@ -16,7 +16,7 @@ class LociDist[Api <: RescalaInterface](val api: Api) {
   import api._
 
   def distributeDeltaCRDT[A: UIJDLattice](
-      signal: Signal[CRDTInterface[A]],
+      signal: Signal[ReactiveCRDT[A, _]],
       deltaEvt: Evt[Delta[A]],
       registry: Registry
   )(binding: Binding[A => Unit, A => Future[Unit]]): Unit = {
@@ -31,13 +31,13 @@ class LociDist[Api <: RescalaInterface](val api: Api) {
       val remoteUpdate: A => Future[Unit] = registry.lookup(binding, remoteRef)
 
       // Send full state to initialize remote
-      val currentState = signal.readValueOnce.crdt.state
+      val currentState = signal.readValueOnce.state
       if (currentState != UIJDLattice[A].bottom) remoteUpdate(currentState)
 
       // Whenever the crdt is changed propagate the delta
       // Praktisch wäre etwas wie crdt.observeDelta
       observers += (remoteRef -> signal.observe { s =>
-        val deltaStateList = s.crdt.deltaBuffer.collect {
+        val deltaStateList = s.deltaBuffer.collect {
           case Delta(replicaID, deltaState) if replicaID != remoteRef.toString => deltaState
         } ++ resendBuffer.get(remoteRef).toList
 

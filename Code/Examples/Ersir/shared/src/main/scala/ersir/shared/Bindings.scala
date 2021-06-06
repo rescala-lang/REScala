@@ -7,7 +7,7 @@ import loci.registry.Binding
 import loci.transmitter.Serializable
 import loci.transmitter.transmittable.IdenticallyTransmittable
 import rescala.extra.lattices.delta.CContext._
-import rescala.extra.lattices.delta.impl.reactive.RGA
+import rescala.extra.lattices.delta.crdt.reactive.RGA
 import rescala.extra.lattices.delta.Codecs._
 
 import scala.concurrent.Future
