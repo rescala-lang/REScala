@@ -44,21 +44,17 @@ object RGAInterface {
       ForcedWriteInterface.ForcedWriteAsUIJDLattice[GListInterface.State[Dot]]
   }
 
-  private def deltaState[E, C: CContext](
-      fw: Option[ForcedWriteInterface.State[GListInterface.State[Dot]]] = None,
-      df: Option[DotFun[RGANode[E]]] = None,
-      cc: Option[C] = None
-  ): State[E, C] = {
-    val bottom = UIJDLattice[State[E, C]].bottom
+  private class DeltaStateFactory[E, C: CContext] {
+    val bottom: State[E, C] = UIJDLattice[State[E, C]].bottom
 
-    Causal(
-      (
-        fw.getOrElse(bottom.dotStore._1),
-        df.getOrElse(bottom.dotStore._2)
-      ),
-      cc.getOrElse(bottom.cc)
-    )
+    def make(
+        fw: ForcedWriteInterface.State[GListInterface.State[Dot]] = bottom.dotStore._1,
+        df: DotFun[RGANode[E]] = bottom.dotStore._2,
+        cc: C = bottom.cc
+    ): State[E, C] = Causal((fw, df), cc)
   }
+
+  private def deltaState[E, C: CContext]: DeltaStateFactory[E, C] = new DeltaStateFactory[E, C]
 
   private def readRec[E, C: CContext](state: State[E, C], target: Int, counted: Int, skipped: Int): Option[E] =
     state match {
@@ -127,10 +123,10 @@ object RGAInterface {
         case Some(golistDelta) =>
           val dfDelta = DotFun[RGANode[E]].empty + (nextDot -> Alive(TimedVal(e, replicaID)))
 
-          deltaState(
-            fw = Some(golistDelta),
-            df = Some(dfDelta),
-            cc = Some(CContext[C].fromSet(Set(nextDot)))
+          deltaState[E, C].make(
+            fw = golistDelta,
+            df = dfDelta,
+            cc = CContext[C].fromSet(Set(nextDot))
           )
       }
   }
@@ -173,10 +169,10 @@ object RGAInterface {
         case Some(golistDelta) =>
           val dfDelta = DotFun[RGANode[E]].empty ++ (nextDots zip elems.map(e => Alive(TimedVal(e, replicaID))))
 
-          deltaState(
-            fw = Some(golistDelta),
-            df = Some(dfDelta),
-            cc = Some(CContext[C].fromSet(nextDots.toSet))
+          deltaState[E, C].make(
+            fw = golistDelta,
+            df = dfDelta,
+            cc = CContext[C].fromSet(nextDots.toSet)
           )
       }
   }
@@ -198,7 +194,7 @@ object RGAInterface {
               case Dead() => updateRGANodeRec(state, i, newNode, counted, skipped + 1)
               case Alive(_) =>
                 if (counted == i)
-                  deltaState(df = Some(DotFun[RGANode[E]].empty + (d -> newNode)))
+                  deltaState[E, C].make(df = DotFun[RGANode[E]].empty + (d -> newNode))
                 else
                   updateRGANodeRec(state, i, newNode, counted + 1, skipped)
             }
@@ -226,7 +222,7 @@ object RGAInterface {
 
         val dfDelta = DotFun[RGANode[E]].empty ++ toUpdate.map(_ -> newNode)
 
-        deltaState(df = Some(dfDelta))
+        deltaState[E, C].make(df = dfDelta)
     }
 
   def updateBy[E, C: CContext](cond: E => Boolean, e: E): DeltaMutator[State[E, C]] =
@@ -244,16 +240,16 @@ object RGAInterface {
 
         val golistPurged = GListInterface.without(fw.value, toRemove)
 
-        deltaState(
-          fw = Some(ForcedWriteInterface.forcedWrite(golistPurged)(replicaID, fw)),
-          cc = Some(CContext[C].fromSet(toRemove))
+        deltaState[E, C].make(
+          fw = ForcedWriteInterface.forcedWrite(golistPurged)(replicaID, fw),
+          cc = CContext[C].fromSet(toRemove)
         )
     }
 
   def clear[E, C: CContext](): DeltaMutator[State[E, C]] = {
     case (_, Causal(_, cc)) =>
-      deltaState(
-        cc = Some(cc)
+      deltaState[E, C].make(
+        cc = cc
       )
   }
 }

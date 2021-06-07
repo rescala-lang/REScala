@@ -12,17 +12,16 @@ object MVRegisterInterface {
     type Embedded[A] = DotFun[A]
   }
 
-  private def deltaState[A: UIJDLattice, C: CContext](
-      df: Option[DotFun[A]] = None,
-      cc: Option[C]
-  ): State[A, C] = {
-    val bottom = UIJDLattice[State[A, C]].bottom
+  private class DeltaStateFactory[A: UIJDLattice, C: CContext] {
+    val bottom: State[A, C] = UIJDLattice[State[A, C]].bottom
 
-    Causal(
-      df.getOrElse(bottom.dotStore),
-      cc.getOrElse(bottom.cc)
-    )
+    def make(
+        df: DotFun[A] = bottom.dotStore,
+        cc: C = bottom.cc
+    ): State[A, C] = Causal(df, cc)
   }
+
+  private def deltaState[A: UIJDLattice, C: CContext]: DeltaStateFactory[A, C] = new DeltaStateFactory[A, C]
 
   def read[A: UIJDLattice, C: CContext]: DeltaQuery[State[A, C], Set[A]] = {
     case Causal(df, _) => df.values.toSet
@@ -32,16 +31,16 @@ object MVRegisterInterface {
     case (replicaID, Causal(df, cc)) =>
       val nextDot = CContext[C].nextDot(cc, replicaID)
 
-      deltaState(
-        df = Some(Map(nextDot -> v)),
-        cc = Some(CContext[C].fromSet(df.keySet + nextDot))
+      deltaState.make(
+        df = Map(nextDot -> v),
+        cc = CContext[C].fromSet(df.keySet + nextDot)
       )
   }
 
   def clear[A: UIJDLattice, C: CContext](): DeltaMutator[State[A, C]] = {
     case (_, Causal(df, _)) =>
-      deltaState(
-        cc = Some(CContext[C].fromSet(df.keySet))
+      deltaState.make(
+        cc = CContext[C].fromSet(df.keySet)
       )
   }
 }

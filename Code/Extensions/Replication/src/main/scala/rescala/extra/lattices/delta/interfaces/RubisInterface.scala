@@ -18,19 +18,17 @@ object RubisInterface {
 
   implicit val UserAsUIJDLattice: UIJDLattice[User] = UIJDLattice.AtomicUIJDLattice[User]
 
-  private def deltaState[C: CContext](
-      userRequests: Option[AWSetInterface.State[(User, String), C]] = None,
-      users: Option[Map[User, String]] = None,
-      auctions: Option[Map[AID, AuctionInterface.State]] = None
-  ): State[C] = {
-    val bottom = UIJDLattice[State[C]].bottom
+  private class DeltaStateFactory[C: CContext] {
+    val bottom: State[C] = UIJDLattice[State[C]].bottom
 
-    (
-      userRequests.getOrElse(bottom._1),
-      users.getOrElse(bottom._2),
-      auctions.getOrElse(bottom._3)
-    )
+    def make(
+        userRequests: AWSetInterface.State[(User, String), C] = bottom._1,
+        users: Map[User, String] = bottom._2,
+        auctions: Map[AID, AuctionInterface.State] = bottom._3
+    ): State[C] = (userRequests, users, auctions)
   }
+
+  private def deltaState[C: CContext]: DeltaStateFactory[C] = new DeltaStateFactory[C]
 
   def placeBid[C: CContext](auctionId: AID, userId: User, price: Int): DeltaMutator[State[C]] = {
     case (replicaID, (_, users, m)) =>
@@ -39,7 +37,7 @@ object RubisInterface {
           m.updatedWith(auctionId) { _.map(a => AuctionInterface.bid(userId, price)(replicaID, a)) }
         } else Map.empty[AID, AuctionInterface.State]
 
-      deltaState(auctions = Some(newMap))
+      deltaState[C].make(auctions = newMap)
   }
 
   def closeAuction[C: CContext](auctionId: AID): DeltaMutator[State[C]] = {
@@ -49,7 +47,7 @@ object RubisInterface {
           m.updatedWith(auctionId) { _.map(a => AuctionInterface.close()(replicaID, a)) }
         } else Map.empty[AID, AuctionInterface.State]
 
-      deltaState(auctions = Some(newMap))
+      deltaState[C].make(auctions = newMap)
   }
 
   def openAuction[C: CContext](auctionId: AID): DeltaMutator[State[C]] = {
@@ -58,13 +56,13 @@ object RubisInterface {
         if (m.contains(auctionId)) Map.empty[AID, AuctionInterface.State]
         else Map(auctionId -> UIJDLattice[AuctionInterface.State].bottom)
 
-      deltaState(auctions = Some(newMap))
+      deltaState[C].make(auctions = newMap)
   }
 
   def requestRegisterUser[C: CContext](userId: User): DeltaMutator[State[C]] = {
     case (replicaID, (req, users, _)) =>
-      if (users.contains(userId)) deltaState()
-      else deltaState(userRequests = Some(AWSetInterface.add(userId -> replicaID).apply(replicaID, req)))
+      if (users.contains(userId)) deltaState[C].make()
+      else deltaState[C].make(userRequests = AWSetInterface.add(userId -> replicaID).apply(replicaID, req))
   }
 
   def resolveRegisterUser[C: CContext](): DeltaMutator[State[C]] = {
@@ -78,9 +76,9 @@ object RubisInterface {
           }
       }
 
-      deltaState(
-        userRequests = Some(AWSetInterface.clear[(User, String), C]().apply(replicaID, req)),
-        users = Some(newUsers)
+      deltaState[C].make(
+        userRequests = AWSetInterface.clear[(User, String), C]().apply(replicaID, req),
+        users = newUsers
       )
   }
 }

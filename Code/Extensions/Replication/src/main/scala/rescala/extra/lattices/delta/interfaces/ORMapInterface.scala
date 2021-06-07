@@ -12,17 +12,16 @@ object ORMapInterface {
     type Embedded[K, V] = DotMap[K, V]
   }
 
-  private def deltaState[K, V: DotStore, C: CContext](
-      dm: Option[DotMap[K, V]] = None,
-      cc: C
-  ): State[K, V, C] = {
-    val bottom = UIJDLattice[State[K, V, C]].bottom
+  private class DeltaStateFactory[K, V: DotStore, C: CContext] {
+    val bottom: State[K, V, C] = UIJDLattice[State[K, V, C]].bottom
 
-    Causal(
-      dm.getOrElse(bottom.dotStore),
-      cc
-    )
+    def make(
+        dm: DotMap[K, V] = bottom.dotStore,
+        cc: C = bottom.cc
+    ): State[K, V, C] = Causal(dm, cc)
   }
+
+  private def deltaState[K, V: DotStore, C: CContext]: DeltaStateFactory[K, V, C] = new DeltaStateFactory[K, V, C]
 
   def contains[K, V: DotStore, C: CContext](k: K): DeltaQuery[State[K, V, C], Boolean] = {
     case Causal(dm, _) => dm.contains(k)
@@ -46,8 +45,8 @@ object ORMapInterface {
 
       m(replicaID, Causal(v, cc)) match {
         case Causal(stateDelta, ccDelta) =>
-          deltaState(
-            dm = Some(DotMap[K, V].empty.updated(k, stateDelta)),
+          deltaState[K, V, C].make(
+            dm = DotMap[K, V].empty.updated(k, stateDelta),
             cc = ccDelta
           )
       }
@@ -57,7 +56,7 @@ object ORMapInterface {
     case (_, Causal(dm, _)) =>
       val v = dm.getOrElse(k, DotStore[V].empty)
 
-      deltaState(
+      deltaState[K, V, C].make(
         cc = CContext[C].fromSet(DotStore[V].dots(v))
       )
   }
@@ -69,7 +68,7 @@ object ORMapInterface {
         case (set, v) => set union DotStore[V].dots(v)
       }
 
-      deltaState(
+      deltaState[K, V, C].make(
         cc = CContext[C].fromSet(dots)
       )
   }
@@ -80,14 +79,14 @@ object ORMapInterface {
         case v if cond(Causal(v, cc)) => DotStore[V].dots(v)
       }.fold(Set())(_ union _)
 
-      deltaState(
+      deltaState[K, V, C].make(
         cc = CContext[C].fromSet(toRemove)
       )
   }
 
   def clear[K, V: DotStore, C: CContext]: DeltaMutator[State[K, V, C]] = {
     case (_, Causal(dm, _)) =>
-      deltaState(
+      deltaState[K, V, C].make(
         cc = CContext[C].fromSet(DotMap[K, V].dots(dm))
       )
   }

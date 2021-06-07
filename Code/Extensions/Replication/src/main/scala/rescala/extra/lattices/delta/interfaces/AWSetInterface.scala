@@ -12,17 +12,16 @@ object AWSetInterface {
     type Embedded[E] = DotMap[E, DotSet]
   }
 
-  private def deltaState[E, C: CContext](
-      dm: Option[DotMap[E, DotSet]] = None,
-      cc: Option[C]
-  ): State[E, C] = {
-    val bottom = UIJDLattice[State[E, C]].bottom
+  private class DeltaStateFactory[E, C: CContext] {
+    val bottom: State[E, C] = UIJDLattice[State[E, C]].bottom
 
-    Causal(
-      dm.getOrElse(bottom.dotStore),
-      cc.getOrElse(bottom.cc)
-    )
+    def make(
+        dm: DotMap[E, DotSet] = bottom.dotStore,
+        cc: C = bottom.cc
+    ): State[E, C] = Causal(dm, cc)
   }
+
+  private def deltaState[E, C: CContext]: DeltaStateFactory[E, C] = new DeltaStateFactory[E, C]
 
   def elements[E, C: CContext]: DeltaQuery[State[E, C], Set[E]] = {
     case Causal(dm, _) => dm.keySet
@@ -33,9 +32,9 @@ object AWSetInterface {
       val nextDot = CContext[C].nextDot(cc, replicaID)
       val v       = dm.getOrElse(e, DotSet.empty)
 
-      deltaState(
-        dm = Some(DotMap[E, DotSet].empty.updated(e, Set(nextDot))),
-        cc = Some(CContext[C].fromSet(v + nextDot))
+      deltaState[E, C].make(
+        dm = DotMap[E, DotSet].empty.updated(e, Set(nextDot)),
+        cc = CContext[C].fromSet(v + nextDot)
       )
   }
 
@@ -43,8 +42,8 @@ object AWSetInterface {
     case (_, Causal(dm, _)) =>
       val v = dm.getOrElse(e, DotSet.empty)
 
-      deltaState(
-        cc = Some(CContext[C].fromSet(v))
+      deltaState[E, C].make(
+        cc = CContext[C].fromSet(v)
       )
   }
 
@@ -54,15 +53,15 @@ object AWSetInterface {
         case (k, v) if cond(k) => v
       }.foldLeft(DotSet.empty)(_ union _)
 
-      deltaState(
-        cc = Some(CContext[C].fromSet(removedDots))
+      deltaState[E, C].make(
+        cc = CContext[C].fromSet(removedDots)
       )
   }
 
   def clear[E, C: CContext](): DeltaMutator[State[E, C]] = {
     case (_, Causal(dm, _)) =>
-      deltaState(
-        cc = Some(CContext[C].fromSet(DotMap[E, DotSet].dots(dm)))
+      deltaState[E, C].make(
+        cc = CContext[C].fromSet(DotMap[E, DotSet].dots(dm))
       )
   }
 }
