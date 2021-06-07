@@ -114,6 +114,8 @@ class TodoApp() {
           TodoTaskView.signalAndUI(myID, id, None, toggleAll.event)
         }.unzip3
 
+        removed.foreach { signalMap(_).disconnect() }
+
         val newSignalMap = signalMap -- removed ++ (added zip addedSignals)
         val newUIMap     = uiMap -- removed ++ (added zip addedUIs)
         val newEvtMap    = evtMap -- removed ++ (added zip addedEvts)
