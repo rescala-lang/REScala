@@ -64,8 +64,20 @@ object CContext {
       )
         yield Dot(replicaID, counter)
 
-    override def union[B: CContext](left: Map[String, Diet[Int]], right: B): Map[String, Diet[Int]] =
-      CContext[B].toSet(right).foldLeft(left)(addDot)
+    override def union[B: CContext](left: Map[String, Diet[Int]], right: B): Map[String, Diet[Int]] = {
+      right match {
+        case context: DietMapCContext =>
+          context.keySet.foldLeft(left) {
+            case (m, k) =>
+              m.updatedWith(k) {
+                case Some(l) => Some(l ++ context(k))
+                case None    => Some(context(k))
+              }
+          }
+
+        case _ => CContext[B].toSet(right).foldLeft(left)(addDot)
+      }
+    }
 
     override def max(cc: Map[String, Diet[Int]], replicaID: String): Option[Dot] =
       cc.getOrElse(replicaID, Diet.empty[Int]).max.map(Dot(replicaID, _))

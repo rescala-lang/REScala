@@ -23,11 +23,10 @@ object DotStore {
 
     override def merge[C: CContext, D: CContext](left: Set[Dot], leftContext: C, right: Set[Dot], rightContext: D)
         : (Set[Dot], C) = {
-      val inBoth    = left intersect right
       val fromLeft  = left.filter(!CContext[D].contains(rightContext, _))
-      val fromRight = right.filter(!CContext[C].contains(leftContext, _))
+      val fromRight = right.filter(dot => left.contains(dot) || !CContext[C].contains(leftContext, dot))
 
-      (inBoth union fromLeft union fromRight, CContext[C].union(leftContext, rightContext))
+      (fromLeft union fromRight, CContext[C].union(leftContext, rightContext))
     }
 
     override def empty: Set[Dot] = Set.empty[Dot]
@@ -52,11 +51,20 @@ object DotStore {
 
     override def merge[C: CContext, D: CContext](left: Map[Dot, A], leftContext: C, right: Map[Dot, A], rightContext: D)
         : (Map[Dot, A], C) = {
-      val inBoth    = (left.keySet intersect right.keySet).map(dot => dot -> Lattice.merge(left(dot), right(dot))).toMap
-      val fromLeft  = left.filter { case (dot, _) => !CContext[D].contains(rightContext, dot) }
-      val fromRight = right.filter { case (dot, _) => !CContext[C].contains(leftContext, dot) }
 
-      (inBoth ++ fromLeft ++ fromRight, CContext[C].union(leftContext, rightContext))
+      val fromLeft = left.filter { case (dot, _) => !CContext[D].contains(rightContext, dot) }
+
+      val dfMerged = right.keys.foldLeft(fromLeft) {
+        case (m, dot) =>
+          left.get(dot) match {
+            case None =>
+              if (CContext[C].contains(leftContext, dot)) m
+              else m.updated(dot, right(dot))
+            case Some(l) => m.updated(dot, UIJDLattice[A].merge(l, right(dot)))
+          }
+      }
+
+      (dfMerged, CContext[C].union(leftContext, rightContext))
     }
 
     override def empty: Map[Dot, A] = Map.empty[Dot, A]
@@ -89,16 +97,18 @@ object DotStore {
         right: DotMap[K, V],
         rightContext: D
     ): (DotMap[K, V], C) = {
-      val allKeys = left.keySet union right.keySet
-      val mergedValues = allKeys map { k =>
-        val leftV          = left.getOrElse(k, DotStore[V].empty)
-        val rightV         = right.getOrElse(k, DotStore[V].empty)
-        val (mergedVal, _) = DotStore[V].merge(leftV, leftContext, rightV, rightContext)
+      val allKeys = left.keySet ++ right.keySet
 
-        k -> mergedVal
-      } filter { case (_, v) => v != DotStore[V].empty }
+      val dmMerged = allKeys.foldLeft(left) {
+        case (m, k) =>
+          val leftV          = left.getOrElse(k, DotStore[V].empty)
+          val rightV         = right.getOrElse(k, DotStore[V].empty)
+          val (mergedVal, _) = DotStore[V].merge(leftV, leftContext, rightV, rightContext)
 
-      (mergedValues.toMap, CContext[C].union(leftContext, rightContext))
+          m.updated(k, mergedVal)
+      }
+
+      (dmMerged, CContext[C].union(leftContext, rightContext))
     }
 
     override def empty: DotMap[K, V] = Map.empty[K, V]

@@ -24,7 +24,9 @@ object GListInterface {
           left: Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]],
           right: Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]]
       ): Boolean =
-        left.toSet.subsetOf(right.toSet)
+        left.keys.forall { k =>
+          right.get(k).contains(left(k))
+        }
 
       /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
       override def decompose(state: Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]])
@@ -54,7 +56,7 @@ object GListInterface {
           case None => left
           case Some(next) =>
             val leftMerged =
-              if (left.contains(current) && left.values.toSet.contains(next))
+              if (left.contains(current) && left.exists { case (_, r) => r == next })
                 left
               else
                 insertEdge(left, (current, next))
