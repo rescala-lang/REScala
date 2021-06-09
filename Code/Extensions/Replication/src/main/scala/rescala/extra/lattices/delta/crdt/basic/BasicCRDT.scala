@@ -5,7 +5,7 @@ import rescala.extra.lattices.delta.{CRDTInterface, Delta, UIJDLattice}
 trait BasicCRDT[State, Wrapper] extends CRDTInterface[State, Wrapper] {
   protected val antiEntropy: AntiEntropy[State]
 
-  override protected val replicaID: String = antiEntropy.replicaID
+  override val replicaID: String = antiEntropy.replicaID
 
   protected def copy(state: State = state): Wrapper
 
