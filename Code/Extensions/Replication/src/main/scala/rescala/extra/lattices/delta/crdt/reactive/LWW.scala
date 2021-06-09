@@ -6,9 +6,9 @@ import rescala.extra.lattices.delta.interfaces.LWWInterface
 import rescala.extra.lattices.delta.interfaces.LWWInterface.{LWWCompanion, State}
 
 class LWW[A, C: CContext](
-    protected[rescala] val state: State[A, C],
-    protected val replicaID: String,
-    protected[rescala] val deltaBuffer: List[Delta[State[A, C]]]
+    val state: State[A, C],
+    val replicaID: String,
+    val deltaBuffer: List[Delta[State[A, C]]]
 ) extends LWWInterface[A, C, LWW[A, C]] with ReactiveCRDT[State[A, C], LWW[A, C]] {
 
   override protected def copy(state: State[A, C], deltaBuffer: List[Delta[State[A, C]]]): LWW[A, C] =

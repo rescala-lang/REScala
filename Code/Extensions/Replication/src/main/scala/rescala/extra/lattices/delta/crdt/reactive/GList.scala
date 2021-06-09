@@ -5,9 +5,9 @@ import rescala.extra.lattices.delta.interfaces.GListInterface.{GListCompanion, S
 import rescala.extra.lattices.delta.{Delta, UIJDLattice}
 
 class GList[E](
-    protected[rescala] val state: State[E],
-    protected val replicaID: String,
-    protected[rescala] val deltaBuffer: List[Delta[State[E]]]
+    val state: State[E],
+    val replicaID: String,
+    val deltaBuffer: List[Delta[State[E]]]
 ) extends GListInterface[E, GList[E]] with ReactiveCRDT[State[E], GList[E]] {
 
   override protected def copy(state: State[E], deltaBuffer: List[Delta[State[E]]]): GList[E] =

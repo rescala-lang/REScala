@@ -5,9 +5,9 @@ import rescala.extra.lattices.delta.interfaces.TwoPSetInterface
 import rescala.extra.lattices.delta.interfaces.TwoPSetInterface.{State, TwoPSetCompanion}
 
 class TwoPSet[E](
-    protected[rescala] val state: State[E],
-    protected val replicaID: String,
-    protected[rescala] val deltaBuffer: List[Delta[State[E]]]
+    val state: State[E],
+    val replicaID: String,
+    val deltaBuffer: List[Delta[State[E]]]
 ) extends TwoPSetInterface[E, TwoPSet[E]] with ReactiveCRDT[State[E], TwoPSet[E]] {
 
   override protected def copy(state: (Set[E], Set[E]), deltaBuffer: List[Delta[State[E]]]): TwoPSet[E] =

@@ -5,7 +5,7 @@ import rescala.extra.lattices.delta.interfaces.ORMapInterface
 import rescala.extra.lattices.delta.{CContext, DotStore, UIJDLattice}
 
 class ORMap[K, V: DotStore, C: CContext](
-    protected[rescala] val state: State[K, V, C],
+    val state: State[K, V, C],
     protected val antiEntropy: AntiEntropy[State[K, V, C]]
 ) extends ORMapInterface[K, V, C, ORMap[K, V, C]] with BasicCRDT[State[K, V, C], ORMap[K, V, C]] {
 

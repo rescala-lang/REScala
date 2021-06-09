@@ -5,9 +5,9 @@ import rescala.extra.lattices.delta.interfaces.GCounterInterface.{GCounterCompan
 import rescala.extra.lattices.delta.interfaces.GCounterInterface
 
 class GCounter(
-    protected[rescala] val state: State,
-    protected val replicaID: String,
-    protected[rescala] val deltaBuffer: List[Delta[State]]
+    val state: State,
+    val replicaID: String,
+    val deltaBuffer: List[Delta[State]]
 ) extends GCounterInterface[GCounter] with ReactiveCRDT[State, GCounter] {
 
   override protected def copy(state: State, deltaBuffer: List[Delta[State]]): GCounter =

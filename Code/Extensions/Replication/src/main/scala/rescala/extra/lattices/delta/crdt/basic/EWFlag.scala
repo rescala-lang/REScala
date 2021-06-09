@@ -6,7 +6,7 @@ import rescala.extra.lattices.delta.interfaces.EWFlagInterface
 import rescala.extra.lattices.delta.{CContext, UIJDLattice}
 
 class EWFlag[C: CContext](
-    protected[rescala] val state: State[C],
+    val state: State[C],
     protected val antiEntropy: AntiEntropy[State[C]]
 ) extends EWFlagInterface[C, EWFlag[C]] with BasicCRDT[State[C], EWFlag[C]] {
 

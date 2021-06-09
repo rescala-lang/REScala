@@ -5,9 +5,9 @@ import rescala.extra.lattices.delta.interfaces.PNCounterInterface
 import rescala.extra.lattices.delta.interfaces.PNCounterInterface.{PNCounterCompanion, State}
 
 class PNCounter(
-    protected[rescala] val state: State,
-    protected val replicaID: String,
-    protected[rescala] val deltaBuffer: List[Delta[State]]
+    val state: State,
+    val replicaID: String,
+    val deltaBuffer: List[Delta[State]]
 ) extends PNCounterInterface[PNCounter] with ReactiveCRDT[State, PNCounter] {
 
   override protected def copy(state: State, deltaBuffer: List[Delta[State]]): PNCounter =

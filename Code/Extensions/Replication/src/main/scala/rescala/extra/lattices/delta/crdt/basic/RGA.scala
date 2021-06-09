@@ -6,7 +6,7 @@ import rescala.extra.lattices.delta.interfaces.RGAInterface.{RGACompanion, State
 import rescala.extra.lattices.delta.{CContext, UIJDLattice}
 
 class RGA[E, C: CContext](
-    protected[rescala] val state: State[E, C],
+    val state: State[E, C],
     protected val antiEntropy: AntiEntropy[State[E, C]]
 ) extends RGAInterface[E, C, RGA[E, C]] with BasicCRDT[State[E, C], RGA[E, C]] {
 

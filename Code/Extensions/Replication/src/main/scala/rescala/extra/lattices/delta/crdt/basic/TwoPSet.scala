@@ -5,7 +5,7 @@ import rescala.extra.lattices.delta.interfaces.TwoPSetInterface
 import rescala.extra.lattices.delta.interfaces.TwoPSetInterface.{State, TwoPSetCompanion}
 
 class TwoPSet[E](
-    protected[rescala] val state: State[E],
+    val state: State[E],
     protected val antiEntropy: AntiEntropy[State[E]]
 ) extends TwoPSetInterface[E, TwoPSet[E]] with BasicCRDT[State[E], TwoPSet[E]] {
 

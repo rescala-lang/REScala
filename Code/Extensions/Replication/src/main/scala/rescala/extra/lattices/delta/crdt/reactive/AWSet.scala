@@ -6,9 +6,9 @@ import rescala.extra.lattices.delta.interfaces.AWSetInterface
 import rescala.extra.lattices.delta.{CContext, Delta, UIJDLattice}
 
 class AWSet[E, C: CContext](
-    protected[rescala] val state: State[E, C],
-    protected val replicaID: String,
-    protected[rescala] val deltaBuffer: List[Delta[State[E, C]]]
+    val state: State[E, C],
+    val replicaID: String,
+    val deltaBuffer: List[Delta[State[E, C]]]
 ) extends AWSetInterface[E, C, AWSet[E, C]] with ReactiveCRDT[State[E, C], AWSet[E, C]] {
 
   override protected def copy(state: State[E, C], deltaBuffer: List[Delta[State[E, C]]]): AWSet[E, C] =

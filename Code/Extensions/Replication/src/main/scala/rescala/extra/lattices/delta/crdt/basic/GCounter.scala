@@ -5,7 +5,7 @@ import rescala.extra.lattices.delta.interfaces.GCounterInterface.{GCounterCompan
 import rescala.extra.lattices.delta.interfaces.GCounterInterface
 
 class GCounter(
-    protected[rescala] val state: State,
+    val state: State,
     protected val antiEntropy: AntiEntropy[State]
 ) extends GCounterInterface[GCounter] with BasicCRDT[State, GCounter] {
 

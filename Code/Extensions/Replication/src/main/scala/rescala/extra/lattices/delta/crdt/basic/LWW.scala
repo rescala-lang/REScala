@@ -6,7 +6,7 @@ import rescala.extra.lattices.delta.interfaces.LWWInterface.{LWWCompanion, State
 import rescala.extra.lattices.delta.{CContext, UIJDLattice}
 
 class LWW[A, C: CContext](
-    protected[rescala] val state: State[A, C],
+    val state: State[A, C],
     protected val antiEntropy: AntiEntropy[State[A, C]]
 ) extends LWWInterface[A, C, LWW[A, C]] with BasicCRDT[State[A, C], LWW[A, C]] {
 

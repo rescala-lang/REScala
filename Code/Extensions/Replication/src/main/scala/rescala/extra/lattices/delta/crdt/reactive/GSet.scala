@@ -5,9 +5,9 @@ import rescala.extra.lattices.delta.interfaces.GSetInterface.{GSetCompanion, Sta
 import rescala.extra.lattices.delta.interfaces.GSetInterface
 
 class GSet[E](
-    protected[rescala] val state: State[E],
-    protected val replicaID: String,
-    protected[rescala] val deltaBuffer: List[Delta[State[E]]]
+    val state: State[E],
+    val replicaID: String,
+    val deltaBuffer: List[Delta[State[E]]]
 ) extends GSetInterface[E, GSet[E]] with ReactiveCRDT[State[E], GSet[E]] {
 
   override protected def copy(state: State[E], deltaBuffer: List[Delta[State[E]]]): GSet[E] =

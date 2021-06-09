@@ -5,7 +5,7 @@ import rescala.extra.lattices.delta.interfaces.LexCounterInterface.{LexCounterCo
 import rescala.extra.lattices.delta.interfaces.LexCounterInterface
 
 class LexCounter(
-    protected[rescala] val state: State,
+    val state: State,
     protected val antiEntropy: AntiEntropy[State]
 ) extends LexCounterInterface[LexCounter] with BasicCRDT[State, LexCounter] {
 

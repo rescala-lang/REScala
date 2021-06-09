@@ -3,9 +3,9 @@ package rescala.extra.lattices.delta
 import rescala.extra.lattices.delta.CRDTInterface.{DeltaMutator, DeltaQuery}
 
 trait CRDTInterface[State, Wrapper] {
-  protected[rescala] val state: State
+  val state: State
 
-  protected val replicaID: String
+  val replicaID: String
 
   protected def query[A](q: DeltaQuery[State, A]): A = q(state)
 

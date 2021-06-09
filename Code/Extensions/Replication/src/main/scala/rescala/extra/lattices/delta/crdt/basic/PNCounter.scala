@@ -5,7 +5,7 @@ import rescala.extra.lattices.delta.interfaces.PNCounterInterface
 import rescala.extra.lattices.delta.interfaces.PNCounterInterface.{PNCounterCompanion, State}
 
 class PNCounter(
-    protected[rescala] val state: State,
+    val state: State,
     protected val antiEntropy: AntiEntropy[State]
 ) extends PNCounterInterface[PNCounter] with BasicCRDT[State, PNCounter] {
 

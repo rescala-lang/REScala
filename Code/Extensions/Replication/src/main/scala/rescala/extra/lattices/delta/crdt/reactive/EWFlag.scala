@@ -6,9 +6,9 @@ import rescala.extra.lattices.delta.interfaces.EWFlagInterface
 import rescala.extra.lattices.delta.{CContext, Delta, UIJDLattice}
 
 class EWFlag[C: CContext](
-    protected[rescala] val state: State[C],
-    protected val replicaID: String,
-    protected[rescala] val deltaBuffer: List[Delta[State[C]]]
+    val state: State[C],
+    val replicaID: String,
+    val deltaBuffer: List[Delta[State[C]]]
 ) extends EWFlagInterface[C, EWFlag[C]] with ReactiveCRDT[State[C], EWFlag[C]] {
 
   override protected def copy(state: State[C], deltaBuffer: List[Delta[State[C]]]): EWFlag[C] =

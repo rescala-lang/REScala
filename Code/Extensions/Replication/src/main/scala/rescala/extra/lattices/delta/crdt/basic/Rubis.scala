@@ -5,7 +5,7 @@ import rescala.extra.lattices.delta.interfaces.RubisInterface.{RubisCompanion, S
 import rescala.extra.lattices.delta.{CContext, UIJDLattice}
 
 class Rubis[C: CContext](
-    protected[rescala] val state: State[C],
+    val state: State[C],
     protected val antiEntropy: AntiEntropy[State[C]]
 ) extends RubisInterface[C, Rubis[C]] with BasicCRDT[State[C], Rubis[C]] {
 

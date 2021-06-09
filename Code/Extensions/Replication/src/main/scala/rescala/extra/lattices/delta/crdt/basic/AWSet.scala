@@ -6,7 +6,7 @@ import rescala.extra.lattices.delta.interfaces.AWSetInterface
 import rescala.extra.lattices.delta.{CContext, UIJDLattice}
 
 class AWSet[E, C: CContext](
-    protected[rescala] val state: State[E, C],
+    val state: State[E, C],
     protected val antiEntropy: AntiEntropy[State[E, C]]
 ) extends AWSetInterface[E, C, AWSet[E, C]] with BasicCRDT[State[E, C], AWSet[E, C]] {
 

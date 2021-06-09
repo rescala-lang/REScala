@@ -3,7 +3,7 @@ package rescala.extra.lattices.delta.crdt.reactive
 import rescala.extra.lattices.delta.{CRDTInterface, Delta, UIJDLattice}
 
 trait ReactiveCRDT[State, Wrapper] extends CRDTInterface[State, Wrapper] {
-  protected[rescala] val deltaBuffer: List[Delta[State]]
+  val deltaBuffer: List[Delta[State]]
 
   protected def copy(state: State = state, deltaBuffer: List[Delta[State]] = deltaBuffer): Wrapper
 

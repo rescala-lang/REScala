@@ -5,9 +5,9 @@ import rescala.extra.lattices.delta.interfaces.RubisInterface
 import rescala.extra.lattices.delta.interfaces.RubisInterface.{RubisCompanion, State}
 
 class Rubis[C: CContext](
-    protected[rescala] val state: State[C],
-    protected val replicaID: String,
-    protected[rescala] val deltaBuffer: List[Delta[State[C]]]
+    val state: State[C],
+    val replicaID: String,
+    val deltaBuffer: List[Delta[State[C]]]
 ) extends RubisInterface[C, Rubis[C]] with ReactiveCRDT[State[C], Rubis[C]] {
 
   override protected def copy(state: State[C], deltaBuffer: List[Delta[State[C]]]): Rubis[C] =

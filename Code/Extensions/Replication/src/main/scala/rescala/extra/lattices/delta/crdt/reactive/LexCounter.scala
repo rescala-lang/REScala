@@ -5,9 +5,9 @@ import rescala.extra.lattices.delta.interfaces.LexCounterInterface.{LexCounterCo
 import rescala.extra.lattices.delta.interfaces.LexCounterInterface
 
 class LexCounter(
-    protected[rescala] val state: State,
-    protected val replicaID: String,
-    protected[rescala] val deltaBuffer: List[Delta[State]]
+    val state: State,
+    val replicaID: String,
+    val deltaBuffer: List[Delta[State]]
 ) extends LexCounterInterface[LexCounter] with ReactiveCRDT[State, LexCounter] {
 
   override protected def copy(state: State, deltaBuffer: List[Delta[State]]): LexCounter =

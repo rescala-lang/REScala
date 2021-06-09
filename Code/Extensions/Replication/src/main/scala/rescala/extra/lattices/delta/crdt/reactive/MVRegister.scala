@@ -6,9 +6,9 @@ import rescala.extra.lattices.delta.interfaces.MVRegisterInterface
 import rescala.extra.lattices.delta.{CContext, Delta, UIJDLattice}
 
 class MVRegister[A: UIJDLattice, C: CContext](
-    protected[rescala] val state: State[A, C],
-    protected val replicaID: String,
-    protected[rescala] val deltaBuffer: List[Delta[State[A, C]]]
+    val state: State[A, C],
+    val replicaID: String,
+    val deltaBuffer: List[Delta[State[A, C]]]
 ) extends MVRegisterInterface[A, C, MVRegister[A, C]] with ReactiveCRDT[State[A, C], MVRegister[A, C]] {
 
   override protected def copy(state: State[A, C], deltaBuffer: List[Delta[State[A, C]]]): MVRegister[A, C] =

@@ -6,7 +6,7 @@ import rescala.extra.lattices.delta.interfaces.MVRegisterInterface
 import rescala.extra.lattices.delta.{CContext, UIJDLattice}
 
 class MVRegister[A: UIJDLattice, C: CContext](
-    protected[rescala] val state: State[A, C],
+    val state: State[A, C],
     protected val antiEntropy: AntiEntropy[State[A, C]]
 ) extends MVRegisterInterface[A, C, MVRegister[A, C]] with BasicCRDT[State[A, C], MVRegister[A, C]] {
 

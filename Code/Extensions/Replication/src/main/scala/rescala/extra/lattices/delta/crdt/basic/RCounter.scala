@@ -6,7 +6,7 @@ import rescala.extra.lattices.delta.interfaces.RCounterInterface
 import rescala.extra.lattices.delta.interfaces.RCounterInterface.{RCounterCompanion, State}
 
 class RCounter[C: CContext](
-    protected[rescala] val state: State[C],
+    val state: State[C],
     protected val antiEntropy: AntiEntropy[State[C]]
 ) extends RCounterInterface[C, RCounter[C]] with BasicCRDT[State[C], RCounter[C]] {
 

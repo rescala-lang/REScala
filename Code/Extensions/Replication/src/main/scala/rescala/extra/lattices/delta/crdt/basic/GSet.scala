@@ -5,7 +5,7 @@ import rescala.extra.lattices.delta.interfaces.GSetInterface.{GSetCompanion, Sta
 import rescala.extra.lattices.delta.interfaces.GSetInterface
 
 class GSet[E](
-    protected[rescala] val state: State[E],
+    val state: State[E],
     protected val antiEntropy: AntiEntropy[State[E]]
 ) extends GSetInterface[E, GSet[E]] with BasicCRDT[State[E], GSet[E]] {
 
