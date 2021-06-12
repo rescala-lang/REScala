@@ -5,11 +5,11 @@ import rescala.extra.lattices.Lattice
 trait DotStore[A] {
   def dots(state: A): Set[Dot]
 
-  def merge[C: CContext, D: CContext](left: A, leftContext: C, right: A, rightContext: D): (A, C)
+  def merge[C: CContext](left: A, leftContext: C, right: A, rightContext: C): (A, C)
 
-  def leq[C: CContext, D: CContext](left: A, leftContext: C, right: A, rightContext: D): Boolean
+  def leq[C: CContext](left: A, leftContext: C, right: A, rightContext: C): Boolean
 
-  def decompose[C: CContext](state: A, cc: C): Set[(A, C)]
+  def decompose[C: CContext](state: A, cc: C): Iterable[(A, C)]
 
   def empty: A
 }
@@ -21,9 +21,8 @@ object DotStore {
   implicit def DotSet: DotStore[Set[Dot]] = new DotStore[Set[Dot]] {
     override def dots(ds: Set[Dot]): Set[Dot] = ds
 
-    override def merge[C: CContext, D: CContext](left: Set[Dot], leftContext: C, right: Set[Dot], rightContext: D)
-        : (Set[Dot], C) = {
-      val fromLeft  = left.filter(!CContext[D].contains(rightContext, _))
+    override def merge[C: CContext](left: Set[Dot], leftContext: C, right: Set[Dot], rightContext: C): (Set[Dot], C) = {
+      val fromLeft  = left.filter(!CContext[C].contains(rightContext, _))
       val fromRight = right.filter(dot => left.contains(dot) || !CContext[C].contains(leftContext, dot))
 
       (fromLeft union fromRight, CContext[C].union(leftContext, rightContext))
@@ -31,17 +30,21 @@ object DotStore {
 
     override def empty: Set[Dot] = Set.empty[Dot]
 
-    override def leq[C: CContext, D: CContext](left: Set[Dot], leftContext: C, right: Set[Dot], rightContext: D)
-        : Boolean = {
-      val firstCondition  = CContext[C].toSet(leftContext).forall(CContext[D].contains(rightContext, _))
-      val secondCondition = (right intersect (CContext[C].toSet(leftContext) diff left)).isEmpty
+    override def leq[C: CContext](left: Set[Dot], leftContext: C, right: Set[Dot], rightContext: C): Boolean = {
+      val firstCondition = CContext[C].forall(leftContext, CContext[C].contains(rightContext, _))
+
+      val secondCondition = {
+        val diff = CContext[C].diff(leftContext, left)
+        !right.exists { CContext[C].contains(diff, _) }
+      }
+
       firstCondition && secondCondition
     }
 
-    override def decompose[C: CContext](state: Set[Dot], cc: C): Set[(Set[Dot], C)] = {
-      val added   = for (d <- state) yield (Set(d), CContext[C].fromSet(Set(d)))
-      val removed = for (d <- CContext[C].toSet(cc) diff state) yield (DotSet.empty, CContext[C].fromSet(Set(d)))
-      added union removed
+    override def decompose[C: CContext](state: Set[Dot], cc: C): Iterable[(Set[Dot], C)] = {
+      val added   = for (d <- state) yield (Set(d), CContext[C].one(d))
+      val removed = CContext[C].decompose(cc, state.contains).map((DotSet.empty, _))
+      removed ++ added
     }
   }
 
@@ -49,18 +52,18 @@ object DotStore {
   implicit def DotFun[A: UIJDLattice]: DotStore[Map[Dot, A]] = new DotStore[Map[Dot, A]] {
     override def dots(ds: Map[Dot, A]): Set[Dot] = ds.keySet
 
-    override def merge[C: CContext, D: CContext](left: Map[Dot, A], leftContext: C, right: Map[Dot, A], rightContext: D)
+    override def merge[C: CContext](left: Map[Dot, A], leftContext: C, right: Map[Dot, A], rightContext: C)
         : (Map[Dot, A], C) = {
 
-      val fromLeft = left.filter { case (dot, _) => !CContext[D].contains(rightContext, dot) }
+      val fromLeft = left.filter { case (dot, _) => !CContext[C].contains(rightContext, dot) }
 
-      val dfMerged = right.keys.foldLeft(fromLeft) {
-        case (m, dot) =>
+      val dfMerged = right.foldLeft(fromLeft) {
+        case (m, (dot, r)) =>
           left.get(dot) match {
             case None =>
               if (CContext[C].contains(leftContext, dot)) m
-              else m.updated(dot, right(dot))
-            case Some(l) => m.updated(dot, UIJDLattice[A].merge(l, right(dot)))
+              else m.updated(dot, r)
+            case Some(l) => m.updated(dot, UIJDLattice[A].merge(l, r))
           }
       }
 
@@ -69,21 +72,26 @@ object DotStore {
 
     override def empty: Map[Dot, A] = Map.empty[Dot, A]
 
-    override def leq[C: CContext, D: CContext](left: Map[Dot, A], leftContext: C, right: Map[Dot, A], rightContext: D)
-        : Boolean = {
-      val firstCondition  = CContext[C].toSet(leftContext).forall(CContext[D].contains(rightContext, _))
-      val secondCondition = (left.keySet intersect right.keySet).forall(k => UIJDLattice[A].leq(left(k), right(k)))
-      val thirdCondition =
-        (DotFun[A].dots(right) intersect (CContext[C].toSet(leftContext) diff DotFun[A].dots(left))).isEmpty
+    override def leq[C: CContext](left: Map[Dot, A], leftContext: C, right: Map[Dot, A], rightContext: C): Boolean = {
+      val firstCondition = CContext[C].forall(leftContext, CContext[C].contains(rightContext, _))
+      val secondCondition = right.keySet.forall { k =>
+        left.get(k).forall { l => UIJDLattice[A].leq(l, right(k)) }
+      }
+      val thirdCondition = {
+        val diff = CContext[C].diff(leftContext, DotFun[A].dots(left))
+        !DotFun[A].dots(right).exists { CContext[C].contains(diff, _) }
+      }
+
       firstCondition && secondCondition && thirdCondition
     }
 
-    override def decompose[C: CContext](state: Map[Dot, A], cc: C): Set[(Map[Dot, A], C)] = {
+    override def decompose[C: CContext](state: Map[Dot, A], cc: C): Iterable[(Map[Dot, A], C)] = {
       val added = for (d <- DotFun[A].dots(state); v <- UIJDLattice[A].decompose(state(d)))
-        yield (Map(d -> v), CContext[C].fromSet(Set(d)))
-      val removed = for (d <- CContext[C].toSet(cc) diff DotFun[A].dots(state))
-        yield (DotFun[A].empty, CContext[C].fromSet(Set(d)))
-      added union removed
+        yield (Map(d -> v), CContext[C].one(d))
+
+      val removed = CContext[C].decompose(cc, DotFun[A].dots(state).contains).map((DotFun[A].empty, _))
+
+      removed ++ added
     }
   }
 
@@ -91,11 +99,11 @@ object DotStore {
   implicit def DotMap[K, V: DotStore]: DotStore[DotMap[K, V]] = new DotStore[DotMap[K, V]] {
     override def dots(ds: DotMap[K, V]): Set[Dot] = ds.values.flatMap(DotStore[V].dots(_)).toSet
 
-    override def merge[C: CContext, D: CContext](
+    override def merge[C: CContext](
         left: DotMap[K, V],
         leftContext: C,
         right: DotMap[K, V],
-        rightContext: D
+        rightContext: C
     ): (DotMap[K, V], C) = {
       val allKeys = left.keySet ++ right.keySet
 
@@ -113,29 +121,33 @@ object DotStore {
 
     override def empty: DotMap[K, V] = Map.empty[K, V]
 
-    override def leq[C: CContext, D: CContext](left: DotMap[K, V], leftContext: C, right: DotMap[K, V], rightContext: D)
-        : Boolean = {
-      val firstCondition = CContext[C].toSet(leftContext).forall(CContext[D].contains(rightContext, _))
-      val secondCondition = (left.keySet union right.keySet).forall { k =>
+    override def leq[C: CContext](left: DotMap[K, V], leftContext: C, right: DotMap[K, V], rightContext: C): Boolean = {
+      val firstCondition = CContext[C].forall(leftContext, CContext[C].contains(rightContext, _))
+
+      def secondConditionHelper(keys: Iterable[K]): Boolean = keys.forall { k =>
         val leftV  = left.getOrElse(k, DotStore[V].empty)
         val rightV = right.getOrElse(k, DotStore[V].empty)
 
-        DotStore[V].leq[C, D](leftV, leftContext, rightV, rightContext)
+        DotStore[V].leq[C](leftV, leftContext, rightV, rightContext)
       }
+
+      val secondCondition = secondConditionHelper(left.keys) && secondConditionHelper(right.keys)
+
       firstCondition && secondCondition
     }
 
-    override def decompose[C: CContext](state: DotMap[K, V], cc: C): Set[(DotMap[K, V], C)] = {
+    override def decompose[C: CContext](state: DotMap[K, V], cc: C): Iterable[(DotMap[K, V], C)] = {
       val added = for {
-        k <- state.keySet
+        k <- state.keys
         (atomicV, atomicCC) <- {
           val v = state.getOrElse(k, DotStore[V].empty)
           DotStore[V].decompose(v, CContext[C].fromSet(DotStore[V].dots(v)))
         }
       } yield (DotMap[K, V].empty.updated(k, atomicV), atomicCC)
-      val removed = for (d <- CContext[C].toSet(cc) diff DotMap[K, V].dots(state))
-        yield (DotMap[K, V].empty, CContext[C].fromSet(Set(d)))
-      added union removed
+
+      val removed = CContext[C].decompose(cc, DotMap[K, V].dots(state).contains).map((DotMap[K, V].empty, _))
+
+      added ++ removed
     }
   }
 
@@ -145,22 +157,23 @@ object DotStore {
       case (ds1, ds2) => DotStore[A].dots(ds1) union DotStore[B].dots(ds2)
     }
 
-    override def merge[C: CContext, D: CContext](left: (A, B), leftContext: C, right: (A, B), rightContext: D)
-        : ((A, B), C) = (left, right) match {
-      case ((left1, left2), (right1, right2)) =>
-        val (stateMerged1, ccMerged1) = DotStore[A].merge(left1, leftContext, right1, rightContext)
-        val (stateMerged2, ccMerged2) = DotStore[B].merge(left2, leftContext, right2, rightContext)
-        ((stateMerged1, stateMerged2), CContext[C].union(ccMerged1, ccMerged2))
-    }
+    override def merge[C: CContext](left: (A, B), leftContext: C, right: (A, B), rightContext: C): ((A, B), C) =
+      (left, right) match {
+        case ((left1, left2), (right1, right2)) =>
+          val (stateMerged1, ccMerged1) = DotStore[A].merge(left1, leftContext, right1, rightContext)
+          val (stateMerged2, ccMerged2) = DotStore[B].merge(left2, leftContext, right2, rightContext)
 
-    override def leq[C: CContext, D: CContext](left: (A, B), leftContext: C, right: (A, B), rightContext: D): Boolean =
+          ((stateMerged1, stateMerged2), CContext[C].union(ccMerged1, ccMerged2))
+      }
+
+    override def leq[C: CContext](left: (A, B), leftContext: C, right: (A, B), rightContext: C): Boolean =
       (left, right) match {
         case ((left1, left2), (right1, right2)) =>
           DotStore[A].leq(left1, leftContext, right1, rightContext) &&
             DotStore[B].leq(left2, leftContext, right2, rightContext)
       }
 
-    override def decompose[C: CContext](state: (A, B), cc: C): Set[((A, B), C)] = state match {
+    override def decompose[C: CContext](state: (A, B), cc: C): Iterable[((A, B), C)] = state match {
       case (state1, state2) =>
         val decomposed1 = DotStore[A].decompose(state1, cc).map {
           case (atomicState, atomicCC) =>
@@ -172,7 +185,7 @@ object DotStore {
             ((DotStore[A].empty, atomicState), atomicCC)
         }
 
-        decomposed1 union decomposed2
+        decomposed1 ++ decomposed2
     }
 
     override def empty: (A, B) = (DotStore[A].empty, DotStore[B].empty)
@@ -182,13 +195,13 @@ object DotStore {
   implicit def DotLess[A: UIJDLattice]: DotStore[A] = new DotStore[A] {
     override def dots(ds: A): Set[Dot] = Set.empty[Dot]
 
-    override def merge[C: CContext, D: CContext](left: A, leftContext: C, right: A, rightContext: D): (A, C) =
-      (Lattice[A].merge(left, right), CContext[C].union[D](leftContext, rightContext))
+    override def merge[C: CContext](left: A, leftContext: C, right: A, rightContext: C): (A, C) =
+      (Lattice[A].merge(left, right), CContext[C].union(leftContext, rightContext))
 
-    override def leq[C: CContext, D: CContext](left: A, leftContext: C, right: A, rightContext: D): Boolean =
+    override def leq[C: CContext](left: A, leftContext: C, right: A, rightContext: C): Boolean =
       UIJDLattice[A].leq(left, right)
 
-    override def decompose[C: CContext](state: A, cc: C): Set[(A, C)] = {
+    override def decompose[C: CContext](state: A, cc: C): Iterable[(A, C)] = {
       UIJDLattice[A].decompose(state).map((_, CContext[C].empty))
     }
 

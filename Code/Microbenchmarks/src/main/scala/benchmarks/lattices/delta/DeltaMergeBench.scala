@@ -18,8 +18,7 @@ import java.util.concurrent.TimeUnit
 @annotations.State(Scope.Thread)
 class DeltaMergeBench {
 
-//  @Param(Array("1", "10", "100", "1000"))
-  @Param(Array("1000"))
+  @Param(Array("1", "10", "100", "1000"))
   var size: Int = _
 
   var fullState: RGA.State[Int, DietMapCContext]         = _

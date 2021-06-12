@@ -16,7 +16,7 @@ object AuctionInterface {
         case _              => true
       }
 
-      override def decompose(state: Status): Set[Status] = Set(state)
+      override def decompose(state: Status): Iterable[Status] = List(state)
 
       override def bottom: Status = Open
 
@@ -46,15 +46,16 @@ object AuctionInterface {
           UIJDLattice[GSetInterface.State[Bid]].leq(lb, rb) && UIJDLattice[Status].leq(ls, rs)
       }
 
-      override def decompose(state: AuctionData): Set[AuctionData] = state match {
-        case AuctionData(bids, status, _) =>
-          bids.map(b =>
-            AuctionData(bids = GSetInterface.insert(b)("", UIJDLattice[GSetInterface.State[Bid]].bottom))
-          ) ++ (status match {
-            case Open   => Set()
-            case Closed => Set(AuctionData(status = Closed))
-          })
-      }
+      override def decompose(state: AuctionData): Iterable[AuctionInterface.State] =
+        state match {
+          case AuctionData(bids, status, _) =>
+            bids.map(b =>
+              AuctionData(bids = GSetInterface.insert(b)("", UIJDLattice[GSetInterface.State[Bid]].bottom))
+            ) ++ (status match {
+              case Open   => Set()
+              case Closed => Set(AuctionData(status = Closed))
+            })
+        }
 
       override def bottom: AuctionData = AuctionData()
 

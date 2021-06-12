@@ -7,9 +7,15 @@ trait CContext[A] {
 
   def fromSet(dots: Set[Dot]): A
 
+  def empty: A
+
+  def one(dot: Dot): A
+
   def toSet(cc: A): Set[Dot]
 
-  def union[B: CContext](left: A, right: B): A
+  def union(left: A, right: A): A
+
+  def diff(cc: A, other: Iterable[Dot]): A
 
   def max(cc: A, replicaID: String): Option[Dot]
 
@@ -18,9 +24,11 @@ trait CContext[A] {
     case None      => Dot(replicaID, 0)
   }
 
-  def empty: A
-
   def convert[B: CContext](cc: A): B = CContext[B].fromSet(toSet(cc))
+
+  def decompose(cc: A, exclude: Dot => Boolean): Iterable[A]
+
+  def forall(cc: A, cond: Dot => Boolean): Boolean
 }
 
 object CContext {
@@ -32,21 +40,34 @@ object CContext {
 
     override def fromSet(dots: Set[Dot]): Set[Dot] = dots
 
+    override def empty: Set[Dot] = Set.empty[Dot]
+
+    override def one(dot: Dot): Set[Dot] = Set(dot)
+
     override def toSet(cc: Set[Dot]): Set[Dot] = cc
 
-    override def union[B: CContext](left: Set[Dot], right: B): Set[Dot] = left union CContext[B].toSet(right)
+    override def union(left: Set[Dot], right: Set[Dot]): Set[Dot] = left union right
+
+    override def diff(cc: Set[Dot], other: Iterable[Dot]): Set[Dot] = cc -- other
 
     override def max(cc: Set[Dot], replicaID: String): Option[Dot] =
       cc.filter(_.replicaID == replicaID).maxByOption(_.counter)
 
-    override def empty: Set[Dot] = Set.empty[Dot]
+    override def decompose(cc: Set[Dot], exclude: Dot => Boolean): Iterable[Set[Dot]] =
+      cc.foldLeft(List.empty[Set[Dot]]) {
+        case (l, dot) =>
+          if (exclude(dot)) l
+          else l :+ Set(dot)
+      }
+
+    override def forall(cc: Set[Dot], cond: Dot => Boolean): Boolean = cc.forall(cond)
   }
 
   type DietMapCContext = Map[String, Diet[Int]]
   implicit def DietMapCContext: CContext[Map[String, Diet[Int]]] = new CContext[Map[String, Diet[Int]]] {
     override def contains(cc: Map[String, Diet[Int]], d: Dot): Boolean = d match {
       case Dot(replicaID, counter) =>
-        cc.getOrElse(replicaID, Diet.empty[Int]).contains(counter)
+        cc.get(replicaID).exists(_.contains(counter))
     }
 
     private def addDot(cc: Map[String, Diet[Int]], dot: Dot): Map[String, Diet[Int]] = dot match {
@@ -55,7 +76,12 @@ object CContext {
         cc + (replicaID -> (oldDiet + counter))
     }
 
-    override def fromSet(dots: Set[Dot]): Map[String, Diet[Int]] = dots.foldLeft(Map[String, Diet[Int]]())(addDot)
+    override def empty: Map[String, Diet[Int]] = Map.empty[String, Diet[Int]]
+
+    override def one(dot: Dot): Map[String, Diet[Int]] = Map(dot.replicaID -> Diet.one(dot.counter))
+
+    override def fromSet(dots: Set[Dot]): Map[String, Diet[Int]] =
+      dots.foldLeft(Map[String, Diet[Int]]())(addDot)
 
     override def toSet(cc: Map[String, Diet[Int]]): Set[Dot] =
       for (
@@ -64,24 +90,42 @@ object CContext {
       )
         yield Dot(replicaID, counter)
 
-    override def union[B: CContext](left: Map[String, Diet[Int]], right: B): Map[String, Diet[Int]] = {
-      right match {
-        case context: DietMapCContext =>
-          context.keySet.foldLeft(left) {
-            case (m, k) =>
-              m.updatedWith(k) {
-                case Some(l) => Some(l ++ context(k))
-                case None    => Some(context(k))
-              }
+    override def union(left: Map[String, Diet[Int]], right: Map[String, Diet[Int]]): Map[String, Diet[Int]] = {
+      right.foldLeft(left) {
+        case (m, (k, r)) =>
+          m.updatedWith(k) {
+            case Some(l) => Some(l ++ r)
+            case None    => Some(r)
           }
-
-        case _ => CContext[B].toSet(right).foldLeft(left)(addDot)
       }
+    }
+
+    override def diff(cc: Map[String, Diet[Int]], other: Iterable[Dot]): Map[String, Diet[Int]] = other.foldLeft(cc) {
+      case (d, Dot(id, c)) =>
+        d.updatedWith(id) {
+          case None       => None
+          case Some(diet) => Some(diet.remove(c))
+        }
     }
 
     override def max(cc: Map[String, Diet[Int]], replicaID: String): Option[Dot] =
       cc.getOrElse(replicaID, Diet.empty[Int]).max.map(Dot(replicaID, _))
 
-    override def empty: Map[String, Diet[Int]] = Map.empty[String, Diet[Int]]
+    override def decompose(cc: Map[String, Diet[Int]], exclude: Dot => Boolean): Iterable[Map[String, Diet[Int]]] =
+      cc.foldLeft(List.empty[Map[String, Diet[Int]]]) {
+        case (list, (id, diet)) =>
+          list ++ diet.foldLeft(List.empty[Map[String, Diet[Int]]]) {
+            case (l, c) =>
+              if (exclude(Dot(id, c))) l
+              else l :+ Map(id -> Diet.one(c))
+          }
+      }
+
+    override def forall(cc: Map[String, Diet[Int]], cond: Dot => Boolean): Boolean =
+      cc.forall {
+        case (id, diet) => diet.foldLeft(true) {
+            case (b, c) => b && cond(Dot(id, c))
+          }
+      }
   }
 }

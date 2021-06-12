@@ -12,8 +12,8 @@ object RCounterInterface {
     }
 
     /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
-    override def decompose(state: (Int, Int)): Set[(Int, Int)] = state match {
-      case (inc, dec) => Set((inc, 0), (0, dec))
+    override def decompose(state: (Int, Int)): Iterable[(Int, Int)] = state match {
+      case (inc, dec) => List((inc, 0), (0, dec))
     }
 
     /** By assumption: associative, commutative, idempotent. */
@@ -60,7 +60,7 @@ object RCounterInterface {
 
       deltaState(
         df = Some(DotFun[(Int, Int)].empty + (nextDot -> ((0, 0)))),
-        cc = CContext[C].fromSet(Set(nextDot))
+        cc = CContext[C].one(nextDot)
       )
   }
 
@@ -74,14 +74,14 @@ object RCounterInterface {
 
           deltaState(
             df = Some(df + (currentDot -> newCounter)),
-            cc = CContext[C].fromSet(Set(currentDot))
+            cc = CContext[C].one(currentDot)
           )
         case _ =>
           val nextDot = CContext[C].nextDot(cc, replicaID)
 
           deltaState(
             df = Some(DotFun[(Int, Int)].empty + (nextDot -> u)),
-            cc = CContext[C].fromSet(Set(nextDot))
+            cc = CContext[C].one(nextDot)
           )
       }
   }

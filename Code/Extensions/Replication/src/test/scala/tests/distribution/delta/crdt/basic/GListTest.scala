@@ -27,7 +27,7 @@ object GListGenerators {
   implicit def arbGList[E: JsonValueCodec](implicit e: Arbitrary[E]): Arbitrary[GList[E]] = Arbitrary(genGList)
 }
 
-class GOListTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
+class GListTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   import GListGenerators._
 
   implicit val IntCodec: JsonValueCodec[Int] = JsonCodecMaker.make
@@ -71,6 +71,16 @@ class GOListTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
         s"All elements after the insertion point should be shifted by 1, but element at ${i + 1} does not equal element originally at $i: ${inserted.read(i + 1)} does not contain ${l(i)}"
       )
     }
+  }
+
+  "toLazyList" in forAll { (list: GList[Int]) =>
+    val l     = list.toList
+    val lazyl = list.toLazyList.toList
+
+    assert(
+      lazyl == l,
+      s"Converting a glist to a lazylist and then a list should have the same result as turning it into a list directly, but $lazyl does not equal $l"
+    )
   }
 
   "concurrent insert" in forAll { (base: List[Int], n1: Int, e1: Int, n2: Int, e2: Int) =>

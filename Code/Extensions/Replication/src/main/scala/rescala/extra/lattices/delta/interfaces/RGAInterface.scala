@@ -6,8 +6,6 @@ import rescala.extra.lattices.delta._
 import rescala.extra.lattices.delta.interfaces.ForcedWriteInterface.ForcedWriteAsUIJDLattice
 import rescala.extra.lattices.delta.interfaces.GListInterface.GListAsUIJDLattice
 
-import scala.annotation.tailrec
-
 object RGAInterface {
   sealed trait RGANode[A]
   case class Alive[A](v: TimedVal[A]) extends RGANode[A]
@@ -22,7 +20,7 @@ object RGAInterface {
       }
 
       /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
-      override def decompose(state: RGANode[A]): Set[RGANode[A]] = Set(state)
+      override def decompose(state: RGANode[A]): Iterable[RGANode[A]] = List(state)
 
       override def bottom: RGANode[A] = throw new UnsupportedOperationException("RGANode does not have a bottom value")
 
@@ -56,20 +54,12 @@ object RGAInterface {
 
   private def deltaState[E, C: CContext]: DeltaStateFactory[E, C] = new DeltaStateFactory[E, C]
 
-  private def readRec[E, C: CContext](state: State[E, C], target: Int, counted: Int, skipped: Int): Option[E] =
-    state match {
-      case Causal((fw, df), _) =>
-        GListInterface.read(counted + skipped)(fw.value).flatMap { d =>
-          df(d) match {
-            case Dead() => readRec(state, target, counted, skipped + 1)
-            case Alive(tv) =>
-              if (counted == target) Some(tv.value)
-              else readRec(state, target, counted + 1, skipped)
-          }
-        }
-    }
-
-  def read[E, C: CContext](i: Int): DeltaQuery[State[E, C], Option[E]] = readRec(_, i, 0, 0)
+  def read[E, C: CContext](i: Int): DeltaQuery[State[E, C], Option[E]] = {
+    case Causal((fw, df), _) =>
+      GListInterface.toLazyList(fw.value).map(df).collect {
+        case Alive(tv) => tv.value
+      }.lift(i)
+  }
 
   def size[E, C: CContext]: DeltaQuery[State[E, C], Int] = {
     case Causal((_, df), _) =>
@@ -81,7 +71,7 @@ object RGAInterface {
 
   def toList[E, C: CContext]: DeltaQuery[State[E, C], List[E]] = {
     case Causal((fw, df), _) =>
-      GListInterface.toList(fw.value).flatMap(df.get).collect {
+      GListInterface.toList(fw.value).map(df).collect {
         case Alive(tv) => tv.value
       }
   }
@@ -90,119 +80,72 @@ object RGAInterface {
     case Causal((fw, _), _) => fw.counter
   }
 
-  private def insertRec[E, C: CContext](
-      replicaID: String,
-      state: State[E, C],
-      target: Int,
-      counted: Int,
-      skipped: Int
-  ): Option[ForcedWriteInterface.State[GListInterface.State[Dot]]] =
-    state match {
-      case Causal((fw, df), cc) =>
-        if (target == counted) {
-          val m = GListInterface.insert(counted + skipped, CContext[C].nextDot(cc, replicaID))
-          Some(
-            ForcedWriteInterface.mutate(m)(replicaID, fw)
-          )
-        } else {
-          GListInterface.read(counted + skipped)(fw.value) flatMap { d =>
-            df(d) match {
-              case Dead()   => insertRec(replicaID, state, target, counted, skipped + 1)
-              case Alive(_) => insertRec(replicaID, state, target, counted + 1, skipped)
-            }
+  private def findInsertIndex[E, C: CContext](state: State[E, C], n: Int): Option[Int] = state match {
+    case Causal((fw, df), _) =>
+      GListInterface.toLazyList(fw.value).zip(LazyList.from(1)).filter {
+        case (dot, _) => df(dot) match {
+            case Alive(_) => true
+            case Dead()   => false
           }
-        }
-    }
+      }.map(_._2).prepended(0).lift(n)
+  }
 
   def insert[E, C: CContext](i: Int, e: E): DeltaMutator[State[E, C]] = {
-    case (replicaID, state @ Causal(_, cc)) =>
+    case (replicaID, state @ Causal((fw, _), cc)) =>
       val nextDot = CContext[C].nextDot(cc, replicaID)
 
-      insertRec(replicaID, state, i, 0, 0) match {
-        case None => UIJDLattice[State[E, C]].bottom
-        case Some(golistDelta) =>
-          val dfDelta = DotFun[RGANode[E]].empty + (nextDot -> Alive(TimedVal(e, replicaID)))
+      findInsertIndex(state, i) match {
+        case None => deltaState[E, C].bottom
+        case Some(glistInsertIndex) =>
+          val m          = GListInterface.insert(glistInsertIndex, nextDot)
+          val glistDelta = ForcedWriteInterface.mutate(m)(replicaID, fw)
+          val dfDelta    = DotFun[RGANode[E]].empty + (nextDot -> Alive(TimedVal(e, replicaID)))
 
           deltaState[E, C].make(
-            fw = golistDelta,
+            fw = glistDelta,
             df = dfDelta,
-            cc = CContext[C].fromSet(Set(nextDot))
+            cc = CContext[C].one(nextDot)
           )
       }
   }
 
-  private def insertAllRec[E, C: CContext](
-      replicaID: String,
-      state: State[E, C],
-      target: Int,
-      counted: Int,
-      skipped: Int,
-      dots: Iterable[Dot]
-  ): Option[ForcedWriteInterface.State[GListInterface.State[Dot]]] =
-    state match {
-      case Causal((fw, df), _) =>
-        if (target == counted) {
-          val m = GListInterface.insertAll(counted + skipped, dots)
-          Some(
-            ForcedWriteInterface.mutate(m)(replicaID, fw)
-          )
-        } else {
-          GListInterface.read(counted + skipped)(fw.value) flatMap { d =>
-            df(d) match {
-              case Dead()   => insertAllRec(replicaID, state, target, counted, skipped + 1, dots)
-              case Alive(_) => insertAllRec(replicaID, state, target, counted + 1, skipped, dots)
-            }
-          }
-        }
-    }
-
   def insertAll[E, C: CContext](i: Int, elems: Iterable[E]): DeltaMutator[State[E, C]] = {
-    case (replicaID, state @ Causal(_, cc)) =>
+    case (replicaID, state @ Causal((fw, _), cc)) =>
       val nextDot = CContext[C].nextDot(cc, replicaID)
 
       val nextDots = List.iterate(nextDot, elems.size) {
         case Dot(c, r) => Dot(c + 1, r)
       }
 
-      insertAllRec(replicaID, state, i, 0, 0, nextDots) match {
-        case None => UIJDLattice[State[E, C]].bottom
-        case Some(golistDelta) =>
-          val dfDelta = DotFun[RGANode[E]].empty ++ (nextDots zip elems.map(e => Alive(TimedVal(e, replicaID))))
+      findInsertIndex(state, i) match {
+        case None => deltaState[E, C].bottom
+        case Some(glistInsertIndex) =>
+          val m          = GListInterface.insertAll(glistInsertIndex, nextDots)
+          val glistDelta = ForcedWriteInterface.mutate(m)(replicaID, fw)
+          val dfDelta    = DotFun[RGANode[E]].empty ++ (nextDots zip elems.map(e => Alive(TimedVal(e, replicaID))))
 
           deltaState[E, C].make(
-            fw = golistDelta,
+            fw = glistDelta,
             df = dfDelta,
             cc = CContext[C].fromSet(nextDots.toSet)
           )
       }
   }
 
-  @tailrec
-  private def updateRGANodeRec[E, C: CContext](
-      state: State[E, C],
-      i: Int,
-      newNode: RGANode[E],
-      counted: Int,
-      skipped: Int
-  ): State[E, C] =
+  private def updateRGANode[E, C: CContext](state: State[E, C], i: Int, newNode: RGANode[E]): State[E, C] =
     state match {
       case Causal((fw, df), _) =>
-        GListInterface.read(counted + skipped)(fw.value) match {
-          case None => UIJDLattice[State[E, C]].bottom
+        GListInterface.toLazyList(fw.value).filter { dot =>
+          df(dot) match {
+            case Alive(_) => true
+            case Dead()   => false
+          }
+        }.lift(i) match {
+          case None => deltaState[E, C].bottom
           case Some(d) =>
-            df(d) match {
-              case Dead() => updateRGANodeRec(state, i, newNode, counted, skipped + 1)
-              case Alive(_) =>
-                if (counted == i)
-                  deltaState[E, C].make(df = DotFun[RGANode[E]].empty + (d -> newNode))
-                else
-                  updateRGANodeRec(state, i, newNode, counted + 1, skipped)
-            }
+            deltaState[E, C].make(df = DotFun[RGANode[E]].empty + (d -> newNode))
         }
     }
-
-  private def updateRGANode[E, C: CContext](state: State[E, C], i: Int, newNode: RGANode[E]): State[E, C] =
-    updateRGANodeRec(state, i, newNode, 0, 0)
 
   def update[E, C: CContext](i: Int, e: E): DeltaMutator[State[E, C]] =
     (replicaID, state) => updateRGANode(state, i, Alive(TimedVal(e, replicaID)))

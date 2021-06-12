@@ -4,6 +4,7 @@ import rescala.extra.lattices.delta.CRDTInterface.{DeltaMutator, DeltaQuery}
 import rescala.extra.lattices.delta._
 
 import scala.annotation.tailrec
+import scala.collection.mutable.ListBuffer
 
 object GListInterface {
   sealed trait GListNode[E]
@@ -30,8 +31,8 @@ object GListInterface {
 
       /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
       override def decompose(state: Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]])
-          : Set[Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]]] =
-        state.toSet.map((edge: (GListNode[TimedVal[E]], Elem[TimedVal[E]])) => Map(edge))
+          : Iterable[Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]]] =
+        state.toList.map((edge: (GListNode[TimedVal[E]], Elem[TimedVal[E]])) => Map(edge))
 
       override def bottom: Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]] = Map.empty
 
@@ -90,30 +91,42 @@ object GListInterface {
     }
 
   @tailrec
-  private def toListRec[E](state: State[E], current: GListNode[TimedVal[E]], acc: List[E]): List[E] =
+  private def toListRec[E](state: State[E], current: GListNode[TimedVal[E]], acc: ListBuffer[E]): ListBuffer[E] =
     state.get(current) match {
       case None                  => acc
-      case Some(next @ Elem(tv)) => toListRec(state, next, acc.appended(tv.value))
+      case Some(next @ Elem(tv)) => toListRec(state, next, acc.append(tv.value))
     }
 
-  def toList[E]: DeltaQuery[State[E], List[E]] = state => toListRec(state, Head[TimedVal[E]](), List.empty[E])
+  def toList[E]: DeltaQuery[State[E], List[E]] =
+    state => toListRec(state, Head[TimedVal[E]](), ListBuffer.empty[E]).toList
+
+  def toLazyList[E]: DeltaQuery[State[E], LazyList[E]] = state =>
+    LazyList.unfold[E, GListNode[TimedVal[E]]](Head[TimedVal[E]]()) { node =>
+      state.get(node) match {
+        case None                  => None
+        case Some(next @ Elem(tv)) => Some((tv.value, next))
+      }
+    }
 
   def size[E]: DeltaQuery[State[E], Int] = state => state.size
 
   def insert[E](i: Int, e: E): DeltaMutator[State[E]] = (replicaID, state) => {
     findNth(state, Head[TimedVal[E]](), i) match {
-      case None        => Map.empty
-      case Some(after) => Map(after -> Elem(TimedVal(e, replicaID)))
+      case None       => Map.empty
+      case Some(pred) => Map(pred -> Elem(TimedVal(e, replicaID)))
     }
   }
 
   def insertAll[E](i: Int, elems: Iterable[E]): DeltaMutator[State[E]] = (replicaID, state) => {
-    findNth(state, Head[TimedVal[E]](), i) match {
-      case None => Map.empty
-      case Some(after) =>
-        val order = elems.map(e => Elem(TimedVal(e, replicaID)))
-        Map((List(after) ++ order.init) zip order: _*)
-    }
+    if (elems.isEmpty)
+      UIJDLattice[State[E]].bottom
+    else
+      findNth(state, Head[TimedVal[E]](), i) match {
+        case None => Map.empty
+        case Some(after) =>
+          val order = elems.map(e => Elem(TimedVal(e, replicaID)))
+          Map((List(after) ++ order.init) zip order: _*)
+      }
   }
 
   @tailrec
@@ -137,6 +150,8 @@ abstract class GListInterface[E, Wrapper] extends CRDTInterface[GListInterface.S
   def read(i: Int): Option[E] = query(GListInterface.read(i))
 
   def toList: List[E] = query(GListInterface.toList)
+
+  def toLazyList: LazyList[E] = query(GListInterface.toLazyList)
 
   def size: Int = query(GListInterface.size)
 

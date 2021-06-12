@@ -13,15 +13,15 @@ object LexCounterInterface {
   def value: DeltaQuery[State, Int] = state => state.values.map(_.snd).sum
 
   def inc(): DeltaMutator[State] = (replicaID, state) =>
-    state.updatedWith(replicaID) {
-      case None                => Some(LexPair(0, 1))
-      case Some(LexPair(l, r)) => Some(LexPair(l, r + 1))
+    state.get(replicaID) match {
+      case None                => Map(replicaID -> LexPair(0, 1))
+      case Some(LexPair(l, r)) => Map(replicaID -> LexPair(l, r + 1))
     }
 
   def dec(): DeltaMutator[State] = (replicaID, state) =>
-    state.updatedWith(replicaID) {
-      case None                => Some(LexPair(1, -1))
-      case Some(LexPair(l, r)) => Some(LexPair(l + 1, r - 1))
+    state.get(replicaID) match {
+      case None                => Map(replicaID -> LexPair(1, -1))
+      case Some(LexPair(l, r)) => Map(replicaID -> LexPair(l + 1, r - 1))
     }
 }
 

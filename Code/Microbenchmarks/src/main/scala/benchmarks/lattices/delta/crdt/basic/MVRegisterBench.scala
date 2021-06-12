@@ -2,7 +2,7 @@ package benchmarks.lattices.delta.crdt.basic
 
 import org.openjdk.jmh.annotations._
 import rescala.extra.lattices.delta.CContext.DietMapCContext
-import rescala.extra.lattices.delta.crdt.reactive.AWSet
+import rescala.extra.lattices.delta.crdt.reactive.MVRegister
 
 import java.util.concurrent.TimeUnit
 
@@ -13,32 +13,28 @@ import java.util.concurrent.TimeUnit
 @Fork(3)
 @Threads(1)
 @State(Scope.Thread)
-class AWSetBench {
+class MVRegisterBench {
 
   @Param(Array("0", "1", "10", "100", "1000"))
-  var size: Int = _
+  var numWrites: Int = _
 
-  var set: AWSet[Int, DietMapCContext] = _
+  var reg: MVRegister[Int, DietMapCContext] = _
 
   @Setup
   def setup(): Unit = {
-    set = (0 until size).foldLeft(AWSet[Int, DietMapCContext]("a")) {
-      case (s, e) => s.add(e)
+    reg = (0 until numWrites).foldLeft(MVRegister[Int, DietMapCContext]("-1")) {
+      case (r, i) =>
+        val delta = MVRegister[Int, DietMapCContext](i.toString).write(i).deltaBuffer.head
+        r.applyDelta(delta)
     }
   }
 
   @Benchmark
-  def elements(): Set[Int] = set.elements
+  def read(): Set[Int] = reg.read
 
   @Benchmark
-  def add(): AWSet[Int, DietMapCContext] = set.add(-1)
+  def write(): MVRegister[Int, DietMapCContext] = reg.write(-1)
 
   @Benchmark
-  def remove(): AWSet[Int, DietMapCContext] = set.remove(0)
-
-  @Benchmark
-  def removeBy(): AWSet[Int, DietMapCContext] = set.removeBy(_ == 0)
-
-  @Benchmark
-  def clear(): AWSet[Int, DietMapCContext] = set.clear()
+  def clear(): MVRegister[Int, DietMapCContext] = reg.clear()
 }

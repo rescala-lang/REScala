@@ -15,7 +15,7 @@ object ForcedWriteInterface {
     }
 
     /** Decomposes a lattice state into ic unique irredundant join decomposition of join-irreducible states */
-    override def decompose(state: FW[E]): Set[FW[E]] = state match {
+    override def decompose(state: FW[E]): Iterable[ForcedWriteInterface.State[E]] = state match {
       case FW(c, v) =>
         UIJDLattice[E].decompose(v).map(FW(c, _))
     }

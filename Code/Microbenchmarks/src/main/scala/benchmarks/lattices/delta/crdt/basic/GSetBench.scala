@@ -1,8 +1,7 @@
 package benchmarks.lattices.delta.crdt.basic
 
 import org.openjdk.jmh.annotations._
-import rescala.extra.lattices.delta.CContext.DietMapCContext
-import rescala.extra.lattices.delta.crdt.reactive.AWSet
+import rescala.extra.lattices.delta.crdt.reactive.GSet
 
 import java.util.concurrent.TimeUnit
 
@@ -13,17 +12,16 @@ import java.util.concurrent.TimeUnit
 @Fork(3)
 @Threads(1)
 @State(Scope.Thread)
-class AWSetBench {
-
+class GSetBench {
   @Param(Array("0", "1", "10", "100", "1000"))
   var size: Int = _
 
-  var set: AWSet[Int, DietMapCContext] = _
+  var set: GSet[Int] = _
 
   @Setup
   def setup(): Unit = {
-    set = (0 until size).foldLeft(AWSet[Int, DietMapCContext]("a")) {
-      case (s, e) => s.add(e)
+    set = (0 until size).foldLeft(GSet[Int]("a")) {
+      case (s, e) => s.insert(e)
     }
   }
 
@@ -31,14 +29,5 @@ class AWSetBench {
   def elements(): Set[Int] = set.elements
 
   @Benchmark
-  def add(): AWSet[Int, DietMapCContext] = set.add(-1)
-
-  @Benchmark
-  def remove(): AWSet[Int, DietMapCContext] = set.remove(0)
-
-  @Benchmark
-  def removeBy(): AWSet[Int, DietMapCContext] = set.removeBy(_ == 0)
-
-  @Benchmark
-  def clear(): AWSet[Int, DietMapCContext] = set.clear()
+  def insert(): GSet[Int] = set.insert(-1)
 }
