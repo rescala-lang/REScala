@@ -114,6 +114,8 @@ object DotStore {
           val (mergedVal, _) = DotStore[V].merge(leftV, leftContext, rightV, rightContext)
 
           m.updated(k, mergedVal)
+      }.filterNot {
+        case (_, v) => v == DotStore[V].empty
       }
 
       (dmMerged, CContext[C].union(leftContext, rightContext))
