@@ -69,6 +69,13 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
   }
 
   object Reactor {
+    /** Creates a new Reactor, which steps through the reactor stages ones.
+      *
+      * @param initialValue The initial value of the Reactor.
+      * @param stageBuilder The StageBuilder defining the Reactors behaviour.
+      * @tparam T The type of the Reactor value.
+      * @return The created Reactor.
+      */
     def once[T](
         initialValue: T,
     )(stageBuilder: StageBuilder[T]): Reactor[T] = {
@@ -82,6 +89,13 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
         }
     }
 
+    /** Creates a new Reactor, which starts from the beginning, once it's finished.
+      *
+      * @param initialValue The initial value of the Reactor.
+      * @param stageBuilder The StageBuilder defining the Reactors behaviour.
+      * @tparam T The type of the Reactor value.
+      * @return The created Reactor.
+      */
     def loop[T](
         initialValue: T,
     )(stageBuilder: StageBuilder[T]): Reactor[T] = {
@@ -115,10 +129,20 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
       copy(actions = actions :+ newValue)
     }
 
+    /** Sets the value of the Reactor.
+      *
+      * @param newValue The new value of the Reactor.
+      * @return A StageBuilder describing the Reactor behaviour.
+      */
     def set(newValue: T): StageBuilder[T] = {
       addAction(ReactorAction.SetAction(newValue))
     }
 
+    /** Modifies the value of the Reactor.
+      *
+      * @param modifier A function that has the old Reactor value as input and returns a new Reactor value.
+      * @return A StageBuilder describing the Reactor behaviour.
+      */
     def modify(modifier: T => T): StageBuilder[T] = {
       addAction(ReactorAction.ModifyAction(modifier))
     }
