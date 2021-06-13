@@ -9,7 +9,8 @@ import scala.annotation.tailrec
 class ReactorBundle[Api <: RescalaInterface](val api: Api) {
   import api._
   class Reactor[T](
-      initState: State[ReactorStage[T]]
+      initState: State[ReactorStage[T]],
+      looping: Boolean = false,
   ) extends Derived with Interp[T] with MacroAccess[T, Interp[T]] {
 
     override type Value = ReactorStage[T]
@@ -50,14 +51,18 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
         }
       }
 
-      val resStage = processActions(input.before)
+      var resStage = processActions(input.before)
+      if (looping && resStage.stages.actions.isEmpty) {
+        resStage = resStage.copy(stages = resStage.initialStages)
+        resStage = processActions(resStage)
+      }
 
       input.withValue(resStage)
     }
 
     override def resource: Interp[T] = this
 
-    def now(implicit scheduler: Scheduler): T = scheduler.forceNewTransaction(this)(at => at.now(this))
+    def now(implicit scheduler: Scheduler): T = scheduler.singleReadValueOnce(this)
   }
 
   object Reactor {
@@ -67,10 +72,23 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
       CreationTicket.fromScheduler(scheduler)
         .create(
           Set(),
-          new ReactorStage[T](initialValue, stageBuilder),
+          new ReactorStage[T](initialValue, stageBuilder, stageBuilder),
           inite = true
         ) { createdState: State[ReactorStage[T]] =>
           new Reactor[T](createdState)
+        }
+    }
+
+    def loop[T](
+        initialValue: T,
+    )(stageBuilder: StageBuilder[T]): Reactor[T] = {
+      CreationTicket.fromScheduler(scheduler)
+        .create(
+          Set(),
+          new ReactorStage[T](initialValue, stageBuilder, stageBuilder),
+          inite = true
+        ) { createdState: State[ReactorStage[T]] =>
+          new Reactor[T](createdState, true)
         }
     }
   }
@@ -84,7 +102,7 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
         extends ReactorAction[T]
   }
 
-  case class ReactorStage[T](currentValue: T, stages: StageBuilder[T])
+  case class ReactorStage[T](currentValue: T, stages: StageBuilder[T], initialStages: StageBuilder[T])
 
   case class StageBuilder[T](actions: List[ReactorAction[T]] = Nil) {
 

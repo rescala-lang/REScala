@@ -69,7 +69,7 @@ class ReactorWithoutAPITest extends RETests {
       assert(reactor.now === 2)
     }
 
-    test("Reactor has no glitches") {
+    "Reactor has no glitches" ignore {
       val e1 = Evt[String]()
 
       val reactor = Reactor.once("Initial Value") {
@@ -89,6 +89,25 @@ class ReactorWithoutAPITest extends RETests {
 
       assert(tuple.now === (("Fire", "Reacted")))
       assert(history.now === List(("Fire", "Reacted")))
+    }
+
+    test("Recrot can loop") {
+      val e1 = Evt[Unit]()
+      val reactor = Reactor.loop("Initial Value") {
+        StageBuilder().set("First Stage").next(e1) { _ =>
+          {
+            StageBuilder().set("Second Stage").next(e1) { _ => StageBuilder() }
+          }
+        }
+      }
+
+      assert(reactor.now === "First Stage")
+      e1.fire()
+      assert(reactor.now === "Second Stage")
+      e1.fire()
+      assert(reactor.now === "First Stage")
+      e1.fire()
+      assert(reactor.now === "Second Stage")
     }
   }
 }
