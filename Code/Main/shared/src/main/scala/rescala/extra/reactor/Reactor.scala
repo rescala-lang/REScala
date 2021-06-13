@@ -35,6 +35,9 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
           case Nil => stage
           case ReactorAction.SetAction(v) :: tail =>
             processActions(stage.copy(currentValue = v, stages = StageBuilder(tail)))
+          case ReactorAction.ModifyAction(modifier) :: tail =>
+            val modifiedValue = modifier(stage.currentValue)
+            processActions(stage.copy(currentValue = modifiedValue, stages = StageBuilder(tail)))
           case ReactorAction.NextAction(event, handler) :: _ =>
             if (progressedStage) {
               return stage
@@ -98,6 +101,8 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
   object ReactorAction {
     case class SetAction[T](res: T) extends ReactorAction[T]
 
+    case class ModifyAction[T](modifier: T => T) extends ReactorAction[T]
+
     case class NextAction[T, E](event: Event[E], handler: E => StageBuilder[T])
         extends ReactorAction[T]
   }
@@ -112,6 +117,10 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
 
     def set(newValue: T): StageBuilder[T] = {
       addAction(ReactorAction.SetAction(newValue))
+    }
+
+    def modify(modifier: T => T): StageBuilder[T] = {
+      addAction(ReactorAction.ModifyAction(modifier))
     }
 
     /** Waits until the event is triggered.
