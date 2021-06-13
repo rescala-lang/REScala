@@ -1,19 +1,16 @@
 package rescala.extra.reactor
 
-
 import rescala.core.ReName
 import rescala.interface.RescalaInterface
-
 import rescala.macros.MacroAccess
-
 
 import scala.annotation.tailrec
 
 class ReactorBundle[Api <: RescalaInterface](val api: Api) {
   import api._
   class Reactor[T](
-                    initState: State[ReactorStage[T]]
-                  ) extends Derived with Interp[T] with MacroAccess[T, Interp[T]] {
+      initState: State[ReactorStage[T]]
+  ) extends Derived with Interp[T] with MacroAccess[T, Interp[T]] {
 
     override type Value = ReactorStage[T]
 
@@ -29,6 +26,8 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
 
       input.trackDependencies(Set())
 
+      var progressedStage = false
+
       @tailrec
       def processActions[A](stage: ReactorStage[T]): ReactorStage[T] = {
         stage.stages.actions match {
@@ -36,10 +35,15 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
           case ReactorAction.SetAction(v) :: tail =>
             processActions(stage.copy(currentValue = v, stages = StageBuilder(tail)))
           case ReactorAction.NextAction(event, handler) :: _ =>
+            if (progressedStage) {
+              return stage
+            }
+
             val eventValue = input.depend(event)
             eventValue match {
               case None => stage
               case Some(value) =>
+                progressedStage = true
                 val stages = handler(value)
                 processActions(stage.copy(stages = stages))
             }
@@ -58,8 +62,8 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
 
   object Reactor {
     def once[T](
-                 initialValue: T,
-               )(stageBuilder: StageBuilder[T]): Reactor[T] = {
+        initialValue: T,
+    )(stageBuilder: StageBuilder[T]): Reactor[T] = {
       CreationTicket.fromScheduler(scheduler)
         .create(
           Set(),
@@ -77,7 +81,7 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
     case class SetAction[T](res: T) extends ReactorAction[T]
 
     case class NextAction[T, E](event: Event[E], handler: E => StageBuilder[T])
-      extends ReactorAction[T]
+        extends ReactorAction[T]
   }
 
   case class ReactorStage[T](currentValue: T, stages: StageBuilder[T])
