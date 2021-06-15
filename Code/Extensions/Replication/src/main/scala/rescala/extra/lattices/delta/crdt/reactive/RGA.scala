@@ -4,6 +4,11 @@ import rescala.extra.lattices.delta.interfaces.RGAInterface
 import rescala.extra.lattices.delta.interfaces.RGAInterface.{RGACompanion, State}
 import rescala.extra.lattices.delta.{CContext, Delta, UIJDLattice}
 
+/** Reactive implementation of [[RGAInterface]]
+  *
+  * @tparam E Type of the elements stored in the list
+  * @tparam C Type of the causal context used for this causal CRDT
+  */
 class RGA[E, C: CContext](
     val state: State[E, C],
     val replicaID: String,
@@ -15,6 +20,13 @@ class RGA[E, C: CContext](
 }
 
 object RGA extends RGACompanion {
+
+  /** Creates a new RGA instance
+    *
+    * @param replicaID Unique id of the replica that this instance is located on
+    * @tparam E Type of the elements stored in the list
+    * @tparam C Type of the causal context used for this causal CRDT
+    */
   def apply[E, C: CContext](replicaID: String): RGA[E, C] =
     new RGA(UIJDLattice[State[E, C]].bottom, replicaID, List())
 }

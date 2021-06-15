@@ -146,6 +146,15 @@ object GListInterface {
   def without[E](state: State[E], elems: Set[E]): State[E] = withoutRec(state, Head[TimedVal[E]](), elems)
 }
 
+/** A GList is a Delta CRDT modeling a grow-only list where list elements can neither be removed nor modified.
+  *
+  * Concurrent inserts at the same index i are resolved by the timestamps of the insert operations: the later insert
+  * will be at index i while the earlier insert will be pushed to index i+1.
+  *
+  * Note: GList is implemented as a linked list, thus the time needed to execute operations at the end of the list will
+  * scale linearly with the length of the list. Similarly, toList always has to iterate the whole list, so for applications
+  * that don't always need the whole list you should consider using toLazyList instead.
+  */
 abstract class GListInterface[E, Wrapper] extends CRDTInterface[GListInterface.State[E], Wrapper] {
   def read(i: Int): Option[E] = query(GListInterface.read(i))
 
@@ -156,4 +165,6 @@ abstract class GListInterface[E, Wrapper] extends CRDTInterface[GListInterface.S
   def size: Int = query(GListInterface.size)
 
   def insert(i: Int, e: E): Wrapper = mutate(GListInterface.insert(i, e))
+
+  def insertAll(i: Int, elems: Iterable[E]): Wrapper = mutate(GListInterface.insertAll(i, elems))
 }

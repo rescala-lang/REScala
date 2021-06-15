@@ -4,6 +4,7 @@ import rescala.extra.lattices.delta.{Delta, UIJDLattice}
 import rescala.extra.lattices.delta.interfaces.PNCounterInterface
 import rescala.extra.lattices.delta.interfaces.PNCounterInterface.{PNCounterCompanion, State}
 
+/** Reactive implementation of [[PNCounterInterface]] */
 class PNCounter(
     val state: State,
     val replicaID: String,
@@ -15,5 +16,10 @@ class PNCounter(
 }
 
 object PNCounter extends PNCounterCompanion {
+
+  /** Creates a new PNCounter instance
+    *
+    * @param replicaID Unique id of the replica that this instance is located on
+    */
   def apply(replicaID: String): PNCounter = new PNCounter(UIJDLattice[State].bottom, replicaID, List())
 }

@@ -5,6 +5,11 @@ import rescala.extra.lattices.delta.interfaces.AWSetInterface.{AWSetCompanion, S
 import rescala.extra.lattices.delta.interfaces.AWSetInterface
 import rescala.extra.lattices.delta.{CContext, Delta, UIJDLattice}
 
+/** Reactive implementation of [[AWSetInterface]]
+  *
+  * @tparam E Type of the elements stored in the set
+  * @tparam C Type of the causal context used for this causal CRDT
+  */
 class AWSet[E, C: CContext](
     val state: State[E, C],
     val replicaID: String,
@@ -16,6 +21,13 @@ class AWSet[E, C: CContext](
 }
 
 object AWSet extends AWSetCompanion {
+
+  /** Creates a new AWSet instance
+    *
+    * @param replicaID Unique id of the replica that this instance is located on
+    * @tparam E Type of the elements stored in the set
+    * @tparam C Type of the causal context used for this causal CRDT
+    */
   def apply[E, C: CContext](replicaID: String): AWSet[E, C] =
     new AWSet(UIJDLattice[State[E, C]].bottom, replicaID, List())
 }

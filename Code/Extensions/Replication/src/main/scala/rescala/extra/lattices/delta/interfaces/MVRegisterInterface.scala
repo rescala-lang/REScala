@@ -45,6 +45,11 @@ object MVRegisterInterface {
   }
 }
 
+/** An MVRegister (Multi-Value Register) is a Delta CRDT modeling a register.
+  *
+  * In the absence of concurrent writes, the MVRegister is either empty or holds one value.
+  * When multiple values are written concurrently, reading the MVRegister returns a set holding all these values.
+  */
 abstract class MVRegisterInterface[A: UIJDLattice, C: CContext, Wrapper]
     extends CRDTInterface[MVRegisterInterface.State[A, C], Wrapper] {
   def read: Set[A] = query(MVRegisterInterface.read)

@@ -15,6 +15,7 @@ object GSetInterface {
   def insert[E](element: E): DeltaMutator[State[E]] = (_, _) => Set(element)
 }
 
+/** A GSet is a Delta CRDT modeling a simple grow-only set. */
 abstract class GSetInterface[E, Wrapper] extends CRDTInterface[GSetInterface.State[E], Wrapper] {
   def elements: Set[E] = query(GSetInterface.elements)
 

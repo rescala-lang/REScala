@@ -18,6 +18,7 @@ object GCounterInterface {
   def inc(): DeltaMutator[State] = (replicaID, state) => Map(replicaID -> (state.getOrElse(replicaID, 0) + 1))
 }
 
+/** A GCounter is a Delta CRDT modeling an increment-only counter. */
 abstract class GCounterInterface[Wrapper] extends CRDTInterface[GCounterInterface.State, Wrapper] {
   def value: Int = query(GCounterInterface.value)
 

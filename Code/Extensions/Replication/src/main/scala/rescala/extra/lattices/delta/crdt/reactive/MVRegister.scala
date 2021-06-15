@@ -5,6 +5,11 @@ import rescala.extra.lattices.delta.interfaces.MVRegisterInterface.{MVRegisterCo
 import rescala.extra.lattices.delta.interfaces.MVRegisterInterface
 import rescala.extra.lattices.delta.{CContext, Delta, UIJDLattice}
 
+/** Reactive implementation of [[MVRegisterInterface]]
+  *
+  * @tparam A Type of the stored value
+  * @tparam C Type of the causal context used for this causal CRDT
+  */
 class MVRegister[A: UIJDLattice, C: CContext](
     val state: State[A, C],
     val replicaID: String,
@@ -16,6 +21,13 @@ class MVRegister[A: UIJDLattice, C: CContext](
 }
 
 object MVRegister extends MVRegisterCompanion {
+
+  /** Creates a new MVRegister instance
+    *
+    * @param replicaID Unique id of the replica that this instance is located on
+    * @tparam A Type of the stored value
+    * @tparam C Type of the causal context used for this causal CRDT
+    */
   def apply[A: UIJDLattice, C: CContext](replicaID: String): MVRegister[A, C] =
     new MVRegister(UIJDLattice[State[A, C]].bottom, replicaID, List())
 }

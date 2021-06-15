@@ -45,6 +45,10 @@ object EWFlagInterface {
   }
 }
 
+/** An EWFlag (Enable-Wins Flag) is a Delta CRDT modeling a boolean flag.
+  *
+  * When the flag is concurrently disabled and enabled then the enable operation wins, i.e. the resulting flag is enabled.
+  */
 abstract class EWFlagInterface[C: CContext, Wrapper] extends CRDTInterface[EWFlagInterface.State[C], Wrapper] {
   def read: Boolean = query(EWFlagInterface.read)
 

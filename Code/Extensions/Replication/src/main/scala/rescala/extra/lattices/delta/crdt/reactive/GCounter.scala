@@ -4,6 +4,7 @@ import rescala.extra.lattices.delta.{Delta, UIJDLattice}
 import rescala.extra.lattices.delta.interfaces.GCounterInterface.{GCounterCompanion, State}
 import rescala.extra.lattices.delta.interfaces.GCounterInterface
 
+/** Reactive implementation of [[GCounterInterface]] */
 class GCounter(
     val state: State,
     val replicaID: String,
@@ -15,5 +16,9 @@ class GCounter(
 }
 
 object GCounter extends GCounterCompanion {
+
+  /** Creates a new GCounter instance
+    * @param replicaID Unique id of the replica that this instance is located on
+    */
   def apply(replicaID: String): GCounter = new GCounter(UIJDLattice[State].bottom, replicaID, List())
 }

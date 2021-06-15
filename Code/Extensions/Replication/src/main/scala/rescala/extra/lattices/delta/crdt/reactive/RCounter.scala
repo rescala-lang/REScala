@@ -4,6 +4,10 @@ import rescala.extra.lattices.delta.{CContext, Delta, UIJDLattice}
 import rescala.extra.lattices.delta.interfaces.RCounterInterface
 import rescala.extra.lattices.delta.interfaces.RCounterInterface.{RCounterCompanion, State}
 
+/** Reactive implementation of [[RCounterInterface]]
+  *
+  * @tparam C Type of the causal context used for this causal CRDT
+  */
 class RCounter[C: CContext](
     val state: State[C],
     val replicaID: String,
@@ -15,6 +19,12 @@ class RCounter[C: CContext](
 }
 
 object RCounter extends RCounterCompanion {
+
+  /** Creates a new RCounter instance
+    *
+    * @param replicaID Unique id of the replica that this instance is located on
+    * @tparam C Type of the causal context used for this causal CRDT
+    */
   def apply[C: CContext](replicaID: String): RCounter[C] =
     new RCounter(UIJDLattice[State[C]].bottom, replicaID, List())
 }

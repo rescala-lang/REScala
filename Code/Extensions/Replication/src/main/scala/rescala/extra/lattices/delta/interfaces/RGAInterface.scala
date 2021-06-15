@@ -197,6 +197,25 @@ object RGAInterface {
   }
 }
 
+/** An RGA (Replicated Growable Array) is a Delta CRDT modeling a list.
+  *
+  * When two values are concurrently inserted at an index i, the value of the insert operation with the later timestamp
+  * will be at index i while the earlier inserted value will be pushed to index i+1. When an element is subject to two
+  * concurrent updates, the later update overwrites the earlier update. If an element is concurrently updated and deleted,
+  * the element will simply be deleted, ignoring the update.
+  *
+  * Note that RGAs are implemented as linked lists, thus the time needed to execute operations toward the end of the list
+  * will scale linearly with the size of the list.
+  *
+  * To correctly handle concurrent remote inserts next to elements that were deleted locally, the RGA implementation internally
+  * keeps deleted elements as hidden tombstones in the list. Since many tombstones will slow down the operations on this
+  * data structure, purgeTombstones should be executed periodically to remove tombstones from the list. Note however that
+  * this invalidates any concurrent insert operations. Ideally, purgeTombstones should only be called in downtime periods
+  * and only by privileged replicas.
+  *
+  * This implementation was modeled after the RGA proposed by Roh et al. in "Replicated abstract data types: Building blocks
+  * for collaborative applications", see [[https://www.sciencedirect.com/science/article/pii/S0743731510002716?casa_token=lQaLin7aEvcAAAAA:Esc3h3WvkFHUcvhalTPPvV5HbJge91D4-2jyKiSlz8GBDjx31l4xvfH8DIstmQ973PVi46ckXHg here]]
+  */
 abstract class RGAInterface[E, C: CContext, Wrapper] extends CRDTInterface[RGAInterface.State[E, C], Wrapper] {
   def read(i: Int): Option[E] = query(RGAInterface.read(i))
 

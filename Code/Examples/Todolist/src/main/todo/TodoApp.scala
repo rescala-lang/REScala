@@ -12,7 +12,7 @@ import rescala.extra.Tags._
 import rescala.extra.distributables.LociDist
 import rescala.extra.lattices.delta.CContext._
 import rescala.extra.lattices.delta.Delta
-import rescala.extra.lattices.delta.crdt.reactive.{LWW, RGA}
+import rescala.extra.lattices.delta.crdt.reactive.{LWWRegister, RGA}
 import rescala.extra.lattices.delta.crdt.reactive.RGA._
 import rescala.extra.lattices.delta.Codecs._
 import scalatags.JsDom
@@ -53,14 +53,14 @@ class TodoApp() {
 
     case class State(
         list: RGA[String, DietMapCContext],
-        signalMap: Map[String, Signal[LWW[TodoTask, DietMapCContext]]],
+        signalMap: Map[String, Signal[LWWRegister[TodoTask, DietMapCContext]]],
         uiMap: Map[String, TypedTag[LI]],
         evtMap: Map[String, Event[String]]
     )
 
     val listInitial = RGA[String, DietMapCContext](myID)
 
-    val signalMapInitial = Map[String, Signal[LWW[TodoTask, DietMapCContext]]]()
+    val signalMapInitial = Map[String, Signal[LWWRegister[TodoTask, DietMapCContext]]]()
 
     val uiMapInitial = Map[String, TypedTag[LI]]()
 

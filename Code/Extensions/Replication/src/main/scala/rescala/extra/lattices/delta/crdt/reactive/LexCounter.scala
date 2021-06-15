@@ -4,6 +4,7 @@ import rescala.extra.lattices.delta.{Delta, UIJDLattice}
 import rescala.extra.lattices.delta.interfaces.LexCounterInterface.{LexCounterCompanion, State}
 import rescala.extra.lattices.delta.interfaces.LexCounterInterface
 
+/** Reactive implementation of [[LexCounterInterface]] */
 class LexCounter(
     val state: State,
     val replicaID: String,
@@ -15,5 +16,9 @@ class LexCounter(
 }
 
 object LexCounter extends LexCounterCompanion {
+
+  /** Creates a new LexCounter instance
+    * @param replicaID Unique id of the replica that this instance is located on
+    */
   def apply(replicaID: String): LexCounter = new LexCounter(UIJDLattice[State].bottom, replicaID, List())
 }

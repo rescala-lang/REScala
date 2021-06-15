@@ -66,6 +66,10 @@ object AWSetInterface {
   }
 }
 
+/** An AWSet (Add-Wins Set) is a Delta CRDT modeling a set.
+  *
+  * When an element is concurrently added and removed/cleared from the set then the add operation wins, i.e. the resulting set contains the element.
+  */
 abstract class AWSetInterface[E, C: CContext, Wrapper] extends CRDTInterface[AWSetInterface.State[E, C], Wrapper] {
   def elements: Set[E] = query(AWSetInterface.elements)
 

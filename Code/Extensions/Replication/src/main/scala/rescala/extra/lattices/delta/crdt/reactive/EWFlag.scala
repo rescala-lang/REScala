@@ -5,6 +5,9 @@ import rescala.extra.lattices.delta.interfaces.EWFlagInterface.{EWFlagCompanion,
 import rescala.extra.lattices.delta.interfaces.EWFlagInterface
 import rescala.extra.lattices.delta.{CContext, Delta, UIJDLattice}
 
+/** Reactive implementation of [[EWFlagInterface]]
+  * @tparam C Type of the causal context used for this Causal CRDT
+  */
 class EWFlag[C: CContext](
     val state: State[C],
     val replicaID: String,
@@ -16,6 +19,12 @@ class EWFlag[C: CContext](
 }
 
 object EWFlag extends EWFlagCompanion {
+
+  /** Creates a new EWFlag instance
+    *
+    * @param replicaID Unique id of the replica that this instance is located on
+    * @tparam C Type of the causal context used for this Causal CRDT
+    */
   def apply[C: CContext](replicaID: String): EWFlag[C] =
     new EWFlag(UIJDLattice[State[C]].bottom, replicaID, List())
 }

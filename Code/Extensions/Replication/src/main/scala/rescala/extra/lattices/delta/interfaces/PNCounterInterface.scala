@@ -30,6 +30,10 @@ object PNCounterInterface {
   }
 }
 
+/** A PNCounter (Positive-Negative Counter) is a Delta CRDT modeling a counter.
+  *
+  * It is composed of two grow-only counters (see [[GCounterInterface]]) to enable both increments and decrements of the counter value.
+  */
 abstract class PNCounterInterface[Wrapper] extends CRDTInterface[PNCounterInterface.State, Wrapper] {
   def value: Int = query(PNCounterInterface.value)
 

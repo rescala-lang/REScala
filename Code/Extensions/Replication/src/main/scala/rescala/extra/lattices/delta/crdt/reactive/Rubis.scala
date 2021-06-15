@@ -4,6 +4,10 @@ import rescala.extra.lattices.delta.{CContext, Delta, UIJDLattice}
 import rescala.extra.lattices.delta.interfaces.RubisInterface
 import rescala.extra.lattices.delta.interfaces.RubisInterface.{RubisCompanion, State}
 
+/** Reactive implementation of [[RubisInterface]]
+  *
+  * @tparam C Type of the causal context used for this causal CRDT
+  */
 class Rubis[C: CContext](
     val state: State[C],
     val replicaID: String,
@@ -15,6 +19,12 @@ class Rubis[C: CContext](
 }
 
 object Rubis extends RubisCompanion {
+
+  /** Creates a new Rubis instance
+    *
+    * @param replicaID Unique id of the replica that this instance is located on
+    * @tparam C Type of the causal context used for this causal CRDT
+    */
   def apply[C: CContext](replicaID: String): Rubis[C] =
     new Rubis(UIJDLattice[State[C]].bottom, replicaID, List())
 }

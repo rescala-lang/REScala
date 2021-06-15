@@ -92,6 +92,12 @@ object ORMapInterface {
   }
 }
 
+/** An ORMap (Observed-Remove Map) is a Delta CRDT that models a map from an arbitrary key type to nested Delta CRDTs.
+  *
+  * The nested CRDTs can be queried/mutated by calling the queryKey/mutateKey methods with a DeltaQuery/DeltaMutator generated
+  * by a CRDT Interface method of the nested CRDT. For example, to enable a nested EWFlag, one would pass `EWFlagInterface.enable()`
+  * as the DeltaMutator to mutateKey.
+  */
 abstract class ORMapInterface[K, V: DotStore, C: CContext, Wrapper]
     extends CRDTInterface[ORMapInterface.State[K, V, C], Wrapper] {
 

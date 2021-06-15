@@ -4,11 +4,11 @@ import rescala.extra.lattices.delta.CRDTInterface.{DeltaMutator, DeltaQuery}
 import rescala.extra.lattices.delta.DotStore.DotFun
 import rescala.extra.lattices.delta._
 
-object LWWInterface {
+object LWWRegisterInterface {
   type State[A, C] = MVRegisterInterface.State[TimedVal[A], C]
 
   trait LWWCompanion {
-    type State[A, C] = LWWInterface.State[A, C]
+    type State[A, C] = LWWRegisterInterface.State[A, C]
     type Embedded[A] = DotFun[TimedVal[A]]
   }
 
@@ -27,12 +27,17 @@ object LWWInterface {
   def clear[A, C: CContext](): DeltaMutator[State[A, C]] = MVRegisterInterface.clear()
 }
 
-abstract class LWWInterface[A, C: CContext, Wrapper] extends CRDTInterface[LWWInterface.State[A, C], Wrapper] {
-  def read: Option[A] = query(LWWInterface.read)
+/** An LWW (Last Writer Wins) is a Delta CRDT modeling a register.
+  *
+  * If two concurrent write operations occur, the resulting LWW takes on the value of the write operation with the later timestamp.
+  */
+abstract class LWWRegisterInterface[A, C: CContext, Wrapper]
+    extends CRDTInterface[LWWRegisterInterface.State[A, C], Wrapper] {
+  def read: Option[A] = query(LWWRegisterInterface.read)
 
-  def write(v: A): Wrapper = mutate(LWWInterface.write(v))
+  def write(v: A): Wrapper = mutate(LWWRegisterInterface.write(v))
 
-  def map(f: A => A): Wrapper = mutate(LWWInterface.map(f))
+  def map(f: A => A): Wrapper = mutate(LWWRegisterInterface.map(f))
 
-  def clear(): Wrapper = mutate(LWWInterface.clear())
+  def clear(): Wrapper = mutate(LWWRegisterInterface.clear())
 }

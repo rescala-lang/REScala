@@ -5,6 +5,12 @@ import rescala.extra.lattices.delta.interfaces.ORMapInterface.{ORMapCompanion, S
 import rescala.extra.lattices.delta.interfaces.ORMapInterface
 import rescala.extra.lattices.delta.{CContext, Delta, DotStore, UIJDLattice}
 
+/** Reactive implementation of [[ORMapInterface]]
+  *
+  * @tparam K Type of the keys of this map
+  * @tparam V Type of the dot store used as values in this map
+  * @tparam C Type of the causal context used for this causal CRDT
+  */
 class ORMap[K, V: DotStore, C: CContext](
     val state: State[K, V, C],
     val replicaID: String,
@@ -16,6 +22,14 @@ class ORMap[K, V: DotStore, C: CContext](
 }
 
 object ORMap extends ORMapCompanion {
+
+  /** Creates a new ORMap instance
+    *
+    * @param replicaID Unique id of the replica that this instance is located on
+    * @tparam K Type of the keys of this map
+    * @tparam V Type of the dot store used as values in this map. Usually, this will be the Embedded type defined by a causal CRDT.
+    * @tparam C Type of the causal context used for this causal CRDT
+    */
   def apply[K, V: DotStore, C: CContext](replicaID: String): ORMap[K, V, C] =
     new ORMap(UIJDLattice[State[K, V, C]].bottom, replicaID, List())
 }

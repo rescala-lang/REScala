@@ -24,6 +24,11 @@ object TwoPSetInterface {
   def remove[E](element: E): DeltaMutator[State[E]] = (_, _) => deltaState(remove = Set(element))
 }
 
+/** A TwoPSet (Two-Phase Set) is a Delta CRDT modeling a set.
+  *
+  * The set is modeled as two grow-only sets, a set of added elements and a set of removed elements. Because of this,
+  * elements that were removed from the set once can never be re-added.
+  */
 abstract class TwoPSetInterface[E, Wrapper] extends CRDTInterface[TwoPSetInterface.State[E], Wrapper] {
   def elements: Set[E] = query(TwoPSetInterface.elements)
 

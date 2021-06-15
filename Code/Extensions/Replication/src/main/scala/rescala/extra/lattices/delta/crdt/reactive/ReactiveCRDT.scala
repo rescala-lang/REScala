@@ -2,6 +2,13 @@ package rescala.extra.lattices.delta.crdt.reactive
 
 import rescala.extra.lattices.delta.{CRDTInterface, Delta, UIJDLattice}
 
+/** ReactiveCRDTs are Delta CRDTs that store applied deltas in their deltaBuffer attribute. Middleware should regularly
+  * take these deltas and ship them to other replicas, using applyDelta to apply them on the remote state. After deltas
+  * have been read and propagated by the middleware, it should call resetDeltaBuffer to empty the deltaBuffer.
+  *
+  * @tparam State Type of the CRDT state
+  * @tparam Wrapper Type of the class wrapping the CRDT state
+  */
 trait ReactiveCRDT[State, Wrapper] extends CRDTInterface[State, Wrapper] {
   val deltaBuffer: List[Delta[State]]
 

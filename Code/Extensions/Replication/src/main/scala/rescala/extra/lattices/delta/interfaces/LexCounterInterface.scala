@@ -25,6 +25,10 @@ object LexCounterInterface {
     }
 }
 
+/** A LexCounter is a Delta CRDT modeling a counter.
+  *
+  * It uses lexicographic pairs to allow counter decrements as well as increments.
+  */
 abstract class LexCounterInterface[Wrapper] extends CRDTInterface[LexCounterInterface.State, Wrapper] {
   def value: Int = query(LexCounterInterface.value)
 

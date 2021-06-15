@@ -83,6 +83,16 @@ object RubisInterface {
   }
 }
 
+/** A Rubis (Rice University Bidding System) is a Delta CRDT modeling an auction system.
+  *
+  * Bids can only be placed on auctions that were previously opened and with a previously registered userId. When an auction
+  * is closed, concurrently placed bids are still accepted and may thus change the winner of the auction. To prevent two
+  * replicas from concurrently registering the same userId, requests for registering a new userId must be resolved by a
+  * central replica using resolveRegisterUser.
+  *
+  * This auction system was in part modeled after the Rice University Bidding System (RUBiS) proposed by Cecchet et al. in
+  * "Performance and Scalability of EJB Applications", see [[https://www.researchgate.net/publication/2534515_Performance_and_Scalability_of_EJB_Applications here]]
+  */
 abstract class RubisInterface[C: CContext, Wrapper] extends CRDTInterface[RubisInterface.State[C], Wrapper] {
   def placeBid(auctionId: AID, userId: User, price: Int): Wrapper =
     mutate(RubisInterface.placeBid(auctionId, userId, price))

@@ -98,6 +98,14 @@ object RCounterInterface {
   }
 }
 
+/** An RCounter (Resettable Counter/Add Wins Counter) is a Delta CRDT modeling a counter.
+  *
+  * Calling fresh after every time that deltas are shipped to other replicas prevents subsequent increment/decrement
+  * operations to be overwritten by concurrent reset operations.
+  *
+  * This counter was originally proposed by Baquera et al.
+  * in "The problem with embedded CRDT counters and a solution", see [[https://dl.acm.org/doi/abs/10.1145/2911151.2911159?casa_token=D7n88K9dW7gAAAAA:m3WhHMFZxoCwGFk8DVoqJXBJpwJwrqKMLqtgKo_TSiwU_ErWgOZjo4UqYqDCb-bG3iJlXc_Ti7aB9w here]]
+  */
 abstract class RCounterInterface[C: CContext, Wrapper] extends CRDTInterface[RCounterInterface.State[C], Wrapper] {
   def value: Int = query(RCounterInterface.value)
 
