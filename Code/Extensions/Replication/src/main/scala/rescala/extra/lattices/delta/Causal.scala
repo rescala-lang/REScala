@@ -1,5 +1,10 @@
 package rescala.extra.lattices.delta
 
+/** State type of causal CRDTs, which consist of a dot store and a causal context.
+  *
+  * @tparam D Type of the dot store
+  * @tparam C Type of the causal context
+  */
 case class Causal[D, C](dotStore: D, cc: C)
 
 case object Causal {

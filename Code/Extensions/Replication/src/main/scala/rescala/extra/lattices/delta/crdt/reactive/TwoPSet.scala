@@ -4,7 +4,7 @@ import rescala.extra.lattices.delta.{Delta, UIJDLattice}
 import rescala.extra.lattices.delta.interfaces.TwoPSetInterface
 import rescala.extra.lattices.delta.interfaces.TwoPSetInterface.{State, TwoPSetCompanion}
 
-/** Reactive implementation of [[TwoPSetInterface]]
+/** [[ReactiveCRDT Reactive]] implementation of [[TwoPSetInterface]]
   *
   * @tparam E Type of the elements stored in the set
   */

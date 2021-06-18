@@ -4,7 +4,7 @@ import rescala.extra.lattices.delta.{Delta, UIJDLattice}
 import rescala.extra.lattices.delta.interfaces.GSetInterface.{GSetCompanion, State}
 import rescala.extra.lattices.delta.interfaces.GSetInterface
 
-/** Reactive implementation of [[GSetInterface]]
+/** [[ReactiveCRDT Reactive]] implementation of [[GSetInterface]]
   * @tparam E Type of the elements stored in the set
   */
 class GSet[E](

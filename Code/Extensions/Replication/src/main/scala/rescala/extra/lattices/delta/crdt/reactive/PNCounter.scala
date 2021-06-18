@@ -4,7 +4,7 @@ import rescala.extra.lattices.delta.{Delta, UIJDLattice}
 import rescala.extra.lattices.delta.interfaces.PNCounterInterface
 import rescala.extra.lattices.delta.interfaces.PNCounterInterface.{PNCounterCompanion, State}
 
-/** Reactive implementation of [[PNCounterInterface]] */
+/** [[ReactiveCRDT Reactive]] implementation of [[PNCounterInterface]] */
 class PNCounter(
     val state: State,
     val replicaID: String,

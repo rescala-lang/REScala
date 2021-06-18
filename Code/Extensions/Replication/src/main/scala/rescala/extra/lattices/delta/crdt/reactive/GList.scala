@@ -4,7 +4,7 @@ import rescala.extra.lattices.delta.interfaces.GListInterface
 import rescala.extra.lattices.delta.interfaces.GListInterface.{GListCompanion, State}
 import rescala.extra.lattices.delta.{Delta, UIJDLattice}
 
-/** Reactive implementation of [[GListInterface]]
+/** [[ReactiveCRDT Reactive]] implementation of [[GListInterface]]
   * @tparam E Type of the elements in the list
   */
 class GList[E](
@@ -20,6 +20,8 @@ class GList[E](
 object GList extends GListCompanion {
 
   /** Creates a new GList instance
+    *
+    * @param replicaID Unique id of the replica that this instance is located on
     * @tparam E Type of the elements in the list
     */
   def apply[E](replicaID: String): GList[E] = new GList(UIJDLattice[State[E]].bottom, replicaID, List())

@@ -4,7 +4,7 @@ import rescala.extra.lattices.delta.{Delta, UIJDLattice}
 import rescala.extra.lattices.delta.interfaces.LexCounterInterface.{LexCounterCompanion, State}
 import rescala.extra.lattices.delta.interfaces.LexCounterInterface
 
-/** Reactive implementation of [[LexCounterInterface]] */
+/** [[ReactiveCRDT Reactive]] implementation of [[LexCounterInterface]] */
 class LexCounter(
     val state: State,
     val replicaID: String,

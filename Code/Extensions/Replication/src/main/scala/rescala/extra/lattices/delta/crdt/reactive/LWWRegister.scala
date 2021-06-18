@@ -3,9 +3,9 @@ package rescala.extra.lattices.delta.crdt.reactive
 import rescala.extra.lattices.delta.DotStore.DotFun
 import rescala.extra.lattices.delta.{CContext, Delta, UIJDLattice}
 import rescala.extra.lattices.delta.interfaces.LWWRegisterInterface
-import rescala.extra.lattices.delta.interfaces.LWWRegisterInterface.{LWWCompanion, State}
+import rescala.extra.lattices.delta.interfaces.LWWRegisterInterface.{LWWRegisterCompanion, State}
 
-/** Reactive implementation of [[LWWRegisterInterface]]
+/** [[ReactiveCRDT Reactive]] implementation of [[LWWRegisterInterface]]
   *
   * @tparam A Type of the stored value
   * @tparam C Type of the causal context used for this causal CRDT
@@ -20,7 +20,7 @@ class LWWRegister[A, C: CContext](
     new LWWRegister(state, replicaID, deltaBuffer)
 }
 
-object LWWRegister extends LWWCompanion {
+object LWWRegister extends LWWRegisterCompanion {
 
   /** Creates a new LWWRegister instance
     *

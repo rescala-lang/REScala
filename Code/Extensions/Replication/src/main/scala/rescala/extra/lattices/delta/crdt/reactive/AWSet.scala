@@ -5,7 +5,7 @@ import rescala.extra.lattices.delta.interfaces.AWSetInterface.{AWSetCompanion, S
 import rescala.extra.lattices.delta.interfaces.AWSetInterface
 import rescala.extra.lattices.delta.{CContext, Delta, UIJDLattice}
 
-/** Reactive implementation of [[AWSetInterface]]
+/** [[ReactiveCRDT Reactive]] implementation of [[AWSetInterface]]
   *
   * @tparam E Type of the elements stored in the set
   * @tparam C Type of the causal context used for this causal CRDT

@@ -2,6 +2,9 @@ package rescala.extra.lattices.delta
 
 import rescala.extra.lattices.Lattice
 
+/** DotStore is the typeclass trait for dot stores, data structures that are part of causal CRDTs and make use of dots to
+  * track causality.
+  */
 trait DotStore[A] {
   def dots(state: A): Set[Dot]
 
@@ -17,6 +20,9 @@ trait DotStore[A] {
 object DotStore {
   def apply[A](implicit ds: DotStore[A]): DotStore[A] = ds
 
+  /** DotSet is a dot store implementation that is simply a set of dots. See [[interfaces.EWFlagInterface]] for a
+    * usage example.
+    */
   type DotSet = Set[Dot]
   implicit def DotSet: DotStore[Set[Dot]] = new DotStore[Set[Dot]] {
     override def dots(ds: Set[Dot]): Set[Dot] = ds
@@ -48,6 +54,9 @@ object DotStore {
     }
   }
 
+  /** DotFun is a dot store implementation that maps dots to values of a Lattice type. See [[interfaces.MVRegisterInterface]]
+    * for a usage example.
+    */
   type DotFun[A] = Map[Dot, A]
   implicit def DotFun[A: UIJDLattice]: DotStore[Map[Dot, A]] = new DotStore[Map[Dot, A]] {
     override def dots(ds: Map[Dot, A]): Set[Dot] = ds.keySet
@@ -95,6 +104,9 @@ object DotStore {
     }
   }
 
+  /** DotMap is a dot store implementation that maps keys of an arbitrary type K to values of a dot store type V. See
+    * [[interfaces.ORMapInterface]] for a usage exmample.
+    */
   type DotMap[K, V] = Map[K, V]
   implicit def DotMap[K, V: DotStore]: DotStore[DotMap[K, V]] = new DotStore[DotMap[K, V]] {
     override def dots(ds: DotMap[K, V]): Set[Dot] = ds.values.flatMap(DotStore[V].dots(_)).toSet
@@ -153,6 +165,9 @@ object DotStore {
     }
   }
 
+  /** DotPair is a dot store implementation that allows the composition of two dot stores in a pair. See [[interfaces.RGAInterface]]
+    * for a usage example
+    */
   type DotPair[A, B] = (A, B)
   implicit def DotPair[A: DotStore, B: DotStore]: DotStore[DotPair[A, B]] = new DotStore[(A, B)] {
     override def dots(ds: (A, B)): Set[Dot] = ds match {
@@ -193,6 +208,11 @@ object DotStore {
     override def empty: (A, B) = (DotStore[A].empty, DotStore[B].empty)
   }
 
+  /** DotLess is a dot store implementation that, in combination with [[DotPair]], allows to compose non-causal CRDTs
+    * with causal CRDTs. For a usage example, see [[interfaces.RGAInterface]], where the implicit presence of DotLess is
+    * necessary so that the non-causal [[interfaces.ForcedWriteInterface]] can be part of the [[DotPair]] that makes up
+    * the state.
+    */
   type DotLess[A] = A
   implicit def DotLess[A: UIJDLattice]: DotStore[A] = new DotStore[A] {
     override def dots(ds: A): Set[Dot] = Set.empty[Dot]

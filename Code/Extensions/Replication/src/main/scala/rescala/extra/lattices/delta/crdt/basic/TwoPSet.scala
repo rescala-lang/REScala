@@ -4,6 +4,10 @@ import rescala.extra.lattices.delta.UIJDLattice
 import rescala.extra.lattices.delta.interfaces.TwoPSetInterface
 import rescala.extra.lattices.delta.interfaces.TwoPSetInterface.{State, TwoPSetCompanion}
 
+/** [[BasicCRDT Basic]] implementation of [[TwoPSetInterface]]
+  *
+  * @tparam E Type of the elements stored in the set
+  */
 class TwoPSet[E](
     val state: State[E],
     protected val antiEntropy: AntiEntropy[State[E]]
@@ -13,5 +17,11 @@ class TwoPSet[E](
 }
 
 object TwoPSet extends TwoPSetCompanion {
+
+  /** Creates a new TwoPSet instance
+    *
+    * @param antiEntropy AntiEntropy instance used for exchanging deltas with other replicas
+    * @tparam E Type of the elements stored in the set
+    */
   def apply[E](antiEntropy: AntiEntropy[State[E]]): TwoPSet[E] = new TwoPSet(UIJDLattice[State[E]].bottom, antiEntropy)
 }

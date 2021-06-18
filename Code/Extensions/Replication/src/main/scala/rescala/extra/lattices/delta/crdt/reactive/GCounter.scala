@@ -4,7 +4,7 @@ import rescala.extra.lattices.delta.{Delta, UIJDLattice}
 import rescala.extra.lattices.delta.interfaces.GCounterInterface.{GCounterCompanion, State}
 import rescala.extra.lattices.delta.interfaces.GCounterInterface
 
-/** Reactive implementation of [[GCounterInterface]] */
+/** [[ReactiveCRDT Reactive]] implementation of [[GCounterInterface]] */
 class GCounter(
     val state: State,
     val replicaID: String,

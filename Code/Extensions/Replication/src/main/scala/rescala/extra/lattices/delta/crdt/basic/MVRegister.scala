@@ -5,6 +5,11 @@ import rescala.extra.lattices.delta.interfaces.MVRegisterInterface.{MVRegisterCo
 import rescala.extra.lattices.delta.interfaces.MVRegisterInterface
 import rescala.extra.lattices.delta.{CContext, UIJDLattice}
 
+/** [[BasicCRDT Basic]] implementation of [[MVRegisterInterface]]
+  *
+  * @tparam A Type of the stored value
+  * @tparam C Type of the causal context used for this causal CRDT
+  */
 class MVRegister[A: UIJDLattice, C: CContext](
     val state: State[A, C],
     protected val antiEntropy: AntiEntropy[State[A, C]]
@@ -14,6 +19,13 @@ class MVRegister[A: UIJDLattice, C: CContext](
 }
 
 object MVRegister extends MVRegisterCompanion {
+
+  /** Creates a new MVRegister instance
+    *
+    * @param antiEntropy AntiEntropy instance used for exchanging deltas with other replicas
+    * @tparam A Type of the stored value
+    * @tparam C Type of the causal context used for this causal CRDT
+    */
   def apply[A: UIJDLattice, C: CContext](antiEntropy: AntiEntropy[State[A, C]]): MVRegister[A, C] =
     new MVRegister(UIJDLattice[State[A, C]].bottom, antiEntropy)
 }

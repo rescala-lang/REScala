@@ -5,7 +5,7 @@ import rescala.extra.lattices.delta.interfaces.ORMapInterface.{ORMapCompanion, S
 import rescala.extra.lattices.delta.interfaces.ORMapInterface
 import rescala.extra.lattices.delta.{CContext, Delta, DotStore, UIJDLattice}
 
-/** Reactive implementation of [[ORMapInterface]]
+/** [[ReactiveCRDT Reactive]] implementation of [[ORMapInterface]]
   *
   * @tparam K Type of the keys of this map
   * @tparam V Type of the dot store used as values in this map

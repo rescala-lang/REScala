@@ -4,7 +4,7 @@ import rescala.extra.lattices.delta.{CContext, Delta, UIJDLattice}
 import rescala.extra.lattices.delta.interfaces.RCounterInterface
 import rescala.extra.lattices.delta.interfaces.RCounterInterface.{RCounterCompanion, State}
 
-/** Reactive implementation of [[RCounterInterface]]
+/** [[ReactiveCRDT Reactive]] implementation of [[RCounterInterface]]
   *
   * @tparam C Type of the causal context used for this causal CRDT
   */

@@ -5,7 +5,7 @@ import rescala.extra.lattices.delta.interfaces.EWFlagInterface.{EWFlagCompanion,
 import rescala.extra.lattices.delta.interfaces.EWFlagInterface
 import rescala.extra.lattices.delta.{CContext, Delta, UIJDLattice}
 
-/** Reactive implementation of [[EWFlagInterface]]
+/** [[ReactiveCRDT Reactive]] implementation of [[EWFlagInterface]]
   * @tparam C Type of the causal context used for this Causal CRDT
   */
 class EWFlag[C: CContext](

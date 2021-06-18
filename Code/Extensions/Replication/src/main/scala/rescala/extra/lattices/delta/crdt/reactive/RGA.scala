@@ -4,7 +4,7 @@ import rescala.extra.lattices.delta.interfaces.RGAInterface
 import rescala.extra.lattices.delta.interfaces.RGAInterface.{RGACompanion, State}
 import rescala.extra.lattices.delta.{CContext, Delta, UIJDLattice}
 
-/** Reactive implementation of [[RGAInterface]]
+/** [[ReactiveCRDT Reactive]] implementation of [[RGAInterface]]
   *
   * @tparam E Type of the elements stored in the list
   * @tparam C Type of the causal context used for this causal CRDT

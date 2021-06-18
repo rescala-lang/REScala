@@ -4,7 +4,7 @@ import rescala.extra.lattices.delta.{CContext, Delta, UIJDLattice}
 import rescala.extra.lattices.delta.interfaces.RubisInterface
 import rescala.extra.lattices.delta.interfaces.RubisInterface.{RubisCompanion, State}
 
-/** Reactive implementation of [[RubisInterface]]
+/** [[ReactiveCRDT Reactive]] implementation of [[RubisInterface]]
   *
   * @tparam C Type of the causal context used for this causal CRDT
   */

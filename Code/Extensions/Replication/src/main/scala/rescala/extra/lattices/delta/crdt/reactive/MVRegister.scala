@@ -5,7 +5,7 @@ import rescala.extra.lattices.delta.interfaces.MVRegisterInterface.{MVRegisterCo
 import rescala.extra.lattices.delta.interfaces.MVRegisterInterface
 import rescala.extra.lattices.delta.{CContext, Delta, UIJDLattice}
 
-/** Reactive implementation of [[MVRegisterInterface]]
+/** [[ReactiveCRDT Reactive]] implementation of [[MVRegisterInterface]]
   *
   * @tparam A Type of the stored value
   * @tparam C Type of the causal context used for this causal CRDT

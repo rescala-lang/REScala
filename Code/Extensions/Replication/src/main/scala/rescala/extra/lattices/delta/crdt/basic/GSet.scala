@@ -4,6 +4,9 @@ import rescala.extra.lattices.delta.UIJDLattice
 import rescala.extra.lattices.delta.interfaces.GSetInterface.{GSetCompanion, State}
 import rescala.extra.lattices.delta.interfaces.GSetInterface
 
+/** [[BasicCRDT Basic]] implementation of [[GSetInterface]]
+  * @tparam E Type of the elements stored in the set
+  */
 class GSet[E](
     val state: State[E],
     protected val antiEntropy: AntiEntropy[State[E]]
@@ -13,5 +16,10 @@ class GSet[E](
 }
 
 object GSet extends GSetCompanion {
+
+  /** Creates a new GSet instance
+    * @param antiEntropy AntiEntropy instance used for exchanging deltas with other replicas
+    * @tparam E Type of the elements stored in the set
+    */
   def apply[E](antiEntropy: AntiEntropy[State[E]]): GSet[E] = new GSet(UIJDLattice[State[E]].bottom, antiEntropy)
 }

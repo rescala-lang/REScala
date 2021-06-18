@@ -1,5 +1,8 @@
 package rescala.extra.lattices.delta
 
+/** A LexPair is a lexicographic pair of two values that is used with a lexicographical ordering in the state of
+  * [[interfaces.LexCounterInterface]].
+  */
 case class LexPair[A, B](fst: A, snd: B)
 
 case object LexPair {

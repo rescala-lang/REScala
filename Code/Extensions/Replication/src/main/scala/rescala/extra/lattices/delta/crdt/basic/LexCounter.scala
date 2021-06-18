@@ -4,6 +4,7 @@ import rescala.extra.lattices.delta.UIJDLattice
 import rescala.extra.lattices.delta.interfaces.LexCounterInterface.{LexCounterCompanion, State}
 import rescala.extra.lattices.delta.interfaces.LexCounterInterface
 
+/** [[BasicCRDT Basic]] implementation of [[LexCounterInterface]] */
 class LexCounter(
     val state: State,
     protected val antiEntropy: AntiEntropy[State]
@@ -13,5 +14,9 @@ class LexCounter(
 }
 
 object LexCounter extends LexCounterCompanion {
+
+  /** Creates a new LexCounter instance
+    * @param antiEntropy AntiEntropy instance used for exchanging deltas with other replicas
+    */
   def apply(antiEntropy: AntiEntropy[State]): LexCounter = new LexCounter(UIJDLattice[State].bottom, antiEntropy)
 }

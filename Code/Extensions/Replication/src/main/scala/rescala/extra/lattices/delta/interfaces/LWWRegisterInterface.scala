@@ -7,7 +7,7 @@ import rescala.extra.lattices.delta._
 object LWWRegisterInterface {
   type State[A, C] = MVRegisterInterface.State[TimedVal[A], C]
 
-  trait LWWCompanion {
+  trait LWWRegisterCompanion {
     type State[A, C] = LWWRegisterInterface.State[A, C]
     type Embedded[A] = DotFun[TimedVal[A]]
   }

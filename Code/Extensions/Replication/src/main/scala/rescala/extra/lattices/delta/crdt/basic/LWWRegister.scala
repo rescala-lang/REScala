@@ -2,9 +2,14 @@ package rescala.extra.lattices.delta.crdt.basic
 
 import rescala.extra.lattices.delta.DotStore.DotFun
 import rescala.extra.lattices.delta.interfaces.LWWRegisterInterface
-import rescala.extra.lattices.delta.interfaces.LWWRegisterInterface.{LWWCompanion, State}
+import rescala.extra.lattices.delta.interfaces.LWWRegisterInterface.{LWWRegisterCompanion, State}
 import rescala.extra.lattices.delta.{CContext, UIJDLattice}
 
+/** [[BasicCRDT Basic]] implementation of [[LWWRegisterInterface]]
+  *
+  * @tparam A Type of the stored value
+  * @tparam C Type of the causal context used for this causal CRDT
+  */
 class LWWRegister[A, C: CContext](
     val state: State[A, C],
     protected val antiEntropy: AntiEntropy[State[A, C]]
@@ -13,7 +18,14 @@ class LWWRegister[A, C: CContext](
   override protected def copy(state: State[A, C]): LWWRegister[A, C] = new LWWRegister(state, antiEntropy)
 }
 
-object LWWRegister extends LWWCompanion {
+object LWWRegister extends LWWRegisterCompanion {
+
+  /** Creates a new LWWRegister instance
+    *
+    * @param antiEntropy AntiEntropy instance used for exchanging deltas with other replicas
+    * @tparam A Type of the stored value
+    * @tparam C Type of the causal context used for this causal CRDT
+    */
   def apply[A, C: CContext](antiEntropy: AntiEntropy[State[A, C]]): LWWRegister[A, C] =
     new LWWRegister(UIJDLattice[State[A, C]].bottom, antiEntropy)
 }
