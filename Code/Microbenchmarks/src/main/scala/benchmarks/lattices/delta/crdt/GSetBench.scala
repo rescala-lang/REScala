@@ -1,7 +1,7 @@
-package benchmarks.lattices.delta.crdt.basic
+package benchmarks.lattices.delta.crdt
 
 import org.openjdk.jmh.annotations._
-import rescala.extra.lattices.delta.crdt.reactive.TwoPSet
+import rescala.extra.lattices.delta.crdt.reactive.GSet
 
 import java.util.concurrent.TimeUnit
 
@@ -12,16 +12,15 @@ import java.util.concurrent.TimeUnit
 @Fork(3)
 @Threads(1)
 @State(Scope.Thread)
-class TwoPSetBench {
-
+class GSetBench {
   @Param(Array("0", "1", "10", "100", "1000"))
   var size: Int = _
 
-  var set: TwoPSet[Int] = _
+  var set: GSet[Int] = _
 
   @Setup
   def setup(): Unit = {
-    set = (0 until size).foldLeft(TwoPSet[Int]("a")) {
+    set = (0 until size).foldLeft(GSet[Int]("a")) {
       case (s, e) => s.insert(e)
     }
   }
@@ -30,8 +29,5 @@ class TwoPSetBench {
   def elements(): Set[Int] = set.elements
 
   @Benchmark
-  def insert(): TwoPSet[Int] = set.insert(-1)
-
-  @Benchmark
-  def remove(): TwoPSet[Int] = set.remove(0)
+  def insert(): GSet[Int] = set.insert(-1)
 }

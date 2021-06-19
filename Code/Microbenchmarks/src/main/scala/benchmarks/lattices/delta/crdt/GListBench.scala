@@ -1,4 +1,4 @@
-package benchmarks.lattices.delta.crdt.basic
+package benchmarks.lattices.delta.crdt
 
 import org.openjdk.jmh.annotations._
 import rescala.extra.lattices.delta.crdt.reactive.GList
