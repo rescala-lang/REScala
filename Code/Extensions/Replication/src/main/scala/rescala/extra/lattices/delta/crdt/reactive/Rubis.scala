@@ -4,7 +4,7 @@ import rescala.extra.lattices.delta.{CContext, Delta, UIJDLattice}
 import rescala.extra.lattices.delta.interfaces.RubisInterface
 import rescala.extra.lattices.delta.interfaces.RubisInterface.{RubisCompanion, State}
 
-/** [[ReactiveCRDT Reactive]] implementation of [[RubisInterface]]
+/** [[ReactiveCRDT Reactive]] implementation of [[rescala.extra.lattices.delta.interfaces.RubisInterface RubisInterface]]
   *
   * Instead of the class constructor, you should use the apply method of the companion object to create new instances.
   *

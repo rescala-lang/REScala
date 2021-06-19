@@ -5,7 +5,7 @@ import rescala.extra.lattices.delta.DotStore.DotFun
 import rescala.extra.lattices.delta.interfaces.RCounterInterface
 import rescala.extra.lattices.delta.interfaces.RCounterInterface.{RCounterCompanion, State}
 
-/** [[BasicCRDT Basic]] implementation of [[RCounterInterface]]
+/** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.RCounterInterface RCounterInterface]]
   *
   * Instead of the class constructor, you should use the apply method of the companion object to create new instances.
   *

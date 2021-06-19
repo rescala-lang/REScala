@@ -5,7 +5,7 @@ import rescala.extra.lattices.delta.interfaces.ORMapInterface.{ORMapCompanion, S
 import rescala.extra.lattices.delta.interfaces.ORMapInterface
 import rescala.extra.lattices.delta.{CContext, Delta, DotStore, UIJDLattice}
 
-/** [[ReactiveCRDT Reactive]] implementation of [[ORMapInterface]]
+/** [[ReactiveCRDT Reactive]] implementation of [[rescala.extra.lattices.delta.interfaces.ORMapInterface ORMapInterface]]
   *
   * Instead of the class constructor, you should use the apply method of the companion object to create new instances.
   *

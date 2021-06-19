@@ -4,7 +4,7 @@ import rescala.extra.lattices.delta.{Delta, UIJDLattice}
 import rescala.extra.lattices.delta.interfaces.GSetInterface.{GSetCompanion, State}
 import rescala.extra.lattices.delta.interfaces.GSetInterface
 
-/** [[ReactiveCRDT Reactive]] implementation of [[GSetInterface]]
+/** [[ReactiveCRDT Reactive]] implementation of [[rescala.extra.lattices.delta.interfaces.GSetInterface GSetInterface]]
   *
   * Instead of the class constructor, you should use the apply method of the companion object to create new instances.
   *

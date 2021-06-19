@@ -4,7 +4,7 @@ import rescala.extra.lattices.delta.interfaces.GListInterface
 import rescala.extra.lattices.delta.interfaces.GListInterface.{GListCompanion, State}
 import rescala.extra.lattices.delta.{Delta, UIJDLattice}
 
-/** [[ReactiveCRDT Reactive]] implementation of [[GListInterface]]
+/** [[ReactiveCRDT Reactive]] implementation of [[rescala.extra.lattices.delta.interfaces.GListInterface GListInterface]]
   *
   * Instead of the class constructor, you should use the apply method of the companion object to create new instances.
   *

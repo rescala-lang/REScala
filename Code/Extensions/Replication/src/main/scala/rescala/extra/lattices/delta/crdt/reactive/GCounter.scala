@@ -4,7 +4,7 @@ import rescala.extra.lattices.delta.{Delta, UIJDLattice}
 import rescala.extra.lattices.delta.interfaces.GCounterInterface.{GCounterCompanion, State}
 import rescala.extra.lattices.delta.interfaces.GCounterInterface
 
-/** [[ReactiveCRDT Reactive]] implementation of [[GCounterInterface]]
+/** [[ReactiveCRDT Reactive]] implementation of [[rescala.extra.lattices.delta.interfaces.GCounterInterface GCounterInterface]]
   *
   * Instead of the class constructor, you should use the apply method of the companion object to create new instances.
   */

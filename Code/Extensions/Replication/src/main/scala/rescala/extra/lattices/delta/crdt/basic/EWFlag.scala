@@ -5,7 +5,7 @@ import rescala.extra.lattices.delta.interfaces.EWFlagInterface.{EWFlagCompanion,
 import rescala.extra.lattices.delta.interfaces.EWFlagInterface
 import rescala.extra.lattices.delta.{CContext, UIJDLattice}
 
-/** [[BasicCRDT Basic]] implementation of [[EWFlagInterface]]
+/** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.EWFlagInterface EWFlagInterface]]
   *
   * Instead of the class constructor, you should use the apply method of the companion object to create new instances.
   *

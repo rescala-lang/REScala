@@ -5,7 +5,7 @@ import rescala.extra.lattices.delta.interfaces.LWWRegisterInterface
 import rescala.extra.lattices.delta.interfaces.LWWRegisterInterface.{LWWRegisterCompanion, State}
 import rescala.extra.lattices.delta.{CContext, UIJDLattice}
 
-/** [[BasicCRDT Basic]] implementation of [[LWWRegisterInterface]]
+/** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.LWWRegisterInterface LWWRegisterInterface]]
   *
   * Instead of the class constructor, you should use the apply method of the companion object to create new instances.
   *

@@ -10,7 +10,7 @@ trait UIJDLattice[A] extends Lattice[A] {
   /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
   def decompose(state: A): Iterable[A]
 
-  /** computes [[delta]] without [[state]] */
+  /** computes delta without state */
   def diff(state: A, delta: A): Option[A] = {
     decompose(delta).filter(!leq(_, state)).reduceOption(merge)
   }

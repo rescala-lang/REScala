@@ -4,7 +4,7 @@ import rescala.extra.lattices.delta.UIJDLattice
 import rescala.extra.lattices.delta.interfaces.LexCounterInterface.{LexCounterCompanion, State}
 import rescala.extra.lattices.delta.interfaces.LexCounterInterface
 
-/** [[BasicCRDT Basic]] implementation of [[LexCounterInterface]]
+/** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.LexCounterInterface LexCounterInterface]]
   *
   * Instead of the class constructor, you should use the apply method of the companion object to create new instances.
   */

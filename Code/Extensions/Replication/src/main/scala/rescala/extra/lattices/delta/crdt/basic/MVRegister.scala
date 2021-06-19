@@ -5,7 +5,7 @@ import rescala.extra.lattices.delta.interfaces.MVRegisterInterface.{MVRegisterCo
 import rescala.extra.lattices.delta.interfaces.MVRegisterInterface
 import rescala.extra.lattices.delta.{CContext, UIJDLattice}
 
-/** [[BasicCRDT Basic]] implementation of [[MVRegisterInterface]]
+/** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.MVRegisterInterface MVRegisterInterface]]
   *
   * Instead of the class constructor, you should use the apply method of the companion object to create new instances.
   *

@@ -4,7 +4,7 @@ import rescala.extra.lattices.delta.interfaces.RGAInterface
 import rescala.extra.lattices.delta.interfaces.RGAInterface.{RGACompanion, State}
 import rescala.extra.lattices.delta.{CContext, Delta, UIJDLattice}
 
-/** [[ReactiveCRDT Reactive]] implementation of [[RGAInterface]]
+/** [[ReactiveCRDT Reactive]] implementation of [[rescala.extra.lattices.delta.interfaces.RGAInterface RGAInterface]]
   *
   * Instead of the class constructor, you should use the apply method of the companion object to create new instances.
   *

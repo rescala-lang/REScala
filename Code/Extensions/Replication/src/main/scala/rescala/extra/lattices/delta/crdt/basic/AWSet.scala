@@ -5,7 +5,7 @@ import rescala.extra.lattices.delta.interfaces.AWSetInterface.{AWSetCompanion, S
 import rescala.extra.lattices.delta.interfaces.AWSetInterface
 import rescala.extra.lattices.delta.{CContext, UIJDLattice}
 
-/** [[BasicCRDT Basic]] implementation of [[AWSetInterface]]
+/** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.AWSetInterface AWSetInterface]]
   *
   * Instead of the class constructor, you should use the apply method of the companion object to create new instances.
   *

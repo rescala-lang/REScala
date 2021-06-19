@@ -4,7 +4,7 @@ import rescala.extra.lattices.delta.{Delta, UIJDLattice}
 import rescala.extra.lattices.delta.interfaces.GMapInterface
 import rescala.extra.lattices.delta.interfaces.GMapInterface.{GMapCompanion, State}
 
-/** [[ReactiveCRDT Reacitve]] implementation of [[GMapInterface]]
+/** [[ReactiveCRDT Reacitve]] implementation of [[rescala.extra.lattices.delta.interfaces.GMapInterface GMapInterface]]
   *
   * Instead of the class constructor, you should use the apply method of the companion object to create new instances.
   *
