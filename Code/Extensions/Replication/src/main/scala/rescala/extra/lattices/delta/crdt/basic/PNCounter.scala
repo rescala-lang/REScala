@@ -4,7 +4,10 @@ import rescala.extra.lattices.delta.UIJDLattice
 import rescala.extra.lattices.delta.interfaces.PNCounterInterface
 import rescala.extra.lattices.delta.interfaces.PNCounterInterface.{PNCounterCompanion, State}
 
-/** [[BasicCRDT Basic]] implementation of [[PNCounterInterface]] */
+/** [[BasicCRDT Basic]] implementation of [[PNCounterInterface]]
+  *
+  * Instead of the class constructor, you should use the apply method of the companion object to create new instances.
+  */
 class PNCounter(
     val state: State,
     protected val antiEntropy: AntiEntropy[State]

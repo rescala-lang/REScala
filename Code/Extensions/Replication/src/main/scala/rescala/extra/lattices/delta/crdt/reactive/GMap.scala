@@ -6,6 +6,8 @@ import rescala.extra.lattices.delta.interfaces.GMapInterface.{GMapCompanion, Sta
 
 /** [[ReactiveCRDT Reacitve]] implementation of [[GMapInterface]]
   *
+  * Instead of the class constructor, you should use the apply method of the companion object to create new instances.
+  *
   * @tparam K Type of the keys of this map
   * @tparam V State type of the nested CRDTs
   */

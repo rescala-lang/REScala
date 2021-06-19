@@ -4,7 +4,10 @@ import rescala.extra.lattices.delta.UIJDLattice
 import rescala.extra.lattices.delta.interfaces.GCounterInterface.{GCounterCompanion, State}
 import rescala.extra.lattices.delta.interfaces.GCounterInterface
 
-/** [[BasicCRDT Basic]] implementation of [[GCounterInterface]] */
+/** [[BasicCRDT Basic]] implementation of [[GCounterInterface]]
+  *
+  * Instead of the class constructor, you should use the apply method of the companion object to create new instances.
+  */
 class GCounter(
     val state: State,
     protected val antiEntropy: AntiEntropy[State]

@@ -7,6 +7,8 @@ import rescala.extra.lattices.delta.{CContext, UIJDLattice}
 
 /** [[BasicCRDT Basic]] implementation of [[RGAInterface]]
   *
+  * Instead of the class constructor, you should use the apply method of the companion object to create new instances.
+  *
   * @tparam E Type of the elements stored in the list
   * @tparam C Type of the causal context used for this causal CRDT
   */

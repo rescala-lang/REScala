@@ -5,6 +5,9 @@ import rescala.extra.lattices.delta.interfaces.GListInterface
 import rescala.extra.lattices.delta.interfaces.GListInterface.{GListCompanion, State}
 
 /** [[BasicCRDT Basic]] implementation of [[GListInterface]]
+  *
+  * Instead of the class constructor, you should use the apply method of the companion object to create new instances.
+  *
   * @tparam E Type of the elements in the list
   */
 class GList[E](

@@ -6,6 +6,8 @@ import rescala.extra.lattices.delta.{CContext, DotStore, UIJDLattice}
 
 /** [[BasicCRDT Basic]] implementation of [[ORMapInterface]]
   *
+  * Instead of the class constructor, you should use the apply method of the companion object to create new instances.
+  *
   * @tparam K Type of the keys of this map
   * @tparam V Type of the dot store used as values in this map
   * @tparam C Type of the causal context used for this causal CRDT

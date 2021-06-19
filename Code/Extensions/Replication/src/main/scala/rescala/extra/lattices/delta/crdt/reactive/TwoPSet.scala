@@ -6,6 +6,8 @@ import rescala.extra.lattices.delta.interfaces.TwoPSetInterface.{State, TwoPSetC
 
 /** [[ReactiveCRDT Reactive]] implementation of [[TwoPSetInterface]]
   *
+  * Instead of the class constructor, you should use the apply method of the companion object to create new instances.
+  *
   * @tparam E Type of the elements stored in the set
   */
 class TwoPSet[E](

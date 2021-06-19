@@ -6,6 +6,8 @@ import rescala.extra.lattices.delta.interfaces.RubisInterface.{RubisCompanion, S
 
 /** [[ReactiveCRDT Reactive]] implementation of [[RubisInterface]]
   *
+  * Instead of the class constructor, you should use the apply method of the companion object to create new instances.
+  *
   * @tparam C Type of the causal context used for this causal CRDT
   */
 class Rubis[C: CContext](

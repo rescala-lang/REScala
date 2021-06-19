@@ -5,6 +5,9 @@ import rescala.extra.lattices.delta.interfaces.GSetInterface.{GSetCompanion, Sta
 import rescala.extra.lattices.delta.interfaces.GSetInterface
 
 /** [[BasicCRDT Basic]] implementation of [[GSetInterface]]
+  *
+  * Instead of the class constructor, you should use the apply method of the companion object to create new instances.
+  *
   * @tparam E Type of the elements stored in the set
   */
 class GSet[E](

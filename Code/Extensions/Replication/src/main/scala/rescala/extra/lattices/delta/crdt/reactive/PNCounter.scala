@@ -4,7 +4,10 @@ import rescala.extra.lattices.delta.{Delta, UIJDLattice}
 import rescala.extra.lattices.delta.interfaces.PNCounterInterface
 import rescala.extra.lattices.delta.interfaces.PNCounterInterface.{PNCounterCompanion, State}
 
-/** [[ReactiveCRDT Reactive]] implementation of [[PNCounterInterface]] */
+/** [[ReactiveCRDT Reactive]] implementation of [[PNCounterInterface]]
+  *
+  * Instead of the class constructor, you should use the apply method of the companion object to create new instances.
+  */
 class PNCounter(
     val state: State,
     val replicaID: String,

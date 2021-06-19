@@ -6,6 +6,9 @@ import rescala.extra.lattices.delta.interfaces.EWFlagInterface
 import rescala.extra.lattices.delta.{CContext, Delta, UIJDLattice}
 
 /** [[ReactiveCRDT Reactive]] implementation of [[EWFlagInterface]]
+  *
+  * Instead of the class constructor, you should use the apply method of the companion object to create new instances.
+  *
   * @tparam C Type of the causal context used for this Causal CRDT
   */
 class EWFlag[C: CContext](

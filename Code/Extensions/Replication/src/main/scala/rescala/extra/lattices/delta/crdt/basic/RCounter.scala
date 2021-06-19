@@ -7,6 +7,8 @@ import rescala.extra.lattices.delta.interfaces.RCounterInterface.{RCounterCompan
 
 /** [[BasicCRDT Basic]] implementation of [[RCounterInterface]]
   *
+  * Instead of the class constructor, you should use the apply method of the companion object to create new instances.
+  *
   * @tparam C Type of the causal context used for this causal CRDT
   */
 class RCounter[C: CContext](
