@@ -4,9 +4,7 @@ package encrdt.experiments
 /**
  * Counter CRDT using states
  */
-class CounterCrdt(val replicaId: Int) extends Crdt {
-
-  type StateT = CounterCrdtState
+class CounterCrdt(val replicaId: Int) {
 
   def this(replicaId: Int, initialState: CounterCrdtState) {
     this(replicaId)
@@ -23,7 +21,7 @@ class CounterCrdt(val replicaId: Int) extends Crdt {
   }
 
   def merge(remoteState: CounterCrdtState): Unit = {
-    state = state.merge(remoteState)
+    state = SemiLattice.merged(state, remoteState)
   }
 
   // Local counts
@@ -38,11 +36,6 @@ class CounterCrdt(val replicaId: Int) extends Crdt {
 case class CounterCrdtState(positiveCounts: Map[Int, Int] = Map(),
                             negativeCounts: Map[Int, Int] = Map()) {
 
-  def merge(other: CounterCrdtState): CounterCrdtState = CounterCrdtState(
-    mergeCounterMaps(positiveCounts, other.positiveCounts),
-    mergeCounterMaps(negativeCounts, other.negativeCounts)
-  )
-
   def updated(replicaId: Int, delta: Int): CounterCrdtState = {
     if (delta > 0) this.copy(
       positiveCounts = positiveCounts.updatedWith(replicaId)(value => Some(value.getOrElse(0) + delta))
@@ -52,6 +45,15 @@ case class CounterCrdtState(positiveCounts: Map[Int, Int] = Map(),
     )
     else this
   }
+
+}
+
+object CounterCrdtState {
+  implicit val semiLattice: SemiLattice[CounterCrdtState] = (left: CounterCrdtState, right: CounterCrdtState) =>
+    CounterCrdtState(
+      mergeCounterMaps(left.positiveCounts, right.positiveCounts),
+      mergeCounterMaps(left.negativeCounts, right.negativeCounts)
+    )
 
   // Merges mappings of both maps, takes biggest value if key is present in both maps
   def mergeCounterMaps[K](a: Map[K, Int], b: Map[K, Int]): Map[K, Int] =
