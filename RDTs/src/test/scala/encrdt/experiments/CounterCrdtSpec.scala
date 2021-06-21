@@ -153,7 +153,7 @@ class CounterCrdtSpec extends AnyFlatSpec {
 
   it should "allow the merge of two empty crdts" in {
     assertResult(CounterCrdtState()) {
-      CounterCrdtState().merge(CounterCrdtState())
+      SemiLattice.merged(CounterCrdtState(), CounterCrdtState())
     }
   }
 
