@@ -208,6 +208,7 @@ lazy val dividiParoli = project.in(file("Code/Examples/dividiParoli"))
 
 lazy val consoleReplication = project.in(file("Code/Examples/ConsoleReplication"))
   .dependsOn(rescalaJVM, replicationJVM)
+  .enablePlugins(JavaAppPackaging)
   .settings(
     name := "console replication",
     cfg.base,
