@@ -83,6 +83,43 @@ println(flagB2.read) // true
 
 After synchronization, both flags are enabled. This is because the `EWFlag` CRDT always resolves concurrent enable and disable operations by letting the enable operation "win".
 
+Finally, here is the full executable code example including all necessary imports:
+
+```scala
+import rescala.extra.lattices.delta.CContext.DietMapCContext
+import rescala.extra.lattices.delta.Codecs._
+import rescala.extra.lattices.delta.crdt.basic.{AntiEntropy, EWFlag, Network}
+
+import scala.collection.mutable
+
+object BasicExample extends App {
+  val network = new Network(0, 0, 0)
+
+  val aea = new AntiEntropy[EWFlag.State[DietMapCContext]]("a", network, mutable.Buffer("b"))
+  val aeb = new AntiEntropy[EWFlag.State[DietMapCContext]]("b", network, mutable.Buffer("a"))
+
+  val flagA0 = EWFlag(aea)
+  val flagB0 = EWFlag(aeb)
+
+  println(flagA0.read) // false
+  println(flagB0.read) // false
+
+  val flagA1 = flagA0.enable()
+  val flagB1 = flagB0.disable()
+
+  println(flagA1.read) // true
+  println(flagB1.read) // false
+
+  AntiEntropy.sync(aea, aeb)
+
+  val flagA2 = flagA1.processReceivedDeltas()
+  val flagB2 = flagB1.processReceivedDeltas()
+
+  println(flagA2.read) // true
+  println(flagB2.read) // true
+}
+```
+
 ### "Reactive Implementation"
 
 The second implementation can be actually used to synchronize CRDTs over a real network. Since this version was originally developed to allow integration of Delta CRDTs with [REScala](https://www.rescala-lang.com/), a reactive programming extension of Scala, I like to call this implementation the "reactive implementation" (although it has no reactive components itself).
@@ -96,36 +133,42 @@ In this implementation, CRDTs have a `deltaBuffer` field and an `applyDelta` met
 Apart from the propagation of deltas, the usage of CRDTs in this implementation is very similar to the basic implementation:
 
 ```scala
+import rescala.extra.lattices.delta.CContext.DietMapCContext
+import rescala.extra.lattices.delta.Codecs._
+import rescala.extra.lattices.delta.crdt.reactive.EWFlag
+
 // On replica A
+object ReplicaA extends App {
+  val flagA0 = EWFlag("a")
+  println(flagA0.read) //false
 
-val flagA0 = EWFlag("a")
-println(flagA0.read) //false
+  val flagA1 = flagA0.enable()
+  println(flagA1.read) // true
 
-val flagA1 = flagA0.enable()
-println(flagA1.read) // true
+  // send delta to B
 
-// send delta to B
+  // receive delta from B in variable "delta"
 
-// receive delta from B in variable "delta"
-
-val flagA2 = flagA1.applyDelta(delta)
-println(flagA2.read) // true
+  val flagA2 = flagA1.applyDelta(delta)
+  println(flagA2.read) // true
+}
 
 
 // On replica B
+object ReplicaB extends App {
+  val flagB0 = EWFlag("b")
+  println(flagB0.read) //false
 
-val flagB0 = EWFlag("b")
-println(flagB0.read) //false
+  val flagB1 = flagB0.disable()
+  println(flagB1.read) // false
 
-val flagB1 = flagB0.disable()
-println(flagB1.read) // false
+  // send delta to A
 
-// send delta to A
+  // receive delta from A in variable "delta"
 
-// receive delta from A in variable "delta"
-
-val flagB2 = flagB1.applyDelta(delta)
-println(flagB2.read) // true
+  val flagB2 = flagB1.applyDelta(delta)
+  println(flagB2.read) // true
+}
 ```
 
 ### Selecting the Right CRDT for Your Problem
