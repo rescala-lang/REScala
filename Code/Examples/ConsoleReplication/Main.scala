@@ -57,16 +57,6 @@ object Commandline {
 object Impl {
   val registry = new Registry
 
-  //implicit def jsoniterBasedSerializable[T](implicit codec: JsonValueCodec[T]): Serializable[T] =
-  //  new Serializable[T] {
-  //    def serialize(value: T) = {
-  //      val bytes = writeToArray(value)
-  //      MessageBuffer.wrapByteBuffer(ByteBuffer.wrap(bytes))
-  //    }
-  //    def deserialize(value: MessageBuffer) =
-  //      Try { readFromByteBuffer(value.asByteBuffer) }
-  //  }
-
   implicit val StringRw: JsonValueCodec[String] = JsonCodecMaker.make
   //implicit val _Ts: IdenticallyTransmittable[String] = IdenticallyTransmittable()
 
