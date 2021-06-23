@@ -66,11 +66,11 @@ object UIJDLattice {
     }
 
     override def merge(left: Map[K, V], right: Map[K, V]): Map[K, V] =
-      right.keys.foldLeft(left) {
+      right.keysIterator.foldLeft(left) {
         case (m, k) =>
           left.get(k) match {
-            case None    => m + (k -> right(k))
-            case Some(l) => m + (k -> Lattice.merge(l, right(k)))
+            case None    => m.updated(k, right(k))
+            case Some(l) => m.updated(k, Lattice.merge(l, right(k)))
           }
       }
 
