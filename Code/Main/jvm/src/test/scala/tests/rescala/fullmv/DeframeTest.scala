@@ -2,8 +2,7 @@ package tests.rescala.fullmv
 
 import org.scalatest.funsuite.AnyFunSuite
 import rescala.fullmv.NotificationBranchResult.ReevOutBranchResult.{NotifyAndNonReadySuccessor, PureNotifyOnly}
-import rescala.fullmv.{FramingBranchResult, FullMVUtil, FullMVApi, NotificationBranchResult}
-import rescala.fullmv.tasks._
+import rescala.fullmv.{FramingBranchResult, FullMVApi, NotificationBranchResult}
 import rescala.operator.Pulse
 
 import scala.concurrent.duration.Duration

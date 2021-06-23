@@ -9,8 +9,6 @@ class ReevaluationBundle[T <: RescalaInterface](val api: T) {
 
   class ReevaluationTracker[A] private () extends Matchers {
 
-    import api._
-
     var results: List[A] = Nil
     /* should be private but is unused */
     var strongRef: AnyRef = _ // to prevent fake observers from being prematurely gc'd

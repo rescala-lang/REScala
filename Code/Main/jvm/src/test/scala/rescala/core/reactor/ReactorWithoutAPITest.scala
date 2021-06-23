@@ -1,7 +1,6 @@
 package rescala.core.reactor
 
 import rescala.core.ReName
-import rescala.default
 import rescala.macros.MacroAccess
 import tests.rescala.testtools.RETests
 

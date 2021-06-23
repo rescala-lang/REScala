@@ -1,7 +1,6 @@
 package tests.rescala.testtools
 
 import rescala.interface.RescalaInterface
-import rescala.parrp.ParRP
 
 import java.util.concurrent.ForkJoinPool.ManagedBlocker
 import java.util.concurrent.{CountDownLatch, ForkJoinPool}
