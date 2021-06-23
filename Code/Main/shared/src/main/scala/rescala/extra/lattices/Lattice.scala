@@ -3,7 +3,10 @@ package rescala.extra.lattices
 /** Well, its technically a semilattice, but that is just more to type. */
 trait Lattice[A] {
 
-  /** By assumption: associative, commutative, idempotent. */
+  /** By assumption: associative, commutative, idempotent.
+    *
+    * For use with Delta CRDTs, this function should be optimized for the case that left >> right.
+    */
   def merge(left: A, right: A): A
 }
 
