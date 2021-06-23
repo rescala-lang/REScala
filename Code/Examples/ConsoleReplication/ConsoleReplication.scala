@@ -19,7 +19,7 @@ import loci.registry.Binding
 import com.monovore.decline.Visibility.Partial
 import com.monovore.decline.{Command, CommandApp, Opts}
 
-object Main extends CommandApp(
+object ConsoleReplication extends CommandApp(
       name = "cr",
       header = "test CRDTs on the commandline",
       main = Commandline.command.options
@@ -53,6 +53,7 @@ object Commandline {
   }
 
 }
+
 
 object Impl {
   val registry = new Registry
