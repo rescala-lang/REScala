@@ -206,6 +206,20 @@ lazy val dividiParoli = project.in(file("Code/Examples/dividiParoli"))
     fork := true
   )
 
+lazy val consoleReplication = project.in(file("Code/Examples/ConsoleReplication"))
+  .dependsOn(rescalaJVM, replicationJVM)
+  .settings(
+    name := "console replication",
+    cfg.base,
+    cfg.noPublish,
+    fork := true,
+    libraryDependencies ++= Seq(
+      loci.tcp.value,
+      decline.value,
+      loci.jsoniterScala.value,
+    )
+  )
+
 lazy val ersirServer = project.in(file("Code/Examples/Ersir/server"))
   .settings(
     name := "server",
