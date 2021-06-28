@@ -18,7 +18,9 @@ import com.monovore.decline.{Command, CommandApp, Opts}
 import loci.transmitter.RemoteRef
 import rescala.extra.lattices.delta.{Delta, UIJDLattice}
 
+import java.util.concurrent.FutureTask
 import scala.io.StdIn.readLine
+import scala.util.{Failure, Success}
 
 object ConsoleReplication extends CommandApp(
       name = "cr",
@@ -30,7 +32,7 @@ object Commandline {
 
   val idArg: Opts[String]                    = Opts.argument[String](metavar = "id")
   val listenPortArg: Opts[Int]               = Opts.argument[Int](metavar = "listenPort")
-  val connectArg: Opts[NonEmptyList[String]] = Opts.arguments[String]("connectTo")
+  val connectArg: Opts[NonEmptyList[String]] = Opts.arguments[String](metavar = "connectTo")
 
   val peerCommand: Opts[Unit] = Opts.subcommand(
     name = "peer",
@@ -48,8 +50,17 @@ object Commandline {
     }
   }
 
+  val listenPeerCommand: Opts[Unit] = Opts.subcommand(
+    name = "listenpeer",
+    help = "Start peer that only listens"
+  ) {
+    (idArg, listenPortArg).mapN {
+      case (id, listenPort) => new Peer(id, listenPort, List()).run()
+    }
+  }
+
   val command: Command[Unit] = Command(name = "conrep", header = "test CRTDs on the console") {
-    peerCommand
+    peerCommand orElse listenPeerCommand
   }
 
 }
@@ -101,8 +112,37 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
     println(registry.listen(TCP(listenPort)))
 
-    connectTo.foreach {
-      case (ip, port) => registry.connect(TCP(ip, port))
+    var remoteToAddress = Map[RemoteRef, (String, Int)]()
+
+    def connectToRemote(address: (String, Int)): Unit = address match {
+      case (ip, port) =>
+        new FutureTask[Unit](() => {
+          def attemptReconnect(): Unit = {
+            registry.connect(TCP(ip, port)).onComplete {
+              case Success(value) =>
+                remoteToAddress = remoteToAddress.updated(value, (ip, port))
+                return
+              case Failure(_) =>
+                Thread.sleep(1000)
+                attemptReconnect()
+            }
+          }
+
+          attemptReconnect()
+        }).run()
+    }
+
+    connectTo.foreach(connectToRemote)
+
+    registry.remoteLeft.monitor { rr =>
+      remoteToAddress.get(rr) match {
+        case Some(address) =>
+          remoteToAddress = remoteToAddress.removed(rr)
+
+          connectToRemote(address)
+
+        case None =>
+      }
     }
 
     registry.remoteJoined.monitor { rr =>
