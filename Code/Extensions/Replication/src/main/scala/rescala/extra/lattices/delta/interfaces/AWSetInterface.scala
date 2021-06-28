@@ -38,12 +38,44 @@ object AWSetInterface {
       )
   }
 
+  def addAll[E, C: CContext](elems: Iterable[E]): DeltaMutator[State[E, C]] = {
+    case (replicaID, Causal(dm, cc)) =>
+      val nextCounter = CContext[C].nextDot(cc, replicaID).counter
+      val nextDots    = (nextCounter until nextCounter + elems.size).toSet.map(Dot(replicaID, _))
+
+      val ccontextSet = elems.foldLeft(nextDots) {
+        case (dots, e) => dm.get(e) match {
+            case Some(ds) => dots union ds
+            case None     => dots
+          }
+      }
+
+      deltaState[E, C].make(
+        dm = (elems zip nextDots.map(Set(_))).toMap,
+        cc = CContext[C].fromSet(ccontextSet)
+      )
+  }
+
   def remove[E, C: CContext](e: E): DeltaMutator[State[E, C]] = {
     case (_, Causal(dm, _)) =>
       val v = dm.getOrElse(e, DotSet.empty)
 
       deltaState[E, C].make(
         cc = CContext[C].fromSet(v)
+      )
+  }
+
+  def removeAll[E, C: CContext](elems: Iterable[E]): DeltaMutator[State[E, C]] = {
+    case (_, Causal(dm, _)) =>
+      val dotsToRemove = elems.foldLeft(Set.empty[Dot]) {
+        case (dots, e) => dm.get(e) match {
+            case Some(ds) => dots union ds
+            case None     => dots
+          }
+      }
+
+      deltaState[E, C].make(
+        cc = CContext[C].fromSet(dotsToRemove)
       )
   }
 
@@ -75,7 +107,11 @@ abstract class AWSetInterface[E, C: CContext, Wrapper] extends CRDTInterface[AWS
 
   def add(e: E): Wrapper = mutate(AWSetInterface.add(e))
 
+  def addAll(elems: Iterable[E]): Wrapper = mutate(AWSetInterface.addAll(elems))
+
   def remove(e: E): Wrapper = mutate(AWSetInterface.remove(e))
+
+  def removeAll(elems: Iterable[E]): Wrapper = mutate(AWSetInterface.removeAll(elems))
 
   def removeBy(cond: E => Boolean): Wrapper = mutate(AWSetInterface.removeBy(cond))
 
