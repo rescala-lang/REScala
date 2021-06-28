@@ -295,7 +295,6 @@ lazy val replication = crossProject(JSPlatform, JVMPlatform).crossType(CrossType
   .settings(
     name := "loci-distribution",
     cfg.base,
-    cfg.noPublish,
     libraryDependencies ++= jsoniterScalaAll.value ++ Seq(
       loci.communication.value,
       loci.circe.value,
