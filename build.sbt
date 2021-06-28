@@ -214,6 +214,7 @@ lazy val consoleReplication = project.in(file("Code/Examples/ConsoleReplication"
     cfg.base,
     cfg.noPublish,
     fork := true,
+    run / connectInput := true,
     libraryDependencies ++= Seq(
       loci.tcp.value,
       decline.value,
