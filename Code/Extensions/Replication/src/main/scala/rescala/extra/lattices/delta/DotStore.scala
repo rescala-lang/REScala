@@ -117,20 +117,27 @@ object DotStore {
         right: DotMap[K, V],
         rightContext: C
     ): (DotMap[K, V], C) = {
-      val allKeys = left.keySet ++ right.keySet
 
-      val dmMerged = allKeys.foldLeft(left) {
-        case (m, k) =>
-          val leftV          = left.getOrElse(k, DotStore[V].empty)
-          val rightV         = right.getOrElse(k, DotStore[V].empty)
-          val (mergedVal, _) = DotStore[V].merge(leftV, leftContext, rightV, rightContext)
-
-          m.updated(k, mergedVal)
-      }.filterNot {
-        case (_, v) => v == DotStore[V].empty
+      def mergeHelp(left: V, right: V) = {
+        val (mergedVal, _) = DotStore[V].merge(left, leftContext, right, rightContext)
+        if (mergedVal == DotStore[V].empty) None
+        else Some(mergedVal)
       }
 
-      (dmMerged, CContext[C].union(leftContext, rightContext))
+      val added = right.foldLeft(left) { case (currentLeft, (k, r)) =>
+        currentLeft.updatedWith(k) {
+          case None    => mergeHelp(DotStore[V].empty, r)
+          case Some(l) => mergeHelp(l, r)
+        }
+      }
+
+      val filtered =
+        added.map { case (k, l) =>
+          if (right.contains(k)) Some(k -> l)
+          else mergeHelp(l, DotStore[V].empty).map(k -> _)
+        }.flatten.toMap
+
+      (filtered, CContext[C].union(leftContext, rightContext))
     }
 
     override def empty: DotMap[K, V] = Map.empty[K, V]
