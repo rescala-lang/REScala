@@ -1,6 +1,9 @@
 package de.ckuessner
 package encrdt.experiments
 
+import com.github.plokhotnyuk.jsoniter_scala.core._
+import com.github.plokhotnyuk.jsoniter_scala.macros._
+
 /**
  * Counter CRDT using states
  */
@@ -25,12 +28,13 @@ class CounterCrdt(val replicaId: Int) {
   }
 
   // Local counts
-  def query(): Int = state.positiveCounts.values.sum - state.negativeCounts.values.sum
+  def query(): Int = state.query()
 
   def update(delta: Int): Unit = {
     state = state.updated(replicaId, delta)
   }
 }
+
 
 // Encapsulates the state of the CRDT
 case class CounterCrdtState(positiveCounts: Map[Int, Int] = Map(),
@@ -46,9 +50,12 @@ case class CounterCrdtState(positiveCounts: Map[Int, Int] = Map(),
     else this
   }
 
+  def query(): Int = positiveCounts.values.sum - negativeCounts.values.sum
 }
 
 object CounterCrdtState {
+  implicit val jsonCodec: JsonValueCodec[CounterCrdtState] = JsonCodecMaker.make
+
   implicit val semiLattice: SemiLattice[CounterCrdtState] = (left: CounterCrdtState, right: CounterCrdtState) =>
     CounterCrdtState(
       mergeCounterMaps(left.positiveCounts, right.positiveCounts),
