@@ -100,9 +100,9 @@ class CounterCrdtSpec extends AnyFlatSpec {
   }
 
   it should "merge with some replicas not present in left crdt" in {
-    val leftStateInitial = CounterCrdtState(Map(1->1, 2->1))
+    val leftStateInitial = CounterCrdtState(Map(1 -> 1, 2 -> 1))
     var crdtLeft = new CounterCrdt(1, leftStateInitial)
-    val rightState = CounterCrdtState(Map(1->1, 2->2, 3->3, 4->4))
+    val rightState = CounterCrdtState(Map(1 -> 1, 2 -> 2, 3 -> 3, 4 -> 4))
 
     assume(crdtLeft.query() == 2)
 
@@ -113,7 +113,7 @@ class CounterCrdtSpec extends AnyFlatSpec {
     }
 
     // Positive/Negative mixed
-    val rightStateNegatives = CounterCrdtState(negativeCounts = Map(1->1, 2->2, 3->3, 4->4))
+    val rightStateNegatives = CounterCrdtState(negativeCounts = Map(1 -> 1, 2 -> 2, 3 -> 3, 4 -> 4))
     assertResult(0) {
       crdtLeft.merge(rightStateNegatives)
       crdtLeft.query()
@@ -130,9 +130,9 @@ class CounterCrdtSpec extends AnyFlatSpec {
   }
 
   it should "merge with some replicas not present in right crdt" in {
-    val leftState = CounterCrdtState(Map(1->1, 2->1, 3->3, 4->4))
+    val leftState = CounterCrdtState(Map(1 -> 1, 2 -> 1, 3 -> 3, 4 -> 4))
     var crdtLeft = new CounterCrdt(1, leftState)
-    val rightState = CounterCrdtState(Map(1->1, 2->2))
+    val rightState = CounterCrdtState(Map(1 -> 1, 2 -> 2))
 
     assume(crdtLeft.query() == 9)
 
@@ -143,12 +143,12 @@ class CounterCrdtSpec extends AnyFlatSpec {
     }
 
     // Positive/Negative mixed
-    val leftStateNegativesMap = Map(1->1, 2->1, 3->3, 4->4)
+    val leftStateNegativesMap = Map(1 -> 1, 2 -> 1, 3 -> 3, 4 -> 4)
     crdtLeft = new CounterCrdt(1, crdtLeft.state.copy(negativeCounts = leftStateNegativesMap))
     assume(crdtLeft.query() == 1)
 
     assertResult(0) {
-      crdtLeft.merge(rightState.copy(negativeCounts = Map(1->0, 2->2)))
+      crdtLeft.merge(rightState.copy(negativeCounts = Map(1 -> 0, 2 -> 2)))
       crdtLeft.query()
     }
   }
@@ -160,14 +160,12 @@ class CounterCrdtSpec extends AnyFlatSpec {
   }
 
   it should "serialize and deserialize" in {
-    "A CounterCrdt" should "serialize" in {
-      val crdtState = CounterCrdtState(positiveCounts = Map(42->21, 21->42), negativeCounts = Map(42->42, 21->21))
+    val crdtState = CounterCrdtState(positiveCounts = Map(42 -> 21, 21 -> 42), negativeCounts = Map(42 -> 42, 21 -> 21))
 
-      val serializedState = writeToString(crdtState)
-      val crdtDeserialized = readFromString[CounterCrdtState](serializedState)
+    val serializedState = writeToString(crdtState)
+    val crdtDeserialized = readFromString[CounterCrdtState](serializedState)
 
-      crdtDeserialized shouldEqual crdtState
-    }
+    crdtDeserialized shouldBe crdtState
   }
 
 

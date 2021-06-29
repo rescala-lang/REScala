@@ -1,6 +1,9 @@
 package de.ckuessner
 package encrdt.experiments
 
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
+
 class AddWinsSetCrdt[T](val replicaId: Int) extends SetCrdt[T] {
 
   private var _state: AddWinsSetState[T] = AddWinsSetState[T]()
@@ -81,4 +84,7 @@ object AddWinsSetState {
 
       AddWinsSetState(elementsAfterMerge.values.toSet, clocksAfterMerge)
     }
+
+  implicit def codec[T](implicit jsonValueCodec: JsonValueCodec[T]): JsonValueCodec[AddWinsSetState[T]] =
+    JsonCodecMaker.make[AddWinsSetState[T]]
 }
