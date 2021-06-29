@@ -20,11 +20,13 @@ class AWSetBench {
 
   var set: AWSet[Int, DietMapCContext] = _
 
-  @Setup
-  def setup(): Unit = {
-    set = (0 until size).foldLeft(AWSet[Int, DietMapCContext]("a")) {
+  def createBySize(size: Int): AWSet[Int, DietMapCContext] = (0 until size).foldLeft(AWSet[Int, DietMapCContext]("a")) {
       case (s, e) => s.add(e)
     }
+
+  @Setup
+  def setup(): Unit = {
+    set = createBySize(size)
   }
 
   @Benchmark
@@ -41,4 +43,7 @@ class AWSetBench {
 
   @Benchmark
   def clear(): AWSet[Int, DietMapCContext] = set.clear()
+
+  @Benchmark
+  def construct(): AWSet[Int, DietMapCContext] = createBySize(size)
 }
