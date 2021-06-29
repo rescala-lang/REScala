@@ -1,7 +1,7 @@
 package de.ckuessner
 package encrdt.experiments
 
-class AddWinsSetCrdt[T](val replicaId: Int) {
+class AddWinsSetCrdt[T](val replicaId: Int) extends SetCrdt[T] {
 
   private var _state: AddWinsSetState[T] = AddWinsSetState[T]()
 
@@ -39,9 +39,7 @@ case class AddWinsSetState[T](elements: Set[(T, Int, Int)] = Set[(T, Int, Int)](
   def values(): Set[T] = elements.map(_._1)
 
   def removed(element: T): AddWinsSetState[T] = {
-    copy(elements = elements filter {
-      _._1 == element
-    })
+    copy(elements = elements.filter(_._1 == element))
   }
 
   def added(newElem: T, replicaId: Int): AddWinsSetState[T] = {

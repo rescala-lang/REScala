@@ -1,7 +1,7 @@
 package de.ckuessner
 package encrdt.experiments
 
-class TwoPhaseSetCrdt[T](val replicaId: Int) {
+class TwoPhaseSetCrdt[T](val replicaId: Int) extends SetCrdt[T] {
 
   private var _state = TwoPhaseSetState[T]()
 
@@ -19,10 +19,12 @@ class TwoPhaseSetCrdt[T](val replicaId: Int) {
   def remove(element: T): Unit = {
     _state = _state.removed(element)
   }
+
+  def values: Set[T] = state.values
 }
 
 case class TwoPhaseSetState[T](added: Set[T] = Set[T](), removed: Set[T] = Set[T]()) {
-  def elements: Set[T] = added -- removed
+  def values: Set[T] = added -- removed
 
   def added(element: T): TwoPhaseSetState[T] = copy(added = added + element)
 
