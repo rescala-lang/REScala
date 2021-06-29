@@ -1,6 +1,9 @@
 package de.ckuessner
 package encrdt.experiments
 
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
+
 class TwoPhaseSetCrdt[T](val replicaId: Int) extends SetCrdt[T] {
 
   private var _state = TwoPhaseSetState[T]()
@@ -37,4 +40,7 @@ object TwoPhaseSetState {
   implicit def TwoPhaseSetSemiLattice[T]: SemiLattice[TwoPhaseSetState[T]] =
     (left: TwoPhaseSetState[T], right: TwoPhaseSetState[T]) =>
       TwoPhaseSetState(left.added ++ right.added, left.removed ++ right.removed)
+
+  implicit def codec[T](implicit jsonValueCodec: JsonValueCodec[T]): JsonValueCodec[TwoPhaseSetState[T]] =
+    JsonCodecMaker.make[TwoPhaseSetState[T]]
 }

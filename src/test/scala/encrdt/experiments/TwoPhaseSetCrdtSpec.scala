@@ -1,7 +1,10 @@
 package de.ckuessner
 package encrdt.experiments
 
+import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromString, writeToString}
+import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 
 class TwoPhaseSetCrdtSpec extends AnyFlatSpec {
 
@@ -62,6 +65,16 @@ class TwoPhaseSetCrdtSpec extends AnyFlatSpec {
       left.add(1)
       left.values
     }
+  }
+
+  it should "serialize and deserialize" in {
+    val crdtState = TwoPhaseSetState[Int]()
+    implicit val intCode: JsonValueCodec[Int] = JsonCodecMaker.make
+
+    val serialized = writeToString(crdtState)
+    val deserialized = readFromString[TwoPhaseSetState[Int]](serialized)
+
+    deserialized shouldBe crdtState
   }
 
 }
