@@ -1,7 +1,9 @@
 package de.ckuessner
 package encrdt.experiments
 
+import com.github.plokhotnyuk.jsoniter_scala.core.{readFromString, writeToString}
 import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 
 class CounterCrdtSpec extends AnyFlatSpec {
 
@@ -156,5 +158,17 @@ class CounterCrdtSpec extends AnyFlatSpec {
       SemiLattice.merged(CounterCrdtState(), CounterCrdtState())
     }
   }
+
+  it should "serialize and deserialize" in {
+    "A CounterCrdt" should "serialize" in {
+      val crdtState = CounterCrdtState(positiveCounts = Map(42->21, 21->42), negativeCounts = Map(42->42, 21->21))
+
+      val serializedState = writeToString(crdtState)
+      val crdtDeserialized = readFromString[CounterCrdtState](serializedState)
+
+      crdtDeserialized shouldEqual crdtState
+    }
+  }
+
 
 }
