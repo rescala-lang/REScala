@@ -19,3 +19,6 @@ libraryDependencies ++= Seq(
   "org.scalactic" %% "scalactic" % "3.2.9",
   "org.scalatest" %% "scalatest" % "3.2.9" % "test"
 )
+
+// Encryption / Decryption using Googles Tink Crypto Library
+libraryDependencies += "com.google.crypto.tink" % "tink" % "1.6.0"
