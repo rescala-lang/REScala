@@ -6,6 +6,6 @@ trait SemiLattice[T] {
 }
 
 object SemiLattice {
-  def apply[A](implicit lattice: SemiLattice[A]): SemiLattice[A] = lattice
+  @inline def apply[A](implicit lattice: SemiLattice[A]): SemiLattice[A] = lattice
   def merged[A: SemiLattice](left: A, right: A): A = apply[A].merged(left, right)
 }
