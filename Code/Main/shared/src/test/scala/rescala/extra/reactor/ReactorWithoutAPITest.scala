@@ -117,5 +117,26 @@ class ReactorWithoutAPITest extends RETests {
 
       assert(reactor.now === 50)
     }
+
+    test("Reactor read can branch") {
+      val e1 = Evt[Int]()
+      val reactor = Reactor.loop("") {
+        StageBuilder().next(e1) { eventValue =>
+          StageBuilder().read(_ =>
+            if (eventValue > 10) {
+              StageBuilder().set("Greater 10")
+            } else {
+              StageBuilder().set("Smaller 10")
+            }
+          )
+        }
+      }
+
+      assert(reactor.now === "")
+      e1.fire(42)
+      assert(reactor.now === "Greater 10")
+      e1.fire(9)
+      assert(reactor.now === "Smaller 10")
+    }
   }
 }
