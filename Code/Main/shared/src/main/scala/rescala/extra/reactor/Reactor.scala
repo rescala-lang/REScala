@@ -159,5 +159,8 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
     def next[E](event: Event[E])(body: E => StageBuilder[T]): StageBuilder[T] = {
       addAction(ReactorAction.NextAction(event, body))
     }
+    def next(event: Event[Unit])(body: => StageBuilder[T]): StageBuilder[T] = {
+      addAction(ReactorAction.NextAction(event, (_: Unit) => body))
+    }
   }
 }

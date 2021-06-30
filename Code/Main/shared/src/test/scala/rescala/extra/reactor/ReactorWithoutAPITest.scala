@@ -26,7 +26,7 @@ class ReactorWithoutAPITest extends RETests {
     test("Reactor waits for event when using next") {
       val e1 = Evt[Unit]()
       val reactor = Reactor.once(42) {
-        StageBuilder().next(e1) { _ =>
+        StageBuilder().next(e1) {
           StageBuilder().set(1)
         }
       }
@@ -54,9 +54,9 @@ class ReactorWithoutAPITest extends RETests {
       val e1 = Evt[Unit]()
 
       val reactor = Reactor.once(0) {
-        StageBuilder().next(e1) { (_) =>
+        StageBuilder().next(e1) {
           StageBuilder().set(1)
-            .next(e1) { (_) =>
+            .next(e1) {
               StageBuilder().set(2)
             }
         }
@@ -69,7 +69,7 @@ class ReactorWithoutAPITest extends RETests {
       assert(reactor.now === 2)
     }
 
-    "Reactor has no glitches" ignore {
+    test("Reactor has no glitches") {
       val e1 = Evt[String]()
 
       val reactor = Reactor.once("Initial Value") {
@@ -79,7 +79,7 @@ class ReactorWithoutAPITest extends RETests {
           }
       }
 
-      val tuple   = Signal { (e1.latest("Init").value, reactor.now) }
+      val tuple   = Signal { (e1.latest("Init").value, reactor.value) }
       val history = tuple.changed.last(5)
 
       assert(tuple.now === (("Init", "Not Reacted")))
@@ -91,13 +91,11 @@ class ReactorWithoutAPITest extends RETests {
       assert(history.now === List(("Fire", "Reacted")))
     }
 
-    test("Recrot can loop") {
+    test("Rector can loop") {
       val e1 = Evt[Unit]()
       val reactor = Reactor.loop("Initial Value") {
-        StageBuilder().set("First Stage").next(e1) { _ =>
-          {
-            StageBuilder().set("Second Stage").next(e1) { _ => StageBuilder() }
-          }
+        StageBuilder().set("First Stage").next(e1) {
+          StageBuilder().set("Second Stage").next(e1) { StageBuilder() }
         }
       }
 
@@ -108,23 +106,6 @@ class ReactorWithoutAPITest extends RETests {
       assert(reactor.now === "First Stage")
       e1.fire()
       assert(reactor.now === "Second Stage")
-    }
-
-    test("Reactor modify") {
-      val e1 = Evt[String]()
-      val reactor = Reactor.loop("") {
-        StageBuilder().next(e1) { eventValue =>
-          StageBuilder().modify( currentValue => currentValue + eventValue)
-        }
-      }
-
-      assert(reactor.now === "")
-      e1.fire("Hello")
-      assert(reactor.now === "Hello")
-      e1.fire(" World")
-      assert(reactor.now === "Hello World")
-      e1.fire("!")
-      assert(reactor.now === "Hello World!")
     }
   }
 }
