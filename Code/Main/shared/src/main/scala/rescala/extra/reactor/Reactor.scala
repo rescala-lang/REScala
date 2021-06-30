@@ -51,6 +51,9 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
                 val stages = handler(value)
                 processActions(stage.copy(stages = stages))
             }
+          case ReactorAction.ReadAction(builder) :: _ =>
+            val nextStage = builder(stage.currentValue)
+            processActions(stage.copy(stages = nextStage))
         }
       }
 
@@ -119,6 +122,8 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
 
     case class NextAction[T, E](event: Event[E], handler: E => StageBuilder[T])
         extends ReactorAction[T]
+
+    case class ReadAction[T](stageBuilder: T => StageBuilder[T]) extends ReactorAction[T]
   }
 
   case class ReactorStage[T](currentValue: T, stages: StageBuilder[T], initialStages: StageBuilder[T])
@@ -161,6 +166,10 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
     }
     def next(event: Event[Unit])(body: => StageBuilder[T]): StageBuilder[T] = {
       addAction(ReactorAction.NextAction(event, (_: Unit) => body))
+    }
+
+    def read(stageBuilder: T => StageBuilder[T]): StageBuilder[T] = {
+      addAction(ReactorAction.ReadAction(stageBuilder))
     }
   }
 }

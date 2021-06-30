@@ -107,5 +107,15 @@ class ReactorWithoutAPITest extends RETests {
       e1.fire()
       assert(reactor.now === "Second Stage")
     }
+
+    test("Reactor read") {
+      val reactor = Reactor.once(42) {
+        StageBuilder().read(currentValue =>
+          StageBuilder().set(currentValue + 8)
+        )
+      }
+
+      assert(reactor.now === 50)
+    }
   }
 }
