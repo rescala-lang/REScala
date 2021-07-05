@@ -180,5 +180,68 @@ class ReactorWithoutAPITest extends RETests {
       e1.fire(50)
       assert(reactor.now === 0)
     }
+
+    test("Reactor until works") {
+      val e1 = Evt[Unit]()
+      val reactor = Reactor.once("Initial Value") {
+        StageBuilder().until(e1)(
+          body = {
+            StageBuilder().set("Body value")
+          },
+          interrupt = { _ =>
+            StageBuilder().set("Interrupt value")
+          }
+        )
+      }
+
+      assert(reactor.now === "Body value")
+      e1.fire()
+      assert(reactor.now === "Interrupt value")
+    }
+
+    test("Reactor until passes event value") {
+      val e1 = Evt[String]()
+      val reactor = Reactor.once("Initial Value") {
+        StageBuilder().until(e1)(
+          body = {
+            StageBuilder().set("Body value")
+          },
+          interrupt = { eventValue =>
+            StageBuilder().set(eventValue)
+          }
+        )
+      }
+
+      assert(reactor.now === "Body value")
+      e1.fire("Event value")
+      assert(reactor.now === "Event value")
+    }
+
+    test("Reactor until can contain loops") {
+      val interrupt = Evt[Unit]()
+      val modifyEvent = Evt[String]()
+      val reactor = Reactor.once("Initial Value") {
+        StageBuilder().until(interrupt)(
+          body = {
+            StageBuilder().loop {
+              StageBuilder().next(modifyEvent) { eventValue =>
+                StageBuilder().set(eventValue)
+              }
+            }
+          },
+          interrupt = { _ =>
+            StageBuilder().set("Interrupted")
+          }
+        )
+      }
+
+      assert(reactor.now === "Initial Value")
+      modifyEvent.fire("First Value")
+      assert(reactor.now === "First Value")
+      modifyEvent.fire("Second Value")
+      assert(reactor.now === "Second Value")
+      interrupt.fire()
+      assert(reactor.now === "Interrupted")
+    }
   }
 }

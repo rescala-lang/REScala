@@ -59,6 +59,18 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
             }
 
             resultStage.copy(stages = StageBuilder(List(ReactorAction.LoopAction(body, resultStage.stages))))
+          case ReactorAction.UntilAction(event, body, interrupt) :: _ =>
+            val eventValue = input.depend(event)
+            eventValue match {
+              case None =>
+                val resultStage = processActions(stage.copy(stages = body))
+                resultStage.copy(stages =
+                  StageBuilder(List(ReactorAction.UntilAction(event, resultStage.stages, interrupt)))
+                )
+              case Some(value) =>
+                val stages = interrupt(value)
+                processActions(stage.copy(stages = stages))
+            }
         }
       }
 
@@ -132,6 +144,9 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
     case class ReadAction[T](stageBuilder: T => StageBuilder[T]) extends ReactorAction[T]
 
     case class LoopAction[T](body: StageBuilder[T], stagesLeft: StageBuilder[T]) extends ReactorAction[T]
+
+    case class UntilAction[T, E](event: Event[E], body: StageBuilder[T], interrupt: E => StageBuilder[T])
+        extends ReactorAction[T]
   }
 
   case class ReactorStage[T](currentValue: T, stages: StageBuilder[T], initialStages: StageBuilder[T])
@@ -182,6 +197,10 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
 
     def loop(body: => StageBuilder[T]): StageBuilder[T] = {
       addAction(ReactorAction.LoopAction(body, body))
+    }
+
+    def until[E](event: Event[E])(body: => StageBuilder[T], interrupt: E => StageBuilder[T]): StageBuilder[T] = {
+      addAction(ReactorAction.UntilAction(event, body, interrupt))
     }
   }
 }
