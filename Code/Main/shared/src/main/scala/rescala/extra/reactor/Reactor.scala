@@ -4,8 +4,6 @@ import rescala.core.ReName
 import rescala.interface.RescalaInterface
 import rescala.macros.MacroAccess
 
-import scala.annotation.tailrec
-
 class ReactorBundle[Api <: RescalaInterface](val api: Api) {
   import api._
   class Reactor[T](
@@ -29,7 +27,7 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
 
       var progressedStage = false
 
-      @tailrec
+      // @tailrec
       def processActions[A](stage: ReactorStage[T]): ReactorStage[T] = {
         stage.stages.actions match {
           case Nil => stage
@@ -54,6 +52,13 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
           case ReactorAction.ReadAction(builder) :: _ =>
             val nextStage = builder(stage.currentValue)
             processActions(stage.copy(stages = nextStage))
+          case ReactorAction.LoopAction(body, stagesLeft) :: _ =>
+            val resultStage = processActions(stage.copy(stages = stagesLeft))
+            if (resultStage.stages.actions.isEmpty) {
+              return processActions(resultStage.copy(stages = body))
+            }
+
+            resultStage.copy(stages = StageBuilder(List(ReactorAction.LoopAction(body, resultStage.stages))))
         }
       }
 
@@ -72,6 +77,7 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
   }
 
   object Reactor {
+
     /** Creates a new Reactor, which steps through the reactor stages ones.
       *
       * @param initialValue The initial value of the Reactor.
@@ -124,6 +130,8 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
         extends ReactorAction[T]
 
     case class ReadAction[T](stageBuilder: T => StageBuilder[T]) extends ReactorAction[T]
+
+    case class LoopAction[T](body: StageBuilder[T], stagesLeft: StageBuilder[T]) extends ReactorAction[T]
   }
 
   case class ReactorStage[T](currentValue: T, stages: StageBuilder[T], initialStages: StageBuilder[T])
@@ -170,6 +178,10 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
 
     def read(stageBuilder: T => StageBuilder[T]): StageBuilder[T] = {
       addAction(ReactorAction.ReadAction(stageBuilder))
+    }
+
+    def loop(body: => StageBuilder[T]): StageBuilder[T] = {
+      addAction(ReactorAction.LoopAction(body, body))
     }
   }
 }

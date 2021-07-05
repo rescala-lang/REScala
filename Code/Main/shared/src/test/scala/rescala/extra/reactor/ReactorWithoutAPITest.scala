@@ -138,5 +138,47 @@ class ReactorWithoutAPITest extends RETests {
       e1.fire(9)
       assert(reactor.now === "Smaller 10")
     }
+
+    test("Reactor stage loop") {
+      val e1 = Evt[Int]()
+      val reactor = Reactor.once(42) {
+        StageBuilder().loop {
+          StageBuilder().next(e1) { eventValue =>
+            StageBuilder[Int]().modify(currentValue => currentValue + eventValue)
+          }
+        }
+      }
+
+      assert(reactor.now === 42)
+      e1.fire(1)
+      assert(reactor.now === 43)
+      e1.fire(7)
+      assert(reactor.now === 50)
+    }
+
+    test("Reactor complex stage loop") {
+      val e1 = Evt[Int]()
+      val reactor = Reactor.once(42) {
+        StageBuilder().loop {
+          StageBuilder().next(e1) { eventValue =>
+            StageBuilder[Int]()
+              .modify(currentValue => currentValue + eventValue)
+              .next(e1) { eventValue =>
+                StageBuilder().modify(currentValue => currentValue - eventValue)
+              }
+          }
+        }
+      }
+
+      assert(reactor.now === 42)
+      e1.fire(1)
+      assert(reactor.now === 43)
+      e1.fire(3)
+      assert(reactor.now === 40)
+      e1.fire(10)
+      assert(reactor.now === 50)
+      e1.fire(50)
+      assert(reactor.now === 0)
+    }
   }
 }
