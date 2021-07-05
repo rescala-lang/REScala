@@ -188,7 +188,7 @@ class ReactorWithoutAPITest extends RETests {
           body = {
             StageBuilder().set("Body value")
           },
-          interrupt = { _ =>
+          interruptHandler = { _ =>
             StageBuilder().set("Interrupt value")
           }
         )
@@ -206,7 +206,7 @@ class ReactorWithoutAPITest extends RETests {
           body = {
             StageBuilder().set("Body value")
           },
-          interrupt = { eventValue =>
+          interruptHandler = { eventValue =>
             StageBuilder().set(eventValue)
           }
         )
@@ -229,7 +229,7 @@ class ReactorWithoutAPITest extends RETests {
               }
             }
           },
-          interrupt = { _ =>
+          interruptHandler = { _ =>
             StageBuilder().set("Interrupted")
           }
         )

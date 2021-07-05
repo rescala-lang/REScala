@@ -187,20 +187,55 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
     def next[E](event: Event[E])(body: E => StageBuilder[T]): StageBuilder[T] = {
       addAction(ReactorAction.NextAction(event, body))
     }
+
+    /** Waits until the event is triggered.
+      *
+      * When the event is triggered the given body is executed in the
+      * same transaction.
+      *
+      * @param event the event to wait for.
+      * @param body  the code to execute when the event is triggered.
+      */
     def next(event: Event[Unit])(body: => StageBuilder[T]): StageBuilder[T] = {
       addAction(ReactorAction.NextAction(event, (_: Unit) => body))
     }
 
-    def read(stageBuilder: T => StageBuilder[T]): StageBuilder[T] = {
-      addAction(ReactorAction.ReadAction(stageBuilder))
+    /** Reads the current reactor value.
+      *
+      * Executes the body with the current reactor value
+      * and expects another [[StageBuilder]] as result.
+      *
+      * A usage example could be returning different [[StageBuilder]]s
+      * depending on the event value.
+      *
+      * @param body The function building the resulting [[StageBuilder]]
+      */
+    def read(body: T => StageBuilder[T]): StageBuilder[T] = {
+      addAction(ReactorAction.ReadAction(body))
     }
 
+    /** Executes the body in a loop.
+      *
+      * @param body The [[StageBuilder]] to be executes repeatedly
+      */
     def loop(body: => StageBuilder[T]): StageBuilder[T] = {
       addAction(ReactorAction.LoopAction(body, body))
     }
 
-    def until[E](event: Event[E])(body: => StageBuilder[T], interrupt: E => StageBuilder[T]): StageBuilder[T] = {
-      addAction(ReactorAction.UntilAction(event, body, interrupt))
+    /** Executes it's body until an event is fired.
+      *
+      * Until executes the body until the given event is fired.
+      * When the event is fired, until executes the interruptHandler.
+      *
+      * @param event The event indicating the interrupt.
+      * @param body The [[StageBuilder]] to be executes by default.
+      * @param interruptHandler A function taking the interrupt event's value
+      *                         and returning a [[StageBuilder]].
+      *                         It is executed when the interrupt is fired.
+      * @tparam E The type of the event value.
+      */
+    def until[E](event: Event[E])(body: => StageBuilder[T], interruptHandler: E => StageBuilder[T]): StageBuilder[T] = {
+      addAction(ReactorAction.UntilAction(event, body, interruptHandler))
     }
   }
 }
