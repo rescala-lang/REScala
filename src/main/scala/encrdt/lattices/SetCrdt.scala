@@ -1,5 +1,5 @@
 package de.ckuessner
-package encrdt.experiments
+package encrdt.lattices
 
 trait SetCrdt[T] {
   def add(element: T)

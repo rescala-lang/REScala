@@ -1,18 +1,20 @@
 package de.ckuessner
-package encrdt.experiments
+package encrdt.lattices
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromString, writeToString}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 
-class TwoPhaseSetCrdtSpec extends AnyFlatSpec {
+class TwoPhaseSetSpec extends AnyFlatSpec {
+
+  implicit def twoPhaseIntSetCodec: JsonValueCodec[TwoPhaseSetLattice[Int]] = JsonCodecMaker.make
 
   "A TwoPhaseSetCrdt" should "merge with empty crdt" in {
-    val left = new TwoPhaseSetCrdt[String](1)
-    val right = new TwoPhaseSetCrdt[String](2)
+    val left = new TwoPhaseSet[String](1)
+    val right = new TwoPhaseSet[String](2)
 
-    assertResult(TwoPhaseSetState()) {
+    assertResult(TwoPhaseSetLattice()) {
       left.merge(right.state)
       left.state
     }
@@ -20,7 +22,7 @@ class TwoPhaseSetCrdtSpec extends AnyFlatSpec {
   }
 
   it should "handle add correctly" in {
-    val left = new TwoPhaseSetCrdt[Int](1)
+    val left = new TwoPhaseSet[Int](1)
 
     assertResult(Set(1)) {
       left.add(1)
@@ -36,7 +38,7 @@ class TwoPhaseSetCrdtSpec extends AnyFlatSpec {
   }
 
   it should "handle simple remove correctly" in {
-    val left = new TwoPhaseSetCrdt[Int](1)
+    val left = new TwoPhaseSet[Int](1)
 
     left.add(1)
 
@@ -58,7 +60,7 @@ class TwoPhaseSetCrdtSpec extends AnyFlatSpec {
   }
 
   it should "not add element after removal of same element" in {
-    val left = new TwoPhaseSetCrdt[Int](1)
+    val left = new TwoPhaseSet[Int](1)
     left.add(1)
     left.remove(1)
     assertResult(Set()) {
@@ -68,11 +70,10 @@ class TwoPhaseSetCrdtSpec extends AnyFlatSpec {
   }
 
   it should "serialize and deserialize" in {
-    val crdtState = TwoPhaseSetState[Int]()
-    implicit val intCode: JsonValueCodec[Int] = JsonCodecMaker.make
+    val crdtState = TwoPhaseSetLattice[Int]()
 
     val serialized = writeToString(crdtState)
-    val deserialized = readFromString[TwoPhaseSetState[Int]](serialized)
+    val deserialized = readFromString[TwoPhaseSetLattice[Int]](serialized)
 
     deserialized shouldBe crdtState
   }
