@@ -1,25 +1,25 @@
 package de.ckuessner
-package encrdt.experiments
+package encrdt.lattices
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 
-class AddWinsSetCrdt[T](val replicaId: Int) extends SetCrdt[T] {
+class AddWinsSet[T](val replicaId: Int) extends SetCrdt[T] {
 
-  private var _state: AddWinsSetState[T] = AddWinsSetState[T]()
+  private var _state: AddWinsSetLattice[T] = AddWinsSetLattice[T]()
 
-  def this(replicaId: Int, initialState: AddWinsSetState[T]) {
+  def this(replicaId: Int, initialState: AddWinsSetLattice[T]) {
     this(replicaId)
     _state = initialState
   }
 
-  private def state_=(state: AddWinsSetState[T]) {
+  private def state_=(state: AddWinsSetLattice[T]) {
     _state = state
   }
 
-  def state: AddWinsSetState[T] = _state
+  def state: AddWinsSetLattice[T] = _state
 
-  def merge(remoteState: AddWinsSetState[T]): Unit = SemiLattice.merged(state, remoteState)
+  def merge(remoteState: AddWinsSetLattice[T]): Unit = SemiLattice.merged(state, remoteState)
 
   def add(element: T): Unit = {
     state = state.added(element, replicaId)
@@ -36,16 +36,16 @@ class AddWinsSetCrdt[T](val replicaId: Int) extends SetCrdt[T] {
 }
 
 // insertions: Set[(element, time, replicaId)]
-case class AddWinsSetState[T](elements: Set[(T, Int, Int)] = Set[(T, Int, Int)](),
-                              clocks: Map[Int, Int] = Map[Int, Int]()) {
+case class AddWinsSetLattice[T](elements: Set[(T, Int, Int)] = Set[(T, Int, Int)](),
+                                clocks: Map[Int, Int] = Map[Int, Int]()) {
 
   def values(): Set[T] = elements.map(_._1)
 
-  def removed(element: T): AddWinsSetState[T] = {
+  def removed(element: T): AddWinsSetLattice[T] = {
     copy(elements = elements.filter(_._1 == element))
   }
 
-  def added(newElem: T, replicaId: Int): AddWinsSetState[T] = {
+  def added(newElem: T, replicaId: Int): AddWinsSetLattice[T] = {
     // Prepare
     val newTime = clocks.getOrElse(replicaId, 1)
     val clocksAfterAdd = clocks + (replicaId -> newTime)
@@ -57,15 +57,15 @@ case class AddWinsSetState[T](elements: Set[(T, Int, Int)] = Set[(T, Int, Int)](
         elem == newElem && replicaOfElem == replicaId && clockOfElem < newTime
     }
 
-    AddWinsSetState(elementsAfterAdd, clocksAfterAdd)
+    AddWinsSetLattice(elementsAfterAdd, clocksAfterAdd)
   }
 
 }
 
-object AddWinsSetState {
+object AddWinsSetLattice {
   // See: arXiv:1210.3368
-  implicit def AddWinsSetSemiLattice[T]: SemiLattice[AddWinsSetState[T]] =
-    (left: AddWinsSetState[T], right: AddWinsSetState[T]) => {
+  implicit def AddWinsSetSemiLattice[T]: SemiLattice[AddWinsSetLattice[T]] =
+    (left: AddWinsSetLattice[T], right: AddWinsSetLattice[T]) => {
       // If it's present in both, it wasn't removed
       val presentInBoth = left.elements & right.elements
 
@@ -82,9 +82,9 @@ object AddWinsSetState {
         .map(key => key -> left.clocks.getOrElse(key, 0).max(right.clocks.getOrElse(key, 0)))
         .toMap
 
-      AddWinsSetState(elementsAfterMerge.values.toSet, clocksAfterMerge)
+      AddWinsSetLattice(elementsAfterMerge.values.toSet, clocksAfterMerge)
     }
 
-  implicit def codec[T](implicit jsonValueCodec: JsonValueCodec[T]): JsonValueCodec[AddWinsSetState[T]] =
-    JsonCodecMaker.make[AddWinsSetState[T]]
+  implicit def codec[T](implicit jsonValueCodec: JsonValueCodec[T]): JsonValueCodec[AddWinsSetLattice[T]] =
+    JsonCodecMaker.make[AddWinsSetLattice[T]]
 }

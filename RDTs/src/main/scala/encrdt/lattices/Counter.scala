@@ -1,5 +1,5 @@
 package de.ckuessner
-package encrdt.experiments
+package encrdt.lattices
 
 import com.github.plokhotnyuk.jsoniter_scala.core._
 import com.github.plokhotnyuk.jsoniter_scala.macros._
@@ -7,23 +7,23 @@ import com.github.plokhotnyuk.jsoniter_scala.macros._
 /**
  * Counter CRDT using states
  */
-class CounterCrdt(val replicaId: Int) {
+class Counter(val replicaId: Int) {
 
-  def this(replicaId: Int, initialState: CounterCrdtState) {
+  def this(replicaId: Int, initialState: CounterCrdtLattice) {
     this(replicaId)
     this.state = initialState
   }
 
   // Local state of the CRDT
-  private var _state = CounterCrdtState()
+  private var _state = CounterCrdtLattice()
 
-  def state: CounterCrdtState = _state
+  def state: CounterCrdtLattice = _state
 
-  private def state_=(state: CounterCrdtState): Unit = {
+  private def state_=(state: CounterCrdtLattice): Unit = {
     _state = state
   }
 
-  def merge(remoteState: CounterCrdtState): Unit = {
+  def merge(remoteState: CounterCrdtLattice): Unit = {
     state = SemiLattice.merged(state, remoteState)
   }
 
@@ -37,10 +37,10 @@ class CounterCrdt(val replicaId: Int) {
 
 
 // Encapsulates the state of the CRDT
-case class CounterCrdtState(positiveCounts: Map[Int, Int] = Map(),
-                            negativeCounts: Map[Int, Int] = Map()) {
+case class CounterCrdtLattice(positiveCounts: Map[Int, Int] = Map(),
+                              negativeCounts: Map[Int, Int] = Map()) {
 
-  def updated(replicaId: Int, delta: Int): CounterCrdtState = {
+  def updated(replicaId: Int, delta: Int): CounterCrdtLattice = {
     if (delta > 0) this.copy(
       positiveCounts = positiveCounts.updatedWith(replicaId)(value => Some(value.getOrElse(0) + delta))
     )
@@ -53,11 +53,11 @@ case class CounterCrdtState(positiveCounts: Map[Int, Int] = Map(),
   def query(): Int = positiveCounts.values.sum - negativeCounts.values.sum
 }
 
-object CounterCrdtState {
-  implicit val jsonCodec: JsonValueCodec[CounterCrdtState] = JsonCodecMaker.make
+object CounterCrdtLattice {
+  implicit val jsonCodec: JsonValueCodec[CounterCrdtLattice] = JsonCodecMaker.make
 
-  implicit val semiLattice: SemiLattice[CounterCrdtState] = (left: CounterCrdtState, right: CounterCrdtState) =>
-    CounterCrdtState(
+  implicit val semiLattice: SemiLattice[CounterCrdtLattice] = (left: CounterCrdtLattice, right: CounterCrdtLattice) =>
+    CounterCrdtLattice(
       mergeCounterMaps(left.positiveCounts, right.positiveCounts),
       mergeCounterMaps(left.negativeCounts, right.negativeCounts)
     )

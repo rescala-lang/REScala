@@ -1,5 +1,7 @@
 package de.ckuessner
-package encrdt.experiments
+package encrdt.encrypted
+
+import encrdt.lattices.SemiLattice
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker

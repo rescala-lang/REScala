@@ -1,8 +1,9 @@
 package de.ckuessner
-package encrdt.experiments
+package encrdt.encrypted
 
 import com.google.crypto.tink.aead.AeadConfig
 import com.google.crypto.tink.{Aead, KeyTemplates, KeysetHandle}
+import de.ckuessner.encrdt.lattices.CounterCrdtLattice
 import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.util.Random
@@ -13,7 +14,7 @@ class EncryptedCrdtSpec extends AnyFlatSpec {
   val aead: Aead = keyset.getPrimitive(classOf[Aead])
 
   "EncryptedCrdt" should "unseal for simple example with CounterCrdt" in {
-    val counterCrdtState = CounterCrdtState(Map(123 -> 12, 42 -> 21), Map(4711 -> 1, 42 -> 12))
+    val counterCrdtState = CounterCrdtLattice(Map(123 -> 12, 42 -> 21), Map(4711 -> 1, 42 -> 12))
 
     val encCrdt = EncryptedCrdt.from(counterCrdtState, aead).get
     assertResult(counterCrdtState) {
@@ -22,8 +23,8 @@ class EncryptedCrdtSpec extends AnyFlatSpec {
   }
 
   it should "merge for CounterCrdt and unseal to correct Crdt" in {
-    val encCrdt = new EncryptedCrdt[CounterCrdtState](aead)
-    var crdtState = CounterCrdtState()
+    val encCrdt = new EncryptedCrdt[CounterCrdtLattice](aead)
+    var crdtState = CounterCrdtLattice()
 
     val r = new Random()
     for (_ <- 1 to 10) {
