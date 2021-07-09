@@ -63,7 +63,7 @@ object CContext {
       cc.foldLeft(List.empty[Set[Dot]]) {
         case (l, dot) =>
           if (exclude(dot)) l
-          else l :+ Set(dot)
+          else Set(dot) :: l
       }
 
     override def forall(cc: Set[Dot], cond: Dot => Boolean): Boolean = cc.forall(cond)
@@ -123,10 +123,10 @@ object CContext {
     override def decompose(cc: Map[String, Diet[Int]], exclude: Dot => Boolean): Iterable[Map[String, Diet[Int]]] =
       cc.foldLeft(List.empty[Map[String, Diet[Int]]]) {
         case (list, (id, diet)) =>
-          list ++ diet.foldLeft(List.empty[Map[String, Diet[Int]]]) {
+          diet.foldLeft(list) {
             case (l, c) =>
               if (exclude(Dot(id, c))) l
-              else l :+ Map(id -> Diet.one(c))
+              else Map(id -> Diet.one(c)) :: l
           }
       }
 
