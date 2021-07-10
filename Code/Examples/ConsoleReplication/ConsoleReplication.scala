@@ -15,7 +15,7 @@ import rescala.extra.lattices.delta.Codecs._
 import scala.concurrent.Future
 import scala.util.matching.Regex
 import com.monovore.decline.{Command, CommandApp, Opts}
-import loci.transmitter.RemoteRef
+import loci.transmitter.{RemoteAccessException, RemoteRef}
 import rescala.extra.lattices.delta.{Delta, UIJDLattice}
 
 import java.util.concurrent.FutureTask
@@ -106,7 +106,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
       sendDeltas()
       set = set.resetDeltaBuffer()
 
-      println("Received Delta, new state:")
+      println("Received Delta")
       println(set.elements)
     }
 
@@ -145,21 +145,54 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
       }
     }
 
+    def sendRecursive(
+        remoteReceiveDelta: AWSet.State[Int, DietMapCContext] => Future[Unit],
+        delta: AWSet.State[Int, DietMapCContext]
+    ): Unit = {
+      new FutureTask[Unit](() => {
+        def attemptSend(
+            atoms: Iterable[AWSet.State[Int, DietMapCContext]],
+            merged: AWSet.State[Int, DietMapCContext]
+        ): Unit = {
+          remoteReceiveDelta(merged).failed.foreach {
+            case e: RemoteAccessException => e.reason match {
+                case RemoteAccessException.RemoteException(name, _) if name.contains("JsonReaderException") =>
+                  val a =
+                    if (atoms.isEmpty) UIJDLattice[AWSet.State[Int, DietMapCContext]].decompose(merged)
+                    else atoms
+
+                  val atomsSize = a.size
+
+                  val firstHalf  = a.take(atomsSize / 2)
+                  val secondHalf = a.drop(atomsSize / 2)
+
+                  attemptSend(firstHalf, firstHalf.reduce(UIJDLattice[AWSet.State[Int, DietMapCContext]].merge))
+                  attemptSend(secondHalf, secondHalf.reduce(UIJDLattice[AWSet.State[Int, DietMapCContext]].merge))
+                case _ => e.printStackTrace()
+              }
+            case e => e.printStackTrace()
+          }
+        }
+
+        attemptSend(List(), delta)
+      }).run()
+    }
+
     registry.remoteJoined.monitor { rr =>
-      registry.lookup(receiveDeltaBinding, rr)(set.state)
+      sendRecursive(registry.lookup(receiveDeltaBinding, rr), set.state)
     }
 
     while (true) {
       readLine() match {
         case add(n) =>
           set = set.add(n.toInt)
-          println(s"Added $n, new state:")
+          println(s"Added $n")
           println(set.elements)
           sendDeltas()
 
         case remove(n) =>
           set = set.remove(n.toInt)
-          println(s"Removed $n, new state:")
+          println(s"Removed $n")
           println(set.elements)
           sendDeltas()
 
