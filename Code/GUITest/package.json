@@ -1,0 +1,10 @@
+{
+  "name": "TodolistGUITest",
+  "devDependencies": {
+    "css-loader": "^5.2.6"
+  },
+  "dependencies": {
+    "sass": "^1.35.2",
+    "sass-loader": "^10.1.1"
+  }
+}
