@@ -6,7 +6,6 @@ import java.util.concurrent.atomic.AtomicInteger
 import benchmarks.{EngineParam, Workload}
 import org.openjdk.jmh.annotations._
 import rescala.interface.RescalaInterface
-import rescala.operator._
 
 @AuxCounters
 @State(Scope.Thread)
