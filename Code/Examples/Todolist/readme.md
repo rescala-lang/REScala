@@ -50,8 +50,9 @@ scalajs-dom, see build.sbt for required versions.
 Run with:
 
 ~~~
-$ npm install             # get js dependencies
-$ sbt fastOptJS           # get scala dependencies and compile scala to js
+cd "REScala main repository"
+$ sbt "project todolist" fastOptJS           # get scala dependencies and compile scala to js
+cd "todolist subfolder (this file)"
 $ firefox index.html      # open todomvc    in browser
 ~~~
 
