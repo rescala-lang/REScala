@@ -175,7 +175,7 @@ lazy val dividiParoli = project.in(file("Code/Examples/dividiParoli"))
       jline.value,
       "org.scalafx"                %% "scalafxml-core-sfx8"     % "0.5",
       "com.jfoenix"                 % "jfoenix"                 % "9.0.10",
-      "com.typesafe.scala-logging" %% "scala-logging"           % "3.9.3",
+      "com.typesafe.scala-logging" %% "scala-logging"           % "3.9.4",
       "ch.qos.logback"              % "logback-classic"         % "1.2.3",
       "com.typesafe.akka"          %% "akka-slf4j"              % V.akkaActors,
       "com.typesafe.akka"          %% "akka-actor"              % V.akkaActors,
@@ -357,11 +357,11 @@ lazy val addScalafxDependencies = {
   }
   Seq(
     libraryDependencies ++= Seq(
-      "org.scalafx" %% "scalafx" % "15.0.1-R21",
+      "org.scalafx" %% "scalafx" % "16.0.0-R24",
       scalaSwing.value,
     ),
     libraryDependencies ++= Seq("base", "controls", "fxml", "graphics", "media", "swing", "web").map(m =>
-      "org.openjfx" % s"javafx-$m" % "15.0.1" classifier osName
+      "org.openjfx" % s"javafx-$m" % "16" classifier osName
     )
     // (Compile / unmanagedJars) += Attributed.blank(file(System.getenv("JAVA_HOME") + "/lib/ext/jfxrt.jar"))
   )
