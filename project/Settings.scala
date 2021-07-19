@@ -34,7 +34,7 @@ object Settings {
         case a if a.startsWith("2.11") => scalacOptionsCommon ++ scalaOptions12minus
         case a if a.startsWith("2.12") => scalacOptionsCommon ++ scalacOptions12plus ++ scalaOptions12minus
         case a if a.startsWith("2.13") => scalacOptionsCommon ++ scalacOptions12plus ++ scalaOptions13
-        case a if a.startsWith("0.") || a.startsWith("3.0") => Seq("-language:Scala2Compat,implicitConversions")
+        case a if a.startsWith("0.") || a.startsWith("3.0") => scalaOptions3
       }
     )
 
@@ -93,6 +93,12 @@ object Settings {
   )
   lazy val scalaOptions13: Seq[String] = Seq(
     // "-Xsource:3"
+  )
+  lazy val scalaOptions3 = Seq(
+    "-language:implicitConversions",
+    "-Ysafe-init",
+    "-print-tasty",
+    //"-Yexplicit-nulls",
   )
 
   val strictCompile = Compile / compile / scalacOptions += "-Xfatal-warnings"
