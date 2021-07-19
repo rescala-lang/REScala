@@ -9,14 +9,16 @@ object Main {
 
     def iReturnThee = iAmThree
 
-    val derived = dottyEventExpression(iAmAnEvt.value)
+    val derived = dottyEventExpression[Int] {
+      (iAmAnEvt.value, iAmToo.value) match {
+        case (None, b) => b
+        case (a, None) => a
+        case (Some(a), Some(b)) => Some(a + b)
+        case other => None
+      }
+    }
 
     derived.observe(println)
-
-    //dottyEventExpression {
-    //  val dep = iAmToo.value
-    //  dep.map(_.toString)
-    //}
 
     //Events.dynamic() { dt =>
     //  {
@@ -33,6 +35,7 @@ object Main {
     //    None
     //  }
     //}
+    iAmToo.fire(10)
     iAmAnEvt.fire(5)
     iAmThree.fire(6)
   }
