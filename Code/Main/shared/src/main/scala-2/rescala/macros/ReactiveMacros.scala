@@ -3,37 +3,12 @@ package rescala.macros
 import rescala.operator.cutOutOfUserComputation
 import retypecheck._
 
-import scala.annotation.compileTimeOnly
 import scala.reflect.macros.blackbox
 
 object MacroTags {
   type Staticism
   type Static <: Staticism
   type Dynamic <: Staticism
-}
-
-trait MacroAccess[+A, +T] {
-
-  /** Makes the enclosing reactive expression depend on the current value of the reactive.
-    * Is an alias for [[value]].
-    *
-    * @group accessor
-    * @see value
-    */
-  @compileTimeOnly(s"${this} apply can only be used inside of reactive expressions")
-  final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of acro")
-
-  /** Makes the enclosing reactive expression depend on the current value of the reactive.
-    * Is an alias for [[apply]].
-    *
-    * @group accessor
-    * @see apply
-    */
-  @compileTimeOnly("value can only be used inside of reactive expressions")
-  final def value: A = throw new IllegalAccessException(s"$this.value called outside of macro")
-
-  def resource: T
-
 }
 
 class ReactiveMacros(val c: blackbox.Context) {

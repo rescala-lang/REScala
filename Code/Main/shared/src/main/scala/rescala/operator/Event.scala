@@ -3,6 +3,7 @@ package rescala.operator
 import rescala.compat.EventCompatApi
 import rescala.core._
 import rescala.interface.RescalaInterface
+import rescala.macros.InterpBundle
 import rescala.operator.Pulse.{Exceptional, NoChange, Value}
 import rescala.operator.RExceptions.ObservedException
 
@@ -31,7 +32,7 @@ object EventsMacroImpl {
 
 }
 
-trait EventApi extends EventCompatApi {
+trait EventApi extends EventCompatApi with InterpBundle {
   selfType: RescalaInterface with SignalApi with Sources with DefaultImplementations with Observing
     with Core =>
 
@@ -54,7 +55,7 @@ trait EventApi extends EventCompatApi {
     * @groupname accessors Accessors and observers
     * @groupprio accessor 5
     */
-  trait Event[+T] extends ReSource with EventCompat[T] with Disconnectable {
+  trait Event[+T] extends ReSource with EventCompat[T] with InterpMacro[Option[T]] with Disconnectable {
 
     implicit def internalAccess(v: Value): Pulse[T]
     def resource: Interp[Option[T]] = this
