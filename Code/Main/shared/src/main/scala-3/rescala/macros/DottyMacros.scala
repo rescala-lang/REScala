@@ -34,11 +34,14 @@ def detectImpl[T: Type](expr: Expr[Option[T]])(using Quotes): Expr[Event[T]] =
       import quotes.reflect.*
       e match {
         case '{(${x}: MacroAccess[_, interp]).value} =>
-          println(s"type: ${TypeRepr.of[T].widen}")
+          println(s"type ${TypeRepr.of[T].show}")
+          println(s"wide type: ${TypeRepr.of[T].widen.show}")
           val wideType = TypeRepr.of[T].widen.asType
-          val term = replacement(x).asExprOf[Interp[T]]
+          val replaced = replacement(x)
+          println(s"replace: ${replaced.show}")
+          val term = replaced.asExprOf[Interp[T]]
           println(s"term: ${term.show}")
-          '{(${staticTicket.asExprOf[StaticTicket]}.dependStatic(${term}))}
+          '{(${staticTicket.asExprOf[StaticTicket]}.dependStatic[T](${term}))}
         case _ => transformChildren(e)
       }
     }
