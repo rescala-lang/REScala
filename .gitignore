@@ -32,3 +32,4 @@ website/
 out/
 .bsp/
 *.jfr
+Code/GUITest/reports/
