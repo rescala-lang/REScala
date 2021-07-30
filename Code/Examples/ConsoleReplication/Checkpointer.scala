@@ -21,7 +21,7 @@ class Checkpointer(listenPort: Int) {
   def run(): Unit = {
     registry.bind(assessCheckpointBinding) {
       case SyncMessage(cp, deltaState) =>
-        val apply = (cp + 1 to checkpoint).map(checkpointToDelta).foldLeft(bottom)(UIJDLattice[SetState].merge)
+        val apply = (cp + 1 to checkpoint).map(checkpointToDelta).toList
 
         UIJDLattice[SetState].diff(fullState, deltaState) match {
           case None =>

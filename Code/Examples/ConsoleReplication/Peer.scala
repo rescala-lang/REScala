@@ -118,8 +118,8 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
             case Failure(e) => e.printStackTrace()
 
             case Success(CheckpointMessage(cp, apply, keep)) =>
-              checkpoint = cp
-              set = set.applyDelta(Delta(id, apply))
+              if (cp > checkpoint) checkpoint = cp
+              set = apply.foldLeft(set)((s, d) => s.applyDelta(Delta(id, d))).resetDeltaBuffer()
               changesSinceCP = keep
           }
         }

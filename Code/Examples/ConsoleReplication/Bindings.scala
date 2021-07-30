@@ -16,7 +16,7 @@ object Bindings {
 
   case class SyncMessage(cp: Int, deltaState: SetState)
 
-  case class CheckpointMessage(cp: Int, apply: SetState, keep: SetState)
+  case class CheckpointMessage(cp: Int, apply: List[SetState], keep: SetState)
 
   implicit val IntCodec: JsonValueCodec[Int] = JsonCodecMaker.make
 
