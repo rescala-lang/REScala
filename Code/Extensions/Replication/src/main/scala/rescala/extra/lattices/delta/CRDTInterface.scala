@@ -9,7 +9,7 @@ trait CRDTInterface[State, Wrapper] {
 
   protected def query[A](q: DeltaQuery[State, A]): A = q(state)
 
-  protected def mutate(m: DeltaMutator[State])(implicit u: UIJDLattice[State]): Wrapper =
+  def mutate(m: DeltaMutator[State])(implicit u: UIJDLattice[State]): Wrapper =
     applyDelta(Delta(replicaID, m(replicaID, state)))
 
   def applyDelta(delta: Delta[State])(implicit u: UIJDLattice[State]): Wrapper

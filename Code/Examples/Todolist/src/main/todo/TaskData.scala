@@ -12,8 +12,9 @@ import rescala.extra.Tags._
 import rescala.extra.distributables.LociDist
 import rescala.extra.lattices.delta.CContext._
 import rescala.extra.lattices.delta.Codecs._
-import rescala.extra.lattices.delta.Delta
+import rescala.extra.lattices.delta.{Delta, TimedVal}
 import rescala.extra.lattices.delta.crdt.reactive.LWWRegister
+import rescala.extra.lattices.delta.interfaces.MVRegisterInterface
 import scalatags.JsDom.TypedTag
 import src.main.todo.Todolist.replicaId
 import scalatags.JsDom.all._
@@ -72,7 +73,7 @@ class TaskRefObj(toggleAll: Event[UIEvent]) {
     val lwwInit = LWWRegister[TaskData, DietMapCContext](replicaId)
 
     val lww = task match {
-      case None    => lwwInit
+      case None    => lwwInit.mutate((replicaID, state) => MVRegisterInterface.write[TimedVal[TaskData], DietMapCContext](TimedVal(TaskData("<empty>"), replicaID, 0, 0)).apply(replicaID, state))
       case Some(v) => lwwInit.write(v)
     }
 
