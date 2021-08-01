@@ -1,6 +1,7 @@
 package rescala.extra
 
 import org.scalajs.dom
+import org.scalajs.dom.html.Input
 import org.scalajs.dom.{Element, Node}
 import rescala.interface.RescalaInterface
 import scalatags.JsDom.all.{Attr, AttrValue, Modifier, Style, StyleValue}
@@ -149,7 +150,11 @@ class Tags[Api <: RescalaInterface](val api: Api) {
     new AttrValue[Sig[T]] {
       def apply(t: dom.Element, a: Attr, signal: Sig[T]): Unit = {
         Observe.strong(signal, fireImmediately = true)(tagObserver(t, signal) { value =>
+          // hack because scalatags seems to add classes instead of replacing
           t.removeAttribute(a.name)
+          // hack to also change the current value of an input, not just the value attribute …
+          if (a.name == "value" && t.isInstanceOf[Input] && value.isInstanceOf[String])
+            t.asInstanceOf[Input].value = value.asInstanceOf[String]
           implicitly[AttrValue[T]].apply(t, a, value)
         })(engine)
       }
