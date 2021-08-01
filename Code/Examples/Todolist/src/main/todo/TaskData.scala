@@ -21,32 +21,41 @@ import java.util.concurrent.ThreadLocalRandom
 import scala.Function.const
 import scala.scalajs.js.timers.setTimeout
 
-case class TodoTask(
-    id: String = s"Task(${ThreadLocalRandom.current().nextLong().toHexString})",
+case class TaskData(
     desc: String,
     done: Boolean = false
 ) {
-  def toggle(): TodoTask          = copy(done = !done)
-  def edit(str: String): TodoTask = copy(desc = str)
+  def toggle(): TaskData          = copy(done = !done)
+  def edit(str: String): TaskData = copy(desc = str)
 }
 
-object TodoTask {
-  implicit val todoTaskCodec: JsonValueCodec[TodoTask] = JsonCodecMaker.make
+object TaskData {
+  implicit val todoTaskCodec: JsonValueCodec[TaskData] = JsonCodecMaker.make
 }
 
-case class TodoTaskView(tag: TypedTag[LI], removeEvt: Event[String], writeEvt: Event[TodoTask])
+final class TaskRef(
+    val task: Signal[LWWRegister[TaskData, DietMapCContext]],
+    val tag: TypedTag[LI],
+    val removed: Event[String],
+    val id: String,
+) {
+  override def hashCode(): Int = id.hashCode
+  override def equals(obj: Any): Boolean = obj match {
+    case other: TaskRef => id == other.id
+    case _              => false
+  }
+}
 
-object TodoTaskView {
-  implicit val transmittableLWW: IdenticallyTransmittable[LWWRegister.State[TodoTask, DietMapCContext]] =
+object TaskRef {
+  implicit val transmittableLWW: IdenticallyTransmittable[LWWRegister.State[TaskData, DietMapCContext]] =
     IdenticallyTransmittable()
 
   def signalAndUI(
       replicaID: String,
-      taskID: String,
-      task: Option[TodoTask],
-      toggleAll: Event[UIEvent]
-  ): (Signal[LWWRegister[TodoTask, DietMapCContext]], TypedTag[LI], Event[String]) = {
-    val lwwInit = LWWRegister[TodoTask, DietMapCContext](replicaID)
+      task: Option[TaskData],
+      toggleAll: Event[UIEvent],
+  ): TaskRef = {
+    val lwwInit = LWWRegister[TaskData, DietMapCContext](replicaID)
 
     val lww = task match {
       case None    => lwwInit
@@ -73,7 +82,7 @@ object TodoTaskView {
 
     val doneEv = toggleAll || doneClick.event
 
-    val deltaEvt = Evt[Delta[LWWRegister.State[TodoTask, DietMapCContext]]]()
+    val deltaEvt = Evt[Delta[LWWRegister.State[TaskData, DietMapCContext]]]()
 
     val crdt = Events.foldAll(lww)(current =>
       Seq(
@@ -83,11 +92,13 @@ object TodoTaskView {
       )
     )
 
+    val taskID = s"Task(${ThreadLocalRandom.current().nextLong().toHexString})"
+
     LociDist.distributeDeltaCRDT(crdt, deltaEvt, Todolist.registry)(
-      Binding[LWWRegister.State[TodoTask, DietMapCContext] => Unit](taskID)
+      Binding[LWWRegister.State[TaskData, DietMapCContext] => Unit](taskID)
     )
 
-    val taskData = crdt.map(_.read.getOrElse(TodoTask(desc = "LWW Empty")))
+    val taskData = crdt.map(_.read.getOrElse(TaskData(desc = "LWW Empty")))
 
     val removeButton =
       Events.fromCallback[UIEvent](cb => button(`class` := "destroy", onclick := cb))
@@ -100,7 +111,7 @@ object TodoTaskView {
       editDiv.value(
         input(
           `class` := "toggle",
-          `type` := "checkbox",
+          `type`  := "checkbox",
           doneClick.value,
           checked := taskData.map(c => if (c.done) Some(checked.v) else None)
         ),
@@ -110,51 +121,6 @@ object TodoTaskView {
       editInput
     )
 
-    (crdt, listItem, removeButton.event.map(_ => taskID))
-  }
-
-  def fromTask(task: TodoTask): TodoTaskView = {
-    val edittext = Events.fromCallback[UIEvent] { inputChange =>
-      input(`class` := "edit", `type` := "text", onchange := inputChange, onblur := inputChange)
-    }
-
-    val edittextStr = edittext.event.map { e: UIEvent =>
-      val myinput = e.target.asInstanceOf[Input]
-      myinput.value.trim
-    }
-
-    val editDiv = Events.fromCallback[UIEvent] { cb =>
-      div(`class` := "view", ondblclick := cb)
-    }
-
-    val changeEditing = (edittextStr map const(false)) || (editDiv.event map const(true))
-    val editingV      = changeEditing.latest(init = false)(implicitly)
-
-    val doneClick = Events.fromCallback[UIEvent](onchange := _)
-
-    val writeEvt = doneClick.event.map(_ => task.toggle()) || edittextStr.map(str => task.edit(str))
-
-    val removeButton =
-      Events.fromCallback[UIEvent](cb => button(`class` := "destroy", onclick := cb))
-
-    val editInput = edittext.value(value := task.desc).render
-    editDiv.event.observe(_ => setTimeout(0) { editInput.focus() })
-
-    val listItem = li(
-      `class` := editingV.map(if (_) "editing" else "no-editing"),
-      editDiv.value(
-        input(
-          `class` := "toggle",
-          `type` := "checkbox",
-          doneClick.value,
-          checked := (if (task.done) Some(checked.v) else None)
-        ),
-        label(stringFrag(task.desc)),
-        removeButton.value
-      ),
-      editInput
-    )
-
-    TodoTaskView(listItem, removeButton.event.map(_ => task.id), writeEvt)
+    new TaskRef(crdt, listItem, removeButton.event.map(_ => taskID), taskID)
   }
 }

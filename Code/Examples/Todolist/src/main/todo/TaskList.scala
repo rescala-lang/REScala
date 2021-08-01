@@ -13,77 +13,52 @@ import java.util.concurrent.ThreadLocalRandom
 
 class TaskList(toggleAll: Event[UIEvent]) {
 
-  case class State(
-      list: RGA[String, DietMapCContext],
-      signalMap: Map[String, Signal[LWWRegister[TodoTask, DietMapCContext]]],
-      uiMap: Map[String, TypedTag[LI]],
-      evtMap: Map[String, Event[String]]
-  )
+  type State = RGA[TaskRef, DietMapCContext]
 
-  val myID: String = ThreadLocalRandom.current().nextLong().toHexString
+  val replicaId: String = ThreadLocalRandom.current().nextLong().toHexString
 
-  def listInitial: RGA[String, DietMapCContext] = RGA[String, DietMapCContext](myID)
+  def listInitial: State = RGA[TaskRef, DietMapCContext](replicaId)
 
-  def handleCreateTodo(s: => State)(desc: String): State = {
-    val State(list, signalMap, uiMap, evtMap) = s
+  def handleCreateTodo(state: => State)(desc: String): State = {
 
-    val newTask = TodoTask(desc = desc)
+    val newTask = TaskData(desc)
 
-    val (signal, ui, evt) = TodoTaskView.signalAndUI(myID, newTask.id, Some(newTask), toggleAll)
+    val taskref = TaskRef.signalAndUI(replicaId, Some(newTask), toggleAll)
 
-    val newList = list.resetDeltaBuffer().prepend(newTask.id)
+    state.resetDeltaBuffer().prepend(taskref)
 
-    State(newList, signalMap + (newTask.id -> signal), uiMap + (newTask.id -> ui), evtMap + (newTask.id -> evt))
   }
 
-  def handleRemoveAll(s: => State, dt: DynamicTicket): State = {
-    val State(list, signalMap, uiMap, evtMap) = s
-
-    val removeIDs = signalMap.values.collect { sig =>
-      dt.depend(sig).read match {
-        case Some(TodoTask(id, _, true)) => id
-      }
-    }.toSet
-
-    val newList = list.resetDeltaBuffer().deleteBy(removeIDs.contains)
-
-    // todo, move to observer, disconnect during transaction does not respect rollbacks
-    removeIDs.foreach { signalMap(_).disconnect() }
-
-    State(newList, signalMap -- removeIDs, uiMap -- removeIDs, evtMap -- removeIDs)
+  def handleRemoveAll(state: => State, dt: DynamicTicket): State = {
+    state.resetDeltaBuffer().deleteBy { taskref =>
+      val isDone = dt.depend(taskref.task).read.exists(_.done)
+      // todo, move to observer, disconnect during transaction does not respect rollbacks
+      if (isDone) taskref.task.disconnect()
+      isDone
+    }
   }
 
-  def handleRemove(s: => State)(id: String): State = {
-    val State(list, signalMap, uiMap, evtMap) = s
-
-    val newList = list.resetDeltaBuffer().deleteBy(_ == id)
-    signalMap(id).disconnect()
-
-    State(newList, signalMap - id, uiMap - id, evtMap - id)
+  def handleRemove(state: => State)(id: String): State = {
+    state.resetDeltaBuffer().deleteBy { taskref =>
+      val delete = taskref.id == id
+      // todo, move to observer, disconnect during transaction does not respect rollbacks
+      if (delete) taskref.task.disconnect()
+      delete
+    }
   }
 
-  def handleDelta(s: => State)(delta: Delta[RGA.State[String, DietMapCContext]]): State = {
-    val State(list, signalMap, uiMap, evtMap) = s
+  def handleDelta(s: => State)(delta: Delta[RGA.State[TaskRef, DietMapCContext]]): State = {
+    val list = s
 
     val newList = list.resetDeltaBuffer().applyDelta(delta)
 
     val oldIDs = list.toList.toSet
     val newIDs = newList.toList.toSet
 
-    val added   = (newIDs -- oldIDs).toList
     val removed = oldIDs -- newIDs
+    removed.foreach { _.task.disconnect() }
 
-    val (addedSignals, addedUIs, addedEvts) = added.map { id =>
-      TodoTaskView.signalAndUI(myID, id, None, toggleAll)
-    }.unzip3
-
-    removed.foreach { signalMap(_).disconnect() }
-
-    val newSignalMap = signalMap -- removed ++ (added zip addedSignals)
-    val newUIMap     = uiMap -- removed ++ (added zip addedUIs)
-    val newEvtMap    = evtMap -- removed ++ (added zip addedEvts)
-
-    State(newList, newSignalMap, newUIMap, newEvtMap)
+    newList
   }
 
 }

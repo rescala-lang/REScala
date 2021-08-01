@@ -45,42 +45,29 @@ class TodoAppUI() {
       input(id := "toggle-all", name := "toggle-all", `class` := "toggle-all", `type` := "checkbox", onchange := cb)
     }
 
-    val deltaEvt = Evt[Delta[RGA.State[String, DietMapCContext]]]
-
-    val signalMapInitial = Map[String, Signal[LWWRegister[TodoTask, DietMapCContext]]]()
-
-    val uiMapInitial = Map[String, TypedTag[LI]]()
-
-    val evtMapInitial = Map[String, Event[String]]()
+    val deltaEvt = Evt[Delta[RGA.State[TaskRef, DietMapCContext]]]
 
     val tasklist = new TaskList(toggleAll.event)
 
-    val state =
-      Events.foldAll(tasklist.State(tasklist.listInitial, signalMapInitial, uiMapInitial, evtMapInitial)) { s =>
+    val rga =
+      Events.foldAll(tasklist.listInitial) { s =>
         Seq(
           createTodo act tasklist.handleCreateTodo(s),
           removeAll.event dyn { dt => _ => tasklist.handleRemoveAll(s, dt) },
-          s.evtMap.values.toSeq act tasklist.handleRemove(s),
+          s.toList.map(_.removed) act tasklist.handleRemove(s),
           deltaEvt act tasklist.handleDelta(s)
         )
       }
 
-    val rga = state.map(_.list)
-
     LociDist.distributeDeltaCRDT(rga, deltaEvt, Todolist.registry)(
-      Binding[RGA.State[String, DietMapCContext] => Unit]("tasklist")
+      Binding[RGA.State[TaskRef, DietMapCContext] => Unit]("tasklist")
     )
 
-    val tasksAndListItems = state.map { s =>
-      val list      = s.list.toList
-      val tasks     = list.flatMap(id => s.signalMap(id)().read)
-      val listItems = list.map(id => s.uiMap(id))
-      (tasks, listItems)
-    }
+    val tasksList = rga.map { _.toList }
 
-    val tasks = tasksAndListItems.map(_._1)
+    val tasksData = tasksList.map(_.flatMap(_.task.value.read))
 
-    val listItems = tasksAndListItems.map(_._2)
+    val taskTags = tasksList.map(_.map(_.tag))
 
     div(
       `class` := "todoapp",
@@ -91,19 +78,19 @@ class TodoAppUI() {
       ),
       section(
         `class` := "main",
-        `style` := Signal { if (tasks().isEmpty) "display:hidden" else "" },
+        `style` := Signal { if (tasksData().isEmpty) "display:hidden" else "" },
         toggleAll.value,
         label(`for` := "toggle-all", "Mark all as complete"),
         ul(
           `class` := "todo-list",
-          listItems.asModifierL
+          taskTags.asModifierL
         )
       ),
       div(
         `class` := "footer",
-        `style` := Signal { if (tasks().isEmpty) "display:none" else "" },
+        `style` := Signal { if (tasksData().isEmpty) "display:none" else "" },
         Signal {
-          val remainingTasks = tasks.value.count(!_.done)
+          val remainingTasks = tasksData.value.count(!_.done)
           span(
             `class` := "todo-count",
             strong("" + remainingTasks),
@@ -113,7 +100,7 @@ class TodoAppUI() {
           )
         }.asModifier,
         Signal {
-          removeAll.value(`class` := "clear-completed" + (if (!tasks.value.exists(_.done)) " hidden" else ""))
+          removeAll.value(`class` := "clear-completed" + (if (!tasksData.value.exists(_.done)) " hidden" else ""))
         }.asModifier
       )
     )
