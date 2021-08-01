@@ -18,7 +18,6 @@ class TurnCreation {
 
   var engine: RescalaInterface = _
   lazy val stableEngine        = engine
-  import stableEngine._
 
   @Setup
   def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam) = {

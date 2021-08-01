@@ -4,7 +4,6 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import benchmarks.philosophers.PhilosopherTable._
 import org.openjdk.jmh.infra.Blackhole; import rescala.interface.RescalaInterface
-import rescala.operator._
 
 class PhilosopherTable(philosopherCount: Int, work: Long)(val engine: RescalaInterface) {
 
