@@ -5,7 +5,7 @@ import org.scalajs.dom.document
 
 object Todolist {
 
-  val todoApp = new TodoApp()
+  val todoApp = new TodoAppUI()
 
   val registry = new Registry
 
