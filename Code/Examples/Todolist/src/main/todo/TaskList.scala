@@ -20,65 +20,69 @@ class TaskList(toggleAll: Event[UIEvent]) {
       evtMap: Map[String, Event[String]]
   )
 
-  val myID = ThreadLocalRandom.current().nextLong().toHexString
+  val myID: String = ThreadLocalRandom.current().nextLong().toHexString
 
-  def listInitial = RGA[String, DietMapCContext](myID)
+  def listInitial: RGA[String, DietMapCContext] = RGA[String, DietMapCContext](myID)
 
-  def handleCreateTodo(s: => State)(desc: String): State = s match {
-    case State(list, signalMap, uiMap, evtMap) =>
-      val newTask = TodoTask(desc = desc)
+  def handleCreateTodo(s: => State)(desc: String): State = {
+    val State(list, signalMap, uiMap, evtMap) = s
 
-      val (signal, ui, evt) = TodoTaskView.signalAndUI(myID, newTask.id, Some(newTask), toggleAll)
+    val newTask = TodoTask(desc = desc)
 
-      val newList = list.resetDeltaBuffer().prepend(newTask.id)
+    val (signal, ui, evt) = TodoTaskView.signalAndUI(myID, newTask.id, Some(newTask), toggleAll)
 
-      State(newList, signalMap + (newTask.id -> signal), uiMap + (newTask.id -> ui), evtMap + (newTask.id -> evt))
+    val newList = list.resetDeltaBuffer().prepend(newTask.id)
+
+    State(newList, signalMap + (newTask.id -> signal), uiMap + (newTask.id -> ui), evtMap + (newTask.id -> evt))
   }
 
-  def handleRemoveAll(s: => State): State = s match {
-    case State(list, signalMap, uiMap, evtMap) =>
-      val removeIDs = signalMap.values.collect { sig =>
-        sig.readValueOnce.read match {
-          case Some(TodoTask(id, _, true)) => id
-        }
-      }.toSet
+  def handleRemoveAll(s: => State): State = {
+    val State(list, signalMap, uiMap, evtMap) = s
 
-      val newList = list.resetDeltaBuffer().deleteBy(removeIDs.contains)
+    val removeIDs = signalMap.values.collect { sig =>
+      sig.readValueOnce.read match {
+        case Some(TodoTask(id, _, true)) => id
+      }
+    }.toSet
 
-      removeIDs.foreach { signalMap(_).disconnect() }
+    val newList = list.resetDeltaBuffer().deleteBy(removeIDs.contains)
 
-      State(newList, signalMap -- removeIDs, uiMap -- removeIDs, evtMap -- removeIDs)
+    removeIDs.foreach { signalMap(_).disconnect() }
+
+    State(newList, signalMap -- removeIDs, uiMap -- removeIDs, evtMap -- removeIDs)
   }
 
-  def handleRemove(s: => State)(id: String): State = s match {
-    case State(list, signalMap, uiMap, evtMap) =>
-      val newList = list.resetDeltaBuffer().deleteBy(_ == id)
-      signalMap(id).disconnect()
+  def handleRemove(s: => State)(id: String): State = {
+    val State(list, signalMap, uiMap, evtMap) = s
 
-      State(newList, signalMap - id, uiMap - id, evtMap - id)
+    val newList = list.resetDeltaBuffer().deleteBy(_ == id)
+    signalMap(id).disconnect()
+
+    State(newList, signalMap - id, uiMap - id, evtMap - id)
   }
 
-  def handleDelta(s: => State)(delta: Delta[RGA.State[String, DietMapCContext]]): State = s match {
-    case State(list, signalMap, uiMap, evtMap) =>
-      val newList = list.resetDeltaBuffer().applyDelta(delta)
+  def handleDelta(s: => State)(delta: Delta[RGA.State[String, DietMapCContext]]): State = {
+    val State(list, signalMap, uiMap, evtMap) = s
 
-      val oldIDs = list.toList.toSet
-      val newIDs = newList.toList.toSet
+    val newList = list.resetDeltaBuffer().applyDelta(delta)
 
-      val added   = (newIDs -- oldIDs).toList
-      val removed = oldIDs -- newIDs
+    val oldIDs = list.toList.toSet
+    val newIDs = newList.toList.toSet
 
-      val (addedSignals, addedUIs, addedEvts) = added.map { id =>
-        TodoTaskView.signalAndUI(myID, id, None, toggleAll)
-      }.unzip3
+    val added   = (newIDs -- oldIDs).toList
+    val removed = oldIDs -- newIDs
 
-      removed.foreach { signalMap(_).disconnect() }
+    val (addedSignals, addedUIs, addedEvts) = added.map { id =>
+      TodoTaskView.signalAndUI(myID, id, None, toggleAll)
+    }.unzip3
 
-      val newSignalMap = signalMap -- removed ++ (added zip addedSignals)
-      val newUIMap     = uiMap -- removed ++ (added zip addedUIs)
-      val newEvtMap    = evtMap -- removed ++ (added zip addedEvts)
+    removed.foreach { signalMap(_).disconnect() }
 
-      State(newList, newSignalMap, newUIMap, newEvtMap)
+    val newSignalMap = signalMap -- removed ++ (added zip addedSignals)
+    val newUIMap     = uiMap -- removed ++ (added zip addedUIs)
+    val newEvtMap    = evtMap -- removed ++ (added zip addedEvts)
+
+    State(newList, newSignalMap, newUIMap, newEvtMap)
   }
 
 }
