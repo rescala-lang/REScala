@@ -1,26 +1,23 @@
 package src.main.todo
 
-import src.main.todo.Todolist.replicaId
-
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import loci.registry.Binding
-import loci.transmitter.transmittable.IdenticallyTransmittable
 import loci.serializer.jsoniterScala.jsoniteScalaBasedSerializable
+import loci.transmitter.transmittable.IdenticallyTransmittable
 import org.scalajs.dom.UIEvent
 import org.scalajs.dom.html.{Input, LI}
 import rescala.default._
 import rescala.extra.Tags._
 import rescala.extra.distributables.LociDist
 import rescala.extra.lattices.delta.CContext._
+import rescala.extra.lattices.delta.Codecs._
 import rescala.extra.lattices.delta.Delta
 import rescala.extra.lattices.delta.crdt.reactive.LWWRegister
-import rescala.extra.lattices.delta.Codecs._
 import scalatags.JsDom.TypedTag
+import src.main.todo.Todolist.replicaId
 import scalatags.JsDom.all._
 
-
-import java.util.concurrent.ThreadLocalRandom
 import scala.Function.const
 import scala.collection.mutable
 import scala.scalajs.js.timers.setTimeout
@@ -53,22 +50,23 @@ final class TaskRef(
 class TaskRefObj(toggleAll: Event[UIEvent]) {
 
   private val taskRefMap: mutable.Map[String, TaskRef] = mutable.Map.empty
-  def lookupOrCreateTaskRef(id: String): TaskRef = {
-    taskRefMap.getOrElseUpdate(id, {
-      signalAndUI(None)
-    })
-  }
 
   implicit val taskRefCodec: JsonValueCodec[TaskRef] = new JsonValueCodec[TaskRef] {
-    override def decodeValue(in: JsonReader, default: TaskRef): TaskRef = lookupOrCreateTaskRef(in.readString(default.id))
+    override def decodeValue(in: JsonReader, default: TaskRef): TaskRef =
+      lookupOrCreateTaskRef(in.readString(default.id), None)
     override def encodeValue(x: TaskRef, out: JsonWriter): Unit = out.writeVal(x.id)
-    override def nullValue: TaskRef = new TaskRef(Var.empty, li(), Evt(), "")
+    override def nullValue: TaskRef                             = new TaskRef(Var.empty, li(), Evt(), "")
   }
 
   implicit val transmittableLWW: IdenticallyTransmittable[LWWRegister.State[TaskData, DietMapCContext]] =
     IdenticallyTransmittable()
 
+  def lookupOrCreateTaskRef(id: String, task: Option[TaskData]): TaskRef = {
+    taskRefMap.getOrElseUpdate(id, { signalAndUI(id, task) })
+  }
+
   def signalAndUI(
+      taskID: String,
       task: Option[TaskData],
   ): TaskRef = {
     val lwwInit = LWWRegister[TaskData, DietMapCContext](replicaId)
@@ -107,8 +105,6 @@ class TaskRefObj(toggleAll: Event[UIEvent]) {
         deltaEvt act { delta => current.resetDeltaBuffer().applyDelta(delta) }
       )
     )
-
-    val taskID = s"Task(${ThreadLocalRandom.current().nextLong().toHexString})"
 
     LociDist.distributeDeltaCRDT(crdt, deltaEvt, Todolist.registry)(
       Binding[LWWRegister.State[TaskData, DietMapCContext] => Unit](taskID)

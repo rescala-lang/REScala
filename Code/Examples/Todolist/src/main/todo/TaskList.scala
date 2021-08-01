@@ -8,6 +8,8 @@ import rescala.extra.lattices.delta.crdt.reactive.RGA
 import rescala.extra.lattices.delta.crdt.reactive.RGA._
 import src.main.todo.Todolist.replicaId
 
+import java.util.concurrent.ThreadLocalRandom
+
 class TaskList(toggleAll: Event[UIEvent], taskRefs: TaskRefObj) {
 
   type State = RGA[TaskRef, DietMapCContext]
@@ -18,7 +20,7 @@ class TaskList(toggleAll: Event[UIEvent], taskRefs: TaskRefObj) {
 
     val newTask = TaskData(desc)
 
-    val taskref = taskRefs.signalAndUI(Some(newTask))
+    val taskref = taskRefs.lookupOrCreateTaskRef(s"Task(${ThreadLocalRandom.current().nextLong().toHexString})", Some(newTask))
 
     state.resetDeltaBuffer().prepend(taskref)
 
