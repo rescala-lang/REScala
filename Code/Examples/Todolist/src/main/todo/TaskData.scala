@@ -62,10 +62,10 @@ class TaskRefObj(toggleAll: Event[UIEvent]) {
     IdenticallyTransmittable()
 
   def lookupOrCreateTaskRef(id: String, task: Option[TaskData]): TaskRef = {
-    taskRefMap.getOrElseUpdate(id, { signalAndUI(id, task) })
+    taskRefMap.getOrElseUpdate(id, { createTaskRef(id, task) })
   }
 
-  def signalAndUI(
+  def createTaskRef(
       taskID: String,
       task: Option[TaskData],
   ): TaskRef = {
@@ -90,7 +90,7 @@ class TaskRefObj(toggleAll: Event[UIEvent]) {
     }
 
     val changeEditing = (edittextStr map const(false)) || (editDiv.event map const(true))
-    val editingV      = changeEditing.latest(init = false)(implicitly)
+    val editingV      = changeEditing.latest(init = false)
 
     val doneClick = Events.fromCallback[UIEvent](onchange := _)
 
