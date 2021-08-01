@@ -77,6 +77,8 @@ trait Core {
 
     def accessTicket(): AccessTicket
 
+    /** hook for schedulers to globally collect all created resources,
+      * usually does nothing */
     protected[this] def register(reactive: ReSource): Unit = ()
 
     /** Correctly initializes [[ReSource]]s */
