@@ -417,16 +417,19 @@ trait EventApi extends EventCompatApi with InterpBundle {
     class StaticFoldMatchDynamic[T, +A](val event: Event[T], val f: DynamicTicket => T => A) extends FoldMatch[A]
     class DynamicFoldMatch[T, +A](val event: () => Seq[Event[T]], val f: T => A)             extends FoldMatch[A]
 
-    class OnEv[T](e: Event[T]) {
+    class OnEv[T](event: Event[T]) {
 
-      /** Constructs a pair similar to ->, however this one is compatible with type inference for [[fold]] */
-      final def act[A](fun: T => A): FoldMatch[A]                  = new StaticFoldMatch(e, fun)
-      final def dyn[A](fun: DynamicTicket => T => A): FoldMatch[A] = new StaticFoldMatchDynamic(e, fun)
+      /** Constructs a handling branch that handles the static [[event]] with [[fun]] */
+      final def act[A](fun: T => A): FoldMatch[A] = new StaticFoldMatch(event, fun)
+
+      /** Similar to act, but provides access to a dynamic ticket in [[fun]] */
+      final def dyn[A](fun: DynamicTicket => T => A): FoldMatch[A] = new StaticFoldMatchDynamic(event, fun)
     }
-    class OnEvs[T](e: => Seq[Event[T]]) {
 
-      /** Constructs a pair similar to ->, however this one is compatible with type inference for [[fold]] */
-      final def act[A](fun: T => A): FoldMatch[A] = new DynamicFoldMatch(() => e, fun)
+    class OnEvs[T](events: => Seq[Event[T]]) {
+
+      /** Constructs a handler for all [[events]], note that [[events]] may dynamically compute the events from the current state */
+      final def act[A](fun: T => A): FoldMatch[A] = new DynamicFoldMatch(() => events, fun)
     }
 
     class CBResult[T, R](val event: Event[T], val value: R)
