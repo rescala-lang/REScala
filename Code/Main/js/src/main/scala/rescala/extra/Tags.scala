@@ -95,7 +95,7 @@ class Tags[Api <: RescalaInterface](val api: Api) {
         reevalVal match {
           case Pulse.empty | Pulse.NoChange => false
           case Pulse.Exceptional(f) =>
-            throw new ObservedException(rendered, s"signal tag attached to $parent observed", f)
+            throw ObservedException(rendered, s"signal tag attached to $parent observed", f)
           case Pulse.Value(v) =>
             isInDocumentHack(parent)(v)
         }
@@ -149,6 +149,7 @@ class Tags[Api <: RescalaInterface](val api: Api) {
     new AttrValue[Sig[T]] {
       def apply(t: dom.Element, a: Attr, signal: Sig[T]): Unit = {
         Observe.strong(signal, fireImmediately = true)(tagObserver(t, signal) { value =>
+          t.removeAttribute(a.name)
           implicitly[AttrValue[T]].apply(t, a, value)
         })(engine)
       }
