@@ -1,6 +1,8 @@
 package src.main.todo
 
-import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import src.main.todo.Todolist.replicaId
+
+import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import loci.registry.Binding
 import loci.transmitter.transmittable.IdenticallyTransmittable
@@ -17,8 +19,10 @@ import rescala.extra.lattices.delta.Codecs._
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all._
 
+
 import java.util.concurrent.ThreadLocalRandom
 import scala.Function.const
+import scala.collection.mutable
 import scala.scalajs.js.timers.setTimeout
 
 case class TaskData(
@@ -46,16 +50,28 @@ final class TaskRef(
   }
 }
 
-object TaskRef {
+class TaskRefObj(toggleAll: Event[UIEvent]) {
+
+  private val taskRefMap: mutable.Map[String, TaskRef] = mutable.Map.empty
+  def lookupOrCreateTaskRef(id: String): TaskRef = {
+    taskRefMap.getOrElseUpdate(id, {
+      signalAndUI(None)
+    })
+  }
+
+  implicit val taskRefCodec: JsonValueCodec[TaskRef] = new JsonValueCodec[TaskRef] {
+    override def decodeValue(in: JsonReader, default: TaskRef): TaskRef = lookupOrCreateTaskRef(in.readString(default.id))
+    override def encodeValue(x: TaskRef, out: JsonWriter): Unit = out.writeVal(x.id)
+    override def nullValue: TaskRef = new TaskRef(Var.empty, li(), Evt(), "")
+  }
+
   implicit val transmittableLWW: IdenticallyTransmittable[LWWRegister.State[TaskData, DietMapCContext]] =
     IdenticallyTransmittable()
 
   def signalAndUI(
-      replicaID: String,
       task: Option[TaskData],
-      toggleAll: Event[UIEvent],
   ): TaskRef = {
-    val lwwInit = LWWRegister[TaskData, DietMapCContext](replicaID)
+    val lwwInit = LWWRegister[TaskData, DietMapCContext](replicaId)
 
     val lww = task match {
       case None    => lwwInit

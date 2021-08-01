@@ -3,18 +3,18 @@ package src.main.todo
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import loci.registry.Binding
-import loci.serializer.jsoniterScala.jsoniteScalaBasedSerializable
+import loci.serializer.jsoniterScala._
 import loci.transmitter.transmittable.IdenticallyTransmittable
 import org.scalajs.dom.UIEvent
-import org.scalajs.dom.html.{Div, Input, LI}
+import org.scalajs.dom.html.{Div, Input}
 import rescala.default._
 import rescala.extra.Tags._
 import rescala.extra.distributables.LociDist
 import rescala.extra.lattices.delta.CContext._
 import rescala.extra.lattices.delta.Codecs._
 import rescala.extra.lattices.delta.Delta
+import rescala.extra.lattices.delta.crdt.reactive.RGA
 import rescala.extra.lattices.delta.crdt.reactive.RGA._
-import rescala.extra.lattices.delta.crdt.reactive.{LWWRegister, RGA}
 import scalatags.JsDom
 import scalatags.JsDom.all._
 import scalatags.JsDom.tags2.section
@@ -23,9 +23,6 @@ import scalatags.JsDom.{Attr, TypedTag}
 class TodoAppUI() {
 
   implicit val stringCodec: JsonValueCodec[String] = JsonCodecMaker.make
-
-  implicit val transmittableList: IdenticallyTransmittable[RGA.State[String, DietMapCContext]] =
-    IdenticallyTransmittable()
 
   @scala.annotation.nowarn // Auto-application to `()`
   def getContents(): TypedTag[Div] = {
@@ -47,7 +44,14 @@ class TodoAppUI() {
 
     val deltaEvt = Evt[Delta[RGA.State[TaskRef, DietMapCContext]]]
 
-    val tasklist = new TaskList(toggleAll.event)
+    val taskrefs = new TaskRefObj(toggleAll.event)
+    val tasklist = new TaskList(toggleAll.event, taskrefs)
+
+    import taskrefs.taskRefCodec
+    implicit val codec: JsonValueCodec[RGA.State[TaskRef, DietMapCContext]] = RGAStateCodec
+
+    implicit val transmittableList: IdenticallyTransmittable[RGA.State[TaskRef, DietMapCContext]] =
+      IdenticallyTransmittable()
 
     val rga =
       Events.foldAll(tasklist.listInitial) { s =>

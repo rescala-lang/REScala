@@ -3,7 +3,11 @@ package src.main.todo
 import loci.registry.Registry
 import org.scalajs.dom.document
 
+import java.util.concurrent.ThreadLocalRandom
+
 object Todolist {
+
+  val replicaId: String = ThreadLocalRandom.current().nextLong().toHexString
 
   val todoApp = new TodoAppUI()
 

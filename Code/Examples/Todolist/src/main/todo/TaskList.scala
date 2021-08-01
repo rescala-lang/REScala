@@ -1,21 +1,16 @@
 package src.main.todo
 
 import org.scalajs.dom.UIEvent
-import org.scalajs.dom.html.LI
 import rescala.default._
 import rescala.extra.lattices.delta.CContext._
 import rescala.extra.lattices.delta.Delta
+import rescala.extra.lattices.delta.crdt.reactive.RGA
 import rescala.extra.lattices.delta.crdt.reactive.RGA._
-import rescala.extra.lattices.delta.crdt.reactive.{LWWRegister, RGA}
-import scalatags.JsDom.TypedTag
+import src.main.todo.Todolist.replicaId
 
-import java.util.concurrent.ThreadLocalRandom
-
-class TaskList(toggleAll: Event[UIEvent]) {
+class TaskList(toggleAll: Event[UIEvent], taskRefs: TaskRefObj) {
 
   type State = RGA[TaskRef, DietMapCContext]
-
-  val replicaId: String = ThreadLocalRandom.current().nextLong().toHexString
 
   def listInitial: State = RGA[TaskRef, DietMapCContext](replicaId)
 
@@ -23,7 +18,7 @@ class TaskList(toggleAll: Event[UIEvent]) {
 
     val newTask = TaskData(desc)
 
-    val taskref = TaskRef.signalAndUI(replicaId, Some(newTask), toggleAll)
+    val taskref = taskRefs.signalAndUI(Some(newTask))
 
     state.resetDeltaBuffer().prepend(taskref)
 
