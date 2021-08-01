@@ -1,3 +1,5 @@
+package central
+
 import cats.data.NonEmptyList
 import cats.implicits._
 import com.monovore.decline.{Command, CommandApp, Opts}

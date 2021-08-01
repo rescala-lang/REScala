@@ -1,4 +1,6 @@
-import Bindings._
+package central
+
+import central.Bindings._
 import loci.communicator.tcp.TCP
 import loci.registry.Registry
 import loci.transmitter.{RemoteAccessException, RemoteRef}

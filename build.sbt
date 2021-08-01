@@ -219,7 +219,8 @@ lazy val consoleReplication = project.in(file("Code/Examples/ConsoleReplication"
       loci.tcp.value,
       decline.value,
       loci.jsoniterScala.value,
-    )
+    ),
+    (Compile / scalaSource) := baseDirectory.value
   )
 
 lazy val ersirServer = project.in(file("Code/Examples/Ersir/server"))
