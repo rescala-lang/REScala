@@ -59,7 +59,7 @@ class TodoAppUI() {
       Events.foldAll(tasklist.State(tasklist.listInitial, signalMapInitial, uiMapInitial, evtMapInitial)) { s =>
         Seq(
           createTodo act tasklist.handleCreateTodo(s),
-          removeAll.event act { _ => tasklist.handleRemoveAll(s) },
+          removeAll.event dyn { dt => _ => tasklist.handleRemoveAll(s, dt) },
           s.evtMap.values.toSeq act tasklist.handleRemove(s),
           deltaEvt act tasklist.handleDelta(s)
         )

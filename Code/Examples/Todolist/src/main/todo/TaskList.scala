@@ -36,17 +36,18 @@ class TaskList(toggleAll: Event[UIEvent]) {
     State(newList, signalMap + (newTask.id -> signal), uiMap + (newTask.id -> ui), evtMap + (newTask.id -> evt))
   }
 
-  def handleRemoveAll(s: => State): State = {
+  def handleRemoveAll(s: => State, dt: DynamicTicket): State = {
     val State(list, signalMap, uiMap, evtMap) = s
 
     val removeIDs = signalMap.values.collect { sig =>
-      sig.readValueOnce.read match {
+      dt.depend(sig).read match {
         case Some(TodoTask(id, _, true)) => id
       }
     }.toSet
 
     val newList = list.resetDeltaBuffer().deleteBy(removeIDs.contains)
 
+    // todo, move to observer, disconnect during transaction does not respect rollbacks
     removeIDs.foreach { signalMap(_).disconnect() }
 
     State(newList, signalMap -- removeIDs, uiMap -- removeIDs, evtMap -- removeIDs)
