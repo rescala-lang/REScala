@@ -1,4 +1,4 @@
-package src.main.todo
+package todo
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
@@ -16,7 +16,7 @@ import rescala.extra.lattices.delta.{Delta, TimedVal}
 import rescala.extra.lattices.delta.crdt.reactive.LWWRegister
 import rescala.extra.lattices.delta.interfaces.MVRegisterInterface
 import scalatags.JsDom.TypedTag
-import src.main.todo.Todolist.replicaId
+import todo.Todolist.replicaId
 import scalatags.JsDom.all._
 
 import scala.Function.const

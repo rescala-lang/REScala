@@ -1,4 +1,4 @@
-package src.main.todo
+package todo
 
 import org.scalajs.dom.UIEvent
 import rescala.default._
@@ -6,7 +6,7 @@ import rescala.extra.lattices.delta.CContext._
 import rescala.extra.lattices.delta.Delta
 import rescala.extra.lattices.delta.crdt.reactive.RGA
 import rescala.extra.lattices.delta.crdt.reactive.RGA._
-import src.main.todo.Todolist.replicaId
+import todo.Todolist.replicaId
 
 import java.util.concurrent.ThreadLocalRandom
 

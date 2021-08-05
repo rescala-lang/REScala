@@ -1,4 +1,4 @@
-package src.main.todo
+package todo
 
 import loci.communicator.experimental.webrtc.WebRTC
 import loci.communicator.experimental.webrtc.WebRTC.ConnectorFactory

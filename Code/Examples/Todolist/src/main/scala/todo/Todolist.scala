@@ -1,4 +1,4 @@
-package src.main.todo
+package todo
 
 import loci.registry.Registry
 import org.scalajs.dom.document

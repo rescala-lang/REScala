@@ -155,7 +155,6 @@ lazy val todolist = project.in(file("Code/Examples/Todolist"))
       loci.jsoniterScala.value,
       catsCollection.value,
     ),
-    (Compile / scalaSource) := baseDirectory.value,
     scalaJSUseMainModuleInitializer := true,
   )
 
