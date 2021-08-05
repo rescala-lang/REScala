@@ -410,8 +410,6 @@ trait EventApi extends EventCompatApi with InterpBundle {
       }
     }
 
-    val Match = Seq
-
     sealed trait FoldMatch[+A]
     class StaticFoldMatch[T, +A](val event: Event[T], val f: T => A)                         extends FoldMatch[A]
     class StaticFoldMatchDynamic[T, +A](val event: Event[T], val f: DynamicTicket => T => A) extends FoldMatch[A]

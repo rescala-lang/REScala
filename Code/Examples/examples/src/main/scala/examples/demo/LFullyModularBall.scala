@@ -72,7 +72,7 @@ object LFullyModularBall extends Main {
     val inc = Clock.ticks.map(tick => velocity.readValueOnce * tick.toDouble)
 
     val pos = Events.foldAll(Pos(0, 0))(acc =>
-      Events.Match(
+      Seq(
         reset act { case Point(x, y) => Pos(x.toDouble, y.toDouble) },
         inc act { inc => acc + inc }
       )

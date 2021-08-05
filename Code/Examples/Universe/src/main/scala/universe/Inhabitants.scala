@@ -49,7 +49,7 @@ trait Female extends Animal {
   final val isPregnant: Signal[Boolean]   = mate.map { _.isDefined }   //#SIG
   private val becomePregnant: Event[Unit] = isPregnant.changedTo(true) //#EVT //#IF
   private val pregnancyTime: Signal[Int] = Events.foldAll(Animal.PregnancyTime)(acc =>
-    Events.Match(
+    Seq(
       becomePregnant act { _ => Animal.PregnancyTime },
       world.time.hour.changed act { _ => acc - (if (isPregnant.readValueOnce) 1 else 0) }
     )
