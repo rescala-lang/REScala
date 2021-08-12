@@ -37,11 +37,22 @@ lazy val cfg = new {
   )
 
   lazy val noPublish = Seq(
-    publishArtifact := false,
+    publishArtifact   := false,
     packagedArtifacts := Map.empty,
-    publish := {},
-    publishLocal := {}
+    publish           := {},
+    publishLocal      := {}
   )
+
+  def `is 2.13+`(scalaVersion: String): Boolean =
+    CrossVersion.partialVersion(scalaVersion) collect { case (2, n) => n >= 13 } getOrElse false
+
+  lazy val publishOnly213 =
+    Seq(
+      publishArtifact   := (if (`is 2.13+`(scalaVersion.value)) publishArtifact.value else false),
+      packagedArtifacts := (if (`is 2.13+`(scalaVersion.value)) packagedArtifacts.value else Map.empty),
+      publish           := (if (`is 2.13+`(scalaVersion.value)) publish.value else {}),
+      publishLocal      := (if (`is 2.13+`(scalaVersion.value)) publishLocal.value else {})
+    )
 }
 
 lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
@@ -105,7 +116,7 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform, NativePlatform).in(file
   .jsSettings(
     libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, _)) => Seq(scalatags.value % "provided,test")
-      case _ => Nil
+      case _            => Nil
     }),
     libraryDependencies ++= Seq(
       // for restoration
@@ -188,17 +199,15 @@ lazy val dividiParoli = project.in(file("Code/Examples/dividiParoli"))
       "com.typesafe.akka"          %% "akka-cluster-tools"      % V.akkaActors,
       "com.typesafe.akka"          %% "akka-multi-node-testkit" % V.akkaActors,
     ), { // include correct macroparadise version
-      def `is 2.13+`(scalaVersion: String): Boolean =
-        CrossVersion.partialVersion(scalaVersion) collect { case (2, n) => n >= 13 } getOrElse false
       Seq(
         scalacOptions ++= {
-          if (`is 2.13+`(scalaVersion.value))
+          if (cfg.`is 2.13+`(scalaVersion.value))
             Seq("-Ymacro-annotations")
           else
             Seq.empty
         },
         libraryDependencies ++= {
-          if (`is 2.13+`(scalaVersion.value))
+          if (cfg.`is 2.13+`(scalaVersion.value))
             Seq.empty
           else
             Seq(compilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.patch))
@@ -216,7 +225,7 @@ lazy val consoleReplication = project.in(file("Code/Examples/ConsoleReplication"
     name := "console replication",
     cfg.base,
     cfg.noPublish,
-    fork := true,
+    fork               := true,
     run / connectInput := true,
     libraryDependencies ++= Seq(
       loci.tcp.value,
@@ -254,7 +263,7 @@ lazy val ersirWeb = project.in(file("Code/Examples/Ersir/web"))
       normalizecss.value,
     ),
     scalaJSUseMainModuleInitializer := true,
-    webpackBundlingMode := BundlingMode.LibraryOnly()
+    webpackBundlingMode             := BundlingMode.LibraryOnly()
     //scalacOptions += "-P:scalajs:sjsDefinedByDefault"
   )
   .dependsOn(ersirSharedJS)
@@ -304,7 +313,8 @@ lazy val replication = crossProject(JSPlatform, JVMPlatform).crossType(CrossType
       loci.circe.value,
       loci.upickle.value,
       catsCollection.value
-    )
+    ),
+    cfg.publishOnly213
   )
 
 lazy val replicationJS  = replication.js
