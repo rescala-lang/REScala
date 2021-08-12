@@ -48,9 +48,11 @@ lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
   dividiParoli,
   examples,
   microbench,
+  replicationJS,
+  replicationJVM,
+  rescalafx,
   rescalaJS,
   rescalaJVM,
-  rescalafx,
   reswing,
   todolist,
   universe,
@@ -101,11 +103,13 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform, NativePlatform).in(file
     })
   )
   .jsSettings(
+    libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, _)) => Seq(scalatags.value % "provided,test")
+      case _ => Nil
+    }),
     libraryDependencies ++= Seq(
       // for restoration
       (scalajsDom.value % "provided").cross(CrossVersion.for3Use2_13),
-      // for rescalatags
-      (scalatags.value % "provided,test").cross(CrossVersion.for3Use2_13),
     ),
     // dom envirnoment
     jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
@@ -293,7 +297,7 @@ lazy val replication = crossProject(JSPlatform, JVMPlatform).crossType(CrossType
   .in(file("Code/Extensions/Replication"))
   .dependsOn(rescala % "compile->compile;test->test")
   .settings(
-    name := "loci-distribution",
+    name := "replication",
     cfg.base,
     libraryDependencies ++= jsoniterScalaAll.value ++ Seq(
       loci.communication.value,

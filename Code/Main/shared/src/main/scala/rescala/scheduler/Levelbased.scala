@@ -26,7 +26,7 @@ trait Levelbased extends Twoversion {
     /** Stores all active reactives in case we create more later and need to reevaluate them. */
     private val _propagating: ArrayBuffer[ReSource] = ArrayBuffer[ReSource]()
 
-    val levelQueue = new LevelQueue(this)
+    lazy val levelQueue = new LevelQueue(this)
 
     /** Store a single resettable ticket for the whole evaluation.
       * This optimization drastically reduces garbage generation of a relatively expensive object
