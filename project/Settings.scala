@@ -96,7 +96,7 @@ object Settings {
   )
   lazy val scalaOptions3 = Seq(
     "-language:implicitConversions",
-    "-Ysafe-init",
+    // "-Ysafe-init",
     "-print-tasty",
     //"-Yexplicit-nulls",
   )
