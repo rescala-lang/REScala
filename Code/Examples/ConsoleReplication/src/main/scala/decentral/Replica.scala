@@ -201,6 +201,9 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
         case `elements` =>
           println(set.elements)
 
+        case `size` =>
+          println(set.elements.size)
+
         case `exit` =>
           System.exit(0)
 
