@@ -92,9 +92,9 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
     registry.bindSbj(receiveCheckpointBinding) { (remoteRef: RemoteRef, msg: CheckpointMessage) =>
       msg match {
         case CheckpointMessage(cp @ Checkpoint(replicaID, counter), changes) =>
-          if (checkpoints(replicaID) >= counter) return
+          if (checkpoints.contains(replicaID) && checkpoints(replicaID) >= counter) return
 
-          set = set.applyDelta(Delta(remoteRef.toString, changes))
+          set = set.applyDelta(Delta(remoteRef.toString, changes)).resetDeltaBuffer()
 
           unboundRemoteChanges =
             UIJDLattice[SetState].diff(changes, unboundRemoteChanges).getOrElse(UIJDLattice[SetState].bottom)
@@ -127,8 +127,8 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
 
   def createCheckpoints(): Unit = {
     while (unboundLocalChanges.size > maxAtomsForCheckpoint) {
-      val changesForCheckPoint = unboundLocalChanges.take(maxAtomsForCheckpoint)
-      unboundLocalChanges = unboundLocalChanges.drop(maxAtomsForCheckpoint)
+      val changesForCheckPoint = unboundLocalChanges.takeRight(maxAtomsForCheckpoint)
+      unboundLocalChanges = unboundLocalChanges.dropRight(maxAtomsForCheckpoint)
       createCheckpoint(changesForCheckPoint)
     }
 
@@ -149,6 +149,14 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
       propagateDeltas()
     } else {
       createCheckpoints()
+
+      if (unboundLocalChanges.nonEmpty) {
+        val delta = unboundLocalChanges.reduce(UIJDLattice[SetState].merge)
+
+        registry.remotes.foreach { sendDelta(delta, _) }
+      }
+
+      set = set.resetDeltaBuffer()
     }
   }
 

@@ -1,6 +1,5 @@
 package decentral
 
-import cats.data.NonEmptyList
 import cats.implicits._
 import com.monovore.decline.{Command, CommandApp, Opts}
 
@@ -30,7 +29,7 @@ object Commandline {
       case (id, listenPort, connectTo, initSize) =>
         val ipsAndPorts = connectTo.map {
           case ipAndPort(ip, port) => (ip, port.toInt)
-        }.toList
+        }
 
         new Replica(listenPort, ipsAndPorts, id, initSize).run()
     }
