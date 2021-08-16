@@ -1,8 +1,6 @@
 package decentral
 
-import decentral.Bindings.{
-  CheckpointMessage, SetState, getCheckpointsBinding, receiveCheckpointBinding, receiveDeltaBinding
-}
+import decentral.Bindings._
 import loci.transmitter.{RemoteAccessException, RemoteRef}
 import rescala.extra.lattices.delta.CContext.DietMapCContext
 import rescala.extra.lattices.delta.{Delta, UIJDLattice}
@@ -29,9 +27,9 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
 
   var checkpointMap: Map[Checkpoint, SetState] = Map()
 
-  var looseLocalChanges: List[SetState] = List()
+  var unboundLocalChanges: List[SetState] = List()
 
-  var looseRemoteChanges: SetState = UIJDLattice[SetState].bottom
+  var unboundRemoteChanges: SetState = UIJDLattice[SetState].bottom
 
   def sendDeltaRecursive(
       remoteReceiveDelta: SetState => Future[Unit],
@@ -79,11 +77,15 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
     val delta = Delta(remoteRef.toString, deltaState)
     set = set.applyDelta(delta)
 
-    looseRemoteChanges = UIJDLattice[SetState].merge(looseRemoteChanges, set.deltaBuffer.head.deltaState)
+    set.deltaBuffer.headOption match {
+      case None =>
+      case Some(Delta(_, deltaState)) =>
+        unboundRemoteChanges = UIJDLattice[SetState].merge(unboundRemoteChanges, deltaState)
 
-    propagateDeltas()
+        propagateDeltas()
 
-    println(set.elements)
+        println(set.elements)
+    }
   }
 
   def bindReceiveCheckpoint(): Unit =
@@ -94,8 +96,8 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
 
           set = set.applyDelta(Delta(remoteRef.toString, changes))
 
-          looseRemoteChanges =
-            UIJDLattice[SetState].diff(changes, looseRemoteChanges).getOrElse(UIJDLattice[SetState].bottom)
+          unboundRemoteChanges =
+            UIJDLattice[SetState].diff(changes, unboundRemoteChanges).getOrElse(UIJDLattice[SetState].bottom)
 
           checkpoints = checkpoints.updated(replicaID, counter)
 
@@ -123,26 +125,30 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
     registry.remotes.foreach { sendCheckpoint(CheckpointMessage(newCheckpoint, changes), _) }
   }
 
+  def createCheckpoints(): Unit = {
+    while (unboundLocalChanges.size > maxAtomsForCheckpoint) {
+      val changesForCheckPoint = unboundLocalChanges.take(maxAtomsForCheckpoint)
+      unboundLocalChanges = unboundLocalChanges.drop(maxAtomsForCheckpoint)
+      createCheckpoint(changesForCheckPoint)
+    }
+
+    if (unboundLocalChanges.size >= minAtomsForCheckpoint) {
+      createCheckpoint(unboundLocalChanges)
+      unboundLocalChanges = List()
+    }
+  }
+
   def onMutate(): Unit = {
     if (set.deltaBuffer.isEmpty) return
 
-    looseLocalChanges = set.deltaBuffer.foldLeft(looseLocalChanges) { (list, delta) =>
+    unboundLocalChanges = set.deltaBuffer.foldLeft(unboundLocalChanges) { (list, delta) =>
       list.prependedAll(UIJDLattice[SetState].decompose(delta.deltaState))
     }
 
-    if (looseLocalChanges.size < minAtomsForCheckpoint) {
+    if (unboundLocalChanges.size < minAtomsForCheckpoint) {
       propagateDeltas()
     } else {
-      while (looseLocalChanges.size > maxAtomsForCheckpoint) {
-        val changesForCheckPoint = looseLocalChanges.take(maxAtomsForCheckpoint)
-        looseLocalChanges = looseLocalChanges.drop(500)
-        createCheckpoint(changesForCheckPoint)
-      }
-
-      if (looseLocalChanges.size >= minAtomsForCheckpoint) {
-        createCheckpoint(looseLocalChanges)
-        looseLocalChanges = List()
-      }
+      createCheckpoints()
     }
   }
 
@@ -154,15 +160,16 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
         (remoteCounter + 1 to counter).foreach { n =>
           val cp      = Checkpoint(replicaID, n)
           val changes = checkpointMap(cp)
+
           sendCheckpoint(CheckpointMessage(cp, changes), rr)
         }
       }
     }
 
-    val looseChanges = looseLocalChanges.foldLeft(looseRemoteChanges) { UIJDLattice[SetState].merge }
+    val unboundChanges = unboundLocalChanges.foldLeft(unboundRemoteChanges) { UIJDLattice[SetState].merge }
 
-    if (looseChanges != UIJDLattice[SetState].bottom)
-      sendDelta(looseChanges, rr)
+    if (unboundChanges != UIJDLattice[SetState].bottom)
+      sendDelta(unboundChanges, rr)
   }
 
   def run(): Unit = {
@@ -170,9 +177,12 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
     bindReceiveDelta()
     bindReceiveCheckpoint()
 
+    monitorJoin()
+
     setupConnectionHandling()
 
-    monitorJoin()
+    set = set.addAll(0 until initSize)
+    onMutate()
 
     while (true) {
       readLine() match {
