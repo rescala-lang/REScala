@@ -1,6 +1,8 @@
 package de.ckuessner
 package encrdt.lattices
 
+import encrdt.util.MapHelper.max
+
 import com.github.plokhotnyuk.jsoniter_scala.core._
 import com.github.plokhotnyuk.jsoniter_scala.macros._
 
@@ -63,8 +65,5 @@ object CounterCrdtLattice {
     )
 
   // Merges mappings of both maps, takes biggest value if key is present in both maps
-  def mergeCounterMaps[K](a: Map[K, Int], b: Map[K, Int]): Map[K, Int] =
-    (a.keySet ++ b.keySet)
-      .map(key => key -> a.getOrElse(key, 0).max(b.getOrElse(key, 0)))
-      .toMap
+  def mergeCounterMaps[K](a: Map[K, Int], b: Map[K, Int]): Map[K, Int] = max(a, b)
 }
