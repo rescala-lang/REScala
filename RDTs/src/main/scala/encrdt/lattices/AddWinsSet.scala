@@ -1,6 +1,7 @@
 package de.ckuessner
 package encrdt.lattices
 
+import encrdt.causality.{LamportClock, VectorClock}
 import encrdt.lattices.interfaces.SetCrdt
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
@@ -37,9 +38,8 @@ class AddWinsSet[T](val replicaId: String) extends SetCrdt[T] {
 
 }
 
-// insertions: Set[(element, time, replicaId)]
-case class AddWinsSetLattice[T](elements: Set[(T, Int, String)] = Set[(T, Int, String)](),
-                                clocks: Map[String, Int] = Map[String, Int]()) {
+case class AddWinsSetLattice[T](elements: Set[(T, LamportClock)] = Set[(T, LamportClock)](),
+                                clocks: VectorClock = VectorClock()) {
 
   def values(): Set[T] = elements.map(_._1)
 
@@ -49,14 +49,13 @@ case class AddWinsSetLattice[T](elements: Set[(T, Int, String)] = Set[(T, Int, S
 
   def added(newElem: T, replicaId: String): AddWinsSetLattice[T] = {
     // Prepare
-    val newTime = clocks.getOrElse(replicaId, 1)
-    val clocksAfterAdd = clocks + (replicaId -> newTime)
-    val elementEntry = (newElem, newTime, replicaId)
+    val clocksAfterAdd = clocks.advance(replicaId)
+    val newLocalClock = clocks.clockOf(replicaId)
 
     // Effect
-    val elementsAfterAdd = (elements + elementEntry) filterNot {
-      case (elem, clockOfElem, replicaOfElem) =>
-        elem == newElem && replicaOfElem == replicaId && clockOfElem < newTime
+    val elementsAfterAdd = (elements + ((newElem, newLocalClock))) filterNot {
+      case (elem, elemClock) =>
+        elem == newElem && elemClock.replicaId == replicaId && elemClock.time < newLocalClock.time
     }
 
     AddWinsSetLattice(elementsAfterAdd, clocksAfterAdd)
@@ -65,24 +64,22 @@ case class AddWinsSetLattice[T](elements: Set[(T, Int, String)] = Set[(T, Int, S
 }
 
 object AddWinsSetLattice {
-  // See: arXiv:1210.3368
+  // See: arXiv:1210.3368 (https://arxiv.org/pdf/1210.3368.pdf)
   implicit def AddWinsSetSemiLattice[T]: SemiLattice[AddWinsSetLattice[T]] =
     (left: AddWinsSetLattice[T], right: AddWinsSetLattice[T]) => {
       // If it's present in both, it wasn't removed
       val presentInBoth = left.elements & right.elements
 
       // If it's present on left and has a timestamp higher than highest timestamp of right, it was just added on left
-      val addedOnLeft = (left.elements -- right.elements) filter { case (_, c, i) => c > right.clocks(i) }
+      val addedOnLeft = (left.elements -- right.elements) filter { case (_, LamportClock(c, i)) => c > right.clocks.timeOf(i) }
       // Vice versa
-      val addedOnRight = (right.elements -- left.elements) filter { case (_, c, i) => c > left.clocks(i) }
+      val addedOnRight = (right.elements -- left.elements) filter { case (_, LamportClock(c, i)) => c > left.clocks.timeOf(i) }
 
       val allElements = presentInBoth ++ addedOnLeft ++ addedOnRight
       // Clean up 'old' elements (keep only element with only highest timestamp per replicaId)
-      val elementsAfterMerge = allElements.groupBy { case (e, _, i) => (e, i) }.view.mapValues(_.maxBy(_._2))
+      val elementsAfterMerge = allElements.groupBy { case (e, LamportClock(_, i)) => (e, i) }.view.mapValues(_.maxBy(_._2))
 
-      val clocksAfterMerge = (left.clocks.keySet ++ right.clocks.keySet)
-        .map(key => key -> left.clocks.getOrElse(key, 0).max(right.clocks.getOrElse(key, 0)))
-        .toMap
+      val clocksAfterMerge = left.clocks.merged(right.clocks)
 
       AddWinsSetLattice(elementsAfterMerge.values.toSet, clocksAfterMerge)
     }
