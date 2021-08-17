@@ -6,11 +6,11 @@ import encrdt.lattices.interfaces.SetCrdt
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 
-class AddWinsSet[T](val replicaId: Int) extends SetCrdt[T] {
+class AddWinsSet[T](val replicaId: String) extends SetCrdt[T] {
 
   private var _state: AddWinsSetLattice[T] = AddWinsSetLattice[T]()
 
-  def this(replicaId: Int, initialState: AddWinsSetLattice[T]) {
+  def this(replicaId: String, initialState: AddWinsSetLattice[T]) {
     this(replicaId)
     _state = initialState
   }
@@ -38,8 +38,8 @@ class AddWinsSet[T](val replicaId: Int) extends SetCrdt[T] {
 }
 
 // insertions: Set[(element, time, replicaId)]
-case class AddWinsSetLattice[T](elements: Set[(T, Int, Int)] = Set[(T, Int, Int)](),
-                                clocks: Map[Int, Int] = Map[Int, Int]()) {
+case class AddWinsSetLattice[T](elements: Set[(T, Int, String)] = Set[(T, Int, String)](),
+                                clocks: Map[String, Int] = Map[String, Int]()) {
 
   def values(): Set[T] = elements.map(_._1)
 
@@ -47,7 +47,7 @@ case class AddWinsSetLattice[T](elements: Set[(T, Int, Int)] = Set[(T, Int, Int)
     copy(elements = elements.filter(_._1 == element))
   }
 
-  def added(newElem: T, replicaId: Int): AddWinsSetLattice[T] = {
+  def added(newElem: T, replicaId: String): AddWinsSetLattice[T] = {
     // Prepare
     val newTime = clocks.getOrElse(replicaId, 1)
     val clocksAfterAdd = clocks + (replicaId -> newTime)
