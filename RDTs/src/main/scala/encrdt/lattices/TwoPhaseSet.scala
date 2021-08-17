@@ -1,6 +1,8 @@
 package de.ckuessner
 package encrdt.lattices
 
+import encrdt.lattices.interfaces.SetCrdt
+
 class TwoPhaseSet[T](val replicaId: Int) extends SetCrdt[T] {
 
   private var _state = TwoPhaseSetLattice[T]()

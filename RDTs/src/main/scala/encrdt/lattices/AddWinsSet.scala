@@ -1,6 +1,8 @@
 package de.ckuessner
 package encrdt.lattices
 
+import encrdt.lattices.interfaces.SetCrdt
+
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 
@@ -13,7 +15,7 @@ class AddWinsSet[T](val replicaId: Int) extends SetCrdt[T] {
     _state = initialState
   }
 
-  private def state_=(state: AddWinsSetLattice[T]) {
+  private def state_=(state: AddWinsSetLattice[T]): Unit = {
     _state = state
   }
 
