@@ -11,8 +11,8 @@ class TwoPhaseSetSpec extends AnyFlatSpec {
   implicit def twoPhaseIntSetCodec: JsonValueCodec[TwoPhaseSetLattice[Int]] = JsonCodecMaker.make
 
   "A TwoPhaseSetCrdt" should "merge with empty crdt" in {
-    val left = new TwoPhaseSet[String](1)
-    val right = new TwoPhaseSet[String](2)
+    val left = new TwoPhaseSet[String]("A")
+    val right = new TwoPhaseSet[String]("B")
 
     assertResult(TwoPhaseSetLattice()) {
       left.merge(right.state)
@@ -22,7 +22,7 @@ class TwoPhaseSetSpec extends AnyFlatSpec {
   }
 
   it should "handle add correctly" in {
-    val left = new TwoPhaseSet[Int](1)
+    val left = new TwoPhaseSet[Int]("A")
 
     assertResult(Set(1)) {
       left.add(1)
@@ -38,7 +38,7 @@ class TwoPhaseSetSpec extends AnyFlatSpec {
   }
 
   it should "handle simple remove correctly" in {
-    val left = new TwoPhaseSet[Int](1)
+    val left = new TwoPhaseSet[Int]("A")
 
     left.add(1)
 
@@ -60,7 +60,7 @@ class TwoPhaseSetSpec extends AnyFlatSpec {
   }
 
   it should "not add element after removal of same element" in {
-    val left = new TwoPhaseSet[Int](1)
+    val left = new TwoPhaseSet[Int]("A")
     left.add(1)
     left.remove(1)
     assertResult(Set()) {

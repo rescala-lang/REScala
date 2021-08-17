@@ -9,9 +9,9 @@ import com.github.plokhotnyuk.jsoniter_scala.macros._
 /**
  * Counter CRDT using states
  */
-class Counter(val replicaId: Int) {
+class Counter(val replicaId: String) {
 
-  def this(replicaId: Int, initialState: CounterCrdtLattice) {
+  def this(replicaId: String, initialState: CounterCrdtLattice) {
     this(replicaId)
     this.state = initialState
   }
@@ -39,10 +39,10 @@ class Counter(val replicaId: Int) {
 
 
 // Encapsulates the state of the CRDT
-case class CounterCrdtLattice(positiveCounts: Map[Int, Int] = Map(),
-                              negativeCounts: Map[Int, Int] = Map()) {
+case class CounterCrdtLattice(positiveCounts: Map[String, Int] = Map(),
+                              negativeCounts: Map[String, Int] = Map()) {
 
-  def updated(replicaId: Int, delta: Int): CounterCrdtLattice = {
+  def updated(replicaId: String, delta: Int): CounterCrdtLattice = {
     if (delta > 0) this.copy(
       positiveCounts = positiveCounts.updatedWith(replicaId)(value => Some(value.getOrElse(0) + delta))
     )
@@ -60,10 +60,7 @@ object CounterCrdtLattice {
 
   implicit val semiLattice: SemiLattice[CounterCrdtLattice] = (left: CounterCrdtLattice, right: CounterCrdtLattice) =>
     CounterCrdtLattice(
-      mergeCounterMaps(left.positiveCounts, right.positiveCounts),
-      mergeCounterMaps(left.negativeCounts, right.negativeCounts)
+      max(left.positiveCounts, right.positiveCounts),
+      max(left.negativeCounts, right.negativeCounts)
     )
-
-  // Merges mappings of both maps, takes biggest value if key is present in both maps
-  def mergeCounterMaps[K](a: Map[K, Int], b: Map[K, Int]): Map[K, Int] = max(a, b)
 }
