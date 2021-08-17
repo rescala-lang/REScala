@@ -2,13 +2,18 @@ package de.ckuessner
 package encrdt.util
 
 object MapHelper {
-  def max[K](a: Map[K, Long], b: Map[K, Long]): Map[K, Long] =
+  /**
+   * Returns map where each value is the maximum in both maps.
+   * If a key is present in one map, takes max(0, val).
+   *
+   * @param a map a
+   * @param b map b
+   * @tparam K Type of key
+   * @tparam V Type of value
+   * @return Map containing all keys of both maps with maximum value per key
+   */
+  def max[K, V](a: Map[K, V], b: Map[K, V])(implicit num: Numeric[V]): Map[K, V] =
     (a.keySet ++ b.keySet)
-      .map(key => key -> a.getOrElse(key, 0).max(b.getOrElse(key, 0)))
-      .toMap
-
-  def max[K](a: Map[K, Int], b: Map[K, Int]): Map[K, Int] =
-    (a.keySet ++ b.keySet)
-      .map(key => key -> a.getOrElse(key, 0).max(b.getOrElse(key, 0)))
+      .map(key => key -> num.max(a.getOrElse(key, 0.asInstanceOf[V]), b.getOrElse(key, 0.asInstanceOf[V])))
       .toMap
 }
