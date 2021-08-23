@@ -2,6 +2,7 @@ package de.ckuessner
 package encrdt.lattices
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{readFromString, writeToString}
+import de.ckuessner.encrdt.lattices.interfaces.SemiLattice
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 
