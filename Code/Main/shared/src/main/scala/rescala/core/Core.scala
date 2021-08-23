@@ -8,11 +8,8 @@ import scala.util.DynamicVariable
 trait Core {
   type State[_]
 
-  /** Source of (reactive) values, the [[Struct]] defines how the state is stored internally,
-    * and how dependencies are managed.
+  /** Source of (reactive) values.
     * State can only be accessed with a correct [[InnerTicket]].
-    *
-    * @tparam S [[Struct]] defining the internal state
     */
   trait ReSource {
     type Value
@@ -27,7 +24,7 @@ trait Core {
     final type ReIn = ReevTicket[Value]
     final type Rout = Result[Value]
 
-    /** called if any of the dependencies ([[ReSource]]s) changed in the current update turn,
+    /** called if any of the dependencies ([[rescala.core.Core.ReSource]]s) changed in the current update turn,
       * after all (known) dependencies are updated
       */
     protected[rescala] def reevaluate(input: ReIn): Rout
@@ -45,7 +42,7 @@ trait Core {
     override def toString: String = s"${name.str}($state)"
   }
 
-  /** Common macro accessors for [[rescala.operator.Signal]] and [[rescala.operator.Event]]
+  /** Common macro accessors for [[rescala.operator.SignalBundle.Signal]] and [[rescala.operator.EventBundle.Event]]
     *
     * @tparam A return type of the accessor
     * @groupname accessor Accessor and observers

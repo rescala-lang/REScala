@@ -33,7 +33,7 @@ trait Levelbased extends Twoversion {
       */
     private val reevaluationTicket: ReevTicket[_] = makeDynamicReevaluationTicket(null)
 
-    /** Overrides [[LevelQueue.Evaluator]], this is essentially an inlined callback */
+    /** Overrides the evaluator, this is essentially an inlined callback */
     override def evaluate(r: Derived): Unit = evaluateIn(r)(reevaluationTicket.reset(r.state.base(token)))
     def evaluateIn(head: Derived)(dt: ReevTicket[head.Value]): Unit = {
       val reevRes = head.reevaluate(dt)

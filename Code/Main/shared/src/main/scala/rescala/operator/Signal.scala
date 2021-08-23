@@ -1,6 +1,6 @@
 package rescala.operator
 
-import rescala.compat.SignalCompatApi
+import rescala.compat.SignalCompatBundle
 import rescala.core.Core
 import rescala.interface.RescalaInterface
 import rescala.operator.RExceptions.{EmptySignalControlThrowable, ObservedException}
@@ -14,7 +14,7 @@ object SignalMacroImpl {
 }
 
 trait SignalBundle {
-  selfType: RescalaInterface with SignalCompatApi with EventBundle with SignalBundle with Sources with DefaultImplementations
+  selfType: RescalaInterface with SignalCompatBundle with EventBundle with SignalBundle with Sources with DefaultImplementations
     with Observing with Core =>
 
   /** Time changing value derived from the dependencies.

@@ -57,7 +57,7 @@ trait FullMVBundle extends Core {
 
     def reevIn(turn: T): V
 
-    /** progress [[firstFrame]] forward until a [[Version.isFrame]] is encountered, and
+    /** progress `firstFrame` forward until a `Version.isFrame` is encountered, and
       * return the resulting notification out (with reframing if subsequent write is found).
       */
     def reevOut(
@@ -69,7 +69,7 @@ trait FullMVBundle extends Core {
     /** entry point for before(this); may suspend.
       *
       * @param txn the executing transaction
-      * @return the corresponding [[Version.value]] from before this transaction, i.e., ignoring the transaction's
+      * @return the corresponding `Version.value` from before this transaction, i.e., ignoring the transaction's
       *         own writes.
       */
     def dynamicBefore(txn: T): V
@@ -79,7 +79,7 @@ trait FullMVBundle extends Core {
     /** entry point for after(this); may suspend.
       *
       * @param txn the executing transaction
-      * @return the corresponding [[Version.value]] from after this transaction, i.e., awaiting and returning the
+      * @return the corresponding `Version.value` ` from after this transaction, i.e., awaiting and returning the
       *         transaction's own write if one has occurred or will occur.
       */
     def dynamicAfter(txn: T): V
@@ -90,7 +90,7 @@ trait FullMVBundle extends Core {
       *
       * @param txn the executing reevaluation's transaction
       * @param add the new edge's sink node
-      * @return the appropriate [[Version.value]].
+      * @return the appropriate [[rescala.fullmv. Version.value]].
       */
     def discover(txn: T, add: OutDep): (List[T], Option[T])
 

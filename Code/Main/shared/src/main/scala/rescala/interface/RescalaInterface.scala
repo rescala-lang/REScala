@@ -1,6 +1,6 @@
 package rescala.interface
 
-import rescala.compat.{EventCompatApi, SignalCompatApi}
+import rescala.compat.{EventCompatBundle, SignalCompatBundle}
 import rescala.core.Core
 import rescala.operator.{DefaultImplementations, EventBundle, FlattenApi, Observing, SignalBundle, Sources}
 
@@ -25,7 +25,7 @@ import rescala.operator.{DefaultImplementations, EventBundle, FlattenApi, Observ
   *           over multiple scheduler implementations.
   */
 trait RescalaInterface extends EventBundle with SignalBundle with FlattenApi with Sources with DefaultImplementations
-                       with Observing with Core with SignalCompatApi with EventCompatApi {
+                       with Observing with Core with SignalCompatBundle with EventCompatBundle {
 
   /** @group internal */
   def scheduler: Scheduler
@@ -41,30 +41,20 @@ trait RescalaInterface extends EventBundle with SignalBundle with FlattenApi wit
   /** Executes a transaction.
     *
     * @param initialWrites  All inputs that might be changed by the transaction
-    * @param admissionPhase An admission function that may perform arbitrary [[rescala.operator.Signal.readValueOnce]] reads
-    *                       to [[rescala.operator.Evt.admit]] / [[rescala.operator.Var.admit]] arbitrary
+    * @param admissionPhase An admission function that may
+    *                       [[rescala.operator.Sources.Evt.admit]] / [[rescala.operator.Sources.Var.admit]] arbitrary
     *                       input changes that will be applied as an atomic transaction at the end.
     * @tparam R Result type of the admission function
     * @return Result of the admission function
     * @group update
+    * @example transaction(a, b){ implicit at => a.set(5); b.set(1); at.now(a) }
     */
   def transaction[R](initialWrites: ReSource*)(admissionPhase: AdmissionTicket => R): R = {
     scheduler.forceNewTransaction(initialWrites: _*)(admissionPhase)
   }
 
   /** Executes a transaction with WrapUpPhase.
-    *
-    * @param initialWrites  All inputs that might be changed by the transaction
-    * @param admissionPhase An admission function that may perform arbitrary [[rescala.operator.Signal.readValueOnce]] reads
-    *                       to [[rescala.operator.Evt.admit]] / [[rescala.operator.Var.admit]] arbitrary
-    *                       input changes that will be applied as an atomic transaction at the end.
-    *                       The return value of this phase will be passed to the wrapUpPhase
-    * @param wrapUpPhase    A wrap-up function that receives the admissionPhase result and may perform arbitrary
-    *                       [[rescala.operator.Signal.readValueOnce]] reads which are
-    *                       executed after the update propagation.
-    * @tparam I Intermediate Result type passed from admission to wrapup phase
-    * @tparam R Final Result type of the wrapup phase
-    * @return Result of the wrapup function
+    * @see transaction
     * @group update
     */
   def transactionWithWrapup[I, R](initialWrites: ReSource*)(admissionPhase: AdmissionTicket => I)(wrapUpPhase: (

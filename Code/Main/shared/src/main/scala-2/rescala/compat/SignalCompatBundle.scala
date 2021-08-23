@@ -5,7 +5,7 @@ import rescala.macros.InterpBundle
 import rescala.macros.MacroTags.{Dynamic, Static}
 import rescala.operator.{SignalBundle, cutOutOfUserComputation}
 
-trait SignalCompatApi extends InterpBundle {
+trait SignalCompatBundle extends InterpBundle {
   selfType: SignalBundle with Core =>
 
   trait SignalCompat[+T] extends InterpMacro[T] {

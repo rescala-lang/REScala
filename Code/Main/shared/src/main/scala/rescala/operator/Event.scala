@@ -1,6 +1,6 @@
 package rescala.operator
 
-import rescala.compat.EventCompatApi
+import rescala.compat.EventCompatBundle
 import rescala.core._
 import rescala.interface.RescalaInterface
 import rescala.macros.InterpBundle
@@ -32,7 +32,7 @@ object EventsMacroImpl {
 
 }
 
-trait EventBundle extends EventCompatApi with InterpBundle {
+trait EventBundle extends EventCompatBundle with InterpBundle {
   selfType: RescalaInterface with SignalBundle with Sources with DefaultImplementations with Observing
     with Core =>
 
@@ -74,7 +74,7 @@ trait EventBundle extends EventCompatApi with InterpBundle {
 
     /** Add an observer.
       *
-      * @return the resulting [[Observe]] can be used to remove the observer.
+      * @return the resulting [[rescala.operator.Observing.Observe]] can be used to remove the observer.
       * @group accessor
       */
     final def observe(onValue: T => Unit, onError: Throwable => Unit = null, fireImmediately: Boolean = false)(implicit
@@ -334,7 +334,7 @@ trait EventBundle extends EventCompatApi with InterpBundle {
 
     /** Folds events with a given operation to create a Signal.
       *
-      * @see [[rescala.operator.Event.fold]]
+      * @see [[rescala.operator.EventBundle.Event.fold]]
       */
     @cutOutOfUserComputation
     def fold[T](dependencies: Set[ReSource], init: T)(expr: StaticTicket => (() => T) => T)(implicit
@@ -350,19 +350,18 @@ trait EventBundle extends EventCompatApi with InterpBundle {
     }
 
     /** Folds when any one of a list of events occurs, if multiple events occur, every fold is executed in order.
-     *
-     * Example for a counter that can be reset:
-     *
-     * {{{
-     * val add: Event[Int]
-     * val reset: Event[Unit]
-     * Events.foldAll(0){ current => Seq(
-     *   add act { v => current + v }
-     *   reset act { _ => 0 }
-     * )}
-     * }}}
-     *
-     * */
+      *
+      * Example for a counter that can be reset:
+      *
+      * {{{
+      * val add: Event[Int]
+      * val reset: Event[Unit]
+      * Events.foldAll(0){ current => Seq(
+      *   add act { v => current + v }
+      *   reset act { _ => 0 }
+      * )}
+      * }}}
+      */
     @cutOutOfUserComputation
     final def foldAll[A](init: A)(accthingy: (=> A) => Seq[FoldMatch[A]])(implicit
         ticket: CreationTicket
@@ -411,16 +410,18 @@ trait EventBundle extends EventCompatApi with InterpBundle {
 
     class OnEv[T](event: Event[T]) {
 
-      /** Constructs a handling branch that handles the static [[event]] with [[fun]] */
+      /** Constructs a handling branch that handles the static `event`
+        * @param fun handler for activations of `event`
+        */
       final def act[A](fun: T => A): FoldMatch[A] = new StaticFoldMatch(event, fun)
 
-      /** Similar to act, but provides access to a dynamic ticket in [[fun]] */
+      /** Similar to act, but provides access to a dynamic ticket in `fun` */
       final def dyn[A](fun: DynamicTicket => T => A): FoldMatch[A] = new StaticFoldMatchDynamic(event, fun)
     }
 
     class OnEvs[T](events: => Seq[Event[T]]) {
 
-      /** Constructs a handler for all [[events]], note that [[events]] may dynamically compute the events from the current state */
+      /** Constructs a handler for all `events`, note that `events` may dynamically compute the events from the current state */
       final def act[A](fun: T => A): FoldMatch[A] = new DynamicFoldMatch(() => events, fun)
     }
 

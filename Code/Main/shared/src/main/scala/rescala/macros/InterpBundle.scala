@@ -18,10 +18,10 @@ trait MacroAccess[+A, +T] {
     * @see value
     */
   @compileTimeOnly(s"${this} apply can only be used inside of reactive expressions")
-  final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of acro")
+  final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")
 
   /** Makes the enclosing reactive expression depend on the current value of the reactive.
-    * Is an alias for [[apply]].
+    * Is an alias for [[rescala.macros.MacroAccess.apply]].
     *
     * @group accessor
     * @see apply

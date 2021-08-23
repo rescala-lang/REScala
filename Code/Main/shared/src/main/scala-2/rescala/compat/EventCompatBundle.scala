@@ -6,7 +6,7 @@ import rescala.macros.InterpBundle
 import rescala.macros.MacroTags.{Dynamic, Static}
 import rescala.operator.{EventsMacroImpl, cutOutOfUserComputation}
 
-trait EventCompatApi extends InterpBundle {
+trait EventCompatBundle extends InterpBundle {
   selfType: RescalaInterface with Core =>
 
   trait EventCompat[+T] extends InterpMacro[Option[T]] {
@@ -83,7 +83,6 @@ trait EventCompatApi extends InterpBundle {
 
     /** Folds events with a given operation to create a Signal.
       * @group conversion
-      * @inheritdoc
       */
     @cutOutOfUserComputation
     final def fold[A](init: A)(op: (A, T) => A)(implicit ticket: CreationTicket): Signal[A] =
@@ -99,11 +98,11 @@ trait EventCompatApi extends InterpBundle {
 
   }
 
-  /** Similar to [[Signal]] expressions, but resulting in an event.
+  /** Similar to [[rescala.compat.SignalCompatBundle.Signal]] expressions, but resulting in an event.
     * Accessed events return options depending on whether they fire or not,
     * and the complete result of the expression is an event as well.
     *
-    * @see [[Signal]]
+    * @see [[rescala.compat.SignalCompatBundle.Signal]]
     * @group create
     */
   object Event {

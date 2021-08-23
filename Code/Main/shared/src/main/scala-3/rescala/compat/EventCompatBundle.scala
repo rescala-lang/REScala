@@ -4,7 +4,7 @@ import rescala.core.Core
 import rescala.interface.RescalaInterface
 import rescala.operator.{cutOutOfUserComputation}
 
-trait EventCompatApi {
+trait EventCompatBundle {
   selfType: RescalaInterface with Core =>
 
   trait EventCompat[+T] extends Interp[Option[T]] {

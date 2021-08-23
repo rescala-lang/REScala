@@ -8,8 +8,8 @@ trait DefaultImplementations {
   self: RescalaInterface with EventBundle with SignalBundle with Sources with DefaultImplementations with Observing
     with Core =>
 
-  /** @param isDynamicWithStaticDeps [[None]] means static dependencies only,
-    *                                [[Some]] means dynamic with the given static ones for optimization
+  /** @param isDynamicWithStaticDeps [[scala.None]] means static dependencies only,
+    *                                [[scala.Some]] means dynamic with the given static ones for optimization
     */
   class SignalImpl[T](
       initial: State[Pulse[T]],
@@ -37,7 +37,7 @@ trait DefaultImplementations {
     protected[this] def computePulse(rein: ReevTicket[Pulse[T]]): Pulse[T]
   }
 
-  /** @Param: isDynamicWithStaticDeps If this is None, the event is static. Else, it is dynamic with the set of static dependencies*/
+  /** @param isDynamicWithStaticDeps If this is None, the event is static. Else, it is dynamic with the set of static dependencies*/
   class EventImpl[T](
       initial: State[Pulse[T]],
       expr: DynamicTicket => Pulse[T],
