@@ -1,11 +1,10 @@
 package de.ckuessner
 package encrdt.encrypted
 
-import encrdt.lattices.SemiLattice
-
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import com.google.crypto.tink.Aead
+import de.ckuessner.encrdt.lattices.interfaces.SemiLattice
 
 import scala.collection.immutable.Queue
 import scala.util.{Failure, Success, Try}

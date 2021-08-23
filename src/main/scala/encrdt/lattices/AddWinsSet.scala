@@ -2,7 +2,7 @@ package de.ckuessner
 package encrdt.lattices
 
 import encrdt.causality.{LamportClock, VectorClock}
-import encrdt.lattices.interfaces.SetCrdt
+import encrdt.lattices.interfaces.{SemiLattice, SetCrdt}
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
