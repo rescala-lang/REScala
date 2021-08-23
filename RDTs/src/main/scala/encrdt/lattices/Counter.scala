@@ -1,6 +1,7 @@
 package de.ckuessner
 package encrdt.lattices
 
+import encrdt.lattices.interfaces.SemiLattice
 import encrdt.util.MapHelper.max
 
 import com.github.plokhotnyuk.jsoniter_scala.core._

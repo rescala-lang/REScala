@@ -1,7 +1,7 @@
 package de.ckuessner
 package encrdt.lattices
 
-import encrdt.lattices.interfaces.SetCrdt
+import encrdt.lattices.interfaces.{SemiLattice, SetCrdt}
 
 class TwoPhaseSet[T](val replicaId: String) extends SetCrdt[T] {
 
