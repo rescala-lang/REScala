@@ -59,7 +59,7 @@ class SynchronizationAdapter[T: SemiLattice](val context: ActorContext[_],
       replyTo ! PeerMap(peerRefs)
   }
 
-  private def notifyPeersAboutStateChange(newState: T): Unit = {
+  protected def notifyPeersAboutStateChange(newState: T): Unit = {
     // TODO: Failure semantics? https://doc.akka.io/docs/akka/current/general/message-delivery-reliability.html
     // TODO: Move to child actor
     peerRefs.filter {
