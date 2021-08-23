@@ -14,7 +14,6 @@ trait EventCompatApi extends InterpBundle {
 
     /** Collects the results from a partial function
       *
-      * @usecase def collect[U](pf: PartialFunction[T, U]): rescala.default.Event[U]
       * @group operator
       */
     @cutOutOfUserComputation
@@ -32,7 +31,6 @@ trait EventCompatApi extends InterpBundle {
 
     /** Filters the event, only propagating the value when the filter is true.
       *
-      * @usecase def filter(pred: T => Boolean): rescala.default.Event[T]
       * @group operator
       */
     @cutOutOfUserComputation
@@ -50,7 +48,6 @@ trait EventCompatApi extends InterpBundle {
 
     /** Filters the event, only propagating the value when the filter is true.
       *
-      * @usecase def &&(pred: T => Boolean): rescala.default.Event[T]
       * @see filter
       * @group operator
       */
@@ -69,7 +66,6 @@ trait EventCompatApi extends InterpBundle {
 
     /** Transform the event.
       *
-      * @usecase def map[A](expression: T => A): rescala.default.Event[A]
       * @group operator
       */
     @cutOutOfUserComputation
@@ -87,7 +83,6 @@ trait EventCompatApi extends InterpBundle {
 
     /** Folds events with a given operation to create a Signal.
       * @group conversion
-      * @usecase def fold[A](init: A)(op: (A, T) => A): rescala.default.Signal[A]
       * @inheritdoc
       */
     @cutOutOfUserComputation

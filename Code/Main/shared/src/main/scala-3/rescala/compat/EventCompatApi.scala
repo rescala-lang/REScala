@@ -11,7 +11,6 @@ trait EventCompatApi {
     selfType: Event[T] =>
 
     /** Filters the event, only propagating the value when the filter is true.
-      * @usecase def filter(pred: T => Boolean): rescala.default.Event[T]
       * @group operator
       */
     @cutOutOfUserComputation
@@ -19,14 +18,12 @@ trait EventCompatApi {
       Events.staticNamed(s"(filter $this)", this)(st => st.collectStatic(this).filter(expression))
 
     /** Collects the results from a partial function
-      * @usecase def collect[U](pf: PartialFunction[T, U]): rescala.default.Event[U]
       * @group operator
       */
     final def collect[U](expression: PartialFunction[T, U])(implicit ticket: CreationTicket): Event[U] =
       Events.staticNamed(s"(collect $this)", this) { st => st.collectStatic(this).collect(expression) }
 
     /** Transform the event.
-      * @usecase def map[A](expression: T => A): rescala.default.Event[A]
       * @group operator
       */
     @cutOutOfUserComputation
@@ -35,7 +32,6 @@ trait EventCompatApi {
 
     /** Folds events with a given operation to create a Signal.
       * @group conversion
-      * @usecase def fold[A](init: A)(op: (A, T) => A): rescala.default.Signal[A]
       * @inheritdoc
       */
     @cutOutOfUserComputation

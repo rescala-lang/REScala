@@ -67,7 +67,6 @@ trait EventApi extends EventCompatApi with InterpBundle {
     override def interpret(v: Value): Option[T] = v.toOption
 
     /** Adds an observer.
-      * @usecase def +=(handler: T => Unit): Observe
       * @see observe
       * @group accessor
       */
@@ -76,7 +75,6 @@ trait EventApi extends EventCompatApi with InterpBundle {
     /** Add an observer.
       *
       * @return the resulting [[Observe]] can be used to remove the observer.
-      * @usecase def observe(handler: T => Unit): Observe
       * @group accessor
       */
     final def observe(onValue: T => Unit, onError: Throwable => Unit = null, fireImmediately: Boolean = false)(implicit
@@ -104,7 +102,6 @@ trait EventApi extends EventCompatApi with InterpBundle {
 
     /** Uses a partial function `onFailure` to recover an error carried by the event into a value when returning Some(value),
       * or filters the error when returning None
-      * @usecase def recover[R >: T](onFailure: PartialFunction[Throwable, Option[R]]): rescala.default.Event[R]
       */
     final def recover[R >: T](onFailure: PartialFunction[Throwable, Option[R]])(implicit
         ticket: CreationTicket
@@ -120,7 +117,6 @@ trait EventApi extends EventCompatApi with InterpBundle {
     /** Events disjunction.
       * Propagates the values if any of the events fires.
       * Only propagates the left event if both fire.
-      * @usecase def ||[U >: T](other: rescala.default.Event[U]): rescala.default.Event[U]
       * @group operator
       */
     @cutOutOfUserComputation
@@ -132,7 +128,6 @@ trait EventApi extends EventCompatApi with InterpBundle {
     }
 
     /** Propagates the event only when except does not fire.
-      * @usecase def \[U](except: rescala.default.Event[U]): rescala.default.Event[T]
       * @group operator
       */
     @cutOutOfUserComputation
@@ -147,7 +142,6 @@ trait EventApi extends EventCompatApi with InterpBundle {
     }
 
     /** Merge the event with the other, if both fire simultaneously.
-      * @usecase def and[U, R](other: rescala.default.Event[U]): rescala.default.Event[R]
       * @group operator
       */
     @cutOutOfUserComputation
@@ -161,7 +155,6 @@ trait EventApi extends EventCompatApi with InterpBundle {
     }
 
     /** Merge the event with the other into a tuple, if both fire simultaneously.
-      * @usecase def zip[U](other: rescala.default.Event[U]): rescala.default.Event[(T, U)]
       * @group operator
       * @see and
       */
@@ -169,7 +162,6 @@ trait EventApi extends EventCompatApi with InterpBundle {
     final def zip[U](other: Event[U])(implicit ticket: CreationTicket): Event[(T, U)] = and(other)(Tuple2.apply)
 
     /** Merge the event with the other into a tuple, even if only one of them fired.
-      * @usecase def zipOuter[U](other: Event[U]): rescala.default.Event[(Option[T], Option[U])]
       * @group operator
       */
     @cutOutOfUserComputation
@@ -188,7 +180,6 @@ trait EventApi extends EventCompatApi with InterpBundle {
     final def flatten[R](implicit flatten: Flatten[Event[T], R]): R = flatten.apply(this)
 
     /** Drop the event parameter; equivalent to map((_: Any) => ())
-      * @usecase def dropParam(implicit ticket: CreationTicket): rescala.default.Event[Unit]
       * @group operator
       */
     @cutOutOfUserComputation
@@ -197,7 +188,6 @@ trait EventApi extends EventCompatApi with InterpBundle {
 
     /** reduces events with a given reduce function to create a Signal
       *
-      * @usecase def reduce[A](reducer: (=> A, => T) => A): rescala.default.Signal[A]
       * @group conversion
       */
     @cutOutOfUserComputation
@@ -218,7 +208,6 @@ trait EventApi extends EventCompatApi with InterpBundle {
 
     /** Applies a function on the current value of the signal every time the event occurs,
       * starting with the init value before the first event occurrence
-      * @usecase def iterate[A](init: A)(f: A => A): rescala.default.Signal[A]
       * @group conversion
       */
     @cutOutOfUserComputation
@@ -228,7 +217,6 @@ trait EventApi extends EventCompatApi with InterpBundle {
     /** Counts the occurrences of the event. Starts from 0, when the event has never been
       * fired yet. The argument of the event is simply discarded.
       * @group conversion
-      * @usecase def count(): rescala.default.Signal[Int]
       * @inheritdoc
       */
     @cutOutOfUserComputation
@@ -237,7 +225,6 @@ trait EventApi extends EventCompatApi with InterpBundle {
 
     /** returns a signal holding the latest value of the event.
       * @param init initial value of the returned signal
-      * @usecase def latest[A >: T](init: A): rescala.default.Signal[A]
       * @group conversion
       */
     @cutOutOfUserComputation
@@ -245,7 +232,6 @@ trait EventApi extends EventCompatApi with InterpBundle {
       Events.foldOne(this, init)((_, v) => v)
 
     /** returns a signal holding the latest value of the event.
-      * @usecase def latest[A >: T](): rescala.default.Signal[A]
       * @group conversion
       */
     @cutOutOfUserComputation
@@ -253,7 +239,6 @@ trait EventApi extends EventCompatApi with InterpBundle {
       reduce[A]((_, v) => v)
 
     /** Holds the latest value of an event as an Option, None before the first event occured
-      * @usecase def latestOption[A >: T](): rescala.default.Signal[Option[A]]
       * @group conversion
       */
     @cutOutOfUserComputation
@@ -262,7 +247,6 @@ trait EventApi extends EventCompatApi with InterpBundle {
 
     /** Returns a signal which holds the last n events in a list. At the beginning the
       * list increases in size up to when n values are available
-      * @usecase def last[A >: T](n: Int): rescala.default.Signal[LinearSeq[A]]
       * @group conversion
       */
     @cutOutOfUserComputation
@@ -276,7 +260,6 @@ trait EventApi extends EventCompatApi with InterpBundle {
     }
 
     /** collects events resulting in a variable holding a list of all values.
-      * @usecase def list[A >: T](): rescala.default.Signal[List[A]]
       * @group conversion
       */
     @cutOutOfUserComputation
@@ -284,7 +267,6 @@ trait EventApi extends EventCompatApi with InterpBundle {
       Events.foldOne(this, List[A]())((acc, v) => v :: acc)
 
     /** Switch back and forth between two signals on occurrence of event e
-      * @usecase def toggle[A](a: rescala.default.Signal[A], b: rescala.default.Signal[A]): rescala.default.Signal[A]
       * @group conversion
       */
     @cutOutOfUserComputation
