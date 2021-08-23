@@ -13,8 +13,8 @@ object SignalMacroImpl {
   object MapFuncImpl { def apply[T1, A](value: T1, mapper: T1 => A): A = mapper(value) }
 }
 
-trait SignalApi {
-  selfType: RescalaInterface with SignalCompatApi with EventApi with SignalApi with Sources with DefaultImplementations
+trait SignalBundle {
+  selfType: RescalaInterface with SignalCompatApi with EventBundle with SignalBundle with Sources with DefaultImplementations
     with Observing with Core =>
 
   /** Time changing value derived from the dependencies.

@@ -34,7 +34,7 @@ trait Core {
   }
 
   /** Base implementation for reactives, with [[Derived]] for scheduling,
-    * together with a [[ReName]] and asking for a [[Struct.State]]
+    * together with a [[ReName]] and containing a [[State]]
     *
     * @param state the initial state passed by the scheduler
     * @param name  the name of the reactive, useful for debugging as it often contains positional information

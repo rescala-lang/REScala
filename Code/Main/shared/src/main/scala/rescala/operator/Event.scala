@@ -32,8 +32,8 @@ object EventsMacroImpl {
 
 }
 
-trait EventApi extends EventCompatApi with InterpBundle {
-  selfType: RescalaInterface with SignalApi with Sources with DefaultImplementations with Observing
+trait EventBundle extends EventCompatApi with InterpBundle {
+  selfType: RescalaInterface with SignalBundle with Sources with DefaultImplementations with Observing
     with Core =>
 
   /** Events only propagate a value when they are changing,
@@ -217,7 +217,6 @@ trait EventApi extends EventCompatApi with InterpBundle {
     /** Counts the occurrences of the event. Starts from 0, when the event has never been
       * fired yet. The argument of the event is simply discarded.
       * @group conversion
-      * @inheritdoc
       */
     @cutOutOfUserComputation
     final def count()(implicit ticket: CreationTicket): Signal[Int] =

@@ -4,7 +4,7 @@ import rescala.core._
 import rescala.interface.RescalaInterface
 
 trait Sources {
-  self: RescalaInterface with EventApi with SignalApi with Sources with DefaultImplementations with Observing
+  self: RescalaInterface with EventBundle with SignalBundle with Sources with DefaultImplementations with Observing
     with Core =>
 
   trait Source[T] extends ReSource {

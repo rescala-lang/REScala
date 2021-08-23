@@ -3,10 +3,10 @@ package rescala.compat
 import rescala.core.Core
 import rescala.macros.InterpBundle
 import rescala.macros.MacroTags.{Dynamic, Static}
-import rescala.operator.{SignalApi, cutOutOfUserComputation}
+import rescala.operator.{SignalBundle, cutOutOfUserComputation}
 
 trait SignalCompatApi extends InterpBundle {
-  selfType: SignalApi with Core =>
+  selfType: SignalBundle with Core =>
 
   trait SignalCompat[+T] extends InterpMacro[T] {
 

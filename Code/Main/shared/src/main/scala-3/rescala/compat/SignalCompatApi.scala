@@ -2,7 +2,7 @@ package rescala.compat
 
 import rescala.core.Core
 import rescala.interface.RescalaInterface
-import rescala.operator.{SignalApi, cutOutOfUserComputation}
+import rescala.operator.{SignalBundle, cutOutOfUserComputation}
 
 trait SignalCompatApi {
   selfType: RescalaInterface with Core =>
