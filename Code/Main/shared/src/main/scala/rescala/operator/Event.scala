@@ -368,7 +368,20 @@ trait EventApi extends EventCompatApi with InterpBundle {
       }
     }
 
-    /** Folds when any one of a list of events occurs, if multiple events occur, every fold is executed in order. */
+    /** Folds when any one of a list of events occurs, if multiple events occur, every fold is executed in order.
+     *
+     * Example for a counter that can be reset:
+     *
+     * {{{
+     * val add: Event[Int]
+     * val reset: Event[Unit]
+     * Events.foldAll(0){ current => Seq(
+     *   add act { v => current + v }
+     *   reset act { _ => 0 }
+     * )}
+     * }}}
+     *
+     * */
     @cutOutOfUserComputation
     final def foldAll[A](init: A)(accthingy: (=> A) => Seq[FoldMatch[A]])(implicit
         ticket: CreationTicket
