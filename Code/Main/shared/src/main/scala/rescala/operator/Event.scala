@@ -357,7 +357,7 @@ trait EventBundle extends EventCompatBundle with InterpBundle {
       * val add: Event[Int]
       * val reset: Event[Unit]
       * Events.foldAll(0){ current => Seq(
-      *   add act { v => current + v }
+      *   add act { v => current + v },
       *   reset act { _ => 0 }
       * )}
       * }}}
