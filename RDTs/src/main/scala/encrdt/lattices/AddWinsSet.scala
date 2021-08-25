@@ -11,7 +11,7 @@ class AddWinsSet[T](val replicaId: String) extends SetCrdt[T] {
 
   private var _state: AddWinsSetLattice[T] = AddWinsSetLattice[T]()
 
-  def this(replicaId: String, initialState: AddWinsSetLattice[T]) {
+  def this(replicaId: String, initialState: AddWinsSetLattice[T]) = {
     this(replicaId)
     _state = initialState
   }

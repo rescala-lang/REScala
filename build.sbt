@@ -27,11 +27,12 @@ libraryDependencies ++= Seq(
 libraryDependencies += "com.google.crypto.tink" % "tink" % "1.6.1"
 
 // CRDT Actors
-val AkkaVersion = "2.6.15"
+val AkkaVersion = "2.6.16"
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor-typed" % AkkaVersion,
   "com.typesafe.akka" %% "akka-actor-testkit-typed" % AkkaVersion % Test,
   "com.typesafe.akka" %% "akka-remote" % AkkaVersion,
+  "com.typesafe.akka" %% "akka-cluster-typed" % AkkaVersion,
   "ch.qos.logback" % "logback-classic" % "1.2.5"
 )
 
