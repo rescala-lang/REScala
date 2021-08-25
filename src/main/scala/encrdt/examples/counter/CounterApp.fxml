@@ -6,20 +6,29 @@
 <GridPane xmlns="http://javafx.com/javafx/11.0.2" xmlns:fx="http://javafx.com/fxml/1" fx:controller="de.ckuessner.encrdt.examples.counter.CounterController">
    <columnConstraints>
       <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
+      <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="70.0" />
       <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="50.0" />
-      <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="50.0" />
+      <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
    </columnConstraints>
    <rowConstraints>
       <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
       <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
       <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
    </rowConstraints>
    <children>
+      <Label text="Local address:" GridPane.rowIndex="3" />
+      <TextField fx:id="addressTextField" editable="false" GridPane.columnIndex="1" GridPane.columnSpan="3" GridPane.rowIndex="3" />
+      <Button fx:id="connectBtn" mnemonicParsing="false" text="Connect to seed node" GridPane.columnSpan="2" GridPane.rowIndex="4" />
       <TextField fx:id="countField" editable="false" focusTraversable="false" prefWidth="100.0" text="0" GridPane.columnIndex="1" GridPane.vgrow="ALWAYS" />
-      <Label focusTraversable="false" text="Count: " GridPane.vgrow="NEVER" />
-      <TextField fx:id="addField" prefWidth="50.0" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.vgrow="ALWAYS" />
-      <TextField fx:id="subField" prefWidth="50.0" GridPane.columnIndex="1" GridPane.rowIndex="2" GridPane.vgrow="ALWAYS" />
+      <Label focusTraversable="false" text="Count: " GridPane.halignment="RIGHT" GridPane.vgrow="NEVER" />
+      <Spinner fx:id="deltaSpinner" GridPane.columnIndex="1" GridPane.rowIndex="1">
+         <valueFactory>
+            <SpinnerValueFactory.IntegerSpinnerValueFactory max="2147483647" min="0" />
+         </valueFactory>
+      </Spinner>
       <Button fx:id="addBtn" mnemonicParsing="false" prefWidth="50.0" text="Add" GridPane.columnIndex="2" GridPane.rowIndex="1" GridPane.vgrow="NEVER" />
-      <Button fx:id="subBtn" mnemonicParsing="false" prefWidth="50.0" text="Sub" GridPane.columnIndex="2" GridPane.rowIndex="2" GridPane.vgrow="NEVER" />
+      <Button fx:id="subBtn" mnemonicParsing="false" prefWidth="50.0" text="Sub" GridPane.halignment="RIGHT" GridPane.rowIndex="1" GridPane.vgrow="NEVER" />
    </children>
 </GridPane>

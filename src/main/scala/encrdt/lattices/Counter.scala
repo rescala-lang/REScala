@@ -12,7 +12,7 @@ import com.github.plokhotnyuk.jsoniter_scala.macros._
  */
 class Counter(val replicaId: String) {
 
-  def this(replicaId: String, initialState: CounterCrdtLattice) {
+  def this(replicaId: String, initialState: CounterCrdtLattice) = {
     this(replicaId)
     this.state = initialState
   }

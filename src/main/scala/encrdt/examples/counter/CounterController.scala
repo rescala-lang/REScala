@@ -3,58 +3,102 @@ package encrdt.examples.counter
 
 
 import encrdt.actors.{Counter, ObservableSynchronizationAdapter}
+import encrdt.examples.counter.CounterApp.syncServiceKey
 import encrdt.lattices.CounterCrdtLattice
 
+import akka.actor.AddressFromURIString
 import akka.actor.typed.scaladsl.AskPattern.Askable
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, ActorSystem, Scheduler}
+import akka.cluster.typed.{Cluster, JoinSeedNodes}
 import akka.util.Timeout
-import scalafx.scene.control.{Button, TextField, TextFormatter}
-import scalafx.util.StringConverter
+import com.typesafe.config.ConfigFactory
+import scalafx.scene.control.Alert.AlertType
+import scalafx.scene.control._
 import scalafxml.core.macros.sfxml
 
+import java.net.MalformedURLException
 import java.util.UUID
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 import scala.util.{Failure, Success}
 
+trait CounterControllerInterface {
+  def stop(): Unit
+
+  val replicaId: String
+
+  def increment(delta: Int): Unit
+
+  def decrement(delta: Int): Unit
+}
+
 @sfxml
 class CounterController(private val addBtn: Button,
-                        private val addField: TextField,
                         private val subBtn: Button,
-                        private val subField: TextField,
-                        private val countField: TextField) {
+                        private val deltaSpinner: Spinner[Int],
+                        private val countField: TextField,
+                        private val connectBtn: Button,
+                        private val addressTextField: TextField)
+  extends CounterControllerInterface {
 
   val replicaId: String = UUID.randomUUID().toString
 
-  val actorSystem: ActorSystem[Counter.Command] =
-    ActorSystem(
-      Behaviors.logMessages(
-        Counter(replicaId, ctx =>
-          new ObservableSynchronizationAdapter[CounterCrdtLattice](
-            () => stateChanged(),
-            ctx,
-            replicaId,
-            CounterCrdtLattice())
-        )), "counterapp")
+  private val actorSystem: ActorSystem[Counter.Command] = ActorSystem.create(
+    Behaviors.logMessages(
+      Counter(replicaId, ctx =>
+        new ObservableSynchronizationAdapter[CounterCrdtLattice](
+          () => stateChanged(),
+          ctx,
+          syncServiceKey,
+          replicaId,
+          CounterCrdtLattice()),
+        syncServiceKey
+      )),
+    "Counter",
+    ConfigFactory.load("application.conf")
+  )
 
-  Runtime.getRuntime.addShutdownHook(new Thread(() => actorSystem.terminate()))
+  addressTextField.setText(actorSystem.address.toString)
 
-  val counterActor: ActorRef[Counter.Command] = actorSystem
+  private val counterActor: ActorRef[Counter.Command] = actorSystem
 
-  addField.setTextFormatter(new TextFormatter(StringConverter(Integer.parseUnsignedInt, Integer.toString), 0))
-  subField.setTextFormatter(new TextFormatter(StringConverter(Integer.parseUnsignedInt, Integer.toString), 0))
+  private val cluster: Cluster = Cluster(actorSystem)
 
   addBtn.setOnAction { _ =>
-    increment(Integer.parseUnsignedInt(addField.text.get()))
+    increment(deltaSpinner.value.get())
   }
 
   subBtn.setOnAction { _ =>
-    decrement(Integer.parseUnsignedInt(subField.text.get()))
+    decrement(deltaSpinner.value.get())
+  }
+
+  connectBtn.setOnAction { _ =>
+    val dialog = new TextInputDialog() {
+      initOwner(CounterApp.stage)
+      title = "Connect to seed node"
+      headerText = "Connect to seed node"
+      contentText = "URI of seed node:"
+    }
+    dialog.showAndWait() match {
+      case Some(addressString) =>
+        try {
+          if (!addressString.isBlank) {
+            val address = AddressFromURIString.parse(addressString)
+            cluster.manager ! JoinSeedNodes(Seq(address))
+          }
+        } catch {
+          case urle: MalformedURLException => new Alert(AlertType.Error) {
+            title = "Malformed URI"
+            headerText = "Malformed URI error"
+            contentText = "Not a valid URI: " + urle.getMessage
+          }.show()
+        }
+      case None =>
+    }
   }
 
   def stateChanged(): Unit = {
-    Console.println("CounterController::stateChanged()")
     val timeout: Timeout = 1.seconds
     // Use Akka ActorSystem scheduler for ask
     val scheduler: Scheduler = actorSystem.scheduler
@@ -76,5 +120,9 @@ class CounterController(private val addBtn: Button,
 
   def decrement(delta: Int): Unit = {
     counterActor ! Counter.Update(-delta)
+  }
+
+  def stop(): Unit = {
+    actorSystem.terminate()
   }
 }

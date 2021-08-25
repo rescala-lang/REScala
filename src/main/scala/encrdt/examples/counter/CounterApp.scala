@@ -1,6 +1,10 @@
 package de.ckuessner
 package encrdt.examples.counter
 
+import encrdt.actors.SynchronizationAdapter
+import encrdt.lattices.CounterCrdtLattice
+
+import akka.actor.typed.receptionist.ServiceKey
 import javafx.{scene => jfxs}
 import scalafx.Includes._
 import scalafx.application.JFXApp3.PrimaryStage
@@ -13,15 +17,25 @@ import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 object CounterApp extends JFXApp3 {
   val javaFxExecutionContext: ExecutionContextExecutor = ExecutionContext.fromExecutor { cmd => Platform.runLater(cmd) }
 
+  val syncServiceKey: ServiceKey[SynchronizationAdapter.Command[CounterCrdtLattice]] = ServiceKey("counterSync")
+
+  private var controller: CounterControllerInterface = _
+
   override def start(): Unit = {
     val loader = new FXMLLoader(getClass.getResource("CounterApp.fxml"), new DependenciesByType(Map.empty))
     loader.load()
     val root = loader.getRoot[jfxs.Parent]
+    controller = loader.getController()
 
     stage = new PrimaryStage() {
       title = "Counter App"
       scene = new Scene(root)
     }
+  }
+
+  override def stopApp(): Unit = {
+    controller.stop()
+    super.stopApp()
   }
 }
 
