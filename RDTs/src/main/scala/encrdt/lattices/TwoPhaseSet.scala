@@ -17,7 +17,12 @@ class TwoPhaseSet[T](val replicaId: String) extends SetCrdt[T] {
     _state = _state.added(element)
   }
 
-  // When removing an element that is not currently present in the Set, the element can't be added later on.
+  /**
+   * Permanently removes the element from the Set.
+   * When removing an element that is not currently present in the Set, the element can't be added later on.
+   *
+   * @param element The element to be removed
+   */
   def remove(element: T): Unit = {
     _state = _state.removed(element)
   }
@@ -25,18 +30,18 @@ class TwoPhaseSet[T](val replicaId: String) extends SetCrdt[T] {
   def values: Set[T] = state.values
 }
 
-case class TwoPhaseSetLattice[T](added: Set[T] = Set[T](), removed: Set[T] = Set[T]()) {
-  def values: Set[T] = added -- removed
+case class TwoPhaseSetLattice[T](addedElems: Set[T] = Set[T](), removedElems: Set[T] = Set[T]()) {
+  def values: Set[T] = addedElems -- removedElems
 
-  def added(element: T): TwoPhaseSetLattice[T] = copy(added = added + element)
+  def added(element: T): TwoPhaseSetLattice[T] = copy(addedElems = addedElems + element)
 
   def removed(element: T): TwoPhaseSetLattice[T] = {
-    copy(removed = removed + element)
+    copy(removedElems = removedElems + element)
   }
 }
 
 object TwoPhaseSetLattice {
   implicit def TwoPhaseSetSemiLattice[T]: SemiLattice[TwoPhaseSetLattice[T]] =
     (left: TwoPhaseSetLattice[T], right: TwoPhaseSetLattice[T]) =>
-      TwoPhaseSetLattice(left.added ++ right.added, left.removed ++ right.removed)
+      TwoPhaseSetLattice(left.addedElems ++ right.addedElems, left.removedElems ++ right.removedElems)
 }
