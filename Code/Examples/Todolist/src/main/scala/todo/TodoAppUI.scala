@@ -115,15 +115,15 @@ class TodoAppUI() {
 
     val todoInputField: Input = handler.value.render
 
-    (
+    val handlerEvent =
       handler.event.map { e: UIEvent =>
         e.preventDefault()
         val res = todoInputField.value.trim
         todoInputField.value = ""
         res
-      },
-      todoInputField
-    )
+      }
+
+    (handlerEvent, todoInputField)
   }
 
 }
