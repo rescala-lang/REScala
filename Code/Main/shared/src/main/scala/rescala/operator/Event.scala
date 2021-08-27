@@ -214,8 +214,9 @@ trait EventBundle extends EventCompatBundle with InterpBundle {
     final def iterate[A](init: A)(f: A => A)(implicit ticket: CreationTicket): Signal[A] =
       Events.foldOne(this, init)((acc, _) => f(acc))
 
-    /** Counts the occurrences of the event. Starts from 0, when the event has never been
-      * fired yet. The argument of the event is simply discarded.
+    /** Counts the occurrences of the event.
+      * The argument of the event is discarded.
+      * Always starts from 0 when the count is created (no matter how often the event has activated in the past).
       * @group conversion
       */
     @cutOutOfUserComputation
