@@ -10,7 +10,7 @@ import todo.Todolist.replicaId
 
 import java.util.concurrent.ThreadLocalRandom
 
-class TaskList(toggleAll: Event[UIEvent], taskRefs: TaskRefObj) {
+class TaskOps(taskRefs: TaskRefObj) {
 
   type State = RGA[TaskRef, DietMapCContext]
 

@@ -45,7 +45,7 @@ class TodoAppUI() {
     val deltaEvt = Evt[Delta[RGA.State[TaskRef, DietMapCContext]]]
 
     val taskrefs = new TaskRefObj(toggleAll.event)
-    val tasklist = new TaskList(toggleAll.event, taskrefs)
+    val taskOps = new TaskOps(taskrefs)
 
     import taskrefs.taskRefCodec
     implicit val codec: JsonValueCodec[RGA.State[TaskRef, DietMapCContext]] = RGAStateCodec
@@ -54,12 +54,12 @@ class TodoAppUI() {
       IdenticallyTransmittable()
 
     val rga =
-      Events.foldAll(tasklist.listInitial) { s =>
+      Events.foldAll(taskOps.listInitial) { s =>
         Seq(
-          createTodo act tasklist.handleCreateTodo(s),
-          removeAll.event dyn { dt => _ => tasklist.handleRemoveAll(s, dt) },
-          s.toList.map(_.removed) act tasklist.handleRemove(s),
-          deltaEvt act tasklist.handleDelta(s)
+          createTodo act taskOps.handleCreateTodo(s),
+          removeAll.event dyn { dt => _ => taskOps.handleRemoveAll(s, dt) },
+          s.toList.map(_.removed) act taskOps.handleRemove(s),
+          deltaEvt act taskOps.handleDelta(s)
         )
       }
 
