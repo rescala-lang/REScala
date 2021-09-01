@@ -18,7 +18,7 @@ class TwoPhaseMap[K, V: SemiLattice](val replicaId: String) extends MapCrdt[K, V
   override def values: Map[K, V] = _state.values
 }
 
-case class TwoPhaseMapLattice[K, V: SemiLattice](entries: TwoPhaseSetLattice[(K, V)] = TwoPhaseSetLattice()) {
+case class TwoPhaseMapLattice[K, V: SemiLattice](entries: TwoPhaseSetLattice[(K, V)] = TwoPhaseSetLattice[(K, V)]()) {
   def keys: Set[K] = entries.values.map(_._1)
 
   def values: Map[K, V] = entries.values.toMap
@@ -41,6 +41,9 @@ case class TwoPhaseMapLattice[K, V: SemiLattice](entries: TwoPhaseSetLattice[(K,
   }
 
   def removed(key: K): TwoPhaseMapLattice[K, V] = {
-    TwoPhaseMapLattice(TwoPhaseSetLattice(entries.addedElems, entries.removedElems + (key -> get(key))))
+    entries.values.find(_._1 == key) match {
+      case Some(pair) => TwoPhaseMapLattice(TwoPhaseSetLattice(entries.addedElems, entries.removedElems + pair))
+      case None => this
+    }
   }
 }
