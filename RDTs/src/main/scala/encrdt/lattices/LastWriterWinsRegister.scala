@@ -14,7 +14,7 @@ class LastWriterWinsRegister[T](initialState: LastWriterWinsRegisterLattice[T, (
 
   private var _state = initialState
 
-  private def currentVCTime: VectorClock = state.timestamp._1
+  def currentTime: VectorClock = state.timestamp._1
 
   def state: LastWriterWinsRegisterLattice[T, (VectorClock, Instant, String)] = _state
 
@@ -23,7 +23,7 @@ class LastWriterWinsRegister[T](initialState: LastWriterWinsRegisterLattice[T, (
   def set(value: T): Unit = {
     _state = SemiLattice.merged(
       state,
-      LastWriterWinsRegisterLattice(value, (currentVCTime.advance(replicaId), Instant.now(), replicaId))
+      LastWriterWinsRegisterLattice(value, (currentTime.advance(replicaId), Instant.now(), replicaId))
     )
   }
 

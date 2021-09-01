@@ -9,7 +9,10 @@ import scala.annotation.tailrec
 class MultiValueRegister[T](initialState: MultiValueRegisterLattice[T], val replicaId: String) {
   private var _state = initialState
 
-  private def currentTime: VectorClock = state.versions.keys.reduce((a, b) => a.merged(b))
+  def currentTime: VectorClock = {
+    if (state.versions.isEmpty) VectorClock()
+    else state.versions.keys.reduce((a, b) => a.merged(b))
+  }
 
   def state: MultiValueRegisterLattice[T] = _state
 
