@@ -14,6 +14,6 @@ object MapHelper {
    */
   def max[K, V](a: Map[K, V], b: Map[K, V])(implicit num: Numeric[V]): Map[K, V] =
     (a.keySet ++ b.keySet)
-      .map(key => key -> num.max(a.getOrElse(key, 0.asInstanceOf[V]), b.getOrElse(key, 0.asInstanceOf[V])))
+      .map(key => key -> num.max(a.getOrElse(key, num.zero), b.getOrElse(key, num.zero)))
       .toMap
 }
