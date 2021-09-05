@@ -1,10 +1,11 @@
 package de.ckuessner
-package encrdt.actors
+package counter.actors
+
+import encrdt.lattices.CounterLattice
 
 import akka.actor.typed.receptionist.{Receptionist, ServiceKey}
 import akka.actor.typed.scaladsl.{AbstractBehavior, ActorContext, Behaviors}
 import akka.actor.typed.{ActorRef, Behavior}
-import de.ckuessner.encrdt.lattices.CounterLattice
 
 object Counter {
   case class Value(value: Int)

@@ -1,9 +1,9 @@
 package de.ckuessner
-package encrdt.examples.counter
+package counter
 
-
-import encrdt.actors.{Counter, ObservableSynchronizationAdapter}
-import encrdt.examples.counter.CounterApp.syncServiceKey
+import counter.CounterApp.syncServiceKey
+import counter.actors.{Counter, ObservableSynchronizationAdapter}
+import encrdt.lattices.CounterLattice
 
 import akka.actor.AddressFromURIString
 import akka.actor.typed.scaladsl.AskPattern.Askable
@@ -12,7 +12,6 @@ import akka.actor.typed.{ActorRef, ActorSystem, Scheduler}
 import akka.cluster.typed.{Cluster, JoinSeedNodes}
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
-import de.ckuessner.encrdt.lattices.CounterLattice
 import scalafx.scene.control.Alert.AlertType
 import scalafx.scene.control._
 import scalafxml.core.macros.sfxml

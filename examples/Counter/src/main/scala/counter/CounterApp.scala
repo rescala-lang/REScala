@@ -1,10 +1,10 @@
 package de.ckuessner
-package encrdt.examples.counter
+package counter
 
-import encrdt.actors.SynchronizationAdapter
+import counter.actors.SynchronizationAdapter
+import encrdt.lattices.CounterLattice
 
 import akka.actor.typed.receptionist.ServiceKey
-import de.ckuessner.encrdt.lattices.CounterLattice
 import javafx.{scene => jfxs}
 import scalafx.Includes._
 import scalafx.application.JFXApp3.PrimaryStage
