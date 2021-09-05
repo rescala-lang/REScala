@@ -1,13 +1,16 @@
 package de.ckuessner
-package encrdt.lattices
+package encrdt.crdts
 
-import encrdt.lattices.interfaces.SemiLattice
+import encrdt.lattices.{CounterLattice, SemiLattice}
 
-import com.github.plokhotnyuk.jsoniter_scala.core.{readFromString, writeToString}
+import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromString, writeToString}
+import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 
 class CounterSpec extends AnyFlatSpec {
+
+  implicit val codec: JsonValueCodec[CounterLattice] = JsonCodecMaker.make
 
   "A CounterCrdt" should "initialize with 0" in {
     val crdt = new Counter("42")
@@ -52,7 +55,7 @@ class CounterSpec extends AnyFlatSpec {
   }
 
   it should "be idempotent when merging" in {
-    val state = CounterCrdtLattice(Map("1" -> 10), Map("2" -> 2))
+    val state = CounterLattice(Map("1" -> 10), Map("2" -> 2))
     val crdt = new Counter("1", state)
     assume(crdt.query() == 8)
 
@@ -76,7 +79,7 @@ class CounterSpec extends AnyFlatSpec {
       crdt.query()
     }
 
-    crdt.merge(CounterCrdtLattice())
+    crdt.merge(CounterLattice())
     assertResult(8) {
       crdt.query()
     }
@@ -102,9 +105,9 @@ class CounterSpec extends AnyFlatSpec {
   }
 
   it should "merge with some replicas not present in left crdt" in {
-    val leftStateInitial = CounterCrdtLattice(Map("1" -> 1, "2" -> 1))
+    val leftStateInitial = CounterLattice(Map("1" -> 1, "2" -> 1))
     var crdtLeft = new Counter("1", leftStateInitial)
-    val rightState = CounterCrdtLattice(Map("1" -> 1, "2" -> 2, "3" -> 3, "4" -> 4))
+    val rightState = CounterLattice(Map("1" -> 1, "2" -> 2, "3" -> 3, "4" -> 4))
 
     assume(crdtLeft.query() == 2)
 
@@ -115,7 +118,7 @@ class CounterSpec extends AnyFlatSpec {
     }
 
     // Positive/Negative mixed
-    val rightStateNegatives = CounterCrdtLattice(negativeCounts = Map("1" -> 1, "2" -> 2, "3" -> 3, "4" -> 4))
+    val rightStateNegatives = CounterLattice(negativeCounts = Map("1" -> 1, "2" -> 2, "3" -> 3, "4" -> 4))
     assertResult(0) {
       crdtLeft.merge(rightStateNegatives)
       crdtLeft.query()
@@ -132,9 +135,9 @@ class CounterSpec extends AnyFlatSpec {
   }
 
   it should "merge with some replicas not present in right crdt" in {
-    val leftState = CounterCrdtLattice(Map("1" -> 1, "2" -> 1, "3" -> 3, "4" -> 4))
+    val leftState = CounterLattice(Map("1" -> 1, "2" -> 1, "3" -> 3, "4" -> 4))
     var crdtLeft = new Counter("1", leftState)
-    val rightState = CounterCrdtLattice(Map("1" -> 1, "2" -> 2))
+    val rightState = CounterLattice(Map("1" -> 1, "2" -> 2))
 
     assume(crdtLeft.query() == 9)
 
@@ -156,16 +159,16 @@ class CounterSpec extends AnyFlatSpec {
   }
 
   it should "allow the merge of two empty crdts" in {
-    assertResult(CounterCrdtLattice()) {
-      SemiLattice.merged(CounterCrdtLattice(), CounterCrdtLattice())
+    assertResult(CounterLattice()) {
+      SemiLattice.merged(CounterLattice(), CounterLattice())
     }
   }
 
   it should "serialize and deserialize" in {
-    val crdtState = CounterCrdtLattice(positiveCounts = Map("42" -> 21, "21" -> 42), negativeCounts = Map("42" -> 42, "21" -> 21))
+    val crdtState = CounterLattice(positiveCounts = Map("42" -> 21, "21" -> 42), negativeCounts = Map("42" -> 42, "21" -> 21))
 
     val serializedState = writeToString(crdtState)
-    val crdtDeserialized = readFromString[CounterCrdtLattice](serializedState)
+    val crdtDeserialized = readFromString[CounterLattice](serializedState)
 
     crdtDeserialized shouldBe crdtState
   }

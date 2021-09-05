@@ -1,5 +1,5 @@
 package de.ckuessner
-package encrdt.lattices.interfaces
+package encrdt.crdts.interfaces
 
 trait SetCrdt[T] {
   def add(element: T): Unit

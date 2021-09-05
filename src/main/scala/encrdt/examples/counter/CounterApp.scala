@@ -2,9 +2,9 @@ package de.ckuessner
 package encrdt.examples.counter
 
 import encrdt.actors.SynchronizationAdapter
-import encrdt.lattices.CounterCrdtLattice
 
 import akka.actor.typed.receptionist.ServiceKey
+import de.ckuessner.encrdt.lattices.CounterLattice
 import javafx.{scene => jfxs}
 import scalafx.Includes._
 import scalafx.application.JFXApp3.PrimaryStage
@@ -17,7 +17,7 @@ import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 object CounterApp extends JFXApp3 {
   val javaFxExecutionContext: ExecutionContextExecutor = ExecutionContext.fromExecutor { cmd => Platform.runLater(cmd) }
 
-  val syncServiceKey: ServiceKey[SynchronizationAdapter.Command[CounterCrdtLattice]] = ServiceKey("counterSync")
+  val syncServiceKey: ServiceKey[SynchronizationAdapter.Command[CounterLattice]] = ServiceKey("counterSync")
 
   private var controller: CounterControllerInterface = _
 

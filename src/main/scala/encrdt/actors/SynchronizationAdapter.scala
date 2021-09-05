@@ -1,11 +1,10 @@
 package de.ckuessner
 package encrdt.actors
 
-import encrdt.lattices.interfaces.SemiLattice
-
 import akka.actor.typed.ActorRef
 import akka.actor.typed.receptionist.ServiceKey
 import akka.actor.typed.scaladsl.ActorContext
+import de.ckuessner.encrdt.lattices.SemiLattice
 
 object SynchronizationAdapter {
   trait Command[T]

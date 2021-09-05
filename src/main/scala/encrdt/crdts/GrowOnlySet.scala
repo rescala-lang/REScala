@@ -1,7 +1,7 @@
 package de.ckuessner
-package encrdt.lattices
+package encrdt.crdts
 
-import encrdt.lattices.interfaces.{SemiLattice, SetCrdt}
+import encrdt.crdts.interfaces.SetCrdt
 
 class GrowOnlySet[T] extends SetCrdt[T] {
   private var _state: Set[T] = Set()
@@ -14,9 +14,4 @@ class GrowOnlySet[T] extends SetCrdt[T] {
     throw new UnsupportedOperationException("Can't remove elements from GrowOnlySet")
 
   override def values: Set[T] = _state
-}
-
-object GrowOnlySetLattice {
-  implicit def lattice[T]: SemiLattice[Set[T]] =
-    (left: Set[T], right: Set[T]) => left ++ right
 }
