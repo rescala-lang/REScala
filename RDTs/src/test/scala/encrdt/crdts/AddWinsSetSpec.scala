@@ -1,7 +1,7 @@
 package de.ckuessner
-package encrdt.lattices
+package encrdt.crdts
 
-import encrdt.lattices.interfaces.SemiLattice
+import encrdt.lattices.{AddWinsSetLattice, SemiLattice}
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers._
@@ -31,13 +31,13 @@ class AddWinsSetSpec extends AnyFlatSpec {
     set.removed(1).values should be(empty)
 
     val set2 = set.added(2, "A").added(3, "B")
-    set2.removed(3).values() should not contain (3)
-    set2.removed(3).values() should contain(1)
-    set2.removed(3).values() should contain(2)
+    set2.removed(3).values should not contain (3)
+    set2.removed(3).values should contain(1)
+    set2.removed(3).values should contain(2)
 
-    set2.removed(2).values() should not contain (2)
-    set2.removed(2).values() should contain(1)
-    set2.removed(2).values() should contain(3)
+    set2.removed(2).values should not contain (2)
+    set2.removed(2).values should contain(1)
+    set2.removed(2).values should contain(3)
   }
 
   it should "have symmetric merge" in {
@@ -56,7 +56,7 @@ class AddWinsSetSpec extends AnyFlatSpec {
     right = right.added(1, "B")
 
     val m1 = merged(left, right)
-    m1.values() should contain(1)
+    m1.values should contain(1)
   }
 
   it should "remove element if removal is causal" in {

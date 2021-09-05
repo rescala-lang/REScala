@@ -1,11 +1,10 @@
 package de.ckuessner
 package encrdt.actors
 
-import encrdt.lattices.interfaces.SemiLattice
-
 import akka.actor.typed.ActorRef
 import akka.actor.typed.receptionist.ServiceKey
 import akka.actor.typed.scaladsl.ActorContext
+import de.ckuessner.encrdt.lattices.SemiLattice
 
 class ObservableSynchronizationAdapter[T: SemiLattice](val stateChangedHandler: () => Unit,
                                                        context: ActorContext[_],

@@ -1,8 +1,9 @@
 package de.ckuessner
-package encrdt.lattices.interfaces
+package encrdt.crdts.interfaces
 
 trait MapCrdt[K, V] {
   @inline def apply(key: K): Option[V] = get(key)
+
   def get(key: K): Option[V]
 
   // No return value, as effect is only eventually consistent

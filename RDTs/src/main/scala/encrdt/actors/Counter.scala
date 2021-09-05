@@ -1,35 +1,34 @@
 package de.ckuessner
 package encrdt.actors
 
-import encrdt.lattices.CounterCrdtLattice
-
 import akka.actor.typed.receptionist.{Receptionist, ServiceKey}
 import akka.actor.typed.scaladsl.{AbstractBehavior, ActorContext, Behaviors}
 import akka.actor.typed.{ActorRef, Behavior}
+import de.ckuessner.encrdt.lattices.CounterLattice
 
 object Counter {
   case class Value(value: Int)
 
   sealed trait Command
 
-  private case class SynchronizationCommand(cmd: SynchronizationAdapter.Command[CounterCrdtLattice]) extends Command
+  private case class SynchronizationCommand(cmd: SynchronizationAdapter.Command[CounterLattice]) extends Command
 
   case class Update(delta: Int) extends Command
 
   case class Query(replyTo: ActorRef[Value]) extends Command
 
-  def apply(implicit syncServiceKey: ServiceKey[SynchronizationAdapter.Command[CounterCrdtLattice]]): Behavior[Command] =
+  def apply(implicit syncServiceKey: ServiceKey[SynchronizationAdapter.Command[CounterLattice]]): Behavior[Command] =
     Behaviors.setup(context =>
       new Counter(
         context,
-        new SynchronizationAdapter(context, syncServiceKey, context.system.address.toString, CounterCrdtLattice()),
+        new SynchronizationAdapter(context, syncServiceKey, context.system.address.toString, CounterLattice()),
         syncServiceKey
       )
     )
 
   def apply(replicaId: String,
-            syncAdapter: ActorContext[_] => SynchronizationAdapter[CounterCrdtLattice],
-            syncServiceKey: ServiceKey[SynchronizationAdapter.Command[CounterCrdtLattice]]
+            syncAdapter: ActorContext[_] => SynchronizationAdapter[CounterLattice],
+            syncServiceKey: ServiceKey[SynchronizationAdapter.Command[CounterLattice]]
            ): Behavior[Command] = {
 
     Behaviors.setup(context => new Counter(context, syncAdapter(context), syncServiceKey))
@@ -37,19 +36,19 @@ object Counter {
 }
 
 class Counter(context: ActorContext[Counter.Command],
-              syncAdapter: SynchronizationAdapter[CounterCrdtLattice],
-              val syncServiceKey: ServiceKey[SynchronizationAdapter.Command[CounterCrdtLattice]])
+              syncAdapter: SynchronizationAdapter[CounterLattice],
+              val syncServiceKey: ServiceKey[SynchronizationAdapter.Command[CounterLattice]])
   extends AbstractBehavior[Counter.Command](context) {
 
   import Counter._
 
-  private val syncMessageAdapter: ActorRef[SynchronizationAdapter.Command[CounterCrdtLattice]] =
+  private val syncMessageAdapter: ActorRef[SynchronizationAdapter.Command[CounterLattice]] =
     context.messageAdapter(syncCommand => SynchronizationCommand(syncCommand))
   context.system.receptionist ! Receptionist.Register(syncServiceKey, syncMessageAdapter)
 
   private val joinHandler = context.spawnAnonymous[Receptionist.Listing](
     Behaviors.receiveMessagePartial {
-      case syncServiceKey.Listing(reachablePeers: Set[ActorRef[SynchronizationAdapter.Command[CounterCrdtLattice]]]) =>
+      case syncServiceKey.Listing(reachablePeers: Set[ActorRef[SynchronizationAdapter.Command[CounterLattice]]]) =>
         syncMessageAdapter ! SynchronizationAdapter.PeersChanged(reachablePeers)
         Behaviors.same
     }

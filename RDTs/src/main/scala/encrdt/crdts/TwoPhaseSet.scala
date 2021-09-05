@@ -1,7 +1,8 @@
 package de.ckuessner
-package encrdt.lattices
+package encrdt.crdts
 
-import encrdt.lattices.interfaces.{SemiLattice, SetCrdt}
+import encrdt.crdts.interfaces.SetCrdt
+import encrdt.lattices.{SemiLattice, TwoPhaseSetLattice}
 
 class TwoPhaseSet[T](val replicaId: String) extends SetCrdt[T] {
 
@@ -28,20 +29,4 @@ class TwoPhaseSet[T](val replicaId: String) extends SetCrdt[T] {
   }
 
   def values: Set[T] = state.values
-}
-
-case class TwoPhaseSetLattice[T](addedElems: Set[T] = Set[T](), removedElems: Set[T] = Set[T]()) {
-  def values: Set[T] = addedElems -- removedElems
-
-  def added(element: T): TwoPhaseSetLattice[T] = copy(addedElems = addedElems + element)
-
-  def removed(element: T): TwoPhaseSetLattice[T] = {
-    copy(removedElems = removedElems + element)
-  }
-}
-
-object TwoPhaseSetLattice {
-  implicit def TwoPhaseSetSemiLattice[T]: SemiLattice[TwoPhaseSetLattice[T]] =
-    (left: TwoPhaseSetLattice[T], right: TwoPhaseSetLattice[T]) =>
-      TwoPhaseSetLattice(left.addedElems ++ right.addedElems, left.removedElems ++ right.removedElems)
 }

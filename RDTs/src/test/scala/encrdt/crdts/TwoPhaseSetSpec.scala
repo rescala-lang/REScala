@@ -1,5 +1,7 @@
 package de.ckuessner
-package encrdt.lattices
+package encrdt.crdts
+
+import encrdt.lattices.TwoPhaseSetLattice
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromString, writeToString}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker

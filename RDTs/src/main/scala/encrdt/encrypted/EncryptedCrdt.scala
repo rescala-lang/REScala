@@ -2,11 +2,10 @@ package de.ckuessner
 package encrdt.encrypted
 
 import encrdt.causality.VectorClock
-import encrdt.lattices.MultiValueRegisterLattice
-import encrdt.lattices.interfaces.SemiLattice
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import com.google.crypto.tink.Aead
+import de.ckuessner.encrdt.lattices.{MultiValueRegisterLattice, SemiLattice}
 
 import scala.util.{Failure, Success, Try}
 

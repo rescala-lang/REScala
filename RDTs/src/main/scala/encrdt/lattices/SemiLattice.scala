@@ -1,5 +1,5 @@
 package de.ckuessner
-package encrdt.lattices.interfaces
+package encrdt.lattices
 
 trait SemiLattice[T] {
   def merged(left: T, right: T): T
