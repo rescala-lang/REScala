@@ -1,4 +1,4 @@
-lazy val commonSetttings: Def.SettingsDefinition = List(
+lazy val commonSettings: Def.SettingsDefinition = List(
   organization := "de.ckuessner",
   idePackagePrefix := Some("de.ckuessner"),
   scalaVersion := "2.13.6",
@@ -10,15 +10,24 @@ lazy val encrdt = project
   .in(file("."))
   .settings(
     name := "encrdt",
-    commonSetttings,
+    commonSettings,
     libraryDependencies ++= commonDependencies ++ scalatestDependency
   )
+
+lazy val todolist = project
+  .in(file("examples/Todolist"))
+  .settings(
+    name := "todolist",
+    commonSettings,
+    libraryDependencies ++= commonDependencies ++ scalafxDependency ++ javalinDependency,
+    fork := true
+  ).dependsOn(encrdt)
 
 lazy val counter = project
   .in(file("examples/Counter"))
   .settings(
     name := "Counter",
-    commonSetttings,
+    commonSettings,
     libraryDependencies ++= akkaDependency ++ scalafxDependency,
     fork := true
   ).dependsOn(encrdt)
@@ -47,6 +56,12 @@ lazy val akkaDependency = Seq(
   "com.typesafe.akka" %% "akka-remote" % AkkaVersion,
   "com.typesafe.akka" %% "akka-cluster-typed" % AkkaVersion,
   "ch.qos.logback" % "logback-classic" % "1.2.5"
+)
+
+// Synced CRDTs using websockets
+lazy val javalinDependency = Seq(
+  "io.javalin" % "javalin" % "3.13.11",
+  "org.slf4j" % "slf4j-simple" % "1.7.32"
 )
 
 // ScalaFX, see https://www.scalafx.org/docs/quickstart/
