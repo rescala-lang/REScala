@@ -184,11 +184,11 @@ class ReactorWithoutAPITest extends RETests {
     test("Reactor until works") {
       val e1 = Evt[Unit]()
       val reactor = Reactor.once("Initial Value") {
-        StageBuilder().until(e1)(
+        StageBuilder().until(e1,
           body = {
             StageBuilder().set("Body value")
           },
-          interruptHandler = { _ =>
+          interruptHandler = { (_: Unit) =>
             StageBuilder().set("Interrupt value")
           }
         )
@@ -202,12 +202,12 @@ class ReactorWithoutAPITest extends RETests {
     test("Reactor until passes event value") {
       val e1 = Evt[String]()
       val reactor = Reactor.once("Initial Value") {
-        StageBuilder().until(e1)(
+        StageBuilder().until(e1,
           body = {
             StageBuilder().set("Body value")
           },
-          interruptHandler = { eventValue =>
-            StageBuilder().set(eventValue)
+          interruptHandler = { (e: String) =>
+            StageBuilder().set(e)
           }
         )
       }
@@ -221,7 +221,7 @@ class ReactorWithoutAPITest extends RETests {
       val interrupt = Evt[Unit]()
       val modifyEvent = Evt[String]()
       val reactor = Reactor.once("Initial Value") {
-        StageBuilder().until(interrupt)(
+        StageBuilder().until(interrupt,
           body = {
             StageBuilder().loop {
               StageBuilder().next(modifyEvent) { eventValue =>
@@ -229,7 +229,7 @@ class ReactorWithoutAPITest extends RETests {
               }
             }
           },
-          interruptHandler = { _ =>
+          interruptHandler = { (v: Unit) =>
             StageBuilder().set("Interrupted")
           }
         )
@@ -242,6 +242,29 @@ class ReactorWithoutAPITest extends RETests {
       assert(reactor.now === "Second Value")
       interrupt.fire()
       assert(reactor.now === "Interrupted")
+    }
+
+    test("Reactor until works without interruptHandler") {
+      val interrupt = Evt[Unit]()
+      val modifier = Evt[Int]()
+      val reactor = Reactor.once(0) {
+        StageBuilder().until(interrupt,
+          body = {
+            StageBuilder().loop {
+              StageBuilder().next(modifier) { v =>
+                StageBuilder().set(v)
+              }
+            }
+          }
+        )
+      }
+
+      assert(reactor.now === 0)
+      modifier.fire(42)
+      assert(reactor.now === 42)
+      interrupt.fire()
+      modifier.fire(50)
+      assert(reactor.now === 42)
     }
   }
 }

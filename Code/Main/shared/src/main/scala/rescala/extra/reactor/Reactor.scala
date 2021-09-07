@@ -234,8 +234,22 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
       *                         It is executed when the interrupt is fired.
       * @tparam E The type of the event value.
       */
-    def until[E](event: Event[E])(body: => StageBuilder[T], interruptHandler: E => StageBuilder[T]): StageBuilder[T] = {
+    def until[E](event: Event[E], body: => StageBuilder[T], interruptHandler: E => StageBuilder[T]): StageBuilder[T] = {
       addAction(ReactorAction.UntilAction(event, body, interruptHandler))
+    }
+
+    /** Executes it's body until an event is fired.
+      *
+      * Until executes the body until the given event is fired.
+      * When the event is fired, until executes the interruptHandler.
+      *
+      * @param event The event indicating the interrupt.
+      * @param body The [[StageBuilder]] to be executes by default.
+      * @tparam E The type of the event value.
+      */
+    def until[E](event: Event[E], body: => StageBuilder[T]): StageBuilder[T] = {
+      val interrupHandler = { (v: E) => StageBuilder[T]() }
+      addAction(ReactorAction.UntilAction(event, body, interrupHandler))
     }
   }
 }
