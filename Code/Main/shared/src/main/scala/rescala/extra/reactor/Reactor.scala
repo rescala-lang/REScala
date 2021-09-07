@@ -32,10 +32,10 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
         stage.stages.actions match {
           case Nil => stage
           case ReactorAction.SetAction(v) :: tail =>
-            processActions(stage.copy(currentValue = v, stages = StageBuilder(tail)))
+            processActions(stage.copy(currentValue = v, stages = Stage(tail)))
           case ReactorAction.ModifyAction(modifier) :: tail =>
             val modifiedValue = modifier(stage.currentValue)
-            processActions(stage.copy(currentValue = modifiedValue, stages = StageBuilder(tail)))
+            processActions(stage.copy(currentValue = modifiedValue, stages = Stage(tail)))
           case ReactorAction.NextAction(event, handler) :: _ =>
             if (progressedStage) {
               return stage
@@ -58,14 +58,14 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
               return processActions(resultStage.copy(stages = body))
             }
 
-            resultStage.copy(stages = StageBuilder(List(ReactorAction.LoopAction(body, resultStage.stages))))
+            resultStage.copy(stages = Stage(List(ReactorAction.LoopAction(body, resultStage.stages))))
           case ReactorAction.UntilAction(event, body, interrupt) :: _ =>
             val eventValue = input.depend(event)
             eventValue match {
               case None =>
                 val resultStage = processActions(stage.copy(stages = body))
                 resultStage.copy(stages =
-                  StageBuilder(List(ReactorAction.UntilAction(event, resultStage.stages, interrupt)))
+                  Stage(List(ReactorAction.UntilAction(event, resultStage.stages, interrupt)))
                 )
               case Some(value) =>
                 val stages = interrupt(value)
@@ -99,7 +99,7 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
       */
     def once[T](
         initialValue: T,
-    )(stageBuilder: StageBuilder[T]): Reactor[T] = {
+    )(stageBuilder: Stage[T]): Reactor[T] = {
       CreationTicket.fromScheduler(scheduler)
         .create(
           Set(),
@@ -119,7 +119,7 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
       */
     def loop[T](
         initialValue: T,
-    )(stageBuilder: StageBuilder[T]): Reactor[T] = {
+    )(stageBuilder: Stage[T]): Reactor[T] = {
       CreationTicket.fromScheduler(scheduler)
         .create(
           Set(),
@@ -138,22 +138,22 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
 
     case class ModifyAction[T](modifier: T => T) extends ReactorAction[T]
 
-    case class NextAction[T, E](event: Event[E], handler: E => StageBuilder[T])
+    case class NextAction[T, E](event: Event[E], handler: E => Stage[T])
         extends ReactorAction[T]
 
-    case class ReadAction[T](stageBuilder: T => StageBuilder[T]) extends ReactorAction[T]
+    case class ReadAction[T](stageBuilder: T => Stage[T]) extends ReactorAction[T]
 
-    case class LoopAction[T](body: StageBuilder[T], stagesLeft: StageBuilder[T]) extends ReactorAction[T]
+    case class LoopAction[T](body: Stage[T], stagesLeft: Stage[T]) extends ReactorAction[T]
 
-    case class UntilAction[T, E](event: Event[E], body: StageBuilder[T], interrupt: E => StageBuilder[T])
+    case class UntilAction[T, E](event: Event[E], body: Stage[T], interrupt: E => Stage[T])
         extends ReactorAction[T]
   }
 
-  case class ReactorStage[T](currentValue: T, stages: StageBuilder[T], initialStages: StageBuilder[T])
+  case class ReactorStage[T](currentValue: T, stages: Stage[T], initialStages: Stage[T])
 
-  case class StageBuilder[T](actions: List[ReactorAction[T]] = Nil) {
+  case class Stage[T](actions: List[ReactorAction[T]] = Nil) {
 
-    private def addAction(newValue: ReactorAction[T]): StageBuilder[T] = {
+    private def addAction(newValue: ReactorAction[T]): Stage[T] = {
       copy(actions = actions :+ newValue)
     }
 
@@ -162,7 +162,7 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
       * @param newValue The new value of the Reactor.
       * @return A StageBuilder describing the Reactor behaviour.
       */
-    def set(newValue: T): StageBuilder[T] = {
+    def set(newValue: T): Stage[T] = {
       addAction(ReactorAction.SetAction(newValue))
     }
 
@@ -171,7 +171,7 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
       * @param modifier A function that has the old Reactor value as input and returns a new Reactor value.
       * @return A StageBuilder describing the Reactor behaviour.
       */
-    def modify(modifier: T => T): StageBuilder[T] = {
+    def modify(modifier: T => T): Stage[T] = {
       addAction(ReactorAction.ModifyAction(modifier))
     }
 
@@ -184,7 +184,7 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
       * @param body  the code to execute when the event is triggered.
       * @tparam E the event's type.
       */
-    def next[E](event: Event[E])(body: E => StageBuilder[T]): StageBuilder[T] = {
+    def next[E](event: Event[E])(body: E => Stage[T]): Stage[T] = {
       addAction(ReactorAction.NextAction(event, body))
     }
 
@@ -196,29 +196,29 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
       * @param event the event to wait for.
       * @param body  the code to execute when the event is triggered.
       */
-    def next(event: Event[Unit])(body: => StageBuilder[T]): StageBuilder[T] = {
+    def next(event: Event[Unit])(body: => Stage[T]): Stage[T] = {
       addAction(ReactorAction.NextAction(event, (_: Unit) => body))
     }
 
     /** Reads the current reactor value.
       *
       * Executes the body with the current reactor value
-      * and expects another [[StageBuilder]] as result.
+      * and expects another [[Stage]] as result.
       *
-      * A usage example could be returning different [[StageBuilder]]s
+      * A usage example could be returning different [[Stage]]s
       * depending on the event value.
       *
-      * @param body The function building the resulting [[StageBuilder]]
+      * @param body The function building the resulting [[Stage]]
       */
-    def read(body: T => StageBuilder[T]): StageBuilder[T] = {
+    def read(body: T => Stage[T]): Stage[T] = {
       addAction(ReactorAction.ReadAction(body))
     }
 
     /** Executes the body in a loop.
       *
-      * @param body The [[StageBuilder]] to be executes repeatedly
+      * @param body The [[Stage]] to be executes repeatedly
       */
-    def loop(body: => StageBuilder[T]): StageBuilder[T] = {
+    def loop(body: => Stage[T]): Stage[T] = {
       addAction(ReactorAction.LoopAction(body, body))
     }
 
@@ -227,14 +227,14 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
       * Until executes the body until the given event is fired.
       * When the event is fired, until executes the interruptHandler.
       *
-      * @param event The event indicating the interrupt.
-      * @param body The [[StageBuilder]] to be executes by default.
+      * @param event            The event indicating the interrupt.
+      * @param body             The [[Stage]] to be executes by default.
       * @param interruptHandler A function taking the interrupt event's value
-      *                         and returning a [[StageBuilder]].
+      *                         and returning a [[Stage]].
       *                         It is executed when the interrupt is fired.
       * @tparam E The type of the event value.
       */
-    def until[E](event: Event[E], body: => StageBuilder[T], interruptHandler: E => StageBuilder[T]): StageBuilder[T] = {
+    def until[E](event: Event[E], body: => Stage[T], interruptHandler: E => Stage[T]): Stage[T] = {
       addAction(ReactorAction.UntilAction(event, body, interruptHandler))
     }
 
@@ -243,13 +243,13 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
       * Until executes the body until the given event is fired.
       * When the event is fired, until executes the interruptHandler.
       *
-      * @param event The event indicating the interrupt.
-      * @param body The [[StageBuilder]] to be executes by default.
+      * @param event            The event indicating the interrupt.
+      * @param body             The [[Stage]] to be executes by default.
       * @param interruptHandler A function taking the interrupt event's value
-      *                         and returning a [[StageBuilder]].
+      *                         and returning a [[Stage]].
       *                         It is executed when the interrupt is fired.
       */
-    def until(event: Event[Unit], body: => StageBuilder[T], interruptHandler: StageBuilder[T]): StageBuilder[T] = {
+    def until(event: Event[Unit], body: => Stage[T], interruptHandler: Stage[T]): Stage[T] = {
       val handler = { (_: Unit) => interruptHandler }
       addAction(ReactorAction.UntilAction(event, body, handler))
     }
@@ -259,11 +259,11 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
       * Until executes the body until the given event is fired.
       *
       * @param event The event indicating the interrupt.
-      * @param body The [[StageBuilder]] to be executes by default.
+      * @param body  The [[Stage]] to be executes by default.
       * @tparam E The type of the event value.
       */
-    def until[E](event: Event[E], body: => StageBuilder[T]): StageBuilder[T] = {
-      val interrupHandler = { (_: E) => StageBuilder[T]() }
+    def until[E](event: Event[E], body: => Stage[T]): Stage[T] = {
+      val interrupHandler = { (_: E) => Stage[T]() }
       addAction(ReactorAction.UntilAction(event, body, interrupHandler))
     }
   }
