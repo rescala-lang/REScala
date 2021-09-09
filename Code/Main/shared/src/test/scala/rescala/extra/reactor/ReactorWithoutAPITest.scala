@@ -266,5 +266,21 @@ class ReactorWithoutAPITest extends RETests {
       modifier.fire(50)
       assert(reactor.now === 42)
     }
+
+    test("Reactor multiple changes in a single stage") {
+      val start = Evt[Unit]()
+      val reactor = Reactor.once(0) {
+        Stage().next(start) {
+          Stage().set(1).set(42)
+        }
+      }
+
+      val reactorSignal = Signal { reactor.value }
+      val reactorChanged = reactorSignal.changed
+
+      val counter = reactorChanged.count()
+      start.fire()
+      assert(counter.now === 1)
+    }
   }
 }
