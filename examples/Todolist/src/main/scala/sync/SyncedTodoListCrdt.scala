@@ -9,9 +9,11 @@ import todolist.{TodoEntry, TodoListController}
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 
+import java.net.URI
 import java.util.UUID
 import java.util.concurrent.{ExecutorService, Executors}
-import scala.concurrent.duration.DurationInt
+import java.util.regex.Matcher
+import scala.concurrent.duration.{DurationInt, MILLISECONDS}
 import scala.concurrent.{Await, ExecutionContext, Future}
 
 class SyncedTodoListCrdt(val replicaId: String) extends MapCrdt[UUID, TodoEntry] {
@@ -21,20 +23,16 @@ class SyncedTodoListCrdt(val replicaId: String) extends MapCrdt[UUID, TodoEntry]
   private val crdtExecutorService: ExecutorService = Executors.newSingleThreadExecutor()
   private val crdtExecContext: ExecutionContext = ExecutionContext.fromExecutor(crdtExecutorService)
 
-  private val syncHandler = new ConnectionHandler[StateType](
-    replicaId,
-    handleStateReceived,
-    () => queryCrdtState
-  )
+  private val connectionManager = new ConnectionManager[StateType](replicaId, queryCrdtState, handleStateReceived)
 
-  def address: String = syncHandler.address
+  def address: URI = connectionManager.uri
 
   def connect(connectionString: String): Unit = {
     val parts = connectionString.split("@")
-    if (parts.length == 2)
-      syncHandler.connectWithClientWs(parts(0), parts(1))
-    else
-      Console.err.println("Invalid connection string: " + syncHandler)
+    if (parts.length == 2) {
+      connectionManager.connectToNewPeers(Map(parts(0) -> parts(1)))
+    } else
+      Console.err.println(s"Invalid connection string: $connectionString")
   }
 
   private def handleStateReceived(state: StateType): Unit = {
@@ -46,7 +44,7 @@ class SyncedTodoListCrdt(val replicaId: String) extends MapCrdt[UUID, TodoEntry]
     })
   }
 
-  private def queryCrdtState: StateType = Await.result(
+  private def queryCrdtState(): StateType = Await.result(
     Future {
       crdt.state
     }(crdtExecContext),
@@ -61,21 +59,26 @@ class SyncedTodoListCrdt(val replicaId: String) extends MapCrdt[UUID, TodoEntry]
   )
 
   def shutdown(): Unit = {
-    syncHandler.shutdown()
+    connectionManager.stop()
     crdtExecutorService.shutdown()
+    crdtExecutorService.awaitTermination(500, MILLISECONDS)
   }
 
   override def get(key: UUID): Option[TodoEntry] =
     runInCrdtExecContext(() => crdt.get(key))
 
   override def put(key: UUID, value: TodoEntry): Unit = {
-    runInCrdtExecContext(() => crdt.put(key, value))
-    syncHandler.stateChanged()
+    runInCrdtExecContext(() => {
+      crdt.put(key, value)
+      connectionManager.stateChanged(crdt.state)
+    })
   }
 
   override def remove(key: UUID): Unit = {
-    runInCrdtExecContext(() => crdt.remove(key))
-    syncHandler.stateChanged()
+    runInCrdtExecContext(() => {
+      crdt.remove(key)
+      connectionManager.stateChanged(crdt.state)
+    })
   }
 
   override def values: Map[UUID, TodoEntry] =

@@ -19,7 +19,7 @@ lazy val todolist = project
   .settings(
     name := "todolist",
     commonSettings,
-    libraryDependencies ++= commonDependencies ++ scalafxDependency ++ javalinDependency,
+    libraryDependencies ++= commonDependencies ++ scalafxDependency ++ jettyDependency,
     fork := true
   ).dependsOn(encrdt)
 
@@ -37,9 +37,13 @@ lazy val commonDependencies = Seq(
   "com.google.crypto.tink" % "tink" % "1.6.1",
   // jsoniter-scala
   // Use the %%% operator instead of %% for Scala.js
-  "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core" % "2.10.1",
+  "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core" % "2.10.2",
   // Use the "provided" scope instead when the "compile-internal" scope is not supported
-  "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "2.10.1" % "provided"
+  "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "2.10.2" % "provided",
+  // Logging
+  "org.slf4j" % "slf4j-api" % "2.0.0-alpha4",
+  "org.slf4j" % "slf4j-simple" % "2.0.0-alpha4",
+  "com.typesafe.scala-logging" %% "scala-logging" % "3.9.4"
 )
 
 // scalatest
@@ -55,13 +59,14 @@ lazy val akkaDependency = Seq(
   "com.typesafe.akka" %% "akka-actor-testkit-typed" % AkkaVersion % Test,
   "com.typesafe.akka" %% "akka-remote" % AkkaVersion,
   "com.typesafe.akka" %% "akka-cluster-typed" % AkkaVersion,
-  "ch.qos.logback" % "logback-classic" % "1.2.5"
 )
 
-// Synced CRDTs using websockets
-lazy val javalinDependency = Seq(
-  "io.javalin" % "javalin" % "3.13.11",
-  "org.slf4j" % "slf4j-simple" % "1.7.32"
+lazy val jettyVersion = "11.0.6"
+lazy val jettyDependency = Seq(
+  "org.eclipse.jetty" % "jetty-server" % jettyVersion,
+  "org.eclipse.jetty.websocket" % "websocket-jetty-api" % jettyVersion,
+  "org.eclipse.jetty.websocket" % "websocket-jetty-server" % jettyVersion,
+  "org.eclipse.jetty.websocket" % "websocket-jetty-client" % jettyVersion,
 )
 
 // ScalaFX, see https://www.scalafx.org/docs/quickstart/
