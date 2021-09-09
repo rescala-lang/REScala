@@ -1,8 +1,7 @@
 package de.ckuessner
 package todolist
 
-import sync.SyncedTodoListCrdt
-
+import com.typesafe.scalalogging.Logger
 import javafx.collections.{FXCollections, ObservableList}
 import scalafx.application.Platform
 import scalafx.beans.property.ObjectProperty
@@ -11,8 +10,10 @@ import java.util.UUID
 import scala.jdk.CollectionConverters._
 
 object TodoListController {
-  val replicaId: String = UUID.randomUUID().toString.substring(0,4)
+  val replicaId: String = UUID.randomUUID().toString.substring(0, 4)
   private val todos: SyncedTodoListCrdt = new SyncedTodoListCrdt(replicaId)
+
+  private val LOG = Logger(getClass)
 
   def handleUpdated(before: Map[UUID, TodoEntry], after: Map[UUID, TodoEntry]): Unit = {
     val added = after.keySet.diff(before.keySet)
@@ -57,7 +58,7 @@ object TodoListController {
 
   def changeTodo(uuid: UUID, changedEntry: TodoEntry): Unit = {
     if (!todos.get(uuid).contains(changedEntry)) {
-      Console.println(s"$uuid -> $changedEntry changed from ${todos.get(uuid)}")
+      LOG.debug(s"$uuid -> $changedEntry changed from ${todos.get(uuid)}")
       uuidToTodoEntryProperties(uuid).set(changedEntry)
       todos.put(uuid, changedEntry)
     }

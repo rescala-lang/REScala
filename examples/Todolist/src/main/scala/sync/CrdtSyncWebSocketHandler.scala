@@ -6,6 +6,7 @@ import sync.CrdtSyncWebSocketHandler._
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromString, writeToString}
 import com.typesafe.scalalogging.Logger
+import org.eclipse.jetty.websocket.api.exceptions.WebSocketTimeoutException
 import org.eclipse.jetty.websocket.api.{CloseStatus, Session, WebSocketAdapter, WebSocketBehavior}
 
 import scala.util.{Failure, Success, Try}
@@ -78,7 +79,11 @@ class CrdtSyncWebSocketHandler[S](val localReplicaId: String,
   }
 
   override def onWebSocketError(cause: Throwable): Unit = {
-    LOG.error(s"websocket received error (removing handler): $cause")
+    if (cause.isInstanceOf[WebSocketTimeoutException]) {
+      LOG.warn(s"Connection to $remoteReplicaId timed out")
+    } else {
+      LOG.error(s"websocket received error (removing handler): $cause")
+    }
     connectionManager.removeHandler(this)
   }
 

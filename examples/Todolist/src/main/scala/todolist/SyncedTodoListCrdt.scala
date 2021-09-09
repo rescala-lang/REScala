@@ -1,10 +1,10 @@
 package de.ckuessner
-package sync
+package todolist
 
 import encrdt.crdts.AddWinsLastWriterWinsMap
 import encrdt.crdts.interfaces.MapCrdt
-import sync.SyncedTodoListCrdt.StateType
-import todolist.{TodoEntry, TodoListController}
+import sync.ConnectionManager
+import todolist.SyncedTodoListCrdt.StateType
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
@@ -12,7 +12,6 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import java.net.URI
 import java.util.UUID
 import java.util.concurrent.{ExecutorService, Executors}
-import java.util.regex.Matcher
 import scala.concurrent.duration.{DurationInt, MILLISECONDS}
 import scala.concurrent.{Await, ExecutionContext, Future}
 

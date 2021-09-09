@@ -10,6 +10,7 @@ import org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerI
 import org.eclipse.jetty.websocket.server.{JettyServerUpgradeRequest, JettyServerUpgradeResponse, JettyWebSocketCreator}
 
 import java.net.URI
+import java.time.Duration
 
 class CrdtSyncWebSocketServer[S](val localReplicaId: String,
                                  private val connectionManager: ConnectionManager[S],
@@ -53,8 +54,8 @@ class CrdtSyncWebSocketServer[S](val localReplicaId: String,
     }
 
   JettyWebSocketServletContainerInitializer.configure(ctxHandler, (servletContext, container) => {
-    servletContext.setSessionTimeout(0)
     container.addMapping("/", webSocketCreator)
+    container.setIdleTimeout(Duration.ZERO)
   })
 
   def uri: URI = {
