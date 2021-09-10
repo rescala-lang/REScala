@@ -45,6 +45,7 @@ class CrdtSyncWebSocketHandler[S](val localReplicaId: String,
 
     // Requesting remote peers, connecting to them on receive of Peers(...)
     sendMessage(RequestPeers)
+    sendMessage(RequestState) // TODO: pass VectorClock to tell whether update needs to be transmitted?
   }
 
   override def onWebSocketText(messageString: String): Unit = {

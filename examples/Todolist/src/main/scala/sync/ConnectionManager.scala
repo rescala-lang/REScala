@@ -7,7 +7,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToString
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import com.typesafe.scalalogging.Logger
 
-import java.net.URI
+import java.net.{InetSocketAddress, URI}
 import java.util.concurrent.ConcurrentHashMap
 import scala.jdk.CollectionConverters.ConcurrentMapHasAsScala
 
@@ -30,7 +30,7 @@ class ConnectionManager[S](val localReplicaId: String,
   crdtSyncWebSocketServer.start()
 
   def broadcast(message: Message): Unit = {
-    LOG.info(s"Broadcasting $message to ${handlers.asScala.values}")
+    LOG.info(s"Broadcasting $message to ${handlers.asScala.values.toList}")
     handlers.forEach { (remoteReplicaId, handler) =>
       handler.sendMessage(message)
     }
@@ -99,7 +99,14 @@ class ConnectionManager[S](val localReplicaId: String,
     rId -> {
       val address = handler.getSession.getRemoteAddress
       try {
-        URI.create(s"ws://${address}/").toString
+        address match {
+          case inetAddress: InetSocketAddress =>
+            // Tests if string is valid URI
+            URI.create(s"ws://${inetAddress.getHostName}:${inetAddress.getPort}/").toString
+          case _ =>
+            LOG.warn(s"Cannot create uri from non-InetSocketAddress SocketAddress: $address")
+            null
+        }
       } catch {
         case _: IllegalArgumentException =>
           LOG.warn(s"Received invalid peer address for $rId: $address")

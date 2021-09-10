@@ -11,7 +11,7 @@ import scala.jdk.CollectionConverters._
 
 object TodoListController {
   val replicaId: String = UUID.randomUUID().toString.substring(0, 4)
-  private val todos: SyncedTodoListCrdt = new SyncedTodoListCrdt(replicaId)
+  private val crdt: SyncedTodoListCrdt = new SyncedTodoListCrdt(replicaId)
 
   private val LOG = Logger(getClass)
 
@@ -32,11 +32,10 @@ object TodoListController {
 
       observableUuidList.removeAll(removed.asJavaCollection)
     }
-
   }
 
   val observableUuidList: ObservableList[UUID] =
-    FXCollections.observableList(new java.util.ArrayList[UUID](todos.values.keys.asJavaCollection))
+    FXCollections.observableList(new java.util.ArrayList[UUID](crdt.values.keys.asJavaCollection))
 
   private var uuidToTodoEntryProperties: Map[UUID, ObjectProperty[TodoEntry]] =
     Map[UUID, ObjectProperty[TodoEntry]]()
@@ -46,29 +45,34 @@ object TodoListController {
 
   def addTodo(todoEntry: TodoEntry): Unit = {
     val uuid = UUID.randomUUID()
-    todos.put(uuid, todoEntry)
+    crdt.put(uuid, todoEntry)
     uuidToTodoEntryProperties = uuidToTodoEntryProperties + (uuid -> ObjectProperty[TodoEntry](todoEntry))
     observableUuidList.add(uuid)
   }
 
   def removeTodo(uuid: UUID): Unit = {
-    todos.remove(uuid)
+    crdt.remove(uuid)
     observableUuidList.remove(uuid)
   }
 
   def changeTodo(uuid: UUID, changedEntry: TodoEntry): Unit = {
-    if (!todos.get(uuid).contains(changedEntry)) {
-      LOG.debug(s"$uuid -> $changedEntry changed from ${todos.get(uuid)}")
+    if (!crdt.get(uuid).contains(changedEntry)) {
+      LOG.debug(s"$uuid -> $changedEntry changed from ${crdt.get(uuid)}")
       uuidToTodoEntryProperties(uuid).set(changedEntry)
-      todos.put(uuid, changedEntry)
+      crdt.put(uuid, changedEntry)
     }
   }
 
   def stop(): Unit = {
-    todos.shutdown()
+    crdt.shutdown()
   }
 
-  def connectionString: String = s"${todos.replicaId}@${todos.address}"
+  def connectionString: String = s"${crdt.replicaId}@${crdt.address}"
 
-  def connect(connectionString: String): Unit = todos.connect(connectionString)
+  def connect(connectionString: String): Unit = crdt.connect(connectionString)
+
+  def todos: Map[UUID, TodoEntry] = crdt.values
+
+  def peers: Map[String, String] = crdt.peers
+
 }

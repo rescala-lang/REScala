@@ -2,10 +2,10 @@ package de.ckuessner
 package todolist
 
 import scalafx.Includes._
-import scalafx.application.JFXApp3
+import scalafx.application.{JFXApp3, Platform}
 import scalafx.scene.Scene
 import scalafx.scene.control.{Button, ListView, TextField}
-import scalafx.scene.layout.{HBox, VBox}
+import scalafx.scene.layout.{HBox, Priority, VBox}
 
 import java.util.UUID
 
@@ -18,11 +18,12 @@ object TodoListApp extends JFXApp3 {
 
     val newTodoTextField = new TextField {
       promptText = "Todo Entry"
+      hgrow = Priority.Always
     }
 
     val addTodoButton = new Button {
-      text = "Add"
-      onAction = () =>{
+      text = "+"
+      onAction = () => {
         TodoListController.addTodo(TodoEntry(newTodoTextField.text.value))
         newTodoTextField.clear()
       }
@@ -30,12 +31,20 @@ object TodoListApp extends JFXApp3 {
 
     val connectionTextField = new TextField {
       promptText = "replica@remote"
+      hgrow = Priority.Always
     }
 
     val localAddressTextField = new TextField {
       text = TodoListController.connectionString
       editable = false
     }
+    localAddressTextField.focusedProperty.addListener(_ =>
+      Platform.runLater {
+        if (localAddressTextField.isFocused) {
+          localAddressTextField.selectAll()
+        }
+      }
+    )
 
     val addConnectionButton = new Button("Connect")
     addConnectionButton.onAction = () => {
@@ -51,12 +60,24 @@ object TodoListApp extends JFXApp3 {
           children = Seq(
             todoListView,
             new HBox {
-              children = Seq(addTodoButton, newTodoTextField)
+              children = Seq(newTodoTextField, addTodoButton)
             },
             new HBox {
-              children = Seq(addConnectionButton, connectionTextField)
+              children = Seq(connectionTextField, addConnectionButton)
             },
-            localAddressTextField
+            localAddressTextField,
+            new HBox {
+              children = Seq(
+                new Button {
+                  text = "Log state"
+                  onAction = () => Console.println(s"State: ${TodoListController.todos})")
+                },
+                new Button {
+                  text = "Log peers"
+                  onAction = () => Console.println(s"Peers: ${TodoListController.peers})")
+                }
+              )
+            }
           )
         }
       }

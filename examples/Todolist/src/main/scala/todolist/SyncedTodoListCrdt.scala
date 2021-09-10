@@ -82,6 +82,8 @@ class SyncedTodoListCrdt(val replicaId: String) extends MapCrdt[UUID, TodoEntry]
 
   override def values: Map[UUID, TodoEntry] =
     runInCrdtExecContext(() => crdt.values)
+
+  def peers: Map[String, String] = connectionManager.peers
 }
 
 object SyncedTodoListCrdt {
