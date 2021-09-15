@@ -8,6 +8,10 @@ import scala.math.PartialOrdering
 case class VectorClock(timestamps: Map[String, Long] = Map()) {
   def merged(other: VectorClock): VectorClock = VectorClock(max(timestamps, other.timestamps))
 
+  def merged(other: Map[String, Long]): VectorClock = VectorClock(max(timestamps, other))
+
+  def merged(other: LamportClock): VectorClock = merged(Map(other.replicaId -> other.time))
+
   def advance(replicaId: String): VectorClock = VectorClock(
     timestamps = timestamps + (replicaId -> (timestamps.getOrElse(replicaId, 0L) + 1L))
   )
@@ -15,6 +19,8 @@ case class VectorClock(timestamps: Map[String, Long] = Map()) {
   def timeOf(replicaId: String): Long = timestamps.getOrElse(replicaId, 0)
 
   def clockOf(replicaId: String): LamportClock = LamportClock(timeOf(replicaId), replicaId)
+
+  def contains(timestamp: LamportClock): Boolean = timestamps.getOrElse(timestamp.replicaId, 0L) >= timestamp.time
 }
 
 object VectorClock {
