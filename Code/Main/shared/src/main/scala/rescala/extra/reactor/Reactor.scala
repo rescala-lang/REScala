@@ -93,17 +93,17 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
     /** Creates a new Reactor, which steps through the reactor stages ones.
       *
       * @param initialValue The initial value of the Reactor.
-      * @param stageBuilder The StageBuilder defining the Reactors behaviour.
+      * @param initialStage The Stage defining the Reactors behaviour.
       * @tparam T The type of the Reactor value.
       * @return The created Reactor.
       */
     def once[T](
         initialValue: T,
-    )(stageBuilder: Stage[T]): Reactor[T] = {
+    )(initialStage: Stage[T]): Reactor[T] = {
       CreationTicket.fromScheduler(scheduler)
         .create(
           Set(),
-          new ReactorState[T](initialValue, stageBuilder, stageBuilder),
+          new ReactorState[T](initialValue, initialStage, initialStage),
           inite = true
         ) { createdState: State[ReactorState[T]] =>
           new Reactor[T](createdState)
@@ -113,17 +113,17 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
     /** Creates a new Reactor, which starts from the beginning, once it's finished.
       *
       * @param initialValue The initial value of the Reactor.
-      * @param stageBuilder The StageBuilder defining the Reactors behaviour.
+      * @param initialStage The Stage defining the Reactors behaviour.
       * @tparam T The type of the Reactor value.
       * @return The created Reactor.
       */
     def loop[T](
         initialValue: T,
-    )(stageBuilder: Stage[T]): Reactor[T] = {
+    )(initialStage: Stage[T]): Reactor[T] = {
       CreationTicket.fromScheduler(scheduler)
         .create(
           Set(),
-          new ReactorState[T](initialValue, stageBuilder, stageBuilder),
+          new ReactorState[T](initialValue, initialStage, initialStage),
           inite = true
         ) { createdState: State[ReactorState[T]] =>
           new Reactor[T](createdState, true)
