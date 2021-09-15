@@ -3,7 +3,6 @@ package encrdt.lattices
 
 import encrdt.util.MapHelper.max
 
-// Encapsulates the state of the CRDT
 case class CounterLattice(positiveCounts: Map[String, Int] = Map(),
                           negativeCounts: Map[String, Int] = Map()) {
 
