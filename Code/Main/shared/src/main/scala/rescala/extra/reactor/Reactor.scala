@@ -29,13 +29,13 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
 
       // @tailrec
       def processActions[A](currentState: ReactorState[T]): ReactorState[T] = {
-        currentState.stages.actions match {
+        currentState.currentStage.actions match {
           case Nil => currentState
           case ReactorAction.SetAction(v) :: tail =>
-            processActions(currentState.copy(currentValue = v, stages = Stage(tail)))
+            processActions(currentState.copy(currentValue = v, currentStage = Stage(tail)))
           case ReactorAction.ModifyAction(modifier) :: tail =>
             val modifiedValue = modifier(currentState.currentValue)
-            processActions(currentState.copy(currentValue = modifiedValue, stages = Stage(tail)))
+            processActions(currentState.copy(currentValue = modifiedValue, currentStage = Stage(tail)))
           case ReactorAction.NextAction(event, handler) :: _ =>
             if (progressedStage) {
               return currentState
@@ -47,36 +47,36 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
               case Some(value) =>
                 progressedStage = true
                 val stages = handler(value)
-                processActions(currentState.copy(stages = stages))
+                processActions(currentState.copy(currentStage = stages))
             }
           case ReactorAction.ReadAction(builder) :: _ =>
             val nextStage = builder(currentState.currentValue)
-            processActions(currentState.copy(stages = nextStage))
-          case ReactorAction.LoopAction(body, stagesLeft) :: _ =>
-            val resultStage = processActions(currentState.copy(stages = stagesLeft))
-            if (resultStage.stages.actions.isEmpty) {
-              return processActions(resultStage.copy(stages = body))
+            processActions(currentState.copy(currentStage = nextStage))
+          case ReactorAction.LoopAction(currentStage, initialStage) :: _ =>
+            val resultStage = processActions(currentState.copy(currentStage = currentStage))
+            if (resultStage.currentStage.actions.isEmpty) {
+              return processActions(resultStage.copy(currentStage = initialStage))
             }
 
-            resultStage.copy(stages = Stage(List(ReactorAction.LoopAction(body, resultStage.stages))))
+            resultStage.copy(currentStage = Stage(List(ReactorAction.LoopAction(resultStage.currentStage, initialStage))))
           case ReactorAction.UntilAction(event, body, interrupt) :: _ =>
             val eventValue = input.depend(event)
             eventValue match {
               case None =>
-                val resultStage = processActions(currentState.copy(stages = body))
-                resultStage.copy(stages =
-                  Stage(List(ReactorAction.UntilAction(event, resultStage.stages, interrupt)))
+                val resultStage = processActions(currentState.copy(currentStage = body))
+                resultStage.copy(currentStage =
+                  Stage(List(ReactorAction.UntilAction(event, resultStage.currentStage, interrupt)))
                 )
               case Some(value) =>
                 val stages = interrupt(value)
-                processActions(currentState.copy(stages = stages))
+                processActions(currentState.copy(currentStage = stages))
             }
         }
       }
 
       var resState = processActions(input.before)
-      if (looping && resState.stages.actions.isEmpty) {
-        resState = resState.copy(stages = resState.initialStages)
+      if (looping && resState.currentStage.actions.isEmpty) {
+        resState = resState.copy(currentStage = resState.initialStage)
         resState = processActions(resState)
       }
 
@@ -143,13 +143,13 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
 
     case class ReadAction[T](stageBuilder: T => Stage[T]) extends ReactorAction[T]
 
-    case class LoopAction[T](body: Stage[T], stagesLeft: Stage[T]) extends ReactorAction[T]
+    case class LoopAction[T](currentStage: Stage[T], initialStage: Stage[T]) extends ReactorAction[T]
 
     case class UntilAction[T, E](event: Event[E], body: Stage[T], interrupt: E => Stage[T])
         extends ReactorAction[T]
   }
 
-  case class ReactorState[T](currentValue: T, stages: Stage[T], initialStages: Stage[T])
+  case class ReactorState[T](currentValue: T, currentStage: Stage[T], initialStage: Stage[T])
 
   case class Stage[T](actions: List[ReactorAction[T]] = Nil) {
 
