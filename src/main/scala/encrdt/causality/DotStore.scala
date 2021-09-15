@@ -2,7 +2,6 @@ package de.ckuessner
 package encrdt.causality
 
 import encrdt.causality.DotStore._
-import encrdt.lattices.SemiLattice
 
 // See: Delta state replicated data types (https://doi.org/10.1016/j.jpdc.2017.08.003)
 trait DotStore[D] {
@@ -27,19 +26,20 @@ object DotStore {
 
   def apply[D](implicit dotStore: DotStore[D]): DotStore[D] = dotStore
 
-  implicit def DotSet: DotStore[DotSet] = new DotStore[DotSet] {
+  implicit def dotSetDotStore: DotStore[DotSet] = new DotStore[DotSet] {
     override def dots(dotStore: DotSet): Set[Dot] = dotStore
 
     override def bottom: DotSet = Set.empty
   }
 
-  implicit def DotFun[V: SemiLattice]: DotStore[DotFun[V]] = new DotStore[DotFun[V]] {
+  // Todo: V should be a SemiLattice according to paper
+  implicit def dotFunDotStore[V]: DotStore[DotFun[V]] = new DotStore[DotFun[V]] {
     override def dots(dotStore: DotFun[V]): Set[Dot] = dotStore.keySet
 
     override def bottom: DotFun[V] = Map.empty
   }
 
-  implicit def dotMap[K, V: DotStore]: DotStore[DotMap[K, V]] = new DotStore[DotMap[K, V]] {
+  implicit def dotMapDotStore[K, V: DotStore]: DotStore[DotMap[K, V]] = new DotStore[DotMap[K, V]] {
     override def dots(dotStore: DotMap[K, V]): Set[Dot] =
       dotStore.values.flatMap(DotStore[V].dots(_)).toSet
 

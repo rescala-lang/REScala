@@ -2,7 +2,7 @@ package de.ckuessner
 package encrdt.crdts
 
 import encrdt.causality.DotStore
-import encrdt.causality.DotStore.{DotMap, DotSet, dotSetToVectorClock}
+import encrdt.causality.DotStore.{DotMap, DotSet, dotSetDotStore, dotSetToVectorClock}
 import encrdt.crdts.DeltaAddWinsSet.DeltaAddWinsSetLattice
 import encrdt.crdts.interfaces.SetCrdt
 import encrdt.lattices.{Causal, SemiLattice}
