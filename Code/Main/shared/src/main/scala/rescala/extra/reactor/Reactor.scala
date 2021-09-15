@@ -103,7 +103,7 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
       CreationTicket.fromScheduler(scheduler)
         .create(
           Set(),
-          new ReactorState[T](initialValue, initialStage, initialStage),
+          new ReactorState[T](initialValue, initialStage),
           inite = true
         ) { createdState: State[ReactorState[T]] =>
           new Reactor[T](createdState)
@@ -123,7 +123,7 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
       CreationTicket.fromScheduler(scheduler)
         .create(
           Set(),
-          new ReactorState[T](initialValue, initialStage, initialStage),
+          new ReactorState[T](initialValue, initialStage),
           inite = true
         ) { createdState: State[ReactorState[T]] =>
           new Reactor[T](createdState, true)
@@ -149,7 +149,9 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
         extends ReactorAction[T]
   }
 
-  case class ReactorState[T](currentValue: T, currentStage: Stage[T], initialStage: Stage[T])
+  case class ReactorState[T](currentValue: T, currentStage: Stage[T], initialStage: Stage[T]) {
+    def this(currentValue: T, initialStage: Stage[T]) = this(currentValue, initialStage, initialStage)
+  }
 
   case class Stage[T](actions: List[ReactorAction[T]] = Nil) {
 
