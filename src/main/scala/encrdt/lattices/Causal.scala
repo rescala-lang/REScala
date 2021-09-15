@@ -10,8 +10,8 @@ case class Causal[D: DotStore](dotStore: D, causalContext: CausalContext)
 object Causal {
   def bottom[D: DotStore]: Causal[D] = Causal(DotStore[D].bottom, VectorClock())
 
+  // (s, c) ⨆ (s', c') = ((s ∩ s') ∪ (s \ c') ∪ (s' \ c), c ∪ c')
   implicit def CausalWithDotSetLattice: SemiLattice[Causal[DotSet]] = (left, right) => {
-    // (s, c) ⨆ (s', c') = ((s ∩ s') ∪ (s \ c') ∪ (s' \ c), c ∪ c')
     val inBoth = left.dotStore & right.dotStore
     val newInLeft = left.dotStore.filterNot(dot => dot <= right.causalContext.clockOf(dot.replicaId))
     val newInRight = right.dotStore.filterNot(dot => dot <= left.causalContext.clockOf(dot.replicaId))
@@ -20,24 +20,25 @@ object Causal {
     Causal(inBoth ++ newInLeft ++ newInRight, mergedCausalContext)
   }
 
+  // (m, c) ⨆ (m', c') = ( {k -> m(k) ⨆ m'(k) | k ∈ dom m ∩ dom m'} ∪
+  //                       {(d, v) ∈ m  | d ∉ c'} ∪
+  //                       {(d, v) ∈ m' | d ∉ c},
+  //                      c ∪ c')
   implicit def CausalWithDotFunLattice[V: SemiLattice]: SemiLattice[Causal[DotFun[V]]] = (left, right) => {
-    // (m, c) ⨆ (m', c') = ( {k -> m(k) ⨆ m'(k) | k ∈ dom m ∩ dom m'} ∪
-    //                       {(d, v) ∈ m  | d ∉ c'} ∪
-    //                       {(d, v) ∈ m' | d ∉ c},
-    //                      c ∪ c')
     Causal(
-      (left.dotStore.keySet union right.dotStore.keySet map { (dot: Dot) =>
+      (left.dotStore.keySet & right.dotStore.keySet map { (dot: Dot) =>
         (dot, SemiLattice.merged(left.dotStore(dot), right.dotStore(dot)))
       }).toMap
-        ++ left.dotStore.filterNot { case (dot, _) => right.dotStore.contains(dot) }
-        ++ right.dotStore.filterNot { case (dot, _) => left.dotStore.contains(dot) },
+        ++ left.dotStore.filterNot { case (dot, _) => right.causalContext.contains(dot) }
+        ++ right.dotStore.filterNot { case (dot, _) => left.causalContext.contains(dot) },
       left.causalContext.merged(right.causalContext)
     )
   }
 
-  implicit def CausalWithDotMapLattice[K, V: DotStore](implicit vSemiLattice: SemiLattice[Causal[V]]): SemiLattice[Causal[DotMap[K, V]]] = (left, right) => {
-    // (m, c) ⨆ (m', c') = ( {k -> v(k) | k ∈ dom m ∩ dom m' ∧ v(k) ≠ ⊥}, c ∪ c')
-    //                      where v(k) = fst((m(k), c) ⨆ (m'(k), c'))
+  // (m, c) ⨆ (m', c') = ( {k -> v(k) | k ∈ dom m ∩ dom m' ∧ v(k) ≠ ⊥}, c ∪ c')
+  //                      where v(k) = fst((m(k), c) ⨆ (m'(k), c'))
+  implicit def CausalWithDotMapLattice[K, V: DotStore](implicit vSemiLattice: SemiLattice[Causal[V]]
+                                                      ): SemiLattice[Causal[DotMap[K, V]]] = (left, right) => {
     Causal(((left.dotStore.keySet union right.dotStore.keySet) map { key =>
       val leftCausal = Causal(left.dotStore.getOrElse(key, DotStore[V].bottom), left.causalContext)
       val rightCausal = Causal(right.dotStore.getOrElse(key, DotStore[V].bottom), right.causalContext)
