@@ -8,8 +8,8 @@ import encrdt.crdts.interfaces.SetCrdt
 import encrdt.lattices.{Causal, SemiLattice}
 
 class DeltaAddWinsSet[E](val replicaId: String,
-                         initialState: DeltaAddWinsSetLattice[E] = Causal.bottom)
-  extends SetCrdt[E] {
+                         initialState: DeltaAddWinsSetLattice[E] = Causal.bottom[DotMap[E, DotSet]]
+                        ) extends SetCrdt[E] {
 
   private var _state: DeltaAddWinsSetLattice[E] = initialState
   private var deltas: Vector[DeltaAddWinsSetLattice[E]] = Vector()
@@ -47,7 +47,11 @@ object DeltaAddWinsSet {
    * @tparam E Type of the elements in the set
    * @return The delta of the add
    */
-  def deltaAdd[E](replicaId: String, element: E, set: DeltaAddWinsSetLattice[E]): DeltaAddWinsSetLattice[E] = {
+  def deltaAdd[E](replicaId: String,
+                  element: E,
+                  set: DeltaAddWinsSetLattice[E]
+                 ): DeltaAddWinsSetLattice[E] = {
+
     val newDot = set.causalContext.clockOf(replicaId).advance(replicaId)
     val deltaDotStore: DotMap[E, DotSet] = Map(element -> Set(newDot))
     val deltaCausalContext = set.dotStore.getOrElse(element, DotStore[DotSet].bottom) + newDot
@@ -64,12 +68,10 @@ object DeltaAddWinsSet {
    * @tparam E Type of the elements in the set
    * @return The delta of the remove
    */
-  def deltaRemove[E](element: E, set: DeltaAddWinsSetLattice[E]): DeltaAddWinsSetLattice[E] = {
-    Causal(
-      DotStore[DotMap[E, DotSet]].bottom,
-      set.dotStore.getOrElse(element, DotStore[DotSet].bottom) // Implicit conversion of DotSet to VectorClock
-    )
-  }
+  def deltaRemove[E](element: E, set: DeltaAddWinsSetLattice[E]): DeltaAddWinsSetLattice[E] = Causal(
+    DotStore[DotMap[E, DotSet]].bottom,
+    dotSetToVectorClock(set.dotStore.getOrElse(element, DotStore[DotSet].bottom))
+  )
 
   /**
    * Returns the '''delta''' that removes all elements from the `set`.
@@ -80,10 +82,8 @@ object DeltaAddWinsSet {
    * @tparam E Type of the elements in the set
    * @return The delta of the clear
    */
-  def deltaClear[E](set: DeltaAddWinsSetLattice[E]): DeltaAddWinsSetLattice[E] = {
-    Causal(
-      DotStore[DotMap[E, DotSet]].bottom,
-      DotStore[DotMap[E, DotSet]].dots(set.dotStore)
-    )
-  }
+  def deltaClear[E](set: DeltaAddWinsSetLattice[E]): DeltaAddWinsSetLattice[E] = Causal(
+    DotStore[DotMap[E, DotSet]].bottom,
+    DotStore[DotMap[E, DotSet]].dots(set.dotStore)
+  )
 }
