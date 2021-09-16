@@ -10,7 +10,7 @@ class AddWinsSetSpec extends AnyFlatSpec {
   def merged[T](left: AddWinsSetLattice[T], right: AddWinsSetLattice[T]): AddWinsSetLattice[T] =
     SemiLattice[AddWinsSetLattice[T]].merged(left, right)
 
-  "An AddWinsSet" should "merge when empty" in {
+  "An AddWinsSet Lattice" should "merge when empty" in {
     val left = AddWinsSetLattice[Int]()
 
     merged(left, left) should ===(left)
@@ -81,5 +81,29 @@ class AddWinsSetSpec extends AnyFlatSpec {
     merged(m1, right) should ===(m1)
     merged(right, m1) should ===(m1)
     merged(m1, m1) should ===(m1)
+  }
+
+  it should "merge parallel add of different elements" in {
+    val left = AddWinsSetLattice[Int]().added(1, "A")
+    val right = AddWinsSetLattice[Int]().added(2, "B")
+    merged(left, right).values should ===(Set(1,2))
+  }
+
+  it should "merge parallel add of same elements" in {
+    val left = AddWinsSetLattice[Int]().added(1, "A")
+    val right = AddWinsSetLattice[Int]().added(1, "B")
+    merged(left, right).values should ===(Set(1))
+  }
+
+  it should "keep value if added twice" in {
+    val left = AddWinsSetLattice[Int]().added(1, "A")
+    left.added(1, "A").values should ===(Set(1))
+    left.added(1, "B").values should ===(Set(1))
+  }
+
+  it should "keep values in merge if added twice" in {
+    val left = AddWinsSetLattice[Int]().added(1, "A")
+    val stateAfterSecondAdd = left.added(1, "A")
+    merged(left, stateAfterSecondAdd).values should ===(Set(1))
   }
 }
