@@ -16,14 +16,6 @@ object DotStore {
   type DotFun[V] = Map[Dot, V]
   type DotMap[K, V] = Map[K, V]
 
-  type CausalContext = VectorClock
-
-  import scala.language.implicitConversions
-
-  implicit def dotSetToVectorClock(dotSet: DotSet): VectorClock = {
-    dotSet.foldLeft(VectorClock())((vc, dot) => vc.merged(dot))
-  }
-
   def apply[D](implicit dotStore: DotStore[D]): DotStore[D] = dotStore
 
   implicit def dotSetDotStore: DotStore[DotSet] = new DotStore[DotSet] {
