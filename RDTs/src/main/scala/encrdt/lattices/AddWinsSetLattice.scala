@@ -24,32 +24,32 @@ case class AddWinsSetLattice[T](elements: Set[(T, LamportClock)] = Set[(T, Lampo
 }
 
 object AddWinsSetLattice {
-  // See: arXiv:1210.3368 (https://arxiv.org/pdf/1210.3368.pdf)
+  // See: https://arxiv.org/pdf/1210.3368.pdf - An Optimized Conflict-free Replicated Set
   implicit def AddWinsSetSemiLattice[T]: SemiLattice[AddWinsSetLattice[T]] =
     (left: AddWinsSetLattice[T], right: AddWinsSetLattice[T]) => {
-      // If it's present in left and has a timestamp higher than highest timestamp of right, it was just added on left
-      val presentInRight = right.values
-      val addedOnLeft = left.elements
-        .filterNot { case (elem, _) => presentInRight.contains(elem) }
-        .filter { case (_, LamportClock(c, i)) => c > right.clocks.timeOf(i) }
+      val commonElems = left.elements & right.elements
 
-      // Vice versa
-      val presentInLeft = left.values
-      val addedOnRight = right.elements
-        .filterNot { case (elem, _) => presentInLeft.contains(elem) }
-        .filter { case (_, LamportClock(c, i)) => c > left.clocks.timeOf(i) }
+      val leftCausalElements = left.elements.filter { case (e, LamportClock(c, i)) =>
+        c > right.clocks.timeOf(i)
+      }
 
-      // If it's present in both, it wasn't removed.
-      // Clean up 'old' elements (keep only element with highest timestamp per replicaId)
-      val presentInBoth = (left.elements & right.elements)
-        .groupBy { case (value, LamportClock(_, rId)) => (value, rId) }
-        .values
-        .map(groupedElements => groupedElements.maxBy(_._2))
-        .toSet
+      val rightCausalElements = right.elements.filter { case (e, LamportClock(c, i)) =>
+        c > left.clocks.timeOf(i)
+      }
 
-      val elementsAfterMerge = presentInBoth ++ addedOnLeft ++ addedOnRight
-      val clocksAfterMerge = left.clocks.merged(right.clocks)
+      val allElements = commonElems ++ leftCausalElements ++ rightCausalElements
 
-      AddWinsSetLattice(elementsAfterMerge, clocksAfterMerge)
+      // Only keep most recent LamportClock (per replica)
+      val duplicates = allElements.filter { case (e, LamportClock(c, i)) =>
+        allElements.exists {
+          case (`e`, LamportClock(otherC, `i`)) => c < otherC
+          case _ => false
+        }
+      }
+
+      val cleanedElements = allElements -- duplicates
+      val receivedSummary = left.clocks.merged(right.clocks)
+
+      AddWinsSetLattice(cleanedElements, receivedSummary)
     }
 }
