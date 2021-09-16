@@ -1,8 +1,8 @@
 package de.ckuessner
 package encrdt.crdts
 
-import encrdt.causality.DotStore
-import encrdt.causality.DotStore.{DotMap, DotSet, dotSetDotStore, dotSetToVectorClock}
+import encrdt.causality.{CausalContext, DotStore}
+import encrdt.causality.DotStore.{DotMap, DotSet, dotSetDotStore}
 import encrdt.crdts.DeltaAddWinsSet.DeltaAddWinsSetLattice
 import encrdt.crdts.interfaces.SetCrdt
 import encrdt.lattices.{Causal, SemiLattice}
@@ -54,8 +54,8 @@ object DeltaAddWinsSet {
 
     val newDot = set.causalContext.clockOf(replicaId).advance(replicaId)
     val deltaDotStore: DotMap[E, DotSet] = Map(element -> Set(newDot))
-    val deltaCausalContext = set.dotStore.getOrElse(element, DotStore[DotSet].bottom) + newDot
-    Causal(deltaDotStore, deltaCausalContext) // Implicit conversion of DotSet to VectorClock
+    val deltaCausalContext = CausalContext(set.dotStore.getOrElse(element, DotStore[DotSet].bottom) + newDot)
+    Causal(deltaDotStore, deltaCausalContext)
   }
 
   /**
@@ -70,7 +70,7 @@ object DeltaAddWinsSet {
    */
   def deltaRemove[E](element: E, set: DeltaAddWinsSetLattice[E]): DeltaAddWinsSetLattice[E] = Causal(
     DotStore[DotMap[E, DotSet]].bottom,
-    dotSetToVectorClock(set.dotStore.getOrElse(element, DotStore[DotSet].bottom))
+    CausalContext(set.dotStore.getOrElse(element, DotStore[DotSet].bottom))
   )
 
   /**
@@ -84,6 +84,6 @@ object DeltaAddWinsSet {
    */
   def deltaClear[E](set: DeltaAddWinsSetLattice[E]): DeltaAddWinsSetLattice[E] = Causal(
     DotStore[DotMap[E, DotSet]].bottom,
-    DotStore[DotMap[E, DotSet]].dots(set.dotStore)
+    CausalContext(DotStore[DotMap[E, DotSet]].dots(set.dotStore))
   )
 }
