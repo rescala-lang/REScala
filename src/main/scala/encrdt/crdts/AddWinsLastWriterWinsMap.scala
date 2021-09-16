@@ -3,10 +3,10 @@ package encrdt.crdts
 
 import encrdt.crdts.AddWinsLastWriterWinsMap.LatticeType
 import encrdt.crdts.interfaces.MapCrdt
-import encrdt.lattices.{AddWinsMapLattice, LWWTime, LastWriterWinsRegisterLattice, SemiLattice}
+import encrdt.lattices.{AddWinsMapLattice, CausalTimeTag, LastWriterWinsRegisterLattice, SemiLattice}
 
 class AddWinsLastWriterWinsMap[K, V](val replicaId: String,
-                                     initialState: AddWinsMapLattice[K, LastWriterWinsRegisterLattice[V, LWWTime]] = AddWinsMapLattice[K, LastWriterWinsRegisterLattice[V, LWWTime]]()
+                                     initialState: AddWinsMapLattice[K, LastWriterWinsRegisterLattice[V, CausalTimeTag]] = AddWinsMapLattice[K, LastWriterWinsRegisterLattice[V, CausalTimeTag]]()
                                     ) extends MapCrdt[K, V] {
 
   private var _state = initialState
@@ -18,7 +18,7 @@ class AddWinsLastWriterWinsMap[K, V](val replicaId: String,
   override def put(key: K, value: V): Unit = {
     val timeStamp = _state.values.get(key) match {
       case Some(register) => register.timestamp.advance(replicaId)
-      case None => LWWTime().advance(replicaId)
+      case None => CausalTimeTag().advance(replicaId)
     }
 
     _state = _state.added(key, LastWriterWinsRegisterLattice(value, timeStamp), replicaId)
@@ -35,5 +35,5 @@ class AddWinsLastWriterWinsMap[K, V](val replicaId: String,
 }
 
 object AddWinsLastWriterWinsMap {
-  type LatticeType[K, V] = AddWinsMapLattice[K, LastWriterWinsRegisterLattice[V, LWWTime]]
+  type LatticeType[K, V] = AddWinsMapLattice[K, LastWriterWinsRegisterLattice[V, CausalTimeTag]]
 }

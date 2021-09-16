@@ -1,14 +1,14 @@
 package de.ckuessner
 package encrdt.crdts
 
-import encrdt.lattices.{LWWTime, LastWriterWinsRegisterLattice, SemiLattice}
+import encrdt.lattices.{CausalTimeTag, LastWriterWinsRegisterLattice, SemiLattice}
 
-class LastWriterWinsRegister[T](initialState: LastWriterWinsRegisterLattice[T, LWWTime],
+class LastWriterWinsRegister[T](initialState: LastWriterWinsRegisterLattice[T, CausalTimeTag],
                                 val replicaId: String) { // SemiLattice requires ordering of timestamp
 
   private var _state = initialState
 
-  def state: LastWriterWinsRegisterLattice[T, LWWTime] = _state
+  def state: LastWriterWinsRegisterLattice[T, CausalTimeTag] = _state
 
   def value: T = state.value
 
@@ -16,7 +16,7 @@ class LastWriterWinsRegister[T](initialState: LastWriterWinsRegisterLattice[T, L
     _state = LastWriterWinsRegisterLattice(value, _state.timestamp.advance(replicaId))
   }
 
-  def merge(otherState: LastWriterWinsRegisterLattice[T, LWWTime]): Unit =
+  def merge(otherState: LastWriterWinsRegisterLattice[T, CausalTimeTag]): Unit =
     _state = SemiLattice.merged(this.state, otherState)
 }
 
@@ -25,6 +25,6 @@ object LastWriterWinsRegister {
     new LastWriterWinsRegister(
       LastWriterWinsRegisterLattice(
         initialValue,
-        LWWTime().advance(replicaId)),
+        CausalTimeTag().advance(replicaId)),
       replicaId)
 }

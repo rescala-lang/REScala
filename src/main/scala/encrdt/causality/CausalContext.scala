@@ -3,7 +3,7 @@ package encrdt.causality
 
 import encrdt.causality.DotStore.{Dot, DotSet}
 
-// Todo: Can be optimized under causal consistency/non-causal anti entropy
+// Can be optimized using Concise Version Vectors / Interval Version Vectors
 case class CausalContext(dots: Set[Dot] = Set()) {
   def clockOf(replicaId: String): Dot = {
     dots
