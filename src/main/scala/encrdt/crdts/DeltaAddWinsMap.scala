@@ -9,10 +9,11 @@ import encrdt.lattices.Causal
 object DeltaAddWinsMap {
   type DeltaAddWinsMapLattice[K, V] = Causal[DotMap[K, V]]
 
+  def bottom[K, V: DotStore]: DeltaAddWinsMapLattice[K, V] = Causal.bottom[DotMap[K, V]]
+
   /**
    * Returns the '''delta''' that contains the recursive mutation performed by the `deltaMutator`.
    *
-   * @param replicaId    Id of the replica performing the mutation
    * @param key          Key of the element that is mutated
    * @param deltaMutator The delta-mutator that returns the delta of the recursive mutation
    * @param map          The map on which the delta-mutator is applied
@@ -20,13 +21,12 @@ object DeltaAddWinsMap {
    * @tparam V The type of the value (needs to be a Delta CRDT)
    * @return The delta of the recursive delta-mutation
    */
-  def deltaMutate[K, V: DotStore](replicaId: String,
-                                  key: K,
-                                  deltaMutator: String => Causal[V] => Causal[V],
+  def deltaMutate[K, V: DotStore](key: K,
+                                  deltaMutator: Causal[V] => Causal[V],
                                   map: DeltaAddWinsMapLattice[K, V]
                                  ): DeltaAddWinsMapLattice[K, V] = {
 
-    deltaMutator(replicaId)(Causal(
+    deltaMutator(Causal(
       map.dotStore.getOrElse(key, DotStore[V].bottom),
       map.causalContext)
     ) match {
