@@ -1,8 +1,8 @@
 package de.ckuessner
-package sync
+package encrdt.sync
 
-import sync.ConnectionManager._
-import sync.CrdtSyncWebSocketHandler._
+import encrdt.sync.ConnectionManager._
+import encrdt.sync.CrdtSyncWebSocketHandler._
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromString, writeToString}
 import com.typesafe.scalalogging.Logger

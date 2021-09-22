@@ -1,7 +1,7 @@
 package de.ckuessner
-package sync
+package encrdt.sync
 
-import sync.ConnectionManager.REPLICAID_HEADER
+import encrdt.sync.ConnectionManager.REPLICAID_HEADER
 
 import com.typesafe.scalalogging.Logger
 import org.eclipse.jetty.server.{Server, ServerConnector}

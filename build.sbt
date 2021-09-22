@@ -11,7 +11,7 @@ lazy val encrdt = project
   .settings(
     name := "encrdt",
     commonSettings,
-    libraryDependencies ++= commonDependencies ++ scalatestDependency
+    libraryDependencies ++= commonDependencies ++ scalatestDependency ++ jettyDependency
   )
 
 lazy val todolist = project
@@ -19,7 +19,7 @@ lazy val todolist = project
   .settings(
     name := "todolist",
     commonSettings,
-    libraryDependencies ++= commonDependencies ++ scalafxDependency ++ jettyDependency,
+    libraryDependencies ++= commonDependencies ++ scalafxDependency,
     fork := true
   ).dependsOn(encrdt)
 

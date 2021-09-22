@@ -1,7 +1,7 @@
 package de.ckuessner
-package sync
+package encrdt.sync
 
-import sync.ConnectionManager._
+import encrdt.sync.ConnectionManager._
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToString}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
