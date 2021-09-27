@@ -27,28 +27,35 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
 
       var progressedStage = false
 
-      // @tailrec
       def processActions[A](currentState: ReactorState[T]): ReactorState[T] = {
+        def setAction(value: T, remainingActions: List[ReactorAction[T]]): ReactorState[T] = {
+          processActions(currentState.copy(currentValue = value, currentStage = Stage(remainingActions)))
+        }
+
+        def nextAction[E](event: Event[E], handler: E => Stage[T]): ReactorState[T] = {
+          if (progressedStage) {
+            return currentState
+          }
+
+          val eventValue = input.depend(event)
+          eventValue match {
+            case None => currentState
+            case Some(value) =>
+              progressedStage = true
+              val stages = handler(value)
+              processActions(currentState.copy(currentStage = stages))
+          }
+        }
+
         currentState.currentStage.actions match {
           case Nil => currentState
           case ReactorAction.SetAction(v) :: tail =>
-            processActions(currentState.copy(currentValue = v, currentStage = Stage(tail)))
+            setAction(v, tail)
           case ReactorAction.ModifyAction(modifier) :: tail =>
             val modifiedValue = modifier(currentState.currentValue)
-            processActions(currentState.copy(currentValue = modifiedValue, currentStage = Stage(tail)))
+            setAction(modifiedValue, tail)
           case ReactorAction.NextAction(event, handler) :: _ =>
-            if (progressedStage) {
-              return currentState
-            }
-
-            val eventValue = input.depend(event)
-            eventValue match {
-              case None => currentState
-              case Some(value) =>
-                progressedStage = true
-                val stages = handler(value)
-                processActions(currentState.copy(currentStage = stages))
-            }
+            nextAction(event, handler)
           case ReactorAction.ReadAction(builder) :: _ =>
             val nextStage = builder(currentState.currentValue)
             processActions(currentState.copy(currentStage = nextStage))
@@ -58,7 +65,9 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
               return processActions(resultStage.copy(currentStage = initialStage))
             }
 
-            resultStage.copy(currentStage = Stage(List(ReactorAction.LoopAction(resultStage.currentStage, initialStage))))
+            resultStage.copy(currentStage =
+              Stage(List(ReactorAction.LoopAction(resultStage.currentStage, initialStage)))
+            )
           case ReactorAction.UntilAction(event, body, interrupt) :: _ =>
             val eventValue = input.depend(event)
             eventValue match {
