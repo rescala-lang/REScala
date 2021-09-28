@@ -24,6 +24,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
   val remove: Regex    = """remove (\d+)""".r
   val clear: String    = "clear"
   val elements: String = "elements"
+  val size: String     = "size"
   val exit: String     = "exit"
 
   var set: AWSet[Int, DietMapCContext] = AWSet(id)
@@ -208,6 +209,9 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
         case `elements` =>
           println(set.elements)
+
+        case `size` =>
+          println(set.elements.size)
 
         case `exit` =>
           System.exit(0)
