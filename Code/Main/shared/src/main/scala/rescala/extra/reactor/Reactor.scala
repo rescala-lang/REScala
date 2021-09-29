@@ -25,7 +25,7 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
 
       input.trackDependencies(Set())
 
-      var progressedStage = false
+      var progressesNextAction = false
 
       def processActions[A](currentState: ReactorState[T]): ReactorState[T] = {
         def setAction(value: T, remainingActions: List[ReactorAction[T]]): ReactorState[T] = {
@@ -33,7 +33,7 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
         }
 
         def nextAction[E](event: Event[E], handler: E => Stage[T]): ReactorState[T] = {
-          if (progressedStage) {
+          if (progressesNextAction) {
             return currentState
           }
 
@@ -41,7 +41,7 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
           eventValue match {
             case None => currentState
             case Some(value) =>
-              progressedStage = true
+              progressesNextAction = true
               val stages = handler(value)
               processActions(currentState.copy(currentStage = stages))
           }
