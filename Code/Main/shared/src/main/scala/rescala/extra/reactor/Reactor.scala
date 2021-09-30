@@ -70,18 +70,26 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
           }
         }
 
+        def modifyAction(modifier: T => T, currentValue: T, tail: List[ReactorAction[T]]): ReactorState[T] = {
+          val modifiedValue = modifier(currentValue)
+          setAction(modifiedValue, tail)
+        }
+
+        def readAction(builder: T => Stage[T], currentValue: T): ReactorState[T] = {
+          val nextStage = builder(currentValue)
+          processActions(currentState.copy(currentStage = nextStage))
+        }
+
         currentState.currentStage.actions match {
           case Nil => currentState
           case ReactorAction.SetAction(v) :: tail =>
             setAction(v, tail)
           case ReactorAction.ModifyAction(modifier) :: tail =>
-            val modifiedValue = modifier(currentState.currentValue)
-            setAction(modifiedValue, tail)
+            modifyAction(modifier, currentState.currentValue, tail)
           case ReactorAction.NextAction(event, handler) :: _ =>
             nextAction(event, handler)
           case ReactorAction.ReadAction(builder) :: _ =>
-            val nextStage = builder(currentState.currentValue)
-            processActions(currentState.copy(currentStage = nextStage))
+            readAction(builder, currentState.currentValue)
           case ReactorAction.LoopAction(currentStage, initialStage) :: _ =>
             loopAction(currentStage, initialStage)
           case ReactorAction.UntilAction(event, body, interrupt) :: _ =>
