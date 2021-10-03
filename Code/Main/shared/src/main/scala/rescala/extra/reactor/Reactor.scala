@@ -60,9 +60,9 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
           val eventValue = input.depend(event)
           eventValue match {
             case None =>
-              val resultStage = processActions(currentState.copy(currentStage = body))
-              resultStage.copy(currentStage =
-                Stage(List(ReactorAction.UntilAction(event, resultStage.currentStage, interrupt)))
+              val resultState = processActions(currentState.copy(currentStage = body))
+              resultState.copy(currentStage =
+                Stage(List(ReactorAction.UntilAction(event, resultState.currentStage, interrupt)))
               )
             case Some(value) =>
               val stages = interrupt(value)
