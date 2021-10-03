@@ -7,8 +7,7 @@ import rescala.macros.MacroAccess
 class ReactorBundle[Api <: RescalaInterface](val api: Api) {
   import api._
   class Reactor[T](
-      initState: State[ReactorState[T]],
-      looping: Boolean = false,
+      initState: State[ReactorState[T]]
   ) extends Derived with Interp[T] with MacroAccess[T, Interp[T]] {
 
     override type Value = ReactorState[T]
@@ -97,11 +96,7 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
         }
       }
 
-      var resState = processActions(input.before)
-      if (looping && resState.currentStage.actions.isEmpty) {
-        resState = resState.copy(currentStage = resState.initialStage)
-        resState = processActions(resState)
-      }
+      val resState = processActions(input.before)
 
       input.withValue(resState)
     }
@@ -123,14 +118,7 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
     def once[T](
         initialValue: T,
     )(initialStage: Stage[T]): Reactor[T] = {
-      CreationTicket.fromScheduler(scheduler)
-        .create(
-          Set(),
-          new ReactorState[T](initialValue, initialStage),
-          inite = true
-        ) { createdState: State[ReactorState[T]] =>
-          new Reactor[T](createdState)
-        }
+      createReactor(initialValue, initialStage)
     }
 
     /** Creates a new Reactor, which starts from the beginning, once it's finished.
@@ -143,13 +131,18 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
     def loop[T](
         initialValue: T,
     )(initialStage: Stage[T]): Reactor[T] = {
+      val loopingStage = initialStage.copy(List(ReactorAction.LoopAction(initialStage, initialStage)))
+      createReactor(initialValue, loopingStage)
+    }
+
+    private def createReactor[T](initialValue: T, initialStage: Stage[T]): Reactor[T] = {
       CreationTicket.fromScheduler(scheduler)
         .create(
           Set(),
           new ReactorState[T](initialValue, initialStage),
           inite = true
         ) { createdState: State[ReactorState[T]] =>
-          new Reactor[T](createdState, true)
+          new Reactor[T](createdState)
         }
     }
   }
