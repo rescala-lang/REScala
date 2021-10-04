@@ -30,7 +30,7 @@ class BaselineBenchmark {
     trigger = Evt[Unit]()
     reactor = Reactor.loop(0) {
       S.next(trigger) {
-        Stage()
+        S.end
       }
     }
   }

@@ -320,5 +320,9 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
     def until[T](event: Event[Any], body: => Stage[T]): Stage[T] = {
       Stage().until(event, body)
     }
+
+    def end[T]: Stage[T] = {
+      Stage()
+    }
   }
 }
