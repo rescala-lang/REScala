@@ -17,7 +17,7 @@ class ReactorWithoutAPITest extends RETests {
 
     test("Reactor executes body instantly") {
       val reactor = Reactor.once("Initial Value") {
-        Stage().set("Value Set!")
+        S.set("Value Set!")
       }
 
       assert(transaction(reactor) { _.now(reactor) } === "Value Set!")
@@ -26,8 +26,8 @@ class ReactorWithoutAPITest extends RETests {
     test("Reactor waits for event when using next") {
       val e1 = Evt[Unit]()
       val reactor = Reactor.once(42) {
-        Stage().next(e1) {
-          Stage().set(1)
+        S.next(e1) {
+          S.set(1)
         }
       }
 
@@ -40,8 +40,8 @@ class ReactorWithoutAPITest extends RETests {
       val e1 = Evt[Int]()
 
       val reactor = Reactor.once(0) {
-        Stage().next(e1) { (e) =>
-          Stage().set(e)
+        S.next(e1) { e =>
+          S.set(e)
         }
       }
 
@@ -54,10 +54,10 @@ class ReactorWithoutAPITest extends RETests {
       val e1 = Evt[Unit]()
 
       val reactor = Reactor.once(0) {
-        Stage().next(e1) {
-          Stage().set(1)
+        S.next(e1) {
+          S.set(1)
             .next(e1) {
-              Stage().set(2)
+              S.set(2)
             }
         }
       }
@@ -73,9 +73,9 @@ class ReactorWithoutAPITest extends RETests {
       val e1 = Evt[String]()
 
       val reactor = Reactor.once("Initial Value") {
-        Stage().set("Not Reacted")
+        S.set("Not Reacted")
           .next(e1) { _ =>
-            Stage().set("Reacted")
+            S.set("Reacted")
           }
       }
 
@@ -94,8 +94,8 @@ class ReactorWithoutAPITest extends RETests {
     test("Rector can loop") {
       val e1 = Evt[Unit]()
       val reactor = Reactor.loop("Initial Value") {
-        Stage().set("First Stage").next(e1) {
-          Stage().set("Second Stage").next(e1) { Stage() }
+        S.set("First Stage").next(e1) {
+          S.set("Second Stage").next(e1) { Stage() }
         }
       }
 
@@ -110,8 +110,8 @@ class ReactorWithoutAPITest extends RETests {
 
     test("Reactor read") {
       val reactor = Reactor.once(42) {
-        Stage().read(currentValue =>
-          Stage().set(currentValue + 8)
+        S.read(currentValue =>
+          S.set(currentValue + 8)
         )
       }
 
@@ -121,12 +121,12 @@ class ReactorWithoutAPITest extends RETests {
     test("Reactor read can branch") {
       val e1 = Evt[Int]()
       val reactor = Reactor.loop("") {
-        Stage().next(e1) { eventValue =>
-          Stage().read(_ =>
+        S.next(e1) { eventValue =>
+          S.read(_ =>
             if (eventValue > 10) {
-              Stage().set("Greater 10")
+              S.set("Greater 10")
             } else {
-              Stage().set("Smaller 10")
+              S.set("Smaller 10")
             }
           )
         }
@@ -142,9 +142,9 @@ class ReactorWithoutAPITest extends RETests {
     test("Reactor stage loop") {
       val e1 = Evt[Int]()
       val reactor = Reactor.once(42) {
-        Stage().loop {
-          Stage().next(e1) { eventValue =>
-            Stage[Int]().modify(currentValue => currentValue + eventValue)
+        S.loop {
+          S.next(e1) { eventValue =>
+            S.modify(currentValue => currentValue + eventValue)
           }
         }
       }
@@ -160,11 +160,10 @@ class ReactorWithoutAPITest extends RETests {
       val e1 = Evt[Int]()
       val reactor = Reactor.once(42) {
         Stage().loop {
-          Stage().next(e1) { eventValue =>
-            Stage[Int]()
-              .modify(currentValue => currentValue + eventValue)
+          S.next(e1) { eventValue =>
+            S.modify((currentValue: Int) => currentValue + eventValue)
               .next(e1) { eventValue =>
-                Stage().modify(currentValue => currentValue - eventValue)
+                S.modify(currentValue => currentValue - eventValue)
               }
           }
         }
@@ -184,12 +183,13 @@ class ReactorWithoutAPITest extends RETests {
     test("Reactor until works") {
       val e1 = Evt[Unit]()
       val reactor = Reactor.once("Initial Value") {
-        Stage().until(e1,
+        S.until(
+          e1,
           body = {
-            Stage().set("Body value")
+            S.set("Body value")
           },
           interruptHandler = {
-            Stage().set("Interrupt value")
+            S.set("Interrupt value")
           }
         )
       }
@@ -202,12 +202,13 @@ class ReactorWithoutAPITest extends RETests {
     test("Reactor until passes event value") {
       val e1 = Evt[String]()
       val reactor = Reactor.once("Initial Value") {
-        Stage().until(e1,
+        S.until(
+          e1,
           body = {
-            Stage().set("Body value")
+            S.set("Body value")
           },
           interruptHandler = { (e: String) =>
-            Stage().set(e)
+            S.set(e)
           }
         )
       }
@@ -218,19 +219,20 @@ class ReactorWithoutAPITest extends RETests {
     }
 
     test("Reactor until can contain loops") {
-      val interrupt = Evt[Unit]()
+      val interrupt   = Evt[Unit]()
       val modifyEvent = Evt[String]()
       val reactor = Reactor.once("Initial Value") {
-        Stage().until(interrupt,
+        S.until(
+          interrupt,
           body = {
-            Stage().loop {
-              Stage().next(modifyEvent) { eventValue =>
-                Stage().set(eventValue)
+            S.loop {
+              S.next(modifyEvent) { eventValue =>
+                S.set(eventValue)
               }
             }
           },
           interruptHandler = {
-            Stage().set("Interrupted")
+            S.set("Interrupted")
           }
         )
       }
@@ -246,13 +248,14 @@ class ReactorWithoutAPITest extends RETests {
 
     test("Reactor until works without interruptHandler") {
       val interrupt = Evt[Unit]()
-      val modifier = Evt[Int]()
+      val modifier  = Evt[Int]()
       val reactor = Reactor.once(0) {
-        Stage().until(interrupt,
+        S.until(
+          interrupt,
           body = {
-            Stage().loop {
-              Stage().next(modifier) { v =>
-                Stage().set(v)
+            S.loop {
+              S.next(modifier) { v =>
+                S.set(v)
               }
             }
           }
@@ -270,12 +273,12 @@ class ReactorWithoutAPITest extends RETests {
     test("Reactor multiple changes in a single stage") {
       val start = Evt[Unit]()
       val reactor = Reactor.once(0) {
-        Stage().next(start) {
-          Stage().set(1).set(42)
+        S.next(start) {
+          S.set(1).set(42)
         }
       }
 
-      val reactorSignal = Signal { reactor.value }
+      val reactorSignal  = Signal { reactor.value }
       val reactorChanged = reactorSignal.changed
 
       val counter = reactorChanged.count()

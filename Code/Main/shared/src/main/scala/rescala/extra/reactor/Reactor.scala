@@ -278,9 +278,47 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
       * @param body  The [[Stage]] to be executes by default.
       * @tparam E The type of the event value.
       */
-    def until[E](event: Event[E], body: => Stage[T]): Stage[T] = {
-      val interrupHandler = { (_: E) => Stage[T]() }
+    def until(event: Event[Any], body: => Stage[T]): Stage[T] = {
+      val interrupHandler = { (_: Any) => Stage[T]() }
       addAction(ReactorAction.UntilAction(event, body, interrupHandler))
+    }
+  }
+
+  object S {
+    def set[T](newValue: T): Stage[T] = {
+      Stage().set(newValue)
+    }
+
+    def modify[T](modifier: T => T): Stage[T] = {
+      Stage().modify(modifier)
+    }
+
+    def next[T, E](event: Event[E])(body: E => Stage[T]): Stage[T] = {
+      Stage().next(event)(body)
+    }
+
+    def next[T](event: Event[Unit])(body: => Stage[T]): Stage[T] = {
+      Stage().next(event)(body)
+    }
+
+    def read[T](body: T => Stage[T]): Stage[T] = {
+      Stage().read(body)
+    }
+
+    def loop[T](body: => Stage[T]): Stage[T] = {
+      Stage().loop(body)
+    }
+
+    def until[T, E](event: Event[E], body: => Stage[T], interruptHandler: E => Stage[T]): Stage[T] = {
+      Stage().until(event, body, interruptHandler)
+    }
+
+    def until[T](event: Event[Unit], body: => Stage[T], interruptHandler: Stage[T]): Stage[T] = {
+      Stage().until(event, body, interruptHandler)
+    }
+
+    def until[T](event: Event[Any], body: => Stage[T]): Stage[T] = {
+      Stage().until(event, body)
     }
   }
 }
