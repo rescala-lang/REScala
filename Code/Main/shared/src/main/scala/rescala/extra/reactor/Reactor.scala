@@ -165,9 +165,7 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
         extends ReactorAction[T]
   }
 
-  case class ReactorState[T](currentValue: T, currentStage: Stage[T], initialStage: Stage[T]) {
-    def this(currentValue: T, initialStage: Stage[T]) = this(currentValue, initialStage, initialStage)
-  }
+  case class ReactorState[T](currentValue: T, currentStage: Stage[T])
 
   case class Stage[T](actions: List[ReactorAction[T]] = Nil) {
 
