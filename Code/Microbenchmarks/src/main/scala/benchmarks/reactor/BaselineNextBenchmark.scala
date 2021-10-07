@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit
 @Fork(3)
 @Threads(1)
 @State(Scope.Thread)
-class SetBenchmark {
+class BaselineNextBenchmark {
   var engine: RescalaInterface = _
   lazy val stableEngine        = engine
   lazy val reactorApi          = new ReactorBundle[stableEngine.type](stableEngine)
@@ -30,7 +30,7 @@ class SetBenchmark {
     trigger = Evt[Unit]()
     reactor = Reactor.loop(0) {
       S.next(trigger) {
-        S.set(42)
+        S.end
       }
     }
   }

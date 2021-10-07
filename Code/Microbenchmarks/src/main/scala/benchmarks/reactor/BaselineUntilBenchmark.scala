@@ -10,14 +10,15 @@ import java.util.concurrent.TimeUnit
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @Warmup(iterations = 3, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
-@Measurement(iterations = 3, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
+@Measurement(iterations = 10, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
 @Fork(3)
 @Threads(1)
 @State(Scope.Thread)
-class BaselineBenchmark {
+class BaselineUntilBenchmark {
   var engine: RescalaInterface = _
   lazy val stableEngine        = engine
   lazy val reactorApi          = new ReactorBundle[stableEngine.type](stableEngine)
+
   import reactorApi._
   import stableEngine._
 
@@ -29,9 +30,15 @@ class BaselineBenchmark {
     engine = engineParam.engine
     trigger = Evt[Unit]()
     reactor = Reactor.loop(0) {
-      S.next(trigger) {
-        S.end
-      }
+      S.until(
+        trigger,
+        body = {
+          S.set(41)
+        },
+        interruptHandler = {
+          S.set(42)
+        }
+      )
     }
   }
 
