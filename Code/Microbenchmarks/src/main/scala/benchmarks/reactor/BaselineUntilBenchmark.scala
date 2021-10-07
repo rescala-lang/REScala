@@ -33,11 +33,11 @@ class BaselineUntilBenchmark {
       S.until(
         trigger,
         body = {
-          S.set(41)
-        },
+          S.end
+        }: Stage[Int],
         interruptHandler = {
-          S.set(42)
-        }
+          S.end
+        }: Stage[Int]
       )
     }
   }
