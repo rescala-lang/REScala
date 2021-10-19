@@ -8,8 +8,8 @@ import scala.annotation.tailrec
 
 class ReactorWithoutAPITest extends RETests {
 
-  import rescala.default._
   import ReactorAction._
+  import rescala.default._
 
   class Reactor[T](
       initState: State[ReactorStage[T]]
