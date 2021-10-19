@@ -5,9 +5,8 @@ import encrdt.causality.DotStore.DotFun
 import encrdt.crdts.DeltaAddWinsLastWriterWinsMap.{DeltaAddWinsLastWriterWinsMapLattice, timestampedValueLattice}
 import encrdt.crdts.DeltaAddWinsMap.DeltaAddWinsMapLattice
 import encrdt.crdts.interfaces.MapCrdt
+import encrdt.lattices.LastWriterWinsTagLattice.lwwLattice
 import encrdt.lattices.SemiLattice
-
-import de.ckuessner.encrdt.lattices.LastWriterWinsTagLattice.lwwLattice
 
 import java.time.Instant
 
@@ -16,7 +15,10 @@ class DeltaAddWinsLastWriterWinsMap[K, V](val replicaId: String,
                                           initialDeltas: Vector[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = Vector()
                                          ) extends MapCrdt[K, V] {
   var _state: DeltaAddWinsLastWriterWinsMapLattice[K, V] = initialState
-  var deltas: Vector[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = initialDeltas
+  var _deltas: Vector[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = initialDeltas
+
+  def state: DeltaAddWinsLastWriterWinsMapLattice[K, V] = _state
+  def deltas: Vector[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = _deltas
 
   override def get(key: K): Option[V] =
     _state.dotStore
@@ -42,8 +44,12 @@ class DeltaAddWinsLastWriterWinsMap[K, V](val replicaId: String,
       k -> mvReg.values.maxBy(_._2)._1
     }
 
+  def merge(other: DeltaAddWinsLastWriterWinsMapLattice[K, V]): Unit = {
+    mutate(other)
+  }
+
   private def mutate(delta: DeltaAddWinsLastWriterWinsMapLattice[K, V]): Unit = {
-    deltas = deltas.appended(delta)
+    _deltas = _deltas.appended(delta)
     _state = SemiLattice[DeltaAddWinsLastWriterWinsMapLattice[K, V]].merged(_state, delta)
   }
 }
@@ -58,4 +64,6 @@ object DeltaAddWinsLastWriterWinsMap {
     if (SemiLattice.merged(left._2, right._2) == left._2) left
     else right
   }
+
+  type StateType[K, V] = DeltaAddWinsMapLattice[K, DotFun[(V, (Instant, String))]]
 }
