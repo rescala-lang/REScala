@@ -8,7 +8,6 @@ import scala.annotation.tailrec
 
 class ReactorBundle[Api <: RescalaInterface](val api: Api) {
   import api._
-
   class Reactor[T](
       initState: State[ReactorStage[T]]
   ) extends Derived with Interp[T] with MacroAccess[T, Interp[T]] {
@@ -17,10 +16,8 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
 
     override protected[rescala] def state: State[ReactorStage[T]] = initState
     override protected[rescala] def name: ReName                  = "Custom Reactor"
-
-    override def interpret(v: ReactorStage[T]): T = v.currentValue
-
-    override protected[rescala] def commit(base: ReactorStage[T]): ReactorStage[T] = base
+    override def interpret(v: ReactorStage[T]): T                 = v.currentValue
+    override protected[rescala] def commit(base: Value): Value    = base
 
     /** called if any of the dependencies changed in the current update turn,
       * after all (known) dependencies are updated
@@ -90,7 +87,6 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
     }
 
   }
-
   object Reactor {
     def once[T](
         initialValue: T,
