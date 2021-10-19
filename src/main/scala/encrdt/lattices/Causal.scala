@@ -4,7 +4,7 @@ package encrdt.lattices
 import encrdt.causality.DotStore._
 import encrdt.causality.{CausalContext, DotStore}
 
-case class Causal[D: DotStore](dotStore: D, causalContext: CausalContext)
+case class Causal[D](dotStore: D, causalContext: CausalContext)
 
 // See: Delta state replicated data types (https://doi.org/10.1016/j.jpdc.2017.08.003)
 object Causal {
@@ -38,8 +38,8 @@ object Causal {
   // (m, c) ⨆ (m', c') = ( {k -> v(k) | k ∈ dom m ∩ dom m' ∧ v(k) ≠ ⊥}, c ∪ c')
   //                      where v(k) = fst((m(k), c) ⨆ (m'(k), c'))
   implicit def CausalWithDotMapLattice[K, V: DotStore](implicit vSemiLattice: SemiLattice[Causal[V]]
-                                                      ): SemiLattice[Causal[DotMap[K, V]]] = new SemiLattice[Causal[DotMap[K, V]]] {
-    override def merged(left: Causal[DotMap[K, V]], right: Causal[DotMap[K, V]]): Causal[DotMap[K, V]] =
+                                                      ): SemiLattice[Causal[DotMap[K, V]]] =
+    (left: Causal[DotMap[K, V]], right: Causal[DotMap[K, V]]) =>
       Causal(((left.dotStore.keySet union right.dotStore.keySet) map { key =>
         val leftCausal = Causal(left.dotStore.getOrElse(key, DotStore[V].bottom), left.causalContext)
         val rightCausal = Causal(right.dotStore.getOrElse(key, DotStore[V].bottom), right.causalContext)
@@ -47,5 +47,4 @@ object Causal {
       } filterNot {
         case (key, dotStore) => DotStore[V].bottom == dotStore
       }).toMap, left.causalContext.merged(right.causalContext))
-  }
 }

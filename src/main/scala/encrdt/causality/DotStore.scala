@@ -4,7 +4,7 @@ package encrdt.causality
 import encrdt.causality.DotStore._
 
 // See: Delta state replicated data types (https://doi.org/10.1016/j.jpdc.2017.08.003)
-trait DotStore[D] {
+sealed trait DotStore[D] {
   def dots(dotStore: D): Set[Dot]
 
   def bottom: D
