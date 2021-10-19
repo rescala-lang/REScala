@@ -2,7 +2,6 @@ package rescala.extra.reactor
 
 import rescala.core.ReName
 import rescala.interface.RescalaInterface
-import rescala.macros.MacroAccess
 
 import scala.annotation.tailrec
 
@@ -10,7 +9,7 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
   import api._
   class Reactor[T](
       initState: State[ReactorStage[T]]
-  ) extends Derived with Interp[T] with MacroAccess[T, Interp[T]] {
+  ) extends Derived with Interp[T] {
 
     override type Value = ReactorStage[T]
 
@@ -47,8 +46,6 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
 
       input.withValue(resStage)
     }
-
-    override def resource: Interp[T] = this
 
     def now(implicit scheduler: Scheduler): T = scheduler.forceNewTransaction(this)(at => at.now(this))
   }
