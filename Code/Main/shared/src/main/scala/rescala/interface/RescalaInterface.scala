@@ -2,7 +2,7 @@ package rescala.interface
 
 import rescala.compat.{EventCompatBundle, SignalCompatBundle}
 import rescala.core.Core
-import rescala.operator.{DefaultImplementations, EventBundle, FlattenApi, Observing, SignalBundle, Sources}
+import rescala.operator._
 
 /** Rescala has two main abstractions. [[Event]] and [[Signal]] commonly referred to as reactives.
   * Use [[Var]] to create signal sources and [[Evt]] to create event sources.
@@ -25,7 +25,7 @@ import rescala.operator.{DefaultImplementations, EventBundle, FlattenApi, Observ
   *           over multiple scheduler implementations.
   */
 trait RescalaInterface extends EventBundle with SignalBundle with FlattenApi with Sources with DefaultImplementations
-                       with Observing with Core with SignalCompatBundle with EventCompatBundle {
+    with Observing with Core with SignalCompatBundle with EventCompatBundle {
 
   /** @group internal */
   def scheduler: Scheduler
