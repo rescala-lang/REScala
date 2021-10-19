@@ -2,7 +2,6 @@ package benchmarks.reactor
 
 import benchmarks.EngineParam
 import org.openjdk.jmh.annotations._
-import rescala.extra.reactor.ReactorBundle
 import rescala.interface.RescalaInterface
 
 import java.util.concurrent.TimeUnit
@@ -14,27 +13,21 @@ import java.util.concurrent.TimeUnit
 @Fork(5)
 @Threads(1)
 @State(Scope.Thread)
-class SetBenchmark {
+class BaselineEventPropagation {
   var engine: RescalaInterface = _
   lazy val stableEngine        = engine
-  lazy val reactorApi          = new ReactorBundle[stableEngine.type](stableEngine)
-  import reactorApi._
   import stableEngine._
 
-  var reactor: Reactor[Int] = _
-  var trigger: Evt[Unit]    = _
+  var event: Evt[Int]     = _
+  var signal: Signal[Int] = _
 
   @Setup
   def setup(engineParam: EngineParam) = {
     engine = engineParam.engine
-    trigger = Evt[Unit]()
-    reactor = Reactor.loop(0) {
-      S.next(trigger) {
-        S.set(42)
-      }
-    }
+    event = Evt[Int]()
+    signal = event.latest(0)
   }
 
   @Benchmark
-  def run(): Unit = trigger.fire()
+  def run(): Unit = event.fire(signal.now + 1)
 }
