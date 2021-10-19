@@ -106,4 +106,24 @@ class AddWinsSetSpec extends AnyFlatSpec {
     val stateAfterSecondAdd = left.added(1, "A")
     merged(left, stateAfterSecondAdd).values should ===(Set(1))
   }
+
+  it should "work with dropped states" in {
+    val first = AddWinsSetLattice[Int]().added(1, "A")
+    val second = first.removed(1)
+
+    val thirdA = second.added(2, "A").removed(2)
+    val fourthA = thirdA.added(1, "A")
+
+    val thirdB = second.added(2, "B")
+
+    merged(first, thirdB).values should ===(Set(2))
+    merged(thirdA, first).values should ===(Set())
+    merged(thirdB, first).values should ===(Set(2))
+    merged(thirdA, thirdB).values should ===(Set(2))
+    merged(first, fourthA).values should ===(Set(1))
+    merged(second, fourthA).values should ===(Set(1))
+    merged(fourthA, second).values should ===(Set(1))
+    merged(merged(thirdB, thirdA), fourthA).values should ===(Set(1,2))
+    merged(fourthA, thirdB).values should ===(Set(1,2))
+  }
 }
