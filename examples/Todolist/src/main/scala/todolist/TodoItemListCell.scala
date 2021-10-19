@@ -7,8 +7,9 @@ import scalafx.Includes._
 import scalafx.beans.binding.Bindings
 import scalafx.beans.property.ObjectProperty
 import scalafx.beans.value.ObservableValue
+import scalafx.geometry.Pos
 import scalafx.scene.control.{CheckBox, TextField}
-import scalafx.scene.layout.HBox
+import scalafx.scene.layout.{HBox, Priority}
 
 import java.lang
 import java.util.UUID
@@ -16,7 +17,9 @@ import java.util.UUID
 class TodoItemListCell extends ListCell[UUID] {
   var todoProperty: Option[ObjectProperty[TodoEntry]] = None
 
-  val textField = new TextField()
+  private val textField = new TextField {
+    hgrow = Priority.Always
+  }
   textField.text.onChange { (source: ObservableValue[String, String], oldVal, newVal) =>
     val uuid = getItem
     todoProperty match {
@@ -25,7 +28,7 @@ class TodoItemListCell extends ListCell[UUID] {
     }
   }
 
-  val checkBox = new CheckBox()
+  private val checkBox = new CheckBox()
   checkBox.selectedProperty.onChange { (observable: ObservableValue[Boolean, java.lang.Boolean], oldVal, newVal) =>
     val uuid = getItem
     todoProperty match {
@@ -36,6 +39,7 @@ class TodoItemListCell extends ListCell[UUID] {
 
   private val rootContainer = new HBox {
     children = List(checkBox, textField)
+    alignment = Pos.CenterLeft
   }
 
   override def updateItem(uuid: UUID, empty: Boolean): Unit = {
