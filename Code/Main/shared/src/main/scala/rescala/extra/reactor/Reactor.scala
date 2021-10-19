@@ -22,7 +22,7 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
     /** called if any of the dependencies changed in the current update turn,
       * after all (known) dependencies are updated
       */
-    override protected[rescala] def reevaluate(input: ReevTicket[ReactorStage[T]]): Result[ReactorStage[T]] = {
+    override protected[rescala] def reevaluate(input: ReIn): Rout = {
 
       input.trackDependencies(Set())
 
@@ -51,12 +51,28 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
     override def resource: Interp[T] = this
 
     def now(implicit scheduler: Scheduler): T = scheduler.forceNewTransaction(this)(at => at.now(this))
+  }
 
+  object Reactor {
+    def once[T](
+        initialValue: T,
+    )(stageBuilder: StageBuilder[T]): Reactor[T] = {
+      CreationTicket.fromScheduler(scheduler)
+        .create(
+          Set(),
+          new ReactorStage[T](initialValue, stageBuilder),
+          inite = true
+        ) { createdState: State[ReactorStage[T]] =>
+          new Reactor[T](createdState)
+        }
+    }
   }
 
   sealed trait ReactorAction[T]
+
   object ReactorAction {
     case class SetAction[T](res: T) extends ReactorAction[T]
+
     case class NextAction[T, E](event: Event[E], handler: E => StageBuilder[T])
         extends ReactorAction[T]
   }
@@ -79,26 +95,11 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
       * same transaction.
       *
       * @param event the event to wait for.
-      * @param body the code to execute when the event is triggered.
+      * @param body  the code to execute when the event is triggered.
       * @tparam E the event's type.
       */
     def next[E](event: Event[E])(body: E => StageBuilder[T]): StageBuilder[T] = {
       addAction(ReactorAction.NextAction(event, body))
-    }
-
-  }
-  object Reactor {
-    def once[T](
-        initialValue: T,
-    )(stageBuilder: StageBuilder[T]): Reactor[T] = {
-      CreationTicket.fromScheduler(scheduler)
-        .create(
-          Set(),
-          new ReactorStage[T](initialValue, stageBuilder),
-          inite = true
-        ) { createdState: State[ReactorStage[T]] =>
-          new Reactor[T](createdState)
-        }
     }
   }
 }
