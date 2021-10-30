@@ -11,9 +11,6 @@ object Storing {
       val item = dom.window.localStorage.getItem(key)
       if (item == null) default
       else {
-        println("==== start")
-        println(item)
-        println("==== end")
         val res = try { readFromString[A](item) }
         catch {
           case cause: Throwable =>
