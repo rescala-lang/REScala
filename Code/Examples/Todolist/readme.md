@@ -51,7 +51,7 @@ Run with:
 
 ~~~
 cd "REScala main repository"
-$ sbt "project todolist" fastOptJS           # get scala dependencies and compile scala to js
+$ sbt "project todolist" fastLinkJS           # get scala dependencies and compile scala to js
 cd "todolist subfolder (this file)"
 $ firefox index.html      # open todomvc    in browser
 ~~~
