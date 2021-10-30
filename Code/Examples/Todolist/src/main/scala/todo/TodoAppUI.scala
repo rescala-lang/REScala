@@ -4,14 +4,12 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import loci.registry.Binding
 import loci.serializer.jsoniterScala._
-import loci.transmitter.transmittable.IdenticallyTransmittable
 import org.scalajs.dom.UIEvent
 import org.scalajs.dom.html.{Div, Input}
 import rescala.default._
 import rescala.extra.Tags._
 import rescala.extra.distributables.LociDist
 import rescala.extra.lattices.delta.CContext._
-import rescala.extra.lattices.delta.Codecs._
 import rescala.extra.lattices.delta.Delta
 import rescala.extra.lattices.delta.crdt.reactive.RGA
 import rescala.extra.lattices.delta.crdt.reactive.RGA._
@@ -20,7 +18,7 @@ import scalatags.JsDom.all._
 import scalatags.JsDom.tags2.section
 import scalatags.JsDom.{Attr, TypedTag}
 
-class TodoAppUI() {
+class TodoAppUI(val storagePrefix: String) {
 
   implicit val stringCodec: JsonValueCodec[String] = JsonCodecMaker.make
 
@@ -44,24 +42,24 @@ class TodoAppUI() {
 
     val deltaEvt = Evt[Delta[RGA.State[TaskRef, DietMapCContext]]]
 
-    val taskrefs = new TaskRefObj(toggleAll.event)
+    val taskrefs = new TaskRefObj(toggleAll.event, storagePrefix)
+    TaskRefs.taskrefObj = taskrefs
     val taskOps = new TaskOps(taskrefs)
 
-    import taskrefs.taskRefCodec
-    implicit val codec: JsonValueCodec[RGA.State[TaskRef, DietMapCContext]] = RGAStateCodec
+    import Codecs._
 
-    implicit val transmittableList: IdenticallyTransmittable[RGA.State[TaskRef, DietMapCContext]] =
-      IdenticallyTransmittable()
-
-    val rga =
-      Events.foldAll(taskOps.listInitial) { s =>
-        Seq(
-          createTodo act taskOps.handleCreateTodo(s),
-          removeAll.event dyn { dt => _ => taskOps.handleRemoveAll(s, dt) },
-          s.toList.map(_.removed) act taskOps.handleRemove(s),
-          deltaEvt act taskOps.handleDelta(s)
-        )
-      }
+    val rga = {
+      Storing.storedAs(storagePrefix, taskOps.listInitial) { init =>
+        Events.foldAll(init) { s =>
+          Seq(
+            createTodo act taskOps.handleCreateTodo(s),
+            removeAll.event dyn { dt => _ => taskOps.handleRemoveAll(s, dt) },
+            s.toList.map(_.removed) act taskOps.handleRemove(s),
+            deltaEvt act taskOps.handleDelta(s)
+            )
+        }
+      }(codecRGA)
+    }
 
     LociDist.distributeDeltaCRDT(rga, deltaEvt, Todolist.registry)(
       Binding[RGA.State[TaskRef, DietMapCContext] => Unit]("tasklist")

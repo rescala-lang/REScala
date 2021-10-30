@@ -18,7 +18,8 @@ class TaskOps(taskRefs: TaskRefObj) {
 
   def handleCreateTodo(state: => State)(desc: String): State = {
     val taskid   = s"Task(${ThreadLocalRandom.current().nextLong().toHexString})"
-    val taskref = taskRefs.lookupOrCreateTaskRef(taskid, Some(TaskData(desc)))
+    TaskRefs.lookupOrCreateTaskRef(taskid, Some(TaskData(desc)))
+    val taskref = TaskRef(taskid)
     state.resetDeltaBuffer().prepend(taskref)
   }
 

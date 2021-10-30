@@ -32,11 +32,15 @@ case class TaskData(
   def edit(str: String): TaskData = copy(desc = str)
 }
 
-object TaskData {
-  implicit val todoTaskCodec: JsonValueCodec[TaskData] = JsonCodecMaker.make
+case class TaskRef(id: String) {
+  lazy val cached: TaskRefData = TaskRefs.lookupOrCreateTaskRef(id, None)
+
+  def task: Signal[LWWRegister[TaskData, DietMapCContext]] = cached.task
+  def tag: TypedTag[LI]                                    = cached.tag
+  def removed: Event[String]                               = cached.removed
 }
 
-final class TaskRef(
+final class TaskRefData(
     val task: Signal[LWWRegister[TaskData, DietMapCContext]],
     val tag: TypedTag[LI],
     val removed: Event[String],
@@ -49,28 +53,27 @@ final class TaskRef(
   }
 }
 
-class TaskRefObj(toggleAll: Event[UIEvent]) {
+object TaskRefs {
+  private val taskRefMap: mutable.Map[String, TaskRefData] = mutable.Map.empty
 
-  private val taskRefMap: mutable.Map[String, TaskRef] = mutable.Map.empty
+  var taskrefObj: TaskRefObj = null
 
-  implicit val taskRefCodec: JsonValueCodec[TaskRef] = new JsonValueCodec[TaskRef] {
-    override def decodeValue(in: JsonReader, default: TaskRef): TaskRef =
-      lookupOrCreateTaskRef(in.readString(default.id), None)
-    override def encodeValue(x: TaskRef, out: JsonWriter): Unit = out.writeVal(x.id)
-    override def nullValue: TaskRef                             = new TaskRef(Var.empty, li(), Evt(), "")
+  def lookupOrCreateTaskRef(id: String, task: Option[TaskData]): TaskRefData = {
+    TaskRefs.taskRefMap.getOrElseUpdate(id, { taskrefObj.createTaskRef(id, task) })
   }
+}
+
+class TaskRefObj(toggleAll: Event[UIEvent], storePrefix: String) {
+
+  import Codecs.todoTaskCodec
 
   implicit val transmittableLWW: IdenticallyTransmittable[LWWRegister.State[TaskData, DietMapCContext]] =
     IdenticallyTransmittable()
 
-  def lookupOrCreateTaskRef(id: String, task: Option[TaskData]): TaskRef = {
-    taskRefMap.getOrElseUpdate(id, { createTaskRef(id, task) })
-  }
-
   def createTaskRef(
       taskID: String,
       task: Option[TaskData],
-  ): TaskRef = {
+  ): TaskRefData = {
     val lwwInit = LWWRegister[TaskData, DietMapCContext](replicaId)
 
     val lww = task match {
@@ -117,13 +120,15 @@ class TaskRefObj(toggleAll: Event[UIEvent]) {
     //  )
     //)
 
-    val crdt = Events.foldAll(lww)(current =>
-      Seq(
-        doneEv act { _ => current.resetDeltaBuffer().map(_.toggle()) },
-        edittextStr act { v => current.resetDeltaBuffer().map(_.edit(v)) },
-        deltaEvt act { delta => current.resetDeltaBuffer().applyDelta(delta) }
+    val crdt = Storing.storedAs(storePrefix + taskID, lww) { init =>
+      Events.foldAll(init)(current =>
+        Seq(
+          doneEv act { _ => current.resetDeltaBuffer().map(_.toggle()) },
+          edittextStr act { v => current.resetDeltaBuffer().map(_.edit(v)) },
+          deltaEvt act { delta => current.resetDeltaBuffer().applyDelta(delta) }
+        )
       )
-    )
+    }(Codecs.codecLww)
 
     LociDist.distributeDeltaCRDT(crdt, deltaEvt, Todolist.registry)(
       Binding[LWWRegister.State[TaskData, DietMapCContext] => Unit](taskID)
@@ -152,6 +157,6 @@ class TaskRefObj(toggleAll: Event[UIEvent]) {
       editInput
     )
 
-    new TaskRef(crdt, listItem, removeButton.event.map(_ => taskID), taskID)
+    new TaskRefData(crdt, listItem, removeButton.event.map(_ => taskID), taskID)
   }
 }

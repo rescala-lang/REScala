@@ -9,12 +9,13 @@ object Todolist {
 
   val replicaId: String = ThreadLocalRandom.current().nextLong().toHexString
 
-  val todoApp = new TodoAppUI()
-
   val registry = new Registry
 
   def main(args: Array[String]): Unit = {
 
+    val storagePrefix = args.headOption.getOrElse("default")
+
+    val todoApp = new TodoAppUI(storagePrefix)
     val div = todoApp.getContents()
 
     val webrtc = WebRTCHandling(registry)
