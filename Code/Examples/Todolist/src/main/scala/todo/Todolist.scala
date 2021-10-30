@@ -1,7 +1,7 @@
 package todo
 
 import loci.registry.Registry
-import org.scalajs.dom.document
+import org.scalajs.dom.{document, window}
 
 import java.util.concurrent.ThreadLocalRandom
 
@@ -13,7 +13,8 @@ object Todolist {
 
   def main(args: Array[String]): Unit = {
 
-    val storagePrefix = args.headOption.getOrElse("default")
+    val storagePrefix = window.location.href
+    println(storagePrefix)
 
     val todoApp = new TodoAppUI(storagePrefix)
     val div = todoApp.getContents()
