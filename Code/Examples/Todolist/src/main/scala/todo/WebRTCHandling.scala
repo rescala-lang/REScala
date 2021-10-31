@@ -1,5 +1,8 @@
 package todo
 
+import com.github.plokhotnyuk.jsoniter_scala.core._
+import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
+import loci.communicator.experimental.webrtc
 import loci.communicator.experimental.webrtc.WebRTC
 import loci.communicator.experimental.webrtc.WebRTC.ConnectorFactory
 import loci.registry.Registry
@@ -8,10 +11,6 @@ import scalatags.JsDom.all._
 import scalatags.JsDom.tags2.section
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import com.github.plokhotnyuk.jsoniter_scala.core._
-import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import loci.communicator.experimental.webrtc
-
 import scala.concurrent.{Future, Promise}
 
 case class WebRTCHandling(registry: Registry) {

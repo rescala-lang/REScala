@@ -1,7 +1,5 @@
 package todo
 
-import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter}
-import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import loci.registry.Binding
 import loci.serializer.jsoniterScala.jsoniteScalaBasedSerializable
 import loci.transmitter.transmittable.IdenticallyTransmittable
@@ -12,13 +10,12 @@ import rescala.extra.Tags._
 import rescala.extra.distributables.LociDist
 import rescala.extra.lattices.delta.CContext._
 import rescala.extra.lattices.delta.Codecs._
-import rescala.extra.lattices.delta.{Delta, TimedVal, UIJDLattice}
 import rescala.extra.lattices.delta.crdt.reactive.LWWRegister
 import rescala.extra.lattices.delta.interfaces.MVRegisterInterface
-import rescala.todo.DeltaStateReactive
+import rescala.extra.lattices.delta.{Delta, TimedVal}
 import scalatags.JsDom.TypedTag
-import todo.Todolist.replicaId
 import scalatags.JsDom.all._
+import todo.Todolist.replicaId
 
 import scala.Function.const
 import scala.collection.mutable

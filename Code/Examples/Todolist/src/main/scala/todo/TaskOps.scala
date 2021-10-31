@@ -1,6 +1,5 @@
 package todo
 
-import org.scalajs.dom.UIEvent
 import rescala.default._
 import rescala.extra.lattices.delta.CContext._
 import rescala.extra.lattices.delta.Delta
