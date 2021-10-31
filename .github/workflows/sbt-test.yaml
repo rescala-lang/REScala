@@ -21,4 +21,4 @@ jobs:
     - name: install jsdom
       run: npm install jsdom
     - name: Run tests
-      run: sbt "set ThisBuild / Test / parallelExecution := false" compile test:compile test
+      run: sbt "set ThisBuild / Test / parallelExecution := false" compile Test/compile test
