@@ -4,7 +4,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import loci.registry.Binding
 import loci.serializer.jsoniterScala._
-import org.scalajs.dom.UIEvent
+import org.scalajs.dom.{UIEvent, window}
 import org.scalajs.dom.html.{Div, Input}
 import rescala.default._
 import rescala.extra.Tags._
@@ -71,11 +71,13 @@ class TodoAppUI(val storagePrefix: String) {
 
     val taskTags = tasksList.map(_.map(_.tag))
 
+    val largeheader = window.location.hash.substring(1)
+
     div(
       `class` := "todoapp",
       header(
         `class` := "header",
-        h1("todos"),
+        h1( if (largeheader.nonEmpty) largeheader else "todos"),
         todoInputField
       ),
       section(
