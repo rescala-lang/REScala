@@ -1,7 +1,7 @@
 package de.ckuessner
-package encrdt.sync
+package encrdt.sync.p2p
 
-import encrdt.sync.ConnectionManager.REPLICAID_HEADER
+import encrdt.sync.p2p.P2PConnectionManager.REPLICAID_HEADER
 
 import com.typesafe.scalalogging.Logger
 import org.eclipse.jetty.server.{Server, ServerConnector}
@@ -13,7 +13,7 @@ import java.net.URI
 import java.time.Duration
 
 class CrdtSyncWebSocketServer[S](val localReplicaId: String,
-                                 private val connectionManager: ConnectionManager[S],
+                                 private val connectionManager: P2PConnectionManager[S],
                                  private val handlerFactory: String => CrdtSyncWebSocketHandler[S]) {
 
   private val LOG = Logger(getClass)
