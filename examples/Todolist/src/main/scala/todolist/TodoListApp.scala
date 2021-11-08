@@ -9,7 +9,9 @@ import scalafx.scene.layout.{HBox, Priority, VBox}
 
 import java.util.UUID
 
-object TodoListApp extends JFXApp3 {
+object TodoListAppPeerToPeer extends TodoListApp
+
+class TodoListApp extends JFXApp3 {
   override def start(): Unit = {
     val todoListView = new ListView[UUID] {
       cellFactory = { listView => new TodoItemListCell() }
@@ -74,7 +76,7 @@ object TodoListApp extends JFXApp3 {
                 },
                 new Button {
                   text = "Log peers"
-                  onAction = () => Console.println(s"Peers: ${TodoListController.peers})")
+                  onAction = () => Console.println(s"Peers: ${TodoListController.remoteAddresses})")
                 }
               )
             }

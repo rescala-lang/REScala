@@ -1,44 +1,56 @@
 package de.ckuessner
 package todolist
 
+import encrdt.sync.p2p.P2PConnectionManager
+import todolist.SyncedTodoListCrdt.StateType
+
 import com.typesafe.scalalogging.Logger
+import de.ckuessner.encrdt.sync.ConnectionManager
+import de.ckuessner.encrdt.sync.client_server.TrustedReplicaWebSocketClient
 import javafx.collections.{FXCollections, ObservableList}
 import scalafx.application.Platform
 import scalafx.beans.property.ObjectProperty
 
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
+import scala.collection.convert.ImplicitConversions.`collection asJava`
+import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 
 object TodoListController {
   val replicaId: String = UUID.randomUUID().toString.substring(0, 4)
+
   private val crdt: SyncedTodoListCrdt = new SyncedTodoListCrdt(replicaId)
 
   private val LOG = Logger(getClass)
 
   def handleUpdated(before: Map[UUID, TodoEntry], after: Map[UUID, TodoEntry]): Unit = {
-    val added = after.keySet.diff(before.keySet)
-    val removed = before.keySet.diff(after.keySet)
-    val changed = (before.keySet -- removed)
-      .map { key => key -> (before(key), after(key)) }
-      .filter { case (key, (b, a)) => b != a }
-      .map { case (uuid, (b, a)) => uuid -> a }
-
     Platform.runLater {
-      uuidToTodoEntryProperties = uuidToTodoEntryProperties ++ added.map(uuid => uuid -> ObjectProperty(after(uuid)))
+      val added = after.keySet.diff(before.keySet)
+      val removed = before.keySet.diff(after.keySet)
+      val changed = (before.keySet -- removed)
+        .map { uuid => uuid -> (before(uuid), after(uuid)) }
+        .filter { case (uuid, (b, a)) => b != a }
+        .map { case (uuid, (b, a)) => uuid -> a }
+
+      uuidToTodoEntryProperties.addAll(added.map(uuid => uuid -> ObjectProperty(after(uuid))))
+      observableUuidList.addAll(added)
 
       changed.foreach { case (k, v) => uuidToTodoEntryProperties(k).set(v) }
 
-      observableUuidList.addAll(added.asJavaCollection)
+      observableUuidList.removeAll(removed)
+      removed.foreach { uuid =>
+        uuidToTodoEntryProperties.remove(uuid)
+      }
 
-      observableUuidList.removeAll(removed.asJavaCollection)
     }
   }
 
   val observableUuidList: ObservableList[UUID] =
     FXCollections.observableList(new java.util.ArrayList[UUID](crdt.values.keys.asJavaCollection))
 
-  private var uuidToTodoEntryProperties: Map[UUID, ObjectProperty[TodoEntry]] =
-    Map[UUID, ObjectProperty[TodoEntry]]()
+  private val uuidToTodoEntryProperties: mutable.Map[UUID, ObjectProperty[TodoEntry]] =
+    new ConcurrentHashMap[UUID, ObjectProperty[TodoEntry]]().asScala
 
   def getTodo(uuid: UUID): Option[ObjectProperty[TodoEntry]] =
     uuidToTodoEntryProperties.get(uuid)
@@ -46,18 +58,24 @@ object TodoListController {
   def addTodo(todoEntry: TodoEntry): Unit = {
     val uuid = UUID.randomUUID()
     crdt.put(uuid, todoEntry)
-    uuidToTodoEntryProperties = uuidToTodoEntryProperties + (uuid -> ObjectProperty[TodoEntry](todoEntry))
+    uuidToTodoEntryProperties.put(uuid, ObjectProperty[TodoEntry](todoEntry))
     observableUuidList.add(uuid)
   }
 
   def removeTodo(uuid: UUID): Unit = {
     crdt.remove(uuid)
     observableUuidList.remove(uuid)
+    uuidToTodoEntryProperties.remove(uuid)
   }
 
   def changeTodo(uuid: UUID, changedEntry: TodoEntry): Unit = {
-    if (!crdt.get(uuid).contains(changedEntry)) {
-      LOG.debug(s"$uuid -> $changedEntry changed from ${crdt.get(uuid)}")
+    if (uuid == null || changedEntry == null) {
+      LOG.warn("uuid null for " + changedEntry)
+    } else {
+      val oldTodo = crdt.get(uuid)
+      if (oldTodo.contains(changedEntry)) return
+
+      LOG.debug(s"$uuid -> $changedEntry changed from $oldTodo")
       uuidToTodoEntryProperties(uuid).set(changedEntry)
       crdt.put(uuid, changedEntry)
     }
@@ -73,6 +91,5 @@ object TodoListController {
 
   def todos: Map[UUID, TodoEntry] = crdt.values
 
-  def peers: Map[String, String] = crdt.peers
-
+  def remoteAddresses: Set[String] = crdt.remoteAddresses
 }
