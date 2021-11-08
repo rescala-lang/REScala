@@ -1,7 +1,7 @@
 package de.ckuessner
-package encrdt.sync
+package encrdt.sync.p2p
 
-import encrdt.sync.ConnectionManager.REPLICAID_HEADER
+import encrdt.sync.p2p.P2PConnectionManager.REPLICAID_HEADER
 
 import com.typesafe.scalalogging.Logger
 import org.eclipse.jetty.websocket.client.{ClientUpgradeRequest, WebSocketClient}

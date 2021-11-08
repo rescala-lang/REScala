@@ -1,8 +1,8 @@
 package de.ckuessner
-package encrdt.sync
+package encrdt.sync.p2p
 
-import encrdt.sync.ConnectionManager._
-import encrdt.sync.CrdtSyncWebSocketHandler._
+import encrdt.sync.p2p.CrdtSyncWebSocketHandler.{clientShutdownCloseStatus, duplicateCloseStatus}
+import encrdt.sync.p2p.P2PConnectionManager._
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromString, writeToString}
 import com.typesafe.scalalogging.Logger
@@ -13,7 +13,7 @@ import scala.util.{Failure, Success, Try}
 
 class CrdtSyncWebSocketHandler[S](val localReplicaId: String,
                                   val remoteReplicaId: String,
-                                  private val connectionManager: ConnectionManager[S],
+                                  private val connectionManager: P2PConnectionManager[S],
                                   private val stateReceivedHandler: S => Unit,
                                   private val localStateProvider: () => S)
                                  (implicit valueCodec: JsonValueCodec[S]) extends WebSocketAdapter {
