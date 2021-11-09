@@ -25,6 +25,7 @@ trait WebSocketReplica extends Replica {
 
   override protected def disseminate(encryptedState: EncryptedState): Unit = {
     val serialized = writeToString(encryptedState)
+    replicas = replicas.filter(sess => sess.isOpen)
     replicas.foreach(session => session.getRemote.sendString(serialized))
     LOG.debug(s"Disseminating ${encryptedState.versionVector}")
   }
