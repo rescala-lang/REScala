@@ -36,8 +36,10 @@ abstract class UntrustedReplica(initialStates: Set[EncryptedState]) extends Repl
     }
 
     stateStore = leastUpperBound(
-      stateStore.filter(oldState => VectorClockOrdering.lteq(oldState.versionVector, newState.versionVector)) + newState
+      stateStore.filterNot(oldState => VectorClockOrdering.lteq(oldState.versionVector, newState.versionVector)) + newState
     )
+
+    Console.println(stateStore.map(_.versionVector))
   }
 
   private def leastUpperBound(states: Set[EncryptedState]): Set[EncryptedState] = {

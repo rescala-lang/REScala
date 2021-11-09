@@ -39,11 +39,10 @@ object VectorClock {
     }
 
     override def lteq(x: VectorClock, y: VectorClock): Boolean = {
-      if (x.timestamps.isEmpty && y.timestamps.isEmpty) return true
-      if (x.timestamps.keySet != y.timestamps.keySet) return false
-
-      val anyXGreaterY = x.timestamps.keySet
-        .exists(key => x.timestamps(key) > y.timestamps(key))
+      if (x.timestamps.isEmpty) return true
+      val anyXGreaterY = x.timestamps.exists {
+        case (key, xTimeStampForKey) => xTimeStampForKey > y.timestamps.getOrElse(key, 0L)
+      }
 
       !anyXGreaterY
     }
