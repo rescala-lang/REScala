@@ -1,5 +1,6 @@
 package rescala.macros
 
+import rescala.core.Core
 import rescala.operator.cutOutOfUserComputation
 import retypecheck._
 
@@ -186,6 +187,8 @@ class ReactiveMacros(val c: blackbox.Context) {
 
   // here be dragons
 
+  val reSourceType = typeOf[Core#ReSource]
+
   def underlying(tpe: Type): Type =
     if (tpe ne tpe.dealias)
       underlying(tpe.dealias)
@@ -194,6 +197,14 @@ class ReactiveMacros(val c: blackbox.Context) {
     else
       tpe
 
+  def underlyingReSourceType(tpe: Type): Type =
+    underlying(tpe) match {
+      case RefinedType(parents, _) =>
+        underlyingReSourceType(parents.find(_ <:< reSourceType).get)
+      case tpe =>
+        tpe
+    }
+
   def doMagic(tpe: Type) = {
     val tn = getBundle
     tpe.asSeenFrom(tn, tpe.typeSymbol.owner).dealias
@@ -201,7 +212,7 @@ class ReactiveMacros(val c: blackbox.Context) {
 
   def getBundle: Type = {
     val ntype = c.prefix.tree.tpe
-    underlying(ntype) match {
+    underlyingReSourceType(ntype) match {
       case TypeRef(tn, _, _) => tn: Type
     }
   }
