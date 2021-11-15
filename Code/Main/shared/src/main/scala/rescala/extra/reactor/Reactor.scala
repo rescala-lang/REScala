@@ -116,7 +116,7 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
       * @return The created Reactor.
       */
     def once[T](
-        initialValue: T,
+        initialValue: T
     )(initialStage: Stage[T]): Reactor[T] = {
       createReactor(initialValue, initialStage)
     }
@@ -129,7 +129,7 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
       * @return The created Reactor.
       */
     def loop[T](
-        initialValue: T,
+        initialValue: T
     )(initialStage: Stage[T]): Reactor[T] = {
       val loopingStage = initialStage.copy(List(ReactorAction.LoopAction(initialStage, initialStage)))
       createReactor(initialValue, loopingStage)
