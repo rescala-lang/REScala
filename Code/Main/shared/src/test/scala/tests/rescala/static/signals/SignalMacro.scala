@@ -7,7 +7,7 @@ class SignalMacro extends RETests {
   multiEngined { engine =>
     import engine._
 
-    test(".value access works") {
+    test("value access works") {
 
       val v                     = Var(List(1, 2, 3))
       val s1: Signal[List[Int]] = Signal { v.value.map(_ + 2) }
@@ -16,6 +16,21 @@ class SignalMacro extends RETests {
       assert(s1.readValueOnce === List(3, 4, 5))
       assert(s2.readValueOnce === List(3, 4, 5))
 
+    }
+
+    test("nested mapping over event") {
+      var test = 0
+
+      val e = Evt[Int]()
+      val s = Signal { e }
+      val r = s map { event => event map { _ + 1 } }
+
+      r.readValueOnce += { test = _ }
+      assert(test === 0)
+      e.fire(2)
+      assert(test === 3)
+      e.fire(4)
+      assert(test === 5)
     }
 
     test("conversion Function With Argument In Signal") {

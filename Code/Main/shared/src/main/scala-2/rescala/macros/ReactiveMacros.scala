@@ -113,7 +113,8 @@ class ReactiveMacros(val c: blackbox.Context) {
       q"$prefixIdent.value"
     }
     def prefixValDef: ValDef = {
-      q"val $prefixTermName : ${c.prefix.actualType} = ${c.prefix.tree}": ValDef
+      val prefixTypeTree = ReTyper(c).createTypeTree(c.prefix.actualType, c.enclosingPosition)
+      q"val $prefixTermName: $prefixTypeTree = ${c.prefix.tree}"
     }
   }
 
