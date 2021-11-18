@@ -14,7 +14,7 @@ import java.util.concurrent._
 import scala.concurrent.Future
 import scala.io.StdIn.readLine
 import scala.util.matching.Regex
-import scala.util.{Failure, Random, Success}
+import scala.util.{Failure, Success}
 
 class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
@@ -36,14 +36,14 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
   def synchronizationPoint(value: String)(callback: => Unit): Unit = {
     tokens = tokens.acquire(value)
-    callbacks ::= (value, () => callback)
+    callbacks ::= Tuple2(value, () => callback)
   }
 
   def checkCallbacks(): Unit = {
     val res  = callbacks.groupBy { case (t, c) => tokens.isOwned(t) }
     val mine = res.getOrElse(true, Nil)
     callbacks = res.getOrElse(false, Nil)
-    mine.map(_._1).sorted.distinct.foldLeft(tokens) { case (s, tok) => tokens.free(tok) }
+    tokens = mine.map(_._1).sorted.distinct.foldLeft(tokens) { case (s, tok) => tokens.free(tok) }
     mine.map(_._2).foreach(_.apply())
   }
 
@@ -133,9 +133,10 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
   def printStatus() = {
     println(s"> Cal :\n  work: ${calendar.work.now.elements}\n  vaca: ${calendar.vacation.now.elements}")
-    println(s"> Raft: ${tokens.tokenAgreement.leader}\n  ${tokens.tokenAgreement.values}")
+    println(s"> Raft: ${tokens.tokenAgreement.leader} (${tokens.tokenAgreement.currentTerm})\n  ${tokens.tokenAgreement.values}")
     println(s"> Want: ${tokens.want.elements}")
     println(s"> Free: ${tokens.tokenFreed.elements}")
+    println("")
   }
 
   val globalLock = new Object()
@@ -182,10 +183,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
     }
 
     while (true) {
-      print(">")
-      System.out.flush()
       val line = readLine()
-
       globalLock.synchronized {
         line match {
           case add(c, start, end) =>
