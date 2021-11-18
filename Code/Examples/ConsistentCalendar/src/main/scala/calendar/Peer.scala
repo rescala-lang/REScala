@@ -1,6 +1,6 @@
 package central
 
-import calendar.{Appointment, CalendarProgram}
+import calendar.{Appointment, CalendarProgram, RaftTokens, Token}
 import central.Bindings._
 import loci.communicator.tcp.TCP
 import loci.registry.Registry
@@ -8,6 +8,7 @@ import loci.transmitter.{RemoteAccessException, RemoteRef}
 import rescala.extra.lattices.delta.CContext.DietMapCContext
 import rescala.extra.lattices.delta.crdt.reactive.AWSet
 import rescala.extra.lattices.delta.{Delta, UIJDLattice}
+import central.SyncMessage.{AppointmentMessage, CalendarState, FreeMessage, RaftMessage, WantMessage}
 
 import java.util.concurrent._
 import scala.concurrent.Future
@@ -21,23 +22,15 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
   implicit val ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
 
-  val add     : Regex  = """add (\w+) (\d+) (\d+)""".r
-  val remove  : Regex  = """remove (\w+) (\d+) (\d+)""".r
-  val change  : Regex  = """change (\w+) (\d+) (\d+) (\d+) (\d+)""".r
-  val clear   : String = "clear"
-  val elements: String = "elements"
-  val size    : String = "size"
-  val exit    : String = "exit"
+  val add   : Regex = """add (\w+) (\d+) (\d+)""".r
+  val remove: Regex = """remove (\w+) (\d+) (\d+)""".r
+  val change: Regex = """change (\w+) (\d+) (\d+) (\d+) (\d+)""".r
 
   val calendar = new CalendarProgram(id)
 
-  var checkpoint: Int = 0
-
-  var changesSinceCP: SetState = UIJDLattice[SetState].bottom
-
   var remoteToAddress: Map[RemoteRef, (String, Int)] = Map()
 
-  var checkpointerRR: Option[RemoteRef] = None
+  var tokens: RaftTokens = RaftTokens.init(id)
 
   def connectToRemote(address: (String, Int)): Unit = address match {
     case (ip, port) =>
@@ -58,26 +51,41 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
   }
 
   def sendDeltas(): Unit = {
-    registry.remotes.filterNot(checkpointerRR.contains).foreach { rr =>
+    registry.remotes.foreach { rr =>
       val remoteReceiveSyncMessage = registry.lookup(receiveSyncMessageBinding, rr)
 
       calendar.replicated.foreach { case (id, set) =>
         set.now.deltaBuffer.collect {
           case Delta(replicaID, deltaState) if replicaID != rr.toString => deltaState
-        }.reduceOption(UIJDLattice[SetState].merge).foreach(sendRecursive(
+        }.reduceOption(UIJDLattice[CalendarState].merge).foreach(sendRecursive(
           remoteReceiveSyncMessage,
           _,
           id
           ))
       }
-    }
 
-    calendar.replicated.foreach{case (id, r) => r.transform(_.resetDeltaBuffer())}
+      tokens.want.deltaBuffer.collect {
+        case Delta(replicaID, deltaState) if replicaID != rr.toString => deltaState
+      }.reduceOption(UIJDLattice[AWSet.State[Token, DietMapCContext]].merge).foreach { state =>
+        remoteReceiveSyncMessage(WantMessage(state))
+      }
+
+      tokens.tokenFreed.deltaBuffer.collect {
+        case Delta(replicaID, deltaState) if replicaID != rr.toString => deltaState
+      }.reduceOption(UIJDLattice[AWSet.State[Token, DietMapCContext]].merge).foreach { state =>
+        remoteReceiveSyncMessage(FreeMessage(state))
+      }
+
+      remoteReceiveSyncMessage(RaftMessage(tokens.tokenAgreement))
+
+
+      calendar.replicated.foreach { case (id, r) => r.transform(_.resetDeltaBuffer()) }
+    }
   }
 
-  def splitState(atoms: Iterable[SetState], merged: SetState): (Iterable[SetState], Iterable[SetState]) = {
+  def splitState(atoms: Iterable[CalendarState], merged: CalendarState): (Iterable[CalendarState], Iterable[CalendarState]) = {
     val a =
-      if (atoms.isEmpty) UIJDLattice[SetState].decompose(merged)
+      if (atoms.isEmpty) UIJDLattice[CalendarState].decompose(merged)
       else atoms
 
     val atomsSize = a.size
@@ -90,14 +98,14 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
                      delta: AWSet.State[Appointment, DietMapCContext],
                      crdtid: String,
                    ): Unit = new FutureTask[Unit](() => {
-    def attemptSend(atoms: Iterable[SetState], merged: SetState): Unit = {
-      remoteReceiveSyncMessage(SyncMessage(checkpoint, merged, crdtid)).failed.foreach {
+    def attemptSend(atoms: Iterable[CalendarState], merged: CalendarState): Unit = {
+      remoteReceiveSyncMessage(AppointmentMessage(merged, crdtid)).failed.foreach {
         case e: RemoteAccessException => e.reason match {
           case RemoteAccessException.RemoteException(name, _) if name.contains("JsonReaderException") =>
             val (firstHalf, secondHalf) = splitState(atoms, merged)
 
-            attemptSend(firstHalf, firstHalf.reduce(UIJDLattice[SetState].merge))
-            attemptSend(secondHalf, secondHalf.reduce(UIJDLattice[SetState].merge))
+            attemptSend(firstHalf, firstHalf.reduce(UIJDLattice[CalendarState].merge))
+            attemptSend(secondHalf, secondHalf.reduce(UIJDLattice[CalendarState].merge))
           case _                                                                                      => e.printStackTrace()
         }
 
@@ -109,24 +117,27 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
   }).run()
 
 
-
   def run(): Unit = {
     registry.bindSbj(receiveSyncMessageBinding) { (remoteRef: RemoteRef, message: SyncMessage) =>
       println(s"Received $message")
 
-      val SyncMessage(cp, deltaState, id) = message
+      message match {
+        case AppointmentMessage(deltaState, id) =>
 
-
-      val delta = Delta(remoteRef.toString, deltaState)
-      val set = calendar.replicated(id)
-      set.transform(_.applyDelta(delta))
+          val delta = Delta(remoteRef.toString, deltaState)
+          val set   = calendar.replicated(id)
+          set.transform(_.applyDelta(delta))
+        case WantMessage(state)                 =>
+          tokens = tokens.applyWant(Delta(remoteRef.toString, state))
+        case FreeMessage(state)                 =>
+          tokens = tokens.applyFree(Delta(remoteRef.toString, state))
+        case RaftMessage(state)                 => {
+          tokens = tokens.applyRaft(state)
+        }
+      }
 
       sendDeltas()
-
-      println(set.now.elements)
     }
-
-    registry.bind(isCheckpointerBinding) { () => false }
 
     println(registry.listen(TCP(listenPort)))
 
@@ -146,7 +157,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
     while (true) {
       readLine() match {
         case add(c, start, end) =>
-          val cal = if (c == "work") calendar.work else calendar.vacation
+          val cal         = if (c == "work") calendar.work else calendar.vacation
           val appointment = Appointment(start.toInt, end.toInt)
           calendar.add_appointment(cal, appointment)
           println(s"Added $appointment")
@@ -154,7 +165,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
           sendDeltas()
 
         case remove(c, start, end) =>
-          val cal = if (c == "work") calendar.work else calendar.vacation
+          val cal         = if (c == "work") calendar.work else calendar.vacation
           val appointment = Appointment(start.toInt, end.toInt)
           calendar.remove_appointment(cal, appointment)
           println(s"Removed $appointment")
@@ -162,25 +173,22 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
           sendDeltas()
 
         case change(c, start, end, nstart, nend) =>
-          val cal = if (c == "work") calendar.work else calendar.vacation
+          val cal         = if (c == "work") calendar.work else calendar.vacation
           val appointment = Appointment(start.toInt, end.toInt)
           calendar.change_time(cal, appointment, nstart.toInt, nend.toInt)
           println(s"changed $appointment")
           println(cal.now.elements)
           sendDeltas()
 
-        case `clear` =>
-          sendDeltas()
 
-        case `elements` =>
+        case "elements" =>
           println(calendar.work.now.elements)
           println(calendar.vacation.now.elements)
 
-        case `size` =>
-          println(calendar.work.now.elements.size)
-          println(calendar.vacation.now.elements.size)
+        case "update" =>
+          tokens = tokens.update()
 
-        case `exit` =>
+        case "exit" =>
           System.exit(0)
 
         case _ => println("Unknown command")

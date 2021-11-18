@@ -1,8 +1,9 @@
 package calendar
 
-import rescala.extra.lattices.RaftState
 import rescala.extra.lattices.delta.CContext.DietMapCContext
+import rescala.extra.lattices.delta.Delta
 import rescala.extra.lattices.delta.crdt.reactive.AWSet
+import rescala.extra.lattices.{Lattice, RaftState}
 
 import scala.util.Random
 
@@ -43,13 +44,25 @@ case class RaftTokens(replicaID: String,
     if (tokenAgreement.leader == replicaID) {
       val unwanted = want.removeAll(want.elements.filter(generalDuties.values.contains))
       want.elements.headOption match {
-        case None => copy(tokenAgreement = generalDuties, want = unwanted)
+        case None      => copy(tokenAgreement = generalDuties, want = unwanted)
         case Some(tok) =>
           copy(tokenAgreement = generalDuties.propose(replicaID, tok), want = unwanted)
       }
     } else copy(tokenAgreement = generalDuties)
 
 
+  }
+
+  def applyWant(state: Delta[AWSet.State[Token, DietMapCContext]]): RaftTokens = {
+    copy(want = want.applyDelta(state))
+  }
+
+  def applyFree(state: Delta[AWSet.State[Token, DietMapCContext]]): RaftTokens = {
+    copy(tokenFreed = tokenFreed.applyDelta(state))
+  }
+
+  def applyRaft(state: RaftState[Token]): RaftTokens = {
+    copy(tokenAgreement = Lattice.merge(tokenAgreement, state))
   }
 
 
