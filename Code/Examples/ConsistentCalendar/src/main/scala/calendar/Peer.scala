@@ -26,7 +26,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
   val remove: Regex = """remove (\w+) (\d+) (\d+)""".r
   val change: Regex = """change (\w+) (\d+) (\d+) (\d+) (\d+)""".r
 
-  val calendar = new CalendarProgram(id)
+  val calendar = new CalendarProgram(id, synchronizationPoint)
 
   var remoteToAddress: Map[RemoteRef, (String, Int)] = Map()
 
@@ -34,16 +34,16 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
   var callbacks: List[(String, () => Unit)] = Nil
 
-  def synchronizationPoint(value: String)(callback: () => Unit): Unit = {
+  def synchronizationPoint(value: String)(callback: => Unit): Unit = {
     tokens = tokens.acquire(value)
-    callbacks ::= (value, callback)
+    callbacks ::= (value, () => callback)
   }
 
   def checkCallbacks(): Unit = {
-    val res = callbacks.groupBy{case (t, c) => tokens.isOwned(t)}
+    val res  = callbacks.groupBy { case (t, c) => tokens.isOwned(t) }
     val mine = res.getOrElse(true, Nil)
     callbacks = res.getOrElse(false, Nil)
-    mine.map(_._1).sorted.distinct.foldLeft(tokens){case (s, tok) => tokens.free(tok)}
+    mine.map(_._1).sorted.distinct.foldLeft(tokens) { case (s, tok) => tokens.free(tok) }
     mine.map(_._2).foreach(_.apply())
   }
 
@@ -94,7 +94,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
       remoteReceiveSyncMessage(RaftMessage(tokens.tokenAgreement))
 
 
-      calendar.replicated.foreach { case (id, r) => r.transform(_.resetDeltaBuffer()) }
+      //calendar.replicated.foreach { case (id, r) => r.transform(_.resetDeltaBuffer()) }
     }
   }
 
@@ -131,13 +131,21 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
     attemptSend(List(), delta)
   }).run()
 
+  def printStatus() = {
+    println(s"> Cal :\n  work: ${calendar.work.now.elements}\n  vaca: ${calendar.vacation.now.elements}")
+    println(s"> Raft: ${tokens.tokenAgreement.leader}\n  ${tokens.tokenAgreement.values}")
+    println(s"> Want: ${tokens.want.elements}")
+    println(s"> Free: ${tokens.tokenFreed.elements}")
+  }
+
   val globalLock = new Object()
 
   def run(): Unit = {
     registry.bindSbj(receiveSyncMessageBinding) { (remoteRef: RemoteRef, message: SyncMessage) =>
-      println(s"\nReceived $message")
 
       globalLock.synchronized {
+        println(s"> Recv: $message")
+
         message match {
           case AppointmentMessage(deltaState, id) =>
 
@@ -152,6 +160,8 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
             tokens = tokens.applyRaft(state)
           }
         }
+        printStatus()
+
       }
 
     }
@@ -182,22 +192,16 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
             val cal         = if (c == "work") calendar.work else calendar.vacation
             val appointment = Appointment(start.toInt, end.toInt)
             calendar.add_appointment(cal, appointment)
-            println(s"Added $appointment")
-            println(cal.now.elements)
 
           case remove(c, start, end) =>
             val cal         = if (c == "work") calendar.work else calendar.vacation
             val appointment = Appointment(start.toInt, end.toInt)
             calendar.remove_appointment(cal, appointment)
-            println(s"Removed $appointment")
-            println(cal.now.elements)
 
           case change(c, start, end, nstart, nend) =>
             val cal         = if (c == "work") calendar.work else calendar.vacation
             val appointment = Appointment(start.toInt, end.toInt)
             calendar.change_time(cal, appointment, nstart.toInt, nend.toInt)
-            println(s"changed $appointment")
-            println(cal.now.elements)
 
 
           case "elements" =>
@@ -215,9 +219,10 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
             tokens = tokens.update()
             checkCallbacks()
         }
+        printStatus()
+
       }
 
-      println(s"current raft leader is ${tokens.tokenAgreement.leader}")
       sendDeltas()
 
     }
