@@ -7,9 +7,6 @@ import sbtcrossproject.CrossPlugin.autoImport.{CrossType, crossProject}
 
 ThisBuild / incOptions := (ThisBuild / incOptions).value.withLogRecompileOnMacro(false)
 cfg.noPublish
-ThisBuild / resolvers += ("STG old bintray repo" at "http://www.st.informatik.tu-darmstadt.de/maven/").withAllowInsecureProtocol(
-  true
-)
 
 def byVersion[T](version: String, v2: T, v3: T) = {
   CrossVersion.partialVersion(version) match {

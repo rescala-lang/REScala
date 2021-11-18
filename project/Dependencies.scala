@@ -26,7 +26,7 @@ object Dependencies {
     val okHttp                   = "4.9.2"
     val pprint                   = "0.6.6"
     val reactiveStreams          = "1.0.3"
-    val retypecheck              = "0.8.0"
+    val retypecheck              = "0.9.0"
     val scala211                 = "2.11.12"
     val scala212                 = "2.12.15"
     val scala213                 = "2.13.6"
@@ -67,7 +67,7 @@ object Dependencies {
   val okHttp          = Def.setting("com.squareup.okhttp3" % "okhttp" % V.okHttp)
   val pprint          = Def.setting("com.lihaoyi" %%% "pprint" % V.pprint)
   val reactiveStreams = Def.setting("org.reactivestreams" % "reactive-streams" % V.reactiveStreams)
-  val retypecheck     = Def.setting("de.tuda.stg" %% "retypecheck" % V.retypecheck)
+  val retypecheck     = Def.setting("io.github.scala-loci" %% "retypecheck" % V.retypecheck)
   val scalacheck      = Def.setting("org.scalacheck" %%% "scalacheck" % V.scalacheck % "test")
   val scalactic       = Def.setting("org.scalactic" %% "scalactic" % V.scalactic)
   val scalaJavaTime   = Def.setting("io.github.cquiroz" %%% "scala-java-time" % V.scalaJavaTime)
