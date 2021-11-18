@@ -119,7 +119,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
   def run(): Unit = {
     registry.bindSbj(receiveSyncMessageBinding) { (remoteRef: RemoteRef, message: SyncMessage) =>
-      println(s"Received $message")
+      println(s"\nReceived $message")
 
       message match {
         case AppointmentMessage(deltaState, id) =>
@@ -136,7 +136,6 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
         }
       }
 
-      sendDeltas()
     }
 
     println(registry.listen(TCP(listenPort)))
@@ -155,6 +154,8 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
     }
 
     while (true) {
+      print(">")
+      System.out.flush()
       readLine() match {
         case add(c, start, end) =>
           val cal         = if (c == "work") calendar.work else calendar.vacation
@@ -162,7 +163,6 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
           calendar.add_appointment(cal, appointment)
           println(s"Added $appointment")
           println(cal.now.elements)
-          sendDeltas()
 
         case remove(c, start, end) =>
           val cal         = if (c == "work") calendar.work else calendar.vacation
@@ -170,7 +170,6 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
           calendar.remove_appointment(cal, appointment)
           println(s"Removed $appointment")
           println(cal.now.elements)
-          sendDeltas()
 
         case change(c, start, end, nstart, nend) =>
           val cal         = if (c == "work") calendar.work else calendar.vacation
@@ -178,21 +177,26 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
           calendar.change_time(cal, appointment, nstart.toInt, nend.toInt)
           println(s"changed $appointment")
           println(cal.now.elements)
-          sendDeltas()
 
 
         case "elements" =>
           println(calendar.work.now.elements)
           println(calendar.vacation.now.elements)
 
-        case "update" =>
-          tokens = tokens.update()
+        case "lead" =>
+          tokens = tokens.lead()
 
         case "exit" =>
           System.exit(0)
 
-        case _ => println("Unknown command")
+        case _ =>
+          println("doing housekeeping")
+          tokens = tokens.update()
       }
+
+      println(s"current raft leader is ${tokens.tokenAgreement.leader}")
+      sendDeltas()
+
     }
   }
 }

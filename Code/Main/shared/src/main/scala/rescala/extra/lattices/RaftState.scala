@@ -67,8 +67,11 @@ case class RaftState[T](
     val votes = leaderVotes.filter(candidate => candidate.term == maxTerm)
     if (votes.exists(_.voter == me)) RaftState[T]()
     else {
-      val bestCandidate = votes.groupBy(_.leader).maxBy(_._2.size)._1
-      RaftState[T](leaderVotes = Set(Vote(maxTerm, bestCandidate, me)))
+      votes.groupBy(_.leader).maxByOption(_._2.size).map(_._1) match {
+        case Some(bestCandidate) =>
+          RaftState[T](leaderVotes = Set(Vote(maxTerm, bestCandidate, me)))
+        case None => RaftState[T]()
+      }
     }
   }
 

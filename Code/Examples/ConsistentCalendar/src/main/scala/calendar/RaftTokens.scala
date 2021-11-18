@@ -15,6 +15,8 @@ case class RaftTokens(replicaID: String,
                       tokenAgreement: RaftState[Token],
                       want: AWSet[Token, DietMapCContext],
                       tokenFreed: AWSet[Token, DietMapCContext]) {
+  def lead(): RaftTokens =
+    copy(tokenAgreement = tokenAgreement.becomeCandidate(replicaID))
 
 
   def owned(value: String): List[Token] = {
@@ -69,5 +71,5 @@ case class RaftTokens(replicaID: String,
 }
 
 object RaftTokens {
-  def init(replicaID: String) = RaftTokens(replicaID, RaftState(Set(replicaID)), AWSet(replicaID), AWSet(replicaID))
+  def init(replicaID: String): RaftTokens = RaftTokens(replicaID, RaftState(Set(replicaID)), AWSet(replicaID), AWSet(replicaID))
 }
