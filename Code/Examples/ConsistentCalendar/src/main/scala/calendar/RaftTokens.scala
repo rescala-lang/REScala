@@ -15,8 +15,6 @@ case class RaftTokens(replicaID: String,
                       tokenAgreement: RaftState[Token],
                       want: AWSet[Token, DietMapCContext],
                       tokenFreed: AWSet[Token, DietMapCContext]) {
-  def lead(): RaftTokens =
-    copy(tokenAgreement = tokenAgreement.becomeCandidate(replicaID))
 
 
   def owned(value: String): List[Token] = {
@@ -26,8 +24,8 @@ case class RaftTokens(replicaID: String,
   def isOwned(value: String): Boolean = owned(value).nonEmpty
 
   def acquire(value: String): RaftTokens = {
-
     val token = Token(Random.nextLong(), replicaID, value)
+
     // conditional is only an optimization
     if (!(tokenAgreement.values.iterator ++ want.elements.iterator).exists(_.same(token))) {
       copy(want = want.add(token))
@@ -40,7 +38,6 @@ case class RaftTokens(replicaID: String,
   }
 
   def update(): RaftTokens = {
-
     val generalDuties = tokenAgreement.supportLeader(replicaID).supportProposal(replicaID)
 
     if (tokenAgreement.leader == replicaID) {
@@ -51,9 +48,8 @@ case class RaftTokens(replicaID: String,
           copy(tokenAgreement = generalDuties.propose(replicaID, tok), want = unwanted)
       }
     } else copy(tokenAgreement = generalDuties)
-
-
   }
+
 
   def applyWant(state: Delta[AWSet.State[Token, DietMapCContext]]): RaftTokens = {
     copy(want = want.applyDelta(state))
@@ -67,6 +63,8 @@ case class RaftTokens(replicaID: String,
     copy(tokenAgreement = Lattice.merge(tokenAgreement, state))
   }
 
+  def lead(): RaftTokens =
+    copy(tokenAgreement = tokenAgreement.becomeCandidate(replicaID))
 
 }
 

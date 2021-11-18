@@ -14,7 +14,7 @@ import java.util.concurrent._
 import scala.concurrent.Future
 import scala.io.StdIn.readLine
 import scala.util.matching.Regex
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Random, Success}
 
 class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
@@ -30,7 +30,22 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
   var remoteToAddress: Map[RemoteRef, (String, Int)] = Map()
 
-  var tokens: RaftTokens = RaftTokens.init(id)
+  @volatile var tokens: RaftTokens = RaftTokens.init(id)
+
+  var callbacks: List[(String, () => Unit)] = Nil
+
+  def synchronizationPoint(value: String)(callback: () => Unit): Unit = {
+    tokens = tokens.acquire(value)
+    callbacks ::= (value, callback)
+  }
+
+  def checkCallbacks(): Unit = {
+    val res = callbacks.groupBy{case (t, c) => tokens.isOwned(t)}
+    val mine = res.getOrElse(true, Nil)
+    callbacks = res.getOrElse(false, Nil)
+    mine.map(_._1).sorted.distinct.foldLeft(tokens){case (s, tok) => tokens.free(tok)}
+    mine.map(_._2).foreach(_.apply())
+  }
 
   def connectToRemote(address: (String, Int)): Unit = address match {
     case (ip, port) =>
@@ -116,23 +131,26 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
     attemptSend(List(), delta)
   }).run()
 
+  val globalLock = new Object()
 
   def run(): Unit = {
     registry.bindSbj(receiveSyncMessageBinding) { (remoteRef: RemoteRef, message: SyncMessage) =>
       println(s"\nReceived $message")
 
-      message match {
-        case AppointmentMessage(deltaState, id) =>
+      globalLock.synchronized {
+        message match {
+          case AppointmentMessage(deltaState, id) =>
 
-          val delta = Delta(remoteRef.toString, deltaState)
-          val set   = calendar.replicated(id)
-          set.transform(_.applyDelta(delta))
-        case WantMessage(state)                 =>
-          tokens = tokens.applyWant(Delta(remoteRef.toString, state))
-        case FreeMessage(state)                 =>
-          tokens = tokens.applyFree(Delta(remoteRef.toString, state))
-        case RaftMessage(state)                 => {
-          tokens = tokens.applyRaft(state)
+            val delta = Delta(remoteRef.toString, deltaState)
+            val set   = calendar.replicated(id)
+            set.transform(_.applyDelta(delta))
+          case WantMessage(state)                 =>
+            tokens = tokens.applyWant(Delta(remoteRef.toString, state))
+          case FreeMessage(state)                 =>
+            tokens = tokens.applyFree(Delta(remoteRef.toString, state))
+          case RaftMessage(state)                 => {
+            tokens = tokens.applyRaft(state)
+          }
         }
       }
 
@@ -156,42 +174,47 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
     while (true) {
       print(">")
       System.out.flush()
-      readLine() match {
-        case add(c, start, end) =>
-          val cal         = if (c == "work") calendar.work else calendar.vacation
-          val appointment = Appointment(start.toInt, end.toInt)
-          calendar.add_appointment(cal, appointment)
-          println(s"Added $appointment")
-          println(cal.now.elements)
+      val line = readLine()
 
-        case remove(c, start, end) =>
-          val cal         = if (c == "work") calendar.work else calendar.vacation
-          val appointment = Appointment(start.toInt, end.toInt)
-          calendar.remove_appointment(cal, appointment)
-          println(s"Removed $appointment")
-          println(cal.now.elements)
+      globalLock.synchronized {
+        line match {
+          case add(c, start, end) =>
+            val cal         = if (c == "work") calendar.work else calendar.vacation
+            val appointment = Appointment(start.toInt, end.toInt)
+            calendar.add_appointment(cal, appointment)
+            println(s"Added $appointment")
+            println(cal.now.elements)
 
-        case change(c, start, end, nstart, nend) =>
-          val cal         = if (c == "work") calendar.work else calendar.vacation
-          val appointment = Appointment(start.toInt, end.toInt)
-          calendar.change_time(cal, appointment, nstart.toInt, nend.toInt)
-          println(s"changed $appointment")
-          println(cal.now.elements)
+          case remove(c, start, end) =>
+            val cal         = if (c == "work") calendar.work else calendar.vacation
+            val appointment = Appointment(start.toInt, end.toInt)
+            calendar.remove_appointment(cal, appointment)
+            println(s"Removed $appointment")
+            println(cal.now.elements)
+
+          case change(c, start, end, nstart, nend) =>
+            val cal         = if (c == "work") calendar.work else calendar.vacation
+            val appointment = Appointment(start.toInt, end.toInt)
+            calendar.change_time(cal, appointment, nstart.toInt, nend.toInt)
+            println(s"changed $appointment")
+            println(cal.now.elements)
 
 
-        case "elements" =>
-          println(calendar.work.now.elements)
-          println(calendar.vacation.now.elements)
+          case "elements" =>
+            println(calendar.work.now.elements)
+            println(calendar.vacation.now.elements)
 
-        case "lead" =>
-          tokens = tokens.lead()
+          case "lead" =>
+            tokens = tokens.lead()
 
-        case "exit" =>
-          System.exit(0)
+          case "exit" =>
+            System.exit(0)
 
-        case _ =>
-          println("doing housekeeping")
-          tokens = tokens.update()
+          case _ =>
+            println("doing housekeeping")
+            tokens = tokens.update()
+            checkCallbacks()
+        }
       }
 
       println(s"current raft leader is ${tokens.tokenAgreement.leader}")
