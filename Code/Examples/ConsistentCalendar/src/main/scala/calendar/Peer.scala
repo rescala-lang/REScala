@@ -143,18 +143,6 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
       }
     }
 
-    //registry.remoteJoined.monitor { rr =>
-    //  registry.lookup(isCheckpointerBinding, rr)().foreach {
-    //    case true  =>
-    //      checkpointerRR = Some(rr)
-    //      // assessCheckpointRecursive()
-    //    case false =>
-    //      calendar.replicated.foreach { case (id, set) =>
-    //        sendRecursive(registry.lookup(receiveSyncMessageBinding, rr), , id)
-    //      }
-    //  }
-    //}
-
     while (true) {
       readLine() match {
         case add(c, start, end) =>
