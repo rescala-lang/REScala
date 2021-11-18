@@ -235,6 +235,22 @@ lazy val consoleReplication = project.in(file("Code/Examples/ConsoleReplication"
     (Compile / scalaSource) := baseDirectory.value
   )
 
+lazy val consistentCalendar = project.in(file("Code/Examples/ConsistentCalendar"))
+  .dependsOn(rescalaJVM, replicationJVM)
+  .enablePlugins(JavaAppPackaging)
+  .settings(
+    name := "consistent-calendar",
+    cfg.base,
+    cfg.noPublish,
+    fork               := true,
+    run / connectInput := true,
+    libraryDependencies ++= Seq(
+      loci.tcp.value,
+      decline.value,
+      loci.jsoniterScala.value,
+    ),
+  )
+
 lazy val ersirServer = project.in(file("Code/Examples/Ersir/server"))
   .settings(
     name := "server",
