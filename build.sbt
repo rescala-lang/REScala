@@ -14,6 +14,15 @@ lazy val encrdt = project
     libraryDependencies ++= commonDependencies ++ scalatestDependency ++ jettyDependency
   )
 
+lazy val benchmarks = project
+  .in(file("benchmarks"))
+  .enablePlugins(JmhPlugin)
+  .settings(
+    name := "benchmarks",
+    commonSettings,
+    libraryDependencies ++= commonDependencies ++ javaFakerDependency
+  ).dependsOn(encrdt)
+
 lazy val todolist = project
   .in(file("examples/Todolist"))
   .settings(
@@ -35,11 +44,12 @@ lazy val counter = project
 lazy val commonDependencies = Seq(
   // Encryption / Decryption using Googles Tink Crypto Library
   "com.google.crypto.tink" % "tink" % "1.6.1",
+  "org.conscrypt" % "conscrypt-openjdk-uber" % "2.5.2",
   // jsoniter-scala
   // Use the %%% operator instead of %% for Scala.js
-  "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core" % "2.10.2",
+  "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core" % "2.11.1",
   // Use the "provided" scope instead when the "compile-internal" scope is not supported
-  "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "2.10.2" % "provided",
+  "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "2.11.1" % "provided",
   // Logging
   "org.slf4j" % "slf4j-api" % "2.0.0-alpha4",
   "org.slf4j" % "slf4j-simple" % "2.0.0-alpha4",
@@ -50,6 +60,10 @@ lazy val commonDependencies = Seq(
 lazy val scalatestDependency = Seq(
   "org.scalactic" %% "scalactic" % "3.2.9",
   "org.scalatest" %% "scalatest" % "3.2.9" % "test"
+)
+
+lazy val javaFakerDependency = Seq(
+  "com.github.javafaker" % "javafaker" % "1.0.2"
 )
 
 // CRDT Actors
