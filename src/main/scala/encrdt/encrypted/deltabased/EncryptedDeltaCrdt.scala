@@ -58,8 +58,8 @@ abstract class TrustedReplica[T](val replicaId: String,
 }
 
 abstract class UntrustedReplica(initialDeltaGroups: Set[EncryptedDeltaGroup] = Set.empty) extends Replica {
-  private var dottedVersionVector: DotSet = Set.empty
-  private var encryptedDeltaGroupStore: Set[EncryptedDeltaGroup] = initialDeltaGroups
+  protected var dottedVersionVector: DotSet = Set.empty
+  protected var encryptedDeltaGroupStore: Set[EncryptedDeltaGroup] = initialDeltaGroups
 
   override def receive(encryptedDeltaGroup: EncryptedDeltaGroup): Unit = {
     dottedVersionVector = dottedVersionVector union encryptedDeltaGroup.dottedVersionVector
