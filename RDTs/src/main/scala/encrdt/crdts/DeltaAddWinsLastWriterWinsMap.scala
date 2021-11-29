@@ -18,6 +18,7 @@ class DeltaAddWinsLastWriterWinsMap[K, V](val replicaId: String,
   var _deltas: Vector[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = initialDeltas
 
   def state: DeltaAddWinsLastWriterWinsMapLattice[K, V] = _state
+
   def deltas: Vector[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = _deltas
 
   override def get(key: K): Option[V] =
@@ -35,6 +36,17 @@ class DeltaAddWinsLastWriterWinsMap[K, V](val replicaId: String,
         _state
       )
     )
+
+  def putDelta(key: K, value: V): DeltaAddWinsMapLattice[K, DotFun[(V, (Instant, String))]] = {
+    val delta: DeltaAddWinsMapLattice[K, DotFun[(V, (Instant, String))]] =
+      DeltaAddWinsMap.deltaMutate(
+        key,
+        DeltaMultiValueRegister.deltaWrite((value, (Instant.now(), replicaId)), replicaId, _),
+        _state
+      )
+    mutate(delta)
+    delta
+  }
 
   override def remove(key: K): Unit =
     mutate(DeltaAddWinsMap.deltaRemove(key, _state))

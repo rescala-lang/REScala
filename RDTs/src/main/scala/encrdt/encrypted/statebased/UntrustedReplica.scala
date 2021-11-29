@@ -10,9 +10,11 @@ import com.google.crypto.tink.Aead
 
 abstract class UntrustedReplica(initialStates: Set[EncryptedState]) extends Replica {
   protected var stateStore: Set[EncryptedState] = initialStates
-  protected var versionVector: VectorClock = {
-    if (stateStore.isEmpty) VectorClock()
-    else stateStore.map(_.versionVector).reduce((l, r) => l.merged(r))
+
+  protected var versionVector: VectorClock = _
+  versionVector = {
+    if (initialStates.isEmpty) VectorClock()
+    else initialStates.map(_.versionVector).reduce((l, r) => l.merged(r))
   }
 
   def decrypt[T: SemiLattice](aead: Aead)(implicit tCodec: JsonValueCodec[T]): DecryptedState[T] = {
