@@ -1,10 +1,10 @@
 package de.ckuessner
 package encrdt.benchmarks
 
-import encrdt.benchmarks.Codecs.awlwwmapJsonCodec
+import encrdt.benchmarks.Codecs.deltaAwlwwmapJsonCodec
 import encrdt.causality.VectorClock
-import encrdt.crdts.AddWinsLastWriterWinsMap
-import encrdt.crdts.AddWinsLastWriterWinsMap.LatticeType
+import encrdt.crdts.DeltaAddWinsLastWriterWinsMap
+import encrdt.crdts.DeltaAddWinsLastWriterWinsMap.{StateType, timestampedValueLattice}
 import encrdt.encrypted.statebased
 import encrdt.encrypted.statebased.{DecryptedState, EncryptedState}
 
@@ -23,7 +23,7 @@ object StateBasedUntrustedReplicaSizeBenchmark extends App {
     for (commonElements <- (1 to 4).map(i => math.pow(10, i).toInt - parallelStates)) {
       val dummyKeyValuePairs = Helper.dummyKeyValuePairs(commonElements + parallelStates)
 
-      val crdt = new AddWinsLastWriterWinsMap[String, String]("0")
+      val crdt = new DeltaAddWinsLastWriterWinsMap[String, String]("0")
       var versionVector: VectorClock = VectorClock()
 
       for (i <- 0 until commonElements) {
@@ -45,21 +45,23 @@ object StateBasedUntrustedReplicaSizeBenchmark extends App {
         }
       }
 
-      var decryptedStatesMerged: DecryptedState[LatticeType[String, String]] = commonStateDec
+      var decryptedStatesMerged: DecryptedState[StateType[String, String]] = commonStateDec
 
       for (replicaId <- 1 to parallelStates) {
         val entry = dummyKeyValuePairs(commonElements + replicaId - 1)
-        val replicaSpecificCrdt = new AddWinsLastWriterWinsMap[String, String](replicaId.toString, commonState)
+        val replicaSpecificCrdt = new DeltaAddWinsLastWriterWinsMap[String, String](replicaId.toString, commonState)
         replicaSpecificCrdt.put(entry._1, entry._2)
         val replicaSpecificVersionVector = versionVector.advance(replicaId.toString)
-        val replicaSpecificDecState: DecryptedState[LatticeType[String, String]] = DecryptedState(replicaSpecificCrdt.state, replicaSpecificVersionVector)
+        val replicaSpecificDecState: DecryptedState[StateType[String, String]] = DecryptedState(replicaSpecificCrdt.state, replicaSpecificVersionVector)
         val replicaSpecificEncState = replicaSpecificDecState.encrypt(aead)
         untrustedReplica.receive(replicaSpecificEncState)
-        decryptedStatesMerged = DecryptedState.lattice[LatticeType[String, String]].merged(decryptedStatesMerged, replicaSpecificDecState)
+        decryptedStatesMerged = DecryptedState.lattice[StateType[String, String]].merged(decryptedStatesMerged, replicaSpecificDecState)
       }
 
       val mergedSize = writeToArray(decryptedStatesMerged.state).length
-      csvFile.println(s"$parallelStates,$commonElements,${parallelStates + commonElements},${untrustedReplica.size},$mergedSize")
+      val csvLine = s"$parallelStates,$commonElements,${parallelStates + commonElements},${untrustedReplica.size},$mergedSize"
+      println(csvLine)
+      csvFile.println(csvLine)
     }
 
   }

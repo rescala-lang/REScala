@@ -13,9 +13,6 @@ object Codecs {
   implicit val awlwwmapJsonCodec: JsonValueCodec[AddWinsLastWriterWinsMap.LatticeType[String, String]] =
     JsonCodecMaker.make[AddWinsLastWriterWinsMap.LatticeType[String, String]]
 
-  implicit val deltaAwlwwmapJsonCodec: JsonValueCodec[DeltaAddWinsLastWriterWinsMap.StateType[String, String]] =
-    JsonCodecMaker.make[DeltaAddWinsLastWriterWinsMap.StateType[String, String]]
-
   implicit val dotMapAsSetCodec: JsonValueCodec[Set[(Dot, (String, (Instant, String)))]] = JsonCodecMaker.make
   implicit val dotMapCodec: JsonValueCodec[Map[Dot, (String, (Instant, String))]] = new JsonValueCodec[Map[Dot, (String, (Instant, String))]] {
     override def decodeValue(in: JsonReader, default: Map[Dot, (String, (Instant, String))]): Map[Dot, (String, (Instant, String))] =
@@ -28,5 +25,5 @@ object Codecs {
       Map.empty
   }
 
-  implicit val stateCodec: JsonValueCodec[DeltaAddWinsLastWriterWinsMap.StateType[String, String]] = JsonCodecMaker.make
+  implicit val deltaAwlwwmapJsonCodec: JsonValueCodec[DeltaAddWinsLastWriterWinsMap.StateType[String, String]] = JsonCodecMaker.make
 }
