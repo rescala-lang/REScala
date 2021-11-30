@@ -39,7 +39,7 @@ object StateBasedUntrustedReplicaSizeBenchmark extends App {
         override protected def disseminate(encryptedState: EncryptedState): Unit = {}
 
         def size: Int = {
-          stateStore.map { encState =>
+          stateStore.toList.map { encState =>
             encState.serialVersionVector.length + encState.stateCiphertext.length
           }.sum
         }

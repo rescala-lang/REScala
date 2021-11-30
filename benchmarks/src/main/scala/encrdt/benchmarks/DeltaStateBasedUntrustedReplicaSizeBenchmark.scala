@@ -10,7 +10,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{writeToArray, writeToString}
 import com.google.crypto.tink.Aead
 
 import java.io.{ByteArrayOutputStream, ObjectOutputStream, PrintWriter}
-import java.nio.file.{Files, Paths}
+import java.nio.file.{Files, Path, Paths}
 
 object DeltaStateBasedUntrustedReplicaSizeBenchmark extends App {
   val debug = false
@@ -29,62 +29,14 @@ object DeltaStateBasedUntrustedReplicaSizeBenchmark extends App {
 
   val aead = Helper.setupAead("AES128_GCM")
 
+  val dummyKeyValuePairs = Helper.dummyKeyValuePairs(10_000)
   for (parallelStates <- 1 to 4) {
     for (commonElements <- (1 to 4).map(i => math.pow(10, i).toInt - parallelStates)) {
-      val dummyKeyValuePairs = Helper.dummyKeyValuePairs(commonElements + parallelStates)
-
       val crdt: DeltaAddWinsLastWriterWinsMap[String, String] =
         new DeltaAddWinsLastWriterWinsMap[String, String]("0")
       var currentDot = LamportClock(0, "0")
 
-      val untrustedReplica = new UntrustedReplica() {
-        override protected def prune(): Unit = {}
-
-        override protected def disseminate(encryptedState: EncryptedDeltaGroup): Unit = {}
-
-        def size(): Int = {
-          encryptedDeltaGroupStore.map { delta =>
-            delta.stateCiphertext.length + delta.serialDottedVersionVector.length
-          }.sum
-        }
-
-        def decryptAndWriteDecryptedNotReserialized(): Unit = {
-          val os = Files.newOutputStream(debugOutDir.resolve("decrypted-deltas" + encryptedDeltaGroupStore.size))
-          val printWriter = new PrintWriter(os)
-          encryptedDeltaGroupStore.foreach(encDeltaGroup => {
-            printWriter.print(new String(aead.decrypt(encDeltaGroup.stateCiphertext, encDeltaGroup.serialDottedVersionVector)))
-            printWriter.print('|')
-            printWriter.println(new String(encDeltaGroup.serialDottedVersionVector))
-          })
-          printWriter.close()
-        }
-
-        def decryptAndWriteDeltasToFile(): Unit = {
-          val os = Files.newOutputStream(debugOutDir.resolve("deltas-untrusted-delta-replica-" + encryptedDeltaGroupStore.size))
-          val printWriter = new PrintWriter(os)
-          encryptedDeltaGroupStore.foreach(encDeltaGroup => printWriter.println(encDeltaGroup.decrypt(aead)))
-          printWriter.close()
-        }
-
-        def decryptAndWriteStateToFile(): Unit = {
-          val os = Files.newOutputStream(debugOutDir.resolve("state-untrusted-delta-replica-" + encryptedDeltaGroupStore.size))
-          val printWriter = new PrintWriter(os)
-          val crdt = decrypt(aead)
-          printWriter.write(writeToString(crdt.state))
-          printWriter.close()
-        }
-
-        def decrypt(aead: Aead): DeltaAddWinsLastWriterWinsMap[String, String] = {
-          val crdt = new DeltaAddWinsLastWriterWinsMap[String, String]("")
-          encryptedDeltaGroupStore.map { encDeltaGroup =>
-            encDeltaGroup.decrypt(aead)
-          }.foreach { decDeltaGroup =>
-            crdt.merge(decDeltaGroup.deltaGroup)
-          }
-
-          crdt
-        }
-      }
+      val untrustedReplica = new UntrustedReplicaMock(aead, debugOutDir)
 
       for (i <- 0 until commonElements) {
         val entry = dummyKeyValuePairs(i)
@@ -130,3 +82,53 @@ object DeltaStateBasedUntrustedReplicaSizeBenchmark extends App {
 
   csvFile.close()
 }
+
+private class UntrustedReplicaMock(aead: Aead, debugOutDir: Path) extends UntrustedReplica() {
+  override protected def prune(): Unit = {}
+
+  override protected def disseminate(encryptedState: EncryptedDeltaGroup): Unit = {}
+
+  def size(): Int = {
+    encryptedDeltaGroupStore.toList.map { delta =>
+      delta.stateCiphertext.length + delta.serialDottedVersionVector.length
+    }.sum
+  }
+
+  def decryptAndWriteDecryptedNotReserialized(): Unit = {
+    val os = Files.newOutputStream(debugOutDir.resolve("decrypted-deltas" + encryptedDeltaGroupStore.size))
+    val printWriter = new PrintWriter(os)
+    encryptedDeltaGroupStore.foreach(encDeltaGroup => {
+      printWriter.print(new String(aead.decrypt(encDeltaGroup.stateCiphertext, encDeltaGroup.serialDottedVersionVector)))
+      printWriter.print('|')
+      printWriter.println(new String(encDeltaGroup.serialDottedVersionVector))
+    })
+    printWriter.close()
+  }
+
+  def decryptAndWriteDeltasToFile(): Unit = {
+    val os = Files.newOutputStream(debugOutDir.resolve("deltas-untrusted-delta-replica-" + encryptedDeltaGroupStore.size))
+    val printWriter = new PrintWriter(os)
+    encryptedDeltaGroupStore.foreach(encDeltaGroup => printWriter.println(encDeltaGroup.decrypt(aead)))
+    printWriter.close()
+  }
+
+  def decryptAndWriteStateToFile(): Unit = {
+    val os = Files.newOutputStream(debugOutDir.resolve("state-untrusted-delta-replica-" + encryptedDeltaGroupStore.size))
+    val printWriter = new PrintWriter(os)
+    val crdt = decrypt(aead)
+    printWriter.write(writeToString(crdt.state))
+    printWriter.close()
+  }
+
+  def decrypt(aead: Aead): DeltaAddWinsLastWriterWinsMap[String, String] = {
+    val crdt = new DeltaAddWinsLastWriterWinsMap[String, String]("")
+    encryptedDeltaGroupStore.map { encDeltaGroup =>
+      encDeltaGroup.decrypt(aead)
+    }.foreach { decDeltaGroup =>
+      crdt.merge(decDeltaGroup.deltaGroup)
+    }
+
+    crdt
+  }
+}
+
