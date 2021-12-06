@@ -53,7 +53,6 @@ lazy val cfg = new {
 }
 
 lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
-  dividiParoli,
   examples,
   microbench,
   replicationJS,
@@ -168,51 +167,6 @@ lazy val todolist = project.in(file("Code/Examples/Todolist"))
       catsCollection.value,
     ),
     scalaJSUseMainModuleInitializer := true,
-  )
-
-lazy val dividiParoli = project.in(file("Code/Examples/dividiParoli"))
-  .dependsOn(rescalaJVM, replicationJVM)
-  .settings(
-    name := "dividi and paroli",
-    cfg.base,
-    cfg.noPublish,
-    (Compile / packageBin / mappings) ~= { _.filter(!_._1.getName.endsWith(".conf")) },
-    (Compile / packageBin / mappings) ~= { _.filter(!_._1.getName.endsWith(".xml")) },
-    addScalafxDependencies,
-    libraryDependencies ++= circeAll.value ++ akkaHttpAll.value ++ Seq(
-      loci.communication.value,
-      loci.circe.value,
-      loci.wsAkka.value,
-      jline.value,
-      "org.scalafx"                %% "scalafxml-core-sfx8"     % "0.5",
-      "com.jfoenix"                 % "jfoenix"                 % "9.0.10",
-      "com.typesafe.scala-logging" %% "scala-logging"           % "3.9.4",
-      "ch.qos.logback"              % "logback-classic"         % "1.2.7",
-      "com.typesafe.akka"          %% "akka-slf4j"              % V.akkaActors,
-      "com.typesafe.akka"          %% "akka-actor"              % V.akkaActors,
-      "com.typesafe.akka"          %% "akka-remote"             % V.akkaActors,
-      "com.typesafe.akka"          %% "akka-cluster"            % V.akkaActors,
-      "com.typesafe.akka"          %% "akka-cluster-metrics"    % V.akkaActors,
-      "com.typesafe.akka"          %% "akka-cluster-tools"      % V.akkaActors,
-      "com.typesafe.akka"          %% "akka-multi-node-testkit" % V.akkaActors,
-    ), { // include correct macroparadise version
-      Seq(
-        scalacOptions ++= {
-          if (cfg.`is 2.13+`(scalaVersion.value))
-            Seq("-Ymacro-annotations")
-          else
-            Seq.empty
-        },
-        libraryDependencies ++= {
-          if (cfg.`is 2.13+`(scalaVersion.value))
-            Seq.empty
-          else
-            Seq(compilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.patch))
-        }
-      )
-    },
-    scalacOptions += "--no-warnings",
-    fork := true
   )
 
 lazy val consoleReplication = project.in(file("Code/Examples/ConsoleReplication"))
@@ -384,11 +338,11 @@ lazy val addScalafxDependencies = {
   }
   Seq(
     libraryDependencies ++= Seq(
-      "org.scalafx" %% "scalafx" % "16.0.0-R24",
+      "org.scalafx" %% "scalafx" % "17.0.1-R26",
       scalaSwing.value,
     ),
     libraryDependencies ++= Seq("base", "controls", "fxml", "graphics", "media", "swing", "web").map(m =>
-      "org.openjfx" % s"javafx-$m" % "16" classifier osName
+      "org.openjfx" % s"javafx-$m" % "17.0.1" classifier osName
     )
     // (Compile / unmanagedJars) += Attributed.blank(file(System.getenv("JAVA_HOME") + "/lib/ext/jfxrt.jar"))
   )

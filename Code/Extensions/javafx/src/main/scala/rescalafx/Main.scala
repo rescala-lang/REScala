@@ -1,44 +1,46 @@
 package rescalafx
 
-import scalafx.application.JFXApp.PrimaryStage
-import scalafx.application.{JFXApp, Platform}
+import scalafx.application.JFXApp3.PrimaryStage
+import scalafx.application.{JFXApp3, Platform}
 import scalafx.scene.{Node, Scene}
 import scalafx.scene.control.{Label, Slider}
 import scalafx.scene.layout.VBox
 import rescalafx.JFXAdapter._
 import rescala.default._
 
-object Main extends JFXApp {
+object Main extends JFXApp3 {
+  override def start(): Unit = {
 
-  private val slider      = new Slider(0, 30, 0)
-  private val sliderValue = new Label()
+    val slider      = new Slider(0, 30, 0)
+    val sliderValue = new Label()
 
-  sliderValue.text <== {
-    val sliderSignal = slider.value.toSignal
-    val str          = sliderSignal.map(v => f"$v%.2f")
-    new SignalToStringProperty(str).toProperty
-  }
-
-  def render(): Node =
-    new VBox {
-      children = Seq(
-        slider,
-        sliderValue
-      )
+    sliderValue.text <== {
+      val sliderSignal = slider.value.toSignal
+      val str          = sliderSignal.map(v => f"$v%.2f")
+      new SignalToStringProperty(str).toProperty
     }
 
-  stage = new PrimaryStage {
+    def render(): Node =
+      new VBox {
+        children = Seq(
+          slider,
+          sliderValue
+        )
+      }
 
-    width = 1000
-    height = 600
-    title = "Slider Demo"
+    stage = new PrimaryStage {
 
-    scene = new Scene {
-      content = render()
-    }
+      width = 1000
+      height = 600
+      title = "Slider Demo"
 
-    onCloseRequest = _ => {
-      Platform.exit()
+      scene = new Scene {
+        content = render()
+      }
+
+      onCloseRequest = _ => {
+        Platform.exit()
+      }
     }
   }
 }
