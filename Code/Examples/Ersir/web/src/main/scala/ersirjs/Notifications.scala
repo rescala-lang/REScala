@@ -1,6 +1,6 @@
 package ersirjs
 
-import org.scalajs.dom.experimental.Notification
+import org.scalajs.dom.Notification
 
 object Notifications {
   def send(str: String): Unit = {

@@ -219,7 +219,6 @@ lazy val ersirWeb = project.in(file("Code/Examples/Ersir/web"))
   .settings(
     name := "web",
     cfg.base,
-    (Compile / npmDependencies) ++= Seq("mqtt" -> "2.18.2"),
     libraryDependencies ++= Seq(
       scalajsDom.value,
       normalizecss.value,
