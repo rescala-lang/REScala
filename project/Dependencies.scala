@@ -109,6 +109,7 @@ object Dependencies {
     val jsoniterScala = generic("serializer-jsoniter-scala")
     val webrtc        = generic("communicator-webrtc")
     val wsAkka        = generic("communicator-ws-akka")
+    val wsWeb         = generic("communicator-ws-webnative")
     val wsJavalin     = generic("communicator-ws-javalin")
   }
 

@@ -1,7 +1,7 @@
 package ersirjs
 
 import ersir.shared._
-import loci.communicator.ws.akka.WS
+import loci.communicator.ws.webnative.WS
 import loci.registry.Registry
 import loci.transmitter.RemoteRef
 import org.scalajs.dom

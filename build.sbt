@@ -103,12 +103,6 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform, NativePlatform).in(file
       v3 = None
     )
   )
-  .jvmSettings(
-    libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, n)) if n <= 12 => Nil
-      case _                       => akkaHttpAll.value.map(d => (d % "test").cross(CrossVersion.for3Use2_13))
-    })
-  )
   .jsSettings(
     libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, _)) => Seq(scalatags.value % "provided,test")
@@ -211,6 +205,7 @@ lazy val ersirServer = project.in(file("Code/Examples/Ersir/server"))
       jsoup.value,
       betterFiles.value,
       decline.value,
+      loci.wsAkka.value,
     ),
     vbundleDef,
     (Compile / compile) := ((Compile / compile) dependsOn vbundle).value
@@ -228,6 +223,7 @@ lazy val ersirWeb = project.in(file("Code/Examples/Ersir/web"))
     libraryDependencies ++= Seq(
       scalajsDom.value,
       normalizecss.value,
+      loci.wsWeb.value,
     ),
     scalaJSUseMainModuleInitializer := true,
     webpackBundlingMode             := BundlingMode.LibraryOnly()
@@ -247,7 +243,6 @@ lazy val ersirShared = crossProject(JSPlatform, JVMPlatform)
     libraryDependencies ++= circeAll.value ++ akkaHttpAll.value ++ jsoniterScalaAll.value ++ Seq(
       scalatags.value,
       loci.communication.value,
-      loci.wsAkka.value,
       scribe.value,
       loci.circe.value,
       catsCollection.value,
