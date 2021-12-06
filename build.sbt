@@ -8,6 +8,38 @@ import sbtcrossproject.CrossPlugin.autoImport.{CrossType, crossProject}
 ThisBuild / incOptions := (ThisBuild / incOptions).value.withLogRecompileOnMacro(false)
 cfg.noPublish
 
+
+
+ThisBuild / organization := "de.tu-darmstadt.stg"
+ThisBuild / organizationName := "Software Technology Group"
+ThisBuild / organizationHomepage := Some(url("https://www.stg.tu-darmstadt.de/"))
+
+ThisBuild / scmInfo := Some(
+  ScmInfo(
+    url("https://github.com/rescala-lang/REScala"),
+    "scm:git@github.com:rescala-lang/REScala.git"
+  )
+)
+
+// no binary compatibility for 0.Y.z releases
+ThisBuild / versionScheme := Some("semver-spec")
+
+// ThisBuild / description := "Some description about your project."
+ThisBuild / licenses := List("Apache 2" -> new URL("http://www.apache.org/licenses/LICENSE-2.0.txt"))
+ThisBuild / homepage := Some(url("https://www.rescala-lang.com/"))
+
+// Remove all additional repository other than Maven Central from POM
+ThisBuild / pomIncludeRepository := { _ => false }
+ThisBuild / publishTo := {
+  val nexus = "https://oss.sonatype.org/"
+  if (isSnapshot.value) Some("snapshots" at nexus + "content/repositories/snapshots")
+  else Some("releases" at nexus + "service/local/staging/deploy/maven2")
+}
+ThisBuild / publishMavenStyle := true
+
+
+
+
 def byVersion[T](version: String, v2: T, v3: T) = {
   CrossVersion.partialVersion(version) match {
     case Some((3, _)) => v3
@@ -18,7 +50,6 @@ def byVersion[T](version: String, v2: T, v3: T) = {
 
 lazy val cfg = new {
   val base: Def.SettingsDefinition = List(
-    organization := "de.tuda.stg",
     scalacOptions += byVersion(scalaVersion.value, v2 = "-Xdisable-assertions", v3 = ""),
     // scaladoc
     autoAPIMappings := true,
