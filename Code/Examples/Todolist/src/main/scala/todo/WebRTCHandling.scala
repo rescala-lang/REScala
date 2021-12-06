@@ -2,9 +2,9 @@ package todo
 
 import com.github.plokhotnyuk.jsoniter_scala.core._
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import loci.communicator.experimental.webrtc
-import loci.communicator.experimental.webrtc.WebRTC
-import loci.communicator.experimental.webrtc.WebRTC.ConnectorFactory
+import loci.communicator.webrtc
+import loci.communicator.webrtc.WebRTC
+import loci.communicator.webrtc.WebRTC.ConnectorFactory
 import loci.registry.Registry
 import org.scalajs.dom.UIEvent
 import scalatags.JsDom.all._

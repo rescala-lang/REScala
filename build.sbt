@@ -187,7 +187,7 @@ lazy val dividiParoli = project.in(file("Code/Examples/dividiParoli"))
       "org.scalafx"                %% "scalafxml-core-sfx8"     % "0.5",
       "com.jfoenix"                 % "jfoenix"                 % "9.0.10",
       "com.typesafe.scala-logging" %% "scala-logging"           % "3.9.4",
-      "ch.qos.logback"              % "logback-classic"         % "1.2.3",
+      "ch.qos.logback"              % "logback-classic"         % "1.2.7",
       "com.typesafe.akka"          %% "akka-slf4j"              % V.akkaActors,
       "com.typesafe.akka"          %% "akka-actor"              % V.akkaActors,
       "com.typesafe.akka"          %% "akka-remote"             % V.akkaActors,
