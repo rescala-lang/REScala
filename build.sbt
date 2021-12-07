@@ -83,7 +83,7 @@ lazy val cfg = new {
     )
 }
 
-lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
+lazy val rescalaProject = project.in(file(".")).settings(cfg.base, cfg.noPublish).aggregate(
   examples,
   microbench,
   replicationJS,
@@ -94,8 +94,14 @@ lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
   reswing,
   todolist,
   universe,
+  rescalaNative,
 )
-  .settings(cfg.noPublish)
+
+lazy val rescalaAll = project.in(file("Code")).settings(cfg.base, cfg.noPublish).aggregate(
+  rescalaJS,
+  rescalaJVM,
+  rescalaNative,
+)
 
 lazy val rescala = crossProject(JSPlatform, JVMPlatform, NativePlatform).in(file("Code/Main"))
   .settings(
@@ -146,15 +152,13 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform, NativePlatform).in(file
     // dom envirnoment
     jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
   )
-//  .nativeSettings(
-//    crossScalaVersions := Seq("2.11.8"),
-//    scalaVersion := "2.11.8")
+ .nativeSettings(crossScalaVersions := crossScalaVersions.value.filter(_ != V.scala3))
 
 lazy val rescalaJVM = rescala.jvm
 
 lazy val rescalaJS = rescala.js
 
-//lazy val rescalaNative = rescala.native
+lazy val rescalaNative = rescala.native
 
 // =====================================================================================
 // Examples
