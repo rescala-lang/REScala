@@ -103,13 +103,13 @@ lazy val rescalaProject = project.in(file(".")).settings(cfg.base, cfg.noPublish
   reswing,
   todolist,
   universe,
-  rescalaNative,
+  // rescalaNative,
 )
 
 lazy val rescalaAll = project.in(file("Code")).settings(cfg.base, cfg.noPublish).aggregate(
   rescalaJS,
   rescalaJVM,
-  rescalaNative,
+  // rescalaNative,
 )
 
 lazy val rescala = crossProject(JSPlatform, JVMPlatform, NativePlatform).in(file("Code/Main"))
@@ -128,10 +128,6 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform, NativePlatform).in(file
     libraryDependencies ++= {
       val only213 = scalatestpluscheck.value +:
         Seq(
-          loci.wsAkka.value,
-          loci.circe.value,
-          loci.upickle.value,
-          loci.communication.value,
           scalaJavaTime.value,
         ).map(_ % "test")
       val only2 = Seq(scalaOrganization.value % "scala-reflect" % scalaVersion.value % "provided")
@@ -161,15 +157,15 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform, NativePlatform).in(file
     // dom envirnoment
     jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
   )
- .nativeSettings(
-    crossScalaVersions := crossScalaVersions.value.filter(_ != V.scala3)
-  )
+ // .nativeSettings(
+ //    crossScalaVersions := crossScalaVersions.value.filter(_ != V.scala3)
+ //  )
 
 lazy val rescalaJVM = rescala.jvm
 
 lazy val rescalaJS = rescala.js
 
-lazy val rescalaNative = rescala.native
+// lazy val rescalaNative = rescala.native
 
 // =====================================================================================
 // Examples
