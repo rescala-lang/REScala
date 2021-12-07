@@ -152,7 +152,10 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform, NativePlatform).in(file
     // dom envirnoment
     jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
   )
- .nativeSettings(crossScalaVersions := crossScalaVersions.value.filter(_ != V.scala3))
+ .nativeSettings(
+    crossScalaVersions := crossScalaVersions.value.filter(_ != V.scala3),
+    publishArtifact := byVersion(scalaVersion.value, true, false)
+  )
 
 lazy val rescalaJVM = rescala.jvm
 
