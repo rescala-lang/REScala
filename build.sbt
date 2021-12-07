@@ -21,6 +21,15 @@ ThisBuild / scmInfo := Some(
   )
 )
 
+ThisBuild / developers := List(
+  Developer(
+    id    = "ragnar",
+    name  = "Ragnar Mogk",
+    email = "mogk@cs.tu-darmstadt.de",
+    url   = url("https://www.stg.tu-darmstadt.de/")
+  )
+)
+
 // no binary compatibility for 0.Y.z releases
 ThisBuild / versionScheme := Some("semver-spec")
 
