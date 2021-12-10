@@ -20,7 +20,11 @@ lazy val benchmarks = project
   .settings(
     name := "benchmarks",
     commonSettings,
-    libraryDependencies ++= commonDependencies ++ javaFakerDependency
+    assembly := (assembly dependsOn (Jmh/compile)).value,
+    libraryDependencies ++= commonDependencies ++ javaFakerDependency,
+    assembly / mainClass := Some("de.ckuessner.encrdt.benchmarks.BenchmarkRunnerApp"),
+    assembly / assemblyJarName := "benchmarks.jar",
+    assembly / assemblyMergeStrategy := discardModuleInfoMergeStrategy
   ).dependsOn(encrdt)
 
 lazy val todolist = project
@@ -29,8 +33,14 @@ lazy val todolist = project
     name := "todolist",
     commonSettings,
     libraryDependencies ++= commonDependencies ++ scalafxDependency,
-    fork := true
+    fork := true,
+    //assembly / mainClass := Some("de.ckuessner.intermediaries_demo.TrustedReplicaDemoApp"),
+    //assembly / assemblyJarName := "todolist-trusted-replica.jar",
+    //assembly / mainClass := Some("de.ckuessner.intermediaries_demo.UntrustedReplicaApp"),
+    //assembly / assemblyJarName := "todolist-untrusted-replica.jar",
+    //assembly / assemblyMergeStrategy := discardModuleInfoMergeStrategy
   ).dependsOn(encrdt)
+
 
 lazy val counter = project
   .in(file("examples/Counter"))
@@ -99,4 +109,10 @@ lazy val scalafxDependency = Seq(
   // Create dependencies for JavaFX modules
   Seq("base", "controls", "fxml", "graphics", "media", "swing", "web")
     .map(m => "org.openjfx" % s"javafx-$m" % "16" classifier osName)
+}
+
+lazy val discardModuleInfoMergeStrategy: (String => sbtassembly.MergeStrategy) = {
+  case "module-info.class" => MergeStrategy.discard
+  case "META-INF/versions/9/module-info.class" => MergeStrategy.discard
+  case other => MergeStrategy.defaultMergeStrategy(other)
 }
