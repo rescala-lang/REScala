@@ -34,11 +34,8 @@ lazy val todolist = project
     commonSettings,
     libraryDependencies ++= commonDependencies ++ scalafxDependency,
     fork := true,
-    //assembly / mainClass := Some("de.ckuessner.intermediaries_demo.TrustedReplicaDemoApp"),
-    //assembly / assemblyJarName := "todolist-trusted-replica.jar",
-    //assembly / mainClass := Some("de.ckuessner.intermediaries_demo.UntrustedReplicaApp"),
-    //assembly / assemblyJarName := "todolist-untrusted-replica.jar",
-    //assembly / assemblyMergeStrategy := discardModuleInfoMergeStrategy
+    assembly / assemblyJarName := "todolist.jar",
+    assembly / assemblyMergeStrategy := discardModuleInfoMergeStrategy
   ).dependsOn(encrdt)
 
 
