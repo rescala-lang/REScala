@@ -2,56 +2,58 @@ package de.ckuessner
 package encrdt.benchmarks
 
 import encrdt.benchmarks.Codecs.deltaAwlwwmapJsonCodec
+import encrdt.causality.DotStore.{Dot, DotSet}
 import encrdt.causality.LamportClock
 import encrdt.crdts.DeltaAddWinsLastWriterWinsMap
 import encrdt.encrypted.deltabased.{DecryptedDeltaGroup, EncryptedDeltaGroup, UntrustedReplica}
 
-import com.github.plokhotnyuk.jsoniter_scala.core.{writeToArray, writeToString}
+import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToArray, writeToString}
+import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import com.google.crypto.tink.Aead
 
-import java.io.{ByteArrayOutputStream, ObjectOutputStream, PrintWriter}
+import java.io.PrintWriter
 import java.nio.file.{Files, Path, Paths}
 
-trait DeltaStateUntrusteReplicaSizeBenchEnvironment {
-  val header = "concurrentUpdates,commonElements,uniqueElements,untrustedReplicaSize,mergedSize"
+object DeltaStateBasedUntrustedReplicaSizeBenchmark extends App with DeltaStateUntrustedReplicaSizeBenchEnvironment {
+  val csvFile = new PrintWriter(Files.newOutputStream(Paths.get("./benchmarks/results/delta_state_size_benchmark.csv")))
+  println(csvHeader)
+  csvFile.println(csvHeader)
 
-  val debug = false
-  val outDir = Paths.get("./", "benchmarks", "out")
-  if (!outDir.toFile.exists()) outDir.toFile.mkdirs()
-  val debugOutDir = outDir.resolve("debug")
-  if (debug) {
-    val dirFile = debugOutDir.toFile
-    if (!dirFile.exists()) dirFile.mkdirs()
+  //for (totalElements <- (1 to 4).map(i => math.pow(10, i).toInt)) {
+  val totalElements = 10_000 // Commment out, if using the loop above
+  val maxParallelStates = 4
+  val elementsInCommon = totalElements - maxParallelStates
+
+  val benchmarkSharedUntrustedReplica = new UntrustedDeltaBasedReplicaMock(aead);
+  var benchmarkSharedCurrentDot = LamportClock(0, "0");
+  val benchmarkSharedCrdt: DeltaAddWinsLastWriterWinsMap[String, String] =
+    new DeltaAddWinsLastWriterWinsMap[String, String]("0")
+
+  for (i <- 0 until elementsInCommon) {
+    val entry = dummyKeyValuePairs(i)
+    benchmarkSharedCurrentDot = benchmarkSharedCurrentDot.advance("0")
+    val delta = benchmarkSharedCrdt.putDelta(entry._1, entry._2)
+    val encDelta = DecryptedDeltaGroup(delta, Set(benchmarkSharedCurrentDot)).encrypt(aead)
+    benchmarkSharedUntrustedReplica.receive(encDelta)
   }
 
-  val aead = Helper.setupAead("AES128_GCM")
-  val dummyKeyValuePairs = Helper.dummyKeyValuePairs(10_000)
-}
-
-object DeltaStateBasedUntrustedReplicaSizeBenchmark extends App with DeltaStateUntrusteReplicaSizeBenchEnvironment {
-  val csvFile = new PrintWriter(Files.newOutputStream(Paths.get("./benchmarks/out/delta_state_size_benchmark.csv")))
-  println(header)
-  csvFile.println(header)
-
-  for (parallelStates <- 1 to 4) {
-    for (commonElements <- (1 to 4).map(i => math.pow(10, i).toInt - parallelStates)) {
-      val crdt: DeltaAddWinsLastWriterWinsMap[String, String] =
-        new DeltaAddWinsLastWriterWinsMap[String, String]("0")
-      var currentDot = LamportClock(0, "0")
-
-      val untrustedReplica = new UntrustedReplicaMock(aead, debugOutDir)
-
-      for (i <- 0 until commonElements) {
+  for (parallelStates <- 1 to maxParallelStates) {
+    val crdt = new DeltaAddWinsLastWriterWinsMap[String, String]("0", benchmarkSharedCrdt.state, benchmarkSharedCrdt.deltas)
+    val untrustedReplica = benchmarkSharedUntrustedReplica.copy()
+    var localDot = LamportClock(0, "0");
+    // Populate CRDT with missing elements (before adding concurrent updates)
+    {
+      for (i <- elementsInCommon until (totalElements - parallelStates)) {
         val entry = dummyKeyValuePairs(i)
+        localDot = localDot.advance("0")
         val delta = crdt.putDelta(entry._1, entry._2)
-        currentDot = currentDot.advance("0")
-        val encDelta = DecryptedDeltaGroup(delta, Set(currentDot)).encrypt(aead)
+        val encDelta = DecryptedDeltaGroup(delta, Set(localDot)).encrypt(aead)
         untrustedReplica.receive(encDelta)
       }
 
       var unmergedDeltas = List.empty[DeltaAddWinsLastWriterWinsMap.StateType[String, String]]
       for (replicaId <- 1 to parallelStates) {
-        val entry = dummyKeyValuePairs(commonElements + replicaId - 1)
+        val entry = dummyKeyValuePairs(totalElements - replicaId)
         val replicaSpecificCrdt = new DeltaAddWinsLastWriterWinsMap[String, String](replicaId.toString, crdt.state, crdt.deltas)
         val delta = replicaSpecificCrdt.putDelta(entry._1, entry._2)
         unmergedDeltas = unmergedDeltas :+ delta
@@ -64,42 +66,36 @@ object DeltaStateBasedUntrustedReplicaSizeBenchmark extends App with DeltaStateU
       unmergedDeltas.foreach(delta => mergedCrdt.merge(delta))
       val serializedDecryptedMergedState = writeToArray(mergedCrdt.state)
 
-      if (debug) {
-        val bos = new ByteArrayOutputStream()
-        new ObjectOutputStream(bos).writeObject(mergedCrdt.state)
-        println(bos.size())
-
-        if (parallelStates == 1) {
-          untrustedReplica.decryptAndWriteDeltasToFile()
-          untrustedReplica.decryptAndWriteStateToFile()
-          untrustedReplica.decryptAndWriteDecryptedNotReserialized()
-        }
-      }
-
       val mergedSize = serializedDecryptedMergedState.length
-      val csvLine = s"$parallelStates,$commonElements,${parallelStates + commonElements},${untrustedReplica.size()},$mergedSize"
+      val csvLine = s"$parallelStates,${totalElements - parallelStates},$totalElements,${untrustedReplica.size()},$mergedSize"
       println(csvLine)
       csvFile.println(csvLine)
     }
   }
+  //}
 
   csvFile.close()
 }
 
-object DeltaStateBasedUntrustedReplicaSizeBenchmarkLinearScaling extends App with DeltaStateUntrusteReplicaSizeBenchEnvironment {
-  val csvFile = new PrintWriter(Files.newOutputStream(Paths.get("./benchmarks/out/delta_state_size_benchmark_linear_sampling.csv")))
-  println(header)
-  csvFile.println(header)
+object DeltaStateBasedUntrustedReplicaSizeBenchmarkLinearScaling extends App with DeltaStateUntrustedReplicaSizeBenchEnvironment {
+  val csvFile = new PrintWriter(Files.newOutputStream(Paths.get("./benchmarks/results/delta_state_size_benchmark_linear_sampling.csv")))
+  println(csvHeader)
+  csvFile.println(csvHeader)
   val crdt: DeltaAddWinsLastWriterWinsMap[String, String] = new DeltaAddWinsLastWriterWinsMap[String, String]("0")
   var currentDot = LamportClock(0, "0")
+  implicit val dotSetCodec: JsonValueCodec[DotSet] = JsonCodecMaker.make[DotSet]
 
-  val untrustedReplica = new UntrustedReplicaMock(aead, debugOutDir)
+
+  val untrustedReplica = new UntrustedDeltaBasedReplicaMock(aead)
+
+  var allDots = Set.empty[Dot]
 
   val totalElements = 10_000
   for (i <- 0 until totalElements) {
     val entry = dummyKeyValuePairs(i)
     val delta = crdt.putDelta(entry._1, entry._2)
     currentDot = currentDot.advance("0")
+    allDots = allDots + currentDot
     val encDelta = DecryptedDeltaGroup(delta, Set(currentDot)).encrypt(aead)
     untrustedReplica.receive(encDelta)
 
@@ -114,7 +110,7 @@ object DeltaStateBasedUntrustedReplicaSizeBenchmarkLinearScaling extends App wit
   csvFile.close()
 }
 
-class UntrustedReplicaMock(aead: Aead, debugOutDir: Path) extends UntrustedReplica() {
+class UntrustedDeltaBasedReplicaMock(aead: Aead) extends UntrustedReplica() {
   override protected def prune(): Unit = {}
 
   override protected def disseminate(encryptedState: EncryptedDeltaGroup): Unit = {}
@@ -125,8 +121,8 @@ class UntrustedReplicaMock(aead: Aead, debugOutDir: Path) extends UntrustedRepli
     }.sum
   }
 
-  def decryptAndWriteDecryptedNotReserialized(): Unit = {
-    val os = Files.newOutputStream(debugOutDir.resolve("decrypted-deltas" + encryptedDeltaGroupStore.size))
+  def decryptAndWriteDecryptedNotReserialized(outFilepath: Path): Unit = {
+    val os = Files.newOutputStream(outFilepath)
     val printWriter = new PrintWriter(os)
     encryptedDeltaGroupStore.foreach(encDeltaGroup => {
       printWriter.print(new String(aead.decrypt(encDeltaGroup.stateCiphertext, encDeltaGroup.serialDottedVersionVector)))
@@ -136,15 +132,15 @@ class UntrustedReplicaMock(aead: Aead, debugOutDir: Path) extends UntrustedRepli
     printWriter.close()
   }
 
-  def decryptAndWriteDeltasToFile(): Unit = {
-    val os = Files.newOutputStream(debugOutDir.resolve("deltas-untrusted-delta-replica-" + encryptedDeltaGroupStore.size))
+  def decryptAndWriteDeltasToFile(outFilePath: Path): Unit = {
+    val os = Files.newOutputStream(outFilePath)
     val printWriter = new PrintWriter(os)
     encryptedDeltaGroupStore.foreach(encDeltaGroup => printWriter.println(encDeltaGroup.decrypt(aead)))
     printWriter.close()
   }
 
-  def decryptAndWriteStateToFile(): Unit = {
-    val os = Files.newOutputStream(debugOutDir.resolve("state-untrusted-delta-replica-" + encryptedDeltaGroupStore.size))
+  def decryptAndWriteStateToFile(outFilePath: Path): Unit = {
+    val os = Files.newOutputStream(outFilePath)
     val printWriter = new PrintWriter(os)
     val crdt = decrypt(aead)
     printWriter.write(writeToString(crdt.state))
@@ -161,5 +157,20 @@ class UntrustedReplicaMock(aead: Aead, debugOutDir: Path) extends UntrustedRepli
 
     crdt
   }
+
+  def copy(): UntrustedDeltaBasedReplicaMock = {
+    val obj = new UntrustedDeltaBasedReplicaMock(aead)
+    obj.encryptedDeltaGroupStore = encryptedDeltaGroupStore
+    obj.dottedVersionVector = dottedVersionVector
+    obj
+  }
 }
 
+trait DeltaStateUntrustedReplicaSizeBenchEnvironment {
+  val csvHeader = "concurrentUpdates,commonElements,uniqueElements,untrustedReplicaSize,mergedSize"
+
+  val outDir: Path = Paths.get("./", "benchmarks", "results")
+  if (!outDir.toFile.exists()) outDir.toFile.mkdirs()
+  val aead: Aead = Helper.setupAead("AES128_GCM")
+  val dummyKeyValuePairs: Array[(String, String)] = Helper.dummyKeyValuePairs(10_000)
+}

@@ -110,7 +110,7 @@ class SerializeOnlyBenchmarkState {
   var serialPlaintextState: Array[Byte] = _
   var serialPlaintextVectorClock: Array[Byte] = _
 
-  @Param(Array("10", "100", "1000", "10000"))
+  @Param(Array("10", "100", "1000"))
   var crdtSizeInElements: Int = _
 
   @Setup(Level.Trial)
