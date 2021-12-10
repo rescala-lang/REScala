@@ -67,19 +67,19 @@ class TodoListApp extends JFXApp3 {
             new HBox {
               children = Seq(connectionTextField, addConnectionButton)
             },
-            localAddressTextField,
-            new HBox {
-              children = Seq(
-                new Button {
-                  text = "Log state"
-                  onAction = () => Console.println(s"State: ${TodoListController.todos})")
-                },
-                new Button {
-                  text = "Log peers"
-                  onAction = () => Console.println(s"Peers: ${TodoListController.remoteAddresses})")
-                }
-              )
-            }
+            //localAddressTextField,
+            //new HBox {
+            //  children = Seq(
+            //    new Button {
+            //      text = "Log state"
+            //      onAction = () => Console.println(s"State: ${TodoListController.todos})")
+            //    },
+            //    new Button {
+            //      text = "Log peers"
+            //      onAction = () => Console.println(s"Peers: ${TodoListController.remoteAddresses})")
+            //    }
+            //  )
+            //}
           )
         }
       }

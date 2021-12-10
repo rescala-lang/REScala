@@ -74,6 +74,8 @@ trait WebSocketReplica extends Replica {
       container.addMapping("/", (r,s) => ReplicaWsAdapter.apply(r,s))
       container.setIdleTimeout(Duration.ZERO)
       ctx.setSessionTimeout(0)
+      container.setMaxBinaryMessageSize(Long.MaxValue)
+      container.setMaxTextMessageSize(Long.MaxValue)
     })
 
     server.start()
@@ -118,6 +120,8 @@ abstract class TrustedReplicaWebSocketClient[T](replicaId: String, aead: Aead)
   private val webSocketClient: WebSocketClient = new WebSocketClient()
   webSocketClient.setIdleTimeout(Duration.ZERO) // Infinite timeout
   webSocketClient.start()
+  webSocketClient.setMaxBinaryMessageSize(Long.MaxValue)
+  webSocketClient.setMaxTextMessageSize(Long.MaxValue)
 
   override protected def newReplicaAdded(session: Session): Unit = {
     replicas = replicas + session
