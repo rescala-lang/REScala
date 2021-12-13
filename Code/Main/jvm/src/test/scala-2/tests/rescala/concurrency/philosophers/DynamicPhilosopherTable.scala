@@ -37,8 +37,8 @@ class DynamicPhilosopherTable[S](philosopherCount: Int, work: Long)(ri: RescalaI
       implicit val name: ReName = s"Vision($i)"
       val vision = Signal {
         fork1() match {
-          case Taken(name) if name != ownName => WaitingFor(name)
-          case Taken(`ownName`)               => Eating
+          case Taken(`ownName`) => Eating
+          case Taken(name)      => WaitingFor(name)
           case Free => fork2() match {
               case Free        => Ready
               case Taken(name) => WaitingFor(name)

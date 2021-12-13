@@ -33,8 +33,8 @@ class DynamicPhilosopherTable(philosopherCount: Int, work: Long)(override val en
       val ownName = i.toString
       val vision = Signal.dynamic {
         forks(i)() match {
-          case Taken(name) if name != ownName => BlockedBy(name)
-          case Taken(`ownName`)               => Done
+          case Taken(`ownName`) => Done
+          case Taken(name)      => BlockedBy(name)
           case Free => forks(mod(i - 1))() match {
               case Free        => Ready
               case Taken(name) => BlockedBy(name)
@@ -67,8 +67,8 @@ class HalfDynamicPhilosopherTable(philosopherCount: Int, work: Long)(
       val ownName = i.toString
       val vision = Signal.dynamic {
         forks(i)() match {
-          case Taken(name) if name != ownName => BlockedBy(name)
-          case Taken(`ownName`)               => Done
+          case Taken(`ownName`) => Done
+          case Taken(name)      => BlockedBy(name)
           case Free => forks(mod(i - 1))() match {
               case Free        => Ready
               case Taken(name) => BlockedBy(name)
