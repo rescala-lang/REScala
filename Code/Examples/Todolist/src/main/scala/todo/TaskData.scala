@@ -2,7 +2,7 @@ package todo
 
 import loci.registry.Binding
 import loci.serializer.jsoniterScala.jsoniteScalaBasedSerializable
-import loci.transmitter.transmittable.IdenticallyTransmittable
+import loci.transmitter.IdenticallyTransmittable
 import org.scalajs.dom.UIEvent
 import org.scalajs.dom.html.{Input, LI}
 import rescala.default._

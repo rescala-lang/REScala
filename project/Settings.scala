@@ -1,9 +1,9 @@
+/* This file is shared between multiple projects
+ * and may contain unused dependencies */
+
 import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
 import sbt.Keys._
 import sbt._
-
-/* This file is shared between multiple projects
- * and may contain unused dependencies */
 
 object Settings {
 
@@ -96,7 +96,7 @@ object Settings {
   )
   lazy val scalaOptions3 = Seq(
     "-language:implicitConversions",
-    // "-Ysafe-init",
+    "-Ysafe-init",
     "-print-tasty",
     //"-Yexplicit-nulls",
   )
