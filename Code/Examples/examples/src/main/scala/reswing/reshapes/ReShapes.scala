@@ -29,7 +29,7 @@ import scala.swing.event.SelectionChanged
 object ReShapes extends SimpleSwingApplication {
   private val panelDrawingSpaceStates = new HashMap[TabbedPane.Page, (DrawingSpaceState, NetworkSpaceState)]
 
-  val drawingSpaceState = Var[DrawingSpaceState](null) //#VAR
+  val drawingSpaceState = Var[DrawingSpaceState](null) // #VAR
 
   def top =
     new MainFrame {
@@ -59,34 +59,34 @@ object ReShapes extends SimpleSwingApplication {
   val menu = new MenuBar {
     val undo = new ReMenuItem(
       "Undo",
-      enabled = Signal.dynamic { //#SIG //#IS( // )
+      enabled = Signal.dynamic { // #SIG //#IS( // )
         drawingSpaceState() != null && drawingSpaceState().commands().nonEmpty
       }
     )
 
     val merge = new ReMenu(
-      text = "Merge with...", //#SIG //#IS( // )
-      contents = Signal {     //#SIG //#IS( // )
+      text = "Merge with...", // #SIG //#IS( // )
+      contents = Signal {     // #SIG //#IS( // )
         itemsEvents() map { case (btn, _) => btn }
       }
     )
 
-    final lazy val merged = UnionEvent(Signal { //#SIG //#UE( //#EVT //#IF )
+    final lazy val merged = UnionEvent(Signal { // #SIG //#UE( //#EVT //#IF )
       itemsEvents() map { case (_, ev) => ev }
     })
 
-    lazy val update = Evt[Unit]() //#EVT
+    lazy val update = Evt[Unit]() // #EVT
 
-    private lazy val itemsEvents: Signal[Seq[(Component, Event[Command])]] = //#SIG
-      (update map { _: Any => //#EF
+    private lazy val itemsEvents: Signal[Seq[(Component, Event[Command])]] = // #SIG
+      (update map { _: Any => // #EF
         (ui.tabbedPane.pages filter { tab => tab.index != ui.tabbedPane.selection.index } map { (tab: Page) =>
-          val item = new ReMenuItem(tab.title) //#IS( // )
-          val command = item.clicked map { _: Any => //#EF
+          val item = new ReMenuItem(tab.title) // #IS( // )
+          val command = item.clicked map { _: Any => // #EF
             new MergeDrawingSpaces(panelDrawingSpaceStates(tab)._1)
           }
           (item: Component, command)
         }).toSeq
-      }) latest Seq.empty //#IF
+      }) latest Seq.empty // #IF
 
     contents += new Menu("File") {
       contents += new MenuItem(Action("New tab") { addTab() })
@@ -96,8 +96,8 @@ object ReShapes extends SimpleSwingApplication {
       contents += new MenuItem(new SaveAction)
       contents += new MenuItem(new LoadAction)
       contents += new Separator
-      contents += new ReMenuItem(text = ReSwingValue("Quit")) { //#IS( // )
-        clicked += { _ => quit() } //#HDL
+      contents += new ReMenuItem(text = ReSwingValue("Quit")) { // #IS( // )
+        clicked += { _ => quit() } // #HDL
       }
     }
 
@@ -145,14 +145,14 @@ object ReShapes extends SimpleSwingApplication {
         lazy val state: DrawingSpaceState = new DrawingSpaceState {
           def isCurrentState(x: Any) = drawingSpaceState.now == this
 
-          override lazy val nextShape: Signal[Shape] = Signal { ui.shapeSelectionPanel.nextShape().copy(this) } //#SIG
-          override lazy val strokeWidth              = Signal { ui.strokeInputPanel.strokeWidth() }             //#SIG
-          override lazy val color                    = Signal { ui.strokeInputPanel.color() }                   //#SIG
+          override lazy val nextShape: Signal[Shape] = Signal { ui.shapeSelectionPanel.nextShape().copy(this) } // #SIG
+          override lazy val strokeWidth              = Signal { ui.strokeInputPanel.strokeWidth() }             // #SIG
+          override lazy val color                    = Signal { ui.strokeInputPanel.color() }                   // #SIG
 
-          override lazy val executed: Event[Command] = //#EVT
-            value(panel.drawn || ui.shapePanel.deleted || menu.merged) && isCurrentState _ //#EF //#EF //#EF
-          override lazy val reverted: Event[Command] = value(ui.commandPanel.revert || //#EVT //#EF
-            (menu.undo.clicked map { _: Any => commands.value.head })) && isCurrentState _ //#EF //#EF
+          override lazy val executed: Event[Command] = // #EVT
+            value(panel.drawn || ui.shapePanel.deleted || menu.merged) && isCurrentState _ // #EF //#EF //#EF
+          override lazy val reverted: Event[Command] = value(ui.commandPanel.revert || // #EVT //#EF
+            (menu.undo.clicked map { _: Any => commands.value.head })) && isCurrentState _ // #EF //#EF
         }
 
         (state, panel)

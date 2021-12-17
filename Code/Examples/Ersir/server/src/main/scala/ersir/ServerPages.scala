@@ -13,13 +13,13 @@ class ServerPages() {
       head(
         title := "EmergenCity RSS Reader",
         link(rel := "manifest", href := "static/manifest.json"),
-        link(rel := "icon", href := "static/icon.png", attr("sizes") := "192x192"),
+        link(rel := "icon", href     := "static/icon.png", attr("sizes") := "192x192"),
         SeqFrag(ResourcePaths.css.map { css =>
           link(href := css, rel := "stylesheet", `type` := MediaTypes.`text/css`.toString())
         }),
         meta(attrname := "viewport", content := "width=device-width, initial-scale=1, user-scalable=yes, minimal-ui"),
         //      script(raw("""if('serviceWorker' in navigator) {
-        //navigator.serviceWorker
+        // navigator.serviceWorker
         //         .register('serviceworker.js')
         //         .then(function() { console.log('Service Worker Registered'); }); }"""))
       )

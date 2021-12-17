@@ -13,7 +13,8 @@ import scala.concurrent.duration.Duration
 
 trait ReactiveLocalCloneBundle extends FullMVBundle with SignalBundle {
   selfType: Mirror with TurnImplBundle with TaskBundle with FullMvStateBundle with SubsumableLockBundle with EventBundle
-    with ReactiveReflectionBundle with FullMVTurnLocalCloneBundle with ReactiveMirrorBundle with RescalaInterface with SignalCompatBundle with EventBundle with SignalBundle with Observing with Core =>
+    with ReactiveReflectionBundle with FullMVTurnLocalCloneBundle with ReactiveMirrorBundle with RescalaInterface
+    with SignalCompatBundle with EventBundle with SignalBundle with Observing with Core =>
 
   object ReactiveLocalClone {
     def apply[A](signal: Signal[A], host: FullMVEngine)(implicit name: ReName): Signal[A] =
@@ -64,7 +65,7 @@ trait ReactiveLocalCloneBundle extends FullMVBundle with SignalBundle {
           initialState,
           ticket.rename.derive("EventReflection")
         ) with Event[P] {
-          override def internalAccess(v: Pulse[P]): Pulse[P]                        = v
+          override def internalAccess(v: Pulse[P]): Pulse[P]          = v
           override def disconnect()(implicit engine: Scheduler): Unit = ???
         }
         connectAndInitializeLocalPushClone(fakeDelay, event, turn, reflectionIsTransient = true, ticket.rename.str)(

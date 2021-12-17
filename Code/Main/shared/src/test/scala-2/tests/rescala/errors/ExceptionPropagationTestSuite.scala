@@ -116,7 +116,7 @@ class ExceptionPropagationTestSuite extends RETests {
 
       input.set("100")
       assert(folded.readValueOnce === 100, "successful fold 5")
-      intercept[NumberFormatException](res.pair) //TODO: should maybe change?
+      intercept[NumberFormatException](res.pair) // TODO: should maybe change?
 
       input.set("200")
       assert(res.pair === (100 -> 200), "successful changed3")

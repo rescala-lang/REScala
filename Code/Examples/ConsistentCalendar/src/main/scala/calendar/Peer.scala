@@ -22,7 +22,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
   implicit val ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
 
-  val add   : Regex = """add (\w+) (\d+) (\d+)""".r
+  val add: Regex    = """add (\w+) (\d+) (\d+)""".r
   val remove: Regex = """remove (\w+) (\d+) (\d+)""".r
   val change: Regex = """change (\w+) (\d+) (\d+) (\d+) (\d+)""".r
 
@@ -55,7 +55,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
             case Success(value) =>
               remoteToAddress = remoteToAddress.updated(value, (ip, port))
               return
-            case Failure(_)     =>
+            case Failure(_) =>
               Thread.sleep(1000)
               attemptReconnect()
           }
@@ -76,7 +76,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
           remoteReceiveSyncMessage,
           _,
           id
-          ))
+        ))
       }
 
       tokens.want.deltaBuffer.collect {
@@ -93,12 +93,14 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
       remoteReceiveSyncMessage(RaftMessage(tokens.tokenAgreement))
 
-
-      //calendar.replicated.foreach { case (id, r) => r.transform(_.resetDeltaBuffer()) }
+    // calendar.replicated.foreach { case (id, r) => r.transform(_.resetDeltaBuffer()) }
     }
   }
 
-  def splitState(atoms: Iterable[CalendarState], merged: CalendarState): (Iterable[CalendarState], Iterable[CalendarState]) = {
+  def splitState(
+      atoms: Iterable[CalendarState],
+      merged: CalendarState
+  ): (Iterable[CalendarState], Iterable[CalendarState]) = {
     val a =
       if (atoms.isEmpty) UIJDLattice[CalendarState].decompose(merged)
       else atoms
@@ -109,20 +111,20 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
   }
 
   def sendRecursive(
-                     remoteReceiveSyncMessage: SyncMessage => Future[Unit],
-                     delta: AWSet.State[Appointment, DietMapCContext],
-                     crdtid: String,
-                   ): Unit = new FutureTask[Unit](() => {
+      remoteReceiveSyncMessage: SyncMessage => Future[Unit],
+      delta: AWSet.State[Appointment, DietMapCContext],
+      crdtid: String,
+  ): Unit = new FutureTask[Unit](() => {
     def attemptSend(atoms: Iterable[CalendarState], merged: CalendarState): Unit = {
       remoteReceiveSyncMessage(AppointmentMessage(merged, crdtid)).failed.foreach {
         case e: RemoteAccessException => e.reason match {
-          case RemoteAccessException.RemoteException(name, _) if name.contains("JsonReaderException") =>
-            val (firstHalf, secondHalf) = splitState(atoms, merged)
+            case RemoteAccessException.RemoteException(name, _) if name.contains("JsonReaderException") =>
+              val (firstHalf, secondHalf) = splitState(atoms, merged)
 
-            attemptSend(firstHalf, firstHalf.reduce(UIJDLattice[CalendarState].merge))
-            attemptSend(secondHalf, secondHalf.reduce(UIJDLattice[CalendarState].merge))
-          case _                                                                                      => e.printStackTrace()
-        }
+              attemptSend(firstHalf, firstHalf.reduce(UIJDLattice[CalendarState].merge))
+              attemptSend(secondHalf, secondHalf.reduce(UIJDLattice[CalendarState].merge))
+            case _ => e.printStackTrace()
+          }
 
         case e => e.printStackTrace()
       }
@@ -133,7 +135,9 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
   def printStatus() = {
     println(s"> Cal :\n  work: ${calendar.work.now.elements}\n  vaca: ${calendar.vacation.now.elements}")
-    println(s"> Raft: ${tokens.tokenAgreement.leader} (${tokens.tokenAgreement.currentTerm})\n  ${tokens.tokenAgreement.values}")
+    println(
+      s"> Raft: ${tokens.tokenAgreement.leader} (${tokens.tokenAgreement.currentTerm})\n  ${tokens.tokenAgreement.values}"
+    )
     println(s"> Want: ${tokens.want.elements}")
     println(s"> Free: ${tokens.tokenFreed.elements}")
     println("")
@@ -143,21 +147,19 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
   def run(): Unit = {
     registry.bindSbj(receiveSyncMessageBinding) { (remoteRef: RemoteRef, message: SyncMessage) =>
-
       globalLock.synchronized {
         println(s"> Recv: $message")
 
         message match {
           case AppointmentMessage(deltaState, id) =>
-
             val delta = Delta(remoteRef.toString, deltaState)
             val set   = calendar.replicated(id)
             set.transform(_.applyDelta(delta))
-          case WantMessage(state)                 =>
+          case WantMessage(state) =>
             tokens = tokens.applyWant(Delta(remoteRef.toString, state))
-          case FreeMessage(state)                 =>
+          case FreeMessage(state) =>
             tokens = tokens.applyFree(Delta(remoteRef.toString, state))
-          case RaftMessage(state)                 => {
+          case RaftMessage(state) => {
             tokens = tokens.applyRaft(state)
           }
         }
@@ -200,7 +202,6 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
             val cal         = if (c == "work") calendar.work else calendar.vacation
             val appointment = Appointment(start.toInt, end.toInt)
             calendar.change_time(cal, appointment, nstart.toInt, nend.toInt)
-
 
           case "elements" =>
             println(calendar.work.now.elements)

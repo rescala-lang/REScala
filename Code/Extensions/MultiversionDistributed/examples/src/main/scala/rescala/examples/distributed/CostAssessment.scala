@@ -40,8 +40,9 @@ object CostAssessment {
       import ReactiveTransmittable._
       import io.circe.generic.auto._
       import rescala.fullmv.transmitter.CirceSerialization._
-      implicit val host   = this
-      def binding(i: Int): Binding[Signal[Map[String, Set[Int]]], Future[Signal[Map[String, Set[Int]]]]] = ??? //  = Binding[Signal[Map[String, Set[Int]]]](s"binding-$i")
+      implicit val host = this
+      def binding(i: Int): Binding[Signal[Map[String, Set[Int]]], Future[Signal[Map[String, Set[Int]]]]] =
+        ??? //  = Binding[Signal[Map[String, Set[Int]]]](s"binding-$i")
     }
 
     class SideHost(name: String) extends Host(name) {
@@ -146,8 +147,8 @@ object CostAssessment {
     val topHost = new FullMVEngine(Duration.Zero, "top-localmirror")
     import topHost._
 
-    val mergeFromLeft                                   = ReactiveLocalClone(leftOutput, topHost)
-    val mergeFromRight                                  = ReactiveLocalClone(rightOutput, topHost)
+    val mergeFromLeft                           = ReactiveLocalClone(leftOutput, topHost)
+    val mergeFromRight                          = ReactiveLocalClone(rightOutput, topHost)
     val topMerge: Signal[Map[String, Set[Int]]] = Signal { merge(mergeFromLeft(), mergeFromRight()) }
 
     var violations: List[Map[String, Set[Int]]] = Nil
@@ -180,8 +181,8 @@ object CostAssessment {
       rightOutput = Signal { merge(fakeMirrorLeftOutput(), rightOutputStatic()) }
     }
 
-    val fakeMirrorLeftMerge                            = leftOutput.map(identity)
-    val fakeMirrorRightMerge                           = rightOutput.map(identity)
+    val fakeMirrorLeftMerge                     = leftOutput.map(identity)
+    val fakeMirrorRightMerge                    = rightOutput.map(identity)
     val topMerge: Signal[Map[String, Set[Int]]] = Signal { merge(fakeMirrorLeftMerge(), fakeMirrorRightMerge()) }
 
     var violations: List[Map[String, Set[Int]]] = Nil

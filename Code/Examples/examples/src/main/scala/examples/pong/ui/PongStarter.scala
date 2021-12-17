@@ -14,7 +14,7 @@ import scala.swing.{MainFrame, Panel, SimpleSwingApplication, Swing}
 
 object PongStarter extends SimpleSwingApplication {
   /* Uncomment to enable logging: */
-  //react.ReactiveEngine.log.enableAllLogging
+  // react.ReactiveEngine.log.enableAllLogging
 
   lazy val application = new PongWindow
   def top              = application.frame

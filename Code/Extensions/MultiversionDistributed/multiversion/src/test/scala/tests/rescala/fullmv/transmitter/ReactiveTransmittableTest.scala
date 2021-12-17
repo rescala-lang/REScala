@@ -19,7 +19,8 @@ class ReactiveTransmittableTest extends AnyFunSuite {
     import ReactiveTransmittable._
     implicit val host = this
 
-    val binding: Binding[Signal[Int], Future[Signal[Int]]] = ??? //Binding[Signal[Int]].apply[Future[Signal[Int]]]("signal")(???)
+    val binding: Binding[Signal[Int], Future[Signal[Int]]] =
+      ??? // Binding[Signal[Int]].apply[Future[Signal[Int]]]("signal")(???)
   }
 
   test("basic transmission works") {
@@ -73,15 +74,17 @@ class ReactiveTransmittableTest extends AnyFunSuite {
       import rescala.fullmv.transmitter.CirceSerialization._
       import ReactiveTransmittable._
 
-      val branch1: Binding[Signal[(String, Int)], Future[Signal[(String, Int)]]] = ??? // Binding[Signal[(String, Int)]]("branch1")
-      val branch2: Binding[Signal[(String, Int)], Future[Signal[(String, Int)]]] = ??? // Binding[Signal[(String, Int)]]("branch2")
+      val branch1: Binding[Signal[(String, Int)], Future[Signal[(String, Int)]]] =
+        ??? // Binding[Signal[(String, Int)]]("branch1")
+      val branch2: Binding[Signal[(String, Int)], Future[Signal[(String, Int)]]] =
+        ??? // Binding[Signal[(String, Int)]]("branch2")
     }
 
     val hostA = new GFHost("gfA")
     val port  = TransmitterTestsPortManagement.getFreePort()
     hostA.registry.listen(TCP(port))
     try {
-      val input = { import hostA._; Var(5) }
+      val input    = { import hostA._; Var(5) }
       val branch1A = { import hostA._; input.map("1a" -> _) }
       hostA.registry.bind(hostA.branch1)(branch1A)
       hostA.registry.bind(hostA.binding)(input)
@@ -131,8 +134,10 @@ class ReactiveTransmittableTest extends AnyFunSuite {
       import rescala.fullmv.transmitter.CirceSerialization._
       import ReactiveTransmittable._
 
-      val branch1: Binding[Event[(String, Int)], Future[Event[(String, Int)]]] = ??? //   = Binding[Event[(String, Int)]]("branch1")
-      val branch2: Binding[Event[(String, Int)], Future[Event[(String, Int)]]] = ??? //   = Binding[Event[(String, Int)]]("branch2")
+      val branch1: Binding[Event[(String, Int)], Future[Event[(String, Int)]]] =
+        ??? //   = Binding[Event[(String, Int)]]("branch1")
+      val branch2: Binding[Event[(String, Int)], Future[Event[(String, Int)]]] =
+        ??? //   = Binding[Event[(String, Int)]]("branch2")
       val eBinding: Binding[Event[(Int)], Future[Event[(Int)]]] = ??? //  = Binding[Event[Int]]("event")
     }
 
@@ -140,7 +145,7 @@ class ReactiveTransmittableTest extends AnyFunSuite {
     val port  = TransmitterTestsPortManagement.getFreePort()
     hostA.registry.listen(TCP(port))
     try {
-      val input = { import hostA._; Evt[Int]() }
+      val input    = { import hostA._; Evt[Int]() }
       val branch1A = { import hostA._; input.map("1a" -> _) }
       hostA.registry.bind(hostA.branch1)(branch1A)
       hostA.registry.bind(hostA.eBinding)(input)

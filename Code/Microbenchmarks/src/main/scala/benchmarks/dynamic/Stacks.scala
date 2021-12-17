@@ -58,11 +58,12 @@ class Stacks {
   @Benchmark
   def run(state: StackState, step: Step, params: ThreadParams) = {
     import state.stableEngine._
-    if (state.isManual) state.synchronized {
-      val index = params.getThreadIndex % params.getThreadCount
-      state.sources(index).set(step.run())
-      state.dynamics(index).readValueOnce
-    }
+    if (state.isManual)
+      state.synchronized {
+        val index = params.getThreadIndex % params.getThreadCount
+        state.sources(index).set(step.run())
+        state.dynamics(index).readValueOnce
+      }
     else {
       val index = params.getThreadIndex % params.getThreadCount
       state.sources(index).set(step.run())

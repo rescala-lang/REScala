@@ -116,13 +116,13 @@ trait SimpleBundle extends Core with Observing {
               Util.evaluateAll(created, creation, afterCommitObservers).foreach(reset)
               assert(creation.drainCreated().isEmpty)
 
-              //cleanup
+              // cleanup
               initial.foreach(reset)
               created.foreach(reset)
               sources.foreach(reset)
               sorted.foreach(reset)
 
-              //wrapup
+              // wrapup
               if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(creation.accessTicket())
               admissionResult
             }

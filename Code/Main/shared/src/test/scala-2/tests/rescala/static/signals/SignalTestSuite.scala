@@ -94,7 +94,7 @@ class SignalTestSuite extends RETests {
         }
       }
       assert(`dynamic signal changing from level 1 to level 5`.readValueOnce == "level 0")
-      //note: will start with level 5 because of static guess of current level done by the macro expansion
+      // note: will start with level 5 because of static guess of current level done by the macro expansion
       assertLevel(`dynamic signal changing from level 1 to level 5`, 5)
 
       v0.set("level0+")

@@ -35,7 +35,7 @@ object FullMVUtil {
     if (!future.isCompleted) {
       val blocker = new java.util.concurrent.ForkJoinPool.ManagedBlocker {
         override def isReleasable: Boolean = future.isCompleted
-        override def block(): Boolean = { Await.ready(future, timeout); true }
+        override def block(): Boolean      = { Await.ready(future, timeout); true }
       }
       ForkJoinPool.managedBlock(blocker)
     }

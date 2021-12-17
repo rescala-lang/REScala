@@ -8,7 +8,7 @@ import rescala.fullmv.tasks.TaskBundle
 import scala.concurrent.duration.Duration
 
 trait ReactiveMirrorBundle extends FullMVTurnReflectionBundle {
-   self: Mirror with TurnImplBundle with TaskBundle with FullMvStateBundle with SubsumableLockBundle =>
+  self: Mirror with TurnImplBundle with TaskBundle with FullMvStateBundle with SubsumableLockBundle =>
 
   object ReactiveMirror {
     def apply[A](reactive: ReSource, turn: FullMVTurn, reflectionIsTransient: Boolean, rename: ReName)(
@@ -92,10 +92,10 @@ trait ReactiveMirrorBundle extends FullMVTurnReflectionBundle {
         unchange: Value => Value
     ): NotificationBranchResult.ReevOutBranchResult[FullMVTurn, Derived] = ???
 
-    override def dynamicBefore(txn: FullMVTurn): Nothing                                                       = ???
-    override def staticBefore(txn: FullMVTurn): Nothing                                                        = ???
-    override def dynamicAfter(txn: FullMVTurn): Nothing                                                        = ???
-    override def staticAfter(txn: FullMVTurn): Nothing                                                         = ???
+    override def dynamicBefore(txn: FullMVTurn): Nothing                                         = ???
+    override def staticBefore(txn: FullMVTurn): Nothing                                          = ???
+    override def dynamicAfter(txn: FullMVTurn): Nothing                                          = ???
+    override def staticAfter(txn: FullMVTurn): Nothing                                           = ???
     override def discover(txn: FullMVTurn, add: Derived): (List[FullMVTurn], Option[FullMVTurn]) = ???
     override def drop(txn: FullMVTurn, remove: Derived): (List[FullMVTurn], Option[FullMVTurn])  = ???
     override def retrofitSinkFrames(

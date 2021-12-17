@@ -35,7 +35,9 @@ class SignalMapGrid extends BusyThreads {
       var result: Signal[Int] = source
       for (d <- 1 to depth) {
         result = ReName.named(s"map-$w-$d") { implicit ! =>
-          result.map { v => work.consume(); v + 1 }
+          result.map { v =>
+            work.consume(); v + 1
+          }
         }
       }
       result

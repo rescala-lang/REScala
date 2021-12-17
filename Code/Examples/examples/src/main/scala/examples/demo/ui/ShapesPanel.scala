@@ -12,7 +12,7 @@ import scala.swing.Panel
 case class Point(x: Int, y: Int)
 
 class ShapesPanel(val shapes: Signal[Iterable[Shape]]) extends Panel {
-  //val allChanges: Event[Any] = Event { shapes().find{ shape: Shape => shape.changed().isDefined } }
+  // val allChanges: Event[Any] = Event { shapes().find{ shape: Shape => shape.changed().isDefined } }
   val allChanges: Event[Any] = shapes.map(_.map(_.changed)).flatten[Event[Any]](firstFiringEvent)
 
   allChanges observe { _ => repaint() }
@@ -37,9 +37,9 @@ class ShapesPanel(val shapes: Signal[Iterable[Shape]]) extends Panel {
   val _size: Var[Dimension]      = Var(size)
   val sigSize: Signal[Dimension] = _size
   peer.addComponentListener(new ComponentListener {
-    override def componentShown(e: ComponentEvent) = {}
-    override def componentHidden(e: ComponentEvent) = {}
-    override def componentMoved(e: ComponentEvent) = {}
+    override def componentShown(e: ComponentEvent)   = {}
+    override def componentHidden(e: ComponentEvent)  = {}
+    override def componentMoved(e: ComponentEvent)   = {}
     override def componentResized(e: ComponentEvent) = _size.set(size)
   })
 

@@ -60,7 +60,7 @@ object Codecs {
 
   implicit def EWFlagStateCodec[C: JsonValueCodec]: JsonValueCodec[Causal[Set[Dot], C]] = JsonCodecMaker.make
 
-  //implicit def EWFlagEmbeddedCodec: JsonValueCodec[Set[Dot]] = JsonCodecMaker.make
+  // implicit def EWFlagEmbeddedCodec: JsonValueCodec[Set[Dot]] = JsonCodecMaker.make
 
   /** GCounter */
 

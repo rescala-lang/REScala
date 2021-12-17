@@ -58,7 +58,7 @@ class FollowMouse {
       reactions += FollowMouse.this.mouse.react
 
       preferredSize = new Dimension(Max_X, Max_Y)
-      //val scoreFont = new Font("Tahoma", java.awt.Font.PLAIN, 32)
+      // val scoreFont = new Font("Tahoma", java.awt.Font.PLAIN, 32)
       override def paintComponent(g: Graphics2D): Unit = {
         g.setColor(java.awt.Color.DARK_GRAY)
         g.fillOval(x.now, y.now, Size, Size)

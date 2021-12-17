@@ -13,9 +13,9 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
     override type Value = ReactorState[T]
 
     override protected[rescala] def state: State[ReactorState[T]] = initState
-    override protected[rescala] def name: ReName = "Custom Reactor"
-    override def interpret(v: ReactorState[T]): T = v.currentValue
-    override protected[rescala] def commit(base: Value): Value = base
+    override protected[rescala] def name: ReName                  = "Custom Reactor"
+    override def interpret(v: ReactorState[T]): T                 = v.currentValue
+    override protected[rescala] def commit(base: Value): Value    = base
 
     /** called if any of the dependencies changed in the current update turn,
       * after all (known) dependencies are updated

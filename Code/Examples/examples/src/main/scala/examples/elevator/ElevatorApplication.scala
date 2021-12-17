@@ -9,7 +9,7 @@ import scala.swing._
 object ElevatorApplication extends SimpleSwingApplication {
 
   /* Uncomment to enable logging: */
-  //react.ReactiveEngine.log.enableAllLogging
+  // react.ReactiveEngine.log.enableAllLogging
 
   lazy val elevator    = new Elevator(3)
   lazy val application = new ElevatorApplication(elevator)

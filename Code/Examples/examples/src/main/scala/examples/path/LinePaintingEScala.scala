@@ -32,10 +32,14 @@ object LinePaintingEScala extends SimpleSwingApplication {
     }
 
     /* Attach handlers to the EScala events */
-    mousePressed += { p => moveTo(p); requestFocusInWindow() }
+    mousePressed += { p =>
+      moveTo(p); requestFocusInWindow()
+    }
     mouseDragged += { lineTo(_) }
     mouseReleased += { lineTo(_) }
-    cKeyTyped += { _ => path = new geom.GeneralPath; repaint() }
+    cKeyTyped += { _ =>
+      path = new geom.GeneralPath; repaint()
+    }
     focusLost += { x => repaint() }
 
     /* records the dragging */

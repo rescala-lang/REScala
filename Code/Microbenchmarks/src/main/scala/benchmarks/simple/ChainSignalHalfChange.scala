@@ -34,7 +34,9 @@ class ChainSignalHalfChange {
       }
     }
     for (_ <- Range(0, size.size)) {
-      result = result.map { v => v + 1; work.consume(); 0 }
+      result = result.map { v =>
+        v + 1; work.consume(); 0
+      }
     }
   }
 

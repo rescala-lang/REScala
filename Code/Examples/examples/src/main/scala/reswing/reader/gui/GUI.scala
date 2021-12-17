@@ -20,9 +20,9 @@ class GUI(
     fetcherState: Signal[String] = Signal { "" }
 ) extends SimpleSwingApplication {
   val refreshButton        = new ReButton("Refresh")
-  val refresh: Event[Unit] = refreshButton.clicked.dropParam: Event[Unit] //#EVT //#EF
+  val refresh: Event[Unit] = refreshButton.clicked.dropParam: Event[Unit] // #EVT //#EF
 
-  val requestURLAddition = Evt[String]() //#EVT
+  val requestURLAddition = Evt[String]() // #EVT
 
   val refreshCheckbox = new ReCheckBox("auto refresh", selected = true)
   def refreshAllowed  = refreshCheckbox.selected
@@ -56,13 +56,13 @@ class GUI(
       configure()
 
       val channelList = new ReListViewEx[RSSChannel](
-        Signal { store.channels().keys.toSeq }, //#SIG
+        Signal { store.channels().keys.toSeq }, // #SIG
         visibleRowCount = 3
       ) {
         peer.renderer = ListView.Renderer(_.title)
       }
 
-      val selectedChannelItems = Signal.dynamic { //#SIG
+      val selectedChannelItems = Signal.dynamic { // #SIG
         channelList.selectedItem() match {
           case Some(channel) => store.channels().get(channel) match {
               case Some(items) => items().toSeq

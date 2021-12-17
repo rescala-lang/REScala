@@ -47,15 +47,15 @@ class MillGame {
 
   val board = new MillBoard
 
-  val stateVar: Var[Gamestate]         = Var(PlaceStone(White))           //#VAR
-  val remainCount: Var[Map[Slot, Int]] = Var(Map(Black -> 9, White -> 9)) //#VAR
+  val stateVar: Var[Gamestate]         = Var(PlaceStone(White))           // #VAR
+  val remainCount: Var[Map[Slot, Int]] = Var(Map(Black -> 9, White -> 9)) // #VAR
 
   def state = stateVar.now
 
-  val remainCountChanged = remainCount.changed //#EVT //#IF
-  val stateChanged       = stateVar.changed    //#EVT //#IF
+  val remainCountChanged = remainCount.changed // #EVT //#IF
+  val stateChanged       = stateVar.changed    // #EVT //#IF
 
-  val possibleNextMoves: Signal[Seq[(SlotIndex, SlotIndex)]] = Signal { //#SIG
+  val possibleNextMoves: Signal[Seq[(SlotIndex, SlotIndex)]] = Signal { // #SIG
     stateVar() match {
       case PlaceStone(_) | RemoveStone(_) | GameOver(_) => Seq.empty
       case state @ (MoveStoneSelect(_) | MoveStoneDrop(_, _)) =>
@@ -68,11 +68,11 @@ class MillGame {
   def possibleMoves = possibleNextMoves.now
 
   /* Event based game logic: */
-  board.millClosed += { color => //#HDL
+  board.millClosed += { color => // #HDL
     stateVar set RemoveStone(color)
   }
 
-  board.numStonesChanged += { //#HDL
+  board.numStonesChanged += { // #HDL
     case (color, n) =>
       if (remainCount.now.apply(color) == 0 && n < 3) {
         stateVar set GameOver(color.other)
@@ -80,8 +80,10 @@ class MillGame {
   }
 
   val gameEnd: Event[Gamestate] =
-    stateChanged && ((_: Gamestate) match { case GameOver(_) => true; case _ => false }) //#EVT //#EF
-  val gameWon: Event[Slot] = gameEnd map { (_: Gamestate) match { case GameOver(w) => w; case _ => null } } //#EVT //#EF
+    stateChanged && ((_: Gamestate) match { case GameOver(_) => true; case _ => false }) // #EVT //#EF
+  val gameWon: Event[Slot] = gameEnd map {
+    (_: Gamestate) match { case GameOver(w) => w; case _ => null }
+  } // #EVT //#EF
 
   private def nextState(player: Slot): Gamestate =
     if (remainCount.now.apply(player) > 0) PlaceStone(player)

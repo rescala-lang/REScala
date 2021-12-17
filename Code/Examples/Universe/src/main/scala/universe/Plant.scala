@@ -12,7 +12,7 @@ class Plant(implicit world: World) extends BoardElement {
   val expands: Event[Unit]       = size.changedTo(Plant.MaxSize)
   override def isAnimal: Boolean = false
 
-  expands += { _ => //#HDL
+  expands += { _ => // #HDL
     // germinate: spawn a new plant in proximity to this one
     world.plan {
       world.board.getPosition(this).foreach { mypos =>

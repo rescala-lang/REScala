@@ -36,7 +36,9 @@ class NaturalGraph {
       Signals.lift(s1, s2) { (s1, s2) =>
         val r = s1 + s2; work.consume(); r
       }
-    def noc(sources: Signal[Int]*): Signal[Int] = Signals.lift(sources) { _ => work.consume(); 0 }
+    def noc(sources: Signal[Int]*): Signal[Int] = Signals.lift(sources) { _ =>
+      work.consume(); 0
+    }
 
     source = Var(step.get())
 

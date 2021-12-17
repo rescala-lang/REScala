@@ -37,7 +37,7 @@ trait DefaultImplementations {
     protected[this] def computePulse(rein: ReevTicket[Pulse[T]]): Pulse[T]
   }
 
-  /** @param isDynamicWithStaticDeps If this is None, the event is static. Else, it is dynamic with the set of static dependencies*/
+  /** @param isDynamicWithStaticDeps If this is None, the event is static. Else, it is dynamic with the set of static dependencies */
   class EventImpl[T](
       initial: State[Pulse[T]],
       expr: DynamicTicket => Pulse[T],

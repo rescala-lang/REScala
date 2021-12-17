@@ -39,14 +39,14 @@ class CharacterIterator(buf: Array[Char], count: Int, caret: Int) extends Iterat
   * Moving the caret requires copying text from one segment to the other.
   */
 class GapBuffer {
-  val caretChanged = Evt[Int]() //#EVT
+  val caretChanged = Evt[Int]() // #EVT
 
   private var buf  = new Array[Char](0)
-  private val size = Var(0) //#VAR
-  private val offsets: Signal[(Int, Int)] = (caretChanged && //#SIG //#EF
+  private val size = Var(0) // #VAR
+  private val offsets: Signal[(Int, Int)] = (caretChanged && // #SIG //#EF
     { offset => offset >= 0 && offset <= size.value }).fold((0, 0))((s, n) => s._2 -> n)
 
-  offsets.changed += { //#HDL
+  offsets.changed += { // #HDL
     case (prev, cur) =>
       // the caret has moved
       // which requires copying text from one segment to the other
@@ -57,14 +57,14 @@ class GapBuffer {
       Array.copy(buf, src, buf, dest, dist)
   }
 
-  val caret = Signal { offsets()._2 } //#SIG
+  val caret = Signal { offsets()._2 } // #SIG
 
-  val iterable = Signal { //#SIG
+  val iterable = Signal { // #SIG
     val (b, s) = (buf, size())
     new Iterable[Char] { def iterator = new CharacterIterator(b, s, caret.value) }: Iterable[Char]
   }
 
-  val length = Signal { size() } //#SIG
+  val length = Signal { size() } // #SIG
 
   def apply(i: Int) = buf(if (i >= caret.now) i + (buf.length - size.now) else i)
 

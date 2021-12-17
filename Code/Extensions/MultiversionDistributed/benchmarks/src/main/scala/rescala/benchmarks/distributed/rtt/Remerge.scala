@@ -3,7 +3,9 @@ package rescala.benchmarks.distributed.rtt
 import java.util.concurrent._
 import org.openjdk.jmh.annotations._
 import rescala.core.ReName
-import rescala.fullmv.DistributedFullMVApi.{CreationTicket, FullMVEngine, ReactiveLocalClone, Signal, Signals, Var, scopedScheduler, transactionWithWrapup}
+import rescala.fullmv.DistributedFullMVApi.{
+  CreationTicket, FullMVEngine, ReactiveLocalClone, Signal, Signals, Var, scopedScheduler, transactionWithWrapup
+}
 import rescala.core.ReName
 import rescala.fullmv.mirrors.localcloning.FakeDelayer
 
@@ -29,11 +31,11 @@ class Remerge {
   var mergeAt: Int = _
 
   var sources: Seq[(FullMVEngine, Var[Int])]                  = _
-  var instantMergeHost: FullMVEngine                                        = _
+  var instantMergeHost: FullMVEngine                          = _
   var remotesOnInstantMerge: Seq[Signal[Int]]                 = _
   var instantMerge: Signal[Int]                               = _
   var preMergeDistance: Seq[Seq[(FullMVEngine, Signal[Int])]] = _
-  var mergeHost: FullMVEngine                                               = _
+  var mergeHost: FullMVEngine                                 = _
   var remotesOnMerge: Seq[Signal[Int]]                        = _
   var merge: Signal[Int]                                      = _
   var postMergeDistance: Seq[(FullMVEngine, Signal[Int])]     = _

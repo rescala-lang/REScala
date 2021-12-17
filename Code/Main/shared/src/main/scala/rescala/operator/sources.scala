@@ -30,7 +30,7 @@ trait Sources {
 
     /** Trigger the event */
     @deprecated("use .fire instead of apply", "0.21.0")
-    def apply(value: T)(implicit fac: Scheduler): Unit          = fire(value)(fac)
+    def apply(value: T)(implicit fac: Scheduler): Unit = fire(value)(fac)
     def fire()(implicit fac: Scheduler, ev: Unit =:= T): Unit   = fire(ev(()))(fac)
     def fire(value: T)(implicit fac: Scheduler): Unit           = fac.forceNewTransaction(this) { admit(value)(_) }
     override def disconnect()(implicit engine: Scheduler): Unit = ()
@@ -61,7 +61,7 @@ trait Sources {
     override val resource: Signal[A]                            = this
     override def disconnect()(implicit engine: Scheduler): Unit = ()
 
-    //def update(value: A)(implicit fac: Engine): Unit = set(value)
+    // def update(value: A)(implicit fac: Engine): Unit = set(value)
     def set(value: A)(implicit fac: Scheduler): Unit = fac.forceNewTransaction(this) { admit(value)(_) }
 
     def transform(f: A => A)(implicit fac: Scheduler): Unit =

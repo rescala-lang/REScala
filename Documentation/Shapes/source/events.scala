@@ -1,9 +1,9 @@
 class Events {
 
-  // defines which shape is drawn next for example 
+  // defines which shape is drawn next for example
   // reshapes.figures.Line if nextShape contains reference to line
   val nextShape: Var[Shape] = new Var(new Line)
-  // contains the currently selected shape which is, for example, 
+  // contains the currently selected shape which is, for example,
   // moved around or edited (size/stroke)
   val selectedShape: Var[Shape] = new Var(null)
   // stores all currently drawn shapes
@@ -18,13 +18,13 @@ class Events {
   val fileName: Var[String] = new Var("unnamed")
 
   var mode: EditingMode = Drawing()
-  // event for changes in drawing mode between drawing shapes 
+  // event for changes in drawing mode between drawing shapes
   // and selecting shapes
   val modeChange = nextShape.changed || selectedShape.changed
 
   // event which describes cases where a redraw is necassary
-  val canvasChange = selectedShape.changed || allShapes.changed 
-        || modeChange || strokeWidth.changed || color.changed
+  val canvasChange = selectedShape.changed || allShapes.changed
+    || modeChange || strokeWidth.changed || color.changed
 
   nextShape.changed += (shape => {
     shape.strokeWidth = strokeWidth.getValue

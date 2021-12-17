@@ -35,7 +35,7 @@ object SignalSwingApp extends SimpleSwingApplication {
       label.text = Signal { (if (nClicks() == 0) "No" else nClicks()).toString + " button clicks registered" }
 
       // Alternative with switch
-      //label.text = Signal {"No clicks"}.switchOnce(button.clicked)( Signal{ nClicks() + " clicks registered" } )
+      // label.text = Signal {"No clicks"}.switchOnce(button.clicked)( Signal{ nClicks() + " clicks registered" } )
 
       button.text = Signal { "Click me" + (if (nClicks() == 0) "!" else " again") }
 

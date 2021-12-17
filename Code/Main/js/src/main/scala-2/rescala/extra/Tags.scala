@@ -73,10 +73,10 @@ class Tags[Api <: RescalaInterface](val api: Api) {
 
         observe = Observe.strong(rendered, fireImmediately = true)(
           tagObserver[Frag](parent, rendered) { newTag =>
-            //println(s"$rendered parent $parent")
+            // println(s"$rendered parent $parent")
             if (parent != null && !scalajs.js.isUndefined(parent)) {
               val newNode = newTag.render
-              //println(s"$rendered appending $newNode to $parent with $currentNode")
+              // println(s"$rendered appending $newNode to $parent with $currentNode")
               if (currentNode != null) parent.replaceChild(newNode, currentNode)
               else parent.appendChild(newNode)
               currentNode = newNode
@@ -124,7 +124,7 @@ class Tags[Api <: RescalaInterface](val api: Api) {
           currentNodes = currentTags.map(_.render)
           currentNodes.foreach(parent.appendChild)
         } else {
-          //println(s"Warning, added $rendered to dom AGAIN, this is experimental")
+          // println(s"Warning, added $rendered to dom AGAIN, this is experimental")
           observe.remove()(engine)
           observe = null
           // adding nodes to the dom again should move them
@@ -160,11 +160,11 @@ class Tags[Api <: RescalaInterface](val api: Api) {
       }
     }
 
-  //implicit def varAttrValue[T: AttrValue](implicit engine: Scheduler)
-  //: AttrValue[Var[T]] = genericReactiveAttrValue[T, S, ({type λ[T2] = Var[T2]})#λ]
+  // implicit def varAttrValue[T: AttrValue](implicit engine: Scheduler)
+  // : AttrValue[Var[T]] = genericReactiveAttrValue[T, S, ({type λ[T2] = Var[T2]})#λ]
   //
-  //implicit def signalAttrValue[T: AttrValue](implicit engine: Scheduler)
-  //: AttrValue[Signal[T]] = genericReactiveAttrValue[T, S, ({type λ[T2] = Signal[T2]})#λ]
+  // implicit def signalAttrValue[T: AttrValue](implicit engine: Scheduler)
+  // : AttrValue[Signal[T]] = genericReactiveAttrValue[T, S, ({type λ[T2] = Signal[T2]})#λ]
 
   def genericReactiveStyleValue[T, Sig[T2] <: Signal[T2]](implicit
       engine: Scheduler,
@@ -215,7 +215,7 @@ class Tags[Api <: RescalaInterface](val api: Api) {
       oldTags: Seq[TypedTag[Element]],
       newTags: Seq[TypedTag[Element]]
   ): List[Element] = {
-    //println(s"replacing for $parent")
+    // println(s"replacing for $parent")
     val oni           = oldNodes.iterator
     val oti           = oldTags.iterator
     val nti           = newTags.iterator

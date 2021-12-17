@@ -42,7 +42,7 @@ class RaftLatticeTest extends AnyFreeSpec {
     assert(afterFirstVote.leader === "a")
     assert(afterFirstVote.currentTerm === 1)
 
-    //kinda split between a and b, but c is still fine with everyone
+    // kinda split between a and b, but c is still fine with everyone
 
     val afterProposalAndSplit = afterFirstVote
       .propose("a", "As first proposal")

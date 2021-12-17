@@ -10,7 +10,7 @@ class ReactiveMirrorTest extends AnyFunSuite {
   val engineA = new FullMVEngine(Duration.Zero, "A")
   val engineB = new FullMVEngine(Duration.Zero, "B")
   test("basic mirroring works") {
-    val input = { import engineA._; Var(5) }
+    val input      = { import engineA._; Var(5) }
     val reflection = ReactiveLocalClone(input, engineB)
 
     assert({ import engineB._; reflection.readValueOnce } === 5); { import engineA._; input.set(123) }
@@ -18,21 +18,21 @@ class ReactiveMirrorTest extends AnyFunSuite {
   }
 
   test("reflection supports derivations") {
-    val input = { import engineA._; Var(5) }
+    val input      = { import engineA._; Var(5) }
     val reflection = ReactiveLocalClone(input, engineB)
-    val derived = { import engineB._; reflection.map(_ * 2) }
+    val derived    = { import engineB._; reflection.map(_ * 2) }
 
     assert({ import engineB._; derived.readValueOnce } === 10); { import engineA._; input.set(123) }
     assert({ import engineB._; derived.readValueOnce } === 246)
   }
 
   test("reflection maintains glitch freedom") {
-    val input = { import engineA._; Var(5) }
-    val branch1A = { import engineA._; input.map("1a" -> _) }
-    val branch1B = { import engineB._; ReactiveLocalClone(branch1A, engineB).map("1b" -> _) }
+    val input      = { import engineA._; Var(5) }
+    val branch1A   = { import engineA._; input.map("1a" -> _) }
+    val branch1B   = { import engineB._; ReactiveLocalClone(branch1A, engineB).map("1b" -> _) }
     val reflection = ReactiveLocalClone(input, engineB)
-    val branch2A = { import engineA._; input.map("2a" -> _) }
-    val branch2B = { import engineB._; ReactiveLocalClone(branch2A, engineB).map("2b" -> _) }
+    val branch2A   = { import engineA._; input.map("2a" -> _) }
+    val branch2B   = { import engineB._; ReactiveLocalClone(branch2A, engineB).map("2b" -> _) }
 
     val tracker = ArrayBuffer[((String, (String, Int)), Int, (String, (String, Int)))]()
     val derived = {
@@ -54,12 +54,12 @@ class ReactiveMirrorTest extends AnyFunSuite {
   }
 
   test("events work too") {
-    val input = { import engineA._; Evt[Int]() }
-    val branch1A = { import engineA._; input.map("1a" -> _) }
-    val branch1B = { import engineB._; ReactiveLocalClone(branch1A, engineB).map("1b" -> _) }
+    val input      = { import engineA._; Evt[Int]() }
+    val branch1A   = { import engineA._; input.map("1a" -> _) }
+    val branch1B   = { import engineB._; ReactiveLocalClone(branch1A, engineB).map("1b" -> _) }
     val reflection = ReactiveLocalClone(input, engineB)
-    val branch2A = { import engineA._; input.map("2a" -> _) }
-    val branch2B = { import engineB._; ReactiveLocalClone(branch2A, engineB).map("2b" -> _) }
+    val branch2A   = { import engineA._; input.map("2a" -> _) }
+    val branch2B   = { import engineB._; ReactiveLocalClone(branch2A, engineB).map("2b" -> _) }
 
     val tracker = ArrayBuffer[(Option[(String, (String, Int))], Option[Int], Option[(String, (String, Int))])]()
     val derived = {

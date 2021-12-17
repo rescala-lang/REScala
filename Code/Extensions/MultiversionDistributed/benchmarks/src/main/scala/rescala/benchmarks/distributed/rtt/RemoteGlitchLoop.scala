@@ -3,7 +3,7 @@ package rescala.benchmarks.distributed.rtt
 import java.util.concurrent.TimeUnit
 
 import org.openjdk.jmh.annotations._
-import rescala.fullmv.DistributedFullMVApi.{CreationTicket, ReactiveLocalClone, FullMVEngine, Signal,Var}
+import rescala.fullmv.DistributedFullMVApi.{CreationTicket, ReactiveLocalClone, FullMVEngine, Signal, Var}
 import rescala.core.{ReName}
 import rescala.fullmv.mirrors.localcloning.{FakeDelayer}
 
@@ -17,14 +17,14 @@ import scala.concurrent.duration._
 @Threads(1)
 @State(Scope.Benchmark)
 class RemoteGlitchLoop {
-  var sourceEngine: FullMVEngine                = _
+  var sourceEngine: FullMVEngine  = _
   var source: Var[Int]            = _
-  var remoteEngine: FullMVEngine                = _
+  var remoteEngine: FullMVEngine  = _
   var sourceOnRemote: Signal[Int] = _
   var remoteNode: Signal[Int]     = _
   var remoteOnSource: Signal[Int] = _
   var sourceMerge: Signal[Int]    = _
-  var glitchCounter: Int                        = _
+  var glitchCounter: Int          = _
 
   @Param(Array("50"))
   var msDelay: Int = _

@@ -68,7 +68,7 @@ object LFullyModularBall extends Main {
       )
     }
 
-    //TODO: using now to remove cycle …
+    // TODO: using now to remove cycle …
     val inc = Clock.ticks.map(tick => velocity.readValueOnce * tick.toDouble)
 
     val pos = Events.foldAll(Pos(0, 0))(acc =>

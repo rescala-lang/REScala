@@ -207,8 +207,8 @@ object DotStoreLattice {
       override def dots(a: Store): Store = a
 
       /** Only keeps the highest element of each dot subsequence in the set. */
-      //TODO: how do we know where subsequences started?
-      //TODO: this most likely only works with causal delivery of things, which we may not have
+      // TODO: how do we know where subsequences started?
+      // TODO: this most likely only works with causal delivery of things, which we may not have
       override def compress(a: Store): Store = a.filter(d => !a.contains(Dot(d.replicaId, d.counter + 1)))
 
       override def empty: Store = Set.empty

@@ -140,7 +140,9 @@ class PessimisticTest extends RETests {
     val b2     = b0.map(identity).map(!_) // dirty hacks to get il_3 to reevaluate first on levelbased engines
     val i0     = Var(11)
     var reeval = 0
-    val i1_3   = Signals.dynamic(b0) { t => reeval += 1; if (t.depend(b0) && t.depend(b2)) t.depend(i0) else 42 }
+    val i1_3 = Signals.dynamic(b0) { t =>
+      reeval += 1; if (t.depend(b0) && t.depend(b2)) t.depend(i0) else 42
+    }
 
     var regs   = 0
     var unregs = 0

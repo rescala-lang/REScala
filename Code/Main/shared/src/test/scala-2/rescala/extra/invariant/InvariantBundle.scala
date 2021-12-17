@@ -157,13 +157,13 @@ trait InvariantBundle extends rescala.core.Core {
 
               Util.evaluateInvariants(created ++ sorted ++ initialWrites, initialWrites)
 
-              //cleanup
+              // cleanup
               initial.foreach(reset)
               created.foreach(reset)
               sources.foreach(reset)
               sorted.foreach(reset)
 
-              //wrapup
+              // wrapup
               if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(creation.accessTicket())
               admissionResult
             }

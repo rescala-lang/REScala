@@ -19,7 +19,7 @@ case class AddWinsSetO[A](store: Map[A, Context], context: Context) {
     //    (Set((id, dot)), past.getOrElse(id, Set()) + dot, Set((id, e)))
     // this is sufficient in my opinion:
     // for adds we don't have to know (in the CC) conflicting adds or removes for this element because adds win anyway
-    //AddWinsSet(Map(id -> Set(dot)), Set(dot), Map(e -> id))
+    // AddWinsSet(Map(id -> Set(dot)), Set(dot), Map(e -> id))
 
   }
 

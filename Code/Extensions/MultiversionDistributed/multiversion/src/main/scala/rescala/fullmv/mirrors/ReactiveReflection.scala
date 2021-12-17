@@ -88,7 +88,9 @@ trait ReactiveReflectionBundle extends FullMVBundle {
     override def buffer(turn: FullMVTurn, value: P): Unit = _buffer.put(turn, value)
     override def submit(action: FullMVAction): Unit       = host.threadPool.submit(action)
 
-    override protected[rescala] def commit(base: Value): Value = throw new IllegalStateException("TODO: this is not implemented, commit is a new method that enables reactives to change their value on commit (such as events dropping back to no value). Not sure how to map that to reactive reflections?")
+    override protected[rescala] def commit(base: Value): Value = throw new IllegalStateException(
+      "TODO: this is not implemented, commit is a new method that enables reactives to change their value on commit (such as events dropping back to no value). Not sure how to map that to reactive reflections?"
+    )
 
     override protected[rescala] def reevaluate(input: ReIn): ReevTicket[P] = {
       val turn  = input.initializer

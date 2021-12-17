@@ -83,13 +83,13 @@ class TextArea extends ReComponent {
   // [same semantics as for: javax.swing.text.Caret]
   object caret {
     @cutOutOfUserComputation
-    def dot               = buffer.caret
+    def dot = buffer.caret
     def dot_=(value: Int) = buffer.caretChanged.fire(value)
 
     // dot as position (row and column)
     private val dotPosSignal = Signal { LineOffset.position(buffer.iterable(), dot()) }
     @cutOutOfUserComputation
-    def dotPos                    = dotPosSignal
+    def dotPos = dotPosSignal
     def dotPos_=(value: Position) = dot = LineOffset.offset(buffer.iterable.readValueOnce, value)
 
     private val markVar = Var(0)
@@ -97,13 +97,13 @@ class TextArea extends ReComponent {
     // mark as offset
     private val markSignal = Signal { markVar() }
     @cutOutOfUserComputation
-    def mark               = markSignal
+    def mark = markSignal
     def mark_=(value: Int) = if (value >= 0 && value <= buffer.length.readValueOnce) markVar set value
 
     // mark as position (row and column)
     private val markPosSignal = Signal { LineOffset.position(buffer.iterable(), mark()) }
     @cutOutOfUserComputation
-    def markPos                    = markPosSignal
+    def markPos = markPosSignal
     def markPos_=(value: Position) = mark = LineOffset.offset(buffer.iterable.readValueOnce, value)
 
     // caret location as offset
@@ -116,7 +116,7 @@ class TextArea extends ReComponent {
 
     // caret location as position (row and column)
     @cutOutOfUserComputation
-    def position                    = dotPos
+    def position = dotPos
     def position_=(value: Position) = offset = LineOffset.offset(buffer.iterable.readValueOnce, value)
 
     protected[TextArea] val blink  = new Timer(500) start

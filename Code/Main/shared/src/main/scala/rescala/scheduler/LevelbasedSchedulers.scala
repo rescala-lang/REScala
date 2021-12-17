@@ -3,9 +3,9 @@ package rescala.scheduler
 trait NoLock extends Levelbased {
   type State[V] = LevelState[V]
   private[rescala] class SimpleNoLock extends LevelBasedTransaction {
-    override protected def makeDerivedStructState[V](ip: V): State[V] = new LevelState(ip)
-    override def releasePhase(): Unit                                 = ()
-    override def preparationPhase(initialWrites: Set[ReSource]): Unit = {}
+    override protected def makeDerivedStructState[V](ip: V): State[V]           = new LevelState(ip)
+    override def releasePhase(): Unit                                           = ()
+    override def preparationPhase(initialWrites: Set[ReSource]): Unit           = {}
     override def beforeDynamicDependencyInteraction(dependency: ReSource): Unit = {}
   }
 

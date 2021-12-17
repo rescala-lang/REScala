@@ -30,7 +30,7 @@ class Carnivore(implicit world: World) extends Animal {
 
 class Herbivore(implicit world: World) extends Animal {
 
-  override val findFood: Signal[PartialFunction[BoardElement, BoardElement]] = //#SIG
+  override val findFood: Signal[PartialFunction[BoardElement, BoardElement]] = // #SIG
     Var {
       { case p: Plant => p }: PartialFunction[BoardElement, BoardElement]
     }
@@ -45,22 +45,22 @@ class Herbivore(implicit world: World) extends Animal {
 trait Female extends Animal {
 
   // counts down to 0
-  private val mate: Var[Option[Animal]]   = Var(None)                  //#VAR
-  final val isPregnant: Signal[Boolean]   = mate.map { _.isDefined }   //#SIG
-  private val becomePregnant: Event[Unit] = isPregnant.changedTo(true) //#EVT //#IF
+  private val mate: Var[Option[Animal]]   = Var(None)                  // #VAR
+  final val isPregnant: Signal[Boolean]   = mate.map { _.isDefined }   // #SIG
+  private val becomePregnant: Event[Unit] = isPregnant.changedTo(true) // #EVT //#IF
   private val pregnancyTime: Signal[Int] = Events.foldAll(Animal.PregnancyTime)(acc =>
     Seq(
       becomePregnant act { _ => Animal.PregnancyTime },
       world.time.hour.changed act { _ => acc - (if (isPregnant.readValueOnce) 1 else 0) }
     )
   )
-  private val giveBirth: Event[Unit] = pregnancyTime.changedTo(0)                    //#EVT //#IF
-  final override val isFertile       = Signals.lift(isAdult, isPregnant) { _ && !_ } //#SIG
+  private val giveBirth: Event[Unit] = pregnancyTime.changedTo(0)                    // #EVT //#IF
+  final override val isFertile       = Signals.lift(isAdult, isPregnant) { _ && !_ } // #SIG
 
   // override val energyDrain = Signal { super.energyDrain() * 2 }
   // not possible
 
-  giveBirth += { _ => //#HDL
+  giveBirth += { _ => // #HDL
     world.plan {
       val father = mate.readValueOnce.get
       val child  = createOffspring(father)

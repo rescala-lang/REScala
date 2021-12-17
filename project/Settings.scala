@@ -50,8 +50,8 @@ object Settings {
     "-language:higherKinds",         // Allow higher-kinded types
     "-language:implicitConversions", // Allow definition of implicit functions called views
     "-unchecked",                    // Enable additional warnings where generated code depends on assumptions.
-    //"-Xcheckinit",                       // Wrap field accessors to throw an exception on uninitialized access.
-    //"-Xfatal-warnings",                  // Fail the compilation if there are any warnings.
+    // "-Xcheckinit",                       // Wrap field accessors to throw an exception on uninitialized access.
+    // "-Xfatal-warnings",                  // Fail the compilation if there are any warnings.
     "-Xlint:adapted-args",           // Warn if an argument list is modified to match the receiver./
     "-Xlint:delayedinit-select",     // Selecting member of DelayedInit.
     "-Xlint:doc-detached",           // A Scaladoc comment appears to be detached from its element.
@@ -66,9 +66,9 @@ object Settings {
     "-Xlint:type-parameter-shadow",  // A local type parameter shadows a type already in scope.
     "-Ywarn-dead-code",              // Warn when dead code is identified.
     "-Ywarn-numeric-widen",          // Warn when numerics are widened.
-    //"-Ywarn-unused:params",              // Warn if a value parameter is unused.
-    //"-Ywarn-unused:patvars",             // Warn if a variable bound in a pattern is unused.
-    //"-Ywarn-value-discard"               // Warn when non-Unit expression results are unused.
+    // "-Ywarn-unused:params",              // Warn if a value parameter is unused.
+    // "-Ywarn-unused:patvars",             // Warn if a variable bound in a pattern is unused.
+    // "-Ywarn-value-discard"               // Warn when non-Unit expression results are unused.
   )
   lazy val scalacOptions12plus: Seq[String] = Seq(
     // do not work on 2.11
@@ -98,7 +98,7 @@ object Settings {
     "-language:implicitConversions",
     "-Ysafe-init",
     "-print-tasty",
-    //"-Yexplicit-nulls",
+    // "-Yexplicit-nulls",
   )
 
   val strictCompile = Compile / compile / scalacOptions += "-Xfatal-warnings"

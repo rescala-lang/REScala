@@ -27,13 +27,19 @@ object ApplicationSwingTextArea extends SimpleSwingApplication {
   val wordCountLabel = new ReLabel(Signal { "Words " + textArea.text().length() })
 
   val selectAllButton = new ReButton("Select All")
-  selectAllButton.clicked += { _ => textArea.selectAll(); textArea.requestFocus() }
+  selectAllButton.clicked += { _ =>
+    textArea.selectAll(); textArea.requestFocus()
+  }
 
   val copyButton = new ReButton("Copy")
-  copyButton.clicked += { _ => textArea.copy(); textArea.requestFocus() }
+  copyButton.clicked += { _ =>
+    textArea.copy(); textArea.requestFocus()
+  }
 
   val pasteButton = new ReButton("Paste")
-  pasteButton.clicked += { _ => textArea.paste(); textArea.requestFocus() }
+  pasteButton.clicked += { _ =>
+    textArea.paste(); textArea.requestFocus()
+  }
 
   // layout
   def top =

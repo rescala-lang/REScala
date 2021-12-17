@@ -16,23 +16,23 @@ import reswing.ReButton
 class CommandPanel extends BoxPanel(Orientation.Vertical) {
   def state = ReShapes.drawingSpaceState
 
-  val commands = Signal.dynamic { if (state() != null) state().commands() else List.empty } //#SIG
+  val commands = Signal.dynamic { if (state() != null) state().commands() else List.empty } // #SIG
 
-  val buttonsEvents = Signal { //#SIG
+  val buttonsEvents = Signal { // #SIG
     commands() map { command =>
-      val button = new ReButton(command.description) //#IS( //#EVT )
+      val button = new ReButton(command.description) // #IS( //#EVT )
       (button: Component, button.clicked map { _: Any => command })
     }
   }
 
-  val revert = UnionEvent(Signal { //#SIG //#UE( //#EVT //#IF )
+  val revert = UnionEvent(Signal { // #SIG //#UE( //#EVT //#IF )
     buttonsEvents() map { case (_, ev) => ev: Event[Command] }
   })
 
   val commandPanel = new ReBoxPanel(
     orientation = Orientation.Vertical,
     contents = Signal { (buttonsEvents() map { case (btn, _) => btn }): Seq[Component] }
-  ) //#SIG //#IS( // )
+  ) // #SIG //#IS( // )
 
   contents += new ScrollPane {
     contents = commandPanel

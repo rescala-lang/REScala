@@ -117,7 +117,7 @@ class TrueDynamicSignals extends RETests {
       assert(testsig.readValueOnce === 55)
     }
 
-    //test("chained Signals2") {
+    // test("chained Signals2") {
     //
     //  import scala.language.reflectiveCalls
     //
@@ -142,7 +142,7 @@ class TrueDynamicSignals extends RETests {
     //  assert(sig.readValueOnce === 10)
     //  v1 set 80
     //  assert(sig.readValueOnce === 80)
-    //}
+    // }
 
     test("extracting Signal Side Effects") {
       val e1 = Evt[Int]()
@@ -165,7 +165,7 @@ class TrueDynamicSignals extends RETests {
       assert(normalRes.readValueOnce === 1, "end, normal")
     }
 
-    //test("chained Signals1") {
+    // test("chained Signals1") {
     //
     //  import scala.language.reflectiveCalls
     //
@@ -182,7 +182,7 @@ class TrueDynamicSignals extends RETests {
     //  assert(sig.readValueOnce === List(5, 7))
     //  v set v.readValueOnce.reverse
     //  assert(sig.readValueOnce === List(7, 5))
-    //}
+    // }
 
     test("signal Does Not Reevaluate The Expression If Depends On IsUpdated That Is Not In Current Dependencies") {
       val condition     = Var(true)
@@ -229,8 +229,8 @@ class TrueDynamicSignals extends RETests {
       val outside = Var(1)
 
       val testsig = Signals.dynamic() { implicit to =>
-        //remark 01.10.2014: without the bound the inner signal will be enqueued (it is level 0 same as its dependency)
-        //this will cause testsig to reevaluate again, after the inner signal is fully updated.
+        // remark 01.10.2014: without the bound the inner signal will be enqueued (it is level 0 same as its dependency)
+        // this will cause testsig to reevaluate again, after the inner signal is fully updated.
         // leading to an infinite loop
         to.depend(Signals.dynamic(outside) { ti => ti.depend(outside) })
       }

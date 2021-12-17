@@ -29,8 +29,9 @@ object XShapeSerializabilityTest {
     import ReactiveTransmittable._
     import io.circe.generic.auto._
     import rescala.fullmv.transmitter.CirceSerialization._
-    implicit val host  = this
-    val derivedBinding: Binding[Signal[Data[Merge[Data[Int]]]], Future[Signal[Data[Merge[Data[Int]]]]]] = ??? //  = Binding[Signal[Data[Merge[Data[Int]]]]]("derived")
+    implicit val host = this
+    val derivedBinding: Binding[Signal[Data[Merge[Data[Int]]]], Future[Signal[Data[Merge[Data[Int]]]]]] =
+      ??? //  = Binding[Signal[Data[Merge[Data[Int]]]]]("derived")
   }
 
   class SideHost(name: String) extends Host(name) {
@@ -41,7 +42,8 @@ object XShapeSerializabilityTest {
     import io.circe.generic.auto._
     import rescala.fullmv.transmitter.CirceSerialization._
 
-    val sourceBinding: Binding[Signal[Data[Int]], Future[Signal[Data[Int]]]] = ??? //  = Binding[Signal[Data[Int]]]("source")
+    val sourceBinding: Binding[Signal[Data[Int]], Future[Signal[Data[Int]]]] =
+      ??? //  = Binding[Signal[Data[Int]]]("source")
 
     val source       = Var(0)
     val taggedSource = source.map(Data(name, _))

@@ -12,7 +12,7 @@ object Bindings {
   import rescala.fullmv.transmitter.CirceSerialization._
   implicit val host: FullMVEngine = scheduler
 
-  val testBinding     = Binding[Int => Int]("test")
+  val testBinding                                                    = Binding[Int => Int]("test")
   val variableBinding: Binding[Signal[(Int)], Future[Signal[(Int)]]] = ??? //  = Binding[Signal[Int]]("variable")
 }
 

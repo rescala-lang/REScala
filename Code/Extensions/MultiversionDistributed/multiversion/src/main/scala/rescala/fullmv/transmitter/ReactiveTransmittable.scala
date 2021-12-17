@@ -421,7 +421,7 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
       final case class Exceptional(serializedThrowable: Array[Byte]) extends Pluse[Nothing]
     }
 
-    //implicit def signalTransmittable[P, S](implicit
+    // implicit def signalTransmittable[P, S](implicit
     //    host: FullMVEngine,
     //    messageTransmittable: Transmittable[
     //      MessageWithInfrastructure[Msg[Pluse[P]]],
@@ -429,7 +429,7 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
     //      MessageWithInfrastructure[Msg[Pluse[P]]]
     //    ],
     //    serializable: Serializable[S]
-    //): Transmittable[Signal[P], S, Signal[P]] =
+    // ): Transmittable[Signal[P], S, Signal[P]] =
     //  new ReactiveTransmittable[P, Signal[P], S] {
     //    override def instantiate(
     //        state: FullMVState[Pulse[P], FullMVTurn, ReSource, Derived],
@@ -445,7 +445,7 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
     //    override val isTransient                                        = false
     //    override def toPulse(reactive: Signal[P]): reactive.Value => Pulse[P] = v => v
     //  }
-    //implicit def eventTransmittable[P, S](implicit
+    // implicit def eventTransmittable[P, S](implicit
     //    host: FullMVEngine,
     //    messageTransmittable: Transmittable[
     //      MessageWithInfrastructure[Msg[Pluse[P]]],
@@ -453,7 +453,7 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
     //      MessageWithInfrastructure[Msg[Pluse[P]]]
     //    ],
     //    serializable: Serializable[S]
-    //): Transmittable[Event[P], S, Event[P]] =
+    // ): Transmittable[Event[P], S, Event[P]] =
     //  new ReactiveTransmittable[P, Event[P], S] {
     //    override def instantiate(
     //        state: FullMVState[Pulse[P], FullMVTurn, ReSource, Derived],

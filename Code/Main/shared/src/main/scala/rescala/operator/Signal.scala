@@ -14,7 +14,8 @@ object SignalMacroImpl {
 }
 
 trait SignalBundle {
-  selfType: RescalaInterface with SignalCompatBundle with EventBundle with SignalBundle with Sources with DefaultImplementations
+  selfType: RescalaInterface with SignalCompatBundle with EventBundle with SignalBundle with Sources
+    with DefaultImplementations
     with Observing with Core =>
 
   /** Time changing value derived from the dependencies.
@@ -92,7 +93,7 @@ trait SignalBundle {
 
     // ================== Derivations ==================
 
-    //final def recover[R >: A](onFailure: Throwable => R)(implicit ticket: TurnSource): Signal[R, S = recover(PartialFunction(onFailure))
+    // final def recover[R >: A](onFailure: Throwable => R)(implicit ticket: TurnSource): Signal[R, S = recover(PartialFunction(onFailure))
 
     @cutOutOfUserComputation
     final def abortOnError(message: String)(implicit ticket: CreationTicket): Signal[T] =

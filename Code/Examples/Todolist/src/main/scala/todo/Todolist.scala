@@ -17,7 +17,7 @@ object Todolist {
     println(storagePrefix)
 
     val todoApp = new TodoAppUI(storagePrefix)
-    val div = todoApp.getContents()
+    val div     = todoApp.getContents()
 
     val webrtc = WebRTCHandling(registry)
 
@@ -25,6 +25,5 @@ object Todolist {
     document.body.appendChild(webrtc.webrtcHandlingArea.render)
 
   }
-
 
 }

@@ -20,11 +20,11 @@ object MainWindow extends SimpleSwingApplication {
     new MainFrame {
       import scala.language.reflectiveCalls
 
-      game.gameWon += { winner => //#HDL
+      game.gameWon += { winner => // #HDL
         Dialog.showMessage(ui, "Game won by " + winner, "Game ended", Dialog.Message.Info)
       }
 
-      game.remainCountChanged += { count => //#HDL
+      game.remainCountChanged += { count => // #HDL
         ui.counterBar.text =
           "White: " + count(White) + " / " +
             "Black: " + count(Black)
@@ -68,11 +68,11 @@ class MillDrawer(val game: MillGame) extends ReComponent(preferredSize = new Dim
   val MiddlePercent = 2f / 3
   val InnerPercent  = 1f / 3
 
-  val squareSize: Signal[Int] = Signal { //#SIG
+  val squareSize: Signal[Int] = Signal { // #SIG
     (math.min(size().width, size().height) * SizePercent).toInt
   }
 
-  val coordinates = Signal { //#SIG
+  val coordinates = Signal { // #SIG
     val midX     = size().width / 2
     val midY     = size().height / 2
     val xFactors = List.fill(3)(List(-1, -1, -1, 0, 1, 1, 1, 0)).flatten
@@ -89,19 +89,19 @@ class MillDrawer(val game: MillGame) extends ReComponent(preferredSize = new Dim
     }
   }
 
-  val board = Signal { //#SIG
+  val board = Signal { // #SIG
     val offset = (2 * StoneRadius, 2 * StoneRadius)
     val size   = squareSize() + 4 * StoneRadius
     Rect(coordinates()(16) - offset, size, size)
   }
 
-  val lines = Signal { //#SIG
+  val lines = Signal { // #SIG
     MillBoard.lines map { indices =>
       Line(coordinates()(indices.head.index), coordinates()(indices.last.index))
     }
   }
 
-  val selectedIndex = Signal { //#SIG
+  val selectedIndex = Signal { // #SIG
     game.stateVar() match {
       case MoveStoneDrop(_, index) => index
       case JumpStoneDrop(_, index) => index
@@ -109,7 +109,7 @@ class MillDrawer(val game: MillGame) extends ReComponent(preferredSize = new Dim
     }
   }
 
-  val highlightedIndex = Signal { //#SIG
+  val highlightedIndex = Signal { // #SIG
     val index = mouse.moves.moved.latestOption().apply() match {
       case Some(e) => coordinates() indexWhere {
           p => (p.distance((e.point.x, e.point.y))) < ClickArea
@@ -119,7 +119,7 @@ class MillDrawer(val game: MillGame) extends ReComponent(preferredSize = new Dim
     SlotIndex(index)
   }
 
-  val moveLines = Signal { //#SIG
+  val moveLines = Signal { // #SIG
     val possibleMoves =
       if (selectedIndex() == SlotIndex(-1))
         game.possibleNextMoves() filter {
@@ -138,16 +138,16 @@ class MillDrawer(val game: MillGame) extends ReComponent(preferredSize = new Dim
   }
 
   val indexClicked =
-    (mouse.clicks.released map { e: MouseReleased => //#EF
+    (mouse.clicks.released map { e: MouseReleased => // #EF
       val index = coordinates.value.indexWhere {
         p => (p distance ((e.point.x, e.point.y))) < ClickArea
       }
       SlotIndex(index)
-    }) && (_ != SlotIndex(-1)) //#EF
+    }) && (_ != SlotIndex(-1)) // #EF
 
   val backgroundRect = Signal { Rect(0, 0, bounds().width, bounds().height) } // #SIG
 
-  val presentation = Signal { //#SIG
+  val presentation = Signal { // #SIG
     // background and board
     Seq(
       Presentation(backgroundRect(), color = Color.GRAY),
@@ -169,9 +169,9 @@ class MillDrawer(val game: MillGame) extends ReComponent(preferredSize = new Dim
       })
   }
 
-  indexClicked += { index => game.playerInput(index) } //#HDL
+  indexClicked += { index => game.playerInput(index) } // #HDL
 
-  presentation.changed += { _ => this.repaint() } //#HDL
+  presentation.changed += { _ => this.repaint() } // #HDL
 
   override def paintComponent(g: Graphics2D): Unit = {
     g.setRenderingHint(

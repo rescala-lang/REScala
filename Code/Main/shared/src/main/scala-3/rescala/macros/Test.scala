@@ -11,16 +11,16 @@ object Main {
 
     val derived = dottyEventExpression[Int] {
       (iAmAnEvt.value, iAmToo.value) match {
-        case (None, b) => b
-        case (a, None) => a
+        case (None, b)          => b
+        case (a, None)          => a
         case (Some(a), Some(b)) => Some(a + b)
-        case other => None
+        case other              => None
       }
     }
 
     derived.observe(println)
 
-    //Events.dynamic() { dt =>
+    // Events.dynamic() { dt =>
     //  {
     //    implicit def idt: DynamicTicket = dt
     //    dottyEventExpression({
@@ -34,7 +34,7 @@ object Main {
     //    println("reevaluated!")
     //    None
     //  }
-    //}
+    // }
     iAmToo.fire(10)
     iAmAnEvt.fire(5)
     iAmThree.fire(6)

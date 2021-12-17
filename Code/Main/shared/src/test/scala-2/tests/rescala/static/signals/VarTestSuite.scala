@@ -48,7 +48,9 @@ class VarTestSuite extends RETests {
     test("dependant Is Only Invoked On Value Change") {
       var changes = 0
       val v       = Var(1)
-      val s       = v.map { i => changes += 1; i + 1 }
+      val s = v.map { i =>
+        changes += 1; i + 1
+      }
       assert(s.readValueOnce == 2)
       assert(changes == 1)
       v.set(2)

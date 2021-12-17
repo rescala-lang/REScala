@@ -75,7 +75,8 @@ trait Core {
     def accessTicket(): AccessTicket
 
     /** hook for schedulers to globally collect all created resources,
-      * usually does nothing */
+      * usually does nothing
+      */
     protected[this] def register(reactive: ReSource): Unit = ()
 
     /** Correctly initializes [[ReSource]]s */
@@ -159,8 +160,8 @@ trait Core {
       * and are also returned in the resulting dependencies.
       */
     final def trackDependencies(initial: Set[ReSource]): ReevTicket[V] = { collectedDependencies = initial; this }
-    final def trackStatic(): ReevTicket[V] = { collectedDependencies = null; this }
-    final def withPropagate(p: Boolean): ReevTicket[V] = { _propagate = p; this }
+    final def trackStatic(): ReevTicket[V]                             = { collectedDependencies = null; this }
+    final def withPropagate(p: Boolean): ReevTicket[V]                 = { _propagate = p; this }
     final def withValue(v: V): ReevTicket[V] = {
       require(v != null, "value must not be null");
       value = v;
@@ -241,7 +242,7 @@ trait Core {
 
   /** Enables the creation of other reactives */
   @implicitNotFound(msg = "Could not find capability to create reactives. Maybe a missing import?")
-  //@scala.annotation.nowarn("msg=The outer reference in this type test cannot be checked at run time.")
+  // @scala.annotation.nowarn("msg=The outer reference in this type test cannot be checked at run time.")
   final class CreationTicket(val self: Either[Initializer, Scheduler], val rename: ReName) {
 
     private[rescala] def create[V, T <: Derived](

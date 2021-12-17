@@ -106,7 +106,7 @@ abstract class Animal(implicit world: World) extends BoardElement {
     Moving(Pos(randx, randy))
   }
 
-  final val age: Signal[Int] = world.time.day.changed.count() //#SIG //#IF //#IF
+  final val age: Signal[Int] = world.time.day.changed.count() // #SIG //#IF //#IF
 
   final val isAdult: Signal[Boolean] = age.map(_ > Animal.FertileAge)(CreationTicket.fromSchedulerImplicit)
 

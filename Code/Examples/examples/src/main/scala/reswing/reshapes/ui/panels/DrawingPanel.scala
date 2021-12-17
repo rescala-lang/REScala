@@ -42,7 +42,7 @@ class DrawingPanel(val state: DrawingSpaceState) extends Panel {
         shape.draw(g)
   }
 
-  lazy val drawn = Evt[Command]() //#EVT
+  lazy val drawn = Evt[Command]() // #EVT
 
   listenTo(mouse.clicks, mouse.moves)
 
@@ -86,10 +86,10 @@ class DrawingPanel(val state: DrawingSpaceState) extends Panel {
       repaint()
   }
 
-  (state.selectedShape.changed ||        //#IF //#EF
-    state.shapes.changed ||              //#IF //#EF
-    state.strokeWidth.changed ||         //#IF //#EF
-    state.color.changed) += canvasChange //#IF //#HDL
+  (state.selectedShape.changed ||        // #IF //#EF
+    state.shapes.changed ||              // #IF //#EF
+    state.strokeWidth.changed ||         // #IF //#EF
+    state.color.changed) += canvasChange // #IF //#HDL
 
   def canvasChange(x: Any) = repaint()
 }

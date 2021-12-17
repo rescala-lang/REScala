@@ -4,7 +4,7 @@ import java.util.concurrent.TimeUnit
 
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
-import rescala.fullmv.DistributedFullMVApi.{CreationTicket, ReactiveLocalClone, FullMVEngine, Signal,Var}
+import rescala.fullmv.DistributedFullMVApi.{CreationTicket, ReactiveLocalClone, FullMVEngine, Signal, Var}
 import rescala.core.{ReName}
 import rescala.fullmv.mirrors.localcloning.{FakeDelayer}
 
@@ -18,7 +18,7 @@ import scala.concurrent.duration._
 @Threads(1)
 @State(Scope.Benchmark)
 class DistributedSignalMapGrid {
-  var sourceEngine: FullMVEngine                                           = _
+  var sourceEngine: FullMVEngine                             = _
   var source: Var[Int]                                       = _
   var nodes: Seq[Seq[(FullMVEngine, Seq[Seq[Signal[Int]]])]] = _
   @Param(Array("50"))
@@ -64,7 +64,9 @@ class DistributedSignalMapGrid {
             val name = s"map-$dh-$wh-$dn-$wn"
 //            println(s"transforming $name from $from")
             ReName.named(name) { implicit ! =>
-              from.map { v => Blackhole.consumeCPU(work); v + 1 }(CreationTicket.fromScheduler(host))
+              from.map { v =>
+                Blackhole.consumeCPU(work); v + 1
+              }(CreationTicket.fromScheduler(host))
             }
           }
           res2

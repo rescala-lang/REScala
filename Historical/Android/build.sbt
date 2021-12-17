@@ -1,8 +1,8 @@
 // set the prompt (for this build) to include the project id.
 shellPrompt in ThisBuild := { state => Project.extract(state).currentRef.project + "> " }
 // do not spam console with too many errors
-maxErrors := 5
-crossScalaVersions := Seq(cfg.version_211)
+maxErrors                 := 5
+crossScalaVersions        := Seq(cfg.version_211)
 (incOptions in ThisBuild) := (incOptions in ThisBuild).value.withLogRecompileOnMacro(false)
 
 lazy val androidRescala =
@@ -42,7 +42,7 @@ lazy val reandroidthings = project.in(file("REAndroidThings"))
   .settings(
     commonAndroidSettings,
     resolvers += Resolver.bintrayRepo("google", "androidthings"),
-    name := "reandroidthings",
+    name                                                      := "reandroidthings",
     libraryDependencies += "com.google.android.things"         % "androidthings"  % "0.4.1-devpreview" % "provided",
     libraryDependencies += "com.google.android.things.contrib" % "driver-bmx280"  % "0.3"              % "compile",
     libraryDependencies += "com.google.android.things.contrib" % "driver-ht16k33" % "0.3"              % "compile"
@@ -74,8 +74,8 @@ lazy val androidDependencies = libraryDependencies ++= Seq(
 
 lazy val androidAware = Seq(
   buildToolsVersion in Android := Some("26.0.1"),
-  minSdkVersion in Android := "24",
-  platformTarget in Android := "android-26",
+  minSdkVersion in Android     := "24",
+  platformTarget in Android    := "android-26",
   javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
   exportJars := true
 )
@@ -98,7 +98,7 @@ lazy val cfg = new {
 
   val base = List(
     organization := "de.tuda.stg",
-    version := "0.20.0",
+    version      := "0.20.0",
     scalaVersion := version_211,
     baseScalac,
     autoAPIMappings := true // scaladoc
@@ -111,7 +111,7 @@ lazy val cfg = new {
   )
 
   val noPublish = List(
-    publish := {},
+    publish      := {},
     publishLocal := {}
   )
 
@@ -128,18 +128,18 @@ lazy val cfg = new {
   )
 
   lazy val strictScalac = scalacOptions ++= List(
-    //"-Xlog-implicits" ,
-    //"-Yno-predef" ,
-    //"-Yno-imports" ,
+    // "-Xlog-implicits" ,
+    // "-Yno-predef" ,
+    // "-Yno-imports" ,
     "-Xfatal-warnings",
-    //"-Yinline-warnings" ,
+    // "-Yinline-warnings" ,
     "-Yno-adapted-args",
     "-Ywarn-dead-code",
     "-Ywarn-nullary-override",
     "-Ywarn-nullary-unit",
     "-Ywarn-numeric-widen"
-    //"-Ywarn-value-discard" ,
-    //"-Ymacro-debug-lite" ,
+    // "-Ywarn-value-discard" ,
+    // "-Ymacro-debug-lite" ,
   )
 
   lazy val snapshotAssertions = scalacOptions ++= (if (!version.value.endsWith("-SNAPSHOT"))

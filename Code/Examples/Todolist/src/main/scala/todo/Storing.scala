@@ -11,14 +11,15 @@ object Storing {
       val item = dom.window.localStorage.getItem(key)
       if (item == null) default
       else {
-        val res = try { readFromString[A](item) }
-        catch {
-          case cause: Throwable =>
-            println(s"could not restore $key: $cause")
-            cause.printStackTrace()
-            dom.window.localStorage.removeItem(key)
-            default
-        }
+        val res =
+          try { readFromString[A](item) }
+          catch {
+            case cause: Throwable =>
+              println(s"could not restore $key: $cause")
+              cause.printStackTrace()
+              dom.window.localStorage.removeItem(key)
+              default
+          }
         println(s"restored $res")
         res
       }

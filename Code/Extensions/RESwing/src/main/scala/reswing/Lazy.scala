@@ -7,7 +7,7 @@ final class Lazy[+T](init: => T) {
   private[this] var defined    = false
   private[this] lazy val value = init
 
-  def isDefined = defined
+  def isDefined  = defined
   def apply(): T = { defined = true; value }
 }
 

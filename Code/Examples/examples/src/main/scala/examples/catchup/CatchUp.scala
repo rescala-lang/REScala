@@ -86,7 +86,7 @@ class CatchUp {
       val myFont = new Font("Tahoma", java.awt.Font.PLAIN, SizeY)
       override def paintComponent(g: Graphics2D): Unit = {
         transaction(catchBox, caught, upBox, scoreString) { t =>
-          //val fontMetrics = g.getFontMetrics(myFont)
+          // val fontMetrics = g.getFontMetrics(myFont)
           g.setColor(java.awt.Color.DARK_GRAY)
           g.fill(t.now(catchBox))
           if (t.now(caught))

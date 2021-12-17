@@ -103,8 +103,8 @@ object Dependencies {
   object loci {
     def generic(n: String): Def.Initialize[sbt.ModuleID] =
       if (V.scalaLoci.size > 20)
-           Def.setting("com.github.scala-loci.scala-loci" %%% s"scala-loci-$n" % V.scalaLoci)
-      else Def.setting("io.github.scala-loci"             %%% s"scala-loci-$n" % V.scalaLoci)
+        Def.setting("com.github.scala-loci.scala-loci" %%% s"scala-loci-$n" % V.scalaLoci)
+      else Def.setting("io.github.scala-loci"          %%% s"scala-loci-$n" % V.scalaLoci)
 
     val communication = generic("communication")
     val circe         = generic("serializer-circe")

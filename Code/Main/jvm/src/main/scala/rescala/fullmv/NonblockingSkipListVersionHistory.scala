@@ -147,7 +147,7 @@ trait FullMvStateBundle extends FullMVBundle {
       init,
       null, {
         val iv = valuePersistency
-        //TODO: this SHOULD be Written(iv, unchange(iv)), but unchange is no longer available at this point …
+        // TODO: this SHOULD be Written(iv, unchange(iv)), but unchange is no longer available at this point …
         Written(iv, iv)
       },
       null

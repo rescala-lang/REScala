@@ -21,13 +21,13 @@ class ShapePanel extends BoxPanel(Orientation.Vertical) {
   @cutOutOfUserComputation
   def state = ReShapes.drawingSpaceState
 
-  val shapes = Signal.dynamic { if (state() != null) state().shapes() else List.empty } //#SIG
+  val shapes = Signal.dynamic { if (state() != null) state().shapes() else List.empty } // #SIG
 
-  val shapeViews = Signal { shapes() map { shape => new ShapeView(shape, state()) } } //#SIG
+  val shapeViews = Signal { shapes() map { shape => new ShapeView(shape, state()) } } // #SIG
 
   val shapesPanel = new ReBoxPanel(
     orientation = Orientation.Vertical,
-    contents = Signal[Seq[Component]] { //#SIG
+    contents = Signal[Seq[Component]] { // #SIG
       shapeViews() map { shapeView: ShapeView => shapeView: Component }
     }
   )
@@ -36,7 +36,7 @@ class ShapePanel extends BoxPanel(Orientation.Vertical) {
     contents = shapesPanel
   }
 
-  val deleted = UnionEvent(Signal { shapeViews() map { shapeView => shapeView.deleted } }) //#SIG //#UE( //#EVT //#IF )
+  val deleted = UnionEvent(Signal { shapeViews() map { shapeView => shapeView.deleted } }) // #SIG //#UE( //#EVT //#IF )
 }
 
 class ShapeView(shape: Shape, state: DrawingSpaceState) extends ReBoxPanel(Orientation.Horizontal) {
@@ -45,18 +45,18 @@ class ShapeView(shape: Shape, state: DrawingSpaceState) extends ReBoxPanel(Orien
 
   val deleteButton = new ReButton("delete")
 
-  val deleted: Event[DeleteShape] = //#EVT
-    deleteButton.clicked map { _: Any => new DeleteShape(shape) } //#EF
+  val deleted: Event[DeleteShape] = // #EVT
+    deleteButton.clicked map { _: Any => new DeleteShape(shape) } // #EF
 
   peer.background = NOT_SELECTED_COLOR
   peer.contents += new Label(shape.toString)
   peer.contents += deleteButton
 
-  mouse.clicks.clicked += { _ => //#HDL
+  mouse.clicks.clicked += { _ => // #HDL
     state.select.fire(if (state.selectedShape.now != shape) shape else null)
   }
 
-  state.selectedShape.changed += { selected => //#HDL
+  state.selectedShape.changed += { selected => // #HDL
     peer.background = if (selected == shape) SELECTED_COLOR else NOT_SELECTED_COLOR
   }
 }

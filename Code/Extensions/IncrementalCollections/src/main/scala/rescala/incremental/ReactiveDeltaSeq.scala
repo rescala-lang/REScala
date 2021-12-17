@@ -191,7 +191,7 @@ trait ReactiveDeltaSeq[T, S <: Struct] extends ReSource[S] {
       resInt: ReSerializable[Int]
   ): Signal[Boolean, S] = {
     // find all seqElements which equal element
-    val instancesNumber = count { seqElement: T => ord.equiv(element, seqElement) } //TODO:test
+    val instancesNumber = count { seqElement: T => ord.equiv(element, seqElement) } // TODO:test
     // if more than 1 found
     instancesNumber.map(x => x > 0)
   }
@@ -231,14 +231,14 @@ trait ReactiveDeltaSeq[T, S <: Struct] extends ReSource[S] {
         if (trackingSequence.isEmpty) {
           (delta.value, delta.value) +: trackingSequence
         } else {
-          var min = trackingSequence.head._2 //current minimum
+          var min = trackingSequence.head._2 // current minimum
           if (ord.compare(delta.value, min) < 0) // update if added element is smaller
             min = delta.value
           (delta.value, min) +: trackingSequence // prepend to the tracking-sequence
         }
       }
     )(
-      //unfold operation
+      // unfold operation
       (trackingSequence: mutable.IndexedSeq[(T, T)], delta: Delta[T]) => {
         // index of element, being removed
         val deletionIndex = trackingSequence.indexWhere(element => ord.compare(element._1, delta.value) == 0)
@@ -439,7 +439,7 @@ class IncSeq[T, S <: Struct] private[rescala] (initialState: IncSeq.SeqState[T, 
 
   private val elements: mutable.Map[T, Int] = mutable.HashMap()
 
-  override protected[rescala] def reevaluate(input: ReIn): Rout = ??? //TODO what comes here...
+  override protected[rescala] def reevaluate(input: ReIn): Rout = ??? // TODO what comes here...
 
   def add(value: T)(implicit fac: Scheduler[S]): Unit =
     fac.executeTurn(this) {

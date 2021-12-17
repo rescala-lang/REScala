@@ -108,7 +108,7 @@ class ReactiveMacros(val c: blackbox.Context) {
     private val prefixTermName: TermName = TermName(c.freshName("prefix$"))
     val prefixIdent: Ident               = Ident(prefixTermName)
     def prefixValue: Tree = {
-      //val prefixTree = c.prefix.tree
+      // val prefixTree = c.prefix.tree
       internal.updateAttachment(prefixIdent, IsCutOut)
       internal.setType(prefixIdent, c.prefix.actualType)
       q"$prefixIdent.value"
@@ -163,7 +163,7 @@ class ReactiveMacros(val c: blackbox.Context) {
     if (c.hasErrors) return compileErrorsAst
 
     // TODO: placeholder symbol
-    //val eventsSymbol = weakTypeOf[rescala.operator.EventsMacroImpl.type].termSymbol.asTerm.name
+    // val eventsSymbol = weakTypeOf[rescala.operator.EventsMacroImpl.type].termSymbol.asTerm.name
     val ticketType  = weakTypeOf[StaticTicket]
     val funcImpl    = weakTypeOf[rescala.operator.EventsMacroImpl.FoldFuncImpl.type].typeSymbol.asClass.module
     val pm          = new PrefixManipulation()
@@ -268,7 +268,7 @@ class ReactiveMacros(val c: blackbox.Context) {
     override def transform(tree: Tree): Tree =
       tree match {
         // replace any used CreationTicket in a Signal expression with the correct turn source for the current turn
-        //q"$_.fromSchedulerImplicit[..$_](...$_)"
+        // q"$_.fromSchedulerImplicit[..$_](...$_)"
         // TODO: this was disabled because of the bundle hack, need to figure out how to access creation ticket again
         case turnSource @ Apply(Select(ctleft, TermName("fromSchedulerImplicit")), _)
             if turnSource.tpe.typeSymbol.name == weakTypeOf[CreationTicket].typeSymbol.name

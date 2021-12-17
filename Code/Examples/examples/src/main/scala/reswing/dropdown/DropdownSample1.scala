@@ -33,7 +33,7 @@ object DropdownSample1 extends SimpleSwingApplication {
           }
         }
 
-      //val listOfSignals = Signal {List(val1, val2, val3, val4)}
+      // val listOfSignals = Signal {List(val1, val2, val3, val4)}
 
       val dropdown       = new ReDynamicComboBox(options = options, selection = -1)
       val selectionIndex = Signal { dropdown.selection() }

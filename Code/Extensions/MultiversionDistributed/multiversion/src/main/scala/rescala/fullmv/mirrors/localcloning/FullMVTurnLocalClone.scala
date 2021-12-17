@@ -3,13 +3,16 @@ package rescala.fullmv.mirrors.localcloning
 import rescala.fullmv.mirrors._
 import rescala.fullmv.sgt.synchronization._
 import rescala.fullmv.tasks.TaskBundle
-import rescala.fullmv.{FullMVBundle, FullMVUtil, FullMvStateBundle, TransactionSpanningTreeNode, TurnImplBundle, TurnPhase}
+import rescala.fullmv.{
+  FullMVBundle, FullMVUtil, FullMvStateBundle, TransactionSpanningTreeNode, TurnImplBundle, TurnPhase
+}
 
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 
 trait FullMVTurnLocalCloneBundle extends FullMVBundle {
-  selfType: Mirror with TurnImplBundle with TaskBundle with FullMvStateBundle with SubsumableLockBundle with FullMVTurnReflectionBundle =>
+  selfType: Mirror with TurnImplBundle with TaskBundle with FullMvStateBundle with SubsumableLockBundle
+    with FullMVTurnReflectionBundle =>
 
   object FullMVTurnLocalClone {
     def withPredecessorReplication(

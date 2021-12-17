@@ -145,8 +145,8 @@ trait CalculusLike extends Core {
     def run(): Propagation = {
       // make this available, as we may need it to create new reactives
       FScheduler.currentPropagation = this
-      //println("propagating:")
-      //println(s"active: $active\nprocessed: $processed\n" +
+      // println("propagating:")
+      // println(s"active: $active\nprocessed: $processed\n" +
       //        s"ready: $ready\noutdated: $outdated\nall: $allReactives\n" +
       //        s"unprocessed: $unprocessed")
 
@@ -159,7 +159,7 @@ trait CalculusLike extends Core {
         // if there is anything to skip, we just skip all of them at once
         val toSkip = ready -- outdated
         if (toSkip.nonEmpty) {
-          //println(s"skipping: $toSkip")
+          // println(s"skipping: $toSkip")
           Propagation(active, processed ++ toSkip, knownReactives, creationTicket).run()
         }
         // if there is nothing to skip, we continue with reevaluation
@@ -248,7 +248,7 @@ trait CalculusLike extends Core {
       reev.inputs() match {
         case None => // static reactive
           finishReevaluation()
-        case Some(inputs) => //dynamic reactive
+        case Some(inputs) => // dynamic reactive
           reactive.state.inputs = inputs
           if (dynamicOk(reactive)) finishReevaluation()
           else (false, reev.activate)

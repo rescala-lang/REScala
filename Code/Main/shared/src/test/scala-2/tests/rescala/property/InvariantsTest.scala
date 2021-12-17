@@ -140,7 +140,7 @@ class InvariantsTest extends RETests with ScalaCheckDrivenPropertyChecks with Ma
   }
 
   "all invariants get tested" in forAll(Gen.choose(1, 50), Gen.choose(0, 49)) { (n: Int, failingIndex: Int) =>
-    //Create an arbitrary amount of invariants and select one to fail
+    // Create an arbitrary amount of invariants and select one to fail
     whenever(failingIndex < n) {
       val invariants = 0 to n map { i =>
         new Invariant[Int](
@@ -156,7 +156,7 @@ class InvariantsTest extends RETests with ScalaCheckDrivenPropertyChecks with Ma
       v.setValueGenerator(Gen.posNum[Int])
       sut.specify(invariants: _*)
 
-      //expect the correct invariant to fail
+      // expect the correct invariant to fail
       val caught = intercept[InvariantViolationException] { sut.test() }
       val regex  = "$Value\\(.*\\) violates invariant invariant" + failingIndex + ".*"
       caught.getMessage.matches(regex)

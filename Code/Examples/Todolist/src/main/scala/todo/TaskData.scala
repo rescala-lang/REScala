@@ -104,18 +104,18 @@ class TaskRefObj(toggleAll: Event[UIEvent], storePrefix: String) {
 
     val deltaEvt = Evt[Delta[LWWRegister.State[TaskData, DietMapCContext]]]()
 
-    //type Carrier = LWWRegister.State[TaskData, DietMapCContext]
+    // type Carrier = LWWRegister.State[TaskData, DietMapCContext]
     //
-    //val merge = implicitly[UIJDLattice[Carrier]]
+    // val merge = implicitly[UIJDLattice[Carrier]]
     //
-    //val crdtAlt = DeltaStateReactive.create[Carrier, Carrier](
+    // val crdtAlt = DeltaStateReactive.create[Carrier, Carrier](
     //  lww,
     //  deltaEvt,
     //  (s, d) => merge.merge(s, d),
     //  Seq(
     //    { (dt: DynamicTicket, current: Carrier) => dt.depend(doneEv); current },
     //  )
-    //)
+    // )
 
     val crdt = Storing.storedAs(storePrefix + taskID, lww) { init =>
       Events.foldAll(init)(current =>

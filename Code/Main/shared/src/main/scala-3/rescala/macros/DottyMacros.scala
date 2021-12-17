@@ -12,7 +12,7 @@ class FindInterp extends ExprMap {
   override def transform[T](e: Expr[T])(using Type[T])(using Quotes): Expr[T] = {
     import quotes.reflect.*
     e match {
-      case '{(${x}: MacroAccess[_, _]).value} =>
+      case '{ (${ x }: MacroAccess[_, _]).value } =>
         println(s"extracting ${x.show}")
         found ::= x
         e
@@ -33,7 +33,7 @@ def detectImpl[T: Type](expr: Expr[Option[T]])(using Quotes): Expr[Event[T]] =
     override def transform[T](e: Expr[T])(using Type[T])(using Quotes): Expr[T] = {
       import quotes.reflect.*
       e match {
-        case '{(${x}: MacroAccess[_, interp]).value} =>
+        case '{ (${ x }: MacroAccess[_, interp]).value } =>
           println(s"type ${TypeRepr.of[T].show}")
           println(s"wide type: ${TypeRepr.of[T].widen.show}")
           val wideType = TypeRepr.of[T].widen.asType
@@ -41,18 +41,20 @@ def detectImpl[T: Type](expr: Expr[Option[T]])(using Quotes): Expr[Event[T]] =
           println(s"replace: ${replaced.show}")
           val term = replaced.asExprOf[Interp[T]]
           println(s"term: ${term.show}")
-          '{(${staticTicket.asExprOf[StaticTicket]}.dependStatic[T](${term}))}
+          '{ (${ staticTicket.asExprOf[StaticTicket] }.dependStatic[T](${ term })) }
         case _ => transformChildren(e)
       }
     }
   }
 
-  //val exprSym = Symbol.newMethod(Symbol.spliceOwner, "reactiveExpr", TypeRepr.of[StaticTicket => Option[Any]])
+  // val exprSym = Symbol.newMethod(Symbol.spliceOwner, "reactiveExpr", TypeRepr.of[StaticTicket => Option[Any]])
 
-  val exprType = MethodType.apply(List("staticTicket"))((_: MethodType) => List(TypeRepr.of[StaticTicket]), (_ : MethodType) => TypeRepr.of[Option[T]])
+  val exprType = MethodType.apply(List("staticTicket"))(
+    (_: MethodType) => List(TypeRepr.of[StaticTicket]),
+    (_: MethodType) => TypeRepr.of[Option[T]]
+  )
 
-  //println(Printer.TreeStructure.show(expr.asTerm))
-
+  // println(Printer.TreeStructure.show(expr.asTerm))
 
   println(s"expr: ${expr.show}")
 
@@ -60,15 +62,23 @@ def detectImpl[T: Type](expr: Expr[Option[T]])(using Quotes): Expr[Event[T]] =
   val fi = FindInterp()
   fi.transform(expr)
   val found = fi.found
-  val res = ValDef.let(Symbol.spliceOwner, found.map(_.asTerm)){defs =>
+  val res = ValDef.let(Symbol.spliceOwner, found.map(_.asTerm)) { defs =>
     val replacementMap = found.zip(defs).toMap
-    //val rdef = DefDef(exprSym, {params =>
-    val rdef = Lambda(Symbol.spliceOwner, exprType, {(sym, params) =>
-      val staticTicket = params.head
-      ReplaceInterp(replacementMap, staticTicket).transform(expr).asTerm.changeOwner(sym)
-    })
+    // val rdef = DefDef(exprSym, {params =>
+    val rdef = Lambda(
+      Symbol.spliceOwner,
+      exprType,
+      { (sym, params) =>
+        val staticTicket = params.head
+        ReplaceInterp(replacementMap, staticTicket).transform(expr).asTerm.changeOwner(sym)
+      }
+    )
     println(s"rdef ${rdef.show}")
-    ('{Events.static(${Expr.ofSeq(defs.toSeq.map(_.asExprOf[ReSource]))} : _*){${rdef.asExprOf[StaticTicket => Option[T]]}}}).asTerm
+    ('{
+      Events.static(${ Expr.ofSeq(defs.toSeq.map(_.asExprOf[ReSource])) }: _*) {
+        ${ rdef.asExprOf[StaticTicket => Option[T]] }
+      }
+    }).asTerm
   }.asExprOf[Event[T]]
   println(s"res ${res.show}")
   res

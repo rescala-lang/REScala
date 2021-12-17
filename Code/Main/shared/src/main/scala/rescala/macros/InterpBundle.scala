@@ -4,7 +4,6 @@ import rescala.core.Core
 
 import scala.annotation.compileTimeOnly
 
-
 trait InterpBundle extends Core {
   trait InterpMacro[+A] extends Interp[A] with MacroAccess[A, Interp[A]]
 }

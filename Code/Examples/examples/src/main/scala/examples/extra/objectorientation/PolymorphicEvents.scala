@@ -9,7 +9,7 @@ class Keyboard {
 }
 
 class Numpad extends Keyboard {
-  //lazy val keyPressed = super.keyPressed && (_ => true)
+  // lazy val keyPressed = super.keyPressed && (_ => true)
   override def keyPressed     = super.keyPressed && (_ => true)
   override lazy val something = Signal { 1 }
 }

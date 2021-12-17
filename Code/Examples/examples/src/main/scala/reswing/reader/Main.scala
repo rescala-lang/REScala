@@ -19,17 +19,17 @@ import reswing.reader.network.Fetcher
 import reswing.reader.network.UrlChecker
 
 object Main extends App {
-  val tick    = Evt[Unit]() //#EVT
+  val tick    = Evt[Unit]() // #EVT
   val checker = new UrlChecker
   val fetcher = new Fetcher(checker.checkedURL.fold(Set.empty[URL])(_ + _))
   val parser  = new XmlParser
   val store   = new FeedStore(parser.channelParsed, parser.itemParsed)
   val app = new GUI(
     store,
-    (store.itemAdded map { x: RSSItem => //#EF
+    (store.itemAdded map { x: RSSItem => // #EF
       (x.srcChannel map (_.title) getOrElse "<unknown>") + ": " + x.title
-    }) latest "",    //#IF
-    Signal.dynamic { //#SIG
+    }) latest "",    // #IF
+    Signal.dynamic { // #SIG
       val itemCount = (store.channels() map { case (_, items) => items().size }).sum
       "Channels: " + store.channels().size + " Items: " + itemCount
     },
@@ -42,9 +42,9 @@ object Main extends App {
     m.mediate(fetcher, parser, store, checker)
   }
 
-  checker.urlIsInvalid += { _ => showInvalidUrlDialog() } //#HDL
+  checker.urlIsInvalid += { _ => showInvalidUrlDialog() } // #HDL
 
-  val sleepTime = 5000L //20000
+  val sleepTime = 5000L // 20000
 
   // ---------------------------------------------------------------------------
 
@@ -70,11 +70,11 @@ object Main extends App {
     Dialog.showMessage(null, "This url is not valid", "Invalid url", Message.Error, EmptyIcon)
 
   private def setupGuiEvents(): Unit = {
-    app.requestURLAddition += { url => checker.check(url) } //#HDL
+    app.requestURLAddition += { url => checker.check(url) } // #HDL
 
-    val guardedTick = tick && { _ => app.refreshAllowed.value } //#EVT //#EF
+    val guardedTick = tick && { _ => app.refreshAllowed.value } // #EVT //#EF
 
-    (app.refresh || guardedTick) += { _ => fetcher.fetchAll() } //#EF //#HDL
+    (app.refresh || guardedTick) += { _ => fetcher.fetchAll() } // #EF //#HDL
   }
 
   private def loadURLs(path: String): Option[Seq[String]] = {

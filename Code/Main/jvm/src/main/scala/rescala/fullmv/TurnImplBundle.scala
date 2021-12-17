@@ -71,7 +71,7 @@ trait TurnImplBundle extends FullMVBundle {
       Future.successful(())
     }
 
-    //========================================================Local State Control============================================================
+    // ========================================================Local State Control============================================================
 
 // TODO draft for async turn phase transitions
 //  val firstUnknownPredecessor = new AtomicInteger(0)
@@ -283,7 +283,7 @@ trait TurnImplBundle extends FullMVBundle {
       //    }
     }
 
-    //========================================================Ordering Search and Establishment Interface============================================================
+    // ========================================================Ordering Search and Establishment Interface============================================================
 
     def isTransitivePredecessor(txn: FullMVTurn): Boolean = {
       assert(txn.host == host, s"predecessor query for $txn before $this is hosted on ${txn.host} different from $host")
@@ -437,7 +437,7 @@ trait TurnImplBundle extends FullMVBundle {
       Future.successful(())
     }
 
-    //========================================================SSG SCC Mutual Exclusion Control============================================================
+    // ========================================================SSG SCC Mutual Exclusion Control============================================================
 
     override def getLockedRoot: Future[LockStateResult] = {
       val l = subsumableLock.get
@@ -559,7 +559,7 @@ trait TurnImplBundle extends FullMVBundle {
       }
     }
 
-    //========================================================ToString============================================================
+    // ========================================================ToString============================================================
 
     override def toString: String =
       s"FullMVTurn($guid on $host, ${TurnPhase.toString(phase)}${if (activeBranches.get != 0) s"(${activeBranches.get})"

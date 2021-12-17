@@ -11,8 +11,8 @@ object ConsoleReplication extends CommandApp(
 
 object Commandline {
 
-  val idArg: Opts[String]      = Opts.argument[String](metavar = "id")
-  val listenPortArg: Opts[Int] = Opts.argument[Int](metavar = "listenPort")
+  val idArg: Opts[String]            = Opts.argument[String](metavar = "id")
+  val listenPortArg: Opts[Int]       = Opts.argument[Int](metavar = "listenPort")
   val connectArg: Opts[List[String]] = Opts.arguments[String](metavar = "connectTo").orEmpty
 
   val peerCommand: Opts[Unit] = Opts.subcommand(
@@ -30,7 +30,6 @@ object Commandline {
         new Peer(id, listenPort, ipsAndPorts).run()
     }
   }
-
 
   val command: Command[Unit] = Command(name = "conrep", header = "test CRTDs on the console") {
     peerCommand

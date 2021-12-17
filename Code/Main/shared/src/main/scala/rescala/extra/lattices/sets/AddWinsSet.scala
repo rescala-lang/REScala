@@ -6,7 +6,7 @@ import rescala.extra.lattices.dotstores.{Causal, Dot, DotStoreLattice}
 import rescala.extra.lattices.{IdUtil, Lattice}
 
 case class AddWinsSet[A](store: Map[A, Set[Dot]], context: Set[Dot]) {
-  //(updatesCurrent[Set[(id, dot)], knownPast[Set[dot]], newData[Set[(id,data)])
+  // (updatesCurrent[Set[(id, dot)], knownPast[Set[dot]], newData[Set[(id,data)])
   // a delta always includes new (id,dot) pairs, the known causal context for the modified ids as well as the new data elements
 
   /** Adds a value conceptually from a new random replica */
@@ -29,7 +29,7 @@ case class AddWinsSet[A](store: Map[A, Set[Dot]], context: Set[Dot]) {
     //    (Set((id, dot)), past.getOrElse(id, Set()) + dot, Set((id, e)))
     // this is sufficient in my opinion:
     // for adds we don't have to know (in the CC) conflicting adds or removes for this element because adds win anyway
-    //AddWinsSet(Map(id -> Set(dot)), Set(dot), Map(e -> id))
+    // AddWinsSet(Map(id -> Set(dot)), Set(dot), Map(e -> id))
 
   }
 

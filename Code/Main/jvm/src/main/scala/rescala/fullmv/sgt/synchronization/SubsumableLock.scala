@@ -69,7 +69,7 @@ trait SubsumableLock extends SubsumableLockProxy with Hosted[SubsumableLock] {
   def asyncUnlock0(): Unit
 
   def asyncUnlock(): Unit = {
-    asyncUnlock0() //.onComplete {
+    asyncUnlock0() // .onComplete {
 //      case Success(()) =>
 //        if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this dropping temporary thread reference after unlock")
     localSubRefs(1)
@@ -108,7 +108,7 @@ trait SubsumableLock extends SubsumableLockProxy with Hosted[SubsumableLock] {
   }
 
   override def asyncRemoteRefDropped(): Unit = {
-    //if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this dropping remote reference")
+    // if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this dropping remote reference")
     localSubRefs(1)
   }
 

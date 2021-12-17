@@ -38,8 +38,8 @@ class FlattenTest extends RETests {
     }
 
     test("flatten Signal Seq") {
-      val v     = Var.empty[Seq[Signal[Int]]]
-      var count = 0
+      val v          = Var.empty[Seq[Signal[Int]]]
+      var count      = 0
       val v1, v2, v3 = { count += 1; Var(count) }
       v.set(List(v1, v2, v3))
 
@@ -57,8 +57,8 @@ class FlattenTest extends RETests {
     }
 
     test("flatten Signal Set") {
-      val v     = Var.empty[Set[Var[Int]]]
-      var count = 0
+      val v          = Var.empty[Set[Var[Int]]]
+      var count      = 0
       val v1, v2, v3 = { count += 1; Var(count) }
       v.set(Set(v1, v2, v3))
 
@@ -76,8 +76,8 @@ class FlattenTest extends RETests {
     }
 
     test("flatten Signal Array") {
-      val v     = Var.empty[Array[Var[Int]]]
-      var count = 0
+      val v          = Var.empty[Array[Var[Int]]]
+      var count      = 0
       val v1, v2, v3 = { count += 1; Var(count) }
       v.set(Array(v1, v2, v3))
 
@@ -161,7 +161,7 @@ class FlattenTest extends RETests {
       assert(lastEvent == 1)
       e2.fire(2)
       assert(lastEvent == 1)
-      eventSelector set e2 //select new event source
+      eventSelector set e2 // select new event source
       e2.fire(3)
       assert(lastEvent == 3)
       e1.fire(4)

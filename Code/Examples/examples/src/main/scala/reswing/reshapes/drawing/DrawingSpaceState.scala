@@ -12,36 +12,36 @@ import scala.xml.{Attribute, Null, Text, XML}
 /** Represents the current state of one drawing space */
 class DrawingSpaceState {
   // selected shape to be drawn
-  lazy val nextShape: Signal[Shape] = Signal[Shape] { new Line(this) } //#SIG
+  lazy val nextShape: Signal[Shape] = Signal[Shape] { new Line(this) } // #SIG
   // currently selected shape inside the drawing space
-  final lazy val selectedShape: Signal[Shape] = //#SIG
-    ((shapes.changed && { shapes => //#IF  //#EF
+  final lazy val selectedShape: Signal[Shape] = // #SIG
+    ((shapes.changed && { shapes => // #IF  //#EF
       !(shapes contains selectedShape.value)
     } map { _: Any => null }) ||
-      (select && { shape => //#EF
+      (select && { shape => // #EF
         shape == null || (shapes.value contains shape)
-      })) latest null //#IF
+      })) latest null // #IF
   // currently drawn shapes
-  final lazy val shapes: Signal[List[Shape]] = Signal { commandsShapes() match { case (_, shapes) => shapes } } //#SIG
+  final lazy val shapes: Signal[List[Shape]] = Signal { commandsShapes() match { case (_, shapes) => shapes } } // #SIG
   // all executed commands
   final lazy val commands: Signal[List[Command]] =
-    Signal { commandsShapes() match { case (commands, _) => commands } } //#SIG
+    Signal { commandsShapes() match { case (commands, _) => commands } } // #SIG
   // current stroke width
-  lazy val strokeWidth = Signal { 1 } //#SIG
+  lazy val strokeWidth = Signal { 1 } // #SIG
   // current stroke color
-  lazy val color = Signal { Color.BLACK } //#SIG
+  lazy val color = Signal { Color.BLACK } // #SIG
   // filename after saving
-  val fileName = Var("unnamed") //#VAR
+  val fileName = Var("unnamed") // #VAR
 
   // can be overridden in order to declare events declaratively
-  lazy val executed: Event[Command] = Evt[Command]() //#EVT
-  lazy val reverted: Event[Command] = Evt[Command]() //#EVT
+  lazy val executed: Event[Command] = Evt[Command]() // #EVT
+  lazy val reverted: Event[Command] = Evt[Command]() // #EVT
 
   // events that can be called imperatively
-  final lazy val execute = Evt[Command]() //#EVT
-  final lazy val revert  = Evt[Command]() //#EVT
-  final lazy val clear   = Evt[Unit]()    //#EVT
-  final lazy val select  = Evt[Shape]()   //#EVT
+  final lazy val execute = Evt[Command]() // #EVT
+  final lazy val revert  = Evt[Command]() // #EVT
+  final lazy val clear   = Evt[Unit]()    // #EVT
+  final lazy val select  = Evt[Shape]()   // #EVT
 
   private sealed abstract class CommandType
   private case class Execute(command: Command) extends CommandType
@@ -49,12 +49,12 @@ class DrawingSpaceState {
   private case class Clear()                   extends CommandType
 
   private lazy val commandInvoked: Event[CommandType] =
-    ((executed || execute) map { command: Command => Execute(command) }) || //#EF //#EF //#EF
-      ((reverted || revert) map { command: Command => Revert(command) }) || //#EF //#EF //#EF
-      (clear map { _: Unit => Clear() })                                    //#EF
+    ((executed || execute) map { command: Command => Execute(command) }) || // #EF //#EF //#EF
+      ((reverted || revert) map { command: Command => Revert(command) }) || // #EF //#EF //#EF
+      (clear map { _: Unit => Clear() })                                    // #EF
 
-  private lazy val commandsShapes: Signal[(List[Command], List[Shape])] = //#SIG
-    commandInvoked.fold((List.empty[Command], List.empty[Shape])) { //#IF
+  private lazy val commandsShapes: Signal[(List[Command], List[Shape])] = // #SIG
+    commandInvoked.fold((List.empty[Command], List.empty[Shape])) { // #IF
       case ((commands, shapes), commandType) => commandType match {
           case Execute(command) =>
             (command :: commands, command execute shapes)
@@ -118,7 +118,7 @@ class NetworkSpaceState(
     }
   }).start()
 
-  drawingStateSpace.shapes.changed += { shapes => //#IF //#HDL
+  drawingStateSpace.shapes.changed += { shapes => // #IF //#HDL
     if (!updating) {
       println("sending update")
       val socket = new Socket(serverInetAddress, exchangePort)

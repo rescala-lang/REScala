@@ -227,7 +227,7 @@ class SignalMacro extends RETests {
       assert(s.readValueOnce == 27)
     }
 
-    //test("function As Getter For Signal") {
+    // test("function As Getter For Signal") {
     //
     //  import scala.language.reflectiveCalls
     //
@@ -241,9 +241,9 @@ class SignalMacro extends RETests {
     //  assert(sig.readValueOnce === 20)
     //  v set 30
     //  assert(sig.readValueOnce === 30)
-    //}
+    // }
 
-    //test("function As Getter For Event And Conversion Function") {
+    // test("function As Getter For Event And Conversion Function") {
     //
     //  import scala.language.reflectiveCalls
     //
@@ -257,7 +257,7 @@ class SignalMacro extends RETests {
     //  assert(sig.readValueOnce === None)
     //  e.fire(30)
     //  assert(sig.readValueOnce === Some(30))
-    //}
+    // }
 
     test("correctly replace ticket during macro expansion") {
 

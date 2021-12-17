@@ -11,11 +11,12 @@ case class Token(id: Long, owner: String, value: String) {
   def same(other: Token) = owner == other.owner && value == other.value
 }
 
-case class RaftTokens(replicaID: String,
-                      tokenAgreement: RaftState[Token],
-                      want: AWSet[Token, DietMapCContext],
-                      tokenFreed: AWSet[Token, DietMapCContext]) {
-
+case class RaftTokens(
+    replicaID: String,
+    tokenAgreement: RaftState[Token],
+    want: AWSet[Token, DietMapCContext],
+    tokenFreed: AWSet[Token, DietMapCContext]
+) {
 
   def owned(value: String): List[Token] = {
     tokenAgreement.values.filter(t => t.value == value && t.owner == replicaID && !tokenFreed.elements.contains(t))
@@ -29,8 +30,7 @@ case class RaftTokens(replicaID: String,
     // conditional is only an optimization
     if (!(tokenAgreement.values.iterator ++ want.elements.iterator).exists(_.same(token))) {
       copy(want = want.add(token))
-    }
-    else this
+    } else this
   }
 
   def free(value: String): RaftTokens = {
@@ -43,13 +43,12 @@ case class RaftTokens(replicaID: String,
     if (tokenAgreement.leader == replicaID) {
       val unwanted = want.removeAll(want.elements.filter(generalDuties.values.contains))
       unwanted.elements.headOption match {
-        case None      => copy(tokenAgreement = generalDuties, want = unwanted)
+        case None => copy(tokenAgreement = generalDuties, want = unwanted)
         case Some(tok) =>
           copy(tokenAgreement = generalDuties.propose(replicaID, tok), want = unwanted)
       }
     } else copy(tokenAgreement = generalDuties)
   }
-
 
   def applyWant(state: Delta[AWSet.State[Token, DietMapCContext]]): RaftTokens = {
     copy(want = want.applyDelta(state))
@@ -69,5 +68,6 @@ case class RaftTokens(replicaID: String,
 }
 
 object RaftTokens {
-  def init(replicaID: String): RaftTokens = RaftTokens(replicaID, RaftState(Set(replicaID)), AWSet(replicaID), AWSet(replicaID))
+  def init(replicaID: String): RaftTokens =
+    RaftTokens(replicaID, RaftState(Set(replicaID)), AWSet(replicaID), AWSet(replicaID))
 }

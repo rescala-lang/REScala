@@ -204,7 +204,7 @@ trait FullMVBundle extends Core {
       with Hosted[FullMVTurn] {
     override val host: FullMVEngine
 
-    //========================================================Internal Management============================================================
+    // ========================================================Internal Management============================================================
 
     // ===== Turn State Manangement External API
 // TODO draft for async turn phase transitions
@@ -236,7 +236,7 @@ trait FullMVBundle extends Core {
     // should be mirrored/buffered locally
     def isTransitivePredecessor(txn: FullMVTurn): Boolean
 
-    //========================================================Remote Replication============================================================
+    // ========================================================Remote Replication============================================================
 
     val phaseReplicators: AtomicReference[List[FullMVTurnPhaseReflectionProxy]] =
       new AtomicReference(Nil) // implicit set, write accesses are synchronized through CAS
@@ -284,7 +284,7 @@ trait FullMVBundle extends Core {
       ensurePredecessorReplication(clockedPredecessors._1, clockedPredecessors._2)
     def ensurePredecessorReplication(startAt: TransactionSpanningTreeNode[FullMVTurn], clock: Int): Unit
 
-    //========================================================Scheduler Interface============================================================
+    // ========================================================Scheduler Interface============================================================
 
     override def makeDerivedStructState[V](valuePersistency: V)
         : NonblockingSkipListVersionHistory[V, FullMVTurn, ReSource, Derived] = {

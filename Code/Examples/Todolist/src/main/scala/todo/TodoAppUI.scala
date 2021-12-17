@@ -56,7 +56,7 @@ class TodoAppUI(val storagePrefix: String) {
             removeAll.event dyn { dt => _ => taskOps.handleRemoveAll(s, dt) },
             s.toList.map(_.removed) act taskOps.handleRemove(s),
             deltaEvt act taskOps.handleDelta(s)
-            )
+          )
         }
       }(codecRGA)
     }
@@ -77,7 +77,7 @@ class TodoAppUI(val storagePrefix: String) {
       `class` := "todoapp",
       header(
         `class` := "header",
-        h1( if (largeheader.nonEmpty) largeheader else "todos"),
+        h1(if (largeheader.nonEmpty) largeheader else "todos"),
         todoInputField
       ),
       section(
