@@ -2,7 +2,7 @@ package tests.rescala.fullmv.mirrors
 
 import org.scalatest.funsuite.AnyFunSuite
 import rescala.fullmv._
-import tests.rescala.fullmv.DistributedFullMVApi.{FullMVTurnLocalClone, FullMVEngine, FullMVTurn, FullMVTurnImpl, SerializationGraphTracking}
+import DistributedFullMVApi.{FullMVTurnLocalClone, FullMVEngine, FullMVTurn, FullMVTurnImpl, SerializationGraphTracking}
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration

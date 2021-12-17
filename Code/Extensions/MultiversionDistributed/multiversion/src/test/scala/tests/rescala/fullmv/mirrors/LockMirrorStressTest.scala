@@ -4,7 +4,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 import org.scalatest.funsuite.AnyFunSuite
 import rescala.fullmv._
-import tests.rescala.fullmv.DistributedFullMVApi.{FullMVEngine, FullMVTurnLocalClone, SerializationGraphTracking, FullMVTurnImpl}
+import DistributedFullMVApi.{FullMVEngine, FullMVTurnLocalClone, SerializationGraphTracking, FullMVTurnImpl}
 import rescala.parrp.Backoff
 import tests.rescala.testtools.Spawn
 

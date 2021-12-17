@@ -2,7 +2,7 @@ package tests.rescala.fullmv.transmitter
 
 import org.scalatest.funsuite.AnyFunSuite
 import rescala.fullmv._
-import tests.rescala.fullmv.DistributedFullMVApi.{FullMVEngine, ReactiveTransmittable, Signal, Var}
+import DistributedFullMVApi.{FullMVEngine, ReactiveTransmittable, Signal, Var}
 import loci.communicator.tcp.TCP
 import loci.registry.{Binding, Registry}
 import tests.rescala.testtools.Spawn

@@ -3,7 +3,7 @@ package tests.rescala.fullmv.mirrors
 import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
 
 import org.scalatest.funsuite.AnyFunSuite
-import tests.rescala.fullmv.DistributedFullMVApi.{FullMVEngine, Var, Evt, Signal, Event, ReactiveLocalClone}
+import rescala.fullmv.DistributedFullMVApi.{FullMVEngine, Var, Evt, Signal, Event, ReactiveLocalClone}
 import tests.rescala.testtools.Spawn
 
 import scala.annotation.tailrec

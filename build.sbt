@@ -8,10 +8,8 @@ import sbtcrossproject.CrossPlugin.autoImport.{CrossType, crossProject}
 ThisBuild / incOptions := (ThisBuild / incOptions).value.withLogRecompileOnMacro(false)
 cfg.noPublish
 
-
-
-ThisBuild / organization := "de.tu-darmstadt.stg"
-ThisBuild / organizationName := "Software Technology Group"
+ThisBuild / organization         := "de.tu-darmstadt.stg"
+ThisBuild / organizationName     := "Software Technology Group"
 ThisBuild / organizationHomepage := Some(url("https://www.stg.tu-darmstadt.de/"))
 
 ThisBuild / scmInfo := Some(
@@ -23,10 +21,10 @@ ThisBuild / scmInfo := Some(
 
 ThisBuild / developers := List(
   Developer(
-    id    = "ragnar",
-    name  = "Ragnar Mogk",
+    id = "ragnar",
+    name = "Ragnar Mogk",
     email = "mogk@cs.tu-darmstadt.de",
-    url   = url("https://www.stg.tu-darmstadt.de/")
+    url = url("https://www.stg.tu-darmstadt.de/")
   )
 )
 
@@ -45,9 +43,6 @@ ThisBuild / publishTo := {
   else Some("releases" at nexus + "service/local/staging/deploy/maven2")
 }
 ThisBuild / publishMavenStyle := true
-
-
-
 
 def byVersion[T](version: String, v2: T, v3: T) = {
   CrossVersion.partialVersion(version) match {
@@ -155,9 +150,9 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform, NativePlatform).in(file
     // dom envirnoment
     jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
   )
- // .nativeSettings(
- //    crossScalaVersions := crossScalaVersions.value.filter(_ != V.scala3)
- //  )
+// .nativeSettings(
+//    crossScalaVersions := crossScalaVersions.value.filter(_ != V.scala3)
+//  )
 
 lazy val rescalaJVM = rescala.jvm
 
@@ -265,7 +260,7 @@ lazy val ersirWeb = project.in(file("Code/Examples/Ersir/web"))
     ),
     scalaJSUseMainModuleInitializer := true,
     webpackBundlingMode             := BundlingMode.LibraryOnly()
-    //scalacOptions += "-P:scalajs:sjsDefinedByDefault"
+    // scalacOptions += "-P:scalajs:sjsDefinedByDefault"
   )
   .dependsOn(ersirSharedJS)
   .enablePlugins(SbtSassify)
@@ -320,25 +315,38 @@ lazy val replicationJS  = replication.js
 lazy val replicationJVM = replication.jvm
 
 lazy val distributedFullmv = project.in(file("Code/Extensions/MultiversionDistributed/multiversion"))
-  .settings( cfg.base, name := "rescala-distributed-multiversion",
-    cfg.test, cfg.noPublish, libraryDependencies ++= circeAll.value, libraryDependencies ++= Seq(
-   loci.communication.value,
-   loci.tcp.value,
-   loci.circe.value,
-   loci.upickle.value,
- ))
+  .settings(
+    cfg.base,
+    name := "fullmv-distributed-multiversion",
+    cfg.test,
+    cfg.noPublish,
+    libraryDependencies ++= circeAll.value,
+    libraryDependencies ++= Seq(
+      loci.communication.value,
+      loci.tcp.value,
+      loci.circe.value,
+      loci.upickle.value,
+    )
+  )
   .dependsOn(rescalaJVM, rescalaJVM % "test->test")
 
-lazy val distributedExamples = project.in(file("Code/Extensions/MultiversionDistributed/examples"))
+lazy val distributedFullMVExamples = project.in(file("Code/Extensions/MultiversionDistributed/examples"))
   .enablePlugins(JmhPlugin)
-  .settings(name := "rescala-distributed-examples", cfg.base, cfg.noPublish)
+  .settings(name := "fullmv-distributed-examples", cfg.base, cfg.noPublish)
+  .dependsOn(distributedFullmv % "test->test")
   .dependsOn(distributedFullmv % "compile->test")
+  .dependsOn(rescalaJVM % "test->test")
   .enablePlugins(JavaAppPackaging)
 
-lazy val distributedBenchmarks = project.in(file("Code/Extensions/MultiversionDistributed/benchmarks"))
+lazy val distributedFullMVBenchmarks = project.in(file("Code/Extensions/MultiversionDistributed/benchmarks"))
   .enablePlugins(JmhPlugin)
-  .settings(name := "rescala-distributed-benchmarks", cfg.base, cfg.noPublish, (Compile / mainClass) := Some("org.openjdk.jmh.Main"),
-    TaskKey[Unit]("compileJmh") := Seq(pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh / compile).dependOn.value)
+  .settings(
+    name := "fullmv-distributed-benchmarks",
+    cfg.base,
+    cfg.noPublish,
+    (Compile / mainClass)       := Some("org.openjdk.jmh.Main"),
+    TaskKey[Unit]("compileJmh") := Seq(pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh / compile).dependOn.value
+  )
   .dependsOn(distributedFullmv % "compile->test")
   .enablePlugins(JavaAppPackaging)
 

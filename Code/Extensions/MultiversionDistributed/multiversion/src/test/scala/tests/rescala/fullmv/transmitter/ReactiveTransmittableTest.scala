@@ -1,10 +1,10 @@
 package tests.rescala.fullmv.transmitter
 
 import org.scalatest.funsuite.AnyFunSuite
-import tests.rescala.fullmv.DistributedFullMVApi.{Event, Evt, FullMVEngine, ReactiveTransmittable, Signal, Var}
+import rescala.fullmv.DistributedFullMVApi.{Event, Evt, FullMVEngine, ReactiveTransmittable, Signal, Var}
 import loci.communicator.tcp.TCP
 import loci.registry.{Binding, Registry}
-import tests.rescala.fullmv.DistributedFullMVApi
+import rescala.fullmv.DistributedFullMVApi
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.{Await, Future}

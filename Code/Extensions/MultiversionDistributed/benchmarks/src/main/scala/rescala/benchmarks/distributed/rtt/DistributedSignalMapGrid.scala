@@ -4,10 +4,9 @@ import java.util.concurrent.TimeUnit
 
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
-import rescala.core.{CreationTicket, ReName}
-import rescala.fullmv.mirrors.localcloning.{FakeDelayer, ReactiveLocalClone}
-import rescala.fullmv.{FullMVEngine, FullMVStruct}
-import rescala.reactives.{Signal, Var}
+import rescala.fullmv.DistributedFullMVApi.{CreationTicket, ReactiveLocalClone, FullMVEngine, Signal,Var}
+import rescala.core.{ReName}
+import rescala.fullmv.mirrors.localcloning.{FakeDelayer}
 
 import scala.concurrent.duration._
 
@@ -20,8 +19,8 @@ import scala.concurrent.duration._
 @State(Scope.Benchmark)
 class DistributedSignalMapGrid {
   var sourceEngine: FullMVEngine                                           = _
-  var source: Var[Int, FullMVStruct]                                       = _
-  var nodes: Seq[Seq[(FullMVEngine, Seq[Seq[Signal[Int, FullMVStruct]]])]] = _
+  var source: Var[Int]                                       = _
+  var nodes: Seq[Seq[(FullMVEngine, Seq[Seq[Signal[Int]]])]] = _
   @Param(Array("50"))
   var msDelay: Int = _
   @Param(Array("1", "2", "3", "5"))
@@ -43,10 +42,10 @@ class DistributedSignalMapGrid {
     source = {
       val e = sourceEngine
       import e._
-      sourceEngine.Var(0)
+      Var(0)
     }
 
-    var result: Seq[(FullMVEngine, Seq[Signal[Int, FullMVStruct]])] =
+    var result: Seq[(FullMVEngine, Seq[Signal[Int]])] =
       Seq.fill(widthHosts)(sourceEngine -> Seq.fill(widthNodesPerHost)(source))
     nodes = for (dh <- 1 to depthHosts) yield {
       val r = for (wh <- 1 to widthHosts) yield {
@@ -65,7 +64,7 @@ class DistributedSignalMapGrid {
             val name = s"map-$dh-$wh-$dn-$wn"
 //            println(s"transforming $name from $from")
             ReName.named(name) { implicit ! =>
-              from.map { v => Blackhole.consumeCPU(work); v + 1 }(CreationTicket.fromEngine(host))
+              from.map { v => Blackhole.consumeCPU(work); v + 1 }(CreationTicket.fromScheduler(host))
             }
           }
           res2

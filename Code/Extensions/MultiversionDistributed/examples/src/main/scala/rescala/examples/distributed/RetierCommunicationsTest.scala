@@ -1,7 +1,6 @@
 package rescala.examples.distributed
 
-import rescala.fullmv.FullMVEngine
-import rescala.fullmv.FullMVEngine.default._
+import rescala.fullmv.DistributedFullMVApi.{FullMVEngine, Signal, scheduler, Var, Signals}
 import loci.communicator.tcp._
 import loci.registry.{Binding, Registry}
 
@@ -9,13 +8,12 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 object Bindings {
-  import rescala.fullmv.transmitter.ReactiveTransmittable._
   import io.circe.generic.auto._
   import rescala.fullmv.transmitter.CirceSerialization._
-  implicit val host: FullMVEngine = explicitEngine
+  implicit val host: FullMVEngine = scheduler
 
   val testBinding     = Binding[Int => Int]("test")
-  val variableBinding = Binding[Signal[Int]]("variable")
+  val variableBinding: Binding[Signal[(Int)], Future[Signal[(Int)]]] = ??? //  = Binding[Signal[Int]]("variable")
 }
 
 object Main1 extends App {

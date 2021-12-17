@@ -1,15 +1,12 @@
 package rescala.examples.distributed
 
-import rescala.fullmv.mirrors.localcloning.ReactiveLocalClone
-import rescala.fullmv.transmitter.ReactiveTransmittable
-import rescala.fullmv.{FullMVEngine, FullMVStruct}
-import rescala.reactives.Signal
+import rescala.fullmv.DistributedFullMVApi.{FullMVEngine, ReactiveLocalClone, ReactiveTransmittable, Signal, Var}
 import loci.communicator.tcp.TCP
 import loci.registry.{Binding, Registry}
-import tests.rescala.testtools.Spawn
 import tests.rescala.fullmv.transmitter.TransmitterTestsPortManagement
+import tests.rescala.testtools.Spawn
 
-import scala.concurrent.Await
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 
 object CostAssessment {
@@ -31,7 +28,7 @@ object CostAssessment {
       left: Side,
       right: Side,
       topHost: FullMVEngine,
-      topMerge: Signal[Map[String, Set[Int]], FullMVStruct]
+      topMerge: Signal[Map[String, Set[Int]]]
   )
   type GraphRunner[R] = (Int, Graph => R) => (R, List[Map[String, Set[Int]]])
 
@@ -44,7 +41,7 @@ object CostAssessment {
       import io.circe.generic.auto._
       import rescala.fullmv.transmitter.CirceSerialization._
       implicit val host   = this
-      def binding(i: Int) = Binding[Signal[Map[String, Set[Int]]]](s"binding-$i")
+      def binding(i: Int): Binding[Signal[Map[String, Set[Int]]], Future[Signal[Map[String, Set[Int]]]]] = ??? //  = Binding[Signal[Map[String, Set[Int]]]](s"binding-$i")
     }
 
     class SideHost(name: String) extends Host(name) {
@@ -97,7 +94,7 @@ object CostAssessment {
           val mergeFromLeft  = Await.result(registry.lookup(binding(length), remoteLeft), timeout)
           val remoteRight    = Await.result(registry.connect(TCP("localhost", rightHost.port)), timeout)
           val mergeFromRight = Await.result(registry.lookup(binding(length), remoteRight), timeout)
-          val topMerge: topHost.Signal[Map[String, Set[Int]]] = Signal { merge(mergeFromLeft(), mergeFromRight()) }
+          val topMerge: Signal[Map[String, Set[Int]]] = Signal { merge(mergeFromLeft(), mergeFromRight()) }
 
           var violations: List[Map[String, Set[Int]]] = Nil
           topMerge.observe { v => if (isGlitched(v)) violations = v :: violations }
@@ -151,7 +148,7 @@ object CostAssessment {
 
     val mergeFromLeft                                   = ReactiveLocalClone(leftOutput, topHost)
     val mergeFromRight                                  = ReactiveLocalClone(rightOutput, topHost)
-    val topMerge: topHost.Signal[Map[String, Set[Int]]] = Signal { merge(mergeFromLeft(), mergeFromRight()) }
+    val topMerge: Signal[Map[String, Set[Int]]] = Signal { merge(mergeFromLeft(), mergeFromRight()) }
 
     var violations: List[Map[String, Set[Int]]] = Nil
     topMerge.observe { v => if (isGlitched(v)) violations = v :: violations }
@@ -185,7 +182,7 @@ object CostAssessment {
 
     val fakeMirrorLeftMerge                            = leftOutput.map(identity)
     val fakeMirrorRightMerge                           = rightOutput.map(identity)
-    val topMerge: engine.Signal[Map[String, Set[Int]]] = Signal { merge(fakeMirrorLeftMerge(), fakeMirrorRightMerge()) }
+    val topMerge: Signal[Map[String, Set[Int]]] = Signal { merge(fakeMirrorLeftMerge(), fakeMirrorRightMerge()) }
 
     var violations: List[Map[String, Set[Int]]] = Nil
     topMerge.observe { v => if (isGlitched(v)) violations = v :: violations }

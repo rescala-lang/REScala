@@ -1,12 +1,12 @@
 package rescala.benchmarks.distributed.rtt
 
 import java.util.concurrent._
-
 import org.openjdk.jmh.annotations._
 import rescala.core.ReName
-import rescala.fullmv.mirrors.localcloning.{FakeDelayer, ReactiveLocalClone}
-import rescala.fullmv.{FullMVEngine, FullMVStruct}
-import rescala.reactives.{Signal, Var}
+import rescala.fullmv.DistributedFullMVApi.{
+  FullMVEngine, ReactiveLocalClone, Signal, Signals, Var, scopedScheduler, transactionWithWrapup
+}
+import rescala.fullmv.mirrors.localcloning.FakeDelayer
 
 import scala.concurrent.duration._
 import scala.concurrent._
@@ -29,12 +29,12 @@ class ConflictDistances {
   @Param(Array("1", "2", "3", "5"))
   var mergeAt: Int = _
 
-  var sources: Seq[(FullMVEngine, Var[Int, FullMVStruct])]                  = _
-  var preMergeDistance: Seq[Seq[(FullMVEngine, Signal[Int, FullMVStruct])]] = _
-  var mergeHost: FullMVEngine                                               = _
-  var remotesOnMerge: Seq[Signal[Int, FullMVStruct]]                        = _
-  var merge: Signal[Int, FullMVStruct]                                      = _
-  var postMergeDistance: Seq[(FullMVEngine, Signal[Int, FullMVStruct])]     = _
+  var sources: Seq[(FullMVEngine, Var[Int])]                  = _
+  var preMergeDistance: Seq[Seq[(FullMVEngine, Signal[Int])]] = _
+  var mergeHost: FullMVEngine                                 = _
+  var remotesOnMerge: Seq[Signal[Int]]                        = _
+  var merge: Signal[Int]                                      = _
+  var postMergeDistance: Seq[(FullMVEngine, Signal[Int])]     = _
 
   var barrier: CyclicBarrier      = _
   var threadpool: ExecutorService = _
@@ -53,11 +53,11 @@ class ConflictDistances {
       val engine = new FullMVEngine(10.seconds, s"src-$i")
       engine -> {
         import engine._
-        engine.Var(0)
+        Var(0)
       }
     }
 
-    var preMerge: Seq[(FullMVEngine, Signal[Int, FullMVStruct])] = sources
+    var preMerge: Seq[(FullMVEngine, Signal[Int])] = sources
     preMergeDistance = for (d <- 1 until mergeAt) yield {
       preMerge = for (i <- 1 to threads) yield {
         val host = new FullMVEngine(10.seconds, s"premerge-$d-$i")
@@ -82,7 +82,7 @@ class ConflictDistances {
       }
     }
 
-    var postMerge: (FullMVEngine, Signal[Int, FullMVStruct]) = mergeHost -> merge
+    var postMerge: (FullMVEngine, Signal[Int]) = mergeHost -> merge
     postMergeDistance = for (i <- 1 to totalLength - mergeAt) yield {
       val host = new FullMVEngine(10.seconds, s"host-$i")
       postMerge = host -> ReName.named(s"clone-$i") { implicit ! =>
@@ -107,13 +107,15 @@ class ConflictDistances {
         override def run(): Unit = {
           p.complete(Try {
             val (engine, source) = sources(i - 1)
-            engine.transactionWithWrapup(source)({ ticket =>
-              val before = ticket.now(source)
-              source.admit(before + 1)(ticket)
-            })({ (_, ticket) =>
-              // prevent turns from completing before all turns have updated the whole graph
-              barrier.await()
-            })
+            scopedScheduler.withValue(engine) {
+              transactionWithWrapup(source)({ ticket =>
+                val before = ticket.now(source)
+                source.admit(before + 1)(ticket)
+              })({ (_, ticket) =>
+                // prevent turns from completing before all turns have updated the whole graph
+                barrier.await()
+              })
+            }
           })
         }
       })
