@@ -1,13 +1,13 @@
 package tests.rescala.fullmv.transmitter
 
 import org.scalatest.funsuite.AnyFunSuite
-import rescala.fullmv.transmitter.ReactiveTransmittable
-import rescala.fullmv.{FullMVEngine, FullMVStruct}
+import tests.rescala.fullmv.DistributedFullMVApi.{Event, Evt, FullMVEngine, ReactiveTransmittable, Signal, Var}
 import loci.communicator.tcp.TCP
 import loci.registry.{Binding, Registry}
+import tests.rescala.fullmv.DistributedFullMVApi
 
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.Await
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 
 class ReactiveTransmittableTest extends AnyFunSuite {
@@ -19,7 +19,7 @@ class ReactiveTransmittableTest extends AnyFunSuite {
     import ReactiveTransmittable._
     implicit val host = this
 
-    val binding = Binding[Signal[Int]]("signal")
+    val binding: Binding[Signal[Int], Future[Signal[Int]]] = ??? //Binding[Signal[Int]].apply[Future[Signal[Int]]]("signal")(???)
   }
 
   test("basic transmission works") {
@@ -32,7 +32,7 @@ class ReactiveTransmittableTest extends AnyFunSuite {
 
       val hostB   = new Host("basicB")
       val remoteA = Await.result(hostB.registry.connect(TCP("localhost", port)), 10.second)
-      val reflection: rescala.reactives.Signal[Int, FullMVStruct] =
+      val reflection: Signal[Int] =
         Await.result(hostB.registry.lookup(hostB.binding, remoteA), 10.second)
       Thread.sleep(1000)
 
@@ -53,7 +53,7 @@ class ReactiveTransmittableTest extends AnyFunSuite {
 
       val hostB   = new Host("derivationB")
       val remoteA = Await.result(hostB.registry.connect(TCP("localhost", port)), 10.second)
-      val reflection: rescala.reactives.Signal[Int, FullMVStruct] =
+      val reflection: Signal[Int] =
         Await.result(hostB.registry.lookup(hostB.binding, remoteA), 10.second)
 
       val derived = { import hostB._; reflection.map(_ * 2) }
@@ -73,8 +73,8 @@ class ReactiveTransmittableTest extends AnyFunSuite {
       import rescala.fullmv.transmitter.CirceSerialization._
       import ReactiveTransmittable._
 
-      val branch1 = Binding[Signal[(String, Int)]]("branch1")
-      val branch2 = Binding[Signal[(String, Int)]]("branch2")
+      val branch1: Binding[Signal[(String, Int)], Future[Signal[(String, Int)]]] = ??? // Binding[Signal[(String, Int)]]("branch1")
+      val branch2: Binding[Signal[(String, Int)], Future[Signal[(String, Int)]]] = ??? // Binding[Signal[(String, Int)]]("branch2")
     }
 
     val hostA = new GFHost("gfA")
@@ -91,11 +91,11 @@ class ReactiveTransmittableTest extends AnyFunSuite {
       val hostB   = new GFHost("gfB")
       val remoteA = Await.result(hostB.registry.connect(TCP("localhost", port)), 10.second)
 
-      val remoteBranch1: rescala.reactives.Signal[(String, Int), FullMVStruct] =
+      val remoteBranch1: Signal[(String, Int)] =
         Await.result(hostB.registry.lookup(hostB.branch1, remoteA), 10.second)
-      val reflection: rescala.reactives.Signal[Int, FullMVStruct] =
+      val reflection: Signal[Int] =
         Await.result(hostB.registry.lookup(hostB.binding, remoteA), 10.second)
-      val remoteBranch2: rescala.reactives.Signal[(String, Int), FullMVStruct] =
+      val remoteBranch2: Signal[(String, Int)] =
         Await.result(hostB.registry.lookup(hostB.branch2, remoteA), 10.second)
 
       val branch1B = { import hostB._; remoteBranch1.map("1b" -> _) }
@@ -131,9 +131,9 @@ class ReactiveTransmittableTest extends AnyFunSuite {
       import rescala.fullmv.transmitter.CirceSerialization._
       import ReactiveTransmittable._
 
-      val branch1  = Binding[Event[(String, Int)]]("branch1")
-      val branch2  = Binding[Event[(String, Int)]]("branch2")
-      val eBinding = Binding[Event[Int]]("event")
+      val branch1: Binding[Event[(String, Int)], Future[Event[(String, Int)]]] = ??? //   = Binding[Event[(String, Int)]]("branch1")
+      val branch2: Binding[Event[(String, Int)], Future[Event[(String, Int)]]] = ??? //   = Binding[Event[(String, Int)]]("branch2")
+      val eBinding: Binding[Event[(Int)], Future[Event[(Int)]]] = ??? //  = Binding[Event[Int]]("event")
     }
 
     val hostA = new GFHost("gfA")
@@ -150,11 +150,11 @@ class ReactiveTransmittableTest extends AnyFunSuite {
       val hostB   = new GFHost("gfB")
       val remoteA = Await.result(hostB.registry.connect(TCP("localhost", port)), 10.second)
 
-      val remoteBranch1: rescala.reactives.Event[(String, Int), FullMVStruct] =
+      val remoteBranch1: Event[(String, Int)] =
         Await.result(hostB.registry.lookup(hostB.branch1, remoteA), 10.second)
-      val reflection: rescala.reactives.Event[Int, FullMVStruct] =
+      val reflection: Event[Int] =
         Await.result(hostB.registry.lookup(hostB.eBinding, remoteA), 10.second)
-      val remoteBranch2: rescala.reactives.Event[(String, Int), FullMVStruct] =
+      val remoteBranch2: Event[(String, Int)] =
         Await.result(hostB.registry.lookup(hostB.branch2, remoteA), 10.second)
 
       val branch1B = { import hostB._; remoteBranch1.map("1b" -> _) }

@@ -1,13 +1,13 @@
 package tests.rescala.fullmv.transmitter
 
 import org.scalatest.funsuite.AnyFunSuite
-import rescala.fullmv.transmitter.ReactiveTransmittable
 import rescala.fullmv._
+import tests.rescala.fullmv.DistributedFullMVApi.{FullMVEngine, ReactiveTransmittable, Signal, Var}
 import loci.communicator.tcp.TCP
 import loci.registry.{Binding, Registry}
 import tests.rescala.testtools.Spawn
 
-import scala.concurrent.{Await, TimeoutException}
+import scala.concurrent.{Await, Future, TimeoutException}
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
@@ -30,7 +30,7 @@ object XShapeSerializabilityTest {
     import io.circe.generic.auto._
     import rescala.fullmv.transmitter.CirceSerialization._
     implicit val host  = this
-    val derivedBinding = Binding[Signal[Data[Merge[Data[Int]]]]]("derived")
+    val derivedBinding: Binding[Signal[Data[Merge[Data[Int]]]], Future[Signal[Data[Merge[Data[Int]]]]]] = ??? //  = Binding[Signal[Data[Merge[Data[Int]]]]]("derived")
   }
 
   class SideHost(name: String) extends Host(name) {
@@ -41,7 +41,7 @@ object XShapeSerializabilityTest {
     import io.circe.generic.auto._
     import rescala.fullmv.transmitter.CirceSerialization._
 
-    val sourceBinding = Binding[Signal[Data[Int]]]("source")
+    val sourceBinding: Binding[Signal[Data[Int]], Future[Signal[Data[Int]]]] = ??? //  = Binding[Signal[Data[Int]]]("source")
 
     val source       = Var(0)
     val taggedSource = source.map(Data(name, _))

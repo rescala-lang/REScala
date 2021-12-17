@@ -1,6 +1,6 @@
 package rescala.fullmv.mirrors.localcloning
 
-import rescala.fullmv.FullMVEngine
+import rescala.fullmv.FullMVUtil
 import rescala.fullmv.mirrors._
 import rescala.fullmv.sgt.synchronization.{LockStateResult0, SubsumableLock}
 
@@ -39,7 +39,7 @@ class SubsumableLockLocalCloneProxy(
         case RemoteBlocked(newParent: SubsumableLock) =>
           RemoteBlocked(SubsumableLockLocalClone(newParent, reflectionHost, fakeDelay))
         case RemoteGCd => RemoteGCd
-      }(FullMVEngine.notWorthToMoveToTaskpool)
+      }(FullMVUtil.notWorthToMoveToTaskpool)
     )
   override def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[RemoteTrySubsumeResult] =
     FakeDelayer.requestReply(
@@ -51,7 +51,7 @@ class SubsumableLockLocalCloneProxy(
         case RemoteBlocked(newParent: SubsumableLock) =>
           RemoteBlocked(SubsumableLockLocalClone(newParent, reflectionHost, fakeDelay))
         case RemoteGCd => RemoteGCd
-      }(FullMVEngine.notWorthToMoveToTaskpool)
+      }(FullMVUtil.notWorthToMoveToTaskpool)
     )
   override def remoteUnlock(): Unit =
     FakeDelayer.async(reflectionHost, mirrorHost, fakeDelay, localProxy.remoteUnlock())

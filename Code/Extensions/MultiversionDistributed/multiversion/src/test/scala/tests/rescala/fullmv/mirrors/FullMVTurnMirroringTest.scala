@@ -2,7 +2,7 @@ package tests.rescala.fullmv.mirrors
 
 import org.scalatest.funsuite.AnyFunSuite
 import rescala.fullmv._
-import rescala.fullmv.mirrors.localcloning.FullMVTurnLocalClone
+import tests.rescala.fullmv.DistributedFullMVApi.{FullMVTurnLocalClone, FullMVEngine, FullMVTurn, FullMVTurnImpl, SerializationGraphTracking}
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -117,7 +117,7 @@ class FullMVTurnMirroringTest extends AnyFunSuite {
     val turnOneRoot = host0.newTurn()
     turnOneRoot.beginExecuting()
     val turnOne: FullMVTurn = turnOneRoot
-    if (FullMVEngine.DEBUG)
+    if (FullMVUtil.DEBUG)
       println(s"turnOne on host0: $turnOne with ${turnOne.asInstanceOf[FullMVTurnImpl].subsumableLock.get()}")
     val turnOneA = FullMVTurnLocalClone.withPredecessorReplication(turnOne, hostA)
     val turnOneB = FullMVTurnLocalClone.withPredecessorReplication(turnOneA, hostB)
@@ -126,7 +126,7 @@ class FullMVTurnMirroringTest extends AnyFunSuite {
     val turnTwoRoot = hostA.newTurn()
     turnTwoRoot.beginExecuting()
     val turnTwoA: FullMVTurn = turnTwoRoot
-    if (FullMVEngine.DEBUG)
+    if (FullMVUtil.DEBUG)
       println(s"turnTwo on hostA: $turnTwoA with ${turnTwoA.asInstanceOf[FullMVTurnImpl].subsumableLock.get()}")
     val turnTwo  = FullMVTurnLocalClone.withPredecessorReplication(turnTwoA, host0)
     val turnTwoB = FullMVTurnLocalClone.withPredecessorReplication(turnTwo, hostB)
@@ -135,7 +135,7 @@ class FullMVTurnMirroringTest extends AnyFunSuite {
     val turnThreeRoot = hostB.newTurn()
     turnThreeRoot.beginExecuting()
     val turnThreeB: FullMVTurn = turnThreeRoot
-    if (FullMVEngine.DEBUG)
+    if (FullMVUtil.DEBUG)
       println(s"turnThree on hostB: $turnThreeB with ${turnThreeB.asInstanceOf[FullMVTurnImpl].subsumableLock.get()}")
     val turnThreeA = FullMVTurnLocalClone.withPredecessorReplication(turnThreeB, hostA)
     val turnThree  = FullMVTurnLocalClone.withPredecessorReplication(turnThreeA, host0)

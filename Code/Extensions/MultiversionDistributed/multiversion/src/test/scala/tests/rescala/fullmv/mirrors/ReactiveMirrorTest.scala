@@ -1,8 +1,7 @@
 package tests.rescala.fullmv.mirrors
 
 import org.scalatest.funsuite.AnyFunSuite
-import rescala.fullmv.FullMVEngine
-import rescala.fullmv.mirrors.localcloning.ReactiveLocalClone
+import tests.rescala.fullmv.DistributedFullMVApi.{FullMVEngine, ReactiveLocalClone, Var, Signal, Evt, Event}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration.Duration

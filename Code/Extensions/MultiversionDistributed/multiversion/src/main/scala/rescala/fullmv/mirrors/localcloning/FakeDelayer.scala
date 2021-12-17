@@ -1,9 +1,9 @@
 package rescala.fullmv.mirrors.localcloning
 
+import rescala.fullmv.FullMVUtil
+
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{ScheduledThreadPoolExecutor, TimeUnit}
-
-import rescala.fullmv.FullMVEngine
 import rescala.fullmv.mirrors.Host
 
 import scala.concurrent.duration.Duration
@@ -75,7 +75,7 @@ object FakeDelayer {
                 fakeDelay.toMillis,
                 TimeUnit.MILLISECONDS
               )
-            }(FullMVEngine.notWorthToMoveToTaskpool)
+            }(FullMVUtil.notWorthToMoveToTaskpool)
           }
         },
         fakeDelay.toMillis,

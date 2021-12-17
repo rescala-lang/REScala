@@ -1,104 +1,109 @@
 package rescala.fullmv.mirrors
 
 import java.util.concurrent.ConcurrentHashMap
-
-import rescala.core.Derived
 import rescala.core._
+import rescala.fullmv.sgt.synchronization.SubsumableLockBundle
+import rescala.fullmv.{FullMVBundle, FullMvStateBundle, TurnImplBundle, TurnPhase}
 import rescala.fullmv.tasks._
-import rescala.fullmv.{FullMVEngine, FullMVState, FullMVStruct, FullMVTurn, TurnPhase}
 
-trait ReactiveReflection[-P] extends Derived[FullMVStruct] with ReactiveReflectionProxy[P] {
-  val host: FullMVEngine
-  def buffer(turn: FullMVTurn, value: P): Unit
-  def submit(action: FullMVAction): Unit
+trait ReactiveReflectionBundle extends FullMVBundle {
+  self: Mirror with TurnImplBundle with TaskBundle with FullMvStateBundle with SubsumableLockBundle =>
 
-  override def asyncIncrementFrame(turn: FullMVTurn): Unit = {
-    submit(new Framing(turn, this) {
-      override def doCompute(): Unit = {
-        turn.newBranchFromRemote(TurnPhase.Framing)
-        super.doCompute()
-      }
-      override def toString: String = "Remote" + super.toString
-    })
+  trait ReactiveReflection[-P] extends Derived with ReactiveReflectionProxy[P] {
+    val host: FullMVEngine
+    def buffer(turn: FullMVTurn, value: P): Unit
+    def submit(action: FullMVAction): Unit
+
+    override def asyncIncrementFrame(turn: FullMVTurn): Unit = {
+      submit(new Framing(turn, this) {
+        override def doCompute(): Unit = {
+          turn.newBranchFromRemote(TurnPhase.Framing)
+          super.doCompute()
+        }
+        override def toString: String = "Remote" + super.toString
+      })
+    }
+
+    override def asyncIncrementSupersedeFrame(turn: FullMVTurn, supersede: FullMVTurn): Unit = {
+      submit(new SupersedeFraming(turn, this, supersede) {
+        override def doCompute(): Unit = {
+          turn.newBranchFromRemote(TurnPhase.Framing)
+          super.doCompute()
+        }
+        override def toString: String = "Remote" + super.toString
+      })
+    }
+
+    override def asyncResolvedUnchanged(turn: FullMVTurn): Unit = {
+      submit(new Notification(turn, this, changed = false) {
+        override def doCompute(): Unit = {
+          turn.newBranchFromRemote(TurnPhase.Executing)
+          super.doCompute()
+        }
+        override def toString: String = "Remote" + super.toString
+      })
+    }
+
+    override def asyncResolvedUnchangedFollowFrame(turn: FullMVTurn, followFrame: FullMVTurn): Unit = {
+      submit(new NotificationWithFollowFrame(turn, this, changed = false, followFrame) {
+        override def doCompute(): Unit = {
+          turn.newBranchFromRemote(TurnPhase.Executing)
+          super.doCompute()
+        }
+        override def toString: String = "Remote" + super.toString
+      })
+    }
+
+    override def asyncNewValue(turn: FullMVTurn, value: P): Unit = {
+      submit(new Notification(turn, this, changed = true) {
+        override def doCompute(): Unit = {
+          turn.newBranchFromRemote(TurnPhase.Executing)
+          buffer(turn, value)
+          super.doCompute()
+        }
+        override def toString: String = "Remote" + super.toString
+      })
+    }
+
+    override def asyncNewValueFollowFrame(turn: FullMVTurn, value: P, followFrame: FullMVTurn): Unit = {
+      submit(new NotificationWithFollowFrame(turn, this, changed = true, followFrame) {
+        override def doCompute(): Unit = {
+          turn.newBranchFromRemote(TurnPhase.Executing)
+          buffer(turn, value)
+          super.doCompute()
+        }
+        override def toString: String = "Remote" + super.toString
+      })
+    }
   }
 
-  override def asyncIncrementSupersedeFrame(turn: FullMVTurn, supersede: FullMVTurn): Unit = {
-    submit(new SupersedeFraming(turn, this, supersede) {
-      override def doCompute(): Unit = {
-        turn.newBranchFromRemote(TurnPhase.Framing)
-        super.doCompute()
-      }
-      override def toString: String = "Remote" + super.toString
-    })
-  }
+  class ReactiveReflectionImpl[P](
+      override val host: FullMVEngine,
+      var ignoreTurn: Option[FullMVTurn],
+      initialState: FullMVState[P, FullMVTurn, ReSource, Derived],
+      rename: ReName
+  ) extends Base[P](initialState, rename)
+      with ReactiveReflection[P] {
+    val _buffer                                           = new ConcurrentHashMap[FullMVTurn, P]()
+    override def buffer(turn: FullMVTurn, value: P): Unit = _buffer.put(turn, value)
+    override def submit(action: FullMVAction): Unit       = host.threadPool.submit(action)
 
-  override def asyncResolvedUnchanged(turn: FullMVTurn): Unit = {
-    submit(new Notification(turn, this, changed = false) {
-      override def doCompute(): Unit = {
-        turn.newBranchFromRemote(TurnPhase.Executing)
-        super.doCompute()
-      }
-      override def toString: String = "Remote" + super.toString
-    })
-  }
+    override protected[rescala] def commit(base: Value): Value = throw new IllegalStateException("TODO: this is not implemented, commit is a new method that enables reactives to change their value on commit (such as events dropping back to no value). Not sure how to map that to reactive reflections?")
 
-  override def asyncResolvedUnchangedFollowFrame(turn: FullMVTurn, followFrame: FullMVTurn): Unit = {
-    submit(new NotificationWithFollowFrame(turn, this, changed = false, followFrame) {
-      override def doCompute(): Unit = {
-        turn.newBranchFromRemote(TurnPhase.Executing)
-        super.doCompute()
-      }
-      override def toString: String = "Remote" + super.toString
-    })
-  }
-
-  override def asyncNewValue(turn: FullMVTurn, value: P): Unit = {
-    submit(new Notification(turn, this, changed = true) {
-      override def doCompute(): Unit = {
-        turn.newBranchFromRemote(TurnPhase.Executing)
-        buffer(turn, value)
-        super.doCompute()
-      }
-      override def toString: String = "Remote" + super.toString
-    })
-  }
-
-  override def asyncNewValueFollowFrame(turn: FullMVTurn, value: P, followFrame: FullMVTurn): Unit = {
-    submit(new NotificationWithFollowFrame(turn, this, changed = true, followFrame) {
-      override def doCompute(): Unit = {
-        turn.newBranchFromRemote(TurnPhase.Executing)
-        buffer(turn, value)
-        super.doCompute()
-      }
-      override def toString: String = "Remote" + super.toString
-    })
-  }
-}
-
-class ReactiveReflectionImpl[P](
-    override val host: FullMVEngine,
-    var ignoreTurn: Option[FullMVTurn],
-    initialState: FullMVState[P, FullMVTurn, ReSource[FullMVStruct], Derived[FullMVStruct]],
-    rename: ReName
-) extends Base[P, FullMVStruct](initialState, rename)
-    with ReactiveReflection[P] {
-  val _buffer                                           = new ConcurrentHashMap[FullMVTurn, P]()
-  override def buffer(turn: FullMVTurn, value: P): Unit = _buffer.put(turn, value)
-  override def submit(action: FullMVAction): Unit       = host.threadPool.submit(action)
-
-  override protected[rescala] def reevaluate(input: ReIn): ReevTicket[P, FullMVStruct] = {
-    val turn  = input.initializer
-    val value = _buffer.remove(turn)
-    if (value == null) {
-      if (ignoreTurn.contains(turn)) {
-        ignoreTurn = None
+    override protected[rescala] def reevaluate(input: ReIn): ReevTicket[P] = {
+      val turn  = input.initializer
+      val value = _buffer.remove(turn)
+      if (value == null) {
+        if (ignoreTurn.contains(turn)) {
+          ignoreTurn = None
+        } else {
+          throw new AssertionError(s"$this was reevaluated for $turn but no value was buffered.")
+        }
+        input
       } else {
-        throw new AssertionError(s"$this was reevaluated for $turn but no value was buffered.")
+        if (ignoreTurn.contains(turn)) ignoreTurn = None
+        input.withValue(value)
       }
-      input
-    } else {
-      if (ignoreTurn.contains(turn)) ignoreTurn = None
-      input.withValue(value)
     }
   }
 }
