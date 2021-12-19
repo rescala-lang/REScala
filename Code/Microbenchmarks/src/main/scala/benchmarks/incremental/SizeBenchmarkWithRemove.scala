@@ -1,12 +1,11 @@
-package benchmarks
+package benchmarks.incremental
+import rescala.extra.incremental.IncrementalApi.{State => _, _}
 
 import java.util.concurrent.TimeUnit
 
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
-import rescala.collectionsDefault._
 
-import scala.util.Random
 
 /** @author gerizuna
   * @since 10.10.19
@@ -18,47 +17,43 @@ import scala.util.Random
 @Measurement(iterations = 10, time = 1, timeUnit = TimeUnit.SECONDS)
 @Fork(3)
 @State(Scope.Thread)
-class MinBenchmarkWithRemoveWorstCase {
+class SizeBenchmarkWithRemove {
 
   @Param(Array("1", "5", "10", "50", "100", "500", "1000", "5000", "10000"))
   var arg: Int = _
 
-  var removeEvent: Evt[Int] = _
-  var minOfSeq: Signal[Int] = _
+  var removeEvent: Evt[Int]  = _
+  var sizeOfSeq: Signal[Int] = _
 
-  var reactSeq: SeqSource[Int]           = _
-  var reactMinOfSeq: Signal[Option[Int]] = _
+  var reactSeq: SeqSource[Int]    = _
+  var sizeOfReactSeq: Signal[Int] = _
 
   @Setup(Level.Invocation)
   def prepare: Unit = {
     removeEvent = Evt[Int]()
-    val seq = removeEvent.fold((1 to arg toList).reverse)((s, x) => {
+    val seq = removeEvent.fold((1 to arg).toList)((s, x) => {
       s diff Seq(x)
     })
-    minOfSeq = Signal {
-      seq().min
+    sizeOfSeq = Signal {
+      seq().size
     }
 
     reactSeq = SeqSource.empty[Int]
-    reactMinOfSeq = reactSeq.min
+    sizeOfReactSeq = reactSeq.size
     seq.now.foreach(x => reactSeq.add(x))
-
   }
 
   @Benchmark
   def testSeq(blackHole: Blackhole): Unit = {
-
-    removeEvent.fire(1)
-
+    removeEvent.fire(arg)
     blackHole.consume(removeEvent)
-    blackHole.consume(minOfSeq)
+    blackHole.consume(sizeOfSeq)
   }
 
   @Benchmark
   def testReactSeq(blackHole: Blackhole): Unit = {
-    reactSeq.remove(1)
+    reactSeq.remove(arg)
     blackHole.consume(reactSeq)
-    blackHole.consume(reactMinOfSeq)
+    blackHole.consume(sizeOfReactSeq)
   }
-
 }

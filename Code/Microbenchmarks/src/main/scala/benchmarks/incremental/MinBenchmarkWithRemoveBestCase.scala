@@ -1,11 +1,10 @@
-package benchmarks
+package benchmarks.incremental
+import rescala.extra.incremental.IncrementalApi.{State => _, _}
 
 import java.util.concurrent.TimeUnit
 
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
-import rescala.collectionsDefault._
-import rescala.parrp.ParRP
 
 /** @author gerizuna
   * @since 10.10.19
@@ -17,44 +16,49 @@ import rescala.parrp.ParRP
 @Measurement(iterations = 10, time = 1, timeUnit = TimeUnit.SECONDS)
 @Fork(3)
 @State(Scope.Thread)
-class SizeBenchmarkWithInsert {
+class MinBenchmarkWithRemoveBestCase {
 
   @Param(Array("1", "5", "10", "50", "100", "500", "1000", "5000", "10000"))
   var arg: Int = _
 
-  var addEvent: Evt[Int]     = _
-  var sizeOfSeq: Signal[Int] = _
+  var removeEvent: Evt[Int] = _
+  var minOfSeq: Signal[Int] = _
 
-  var reactSeq: SeqSource[Int]    = _
-  var sizeOfReactSeq: Signal[Int] = _
+  var reactSeq: SeqSource[Int]           = _
+  var reactMinOfSeq: Signal[Option[Int]] = _
 
   @Setup(Level.Invocation)
   def prepare: Unit = {
-    addEvent = Evt[Int]()
-    val seq = addEvent.fold(1 to arg toList)((s, x) => {
-      s :+ x
+    removeEvent = Evt[Int]()
+    val seq = removeEvent.fold((1 to arg).toList)((s, x) => {
+      s diff Seq(x)
     })
-    sizeOfSeq = Signal {
-      seq().size
+    minOfSeq = Signal {
+      seq().min
     }
 
     reactSeq = SeqSource.empty[Int]
-    sizeOfReactSeq = reactSeq.size
-    seq.now.foreach(x => reactSeq.add(x))
+    reactMinOfSeq = reactSeq.min
+    seq.now.reverse.foreach(x => reactSeq.add(x))
+
   }
 
   @Benchmark
   def testSeq(blackHole: Blackhole): Unit = {
-    addEvent.fire(arg)
-    blackHole.consume(addEvent)
-    blackHole.consume(sizeOfSeq)
+
+    removeEvent.fire(1)
+
+    blackHole.consume(removeEvent)
+    blackHole.consume(minOfSeq)
   }
 
   @Benchmark
   def testReactSeq(blackHole: Blackhole): Unit = {
-    reactSeq.add(arg)
+
+    reactSeq.remove(1)
+
     blackHole.consume(reactSeq)
-    blackHole.consume(sizeOfReactSeq)
+    blackHole.consume(reactMinOfSeq)
   }
 
 }

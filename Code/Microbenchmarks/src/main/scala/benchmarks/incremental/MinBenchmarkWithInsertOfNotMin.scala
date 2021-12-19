@@ -1,10 +1,10 @@
-package benchmarks
+package benchmarks.incremental
+import rescala.extra.incremental.IncrementalApi.{State => _, _}
 
 import java.util.concurrent.TimeUnit
 
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
-import rescala.collectionsDefault._
 
 /** @author gerizuna
   * @since 10.10.19
@@ -16,7 +16,7 @@ import rescala.collectionsDefault._
 @Measurement(iterations = 10, time = 1, timeUnit = TimeUnit.SECONDS)
 @Fork(3)
 @State(Scope.Thread)
-class MinBenchmarkWithInsertOfMin {
+class MinBenchmarkWithInsertOfNotMin {
 
   @Param(Array("1", "5", "10", "50", "100", "500", "1000", "5000", "10000"))
   var arg: Int = _
@@ -30,7 +30,7 @@ class MinBenchmarkWithInsertOfMin {
   @Setup(Level.Invocation)
   def prepare: Unit = {
     addEvent = Evt[Int]()
-    val seq = addEvent.fold(2 to arg toList)((s, x) => {
+    val seq = addEvent.fold((1 to arg).toList)((s, x) => {
       s :+ x
     })
 
@@ -45,14 +45,14 @@ class MinBenchmarkWithInsertOfMin {
 
   @Benchmark
   def testSeq(blackHole: Blackhole): Unit = {
-    addEvent.fire(1)
+    addEvent.fire(arg)
     blackHole.consume(addEvent)
     blackHole.consume(minOfSeq)
   }
 
   @Benchmark
   def testReactSeq(blackHole: Blackhole): Unit = {
-    reactSeq.add(1)
+    reactSeq.add(arg)
 
     blackHole.consume(reactSeq)
     blackHole.consume(reactMinOfSeq)

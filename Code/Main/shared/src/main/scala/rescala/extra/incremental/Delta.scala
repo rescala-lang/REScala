@@ -1,4 +1,4 @@
-package rescala.incremental
+package rescala.extra.incremental
 
 /** Deltas represent a change that will happen on reactive sequences. This could be adding, removing or no change at all
   * @tparam T type of the value the Delta holds

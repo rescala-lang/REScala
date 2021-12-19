@@ -1,11 +1,10 @@
-package benchmarks
+package benchmarks.incremental
+import rescala.extra.incremental.IncrementalApi.{State => _, _}
 
 import java.util.concurrent.TimeUnit
 
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
-import rescala.collectionsDefault._
-import rescala.incremental.ReactiveDeltaSeq
 import rescala.parrp.ParRP
 
 import scala.util.Random
@@ -28,12 +27,12 @@ class MapBenchmarkWithRemove {
   var mappedSeq: Signal[Seq[Int]] = _
 
   var reactSeq: SeqSource[Int]                     = _
-  var reactMappedSeq: ReactiveDeltaSeq[Int, ParRP] = _
+  var reactMappedSeq: ReactiveDeltaSeq[Int] = _
 
   @Setup(Level.Invocation)
   def prepare: Unit = {
     removeEvent = Evt[Int]()
-    val seq = removeEvent.fold(1 to arg toList)((s, x) => {
+    val seq = removeEvent.fold((1 to arg).toList)((s, x) => {
       s diff Seq(x)
     })
     mappedSeq = Signal {

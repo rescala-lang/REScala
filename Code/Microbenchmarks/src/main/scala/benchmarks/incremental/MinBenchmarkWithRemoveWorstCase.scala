@@ -1,64 +1,64 @@
-package benchmarks
+package benchmarks.incremental
+import rescala.extra.incremental.IncrementalApi.{State => _, _}
 
 import java.util.concurrent.TimeUnit
 
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
-import rescala.collectionsDefault._
-import rescala.incremental.ReactiveDeltaSeq
-import rescala.parrp.ParRP
 
 import scala.util.Random
 
 /** @author gerizuna
   * @since 10.10.19
   */
+
 @BenchmarkMode(Array(Mode.AverageTime))
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @Warmup(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 10, time = 1, timeUnit = TimeUnit.SECONDS)
 @Fork(3)
 @State(Scope.Thread)
-class MapBenchmarkWithInsert {
+class MinBenchmarkWithRemoveWorstCase {
 
   @Param(Array("1", "5", "10", "50", "100", "500", "1000", "5000", "10000"))
   var arg: Int = _
 
-  var addEvent: Evt[Int]          = _
-  var mappedSeq: Signal[Seq[Int]] = _
+  var removeEvent: Evt[Int] = _
+  var minOfSeq: Signal[Int] = _
 
-  var reactSeq: SeqSource[Int]                     = _
-  var reactMappedSeq: ReactiveDeltaSeq[Int, ParRP] = _
+  var reactSeq: SeqSource[Int]           = _
+  var reactMinOfSeq: Signal[Option[Int]] = _
 
   @Setup(Level.Invocation)
   def prepare: Unit = {
-    addEvent = Evt[Int]()
-    val seq = addEvent.fold(Seq.range(1, arg))((s, x) => {
-      s :+ x
+    removeEvent = Evt[Int]()
+    val seq = removeEvent.fold(((1 to arg).toList).reverse)((s, x) => {
+      s diff Seq(x)
     })
-    mappedSeq = Signal {
-      seq().map(x => {
-        x * x
-      })
+    minOfSeq = Signal {
+      seq().min
     }
 
     reactSeq = SeqSource.empty[Int]
-    reactMappedSeq = reactSeq.map(x => x * x)
+    reactMinOfSeq = reactSeq.min
     seq.now.foreach(x => reactSeq.add(x))
+
   }
 
   @Benchmark
   def testSeq(blackHole: Blackhole): Unit = {
-    addEvent.fire(arg)
-    blackHole.consume(addEvent)
-    blackHole.consume(mappedSeq)
+
+    removeEvent.fire(1)
+
+    blackHole.consume(removeEvent)
+    blackHole.consume(minOfSeq)
   }
 
   @Benchmark
   def testReactSeq(blackHole: Blackhole): Unit = {
-    reactSeq.add(arg)
+    reactSeq.remove(1)
     blackHole.consume(reactSeq)
-    blackHole.consume(reactMappedSeq)
+    blackHole.consume(reactMinOfSeq)
   }
 
 }
