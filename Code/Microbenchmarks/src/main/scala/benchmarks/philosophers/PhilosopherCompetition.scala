@@ -38,8 +38,8 @@ class PhilosopherCompetition {
   }
 
   def tryUpdateCycle(comp: Competition)(seating: comp.stableTable.Seating): Boolean = {
-    val res = comp.table.tryEat(seating.asInstanceOf)
-    if (res) seating.philosopher.set(Thinking)(comp.table.engine.scheduler.asInstanceOf)
+    val res = comp.stableTable.tryEat(seating)
+    if (res) seating.philosopher.set(Thinking)(comp.stableTable.engine.scheduler)
     !res
   }
 
@@ -60,7 +60,7 @@ class PhilosopherCompetition {
         try {
           thirdLock.lock()
           try {
-            comp.table.tryEat(seating.asInstanceOf)
+            comp.stableTable.tryEat(seating)
           } finally { thirdLock.unlock() }
         } finally { secondLock.unlock() }
       } finally { firstLock.unlock() }
@@ -71,7 +71,7 @@ class PhilosopherCompetition {
         try {
           thirdLock.lock()
           try {
-            seating.philosopher.set(Thinking)(comp.table.engine.scheduler.asInstanceOf)
+            seating.philosopher.set(Thinking)(comp.stableTable.engine.scheduler)
           } finally { thirdLock.unlock() }
         } finally { secondLock.unlock() }
       } finally { firstLock.unlock() }
@@ -115,17 +115,17 @@ class Competition extends BusyThreads {
       case "other"   => new OtherHalfDynamicPhilosopherTable(philosophers, work.work)(engineParam.engine)
     }
     blocks = (layout match {
-      case "alternating" => deal(table.seatings.toList, math.min(params.getThreads, philosophers))
-      case "noconflict"  => deal(table.seatings.sliding(4, 4).map(_.head).toList, params.getThreads)
-      case "random"      => List(table.seatings)
-    }).map(_.toArray).toArray.asInstanceOf
+      case "alternating" => deal(stableTable.seatings.toList, math.min(params.getThreads, philosophers))
+      case "noconflict"  => deal(stableTable.seatings.sliding(4, 4).map(_.head).toList, params.getThreads)
+      case "random"      => List(stableTable.seatings)
+    }).map(_.toArray).toArray
   }
 
   @TearDown(Level.Iteration)
   def cleanEating(): Unit = {
     // print(s"actually eaten: ${ table.eaten.get() } measured: ")
     table.eaten.set(0)
-    table.seatings.foreach(_.philosopher.set(Thinking)(table.engine.scheduler.asInstanceOf))
+    table.seatings.foreach(_.philosopher.set(Thinking)(stableTable.engine.scheduler))
   }
 
   final def deal[A](initialDeck: List[A], numberOfHands: Int): List[List[A]] = {

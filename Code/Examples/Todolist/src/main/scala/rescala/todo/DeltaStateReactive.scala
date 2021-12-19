@@ -3,7 +3,7 @@ package rescala.todo
 import rescala.core.ReName
 import rescala.default._
 
-case class DeltaWithState[Delta, State](delta: Seq[Delta], state: State)
+case class DeltaWithState[Delta, DState](delta: Seq[Delta], state: DState)
 
 class DeltaStateReactive[Delta, Combined](
     initState: State[DeltaWithState[Delta, Combined]],
@@ -33,12 +33,12 @@ class DeltaStateReactive[Delta, Combined](
 }
 
 object DeltaStateReactive {
-  def create[State, Delta](
-      init: State,
+  def create[DState, Delta](
+      init: DState,
       deltaInput: Interp[Delta],
-      applyDelta: (State, Delta) => State,
-      handlers: Seq[(DynamicTicket, State) => Delta]
-  )(implicit name: ReName, creationTicket: CreationTicket): DeltaStateReactive[Delta, State] =
+      applyDelta: (DState, Delta) => DState,
+      handlers: Seq[(DynamicTicket, DState) => Delta]
+  )(implicit name: ReName, creationTicket: CreationTicket): DeltaStateReactive[Delta, DState] =
     creationTicket.create(Set(deltaInput), DeltaWithState(List.empty[Delta], init), inite = false)(state =>
       new DeltaStateReactive(state, deltaInput, applyDelta, handlers, name)
     )
