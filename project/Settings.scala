@@ -92,7 +92,7 @@ object Settings {
     "-Xfuture",                         // Turn on future language features.
   )
   lazy val scalaOptions13: Seq[String] = Seq(
-    // "-Xsource:3"
+    "-Xsource:3"
   )
   lazy val scalaOptions3 = Seq(
     "-language:implicitConversions",
