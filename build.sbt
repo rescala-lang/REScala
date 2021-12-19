@@ -1,60 +1,14 @@
 import java.nio.file.Files
 
-import Dependencies.{Versions => V, _}
+import Dependencies._
 import Settings._
-// shadow sbt-scalajs' crossProject and CrossType from Scala.js 0.6.x
-import sbtcrossproject.CrossPlugin.autoImport.{CrossType, crossProject}
 
 ThisBuild / incOptions := (ThisBuild / incOptions).value.withLogRecompileOnMacro(false)
 cfg.noPublish
 
-ThisBuild / organization         := "de.tu-darmstadt.stg"
-ThisBuild / organizationName     := "Software Technology Group"
-ThisBuild / organizationHomepage := Some(url("https://www.stg.tu-darmstadt.de/"))
-
-ThisBuild / scmInfo := Some(
-  ScmInfo(
-    url("https://github.com/rescala-lang/REScala"),
-    "scm:git@github.com:rescala-lang/REScala.git"
-  )
-)
-
-ThisBuild / developers := List(
-  Developer(
-    id = "ragnar",
-    name = "Ragnar Mogk",
-    email = "mogk@cs.tu-darmstadt.de",
-    url = url("https://www.stg.tu-darmstadt.de/")
-  )
-)
-
-// no binary compatibility for 0.Y.z releases
-ThisBuild / versionScheme := Some("semver-spec")
-
-// ThisBuild / description := "Some description about your project."
-ThisBuild / licenses := List("Apache 2" -> new URL("http://www.apache.org/licenses/LICENSE-2.0.txt"))
-ThisBuild / homepage := Some(url("https://www.rescala-lang.com/"))
-
-// Remove all additional repository other than Maven Central from POM
-ThisBuild / pomIncludeRepository := { _ => false }
-ThisBuild / publishTo := {
-  val nexus = "https://oss.sonatype.org/"
-  if (isSnapshot.value) Some("snapshots" at nexus + "content/repositories/snapshots")
-  else Some("releases" at nexus + "service/local/staging/deploy/maven2")
-}
-ThisBuild / publishMavenStyle := true
-
-def byVersion[T](version: String, v2: T, v3: T) = {
-  CrossVersion.partialVersion(version) match {
-    case Some((3, _)) => v3
-    case _            => v2
-  }
-
-}
-
 lazy val cfg = new {
   val base: Def.SettingsDefinition = List(
-    scalacOptions += byVersion(scalaVersion.value, v2 = "-Xdisable-assertions", v3 = ""),
+    scalacOptions += (if (`is 3.0+`(scalaVersion.value)) "" else "-Xdisable-assertions"),
     // scaladoc
     autoAPIMappings := true,
     Compile / doc / scalacOptions += "-groups",
@@ -74,9 +28,6 @@ lazy val cfg = new {
     publish           := {},
     publishLocal      := {}
   )
-
-  def `is 2.13+`(scalaVersion: String): Boolean =
-    CrossVersion.partialVersion(scalaVersion) collect { case (2, n) => n >= 13 } getOrElse false
 
   lazy val publishOnly213 =
     Seq(
@@ -113,6 +64,7 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform, NativePlatform).in(file
     strictCompile,
     cfg.base,
     cfg.test,
+    publishSonatype,
     libraryDependencies ++= Seq(
       sourcecode.value,
       retypecheck.value.cross(CrossVersion.for3Use2_13),
@@ -132,11 +84,6 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform, NativePlatform).in(file
         case _                   => List.empty
       }
     },
-    Compile / unmanagedSourceDirectories ++= byVersion(
-      scalaVersion.value,
-      v2 = Some(sourceDirectory.value.getParentFile.getParentFile / "shared/src/main/scala-2"),
-      v3 = None
-    )
   )
   .jsSettings(
     libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
@@ -365,6 +312,40 @@ lazy val microbench = project.in(file("Code/Microbenchmarks"))
 
 // =====================================================================================
 // custom tasks
+
+lazy val publishSonatype = Def.settings(
+  organization         := "de.tu-darmstadt.stg",
+  organizationName     := "Software Technology Group",
+  organizationHomepage := Some(url("https://www.stg.tu-darmstadt.de/")),
+  scmInfo := Some(
+    ScmInfo(
+      url("https://github.com/rescala-lang/REScala"),
+      "scm:git@github.com:rescala-lang/REScala.git"
+    )
+  ),
+  developers := List(
+    Developer(
+      id = "ragnar",
+      name = "Ragnar Mogk",
+      email = "mogk@cs.tu-darmstadt.de",
+      url = url("https://www.stg.tu-darmstadt.de/")
+    )
+  ),
+
+  // no binary compatibility for 0.Y.z releases
+  versionScheme := Some("semver-spec"),
+  licenses      := List("Apache 2" -> new URL("http://www.apache.org/licenses/LICENSE-2.0.txt")),
+  homepage      := Some(url("https://www.rescala-lang.com/")),
+
+  // Remove all additional repository other than Maven Central from POM
+  pomIncludeRepository := { _ => false },
+  publishTo := {
+    val nexus = "https://oss.sonatype.org/"
+    if (isSnapshot.value) Some("snapshots" at s"${nexus}content/repositories/snapshots")
+    else Some("releases" at s"${nexus}service/local/staging/deploy/maven2")
+  },
+  publishMavenStyle := true
+)
 
 // Add JavaFX dependencies, should probably match whatever the scalafx version was tested against:
 // https://www.scalafx.org/news/releases/

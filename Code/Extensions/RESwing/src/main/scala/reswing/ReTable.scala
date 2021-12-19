@@ -7,6 +7,7 @@ import scala.swing.event.{
   TableUpdated
 }
 
+
 class ReTable[A <: AnyRef](
     val rowData: ReSwingValue[Seq[Seq[A]]] = ReSwingNoValue[Seq[Seq[A]]](),
     val columnNames: ReSwingValue[Seq[String]] = (),
@@ -74,7 +75,7 @@ class ReTable[A <: AnyRef](
   rowData.using(
     { () =>
       peer.peer.getModel match {
-        case model: ReTable.ReTableModel[A] =>
+        case model: ReTable.ReTableModel[A @unchecked] =>
           model.getRowData
         case model =>
           for (r <- 0 to model.getRowCount())
@@ -86,8 +87,8 @@ class ReTable[A <: AnyRef](
     },
     { rowData =>
       (peer.peer.getModel match {
-        case model: ReTable.ReTableModel[A] => model
-        case _ =>
+        case model: ReTable.ReTableModel[A @unchecked] => model
+        case _                                         =>
           val model = new ReTable.ReTableModel[A]
           peer.peer setModel model
           modelChanged()
@@ -104,7 +105,7 @@ class ReTable[A <: AnyRef](
   columnNames.using(
     { () =>
       peer.peer.getModel match {
-        case model: ReTable.ReTableModel[A] =>
+        case model: ReTable.ReTableModel[_] =>
           model.getColumnNames
         case model =>
           for (c <- 0 to model.getColumnCount())
@@ -113,7 +114,7 @@ class ReTable[A <: AnyRef](
     },
     { columnNames =>
       (peer.peer.getModel match {
-        case model: ReTable.ReTableModel[A] => model
+        case model: ReTable.ReTableModel[_] => model
         case _ =>
           val model = new ReTable.ReTableModel[A]
           peer.peer setModel model
@@ -127,7 +128,7 @@ class ReTable[A <: AnyRef](
   editable.using(
     { () =>
       peer.peer.getModel match {
-        case model: ReTable.ReTableModel[A] =>
+        case model: ReTable.ReTableModel[_] =>
           model.getCellEditable
         case model =>
           (row, column) => model.isCellEditable(row, column)
@@ -135,7 +136,7 @@ class ReTable[A <: AnyRef](
     },
     { editable =>
       (peer.peer.getModel match {
-        case model: ReTable.ReTableModel[A] => model
+        case model: ReTable.ReTableModel[_] => model
         case _ =>
           val model = new ReTable.ReTableModel[A]
           peer.peer setModel model

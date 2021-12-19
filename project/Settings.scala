@@ -1,7 +1,6 @@
 /* This file is shared between multiple projects
  * and may contain unused dependencies */
 
-import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
 import sbt.Keys._
 import sbt._
 
@@ -28,15 +27,19 @@ object Settings {
     scalacOptions ++= settingsFor(scalaVersion.value)
   )
 
+  def `is 2.13+`(scalaVersion: String): Boolean = CrossVersion.partialVersion(scalaVersion) collect { case (2, n) =>
+    n >= 13
+  } getOrElse false
+
+  def `is 3.0+`(version: String) = CrossVersion.partialVersion(version) collect { case (3, _) => true } getOrElse false
+
   def settingsFor(version: String) =
-    (
-      version match {
-        case a if a.startsWith("2.11") => scalacOptionsCommon ++ scalaOptions12minus
-        case a if a.startsWith("2.12") => scalacOptionsCommon ++ scalacOptions12plus ++ scalaOptions12minus
-        case a if a.startsWith("2.13") => scalacOptionsCommon ++ scalacOptions12plus ++ scalaOptions13
-        case a if a.startsWith("0.") || a.startsWith("3.") => scalaOptions3
-      }
-    )
+    version match {
+      case a if a.startsWith("2.11") => scalacOptionsCommon ++ scalaOptions12minus
+      case a if a.startsWith("2.12") => scalacOptionsCommon ++ scalacOptions12plus ++ scalaOptions12minus
+      case a if a.startsWith("2.13") => scalacOptionsCommon ++ scalacOptions12plus ++ scalaOptions13
+      case a if a.startsWith("0.") || a.startsWith("3.") => scalaOptions3
+    }
 
   // based on tpolecats scala options https://tpolecat.github.io/2017/04/25/scalac-flags.html
   lazy val scalacOptionsCommon: Seq[String] = Seq(
@@ -102,13 +105,11 @@ object Settings {
   )
 
   val strictCompile = Compile / compile / scalacOptions += "-Xfatal-warnings"
-}
 
-object Resolvers {
-  val stg =
-    resolvers += ("STG old bintray repo" at "http://www.st.informatik.tu-darmstadt.de/maven/").withAllowInsecureProtocol(
-      true
-    )
-  val jitpack = resolvers += "jitpack" at "https://jitpack.io"
+  val legacyStgResolver =
+    resolvers += ("STG old bintray repo" at "http://www.st.informatik.tu-darmstadt.de/maven/")
+      .withAllowInsecureProtocol(true)
+
+  val jitpackResolver = resolvers += "jitpack" at "https://jitpack.io"
 
 }
