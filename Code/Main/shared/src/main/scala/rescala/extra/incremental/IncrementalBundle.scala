@@ -2,13 +2,14 @@ package rescala.extra.incremental
 
 import rescala.compat.SignalCompatBundle
 import rescala.core._
+import rescala.interface.RescalaInterface
 import rescala.operator.{EventBundle, SignalBundle, cutOutOfUserComputation}
 
 import scala.collection.mutable
 import scala.util.control.Breaks.{break, breakable}
 
 trait IncrementalBundle extends Core {
-  self: EventBundle with SignalBundle with SignalCompatBundle =>
+  self: EventBundle with SignalBundle with SignalCompatBundle with RescalaInterface =>
 
   /** @tparam T Type of values inside Deltas
     * @tparam S Structure of Reactive Sequence source
@@ -194,7 +195,7 @@ trait IncrementalBundle extends Core {
     def contains(element: T)(implicit
         ticket: CreationTicket,
         ord: Ordering[T]
-    ): Signal[Boolean] = { exists {seqElement: T => ord.equiv(element, seqElement) } }
+    ): Signal[Boolean] = { exists {(seqElement: T) => ord.equiv(element, seqElement) } }
 
     /** To check if elements fulfilling the condition exists
       *

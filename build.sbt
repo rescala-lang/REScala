@@ -15,13 +15,6 @@ lazy val cfg = new {
     commonCrossBuildVersions
   ) ++ scalaVersion_213
 
-  val test = List(
-    (Test / testOptions) += Tests.Argument("-oICN"),
-    (Test / parallelExecution) := true,
-    libraryDependencies += scalatest.value,
-    Test / javaOptions += "-Xmx8G"
-  )
-
   lazy val noPublish = Seq(
     publishArtifact   := false,
     packagedArtifacts := Map.empty,
@@ -49,13 +42,13 @@ lazy val rescalaProject = project.in(file(".")).settings(cfg.base, cfg.noPublish
   reswing,
   todolist,
   universe,
-  // rescalaNative,
+  //rescalaNative,
 )
 
 lazy val rescalaAll = project.in(file("Code")).settings(cfg.base, cfg.noPublish).aggregate(
   rescalaJS,
   rescalaJVM,
-  // rescalaNative,
+  //rescalaNative,
 )
 
 lazy val rescala = crossProject(JSPlatform, JVMPlatform, NativePlatform).in(file("Code/Main"))
@@ -63,49 +56,33 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform, NativePlatform).in(file
     name := "rescala",
     strictCompile,
     cfg.base,
-    cfg.test,
     publishSonatype,
     libraryDependencies ++= Seq(
       sourcecode.value,
       retypecheck.value.cross(CrossVersion.for3Use2_13),
       reactiveStreams.value,
+      scalatest.value,
+      scalatestpluscheck.value,
     ),
-    libraryDependencies ++= {
-      val only213 = scalatestpluscheck.value +:
-        Seq(
-          scalaJavaTime.value,
-        ).map(_ % "test")
-      val only2 = Seq(scalaOrganization.value % "scala-reflect" % scalaVersion.value % "provided")
-
-      (CrossVersion.partialVersion(scalaVersion.value), crossProjectPlatform.value) match {
-        case (_, NativePlatform) => List.empty
-        case (Some((2, 13)), _)  => only213 ++ only2
-        case (Some((2, _)), _)   => only2
-        case _                   => List.empty
-      }
-    },
+    libraryDependencies ++= (if(`is 3.0+`(scalaVersion.value)) None else Some(scalaOrganization.value % "scala-reflect" % scalaVersion.value % "provided"))
   )
   .jsSettings(
-    libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, _)) => Seq(scalatags.value % "provided,test")
-      case _            => Nil
-    }),
-    libraryDependencies ++= Seq(
-      // for restoration
-      (scalajsDom.value % "provided").cross(CrossVersion.for3Use2_13),
-    ),
+    Test / compile / scalacOptions += (if(`is 3.0+`(scalaVersion.value)) "" else "-P:scalajs:nowarnGlobalExecutionContext"),
+    libraryDependencies += scalaJavaTime.value % "test",
+    libraryDependencies += scalatags.value % "provided,test",
     // dom envirnoment
     jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
   )
-// .nativeSettings(
-//    crossScalaVersions := crossScalaVersions.value.filter(_ != V.scala3)
-//  )
+  .nativeSettings(
+    crossScalaVersions := crossScalaVersions.value.filter(_ != Dependencies.Versions.scala3),
+    nativeLinkStubs := true
+  )
 
 lazy val rescalaJVM = rescala.jvm
 
 lazy val rescalaJS = rescala.js
 
-// lazy val rescalaNative = rescala.native
+lazy val rescalaNative = rescala.native
 
 // =====================================================================================
 // Examples
@@ -265,10 +242,10 @@ lazy val distributedFullmv = project.in(file("Code/Extensions/MultiversionDistri
   .settings(
     cfg.base,
     name := "fullmv-distributed-multiversion",
-    cfg.test,
     cfg.noPublish,
     libraryDependencies ++= circeAll.value,
     libraryDependencies ++= Seq(
+      scalatest.value,
       loci.communication.value,
       loci.tcp.value,
       loci.circe.value,
