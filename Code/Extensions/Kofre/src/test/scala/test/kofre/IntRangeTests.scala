@@ -3,8 +3,8 @@ package test.kofre
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import rescala.extra.lattices.dotstores.IntTree
-import rescala.extra.lattices.sets.AddWinsSetO
+import kofre.dotstores.IntTree
+import kofre.sets.AddWinsSetO
 
 import scala.collection.Seq
 
@@ -26,7 +26,7 @@ class IntRangeTests extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
   implicit val shortlists: Arbitrary[Seq[Int]] = Arbitrary(Gen.someOf(0 to 20))
 
-  "insert all" in forAll { list: Seq[Int] =>
+  "insert all" in forAll { (list: Seq[Int]) =>
     val range = list.foldLeft(IntTree.empty)(IntTree.insert)
     println(list)
     println(IntTree.show(range))

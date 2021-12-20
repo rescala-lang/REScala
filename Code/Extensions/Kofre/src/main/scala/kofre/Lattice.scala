@@ -11,7 +11,8 @@ trait Lattice[A]:
     */
   def merge(left: A, right: A): A
 
-extension [A](left: A)(using l: Lattice[A]) def merge(right: A): A = l.merge(left, right)
+object syntax:
+  extension [A](left: A)(using l: Lattice[A]) def merge(right: A): A = l.merge(left, right)
 
 object Lattice:
   def apply[A](implicit ev: Lattice[A]): Lattice[A] = ev

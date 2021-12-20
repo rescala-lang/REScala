@@ -3,10 +3,12 @@ package test.kofre
 import org.scalacheck.Arbitrary
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import rescala.extra.lattices.IdUtil
-import rescala.extra.lattices.Lattice.LatticeOps
-import rescala.extra.lattices.dotstores.Context
-import rescala.extra.lattices.sets.AddWinsSetO
+import kofre.IdUtil
+import kofre.syntax.merge
+import kofre.dotstores.Context
+import kofre.sets.AddWinsSetO
+import kofre.syntax.merge
+
 
 import scala.util.Random
 
@@ -69,7 +71,7 @@ class AddWinsSetOTest extends AnyFreeSpec with ScalaCheckPropertyChecks {
         assert(!removed.contains(elem))
       }
       "property based tests" - {
-        "with strings" ignore forAll { s: AddWinsSetO[String] =>
+        "with strings" ignore forAll { (s: AddWinsSetO[String]) =>
           whenever(s.toSet.nonEmpty) {
             // randomly pick one element:
             val elem: String                 = Random.shuffle(s.toSet.toList).head
@@ -78,7 +80,7 @@ class AddWinsSetOTest extends AnyFreeSpec with ScalaCheckPropertyChecks {
             assert(!removed.contains(elem))
           }
         }
-        "with integers" ignore forAll { s: AddWinsSetO[Int] =>
+        "with integers" ignore forAll { (s: AddWinsSetO[Int]) =>
           whenever(s.toSet.nonEmpty) {
             // randomly pick one element:
             val elem: Int                 = Random.shuffle(s.toSet.toList).head

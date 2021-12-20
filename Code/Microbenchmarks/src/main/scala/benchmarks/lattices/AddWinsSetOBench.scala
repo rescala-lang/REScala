@@ -83,11 +83,10 @@ class AddWinsSetOBench {
     write(rep1Set)
   }
 
-  // @Benchmark
-  // def serializeCirce() = {
-  //  import io.circe.syntax._
-  //  rep1Set.asJson.noSpaces
-  // }
+  @Benchmark
+  def serializeJsoniter() = {
+    com.github.plokhotnyuk.jsoniter_scala.core.writeToArray(rep1Set)
+  }
 
   @Benchmark
   def serializeUJsonDelta() = {
@@ -95,10 +94,9 @@ class AddWinsSetOBench {
     write(rep2Delta)
   }
 
-  // @Benchmark
-  // def serializeCirceDelta() = {
-  //  import io.circe.syntax._
-  //  rep2Delta.asJson.noSpaces
-  // }
+   @Benchmark
+   def serializeJsoniterDelta() = {
+     com.github.plokhotnyuk.jsoniter_scala.core.writeToArray(rep2Delta)
+   }
 
 }

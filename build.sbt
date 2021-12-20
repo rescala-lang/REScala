@@ -211,8 +211,13 @@ lazy val rescalafx = project.in(file("Code/Extensions/javafx"))
 
 lazy val kofre = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure)
   .in(file("Code/Extensions/Kofre"))
-  .settings(name := "kofre", scalaVersion_3, noPublish)
-lazy val kofreJS = kofre.js
+  .settings(
+    name := "kofre",
+    scalaVersion_3,
+    noPublish,
+    libraryDependencies ++= List(scalatest.value, scalatestpluscheck.value),
+  )
+lazy val kofreJS  = kofre.js
 lazy val kofreJVM = kofre.jvm
 
 lazy val replication = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure)
@@ -278,6 +283,7 @@ lazy val microbench = project.in(file("Code/Microbenchmarks"))
     noPublish,
     (Compile / mainClass) := Some("org.openjdk.jmh.Main"),
     libraryDependencies ++= circeAll.value :+ catsCollection.value :+ upickle.value,
+    libraryDependencies ++= jsoniterScalaAll.value,
     TaskKey[Unit]("compileJmh") := Seq(pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh / compile).dependOn.value
   )
   .enablePlugins(JavaAppPackaging)

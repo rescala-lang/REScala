@@ -3,9 +3,9 @@ package test.kofre
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import rescala.extra.lattices.Lattice
-import rescala.extra.lattices.primitives.GCounter
-import tests.rescala.lattices.DataGenerator._
+import kofre.Lattice
+import kofre.primitives.GCounter
+import DataGenerator._
 
 object DataGenerator {
   implicit val genCounter: Arbitrary[GCounter] = Arbitrary(for {

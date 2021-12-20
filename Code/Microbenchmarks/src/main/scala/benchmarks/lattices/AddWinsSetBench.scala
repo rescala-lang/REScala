@@ -15,7 +15,7 @@ import kofre.sets.{AddWinsSet, AddWinsSetO}
 @State(Scope.Thread)
 class AddWinsSetBench {
 
-  @Param(Array("0", "1", "10", "100", "1000"))
+  @Param(Array("10"))
   var setSize: Int = _
 
   var rep1Set: AddWinsSet[String]        = _
@@ -71,12 +71,11 @@ class AddWinsSetBench {
     write(rep1Set)
   }
 
-  // @Benchmark
-  // def serializeCirce() = {
-  //  import io.circe.syntax._
-  //  import Codecs.awsCirceCodec
-  //  rep1Set.asJson.noSpaces
-  // }
+  @Benchmark
+  def serializeJsoniter() = {
+    import Codecs.awsJsoiterCodec
+    com.github.plokhotnyuk.jsoniter_scala.core.writeToArray(rep1Set)
+  }
 
   @Benchmark
   def serializeUJsonDelta() = {
@@ -85,23 +84,20 @@ class AddWinsSetBench {
     write(rep2Delta)
   }
 
-  // @Benchmark
-  // def serializeCirceDelta() = {
-  //  import io.circe.syntax._
-  //  import Codecs.awsCirceCodec
-  //  rep2Delta.asJson.noSpaces
-  // }
+  @Benchmark
+  def serializeJsoniterDelta() = {
+    import Codecs.awsJsoiterCodec
+    com.github.plokhotnyuk.jsoniter_scala.core.writeToArray(rep2Delta)
+  }
 
 }
 
 object Codecs {
 
-  import upickle.default._
-
   implicit val dotUJsonCodec: upickle.default.ReadWriter[Dot]          = upickle.default.macroRW
   implicit val itRangeCodec: upickle.default.ReadWriter[IntTree.Range] = upickle.default.macroRW
   implicit val itTreeCodec: upickle.default.ReadWriter[IntTree.Tree]   = upickle.default.macroRW
-  implicit val contextCodec: upickle.default.ReadWriter[Context] = upickle.default.macroRW: @scala.annotation.nowarn
+  implicit val contextCodec: upickle.default.ReadWriter[Context] = upickle.default.macroRW
 
   implicit val awsOUJsonCodec: upickle.default.ReadWriter[AddWinsSetO[String]] = upickle.default.macroRW
   implicit val awsUJsonCodec: upickle.default.ReadWriter[AddWinsSet[String]]   = upickle.default.macroRW
@@ -112,4 +108,13 @@ object Codecs {
   //  io.circe.generic.semiauto.deriveEncoder: @scala.annotation.nowarn
   // implicit val awsCirceCodec: io.circe.Encoder[AddWinsSet[String]] =
   //  io.circe.generic.semiauto.deriveEncoder: @scala.annotation.nowarn
+
+  import com.github.plokhotnyuk.jsoniter_scala.core._
+  import com.github.plokhotnyuk.jsoniter_scala.macros._
+
+  implicit val awsOJsoiterCodec: JsonValueCodec[AddWinsSetO[String]] =
+    JsonCodecMaker.make(CodecMakerConfig.withAllowRecursiveTypes(true))
+  implicit val awsJsoiterCodec: JsonValueCodec[AddWinsSet[String]] =
+    JsonCodecMaker.make(CodecMakerConfig.withAllowRecursiveTypes(true))
+
 }
