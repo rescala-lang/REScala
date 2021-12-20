@@ -19,21 +19,21 @@ class CreationTicketTest extends RETests {
       test("some Dynamic No Implicit") {
         engine.transaction() { (dynamicTurn: AdmissionTicket) =>
           assert(implicitly[CreationTicket].self === Right(engine.scheduler))
-          assert(implicitly[CreationTicket].transaction(identity) === dynamicTurn.initializer)
+          assert(implicitly[CreationTicket].dynamicCreation(identity) === dynamicTurn.initializer)
         }
       }
 
       test("none Dynamic Some Implicit") {
         implicit val implicitTurn: Initializer = getTurn
         assert(implicitly[CreationTicket].self === Left(implicitTurn))
-        assert(implicitly[CreationTicket].transaction(identity) === implicitTurn)
+        assert(implicitly[CreationTicket].dynamicCreation(identity) === implicitTurn)
       }
 
       test("some Dynamic Some Implicit") {
         engine.transaction() { (dynamicTurn: AdmissionTicket) =>
           implicit val implicitTurn: Initializer = getTurn
           assert(implicitly[CreationTicket].self === Left(implicitTurn))
-          assert(implicitly[CreationTicket].transaction(identity) === implicitTurn)
+          assert(implicitly[CreationTicket].dynamicCreation(identity) === implicitTurn)
         }
       }
 
@@ -45,7 +45,7 @@ class CreationTicketTest extends RETests {
         }
         engine.transaction() { dynamic =>
           assert(closure().self === Left(closureDefinition))
-          assert(closure().transaction(identity) === closureDefinition)
+          assert(closure().dynamicCreation(identity) === closureDefinition)
         }
       }
 
@@ -55,7 +55,7 @@ class CreationTicketTest extends RETests {
         }
         engine.transaction() { dynamic =>
           assert(closure().self === Right(engine.scheduler))
-          assert(closure().transaction(identity) === dynamic.initializer)
+          assert(closure().dynamicCreation(identity) === dynamic.initializer)
         }
       }
 

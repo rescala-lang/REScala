@@ -248,15 +248,14 @@ trait Core {
         initValue: V,
         needsReevaluation: Boolean
     )(instantiateReactive: State[V] => T): T = {
-      transaction(_.create(incoming, initValue, needsReevaluation, this)(instantiateReactive))
+      dynamicCreation(_.create(incoming, initValue, needsReevaluation, this)(instantiateReactive))
     }
     private[rescala] def createSource[V, T <: ReSource](intv: V)(instantiateReactive: State[V] => T): T = {
-
-      transaction(_.createSource(intv, this)(instantiateReactive))
+      dynamicCreation(_.createSource(intv, this)(instantiateReactive))
     }
 
     /** Using the ticket requires to create a new scope, such that we can ensure that everything happens in the same transaction */
-    def transaction[T](f: Initializer => T): T =
+    def dynamicCreation[T](f: Initializer => T): T =
       self match {
         case Left(integrated) => f(integrated)
         case Right(engine)    => engine.initializerDynamicLookup(f)

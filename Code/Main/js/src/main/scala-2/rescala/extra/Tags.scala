@@ -62,7 +62,7 @@ class Tags[Api <: RescalaInterface](val api: Api) {
     var observe: Observe  = null
     var currentNode: Node = null
     override def applyTo(parent: Element): Unit = {
-      CreationTicket.fromScheduler(engine).transaction { init =>
+      CreationTicket.fromScheduler(engine).dynamicCreation { init =>
         if (observe != null) {
           observe.remove()(engine)
           if (currentNode != null) {
@@ -118,7 +118,7 @@ class Tags[Api <: RescalaInterface](val api: Api) {
     var currentNodes: Seq[Element]          = Nil
     var currentTags: Seq[TypedTag[Element]] = Nil
     override def applyTo(parent: Element): Unit = {
-      CreationTicket.fromScheduler(engine).transaction { init =>
+      CreationTicket.fromScheduler(engine).dynamicCreation { init =>
         if (observe == null) {
           currentTags = init.accessTicket().now(rendered)
           currentNodes = currentTags.map(_.render)

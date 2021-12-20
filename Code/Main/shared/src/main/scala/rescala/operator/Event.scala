@@ -271,7 +271,7 @@ trait EventBundle extends EventCompatBundle with InterpBundle {
       */
     @cutOutOfUserComputation
     final def toggle[A](a: Signal[A], b: Signal[A])(implicit ticket: CreationTicket): Signal[A] =
-      ticket.transaction { ict =>
+      ticket.dynamicCreation { ict =>
         val switched: Signal[Boolean] = iterate(false) { !_ }(ict)
         Signals.dynamic(switched, a, b) { s => if (s.depend(switched)) s.depend(b) else s.depend(a) }(ict)
       }
@@ -311,7 +311,7 @@ trait EventBundle extends EventCompatBundle with InterpBundle {
     /** Creates change events */
     @cutOutOfUserComputation
     def change[T](signal: Signal[T])(implicit ticket: CreationTicket): Event[Diff[T]] =
-      ticket.transaction { initTurn =>
+      ticket.dynamicCreation { initTurn =>
         val internal = initTurn.create[(Pulse[T], Pulse[Diff[T]]), ChangeEventImpl[T]](
           Set[ReSource](signal),
           (Pulse.NoChange, Pulse.NoChange),
