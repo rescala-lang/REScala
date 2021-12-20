@@ -255,9 +255,6 @@ trait Core {
       transaction(_.createSource(intv, this)(instantiateReactive))
     }
 
-    /** Returns true if this ticket is already part of a transaction. */
-    def isInnerTicket(): Boolean = self.isLeft
-
     /** Using the ticket requires to create a new scope, such that we can ensure that everything happens in the same transaction */
     def transaction[T](f: Initializer => T): T =
       self match {
