@@ -13,16 +13,18 @@ lazy val cfg = new {
 
 lazy val rescalaProject = project.in(file(".")).settings(cfg.base, noPublish).aggregate(
   examples,
+  kofreJS,
+  kofreJVM,
   microbench,
   replicationJS,
   replicationJVM,
-  rescalafx,
   rescalaJS,
   rescalaJVM,
+  rescalaNative,
+  rescalafx,
   reswing,
   todolist,
   universe,
-  rescalaNative,
 )
 
 lazy val rescalaAll = project.in(file("Code")).settings(cfg.base, noPublish).aggregate(
@@ -210,6 +212,8 @@ lazy val rescalafx = project.in(file("Code/Extensions/javafx"))
 lazy val kofre = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure)
   .in(file("Code/Extensions/Kofre"))
   .settings(name := "kofre", scalaVersion_3, noPublish)
+lazy val kofreJS = kofre.js
+lazy val kofreJVM = kofre.jvm
 
 lazy val replication = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure)
   .in(file("Code/Extensions/Replication"))
@@ -277,7 +281,7 @@ lazy val microbench = project.in(file("Code/Microbenchmarks"))
     TaskKey[Unit]("compileJmh") := Seq(pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh / compile).dependOn.value
   )
   .enablePlugins(JavaAppPackaging)
-  .dependsOn(rescalaJVM, replicationJVM, kofre.jvm)
+  .dependsOn(rescalaJVM, replicationJVM, kofreJVM)
 
 // =====================================================================================
 // custom tasks
