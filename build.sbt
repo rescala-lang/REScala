@@ -8,7 +8,7 @@ cfg.noPublish
 
 lazy val cfg = new {
   val base: Def.SettingsDefinition = List(
-    scalacOptions += (if (`is 3.0+`(scalaVersion.value)) "" else "-Xdisable-assertions"),
+    scalacOptions += (if (`is 3`(scalaVersion.value)) "" else "-Xdisable-assertions"),
     // scaladoc
     autoAPIMappings := true,
     Compile / doc / scalacOptions += "-groups",
@@ -24,10 +24,10 @@ lazy val cfg = new {
 
   lazy val publishOnly213 =
     Seq(
-      publishArtifact   := (if (`is 2.13+`(scalaVersion.value)) publishArtifact.value else false),
-      packagedArtifacts := (if (`is 2.13+`(scalaVersion.value)) packagedArtifacts.value else Map.empty),
-      publish           := (if (`is 2.13+`(scalaVersion.value)) publish.value else {}),
-      publishLocal      := (if (`is 2.13+`(scalaVersion.value)) publishLocal.value else {})
+      publishArtifact   := (if (`is 2.13`(scalaVersion.value)) publishArtifact.value else false),
+      packagedArtifacts := (if (`is 2.13`(scalaVersion.value)) packagedArtifacts.value else Map.empty),
+      publish           := (if (`is 2.13`(scalaVersion.value)) publish.value else {}),
+      publishLocal      := (if (`is 2.13`(scalaVersion.value)) publishLocal.value else {})
     )
 }
 
@@ -56,18 +56,20 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform, NativePlatform).in(file
     name := "rescala",
     strictCompile,
     cfg.base,
+    // fullmv does not survive this check, but I want to keep it in the shared settings
+    scalacOptions := scalacOptions.value.filter(_ != "-Ysafe-init"),
     publishSonatype,
     libraryDependencies ++= Seq(
       sourcecode.value,
       retypecheck.value.cross(CrossVersion.for3Use2_13),
       reactiveStreams.value,
       scalatest.value,
-      scalatestpluscheck.value,
+      (if (`is 2.11`(scalaVersion.value)) "org.scalatestplus" %%% "scalacheck-1-15" % "3.3.0.0-SNAP3" % "test" else scalatestpluscheck.value),
     ),
-    libraryDependencies ++= (if(`is 3.0+`(scalaVersion.value)) None else Some(scalaOrganization.value % "scala-reflect" % scalaVersion.value % "provided"))
+    libraryDependencies ++= (if(`is 3`(scalaVersion.value)) None else Some(scalaOrganization.value % "scala-reflect" % scalaVersion.value % "provided"))
   )
   .jsSettings(
-    Test / compile / scalacOptions += (if(`is 3.0+`(scalaVersion.value)) "" else "-P:scalajs:nowarnGlobalExecutionContext"),
+    Test / compile / scalacOptions += (if(`is 3`(scalaVersion.value)) "" else "-P:scalajs:nowarnGlobalExecutionContext"),
     libraryDependencies += scalaJavaTime.value % "test",
     libraryDependencies += scalatags.value % "provided,test",
     // dom envirnoment
@@ -118,6 +120,7 @@ lazy val todolist = project.in(file("Code/Examples/Todolist"))
       loci.jsoniterScala.value,
       catsCollection.value,
     ),
+    scalacOptions += "-P:scalajs:nowarnGlobalExecutionContext",
     scalaJSUseMainModuleInitializer := true,
   )
 

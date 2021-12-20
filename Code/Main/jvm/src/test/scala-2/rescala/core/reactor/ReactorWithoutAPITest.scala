@@ -4,8 +4,6 @@ import rescala.core.ReName
 import rescala.macros.MacroAccess
 import tests.rescala.testtools.RETests
 
-import scala.annotation.tailrec
-
 class ReactorWithoutAPITest extends RETests {
 
   import ReactorAction._
@@ -35,7 +33,8 @@ class ReactorWithoutAPITest extends RETests {
 
       input.trackDependencies(Set())
 
-      @tailrec
+      // todo, this should be tailrec, but then does not compile on 2.11
+      // @tailrec
       def processActions[A](stage: ReactorStage[T]): ReactorStage[T] = {
         stage.stages.actions match {
           case Nil                  => stage

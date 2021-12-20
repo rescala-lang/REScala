@@ -27,11 +27,12 @@ object Settings {
     scalacOptions ++= settingsFor(scalaVersion.value)
   )
 
-  def `is 2.13+`(scalaVersion: String): Boolean = CrossVersion.partialVersion(scalaVersion) collect { case (2, n) =>
-    n >= 13
-  } getOrElse false
-
-  def `is 3.0+`(version: String) = CrossVersion.partialVersion(version) collect { case (3, _) => true } getOrElse false
+  def `is 2.11`(scalaVersion: String): Boolean =
+    CrossVersion.partialVersion(scalaVersion).contains((2,11))
+  def `is 2.13`(scalaVersion: String): Boolean =
+    CrossVersion.partialVersion(scalaVersion).contains((2,13))
+  def `is 3`(version: String) =
+    CrossVersion.partialVersion(version) collect { case (3, _) => true } getOrElse false
 
   def settingsFor(version: String) =
     version match {

@@ -179,7 +179,7 @@ trait InvariantBundle extends rescala.core.Core {
     }
 
     def specify[T](inv: Seq[Invariant[T]], signal: Signal[T]): Unit = {
-      signal.state.invariants = inv.map(inv => new Invariant(inv.description, (invp: Pulse[T]) => inv.inv(invp.get)))
+      signal.state.invariants = inv.map(inv => new Invariant[signal.Value](inv.description, (invp: Pulse[T]) => inv.inv(invp.get: T)))
     }
 
     implicit class SignalWithInvariants[T](val signal: Signal[T]) {

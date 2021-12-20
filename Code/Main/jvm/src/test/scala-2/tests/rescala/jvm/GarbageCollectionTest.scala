@@ -35,9 +35,9 @@ class GarbageCollectionTest extends RETests with Whenever {
           `heap of garbage`.iterator.map(_._1).foreach(_.admitPulse(Pulse.Value(1))(at))
         }
         System.gc()
-        val timeout = !(System.currentTimeMillis() < start + 100_000)
+        val timeout = !(System.currentTimeMillis() < start + 100000)
         assert(!timeout, "did not GC a signal before timeout")
-        if (q.poll() ne null) done = true
+        if (!(q.poll() eq null)) done = true
       }
     }
 
