@@ -1,6 +1,6 @@
-package rescala.extra.lattices.primitives
+package kofre.primitives
 
-import rescala.extra.lattices.Lattice
+import kofre.Lattice
 
 case class LastWriterWins[A](timestamp: Long, payload: A) {
   def map[B](f: A => B): LastWriterWins[B] = LastWriterWins(f(payload))

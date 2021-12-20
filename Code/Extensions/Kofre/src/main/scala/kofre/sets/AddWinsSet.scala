@@ -1,9 +1,9 @@
-package rescala.extra.lattices.sets
+package kofre.sets
 
-import rescala.extra.lattices.IdUtil.Id
-import rescala.extra.lattices.dotstores.DotStoreLattice._
-import rescala.extra.lattices.dotstores.{Causal, Dot, DotStoreLattice}
-import rescala.extra.lattices.{IdUtil, Lattice}
+import kofre.IdUtil.Id
+import kofre.dotstores.DotStoreLattice._
+import kofre.dotstores.{Causal, Dot, DotStoreLattice}
+import kofre.{IdUtil, Lattice}
 
 case class AddWinsSet[A](store: Map[A, Set[Dot]], context: Set[Dot]) {
   // (updatesCurrent[Set[(id, dot)], knownPast[Set[dot]], newData[Set[(id,data)])

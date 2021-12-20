@@ -3,7 +3,7 @@ package calendar
 import rescala.extra.lattices.delta.CContext.DietMapCContext
 import rescala.extra.lattices.delta.Delta
 import rescala.extra.lattices.delta.crdt.reactive.AWSet
-import rescala.extra.lattices.{Lattice, RaftState}
+import rescala.extra.lattices.Lattice
 
 import scala.util.Random
 

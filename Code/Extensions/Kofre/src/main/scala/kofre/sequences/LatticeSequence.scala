@@ -1,8 +1,8 @@
-package rescala.extra.lattices.sequences
+package kofre.sequences
 
-import rescala.extra.lattices.Lattice
-import rescala.extra.lattices.sequences.RGA.RGA
-import rescala.extra.lattices.sets.SetLike
+import kofre.Lattice
+import kofre.sequences.RGA.RGA
+import kofre.sets.SetLike
 
 import scala.collection.AbstractIterator
 

@@ -1,11 +1,10 @@
 package benchmarks.lattices
 
 import java.util.concurrent.TimeUnit
-
 import org.openjdk.jmh.annotations._
-import rescala.extra.lattices.dotstores.{Context, Dot, IntTree}
-import rescala.extra.lattices.{IdUtil, Lattice}
-import rescala.extra.lattices.sets.{AddWinsSet, AddWinsSetO}
+import kofre.dotstores.{Context, Dot, IntTree}
+import kofre.{IdUtil, Lattice}
+import kofre.sets.{AddWinsSet, AddWinsSetO}
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -72,12 +71,12 @@ class AddWinsSetBench {
     write(rep1Set)
   }
 
-  @Benchmark
-  def serializeCirce() = {
-    import io.circe.syntax._
-    import Codecs.awsCirceCodec
-    rep1Set.asJson.noSpaces
-  }
+  //@Benchmark
+  //def serializeCirce() = {
+  //  import io.circe.syntax._
+  //  import Codecs.awsCirceCodec
+  //  rep1Set.asJson.noSpaces
+  //}
 
   @Benchmark
   def serializeUJsonDelta() = {
@@ -86,12 +85,12 @@ class AddWinsSetBench {
     write(rep2Delta)
   }
 
-  @Benchmark
-  def serializeCirceDelta() = {
-    import io.circe.syntax._
-    import Codecs.awsCirceCodec
-    rep2Delta.asJson.noSpaces
-  }
+  //@Benchmark
+  //def serializeCirceDelta() = {
+  //  import io.circe.syntax._
+  //  import Codecs.awsCirceCodec
+  //  rep2Delta.asJson.noSpaces
+  //}
 
 }
 
@@ -107,10 +106,10 @@ object Codecs {
   implicit val awsOUJsonCodec: upickle.default.ReadWriter[AddWinsSetO[String]] = upickle.default.macroRW
   implicit val awsUJsonCodec: upickle.default.ReadWriter[AddWinsSet[String]]   = upickle.default.macroRW
 
-  import io.circe.generic.auto._
-
-  implicit val awsOCirceCodec: io.circe.Encoder[AddWinsSetO[String]] =
-    io.circe.generic.semiauto.deriveEncoder: @scala.annotation.nowarn
-  implicit val awsCirceCodec: io.circe.Encoder[AddWinsSet[String]] =
-    io.circe.generic.semiauto.deriveEncoder: @scala.annotation.nowarn
+  //import io.circe.generic.auto._
+  //
+  //implicit val awsOCirceCodec: io.circe.Encoder[AddWinsSetO[String]] =
+  //  io.circe.generic.semiauto.deriveEncoder: @scala.annotation.nowarn
+  //implicit val awsCirceCodec: io.circe.Encoder[AddWinsSet[String]] =
+  //  io.circe.generic.semiauto.deriveEncoder: @scala.annotation.nowarn
 }

@@ -4,11 +4,9 @@ import calendar.{Appointment, Token}
 import loci.registry.Binding
 import loci.transmitter.transmittable.IdenticallyTransmittable
 import loci.serializer.jsoniterScala._
-import rescala.extra.lattices.RaftState
 import rescala.extra.lattices.delta.CContext.DietMapCContext
 import rescala.extra.lattices.delta.crdt.reactive.AWSet
 import rescala.extra.lattices.delta.Codecs._
-
 import com.github.plokhotnyuk.jsoniter_scala.macros._
 import com.github.plokhotnyuk.jsoniter_scala.core._
 

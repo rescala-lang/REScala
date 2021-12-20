@@ -1,7 +1,7 @@
-package rescala.extra.lattices
+package kofre
 
-import rescala.extra.lattices.IdUtil.Id
-import rescala.extra.lattices.RaftState._
+import kofre.IdUtil.Id
+import RaftState.*
 
 import scala.util.Try
 

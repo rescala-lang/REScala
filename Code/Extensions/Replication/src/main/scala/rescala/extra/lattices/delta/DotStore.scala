@@ -1,6 +1,6 @@
 package rescala.extra.lattices.delta
 
-import rescala.extra.lattices.Lattice
+import kofre.Lattice
 
 /** DotStore is the typeclass trait for dot stores, data structures that are part of causal CRDTs and make use of dots to
   * track causality.

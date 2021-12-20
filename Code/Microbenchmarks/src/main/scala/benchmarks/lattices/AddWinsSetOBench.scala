@@ -1,11 +1,10 @@
 package benchmarks.lattices
 
 import java.util.concurrent.TimeUnit
-
 import benchmarks.lattices.Codecs._
 import org.openjdk.jmh.annotations._
-import rescala.extra.lattices.sets.AddWinsSetO
-import rescala.extra.lattices.{IdUtil, Lattice}
+import kofre.sets.AddWinsSetO
+import kofre.{IdUtil, Lattice}
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -84,11 +83,11 @@ class AddWinsSetOBench {
     write(rep1Set)
   }
 
-  @Benchmark
-  def serializeCirce() = {
-    import io.circe.syntax._
-    rep1Set.asJson.noSpaces
-  }
+  //@Benchmark
+  //def serializeCirce() = {
+  //  import io.circe.syntax._
+  //  rep1Set.asJson.noSpaces
+  //}
 
   @Benchmark
   def serializeUJsonDelta() = {
@@ -96,10 +95,10 @@ class AddWinsSetOBench {
     write(rep2Delta)
   }
 
-  @Benchmark
-  def serializeCirceDelta() = {
-    import io.circe.syntax._
-    rep2Delta.asJson.noSpaces
-  }
+  //@Benchmark
+  //def serializeCirceDelta() = {
+  //  import io.circe.syntax._
+  //  rep2Delta.asJson.noSpaces
+  //}
 
 }

@@ -1,6 +1,6 @@
-package rescala.extra.lattices.primitives
+package kofre.primitives
 
-import rescala.extra.lattices.{IdUtil, Lattice}
+import kofre.{IdUtil, Lattice}
 
 import scala.collection.immutable.HashMap
 

@@ -1,7 +1,7 @@
-package rescala.extra.lattices.sequences
+package kofre.sequences
 
-import rescala.extra.lattices.IdUtil
-import rescala.extra.lattices.sequences.Vertex.Timestamp
+import kofre.IdUtil
+import kofre.sequences.Vertex.Timestamp
 
 case class Vertex(timestamp: Timestamp, id: IdUtil.Id)
 

@@ -1,7 +1,7 @@
 package rescala.extra.replication
 
 import io.circe._
-import rescala.extra.lattices.sequences.Vertex
+import kofre.sequences.Vertex
 
 import scala.util.Right
 

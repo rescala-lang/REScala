@@ -207,9 +207,14 @@ lazy val rescalafx = project.in(file("Code/Extensions/javafx"))
   .dependsOn(rescalaJVM)
   .settings(name := "rescalafx", cfg.base, noPublish, addScalafxDependencies)
 
+lazy val kofre = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure)
+  .in(file("Code/Extensions/Kofre"))
+  .settings(name := "kofre", scalaVersion_3, noPublish)
+
 lazy val replication = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure)
   .in(file("Code/Extensions/Replication"))
   .dependsOn(rescala % "compile->compile;test->test")
+  .dependsOn(kofre)
   .settings(
     name := "replication",
     cfg.base,
@@ -261,11 +266,6 @@ lazy val distributedFullMVBenchmarks = project.in(file("Code/Extensions/Multiver
   .dependsOn(distributedFullmv % "compile->test")
   .enablePlugins(JavaAppPackaging)
 
-
-lazy val kofre = project.in(file("Code/Extensions/Kofre"))
-                            .dependsOn(rescalaJVM)
-                            .settings(name := "kofre", scalaVersion_3, noPublish)
-
 lazy val microbench = project.in(file("Code/Microbenchmarks"))
   .enablePlugins(JmhPlugin)
   .settings(
@@ -277,7 +277,7 @@ lazy val microbench = project.in(file("Code/Microbenchmarks"))
     TaskKey[Unit]("compileJmh") := Seq(pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh / compile).dependOn.value
   )
   .enablePlugins(JavaAppPackaging)
-  .dependsOn(rescalaJVM, replicationJVM)
+  .dependsOn(rescalaJVM, replicationJVM, kofre.jvm)
 
 // =====================================================================================
 // custom tasks

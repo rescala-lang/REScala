@@ -1,7 +1,7 @@
-package rescala.extra.lattices.dotstores
+package kofre.dotstores
 
-import rescala.extra.lattices.IdUtil.Id
-import rescala.extra.lattices.Lattice
+import kofre.IdUtil.Id
+import kofre.Lattice
 
 case class Dot(replicaId: Id, counter: Int)
 case class Causal[A](store: A, context: Set[Dot])

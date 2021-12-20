@@ -1,8 +1,8 @@
-package rescala.extra.lattices.sets
+package kofre.sets
 
-import rescala.extra.lattices.IdUtil.Id
-import rescala.extra.lattices.Lattice
-import rescala.extra.lattices.dotstores.Context
+import kofre.IdUtil.Id
+import kofre.Lattice
+import kofre.dotstores.Context
 
 case class AddWinsSetO[A](store: Map[A, Context], context: Context) {
 

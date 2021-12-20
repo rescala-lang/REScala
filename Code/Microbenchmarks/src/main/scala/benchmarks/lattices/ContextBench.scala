@@ -1,10 +1,9 @@
 package benchmarks.lattices
 
 import java.util.concurrent.TimeUnit
-
 import org.openjdk.jmh.annotations._
-import rescala.extra.lattices.dotstores.{Context, IntTree}
-import rescala.extra.lattices.{IdUtil, Lattice}
+import kofre.{IdUtil, Lattice}
+import kofre.dotstores.{Context, IntTree}
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)

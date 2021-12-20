@@ -1,6 +1,6 @@
-package rescala.extra.lattices.sets
+package kofre.sets
 
-import rescala.extra.lattices.Lattice
+import kofre.Lattice
 
 /** Two phase set where elements can be added and removed but never added again. */
 case class TwoPSet[A](entries: Set[A], tombstones: Set[A]) {

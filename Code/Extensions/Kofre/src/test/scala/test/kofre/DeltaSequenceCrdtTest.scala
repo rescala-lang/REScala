@@ -1,4 +1,4 @@
-package tests.rescala.lattices
+package test.kofre
 
 import org.scalatest.freespec.AnyFreeSpec
 import rescala.extra.lattices.Lattice

@@ -1,7 +1,8 @@
 package rescala.extra.lattices.delta
 
-import rescala.extra.lattices.Lattice
-import rescala.extra.lattices.Lattice._
+import kofre.Lattice
+import kofre.Lattice.optionLattice
+
 
 /** Extends the Lattice typeclass with the ability to compare states through unique irredundant join decomposition */
 trait UIJDLattice[A] extends Lattice[A] {

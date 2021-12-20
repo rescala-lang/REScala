@@ -1,7 +1,7 @@
-package rescala.extra.lattices.sequences
+package kofre.sequences
 
-import rescala.extra.lattices.Lattice
-import rescala.extra.lattices.sets.TwoPSet
+import kofre.Lattice
+import kofre.sets.TwoPSet
 
 object RGA {
 

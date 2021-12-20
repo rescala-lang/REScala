@@ -1,8 +1,8 @@
-package tests.rescala.lattices
+package test.kofre
 
 import org.scalatest.freespec.AnyFreeSpec
-import rescala.extra.lattices.{Lattice, RaftState}
 import rescala.extra.lattices.RaftState.Vote
+import rescala.extra.lattices.{Lattice, RaftState}
 
 class RaftLatticeTest extends AnyFreeSpec {
 

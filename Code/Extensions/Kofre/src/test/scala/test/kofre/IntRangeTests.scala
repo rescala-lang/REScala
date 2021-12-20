@@ -1,4 +1,4 @@
-package tests.rescala.lattices
+package test.kofre
 
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec

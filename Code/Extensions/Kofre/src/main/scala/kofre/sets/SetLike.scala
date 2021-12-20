@@ -1,4 +1,4 @@
-package rescala.extra.lattices.sets
+package kofre.sets
 
 trait SetLike[A, F] {
   def add(set: F, value: A): F

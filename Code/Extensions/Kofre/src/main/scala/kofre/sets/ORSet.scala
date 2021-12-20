@@ -1,6 +1,6 @@
-package rescala.extra.lattices.sets
+package kofre.sets
 
-import rescala.extra.lattices.{IdUtil, Lattice}
+import kofre.{IdUtil, Lattice}
 
 /** Implementation of an Observed-Remove Set similar to the one described by Shapiro et al. (2011) */
 case class ORSet[A](entries: Map[IdUtil.Id, A], tombstones: Set[IdUtil.Id]) {

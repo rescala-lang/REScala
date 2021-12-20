@@ -1,8 +1,8 @@
-package rescala.extra.lattices.sequences
+package kofre.sequences
 
-import rescala.extra.lattices.IdUtil.Id
-import rescala.extra.lattices.Lattice
-import rescala.extra.lattices.sets.AddWinsSetO
+import kofre.IdUtil.Id
+import kofre.Lattice
+import kofre.sets.AddWinsSetO
 
 import scala.collection.AbstractIterator
 

@@ -1,6 +1,6 @@
-package rescala.extra.lattices.sequences
+package kofre.sequences
 
-import rescala.extra.lattices.Lattice
+import kofre.Lattice
 
 import scala.collection.immutable.HashMap
 
