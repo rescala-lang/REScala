@@ -58,7 +58,7 @@ trait Core {
 
   trait Initializer {
 
-    /** Creates and correctly initializes new [[rescala.core.Derived]]s */
+    /** Creates and correctly initializes new [[Derived]]s */
     final private[rescala] def create[V, T <: Derived](
         incoming: Set[ReSource],
         initValue: V,
@@ -177,7 +177,25 @@ trait Core {
       res._before = nb
       res
     }
+  }
 
+  /** Result of a reevaluation */
+  trait Result[T] {
+
+    /** True iff outputs must also be reevaluated, false iff the propagation ends here. */
+    def activate: Boolean
+
+    /** No-allocation accessor for the optional new value. */
+    def forValue(f: T => Unit): Unit
+
+    /** No-allocation accessor for the effect caused by the reevaluation. */
+    def forEffect(f: Observation => Unit): Unit
+
+    /** New input resources.
+      * None for static reactives.
+      * Otherwise a list of all static reactives, and accessed dynamic reactives.
+      */
+    def inputs(): Option[Set[ReSource]]
   }
 
   /** User facing low level API to access values in a dynamic context. */
@@ -261,11 +279,8 @@ trait Core {
       new CreationTicket(Left(ticket.initializer), line)
     implicit def fromAdmissionImplicit(implicit ticket: AdmissionTicket, line: ReName): CreationTicket =
       new CreationTicket(Left(ticket.initializer), line)
-
-    implicit def fromInitializerImplicit(implicit
-        initializer: Initializer,
-        line: ReName
-    ): CreationTicket = new CreationTicket(Left(initializer), line)
+    implicit def fromInitializerImplicit(implicit initializer: Initializer, line: ReName): CreationTicket =
+      new CreationTicket(Left(initializer), line)
     implicit def fromInitializer(creation: Initializer)(implicit line: ReName): CreationTicket =
       new CreationTicket(Left(creation), line)
   }
@@ -280,24 +295,6 @@ trait Core {
       new CreationTicket(Right(factory), line)
     implicit def fromNameImplicit(line: String)(implicit outer: CreationTicket): CreationTicket =
       new CreationTicket(outer.self, line)
-  }
-
-  trait Result[T] {
-
-    /** True iff outputs must also be reevaluated, false iff the propagation ends here. */
-    def activate: Boolean
-
-    /** No-allocation accessor for the optional new value. */
-    def forValue(f: T => Unit): Unit
-
-    /** No-allocation accessor for the effect caused by the reevaluation. */
-    def forEffect(f: Observation => Unit): Unit
-
-    /** New input resources.
-      * None for static reactives.
-      * Otherwise a list of all static reactives, and accessed dynamic reactives.
-      */
-    def inputs(): Option[Set[ReSource]]
   }
 
   trait Observation {

@@ -1,14 +1,11 @@
 package rescala.benchmarks.distributed.rtt
 
-import java.util.concurrent._
 import org.openjdk.jmh.annotations._
 import rescala.core.ReName
-import rescala.fullmv.DistributedFullMVApi.{
-  CreationTicket, FullMVEngine, ReactiveLocalClone, Signal, Signals, Var, scopedScheduler, transactionWithWrapup
-}
-import rescala.core.ReName
+import rescala.fullmv.DistributedFullMVApi.{FullMVEngine, ReactiveLocalClone, Signal, Signals, Var, scopedScheduler, transactionWithWrapup}
 import rescala.fullmv.mirrors.localcloning.FakeDelayer
 
+import java.util.concurrent._
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.util.Try
@@ -56,8 +53,7 @@ class Remerge {
     sources = for (i <- 1 to threads) yield {
       val engine = new FullMVEngine(10.seconds, s"src-$i")
       engine -> {
-        import engine._
-        Var(0)
+        Var(0)(engine)
       }
     }
 
@@ -68,10 +64,10 @@ class Remerge {
       }
     }
     instantMerge = {
-      val e = instantMergeHost
-      import e._
-      Signals.static(remotesOnInstantMerge: _*) { t =>
-        remotesOnInstantMerge.map(t.dependStatic).sum
+      scopedScheduler.withValue(instantMergeHost) {
+        Signals.static(remotesOnInstantMerge: _*) { t =>
+          remotesOnInstantMerge.map(t.dependStatic).sum
+        }
       }
     }
 
@@ -93,10 +89,10 @@ class Remerge {
       }
     }
     merge = {
-      val e = mergeHost
-      import e._
-      Signals.static(remotesOnMerge: _*) { t =>
-        remotesOnMerge.map(t.dependStatic).sum
+      scopedScheduler.withValue(mergeHost) {
+        Signals.static(remotesOnMerge: _*) { t =>
+          remotesOnMerge.map(t.dependStatic).sum
+        }
       }
     }
 
