@@ -65,7 +65,7 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform, NativePlatform).in(file
       retypecheck.value.cross(CrossVersion.for3Use2_13),
       reactiveStreams.value,
       scalatest.value,
-      (if (`is 2.11`(scalaVersion.value)) "org.scalatestplus" %%% "scalacheck-1-15" % "3.3.0.0-SNAP3" % "test" else scalatestpluscheck.value),
+      (if (`is 2.11`(scalaVersion.value)) "org.scalatestplus" %%% "scalacheck-1-15" % "3.2.4.0-M1" % "test" else scalatestpluscheck.value),
     ),
     libraryDependencies ++= (if(`is 3`(scalaVersion.value)) None else Some(scalaOrganization.value % "scala-reflect" % scalaVersion.value % "provided"))
   )
