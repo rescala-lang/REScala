@@ -112,20 +112,20 @@ class Tags[Api <: RescalaInterface](val api: Api) {
         }
     }
 
-  private class RETagListModifier(rendered: Signal[Seq[TypedTag[Element]]], engine: Scheduler)
+  private class RETagListModifier(rendered: Signal[Seq[TypedTag[Element]]], scheduler: Scheduler)
       extends Modifier {
     var observe: Observe                    = null
     var currentNodes: Seq[Element]          = Nil
     var currentTags: Seq[TypedTag[Element]] = Nil
     override def applyTo(parent: Element): Unit = {
-      CreationTicket.fromScheduler(engine).dynamicCreation { init =>
+      scheduler.dynamicTransaction { tx =>
         if (observe == null) {
-          currentTags = init.accessTicket().now(rendered)
+          currentTags = tx.accessTicket.now(rendered)
           currentNodes = currentTags.map(_.render)
           currentNodes.foreach(parent.appendChild)
         } else {
           // println(s"Warning, added $rendered to dom AGAIN, this is experimental")
-          observe.remove()(engine)
+          observe.remove()(scheduler)
           observe = null
           // adding nodes to the dom again should move them
           currentNodes.foreach(parent.appendChild)
@@ -139,7 +139,7 @@ class Tags[Api <: RescalaInterface](val api: Api) {
               currentTags = newTags
             }
           }
-        }(init)
+        }(tx.initializer)
       }
     }
   }
@@ -160,10 +160,10 @@ class Tags[Api <: RescalaInterface](val api: Api) {
       }
     }
 
-  // implicit def varAttrValue[T: AttrValue](implicit engine: Scheduler)
+  // implicit def varAttrValue[T: AttrValue](implicit scheduler: Scheduler)
   // : AttrValue[Var[T]] = genericReactiveAttrValue[T, S, ({type λ[T2] = Var[T2]})#λ]
   //
-  // implicit def signalAttrValue[T: AttrValue](implicit engine: Scheduler)
+  // implicit def signalAttrValue[T: AttrValue](implicit scheduler: Scheduler)
   // : AttrValue[Signal[T]] = genericReactiveAttrValue[T, S, ({type λ[T2] = Signal[T2]})#λ]
 
   def genericReactiveStyleValue[T, Sig[T2] <: Signal[T2]](implicit

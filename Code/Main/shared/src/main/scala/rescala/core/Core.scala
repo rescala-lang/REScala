@@ -72,8 +72,6 @@ trait Core {
       reactive
     }
 
-    def accessTicket(): AccessTicket
-
     /** hook for schedulers to globally collect all created resources, usually does nothing */
     protected[this] def register(reactive: ReSource): Unit = ()
 
@@ -113,8 +111,8 @@ trait Core {
     * The ticket tracks return values, such as dependencies, the value, and if the value should be propagated.
     * Such usages make it unsuitable as an API for the user, where [[StaticTicket]] or [[DynamicTicket]] should be used instead.
     */
-  abstract class ReevTicket[V](initializer: Initializer, private var _before: V)
-      extends DynamicTicket(initializer)
+  abstract class ReevTicket[V](tx: Transaction, private var _before: V)
+      extends DynamicTicket(tx)
       with Result[V] {
 
     // schedulers implement these to allow access
@@ -199,13 +197,13 @@ trait Core {
   }
 
   /** User facing low level API to access values in a dynamic context. */
-  abstract class DynamicTicket(creation: Initializer) extends StaticTicket(creation) {
+  abstract class DynamicTicket(tx: Transaction) extends StaticTicket(tx) {
     private[rescala] def collectDynamic(reactive: ReSource): reactive.Value
     final def depend[A](reactive: Interp[A]): A = reactive.interpret(collectDynamic(reactive))
   }
 
   /** User facing low level API to access values in a static context. */
-  sealed abstract class StaticTicket(val initializer: Initializer) {
+  sealed abstract class StaticTicket(val tx: Transaction) {
     private[rescala] def collectStatic(reactive: ReSource): reactive.Value
     final def dependStatic[A](reactive: Interp[A]): A = reactive.interpret(collectStatic(reactive))
   }
@@ -226,7 +224,7 @@ trait Core {
   /** Enables reading of the current value during admission.
     * Keeps track of written sources internally.
     */
-  abstract class AdmissionTicket(val initializer: Initializer, declaredWrites: Set[ReSource]) extends AccessTicket {
+  abstract class AdmissionTicket(val tx: Transaction, declaredWrites: Set[ReSource]) extends AccessTicket {
 
     private var _initialChanges                                       = Map[ReSource, InitialChange]()
     private[rescala] def initialChanges: Map[ReSource, InitialChange] = _initialChanges
@@ -269,20 +267,22 @@ trait Core {
     def dynamicCreation[T](f: Initializer => T): T =
       self match {
         case Left(integrated) => f(integrated)
-        case Right(engine)    => engine.initializerDynamicLookup(f)
+        case Right(engine)    => engine.dynamicTransaction(dt => f(dt.initializer))
       }
   }
 
   /** As reactives can be created during propagation, any [[InnerTicket]] can be converted to a creation ticket. */
   object CreationTicket extends LowPriorityCreationImplicits {
     implicit def fromTicketImplicit(implicit ticket: StaticTicket, line: ReName): CreationTicket =
-      new CreationTicket(Left(ticket.initializer), line)
+      new CreationTicket(Left(ticket.tx.initializer), line)
     implicit def fromAdmissionImplicit(implicit ticket: AdmissionTicket, line: ReName): CreationTicket =
-      new CreationTicket(Left(ticket.initializer), line)
+      new CreationTicket(Left(ticket.tx.initializer), line)
     implicit def fromInitializerImplicit(implicit initializer: Initializer, line: ReName): CreationTicket =
       new CreationTicket(Left(initializer), line)
     implicit def fromInitializer(creation: Initializer)(implicit line: ReName): CreationTicket =
       new CreationTicket(Left(creation), line)
+    implicit def fromTransactionImplicit(implicit tx: Transaction, line: ReName): CreationTicket =
+      new CreationTicket(Left(tx.initializer), line)
   }
 
   /** If no [[InnerTicket]] is found, then these implicits will search for a [[Scheduler]],
@@ -322,6 +322,11 @@ trait Core {
 
   }
 
+  trait Transaction {
+    def accessTicket: AccessTicket
+    def initializer: Initializer
+  }
+
   /** Propagation engine that defines the basic data-types available to the user and creates turns for propagation handling
     *
     * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
@@ -333,7 +338,7 @@ trait Core {
     }
     def forceNewTransaction[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R): R
     private[rescala] def singleReadValueOnce[A](reactive: Interp[A]): A
-    private[rescala] def initializerDynamicLookup[T](f: Initializer => T): T
+    private[rescala] def dynamicTransaction[T](f: Transaction => T): T
 
     /** Name of the scheduler, used for helpful error messages. */
     def schedulerName: String
@@ -344,18 +349,18 @@ trait Core {
     def apply(implicit scheduler: Scheduler): Scheduler = scheduler
   }
 
-  trait DynamicInitializerLookup[ExactInitializer <: Initializer] extends Scheduler {
+  trait DynamicInitializerLookup[Tx <: Transaction] extends Scheduler {
 
-    final override private[rescala] def initializerDynamicLookup[T](f: Initializer => T): T = {
+    final override private[rescala] def dynamicTransaction[T](f: Transaction => T): T = {
       _currentInitializer.value match {
-        case Some(turn) => f(turn)
-        case None       => forceNewTransaction(Set.empty, ticket => f(ticket.initializer))
+        case Some(transaction) => f(transaction)
+        case None              => forceNewTransaction(Set.empty, ticket => f(ticket.tx))
       }
     }
 
-    final protected val _currentInitializer: DynamicVariable[Option[ExactInitializer]] =
-      new DynamicVariable[Option[ExactInitializer]](None)
-    final private[rescala] def withDynamicInitializer[R](init: ExactInitializer)(thunk: => R): R =
+    final protected val _currentInitializer: DynamicVariable[Option[Tx]] =
+      new DynamicVariable[Option[Tx]](None)
+    final private[rescala] def withDynamicInitializer[R](init: Tx)(thunk: => R): R =
       _currentInitializer.withValue(Some(init))(thunk)
   }
 }

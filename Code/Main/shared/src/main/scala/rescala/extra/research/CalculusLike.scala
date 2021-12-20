@@ -23,14 +23,9 @@ trait CalculusLike extends Core {
     * especially during an ongoing propagation.
     * The formalization does not support this, to keep the complexity of the proofs in check.
     */
-  class SimpleCreation() extends Initializer {
+  final class SimpleCreation() extends Initializer {
     override protected[this] def makeDerivedStructState[V](ip: V): StoreValue[V] =
       new StoreValue[V](ip)
-
-    override def accessTicket(): AccessTicket =
-      new AccessTicket {
-        override private[rescala] def access(reactive: ReSource): reactive.Value = reactive.state.value
-      }
 
     override protected[this] def register(reactive: ReSource): Unit = FScheduler.allReactives += reactive
 
@@ -47,7 +42,7 @@ trait CalculusLike extends Core {
       if (needsReevaluation || requiresReev(reactive)) {
         println(s"creation evaluation $reactive")
         // evaluate immediately to support some higher order + creation nonsense
-        Reevaluate.evaluate(reactive, r => true, this)
+        Reevaluate.evaluate(reactive, r => true, FTransaction(this))
       }
     }
 
@@ -60,8 +55,16 @@ trait CalculusLike extends Core {
 
   }
 
+  object FAccess extends AccessTicket {
+    override private[rescala] def access(reactive: ReSource): reactive.Value = reactive.state.value
+  }
+
+  case class FTransaction(override val initializer: Initializer) extends Transaction {
+    override val accessTicket: AccessTicket = FAccess
+  }
+
   object FScheduler
-      extends DynamicInitializerLookup[SimpleCreation]
+      extends DynamicInitializerLookup[FTransaction]
       with Scheduler {
 
     override def schedulerName: String = "FormalizationLike"
@@ -84,10 +87,10 @@ trait CalculusLike extends Core {
         idle = false
         try {
           println(s"\nexecuting turn from $initialWrites")
-          val creation = new SimpleCreation()
-          withDynamicInitializer(creation) {
+          val transaction = FTransaction(new SimpleCreation())
+          withDynamicInitializer(transaction) {
             // admission
-            val admissionTicket = new AdmissionTicket(creation, initialWrites) {
+            val admissionTicket = new AdmissionTicket(transaction, initialWrites) {
               override private[rescala] def access(reactive: ReSource): reactive.Value = reactive.state.value
             }
 
@@ -104,14 +107,14 @@ trait CalculusLike extends Core {
             println(s"sources: $sources")
 
             // start a new propagation changes in REScala always have to happen as a side effect
-            val propagation = Propagation(active = sources, processed = sources, allReactives, creation)
+            val propagation = Propagation(active = sources, processed = sources, allReactives, transaction)
             println(s"starting propagation $propagation")
             val result = propagation.run()
             println(s"done propagating")
 
             // wrapup, this is for a rarely used rescala features, where transactions can
             // do some cleanup when they complete. Not supported in the formalization
-            if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(creation.accessTicket())
+            if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(transaction.accessTicket)
 
             // commit cleans up some internal state
             result.commit()
@@ -132,7 +135,7 @@ trait CalculusLike extends Core {
       active: Set[ReSource],
       processed: Set[ReSource],
       knownReactives: Set[ReSource],
-      creationTicket: SimpleCreation
+      transaction: FTransaction
   ) {
 
     // resets the state of all reactives back to whatever it should be after propagation
@@ -160,7 +163,7 @@ trait CalculusLike extends Core {
         val toSkip = ready -- outdated
         if (toSkip.nonEmpty) {
           // println(s"skipping: $toSkip")
-          Propagation(active, processed ++ toSkip, knownReactives, creationTicket).run()
+          Propagation(active, processed ++ toSkip, knownReactives, transaction).run()
         }
         // if there is nothing to skip, we continue with reevaluation
         else {
@@ -175,7 +178,7 @@ trait CalculusLike extends Core {
           val oldRstring = r.state.inputs
           val (evaluated, propagate) = r match {
             case r: Derived =>
-              Reevaluate.evaluate(r, isReady, creationTicket)
+              Reevaluate.evaluate(r, isReady, transaction)
             case _ => (true, false)
           }
 
@@ -186,10 +189,10 @@ trait CalculusLike extends Core {
 
           if (evaluated) {
             val nextActive = if (propagate) active + r else active
-            Propagation(nextActive, processed + r, knownReactives, creationTicket).run()
+            Propagation(nextActive, processed + r, knownReactives, transaction).run()
           } else {
             println(s"redoing \n$oldRstring\nto\n${r.state.inputs}")
-            Propagation(active, processed, knownReactives, creationTicket).run()
+            Propagation(active, processed, knownReactives, transaction).run()
           }
         }
       }
@@ -225,9 +228,9 @@ trait CalculusLike extends Core {
     def evaluate(
         reactive: Derived,
         dynamicOk: ReSource => Boolean,
-        creationTicket: SimpleCreation
+        transaction: FTransaction
     ): (Boolean, Boolean) = {
-      val dt = new ReevTicket[reactive.Value](creationTicket, reactive.state.value) {
+      val dt = new ReevTicket[reactive.Value](transaction, reactive.state.value) {
         override def dynamicAccess(input: ReSource): input.Value = {
           input.state.value
         }

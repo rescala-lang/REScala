@@ -48,10 +48,9 @@ trait Twoversion extends Core {
 
   /** Implementation of the turn handling defined in the Engine trait
     *
-    * @tparam S  Struct type that defines the spore type used to manage the reactive evaluation
     * @tparam Tx Transaction type used by the scheduler
     */
-  trait TwoVersionScheduler[Tx <: TwoVersionTransaction with Initializer]
+  trait TwoVersionScheduler[Tx <: TwoVersionTransaction]
       extends DynamicInitializerLookup[Tx] {
     private[rescala] def singleReadValueOnce[A](reactive: Interp[A]): A =
       reactive.interpret(reactive.state.base(null))
@@ -84,7 +83,7 @@ trait Twoversion extends Core {
             val admissionResult = admissionPhase(admissionTicket)
             tx.initializationPhase(admissionTicket.initialChanges)
             tx.propagationPhase()
-            if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(tx.accessTicket())
+            if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(tx.accessTicket)
             admissionResult
           }
           tx.commitPhase()
@@ -104,16 +103,10 @@ trait Twoversion extends Core {
 
   }
 
-  /** Abstract propagation definition that defines phases for reactive propagation through dependent reactive elements.
-    *
-    * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
-    */
-  sealed trait TwoVersionTransaction {
+  /** Abstract propagation definition that defines phases for reactive propagation through dependent reactive elements. */
+  sealed trait TwoVersionTransaction extends Transaction {
 
-    /** Schedules a temporarily written change to be committed by the turn.
-      *
-      * @param committable Commitable element to be scheduled
-      */
+    /** Schedules a temporarily written change to be committed by the turn. */
     def schedule(committable: ReSource): Unit
 
     /** Locks (and potentially otherwise prepares) all affected reactive values to prevent interfering changes.
@@ -122,10 +115,7 @@ trait Twoversion extends Core {
       */
     def preparationPhase(initialWrites: Set[ReSource]): Unit
 
-    /** Starts the propagation by applying the initial changes
-      *
-      * @param initialChanges
-      */
+    /** Starts the propagation by applying the initial changes */
     def initializationPhase(initialChanges: Map[ReSource, InitialChange]): Unit
 
     /** Performs the actual propagation, setting the new (not yet committed) values for each reactive element. */
@@ -154,14 +144,12 @@ trait Twoversion extends Core {
     *
     * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
     */
-  trait TwoVersionTransactionImpl extends TwoVersionTransaction with Initializer {
+  trait TwoVersionTransactionImpl extends TwoVersionTransaction {
 
     val token: Token = Token()
 
     val toCommit  = ArrayBuffer[ReSource]()
     val observers = ArrayBuffer[Observation]()
-
-    def initializer: Initializer = this
 
     override def schedule(commitable: ReSource): Unit = toCommit += commitable
 
@@ -206,20 +194,20 @@ trait Twoversion extends Core {
     def beforeDynamicDependencyInteraction(dependency: ReSource): Unit
 
     override private[rescala] def makeAdmissionPhaseTicket(initialWrites: Set[ReSource]): AdmissionTicket =
-      new AdmissionTicket(initializer, initialWrites) {
+      new AdmissionTicket(this, initialWrites) {
         override private[rescala] def access(reactive: ReSource): reactive.Value = {
           beforeDynamicDependencyInteraction(reactive)
           reactive.state.base(token)
         }
       }
     private[rescala] def makeDynamicReevaluationTicket[V, N](b: V): ReevTicket[V] =
-      new ReevTicket[V](initializer, b) {
+      new ReevTicket[V](this, b) {
         override def dynamicAccess(reactive: ReSource): reactive.Value =
           TwoVersionTransactionImpl.this.dynamicAfter(reactive)
         override def staticAccess(reactive: ReSource): reactive.Value = reactive.state.get(token)
       }
 
-    override def accessTicket(): AccessTicket =
+    override val accessTicket: AccessTicket =
       new AccessTicket {
         override def access(reactive: ReSource): reactive.Value =
           TwoVersionTransactionImpl.this.dynamicAfter(reactive)

@@ -275,7 +275,7 @@ class ReactiveMacros(val c: blackbox.Context) {
               && turnSource.symbol.owner == symbolOf[LowPriorityCreationImplicits] =>
           val ct = getBundledClass(weakTypeOf[CreationTicket])
           q"""new $ct(
-                  ${termNames.ROOTPKG}.scala.Left($ticketIdent.initializer),
+                  ${termNames.ROOTPKG}.scala.Left($ticketIdent.tx.initializer),
                   ${termNames.ROOTPKG}.rescala.core.ReName.create)"""
 
         case tree @ Select(reactive, TermName("now")) =>

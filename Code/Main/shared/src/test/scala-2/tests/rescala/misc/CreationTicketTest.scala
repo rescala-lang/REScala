@@ -10,7 +10,7 @@ class CreationTicketTest extends RETests {
       /* this test uses some shady planned()(identity) to get the turn object out of the transaction
        * you should not do this. */
       def getTurn(implicit engine: Scheduler): Initializer =
-        engine.forceNewTransaction()(_.initializer)
+        engine.forceNewTransaction()(_.tx.initializer)
 
       test("none Dynamic No Implicit") {
         assert(implicitly[CreationTicket].self === Right(engine.scheduler))
@@ -19,7 +19,7 @@ class CreationTicketTest extends RETests {
       test("some Dynamic No Implicit") {
         engine.transaction() { (dynamicTurn: AdmissionTicket) =>
           assert(implicitly[CreationTicket].self === Right(engine.scheduler))
-          assert(implicitly[CreationTicket].dynamicCreation(identity) === dynamicTurn.initializer)
+          assert(implicitly[CreationTicket].dynamicCreation(identity) === dynamicTurn.tx.initializer)
         }
       }
 
@@ -55,7 +55,7 @@ class CreationTicketTest extends RETests {
         }
         engine.transaction() { dynamic =>
           assert(closure().self === Right(engine.scheduler))
-          assert(closure().dynamicCreation(identity) === dynamic.initializer)
+          assert(closure().dynamicCreation(identity) === dynamic.tx.initializer)
         }
       }
 

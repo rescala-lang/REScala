@@ -180,7 +180,7 @@ trait FullMVBundle extends Core {
           if (admissionTicket.wrapUp == null) {
             admissionResult
           } else {
-            val wrapUpTicket = turn.accessTicket()
+            val wrapUpTicket = turn.accessTicket
             admissionResult.map { i =>
               // executed in map call so that exceptions in wrapUp make the transaction result a Failure
               admissionTicket.wrapUp(wrapUpTicket)
@@ -198,7 +198,7 @@ trait FullMVBundle extends Core {
   }
 
   trait FullMVTurn
-      extends Initializer
+      extends Initializer with Transaction
       with FullMVTurnProxy
       with SubsumableLockEntryPoint
       with Hosted[FullMVTurn] {
@@ -221,7 +221,7 @@ trait FullMVBundle extends Core {
       }
     }
 
-    override def accessTicket(): AccessTicket =
+    override val accessTicket: AccessTicket =
       new AccessTicket() {
         override def access(reactive: ReSource): reactive.Value = dynamicAfter(reactive)
       }

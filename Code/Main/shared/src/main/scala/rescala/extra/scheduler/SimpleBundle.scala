@@ -6,7 +6,7 @@ import rescala.operator.Observing
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 trait SimpleBundle extends Core with Observing {
-  type State[V] = SimpleState[V]
+  type State[V] <: SimpleState[V]
 
   class SimpleState[V](var value: V) {
 
@@ -26,15 +26,12 @@ trait SimpleBundle extends Core with Observing {
       s"State(outgoing = $outgoing, discovered = $discovered, dirty = $dirty, done = $done)"
   }
 
+  def makeDerivedStructStateBundle[V](ip: V): State[V]
+
   class SimpleInitializer(afterCommitObservers: ListBuffer[Observation]) extends Initializer {
-    override protected[this] def makeDerivedStructState[V](ip: V): SimpleState[V] = new SimpleState[V](ip)
+    override protected[this] def makeDerivedStructState[V](ip: V): State[V] = makeDerivedStructStateBundle(ip)
 
     private var createdReactives: Seq[Derived] = Seq.empty
-
-    override def accessTicket(): AccessTicket =
-      new AccessTicket {
-        override private[rescala] def access(reactive: ReSource): reactive.Value = reactive.state.value
-      }
 
     def drainCreated(): Seq[Derived] = {
       val tmp = createdReactives
@@ -63,19 +60,29 @@ trait SimpleBundle extends Core with Observing {
       if (discovered && !predecessorsDone) {
         // do nothing, this reactive is reached by normal propagation later
       } else if (needsReevaluation || requiresReev) {
-        Util.evaluate(reactive, this, afterCommitObservers)
+        Util.evaluate(reactive, SimpleTransaction(this), afterCommitObservers)
       } else if (predecessorsDone) reactive.state.done = true
     }
 
   }
 
-  object SimpleScheduler extends DynamicInitializerLookup[SimpleInitializer] with Scheduler {
+  case class SimpleTransaction(override val initializer: SimpleInitializer) extends Transaction {
+    override object accessTicket extends AccessTicket {
+      override private[rescala] def access(reactive: ReSource): reactive.Value = reactive.state.value
+    }
+  }
+
+  object SimpleScheduler extends SimpleSchedulerInterface
+
+  trait SimpleSchedulerInterface extends DynamicInitializerLookup[SimpleTransaction] with Scheduler {
 
     override def schedulerName: String = "Simple"
 
     var idle = true
 
     def reset(r: ReSource) = r.state.reset(r.commit(r.state.value))
+
+    def beforeCleanupHook(all: Seq[ReSource], initialWrites: Set[ReSource]): Unit = ()
 
     override def forceNewTransaction[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R): R =
       synchronized {
@@ -84,10 +91,11 @@ trait SimpleBundle extends Core with Observing {
         val afterCommitObservers: ListBuffer[Observation] = ListBuffer.empty
         val res =
           try {
-            val creation = new SimpleInitializer(afterCommitObservers)
-            withDynamicInitializer(creation) {
+            val creation    = new SimpleInitializer(afterCommitObservers)
+            val transaction = SimpleTransaction(creation)
+            withDynamicInitializer(transaction) {
               // admission
-              val admissionTicket: AdmissionTicket = new AdmissionTicket(creation, initialWrites) {
+              val admissionTicket: AdmissionTicket = new AdmissionTicket(transaction, initialWrites) {
                 override private[rescala] def access(reactive: ReSource): reactive.Value = reactive.state.value
               }
               val admissionResult = admissionPhase(admissionTicket)
@@ -110,11 +118,13 @@ trait SimpleBundle extends Core with Observing {
 
               // propagation
               val sorted = Util.toposort(initial)
-              Util.evaluateAll(sorted, creation, afterCommitObservers).foreach(reset)
+              Util.evaluateAll(sorted, transaction, afterCommitObservers).foreach(reset)
               // evaluate everything that was created, but not accessed, and requires ignition
               val created = creation.drainCreated()
-              Util.evaluateAll(created, creation, afterCommitObservers).foreach(reset)
+              Util.evaluateAll(created, transaction, afterCommitObservers).foreach(reset)
               assert(creation.drainCreated().isEmpty)
+
+              beforeCleanupHook(created ++ sorted ++ initialWrites, initialWrites)
 
               // cleanup
               initial.foreach(reset)
@@ -123,7 +133,7 @@ trait SimpleBundle extends Core with Observing {
               sorted.foreach(reset)
 
               // wrapup
-              if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(creation.accessTicket())
+              if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(transaction.accessTicket)
               admissionResult
             }
           } finally {
@@ -160,7 +170,7 @@ trait SimpleBundle extends Core with Observing {
     @scala.annotation.tailrec
     def evaluateAll(
         evaluatees: Seq[Derived],
-        creation: SimpleInitializer,
+        creation: SimpleTransaction,
         afterCommitObservers: ListBuffer[Observation]
     ): Seq[Derived] = {
       // first one where evaluation detects glitch
@@ -173,7 +183,7 @@ trait SimpleBundle extends Core with Observing {
       glitched match {
         case None => evaluatees
         case Some(reactive) =>
-          val evaluateNext = evaluatees.filterNot(_.state.done) ++ creation.drainCreated()
+          val evaluateNext = evaluatees.filterNot(_.state.done) ++ creation.initializer.drainCreated()
           evaluateNext.foreach(_.state.discovered = false)
           evaluateAll(Util.toposort(evaluateNext), creation, afterCommitObservers)
       }
@@ -181,7 +191,7 @@ trait SimpleBundle extends Core with Observing {
 
     def evaluate(
         reactive: Derived,
-        creationTicket: SimpleInitializer,
+        creationTicket: SimpleTransaction,
         afterCommitObservers: ListBuffer[Observation]
     ): Boolean = {
       var potentialGlitch = false

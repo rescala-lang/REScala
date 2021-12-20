@@ -12,6 +12,8 @@ object Schedulers extends PlatformSchedulers {
 
   object simple extends SimpleBundle with RescalaInterface {
     override def scheduler: simple.Scheduler = SimpleScheduler
+    override type State[V] = SimpleState[V]
+    override def makeDerivedStructStateBundle[V](ip: V) = new SimpleState(ip)
   }
 
   override def byName(name: String): RescalaInterface =
