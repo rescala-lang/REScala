@@ -113,4 +113,19 @@ object Settings {
 
   val jitpackResolver = resolvers += "jitpack" at "https://jitpack.io"
 
+  val noPublish = Seq(
+    publishArtifact   := false,
+    packagedArtifacts := Map.empty,
+    publish           := {},
+    publishLocal      := {}
+  )
+
+  val publishOnly213 =
+    Seq(
+      publishArtifact   := (if (`is 2.13`(scalaVersion.value)) publishArtifact.value else false),
+      packagedArtifacts := (if (`is 2.13`(scalaVersion.value)) packagedArtifacts.value else Map.empty),
+      publish           := (if (`is 2.13`(scalaVersion.value)) publish.value else {}),
+      publishLocal      := (if (`is 2.13`(scalaVersion.value)) publishLocal.value else {})
+    )
+
 }

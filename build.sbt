@@ -5,34 +5,13 @@ import Settings._
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 ThisBuild / incOptions        := (ThisBuild / incOptions).value.withLogRecompileOnMacro(false)
-cfg.noPublish
+noPublish
 
 lazy val cfg = new {
-  val base: Def.SettingsDefinition = List(
-    scalacOptions += (if (`is 3`(scalaVersion.value)) "" else "-Xdisable-assertions"),
-    // scaladoc
-    autoAPIMappings := true,
-    Compile / doc / scalacOptions += "-groups",
-    commonCrossBuildVersions
-  ) ++ scalaVersion_213
-
-  lazy val noPublish = Seq(
-    publishArtifact   := false,
-    packagedArtifacts := Map.empty,
-    publish           := {},
-    publishLocal      := {}
-  )
-
-  lazy val publishOnly213 =
-    Seq(
-      publishArtifact   := (if (`is 2.13`(scalaVersion.value)) publishArtifact.value else false),
-      packagedArtifacts := (if (`is 2.13`(scalaVersion.value)) packagedArtifacts.value else Map.empty),
-      publish           := (if (`is 2.13`(scalaVersion.value)) publish.value else {}),
-      publishLocal      := (if (`is 2.13`(scalaVersion.value)) publishLocal.value else {})
-    )
+  val base: Def.SettingsDefinition = commonCrossBuildVersions +: scalaVersion_213
 }
 
-lazy val rescalaProject = project.in(file(".")).settings(cfg.base, cfg.noPublish).aggregate(
+lazy val rescalaProject = project.in(file(".")).settings(cfg.base, noPublish).aggregate(
   examples,
   microbench,
   replicationJS,
@@ -46,7 +25,7 @@ lazy val rescalaProject = project.in(file(".")).settings(cfg.base, cfg.noPublish
   rescalaNative,
 )
 
-lazy val rescalaAll = project.in(file("Code")).settings(cfg.base, cfg.noPublish).aggregate(
+lazy val rescalaAll = project.in(file("Code")).settings(cfg.base, noPublish).aggregate(
   rescalaJS,
   rescalaJVM,
   rescalaNative,
@@ -55,8 +34,12 @@ lazy val rescalaAll = project.in(file("Code")).settings(cfg.base, cfg.noPublish)
 lazy val rescala = crossProject(JSPlatform, JVMPlatform, NativePlatform).in(file("Code/Main"))
   .settings(
     name := "rescala",
-    strictCompile,
     cfg.base,
+    scalacOptions += (if (`is 3`(scalaVersion.value)) "" else "-Xdisable-assertions"),
+    // scaladoc
+    autoAPIMappings := true,
+    Compile / doc / scalacOptions += "-groups",
+    strictCompile,
     // fullmv does not survive this check, but I want to keep it in the shared settings
     scalacOptions := scalacOptions.value.filter(_ != "-Ysafe-init"),
     publishSonatype,
@@ -65,18 +48,17 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform, NativePlatform).in(file
       retypecheck.value.cross(CrossVersion.for3Use2_13),
       reactiveStreams.value,
       scalatest.value,
-      (if (`is 2.11`(scalaVersion.value)) "org.scalatestplus" %%% "scalacheck-1-15" % "3.2.4.0-M1" % "test"
-       else scalatestpluscheck.value),
+      if (`is 2.11`(scalaVersion.value))
+        "org.scalatestplus" %%% "scalacheck-1-15" % "3.2.4.0-M1" % "test"
+      else scalatestpluscheck.value,
     ),
     libraryDependencies ++= (if (`is 3`(scalaVersion.value)) None
                              else Some(scalaOrganization.value % "scala-reflect" % scalaVersion.value % "provided"))
   )
   .jsSettings(
-    Test / compile / scalacOptions += (if (`is 3`(scalaVersion.value)) ""
-                                       else "-P:scalajs:nowarnGlobalExecutionContext"),
+    Test / compile / scalacOptions += "-P:scalajs:nowarnGlobalExecutionContext",
     libraryDependencies += scalatags.value % "provided,test",
-    // dom envirnoment
-    jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
+    jsEnv                                 := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
   )
   .nativeSettings(
     crossScalaVersions := crossScalaVersions.value.filter(_ != Dependencies.Versions.scala3),
@@ -97,7 +79,7 @@ lazy val examples = project.in(file("Code/Examples/examples"))
   .settings(
     name := "rescala-examples",
     cfg.base,
-    cfg.noPublish,
+    noPublish,
     libraryDependencies ++= Seq(
       scalaXml.value,
       scalaSwing.value
@@ -106,7 +88,7 @@ lazy val examples = project.in(file("Code/Examples/examples"))
 
 lazy val universe = project.in(file("Code/Examples/Universe"))
   .dependsOn(rescalaJVM)
-  .settings(cfg.base, cfg.noPublish, name := "rescala-universe", libraryDependencies += scalaParallelCollections.value)
+  .settings(cfg.base, noPublish, name := "rescala-universe", libraryDependencies += scalaParallelCollections.value)
   .enablePlugins(JavaAppPackaging)
 
 lazy val todolist = project.in(file("Code/Examples/Todolist"))
@@ -114,7 +96,7 @@ lazy val todolist = project.in(file("Code/Examples/Todolist"))
   .dependsOn(rescalaJS, replicationJS)
   .settings(
     cfg.base,
-    cfg.noPublish,
+    noPublish,
     name := "todolist",
     libraryDependencies ++= circeAll.value ++ jsoniterScalaAll.value ++ Seq(
       loci.circe.value,
@@ -133,7 +115,7 @@ lazy val consoleReplication = project.in(file("Code/Examples/ConsoleReplication"
   .settings(
     name := "console replication",
     cfg.base,
-    cfg.noPublish,
+    noPublish,
     fork               := true,
     run / connectInput := true,
     libraryDependencies ++= Seq(
@@ -150,7 +132,7 @@ lazy val consistentCalendar = project.in(file("Code/Examples/ConsistentCalendar"
   .settings(
     name := "consistent-calendar",
     cfg.base,
-    cfg.noPublish,
+    noPublish,
     fork               := true,
     run / connectInput := true,
     libraryDependencies ++= Seq(
@@ -190,7 +172,6 @@ lazy val ersirWeb = project.in(file("Code/Examples/Ersir/web"))
     ),
     scalaJSUseMainModuleInitializer := true,
     webpackBundlingMode             := BundlingMode.LibraryOnly()
-    // scalacOptions += "-P:scalajs:sjsDefinedByDefault"
   )
   .dependsOn(ersirSharedJS)
   .enablePlugins(SbtSassify)
@@ -219,12 +200,12 @@ lazy val ersirSharedJS  = ersirShared.js
 // Extensions
 
 lazy val reswing = project.in(file("Code/Extensions/RESwing"))
-  .settings(name := "reswing", cfg.base, cfg.noPublish, libraryDependencies += scalaSwing.value)
+  .settings(name := "reswing", cfg.base, noPublish, libraryDependencies += scalaSwing.value)
   .dependsOn(rescalaJVM)
 
 lazy val rescalafx = project.in(file("Code/Extensions/javafx"))
   .dependsOn(rescalaJVM)
-  .settings(name := "rescalafx", cfg.base, cfg.noPublish, addScalafxDependencies)
+  .settings(name := "rescalafx", cfg.base, noPublish, addScalafxDependencies)
 
 lazy val replication = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure)
   .in(file("Code/Extensions/Replication"))
@@ -238,7 +219,7 @@ lazy val replication = crossProject(JSPlatform, JVMPlatform).crossType(CrossType
       loci.upickle.value,
       catsCollection.value
     ),
-    cfg.publishOnly213
+    publishOnly213
   )
 
 lazy val replicationJS  = replication.js
@@ -248,7 +229,7 @@ lazy val distributedFullmv = project.in(file("Code/Extensions/MultiversionDistri
   .settings(
     cfg.base,
     name := "fullmv-distributed-multiversion",
-    cfg.noPublish,
+    noPublish,
     libraryDependencies ++= circeAll.value,
     libraryDependencies ++= Seq(
       scalatest.value,
@@ -262,7 +243,7 @@ lazy val distributedFullmv = project.in(file("Code/Extensions/MultiversionDistri
 
 lazy val distributedFullMVExamples = project.in(file("Code/Extensions/MultiversionDistributed/examples"))
   .enablePlugins(JmhPlugin)
-  .settings(name := "fullmv-distributed-examples", cfg.base, cfg.noPublish)
+  .settings(name := "fullmv-distributed-examples", cfg.base, noPublish)
   .dependsOn(distributedFullmv % "test->test")
   .dependsOn(distributedFullmv % "compile->test")
   .dependsOn(rescalaJVM % "test->test")
@@ -273,7 +254,7 @@ lazy val distributedFullMVBenchmarks = project.in(file("Code/Extensions/Multiver
   .settings(
     name := "fullmv-distributed-benchmarks",
     cfg.base,
-    cfg.noPublish,
+    noPublish,
     (Compile / mainClass)       := Some("org.openjdk.jmh.Main"),
     TaskKey[Unit]("compileJmh") := Seq(pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh / compile).dependOn.value
   )
@@ -285,7 +266,7 @@ lazy val microbench = project.in(file("Code/Microbenchmarks"))
   .settings(
     name := "microbenchmarks",
     cfg.base,
-    cfg.noPublish,
+    noPublish,
     (Compile / mainClass) := Some("org.openjdk.jmh.Main"),
     libraryDependencies ++= circeAll.value :+ catsCollection.value :+ upickle.value,
     TaskKey[Unit]("compileJmh") := Seq(pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh / compile).dependOn.value
