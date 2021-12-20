@@ -261,6 +261,11 @@ lazy val distributedFullMVBenchmarks = project.in(file("Code/Extensions/Multiver
   .dependsOn(distributedFullmv % "compile->test")
   .enablePlugins(JavaAppPackaging)
 
+
+lazy val kofre = project.in(file("Code/Extensions/Kofre"))
+                            .dependsOn(rescalaJVM)
+                            .settings(name := "kofre", scalaVersion_3, noPublish)
+
 lazy val microbench = project.in(file("Code/Microbenchmarks"))
   .enablePlugins(JmhPlugin)
   .settings(
