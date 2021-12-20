@@ -42,17 +42,17 @@ trait SimpleBundle extends Core with Observing {
       tmp
     }
 
-    override protected[this] def ignite(
+    override protected[this] def initialize(
         reactive: Derived,
         incoming: Set[ReSource],
-        ignitionRequiresReevaluation: Boolean
+        needsReevaluation: Boolean
     ): Unit = {
       incoming.foreach { dep =>
         dep.state.outgoing += reactive
       }
       reactive.state.incoming = incoming
-      reactive.state.discovered = ignitionRequiresReevaluation
-      reactive.state.dirty = ignitionRequiresReevaluation
+      reactive.state.discovered = needsReevaluation
+      reactive.state.dirty = needsReevaluation
       createdReactives :+= reactive
 
       val predecessorsDone = incoming.forall(r => !r.state.discovered || r.state.done)
@@ -62,7 +62,7 @@ trait SimpleBundle extends Core with Observing {
       val discovered = incoming.exists(_.state.discovered)
       if (discovered && !predecessorsDone) {
         // do nothing, this reactive is reached by normal propagation later
-      } else if (ignitionRequiresReevaluation || requiresReev) {
+      } else if (needsReevaluation || requiresReev) {
         Util.evaluate(reactive, this, afterCommitObservers)
       } else if (predecessorsDone) reactive.state.done = true
     }

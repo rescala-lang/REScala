@@ -140,8 +140,8 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
         .create(
           Set(),
           new ReactorState[T](initialValue, initialStage),
-          inite = true
-        ) { (createdState: State[ReactorState[T]]) =>
+          needsReevaluation = true
+          ) { (createdState: State[ReactorState[T]]) =>
           new Reactor[T](createdState)
         }
     }

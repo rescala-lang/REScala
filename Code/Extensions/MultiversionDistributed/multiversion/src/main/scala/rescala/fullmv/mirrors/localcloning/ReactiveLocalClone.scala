@@ -28,7 +28,7 @@ trait ReactiveLocalCloneBundle extends FullMVBundle with SignalBundle {
     def apply[A](signal: Signal[A], fakeDelay: Duration)(implicit
         ticket: CreationTicket
     ): Signal[A] = {
-      ticket.create(Set(), Pulse.empty: Pulse[A], inite = true) { initialState =>
+      ticket.create(Set(), Pulse.empty: Pulse[A], needsReevaluation = true) { initialState =>
         val turn = initialState.asInstanceOf[
           NonblockingSkipListVersionHistory[_, FullMVTurn, _, _]
         ].laggingLatestStable.get().get().txn
@@ -55,7 +55,7 @@ trait ReactiveLocalCloneBundle extends FullMVBundle with SignalBundle {
     def apply[P](event: Event[P], fakeDelay: Duration)(implicit
         ticket: CreationTicket
     ): Event[P] = {
-      ticket.create(Set(), Pulse.NoChange: Pulse[P], inite = false) { initialState =>
+      ticket.create(Set(), Pulse.NoChange: Pulse[P], needsReevaluation = false) { initialState =>
         val turn = initialState.asInstanceOf[
           NonblockingSkipListVersionHistory[_, FullMVTurn, _, _]
         ].laggingLatestStable.get().get().txn

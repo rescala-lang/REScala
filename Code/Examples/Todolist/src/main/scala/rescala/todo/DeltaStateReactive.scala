@@ -39,7 +39,7 @@ object DeltaStateReactive {
       applyDelta: (DState, Delta) => DState,
       handlers: Seq[(DynamicTicket, DState) => Delta]
   )(implicit name: ReName, creationTicket: CreationTicket): DeltaStateReactive[Delta, DState] =
-    creationTicket.create(Set(deltaInput), DeltaWithState(List.empty[Delta], init), inite = false)(state =>
+    creationTicket.create(Set(deltaInput), DeltaWithState(List.empty[Delta], init), needsReevaluation = false)(state =>
       new DeltaStateReactive(state, deltaInput, applyDelta, handlers, name)
-    )
+                                                                                                               )
 }

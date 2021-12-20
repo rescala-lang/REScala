@@ -59,10 +59,10 @@ trait Levelbased extends Twoversion {
     private def nextLevel(dependencies: Set[ReSource]): Int =
       if (dependencies.isEmpty) 0 else dependencies.map(_.state.level()).max + 1
 
-    override protected def ignite(
+    override protected def initialize(
         reactive: Derived,
         incoming: Set[ReSource],
-        ignitionRequiresReevaluation: Boolean
+        needsReevaluation: Boolean
     ): Unit = {
       val level = nextLevel(incoming)
       reactive.state.updateLevel(level)
@@ -73,7 +73,7 @@ trait Levelbased extends Twoversion {
       }
       reactive.state.updateIncoming(incoming)
 
-      if (ignitionRequiresReevaluation || incoming.exists(_propagating.contains)) {
+      if (needsReevaluation || incoming.exists(_propagating.contains)) {
         if (level <= levelQueue.currentLevel()) {
           evaluateIn(reactive)(makeDynamicReevaluationTicket(reactive.state.base(token)))
         } else {

@@ -304,10 +304,10 @@ trait FullMVBundle extends Core {
       state
     }
 
-    override def ignite(
+    override def initialize(
         reactive: Derived,
         incoming: Set[ReSource],
-        ignitionRequiresReevaluation: Boolean
+        needsReevaluation: Boolean
     ): Unit = {
 //    assert(Thread.currentThread() == userlandThread, s"$this ignition of $reactive on different thread ${Thread.currentThread().getName}")
       if (FullMVUtil.DEBUG) println(s"[${Thread.currentThread().getName}] $this igniting $reactive on $incoming")
@@ -325,25 +325,25 @@ trait FullMVBundle extends Core {
       // reevaluation (if one is required) to have been completed, but cannot access values from subsequent turns
       // and hence does not need to wait for those.
       activeBranchDifferential(TurnPhase.Executing, 1)
-      val ignitionNotification = new Notification(this, reactive, changed = ignitionRequiresReevaluation)
+      val ignitionNotification = new Notification(this, reactive, changed = needsReevaluation)
       ignitionNotification.deliverNotification() match {
         case (true, DoNothing) =>
           if (FullMVUtil.DEBUG)
-            println(s"[${Thread.currentThread().getName}] $this ignite $reactive spawned a branch.")
+            println(s"[${Thread.currentThread().getName}] $this initialize $reactive spawned a branch.")
         case (false, DoNothing) =>
           if (FullMVUtil.DEBUG)
             println(
-              s"[${Thread.currentThread().getName}] $this ignite $reactive did not spawn a branch or reevaluation."
+              s"[${Thread.currentThread().getName}] $this initialize $reactive did not spawn a branch or reevaluation."
             )
           activeBranchDifferential(TurnPhase.Executing, -1)
         case (retainBranch, ReevaluationReady) =>
           if (FullMVUtil.DEBUG)
-            println(s"[${Thread.currentThread().getName}] $this ignite $reactive spawned reevaluation.")
+            println(s"[${Thread.currentThread().getName}] $this initialize $reactive spawned reevaluation.")
           new Reevaluation(this, reactive).doReevaluation(retainBranch)
         case (true, NotifyAndReevaluationReadySuccessor(out, succTxn)) if out.isEmpty =>
           if (FullMVUtil.DEBUG)
             println(
-              s"[${Thread.currentThread().getName}] $this ignite $reactive spawned reevaluation for successor $succTxn."
+              s"[${Thread.currentThread().getName}] $this initialize $reactive spawned reevaluation for successor $succTxn."
             )
           activeBranchDifferential(TurnPhase.Executing, -1)
           val succReev = new Reevaluation(succTxn, reactive)
@@ -357,7 +357,7 @@ trait FullMVBundle extends Core {
         case (true, NotifyAndNonReadySuccessor(out, _)) if out.isEmpty =>
           activeBranchDifferential(TurnPhase.Executing, -1)
         case other =>
-          throw new AssertionError(s"$this ignite $reactive: unexpected result: $other")
+          throw new AssertionError(s"$this initialize $reactive: unexpected result: $other")
       }
     }
 

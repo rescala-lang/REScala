@@ -34,17 +34,17 @@ trait CalculusLike extends Core {
 
     override protected[this] def register(reactive: ReSource): Unit = FScheduler.allReactives += reactive
 
-    override protected[this] def ignite(
+    override protected[this] def initialize(
         reactive: Derived,
         incoming: Set[ReSource],
-        ignitionRequiresReevaluation: Boolean
+        needsReevaluation: Boolean
     ): Unit = {
-      println(s"creating $reactive $ignitionRequiresReevaluation")
+      println(s"creating $reactive $needsReevaluation")
       println(incoming)
 
       reactive.state.inputs = incoming
 
-      if (ignitionRequiresReevaluation || requiresReev(reactive)) {
+      if (needsReevaluation || requiresReev(reactive)) {
         println(s"creation evaluation $reactive")
         // evaluate immediately to support some higher order + creation nonsense
         Reevaluate.evaluate(reactive, r => true, this)

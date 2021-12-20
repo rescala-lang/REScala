@@ -195,8 +195,8 @@ trait EventBundle extends EventCompatBundle with InterpBundle {
       ticket.create(
         Set(this),
         Pulse.empty: Pulse[A],
-        inite = false
-      ) { state =>
+        needsReevaluation = false
+        ) { state =>
         new SignalImpl[A](
           initial = state,
           expr = { (st, currentValue) => reducer(currentValue(), st.collectStatic(this).get) },
@@ -285,7 +285,7 @@ trait EventBundle extends EventCompatBundle with InterpBundle {
     def staticNamed[T](name: String, dependencies: ReSource*)(calculate: StaticTicket => Pulse[T])(implicit
         ticket: CreationTicket
     ): Event[T] = {
-      ticket.create[Pulse[T], EventImpl[T]](dependencies.toSet, Pulse.NoChange, inite = false) {
+      ticket.create[Pulse[T], EventImpl[T]](dependencies.toSet, Pulse.NoChange, needsReevaluation = false) {
         state => new EventImpl[T](state, calculate, name, None)
       }
     }
@@ -303,7 +303,7 @@ trait EventBundle extends EventCompatBundle with InterpBundle {
         ticket: CreationTicket
     ): Event[T] = {
       val staticDeps = dependencies.toSet
-      ticket.create[Pulse[T], EventImpl[T]](staticDeps, Pulse.NoChange, inite = true) { state =>
+      ticket.create[Pulse[T], EventImpl[T]](staticDeps, Pulse.NoChange, needsReevaluation = true) { state =>
         new EventImpl[T](state, expr.andThen(Pulse.fromOption), ticket.rename, Some(staticDeps))
       }
     }
@@ -315,9 +315,9 @@ trait EventBundle extends EventCompatBundle with InterpBundle {
         val internal = initTurn.create[(Pulse[T], Pulse[Diff[T]]), ChangeEventImpl[T]](
           Set[ReSource](signal),
           (Pulse.NoChange, Pulse.NoChange),
-          inite = true,
+          needsReevaluation = true,
           ticket
-        ) { state =>
+          ) { state =>
           new ChangeEventImpl[T](state, signal, ticket.rename)
         }
         static(internal)(st => st.dependStatic(internal))(initTurn)
@@ -344,8 +344,8 @@ trait EventBundle extends EventCompatBundle with InterpBundle {
       ticket.create(
         dependencies,
         Pulse.tryCatch[Pulse[T]](Pulse.Value(init)),
-        inite = false
-      ) {
+        needsReevaluation = false
+        ) {
         state => new SignalImpl[T](state, (st, v) => expr(st)(v), ticket.rename, None)
       }
     }
@@ -398,8 +398,8 @@ trait EventBundle extends EventCompatBundle with InterpBundle {
       ticket.create(
         staticInputs.toSet[ReSource],
         Pulse.tryCatch[Pulse[A]](Pulse.Value(init)),
-        inite = true
-      ) {
+        needsReevaluation = true
+        ) {
         state => new SignalImpl[A](state, operator, ticket.rename, Some(staticInputs.toSet[ReSource]))
       }
     }

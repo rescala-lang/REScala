@@ -108,7 +108,7 @@ trait Twoversion extends Core {
     *
     * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
     */
-  trait TwoVersionTransaction {
+  sealed trait TwoVersionTransaction {
 
     /** Schedules a temporarily written change to be committed by the turn.
       *
@@ -161,6 +161,8 @@ trait Twoversion extends Core {
     val toCommit  = ArrayBuffer[ReSource]()
     val observers = ArrayBuffer[Observation]()
 
+    def initializer: Initializer = this
+
     override def schedule(commitable: ReSource): Unit = toCommit += commitable
 
     def observe(f: Observation): Unit = observers += f
@@ -204,14 +206,14 @@ trait Twoversion extends Core {
     def beforeDynamicDependencyInteraction(dependency: ReSource): Unit
 
     override private[rescala] def makeAdmissionPhaseTicket(initialWrites: Set[ReSource]): AdmissionTicket =
-      new AdmissionTicket(this, initialWrites) {
+      new AdmissionTicket(initializer, initialWrites) {
         override private[rescala] def access(reactive: ReSource): reactive.Value = {
           beforeDynamicDependencyInteraction(reactive)
           reactive.state.base(token)
         }
       }
     private[rescala] def makeDynamicReevaluationTicket[V, N](b: V): ReevTicket[V] =
-      new ReevTicket[V](this, b) {
+      new ReevTicket[V](initializer, b) {
         override def dynamicAccess(reactive: ReSource): reactive.Value =
           TwoVersionTransactionImpl.this.dynamicAfter(reactive)
         override def staticAccess(reactive: ReSource): reactive.Value = reactive.state.get(token)

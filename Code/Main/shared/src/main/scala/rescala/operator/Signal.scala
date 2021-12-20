@@ -155,7 +155,7 @@ trait SignalBundle {
 
     @cutOutOfUserComputation
     def ofUDF[T](udf: UserDefinedFunction[T, ReSource, DynamicTicket])(implicit ct: CreationTicket): Signal[T] = {
-      ct.create[Pulse[T], SignalImpl[T]](udf.staticDependencies, Pulse.empty, inite = true) {
+      ct.create[Pulse[T], SignalImpl[T]](udf.staticDependencies, Pulse.empty, needsReevaluation = true) {
         state =>
           new SignalImpl[T](
             state,
@@ -171,7 +171,7 @@ trait SignalBundle {
     def static[T](dependencies: ReSource*)(expr: StaticTicket => T)(implicit
         ct: CreationTicket
     ): Signal[T] = {
-      ct.create[Pulse[T], SignalImpl[T]](dependencies.toSet, Pulse.empty, inite = true) {
+      ct.create[Pulse[T], SignalImpl[T]](dependencies.toSet, Pulse.empty, needsReevaluation = true) {
         state => new SignalImpl[T](state, ignore2(expr), ct.rename, None)
       }
     }
@@ -182,7 +182,7 @@ trait SignalBundle {
         ct: CreationTicket
     ): Signal[T] = {
       val staticDeps = dependencies.toSet
-      ct.create[Pulse[T], SignalImpl[T]](staticDeps, Pulse.empty, inite = true) {
+      ct.create[Pulse[T], SignalImpl[T]](staticDeps, Pulse.empty, needsReevaluation = true) {
         state => new SignalImpl[T](state, ignore2(expr), ct.rename, Some(staticDeps))
       }
     }

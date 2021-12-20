@@ -441,7 +441,7 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
     //        override def disconnect()(implicit engine: Scheduler): Unit = ???
     //      }
     //    override val valuePersistency: Pulse[P] = Pulse.empty
-    //    override val ignitionRequiresReevaluation                       = true
+    //    override val needsReevaluation                       = true
     //    override val isTransient                                        = false
     //    override def toPulse(reactive: Signal[P]): reactive.Value => Pulse[P] = v => v
     //  }
@@ -466,7 +466,7 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
     //        override def disconnect()(implicit engine: Scheduler): Unit = ???
     //      }
     //    override val valuePersistency: Pulse[P]                    = Pulse.empty
-    //    override val ignitionRequiresReevaluation                                          = false
+    //    override val needsReevaluation                                          = false
     //    override val isTransient                                                           = true
     //    override def toPulse(reactive: Event[P]): reactive.Value => Pulse[P] = reactive.internalAccess
     //  }
@@ -772,7 +772,7 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
             )
             for ((reflectionTurn, v) <- reflectionInitValues) reflection.buffer(reflectionTurn, v.toPulse)
 
-            turn.ignite(reflection, Set.empty, ignitionRequiresReevaluation)
+            turn.initialize(reflection, Set.empty, ignitionRequiresReevaluation)
 
             turn.completeExecuting()
           } catch {

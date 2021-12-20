@@ -129,8 +129,8 @@ class ReactorWithoutAPITest extends RETests {
         .create(
           dependencies,
           new ReactorStage[T](initialValue, stageBuilder),
-          inite = true
-        ) { (createdState: State[ReactorStage[T]]) =>
+          needsReevaluation = true
+          ) { (createdState: State[ReactorStage[T]]) =>
           new Reactor[T](createdState)
         }
     }

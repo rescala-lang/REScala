@@ -113,7 +113,7 @@ trait IncrementalBundle extends Core {
       // The new created Source will be a FilterDeltaSeq which is basically a ReactiveDeltaSeq, which reevaluates differently when changes are propagated
       // FilterDeltaSeq depends on this (ReactiveDeltaSeq). It is initialized as an empty sequence.
       // Each time a change on ReactiveDeltaSeq occurs, if it passes the filterOperation, it is automatically added to FilterDeltaSeq
-      ticket.create[Delta[T], FilterDeltaSeq[T]](Set(this), Delta.noChange, inite = false) {
+      ticket.create[Delta[T], FilterDeltaSeq[T]](Set(this), Delta.noChange, needsReevaluation = false) {
         state => new FilterDeltaSeq[T](this, filterOperation)(state, ticket.rename) with DisconnectableImpl
       }
     }
@@ -132,7 +132,7 @@ trait IncrementalBundle extends Core {
       // The new created Source will be a MapDeltaSeq which is basically a ReactiveDeltaSeq, which reevaluates differently when changes are propagated
       // MapDeltaSeq depends on this (ReactiveDeltaSeq). It is initialized as an empty sequence.
       // Each time a change on ReactiveDeltaSeq occurs, it is mapped and automatically added to MapDeltaSeq
-      ticket.create[Delta[A], MapDeltaSeq[T, A]](Set(this), Delta.noChange, inite = false) {
+      ticket.create[Delta[A], MapDeltaSeq[T, A]](Set(this), Delta.noChange, needsReevaluation = false) {
         state => new MapDeltaSeq[T, A](this, mapOperation)(state, ticket.rename) with DisconnectableImpl
       }
     }
@@ -153,8 +153,8 @@ trait IncrementalBundle extends Core {
       ticket.create[Delta[T], ConcatenateDeltaSeq[T]](
         Set(this, that),
         Delta.noChange,
-        inite = false
-      ) {
+        needsReevaluation = false
+        ) {
         state => new ConcatenateDeltaSeq[T](this, that)(state, ticket.rename) with DisconnectableImpl
       }
     }

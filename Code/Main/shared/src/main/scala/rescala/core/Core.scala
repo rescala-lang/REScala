@@ -61,22 +61,20 @@ trait Core {
     /** Creates and correctly initializes new [[rescala.core.Derived]]s */
     final private[rescala] def create[V, T <: Derived](
         incoming: Set[ReSource],
-        initv: V,
-        inite: Boolean,
+        initValue: V,
+        needsReevaluation: Boolean,
         creationTicket: CreationTicket
     )(instantiateReactive: State[V] => T): T = {
-      val state    = makeDerivedStructState[V](initv)
+      val state    = makeDerivedStructState[V](initValue)
       val reactive = instantiateReactive(state)
       register(reactive)
-      ignite(reactive, incoming, inite)
+      initialize(reactive, incoming, needsReevaluation)
       reactive
     }
 
     def accessTicket(): AccessTicket
 
-    /** hook for schedulers to globally collect all created resources,
-      * usually does nothing
-      */
+    /** hook for schedulers to globally collect all created resources, usually does nothing */
     protected[this] def register(reactive: ReSource): Unit = ()
 
     /** Correctly initializes [[ReSource]]s */
@@ -99,14 +97,14 @@ trait Core {
 
     /** to be implemented by the propagation algorithm, called when a new reactive has been instantiated and needs to be connected to the graph and potentially reevaluated.
       *
-      * @param reactive                     the newly instantiated reactive
-      * @param incoming                     a set of incoming dependencies
-      * @param ignitionRequiresReevaluation true if the reactive must be reevaluated at creation even if none of its dependencies change in the creating turn.
+      * @param reactive          the newly instantiated reactive
+      * @param incoming          a set of incoming dependencies
+      * @param needsReevaluation true if the reactive must be reevaluated at creation even if none of its dependencies change in the creating turn.
       */
-    protected[this] def ignite(
+    protected[this] def initialize(
         reactive: Derived,
         incoming: Set[ReSource],
-        ignitionRequiresReevaluation: Boolean
+        needsReevaluation: Boolean
     ): Unit
 
   }
@@ -247,10 +245,10 @@ trait Core {
 
     private[rescala] def create[V, T <: Derived](
         incoming: Set[ReSource],
-        initv: V,
-        inite: Boolean
+        initValue: V,
+        needsReevaluation: Boolean
     )(instantiateReactive: State[V] => T): T = {
-      transaction(_.create(incoming, initv, inite, this)(instantiateReactive))
+      transaction(_.create(incoming, initValue, needsReevaluation, this)(instantiateReactive))
     }
     private[rescala] def createSource[V, T <: ReSource](intv: V)(instantiateReactive: State[V] => T): T = {
 
