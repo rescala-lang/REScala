@@ -71,12 +71,12 @@ class AddWinsSetBench {
     write(rep1Set)
   }
 
-  //@Benchmark
-  //def serializeCirce() = {
+  // @Benchmark
+  // def serializeCirce() = {
   //  import io.circe.syntax._
   //  import Codecs.awsCirceCodec
   //  rep1Set.asJson.noSpaces
-  //}
+  // }
 
   @Benchmark
   def serializeUJsonDelta() = {
@@ -85,12 +85,12 @@ class AddWinsSetBench {
     write(rep2Delta)
   }
 
-  //@Benchmark
-  //def serializeCirceDelta() = {
+  // @Benchmark
+  // def serializeCirceDelta() = {
   //  import io.circe.syntax._
   //  import Codecs.awsCirceCodec
   //  rep2Delta.asJson.noSpaces
-  //}
+  // }
 
 }
 
@@ -106,10 +106,10 @@ object Codecs {
   implicit val awsOUJsonCodec: upickle.default.ReadWriter[AddWinsSetO[String]] = upickle.default.macroRW
   implicit val awsUJsonCodec: upickle.default.ReadWriter[AddWinsSet[String]]   = upickle.default.macroRW
 
-  //import io.circe.generic.auto._
+  // import io.circe.generic.auto._
   //
-  //implicit val awsOCirceCodec: io.circe.Encoder[AddWinsSetO[String]] =
+  // implicit val awsOCirceCodec: io.circe.Encoder[AddWinsSetO[String]] =
   //  io.circe.generic.semiauto.deriveEncoder: @scala.annotation.nowarn
-  //implicit val awsCirceCodec: io.circe.Encoder[AddWinsSet[String]] =
+  // implicit val awsCirceCodec: io.circe.Encoder[AddWinsSet[String]] =
   //  io.circe.generic.semiauto.deriveEncoder: @scala.annotation.nowarn
 }

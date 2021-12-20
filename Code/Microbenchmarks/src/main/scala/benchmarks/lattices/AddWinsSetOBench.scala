@@ -83,11 +83,11 @@ class AddWinsSetOBench {
     write(rep1Set)
   }
 
-  //@Benchmark
-  //def serializeCirce() = {
+  // @Benchmark
+  // def serializeCirce() = {
   //  import io.circe.syntax._
   //  rep1Set.asJson.noSpaces
-  //}
+  // }
 
   @Benchmark
   def serializeUJsonDelta() = {
@@ -95,10 +95,10 @@ class AddWinsSetOBench {
     write(rep2Delta)
   }
 
-  //@Benchmark
-  //def serializeCirceDelta() = {
+  // @Benchmark
+  // def serializeCirceDelta() = {
   //  import io.circe.syntax._
   //  rep2Delta.asJson.noSpaces
-  //}
+  // }
 
 }
