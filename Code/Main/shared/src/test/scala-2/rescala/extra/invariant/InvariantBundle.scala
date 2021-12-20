@@ -4,13 +4,13 @@ import org.scalacheck.Prop.forAll
 import org.scalacheck.Test.PropException
 import org.scalacheck.{Gen, Prop, Test}
 import rescala.extra.scheduler.SimpleBundle
-import rescala.operator.Pulse
 import rescala.interface.RescalaInterface
+import rescala.operator.Pulse
 
-import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+import scala.collection.mutable.ListBuffer
 
 object InvariantApi extends InvariantBundle with RescalaInterface {
-  def scheduler = InvariantScheduler
+  def scheduler: InvariantScheduler.type = InvariantScheduler
 
   override def makeDerivedStructStateBundle[V](ip: V): InvariantApi.InvariantState[V] = new InvariantState(ip)
 }
