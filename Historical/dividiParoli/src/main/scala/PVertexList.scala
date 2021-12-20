@@ -31,7 +31,7 @@ object PVertexList {
     new PVertexList[A](init)
   }
 
-  //noinspection ConvertExpressionToSAM
+  // noinspection ConvertExpressionToSAM
   implicit def PVertexListFactory[A]: PVarFactory[PVertexList[A]] =
     new PVarFactory[PVertexList[A]] {
       override def apply(): PVertexList[A] = PVertexList[A]()

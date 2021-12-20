@@ -71,7 +71,7 @@ object DividiApp extends JFXApp {
   val logBinding = Binding[PGrowOnlyLog[Transaction]]("log")
   val (registry, transactionLogDist): (Registry, PGrowOnlyLog[Transaction]) = {
     val registry = new Registry
-    if (username == "Alice") { //server mode
+    if (username == "Alice") { // server mode
       registry.listen(WS(1099))
 
       val newLog = PGrowOnlyLog[Transaction]()

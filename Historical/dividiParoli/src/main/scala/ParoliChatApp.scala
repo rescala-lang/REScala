@@ -51,11 +51,12 @@ object ParoliChatApp {
   val console = new jline.console.ConsoleReader()
 
   def main(args: Array[String]): Unit =
-    if (args.length >= 1) args(0) match {
-      case "Alice"   => startup("Alice", "2550")
-      case "Bob"     => startup("Bob", "2551")
-      case "Charlie" => startup("Charlie", "2552")
-    }
+    if (args.length >= 1)
+      args(0) match {
+        case "Alice"   => startup("Alice", "2550")
+        case "Bob"     => startup("Bob", "2551")
+        case "Charlie" => startup("Charlie", "2552")
+      }
     else {
       val config = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + 2553).withFallback(
         ConfigFactory.parseString(ConfigString.value)
@@ -79,9 +80,9 @@ object ParoliChatApp {
   }
 
   def run(name: String, e: ActorRef): Unit = {
-    //implicit val engine = e
+    // implicit val engine = e
     val history: PVertexList[String] = PVertexList(List())
-    //history.publish("ChatHistory")
+    // history.publish("ChatHistory")
 
     // redraw interface every time the history changes:
     history.crdtSignal.observe { value =>

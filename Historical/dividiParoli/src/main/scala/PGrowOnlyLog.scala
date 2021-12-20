@@ -19,7 +19,7 @@ object PGrowOnlyLog {
   /** Allows creation of PVertexLogs by passing a set of initial values. */
   def apply[A](values: List[A]): PGrowOnlyLog[A] = new PGrowOnlyLog[A](RGOA(values))
 
-  //noinspection ConvertExpressionToSAM
+  // noinspection ConvertExpressionToSAM
   implicit def PGrowOnlyLogFactory[A]: PVarFactory[PGrowOnlyLog[A]] =
     new PVarFactory[PGrowOnlyLog[A]] {
       override def apply(): PGrowOnlyLog[A] = PGrowOnlyLog[A]()

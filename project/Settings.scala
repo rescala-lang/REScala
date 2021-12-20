@@ -28,9 +28,9 @@ object Settings {
   )
 
   def `is 2.11`(scalaVersion: String): Boolean =
-    CrossVersion.partialVersion(scalaVersion).contains((2,11))
+    CrossVersion.partialVersion(scalaVersion).contains((2, 11))
   def `is 2.13`(scalaVersion: String): Boolean =
-    CrossVersion.partialVersion(scalaVersion).contains((2,13))
+    CrossVersion.partialVersion(scalaVersion).contains((2, 13))
   def `is 3`(version: String) =
     CrossVersion.partialVersion(version) collect { case (3, _) => true } getOrElse false
 

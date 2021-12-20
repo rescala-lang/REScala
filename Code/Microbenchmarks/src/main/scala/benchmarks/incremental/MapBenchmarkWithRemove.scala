@@ -23,7 +23,7 @@ class MapBenchmarkWithRemove {
   var removeEvent: Evt[Int]       = _
   var mappedSeq: Signal[Seq[Int]] = _
 
-  var reactSeq: SeqSource[Int]                     = _
+  var reactSeq: SeqSource[Int]              = _
   var reactMappedSeq: ReactiveDeltaSeq[Int] = _
 
   @Setup(Level.Invocation)

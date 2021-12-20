@@ -7,7 +7,6 @@ import scala.swing.event.{
   TableUpdated
 }
 
-
 class ReTable[A <: AnyRef](
     val rowData: ReSwingValue[Seq[Seq[A]]] = ReSwingNoValue[Seq[Seq[A]]](),
     val columnNames: ReSwingValue[Seq[String]] = (),
@@ -88,7 +87,7 @@ class ReTable[A <: AnyRef](
     { rowData =>
       (peer.peer.getModel match {
         case model: ReTable.ReTableModel[A @unchecked] => model
-        case _                                         =>
+        case _ =>
           val model = new ReTable.ReTableModel[A]
           peer.peer setModel model
           modelChanged()

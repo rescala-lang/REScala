@@ -196,7 +196,7 @@ trait EventBundle extends EventCompatBundle with InterpBundle {
         Set(this),
         Pulse.empty: Pulse[A],
         needsReevaluation = false
-        ) { state =>
+      ) { state =>
         new SignalImpl[A](
           initial = state,
           expr = { (st, currentValue) => reducer(currentValue(), st.collectStatic(this).get) },
@@ -317,7 +317,7 @@ trait EventBundle extends EventCompatBundle with InterpBundle {
           (Pulse.NoChange, Pulse.NoChange),
           needsReevaluation = true,
           ticket
-          ) { state =>
+        ) { state =>
           new ChangeEventImpl[T](state, signal, ticket.rename)
         }
         static(internal)(st => st.dependStatic(internal))(initTurn)
@@ -345,7 +345,7 @@ trait EventBundle extends EventCompatBundle with InterpBundle {
         dependencies,
         Pulse.tryCatch[Pulse[T]](Pulse.Value(init)),
         needsReevaluation = false
-        ) {
+      ) {
         state => new SignalImpl[T](state, (st, v) => expr(st)(v), ticket.rename, None)
       }
     }
@@ -399,7 +399,7 @@ trait EventBundle extends EventCompatBundle with InterpBundle {
         staticInputs.toSet[ReSource],
         Pulse.tryCatch[Pulse[A]](Pulse.Value(init)),
         needsReevaluation = true
-        ) {
+      ) {
         state => new SignalImpl[A](state, operator, ticket.rename, Some(staticInputs.toSet[ReSource]))
       }
     }

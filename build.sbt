@@ -4,7 +4,7 @@ import Dependencies._
 import Settings._
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
-ThisBuild / incOptions := (ThisBuild / incOptions).value.withLogRecompileOnMacro(false)
+ThisBuild / incOptions        := (ThisBuild / incOptions).value.withLogRecompileOnMacro(false)
 cfg.noPublish
 
 lazy val cfg = new {
@@ -65,19 +65,22 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform, NativePlatform).in(file
       retypecheck.value.cross(CrossVersion.for3Use2_13),
       reactiveStreams.value,
       scalatest.value,
-      (if (`is 2.11`(scalaVersion.value)) "org.scalatestplus" %%% "scalacheck-1-15" % "3.2.4.0-M1" % "test" else scalatestpluscheck.value),
+      (if (`is 2.11`(scalaVersion.value)) "org.scalatestplus" %%% "scalacheck-1-15" % "3.2.4.0-M1" % "test"
+       else scalatestpluscheck.value),
     ),
-    libraryDependencies ++= (if(`is 3`(scalaVersion.value)) None else Some(scalaOrganization.value % "scala-reflect" % scalaVersion.value % "provided"))
+    libraryDependencies ++= (if (`is 3`(scalaVersion.value)) None
+                             else Some(scalaOrganization.value % "scala-reflect" % scalaVersion.value % "provided"))
   )
   .jsSettings(
-    Test / compile / scalacOptions += (if(`is 3`(scalaVersion.value)) "" else "-P:scalajs:nowarnGlobalExecutionContext"),
+    Test / compile / scalacOptions += (if (`is 3`(scalaVersion.value)) ""
+                                       else "-P:scalajs:nowarnGlobalExecutionContext"),
     libraryDependencies += scalatags.value % "provided,test",
     // dom envirnoment
     jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
   )
   .nativeSettings(
     crossScalaVersions := crossScalaVersions.value.filter(_ != Dependencies.Versions.scala3),
-    nativeLinkStubs := true
+    nativeLinkStubs    := true
   )
 
 lazy val rescalaJVM = rescala.jvm

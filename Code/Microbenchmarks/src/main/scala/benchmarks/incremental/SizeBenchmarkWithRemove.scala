@@ -5,7 +5,6 @@ import rescala.extra.incremental.IncrementalApi.{State => _, _}
 
 import java.util.concurrent.TimeUnit
 
-
 /** @author gerizuna
   * @since 10.10.19
   */

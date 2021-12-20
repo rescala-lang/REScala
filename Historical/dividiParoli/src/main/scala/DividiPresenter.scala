@@ -29,8 +29,8 @@ class DividiPresenter(
 ) {
 
   // initialize interface
-  //showDebtOutput(false)
-  //debtOutput.text.onChange((_, _, newVal) => if (newVal != "") showDebtOutput(false) else showDebtOutput(true))
+  // showDebtOutput(false)
+  // debtOutput.text.onChange((_, _, newVal) => if (newVal != "") showDebtOutput(false) else showDebtOutput(true))
 
   // bind toolbar
   onlineButton.selectedProperty() <==> DividiApp.onlineGui

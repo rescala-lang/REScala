@@ -16,9 +16,7 @@ trait IncrementalBundle extends Core {
     */
   trait ReactiveDeltaSeq[T] extends Derived {
 
-
     override protected[rescala] def commit(base: Delta[T]): Delta[T] = Delta.noChange
-
 
     /** the value of deltas send through the set */
     override type Value = Delta[T]
@@ -154,7 +152,7 @@ trait IncrementalBundle extends Core {
         Set(this, that),
         Delta.noChange,
         needsReevaluation = false
-        ) {
+      ) {
         state => new ConcatenateDeltaSeq[T](this, that)(state, ticket.rename) with DisconnectableImpl
       }
     }
@@ -195,7 +193,7 @@ trait IncrementalBundle extends Core {
     def contains(element: T)(implicit
         ticket: CreationTicket,
         ord: Ordering[T]
-    ): Signal[Boolean] = { exists {(seqElement: T) => ord.equiv(element, seqElement) } }
+    ): Signal[Boolean] = { exists { (seqElement: T) => ord.equiv(element, seqElement) } }
 
     /** To check if elements fulfilling the condition exists
       *

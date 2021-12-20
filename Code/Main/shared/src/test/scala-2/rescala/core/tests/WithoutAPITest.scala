@@ -62,7 +62,7 @@ class WithoutAPITest extends RETests {
             Set(customSource),
             "Well, this is an initial value",
             needsReevaluation = false
-            ) { createdState =>
+          ) { createdState =>
             new CustomDerivedString(createdState, customSource)
           }
 
