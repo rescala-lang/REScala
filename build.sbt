@@ -3,6 +3,7 @@ import java.nio.file.Files
 import Dependencies._
 import Settings._
 
+Global / onChangedBuildSource := ReloadOnSourceChanges
 ThisBuild / incOptions := (ThisBuild / incOptions).value.withLogRecompileOnMacro(false)
 cfg.noPublish
 
@@ -42,13 +43,13 @@ lazy val rescalaProject = project.in(file(".")).settings(cfg.base, cfg.noPublish
   reswing,
   todolist,
   universe,
-  //rescalaNative,
+  rescalaNative,
 )
 
 lazy val rescalaAll = project.in(file("Code")).settings(cfg.base, cfg.noPublish).aggregate(
   rescalaJS,
   rescalaJVM,
-  //rescalaNative,
+  rescalaNative,
 )
 
 lazy val rescala = crossProject(JSPlatform, JVMPlatform, NativePlatform).in(file("Code/Main"))
@@ -70,7 +71,6 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform, NativePlatform).in(file
   )
   .jsSettings(
     Test / compile / scalacOptions += (if(`is 3`(scalaVersion.value)) "" else "-P:scalajs:nowarnGlobalExecutionContext"),
-    libraryDependencies += scalaJavaTime.value % "test",
     libraryDependencies += scalatags.value % "provided,test",
     // dom envirnoment
     jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()

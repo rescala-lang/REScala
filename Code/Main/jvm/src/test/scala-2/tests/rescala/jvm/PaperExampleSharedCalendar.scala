@@ -1,10 +1,10 @@
-package tests.rescala.misc
-
-import java.time.temporal.ChronoField
-import java.time.{Clock, LocalDate => Date}
+package tests.rescala.jvm
 
 import org.scalatest.freespec.AnyFreeSpec
 import rescala.default._
+
+import java.time.temporal.ChronoField
+import java.time.{Clock, LocalDate => Date}
 
 class PaperExampleSharedCalendar extends AnyFreeSpec {
 
