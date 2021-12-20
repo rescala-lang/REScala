@@ -109,11 +109,6 @@ trait Core {
 
   }
 
-  /** [[InnerTicket]]s are used in Rescala to give capabilities to contexts during propagation.
-    * [[ReevTicket]] is used during reevaluation, and [[AdmissionTicket]] during the initialization.
-    */
-  class InnerTicket(val initializer: Initializer)
-
   /** [[ReevTicket]] is given to the [[Derived]] reevaluate method and allows to access other reactives.
     * The ticket tracks return values, such as dependencies, the value, and if the value should be propagated.
     * Such usages make it unsuitable as an API for the user, where [[StaticTicket]] or [[DynamicTicket]] should be used instead.
@@ -192,7 +187,7 @@ trait Core {
   }
 
   /** User facing low level API to access values in a static context. */
-  sealed abstract class StaticTicket(creation: Initializer) extends InnerTicket(creation) {
+  sealed abstract class StaticTicket(val initializer: Initializer) {
     private[rescala] def collectStatic(reactive: ReSource): reactive.Value
     final def dependStatic[A](reactive: Interp[A]): A = reactive.interpret(collectStatic(reactive))
   }
@@ -213,9 +208,7 @@ trait Core {
   /** Enables reading of the current value during admission.
     * Keeps track of written sources internally.
     */
-  abstract class AdmissionTicket(initializer: Initializer, declaredWrites: Set[ReSource])
-      extends InnerTicket(initializer)
-      with AccessTicket {
+  abstract class AdmissionTicket(val initializer: Initializer, declaredWrites: Set[ReSource]) extends AccessTicket {
 
     private var _initialChanges                                       = Map[ReSource, InitialChange]()
     private[rescala] def initialChanges: Map[ReSource, InitialChange] = _initialChanges
@@ -264,7 +257,9 @@ trait Core {
 
   /** As reactives can be created during propagation, any [[InnerTicket]] can be converted to a creation ticket. */
   object CreationTicket extends LowPriorityCreationImplicits {
-    implicit def fromTicketImplicit(implicit ticket: InnerTicket, line: ReName): CreationTicket =
+    implicit def fromTicketImplicit(implicit ticket: StaticTicket, line: ReName): CreationTicket =
+      new CreationTicket(Left(ticket.initializer), line)
+    implicit def fromAdmissionImplicit(implicit ticket: AdmissionTicket, line: ReName): CreationTicket =
       new CreationTicket(Left(ticket.initializer), line)
 
     implicit def fromInitializerImplicit(implicit
