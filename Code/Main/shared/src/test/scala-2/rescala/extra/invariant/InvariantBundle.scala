@@ -11,6 +11,7 @@ import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 object InvariantApi extends InvariantBundle with RescalaInterface {
   def scheduler = InvariantScheduler
+
   override def makeDerivedStructStateBundle[V](ip: V): InvariantApi.InvariantState[V] = new InvariantState(ip)
 }
 
@@ -169,7 +170,7 @@ trait InvariantBundle extends SimpleBundle {
           new IllegalArgumentException(s"${reactive.state.value} violates invariant ${inv.description}"),
           reactive,
           InvariantUtil.getCausalErrorChains(reactive, initialWrites)
-          )
+        )
       }
     }
 

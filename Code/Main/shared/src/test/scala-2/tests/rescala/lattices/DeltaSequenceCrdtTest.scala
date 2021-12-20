@@ -1,4 +1,4 @@
-package tests.distribution
+package tests.rescala.lattices
 
 import org.scalatest.freespec.AnyFreeSpec
 import rescala.extra.lattices.Lattice

@@ -1,4 +1,4 @@
-package tests.distribution
+package tests.rescala.lattices
 
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec

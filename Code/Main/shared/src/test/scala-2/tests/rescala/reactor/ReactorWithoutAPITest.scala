@@ -1,6 +1,7 @@
-package rescala.extra.reactor
+package tests.rescala.reactor
 
 import _root_.tests.rescala.testtools.RETests
+import rescala.extra.reactor.ReactorBundle
 
 class ReactorWithoutAPITest extends RETests {
 

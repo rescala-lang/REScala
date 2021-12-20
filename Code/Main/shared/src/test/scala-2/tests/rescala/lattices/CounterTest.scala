@@ -1,10 +1,11 @@
-package tests.distribution
+package tests.rescala.lattices
 
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.lattices.Lattice
 import rescala.extra.lattices.primitives.GCounter
+import tests.rescala.lattices.DataGenerator._
 
 object DataGenerator {
   implicit val genCounter: Arbitrary[GCounter] = Arbitrary(for {
@@ -16,8 +17,6 @@ object DataGenerator {
 }
 
 class CounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
-
-  import tests.distribution.DataGenerator._
 
   "idempotent" in forAll { (a: GCounter, b: GCounter) =>
     val ab  = Lattice.merge(a, b)
