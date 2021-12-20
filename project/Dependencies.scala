@@ -13,7 +13,7 @@ object Dependencies {
     val betterFiles              = "3.9.1"
     val catsCore                 = "2.6.1"
     val catsCollection           = "0.9.2"
-    val circeCore                = "0.13.0"
+    val circeCore                = "0.14.1"
     val decline                  = "2.2.0"
     val fastparse                = "2.3.3"
     val javalin                  = "3.13.12"
