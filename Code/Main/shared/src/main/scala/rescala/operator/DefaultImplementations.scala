@@ -66,7 +66,7 @@ trait DefaultImplementations {
     override protected[rescala] def commit(base: (Pulse[T], Pulse[Diff[T]])): (Pulse[T], Pulse[Diff[T]]) =
       base.copy(_2 = Pulse.NoChange)
     override def internalAccess(v: (Pulse[T], Pulse[Diff[T]])): Pulse[Diff[T]] = v._2
-    override def interpret(v: Value): Option[Diff[T]]                          = v._2.toOption
+    override def read(v: Value): Option[Diff[T]]                          = v._2.toOption
 
     override protected[rescala] def reevaluate(rein: ReIn): Rout =
       guardReevaluate(rein) {

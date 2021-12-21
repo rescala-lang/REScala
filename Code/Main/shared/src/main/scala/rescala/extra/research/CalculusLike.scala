@@ -89,9 +89,7 @@ trait CalculusLike extends Core {
           val transaction = FTransaction(new SimpleCreation())
           withDynamicInitializer(transaction) {
             // admission
-            val admissionTicket = new AdmissionTicket(transaction, initialWrites) {
-              override private[rescala] def access(reactive: ReSource): reactive.Value = reactive.state.value
-            }
+            val admissionTicket = new AdmissionTicket(transaction, initialWrites)
 
             // collect the fired values
             val admissionResult = admissionPhase(admissionTicket)
@@ -126,8 +124,8 @@ trait CalculusLike extends Core {
           idle = true
         }
       }
-    override private[rescala] def singleReadValueOnce[A](reactive: Interp[A]): A =
-      reactive.interpret(reactive.state.value)
+    override private[rescala] def singleReadValueOnce[A](reactive: Readable[A]): A =
+      reactive.read(reactive.state.value)
   }
 
   case class Propagation(

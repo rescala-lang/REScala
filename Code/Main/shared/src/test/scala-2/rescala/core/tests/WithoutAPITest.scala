@@ -7,13 +7,13 @@ class WithoutAPITest extends RETests {
   multiEngined { engine =>
     import engine._
 
-    class CustomSource[T](initState: State[T]) extends ReSource with Interp[T] {
+    class CustomSource[T](initState: State[T]) extends ReSource with Readable[T] {
       outer =>
 
       override type Value = T
       override protected[rescala] def state: State[T]            = initState
       override protected[rescala] def name: ReName               = "I am a source name"
-      override def interpret(v: Value): T                        = v
+      override def read(v: Value): T                        = v
       override protected[rescala] def commit(base: Value): Value = base
 
       def makeChange(newValue: T) =
@@ -30,9 +30,9 @@ class WithoutAPITest extends RETests {
 
     class CustomDerivedString(
         initState: State[String],
-        inputSource: Interp[String]
+        inputSource: Readable[String]
     ) extends Derived
-        with Interp[String] {
+        with Readable[String] {
       override type Value = String
       override protected[rescala] def state: State[Value]        = initState
       override protected[rescala] def name: ReName               = "I am a name"
@@ -43,7 +43,7 @@ class WithoutAPITest extends RETests {
         input.withValue(sourceVal + " :D")
       }
 
-      override def interpret(v: Value): String = v
+      override def read(v: Value): String = v
     }
 
     test("simple usage of core rescala without signals or events") {
@@ -56,7 +56,7 @@ class WithoutAPITest extends RETests {
 
       assert(transaction(customSource) { _.now(customSource) } === "Hi!")
 
-      val customDerived: Interp[String] =
+      val customDerived: Readable[String] =
         CreationTicket.fromScheduler(scheduler)
           .create(
             Set(customSource),

@@ -52,8 +52,8 @@ trait Twoversion extends Core {
     */
   trait TwoVersionScheduler[Tx <: TwoVersionTransaction]
     extends SchedulerImpl[Tx] {
-    private[rescala] def singleReadValueOnce[A](reactive: Interp[A]): A =
-      reactive.interpret(reactive.state.base(null))
+    private[rescala] def singleReadValueOnce[A](reactive: Readable[A]): A =
+      reactive.read(reactive.state.base(null))
 
     /** goes through the whole turn lifecycle
       * - create a new turn and put it on the stack
@@ -194,12 +194,7 @@ trait Twoversion extends Core {
     def beforeDynamicDependencyInteraction(dependency: ReSource): Unit
 
     override private[rescala] def makeAdmissionPhaseTicket(initialWrites: Set[ReSource]): AdmissionTicket =
-      new AdmissionTicket(this, initialWrites) {
-        override private[rescala] def access(reactive: ReSource): reactive.Value = {
-          beforeDynamicDependencyInteraction(reactive)
-          reactive.state.base(token)
-        }
-      }
+      new AdmissionTicket(this, initialWrites)
     private[rescala] def makeDynamicReevaluationTicket[V, N](b: V): ReevTicket[V] =
       new ReevTicket[V](this, b) {
         override def dynamicAccess(reactive: ReSource): reactive.Value =

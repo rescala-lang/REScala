@@ -8,7 +8,7 @@ import scala.util.DynamicVariable
 trait Core {
   type State[_]
 
-  /** Source of (reactive) values.*/
+  /** Source of (reactive) values. */
   trait ReSource {
     type Value
     protected[rescala] def state: State[Value]
@@ -45,18 +45,19 @@ trait Core {
     * @tparam A return type of the accessor
     * @groupname accessor Accessor and observers
     */
-  trait Interp[+A] extends ReSource {
+  trait Readable[+A] extends ReSource {
 
     /** Interprets the internal type to the external type
       *
       * @group internal
       */
-    def interpret(v: Value): A
+    def read(v: Value): A
   }
 
   /** An initializer is the glue between that binds the creation of the reactive from the operator and scheduler side together.
     * The operator provides the logic to wrap a state and the scheduler provides the implementation of that state.
-    * This is where the two are joined. After that, the new reactive may have to be initialized. */
+    * This is where the two are joined. After that, the new reactive may have to be initialized.
+    */
   trait Initializer {
 
     /** Creates and correctly initializes new [[Derived]]s */
@@ -200,13 +201,13 @@ trait Core {
   /** User facing low level API to access values in a dynamic context. */
   abstract class DynamicTicket(tx: Transaction) extends StaticTicket(tx) {
     private[rescala] def collectDynamic(reactive: ReSource): reactive.Value
-    final def depend[A](reactive: Interp[A]): A = reactive.interpret(collectDynamic(reactive))
+    final def depend[A](reactive: Readable[A]): A = reactive.read(collectDynamic(reactive))
   }
 
   /** User facing low level API to access values in a static context. */
   sealed abstract class StaticTicket(val tx: Transaction) {
     private[rescala] def collectStatic(reactive: ReSource): reactive.Value
-    final def dependStatic[A](reactive: Interp[A]): A = reactive.interpret(collectStatic(reactive))
+    final def dependStatic[A](reactive: Readable[A]): A = reactive.read(collectStatic(reactive))
   }
 
   /** Encapsulates an action changing a single source. */
@@ -225,9 +226,9 @@ trait Core {
   /** Enables reading of the current value during admission.
     * Keeps track of written sources internally.
     */
-  abstract class AdmissionTicket(val tx: Transaction, declaredWrites: Set[ReSource]) extends AccessTicket {
+  final class AdmissionTicket(val tx: Transaction, declaredWrites: Set[ReSource]) {
 
-    private var _initialChanges                                       = Map[ReSource, InitialChange]()
+    private var _initialChanges: Map[ReSource, InitialChange]         = Map[ReSource, InitialChange]()
     private[rescala] def initialChanges: Map[ReSource, InitialChange] = _initialChanges
     private[rescala] def recordChange[T](ic: InitialChange): Unit = {
       assert(
@@ -238,13 +239,16 @@ trait Core {
       _initialChanges += ic.source -> ic
     }
 
+    /** convenience method as many case studies depend on this being available directly on the AT */
+    def now[A](reactive: Readable[A]): A = tx.accessTicket.now(reactive)
+
     private[rescala] var wrapUp: AccessTicket => Unit = null
   }
 
   trait AccessTicket {
     private[rescala] def access(reactive: ReSource): reactive.Value
-    final def now[A](reactive: Interp[A]): A = {
-      RExceptions.toExternalReadException(reactive, reactive.interpret(access(reactive)))
+    final def now[A](reactive: Readable[A]): A = {
+      RExceptions.toExternalReadException(reactive, reactive.read(access(reactive)))
     }
   }
 
@@ -327,7 +331,8 @@ trait Core {
     * The reading values using the [[AccessTicket]] is core to any reactive propagation.
     * But creating reactives using the [[Initializer]] is a liability to the scheduler, but a superpower to the operators.
     * Its a classical tradeoff, but it would be better to not make this choice by default,
-    * that is, reactive creation should be limited such that we can experiment with schedulers that do not have this liability. */
+    * that is, reactive creation should be limited such that we can experiment with schedulers that do not have this liability.
+    */
   trait Transaction {
     def accessTicket: AccessTicket
     def initializer: Initializer
@@ -335,12 +340,12 @@ trait Core {
 
   /** Scheduler that defines the basic data-types available to the user and creates turns for propagation handling */
   @implicitNotFound(msg = "Could not find an implicit scheduler. Did you forget an import?")
-  sealed trait Scheduler {
+  trait Scheduler {
     final def forceNewTransaction[R](initialWrites: ReSource*)(admissionPhase: AdmissionTicket => R): R = {
       forceNewTransaction(initialWrites.toSet, admissionPhase)
     }
     def forceNewTransaction[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R): R
-    private[rescala] def singleReadValueOnce[A](reactive: Interp[A]): A
+    private[rescala] def singleReadValueOnce[A](reactive: Readable[A]): A
     private[rescala] def dynamicTransaction[T](f: Transaction => T): T
 
     /** Name of the scheduler, used for helpful error messages. */

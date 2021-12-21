@@ -3,7 +3,7 @@ package rescala.operator
 import rescala.compat.EventCompatBundle
 import rescala.core._
 import rescala.interface.RescalaInterface
-import rescala.macros.InterpBundle
+import rescala.macros.ReadableMacroBundle
 import rescala.operator.Pulse.{Exceptional, NoChange, Value}
 import rescala.operator.RExceptions.ObservedException
 
@@ -32,7 +32,7 @@ object EventsMacroImpl {
 
 }
 
-trait EventBundle extends EventCompatBundle with InterpBundle {
+trait EventBundle extends EventCompatBundle with ReadableMacroBundle {
   selfType: RescalaInterface with SignalBundle with Sources with DefaultImplementations with Observing
     with Core =>
 
@@ -55,16 +55,16 @@ trait EventBundle extends EventCompatBundle with InterpBundle {
     * @groupname accessors Accessors and observers
     * @groupprio accessor 5
     */
-  trait Event[+T] extends ReSource with EventCompat[T] with InterpMacro[Option[T]] with Disconnectable {
+  trait Event[+T] extends ReSource with EventCompat[T] with ReadableMacro[Option[T]] with Disconnectable {
 
     implicit def internalAccess(v: Value): Pulse[T]
-    def resource: Interp[Option[T]] = this
+    def resource: Readable[Option[T]] = this
 
     /** Interprets the pulse of the event by converting to an option
       *
       * @group internal
       */
-    override def interpret(v: Value): Option[T] = v.toOption
+    override def read(v: Value): Option[T] = v.toOption
 
     /** Adds an observer.
       * @see observe

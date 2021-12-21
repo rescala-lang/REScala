@@ -31,9 +31,9 @@ trait SignalBundle {
     */
   trait Signal[+T] extends Disconnectable with SignalCompat[T] {
     override type Value <: Pulse[T]
-    override def interpret(v: Value): T                        = v.get
+    override def read(v: Value): T                        = v.get
     override protected[rescala] def commit(base: Value): Value = base
-    def resource: Interp[T]                                    = this
+    def resource: Readable[T]                                    = this
 
     /** Returns the current value of the signal
       * However, using now is in most cases not what you want.

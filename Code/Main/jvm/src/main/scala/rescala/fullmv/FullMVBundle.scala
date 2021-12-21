@@ -133,8 +133,8 @@ trait FullMVBundle extends Core {
       override def reportFailure(cause: Throwable): Unit = cause.printStackTrace()
     }
 
-    override private[rescala] def singleReadValueOnce[A](reactive: Interp[A]) =
-      reactive.interpret(reactive.state.latestValue)
+    override private[rescala] def singleReadValueOnce[A](reactive: Readable[A]) =
+      reactive.read(reactive.state.latestValue)
 
     override def forceNewTransaction[R](declaredWrites: Set[ReSource], admissionPhase: (AdmissionTicket) => R): R = {
       val turn = newTurn()
@@ -150,9 +150,7 @@ trait FullMVBundle extends Core {
         }
 
         // admission phase
-        val admissionTicket = new AdmissionTicket(turn, declaredWrites) {
-          override private[rescala] def access(reactive: ReSource): reactive.Value = turn.dynamicBefore(reactive)
-        }
+        val admissionTicket = new AdmissionTicket(turn, declaredWrites)
         val admissionResult = Try { admissionPhase(admissionTicket) }
         if (FullMVUtil.DEBUG) admissionResult match {
           case scala.util.Failure(e) => e.printStackTrace()

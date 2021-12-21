@@ -95,9 +95,7 @@ trait SimpleBundle extends Core with Observing {
             val transaction = SimpleTransaction(creation)
             withDynamicInitializer(transaction) {
               // admission
-              val admissionTicket: AdmissionTicket = new AdmissionTicket(transaction, initialWrites) {
-                override private[rescala] def access(reactive: ReSource): reactive.Value = reactive.state.value
-              }
+              val admissionTicket: AdmissionTicket = new AdmissionTicket(transaction, initialWrites)
               val admissionResult = admissionPhase(admissionTicket)
               val sources = admissionTicket.initialChanges.values.collect {
                 case iv if iv.writeValue(iv.source.state.value, iv.source.state.value = _) => iv.source
@@ -143,9 +141,9 @@ trait SimpleBundle extends Core with Observing {
         res
       }
 
-    override private[rescala] def singleReadValueOnce[A](reactive: Interp[A]): A = {
+    override private[rescala] def singleReadValueOnce[A](reactive: Readable[A]): A = {
       val id = reactive
-      id.interpret(id.state.value)
+      id.read(id.state.value)
     }
   }
 

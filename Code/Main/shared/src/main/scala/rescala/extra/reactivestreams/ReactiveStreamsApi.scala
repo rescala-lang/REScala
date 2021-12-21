@@ -36,10 +36,10 @@ class ReactiveStreamsApi(val api: RescalaInterface) {
 
   object REPublisher {
 
-    def apply[T](dependency: Interp[Pulse[T]])(implicit fac: Scheduler): REPublisher[T] =
+    def apply[T](dependency: Readable[Pulse[T]])(implicit fac: Scheduler): REPublisher[T] =
       new REPublisher[T](dependency, fac)
 
-    class REPublisher[T](dependency: Interp[Pulse[T]], fac: Scheduler) extends Publisher[T] {
+    class REPublisher[T](dependency: Readable[Pulse[T]], fac: Scheduler) extends Publisher[T] {
 
       override def subscribe(s: Subscriber[_ >: T]): Unit = {
         val sub = subscription(dependency, s, fac)
@@ -49,11 +49,11 @@ class ReactiveStreamsApi(val api: RescalaInterface) {
     }
 
     class SubscriptionReactive[T](
-        bud: State[Pulse[T]],
-        dependency: Interp[Pulse[T]],
-        subscriber: Subscriber[_ >: T],
-        fac: Scheduler,
-        name: ReName
+                                   bud: State[Pulse[T]],
+                                   dependency: Readable[Pulse[T]],
+                                   subscriber: Subscriber[_ >: T],
+                                   fac: Scheduler,
+                                   name: ReName
     ) extends Base[Pulse[T]](bud, name)
         with Derived
         with Subscription {
@@ -104,9 +104,9 @@ class ReactiveStreamsApi(val api: RescalaInterface) {
     }
 
     def subscription[T](
-        dependency: Interp[Pulse[T]],
-        subscriber: Subscriber[_ >: T],
-        fac: Scheduler
+                         dependency: Readable[Pulse[T]],
+                         subscriber: Subscriber[_ >: T],
+                         fac: Scheduler
     ): SubscriptionReactive[T] = {
       fac.forceNewTransaction() { ticket =>
         val name: ReName = s"forSubscriber($subscriber)"

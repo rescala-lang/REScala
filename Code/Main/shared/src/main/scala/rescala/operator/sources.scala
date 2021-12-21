@@ -55,7 +55,7 @@ trait Sources {
     * @tparam S Struct type used for the propagation of the signal
     */
   class Var[A] private[rescala] (initialState: State[Pulse[A]], name: ReName) extends Base[Pulse[A]](initialState, name)
-      with Source[A] with Signal[A] with Interp[A] {
+                                                                              with Source[A] with Signal[A] with Readable[A] {
     override type Value = Pulse[A]
 
     override val resource: Signal[A]                            = this
@@ -66,7 +66,7 @@ trait Sources {
 
     def transform(f: A => A)(implicit fac: Scheduler): Unit =
       fac.forceNewTransaction(this) { t =>
-        admit(f(t.now(this)))(t)
+        admit(f(t.tx.accessTicket.now(this)))(t)
       }
 
     def setEmpty()(implicit fac: Scheduler): Unit = fac.forceNewTransaction(this)(t => admitPulse(Pulse.empty)(t))

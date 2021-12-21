@@ -8,13 +8,13 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
   import api._
   class Reactor[T](
       initState: State[ReactorState[T]]
-  ) extends Derived with Interp[T] with MacroAccess[T, Interp[T]] {
+  ) extends Derived with Readable[T] with MacroAccess[T, Readable[T]] {
 
     override type Value = ReactorState[T]
 
     override protected[rescala] def state: State[ReactorState[T]] = initState
     override protected[rescala] def name: ReName                  = "Custom Reactor"
-    override def interpret(v: ReactorState[T]): T                 = v.currentValue
+    override def read(v: ReactorState[T]): T                 = v.currentValue
     override protected[rescala] def commit(base: Value): Value    = base
 
     /** called if any of the dependencies changed in the current update turn,
@@ -101,7 +101,7 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
       input.withValue(resState)
     }
 
-    override def resource: Interp[T] = this
+    override def resource: Readable[T] = this
 
     def now(implicit scheduler: Scheduler): T = scheduler.singleReadValueOnce(this)
   }

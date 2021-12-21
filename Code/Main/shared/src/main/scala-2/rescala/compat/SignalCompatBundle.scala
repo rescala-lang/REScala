@@ -1,14 +1,14 @@
 package rescala.compat
 
 import rescala.core.Core
-import rescala.macros.InterpBundle
+import rescala.macros.ReadableMacroBundle
 import rescala.macros.MacroTags.{Dynamic, Static}
 import rescala.operator.{SignalBundle, cutOutOfUserComputation}
 
-trait SignalCompatBundle extends InterpBundle {
+trait SignalCompatBundle extends ReadableMacroBundle {
   selfType: SignalBundle with Core =>
 
-  trait SignalCompat[+T] extends InterpMacro[T] {
+  trait SignalCompat[+T] extends ReadableMacro[T] {
 
     /** Return a Signal with f applied to the value
       * @group operator

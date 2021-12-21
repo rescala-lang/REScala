@@ -2,14 +2,14 @@ package rescala.compat
 
 import rescala.core.Core
 import rescala.interface.RescalaInterface
-import rescala.macros.InterpBundle
+import rescala.macros.ReadableMacroBundle
 import rescala.macros.MacroTags.{Dynamic, Static}
 import rescala.operator.{EventsMacroImpl, cutOutOfUserComputation}
 
-trait EventCompatBundle extends InterpBundle {
+trait EventCompatBundle extends ReadableMacroBundle {
   selfType: RescalaInterface with Core =>
 
-  trait EventCompat[+T] extends InterpMacro[Option[T]] {
+  trait EventCompat[+T] extends ReadableMacro[Option[T]] {
     selfType: Event[T] =>
 
     /** Collects the results from a partial function

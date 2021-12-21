@@ -12,8 +12,8 @@ class ReactorWithoutAPITest extends RETests {
   class Reactor[T](
       initState: State[ReactorStage[T]]
   ) extends Derived
-      with Interp[T]
-      with MacroAccess[T, Interp[T]] {
+    with Readable[T]
+    with MacroAccess[T, Readable[T]] {
 
     override type Value = ReactorStage[T]
 
@@ -24,7 +24,7 @@ class ReactorWithoutAPITest extends RETests {
       *
       * @group internal
       */
-    override def interpret(v: ReactorStage[T]): T = v.currentValue
+    override def read(v: ReactorStage[T]): T = v.currentValue
 
     /** called if any of the dependencies ([[ReSource]]s) changed in the current update turn,
       * after all (known) dependencies are updated
@@ -64,7 +64,7 @@ class ReactorWithoutAPITest extends RETests {
       */
     override protected[rescala] def commit(base: ReactorStage[T]): ReactorStage[T] = base
 
-    override def resource: Interp[T] = this
+    override def resource: Readable[T] = this
 
     def now: T = scheduler.forceNewTransaction(this)(at => at.now(this))
   }
