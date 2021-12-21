@@ -1,6 +1,5 @@
 package kofre
 
-import java.security.SecureRandom
 import java.util.{Base64, UUID}
 
 object IdUtil {
@@ -8,11 +7,13 @@ object IdUtil {
 
   type Id = String
 
-  val random: SecureRandom = SecureRandom()
+  val random = scala.util.Random()
 
   /** Generates unique identifiers for use by CRDTs */
   def genId(): Id =
     val randomBytes = new Array[Byte](15)
     random.nextBytes(randomBytes)
-    Base64.getEncoder.encodeToString(randomBytes)
+    val res =Base64.getEncoder.encodeToString(randomBytes)
+    println(res)
+    res
 }
