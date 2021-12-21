@@ -42,11 +42,10 @@ object Lattice:
             Lattice.merge(left.get(key), right.get(key)).map(key -> _)
           }.toMap
     }
-
 end Lattice
 
 object LatticeDerivation {
-  def iterator[T](p: T) = p.asInstanceOf[Product].productIterator
+  def iterator[T](p: T): Iterator[Any] = p.asInstanceOf[Product].productIterator
 
   inline def derived[T](using m: Mirror.Of[T], c: Manifest[T]): Lattice[T] =
     lazy val elemInstances = LatticeDerivation.summonAll[m.MirroredElemTypes]
