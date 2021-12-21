@@ -74,7 +74,7 @@ trait SimpleBundle extends Core with Observing {
 
   object SimpleScheduler extends SimpleSchedulerInterface
 
-  trait SimpleSchedulerInterface extends DynamicInitializerLookup[SimpleTransaction] with Scheduler {
+  trait SimpleSchedulerInterface extends SchedulerImpl[SimpleTransaction] {
 
     override def schedulerName: String = "Simple"
 

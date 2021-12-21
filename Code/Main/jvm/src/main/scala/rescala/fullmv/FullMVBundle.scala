@@ -111,9 +111,9 @@ trait FullMVBundle extends Core {
   }
 
   class FullMVEngine(val timeout: Duration, val schedulerName: String)
-      extends DynamicInitializerLookup[FullMVTurn]
-      with FullMVTurnHost
-      with HostImpl[FullMVTurn] {
+    extends SchedulerImpl[FullMVTurn]
+    with FullMVTurnHost
+    with HostImpl[FullMVTurn] {
 
     override object lockHost extends SubsumableLockHostImpl {
       override def toString: String = "Locks " + schedulerName

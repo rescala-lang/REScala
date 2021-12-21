@@ -8,9 +8,7 @@ import scala.util.DynamicVariable
 trait Core {
   type State[_]
 
-  /** Source of (reactive) values.
-    * State can only be accessed with a correct [[InnerTicket]].
-    */
+  /** Source of (reactive) values.*/
   trait ReSource {
     type Value
     protected[rescala] def state: State[Value]
@@ -56,6 +54,9 @@ trait Core {
     def interpret(v: Value): A
   }
 
+  /** An initializer is the glue between that binds the creation of the reactive from the operator and scheduler side together.
+    * The operator provides the logic to wrap a state and the scheduler provides the implementation of that state.
+    * This is where the two are joined. After that, the new reactive may have to be initialized. */
   trait Initializer {
 
     /** Creates and correctly initializes new [[Derived]]s */
@@ -249,7 +250,6 @@ trait Core {
 
   /** Enables the creation of other reactives */
   @implicitNotFound(msg = "Could not find capability to create reactives. Maybe a missing import?")
-  // @scala.annotation.nowarn("msg=The outer reference in this type test cannot be checked at run time.")
   final class CreationTicket(val self: Either[Initializer, Scheduler], val rename: ReName) {
 
     private[rescala] def create[V, T <: Derived](
@@ -271,7 +271,7 @@ trait Core {
       }
   }
 
-  /** As reactives can be created during propagation, any [[InnerTicket]] can be converted to a creation ticket. */
+  /** As reactives can be created during propagation, any Ticket can be converted to a creation ticket. */
   object CreationTicket extends LowPriorityCreationImplicits {
     implicit def fromTicketImplicit(implicit ticket: StaticTicket, line: ReName): CreationTicket =
       new CreationTicket(Left(ticket.tx.initializer), line)
@@ -285,7 +285,7 @@ trait Core {
       new CreationTicket(Left(tx.initializer), line)
   }
 
-  /** If no [[InnerTicket]] is found, then these implicits will search for a [[Scheduler]],
+  /** If no Fitting Ticket is found, then these implicits will search for a [[Scheduler]],
     * creating the reactives outside of any turn.
     */
   sealed trait LowPriorityCreationImplicits {
@@ -322,17 +322,20 @@ trait Core {
 
   }
 
+  /** A transaction (or maybe transaction handle would be the better term) is available from reevaluation and admission tickets.
+    * That is, everywhere during a transaction, you can read reactives, but also create them.
+    * The reading values using the [[AccessTicket]] is core to any reactive propagation.
+    * But creating reactives using the [[Initializer]] is a liability to the scheduler, but a superpower to the operators.
+    * Its a classical tradeoff, but it would be better to not make this choice by default,
+    * that is, reactive creation should be limited such that we can experiment with schedulers that do not have this liability. */
   trait Transaction {
     def accessTicket: AccessTicket
     def initializer: Initializer
   }
 
-  /** Propagation engine that defines the basic data-types available to the user and creates turns for propagation handling
-    *
-    * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
-    */
-  @implicitNotFound(msg = "Could not find an implicit propagation engine. Did you forget an import?")
-  trait Scheduler {
+  /** Scheduler that defines the basic data-types available to the user and creates turns for propagation handling */
+  @implicitNotFound(msg = "Could not find an implicit scheduler. Did you forget an import?")
+  sealed trait Scheduler {
     final def forceNewTransaction[R](initialWrites: ReSource*)(admissionPhase: AdmissionTicket => R): R = {
       forceNewTransaction(initialWrites.toSet, admissionPhase)
     }
@@ -345,11 +348,7 @@ trait Core {
     override def toString: String = s"Scheduler($schedulerName)"
   }
 
-  object Scheduler {
-    def apply(implicit scheduler: Scheduler): Scheduler = scheduler
-  }
-
-  trait DynamicInitializerLookup[Tx <: Transaction] extends Scheduler {
+  trait SchedulerImpl[Tx <: Transaction] extends Scheduler {
 
     final override private[rescala] def dynamicTransaction[T](f: Transaction => T): T = {
       _currentInitializer.value match {

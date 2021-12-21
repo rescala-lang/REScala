@@ -51,7 +51,7 @@ trait Twoversion extends Core {
     * @tparam Tx Transaction type used by the scheduler
     */
   trait TwoVersionScheduler[Tx <: TwoVersionTransaction]
-      extends DynamicInitializerLookup[Tx] {
+    extends SchedulerImpl[Tx] {
     private[rescala] def singleReadValueOnce[A](reactive: Interp[A]): A =
       reactive.interpret(reactive.state.base(null))
 

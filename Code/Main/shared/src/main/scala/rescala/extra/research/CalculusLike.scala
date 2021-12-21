@@ -64,8 +64,7 @@ trait CalculusLike extends Core {
   }
 
   object FScheduler
-      extends DynamicInitializerLookup[FTransaction]
-      with Scheduler {
+    extends SchedulerImpl[FTransaction] {
 
     override def schedulerName: String = "FormalizationLike"
 
