@@ -55,12 +55,8 @@ trait CalculusLike extends Core {
 
   }
 
-  object FAccess extends AccessTicket {
-    override private[rescala] def access(reactive: ReSource): reactive.Value = reactive.state.value
-  }
-
   case class FTransaction(override val initializer: Initializer) extends Transaction {
-    override val accessTicket: AccessTicket = FAccess
+    override private[rescala] def access(reactive: ReSource): reactive.Value = reactive.state.value
   }
 
   object FScheduler
@@ -111,7 +107,7 @@ trait CalculusLike extends Core {
 
             // wrapup, this is for a rarely used rescala features, where transactions can
             // do some cleanup when they complete. Not supported in the formalization
-            if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(transaction.accessTicket)
+            if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(transaction)
 
             // commit cleans up some internal state
             result.commit()

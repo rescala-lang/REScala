@@ -51,7 +51,7 @@ trait Twoversion extends Core {
     * @tparam Tx Transaction type used by the scheduler
     */
   trait TwoVersionScheduler[Tx <: TwoVersionTransaction]
-    extends SchedulerImpl[Tx] {
+      extends SchedulerImpl[Tx] {
     private[rescala] def singleReadValueOnce[A](reactive: Readable[A]): A =
       reactive.read(reactive.state.base(null))
 
@@ -83,7 +83,7 @@ trait Twoversion extends Core {
             val admissionResult = admissionPhase(admissionTicket)
             tx.initializationPhase(admissionTicket.initialChanges)
             tx.propagationPhase()
-            if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(tx.accessTicket)
+            if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(tx)
             admissionResult
           }
           tx.commitPhase()
@@ -202,11 +202,8 @@ trait Twoversion extends Core {
         override def staticAccess(reactive: ReSource): reactive.Value = reactive.state.get(token)
       }
 
-    override val accessTicket: AccessTicket =
-      new AccessTicket {
-        override def access(reactive: ReSource): reactive.Value =
-          TwoVersionTransactionImpl.this.dynamicAfter(reactive)
-      }
+    override def access(reactive: ReSource): reactive.Value =
+      TwoVersionTransactionImpl.this.dynamicAfter(reactive)
 
     private[rescala] def dynamicAfter[P](reactive: ReSource): reactive.Value = {
       // Note: This only synchronizes reactive to be serializable-synchronized, but not glitch-free synchronized.

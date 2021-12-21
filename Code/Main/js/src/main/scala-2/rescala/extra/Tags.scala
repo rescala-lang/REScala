@@ -120,7 +120,7 @@ class Tags[Api <: RescalaInterface](val api: Api) {
     override def applyTo(parent: Element): Unit = {
       scheduler.dynamicTransaction { tx =>
         if (observe == null) {
-          currentTags = tx.accessTicket.now(rendered)
+          currentTags = tx.now(rendered)
           currentNodes = currentTags.map(_.render)
           currentNodes.foreach(parent.appendChild)
         } else {

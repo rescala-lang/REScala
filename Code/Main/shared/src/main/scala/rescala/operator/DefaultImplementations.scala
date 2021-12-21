@@ -28,12 +28,11 @@ trait DefaultImplementations {
       with Derived
       with DisconnectableImpl {
 
-    override protected[rescala] def reevaluate(rein: ReIn): Rout =
-      guardReevaluate(rein) {
-        val rein2    = isDynamicWithStaticDeps.fold(rein.trackStatic())(rein.trackDependencies)
-        val newPulse = computePulse(rein2)
-        if (newPulse.isChange) rein2.withValue(newPulse) else rein2
-      }
+    override protected[rescala] def guardedReevaluate(rein: ReIn): Rout = {
+      val rein2    = isDynamicWithStaticDeps.fold(rein.trackStatic())(rein.trackDependencies)
+      val newPulse = computePulse(rein2)
+      if (newPulse.isChange) rein2.withValue(newPulse) else rein2
+    }
     protected[this] def computePulse(rein: ReevTicket[Pulse[T]]): Pulse[T]
   }
 
@@ -66,16 +65,15 @@ trait DefaultImplementations {
     override protected[rescala] def commit(base: (Pulse[T], Pulse[Diff[T]])): (Pulse[T], Pulse[Diff[T]]) =
       base.copy(_2 = Pulse.NoChange)
     override def internalAccess(v: (Pulse[T], Pulse[Diff[T]])): Pulse[Diff[T]] = v._2
-    override def read(v: Value): Option[Diff[T]]                          = v._2.toOption
+    override def read(v: Value): Option[Diff[T]]                               = v._2.toOption
 
-    override protected[rescala] def reevaluate(rein: ReIn): Rout =
-      guardReevaluate(rein) {
-        val to: Pulse[T]   = rein.collectStatic(signal)
-        val from: Pulse[T] = rein.before._1
-        if (to == Pulse.empty) rein // ignore empty propagations
-        else if (from != Pulse.NoChange) rein.withValue((to, Pulse.Value(Diff(from, to))))
-        else rein.withValue((to, Pulse.NoChange)).withPropagate(false)
-      }
+    override protected[rescala] def guardedReevaluate(rein: ReIn): Rout = {
+      val to: Pulse[T]   = rein.collectStatic(signal)
+      val from: Pulse[T] = rein.before._1
+      if (to == Pulse.empty) rein // ignore empty propagations
+      else if (from != Pulse.NoChange) rein.withValue((to, Pulse.Value(Diff(from, to))))
+      else rein.withValue((to, Pulse.NoChange)).withPropagate(false)
+    }
   }
 
 }

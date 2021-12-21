@@ -31,8 +31,7 @@ trait Observing extends Core {
 
           override protected[rescala] def commit(base: Obs.this.Value): Obs.this.Value = Pulse.NoChange
 
-          override protected[rescala] def reevaluate(dt: ReIn): Rout =
-            guardReevaluate(dt) {
+          override protected[rescala] def guardedReevaluate(dt: ReIn): Rout = {
               val v  = dt.collectStatic(dependency)
               val oi = fun(v)
               if (oi.checkExceptionAndRemoval()) dt.trackDependencies(Set.empty)

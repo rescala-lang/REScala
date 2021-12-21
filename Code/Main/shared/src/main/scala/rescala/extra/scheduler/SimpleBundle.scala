@@ -67,9 +67,7 @@ trait SimpleBundle extends Core with Observing {
   }
 
   case class SimpleTransaction(override val initializer: SimpleInitializer) extends Transaction {
-    override object accessTicket extends AccessTicket {
-      override private[rescala] def access(reactive: ReSource): reactive.Value = reactive.state.value
-    }
+    override private[rescala] def access(reactive: ReSource): reactive.Value = reactive.state.value
   }
 
   object SimpleScheduler extends SimpleSchedulerInterface
@@ -96,7 +94,7 @@ trait SimpleBundle extends Core with Observing {
             withDynamicInitializer(transaction) {
               // admission
               val admissionTicket: AdmissionTicket = new AdmissionTicket(transaction, initialWrites)
-              val admissionResult = admissionPhase(admissionTicket)
+              val admissionResult                  = admissionPhase(admissionTicket)
               val sources = admissionTicket.initialChanges.values.collect {
                 case iv if iv.writeValue(iv.source.state.value, iv.source.state.value = _) => iv.source
               }.toSeq
@@ -131,7 +129,7 @@ trait SimpleBundle extends Core with Observing {
               sorted.foreach(reset)
 
               // wrapup
-              if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(transaction.accessTicket)
+              if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(transaction)
               admissionResult
             }
           } finally {

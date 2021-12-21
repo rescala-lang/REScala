@@ -66,7 +66,7 @@ trait Sources {
 
     def transform(f: A => A)(implicit fac: Scheduler): Unit =
       fac.forceNewTransaction(this) { t =>
-        admit(f(t.tx.accessTicket.now(this)))(t)
+        admit(f(t.tx.now(this)))(t)
       }
 
     def setEmpty()(implicit fac: Scheduler): Unit = fac.forceNewTransaction(this)(t => admitPulse(Pulse.empty)(t))

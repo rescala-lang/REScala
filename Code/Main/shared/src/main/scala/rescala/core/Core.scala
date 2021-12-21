@@ -54,6 +54,19 @@ trait Core {
     def read(v: Value): A
   }
 
+  /** Encapsulates an action changing a single source. */
+  trait InitialChange {
+
+    /** The source to be changed. */
+    val source: ReSource
+
+    /** @param base         the current (old) value of the source.
+      * @param writeCallback callback to apply the new value, executed only if the action is approved by the source.
+      * @return the propagation status of the source (whether or not to reevaluate output reactives).
+      */
+    def writeValue(base: source.Value, writeCallback: source.Value => Unit): Boolean
+  }
+
   /** An initializer is the glue between that binds the creation of the reactive from the operator and scheduler side together.
     * The operator provides the logic to wrap a state and the scheduler provides the implementation of that state.
     * This is where the two are joined. After that, the new reactive may have to be initialized.
@@ -107,6 +120,18 @@ trait Core {
         needsReevaluation: Boolean
     ): Unit
 
+  }
+
+  /** User facing low level API to access values in a static context. */
+  sealed abstract class StaticTicket(val tx: Transaction) {
+    private[rescala] def collectStatic(reactive: ReSource): reactive.Value
+    final def dependStatic[A](reactive: Readable[A]): A = reactive.read(collectStatic(reactive))
+  }
+
+  /** User facing low level API to access values in a dynamic context. */
+  abstract class DynamicTicket(tx: Transaction) extends StaticTicket(tx) {
+    private[rescala] def collectDynamic(reactive: ReSource): reactive.Value
+    final def depend[A](reactive: Readable[A]): A = reactive.read(collectDynamic(reactive))
   }
 
   /** [[ReevTicket]] is given to the [[Derived]] reevaluate method and allows to access other reactives.
@@ -198,30 +223,8 @@ trait Core {
     def inputs(): Option[Set[ReSource]]
   }
 
-  /** User facing low level API to access values in a dynamic context. */
-  abstract class DynamicTicket(tx: Transaction) extends StaticTicket(tx) {
-    private[rescala] def collectDynamic(reactive: ReSource): reactive.Value
-    final def depend[A](reactive: Readable[A]): A = reactive.read(collectDynamic(reactive))
-  }
-
-  /** User facing low level API to access values in a static context. */
-  sealed abstract class StaticTicket(val tx: Transaction) {
-    private[rescala] def collectStatic(reactive: ReSource): reactive.Value
-    final def dependStatic[A](reactive: Readable[A]): A = reactive.read(collectStatic(reactive))
-  }
-
-  /** Encapsulates an action changing a single source. */
-  trait InitialChange {
-
-    /** The source to be changed. */
-    val source: ReSource
-
-    /** @param base         the current (old) value of the source.
-      * @param writeCallback callback to apply the new value, executed only if the action is approved by the source.
-      * @return the propagation status of the source (whether or not to reevaluate output reactives).
-      */
-    def writeValue(base: source.Value, writeCallback: source.Value => Unit): Boolean
-  }
+  /** Records side effects for latex execution. */
+  trait Observation { def execute(): Unit }
 
   /** Enables reading of the current value during admission.
     * Keeps track of written sources internally.
@@ -240,16 +243,9 @@ trait Core {
     }
 
     /** convenience method as many case studies depend on this being available directly on the AT */
-    def now[A](reactive: Readable[A]): A = tx.accessTicket.now(reactive)
+    def now[A](reactive: Readable[A]): A = tx.now(reactive)
 
-    private[rescala] var wrapUp: AccessTicket => Unit = null
-  }
-
-  trait AccessTicket {
-    private[rescala] def access(reactive: ReSource): reactive.Value
-    final def now[A](reactive: Readable[A]): A = {
-      RExceptions.toExternalReadException(reactive, reactive.read(access(reactive)))
-    }
+    private[rescala] var wrapUp: Transaction => Unit = null
   }
 
   /** Enables the creation of other reactives */
@@ -301,40 +297,48 @@ trait Core {
       new CreationTicket(outer.self, line)
   }
 
-  trait Observation {
-    def execute(): Unit
-  }
-
+  /** Essentially a kill switch, that will remove the reactive at some point. */
   trait Disconnectable {
     def disconnect()(implicit engine: Scheduler): Unit
   }
 
+  /** Removes the reactive instead of its next normal reevaluation.
+    * This makes use of the fact, that all reactives are technically dynamic reactives,
+    * and removing incoming dependencies is always kinda safe, as long as we are sure we no longer care!
+    */
   trait DisconnectableImpl extends Derived with Disconnectable {
     @volatile private var disconnected = false
     final def disconnect()(implicit engine: Scheduler): Unit = {
       disconnected = true
     }
 
-    def guardReevaluate(rein: ReIn)(normalEval: => Rout): Rout = {
+    final override protected[rescala] def reevaluate(rein: ReIn): Rout = {
       if (disconnected) {
         rein.trackDependencies(Set.empty)
         rein
       } else {
-        normalEval
+        guardedReevaluate(rein)
       }
     }
+
+    protected[rescala] def guardedReevaluate(rein: ReIn): Rout
 
   }
 
   /** A transaction (or maybe transaction handle would be the better term) is available from reevaluation and admission tickets.
     * That is, everywhere during a transaction, you can read reactives, but also create them.
-    * The reading values using the [[AccessTicket]] is core to any reactive propagation.
+    * The reading values is core to any reactive propagation.
     * But creating reactives using the [[Initializer]] is a liability to the scheduler, but a superpower to the operators.
     * Its a classical tradeoff, but it would be better to not make this choice by default,
     * that is, reactive creation should be limited such that we can experiment with schedulers that do not have this liability.
     */
   trait Transaction {
-    def accessTicket: AccessTicket
+
+    final def now[A](reactive: Readable[A]): A = {
+      RExceptions.toExternalReadException(reactive, reactive.read(access(reactive)))
+    }
+    private[rescala] def access(reactive: ReSource): reactive.Value
+
     def initializer: Initializer
   }
 

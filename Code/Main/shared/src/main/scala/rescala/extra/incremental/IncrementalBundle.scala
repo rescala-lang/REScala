@@ -14,7 +14,7 @@ trait IncrementalBundle extends Core {
   /** @tparam T Type of values inside Deltas
     * @tparam S Structure of Reactive Sequence source
     */
-  trait ReactiveDeltaSeq[T] extends Derived {
+  trait ReactiveDeltaSeq[T] extends Derived  with DisconnectableImpl {
 
     override protected[rescala] def commit(base: Delta[T]): Delta[T] = Delta.noChange
 
@@ -153,7 +153,7 @@ trait IncrementalBundle extends Core {
         Delta.noChange,
         needsReevaluation = false
       ) {
-        state => new ConcatenateDeltaSeq[T](this, that)(state, ticket.rename) with DisconnectableImpl
+        state => new ConcatenateDeltaSeq[T](this, that)(state, ticket.rename)
       }
     }
 
@@ -320,12 +320,12 @@ trait IncrementalBundle extends Core {
       initialState: IncSeq.SeqState[T],
       name: ReName
   ) extends Base[Delta[T]](initialState, name)
-      with ReactiveDeltaSeq[T] {
+      with ReactiveDeltaSeq[T] with DisconnectableImpl {
 
     /** @param input
       * @return
       */
-    override protected[rescala] def reevaluate(input: ReIn): Rout = {
+    override protected[rescala] def guardedReevaluate(input: ReIn): Rout = {
       val leftDelta = input.collectStatic(left)
       leftDelta match {
         case NoChange() =>
@@ -358,7 +358,7 @@ trait IncrementalBundle extends Core {
     /** @param input Basing ReIn Ticket filters the ReactiveDeltaSeq using the filterExpression define above. That it uses withValue to write the new Sequence
       * @return Returns the new Sequence
       */
-    override protected[rescala] def reevaluate(input: ReIn): Rout = {
+    override protected[rescala] def guardedReevaluate(input: ReIn): Rout = {
       val filteredDeltas = input.collectStatic(in).filter(expression)
       input.withValue(filteredDeltas)
       input
@@ -383,7 +383,7 @@ trait IncrementalBundle extends Core {
     /** @param input Basing ReIn Ticket maps the ReactiveDeltaSeq using the fold defined above. That it uses withValue to write the new Sequence
       * @return Returns the new Sequence
       */
-    override protected[rescala] def reevaluate(input: ReIn): Rout = {
+    override protected[rescala] def guardedReevaluate(input: ReIn): Rout = {
       val mappedDeltas = input.collectStatic(in).map(op)
       input.withValue(mappedDeltas)
       input
@@ -430,7 +430,7 @@ trait IncrementalBundle extends Core {
 
     private val elements: mutable.Map[T, Int] = mutable.HashMap()
 
-    override protected[rescala] def reevaluate(input: ReIn): Rout = ??? // TODO what comes here...
+    override protected[rescala] def guardedReevaluate(input: ReIn): Rout = ??? // TODO what comes here...
 
     def add(value: T)(implicit fac: Scheduler): Unit =
       fac.forceNewTransaction(this) {

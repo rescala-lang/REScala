@@ -57,14 +57,11 @@ trait RescalaInterface extends EventBundle with SignalBundle with FlattenApi wit
     * @see transaction
     * @group update
     */
-  def transactionWithWrapup[I, R](initialWrites: ReSource*)(admissionPhase: AdmissionTicket => I)(wrapUpPhase: (
-      I,
-      AccessTicket
-  ) => R): R = {
+  def transactionWithWrapup[I, R](iw: ReSource*)(ap: AdmissionTicket => I)(wrapUp: (I, Transaction) => R): R = {
     var res: Option[R] = None
-    transaction(initialWrites: _*)(at => {
-      val apr: I = admissionPhase(at)
-      at.wrapUp = wut => { res = Some(wrapUpPhase(apr, wut)) }
+    transaction(iw: _*)(at => {
+      val apr: I = ap(at)
+      at.wrapUp = wut => { res = Some(wrapUp(apr, wut)) }
     })
     res.get
   }
