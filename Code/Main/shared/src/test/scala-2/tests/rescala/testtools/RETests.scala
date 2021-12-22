@@ -13,7 +13,7 @@ abstract class RETests extends AnyFreeSpec with TableDrivenPropertyChecks {
       tags: List[Tag] = Nil
   )(testCase: RescalaInterface => Any)(implicit pos: source.Position): Unit = {
     forAll(Table("engine", es: _*)) { e =>
-      val testEngine = e.asInstanceOf[RescalaInterface]
+      val testEngine = e
       s"Testing $testEngine" - (tags match {
         case Nil          => text in testCase(testEngine)
         case head :: tail => text.taggedAs(head, tail: _*) in testCase(testEngine)
@@ -27,7 +27,7 @@ abstract class RETests extends AnyFreeSpec with TableDrivenPropertyChecks {
 
   def multiEngined(block: RescalaInterface => Any): Unit = {
     for (engine <- tests.rescala.testtools.TestEngines.all) yield {
-      s"Testing $engine" - block(engine.asInstanceOf[RescalaInterface])
+      s"Testing $engine" - block(engine)
     }
   }
 
