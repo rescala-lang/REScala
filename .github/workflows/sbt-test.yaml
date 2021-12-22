@@ -21,4 +21,6 @@ jobs:
     - name: install jsdom
       run: npm install jsdom
     - name: Run tests
+      env:
+        JAVA_OPTS: -Xmx4g
       run: sbt "set ThisBuild / Test / parallelExecution := false" compile Test/compile testQuick testQuick
