@@ -49,11 +49,11 @@ class ReactiveStreamsApi(val api: RescalaInterface) {
     }
 
     class SubscriptionReactive[T](
-                                   bud: State[Pulse[T]],
-                                   dependency: Readable[Pulse[T]],
-                                   subscriber: Subscriber[_ >: T],
-                                   fac: Scheduler,
-                                   name: ReName
+        bud: State[Pulse[T]],
+        dependency: Readable[Pulse[T]],
+        subscriber: Subscriber[_ >: T],
+        fac: Scheduler,
+        name: ReName
     ) extends Base[Pulse[T]](bud, name)
         with Derived
         with Subscription {
@@ -104,9 +104,9 @@ class ReactiveStreamsApi(val api: RescalaInterface) {
     }
 
     def subscription[T](
-                         dependency: Readable[Pulse[T]],
-                         subscriber: Subscriber[_ >: T],
-                         fac: Scheduler
+        dependency: Readable[Pulse[T]],
+        subscriber: Subscriber[_ >: T],
+        fac: Scheduler
     ): SubscriptionReactive[T] = {
       fac.forceNewTransaction() { ticket =>
         val name: ReName = s"forSubscriber($subscriber)"

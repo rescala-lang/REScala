@@ -32,11 +32,11 @@ trait Observing extends Core {
           override protected[rescala] def commit(base: Obs.this.Value): Obs.this.Value = Pulse.NoChange
 
           override protected[rescala] def guardedReevaluate(dt: ReIn): Rout = {
-              val v  = dt.collectStatic(dependency)
-              val oi = fun(v)
-              if (oi.checkExceptionAndRemoval()) dt.trackDependencies(Set.empty)
-              else dt.withEffect(oi)
-            }
+            val v  = dt.collectStatic(dependency)
+            val oi = fun(v)
+            if (oi.checkExceptionAndRemoval()) dt.trackDependencies(Set.empty)
+            else dt.withEffect(oi)
+          }
           override def remove()(implicit fac: Scheduler): Unit = disconnect()
         }
         new Obs

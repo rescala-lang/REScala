@@ -14,7 +14,7 @@ trait IncrementalBundle extends Core {
   /** @tparam T Type of values inside Deltas
     * @tparam S Structure of Reactive Sequence source
     */
-  trait ReactiveDeltaSeq[T] extends Derived  with DisconnectableImpl {
+  trait ReactiveDeltaSeq[T] extends Derived with DisconnectableImpl {
 
     override protected[rescala] def commit(base: Delta[T]): Delta[T] = Delta.noChange
 

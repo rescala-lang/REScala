@@ -31,9 +31,9 @@ trait Sources {
     /** Trigger the event */
     @deprecated("use .fire instead of apply", "0.21.0")
     def apply(value: T)(implicit fac: Scheduler): Unit = fire(value)(fac)
-    def fire()(implicit fac: Scheduler, ev: Unit =:= T): Unit   = fire(ev(()))(fac)
-    def fire(value: T)(implicit fac: Scheduler): Unit           = fac.forceNewTransaction(this) { admit(value)(_) }
-    override def disconnect()(implicit engine: Scheduler): Unit = ()
+    def fire()(implicit fac: Scheduler, ev: Unit =:= T): Unit = fire(ev(()))(fac)
+    def fire(value: T)(implicit fac: Scheduler): Unit         = fac.forceNewTransaction(this) { admit(value)(_) }
+    override def disconnect(): Unit                           = ()
     def admitPulse(pulse: Pulse[T])(implicit ticket: AdmissionTicket): Unit = {
       ticket.recordChange(new InitialChange {
         override val source: Evt.this.type = Evt.this
@@ -55,11 +55,11 @@ trait Sources {
     * @tparam S Struct type used for the propagation of the signal
     */
   class Var[A] private[rescala] (initialState: State[Pulse[A]], name: ReName) extends Base[Pulse[A]](initialState, name)
-                                                                              with Source[A] with Signal[A] with Readable[A] {
+      with Source[A] with Signal[A] with Readable[A] {
     override type Value = Pulse[A]
 
-    override val resource: Signal[A]                            = this
-    override def disconnect()(implicit engine: Scheduler): Unit = ()
+    override val resource: Signal[A] = this
+    override def disconnect(): Unit  = ()
 
     // def update(value: A)(implicit fac: Engine): Unit = set(value)
     def set(value: A)(implicit fac: Scheduler): Unit = fac.forceNewTransaction(this) { admit(value)(_) }

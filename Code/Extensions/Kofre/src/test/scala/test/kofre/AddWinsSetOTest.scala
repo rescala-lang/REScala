@@ -9,7 +9,6 @@ import kofre.dotstores.Context
 import kofre.sets.AddWinsSetO
 import kofre.syntax.merge
 
-
 import scala.util.Random
 
 object AWOTestHelper {

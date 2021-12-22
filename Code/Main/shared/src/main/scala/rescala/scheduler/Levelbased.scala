@@ -59,7 +59,6 @@ trait Levelbased extends Twoversion {
     private def nextLevel(dependencies: Set[ReSource]): Int =
       if (dependencies.isEmpty) 0 else dependencies.map(_.state.level()).max + 1
 
-
     override def initializer: Initializer = this
 
     override protected def initialize(

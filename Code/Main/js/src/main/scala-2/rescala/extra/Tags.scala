@@ -37,7 +37,7 @@ class Tags[Api <: RescalaInterface](val api: Api) {
   implicit class SignalToScalatags(val signal: Signal[TypedTag[Element]]) {
 
     /** converts a Signal of a scalatags Tag to a scalatags Frag which automatically reflects changes to the signal in the dom */
-    def asModifier(implicit engine: Scheduler): Modifier = {
+    def asModifier(implicit engine: DynamicScope): Modifier = {
       new REFragModifier(signal, engine)
     }
   }
@@ -45,7 +45,7 @@ class Tags[Api <: RescalaInterface](val api: Api) {
   implicit class SignalStrToScalatags(val signal: Signal[StringFrag]) {
 
     /** converts a Signal of a scalatags Tag to a scalatags Frag which automatically reflects changes to the signal in the dom */
-    def asModifier(implicit engine: Scheduler): Modifier = {
+    def asModifier(implicit engine: DynamicScope): Modifier = {
       new REFragModifier(signal, engine)
     }
   }
@@ -53,18 +53,18 @@ class Tags[Api <: RescalaInterface](val api: Api) {
   implicit class SignalTagListToScalatags(val signal: Signal[Seq[TypedTag[Element]]]) {
 
     /** converts a Signal of a scalatags Tag to a scalatags Frag which automatically reflects changes to the signal in the dom */
-    def asModifierL(implicit engine: Scheduler): Modifier = {
+    def asModifierL(implicit engine: DynamicScope): Modifier = {
       new RETagListModifier(signal.withDefault(Nil)(engine), engine)
     }
   }
 
-  private class REFragModifier(rendered: Signal[Frag], engine: Scheduler) extends Modifier {
+  private class REFragModifier(rendered: Signal[Frag], engine: DynamicScope) extends Modifier {
     var observe: Observe  = null
     var currentNode: Node = null
     override def applyTo(parent: Element): Unit = {
-      CreationTicket.fromScheduler(engine).scope.dynamicTransaction { init =>
+      CreationTicket.fromExplicitDynamicScope(engine).scope.dynamicTransaction { init =>
         if (observe != null) {
-          observe.remove()(engine)
+          observe.remove()
           if (currentNode != null) {
             currentNode.parentNode.removeChild(currentNode)
             currentNode = null
@@ -112,7 +112,7 @@ class Tags[Api <: RescalaInterface](val api: Api) {
         }
     }
 
-  private class RETagListModifier(rendered: Signal[Seq[TypedTag[Element]]], scheduler: Scheduler)
+  private class RETagListModifier(rendered: Signal[Seq[TypedTag[Element]]], scheduler: DynamicScope)
       extends Modifier {
     var observe: Observe                    = null
     var currentNodes: Seq[Element]          = Nil
@@ -125,7 +125,7 @@ class Tags[Api <: RescalaInterface](val api: Api) {
           currentNodes.foreach(parent.appendChild)
         } else {
           // println(s"Warning, added $rendered to dom AGAIN, this is experimental")
-          observe.remove()(scheduler)
+          observe.remove()
           observe = null
           // adding nodes to the dom again should move them
           currentNodes.foreach(parent.appendChild)
@@ -145,7 +145,7 @@ class Tags[Api <: RescalaInterface](val api: Api) {
   }
 
   implicit def genericReactiveAttrValue[T: AttrValue, Sig[T2] <: Signal[T2]](implicit
-      engine: Scheduler
+      engine: DynamicScope
   ): AttrValue[Sig[T]] =
     new AttrValue[Sig[T]] {
       def apply(t: dom.Element, a: Attr, signal: Sig[T]): Unit = {
@@ -167,7 +167,7 @@ class Tags[Api <: RescalaInterface](val api: Api) {
   // : AttrValue[Signal[T]] = genericReactiveAttrValue[T, S, ({type λ[T2] = Signal[T2]})#λ]
 
   def genericReactiveStyleValue[T, Sig[T2] <: Signal[T2]](implicit
-      engine: Scheduler,
+      engine: DynamicScope,
       tstyle: StyleValue[T]
   ): StyleValue[Sig[T]] =
     new StyleValue[Sig[T]] {
@@ -178,11 +178,11 @@ class Tags[Api <: RescalaInterface](val api: Api) {
       }
     }
 
-  implicit def varStyleValue[T: StyleValue]: StyleValue[Var[T]] =
-    genericReactiveStyleValue[T, ({ type λ[T2] = Var[T2] })#λ]
+  implicit def varStyleValue[T: StyleValue](implicit ds: DynamicScope): StyleValue[Var[T]] =
+    genericReactiveStyleValue[T, ({ type λ[T2] = Var[T2] })#λ](ds, implicitly)
 
-  implicit def signalStyleValue[T: StyleValue]: StyleValue[Signal[T]] =
-    genericReactiveStyleValue[T, ({ type λ[T2] = Signal[T2] })#λ]
+  implicit def signalStyleValue[T: StyleValue](implicit ds: DynamicScope): StyleValue[Signal[T]] =
+    genericReactiveStyleValue[T, ({ type λ[T2] = Signal[T2] })#λ](ds, implicitly)
 
   implicit def bindEvt[T]: generic.AttrValue[Element, Evt[T]] =
     new generic.AttrValue[dom.Element, Evt[T]] {

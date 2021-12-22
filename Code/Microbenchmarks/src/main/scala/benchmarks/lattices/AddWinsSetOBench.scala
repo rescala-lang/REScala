@@ -94,9 +94,9 @@ class AddWinsSetOBench {
     write(rep2Delta)
   }
 
-   @Benchmark
-   def serializeJsoniterDelta() = {
-     com.github.plokhotnyuk.jsoniter_scala.core.writeToArray(rep2Delta)
-   }
+  @Benchmark
+  def serializeJsoniterDelta() = {
+    com.github.plokhotnyuk.jsoniter_scala.core.writeToArray(rep2Delta)
+  }
 
 }

@@ -8,7 +8,6 @@ import kofre.syntax.merge
 import kofre.sets.AddWinsSet
 import kofre.syntax.merge
 
-
 import scala.util.Random
 
 object AWTestHelper {

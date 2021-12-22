@@ -145,7 +145,7 @@ trait FullMVBundle extends Core {
       reactive.read(reactive.state.latestValue)
 
     override def forceNewTransaction[R](declaredWrites: Set[ReSource], admissionPhase: (AdmissionTicket) => R): R = {
-      val turn = newTurn()
+      val turn        = newTurn()
       val transaction = TransactionHandle(turn, before = false)
       withDynamicInitializer(transaction) {
         if (declaredWrites.nonEmpty) {

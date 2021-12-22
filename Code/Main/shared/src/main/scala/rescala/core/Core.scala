@@ -248,35 +248,6 @@ trait Core {
     private[rescala] var wrapUp: Transaction => Unit = null
   }
 
-  final class ScopeSearch(val self: Either[Transaction, Scheduler]) {
-
-    /** Using the ticket requires to create a new scope, such that we can ensure that everything happens in the same transaction */
-    def dynamicTransaction[T](f: Transaction => T): T =
-      self match {
-        case Left(integrated) => f(integrated)
-        case Right(engine)    => engine.dynamicTransaction(dt => f(dt))
-      }
-  }
-
-  /** As reactives can be created during propagation, any Ticket can be converted to a creation ticket. */
-  object ScopeSearch extends LowPriorityScopeImplicits {
-
-    implicit def fromTicketImplicit(implicit ticket: StaticTicket): ScopeSearch =
-      new ScopeSearch(Left(ticket.tx))
-    implicit def fromAdmissionImplicit(implicit ticket: AdmissionTicket): ScopeSearch =
-      new ScopeSearch(Left(ticket.tx))
-    implicit def fromTransactionImplicit(implicit tx: Transaction): ScopeSearch =
-      new ScopeSearch(Left(tx))
-  }
-
-  /** If no Fitting Ticket is found, then these implicits will search for a [[Scheduler]],
-    * creating the reactives outside of any turn.
-    */
-  sealed trait LowPriorityScopeImplicits {
-    implicit def fromSchedulerImplicit(implicit factory: Scheduler): ScopeSearch =
-      new ScopeSearch(Right(factory))
-  }
-
   /** Enables the creation of other reactives */
   @implicitNotFound(msg = "Could not find capability to create reactives. Maybe a missing import?")
   final class CreationTicket(val scope: ScopeSearch, val rename: ReName) {
@@ -296,7 +267,7 @@ trait Core {
   object CreationTicket {
     implicit def fromScope(implicit scope: ScopeSearch, line: ReName): CreationTicket = new CreationTicket(scope, line)
     // cases below are when one explicitly passes one of the parameters
-    implicit def fromScheduler(factory: Scheduler)(implicit line: ReName): CreationTicket =
+    implicit def fromExplicitDynamicScope(factory: DynamicScope)(implicit line: ReName): CreationTicket =
       new CreationTicket(new ScopeSearch(Right(factory)), line)
     implicit def fromTransaction(tx: Transaction)(implicit line: ReName): CreationTicket =
       new CreationTicket(new ScopeSearch(Left(tx)), line)
@@ -307,7 +278,7 @@ trait Core {
 
   /** Essentially a kill switch, that will remove the reactive at some point. */
   trait Disconnectable {
-    def disconnect()(implicit engine: Scheduler): Unit
+    def disconnect(): Unit
   }
 
   /** Removes the reactive instead of its next normal reevaluation.
@@ -316,7 +287,7 @@ trait Core {
     */
   trait DisconnectableImpl extends Derived with Disconnectable {
     @volatile private var disconnected = false
-    final def disconnect()(implicit engine: Scheduler): Unit = {
+    final def disconnect(): Unit = {
       disconnected = true
     }
 
@@ -350,24 +321,30 @@ trait Core {
     def initializer: Initializer
   }
 
-  /** Scheduler that defines the basic data-types available to the user and creates turns for propagation handling */
+  /** Scheduler that defines the basic data-types available to the user and creates turns for propagation handling.
+    * Note: This should NOT extend [[DynamicScope]], but did so in the past and there are too many tests that assume so ...
+    */
   @implicitNotFound(msg = "Could not find an implicit scheduler. Did you forget an import?")
-  trait Scheduler {
+  trait Scheduler extends DynamicScope {
     final def forceNewTransaction[R](initialWrites: ReSource*)(admissionPhase: AdmissionTicket => R): R = {
       forceNewTransaction(initialWrites.toSet, admissionPhase)
     }
     def forceNewTransaction[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R): R
     private[rescala] def singleReadValueOnce[A](reactive: Readable[A]): A
-    private[rescala] def dynamicTransaction[T](f: Transaction => T): T
 
     /** Name of the scheduler, used for helpful error messages. */
     def schedulerName: String
     override def toString: String = s"Scheduler($schedulerName)"
   }
 
-  trait SchedulerImpl[Tx <: Transaction] extends Scheduler {
+  /** Provides the capability to look up transactions in the dynamic scope. */
+  trait DynamicScope {
+    private[rescala] def dynamicTransaction[T](f: Transaction => T): T
+  }
 
-    final override private[rescala] def dynamicTransaction[T](f: Transaction => T): T = {
+  trait SchedulerImpl[Tx <: Transaction] extends DynamicScope with Scheduler {
+
+    final private[rescala] def dynamicTransaction[T](f: Transaction => T): T = {
       _currentInitializer.value match {
         case Some(transaction) => f(transaction)
         case None              => forceNewTransaction(Set.empty, ticket => f(ticket.tx))
@@ -379,4 +356,38 @@ trait Core {
     final private[rescala] def withDynamicInitializer[R](init: Tx)(thunk: => R): R =
       _currentInitializer.withValue(Some(init))(thunk)
   }
+
+  case class ScopeSearch(val self: Either[Transaction, DynamicScope]) {
+
+    /** Either just use the statically found transaction,
+      * or do a lookup in the dynamic scope.
+      * If the lookup fails, it will start a new transaction.
+      */
+    def dynamicTransaction[T](f: Transaction => T): T =
+      self match {
+        case Left(integrated) => f(integrated)
+        case Right(ds)        => ds.dynamicTransaction(dt => f(dt))
+      }
+
+  }
+
+  /** As reactives can be created during propagation, any Ticket can be converted to a creation ticket. */
+  object ScopeSearch extends LowPriorityScopeImplicits {
+
+    implicit def fromTicketImplicit(implicit ticket: StaticTicket): ScopeSearch =
+      new ScopeSearch(Left(ticket.tx))
+    implicit def fromAdmissionImplicit(implicit ticket: AdmissionTicket): ScopeSearch =
+      new ScopeSearch(Left(ticket.tx))
+    implicit def fromTransactionImplicit(implicit tx: Transaction): ScopeSearch =
+      new ScopeSearch(Left(tx))
+  }
+
+  /** If no Fitting Ticket is found, then these implicits will search for a [[DynamicScope]],
+    * creating the reactives outside of any turn.
+    */
+  sealed trait LowPriorityScopeImplicits {
+    implicit def fromSchedulerImplicit(implicit factory: DynamicScope): ScopeSearch =
+      new ScopeSearch(Right(factory))
+  }
+
 }

@@ -148,7 +148,7 @@ trait TaskBundle extends FullMVBundle {
     def doReevaluation(retainBranch: Boolean): Unit = {
 //    assert(Thread.currentThread() == turn.userlandThread, s"$this on different thread ${Thread.currentThread().getName}")
       assert(turn.phase == TurnPhase.Executing, s"$turn cannot reevaluate (requires executing phase")
-      var value = node.state.reevIn(turn)
+      var value             = node.state.reevIn(turn)
       val transactionHandle = TransactionHandle(turn, before = false)
       val ticket: ReevTicket[node.Value] = new ReevTicket(transactionHandle, value) {
         override protected def staticAccess(reactive: ReSource): reactive.Value = turn.staticAfter(reactive)

@@ -26,13 +26,12 @@ class PhilosopherCompetition {
     import comp.stableTable.Seating
     val myBlock = comp.blocks(params.getThreadIndex % comp.blocks.length)
     val bo      = new Backoff()
-    while
-      ({
-        val seating: Seating = myBlock(ThreadLocalRandom.current().nextInt(myBlock.length))
-        if (comp.manualLocking)
-          manualLocking(comp)(seating)
-        else
-          tryUpdateCycle(comp)(seating)
+    while ({
+      val seating: Seating = myBlock(ThreadLocalRandom.current().nextInt(myBlock.length))
+      if (comp.manualLocking)
+        manualLocking(comp)(seating)
+      else
+        tryUpdateCycle(comp)(seating)
     }) { bo.backoff() }
 
   }

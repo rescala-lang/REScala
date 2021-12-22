@@ -14,7 +14,7 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
 
     override protected[rescala] def state: State[ReactorState[T]] = initState
     override protected[rescala] def name: ReName                  = "Custom Reactor"
-    override def read(v: ReactorState[T]): T                 = v.currentValue
+    override def read(v: ReactorState[T]): T                      = v.currentValue
     override protected[rescala] def commit(base: Value): Value    = base
 
     /** called if any of the dependencies changed in the current update turn,
@@ -135,15 +135,14 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
       createReactor(initialValue, loopingStage)
     }
 
-    private def createReactor[T](initialValue: T, initialStage: Stage[T]): Reactor[T] = {
-      CreationTicket.fromScheduler(scheduler)
-        .create(
-          Set(),
-          new ReactorState[T](initialValue, initialStage),
-          needsReevaluation = true
-        ) { (createdState: State[ReactorState[T]]) =>
-          new Reactor[T](createdState)
-        }
+    private def createReactor[T](initialValue: T, initialStage: Stage[T])(implicit ct: CreationTicket): Reactor[T] = {
+      ct.create(
+        Set(),
+        new ReactorState[T](initialValue, initialStage),
+        needsReevaluation = true
+      ) { (createdState: State[ReactorState[T]]) =>
+        new Reactor[T](createdState)
+      }
     }
   }
 

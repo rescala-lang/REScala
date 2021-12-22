@@ -97,7 +97,7 @@ object Codecs {
   implicit val dotUJsonCodec: upickle.default.ReadWriter[Dot]          = upickle.default.macroRW
   implicit val itRangeCodec: upickle.default.ReadWriter[IntTree.Range] = upickle.default.macroRW
   implicit val itTreeCodec: upickle.default.ReadWriter[IntTree.Tree]   = upickle.default.macroRW
-  implicit val contextCodec: upickle.default.ReadWriter[Context] = upickle.default.macroRW
+  implicit val contextCodec: upickle.default.ReadWriter[Context]       = upickle.default.macroRW
 
   implicit val awsOUJsonCodec: upickle.default.ReadWriter[AddWinsSetO[String]] = upickle.default.macroRW
   implicit val awsUJsonCodec: upickle.default.ReadWriter[AddWinsSet[String]]   = upickle.default.macroRW

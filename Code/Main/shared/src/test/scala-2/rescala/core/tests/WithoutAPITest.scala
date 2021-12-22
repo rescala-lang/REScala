@@ -13,7 +13,7 @@ class WithoutAPITest extends RETests {
       override type Value = T
       override protected[rescala] def state: State[T]            = initState
       override protected[rescala] def name: ReName               = "I am a source name"
-      override def read(v: Value): T                        = v
+      override def read(v: Value): T                             = v
       override protected[rescala] def commit(base: Value): Value = base
 
       def makeChange(newValue: T) =
@@ -49,7 +49,7 @@ class WithoutAPITest extends RETests {
     test("simple usage of core rescala without signals or events") {
 
       val customSource: CustomSource[String] =
-        CreationTicket.fromScheduler(scheduler)
+        implicitly[CreationTicket]
           .createSource("Hi!") { createdState =>
             new CustomSource[String](createdState)
           }
@@ -57,7 +57,7 @@ class WithoutAPITest extends RETests {
       assert(transaction(customSource) { _.now(customSource) } === "Hi!")
 
       val customDerived: Readable[String] =
-        CreationTicket.fromScheduler(scheduler)
+        implicitly[CreationTicket]
           .create(
             Set(customSource),
             "Well, this is an initial value",

@@ -12,8 +12,8 @@ class ReactorWithoutAPITest extends RETests {
   class Reactor[T](
       initState: State[ReactorStage[T]]
   ) extends Derived
-    with Readable[T]
-    with MacroAccess[T, Readable[T]] {
+      with Readable[T]
+      with MacroAccess[T, Readable[T]] {
 
     override type Value = ReactorStage[T]
 
@@ -124,15 +124,14 @@ class ReactorWithoutAPITest extends RETests {
     def once[T](
         initialValue: T,
         dependencies: Set[ReSource]
-    )(stageBuilder: StageBuilder[T]): Reactor[T] = {
-      CreationTicket.fromScheduler(scheduler)
-        .create(
-          dependencies,
-          new ReactorStage[T](initialValue, stageBuilder),
-          needsReevaluation = true
-        ) { (createdState: State[ReactorStage[T]]) =>
-          new Reactor[T](createdState)
-        }
+    )(stageBuilder: StageBuilder[T])(implicit ct: CreationTicket): Reactor[T] = {
+      ct.create(
+        dependencies,
+        new ReactorStage[T](initialValue, stageBuilder),
+        needsReevaluation = true
+      ) { (createdState: State[ReactorStage[T]]) =>
+        new Reactor[T](createdState)
+      }
     }
   }
 

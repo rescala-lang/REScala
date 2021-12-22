@@ -205,11 +205,6 @@ class ReactiveMacros(val c: blackbox.Context) {
         tpe
     }
 
-  def doMagic(tpe: Type) = {
-    val tn = getBundle
-    tpe.asSeenFrom(tn, tpe.typeSymbol.owner).dealias
-  }
-
   def getBundle: Type = {
     val ntype = c.prefix.tree.tpe
     underlyingReSourceType(ntype) match {
@@ -217,12 +212,18 @@ class ReactiveMacros(val c: blackbox.Context) {
     }
   }
 
-  def getMember(name: String) = {
-    val tn = getBundle
-    tn.member(TypeName(name))
-  }
-
   def getBundledClass(tpe: Type) = {
+
+    def doMagic(tpe: Type) = {
+      val tn = getBundle
+      tpe.asSeenFrom(tn, tpe.typeSymbol.owner).dealias
+    }
+
+    def getMember(name: String) = {
+      val tn = getBundle
+      tn.member(TypeName(name))
+    }
+
     doMagic(getMember(tpe.typeSymbol.name.toString).asType.toType)
   }
 
@@ -274,9 +275,7 @@ class ReactiveMacros(val c: blackbox.Context) {
             if turnSource.tpe.typeSymbol.name == weakTypeOf[CreationTicket].typeSymbol.name
               && turnSource.symbol.owner == symbolOf[LowPriorityCreationImplicits] =>
           val ct = getBundledClass(weakTypeOf[CreationTicket])
-          q"""new $ct(
-                  ${termNames.ROOTPKG}.scala.Left($ticketIdent.tx),
-                  ${termNames.ROOTPKG}.rescala.core.ReName.create)"""
+          q"""new $ct(${termNames.ROOTPKG}.scala.Left($ticketIdent.tx))"""
 
         case tree @ Select(reactive, TermName("now")) =>
           c.warning(
