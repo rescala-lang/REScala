@@ -62,7 +62,7 @@ class Tags[Api <: RescalaInterface](val api: Api) {
     var observe: Observe  = null
     var currentNode: Node = null
     override def applyTo(parent: Element): Unit = {
-      CreationTicket.fromExplicitDynamicScope(engine).scope.dynamicTransaction { init =>
+      CreationTicket.fromExplicitDynamicScope(engine).scope.embedTransaction { init =>
         if (observe != null) {
           observe.remove()
           if (currentNode != null) {

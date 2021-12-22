@@ -19,21 +19,21 @@ class CreationTicketTest extends RETests {
       test("some Dynamic No Implicit") {
         engine.transaction() { (dynamicTurn: AdmissionTicket) =>
           assert(implicitly[CreationTicket].scope.self === Right(engine.scheduler))
-          assert(implicitly[CreationTicket].scope.dynamicTransaction(identity) === dynamicTurn.tx)
+          assert(implicitly[CreationTicket].scope.embedTransaction(identity) === dynamicTurn.tx)
         }
       }
 
       test("none Dynamic Some Implicit") {
         implicit val implicitTurn: Transaction = getTurn
         assert(implicitly[CreationTicket].scope.self === Left(implicitTurn))
-        assert(implicitly[CreationTicket].scope.dynamicTransaction(identity) === implicitTurn)
+        assert(implicitly[CreationTicket].scope.embedTransaction(identity) === implicitTurn)
       }
 
       test("some Dynamic Some Implicit") {
         engine.transaction() { (dynamicTurn: AdmissionTicket) =>
           implicit val implicitTurn: Transaction = getTurn
           assert(implicitly[CreationTicket].scope.self === Left(implicitTurn))
-          assert(implicitly[CreationTicket].scope.dynamicTransaction(identity) === implicitTurn)
+          assert(implicitly[CreationTicket].scope.embedTransaction(identity) === implicitTurn)
         }
       }
 
@@ -45,7 +45,7 @@ class CreationTicketTest extends RETests {
         }
         engine.transaction() { dynamic =>
           assert(closure().scope.self === Left(closureDefinition))
-          assert(closure().scope.dynamicTransaction(identity) === closureDefinition)
+          assert(closure().scope.embedTransaction(identity) === closureDefinition)
         }
       }
 
@@ -55,7 +55,7 @@ class CreationTicketTest extends RETests {
         }
         engine.transaction() { dynamic =>
           assert(closure().scope.self === Right(engine.scheduler))
-          assert(closure().scope.dynamicTransaction(identity) === dynamic.tx.initializer)
+          assert(closure().scope.embedTransaction(identity) === dynamic.tx.initializer)
         }
       }
 

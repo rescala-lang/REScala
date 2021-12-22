@@ -264,10 +264,10 @@ trait Core {
         initValue: V,
         needsReevaluation: Boolean
     )(instantiateReactive: State[V] => T): T = {
-      scope.dynamicTransaction(_.initializer.create(incoming, initValue, needsReevaluation, this)(instantiateReactive))
+      scope.embedTransaction(_.initializer.create(incoming, initValue, needsReevaluation, this)(instantiateReactive))
     }
     private[rescala] def createSource[V, T <: ReSource](intv: V)(instantiateReactive: State[V] => T): T = {
-      scope.dynamicTransaction(_.initializer.createSource(intv, this)(instantiateReactive))
+      scope.embedTransaction(_.initializer.createSource(intv, this)(instantiateReactive))
     }
   }
 
@@ -370,7 +370,7 @@ trait Core {
       * or do a lookup in the dynamic scope.
       * If the lookup fails, it will start a new transaction.
       */
-    def dynamicTransaction[T](f: Transaction => T): T =
+    def embedTransaction[T](f: Transaction => T): T =
       self match {
         case Left(integrated) => f(integrated)
         case Right(ds)        => ds.dynamicTransaction(dt => f(dt))
