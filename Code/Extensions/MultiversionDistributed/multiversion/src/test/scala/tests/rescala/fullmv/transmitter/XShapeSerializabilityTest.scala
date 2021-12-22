@@ -7,7 +7,7 @@ import loci.communicator.tcp.TCP
 import loci.registry.{Binding, Registry}
 import tests.rescala.testtools.Spawn
 
-import scala.concurrent.{Await, Future, TimeoutException}
+import scala.concurrent.{Await, TimeoutException}
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
@@ -18,32 +18,59 @@ class XShapeSerializabilityTest extends AnyFunSuite {
 }
 
 object XShapeSerializabilityTest {
+  import io.circe._
+  import io.circe.generic.semiauto._
+  implicit val spanningTreeNodeDecoder: Decoder[rescala.fullmv.CaseClassTransactionSpanningTreeNode[(Long, Int)]] =
+    deriveDecoder
+  implicit val spanningTreeNodeEncoder: Encoder[rescala.fullmv.CaseClassTransactionSpanningTreeNode[(Long, Int)]] =
+    deriveEncoder
+
   case class Data[+T](name: String, data: T)
   case class Merge[+T](left: T, right: T)
+
+  import loci.transmitter._
+
+  implicit def dataTransmittable[T, I, U](implicit
+      transmittable: Transmittable[(String, T), I, (String, U)]
+  ): DelegatingTransmittable[Data[T], I, Data[U]] {
+    type Delegates = transmittable.Type
+  } =
+    DelegatingTransmittable(
+      provide = (value, context) => context.delegate(value.name -> value.data),
+      receive = (value, context) => (Data[U] _).tupled(context.delegate(value))
+    )
+
+  implicit def mergeTransmittable[T, I, U](implicit
+      transmittable: Transmittable[(T, T), I, (U, U)]
+  ): DelegatingTransmittable[Merge[T], I, Merge[U]] {
+    type Delegates = transmittable.Type
+  } =
+    DelegatingTransmittable(
+      provide = (value, context) => context.delegate(value.left -> value.right),
+      receive = (value, context) => (Merge[U] _).tupled(context.delegate(value))
+    )
 
   def isGlitched(v: Merge[Data[Merge[_]]]): Boolean = v.left.data != v.right.data
 
   class Host(name: String) extends FullMVEngine(10.second, name) {
     val registry   = new Registry
     def shutdown() = registry.terminate()
+
+    import loci.serializer.circe._
     import ReactiveTransmittable._
-    import io.circe.generic.auto._
-    import rescala.fullmv.transmitter.CirceSerialization._
-    implicit val host = this
-    val derivedBinding: Binding[Signal[Data[Merge[Data[Int]]]], Future[Signal[Data[Merge[Data[Int]]]]]] =
-      ??? //  = Binding[Signal[Data[Merge[Data[Int]]]]]("derived")
+
+    implicit val host  = this
+    val derivedBinding = Binding[Signal[Data[Merge[Data[Int]]]]]("derived")
   }
 
   class SideHost(name: String) extends Host(name) {
     val port: Int = TransmitterTestsPortManagement.getFreePort()
     registry.listen(TCP(port))
 
+    import loci.serializer.circe._
     import ReactiveTransmittable._
-    import io.circe.generic.auto._
-    import rescala.fullmv.transmitter.CirceSerialization._
 
-    val sourceBinding: Binding[Signal[Data[Int]], Future[Signal[Data[Int]]]] =
-      ??? //  = Binding[Signal[Data[Int]]]("source")
+    val sourceBinding = Binding[Signal[Data[Int]]]("source")
 
     val source       = Var(0)
     val taggedSource = source.map(Data(name, _))
@@ -155,7 +182,7 @@ object XShapeSerializabilityTest {
           val scoreRight = workerRight.awaitTry(1000)
           val scores     = Array(scoreLeft, scoreRight)
           println("X-Shape distributed Serializability stress test thread results:")
-          println("\t" + scores.zipWithIndex.map { case (count, idx) => idx + ": " + count }.mkString("\n\t"))
+          println("\t" + scores.zipWithIndex.map { case (count, idx) => s"$idx: $count" }.mkString("\n\t"))
           scores.find {
             case Failure(ex: TimeoutException) => false
             case Failure(_)                    => true

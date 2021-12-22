@@ -2,7 +2,7 @@ package rescala.fullmv.transmitter
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
 import java.util.concurrent.{ConcurrentHashMap, ThreadLocalRandom}
-import rescala.core._
+import rescala.compat.SignalCompatBundle
 import rescala.fullmv.TurnPhase.Type
 import rescala.fullmv.mirrors._
 import rescala.fullmv.sgt.synchronization._
@@ -16,8 +16,9 @@ import scala.concurrent._
 import scala.util.{Failure, Success}
 
 trait ReactiveTransmittableBundle extends FullMVBundle {
-  selfType: Mirror with TurnImplBundle with TaskBundle with FullMvStateBundle with SubsumableLockBundle with EventBundle
-    with SignalBundle with ReactiveReflectionBundle with ReactiveMirrorBundle =>
+  selfType: Mirror with TurnImplBundle with TaskBundle with FullMvStateBundle with SubsumableLockBundle
+    with SignalCompatBundle with EventBundle with SignalBundle with ReactiveReflectionBundle
+    with ReactiveMirrorBundle =>
 
   object ReactiveTransmittable {
     val DEBUG: Boolean = FullMVUtil.DEBUG || SubsumableLock.DEBUG
@@ -421,66 +422,76 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
       final case class Exceptional(serializedThrowable: Array[Byte]) extends Pluse[Nothing]
     }
 
-    // implicit def signalTransmittable[P, S](implicit
-    //    host: FullMVEngine,
-    //    messageTransmittable: Transmittable[
-    //      MessageWithInfrastructure[Msg[Pluse[P]]],
-    //      S,
-    //      MessageWithInfrastructure[Msg[Pluse[P]]]
-    //    ],
-    //    serializable: Serializable[S]
-    // ): Transmittable[Signal[P], S, Signal[P]] =
-    //  new ReactiveTransmittable[P, Signal[P], S] {
-    //    override def instantiate(
-    //        state: FullMVState[Pulse[P], FullMVTurn, ReSource, Derived],
-    //        initTurn: FullMVTurn,
-    //        name: String
-    //    ): ReactiveReflectionImpl[Pulse[P]] with Signal[P] =
-    //      new ReactiveReflectionImpl[Pulse[P]](host, None, state, s"SignalReflection($name)")
-    //        with Signal[P] {
-    //        override def disconnect()(implicit engine: Scheduler): Unit = ???
-    //      }
-    //    override val valuePersistency: Pulse[P] = Pulse.empty
-    //    override val needsReevaluation                       = true
-    //    override val isTransient                                        = false
-    //    override def toPulse(reactive: Signal[P]): reactive.Value => Pulse[P] = v => v
-    //  }
-    // implicit def eventTransmittable[P, S](implicit
-    //    host: FullMVEngine,
-    //    messageTransmittable: Transmittable[
-    //      MessageWithInfrastructure[Msg[Pluse[P]]],
-    //      S,
-    //      MessageWithInfrastructure[Msg[Pluse[P]]]
-    //    ],
-    //    serializable: Serializable[S]
-    // ): Transmittable[Event[P], S, Event[P]] =
-    //  new ReactiveTransmittable[P, Event[P], S] {
-    //    override def instantiate(
-    //        state: FullMVState[Pulse[P], FullMVTurn, ReSource, Derived],
-    //        initTurn: FullMVTurn,
-    //        name: String
-    //    ): ReactiveReflectionImpl[Pulse[P]] with Event[P] =
-    //      new ReactiveReflectionImpl[Pulse[P]](host, Some(initTurn), state, s"EventReflection($name)")
-    //        with Event[P] {
-    //        override def internalAccess(v: Pulse[P]): Pulse[P]                        = v
-    //        override def disconnect()(implicit engine: Scheduler): Unit = ???
-    //      }
-    //    override val valuePersistency: Pulse[P]                    = Pulse.empty
-    //    override val needsReevaluation                                          = false
-    //    override val isTransient                                                           = true
-    //    override def toPulse(reactive: Event[P]): reactive.Value => Pulse[P] = reactive.internalAccess
-    //  }
+    implicit def fullvmPluseTransmittable[T, I, U](implicit
+        transmittable: Transmittable[(Option[T], Option[Array[Byte]]), I, (Option[U], Option[Array[Byte]])]
+    ): DelegatingTransmittable[Pluse[T], I, Pluse[U]] {
+      type Delegates = transmittable.Type
+    } =
+      DelegatingTransmittable(
+        provide = (value, context) =>
+          context.delegate(value match {
+            case Pluse.Value(v)       => Some(v) -> None
+            case Pluse.Exceptional(e) => None    -> Some(e)
+            case _                    => None    -> None
+          }),
+        receive = (value, context) =>
+          context.delegate(value) match {
+            case (Some(v), _) => Pluse.Value(v)
+            case (_, Some(e)) => Pluse.Exceptional(e)
+            case _            => Pluse.NoChange
+          }
+      )
+
+    implicit def fullvmCaseClassTransactionSpanningTreeNodeTransmittable
+        : IdenticallyTransmittable[rescala.fullmv.CaseClassTransactionSpanningTreeNode[(Long, Int)]] =
+      IdenticallyTransmittable()
+
+    implicit def fullmvSignalTransmittable[T, I](implicit
+        host: FullMVEngine,
+        transmittable: Transmittable[
+          MessageWithInfrastructure[Msg[Pluse[T]]],
+          I,
+          MessageWithInfrastructure[Msg[Pluse[T]]]
+        ]
+    ): ConnectedTransmittable[Signal[T], I, Signal[T]] {
+      type Message = transmittable.Type
+    } =
+      ConnectedTransmittable(
+        provide = (value, context) => {
+          val signal = new DistributedSignal[T, I](Pulse.empty)
+          signal.send(value, context.remote, context.endpoint)
+        },
+        receive = (value, context) => {
+          val signal = new DistributedSignal[T, I](Pulse.empty)
+          signal.receive(value, context.remote, context.endpoint)
+        }
+      )
+
+    implicit def fullmvEventTransmittable[T, I](implicit
+        host: FullMVEngine,
+        transmittable: Transmittable[
+          MessageWithInfrastructure[Msg[Pluse[T]]],
+          I,
+          MessageWithInfrastructure[Msg[Pluse[T]]]
+        ]
+    ): ConnectedTransmittable[Event[T], I, Event[T]] {
+      type Message = transmittable.Type
+    } =
+      ConnectedTransmittable(
+        provide = (value, context) => {
+          val event = new DistributedEvent[T, I](Pulse.empty)
+          event.send(value, context.remote, context.endpoint)
+        },
+        receive = (value, context) => {
+          val event = new DistributedEvent[T, I](Pulse.empty)
+          event.receive(value, context.remote, context.endpoint)
+        }
+      )
   }
 
-  abstract class ReactiveTransmittable[P, R <: ReSource, S](implicit
-      val host: FullMVEngine,
-      messageTransmittable: Transmittable[
-        ReactiveTransmittable.MessageWithInfrastructure[ReactiveTransmittable.Msg[ReactiveTransmittable.Pluse[P]]],
-        S,
-        ReactiveTransmittable.MessageWithInfrastructure[ReactiveTransmittable.Msg[ReactiveTransmittable.Pluse[P]]]
-      ],
-      serializable: Serializable[S]
-  ) /*extends ConnectedTransmittable[R, S, R]*/ {
+  abstract class DistributedReactive[P, R[_] <: ReSource, I](implicit
+      val host: FullMVEngine
+  ) {
     def topLevelBundle(turn: FullMVTurn): ReactiveTransmittable.TopLevelTurnPushBundle = {
       assert(turn.host == host, s"$turn is not on $host?!")
       val startReplication = turn.clockedPredecessors
@@ -555,7 +566,7 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
     }
 
     def send(
-        reactive: R,
+        reactive: R[P],
         remote: RemoteRef,
         endpoint: EndPointWithInfrastructure[Msg]
     ): MessageWithInfrastructure[Msg] = {
@@ -597,7 +608,7 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
                 }
               }
             })
-          case otherwise: PossiblyBlockingTopLevel[P] =>
+          case otherwise: PossiblyBlockingTopLevel[_] =>
             new Exception("Illegal top level message received on sender side: " + otherwise).printStackTrace()
           case otherwise: UnderlyingChatter =>
             handleChatter(endpoint, requestId, otherwise)
@@ -714,13 +725,13 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
 
     val ignitionRequiresReevaluation: Boolean
     val isTransient: Boolean
-    def toPulse(reactive: R): reactive.Value => Pulse[P]
+    def toPulse(reactive: R[P]): reactive.Value => Pulse[P]
 
     def receive(
         value: MessageWithInfrastructure[Msg],
         remote: RemoteRef,
         endpoint: EndPointWithInfrastructure[Msg]
-    ): R = {
+    ): R[P] = {
       if (ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host receiving a value")
       val turn = host.newTurn()
       turn.beginExecuting()
@@ -747,7 +758,7 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
               case t: Throwable =>
                 new Exception(s"$host error processing top level async $topLevel for $reflection", t).printStackTrace()
             }
-          case otherwise: PossiblyBlockingTopLevel[P] =>
+          case otherwise: PossiblyBlockingTopLevel[_] =>
             new Exception("Illegal top level message received on receiver side: " + otherwise).printStackTrace()
           case otherwise: UnderlyingChatter =>
             handleChatter(endpoint, requestId, otherwise)
@@ -793,7 +804,7 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
         state: FullMVState[Pulse[P], FullMVTurn, ReSource, Derived],
         initTurn: FullMVTurn,
         name: String
-    ): ReactiveReflectionImpl[Pulse[P]] with R
+    ): ReactiveReflectionImpl[Pulse[P]] with R[P]
 
     def handleTopLevelAsync(
         reflection: ReactiveReflection[Pulse[P]],
@@ -1192,5 +1203,42 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
           AsyncNewValueFollowFrame(topLevelBundle(turn), Pluse.fromPulse(value), topLevelBundle(followFrame))
         )
     }
+  }
+
+  class DistributedSignal[T, I](persistency: Pulse[T])(implicit
+      host: FullMVEngine
+  ) extends DistributedReactive[T, Signal, I] {
+    override def instantiate(
+        state: FullMVState[Pulse[T], FullMVTurn, ReSource, Derived],
+        initTurn: FullMVTurn,
+        name: String
+    ): ReactiveReflectionImpl[Pulse[T]] with Signal[T] =
+      new ReactiveReflectionImpl[Pulse[T]](host, None, state, s"SignalReflection($name)")
+        with Signal[T] {
+        override def disconnect(): Unit = ???
+      }
+    override val valuePersistency                                         = persistency
+    override val ignitionRequiresReevaluation                             = true
+    override val isTransient                                              = false
+    override def toPulse(reactive: Signal[T]): reactive.Value => Pulse[T] = v => v
+  }
+
+  class DistributedEvent[T, I](persistency: Pulse[T])(implicit
+      host: FullMVEngine
+  ) extends DistributedReactive[T, Event, I] {
+    override def instantiate(
+        state: FullMVState[Pulse[T], FullMVTurn, ReSource, Derived],
+        initTurn: FullMVTurn,
+        name: String
+    ): ReactiveReflectionImpl[Pulse[T]] with Event[T] =
+      new ReactiveReflectionImpl[Pulse[T]](host, None, state, s"SignalReflection($name)")
+        with Event[T] {
+        override def internalAccess(v: Pulse[T]): Pulse[T] = v
+        override def disconnect(): Unit                    = ???
+      }
+    override val valuePersistency                                        = persistency
+    override val ignitionRequiresReevaluation                            = false
+    override val isTransient                                             = true
+    override def toPulse(reactive: Event[T]): reactive.Value => Pulse[T] = reactive.internalAccess
   }
 }

@@ -4,23 +4,27 @@ import org.scalatest.funsuite.AnyFunSuite
 import rescala.fullmv.DistributedFullMVApi.{Event, Evt, FullMVEngine, ReactiveTransmittable, Signal, Var}
 import loci.communicator.tcp.TCP
 import loci.registry.{Binding, Registry}
-import rescala.fullmv.DistributedFullMVApi
 
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Await
 import scala.concurrent.duration._
 
 class ReactiveTransmittableTest extends AnyFunSuite {
+  import io.circe._
+  import io.circe.generic.semiauto._
+  implicit val spanningTreeNodeDecoder: Decoder[rescala.fullmv.CaseClassTransactionSpanningTreeNode[(Long, Int)]] =
+    deriveDecoder
+  implicit val spanningTreeNodeEncoder: Encoder[rescala.fullmv.CaseClassTransactionSpanningTreeNode[(Long, Int)]] =
+    deriveEncoder
+
   class Host(name: String) extends FullMVEngine(10.second, name) {
     val registry = new Registry
 
-    import io.circe.generic.auto._
-    import rescala.fullmv.transmitter.CirceSerialization._
+    import loci.serializer.circe._
     import ReactiveTransmittable._
     implicit val host = this
 
-    val binding: Binding[Signal[Int], Future[Signal[Int]]] =
-      ??? // Binding[Signal[Int]].apply[Future[Signal[Int]]]("signal")(???)
+    val binding = Binding[Signal[Int]]("signal")
   }
 
   test("basic transmission works") {
@@ -37,8 +41,11 @@ class ReactiveTransmittableTest extends AnyFunSuite {
         Await.result(hostB.registry.lookup(hostB.binding, remoteA), 10.second)
       Thread.sleep(1000)
 
-      assert({ import hostB._; reflection.readValueOnce } === 5); { import hostA._; input.set(123) }
-      assert({ import hostB._; reflection.readValueOnce } === 123)
+      assert(reflection.readValueOnce === 5)
+
+      { import hostA._; input.set(123) }
+
+      assert(reflection.readValueOnce === 123)
     } finally {
       hostA.registry.terminate()
     }
@@ -61,8 +68,11 @@ class ReactiveTransmittableTest extends AnyFunSuite {
 
       Thread.sleep(1000)
 
-      assert({ import hostB._; derived.readValueOnce } === 10); { import hostA._; input.set(123) }
-      assert({ import hostB._; derived.readValueOnce } === 246)
+      assert(derived.readValueOnce === 10)
+
+      { import hostA._; input.set(123) }
+
+      assert(derived.readValueOnce === 246)
     } finally {
       hostA.registry.terminate()
     }
@@ -70,14 +80,11 @@ class ReactiveTransmittableTest extends AnyFunSuite {
 
   test("transmission maintains glitch freedom") {
     class GFHost(name: String) extends Host(name) {
-      import io.circe.generic.auto._
-      import rescala.fullmv.transmitter.CirceSerialization._
+      import loci.serializer.circe._
       import ReactiveTransmittable._
 
-      val branch1: Binding[Signal[(String, Int)], Future[Signal[(String, Int)]]] =
-        ??? // Binding[Signal[(String, Int)]]("branch1")
-      val branch2: Binding[Signal[(String, Int)], Future[Signal[(String, Int)]]] =
-        ??? // Binding[Signal[(String, Int)]]("branch2")
+      val branch1 = Binding[Signal[(String, Int)]]("branch1")
+      val branch2 = Binding[Signal[(String, Int)]]("branch2")
     }
 
     val hostA = new GFHost("gfA")
@@ -118,10 +125,13 @@ class ReactiveTransmittableTest extends AnyFunSuite {
 
       Thread.sleep(1000)
 
-      assert({ import hostB._; derived.readValueOnce } === ((("1b", ("1a", 5)), 5, ("2b", ("2a", 5)))))
+      assert(derived.readValueOnce === ((("1b", ("1a", 5)), 5, ("2b", ("2a", 5)))))
       assert(tracker === ArrayBuffer((("1b", ("1a", 5)), 5, ("2b", ("2a", 5)))))
-      tracker.clear(); { import hostA._; input.set(123) }
-      assert({ import hostB._; derived.readValueOnce } === ((("1b", ("1a", 123)), 123, ("2b", ("2a", 123)))))
+      tracker.clear()
+
+      { import hostA._; input.set(123) }
+
+      assert(derived.readValueOnce === ((("1b", ("1a", 123)), 123, ("2b", ("2a", 123)))))
       assert(tracker === ArrayBuffer((("1b", ("1a", 123)), 123, ("2b", ("2a", 123)))))
     } finally {
       hostA.registry.terminate()
@@ -130,15 +140,12 @@ class ReactiveTransmittableTest extends AnyFunSuite {
 
   test("events work too") {
     class GFHost(name: String) extends Host(name) {
-      import io.circe.generic.auto._
-      import rescala.fullmv.transmitter.CirceSerialization._
+      import loci.serializer.circe._
       import ReactiveTransmittable._
 
-      val branch1: Binding[Event[(String, Int)], Future[Event[(String, Int)]]] =
-        ??? //   = Binding[Event[(String, Int)]]("branch1")
-      val branch2: Binding[Event[(String, Int)], Future[Event[(String, Int)]]] =
-        ??? //   = Binding[Event[(String, Int)]]("branch2")
-      val eBinding: Binding[Event[(Int)], Future[Event[(Int)]]] = ??? //  = Binding[Event[Int]]("event")
+      val branch1  = Binding[Event[(String, Int)]]("branch1")
+      val branch2  = Binding[Event[(String, Int)]]("branch2")
+      val eBinding = Binding[Event[Int]]("event")
     }
 
     val hostA = new GFHost("gfA")
@@ -180,10 +187,13 @@ class ReactiveTransmittableTest extends AnyFunSuite {
 
       Thread.sleep(1000)
 
-      assert({ import hostB._; hold.readValueOnce } === List())
+      assert(hold.readValueOnce === List())
       assert(tracker.isEmpty) // in case this failed, someone may have changed event initialization semantics again. Try instead for === ArrayBuffer((None, None, None))
-      tracker.clear(); { import hostA._; input.fire(123) }
-      assert({ import hostB._; hold.readValueOnce } === List((
+      tracker.clear()
+
+      { import hostA._; input.fire(123) }
+
+      assert(hold.readValueOnce === List((
         Some(("1b", ("1a", 123))),
         Some(123),
         Some(("2b", ("2a", 123)))
