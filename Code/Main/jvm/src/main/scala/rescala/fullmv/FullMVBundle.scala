@@ -110,10 +110,18 @@ trait FullMVBundle extends Core {
     def retrofitSinkFrames(successorWrittenVersions: Seq[T], maybeSuccessorFrame: Option[T], arity: Int): Seq[T]
   }
 
+  case class TransactionHandle(ti: FullMVTurn, before: Boolean) extends Transaction {
+    override private[rescala] def access(reactive: ReSource): reactive.Value = {
+      if (before) ti.dynamicBefore(reactive)
+      else ti.dynamicAfter(reactive)
+    }
+    override def initializer: Initializer = ti
+  }
+
   class FullMVEngine(val timeout: Duration, val schedulerName: String)
-    extends SchedulerImpl[FullMVTurn]
-    with FullMVTurnHost
-    with HostImpl[FullMVTurn] {
+      extends SchedulerImpl[TransactionHandle]
+      with FullMVTurnHost
+      with HostImpl[FullMVTurn] {
 
     override object lockHost extends SubsumableLockHostImpl {
       override def toString: String = "Locks " + schedulerName
@@ -138,7 +146,8 @@ trait FullMVBundle extends Core {
 
     override def forceNewTransaction[R](declaredWrites: Set[ReSource], admissionPhase: (AdmissionTicket) => R): R = {
       val turn = newTurn()
-      withDynamicInitializer(turn) {
+      val transaction = TransactionHandle(turn, before = false)
+      withDynamicInitializer(transaction) {
         if (declaredWrites.nonEmpty) {
           // framing phase
           turn.beginFraming()
@@ -150,7 +159,7 @@ trait FullMVBundle extends Core {
         }
 
         // admission phase
-        val admissionTicket = new AdmissionTicket(turn, declaredWrites)
+        val admissionTicket = new AdmissionTicket(transaction.copy(before = true), declaredWrites)
         val admissionResult = Try { admissionPhase(admissionTicket) }
         if (FullMVUtil.DEBUG) admissionResult match {
           case scala.util.Failure(e) => e.printStackTrace()
@@ -178,10 +187,9 @@ trait FullMVBundle extends Core {
           if (admissionTicket.wrapUp == null) {
             admissionResult
           } else {
-            val wrapUpTicket = turn
             admissionResult.map { i =>
               // executed in map call so that exceptions in wrapUp make the transaction result a Failure
-              admissionTicket.wrapUp(wrapUpTicket)
+              admissionTicket.wrapUp(transaction)
               i
             }
           }
@@ -196,7 +204,7 @@ trait FullMVBundle extends Core {
   }
 
   trait FullMVTurn
-      extends Initializer with Transaction
+      extends Initializer
       with FullMVTurnProxy
       with SubsumableLockEntryPoint
       with Hosted[FullMVTurn] {
@@ -218,9 +226,6 @@ trait FullMVBundle extends Core {
         if (waiter.getValue <= newPhase) LockSupport.unpark(waiter.getKey)
       }
     }
-
-
-    override def access(reactive: ReSource): reactive.Value = dynamicAfter(reactive)
 
     def selfNode: TransactionSpanningTreeNode[FullMVTurn]
     // should be mirrored/buffered locally

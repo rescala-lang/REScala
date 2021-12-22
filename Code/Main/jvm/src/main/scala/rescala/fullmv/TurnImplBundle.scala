@@ -20,8 +20,6 @@ trait TurnImplBundle extends FullMVBundle {
   ) extends FullMVTurn {
     var initialChanges: collection.Map[ReSource, InitialChange] = _
 
-    override def initializer: Initializer = this
-
     // read and write order between the various volatiles:
     // phase is written after activeBranches and selfNode is read (phase switches only occur once no tasks remain or can be spawned by predecessors)
     // phase and predecessors/selfNode are written before replicators is read
