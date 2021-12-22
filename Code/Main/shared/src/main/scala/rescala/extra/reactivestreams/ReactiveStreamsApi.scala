@@ -114,7 +114,7 @@ class ReactiveStreamsApi(val api: RescalaInterface) {
           Set(dependency),
           Pulse.empty,
           needsReevaluation = false,
-          new CreationTicket(Left(ticket.tx.initializer), name)
+          new CreationTicket(Left(ticket.tx), name)
         ) {
           state => new SubscriptionReactive[T](state, dependency, subscriber, fac, name)
         }

@@ -9,8 +9,8 @@ class CreationTicketTest extends RETests {
     if (engine != rescala.Schedulers.simple) {
       /* this test uses some shady planned()(identity) to get the turn object out of the transaction
        * you should not do this. */
-      def getTurn(implicit engine: Scheduler): Initializer =
-        engine.forceNewTransaction()(_.tx.initializer)
+      def getTurn(implicit engine: Scheduler): Transaction =
+        engine.forceNewTransaction()(_.tx)
 
       test("none Dynamic No Implicit") {
         assert(implicitly[CreationTicket].self === Right(engine.scheduler))
@@ -19,33 +19,33 @@ class CreationTicketTest extends RETests {
       test("some Dynamic No Implicit") {
         engine.transaction() { (dynamicTurn: AdmissionTicket) =>
           assert(implicitly[CreationTicket].self === Right(engine.scheduler))
-          assert(implicitly[CreationTicket].dynamicCreation(identity) === dynamicTurn.tx.initializer)
+          assert(implicitly[CreationTicket].dynamicTransaction(identity) === dynamicTurn.tx)
         }
       }
 
       test("none Dynamic Some Implicit") {
-        implicit val implicitTurn: Initializer = getTurn
+        implicit val implicitTurn: Transaction = getTurn
         assert(implicitly[CreationTicket].self === Left(implicitTurn))
-        assert(implicitly[CreationTicket].dynamicCreation(identity) === implicitTurn)
+        assert(implicitly[CreationTicket].dynamicTransaction(identity) === implicitTurn)
       }
 
       test("some Dynamic Some Implicit") {
         engine.transaction() { (dynamicTurn: AdmissionTicket) =>
-          implicit val implicitTurn: Initializer = getTurn
+          implicit val implicitTurn: Transaction = getTurn
           assert(implicitly[CreationTicket].self === Left(implicitTurn))
-          assert(implicitly[CreationTicket].dynamicCreation(identity) === implicitTurn)
+          assert(implicitly[CreationTicket].dynamicTransaction(identity) === implicitTurn)
         }
       }
 
       test("implicit In Closures") {
-        val closureDefinition: Initializer = getTurn(engine.scheduler)
+        val closureDefinition: Transaction = getTurn(engine.scheduler)
         val closure = {
-          implicit def it: Initializer = closureDefinition
+          implicit def it: Transaction = closureDefinition
           () => implicitly[CreationTicket]
         }
         engine.transaction() { dynamic =>
           assert(closure().self === Left(closureDefinition))
-          assert(closure().dynamicCreation(identity) === closureDefinition)
+          assert(closure().dynamicTransaction(identity) === closureDefinition)
         }
       }
 
@@ -55,7 +55,7 @@ class CreationTicketTest extends RETests {
         }
         engine.transaction() { dynamic =>
           assert(closure().self === Right(engine.scheduler))
-          assert(closure().dynamicCreation(identity) === dynamic.tx.initializer)
+          assert(closure().dynamicTransaction(identity) === dynamic.tx.initializer)
         }
       }
 

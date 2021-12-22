@@ -250,39 +250,37 @@ trait Core {
 
   /** Enables the creation of other reactives */
   @implicitNotFound(msg = "Could not find capability to create reactives. Maybe a missing import?")
-  final class CreationTicket(val self: Either[Initializer, Scheduler], val rename: ReName) {
+  final class CreationTicket(val self: Either[Transaction, Scheduler], val rename: ReName) {
 
     private[rescala] def create[V, T <: Derived](
         incoming: Set[ReSource],
         initValue: V,
         needsReevaluation: Boolean
     )(instantiateReactive: State[V] => T): T = {
-      dynamicCreation(_.create(incoming, initValue, needsReevaluation, this)(instantiateReactive))
+      dynamicTransaction(_.initializer.create(incoming, initValue, needsReevaluation, this)(instantiateReactive))
     }
     private[rescala] def createSource[V, T <: ReSource](intv: V)(instantiateReactive: State[V] => T): T = {
-      dynamicCreation(_.createSource(intv, this)(instantiateReactive))
+      dynamicTransaction(_.initializer.createSource(intv, this)(instantiateReactive))
     }
 
     /** Using the ticket requires to create a new scope, such that we can ensure that everything happens in the same transaction */
-    def dynamicCreation[T](f: Initializer => T): T =
+    def dynamicTransaction[T](f: Transaction => T): T =
       self match {
         case Left(integrated) => f(integrated)
-        case Right(engine)    => engine.dynamicTransaction(dt => f(dt.initializer))
+        case Right(engine)    => engine.dynamicTransaction(dt => f(dt))
       }
   }
 
   /** As reactives can be created during propagation, any Ticket can be converted to a creation ticket. */
   object CreationTicket extends LowPriorityCreationImplicits {
     implicit def fromTicketImplicit(implicit ticket: StaticTicket, line: ReName): CreationTicket =
-      new CreationTicket(Left(ticket.tx.initializer), line)
+      new CreationTicket(Left(ticket.tx), line)
     implicit def fromAdmissionImplicit(implicit ticket: AdmissionTicket, line: ReName): CreationTicket =
-      new CreationTicket(Left(ticket.tx.initializer), line)
-    implicit def fromInitializerImplicit(implicit initializer: Initializer, line: ReName): CreationTicket =
-      new CreationTicket(Left(initializer), line)
-    implicit def fromInitializer(creation: Initializer)(implicit line: ReName): CreationTicket =
-      new CreationTicket(Left(creation), line)
+      new CreationTicket(Left(ticket.tx), line)
     implicit def fromTransactionImplicit(implicit tx: Transaction, line: ReName): CreationTicket =
-      new CreationTicket(Left(tx.initializer), line)
+      new CreationTicket(Left(tx), line)
+    implicit def fromTransaction(tx: Transaction)(implicit line: ReName): CreationTicket =
+      new CreationTicket(Left(tx), line)
   }
 
   /** If no Fitting Ticket is found, then these implicits will search for a [[Scheduler]],
