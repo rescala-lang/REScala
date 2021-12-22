@@ -25,8 +25,8 @@ class ReactiveMacros(val c: blackbox.Context) {
       ReactiveType: c.WeakTypeTag,
       StaticTicket: c.WeakTypeTag,
       DynamicTicket: c.WeakTypeTag,
-      CreationTicket: c.WeakTypeTag,
-      LowPriorityCreationImplicits: c.WeakTypeTag
+      ScopeSearch: c.WeakTypeTag,
+      LowPriorityImplicitObject: c.WeakTypeTag
   ](expression: Tree)(ticket: c.Tree): c.Tree = {
     ReactiveExpressionWithAPI[
       A,
@@ -34,8 +34,8 @@ class ReactiveMacros(val c: blackbox.Context) {
       ReactiveType,
       StaticTicket,
       DynamicTicket,
-      CreationTicket,
-      LowPriorityCreationImplicits
+      ScopeSearch,
+      LowPriorityImplicitObject
     ](expression)(ticket)(
       q"(${c.prefix.tree}).rescalaAPI",
       None
@@ -48,13 +48,13 @@ class ReactiveMacros(val c: blackbox.Context) {
       ReactiveType: c.WeakTypeTag,
       StaticTicket: c.WeakTypeTag,
       DynamicTicket: c.WeakTypeTag,
-      CreationTicket: c.WeakTypeTag,
-      LowPriorityCreationImplicits: c.WeakTypeTag
+      ScopeSearch: c.WeakTypeTag,
+      LowPriorityImplicitObject: c.WeakTypeTag
   ](expression: Tree)(ticket: c.Tree)(rescalaAPI: Tree, prefixManipulation: Option[PrefixManipulation]): c.Tree = {
     if (c.hasErrors) return compileErrorsAst
 
     val forceStatic = !(weakTypeOf[IsStatic] <:< weakTypeOf[MacroTags.Dynamic])
-    val lego        = new MacroLego[CreationTicket, LowPriorityCreationImplicits](expression, forceStatic)
+    val lego        = new MacroLego[ScopeSearch, LowPriorityImplicitObject](expression, forceStatic)
 
     val dependencies   = lego.detections.detectedStaticReactives
     val isStatic       = lego.detections.detectedDynamicReactives.isEmpty
@@ -78,13 +78,13 @@ class ReactiveMacros(val c: blackbox.Context) {
       DependencyType: c.WeakTypeTag,
       Capability: c.WeakTypeTag,
       DynamicTicket: c.WeakTypeTag,
-      CreationTicket: c.WeakTypeTag,
-      LowPriorityCreationImplicits: c.WeakTypeTag
+      ScopeSearch: c.WeakTypeTag,
+      LowPriorityImplicitObject: c.WeakTypeTag
   ](expression: Tree): c.Tree = {
     if (c.hasErrors) return compileErrorsAst
 
     val forceStatic = !(weakTypeOf[Capability] <:< weakTypeOf[DynamicTicket])
-    val lego        = new MacroLego[CreationTicket, LowPriorityCreationImplicits](expression, forceStatic)
+    val lego        = new MacroLego[ScopeSearch, LowPriorityImplicitObject](expression, forceStatic)
 
     val dependencies = lego.detections.detectedStaticReactives
     val isStatic     = lego.detections.detectedDynamicReactives.isEmpty
@@ -126,8 +126,8 @@ class ReactiveMacros(val c: blackbox.Context) {
       ReactiveType: c.WeakTypeTag,
       StaticTicket: c.WeakTypeTag,
       DynamicTicket: c.WeakTypeTag,
-      CreationTicket: c.WeakTypeTag,
-      LowPriorityCreationImplicits: c.WeakTypeTag
+      ScopeSearch: c.WeakTypeTag,
+      LowPriorityImplicitObject: c.WeakTypeTag
   ](expression: c.Tree)(ticket: c.Tree): c.Tree = {
     if (c.hasErrors) return compileErrorsAst
 
@@ -141,8 +141,8 @@ class ReactiveMacros(val c: blackbox.Context) {
       ReactiveType,
       StaticTicket,
       DynamicTicket,
-      CreationTicket,
-      LowPriorityCreationImplicits
+      ScopeSearch,
+      LowPriorityImplicitObject
     ](computation)(ticket)(
       q"${pm.prefixIdent}.rescalaAPI",
       Some(pm)
@@ -155,8 +155,8 @@ class ReactiveMacros(val c: blackbox.Context) {
       ReactiveType: c.WeakTypeTag,
       CT: c.WeakTypeTag,
       StaticTicket: c.WeakTypeTag,
-      CreationTicket: c.WeakTypeTag,
-      LowPriorityCreationImplicits: c.WeakTypeTag
+      ScopeSearch: c.WeakTypeTag,
+      LowPriorityImplicitObject: c.WeakTypeTag
   ](
       init: c.Expr[A]
   )(op: c.Expr[(A, T) => A])(ticket: c.Expr[CT]): c.Tree = {
@@ -170,7 +170,7 @@ class ReactiveMacros(val c: blackbox.Context) {
     val computation = q"""$funcImpl.apply[${weakTypeOf[T]}, ${weakTypeOf[A]}](_, ${pm.prefixValue}, $op)"""
     fixNullTypes(computation)
 
-    val lego       = new MacroLego[CreationTicket, LowPriorityCreationImplicits](computation, forceStatic = true)
+    val lego       = new MacroLego[ScopeSearch, LowPriorityImplicitObject](computation, forceStatic = true)
     val detections = lego.detections.detectedStaticReactives
 
     val wrt = weakTypeOf[ReactiveType]
