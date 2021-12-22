@@ -66,7 +66,7 @@ class DistributedSignalMapGrid {
             ReName.named(name) { implicit ! =>
               from.map { v =>
                 Blackhole.consumeCPU(work); v + 1
-              }(CreationTicket.fromScheduler(host))
+              }(host)
             }
           }
           res2

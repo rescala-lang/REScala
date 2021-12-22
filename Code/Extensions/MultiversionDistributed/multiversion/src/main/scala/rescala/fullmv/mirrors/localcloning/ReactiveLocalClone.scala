@@ -21,7 +21,7 @@ trait ReactiveLocalCloneBundle extends FullMVBundle with SignalBundle {
       apply(signal, host, Duration.Zero)(name)
     def apply[A](signal: Signal[A], host: FullMVEngine, fakeDelay: Duration)(implicit
         name: ReName
-    ): Signal[A] = apply(signal, fakeDelay)(CreationTicket.fromScheduler(host)(name))
+    ): Signal[A] = apply(signal, fakeDelay)(CreationTicket.fromExplicitDynamicScope(host)(name))
     def apply[A](signal: Signal[A])(implicit
         ticket: CreationTicket
     ): Signal[A] = apply(signal, Duration.Zero)(ticket)
@@ -35,7 +35,7 @@ trait ReactiveLocalCloneBundle extends FullMVBundle with SignalBundle {
         val reflection =
           new ReactiveReflectionImpl[Pulse[A]](turn.host, None, initialState, ticket.rename.derive("SignalReflection"))
             with Signal[A] {
-            override def disconnect()(implicit engine: Scheduler): Unit = ???
+            override def disconnect(): Unit = ???
           }
         connectAndInitializeLocalPushClone(fakeDelay, signal, turn, reflectionIsTransient = false, ticket.rename.str)(
           identity,
@@ -49,7 +49,7 @@ trait ReactiveLocalCloneBundle extends FullMVBundle with SignalBundle {
       apply(event, host, Duration.Zero)(name)
     def apply[P](event: Event[P], host: FullMVEngine, fakeDelay: Duration)(implicit
         name: ReName
-    ): Event[P] = apply(event, fakeDelay)(CreationTicket.fromScheduler(host)(name))
+    ): Event[P] = apply(event, fakeDelay)(CreationTicket.fromExplicitDynamicScope(host)(name))
     def apply[P](event: Event[P])(implicit ticket: CreationTicket): Event[P] =
       apply(event, Duration.Zero)(ticket)
     def apply[P](event: Event[P], fakeDelay: Duration)(implicit
@@ -66,7 +66,7 @@ trait ReactiveLocalCloneBundle extends FullMVBundle with SignalBundle {
           ticket.rename.derive("EventReflection")
         ) with Event[P] {
           override def internalAccess(v: Pulse[P]): Pulse[P]          = v
-          override def disconnect()(implicit engine: Scheduler): Unit = ???
+          override def disconnect(): Unit = ???
         }
         connectAndInitializeLocalPushClone(fakeDelay, event, turn, reflectionIsTransient = true, ticket.rename.str)(
           event.internalAccess,

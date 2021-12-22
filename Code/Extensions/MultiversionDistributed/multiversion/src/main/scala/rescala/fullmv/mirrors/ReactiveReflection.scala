@@ -93,7 +93,7 @@ trait ReactiveReflectionBundle extends FullMVBundle {
     )
 
     override protected[rescala] def reevaluate(input: ReIn): ReevTicket[P] = {
-      val turn  = input.initializer
+      val turn  = input.tx
       val value = _buffer.remove(turn)
       if (value == null) {
         if (ignoreTurn.contains(turn)) {
