@@ -46,7 +46,6 @@ trait EventBundle extends EventCompatBundle with ReadableMacroBundle {
     * We also hide the internal state parameter of passed and returned events.
     *
     * @tparam T Value type of the event occurrences.
-    * @tparam S Internal [[rescala.core.Struct]]ure of state.
     *
     * @groupname operator Event operators
     * @groupprio operator 10

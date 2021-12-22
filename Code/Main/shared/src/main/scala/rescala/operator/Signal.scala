@@ -21,7 +21,6 @@ trait SignalBundle {
   /** Time changing value derived from the dependencies.
     *
     * @tparam T Type stored by the signal
-    * @tparam S Struct type used for the propagation of the signal
     * @groupname operator Signal operators
     * @groupprio operator 10
     * @groupname conversion Signal to Event conversions
