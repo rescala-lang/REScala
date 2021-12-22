@@ -248,20 +248,7 @@ trait Core {
     private[rescala] var wrapUp: Transaction => Unit = null
   }
 
-  /** Enables the creation of other reactives */
-  @implicitNotFound(msg = "Could not find capability to create reactives. Maybe a missing import?")
-  final class CreationTicket(val self: Either[Transaction, Scheduler], val rename: ReName) {
-
-    private[rescala] def create[V, T <: Derived](
-        incoming: Set[ReSource],
-        initValue: V,
-        needsReevaluation: Boolean
-    )(instantiateReactive: State[V] => T): T = {
-      dynamicTransaction(_.initializer.create(incoming, initValue, needsReevaluation, this)(instantiateReactive))
-    }
-    private[rescala] def createSource[V, T <: ReSource](intv: V)(instantiateReactive: State[V] => T): T = {
-      dynamicTransaction(_.initializer.createSource(intv, this)(instantiateReactive))
-    }
+  final class ScopeSearch(val self: Either[Transaction, Scheduler]) {
 
     /** Using the ticket requires to create a new scope, such that we can ensure that everything happens in the same transaction */
     def dynamicTransaction[T](f: Transaction => T): T =
@@ -272,27 +259,50 @@ trait Core {
   }
 
   /** As reactives can be created during propagation, any Ticket can be converted to a creation ticket. */
-  object CreationTicket extends LowPriorityCreationImplicits {
-    implicit def fromTicketImplicit(implicit ticket: StaticTicket, line: ReName): CreationTicket =
-      new CreationTicket(Left(ticket.tx), line)
-    implicit def fromAdmissionImplicit(implicit ticket: AdmissionTicket, line: ReName): CreationTicket =
-      new CreationTicket(Left(ticket.tx), line)
-    implicit def fromTransactionImplicit(implicit tx: Transaction, line: ReName): CreationTicket =
-      new CreationTicket(Left(tx), line)
-    implicit def fromTransaction(tx: Transaction)(implicit line: ReName): CreationTicket =
-      new CreationTicket(Left(tx), line)
+  object ScopeSearch extends LowPriorityScopeImplicits {
+
+    implicit def fromTicketImplicit(implicit ticket: StaticTicket): ScopeSearch =
+      new ScopeSearch(Left(ticket.tx))
+    implicit def fromAdmissionImplicit(implicit ticket: AdmissionTicket): ScopeSearch =
+      new ScopeSearch(Left(ticket.tx))
+    implicit def fromTransactionImplicit(implicit tx: Transaction): ScopeSearch =
+      new ScopeSearch(Left(tx))
   }
 
   /** If no Fitting Ticket is found, then these implicits will search for a [[Scheduler]],
     * creating the reactives outside of any turn.
     */
-  sealed trait LowPriorityCreationImplicits {
-    implicit def fromSchedulerImplicit(implicit factory: Scheduler, line: ReName): CreationTicket =
-      new CreationTicket(Right(factory), line)
+  sealed trait LowPriorityScopeImplicits {
+    implicit def fromSchedulerImplicit(implicit factory: Scheduler): ScopeSearch =
+      new ScopeSearch(Right(factory))
+  }
+
+  /** Enables the creation of other reactives */
+  @implicitNotFound(msg = "Could not find capability to create reactives. Maybe a missing import?")
+  final class CreationTicket(val scope: ScopeSearch, val rename: ReName) {
+
+    private[rescala] def create[V, T <: Derived](
+        incoming: Set[ReSource],
+        initValue: V,
+        needsReevaluation: Boolean
+    )(instantiateReactive: State[V] => T): T = {
+      scope.dynamicTransaction(_.initializer.create(incoming, initValue, needsReevaluation, this)(instantiateReactive))
+    }
+    private[rescala] def createSource[V, T <: ReSource](intv: V)(instantiateReactive: State[V] => T): T = {
+      scope.dynamicTransaction(_.initializer.createSource(intv, this)(instantiateReactive))
+    }
+  }
+
+  object CreationTicket {
+    implicit def fromScope(implicit scope: ScopeSearch, line: ReName): CreationTicket = new CreationTicket(scope, line)
+    // cases below are when one explicitly passes one of the parameters
     implicit def fromScheduler(factory: Scheduler)(implicit line: ReName): CreationTicket =
-      new CreationTicket(Right(factory), line)
-    implicit def fromNameImplicit(line: String)(implicit outer: CreationTicket): CreationTicket =
-      new CreationTicket(outer.self, line)
+      new CreationTicket(new ScopeSearch(Right(factory)), line)
+    implicit def fromTransaction(tx: Transaction)(implicit line: ReName): CreationTicket =
+      new CreationTicket(new ScopeSearch(Left(tx)), line)
+    implicit def fromName(str: String)(implicit scopeSearch: ScopeSearch): CreationTicket =
+      new CreationTicket(scopeSearch, ReName(str))
+
   }
 
   /** Essentially a kill switch, that will remove the reactive at some point. */

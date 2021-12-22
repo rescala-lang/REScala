@@ -23,7 +23,7 @@ trait SignalCompatBundle extends ReadableMacroBundle {
         StaticTicket,
         DynamicTicket,
         CreationTicket,
-        LowPriorityCreationImplicits
+      LowPriorityScopeImplicits
       ]
 
   }
@@ -42,7 +42,7 @@ trait SignalCompatBundle extends ReadableMacroBundle {
         Cap,
         DynamicTicket,
         CreationTicket,
-        LowPriorityCreationImplicits
+      LowPriorityScopeImplicits
       ]
   }
 
@@ -64,7 +64,7 @@ trait SignalCompatBundle extends ReadableMacroBundle {
         StaticTicket,
         DynamicTicket,
         CreationTicket,
-        LowPriorityCreationImplicits
+      LowPriorityScopeImplicits
       ]
     final def static[A](expression: A)(implicit ticket: CreationTicket): Signal[A] =
       macro rescala.macros.ReactiveMacros.ReactiveExpression[
@@ -74,7 +74,7 @@ trait SignalCompatBundle extends ReadableMacroBundle {
         StaticTicket,
         DynamicTicket,
         CreationTicket,
-        LowPriorityCreationImplicits
+      LowPriorityScopeImplicits
       ]
     final def dynamic[A](expression: A)(implicit ticket: CreationTicket): Signal[A] =
       macro rescala.macros.ReactiveMacros.ReactiveExpression[
@@ -84,7 +84,7 @@ trait SignalCompatBundle extends ReadableMacroBundle {
         StaticTicket,
         DynamicTicket,
         CreationTicket,
-        LowPriorityCreationImplicits
+      LowPriorityScopeImplicits
       ]
   }
 

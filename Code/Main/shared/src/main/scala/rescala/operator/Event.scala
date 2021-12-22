@@ -271,7 +271,7 @@ trait EventBundle extends EventCompatBundle with ReadableMacroBundle {
       */
     @cutOutOfUserComputation
     final def toggle[A](a: Signal[A], b: Signal[A])(implicit ticket: CreationTicket): Signal[A] =
-      ticket.dynamicTransaction { ict =>
+      ticket.scope.dynamicTransaction { ict =>
         val switched: Signal[Boolean] = iterate(false) { !_ }(ict)
         Signals.dynamic(switched, a, b) { s => if (s.depend(switched)) s.depend(b) else s.depend(a) }(ict)
       }
@@ -311,7 +311,7 @@ trait EventBundle extends EventCompatBundle with ReadableMacroBundle {
     /** Creates change events */
     @cutOutOfUserComputation
     def change[T](signal: Signal[T])(implicit ticket: CreationTicket): Event[Diff[T]] =
-      ticket.dynamicTransaction { initTurn =>
+      ticket.scope.dynamicTransaction { initTurn =>
         val internal = initTurn.initializer.create[(Pulse[T], Pulse[Diff[T]]), ChangeEventImpl[T]](
           Set[ReSource](signal),
           (Pulse.NoChange, Pulse.NoChange),

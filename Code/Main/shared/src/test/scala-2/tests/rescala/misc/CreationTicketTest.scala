@@ -13,27 +13,27 @@ class CreationTicketTest extends RETests {
         engine.forceNewTransaction()(_.tx)
 
       test("none Dynamic No Implicit") {
-        assert(implicitly[CreationTicket].self === Right(engine.scheduler))
+        assert(implicitly[CreationTicket].scope.self === Right(engine.scheduler))
       }
 
       test("some Dynamic No Implicit") {
         engine.transaction() { (dynamicTurn: AdmissionTicket) =>
-          assert(implicitly[CreationTicket].self === Right(engine.scheduler))
-          assert(implicitly[CreationTicket].dynamicTransaction(identity) === dynamicTurn.tx)
+          assert(implicitly[CreationTicket].scope.self === Right(engine.scheduler))
+          assert(implicitly[CreationTicket].scope.dynamicTransaction(identity) === dynamicTurn.tx)
         }
       }
 
       test("none Dynamic Some Implicit") {
         implicit val implicitTurn: Transaction = getTurn
-        assert(implicitly[CreationTicket].self === Left(implicitTurn))
-        assert(implicitly[CreationTicket].dynamicTransaction(identity) === implicitTurn)
+        assert(implicitly[CreationTicket].scope.self === Left(implicitTurn))
+        assert(implicitly[CreationTicket].scope.dynamicTransaction(identity) === implicitTurn)
       }
 
       test("some Dynamic Some Implicit") {
         engine.transaction() { (dynamicTurn: AdmissionTicket) =>
           implicit val implicitTurn: Transaction = getTurn
-          assert(implicitly[CreationTicket].self === Left(implicitTurn))
-          assert(implicitly[CreationTicket].dynamicTransaction(identity) === implicitTurn)
+          assert(implicitly[CreationTicket].scope.self === Left(implicitTurn))
+          assert(implicitly[CreationTicket].scope.dynamicTransaction(identity) === implicitTurn)
         }
       }
 
@@ -44,8 +44,8 @@ class CreationTicketTest extends RETests {
           () => implicitly[CreationTicket]
         }
         engine.transaction() { dynamic =>
-          assert(closure().self === Left(closureDefinition))
-          assert(closure().dynamicTransaction(identity) === closureDefinition)
+          assert(closure().scope.self === Left(closureDefinition))
+          assert(closure().scope.dynamicTransaction(identity) === closureDefinition)
         }
       }
 
@@ -54,8 +54,8 @@ class CreationTicketTest extends RETests {
           engine.transaction() { t => () => implicitly[CreationTicket] }
         }
         engine.transaction() { dynamic =>
-          assert(closure().self === Right(engine.scheduler))
-          assert(closure().dynamicTransaction(identity) === dynamic.tx.initializer)
+          assert(closure().scope.self === Right(engine.scheduler))
+          assert(closure().scope.dynamicTransaction(identity) === dynamic.tx.initializer)
         }
       }
 
