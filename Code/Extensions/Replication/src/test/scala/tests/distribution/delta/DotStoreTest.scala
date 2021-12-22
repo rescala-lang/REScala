@@ -6,6 +6,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.lattices.delta.CContext.SetCContext
 import rescala.extra.lattices.delta.DotStore._
 import rescala.extra.lattices.delta.{Causal, Dot, DotStore, UIJDLattice}
+import tests.rescala.testtools.IgnoreOnGithubCiBecause
 
 object DotStoreGenerators {
   val genDot: Gen[Dot] = for {
@@ -244,58 +245,49 @@ class DotMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     s"DotMap.empty should be empty, but ${DotMap[Int, DotSet].empty} is not empty"
   )
 
-  case class IgnoreOnGithubCiBecause(name: String, reason: String) {
-    def in(f: => Any) = {
-      println(s"github workflow variable is: ${System.getenv("GITHUB_WORKFLOW")}" )
-      if (Option(System.getenv("GITHUB_WORKFLOW")).exists(_.nonEmpty))
-        name.ignore(f)
-      else name.in(f)
-    }
-  }
+  "merge".taggedAs(IgnoreOnGithubCiBecause("flaky tests, probably buggy, but not useful to know in CI")) in forAll {
+    (dmA: DotMap[Int, DotSet], deletedA: Set[Dot], dmB: DotMap[Int, DotSet], deletedB: Set[Dot]) =>
+      val dotsA = DotMap[Int, DotSet].dots(dmA)
+      val dotsB = DotMap[Int, DotSet].dots(dmB)
+      val ccA   = dotsA union deletedA
+      val ccB   = dotsB union deletedB
 
-
-
-  IgnoreOnGithubCiBecause("merge", reason = "flaky tests, probably buggy, but not useful to know in CI") in forAll { (dmA: DotMap[Int, DotSet], deletedA: Set[Dot], dmB: DotMap[Int, DotSet], deletedB: Set[Dot]) =>
-    val dotsA = DotMap[Int, DotSet].dots(dmA)
-    val dotsB = DotMap[Int, DotSet].dots(dmB)
-    val ccA   = dotsA union deletedA
-    val ccB   = dotsB union deletedB
-
-    val Causal(dmMerged, ccMerged) =
-      UIJDLattice[Causal[DotMap[Int, DotSet], SetCContext]].merge(Causal(dmA, ccA), Causal(dmB, ccB))
-    val dotsMerged = DotMap[Int, DotSet].dots(dmMerged)
-
-    assert(
-      ccMerged == (ccA union ccB),
-      s"DotMap.merge should have the same effect as set union on the causal context, but $ccMerged does not equal ${ccA union ccB}"
-    )
-    assert(
-      dotsMerged subsetOf (dotsA union dotsB),
-      s"DotMap.merge should not add new elements to the DotSet, but $dotsMerged is not a subset of ${dotsA union dotsB}"
-    )
-    assert(
-      (dotsMerged intersect (deletedA diff dotsA)).isEmpty,
-      s"The DotMap resulting from DotMap.merge should not contain dots that were deleted on the lhs, but $dotsMerged contains elements from ${deletedA diff dotsA}"
-    )
-    assert(
-      (dotsMerged intersect (deletedB diff dotsB)).isEmpty,
-      s"The DotMap resulting from DotMap.merge should not contain dots that were deleted on the rhs, but $dotsMerged contains elements from ${deletedB diff dotsB}"
-    )
-
-    (dmA.keySet union dmB.keySet).foreach { k =>
-      val vMerged =
-        DotSet.mergePartial(Causal(dmA.getOrElse(k, DotSet.empty), ccA), Causal(dmB.getOrElse(k, DotSet.empty), ccB))
+      val Causal(dmMerged, ccMerged) =
+        UIJDLattice[Causal[DotMap[Int, DotSet], SetCContext]].merge(Causal(dmA, ccA), Causal(dmB, ccB))
+      val dotsMerged = DotMap[Int, DotSet].dots(dmMerged)
 
       assert(
-        vMerged.isEmpty || dmMerged(k) == vMerged,
-        s"For all keys that are in both DotMaps the result of DotMap.merge should map these to the merged values, but ${dmMerged.get(k)} does not equal $vMerged"
+        ccMerged == (ccA union ccB),
+        s"DotMap.merge should have the same effect as set union on the causal context, but $ccMerged does not equal ${ccA union ccB}"
       )
-    }
+      assert(
+        dotsMerged subsetOf (dotsA union dotsB),
+        s"DotMap.merge should not add new elements to the DotSet, but $dotsMerged is not a subset of ${dotsA union dotsB}"
+      )
+      assert(
+        (dotsMerged intersect (deletedA diff dotsA)).isEmpty,
+        s"The DotMap resulting from DotMap.merge should not contain dots that were deleted on the lhs, but $dotsMerged contains elements from ${deletedA diff dotsA}"
+      )
+      assert(
+        (dotsMerged intersect (deletedB diff dotsB)).isEmpty,
+        s"The DotMap resulting from DotMap.merge should not contain dots that were deleted on the rhs, but $dotsMerged contains elements from ${deletedB diff dotsB}"
+      )
+
+      (dmA.keySet union dmB.keySet).foreach { k =>
+        val vMerged =
+          DotSet.mergePartial(Causal(dmA.getOrElse(k, DotSet.empty), ccA), Causal(dmB.getOrElse(k, DotSet.empty), ccB))
+
+        assert(
+          vMerged.isEmpty || dmMerged(k) == vMerged,
+          s"For all keys that are in both DotMaps the result of DotMap.merge should map these to the merged values, but ${dmMerged.get(k)} does not equal $vMerged"
+        )
+      }
   }
 
-  IgnoreOnGithubCiBecause("leq", reason = "flaky, probably buggy") in forAll { (dmA: DotMap[Int, DotSet], deletedA: Set[Dot], dmB: DotMap[Int, DotSet], deletedB: Set[Dot]) =>
-    val ccA = DotMap[Int, DotSet].dots(dmA) union deletedA
-    val ccB = DotMap[Int, DotSet].dots(dmB) union deletedB
+  "leq".taggedAs(IgnoreOnGithubCiBecause("flaky tests, probably buggy, but not useful to know in CI")) in forAll {
+    (dmA: DotMap[Int, DotSet], deletedA: Set[Dot], dmB: DotMap[Int, DotSet], deletedB: Set[Dot]) =>
+      val ccA = DotMap[Int, DotSet].dots(dmA) union deletedA
+      val ccB = DotMap[Int, DotSet].dots(dmB) union deletedB
 
     assert(
       DotMap[Int, DotSet].leq(Causal(dmA, ccA), Causal(dmA, ccA)),
