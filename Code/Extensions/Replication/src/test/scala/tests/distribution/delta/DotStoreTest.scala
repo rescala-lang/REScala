@@ -6,7 +6,6 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.lattices.delta.CContext.SetCContext
 import rescala.extra.lattices.delta.DotStore._
 import rescala.extra.lattices.delta.{Causal, Dot, DotStore, UIJDLattice}
-import tests.rescala.testtools.IgnoreOnGithubCiBecause
 
 object DotStoreGenerators {
   val genDot: Gen[Dot] = for {
@@ -245,7 +244,16 @@ class DotMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     s"DotMap.empty should be empty, but ${DotMap[Int, DotSet].empty} is not empty"
   )
 
-  "merge".taggedAs(IgnoreOnGithubCiBecause("flaky tests, probably buggy, but not useful to know in CI")) in forAll { (dmA: DotMap[Int, DotSet], deletedA: Set[Dot], dmB: DotMap[Int, DotSet], deletedB: Set[Dot]) =>
+  case class IgnoreOnGithubCiBecause(name: String, reason: String) {
+    def in(f: => Any) =
+      if (Option(System.getenv("GITHUB_WORKFLOW")).exists(_.nonEmpty))
+        name.ignore(f)
+      else name.in(f)
+  }
+
+
+
+  IgnoreOnGithubCiBecause("merge", reason = "flaky tests, probably buggy, but not useful to know in CI") in forAll { (dmA: DotMap[Int, DotSet], deletedA: Set[Dot], dmB: DotMap[Int, DotSet], deletedB: Set[Dot]) =>
     val dotsA = DotMap[Int, DotSet].dots(dmA)
     val dotsB = DotMap[Int, DotSet].dots(dmB)
     val ccA   = dotsA union deletedA
@@ -283,7 +291,7 @@ class DotMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     }
   }
 
-  "leq".taggedAs(IgnoreOnGithubCiBecause("flaky tests, probably buggy, but not useful to know in CI")) in forAll { (dmA: DotMap[Int, DotSet], deletedA: Set[Dot], dmB: DotMap[Int, DotSet], deletedB: Set[Dot]) =>
+  IgnoreOnGithubCiBecause("leq", reason = "flaky, probably buggy") in forAll { (dmA: DotMap[Int, DotSet], deletedA: Set[Dot], dmB: DotMap[Int, DotSet], deletedB: Set[Dot]) =>
     val ccA = DotMap[Int, DotSet].dots(dmA) union deletedA
     val ccB = DotMap[Int, DotSet].dots(dmB) union deletedB
 

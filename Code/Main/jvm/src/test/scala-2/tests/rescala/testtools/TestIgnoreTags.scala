@@ -1,19 +1,20 @@
 package tests.rescala.testtools
 
-import org.scalatest.Tag
+import org.scalatest.{Ignore, Tag}
 
 // workarounds for tests are fun.
+// note, this does not seem to work in JS because Ignore kinda does not exist
 case class IgnoreOnWindowsBecause(description: String)
-    extends Tag(if (System.getProperty("os.name").contains("Windows")) "org.scalatest.Ignore" else "")
+    extends Tag(if (System.getProperty("os.name").contains("Windows")) classOf[Ignore].getName else "")
 
 case class IgnoreOnGithubCiBecause(description: String)
-    extends Tag(if (Option(System.getenv("GITHUB_WORKFLOW")).exists(_.nonEmpty)) "org.scalatest.Ignore" else "")
+    extends Tag(if (Option(System.getenv("GITHUB_WORKFLOW")).exists(_.nonEmpty)) classOf[Ignore].getName else "")
 
 case class IgnoreOnGithubWindowsCiBecause(description: String)
     extends Tag(
       if (
         System.getProperty("os.name").contains("Windows") &&
         Option(System.getenv("GITHUB_WORKFLOW")).exists(_.nonEmpty)
-      ) "org.scalatest.Ignore"
+      ) classOf[Ignore].getName
       else ""
     )
