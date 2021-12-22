@@ -13,7 +13,5 @@ object IdUtil {
   def genId(): Id =
     val randomBytes = new Array[Byte](15)
     random.nextBytes(randomBytes)
-    val res = Base64.getEncoder.encodeToString(randomBytes)
-    println(res)
-    res
+    Base64.getEncoder.encodeToString(randomBytes)
 }
