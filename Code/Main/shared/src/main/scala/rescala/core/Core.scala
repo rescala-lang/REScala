@@ -6,6 +6,13 @@ import scala.annotation.implicitNotFound
 import scala.util.DynamicVariable
 
 trait Core {
+
+  /** In case you wondered why everything in REScala is in these weird bundle traits, this is why.
+    * The ReSource below depends on some abstract state, which is defined by the concrete scheduler implementations.
+    * As basically everything else references ReSources, everything must be bundled together.
+    * This is good for users, because they get strong guarantees about the used correctness, and the API is still OK.
+    * Its terrible for us, because the Scala Incremental compiler does not really work anymore.
+    */
   type State[_]
 
   /** Source of (reactive) values. */
