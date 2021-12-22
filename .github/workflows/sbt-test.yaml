@@ -8,11 +8,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest]
+        os: [windows-latest, macos-latest, ubuntu-latest]
         java-version: [8, 11, 17]
-        scala-version: ["2.13.7"]
 
     steps:
+
     - uses: actions/checkout@v2
     - uses: actions/setup-java@v1
       with:
@@ -22,7 +22,12 @@ jobs:
         node-version: '16'
     - name: install jsdom
       run: npm install jsdom
+
+
     - name: Run tests
       env:
         JAVA_OPTS: -Xmx4g
-      run: sbt ++${{ matrix.scala-version }} "set ThisBuild / Test / parallelExecution := false" compile Test/compile testQuick testQuick
+      # the idea here is, that we first do compile, Test / compile, testQuick sequentially, so if compilation fails on some sub project we abort early without half starting tests on some other sub project. However, sometimes compilation or testing fails spuriously, so we just do it again, which should fix most of the spurious compilation failures, and also may try to reexecute some of the spurious tests. As this keeps the incremental sbt cache, if the first one succeeds, the second one should be essentially for free.
+      run: |
+        sbt "set ThisBuild / Test / parallelExecution := false" compile Test/compile testQuick
+        sbt "set ThisBuild / Test / parallelExecution := false" compile Test/compile testQuick
