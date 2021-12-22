@@ -245,10 +245,12 @@ class DotMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   )
 
   case class IgnoreOnGithubCiBecause(name: String, reason: String) {
-    def in(f: => Any) =
+    def in(f: => Any) = {
+      println(s"github workflow variable is: ${System.getenv("GITHUB_WORKFLOW")}" )
       if (Option(System.getenv("GITHUB_WORKFLOW")).exists(_.nonEmpty))
         name.ignore(f)
       else name.in(f)
+    }
   }
 
 
