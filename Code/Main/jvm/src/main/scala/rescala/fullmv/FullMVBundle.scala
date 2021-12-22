@@ -110,11 +110,8 @@ trait FullMVBundle extends Core {
     def retrofitSinkFrames(successorWrittenVersions: Seq[T], maybeSuccessorFrame: Option[T], arity: Int): Seq[T]
   }
 
-  case class TransactionHandle(ti: FullMVTurn, before: Boolean) extends Transaction {
-    override private[rescala] def access(reactive: ReSource): reactive.Value = {
-      if (before) ti.dynamicBefore(reactive)
-      else ti.dynamicAfter(reactive)
-    }
+  case class TransactionHandle(ti: FullMVTurn) extends Transaction {
+    override private[rescala] def access(reactive: ReSource): reactive.Value = ti.dynamicBefore(reactive)
     override def initializer: Initializer = ti
   }
 
@@ -146,7 +143,7 @@ trait FullMVBundle extends Core {
 
     override def forceNewTransaction[R](declaredWrites: Set[ReSource], admissionPhase: (AdmissionTicket) => R): R = {
       val turn        = newTurn()
-      val transaction = TransactionHandle(turn, before = false)
+      val transaction = TransactionHandle(turn)
       withDynamicInitializer(transaction) {
         if (declaredWrites.nonEmpty) {
           // framing phase
@@ -159,7 +156,7 @@ trait FullMVBundle extends Core {
         }
 
         // admission phase
-        val admissionTicket = new AdmissionTicket(transaction.copy(before = true), declaredWrites)
+        val admissionTicket = new AdmissionTicket(transaction, declaredWrites)
         val admissionResult = Try { admissionPhase(admissionTicket) }
         if (FullMVUtil.DEBUG) admissionResult match {
           case scala.util.Failure(e) => e.printStackTrace()
