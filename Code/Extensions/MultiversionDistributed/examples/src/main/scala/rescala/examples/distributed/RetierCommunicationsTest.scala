@@ -9,11 +9,12 @@ import scala.concurrent.{Await, Future}
 
 object Bindings {
   import io.circe.generic.auto._
-  import rescala.fullmv.transmitter.CirceSerialization._
+  import loci.serializer.circe._
+  import rescala.fullmv.DistributedFullMVApi.ReactiveTransmittable._
   implicit val host: FullMVEngine = scheduler
 
   val testBinding                                                    = Binding[Int => Int]("test")
-  val variableBinding: Binding[Signal[(Int)], Future[Signal[(Int)]]] = ??? //  = Binding[Signal[Int]]("variable")
+  val variableBinding: Binding[Signal[(Int)], Future[Signal[(Int)]]] = Binding[Signal[Int]]("variable")
 }
 
 object Main1 extends App {
@@ -43,7 +44,7 @@ object Main1 extends App {
         x + 1
       }
     } else {
-      Thread.sleep(10)
+      Thread.sleep(1000)
     }
 //    Thread.sleep(1000)
   }

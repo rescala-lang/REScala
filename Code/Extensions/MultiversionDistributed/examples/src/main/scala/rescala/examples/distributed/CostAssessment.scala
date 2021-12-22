@@ -39,10 +39,10 @@ object CostAssessment {
 
       import ReactiveTransmittable._
       import io.circe.generic.auto._
-      import rescala.fullmv.transmitter.CirceSerialization._
+      import loci.serializer.circe._
+      import ReactiveTransmittable._
       implicit val host = this
-      def binding(i: Int): Binding[Signal[Map[String, Set[Int]]], Future[Signal[Map[String, Set[Int]]]]] =
-        ??? //  = Binding[Signal[Map[String, Set[Int]]]](s"binding-$i")
+      def binding(i: Int)  = Binding[Signal[Map[String, Set[Int]]]](s"binding-$i")
     }
 
     class SideHost(name: String) extends Host(name) {
