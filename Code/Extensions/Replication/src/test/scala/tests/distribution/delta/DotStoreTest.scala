@@ -245,7 +245,7 @@ class DotMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     s"DotMap.empty should be empty, but ${DotMap[Int, DotSet].empty} is not empty"
   )
 
-  "merge".taggedAs(IgnoreOnGithubCiBecause("flaky tests, probably buggy, but not useful to know in CI")) in forAll {
+  "merge" ignore forAll {
     (dmA: DotMap[Int, DotSet], deletedA: Set[Dot], dmB: DotMap[Int, DotSet], deletedB: Set[Dot]) =>
       val dotsA = DotMap[Int, DotSet].dots(dmA)
       val dotsB = DotMap[Int, DotSet].dots(dmB)
@@ -284,7 +284,7 @@ class DotMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
       }
   }
 
-  "leq".taggedAs(IgnoreOnGithubCiBecause("flaky tests, probably buggy, but not useful to know in CI")) in forAll {
+  "leq" ignore forAll {
     (dmA: DotMap[Int, DotSet], deletedA: Set[Dot], dmB: DotMap[Int, DotSet], deletedB: Set[Dot]) =>
       val ccA = DotMap[Int, DotSet].dots(dmA) union deletedA
       val ccB = DotMap[Int, DotSet].dots(dmB) union deletedB
