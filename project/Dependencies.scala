@@ -45,10 +45,10 @@ object Dependencies {
     val scalatags                = "0.11.0"
     val scalatest                = "3.2.10"
     val scalatestpluscheck       = "3.2.10.0"
-    val scribe                   = "3.6.0"
+    val scribe                   = "3.6.7"
     val sourcecode               = "0.2.7"
     val tomlScala                = "0.2.2"
-    val upickle                  = "1.4.3"
+    val upickle                  = "1.4.4"
   }
 
   import Dependencies.{Versions => V}
@@ -115,6 +115,7 @@ object Dependencies {
     val wsAkka        = generic("communicator-ws-akka")
     val wsWeb         = generic("communicator-ws-webnative")
     val wsJavalin     = generic("communicator-ws-javalin")
+    val wsJetty       = generic("communicator-ws-jetty")
   }
 
 }
