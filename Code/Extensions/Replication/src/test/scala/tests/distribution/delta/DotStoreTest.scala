@@ -9,7 +9,7 @@ import rescala.extra.lattices.delta.{Causal, Dot, DotStore, UIJDLattice}
 
 object DotStoreGenerators {
   val genDot: Gen[Dot] = for {
-    replicaID <- Gen.alphaNumStr
+    replicaID <- Gen.stringOfN(1, Gen.alphaNumChar)
     counter   <- Gen.posNum[Int]
   } yield Dot(replicaID, counter)
 
@@ -244,7 +244,7 @@ class DotMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     s"DotMap.empty should be empty, but ${DotMap[Int, DotSet].empty} is not empty"
   )
 
-  "merge" ignore forAll {
+  "merge" in forAll {
     (dmA: DotMap[Int, DotSet], deletedA: Set[Dot], dmB: DotMap[Int, DotSet], deletedB: Set[Dot]) =>
       val dotsA = DotMap[Int, DotSet].dots(dmA)
       val dotsB = DotMap[Int, DotSet].dots(dmB)
