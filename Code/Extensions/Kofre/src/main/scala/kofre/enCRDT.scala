@@ -1,7 +1,7 @@
 package kofre
 
 import scala.collection.immutable.HashMap
-import kofre.syntax.merge
+import kofre.Lattice.merge
 
 type Secret = String
 

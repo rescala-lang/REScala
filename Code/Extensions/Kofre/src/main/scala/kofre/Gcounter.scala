@@ -1,23 +1,15 @@
 package kofre
 
 import scala.collection.immutable.HashMap
-
-import kofre.syntax.merge
+import kofre.Lattice.merge
 
 type ReplicaID = String
 
-given maplattice[K, V: Lattice]: Lattice[Map[K, V]] with
-  def merge(left: Map[K, V], right: Map[K, V]): Map[K, V] =
-    left.to(HashMap).merged(right.to(HashMap)) {
-      case ((id, v1), (_, v2)) => (id, (v1 merge v2))
-    }
-
-given Lattice[Int] with
-  def merge(left: Int, right: Int): Int = left max right
+given Lattice[Int] = _ max _
 
 opaque type Version = Map[ReplicaID, Int]
 
-given Lattice[Version] = maplattice
+given Lattice[Version] = Lattice.mapLattice
 
 object Version:
   def zero: Version = HashMap.empty
@@ -29,7 +21,7 @@ extension (c: Version)
   def <(o: Version)               = c <= o && c.exists((k, v) => v < o.getOrElse(k, 0))
 
 class CounterClass(replicaID: ReplicaID):
-  private var current = Version.zero
+  private var current: Version = Version.zero
 
   def inc(): Unit = current = current merge current.inc(replicaID)
   def value: Int  = current.value

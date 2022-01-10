@@ -1,5 +1,7 @@
 package kofre
 
+import scala.annotation.targetName
+import scala.collection.immutable.HashMap
 import scala.compiletime.{erasedValue, summonInline}
 import scala.deriving.*
 
@@ -7,50 +9,40 @@ import scala.deriving.*
 trait Lattice[A]:
   /** By assumption: associative, commutative, idempotent.
     *
-    * For use with Delta CRDTs, this function should be optimized for the case that left >> right.
+    * For use with Delta CRDTs, this function should be optimized for the case
+    * that left >> right, i.e., that left is the current state and right the delta
     */
   def merge(left: A, right: A): A
 
-object syntax:
-  extension [A](left: A)(using l: Lattice[A]) def merge(right: A): A = l.merge(left, right)
 
-object Lattice:
+
+object Lattice {
   def apply[A](implicit ev: Lattice[A]): Lattice[A] = ev
   def merge[A: Lattice](left: A, right: A): A       = apply[A].merge(left, right)
 
-  implicit def setInstance[A]: Lattice[Set[A]] =
-    new Lattice[Set[A]] {
-      override def merge(left: Set[A], right: Set[A]): Set[A] = left.union(right)
-    }
+  extension [A: Lattice](left: A)
+    @targetName("mergeSyntax")
+    def merge(right: A): A = Lattice.merge(left, right)
 
-  implicit def optionLattice[A: Lattice]: Lattice[Option[A]] =
-    new Lattice[Option[A]] {
-      override def merge(left: Option[A], right: Option[A]): Option[A] =
-        (left, right) match {
-          case (None, r)          => r
-          case (l, None)          => l
-          case (Some(l), Some(r)) => Some(Lattice.merge[A](l, r))
-        }
-    }
+  given setLattice[A]: Lattice[Set[A]] = _ union _
+
+  given optionLattice[A: Lattice]: Lattice[Option[A]] =
+    case (None, r)          => r
+    case (l, None)          => l
+    case (Some(l), Some(r)) => Some(Lattice.merge[A](l, r))
 
   implicit def mapLattice[K, V: Lattice]: Lattice[Map[K, V]] =
-    new Lattice[Map[K, V]] {
-      override def merge(left: Map[K, V], right: Map[K, V]): Map[K, V] =
-        (left.keysIterator ++ right.keysIterator)
-          .toSet[K].iterator
-          .flatMap { key =>
-            Lattice.merge(left.get(key), right.get(key)).map(key -> _)
-          }.toMap
-    }
-end Lattice
+    (left, right) =>
+      left.to(HashMap).merged(right.to(HashMap)) {
+        case ((id, v1), (_, v2)) => (id, (v1 merge v2))
+      }
 
-object LatticeDerivation {
   def iterator[T](p: T): Iterator[Any] = p.asInstanceOf[Product].productIterator
 
   inline def derived[T](using m: Mirror.Of[T], c: Manifest[T]): Lattice[T] =
-    lazy val elemInstances = LatticeDerivation.summonAll[m.MirroredElemTypes]
+    lazy val elemInstances = summonAll[m.MirroredElemTypes]
     inline m match
-      case p: Mirror.ProductOf[T] => LatticeDerivation.mergeProduct(p, c, elemInstances)
+      case p: Mirror.ProductOf[T] => mergeProduct(p, c, elemInstances)
 
   def mergeProduct[T](p: Mirror.ProductOf[T], c: Manifest[T], lattices: => List[Lattice[_]]): Lattice[T] =
 

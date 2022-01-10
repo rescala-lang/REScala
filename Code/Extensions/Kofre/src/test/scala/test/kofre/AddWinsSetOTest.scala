@@ -4,10 +4,10 @@ import org.scalacheck.Arbitrary
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import kofre.IdUtil
-import kofre.syntax.merge
+import kofre.Lattice.merge
 import kofre.dotstores.Context
 import kofre.sets.AddWinsSetO
-import kofre.syntax.merge
+import kofre.Lattice.merge
 
 import scala.util.Random
 
