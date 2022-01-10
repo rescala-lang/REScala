@@ -6,7 +6,6 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.lattices.delta.CContext.SetCContext
 import rescala.extra.lattices.delta.DotStore._
 import rescala.extra.lattices.delta.{Causal, Dot, DotStore, UIJDLattice}
-import tests.rescala.testtools.IgnoreOnGithubCiBecause
 
 object DotStoreGenerators {
   val genDot: Gen[Dot] = for {

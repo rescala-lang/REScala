@@ -1,6 +1,6 @@
 package tests.rescala.testtools
 
-import org.scalatest.{Ignore, Tag}
+import org.scalatest.Tag
 
 // workarounds for tests are fun.
 // note, this does not seem to work in JS because the environment variable can not be read
