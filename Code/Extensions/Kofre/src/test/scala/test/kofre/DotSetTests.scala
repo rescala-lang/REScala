@@ -3,8 +3,8 @@ package test.kofre
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import kofre.dotstores.DotStoreLattice._
-import kofre.dotstores.{Causal, Dot, DotStoreLattice}
+import kofre.dotbased.DotStoreLattice._
+import kofre.dotbased.{Causal, Dot, DotStoreLattice}
 
 object DotSetGenerator {
   implicit val genDot: Arbitrary[Dot] = Arbitrary(for {

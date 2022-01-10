@@ -2,7 +2,7 @@ package test.kofre
 
 import org.scalatest.freespec.AnyFreeSpec
 import kofre.Lattice
-import kofre.sequences.{DeltaSequence, Vertex}
+import kofre.rga.{DeltaSequence, Vertex}
 
 class DeltaSequenceCrdtTest extends AnyFreeSpec {
 

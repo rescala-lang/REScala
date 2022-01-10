@@ -1,8 +1,8 @@
-package kofre.sequences
+package kofre.rga
 
 import kofre.IdUtil.Id
 import kofre.Lattice
-import kofre.sets.AddWinsSetO
+import kofre.dotbased.AddWinsSetO
 
 import scala.collection.AbstractIterator
 

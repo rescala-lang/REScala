@@ -1,7 +1,10 @@
-package kofre
+package kofre.protocol
+
+import kofre.Lattice.merge
+import kofre.primitives.Version
+import kofre.{IdUtil, Lattice}
 
 import scala.collection.immutable.HashMap
-import kofre.Lattice.merge
 
 type Secret = String
 
@@ -20,19 +23,9 @@ given [S]: Lattice[EnCRDT[S]] with
 
 extension [S](c: EnCRDT[S])
   def version: Version = c.map(_.metadata).reduceOption(Lattice.merge[Version]).getOrElse(Version.zero)
-  def send(data: S, key: Secret, replicaID: ReplicaID): EnCRDT[S] =
+  def send(data: S, key: Secret, replicaID: IdUtil.Id): EnCRDT[S] =
     val causality = c.version.inc(replicaID)
     Set(encrypt(data, causality, key))
 
   def recombine(key: Secret)(using Lattice[S]): Option[S] =
     c.flatMap(decrypt(key)).reduceOption(Lattice.merge[S])
-
-@main
-def test2() =
-  val key  = "secret"
-  val ec   = Set(): EnCRDT[Map[String, Int]]
-  val res  = ec.send(Map("Hello" -> 5), key, "a")
-  val resb = res merge res.send(Map("Hello" -> 10), key, "b")
-  val res2 = res merge res.send(Map("Hello" -> 4), key, "a")
-  println(res2 merge resb)
-  println(res2.merge(resb).recombine(key))

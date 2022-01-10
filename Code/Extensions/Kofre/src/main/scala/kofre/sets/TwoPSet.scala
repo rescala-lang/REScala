@@ -26,11 +26,6 @@ object TwoPSet {
     new TwoPSet(values.toSet, Set())
   }
 
-  implicit def instance[A]: Lattice[TwoPSet[A]] with SetLike[A, TwoPSet[A]] =
-    new Lattice[TwoPSet[A]] with SetLike[A, TwoPSet[A]] {
-      override def merge(left: TwoPSet[A], right: TwoPSet[A]): TwoPSet[A] =
-        left.add(right.entries).remove(right.tombstones)
-      override def add(set: TwoPSet[A], value: A): TwoPSet[A]   = set.add(value)
-      override def contains(set: TwoPSet[A], value: A): Boolean = set.contains(value)
-    }
+  given lattice[A]: Lattice[TwoPSet[A]] = (left, right) =>
+    left.add(right.entries).remove(right.tombstones)
 }

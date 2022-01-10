@@ -1,4 +1,4 @@
-package kofre.dotstores
+package kofre.dotbased
 
 import kofre.IdUtil.Id
 import kofre.Lattice

@@ -5,8 +5,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import kofre.IdUtil
 import kofre.Lattice.merge
-import kofre.dotstores.Context
-import kofre.sets.AddWinsSetO
+import kofre.dotbased.{AddWinsSetO, Context}
 import kofre.Lattice.merge
 
 import scala.util.Random

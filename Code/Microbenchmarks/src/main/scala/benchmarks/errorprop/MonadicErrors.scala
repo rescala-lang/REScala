@@ -35,7 +35,7 @@ class MonadicErrors {
       val source                  = Evt[Try[Int]]()
       var result: Event[Try[Int]] = source
       for (_ <- Range(1, size.size)) {
-        result = result.map { t: Try[Int] =>
+        result = result.map { (t: Try[Int]) =>
           t.map { v =>
             val r = v + 1; work.consume(); r
           }

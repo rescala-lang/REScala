@@ -1,7 +1,8 @@
-package kofre
+package kofre.protocol
 
 import kofre.IdUtil.Id
-import RaftState.*
+import kofre.Lattice
+import kofre.protocol.RaftState.*
 
 import scala.util.Try
 

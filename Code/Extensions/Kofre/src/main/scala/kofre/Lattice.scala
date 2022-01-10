@@ -4,6 +4,7 @@ import scala.annotation.targetName
 import scala.collection.immutable.HashMap
 import scala.compiletime.{erasedValue, summonInline}
 import scala.deriving.*
+import kofre.Lattice.merge
 
 /** Well, its technically a semilattice, but that is just more to type. */
 trait Lattice[A]:
@@ -14,8 +15,6 @@ trait Lattice[A]:
     */
   def merge(left: A, right: A): A
 
-
-
 object Lattice {
   def apply[A](implicit ev: Lattice[A]): Lattice[A] = ev
   def merge[A: Lattice](left: A, right: A): A       = apply[A].merge(left, right)
@@ -24,6 +23,8 @@ object Lattice {
     @targetName("mergeSyntax")
     def merge(right: A): A = Lattice.merge(left, right)
 
+  ///////////////// common instances below ///////////////
+
   given setLattice[A]: Lattice[Set[A]] = _ union _
 
   given optionLattice[A: Lattice]: Lattice[Option[A]] =
@@ -31,18 +32,21 @@ object Lattice {
     case (l, None)          => l
     case (Some(l), Some(r)) => Some(Lattice.merge[A](l, r))
 
-  implicit def mapLattice[K, V: Lattice]: Lattice[Map[K, V]] =
+  given mapLattice[K, V: Lattice]: Lattice[Map[K, V]] =
     (left, right) =>
       left.to(HashMap).merged(right.to(HashMap)) {
         case ((id, v1), (_, v2)) => (id, (v1 merge v2))
       }
 
-  def iterator[T](p: T): Iterator[Any] = p.asInstanceOf[Product].productIterator
-
   inline def derived[T](using m: Mirror.Of[T], c: Manifest[T]): Lattice[T] =
-    lazy val elemInstances = summonAll[m.MirroredElemTypes]
+    lazy val elemInstances = LatticeDeriveImpl.summonAll[m.MirroredElemTypes]
     inline m match
-      case p: Mirror.ProductOf[T] => mergeProduct(p, c, elemInstances)
+      case p: Mirror.ProductOf[T] => LatticeDeriveImpl.mergeProduct(p, c, elemInstances)
+}
+
+
+object LatticeDeriveImpl {
+  def iterator[T](p: T): Iterator[Any] = p.asInstanceOf[Product].productIterator
 
   def mergeProduct[T](p: Mirror.ProductOf[T], c: Manifest[T], lattices: => List[Lattice[_]]): Lattice[T] =
 
@@ -60,5 +64,4 @@ object Lattice {
     inline erasedValue[T] match
       case _: EmptyTuple => Nil
       case _: (t *: ts)  => summonInline[Lattice[t]] :: summonAll[ts]
-
 }

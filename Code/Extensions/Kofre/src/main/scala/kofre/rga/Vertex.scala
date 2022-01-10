@@ -1,7 +1,7 @@
-package kofre.sequences
+package kofre.rga
 
 import kofre.IdUtil
-import kofre.sequences.Vertex.Timestamp
+import kofre.rga.Vertex.Timestamp
 
 case class Vertex(timestamp: Timestamp, id: IdUtil.Id)
 

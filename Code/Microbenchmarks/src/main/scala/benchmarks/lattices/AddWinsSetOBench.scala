@@ -2,8 +2,8 @@ package benchmarks.lattices
 
 import java.util.concurrent.TimeUnit
 import benchmarks.lattices.Codecs._
+import kofre.dotbased.AddWinsSetO
 import org.openjdk.jmh.annotations._
-import kofre.sets.AddWinsSetO
 import kofre.{IdUtil, Lattice}
 
 @BenchmarkMode(Array(Mode.Throughput))

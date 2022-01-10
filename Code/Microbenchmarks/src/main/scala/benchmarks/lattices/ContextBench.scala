@@ -3,7 +3,7 @@ package benchmarks.lattices
 import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
 import kofre.{IdUtil, Lattice}
-import kofre.dotstores.{Context, IntTree}
+import kofre.dotbased.{Context, IntTree}
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)

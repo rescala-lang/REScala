@@ -2,9 +2,8 @@ package benchmarks.lattices
 
 import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
-import kofre.dotstores.{Context, Dot, IntTree}
+import kofre.dotbased.{AddWinsSet, AddWinsSetO, Context, Dot, IntTree}
 import kofre.{IdUtil, Lattice}
-import kofre.sets.{AddWinsSet, AddWinsSetO}
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
