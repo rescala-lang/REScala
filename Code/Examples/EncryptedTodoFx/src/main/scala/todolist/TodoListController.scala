@@ -1,10 +1,10 @@
-package de.ckuessner
+
 package todolist
 
 import encrdt.sync.p2p.P2PConnectionManager
 import todolist.SyncedTodoListCrdt.StateType
-import de.ckuessner.encrdt.sync.ConnectionManager
-import de.ckuessner.encrdt.sync.client_server.{LOG, TrustedReplicaWebSocketClient}
+import encrdt.sync.ConnectionManager
+import encrdt.sync.client_server.{LOG, TrustedReplicaWebSocketClient}
 import javafx.collections.{FXCollections, ObservableList}
 import scalafx.application.Platform
 import scalafx.beans.property.ObjectProperty

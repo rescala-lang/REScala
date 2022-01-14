@@ -1,4 +1,4 @@
-package de.ckuessner
+
 package encrdt.lattices
 
 case class AddWinsMapLattice[K, V](keys: AddWinsSetLattice[K] = AddWinsSetLattice[K](), mappings: Map[K, V] = Map[K, V]()) {

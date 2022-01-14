@@ -1,4 +1,4 @@
-package de.ckuessner
+
 package encrdt.lattices
 
 import encrdt.util.MapHelper.max

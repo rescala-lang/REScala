@@ -1,4 +1,4 @@
-package de.ckuessner
+
 package encrdt.causality
 
 import encrdt.causality.DotStore.{Dot, DotSet}

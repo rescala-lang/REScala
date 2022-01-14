@@ -1,4 +1,4 @@
-package de.ckuessner
+
 package todolist
 
 import encrdt.causality.DotStore.Dot

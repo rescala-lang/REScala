@@ -1,10 +1,10 @@
-package de.ckuessner
+
 package encrdt.sync.p2p
 
 import encrdt.sync.p2p.CrdtSyncWebSocketHandler.{clientShutdownCloseStatus, duplicateCloseStatus}
 import encrdt.sync.p2p.P2PConnectionManager._
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromString, writeToString}
-import de.ckuessner.encrdt.sync.client_server.LOG
+import encrdt.sync.client_server.LOG
 import org.eclipse.jetty.websocket.api.exceptions.WebSocketTimeoutException
 import org.eclipse.jetty.websocket.api.{CloseStatus, Session, WebSocketAdapter, WebSocketBehavior}
 

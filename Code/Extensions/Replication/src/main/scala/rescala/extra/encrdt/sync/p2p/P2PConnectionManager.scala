@@ -1,11 +1,11 @@
-package de.ckuessner
+
 package encrdt.sync.p2p
 
 import encrdt.sync.ConnectionManager
 import encrdt.sync.p2p.P2PConnectionManager._
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToString}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import de.ckuessner.encrdt.sync.client_server.LOG
+import encrdt.sync.client_server.LOG
 
 import java.net.{InetSocketAddress, URI}
 import java.util.concurrent.ConcurrentHashMap

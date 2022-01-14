@@ -1,4 +1,4 @@
-package de.ckuessner
+
 package encrdt.benchmarks
 
 import encrdt.benchmarks.Codecs.deltaAwlwwmapJsonCodec

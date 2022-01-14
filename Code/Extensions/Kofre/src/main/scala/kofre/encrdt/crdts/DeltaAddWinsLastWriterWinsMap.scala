@@ -1,13 +1,13 @@
-package de.ckuessner
+
 package encrdt.crdts
 
-import de.ckuessner.encrdt.causality.DotStore.DotFun
-import de.ckuessner.encrdt.causality.LamportClock
-import de.ckuessner.encrdt.crdts.DeltaAddWinsLastWriterWinsMap.{DeltaAddWinsLastWriterWinsMapLattice, timestampedValueLattice}
-import de.ckuessner.encrdt.crdts.DeltaAddWinsMap.DeltaAddWinsMapLattice
-import de.ckuessner.encrdt.crdts.interfaces.MapCrdt
-import de.ckuessner.encrdt.lattices.LastWriterWinsTagLattice.lwwLattice
-import de.ckuessner.encrdt.lattices.SemiLattice
+import encrdt.causality.DotStore.DotFun
+import encrdt.causality.LamportClock
+import encrdt.crdts.DeltaAddWinsLastWriterWinsMap.{DeltaAddWinsLastWriterWinsMapLattice, timestampedValueLattice}
+import encrdt.crdts.DeltaAddWinsMap.DeltaAddWinsMapLattice
+import encrdt.crdts.interfaces.MapCrdt
+import encrdt.lattices.LastWriterWinsTagLattice.lwwLattice
+import encrdt.lattices.SemiLattice
 
 import java.time.Instant
 

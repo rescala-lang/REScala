@@ -1,4 +1,4 @@
-package de.ckuessner
+
 package encrdt.crdts
 
 import encrdt.lattices.{CausalTimeTag, LastWriterWinsRegisterLattice, SemiLattice}

@@ -1,4 +1,4 @@
-package de.ckuessner
+
 package encrdt.sync.client_server
 
 import encrdt.encrypted.statebased._

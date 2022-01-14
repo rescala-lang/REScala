@@ -1,4 +1,4 @@
-package de.ckuessner
+
 package encrdt.lattices
 
 case class TwoPhaseMapLattice[K, V: SemiLattice](keys: TwoPhaseSetLattice[K] = TwoPhaseSetLattice[K](),

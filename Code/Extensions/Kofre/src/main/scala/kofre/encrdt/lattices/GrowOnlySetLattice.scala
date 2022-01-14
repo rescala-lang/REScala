@@ -1,4 +1,4 @@
-package de.ckuessner
+
 package encrdt.lattices
 
 case class GrowOnlySetLattice[T](values: Set[T]) {

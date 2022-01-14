@@ -1,4 +1,4 @@
-package de.ckuessner
+
 package encrdt.lattices
 
 case class TwoPhaseSetLattice[T](addedElems: Set[T] = Set[T](), removedElems: Set[T] = Set[T]()) {

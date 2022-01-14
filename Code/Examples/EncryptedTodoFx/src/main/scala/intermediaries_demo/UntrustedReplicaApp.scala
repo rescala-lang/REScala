@@ -1,4 +1,4 @@
-package de.ckuessner
+
 package intermediaries_demo
 
 import encrdt.sync.client_server.UntrustedReplicaWebSocketServer

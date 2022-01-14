@@ -1,4 +1,4 @@
-package de.ckuessner
+
 package encrdt.encrypted.deltabased
 
 import encrdt.causality.DotStore.{Dot, DotSet}

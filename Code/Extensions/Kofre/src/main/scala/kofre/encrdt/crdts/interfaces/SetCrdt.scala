@@ -1,4 +1,4 @@
-package de.ckuessner
+
 package encrdt.crdts.interfaces
 
 trait SetCrdt[T] {
