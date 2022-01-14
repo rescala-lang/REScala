@@ -33,7 +33,7 @@ case class Context(internal: Map[Id, IntTree.Tree]) {
       internal.iterator.filter { case (id, _) => other.internal.contains(id) }.map {
         case (id, range) =>
           val otherRange = other.internal(id)
-          val res        = IntTree.fromIterator(IntTree.toSeq(range).iterator.filter(IntTree.contains(otherRange, _)))
+          val res        = IntTree.fromIterator(IntTree.iterator(range).filter(IntTree.contains(otherRange, _)))
           id -> res
       }.toMap
     }
@@ -78,11 +78,12 @@ object IntTree {
       case tree: Range => (ranges(tree.less) :+ tree) ++ ranges(tree.more)
     }
 
-  def toSeq(tree: Tree): List[Int] =
-    tree match {
-      case Empty       => Nil
-      case tree: Range => toSeq(tree.less) ++ (tree.from until tree.until) ++ toSeq(tree.more)
-    }
+  def toSeq(tree: Tree): List[Int] = iterator(tree).toList
+
+  def iterator(tree: Tree): Iterator[Int] = tree match {
+    case Empty => Iterator.empty[Int]
+    case tree: Range => iterator(tree.less) ++ (tree.from until tree.until) ++ iterator(tree.more)
+  }
 
   def merge(left: Tree, right: Tree): Tree = ranges(right).foldLeft(left) { (ir, r) => insert(ir, r.from, r.until) }
 
