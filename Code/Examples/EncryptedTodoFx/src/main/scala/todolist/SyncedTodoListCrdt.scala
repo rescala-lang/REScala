@@ -6,7 +6,6 @@ import encrdt.crdts.DeltaAddWinsLastWriterWinsMap
 import encrdt.crdts.interfaces.MapCrdt
 import encrdt.sync.ConnectionManager
 import todolist.SyncedTodoListCrdt.StateType
-
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import scalafx.application.Platform
@@ -15,6 +14,7 @@ import java.net.URI
 import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.{ExecutorService, Executors}
+import scala.annotation.nowarn
 import scala.concurrent.duration.{DurationInt, MILLISECONDS}
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Try
@@ -102,6 +102,7 @@ object SyncedTodoListCrdt {
   type StateType = DeltaAddWinsLastWriterWinsMap.StateType[UUID, TodoEntry]
 
   private implicit val dotMapAsSetCodec: JsonValueCodec[Set[(Dot, (TodoEntry, (Instant, String)))]] = JsonCodecMaker.make
+  @nowarn
   private implicit val dotMapCodec: JsonValueCodec[Map[Dot, (TodoEntry, (Instant, String))]] = new JsonValueCodec[Map[Dot, (TodoEntry, (Instant, String))]] {
     override def decodeValue(in: JsonReader, default: Map[Dot, (TodoEntry, (Instant, String))]): Map[Dot, (TodoEntry, (Instant, String))] =
       dotMapAsSetCodec.decodeValue(in, Set.empty).toMap

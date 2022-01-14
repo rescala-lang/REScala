@@ -1,17 +1,13 @@
 
 package todolist
 
-import encrdt.sync.p2p.P2PConnectionManager
-import todolist.SyncedTodoListCrdt.StateType
-import encrdt.sync.ConnectionManager
-import encrdt.sync.client_server.{LOG, TrustedReplicaWebSocketClient}
+import encrdt.sync.client_server.LOG
 import javafx.collections.{FXCollections, ObservableList}
 import scalafx.application.Platform
 import scalafx.beans.property.ObjectProperty
 
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
-import scala.jdk.CollectionConverters._
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 

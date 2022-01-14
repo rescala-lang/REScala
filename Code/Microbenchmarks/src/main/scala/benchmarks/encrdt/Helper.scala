@@ -6,7 +6,7 @@ import com.google.crypto.tink.{Aead, KeyTemplates, KeysetHandle}
 import org.conscrypt.Conscrypt
 
 import java.security.Security
-import java.util.{Random, UUID}
+import java.util.UUID
 
 object Helper {
 

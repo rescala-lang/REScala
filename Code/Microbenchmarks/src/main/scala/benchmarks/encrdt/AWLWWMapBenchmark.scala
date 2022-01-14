@@ -33,7 +33,7 @@ class AWLWWMapBenchmark {
   @Warmup(iterations = 7)
   def encryptOnly(blackhole: Blackhole, serializeOnlyBenchmarkState: SerializeOnlyBenchmarkState, aeadState: AeadState): Unit = {
     val serialEncryptedState = aeadState.aead.encrypt(serializeOnlyBenchmarkState.serialPlaintextState, serializeOnlyBenchmarkState.serialPlaintextVectorClock)
-    blackhole.consume(serialEncryptedState, serializeOnlyBenchmarkState.serialPlaintextState)
+    blackhole.consume((serialEncryptedState, serializeOnlyBenchmarkState.serialPlaintextState))
   }
 
   @Benchmark
@@ -42,7 +42,7 @@ class AWLWWMapBenchmark {
     val serialPlaintextState = writeToArray(serializeOnlyBenchmarkState.crdtState)
     val serialPlaintextVectorClock = writeToArray(serializeOnlyBenchmarkState.crdtStateVersionVector)
     val serialEncryptedState = aeadState.aead.encrypt(serialPlaintextState, serialPlaintextVectorClock)
-    blackhole.consume(serialEncryptedState, serialPlaintextState)
+    blackhole.consume((serialEncryptedState, serialPlaintextState))
   }
 
   @Benchmark
@@ -83,7 +83,7 @@ class AWLWWMapBenchmark {
       val serialVectorClock = writeToArray(versionVector)
       val encryptedState = aead.encrypt(serialState, serialVectorClock)
 
-      blackhole.consume(encryptedState, serialState)
+      blackhole.consume((encryptedState, serialState))
     }
   }
 }

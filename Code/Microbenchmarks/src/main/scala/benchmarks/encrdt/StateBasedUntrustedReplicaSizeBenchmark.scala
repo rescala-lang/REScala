@@ -27,7 +27,7 @@ object StateBasedUntrustedReplicaSizeBenchmark extends App {
 
   val minElementExponent = 4 // 10 ** this as minimum tested total elements added to CRDT
   val maxElementExponent = 4 // 10 ** this as maximum tested total elements added to CRDT
-  for (totalElements <- (minElementExponent to maxElementExponent).map(i => math.pow(10, i).toInt)) {
+  for (totalElements <- (minElementExponent to maxElementExponent).map(i => math.pow(10, i.toDouble).toInt)) {
     val crdt = new DeltaAddWinsLastWriterWinsMap[String, String]("0")
     var versionVector: VectorClock = VectorClock()
 
