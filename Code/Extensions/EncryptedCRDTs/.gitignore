@@ -1,0 +1,9 @@
+*.class
+*.log
+.bsp
+.idea
+target
+demokey.json
+benchmarks/out
+benchmarks/results
+.ipynb_checkpoints
