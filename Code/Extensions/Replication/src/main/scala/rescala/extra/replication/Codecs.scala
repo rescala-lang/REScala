@@ -3,7 +3,7 @@ package rescala.extra.lattices.delta
 import cats.collections.Diet
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
-import rescala.extra.lattices.delta.CContext.DietMapCContext
+import rescala.extra.lattices.delta.DietCC.DietMapCContext
 import rescala.extra.lattices.delta.interfaces.AuctionInterface.AuctionData
 import rescala.extra.lattices.delta.interfaces.ForcedWriteInterface.FW
 import rescala.extra.lattices.delta.interfaces.GListInterface.{Elem, GListNode}

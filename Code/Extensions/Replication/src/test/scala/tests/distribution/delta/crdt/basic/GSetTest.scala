@@ -16,7 +16,7 @@ object GSetGenerators {
     elements <- Gen.containerOf[List, E](e.arbitrary)
   } yield {
     val network = new Network(0, 0, 0)
-    val ae      = new AntiEntropy[GSet.State[E]]("a", network, mutable.Buffer())
+    val ae      = new AntiEntropyImpl[GSet.State[E]]("a", network, mutable.Buffer())
 
     elements.foldLeft(GSet[E](ae)) {
       case (set, e) => set.insert(e)
@@ -43,13 +43,13 @@ class GSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent insert" in forAll { (e: Int, e1: Int, e2: Int) =>
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropy[GSet.State[Int]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[GSet.State[Int]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropyImpl[GSet.State[Int]]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropyImpl[GSet.State[Int]]("b", network, mutable.Buffer("a"))
 
     val sa0 = GSet[Int](aea).insert(e)
     val sb0 = GSet[Int](aeb).insert(e)
 
-    AntiEntropy.sync(aea, aeb)
+    AntiEntropyImpl.sync(aea, aeb)
 
     val sa1 = sa0.processReceivedDeltas()
     val sb1 = sb0.processReceivedDeltas()
@@ -66,7 +66,7 @@ class GSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     val sa2 = sa1.insert(e1)
     val sb2 = sb1.insert(e2)
 
-    AntiEntropy.sync(aea, aeb)
+    AntiEntropyImpl.sync(aea, aeb)
 
     val sa3 = sa2.processReceivedDeltas()
     val sb3 = sb2.processReceivedDeltas()
@@ -82,8 +82,8 @@ class GSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   }
 
   "convergence" in forAll { (insertedA: List[Int], insertedB: List[Int], network: Network) =>
-    val aea = new AntiEntropy[GSet.State[Int]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[GSet.State[Int]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropyImpl[GSet.State[Int]]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropyImpl[GSet.State[Int]]("b", network, mutable.Buffer("a"))
 
     val sa0 = insertedA.foldLeft(GSet[Int](aea)) {
       case (set, e) => set.insert(e)
@@ -92,9 +92,9 @@ class GSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
       case (set, e) => set.insert(e)
     }
 
-    AntiEntropy.sync(aea, aeb)
+    AntiEntropyImpl.sync(aea, aeb)
     network.startReliablePhase()
-    AntiEntropy.sync(aea, aeb)
+    AntiEntropyImpl.sync(aea, aeb)
 
     val sa1 = sa0.processReceivedDeltas()
     val sb1 = sb0.processReceivedDeltas()

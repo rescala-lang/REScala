@@ -3,7 +3,8 @@ package tests.distribution.delta
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import rescala.extra.lattices.delta.CContext.{DietMapCContext, SetCContext}
+import rescala.extra.lattices.delta.CContext.{SetCContext}
+import rescala.extra.lattices.delta.DietCC.DietMapCContext
 import rescala.extra.lattices.delta.Dot
 
 object CContextGenerators {

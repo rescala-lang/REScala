@@ -9,7 +9,7 @@ import org.scalajs.dom.html.{Div, Input}
 import rescala.default._
 import rescala.extra.Tags._
 import rescala.extra.distributables.LociDist
-import rescala.extra.lattices.delta.CContext._
+import rescala.extra.lattices.delta.DietCC._
 import rescala.extra.lattices.delta.Delta
 import rescala.extra.lattices.delta.crdt.reactive.RGA
 import rescala.extra.lattices.delta.crdt.reactive.RGA._

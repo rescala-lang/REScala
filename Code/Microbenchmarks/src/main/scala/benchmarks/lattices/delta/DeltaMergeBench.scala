@@ -2,7 +2,7 @@ package benchmarks.lattices.delta
 
 import org.openjdk.jmh.annotations
 import org.openjdk.jmh.annotations._
-import rescala.extra.lattices.delta.CContext._
+import rescala.extra.lattices.delta.DietCC._
 import rescala.extra.lattices.delta.crdt.reactive._
 import rescala.extra.lattices.delta.interfaces.RGAInterface
 import rescala.extra.lattices.delta.{Dot, UIJDLattice}

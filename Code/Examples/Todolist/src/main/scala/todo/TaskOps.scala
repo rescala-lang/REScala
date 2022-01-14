@@ -1,7 +1,7 @@
 package todo
 
 import rescala.default._
-import rescala.extra.lattices.delta.CContext._
+import rescala.extra.lattices.delta.DietCC._
 import rescala.extra.lattices.delta.Delta
 import rescala.extra.lattices.delta.crdt.reactive.RGA
 import rescala.extra.lattices.delta.crdt.reactive.RGA._

@@ -10,6 +10,7 @@ import rescala.extra.lattices.delta.crdt.basic._
 import rescala.extra.lattices.delta.Codecs._
 import rescala.extra.lattices.delta.{CContext, UIJDLattice}
 import NetworkGenerators._
+import rescala.extra.lattices.delta.DietCC.DietMapCContext
 
 import scala.collection.mutable
 import scala.util.Random
@@ -24,7 +25,7 @@ object MVRegisterGenerators {
     nClear <- Gen.posNum[Short]
   } yield {
     val network = new Network(0, 0, 0)
-    val ae      = new AntiEntropy[MVRegister.State[A, C]]("a", network, mutable.Buffer())
+    val ae      = new AntiEntropyImpl[MVRegister.State[A, C]]("a", network, mutable.Buffer())
 
     val ops = Random.shuffle(values.indices ++ List.fill(nClear.toInt)(-1))
 
@@ -68,13 +69,13 @@ class MVRegisterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent write" in forAll { (vA: Int, vB: Int) =>
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropy[MVRegister.State[Int, DietMapCContext]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[MVRegister.State[Int, DietMapCContext]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropyImpl[MVRegister.State[Int, DietMapCContext]]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropyImpl[MVRegister.State[Int, DietMapCContext]]("b", network, mutable.Buffer("a"))
 
     val ra0 = MVRegister[Int, DietMapCContext](aea).write(vA)
     val rb0 = MVRegister[Int, DietMapCContext](aeb).write(vB)
 
-    AntiEntropy.sync(aea, aeb)
+    AntiEntropyImpl.sync(aea, aeb)
 
     val ra1 = ra0.processReceivedDeltas()
     val rb1 = rb0.processReceivedDeltas()
@@ -92,13 +93,13 @@ class MVRegisterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent write/clear" in forAll { v: Int =>
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropy[MVRegister.State[Int, DietMapCContext]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[MVRegister.State[Int, DietMapCContext]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropyImpl[MVRegister.State[Int, DietMapCContext]]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropyImpl[MVRegister.State[Int, DietMapCContext]]("b", network, mutable.Buffer("a"))
 
     val ra0 = MVRegister[Int, DietMapCContext](aea).write(v)
     val rb0 = MVRegister[Int, DietMapCContext](aeb).clear()
 
-    AntiEntropy.sync(aea, aeb)
+    AntiEntropyImpl.sync(aea, aeb)
 
     val ra1 = ra0.processReceivedDeltas()
     val rb1 = rb0.processReceivedDeltas()
@@ -115,8 +116,8 @@ class MVRegisterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
   "convergence" in forAll {
     (valuesA: List[Int], nClearA: Short, valuesB: List[Int], nClearB: Short, network: Network) =>
-      val aea = new AntiEntropy[MVRegister.State[Int, DietMapCContext]]("a", network, mutable.Buffer("b"))
-      val aeb = new AntiEntropy[MVRegister.State[Int, DietMapCContext]]("b", network, mutable.Buffer("a"))
+      val aea = new AntiEntropyImpl[MVRegister.State[Int, DietMapCContext]]("a", network, mutable.Buffer("b"))
+      val aeb = new AntiEntropyImpl[MVRegister.State[Int, DietMapCContext]]("b", network, mutable.Buffer("a"))
 
       val opsA = Random.shuffle(valuesA.indices ++ List.fill(nClearA.toInt)(-1))
       val opsB = Random.shuffle(valuesB.indices ++ List.fill(nClearB.toInt)(-1))
@@ -130,9 +131,9 @@ class MVRegisterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
         case (r, n)  => r.write(valuesB(n))
       }
 
-      AntiEntropy.sync(aea, aeb)
+      AntiEntropyImpl.sync(aea, aeb)
       network.startReliablePhase()
-      AntiEntropy.sync(aea, aeb)
+      AntiEntropyImpl.sync(aea, aeb)
 
       val ra1 = ra0.processReceivedDeltas()
       val rb1 = rb0.processReceivedDeltas()

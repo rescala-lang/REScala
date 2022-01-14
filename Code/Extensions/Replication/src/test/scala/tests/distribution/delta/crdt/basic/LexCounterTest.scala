@@ -15,7 +15,7 @@ object LexCounterGenerators {
     nDec <- Gen.posNum[Int]
   } yield {
     val network = new Network(0, 0, 0)
-    val ae      = new AntiEntropy[LexCounter.State]("a", network, mutable.Buffer())
+    val ae      = new AntiEntropyImpl[LexCounter.State]("a", network, mutable.Buffer())
 
     val inced = (0 to nInc).foldLeft(LexCounter(ae)) {
       case (c, _) => c.inc()
@@ -53,13 +53,13 @@ class LexCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent" in forAll { (incOrDecA: Boolean, incOrDecB: Boolean) =>
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropy[LexCounter.State]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[LexCounter.State]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropyImpl[LexCounter.State]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropyImpl[LexCounter.State]("b", network, mutable.Buffer("a"))
 
     val ca0 = if (incOrDecA) LexCounter(aea).inc() else LexCounter(aea).dec()
     val cb0 = if (incOrDecB) LexCounter(aeb).inc() else LexCounter(aeb).dec()
 
-    AntiEntropy.sync(aea, aeb)
+    AntiEntropyImpl.sync(aea, aeb)
 
     val ca1 = ca0.processReceivedDeltas()
     val cb1 = cb0.processReceivedDeltas()
@@ -78,8 +78,8 @@ class LexCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   }
 
   "convergence" in forAll { (incA: Short, decA: Short, incB: Short, decB: Short, network: Network) =>
-    val aea = new AntiEntropy[LexCounter.State]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[LexCounter.State]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropyImpl[LexCounter.State]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropyImpl[LexCounter.State]("b", network, mutable.Buffer("a"))
 
     val incedA = (0 until incA.toInt).foldLeft(LexCounter(aea)) {
       case (c, _) => c.inc()
@@ -94,9 +94,9 @@ class LexCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
       case (c, _) => c.dec()
     }
 
-    AntiEntropy.sync(aea, aeb)
+    AntiEntropyImpl.sync(aea, aeb)
     network.startReliablePhase()
-    AntiEntropy.sync(aea, aeb)
+    AntiEntropyImpl.sync(aea, aeb)
 
     val ca1 = ca0.processReceivedDeltas()
     val cb1 = cb0.processReceivedDeltas()

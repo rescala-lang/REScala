@@ -3,7 +3,7 @@ package benchmarks.lattices.delta
 import java.util.concurrent.TimeUnit
 
 import org.openjdk.jmh.annotations._
-import rescala.extra.lattices.delta.CContext.DietMapCContext
+import rescala.extra.lattices.delta.DietCC.DietMapCContext
 import rescala.extra.lattices.delta.Dot
 
 @BenchmarkMode(Array(Mode.Throughput))
