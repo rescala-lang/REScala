@@ -8,7 +8,6 @@ import scala.collection.immutable.HashMap
 import scala.collection.mutable
 import scala.util.Random
 
-
 object MergeImpl {
   def mergeKeySet[K, V: Lattice]: Lattice[Map[K, V]] =
     (left, right) =>
@@ -28,9 +27,9 @@ object MergeImpl {
   def mergeMutable[K, V: Lattice]: Lattice[Map[K, V]] = new Lattice[Map[K, V]] {
     def merge(left: Map[K, V], right: Map[K, V]): Map[K, V] = {
       val aggregate = left.to(mutable.HashMap)
-      right.foreach{ case (k, r) =>
-        aggregate.updateWith(k){
-          case None => Some(r)
+      right.foreach { case (k, r) =>
+        aggregate.updateWith(k) {
+          case None    => Some(r)
           case Some(l) => Some(Lattice[V].merge(l, r))
         }
       }
@@ -56,14 +55,13 @@ class MapMergeBenchmark {
   @Param(Array("1"))
   var rightSize: Int = _
 
-
-  var left: Map[Int, Int] = _
+  var left: Map[Int, Int]  = _
   var right: Map[Int, Int] = _
 
   import MergeImpl.IntLattice
 
-  val latticeSet: Lattice[Map[Int, Int]] = MergeImpl.mergeKeySet
-  val latticeHash: Lattice[Map[Int, Int]] = MergeImpl.mergeHashMap
+  val latticeSet: Lattice[Map[Int, Int]]     = MergeImpl.mergeKeySet
+  val latticeHash: Lattice[Map[Int, Int]]    = MergeImpl.mergeHashMap
   val latticeMutable: Lattice[Map[Int, Int]] = MergeImpl.mergeMutable
 
   @Setup
@@ -83,4 +81,3 @@ class MapMergeBenchmark {
   def mutableMerge() = latticeMutable.merge(left, right)
 
 }
-

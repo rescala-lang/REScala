@@ -1,8 +1,8 @@
 package rescala.extra.lattices.delta.crdt.basic
 
 import kofre.decompose.UIJDLattice
-import kofre.decompose.interfaces.GSetInterface.{GSetCompanion, State}
 import kofre.decompose.interfaces.GSetInterface
+import kofre.decompose.interfaces.GSetInterface.{GSetCompanion, State}
 
 /** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.GSetInterface GSetInterface]]
   *

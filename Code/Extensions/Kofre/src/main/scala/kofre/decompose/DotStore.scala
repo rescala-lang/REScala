@@ -195,7 +195,7 @@ object DotStore {
       (left, right) match {
         case (Causal((left1, left2), leftCContext), Causal((right1, right2), rightCContext)) =>
           DotStore[A].leq(Causal(left1, leftCContext), Causal(right1, rightCContext)) &&
-            DotStore[B].leq(Causal(left2, leftCContext), Causal(right2, rightCContext))
+          DotStore[B].leq(Causal(left2, leftCContext), Causal(right2, rightCContext))
       }
 
     override def decompose[C: CContext](state: Causal[(A, B), C]): Iterable[Causal[(A, B), C]] = state match {

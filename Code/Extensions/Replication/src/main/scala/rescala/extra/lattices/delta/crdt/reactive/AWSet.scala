@@ -1,8 +1,8 @@
 package rescala.extra.lattices.delta.crdt.reactive
 
 import kofre.decompose.DotStore.{DotMap, DotSet}
-import kofre.decompose.interfaces.AWSetInterface.{AWSetCompanion, State}
 import kofre.decompose.interfaces.AWSetInterface
+import kofre.decompose.interfaces.AWSetInterface.{AWSetCompanion, State}
 import kofre.decompose.{CContext, Delta, UIJDLattice}
 
 /** [[ReactiveCRDT Reactive]] implementation of [[rescala.extra.lattices.delta.interfaces.AWSetInterface AWSetInterface]]

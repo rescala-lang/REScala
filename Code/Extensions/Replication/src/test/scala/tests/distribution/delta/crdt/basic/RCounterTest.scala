@@ -1,15 +1,14 @@
 package tests.distribution.delta.crdt.basic
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import kofre.decompose.CContext
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import kofre.decompose.CContext._
-import kofre.decompose.CContext
-import rescala.extra.lattices.delta.crdt.basic._
 import rescala.extra.lattices.delta.Codecs._
-import NetworkGenerators._
 import rescala.extra.lattices.delta.DietCC.DietMapCContext
+import rescala.extra.lattices.delta.crdt.basic._
+import tests.distribution.delta.crdt.basic.NetworkGenerators._
 
 import scala.collection.mutable
 import scala.util.Random

@@ -19,7 +19,7 @@ case class ORSet[A](entries: Map[IdUtil.Id, A], tombstones: Set[IdUtil.Id]) {
 }
 
 object ORSet {
-  def empty[A]: ORSet[A] = ORSet(Map.empty, Set.empty)
+  def empty[A]: ORSet[A]                 = ORSet(Map.empty, Set.empty)
   def apply[A](values: Set[A]): ORSet[A] = ORSet(values.map(IdUtil.genId() -> _).toMap, Set())
   given lattice[A]: Lattice[ORSet[A]] = (left, right) =>
     val lefte  = left.entries -- right.tombstones

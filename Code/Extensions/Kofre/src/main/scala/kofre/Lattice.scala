@@ -23,7 +23,7 @@ object Lattice {
     @targetName("mergeSyntax")
     def merge(right: A): A = Lattice.merge(left, right)
 
-  ///////////////// common instances below ///////////////
+  // /////////////// common instances below ///////////////
 
   given setLattice[A]: Lattice[Set[A]] = _ union _
 
@@ -43,7 +43,6 @@ object Lattice {
     inline m match
       case p: Mirror.ProductOf[T] => LatticeDeriveImpl.mergeProduct(p, c, elemInstances)
 }
-
 
 object LatticeDeriveImpl {
   def iterator[T](p: T): Iterator[Any] = p.asInstanceOf[Product].productIterator

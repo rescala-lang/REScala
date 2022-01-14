@@ -27,18 +27,18 @@ object DataGenerator {
   given Lattice[Int] = _ max _
 
   given arbORSet[A: Arbitrary]: Arbitrary[ORSet[A]] = Arbitrary(for {
-    added <- Gen.nonEmptyListOf(Arbitrary.arbitrary[A])
+    added   <- Gen.nonEmptyListOf(Arbitrary.arbitrary[A])
     removed <- Gen.listOf(Gen.oneOf(added))
   } yield {
     val a = added.foldLeft(ORSet.empty[A])((s, v) => Lattice.merge(s, s.add(v)))
-    removed.foldLeft(a)((s,v) => Lattice.merge(s, s.remove(v)))
+    removed.foldLeft(a)((s, v) => Lattice.merge(s, s.remove(v)))
   })
 
 }
 
 class VersionLattice extends LatticeMergeTest[Version]
 class LWWLatice      extends LatticeMergeTest[LastWriterWins[Int]]
-class OrSetLatice      extends LatticeMergeTest[ORSet[Int]]
+class OrSetLatice    extends LatticeMergeTest[ORSet[Int]]
 
 abstract class LatticeMergeTest[A: Arbitrary: Lattice] extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 

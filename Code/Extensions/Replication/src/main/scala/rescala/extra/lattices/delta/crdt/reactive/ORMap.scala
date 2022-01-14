@@ -1,8 +1,8 @@
 package rescala.extra.lattices.delta.crdt.reactive
 
 import kofre.decompose.DotStore.DotMap
-import kofre.decompose.interfaces.ORMapInterface.{ORMapCompanion, State}
 import kofre.decompose.interfaces.ORMapInterface
+import kofre.decompose.interfaces.ORMapInterface.{ORMapCompanion, State}
 import kofre.decompose.{CContext, Delta, DotStore, UIJDLattice}
 
 /** [[ReactiveCRDT Reactive]] implementation of [[rescala.extra.lattices.delta.interfaces.ORMapInterface ORMapInterface]]

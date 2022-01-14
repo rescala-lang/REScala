@@ -1,8 +1,8 @@
 package rescala.extra.lattices.delta.crdt.basic
 
 import kofre.decompose.DotStore.DotFun
-import kofre.decompose.interfaces.MVRegisterInterface.{MVRegisterCompanion, State}
 import kofre.decompose.interfaces.MVRegisterInterface
+import kofre.decompose.interfaces.MVRegisterInterface.{MVRegisterCompanion, State}
 import kofre.decompose.{CContext, UIJDLattice}
 
 /** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.MVRegisterInterface MVRegisterInterface]]

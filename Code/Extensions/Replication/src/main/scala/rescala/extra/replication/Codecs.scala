@@ -3,12 +3,12 @@ package rescala.extra.lattices.delta
 import cats.collections.Diet
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
-import kofre.decompose.{Causal, Dot, LexPair, TimedVal}
-import rescala.extra.lattices.delta.DietCC.DietMapCContext
 import kofre.decompose.interfaces.AuctionInterface.AuctionData
 import kofre.decompose.interfaces.ForcedWriteInterface.FW
 import kofre.decompose.interfaces.GListInterface.{Elem, GListNode}
 import kofre.decompose.interfaces.RGAInterface.RGANode
+import kofre.decompose.{Causal, Dot, LexPair, TimedVal}
+import rescala.extra.lattices.delta.DietCC.DietMapCContext
 
 object Codecs {
 

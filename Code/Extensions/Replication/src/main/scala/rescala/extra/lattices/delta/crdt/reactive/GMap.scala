@@ -1,8 +1,8 @@
 package rescala.extra.lattices.delta.crdt.reactive
 
-import kofre.decompose.{Delta, UIJDLattice}
 import kofre.decompose.interfaces.GMapInterface
 import kofre.decompose.interfaces.GMapInterface.{GMapCompanion, State}
+import kofre.decompose.{Delta, UIJDLattice}
 
 /** [[ReactiveCRDT Reacitve]] implementation of [[rescala.extra.lattices.delta.interfaces.GMapInterface GMapInterface]]
   *

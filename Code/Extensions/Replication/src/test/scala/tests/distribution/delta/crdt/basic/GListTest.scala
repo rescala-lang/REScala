@@ -2,13 +2,13 @@ package tests.distribution.delta.crdt.basic
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
+import kofre.decompose.interfaces.GListInterface.GListAsUIJDLattice
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import rescala.extra.lattices.delta.crdt.basic._
 import rescala.extra.lattices.delta.Codecs._
-import kofre.decompose.interfaces.GListInterface.GListAsUIJDLattice
-import NetworkGenerators._
+import rescala.extra.lattices.delta.crdt.basic._
+import tests.distribution.delta.crdt.basic.NetworkGenerators._
 
 import scala.collection.mutable
 

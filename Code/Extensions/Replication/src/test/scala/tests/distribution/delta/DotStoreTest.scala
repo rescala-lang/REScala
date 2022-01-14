@@ -1,11 +1,11 @@
 package tests.distribution.delta
 
-import org.scalacheck.{Arbitrary, Gen}
-import org.scalatest.freespec.AnyFreeSpec
-import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import kofre.decompose.CContext.SetCContext
 import kofre.decompose.DotStore._
 import kofre.decompose.{Causal, Dot, DotStore, UIJDLattice}
+import org.scalacheck.{Arbitrary, Gen}
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 object DotStoreGenerators {
   val genDot: Gen[Dot] = for {
@@ -276,12 +276,15 @@ class DotMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
       if (dotsA.intersect(dotsB).isEmpty) {
         (dmA.keySet union dmB.keySet).foreach { k =>
           val vMerged =
-            DotSet.mergePartial(Causal(dmA.getOrElse(k, DotSet.empty), ccA), Causal(dmB.getOrElse(k, DotSet.empty), ccB))
+            DotSet.mergePartial(
+              Causal(dmA.getOrElse(k, DotSet.empty), ccA),
+              Causal(dmB.getOrElse(k, DotSet.empty), ccB)
+            )
 
           assert(
             vMerged.isEmpty || dmMerged(k) == vMerged,
             s"For all keys that are in both DotMaps the result of DotMap.merge should map these to the merged values, but ${dmMerged.get(k)} does not equal $vMerged"
-            )
+          )
         }
       }
   }

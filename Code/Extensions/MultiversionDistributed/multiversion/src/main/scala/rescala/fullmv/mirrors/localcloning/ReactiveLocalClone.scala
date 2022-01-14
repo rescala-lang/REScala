@@ -65,8 +65,8 @@ trait ReactiveLocalCloneBundle extends FullMVBundle with SignalBundle {
           initialState,
           ticket.rename.derive("EventReflection")
         ) with Event[P] {
-          override def internalAccess(v: Pulse[P]): Pulse[P]          = v
-          override def disconnect(): Unit = ???
+          override def internalAccess(v: Pulse[P]): Pulse[P] = v
+          override def disconnect(): Unit                    = ???
         }
         connectAndInitializeLocalPushClone(fakeDelay, event, turn, reflectionIsTransient = true, ticket.rename.str)(
           event.internalAccess,

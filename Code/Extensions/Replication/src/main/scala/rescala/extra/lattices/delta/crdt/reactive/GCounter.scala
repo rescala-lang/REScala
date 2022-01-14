@@ -1,8 +1,8 @@
 package rescala.extra.lattices.delta.crdt.reactive
 
-import kofre.decompose.{Delta, UIJDLattice}
-import kofre.decompose.interfaces.GCounterInterface.{GCounterCompanion, State}
 import kofre.decompose.interfaces.GCounterInterface
+import kofre.decompose.interfaces.GCounterInterface.{GCounterCompanion, State}
+import kofre.decompose.{Delta, UIJDLattice}
 
 /** [[ReactiveCRDT Reactive]] implementation of [[rescala.extra.lattices.delta.interfaces.GCounterInterface GCounterInterface]]
   *

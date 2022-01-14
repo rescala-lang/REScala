@@ -188,15 +188,15 @@ object ReShapes extends SimpleSwingApplication {
   def addNetworkTab(): Unit = {
     if (serverDialog.showDialog(ui.locationOnScreen) && serverDialog.inputIsValid())
       try addTab({ drawingSpaceState =>
-        new NetworkSpaceState(
-          drawingSpaceState,
-          Swing.onEDTWait,
-          serverDialog.hostname,
-          serverDialog.commandPort,
-          serverDialog.exchangePort,
-          serverDialog.listenerPort
-        )
-      })
+          new NetworkSpaceState(
+            drawingSpaceState,
+            Swing.onEDTWait,
+            serverDialog.hostname,
+            serverDialog.commandPort,
+            serverDialog.exchangePort,
+            serverDialog.listenerPort
+          )
+        })
       catch {
         case e: ConnectException =>
           JOptionPane.showMessageDialog(null, "Server not available", "ConnectException", JOptionPane.ERROR_MESSAGE)

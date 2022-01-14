@@ -56,7 +56,8 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
                     Some((s, c)): Option[(CaseClassTransactionSpanningTreeNode[TurnPushBundle], Int)],
                     Some(v): Option[P]
                   )
-              })
+              }
+            )
           case AsyncIncrementFrame(turn) =>
             allEmpty("AsyncIncrementFrame").copy(_2 = (turn._1, turn._2, Some((turn._3, turn._4)), None) :: Nil)
           case AsyncIncrementSupersedeFrame(turn, supersede) =>
@@ -95,10 +96,12 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
           case AsyncNewPhase(turn) => allEmpty("AsyncNewPhase").copy(_2 = (turn._1, turn._2, None, None) :: Nil)
           case AsyncAddPredecessorReplicator(turn, startAt, clock) =>
             allEmpty("AddPredecessorReplicator").copy(_2 =
-              (turn, TurnPhase.Uninitialized, Some((startAt, clock)), None) :: Nil)
+              (turn, TurnPhase.Uninitialized, Some((startAt, clock)), None) :: Nil
+            )
           case NewPredecessors(newPredecessors, clock) =>
             allEmpty("NewPredecessors").copy(_2 =
-              (Host.dummyGuid, TurnPhase.Uninitialized, Some((newPredecessors, clock)), None) :: Nil)
+              (Host.dummyGuid, TurnPhase.Uninitialized, Some((newPredecessors, clock)), None) :: Nil
+            )
           case AddRemoteBranch(turn, forPhase) =>
             allEmpty("AddRemoteBranch").copy(_2 = (turn, forPhase, None, None) :: Nil)
           case AsyncRemoteBranchComplete(turn, forPhase) =>
@@ -109,7 +112,8 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
             allEmpty("AcquireRemoteBranchResponse").copy(_2 = (Host.dummyGuid, phase, None, None) :: Nil)
           case AddPredecessor(turn, predecessorTree) =>
             allEmpty("AddPredecessor").copy(_2 =
-              (turn, TurnPhase.Uninitialized, Some((predecessorTree, -1)), None) :: Nil)
+              (turn, TurnPhase.Uninitialized, Some((predecessorTree, -1)), None) :: Nil
+            )
           case BooleanResponse(bool) => allEmpty(if (bool) "BooleanTrueResponse" else "BooleanFalseResponse")
           case MaybeNewReachableSubtree(turn, attachBelow, tree) =>
             allEmpty("MaybeNewReachableSubtree").copy(_2 =
@@ -122,7 +126,8 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
             )
           case NewSuccessor(turn, successor) =>
             allEmpty("NewSuccessor").copy(_2 =
-              (turn, TurnPhase.Uninitialized, None, None) :: (successor._1, successor._2, None, None) :: Nil)
+              (turn, TurnPhase.Uninitialized, None, None) :: (successor._1, successor._2, None, None) :: Nil
+            )
           case TurnGetLockedRoot(turn) =>
             allEmpty("TurnGetLockedRoot").copy(_2 = (turn, TurnPhase.Uninitialized, None, None) :: Nil)
           case LockStateTurnCompletedResponse => allEmpty("LockStateTurnCompletedResponse")
