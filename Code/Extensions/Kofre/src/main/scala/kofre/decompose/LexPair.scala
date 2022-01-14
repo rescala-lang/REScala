@@ -1,4 +1,4 @@
-package rescala.extra.lattices.delta
+package kofre.decompose
 
 /** A LexPair is a lexicographic pair of two values that is used with a lexicographical ordering in the state of
   * [[interfaces.LexCounterInterface]].

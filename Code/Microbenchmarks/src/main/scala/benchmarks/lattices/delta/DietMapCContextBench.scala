@@ -4,7 +4,7 @@ import java.util.concurrent.TimeUnit
 
 import org.openjdk.jmh.annotations._
 import rescala.extra.lattices.delta.DietCC.DietMapCContext
-import rescala.extra.lattices.delta.Dot
+import kofre.decompose.Dot
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)

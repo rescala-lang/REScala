@@ -1,8 +1,8 @@
 package rescala.extra.lattices.delta.crdt.basic
 
-import rescala.extra.lattices.delta.UIJDLattice
-import rescala.extra.lattices.delta.interfaces.GMapInterface
-import rescala.extra.lattices.delta.interfaces.GMapInterface.{GMapCompanion, State}
+import kofre.decompose.UIJDLattice
+import kofre.decompose.interfaces.GMapInterface
+import kofre.decompose.interfaces.GMapInterface.{GMapCompanion, State}
 
 /** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.GMapInterface GMapInterface]]
   *

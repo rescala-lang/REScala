@@ -1,9 +1,9 @@
 package rescala.extra.lattices.delta.crdt.basic
 
-import rescala.extra.lattices.delta.DotStore.DotSet
-import rescala.extra.lattices.delta.interfaces.EWFlagInterface.{EWFlagCompanion, State}
-import rescala.extra.lattices.delta.interfaces.EWFlagInterface
-import rescala.extra.lattices.delta.{CContext, UIJDLattice}
+import kofre.decompose.DotStore.DotSet
+import kofre.decompose.interfaces.EWFlagInterface.{EWFlagCompanion, State}
+import kofre.decompose.interfaces.EWFlagInterface
+import kofre.decompose.{CContext, UIJDLattice}
 
 /** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.EWFlagInterface EWFlagInterface]]
   *

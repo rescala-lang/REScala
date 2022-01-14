@@ -1,9 +1,9 @@
 package rescala.extra.lattices.delta.crdt.reactive
 
-import rescala.extra.lattices.delta.DotStore.DotFun
-import rescala.extra.lattices.delta.{CContext, Delta, UIJDLattice}
-import rescala.extra.lattices.delta.interfaces.LWWRegisterInterface
-import rescala.extra.lattices.delta.interfaces.LWWRegisterInterface.{LWWRegisterCompanion, State}
+import kofre.decompose.DotStore.DotFun
+import kofre.decompose.{CContext, Delta, UIJDLattice}
+import kofre.decompose.interfaces.LWWRegisterInterface
+import kofre.decompose.interfaces.LWWRegisterInterface.{LWWRegisterCompanion, State}
 
 /** [[ReactiveCRDT Reactive]] implementation of [[rescala.extra.lattices.delta.interfaces.LWWRegisterInterface LWWRegisterInterface]]
   *

@@ -1,8 +1,8 @@
 package rescala.extra.lattices.delta.crdt.basic
 
-import rescala.extra.lattices.delta.interfaces.RubisInterface
-import rescala.extra.lattices.delta.interfaces.RubisInterface.{RubisCompanion, State}
-import rescala.extra.lattices.delta.{CContext, UIJDLattice}
+import kofre.decompose.interfaces.RubisInterface
+import kofre.decompose.interfaces.RubisInterface.{RubisCompanion, State}
+import kofre.decompose.{CContext, UIJDLattice}
 
 /** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.RubisInterface RubisInterface]]
   *

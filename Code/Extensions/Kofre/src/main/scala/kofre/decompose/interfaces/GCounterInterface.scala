@@ -1,8 +1,8 @@
-package rescala.extra.lattices.delta.interfaces
+package kofre.decompose.interfaces
 
-import rescala.extra.lattices.delta.CRDTInterface.{DeltaMutator, DeltaQuery}
-import rescala.extra.lattices.delta.UIJDLattice._
-import rescala.extra.lattices.delta._
+import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
+import kofre.decompose.UIJDLattice._
+import kofre.decompose._
 
 object GCounterInterface {
   type State = Map[String, Int]

@@ -1,4 +1,4 @@
-package rescala.extra.lattices.delta
+package kofre.decompose
 
 /** State type of causal CRDTs, which consist of a dot store and a causal context.
   *

@@ -1,8 +1,8 @@
 package rescala.extra.lattices.delta.crdt.basic
 
-import rescala.extra.lattices.delta.UIJDLattice
-import rescala.extra.lattices.delta.interfaces.LexCounterInterface.{LexCounterCompanion, State}
-import rescala.extra.lattices.delta.interfaces.LexCounterInterface
+import kofre.decompose.UIJDLattice
+import kofre.decompose.interfaces.LexCounterInterface.{LexCounterCompanion, State}
+import kofre.decompose.interfaces.LexCounterInterface
 
 /** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.LexCounterInterface LexCounterInterface]]
   *

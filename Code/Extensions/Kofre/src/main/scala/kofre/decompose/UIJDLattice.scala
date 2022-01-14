@@ -1,4 +1,4 @@
-package rescala.extra.lattices.delta
+package kofre.decompose
 
 import kofre.Lattice
 import kofre.Lattice.optionLattice

@@ -4,8 +4,8 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import rescala.extra.lattices.delta.CContext._
-import rescala.extra.lattices.delta.interfaces.AWSetInterface
+import kofre.decompose.CContext._
+import kofre.decompose.interfaces.AWSetInterface
 import rescala.extra.lattices.delta.crdt.basic._
 import rescala.extra.lattices.delta.Codecs._
 import rescala.extra.lattices.delta.DietCC.DietMapCContext

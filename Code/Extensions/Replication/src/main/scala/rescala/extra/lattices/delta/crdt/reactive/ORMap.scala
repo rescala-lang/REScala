@@ -1,9 +1,9 @@
 package rescala.extra.lattices.delta.crdt.reactive
 
-import rescala.extra.lattices.delta.DotStore.DotMap
-import rescala.extra.lattices.delta.interfaces.ORMapInterface.{ORMapCompanion, State}
-import rescala.extra.lattices.delta.interfaces.ORMapInterface
-import rescala.extra.lattices.delta.{CContext, Delta, DotStore, UIJDLattice}
+import kofre.decompose.DotStore.DotMap
+import kofre.decompose.interfaces.ORMapInterface.{ORMapCompanion, State}
+import kofre.decompose.interfaces.ORMapInterface
+import kofre.decompose.{CContext, Delta, DotStore, UIJDLattice}
 
 /** [[ReactiveCRDT Reactive]] implementation of [[rescala.extra.lattices.delta.interfaces.ORMapInterface ORMapInterface]]
   *

@@ -1,9 +1,9 @@
 package rescala.extra.lattices.delta.crdt.basic
 
-import rescala.extra.lattices.delta.DotStore.{DotFun, DotPair}
-import rescala.extra.lattices.delta.interfaces.RGAInterface
-import rescala.extra.lattices.delta.interfaces.RGAInterface.{RGACompanion, State}
-import rescala.extra.lattices.delta.{CContext, UIJDLattice}
+import kofre.decompose.DotStore.{DotFun, DotPair}
+import kofre.decompose.interfaces.RGAInterface
+import kofre.decompose.interfaces.RGAInterface.{RGACompanion, State}
+import kofre.decompose.{CContext, UIJDLattice}
 
 /** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.RGAInterface RGAInterface]]
   *

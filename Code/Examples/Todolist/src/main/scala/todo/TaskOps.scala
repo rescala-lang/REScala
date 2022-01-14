@@ -2,7 +2,7 @@ package todo
 
 import rescala.default._
 import rescala.extra.lattices.delta.DietCC._
-import rescala.extra.lattices.delta.Delta
+import kofre.decompose.Delta
 import rescala.extra.lattices.delta.crdt.reactive.RGA
 import rescala.extra.lattices.delta.crdt.reactive.RGA._
 import todo.Todolist.replicaId

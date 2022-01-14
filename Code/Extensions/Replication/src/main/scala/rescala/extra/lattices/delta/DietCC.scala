@@ -1,5 +1,6 @@
 package rescala.extra.lattices.delta
 
+import kofre.decompose.{CContext, Dot}
 import cats.collections._
 
 object DietCC {

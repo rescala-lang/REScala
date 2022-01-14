@@ -7,7 +7,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.lattices.delta.DietCC.DietMapCContext
 import rescala.extra.lattices.delta.crdt.basic.{AWSet, AntiEntropy, AntiEntropyImpl, GMap, Network}
 import rescala.extra.lattices.delta.Codecs._
-import rescala.extra.lattices.delta.interfaces.AWSetInterface
+import kofre.decompose.interfaces.AWSetInterface
 
 import scala.collection.mutable
 

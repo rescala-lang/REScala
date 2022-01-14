@@ -1,9 +1,9 @@
 package rescala.extra.lattices.delta.crdt.basic
 
-import rescala.extra.lattices.delta.DotStore.{DotMap, DotSet}
-import rescala.extra.lattices.delta.interfaces.AWSetInterface.{AWSetCompanion, State}
-import rescala.extra.lattices.delta.interfaces.AWSetInterface
-import rescala.extra.lattices.delta.{CContext, UIJDLattice}
+import kofre.decompose.DotStore.{DotMap, DotSet}
+import kofre.decompose.interfaces.AWSetInterface.{AWSetCompanion, State}
+import kofre.decompose.interfaces.AWSetInterface
+import kofre.decompose.{CContext, UIJDLattice}
 
 /** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.AWSetInterface AWSetInterface]]
   *

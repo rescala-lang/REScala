@@ -1,8 +1,8 @@
 package rescala.extra.lattices.delta.crdt.basic
 
-import rescala.extra.lattices.delta.UIJDLattice
-import rescala.extra.lattices.delta.interfaces.TwoPSetInterface
-import rescala.extra.lattices.delta.interfaces.TwoPSetInterface.{State, TwoPSetCompanion}
+import kofre.decompose.UIJDLattice
+import kofre.decompose.interfaces.TwoPSetInterface
+import kofre.decompose.interfaces.TwoPSetInterface.{State, TwoPSetCompanion}
 
 /** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.TwoPSetInterface TwoPSetInterface]]
   *

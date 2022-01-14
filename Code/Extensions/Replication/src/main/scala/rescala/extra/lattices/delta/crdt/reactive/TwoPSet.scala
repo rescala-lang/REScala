@@ -1,8 +1,8 @@
 package rescala.extra.lattices.delta.crdt.reactive
 
-import rescala.extra.lattices.delta.{Delta, UIJDLattice}
-import rescala.extra.lattices.delta.interfaces.TwoPSetInterface
-import rescala.extra.lattices.delta.interfaces.TwoPSetInterface.{State, TwoPSetCompanion}
+import kofre.decompose.{Delta, UIJDLattice}
+import kofre.decompose.interfaces.TwoPSetInterface
+import kofre.decompose.interfaces.TwoPSetInterface.{State, TwoPSetCompanion}
 
 /** [[ReactiveCRDT Reactive]] implementation of [[rescala.extra.lattices.delta.interfaces.TwoPSetInterface TwoPSetInterface]]
   *

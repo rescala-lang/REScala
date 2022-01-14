@@ -1,9 +1,9 @@
 package rescala.extra.lattices.delta.crdt.reactive
 
-import rescala.extra.lattices.delta.DotStore.DotFun
-import rescala.extra.lattices.delta.interfaces.MVRegisterInterface.{MVRegisterCompanion, State}
-import rescala.extra.lattices.delta.interfaces.MVRegisterInterface
-import rescala.extra.lattices.delta.{CContext, Delta, UIJDLattice}
+import kofre.decompose.DotStore.DotFun
+import kofre.decompose.interfaces.MVRegisterInterface.{MVRegisterCompanion, State}
+import kofre.decompose.interfaces.MVRegisterInterface
+import kofre.decompose.{CContext, Delta, UIJDLattice}
 
 /** [[ReactiveCRDT Reactive]] implementation of [[rescala.extra.lattices.delta.interfaces.MVRegisterInterface MVRegisterInterface]]
   *

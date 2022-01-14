@@ -1,4 +1,4 @@
-package rescala.extra.lattices.delta
+package kofre.decompose
 
 /** Dots are globally unique counters that are used to track causality in causal CRDTs. To guarantee global uniqueness,
   * dots combine a globally unique replicaID with a locally unique counter.

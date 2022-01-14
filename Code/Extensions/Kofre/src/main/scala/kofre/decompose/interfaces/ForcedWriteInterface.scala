@@ -1,7 +1,7 @@
-package rescala.extra.lattices.delta.interfaces
+package kofre.decompose.interfaces
 
-import rescala.extra.lattices.delta.CRDTInterface.{DeltaMutator, DeltaQuery}
-import rescala.extra.lattices.delta.UIJDLattice
+import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
+import kofre.decompose.UIJDLattice
 
 object ForcedWriteInterface {
   case class FW[E](counter: Long, value: E)

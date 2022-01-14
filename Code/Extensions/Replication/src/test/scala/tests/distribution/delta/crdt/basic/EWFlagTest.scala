@@ -4,7 +4,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import rescala.extra.lattices.delta.CContext
+import kofre.decompose.CContext
 import rescala.extra.lattices.delta.DietCC._
 import rescala.extra.lattices.delta.crdt.basic._
 import rescala.extra.lattices.delta.Codecs._

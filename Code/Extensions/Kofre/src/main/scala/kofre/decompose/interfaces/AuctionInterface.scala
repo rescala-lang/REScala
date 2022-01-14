@@ -1,8 +1,8 @@
-package rescala.extra.lattices.delta.interfaces
+package kofre.decompose.interfaces
 
-import rescala.extra.lattices.delta.CRDTInterface.DeltaMutator
-import rescala.extra.lattices.delta._
-import rescala.extra.lattices.delta.interfaces.AuctionInterface.Bid.User
+import kofre.decompose.CRDTInterface.DeltaMutator
+import kofre.decompose._
+import kofre.decompose.interfaces.AuctionInterface.Bid.User
 
 object AuctionInterface {
   sealed trait Status

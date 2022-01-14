@@ -1,6 +1,6 @@
 package rescala.extra.lattices.delta.crdt.basic
 
-import rescala.extra.lattices.delta.Delta
+import kofre.decompose.Delta
 
 trait AntiEntropy[A] {
 

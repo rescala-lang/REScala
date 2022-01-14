@@ -1,8 +1,8 @@
 package rescala.extra.lattices.delta.crdt.reactive
 
-import rescala.extra.lattices.delta.interfaces.RGAInterface
-import rescala.extra.lattices.delta.interfaces.RGAInterface.{RGACompanion, State}
-import rescala.extra.lattices.delta.{CContext, Delta, UIJDLattice}
+import kofre.decompose.interfaces.RGAInterface
+import kofre.decompose.interfaces.RGAInterface.{RGACompanion, State}
+import kofre.decompose.{CContext, Delta, UIJDLattice}
 
 /** [[ReactiveCRDT Reactive]] implementation of [[rescala.extra.lattices.delta.interfaces.RGAInterface RGAInterface]]
   *

@@ -5,9 +5,9 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import rescala.extra.lattices.delta.CContext.SetCContext
-import rescala.extra.lattices.delta.CContext
-import rescala.extra.lattices.delta.DotStore._
+import kofre.decompose.CContext.SetCContext
+import kofre.decompose.CContext
+import kofre.decompose.DotStore._
 import rescala.extra.lattices.delta.Codecs._
 import NetworkGenerators._
 import rescala.extra.lattices.delta.crdt.basic._

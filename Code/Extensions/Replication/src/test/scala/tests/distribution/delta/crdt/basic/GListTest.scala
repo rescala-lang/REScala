@@ -7,7 +7,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.lattices.delta.crdt.basic._
 import rescala.extra.lattices.delta.Codecs._
-import rescala.extra.lattices.delta.interfaces.GListInterface.GListAsUIJDLattice
+import kofre.decompose.interfaces.GListInterface.GListAsUIJDLattice
 import NetworkGenerators._
 
 import scala.collection.mutable

@@ -1,10 +1,10 @@
-package rescala.extra.lattices.delta.interfaces
+package kofre.decompose.interfaces
 
-import rescala.extra.lattices.delta.CRDTInterface.{DeltaMutator, DeltaQuery}
-import rescala.extra.lattices.delta.DotStore.{DotFun, DotLess, DotPair}
-import rescala.extra.lattices.delta._
-import rescala.extra.lattices.delta.interfaces.ForcedWriteInterface.ForcedWriteAsUIJDLattice
-import rescala.extra.lattices.delta.interfaces.GListInterface.GListAsUIJDLattice
+import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
+import kofre.decompose.DotStore.{DotFun, DotLess, DotPair}
+import kofre.decompose._
+import kofre.decompose.interfaces.ForcedWriteInterface.ForcedWriteAsUIJDLattice
+import kofre.decompose.interfaces.GListInterface.GListAsUIJDLattice
 
 object RGAInterface {
   sealed trait RGANode[A]

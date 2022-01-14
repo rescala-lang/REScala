@@ -1,6 +1,6 @@
-package rescala.extra.lattices.delta
+package kofre.decompose
 
-import rescala.extra.lattices.delta.CRDTInterface.{DeltaMutator, DeltaQuery}
+import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
 
 trait CRDTInterface[State, Wrapper] {
   val state: State

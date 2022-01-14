@@ -1,8 +1,8 @@
 package rescala.extra.lattices.delta.crdt.reactive
 
-import rescala.extra.lattices.delta.{Delta, UIJDLattice}
-import rescala.extra.lattices.delta.interfaces.GSetInterface.{GSetCompanion, State}
-import rescala.extra.lattices.delta.interfaces.GSetInterface
+import kofre.decompose.{Delta, UIJDLattice}
+import kofre.decompose.interfaces.GSetInterface.{GSetCompanion, State}
+import kofre.decompose.interfaces.GSetInterface
 
 /** [[ReactiveCRDT Reactive]] implementation of [[rescala.extra.lattices.delta.interfaces.GSetInterface GSetInterface]]
   *

@@ -4,8 +4,8 @@ import org.openjdk.jmh.annotations
 import org.openjdk.jmh.annotations._
 import rescala.extra.lattices.delta.DietCC._
 import rescala.extra.lattices.delta.crdt.reactive._
-import rescala.extra.lattices.delta.interfaces.AWSetInterface
-import rescala.extra.lattices.delta.{Dot, UIJDLattice}
+import kofre.decompose.interfaces.AWSetInterface
+import kofre.decompose.{Dot, UIJDLattice}
 
 import java.util.concurrent.TimeUnit
 

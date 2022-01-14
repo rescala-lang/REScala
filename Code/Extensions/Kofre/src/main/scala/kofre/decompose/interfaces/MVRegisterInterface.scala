@@ -1,8 +1,8 @@
-package rescala.extra.lattices.delta.interfaces
+package kofre.decompose.interfaces
 
-import rescala.extra.lattices.delta.CRDTInterface.{DeltaMutator, DeltaQuery}
-import rescala.extra.lattices.delta.DotStore.DotFun
-import rescala.extra.lattices.delta._
+import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
+import kofre.decompose.DotStore.DotFun
+import kofre.decompose._
 
 object MVRegisterInterface {
   type State[A, C] = Causal[DotFun[A], C]

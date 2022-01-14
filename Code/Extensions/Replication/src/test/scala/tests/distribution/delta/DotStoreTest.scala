@@ -3,9 +3,9 @@ package tests.distribution.delta
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import rescala.extra.lattices.delta.CContext.SetCContext
-import rescala.extra.lattices.delta.DotStore._
-import rescala.extra.lattices.delta.{Causal, Dot, DotStore, UIJDLattice}
+import kofre.decompose.CContext.SetCContext
+import kofre.decompose.DotStore._
+import kofre.decompose.{Causal, Dot, DotStore, UIJDLattice}
 
 object DotStoreGenerators {
   val genDot: Gen[Dot] = for {

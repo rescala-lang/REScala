@@ -1,8 +1,8 @@
 package rescala.extra.lattices.delta.crdt.basic
 
-import rescala.extra.lattices.delta.UIJDLattice
-import rescala.extra.lattices.delta.interfaces.GListInterface
-import rescala.extra.lattices.delta.interfaces.GListInterface.{GListCompanion, State}
+import kofre.decompose.UIJDLattice
+import kofre.decompose.interfaces.GListInterface
+import kofre.decompose.interfaces.GListInterface.{GListCompanion, State}
 
 /** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.GListInterface GListInterface]]
   *

@@ -1,6 +1,6 @@
 package rescala.extra.lattices.delta.crdt.reactive
 
-import rescala.extra.lattices.delta.{CRDTInterface, Delta, UIJDLattice}
+import kofre.decompose.{CRDTInterface, Delta, UIJDLattice}
 
 /** ReactiveCRDTs are Delta CRDTs that store applied deltas in their deltaBuffer attribute. Middleware should regularly
   * take these deltas and ship them to other replicas, using applyDelta to apply them on the remote state. After deltas

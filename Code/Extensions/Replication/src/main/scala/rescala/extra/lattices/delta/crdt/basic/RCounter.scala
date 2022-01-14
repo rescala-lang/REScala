@@ -1,9 +1,9 @@
 package rescala.extra.lattices.delta.crdt.basic
 
-import rescala.extra.lattices.delta.{CContext, UIJDLattice}
-import rescala.extra.lattices.delta.DotStore.DotFun
-import rescala.extra.lattices.delta.interfaces.RCounterInterface
-import rescala.extra.lattices.delta.interfaces.RCounterInterface.{RCounterCompanion, State}
+import kofre.decompose.{CContext, UIJDLattice}
+import kofre.decompose.DotStore.DotFun
+import kofre.decompose.interfaces.RCounterInterface
+import kofre.decompose.interfaces.RCounterInterface.{RCounterCompanion, State}
 
 /** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.RCounterInterface RCounterInterface]]
   *

@@ -1,8 +1,8 @@
 package rescala.extra.lattices.delta.crdt.basic
 
-import rescala.extra.lattices.delta.UIJDLattice
-import rescala.extra.lattices.delta.interfaces.PNCounterInterface
-import rescala.extra.lattices.delta.interfaces.PNCounterInterface.{PNCounterCompanion, State}
+import kofre.decompose.UIJDLattice
+import kofre.decompose.interfaces.PNCounterInterface
+import kofre.decompose.interfaces.PNCounterInterface.{PNCounterCompanion, State}
 
 /** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.PNCounterInterface PNCounterInterface]]
   *

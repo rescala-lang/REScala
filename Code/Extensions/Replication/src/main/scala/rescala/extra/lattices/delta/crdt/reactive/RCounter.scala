@@ -1,8 +1,8 @@
 package rescala.extra.lattices.delta.crdt.reactive
 
-import rescala.extra.lattices.delta.{CContext, Delta, UIJDLattice}
-import rescala.extra.lattices.delta.interfaces.RCounterInterface
-import rescala.extra.lattices.delta.interfaces.RCounterInterface.{RCounterCompanion, State}
+import kofre.decompose.{CContext, Delta, UIJDLattice}
+import kofre.decompose.interfaces.RCounterInterface
+import kofre.decompose.interfaces.RCounterInterface.{RCounterCompanion, State}
 
 /** [[ReactiveCRDT Reactive]] implementation of [[rescala.extra.lattices.delta.interfaces.RCounterInterface RCounterInterface]]
   *

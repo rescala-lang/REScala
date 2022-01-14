@@ -1,8 +1,8 @@
 package rescala.extra.lattices.delta.crdt.basic
 
-import rescala.extra.lattices.delta.UIJDLattice
-import rescala.extra.lattices.delta.interfaces.GCounterInterface.{GCounterCompanion, State}
-import rescala.extra.lattices.delta.interfaces.GCounterInterface
+import kofre.decompose.UIJDLattice
+import kofre.decompose.interfaces.GCounterInterface.{GCounterCompanion, State}
+import kofre.decompose.interfaces.GCounterInterface
 
 /** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.GCounterInterface GCounterInterface]]
   *

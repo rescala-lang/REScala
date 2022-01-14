@@ -2,9 +2,9 @@ package benchmarks.lattices.delta.crdt
 
 import org.openjdk.jmh.annotations._
 import rescala.extra.lattices.delta.DietCC.DietMapCContext
-import rescala.extra.lattices.delta.UIJDLattice
+import kofre.decompose.UIJDLattice
 import rescala.extra.lattices.delta.crdt.basic.AWSet
-import rescala.extra.lattices.delta.interfaces.AWSetInterface
+import kofre.decompose.interfaces.AWSetInterface
 
 import java.util.concurrent.TimeUnit
 

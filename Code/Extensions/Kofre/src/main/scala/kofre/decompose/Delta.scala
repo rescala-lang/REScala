@@ -1,4 +1,4 @@
-package rescala.extra.lattices.delta
+package kofre.decompose
 
 /** A Delta combines a delta state from the same state space as the CRDT state with the id of the replica propagating it.
   *

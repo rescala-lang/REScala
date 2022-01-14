@@ -3,7 +3,7 @@ package rescala.extra.lattices.delta.crdt.basic
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReaderException, JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import rescala.extra.lattices.delta.crdt.basic.AntiEntropyImpl.{AckMsg, DeltaMsg}
-import rescala.extra.lattices.delta.{Delta, UIJDLattice}
+import kofre.decompose.{Delta, UIJDLattice}
 
 import scala.collection.mutable
 

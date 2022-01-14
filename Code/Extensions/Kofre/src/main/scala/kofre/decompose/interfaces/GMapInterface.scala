@@ -1,7 +1,7 @@
-package rescala.extra.lattices.delta.interfaces
+package kofre.decompose.interfaces
 
-import rescala.extra.lattices.delta.CRDTInterface.{DeltaMutator, DeltaQuery}
-import rescala.extra.lattices.delta.{CRDTInterface, UIJDLattice}
+import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
+import kofre.decompose.{CRDTInterface, UIJDLattice}
 
 object GMapInterface {
   type State[K, V] = Map[K, V]

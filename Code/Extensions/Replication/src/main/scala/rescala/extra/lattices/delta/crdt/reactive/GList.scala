@@ -1,8 +1,8 @@
 package rescala.extra.lattices.delta.crdt.reactive
 
-import rescala.extra.lattices.delta.interfaces.GListInterface
-import rescala.extra.lattices.delta.interfaces.GListInterface.{GListCompanion, State}
-import rescala.extra.lattices.delta.{Delta, UIJDLattice}
+import kofre.decompose.interfaces.GListInterface
+import kofre.decompose.interfaces.GListInterface.{GListCompanion, State}
+import kofre.decompose.{Delta, UIJDLattice}
 
 /** [[ReactiveCRDT Reactive]] implementation of [[rescala.extra.lattices.delta.interfaces.GListInterface GListInterface]]
   *

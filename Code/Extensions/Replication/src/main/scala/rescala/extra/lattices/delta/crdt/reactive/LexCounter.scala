@@ -1,8 +1,8 @@
 package rescala.extra.lattices.delta.crdt.reactive
 
-import rescala.extra.lattices.delta.{Delta, UIJDLattice}
-import rescala.extra.lattices.delta.interfaces.LexCounterInterface.{LexCounterCompanion, State}
-import rescala.extra.lattices.delta.interfaces.LexCounterInterface
+import kofre.decompose.{Delta, UIJDLattice}
+import kofre.decompose.interfaces.LexCounterInterface.{LexCounterCompanion, State}
+import kofre.decompose.interfaces.LexCounterInterface
 
 /** [[ReactiveCRDT Reactive]] implementation of [[rescala.extra.lattices.delta.interfaces.LexCounterInterface LexCounterInterface]]
   *
