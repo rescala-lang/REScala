@@ -4,6 +4,7 @@ import kofre.decompose.DotStore.DotFun
 import kofre.decompose.interfaces.LWWRegisterInterface
 import kofre.decompose.interfaces.LWWRegisterInterface.{LWWRegisterCompanion, State}
 import kofre.decompose.{CContext, UIJDLattice}
+import rescala.extra.replication.AntiEntropy
 
 /** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.LWWRegisterInterface LWWRegisterInterface]]
   *

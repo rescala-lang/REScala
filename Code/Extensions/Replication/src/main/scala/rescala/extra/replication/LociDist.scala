@@ -1,4 +1,4 @@
-package rescala.extra.distributables
+package rescala.extra.replication
 
 import kofre.decompose.{Delta, UIJDLattice}
 import loci.registry.{Binding, Registry}

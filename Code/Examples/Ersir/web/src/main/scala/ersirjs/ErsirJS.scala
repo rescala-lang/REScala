@@ -6,10 +6,10 @@ import loci.registry.Registry
 import loci.transmitter.RemoteRef
 import org.scalajs.dom
 import rescala.default._
-import rescala.extra.distributables.LociDist
 import rescala.extra.lattices.delta.CContext.DietMapCContext
 import rescala.extra.lattices.delta.Delta
 import rescala.extra.lattices.delta.crdt.reactive.RGA
+import rescala.extra.replication.LociDist
 
 import java.util.concurrent.ThreadLocalRandom
 import scala.concurrent.Future

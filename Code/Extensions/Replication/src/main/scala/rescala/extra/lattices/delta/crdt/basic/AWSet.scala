@@ -4,6 +4,7 @@ import kofre.decompose.DotStore.{DotMap, DotSet}
 import kofre.decompose.interfaces.AWSetInterface
 import kofre.decompose.interfaces.AWSetInterface.{AWSetCompanion, State}
 import kofre.decompose.{CContext, UIJDLattice}
+import rescala.extra.replication.AntiEntropy
 
 /** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.AWSetInterface AWSetInterface]]
   *

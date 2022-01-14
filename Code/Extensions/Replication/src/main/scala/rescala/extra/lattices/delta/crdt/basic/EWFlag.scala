@@ -4,6 +4,7 @@ import kofre.decompose.DotStore.DotSet
 import kofre.decompose.interfaces.EWFlagInterface
 import kofre.decompose.interfaces.EWFlagInterface.{EWFlagCompanion, State}
 import kofre.decompose.{CContext, UIJDLattice}
+import rescala.extra.replication.AntiEntropy
 
 /** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.EWFlagInterface EWFlagInterface]]
   *

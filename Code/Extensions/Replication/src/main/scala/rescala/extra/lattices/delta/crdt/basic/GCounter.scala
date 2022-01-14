@@ -3,6 +3,7 @@ package rescala.extra.lattices.delta.crdt.basic
 import kofre.decompose.UIJDLattice
 import kofre.decompose.interfaces.GCounterInterface
 import kofre.decompose.interfaces.GCounterInterface.{GCounterCompanion, State}
+import rescala.extra.replication.AntiEntropy
 
 /** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.GCounterInterface GCounterInterface]]
   *

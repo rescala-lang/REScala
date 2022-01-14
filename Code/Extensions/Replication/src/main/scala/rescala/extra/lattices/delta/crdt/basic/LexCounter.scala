@@ -3,6 +3,7 @@ package rescala.extra.lattices.delta.crdt.basic
 import kofre.decompose.UIJDLattice
 import kofre.decompose.interfaces.LexCounterInterface
 import kofre.decompose.interfaces.LexCounterInterface.{LexCounterCompanion, State}
+import rescala.extra.replication.AntiEntropy
 
 /** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.LexCounterInterface LexCounterInterface]]
   *

@@ -4,6 +4,7 @@ import kofre.decompose.DotStore.DotFun
 import kofre.decompose.interfaces.MVRegisterInterface
 import kofre.decompose.interfaces.MVRegisterInterface.{MVRegisterCompanion, State}
 import kofre.decompose.{CContext, UIJDLattice}
+import rescala.extra.replication.AntiEntropy
 
 /** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.MVRegisterInterface MVRegisterInterface]]
   *

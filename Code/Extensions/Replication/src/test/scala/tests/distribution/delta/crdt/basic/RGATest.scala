@@ -6,10 +6,11 @@ import kofre.decompose.CContext
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import rescala.extra.lattices.delta.Codecs._
+import rescala.extra.lattices.delta.JsoniterCodecs._
 import rescala.extra.lattices.delta.DietCC.DietMapCContext
 import rescala.extra.lattices.delta.crdt.basic.RGA._
 import rescala.extra.lattices.delta.crdt.basic._
+import rescala.extra.replication.AntiEntropy
 import tests.distribution.delta.crdt.basic.NetworkGenerators._
 
 import scala.collection.mutable
@@ -37,7 +38,7 @@ object RGAGenerators {
   } yield {
     val network = new Network(0, 0, 0)
 
-    val ae = new AntiEntropyImpl[RGA.State[E, C]]("a", network, mutable.Buffer())
+    val ae = new AntiEntropy[RGA.State[E, C]]("a", network, mutable.Buffer())
 
     makeRGA(insertedIndices zip insertedValues, removed, ae)
   }
@@ -115,11 +116,11 @@ class RGATest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     (inserted: List[(Int, Int)], removed: List[Int], n1: Int, e1: Int, n2: Int, e2: Int) =>
       val network = new Network(0, 0, 0)
 
-      val aea = new AntiEntropyImpl[RGA.State[Int, DietMapCContext]]("a", network, mutable.Buffer("b"))
-      val aeb = new AntiEntropyImpl[RGA.State[Int, DietMapCContext]]("b", network, mutable.Buffer("a"))
+      val aea = new AntiEntropy[RGA.State[Int, DietMapCContext]]("a", network, mutable.Buffer("b"))
+      val aeb = new AntiEntropy[RGA.State[Int, DietMapCContext]]("b", network, mutable.Buffer("a"))
 
       val la0 = makeRGA(inserted, removed, aea)
-      AntiEntropyImpl.sync(aea, aeb)
+      AntiEntropy.sync(aea, aeb)
       val lb0 = RGA(aeb).processReceivedDeltas()
 
       val size = la0.size
@@ -129,7 +130,7 @@ class RGATest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
       val la1 = la0.insert(idx1, e1)
       lb0.insert(idx2, e2)
 
-      AntiEntropyImpl.sync(aea, aeb)
+      AntiEntropy.sync(aea, aeb)
 
       val la2 = la1.processReceivedDeltas()
 
@@ -150,11 +151,11 @@ class RGATest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent delete" in forAll { (inserted: List[(Int, Int)], removed: List[Int], n: Int, n1: Int, n2: Int) =>
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropyImpl[RGA.State[Int, DietMapCContext]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropyImpl[RGA.State[Int, DietMapCContext]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[RGA.State[Int, DietMapCContext]]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[RGA.State[Int, DietMapCContext]]("b", network, mutable.Buffer("a"))
 
     val la0 = makeRGA(inserted, removed, aea)
-    AntiEntropyImpl.sync(aea, aeb)
+    AntiEntropy.sync(aea, aeb)
     val lb0 = RGA(aeb).processReceivedDeltas()
 
     val idx = if (la0.size == 0) 0 else math.floorMod(n, la0.size)
@@ -162,7 +163,7 @@ class RGATest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     val la1 = la0.delete(idx)
     val lb1 = lb0.delete(idx)
 
-    AntiEntropyImpl.sync(aea, aeb)
+    AntiEntropy.sync(aea, aeb)
 
     val la2 = la1.processReceivedDeltas()
     val lb2 = lb1.processReceivedDeltas()
@@ -179,7 +180,7 @@ class RGATest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     val la3 = la2.delete(idx1)
     lb2.delete(idx2)
 
-    AntiEntropyImpl.sync(aea, aeb)
+    AntiEntropy.sync(aea, aeb)
 
     val la4 = la3.processReceivedDeltas()
 
@@ -201,11 +202,11 @@ class RGATest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent insert update" in forAll { (inserted: List[(Int, Int)], removed: List[Int], n: Int, e1: Int, e2: Int) =>
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropyImpl[RGA.State[Int, DietMapCContext]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropyImpl[RGA.State[Int, DietMapCContext]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[RGA.State[Int, DietMapCContext]]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[RGA.State[Int, DietMapCContext]]("b", network, mutable.Buffer("a"))
 
     val la0 = makeRGA(inserted, removed, aea)
-    AntiEntropyImpl.sync(aea, aeb)
+    AntiEntropy.sync(aea, aeb)
     val lb0 = RGA(aeb).processReceivedDeltas()
 
     val idx = if (la0.size == 0) 0 else math.floorMod(n, la0.size)
@@ -213,7 +214,7 @@ class RGATest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     val la1 = la0.insert(idx, e1)
     lb0.update(idx, e2)
 
-    AntiEntropyImpl.sync(aea, aeb)
+    AntiEntropy.sync(aea, aeb)
 
     val la2 = la1.processReceivedDeltas()
 
@@ -228,11 +229,11 @@ class RGATest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent insert delete" in forAll { (inserted: List[(Int, Int)], removed: List[Int], n: Int, e: Int) =>
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropyImpl[RGA.State[Int, DietMapCContext]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropyImpl[RGA.State[Int, DietMapCContext]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[RGA.State[Int, DietMapCContext]]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[RGA.State[Int, DietMapCContext]]("b", network, mutable.Buffer("a"))
 
     val la0 = makeRGA(inserted, removed, aea)
-    AntiEntropyImpl.sync(aea, aeb)
+    AntiEntropy.sync(aea, aeb)
     val lb0 = RGA(aeb).processReceivedDeltas()
 
     val idx = if (la0.size == 0) 0 else math.floorMod(n, la0.size)
@@ -240,7 +241,7 @@ class RGATest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     val la1 = la0.insert(idx + 1, e)
     lb0.delete(idx)
 
-    AntiEntropyImpl.sync(aea, aeb)
+    AntiEntropy.sync(aea, aeb)
 
     val la2 = la1.processReceivedDeltas()
 
@@ -255,11 +256,11 @@ class RGATest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent update delete" in forAll { (inserted: List[(Int, Int)], removed: List[Int], n: Int, e: Int) =>
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropyImpl[RGA.State[Int, DietMapCContext]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropyImpl[RGA.State[Int, DietMapCContext]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[RGA.State[Int, DietMapCContext]]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[RGA.State[Int, DietMapCContext]]("b", network, mutable.Buffer("a"))
 
     val la0 = makeRGA(inserted, removed, aea)
-    AntiEntropyImpl.sync(aea, aeb)
+    AntiEntropy.sync(aea, aeb)
     val lb0 = RGA(aeb).processReceivedDeltas()
 
     val idx = if (la0.size == 0) 0 else math.floorMod(n, la0.size)
@@ -267,7 +268,7 @@ class RGATest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     val la1 = la0.delete(idx)
     lb0.update(idx, e)
 
-    AntiEntropyImpl.sync(aea, aeb)
+    AntiEntropy.sync(aea, aeb)
 
     val la2 = la1.processReceivedDeltas()
 
@@ -287,12 +288,12 @@ class RGATest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
         network: Network
     ) =>
       {
-        val aea = new AntiEntropyImpl[RGA.State[Int, DietMapCContext]]("a", network, mutable.Buffer("b"))
-        val aeb = new AntiEntropyImpl[RGA.State[Int, DietMapCContext]]("b", network, mutable.Buffer("a"))
+        val aea = new AntiEntropy[RGA.State[Int, DietMapCContext]]("a", network, mutable.Buffer("b"))
+        val aeb = new AntiEntropy[RGA.State[Int, DietMapCContext]]("b", network, mutable.Buffer("a"))
 
         val la0 = makeRGA(inserted, removed, aea)
         network.startReliablePhase()
-        AntiEntropyImpl.sync(aea, aeb)
+        AntiEntropy.sync(aea, aeb)
         network.endReliablePhase()
         val lb0 = RGA(aeb).processReceivedDeltas()
 
@@ -324,9 +325,9 @@ class RGATest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
           }
         }
 
-        AntiEntropyImpl.sync(aea, aeb)
+        AntiEntropy.sync(aea, aeb)
         network.startReliablePhase()
-        AntiEntropyImpl.sync(aea, aeb)
+        AntiEntropy.sync(aea, aeb)
 
         val la2 = la1.processReceivedDeltas()
         val lb2 = lb1.processReceivedDeltas()

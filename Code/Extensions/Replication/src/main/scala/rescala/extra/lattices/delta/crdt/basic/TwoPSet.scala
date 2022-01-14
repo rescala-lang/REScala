@@ -3,6 +3,7 @@ package rescala.extra.lattices.delta.crdt.basic
 import kofre.decompose.UIJDLattice
 import kofre.decompose.interfaces.TwoPSetInterface
 import kofre.decompose.interfaces.TwoPSetInterface.{State, TwoPSetCompanion}
+import rescala.extra.replication.AntiEntropy
 
 /** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.TwoPSetInterface TwoPSetInterface]]
   *

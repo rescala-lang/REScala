@@ -3,6 +3,7 @@ package rescala.extra.lattices.delta.crdt.basic
 import kofre.decompose.UIJDLattice
 import kofre.decompose.interfaces.PNCounterInterface
 import kofre.decompose.interfaces.PNCounterInterface.{PNCounterCompanion, State}
+import rescala.extra.replication.AntiEntropy
 
 /** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.PNCounterInterface PNCounterInterface]]
   *

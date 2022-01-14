@@ -5,9 +5,10 @@ import kofre.decompose.CContext
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import rescala.extra.lattices.delta.Codecs._
+import rescala.extra.lattices.delta.JsoniterCodecs._
 import rescala.extra.lattices.delta.DietCC._
 import rescala.extra.lattices.delta.crdt.basic._
+import rescala.extra.replication.AntiEntropy
 import tests.distribution.delta.crdt.basic.NetworkGenerators._
 
 import scala.collection.mutable
@@ -19,7 +20,7 @@ object EWFlagGenerators {
     nDisable <- Gen.posNum[Int]
   } yield {
     val network = new Network(0, 0, 0)
-    val ae      = new AntiEntropyImpl[EWFlag.State[C]]("a", network, mutable.Buffer())
+    val ae      = new AntiEntropy[EWFlag.State[C]]("a", network, mutable.Buffer())
 
     val ops = Random.shuffle(List.fill(nEnable)(1) ++ List.fill(nDisable)(0))
 
@@ -58,13 +59,13 @@ class EWFlagTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent enable" in {
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropyImpl[EWFlag.State[DietMapCContext]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropyImpl[EWFlag.State[DietMapCContext]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[EWFlag.State[DietMapCContext]]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[EWFlag.State[DietMapCContext]]("b", network, mutable.Buffer("a"))
 
     val fa0 = EWFlag(aea).enable()
     val fb0 = EWFlag(aeb).enable()
 
-    AntiEntropyImpl.sync(aea, aeb)
+    AntiEntropy.sync(aea, aeb)
 
     val fa1 = fa0.processReceivedDeltas()
     val fb1 = fb0.processReceivedDeltas()
@@ -82,8 +83,8 @@ class EWFlagTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent disable" in {
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropyImpl[EWFlag.State[DietMapCContext]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropyImpl[EWFlag.State[DietMapCContext]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[EWFlag.State[DietMapCContext]]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[EWFlag.State[DietMapCContext]]("b", network, mutable.Buffer("a"))
 
     val fa0 = EWFlag(aea)
     val fb0 = EWFlag(aeb)
@@ -91,7 +92,7 @@ class EWFlagTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     val fa1 = fa0.disable()
     val fb1 = fb0.disable()
 
-    AntiEntropyImpl.sync(aea, aeb)
+    AntiEntropy.sync(aea, aeb)
 
     val fa2 = fa1.processReceivedDeltas()
     val fb2 = fb1.processReceivedDeltas()
@@ -109,13 +110,13 @@ class EWFlagTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent enable/disable" in {
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropyImpl[EWFlag.State[DietMapCContext]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropyImpl[EWFlag.State[DietMapCContext]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[EWFlag.State[DietMapCContext]]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[EWFlag.State[DietMapCContext]]("b", network, mutable.Buffer("a"))
 
     val fa0 = EWFlag(aea).enable()
     val fb0 = EWFlag(aeb).disable()
 
-    AntiEntropyImpl.sync(aea, aeb)
+    AntiEntropy.sync(aea, aeb)
 
     val fa1 = fa0.processReceivedDeltas()
     val fb1 = fb0.processReceivedDeltas()
@@ -131,8 +132,8 @@ class EWFlagTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   }
 
   "convergence" in forAll { (enableA: Short, disableA: Short, enableB: Short, disableB: Short, network: Network) =>
-    val aea = new AntiEntropyImpl[EWFlag.State[DietMapCContext]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropyImpl[EWFlag.State[DietMapCContext]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[EWFlag.State[DietMapCContext]]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[EWFlag.State[DietMapCContext]]("b", network, mutable.Buffer("a"))
 
     val opsA = Random.shuffle(List.fill(enableA.toInt)(1) ++ List.fill(disableA.toInt)(0))
     val opsB = Random.shuffle(List.fill(enableB.toInt)(1) ++ List.fill(disableB.toInt)(0))
@@ -150,9 +151,9 @@ class EWFlagTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
       case (f, _) => f
     }
 
-    AntiEntropyImpl.sync(aea, aeb)
+    AntiEntropy.sync(aea, aeb)
     network.startReliablePhase()
-    AntiEntropyImpl.sync(aea, aeb)
+    AntiEntropy.sync(aea, aeb)
 
     val fa1 = fa0.processReceivedDeltas()
     val fb1 = fb0.processReceivedDeltas()

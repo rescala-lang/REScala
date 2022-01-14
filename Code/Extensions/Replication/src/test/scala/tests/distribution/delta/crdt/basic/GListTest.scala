@@ -6,8 +6,9 @@ import kofre.decompose.interfaces.GListInterface.GListAsUIJDLattice
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import rescala.extra.lattices.delta.Codecs._
+import rescala.extra.lattices.delta.JsoniterCodecs._
 import rescala.extra.lattices.delta.crdt.basic._
+import rescala.extra.replication.AntiEntropy
 import tests.distribution.delta.crdt.basic.NetworkGenerators._
 
 import scala.collection.mutable
@@ -17,7 +18,7 @@ object GListGenerators {
     elems <- Gen.containerOf[List, E](e.arbitrary)
   } yield {
     val network = new Network(0, 0, 0)
-    val ae      = new AntiEntropyImpl[GList.State[E]]("a", network, mutable.Buffer())
+    val ae      = new AntiEntropy[GList.State[E]]("a", network, mutable.Buffer())
 
     elems.foldLeft(GList(ae)) {
       case (list, el) => list.insert(0, el)
@@ -86,14 +87,14 @@ class GListTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent insert" in forAll { (base: List[Int], n1: Int, e1: Int, n2: Int, e2: Int) =>
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropyImpl[GList.State[Int]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropyImpl[GList.State[Int]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[GList.State[Int]]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[GList.State[Int]]("b", network, mutable.Buffer("a"))
 
     val la0 = base.reverse.foldLeft(GList(aea)) {
       case (l, e) => l.insert(0, e)
     }
 
-    AntiEntropyImpl.sync(aea, aeb)
+    AntiEntropy.sync(aea, aeb)
     val lb0 = GList(aeb).processReceivedDeltas()
 
     val size = base.size
@@ -103,7 +104,7 @@ class GListTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     val la1 = la0.insert(idx1, e1)
     lb0.insert(idx2, e2)
 
-    AntiEntropyImpl.sync(aea, aeb)
+    AntiEntropy.sync(aea, aeb)
 
     val la2 = la1.processReceivedDeltas()
 
@@ -122,23 +123,23 @@ class GListTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   }
 
   "convergence" in forAll { (base: List[Int], insertedA: List[Int], insertedB: List[Int], network: Network) =>
-    val aea = new AntiEntropyImpl[GList.State[Int]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropyImpl[GList.State[Int]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[GList.State[Int]]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[GList.State[Int]]("b", network, mutable.Buffer("a"))
 
     val la0 = base.reverse.foldLeft(GList(aea)) {
       case (l, e) => l.insert(0, e)
     }
     network.startReliablePhase()
-    AntiEntropyImpl.sync(aea, aeb)
+    AntiEntropy.sync(aea, aeb)
     network.endReliablePhase()
     val lb0 = GList(aeb).processReceivedDeltas()
 
     val la1 = insertedA.foldLeft(la0) { (l, e) => l.insert(e, e) }
     val lb1 = insertedB.foldLeft(lb0) { (l, e) => l.insert(e, e) }
 
-    AntiEntropyImpl.sync(aea, aeb)
+    AntiEntropy.sync(aea, aeb)
     network.startReliablePhase()
-    AntiEntropyImpl.sync(aea, aeb)
+    AntiEntropy.sync(aea, aeb)
 
     val la2 = la1.processReceivedDeltas()
     val lb2 = lb1.processReceivedDeltas()

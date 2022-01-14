@@ -5,8 +5,9 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import rescala.extra.lattices.delta.Codecs._
+import rescala.extra.lattices.delta.JsoniterCodecs._
 import rescala.extra.lattices.delta.crdt.basic._
+import rescala.extra.replication.AntiEntropy
 import tests.distribution.delta.crdt.basic.NetworkGenerators._
 
 import scala.collection.mutable
@@ -18,7 +19,7 @@ object TwoPSetGenerators {
     removed <- Gen.pick(n, added)
   } yield {
     val network = new Network(0, 0, 0)
-    val ae      = new AntiEntropyImpl[TwoPSet.State[E]]("a", network, mutable.Buffer())
+    val ae      = new AntiEntropy[TwoPSet.State[E]]("a", network, mutable.Buffer())
     val setAdded = added.foldLeft(TwoPSet(ae)) {
       case (set, e) => set.insert(e)
     }
@@ -37,7 +38,7 @@ class TowPSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
   "insert" in forAll { (insert: List[Int], remove: List[Int], e: Int) =>
     val network = new Network(0, 0, 0)
-    val ae      = new AntiEntropyImpl[TwoPSet.State[Int]]("a", network, mutable.Buffer())
+    val ae      = new AntiEntropy[TwoPSet.State[Int]]("a", network, mutable.Buffer())
 
     val setInserted = insert.foldLeft(TwoPSet[Int](ae)) {
       case (s, e) => s.insert(e)
@@ -67,8 +68,8 @@ class TowPSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent insert/remove" in forAll { (addOrRemoveA: Either[Int, Int], addOrRemoveB: Either[Int, Int]) =>
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropyImpl[TwoPSet.State[Int]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropyImpl[TwoPSet.State[Int]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[TwoPSet.State[Int]]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[TwoPSet.State[Int]]("b", network, mutable.Buffer("a"))
 
     val sa0 = addOrRemoveA match {
       case Left(e)  => TwoPSet(aea).insert(e)
@@ -79,7 +80,7 @@ class TowPSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
       case Right(e) => TwoPSet(aeb).remove(e)
     }
 
-    AntiEntropyImpl.sync(aea, aeb)
+    AntiEntropy.sync(aea, aeb)
 
     val sa1 = sa0.processReceivedDeltas()
     val sb1 = sb0.processReceivedDeltas()
@@ -101,8 +102,8 @@ class TowPSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
   "convergence" in forAll {
     (insertA: List[Int], removeA: List[Int], insertB: List[Int], removeB: List[Int], network: Network) =>
-      val aea = new AntiEntropyImpl[TwoPSet.State[Int]]("a", network, mutable.Buffer("b"))
-      val aeb = new AntiEntropyImpl[TwoPSet.State[Int]]("b", network, mutable.Buffer("a"))
+      val aea = new AntiEntropy[TwoPSet.State[Int]]("a", network, mutable.Buffer("b"))
+      val aeb = new AntiEntropy[TwoPSet.State[Int]]("b", network, mutable.Buffer("a"))
 
       val insertedA = insertA.foldLeft(TwoPSet[Int](aea)) {
         case (s, e) => s.insert(e)
@@ -117,9 +118,9 @@ class TowPSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
         case (s, e) => s.remove(e)
       }
 
-      AntiEntropyImpl.sync(aea, aeb)
+      AntiEntropy.sync(aea, aeb)
       network.startReliablePhase()
-      AntiEntropyImpl.sync(aea, aeb)
+      AntiEntropy.sync(aea, aeb)
 
       val sa1 = sa0.processReceivedDeltas()
       val sb1 = sb0.processReceivedDeltas()

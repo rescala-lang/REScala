@@ -1,6 +1,7 @@
 package rescala.extra.lattices.delta.crdt.basic
 
 import kofre.decompose.{CRDTInterface, Delta, UIJDLattice}
+import rescala.extra.replication.AntiEntropy
 
 /** BasicCRDTs are Delta CRDTs that use [[AntiEntropy]] and [[Network]] as Middleware for exchanging deltas between replicas.
   * They cannot actually be used on multiple connected replicas, but are useful for locally testing the behavior of

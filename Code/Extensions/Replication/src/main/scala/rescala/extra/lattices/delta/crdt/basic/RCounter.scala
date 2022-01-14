@@ -4,6 +4,7 @@ import kofre.decompose.DotStore.DotFun
 import kofre.decompose.interfaces.RCounterInterface
 import kofre.decompose.interfaces.RCounterInterface.{RCounterCompanion, State}
 import kofre.decompose.{CContext, UIJDLattice}
+import rescala.extra.replication.AntiEntropy
 
 /** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.RCounterInterface RCounterInterface]]
   *

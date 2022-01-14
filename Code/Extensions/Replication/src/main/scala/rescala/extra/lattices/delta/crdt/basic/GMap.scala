@@ -3,6 +3,7 @@ package rescala.extra.lattices.delta.crdt.basic
 import kofre.decompose.UIJDLattice
 import kofre.decompose.interfaces.GMapInterface
 import kofre.decompose.interfaces.GMapInterface.{GMapCompanion, State}
+import rescala.extra.replication.AntiEntropy
 
 /** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.GMapInterface GMapInterface]]
   *

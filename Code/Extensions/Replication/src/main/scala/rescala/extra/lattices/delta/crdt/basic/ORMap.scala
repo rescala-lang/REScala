@@ -3,6 +3,7 @@ package rescala.extra.lattices.delta.crdt.basic
 import kofre.decompose.interfaces.ORMapInterface
 import kofre.decompose.interfaces.ORMapInterface.{ORMapCompanion, State}
 import kofre.decompose.{CContext, DotStore, UIJDLattice}
+import rescala.extra.replication.AntiEntropy
 
 /** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.ORMapInterface ORMapInterface]]
   *

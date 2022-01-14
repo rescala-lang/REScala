@@ -8,10 +8,10 @@ import loci.communicator.ws.akka._
 import loci.registry.Registry
 import org.jsoup.Jsoup
 import rescala.default._
-import rescala.extra.distributables.LociDist
 import rescala.extra.lattices.delta.CContext.DietMapCContext
 import rescala.extra.lattices.delta.Delta
 import rescala.extra.lattices.delta.crdt.reactive.RGA
+import rescala.extra.replication.LociDist
 import rescala.operator.Diff
 
 import java.util.concurrent.ThreadLocalRandom

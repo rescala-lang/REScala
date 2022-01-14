@@ -5,9 +5,10 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import kofre.decompose.interfaces.AWSetInterface
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import rescala.extra.lattices.delta.Codecs._
+import rescala.extra.lattices.delta.JsoniterCodecs._
 import rescala.extra.lattices.delta.DietCC.DietMapCContext
 import rescala.extra.lattices.delta.crdt.basic._
+import rescala.extra.replication.AntiEntropy
 
 import scala.collection.mutable
 
@@ -17,8 +18,8 @@ class ORMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "mutateKey/queryKey" in { (add: List[Int], remove: List[Int], k: Int) =>
     val network = new Network(0, 0, 0)
     val aea =
-      new AntiEntropyImpl[ORMap.State[Int, AWSet.Embedded[Int], DietMapCContext]]("a", network, mutable.Buffer())
-    val aeb = new AntiEntropyImpl[AWSet.State[Int, DietMapCContext]]("b", network, mutable.Buffer())
+      new AntiEntropy[ORMap.State[Int, AWSet.Embedded[Int], DietMapCContext]]("a", network, mutable.Buffer())
+    val aeb = new AntiEntropy[AWSet.State[Int, DietMapCContext]]("b", network, mutable.Buffer())
 
     val set = {
       val added = add.foldLeft(AWSet[Int, DietMapCContext](aeb)) {
@@ -51,8 +52,8 @@ class ORMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "remove" in { (add: List[Int], remove: List[Int], k: Int) =>
     val network = new Network(0, 0, 0)
     val aea =
-      new AntiEntropyImpl[ORMap.State[Int, AWSet.Embedded[Int], DietMapCContext]]("a", network, mutable.Buffer())
-    val aeb = new AntiEntropyImpl[AWSet.State[Int, DietMapCContext]]("b", network, mutable.Buffer())
+      new AntiEntropy[ORMap.State[Int, AWSet.Embedded[Int], DietMapCContext]]("a", network, mutable.Buffer())
+    val aeb = new AntiEntropy[AWSet.State[Int, DietMapCContext]]("b", network, mutable.Buffer())
 
     val empty = AWSet[Int, DietMapCContext](aeb)
 

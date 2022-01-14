@@ -7,12 +7,12 @@ import org.scalajs.dom.UIEvent
 import org.scalajs.dom.html.{Input, LI}
 import rescala.default._
 import rescala.extra.Tags._
-import rescala.extra.distributables.LociDist
 import rescala.extra.lattices.delta.DietCC._
-import rescala.extra.lattices.delta.Codecs._
+import rescala.extra.lattices.delta.JsoniterCodecs._
 import rescala.extra.lattices.delta.crdt.reactive.LWWRegister
 import kofre.decompose.interfaces.MVRegisterInterface
 import kofre.decompose.{Delta, TimedVal}
+import rescala.extra.replication.LociDist
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all._
 import todo.Todolist.replicaId

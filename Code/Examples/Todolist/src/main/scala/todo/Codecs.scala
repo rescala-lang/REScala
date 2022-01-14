@@ -4,7 +4,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, J
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import loci.transmitter.IdenticallyTransmittable
 import rescala.extra.lattices.delta.DietCC._
-import rescala.extra.lattices.delta.Codecs._
+import rescala.extra.lattices.delta.JsoniterCodecs._
 import rescala.extra.lattices.delta.crdt.reactive
 import rescala.extra.lattices.delta.crdt.reactive.{LWWRegister, RGA}
 import todo.Todolist.replicaId

@@ -5,9 +5,10 @@ import kofre.decompose.CContext
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import rescala.extra.lattices.delta.Codecs._
+import rescala.extra.lattices.delta.JsoniterCodecs._
 import rescala.extra.lattices.delta.DietCC.DietMapCContext
 import rescala.extra.lattices.delta.crdt.basic._
+import rescala.extra.replication.AntiEntropy
 import tests.distribution.delta.crdt.basic.NetworkGenerators._
 
 import scala.collection.mutable
@@ -21,7 +22,7 @@ object RCounterGenerators {
     nFresh <- Gen.posNum[Int]
   } yield {
     val network = new Network(0, 0, 0)
-    val ae      = new AntiEntropyImpl[RCounter.State[C]]("a", network, mutable.Buffer())
+    val ae      = new AntiEntropy[RCounter.State[C]]("a", network, mutable.Buffer())
 
     val ops = Random.shuffle(List.fill(nInc)(0) ++ List.fill(nDec)(1) ++ List.fill(nReset)(2) ++ List.fill(nFresh)(3))
 
@@ -80,8 +81,8 @@ class RCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent increment/decrement/fresh" in forAll { (opA: Either[Unit, Boolean], opB: Either[Unit, Boolean]) =>
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropyImpl[RCounter.State[DietMapCContext]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropyImpl[RCounter.State[DietMapCContext]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[RCounter.State[DietMapCContext]]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[RCounter.State[DietMapCContext]]("b", network, mutable.Buffer("a"))
 
     val ca0 = opA match {
       case Left(_)      => RCounter[DietMapCContext](aea).increment()
@@ -94,7 +95,7 @@ class RCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
       case Right(true)  => RCounter[DietMapCContext](aeb).fresh()
     }
 
-    AntiEntropyImpl.sync(aea, aeb)
+    AntiEntropy.sync(aea, aeb)
 
     val ca1 = ca0.processReceivedDeltas()
     val cb1 = cb0.processReceivedDeltas()
@@ -118,17 +119,17 @@ class RCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent reset and increment/decrement without fresh" in forAll { op: Boolean =>
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropyImpl[RCounter.State[DietMapCContext]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropyImpl[RCounter.State[DietMapCContext]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[RCounter.State[DietMapCContext]]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[RCounter.State[DietMapCContext]]("b", network, mutable.Buffer("a"))
 
     val ca0 = RCounter[DietMapCContext](aea).increment()
-    AntiEntropyImpl.sync(aea, aeb)
+    AntiEntropy.sync(aea, aeb)
     val cb0 = RCounter[DietMapCContext](aeb).processReceivedDeltas()
 
     val ca1 = if (op) ca0.increment() else ca0.decrement()
     val cb1 = cb0.reset()
 
-    AntiEntropyImpl.sync(aea, aeb)
+    AntiEntropy.sync(aea, aeb)
 
     val ca2 = ca1.processReceivedDeltas()
     val cb2 = cb1.processReceivedDeltas()
@@ -146,17 +147,17 @@ class RCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent reset and increment/decrement with fresh" in forAll { op: Boolean =>
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropyImpl[RCounter.State[DietMapCContext]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropyImpl[RCounter.State[DietMapCContext]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[RCounter.State[DietMapCContext]]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[RCounter.State[DietMapCContext]]("b", network, mutable.Buffer("a"))
 
     val ca0 = RCounter[DietMapCContext](aea).increment()
-    AntiEntropyImpl.sync(aea, aeb)
+    AntiEntropy.sync(aea, aeb)
     val cb0 = RCounter[DietMapCContext](aeb).processReceivedDeltas()
 
     val ca1 = if (op) ca0.fresh().increment() else ca0.fresh().decrement()
     val cb1 = cb0.reset()
 
-    AntiEntropyImpl.sync(aea, aeb)
+    AntiEntropy.sync(aea, aeb)
 
     val ca2 = ca1.processReceivedDeltas()
     val cb2 = cb1.processReceivedDeltas()
@@ -182,8 +183,8 @@ class RCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
         network: Network
     ) =>
       {
-        val aea = new AntiEntropyImpl[RCounter.State[DietMapCContext]]("a", network, mutable.Buffer("b"))
-        val aeb = new AntiEntropyImpl[RCounter.State[DietMapCContext]]("b", network, mutable.Buffer("a"))
+        val aea = new AntiEntropy[RCounter.State[DietMapCContext]]("a", network, mutable.Buffer("b"))
+        val aeb = new AntiEntropy[RCounter.State[DietMapCContext]]("b", network, mutable.Buffer("a"))
 
         val opsA1 = Random.shuffle(List.fill(nOpsA1._1.toInt)(0) ++ List.fill(nOpsA1._2.toInt)(1) ++ List.fill(
           nOpsA1._3.toInt
@@ -212,14 +213,14 @@ class RCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
         val ca0 = applyOps(RCounter[DietMapCContext](aea), opsA1)
         val cb0 = applyOps(RCounter[DietMapCContext](aeb), opsB1)
 
-        AntiEntropyImpl.sync(aea, aeb)
+        AntiEntropy.sync(aea, aeb)
 
         val ca1 = applyOps(ca0.processReceivedDeltas(), opsA2)
         val cb1 = applyOps(cb0.processReceivedDeltas(), opsB2)
 
-        AntiEntropyImpl.sync(aea, aeb)
+        AntiEntropy.sync(aea, aeb)
         network.startReliablePhase()
-        AntiEntropyImpl.sync(aea, aeb)
+        AntiEntropy.sync(aea, aeb)
 
         val ca2 = ca1.processReceivedDeltas()
         val cb2 = cb1.processReceivedDeltas()

@@ -4,6 +4,7 @@ import kofre.decompose.DotStore.{DotFun, DotPair}
 import kofre.decompose.interfaces.RGAInterface
 import kofre.decompose.interfaces.RGAInterface.{RGACompanion, State}
 import kofre.decompose.{CContext, UIJDLattice}
+import rescala.extra.replication.AntiEntropy
 
 /** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.RGAInterface RGAInterface]]
   *
