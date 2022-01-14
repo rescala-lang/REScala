@@ -8,7 +8,7 @@ ThisBuild / incOptions        := (ThisBuild / incOptions).value.withLogRecompile
 noPublish
 
 lazy val cfg = new {
-  val base: Def.SettingsDefinition = commonCrossBuildVersions +: scalaVersion_213
+  val base: Def.SettingsDefinition = strict +: commonCrossBuildVersions +: scalaVersion_213
 }
 
 lazy val rescalaProject = project.in(file(".")).settings(cfg.base, noPublish).aggregate(
@@ -42,7 +42,6 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform, NativePlatform).in(file
     // scaladoc
     autoAPIMappings := true,
     Compile / doc / scalacOptions += "-groups",
-    strictCompile,
     // fullmv does not survive this check, but I want to keep it in the shared settings
     scalacOptions := scalacOptions.value.filter(_ != "-Ysafe-init"),
     publishSonatype,

@@ -107,6 +107,7 @@ object Settings {
   )
 
   val strictCompile = Compile / compile / scalacOptions += "-Xfatal-warnings"
+  val strict = scalacOptions += "-Xfatal-warnings"
 
   val legacyStgResolver =
     resolvers += ("STG old bintray repo" at "http://www.st.informatik.tu-darmstadt.de/maven/")
