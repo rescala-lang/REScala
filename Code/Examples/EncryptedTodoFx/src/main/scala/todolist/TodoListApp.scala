@@ -14,7 +14,7 @@ object TodoListAppPeerToPeer extends TodoListApp
 class TodoListApp extends JFXApp3 {
   override def start(): Unit = {
     val todoListView = new ListView[UUID] {
-      cellFactory = { listView => new TodoItemListCell() }
+      cellFactory = { (_ : Any) => new TodoItemListCell() }
       items = TodoListController.observableUuidList
     }
 

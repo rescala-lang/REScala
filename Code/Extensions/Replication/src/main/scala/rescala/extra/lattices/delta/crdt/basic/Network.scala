@@ -1,7 +1,5 @@
 package rescala.extra.lattices.delta.crdt.basic
 
-import rescala.extra.replication.AntiEntropy
-
 import scala.collection.mutable
 import scala.util.Random
 

@@ -38,7 +38,7 @@ abstract class TrustedReplica[T](val replicaId: String,
       returnedVal
     }
 
-    nextDotImpl _
+    () => nextDotImpl
   }) ()
 
   def receive(encryptedDeltaGroup: EncryptedDeltaGroup): Unit = {

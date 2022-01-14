@@ -25,6 +25,7 @@ lazy val rescalaProject = project.in(file(".")).settings(cfg.base, noPublish).ag
   reswing,
   todolist,
   universe,
+  encryptedTodo,
 )
 
 lazy val rescalaAll = project.in(file("Code")).settings(cfg.base, noPublish).aggregate(
@@ -109,6 +110,16 @@ lazy val todolist = project.in(file("Code/Examples/Todolist"))
     ),
     scalacOptions += "-P:scalajs:nowarnGlobalExecutionContext",
     scalaJSUseMainModuleInitializer := true,
+  )
+
+lazy val encryptedTodo = project.in(file("Code/Examples/EncryptedTodoFx"))
+  .dependsOn(replicationJVM)
+  .settings(
+    cfg.base,
+    noPublish,
+    name := "encryptedTodo",
+    libraryDependencies ++= circeAll.value ++ jsoniterScalaAll.value,
+    addScalafxDependencies,
   )
 
 lazy val consoleReplication = project.in(file("Code/Examples/ConsoleReplication"))
@@ -232,17 +243,17 @@ lazy val replication = crossProject(JSPlatform, JVMPlatform).crossType(CrossType
       loci.circe.value,
       loci.upickle.value,
       catsCollection.value,
-      "com.google.crypto.tink" % "tink" % "1.6.1",
-      "org.conscrypt" % "conscrypt-openjdk-uber" % "2.5.2",
-      ),
+      "com.google.crypto.tink" % "tink"                   % "1.6.1",
+      "org.conscrypt"          % "conscrypt-openjdk-uber" % "2.5.2",
+    ),
     libraryDependencies ++= {
       val jettyVersion = "11.0.6"
       Seq(
-        "org.eclipse.jetty" % "jetty-server" % jettyVersion,
-        "org.eclipse.jetty.websocket" % "websocket-jetty-api" % jettyVersion,
+        "org.eclipse.jetty"           % "jetty-server"           % jettyVersion,
+        "org.eclipse.jetty.websocket" % "websocket-jetty-api"    % jettyVersion,
         "org.eclipse.jetty.websocket" % "websocket-jetty-server" % jettyVersion,
         "org.eclipse.jetty.websocket" % "websocket-jetty-client" % jettyVersion,
-        )
+      )
     },
     publishOnly213
   )
