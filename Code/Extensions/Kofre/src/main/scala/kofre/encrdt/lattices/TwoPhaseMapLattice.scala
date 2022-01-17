@@ -1,8 +1,9 @@
-
 package encrdt.lattices
-
-case class TwoPhaseMapLattice[K, V: SemiLattice](keys: TwoPhaseSetLattice[K] = TwoPhaseSetLattice[K](),
-                                                 mappings: Map[K, V] = Map[K, V]()) {
+import kofre.Lattice
+case class TwoPhaseMapLattice[K, V: Lattice](
+    keys: TwoPhaseSetLattice[K] = TwoPhaseSetLattice[K](),
+    mappings: Map[K, V] = Map[K, V]()
+) {
 
   def values: Map[K, V] = mappings
 
@@ -18,7 +19,7 @@ case class TwoPhaseMapLattice[K, V: SemiLattice](keys: TwoPhaseSetLattice[K] = T
     get(key) match {
       case Some(conflictingValue) =>
         // Merge value with value currently in map
-        mappings + (key -> SemiLattice.merged(value, conflictingValue))
+        mappings + (key -> Lattice.merge(value, conflictingValue))
         TwoPhaseMapLattice(keys, mappings)
       case None =>
         TwoPhaseMapLattice(
@@ -39,10 +40,10 @@ object TwoPhaseMapLattice {
 
   import OptionLattice.optLattice
 
-  def twoPhaseMapLattice[K, V: SemiLattice]: SemiLattice[TwoPhaseMapLattice[K, V]] = (l, r) => {
-    val mergedKeys = SemiLattice.merged(l.keys, r.keys)
+  def twoPhaseMapLattice[K, V: Lattice]: Lattice[TwoPhaseMapLattice[K, V]] = (l, r) => {
+    val mergedKeys = Lattice.merge(l.keys, r.keys)
     val mergedMap = mergedKeys.values.map { (key: K) =>
-      key -> SemiLattice.merged(l.get(key), r.get(key)).get
+      key -> Lattice.merge(l.get(key), r.get(key)).get
     }.toMap
 
     TwoPhaseMapLattice(

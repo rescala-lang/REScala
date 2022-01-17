@@ -5,14 +5,15 @@ import encrdt.causality.DotStore.{Dot, DotSet}
 import encrdt.causality.{DotStore, LamportClock}
 import encrdt.crdts.interfaces.Crdt
 import encrdt.encrypted.deltabased.Codecs.dotSetJsonCodec
-import encrdt.lattices.SemiLattice
+import kofre.Lattice
+
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import com.google.crypto.tink.Aead
 
-class EncryptedDeltaCrdt[T: SemiLattice](val aead: Aead,
-                                         replicaId: String) {
+class EncryptedDeltaCrdt[T: Lattice](val aead: Aead,
+                                     replicaId: String) {
 
 }
 

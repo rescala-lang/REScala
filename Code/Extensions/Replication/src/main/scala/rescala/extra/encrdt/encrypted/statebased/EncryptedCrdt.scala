@@ -4,7 +4,9 @@ package encrdt.encrypted.statebased
 import encrdt.causality.VectorClock
 import encrdt.crdts.interfaces.Crdt
 import encrdt.encrypted.statebased.DecryptedState.vectorClockJsonCodec
-import encrdt.lattices.{MultiValueRegisterLattice, SemiLattice}
+import encrdt.lattices.MultiValueRegisterLattice
+import kofre.Lattice
+
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
@@ -23,7 +25,7 @@ class EncryptedCrdt(initialState: MultiValueRegisterLattice[EncryptedState] = Mu
     if (state.versions.isEmpty) VectorClock()
     else state.versions.keys.reduce((a, b) => a.merged(b))
 
-  def unseal[T: SemiLattice](aead: Aead)(implicit jsonValueCodec: JsonValueCodec[T]): Try[DecryptedState[T]] =
+  def unseal[T: Lattice](aead: Aead)(implicit jsonValueCodec: JsonValueCodec[T]): Try[DecryptedState[T]] =
     state.versions.values.map { (encState: EncryptedState) =>
       Try {
         encState.decrypt[T](aead)(jsonValueCodec)
@@ -31,7 +33,7 @@ class EncryptedCrdt(initialState: MultiValueRegisterLattice[EncryptedState] = Mu
     } reduce ((leftTry: Try[DecryptedState[T]], rightTry: Try[DecryptedState[T]]) => {
       (leftTry, rightTry) match {
         case (Success(left), Success(right)) => Success(
-          DecryptedState(SemiLattice[T].merged(left.state, right.state), left.versionVector.merged(right.versionVector))
+          DecryptedState(Lattice[T].merge(left.state, right.state), left.versionVector.merged(right.versionVector))
         )
         case (Failure(e), _) => Failure(e)
         case (_, Failure(e)) => Failure(e)
@@ -39,7 +41,7 @@ class EncryptedCrdt(initialState: MultiValueRegisterLattice[EncryptedState] = Mu
     })
 
   override def merge(other: MultiValueRegisterLattice[EncryptedState]): Unit = {
-    _state = SemiLattice[MultiValueRegisterLattice[EncryptedState]].merged(_state, other)
+    _state = Lattice[MultiValueRegisterLattice[EncryptedState]].merge(_state, other)
   }
 }
 
@@ -72,7 +74,7 @@ case class DecryptedState[T](state: T, versionVector: VectorClock) {
 object DecryptedState {
   implicit val vectorClockJsonCodec: JsonValueCodec[VectorClock] = JsonCodecMaker.make
 
-  implicit def lattice[T](implicit tLattice: SemiLattice[T]): SemiLattice[DecryptedState[T]] = (left, right) => {
-    DecryptedState(SemiLattice[T].merged(left.state, right.state), left.versionVector.merged(right.versionVector))
+  implicit def lattice[T](implicit tLattice: Lattice[T]): Lattice[DecryptedState[T]] = (left, right) => {
+    DecryptedState(Lattice[T].merge(left.state, right.state), left.versionVector.merged(right.versionVector))
   }
 }

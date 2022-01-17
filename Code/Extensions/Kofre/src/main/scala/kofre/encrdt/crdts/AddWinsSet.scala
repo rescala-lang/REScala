@@ -1,8 +1,9 @@
 
 package encrdt.crdts
+import kofre.Lattice
 
 import encrdt.crdts.interfaces.SetCrdt
-import encrdt.lattices.{AddWinsSetLattice, SemiLattice}
+import encrdt.lattices.{AddWinsSetLattice}
 
 class AddWinsSet[T](val replicaId: String) extends SetCrdt[T] {
 
@@ -19,7 +20,7 @@ class AddWinsSet[T](val replicaId: String) extends SetCrdt[T] {
 
   def state: AddWinsSetLattice[T] = _state
 
-  def merge(remoteState: AddWinsSetLattice[T]): Unit = SemiLattice.merged(state, remoteState)
+  def merge(remoteState: AddWinsSetLattice[T]): Unit = Lattice.merge(state, remoteState)
 
   def add(element: T): Unit = {
     state = state.added(element, replicaId)

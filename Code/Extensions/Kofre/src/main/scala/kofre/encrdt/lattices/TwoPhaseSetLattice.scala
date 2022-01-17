@@ -1,6 +1,6 @@
 
 package encrdt.lattices
-
+import kofre.Lattice
 case class TwoPhaseSetLattice[T](addedElems: Set[T] = Set[T](), removedElems: Set[T] = Set[T]()) {
   def values: Set[T] = addedElems -- removedElems
 
@@ -14,7 +14,7 @@ case class TwoPhaseSetLattice[T](addedElems: Set[T] = Set[T](), removedElems: Se
 }
 
 object TwoPhaseSetLattice {
-  implicit def TwoPhaseSetSemiLattice[T]: SemiLattice[TwoPhaseSetLattice[T]] =
+  implicit def TwoPhaseSetSemiLattice[T]: Lattice[TwoPhaseSetLattice[T]] =
     (left: TwoPhaseSetLattice[T], right: TwoPhaseSetLattice[T]) =>
       TwoPhaseSetLattice(left.addedElems ++ right.addedElems, left.removedElems ++ right.removedElems)
 }

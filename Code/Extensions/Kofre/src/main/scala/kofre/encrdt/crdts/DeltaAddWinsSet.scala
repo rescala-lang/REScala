@@ -5,7 +5,9 @@ import encrdt.causality.{CausalContext, DotStore}
 import encrdt.causality.DotStore.{DotMap, DotSet, dotSetDotStore}
 import encrdt.crdts.DeltaAddWinsSet.DeltaAddWinsSetLattice
 import encrdt.crdts.interfaces.SetCrdt
-import encrdt.lattices.{Causal, SemiLattice}
+import encrdt.lattices.{Causal}
+import kofre.Lattice
+
 
 class DeltaAddWinsSet[E](val replicaId: String,
                          initialState: DeltaAddWinsSetLattice[E] = Causal.bottom[DotMap[E, DotSet]]
@@ -27,7 +29,7 @@ class DeltaAddWinsSet[E](val replicaId: String,
 
   private def mutate(delta: DeltaAddWinsSetLattice[E]): Unit = {
     deltas = deltas.appended(delta)
-    _state = SemiLattice[DeltaAddWinsSetLattice[E]].merged(_state, delta)
+    _state = Lattice[DeltaAddWinsSetLattice[E]].merge(_state, delta)
     // TODO: This is the place to hook in anti entropy
   }
 }

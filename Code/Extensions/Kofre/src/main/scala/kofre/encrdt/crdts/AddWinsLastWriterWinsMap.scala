@@ -1,9 +1,10 @@
 
 package encrdt.crdts
+import kofre.Lattice
 
 import encrdt.crdts.AddWinsLastWriterWinsMap.LatticeType
 import encrdt.crdts.interfaces.MapCrdt
-import encrdt.lattices.{AddWinsMapLattice, CausalTimeTag, LastWriterWinsRegisterLattice, SemiLattice}
+import encrdt.lattices.{AddWinsMapLattice, CausalTimeTag, LastWriterWinsRegisterLattice}
 
 class AddWinsLastWriterWinsMap[K, V](val replicaId: String,
                                      initialState: AddWinsMapLattice[K, LastWriterWinsRegisterLattice[V, CausalTimeTag]] = AddWinsMapLattice[K, LastWriterWinsRegisterLattice[V, CausalTimeTag]]()
@@ -30,7 +31,7 @@ class AddWinsLastWriterWinsMap[K, V](val replicaId: String,
     _state.values.map { case (k, LastWriterWinsRegisterLattice(v, _)) => k -> v }
 
   def merge(otherState: LatticeType[K,V]): Unit = {
-    _state = SemiLattice.merged(_state, otherState)
+    _state = Lattice.merge(_state, otherState)
   }
 }
 

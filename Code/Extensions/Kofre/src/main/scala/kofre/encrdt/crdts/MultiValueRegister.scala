@@ -1,8 +1,9 @@
 
 package encrdt.crdts
+import kofre.Lattice
 
 import encrdt.causality.VectorClock
-import encrdt.lattices.{MultiValueRegisterLattice, SemiLattice}
+import encrdt.lattices.{MultiValueRegisterLattice}
 
 class MultiValueRegister[T](initialState: MultiValueRegisterLattice[T], val replicaId: String) {
   private var _state = initialState
@@ -22,5 +23,5 @@ class MultiValueRegister[T](initialState: MultiValueRegisterLattice[T], val repl
   }
 
   def merge(otherState: MultiValueRegisterLattice[T]): Unit =
-    _state = SemiLattice.merged(this.state, otherState)
+    _state = Lattice.merge(this.state, otherState)
 }

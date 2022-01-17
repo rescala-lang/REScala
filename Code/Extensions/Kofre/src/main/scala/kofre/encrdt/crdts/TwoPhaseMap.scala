@@ -1,11 +1,11 @@
 
 package encrdt.crdts
-
+import kofre.Lattice
 import encrdt.crdts.interfaces.MapCrdt
-import encrdt.lattices.{SemiLattice, TwoPhaseMapLattice}
+import encrdt.lattices.{TwoPhaseMapLattice}
 
-class TwoPhaseMap[K, V: SemiLattice](val replicaId: String,
-                                     val initialState: TwoPhaseMapLattice[K, V]) extends MapCrdt[K, V] {
+class TwoPhaseMap[K, V: Lattice](val replicaId: String,
+                                 val initialState: TwoPhaseMapLattice[K, V]) extends MapCrdt[K, V] {
 
   private var _state = initialState
 

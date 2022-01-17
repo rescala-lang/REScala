@@ -1,6 +1,6 @@
 
 package encrdt.lattices
-
+import kofre.Lattice
 case class AddWinsMapLattice[K, V](keys: AddWinsSetLattice[K] = AddWinsSetLattice[K](), mappings: Map[K, V] = Map[K, V]()) {
   def values: Map[K, V] = mappings
 
@@ -21,11 +21,11 @@ object AddWinsMapLattice {
 
   import OptionLattice.optLattice
 
-  implicit def AddWinsLattice[K, V: SemiLattice]: SemiLattice[AddWinsMapLattice[K, V]] =
+  implicit def AddWinsLattice[K, V: Lattice]: Lattice[AddWinsMapLattice[K, V]] =
     (left: AddWinsMapLattice[K, V], right: AddWinsMapLattice[K, V]) => {
-      val keys = SemiLattice.merged(left.keys, right.keys)
+      val keys = Lattice.merge(left.keys, right.keys)
       val mappings = keys.values.map { key =>
-        key -> SemiLattice.merged(left.mappings.get(key), right.mappings.get(key)).get
+        key -> Lattice.merge(left.mappings.get(key), right.mappings.get(key)).get
       }.toMap
 
       AddWinsMapLattice(keys, mappings)

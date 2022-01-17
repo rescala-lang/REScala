@@ -1,7 +1,8 @@
 
 package encrdt.crdts
+import kofre.Lattice
 
-import encrdt.lattices.{CausalTimeTag, LastWriterWinsRegisterLattice, SemiLattice}
+import encrdt.lattices.{CausalTimeTag, LastWriterWinsRegisterLattice}
 
 class LastWriterWinsRegister[T](initialState: LastWriterWinsRegisterLattice[T, CausalTimeTag],
                                 val replicaId: String) { // SemiLattice requires ordering of timestamp
@@ -17,7 +18,7 @@ class LastWriterWinsRegister[T](initialState: LastWriterWinsRegisterLattice[T, C
   }
 
   def merge(otherState: LastWriterWinsRegisterLattice[T, CausalTimeTag]): Unit =
-    _state = SemiLattice.merged(this.state, otherState)
+    _state = Lattice.merge(this.state, otherState)
 }
 
 object LastWriterWinsRegister {

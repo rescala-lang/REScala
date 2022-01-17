@@ -1,5 +1,6 @@
 
 package encrdt.crdts
+import kofre.Lattice
 
 import encrdt.causality.DotStore.DotFun
 import encrdt.causality.LamportClock
@@ -7,7 +8,6 @@ import encrdt.crdts.DeltaAddWinsLastWriterWinsMap.{DeltaAddWinsLastWriterWinsMap
 import encrdt.crdts.DeltaAddWinsMap.DeltaAddWinsMapLattice
 import encrdt.crdts.interfaces.MapCrdt
 import encrdt.lattices.LastWriterWinsTagLattice.lwwLattice
-import encrdt.lattices.SemiLattice
 
 import java.time.Instant
 
@@ -63,7 +63,7 @@ class DeltaAddWinsLastWriterWinsMap[K, V](val replicaId: String,
 
   private def mutate(delta: DeltaAddWinsLastWriterWinsMapLattice[K, V]): Unit = {
     _deltas = _deltas.appended(delta)
-    _state = SemiLattice[DeltaAddWinsLastWriterWinsMapLattice[K, V]].merged(_state, delta)
+    _state = Lattice[DeltaAddWinsLastWriterWinsMapLattice[K, V]].merge(_state, delta)
   }
 }
 
@@ -73,8 +73,8 @@ object DeltaAddWinsLastWriterWinsMap {
 
   def bottom[K, V]: DeltaAddWinsLastWriterWinsMapLattice[K, V] = DeltaAddWinsMap.bottom[K, DotFun[(V, (Instant, String))]]
 
-  implicit def timestampedValueLattice[V]: SemiLattice[(V, (Instant, String))] = (left, right) => {
-    if (SemiLattice.merged(left._2, right._2) == left._2) left
+  implicit def timestampedValueLattice[V]: Lattice[(V, (Instant, String))] = (left, right) => {
+    if (Lattice.merge(left._2, right._2) == left._2) left
     else right
   }
 

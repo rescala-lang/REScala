@@ -1,6 +1,6 @@
 
 package encrdt.lattices
-
+import kofre.Lattice
 /**
  * Lattice with the least-upper-bound defined by the timeStamp.
  * Timestamps must be unique, totally ordered, consistent with causal order.
@@ -13,7 +13,7 @@ package encrdt.lattices
 case class LastWriterWinsRegisterLattice[T, O](value: T, timestamp: O)
 
 object LastWriterWinsRegisterLattice {
-  implicit def LWWRegLattice[T, O <: Ordered[O]]: SemiLattice[LastWriterWinsRegisterLattice[T, O]] = {
+  implicit def LWWRegLattice[T, O <: Ordered[O]]: Lattice[LastWriterWinsRegisterLattice[T, O]] = {
     (left, right) => {
       if (left == right) left
       else if (left.timestamp > right.timestamp) left
@@ -22,7 +22,7 @@ object LastWriterWinsRegisterLattice {
     }
   }
 
-  implicit def LWWRegLattice[T, O](implicit ord: Ordering[O]): SemiLattice[LastWriterWinsRegisterLattice[T, O]] = {
+  implicit def LWWRegLattice[T, O](implicit ord: Ordering[O]): Lattice[LastWriterWinsRegisterLattice[T, O]] = {
     (left, right) => {
       val order = ord.compare(left.timestamp, right.timestamp)
       if (left == right) left

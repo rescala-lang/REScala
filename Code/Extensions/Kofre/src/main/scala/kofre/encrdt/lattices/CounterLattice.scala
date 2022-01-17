@@ -1,6 +1,6 @@
 
 package encrdt.lattices
-
+import kofre.Lattice
 import encrdt.util.MapHelper.max
 
 case class CounterLattice(positiveCounts: Map[String, Int] = Map(),
@@ -20,7 +20,7 @@ case class CounterLattice(positiveCounts: Map[String, Int] = Map(),
 }
 
 object CounterLattice {
-  implicit val semiLattice: SemiLattice[CounterLattice] = (left: CounterLattice, right: CounterLattice) =>
+  implicit val semiLattice: Lattice[CounterLattice] = (left: CounterLattice, right: CounterLattice) =>
     CounterLattice(
       max(left.positiveCounts, right.positiveCounts),
       max(left.negativeCounts, right.negativeCounts)

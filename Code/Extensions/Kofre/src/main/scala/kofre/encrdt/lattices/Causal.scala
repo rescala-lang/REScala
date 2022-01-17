@@ -1,5 +1,6 @@
 
 package encrdt.lattices
+import kofre.Lattice
 
 import encrdt.causality.DotStore._
 import encrdt.causality.{CausalContext, DotStore}
@@ -11,7 +12,7 @@ object Causal {
   def bottom[D: DotStore]: Causal[D] = Causal(DotStore[D].bottom, CausalContext())
 
   // (s, c) ⨆ (s', c') = ((s ∩ s') ∪ (s \ c') ∪ (s' \ c), c ∪ c')
-  implicit def CausalWithDotSetLattice: SemiLattice[Causal[DotSet]] = (left, right) => {
+  implicit def CausalWithDotSetLattice: Lattice[Causal[DotSet]] = (left, right) => {
     val inBoth = left.dotStore & right.dotStore
     val newInLeft = left.dotStore.filterNot(dot => dot <= right.causalContext.clockOf(dot.replicaId))
     val newInRight = right.dotStore.filterNot(dot => dot <= left.causalContext.clockOf(dot.replicaId))
@@ -24,10 +25,10 @@ object Causal {
   //                       {(d, v) ∈ m  | d ∉ c'} ∪
   //                       {(d, v) ∈ m' | d ∉ c},
   //                      c ∪ c')
-  implicit def CausalWithDotFunLattice[V: SemiLattice]: SemiLattice[Causal[DotFun[V]]] = (left, right) => {
+  implicit def CausalWithDotFunLattice[V: Lattice]: Lattice[Causal[DotFun[V]]] = (left, right) => {
     Causal(
       (left.dotStore.keySet & right.dotStore.keySet map { (dot: Dot) =>
-        (dot, SemiLattice.merged(left.dotStore(dot), right.dotStore(dot)))
+        (dot, Lattice.merge(left.dotStore(dot), right.dotStore(dot)))
       }).toMap
         ++ left.dotStore.filterNot { case (dot, _) => right.causalContext.contains(dot) }
         ++ right.dotStore.filterNot { case (dot, _) => left.causalContext.contains(dot) },
@@ -37,13 +38,13 @@ object Causal {
 
   // (m, c) ⨆ (m', c') = ( {k -> v(k) | k ∈ dom m ∩ dom m' ∧ v(k) ≠ ⊥}, c ∪ c')
   //                      where v(k) = fst((m(k), c) ⨆ (m'(k), c'))
-  implicit def CausalWithDotMapLattice[K, V: DotStore](implicit vSemiLattice: SemiLattice[Causal[V]]
-                                                      ): SemiLattice[Causal[DotMap[K, V]]] =
+  implicit def CausalWithDotMapLattice[K, V: DotStore](implicit vSemiLattice: Lattice[Causal[V]]
+                                                      ): Lattice[Causal[DotMap[K, V]]] =
     (left: Causal[DotMap[K, V]], right: Causal[DotMap[K, V]]) =>
       Causal(((left.dotStore.keySet union right.dotStore.keySet) map { key =>
         val leftCausal = Causal(left.dotStore.getOrElse(key, DotStore[V].bottom), left.causalContext)
         val rightCausal = Causal(right.dotStore.getOrElse(key, DotStore[V].bottom), right.causalContext)
-        key -> SemiLattice[Causal[V]].merged(leftCausal, rightCausal).dotStore
+        key -> Lattice[Causal[V]].merge(leftCausal, rightCausal).dotStore
       } filterNot {
         case (key, dotStore) => DotStore[V].bottom == dotStore
       }).toMap, left.causalContext.merged(right.causalContext))

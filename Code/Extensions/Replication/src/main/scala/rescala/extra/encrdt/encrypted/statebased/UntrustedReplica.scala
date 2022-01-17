@@ -3,7 +3,8 @@ package encrdt.encrypted.statebased
 
 import encrdt.causality.VectorClock
 import encrdt.causality.VectorClock.VectorClockOrdering
-import encrdt.lattices.SemiLattice
+
+import kofre.Lattice
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.Aead
@@ -17,10 +18,10 @@ abstract class UntrustedReplica(initialStates: Set[EncryptedState]) extends Repl
     else initialStates.map(_.versionVector).reduce((l, r) => l.merged(r))
   }
 
-  def decrypt[T: SemiLattice](aead: Aead)(implicit tCodec: JsonValueCodec[T]): DecryptedState[T] = {
+  def decrypt[T: Lattice](aead: Aead)(implicit tCodec: JsonValueCodec[T]): DecryptedState[T] = {
     stateStore
       .map(encState => encState.decrypt[T](aead))
-      .reduce((l, r) => SemiLattice[DecryptedState[T]].merged(l, r))
+      .reduce((l, r) => Lattice[DecryptedState[T]].merge(l, r))
   }
 
   def receive(newState: EncryptedState): Unit = {

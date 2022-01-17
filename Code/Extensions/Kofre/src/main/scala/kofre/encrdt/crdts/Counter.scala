@@ -1,7 +1,8 @@
 
 package encrdt.crdts
+import kofre.Lattice
 
-import encrdt.lattices.{CounterLattice, SemiLattice}
+import encrdt.lattices.{CounterLattice}
 
 /**
  * Counter CRDT using states
@@ -23,7 +24,7 @@ class Counter(val replicaId: String) {
   }
 
   def merge(remoteState: CounterLattice): Unit = {
-    state = SemiLattice.merged(state, remoteState)
+    state = Lattice.merge(state, remoteState)
   }
 
   // Local counts

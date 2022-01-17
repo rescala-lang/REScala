@@ -1,5 +1,6 @@
 
 package encrdt.lattices
+import kofre.Lattice
 
 import encrdt.causality.{LamportClock, VectorClock}
 
@@ -25,7 +26,7 @@ case class AddWinsSetLattice[T](elements: Set[(T, LamportClock)] = Set[(T, Lampo
 
 object AddWinsSetLattice {
   // See: https://arxiv.org/pdf/1210.3368.pdf - An Optimized Conflict-free Replicated Set
-  implicit def AddWinsSetSemiLattice[T]: SemiLattice[AddWinsSetLattice[T]] =
+  implicit def AddWinsSetSemiLattice[T]: Lattice[AddWinsSetLattice[T]] =
     (left: AddWinsSetLattice[T], right: AddWinsSetLattice[T]) => {
       val commonElems = left.elements & right.elements
 

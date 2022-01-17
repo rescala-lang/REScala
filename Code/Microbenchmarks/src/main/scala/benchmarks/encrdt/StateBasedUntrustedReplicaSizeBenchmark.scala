@@ -59,7 +59,7 @@ object StateBasedUntrustedReplicaSizeBenchmark extends App {
         val replicaSpecificDecState: DecryptedState[StateType[String, String]] = DecryptedState(replicaSpecificCrdt.state, replicaSpecificVersionVector)
         val replicaSpecificEncState = replicaSpecificDecState.encrypt(aead)
         untrustedReplica.receive(replicaSpecificEncState)
-        decryptedStatesMerged = DecryptedState.lattice[StateType[String, String]].merged(decryptedStatesMerged, replicaSpecificDecState)
+        decryptedStatesMerged = DecryptedState.lattice[StateType[String, String]].merge(decryptedStatesMerged, replicaSpecificDecState)
       }
 
       val mergedSize = writeToArray(decryptedStatesMerged.state).length

@@ -2,13 +2,13 @@
 package encrdt.lattices
 
 import encrdt.causality.VectorClock
-
+import kofre.Lattice
 import scala.annotation.tailrec
 
 case class MultiValueRegisterLattice[T](versions: Map[VectorClock, T])
 
 object MultiValueRegisterLattice {
-  implicit def MVRegLattice[T](implicit pOrd: PartialOrdering[VectorClock]): SemiLattice[MultiValueRegisterLattice[T]] =
+  implicit def MVRegLattice[T](implicit pOrd: PartialOrdering[VectorClock]): Lattice[MultiValueRegisterLattice[T]] =
     (left, right) => {
       val both = left.versions ++ right.versions
       val toKeep = parallelVersionSubset(both.keySet.toList, List.empty)

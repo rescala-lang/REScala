@@ -1,9 +1,9 @@
 
 package encrdt.crdts
-
 import encrdt.causality.DotStore
 import encrdt.causality.DotStore.{DotFun, dotFunDotStore}
-import encrdt.lattices.{Causal, SemiLattice}
+import encrdt.lattices.{Causal}
+import kofre.Lattice
 
 object DeltaMultiValueRegister {
   type DeltaMultiValueRegisterLattice[V] = Causal[DotFun[V]]
@@ -20,7 +20,7 @@ object DeltaMultiValueRegister {
     )
   }
 
-  def deltaClear[V: SemiLattice](register: DeltaMultiValueRegisterLattice[V]): DeltaMultiValueRegisterLattice[V] =
+  def deltaClear[V: Lattice](register: DeltaMultiValueRegisterLattice[V]): DeltaMultiValueRegisterLattice[V] =
     Causal(
       DotStore[DotFun[V]].bottom,
       register.dotStore.keySet

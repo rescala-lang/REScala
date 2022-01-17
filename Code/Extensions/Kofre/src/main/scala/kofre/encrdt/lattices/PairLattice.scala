@@ -1,10 +1,10 @@
 
 package encrdt.lattices
-
+import kofre.Lattice
 object PairLattice {
-  def pairLattice[A: SemiLattice, B: SemiLattice]: SemiLattice[(A, B)] =
+  def pairLattice[A: Lattice, B: Lattice]: Lattice[(A, B)] =
     (left, right) => (
-      SemiLattice[A].merged(left._1, right._1),
-      SemiLattice[B].merged(left._2, right._2)
+                       Lattice[A].merge(left._1, right._1),
+                       Lattice[B].merge(left._2, right._2)
     )
 }

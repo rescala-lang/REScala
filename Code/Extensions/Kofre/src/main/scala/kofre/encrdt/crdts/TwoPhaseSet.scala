@@ -1,8 +1,9 @@
 
 package encrdt.crdts
+import kofre.Lattice
 
 import encrdt.crdts.interfaces.SetCrdt
-import encrdt.lattices.{SemiLattice, TwoPhaseSetLattice}
+import encrdt.lattices.{TwoPhaseSetLattice}
 
 class TwoPhaseSet[T](val replicaId: String) extends SetCrdt[T] {
 
@@ -11,7 +12,7 @@ class TwoPhaseSet[T](val replicaId: String) extends SetCrdt[T] {
   def state: TwoPhaseSetLattice[T] = _state
 
   def merge(remoteState: TwoPhaseSetLattice[T]): Unit = {
-    _state = SemiLattice[TwoPhaseSetLattice[T]].merged(state, remoteState)
+    _state = Lattice[TwoPhaseSetLattice[T]].merge(state, remoteState)
   }
 
   def add(element: T): Unit = {
