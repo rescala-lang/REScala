@@ -20,7 +20,7 @@ object Dependencies {
     val jline                    = "2.14.6"
     val jodaConvert              = "2.2.1"
     val jodaTime                 = "2.10.3"
-    val jsoniterScalaCore        = "2.12.0"
+    val jsoniterScalaCore        = "2.12.1"
     val jsoup                    = "1.14.3"
     val jsr166y                  = "1.7.0"
     val kaleidoscope             = "0.1.0"
