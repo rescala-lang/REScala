@@ -1,10 +1,11 @@
 package kofre
 
+import kofre.Lattice.merge
+
 import scala.annotation.targetName
 import scala.collection.immutable.HashMap
 import scala.compiletime.{erasedValue, summonInline}
-import scala.deriving.*
-import kofre.Lattice.merge
+import scala.deriving.Mirror
 
 /** Well, its technically a semilattice, but that is just more to type. */
 trait Lattice[A]:
@@ -38,29 +39,31 @@ object Lattice {
         case ((id, v1), (_, v2)) => (id, (v1 merge v2))
       }
 
-  inline def derived[T](using m: Mirror.Of[T], c: Manifest[T]): Lattice[T] =
-    lazy val elemInstances = LatticeDeriveImpl.summonAll[m.MirroredElemTypes]
+  inline def derived[T](using m: Mirror.Of[T]): Lattice[T] =
     inline m match
-      case p: Mirror.ProductOf[T] => LatticeDeriveImpl.mergeProduct(p, c, elemInstances)
+      case p: Mirror.ProductOf[T] =>
+        val lattices = LatticeDeriveImpl.summonList[m.MirroredElemTypes]
+        // convert to array to make lookup during merge faster
+        LatticeDeriveImpl.mergeProduct(p, lattices.toArray.asInstanceOf[Seq[Lattice[Any]]])
+      case s: Mirror.SumOf[T] => scala.compiletime.error("cannot derive Lattices for sum types")
+
 }
 
 object LatticeDeriveImpl {
-  def iterator[T](p: T): Iterator[Any] = p.asInstanceOf[Product].productIterator
 
-  def mergeProduct[T](p: Mirror.ProductOf[T], c: Manifest[T], lattices: => List[Lattice[_]]): Lattice[T] =
-
-    val cons = c.runtimeClass.getDeclaredConstructors.head
-    cons.setAccessible(true)
-
+  def mergeProduct[T](p: Mirror.ProductOf[T], lattices: Seq[Lattice[Any]]): Lattice[T] =
     new Lattice[T]:
       def merge(left: T, right: T): T =
-        val args = iterator(left).zip(iterator(right)).zip(lattices.iterator).map {
-          case ((l, r), elem) => elem.asInstanceOf[Lattice[Any]].merge(l, r)
-        }.toSeq
-        cons.newInstance(args.toSeq: _*).asInstanceOf[T]
+        val lp = left.asInstanceOf[Product]
+        val rp = right.asInstanceOf[Product]
+        p.fromProduct(new Product {
+          def canEqual(that: Any): Boolean = lp.canEqual(that)
+          def productArity: Int            = lp.productArity
+          def productElement(i: Int): Any  = lattices(i).merge(lp.productElement(i), rp.productElement(i))
+        })
 
-  inline def summonAll[T <: Tuple]: List[Lattice[_]] =
+  inline def summonList[T <: Tuple]: List[Lattice[_]] =
     inline erasedValue[T] match
       case _: EmptyTuple => Nil
-      case _: (t *: ts)  => summonInline[Lattice[t]] :: summonAll[ts]
+      case _: (t *: ts)  => summonInline[Lattice[t]] :: summonList[ts]
 }
