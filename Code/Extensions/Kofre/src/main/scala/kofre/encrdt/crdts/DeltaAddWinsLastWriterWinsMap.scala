@@ -1,7 +1,5 @@
-
 package kofre.encrdt.crdts
 import kofre.Lattice
-
 import kofre.encrdt.causality.DotStore.DotFun
 import kofre.encrdt.causality.LamportClock
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap.{DeltaAddWinsLastWriterWinsMapLattice, timestampedValueLattice}
@@ -11,11 +9,12 @@ import kofre.encrdt.lattices.LastWriterWinsTagLattice.lwwLattice
 
 import java.time.Instant
 
-class DeltaAddWinsLastWriterWinsMap[K, V](val replicaId: String,
-                                          initialState: DeltaAddWinsLastWriterWinsMapLattice[K, V] = DeltaAddWinsLastWriterWinsMap.bottom[K, V],
-                                          initialDeltas: Vector[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = Vector()
-                                         ) extends MapCrdt[K, V] {
-  var _state: DeltaAddWinsLastWriterWinsMapLattice[K, V] = initialState
+class DeltaAddWinsLastWriterWinsMap[K, V](
+    val replicaId: String,
+    initialState: DeltaAddWinsLastWriterWinsMapLattice[K, V] = DeltaAddWinsLastWriterWinsMap.bottom[K, V],
+    initialDeltas: Vector[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = Vector()
+) extends MapCrdt[K, V] {
+  var _state: DeltaAddWinsLastWriterWinsMapLattice[K, V]          = initialState
   var _deltas: Vector[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = initialDeltas
 
   def state: DeltaAddWinsLastWriterWinsMapLattice[K, V] = _state
@@ -71,7 +70,8 @@ object DeltaAddWinsLastWriterWinsMap {
   type DeltaAddWinsLastWriterWinsMapLattice[K, V] =
     DeltaAddWinsMapLattice[K, DotFun[(V, (Instant, String))]]
 
-  def bottom[K, V]: DeltaAddWinsLastWriterWinsMapLattice[K, V] = DeltaAddWinsMap.bottom[K, DotFun[(V, (Instant, String))]]
+  def bottom[K, V]: DeltaAddWinsLastWriterWinsMapLattice[K, V] =
+    DeltaAddWinsMap.bottom[K, DotFun[(V, (Instant, String))]]
 
   implicit def timestampedValueLattice[V]: Lattice[(V, (Instant, String))] = (left, right) => {
     if (Lattice.merge(left._2, right._2) == left._2) left

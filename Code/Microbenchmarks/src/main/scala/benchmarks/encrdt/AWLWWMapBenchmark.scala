@@ -1,15 +1,13 @@
-
 package benchmarks.encrdt
 
 import benchmarks.encrdt.Codecs.awlwwmapJsonCodec
-import kofre.encrdt.causality.VectorClock
-import kofre.encrdt.crdts.AddWinsLastWriterWinsMap
-import rescala.extra.encrdt.encrypted.statebased.DecryptedState.vectorClockJsonCodec
-
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToArray
 import com.google.crypto.tink.Aead
+import kofre.encrdt.causality.VectorClock
+import kofre.encrdt.crdts.AddWinsLastWriterWinsMap
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
+import rescala.extra.encrdt.encrypted.statebased.DecryptedState.vectorClockJsonCodec
 
 import java.util.concurrent.TimeUnit
 
@@ -31,17 +29,28 @@ class AWLWWMapBenchmark {
 
   @Benchmark
   @Warmup(iterations = 7)
-  def encryptOnly(blackhole: Blackhole, serializeOnlyBenchmarkState: SerializeOnlyBenchmarkState, aeadState: AeadState): Unit = {
-    val serialEncryptedState = aeadState.aead.encrypt(serializeOnlyBenchmarkState.serialPlaintextState, serializeOnlyBenchmarkState.serialPlaintextVectorClock)
+  def encryptOnly(
+      blackhole: Blackhole,
+      serializeOnlyBenchmarkState: SerializeOnlyBenchmarkState,
+      aeadState: AeadState
+  ): Unit = {
+    val serialEncryptedState = aeadState.aead.encrypt(
+      serializeOnlyBenchmarkState.serialPlaintextState,
+      serializeOnlyBenchmarkState.serialPlaintextVectorClock
+    )
     blackhole.consume((serialEncryptedState, serializeOnlyBenchmarkState.serialPlaintextState))
   }
 
   @Benchmark
   @Warmup(iterations = 10)
-  def serializeAndEncrypt(blackhole: Blackhole, serializeOnlyBenchmarkState: SerializeOnlyBenchmarkState, aeadState: AeadState): Unit = {
-    val serialPlaintextState = writeToArray(serializeOnlyBenchmarkState.crdtState)
+  def serializeAndEncrypt(
+      blackhole: Blackhole,
+      serializeOnlyBenchmarkState: SerializeOnlyBenchmarkState,
+      aeadState: AeadState
+  ): Unit = {
+    val serialPlaintextState       = writeToArray(serializeOnlyBenchmarkState.crdtState)
     val serialPlaintextVectorClock = writeToArray(serializeOnlyBenchmarkState.crdtStateVersionVector)
-    val serialEncryptedState = aeadState.aead.encrypt(serialPlaintextState, serialPlaintextVectorClock)
+    val serialEncryptedState       = aeadState.aead.encrypt(serialPlaintextState, serialPlaintextVectorClock)
     blackhole.consume((serialEncryptedState, serialPlaintextState))
   }
 
@@ -68,10 +77,14 @@ class AWLWWMapBenchmark {
   @Benchmark
   @Fork(2)
   @Warmup(iterations = 3, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
-  def putAndSerializeAndEncryptManyTimes(blackhole: Blackhole, putBenchmarkState: PutManyBenchmarkState, aeadState: AeadState): Unit = {
+  def putAndSerializeAndEncryptManyTimes(
+      blackhole: Blackhole,
+      putBenchmarkState: PutManyBenchmarkState,
+      aeadState: AeadState
+  ): Unit = {
     var versionVector: VectorClock = VectorClock()
-    val crdt = new AddWinsLastWriterWinsMap[String, String](replicaId)
-    val aead = aeadState.aead
+    val crdt                       = new AddWinsLastWriterWinsMap[String, String](replicaId)
+    val aead                       = aeadState.aead
 
     for (entry <- putBenchmarkState.dummyKeyValuePairs) {
       // Update crdt
@@ -79,9 +92,9 @@ class AWLWWMapBenchmark {
       // Track causality information used for encrypted crdt
       versionVector = versionVector.advance(replicaId)
       // Serialize/Encrypt/Authenticate state with attached causality
-      val serialState = writeToArray(crdt.state)
+      val serialState       = writeToArray(crdt.state)
       val serialVectorClock = writeToArray(versionVector)
-      val encryptedState = aead.encrypt(serialState, serialVectorClock)
+      val encryptedState    = aead.encrypt(serialState, serialVectorClock)
 
       blackhole.consume((encryptedState, serialState))
     }
@@ -103,11 +116,11 @@ class AeadState {
 
 @State(Scope.Thread)
 class SerializeOnlyBenchmarkState {
-  var crdt: AddWinsLastWriterWinsMap[String, String] = _
+  var crdt: AddWinsLastWriterWinsMap[String, String]                  = _
   var crdtState: AddWinsLastWriterWinsMap.LatticeType[String, String] = _
-  var crdtStateVersionVector: VectorClock = _
+  var crdtStateVersionVector: VectorClock                             = _
 
-  var serialPlaintextState: Array[Byte] = _
+  var serialPlaintextState: Array[Byte]       = _
   var serialPlaintextVectorClock: Array[Byte] = _
 
   @Param(Array("10", "100", "1000"))
@@ -118,8 +131,8 @@ class SerializeOnlyBenchmarkState {
     val dummyKeyValuePairs = Helper.dummyKeyValuePairs(crdtSizeInElements)
 
     var versionVector: VectorClock = VectorClock()
-    val replicaId = "TestReplica"
-    val crdt = new AddWinsLastWriterWinsMap[String, String](replicaId)
+    val replicaId                  = "TestReplica"
+    val crdt                       = new AddWinsLastWriterWinsMap[String, String](replicaId)
 
     for (entry <- dummyKeyValuePairs) {
       // Update crdt
@@ -149,4 +162,3 @@ class PutManyBenchmarkState {
     dummyKeyValuePairs = Helper.dummyKeyValuePairs(crdtSizeInElements)
   }
 }
-

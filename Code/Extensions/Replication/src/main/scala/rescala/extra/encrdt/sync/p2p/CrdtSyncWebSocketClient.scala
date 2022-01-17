@@ -1,16 +1,16 @@
-
 package rescala.extra.encrdt.sync.p2p
 
-import rescala.extra.encrdt.sync.p2p.P2PConnectionManager.REPLICAID_HEADER
-import rescala.extra.encrdt.sync.client_server.LOG
 import org.eclipse.jetty.websocket.client.{ClientUpgradeRequest, WebSocketClient}
+import rescala.extra.encrdt.sync.client_server.LOG
+import rescala.extra.encrdt.sync.p2p.P2PConnectionManager.REPLICAID_HEADER
 
 import java.net.URI
 import java.time.Duration
 
-class CrdtSyncWebSocketClient[S](val localReplicaId: String,
-                                 private val handlerFactory: String => CrdtSyncWebSocketHandler[S]) {
-
+class CrdtSyncWebSocketClient[S](
+    val localReplicaId: String,
+    private val handlerFactory: String => CrdtSyncWebSocketHandler[S]
+) {
 
   private val webSocketClient: WebSocketClient = new WebSocketClient()
   webSocketClient.setIdleTimeout(Duration.ZERO) // Infinite timeout

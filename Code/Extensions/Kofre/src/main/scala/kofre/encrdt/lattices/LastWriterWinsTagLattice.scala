@@ -1,6 +1,6 @@
-
 package kofre.encrdt.lattices
 import kofre.Lattice
+
 import java.time.Instant
 
 object LastWriterWinsTagLattice {

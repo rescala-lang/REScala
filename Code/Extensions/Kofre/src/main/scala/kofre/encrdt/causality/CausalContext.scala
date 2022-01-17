@@ -1,4 +1,3 @@
-
 package kofre.encrdt.causality
 
 import kofre.encrdt.causality.DotStore.{Dot, DotSet}

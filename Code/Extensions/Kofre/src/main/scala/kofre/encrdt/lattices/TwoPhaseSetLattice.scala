@@ -1,4 +1,3 @@
-
 package kofre.encrdt.lattices
 import kofre.Lattice
 case class TwoPhaseSetLattice[T](addedElems: Set[T] = Set[T](), removedElems: Set[T] = Set[T]()) {

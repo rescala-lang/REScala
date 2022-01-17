@@ -1,21 +1,18 @@
-
 package rescala.extra.encrdt.encrypted.statebased
-
-import kofre.encrdt.causality.VectorClock
-import kofre.encrdt.crdts.interfaces.Crdt
-import rescala.extra.encrdt.encrypted.statebased.DecryptedState.vectorClockJsonCodec
-import kofre.encrdt.lattices.MultiValueRegisterLattice
-import kofre.Lattice
-
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import com.google.crypto.tink.Aead
+import kofre.Lattice
+import kofre.encrdt.causality.VectorClock
+import kofre.encrdt.crdts.interfaces.Crdt
+import kofre.encrdt.lattices.MultiValueRegisterLattice
+import rescala.extra.encrdt.encrypted.statebased.DecryptedState.vectorClockJsonCodec
 
 import scala.util.{Failure, Success, Try}
 
-class EncryptedCrdt(initialState: MultiValueRegisterLattice[EncryptedState] = MultiValueRegisterLattice(Map.empty)
-                   ) extends Crdt[MultiValueRegisterLattice[EncryptedState]] {
+class EncryptedCrdt(initialState: MultiValueRegisterLattice[EncryptedState] = MultiValueRegisterLattice(Map.empty))
+    extends Crdt[MultiValueRegisterLattice[EncryptedState]] {
 
   private var _state = initialState
 
@@ -33,8 +30,8 @@ class EncryptedCrdt(initialState: MultiValueRegisterLattice[EncryptedState] = Mu
     } reduce ((leftTry: Try[DecryptedState[T]], rightTry: Try[DecryptedState[T]]) => {
       (leftTry, rightTry) match {
         case (Success(left), Success(right)) => Success(
-          DecryptedState(Lattice[T].merge(left.state, right.state), left.versionVector.merged(right.versionVector))
-        )
+            DecryptedState(Lattice[T].merge(left.state, right.state), left.versionVector.merged(right.versionVector))
+          )
         case (Failure(e), _) => Failure(e)
         case (_, Failure(e)) => Failure(e)
       }
@@ -49,8 +46,8 @@ case class EncryptedState(stateCiphertext: Array[Byte], serialVersionVector: Arr
   lazy val versionVector: VectorClock = readFromArray(serialVersionVector)
 
   def decrypt[T](aead: Aead)(implicit tJsonCodec: JsonValueCodec[T]): DecryptedState[T] = {
-    val plainText = aead.decrypt(stateCiphertext, serialVersionVector)
-    val state = readFromArray[T](plainText)
+    val plainText     = aead.decrypt(stateCiphertext, serialVersionVector)
+    val state         = readFromArray[T](plainText)
     val versionVector = readFromArray[VectorClock](serialVersionVector)
     DecryptedState(state, versionVector)
   }

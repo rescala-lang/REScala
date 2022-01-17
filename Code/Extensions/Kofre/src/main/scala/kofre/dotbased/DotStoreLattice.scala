@@ -81,7 +81,7 @@ object IntTree {
   def toSeq(tree: Tree): List[Int] = iterator(tree).toList
 
   def iterator(tree: Tree): Iterator[Int] = tree match {
-    case Empty => Iterator.empty[Int]
+    case Empty       => Iterator.empty[Int]
     case tree: Range => iterator(tree.less) ++ (tree.from until tree.until) ++ iterator(tree.more)
   }
 

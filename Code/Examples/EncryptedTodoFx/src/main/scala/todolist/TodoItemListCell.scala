@@ -1,6 +1,4 @@
-
 package todolist
-
 
 import javafx.scene.control.ListCell
 import scalafx.Includes._
@@ -47,7 +45,7 @@ class TodoItemListCell extends ListCell[UUID] {
         val uuid = getItem
         if (uuid != null) todoProperty match {
           case Some(property) => TodoListController.changeTodo(uuid, property.value.copy(description = newVal))
-          case None => Console.err.println(s"TodoItemListCell: Entry $uuid not present in Controller")
+          case None           => Console.err.println(s"TodoItemListCell: Entry $uuid not present in Controller")
         }
       }
 
@@ -56,19 +54,21 @@ class TodoItemListCell extends ListCell[UUID] {
           val uuid = getItem
           if (uuid != null) todoProperty match {
             case Some(property) => TodoListController.changeTodo(uuid, property.value.copy(completed = newVal))
-            case None => Console.err.println(s"TodoItemListCell: Entry $uuid not present in Controller")
+            case None           => Console.err.println(s"TodoItemListCell: Entry $uuid not present in Controller")
           }
       }
 
       subscriptions :+ todoProperty.get.onChange(
-        (observable: ObservableValue[TodoEntry, TodoEntry], before: TodoEntry, after: TodoEntry) => Platform.runLater {
-          if (textField.getText == before.description && before.description != after.description) {
-            textField.setText(after.description)
+        (observable: ObservableValue[TodoEntry, TodoEntry], before: TodoEntry, after: TodoEntry) =>
+          Platform.runLater {
+            if (textField.getText == before.description && before.description != after.description) {
+              textField.setText(after.description)
+            }
+            if (checkBox.selected.get() == before.completed && before.completed != after.completed) {
+              checkBox.setSelected(after.completed)
+            }
           }
-          if (checkBox.selected.get() == before.completed && before.completed != after.completed) {
-            checkBox.setSelected(after.completed)
-          }
-        })
+      )
     }
   }
 

@@ -10,8 +10,6 @@ import kofre.decompose.interfaces.RGAInterface.RGANode
 import kofre.decompose.{Causal, Dot, LexPair, TimedVal}
 import rescala.extra.lattices.delta.DietCC.DietMapCContext
 
-
-
 object JsoniterCodecs {
 
   /** Causal Context */

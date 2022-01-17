@@ -1,4 +1,3 @@
-
 package benchmarks.encrdt
 
 import org.openjdk.jmh.results.RunResult

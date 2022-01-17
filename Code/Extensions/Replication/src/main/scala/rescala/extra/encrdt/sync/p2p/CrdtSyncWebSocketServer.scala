@@ -1,21 +1,22 @@
-
 package rescala.extra.encrdt.sync.p2p
 
-import rescala.extra.encrdt.sync.p2p.P2PConnectionManager.REPLICAID_HEADER
-import rescala.extra.encrdt.sync.client_server.LOG
 import org.eclipse.jetty.server.{Server, ServerConnector}
 import org.eclipse.jetty.servlet.ServletContextHandler
 import org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer
 import org.eclipse.jetty.websocket.server.{JettyServerUpgradeRequest, JettyServerUpgradeResponse, JettyWebSocketCreator}
+import rescala.extra.encrdt.sync.client_server.LOG
+import rescala.extra.encrdt.sync.p2p.P2PConnectionManager.REPLICAID_HEADER
 
 import java.net.URI
 import java.time.Duration
 
-class CrdtSyncWebSocketServer[S](val localReplicaId: String,
-                                 private val connectionManager: P2PConnectionManager[S],
-                                 private val handlerFactory: String => CrdtSyncWebSocketHandler[S]) {
+class CrdtSyncWebSocketServer[S](
+    val localReplicaId: String,
+    private val connectionManager: P2PConnectionManager[S],
+    private val handlerFactory: String => CrdtSyncWebSocketHandler[S]
+) {
 
-  private val server = new Server() // TODO: pass thread-pool?
+  private val server    = new Server() // TODO: pass thread-pool?
   private val connector = new ServerConnector(server)
   server.addConnector(connector)
 
@@ -40,7 +41,9 @@ class CrdtSyncWebSocketServer[S](val localReplicaId: String,
         // TODO: This probably has a race condition! (maybe add a random number to decide on which connection to choose)
         val replicaIdAlreadyHandled = !connectionManager.addPendingConnection(remoteReplicaId, handler)
         if (replicaIdAlreadyHandled) {
-          LOG.info(s"Closing newly established connection with $remoteReplicaId, already has open connection to replica")
+          LOG.info(
+            s"Closing newly established connection with $remoteReplicaId, already has open connection to replica"
+          )
           null
         } else {
           LOG.info(s"Handler created for $remoteReplicaId@${req.getRemoteSocketAddress}")
@@ -50,10 +53,13 @@ class CrdtSyncWebSocketServer[S](val localReplicaId: String,
 
     }
 
-  JettyWebSocketServletContainerInitializer.configure(ctxHandler, (servletContext, container) => {
-    container.addMapping("/", webSocketCreator)
-    container.setIdleTimeout(Duration.ZERO)
-  })
+  JettyWebSocketServletContainerInitializer.configure(
+    ctxHandler,
+    (servletContext, container) => {
+      container.addMapping("/", webSocketCreator)
+      container.setIdleTimeout(Duration.ZERO)
+    }
+  )
 
   def uri: URI = {
     if (server.getURI == null) null

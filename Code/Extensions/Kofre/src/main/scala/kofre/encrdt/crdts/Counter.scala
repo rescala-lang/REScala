@@ -1,12 +1,8 @@
-
 package kofre.encrdt.crdts
 import kofre.Lattice
+import kofre.encrdt.lattices.CounterLattice
 
-import kofre.encrdt.lattices.{CounterLattice}
-
-/**
- * Counter CRDT using states
- */
+/** Counter CRDT using states */
 class Counter(val replicaId: String) {
 
   def this(replicaId: String, initialState: CounterLattice) = {

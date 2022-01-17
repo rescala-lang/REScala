@@ -1,7 +1,6 @@
-
 package kofre.encrdt.causality
 
-import kofre.encrdt.causality.DotStore._
+import kofre.encrdt.causality.DotStore.*
 
 // See: Delta state replicated data types (https://doi.org/10.1016/j.jpdc.2017.08.003)
 sealed trait DotStore[D] {
@@ -11,9 +10,9 @@ sealed trait DotStore[D] {
 }
 
 object DotStore {
-  type Dot = LamportClock
-  type DotSet = Set[Dot]
-  type DotFun[V] = Map[Dot, V]
+  type Dot          = LamportClock
+  type DotSet       = Set[Dot]
+  type DotFun[V]    = Map[Dot, V]
   type DotMap[K, V] = Map[K, V]
 
   def apply[D](implicit dotStore: DotStore[D]): DotStore[D] = dotStore

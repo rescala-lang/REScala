@@ -1,10 +1,8 @@
-
 package kofre.encrdt.lattices
 import kofre.Lattice
 import kofre.encrdt.util.MapHelper.max
 
-case class CounterLattice(positiveCounts: Map[String, Int] = Map(),
-                          negativeCounts: Map[String, Int] = Map()) {
+case class CounterLattice(positiveCounts: Map[String, Int] = Map(), negativeCounts: Map[String, Int] = Map()) {
 
   def updated(replicaId: String, delta: Int): CounterLattice = {
     if (delta > 0) this.copy(

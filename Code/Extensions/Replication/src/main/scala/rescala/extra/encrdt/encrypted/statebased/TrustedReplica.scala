@@ -1,14 +1,12 @@
-
 package rescala.extra.encrdt.encrypted.statebased
-
-import kofre.encrdt.causality.VectorClock
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.Aead
+import kofre.encrdt.causality.VectorClock
 
-abstract class TrustedReplica[T](val localReplicaId: String,
-                                 private val aead: Aead)
-                                (implicit val stateJsonCodec: JsonValueCodec[T]) extends Replica {
+abstract class TrustedReplica[T](val localReplicaId: String, private val aead: Aead)(implicit
+    val stateJsonCodec: JsonValueCodec[T]
+) extends Replica {
 
   var versionVector: VectorClock = VectorClock()
 

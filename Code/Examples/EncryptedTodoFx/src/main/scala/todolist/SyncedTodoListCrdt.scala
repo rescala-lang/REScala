@@ -1,4 +1,3 @@
-
 package todolist
 
 import kofre.encrdt.causality.DotStore.Dot
@@ -21,10 +20,11 @@ import scala.util.Try
 
 class SyncedTodoListCrdt(val replicaId: String) extends MapCrdt[UUID, TodoEntry] {
 
-  private val crdt: DeltaAddWinsLastWriterWinsMap[UUID, TodoEntry] = new DeltaAddWinsLastWriterWinsMap[UUID, TodoEntry](replicaId)
+  private val crdt: DeltaAddWinsLastWriterWinsMap[UUID, TodoEntry] =
+    new DeltaAddWinsLastWriterWinsMap[UUID, TodoEntry](replicaId)
 
   private val crdtExecutorService: ExecutorService = Executors.newSingleThreadExecutor()
-  private val crdtExecContext: ExecutionContext = ExecutionContext.fromExecutor(crdtExecutorService)
+  private val crdtExecContext: ExecutionContext    = ExecutionContext.fromExecutor(crdtExecutorService)
 
   private val connectionManager: ConnectionManager[StateType] =
     ConnectionManagerFactory.connectionManager(replicaId, queryCrdtState, handleStateReceived)
@@ -101,18 +101,23 @@ class SyncedTodoListCrdt(val replicaId: String) extends MapCrdt[UUID, TodoEntry]
 object SyncedTodoListCrdt {
   type StateType = DeltaAddWinsLastWriterWinsMap.StateType[UUID, TodoEntry]
 
-  private implicit val dotMapAsSetCodec: JsonValueCodec[Set[(Dot, (TodoEntry, (Instant, String)))]] = JsonCodecMaker.make
+  private implicit val dotMapAsSetCodec: JsonValueCodec[Set[(Dot, (TodoEntry, (Instant, String)))]] =
+    JsonCodecMaker.make
   @nowarn
-  private implicit val dotMapCodec: JsonValueCodec[Map[Dot, (TodoEntry, (Instant, String))]] = new JsonValueCodec[Map[Dot, (TodoEntry, (Instant, String))]] {
-    override def decodeValue(in: JsonReader, default: Map[Dot, (TodoEntry, (Instant, String))]): Map[Dot, (TodoEntry, (Instant, String))] =
-      dotMapAsSetCodec.decodeValue(in, Set.empty).toMap
+  private implicit val dotMapCodec: JsonValueCodec[Map[Dot, (TodoEntry, (Instant, String))]] =
+    new JsonValueCodec[Map[Dot, (TodoEntry, (Instant, String))]] {
+      override def decodeValue(
+          in: JsonReader,
+          default: Map[Dot, (TodoEntry, (Instant, String))]
+      ): Map[Dot, (TodoEntry, (Instant, String))] =
+        dotMapAsSetCodec.decodeValue(in, Set.empty).toMap
 
-    override def encodeValue(x: Map[Dot, (TodoEntry, (Instant, String))], out: JsonWriter): Unit =
-      dotMapAsSetCodec.encodeValue(x.toSet, out)
+      override def encodeValue(x: Map[Dot, (TodoEntry, (Instant, String))], out: JsonWriter): Unit =
+        dotMapAsSetCodec.encodeValue(x.toSet, out)
 
-    override def nullValue: Map[Dot, (TodoEntry, (Instant, String))] =
-      Map.empty
-  }
+      override def nullValue: Map[Dot, (TodoEntry, (Instant, String))] =
+        Map.empty
+    }
 
   implicit val stateCodec: JsonValueCodec[StateType] = JsonCodecMaker.make
 }

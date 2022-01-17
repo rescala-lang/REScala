@@ -1,4 +1,3 @@
-
 package todolist
 
 import rescala.extra.encrdt.sync.client_server.LOG
@@ -18,7 +17,7 @@ object TodoListController {
 
   def handleUpdated(before: Map[UUID, TodoEntry], after: Map[UUID, TodoEntry]): Unit = {
     Platform.runLater {
-      val added = after.keySet.diff(before.keySet)
+      val added   = after.keySet.diff(before.keySet)
       val removed = before.keySet.diff(after.keySet)
       val changed = (before.keySet -- removed)
         .map { uuid => uuid -> (before(uuid), after(uuid)) }

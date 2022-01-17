@@ -1,17 +1,16 @@
-
 package kofre.encrdt.lattices
 import kofre.Lattice
-
 import kofre.encrdt.causality.VectorClock
 import kofre.encrdt.lattices.CausalTimeTag.lwwTimeOrd
 
 import java.time.Instant
 import scala.math.PartialOrdering
 
-case class CausalTimeTag(vectorClock: VectorClock = VectorClock(),
-                         utc: Instant = Instant.ofEpochMilli(0),
-                         replicaId: String = ""
-                        ) extends Ordered[CausalTimeTag] {
+case class CausalTimeTag(
+    vectorClock: VectorClock = VectorClock(),
+    utc: Instant = Instant.ofEpochMilli(0),
+    replicaId: String = ""
+) extends Ordered[CausalTimeTag] {
 
   def advance(rId: String): CausalTimeTag = CausalTimeTag(vectorClock.advance(rId), Instant.now(), rId)
 

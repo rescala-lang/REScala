@@ -1,4 +1,3 @@
-
 package todolist
 
 import scalafx.Includes._
@@ -14,7 +13,7 @@ object TodoListAppPeerToPeer extends TodoListApp
 class TodoListApp extends JFXApp3 {
   override def start(): Unit = {
     val todoListView = new ListView[UUID] {
-      cellFactory = { (_ : Any) => new TodoItemListCell() }
+      cellFactory = { (_: Any) => new TodoItemListCell() }
       items = TodoListController.observableUuidList
     }
 
@@ -67,8 +66,8 @@ class TodoListApp extends JFXApp3 {
             new HBox {
               children = Seq(connectionTextField, addConnectionButton)
             },
-            //localAddressTextField,
-            //new HBox {
+            // localAddressTextField,
+            // new HBox {
             //  children = Seq(
             //    new Button {
             //      text = "Log state"
@@ -79,7 +78,7 @@ class TodoListApp extends JFXApp3 {
             //      onAction = () => Console.println(s"Peers: ${TodoListController.remoteAddresses})")
             //    }
             //  )
-            //}
+            // }
           )
         }
       }

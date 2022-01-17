@@ -1,12 +1,10 @@
-
 package rescala.extra.encrdt.encrypted.statebased
 
-import kofre.encrdt.causality.VectorClock
-import kofre.encrdt.causality.VectorClock.VectorClockOrdering
-import kofre.Lattice
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.Aead
-import rescala.extra.encrdt.encrypted.statebased.{DecryptedState, EncryptedState, Replica}
+import kofre.Lattice
+import kofre.encrdt.causality.VectorClock
+import kofre.encrdt.causality.VectorClock.VectorClockOrdering
 
 abstract class UntrustedReplica(initialStates: Set[EncryptedState]) extends Replica {
   protected var stateStore: Set[EncryptedState] = initialStates
@@ -38,7 +36,9 @@ abstract class UntrustedReplica(initialStates: Set[EncryptedState]) extends Repl
     }
 
     stateStore = leastUpperBound(
-      stateStore.filterNot(oldState => VectorClockOrdering.lteq(oldState.versionVector, newState.versionVector)) + newState
+      stateStore.filterNot(oldState =>
+        VectorClockOrdering.lteq(oldState.versionVector, newState.versionVector)
+      ) + newState
     )
 
     Console.println(stateStore.map(_.versionVector))

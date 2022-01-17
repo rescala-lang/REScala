@@ -1,4 +1,3 @@
-
 package kofre.encrdt.lattices
 import kofre.Lattice
 case class GrowOnlySetLattice[T](values: Set[T]) {

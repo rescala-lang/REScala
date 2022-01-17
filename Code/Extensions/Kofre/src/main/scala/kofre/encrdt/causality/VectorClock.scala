@@ -1,4 +1,3 @@
-
 package kofre.encrdt.causality
 
 import kofre.encrdt.util.MapHelper.max
@@ -29,7 +28,7 @@ object VectorClock {
       if (x.timestamps.isEmpty) return Some(0)
       if (x.timestamps.keySet != y.timestamps.keySet) return None
 
-      val clockPairs = x.timestamps.keySet.map(key => (x.timestamps(key), y.timestamps(key)))
+      val clockPairs  = x.timestamps.keySet.map(key => (x.timestamps(key), y.timestamps(key)))
       val comparisons = clockPairs map { case (x, y) => x compare y }
 
       if (comparisons.max < 0) return Some(-1)

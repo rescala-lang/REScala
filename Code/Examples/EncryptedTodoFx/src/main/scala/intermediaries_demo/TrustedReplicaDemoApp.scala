@@ -1,4 +1,3 @@
-
 package intermediaries_demo
 
 import rescala.extra.encrdt.sync.client_server.TrustedReplicaWebSocketClient
@@ -18,7 +17,7 @@ object TrustedReplicaDemoApp extends TodoListApp {
     CleartextKeysetHandle.write(keyset, JsonKeysetWriter.withFile(keysetFilePath.toFile))
   }
 
-  private val keyset = CleartextKeysetHandle.read(JsonKeysetReader.withFile(keysetFilePath.toFile))
+  private val keyset     = CleartextKeysetHandle.read(JsonKeysetReader.withFile(keysetFilePath.toFile))
   private val aead: Aead = keyset.getPrimitive(classOf[Aead])
 
   Console.println(keyset.getKeysetInfo)
@@ -30,4 +29,3 @@ object TrustedReplicaDemoApp extends TodoListApp {
       override protected def localState(): StateType = query()
     }
 }
-

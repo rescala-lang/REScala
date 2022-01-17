@@ -1,9 +1,7 @@
-
 package kofre.encrdt.crdts
 import kofre.Lattice
-
 import kofre.encrdt.causality.VectorClock
-import kofre.encrdt.lattices.{MultiValueRegisterLattice}
+import kofre.encrdt.lattices.MultiValueRegisterLattice
 
 class MultiValueRegister[T](initialState: MultiValueRegisterLattice[T], val replicaId: String) {
   private var _state = initialState

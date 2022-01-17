@@ -1,4 +1,3 @@
-
 package kofre.encrdt.crdts.interfaces
 
 trait MapCrdt[K, V] {

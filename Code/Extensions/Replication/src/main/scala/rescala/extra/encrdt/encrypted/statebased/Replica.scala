@@ -1,4 +1,3 @@
-
 package rescala.extra.encrdt.encrypted.statebased
 
 trait Replica {

@@ -1,28 +1,29 @@
-
 package rescala.extra.encrdt.sync.p2p
 
-import rescala.extra.encrdt.sync.p2p.CrdtSyncWebSocketHandler.{clientShutdownCloseStatus, duplicateCloseStatus}
-import rescala.extra.encrdt.sync.p2p.P2PConnectionManager._
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromString, writeToString}
-import rescala.extra.encrdt.sync.p2p.P2PConnectionManager
 import org.eclipse.jetty.websocket.api.exceptions.WebSocketTimeoutException
 import org.eclipse.jetty.websocket.api.{CloseStatus, Session, WebSocketAdapter, WebSocketBehavior}
 import rescala.extra.encrdt.sync.client_server.LOG
+import rescala.extra.encrdt.sync.p2p.CrdtSyncWebSocketHandler.{clientShutdownCloseStatus, duplicateCloseStatus}
+import rescala.extra.encrdt.sync.p2p.P2PConnectionManager._
 
 import scala.util.{Failure, Success, Try}
 
-class CrdtSyncWebSocketHandler[S](val localReplicaId: String,
-                                  val remoteReplicaId: String,
-                                  private val connectionManager: P2PConnectionManager[S],
-                                  private val stateReceivedHandler: S => Unit,
-                                  private val localStateProvider: () => S)
-                                 (implicit valueCodec: JsonValueCodec[S]) extends WebSocketAdapter {
+class CrdtSyncWebSocketHandler[S](
+    val localReplicaId: String,
+    val remoteReplicaId: String,
+    private val connectionManager: P2PConnectionManager[S],
+    private val stateReceivedHandler: S => Unit,
+    private val localStateProvider: () => S
+)(implicit valueCodec: JsonValueCodec[S]) extends WebSocketAdapter {
 
   override def onWebSocketConnect(sess: Session): Unit = {
     if (sess.getBehavior == WebSocketBehavior.CLIENT) {
       val rIdFromHeader = sess.getUpgradeResponse.getHeader(REPLICAID_HEADER)
       if (rIdFromHeader != remoteReplicaId) {
-        LOG.warn(s"Closing connection to ${sess.getRemoteAddress}, because replicaId doesn't match ${rIdFromHeader} != ${remoteReplicaId}")
+        LOG.warn(
+          s"Closing connection to ${sess.getRemoteAddress}, because replicaId doesn't match ${rIdFromHeader} != ${remoteReplicaId}"
+        )
 
         connectionManager.removeHandler(this)
         sess.close(new CloseStatus(2500, "replicaId mismatch"))
@@ -73,7 +74,9 @@ class CrdtSyncWebSocketHandler[S](val localReplicaId: String,
   }
 
   override def onWebSocketClose(statusCode: Int, reason: String): Unit = {
-    LOG.warn(s"websocket to $remoteReplicaId@${getRemote.getRemoteAddress} closed (removing handler) with $statusCode - $reason")
+    LOG.warn(
+      s"websocket to $remoteReplicaId@${getRemote.getRemoteAddress} closed (removing handler) with $statusCode - $reason"
+    )
     connectionManager.removeHandler(this)
   }
 
@@ -106,7 +109,7 @@ class CrdtSyncWebSocketHandler[S](val localReplicaId: String,
 }
 
 object CrdtSyncWebSocketHandler {
-  val clientShutdownCloseStatus = new CloseStatus(4000, "ClientShutdown")
-  val duplicateCloseStatus = new CloseStatus(4001, "Already has open connection")
+  val clientShutdownCloseStatus        = new CloseStatus(4000, "ClientShutdown")
+  val duplicateCloseStatus             = new CloseStatus(4001, "Already has open connection")
   val replicaIdNotSpecifiedCloseStatus = new CloseStatus(4002, "Did not specify replicaId")
 }

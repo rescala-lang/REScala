@@ -1,4 +1,3 @@
-
 package kofre.encrdt.crdts
 
 import kofre.encrdt.crdts.interfaces.SetCrdt

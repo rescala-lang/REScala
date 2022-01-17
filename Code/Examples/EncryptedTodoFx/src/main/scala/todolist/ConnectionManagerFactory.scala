@@ -1,4 +1,3 @@
-
 package todolist
 
 import rescala.extra.encrdt.sync.ConnectionManager
@@ -10,6 +9,10 @@ object ConnectionManagerFactory {
     (replicaId, queryCrdtState, handleStateReceived) =>
       new P2PConnectionManager[StateType](replicaId, queryCrdtState, handleStateReceived)
 
-  def connectionManager(replicaId: String, query: () => StateType, stateReceived: StateType => Unit): ConnectionManager[StateType] =
+  def connectionManager(
+      replicaId: String,
+      query: () => StateType,
+      stateReceived: StateType => Unit
+  ): ConnectionManager[StateType] =
     impl(replicaId, query, stateReceived)
 }

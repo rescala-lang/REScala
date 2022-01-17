@@ -1,21 +1,15 @@
-
 package rescala.extra.encrdt.encrypted.deltabased
-
-import kofre.encrdt.causality.DotStore.{Dot, DotSet}
-import kofre.encrdt.causality.{DotStore, LamportClock}
-import kofre.encrdt.crdts.interfaces.Crdt
-import rescala.extra.encrdt.encrypted.deltabased.Codecs.dotSetJsonCodec
-import kofre.Lattice
-
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import com.google.crypto.tink.Aead
+import kofre.Lattice
+import kofre.encrdt.causality.DotStore.{Dot, DotSet}
+import kofre.encrdt.causality.{DotStore, LamportClock}
+import kofre.encrdt.crdts.interfaces.Crdt
+import rescala.extra.encrdt.encrypted.deltabased.Codecs.dotSetJsonCodec
 
-class EncryptedDeltaCrdt[T: Lattice](val aead: Aead,
-                                     replicaId: String) {
-
-}
+class EncryptedDeltaCrdt[T: Lattice](val aead: Aead, replicaId: String) {}
 
 sealed trait Replica {
   def receive(encryptedState: EncryptedDeltaGroup): Unit
@@ -23,10 +17,9 @@ sealed trait Replica {
   protected def disseminate(encryptedState: EncryptedDeltaGroup): Unit
 }
 
-abstract class TrustedReplica[T](val replicaId: String,
-                                 val crdt: Crdt[T],
-                                 private val aead: Aead)
-                                (implicit val stateJsonCodec: JsonValueCodec[T]) extends Replica {
+abstract class TrustedReplica[T](val replicaId: String, val crdt: Crdt[T], private val aead: Aead)(implicit
+    val stateJsonCodec: JsonValueCodec[T]
+) extends Replica {
 
   private var dottedVersionVector: DotSet = Set.empty
 
@@ -40,7 +33,7 @@ abstract class TrustedReplica[T](val replicaId: String,
     }
 
     () => nextDotImpl
-  }) ()
+  })()
 
   def receive(encryptedDeltaGroup: EncryptedDeltaGroup): Unit = {
     val decryptedState: DecryptedDeltaGroup[T] = encryptedDeltaGroup.decrypt(aead)
@@ -59,7 +52,7 @@ abstract class TrustedReplica[T](val replicaId: String,
 }
 
 abstract class UntrustedReplica(initialDeltaGroups: Set[EncryptedDeltaGroup] = Set.empty) extends Replica {
-  protected var dottedVersionVector: DotSet = Set.empty
+  protected var dottedVersionVector: DotSet                        = Set.empty
   protected var encryptedDeltaGroupStore: Set[EncryptedDeltaGroup] = initialDeltaGroups
 
   override def receive(encryptedDeltaGroup: EncryptedDeltaGroup): Unit = {
@@ -80,8 +73,8 @@ case class EncryptedDeltaGroup(stateCiphertext: Array[Byte], serialDottedVersion
   lazy val dottedVersionVector: DotSet = readFromArray(serialDottedVersionVector)
 
   def decrypt[T](aead: Aead)(implicit tJsonCodec: JsonValueCodec[T]): DecryptedDeltaGroup[T] = {
-    val plainText = aead.decrypt(stateCiphertext, serialDottedVersionVector)
-    val state = readFromArray[T](plainText)
+    val plainText           = aead.decrypt(stateCiphertext, serialDottedVersionVector)
+    val state               = readFromArray[T](plainText)
     val dottedVersionVector = readFromArray[DotSet](serialDottedVersionVector)
     DecryptedDeltaGroup(state, dottedVersionVector)
   }
@@ -89,9 +82,9 @@ case class EncryptedDeltaGroup(stateCiphertext: Array[Byte], serialDottedVersion
 
 case class DecryptedDeltaGroup[T](deltaGroup: T, dottedVersionVector: DotSet) {
   def encrypt(aead: Aead)(implicit tJsonCodec: JsonValueCodec[T]): EncryptedDeltaGroup = {
-    val serialDeltaGroup = writeToArray(deltaGroup)
+    val serialDeltaGroup          = writeToArray(deltaGroup)
     val serialDottedVersionVector = writeToArray(dottedVersionVector)
-    val deltaGroupCipherText = aead.encrypt(serialDeltaGroup, serialDottedVersionVector)
+    val deltaGroupCipherText      = aead.encrypt(serialDeltaGroup, serialDottedVersionVector)
     EncryptedDeltaGroup(deltaGroupCipherText, serialDottedVersionVector)
   }
 }

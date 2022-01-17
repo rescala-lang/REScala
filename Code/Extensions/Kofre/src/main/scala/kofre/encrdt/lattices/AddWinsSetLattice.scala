@@ -1,11 +1,11 @@
-
 package kofre.encrdt.lattices
 import kofre.Lattice
-
 import kofre.encrdt.causality.{LamportClock, VectorClock}
 
-case class AddWinsSetLattice[T](elements: Set[(T, LamportClock)] = Set[(T, LamportClock)](),
-                                clocks: VectorClock = VectorClock()) {
+case class AddWinsSetLattice[T](
+    elements: Set[(T, LamportClock)] = Set[(T, LamportClock)](),
+    clocks: VectorClock = VectorClock()
+) {
 
   def values: Set[T] = elements.map(_._1)
 
@@ -14,9 +14,9 @@ case class AddWinsSetLattice[T](elements: Set[(T, LamportClock)] = Set[(T, Lampo
   }
 
   def added(value: T, replicaId: String): AddWinsSetLattice[T] = {
-    val clocksAfterAdd = clocks.advance(replicaId)
-    val newLocalClock = clocksAfterAdd.clockOf(replicaId)
-    val newElem = (value, newLocalClock)
+    val clocksAfterAdd   = clocks.advance(replicaId)
+    val newLocalClock    = clocksAfterAdd.clockOf(replicaId)
+    val newElem          = (value, newLocalClock)
     val elementsAfterAdd = elements.filterNot(_._1 == value) + newElem
     AddWinsSetLattice(elementsAfterAdd, clocksAfterAdd)
   }
@@ -44,7 +44,7 @@ object AddWinsSetLattice {
       val duplicates = allElements.filter { case (e, LamportClock(c, i)) =>
         allElements.exists {
           case (`e`, LamportClock(otherC, `i`)) => c < otherC
-          case _ => false
+          case _                                => false
         }
       }
 

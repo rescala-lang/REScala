@@ -1,9 +1,7 @@
-
 package kofre.encrdt.crdts
 import kofre.Lattice
-
 import kofre.encrdt.crdts.interfaces.SetCrdt
-import kofre.encrdt.lattices.{AddWinsSetLattice}
+import kofre.encrdt.lattices.AddWinsSetLattice
 
 class AddWinsSet[T](val replicaId: String) extends SetCrdt[T] {
 

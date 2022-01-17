@@ -1,4 +1,3 @@
-
 package benchmarks.encrdt
 
 import com.google.crypto.tink.aead.AeadConfig
