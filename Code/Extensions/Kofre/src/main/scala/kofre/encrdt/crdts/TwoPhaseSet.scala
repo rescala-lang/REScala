@@ -1,9 +1,9 @@
 
-package encrdt.crdts
+package kofre.encrdt.crdts
 import kofre.Lattice
 
-import encrdt.crdts.interfaces.SetCrdt
-import encrdt.lattices.{TwoPhaseSetLattice}
+import kofre.encrdt.crdts.interfaces.SetCrdt
+import kofre.encrdt.lattices.{TwoPhaseSetLattice}
 
 class TwoPhaseSet[T](val replicaId: String) extends SetCrdt[T] {
 

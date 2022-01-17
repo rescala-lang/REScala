@@ -1,5 +1,5 @@
 
-package encrdt.crdts.interfaces
+package kofre.encrdt.crdts.interfaces
 
 trait MapCrdt[K, V] {
   @inline def apply(key: K): Option[V] = get(key)

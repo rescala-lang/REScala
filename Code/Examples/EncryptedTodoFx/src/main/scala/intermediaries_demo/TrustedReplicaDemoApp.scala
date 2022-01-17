@@ -1,7 +1,7 @@
 
 package intermediaries_demo
 
-import encrdt.sync.client_server.TrustedReplicaWebSocketClient
+import rescala.extra.encrdt.sync.client_server.TrustedReplicaWebSocketClient
 import todolist.SyncedTodoListCrdt.{StateType, stateCodec}
 import todolist.{ConnectionManagerFactory, TodoListApp}
 

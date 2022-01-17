@@ -1,8 +1,8 @@
 
-package encrdt.benchmarks
+package benchmarks.encrdt
 
-import encrdt.causality.DotStore.Dot
-import encrdt.crdts.{AddWinsLastWriterWinsMap, DeltaAddWinsLastWriterWinsMap}
+import kofre.encrdt.causality.DotStore.Dot
+import kofre.encrdt.crdts.{AddWinsLastWriterWinsMap, DeltaAddWinsLastWriterWinsMap}
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker

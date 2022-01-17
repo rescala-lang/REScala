@@ -1,7 +1,7 @@
 
-package encrdt.causality
+package kofre.encrdt.causality
 
-import encrdt.causality.DotStore.{Dot, DotSet}
+import kofre.encrdt.causality.DotStore.{Dot, DotSet}
 
 // Can be optimized using Concise Version Vectors / Interval Version Vectors
 case class CausalContext(dots: Set[Dot] = Set()) {

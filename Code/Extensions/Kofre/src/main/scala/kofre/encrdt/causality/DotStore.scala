@@ -1,7 +1,7 @@
 
-package encrdt.causality
+package kofre.encrdt.causality
 
-import encrdt.causality.DotStore._
+import kofre.encrdt.causality.DotStore._
 
 // See: Delta state replicated data types (https://doi.org/10.1016/j.jpdc.2017.08.003)
 sealed trait DotStore[D] {

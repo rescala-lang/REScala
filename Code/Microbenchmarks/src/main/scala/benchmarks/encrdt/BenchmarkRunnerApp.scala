@@ -1,5 +1,5 @@
 
-package encrdt.benchmarks
+package benchmarks.encrdt
 
 import org.openjdk.jmh.results.RunResult
 import org.openjdk.jmh.results.format.ResultFormatType

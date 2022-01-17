@@ -1,5 +1,5 @@
 
-package encrdt.lattices
+package kofre.encrdt.lattices
 import kofre.Lattice
 /**
  * Lattice with the least-upper-bound defined by the timeStamp.

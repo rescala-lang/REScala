@@ -1,11 +1,11 @@
 
-package encrdt.crdts
+package kofre.encrdt.crdts
 
-import encrdt.causality.{CausalContext, DotStore}
-import encrdt.causality.DotStore.{DotMap, DotSet, dotSetDotStore}
-import encrdt.crdts.DeltaAddWinsSet.DeltaAddWinsSetLattice
-import encrdt.crdts.interfaces.SetCrdt
-import encrdt.lattices.{Causal}
+import kofre.encrdt.causality.{CausalContext, DotStore}
+import kofre.encrdt.causality.DotStore.{DotMap, DotSet, dotSetDotStore}
+import kofre.encrdt.crdts.DeltaAddWinsSet.DeltaAddWinsSetLattice
+import kofre.encrdt.crdts.interfaces.SetCrdt
+import kofre.encrdt.lattices.{Causal}
 import kofre.Lattice
 
 

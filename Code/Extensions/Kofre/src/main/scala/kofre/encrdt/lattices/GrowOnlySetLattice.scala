@@ -1,5 +1,5 @@
 
-package encrdt.lattices
+package kofre.encrdt.lattices
 import kofre.Lattice
 case class GrowOnlySetLattice[T](values: Set[T]) {
   def added(element: T): GrowOnlySetLattice[T] = GrowOnlySetLattice(values + element)

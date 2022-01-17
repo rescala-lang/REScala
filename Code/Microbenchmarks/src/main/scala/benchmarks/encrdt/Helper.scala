@@ -1,5 +1,5 @@
 
-package encrdt.benchmarks
+package benchmarks.encrdt
 
 import com.google.crypto.tink.aead.AeadConfig
 import com.google.crypto.tink.{Aead, KeyTemplates, KeysetHandle}

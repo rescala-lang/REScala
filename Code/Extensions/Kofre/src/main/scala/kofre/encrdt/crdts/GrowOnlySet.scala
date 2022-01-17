@@ -1,7 +1,7 @@
 
-package encrdt.crdts
+package kofre.encrdt.crdts
 
-import encrdt.crdts.interfaces.SetCrdt
+import kofre.encrdt.crdts.interfaces.SetCrdt
 
 class GrowOnlySet[T] extends SetCrdt[T] {
   private var _state: Set[T] = Set()

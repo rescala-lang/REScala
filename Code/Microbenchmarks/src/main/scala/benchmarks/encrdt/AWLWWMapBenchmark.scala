@@ -1,10 +1,10 @@
 
-package encrdt.benchmarks
+package benchmarks.encrdt
 
-import encrdt.benchmarks.Codecs.awlwwmapJsonCodec
-import encrdt.causality.VectorClock
-import encrdt.crdts.AddWinsLastWriterWinsMap
-import encrdt.encrypted.statebased.DecryptedState.vectorClockJsonCodec
+import benchmarks.encrdt.Codecs.awlwwmapJsonCodec
+import kofre.encrdt.causality.VectorClock
+import kofre.encrdt.crdts.AddWinsLastWriterWinsMap
+import rescala.extra.encrdt.encrypted.statebased.DecryptedState.vectorClockJsonCodec
 
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToArray
 import com.google.crypto.tink.Aead

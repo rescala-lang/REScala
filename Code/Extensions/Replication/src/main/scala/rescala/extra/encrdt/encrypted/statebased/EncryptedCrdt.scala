@@ -1,10 +1,10 @@
 
-package encrdt.encrypted.statebased
+package rescala.extra.encrdt.encrypted.statebased
 
-import encrdt.causality.VectorClock
-import encrdt.crdts.interfaces.Crdt
-import encrdt.encrypted.statebased.DecryptedState.vectorClockJsonCodec
-import encrdt.lattices.MultiValueRegisterLattice
+import kofre.encrdt.causality.VectorClock
+import kofre.encrdt.crdts.interfaces.Crdt
+import rescala.extra.encrdt.encrypted.statebased.DecryptedState.vectorClockJsonCodec
+import kofre.encrdt.lattices.MultiValueRegisterLattice
 import kofre.Lattice
 
 

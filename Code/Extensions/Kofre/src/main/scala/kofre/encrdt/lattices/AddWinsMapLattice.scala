@@ -1,5 +1,5 @@
 
-package encrdt.lattices
+package kofre.encrdt.lattices
 import kofre.Lattice
 case class AddWinsMapLattice[K, V](keys: AddWinsSetLattice[K] = AddWinsSetLattice[K](), mappings: Map[K, V] = Map[K, V]()) {
   def values: Map[K, V] = mappings

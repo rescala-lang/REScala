@@ -1,8 +1,8 @@
 
-package encrdt.crdts
+package kofre.encrdt.crdts
 import kofre.Lattice
 
-import encrdt.lattices.{CausalTimeTag, LastWriterWinsRegisterLattice}
+import kofre.encrdt.lattices.{CausalTimeTag, LastWriterWinsRegisterLattice}
 
 class LastWriterWinsRegister[T](initialState: LastWriterWinsRegisterLattice[T, CausalTimeTag],
                                 val replicaId: String) { // SemiLattice requires ordering of timestamp

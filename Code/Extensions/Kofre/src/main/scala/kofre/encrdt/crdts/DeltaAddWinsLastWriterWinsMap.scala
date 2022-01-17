@@ -1,13 +1,13 @@
 
-package encrdt.crdts
+package kofre.encrdt.crdts
 import kofre.Lattice
 
-import encrdt.causality.DotStore.DotFun
-import encrdt.causality.LamportClock
-import encrdt.crdts.DeltaAddWinsLastWriterWinsMap.{DeltaAddWinsLastWriterWinsMapLattice, timestampedValueLattice}
-import encrdt.crdts.DeltaAddWinsMap.DeltaAddWinsMapLattice
-import encrdt.crdts.interfaces.MapCrdt
-import encrdt.lattices.LastWriterWinsTagLattice.lwwLattice
+import kofre.encrdt.causality.DotStore.DotFun
+import kofre.encrdt.causality.LamportClock
+import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap.{DeltaAddWinsLastWriterWinsMapLattice, timestampedValueLattice}
+import kofre.encrdt.crdts.DeltaAddWinsMap.DeltaAddWinsMapLattice
+import kofre.encrdt.crdts.interfaces.MapCrdt
+import kofre.encrdt.lattices.LastWriterWinsTagLattice.lwwLattice
 
 import java.time.Instant
 

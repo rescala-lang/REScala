@@ -1,5 +1,5 @@
 
-package encrdt.util
+package kofre.encrdt.util
 
 object MapHelper {
   /**

@@ -1,7 +1,7 @@
 
-package encrdt.encrypted.statebased
+package rescala.extra.encrdt.encrypted.statebased
 
-import encrdt.causality.VectorClock
+import kofre.encrdt.causality.VectorClock
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.Aead

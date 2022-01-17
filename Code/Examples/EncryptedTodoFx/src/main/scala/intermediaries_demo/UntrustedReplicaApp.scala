@@ -1,7 +1,7 @@
 
 package intermediaries_demo
 
-import encrdt.sync.client_server.UntrustedReplicaWebSocketServer
+import rescala.extra.encrdt.sync.client_server.UntrustedReplicaWebSocketServer
 
 object UntrustedReplicaApp extends App {
   val server = new UntrustedReplicaWebSocketServer()

@@ -1,10 +1,10 @@
 
-package encrdt.crdts
+package kofre.encrdt.crdts
 import kofre.Lattice
 
-import encrdt.crdts.AddWinsLastWriterWinsMap.LatticeType
-import encrdt.crdts.interfaces.MapCrdt
-import encrdt.lattices.{AddWinsMapLattice, CausalTimeTag, LastWriterWinsRegisterLattice}
+import kofre.encrdt.crdts.AddWinsLastWriterWinsMap.LatticeType
+import kofre.encrdt.crdts.interfaces.MapCrdt
+import kofre.encrdt.lattices.{AddWinsMapLattice, CausalTimeTag, LastWriterWinsRegisterLattice}
 
 class AddWinsLastWriterWinsMap[K, V](val replicaId: String,
                                      initialState: AddWinsMapLattice[K, LastWriterWinsRegisterLattice[V, CausalTimeTag]] = AddWinsMapLattice[K, LastWriterWinsRegisterLattice[V, CausalTimeTag]]()

@@ -1,8 +1,8 @@
 
-package encrdt.lattices
+package kofre.encrdt.lattices
 import kofre.Lattice
 
-import encrdt.causality.{LamportClock, VectorClock}
+import kofre.encrdt.causality.{LamportClock, VectorClock}
 
 case class AddWinsSetLattice[T](elements: Set[(T, LamportClock)] = Set[(T, LamportClock)](),
                                 clocks: VectorClock = VectorClock()) {

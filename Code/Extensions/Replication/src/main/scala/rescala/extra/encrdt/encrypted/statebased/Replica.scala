@@ -1,5 +1,5 @@
 
-package encrdt.encrypted.statebased
+package rescala.extra.encrdt.encrypted.statebased
 
 trait Replica {
   def receive(encryptedState: EncryptedState): Unit

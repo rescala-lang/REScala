@@ -1,9 +1,9 @@
 
-package encrdt.lattices
+package kofre.encrdt.lattices
 import kofre.Lattice
 
-import encrdt.causality.VectorClock
-import encrdt.lattices.CausalTimeTag.lwwTimeOrd
+import kofre.encrdt.causality.VectorClock
+import kofre.encrdt.lattices.CausalTimeTag.lwwTimeOrd
 
 import java.time.Instant
 import scala.math.PartialOrdering

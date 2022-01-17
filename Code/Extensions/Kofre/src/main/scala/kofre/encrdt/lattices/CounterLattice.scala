@@ -1,7 +1,7 @@
 
-package encrdt.lattices
+package kofre.encrdt.lattices
 import kofre.Lattice
-import encrdt.util.MapHelper.max
+import kofre.encrdt.util.MapHelper.max
 
 case class CounterLattice(positiveCounts: Map[String, Int] = Map(),
                           negativeCounts: Map[String, Int] = Map()) {

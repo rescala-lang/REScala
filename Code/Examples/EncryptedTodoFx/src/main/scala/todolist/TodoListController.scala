@@ -1,7 +1,7 @@
 
 package todolist
 
-import encrdt.sync.client_server.LOG
+import rescala.extra.encrdt.sync.client_server.LOG
 import javafx.collections.{FXCollections, ObservableList}
 import scalafx.application.Platform
 import scalafx.beans.property.ObjectProperty

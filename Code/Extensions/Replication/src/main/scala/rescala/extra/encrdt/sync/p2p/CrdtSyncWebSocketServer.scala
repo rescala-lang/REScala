@@ -1,8 +1,8 @@
 
-package encrdt.sync.p2p
+package rescala.extra.encrdt.sync.p2p
 
-import encrdt.sync.client_server.LOG
-import encrdt.sync.p2p.P2PConnectionManager.REPLICAID_HEADER
+import rescala.extra.encrdt.sync.p2p.P2PConnectionManager.REPLICAID_HEADER
+import rescala.extra.encrdt.sync.client_server.LOG
 import org.eclipse.jetty.server.{Server, ServerConnector}
 import org.eclipse.jetty.servlet.ServletContextHandler
 import org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer

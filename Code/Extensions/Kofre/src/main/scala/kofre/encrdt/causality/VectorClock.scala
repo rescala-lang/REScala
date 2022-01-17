@@ -1,7 +1,7 @@
 
-package encrdt.causality
+package kofre.encrdt.causality
 
-import encrdt.util.MapHelper.max
+import kofre.encrdt.util.MapHelper.max
 
 import scala.math.PartialOrdering
 

@@ -1,11 +1,11 @@
 
-package encrdt.benchmarks
+package benchmarks.encrdt
 
-import encrdt.benchmarks.Codecs.deltaAwlwwmapJsonCodec
-import encrdt.causality.DotStore.{Dot, DotSet}
-import encrdt.causality.LamportClock
-import encrdt.crdts.DeltaAddWinsLastWriterWinsMap
-import encrdt.encrypted.deltabased.{DecryptedDeltaGroup, EncryptedDeltaGroup, UntrustedReplica}
+import benchmarks.encrdt.Codecs.deltaAwlwwmapJsonCodec
+import kofre.encrdt.causality.DotStore.{Dot, DotSet}
+import kofre.encrdt.causality.LamportClock
+import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap
+import rescala.extra.encrdt.encrypted.deltabased.{DecryptedDeltaGroup, EncryptedDeltaGroup, UntrustedReplica}
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToArray, writeToString}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker

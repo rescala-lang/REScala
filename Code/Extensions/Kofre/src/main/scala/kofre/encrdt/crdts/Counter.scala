@@ -1,8 +1,8 @@
 
-package encrdt.crdts
+package kofre.encrdt.crdts
 import kofre.Lattice
 
-import encrdt.lattices.{CounterLattice}
+import kofre.encrdt.lattices.{CounterLattice}
 
 /**
  * Counter CRDT using states

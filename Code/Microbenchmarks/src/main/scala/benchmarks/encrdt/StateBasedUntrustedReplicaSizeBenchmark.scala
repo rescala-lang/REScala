@@ -1,11 +1,11 @@
 
-package encrdt.benchmarks
+package benchmarks.encrdt
 
-import encrdt.benchmarks.Codecs.deltaAwlwwmapJsonCodec
-import encrdt.causality.VectorClock
-import encrdt.crdts.DeltaAddWinsLastWriterWinsMap
-import encrdt.crdts.DeltaAddWinsLastWriterWinsMap.{StateType, timestampedValueLattice}
-import encrdt.encrypted.statebased.{DecryptedState, EncryptedState, UntrustedReplica}
+import benchmarks.encrdt.Codecs.deltaAwlwwmapJsonCodec
+import kofre.encrdt.causality.VectorClock
+import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap
+import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap.{StateType, timestampedValueLattice}
+import rescala.extra.encrdt.encrypted.statebased.{DecryptedState, EncryptedState, UntrustedReplica}
 
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToArray
 

@@ -1,10 +1,10 @@
 
 package todolist
 
-import encrdt.causality.DotStore.Dot
-import encrdt.crdts.DeltaAddWinsLastWriterWinsMap
-import encrdt.crdts.interfaces.MapCrdt
-import encrdt.sync.ConnectionManager
+import kofre.encrdt.causality.DotStore.Dot
+import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap
+import kofre.encrdt.crdts.interfaces.MapCrdt
+import rescala.extra.encrdt.sync.ConnectionManager
 import todolist.SyncedTodoListCrdt.StateType
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker

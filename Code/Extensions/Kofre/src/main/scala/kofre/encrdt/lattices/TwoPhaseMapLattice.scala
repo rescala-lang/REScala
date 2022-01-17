@@ -1,4 +1,4 @@
-package encrdt.lattices
+package kofre.encrdt.lattices
 import kofre.Lattice
 case class TwoPhaseMapLattice[K, V: Lattice](
     keys: TwoPhaseSetLattice[K] = TwoPhaseSetLattice[K](),

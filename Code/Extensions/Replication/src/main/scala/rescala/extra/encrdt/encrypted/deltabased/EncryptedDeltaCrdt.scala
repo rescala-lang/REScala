@@ -1,10 +1,10 @@
 
-package encrdt.encrypted.deltabased
+package rescala.extra.encrdt.encrypted.deltabased
 
-import encrdt.causality.DotStore.{Dot, DotSet}
-import encrdt.causality.{DotStore, LamportClock}
-import encrdt.crdts.interfaces.Crdt
-import encrdt.encrypted.deltabased.Codecs.dotSetJsonCodec
+import kofre.encrdt.causality.DotStore.{Dot, DotSet}
+import kofre.encrdt.causality.{DotStore, LamportClock}
+import kofre.encrdt.crdts.interfaces.Crdt
+import rescala.extra.encrdt.encrypted.deltabased.Codecs.dotSetJsonCodec
 import kofre.Lattice
 
 

@@ -1,5 +1,5 @@
 
-package encrdt.crdts.interfaces
+package kofre.encrdt.crdts.interfaces
 
 trait SetCrdt[T] {
   def add(element: T): Unit

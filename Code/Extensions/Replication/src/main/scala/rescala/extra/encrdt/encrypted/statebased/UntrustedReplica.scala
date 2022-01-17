@@ -1,13 +1,12 @@
 
-package encrdt.encrypted.statebased
+package rescala.extra.encrdt.encrypted.statebased
 
-import encrdt.causality.VectorClock
-import encrdt.causality.VectorClock.VectorClockOrdering
-
+import kofre.encrdt.causality.VectorClock
+import kofre.encrdt.causality.VectorClock.VectorClockOrdering
 import kofre.Lattice
-
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.Aead
+import rescala.extra.encrdt.encrypted.statebased.{DecryptedState, EncryptedState, Replica}
 
 abstract class UntrustedReplica(initialStates: Set[EncryptedState]) extends Replica {
   protected var stateStore: Set[EncryptedState] = initialStates

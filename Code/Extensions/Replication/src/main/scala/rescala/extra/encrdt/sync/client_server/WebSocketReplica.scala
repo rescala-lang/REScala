@@ -1,9 +1,8 @@
 
-package encrdt.sync.client_server
+package rescala.extra.encrdt.sync.client_server
 
-import encrdt.encrypted.statebased._
-import encrdt.sync.ConnectionManager
-
+import rescala.extra.encrdt.encrypted.statebased._
+import rescala.extra.encrdt.sync.ConnectionManager
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromString, writeToString}
 import com.google.crypto.tink.Aead
 import org.eclipse.jetty.server.{Server, ServerConnector}
@@ -12,6 +11,7 @@ import org.eclipse.jetty.websocket.api.{Session, WebSocketAdapter}
 import org.eclipse.jetty.websocket.client.WebSocketClient
 import org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer
 import org.eclipse.jetty.websocket.server.{JettyServerUpgradeRequest, JettyServerUpgradeResponse}
+import rescala.extra.encrdt.encrypted.statebased.{DecryptedState, EncryptedState, Replica, TrustedReplica}
 
 import java.net.URI
 import java.time.Duration
