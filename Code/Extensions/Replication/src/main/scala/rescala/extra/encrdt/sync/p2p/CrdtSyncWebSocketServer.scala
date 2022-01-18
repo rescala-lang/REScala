@@ -30,7 +30,7 @@ class CrdtSyncWebSocketServer[S](
 
       val remoteReplicaId = req.getHeader(REPLICAID_HEADER)
 
-      if (remoteReplicaId.isBlank) {
+      if (remoteReplicaId.forall(Character.isWhitespace)) {
         LOG.warn(s"ReplicaId header is blank, refusing connection from ${req.getRemoteSocketAddress}")
         null
       } else {
