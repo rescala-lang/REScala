@@ -2,6 +2,7 @@ package benchmarks.encrdt
 
 import benchmarks.encrdt.Codecs.deltaAwlwwmapJsonCodec
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToArray
+import kofre.Lattice.Operators
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap.{StateType, timestampedValueLattice}
 import kofre.primitives.VectorClock
@@ -32,14 +33,14 @@ object StateBasedUntrustedReplicaSizeBenchmark extends App {
     for (i <- 0 until totalElements - MAX_PARALLEL_UPDATES) {
       val entry = dummyKeyValuePairs(i)
       crdt.put(entry._1, entry._2)
-      versionVector = versionVector.advance("0")
+      versionVector = versionVector merge versionVector.inc("0")
     }
 
     for (parallelUpdates <- 1 to MAX_PARALLEL_UPDATES) {
       for (i <- (totalElements - MAX_PARALLEL_UPDATES) to (totalElements - parallelUpdates)) {
         val entry = dummyKeyValuePairs(i)
         crdt.put(entry._1, entry._2)
-        versionVector = versionVector.advance("0")
+        versionVector = versionVector merge versionVector.inc("0")
       }
 
       val commonState      = crdt.state
@@ -53,7 +54,7 @@ object StateBasedUntrustedReplicaSizeBenchmark extends App {
         val entry               = dummyKeyValuePairs(totalElements - parallelUpdates + replicaId - 1)
         val replicaSpecificCrdt = new DeltaAddWinsLastWriterWinsMap[String, String](replicaId.toString, commonState)
         replicaSpecificCrdt.put(entry._1, entry._2)
-        val replicaSpecificVersionVector = versionVector.advance(replicaId.toString)
+        val replicaSpecificVersionVector = versionVector merge versionVector.inc(replicaId.toString)
         val replicaSpecificDecState: DecryptedState[StateType[String, String]] =
           DecryptedState(replicaSpecificCrdt.state, replicaSpecificVersionVector)
         val replicaSpecificEncState = replicaSpecificDecState.encrypt(aead)

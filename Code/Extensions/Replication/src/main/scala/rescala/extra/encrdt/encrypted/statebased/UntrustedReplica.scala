@@ -5,7 +5,6 @@ import com.google.crypto.tink.Aead
 import kofre.Lattice
 import kofre.Lattice.Operators
 import kofre.primitives.VectorClock
-import kofre.primitives.VectorClock.VectorClockOrdering
 
 abstract class UntrustedReplica(initialStates: Set[EncryptedState]) extends Replica {
   protected var stateStore: Set[EncryptedState] = initialStates
@@ -23,14 +22,14 @@ abstract class UntrustedReplica(initialStates: Set[EncryptedState]) extends Repl
   }
 
   def receive(newState: EncryptedState): Unit = {
-    if (!VectorClockOrdering.lteq(newState.versionVector, versionVector)) {
+    if (! (newState.versionVector <= versionVector)) {
       // Update VersionVector
       versionVector = versionVector.merge(newState.versionVector)
       // newState is actually new (i.e., contains new updates)
       disseminate(newState)
     } else {
       // received state may already be subsumed by some state in the stateStore
-      if (stateStore.exists(oldState => VectorClockOrdering.lteq(newState.versionVector, oldState.versionVector))) {
+      if (stateStore.exists(oldState => newState.versionVector <= oldState.versionVector)) {
         // The newState is already subsumed by a single state in the stateStore
         return
       }
@@ -38,7 +37,7 @@ abstract class UntrustedReplica(initialStates: Set[EncryptedState]) extends Repl
 
     stateStore = leastUpperBound(
       stateStore.filterNot(oldState =>
-        VectorClockOrdering.lteq(oldState.versionVector, newState.versionVector)
+        oldState.versionVector <= newState.versionVector
       ) + newState
     )
 
@@ -55,7 +54,7 @@ abstract class UntrustedReplica(initialStates: Set[EncryptedState]) extends Repl
         .foldLeft(VectorClock.zero) { case (a: VectorClock, b: VectorClock) => a.merge(b) }
 
       // Check if this state is subsumed by the merged state of all other values
-      VectorClockOrdering.lteq(state.versionVector, mergeOfAllOtherVersionVectors)
+      state.versionVector <= mergeOfAllOtherVersionVectors
     }
 
     val indexedStates = states.zipWithIndex
@@ -85,12 +84,3 @@ abstract class UntrustedReplica(initialStates: Set[EncryptedState]) extends Repl
   }
 }
 
-object UntrustedReplica {
-  object encStatePOrd extends PartialOrdering[EncryptedState] {
-    override def tryCompare(x: EncryptedState, y: EncryptedState): Option[Int] =
-      VectorClockOrdering.tryCompare(x.versionVector, y.versionVector)
-
-    override def lteq(x: EncryptedState, y: EncryptedState): Boolean =
-      VectorClockOrdering.lteq(x.versionVector, y.versionVector)
-  }
-}

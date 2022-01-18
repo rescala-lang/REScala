@@ -19,7 +19,7 @@ abstract class TrustedReplica[T](val localReplicaId: String, private val aead: A
   }
 
   def stateChanged(state: T): Unit = {
-    versionVector = versionVector.advance(localReplicaId)
+    versionVector = versionVector merge versionVector.inc(localReplicaId)
     val encryptedState = DecryptedState(state, versionVector).encrypt(aead)
     disseminate(encryptedState)
   }

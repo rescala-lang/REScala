@@ -1,22 +1,21 @@
 package kofre.encrdt.crdts
 import kofre.Lattice
 import kofre.encrdt.crdts.AddWinsLastWriterWinsMap.LatticeType
-import kofre.encrdt.crdts.interfaces.MapCrdt
 import kofre.encrdt.lattices.{AddWinsMapLattice, CausalTimeTag, LastWriterWinsRegisterLattice}
 
 class AddWinsLastWriterWinsMap[K, V](
     val replicaId: String,
     initialState: AddWinsMapLattice[K, LastWriterWinsRegisterLattice[V, CausalTimeTag]] =
       AddWinsMapLattice[K, LastWriterWinsRegisterLattice[V, CausalTimeTag]]()
-) extends MapCrdt[K, V] {
+){
 
   private var _state = initialState
 
   def state: LatticeType[K, V] = _state
 
-  override def get(key: K): Option[V] = _state.values.get(key).map(reg => reg.value)
+  def get(key: K): Option[V] = _state.values.get(key).map(reg => reg.value)
 
-  override def put(key: K, value: V): Unit = {
+  def put(key: K, value: V): Unit = {
     val timeStamp = _state.values.get(key) match {
       case Some(register) => register.timestamp.advance(replicaId)
       case None           => CausalTimeTag().advance(replicaId)
@@ -25,9 +24,9 @@ class AddWinsLastWriterWinsMap[K, V](
     _state = _state.added(key, LastWriterWinsRegisterLattice(value, timeStamp), replicaId)
   }
 
-  override def remove(key: K): Unit = _state = _state.removed(key)
+  def remove(key: K): Unit = _state = _state.removed(key)
 
-  override def values: Map[K, V] =
+  def values: Map[K, V] =
     _state.values.map { case (k, LastWriterWinsRegisterLattice(v, _)) => k -> v }
 
   def merge(otherState: LatticeType[K, V]): Unit = {

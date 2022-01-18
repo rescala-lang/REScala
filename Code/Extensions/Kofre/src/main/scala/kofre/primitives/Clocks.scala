@@ -11,11 +11,6 @@ case class LamportClock(replicaId: Id, time: Long) {
 }
 
 case class VectorClock(timestamps: Map[Id, Long]) {
-
-  def advance(replicaId: Id): VectorClock = VectorClock(
-    timestamps = timestamps + (replicaId -> (timestamps.getOrElse(replicaId, 0L) + 1L))
-  )
-
   def timeOf(replicaId: Id): Long = timestamps.getOrElse(replicaId, 0)
 
   def clockOf(replicaId: Id): LamportClock = LamportClock(replicaId, timeOf(replicaId))
@@ -23,6 +18,12 @@ case class VectorClock(timestamps: Map[Id, Long]) {
   def inc(id: Id): VectorClock    = VectorClock(HashMap(id -> (timestamps.getOrElse(id, 0L) + 1)))
   def <=(o: VectorClock): Boolean = timestamps.forall((k, v) => v <= o.timestamps.getOrElse(k, 0L))
   def <(o: VectorClock): Boolean  = this <= o && timestamps.exists((k, v) => v < o.timestamps.getOrElse(k, 0L))
+  def tryCompare(y: VectorClock): Option[Int] = {
+    if this < y then return Some(-1)
+    if y < this then return Some(1)
+    if this <= y && y <= this then return Some(0)
+    None
+  }
 }
 
 object VectorClock {
@@ -35,12 +36,7 @@ object VectorClock {
     Lattice.derived
 
   implicit object VectorClockOrdering extends PartialOrdering[VectorClock] {
-    override def tryCompare(x: VectorClock, y: VectorClock): Option[Int] = {
-      if x < y then return Some(-1)
-      if y < x then return Some(1)
-      if x <= y && y <= x then return Some(0)
-      None
-    }
+    override def tryCompare(x: VectorClock, y: VectorClock): Option[Int] = x.tryCompare(y)
 
     override def lteq(x: VectorClock, y: VectorClock): Boolean = x <= y
   }

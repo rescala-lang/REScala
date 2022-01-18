@@ -5,19 +5,18 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import com.google.crypto.tink.Aead
 import kofre.Lattice
 import kofre.Lattice.Operators
-import kofre.primitives.VectorClock
+import kofre.primitives.{MultiValueRegister, VectorClock}
 import kofre.encrdt.crdts.interfaces.Crdt
-import kofre.encrdt.lattices.MultiValueRegisterLattice
 import rescala.extra.encrdt.encrypted.statebased.DecryptedState.vectorClockJsonCodec
 
 import scala.util.{Failure, Success, Try}
 
-class EncryptedCrdt(initialState: MultiValueRegisterLattice[EncryptedState] = MultiValueRegisterLattice(Map.empty))
-    extends Crdt[MultiValueRegisterLattice[EncryptedState]] {
+class EncryptedCrdt(initialState: MultiValueRegister[EncryptedState] = MultiValueRegister(Map.empty))
+    extends Crdt[MultiValueRegister[EncryptedState]] {
 
   private var _state = initialState
 
-  def state: MultiValueRegisterLattice[EncryptedState] = _state
+  def state: MultiValueRegister[EncryptedState] = _state
 
   def currentTime: VectorClock =
     if (state.versions.isEmpty) VectorClock.zero
@@ -38,8 +37,8 @@ class EncryptedCrdt(initialState: MultiValueRegisterLattice[EncryptedState] = Mu
       }
     })
 
-  override def merge(other: MultiValueRegisterLattice[EncryptedState]): Unit = {
-    _state = Lattice[MultiValueRegisterLattice[EncryptedState]].merge(_state, other)
+  override def merge(other: MultiValueRegister[EncryptedState]): Unit = {
+    _state = Lattice[MultiValueRegister[EncryptedState]].merge(_state, other)
   }
 }
 

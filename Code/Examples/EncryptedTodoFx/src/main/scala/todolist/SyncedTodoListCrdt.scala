@@ -2,7 +2,6 @@ package todolist
 
 import kofre.encrdt.causality.DotStore.Dot
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap
-import kofre.encrdt.crdts.interfaces.MapCrdt
 import rescala.extra.encrdt.sync.ConnectionManager
 import todolist.SyncedTodoListCrdt.StateType
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter}
@@ -18,7 +17,7 @@ import scala.concurrent.duration.{DurationInt, MILLISECONDS}
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Try
 
-class SyncedTodoListCrdt(val replicaId: String) extends MapCrdt[UUID, TodoEntry] {
+class SyncedTodoListCrdt(val replicaId: String) {
 
   private val crdt: DeltaAddWinsLastWriterWinsMap[UUID, TodoEntry] =
     new DeltaAddWinsLastWriterWinsMap[UUID, TodoEntry](replicaId)
@@ -70,10 +69,10 @@ class SyncedTodoListCrdt(val replicaId: String) extends MapCrdt[UUID, TodoEntry]
     crdtExecutorService.awaitTermination(500, MILLISECONDS)
   }
 
-  override def get(key: UUID): Option[TodoEntry] =
+  def get(key: UUID): Option[TodoEntry] =
     runInCrdtExecContext(() => crdt.get(key))
 
-  override def put(key: UUID, value: TodoEntry): Unit = {
+  def put(key: UUID, value: TodoEntry): Unit = {
     val newState = runInCrdtExecContext(() => {
       crdt.put(key, value)
       crdt.state
@@ -85,14 +84,14 @@ class SyncedTodoListCrdt(val replicaId: String) extends MapCrdt[UUID, TodoEntry]
     }
   }
 
-  override def remove(key: UUID): Unit = {
+  def remove(key: UUID): Unit = {
     runInCrdtExecContext(() => {
       crdt.remove(key)
       connectionManager.stateChanged(crdt.state)
     })
   }
 
-  override def values: Map[UUID, TodoEntry] =
+  def values: Map[UUID, TodoEntry] =
     runInCrdtExecContext(() => crdt.values)
 
   def remoteAddresses: Set[String] = connectionManager.remoteAddresses

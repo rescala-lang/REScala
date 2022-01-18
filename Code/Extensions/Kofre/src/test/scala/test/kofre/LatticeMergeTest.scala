@@ -1,12 +1,14 @@
 package test.kofre
 
+import kofre.primitives.{LastWriterWins, MultiValueRegister, VectorClock}
+import kofre.sets.ORSet
+import kofre.{IdUtil, Lattice}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import kofre.{IdUtil, Lattice}
 import test.kofre.DataGenerator.{*, given}
-import kofre.primitives.{LastWriterWins, VectorClock}
-import kofre.sets.ORSet
+
+import javax.swing.plaf.multi.MultiListUI
 
 object DataGenerator {
 
@@ -14,7 +16,7 @@ object DataGenerator {
 
   given arbVersion: Arbitrary[VectorClock] = Arbitrary(for {
     ids: Set[IdUtil.Id] <- Gen.nonEmptyListOf(arbId.arbitrary).map(_.toSet)
-    value: List[Long]    <- Gen.listOfN(ids.size, Gen.oneOf(0L to 100L))
+    value: List[Long]   <- Gen.listOfN(ids.size, Gen.oneOf(0L to 100L))
   } yield VectorClock.fromMap(ids.zip(value).toMap))
 
   given arbLww: Arbitrary[LastWriterWins[Int]] = Arbitrary(
@@ -34,11 +36,19 @@ object DataGenerator {
     removed.foldLeft(a)((s, v) => Lattice.merge(s, s.remove(v)))
   })
 
+  given arbMVR[A: Arbitrary]: Arbitrary[MultiValueRegister[A]] =
+    val pairgen = for {
+      version <- arbVersion.arbitrary
+      value   <- Arbitrary.arbitrary[A]
+    } yield (version, value)
+    val map = Gen.listOf(pairgen).map(vs => MultiValueRegister(vs.toMap))
+    Arbitrary(map)
 }
 
-class VersionLattice extends LatticeMergeTest[VectorClock]
-class LWWLatice      extends LatticeMergeTest[LastWriterWins[Int]]
-class OrSetLatice    extends LatticeMergeTest[ORSet[Int]]
+class VectorClockLattice extends LatticeMergeTest[VectorClock]
+class LWWLatice          extends LatticeMergeTest[LastWriterWins[Int]]
+class OrSetLatice        extends LatticeMergeTest[ORSet[Int]]
+class MVRLattice         extends LatticeMergeTest[MultiValueRegister[Int]]
 
 abstract class LatticeMergeTest[A: Arbitrary: Lattice] extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 

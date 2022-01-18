@@ -3,7 +3,6 @@ import kofre.Lattice
 import kofre.encrdt.causality.DotStore.DotFun
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap.{DeltaAddWinsLastWriterWinsMapLattice, timestampedValueLattice}
 import kofre.encrdt.crdts.DeltaAddWinsMap.DeltaAddWinsMapLattice
-import kofre.encrdt.crdts.interfaces.MapCrdt
 import kofre.encrdt.lattices.LastWriterWinsTagLattice.lwwLattice
 import kofre.primitives.LamportClock
 
@@ -13,7 +12,7 @@ class DeltaAddWinsLastWriterWinsMap[K, V](
     val replicaId: String,
     initialState: DeltaAddWinsLastWriterWinsMapLattice[K, V] = DeltaAddWinsLastWriterWinsMap.bottom[K, V],
     initialDeltas: Vector[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = Vector()
-) extends MapCrdt[K, V] {
+) {
   var _state: DeltaAddWinsLastWriterWinsMapLattice[K, V]          = initialState
   var _deltas: Vector[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = initialDeltas
 
@@ -21,14 +20,14 @@ class DeltaAddWinsLastWriterWinsMap[K, V](
 
   def deltas: Vector[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = _deltas
 
-  override def get(key: K): Option[V] =
+  def get(key: K): Option[V] =
     _state.dotStore
       .getOrElse(key, Set.empty[(_, (V, (Instant, String)))])
       .map(_._2)
       .maxByOption(_._2)
       .map(_._1)
 
-  override def put(key: K, value: V): Unit =
+  def put(key: K, value: V): Unit =
     mutate(
       DeltaAddWinsMap.deltaMutate(
         key,
@@ -48,10 +47,10 @@ class DeltaAddWinsLastWriterWinsMap[K, V](
     delta
   }
 
-  override def remove(key: K): Unit =
+  def remove(key: K): Unit =
     mutate(DeltaAddWinsMap.deltaRemove(key, _state))
 
-  override def values: Map[K, V] =
+  def values: Map[K, V] =
     _state.dotStore.map { case (k, mvReg) =>
       k -> mvReg.values.maxBy(_._2)._1
     }

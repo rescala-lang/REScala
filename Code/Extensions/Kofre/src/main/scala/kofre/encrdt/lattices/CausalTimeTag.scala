@@ -1,5 +1,6 @@
 package kofre.encrdt.lattices
 import kofre.Lattice
+import kofre.Lattice.Operators
 import kofre.encrdt.lattices.CausalTimeTag.lwwTimeOrd
 import kofre.primitives.VectorClock
 
@@ -12,7 +13,7 @@ case class CausalTimeTag(
     replicaId: String = ""
 ) extends Ordered[CausalTimeTag] {
 
-  def advance(rId: String): CausalTimeTag = CausalTimeTag(vectorClock.advance(rId), Instant.now(), rId)
+  def advance(rId: String): CausalTimeTag = CausalTimeTag(vectorClock merge vectorClock.inc(rId), Instant.now(), rId)
 
   def toTuple = (vectorClock, utc, replicaId)
 

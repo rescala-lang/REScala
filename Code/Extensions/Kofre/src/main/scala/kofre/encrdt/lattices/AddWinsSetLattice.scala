@@ -15,7 +15,7 @@ case class AddWinsSetLattice[T](
   }
 
   def added(value: T, replicaId: String): AddWinsSetLattice[T] = {
-    val clocksAfterAdd   = clocks.advance(replicaId)
+    val clocksAfterAdd   = clocks merge clocks.inc(replicaId)
     val newLocalClock    = clocksAfterAdd.clockOf(replicaId)
     val newElem          = (value, newLocalClock)
     val elementsAfterAdd = elements.filterNot(_._1 == value) + newElem
