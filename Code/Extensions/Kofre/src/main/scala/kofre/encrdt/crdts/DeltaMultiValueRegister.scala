@@ -13,7 +13,7 @@ object DeltaMultiValueRegister {
       register: DeltaMultiValueRegisterLattice[V]
   ): DeltaMultiValueRegisterLattice[V] = {
 
-    val dot = register.causalContext.clockOf(replicaId).advance(replicaId)
+    val dot = register.causalContext.clockOf(replicaId).advance
     Causal(
       Map(dot -> value),
       register.dotStore.keySet + dot

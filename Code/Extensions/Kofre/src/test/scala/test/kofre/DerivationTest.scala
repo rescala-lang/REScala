@@ -1,5 +1,5 @@
 package test.kofre
-import kofre.primitives.Version
+import kofre.primitives.VectorClock
 import kofre.{IdUtil, Lattice}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalacheck.{Arbitrary, Gen}

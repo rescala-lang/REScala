@@ -49,7 +49,7 @@ object DeltaAddWinsSet {
     */
   def deltaAdd[E](replicaId: String, element: E, set: DeltaAddWinsSetLattice[E]): DeltaAddWinsSetLattice[E] = {
 
-    val newDot                           = set.causalContext.clockOf(replicaId).advance(replicaId)
+    val newDot                           = set.causalContext.clockOf(replicaId).advance
     val deltaDotStore: DotMap[E, DotSet] = Map(element -> Set(newDot))
     val deltaCausalContext = CausalContext(set.dotStore.getOrElse(element, DotStore[DotSet].bottom) + newDot)
     Causal(deltaDotStore, deltaCausalContext)

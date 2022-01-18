@@ -5,17 +5,17 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import kofre.{IdUtil, Lattice}
 import test.kofre.DataGenerator.{*, given}
-import kofre.primitives.{LastWriterWins, Version}
+import kofre.primitives.{LastWriterWins, VectorClock}
 import kofre.sets.ORSet
 
 object DataGenerator {
 
   given arbId: Arbitrary[IdUtil.Id] = Arbitrary(Gen.oneOf('a' to 'g').map(_.toString))
 
-  given arbVersion: Arbitrary[Version] = Arbitrary(for {
+  given arbVersion: Arbitrary[VectorClock] = Arbitrary(for {
     ids: Set[IdUtil.Id] <- Gen.nonEmptyListOf(arbId.arbitrary).map(_.toSet)
-    value: List[Int]    <- Gen.listOfN(ids.size, Gen.oneOf(0 to 100))
-  } yield Version.fromMap(ids.zip(value).toMap))
+    value: List[Long]    <- Gen.listOfN(ids.size, Gen.oneOf(0L to 100L))
+  } yield VectorClock.fromMap(ids.zip(value).toMap))
 
   given arbLww: Arbitrary[LastWriterWins[Int]] = Arbitrary(
     for {
@@ -36,7 +36,7 @@ object DataGenerator {
 
 }
 
-class VersionLattice extends LatticeMergeTest[Version]
+class VersionLattice extends LatticeMergeTest[VectorClock]
 class LWWLatice      extends LatticeMergeTest[LastWriterWins[Int]]
 class OrSetLatice    extends LatticeMergeTest[ORSet[Int]]
 

@@ -1,26 +1,22 @@
 package kofre.primitives
 
-import kofre.Lattice
 import kofre.IdUtil.Id
+import kofre.Lattice
 
 case class PosNegCounter(positiveCounts: Map[Id, Int], negativeCounts: Map[Id, Int]) {
 
-  def updated(replicaId: Id, delta: Int): PosNegCounter = {
-    if (delta > 0) this.copy(
-      positiveCounts = positiveCounts.updatedWith(replicaId)(value => Some(value.getOrElse(0) + delta))
-    )
-    else if (delta < 0) this.copy(
-      negativeCounts = negativeCounts.updatedWith(replicaId)(value => Some(value.getOrElse(0) + delta.abs))
-    )
-    else this
+  def add(replicaId: Id, delta: Int): PosNegCounter = {
+    if (delta > 0) PosNegCounter(Map(replicaId -> (positiveCounts.getOrElse(replicaId, 0) + delta)), Map.empty)
+    else if (delta < 0) PosNegCounter(Map.empty, Map(replicaId -> (positiveCounts.getOrElse(replicaId, 0) - delta)))
+    else PosNegCounter.zero
   }
 
-  def query(): Int = positiveCounts.values.sum - negativeCounts.values.sum
+  def value: Int = positiveCounts.values.sum - negativeCounts.values.sum
 }
 
 object PosNegCounter {
 
-  def zero: PosNegCounter = PosNegCounter(Map.empty, Map.empty)
+  val zero: PosNegCounter = PosNegCounter(Map.empty, Map.empty)
 
   given lattice: Lattice[PosNegCounter] =
     given Lattice[Int] = math.max _

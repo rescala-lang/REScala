@@ -29,7 +29,7 @@ abstract class TrustedReplica[T](val replicaId: String, val crdt: Crdt[T], priva
 
     def nextDotImpl: DotStore.Dot = {
       val returnedVal = container
-      container = container.advance(replicaId)
+      container = container.advance
       returnedVal
     }
 

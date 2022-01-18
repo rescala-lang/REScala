@@ -29,7 +29,7 @@ object DeltaStateBasedUntrustedReplicaSizeBenchmark extends App with DeltaStateU
 
   for (i <- 0 until elementsInCommon) {
     val entry = dummyKeyValuePairs(i)
-    benchmarkSharedCurrentDot = benchmarkSharedCurrentDot.advance("0")
+    benchmarkSharedCurrentDot = benchmarkSharedCurrentDot.advance
     val delta    = benchmarkSharedCrdt.putDelta(entry._1, entry._2)
     val encDelta = DecryptedDeltaGroup(delta, Set(benchmarkSharedCurrentDot)).encrypt(aead)
     benchmarkSharedUntrustedReplica.receive(encDelta)
@@ -44,7 +44,7 @@ object DeltaStateBasedUntrustedReplicaSizeBenchmark extends App with DeltaStateU
     {
       for (i <- elementsInCommon until (totalElements - parallelStates)) {
         val entry = dummyKeyValuePairs(i)
-        localDot = localDot.advance("0")
+        localDot = localDot.advance
         val delta    = crdt.putDelta(entry._1, entry._2)
         val encDelta = DecryptedDeltaGroup(delta, Set(localDot)).encrypt(aead)
         untrustedReplica.receive(encDelta)
@@ -97,7 +97,7 @@ object DeltaStateBasedUntrustedReplicaSizeBenchmarkLinearScaling extends App
   for (i <- 0 until totalElements) {
     val entry = dummyKeyValuePairs(i)
     val delta = crdt.putDelta(entry._1, entry._2)
-    currentDot = currentDot.advance("0")
+    currentDot = currentDot.advance
     allDots = allDots + currentDot
     val encDelta = DecryptedDeltaGroup(delta, Set(currentDot)).encrypt(aead)
     untrustedReplica.receive(encDelta)
