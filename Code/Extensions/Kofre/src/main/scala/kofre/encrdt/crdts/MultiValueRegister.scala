@@ -1,5 +1,6 @@
 package kofre.encrdt.crdts
 import kofre.Lattice
+import kofre.Lattice.Operators
 import kofre.encrdt.causality.VectorClock
 import kofre.encrdt.lattices.MultiValueRegisterLattice
 
@@ -8,7 +9,7 @@ class MultiValueRegister[T](initialState: MultiValueRegisterLattice[T], val repl
 
   def currentTime: VectorClock = {
     if (state.versions.isEmpty) VectorClock()
-    else state.versions.keys.reduce((a, b) => a.merged(b))
+    else state.versions.keys.reduce((a, b) => a.merge(b))
   }
 
   def state: MultiValueRegisterLattice[T] = _state

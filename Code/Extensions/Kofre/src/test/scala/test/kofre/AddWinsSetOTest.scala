@@ -6,7 +6,7 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import kofre.IdUtil
 import kofre.Lattice.merge
 import kofre.dotbased.{AddWinsSetO, Context}
-import kofre.Lattice.merge
+import kofre.Lattice.Operators
 
 import scala.util.Random
 

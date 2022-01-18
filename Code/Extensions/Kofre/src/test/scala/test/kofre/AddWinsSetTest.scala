@@ -4,7 +4,7 @@ import org.scalacheck.Arbitrary
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import kofre.dotbased.{AddWinsSet, Dot, DotStoreLattice}
-import kofre.Lattice.merge
+import kofre.Lattice.Operators
 
 import scala.util.Random
 

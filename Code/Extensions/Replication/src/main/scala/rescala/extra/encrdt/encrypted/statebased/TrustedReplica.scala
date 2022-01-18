@@ -3,6 +3,7 @@ package rescala.extra.encrdt.encrypted.statebased
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.Aead
 import kofre.encrdt.causality.VectorClock
+import kofre.Lattice.Operators
 
 abstract class TrustedReplica[T](val localReplicaId: String, private val aead: Aead)(implicit
     val stateJsonCodec: JsonValueCodec[T]
@@ -12,7 +13,7 @@ abstract class TrustedReplica[T](val localReplicaId: String, private val aead: A
 
   def receive(encryptedState: EncryptedState): Unit = {
     val decryptedState: DecryptedState[T] = encryptedState.decrypt(aead)
-    versionVector = versionVector.merged(decryptedState.versionVector)
+    versionVector = versionVector.merge(decryptedState.versionVector)
     // TODO: synchronize
     merge(decryptedState.state)
   }

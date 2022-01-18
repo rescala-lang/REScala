@@ -1,15 +1,12 @@
 package kofre.encrdt.causality
 
-import kofre.encrdt.util.MapHelper.max
+import kofre.Lattice
 
 import scala.math.PartialOrdering
 
 case class VectorClock(timestamps: Map[String, Long] = Map()) {
-  def merged(other: VectorClock): VectorClock = VectorClock(max(timestamps, other.timestamps))
 
-  def merged(other: Map[String, Long]): VectorClock = VectorClock(max(timestamps, other))
-
-  def merged(other: LamportClock): VectorClock = merged(Map(other.replicaId -> other.time))
+  private given Lattice[Long] = (l,r) => math.max(l, r)
 
   def advance(replicaId: String): VectorClock = VectorClock(
     timestamps = timestamps + (replicaId -> (timestamps.getOrElse(replicaId, 0L) + 1L))
@@ -18,11 +15,14 @@ case class VectorClock(timestamps: Map[String, Long] = Map()) {
   def timeOf(replicaId: String): Long = timestamps.getOrElse(replicaId, 0)
 
   def clockOf(replicaId: String): LamportClock = LamportClock(timeOf(replicaId), replicaId)
-
-  def contains(timestamp: LamportClock): Boolean = timestamps.getOrElse(timestamp.replicaId, 0L) >= timestamp.time
 }
 
 object VectorClock {
+
+  given lattice: Lattice[VectorClock] =
+    given Lattice[Long] = _ max _
+    Lattice.derived
+
   implicit object VectorClockOrdering extends PartialOrdering[VectorClock] {
     override def tryCompare(x: VectorClock, y: VectorClock): Option[Int] = {
       if (x.timestamps.isEmpty) return Some(0)

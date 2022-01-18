@@ -1,5 +1,6 @@
 package kofre.encrdt.lattices
 import kofre.Lattice
+import kofre.Lattice.Operators
 import kofre.encrdt.causality.{LamportClock, VectorClock}
 
 case class AddWinsSetLattice[T](
@@ -49,7 +50,7 @@ object AddWinsSetLattice {
       }
 
       val cleanedElements = allElements -- duplicates
-      val receivedSummary = left.clocks.merged(right.clocks)
+      val receivedSummary = left.clocks.merge(right.clocks)
 
       AddWinsSetLattice(cleanedElements, receivedSummary)
     }

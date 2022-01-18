@@ -15,6 +15,6 @@ given Arbitrary[SomeProductType[NotInt, NotInt]] = Arbitrary(for {
   bs: NotInt <- Gen.posNum[Int]
 } yield SomeProductType(as, bs))
 
-given Lattice[NotInt] = math.max
+given Lattice[NotInt] = math.max _
 
 class DerivedLattice extends LatticeMergeTest[SomeProductType[NotInt, NotInt]]

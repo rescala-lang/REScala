@@ -16,12 +16,20 @@ trait Lattice[A]:
     */
   def merge(left: A, right: A): A
 
+
+
+
+
 object Lattice {
   def apply[A](implicit ev: Lattice[A]): Lattice[A] = ev
   def merge[A: Lattice](left: A, right: A): A       = apply[A].merge(left, right)
 
-  extension [A: Lattice](left: A)
-    @targetName("mergeSyntax")
+  //extension [A: Lattice](left: A)
+  //  @targetName("mergeSyntax")
+  //  def merge(right: A): A = Lattice.merge(left, right)
+
+  // this seems to have better 2.13 compatibility
+  implicit class Operators[A: Lattice](left: A):
     def merge(right: A): A = Lattice.merge(left, right)
 
   // /////////////// common instances below ///////////////

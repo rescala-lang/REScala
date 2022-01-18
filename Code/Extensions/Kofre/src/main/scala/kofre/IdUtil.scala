@@ -7,7 +7,13 @@ object IdUtil {
 
   type Id = String
 
+  object Id:
+    given ordering: Ordering[Id] = summon[Ordering[String]]
+
   val random = scala.util.Random()
+
+  def predefined(s: String): Id = s
+  def zero: Id = ""
 
   /** Generates unique identifiers for use by CRDTs */
   def genId(): Id =

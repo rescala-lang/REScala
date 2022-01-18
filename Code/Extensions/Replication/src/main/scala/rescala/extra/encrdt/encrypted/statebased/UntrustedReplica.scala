@@ -5,6 +5,7 @@ import com.google.crypto.tink.Aead
 import kofre.Lattice
 import kofre.encrdt.causality.VectorClock
 import kofre.encrdt.causality.VectorClock.VectorClockOrdering
+import kofre.Lattice.Operators
 
 abstract class UntrustedReplica(initialStates: Set[EncryptedState]) extends Replica {
   protected var stateStore: Set[EncryptedState] = initialStates
@@ -12,7 +13,7 @@ abstract class UntrustedReplica(initialStates: Set[EncryptedState]) extends Repl
   protected var versionVector: VectorClock = _
   versionVector = {
     if (initialStates.isEmpty) VectorClock()
-    else initialStates.map(_.versionVector).reduce((l, r) => l.merged(r))
+    else initialStates.map(_.versionVector).reduce((l, r) => l.merge(r))
   }
 
   def decrypt[T: Lattice](aead: Aead)(implicit tCodec: JsonValueCodec[T]): DecryptedState[T] = {
@@ -24,7 +25,7 @@ abstract class UntrustedReplica(initialStates: Set[EncryptedState]) extends Repl
   def receive(newState: EncryptedState): Unit = {
     if (!VectorClockOrdering.lteq(newState.versionVector, versionVector)) {
       // Update VersionVector
-      versionVector = versionVector.merged(newState.versionVector)
+      versionVector = versionVector.merge(newState.versionVector)
       // newState is actually new (i.e., contains new updates)
       disseminate(newState)
     } else {
@@ -51,7 +52,7 @@ abstract class UntrustedReplica(initialStates: Set[EncryptedState]) extends Repl
     def subsetIsUpperBound(subset: Set[(EncryptedState, Int)], state: EncryptedState): Boolean = {
       val mergeOfAllOtherVersionVectors = subset
         .map(_._1.versionVector)
-        .foldLeft(VectorClock()) { case (a: VectorClock, b: VectorClock) => a.merged(b) }
+        .foldLeft(VectorClock()) { case (a: VectorClock, b: VectorClock) => a.merge(b) }
 
       // Check if this state is subsumed by the merged state of all other values
       VectorClockOrdering.lteq(state.versionVector, mergeOfAllOtherVersionVectors)
