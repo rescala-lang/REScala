@@ -15,7 +15,7 @@ case class CausalTimeTag(
 
   def advance(rId: String): CausalTimeTag = CausalTimeTag(vectorClock merge vectorClock.inc(rId), Instant.now(), rId)
 
-  def toTuple = (vectorClock, utc, replicaId)
+  def toTuple: (VectorClock, Instant, String) = (vectorClock, utc, replicaId)
 
   override def compare(that: CausalTimeTag): Int = lwwTimeOrd.compare(this, that)
 }
@@ -31,7 +31,7 @@ object CausalTimeTag {
   }
 
   // TODO: max(vc1,vc2), max(utc1,utc2), max(rId1,rid2) would also be a plausible LUB
-  implicit def semiLattice: Lattice[CausalTimeTag] = (l, r) =>
+  given lattice: Lattice[CausalTimeTag] = (l, r) =>
     if (l > r) l
     else if (l < r) r
     else if (l == r) l
