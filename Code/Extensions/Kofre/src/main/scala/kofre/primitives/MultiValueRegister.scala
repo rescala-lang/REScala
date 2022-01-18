@@ -31,28 +31,14 @@ object MultiValueRegister {
     }
 
   @tailrec
-  private def parallelVersionSubset(list: List[VectorClock], acc: List[VectorClock]): List[VectorClock] =
-    list match {
-      case head :: Nil => head :: acc
-      case head :: tail =>
-        val newTailWithComp = tail
-          .map(other => other -> head.tryCompare(other))
-          .filter {
-            case (_, None)       => true
-            case (_, Some(comp)) => comp < 0 // head smaller < tail => tail contains head
-          }
-
-        val headIsContainedInTail = newTailWithComp.exists {
-          case (_, Some(comp)) => comp < 0
-          case _               => false
-        }
-
-        var newAcc = acc
-        if (!headIsContainedInTail) {
-          newAcc = head :: acc
-        }
-
-        parallelVersionSubset(newTailWithComp.map(_._1), newAcc)
+  def parallelVersionSubset(remaining: List[VectorClock], acc: List[VectorClock]): List[VectorClock] =
+    remaining match
       case Nil => acc
-    }
+      case h :: tail =>
+        // remove smaller ones from the list we operate on
+        val rem =  tail.filterNot(e => e <= h)
+        // remove smaller ones from acc
+        val nacc = acc.filterNot(e => e <= h)
+        // continue
+        parallelVersionSubset(rem, h :: nacc)
 }
