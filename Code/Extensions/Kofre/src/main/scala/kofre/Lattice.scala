@@ -52,7 +52,7 @@ object Lattice {
       case p: Mirror.ProductOf[T] =>
         val lattices = LatticeDeriveImpl.summonList[m.MirroredElemTypes]
         // convert to array to make lookup during merge faster
-        LatticeDeriveImpl.mergeProduct(p, lattices.toArray.asInstanceOf[Seq[Lattice[Any]]])
+        LatticeDeriveImpl.mergeProduct(p, lattices.toArray.asInstanceOf[Array[Lattice[Any]]])
       case s: Mirror.SumOf[T] => scala.compiletime.error("cannot derive Lattices for sum types")
 
 }
