@@ -3,8 +3,8 @@ package benchmarks.encrdt
 import benchmarks.encrdt.Codecs.awlwwmapJsonCodec
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToArray
 import com.google.crypto.tink.Aead
-import kofre.encrdt.causality.VectorClock
 import kofre.encrdt.crdts.AddWinsLastWriterWinsMap
+import kofre.primitives.VectorClock
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
 import rescala.extra.encrdt.encrypted.statebased.DecryptedState.vectorClockJsonCodec
@@ -82,7 +82,7 @@ class AWLWWMapBenchmark {
       putBenchmarkState: PutManyBenchmarkState,
       aeadState: AeadState
   ): Unit = {
-    var versionVector: VectorClock = VectorClock()
+    var versionVector: VectorClock = VectorClock.zero
     val crdt                       = new AddWinsLastWriterWinsMap[String, String](replicaId)
     val aead                       = aeadState.aead
 
@@ -130,7 +130,7 @@ class SerializeOnlyBenchmarkState {
   def setupCrdtState(): Unit = {
     val dummyKeyValuePairs = Helper.dummyKeyValuePairs(crdtSizeInElements)
 
-    var versionVector: VectorClock = VectorClock()
+    var versionVector: VectorClock = VectorClock.zero
     val replicaId                  = "TestReplica"
     val crdt                       = new AddWinsLastWriterWinsMap[String, String](replicaId)
 

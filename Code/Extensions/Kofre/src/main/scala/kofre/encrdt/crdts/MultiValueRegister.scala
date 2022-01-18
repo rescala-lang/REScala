@@ -1,14 +1,14 @@
 package kofre.encrdt.crdts
 import kofre.Lattice
 import kofre.Lattice.Operators
-import kofre.encrdt.causality.VectorClock
 import kofre.encrdt.lattices.MultiValueRegisterLattice
+import kofre.primitives.VectorClock
 
 class MultiValueRegister[T](initialState: MultiValueRegisterLattice[T], val replicaId: String) {
   private var _state = initialState
 
   def currentTime: VectorClock = {
-    if (state.versions.isEmpty) VectorClock()
+    if (state.versions.isEmpty) VectorClock.zero
     else state.versions.keys.reduce((a, b) => a.merge(b))
   }
 

@@ -5,8 +5,9 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import com.google.crypto.tink.Aead
 import kofre.Lattice
 import kofre.encrdt.causality.DotStore.{Dot, DotSet}
-import kofre.encrdt.causality.{DotStore, LamportClock}
+import kofre.encrdt.causality.DotStore
 import kofre.encrdt.crdts.interfaces.Crdt
+import kofre.primitives.LamportClock
 import rescala.extra.encrdt.encrypted.deltabased.Codecs.dotSetJsonCodec
 
 class EncryptedDeltaCrdt[T: Lattice](val aead: Aead, replicaId: String) {}

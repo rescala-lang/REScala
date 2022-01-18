@@ -1,10 +1,10 @@
-package kofre.encrdt.causality
+package kofre.primitives
 
 import kofre.Lattice
 
 import scala.math.PartialOrdering
 
-case class VectorClock(timestamps: Map[String, Long] = Map()) {
+case class VectorClock(timestamps: Map[String, Long]) {
 
   private given Lattice[Long] = (l,r) => math.max(l, r)
 
@@ -18,6 +18,8 @@ case class VectorClock(timestamps: Map[String, Long] = Map()) {
 }
 
 object VectorClock {
+
+  def zero: VectorClock = VectorClock(Map.empty)
 
   given lattice: Lattice[VectorClock] =
     given Lattice[Long] = _ max _

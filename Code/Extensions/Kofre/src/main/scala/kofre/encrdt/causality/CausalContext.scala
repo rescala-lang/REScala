@@ -1,6 +1,7 @@
 package kofre.encrdt.causality
 
 import kofre.encrdt.causality.DotStore.{Dot, DotSet}
+import kofre.primitives.LamportClock
 
 // Can be optimized using Concise Version Vectors / Interval Version Vectors
 case class CausalContext(dots: Set[Dot] = Set()) {

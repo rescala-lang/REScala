@@ -2,9 +2,9 @@ package benchmarks.encrdt
 
 import benchmarks.encrdt.Codecs.deltaAwlwwmapJsonCodec
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToArray
-import kofre.encrdt.causality.VectorClock
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap.{StateType, timestampedValueLattice}
+import kofre.primitives.VectorClock
 import rescala.extra.encrdt.encrypted.statebased.{DecryptedState, EncryptedState, UntrustedReplica}
 
 import java.io.PrintWriter
@@ -27,7 +27,7 @@ object StateBasedUntrustedReplicaSizeBenchmark extends App {
   val maxElementExponent = 4 // 10 ** this as maximum tested total elements added to CRDT
   for (totalElements <- (minElementExponent to maxElementExponent).map(i => math.pow(10, i.toDouble).toInt)) {
     val crdt                       = new DeltaAddWinsLastWriterWinsMap[String, String]("0")
-    var versionVector: VectorClock = VectorClock()
+    var versionVector: VectorClock = VectorClock.zero
 
     for (i <- 0 until totalElements - MAX_PARALLEL_UPDATES) {
       val entry = dummyKeyValuePairs(i)

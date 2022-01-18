@@ -12,8 +12,8 @@ object Causal {
   // (s, c) ⨆ (s', c') = ((s ∩ s') ∪ (s \ c') ∪ (s' \ c), c ∪ c')
   implicit def CausalWithDotSetLattice: Lattice[Causal[DotSet]] = (left, right) => {
     val inBoth     = left.dotStore & right.dotStore
-    val newInLeft  = left.dotStore.filterNot(dot => dot <= right.causalContext.clockOf(dot.replicaId))
-    val newInRight = right.dotStore.filterNot(dot => dot <= left.causalContext.clockOf(dot.replicaId))
+    val newInLeft  = left.dotStore.filterNot(dot => dot.time <= right.causalContext.clockOf(dot.replicaId).time)
+    val newInRight = right.dotStore.filterNot(dot => dot.time <= left.causalContext.clockOf(dot.replicaId).time)
 
     val mergedCausalContext = left.causalContext.merged(right.causalContext)
     Causal(inBoth ++ newInLeft ++ newInRight, mergedCausalContext)

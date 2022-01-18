@@ -5,7 +5,7 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import com.google.crypto.tink.Aead
 import kofre.Lattice
 import kofre.Lattice.Operators
-import kofre.encrdt.causality.VectorClock
+import kofre.primitives.VectorClock
 import kofre.encrdt.crdts.interfaces.Crdt
 import kofre.encrdt.lattices.MultiValueRegisterLattice
 import rescala.extra.encrdt.encrypted.statebased.DecryptedState.vectorClockJsonCodec
@@ -20,7 +20,7 @@ class EncryptedCrdt(initialState: MultiValueRegisterLattice[EncryptedState] = Mu
   def state: MultiValueRegisterLattice[EncryptedState] = _state
 
   def currentTime: VectorClock =
-    if (state.versions.isEmpty) VectorClock()
+    if (state.versions.isEmpty) VectorClock.zero
     else state.versions.keys.reduce((a, b) => Lattice.merge(a, b))
 
   def unseal[T: Lattice](aead: Aead)(implicit jsonValueCodec: JsonValueCodec[T]): Try[DecryptedState[T]] =

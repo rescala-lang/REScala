@@ -1,6 +1,7 @@
 package kofre.encrdt.causality
 
 import kofre.encrdt.causality.DotStore.*
+import kofre.primitives.LamportClock
 
 // See: Delta state replicated data types (https://doi.org/10.1016/j.jpdc.2017.08.003)
 sealed trait DotStore[D] {

@@ -1,11 +1,11 @@
 package kofre.encrdt.crdts
 import kofre.Lattice
 import kofre.encrdt.causality.DotStore.DotFun
-import kofre.encrdt.causality.LamportClock
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap.{DeltaAddWinsLastWriterWinsMapLattice, timestampedValueLattice}
 import kofre.encrdt.crdts.DeltaAddWinsMap.DeltaAddWinsMapLattice
 import kofre.encrdt.crdts.interfaces.MapCrdt
 import kofre.encrdt.lattices.LastWriterWinsTagLattice.lwwLattice
+import kofre.primitives.LamportClock
 
 import java.time.Instant
 

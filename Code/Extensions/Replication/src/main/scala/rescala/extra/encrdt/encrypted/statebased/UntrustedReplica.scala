@@ -3,16 +3,16 @@ package rescala.extra.encrdt.encrypted.statebased
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.Aead
 import kofre.Lattice
-import kofre.encrdt.causality.VectorClock
-import kofre.encrdt.causality.VectorClock.VectorClockOrdering
 import kofre.Lattice.Operators
+import kofre.primitives.VectorClock
+import kofre.primitives.VectorClock.VectorClockOrdering
 
 abstract class UntrustedReplica(initialStates: Set[EncryptedState]) extends Replica {
   protected var stateStore: Set[EncryptedState] = initialStates
 
   protected var versionVector: VectorClock = _
   versionVector = {
-    if (initialStates.isEmpty) VectorClock()
+    if (initialStates.isEmpty) VectorClock.zero
     else initialStates.map(_.versionVector).reduce((l, r) => l.merge(r))
   }
 
@@ -52,7 +52,7 @@ abstract class UntrustedReplica(initialStates: Set[EncryptedState]) extends Repl
     def subsetIsUpperBound(subset: Set[(EncryptedState, Int)], state: EncryptedState): Boolean = {
       val mergeOfAllOtherVersionVectors = subset
         .map(_._1.versionVector)
-        .foldLeft(VectorClock()) { case (a: VectorClock, b: VectorClock) => a.merge(b) }
+        .foldLeft(VectorClock.zero) { case (a: VectorClock, b: VectorClock) => a.merge(b) }
 
       // Check if this state is subsumed by the merged state of all other values
       VectorClockOrdering.lteq(state.versionVector, mergeOfAllOtherVersionVectors)
