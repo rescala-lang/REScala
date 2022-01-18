@@ -9,7 +9,7 @@ case class CausalContext(dots: Set[Dot] = Set()) {
     dots
       .filter(dot => dot.replicaId == replicaId)
       .maxByOption(dot => dot.time)
-      .getOrElse(LamportClock(0, replicaId))
+      .getOrElse(LamportClock(replicaId, 0))
   }
 
   def contains(dot: Dot): Boolean = dots.contains(dot)

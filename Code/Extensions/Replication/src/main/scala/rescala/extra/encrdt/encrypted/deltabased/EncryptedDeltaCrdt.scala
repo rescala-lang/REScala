@@ -25,7 +25,7 @@ abstract class TrustedReplica[T](val replicaId: String, val crdt: Crdt[T], priva
   private var dottedVersionVector: DotSet = Set.empty
 
   private def nextDot(): Dot = ({
-    var container = LamportClock(1, replicaId)
+    var container = LamportClock(replicaId, 1)
 
     def nextDotImpl: DotStore.Dot = {
       val returnedVal = container

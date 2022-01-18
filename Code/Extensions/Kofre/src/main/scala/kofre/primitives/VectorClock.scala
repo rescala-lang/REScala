@@ -14,7 +14,7 @@ case class VectorClock(timestamps: Map[String, Long]) {
 
   def timeOf(replicaId: String): Long = timestamps.getOrElse(replicaId, 0)
 
-  def clockOf(replicaId: String): LamportClock = LamportClock(timeOf(replicaId), replicaId)
+  def clockOf(replicaId: String): LamportClock = LamportClock(replicaId, timeOf(replicaId))
 }
 
 object VectorClock {

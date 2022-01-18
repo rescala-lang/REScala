@@ -31,11 +31,11 @@ object AddWinsSetLattice {
     (left: AddWinsSetLattice[T], right: AddWinsSetLattice[T]) => {
       val commonElems = left.elements & right.elements
 
-      val leftCausalElements = left.elements.filter { case (e, LamportClock(c, i)) =>
+      val leftCausalElements = left.elements.filter { case (e, LamportClock(i, c)) =>
         c > right.clocks.timeOf(i)
       }
 
-      val rightCausalElements = right.elements.filter { case (e, LamportClock(c, i)) =>
+      val rightCausalElements = right.elements.filter { case (e, LamportClock(i, c)) =>
         c > left.clocks.timeOf(i)
       }
 
