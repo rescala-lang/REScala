@@ -1,6 +1,6 @@
 package calendar
 import rescala.default._
-import rescala.extra.lattices.delta.CContext.DietMapCContext
+import rescala.extra.lattices.delta.DietCC.DietMapCContext
 import rescala.extra.lattices.delta.crdt.reactive.AWSet
 
 case class Appointment(start: Int, end: Int)

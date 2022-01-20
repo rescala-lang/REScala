@@ -5,10 +5,10 @@ import central.Bindings._
 import loci.communicator.tcp.TCP
 import loci.registry.Registry
 import loci.transmitter.{RemoteAccessException, RemoteRef}
-import rescala.extra.lattices.delta.CContext.DietMapCContext
+import rescala.extra.lattices.delta.DietCC.DietMapCContext
 import rescala.extra.lattices.delta.crdt.reactive.AWSet
-import rescala.extra.lattices.delta.{Delta, UIJDLattice}
 import central.SyncMessage.{AppointmentMessage, CalendarState, FreeMessage, RaftMessage, WantMessage}
+import kofre.decompose.{Delta, UIJDLattice}
 
 import java.util.concurrent._
 import scala.concurrent.Future

@@ -26,6 +26,8 @@ lazy val rescalaProject = project.in(file(".")).settings(cfg.base, noPublish).ag
   todolist,
   universe,
   encryptedTodo,
+  consoleReplication,
+  consistentCalendar,
 )
 
 lazy val rescalaAll = project.in(file("Code")).settings(cfg.base, noPublish).aggregate(

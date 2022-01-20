@@ -2,13 +2,14 @@ package central
 
 import calendar.{Appointment, Token}
 import loci.registry.Binding
-import loci.transmitter.transmittable.IdenticallyTransmittable
+import loci.transmitter.IdenticallyTransmittable
 import loci.serializer.jsoniterScala._
-import rescala.extra.lattices.delta.CContext.DietMapCContext
+import rescala.extra.lattices.delta.DietCC.DietMapCContext
 import rescala.extra.lattices.delta.crdt.reactive.AWSet
 import rescala.extra.lattices.delta.JsoniterCodecs._
 import com.github.plokhotnyuk.jsoniter_scala.macros._
 import com.github.plokhotnyuk.jsoniter_scala.core._
+import kofre.protocol.RaftState
 
 import scala.concurrent.Future
 
