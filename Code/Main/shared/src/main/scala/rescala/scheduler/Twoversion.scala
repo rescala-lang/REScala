@@ -5,7 +5,7 @@ import rescala.core.Core
 import scala.collection.mutable.ArrayBuffer
 import scala.util.control.NonFatal
 
-case class Token(payload: AnyRef = null)
+case class Token()
 
 trait Twoversion extends Core {
 
