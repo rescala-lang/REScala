@@ -2,24 +2,27 @@ package rescala.extra.scheduler
 
 import rescala.scheduler.Twoversion
 
+import java.util.concurrent.atomic.AtomicInteger
+import scala.annotation.tailrec
+
 trait Sidup extends Twoversion {
 
   type State[V] = SidupState[V]
 
   // currently use resource object directly
-  type SourceId = ReSource
+  type SourceId = Int
+  val sidupCounter = new AtomicInteger(0)
 
   class SidupState[V](initialValue: V) extends TwoVersionState[V](initialValue) {
-    var sources: Set[SourceId]  = Set.empty[SourceId]
+    var sources: Set[SourceId]  = Set(sidupCounter.getAndIncrement())
     var sourcesChanged: Boolean = false
-    var activate: Boolean      = false
-    var done: Boolean          = false
+    var activate: Boolean       = false
+    var done: Boolean           = false
 
-    def refreshSources(): Boolean = {
+    def refreshSources(): Unit = {
       val oldSources = sources
       sources = incoming.flatMap(_.state.sources)
       sourcesChanged = oldSources != sources
-      sourcesChanged
     }
     override def updateIncoming(reactives: Set[ReSource]): Unit = {
       super.updateIncoming(reactives)
@@ -47,9 +50,16 @@ trait Sidup extends Twoversion {
         currentTx.discover(dep, reactive)
       }
       reactive.state.updateIncoming(incoming)
+      // is set by the call above, but makes no sense for new reactives
+      reactive.state.sourcesChanged = false
 
-      if (needsReevaluation || reactive.state.sources.exists(currentTx.sources.contains)) {
-        currentTx.pokeLater(reactive)
+      if (needsReevaluation || incoming.exists(_.state.done)) {
+        // somewhat strange workaround to force activation
+        reactive.state.activate = true
+        // immediate evaluation helps break dynamic creation cycle … sometimes
+        if (currentTx.sources != null)
+          currentTx.evaluateIn(reactive)(currentTx.makeDynamicReevaluationTicket(reactive.state.base(currentTx.token)))
+        else currentTx.pokeLater(reactive)
       }
     }
   }
@@ -58,7 +68,7 @@ trait Sidup extends Twoversion {
     var sources: Set[SourceId] = null
 
     override def initializationPhase(initialChanges: Map[ReSource, InitialChange]): Unit = {
-      sources = initialChanges.flatMap { case (s, ic) =>
+      val initsources = initialChanges.flatMap { case (s, ic) =>
         val isChange = ic.writeValue(ic.source.state.base(token), writeState(ic.source))
         if (isChange) {
           s.state.activate = true
@@ -66,8 +76,9 @@ trait Sidup extends Twoversion {
           schedule(s)
           Some(s)
         } else None
-      }.toSet
-      sources.foreach(_.state.outgoing.foreach(pokeLater))
+      }
+      sources = initsources.flatMap(_.state.sources).toSet
+      initsources.foreach(_.state.outgoing.foreach(pokeLater))
     }
 
     /** Store a single resettable ticket for the whole evaluation.
@@ -75,41 +86,60 @@ trait Sidup extends Twoversion {
       */
     private val reevaluationTicket: ReevTicket[_] = makeDynamicReevaluationTicket(null)
 
-    private var evaluating: List[Derived] = List.empty
-    private var evaluatingLater : List[Derived] = List.empty
+    private var evaluating: List[Derived]      = List.empty
+    private var evaluatingLater: List[Derived] = List.empty
 
     def pokeLater(r: Derived): Unit = evaluating ::= r
 
     /** Overrides the evaluator, this is essentially an inlined callback */
     def evaluate(r: Derived): Unit = evaluateIn(r)(reevaluationTicket.reset(r.state.base(token)))
-    def evaluateIn(head: Derived)(dt: ReevTicket[head.Value]): Unit = {
-      val reevRes = head.reevaluate(dt)
-      val dependencies: Option[Set[ReSource]] = reevRes.inputs()
-      dependencies.foreach(commitDependencyDiff(head, head.state.incoming))
-      val inc = relevantIncoming(head)
-      if (inc.forall(_.state.done)) {
-        if (inc.exists(_.state.sourcesChanged)) head.state.refreshSources()
-        reevRes.forValue(writeState(head))
-        schedule(head)
-        reevRes.forEffect(observe)
-        head.state.activate = reevRes.activate
-        if (head.state.activate) head.state.outgoing.foreach(pokeLater)
+    def evaluateIn(reactive: Derived)(dt: ReevTicket[reactive.Value]): Unit = {
+      if (!reactive.state.done) {
+        val rinc = relevantIncoming(reactive)
+        if (rinc.forall(_.state.done)) {
+          // if the state of the reactive itself is activation, this means it has just been created and MUST be evaluated
+          if (reactive.state.activate || rinc.exists(_.state.activate)) {
+            val reevRes                             = reactive.reevaluate(dt)
+            val dependencies: Option[Set[ReSource]] = reevRes.inputs()
+            dependencies.foreach(commitDependencyDiff(reactive, reactive.state.incoming))
+            // recompute relevant dependencies if there were dynamic changes
+            val inc = dependencies.fold(rinc)(_ => relevantIncoming(reactive))
+            if (inc.forall(_.state.done)) {
+              if (inc.exists(_.state.sourcesChanged)) reactive.state.refreshSources()
+              reevRes.forValue(writeState(reactive))
+              reevRes.forEffect(observe)
+              markDone(reactive, reevRes.activate)
+            }
+          } else {
+            markDone(reactive, activate = false)
+          }
+        } else {
+          evaluatingLater ::= reactive
+        }
       }
+
     }
-    private def relevantIncoming(head: Derived): Seq[ReSource] = {
-      head.state.incoming.iterator.filter(_.state.sources.exists(sources.contains)).toSeq
+
+    private def markDone(reactive: Derived, activate: Boolean): Unit = {
+      reactive.state.done = true
+      schedule(reactive)
+      reactive.state.activate = activate
+      reactive.state.outgoing.foreach(pokeLater)
+    }
+    def relevantIncoming(head: Derived): Seq[ReSource] = {
+      head.state.incoming.iterator.filter { r =>
+        r.state.sources.exists(sources.contains)
+      }.toSeq
     }
 
     override def beforeDynamicDependencyInteraction(dependency: ReSource): Unit = ()
     override def preparationPhase(initialWrites: Set[ReSource]): Unit           = ()
-    override def propagationPhase(): Unit                                       = {
+    @tailrec
+    final override def propagationPhase(): Unit = {
       while (evaluating.nonEmpty) {
         val ev = evaluating
         evaluating = List.empty
-        ev.foreach { r =>
-          if (relevantIncoming(r).forall(_.state.done)) evaluate(r)
-          else evaluatingLater ::= r
-        }
+        ev.foreach(evaluate)
       }
       if (evaluatingLater.nonEmpty) {
         evaluating = evaluatingLater
@@ -117,9 +147,8 @@ trait Sidup extends Twoversion {
         propagationPhase()
       }
     }
-    override def releasePhase(): Unit                                           = ()
-    override def initializer: Initializer                                       = new SidupInitializer(this)
+    override def releasePhase(): Unit     = ()
+    override def initializer: Initializer = new SidupInitializer(this)
   }
-
 
 }

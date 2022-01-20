@@ -55,7 +55,7 @@ class CreationTicketTest extends RETests {
         }
         engine.transaction() { dynamic =>
           assert(closure().scope.self === Right(engine.scheduler))
-          assert(closure().scope.embedTransaction(identity) === dynamic.tx.initializer)
+          assert(closure().scope.embedTransaction(identity) === dynamic.tx)
         }
       }
 

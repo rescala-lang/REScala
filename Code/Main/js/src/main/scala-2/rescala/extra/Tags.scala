@@ -133,7 +133,7 @@ class Tags[Api <: RescalaInterface](val api: Api) {
 
         observe = Observe.strong(rendered, fireImmediately = false) {
           tagObserver(parent, rendered) { newTags =>
-            println(s"$rendered parent $parent")
+            //println(s"$rendered parent $parent")
             if (parent != null && !scalajs.js.isUndefined(parent)) {
               currentNodes = replaceAll(parent, currentNodes, currentTags, newTags)
               currentTags = newTags

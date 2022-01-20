@@ -150,7 +150,7 @@ class TrueDynamicSignals extends RETests {
       def newSignal()(implicit ct: CreationTicket): Signal[Int] = e1.count()
 
       val macroRes = Signal {
-        newSignal()(implicitly).value
+        newSignal().value
       }
       val normalRes = Signals.dynamic() { implicit t: DynamicTicket =>
         t.depend(newSignal())

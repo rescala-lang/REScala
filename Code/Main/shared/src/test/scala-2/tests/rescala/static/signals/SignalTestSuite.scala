@@ -1,7 +1,6 @@
 package tests.rescala.static.signals
 
 import java.util.concurrent.atomic.AtomicInteger
-
 import rescala.core.infiltration.Infiltrator
 import tests.rescala.testtools.RETests
 import rescala.interface.RescalaInterface
@@ -88,7 +87,7 @@ class SignalTestSuite extends RETests {
       val v3 = v0.map(_ + "level 1").map(_ + "level 2").map(_ + "level 3")
 
       val `dynamic signal changing from level 1 to level 5` = Signal {
-        if (v0() == "level 0") v0()
+        if (v0.value == "level 0") v0.value
         else {
           v3.map(_ + "level 4 inner").apply()
         }
