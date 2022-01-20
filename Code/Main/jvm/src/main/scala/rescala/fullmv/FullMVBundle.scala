@@ -284,19 +284,19 @@ trait FullMVBundle extends Core {
 
     // ========================================================Scheduler Interface============================================================
 
-    override def makeDerivedStructState[V](valuePersistency: V)
+    override def makeDerivedStructState[V](initialValue: V)
         : NonblockingSkipListVersionHistory[V, FullMVTurn, ReSource, Derived] = {
       val state = new NonblockingSkipListVersionHistory[V, FullMVTurn, ReSource, Derived](
         host.dummy,
-        valuePersistency
-      )
+        initialValue
+        )
       state.incrementFrame(this)
       state
     }
 
-    override protected def makeSourceStructState[V](valuePersistency: V)
+    override protected def makeSourceStructState[V](initialValue: V)
         : NonblockingSkipListVersionHistory[V, FullMVTurn, ReSource, Derived] = {
-      val state = makeDerivedStructState(valuePersistency)
+      val state = makeDerivedStructState(initialValue)
       val res   = state.notify(this, changed = false)
       assert(res == true -> PureNotifyOnly(Set.empty))
       state

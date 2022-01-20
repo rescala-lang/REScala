@@ -29,7 +29,7 @@ trait SimpleBundle extends Core with Observing {
   def makeDerivedStructStateBundle[V](ip: V): State[V]
 
   class SimpleInitializer(afterCommitObservers: ListBuffer[Observation]) extends Initializer {
-    override protected[this] def makeDerivedStructState[V](ip: V): State[V] = makeDerivedStructStateBundle(ip)
+    override protected[this] def makeDerivedStructState[V](initialValue: V): State[V] = makeDerivedStructStateBundle(initialValue)
 
     private var createdReactives: Seq[Derived] = Seq.empty
 

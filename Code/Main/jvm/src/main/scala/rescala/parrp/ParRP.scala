@@ -13,7 +13,7 @@ trait ParRP extends Levelbased {
       override def schedulerName: String = "ParRP"
     }
 
-  class ParRPState[V](ip: V, val lock: ReLock[ParRPInterTurn]) extends LevelState[V](ip)
+  class ParRPState[V](initialValue: V, val lock: ReLock[ParRPInterTurn]) extends LevelState[V](initialValue)
 
   trait ParRPInterTurn {
 
@@ -45,11 +45,11 @@ trait ParRP extends Levelbased {
 
     final val key: Key[ParRPInterTurn] = new Key(this)
 
-    override protected[this] def makeDerivedStructState[V](ip: V): ParRPState[V] = {
+    override protected[this] def makeDerivedStructState[V](initialValue: V): ParRPState[V] = {
       val lock  = new ReLock[ParRPInterTurn]
       val owner = lock.tryLock(key)
       assert(owner eq key, s"$this failed to acquire lock on newly created reactive")
-      new ParRPState(ip, lock)
+      new ParRPState(initialValue, lock)
     }
 
     /** this is called after the turn has finished propagating, but before handlers are executed */
@@ -74,7 +74,7 @@ trait ParRP extends Levelbased {
           throw new IllegalStateException(s"$this tried to lock reactive $reactive owned by its parent $priorKey")
         if (owner ne key) {
           if (reactive.state.lock.tryLock(key) eq key)
-            reactive.state.outgoing().foreach { offer }
+            reactive.state.outgoing.foreach { offer }
           else {
             key.reset()
             backoff.backoff()

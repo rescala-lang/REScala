@@ -109,11 +109,11 @@ trait Core {
     }
 
     /** Creates the internal state of [[Derived]]s */
-    protected[this] def makeDerivedStructState[V](valuePersistency: V): State[V]
+    protected[this] def makeDerivedStructState[V](initialValue: V): State[V]
 
     /** Creates the internal state of [[ReSource]]s */
-    protected[this] def makeSourceStructState[V](valuePersistency: V): State[V] =
-      makeDerivedStructState[V](valuePersistency)
+    protected[this] def makeSourceStructState[V](initialValue: V): State[V] =
+      makeDerivedStructState[V](initialValue)
 
     /** to be implemented by the propagation algorithm, called when a new reactive has been instantiated and needs to be connected to the graph and potentially reevaluated.
       *

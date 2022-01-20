@@ -7,7 +7,7 @@ trait Levelbased extends Twoversion {
 
   type State[V] <: LevelState[V]
 
-  class LevelState[V](ip: V) extends TwoVersionState[V](ip) {
+  class LevelState[V](initialValue: V) extends TwoVersionState[V](initialValue) {
 
     private var _level: Int = 0
 
@@ -52,7 +52,7 @@ trait Levelbased extends Twoversion {
     }
 
     private def enqueueOutgoing(head: ReSource, minLevel: Int): ArrayBuffer[ReSource] = {
-      head.state.outgoing().foreach(levelQueue.enqueue(minLevel))
+      head.state.outgoing.foreach(levelQueue.enqueue(minLevel))
       _propagating += head
     }
 
@@ -84,7 +84,10 @@ trait Levelbased extends Twoversion {
       }
     }
 
-    final override def prepareInitialChange(ic: InitialChange): Unit = {
+    final override def initializationPhase(initialChanges: Map[ReSource, InitialChange]): Unit =
+      initialChanges.values.foreach(prepareInitialChange)
+
+    final def prepareInitialChange(ic: InitialChange): Unit = {
       val n = ic.writeValue(ic.source.state.base(token), writeState(ic.source))
       if (n) enqueueOutgoing(ic.source, LevelQueue.noLevelIncrease)
     }
@@ -131,7 +134,7 @@ trait Levelbased extends Twoversion {
       if (headLevel < headMinLevel) {
         head.state.updateLevel(headMinLevel)
         enqueue(headMinLevel, reevaluate)(head)
-        head.state.outgoing().foreach { r =>
+        head.state.outgoing.foreach { r =>
           if (r.state.level() <= headMinLevel)
             enqueue(headMinLevel + 1, needsEvaluate = false)(r)
         }

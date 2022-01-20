@@ -1,8 +1,9 @@
 package rescala.scheduler
 
+import rescala.core.Core
+
 import scala.collection.mutable.ArrayBuffer
 import scala.util.control.NonFatal
-import rescala.core.Core
 
 case class Token(payload: AnyRef = null)
 
@@ -27,7 +28,7 @@ trait Twoversion extends Core {
     def get(token: Token): V  = { if (token eq owner) update else current }
 
     override def commit(r: V => V): Unit = {
-      current = r(update)
+      if (update != null) current = r(update)
       release()
     }
     override def release(): Unit = {
@@ -37,11 +38,12 @@ trait Twoversion extends Core {
 
     /* incoming and outgoing changes */
 
-    var incoming: Set[ReSource]           = Set.empty
+    private var _incoming: Set[ReSource]  = Set.empty
     protected var _outgoing: Set[Derived] = Set.empty
 
-    def updateIncoming(reactives: Set[ReSource]): Unit = incoming = reactives
-    def outgoing(): Iterable[Derived]                  = _outgoing
+    def updateIncoming(reactives: Set[ReSource]): Unit = _incoming = reactives
+    def outgoing: Iterable[Derived]                  = _outgoing
+    def incoming: Set[ReSource]                       = _incoming
     def discoveredBy(reactive: Derived): Unit          = _outgoing += reactive
     def droppedBy(reactive: Derived): Unit             = _outgoing -= reactive
   }
@@ -171,24 +173,16 @@ trait Twoversion extends Core {
       if (failure != null) throw failure
     }
 
-    def prepareInitialChange(ic: InitialChange): Unit
-
-    final override def initializationPhase(initialChanges: Map[ReSource, InitialChange]): Unit =
-      initialChanges.values.foreach(prepareInitialChange)
-
     final def commitDependencyDiff(node: Derived, current: Set[ReSource])(updated: Set[ReSource]): Unit = {
       val indepsRemoved = current -- updated
       val indepsAdded   = updated -- current
       indepsRemoved.foreach(drop(_, node))
       indepsAdded.foreach(discover(_, node))
-      writeIndeps(node, updated)
+      node.state.updateIncoming(updated)
     }
 
     private[rescala] def discover(source: ReSource, sink: Derived): Unit = source.state.discoveredBy(sink)
     private[rescala] def drop(source: ReSource, sink: Derived): Unit     = source.state.droppedBy(sink)
-
-    private[rescala] def writeIndeps(node: Derived, indepsAfter: Set[ReSource]): Unit =
-      node.state.updateIncoming(indepsAfter)
 
     /** allow the propagation to handle dynamic access to reactives */
     def beforeDynamicDependencyInteraction(dependency: ReSource): Unit

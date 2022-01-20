@@ -24,8 +24,8 @@ trait CalculusLike extends Core {
     * The formalization does not support this, to keep the complexity of the proofs in check.
     */
   final class SimpleCreation() extends Initializer {
-    override protected[this] def makeDerivedStructState[V](ip: V): StoreValue[V] =
-      new StoreValue[V](ip)
+    override protected[this] def makeDerivedStructState[V](initialValue: V): StoreValue[V] =
+      new StoreValue[V](initialValue)
 
     override protected[this] def register(reactive: ReSource): Unit = FScheduler.allReactives += reactive
 
@@ -103,7 +103,7 @@ trait CalculusLike extends Core {
             val propagation = Propagation(active = sources, processed = sources, allReactives, transaction)
             println(s"starting propagation $propagation")
             val result = propagation.run()
-            println(s"done propagating")
+            println(s"done activate")
 
             // wrapup, this is for a rarely used rescala features, where transactions can
             // do some cleanup when they complete. Not supported in the formalization
