@@ -1,9 +1,8 @@
 package kofre.encrdt.crdts
 import kofre.Lattice
-import kofre.encrdt.crdts.interfaces.SetCrdt
 import kofre.encrdt.lattices.TwoPhaseSetLattice
 
-class TwoPhaseSet[T](val replicaId: String) extends SetCrdt[T] {
+class TwoPhaseSet[T](val replicaId: String) {
 
   private var _state = TwoPhaseSetLattice[T]()
 

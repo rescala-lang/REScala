@@ -116,7 +116,7 @@ object DeltaStateBasedUntrustedReplicaSizeBenchmarkLinearScaling extends App
 class UntrustedDeltaBasedReplicaMock(aead: Aead) extends UntrustedReplica() {
   override protected def prune(): Unit = {}
 
-  override protected def disseminate(encryptedState: EncryptedDeltaGroup): Unit = {}
+  protected def disseminate(encryptedState: EncryptedDeltaGroup): Unit = {}
 
   def size(): Int = {
     encryptedDeltaGroupStore.toList.map { delta =>

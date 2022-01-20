@@ -4,26 +4,25 @@ import kofre.Lattice
 import kofre.encrdt.causality.DotStore.{DotMap, DotSet, dotSetDotStore}
 import kofre.encrdt.causality.{CausalContext, DotStore}
 import kofre.encrdt.crdts.DeltaAddWinsSet.DeltaAddWinsSetLattice
-import kofre.encrdt.crdts.interfaces.SetCrdt
 import kofre.encrdt.lattices.Causal
 
 class DeltaAddWinsSet[E](
     val replicaId: String,
     initialState: DeltaAddWinsSetLattice[E] = Causal.bottom[DotMap[E, DotSet]]
-) extends SetCrdt[E] {
+) {
 
   private var _state: DeltaAddWinsSetLattice[E]         = initialState
   private var deltas: Vector[DeltaAddWinsSetLattice[E]] = Vector()
 
   def state: DeltaAddWinsSetLattice[E] = _state
 
-  override def add(element: E): Unit =
+  def add(element: E): Unit =
     mutate(DeltaAddWinsSet.deltaAdd(replicaId, element, _state))
 
-  override def remove(element: E): Unit =
+  def remove(element: E): Unit =
     mutate(DeltaAddWinsSet.deltaRemove(element, _state))
 
-  override def values: Set[E] =
+  def values: Set[E] =
     _state.dotStore.keySet
 
   private def mutate(delta: DeltaAddWinsSetLattice[E]): Unit = {

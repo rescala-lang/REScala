@@ -3,60 +3,14 @@ package rescala.extra.encrdt.encrypted.deltabased
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import com.google.crypto.tink.Aead
-import kofre.Lattice
-import kofre.encrdt.causality.DotStore.{Dot, DotSet}
-import kofre.encrdt.causality.DotStore
-import kofre.encrdt.crdts.interfaces.Crdt
-import kofre.primitives.LamportClock
+import kofre.encrdt.causality.DotStore.DotSet
 import rescala.extra.encrdt.encrypted.deltabased.Codecs.dotSetJsonCodec
 
-class EncryptedDeltaCrdt[T: Lattice](val aead: Aead, replicaId: String) {}
-
-sealed trait Replica {
-  def receive(encryptedState: EncryptedDeltaGroup): Unit
-
-  protected def disseminate(encryptedState: EncryptedDeltaGroup): Unit
-}
-
-abstract class TrustedReplica[T](val replicaId: String, val crdt: Crdt[T], private val aead: Aead)(implicit
-    val stateJsonCodec: JsonValueCodec[T]
-) extends Replica {
-
-  private var dottedVersionVector: DotSet = Set.empty
-
-  private def nextDot(): Dot = ({
-    var container = LamportClock(replicaId, 1)
-
-    def nextDotImpl: DotStore.Dot = {
-      val returnedVal = container
-      container = container.advance
-      returnedVal
-    }
-
-    () => nextDotImpl
-  })()
-
-  def receive(encryptedDeltaGroup: EncryptedDeltaGroup): Unit = {
-    val decryptedState: DecryptedDeltaGroup[T] = encryptedDeltaGroup.decrypt(aead)
-    dottedVersionVector = dottedVersionVector union decryptedState.dottedVersionVector
-    // TODO: synchronize
-    // TODO: Non-causally consistent unless underlying CRDT handles causal consistency
-    crdt.merge(decryptedState.deltaGroup)
-  }
-
-  def localChange(state: T): Unit = {
-    val eventDot = nextDot()
-    dottedVersionVector = dottedVersionVector + eventDot
-    val encryptedDelta = DecryptedDeltaGroup(state, Set(eventDot)).encrypt(aead)
-    disseminate(encryptedDelta)
-  }
-}
-
-abstract class UntrustedReplica(initialDeltaGroups: Set[EncryptedDeltaGroup] = Set.empty) extends Replica {
+abstract class UntrustedReplica(initialDeltaGroups: Set[EncryptedDeltaGroup] = Set.empty) {
   protected var dottedVersionVector: DotSet                        = Set.empty
   protected var encryptedDeltaGroupStore: Set[EncryptedDeltaGroup] = initialDeltaGroups
 
-  override def receive(encryptedDeltaGroup: EncryptedDeltaGroup): Unit = {
+  def receive(encryptedDeltaGroup: EncryptedDeltaGroup): Unit = {
     dottedVersionVector = dottedVersionVector union encryptedDeltaGroup.dottedVersionVector
     encryptedDeltaGroupStore = encryptedDeltaGroupStore + encryptedDeltaGroup
 

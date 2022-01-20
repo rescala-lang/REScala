@@ -1,16 +1,15 @@
 package kofre.encrdt.crdts
 
-import kofre.encrdt.crdts.interfaces.SetCrdt
 
-class GrowOnlySet[T] extends SetCrdt[T] {
+class GrowOnlySet[T] {
   private var _state: Set[T] = Set()
 
   def state: Set[T] = _state
 
-  override def add(element: T): Unit = _state += element
+  def add(element: T): Unit = _state += element
 
-  override def remove(element: T): Unit =
+  def remove(element: T): Unit =
     throw new UnsupportedOperationException("Can't remove elements from GrowOnlySet")
 
-  override def values: Set[T] = _state
+  def values: Set[T] = _state
 }
