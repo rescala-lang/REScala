@@ -1,7 +1,7 @@
 /** This implementation tries to mirror the formalization
   * of the corresponding paper as closely as possible
   */
-package rescala.extra.research
+package rescala.scheduler
 
 import rescala.core.Core
 

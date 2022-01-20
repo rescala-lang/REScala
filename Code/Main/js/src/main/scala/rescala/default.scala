@@ -7,4 +7,4 @@ import rescala.interface.RescalaInterface
   * Events and signals can be created from other reactives by using combinators,
   * signals additionally can be created using [[rescala.default.Signal]] expressions.
   */
-object default extends RescalaInterface with rescala.scheduler.Unmanaged
+object default extends RescalaInterface with rescala.Schedulers.Unmanaged

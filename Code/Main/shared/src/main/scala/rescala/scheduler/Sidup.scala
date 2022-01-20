@@ -1,6 +1,4 @@
-package rescala.extra.scheduler
-
-import rescala.scheduler.Twoversion
+package rescala.scheduler
 
 import java.util.concurrent.atomic.AtomicInteger
 import scala.annotation.tailrec
@@ -128,7 +126,7 @@ trait Sidup extends Twoversion {
     }
     def relevantIncoming(head: Derived): Seq[ReSource] = {
       head.state.incoming.iterator.filter { r =>
-        r.state.sources.exists(sources.contains)
+        sources.exists(r.state.sources.contains)
       }.toSeq
     }
 
@@ -136,12 +134,13 @@ trait Sidup extends Twoversion {
     override def preparationPhase(initialWrites: Set[ReSource]): Unit           = ()
     @tailrec
     final override def propagationPhase(): Unit = {
-      while (evaluating.nonEmpty) {
+      if (evaluating.nonEmpty) {
         val ev = evaluating
         evaluating = List.empty
         ev.foreach(evaluate)
+        propagationPhase()
       }
-      if (evaluatingLater.nonEmpty) {
+      else if (evaluatingLater.nonEmpty) {
         evaluating = evaluatingLater
         evaluatingLater = List.empty
         propagationPhase()

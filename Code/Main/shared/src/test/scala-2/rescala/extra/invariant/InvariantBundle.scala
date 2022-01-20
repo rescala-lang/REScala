@@ -3,9 +3,9 @@ package rescala.extra.invariant
 import org.scalacheck.Prop.forAll
 import org.scalacheck.Test.PropException
 import org.scalacheck.{Gen, Prop, Test}
-import rescala.extra.scheduler.SimpleBundle
 import rescala.interface.RescalaInterface
 import rescala.operator.Pulse
+import rescala.scheduler.TopoBundle
 
 import scala.collection.mutable.ListBuffer
 
@@ -15,7 +15,7 @@ object InvariantApi extends InvariantBundle with RescalaInterface {
   override def makeDerivedStructStateBundle[V](ip: V): InvariantApi.InvariantState[V] = new InvariantState(ip)
 }
 
-trait InvariantBundle extends SimpleBundle {
+trait InvariantBundle extends TopoBundle {
   selfType: RescalaInterface =>
 
   override type State[V] = InvariantState[V]
@@ -46,17 +46,17 @@ trait InvariantBundle extends SimpleBundle {
     override val getMessage: String = message
   }
 
-  class InvariantState[V](value: V) extends SimpleState[V](value) {
+  class InvariantState[V](value: V) extends TopoState[V](value) {
     var invariants: Seq[Invariant[V]] = Seq.empty
     var gen: Gen[_]                   = _
   }
 
   class InvariantInitializer(afterCommitObservers: ListBuffer[Observation])
-      extends SimpleInitializer(afterCommitObservers) {
+    extends TopoInitializer(afterCommitObservers) {
     override protected[this] def makeDerivedStructState[V](ip: V): InvariantState[V] = new InvariantState[V](ip)
   }
 
-  object InvariantScheduler extends SimpleSchedulerInterface {
+  object InvariantScheduler extends TopoSchedulerInterface {
 
     override def schedulerName: String = "SimpleWithInvariantSupport"
 

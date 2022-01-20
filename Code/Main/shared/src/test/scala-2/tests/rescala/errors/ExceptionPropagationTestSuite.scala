@@ -138,7 +138,7 @@ class ExceptionPropagationTestSuite extends RETests {
 
       intercept[ObservedException] { v.set(0) }
       assert(res === 100 / 42, "observers are not triggered on failure")
-      if (engine != rescala.Schedulers.simple) {
+      if (engine != rescala.Schedulers.toposort) {
         assert(v.readValueOnce === 42, "transaction is aborted on failure")
       }
     }
@@ -161,7 +161,7 @@ class ExceptionPropagationTestSuite extends RETests {
     }
 
     test("abort combinator") {
-      if (engine != rescala.Schedulers.simple) {
+      if (engine != rescala.Schedulers.toposort) {
         val v  = Var(0)
         val ds = Signal { div(v()) }
 

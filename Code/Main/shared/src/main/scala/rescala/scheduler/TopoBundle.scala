@@ -1,14 +1,14 @@
-package rescala.extra.scheduler
+package rescala.scheduler
 
 import rescala.core.Core
 import rescala.operator.Observing
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
-trait SimpleBundle extends Core with Observing {
-  type State[V] <: SimpleState[V]
+trait TopoBundle extends Core with Observing {
+  type State[V] <: TopoState[V]
 
-  class SimpleState[V](var value: V) {
+  class TopoState[V](var value: V) {
 
     var outgoing: Set[Derived]  = Set.empty
     var incoming: Set[ReSource] = Set.empty
@@ -28,8 +28,9 @@ trait SimpleBundle extends Core with Observing {
 
   def makeDerivedStructStateBundle[V](ip: V): State[V]
 
-  class SimpleInitializer(afterCommitObservers: ListBuffer[Observation]) extends Initializer {
-    override protected[this] def makeDerivedStructState[V](initialValue: V): State[V] = makeDerivedStructStateBundle(initialValue)
+  class TopoInitializer(afterCommitObservers: ListBuffer[Observation]) extends Initializer {
+    override protected[this] def makeDerivedStructState[V](initialValue: V): State[V] =
+      makeDerivedStructStateBundle(initialValue)
 
     private var createdReactives: Seq[Derived] = Seq.empty
 
@@ -60,19 +61,19 @@ trait SimpleBundle extends Core with Observing {
       if (discovered && !predecessorsDone) {
         // do nothing, this reactive is reached by normal propagation later
       } else if (needsReevaluation || requiresReev) {
-        Util.evaluate(reactive, SimpleTransaction(this), afterCommitObservers)
+        Util.evaluate(reactive, TopoTransaction(this), afterCommitObservers)
       } else if (predecessorsDone) reactive.state.done = true
     }
 
   }
 
-  case class SimpleTransaction(override val initializer: SimpleInitializer) extends Transaction {
+  case class TopoTransaction(override val initializer: TopoInitializer) extends Transaction {
     override private[rescala] def access(reactive: ReSource): reactive.Value = reactive.state.value
   }
 
-  object SimpleScheduler extends SimpleSchedulerInterface
+  object TopoScheduler extends TopoSchedulerInterface
 
-  trait SimpleSchedulerInterface extends SchedulerImpl[SimpleTransaction] {
+  trait TopoSchedulerInterface extends SchedulerImpl[TopoTransaction] {
 
     override def schedulerName: String = "Simple"
 
@@ -89,8 +90,8 @@ trait SimpleBundle extends Core with Observing {
         val afterCommitObservers: ListBuffer[Observation] = ListBuffer.empty
         val res =
           try {
-            val creation    = new SimpleInitializer(afterCommitObservers)
-            val transaction = SimpleTransaction(creation)
+            val creation    = new TopoInitializer(afterCommitObservers)
+            val transaction = TopoTransaction(creation)
             withDynamicInitializer(transaction) {
               // admission
               val admissionTicket: AdmissionTicket = new AdmissionTicket(transaction, initialWrites)
@@ -166,7 +167,7 @@ trait SimpleBundle extends Core with Observing {
     @scala.annotation.tailrec
     def evaluateAll(
         evaluatees: Seq[Derived],
-        creation: SimpleTransaction,
+        creation: TopoTransaction,
         afterCommitObservers: ListBuffer[Observation]
     ): Seq[Derived] = {
       // first one where evaluation detects glitch
@@ -187,7 +188,7 @@ trait SimpleBundle extends Core with Observing {
 
     def evaluate(
         reactive: Derived,
-        creationTicket: SimpleTransaction,
+        creationTicket: TopoTransaction,
         afterCommitObservers: ListBuffer[Observation]
     ): Boolean = {
       var potentialGlitch = false
