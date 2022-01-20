@@ -12,7 +12,7 @@ trait Twoversion extends Core {
   type State[V] <: TwoVersionState[V]
 
   /** State that implements both the buffered pulse and the buffering capabilities itself. */
-  abstract class TwoVersionState[V](protected[rescala] var current: V) extends Committable[V] {
+  abstract class TwoVersionState[V](protected[rescala] var current: V) {
 
     private var owner: Token = null
     private var update: V    = _
@@ -27,11 +27,11 @@ trait Twoversion extends Core {
     def base(token: Token): V = current
     def get(token: Token): V  = { if (token eq owner) update else current }
 
-    override def commit(r: V => V): Unit = {
+    def commit(r: V => V): Unit = {
       if (update != null) current = r(update)
       release()
     }
-    override def release(): Unit = {
+    def release(): Unit = {
       update = null.asInstanceOf[V]
       owner = null
     }
@@ -42,8 +42,8 @@ trait Twoversion extends Core {
     protected var _outgoing: Set[Derived] = Set.empty
 
     def updateIncoming(reactives: Set[ReSource]): Unit = _incoming = reactives
-    def outgoing: Iterable[Derived]                  = _outgoing
-    def incoming: Set[ReSource]                       = _incoming
+    def outgoing: Iterable[Derived]                    = _outgoing
+    def incoming: Set[ReSource]                        = _incoming
     def discoveredBy(reactive: Derived): Unit          = _outgoing += reactive
     def droppedBy(reactive: Derived): Unit             = _outgoing -= reactive
   }
