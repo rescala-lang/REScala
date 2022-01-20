@@ -3,9 +3,9 @@ package central
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import loci.registry.Binding
-import loci.transmitter.transmittable.IdenticallyTransmittable
+import loci.transmitter.IdenticallyTransmittable
 import loci.serializer.jsoniterScala._
-import rescala.extra.lattices.delta.CContext.DietMapCContext
+import rescala.extra.lattices.delta.DietCC.DietMapCContext
 import rescala.extra.lattices.delta.crdt.reactive.AWSet
 import rescala.extra.lattices.delta.JsoniterCodecs._
 

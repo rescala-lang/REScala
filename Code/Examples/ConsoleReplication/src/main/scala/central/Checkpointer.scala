@@ -1,9 +1,10 @@
 package central
 
 import central.Bindings._
+import kofre.decompose.UIJDLattice
 import loci.communicator.tcp.TCP
 import loci.registry.Registry
-import rescala.extra.lattices.delta.UIJDLattice
+import rescala.extra.lattices.delta.DietCC.DietMapCContext
 
 import scala.io.StdIn.readLine
 
