@@ -1,10 +1,10 @@
 package benchmarks.lattices.delta
 
-import java.util.concurrent.TimeUnit
-
+import kofre.decompose.Dot
 import org.openjdk.jmh.annotations._
 import rescala.extra.lattices.delta.DietCC.DietMapCContext
-import kofre.decompose.Dot
+
+import java.util.concurrent.TimeUnit
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -37,11 +37,11 @@ class DietMapCContextBench {
   }
 
   @Benchmark
-  def union = DietMapCContext.union(cca, ccb)
+  def merge = DietMapCContext.union(cca, ccb)
 
   @Benchmark
-  def unionSelf = DietMapCContext.union(cca, cca)
+  def mergeSelf = DietMapCContext.union(cca, cca)
 
   @Benchmark
-  def unionSelfPlusOne = DietMapCContext.union(cca, cca1)
+  def mergeSelfPlusOne = DietMapCContext.union(cca, cca1)
 }
