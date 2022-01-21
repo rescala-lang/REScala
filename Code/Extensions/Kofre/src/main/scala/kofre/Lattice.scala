@@ -48,9 +48,9 @@ object Lattice {
     // convert to array to make lookup during merge fast
     ProductLattice(m, lattices.toArray.asInstanceOf[Array[Lattice[Any]]])
 
-  class ProductLattice[T <: Product](p: Mirror.ProductOf[T], lattices: Seq[Lattice[Any]]) extends Lattice[T]:
+  class ProductLattice[T <: Product](m: Mirror.ProductOf[T], lattices: Seq[Lattice[Any]]) extends Lattice[T]:
     def merge(left: T, right: T): T =
-      p.fromProduct(new Product {
+      m.fromProduct(new Product {
         def canEqual(that: Any): Boolean = left.canEqual(that)
         def productArity: Int            = right.productArity
         def productElement(i: Int): Any  = lattices(i).merge(left.productElement(i), right.productElement(i))
