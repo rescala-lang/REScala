@@ -37,6 +37,16 @@ object MergeImpl {
     }
   }
 
+  def mergeFold[K, V: Lattice]: Lattice[Map[K, V]] =
+    (left, right) =>
+      right.foldLeft(left) {
+        case (m, (k, r)) =>
+          m.updatedWith(k) {
+            case Some(l) => Some(Lattice.merge(l, r))
+            case None    => Some(r)
+          }
+      }
+
   implicit def IntLattice: Lattice[Int] = _ max _
 }
 
@@ -63,6 +73,7 @@ class MapMergeBenchmark {
   val latticeSet: Lattice[Map[Int, Int]]     = MergeImpl.mergeKeySet
   val latticeHash: Lattice[Map[Int, Int]]    = MergeImpl.mergeHashMap
   val latticeMutable: Lattice[Map[Int, Int]] = MergeImpl.mergeMutable
+  val latticeFold: Lattice[Map[Int, Int]]    = MergeImpl.mergeFold
 
   @Setup
   def setup(): Unit = {
@@ -79,5 +90,8 @@ class MapMergeBenchmark {
 
   @Benchmark
   def mutableMerge() = latticeMutable.merge(left, right)
+
+  @Benchmark
+  def foldMerge() = latticeFold.merge(left, right)
 
 }

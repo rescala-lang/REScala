@@ -39,8 +39,12 @@ object Lattice {
 
   given mapLattice[K, V: Lattice]: Lattice[Map[K, V]] =
     (left, right) =>
-      left.to(HashMap).merged(right.to(HashMap)) {
-        case ((id, v1), (_, v2)) => (id, (v1 merge v2))
+      right.foldLeft(left) {
+        case (current, (key, r)) =>
+          current.updatedWith(key) {
+            case Some(l) => Some(l merge r)
+            case None    => Some(r)
+          }
       }
 
   inline def derived[T <: Product](using m: Mirror.ProductOf[T]): Lattice[T] =
