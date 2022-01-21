@@ -44,23 +44,19 @@ object Lattice {
       }
 
   inline def derived[T <: Product](using m: Mirror.ProductOf[T]): Lattice[T] =
-    val lattices = LatticeDeriveImpl.summonList[m.MirroredElemTypes]
+    val lattices = summonList[m.MirroredElemTypes]
     // convert to array to make lookup during merge fast
-    LatticeDeriveImpl.mergeProduct(m, lattices.toArray.asInstanceOf[Array[Lattice[Any]]])
-}
+    ProductLattice(m, lattices.toArray.asInstanceOf[Array[Lattice[Any]]])
 
-object LatticeDeriveImpl {
+  class ProductLattice[T <: Product](p: Mirror.ProductOf[T], lattices: Seq[Lattice[Any]]) extends Lattice[T]:
+    def merge(left: T, right: T): T =
+      p.fromProduct(new Product {
+        def canEqual(that: Any): Boolean = left.canEqual(that)
+        def productArity: Int            = right.productArity
+        def productElement(i: Int): Any  = lattices(i).merge(left.productElement(i), right.productElement(i))
+      })
 
-  def mergeProduct[T <: Product](p: Mirror.ProductOf[T], lattices: Seq[Lattice[Any]]): Lattice[T] =
-    new Lattice[T]:
-      def merge(left: T, right: T): T =
-        p.fromProduct(new Product {
-          def canEqual(that: Any): Boolean = left.canEqual(that)
-          def productArity: Int            = right.productArity
-          def productElement(i: Int): Any  = lattices(i).merge(left.productElement(i), right.productElement(i))
-        })
-
-  inline def summonList[T <: Tuple]: List[Lattice[_]] =
+  private inline def summonList[T <: Tuple]: List[Lattice[_]] =
     inline erasedValue[T] match
       case _: EmptyTuple => Nil
       case _: (t *: ts)  => summonInline[Lattice[t]] :: summonList[ts]
