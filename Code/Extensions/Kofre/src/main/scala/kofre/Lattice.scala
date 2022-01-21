@@ -16,15 +16,11 @@ trait Lattice[A]:
     */
   def merge(left: A, right: A): A
 
-
-
-
-
 object Lattice {
   def apply[A](implicit ev: Lattice[A]): Lattice[A] = ev
   def merge[A: Lattice](left: A, right: A): A       = apply[A].merge(left, right)
 
-  //extension [A: Lattice](left: A)
+  // extension [A: Lattice](left: A)
   //  @targetName("mergeSyntax")
   //  def merge(right: A): A = Lattice.merge(left, right)
 
@@ -47,27 +43,21 @@ object Lattice {
         case ((id, v1), (_, v2)) => (id, (v1 merge v2))
       }
 
-  inline def derived[T](using m: Mirror.Of[T]): Lattice[T] =
-    inline m match
-      case p: Mirror.ProductOf[T] =>
-        val lattices = LatticeDeriveImpl.summonList[m.MirroredElemTypes]
-        // convert to array to make lookup during merge faster
-        LatticeDeriveImpl.mergeProduct(p, lattices.toArray.asInstanceOf[Array[Lattice[Any]]])
-      case s: Mirror.SumOf[T] => scala.compiletime.error("cannot derive Lattices for sum types")
-
+  inline def derived[T <: Product](using m: Mirror.ProductOf[T]): Lattice[T] =
+    val lattices = LatticeDeriveImpl.summonList[m.MirroredElemTypes]
+    // convert to array to make lookup during merge fast
+    LatticeDeriveImpl.mergeProduct(m, lattices.toArray.asInstanceOf[Array[Lattice[Any]]])
 }
 
 object LatticeDeriveImpl {
 
-  def mergeProduct[T](p: Mirror.ProductOf[T], lattices: Seq[Lattice[Any]]): Lattice[T] =
+  def mergeProduct[T <: Product](p: Mirror.ProductOf[T], lattices: Seq[Lattice[Any]]): Lattice[T] =
     new Lattice[T]:
       def merge(left: T, right: T): T =
-        val lp = left.asInstanceOf[Product]
-        val rp = right.asInstanceOf[Product]
         p.fromProduct(new Product {
-          def canEqual(that: Any): Boolean = lp.canEqual(that)
-          def productArity: Int            = lp.productArity
-          def productElement(i: Int): Any  = lattices(i).merge(lp.productElement(i), rp.productElement(i))
+          def canEqual(that: Any): Boolean = left.canEqual(that)
+          def productArity: Int            = right.productArity
+          def productElement(i: Int): Any  = lattices(i).merge(left.productElement(i), right.productElement(i))
         })
 
   inline def summonList[T <: Tuple]: List[Lattice[_]] =
