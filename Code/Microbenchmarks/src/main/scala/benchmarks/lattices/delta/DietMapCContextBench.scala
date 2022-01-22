@@ -23,15 +23,17 @@ class DietMapCContextBench {
   var cca1: DietMapCContext      = _
   var ccaSingle: DietMapCContext = _
 
-  def makeCContext(replicaID: String): DietMapCContext = {
-    val dots = (0 until size).map(Dot(replicaID, _)).toSet
+
+  private def makeCContext(replicaID: String, mul: Int, off: Int, len: Int): DietMapCContext = {
+    val ranges = Range(0, size).map(i => Range(i * mul + off, i * mul + len + off))
+    val dots = ranges.flatten.map(Dot(replicaID, _)).toSet
     DietMapCContext.fromSet(dots)
   }
 
   @Setup
   def setup(): Unit = {
-    cca = makeCContext("a")
-    ccb = makeCContext("b")
+    cca = makeCContext("a", 10, 0, 7)
+    ccb = makeCContext("b", 10, 5, 7)
     cca1 = DietMapCContext.union(cca, DietMapCContext.fromSet(Set(Dot("b", 5))))
     ccaSingle = DietMapCContext.fromSet(Set(Dot("a", size + 10)))
   }

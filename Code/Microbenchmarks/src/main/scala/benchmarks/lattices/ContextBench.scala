@@ -15,7 +15,7 @@ import kofre.dotbased.{Context, IntTree}
 class ContextBench {
 
   @Param(Array("1", "1000"))
-  var setSize: Int = _
+  var size: Int = _
 
   var rep1Set: Context        = _
   var rep1SetPlusOne: Context = _
@@ -24,16 +24,17 @@ class ContextBench {
   val rep2id                  = IdUtil.genId()
   var rep1single: Context     = _
 
-  private def makeRep(rep: IdUtil.Id): Context = {
-    Context(Map(rep -> IntTree.fromIterator((0 until setSize).iterator)))
+  private def makeRep(rep: IdUtil.Id, mul: Int, off: Int, len: Int): Context = {
+    val ranges = Range(0, size).map(i => Range(i * mul + off, i * mul + len + off))
+    Context(Map(rep -> IntTree.fromIterator(ranges.flatten.iterator)))
   }
 
   @Setup
   def setup(): Unit = {
-    rep1Set = makeRep(rep1id)
-    rep2Set = makeRep(rep2id)
+    rep1Set = makeRep(rep1id, 10, 0, 7)
+    rep2Set = makeRep(rep2id, 10, 5, 7)
     rep1SetPlusOne = rep1Set.add(rep2id, 5)
-    rep1single = Context.empty.add(rep1id, setSize + 10)
+    rep1single = Context.empty.add(rep1id, size + 10)
   }
 
   @Benchmark
