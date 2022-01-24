@@ -4,7 +4,7 @@ import kofre.Lattice.merge
 
 import scala.annotation.targetName
 import scala.collection.immutable.HashMap
-import scala.compiletime.{erasedValue, summonInline}
+import scala.compiletime.summonAll
 import scala.deriving.Mirror
 
 /** Well, its technically a semilattice, but that is just more to type. */
@@ -48,20 +48,12 @@ object Lattice {
       }
 
   inline def derived[T <: Product](using m: Mirror.ProductOf[T]): Lattice[T] =
-    val lattices = summonList[m.MirroredElemTypes]
-    // convert to array to make lookup during merge fast
-    ProductLattice(m, lattices.toArray.asInstanceOf[Array[Lattice[Any]]])
-
-  class ProductLattice[T <: Product](m: Mirror.ProductOf[T], lattices: Seq[Lattice[Any]]) extends Lattice[T]:
-    def merge(left: T, right: T): T =
+    val lattices = summonAll[Tuple.Map[m.MirroredElemTypes, Lattice]].toIArray.map(_.asInstanceOf[Lattice[Any]])
+    (left, right) =>
       m.fromProduct(new Product {
-        def canEqual(that: Any): Boolean = left.canEqual(that)
-        def productArity: Int            = right.productArity
+        def canEqual(that: Any): Boolean = false
+        def productArity: Int            = lattices.length
         def productElement(i: Int): Any  = lattices(i).merge(left.productElement(i), right.productElement(i))
       })
 
-  private inline def summonList[T <: Tuple]: List[Lattice[_]] =
-    inline erasedValue[T] match
-      case _: EmptyTuple => Nil
-      case _: (t *: ts)  => summonInline[Lattice[t]] :: summonList[ts]
 }
