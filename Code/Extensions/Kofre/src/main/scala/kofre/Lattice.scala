@@ -1,7 +1,5 @@
 package kofre
 
-import kofre.Lattice.merge
-
 import scala.annotation.targetName
 import scala.collection.immutable.HashMap
 import scala.compiletime.summonAll
@@ -49,11 +47,13 @@ object Lattice {
 
   inline def derived[T <: Product](using m: Mirror.ProductOf[T]): Lattice[T] =
     val lattices = summonAll[Tuple.Map[m.MirroredElemTypes, Lattice]].toIArray.map(_.asInstanceOf[Lattice[Any]])
-    (left, right) =>
+    ProductLattice(m, lattices)
+
+  class ProductLattice[T <: Product](m: Mirror.ProductOf[T], lattices: Seq[Lattice[Any]]) extends Lattice[T]:
+    override def merge(left: T, right: T): T =
       m.fromProduct(new Product {
         def canEqual(that: Any): Boolean = false
         def productArity: Int            = lattices.length
         def productElement(i: Int): Any  = lattices(i).merge(left.productElement(i), right.productElement(i))
       })
-
 }
