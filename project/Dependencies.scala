@@ -20,7 +20,7 @@ object Dependencies {
     val jline                    = "2.14.6"
     val jodaConvert              = "2.2.1"
     val jodaTime                 = "2.10.3"
-    val jsoniterScalaCore        = "2.12.1"
+    val jsoniterScalaCore        = "2.12.3"
     val jsoup                    = "1.14.3"
     val jsr166y                  = "1.7.0"
     val kaleidoscope             = "0.1.0"
@@ -42,13 +42,13 @@ object Dependencies {
     val scalacheck               = "1.15.4"
     val scalactic                = "3.0.0"
     val scalajsDom               = "2.0.0"
-    val scalatags                = "0.11.0"
+    val scalatags                = "0.11.1"
     val scalatest                = "3.2.10"
     val scalatestpluscheck       = "3.2.10.0"
     val scribe                   = "3.6.7"
     val sourcecode               = "0.2.7"
     val tomlScala                = "0.2.2"
-    val upickle                  = "1.4.4"
+    val upickle                  = "1.5.0"
   }
 
   import Dependencies.{Versions => V}
