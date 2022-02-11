@@ -366,9 +366,8 @@ lazy val addScalafxDependencies = {
       scalaSwing.value,
     ),
     libraryDependencies ++= Seq("base", "controls", "fxml", "graphics", "media", "swing", "web").map(m =>
-      "org.openjfx" % s"javafx-$m" % "17.0.1" classifier osName
+      "org.openjfx" % s"javafx-$m" % "17.0.2" classifier osName
     )
-    // (Compile / unmanagedJars) += Attributed.blank(file(System.getenv("JAVA_HOME") + "/lib/ext/jfxrt.jar"))
   )
 }
 
