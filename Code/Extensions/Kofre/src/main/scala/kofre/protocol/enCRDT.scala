@@ -8,13 +8,13 @@ import scala.collection.immutable.HashMap
 
 type Secret = String
 
-case class Encrypted[S](data: S)
 
-case class AEAD[S](cyphertext: Encrypted[S], metadata: VectorClock)
-def encrypt[T](data: T, metadata: VectorClock, key: Secret): AEAD[T] = AEAD(Encrypted(data), metadata)
-def decrypt[T](key: Secret)(aead: AEAD[T]) = Option.when(key == "secret")(aead.cyphertext.data)
+case class AEAD[S, A](cyphertext: S, metadata: A)
 
-type EnCRDT[S] = Set[AEAD[S]]
+def decrypt[S, A](aead: AEAD[S, A], key: Secret): Option[S] = Option.when(key == "secret")(aead.cyphertext)
+def encrypt[S, A](data: S, metadata: A, key: Secret): AEAD[S, A] = AEAD(data, metadata)
+
+type EnCRDT[S] = Set[AEAD[S, VectorClock]]
 
 given [S]: Lattice[EnCRDT[S]] with
   def merge(left: EnCRDT[S], right: EnCRDT[S]): EnCRDT[S] =
@@ -28,4 +28,4 @@ extension [S](c: EnCRDT[S])
     Set(encrypt(data, causality, key))
 
   def recombine(key: Secret)(using Lattice[S]): Option[S] =
-    c.flatMap(decrypt(key)).reduceOption(Lattice.merge[S])
+    c.flatMap(decrypt(_, key)).reduceOption(Lattice.merge[S])
