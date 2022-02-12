@@ -45,9 +45,9 @@ object Lattice {
           }
       }
 
-  inline def derived[T <: Product](using m: Mirror.ProductOf[T]): Lattice[T] =
-    val lattices = summonAll[Tuple.Map[m.MirroredElemTypes, Lattice]].toIArray.map(_.asInstanceOf[Lattice[Any]])
-    ProductLattice(m, lattices)
+  inline def derived[T <: Product](using pm: Mirror.ProductOf[T]): Lattice[T] =
+    val lattices = summonAll[Tuple.Map[pm.MirroredElemTypes, Lattice]].toIArray.map(_.asInstanceOf[Lattice[Any]])
+    ProductLattice(pm, lattices)
 
   class ProductLattice[T <: Product](m: Mirror.ProductOf[T], lattices: Seq[Lattice[Any]]) extends Lattice[T]:
     override def merge(left: T, right: T): T =
