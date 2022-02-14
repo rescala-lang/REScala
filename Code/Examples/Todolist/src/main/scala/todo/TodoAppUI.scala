@@ -17,6 +17,8 @@ import scalatags.JsDom
 import scalatags.JsDom.all._
 import scalatags.JsDom.tags2.section
 import scalatags.JsDom.{Attr, TypedTag}
+import todo.Codecs._
+import rescala.default.Events.CBResult
 
 class TodoAppUI(val storagePrefix: String) {
 
@@ -32,7 +34,7 @@ class TodoAppUI(val storagePrefix: String) {
       autofocus   := "autofocus"
     )
 
-    val (createTodo, todoInputField) = inputFieldHandler(todoInputTag, onchange)
+    val createTodo = inputFieldHandler(todoInputTag, onchange)
 
     val removeAll = Events.fromCallback[UIEvent](cb => button("remove all done todos", onclick := cb))
 
@@ -40,26 +42,23 @@ class TodoAppUI(val storagePrefix: String) {
       input(id := "toggle-all", name := "toggle-all", `class` := "toggle-all", `type` := "checkbox", onchange := cb)
     }
 
-    val deltaEvt = Evt[Delta[RGA.State[TaskRef, DietMapCContext]]]
-
     val taskrefs = new TaskRefObj(toggleAll.event, storagePrefix)
     TaskRefs.taskrefObj = taskrefs
     val taskOps = new TaskOps(taskrefs)
 
-    import Codecs._
+    val deltaEvt = Evt[Delta[RGA.State[TaskRef, DietMapCContext]]]
 
-    val rga = {
+    val rga =
       Storing.storedAs(storagePrefix, taskOps.listInitial) { init =>
-        Events.foldAll(init) { s =>
+        Events.foldAll(init) { current =>
           Seq(
-            createTodo act taskOps.handleCreateTodo(s),
-            removeAll.event dyn { dt => _ => taskOps.handleRemoveAll(s, dt) },
-            s.toList.map(_.removed) act taskOps.handleRemove(s),
-            deltaEvt act taskOps.handleDelta(s)
+            createTodo.event act taskOps.handleCreateTodo(current),
+            removeAll.event dyn { dt => _ => taskOps.handleRemoveAll(current, dt) },
+            current.toList.map(_.removed) act taskOps.handleRemove(current),
+            deltaEvt act taskOps.handleDelta(current)
           )
         }
       }(codecRGA)
-    }
 
     LociDist.distributeDeltaCRDT(rga, deltaEvt, Todolist.registry)(
       Binding[RGA.State[TaskRef, DietMapCContext] => Unit]("tasklist")
@@ -78,12 +77,12 @@ class TodoAppUI(val storagePrefix: String) {
       header(
         `class` := "header",
         h1(if (largeheader.nonEmpty) largeheader else "todos"),
-        todoInputField
+        createTodo.data
       ),
       section(
         `class` := "main",
         `style` := Signal { if (tasksData().isEmpty) "display:hidden" else "" },
-        toggleAll.value,
+        toggleAll.data,
         label(`for` := "toggle-all", "Mark all as complete"),
         ul(
           `class` := "todo-list",
@@ -104,16 +103,16 @@ class TodoAppUI(val storagePrefix: String) {
           )
         }.asModifier,
         Signal {
-          removeAll.value(`class` := "clear-completed" + (if (!tasksData.value.exists(_.done)) " hidden" else ""))
+          removeAll.data(`class` := "clear-completed" + (if (!tasksData.value.exists(_.done)) " hidden" else ""))
         }.asModifier
       )
     )
   }
 
-  def inputFieldHandler(tag: TypedTag[Input], attr: Attr): (Event[String], Input) = {
+  def inputFieldHandler(tag: TypedTag[Input], attr: Attr): CBResult[String, Input] = {
     val handler = Events.fromCallback[UIEvent](cb => tag(attr := cb))
 
-    val todoInputField: Input = handler.value.render
+    val todoInputField: Input = handler.data.render
 
     val handlerEvent =
       handler.event.map { e: UIEvent =>
@@ -123,7 +122,7 @@ class TodoAppUI(val storagePrefix: String) {
         res
       }
 
-    (handlerEvent, todoInputField)
+    new CBResult(handlerEvent, todoInputField)
   }
 
 }

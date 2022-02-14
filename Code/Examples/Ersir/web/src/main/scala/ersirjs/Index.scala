@@ -86,14 +86,14 @@ class Index(connected: Signal[String]) {
         img(cls := "logo", src := "static/logo-small.svg"),
         Icons.lamp
       ),
-      article(cls := "controls", textinput, imageinput, button("Post", addPost.value)),
+      article(cls := "controls", textinput, imageinput, button("Post", addPost.data)),
       main(articles.asModifierL),
       article(
         cls := "controls",
-        button("Reset", reset.value),
+        button("Reset", reset.data),
         button("Fullscreen", onclick := { (_: UIEvent) => Fullscreen.toggleFullscreen() })
+        )
       )
-    )
 
   }
 

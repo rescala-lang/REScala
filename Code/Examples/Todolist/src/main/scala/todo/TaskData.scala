@@ -62,7 +62,7 @@ object TaskRefs {
 
 class TaskRefObj(toggleAll: Event[UIEvent], storePrefix: String) {
 
-  import Codecs.todoTaskCodec
+  import todo.Codecs.todoTaskCodec
 
   implicit val transmittableLWW: IdenticallyTransmittable[LWWRegister.State[TaskData, DietMapCContext]] =
     IdenticallyTransmittable()
@@ -117,7 +117,7 @@ class TaskRefObj(toggleAll: Event[UIEvent], storePrefix: String) {
     //  )
     // )
 
-    val crdt = Storing.storedAs(storePrefix + taskID, lww) { init =>
+    val crdt = Storing.storedAs(s"$storePrefix$taskID", lww) { init =>
       Events.foldAll(init)(current =>
         Seq(
           doneEv act { _ => current.resetDeltaBuffer().map(_.toggle()) },
@@ -136,20 +136,20 @@ class TaskRefObj(toggleAll: Event[UIEvent], storePrefix: String) {
     val removeButton =
       Events.fromCallback[UIEvent](cb => button(`class` := "destroy", onclick := cb))
 
-    val editInput = edittext.value(value := taskData.map(_.desc)).render
+    val editInput = edittext.data(value := taskData.map(_.desc)).render
     editDiv.event.observe(_ => setTimeout(0) { editInput.focus() })
 
     val listItem = li(
       `class` := editingV.map(if (_) "editing" else "no-editing"),
-      editDiv.value(
+      editDiv.data(
         input(
           `class` := "toggle",
           `type`  := "checkbox",
-          doneClick.value,
+          doneClick.data,
           checked := taskData.map(c => if (c.done) Some(checked.v) else None)
-        ),
+          ),
         label(taskData.map(c => stringFrag(c.desc)).asModifier),
-        removeButton.value
+        removeButton.data
       ),
       editInput
     )

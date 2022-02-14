@@ -425,7 +425,7 @@ trait EventBundle extends EventCompatBundle with ReadableMacroBundle {
       final def act[A](fun: T => A): FoldMatch[A] = new DynamicFoldMatch(() => events, fun)
     }
 
-    class CBResult[T, R](val event: Event[T], val value: R)
+    class CBResult[T, R](val event: Event[T], val data: R)
     final class FromCallbackT[T] private[Events] (val dummy: Boolean = true) {
       def apply[R](body: (T => Unit) => R)(implicit ct: CreationTicket, s: Scheduler): CBResult[T, R] = {
         val evt: Evt[T] = Evt[T]()(ct)
