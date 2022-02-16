@@ -15,6 +15,6 @@ indent_style = tab
 
 # scala is very fixed on this indent style
 # in particular, scalafmt does not support tabs
-[*.scala]
+[*.{scala,sbt}]
 indent_style = space
 indent_size = 2
