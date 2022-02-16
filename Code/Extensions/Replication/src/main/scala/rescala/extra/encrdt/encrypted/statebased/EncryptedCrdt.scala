@@ -5,7 +5,7 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import com.google.crypto.tink.Aead
 import kofre.Lattice
 import kofre.Lattice.Operators
-import kofre.primitives.{VectorClock}
+import kofre.primitives.VectorClock
 import rescala.extra.encrdt.encrypted.statebased.DecryptedState.vectorClockJsonCodec
 
 case class EncryptedState(stateCiphertext: Array[Byte], serialVersionVector: Array[Byte]) {
