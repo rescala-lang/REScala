@@ -51,7 +51,7 @@ object CContext {
     override def empty: CausalContext                                            = CausalContext.empty
     override def one(dot: Dot): CausalContext                                    = CausalContext.one(dot)
     override def toSet(cc: CausalContext): Set[Dot]                              = cc.toSet
-    override def union(left: CausalContext, right: CausalContext): CausalContext = left.merged(right)
+    override def union(left: CausalContext, right: CausalContext): CausalContext = left.union(right)
     override def diff(cc: CausalContext, other: Iterable[Dot]): CausalContext    = cc.diff(fromSet(other.toSet))
     override def max(cc: CausalContext, replicaID: String): Option[Dot]          = cc.max(replicaID)
     override def decompose(cc: CausalContext, exclude: Dot => Boolean): Iterable[CausalContext] = cc.decompose(exclude)

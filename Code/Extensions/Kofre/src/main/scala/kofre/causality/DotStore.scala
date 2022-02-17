@@ -3,7 +3,7 @@ package kofre.causality
 import kofre.IdUtil.Id
 import kofre.Lattice
 
-case class Causal[A](store: A, context: Set[Dot])
+case class Causal[A](store: A, context: CausalContext)
 
 /** Dot stores provide a generic way to merge datastructures,
   * implemented on top of one of the provided dot stores.
@@ -46,7 +46,7 @@ object DotStore {
 
   def next[A: DotStore](id: Id, c: A): Dot = {
     val dotsWithId = DotStore[A].dots(c).filter(_.replicaId == id)
-    val maxCount   = if (dotsWithId.isEmpty) 0 else dotsWithId.map(_.counter).max
+    val maxCount   = if (dotsWithId.isEmpty) 0 else dotsWithId.map(_.time).max
     Dot(id, maxCount + 1)
   }
 
@@ -57,6 +57,28 @@ object DotStore {
   def apply[A](implicit dotStore: DotStore[A]): dotStore.type = dotStore
 
   // instances
+
+  implicit val CausalContextDotStoreInstance: DotStore[CausalContext] =
+    new DotStore[CausalContext] {
+      type Store = CausalContext
+
+      override def add(a: Store, d: Dot): Store = a.add(d.replicaId, d.time)
+
+      override def dots(a: Store): Set[Dot] = a.toSet
+
+      /** Only keeps the highest element of each dot subsequence in the set. */
+      // TODO: how do we know where subsequences started?
+      // TODO: this most likely only works with causal delivery of things, which we may not have
+      override def compress(a: Store): Store = CausalContext.fromSet(a.toSet.filter(d => !a.contains(Dot(d.replicaId, d.time + 1))))
+
+      override def empty: Store = CausalContext.empty
+
+      override def merge(left: Causal[Store], right: Causal[Store]): Causal[Store] = {
+        val common      = left.store intersect right.store
+        val newElements = (left.store diff right.context) union (right.store diff left.context)
+        Causal(common union newElements, left.context union right.context)
+      }
+    }
 
   implicit def DotSetInstance: DotStore[Set[Dot]] =
     new DotStore[Set[Dot]] {
@@ -69,13 +91,13 @@ object DotStore {
       /** Only keeps the highest element of each dot subsequence in the set. */
       // TODO: how do we know where subsequences started?
       // TODO: this most likely only works with causal delivery of things, which we may not have
-      override def compress(a: Store): Store = a.filter(d => !a.contains(Dot(d.replicaId, d.counter + 1)))
+      override def compress(a: Store): Store = a.filter(d => !a.contains(Dot(d.replicaId, d.time + 1)))
 
       override def empty: Store = Set.empty
 
       override def merge(left: Causal[Store], right: Causal[Store]): Causal[Store] = {
         val common      = left.store intersect right.store
-        val newElements = (left.store diff right.context) union (right.store diff left.context)
+        val newElements = (left.store diff right.context.toSet) union (right.store diff left.context.toSet)
         Causal(common union newElements, left.context union right.context)
       }
     }

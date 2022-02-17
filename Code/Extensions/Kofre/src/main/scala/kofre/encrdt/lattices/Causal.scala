@@ -13,11 +13,11 @@ object Causal {
   implicit def CausalWithDotSetLattice: Lattice[Causal[DotSet]] = (left, right) => {
     val inBoth = left.dotStore & right.dotStore
     val newInLeft =
-      left.dotStore.filterNot(dot => dot.counter <= right.causalContext.clockOf(dot.replicaId).get.counter)
+      left.dotStore.filterNot(dot => dot.time <= right.causalContext.clockOf(dot.replicaId).get.time)
     val newInRight =
-      right.dotStore.filterNot(dot => dot.counter <= left.causalContext.clockOf(dot.replicaId).get.counter)
+      right.dotStore.filterNot(dot => dot.time <= left.causalContext.clockOf(dot.replicaId).get.time)
 
-    val mergedCausalContext = left.causalContext.merged(right.causalContext)
+    val mergedCausalContext = left.causalContext.union(right.causalContext)
     Causal(inBoth ++ newInLeft ++ newInRight, mergedCausalContext)
   }
 
@@ -32,7 +32,7 @@ object Causal {
       }).toMap
         ++ left.dotStore.filterNot { case (dot, _) => right.causalContext.contains(dot) }
         ++ right.dotStore.filterNot { case (dot, _) => left.causalContext.contains(dot) },
-      left.causalContext.merged(right.causalContext)
+      left.causalContext.union(right.causalContext)
     )
   }
 
@@ -50,6 +50,6 @@ object Causal {
         } filterNot {
           case (key, dotStore) => DotStore[V].bottom == dotStore
         }).toMap,
-        left.causalContext.merged(right.causalContext)
+        left.causalContext.union(right.causalContext)
       )
 }

@@ -10,8 +10,8 @@ import scala.math.PartialOrdering
   * Dots are globally unique counters that are used to track causality in causal CRDTs. To guarantee global uniqueness,
   * dots combine a globally unique replicaID with a locally unique counter.
   */
-case class Dot(replicaId: Id, counter: Long) {
-  def advance: Dot  = Dot(replicaId, counter + 1)
+case class Dot(replicaId: Id, time: Long) {
+  def advance: Dot  = Dot(replicaId, time + 1)
   def next: Dot     = advance
   def replicaID: Id = replicaId
 }

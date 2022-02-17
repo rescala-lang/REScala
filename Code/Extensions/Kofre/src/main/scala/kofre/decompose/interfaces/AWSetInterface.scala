@@ -41,7 +41,7 @@ object AWSetInterface {
 
   def addAll[E, C: CContext](elems: Iterable[E]): DeltaMutator[State[E, C]] = {
     case (replicaID, Causal(dm, cc)) =>
-      val nextCounter = CContext[C].nextDot(cc, replicaID).counter
+      val nextCounter = CContext[C].nextDot(cc, replicaID).time
       val nextDots    = (nextCounter until nextCounter + elems.size).toSet.map(Dot(replicaID, _))
 
       val ccontextSet = elems.foldLeft(nextDots) {

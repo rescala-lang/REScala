@@ -39,16 +39,16 @@ case class CausalContext(internal: Map[Id, IntTree.Tree]) {
       }.toMap
     }
 
-  def merged(other: CausalContext): CausalContext = CausalContext.contextLattice.merge(this, other)
+  def union(other: CausalContext): CausalContext = CausalContext.contextLattice.merge(this, other)
 
-  def contains(d: Dot): Boolean = internal.get(d.replicaID).exists(IntTree.contains(_, d.counter))
+  def contains(d: Dot): Boolean = internal.get(d.replicaID).exists(IntTree.contains(_, d.time))
 
   def toSet: Set[Dot] =
     internal.flatMap((key, tree) => IntTree.iterator(tree).map(time => Dot(key, time))).toSet
 
   def max(replicaID: String): Option[Dot] =
     internal.get(replicaID).map(tree => Dot(replicaID, IntTree.nextValue(tree, Long.MinValue) - 1))
-      .filterNot(_.counter == Long.MinValue)
+      .filterNot(_.time == Long.MinValue)
   def decompose(exclude: Dot => Boolean): Iterable[CausalContext] =
     internal.flatMap { (id, tree) =>
       IntTree.iterator(tree).map(time => CausalContext.single(id, time))
@@ -62,7 +62,7 @@ object CausalContext {
   def single(replicaId: Id, time: Long): CausalContext =
     CausalContext(Map((replicaId, IntTree.insert(IntTree.empty, time))))
   val empty: CausalContext         = CausalContext(Map.empty)
-  def one(dot: Dot): CausalContext = CausalContext.empty.add(dot.replicaId, dot.counter)
+  def one(dot: Dot): CausalContext = CausalContext.empty.add(dot.replicaId, dot.time)
 
   implicit val contextLattice: Lattice[CausalContext] = new Lattice[CausalContext] {
     override def merge(left: CausalContext, right: CausalContext): CausalContext = {
@@ -72,7 +72,7 @@ object CausalContext {
 
   def fromSet(dots: Set[Dot]): CausalContext = CausalContext(dots.groupBy(_.replicaId).map {
     (key, times) =>
-      key -> IntTree.fromIterator(times.iterator.map(_.counter))
+      key -> IntTree.fromIterator(times.iterator.map(_.time))
   })
 
 }

@@ -2,11 +2,11 @@ package kofre.dotbased
 
 import kofre.IdUtil.Id
 import kofre.causality.DotStore.*
-import kofre.causality.{Causal, Dot, DotStore}
+import kofre.causality.{Causal, CausalContext, Dot, DotStore}
 import kofre.dotbased.AddWinsSet
 import kofre.{IdUtil, Lattice}
 
-case class AddWinsSet[A](store: Map[A, Set[Dot]], context: Set[Dot]) {
+case class AddWinsSet[A](store: Map[A, Set[Dot]], context: CausalContext) {
   // (updatesCurrent[Set[(id, dot)], knownPast[Set[dot]], newData[Set[(id,data)])
   // a delta always includes new (id,dot) pairs, the known causal context for the modified ids as well as the new data elements
 
@@ -23,7 +23,7 @@ case class AddWinsSet[A](store: Map[A, Set[Dot]], context: Set[Dot]) {
   def addΔ(element: A, replicaID: Id): AddWinsSet[A] = {
     val dot     = DotStore.next(replicaID, context)
     val onlyDot = Set(dot)
-    AddWinsSet(Map(element -> onlyDot), store.get(element).fold(onlyDot)(_ + dot))
+    AddWinsSet(Map(element -> onlyDot), CausalContext.fromSet(store.get(element).fold(onlyDot)(_ + dot)))
 
     // TODO: potential optimization
     // this is what the paper does:
@@ -39,11 +39,11 @@ case class AddWinsSet[A](store: Map[A, Set[Dot]], context: Set[Dot]) {
     * Thus, the delta for removal is the empty map,
     * with the dot of the removed element in the context.
     */
-  def removeΔ(e: A): AddWinsSet[A] = AddWinsSet[A](Map.empty, store.getOrElse(e, Set.empty))
+  def removeΔ(e: A): AddWinsSet[A] = AddWinsSet[A](Map.empty, CausalContext.fromSet(store.getOrElse(e, Set.empty)))
 
   def remove(element: A): AddWinsSet[A] = Lattice.merge(this, removeΔ(element))
 
-  def clear: AddWinsSet[A] = AddWinsSet[A](Map(), DotStore[Map[A, Set[Dot]]].dots(store))
+  def clear: AddWinsSet[A] = AddWinsSet[A](Map(), CausalContext.fromSet(DotStore[Map[A, Set[Dot]]].dots(store)))
 
   def toSet: Set[A] = store.keySet
 
@@ -66,7 +66,7 @@ case class AddWinsSet[A](store: Map[A, Set[Dot]], context: Set[Dot]) {
 
 object AddWinsSet {
 
-  def empty[A]: AddWinsSet[A] = AddWinsSet[A](Map.empty[A, Set[Dot]], Set.empty[Dot])
+  def empty[A]: AddWinsSet[A] = AddWinsSet[A](Map.empty[A, Set[Dot]], CausalContext.empty)
 
   /* AddWinsSet is isomorphic to the corresponding Causal */
 
