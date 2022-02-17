@@ -12,8 +12,7 @@ trait DotStore[Store] {
 
   def dots(a: Store): Set[Dot]
 
-  def empty: Store
-  def bottom: Store = empty
+  def bottom: Store
 
   /** The new element contains all the dots that are either
     * contained in both dotstores or contained in one of the dotstores but not in the causal context (history) of the
@@ -31,7 +30,7 @@ object DotStore {
   implicit def dotFunDotStore[V]: DotStore[DotFun[V]] = new DotStore[DotFun[V]] {
 
     override def add(a: DotFun[V], d: Dot): DotFun[V] = ???
-    override def empty: DotFun[V]                     = Map.empty
+    override def bottom: DotFun[V]                     = Map.empty
 
     override def merge(left: Causal[DotFun[V]], right: Causal[DotFun[V]]): Causal[DotFun[V]] = ???
 
@@ -61,7 +60,7 @@ object DotStore {
 
       override def dots(a: Store): Set[Dot] = a.toSet
 
-      override def empty: Store = CausalContext.empty
+      override def bottom: Store = CausalContext.empty
 
       override def merge(left: Causal[Store], right: Causal[Store]): Causal[Store] = {
         val common      = left.store intersect right.store
@@ -78,7 +77,7 @@ object DotStore {
 
       override def dots(a: Store): Store = a
 
-      override def empty: Store = Set.empty
+      override def bottom: Store = Set.empty
 
       override def merge(left: Causal[Store], right: Causal[Store]): Causal[Store] = {
         val common      = left.store intersect right.store
@@ -95,11 +94,11 @@ object DotStore {
 
       override def dots(a: Store): Set[Dot] = a.valuesIterator.flatMap(dsl.dots).toSet
 
-      override def empty: Store = Map.empty
+      override def bottom: Store = Map.empty
 
       override def merge(left: Causal[Store], right: Causal[Store]): Causal[Store] = {
 
-        val empty = DotStore[A].empty
+        val empty = DotStore[A].bottom
 
         // The new store is everything both sides have seen and everything that is new.
         // If something is missing from the store (but in the context) it has been deleted.
