@@ -5,7 +5,8 @@ import org.openjdk.jmh.annotations._
 import rescala.extra.lattices.delta.DietCC._
 import rescala.extra.lattices.delta.crdt.reactive._
 import kofre.decompose.interfaces.RGAInterface
-import kofre.decompose.{Dot, UIJDLattice}
+import kofre.decompose.{UIJDLattice}
+import kofre.causality.Dot
 
 import java.util.concurrent.TimeUnit
 
@@ -19,49 +20,49 @@ import java.util.concurrent.TimeUnit
 class DeltaMergeBench {
 
   @Param(Array("1", "10", "100", "1000"))
-  var size: Int = _
+  var size: Long = _
 
-  var fullState: RGA.State[Int, DietMapCContext]         = _
-  var plusOneState: RGA.State[Int, DietMapCContext]      = _
-  var plusOneDeltaState: RGA.State[Int, DietMapCContext] = _
+  var fullState: RGA.State[Long, DietMapCContext]         = _
+  var plusOneState: RGA.State[Long, DietMapCContext]      = _
+  var plusOneDeltaState: RGA.State[Long, DietMapCContext] = _
 
   def makeCContext(replicaID: String): DietMapCContext = {
-    val dots = (0 until size).map(Dot(replicaID, _)).toSet
+    val dots = (0L until size).map(Dot(replicaID, _)).toSet
     DietMapCContext.fromSet(dots)
   }
 
   @Setup
   def setup(): Unit = {
-    val baseState = UIJDLattice[RGA.State[Int, DietMapCContext]].bottom
+    val baseState = UIJDLattice[RGA.State[Long, DietMapCContext]].bottom
 
-    val deltaState = RGAInterface.insertAll[Int, DietMapCContext](0, 0 to size).apply("", baseState)
-    fullState = UIJDLattice[RGA.State[Int, DietMapCContext]].merge(baseState, deltaState)
+    val deltaState = RGAInterface.insertAll[Long, DietMapCContext](0, 0L to size).apply("", baseState)
+    fullState = UIJDLattice[RGA.State[Long, DietMapCContext]].merge(baseState, deltaState)
 
-    plusOneDeltaState = RGAInterface.insert[Int, DietMapCContext](0, size).apply("", fullState)
-    plusOneState = UIJDLattice[RGA.State[Int, DietMapCContext]].merge(fullState, plusOneDeltaState)
+    plusOneDeltaState = RGAInterface.insert[Long, DietMapCContext](0, size).apply("", fullState)
+    plusOneState = UIJDLattice[RGA.State[Long, DietMapCContext]].merge(fullState, plusOneDeltaState)
   }
 
   @Benchmark
-  def fullMerge: RGA.State[Int, DietMapCContext] = {
-    UIJDLattice[RGA.State[Int, DietMapCContext]].merge(fullState, plusOneState)
+  def fullMerge: RGA.State[Long, DietMapCContext] = {
+    UIJDLattice[RGA.State[Long, DietMapCContext]].merge(fullState, plusOneState)
   }
 
   @Benchmark
-  def fullDiff: Option[RGA.State[Int, DietMapCContext]] = {
-    UIJDLattice[RGA.State[Int, DietMapCContext]].diff(fullState, plusOneState)
+  def fullDiff: Option[RGA.State[Long, DietMapCContext]] = {
+    UIJDLattice[RGA.State[Long, DietMapCContext]].diff(fullState, plusOneState)
   }
 
   @Benchmark
-  def deltaMerge: RGA.State[Int, DietMapCContext] = {
-    UIJDLattice[RGA.State[Int, DietMapCContext]].diff(fullState, plusOneDeltaState) match {
+  def deltaMerge: RGA.State[Long, DietMapCContext] = {
+    UIJDLattice[RGA.State[Long, DietMapCContext]].diff(fullState, plusOneDeltaState) match {
       case Some(stateDiff) =>
-        UIJDLattice[RGA.State[Int, DietMapCContext]].merge(fullState, stateDiff)
+        UIJDLattice[RGA.State[Long, DietMapCContext]].merge(fullState, stateDiff)
       case None => fullState
     }
   }
 
   @Benchmark
-  def deltaMergeNoDiff: RGA.State[Int, DietMapCContext] = {
-    UIJDLattice[RGA.State[Int, DietMapCContext]].merge(fullState, plusOneDeltaState)
+  def deltaMergeNoDiff: RGA.State[Long, DietMapCContext] = {
+    UIJDLattice[RGA.State[Long, DietMapCContext]].merge(fullState, plusOneDeltaState)
   }
 }

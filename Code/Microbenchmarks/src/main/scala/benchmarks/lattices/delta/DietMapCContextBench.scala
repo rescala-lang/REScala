@@ -1,8 +1,8 @@
 package benchmarks.lattices.delta
 
-import kofre.decompose.Dot
 import org.openjdk.jmh.annotations._
 import rescala.extra.lattices.delta.DietCC.DietMapCContext
+import kofre.causality.Dot
 
 import java.util.concurrent.TimeUnit
 
@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit
 class DietMapCContextBench {
 
   @Param(Array("1", "1000"))
-  var size: Int = _
+  var size: Long = _
 
   var cca: DietMapCContext       = _
   var ccb: DietMapCContext       = _
@@ -24,8 +24,8 @@ class DietMapCContextBench {
   var ccaSingle: DietMapCContext = _
 
 
-  private def makeCContext(replicaID: String, mul: Int, off: Int, len: Int): DietMapCContext = {
-    val ranges = Range(0, size).map(i => Range(i * mul + off, i * mul + len + off))
+  private def makeCContext(replicaID: String, mul: Long, off: Long, len: Long): DietMapCContext = {
+    val ranges = Range.Long(0L, size, 1).map(i => Range.Long(i * mul + off, i * mul + len + off, 1))
     val dots = ranges.flatten.map(Dot(replicaID, _)).toSet
     DietMapCContext.fromSet(dots)
   }

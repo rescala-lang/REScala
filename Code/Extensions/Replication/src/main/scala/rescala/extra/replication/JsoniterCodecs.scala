@@ -7,7 +7,8 @@ import kofre.decompose.interfaces.AuctionInterface.AuctionData
 import kofre.decompose.interfaces.ForcedWriteInterface.FW
 import kofre.decompose.interfaces.GListInterface.{Elem, GListNode}
 import kofre.decompose.interfaces.RGAInterface.RGANode
-import kofre.decompose.{Causal, Dot, LexPair, TimedVal}
+import kofre.decompose.{Causal, LexPair, TimedVal}
+import kofre.causality.Dot
 import rescala.extra.lattices.delta.DietCC.DietMapCContext
 
 object JsoniterCodecs {
@@ -16,9 +17,9 @@ object JsoniterCodecs {
 
   implicit val SetCContextCodec: JsonValueCodec[Set[Dot]] = JsonCodecMaker.make
 
-  implicit val DietCodec: JsonValueCodec[Diet[Int]] = new JsonValueCodec[Diet[Int]] {
-    override def decodeValue(in: JsonReader, default: Diet[Int]): Diet[Int] = {
-      var result = Diet.empty[Int]
+  implicit val DietCodec: JsonValueCodec[Diet[Long]] = new JsonValueCodec[Diet[Long]] {
+    override def decodeValue(in: JsonReader, default: Diet[Long]): Diet[Long] = {
+      var result = Diet.empty[Long]
 
       in.isNextToken('"')
 
@@ -28,9 +29,9 @@ object JsoniterCodecs {
         in.nextToken() match {
           case 'R' =>
             while (!in.isNextToken('(')) {}
-            val lower = in.readInt()
+            val lower = in.readLong()
             in.isNextToken(',')
-            val upper = in.readInt()
+            val upper = in.readLong()
             result = result + cats.collections.Range(lower, upper)
             in.isNextToken(')')
           case _ =>
@@ -40,11 +41,11 @@ object JsoniterCodecs {
       result
     }
 
-    override def encodeValue(x: Diet[Int], out: JsonWriter): Unit = {
+    override def encodeValue(x: Diet[Long], out: JsonWriter): Unit = {
       out.writeVal(x.toString)
     }
 
-    override def nullValue: Diet[Int] = null
+    override def nullValue: Diet[Long] = null
   }
 
   implicit val DietMapCContextCodec: JsonValueCodec[DietMapCContext] = JsonCodecMaker.make

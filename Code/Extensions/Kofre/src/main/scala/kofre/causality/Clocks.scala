@@ -7,9 +7,14 @@ import kofre.{IdUtil, Lattice}
 import scala.collection.immutable.HashMap
 import scala.math.PartialOrdering
 
-/** a lamport clock */
+/** Dots are another name for lamport clocks.
+  * Dots are globally unique counters that are used to track causality in causal CRDTs. To guarantee global uniqueness,
+  * dots combine a globally unique replicaID with a locally unique counter.
+  */
 case class Dot(replicaId: Id, counter: Long) {
   def advance: Dot = Dot(replicaId, counter + 1)
+  def next: Dot = advance
+  def replicaID: Id = replicaId
 }
 
 case class VectorClock(timestamps: Map[Id, Long]) {

@@ -1,5 +1,7 @@
 package kofre.decompose
 
+import kofre.causality.Dot
+
 /** CContext is the typeclass trait for causal contexts. Causal contexts are used in causal CRDTs to keep track of all the dots that a
   * replica has witnessed.
   */

@@ -5,7 +5,8 @@ import org.openjdk.jmh.annotations._
 import rescala.extra.lattices.delta.DietCC._
 import rescala.extra.lattices.delta.crdt.reactive._
 import kofre.decompose.interfaces.AWSetInterface
-import kofre.decompose.{Dot, UIJDLattice}
+import kofre.decompose.{UIJDLattice}
+import kofre.causality.Dot
 
 import java.util.concurrent.TimeUnit
 
@@ -19,49 +20,49 @@ import java.util.concurrent.TimeUnit
 class AWSetDeltaMergeBench {
 
   @Param(Array("1", "10", "100", "1000"))
-  var size: Int = _
+  var size: Long = _
 
-  var fullState: AWSet.State[Int, DietMapCContext]         = _
-  var plusOneState: AWSet.State[Int, DietMapCContext]      = _
-  var plusOneDeltaState: AWSet.State[Int, DietMapCContext] = _
+  var fullState: AWSet.State[Long, DietMapCContext]         = _
+  var plusOneState: AWSet.State[Long, DietMapCContext]      = _
+  var plusOneDeltaState: AWSet.State[Long, DietMapCContext] = _
 
   def makeCContext(replicaID: String): DietMapCContext = {
-    val dots = (0 until size).map(Dot(replicaID, _)).toSet
+    val dots = (0L until size).map(Dot(replicaID, _)).toSet
     DietMapCContext.fromSet(dots)
   }
 
   @Setup
   def setup(): Unit = {
-    val baseState = UIJDLattice[AWSet.State[Int, DietMapCContext]].bottom
+    val baseState = UIJDLattice[AWSet.State[Long, DietMapCContext]].bottom
 
-    val deltaState = AWSetInterface.addAll[Int, DietMapCContext](0 to size).apply("", baseState)
-    fullState = UIJDLattice[AWSet.State[Int, DietMapCContext]].merge(baseState, deltaState)
+    val deltaState = AWSetInterface.addAll[Long, DietMapCContext](0L to size).apply("", baseState)
+    fullState = UIJDLattice[AWSet.State[Long, DietMapCContext]].merge(baseState, deltaState)
 
-    plusOneDeltaState = AWSetInterface.add[Int, DietMapCContext](size).apply("", fullState)
-    plusOneState = UIJDLattice[AWSet.State[Int, DietMapCContext]].merge(fullState, plusOneDeltaState)
+    plusOneDeltaState = AWSetInterface.add[Long, DietMapCContext](size).apply("", fullState)
+    plusOneState = UIJDLattice[AWSet.State[Long, DietMapCContext]].merge(fullState, plusOneDeltaState)
   }
 
   @Benchmark
-  def fullMerge: AWSet.State[Int, DietMapCContext] = {
-    UIJDLattice[AWSet.State[Int, DietMapCContext]].merge(fullState, plusOneState)
+  def fullMerge: AWSet.State[Long, DietMapCContext] = {
+    UIJDLattice[AWSet.State[Long, DietMapCContext]].merge(fullState, plusOneState)
   }
 
   @Benchmark
-  def fullDiff: Option[AWSet.State[Int, DietMapCContext]] = {
-    UIJDLattice[AWSet.State[Int, DietMapCContext]].diff(fullState, plusOneState)
+  def fullDiff: Option[AWSet.State[Long, DietMapCContext]] = {
+    UIJDLattice[AWSet.State[Long, DietMapCContext]].diff(fullState, plusOneState)
   }
 
   @Benchmark
-  def deltaMerge: AWSet.State[Int, DietMapCContext] = {
-    UIJDLattice[AWSet.State[Int, DietMapCContext]].diff(fullState, plusOneDeltaState) match {
+  def deltaMerge: AWSet.State[Long, DietMapCContext] = {
+    UIJDLattice[AWSet.State[Long, DietMapCContext]].diff(fullState, plusOneDeltaState) match {
       case Some(stateDiff) =>
-        UIJDLattice[AWSet.State[Int, DietMapCContext]].merge(fullState, stateDiff)
+        UIJDLattice[AWSet.State[Long, DietMapCContext]].merge(fullState, stateDiff)
       case None => fullState
     }
   }
 
   @Benchmark
-  def deltaMergeNoDiff: AWSet.State[Int, DietMapCContext] = {
-    UIJDLattice[AWSet.State[Int, DietMapCContext]].merge(fullState, plusOneDeltaState)
+  def deltaMergeNoDiff: AWSet.State[Long, DietMapCContext] = {
+    UIJDLattice[AWSet.State[Long, DietMapCContext]].merge(fullState, plusOneDeltaState)
   }
 }
