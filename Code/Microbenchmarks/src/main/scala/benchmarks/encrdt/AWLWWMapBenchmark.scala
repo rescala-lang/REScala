@@ -4,8 +4,8 @@ import benchmarks.encrdt.Codecs.awlwwmapJsonCodec
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToArray
 import com.google.crypto.tink.Aead
 import kofre.Lattice.Operators
+import kofre.causality.VectorClock
 import kofre.encrdt.crdts.AddWinsLastWriterWinsMap
-import kofre.primitives.VectorClock
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
 import rescala.extra.encrdt.encrypted.statebased.DecryptedState.vectorClockJsonCodec

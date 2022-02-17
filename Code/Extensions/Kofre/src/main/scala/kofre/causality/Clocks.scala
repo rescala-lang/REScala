@@ -1,6 +1,7 @@
-package kofre.primitives
+package kofre.causality
 
 import kofre.IdUtil.Id
+import kofre.causality.{Dot, VectorClock}
 import kofre.{IdUtil, Lattice}
 
 import scala.collection.immutable.HashMap

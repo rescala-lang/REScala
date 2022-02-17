@@ -1,11 +1,11 @@
 package kofre.encrdt.lattices
 import kofre.Lattice
 import kofre.Lattice.Operators
-import kofre.primitives.{Dot, VectorClock}
+import kofre.causality.{Dot, VectorClock}
 
 case class AddWinsSetLattice[T](
-                                 elements: Set[(T, Dot)] = Set[(T, Dot)](),
-                                 clocks: VectorClock = VectorClock.zero
+    elements: Set[(T, Dot)] = Set[(T, Dot)](),
+    clocks: VectorClock = VectorClock.zero
 ) {
 
   def values: Set[T] = elements.map(_._1)

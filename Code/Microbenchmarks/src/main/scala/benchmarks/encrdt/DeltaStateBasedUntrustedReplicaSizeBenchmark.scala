@@ -4,9 +4,9 @@ import benchmarks.encrdt.Codecs.deltaAwlwwmapJsonCodec
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToArray, writeToString}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import com.google.crypto.tink.Aead
+import kofre.causality.Dot
 import kofre.encrdt.causality.DotStore.{Dot, DotSet}
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap
-import kofre.primitives.Dot
 import rescala.extra.encrdt.encrypted.deltabased.{DecryptedDeltaGroup, EncryptedDeltaGroup, UntrustedReplica}
 
 import java.io.PrintWriter

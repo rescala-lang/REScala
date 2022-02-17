@@ -1,6 +1,5 @@
 package todolist
 
-import kofre.encrdt.causality.DotStore.Dot
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap
 import rescala.extra.encrdt.sync.ConnectionManager
 import todolist.SyncedTodoListCrdt.StateType

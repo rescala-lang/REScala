@@ -1,11 +1,11 @@
 package kofre.dotbased
 
 import kofre.IdUtil.Id
-import kofre.dotbased.DotStoreLattice.*
-import kofre.dotbased.{Causal, DotStoreLattice}
+import kofre.causality.{Causal, Dot, DotStoreLattice}
+import kofre.causality.DotStoreLattice.*
+import kofre.causality.DotStoreLattice
 import kofre.dotbased.AddWinsSet
 import kofre.{IdUtil, Lattice}
-import kofre.primitives.Dot
 
 case class AddWinsSet[A](store: Map[A, Set[Dot]], context: Set[Dot]) {
   // (updatesCurrent[Set[(id, dot)], knownPast[Set[dot]], newData[Set[(id,data)])

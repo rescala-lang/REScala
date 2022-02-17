@@ -1,10 +1,10 @@
 package kofre.encrdt.crdts
 import kofre.Lattice
-import kofre.encrdt.causality.DotStore.DotFun
+import kofre.causality.Dot
+import kofre.causality.DotStore.DotFun
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap.{DeltaAddWinsLastWriterWinsMapLattice, timestampedValueLattice}
 import kofre.encrdt.crdts.DeltaAddWinsMap.DeltaAddWinsMapLattice
 import kofre.encrdt.lattices.LastWriterWinsTagLattice.lwwLattice
-import kofre.primitives.Dot
 
 import java.time.Instant
 

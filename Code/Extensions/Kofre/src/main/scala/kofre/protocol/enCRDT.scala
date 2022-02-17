@@ -1,7 +1,7 @@
 package kofre.protocol
 
 import kofre.Lattice.merge
-import kofre.primitives.VectorClock
+import kofre.causality.VectorClock
 import kofre.{IdUtil, Lattice}
 
 import scala.collection.immutable.HashMap

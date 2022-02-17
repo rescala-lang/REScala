@@ -3,9 +3,9 @@ package benchmarks.encrdt
 import benchmarks.encrdt.Codecs.deltaAwlwwmapJsonCodec
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToArray
 import kofre.Lattice.Operators
+import kofre.causality.VectorClock
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap.{StateType, timestampedValueLattice}
-import kofre.primitives.VectorClock
 import rescala.extra.encrdt.encrypted.statebased.{DecryptedState, EncryptedState, UntrustedReplica}
 
 import java.io.PrintWriter
