@@ -115,7 +115,7 @@ class DotSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
     assert(
       dsMerged == ds,
-      s"Merging the list of atoms returned by DotSet.decompose should produce an equal DotSet, but $dsMerged does not equal $ds"
+      s"Merging the list of atoms returned by DotSet.decompose should produce an equal DotSet, but $dsMerged does not equal $ds (while decomposed was $decomposed)"
     )
     assert(
       ccMerged == CausalContext.fromSet(cc),
@@ -333,7 +333,7 @@ class DotMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
       s"Merging the list of atoms returned by DotMap.decompose should produce an equal DotMap, but $dmMerged does not equal $dm"
     )
     assert(
-      duplicateDots || dm.keys.forall(k => dm(k) == dmMerged.getOrElse(k, DotSet.empty)),
+      duplicateDots || dm.keys.forall(k => dm(k).toSet == dmMerged.getOrElse(k, DotSet.empty)),
       s"Merging the list of atoms returned by DotMap.decompose should produce an equal Causal Context, but $ccMerged does not equal $cc"
     )
   }
