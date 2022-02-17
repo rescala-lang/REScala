@@ -1,8 +1,8 @@
 package kofre.encrdt.crdts
 
 import kofre.causality.DotStore.*
-import kofre.causality.{CausalContext, DotStore}
-import kofre.encrdt.lattices.Causal
+import kofre.causality.{CausalContext, DotStore, Causal}
+import kofre.causality.Causal
 
 // See: Delta state replicated data types (https://doi.org/10.1016/j.jpdc.2017.08.003)
 object DeltaAddWinsMap {

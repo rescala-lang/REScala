@@ -3,7 +3,6 @@ package kofre.causality
 import kofre.IdUtil.Id
 import kofre.Lattice
 
-case class Causal[A](store: A, context: CausalContext)
 
 /** Dot stores provide a generic way to merge datastructures,
   * implemented on top of one of the provided dot stores.
