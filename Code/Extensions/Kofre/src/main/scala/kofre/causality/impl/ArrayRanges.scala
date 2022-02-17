@@ -1,4 +1,4 @@
-package kofre.dotbased
+package kofre.causality.impl
 
 import java.util
 import scala.annotation.tailrec

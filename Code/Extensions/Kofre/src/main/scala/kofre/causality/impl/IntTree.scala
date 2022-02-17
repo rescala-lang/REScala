@@ -1,4 +1,4 @@
-package kofre.dotbased
+package kofre.causality.impl
 
 import kofre.Lattice
 
@@ -123,7 +123,8 @@ object IntTree {
       }
     }
 
-  object CatsDietLike {
+  /** this was an experiment in performance optimization which seems to have not worked */
+  private object CatsDietLike {
     def noMoreThan(tree: Tree, a: Int): (Tree, Int) =
       tree match {
         case Range(start, end, l, r) =>

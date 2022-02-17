@@ -1,9 +1,11 @@
 package benchmarks.lattices
 
+import kofre.causality.IntTreeContext
+import kofre.causality.impl.IntTree
+
 import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
 import kofre.{IdUtil, Lattice}
-import kofre.dotbased.{Context, IntTree}
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -17,16 +19,16 @@ class ContextBench {
   @Param(Array("1", "1000"))
   var size: Int = _
 
-  var rep1Set: Context        = _
-  var rep1SetPlusOne: Context = _
-  var rep2Set: Context        = _
+  var rep1Set: IntTreeContext        = _
+  var rep1SetPlusOne: IntTreeContext = _
+  var rep2Set: IntTreeContext        = _
   val rep1id                  = IdUtil.genId()
   val rep2id                  = IdUtil.genId()
-  var rep1single: Context     = _
+  var rep1single: IntTreeContext = _
 
-  private def makeRep(rep: IdUtil.Id, mul: Int, off: Int, len: Int): Context = {
+  private def makeRep(rep: IdUtil.Id, mul: Int, off: Int, len: Int): IntTreeContext = {
     val ranges = Range(0, size).map(i => Range(i * mul + off, i * mul + len + off))
-    Context(Map(rep -> IntTree.fromIterator(ranges.flatten.iterator)))
+    IntTreeContext(Map(rep -> IntTree.fromIterator(ranges.flatten.iterator)))
   }
 
   @Setup
@@ -34,7 +36,7 @@ class ContextBench {
     rep1Set = makeRep(rep1id, 10, 0, 7)
     rep2Set = makeRep(rep2id, 10, 5, 7)
     rep1SetPlusOne = rep1Set.add(rep2id, 5)
-    rep1single = Context.empty.add(rep1id, size + 10)
+    rep1single = IntTreeContext.empty.add(rep1id, size + 10)
   }
 
   @Benchmark

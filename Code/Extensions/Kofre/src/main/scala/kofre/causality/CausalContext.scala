@@ -65,8 +65,7 @@ object CContext {
   /** SetCContext is a causal context implementation that simply stores all dots in a set. For most applications you should
     * use DietMapCContext instead, as it uses compression to efficiently store large continuous ranges of dots.
     */
-  type SetCContext = Set[Dot]
-  implicit def SetCContext: CContext[Set[Dot]] = new CContext[Set[Dot]] {
+  implicit val SetCContext: CContext[Set[Dot]] = new CContext[Set[Dot]] {
     override def contains(cc: Set[Dot], d: Dot): Boolean = cc.contains(d)
 
     override def fromSet(dots: Set[Dot]): Set[Dot] = dots

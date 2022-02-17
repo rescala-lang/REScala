@@ -1,12 +1,14 @@
-package kofre.dotbased
+package kofre.causality
 
 import kofre.IdUtil.Id
 import kofre.Lattice
+import kofre.causality.impl.IntTree
+import kofre.causality.IntTreeContext
 
-case class Context(internal: Map[Id, IntTree.Tree]) {
+case class IntTreeContext(internal: Map[Id, IntTree.Tree]) {
 
-  def add(replicaId: Id, time: Int): Context =
-    Context(internal.updated(
+  def add(replicaId: Id, time: Int): IntTreeContext =
+    IntTreeContext(internal.updated(
       replicaId,
       IntTree.insert(internal.getOrElse(replicaId, IntTree.empty), time)
     ))
@@ -14,8 +16,8 @@ case class Context(internal: Map[Id, IntTree.Tree]) {
     val range = internal.getOrElse(replicaId, IntTree.empty)
     IntTree.nextValue(range, 0)
   }
-  def diff(extern: Context): Context =
-    Context {
+  def diff(extern: IntTreeContext): IntTreeContext =
+    IntTreeContext {
       internal.map {
         case (id, range) =>
           val filtered = extern.internal.get(id).map { erange =>
@@ -25,8 +27,8 @@ case class Context(internal: Map[Id, IntTree.Tree]) {
           id -> filtered.getOrElse(range)
       }
     }
-  def intersect(other: Context): Context =
-    Context {
+  def intersect(other: IntTreeContext): IntTreeContext =
+    IntTreeContext {
       internal.iterator.filter { case (id, _) => other.internal.contains(id) }.map {
         case (id, range) =>
           val otherRange = other.internal(id)
@@ -36,13 +38,13 @@ case class Context(internal: Map[Id, IntTree.Tree]) {
     }
 }
 
-object Context {
-  def single(replicaId: Id, time: Int): Context = Context(Map((replicaId, IntTree.insert(IntTree.empty, time))))
-  val empty: Context                            = Context(Map.empty)
+object IntTreeContext {
+  def single(replicaId: Id, time: Int): IntTreeContext = IntTreeContext(Map((replicaId, IntTree.insert(IntTree.empty, time))))
+  val empty: IntTreeContext = IntTreeContext(Map.empty)
 
-  implicit val contextLattice: Lattice[Context] = new Lattice[Context] {
-    override def merge(left: Context, right: Context): Context = {
-      Context(Lattice.merge(left.internal, right.internal))
+  implicit val contextLattice: Lattice[IntTreeContext] = new Lattice[IntTreeContext] {
+    override def merge(left: IntTreeContext, right: IntTreeContext): IntTreeContext = {
+      IntTreeContext(Lattice.merge(left.internal, right.internal))
     }
   }
 }

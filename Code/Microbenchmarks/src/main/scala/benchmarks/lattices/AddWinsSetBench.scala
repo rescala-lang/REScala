@@ -2,8 +2,9 @@ package benchmarks.lattices
 
 import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
-import kofre.dotbased.{AddWinsSet, AddWinsSetO, Context, IntTree}
-import kofre.causality.Dot
+import kofre.dotbased.{AddWinsSet, AddWinsSetO}
+import kofre.causality.{Dot, IntTreeContext}
+import kofre.causality.impl.IntTree
 import kofre.{IdUtil, Lattice}
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -96,8 +97,8 @@ object Codecs {
 
   implicit val dotUJsonCodec: upickle.default.ReadWriter[Dot]          = upickle.default.macroRW
   implicit val itRangeCodec: upickle.default.ReadWriter[IntTree.Range] = upickle.default.macroRW
-  implicit val itTreeCodec: upickle.default.ReadWriter[IntTree.Tree]   = upickle.default.macroRW
-  implicit val contextCodec: upickle.default.ReadWriter[Context]       = upickle.default.macroRW
+  implicit val itTreeCodec: upickle.default.ReadWriter[IntTree.Tree]    = upickle.default.macroRW
+  implicit val contextCodec: upickle.default.ReadWriter[IntTreeContext] = upickle.default.macroRW
 
   implicit val awsOUJsonCodec: upickle.default.ReadWriter[AddWinsSetO[String]] = upickle.default.macroRW
   implicit val awsUJsonCodec: upickle.default.ReadWriter[AddWinsSet[String]]   = upickle.default.macroRW
