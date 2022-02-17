@@ -4,7 +4,6 @@ import kofre.IdUtil.Id
 import kofre.causality.{Dot, VectorClock}
 import kofre.{IdUtil, Lattice}
 
-import scala.collection.immutable.HashMap
 import scala.math.PartialOrdering
 
 /** Dots are another name for lamport clocks.
@@ -22,7 +21,7 @@ case class VectorClock(timestamps: Map[Id, Long]) {
 
   def clockOf(replicaId: Id): Dot = Dot(replicaId, timeOf(replicaId))
 
-  def inc(id: Id): VectorClock    = VectorClock(HashMap(id -> (timestamps.getOrElse(id, 0L) + 1)))
+  def inc(id: Id): VectorClock    = VectorClock(Map(id -> (timestamps.getOrElse(id, 0L) + 1)))
   def <=(o: VectorClock): Boolean = timestamps.forall((k, v) => v <= o.timestamps.getOrElse(k, 0L))
   def <(o: VectorClock): Boolean  = this <= o && timestamps.exists((k, v) => v < o.timestamps.getOrElse(k, 0L))
   def tryCompare(y: VectorClock): Option[Int] = {
@@ -35,7 +34,7 @@ case class VectorClock(timestamps: Map[Id, Long]) {
 
 object VectorClock {
 
-  def zero: VectorClock                      = VectorClock(HashMap.empty)
+  def zero: VectorClock                      = VectorClock(Map.empty)
   def fromMap(m: Map[Id, Long]): VectorClock = VectorClock(m)
 
   given lattice: Lattice[VectorClock] =
