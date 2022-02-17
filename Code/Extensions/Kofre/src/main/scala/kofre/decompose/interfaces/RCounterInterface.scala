@@ -1,6 +1,6 @@
 package kofre.decompose.interfaces
 
-import kofre.causality.{CContext, Causal, CausalContext}
+import kofre.causality.{Causal, CausalContext}
 import kofre.decompose.*
 import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
 import kofre.decompose.DotStore.*
@@ -58,17 +58,17 @@ object RCounterInterface {
     */
   def fresh: DeltaMutator[State] = {
     case (replicaID, Causal(_, cc)) =>
-      val nextDot = CContext[C].nextDot(cc, replicaID)
+      val nextDot = cc.nextDot(replicaID)
 
       deltaState(
         df = Some(DotFun[(Int, Int)].empty + (nextDot -> ((0, 0)))),
-        cc = CContext[C].one(nextDot)
+        cc = CausalContext.one(nextDot)
       )
   }
 
   private def update(u: (Int, Int)): DeltaMutator[State] = {
     case (replicaID, Causal(df, cc)) =>
-      CContext[C].max(cc, replicaID) match {
+      cc.max(replicaID) match {
         case Some(currentDot) if df.contains(currentDot) =>
           val newCounter = (df(currentDot), u) match {
             case ((linc, ldec), (rinc, rdec)) => (linc + rinc, ldec + rdec)
@@ -76,14 +76,14 @@ object RCounterInterface {
 
           deltaState(
             df = Some(df + (currentDot -> newCounter)),
-            cc = CContext[C].one(currentDot)
+            cc = CausalContext.one(currentDot)
           )
         case _ =>
-          val nextDot = CContext[C].nextDot(cc, replicaID)
+          val nextDot = cc.nextDot(replicaID)
 
           deltaState(
             df = Some(DotFun[(Int, Int)].empty + (nextDot -> u)),
-            cc = CContext[C].one(nextDot)
+            cc = CausalContext.one(nextDot)
           )
       }
   }
@@ -95,7 +95,7 @@ object RCounterInterface {
   def reset: DeltaMutator[State] = {
     case (_, Causal(df, _)) =>
       deltaState(
-        cc = CContext[C].fromSet(df.keySet)
+        cc = CausalContext.fromSet(df.keySet)
       )
   }
 }

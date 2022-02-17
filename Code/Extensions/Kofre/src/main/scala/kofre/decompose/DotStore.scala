@@ -1,12 +1,14 @@
 package kofre.decompose
 
 import kofre.Lattice
-import kofre.causality.{CContext, Causal, CausalContext, Dot}
+import kofre.causality.{Causal, CausalContext, Dot}
 
 /** DotStore is the typeclass trait for dot stores, data structures that are part of causal CRDTs and make use of dots to
   * track causality.
   */
 trait DotStore[A] {
+
+  // todo this should probably return a causal context
   def dots(state: A): Set[Dot]
 
   def mergePartial(left: Causal[A], right: Causal[A]): A
@@ -32,8 +34,8 @@ object DotStore {
     override def dots(ds: Set[Dot]): Set[Dot] = ds
 
     override def mergePartial(left: Causal[Set[Dot]], right: Causal[Set[Dot]]): Set[Dot] = {
-      val fromLeft  = left.store.filter(!CContext[C].contains(right.context, _))
-      val fromRight = right.store.filter(dot => left.store.contains(dot) || !CContext[C].contains(left.context, dot))
+      val fromLeft  = left.store.filter(!right.context.contains(_))
+      val fromRight = right.store.filter(dot => left.store.contains(dot) || !left.context.contains(dot))
 
       fromLeft union fromRight
     }
@@ -41,19 +43,19 @@ object DotStore {
     override def empty: Set[Dot] = Set.empty[Dot]
 
     override def leq(left: Causal[Set[Dot]], right: Causal[Set[Dot]]): Boolean = {
-      val firstCondition = CContext[C].forall(left.context, CContext[C].contains(right.context, _))
+      val firstCondition = left.context.forall(right.context.contains)
 
       val secondCondition = {
-        val diff = CContext[C].diff(left.context, left.store)
-        !right.store.exists {CContext[C].contains(diff, _) }
+        val diff = left.context.diff(CausalContext.fromSet(left.store))
+        !right.store.exists(diff.contains)
       }
 
       firstCondition && secondCondition
     }
 
     override def decompose(state: Causal[Set[Dot]]): Iterable[Causal[Set[Dot]]] = {
-      val added   = for (d <- state.store) yield Causal(Set(d), CContext[C].one(d))
-      val removed = CContext[C].decompose(state.context, state.store.contains).map(Causal(DotSet.empty, _))
+      val added   = for (d <- state.store) yield Causal(Set(d), CausalContext.one(d))
+      val removed = state.context.decompose(state.store.contains).map(Causal(DotSet.empty, _))
       removed ++ added
     }
   }
@@ -66,13 +68,13 @@ object DotStore {
     override def dots(ds: Map[Dot, A]): Set[Dot] = ds.keySet
 
     override def mergePartial(left: Causal[Map[Dot, A]], right: Causal[Map[Dot, A]]): Map[Dot, A] = {
-      val fromLeft = left.store.filter { case (dot, _) => !CContext[C].contains(right.context, dot) }
+      val fromLeft = left.store.filter { case (dot, _) => !right.context.contains(dot) }
 
       right.store.foldLeft(fromLeft) {
         case (m, (dot, r)) =>
           left.store.get(dot) match {
             case None =>
-              if (CContext[C].contains(left.context, dot)) m
+              if (left.context.contains(dot)) m
               else m.updated(dot, r)
             case Some(l) => m.updated(dot, UIJDLattice[A].merge(l, r))
           }
@@ -82,13 +84,13 @@ object DotStore {
     override def empty: Map[Dot, A] = Map.empty[Dot, A]
 
     override def leq(left: Causal[Map[Dot, A]], right: Causal[Map[Dot, A]]): Boolean = {
-      val firstCondition = CContext[C].forall(left.context, CContext[C].contains(right.context, _))
+      val firstCondition = left.context.forall(right.context.contains)
       val secondCondition = right.store.keySet.forall { k =>
         left.store.get(k).forall { l => UIJDLattice[A].leq(l, right.store(k)) }
       }
       val thirdCondition = {
-        val diff = CContext[C].diff(left.context, DotFun[A].dots(left.store))
-        !DotFun[A].dots(right.store).exists {CContext[C].contains(diff, _) }
+        val diff = left.context.diff(CausalContext.fromSet(DotFun[A].dots(left.store)))
+        !DotFun[A].dots(right.store).exists(diff.contains)
       }
 
       firstCondition && secondCondition && thirdCondition
@@ -96,10 +98,10 @@ object DotStore {
 
     override def decompose(state: Causal[Map[Dot, A]]): Iterable[Causal[Map[Dot, A]]] = {
       val added = for (d <- DotFun[A].dots(state.store); v <- UIJDLattice[A].decompose(state.store(d)))
-        yield Causal(Map(d -> v), CContext[C].one(d))
+        yield Causal(Map(d -> v), CausalContext.one(d))
 
       val removed =
-        CContext[C].decompose(state.context, DotFun[A].dots(state.store).contains).map(Causal(DotFun[A].empty, _))
+        state.context.decompose(DotFun[A].dots(state.store).contains).map(Causal(DotFun[A].empty, _))
 
       removed ++ added
     }
@@ -122,7 +124,7 @@ object DotStore {
         else Some(mergedVal)
       }
 
-      var rightSet = CContext[C].toSet(right.context)
+      var rightSet = right.context.toSet
 
       val added = right.store.foldLeft(left.store) { case (currentLeft, (k, r)) =>
         rightSet --= DotStore[V].dots(r)
@@ -147,7 +149,7 @@ object DotStore {
     override def empty: DotMap[K, V] = Map.empty[K, V]
 
     override def leq(left: Causal[DotMap[K, V]], right: Causal[DotMap[K, V]]): Boolean = {
-      val firstCondition = CContext[C].forall(left.context, CContext[C].contains(right.context, _))
+      val firstCondition = left.context.forall(right.context.contains)
 
       def secondConditionHelper(keys: Iterable[K]): Boolean = keys.forall { k =>
         val leftV  = left.store.getOrElse(k, DotStore[V].empty)
@@ -166,12 +168,12 @@ object DotStore {
         k <- state.store.keys
         Causal(atomicV, atomicCC) <- {
           val v = state.store.getOrElse(k, DotStore[V].empty)
-          DotStore[V].decompose(Causal(v, CContext[C].fromSet(DotStore[V].dots(v))))
+          DotStore[V].decompose(Causal(v, CausalContext.fromSet(DotStore[V].dots(v))))
         }
       } yield Causal(DotMap[K, V].empty.updated(k, atomicV), atomicCC)
 
       val removed =
-        CContext[C].decompose(state.context, DotMap[K, V].dots(state.store).contains).map(Causal(DotMap[K, V].empty, _))
+        state.context.decompose(DotMap[K, V].dots(state.store).contains).map(Causal(DotMap[K, V].empty, _))
 
       added ++ removed
     }
@@ -236,7 +238,7 @@ object DotStore {
       UIJDLattice[A].leq(left.store, right.store)
 
     override def decompose(state: Causal[A]): Iterable[Causal[A]] = {
-      UIJDLattice[A].decompose(state.store).map(Causal(_, CContext[C].empty))
+      UIJDLattice[A].decompose(state.store).map(Causal(_, CausalContext.empty))
     }
 
     override def empty: A = UIJDLattice[A].bottom

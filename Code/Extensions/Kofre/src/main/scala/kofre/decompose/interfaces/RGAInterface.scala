@@ -1,6 +1,6 @@
 package kofre.decompose.interfaces
 
-import kofre.causality.{CContext, Causal, CausalContext, Dot}
+import kofre.causality.{Causal, CausalContext, Dot}
 import kofre.decompose.*
 import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
 import kofre.decompose.DotStore.{DotFun, DotLess, DotPair}
@@ -96,7 +96,7 @@ object RGAInterface {
 
   def insert[E](i: Int, e: E): DeltaMutator[State[E]] = {
     case (replicaID, state @ Causal((fw, _), cc)) =>
-      val nextDot = CContext[C].nextDot(cc, replicaID)
+      val nextDot = cc.nextDot(replicaID)
 
       findInsertIndex(state, i) match {
         case None => deltaState[E].bottom
@@ -108,14 +108,14 @@ object RGAInterface {
           deltaState[E].make(
             fw = glistDelta,
             df = dfDelta,
-            cc = CContext[C].one(nextDot)
+            cc = CausalContext.one(nextDot)
           )
       }
   }
 
   def insertAll[E](i: Int, elems: Iterable[E]): DeltaMutator[State[E]] = {
     case (replicaID, state @ Causal((fw, _), cc)) =>
-      val nextDot = CContext[C].nextDot(cc, replicaID)
+      val nextDot = cc.nextDot(replicaID)
 
       val nextDots = List.iterate(nextDot, elems.size) {
         case Dot(c, r) => Dot(c + 1, r)
@@ -131,7 +131,7 @@ object RGAInterface {
           deltaState[E].make(
             fw = glistDelta,
             df = dfDelta,
-            cc = CContext[C].fromSet(nextDots.toSet)
+            cc = CausalContext.fromSet(nextDots.toSet)
           )
       }
   }
@@ -189,7 +189,7 @@ object RGAInterface {
 
         deltaState[E].make(
           fw = ForcedWriteInterface.forcedWrite(golistPurged)(replicaID, fw),
-          cc = CContext[C].fromSet(toRemove)
+          cc = CausalContext.fromSet(toRemove)
         )
     }
 

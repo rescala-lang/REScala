@@ -2,7 +2,7 @@ package kofre.decompose
 
 import kofre.Lattice
 import kofre.Lattice.optionLattice
-import kofre.causality.{CContext, Causal, CausalContext}
+import kofre.causality.{Causal, CausalContext}
 
 /** Extends the Lattice typeclass with the ability to compare states through unique irredundant join decomposition */
 trait UIJDLattice[A] extends Lattice[A] {
@@ -153,7 +153,7 @@ object UIJDLattice {
         Causal[D](dsMerged, ccMerged)
       }
 
-      override def bottom: Causal[D] = Causal(DotStore[D].empty, CContext[CausalContext].empty)
+      override def bottom: Causal[D] = Causal(DotStore[D].empty, CausalContext.empty)
     }
 
 }

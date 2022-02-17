@@ -3,7 +3,7 @@ package test.kofre
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import kofre.causality.DotStore.*
+import kofre.dotbased.DotStore.*
 import kofre.causality.CausalContext
 import kofre.causality.{Causal, Dot}
 import kofre.dotbased.DotStore

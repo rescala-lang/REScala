@@ -1,6 +1,6 @@
 package kofre.decompose.interfaces
 
-import kofre.causality.{CContext, Causal, CausalContext}
+import kofre.causality.{Causal, CausalContext}
 import kofre.decompose.*
 import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
 import kofre.decompose.DotStore.DotFun
@@ -31,18 +31,18 @@ object MVRegisterInterface {
 
   def write[A: UIJDLattice](v: A): DeltaMutator[State[A]] = {
     case (replicaID, Causal(df, cc)) =>
-      val nextDot = CContext[C].nextDot(cc, replicaID)
+      val nextDot = cc.nextDot(replicaID)
 
       deltaState.make(
         df = Map(nextDot -> v),
-        cc = CContext[C].fromSet(df.keySet + nextDot)
+        cc = CausalContext.fromSet(df.keySet + nextDot)
       )
   }
 
   def clear[A: UIJDLattice](): DeltaMutator[State[A]] = {
     case (_, Causal(df, _)) =>
       deltaState.make(
-        cc = CContext[C].fromSet(df.keySet)
+        cc = CausalContext.fromSet(df.keySet)
       )
   }
 }

@@ -1,6 +1,6 @@
 package kofre.decompose.interfaces
 
-import kofre.causality.{CContext, Causal, CausalContext}
+import kofre.causality.{Causal, CausalContext}
 import kofre.decompose.*
 import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
 import kofre.decompose.DotStore.*
@@ -30,18 +30,18 @@ object EWFlagInterface {
 
   def enable(): DeltaMutator[State] = {
     case (replicaID, Causal(ds, cc)) =>
-      val nextDot = CContext[C].nextDot(cc, replicaID)
+      val nextDot = cc.nextDot(replicaID)
 
       deltaState.make(
         ds = Set(nextDot),
-        cc = CContext[C].fromSet(ds + nextDot)
+        cc = CausalContext.fromSet(ds + nextDot)
       )
   }
 
   def disable(): DeltaMutator[State] = {
     case (_, Causal(ds, _)) =>
       deltaState.make(
-        cc = CContext[C].fromSet(ds)
+        cc = CausalContext.fromSet(ds)
       )
   }
 }

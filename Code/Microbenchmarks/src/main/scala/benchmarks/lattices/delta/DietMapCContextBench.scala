@@ -1,7 +1,7 @@
 package benchmarks.lattices.delta
 
 import org.openjdk.jmh.annotations._
-import kofre.causality.{CContext, CausalContext, Dot}
+import kofre.causality.{CausalContext, Dot}
 
 import java.util.concurrent.TimeUnit
 
@@ -32,16 +32,16 @@ class DietMapCContextBench {
   def setup(): Unit = {
     cca = makeCContext("a", 10, 0, 7)
     ccb = makeCContext("b", 10, 5, 7)
-    cca1 = CContext.intTreeCC.union(cca, CausalContext.fromSet(Set(Dot("b", 5))))
+    cca1 = cca.union(CausalContext.fromSet(Set(Dot("b", 5))))
     ccaSingle = CausalContext.fromSet(Set(Dot("a", size + 10)))
   }
 
   @Benchmark
-  def merge = CContext.intTreeCC.union(cca, ccb)
+  def merge = (cca union ccb)
 
   @Benchmark
-  def mergeSelf = CContext.intTreeCC.union(cca, cca)
+  def mergeSelf = (cca union cca)
 
   @Benchmark
-  def mergeSelfPlusOne = CContext.intTreeCC.union(cca, cca1)
+  def mergeSelfPlusOne = (cca union cca1)
 }

@@ -3,7 +3,7 @@ package test.kofre
 import org.scalacheck.Arbitrary
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import kofre.dotbased.{AddWinsSet}
+import kofre.dotbased.{AddWinsSet, DotStore}
 import kofre.Lattice.Operators
 import kofre.causality.{CausalContext, Dot}
 

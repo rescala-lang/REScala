@@ -7,7 +7,7 @@ import kofre.causality.impl.IntTree
 
 case class CausalContext(internal: Map[Id, IntTree.Tree]) {
 
-  def clockOf(replicaId: Id): Option[Dot] = CContext.intTreeCC.max(this, replicaId)
+  def clockOf(replicaId: Id): Option[Dot] = max(replicaId)
 
   def add(replicaId: Id, time: Long): CausalContext =
     CausalContext(internal.updated(
@@ -18,6 +18,7 @@ case class CausalContext(internal: Map[Id, IntTree.Tree]) {
     val range = internal.getOrElse(replicaId, IntTree.empty)
     IntTree.nextValue(range, 0)
   }
+  def nextDot(replicaId: Id): Dot = Dot(replicaId, nextTime(replicaId))
   def diff(extern: CausalContext): CausalContext =
     CausalContext {
       internal.map {

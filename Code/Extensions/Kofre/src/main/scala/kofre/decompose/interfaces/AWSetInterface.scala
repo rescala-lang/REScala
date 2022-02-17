@@ -1,6 +1,6 @@
 package kofre.decompose.interfaces
 
-import kofre.causality.{CContext, Dot, Causal}
+import kofre.causality.{Causal, CausalContext, Dot}
 import kofre.decompose.*
 import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
 import kofre.decompose.DotStore.*
@@ -30,18 +30,18 @@ object AWSetInterface {
 
   def add[E](e: E): DeltaMutator[State[E]] = {
     case (replicaID, Causal(dm, cc)) =>
-      val nextDot = CContext[C].nextDot(cc, replicaID)
+      val nextDot = cc.max(replicaID).fold(Dot(replicaID, 0))(_.next)
       val v       = dm.getOrElse(e, DotSet.empty)
 
       deltaState[E].make(
         dm = DotMap[E, DotSet].empty.updated(e, Set(nextDot)),
-        cc = CContext[C].fromSet(v + nextDot)
+        cc = CausalContext.fromSet(v + nextDot)
       )
   }
 
   def addAll[E](elems: Iterable[E]): DeltaMutator[State[E]] = {
     case (replicaID, Causal(dm, cc)) =>
-      val nextCounter = CContext[C].nextDot(cc, replicaID).time
+      val nextCounter = cc.nextTime(replicaID)
       val nextDots    = (nextCounter until nextCounter + elems.size).toSet.map(Dot(replicaID, _))
 
       val ccontextSet = elems.foldLeft(nextDots) {
@@ -53,7 +53,7 @@ object AWSetInterface {
 
       deltaState[E].make(
         dm = (elems zip nextDots.map(Set(_))).toMap,
-        cc = CContext[C].fromSet(ccontextSet)
+        cc = CausalContext.fromSet(ccontextSet)
       )
   }
 
@@ -62,7 +62,7 @@ object AWSetInterface {
       val v = dm.getOrElse(e, DotSet.empty)
 
       deltaState[E].make(
-        cc = CContext[C].fromSet(v)
+        cc = CausalContext.fromSet(v)
       )
   }
 
@@ -76,7 +76,7 @@ object AWSetInterface {
       }
 
       deltaState[E].make(
-        cc = CContext[C].fromSet(dotsToRemove)
+        cc = CausalContext.fromSet(dotsToRemove)
       )
   }
 
@@ -87,14 +87,14 @@ object AWSetInterface {
       }.foldLeft(DotSet.empty)(_ union _)
 
       deltaState[E].make(
-        cc = CContext[C].fromSet(removedDots)
+        cc = CausalContext.fromSet(removedDots)
       )
   }
 
   def clear[E](): DeltaMutator[State[E]] = {
     case (_, Causal(dm, _)) =>
       deltaState[E].make(
-        cc = CContext[C].fromSet(DotMap[E, DotSet].dots(dm))
+        cc = CausalContext.fromSet(DotMap[E, DotSet].dots(dm))
       )
   }
 }

@@ -1,6 +1,6 @@
 package kofre.decompose.interfaces
 
-import kofre.causality.{CContext, Causal, CausalContext, Dot}
+import kofre.causality.{Causal, CausalContext, Dot}
 import kofre.decompose.*
 import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
 import kofre.decompose.DotStore.*
@@ -59,7 +59,7 @@ object ORMapInterface {
       val v = dm.getOrElse(k, DotStore[V].empty)
 
       deltaState[K, V].make(
-        cc = CContext[C].fromSet(DotStore[V].dots(v))
+        cc = CausalContext.fromSet(DotStore[V].dots(v))
       )
   }
 
@@ -71,7 +71,7 @@ object ORMapInterface {
       }
 
       deltaState[K, V].make(
-        cc = CContext[C].fromSet(dots)
+        cc = CausalContext.fromSet(dots)
       )
   }
 
@@ -82,14 +82,14 @@ object ORMapInterface {
       }.fold(Set())(_ union _)
 
       deltaState[K, V].make(
-        cc = CContext[C].fromSet(toRemove)
+        cc = CausalContext.fromSet(toRemove)
       )
   }
 
   def clear[K, V: DotStore]: DeltaMutator[State[K, V]] = {
     case (_, Causal(dm, _)) =>
       deltaState[K, V].make(
-        cc = CContext[C].fromSet(DotMap[K, V].dots(dm))
+        cc = CausalContext.fromSet(DotMap[K, V].dots(dm))
       )
   }
 }
