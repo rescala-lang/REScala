@@ -1,7 +1,7 @@
 package kofre.causality
 
 import kofre.IdUtil
-import kofre.causality.DotStore.DotSet
+import kofre.dotbased.DotStore.DotSet
 import kofre.causality.impl.IntTree
 import kofre.causality.{CContext, Dot}
 

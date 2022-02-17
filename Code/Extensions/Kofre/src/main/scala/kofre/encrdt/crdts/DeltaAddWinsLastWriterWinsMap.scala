@@ -1,7 +1,7 @@
 package kofre.encrdt.crdts
 import kofre.Lattice
 import kofre.causality.Dot
-import kofre.causality.DotStore.DotFun
+import kofre.dotbased.DotStore.DotFun
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap.{DeltaAddWinsLastWriterWinsMapLattice, timestampedValueLattice}
 import kofre.encrdt.crdts.DeltaAddWinsMap.DeltaAddWinsMapLattice
 import kofre.encrdt.lattices.LastWriterWinsTagLattice.lwwLattice

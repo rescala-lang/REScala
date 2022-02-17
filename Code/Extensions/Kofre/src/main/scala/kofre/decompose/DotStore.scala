@@ -106,7 +106,7 @@ object DotStore {
   }
 
   /** DotMap is a dot store implementation that maps keys of an arbitrary type K to values of a dot store type V. See
-    * [[interfaces.ORMapInterface]] for a usage exmample.
+    * [[interfaces.ORMapInterface]] for a usage example.
     */
   type DotMap[K, V] = Map[K, V]
   implicit def DotMap[K, V: DotStore]: DotStore[DotMap[K, V]] = new DotStore[DotMap[K, V]] {

@@ -5,7 +5,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import kofre.dotbased.{AddWinsSet}
 import kofre.Lattice.Operators
-import kofre.causality.{CausalContext, Dot, DotStore}
+import kofre.causality.{CausalContext, Dot}
 
 import scala.util.Random
 

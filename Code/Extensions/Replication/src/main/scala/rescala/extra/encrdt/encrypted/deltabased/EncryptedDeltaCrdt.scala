@@ -3,7 +3,7 @@ package rescala.extra.encrdt.encrypted.deltabased
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import com.google.crypto.tink.Aead
-import kofre.causality.DotStore.DotSet
+import kofre.dotbased.DotStore.DotSet
 import rescala.extra.encrdt.encrypted.deltabased.Codecs.dotSetJsonCodec
 
 abstract class UntrustedReplica(initialDeltaGroups: Set[EncryptedDeltaGroup] = Set.empty) {

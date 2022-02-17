@@ -2,8 +2,9 @@ package kofre.causality
 
 import kofre.Lattice
 import kofre.causality.CausalContext
-import kofre.causality.DotStore.{DotFun, DotMap, DotSet}
+import kofre.dotbased.DotStore.{DotFun, DotMap, DotSet}
 import kofre.causality.Causal
+import kofre.dotbased.DotStore
 
 case class Causal[A](store: A, context: CausalContext)
 

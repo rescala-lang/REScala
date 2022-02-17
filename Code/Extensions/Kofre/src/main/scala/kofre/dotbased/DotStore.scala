@@ -1,7 +1,8 @@
-package kofre.causality
+package kofre.dotbased
 
 import kofre.IdUtil.Id
 import kofre.Lattice
+import kofre.causality.{Causal, CausalContext, Dot}
 
 /** Dot stores provide a generic way to merge datastructures,
   * implemented on top of one of the provided dot stores.
