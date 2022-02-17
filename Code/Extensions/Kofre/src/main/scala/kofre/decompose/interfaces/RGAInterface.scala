@@ -1,12 +1,11 @@
 package kofre.decompose.interfaces
 
-import kofre.causality.CContext
+import kofre.causality.{CContext, Dot}
 import kofre.decompose.*
 import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
 import kofre.decompose.DotStore.{DotFun, DotLess, DotPair}
 import kofre.decompose.interfaces.ForcedWriteInterface.ForcedWriteAsUIJDLattice
 import kofre.decompose.interfaces.GListInterface.GListAsUIJDLattice
-import kofre.causality.Dot
 
 object RGAInterface {
   sealed trait RGANode[A]

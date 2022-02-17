@@ -1,7 +1,7 @@
 package kofre.encrdt.crdts
 import kofre.Lattice
-import kofre.causality.{CausalContext, DotStore}
 import kofre.causality.DotStore.{DotFun, dotFunDotStore}
+import kofre.causality.{CausalContext, DotStore}
 import kofre.encrdt.lattices.Causal
 
 object DeltaMultiValueRegister {

@@ -2,8 +2,8 @@ package kofre.causality
 
 import kofre.IdUtil.Id
 import kofre.Lattice
-import kofre.causality.impl.IntTree
 import kofre.causality.CausalContext
+import kofre.causality.impl.IntTree
 
 case class CausalContext(internal: Map[Id, IntTree.Tree]) {
 

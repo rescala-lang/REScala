@@ -1,8 +1,8 @@
 package kofre.encrdt.crdts
 
 import kofre.Lattice
-import kofre.causality.{CausalContext, DotStore}
 import kofre.causality.DotStore.{DotMap, DotSet, dotSetDotStore}
+import kofre.causality.{CausalContext, DotStore}
 import kofre.encrdt.crdts.DeltaAddWinsSet.DeltaAddWinsSetLattice
 import kofre.encrdt.lattices.Causal
 

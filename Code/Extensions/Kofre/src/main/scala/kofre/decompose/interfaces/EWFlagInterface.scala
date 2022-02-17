@@ -1,9 +1,9 @@
 package kofre.decompose.interfaces
 
+import kofre.causality.CContext
 import kofre.decompose.*
 import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
 import kofre.decompose.DotStore.*
-import kofre.causality.CContext
 
 object EWFlagInterface {
   type State[C] = Causal[DotSet, C]

@@ -1,10 +1,9 @@
 package kofre.decompose.interfaces
 
+import kofre.causality.{CContext, Dot}
 import kofre.decompose.*
 import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
 import kofre.decompose.DotStore.*
-import kofre.causality.Dot
-import kofre.causality.CContext
 
 object AWSetInterface {
   type State[E, C] = Causal[DotMap[E, DotSet], C]

@@ -1,7 +1,7 @@
 package kofre.encrdt.lattices
 import kofre.Lattice
-import kofre.causality.{CausalContext, Dot, DotStore}
 import kofre.causality.DotStore.{DotFun, DotMap, DotSet}
+import kofre.causality.{CausalContext, Dot, DotStore}
 
 case class Causal[D](dotStore: D, causalContext: CausalContext)
 
