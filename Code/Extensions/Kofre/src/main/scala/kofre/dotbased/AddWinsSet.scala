@@ -1,8 +1,8 @@
 package kofre.dotbased
 
 import kofre.IdUtil.Id
-import kofre.causality.DotStoreLattice.*
-import kofre.causality.{Causal, Dot, DotStoreLattice}
+import kofre.causality.DotStore.*
+import kofre.causality.{Causal, Dot, DotStore}
 import kofre.dotbased.AddWinsSet
 import kofre.{IdUtil, Lattice}
 
@@ -21,7 +21,7 @@ case class AddWinsSet[A](store: Map[A, Set[Dot]], context: Set[Dot]) {
 
   /** Adding an element adds it to the current dot store as well as to the causal context (past). */
   def addΔ(element: A, replicaID: Id): AddWinsSet[A] = {
-    val dot     = DotStoreLattice.next(replicaID, context)
+    val dot     = DotStore.next(replicaID, context)
     val onlyDot = Set(dot)
     AddWinsSet(Map(element -> onlyDot), store.get(element).fold(onlyDot)(_ + dot))
 
@@ -43,7 +43,7 @@ case class AddWinsSet[A](store: Map[A, Set[Dot]], context: Set[Dot]) {
 
   def remove(element: A): AddWinsSet[A] = Lattice.merge(this, removeΔ(element))
 
-  def clear: AddWinsSet[A] = AddWinsSet[A](Map(), DotStoreLattice[Map[A, Set[Dot]]].dots(store))
+  def clear: AddWinsSet[A] = AddWinsSet[A](Map(), DotStore[Map[A, Set[Dot]]].dots(store))
 
   def toSet: Set[A] = store.keySet
 
@@ -78,7 +78,7 @@ object AddWinsSet {
   implicit def addWinsSetLattice[A]: Lattice[AddWinsSet[A]] =
     new Lattice[AddWinsSet[A]] {
       override def merge(left: AddWinsSet[A], right: AddWinsSet[A]): AddWinsSet[A] =
-        DotStoreLattice.DotMapInstance[A, Set[Dot]].merge(left, right)
+        DotStore.DotMapInstance[A, Set[Dot]].merge(left, right)
     }
 
 }

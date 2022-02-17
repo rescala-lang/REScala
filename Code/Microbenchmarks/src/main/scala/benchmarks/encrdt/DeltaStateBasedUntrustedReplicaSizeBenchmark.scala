@@ -5,7 +5,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToArray,
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import com.google.crypto.tink.Aead
 import kofre.causality.Dot
-import kofre.causality.DotStore.{Dot, DotSet}
+import kofre.causality.DotStore.DotSet
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap
 import rescala.extra.encrdt.encrypted.deltabased.{DecryptedDeltaGroup, EncryptedDeltaGroup, UntrustedReplica}
 
