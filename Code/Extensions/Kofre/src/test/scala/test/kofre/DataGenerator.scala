@@ -1,9 +1,10 @@
 package test.kofre
 
-import kofre.primitives.{LastWriterWins, MultiValueRegister, VectorClock}
+import kofre.primitives.{LastWriterWins, MultiValueRegister}
 import kofre.sets.ORSet
 import kofre.{IdUtil, Lattice}
 import org.scalacheck.{Arbitrary, Gen}
+import kofre.causality.VectorClock
 
 object DataGenerator {
 

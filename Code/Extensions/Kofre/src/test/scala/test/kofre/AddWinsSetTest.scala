@@ -3,14 +3,15 @@ package test.kofre
 import org.scalacheck.Arbitrary
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import kofre.dotbased.{AddWinsSet, Dot, DotStoreLattice}
+import kofre.dotbased.{AddWinsSet}
 import kofre.Lattice.Operators
+import kofre.causality.{CausalContext, Dot, DotStore}
 
 import scala.util.Random
 
 object AWTestHelper {
   def merge[T](crdt: AddWinsSet[T], delta: AddWinsSet[T]): AddWinsSet[T] = {
-    DotStoreLattice.DotMapInstance[T, Set[Dot]].merge(crdt, delta)
+    DotStore.DotMapInstance[T, Set[Dot]].merge(crdt, delta)
   }
 }
 
@@ -24,7 +25,7 @@ class AddWinsSetTest extends AnyFreeSpec with ScalaCheckPropertyChecks {
   } yield values.foldLeft(AddWinsSet.empty[Int])((set, value) => AWTestHelper.merge(set, set.addRandom(value))))
 
   "An AddWinsSet should support" - {
-    val initial = AddWinsSet[String](Map(), Set())
+    val initial = AddWinsSet[String](Map(), CausalContext.empty)
     val elem    = "Mop"
     val elem2   = "Mip"
 

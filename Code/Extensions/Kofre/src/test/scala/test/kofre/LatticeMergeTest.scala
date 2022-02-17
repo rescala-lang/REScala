@@ -1,12 +1,13 @@
 package test.kofre
 
-import kofre.primitives.{LastWriterWins, MultiValueRegister, VectorClock}
+import kofre.primitives.{LastWriterWins, MultiValueRegister}
 import kofre.sets.ORSet
 import kofre.{IdUtil, Lattice}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import test.kofre.DataGenerator.{*, given}
+import kofre.causality.VectorClock
 
 import javax.swing.plaf.multi.MultiListUI
 

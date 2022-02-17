@@ -6,7 +6,6 @@ import kofre.decompose.interfaces.AWSetInterface
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.lattices.delta.JsoniterCodecs._
-import rescala.extra.lattices.delta.DietCC.DietMapCContext
 import rescala.extra.lattices.delta.crdt.basic.{AWSet, GMap, Network}
 import rescala.extra.replication.AntiEntropy
 
@@ -17,14 +16,14 @@ class GMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
   "mutateKey/queryKey" in { (add: List[Int], k: Int) =>
     val network = new Network(0, 0, 0)
-    val aea     = new AntiEntropy[GMap.State[Int, AWSet.State[Int, DietMapCContext]]]("a", network, mutable.Buffer())
-    val aeb     = new AntiEntropy[AWSet.State[Int, DietMapCContext]]("b", network, mutable.Buffer())
+    val aea     = new AntiEntropy[GMap.State[Int, AWSet.State[Int]]]("a", network, mutable.Buffer())
+    val aeb     = new AntiEntropy[AWSet.State[Int]]("b", network, mutable.Buffer())
 
-    val set = add.foldLeft(AWSet[Int, DietMapCContext](aeb)) {
+    val set = add.foldLeft(AWSet[Int](aeb)) {
       case (s, e) => s.add(e)
     }
 
-    val map = add.foldLeft(GMap[Int, AWSet.State[Int, DietMapCContext]](aea)) {
+    val map = add.foldLeft(GMap[Int, AWSet.State[Int]](aea)) {
       case (m, e) => m.mutateKey(k, AWSetInterface.add(e))
     }
 

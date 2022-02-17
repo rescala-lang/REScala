@@ -3,7 +3,8 @@ package test.kofre
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import kofre.dotbased.{AddWinsSetO, ArrayRanges}
+import kofre.dotbased.{AddWinsSetO}
+import kofre.causality.impl.ArrayRanges
 
 class ArrayRangesTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 

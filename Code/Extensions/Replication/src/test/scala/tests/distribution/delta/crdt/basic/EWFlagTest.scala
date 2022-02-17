@@ -1,12 +1,9 @@
 package tests.distribution.delta.crdt.basic
 
-import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
-import kofre.decompose.CContext
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.lattices.delta.JsoniterCodecs._
-import rescala.extra.lattices.delta.DietCC._
 import rescala.extra.lattices.delta.crdt.basic._
 import rescala.extra.replication.AntiEntropy
 import tests.distribution.delta.crdt.basic.NetworkGenerators._
@@ -15,12 +12,12 @@ import scala.collection.mutable
 import scala.util.Random
 
 object EWFlagGenerators {
-  def genEWFlag[C: CContext](implicit c: JsonValueCodec[C]): Gen[EWFlag[C]] = for {
+  def genEWFlag: Gen[EWFlag] = for {
     nEnable  <- Gen.posNum[Int]
     nDisable <- Gen.posNum[Int]
   } yield {
     val network = new Network(0, 0, 0)
-    val ae      = new AntiEntropy[EWFlag.State[C]]("a", network, mutable.Buffer())
+    val ae      = new AntiEntropy[EWFlag.State]("a", network, mutable.Buffer())
 
     val ops = Random.shuffle(List.fill(nEnable)(1) ++ List.fill(nDisable)(0))
 
@@ -32,13 +29,13 @@ object EWFlagGenerators {
     }
   }
 
-  implicit def arbEWFlag[C: CContext](implicit c: JsonValueCodec[C]): Arbitrary[EWFlag[C]] = Arbitrary(genEWFlag)
+  implicit def arbEWFlag: Arbitrary[EWFlag] = Arbitrary(genEWFlag)
 }
 
 class EWFlagTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   import EWFlagGenerators._
 
-  "enable" in forAll { flag: EWFlag[DietMapCContext] =>
+  "enable" in forAll { flag: EWFlag =>
     val flagEnabled = flag.enable()
 
     assert(
@@ -47,7 +44,7 @@ class EWFlagTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     )
   }
 
-  "disable" in forAll { flag: EWFlag[DietMapCContext] =>
+  "disable" in forAll { flag: EWFlag =>
     val flagDisabled = flag.disable()
 
     assert(
@@ -59,8 +56,8 @@ class EWFlagTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent enable" in {
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropy[EWFlag.State[DietMapCContext]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[EWFlag.State[DietMapCContext]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[EWFlag.State]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[EWFlag.State]("b", network, mutable.Buffer("a"))
 
     val fa0 = EWFlag(aea).enable()
     val fb0 = EWFlag(aeb).enable()
@@ -83,8 +80,8 @@ class EWFlagTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent disable" in {
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropy[EWFlag.State[DietMapCContext]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[EWFlag.State[DietMapCContext]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[EWFlag.State]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[EWFlag.State]("b", network, mutable.Buffer("a"))
 
     val fa0 = EWFlag(aea)
     val fb0 = EWFlag(aeb)
@@ -110,8 +107,8 @@ class EWFlagTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent enable/disable" in {
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropy[EWFlag.State[DietMapCContext]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[EWFlag.State[DietMapCContext]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[EWFlag.State]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[EWFlag.State]("b", network, mutable.Buffer("a"))
 
     val fa0 = EWFlag(aea).enable()
     val fb0 = EWFlag(aeb).disable()
@@ -132,8 +129,8 @@ class EWFlagTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   }
 
   "convergence" in forAll { (enableA: Short, disableA: Short, enableB: Short, disableB: Short, network: Network) =>
-    val aea = new AntiEntropy[EWFlag.State[DietMapCContext]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[EWFlag.State[DietMapCContext]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[EWFlag.State]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[EWFlag.State]("b", network, mutable.Buffer("a"))
 
     val opsA = Random.shuffle(List.fill(enableA.toInt)(1) ++ List.fill(disableA.toInt)(0))
     val opsB = Random.shuffle(List.fill(enableB.toInt)(1) ++ List.fill(disableB.toInt)(0))

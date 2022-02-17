@@ -3,13 +3,14 @@ package test.kofre
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import kofre.dotbased.{AddWinsSetO, IntTree}
+import kofre.dotbased.{AddWinsSetO}
+import kofre.causality.impl.IntTree
 
 import scala.collection.Seq
 
 object IntRangeGenerator {
   implicit val genDot: Arbitrary[IntTree.Tree] = Arbitrary(for {
-    values <- Gen.someOf(0 to 20)
+    values <- Gen.someOf(0L to 20L)
   } yield values.foldLeft(IntTree.empty)(IntTree.insert))
 
 }
@@ -23,9 +24,9 @@ class IntRangeTests extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     for (x <- 0 to 20) assert(IntTree.contains(IntTree.insert(it1, x), x))
   }
 
-  implicit val shortlists: Arbitrary[Seq[Int]] = Arbitrary(Gen.someOf(0 to 20))
+  implicit val shortlists: Arbitrary[Seq[Long]] = Arbitrary(Gen.someOf(0L to 20L))
 
-  "insert all" in forAll { (list: Seq[Int]) =>
+  "insert all" in forAll { (list: Seq[Long]) =>
     val range = list.foldLeft(IntTree.empty)(IntTree.insert)
     println(list)
     println(IntTree.show(range))

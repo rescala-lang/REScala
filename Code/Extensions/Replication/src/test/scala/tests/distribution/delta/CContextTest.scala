@@ -1,36 +1,36 @@
 package tests.distribution.delta
 
-import kofre.decompose.CContext.SetCContext
-import kofre.decompose.Dot
+import kofre.causality.{CContext, CausalContext, Dot}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import rescala.extra.lattices.delta.DietCC.DietMapCContext
 
 object CContextGenerators {
   import DotStoreGenerators._
 
-  val genSetCContext: Gen[SetCContext] = genDotSet
+  val genSetCContext: Gen[Set[Dot]] = genDotSet
 
-  implicit val arbSetCContext: Arbitrary[SetCContext] = Arbitrary(genSetCContext)
+  implicit val arbSetCContext: Arbitrary[Set[Dot]] = Arbitrary(genSetCContext)
 
-  val genDietMapCContext: Gen[DietMapCContext] = for {
+  val genDietMapCContext: Gen[CausalContext] = for {
     ds <- genDotSet
-  } yield DietMapCContext.fromSet(ds)
+  } yield CausalContext.fromSet(ds)
 
-  implicit val arbDietMapCContext: Arbitrary[DietMapCContext] = Arbitrary(genDietMapCContext)
+  implicit val arbDietMapCContext: Arbitrary[CausalContext] = Arbitrary(genDietMapCContext)
 }
 
 class SetCContextTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   import CContextGenerators._
 
+  val SetCContext = CContext.intTreeCC
+
   "empty" in assert(
-    SetCContext.toSet(SetCContext.empty).isEmpty,
-    s"SetCContext.empty should be empty, but ${SetCContext.empty} is not empty"
+    CausalContext.empty.toSet.isEmpty,
+    s"SetCContext.empty should be empty, but ${CausalContext.empty} is not empty"
   )
 
-  "contains" in forAll { cc: SetCContext =>
-    SetCContext.toSet(cc).foreach { d =>
+  "contains" in forAll { cc: CausalContext =>
+    cc.toSet.foreach { d =>
       assert(
         SetCContext.contains(cc, d),
         s"SetCContext.contains should return true for every dot in the context, but returns false when applied to ($cc, $d)"
@@ -45,7 +45,7 @@ class SetCContextTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     )
   }
 
-  "union" in forAll { (cca: SetCContext, ccb: SetCContext) =>
+  "union" in forAll { (cca: CausalContext, ccb: CausalContext) =>
     val ccunion = SetCContext.union(cca, ccb)
 
     val seta     = SetCContext.toSet(cca)
@@ -58,7 +58,7 @@ class SetCContextTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     )
   }
 
-  "max" in forAll { (cc: SetCContext, randId: String) =>
+  "max" in forAll { (cc: CausalContext, randId: String) =>
     val asSet = SetCContext.toSet(cc)
     val ids   = asSet.map(_.replicaID) + randId
 
@@ -86,7 +86,7 @@ class SetCContextTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     }
   }
 
-  "nextDot" in forAll { (cc: SetCContext, randId: String) =>
+  "nextDot" in forAll { (cc: CausalContext, randId: String) =>
     val asSet = SetCContext.toSet(cc)
     val ids   = asSet.map(_.replicaID) + randId
 
@@ -101,13 +101,13 @@ class SetCContextTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
       SetCContext.max(cc, id) match {
         case Some(Dot(_, c)) =>
           assert(
-            nd.counter == c + 1,
-            s"SetCContext.nextDot should return a dot whose counter is 1 higher than that of SetCContext.max, but ${nd.counter} does not equal $c + 1"
+            nd.time == c + 1,
+            s"SetCContext.nextDot should return a dot whose counter is 1 higher than that of SetCContext.max, but ${nd.time} does not equal $c + 1"
           )
         case None =>
           assert(
-            nd.counter == 0,
-            s"If there exists no maximal dot then SetCContext.nextDot should return a dot whose counter is 0, but ${nd.counter} does not equal 0"
+            nd.time == 0,
+            s"If there exists no maximal dot then SetCContext.nextDot should return a dot whose counter is 0, but ${nd.time} does not equal 0"
           )
       }
     }
@@ -117,12 +117,14 @@ class SetCContextTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 class DietMapCContextTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   import CContextGenerators._
 
+  val DietMapCContext = CContext.intTreeCC
+
   "empty" in assert(
     DietMapCContext.toSet(DietMapCContext.empty).isEmpty,
     s"DietMapCContext.empty should be empty, but ${DietMapCContext.empty} is not empty"
   )
 
-  "contains" in forAll { cc: DietMapCContext =>
+  "contains" in forAll { cc: CausalContext =>
     DietMapCContext.toSet(cc).foreach { d =>
       assert(
         DietMapCContext.contains(cc, d),
@@ -138,7 +140,7 @@ class DietMapCContextTest extends AnyFreeSpec with ScalaCheckDrivenPropertyCheck
     )
   }
 
-  "union" in forAll { (cca: DietMapCContext, ccb: DietMapCContext) =>
+  "union" in forAll { (cca: CausalContext, ccb: CausalContext) =>
     val ccunion = DietMapCContext.union(cca, ccb)
 
     val seta     = DietMapCContext.toSet(cca)
@@ -151,7 +153,7 @@ class DietMapCContextTest extends AnyFreeSpec with ScalaCheckDrivenPropertyCheck
     )
   }
 
-  "max" in forAll { (cc: DietMapCContext, randId: String) =>
+  "max" in forAll { (cc: CausalContext, randId: String) =>
     val asSet = DietMapCContext.toSet(cc)
     val ids   = asSet.map(_.replicaID) + randId
 
@@ -179,7 +181,7 @@ class DietMapCContextTest extends AnyFreeSpec with ScalaCheckDrivenPropertyCheck
     }
   }
 
-  "nextDot" in forAll { (cc: DietMapCContext, randId: String) =>
+  "nextDot" in forAll { (cc: CausalContext, randId: String) =>
     val asSet = DietMapCContext.toSet(cc)
     val ids   = asSet.map(_.replicaID) + randId
 
@@ -194,13 +196,13 @@ class DietMapCContextTest extends AnyFreeSpec with ScalaCheckDrivenPropertyCheck
       DietMapCContext.max(cc, id) match {
         case Some(Dot(_, c)) =>
           assert(
-            nd.counter == c + 1,
-            s"DietMapCContext.nextDot should return a dot whose counter is 1 higher than that of DietMapCContext.max, but ${nd.counter} does not equal $c + 1"
+            nd.time == c + 1,
+            s"DietMapCContext.nextDot should return a dot whose counter is 1 higher than that of DietMapCContext.max, but ${nd.time} does not equal $c + 1"
           )
         case None =>
           assert(
-            nd.counter == 0,
-            s"If there exists no maximal dot then DietMapCContext.nextDot should return a dot whose counter is 0, but ${nd.counter} does not equal 0"
+            nd.time == 0,
+            s"If there exists no maximal dot then DietMapCContext.nextDot should return a dot whose counter is 0, but ${nd.time} does not equal 0"
           )
       }
     }

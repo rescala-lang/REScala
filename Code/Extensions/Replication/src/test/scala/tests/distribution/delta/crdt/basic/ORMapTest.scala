@@ -6,7 +6,6 @@ import kofre.decompose.interfaces.AWSetInterface
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.lattices.delta.JsoniterCodecs._
-import rescala.extra.lattices.delta.DietCC.DietMapCContext
 import rescala.extra.lattices.delta.crdt.basic._
 import rescala.extra.replication.AntiEntropy
 
@@ -18,11 +17,11 @@ class ORMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "mutateKey/queryKey" in { (add: List[Int], remove: List[Int], k: Int) =>
     val network = new Network(0, 0, 0)
     val aea =
-      new AntiEntropy[ORMap.State[Int, AWSet.Embedded[Int], DietMapCContext]]("a", network, mutable.Buffer())
-    val aeb = new AntiEntropy[AWSet.State[Int, DietMapCContext]]("b", network, mutable.Buffer())
+      new AntiEntropy[ORMap.State[Int, AWSet.Embedded[Int]]]("a", network, mutable.Buffer())
+    val aeb = new AntiEntropy[AWSet.State[Int]]("b", network, mutable.Buffer())
 
     val set = {
-      val added = add.foldLeft(AWSet[Int, DietMapCContext](aeb)) {
+      val added = add.foldLeft(AWSet[Int](aeb)) {
         case (s, e) => s.add(e)
       }
 
@@ -32,7 +31,7 @@ class ORMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     }
 
     val map = {
-      val added = add.foldLeft(ORMap[Int, AWSet.Embedded[Int], DietMapCContext](aea)) {
+      val added = add.foldLeft(ORMap[Int, AWSet.Embedded[Int]](aea)) {
         case (m, e) => m.mutateKey(k, AWSetInterface.add(e))
       }
 
@@ -52,13 +51,13 @@ class ORMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "remove" in { (add: List[Int], remove: List[Int], k: Int) =>
     val network = new Network(0, 0, 0)
     val aea =
-      new AntiEntropy[ORMap.State[Int, AWSet.Embedded[Int], DietMapCContext]]("a", network, mutable.Buffer())
-    val aeb = new AntiEntropy[AWSet.State[Int, DietMapCContext]]("b", network, mutable.Buffer())
+      new AntiEntropy[ORMap.State[Int, AWSet.Embedded[Int]]]("a", network, mutable.Buffer())
+    val aeb = new AntiEntropy[AWSet.State[Int]]("b", network, mutable.Buffer())
 
-    val empty = AWSet[Int, DietMapCContext](aeb)
+    val empty = AWSet[Int](aeb)
 
     val map = {
-      val added = add.foldLeft(ORMap[Int, AWSet.Embedded[Int], DietMapCContext](aea)) {
+      val added = add.foldLeft(ORMap[Int, AWSet.Embedded[Int]](aea)) {
         case (m, e) => m.mutateKey(k, AWSetInterface.add(e))
       }
 

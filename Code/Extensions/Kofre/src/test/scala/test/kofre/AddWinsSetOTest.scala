@@ -5,7 +5,8 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import kofre.IdUtil
 import kofre.Lattice.merge
-import kofre.dotbased.{AddWinsSetO, Context}
+import kofre.dotbased.{AddWinsSetO}
+import kofre.causality.CausalContext
 import kofre.Lattice.Operators
 
 import scala.util.Random
@@ -30,7 +31,7 @@ class AddWinsSetOTest extends AnyFreeSpec with ScalaCheckPropertyChecks {
   ))
 
   "An AddWinsSetO should support" - {
-    val initial = AddWinsSetO[String](Map(), Context(Map.empty))
+    val initial = AddWinsSetO[String](Map(), CausalContext(Map.empty))
     val elem    = "Mop"
     val elem2   = "Mip"
 
