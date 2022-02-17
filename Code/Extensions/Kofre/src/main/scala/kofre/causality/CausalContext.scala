@@ -51,7 +51,7 @@ case class CausalContext(internal: Map[Id, IntTree.Tree]) {
       .filterNot(_.time == Long.MinValue)
   def decompose(exclude: Dot => Boolean): Iterable[CausalContext] =
     internal.flatMap { (id, tree) =>
-      IntTree.iterator(tree).map(time => CausalContext.single(id, time))
+      IntTree.iterator(tree).map(time => Dot(id, time)).filterNot(exclude).map(CausalContext.one)
     }
   def forall(cond: Dot => Boolean): Boolean = internal.forall { (id, tree) =>
     IntTree.iterator(tree).forall(time => cond(Dot(id, time)))
