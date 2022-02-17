@@ -3,7 +3,6 @@ package rescala.extra.lattices.delta.crdt.reactive
 import kofre.decompose.interfaces.RubisInterface
 import kofre.decompose.interfaces.RubisInterface.{RubisCompanion, State}
 import kofre.decompose.{Delta, UIJDLattice}
-import kofre.causality.CContext
 
 /** [[ReactiveCRDT Reactive]] implementation of [[rescala.extra.lattices.delta.interfaces.RubisInterface RubisInterface]]
   *
@@ -11,13 +10,13 @@ import kofre.causality.CContext
   *
   * @tparam C Type of the causal context used for this causal CRDT
   */
-class Rubis[C: CContext](
-    val state: State[C],
+class Rubis(
+    val state: State,
     val replicaID: String,
-    val deltaBuffer: List[Delta[State[C]]]
-) extends RubisInterface[C, Rubis[C]] with ReactiveCRDT[State[C], Rubis[C]] {
+    val deltaBuffer: List[Delta[State]]
+) extends RubisInterface[Rubis] with ReactiveCRDT[State, Rubis] {
 
-  override protected def copy(state: State[C], deltaBuffer: List[Delta[State[C]]]): Rubis[C] =
+  override protected def copy(state: State, deltaBuffer: List[Delta[State]]): Rubis =
     new Rubis(state, replicaID, deltaBuffer)
 }
 
@@ -28,6 +27,6 @@ object Rubis extends RubisCompanion {
     * @param replicaID Unique id of the replica that this instance is located on
     * @tparam C Type of the causal context used for this causal CRDT
     */
-  def apply[C: CContext](replicaID: String): Rubis[C] =
-    new Rubis(UIJDLattice[State[C]].bottom, replicaID, List())
+  def apply(replicaID: String): Rubis =
+    new Rubis(UIJDLattice[State].bottom, replicaID, List())
 }

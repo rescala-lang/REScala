@@ -4,7 +4,6 @@ import kofre.decompose.DotStore.{DotMap, DotSet}
 import kofre.decompose.interfaces.AWSetInterface
 import kofre.decompose.interfaces.AWSetInterface.{AWSetCompanion, State}
 import kofre.decompose.{Delta, UIJDLattice}
-import kofre.causality.CContext
 
 /** [[ReactiveCRDT Reactive]] implementation of [[rescala.extra.lattices.delta.interfaces.AWSetInterface AWSetInterface]]
   *
@@ -13,13 +12,13 @@ import kofre.causality.CContext
   * @tparam E Type of the elements stored in the set
   * @tparam C Type of the causal context used for this causal CRDT
   */
-class AWSet[E, C: CContext](
-    val state: State[E, C],
+class AWSet[E](
+    val state: State[E],
     val replicaID: String,
-    val deltaBuffer: List[Delta[State[E, C]]]
-) extends AWSetInterface[E, C, AWSet[E, C]] with ReactiveCRDT[State[E, C], AWSet[E, C]] {
+    val deltaBuffer: List[Delta[State[E]]]
+) extends AWSetInterface[E,AWSet[E]] with ReactiveCRDT[State[E], AWSet[E]] {
 
-  override protected def copy(state: State[E, C], deltaBuffer: List[Delta[State[E, C]]]): AWSet[E, C] =
+  override protected def copy(state: State[E], deltaBuffer: List[Delta[State[E]]]): AWSet[E] =
     new AWSet(state, replicaID, deltaBuffer)
 }
 
@@ -31,6 +30,6 @@ object AWSet extends AWSetCompanion {
     * @tparam E Type of the elements stored in the set
     * @tparam C Type of the causal context used for this causal CRDT
     */
-  def apply[E, C: CContext](replicaID: String): AWSet[E, C] =
-    new AWSet(UIJDLattice[State[E, C]].bottom, replicaID, List())
+  def apply[E](replicaID: String): AWSet[E] =
+    new AWSet(UIJDLattice[State[E]].bottom, replicaID, List())
 }

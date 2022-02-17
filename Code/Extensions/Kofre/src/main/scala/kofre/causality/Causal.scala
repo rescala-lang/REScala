@@ -5,10 +5,11 @@ import kofre.causality.CausalContext
 import kofre.causality.DotStore.{DotFun, DotMap, DotSet}
 import kofre.causality.Causal
 
-
-case class Causal[A](store: A, context: CausalContext):
+case class Causal[A](store: A, context: CausalContext) {
   def dotStore: A = store
   def causalContext: CausalContext = context
+  def cc: CausalContext = context
+}
 
 
 

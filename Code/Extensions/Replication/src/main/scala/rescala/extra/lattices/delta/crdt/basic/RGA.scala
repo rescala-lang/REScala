@@ -4,7 +4,7 @@ import kofre.decompose.DotStore.{DotFun, DotPair}
 import kofre.decompose.interfaces.RGAInterface
 import kofre.decompose.interfaces.RGAInterface.{RGACompanion, State}
 import kofre.decompose.{UIJDLattice}
-import kofre.causality.CContext
+
 import rescala.extra.replication.AntiEntropy
 
 /** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.RGAInterface RGAInterface]]
@@ -14,12 +14,12 @@ import rescala.extra.replication.AntiEntropy
   * @tparam E Type of the elements stored in the list
   * @tparam C Type of the causal context used for this causal CRDT
   */
-class RGA[E, C: CContext](
-    val state: State[E, C],
-    protected val antiEntropy: AntiEntropy[State[E, C]]
-) extends RGAInterface[E, C, RGA[E, C]] with BasicCRDT[State[E, C], RGA[E, C]] {
+class RGA[E](
+    val state: State[E],
+    protected val antiEntropy: AntiEntropy[State[E]]
+) extends RGAInterface[E, RGA[E]] with BasicCRDT[State[E], RGA[E]] {
 
-  override protected def copy(state: State[E, C]): RGA[E, C] = new RGA(state, antiEntropy)
+  override protected def copy(state: State[E]): RGA[E] = new RGA(state, antiEntropy)
 }
 
 object RGA extends RGACompanion {
@@ -30,6 +30,6 @@ object RGA extends RGACompanion {
     * @tparam E Type of the elements stored in the list
     * @tparam C Type of the causal context used for this causal CRDT
     */
-  def apply[E, C: CContext](antiEntropy: AntiEntropy[State[E, C]]): RGA[E, C] =
-    new RGA(UIJDLattice[State[E, C]].bottom, antiEntropy)
+  def apply[E](antiEntropy: AntiEntropy[State[E]]): RGA[E] =
+    new RGA(UIJDLattice[State[E]].bottom, antiEntropy)
 }

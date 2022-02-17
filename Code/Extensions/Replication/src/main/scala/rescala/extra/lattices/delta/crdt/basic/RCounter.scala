@@ -4,7 +4,7 @@ import kofre.decompose.DotStore.DotFun
 import kofre.decompose.interfaces.RCounterInterface
 import kofre.decompose.interfaces.RCounterInterface.{RCounterCompanion, State}
 import kofre.decompose.{UIJDLattice}
-import kofre.causality.CContext
+
 import rescala.extra.replication.AntiEntropy
 
 /** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.RCounterInterface RCounterInterface]]
@@ -13,12 +13,12 @@ import rescala.extra.replication.AntiEntropy
   *
   * @tparam C Type of the causal context used for this causal CRDT
   */
-class RCounter[C: CContext](
-    val state: State[C],
-    protected val antiEntropy: AntiEntropy[State[C]]
-) extends RCounterInterface[C, RCounter[C]] with BasicCRDT[State[C], RCounter[C]] {
+class RCounter(
+    val state: State,
+    protected val antiEntropy: AntiEntropy[State]
+) extends RCounterInterface[RCounter] with BasicCRDT[State, RCounter] {
 
-  override protected def copy(state: State[C]): RCounter[C] = new RCounter(state, antiEntropy)
+  override protected def copy(state: State): RCounter = new RCounter(state, antiEntropy)
 }
 
 object RCounter extends RCounterCompanion {
@@ -28,6 +28,6 @@ object RCounter extends RCounterCompanion {
     * @param antiEntropy AntiEntropy instance used for exchanging deltas with other replicas
     * @tparam C Type of the causal context used for this causal CRDT
     */
-  def apply[C: CContext](antiEntropy: AntiEntropy[State[C]]): RCounter[C] =
-    new RCounter(UIJDLattice[State[C]].bottom, antiEntropy)
+  def apply(antiEntropy: AntiEntropy[State]): RCounter =
+    new RCounter(UIJDLattice[State].bottom, antiEntropy)
 }

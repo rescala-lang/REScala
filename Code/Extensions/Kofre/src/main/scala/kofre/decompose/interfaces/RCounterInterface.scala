@@ -1,11 +1,12 @@
 package kofre.decompose.interfaces
 
-import kofre.causality.CContext
+import kofre.causality.{CContext, Causal, CausalContext}
 import kofre.decompose.*
 import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
 import kofre.decompose.DotStore.*
 
 object RCounterInterface {
+  type C = CausalContext
   implicit def IntPairAsUIJDLattice: UIJDLattice[(Int, Int)] = new UIJDLattice[(Int, Int)] {
     override def leq(left: (Int, Int), right: (Int, Int)): Boolean = (left, right) match {
       case ((linc, ldec), (rinc, rdec)) =>
@@ -26,18 +27,18 @@ object RCounterInterface {
     override def bottom: (Int, Int) = (0, 0)
   }
 
-  type State[C] = Causal[DotFun[(Int, Int)], C]
+  type State = Causal[DotFun[(Int, Int)]]
 
   trait RCounterCompanion {
-    type State[C] = RCounterInterface.State[C]
+    type State = RCounterInterface.State
     type Embedded = DotFun[(Int, Int)]
   }
 
-  private def deltaState[C: CContext](
+  private def deltaState(
       df: Option[DotFun[(Int, Int)]] = None,
       cc: C
-  ): State[C] = {
-    val bottom = UIJDLattice[State[C]].bottom
+  ): State = {
+    val bottom = UIJDLattice[State].bottom
 
     Causal(
       df.getOrElse(bottom.dotStore),
@@ -45,7 +46,7 @@ object RCounterInterface {
     )
   }
 
-  def value[C: CContext]: DeltaQuery[State[C], Int] = {
+  def value: DeltaQuery[State, Int] = {
     case Causal(df, _) =>
       df.values.foldLeft(0) {
         case (counter, (inc, dec)) => counter + inc - dec
@@ -55,7 +56,7 @@ object RCounterInterface {
   /** Without using fresh, reset wins over concurrent increments/decrements
     * When using fresh after every time deltas are shipped to other replicas, increments/decrements win over concurrent resets
     */
-  def fresh[C: CContext]: DeltaMutator[State[C]] = {
+  def fresh: DeltaMutator[State] = {
     case (replicaID, Causal(_, cc)) =>
       val nextDot = CContext[C].nextDot(cc, replicaID)
 
@@ -65,7 +66,7 @@ object RCounterInterface {
       )
   }
 
-  private def update[C: CContext](u: (Int, Int)): DeltaMutator[State[C]] = {
+  private def update(u: (Int, Int)): DeltaMutator[State] = {
     case (replicaID, Causal(df, cc)) =>
       CContext[C].max(cc, replicaID) match {
         case Some(currentDot) if df.contains(currentDot) =>
@@ -87,11 +88,11 @@ object RCounterInterface {
       }
   }
 
-  def increment[C: CContext]: DeltaMutator[State[C]] = update((1, 0))
+  def increment: DeltaMutator[State] = update((1, 0))
 
-  def decrement[C: CContext]: DeltaMutator[State[C]] = update((0, 1))
+  def decrement: DeltaMutator[State] = update((0, 1))
 
-  def reset[C: CContext]: DeltaMutator[State[C]] = {
+  def reset: DeltaMutator[State] = {
     case (_, Causal(df, _)) =>
       deltaState(
         cc = CContext[C].fromSet(df.keySet)
@@ -107,7 +108,7 @@ object RCounterInterface {
   * This counter was originally proposed by Baquera et al.
   * in "The problem with embedded CRDT counters and a solution", see [[https://dl.acm.org/doi/abs/10.1145/2911151.2911159?casa_token=D7n88K9dW7gAAAAA:m3WhHMFZxoCwGFk8DVoqJXBJpwJwrqKMLqtgKo_TSiwU_ErWgOZjo4UqYqDCb-bG3iJlXc_Ti7aB9w here]]
   */
-abstract class RCounterInterface[C: CContext, Wrapper] extends CRDTInterface[RCounterInterface.State[C], Wrapper] {
+abstract class RCounterInterface[ Wrapper] extends CRDTInterface[RCounterInterface.State, Wrapper] {
   def value: Int = query(RCounterInterface.value)
 
   def fresh(): Wrapper = mutate(RCounterInterface.fresh)

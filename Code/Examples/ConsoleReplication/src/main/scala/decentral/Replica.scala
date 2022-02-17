@@ -3,7 +3,6 @@ package decentral
 import decentral.Bindings._
 import kofre.decompose.{Delta, UIJDLattice}
 import loci.transmitter.{RemoteAccessException, RemoteRef}
-import kofre.causality.CausalContext
 import rescala.extra.lattices.delta.crdt.reactive.AWSet
 
 import scala.concurrent.Future
@@ -21,7 +20,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
   val minAtomsForCheckpoint = 100
   val maxAtomsForCheckpoint = 500
 
-  var set: AWSet[Int, CausalContext] = AWSet(id)
+  var set: AWSet[Int] = AWSet(id)
 
   var checkpoints: Map[String, Int] = Map(id -> 0)
 

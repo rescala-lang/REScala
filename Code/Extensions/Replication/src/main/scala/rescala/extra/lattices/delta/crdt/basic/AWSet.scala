@@ -4,7 +4,6 @@ import kofre.decompose.DotStore.{DotMap, DotSet}
 import kofre.decompose.interfaces.AWSetInterface
 import kofre.decompose.interfaces.AWSetInterface.{AWSetCompanion, State}
 import kofre.decompose.{UIJDLattice}
-import kofre.causality.CContext
 import rescala.extra.replication.AntiEntropy
 
 /** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.AWSetInterface AWSetInterface]]
@@ -14,12 +13,12 @@ import rescala.extra.replication.AntiEntropy
   * @tparam E Type of the elements stored in the set
   * @tparam C Type of the causal context used for this causal CRDT
   */
-class AWSet[E, C: CContext](
-    val state: State[E, C],
-    protected val antiEntropy: AntiEntropy[State[E, C]]
-) extends AWSetInterface[E, C, AWSet[E, C]] with BasicCRDT[State[E, C], AWSet[E, C]] {
+class AWSet[E](
+    val state: State[E],
+    protected val antiEntropy: AntiEntropy[State[E]]
+) extends AWSetInterface[E, AWSet[E]] with BasicCRDT[State[E], AWSet[E]] {
 
-  override protected def copy(state: State[E, C]): AWSet[E, C] = new AWSet(state, antiEntropy)
+  override protected def copy(state: State[E]): AWSet[E] = new AWSet(state, antiEntropy)
 }
 
 object AWSet extends AWSetCompanion {
@@ -30,6 +29,6 @@ object AWSet extends AWSetCompanion {
     * @tparam E Type of the elements stored in the set
     * @tparam C Type of the causal context used for this causal CRDT
     */
-  def apply[E, C: CContext](antiEntropy: AntiEntropy[State[E, C]]): AWSet[E, C] =
-    new AWSet(UIJDLattice[State[E, C]].bottom, antiEntropy)
+  def apply[E](antiEntropy: AntiEntropy[State[E]]): AWSet[E] =
+    new AWSet(UIJDLattice[State[E]].bottom, antiEntropy)
 }

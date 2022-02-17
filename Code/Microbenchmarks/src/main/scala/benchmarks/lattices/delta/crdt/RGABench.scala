@@ -1,6 +1,5 @@
 package benchmarks.lattices.delta.crdt
 
-import kofre.causality.CausalContext
 import org.openjdk.jmh.annotations._
 import rescala.extra.lattices.delta.crdt.reactive.RGA
 
@@ -18,14 +17,14 @@ class RGABench {
   @Param(Array("0", "1", "10", "100", "1000"))
   var rgaSize: Int = _
 
-  type SUT = RGA[Int, CausalContext]
+  type SUT = RGA[Int]
 
   var rga: SUT        = _
   var rgaCleared: SUT = _
 
   @Setup
   def setup(): Unit = {
-    rga = RGA[Int, CausalContext]("a").appendAll(0 until rgaSize)
+    rga = RGA[Int]("a").appendAll(0 until rgaSize)
     rgaCleared = rga.clear()
   }
 

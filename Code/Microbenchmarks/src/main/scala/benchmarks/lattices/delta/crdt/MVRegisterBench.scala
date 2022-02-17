@@ -1,6 +1,5 @@
 package benchmarks.lattices.delta.crdt
 
-import kofre.causality.CausalContext
 import org.openjdk.jmh.annotations._
 import rescala.extra.lattices.delta.crdt.reactive.MVRegister
 
@@ -18,13 +17,13 @@ class MVRegisterBench {
   @Param(Array("0", "1", "10", "100", "1000"))
   var numWrites: Int = _
 
-  var reg: MVRegister[Int, CausalContext] = _
+  var reg: MVRegister[Int] = _
 
   @Setup
   def setup(): Unit = {
-    reg = (0 until numWrites).foldLeft(MVRegister[Int, CausalContext]("-1")) {
+    reg = (0 until numWrites).foldLeft(MVRegister[Int]("-1")) {
       case (r, i) =>
-        val delta = MVRegister[Int, CausalContext](i.toString).write(i).deltaBuffer.head
+        val delta = MVRegister[Int](i.toString).write(i).deltaBuffer.head
         r.applyDelta(delta)
     }
   }
@@ -33,8 +32,8 @@ class MVRegisterBench {
   def read(): Set[Int] = reg.read
 
   @Benchmark
-  def write(): MVRegister[Int, CausalContext] = reg.write(-1)
+  def write(): MVRegister[Int] = reg.write(-1)
 
   @Benchmark
-  def clear(): MVRegister[Int, CausalContext] = reg.clear()
+  def clear(): MVRegister[Int] = reg.clear()
 }

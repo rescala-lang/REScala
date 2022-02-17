@@ -5,7 +5,6 @@ import kofre.decompose.{Delta, UIJDLattice}
 import loci.communicator.tcp.TCP
 import loci.registry.Registry
 import loci.transmitter.{RemoteAccessException, RemoteRef}
-import kofre.causality.CausalContext
 import rescala.extra.lattices.delta.crdt.reactive.AWSet
 
 import java.util.concurrent._
@@ -27,7 +26,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
   val size: String     = "size"
   val exit: String     = "exit"
 
-  var set: AWSet[Int, CausalContext] = AWSet(id)
+  var set: AWSet[Int] = AWSet(id)
 
   var checkpoint: Int = 0
 
@@ -82,7 +81,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
   def sendRecursive(
       remoteReceiveSyncMessage: SyncMessage => Future[Unit],
-      delta: AWSet.State[Int, CausalContext]
+      delta: AWSet.State[Int]
   ): Unit = new FutureTask[Unit](() => {
     def attemptSend(atoms: Iterable[SetState], merged: SetState): Unit = {
       remoteReceiveSyncMessage(SyncMessage(checkpoint, merged)).failed.foreach {

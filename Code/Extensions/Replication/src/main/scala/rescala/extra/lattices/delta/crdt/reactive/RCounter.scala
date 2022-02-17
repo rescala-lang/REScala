@@ -3,7 +3,7 @@ package rescala.extra.lattices.delta.crdt.reactive
 import kofre.decompose.interfaces.RCounterInterface
 import kofre.decompose.interfaces.RCounterInterface.{RCounterCompanion, State}
 import kofre.decompose.{Delta, UIJDLattice}
-import kofre.causality.CContext
+
 
 /** [[ReactiveCRDT Reactive]] implementation of [[rescala.extra.lattices.delta.interfaces.RCounterInterface RCounterInterface]]
   *
@@ -11,13 +11,13 @@ import kofre.causality.CContext
   *
   * @tparam C Type of the causal context used for this causal CRDT
   */
-class RCounter[C: CContext](
-    val state: State[C],
+class RCounter(
+    val state: State,
     val replicaID: String,
-    val deltaBuffer: List[Delta[State[C]]]
-) extends RCounterInterface[C, RCounter[C]] with ReactiveCRDT[State[C], RCounter[C]] {
+    val deltaBuffer: List[Delta[State]]
+) extends RCounterInterface[RCounter] with ReactiveCRDT[State, RCounter] {
 
-  override protected def copy(state: State[C], deltaBuffer: List[Delta[State[C]]]): RCounter[C] =
+  override protected def copy(state: State, deltaBuffer: List[Delta[State]]): RCounter =
     new RCounter(state, replicaID, deltaBuffer)
 }
 
@@ -28,6 +28,6 @@ object RCounter extends RCounterCompanion {
     * @param replicaID Unique id of the replica that this instance is located on
     * @tparam C Type of the causal context used for this causal CRDT
     */
-  def apply[C: CContext](replicaID: String): RCounter[C] =
-    new RCounter(UIJDLattice[State[C]].bottom, replicaID, List())
+  def apply(replicaID: String): RCounter =
+    new RCounter(UIJDLattice[State].bottom, replicaID, List())
 }

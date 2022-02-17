@@ -9,66 +9,66 @@ import kofre.decompose.interfaces.RubisInterface.{AID, UserAsUIJDLattice}
 object RubisInterface {
   type AID = String
 
-  type State[C] = (AWSetInterface.State[(User, String), C], Map[User, String], Map[AID, AuctionInterface.State])
+  type State = (AWSetInterface.State[(User, String)], Map[User, String], Map[AID, AuctionInterface.State])
 
   trait RubisCompanion {
-    type State[C] = RubisInterface.State[C]
+    type State = RubisInterface.State
 
     implicit val UserAsUIJDLattice: UIJDLattice[User] = RubisInterface.UserAsUIJDLattice
   }
 
   implicit val UserAsUIJDLattice: UIJDLattice[User] = UIJDLattice.AtomicUIJDLattice[User]
 
-  private class DeltaStateFactory[C: CContext] {
-    val bottom: State[C] = UIJDLattice[State[C]].bottom
+  private class DeltaStateFactory {
+    val bottom: State = UIJDLattice[State].bottom
 
     def make(
-        userRequests: AWSetInterface.State[(User, String), C] = bottom._1,
+        userRequests: AWSetInterface.State[(User, String)] = bottom._1,
         users: Map[User, String] = bottom._2,
         auctions: Map[AID, AuctionInterface.State] = bottom._3
-    ): State[C] = (userRequests, users, auctions)
+    ): State = (userRequests, users, auctions)
   }
 
-  private def deltaState[C: CContext]: DeltaStateFactory[C] = new DeltaStateFactory[C]
+  private def deltaState: DeltaStateFactory = new DeltaStateFactory
 
-  def placeBid[C: CContext](auctionId: AID, userId: User, price: Int): DeltaMutator[State[C]] = {
+  def placeBid(auctionId: AID, userId: User, price: Int): DeltaMutator[State] = {
     case (replicaID, (_, users, m)) =>
       val newMap =
         if (users.get(userId).contains(replicaID) && m.contains(auctionId)) {
           m.updatedWith(auctionId) { _.map(a => AuctionInterface.bid(userId, price)(replicaID, a)) }
         } else Map.empty[AID, AuctionInterface.State]
 
-      deltaState[C].make(auctions = newMap)
+      deltaState.make(auctions = newMap)
   }
 
-  def closeAuction[C: CContext](auctionId: AID): DeltaMutator[State[C]] = {
+  def closeAuction(auctionId: AID): DeltaMutator[State] = {
     case (replicaID, (_, _, m)) =>
       val newMap =
         if (m.contains(auctionId)) {
           m.updatedWith(auctionId) { _.map(a => AuctionInterface.close()(replicaID, a)) }
         } else Map.empty[AID, AuctionInterface.State]
 
-      deltaState[C].make(auctions = newMap)
+      deltaState.make(auctions = newMap)
   }
 
-  def openAuction[C: CContext](auctionId: AID): DeltaMutator[State[C]] = {
+  def openAuction(auctionId: AID): DeltaMutator[State] = {
     case (_, (_, _, m)) =>
       val newMap =
         if (m.contains(auctionId)) Map.empty[AID, AuctionInterface.State]
         else Map(auctionId -> UIJDLattice[AuctionInterface.State].bottom)
 
-      deltaState[C].make(auctions = newMap)
+      deltaState.make(auctions = newMap)
   }
 
-  def requestRegisterUser[C: CContext](userId: User): DeltaMutator[State[C]] = {
+  def requestRegisterUser(userId: User): DeltaMutator[State] = {
     case (replicaID, (req, users, _)) =>
-      if (users.contains(userId)) deltaState[C].make()
-      else deltaState[C].make(userRequests = AWSetInterface.add(userId -> replicaID).apply(replicaID, req))
+      if (users.contains(userId)) deltaState.make()
+      else deltaState.make(userRequests = AWSetInterface.add(userId -> replicaID).apply(replicaID, req))
   }
 
-  def resolveRegisterUser[C: CContext](): DeltaMutator[State[C]] = {
+  def resolveRegisterUser(): DeltaMutator[State] = {
     case (replicaID, (req, users, _)) =>
-      val newUsers = AWSetInterface.elements[(User, String), C].apply(req).foldLeft(Map.empty[User, String]) {
+      val newUsers = AWSetInterface.elements[(User, String)].apply(req).foldLeft(Map.empty[User, String]) {
         case (newlyRegistered, (uid, rid)) =>
           if ((users ++ newlyRegistered).contains(uid))
             newlyRegistered
@@ -77,8 +77,8 @@ object RubisInterface {
           }
       }
 
-      deltaState[C].make(
-        userRequests = AWSetInterface.clear[(User, String), C]().apply(replicaID, req),
+      deltaState.make(
+        userRequests = AWSetInterface.clear[(User, String)]().apply(replicaID, req),
         users = newUsers
       )
   }
@@ -94,7 +94,7 @@ object RubisInterface {
   * This auction system was in part modeled after the Rice University Bidding System (RUBiS) proposed by Cecchet et al. in
   * "Performance and Scalability of EJB Applications", see [[https://www.researchgate.net/publication/2534515_Performance_and_Scalability_of_EJB_Applications here]]
   */
-abstract class RubisInterface[C: CContext, Wrapper] extends CRDTInterface[RubisInterface.State[C], Wrapper] {
+abstract class RubisInterface[ Wrapper] extends CRDTInterface[RubisInterface.State, Wrapper] {
   def placeBid(auctionId: AID, userId: User, price: Int): Wrapper =
     mutate(RubisInterface.placeBid(auctionId, userId, price))
 

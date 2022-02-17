@@ -3,7 +3,6 @@ package rescala.extra.lattices.delta.crdt.reactive
 import kofre.decompose.interfaces.RGAInterface
 import kofre.decompose.interfaces.RGAInterface.{RGACompanion, State}
 import kofre.decompose.{Delta, UIJDLattice}
-import kofre.causality.CContext
 
 /** [[ReactiveCRDT Reactive]] implementation of [[rescala.extra.lattices.delta.interfaces.RGAInterface RGAInterface]]
   *
@@ -12,13 +11,13 @@ import kofre.causality.CContext
   * @tparam E Type of the elements stored in the list
   * @tparam C Type of the causal context used for this causal CRDT
   */
-class RGA[E, C: CContext](
-    val state: State[E, C],
+class RGA[E](
+    val state: State[E],
     val replicaID: String,
-    val deltaBuffer: List[Delta[State[E, C]]]
-) extends RGAInterface[E, C, RGA[E, C]] with ReactiveCRDT[State[E, C], RGA[E, C]] {
+    val deltaBuffer: List[Delta[State[E]]]
+) extends RGAInterface[E, RGA[E]] with ReactiveCRDT[State[E], RGA[E]] {
 
-  override protected def copy(state: State[E, C], deltaBuffer: List[Delta[State[E, C]]]): RGA[E, C] =
+  override protected def copy(state: State[E], deltaBuffer: List[Delta[State[E]]]): RGA[E] =
     new RGA(state, replicaID, deltaBuffer)
 }
 
@@ -30,6 +29,6 @@ object RGA extends RGACompanion {
     * @tparam E Type of the elements stored in the list
     * @tparam C Type of the causal context used for this causal CRDT
     */
-  def apply[E, C: CContext](replicaID: String): RGA[E, C] =
-    new RGA(UIJDLattice[State[E, C]].bottom, replicaID, List())
+  def apply[E](replicaID: String): RGA[E] =
+    new RGA(UIJDLattice[State[E]].bottom, replicaID, List())
 }

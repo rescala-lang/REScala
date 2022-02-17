@@ -4,7 +4,6 @@ import kofre.decompose.DotStore.DotFun
 import kofre.decompose.interfaces.LWWRegisterInterface
 import kofre.decompose.interfaces.LWWRegisterInterface.{LWWRegisterCompanion, State}
 import kofre.decompose.{Delta, UIJDLattice}
-import kofre.causality.CContext
 
 /** [[ReactiveCRDT Reactive]] implementation of [[rescala.extra.lattices.delta.interfaces.LWWRegisterInterface LWWRegisterInterface]]
   *
@@ -13,13 +12,13 @@ import kofre.causality.CContext
   * @tparam A Type of the stored value
   * @tparam C Type of the causal context used for this causal CRDT
   */
-class LWWRegister[A, C: CContext](
-    val state: State[A, C],
+class LWWRegister[A](
+    val state: State[A],
     val replicaID: String,
-    val deltaBuffer: List[Delta[State[A, C]]]
-) extends LWWRegisterInterface[A, C, LWWRegister[A, C]] with ReactiveCRDT[State[A, C], LWWRegister[A, C]] {
+    val deltaBuffer: List[Delta[State[A]]]
+) extends LWWRegisterInterface[A, LWWRegister[A]] with ReactiveCRDT[State[A], LWWRegister[A]] {
 
-  override protected def copy(state: State[A, C], deltaBuffer: List[Delta[State[A, C]]]): LWWRegister[A, C] =
+  override protected def copy(state: State[A], deltaBuffer: List[Delta[State[A]]]): LWWRegister[A] =
     new LWWRegister(state, replicaID, deltaBuffer)
 }
 
@@ -31,6 +30,6 @@ object LWWRegister extends LWWRegisterCompanion {
     * @tparam A Type of the stored value
     * @tparam C Type of the causal context used for this causal CRDT
     */
-  def apply[A, C: CContext](replicaID: String): LWWRegister[A, C] =
-    new LWWRegister(UIJDLattice[State[A, C]].bottom, replicaID, List())
+  def apply[A](replicaID: String): LWWRegister[A] =
+    new LWWRegister(UIJDLattice[State[A]].bottom, replicaID, List())
 }

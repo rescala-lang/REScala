@@ -7,14 +7,16 @@ import kofre.decompose.interfaces.AuctionInterface.AuctionData
 import kofre.decompose.interfaces.ForcedWriteInterface.FW
 import kofre.decompose.interfaces.GListInterface.{Elem, GListNode}
 import kofre.decompose.interfaces.RGAInterface.RGANode
-import kofre.decompose.{Causal, LexPair, TimedVal}
+import kofre.decompose.{LexPair, TimedVal}
 import kofre.causality.{Dot, CausalContext}
+import kofre.causality.Causal
 
 object JsoniterCodecs {
 
   /** Causal Context */
 
   implicit val SetCContextCodec: JsonValueCodec[Set[Dot]] = JsonCodecMaker.make
+
 
   implicit val DietCodec: JsonValueCodec[Diet[Long]] = new JsonValueCodec[Diet[Long]] {
     override def decodeValue(in: JsonReader, default: Diet[Long]): Diet[Long] = {
@@ -52,7 +54,7 @@ object JsoniterCodecs {
 
   /** AWSet */
 
-  implicit def AWSetStateCodec[E: JsonValueCodec, C: JsonValueCodec]: JsonValueCodec[Causal[Map[E, Set[Dot]], C]] =
+  implicit def AWSetStateCodec[E: JsonValueCodec]: JsonValueCodec[Causal[Map[E, Set[Dot]]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   implicit def AWSetEmbeddedCodec[E: JsonValueCodec]: JsonValueCodec[Map[E, Set[Dot]]] =
@@ -60,7 +62,7 @@ object JsoniterCodecs {
 
   /** EWFlag */
 
-  implicit def EWFlagStateCodec[C: JsonValueCodec]: JsonValueCodec[Causal[Set[Dot], C]] = JsonCodecMaker.make
+  implicit def EWFlagStateCodec: JsonValueCodec[Causal[Set[Dot]]] = JsonCodecMaker.make
 
   // implicit def EWFlagEmbeddedCodec: JsonValueCodec[Set[Dot]] = JsonCodecMaker.make
 
@@ -79,8 +81,8 @@ object JsoniterCodecs {
 
   /** LastWriterWins */
 
-  implicit def LastWriterWinsStateCodec[A: JsonValueCodec, C: JsonValueCodec]
-      : JsonValueCodec[Causal[Map[Dot, TimedVal[A]], C]] =
+  implicit def LastWriterWinsStateCodec[A: JsonValueCodec]
+      : JsonValueCodec[Causal[Map[Dot, TimedVal[A]]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   implicit def LastWriterWinsEmbeddedCodec[A: JsonValueCodec]: JsonValueCodec[Map[Dot, TimedVal[A]]] =
@@ -92,7 +94,7 @@ object JsoniterCodecs {
 
   /** MVRegister */
 
-  implicit def MVRegisterStateCodec[A: JsonValueCodec, C: JsonValueCodec]: JsonValueCodec[Causal[Map[Dot, A], C]] =
+  implicit def MVRegisterStateCodec[A: JsonValueCodec]: JsonValueCodec[Causal[Map[Dot, A]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   implicit def MVRegisterEmbeddedCodec[A: JsonValueCodec]: JsonValueCodec[Map[Dot, A]] =
@@ -100,8 +102,8 @@ object JsoniterCodecs {
 
   /** ORMap */
 
-  implicit def ORMapStateCodec[K: JsonValueCodec, V: JsonValueCodec, C: JsonValueCodec]
-      : JsonValueCodec[Causal[Map[K, V], C]] =
+  implicit def ORMapStateCodec[K: JsonValueCodec, V: JsonValueCodec]
+      : JsonValueCodec[Causal[Map[K, V]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   implicit def ORMapEmbeddedCodec[K: JsonValueCodec, V: JsonValueCodec]: JsonValueCodec[Map[K, V]] =
@@ -113,7 +115,7 @@ object JsoniterCodecs {
 
   /** RCounter */
 
-  implicit def RCounterStateCodec[C: JsonValueCodec]: JsonValueCodec[Causal[Map[Dot, (Int, Int)], C]] =
+  implicit def RCounterStateCodec: JsonValueCodec[Causal[Map[Dot, (Int, Int)]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   implicit def RCounterEmbeddedCodec: JsonValueCodec[Map[Dot, (Int, Int)]] =
@@ -121,14 +123,14 @@ object JsoniterCodecs {
 
   /** RGA */
 
-  implicit def RGAStateCodec[E: JsonValueCodec, C: JsonValueCodec]
-      : JsonValueCodec[Causal[(FW[Map[GListNode[TimedVal[Dot]], Elem[TimedVal[Dot]]]], Map[Dot, RGANode[E]]), C]] =
+  implicit def RGAStateCodec[E: JsonValueCodec]
+      : JsonValueCodec[Causal[(FW[Map[GListNode[TimedVal[Dot]], Elem[TimedVal[Dot]]]], Map[Dot, RGANode[E]])]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   /** Rubis */
 
-  implicit def RubisStateCodec[C: JsonValueCodec]: JsonValueCodec[(
-      Causal[Map[(String, String), Set[Dot]], C],
+  implicit def RubisStateCodec: JsonValueCodec[(
+      Causal[Map[(String, String), Set[Dot]]],
       Map[String, String],
       Map[String, AuctionData]
   )] =

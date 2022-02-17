@@ -1,6 +1,5 @@
 package benchmarks.lattices.delta.crdt
 
-import kofre.causality.{CContext, CausalContext}
 import org.openjdk.jmh.annotations._
 import rescala.extra.lattices.delta.crdt.reactive.EWFlag
 
@@ -15,13 +14,13 @@ import java.util.concurrent.TimeUnit
 @State(Scope.Thread)
 class EWFlagBench {
 
-  var flagEnabled: EWFlag[CausalContext]  = _
-  var flagDisabled: EWFlag[CausalContext] = _
+  var flagEnabled: EWFlag  = _
+  var flagDisabled: EWFlag = _
 
   @Setup
   def setup(): Unit = {
-    flagEnabled = EWFlag("a")(CContext.intTreeCC).enable()
-    flagDisabled = EWFlag("b")(CContext.intTreeCC).disable()
+    flagEnabled = EWFlag("a").enable()
+    flagDisabled = EWFlag("b").disable()
   }
 
   @Benchmark
@@ -31,14 +30,14 @@ class EWFlagBench {
   def readDisabled(): Boolean = flagDisabled.read
 
   @Benchmark
-  def enableEnabled(): EWFlag[CausalContext] = flagEnabled.enable()
+  def enableEnabled(): EWFlag = flagEnabled.enable()
 
   @Benchmark
-  def enableDisabled(): EWFlag[CausalContext] = flagDisabled.enable()
+  def enableDisabled(): EWFlag = flagDisabled.enable()
 
   @Benchmark
-  def disableEnabled(): EWFlag[CausalContext] = flagEnabled.disable()
+  def disableEnabled(): EWFlag = flagEnabled.disable()
 
   @Benchmark
-  def disableDisabled(): EWFlag[CausalContext] = flagDisabled.disable()
+  def disableDisabled(): EWFlag = flagDisabled.disable()
 }

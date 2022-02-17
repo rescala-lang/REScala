@@ -4,7 +4,6 @@ import kofre.decompose.DotStore.DotSet
 import kofre.decompose.interfaces.EWFlagInterface
 import kofre.decompose.interfaces.EWFlagInterface.{EWFlagCompanion, State}
 import kofre.decompose.{Delta, UIJDLattice}
-import kofre.causality.CContext
 
 /** [[ReactiveCRDT Reactive]] implementation of [[rescala.extra.lattices.delta.interfaces.EWFlagInterface EWFlagInterface]]
   *
@@ -12,13 +11,13 @@ import kofre.causality.CContext
   *
   * @tparam C Type of the causal context used for this Causal CRDT
   */
-class EWFlag[C: CContext](
-    val state: State[C],
+class EWFlag(
+    val state: State,
     val replicaID: String,
-    val deltaBuffer: List[Delta[State[C]]]
-) extends EWFlagInterface[C, EWFlag[C]] with ReactiveCRDT[State[C], EWFlag[C]] {
+    val deltaBuffer: List[Delta[State]]
+) extends EWFlagInterface[EWFlag] with ReactiveCRDT[State, EWFlag] {
 
-  override protected def copy(state: State[C], deltaBuffer: List[Delta[State[C]]]): EWFlag[C] =
+  override protected def copy(state: State, deltaBuffer: List[Delta[State]]): EWFlag =
     new EWFlag(state, replicaID, deltaBuffer)
 }
 
@@ -29,6 +28,6 @@ object EWFlag extends EWFlagCompanion {
     * @param replicaID Unique id of the replica that this instance is located on
     * @tparam C Type of the causal context used for this Causal CRDT
     */
-  def apply[C: CContext](replicaID: String): EWFlag[C] =
-    new EWFlag(UIJDLattice[State[C]].bottom, replicaID, List())
+  def apply(replicaID: String): EWFlag =
+    new EWFlag(UIJDLattice[State].bottom, replicaID, List())
 }

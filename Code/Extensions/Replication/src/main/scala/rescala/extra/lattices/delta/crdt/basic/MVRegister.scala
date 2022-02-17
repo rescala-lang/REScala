@@ -4,7 +4,6 @@ import kofre.decompose.DotStore.DotFun
 import kofre.decompose.interfaces.MVRegisterInterface
 import kofre.decompose.interfaces.MVRegisterInterface.{MVRegisterCompanion, State}
 import kofre.decompose.{UIJDLattice}
-import kofre.causality.CContext
 import rescala.extra.replication.AntiEntropy
 
 /** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.MVRegisterInterface MVRegisterInterface]]
@@ -14,12 +13,12 @@ import rescala.extra.replication.AntiEntropy
   * @tparam A Type of the stored value
   * @tparam C Type of the causal context used for this causal CRDT
   */
-class MVRegister[A: UIJDLattice, C: CContext](
-    val state: State[A, C],
-    protected val antiEntropy: AntiEntropy[State[A, C]]
-) extends MVRegisterInterface[A, C, MVRegister[A, C]] with BasicCRDT[State[A, C], MVRegister[A, C]] {
+class MVRegister[A: UIJDLattice](
+    val state: State[A],
+    protected val antiEntropy: AntiEntropy[State[A]]
+) extends MVRegisterInterface[A, MVRegister[A]] with BasicCRDT[State[A], MVRegister[A]] {
 
-  override protected def copy(state: State[A, C]): MVRegister[A, C] = new MVRegister(state, antiEntropy)
+  override protected def copy(state: State[A]): MVRegister[A] = new MVRegister(state, antiEntropy)
 }
 
 object MVRegister extends MVRegisterCompanion {
@@ -30,6 +29,6 @@ object MVRegister extends MVRegisterCompanion {
     * @tparam A Type of the stored value
     * @tparam C Type of the causal context used for this causal CRDT
     */
-  def apply[A: UIJDLattice, C: CContext](antiEntropy: AntiEntropy[State[A, C]]): MVRegister[A, C] =
-    new MVRegister(UIJDLattice[State[A, C]].bottom, antiEntropy)
+  def apply[A: UIJDLattice](antiEntropy: AntiEntropy[State[A]]): MVRegister[A] =
+    new MVRegister(UIJDLattice[State[A]].bottom, antiEntropy)
 }

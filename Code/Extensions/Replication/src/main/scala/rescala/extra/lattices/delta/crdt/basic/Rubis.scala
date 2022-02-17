@@ -3,7 +3,7 @@ package rescala.extra.lattices.delta.crdt.basic
 import kofre.decompose.interfaces.RubisInterface
 import kofre.decompose.interfaces.RubisInterface.{RubisCompanion, State}
 import kofre.decompose.{UIJDLattice}
-import kofre.causality.CContext
+
 import rescala.extra.replication.AntiEntropy
 
 /** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.RubisInterface RubisInterface]]
@@ -12,12 +12,12 @@ import rescala.extra.replication.AntiEntropy
   *
   * @tparam C Type of the causal context used for this causal CRDT
   */
-class Rubis[C: CContext](
-    val state: State[C],
-    protected val antiEntropy: AntiEntropy[State[C]]
-) extends RubisInterface[C, Rubis[C]] with BasicCRDT[State[C], Rubis[C]] {
+class Rubis(
+    val state: State,
+    protected val antiEntropy: AntiEntropy[State]
+) extends RubisInterface[Rubis] with BasicCRDT[State, Rubis] {
 
-  override protected def copy(state: State[C]): Rubis[C] = new Rubis(state, antiEntropy)
+  override protected def copy(state: State): Rubis = new Rubis(state, antiEntropy)
 }
 
 object Rubis extends RubisCompanion {
@@ -27,6 +27,6 @@ object Rubis extends RubisCompanion {
     * @param antiEntropy AntiEntropy instance used for exchanging deltas with other replicas
     * @tparam C Type of the causal context used for this causal CRDT
     */
-  def apply[C: CContext](antiEntropy: AntiEntropy[State[C]]): Rubis[C] =
-    new Rubis(UIJDLattice[State[C]].bottom, antiEntropy)
+  def apply(antiEntropy: AntiEntropy[State]): Rubis =
+    new Rubis(UIJDLattice[State].bottom, antiEntropy)
 }

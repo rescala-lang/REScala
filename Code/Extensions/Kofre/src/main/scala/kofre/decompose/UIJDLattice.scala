@@ -2,6 +2,7 @@ package kofre.decompose
 
 import kofre.Lattice
 import kofre.Lattice.optionLattice
+import kofre.causality.{CContext, Causal, CausalContext}
 
 /** Extends the Lattice typeclass with the ability to compare states through unique irredundant join decomposition */
 trait UIJDLattice[A] extends Lattice[A] {
@@ -135,4 +136,24 @@ object UIJDLattice {
         throw new UnsupportedOperationException(s"Can't merge atomic type A, left: $left, right: $right")
       }
   }
+
+
+  implicit def CausalAsUIJDLattice[D: DotStore]: UIJDLattice[Causal[D]] =
+    new UIJDLattice[Causal[D]] {
+      override def leq(left: Causal[D], right: Causal[D]): Boolean = DotStore[D].leq(left, right)
+
+      /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
+      override def decompose(state: Causal[D]): Iterable[Causal[D]] = DotStore[D].decompose(state)
+
+      /** By assumption: associative, commutative, idempotent. */
+      override def merge(left: Causal[D], right: Causal[D]): Causal[D] = {
+        val dsMerged = DotStore[D].mergePartial(left, right)
+        val ccMerged = left.context.union(right.context)
+
+        Causal[D](dsMerged, ccMerged)
+      }
+
+      override def bottom: Causal[D] = Causal(DotStore[D].empty, CContext[CausalContext].empty)
+    }
+
 }

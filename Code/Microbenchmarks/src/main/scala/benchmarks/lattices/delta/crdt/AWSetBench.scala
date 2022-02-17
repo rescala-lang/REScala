@@ -1,6 +1,5 @@
 package benchmarks.lattices.delta.crdt
 
-import kofre.causality.CausalContext
 import org.openjdk.jmh.annotations._
 import rescala.extra.lattices.delta.crdt.reactive.AWSet
 
@@ -18,9 +17,9 @@ class AWSetBench {
   @Param(Array("0", "1", "10", "100", "1000"))
   var size: Int = _
 
-  var set: AWSet[Int, CausalContext] = _
+  var set: AWSet[Int] = _
 
-  def createBySize(size: Int): AWSet[Int, CausalContext] = (0 until size).foldLeft(AWSet[Int, CausalContext]("a")) {
+  def createBySize(size: Int): AWSet[Int] = (0 until size).foldLeft(AWSet[Int]("a")) {
     case (s, e) => s.add(e)
   }
 
@@ -33,23 +32,23 @@ class AWSetBench {
   def elements(): Set[Int] = set.elements
 
   @Benchmark
-  def add(): AWSet[Int, CausalContext] = set.add(-1)
+  def add(): AWSet[Int] = set.add(-1)
 
   @Benchmark
-  def addAll(): AWSet[Int, CausalContext] = AWSet[Int, CausalContext]("a").addAll(0 until size)
+  def addAll(): AWSet[Int] = AWSet[Int]("a").addAll(0 until size)
 
   @Benchmark
-  def remove(): AWSet[Int, CausalContext] = set.remove(0)
+  def remove(): AWSet[Int] = set.remove(0)
 
   @Benchmark
-  def removeBy(): AWSet[Int, CausalContext] = set.removeBy(_ == 0)
+  def removeBy(): AWSet[Int] = set.removeBy(_ == 0)
 
   @Benchmark
-  def removeAll(): AWSet[Int, CausalContext] = set.removeAll(set.elements)
+  def removeAll(): AWSet[Int] = set.removeAll(set.elements)
 
   @Benchmark
-  def clear(): AWSet[Int, CausalContext] = set.clear()
+  def clear(): AWSet[Int] = set.clear()
 
   @Benchmark
-  def construct(): AWSet[Int, CausalContext] = createBySize(size)
+  def construct(): AWSet[Int] = createBySize(size)
 }

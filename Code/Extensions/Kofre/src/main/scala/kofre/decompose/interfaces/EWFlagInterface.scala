@@ -1,46 +1,46 @@
 package kofre.decompose.interfaces
 
-import kofre.causality.CContext
+import kofre.causality.{CContext, Causal, CausalContext}
 import kofre.decompose.*
 import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
 import kofre.decompose.DotStore.*
 
 object EWFlagInterface {
-  type State[C] = Causal[DotSet, C]
+  type State = Causal[DotSet]
 
   trait EWFlagCompanion {
-    type State[C] = EWFlagInterface.State[C]
+    type State = EWFlagInterface.State
     type Embedded = DotSet
   }
 
-  private class DeltaStateFactory[C: CContext] {
-    val bottom: State[C] = UIJDLattice[State[C]].bottom
+  private class DeltaStateFactory {
+    val bottom: State = UIJDLattice[State].bottom
 
     def make(
         ds: DotSet = bottom.dotStore,
-        cc: C = bottom.cc
-    ): State[C] = Causal(ds, cc)
+        cc: CausalContext = bottom.cc
+    ): State = Causal(ds, cc)
   }
 
-  private def deltaState[C: CContext]: DeltaStateFactory[C] = new DeltaStateFactory[C]
+  private def deltaState: DeltaStateFactory = new DeltaStateFactory
 
-  def read[C: CContext]: DeltaQuery[State[C], Boolean] = {
+  def read: DeltaQuery[State, Boolean] = {
     case Causal(ds, _) => ds.nonEmpty
   }
 
-  def enable[C: CContext](): DeltaMutator[State[C]] = {
+  def enable(): DeltaMutator[State] = {
     case (replicaID, Causal(ds, cc)) =>
       val nextDot = CContext[C].nextDot(cc, replicaID)
 
-      deltaState[C].make(
+      deltaState.make(
         ds = Set(nextDot),
         cc = CContext[C].fromSet(ds + nextDot)
       )
   }
 
-  def disable[C: CContext](): DeltaMutator[State[C]] = {
+  def disable(): DeltaMutator[State] = {
     case (_, Causal(ds, _)) =>
-      deltaState[C].make(
+      deltaState.make(
         cc = CContext[C].fromSet(ds)
       )
   }
@@ -50,7 +50,7 @@ object EWFlagInterface {
   *
   * When the flag is concurrently disabled and enabled then the enable operation wins, i.e. the resulting flag is enabled.
   */
-abstract class EWFlagInterface[C: CContext, Wrapper] extends CRDTInterface[EWFlagInterface.State[C], Wrapper] {
+abstract class EWFlagInterface[Wrapper] extends CRDTInterface[EWFlagInterface.State, Wrapper] {
   def read: Boolean = query(EWFlagInterface.read)
 
   def enable(): Wrapper = mutate(EWFlagInterface.enable())

@@ -4,7 +4,6 @@ import kofre.decompose.DotStore.DotFun
 import kofre.decompose.interfaces.LWWRegisterInterface
 import kofre.decompose.interfaces.LWWRegisterInterface.{LWWRegisterCompanion, State}
 import kofre.decompose.{UIJDLattice}
-import kofre.causality.CContext
 import rescala.extra.replication.AntiEntropy
 
 /** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.LWWRegisterInterface LWWRegisterInterface]]
@@ -14,12 +13,12 @@ import rescala.extra.replication.AntiEntropy
   * @tparam A Type of the stored value
   * @tparam C Type of the causal context used for this causal CRDT
   */
-class LWWRegister[A, C: CContext](
-    val state: State[A, C],
-    protected val antiEntropy: AntiEntropy[State[A, C]]
-) extends LWWRegisterInterface[A, C, LWWRegister[A, C]] with BasicCRDT[State[A, C], LWWRegister[A, C]] {
+class LWWRegister[A](
+    val state: State[A],
+    protected val antiEntropy: AntiEntropy[State[A]]
+) extends LWWRegisterInterface[A, LWWRegister[A]] with BasicCRDT[State[A], LWWRegister[A]] {
 
-  override protected def copy(state: State[A, C]): LWWRegister[A, C] = new LWWRegister(state, antiEntropy)
+  override protected def copy(state: State[A]): LWWRegister[A] = new LWWRegister(state, antiEntropy)
 }
 
 object LWWRegister extends LWWRegisterCompanion {
@@ -30,6 +29,6 @@ object LWWRegister extends LWWRegisterCompanion {
     * @tparam A Type of the stored value
     * @tparam C Type of the causal context used for this causal CRDT
     */
-  def apply[A, C: CContext](antiEntropy: AntiEntropy[State[A, C]]): LWWRegister[A, C] =
-    new LWWRegister(UIJDLattice[State[A, C]].bottom, antiEntropy)
+  def apply[A](antiEntropy: AntiEntropy[State[A]]): LWWRegister[A] =
+    new LWWRegister(UIJDLattice[State[A]].bottom, antiEntropy)
 }

@@ -4,7 +4,6 @@ import kofre.decompose.DotStore.DotFun
 import kofre.decompose.interfaces.MVRegisterInterface
 import kofre.decompose.interfaces.MVRegisterInterface.{MVRegisterCompanion, State}
 import kofre.decompose.{Delta, UIJDLattice}
-import kofre.causality.CContext
 
 /** [[ReactiveCRDT Reactive]] implementation of [[rescala.extra.lattices.delta.interfaces.MVRegisterInterface MVRegisterInterface]]
   *
@@ -13,13 +12,13 @@ import kofre.causality.CContext
   * @tparam A Type of the stored value
   * @tparam C Type of the causal context used for this causal CRDT
   */
-class MVRegister[A: UIJDLattice, C: CContext](
-    val state: State[A, C],
+class MVRegister[A: UIJDLattice](
+    val state: State[A],
     val replicaID: String,
-    val deltaBuffer: List[Delta[State[A, C]]]
-) extends MVRegisterInterface[A, C, MVRegister[A, C]] with ReactiveCRDT[State[A, C], MVRegister[A, C]] {
+    val deltaBuffer: List[Delta[State[A]]]
+) extends MVRegisterInterface[A, MVRegister[A]] with ReactiveCRDT[State[A], MVRegister[A]] {
 
-  override protected def copy(state: State[A, C], deltaBuffer: List[Delta[State[A, C]]]): MVRegister[A, C] =
+  override protected def copy(state: State[A], deltaBuffer: List[Delta[State[A]]]): MVRegister[A] =
     new MVRegister(state, replicaID, deltaBuffer)
 }
 
@@ -31,6 +30,6 @@ object MVRegister extends MVRegisterCompanion {
     * @tparam A Type of the stored value
     * @tparam C Type of the causal context used for this causal CRDT
     */
-  def apply[A: UIJDLattice, C: CContext](replicaID: String): MVRegister[A, C] =
-    new MVRegister(UIJDLattice[State[A, C]].bottom, replicaID, List())
+  def apply[A: UIJDLattice](replicaID: String): MVRegister[A] =
+    new MVRegister(UIJDLattice[State[A]].bottom, replicaID, List())
 }

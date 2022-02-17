@@ -2,7 +2,6 @@ package todo
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import kofre.causality.CausalContext
 import loci.registry.Binding
 import loci.serializer.jsoniterScala._
 import org.scalajs.dom.{UIEvent, window}
@@ -46,7 +45,7 @@ class TodoAppUI(val storagePrefix: String) {
     TaskRefs.taskrefObj = taskrefs
     val taskOps = new TaskOps(taskrefs)
 
-    val deltaEvt = Evt[Delta[RGA.State[TaskRef, CausalContext]]]
+    val deltaEvt = Evt[Delta[RGA.State[TaskRef]]]
 
     val rga =
       Storing.storedAs(storagePrefix, taskOps.listInitial) { init =>
@@ -61,7 +60,7 @@ class TodoAppUI(val storagePrefix: String) {
       }(codecRGA)
 
     LociDist.distributeDeltaCRDT(rga, deltaEvt, Todolist.registry)(
-      Binding[RGA.State[TaskRef, CausalContext] => Unit]("tasklist")
+      Binding[RGA.State[TaskRef] => Unit]("tasklist")
     )
 
     val tasksList = rga.map { _.toList }

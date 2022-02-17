@@ -4,7 +4,7 @@ import kofre.decompose.DotStore.DotSet
 import kofre.decompose.interfaces.EWFlagInterface
 import kofre.decompose.interfaces.EWFlagInterface.{EWFlagCompanion, State}
 import kofre.decompose.{UIJDLattice}
-import kofre.causality.CContext
+
 import rescala.extra.replication.AntiEntropy
 
 /** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.EWFlagInterface EWFlagInterface]]
@@ -13,12 +13,12 @@ import rescala.extra.replication.AntiEntropy
   *
   * @tparam C Type of the causal context used for this Causal CRDT
   */
-class EWFlag[C: CContext](
-    val state: State[C],
-    protected val antiEntropy: AntiEntropy[State[C]]
-) extends EWFlagInterface[C, EWFlag[C]] with BasicCRDT[State[C], EWFlag[C]] {
+class EWFlag(
+    val state: State,
+    protected val antiEntropy: AntiEntropy[State]
+) extends EWFlagInterface[EWFlag] with BasicCRDT[State, EWFlag] {
 
-  override protected def copy(state: State[C]): EWFlag[C] = new EWFlag(state, antiEntropy)
+  override protected def copy(state: State): EWFlag = new EWFlag(state, antiEntropy)
 }
 
 object EWFlag extends EWFlagCompanion {
@@ -28,6 +28,6 @@ object EWFlag extends EWFlagCompanion {
     * @param antiEntropy AntiEntropy instance used for exchanging deltas with other replicas
     * @tparam C Type of the causal context used for this Causal CRDT
     */
-  def apply[C: CContext](antiEntropy: AntiEntropy[State[C]]): EWFlag[C] =
-    new EWFlag(UIJDLattice[State[C]].bottom, antiEntropy)
+  def apply(antiEntropy: AntiEntropy[State]): EWFlag =
+    new EWFlag(UIJDLattice[State].bottom, antiEntropy)
 }

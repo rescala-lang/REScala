@@ -8,19 +8,18 @@ import rescala.extra.lattices.delta.crdt.reactive.AWSet
 import rescala.extra.lattices.delta.JsoniterCodecs._
 import com.github.plokhotnyuk.jsoniter_scala.macros._
 import com.github.plokhotnyuk.jsoniter_scala.core._
-import kofre.causality.CausalContext
 import kofre.protocol.RaftState
 
 import scala.concurrent.Future
 
 sealed trait SyncMessage
 object SyncMessage {
-  type CalendarState = AWSet.State[Appointment, CausalContext]
+  type CalendarState = AWSet.State[Appointment]
 
   case class AppointmentMessage(state: CalendarState, target: String) extends SyncMessage
   case class RaftMessage(state: RaftState[Token])                     extends SyncMessage
-  case class WantMessage(state: AWSet.State[Token, CausalContext])    extends SyncMessage
-  case class FreeMessage(state: AWSet.State[Token, CausalContext])    extends SyncMessage
+  case class WantMessage(state: AWSet.State[Token])    extends SyncMessage
+  case class FreeMessage(state: AWSet.State[Token])    extends SyncMessage
 
 }
 

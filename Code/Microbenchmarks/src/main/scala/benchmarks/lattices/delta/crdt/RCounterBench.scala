@@ -1,6 +1,5 @@
 package benchmarks.lattices.delta.crdt
 
-import kofre.causality.CausalContext
 import org.openjdk.jmh.annotations._
 import rescala.extra.lattices.delta.crdt.reactive.RCounter
 
@@ -18,11 +17,11 @@ class RCounterBench {
   @Param(Array("1", "10", "100", "1000"))
   var numReplicas: Int = _
 
-  var counter: RCounter[CausalContext] = _
+  var counter: RCounter = _
 
   @Setup
   def setup(): Unit = {
-    counter = (1 until numReplicas).foldLeft(RCounter[CausalContext]("0").increment()) {
+    counter = (1 until numReplicas).foldLeft(RCounter("0").increment()) {
       case (c, n) =>
         val delta = RCounter(n.toString).increment().deltaBuffer.head
         c.applyDelta(delta)
@@ -33,14 +32,14 @@ class RCounterBench {
   def value(): Int = counter.value
 
   @Benchmark
-  def fresh(): RCounter[CausalContext] = counter.fresh()
+  def fresh(): RCounter = counter.fresh()
 
   @Benchmark
-  def increment(): RCounter[CausalContext] = counter.increment()
+  def increment(): RCounter = counter.increment()
 
   @Benchmark
-  def decrement(): RCounter[CausalContext] = counter.decrement()
+  def decrement(): RCounter = counter.decrement()
 
   @Benchmark
-  def reset(): RCounter[CausalContext] = counter.reset()
+  def reset(): RCounter = counter.reset()
 }

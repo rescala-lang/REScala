@@ -1,6 +1,5 @@
 package benchmarks.lattices.delta.crdt
 
-import kofre.causality.{CContext, CausalContext}
 import org.openjdk.jmh.annotations._
 import kofre.decompose.UIJDLattice
 import rescala.extra.lattices.delta.crdt.basic.AWSet
@@ -20,7 +19,7 @@ class AWSetComparisonBench {
   @Param(Array("0", "1", "10", "100", "1000"))
   var setSize: Int = _
 
-  type State = AWSet.State[String, CausalContext]
+  type State = AWSet.State[String]
 
   var setAState: State        = _
   var setBState: State        = _
@@ -29,7 +28,7 @@ class AWSetComparisonBench {
 
   private def createSet(replicaID: String): State = {
     (0 until setSize).foldLeft(UIJDLattice[State].bottom) { (s, i) =>
-      val delta = AWSetInterface.add(i.toString + replicaID)(CContext.intTreeCC).apply(replicaID, s)
+      val delta = AWSetInterface.add(s"${i.toString}$replicaID").apply(replicaID, s)
       UIJDLattice[State].merge(s, delta)
     }
   }
@@ -39,7 +38,7 @@ class AWSetComparisonBench {
     setAState = createSet("a")
     setBState = createSet("b")
 
-    plusOneDelta = AWSetInterface.add("hallo welt")(CContext.intTreeCC).apply("b", setBState)
+    plusOneDelta = AWSetInterface.add("hallo welt").apply("b", setBState)
     setAStatePlusOne = UIJDLattice[State].merge(setAState, setBState)
   }
 
@@ -47,7 +46,7 @@ class AWSetComparisonBench {
   def create(): State = createSet("c")
 
   @Benchmark
-  def addOne(): State = AWSetInterface.add("Hallo Welt")(CContext.intTreeCC).apply("a", setAState)
+  def addOne(): State = AWSetInterface.add("Hallo Welt").apply("a", setAState)
 
   @Benchmark
   def merge(): State = UIJDLattice[State].merge(setAState, setBState)

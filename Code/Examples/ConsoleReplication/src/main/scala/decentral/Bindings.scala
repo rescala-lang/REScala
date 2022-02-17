@@ -3,7 +3,6 @@ package decentral
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import loci.registry.Binding
-import kofre.causality.CausalContext
 import rescala.extra.lattices.delta.crdt.reactive.AWSet
 import loci.serializer.jsoniterScala._
 import loci.transmitter.IdenticallyTransmittable
@@ -12,13 +11,15 @@ import rescala.extra.lattices.delta.JsoniterCodecs._
 import scala.concurrent.Future
 
 object Bindings {
-  type SetState = AWSet.State[Int, CausalContext]
+  type SetState = AWSet.State[Int]
 
   case class CheckpointMessage(cp: Checkpoint, changes: SetState)
 
   implicit val intCodec: JsonValueCodec[Int] = JsonCodecMaker.make
 
   implicit val checkpointCodec: JsonValueCodec[Checkpoint] = JsonCodecMaker.make
+
+  implicit val setStateMessageCodec: JsonValueCodec[SetState] = JsonCodecMaker.make
 
   implicit val checkpointMessageCodec: JsonValueCodec[CheckpointMessage] = JsonCodecMaker.make
 

@@ -3,7 +3,6 @@ package calendar
 import kofre.Lattice
 import kofre.decompose.Delta
 import kofre.protocol.RaftState
-import kofre.causality.CausalContext
 import rescala.extra.lattices.delta.crdt.reactive.AWSet
 
 import scala.util.Random
@@ -15,8 +14,8 @@ case class Token(id: Long, owner: String, value: String) {
 case class RaftTokens(
     replicaID: String,
     tokenAgreement: RaftState[Token],
-    want: AWSet[Token, CausalContext],
-    tokenFreed: AWSet[Token, CausalContext]
+    want: AWSet[Token],
+    tokenFreed: AWSet[Token]
 ) {
 
   def owned(value: String): List[Token] = {
@@ -51,11 +50,11 @@ case class RaftTokens(
     } else copy(tokenAgreement = generalDuties)
   }
 
-  def applyWant(state: Delta[AWSet.State[Token, CausalContext]]): RaftTokens = {
+  def applyWant(state: Delta[AWSet.State[Token]]): RaftTokens = {
     copy(want = want.applyDelta(state))
   }
 
-  def applyFree(state: Delta[AWSet.State[Token, CausalContext]]): RaftTokens = {
+  def applyFree(state: Delta[AWSet.State[Token]]): RaftTokens = {
     copy(tokenFreed = tokenFreed.applyDelta(state))
   }
 
