@@ -1,6 +1,6 @@
 package kofre.encrdt.crdts
 import kofre.Lattice
-import kofre.causality.DotStore.{DotFun, dotFunDotStore}
+import kofre.causality.DotStore.{DotFun}
 import kofre.causality.{CausalContext, DotStore, Causal}
 
 

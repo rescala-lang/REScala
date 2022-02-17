@@ -3,7 +3,6 @@ package kofre.causality
 import kofre.IdUtil.Id
 import kofre.Lattice
 
-
 /** Dot stores provide a generic way to merge datastructures,
   * implemented on top of one of the provided dot stores.
   * See: Delta state replicated data types (https://doi.org/10.1016/j.jpdc.2017.08.003)
@@ -12,8 +11,6 @@ trait DotStore[Store] {
   def add(a: Store, d: Dot): Store
 
   def dots(a: Store): Set[Dot]
-
-  def compress(a: Store): Store
 
   def empty: Store
   def bottom: Store = empty
@@ -34,7 +31,6 @@ object DotStore {
   implicit def dotFunDotStore[V]: DotStore[DotFun[V]] = new DotStore[DotFun[V]] {
 
     override def add(a: DotFun[V], d: Dot): DotFun[V] = ???
-    override def compress(a: DotFun[V]): DotFun[V]    = a
     override def empty: DotFun[V]                     = Map.empty
 
     override def merge(left: Causal[DotFun[V]], right: Causal[DotFun[V]]): Causal[DotFun[V]] = ???
@@ -65,11 +61,6 @@ object DotStore {
 
       override def dots(a: Store): Set[Dot] = a.toSet
 
-      /** Only keeps the highest element of each dot subsequence in the set. */
-      // TODO: how do we know where subsequences started?
-      // TODO: this most likely only works with causal delivery of things, which we may not have
-      override def compress(a: Store): Store = CausalContext.fromSet(a.toSet.filter(d => !a.contains(Dot(d.replicaId, d.time + 1))))
-
       override def empty: Store = CausalContext.empty
 
       override def merge(left: Causal[Store], right: Causal[Store]): Causal[Store] = {
@@ -87,11 +78,6 @@ object DotStore {
 
       override def dots(a: Store): Store = a
 
-      /** Only keeps the highest element of each dot subsequence in the set. */
-      // TODO: how do we know where subsequences started?
-      // TODO: this most likely only works with causal delivery of things, which we may not have
-      override def compress(a: Store): Store = a.filter(d => !a.contains(Dot(d.replicaId, d.time + 1)))
-
       override def empty: Store = Set.empty
 
       override def merge(left: Causal[Store], right: Causal[Store]): Causal[Store] = {
@@ -108,8 +94,6 @@ object DotStore {
       override def add(a: Store, d: Dot): Store = a.mapValues(v => dsl.add(v, d)).toMap: @scala.annotation.nowarn()
 
       override def dots(a: Store): Set[Dot] = a.valuesIterator.flatMap(dsl.dots).toSet
-
-      override def compress(a: Store): Store = a.mapValues(dsl.compress).toMap: @scala.annotation.nowarn()
 
       override def empty: Store = Map.empty
 
