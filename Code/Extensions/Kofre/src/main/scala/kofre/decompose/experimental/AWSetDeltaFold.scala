@@ -1,8 +1,8 @@
 package kofre.decompose.experimental
 
-import kofre.decompose.{CContext, Causal}
 import kofre.decompose.DotStore.{DotMap, DotSet}
 import kofre.decompose.interfaces.AWSetInterface
+import kofre.decompose.{CContext, Causal}
 
 class AWSetDeltaFold[E, C: CContext, B](acc: B, onAdd: (B, E) => B, onRemove: (B, E) => B) {
   def apply(currentState: AWSetInterface.State[E, C], deltaState: AWSetInterface.State[E, C]): AWSetDeltaFold[E, C, B] =

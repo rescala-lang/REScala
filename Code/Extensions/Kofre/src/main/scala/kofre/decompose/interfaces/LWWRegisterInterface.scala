@@ -1,8 +1,8 @@
 package kofre.decompose.interfaces
 
+import kofre.decompose.*
 import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
 import kofre.decompose.DotStore.DotFun
-import kofre.decompose._
 
 object LWWRegisterInterface {
   type State[A, C] = MVRegisterInterface.State[TimedVal[A], C]

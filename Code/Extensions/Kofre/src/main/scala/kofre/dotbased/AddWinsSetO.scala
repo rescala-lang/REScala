@@ -2,8 +2,7 @@ package kofre.dotbased
 
 import kofre.IdUtil.Id
 import kofre.Lattice
-import kofre.dotbased.Context
-import kofre.dotbased.AddWinsSetO
+import kofre.dotbased.{AddWinsSetO, Context}
 
 case class AddWinsSetO[A](store: Map[A, Context], context: Context) {
 

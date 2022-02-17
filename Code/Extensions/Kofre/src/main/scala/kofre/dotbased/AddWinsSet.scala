@@ -1,9 +1,8 @@
 package kofre.dotbased
 
 import kofre.IdUtil.Id
-import kofre.causality.{Causal, Dot, DotStoreLattice}
 import kofre.causality.DotStoreLattice.*
-import kofre.causality.DotStoreLattice
+import kofre.causality.{Causal, Dot, DotStoreLattice}
 import kofre.dotbased.AddWinsSet
 import kofre.{IdUtil, Lattice}
 

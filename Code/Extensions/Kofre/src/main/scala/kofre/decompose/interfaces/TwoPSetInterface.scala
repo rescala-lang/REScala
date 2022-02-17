@@ -1,7 +1,7 @@
 package kofre.decompose.interfaces
 
+import kofre.decompose.*
 import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
-import kofre.decompose._
 
 object TwoPSetInterface {
   type State[E] = (Set[E], Set[E])

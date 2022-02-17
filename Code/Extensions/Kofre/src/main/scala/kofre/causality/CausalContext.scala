@@ -1,6 +1,6 @@
 package kofre.causality
 
-import DotStore.DotSet
+import kofre.causality.DotStore.DotSet
 
 // Can be optimized using Concise Version Vectors / Interval Version Vectors
 case class CausalContext(dots: Set[Dot] = Set()) {

@@ -5,6 +5,7 @@ import rescala.extra.encrdt.sync.ConnectionManager
 import todolist.SyncedTodoListCrdt.StateType
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
+import kofre.causality.Dot
 import scalafx.application.Platform
 
 import java.net.URI

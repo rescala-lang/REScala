@@ -1,7 +1,7 @@
 package kofre.decompose.interfaces
 
+import kofre.decompose.*
 import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
-import kofre.decompose._
 
 object LexCounterInterface {
   type State = Map[String, LexPair[Int, Int]]

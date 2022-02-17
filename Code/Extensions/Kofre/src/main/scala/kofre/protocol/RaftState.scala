@@ -1,8 +1,8 @@
 package kofre.protocol
 
 import kofre.IdUtil.Id
-import kofre.{IdUtil, Lattice}
 import kofre.protocol.RaftState.*
+import kofre.{IdUtil, Lattice}
 
 import scala.util.Try
 

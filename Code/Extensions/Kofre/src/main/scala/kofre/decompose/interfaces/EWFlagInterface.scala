@@ -1,8 +1,8 @@
 package kofre.decompose.interfaces
 
+import kofre.decompose.*
 import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
-import kofre.decompose.DotStore._
-import kofre.decompose._
+import kofre.decompose.DotStore.*
 
 object EWFlagInterface {
   type State[C] = Causal[DotSet, C]

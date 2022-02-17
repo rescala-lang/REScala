@@ -1,8 +1,8 @@
 package kofre.decompose.interfaces
 
+import kofre.decompose.*
 import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
-import kofre.decompose.DotStore._
-import kofre.decompose._
+import kofre.decompose.DotStore.*
 
 object ORMapInterface {
   type State[K, V, C] = Causal[DotMap[K, V], C]

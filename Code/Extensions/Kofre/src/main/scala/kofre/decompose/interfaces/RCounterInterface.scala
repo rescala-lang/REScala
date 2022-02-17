@@ -1,8 +1,8 @@
 package kofre.decompose.interfaces
 
+import kofre.decompose.*
 import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
-import kofre.decompose.DotStore._
-import kofre.decompose._
+import kofre.decompose.DotStore.*
 
 object RCounterInterface {
   implicit def IntPairAsUIJDLattice: UIJDLattice[(Int, Int)] = new UIJDLattice[(Int, Int)] {

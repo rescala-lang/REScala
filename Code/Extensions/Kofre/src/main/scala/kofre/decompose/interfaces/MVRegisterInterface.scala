@@ -1,8 +1,8 @@
 package kofre.decompose.interfaces
 
+import kofre.decompose.*
 import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
 import kofre.decompose.DotStore.DotFun
-import kofre.decompose._
 
 object MVRegisterInterface {
   type State[A, C] = Causal[DotFun[A], C]

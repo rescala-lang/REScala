@@ -1,7 +1,7 @@
 package kofre.decompose.interfaces
 
+import kofre.decompose.*
 import kofre.decompose.CRDTInterface.DeltaMutator
-import kofre.decompose._
 import kofre.decompose.interfaces.AuctionInterface.Bid.User
 import kofre.decompose.interfaces.RubisInterface.{AID, UserAsUIJDLattice}
 

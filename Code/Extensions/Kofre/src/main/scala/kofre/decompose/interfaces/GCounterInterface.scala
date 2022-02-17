@@ -1,8 +1,8 @@
 package kofre.decompose.interfaces
 
+import kofre.decompose.*
 import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
-import kofre.decompose.UIJDLattice._
-import kofre.decompose._
+import kofre.decompose.UIJDLattice.*
 
 object GCounterInterface {
   type State = Map[String, Int]
