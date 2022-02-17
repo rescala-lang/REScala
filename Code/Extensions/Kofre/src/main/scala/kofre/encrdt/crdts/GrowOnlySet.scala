@@ -1,6 +1,5 @@
 package kofre.encrdt.crdts
 
-
 class GrowOnlySet[T] {
   private var _state: Set[T] = Set()
 

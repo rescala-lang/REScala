@@ -118,5 +118,6 @@ object SyncedTodoListCrdt {
         Map.empty
     }
 
-  implicit val stateCodec: JsonValueCodec[StateType] = JsonCodecMaker.make(CodecMakerConfig.withAllowRecursiveTypes(true))
+  implicit val stateCodec: JsonValueCodec[StateType] =
+    JsonCodecMaker.make(CodecMakerConfig.withAllowRecursiveTypes(true))
 }

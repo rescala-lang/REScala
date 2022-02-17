@@ -13,7 +13,7 @@ object IdUtil {
   val random = scala.util.Random()
 
   def predefined(s: String): Id = s
-  def zero: Id = ""
+  def zero: Id                  = ""
 
   /** Generates unique identifiers for use by CRDTs */
   def genId(): Id =

@@ -21,7 +21,7 @@ class ArrayRanges(val inner: Array[Int]) {
   }
 
   def add(x: Int): ArrayRanges = {
-    merge(ArrayRanges(Array(x, x+1)))
+    merge(ArrayRanges(Array(x, x + 1)))
   }
 
   def starts: Iterator[Int] = if (inner.isEmpty) Iterator.empty else Range(0, inner.length, 2).iterator.map(inner.apply)

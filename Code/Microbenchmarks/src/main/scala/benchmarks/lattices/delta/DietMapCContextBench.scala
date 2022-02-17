@@ -22,10 +22,9 @@ class DietMapCContextBench {
   var cca1: CausalContext      = _
   var ccaSingle: CausalContext = _
 
-
   private def makeCContext(replicaID: String, mul: Long, off: Long, len: Long): CausalContext = {
     val ranges = Range.Long(0L, size, 1).map(i => Range.Long(i * mul + off, i * mul + len + off, 1))
-    val dots = ranges.flatten.map(Dot(replicaID, _)).toSet
+    val dots   = ranges.flatten.map(Dot(replicaID, _)).toSet
     CausalContext.fromSet(dots)
   }
 

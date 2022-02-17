@@ -92,8 +92,8 @@ class Index(connected: Signal[String]) {
         cls := "controls",
         button("Reset", reset.data),
         button("Fullscreen", onclick := { (_: UIEvent) => Fullscreen.toggleFullscreen() })
-        )
       )
+    )
 
   }
 

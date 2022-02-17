@@ -5,13 +5,12 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import kofre.dotbased.{AddWinsSetO, ArrayRanges}
 
-
 class ArrayRangesTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
   "contains works" in {
     val a = ArrayRanges(Array(5, 10, 20, 40))
-    List(Range(5, 10), Range(20,40)).flatten.foreach{i => assert(a.contains(i)) }
-    List(Range(10, 20), Range(40, 50)).flatten.foreach{i => assert(!a.contains(i)) }
+    List(Range(5, 10), Range(20, 40)).flatten.foreach { i => assert(a.contains(i)) }
+    List(Range(10, 20), Range(40, 50)).flatten.foreach { i => assert(!a.contains(i)) }
   }
 
   "merge" in {
@@ -24,7 +23,7 @@ class ArrayRangesTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     assert(empty.merge(b) == b)
     assert(b.merge(empty) == b)
 
-    assert(a.merge(b) == ArrayRanges(Array(5,40)))
+    assert(a.merge(b) == ArrayRanges(Array(5, 40)))
   }
 
 }

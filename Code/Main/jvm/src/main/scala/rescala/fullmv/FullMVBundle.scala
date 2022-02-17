@@ -289,7 +289,7 @@ trait FullMVBundle extends Core {
       val state = new NonblockingSkipListVersionHistory[V, FullMVTurn, ReSource, Derived](
         host.dummy,
         initialValue
-        )
+      )
       state.incrementFrame(this)
       state
     }

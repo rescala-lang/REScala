@@ -111,9 +111,9 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
   }
 
   def sendRecursive(
-                     remoteReceiveSyncMessage: SyncMessage => Future[Unit],
-                     delta: AWSet.State[Appointment, CausalContext],
-                     crdtid: String,
+      remoteReceiveSyncMessage: SyncMessage => Future[Unit],
+      delta: AWSet.State[Appointment, CausalContext],
+      crdtid: String,
   ): Unit = new FutureTask[Unit](() => {
     def attemptSend(atoms: Iterable[CalendarState], merged: CalendarState): Unit = {
       remoteReceiveSyncMessage(AppointmentMessage(merged, crdtid)).failed.foreach {

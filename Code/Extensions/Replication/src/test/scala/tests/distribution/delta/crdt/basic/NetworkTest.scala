@@ -35,10 +35,10 @@ class NetworkTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
       assert(
         rcvd.contains(msg),
         s"""For id "a" the sent messages should be received, but $rcvd does not contain ${msg.mkString(
-          "Array(",
-          ", ",
-          ")"
-        )}"""
+            "Array(",
+            ", ",
+            ")"
+          )}"""
       )
     }
 

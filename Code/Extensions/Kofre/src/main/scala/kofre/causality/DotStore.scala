@@ -6,7 +6,6 @@ import kofre.causality.{Causal, Dot, DotStore, DotStoreLattice}
 
 case class Causal[A](store: A, context: Set[Dot])
 
-
 // See: Delta state replicated data types (https://doi.org/10.1016/j.jpdc.2017.08.003)
 sealed trait DotStore[D] {
   def dots(dotStore: D): Set[Dot]
@@ -42,11 +41,6 @@ object DotStore {
     override def bottom: DotMap[K, V] = Map.empty
   }
 }
-
-
-
-
-
 
 /** Dot stores provide a generic way to merge datastructures,
   * implemented on top of one of the provided dot stores.

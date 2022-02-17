@@ -33,15 +33,15 @@ case class TaskRef(id: String) {
   lazy val cached: TaskRefData = TaskRefs.lookupOrCreateTaskRef(id, None)
 
   def task: Signal[LWWRegister[TaskData, CausalContext]] = cached.task
-  def tag: TypedTag[LI]                                    = cached.tag
-  def removed: Event[String]                               = cached.removed
+  def tag: TypedTag[LI]                                  = cached.tag
+  def removed: Event[String]                             = cached.removed
 }
 
 final class TaskRefData(
-                         val task: Signal[LWWRegister[TaskData, CausalContext]],
-                         val tag: TypedTag[LI],
-                         val removed: Event[String],
-                         val id: String,
+    val task: Signal[LWWRegister[TaskData, CausalContext]],
+    val tag: TypedTag[LI],
+    val removed: Event[String],
+    val id: String,
 ) {
   override def hashCode(): Int = id.hashCode
   override def equals(obj: Any): Boolean = obj match {
@@ -147,7 +147,7 @@ class TaskRefObj(toggleAll: Event[UIEvent], storePrefix: String) {
           `type`  := "checkbox",
           doneClick.data,
           checked := taskData.map(c => if (c.done) Some(checked.v) else None)
-          ),
+        ),
         label(taskData.map(c => stringFrag(c.desc)).asModifier),
         removeButton.data
       ),

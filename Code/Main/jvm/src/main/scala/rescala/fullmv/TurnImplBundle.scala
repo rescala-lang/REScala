@@ -563,7 +563,7 @@ trait TurnImplBundle extends FullMVBundle {
 
     override def toString: String =
       s"FullMVTurn($guid on $host, ${TurnPhase.toString(phase)}${if (activeBranches.get != 0) s"(${activeBranches.get})"
-      else ""})"
+        else ""})"
   }
 
   object FullMVTurnImpl {

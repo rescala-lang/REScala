@@ -13,10 +13,10 @@ case class Token(id: Long, owner: String, value: String) {
 }
 
 case class RaftTokens(
-                       replicaID: String,
-                       tokenAgreement: RaftState[Token],
-                       want: AWSet[Token, CausalContext],
-                       tokenFreed: AWSet[Token, CausalContext]
+    replicaID: String,
+    tokenAgreement: RaftState[Token],
+    want: AWSet[Token, CausalContext],
+    tokenFreed: AWSet[Token, CausalContext]
 ) {
 
   def owned(value: String): List[Token] = {

@@ -33,10 +33,10 @@ object MultiValueRegister {
   @tailrec
   def parallelVersionSubset(remaining: List[VectorClock], acc: List[VectorClock]): List[VectorClock] =
     remaining match
-      case Nil => acc
+      case Nil       => acc
       case h :: tail =>
         // remove smaller ones from the list we operate on
-        val rem =  tail.filterNot(e => e <= h)
+        val rem = tail.filterNot(e => e <= h)
         // remove smaller ones from acc
         val nacc = acc.filterNot(e => e <= h)
         // continue

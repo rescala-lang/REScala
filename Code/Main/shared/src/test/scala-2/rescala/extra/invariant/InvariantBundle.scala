@@ -52,7 +52,7 @@ trait InvariantBundle extends TopoBundle {
   }
 
   class InvariantInitializer(afterCommitObservers: ListBuffer[Observation])
-    extends TopoInitializer(afterCommitObservers) {
+      extends TopoInitializer(afterCommitObservers) {
     override protected[this] def makeDerivedStructState[V](ip: V): InvariantState[V] = new InvariantState[V](ip)
   }
 

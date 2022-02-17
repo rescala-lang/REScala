@@ -22,7 +22,7 @@ class ArrayContextBench {
   var rep2Set: ArrayRanges        = _
   var rep1single: ArrayRanges     = _
 
-  private def makeRep( mul: Int, off: Int, len: Int): ArrayRanges  = {
+  private def makeRep(mul: Int, off: Int, len: Int): ArrayRanges = {
     val ranges = Range(0, size).map(i => Range(i * mul + off, i * mul + len + off))
     new ArrayRanges(ranges.flatMap(r => Array(r.start, r.end)).toArray)
   }

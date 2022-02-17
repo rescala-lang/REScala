@@ -303,7 +303,7 @@ trait FullMVTurnReflectionBundle extends FullMVBundle {
 
     override def toString: String =
       s"FullMVTurnReflection($guid on $host, ${TurnPhase.toString(phase)}${if (localBranchCountBuffer.get != 0) s"(${localBranchCountBuffer.get})"
-      else ""})"
+        else ""})"
   }
 }
 

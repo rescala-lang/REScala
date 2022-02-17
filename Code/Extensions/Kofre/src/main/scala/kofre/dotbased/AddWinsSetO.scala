@@ -75,7 +75,7 @@ object AddWinsSetO {
           val fullNew: CausalContext     = Lattice.merge(common, newElements)
 
           (keyValue, fullNew)
-        }.filter {_._2 != CausalContext.empty }.toMap
+        }.filter { _._2 != CausalContext.empty }.toMap
 
         // the merged state has seen everything from both sides
         val newContext = Lattice.merge(left.context, right.context)

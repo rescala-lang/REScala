@@ -22,7 +22,7 @@ abstract class UntrustedReplica(initialStates: Set[EncryptedState]) extends Repl
   }
 
   def receive(newState: EncryptedState): Unit = {
-    if (! (newState.versionVector <= versionVector)) {
+    if (!(newState.versionVector <= versionVector)) {
       // Update VersionVector
       versionVector = versionVector.merge(newState.versionVector)
       // newState is actually new (i.e., contains new updates)
@@ -83,4 +83,3 @@ abstract class UntrustedReplica(initialStates: Set[EncryptedState]) extends Repl
     rec(indexedStates)
   }
 }
-

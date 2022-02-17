@@ -3,7 +3,7 @@ package rescala.extra.lattices.delta.crdt.basic
 import kofre.decompose.DotStore.DotFun
 import kofre.decompose.interfaces.MVRegisterInterface
 import kofre.decompose.interfaces.MVRegisterInterface.{MVRegisterCompanion, State}
-import kofre.decompose.{ UIJDLattice}
+import kofre.decompose.{UIJDLattice}
 import kofre.causality.CContext
 import rescala.extra.replication.AntiEntropy
 

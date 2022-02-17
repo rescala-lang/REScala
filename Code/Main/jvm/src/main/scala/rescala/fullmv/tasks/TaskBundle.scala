@@ -233,7 +233,7 @@ trait TaskBundle extends FullMVBundle {
       if (FullMVUtil.DEBUG)
         println(
           s"[${Thread.currentThread().getName}] Reevaluation($turn,$node) => ${if (maybeChange.isDefined) "changed"
-          else "unchanged"} $reevOutResult"
+            else "unchanged"} $reevOutResult"
         )
       reevOutResult
     }

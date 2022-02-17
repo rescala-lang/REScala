@@ -5,7 +5,6 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalacheck.{Arbitrary, Gen}
 import test.kofre.DataGenerator.arbId
 
-
 case class SomeProductType[A, B](paramA: A, paramB: B) derives Lattice
 
 opaque type NotInt = Int

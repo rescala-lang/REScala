@@ -11,8 +11,8 @@ import scala.math.PartialOrdering
   * dots combine a globally unique replicaID with a locally unique counter.
   */
 case class Dot(replicaId: Id, counter: Long) {
-  def advance: Dot = Dot(replicaId, counter + 1)
-  def next: Dot = advance
+  def advance: Dot  = Dot(replicaId, counter + 1)
+  def next: Dot     = advance
   def replicaID: Id = replicaId
 }
 

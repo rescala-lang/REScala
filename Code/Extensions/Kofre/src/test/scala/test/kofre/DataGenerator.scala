@@ -13,7 +13,7 @@ object DataGenerator {
     ids: Set[IdUtil.Id] <- Gen.nonEmptyListOf(arbId.arbitrary).map(_.toSet)
     value: List[Long]   <- Gen.listOfN(ids.size, Gen.oneOf(0L to 100L))
   } yield VectorClock.fromMap(ids.zip(value).toMap))
-  
+
   given arbLww: Arbitrary[LastWriterWins[Int]] = Arbitrary(
     for {
       time  <- Gen.long

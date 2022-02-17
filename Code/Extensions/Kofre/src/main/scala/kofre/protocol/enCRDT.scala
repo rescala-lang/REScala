@@ -8,10 +8,9 @@ import scala.collection.immutable.HashMap
 
 type Secret = String
 
-
 case class AEAD[S, A](cyphertext: S, metadata: A)
 
-def decrypt[S, A](aead: AEAD[S, A], key: Secret): Option[S] = Option.when(key == "secret")(aead.cyphertext)
+def decrypt[S, A](aead: AEAD[S, A], key: Secret): Option[S]      = Option.when(key == "secret")(aead.cyphertext)
 def encrypt[S, A](data: S, metadata: A, key: Secret): AEAD[S, A] = AEAD(data, metadata)
 
 type EnCRDT[S] = Set[AEAD[S, VectorClock]]

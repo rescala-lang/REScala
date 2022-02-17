@@ -139,8 +139,7 @@ trait Sidup extends Twoversion {
         evaluating = List.empty
         ev.foreach(evaluate)
         propagationPhase()
-      }
-      else if (evaluatingLater.nonEmpty) {
+      } else if (evaluatingLater.nonEmpty) {
         evaluating = evaluatingLater
         evaluatingLater = List.empty
         propagationPhase()

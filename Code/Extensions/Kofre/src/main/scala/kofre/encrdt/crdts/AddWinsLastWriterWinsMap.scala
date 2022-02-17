@@ -7,7 +7,7 @@ class AddWinsLastWriterWinsMap[K, V](
     val replicaId: String,
     initialState: AddWinsMapLattice[K, LastWriterWinsRegisterLattice[V, CausalTimeTag]] =
       AddWinsMapLattice[K, LastWriterWinsRegisterLattice[V, CausalTimeTag]]()
-){
+) {
 
   private var _state = initialState
 

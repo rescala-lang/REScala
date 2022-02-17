@@ -167,8 +167,8 @@ class DotFunTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
       assert(
         dfMerged(d) == UIJDLattice[Int].merge(dfA(d), dfB(d)),
         s"If a dot is used as key in both DotFuns then the corresponding values should be merged in the result of DotFun.merge, but ${dfMerged(
-          d
-        )} does not equal ${UIJDLattice[Int].merge(dfA(d), dfB(d))}"
+            d
+          )} does not equal ${UIJDLattice[Int].merge(dfA(d), dfB(d))}"
       )
     }
 

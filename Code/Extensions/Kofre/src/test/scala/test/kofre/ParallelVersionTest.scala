@@ -23,4 +23,3 @@ class ParallelVersionTest extends AnyFreeSpec, ScalaCheckDrivenPropertyChecks {
   }
 
 }
-

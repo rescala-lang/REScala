@@ -29,7 +29,7 @@ class AWSetComparisonBench {
 
   private def createSet(replicaID: String): State = {
     (0 until setSize).foldLeft(UIJDLattice[State].bottom) { (s, i) =>
-      val delta = AWSetInterface.add(i.toString + replicaID)(CContext.intTreeCC) .apply(replicaID, s)
+      val delta = AWSetInterface.add(i.toString + replicaID)(CContext.intTreeCC).apply(replicaID, s)
       UIJDLattice[State].merge(s, delta)
     }
   }

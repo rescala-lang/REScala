@@ -47,7 +47,8 @@ object JsoniterCodecs {
     override def nullValue: Diet[Long] = null
   }
 
-  implicit val intTreeCContextCodec: JsonValueCodec[CausalContext] = JsonCodecMaker.make(CodecMakerConfig.withAllowRecursiveTypes(true))
+  implicit val intTreeCContextCodec: JsonValueCodec[CausalContext] =
+    JsonCodecMaker.make(CodecMakerConfig.withAllowRecursiveTypes(true))
 
   /** AWSet */
 
