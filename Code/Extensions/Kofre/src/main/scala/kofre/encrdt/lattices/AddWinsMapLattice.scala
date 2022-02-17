@@ -21,8 +21,6 @@ case class AddWinsMapLattice[K, V](
 
 object AddWinsMapLattice {
 
-  import OptionLattice.optLattice
-
   implicit def AddWinsLattice[K, V: Lattice]: Lattice[AddWinsMapLattice[K, V]] =
     (left: AddWinsMapLattice[K, V], right: AddWinsMapLattice[K, V]) => {
       val keys = Lattice.merge(left.keys, right.keys)

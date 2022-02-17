@@ -80,7 +80,7 @@ object DotStore {
       }
     }
 
-  implicit def DotSetInstance: DotStore[Set[Dot]] =
+  implicit val DotSetInstance: DotStore[Set[Dot]] =
     new DotStore[Set[Dot]] {
       type Store = Set[Dot]
 

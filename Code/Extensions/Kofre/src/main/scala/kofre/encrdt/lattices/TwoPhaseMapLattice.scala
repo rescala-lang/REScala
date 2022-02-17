@@ -38,8 +38,6 @@ case class TwoPhaseMapLattice[K, V: Lattice](
 
 object TwoPhaseMapLattice {
 
-  import OptionLattice.optLattice
-
   def twoPhaseMapLattice[K, V: Lattice]: Lattice[TwoPhaseMapLattice[K, V]] = (l, r) => {
     val mergedKeys = Lattice.merge(l.keys, r.keys)
     val mergedMap = mergedKeys.values.map { (key: K) =>
