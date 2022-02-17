@@ -9,7 +9,13 @@ object IntTree {
   sealed trait Tree
 
   /** inclusive exclusive ranges */
-  case class Range(from: Num, until: Num, less: Tree, more: Tree) extends Tree
+  case class Range(from: Num, until: Num, less: Tree, more: Tree) extends Tree {
+    override def equals(obj: Any): Boolean = obj match
+      case other: Range => IntTree.iterator(this).sameElements(IntTree.iterator(other))
+      case _ => false
+
+    override def hashCode() = IntTree.toSeq(this).hashCode()
+  }
   case object Empty                                               extends Tree
 
   implicit val lattice: Lattice[Tree] = IntTree.merge _
