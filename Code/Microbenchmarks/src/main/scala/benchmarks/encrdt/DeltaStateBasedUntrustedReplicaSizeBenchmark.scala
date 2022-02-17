@@ -6,7 +6,7 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import com.google.crypto.tink.Aead
 import kofre.encrdt.causality.DotStore.{Dot, DotSet}
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap
-import kofre.primitives.LamportClock
+import kofre.primitives.Dot
 import rescala.extra.encrdt.encrypted.deltabased.{DecryptedDeltaGroup, EncryptedDeltaGroup, UntrustedReplica}
 
 import java.io.PrintWriter
@@ -23,7 +23,7 @@ object DeltaStateBasedUntrustedReplicaSizeBenchmark extends App with DeltaStateU
   val elementsInCommon  = totalElements - maxParallelStates
 
   val benchmarkSharedUntrustedReplica = new UntrustedDeltaBasedReplicaMock(aead);
-  var benchmarkSharedCurrentDot       = LamportClock("0", 0);
+  var benchmarkSharedCurrentDot       = Dot("0", 0);
   val benchmarkSharedCrdt: DeltaAddWinsLastWriterWinsMap[String, String] =
     new DeltaAddWinsLastWriterWinsMap[String, String]("0")
 
@@ -39,7 +39,7 @@ object DeltaStateBasedUntrustedReplicaSizeBenchmark extends App with DeltaStateU
     val crdt =
       new DeltaAddWinsLastWriterWinsMap[String, String]("0", benchmarkSharedCrdt.state, benchmarkSharedCrdt.deltas)
     val untrustedReplica = benchmarkSharedUntrustedReplica.copy()
-    var localDot         = LamportClock("0", 0);
+    var localDot         = Dot("0", 0);
     // Populate CRDT with missing elements (before adding concurrent updates)
     {
       for (i <- elementsInCommon until (totalElements - parallelStates)) {
@@ -57,7 +57,7 @@ object DeltaStateBasedUntrustedReplicaSizeBenchmark extends App with DeltaStateU
           new DeltaAddWinsLastWriterWinsMap[String, String](replicaId.toString, crdt.state, crdt.deltas)
         val delta = replicaSpecificCrdt.putDelta(entry._1, entry._2)
         unmergedDeltas = unmergedDeltas :+ delta
-        val dot      = LamportClock(replicaId.toString, 1)
+        val dot      = Dot(replicaId.toString, 1)
         val encState = DecryptedDeltaGroup(delta, Set(dot)).encrypt(aead)
         untrustedReplica.receive(encState)
       }
@@ -86,7 +86,7 @@ object DeltaStateBasedUntrustedReplicaSizeBenchmarkLinearScaling extends App
   println(csvHeader)
   csvFile.println(csvHeader)
   val crdt: DeltaAddWinsLastWriterWinsMap[String, String] = new DeltaAddWinsLastWriterWinsMap[String, String]("0")
-  var currentDot                                          = LamportClock("0", 0)
+  var currentDot                                          = Dot("0", 0)
   implicit val dotSetCodec: JsonValueCodec[DotSet]        = JsonCodecMaker.make[DotSet]
 
   val untrustedReplica = new UntrustedDeltaBasedReplicaMock(aead)

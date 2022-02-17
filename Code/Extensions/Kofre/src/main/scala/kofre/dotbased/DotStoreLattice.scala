@@ -2,8 +2,8 @@ package kofre.dotbased
 
 import kofre.IdUtil.Id
 import kofre.Lattice
+import kofre.primitives.Dot
 
-case class Dot(replicaId: Id, counter: Int)
 case class Causal[A](store: A, context: Set[Dot])
 
 

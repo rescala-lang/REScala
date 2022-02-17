@@ -6,14 +6,15 @@ import kofre.{IdUtil, Lattice}
 import scala.collection.immutable.HashMap
 import scala.math.PartialOrdering
 
-case class LamportClock(replicaId: Id, time: Long) {
-  def advance: LamportClock = LamportClock(replicaId, time + 1)
+/** a lamport clock */
+case class Dot(replicaId: Id, counter: Long) {
+  def advance: Dot = Dot(replicaId, counter + 1)
 }
 
 case class VectorClock(timestamps: Map[Id, Long]) {
   def timeOf(replicaId: Id): Long = timestamps.getOrElse(replicaId, 0)
 
-  def clockOf(replicaId: Id): LamportClock = LamportClock(replicaId, timeOf(replicaId))
+  def clockOf(replicaId: Id): Dot = Dot(replicaId, timeOf(replicaId))
 
   def inc(id: Id): VectorClock    = VectorClock(HashMap(id -> (timestamps.getOrElse(id, 0L) + 1)))
   def <=(o: VectorClock): Boolean = timestamps.forall((k, v) => v <= o.timestamps.getOrElse(k, 0L))

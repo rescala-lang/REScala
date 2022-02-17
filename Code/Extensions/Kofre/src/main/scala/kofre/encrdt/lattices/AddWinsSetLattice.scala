@@ -1,11 +1,11 @@
 package kofre.encrdt.lattices
 import kofre.Lattice
 import kofre.Lattice.Operators
-import kofre.primitives.{LamportClock, VectorClock}
+import kofre.primitives.{Dot, VectorClock}
 
 case class AddWinsSetLattice[T](
-    elements: Set[(T, LamportClock)] = Set[(T, LamportClock)](),
-    clocks: VectorClock = VectorClock.zero
+                                 elements: Set[(T, Dot)] = Set[(T, Dot)](),
+                                 clocks: VectorClock = VectorClock.zero
 ) {
 
   def values: Set[T] = elements.map(_._1)
@@ -31,21 +31,21 @@ object AddWinsSetLattice {
     (left: AddWinsSetLattice[T], right: AddWinsSetLattice[T]) => {
       val commonElems = left.elements & right.elements
 
-      val leftCausalElements = left.elements.filter { case (e, LamportClock(i, c)) =>
+      val leftCausalElements = left.elements.filter { case (e, Dot(i, c)) =>
         c > right.clocks.timeOf(i)
       }
 
-      val rightCausalElements = right.elements.filter { case (e, LamportClock(i, c)) =>
+      val rightCausalElements = right.elements.filter { case (e, Dot(i, c)) =>
         c > left.clocks.timeOf(i)
       }
 
       val allElements = commonElems ++ leftCausalElements ++ rightCausalElements
 
       // Only keep most recent LamportClock (per replica)
-      val duplicates = allElements.filter { case (e, LamportClock(c, i)) =>
+      val duplicates = allElements.filter { case (e, Dot(c, i)) =>
         allElements.exists {
-          case (`e`, LamportClock(otherC, `i`)) => c < otherC
-          case _                                => false
+          case (`e`, Dot(otherC, `i`)) => c < otherC
+          case _                       => false
         }
       }
 

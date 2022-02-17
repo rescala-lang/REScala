@@ -1,15 +1,15 @@
 package kofre.encrdt.causality
 
 import kofre.encrdt.causality.DotStore.{Dot, DotSet}
-import kofre.primitives.LamportClock
+import kofre.primitives.Dot
 
 // Can be optimized using Concise Version Vectors / Interval Version Vectors
 case class CausalContext(dots: Set[Dot] = Set()) {
   def clockOf(replicaId: String): Dot = {
     dots
       .filter(dot => dot.replicaId == replicaId)
-      .maxByOption(dot => dot.time)
-      .getOrElse(LamportClock(replicaId, 0))
+      .maxByOption(dot => dot.counter)
+      .getOrElse(Dot(replicaId, 0))
   }
 
   def contains(dot: Dot): Boolean = dots.contains(dot)
