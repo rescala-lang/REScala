@@ -7,6 +7,8 @@ object IdUtil {
 
   type Id = String
 
+  type Time = Long
+
   object Id:
     given ordering: Ordering[Id] = summon[Ordering[String]]
 

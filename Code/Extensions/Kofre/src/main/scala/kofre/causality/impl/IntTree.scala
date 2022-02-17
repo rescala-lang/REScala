@@ -1,10 +1,11 @@
 package kofre.causality.impl
 
 import kofre.Lattice
+import kofre.IdUtil
 
 object IntTree {
 
-  type Num = Long
+  type Num = IdUtil.Time
 
   sealed trait Tree
 

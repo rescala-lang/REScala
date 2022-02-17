@@ -1,6 +1,6 @@
 package kofre.causality
 
-import kofre.IdUtil.Id
+import kofre.IdUtil.{Id, Time}
 import kofre.Lattice
 import kofre.causality.CausalContext
 import kofre.causality.impl.IntTree
@@ -9,12 +9,12 @@ case class CausalContext(internal: Map[Id, IntTree.Tree]) {
 
   def clockOf(replicaId: Id): Option[Dot] = max(replicaId)
 
-  def add(replicaId: Id, time: Long): CausalContext =
+  def add(replicaId: Id, time: Time): CausalContext =
     CausalContext(internal.updated(
       replicaId,
       IntTree.insert(internal.getOrElse(replicaId, IntTree.empty), time)
     ))
-  def nextTime(replicaId: Id): Long = {
+  def nextTime(replicaId: Id): Time = {
     val range = internal.getOrElse(replicaId, IntTree.empty)
     IntTree.nextValue(range, 0)
   }
