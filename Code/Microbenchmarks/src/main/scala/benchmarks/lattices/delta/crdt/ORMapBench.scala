@@ -1,7 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
+import kofre.causality.CausalContext
 import org.openjdk.jmh.annotations._
-import rescala.extra.lattices.delta.DietCC.DietMapCContext
 import rescala.extra.lattices.delta.crdt.reactive.{EWFlag, ORMap}
 import kofre.decompose.interfaces.EWFlagInterface
 
@@ -19,13 +19,13 @@ class ORMapBench {
   @Param(Array("1", "10", "100", "1000"))
   var numEntries: Int = _
 
-  type SUT = ORMap[Int, EWFlag.Embedded, DietMapCContext]
+  type SUT = ORMap[Int, EWFlag.Embedded, CausalContext]
 
   var map: SUT = _
 
   @Setup
   def setup(): Unit = {
-    map = (0 until numEntries).foldLeft(ORMap[Int, EWFlag.Embedded, DietMapCContext]("a")) {
+    map = (0 until numEntries).foldLeft(ORMap[Int, EWFlag.Embedded, CausalContext]("a")) {
       case (m, i) => m.mutateKey(i, EWFlagInterface.enable())
     }
   }

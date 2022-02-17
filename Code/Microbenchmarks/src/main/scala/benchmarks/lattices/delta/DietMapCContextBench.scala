@@ -1,8 +1,7 @@
 package benchmarks.lattices.delta
 
 import org.openjdk.jmh.annotations._
-import rescala.extra.lattices.delta.DietCC.DietMapCContext
-import kofre.causality.Dot
+import kofre.causality.{CContext, CausalContext, Dot}
 
 import java.util.concurrent.TimeUnit
 
@@ -18,32 +17,32 @@ class DietMapCContextBench {
   @Param(Array("1", "1000"))
   var size: Long = _
 
-  var cca: DietMapCContext       = _
-  var ccb: DietMapCContext       = _
-  var cca1: DietMapCContext      = _
-  var ccaSingle: DietMapCContext = _
+  var cca: CausalContext       = _
+  var ccb: CausalContext       = _
+  var cca1: CausalContext      = _
+  var ccaSingle: CausalContext = _
 
 
-  private def makeCContext(replicaID: String, mul: Long, off: Long, len: Long): DietMapCContext = {
+  private def makeCContext(replicaID: String, mul: Long, off: Long, len: Long): CausalContext = {
     val ranges = Range.Long(0L, size, 1).map(i => Range.Long(i * mul + off, i * mul + len + off, 1))
     val dots = ranges.flatten.map(Dot(replicaID, _)).toSet
-    DietMapCContext.fromSet(dots)
+    CausalContext.fromSet(dots)
   }
 
   @Setup
   def setup(): Unit = {
     cca = makeCContext("a", 10, 0, 7)
     ccb = makeCContext("b", 10, 5, 7)
-    cca1 = DietMapCContext.union(cca, DietMapCContext.fromSet(Set(Dot("b", 5))))
-    ccaSingle = DietMapCContext.fromSet(Set(Dot("a", size + 10)))
+    cca1 = CContext.intTreeCC.union(cca, CausalContext.fromSet(Set(Dot("b", 5))))
+    ccaSingle = CausalContext.fromSet(Set(Dot("a", size + 10)))
   }
 
   @Benchmark
-  def merge = DietMapCContext.union(cca, ccb)
+  def merge = CContext.intTreeCC.union(cca, ccb)
 
   @Benchmark
-  def mergeSelf = DietMapCContext.union(cca, cca)
+  def mergeSelf = CContext.intTreeCC.union(cca, cca)
 
   @Benchmark
-  def mergeSelfPlusOne = DietMapCContext.union(cca, cca1)
+  def mergeSelfPlusOne = CContext.intTreeCC.union(cca, cca1)
 }

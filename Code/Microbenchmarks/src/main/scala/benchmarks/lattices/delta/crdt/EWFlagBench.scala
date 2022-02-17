@@ -1,7 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
+import kofre.causality.{CContext, CausalContext}
 import org.openjdk.jmh.annotations._
-import rescala.extra.lattices.delta.DietCC.DietMapCContext
 import rescala.extra.lattices.delta.crdt.reactive.EWFlag
 
 import java.util.concurrent.TimeUnit
@@ -15,13 +15,13 @@ import java.util.concurrent.TimeUnit
 @State(Scope.Thread)
 class EWFlagBench {
 
-  var flagEnabled: EWFlag[DietMapCContext]  = _
-  var flagDisabled: EWFlag[DietMapCContext] = _
+  var flagEnabled: EWFlag[CausalContext]  = _
+  var flagDisabled: EWFlag[CausalContext] = _
 
   @Setup
   def setup(): Unit = {
-    flagEnabled = EWFlag("a").enable()
-    flagDisabled = EWFlag("b").disable()
+    flagEnabled = EWFlag("a")(CContext.intTreeCC).enable()
+    flagDisabled = EWFlag("b")(CContext.intTreeCC).disable()
   }
 
   @Benchmark
@@ -31,14 +31,14 @@ class EWFlagBench {
   def readDisabled(): Boolean = flagDisabled.read
 
   @Benchmark
-  def enableEnabled(): EWFlag[DietMapCContext] = flagEnabled.enable()
+  def enableEnabled(): EWFlag[CausalContext] = flagEnabled.enable()
 
   @Benchmark
-  def enableDisabled(): EWFlag[DietMapCContext] = flagDisabled.enable()
+  def enableDisabled(): EWFlag[CausalContext] = flagDisabled.enable()
 
   @Benchmark
-  def disableEnabled(): EWFlag[DietMapCContext] = flagEnabled.disable()
+  def disableEnabled(): EWFlag[CausalContext] = flagEnabled.disable()
 
   @Benchmark
-  def disableDisabled(): EWFlag[DietMapCContext] = flagDisabled.disable()
+  def disableDisabled(): EWFlag[CausalContext] = flagDisabled.disable()
 }

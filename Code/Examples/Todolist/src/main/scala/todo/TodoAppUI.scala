@@ -2,13 +2,13 @@ package todo
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
+import kofre.causality.CausalContext
 import loci.registry.Binding
 import loci.serializer.jsoniterScala._
 import org.scalajs.dom.{UIEvent, window}
 import org.scalajs.dom.html.{Div, Input}
 import rescala.default._
 import rescala.extra.Tags._
-import rescala.extra.lattices.delta.DietCC._
 import kofre.decompose.Delta
 import rescala.extra.lattices.delta.crdt.reactive.RGA
 import rescala.extra.lattices.delta.crdt.reactive.RGA._
@@ -46,7 +46,7 @@ class TodoAppUI(val storagePrefix: String) {
     TaskRefs.taskrefObj = taskrefs
     val taskOps = new TaskOps(taskrefs)
 
-    val deltaEvt = Evt[Delta[RGA.State[TaskRef, DietMapCContext]]]
+    val deltaEvt = Evt[Delta[RGA.State[TaskRef, CausalContext]]]
 
     val rga =
       Storing.storedAs(storagePrefix, taskOps.listInitial) { init =>
@@ -61,7 +61,7 @@ class TodoAppUI(val storagePrefix: String) {
       }(codecRGA)
 
     LociDist.distributeDeltaCRDT(rga, deltaEvt, Todolist.registry)(
-      Binding[RGA.State[TaskRef, DietMapCContext] => Unit]("tasklist")
+      Binding[RGA.State[TaskRef, CausalContext] => Unit]("tasklist")
     )
 
     val tasksList = rga.map { _.toList }

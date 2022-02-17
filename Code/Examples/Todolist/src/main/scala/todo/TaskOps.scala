@@ -1,7 +1,7 @@
 package todo
 
+import kofre.causality.CausalContext
 import rescala.default._
-import rescala.extra.lattices.delta.DietCC._
 import kofre.decompose.Delta
 import rescala.extra.lattices.delta.crdt.reactive.RGA
 import rescala.extra.lattices.delta.crdt.reactive.RGA._
@@ -11,9 +11,9 @@ import java.util.concurrent.ThreadLocalRandom
 
 class TaskOps(taskRefs: TaskRefObj) {
 
-  type State = RGA[TaskRef, DietMapCContext]
+  type State = RGA[TaskRef, CausalContext]
 
-  def listInitial: State = RGA[TaskRef, DietMapCContext](replicaId)
+  def listInitial: State = RGA[TaskRef, CausalContext](replicaId)
 
   def handleCreateTodo(state: => State)(desc: String): State = {
     val taskid = s"Task(${ThreadLocalRandom.current().nextLong().toHexString})"
@@ -40,7 +40,7 @@ class TaskOps(taskRefs: TaskRefObj) {
     }
   }
 
-  def handleDelta(s: => State)(delta: Delta[RGA.State[TaskRef, DietMapCContext]]): State = {
+  def handleDelta(s: => State)(delta: Delta[RGA.State[TaskRef, CausalContext]]): State = {
     val list = s
 
     val newList = list.resetDeltaBuffer().applyDelta(delta)

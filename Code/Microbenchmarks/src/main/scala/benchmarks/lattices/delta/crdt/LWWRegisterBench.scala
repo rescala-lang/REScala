@@ -1,7 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
+import kofre.causality.CausalContext
 import org.openjdk.jmh.annotations._
-import rescala.extra.lattices.delta.DietCC.DietMapCContext
 import rescala.extra.lattices.delta.crdt.reactive.LWWRegister
 
 import java.util.concurrent.TimeUnit
@@ -15,13 +15,13 @@ import java.util.concurrent.TimeUnit
 @State(Scope.Thread)
 class LWWRegisterBench {
 
-  var empty: LWWRegister[Int, DietMapCContext] = _
-  var full: LWWRegister[Int, DietMapCContext]  = _
+  var empty: LWWRegister[Int, CausalContext] = _
+  var full: LWWRegister[Int, CausalContext]  = _
 
   @Setup
   def setup(): Unit = {
-    empty = LWWRegister[Int, DietMapCContext]("a")
-    full = LWWRegister[Int, DietMapCContext]("b").write(0)
+    empty = LWWRegister[Int, CausalContext]("a")
+    full = LWWRegister[Int, CausalContext]("b").write(0)
   }
 
   @Benchmark
@@ -31,20 +31,20 @@ class LWWRegisterBench {
   def readFull(): Option[Int] = full.read
 
   @Benchmark
-  def writeEmpty(): LWWRegister[Int, DietMapCContext] = empty.write(1)
+  def writeEmpty(): LWWRegister[Int, CausalContext] = empty.write(1)
 
   @Benchmark
-  def writeFull(): LWWRegister[Int, DietMapCContext] = full.write(1)
+  def writeFull(): LWWRegister[Int, CausalContext] = full.write(1)
 
   @Benchmark
-  def mapEmpty(): LWWRegister[Int, DietMapCContext] = empty.map(_ + 1)
+  def mapEmpty(): LWWRegister[Int, CausalContext] = empty.map(_ + 1)
 
   @Benchmark
-  def mapFull(): LWWRegister[Int, DietMapCContext] = full.map(_ + 1)
+  def mapFull(): LWWRegister[Int, CausalContext] = full.map(_ + 1)
 
   @Benchmark
-  def clearEmpty(): LWWRegister[Int, DietMapCContext] = empty.clear()
+  def clearEmpty(): LWWRegister[Int, CausalContext] = empty.clear()
 
   @Benchmark
-  def clearFull(): LWWRegister[Int, DietMapCContext] = full.clear()
+  def clearFull(): LWWRegister[Int, CausalContext] = full.clear()
 }

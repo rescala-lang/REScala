@@ -2,11 +2,10 @@ package benchmarks.lattices.delta
 
 import org.openjdk.jmh.annotations
 import org.openjdk.jmh.annotations._
-import rescala.extra.lattices.delta.DietCC._
 import rescala.extra.lattices.delta.crdt.reactive._
 import kofre.decompose.interfaces.AWSetInterface
-import kofre.decompose.{UIJDLattice}
-import kofre.causality.Dot
+import kofre.decompose.UIJDLattice
+import kofre.causality.{CausalContext, Dot}
 
 import java.util.concurrent.TimeUnit
 
@@ -22,47 +21,47 @@ class AWSetDeltaMergeBench {
   @Param(Array("1", "10", "100", "1000"))
   var size: Long = _
 
-  var fullState: AWSet.State[Long, DietMapCContext]         = _
-  var plusOneState: AWSet.State[Long, DietMapCContext]      = _
-  var plusOneDeltaState: AWSet.State[Long, DietMapCContext] = _
+  var fullState: AWSet.State[Long, CausalContext]         = _
+  var plusOneState: AWSet.State[Long, CausalContext]      = _
+  var plusOneDeltaState: AWSet.State[Long, CausalContext] = _
 
-  def makeCContext(replicaID: String): DietMapCContext = {
+  def makeCContext(replicaID: String): CausalContext = {
     val dots = (0L until size).map(Dot(replicaID, _)).toSet
-    DietMapCContext.fromSet(dots)
+    CausalContext.fromSet(dots)
   }
 
   @Setup
   def setup(): Unit = {
-    val baseState = UIJDLattice[AWSet.State[Long, DietMapCContext]].bottom
+    val baseState = UIJDLattice[AWSet.State[Long, CausalContext]].bottom
 
-    val deltaState = AWSetInterface.addAll[Long, DietMapCContext](0L to size).apply("", baseState)
-    fullState = UIJDLattice[AWSet.State[Long, DietMapCContext]].merge(baseState, deltaState)
+    val deltaState = AWSetInterface.addAll[Long, CausalContext](0L to size).apply("", baseState)
+    fullState = UIJDLattice[AWSet.State[Long, CausalContext]].merge(baseState, deltaState)
 
-    plusOneDeltaState = AWSetInterface.add[Long, DietMapCContext](size).apply("", fullState)
-    plusOneState = UIJDLattice[AWSet.State[Long, DietMapCContext]].merge(fullState, plusOneDeltaState)
+    plusOneDeltaState = AWSetInterface.add[Long, CausalContext](size).apply("", fullState)
+    plusOneState = UIJDLattice[AWSet.State[Long, CausalContext]].merge(fullState, plusOneDeltaState)
   }
 
   @Benchmark
-  def fullMerge: AWSet.State[Long, DietMapCContext] = {
-    UIJDLattice[AWSet.State[Long, DietMapCContext]].merge(fullState, plusOneState)
+  def fullMerge: AWSet.State[Long, CausalContext] = {
+    UIJDLattice[AWSet.State[Long, CausalContext]].merge(fullState, plusOneState)
   }
 
   @Benchmark
-  def fullDiff: Option[AWSet.State[Long, DietMapCContext]] = {
-    UIJDLattice[AWSet.State[Long, DietMapCContext]].diff(fullState, plusOneState)
+  def fullDiff: Option[AWSet.State[Long, CausalContext]] = {
+    UIJDLattice[AWSet.State[Long, CausalContext]].diff(fullState, plusOneState)
   }
 
   @Benchmark
-  def deltaMerge: AWSet.State[Long, DietMapCContext] = {
-    UIJDLattice[AWSet.State[Long, DietMapCContext]].diff(fullState, plusOneDeltaState) match {
+  def deltaMerge: AWSet.State[Long, CausalContext] = {
+    UIJDLattice[AWSet.State[Long, CausalContext]].diff(fullState, plusOneDeltaState) match {
       case Some(stateDiff) =>
-        UIJDLattice[AWSet.State[Long, DietMapCContext]].merge(fullState, stateDiff)
+        UIJDLattice[AWSet.State[Long, CausalContext]].merge(fullState, stateDiff)
       case None => fullState
     }
   }
 
   @Benchmark
-  def deltaMergeNoDiff: AWSet.State[Long, DietMapCContext] = {
-    UIJDLattice[AWSet.State[Long, DietMapCContext]].merge(fullState, plusOneDeltaState)
+  def deltaMergeNoDiff: AWSet.State[Long, CausalContext] = {
+    UIJDLattice[AWSet.State[Long, CausalContext]].merge(fullState, plusOneDeltaState)
   }
 }

@@ -7,13 +7,13 @@ case class Causal[D](dotStore: D, causalContext: CausalContext)
 
 // See: Delta state replicated data types (https://doi.org/10.1016/j.jpdc.2017.08.003)
 object Causal {
-  def bottom[D: DotStore]: Causal[D] = Causal(DotStore[D].bottom, CausalContext())
+  def bottom[D: DotStore]: Causal[D] = Causal(DotStore[D].bottom, CausalContext.empty)
 
   // (s, c) ⨆ (s', c') = ((s ∩ s') ∪ (s \ c') ∪ (s' \ c), c ∪ c')
   implicit def CausalWithDotSetLattice: Lattice[Causal[DotSet]] = (left, right) => {
     val inBoth     = left.dotStore & right.dotStore
-    val newInLeft  = left.dotStore.filterNot(dot => dot.counter <= right.causalContext.clockOf(dot.replicaId).counter)
-    val newInRight = right.dotStore.filterNot(dot => dot.counter <= left.causalContext.clockOf(dot.replicaId).counter)
+    val newInLeft  = left.dotStore.filterNot(dot => dot.counter <= right.causalContext.clockOf(dot.replicaId).get.counter)
+    val newInRight = right.dotStore.filterNot(dot => dot.counter <= left.causalContext.clockOf(dot.replicaId).get.counter)
 
     val mergedCausalContext = left.causalContext.merged(right.causalContext)
     Causal(inBoth ++ newInLeft ++ newInRight, mergedCausalContext)

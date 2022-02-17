@@ -8,8 +8,7 @@ import kofre.decompose.interfaces.ForcedWriteInterface.FW
 import kofre.decompose.interfaces.GListInterface.{Elem, GListNode}
 import kofre.decompose.interfaces.RGAInterface.RGANode
 import kofre.decompose.{Causal, LexPair, TimedVal}
-import kofre.causality.Dot
-import rescala.extra.lattices.delta.DietCC.DietMapCContext
+import kofre.causality.{Dot, CausalContext}
 
 object JsoniterCodecs {
 
@@ -48,7 +47,7 @@ object JsoniterCodecs {
     override def nullValue: Diet[Long] = null
   }
 
-  implicit val DietMapCContextCodec: JsonValueCodec[DietMapCContext] = JsonCodecMaker.make
+  implicit val intTreeCContextCodec: JsonValueCodec[CausalContext] = JsonCodecMaker.make(CodecMakerConfig.withAllowRecursiveTypes(true))
 
   /** AWSet */
 

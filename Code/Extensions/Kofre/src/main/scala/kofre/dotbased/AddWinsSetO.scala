@@ -2,17 +2,17 @@ package kofre.dotbased
 
 import kofre.IdUtil.Id
 import kofre.Lattice
-import kofre.causality.IntTreeContext
+import kofre.causality.CausalContext
 import kofre.dotbased.AddWinsSetO
 
-case class AddWinsSetO[A](store: Map[A, IntTreeContext], context: IntTreeContext) {
+case class AddWinsSetO[A](store: Map[A, CausalContext], context: CausalContext) {
 
   def add(element: A, replicaID: Id): AddWinsSetO[A] = Lattice.merge(this, addΔ(element, replicaID))
 
   /** Adding an element adds it to the current dot store as well as to the causal context (past). */
   def addΔ(element: A, replicaID: Id): AddWinsSetO[A] = {
     val time     = context.nextTime(replicaID)
-    val singular = IntTreeContext.single(replicaID, time)
+    val singular = CausalContext.single(replicaID, time)
     AddWinsSetO(Map(element -> singular), store.get(element).fold(singular)(_.add(replicaID, time)))
 
     // TODO: potential optimization
@@ -29,7 +29,7 @@ case class AddWinsSetO[A](store: Map[A, IntTreeContext], context: IntTreeContext
     * Thus, the delta for removal is the empty map,
     * with the dot of the removed element in the context.
     */
-  def removeΔ(e: A): AddWinsSetO[A] = AddWinsSetO[A](Map.empty, store.getOrElse(e, IntTreeContext.empty))
+  def removeΔ(e: A): AddWinsSetO[A] = AddWinsSetO[A](Map.empty, store.getOrElse(e, CausalContext.empty))
   def remove(e: A): AddWinsSetO[A]  = Lattice.merge(this, removeΔ(e))
 
   def toSet: Set[A] = store.keySet
@@ -55,7 +55,7 @@ case class AddWinsSetO[A](store: Map[A, IntTreeContext], context: IntTreeContext
 
 object AddWinsSetO {
 
-  def empty[A]: AddWinsSetO[A] = AddWinsSetO[A](Map.empty, IntTreeContext.empty)
+  def empty[A]: AddWinsSetO[A] = AddWinsSetO[A](Map.empty, CausalContext.empty)
 
   def latticeAddWinsSet[A]: Lattice[AddWinsSetO[A]] =
     new Lattice[AddWinsSetO[A]] {
@@ -65,17 +65,17 @@ object AddWinsSetO {
         // The new store is everything both sides have seen and everything that is new.
         // If something is missing from the store (but in the context) it has been deleted.
         val newStore = (left.store.keys ++ right.store.keys).toSet.map { (keyValue: A) =>
-          val leftDots: IntTreeContext  = left.store.getOrElse(keyValue, IntTreeContext.empty)
-          val rightDots: IntTreeContext = right.store.getOrElse(keyValue, IntTreeContext.empty)
+          val leftDots: CausalContext  = left.store.getOrElse(keyValue, CausalContext.empty)
+          val rightDots: CausalContext = right.store.getOrElse(keyValue, CausalContext.empty)
 
-          val common: IntTreeContext      = leftDots.intersect(rightDots)
-          val leftNew: IntTreeContext     = leftDots diff right.context
-          val rightNew: IntTreeContext    = rightDots diff left.context
-          val newElements: IntTreeContext = Lattice.merge(leftNew, rightNew)
-          val fullNew: IntTreeContext     = Lattice.merge(common, newElements)
+          val common: CausalContext      = leftDots.intersect(rightDots)
+          val leftNew: CausalContext     = leftDots diff right.context
+          val rightNew: CausalContext    = rightDots diff left.context
+          val newElements: CausalContext = Lattice.merge(leftNew, rightNew)
+          val fullNew: CausalContext     = Lattice.merge(common, newElements)
 
           (keyValue, fullNew)
-        }.filter {_._2 != IntTreeContext.empty }.toMap
+        }.filter {_._2 != CausalContext.empty }.toMap
 
         // the merged state has seen everything from both sides
         val newContext = Lattice.merge(left.context, right.context)
@@ -90,7 +90,7 @@ object AddWinsSetO {
 
         val leftChanges = left.store.map {
           case (value, context) =>
-            val otherDots      = right.store.getOrElse(value, IntTreeContext.empty)
+            val otherDots      = right.store.getOrElse(value, CausalContext.empty)
             val intersection   = context.intersect(otherDots)
             val additions      = context.diff(right.context)
             val otherAdditions = otherDots.diff(left.context)

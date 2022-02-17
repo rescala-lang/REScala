@@ -1,7 +1,7 @@
 package benchmarks.encrdt
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter}
-import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
+import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import kofre.causality.DotStore.Dot
 import kofre.encrdt.crdts.{AddWinsLastWriterWinsMap, DeltaAddWinsLastWriterWinsMap}
 
@@ -28,5 +28,5 @@ object Codecs {
     }
 
   implicit val deltaAwlwwmapJsonCodec: JsonValueCodec[DeltaAddWinsLastWriterWinsMap.StateType[String, String]] =
-    JsonCodecMaker.make
+    JsonCodecMaker.make(CodecMakerConfig.withAllowRecursiveTypes(true))
 }

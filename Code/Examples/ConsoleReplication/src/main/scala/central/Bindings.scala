@@ -5,7 +5,7 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import loci.registry.Binding
 import loci.transmitter.IdenticallyTransmittable
 import loci.serializer.jsoniterScala._
-import rescala.extra.lattices.delta.DietCC.DietMapCContext
+import kofre.causality.CausalContext
 import rescala.extra.lattices.delta.crdt.reactive.AWSet
 import rescala.extra.lattices.delta.JsoniterCodecs._
 
@@ -13,7 +13,7 @@ import scala.concurrent.Future
 
 object Bindings {
 
-  type SetState = AWSet.State[Int, DietMapCContext]
+  type SetState = AWSet.State[Int, CausalContext]
 
   case class SyncMessage(cp: Int, deltaState: SetState)
 

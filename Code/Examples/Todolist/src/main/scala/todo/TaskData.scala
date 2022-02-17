@@ -1,5 +1,6 @@
 package todo
 
+import kofre.causality.CausalContext
 import loci.registry.Binding
 import loci.serializer.jsoniterScala.jsoniteScalaBasedSerializable
 import loci.transmitter.IdenticallyTransmittable
@@ -7,7 +8,6 @@ import org.scalajs.dom.UIEvent
 import org.scalajs.dom.html.{Input, LI}
 import rescala.default._
 import rescala.extra.Tags._
-import rescala.extra.lattices.delta.DietCC._
 import rescala.extra.lattices.delta.JsoniterCodecs._
 import rescala.extra.lattices.delta.crdt.reactive.LWWRegister
 import kofre.decompose.interfaces.MVRegisterInterface
@@ -32,16 +32,16 @@ case class TaskData(
 case class TaskRef(id: String) {
   lazy val cached: TaskRefData = TaskRefs.lookupOrCreateTaskRef(id, None)
 
-  def task: Signal[LWWRegister[TaskData, DietMapCContext]] = cached.task
+  def task: Signal[LWWRegister[TaskData, CausalContext]] = cached.task
   def tag: TypedTag[LI]                                    = cached.tag
   def removed: Event[String]                               = cached.removed
 }
 
 final class TaskRefData(
-    val task: Signal[LWWRegister[TaskData, DietMapCContext]],
-    val tag: TypedTag[LI],
-    val removed: Event[String],
-    val id: String,
+                         val task: Signal[LWWRegister[TaskData, CausalContext]],
+                         val tag: TypedTag[LI],
+                         val removed: Event[String],
+                         val id: String,
 ) {
   override def hashCode(): Int = id.hashCode
   override def equals(obj: Any): Boolean = obj match {
@@ -64,18 +64,18 @@ class TaskRefObj(toggleAll: Event[UIEvent], storePrefix: String) {
 
   import todo.Codecs.todoTaskCodec
 
-  implicit val transmittableLWW: IdenticallyTransmittable[LWWRegister.State[TaskData, DietMapCContext]] =
+  implicit val transmittableLWW: IdenticallyTransmittable[LWWRegister.State[TaskData, CausalContext]] =
     IdenticallyTransmittable()
 
   def createTaskRef(
       taskID: String,
       task: Option[TaskData],
   ): TaskRefData = {
-    val lwwInit = LWWRegister[TaskData, DietMapCContext](replicaId)
+    val lwwInit = LWWRegister[TaskData, CausalContext](replicaId)
 
     val lww = task match {
       case None => lwwInit.mutate((replicaID, state) =>
-          MVRegisterInterface.write[TimedVal[TaskData], DietMapCContext](
+          MVRegisterInterface.write[TimedVal[TaskData], CausalContext](
             TimedVal(TaskData("<empty>"), replicaID, 0, 0)
           ).apply(replicaID, state)
         )
@@ -102,7 +102,7 @@ class TaskRefObj(toggleAll: Event[UIEvent], storePrefix: String) {
 
     val doneEv = toggleAll || doneClick.event
 
-    val deltaEvt = Evt[Delta[LWWRegister.State[TaskData, DietMapCContext]]]()
+    val deltaEvt = Evt[Delta[LWWRegister.State[TaskData, CausalContext]]]()
 
     // type Carrier = LWWRegister.State[TaskData, DietMapCContext]
     //
@@ -128,7 +128,7 @@ class TaskRefObj(toggleAll: Event[UIEvent], storePrefix: String) {
     }(Codecs.codecLww)
 
     LociDist.distributeDeltaCRDT(crdt, deltaEvt, Todolist.registry)(
-      Binding[LWWRegister.State[TaskData, DietMapCContext] => Unit](taskID)
+      Binding[LWWRegister.State[TaskData, CausalContext] => Unit](taskID)
     )
 
     val taskData = crdt.map(_.read.getOrElse(TaskData(desc = "LWW Empty")))

@@ -1,7 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
+import kofre.causality.CausalContext
 import org.openjdk.jmh.annotations._
-import rescala.extra.lattices.delta.DietCC.DietMapCContext
 import rescala.extra.lattices.delta.crdt.reactive.{EWFlag, GMap}
 import kofre.decompose.interfaces.EWFlagInterface
 
@@ -19,13 +19,13 @@ class GMapBench {
   @Param(Array("1", "10", "100", "1000"))
   var numEntries: Int = _
 
-  type SUT = GMap[Int, EWFlag.State[DietMapCContext]]
+  type SUT = GMap[Int, EWFlag.State[CausalContext]]
 
   var map: SUT = _
 
   @Setup
   def setup(): Unit = {
-    map = (0 until numEntries).foldLeft(GMap[Int, EWFlag.State[DietMapCContext]]("a")) {
+    map = (0 until numEntries).foldLeft(GMap[Int, EWFlag.State[CausalContext]]("a")) {
       case (m, i) => m.mutateKey(i, EWFlagInterface.enable())
     }
   }

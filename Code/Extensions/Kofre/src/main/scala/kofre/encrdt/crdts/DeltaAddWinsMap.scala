@@ -1,6 +1,6 @@
 package kofre.encrdt.crdts
 
-import kofre.causality.DotStore
+import kofre.causality.{CausalContext, DotStore}
 import kofre.causality.DotStore.*
 import kofre.encrdt.lattices.Causal
 
@@ -46,7 +46,7 @@ object DeltaAddWinsMap {
     */
   def deltaRemove[K, V: DotStore](key: K, map: DeltaAddWinsMapLattice[K, V]): DeltaAddWinsMapLattice[K, V] = Causal(
     DotStore[DotMap[K, V]].bottom,
-    DotStore[V].dots(map.dotStore.getOrElse(key, DotStore[V].bottom))
+    CausalContext.fromSet(DotStore[V].dots(map.dotStore.getOrElse(key, DotStore[V].bottom)))
   )
 
   /** Returns the '''delta''' that removes all values from the `map`.
@@ -58,6 +58,6 @@ object DeltaAddWinsMap {
     */
   def deltaClear[K, V: DotStore](map: DeltaAddWinsMapLattice[K, V]): DeltaAddWinsMapLattice[K, V] = Causal(
     DotStore[DotMap[K, V]].bottom,
-    DotStore[DotMap[K, V]].dots(map.dotStore)
+    CausalContext.fromSet(DotStore[DotMap[K, V]].dots(map.dotStore))
   )
 }

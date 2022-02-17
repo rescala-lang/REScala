@@ -4,7 +4,7 @@ import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap
 import rescala.extra.encrdt.sync.ConnectionManager
 import todolist.SyncedTodoListCrdt.StateType
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter}
-import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
+import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import kofre.causality.Dot
 import scalafx.application.Platform
 
@@ -118,5 +118,5 @@ object SyncedTodoListCrdt {
         Map.empty
     }
 
-  implicit val stateCodec: JsonValueCodec[StateType] = JsonCodecMaker.make
+  implicit val stateCodec: JsonValueCodec[StateType] = JsonCodecMaker.make(CodecMakerConfig.withAllowRecursiveTypes(true))
 }

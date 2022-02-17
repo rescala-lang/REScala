@@ -1,13 +1,13 @@
 package calendar
 import rescala.default._
-import rescala.extra.lattices.delta.DietCC.DietMapCContext
+import kofre.causality.CausalContext
 import rescala.extra.lattices.delta.crdt.reactive.AWSet
 
 case class Appointment(start: Int, end: Int)
 
 class CalendarProgram(id: String, synchronizationPoint: String => (=> Unit) => Unit) {
 
-  type Calendar = AWSet[Appointment, DietMapCContext]
+  type Calendar = AWSet[Appointment, CausalContext]
 
   val work     = Var[Calendar](AWSet(id))
   val vacation = Var[Calendar](AWSet(id))

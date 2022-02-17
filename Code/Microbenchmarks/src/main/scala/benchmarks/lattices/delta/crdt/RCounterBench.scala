@@ -1,7 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
+import kofre.causality.CausalContext
 import org.openjdk.jmh.annotations._
-import rescala.extra.lattices.delta.DietCC.DietMapCContext
 import rescala.extra.lattices.delta.crdt.reactive.RCounter
 
 import java.util.concurrent.TimeUnit
@@ -18,11 +18,11 @@ class RCounterBench {
   @Param(Array("1", "10", "100", "1000"))
   var numReplicas: Int = _
 
-  var counter: RCounter[DietMapCContext] = _
+  var counter: RCounter[CausalContext] = _
 
   @Setup
   def setup(): Unit = {
-    counter = (1 until numReplicas).foldLeft(RCounter[DietMapCContext]("0").increment()) {
+    counter = (1 until numReplicas).foldLeft(RCounter[CausalContext]("0").increment()) {
       case (c, n) =>
         val delta = RCounter(n.toString).increment().deltaBuffer.head
         c.applyDelta(delta)
@@ -33,14 +33,14 @@ class RCounterBench {
   def value(): Int = counter.value
 
   @Benchmark
-  def fresh(): RCounter[DietMapCContext] = counter.fresh()
+  def fresh(): RCounter[CausalContext] = counter.fresh()
 
   @Benchmark
-  def increment(): RCounter[DietMapCContext] = counter.increment()
+  def increment(): RCounter[CausalContext] = counter.increment()
 
   @Benchmark
-  def decrement(): RCounter[DietMapCContext] = counter.decrement()
+  def decrement(): RCounter[CausalContext] = counter.decrement()
 
   @Benchmark
-  def reset(): RCounter[DietMapCContext] = counter.reset()
+  def reset(): RCounter[CausalContext] = counter.reset()
 }

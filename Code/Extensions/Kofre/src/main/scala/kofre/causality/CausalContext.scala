@@ -1,95 +1,58 @@
 package kofre.causality
 
-import kofre.causality.DotStore.DotSet
+import kofre.IdUtil.Id
+import kofre.Lattice
+import kofre.causality.impl.IntTree
+import kofre.causality.CausalContext
 
-// Can be optimized using Concise Version Vectors / Interval Version Vectors
-case class CausalContext(dots: Set[Dot] = Set()) {
-  def clockOf(replicaId: String): Dot = {
-    dots
-      .filter(dot => dot.replicaId == replicaId)
-      .maxByOption(dot => dot.counter)
-      .getOrElse(Dot(replicaId, 0))
+case class CausalContext(internal: Map[Id, IntTree.Tree]) {
+
+  def clockOf(replicaId: Id) = CContext.intTreeCC.max(this, replicaId)
+
+  def contains(dot: Dot) = CContext.intTreeCC.contains(this, dot)
+
+  def add(replicaId: Id, time: Long): CausalContext =
+    CausalContext(internal.updated(
+      replicaId,
+      IntTree.insert(internal.getOrElse(replicaId, IntTree.empty), time)
+    ))
+  def nextTime(replicaId: Id): Long = {
+    val range = internal.getOrElse(replicaId, IntTree.empty)
+    IntTree.nextValue(range, 0)
   }
+  def diff(extern: CausalContext): CausalContext =
+    CausalContext {
+      internal.map {
+        case (id, range) =>
+          val filtered = extern.internal.get(id).map { erange =>
+            val keep = IntTree.toSeq(range).filterNot(IntTree.contains(erange, _))
+            IntTree.fromIterator(keep.iterator)
+          }
+          id -> filtered.getOrElse(range)
+      }
+    }
+  def intersect(other: CausalContext): CausalContext =
+    CausalContext {
+      internal.iterator.filter { case (id, _) => other.internal.contains(id) }.map {
+        case (id, range) =>
+          val otherRange = other.internal(id)
+          val res        = IntTree.fromIterator(IntTree.iterator(range).filter(IntTree.contains(otherRange, _)))
+          id -> res
+      }.toMap
+    }
 
-  def contains(dot: Dot): Boolean = dots.contains(dot)
-
-  def merged(other: CausalContext): CausalContext = merged(other.dots)
-
-  def merged(other: Set[Dot]): CausalContext = CausalContext(dots ++ other)
+  def merged(other: CausalContext): CausalContext = CausalContext.contextLattice.merge(this, other)
 }
 
 object CausalContext {
+  def single(replicaId: Id, time: Long): CausalContext = CausalContext(Map((replicaId, IntTree.insert(IntTree.empty, time))))
+  val empty: CausalContext = CausalContext(Map.empty)
 
-  import scala.language.implicitConversions
-
-  implicit def dotSetToCausalContext(dotSet: DotSet): CausalContext = CausalContext(dotSet)
-}
-
-
-
-/** CContext is the typeclass trait for causal contexts. Causal contexts are used in causal CRDTs to keep track of all the dots that a
-  * replica has witnessed.
-  */
-trait CContext[A] {
-  def contains(cc: A, d: Dot): Boolean
-
-  def fromSet(dots: Set[Dot]): A
-
-  def empty: A
-
-  def one(dot: Dot): A
-
-  def toSet(cc: A): Set[Dot]
-
-  def union(left: A, right: A): A
-
-  def diff(cc: A, other: Iterable[Dot]): A
-
-  def max(cc: A, replicaID: String): Option[Dot]
-
-  def nextDot(cc: A, replicaID: String): Dot = max(cc, replicaID) match {
-    case Some(dot) => dot.next
-    case None      => Dot(replicaID, 0)
+  implicit val contextLattice: Lattice[CausalContext] = new Lattice[CausalContext] {
+    override def merge(left: CausalContext, right: CausalContext): CausalContext = {
+      CausalContext(Lattice.merge(left.internal, right.internal))
+    }
   }
 
-  def convert[B: CContext](cc: A): B = CContext[B].fromSet(toSet(cc))
-
-  def decompose(cc: A, exclude: Dot => Boolean): Iterable[A]
-
-  def forall(cc: A, cond: Dot => Boolean): Boolean
-}
-
-object CContext {
-  def apply[A](implicit cc: CContext[A]): CContext[A] = cc
-
-  /** SetCContext is a causal context implementation that simply stores all dots in a set. For most applications you should
-    * use DietMapCContext instead, as it uses compression to efficiently store large continuous ranges of dots.
-    */
-  implicit val SetCContext: CContext[Set[Dot]] = new CContext[Set[Dot]] {
-    override def contains(cc: Set[Dot], d: Dot): Boolean = cc.contains(d)
-
-    override def fromSet(dots: Set[Dot]): Set[Dot] = dots
-
-    override def empty: Set[Dot] = Set.empty[Dot]
-
-    override def one(dot: Dot): Set[Dot] = Set(dot)
-
-    override def toSet(cc: Set[Dot]): Set[Dot] = cc
-
-    override def union(left: Set[Dot], right: Set[Dot]): Set[Dot] = left union right
-
-    override def diff(cc: Set[Dot], other: Iterable[Dot]): Set[Dot] = cc -- other
-
-    override def max(cc: Set[Dot], replicaID: String): Option[Dot] =
-      cc.filter(_.replicaID == replicaID).maxByOption(_.counter)
-
-    override def decompose(cc: Set[Dot], exclude: Dot => Boolean): Iterable[Set[Dot]] =
-      cc.foldLeft(List.empty[Set[Dot]]) {
-        case (l, dot) =>
-          if (exclude(dot)) l
-          else Set(dot) :: l
-      }
-
-    override def forall(cc: Set[Dot], cond: Dot => Boolean): Boolean = cc.forall(cond)
-  }
+  def fromSet(dots: Set[Dot]): CausalContext = CContext.intTreeCC.fromSet(dots)
 }

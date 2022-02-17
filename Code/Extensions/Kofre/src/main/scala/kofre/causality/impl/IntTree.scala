@@ -4,15 +4,17 @@ import kofre.Lattice
 
 object IntTree {
 
+  type Num = Long
+
   sealed trait Tree
 
   /** inclusive exclusive ranges */
-  case class Range(from: Int, until: Int, less: Tree, more: Tree) extends Tree
+  case class Range(from: Num, until: Num, less: Tree, more: Tree) extends Tree
   case object Empty                                               extends Tree
 
   implicit val lattice: Lattice[Tree] = IntTree.merge _
 
-  def fromIterator(iterable: Iterator[Int]): Tree = iterable.foldLeft(empty)(IntTree.insert)
+  def fromIterator(iterable: Iterator[Num]): Tree = iterable.foldLeft(empty)(IntTree.insert)
 
   def show(tree: Tree): String =
     tree match {
@@ -22,7 +24,7 @@ object IntTree {
 
   val empty: Tree = Empty
 
-  def insert(tree: Tree, value: Int): Tree = insert(tree, value, value + 1)
+  def insert(tree: Tree, value: Num): Tree = insert(tree, value, value + 1)
 
   def ranges(tree: Tree): Iterator[Range] =
     tree match {
@@ -30,14 +32,14 @@ object IntTree {
       case tree: Range => (ranges(tree.less) ++ Iterator.single(tree)) ++ ranges(tree.more)
     }
 
-  def toSeq(tree: Tree): List[Int] = iterator(tree).toList
+  def toSeq(tree: Tree): List[Num] = iterator(tree).toList
 
-  def iterator(tree: Tree): Iterator[Int] = tree match {
-    case Empty       => Iterator.empty[Int]
+  def iterator(tree: Tree): Iterator[Num] = tree match {
+    case Empty       => Iterator.empty[Num]
     case tree: Range => iterator(tree.less) ++ (tree.from until tree.until) ++ iterator(tree.more)
   }
 
-  def foldLeft[Z](tree: Tree, z: Z)(f: (Z, Int, Int) => Z): Z =
+  def foldLeft[Z](tree: Tree, z: Z)(f: (Z, Num, Num) => Z): Z =
     tree match
       case Empty => z
       case Range(from, until, less, more) =>
@@ -47,9 +49,9 @@ object IntTree {
 
   def merge(left: Tree, right: Tree): Tree = foldLeft(right, left) { (ir, from, until) => insert(ir, from, until) }
 
-  private def overlap(start: Int, middle: Int, end: Int): Boolean = start <= middle && middle <= end
+  private def overlap(start: Num, middle: Num, end: Num): Boolean = start <= middle && middle <= end
 
-  def nextValue(tree: Tree, default: Int): Int =
+  def nextValue(tree: Tree, default: Num): Num =
     max(tree) match {
       case (_, maxr: Range) => maxr.until
       case _                => default
@@ -103,7 +105,7 @@ object IntTree {
         }
     }
 
-  def insert(tree: Tree, iFrom: Int, iUntil: Int): Tree =
+  def insert(tree: Tree, iFrom: Num, iUntil: Num): Tree =
     tree match {
       case Empty => Range(iFrom, iUntil, Empty, Empty)
       case Range(from, until, less, more) =>
@@ -113,7 +115,7 @@ object IntTree {
     }
 
   @scala.annotation.tailrec
-  def contains(tree: Tree, search: Int): Boolean =
+  def contains(tree: Tree, search: Num): Boolean =
     tree match {
       case Empty => false
       case tree: Range => {
@@ -125,7 +127,7 @@ object IntTree {
 
   /** this was an experiment in performance optimization which seems to have not worked */
   private object CatsDietLike {
-    def noMoreThan(tree: Tree, a: Int): (Tree, Int) =
+    def noMoreThan(tree: Tree, a: Num): (Tree, Num) =
       tree match {
         case Range(start, end, l, r) =>
           if (a > end) {
@@ -136,7 +138,7 @@ object IntTree {
         case Empty => (Empty, a)
       }
 
-    def noLessThan(tree: Tree, a: Int): (Tree, Int) =
+    def noLessThan(tree: Tree, a: Num): (Tree, Num) =
       tree match {
         case Range(start, end, l, r) =>
           if ((a < (start - 1))) {
@@ -147,14 +149,14 @@ object IntTree {
         case Empty => (Empty, a)
       }
 
-    def addRanges(from1: Int, until1: Int, from2: Int, until2: Int): ((Int, Int), (Int, Int)) = {
+    def addRanges(from1: Num, until1: Num, from2: Num, until2: Num): ((Num, Num), (Num, Num)) = {
       if overlap(from1, from2, until1) || overlap(from2, from1, until2) then
         ((math.max(from1, from2), math.max(until1, until2)), (0, 0))
       else if (from1 < from2) then ((from1, until1), (from2, until2))
       else ((from2, until2), (from1, until1))
     }
 
-    def addRangeIncreasing(tree: Tree, iFrom: Int, iUntil: Int): Tree =
+    def addRangeIncreasing(tree: Tree, iFrom: Num, iUntil: Num): Tree =
       tree match {
         case Empty => Range(iFrom, iUntil, Empty, Empty)
 
