@@ -26,7 +26,7 @@ object DeltaAddWinsMap {
   ): DeltaAddWinsMapLattice[K, V] = {
 
     deltaMutator(Causal(
-      map.store.getOrElse(key, DotStore[V].bottom),
+      map.store.getOrElse(key, DotStore[V].empty),
       map.context
       )) match {
       case Causal(dotStore, causalContext) => Causal(
@@ -45,9 +45,9 @@ object DeltaAddWinsMap {
     * @return The delta that contains the removal (and nothing else)
     */
   def deltaRemove[K, V: DotStore](key: K, map: DeltaAddWinsMapLattice[K, V]): DeltaAddWinsMapLattice[K, V] = Causal(
-    DotStore[DotMap[K, V]].bottom,
-    CausalContext.fromSet(DotStore[V].dots(map.store.getOrElse(key, DotStore[V].bottom)))
-  )
+    DotStore[DotMap[K, V]].empty,
+    CausalContext.fromSet(DotStore[V].dots(map.store.getOrElse(key, DotStore[V].empty)))
+    )
 
   /** Returns the '''delta''' that removes all values from the `map`.
     *
@@ -57,7 +57,7 @@ object DeltaAddWinsMap {
     * @return The delta that contains the removal of all mappings
     */
   def deltaClear[K, V: DotStore](map: DeltaAddWinsMapLattice[K, V]): DeltaAddWinsMapLattice[K, V] = Causal(
-    DotStore[DotMap[K, V]].bottom,
+    DotStore[DotMap[K, V]].empty,
     CausalContext.fromSet(DotStore[DotMap[K, V]].dots(map.store))
-  )
+    )
 }
