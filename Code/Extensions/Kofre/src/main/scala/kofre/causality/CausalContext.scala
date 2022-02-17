@@ -7,9 +7,7 @@ import kofre.causality.CausalContext
 
 case class CausalContext(internal: Map[Id, IntTree.Tree]) {
 
-  def clockOf(replicaId: Id) = CContext.intTreeCC.max(this, replicaId)
-
-  def contains(dot: Dot) = CContext.intTreeCC.contains(this, dot)
+  def clockOf(replicaId: Id): Option[Dot] = CContext.intTreeCC.max(this, replicaId)
 
   def add(replicaId: Id, time: Long): CausalContext =
     CausalContext(internal.updated(
@@ -42,11 +40,29 @@ case class CausalContext(internal: Map[Id, IntTree.Tree]) {
     }
 
   def merged(other: CausalContext): CausalContext = CausalContext.contextLattice.merge(this, other)
+
+  def contains(d: Dot): Boolean = internal.get(d.replicaID).exists(IntTree.contains(_, d.counter))
+
+  def toSet: Set[Dot] =
+    internal.flatMap((key, tree) => IntTree.iterator(tree).map(time => Dot(key, time))).toSet
+
+  def max(replicaID: String): Option[Dot] =
+    internal.get(replicaID).map(tree => Dot(replicaID, IntTree.nextValue(tree, Long.MinValue) - 1))
+      .filterNot(_.counter == Long.MinValue)
+  def decompose(exclude: Dot => Boolean): Iterable[CausalContext] =
+    internal.flatMap { (id, tree) =>
+      IntTree.iterator(tree).map(time => CausalContext.single(id, time))
+    }
+  def forall(cond: Dot => Boolean): Boolean = internal.forall { (id, tree) =>
+    IntTree.iterator(tree).forall(time => cond(Dot(id, time)))
+  }
 }
 
 object CausalContext {
-  def single(replicaId: Id, time: Long): CausalContext = CausalContext(Map((replicaId, IntTree.insert(IntTree.empty, time))))
-  val empty: CausalContext = CausalContext(Map.empty)
+  def single(replicaId: Id, time: Long): CausalContext =
+    CausalContext(Map((replicaId, IntTree.insert(IntTree.empty, time))))
+  val empty: CausalContext         = CausalContext(Map.empty)
+  def one(dot: Dot): CausalContext = CausalContext.empty.add(dot.replicaId, dot.counter)
 
   implicit val contextLattice: Lattice[CausalContext] = new Lattice[CausalContext] {
     override def merge(left: CausalContext, right: CausalContext): CausalContext = {
@@ -54,5 +70,9 @@ object CausalContext {
     }
   }
 
-  def fromSet(dots: Set[Dot]): CausalContext = CContext.intTreeCC.fromSet(dots)
+  def fromSet(dots: Set[Dot]): CausalContext = CausalContext(dots.groupBy(_.replicaId).map {
+    (key, times) =>
+      key -> IntTree.fromIterator(times.iterator.map(_.counter))
+  })
+
 }
