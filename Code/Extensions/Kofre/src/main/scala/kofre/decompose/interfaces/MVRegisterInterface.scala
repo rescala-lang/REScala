@@ -18,8 +18,8 @@ object MVRegisterInterface {
     val bottom: State[A] = UIJDLattice[State[A]].bottom
 
     def make(
-        df: DotFun[A] = bottom.dotStore,
-        cc: CausalContext = bottom.cc
+              df: DotFun[A] = bottom.store,
+              cc: CausalContext = bottom.context
     ): State[A] = Causal(df, cc)
   }
 

@@ -41,9 +41,9 @@ object RCounterInterface {
     val bottom = UIJDLattice[State].bottom
 
     Causal(
-      df.getOrElse(bottom.dotStore),
+      df.getOrElse(bottom.store),
       cc
-    )
+      )
   }
 
   def value: DeltaQuery[State, Int] = {

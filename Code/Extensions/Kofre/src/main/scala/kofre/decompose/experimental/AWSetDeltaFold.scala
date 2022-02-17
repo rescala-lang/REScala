@@ -11,7 +11,7 @@ class AWSetDeltaFold[E, B](acc: B, onAdd: (B, E) => B, onRemove: (B, E) => B) {
       case Causal(dm, cc) =>
         val removedDots = CContext[C].toSet(cc) diff DotMap[E, DotSet].dots(dm)
         val removedElems = removedDots.flatMap { dot =>
-          currentState.dotStore.collect {
+          currentState.store.collect {
             case (e, ds) if ds.contains(dot) => e
           }
         }

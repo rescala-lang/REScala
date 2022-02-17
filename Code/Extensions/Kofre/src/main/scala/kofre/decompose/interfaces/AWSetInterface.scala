@@ -17,8 +17,8 @@ object AWSetInterface {
     val bottom: State[E] = UIJDLattice[State[E]].bottom
 
     def make(
-        dm: DotMap[E, DotSet] = bottom.dotStore,
-        cc: C = bottom.cc
+              dm: DotMap[E, DotSet] = bottom.store,
+              cc: C = bottom.context
     ): State[E] = Causal(dm, cc)
   }
 

@@ -21,11 +21,11 @@ class DeltaAddWinsLastWriterWinsMap[K, V](
   def deltas: Vector[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = _deltas
 
   def get(key: K): Option[V] =
-    _state.dotStore
-      .getOrElse(key, Set.empty[(_, (V, (Instant, String)))])
-      .map(_._2)
-      .maxByOption(_._2)
-      .map(_._1)
+    _state.store
+          .getOrElse(key, Set.empty[(_, (V, (Instant, String)))])
+          .map(_._2)
+          .maxByOption(_._2)
+          .map(_._1)
 
   def put(key: K, value: V): Unit =
     mutate(
@@ -51,7 +51,7 @@ class DeltaAddWinsLastWriterWinsMap[K, V](
     mutate(DeltaAddWinsMap.deltaRemove(key, _state))
 
   def values: Map[K, V] =
-    _state.dotStore.map { case (k, mvReg) =>
+    _state.store.map { case (k, mvReg) =>
       k -> mvReg.values.maxBy(_._2)._1
     }
 

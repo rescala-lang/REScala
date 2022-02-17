@@ -13,20 +13,20 @@ object DeltaMultiValueRegister {
       register: DeltaMultiValueRegisterLattice[V]
   ): DeltaMultiValueRegisterLattice[V] = {
 
-    val dot = register.causalContext.clockOf(replicaId).get.advance
+    val dot = register.context.clockOf(replicaId).get.advance
     Causal(
       Map(dot -> value),
-      CausalContext.fromSet(register.dotStore.keySet + dot)
+      CausalContext.fromSet(register.store.keySet + dot)
     )
   }
 
   def deltaClear[V: Lattice](register: DeltaMultiValueRegisterLattice[V]): DeltaMultiValueRegisterLattice[V] =
     Causal(
       DotStore[DotFun[V]].bottom,
-      CausalContext.fromSet(register.dotStore.keySet)
+      CausalContext.fromSet(register.store.keySet)
     )
 
   def read[V](register: DeltaMultiValueRegisterLattice[V]): Set[V] = {
-    register.dotStore.values.toSet
+    register.store.values.toSet
   }
 }

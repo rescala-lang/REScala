@@ -18,8 +18,8 @@ object ORMapInterface {
     val bottom: State[K, V] = UIJDLattice[State[K, V]].bottom
 
     def make(
-        dm: DotMap[K, V] = bottom.dotStore,
-        cc: C = bottom.cc
+              dm: DotMap[K, V] = bottom.store,
+              cc: C = bottom.context
     ): State[K, V] = Causal(dm, cc)
   }
 

@@ -50,9 +50,9 @@ object RGAInterface {
     val bottom: State[E] = UIJDLattice[State[E]].bottom
 
     def make(
-        fw: ForcedWriteInterface.State[GListInterface.State[Dot]] = bottom.dotStore._1,
-        df: DotFun[RGANode[E]] = bottom.dotStore._2,
-        cc: C = bottom.cc
+              fw: ForcedWriteInterface.State[GListInterface.State[Dot]] = bottom.store._1,
+              df: DotFun[RGANode[E]] = bottom.store._2,
+              cc: C = bottom.context
     ): State[E] = Causal((fw, df), cc)
   }
 

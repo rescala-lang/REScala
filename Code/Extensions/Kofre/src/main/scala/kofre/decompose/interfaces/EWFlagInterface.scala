@@ -17,8 +17,8 @@ object EWFlagInterface {
     val bottom: State = UIJDLattice[State].bottom
 
     def make(
-        ds: DotSet = bottom.dotStore,
-        cc: CausalContext = bottom.cc
+              ds: DotSet = bottom.store,
+              cc: CausalContext = bottom.context
     ): State = Causal(ds, cc)
   }
 
