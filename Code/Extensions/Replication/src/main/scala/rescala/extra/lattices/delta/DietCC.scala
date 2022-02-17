@@ -1,7 +1,7 @@
 package rescala.extra.lattices.delta
 
 import cats.collections._
-import kofre.decompose.{CContext}
+import kofre.causality.{CContext}
 import kofre.causality.Dot
 
 object DietCC {

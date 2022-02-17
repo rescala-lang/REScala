@@ -3,7 +3,8 @@ package rescala.extra.lattices.delta.crdt.reactive
 import kofre.decompose.DotStore.DotSet
 import kofre.decompose.interfaces.EWFlagInterface
 import kofre.decompose.interfaces.EWFlagInterface.{EWFlagCompanion, State}
-import kofre.decompose.{CContext, Delta, UIJDLattice}
+import kofre.decompose.{Delta, UIJDLattice}
+import kofre.causality.CContext
 
 /** [[ReactiveCRDT Reactive]] implementation of [[rescala.extra.lattices.delta.interfaces.EWFlagInterface EWFlagInterface]]
   *

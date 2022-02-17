@@ -2,7 +2,8 @@ package rescala.extra.lattices.delta.crdt.basic
 
 import kofre.decompose.interfaces.RubisInterface
 import kofre.decompose.interfaces.RubisInterface.{RubisCompanion, State}
-import kofre.decompose.{CContext, UIJDLattice}
+import kofre.decompose.{UIJDLattice}
+import kofre.causality.CContext
 import rescala.extra.replication.AntiEntropy
 
 /** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.RubisInterface RubisInterface]]

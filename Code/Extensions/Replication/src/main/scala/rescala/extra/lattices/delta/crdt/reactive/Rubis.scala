@@ -2,7 +2,8 @@ package rescala.extra.lattices.delta.crdt.reactive
 
 import kofre.decompose.interfaces.RubisInterface
 import kofre.decompose.interfaces.RubisInterface.{RubisCompanion, State}
-import kofre.decompose.{CContext, Delta, UIJDLattice}
+import kofre.decompose.{Delta, UIJDLattice}
+import kofre.causality.CContext
 
 /** [[ReactiveCRDT Reactive]] implementation of [[rescala.extra.lattices.delta.interfaces.RubisInterface RubisInterface]]
   *

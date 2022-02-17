@@ -2,7 +2,8 @@ package rescala.extra.lattices.delta.crdt.reactive
 
 import kofre.decompose.interfaces.RCounterInterface
 import kofre.decompose.interfaces.RCounterInterface.{RCounterCompanion, State}
-import kofre.decompose.{CContext, Delta, UIJDLattice}
+import kofre.decompose.{Delta, UIJDLattice}
+import kofre.causality.CContext
 
 /** [[ReactiveCRDT Reactive]] implementation of [[rescala.extra.lattices.delta.interfaces.RCounterInterface RCounterInterface]]
   *

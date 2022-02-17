@@ -1,5 +1,7 @@
 package kofre.decompose
 
+import kofre.causality.CContext
+
 /** State type of causal CRDTs, which consist of a dot store and a causal context.
   *
   * @tparam D Type of the dot store

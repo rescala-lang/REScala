@@ -3,7 +3,8 @@ package rescala.extra.lattices.delta.crdt.basic
 import kofre.decompose.DotStore.DotFun
 import kofre.decompose.interfaces.LWWRegisterInterface
 import kofre.decompose.interfaces.LWWRegisterInterface.{LWWRegisterCompanion, State}
-import kofre.decompose.{CContext, UIJDLattice}
+import kofre.decompose.{UIJDLattice}
+import kofre.causality.CContext
 import rescala.extra.replication.AntiEntropy
 
 /** [[BasicCRDT Basic]] implementation of [[rescala.extra.lattices.delta.interfaces.LWWRegisterInterface LWWRegisterInterface]]

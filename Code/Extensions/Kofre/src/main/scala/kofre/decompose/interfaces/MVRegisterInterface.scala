@@ -1,5 +1,6 @@
 package kofre.decompose.interfaces
 
+import kofre.causality.CContext
 import kofre.decompose.*
 import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
 import kofre.decompose.DotStore.DotFun
