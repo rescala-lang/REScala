@@ -5,7 +5,6 @@ import kofre.Lattice.optionLattice
 import kofre.causality.{Causal, CausalContext}
 import kofre.Lattice.Operators
 
-
 /** Extends the Lattice typeclass with the ability to compare states through unique irredundant join decomposition */
 trait UIJDLattice[A] extends Lattice[A] {
   def leq(left: A, right: A): Boolean
@@ -21,6 +20,7 @@ trait UIJDLattice[A] extends Lattice[A] {
   def bottom: A
 }
 
+/** reuse existing lattice instance to implement a UIJDLattice */
 trait UIJDFromLattice[A](using lattice: Lattice[A]) extends UIJDLattice[A] {
   export lattice.merge
 }
@@ -105,20 +105,13 @@ object UIJDLattice {
       override def bottom: (A, B, C) = (UIJDLattice[A].bottom, UIJDLattice[B].bottom, UIJDLattice[C].bottom)
     }
 
-  def AtomicLattice[A]: Lattice[A] = (left, right) =>
-    if (left == right) {
-      left
-    } else {
-      throw new UnsupportedOperationException(s"Can't merge atomic type A, left: $left, right: $right")
-    }
-
-  def AtomicUIJDLattice[A]: UIJDLattice[A] = new UIJDFromLattice[A](using AtomicLattice) {
+  def AtomicUIJDLattice[A]: UIJDLattice[A] = new UIJDLattice[A] {
     override def leq(left: A, right: A): Boolean = false
-
     override def decompose(state: A): Iterable[A] = List(state)
-
     override def bottom: A = throw new UnsupportedOperationException("Can't compute bottom of atomic type A")
-
+    override def merge(left: A, right: A): A =
+      if left == right then left
+      else throw new UnsupportedOperationException(s"Can't merge atomic type A, left: $left, right: $right")
   }
 
   given causalLattice[D: DotStore]: Lattice[Causal[D]] = (left, right) =>
