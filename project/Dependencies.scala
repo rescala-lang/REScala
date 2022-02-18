@@ -20,6 +20,7 @@ object Dependencies {
     val jline                    = "2.14.6"
     val jodaConvert              = "2.2.1"
     val jodaTime                 = "2.10.3"
+    val jol                      = "0.16"
     val jsoniterScalaCore        = "2.13.3"
     val jsoup                    = "1.14.3"
     val jsr166y                  = "1.7.0"
@@ -62,6 +63,7 @@ object Dependencies {
   val jline           = Def.setting("jline" % "jline" % V.jline)
   val jodaConvert     = Def.setting("org.joda" % "joda-convert" % V.jodaConvert)
   val jodaTime        = Def.setting("joda-time" % "joda-time" % V.jodaTime)
+  val jol             = Def.setting("org.openjdk.jol" % "jol-core" % V.jol)
   val jsoup           = Def.setting("org.jsoup" % "jsoup" % V.jsoup)
   val jsr166y         = Def.setting("org.codehaus.jsr166-mirror" % "jsr166y" % V.jsr166y)
   val kaleidoscope    = Def.setting("com.propensive" %%% "kaleidoscope" % V.kaleidoscope)

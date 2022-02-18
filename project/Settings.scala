@@ -130,4 +130,9 @@ object Settings {
       publishLocal      := (if (`is 2.13`(scalaVersion.value)) publishLocal.value else {})
     )
 
+  val jolSettings = Seq(
+    javaOptions += "-Djdk.attach.allowAttachSelf",
+    fork := true,
+    libraryDependencies += Dependencies.jol.value
+  )
 }

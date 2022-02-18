@@ -304,9 +304,10 @@ lazy val microbench = project.in(file("Code/Microbenchmarks"))
     name := "microbenchmarks",
     cfg.base,
     noPublish,
-    (Compile / mainClass) := Some("org.openjdk.jmh.Main"),
+    //(Compile / mainClass) := Some("org.openjdk.jmh.Main"),
     libraryDependencies ++= circeAll.value :+ catsCollection.value :+ upickle.value,
     libraryDependencies ++= jsoniterScalaAll.value,
+    jolSettings,
     TaskKey[Unit]("compileJmh") := Seq(pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh / compile).dependOn.value
   )
   .enablePlugins(JavaAppPackaging)
