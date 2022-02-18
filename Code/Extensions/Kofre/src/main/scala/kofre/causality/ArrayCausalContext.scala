@@ -2,7 +2,7 @@ package kofre.causality
 
 import kofre.IdUtil.{Id, Time}
 import kofre.Lattice
-import kofre.causality.impl.{ArrayRanges}
+import kofre.causality.impl.ArrayRanges
 
 case class ArrayCausalContext(internal: Map[Id, ArrayRanges]) {
 
