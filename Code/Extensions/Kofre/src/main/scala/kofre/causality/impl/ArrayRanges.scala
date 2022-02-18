@@ -8,17 +8,17 @@ import kofre.Lattice
 
 import scala.collection.IndexedSeqView
 
-case class ArrayRanges(inner: Array[Time]) {
+case class ArrayRanges(inner: Array[Time], used: Int) {
 
   override def equals(obj: Any): Boolean = obj match
-    case ar: ArrayRanges => inner.sameElements(ar.inner)
+    case ar: ArrayRanges => inner.iterator.take(used).sameElements(ar.inner.iterator.take(ar.used))
 
-  override def toString: String = s"ArrayRanges(${inner.toSeq.toString()})"
+  override def toString: String = s"ArrayRanges(${inner.toSeq.take(used).toString()})"
 
   def contains(x: Time): Boolean = {
-    val res = java.util.Arrays.binarySearch(inner, x)
+    val res = java.util.Arrays.binarySearch(inner, 0, used, x)
     val pos = if res < 0 then -res - 1 else res
-    if pos >= inner.size then false
+    if pos >= used then false
     else if pos % 2 == 0
     // found a start
     then inner(pos) == x
@@ -27,20 +27,20 @@ case class ArrayRanges(inner: Array[Time]) {
   }
 
   def add(x: Time): ArrayRanges =
-    merge(new ArrayRanges(Array(x, x + 1)))
+    merge(new ArrayRanges(Array(x, x + 1), 2))
 
-  def next: Option[Time] = inner.lastOption
+  def next: Option[Time] = Option.when(used != 0)(inner(used - 1))
 
   def iterator: Iterator[Time] = new Iterator[Time] {
     var pos = 0
-    var value = if inner.isEmpty then 0 else inner(pos)
-    override def hasNext: Boolean = inner.sizeIs > pos
+    var value = if used == 0 then 0 else inner(0)
+    override def hasNext: Boolean = used > pos
     override def next(): Time =
       val res = value
       value += 1
       if value >= inner(pos + 1) then
         pos += 2
-        if inner.sizeIs > pos then
+        if used > pos then
           value = inner(pos)
       res
   }
@@ -50,7 +50,7 @@ case class ArrayRanges(inner: Array[Time]) {
     var rightPos = 0
     var mergedPos = 0
 
-    val merged = new Array[Time](inner.size + other.inner.size)
+    val merged = new Array[Time](used + other.used)
 
     inline def write(t: Time): Unit =
       merged(mergedPos) = t
@@ -61,8 +61,8 @@ case class ArrayRanges(inner: Array[Time]) {
     inline def rstart = other.inner(rightPos)
     inline def rend   = other.inner(rightPos + 1)
 
-    inline def lok = leftPos < inner.size
-    inline def rok = rightPos < other.inner.size
+    inline def lok = leftPos < used
+    inline def rok = rightPos < other.used
 
     def findNextRange(): Unit =
       var (curStart, minEnd) =
@@ -85,20 +85,20 @@ case class ArrayRanges(inner: Array[Time]) {
 
     while (rok || lok) do findNextRange()
 
-    new ArrayRanges(merged.slice(0, mergedPos))
+    new ArrayRanges(merged, mergedPos)
 
   }
 
   override def hashCode(): Int = {
-    inner.hashCode()
+    inner.take(used).hashCode()
   }
 }
 
 object ArrayRanges {
-  val empty: ArrayRanges = new ArrayRanges(Array.empty[Time])
+  val empty: ArrayRanges = new ArrayRanges(Array.empty[Time], 0)
   def apply(elements: Seq[(Time, Time)]): ArrayRanges =
     val content = elements.flatMap(t => Iterable(t._1, t._2)).toArray
-    new ArrayRanges(content)
+    new ArrayRanges(content, content.length)
 
   // this is horrible in performance, please fix
   def from(it: Iterator[Time]): ArrayRanges =

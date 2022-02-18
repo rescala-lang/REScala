@@ -99,7 +99,7 @@ object Codecs {
   implicit val itRangeCodec: upickle.default.ReadWriter[IntTree.Range]   = upickle.default.macroRW
   implicit val itTreeCodec: upickle.default.ReadWriter[IntTree.Tree]     = upickle.default.macroRW
 
-  implicit val arrayRangesCodec: upickle.default.ReadWriter[ArrayRanges] = implicitly[upickle.default.ReadWriter[Array[Long]]].bimap(_.inner.toArray, a => new ArrayRanges(a))
+  implicit val arrayRangesCodec: upickle.default.ReadWriter[ArrayRanges] = upickle.default.macroRW
   implicit val contextCodec: upickle.default.ReadWriter[CausalContext]   = upickle.default.macroRW
 
   implicit val awsOUJsonCodec: upickle.default.ReadWriter[AddWinsSetO[String]] = upickle.default.macroRW
