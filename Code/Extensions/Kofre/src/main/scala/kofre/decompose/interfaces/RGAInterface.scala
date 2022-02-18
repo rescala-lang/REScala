@@ -1,11 +1,12 @@
 package kofre.decompose.interfaces
 
-import kofre.causality.{CausalStore, CausalContext, Dot}
+import kofre.causality.{CausalContext, Dot}
 import kofre.decompose.*
 import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
 import kofre.decompose.DotStore.{DotFun, DotLess, DotPair}
 import kofre.decompose.interfaces.ForcedWriteInterface.ForcedWriteAsUIJDLattice
 import kofre.decompose.interfaces.GListInterface.GListAsUIJDLattice
+import kofre.dotbased.CausalStore
 
 object RGAInterface {
 

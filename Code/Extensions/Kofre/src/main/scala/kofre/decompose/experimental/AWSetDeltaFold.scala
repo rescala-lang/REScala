@@ -1,8 +1,9 @@
 package kofre.decompose.experimental
 
-import kofre.causality.{CausalStore, CausalContext}
+import kofre.causality.CausalContext
 import kofre.decompose.DotStore.{DotMap, DotSet}
 import kofre.decompose.interfaces.AWSetInterface
+import kofre.dotbased.CausalStore
 
 class AWSetDeltaFold[E, B](acc: B, onAdd: (B, E) => B, onRemove: (B, E) => B) {
   type C = CausalContext

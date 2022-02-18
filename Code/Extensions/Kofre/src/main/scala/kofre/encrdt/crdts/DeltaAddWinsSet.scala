@@ -1,11 +1,10 @@
 package kofre.encrdt.crdts
 
 import kofre.Lattice
-import kofre.dotbased.DotStore
+import kofre.dotbased.{CausalStore, DotStore}
 import kofre.dotbased.DotStore.{DotMap, DotSet}
-import kofre.causality.{CausalContext, CausalStore}
+import kofre.causality.CausalContext
 import kofre.encrdt.crdts.DeltaAddWinsSet.DeltaAddWinsSetLattice
-import kofre.causality.CausalStore
 
 class DeltaAddWinsSet[E](
     val replicaId: String,

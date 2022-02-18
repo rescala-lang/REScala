@@ -1,9 +1,9 @@
 package kofre.decompose
 
 import kofre.Lattice
-import kofre.Lattice.optionLattice
-import kofre.causality.{CausalStore, CausalContext}
-import kofre.Lattice.Operators
+import kofre.Lattice.{Operators, mapLattice, optionLattice, setLattice}
+import kofre.causality.CausalContext
+import kofre.dotbased.CausalStore
 
 /** Extends the Lattice typeclass with the ability to compare states through unique irredundant join decomposition */
 trait UIJDLattice[A] extends Lattice[A] {
@@ -39,13 +39,13 @@ object UIJDLattice {
     override def bottom: Int                          = 0
   }
 
-  implicit def SetAsUIJDLattice[A]: UIJDLattice[Set[A]] = new UIJDFromLattice[Set[A]] {
+  implicit def SetAsUIJDLattice[A]: UIJDLattice[Set[A]] = new UIJDFromLattice[Set[A]](using setLattice) {
     override def leq(left: Set[A], right: Set[A]): Boolean  = left subsetOf right
     override def decompose(state: Set[A]): Iterable[Set[A]] = state.map(Set(_))
     override def bottom: Set[A]                             = Set.empty[A]
   }
 
-  implicit def OptionAsUIJDLattice[A: UIJDLattice]: UIJDLattice[Option[A]] = new UIJDFromLattice[Option[A]] {
+  implicit def OptionAsUIJDLattice[A: UIJDLattice]: UIJDLattice[Option[A]] = new UIJDFromLattice[Option[A]](using optionLattice) {
     override def leq(left: Option[A], right: Option[A]): Boolean = (left, right) match {
       case (None, _)          => true
       case (Some(_), None)    => false
@@ -60,7 +60,7 @@ object UIJDLattice {
     override def bottom: Option[A] = Option.empty[A]
   }
 
-  implicit def MapAsUIJDLattice[K, V: UIJDLattice]: UIJDLattice[Map[K, V]] = new UIJDFromLattice[Map[K, V]] {
+  implicit def MapAsUIJDLattice[K, V: UIJDLattice]: UIJDLattice[Map[K, V]] = new UIJDFromLattice[Map[K, V]](using mapLattice) {
     override def leq(left: Map[K, V], right: Map[K, V]): Boolean =
       left.keySet.forall { k =>
         left.get(k) leq right.get(k)
@@ -76,7 +76,7 @@ object UIJDLattice {
     override def bottom: Map[K, V] = Map.empty[K, V]
   }
 
-  implicit def PairAsUIJDLattice[A: UIJDLattice, B: UIJDLattice]: UIJDLattice[(A, B)] = new UIJDFromLattice[(A, B)] {
+  implicit def PairAsUIJDLattice[A: UIJDLattice, B: UIJDLattice]: UIJDLattice[(A, B)] = new UIJDFromLattice[(A, B)](using Lattice.derived) {
     override def bottom: (A, B) = (UIJDLattice[A].bottom, UIJDLattice[B].bottom)
 
     override def leq(left: (A, B), right: (A, B)): Boolean = (left, right) match {
@@ -93,7 +93,7 @@ object UIJDLattice {
   }
 
   implicit def TripleAsUIJDLattice[A: UIJDLattice, B: UIJDLattice, C: UIJDLattice]: UIJDLattice[(A, B, C)] =
-    new UIJDFromLattice[(A, B, C)] {
+    new UIJDFromLattice[(A, B, C)](using Lattice.derived) {
       override def leq(left: (A, B, C), right: (A, B, C)): Boolean = (left, right) match {
         case ((la, lb, lc), (ra, rb, rc)) =>
           (la leq ra) && (lb leq rb) && (lc leq rc)
@@ -124,7 +124,7 @@ object UIJDLattice {
     val ccMerged = left.context merge right.context
     CausalStore[D](dsMerged, ccMerged)
 
-  implicit def CausalAsUIJDLattice[D: DotStore]: UIJDLattice[CausalStore[D]] = new UIJDFromLattice[CausalStore[D]] {
+  implicit def CausalAsUIJDLattice[D: DotStore]: UIJDLattice[CausalStore[D]] = new UIJDFromLattice[CausalStore[D]](using causalLattice) {
     override def leq(left: CausalStore[D], right: CausalStore[D]): Boolean = DotStore[D].leq(left, right)
 
     /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */

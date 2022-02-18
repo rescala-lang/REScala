@@ -5,8 +5,8 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import kofre.dotbased.DotStore.*
 import kofre.causality.CausalContext
-import kofre.causality.{CausalStore, Dot}
-import kofre.dotbased.DotStore
+import kofre.causality.Dot
+import kofre.dotbased.{CausalStore, DotStore}
 
 object DotSetGenerator {
   implicit val genDot: Arbitrary[Dot] = Arbitrary(for {

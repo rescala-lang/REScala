@@ -9,7 +9,7 @@ import kofre.decompose.interfaces.GListInterface.{Elem, GListNode}
 import kofre.decompose.interfaces.RGAInterface.RGANode
 import kofre.decompose.{LexPair, TimedVal}
 import kofre.causality.{CausalContext, Dot}
-import kofre.causality.CausalStore
+import kofre.dotbased.CausalStore
 
 object JsoniterCodecs {
 

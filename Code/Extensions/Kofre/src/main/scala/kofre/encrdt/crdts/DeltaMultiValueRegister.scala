@@ -1,7 +1,7 @@
 package kofre.encrdt.crdts
 import kofre.Lattice
-import kofre.causality.{CausalStore, CausalContext}
-import kofre.dotbased.DotStore
+import kofre.causality.CausalContext
+import kofre.dotbased.{CausalStore, DotStore}
 import kofre.dotbased.DotStore.DotFun
 
 

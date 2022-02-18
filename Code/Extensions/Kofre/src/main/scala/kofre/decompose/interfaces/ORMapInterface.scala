@@ -1,9 +1,10 @@
 package kofre.decompose.interfaces
 
-import kofre.causality.{CausalStore, CausalContext, Dot}
+import kofre.causality.{CausalContext, Dot}
 import kofre.decompose.*
 import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
 import kofre.decompose.DotStore.*
+import kofre.dotbased.CausalStore
 
 object ORMapInterface {
   type State[K, V] = CausalStore[DotMap[K, V]]

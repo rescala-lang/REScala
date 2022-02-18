@@ -1,9 +1,10 @@
 package kofre.decompose.interfaces
 
-import kofre.causality.{CausalStore, CausalContext}
+import kofre.causality.CausalContext
 import kofre.decompose.*
 import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
 import kofre.decompose.DotStore.*
+import kofre.dotbased.CausalStore
 
 object RCounterInterface {
   type C = CausalContext

@@ -2,7 +2,7 @@ package kofre.dotbased
 
 import kofre.IdUtil.Id
 import kofre.dotbased.DotStore.*
-import kofre.causality.{CausalStore, CausalContext, Dot}
+import kofre.causality.{CausalContext, Dot}
 import kofre.dotbased.AddWinsSet
 import kofre.{IdUtil, Lattice}
 

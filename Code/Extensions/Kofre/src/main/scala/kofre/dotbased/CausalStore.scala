@@ -1,14 +1,11 @@
-package kofre.causality
+package kofre.dotbased
 
 import kofre.Lattice
-import kofre.causality.CausalContext
-import kofre.dotbased.DotStore.{DotFun, DotMap, DotSet}
-import kofre.causality.CausalStore
+import kofre.causality.{CausalContext, Dot}
 import kofre.dotbased.DotStore
+import kofre.dotbased.DotStore.{DotFun, DotMap, DotSet}
 
 case class CausalStore[A](store: A, context: CausalContext)
-
-
 
 // See: Delta state replicated data types (https://doi.org/10.1016/j.jpdc.2017.08.003)
 object CausalStore {

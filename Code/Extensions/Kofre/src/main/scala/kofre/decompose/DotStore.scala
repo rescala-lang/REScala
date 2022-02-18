@@ -1,7 +1,8 @@
 package kofre.decompose
 
 import kofre.Lattice
-import kofre.causality.{CausalStore, CausalContext, Dot}
+import kofre.causality.{CausalContext, Dot}
+import kofre.dotbased.CausalStore
 
 /** DotStore is the typeclass trait for dot stores, data structures that are part of causal CRDTs and make use of dots to
   * track causality.

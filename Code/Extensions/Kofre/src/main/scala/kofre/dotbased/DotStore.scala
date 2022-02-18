@@ -2,16 +2,16 @@ package kofre.dotbased
 
 import kofre.IdUtil.Id
 import kofre.Lattice
-import kofre.causality.{CausalStore, CausalContext, Dot}
+import kofre.causality.{CausalContext, Dot}
 
 /** Dot stores provide a generic way to merge datastructures,
   * implemented on top of one of the provided dot stores.
   * See: Delta state replicated data types (https://doi.org/10.1016/j.jpdc.2017.08.003)
   *
-  * A dot store seems to essentially be a of different causal instances,
-  * with some bonus operations
+  * A dot store seems to essentially be a lattice of different causal instances,
+  * with some bonus operations. But not quite.
   */
-trait DotStore[Store] extends Lattice[CausalStore[Store]] {
+trait DotStore[Store] {
   def add(a: Store, d: Dot): Store
 
   def dots(a: Store): Set[Dot]
