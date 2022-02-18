@@ -100,7 +100,7 @@ class DietMapCContextTest extends AnyFreeSpec with ScalaCheckDrivenPropertyCheck
         case Some(Dot(_, c)) =>
           assert(
             nd.time == c + 1,
-            s"DietMapCContext.nextDot should return a dot whose counter is 1 higher than that of DietMapCContext.max, but ${nd.time} does not equal $c + 1"
+            s"DietMapCContext.nextDot should return a dot whose counter is 1 higher than that of DietMapCContext.max, but ${nd.time} does not equal $c + 1 (cc is $cc)"
           )
         case None =>
           assert(

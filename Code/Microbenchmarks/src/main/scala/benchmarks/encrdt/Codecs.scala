@@ -5,8 +5,6 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodec
 import kofre.causality.Dot
 import kofre.encrdt.crdts.{AddWinsLastWriterWinsMap, DeltaAddWinsLastWriterWinsMap}
 
-import rescala.extra.lattices.delta.JsoniterCodecs.ArrayRangesCodec
-
 import java.time.Instant
 
 object Codecs {

@@ -50,7 +50,7 @@ case class ArrayCausalContext(internal: Map[Id, ArrayRanges]) {
     internal.flatMap((key, tree) => tree.iterator.map(time => Dot(key, time))).toSet
 
   def max(replicaID: String): Option[Dot] =
-    internal.get(replicaID).flatMap(_.next.map(Dot(replicaID, _)))
+    internal.get(replicaID).flatMap(_.next.map(c => Dot(replicaID, c - 1)))
 
   def decompose(exclude: Dot => Boolean): Iterable[ArrayCausalContext] =
     internal.flatMap { (id, tree) =>

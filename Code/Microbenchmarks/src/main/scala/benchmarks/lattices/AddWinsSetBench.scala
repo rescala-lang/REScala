@@ -7,8 +7,6 @@ import kofre.causality.{CausalContext, Dot}
 import kofre.causality.impl.{ArrayRanges, IntTree}
 import kofre.{IdUtil, Lattice}
 
-import rescala.extra.lattices.delta.JsoniterCodecs.ArrayRangesCodec
-
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @Warmup(iterations = 3, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
@@ -101,7 +99,7 @@ object Codecs {
   implicit val itRangeCodec: upickle.default.ReadWriter[IntTree.Range]   = upickle.default.macroRW
   implicit val itTreeCodec: upickle.default.ReadWriter[IntTree.Tree]     = upickle.default.macroRW
 
-  implicit val arrayRangesCodec: upickle.default.ReadWriter[ArrayRanges] = implicitly[upickle.default.ReadWriter[Array[Long]]].bimap(_.inner.toArray, a => new ArrayRanges(a.view))
+  implicit val arrayRangesCodec: upickle.default.ReadWriter[ArrayRanges] = implicitly[upickle.default.ReadWriter[Array[Long]]].bimap(_.inner.toArray, a => new ArrayRanges(a))
   implicit val contextCodec: upickle.default.ReadWriter[CausalContext]   = upickle.default.macroRW
 
   implicit val awsOUJsonCodec: upickle.default.ReadWriter[AddWinsSetO[String]] = upickle.default.macroRW

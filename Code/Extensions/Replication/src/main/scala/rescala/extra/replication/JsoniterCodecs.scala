@@ -10,7 +10,6 @@ import kofre.decompose.interfaces.RGAInterface.RGANode
 import kofre.decompose.{LexPair, TimedVal}
 import kofre.causality.{CausalContext, Dot}
 import kofre.causality.Causal
-import kofre.causality.impl.ArrayRanges
 
 object JsoniterCodecs {
 
@@ -48,17 +47,6 @@ object JsoniterCodecs {
     }
 
     override def nullValue: Diet[Long] = null
-  }
-
-  val arrayCodec: JsonValueCodec[Array[Long]] = JsonCodecMaker.make
-
-  implicit val ArrayRangesCodec: JsonValueCodec[ArrayRanges] = new JsonValueCodec[ArrayRanges] {
-    override def decodeValue(in: JsonReader, default: ArrayRanges): ArrayRanges =
-      new ArrayRanges(arrayCodec.decodeValue(in, default.inner.toArray).view)
-
-    override def encodeValue(x: ArrayRanges, out: JsonWriter): Unit = arrayCodec.encodeValue(x.inner.toArray, out)
-
-    override def nullValue: ArrayRanges = null
   }
 
   implicit val intTreeCContextCodec: JsonValueCodec[CausalContext] =

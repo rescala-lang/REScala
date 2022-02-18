@@ -7,15 +7,16 @@ import kofre.IdUtil.Time
 import kofre.Lattice
 
 import scala.collection.IndexedSeqView
-import scala.collection.immutable.NumericRange
 
-case class ArrayRanges(inner: IndexedSeqView[Time]) {
+case class ArrayRanges(inner: Array[Time]) {
 
   override def equals(obj: Any): Boolean = obj match
     case ar: ArrayRanges => inner.sameElements(ar.inner)
 
+  override def toString: String = s"ArrayRanges(${inner.toSeq.toString()})"
+
   def contains(x: Time): Boolean = {
-    val res = inner.search(x).insertionPoint
+    val res = java.util.Arrays.binarySearch(inner, x)
     val pos = if res < 0 then -res - 1 else res
     if pos >= inner.size then false
     else if pos % 2 == 0
@@ -26,7 +27,7 @@ case class ArrayRanges(inner: IndexedSeqView[Time]) {
   }
 
   def add(x: Time): ArrayRanges =
-    merge(new ArrayRanges(Array(x, x + 1).view))
+    merge(new ArrayRanges(Array(x, x + 1)))
 
   def next: Option[Time] = inner.lastOption
 
@@ -84,7 +85,7 @@ case class ArrayRanges(inner: IndexedSeqView[Time]) {
 
     while (rok || lok) do findNextRange()
 
-    new ArrayRanges(merged.view.slice(0, mergedPos))
+    new ArrayRanges(merged.slice(0, mergedPos))
 
   }
 
@@ -94,10 +95,10 @@ case class ArrayRanges(inner: IndexedSeqView[Time]) {
 }
 
 object ArrayRanges {
-  val empty: ArrayRanges = new ArrayRanges(Array.empty[Time].view)
+  val empty: ArrayRanges = new ArrayRanges(Array.empty[Time])
   def apply(elements: Seq[(Time, Time)]): ArrayRanges =
     val content = elements.flatMap(t => Iterable(t._1, t._2)).toArray
-    new ArrayRanges(content.view)
+    new ArrayRanges(content)
 
   // this is horrible in performance, please fix
   def from(it: Iterator[Time]): ArrayRanges =
