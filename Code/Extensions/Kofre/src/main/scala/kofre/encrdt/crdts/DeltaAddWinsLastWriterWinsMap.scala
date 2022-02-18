@@ -5,7 +5,7 @@ import kofre.dotbased.DotStore
 import kofre.dotbased.DotStore.DotFun
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap.{DeltaAddWinsLastWriterWinsMapLattice, timestampedValueLattice}
 import kofre.encrdt.crdts.DeltaAddWinsMap.DeltaAddWinsMapLattice
-import kofre.encrdt.lattices.LastWriterWinsTagLattice.lwwLattice
+import scala.math.Ordering.Implicits.infixOrderingOps
 
 import java.time.Instant
 
@@ -23,10 +23,10 @@ class DeltaAddWinsLastWriterWinsMap[K, V](
 
   def get(key: K): Option[V] =
     _state.store
-          .getOrElse(key, Set.empty[(_, (V, (Instant, String)))])
-          .map(_._2)
-          .maxByOption(_._2)
-          .map(_._1)
+      .getOrElse(key, Set.empty[(_, (V, (Instant, String)))])
+      .map(_._2)
+      .maxByOption(_._2)
+      .map(_._1)
 
   def put(key: K, value: V): Unit =
     mutate(
@@ -73,10 +73,9 @@ object DeltaAddWinsLastWriterWinsMap {
   def bottom[K, V]: DeltaAddWinsLastWriterWinsMapLattice[K, V] =
     DeltaAddWinsMap.bottom[K, DotFun[(V, (Instant, String))]]
 
-  implicit def timestampedValueLattice[V]: Lattice[(V, (Instant, String))] = (left, right) => {
-    if (Lattice.merge(left._2, right._2) == left._2) left
-    else right
-  }
+  implicit def timestampedValueLattice[V](using Ordering[(Instant, String)]): Lattice[(V, (Instant, String))] = (left, right) =>
+    // note, this is incorrect when both are equal
+    if left._2 <= right._2 then right else left
 
   type StateType[K, V] = DeltaAddWinsMapLattice[K, DotFun[(V, (Instant, String))]]
 }
