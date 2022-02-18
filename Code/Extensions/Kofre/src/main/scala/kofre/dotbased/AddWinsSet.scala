@@ -2,7 +2,7 @@ package kofre.dotbased
 
 import kofre.IdUtil.Id
 import kofre.dotbased.DotStore.*
-import kofre.causality.{Causal, CausalContext, Dot}
+import kofre.causality.{CausalStore, CausalContext, Dot}
 import kofre.dotbased.AddWinsSet
 import kofre.{IdUtil, Lattice}
 
@@ -70,9 +70,9 @@ object AddWinsSet {
 
   /* AddWinsSet is isomorphic to the corresponding Causal */
 
-  implicit def toCausal[A](addWinsSet: AddWinsSet[A]): Causal[Map[A, Set[Dot]]] =
-    Causal(addWinsSet.store, addWinsSet.context)
-  implicit def fromCausal[A](causal: Causal[Map[A, Set[Dot]]]): AddWinsSet[A] =
+  implicit def toCausal[A](addWinsSet: AddWinsSet[A]): CausalStore[Map[A, Set[Dot]]] =
+    CausalStore(addWinsSet.store, addWinsSet.context)
+  implicit def fromCausal[A](causal: CausalStore[Map[A, Set[Dot]]]): AddWinsSet[A] =
     AddWinsSet(causal.store, causal.context)
 
   implicit def addWinsSetLattice[A]: Lattice[AddWinsSet[A]] =

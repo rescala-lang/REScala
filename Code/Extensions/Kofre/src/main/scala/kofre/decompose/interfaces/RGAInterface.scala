@@ -1,6 +1,6 @@
 package kofre.decompose.interfaces
 
-import kofre.causality.{Causal, CausalContext, Dot}
+import kofre.causality.{CausalStore, CausalContext, Dot}
 import kofre.decompose.*
 import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
 import kofre.decompose.DotStore.{DotFun, DotLess, DotPair}
@@ -36,7 +36,7 @@ object RGAInterface {
     }
   }
 
-  type State[E] = Causal[DotPair[ForcedWriteInterface.State[GListInterface.State[Dot]], DotFun[RGANode[E]]]]
+  type State[E] = CausalStore[DotPair[ForcedWriteInterface.State[GListInterface.State[Dot]], DotFun[RGANode[E]]]]
 
   trait RGACompanion {
     type State[E] = RGAInterface.State[E]
@@ -53,20 +53,20 @@ object RGAInterface {
               fw: ForcedWriteInterface.State[GListInterface.State[Dot]] = bottom.store._1,
               df: DotFun[RGANode[E]] = bottom.store._2,
               cc: C = bottom.context
-    ): State[E] = Causal((fw, df), cc)
+    ): State[E] = CausalStore((fw, df), cc)
   }
 
   private def deltaState[E]: DeltaStateFactory[E] = new DeltaStateFactory[E]
 
   def read[E](i: Int): DeltaQuery[State[E], Option[E]] = {
-    case Causal((fw, df), _) =>
+    case CausalStore((fw, df), _) =>
       GListInterface.toLazyList(fw.value).map(df).collect {
         case Alive(tv) => tv.value
       }.lift(i)
   }
 
   def size[E]: DeltaQuery[State[E], Int] = {
-    case Causal((_, df), _) =>
+    case CausalStore((_, df), _) =>
       df.values.count {
         case Dead()   => false
         case Alive(_) => true
@@ -74,18 +74,18 @@ object RGAInterface {
   }
 
   def toList[E]: DeltaQuery[State[E], List[E]] = {
-    case Causal((fw, df), _) =>
+    case CausalStore((fw, df), _) =>
       GListInterface.toList(fw.value).map(df).collect {
         case Alive(tv) => tv.value
       }
   }
 
   def sequence[E]: DeltaQuery[State[E], Long] = {
-    case Causal((fw, _), _) => fw.counter
+    case CausalStore((fw, _), _) => fw.counter
   }
 
   private def findInsertIndex[E](state: State[E], n: Int): Option[Int] = state match {
-    case Causal((fw, df), _) =>
+    case CausalStore((fw, df), _) =>
       GListInterface.toLazyList(fw.value).zip(LazyList.from(1)).filter {
         case (dot, _) => df(dot) match {
             case Alive(_) => true
@@ -95,7 +95,7 @@ object RGAInterface {
   }
 
   def insert[E](i: Int, e: E): DeltaMutator[State[E]] = {
-    case (replicaID, state @ Causal((fw, _), cc)) =>
+    case (replicaID, state @ CausalStore((fw, _), cc)) =>
       val nextDot = cc.nextDot(replicaID)
 
       findInsertIndex(state, i) match {
@@ -114,7 +114,7 @@ object RGAInterface {
   }
 
   def insertAll[E](i: Int, elems: Iterable[E]): DeltaMutator[State[E]] = {
-    case (replicaID, state @ Causal((fw, _), cc)) =>
+    case (replicaID, state @ CausalStore((fw, _), cc)) =>
       val nextDot = cc.nextDot(replicaID)
 
       val nextDots = List.iterate(nextDot, elems.size) {
@@ -138,7 +138,7 @@ object RGAInterface {
 
   private def updateRGANode[E](state: State[E], i: Int, newNode: RGANode[E]): State[E] =
     state match {
-      case Causal((fw, df), _) =>
+      case CausalStore((fw, df), _) =>
         GListInterface.toLazyList(fw.value).filter { dot =>
           df(dot) match {
             case Alive(_) => true
@@ -162,7 +162,7 @@ object RGAInterface {
       newNode: RGANode[E]
   ): State[E] =
     state match {
-      case Causal((_, df), _) =>
+      case CausalStore((_, df), _) =>
         val toUpdate = df.toList.collect {
           case (d, Alive(tv)) if cond(tv.value) => d
         }
@@ -180,7 +180,7 @@ object RGAInterface {
 
   def purgeTombstones[E](): DeltaMutator[State[E]] = (replicaID, state) =>
     state match {
-      case Causal((fw, df), _) =>
+      case CausalStore((fw, df), _) =>
         val toRemove = df.collect {
           case (dot, Dead()) => dot
         }.toSet
@@ -194,7 +194,7 @@ object RGAInterface {
     }
 
   def clear[E](): DeltaMutator[State[E]] = {
-    case (_, Causal(_, cc)) =>
+    case (_, CausalStore(_, cc)) =>
       deltaState[E].make(
         cc = cc
       )

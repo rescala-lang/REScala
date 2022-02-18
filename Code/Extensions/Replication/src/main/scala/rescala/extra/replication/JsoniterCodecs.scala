@@ -9,7 +9,7 @@ import kofre.decompose.interfaces.GListInterface.{Elem, GListNode}
 import kofre.decompose.interfaces.RGAInterface.RGANode
 import kofre.decompose.{LexPair, TimedVal}
 import kofre.causality.{CausalContext, Dot}
-import kofre.causality.Causal
+import kofre.causality.CausalStore
 
 object JsoniterCodecs {
 
@@ -54,7 +54,7 @@ object JsoniterCodecs {
 
   /** AWSet */
 
-  implicit def AWSetStateCodec[E: JsonValueCodec]: JsonValueCodec[Causal[Map[E, Set[Dot]]]] =
+  implicit def AWSetStateCodec[E: JsonValueCodec]: JsonValueCodec[CausalStore[Map[E, Set[Dot]]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   implicit def AWSetEmbeddedCodec[E: JsonValueCodec]: JsonValueCodec[Map[E, Set[Dot]]] =
@@ -62,7 +62,7 @@ object JsoniterCodecs {
 
   /** EWFlag */
 
-  implicit def EWFlagStateCodec: JsonValueCodec[Causal[Set[Dot]]] = JsonCodecMaker.make
+  implicit def EWFlagStateCodec: JsonValueCodec[CausalStore[Set[Dot]]] = JsonCodecMaker.make
 
   // implicit def EWFlagEmbeddedCodec: JsonValueCodec[Set[Dot]] = JsonCodecMaker.make
 
@@ -82,7 +82,7 @@ object JsoniterCodecs {
   /** LastWriterWins */
 
   implicit def LastWriterWinsStateCodec[A: JsonValueCodec]
-      : JsonValueCodec[Causal[Map[Dot, TimedVal[A]]]] =
+      : JsonValueCodec[CausalStore[Map[Dot, TimedVal[A]]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   implicit def LastWriterWinsEmbeddedCodec[A: JsonValueCodec]: JsonValueCodec[Map[Dot, TimedVal[A]]] =
@@ -94,7 +94,7 @@ object JsoniterCodecs {
 
   /** MVRegister */
 
-  implicit def MVRegisterStateCodec[A: JsonValueCodec]: JsonValueCodec[Causal[Map[Dot, A]]] =
+  implicit def MVRegisterStateCodec[A: JsonValueCodec]: JsonValueCodec[CausalStore[Map[Dot, A]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   implicit def MVRegisterEmbeddedCodec[A: JsonValueCodec]: JsonValueCodec[Map[Dot, A]] =
@@ -103,7 +103,7 @@ object JsoniterCodecs {
   /** ORMap */
 
   implicit def ORMapStateCodec[K: JsonValueCodec, V: JsonValueCodec]
-      : JsonValueCodec[Causal[Map[K, V]]] =
+      : JsonValueCodec[CausalStore[Map[K, V]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   implicit def ORMapEmbeddedCodec[K: JsonValueCodec, V: JsonValueCodec]: JsonValueCodec[Map[K, V]] =
@@ -115,7 +115,7 @@ object JsoniterCodecs {
 
   /** RCounter */
 
-  implicit def RCounterStateCodec: JsonValueCodec[Causal[Map[Dot, (Int, Int)]]] =
+  implicit def RCounterStateCodec: JsonValueCodec[CausalStore[Map[Dot, (Int, Int)]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   implicit def RCounterEmbeddedCodec: JsonValueCodec[Map[Dot, (Int, Int)]] =
@@ -124,13 +124,13 @@ object JsoniterCodecs {
   /** RGA */
 
   implicit def RGAStateCodec[E: JsonValueCodec]
-      : JsonValueCodec[Causal[(FW[Map[GListNode[TimedVal[Dot]], Elem[TimedVal[Dot]]]], Map[Dot, RGANode[E]])]] =
+      : JsonValueCodec[CausalStore[(FW[Map[GListNode[TimedVal[Dot]], Elem[TimedVal[Dot]]]], Map[Dot, RGANode[E]])]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   /** Rubis */
 
   implicit def RubisStateCodec: JsonValueCodec[(
-      Causal[Map[(String, String), Set[Dot]]],
+      CausalStore[Map[(String, String), Set[Dot]]],
       Map[String, String],
       Map[String, AuctionData]
   )] =

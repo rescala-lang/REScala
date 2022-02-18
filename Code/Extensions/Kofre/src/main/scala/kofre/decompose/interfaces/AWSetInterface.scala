@@ -1,12 +1,12 @@
 package kofre.decompose.interfaces
 
-import kofre.causality.{Causal, CausalContext, Dot}
+import kofre.causality.{CausalStore, CausalContext, Dot}
 import kofre.decompose.*
 import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
 import kofre.decompose.DotStore.*
 
 object AWSetInterface {
-  type State[E] = Causal[DotMap[E, DotSet]]
+  type State[E] = CausalStore[DotMap[E, DotSet]]
 
   trait AWSetCompanion {
     type State[E] = AWSetInterface.State[E]
@@ -19,17 +19,17 @@ object AWSetInterface {
     def make(
               dm: DotMap[E, DotSet] = bottom.store,
               cc: C = bottom.context
-    ): State[E] = Causal(dm, cc)
+    ): State[E] = CausalStore(dm, cc)
   }
 
   private def deltaState[E]: DeltaStateFactory[E] = new DeltaStateFactory[E]
 
   def elements[E]: DeltaQuery[State[E], Set[E]] = {
-    case Causal(dm, _) => dm.keySet
+    case CausalStore(dm, _) => dm.keySet
   }
 
   def add[E](e: E): DeltaMutator[State[E]] = {
-    case (replicaID, Causal(dm, cc)) =>
+    case (replicaID, CausalStore(dm, cc)) =>
       val nextDot = cc.max(replicaID).fold(Dot(replicaID, 0))(_.next)
       val v       = dm.getOrElse(e, DotSet.empty)
 
@@ -40,7 +40,7 @@ object AWSetInterface {
   }
 
   def addAll[E](elems: Iterable[E]): DeltaMutator[State[E]] = {
-    case (replicaID, Causal(dm, cc)) =>
+    case (replicaID, CausalStore(dm, cc)) =>
       val nextCounter = cc.nextTime(replicaID)
       val nextDots    = (nextCounter until nextCounter + elems.size).toSet.map(Dot(replicaID, _))
 
@@ -58,7 +58,7 @@ object AWSetInterface {
   }
 
   def remove[E](e: E): DeltaMutator[State[E]] = {
-    case (_, Causal(dm, _)) =>
+    case (_, CausalStore(dm, _)) =>
       val v = dm.getOrElse(e, DotSet.empty)
 
       deltaState[E].make(
@@ -67,7 +67,7 @@ object AWSetInterface {
   }
 
   def removeAll[E](elems: Iterable[E]): DeltaMutator[State[E]] = {
-    case (_, Causal(dm, _)) =>
+    case (_, CausalStore(dm, _)) =>
       val dotsToRemove = elems.foldLeft(Set.empty[Dot]) {
         case (dots, e) => dm.get(e) match {
             case Some(ds) => dots union ds
@@ -81,7 +81,7 @@ object AWSetInterface {
   }
 
   def removeBy[E](cond: E => Boolean): DeltaMutator[State[E]] = {
-    case (_, Causal(dm, _)) =>
+    case (_, CausalStore(dm, _)) =>
       val removedDots = dm.collect {
         case (k, v) if cond(k) => v
       }.foldLeft(DotSet.empty)(_ union _)
@@ -92,7 +92,7 @@ object AWSetInterface {
   }
 
   def clear[E](): DeltaMutator[State[E]] = {
-    case (_, Causal(dm, _)) =>
+    case (_, CausalStore(dm, _)) =>
       deltaState[E].make(
         cc = CausalContext.fromSet(DotMap[E, DotSet].dots(dm))
       )

@@ -1,6 +1,6 @@
 package kofre.decompose.experimental
 
-import kofre.causality.{Causal, CausalContext}
+import kofre.causality.{CausalStore, CausalContext}
 import kofre.decompose.DotStore.{DotMap, DotSet}
 import kofre.decompose.interfaces.AWSetInterface
 
@@ -8,7 +8,7 @@ class AWSetDeltaFold[E, B](acc: B, onAdd: (B, E) => B, onRemove: (B, E) => B) {
   type C = CausalContext
   def apply(currentState: AWSetInterface.State[E], deltaState: AWSetInterface.State[E]): AWSetDeltaFold[E, B] =
     deltaState match {
-      case Causal(dm, cc) =>
+      case CausalStore(dm, cc) =>
         val removedDots = cc.toSet diff DotMap[E, DotSet].dots(dm)
         val removedElems = removedDots.flatMap { dot =>
           currentState.store.collect {

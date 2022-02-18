@@ -1,6 +1,6 @@
 package kofre.decompose.interfaces
 
-import kofre.causality.{Causal, CausalContext}
+import kofre.causality.{CausalStore, CausalContext}
 import kofre.decompose.*
 import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
 import kofre.decompose.DotStore.*
@@ -27,7 +27,7 @@ object RCounterInterface {
     override def bottom: (Int, Int) = (0, 0)
   }
 
-  type State = Causal[DotFun[(Int, Int)]]
+  type State = CausalStore[DotFun[(Int, Int)]]
 
   trait RCounterCompanion {
     type State = RCounterInterface.State
@@ -40,14 +40,14 @@ object RCounterInterface {
   ): State = {
     val bottom = UIJDLattice[State].bottom
 
-    Causal(
+    CausalStore(
       df.getOrElse(bottom.store),
       cc
       )
   }
 
   def value: DeltaQuery[State, Int] = {
-    case Causal(df, _) =>
+    case CausalStore(df, _) =>
       df.values.foldLeft(0) {
         case (counter, (inc, dec)) => counter + inc - dec
       }
@@ -57,7 +57,7 @@ object RCounterInterface {
     * When using fresh after every time deltas are shipped to other replicas, increments/decrements win over concurrent resets
     */
   def fresh: DeltaMutator[State] = {
-    case (replicaID, Causal(_, cc)) =>
+    case (replicaID, CausalStore(_, cc)) =>
       val nextDot = cc.nextDot(replicaID)
 
       deltaState(
@@ -67,7 +67,7 @@ object RCounterInterface {
   }
 
   private def update(u: (Int, Int)): DeltaMutator[State] = {
-    case (replicaID, Causal(df, cc)) =>
+    case (replicaID, CausalStore(df, cc)) =>
       cc.max(replicaID) match {
         case Some(currentDot) if df.contains(currentDot) =>
           val newCounter = (df(currentDot), u) match {
@@ -93,7 +93,7 @@ object RCounterInterface {
   def decrement: DeltaMutator[State] = update((0, 1))
 
   def reset: DeltaMutator[State] = {
-    case (_, Causal(df, _)) =>
+    case (_, CausalStore(df, _)) =>
       deltaState(
         cc = CausalContext.fromSet(df.keySet)
       )

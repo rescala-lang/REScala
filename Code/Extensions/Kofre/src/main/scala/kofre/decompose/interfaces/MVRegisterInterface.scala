@@ -1,12 +1,12 @@
 package kofre.decompose.interfaces
 
-import kofre.causality.{Causal, CausalContext}
+import kofre.causality.{CausalStore, CausalContext}
 import kofre.decompose.*
 import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
 import kofre.decompose.DotStore.DotFun
 
 object MVRegisterInterface {
-  type State[A] = Causal[DotFun[A]]
+  type State[A] = CausalStore[DotFun[A]]
   type C = CausalContext
 
   trait MVRegisterCompanion {
@@ -20,17 +20,17 @@ object MVRegisterInterface {
     def make(
               df: DotFun[A] = bottom.store,
               cc: CausalContext = bottom.context
-    ): State[A] = Causal(df, cc)
+    ): State[A] = CausalStore(df, cc)
   }
 
   private def deltaState[A: UIJDLattice]: DeltaStateFactory[A] = new DeltaStateFactory[A]
 
   def read[A: UIJDLattice]: DeltaQuery[State[A], Set[A]] = {
-    case Causal(df, _) => df.values.toSet
+    case CausalStore(df, _) => df.values.toSet
   }
 
   def write[A: UIJDLattice](v: A): DeltaMutator[State[A]] = {
-    case (replicaID, Causal(df, cc)) =>
+    case (replicaID, CausalStore(df, cc)) =>
       val nextDot = cc.nextDot(replicaID)
 
       deltaState.make(
@@ -40,7 +40,7 @@ object MVRegisterInterface {
   }
 
   def clear[A: UIJDLattice](): DeltaMutator[State[A]] = {
-    case (_, Causal(df, _)) =>
+    case (_, CausalStore(df, _)) =>
       deltaState.make(
         cc = CausalContext.fromSet(df.keySet)
       )
