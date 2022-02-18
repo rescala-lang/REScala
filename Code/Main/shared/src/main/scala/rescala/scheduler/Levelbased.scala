@@ -1,7 +1,7 @@
 package rescala.scheduler
 
 import java.util.PriorityQueue
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.ListBuffer
 
 trait Levelbased extends Twoversion {
 
@@ -24,7 +24,7 @@ trait Levelbased extends Twoversion {
   trait LevelBasedTransaction extends TwoVersionTransactionImpl with LevelQueue.Evaluator with Initializer {
 
     /** Stores all active reactives in case we create more later and need to reevaluate them. */
-    private val _propagating: ArrayBuffer[ReSource] = ArrayBuffer[ReSource]()
+    private val _propagating: ListBuffer[ReSource] = ListBuffer[ReSource]()
 
     lazy val levelQueue = new LevelQueue(this)
 
@@ -51,7 +51,7 @@ trait Levelbased extends Twoversion {
       }
     }
 
-    private def enqueueOutgoing(head: ReSource, minLevel: Int): ArrayBuffer[ReSource] = {
+    private def enqueueOutgoing(head: ReSource, minLevel: Int): Unit = {
       head.state.outgoing.foreach(levelQueue.enqueue(minLevel))
       _propagating += head
     }

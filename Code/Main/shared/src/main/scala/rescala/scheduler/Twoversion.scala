@@ -2,7 +2,7 @@ package rescala.scheduler
 
 import rescala.core.Core
 
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.ListBuffer
 import scala.util.control.NonFatal
 
 case class Token()
@@ -143,15 +143,13 @@ trait Twoversion extends Core {
 
   /** Basic implementation of the most fundamental propagation steps as defined by AbstractPropagation.
     * Only compatible with spore definitions that store a pulse value and support graph operations.
-    *
-    * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
     */
   trait TwoVersionTransactionImpl extends TwoVersionTransaction {
 
     val token: Token = Token()
 
-    val toCommit  = ArrayBuffer[ReSource]()
-    val observers = ArrayBuffer[Observation]()
+    val toCommit  = ListBuffer[ReSource]()
+    val observers = ListBuffer[Observation]()
 
     override def schedule(commitable: ReSource): Unit = toCommit += commitable
 
