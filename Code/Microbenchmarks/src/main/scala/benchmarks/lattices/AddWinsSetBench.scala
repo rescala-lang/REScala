@@ -3,9 +3,11 @@ package benchmarks.lattices
 import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
 import kofre.dotbased.{AddWinsSet, AddWinsSetO}
-import kofre.causality.{Dot, CausalContext}
-import kofre.causality.impl.{IntTree, ArrayRanges}
+import kofre.causality.{CausalContext, Dot}
+import kofre.causality.impl.{ArrayRanges, IntTree}
 import kofre.{IdUtil, Lattice}
+
+import rescala.extra.lattices.delta.JsoniterCodecs.ArrayRangesCodec
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -98,7 +100,8 @@ object Codecs {
   implicit val dotUJsonCodec: upickle.default.ReadWriter[Dot]            = upickle.default.macroRW
   implicit val itRangeCodec: upickle.default.ReadWriter[IntTree.Range]   = upickle.default.macroRW
   implicit val itTreeCodec: upickle.default.ReadWriter[IntTree.Tree]     = upickle.default.macroRW
-  implicit val arrayRangesCodec: upickle.default.ReadWriter[ArrayRanges] = upickle.default.macroRW
+
+  implicit val arrayRangesCodec: upickle.default.ReadWriter[ArrayRanges] = implicitly[upickle.default.ReadWriter[Array[Long]]].bimap(_.inner.toArray, a => new ArrayRanges(a.view))
   implicit val contextCodec: upickle.default.ReadWriter[CausalContext]   = upickle.default.macroRW
 
   implicit val awsOUJsonCodec: upickle.default.ReadWriter[AddWinsSetO[String]] = upickle.default.macroRW
