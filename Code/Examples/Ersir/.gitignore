@@ -1,6 +1,0 @@
-*.sublime-project
-*.sublime-workspace
-.idea/
-target/
-Uclist.pm
-log.txt

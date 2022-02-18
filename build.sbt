@@ -85,14 +85,15 @@ lazy val examples = project.in(file("Code/Examples/examples"))
     cfg.base,
     noPublish,
     libraryDependencies ++= Seq(
-      scalaXml.value,
-      scalaSwing.value
+      "org.scala-lang.modules" %% "scala-xml"   % "1.3.0",
+      "org.scala-lang.modules" %% "scala-swing" % "3.0.0"
     )
   )
 
 lazy val universe = project.in(file("Code/Examples/Universe"))
   .dependsOn(rescalaJVM)
-  .settings(cfg.base, noPublish, name := "rescala-universe", libraryDependencies += scalaParallelCollections.value)
+  .settings(cfg.base, noPublish, name := "rescala-universe",
+            libraryDependencies += "org.scala-lang.modules" %% "scala-parallel-collections" % "1.0.0")
   .enablePlugins(JavaAppPackaging)
 
 lazy val todolist = project.in(file("Code/Examples/Todolist"))
@@ -155,60 +156,6 @@ lazy val consistentCalendar = project.in(file("Code/Examples/ConsistentCalendar"
       loci.jsoniterScala.value,
     ),
   )
-
-lazy val ersirServer = project.in(file("Code/Examples/Ersir/server"))
-  .settings(
-    name := "server",
-    fork := true,
-    cfg.base,
-    libraryDependencies ++= Seq(
-      jsoup.value,
-      betterFiles.value,
-      decline.value,
-      loci.wsAkka.value,
-    ),
-    vbundleDef,
-    (Compile / compile) := ((Compile / compile) dependsOn vbundle).value
-  )
-  .enablePlugins(JavaServerAppPackaging)
-  .dependsOn(ersirSharedJVM)
-  .dependsOn(rescalaJVM)
-
-lazy val ersirWeb = project.in(file("Code/Examples/Ersir/web"))
-  .enablePlugins(ScalaJSPlugin)
-  .settings(
-    name := "web",
-    cfg.base,
-    libraryDependencies ++= Seq(
-      scalajsDom.value,
-      normalizecss.value,
-      loci.wsWeb.value,
-    ),
-    scalaJSUseMainModuleInitializer := true,
-    webpackBundlingMode             := BundlingMode.LibraryOnly()
-  )
-  .dependsOn(ersirSharedJS)
-  .enablePlugins(SbtSassify)
-  .enablePlugins(ScalaJSBundlerPlugin)
-  .dependsOn(rescalaJS)
-
-lazy val ersirShared = crossProject(JSPlatform, JVMPlatform)
-  .crossType(CrossType.Pure).in(file("Code/Examples/Ersir/shared"))
-  .settings(
-    name := "shared",
-    cfg.base,
-    libraryDependencies ++= circeAll.value ++ akkaHttpAll.value ++ jsoniterScalaAll.value ++ Seq(
-      scalatags.value,
-      loci.communication.value,
-      scribe.value,
-      loci.circe.value,
-      catsCollection.value,
-    )
-  )
-  .dependsOn(rescala)
-  .dependsOn(replication)
-lazy val ersirSharedJVM = ersirShared.jvm
-lazy val ersirSharedJS  = ersirShared.js
 
 // =====================================================================================
 // Extensions
@@ -304,7 +251,7 @@ lazy val microbench = project.in(file("Code/Microbenchmarks"))
     name := "microbenchmarks",
     cfg.base,
     noPublish,
-    //(Compile / mainClass) := Some("org.openjdk.jmh.Main"),
+    // (Compile / mainClass) := Some("org.openjdk.jmh.Main"),
     libraryDependencies ++= circeAll.value :+ catsCollection.value :+ upickle.value,
     libraryDependencies ++= jsoniterScalaAll.value,
     jolSettings,
@@ -370,30 +317,4 @@ lazy val addScalafxDependencies = {
       "org.openjfx" % s"javafx-$m" % "17.0.2" classifier osName
     )
   )
-}
-
-val vbundle = TaskKey[File]("vbundle", "bundles all the viscel resources")
-val vbundleDef = vbundle := {
-  val jsfiles      = (ersirWeb / Compile / fastOptJS / webpack).value
-  val styles       = (ersirWeb / Assets / SassKeys.sassify).value
-  val bundleTarget = (Universal / target).value.toPath.resolve("stage/resources")
-  Files.createDirectories(bundleTarget)
-  Files.createDirectories(bundleTarget.resolve("static"))
-
-  def gzipToTarget(f: File): Unit = IO.gzip(f, bundleTarget.resolve(f.name + ".gz").toFile)
-
-  jsfiles.foreach { af =>
-    val jsfile = af.data
-    gzipToTarget(jsfile)
-    val map = jsfile.toPath.getParent.resolve(jsfile.name + ".map").toFile
-    if (map.exists()) gzipToTarget(jsfile.toPath.getParent.resolve(jsfile.name + ".map").toFile)
-  }
-
-  val staticResources = (Compile / resources).value
-  val resdir          = (Compile / resourceDirectory).value
-  staticResources.filter(_.isFile).foreach { f =>
-    IO.copyFile(f, bundleTarget.resolve(resdir.relativize(f).get.toPath).toFile)
-  }
-  styles.foreach(gzipToTarget)
-  bundleTarget.toFile
 }
