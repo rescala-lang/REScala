@@ -1,7 +1,6 @@
 package benchmarks.lattices
 
-import kofre.causality.CausalContext
-import kofre.causality.impl.IntTree
+import kofre.causality.{CausalContext, Dot}
 
 import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
@@ -28,7 +27,7 @@ class ContextBench {
 
   private def makeRep(rep: IdUtil.Id, mul: Long, off: Long, len: Long): CausalContext = {
     val ranges = Range.Long(0L, size, 1).map(i => Range.Long(i * mul + off, i * mul + len + off, 1))
-    CausalContext(Map(rep -> IntTree.fromIterator(ranges.flatten.iterator)))
+    CausalContext.fromSet(ranges.flatten.iterator.map(Dot(rep, _)).toSet)
   }
 
   @Setup

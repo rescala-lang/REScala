@@ -31,7 +31,7 @@ class AddWinsSetOTest extends AnyFreeSpec with ScalaCheckPropertyChecks {
   ))
 
   "An AddWinsSetO should support" - {
-    val initial = AddWinsSetO[String](Map(), CausalContext(Map.empty))
+    val initial = AddWinsSetO[String](Map(), CausalContext.empty)
     val elem    = "Mop"
     val elem2   = "Mip"
 

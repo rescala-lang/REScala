@@ -4,37 +4,52 @@ import java.util
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
 import kofre.IdUtil.Time
+import kofre.Lattice
 
+import scala.collection.IndexedSeqView
 import scala.collection.immutable.NumericRange
 
-class ArrayRanges(val inner: Array[Time], val used: Int) {
-  override def toString: String = inner.toSeq.toString()
+case class ArrayRanges(inner: IndexedSeqView[Time]) {
+
   override def equals(obj: Any): Boolean = obj match
-    case ar: ArrayRanges => util.Arrays.equals(inner, ar.inner)
+    case ar: ArrayRanges => inner.sameElements(ar.inner)
 
   def contains(x: Time): Boolean = {
-    val res = util.Arrays.binarySearch(inner, x)
+    val res = inner.search(x).insertionPoint
     val pos = if res < 0 then -res - 1 else res
-    if pos >= used then false
+    if pos >= inner.size then false
     else if pos % 2 == 0
-      // found a start
+    // found a start
     then inner(pos) == x
     // found an end
     else x < inner(pos)
   }
 
   def add(x: Time): ArrayRanges =
-    merge(new ArrayRanges(Array(x, x + 1), 2))
+    merge(new ArrayRanges(Array(x, x + 1).view))
 
-  def starts: Iterator[Time] = if (inner.isEmpty) Iterator.empty else Range(0, inner.length, 2).iterator.map(inner.apply)
-  def ends: Iterator[Time]   = if (inner.isEmpty) Iterator.empty else Range(1, inner.length, 2).iterator.map(inner.apply)
+  def next: Option[Time] = inner.lastOption
+
+  def iterator: Iterator[Time] = new Iterator[Time] {
+    var pos = 0
+    var value = if inner.isEmpty then 0 else inner(pos)
+    override def hasNext: Boolean = inner.sizeIs > pos
+    override def next(): Time =
+      val res = value
+      value += 1
+      if value >= inner(pos + 1) then
+        pos += 2
+        if inner.sizeIs > pos then
+          value = inner(pos)
+      res
+  }
 
   def merge(other: ArrayRanges): ArrayRanges = {
     var leftPos  = 0
     var rightPos = 0
     var mergedPos = 0
 
-    val merged = new Array[Time](used + other.used)
+    val merged = new Array[Time](inner.size + other.inner.size)
 
     inline def write(t: Time): Unit =
       merged(mergedPos) = t
@@ -69,17 +84,24 @@ class ArrayRanges(val inner: Array[Time], val used: Int) {
 
     while (rok || lok) do findNextRange()
 
-    new ArrayRanges(merged, mergedPos)
+    new ArrayRanges(merged.view.slice(0, mergedPos))
 
   }
 
   override def hashCode(): Int = {
-    util.Arrays.hashCode(inner)
+    inner.hashCode()
   }
 }
 
 object ArrayRanges {
+  val empty: ArrayRanges = new ArrayRanges(Array.empty[Time].view)
   def apply(elements: Seq[(Time, Time)]): ArrayRanges =
     val content = elements.flatMap(t => Iterable(t._1, t._2)).toArray
-    new ArrayRanges(content, content.length)
+    new ArrayRanges(content.view)
+
+  // this is horrible in performance, please fix
+  def from(it: Iterator[Time]): ArrayRanges =
+    it.foldLeft(ArrayRanges.empty)((range, time) => range.add(time))
+
+  given latticeInstance: Lattice[ArrayRanges] = _ merge _
 }

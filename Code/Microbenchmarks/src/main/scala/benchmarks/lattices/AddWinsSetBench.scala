@@ -4,7 +4,7 @@ import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
 import kofre.dotbased.{AddWinsSet, AddWinsSetO}
 import kofre.causality.{Dot, CausalContext}
-import kofre.causality.impl.IntTree
+import kofre.causality.impl.{IntTree, ArrayRanges}
 import kofre.{IdUtil, Lattice}
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -95,10 +95,11 @@ class AddWinsSetBench {
 
 object Codecs {
 
-  implicit val dotUJsonCodec: upickle.default.ReadWriter[Dot]          = upickle.default.macroRW
-  implicit val itRangeCodec: upickle.default.ReadWriter[IntTree.Range] = upickle.default.macroRW
-  implicit val itTreeCodec: upickle.default.ReadWriter[IntTree.Tree]   = upickle.default.macroRW
-  implicit val contextCodec: upickle.default.ReadWriter[CausalContext] = upickle.default.macroRW
+  implicit val dotUJsonCodec: upickle.default.ReadWriter[Dot]            = upickle.default.macroRW
+  implicit val itRangeCodec: upickle.default.ReadWriter[IntTree.Range]   = upickle.default.macroRW
+  implicit val itTreeCodec: upickle.default.ReadWriter[IntTree.Tree]     = upickle.default.macroRW
+  implicit val arrayRangesCodec: upickle.default.ReadWriter[ArrayRanges] = upickle.default.macroRW
+  implicit val contextCodec: upickle.default.ReadWriter[CausalContext]   = upickle.default.macroRW
 
   implicit val awsOUJsonCodec: upickle.default.ReadWriter[AddWinsSetO[String]] = upickle.default.macroRW
   implicit val awsUJsonCodec: upickle.default.ReadWriter[AddWinsSet[String]]   = upickle.default.macroRW
