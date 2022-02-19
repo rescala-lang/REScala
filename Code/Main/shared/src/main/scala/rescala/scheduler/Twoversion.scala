@@ -17,12 +17,10 @@ trait Twoversion extends Core {
     private var owner: Token = null
     private var update: V    = _
 
-    def write(value: V, token: Token): Boolean = {
-      assert(owner == null || owner == token, s"buffer owned by $owner written by $token")
+    def write(value: V, token: Token): Unit = {
+      assert(owner == null, s"buffer owned by $owner written by $token")
       update = value
-      val res = owner == null
       owner = token
-      res
     }
     def base(token: Token): V = current
     def get(token: Token): V  = { if (token eq owner) update else current }
