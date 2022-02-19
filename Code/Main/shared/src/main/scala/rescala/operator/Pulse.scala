@@ -108,8 +108,6 @@ sealed trait Pulse[+P] {
 /** Object containing utility functions for using pulses */
 object Pulse {
 
-  sealed trait Change[+P] extends Pulse[P]
-
   /** Transforms an optional value into a pulse. If the option doesn't contain a value, an empty pulse indicating no
     * change is returned. Otherwise, a pulse with the option's value set as updated value is returned.
     *
@@ -139,9 +137,8 @@ object Pulse {
     }
 
   /** wrap a pulse generating function to store eventual exceptions into an exceptional pulse */
-  def tryCatch[P >: Change[Nothing] <: Pulse[_]](f: => P, onEmpty: P = Pulse.empty): P =
-    try f
-    catch {
+  def tryCatch[P](f: => Pulse[P], onEmpty: Pulse[P] = Pulse.empty): Pulse[P] =
+    try f catch {
       case ufe: ObservedException      => throw ufe
       case npe: NullPointerException   => throw npe
       case EmptySignalControlThrowable => onEmpty
@@ -158,8 +155,8 @@ object Pulse {
     *
     * @param update Updated value stored by the pulse
     */
-  final case class Value[+P](update: P) extends Change[P]
+  final case class Value[+P](update: P) extends Pulse[P]
 
   /** Pulse indicating an exception */
-  final case class Exceptional(throwable: Throwable) extends Change[Nothing]
+  final case class Exceptional(throwable: Throwable) extends Pulse[Nothing]
 }

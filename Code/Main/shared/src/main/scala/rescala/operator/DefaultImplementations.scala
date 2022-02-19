@@ -5,7 +5,7 @@ import rescala.interface.RescalaInterface
 import rescala.operator.Pulse.NoChange
 
 trait DefaultImplementations {
-  self: RescalaInterface with EventBundle with SignalBundle with Sources with DefaultImplementations with Observing
+  self: RescalaInterface with EventBundle with SignalBundle with Sources with DefaultImplementations with ObserveBundle
     with Core =>
 
   /** @param isDynamicWithStaticDeps [[scala.None]] means static dependencies only,

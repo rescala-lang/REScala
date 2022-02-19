@@ -2,15 +2,13 @@ package rescala.operator
 
 import rescala.core.Core
 
-trait Observing extends Core {
+trait ObserveBundle extends Core {
 
   /** Generic interface for observers that represent a function registered to trigger for every reevaluation of a reactive value.
     * Currently this interface is only used to allow a removal of registered observer functions.
-    *
-    * @tparam S Struct type used for the propagation of the signal
     */
   trait Observe {
-    def remove()(implicit fac: Scheduler): Unit
+    def remove(): Unit
   }
 
   trait ObserveInteract extends Observation {
@@ -23,11 +21,7 @@ trait Observing extends Core {
         fireImmediately: Boolean
     )(fun: dependency.Value => ObserveInteract)(implicit ct: CreationTicket): Observe = {
       ct.create[Pulse[Nothing], Observe with Derived](Set(dependency), Pulse.NoChange, fireImmediately) { state =>
-        class Obs
-            extends Base[Pulse[Nothing]](state, ct.rename)
-            with Derived
-            with Observe
-            with DisconnectableImpl {
+        class Obs extends Base[Pulse[Nothing]](state, ct.rename) with Derived with Observe with DisconnectableImpl {
 
           override protected[rescala] def commit(base: Obs.this.Value): Obs.this.Value = Pulse.NoChange
 
@@ -37,7 +31,7 @@ trait Observing extends Core {
             if (oi.checkExceptionAndRemoval()) dt.trackDependencies(Set.empty)
             else dt.withEffect(oi)
           }
-          override def remove()(implicit fac: Scheduler): Unit = disconnect()
+          override def remove(): Unit = disconnect()
         }
         new Obs
       }

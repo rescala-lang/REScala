@@ -25,7 +25,7 @@ import rescala.operator._
   *           over multiple scheduler implementations.
   */
 trait RescalaInterface extends EventBundle with SignalBundle with FlattenApi with Sources with DefaultImplementations
-    with Observing with Core with SignalCompatBundle with EventCompatBundle {
+                       with ObserveBundle with Core with SignalCompatBundle with EventCompatBundle {
 
   /** @group internal */
   def scheduler: Scheduler

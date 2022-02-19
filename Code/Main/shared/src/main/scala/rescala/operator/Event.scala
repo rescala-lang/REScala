@@ -33,7 +33,7 @@ object EventsMacroImpl {
 }
 
 trait EventBundle extends EventCompatBundle with ReadableMacroBundle {
-  selfType: RescalaInterface with SignalBundle with Sources with DefaultImplementations with Observing
+  selfType: RescalaInterface with SignalBundle with Sources with DefaultImplementations with ObserveBundle
     with Core =>
 
   /** Events only propagate a value when they are changing,
@@ -73,7 +73,7 @@ trait EventBundle extends EventCompatBundle with ReadableMacroBundle {
 
     /** Add an observer.
       *
-      * @return the resulting [[rescala.operator.Observing.Observe]] can be used to remove the observer.
+      * @return the resulting [[rescala.operator.ObserveBundle.Observe]] can be used to remove the observer.
       * @group accessor
       */
     final def observe(onValue: T => Unit, onError: Throwable => Unit = null, fireImmediately: Boolean = false)(implicit
@@ -342,7 +342,7 @@ trait EventBundle extends EventCompatBundle with ReadableMacroBundle {
     ): Signal[T] = {
       ticket.create(
         dependencies,
-        Pulse.tryCatch[Pulse[T]](Pulse.Value(init)),
+        Pulse.tryCatch[T](Pulse.Value(init)),
         needsReevaluation = false
       ) {
         state => new SignalImpl[T](state, (st, v) => expr(st)(v), ticket.rename, None)
@@ -396,7 +396,7 @@ trait EventBundle extends EventCompatBundle with ReadableMacroBundle {
 
       ticket.create(
         staticInputs.toSet[ReSource],
-        Pulse.tryCatch[Pulse[A]](Pulse.Value(init)),
+        Pulse.tryCatch[A](Pulse.Value(init)),
         needsReevaluation = true
       ) {
         state => new SignalImpl[A](state, operator, ticket.rename, Some(staticInputs.toSet[ReSource]))

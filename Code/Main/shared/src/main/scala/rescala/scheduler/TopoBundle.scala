@@ -1,11 +1,11 @@
 package rescala.scheduler
 
 import rescala.core.Core
-import rescala.operator.Observing
+import rescala.operator.ObserveBundle
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
-trait TopoBundle extends Core with Observing {
+trait TopoBundle extends Core with ObserveBundle {
   type State[V] <: TopoState[V]
 
   class TopoState[V](var value: V) {

@@ -16,7 +16,7 @@ object SignalMacroImpl {
 trait SignalBundle {
   selfType: RescalaInterface with SignalCompatBundle with EventBundle with SignalBundle with Sources
     with DefaultImplementations
-    with Observing with Core =>
+    with ObserveBundle with Core =>
 
   /** Time changing value derived from the dependencies.
     *
