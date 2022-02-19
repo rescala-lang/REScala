@@ -224,8 +224,8 @@ trait Core {
     def forEffect(f: Observation => Unit): Unit
 
     /** New input resources.
-      * None for static reactives.
-      * Otherwise a list of all static reactives, and accessed dynamic reactives.
+      * None if unchanged.
+      * Otherwise a list of all input reactives to react to.
       */
     def inputs(): Option[Set[ReSource]]
   }
