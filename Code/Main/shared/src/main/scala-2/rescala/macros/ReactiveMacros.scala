@@ -187,7 +187,7 @@ class ReactiveMacros(val c: blackbox.Context) {
 
   // here be dragons
 
-  val reSourceType = typeOf[Core#ReSource]
+  val reSourceType: c.universe.Type = typeOf[Core#ReSource]
 
   def underlying(tpe: Type): Type =
     if (tpe ne tpe.dealias)

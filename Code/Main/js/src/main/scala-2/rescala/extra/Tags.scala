@@ -17,7 +17,6 @@ object Tags extends Tags[rescala.default.type](rescala.default)
 
 class Tags[Api <: RescalaInterface](val api: Api) {
   import api._
-
   def isInDocument(element: Element): Boolean = {
     js.Dynamic.global.document.contains(element).asInstanceOf[Boolean]
   }
@@ -59,12 +58,12 @@ class Tags[Api <: RescalaInterface](val api: Api) {
   }
 
   private class REFragModifier(rendered: Signal[Frag], engine: DynamicScope) extends Modifier {
-    var observe: Observe  = null
-    var currentNode: Node = null
+    var observe: Disconnectable = null
+    var currentNode: Node       = null
     override def applyTo(parent: Element): Unit = {
       CreationTicket.fromExplicitDynamicScope(engine).scope.embedTransaction { init =>
         if (observe != null) {
-          observe.remove()
+          observe.disconnect()
           if (currentNode != null) {
             currentNode.parentNode.removeChild(currentNode)
             currentNode = null
@@ -114,7 +113,7 @@ class Tags[Api <: RescalaInterface](val api: Api) {
 
   private class RETagListModifier(rendered: Signal[Seq[TypedTag[Element]]], scheduler: DynamicScope)
       extends Modifier {
-    var observe: Observe                    = null
+    var observe: Disconnectable             = null
     var currentNodes: Seq[Element]          = Nil
     var currentTags: Seq[TypedTag[Element]] = Nil
     override def applyTo(parent: Element): Unit = {
@@ -125,7 +124,7 @@ class Tags[Api <: RescalaInterface](val api: Api) {
           currentNodes.foreach(parent.appendChild)
         } else {
           // println(s"Warning, added $rendered to dom AGAIN, this is experimental")
-          observe.remove()
+          observe.disconnect()
           observe = null
           // adding nodes to the dom again should move them
           currentNodes.foreach(parent.appendChild)

@@ -25,7 +25,7 @@ class ObserverCreation extends RETests {
       e1.fire(10)
       e1.fire(10)
       assert(test == 2)
-      o.remove()
+      o.disconnect()
       e1.fire(10)
       assert(test == 2)
     }

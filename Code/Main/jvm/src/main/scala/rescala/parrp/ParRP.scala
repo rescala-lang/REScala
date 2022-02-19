@@ -4,6 +4,7 @@ import rescala.locking._
 import rescala.scheduler.Levelbased
 
 trait ParRP extends Levelbased {
+
   override type State[V] = ParRPState[V]
 
   def parrpWithBackoff(backOff: () => Backoff): Scheduler =

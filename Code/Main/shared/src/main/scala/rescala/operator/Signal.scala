@@ -57,7 +57,7 @@ trait SignalBundle {
       */
     final def observe(onValue: T => Unit, onError: Throwable => Unit = null, fireImmediately: Boolean = true)(implicit
         ticket: CreationTicket
-    ): Observe =
+    ): Disconnectable =
       Observe.strong(this, fireImmediately) { reevalVal =>
         new ObserveInteract {
           override def checkExceptionAndRemoval(): Boolean = {

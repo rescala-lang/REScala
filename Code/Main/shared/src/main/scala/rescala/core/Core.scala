@@ -230,7 +230,7 @@ trait Core {
     def inputs(): Option[Set[ReSource]]
   }
 
-  /** Records side effects for latex execution. */
+  /** Records side effects for later execution. */
   trait Observation { def execute(): Unit }
 
   /** Enables reading of the current value during admission.
@@ -272,7 +272,8 @@ trait Core {
   }
 
   object CreationTicket {
-    implicit def fromScope(implicit scope: ScopeSearch, line: ReName): CreationTicket = new CreationTicket(scope, line)
+    implicit def fromScope(implicit scope: ScopeSearch, line: ReName): CreationTicket =
+      new CreationTicket(scope, line)
     // cases below are when one explicitly passes one of the parameters
     implicit def fromExplicitDynamicScope(factory: DynamicScope)(implicit line: ReName): CreationTicket =
       new CreationTicket(new ScopeSearch(Right(factory)), line)
@@ -396,5 +397,4 @@ trait Core {
     implicit def fromSchedulerImplicit(implicit factory: DynamicScope): ScopeSearch =
       new ScopeSearch(Right(factory))
   }
-
 }

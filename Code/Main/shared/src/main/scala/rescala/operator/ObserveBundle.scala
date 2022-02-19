@@ -4,24 +4,19 @@ import rescala.core.Core
 
 trait ObserveBundle extends Core {
 
-  /** Generic interface for observers that represent a function registered to trigger for every reevaluation of a reactive value.
-    * Currently this interface is only used to allow a removal of registered observer functions.
-    */
-  trait Observe {
-    def remove(): Unit
-  }
-
   trait ObserveInteract extends Observation {
+    // if true, the observer will remove all of its inputs, which allows eventual collection
     def checkExceptionAndRemoval(): Boolean
   }
 
+  /** observers are normale reactives that are configured by a function that converts the value of the input into an [[ObserveInteract]]*/
   object Observe {
     def strong[T](
         dependency: ReSource,
         fireImmediately: Boolean
-    )(fun: dependency.Value => ObserveInteract)(implicit ct: CreationTicket): Observe = {
-      ct.create[Pulse[Nothing], Observe with Derived](Set(dependency), Pulse.NoChange, fireImmediately) { state =>
-        class Obs extends Base[Pulse[Nothing]](state, ct.rename) with Derived with Observe with DisconnectableImpl {
+    )(fun: dependency.Value => ObserveInteract)(implicit ct: CreationTicket): Disconnectable = {
+      ct.create[Pulse[Nothing], Disconnectable with Derived](Set(dependency), Pulse.NoChange, fireImmediately) { state =>
+        class Obs extends Base[Pulse[Nothing]](state, ct.rename) with Derived with DisconnectableImpl {
 
           override protected[rescala] def commit(base: Obs.this.Value): Obs.this.Value = Pulse.NoChange
 
@@ -31,7 +26,6 @@ trait ObserveBundle extends Core {
             if (oi.checkExceptionAndRemoval()) dt.trackDependencies(Set.empty)
             else dt.withEffect(oi)
           }
-          override def remove(): Unit = disconnect()
         }
         new Obs
       }

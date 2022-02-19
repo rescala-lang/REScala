@@ -18,7 +18,7 @@ class GarbageCollectionTest extends RETests with Whenever {
         val v1  = Var(0)
         val res = v1.map(_ => new Array[Int](1024 * 1024))
         val obs = res.observe(_ => ())
-        obs.remove()
+        obs.disconnect()
         res.disconnect()
         val p = new PhantomReference(res, q)
         (v1, p)

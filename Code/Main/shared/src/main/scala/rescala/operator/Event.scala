@@ -69,7 +69,7 @@ trait EventBundle extends EventCompatBundle with ReadableMacroBundle {
       * @see observe
       * @group accessor
       */
-    final def +=(handler: T => Unit)(implicit ticket: CreationTicket): Observe = observe(handler)(ticket)
+    final def +=(handler: T => Unit)(implicit ticket: CreationTicket): Disconnectable = observe(handler)(ticket)
 
     /** Add an observer.
       *
@@ -78,7 +78,7 @@ trait EventBundle extends EventCompatBundle with ReadableMacroBundle {
       */
     final def observe(onValue: T => Unit, onError: Throwable => Unit = null, fireImmediately: Boolean = false)(implicit
         ticket: CreationTicket
-    ): Observe =
+    ): Disconnectable =
       Observe.strong(this, fireImmediately) { reevalVal =>
         val internalVal = internalAccess(reevalVal)
         new ObserveInteract {

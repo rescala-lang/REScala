@@ -24,7 +24,7 @@ class LociDist[Api <: RescalaInterface](val api: Api) {
       deltaEvt.fire(Delta(remoteRef.toString, deltaState))
     }
 
-    var observers    = Map[RemoteRef, Observe]()
+    var observers    = Map[RemoteRef, Disconnectable]()
     var resendBuffer = Map[RemoteRef, A]()
 
     def registerRemote(remoteRef: RemoteRef): Unit = {
@@ -67,7 +67,7 @@ class LociDist[Api <: RescalaInterface](val api: Api) {
     registry.remotes.foreach(registerRemote)
     registry.remoteLeft.monitor { remoteRef =>
       println(s"removing remote $remoteRef")
-      observers(remoteRef).remove()
+      observers(remoteRef).disconnect()
     }
   }
 }
