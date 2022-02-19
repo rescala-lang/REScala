@@ -6,7 +6,7 @@ import rescala.interface.RescalaInterface
 
 @State(Scope.Benchmark)
 class EngineParam {
-  @Param(Array("synchron", "parrp", "fullmv", "simple", "sidup"))
+  @Param(Array("synchron", "parrp", "fullmv", "toposort", "sidup"))
   var engineName: String = _
 
   def engine: RescalaInterface = Schedulers.byName(engineName)
