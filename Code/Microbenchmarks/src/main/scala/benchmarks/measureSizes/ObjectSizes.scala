@@ -24,20 +24,20 @@ object ObjectSizes {
     measure("transaction", List.fill(100)(ptx))
     measure(
       "reev ticket",
-      new rescala.default.ReevTicket(ptx, ()) {
-        override protected def staticAccess(reactive: default.ReSource): reactive.Value  = ???
-        override protected def dynamicAccess(reactive: default.ReSource): reactive.Value = ???
-      }
+      new rescala.default.ReevTicket(ptx, (), new default.AccessHandler {
+        override def staticAccess(reactive: default.ReSource): reactive.Value  = ???
+        override def dynamicAccess(reactive: default.ReSource): reactive.Value = ???
+      })
     )
 
     def stx = new Schedulers.synchron.SimpleNoLock()
     measure("nolock transaction", List.fill(100)(stx))
     measure(
       "nolock reev ticket",
-      new rescala.Schedulers.synchron.ReevTicket(stx, ()) {
-        override protected def staticAccess(reactive: rescala.Schedulers.synchron.ReSource): reactive.Value  = ???
-        override protected def dynamicAccess(reactive: rescala.Schedulers.synchron.ReSource): reactive.Value = ???
-      }
+      new rescala.Schedulers.synchron.ReevTicket(stx, (), new rescala.Schedulers.synchron.AccessHandler {
+        override def staticAccess(reactive: rescala.Schedulers.synchron.ReSource): reactive.Value  = ???
+        override def dynamicAccess(reactive: rescala.Schedulers.synchron.ReSource): reactive.Value = ???
+      })
       )
   }
 

@@ -143,18 +143,21 @@ trait TaskBundle extends FullMVBundle {
     override def toString          = s"Reevaluation($turn, $node)"
   }
 
+
   trait RegularReevaluationHandling extends ReevaluationHandling[Derived] {
     override val node: Derived
+
+    object FullAccessHandle extends AccessHandler {
+      override def staticAccess(reactive: ReSource): reactive.Value = turn.staticAfter(reactive)
+      override def dynamicAccess(reactive: ReSource): reactive.Value = turn.dynamicAfter(reactive)
+    }
+
     def doReevaluation(retainBranch: Boolean): Unit = {
 //    assert(Thread.currentThread() == turn.userlandThread, s"$this on different thread ${Thread.currentThread().getName}")
       assert(turn.phase == TurnPhase.Executing, s"$turn cannot reevaluate (requires executing phase")
       var value             = node.state.reevIn(turn)
       val transactionHandle = TransactionHandle(turn)
-      val ticket: ReevTicket[node.Value] = new ReevTicket(transactionHandle, value) {
-        override protected def staticAccess(reactive: ReSource): reactive.Value = turn.staticAfter(reactive)
-        override protected def dynamicAccess(reactive: ReSource): reactive.Value =
-          turn.dynamicAfter(reactive)
-      }
+      val ticket: ReevTicket[node.Value] = new ReevTicket(transactionHandle, value, FullAccessHandle)
       val res: Result[node.Value] =
         try {
           turn.host.withDynamicInitializer(transactionHandle) {

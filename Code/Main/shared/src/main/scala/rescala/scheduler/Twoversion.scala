@@ -183,14 +183,16 @@ trait Twoversion extends Core {
     /** allow the propagation to handle dynamic access to reactives */
     def beforeDynamicDependencyInteraction(dependency: ReSource): Unit
 
+    object accessHandler extends AccessHandler {
+      override def dynamicAccess(reactive: ReSource): reactive.Value =
+        TwoVersionTransactionImpl.this.dynamicAfter(reactive)
+      override def staticAccess(reactive: ReSource): reactive.Value = reactive.state.get(token)
+    }
+
     override private[rescala] def makeAdmissionPhaseTicket(initialWrites: Set[ReSource]): AdmissionTicket =
       new AdmissionTicket(this, initialWrites)
     private[rescala] def makeDynamicReevaluationTicket[V, N](b: V): ReevTicket[V] =
-      new ReevTicket[V](this, b) {
-        override def dynamicAccess(reactive: ReSource): reactive.Value =
-          TwoVersionTransactionImpl.this.dynamicAfter(reactive)
-        override def staticAccess(reactive: ReSource): reactive.Value = reactive.state.get(token)
-      }
+      new ReevTicket[V](this, b, accessHandler)
 
     override def access(reactive: ReSource): reactive.Value =
       TwoVersionTransactionImpl.this.dynamicAfter(reactive)

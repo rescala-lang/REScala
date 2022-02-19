@@ -141,66 +141,68 @@ trait Core {
     final def depend[A](reactive: Readable[A]): A = reactive.read(collectDynamic(reactive))
   }
 
+  trait AccessHandler {
+    // schedulers implement these to allow access
+    def staticAccess(reactive: ReSource): reactive.Value
+    def dynamicAccess(reactive: ReSource): reactive.Value
+  }
+
   /** [[ReevTicket]] is given to the [[Derived]] reevaluate method and allows to access other reactives.
     * The ticket tracks return values, such as dependencies, the value, and if the value should be propagated.
     * Such usages make it unsuitable as an API for the user, where [[StaticTicket]] or [[DynamicTicket]] should be used instead.
     */
-  abstract class ReevTicket[V](tx: Transaction, private var _before: V)
+  final class ReevTicket[V](tx: Transaction, private var _before: V, accessHandler: AccessHandler)
       extends DynamicTicket(tx)
       with Result[V] {
 
-    // schedulers implement these to allow access
-    protected def staticAccess(reactive: ReSource): reactive.Value
-    protected def dynamicAccess(reactive: ReSource): reactive.Value
+    private var collectedDependencies: Set[ReSource] = null
 
     // dependency tracking accesses
-    private[rescala] final override def collectStatic(reactive: ReSource): reactive.Value = {
+    private[rescala] override def collectStatic(reactive: ReSource): reactive.Value = {
       assert(collectedDependencies == null || collectedDependencies.contains(reactive))
-      staticAccess(reactive)
+      accessHandler.staticAccess(reactive)
     }
 
-    private[rescala] final override def collectDynamic(reactive: ReSource): reactive.Value = {
+    private[rescala] override def collectDynamic(reactive: ReSource): reactive.Value = {
       assert(collectedDependencies != null, "may not access dynamic dependencies without tracking dependencies")
       val updatedDeps = collectedDependencies + reactive
       if (updatedDeps eq collectedDependencies) {
-        staticAccess(reactive)
+        accessHandler.staticAccess(reactive)
       } else {
         collectedDependencies = updatedDeps
-        dynamicAccess(reactive)
+        accessHandler.dynamicAccess(reactive)
       }
     }
 
     // inline result into ticket, to reduce the amount of garbage during reevaluation
-    private var collectedDependencies: Set[ReSource] = null
-
     private var _propagate          = false
     private var value: V            = _
     private var effect: Observation = null
-    override final def toString: String =
+    override def toString: String =
       s"Result(value = $value, propagate = $activate, deps = $collectedDependencies)"
-    final def before: V = _before
+    def before: V = _before
 
     /** Advises the ticket to track dynamic dependencies.
       * The passed initial set of dependencies may be processed as if they were static,
       * and are also returned in the resulting dependencies.
       */
-    final def trackDependencies(initial: Set[ReSource]): ReevTicket[V] = { collectedDependencies = initial; this }
-    final def trackStatic(): ReevTicket[V]                             = { collectedDependencies = null; this }
-    final def withPropagate(p: Boolean): ReevTicket[V]                 = { _propagate = p; this }
-    final def withValue(v: V): ReevTicket[V] = {
+    def trackDependencies(initial: Set[ReSource]): ReevTicket[V] = { collectedDependencies = initial; this }
+    def trackStatic(): ReevTicket[V]                             = { collectedDependencies = null; this }
+    def withPropagate(p: Boolean): ReevTicket[V]                 = { _propagate = p; this }
+    def withValue(v: V): ReevTicket[V] = {
       require(v != null, "value must not be null");
       value = v;
       _propagate = true;
       this
     }
-    final def withEffect(v: Observation): ReevTicket[V] = { effect = v; this }
+    def withEffect(v: Observation): ReevTicket[V] = { effect = v; this }
 
-    final override def activate: Boolean                       = _propagate
-    final override def forValue(f: V => Unit): Unit            = if (value != null) f(value)
-    final override def forEffect(f: Observation => Unit): Unit = if (effect != null) f(effect)
-    final override def inputs(): Option[Set[ReSource]]         = Option(collectedDependencies)
+    override def activate: Boolean                       = _propagate
+    override def forValue(f: V => Unit): Unit            = if (value != null) f(value)
+    override def forEffect(f: Observation => Unit): Unit = if (effect != null) f(effect)
+    override def inputs(): Option[Set[ReSource]]         = Option(collectedDependencies)
 
-    final def reset[NT](nb: NT): ReevTicket[NT] = {
+    def reset[NT](nb: NT): ReevTicket[NT] = {
       _propagate = false
       value = null.asInstanceOf[V]
       effect = null
