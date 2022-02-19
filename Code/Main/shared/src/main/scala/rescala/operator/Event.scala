@@ -1,9 +1,7 @@
 package rescala.operator
 
 import rescala.compat.EventCompatBundle
-import rescala.core._
 import rescala.interface.RescalaInterface
-import rescala.macros.ReadableMacroBundle
 import rescala.operator.Pulse.{Exceptional, NoChange, Value}
 import rescala.operator.RExceptions.ObservedException
 
@@ -32,9 +30,8 @@ object EventsMacroImpl {
 
 }
 
-trait EventBundle extends EventCompatBundle with ReadableMacroBundle {
-  selfType: RescalaInterface with SignalBundle with Sources with DefaultImplementations with ObserveBundle
-    with Core =>
+trait EventBundle extends EventCompatBundle {
+  selfType: RescalaInterface =>
 
   /** Events only propagate a value when they are changing,
     * when the system is at rest, events have no values.

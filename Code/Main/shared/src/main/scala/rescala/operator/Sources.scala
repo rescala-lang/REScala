@@ -1,11 +1,9 @@
 package rescala.operator
 
 import rescala.core._
-import rescala.interface.RescalaInterface
 
 trait Sources {
-  self: RescalaInterface with EventBundle with SignalBundle with Sources with DefaultImplementations with ObserveBundle
-    with Core =>
+  self: EventBundle with SignalBundle  =>
 
   trait Source[T] extends ReSource {
     final def admit(value: T)(implicit ticket: AdmissionTicket): Unit = admitPulse(Pulse.Value(value))

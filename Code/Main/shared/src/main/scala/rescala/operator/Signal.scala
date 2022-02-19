@@ -1,7 +1,6 @@
 package rescala.operator
 
 import rescala.compat.SignalCompatBundle
-import rescala.core.Core
 import rescala.interface.RescalaInterface
 import rescala.operator.RExceptions.{EmptySignalControlThrowable, ObservedException}
 
@@ -13,10 +12,8 @@ object SignalMacroImpl {
   object MapFuncImpl { def apply[T1, A](value: T1, mapper: T1 => A): A = mapper(value) }
 }
 
-trait SignalBundle {
-  selfType: RescalaInterface with SignalCompatBundle with EventBundle with SignalBundle with Sources
-    with DefaultImplementations
-    with ObserveBundle with Core =>
+trait SignalBundle extends SignalCompatBundle {
+  selfType: RescalaInterface  =>
 
   /** Time changing value derived from the dependencies.
     *

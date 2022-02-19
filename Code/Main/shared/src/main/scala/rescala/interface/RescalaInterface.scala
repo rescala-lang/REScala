@@ -1,7 +1,5 @@
 package rescala.interface
 
-import rescala.compat.{EventCompatBundle, SignalCompatBundle}
-import rescala.core.Core
 import rescala.operator._
 
 /** Rescala has two main abstractions. [[Event]] and [[Signal]] commonly referred to as reactives.
@@ -25,7 +23,7 @@ import rescala.operator._
   *           over multiple scheduler implementations.
   */
 trait RescalaInterface extends EventBundle with SignalBundle with FlattenApi with Sources with DefaultImplementations
-                       with ObserveBundle with Core with SignalCompatBundle with EventCompatBundle {
+                       with ObserveBundle {
 
   /** @group internal */
   def scheduler: Scheduler
