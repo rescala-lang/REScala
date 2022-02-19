@@ -205,7 +205,8 @@ trait Twoversion extends Core {
       reactive.state.get(token)
     }
     def writeState(pulsing: ReSource)(value: pulsing.Value): Unit = {
-      if (pulsing.state.write(value, token)) this.schedule(pulsing)
+      pulsing.state.write(value, token)
+      this.schedule(pulsing)
     }
 
   }
