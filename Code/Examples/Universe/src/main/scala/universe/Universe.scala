@@ -36,7 +36,7 @@ object Universe {
       world.batchSpawn(nAnimals, nPlants)
 
       val start = System.nanoTime()
-      while (world.time.week.readValueOnce < 2) {
+      while (world.time.week.readValueOnce(Globals.engine.scheduler) < 2) {
         world.tick()
         world.runPlan()
       }

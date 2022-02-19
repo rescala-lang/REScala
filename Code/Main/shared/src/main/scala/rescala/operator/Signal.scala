@@ -1,7 +1,6 @@
 package rescala.operator
 
 import rescala.compat.SignalCompatBundle
-import rescala.interface.RescalaInterface
 import rescala.operator.RExceptions.{EmptySignalControlThrowable, ObservedException}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -13,7 +12,7 @@ object SignalMacroImpl {
 }
 
 trait SignalBundle extends SignalCompatBundle {
-  selfType: RescalaInterface  =>
+  selfType: Operators  =>
 
   /** Time changing value derived from the dependencies.
     *
@@ -38,13 +37,13 @@ trait SignalBundle extends SignalCompatBundle {
       *
       * @group accessor
       */
-    final def now: T = readValueOnce
+    final def now(implicit scheduler: Scheduler): T = readValueOnce
 
     /** Returns the current value of the signal
       *
       * @group accessor
       */
-    final def readValueOnce: T = {
+    final def readValueOnce(implicit scheduler: Scheduler): T = {
       RExceptions.toExternalReadException(this, scheduler.singleReadValueOnce(this))
     }
 
@@ -187,9 +186,9 @@ trait SignalBundle extends SignalCompatBundle {
     @cutOutOfUserComputation
     def fromFuture[A](fut: Future[A])(implicit fac: Scheduler, ec: ExecutionContext): Signal[A] = {
       fut.value match {
-        case Some(Success(value)) => Var(value)(scheduler)
+        case Some(Success(value)) => Var(value)(fac)
         case _ =>
-          val v: Var[A] = Var.empty[A](scheduler)
+          val v: Var[A] = Var.empty[A](fac)
           fut.onComplete { res =>
             fac.forceNewTransaction(v)(t => v.admitPulse(Pulse.tryCatch(Pulse.Value(res.get)))(t))
           }

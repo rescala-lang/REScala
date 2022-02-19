@@ -1,9 +1,9 @@
 package rescala.operator
 
-import rescala.core._
+import rescala.core.ReName
 
 trait Sources {
-  self: EventBundle with SignalBundle  =>
+  self: Operators  =>
 
   trait Source[T] extends ReSource {
     final def admit(value: T)(implicit ticket: AdmissionTicket): Unit = admitPulse(Pulse.Value(value))

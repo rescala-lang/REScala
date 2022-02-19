@@ -1,11 +1,10 @@
 package rescala.operator
 
 import rescala.core._
-import rescala.interface.RescalaInterface
 import rescala.operator.Pulse.NoChange
 
 trait DefaultImplementations {
-  self: RescalaInterface  =>
+  self: Operators  =>
 
   /** @param isDynamicWithStaticDeps [[scala.None]] means static dependencies only,
     *                                [[scala.Some]] means dynamic with the given static ones for optimization

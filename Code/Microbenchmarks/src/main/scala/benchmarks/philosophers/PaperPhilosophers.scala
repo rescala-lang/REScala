@@ -199,7 +199,7 @@ trait NoTopper extends IndividualCounts {
     }
   }
 
-  override def total: Int = individualCounts.map(_.readValueOnce).sum
+  override def total: Int = individualCounts.map(_.readValueOnce(engine.scheduler)).sum
 }
 
 trait SignalPyramidTopper extends IndividualCounts {

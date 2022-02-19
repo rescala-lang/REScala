@@ -22,8 +22,7 @@ import rescala.operator._
   * @groupdesc internal Methods and type aliases for advanced usages, these are most relevant to abstract
   *           over multiple scheduler implementations.
   */
-trait RescalaInterface extends EventBundle with SignalBundle with FlattenApi with Sources with DefaultImplementations
-                       with ObserveBundle {
+trait RescalaInterface extends Operators {
 
   /** @group internal */
   def scheduler: Scheduler

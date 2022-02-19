@@ -1,12 +1,11 @@
 package rescala.compat
 
-import rescala.interface.RescalaInterface
 import rescala.macros.MacroTags.{Dynamic, Static}
 import rescala.macros.ReadableMacroBundle
-import rescala.operator.{EventsMacroImpl, cutOutOfUserComputation}
+import rescala.operator.{EventsMacroImpl, Operators, cutOutOfUserComputation}
 
 trait EventCompatBundle extends ReadableMacroBundle {
-  selfType: RescalaInterface  =>
+  selfType: Operators  =>
 
   trait EventCompat[+T] extends ReadableMacro[Option[T]] {
     selfType: Event[T] =>

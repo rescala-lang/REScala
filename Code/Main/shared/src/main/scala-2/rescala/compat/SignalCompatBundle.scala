@@ -1,12 +1,12 @@
 package rescala.compat
 
 import rescala.core.Core
-import rescala.macros.ReadableMacroBundle
 import rescala.macros.MacroTags.{Dynamic, Static}
-import rescala.operator.{SignalBundle, cutOutOfUserComputation}
+import rescala.macros.ReadableMacroBundle
+import rescala.operator.{Operators, cutOutOfUserComputation}
 
 trait SignalCompatBundle extends ReadableMacroBundle {
-  selfType: SignalBundle with Core =>
+  selfType: Operators with Core =>
 
   trait SignalCompat[+T] extends ReadableMacro[T] {
 

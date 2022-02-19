@@ -4,10 +4,9 @@ import rescala.compat.FlattenCollectionCompat
 
 import scala.annotation.implicitNotFound
 import scala.reflect.ClassTag
-import rescala.interface.RescalaInterface
 
 trait FlattenApi extends FlattenCollectionCompat {
-  self: RescalaInterface =>
+  self: Operators =>
   @implicitNotFound(msg =
     "Could not flatten ${A}. Try to select a specific flatten strategy from rescala.reactives.Flatten.")
   trait Flatten[-A, R] {

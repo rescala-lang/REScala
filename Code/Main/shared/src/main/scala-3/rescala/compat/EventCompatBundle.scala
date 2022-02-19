@@ -2,10 +2,10 @@ package rescala.compat
 
 import rescala.core.Core
 import rescala.interface.RescalaInterface
-import rescala.operator.{cutOutOfUserComputation}
+import rescala.operator.cutOutOfUserComputation
 
 trait EventCompatBundle {
-  selfType: RescalaInterface with Core =>
+  selfType: Operators =>
 
   trait EventCompat[+T] extends Interp[Option[T]] {
     selfType: Event[T] =>

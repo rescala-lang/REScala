@@ -1,11 +1,11 @@
 package rescala.compat
 
-import rescala.interface.RescalaInterface
+import rescala.operator.Operators
 
 import scala.collection.IterableOps
 
 trait FlattenCollectionCompat {
-  self: RescalaInterface =>
+  self: Operators =>
 
   /** Flatten a Signal[Traversable[Signal[B]\]\] into a Signal[Traversable[B]\] where the new Signal updates whenever any of the inner or the outer signal updates */
   implicit def flattenImplicitFortraversableSignals[B, T[U] <: IterableOps[U, T, T[U]], Sig[A1] <: Signal[A1]](implicit

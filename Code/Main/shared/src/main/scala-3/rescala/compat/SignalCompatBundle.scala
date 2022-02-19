@@ -5,7 +5,7 @@ import rescala.interface.RescalaInterface
 import rescala.operator.{SignalBundle, cutOutOfUserComputation}
 
 trait SignalCompatBundle {
-  selfType: RescalaInterface with Core =>
+  selfType: Operators =>
 
   trait SignalCompat[+T] extends Interp[T] {
     selfType: Signal[T] =>
