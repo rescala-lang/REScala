@@ -2,13 +2,12 @@ package rescala.extra.reactor
 
 import rescala.core.ReName
 import rescala.interface.RescalaInterface
-import rescala.macros.MacroAccess
 
 class ReactorBundle[Api <: RescalaInterface](val api: Api) {
   import api._
   class Reactor[T](
       initState: State[ReactorState[T]]
-  ) extends Derived with Readable[T] with MacroAccess[T, Readable[T]] {
+  ) extends Derived with ReadableMacro[T] {
 
     override type Value = ReactorState[T]
 

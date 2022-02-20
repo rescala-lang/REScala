@@ -4,6 +4,7 @@ import rescala.macros.MacroTags.{Dynamic, Static}
 import rescala.macros.ReadableMacroBundle
 import rescala.operator.{EventsMacroImpl, Operators, cutOutOfUserComputation}
 
+
 trait EventCompatBundle extends ReadableMacroBundle {
   selfType: Operators  =>
 

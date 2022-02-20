@@ -1,6 +1,6 @@
 package rescala.compat
 
-
+import rescala.operator.Operators
 import scala.collection.TraversableLike
 import scala.collection.generic.CanBuildFrom
 

@@ -1,6 +1,7 @@
 package rescala.compat
 
 import rescala.interface.RescalaInterface
+import rescala.operator.Operators
 
 import scala.collection.IterableOps
 

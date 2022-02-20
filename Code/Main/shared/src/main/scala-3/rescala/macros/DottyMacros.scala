@@ -39,7 +39,7 @@ def detectImpl[T: Type](expr: Expr[Option[T]])(using Quotes): Expr[Event[T]] =
           val wideType = TypeRepr.of[T].widen.asType
           val replaced = replacement(x)
           println(s"replace: ${replaced.show}")
-          val term = replaced.asExprOf[Interp[T]]
+          val term = replaced.asExprOf[Readable[T]]
           println(s"term: ${term.show}")
           '{ (${ staticTicket.asExprOf[StaticTicket] }.dependStatic[T](${ term })) }
         case _ => transformChildren(e)

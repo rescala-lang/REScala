@@ -3,11 +3,13 @@ package rescala.compat
 import rescala.core.Core
 import rescala.interface.RescalaInterface
 import rescala.operator.{SignalBundle, cutOutOfUserComputation}
+import rescala.operator.Operators
+import rescala.macros.ReadableMacroBundle
 
-trait SignalCompatBundle {
+trait SignalCompatBundle extends ReadableMacroBundle {
   selfType: Operators =>
 
-  trait SignalCompat[+T] extends Interp[T] {
+  trait SignalCompat[+T] extends Readable[T] {
     selfType: Signal[T] =>
 
     /** Return a Signal with f applied to the value

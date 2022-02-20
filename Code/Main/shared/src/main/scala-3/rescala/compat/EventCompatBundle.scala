@@ -3,11 +3,13 @@ package rescala.compat
 import rescala.core.Core
 import rescala.interface.RescalaInterface
 import rescala.operator.cutOutOfUserComputation
+import rescala.operator.Operators
+import rescala.macros.ReadableMacroBundle
 
-trait EventCompatBundle {
+trait EventCompatBundle extends ReadableMacroBundle {
   selfType: Operators =>
 
-  trait EventCompat[+T] extends Interp[Option[T]] {
+  trait EventCompat[+T] extends Readable[Option[T]] {
     selfType: Event[T] =>
 
     /** Filters the event, only propagating the value when the filter is true.
@@ -48,8 +50,8 @@ trait EventCompatBundle {
     * @group create
     */
   object Event {
-    def apply[T](expr: DynamicTicket ?=> Option[T]): Event[T]   = Events.dynamic()(expr(using _))
-    def dynamic[T](expr: DynamicTicket ?=> Option[T]): Event[T] = Events.dynamic()(expr(using _))
+    def apply[T](expr: DynamicTicket ?=> Option[T])(using CreationTicket): Event[T]   = Events.dynamic()(expr(using _))
+    def dynamic[T](expr: DynamicTicket ?=> Option[T])(using CreationTicket): Event[T] = Events.dynamic()(expr(using _))
   }
 
 }
