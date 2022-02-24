@@ -2,22 +2,23 @@ package todo
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
+import kofre.decompose.Delta
 import loci.registry.Binding
 import loci.serializer.jsoniterScala._
+import org.scalajs.dom.html.{Div, Input, LI}
 import org.scalajs.dom.{UIEvent, window}
-import org.scalajs.dom.html.{Div, Input}
+import rescala.default.Events.CBResult
 import rescala.default._
 import rescala.extra.Tags._
-import kofre.decompose.Delta
-import rescala.extra.lattices.delta.crdt.reactive.RGA
-import rescala.extra.lattices.delta.crdt.reactive.RGA._
+import rescala.extra.lattices.delta.crdt.reactive.ListRDT
+import rescala.extra.lattices.delta.crdt.reactive.ListRDT._
 import rescala.extra.replication.LociDist
 import scalatags.JsDom
 import scalatags.JsDom.all._
 import scalatags.JsDom.tags2.section
 import scalatags.JsDom.{Attr, TypedTag}
 import todo.Codecs._
-import rescala.default.Events.CBResult
+import todo.Todolist.replicaId
 
 class TodoAppUI(val storagePrefix: String) {
 
@@ -41,14 +42,13 @@ class TodoAppUI(val storagePrefix: String) {
       input(id := "toggle-all", name := "toggle-all", `class` := "toggle-all", `type` := "checkbox", onchange := cb)
     }
 
-    val taskrefs = new TaskRefObj(toggleAll.event, storagePrefix)
-    TaskRefs.taskrefObj = taskrefs
-    val taskOps = new TaskOps(taskrefs)
+    val taskrefs = TaskReferences(toggleAll.event, storagePrefix)
+    val taskOps  = new TaskOps(taskrefs)
 
-    val deltaEvt = Evt[Delta[RGA.State[TaskRef]]]
+    val deltaEvt = Evt[Delta[ListRDT.State[TaskRef]]]
 
-    val rga =
-      Storing.storedAs(storagePrefix, taskOps.listInitial) { init =>
+    val tasksRDT: Signal[ListRDT[TaskRef]] =
+      Storing.storedAs(storagePrefix, ListRDT.empty[TaskRef](replicaId)) { init =>
         Events.foldAll(init) { current =>
           Seq(
             createTodo.event act taskOps.handleCreateTodo(current),
@@ -59,15 +59,13 @@ class TodoAppUI(val storagePrefix: String) {
         }
       }(codecRGA)
 
-    LociDist.distributeDeltaCRDT(rga, deltaEvt, Todolist.registry)(
-      Binding[RGA.State[TaskRef] => Unit]("tasklist")
+    LociDist.distributeDeltaCRDT(tasksRDT, deltaEvt, Todolist.registry)(
+      Binding[ListRDT.State[TaskRef] => Unit]("tasklist")
     )
 
-    val tasksList = rga.map { _.toList }
-
-    val tasksData = tasksList.map(_.flatMap(_.task.value.read))
-
-    val taskTags = tasksList.map(_.map(_.tag))
+    val tasksList: Signal[List[TaskRef]]     = tasksRDT.map { _.toList }
+    val tasksData: Signal[List[TaskData]]    = Signal.dynamic { tasksList.value.flatMap(_.task.value.read) }
+    val taskTags: Signal[List[TypedTag[LI]]] = Signal { tasksList.value.map(_.tag) }
 
     val largeheader = window.location.hash.substring(1)
 
@@ -80,7 +78,7 @@ class TodoAppUI(val storagePrefix: String) {
       ),
       section(
         `class` := "main",
-        `style` := Signal { if (tasksData().isEmpty) "display:hidden" else "" },
+        `style` := Signal { if (tasksData.value.isEmpty) "display:hidden" else "" },
         toggleAll.data,
         label(`for` := "toggle-all", "Mark all as complete"),
         ul(
@@ -90,7 +88,7 @@ class TodoAppUI(val storagePrefix: String) {
       ),
       div(
         `class` := "footer",
-        `style` := Signal { if (tasksData().isEmpty) "display:none" else "" },
+        `style` := Signal { if (tasksData.value.isEmpty) "display:none" else "" },
         Signal {
           val remainingTasks = tasksData.value.count(!_.done)
           span(
@@ -102,7 +100,7 @@ class TodoAppUI(val storagePrefix: String) {
           )
         }.asModifier,
         Signal {
-          removeAll.data(`class` := "clear-completed" + (if (!tasksData.value.exists(_.done)) " hidden" else ""))
+          removeAll.data(`class` := s"clear-completed${if (!tasksData.value.exists(_.done)) " hidden" else ""}")
         }.asModifier
       )
     )

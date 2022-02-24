@@ -5,29 +5,29 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import loci.transmitter.IdenticallyTransmittable
 import rescala.extra.lattices.delta.JsoniterCodecs._
 import rescala.extra.lattices.delta.crdt.reactive
-import rescala.extra.lattices.delta.crdt.reactive.{LWWRegister, RGA}
+import rescala.extra.lattices.delta.crdt.reactive.{LWWRegister, ListRDT}
 import todo.Todolist.replicaId
 
 object Codecs {
 
   implicit val taskRefCodec: JsonValueCodec[TaskRef] = JsonCodecMaker.make
 
-  implicit val codecState: JsonValueCodec[RGA.State[TaskRef]] = RGAStateCodec
-  implicit val codecRGA: JsonValueCodec[RGA[TaskRef]] =
-    new JsonValueCodec[RGA[TaskRef]] {
+  implicit val codecState: JsonValueCodec[ListRDT.State[TaskRef]] = RGAStateCodec
+  implicit val codecRGA: JsonValueCodec[ListRDT[TaskRef]]         =
+    new JsonValueCodec[ListRDT[TaskRef]] {
       override def decodeValue(
           in: JsonReader,
-          default: RGA[TaskRef]
-      ): RGA[TaskRef] = {
+          default: ListRDT[TaskRef]
+      ): ListRDT[TaskRef] = {
         val state = codecState.decodeValue(in, default.state)
-        new RGA[TaskRef](state, replicaId, List())
+        new ListRDT[TaskRef](state, replicaId, List())
       }
-      override def encodeValue(x: RGA[TaskRef], out: JsonWriter): Unit =
+      override def encodeValue(x: ListRDT[TaskRef], out: JsonWriter): Unit =
         codecState.encodeValue(x.state, out)
-      override def nullValue: RGA[TaskRef] = RGA[TaskRef](replicaId)
+      override def nullValue: ListRDT[TaskRef] = ListRDT.empty[TaskRef](replicaId)
     }
 
-  implicit val transmittableList: IdenticallyTransmittable[RGA.State[TaskRef]] =
+  implicit val transmittableList: IdenticallyTransmittable[ListRDT.State[TaskRef]] =
     IdenticallyTransmittable()
 
   implicit val todoTaskCodec: JsonValueCodec[TaskData] = JsonCodecMaker.make

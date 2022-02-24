@@ -1,7 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
 import org.openjdk.jmh.annotations._
-import rescala.extra.lattices.delta.crdt.reactive.RGA
+import rescala.extra.lattices.delta.crdt.reactive.ListRDT
 
 import java.util.concurrent.TimeUnit
 
@@ -17,14 +17,14 @@ class RGABench {
   @Param(Array("0", "1", "10", "100", "1000"))
   var rgaSize: Int = _
 
-  type SUT = RGA[Int]
+  type SUT = ListRDT[Int]
 
   var rga: SUT        = _
   var rgaCleared: SUT = _
 
   @Setup
   def setup(): Unit = {
-    rga = RGA[Int]("a").appendAll(0 until rgaSize)
+    rga = ListRDT.empty[Int]("a").appendAll(0 until rgaSize)
     rgaCleared = rga.clear()
   }
 

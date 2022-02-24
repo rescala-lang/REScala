@@ -2,21 +2,18 @@ package todo
 
 import rescala.default._
 import kofre.decompose.Delta
-import rescala.extra.lattices.delta.crdt.reactive.RGA
-import rescala.extra.lattices.delta.crdt.reactive.RGA._
-import todo.Todolist.replicaId
+import rescala.extra.lattices.delta.crdt.reactive.ListRDT
+import rescala.extra.lattices.delta.crdt.reactive.ListRDT._
 
 import java.util.concurrent.ThreadLocalRandom
 
-class TaskOps(taskRefs: TaskRefObj) {
+class TaskOps(taskRefs: TaskReferences) {
 
-  type State = RGA[TaskRef]
-
-  def listInitial: State = RGA[TaskRef](replicaId)
+  type State = ListRDT[TaskRef]
 
   def handleCreateTodo(state: => State)(desc: String): State = {
     val taskid = s"Task(${ThreadLocalRandom.current().nextLong().toHexString})"
-    TaskRefs.lookupOrCreateTaskRef(taskid, Some(TaskData(desc)))
+    TaskReferences.lookupOrCreateTaskRef(taskid, Some(TaskData(desc)))
     val taskref = TaskRef(taskid)
     state.resetDeltaBuffer().prepend(taskref)
   }
@@ -39,7 +36,7 @@ class TaskOps(taskRefs: TaskRefObj) {
     }
   }
 
-  def handleDelta(s: => State)(delta: Delta[RGA.State[TaskRef]]): State = {
+  def handleDelta(s: => State)(delta: Delta[ListRDT.State[TaskRef]]): State = {
     val list = s
 
     val newList = list.resetDeltaBuffer().applyDelta(delta)

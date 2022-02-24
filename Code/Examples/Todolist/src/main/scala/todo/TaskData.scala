@@ -29,7 +29,7 @@ case class TaskData(
 }
 
 case class TaskRef(id: String) {
-  lazy val cached: TaskRefData = TaskRefs.lookupOrCreateTaskRef(id, None)
+  lazy val cached: TaskRefData = TaskReferences.lookupOrCreateTaskRef(id, None)
 
   def task: Signal[LWWRegister[TaskData]] = cached.task
   def tag: TypedTag[LI]                                  = cached.tag
@@ -49,17 +49,24 @@ final class TaskRefData(
   }
 }
 
-object TaskRefs {
+object TaskReferences {
   private val taskRefMap: mutable.Map[String, TaskRefData] = mutable.Map.empty
 
-  var taskrefObj: TaskRefObj = null
+  var taskrefObj: TaskReferences = null
 
   def lookupOrCreateTaskRef(id: String, task: Option[TaskData]): TaskRefData = {
-    TaskRefs.taskRefMap.getOrElseUpdate(id, { taskrefObj.createTaskRef(id, task) })
+    TaskReferences.taskRefMap.getOrElseUpdate(id, {taskrefObj.createTaskRef(id, task) })
+  }
+
+  def apply(toggleAll: Event[UIEvent], storePrefix: String): TaskReferences = {
+    val taskrefs = new TaskReferences(toggleAll, storePrefix)
+    TaskReferences.taskrefObj = taskrefs
+    taskrefs
   }
 }
 
-class TaskRefObj(toggleAll: Event[UIEvent], storePrefix: String) {
+
+class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
 
   import todo.Codecs.todoTaskCodec
 
