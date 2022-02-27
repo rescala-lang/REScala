@@ -37,11 +37,11 @@ object RGAInterface {
     }
   }
 
-  type State[E] = CausalStore[DotPair[ForcedWriteInterface.State[GListInterface.State[Dot]], DotFun[RGANode[E]]]]
+  type State[E] = CausalStore[(ForcedWriteInterface.State[GListInterface.State[Dot]], DotFun[RGANode[E]])]
 
   trait RGACompanion {
     type State[E] = RGAInterface.State[E]
-    type Embedded[E] = DotPair[ForcedWriteInterface.State[GListInterface.State[Dot]], DotFun[RGANode[E]]]
+    type Embedded[E] = (ForcedWriteInterface.State[GListInterface.State[Dot]], DotFun[RGANode[E]])
 
     implicit val ForcedWriteAsUIJDLattice: UIJDLattice[ForcedWriteInterface.State[GListInterface.State[Dot]]] =
       ForcedWriteInterface.ForcedWriteAsUIJDLattice[GListInterface.State[Dot]]

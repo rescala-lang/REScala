@@ -183,8 +183,7 @@ object DotStore {
   /** DotPair is a dot store implementation that allows the composition of two dot stores in a pair. See [[interfaces.RGAInterface]]
     * for a usage example
     */
-  type DotPair[A, B] = (A, B)
-  implicit def DotPair[A: DotStore, B: DotStore]: DotStore[DotPair[A, B]] = new DotStore[(A, B)] {
+  implicit def DotPair[A: DotStore, B: DotStore]: DotStore[(A, B)] = new DotStore[(A, B)] {
     override def dots(ds: (A, B)): Set[Dot] = ds match {
       case (ds1, ds2) => DotStore[A].dots(ds1) union DotStore[B].dots(ds2)
     }
