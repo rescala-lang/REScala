@@ -15,7 +15,7 @@ def encrypt[S, A](data: S, metadata: A, key: Secret): AEAD[S, A] = AEAD(data, me
 
 type EnCRDT[S] = Set[AEAD[S, VectorClock]]
 
-given [S]: Lattice[EnCRDT[S]] with
+given encrdtLattice[S]: Lattice[EnCRDT[S]] with
   def merge(left: EnCRDT[S], right: EnCRDT[S]): EnCRDT[S] =
     val combined = left union right
     combined.filterNot(s => combined.exists(o => s.metadata < o.metadata))
