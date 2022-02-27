@@ -44,7 +44,7 @@ case class ArrayCausalContext(internal: Map[Id, ArrayRanges]) {
 
   def union(other: ArrayCausalContext): ArrayCausalContext = ArrayCausalContext.contextLattice.merge(this, other)
 
-  def contains(d: Dot): Boolean = internal.get(d.replicaID).exists(_.contains(d.time))
+  def contains(d: Dot): Boolean = internal.get(d.replicaId).exists(_.contains(d.time))
 
   def toSet: Set[Dot] =
     internal.flatMap((key, tree) => tree.iterator.map(time => Dot(key, time))).toSet

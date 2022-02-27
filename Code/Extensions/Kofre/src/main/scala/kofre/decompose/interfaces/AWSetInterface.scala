@@ -31,7 +31,7 @@ object AWSetInterface {
 
   def add[E](e: E): DeltaMutator[State[E]] = {
     case (replicaID, CausalStore(dm, cc)) =>
-      val nextDot = cc.max(replicaID).fold(Dot(replicaID, 0))(_.next)
+      val nextDot = cc.max(replicaID).fold(Dot(replicaID, 0))(_.advance)
       val v       = dm.getOrElse(e, DotSet.empty)
 
       deltaState[E].make(

@@ -42,7 +42,7 @@ case class TreeCausalContext(internal: Map[Id, IntTree.Tree]) {
 
   def union(other: TreeCausalContext): TreeCausalContext = TreeCausalContext.contextLattice.merge(this, other)
 
-  def contains(d: Dot): Boolean = internal.get(d.replicaID).exists(IntTree.contains(_, d.time))
+  def contains(d: Dot): Boolean = internal.get(d.replicaId).exists(IntTree.contains(_, d.time))
 
   def toSet: Set[Dot] =
     internal.flatMap((key, tree) => IntTree.iterator(tree).map(time => Dot(key, time))).toSet

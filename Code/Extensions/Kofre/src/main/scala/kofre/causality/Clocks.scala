@@ -12,8 +12,6 @@ import scala.math.PartialOrdering
   */
 case class Dot(replicaId: Id, time: Defs.Time) {
   def advance: Dot  = Dot(replicaId, time + 1)
-  def next: Dot     = advance
-  def replicaID: Id = replicaId
 }
 
 case class VectorClock(timestamps: Map[Id, Defs.Time]) {

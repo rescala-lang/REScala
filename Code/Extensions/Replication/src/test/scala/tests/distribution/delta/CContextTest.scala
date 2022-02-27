@@ -58,7 +58,7 @@ class DietMapCContextTest extends AnyFreeSpec with ScalaCheckDrivenPropertyCheck
 
   "max" in forAll { (cc: CausalContext, randId: String) =>
     val asSet = cc.toSet
-    val ids   = asSet.map(_.replicaID) + randId
+    val ids   = asSet.map(_.replicaId) + randId
 
     ids.foreach { id =>
       val counterVals = asSet.collect {
@@ -86,14 +86,14 @@ class DietMapCContextTest extends AnyFreeSpec with ScalaCheckDrivenPropertyCheck
 
   "nextDot" in forAll { (cc: CausalContext, randId: String) =>
     val asSet = (cc.toSet)
-    val ids   = asSet.map(_.replicaID) + randId
+    val ids   = asSet.map(_.replicaId) + randId
 
     ids.foreach { id =>
       val nd = cc.nextDot(id)
 
       assert(
-        nd.replicaID == id,
-        s"DietMapCContext.nextDot should return a dot for the given replicaID, but ${nd.replicaID} does not equal $id"
+        nd.replicaId == id,
+        s"DietMapCContext.nextDot should return a dot for the given replicaID, but ${nd.replicaId} does not equal $id"
       )
 
       cc.max(id) match {
