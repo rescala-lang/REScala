@@ -4,9 +4,9 @@ import kofre.causality.{CausalContext, Dot}
 import kofre.decompose.*
 import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
 import kofre.decompose.DotStore.{DotFun, DotLess, DotPair}
-import kofre.decompose.interfaces.EpocheInterface.ForcedWriteAsUIJDLattice
 import kofre.decompose.interfaces.GListInterface.GListAsUIJDLattice
 import kofre.dotbased.CausalStore
+import kofre.primitives.Epoche
 
 object RGAInterface {
 
@@ -37,24 +37,24 @@ object RGAInterface {
     }
   }
 
-  type State[E] = CausalStore[(EpocheInterface.Epoche[GListInterface.State[Dot]], DotFun[RGANode[E]])]
+  type State[E] = CausalStore[(Epoche[GListInterface.State[Dot]], DotFun[RGANode[E]])]
 
   trait RGACompanion {
-    type State[E] = RGAInterface.State[E]
-    type Embedded[E] = (EpocheInterface.Epoche[GListInterface.State[Dot]], DotFun[RGANode[E]])
+    type State[E]    = RGAInterface.State[E]
+    type Embedded[E] = (Epoche[GListInterface.State[Dot]], DotFun[RGANode[E]])
 
-    implicit val ForcedWriteAsUIJDLattice: UIJDLattice[EpocheInterface.Epoche[GListInterface.State[Dot]]] =
-      EpocheInterface.ForcedWriteAsUIJDLattice[GListInterface.State[Dot]]
+    implicit val ForcedWriteAsUIJDLattice: UIJDLattice[Epoche[GListInterface.State[Dot]]] =
+      Epoche.epocheAsUIJDLattice[GListInterface.State[Dot]]
   }
 
   private class DeltaStateFactory[E] {
     val bottom: State[E] = UIJDLattice[State[E]].bottom
 
     def make(
-              fw: EpocheInterface.Epoche[GListInterface.State[Dot]] = bottom.store._1,
-              df: DotFun[RGANode[E]] = bottom.store._2,
-              cc: C = bottom.context
-    ): State[E] = CausalStore((fw, df), cc)
+        epoche: Epoche[GListInterface.State[Dot]] = bottom.store._1,
+        df: DotFun[RGANode[E]] = bottom.store._2,
+        cc: C = bottom.context
+    ): State[E] = CausalStore((epoche, df), cc)
   }
 
   private def deltaState[E]: DeltaStateFactory[E] = new DeltaStateFactory[E]
@@ -107,7 +107,7 @@ object RGAInterface {
           val dfDelta    = DotFun[RGANode[E]].empty + (nextDot -> Alive(TimedVal(e, replicaID)))
 
           deltaState[E].make(
-            fw = glistDelta,
+            epoche = glistDelta,
             df = dfDelta,
             cc = CausalContext.one(nextDot)
           )
@@ -130,7 +130,7 @@ object RGAInterface {
           val dfDelta    = DotFun[RGANode[E]].empty ++ (nextDots zip elems.map(e => Alive(TimedVal(e, replicaID))))
 
           deltaState[E].make(
-            fw = glistDelta,
+            epoche = glistDelta,
             df = dfDelta,
             cc = CausalContext.fromSet(nextDots.toSet)
           )
@@ -181,17 +181,17 @@ object RGAInterface {
 
   def purgeTombstones[E](): DeltaMutator[State[E]] = (replicaID, state) =>
     state match {
-      case CausalStore((fw, df), _) =>
+      case CausalStore((epoche, df), _) =>
         val toRemove = df.collect {
           case (dot, Dead()) => dot
         }.toSet
 
-        val golistPurged = GListInterface.without(fw.value, toRemove)
+        val golistPurged = GListInterface.without(epoche.value, toRemove)
 
         deltaState[E].make(
-          fw = EpocheInterface.forcedWrite(golistPurged)(replicaID, fw),
+          epoche = EpocheInterface.epocheWrite(golistPurged)(replicaID, epoche),
           cc = CausalContext.fromSet(toRemove)
-          )
+        )
     }
 
   def clear[E](): DeltaMutator[State[E]] = {
@@ -221,7 +221,7 @@ object RGAInterface {
   * This implementation was modeled after the RGA proposed by Roh et al. in "Replicated abstract data types: Building blocks
   * for collaborative applications", see [[https://www.sciencedirect.com/science/article/pii/S0743731510002716?casa_token=lQaLin7aEvcAAAAA:Esc3h3WvkFHUcvhalTPPvV5HbJge91D4-2jyKiSlz8GBDjx31l4xvfH8DIstmQ973PVi46ckXHg here]]
   */
-abstract class RGAInterface[E,  Wrapper] extends CRDTInterface[RGAInterface.State[E], Wrapper] {
+abstract class RGAInterface[E, Wrapper] extends CRDTInterface[RGAInterface.State[E], Wrapper] {
   def read(i: Int): Option[E] = query(RGAInterface.read(i))
 
   def size: Int = query(RGAInterface.size)

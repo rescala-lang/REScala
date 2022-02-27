@@ -1,11 +1,12 @@
 package kofre.decompose
 
 import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
+import kofre.Defs
 
 trait CRDTInterface[State, Wrapper] {
   val state: State
 
-  val replicaID: String
+  val replicaID: Defs.Id
 
   protected def query[A](q: DeltaQuery[State, A]): A = q(state)
 
@@ -16,6 +17,6 @@ trait CRDTInterface[State, Wrapper] {
 }
 
 object CRDTInterface {
-  type DeltaMutator[A]  = (String, A) => A
+  type DeltaMutator[A]  = (Defs.Id, A) => A
   type DeltaQuery[A, B] = A => B
 }
