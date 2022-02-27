@@ -5,7 +5,7 @@ import org.openjdk.jmh.annotations._
 import kofre.dotbased.{AddWinsSet, AddWinsSetO}
 import kofre.causality.{CausalContext, Dot}
 import kofre.causality.impl.{ArrayRanges, IntTree}
-import kofre.{IdUtil, Lattice}
+import kofre.{Defs, Lattice}
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -22,11 +22,11 @@ class AddWinsSetBench {
   var rep1Set: AddWinsSet[String]        = _
   var rep1SetPlusOne: AddWinsSet[String] = _
   var rep2Set: AddWinsSet[String]        = _
-  val rep1id                             = IdUtil.genId()
-  val rep2id                             = IdUtil.genId()
+  val rep1id                             = Defs.genId()
+  val rep2id                             = Defs.genId()
   var rep2Delta: AddWinsSet[String]      = _
 
-  private def makeRep(rep: IdUtil.Id): AddWinsSet[String] = {
+  private def makeRep(rep: Defs.Id): AddWinsSet[String] = {
     0.until(setSize).foldLeft(AddWinsSet.empty[String]) { case (s, v) => s.add(v.toString + rep, rep) }
   }
 

@@ -4,7 +4,7 @@ import java.util.concurrent.TimeUnit
 import benchmarks.lattices.Codecs._
 import kofre.dotbased.AddWinsSetO
 import org.openjdk.jmh.annotations._
-import kofre.{IdUtil, Lattice}
+import kofre.{Defs, Lattice}
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -27,7 +27,7 @@ class AddWinsSetOBench {
   var justSetRep1: Set[String]            = _
   var justSetRep2: Set[String]            = _
 
-  private def makeRep(rep: IdUtil.Id): AddWinsSetO[String] = {
+  private def makeRep(rep: Defs.Id): AddWinsSetO[String] = {
     0.until(setSize).foldLeft(AddWinsSetO.empty[String]) { case (s, v) => s.add(v.toString + rep, rep) }
   }
 

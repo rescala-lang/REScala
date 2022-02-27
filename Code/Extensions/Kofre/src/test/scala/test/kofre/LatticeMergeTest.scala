@@ -2,7 +2,7 @@ package test.kofre
 
 import kofre.primitives.{LastWriterWins, MultiValueRegister}
 import kofre.sets.ORSet
-import kofre.{IdUtil, Lattice}
+import kofre.{Defs, Lattice}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks

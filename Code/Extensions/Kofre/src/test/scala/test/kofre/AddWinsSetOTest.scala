@@ -3,7 +3,7 @@ package test.kofre
 import org.scalacheck.Arbitrary
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import kofre.IdUtil
+import kofre.Defs
 import kofre.Lattice.merge
 import kofre.dotbased.{AddWinsSetO}
 import kofre.causality.CausalContext
@@ -21,13 +21,13 @@ class AddWinsSetOTest extends AnyFreeSpec with ScalaCheckPropertyChecks {
   implicit lazy val AddWinsSetOWithStrings: Arbitrary[AddWinsSetO[String]] = Arbitrary(for {
     values <- Arbitrary.arbitrary[Set[String]]
   } yield values.foldLeft(AddWinsSetO.empty[String])((set, value) =>
-    AWOTestHelper.merge(set, set.add(value, IdUtil.genId()))
+    AWOTestHelper.merge(set, set.add(value, Defs.genId()))
   ))
 
   implicit lazy val AddWinsSetOWithInts: Arbitrary[AddWinsSetO[Int]] = Arbitrary(for {
     values <- Arbitrary.arbitrary[Set[Int]]
   } yield values.foldLeft(AddWinsSetO.empty[Int])((set, value) =>
-    AWOTestHelper.merge(set, set.add(value, IdUtil.genId()))
+    AWOTestHelper.merge(set, set.add(value, Defs.genId()))
   ))
 
   "An AddWinsSetO should support" - {
@@ -37,8 +37,8 @@ class AddWinsSetOTest extends AnyFreeSpec with ScalaCheckPropertyChecks {
 
     "adding elements" - {
       "manual tests" ignore {
-        val id1       = IdUtil.genId()
-        val id2       = IdUtil.genId()
+        val id1       = Defs.genId()
+        val id2       = Defs.genId()
         val d1        = initial.add(elem, id1)
         val d2        = initial.add(elem2, id2)
         val bothAdded = AWOTestHelper.merge(AWOTestHelper.merge(initial, d1), d2)
@@ -47,12 +47,12 @@ class AddWinsSetOTest extends AnyFreeSpec with ScalaCheckPropertyChecks {
       }
       "property based tests" - {
         "with strings" ignore forAll { (s: AddWinsSetO[String], elem: String) =>
-          val delta = s.add(elem, IdUtil.genId())
+          val delta = s.add(elem, Defs.genId())
           val added = AWOTestHelper.merge(s, delta)
           assert(added.contains(elem))
         }
         "with integers" ignore forAll { (s: AddWinsSetO[Int], elem: Int) =>
-          val delta = s.add(elem, IdUtil.genId())
+          val delta = s.add(elem, Defs.genId())
           val added = AWOTestHelper.merge(s, delta)
           assert(added.contains(elem))
         }
@@ -62,7 +62,7 @@ class AddWinsSetOTest extends AnyFreeSpec with ScalaCheckPropertyChecks {
 
     "removing elements" - {
       "manual tests" ignore {
-        val d1                         = initial.add(elem, IdUtil.genId())
+        val d1                         = initial.add(elem, Defs.genId())
         val added: AddWinsSetO[String] = AWOTestHelper.merge(initial, d1)
 
         val d2                           = added.removeΔ(elem)
@@ -91,8 +91,8 @@ class AddWinsSetOTest extends AnyFreeSpec with ScalaCheckPropertyChecks {
       }
 
       "clearing all elements" ignore {
-        val d1        = initial.add(elem, IdUtil.genId())
-        val d2        = initial.add(elem2, IdUtil.genId())
+        val d1        = initial.add(elem, Defs.genId())
+        val d2        = initial.add(elem2, Defs.genId())
         val bothAdded = AWOTestHelper.merge(AWOTestHelper.merge(initial, d1), d2)
 
         val d3      = bothAdded.clear
@@ -106,8 +106,8 @@ class AddWinsSetOTest extends AnyFreeSpec with ScalaCheckPropertyChecks {
         }
 
         "with other instances" ignore {
-          val d1        = initial.add(elem, IdUtil.genId())
-          val d2        = initial.add(elem2, IdUtil.genId())
+          val d1        = initial.add(elem, Defs.genId())
+          val d2        = initial.add(elem2, Defs.genId())
           val bothAdded = AWOTestHelper.merge(AWOTestHelper.merge(initial, d1), d2)
           val merged    = initial.merge(bothAdded)
           assert(merged.contains(elem) && merged.contains(elem2))

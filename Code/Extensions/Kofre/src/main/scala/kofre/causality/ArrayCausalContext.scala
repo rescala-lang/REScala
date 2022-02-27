@@ -1,6 +1,6 @@
 package kofre.causality
 
-import kofre.IdUtil.{Id, Time}
+import kofre.Defs.{Id, Time}
 import kofre.Lattice
 import kofre.causality.impl.ArrayRanges
 

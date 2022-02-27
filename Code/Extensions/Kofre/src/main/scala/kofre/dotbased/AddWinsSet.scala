@@ -1,10 +1,10 @@
 package kofre.dotbased
 
-import kofre.IdUtil.Id
+import kofre.Defs.Id
 import kofre.dotbased.DotStore.*
 import kofre.causality.{CausalContext, Dot}
 import kofre.dotbased.AddWinsSet
-import kofre.{IdUtil, Lattice}
+import kofre.{Defs, Lattice}
 
 case class AddWinsSet[A](store: Map[A, Set[Dot]], context: CausalContext) {
   // (updatesCurrent[Set[(id, dot)], knownPast[Set[dot]], newData[Set[(id,data)])
@@ -13,7 +13,7 @@ case class AddWinsSet[A](store: Map[A, Set[Dot]], context: CausalContext) {
   /** Adds a value conceptually from a new random replica */
   // TODO: this … is probably not a good idea
   def addRandom(e: A): AddWinsSet[A] = {
-    val id = IdUtil.genId()
+    val id = Defs.genId()
     addΔ(e, id)
   }
 

@@ -3,7 +3,7 @@ package kofre.causality.impl
 import java.util
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
-import kofre.IdUtil.Time
+import kofre.Defs.Time
 import kofre.Lattice
 
 import scala.collection.IndexedSeqView

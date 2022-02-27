@@ -4,7 +4,7 @@ import cats.collections.Diet
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import kofre.decompose.interfaces.AuctionInterface.AuctionData
-import kofre.decompose.interfaces.ForcedWriteInterface.State
+import kofre.decompose.interfaces.EpocheInterface.Epoche
 import kofre.decompose.interfaces.GListInterface.{Elem, GListNode}
 import kofre.decompose.interfaces.RGAInterface.RGANode
 import kofre.decompose.{LexPair, TimedVal}
@@ -124,7 +124,7 @@ object JsoniterCodecs {
   /** RGA */
 
   implicit def RGAStateCodec[E: JsonValueCodec]
-      : JsonValueCodec[CausalStore[(State[Map[GListNode[TimedVal[Dot]], Elem[TimedVal[Dot]]]], Map[Dot, RGANode[E]])]] =
+      : JsonValueCodec[CausalStore[(Epoche[Map[GListNode[TimedVal[Dot]], Elem[TimedVal[Dot]]]], Map[Dot, RGANode[E]])]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   /** Rubis */

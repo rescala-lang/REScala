@@ -1,6 +1,6 @@
 package kofre.rga
 
-import kofre.IdUtil.Id
+import kofre.Defs.Id
 import kofre.Lattice
 import kofre.dotbased.AddWinsSetO
 

@@ -4,7 +4,7 @@ import kofre.causality.{CausalContext, Dot}
 
 import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
-import kofre.{IdUtil, Lattice}
+import kofre.{Defs, Lattice}
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -21,11 +21,11 @@ class ContextBench {
   var rep1Set: CausalContext        = _
   var rep1SetPlusOne: CausalContext = _
   var rep2Set: CausalContext        = _
-  val rep1id                        = IdUtil.genId()
-  val rep2id                        = IdUtil.genId()
+  val rep1id                        = Defs.genId()
+  val rep2id                        = Defs.genId()
   var rep1single: CausalContext     = _
 
-  private def makeRep(rep: IdUtil.Id, mul: Long, off: Long, len: Long): CausalContext = {
+  private def makeRep(rep: Defs.Id, mul: Long, off: Long, len: Long): CausalContext = {
     val ranges = Range.Long(0L, size, 1).map(i => Range.Long(i * mul + off, i * mul + len + off, 1))
     CausalContext.fromSet(ranges.flatten.iterator.map(Dot(rep, _)).toSet)
   }

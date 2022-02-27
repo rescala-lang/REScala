@@ -1,6 +1,6 @@
 package kofre.causality
 
-import kofre.IdUtil.{Id, Time}
+import kofre.Defs.{Id, Time}
 
 object CausalContext {
   export ArrayCausalContext.*

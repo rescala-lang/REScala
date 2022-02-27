@@ -1,9 +1,9 @@
 package kofre.primitives
 
 import kofre.Lattice
-import kofre.IdUtil
+import kofre.Defs
 
-case class LastWriterWins[A](timestamp: IdUtil.Time, payload: A):
+case class LastWriterWins[A](timestamp: Defs.Time, payload: A):
   def map[B](f: A => B): LastWriterWins[B] = LastWriterWins(f(payload))
 
 object LastWriterWins:

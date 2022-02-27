@@ -1,8 +1,9 @@
 package kofre
 
 import java.util.{Base64, UUID}
+import scala.util.Random
 
-object IdUtil {
+object Defs {
   def genTimestamp(): Long = System.currentTimeMillis
 
   type Id = String
@@ -12,10 +13,10 @@ object IdUtil {
   object Id:
     given ordering: Ordering[Id] = summon[Ordering[String]]
 
-  val random = scala.util.Random()
+  val random: Random = scala.util.Random()
 
   def predefined(s: String): Id = s
-  def zero: Id                  = ""
+  def zeroId: Id                  = ""
 
   /** Generates unique identifiers for use by CRDTs */
   def genId(): Id =

@@ -1,6 +1,6 @@
 package kofre.dotbased
 
-import kofre.IdUtil.Id
+import kofre.Defs.Id
 import kofre.Lattice
 import kofre.causality.{CausalContext, Dot}
 

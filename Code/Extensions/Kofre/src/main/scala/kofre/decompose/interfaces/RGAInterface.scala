@@ -4,7 +4,7 @@ import kofre.causality.{CausalContext, Dot}
 import kofre.decompose.*
 import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
 import kofre.decompose.DotStore.{DotFun, DotLess, DotPair}
-import kofre.decompose.interfaces.ForcedWriteInterface.ForcedWriteAsUIJDLattice
+import kofre.decompose.interfaces.EpocheInterface.ForcedWriteAsUIJDLattice
 import kofre.decompose.interfaces.GListInterface.GListAsUIJDLattice
 import kofre.dotbased.CausalStore
 
@@ -37,21 +37,21 @@ object RGAInterface {
     }
   }
 
-  type State[E] = CausalStore[(ForcedWriteInterface.State[GListInterface.State[Dot]], DotFun[RGANode[E]])]
+  type State[E] = CausalStore[(EpocheInterface.Epoche[GListInterface.State[Dot]], DotFun[RGANode[E]])]
 
   trait RGACompanion {
     type State[E] = RGAInterface.State[E]
-    type Embedded[E] = (ForcedWriteInterface.State[GListInterface.State[Dot]], DotFun[RGANode[E]])
+    type Embedded[E] = (EpocheInterface.Epoche[GListInterface.State[Dot]], DotFun[RGANode[E]])
 
-    implicit val ForcedWriteAsUIJDLattice: UIJDLattice[ForcedWriteInterface.State[GListInterface.State[Dot]]] =
-      ForcedWriteInterface.ForcedWriteAsUIJDLattice[GListInterface.State[Dot]]
+    implicit val ForcedWriteAsUIJDLattice: UIJDLattice[EpocheInterface.Epoche[GListInterface.State[Dot]]] =
+      EpocheInterface.ForcedWriteAsUIJDLattice[GListInterface.State[Dot]]
   }
 
   private class DeltaStateFactory[E] {
     val bottom: State[E] = UIJDLattice[State[E]].bottom
 
     def make(
-              fw: ForcedWriteInterface.State[GListInterface.State[Dot]] = bottom.store._1,
+              fw: EpocheInterface.Epoche[GListInterface.State[Dot]] = bottom.store._1,
               df: DotFun[RGANode[E]] = bottom.store._2,
               cc: C = bottom.context
     ): State[E] = CausalStore((fw, df), cc)
@@ -103,7 +103,7 @@ object RGAInterface {
         case None => deltaState[E].bottom
         case Some(glistInsertIndex) =>
           val m          = GListInterface.insert(glistInsertIndex, nextDot)
-          val glistDelta = ForcedWriteInterface.mutate(m)(replicaID, fw)
+          val glistDelta = EpocheInterface.mutate(m)(replicaID, fw)
           val dfDelta    = DotFun[RGANode[E]].empty + (nextDot -> Alive(TimedVal(e, replicaID)))
 
           deltaState[E].make(
@@ -126,7 +126,7 @@ object RGAInterface {
         case None => deltaState[E].bottom
         case Some(glistInsertIndex) =>
           val m          = GListInterface.insertAll(glistInsertIndex, nextDots)
-          val glistDelta = ForcedWriteInterface.mutate(m)(replicaID, fw)
+          val glistDelta = EpocheInterface.mutate(m)(replicaID, fw)
           val dfDelta    = DotFun[RGANode[E]].empty ++ (nextDots zip elems.map(e => Alive(TimedVal(e, replicaID))))
 
           deltaState[E].make(
@@ -189,9 +189,9 @@ object RGAInterface {
         val golistPurged = GListInterface.without(fw.value, toRemove)
 
         deltaState[E].make(
-          fw = ForcedWriteInterface.forcedWrite(golistPurged)(replicaID, fw),
+          fw = EpocheInterface.forcedWrite(golistPurged)(replicaID, fw),
           cc = CausalContext.fromSet(toRemove)
-        )
+          )
     }
 
   def clear[E](): DeltaMutator[State[E]] = {
