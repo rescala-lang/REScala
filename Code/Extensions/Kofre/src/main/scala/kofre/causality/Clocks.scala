@@ -10,14 +10,14 @@ import scala.math.PartialOrdering
   * Dots are globally unique counters that are used to track causality in causal CRDTs. To guarantee global uniqueness,
   * dots combine a globally unique replicaID with a locally unique counter.
   */
-case class Dot(replicaId: Id, time: Long) {
+case class Dot(replicaId: Id, time: Defs.Time) {
   def advance: Dot  = Dot(replicaId, time + 1)
   def next: Dot     = advance
   def replicaID: Id = replicaId
 }
 
-case class VectorClock(timestamps: Map[Id, Long]) {
-  def timeOf(replicaId: Id): Long = timestamps.getOrElse(replicaId, 0)
+case class VectorClock(timestamps: Map[Id, Defs.Time]) {
+  def timeOf(replicaId: Id): Defs.Time = timestamps.getOrElse(replicaId, 0)
 
   def clockOf(replicaId: Id): Dot = Dot(replicaId, timeOf(replicaId))
 
@@ -29,10 +29,10 @@ case class VectorClock(timestamps: Map[Id, Long]) {
 object VectorClock {
 
   def zero: VectorClock                      = VectorClock(Map.empty)
-  def fromMap(m: Map[Id, Long]): VectorClock = VectorClock(m)
+  def fromMap(m: Map[Id, Defs.Time]): VectorClock = VectorClock(m)
 
   given lattice: Lattice[VectorClock] =
-    given Lattice[Long] = _ max _
+    given Lattice[Defs.Time] = _ max _
     Lattice.derived
 
   implicit object VectorClockOrdering extends PartialOrdering[VectorClock] {
