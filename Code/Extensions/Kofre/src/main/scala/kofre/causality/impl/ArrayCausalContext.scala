@@ -1,8 +1,9 @@
-package kofre.causality
+package kofre.causality.impl
 
 import kofre.Defs.{Id, Time}
 import kofre.Lattice
 import kofre.causality.impl.ArrayRanges
+import kofre.causality.Dot
 
 case class ArrayCausalContext(internal: Map[Id, ArrayRanges]) {
 

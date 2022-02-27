@@ -1,9 +1,9 @@
-package kofre.causality
+package kofre.causality.impl
 
 import kofre.Defs.{Id, Time}
 import kofre.Lattice
-import kofre.causality.TreeCausalContext
 import kofre.causality.impl.IntTree
+import kofre.causality.Dot
 
 case class TreeCausalContext(internal: Map[Id, IntTree.Tree]) {
 
