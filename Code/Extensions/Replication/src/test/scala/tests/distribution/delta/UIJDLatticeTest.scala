@@ -1,8 +1,9 @@
 package tests.distribution.delta
 
-import kofre.decompose.LexPair._
+import kofre.decompose.interfaces.LexCounterInterface.LexPair
+import kofre.decompose.interfaces.LexCounterInterface.LexPair._
 import kofre.decompose.UIJDLattice._
-import kofre.decompose.{LexPair, UIJDLattice}
+import kofre.decompose.UIJDLattice
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks

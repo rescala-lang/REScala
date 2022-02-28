@@ -30,7 +30,7 @@ object UIJDLattice {
 
   // this seems to have better 2.13 compatibility
   implicit class Operators[A: UIJDLattice](left: A):
-    def leq(right: A): Boolean = UIJDLattice[A].leq(left, right)
+    def <=(right: A): Boolean = UIJDLattice[A].leq(left, right)
     def decompose: Iterable[A] = UIJDLattice[A].decompose(left)
 
   implicit def IntAsUIJDLattice: UIJDLattice[Int] = new UIJDFromLattice[Int](using _ max _) {
@@ -49,7 +49,7 @@ object UIJDLattice {
     override def leq(left: Option[A], right: Option[A]): Boolean = (left, right) match {
       case (None, _)          => true
       case (Some(_), None)    => false
-      case (Some(l), Some(r)) => l leq r
+      case (Some(l), Some(r)) => l <= r
     }
 
     override def decompose(state: Option[A]): Iterable[Option[A]] = state match {
@@ -63,7 +63,7 @@ object UIJDLattice {
   implicit def MapAsUIJDLattice[K, V: UIJDLattice]: UIJDLattice[Map[K, V]] = new UIJDFromLattice[Map[K, V]](using mapLattice) {
     override def leq(left: Map[K, V], right: Map[K, V]): Boolean =
       left.keySet.forall { k =>
-        left.get(k) leq right.get(k)
+        left.get(k) <= right.get(k)
       }
 
     override def decompose(state: Map[K, V]): Iterable[Map[K, V]] = state.keys.flatMap { k =>
@@ -81,7 +81,7 @@ object UIJDLattice {
 
     override def leq(left: (A, B), right: (A, B)): Boolean = (left, right) match {
       case ((ll, lr), (rl, rr)) =>
-        (ll leq rl) && (lr leq rr)
+        (ll <= rl) && (lr <= rr)
     }
 
     override def decompose(state: (A, B)): Iterable[(A, B)] = state match {
@@ -96,7 +96,7 @@ object UIJDLattice {
     new UIJDFromLattice[(A, B, C)](using Lattice.derived) {
       override def leq(left: (A, B, C), right: (A, B, C)): Boolean = (left, right) match {
         case ((la, lb, lc), (ra, rb, rc)) =>
-          (la leq ra) && (lb leq rb) && (lc leq rc)
+          (la <= ra) && (lb <= rb) && (lc <= rc)
       }
 
       override def decompose(state: (A, B, C)): Iterable[(A, B, C)] = state match {

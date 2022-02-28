@@ -20,7 +20,7 @@ object Lattice {
 
   // this seems to have better 2.13 compatibility
   implicit class Operators[A: Lattice](left: A):
-    def merge(right: A): A = Lattice[A].merge(left, right)
+    infix def merge(right: A): A = Lattice[A].merge(left, right)
 
   // /////////////// common instances below ///////////////
 

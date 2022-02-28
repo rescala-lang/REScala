@@ -7,8 +7,9 @@ import kofre.decompose.interfaces.AuctionInterface.AuctionData
 import kofre.primitives.Epoche
 import kofre.decompose.interfaces.GListInterface.{Elem, GListNode}
 import kofre.decompose.interfaces.RGAInterface.RGANode
-import kofre.decompose.{LexPair, TimedVal}
+import kofre.decompose.TimedVal
 import kofre.causality.{CausalContext, Dot}
+import kofre.decompose.interfaces.LexCounterInterface.LexPair
 import kofre.dotbased.CausalStore
 
 object JsoniterCodecs {
