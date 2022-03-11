@@ -88,6 +88,7 @@ trait EventCompatBundle extends ReadableMacroBundle {
       macro rescala.macros.ReactiveMacros.EventFoldMacro[
         T,
         A,
+        EventsMacroImpl.FoldFuncImpl.type,
         Events.type,
         CreationTicket,
         StaticTicket,

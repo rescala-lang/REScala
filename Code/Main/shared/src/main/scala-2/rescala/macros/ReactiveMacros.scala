@@ -36,10 +36,7 @@ class ReactiveMacros(val c: blackbox.Context) {
       DynamicTicket,
       ScopeSearch,
       LowPriorityImplicitObject
-    ](expression)(ticket)(
-      q"(${c.prefix.tree}).rescalaAPI",
-      None
-    )
+    ](expression)(ticket)(None)
   }
 
   def ReactiveExpressionWithAPI[
@@ -50,7 +47,7 @@ class ReactiveMacros(val c: blackbox.Context) {
       DynamicTicket: c.WeakTypeTag,
       ScopeSearch: c.WeakTypeTag,
       LowPriorityImplicitObject: c.WeakTypeTag
-  ](expression: Tree)(ticket: c.Tree)(rescalaAPI: Tree, prefixManipulation: Option[PrefixManipulation]): c.Tree = {
+  ](expression: Tree)(ticket: c.Tree)(prefixManipulation: Option[PrefixManipulation]): c.Tree = {
     if (c.hasErrors) return compileErrorsAst
 
     val forceStatic = !(weakTypeOf[IsStatic] <:< weakTypeOf[MacroTags.Dynamic])
@@ -143,29 +140,25 @@ class ReactiveMacros(val c: blackbox.Context) {
       DynamicTicket,
       ScopeSearch,
       LowPriorityImplicitObject
-    ](computation)(ticket)(
-      q"${pm.prefixIdent}.rescalaAPI",
-      Some(pm)
-    )
+    ](computation)(ticket)(Some(pm))
   }
 
   def EventFoldMacro[
       T: c.WeakTypeTag,
       A: c.WeakTypeTag,
+      FoldFunctionImpl: c.WeakTypeTag,
       ReactiveType: c.WeakTypeTag,
       CT: c.WeakTypeTag,
       StaticTicket: c.WeakTypeTag,
       ScopeSearch: c.WeakTypeTag,
-      LowPriorityImplicitObject: c.WeakTypeTag
+      LowPriorityImplicitObject: c.WeakTypeTag,
   ](
       init: c.Expr[A]
   )(op: c.Expr[(A, T) => A])(ticket: c.Expr[CT]): c.Tree = {
     if (c.hasErrors) return compileErrorsAst
 
-    // TODO: placeholder symbol
-    // val eventsSymbol = weakTypeOf[rescala.operator.EventsMacroImpl.type].termSymbol.asTerm.name
     val ticketType  = weakTypeOf[StaticTicket]
-    val funcImpl    = weakTypeOf[rescala.operator.EventsMacroImpl.FoldFuncImpl.type].typeSymbol.asClass.module
+    val funcImpl    = weakTypeOf[FoldFunctionImpl].typeSymbol.asClass.module
     val pm          = new PrefixManipulation()
     val computation = q"""$funcImpl.apply[${weakTypeOf[T]}, ${weakTypeOf[A]}](_, ${pm.prefixValue}, $op)"""
     fixNullTypes(computation)
