@@ -1,6 +1,6 @@
 package kofre.decompose
 
-import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
+import kofre.syntax.{DeltaMutator, DeltaQuery}
 import kofre.Defs
 
 trait CRDTInterface[State, Wrapper] {
@@ -14,9 +14,4 @@ trait CRDTInterface[State, Wrapper] {
     applyDelta(Delta(replicaID, m(replicaID, state)))
 
   def applyDelta(delta: Delta[State])(implicit u: UIJDLattice[State]): Wrapper
-}
-
-object CRDTInterface {
-  type DeltaMutator[A]  = (Defs.Id, A) => A
-  type DeltaQuery[A, B] = A => B
 }

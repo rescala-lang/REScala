@@ -1,7 +1,7 @@
 package kofre.decompose.interfaces
 
 import kofre.decompose.*
-import kofre.decompose.CRDTInterface.DeltaMutator
+import kofre.syntax.DeltaMutator
 import kofre.decompose.interfaces.AuctionInterface.Bid.User
 
 object AuctionInterface {

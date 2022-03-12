@@ -2,7 +2,7 @@ package kofre.decompose.interfaces
 
 import kofre.Lattice.Operators
 import kofre.decompose.*
-import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
+import kofre.syntax.{DeltaMutator, DeltaQuery}
 import kofre.decompose.UIJDLattice.Operators
 
 object LexCounterInterface {

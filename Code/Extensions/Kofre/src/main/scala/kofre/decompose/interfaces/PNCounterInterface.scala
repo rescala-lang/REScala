@@ -1,7 +1,7 @@
 package kofre.decompose.interfaces
 
 import kofre.decompose.*
-import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
+import kofre.syntax.{DeltaMutator, DeltaQuery}
 
 object PNCounterInterface {
   type State = (GCounterInterface.State, GCounterInterface.State)

@@ -1,6 +1,6 @@
 package kofre.decompose.interfaces
 import kofre.decompose.*
-import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
+import kofre.syntax.{DeltaMutator, DeltaQuery}
 import kofre.decompose.DotStore.DotFun
 
 object LWWRegisterInterface {

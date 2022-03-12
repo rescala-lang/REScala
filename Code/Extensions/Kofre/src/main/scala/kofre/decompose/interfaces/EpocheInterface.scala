@@ -1,6 +1,6 @@
 package kofre.decompose.interfaces
 
-import kofre.decompose.CRDTInterface.{DeltaMutator, DeltaQuery}
+import kofre.syntax.{DeltaMutator, DeltaQuery}
 import kofre.decompose.UIJDLattice
 import kofre.Defs
 import kofre.primitives.Epoche
