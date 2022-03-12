@@ -26,6 +26,6 @@ object PNCounterModule {
 
     def dec()(using MutationIDP): C =
       val neg = current._2.asGcounter.inc()(using withID(replicaID))
-      mutate(neg, UIJDLattice.bottom)
+      mutate(UIJDLattice.bottom, neg)
   }
 }
