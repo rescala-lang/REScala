@@ -1,10 +1,10 @@
 package test.kofre
 
+import kofre.causality.impl.IntTree
+import kofre.dotbased.AddWinsSetO
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import kofre.dotbased.{AddWinsSetO}
-import kofre.causality.impl.IntTree
 
 import scala.collection.Seq
 
@@ -17,7 +17,7 @@ object IntRangeGenerator {
 
 class IntRangeTests extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
-  import test.kofre.IntRangeGenerator._
+  import test.kofre.IntRangeGenerator.*
 
   "insert one" in forAll { (it1: IntTree.Tree) =>
     println(IntTree.show(it1))

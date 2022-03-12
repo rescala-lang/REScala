@@ -45,7 +45,7 @@ class AntiEntropyCRDT[State](
   override protected def copy(state: State): AntiEntropyCRDT[State] = new AntiEntropyCRDT[State](state, antiEntropy)
 }
 
-object BasicPNCounter {
+object AntiEntropyCRDT {
 
   /** Creates a new PNCounter instance
     *

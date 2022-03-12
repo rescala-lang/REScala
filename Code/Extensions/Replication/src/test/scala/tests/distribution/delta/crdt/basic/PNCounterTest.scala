@@ -19,7 +19,7 @@ object PNCounterGenerator {
     val network = new Network(0, 0, 0)
     val ae      = new AntiEntropy[PNCounter]("a", network, mutable.Buffer())
 
-    val inced = (0 to nInc).foldLeft(BasicPNCounter(ae)) {
+    val inced = (0 to nInc).foldLeft(AntiEntropyCRDT(ae)) {
       case (c, _) => c.inc()
     }
 
@@ -58,8 +58,8 @@ class PNCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     val aea = new AntiEntropy[PNCounter]("a", network, mutable.Buffer("b"))
     val aeb = new AntiEntropy[PNCounter]("b", network, mutable.Buffer("a"))
 
-    val ca0 = if (incOrDecA) BasicPNCounter(aea).inc() else BasicPNCounter(aea).dec()
-    val cb0 = if (incOrDecB) BasicPNCounter(aeb).inc() else BasicPNCounter(aeb).dec()
+    val ca0 = if (incOrDecA) AntiEntropyCRDT[PNCounter](aea).inc() else AntiEntropyCRDT[PNCounter](aea).dec()
+    val cb0 = if (incOrDecB) AntiEntropyCRDT[PNCounter](aeb).inc() else AntiEntropyCRDT[PNCounter](aeb).dec()
 
     AntiEntropy.sync(aea, aeb)
 
@@ -83,13 +83,13 @@ class PNCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     val aea = new AntiEntropy[PNCounter]("a", network, mutable.Buffer("b"))
     val aeb = new AntiEntropy[PNCounter]("b", network, mutable.Buffer("a"))
 
-    val incedA = (0 until incA.toInt).foldLeft(BasicPNCounter(aea)) {
+    val incedA = (0 until incA.toInt).foldLeft(AntiEntropyCRDT[PNCounter](aea)) {
       case (c, _) => c.inc()
     }
     val ca0 = (0 until decA.toInt).foldLeft(incedA) {
       case (c, _) => c.dec()
     }
-    val incedB = (0 until incB.toInt).foldLeft(BasicPNCounter(aeb)) {
+    val incedB = (0 until incB.toInt).foldLeft(AntiEntropyCRDT[PNCounter](aeb)) {
       case (c, _) => c.inc()
     }
     val cb0 = (0 until decB.toInt).foldLeft(incedB) {

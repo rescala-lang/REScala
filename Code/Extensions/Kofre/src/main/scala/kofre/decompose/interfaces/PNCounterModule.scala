@@ -1,24 +1,31 @@
 package kofre.decompose.interfaces
 
 import kofre.Defs.Id
+import kofre.decompose.interfaces.GCounterInterface.{GCounter, asGcounter}
 import kofre.decompose.{CRDTInterface, UIJDLattice}
-import kofre.syntax.{AllPermissionsCtx, DeltaMutator, DeltaQuery, OpsSyntaxHelper, QueryCtx}
+import kofre.syntax.{AllPermissionsCtx, DeltaMutator, DeltaQuery, FixedIdCtx, IdentifierCtx, OpsSyntaxHelper, QueryCtx}
+import kofre.syntax.AllPermissionsCtx.withID
+
 
 /** A PNCounter (Positive-Negative Counter) is a Delta CRDT modeling a counter.
   *
   * It is composed of two grow-only counters (see [[GCounterInterface]]) to enable both increments and decrements of the counter value.
   */
 object PNCounterModule {
-  type PNCounter = (GCounterInterface.State, GCounterInterface.State)
+  type PNCounter = (GCounter, GCounter)
 
   implicit class PNCounterSyntax[C](container: C) extends OpsSyntaxHelper[C, PNCounter](container) {
     def value(using QueryP): Int =
-      GCounterInterface.value(current._1) - GCounterInterface.value(current._2)
+      val pos = current._1.asGcounter.value
+      val neg = current._2.asGcounter.value
+      pos - neg
 
     def inc()(using MutationIDP): C =
-      mutate(GCounterInterface.inc()(replicaID, current._1), UIJDLattice.bottom)
+      val pos = current._1.asGcounter.inc()(using withID(replicaID))
+      mutate(pos, UIJDLattice.bottom)
 
     def dec()(using MutationIDP): C =
-      mutate(UIJDLattice.bottom, GCounterInterface.inc()(replicaID, current._2))
+      val neg = current._2.asGcounter.inc()(using withID(replicaID))
+      mutate(neg, UIJDLattice.bottom)
   }
 }
