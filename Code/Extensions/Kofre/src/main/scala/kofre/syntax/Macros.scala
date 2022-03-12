@@ -25,9 +25,9 @@ def refinementImpl[O: Type, T: Type](id: Expr[String], ops: Expr[O], init: Expr[
 
   val res = refinement.asType match
     case '[t] => '{
-type Ref = t
-new CRDTDynamicMacro[O, T](${ id }, ${ ops }, ${ init }).asInstanceOf[Ref & CRDTDynamicMacro[O, T]]
-}
+        type Ref = t
+        new CRDTDynamicMacro[O, T](${ id }, ${ ops }, ${ init }).asInstanceOf[Ref & CRDTDynamicMacro[O, T]]
+      }
   // res is actually not of type O, but because the outer inline def is transparent, the compiler will ignore this
   // however, intellij uses the O for autocompletion, which is what we want because the CRDTDynamicMacro pretends to be an O
   res.asInstanceOf[Expr[O]]
@@ -43,17 +43,17 @@ class CRDTDynamicMacro[O, T](replicaId: String, ops: O, init: T) extends Selecta
 
 object CRDTDynamicMacro {
   def applyMacro[O, T](
-                        container: Expr[Container[T]],
-                        ops: Expr[O],
-                        id: Expr[String],
-                        name: Expr[String],
-                        arguments: Expr[Any]
-                      )(
-                        using
-                        quotes: Quotes,
-                        oType: Type[O],
-                        tType: Type[T]
-                      ): Expr[Any] =
+      container: Expr[Container[T]],
+      ops: Expr[O],
+      id: Expr[String],
+      name: Expr[String],
+      arguments: Expr[Any]
+  )(
+      using
+      quotes: Quotes,
+      oType: Type[O],
+      tType: Type[T]
+  ): Expr[Any] =
     import quotes.reflect.*
 
     println(arguments.show)
@@ -64,11 +64,11 @@ object CRDTDynamicMacro {
     val mutator          = selected.appliedToArgs(args).asExpr
     println(s"mutator ${mutator.show}")
     val res2 = '{
-    val mut = ${ mutator }
-    mut match
-      case m: DeltaMutator[T @unchecked] => ${ container }.value = m.apply($id, ${ container }.value)
-      case _                        =>
-    mut
+      val mut = ${ mutator }
+      mut match
+        case m: DeltaMutator[T @unchecked] => ${ container }.value = m.apply($id, ${ container }.value)
+        case _                             =>
+      mut
     }
     println("final: " + res2.show)
     res2
