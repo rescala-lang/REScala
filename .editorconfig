@@ -18,3 +18,8 @@ indent_style = tab
 [*.{scala,sbt}]
 indent_style = space
 indent_size = 2
+
+# yml seems to require space indentation
+[*.yml]
+indent_style = space
+indent_size = 2
