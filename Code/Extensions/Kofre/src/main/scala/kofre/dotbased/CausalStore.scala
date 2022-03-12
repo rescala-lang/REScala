@@ -15,9 +15,9 @@ object CausalStore {
   implicit def CausalWithDotSetLattice: Lattice[CausalStore[DotSet]] = (left, right) => {
     val inBoth = left.store & right.store
     val newInLeft =
-      left.store.filterNot(dot => dot.time <= right.context.clockOf(dot.replicaId).get.time)
+      left.store.filterNot(dot => dot.time <= right.context.clockOf(dot.replicaId).fold(-1L)(_.time))
     val newInRight =
-      right.store.filterNot(dot => dot.time <= left.context.clockOf(dot.replicaId).get.time)
+      right.store.filterNot(dot => dot.time <= left.context.clockOf(dot.replicaId).fold(-1L)(_.time))
 
     val mergedCausalContext = left.context.union(right.context)
     CausalStore(inBoth ++ newInLeft ++ newInRight, mergedCausalContext)
