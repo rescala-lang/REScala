@@ -12,7 +12,7 @@ import tests.distribution.delta.crdt.basic.NetworkGenerators._
 import scala.collection.mutable
 
 object PNCounterGenerator {
-  val genPNCounter: Gen[BasicPNCounter] = for {
+  val genPNCounter: Gen[AntiEntropyCRDT[PNCounter]] = for {
     nInc <- Gen.posNum[Int]
     nDec <- Gen.posNum[Int]
   } yield {
@@ -28,13 +28,13 @@ object PNCounterGenerator {
     }
   }
 
-  implicit val arbPNCounter: Arbitrary[BasicPNCounter] = Arbitrary(genPNCounter)
+  implicit val arbPNCounter: Arbitrary[AntiEntropyCRDT[PNCounter]] = Arbitrary(genPNCounter)
 }
 
 class PNCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   import PNCounterGenerator._
 
-  "inc" in forAll { counter: BasicPNCounter =>
+  "inc" in forAll { counter: AntiEntropyCRDT[PNCounter] =>
     val inced = counter.inc()
 
     assert(
@@ -43,7 +43,7 @@ class PNCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     )
   }
 
-  "dec" in forAll { counter: BasicPNCounter =>
+  "dec" in forAll { counter: AntiEntropyCRDT[PNCounter] =>
     val deced = counter.dec()
 
     assert(

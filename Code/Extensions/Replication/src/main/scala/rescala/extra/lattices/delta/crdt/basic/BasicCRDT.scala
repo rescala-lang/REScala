@@ -32,3 +32,25 @@ trait BasicCRDT[State, Wrapper] extends CRDTInterface[State, Wrapper] {
     (crdt, delta) => crdt.applyDelta(delta).asInstanceOf[BasicCRDT[State, Wrapper]]
   }.asInstanceOf[Wrapper]
 }
+
+/** [[BasicCRDT Basic]] implementation
+  *
+  * Instead of the class constructor, you should use the apply method of the companion object to create new instances.
+  */
+class AntiEntropyCRDT[State](
+    val state: State,
+    protected val antiEntropy: AntiEntropy[State]
+) extends BasicCRDT[State, AntiEntropyCRDT[State]] {
+
+  override protected def copy(state: State): AntiEntropyCRDT[State] = new AntiEntropyCRDT[State](state, antiEntropy)
+}
+
+object BasicPNCounter {
+
+  /** Creates a new PNCounter instance
+    *
+    * @param antiEntropy AntiEntropy instance used for exchanging deltas with other replicas
+    */
+  def apply[State: UIJDLattice](antiEntropy: AntiEntropy[State]): AntiEntropyCRDT[State] =
+    new AntiEntropyCRDT(UIJDLattice[State].bottom, antiEntropy)
+}

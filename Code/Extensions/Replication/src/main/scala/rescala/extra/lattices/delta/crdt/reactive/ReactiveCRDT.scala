@@ -23,3 +23,27 @@ trait ReactiveCRDT[State, Wrapper] extends CRDTInterface[State, Wrapper] {
 
   def resetDeltaBuffer(): Wrapper = copy(deltaBuffer = List())
 }
+
+/** [[ReactiveCRDT Reactive]] implementation
+  *
+  * Instead of the class constructor, you should use the apply method of the companion object to create new instances.
+  */
+class ReactiveDeltaCRDT[State](
+                         val state: State,
+                         val replicaID: String,
+                         val deltaBuffer: List[Delta[State]]
+                       ) extends ReactiveCRDT[State, ReactiveDeltaCRDT[State]] {
+
+  override protected def copy(state: State, deltaBuffer: List[Delta[State]]): ReactiveDeltaCRDT[State] =
+    new ReactiveDeltaCRDT[State](state, replicaID, deltaBuffer)
+}
+
+object ReactiveDeltaCRDT {
+
+  /** Creates a new PNCounter instance
+    *
+    * @param replicaID Unique id of the replica that this instance is located on
+    */
+  def apply[State: UIJDLattice](replicaID: String): ReactiveDeltaCRDT[State] =
+    new ReactiveDeltaCRDT[State](UIJDLattice[State].bottom, replicaID, List())
+}
