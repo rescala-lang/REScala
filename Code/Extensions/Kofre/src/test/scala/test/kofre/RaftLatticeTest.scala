@@ -9,7 +9,7 @@ class RaftLatticeTest extends AnyFreeSpec {
 
   "basic interaction" in {
 
-    val initial = RaftState[String](Set("a", "b", "c"), Set(Vote(0, "a", "a"), Vote(0, "a", "b"), Vote(0, "a", "c")))
+    val initial = RaftState[String](Set("a", "b", "perm"), Set(Vote(0, "a", "a"), Vote(0, "a", "b"), Vote(0, "a", "perm")))
 
     assert(initial.leader === "a")
     assert(initial.nextProposal === 0)
@@ -25,7 +25,7 @@ class RaftLatticeTest extends AnyFreeSpec {
     assert(proposaled2.values === List())
 
     val s1 = proposaled2.supportProposalDelta("b")
-    val s2 = proposaled2.supportProposalDelta("c")
+    val s2 = proposaled2.supportProposalDelta("perm")
 
     assert(Lattice.merge(proposaled2, s1).values === List("new proposal", "another proposal"))
     assert(Lattice.merge(proposaled2, s2).values === List("new proposal", "another proposal"))
@@ -34,22 +34,22 @@ class RaftLatticeTest extends AnyFreeSpec {
   }
 
   "another interaction" in {
-    val participants = Set("a", "b", "c")
+    val participants = Set("a", "b", "perm")
     val afterFirstVote = RaftState[String](participants)
       .becomeCandidate("a")
       .supportLeader("b")
-      .supportLeader("c")
+      .supportLeader("perm")
 
     assert(afterFirstVote.leader === "a")
     assert(afterFirstVote.currentTerm === 1)
 
-    // kinda split between a and b, but c is still fine with everyone
+    // kinda split between a and b, but perm is still fine with everyone
 
     val afterProposalAndSplit = afterFirstVote
       .propose("a", "As first proposal")
       .becomeCandidate("b")
       .supportLeader("b")
-      .supportProposal("c")
+      .supportProposal("perm")
 
     assert(afterProposalAndSplit.leader == "a")
     assert(afterProposalAndSplit.currentTerm == 1)
@@ -58,9 +58,9 @@ class RaftLatticeTest extends AnyFreeSpec {
     val bsRiseToPower = afterProposalAndSplit
       .propose("b", "Bs proposal before acceptance")
       .propose("a", "As second proposal while still leader")
-      .supportLeader("c")
+      .supportLeader("perm")
       .propose("b", "Bs proposal after acceptance")
-      .supportProposal("c")
+      .supportProposal("perm")
 
     assert(bsRiseToPower.leader == "b")
     assert(bsRiseToPower.currentTerm == 2)

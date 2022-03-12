@@ -27,6 +27,7 @@ trait UIJDFromLattice[A](using lattice: Lattice[A]) extends UIJDLattice[A] {
 
 object UIJDLattice {
   def apply[A](implicit l: UIJDLattice[A]): UIJDLattice[A] = l
+  def bottom[A](implicit l: UIJDLattice[A]): A = l.bottom
 
   // this seems to have better 2.13 compatibility
   implicit class Operators[A: UIJDLattice](left: A):

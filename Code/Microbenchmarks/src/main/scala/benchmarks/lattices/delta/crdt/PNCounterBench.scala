@@ -1,7 +1,8 @@
 package benchmarks.lattices.delta.crdt
 
 import org.openjdk.jmh.annotations._
-import rescala.extra.lattices.delta.crdt.reactive.PNCounter
+import rescala.extra.lattices.delta.crdt.reactive.ReactivePNCounter
+import kofre.decompose.interfaces.PNCounterModule.PNCounterSyntax
 
 import java.util.concurrent.TimeUnit
 
@@ -17,13 +18,13 @@ class PNCounterBench {
   @Param(Array("1", "10", "100", "1000"))
   var numReplicas: Int = _
 
-  var counter: PNCounter = _
+  var counter: ReactivePNCounter = _
 
   @Setup
   def setup(): Unit = {
-    counter = (1 until numReplicas).foldLeft(PNCounter("0").inc()) {
+    counter = (1 until numReplicas).foldLeft(ReactivePNCounter("0").inc()) {
       case (c, n) =>
-        val delta = PNCounter(n.toString).inc().deltaBuffer.head
+        val delta = ReactivePNCounter(n.toString).inc().deltaBuffer.head
         c.applyDelta(delta)
     }
   }
@@ -32,8 +33,8 @@ class PNCounterBench {
   def value(): Int = counter.value
 
   @Benchmark
-  def inc(): PNCounter = counter.inc()
+  def inc(): ReactivePNCounter = counter.inc()
 
   @Benchmark
-  def dec(): PNCounter = counter.dec()
+  def dec(): ReactivePNCounter = counter.dec()
 }
