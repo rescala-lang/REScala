@@ -7,7 +7,7 @@ import kofre.dotbased.CausalStore
 
 class AWSetDeltaFold[E, B](acc: B, onAdd: (B, E) => B, onRemove: (B, E) => B) {
   type C = CausalContext
-  def apply(currentState: AWSetInterface.State[E], deltaState: AWSetInterface.State[E]): AWSetDeltaFold[E, B] =
+  def apply(currentState: AWSetInterface.AWSet[E], deltaState: AWSetInterface.AWSet[E]): AWSetDeltaFold[E, B] =
     deltaState match {
       case CausalStore(dm, cc) =>
         val removedDots = cc.toSet diff DotMap[E, DotSet].dots(dm)

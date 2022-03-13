@@ -2,8 +2,11 @@ package calendar
 
 import kofre.Lattice
 import kofre.decompose.Delta
+import kofre.decompose.interfaces.AWSetInterface.AWSet
 import kofre.protocol.RaftState
-import rescala.extra.lattices.delta.crdt.reactive.AWSet
+import rescala.extra.lattices.delta.crdt.reactive.ReactiveDeltaCRDT
+import kofre.decompose.interfaces.AWSetInterface.AWSetSyntax
+
 
 import scala.util.Random
 
@@ -14,8 +17,8 @@ case class Token(id: Long, owner: String, value: String) {
 case class RaftTokens(
     replicaID: String,
     tokenAgreement: RaftState[Token],
-    want: AWSet[Token],
-    tokenFreed: AWSet[Token]
+    want: ReactiveDeltaCRDT[AWSet[Token]],
+    tokenFreed: ReactiveDeltaCRDT[AWSet[Token]]
 ) {
 
   def owned(value: String): List[Token] = {
@@ -50,11 +53,11 @@ case class RaftTokens(
     } else copy(tokenAgreement = generalDuties)
   }
 
-  def applyWant(state: Delta[AWSet.State[Token]]): RaftTokens = {
+  def applyWant(state: Delta[AWSet[Token]]): RaftTokens = {
     copy(want = want.applyDelta(state))
   }
 
-  def applyFree(state: Delta[AWSet.State[Token]]): RaftTokens = {
+  def applyFree(state: Delta[AWSet[Token]]): RaftTokens = {
     copy(tokenFreed = tokenFreed.applyDelta(state))
   }
 
@@ -69,5 +72,5 @@ case class RaftTokens(
 
 object RaftTokens {
   def init(replicaID: String): RaftTokens =
-    RaftTokens(replicaID, RaftState(Set(replicaID)), AWSet(replicaID), AWSet(replicaID))
+    RaftTokens(replicaID, RaftState(Set(replicaID)), ReactiveDeltaCRDT(replicaID), ReactiveDeltaCRDT(replicaID))
 }

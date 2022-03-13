@@ -3,6 +3,7 @@ package tests.distribution.delta.crdt.basic
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import kofre.decompose.DotStore._
+import kofre.decompose.interfaces.AWSetInterface.AWSet
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -10,20 +11,23 @@ import rescala.extra.lattices.delta.JsoniterCodecs._
 import rescala.extra.lattices.delta.crdt.basic._
 import rescala.extra.replication.AntiEntropy
 import tests.distribution.delta.crdt.basic.NetworkGenerators._
+import kofre.decompose.interfaces.AWSetInterface.AWSetSyntax
+import kofre.decompose.CRDTInterface.crdtInterfaceContextPermissions
+import kofre.syntax.AllPermissionsCtx
 
 import scala.collection.mutable
 
 object AWSetGenerators {
-  def genAWSet[A: JsonValueCodec](implicit a: Arbitrary[A]): Gen[AWSet[A]] =
+  def genAWSet[A: JsonValueCodec](implicit a: Arbitrary[A]): Gen[AntiEntropyCRDT[AWSet[A]]] =
     for {
       added   <- Gen.containerOf[List, A](a.arbitrary)
       n       <- Gen.choose(0, added.size)
       removed <- Gen.pick(n, added)
     } yield {
       val network = new Network(0, 0, 0)
-      val ae      = new AntiEntropy[AWSet.State[A]]("a", network, mutable.Buffer())
+      val ae      = new AntiEntropy[AWSet[A]]("a", network, mutable.Buffer())
 
-      val setAdded = added.foldLeft(AWSet(ae)) {
+      val setAdded = added.foldLeft(AntiEntropyCRDT[AWSet[A]](ae)) {
         case (set, e) => set.add(e)
       }
       removed.foldLeft(setAdded) {
@@ -33,7 +37,7 @@ object AWSetGenerators {
 
   implicit def arbAWSet[A: JsonValueCodec](implicit
       a: Arbitrary[A]
-  ): Arbitrary[AWSet[A]] =
+  ): Arbitrary[AntiEntropyCRDT[AWSet[A]]] =
     Arbitrary(genAWSet[A])
 }
 
@@ -42,16 +46,19 @@ class AWSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
   implicit val IntCodec: JsonValueCodec[Int] = JsonCodecMaker.make
 
-  "add" in forAll { (set: AWSet[Int], e: Int) =>
-    val added = set.add(e)
+  implicit val permission: AllPermissionsCtx[AntiEntropyCRDT[AWSet[Int]], AWSet[Int]] = crdtInterfaceContextPermissions
 
+  "add" in forAll { (set: AntiEntropyCRDT[AWSet[Int]], e: Int) =>
+    val added: AntiEntropyCRDT[AWSet[Int]] = set.add(e)
+
+    val elems = added.elements
     assert(
-      added.elements.contains(e),
-      s"After adding an element to the set it should be contained in its elements, but ${added.elements} does not contain $e"
+      elems.contains(e),
+      s"After adding an element to the set it should be contained in its elements, but ${elems} does not contain $e"
     )
   }
 
-  "remove" in forAll { (set: AWSet[Int], e: Int) =>
+  "remove" in forAll { (set: AntiEntropyCRDT[AWSet[Int]], e: Int) =>
     val removedNotContained = set.remove(e)
     val added               = set.add(e)
     val removed             = added.remove(e)
@@ -67,7 +74,7 @@ class AWSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     )
   }
 
-  "clear" in forAll { set: AWSet[Int] =>
+  "clear" in forAll { set: AntiEntropyCRDT[AWSet[Int]] =>
     val cleared = set.clear()
 
     assert(
@@ -79,11 +86,11 @@ class AWSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent add" in forAll { (e: Int, e1: Int, e2: Int) =>
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropy[AWSet.State[Int]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[AWSet.State[Int]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[AWSet[Int]]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[AWSet[Int]]("b", network, mutable.Buffer("a"))
 
-    val seta0 = AWSet(aea)
-    val setb0 = AWSet(aeb)
+    val seta0 = AntiEntropyCRDT[AWSet[Int]](aea)
+    val setb0 = AntiEntropyCRDT[AWSet[Int]](aeb)
 
     val seta1 = seta0.add(e)
     val setb1 = setb0.add(e)
@@ -123,13 +130,13 @@ class AWSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent remove" in forAll { (e: Int, e1: Int, e2: Int) =>
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropy[AWSet.State[Int]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[AWSet.State[Int]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[AWSet[Int]]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[AWSet[Int]]("b", network, mutable.Buffer("a"))
 
-    val seta0 = AWSet(aea).add(e).add(e1).add(e2)
+    val seta0 = AntiEntropyCRDT[AWSet[Int]](aea).add(e).add(e1).add(e2)
     aea.sendChangesToAllNeighbors()
     aeb.receiveFromNetwork()
-    val setb0 = AWSet(aeb).processReceivedDeltas()
+    val setb0 = AntiEntropyCRDT[AWSet[Int]](aeb).processReceivedDeltas()
 
     val seta1 = seta0.remove(e)
     val setb1 = setb0.remove(e)
@@ -169,13 +176,13 @@ class AWSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent add/remove" in forAll { (e: Int, e1: Int, e2: Int) =>
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropy[AWSet.State[Int]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[AWSet.State[Int]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[AWSet[Int]]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[AWSet[Int]]("b", network, mutable.Buffer("a"))
 
-    val seta0 = AWSet(aea).add(e2)
+    val seta0 = AntiEntropyCRDT[AWSet[Int]](aea).add(e2)
     aea.sendChangesToAllNeighbors()
     aeb.receiveFromNetwork()
-    val setb0 = AWSet(aeb).processReceivedDeltas()
+    val setb0 = AntiEntropyCRDT[AWSet[Int]](aeb).processReceivedDeltas()
 
     val seta1 = seta0.add(e)
     val setb1 = setb0.remove(e)
@@ -215,12 +222,12 @@ class AWSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent add/clear" in forAll { (e: Int, e1: Int, e2: Int) =>
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropy[AWSet.State[Int]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[AWSet.State[Int]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[AWSet[Int]]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[AWSet[Int]]("b", network, mutable.Buffer("a"))
 
-    val seta0 = AWSet(aea).add(e1).add(e2)
+    val seta0 = AntiEntropyCRDT[AWSet[Int]](aea).add(e1).add(e2)
     AntiEntropy.sync(aea, aeb)
-    val setb0 = AWSet(aeb).processReceivedDeltas()
+    val setb0 = AntiEntropyCRDT[AWSet[Int]](aeb).processReceivedDeltas()
 
     val seta1 = seta0.add(e)
     val setb1 = setb0.clear()
@@ -242,17 +249,17 @@ class AWSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
   "convergence" in forAll {
     (addedA: List[Int], removedA: List[Int], addedB: List[Int], removedB: List[Int], network: Network) =>
-      val aea = new AntiEntropy[AWSet.State[Int]]("a", network, mutable.Buffer("b"))
-      val aeb = new AntiEntropy[AWSet.State[Int]]("b", network, mutable.Buffer("a"))
+      val aea = new AntiEntropy[AWSet[Int]]("a", network, mutable.Buffer("b"))
+      val aeb = new AntiEntropy[AWSet[Int]]("b", network, mutable.Buffer("a"))
 
-      val setaAdded = addedA.foldLeft(AWSet(aea)) {
+      val setaAdded = addedA.foldLeft(AntiEntropyCRDT[AWSet[Int]](aea)) {
         case (set, e) => set.add(e)
       }
       val seta0 = removedA.foldLeft(setaAdded) {
         case (set, e) => set.remove(e)
       }
 
-      val setbAdded = addedB.foldLeft(AWSet(aeb)) {
+      val setbAdded = addedB.foldLeft(AntiEntropyCRDT[AWSet[Int]](aeb)) {
         case (set, e) => set.add(e)
       }
       val setb0 = removedB.foldLeft(setbAdded) {

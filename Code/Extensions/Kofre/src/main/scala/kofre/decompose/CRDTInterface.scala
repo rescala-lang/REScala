@@ -18,7 +18,7 @@ trait CRDTInterface[State, Wrapper] {
 }
 
 object CRDTInterface {
-  implicit def crdtInterfaceContextPermissions[L: UIJDLattice, B <: CRDTInterface[L, B]]: AllPermissionsCtx[B, L] =
+  def crdtInterfaceContextPermissions[L: UIJDLattice, B <: CRDTInterface[L, B]]: AllPermissionsCtx[B, L] =
     new AllPermissionsCtx[B, L] {
       override def replicaId(c: B): Id       = c.replicaID
       override def mutate(c: B, delta: L): B = c.mutate((_, _) => delta)

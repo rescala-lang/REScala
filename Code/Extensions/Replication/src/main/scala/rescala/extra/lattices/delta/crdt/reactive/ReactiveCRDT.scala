@@ -1,6 +1,7 @@
 package rescala.extra.lattices.delta.crdt.reactive
 
 import kofre.decompose.{CRDTInterface, Delta, UIJDLattice}
+import kofre.syntax.AllPermissionsCtx
 
 /** ReactiveCRDTs are Delta CRDTs that store applied deltas in their deltaBuffer attribute. Middleware should regularly
   * take these deltas and ship them to other replicas, using applyDelta to apply them on the remote state. After deltas
@@ -29,16 +30,19 @@ trait ReactiveCRDT[State, Wrapper] extends CRDTInterface[State, Wrapper] {
   * Instead of the class constructor, you should use the apply method of the companion object to create new instances.
   */
 class ReactiveDeltaCRDT[State](
-                         val state: State,
-                         val replicaID: String,
-                         val deltaBuffer: List[Delta[State]]
-                       ) extends ReactiveCRDT[State, ReactiveDeltaCRDT[State]] {
+    val state: State,
+    val replicaID: String,
+    val deltaBuffer: List[Delta[State]]
+) extends ReactiveCRDT[State, ReactiveDeltaCRDT[State]] {
 
   override protected def copy(state: State, deltaBuffer: List[Delta[State]]): ReactiveDeltaCRDT[State] =
     new ReactiveDeltaCRDT[State](state, replicaID, deltaBuffer)
 }
 
 object ReactiveDeltaCRDT {
+
+  implicit def reactiveDeltaCRDTPermissions[L: UIJDLattice]: AllPermissionsCtx[ReactiveDeltaCRDT[L], L] =
+    CRDTInterface.crdtInterfaceContextPermissions[L, ReactiveDeltaCRDT[L]]
 
   /** Creates a new PNCounter instance
     *

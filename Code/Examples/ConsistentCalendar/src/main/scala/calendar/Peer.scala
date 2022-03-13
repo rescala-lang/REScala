@@ -5,8 +5,9 @@ import central.Bindings._
 import loci.communicator.tcp.TCP
 import loci.registry.Registry
 import loci.transmitter.{RemoteAccessException, RemoteRef}
-import rescala.extra.lattices.delta.crdt.reactive.AWSet
 import central.SyncMessage.{AppointmentMessage, CalendarState, FreeMessage, RaftMessage, WantMessage}
+import kofre.decompose.interfaces.AWSetInterface.AWSet
+import kofre.decompose.interfaces.AWSetInterface.AWSetSyntax
 import kofre.decompose.{Delta, UIJDLattice}
 
 import java.util.concurrent._
@@ -80,13 +81,13 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
       tokens.want.deltaBuffer.collect {
         case Delta(replicaID, deltaState) if replicaID != rr.toString => deltaState
-      }.reduceOption(UIJDLattice[AWSet.State[Token]].merge).foreach { state =>
+      }.reduceOption(UIJDLattice[AWSet[Token]].merge).foreach { state =>
         remoteReceiveSyncMessage(WantMessage(state))
       }
 
       tokens.tokenFreed.deltaBuffer.collect {
         case Delta(replicaID, deltaState) if replicaID != rr.toString => deltaState
-      }.reduceOption(UIJDLattice[AWSet.State[Token]].merge).foreach { state =>
+      }.reduceOption(UIJDLattice[AWSet[Token]].merge).foreach { state =>
         remoteReceiveSyncMessage(FreeMessage(state))
       }
 
@@ -111,7 +112,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
   def sendRecursive(
       remoteReceiveSyncMessage: SyncMessage => Future[Unit],
-      delta: AWSet.State[Appointment],
+      delta: AWSet[Appointment],
       crdtid: String,
   ): Unit = new FutureTask[Unit](() => {
     def attemptSend(atoms: Iterable[CalendarState], merged: CalendarState): Unit = {

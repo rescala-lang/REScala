@@ -1,14 +1,16 @@
 package kofre.decompose.interfaces
 
 import kofre.decompose.*
-import kofre.syntax.DeltaMutator
+import kofre.syntax.{AllPermissionsCtx, DeltaMutator}
 import kofre.decompose.interfaces.AuctionInterface.Bid.User
 import kofre.decompose.interfaces.RubisInterface.{AID, UserAsUIJDLattice}
+import kofre.decompose.interfaces.AWSetInterface.AWSetSyntax
+
 
 object RubisInterface {
   type AID = String
 
-  type State = (AWSetInterface.State[(User, String)], Map[User, String], Map[AID, AuctionInterface.State])
+  type State = (AWSetInterface.AWSet[(User, String)], Map[User, String], Map[AID, AuctionInterface.State])
 
   trait RubisCompanion {
     type State = RubisInterface.State
@@ -22,9 +24,9 @@ object RubisInterface {
     val bottom: State = UIJDLattice[State].bottom
 
     def make(
-        userRequests: AWSetInterface.State[(User, String)] = bottom._1,
-        users: Map[User, String] = bottom._2,
-        auctions: Map[AID, AuctionInterface.State] = bottom._3
+              userRequests: AWSetInterface.AWSet[(User, String)] = bottom._1,
+              users: Map[User, String] = bottom._2,
+              auctions: Map[AID, AuctionInterface.State] = bottom._3
     ): State = (userRequests, users, auctions)
   }
 
@@ -62,12 +64,12 @@ object RubisInterface {
   def requestRegisterUser(userId: User): DeltaMutator[State] = {
     case (replicaID, (req, users, _)) =>
       if (users.contains(userId)) deltaState.make()
-      else deltaState.make(userRequests = AWSetInterface.add(userId -> replicaID).apply(replicaID, req))
+      else deltaState.make(userRequests = req.add(userId -> replicaID)(using AllPermissionsCtx.withID(replicaID)))
   }
 
   def resolveRegisterUser(): DeltaMutator[State] = {
     case (replicaID, (req, users, _)) =>
-      val newUsers = AWSetInterface.elements[(User, String)].apply(req).foldLeft(Map.empty[User, String]) {
+      val newUsers = req.elements.foldLeft(Map.empty[User, String]) {
         case (newlyRegistered, (uid, rid)) =>
           if ((users ++ newlyRegistered).contains(uid))
             newlyRegistered
@@ -77,7 +79,7 @@ object RubisInterface {
       }
 
       deltaState.make(
-        userRequests = AWSetInterface.clear[(User, String)]().apply(replicaID, req),
+        userRequests = req.clear(),
         users = newUsers
       )
   }

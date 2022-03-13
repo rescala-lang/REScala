@@ -2,10 +2,10 @@ package benchmarks.lattices.delta
 
 import org.openjdk.jmh.annotations
 import org.openjdk.jmh.annotations._
-import rescala.extra.lattices.delta.crdt.reactive._
-import kofre.decompose.interfaces.AWSetInterface
 import kofre.decompose.UIJDLattice
 import kofre.causality.{CausalContext, Dot}
+import kofre.decompose.interfaces.AWSetInterface.{AWSet, AWSetSyntax}
+import kofre.syntax.AllPermissionsCtx
 
 import java.util.concurrent.TimeUnit
 
@@ -21,9 +21,9 @@ class AWSetDeltaMergeBench {
   @Param(Array("1", "10", "100", "1000"))
   var size: Long = _
 
-  var fullState: AWSet.State[Long]         = _
-  var plusOneState: AWSet.State[Long]      = _
-  var plusOneDeltaState: AWSet.State[Long] = _
+  var fullState: AWSet[Long]         = _
+  var plusOneState: AWSet[Long]      = _
+  var plusOneDeltaState: AWSet[Long] = _
 
   def makeCContext(replicaID: String): CausalContext = {
     val dots = (0L until size).map(Dot(replicaID, _)).toSet
@@ -32,36 +32,36 @@ class AWSetDeltaMergeBench {
 
   @Setup
   def setup(): Unit = {
-    val baseState = UIJDLattice[AWSet.State[Long]].bottom
+    val baseState = UIJDLattice[AWSet[Long]].bottom
 
-    val deltaState = AWSetInterface.addAll[Long](0L to size).apply("", baseState)
-    fullState = UIJDLattice[AWSet.State[Long]].merge(baseState, deltaState)
+    val deltaState = baseState.addAll(0L to size)(AllPermissionsCtx.withID(""))
+    fullState = UIJDLattice[AWSet[Long]].merge(baseState, deltaState)
 
-    plusOneDeltaState = AWSetInterface.add[Long](size).apply("", fullState)
-    plusOneState = UIJDLattice[AWSet.State[Long]].merge(fullState, plusOneDeltaState)
+    plusOneDeltaState = fullState.add(size)(AllPermissionsCtx.withID(""))
+    plusOneState = UIJDLattice[AWSet[Long]].merge(fullState, plusOneDeltaState)
   }
 
   @Benchmark
-  def fullMerge: AWSet.State[Long] = {
-    UIJDLattice[AWSet.State[Long]].merge(fullState, plusOneState)
+  def fullMerge: AWSet[Long] = {
+    UIJDLattice[AWSet[Long]].merge(fullState, plusOneState)
   }
 
   @Benchmark
-  def fullDiff: Option[AWSet.State[Long]] = {
-    UIJDLattice[AWSet.State[Long]].diff(fullState, plusOneState)
+  def fullDiff: Option[AWSet[Long]] = {
+    UIJDLattice[AWSet[Long]].diff(fullState, plusOneState)
   }
 
   @Benchmark
-  def deltaMerge: AWSet.State[Long] = {
-    UIJDLattice[AWSet.State[Long]].diff(fullState, plusOneDeltaState) match {
+  def deltaMerge: AWSet[Long] = {
+    UIJDLattice[AWSet[Long]].diff(fullState, plusOneDeltaState) match {
       case Some(stateDiff) =>
-        UIJDLattice[AWSet.State[Long]].merge(fullState, stateDiff)
+        UIJDLattice[AWSet[Long]].merge(fullState, stateDiff)
       case None => fullState
     }
   }
 
   @Benchmark
-  def deltaMergeNoDiff: AWSet.State[Long] = {
-    UIJDLattice[AWSet.State[Long]].merge(fullState, plusOneDeltaState)
+  def deltaMergeNoDiff: AWSet[Long] = {
+    UIJDLattice[AWSet[Long]].merge(fullState, plusOneDeltaState)
   }
 }

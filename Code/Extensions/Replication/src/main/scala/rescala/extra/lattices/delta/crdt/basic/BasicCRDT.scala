@@ -1,6 +1,7 @@
 package rescala.extra.lattices.delta.crdt.basic
 
 import kofre.decompose.{CRDTInterface, Delta, UIJDLattice}
+import kofre.syntax.AllPermissionsCtx
 import rescala.extra.replication.AntiEntropy
 
 /** BasicCRDTs are Delta CRDTs that use [[AntiEntropy]] and [[Network]] as Middleware for exchanging deltas between replicas.
@@ -46,6 +47,9 @@ class AntiEntropyCRDT[State](
 }
 
 object AntiEntropyCRDT {
+
+  implicit def antiEntropyPermissions[L: UIJDLattice]: AllPermissionsCtx[AntiEntropyCRDT[L], L] =
+    CRDTInterface.crdtInterfaceContextPermissions[L, AntiEntropyCRDT[L]]
 
   /** Creates a new PNCounter instance
     *

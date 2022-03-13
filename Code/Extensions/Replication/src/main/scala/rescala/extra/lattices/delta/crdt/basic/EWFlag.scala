@@ -3,7 +3,7 @@ package rescala.extra.lattices.delta.crdt.basic
 import kofre.decompose.DotStore.DotSet
 import kofre.decompose.interfaces.EWFlagInterface
 import kofre.decompose.interfaces.EWFlagInterface.{EWFlagCompanion, State}
-import kofre.decompose.{UIJDLattice}
+import kofre.decompose.UIJDLattice
 
 import rescala.extra.replication.AntiEntropy
 

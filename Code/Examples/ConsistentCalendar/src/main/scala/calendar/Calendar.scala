@@ -1,15 +1,18 @@
 package calendar
+import kofre.decompose.interfaces.AWSetInterface.AWSet
 import rescala.default._
-import rescala.extra.lattices.delta.crdt.reactive.AWSet
+import rescala.extra.lattices.delta.crdt.reactive.ReactiveDeltaCRDT
+import kofre.decompose.interfaces.AWSetInterface.AWSetSyntax
+
 
 case class Appointment(start: Int, end: Int)
 
 class CalendarProgram(id: String, synchronizationPoint: String => (=> Unit) => Unit) {
 
-  type Calendar = AWSet[Appointment]
+  type Calendar = ReactiveDeltaCRDT[AWSet[Appointment]]
 
-  val work     = Var[Calendar](AWSet(id))
-  val vacation = Var[Calendar](AWSet(id))
+  val work     = Var[Calendar](ReactiveDeltaCRDT(id))
+  val vacation = Var[Calendar](ReactiveDeltaCRDT(id))
 
   val replicated = Map("work" -> work, "vacation" -> vacation)
 

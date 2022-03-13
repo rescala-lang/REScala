@@ -1,7 +1,8 @@
 package benchmarks.lattices.delta.crdt
 
+import kofre.decompose.interfaces.AWSetInterface.{AWSet, AWSetSyntax}
 import org.openjdk.jmh.annotations._
-import rescala.extra.lattices.delta.crdt.reactive.AWSet
+import rescala.extra.lattices.delta.crdt.reactive.ReactiveDeltaCRDT
 
 import java.util.concurrent.TimeUnit
 
@@ -17,9 +18,9 @@ class AWSetBench {
   @Param(Array("0", "1", "10", "100", "1000"))
   var size: Int = _
 
-  var set: AWSet[Int] = _
+  var set: ReactiveDeltaCRDT[AWSet[Int]] = _
 
-  def createBySize(size: Int): AWSet[Int] = (0 until size).foldLeft(AWSet[Int]("a")) {
+  def createBySize(size: Int): ReactiveDeltaCRDT[AWSet[Int]] = (0 until size).foldLeft(ReactiveDeltaCRDT[AWSet[Int]]("a")) {
     case (s, e) => s.add(e)
   }
 
@@ -32,23 +33,23 @@ class AWSetBench {
   def elements(): Set[Int] = set.elements
 
   @Benchmark
-  def add(): AWSet[Int] = set.add(-1)
+  def add(): ReactiveDeltaCRDT[AWSet[Int]] = set.add(-1)
 
   @Benchmark
-  def addAll(): AWSet[Int] = AWSet[Int]("a").addAll(0 until size)
+  def addAll(): ReactiveDeltaCRDT[AWSet[Int]] = ReactiveDeltaCRDT[AWSet[Int]]("a").addAll(0 until size)
 
   @Benchmark
-  def remove(): AWSet[Int] = set.remove(0)
+  def remove(): ReactiveDeltaCRDT[AWSet[Int]] = set.remove(0)
 
   @Benchmark
-  def removeBy(): AWSet[Int] = set.removeBy(_ == 0)
+  def removeBy(): ReactiveDeltaCRDT[AWSet[Int]] = set.removeBy((e: Int) => e == 0)
 
   @Benchmark
-  def removeAll(): AWSet[Int] = set.removeAll(set.elements)
+  def removeAll(): ReactiveDeltaCRDT[AWSet[Int]] = set.removeAll(set.elements)
 
   @Benchmark
-  def clear(): AWSet[Int] = set.clear()
+  def clear(): ReactiveDeltaCRDT[AWSet[Int]] = set.clear()
 
   @Benchmark
-  def construct(): AWSet[Int] = createBySize(size)
+  def construct(): ReactiveDeltaCRDT[AWSet[Int]] = createBySize(size)
 }
