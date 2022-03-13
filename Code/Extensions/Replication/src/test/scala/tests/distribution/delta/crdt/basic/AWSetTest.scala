@@ -12,8 +12,6 @@ import rescala.extra.lattices.delta.crdt.basic._
 import rescala.extra.replication.AntiEntropy
 import tests.distribution.delta.crdt.basic.NetworkGenerators._
 import kofre.decompose.interfaces.AWSetInterface.AWSetSyntax
-import kofre.decompose.CRDTInterface.crdtInterfaceContextPermissions
-import kofre.syntax.AllPermissionsCtx
 
 import scala.collection.mutable
 
@@ -45,8 +43,6 @@ class AWSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   import AWSetGenerators._
 
   implicit val IntCodec: JsonValueCodec[Int] = JsonCodecMaker.make
-
-  implicit val permission: AllPermissionsCtx[AntiEntropyCRDT[AWSet[Int]], AWSet[Int]] = crdtInterfaceContextPermissions
 
   "add" in forAll { (set: AntiEntropyCRDT[AWSet[Int]], e: Int) =>
     val added: AntiEntropyCRDT[AWSet[Int]] = set.add(e)
