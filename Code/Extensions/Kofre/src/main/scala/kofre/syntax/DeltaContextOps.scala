@@ -15,8 +15,7 @@ class FixedIdCtx[C](id: Id) extends IdentifierCtx[C]:
 trait AllPermissionsCtx[C, L] extends IdentifierCtx[C], MutateCtx[C, L]
 
 object QueryCtx:
-  given identityQuery[A]: QueryCtx[A, A] with
-    override def query(c: A): A = c
+  given identityQuery[A]: QueryCtx[A, A] = MutateCtx.identityDeltaMutate
 object MutateCtx:
   given identityDeltaMutate[A]: MutateCtx[A, A] with
     override def query(c: A): A = c
