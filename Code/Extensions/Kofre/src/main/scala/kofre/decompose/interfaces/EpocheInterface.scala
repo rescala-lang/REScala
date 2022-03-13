@@ -1,26 +1,20 @@
 package kofre.decompose.interfaces
 
-import kofre.syntax.{DeltaMutator, DeltaQuery}
-import kofre.decompose.UIJDLattice
 import kofre.Defs
+import kofre.decompose.UIJDLattice
+import kofre.decompose.interfaces.GCounterInterface.GCounter
 import kofre.primitives.Epoche
+import kofre.syntax.AllPermissionsCtx.withID
+import kofre.syntax.{DeltaMutator, DeltaQuery, OpsSyntaxHelper}
 
 object EpocheInterface {
 
+  implicit class EpocheSyntax[C, E](container: C) extends OpsSyntaxHelper[C, Epoche[E]](container) {
+    def read(using QueryP): E = current.value
 
-  def read[E]: DeltaQuery[Epoche[E], E] = {
-    case Epoche(_, v) => v
-  }
+    def write(value: E)(using MutationP): C       = current.copy(value = value)
+    def epocheWrite(value: E)(using MutationP): C = Epoche(current.counter + 1, value)
 
-  def mutate[E](m: DeltaMutator[E]): DeltaMutator[Epoche[E]] = {
-    case (replicaID, Epoche(c, v)) => Epoche(c, m(replicaID, v))
-  }
-
-  def write[E](writeVal: E): DeltaMutator[Epoche[E]] = {
-    case (_, Epoche(c, _)) => Epoche(c, writeVal)
-  }
-
-  def epocheWrite[E](writeVal: E): DeltaMutator[Epoche[E]] = {
-    case (_, Epoche(c, _)) => Epoche(c + 1, writeVal)
+    def map(f: E => E)(using MutationP): C = write(f(current.value))
   }
 }

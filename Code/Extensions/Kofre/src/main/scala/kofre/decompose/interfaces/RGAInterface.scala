@@ -2,11 +2,13 @@ package kofre.decompose.interfaces
 
 import kofre.causality.{CausalContext, Dot}
 import kofre.decompose.*
-import kofre.syntax.{DeltaMutator, DeltaQuery}
+import kofre.syntax.{AllPermissionsCtx, DeltaMutator, DeltaQuery, MutateCtx}
 import kofre.decompose.DotStore.{DotFun, DotLess, DotPair}
 import kofre.decompose.interfaces.GListInterface.GListAsUIJDLattice
 import kofre.dotbased.CausalStore
 import kofre.primitives.Epoche
+import kofre.decompose.interfaces.EpocheInterface.EpocheSyntax
+
 
 object RGAInterface {
 
@@ -102,9 +104,9 @@ object RGAInterface {
       findInsertIndex(state, i) match {
         case None => deltaState[E].bottom
         case Some(glistInsertIndex) =>
-          val m          = GListInterface.insert(glistInsertIndex, nextDot)
-          val glistDelta = EpocheInterface.mutate(m)(replicaID, fw)
-          val dfDelta    = DotFun[RGANode[E]].empty + (nextDot -> Alive(TimedVal(e, replicaID)))
+          val m = GListInterface.insert(glistInsertIndex, nextDot)
+          val glistDelta = fw.map(m(replicaID, _))
+          val dfDelta = DotFun[RGANode[E]].empty + (nextDot -> Alive(TimedVal(e, replicaID)))
 
           deltaState[E].make(
             epoche = glistDelta,
@@ -126,7 +128,7 @@ object RGAInterface {
         case None => deltaState[E].bottom
         case Some(glistInsertIndex) =>
           val m          = GListInterface.insertAll(glistInsertIndex, nextDots)
-          val glistDelta = EpocheInterface.mutate(m)(replicaID, fw)
+          val glistDelta = fw.map(m(replicaID, _))
           val dfDelta    = DotFun[RGANode[E]].empty ++ (nextDots zip elems.map(e => Alive(TimedVal(e, replicaID))))
 
           deltaState[E].make(
@@ -189,7 +191,7 @@ object RGAInterface {
         val golistPurged = GListInterface.without(epoche.value, toRemove)
 
         deltaState[E].make(
-          epoche = EpocheInterface.epocheWrite(golistPurged)(replicaID, epoche),
+          epoche = epoche.epocheWrite(golistPurged),
           cc = CausalContext.fromSet(toRemove)
         )
     }

@@ -39,7 +39,7 @@ trait OpsSyntaxHelper[C, L](container: C) {
   final type Mutation   = MutationP ?=> C
   final type Query[T]   = QueryP ?=> T
 
-  final def current(using perm: QueryCtx[C, L]): L                  = perm.query(container)
-  final def replicaID(using perm: IdentifierCtx[C]): Defs.Id        = perm.replicaId(container)
-  final given mutate(using perm: MutateCtx[C, L]): Conversion[L, C] = perm.mutate(container, _)
+  final protected def current(using perm: QueryCtx[C, L]): L                  = perm.query(container)
+  final protected def replicaID(using perm: IdentifierCtx[C]): Defs.Id        = perm.replicaId(container)
+  final protected given mutate(using perm: MutateCtx[C, L]): Conversion[L, C] = perm.mutate(container, _)
 }
