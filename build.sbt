@@ -54,9 +54,9 @@ lazy val commonDependencies = Seq(
   "org.conscrypt" % "conscrypt-openjdk-uber" % "2.5.2",
   // jsoniter-scala
   // Use the %%% operator instead of %% for Scala.js
-  "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core" % "2.11.1",
+  "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core" % "2.13.6",
   // Use the "provided" scope instead when the "compile-internal" scope is not supported
-  "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "2.11.1" % "provided",
+  "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "2.13.6" % "provided",
   // Logging
   "org.slf4j" % "slf4j-api" % "2.0.0-alpha4",
   "org.slf4j" % "slf4j-simple" % "2.0.0-alpha4",
@@ -65,8 +65,8 @@ lazy val commonDependencies = Seq(
 
 // scalatest
 lazy val scalatestDependency = Seq(
-  "org.scalactic" %% "scalactic" % "3.2.9",
-  "org.scalatest" %% "scalatest" % "3.2.9" % "test"
+  "org.scalactic" %% "scalactic" % "3.2.11",
+  "org.scalatest" %% "scalatest" % "3.2.11" % "test"
 )
 
 lazy val javaFakerDependency = Seq(
@@ -74,7 +74,7 @@ lazy val javaFakerDependency = Seq(
 )
 
 // CRDT Actors
-val AkkaVersion = "2.6.16"
+val AkkaVersion = "2.6.18"
 lazy val akkaDependency = Seq(
   "com.typesafe.akka" %% "akka-actor-typed" % AkkaVersion,
   "com.typesafe.akka" %% "akka-actor-testkit-typed" % AkkaVersion % Test,
