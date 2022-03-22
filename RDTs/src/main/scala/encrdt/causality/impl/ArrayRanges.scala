@@ -1,11 +1,7 @@
 package de.ckuessner
 package causality.impl
 
-import java.util
-import scala.annotation.tailrec
-import scala.collection.mutable.ListBuffer
-import scala.collection.IndexedSeqView
-import Defs.Time
+import de.ckuessner.causality.impl.Defs.Time
 import de.ckuessner.encrdt.lattices.SemiLattice
 
 case class ArrayRanges(inner: Array[Time], used: Int) {
@@ -21,9 +17,9 @@ case class ArrayRanges(inner: Array[Time], used: Int) {
     val pos = if (res < 0) -res - 1 else res
     if (pos >= used) false
     else if (pos % 2 == 0)
-    // found a start
-    inner(pos) == x
-    // found an end
+      // found a start
+      inner(pos) == x
+      // found an end
     else x < inner(pos)
   }
 
@@ -33,23 +29,23 @@ case class ArrayRanges(inner: Array[Time], used: Int) {
   def next: Option[Time] = Option.when(used != 0)(inner(used - 1))
 
   def iterator: Iterator[Time] = new Iterator[Time] {
-    var pos = 0
-    var value: Time = if (used == 0) 0 else inner(0)
+    var pos                       = 0
+    var value: Time               = if (used == 0) 0 else inner(0)
     override def hasNext: Boolean = used > pos
     override def next(): Time = {
       val res = value
       value += 1
       if (value >= inner(pos + 1)) {
         pos += 2
-    if (used > pos)           value = inner(pos)
-  }
+        if (used > pos) value = inner(pos)
+      }
       res
-  }
+    }
   }
 
   def merge(other: ArrayRanges): ArrayRanges = {
-    var leftPos  = 0
-    var rightPos = 0
+    var leftPos   = 0
+    var rightPos  = 0
     var mergedPos = 0
 
     val merged = new Array[Time](used + other.used)
@@ -57,7 +53,7 @@ case class ArrayRanges(inner: Array[Time], used: Int) {
     @inline def write(t: Time): Unit = {
       merged(mergedPos) = t
 
-    mergedPos += 1
+      mergedPos += 1
     }
 
     @inline def lstart = inner(leftPos)
@@ -81,12 +77,12 @@ case class ArrayRanges(inner: Array[Time], used: Int) {
         if (rok && rstart <= minEnd) { res = true; minEnd = math.max(rend, minEnd); rightPos += 2 }
         if (lok && lstart <= minEnd) { res = true; minEnd = math.max(lend, minEnd); leftPos += 2 }
         res
-  }
+      }
 
       while (mergeOverlapping()) ()
       write(curStart)
       write(minEnd)
-  }
+    }
 
     while (rok || lok) findNextRange()
 

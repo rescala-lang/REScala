@@ -7,7 +7,7 @@ import de.ckuessner.encrdt.causality.LamportClock
 import de.ckuessner.encrdt.lattices.SemiLattice
 
 object Defs {
-  type Id = String
+  type Id   = String
   type Time = Long
 }
 
@@ -25,7 +25,7 @@ case class ArrayCausalContext(internal: Map[Id, ArrayRanges]) {
 
   def nextTime(replicaId: Id): Time = rangeAt(replicaId).next.getOrElse(0)
 
-  def nextDot(replicaId: Id): Dot = LamportClock( nextTime(replicaId), replicaId)
+  def nextDot(replicaId: Id): Dot = LamportClock(nextTime(replicaId), replicaId)
 
   def diff(extern: ArrayCausalContext): ArrayCausalContext =
     ArrayCausalContext(
@@ -54,7 +54,7 @@ case class ArrayCausalContext(internal: Map[Id, ArrayRanges]) {
   def contains(d: Dot): Boolean = internal.get(d.replicaId).exists(_.contains(d.time))
 
   def toSet: Set[Dot] =
-    internal.flatMap{case (key, tree) => tree.iterator.map(time => LamportClock( time, key))}.toSet
+    internal.flatMap { case (key, tree) => tree.iterator.map(time => LamportClock(time, key)) }.toSet
 
   def max(replicaID: String): Option[Dot] =
     internal.get(replicaID).flatMap(_.next.map(c => LamportClock(c - 1, replicaID)))
@@ -71,7 +71,7 @@ case class ArrayCausalContext(internal: Map[Id, ArrayRanges]) {
 object ArrayCausalContext {
   def single(replicaId: Id, time: Long): ArrayCausalContext = empty.add(replicaId, time)
 
-  val empty: ArrayCausalContext         = ArrayCausalContext(Map.empty)
+  val empty: ArrayCausalContext = ArrayCausalContext(Map.empty)
 
   def one(dot: Dot): ArrayCausalContext = empty.add(dot.replicaId, dot.time)
 
