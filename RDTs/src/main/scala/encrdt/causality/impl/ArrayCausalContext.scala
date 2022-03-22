@@ -81,7 +81,7 @@ case class ArrayCausalContext(internal: Map[Id, ArrayRanges]) {
     tree.iterator.forall(time => cond(LamportClock(time, id)))
   }
 
-  def <=(other: ArrayCausalContext): Boolean = intersect(other) == this
+  def <= (other: ArrayCausalContext): Boolean = forall(other.contains)
 }
 
 object ArrayCausalContext {
