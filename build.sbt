@@ -1,7 +1,7 @@
 lazy val commonSettings: Def.SettingsDefinition = List(
   organization := "de.ckuessner",
   idePackagePrefix := Some("de.ckuessner"),
-  scalaVersion := "2.13.6",
+  scalaVersion := "2.13.8",
   scalacOptions ++= Seq("-unchecked", "-deprecation", "-Ymacro-annotations"),
   version := "0.1"
 )
@@ -54,9 +54,9 @@ lazy val commonDependencies = Seq(
   "org.conscrypt" % "conscrypt-openjdk-uber" % "2.5.2",
   // jsoniter-scala
   // Use the %%% operator instead of %% for Scala.js
-  "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core" % "2.13.6",
+  "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core" % "2.13.7",
   // Use the "provided" scope instead when the "compile-internal" scope is not supported
-  "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "2.13.6" % "provided",
+  "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "2.13.7" % "provided",
   // Logging
   "org.slf4j" % "slf4j-api" % "2.0.0-alpha4",
   "org.slf4j" % "slf4j-simple" % "2.0.0-alpha4",
