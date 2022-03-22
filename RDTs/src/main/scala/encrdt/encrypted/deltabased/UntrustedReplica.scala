@@ -1,18 +1,19 @@
 package de.ckuessner
 package encrdt.encrypted.deltabased
 
+import de.ckuessner.encrdt.causality.CausalContext
 import encrdt.causality.DotStore.Dot
 
 import scala.collection.mutable
 
 abstract class UntrustedReplica(initialDeltaGroups: Set[EncryptedDeltaGroup] = Set.empty) extends Replica {
-  protected var dottedVersionVector: mutable.Set[Dot] = mutable.Set.empty
+  protected var dottedVersionVector: CausalContext                         = CausalContext()
   protected var encryptedDeltaGroupStore: mutable.Set[EncryptedDeltaGroup] = mutable.Set.from(initialDeltaGroups)
 
   override def receive(encryptedDeltaGroup: EncryptedDeltaGroup): Unit = {
     prune(encryptedDeltaGroup)
 
-    dottedVersionVector.addAll(encryptedDeltaGroup.dottedVersionVector)
+    dottedVersionVector = dottedVersionVector.merged(encryptedDeltaGroup.dottedVersionVector)
     encryptedDeltaGroupStore.add(encryptedDeltaGroup)
   }
 

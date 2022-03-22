@@ -14,6 +14,8 @@ case class CausalContext(acc: ArrayCausalContext) {
     CausalContext(ArrayCausalContext.contextLattice.merged(acc, other.acc))
 
   def merged(other: Set[Dot]): CausalContext = merged(other)
+
+  def add(d: Dot) = CausalContext(acc.add(d.replicaId, d.time))
 }
 
 object CausalContext {
