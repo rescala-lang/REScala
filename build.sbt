@@ -22,7 +22,8 @@ lazy val benchmarks = project
     commonSettings,
     assembly := (assembly dependsOn (Jmh/compile)).value,
     libraryDependencies ++= commonDependencies ++ javaFakerDependency,
-    assembly / mainClass := Some("de.ckuessner.encrdt.benchmarks.BenchmarkRunnerApp"),
+    libraryDependencies +=   "com.github.pathikrit" %% "better-files" % "3.9.1",
+                             assembly / mainClass := Some("de.ckuessner.encrdt.benchmarks.BenchmarkRunnerApp"),
     assembly / assemblyJarName := "benchmarks.jar",
     assembly / assemblyMergeStrategy := discardModuleInfoMergeStrategy
   ).dependsOn(encrdt)
@@ -60,8 +61,7 @@ lazy val commonDependencies = Seq(
   // Logging
   "org.slf4j" % "slf4j-api" % "2.0.0-alpha4",
   "org.slf4j" % "slf4j-simple" % "2.0.0-alpha4",
-  "com.typesafe.scala-logging" %% "scala-logging" % "3.9.4"
-)
+  "com.typesafe.scala-logging" %% "scala-logging" % "3.9.4")
 
 // scalatest
 lazy val scalatestDependency = Seq(
