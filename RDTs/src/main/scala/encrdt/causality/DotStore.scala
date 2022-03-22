@@ -38,3 +38,18 @@ object DotStore {
     override def bottom: DotMap[K, V] = Map.empty
   }
 }
+
+object DotSetPartialOrdering extends PartialOrdering[DotSet] {
+  override def tryCompare(x: DotSet, y: DotSet): Option[Int] = {
+    val unionOfXandY = x union y
+    if (unionOfXandY.size == x.size) { // x contains all elements of union of x and y
+      if (unionOfXandY.size == y.size) return Some(0) // x = y
+      else return Some(1) // y doesn't contain all elements of x => x > y
+    } else if (unionOfXandY.size == y.size) return Some(1) // y contains all elements of union of x and y but x doesn't
+    else return None
+  }
+
+  override def lteq(x: DotSet, y: DotSet): Boolean = {
+    x.forall(y.contains)
+  }
+}
