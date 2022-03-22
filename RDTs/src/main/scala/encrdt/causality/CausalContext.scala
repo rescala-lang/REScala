@@ -1,27 +1,26 @@
 package de.ckuessner
 package encrdt.causality
 
+import de.ckuessner.causality.impl.ArrayCausalContext
 import encrdt.causality.DotStore.{Dot, DotSet}
 
 // Can be optimized using Concise Version Vectors / Interval Version Vectors
-case class CausalContext(dots: Set[Dot] = Set()) {
-  def clockOf(replicaId: String): Dot = {
-    dots
-      .filter(dot => dot.replicaId == replicaId)
-      .maxByOption(dot => dot.time)
-      .getOrElse(LamportClock(0, replicaId))
-  }
+case class CausalContext(acc: ArrayCausalContext) {
+  def clockOf(replicaId: String): Dot = acc.clockOf(replicaId).getOrElse(LamportClock(0, replicaId))
 
-  def contains(dot: Dot): Boolean = dots.contains(dot)
+  def contains(dot: Dot): Boolean = acc.contains(dot)
 
-  def merged(other: CausalContext): CausalContext = merged(other.dots)
+  def merged(other: CausalContext): CausalContext = CausalContext(ArrayCausalContext.contextLattice.merged(acc, other.acc))
 
-  def merged(other: Set[Dot]): CausalContext = CausalContext(dots ++ other)
+  def merged(other: Set[Dot]): CausalContext = merged(other)
 }
 
 object CausalContext {
 
   import scala.language.implicitConversions
 
-  implicit def dotSetToCausalContext(dotSet: DotSet): CausalContext = CausalContext(dotSet)
+  def apply(dots: Set[Dot]): CausalContext = CausalContext(ArrayCausalContext.fromSet(dots))
+  def apply(): CausalContext = CausalContext(ArrayCausalContext.empty)
+
+  implicit def dotSetToCausalContext(dotSet: DotSet): CausalContext = apply(dotSet)
 }
