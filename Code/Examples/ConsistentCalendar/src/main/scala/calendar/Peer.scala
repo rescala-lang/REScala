@@ -54,7 +54,6 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
           registry.connect(TCP(ip, port)).onComplete {
             case Success(value) =>
               remoteToAddress = remoteToAddress.updated(value, (ip, port))
-              return
             case Failure(_) =>
               Thread.sleep(1000)
               attemptReconnect()

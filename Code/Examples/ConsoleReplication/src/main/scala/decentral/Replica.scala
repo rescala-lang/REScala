@@ -92,19 +92,19 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
     registry.bindSbj(receiveCheckpointBinding) { (remoteRef: RemoteRef, msg: CheckpointMessage) =>
       msg match {
         case CheckpointMessage(cp @ Checkpoint(replicaID, counter), changes) =>
-          if (checkpoints.contains(replicaID) && checkpoints(replicaID) >= counter) return
+          if (checkpoints.contains(replicaID) && checkpoints(replicaID) >= counter) () else {
+            set = set.applyDelta(Delta(remoteRef.toString, changes)).resetDeltaBuffer()
 
-          set = set.applyDelta(Delta(remoteRef.toString, changes)).resetDeltaBuffer()
+            unboundRemoteChanges =
+              UIJDLattice[SetState].diff(changes, unboundRemoteChanges).getOrElse(UIJDLattice[SetState].bottom)
 
-          unboundRemoteChanges =
-            UIJDLattice[SetState].diff(changes, unboundRemoteChanges).getOrElse(UIJDLattice[SetState].bottom)
+            checkpoints = checkpoints.updated(replicaID, counter)
 
-          checkpoints = checkpoints.updated(replicaID, counter)
+            checkpointMap = checkpointMap.updated(cp, changes)
 
-          checkpointMap = checkpointMap.updated(cp, changes)
-
-          registry.remotes.foreach { rr =>
-            if (rr != remoteRef) sendCheckpoint(msg, rr)
+            registry.remotes.foreach { rr =>
+              if (rr != remoteRef) sendCheckpoint(msg, rr)
+            }
           }
       }
     }

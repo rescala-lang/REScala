@@ -24,7 +24,6 @@ abstract class Peer {
           registry.connect(TCP(ip, port)).onComplete {
             case Success(value) =>
               remoteToAddress = remoteToAddress.updated(value, (ip, port))
-              return
             case Failure(_) =>
               Thread.sleep(1000)
               attemptConnect()
