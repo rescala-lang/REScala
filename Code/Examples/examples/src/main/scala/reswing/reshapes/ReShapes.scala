@@ -143,16 +143,16 @@ object ReShapes extends SimpleSwingApplication {
         )
 
         lazy val state: DrawingSpaceState = new DrawingSpaceState {
-          def isCurrentState(x: Any) = drawingSpaceState.now == this
+          def isCurrentState = drawingSpaceState.now == this
 
           override lazy val nextShape: Signal[Shape] = Signal { ui.shapeSelectionPanel.nextShape().copy(this) } // #SIG
           override lazy val strokeWidth              = Signal { ui.strokeInputPanel.strokeWidth() }             // #SIG
           override lazy val color                    = Signal { ui.strokeInputPanel.color() }                   // #SIG
 
           override lazy val executed: Event[Command] = // #EVT
-            value(panel.drawn || ui.shapePanel.deleted || menu.merged) && isCurrentState _ // #EF //#EF //#EF
+            value(panel.drawn || ui.shapePanel.deleted || menu.merged) && (_ => isCurrentState) // #EF //#EF //#EF
           override lazy val reverted: Event[Command] = value(ui.commandPanel.revert || // #EVT //#EF
-            (menu.undo.clicked map { _: Any => commands.value.head })) && isCurrentState _ // #EF //#EF
+            (menu.undo.clicked map { _: Any => commands.value.head })) && (_ => isCurrentState) // #EF //#EF
         }
 
         (state, panel)

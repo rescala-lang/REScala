@@ -2,7 +2,7 @@ package benchmarks.simple
 
 import benchmarks._
 import org.openjdk.jmh.annotations._
-import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
+import org.openjdk.jmh.infra.ThreadParams
 import rescala.interface.RescalaInterface
 
 import java.util.concurrent.TimeUnit
@@ -24,7 +24,7 @@ class LowContentionSerialOrder extends BusyThreads {
   var size: Int = _
 
   @Setup(Level.Iteration)
-  def setup(params: BenchmarkParams, engineParam: EngineParam, work: Workload) = {
+  def setup(engineParam: EngineParam, work: Workload) = {
     engine = engineParam.engine
     sources = Array.fill(size)(Var(0))
     grid = Array.tabulate(size - 1) { t =>

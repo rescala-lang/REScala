@@ -3,6 +3,8 @@ package reswing
 import rescala.default.{Event, Evt, implicitScheduler}
 import rescala.operator.cutOutOfUserComputation
 
+import scala.annotation.nowarn
+
 /** Represents `Swing` events that are fired by the library or passed to the
   * library.
   */
@@ -27,7 +29,7 @@ final class ReSwingEventNone[T] private[reswing] extends ReSwingEvent[T] {
 object ReSwingEvent {
 
   /** Creates an empty event (that is never fired) to be used with the library. */
-  implicit def apply[T](value: Unit): ReSwingEventNone[T] = new ReSwingEventNone[T]
+  implicit def apply[T](@nowarn value: Unit): ReSwingEventNone[T] = new ReSwingEventNone[T]
 
   /** Wraps a Event to be used with the library. */
   implicit def apply[T](value: => Event[T]): ReSwingEventIn[T] = new ReSwingEventIn(Lazy { value })

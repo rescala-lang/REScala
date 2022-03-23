@@ -1,13 +1,12 @@
 package benchmarks.basic
 
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.locks.{ReadWriteLock, ReentrantReadWriteLock}
-
-import benchmarks.{EngineParam, Workload}
+import benchmarks.EngineParam
 import org.openjdk.jmh.annotations._
-import org.openjdk.jmh.infra.BenchmarkParams
 import rescala.Schedulers
 import rescala.interface.RescalaInterface
+
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.{ReadWriteLock, ReentrantReadWriteLock}
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -27,7 +26,7 @@ class SingleVar {
   var lock: ReadWriteLock          = _
 
   @Setup
-  def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam): Unit = {
+  def setup(engineParam: EngineParam): Unit = {
     engine = engineParam.engine
     current = false
     source = engineT.Var(current)

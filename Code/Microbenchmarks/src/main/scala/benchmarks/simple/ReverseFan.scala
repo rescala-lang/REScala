@@ -1,13 +1,12 @@
 package benchmarks.simple
 
-import java.util.concurrent.TimeUnit
-
-import benchmarks.{EngineParam, Size, Step, Workload}
+import benchmarks.{EngineParam, Step, Workload}
 import org.openjdk.jmh.annotations._
-import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
+import org.openjdk.jmh.infra.ThreadParams
 import rescala.Schedulers
-
 import rescala.interface.RescalaInterface
+
+import java.util.concurrent.TimeUnit
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -27,7 +26,7 @@ class ReverseFan {
   var isManual: Boolean        = false
 
   @Setup
-  def setup(params: BenchmarkParams, size: Size, step: Step, engineParam: EngineParam, work: Workload) = {
+  def setup(step: Step, engineParam: EngineParam, work: Workload) = {
     engine = engineParam.engine
     sources = Array.fill(16)(Var(step.get()))
     val intermediate = sources.map(_.map { v => { work.consume(); v + 1 } })

@@ -11,6 +11,7 @@ import rescala.extra.encrdt.encrypted.deltabased.{DecryptedDeltaGroup, Encrypted
 
 import java.io.PrintWriter
 import java.nio.file.{Files, Path, Paths}
+import scala.annotation.nowarn
 
 object DeltaStateBasedUntrustedReplicaSizeBenchmark extends App with DeltaStateUntrustedReplicaSizeBenchEnvironment {
   val csvFile = new PrintWriter(Files.newOutputStream(Paths.get("./benchmarks/results/delta_state_size_benchmark.csv")))
@@ -116,7 +117,7 @@ object DeltaStateBasedUntrustedReplicaSizeBenchmarkLinearScaling extends App
 class UntrustedDeltaBasedReplicaMock(aead: Aead) extends UntrustedReplica() {
   override protected def prune(): Unit = {}
 
-  protected def disseminate(encryptedState: EncryptedDeltaGroup): Unit = {}
+  protected def disseminate(@nowarn encryptedState: EncryptedDeltaGroup): Unit = {}
 
   def size(): Int = {
     encryptedDeltaGroupStore.toList.map { delta =>

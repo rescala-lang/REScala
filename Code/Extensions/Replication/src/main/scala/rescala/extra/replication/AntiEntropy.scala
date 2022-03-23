@@ -126,7 +126,7 @@ object AntiEntropy {
   case class DeltaMsg[A](delta: Delta[A], seqNum: Int)
   case class AckMsg(from: String, seqNum: Int)
 
-  def sync[A: UIJDLattice](ae: AntiEntropy[A]*): Unit = {
+  def sync[A](ae: AntiEntropy[A]*): Unit = {
     ae.foreach(_.sendChangesToAllNeighbors())
     ae.foreach(_.receiveFromNetwork())
   }

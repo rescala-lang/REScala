@@ -52,7 +52,6 @@ class ReactiveStreamsApi(val api: RescalaInterface) {
         bud: State[Pulse[T]],
         dependency: Readable[Pulse[T]],
         subscriber: Subscriber[_ >: T],
-        fac: Scheduler,
         name: ReName
     ) extends Base[Pulse[T]](bud, name)
         with Derived
@@ -115,7 +114,7 @@ class ReactiveStreamsApi(val api: RescalaInterface) {
           Pulse.empty,
           needsReevaluation = false
         ) {
-          state => new SubscriptionReactive[T](state, dependency, subscriber, fac, name)
+          state => new SubscriptionReactive[T](state, dependency, subscriber, name)
         }
       }
     }

@@ -40,7 +40,7 @@ object LinePaintingEScala extends SimpleSwingApplication {
     cKeyTyped += { _ =>
       path = new geom.GeneralPath; repaint()
     }
-    focusLost += { x => repaint() }
+    focusLost += { _ => repaint() }
 
     /* records the dragging */
     var path = new geom.GeneralPath

@@ -148,7 +148,7 @@ class ReactiveMacros(val c: blackbox.Context) {
       A: c.WeakTypeTag,
       FoldFunctionImpl: c.WeakTypeTag,
       ReactiveType: c.WeakTypeTag,
-      CT: c.WeakTypeTag,
+      CT,
       StaticTicket: c.WeakTypeTag,
       ScopeSearch: c.WeakTypeTag,
       LowPriorityImplicitObject: c.WeakTypeTag,
@@ -445,7 +445,7 @@ class ReactiveMacros(val c: blackbox.Context) {
   }
 
   /** find expressions annotated with @scala.annotation.unchecked */
-  def calcUncheckedExpressions[A: c.WeakTypeTag](expression: Tree): Set[c.universe.Tree] = {
+  def calcUncheckedExpressions[A](expression: Tree): Set[c.universe.Tree] = {
     (expression collect {
       case tree @ Typed(_, _) if (tree.tpe match {
             case AnnotatedType(annotations, _) =>
@@ -465,7 +465,7 @@ class ReactiveMacros(val c: blackbox.Context) {
     }).flatten.toSet
   }
 
-  def checkForPotentialSideEffects[A: c.WeakTypeTag](
+  def checkForPotentialSideEffects[A](
       expression: Tree,
       uncheckedExpressions: Set[c.universe.Tree]
   ): Unit = {

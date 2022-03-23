@@ -2,6 +2,7 @@ package rescala.scheduler
 
 import rescala.core.Core
 
+import scala.annotation.nowarn
 import scala.collection.mutable.ListBuffer
 import scala.util.control.NonFatal
 
@@ -22,7 +23,7 @@ trait Twoversion extends Core {
       update = value
       owner = token
     }
-    def base(token: Token): V = current
+    def base(@nowarn token: Token): V = current
     def get(token: Token): V  = { if (token eq owner) update else current }
 
     def commit(r: V => V): Unit = {

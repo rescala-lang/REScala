@@ -1,8 +1,7 @@
 package benchmarks.basic
 
-import benchmarks.{EngineParam, Step, Workload}
+import benchmarks.{EngineParam, Step}
 import org.openjdk.jmh.annotations._
-import org.openjdk.jmh.infra.BenchmarkParams
 import rescala.interface.RescalaInterface
 
 import java.util.concurrent.TimeUnit
@@ -32,7 +31,7 @@ class StaticVsDynamic {
   var res: Signal[Int]     = _
 
   @Setup
-  def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam): Unit = {
+  def setup(engineParam: EngineParam): Unit = {
     engine = engineParam.engine
     current = true
     source = stableEngine.Var(current)

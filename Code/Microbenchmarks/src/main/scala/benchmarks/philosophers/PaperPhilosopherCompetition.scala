@@ -1,10 +1,10 @@
 package benchmarks.philosophers
 
-import java.util.concurrent.TimeUnit
-
-import benchmarks.{BusyThreads, EngineParam, Workload}
+import benchmarks.{BusyThreads, EngineParam}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
+
+import java.util.concurrent.TimeUnit
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -15,7 +15,7 @@ import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
 @Threads(2)
 class PaperPhilosopherCompetition {
   @Benchmark
-  def eatOnce(comp: PaperCompetition, params: ThreadParams, work: Workload): Unit = {
+  def eatOnce(comp: PaperCompetition, params: ThreadParams): Unit = {
     if (comp.philosophers > 0) {
       comp.table.eatRandomOnce(params.getThreadIndex, params.getThreadCount)
     } else {
@@ -55,7 +55,7 @@ class PaperCompetition extends BusyThreads {
 
 //  var stream: PrintStream = _
   @Setup(Level.Iteration)
-  def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam) = {
+  def setup(params: BenchmarkParams, engineParam: EngineParam) = {
     val dynamic = dynamicity match {
       case "dynamic"     => Dynamicity.Dynamic
       case "semi-static" => Dynamicity.SemiStatic

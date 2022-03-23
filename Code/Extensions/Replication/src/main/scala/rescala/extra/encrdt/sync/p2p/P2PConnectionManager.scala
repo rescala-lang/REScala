@@ -27,7 +27,7 @@ class P2PConnectionManager[S](val localReplicaId: String, localStateProvider: ()
 
   private def broadcast(message: Message): Unit = {
     LOG.info(s"Broadcasting $message to ${handlers.asScala.values.toList}")
-    handlers.forEach { (remoteReplicaId, handler) =>
+    handlers.forEach { (_ , handler) =>
       handler.sendMessage(message)
     }
   }
@@ -122,7 +122,7 @@ class P2PConnectionManager[S](val localReplicaId: String, localStateProvider: ()
 
   def stop(): Unit = {
     LOG.info("Stopping ConnectionManager")
-    handlers.forEach((rId, handler) => handler.close())
+    handlers.forEach((_, handler) => handler.close())
     crdtSyncWebSocketClient.stop()
     crdtSyncWebSocketServer.stop()
   }

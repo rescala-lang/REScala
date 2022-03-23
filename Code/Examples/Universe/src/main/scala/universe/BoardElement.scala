@@ -2,6 +2,8 @@ package universe
 
 import universe.Globals.engine._
 
+import scala.annotation.nowarn
+
 abstract class BoardElement(implicit val world: World) {
 
   lazy val dies: Event[Unit] = isDead changedTo true
@@ -11,5 +13,5 @@ abstract class BoardElement(implicit val world: World) {
   def isAnimal: Boolean
 
   /** Some imperative code that is called each tick */
-  def doStep(pos: Pos): Unit = {}
+  def doStep(@nowarn pos: Pos): Unit = {}
 }

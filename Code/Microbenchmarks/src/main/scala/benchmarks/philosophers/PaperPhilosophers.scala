@@ -2,12 +2,11 @@ package benchmarks.philosophers
 
 import java.util.concurrent.locks.ReentrantLock
 import java.util.concurrent.{Executors, ThreadLocalRandom}
-
-import rescala.core.{ReName}
+import rescala.core.ReName
 import rescala.interface.RescalaInterface
 import rescala.parrp.Backoff
 
-import scala.annotation.tailrec
+import scala.annotation.{nowarn, tailrec}
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future, TimeoutException}
 import scala.util.{Failure, Success, Try}
@@ -119,7 +118,7 @@ abstract class PaperPhilosophers(val size: Int, val engine: RescalaInterface, dy
     for (i <- 0 until size) yield sights(i).changed
   val successes = for (i <- 0 until size) yield sightChngs(i).filter(_ == Done)
 
-  def manuallyLocked[T](idx: Int)(f: => T): T = synchronized { f }
+  def manuallyLocked[T](@nowarn idx: Int)(f: => T): T = synchronized { f }
 
   def maybeEat(idx: Int): Unit = {
     transaction(phils(idx)) { implicit t =>
@@ -219,7 +218,7 @@ trait SingleFoldTopper {
   self: PaperPhilosophers =>
   import engine._
 
-  val successCount: Signal[Int] = Events.fold(successes.toSet[ReSource], 0) { ticket => before => before() + 1 }
+  val successCount: Signal[Int] = Events.fold(successes.toSet[ReSource], 0) { _ => before => before() + 1 }
   override def total: Int       = successCount.readValueOnce
 }
 

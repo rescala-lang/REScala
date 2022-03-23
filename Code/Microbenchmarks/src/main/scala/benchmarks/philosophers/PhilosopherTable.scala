@@ -24,7 +24,7 @@ class PhilosopherTable(philosopherCount: Int, work: Long)(val engine: RescalaInt
   def createTable(tableSize: Int): Seq[Seating] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
 
-    val phils = for (i <- 0 until tableSize) yield Var[Philosopher](Thinking)
+    val phils = for (_ <- 0 until tableSize) yield Var[Philosopher](Thinking)
 
     val forks = for (i <- 0 until tableSize) yield {
       val nextCircularIndex = mod(i + 1)

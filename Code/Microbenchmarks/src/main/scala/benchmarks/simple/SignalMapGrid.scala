@@ -1,12 +1,11 @@
 package benchmarks.simple
 
-import java.util.concurrent.TimeUnit
-
 import benchmarks._
 import org.openjdk.jmh.annotations._
-import org.openjdk.jmh.infra.BenchmarkParams
-import rescala.core.{ReName}
+import rescala.core.ReName
 import rescala.interface.RescalaInterface
+
+import java.util.concurrent.TimeUnit
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -28,7 +27,7 @@ class SignalMapGrid extends BusyThreads {
   var depth: Int = _
 
   @Setup(Level.Iteration)
-  def setup(params: BenchmarkParams, engineParam: EngineParam, work: Workload) = {
+  def setup(engineParam: EngineParam, work: Workload) = {
     engine = engineParam.engine
     source = Var(0)
     leafs = for (w <- 1 to width) yield {

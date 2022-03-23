@@ -485,7 +485,7 @@ trait IncrementalBundle extends Core {
     def empty[T](implicit ticket: CreationTicket): IncSeq[T] = fromDelta(Delta.noChange[T])
 
     private[this] def fromDelta[T](init: Delta[T])(implicit ticket: CreationTicket): IncSeq[T] =
-      ticket.createSource[Delta[T], IncSeq[T]](Delta.noChange)(new IncSeq[T](
+      ticket.createSource[Delta[T], IncSeq[T]](init)(new IncSeq[T](
         _,
         ticket.rename
       ))

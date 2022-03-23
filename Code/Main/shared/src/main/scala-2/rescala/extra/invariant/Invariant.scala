@@ -7,7 +7,7 @@ object Invariant {
 }
 
 class InvariantInterface(val c: blackbox.Context) {
-  def createInvariantImpl[T: c.WeakTypeTag](inv: c.Expr[T => Boolean]): c.Expr[Invariant[T]] = {
+  def createInvariantImpl[T](inv: c.Expr[T => Boolean]): c.Expr[Invariant[T]] = {
     import c.universe._
 
     val invariantRep     = showCode(inv.tree)

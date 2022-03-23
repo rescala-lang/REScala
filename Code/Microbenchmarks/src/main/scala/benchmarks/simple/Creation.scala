@@ -1,11 +1,10 @@
 package benchmarks.simple
 
-import java.util.concurrent.TimeUnit
-
-import benchmarks.{EngineParam, Workload}
+import benchmarks.EngineParam
 import org.openjdk.jmh.annotations._
-import org.openjdk.jmh.infra.BenchmarkParams
 import rescala.interface.RescalaInterface
+
+import java.util.concurrent.TimeUnit
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -21,7 +20,7 @@ class Creation {
   import stableEngine._
 
   @Setup
-  def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam) = {
+  def setup(engineParam: EngineParam) = {
     engine = engineParam.engine
   }
 

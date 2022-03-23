@@ -4,7 +4,6 @@ import java.util.concurrent.TimeUnit
 
 import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations._
-import org.openjdk.jmh.infra.BenchmarkParams
 import rescala.interface.RescalaInterface
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -24,7 +23,7 @@ class ChainEvent {
   var result: Event[Int] = _
 
   @Setup
-  def setup(params: BenchmarkParams, size: Size, engineParam: EngineParam, work: Workload) = {
+  def setup(size: Size, engineParam: EngineParam, work: Workload) = {
     engine = engineParam.engine
     source = Evt[Int]()
     result = source

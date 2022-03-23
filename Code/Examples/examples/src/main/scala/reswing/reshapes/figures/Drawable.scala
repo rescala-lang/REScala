@@ -51,7 +51,6 @@ abstract class Shape(
   override def toString(): String =
     this.getClass.getSimpleName + " #" + current.toString
 
-  def doUpdate(path: List[Point]) = {}
   def doDraw(g: Graphics2D): Unit
 
   def toLines(): List[(Point, Point)]

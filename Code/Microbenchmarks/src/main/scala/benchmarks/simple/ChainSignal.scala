@@ -1,11 +1,10 @@
 package benchmarks.simple
 
-import java.util.concurrent.TimeUnit
-
 import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations._
-import org.openjdk.jmh.infra.BenchmarkParams
 import rescala.interface.RescalaInterface
+
+import java.util.concurrent.TimeUnit
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -24,7 +23,7 @@ class ChainSignal {
   var result: Signal[Int] = _
 
   @Setup
-  def setup(params: BenchmarkParams, size: Size, step: Step, engineParam: EngineParam, work: Workload) = {
+  def setup(size: Size, step: Step, engineParam: EngineParam, work: Workload) = {
     engine = engineParam.engine
     source = Var(step.run())
     result = source

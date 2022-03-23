@@ -70,7 +70,7 @@ object Settings {
     "-Xlint:type-parameter-shadow",  // A local type parameter shadows a type already in scope.
     "-Ywarn-dead-code",              // Warn when dead code is identified.
     "-Ywarn-numeric-widen",          // Warn when numerics are widened.
-    // "-Ywarn-unused:params",              // Warn if a value parameter is unused.
+    "-Ywarn-unused:params",              // Warn if a value parameter is unused.
     // "-Ywarn-unused:patvars",             // Warn if a variable bound in a pattern is unused.
     // "-Ywarn-value-discard"               // Warn when non-Unit expression results are unused.
     "-Xlint:nonlocal-return",        // A return statement used an exception for flow control.

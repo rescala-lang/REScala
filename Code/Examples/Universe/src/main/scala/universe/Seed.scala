@@ -12,7 +12,7 @@ class Seed(implicit world: World) extends BoardElement {
   dies += { _ => // #HDL
     world.plan {
       world.board.getPosition(this).foreach { mypos =>
-        world.board.nearestFree(mypos).foreach { target =>
+        world.board.nearestFree(mypos).foreach { _ =>
           world.spawn(new Plant)
         }
       }

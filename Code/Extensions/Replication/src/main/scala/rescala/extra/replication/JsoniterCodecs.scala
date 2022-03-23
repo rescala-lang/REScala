@@ -12,6 +12,8 @@ import kofre.causality.{CausalContext, Dot}
 import kofre.decompose.interfaces.LexCounterInterface.LexPair
 import kofre.dotbased.CausalStore
 
+import scala.annotation.nowarn
+
 object JsoniterCodecs {
 
   /** Causal Context */
@@ -55,9 +57,11 @@ object JsoniterCodecs {
 
   /** AWSet */
 
+  @nowarn("msg=never used")
   implicit def AWSetStateCodec[E: JsonValueCodec]: JsonValueCodec[CausalStore[Map[E, Set[Dot]]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
+  @nowarn("msg=never used")
   implicit def AWSetEmbeddedCodec[E: JsonValueCodec]: JsonValueCodec[Map[E, Set[Dot]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
@@ -73,19 +77,22 @@ object JsoniterCodecs {
 
   /** GList */
 
+  @nowarn("msg=never used")
   implicit def GListStateCodec[E: JsonValueCodec]: JsonValueCodec[Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   /** GSet */
 
+  @nowarn("msg=never used")
   implicit def GSetStateCodec[E: JsonValueCodec]: JsonValueCodec[Set[E]] = JsonCodecMaker.make
 
   /** LastWriterWins */
-
+  @nowarn("msg=never used")
   implicit def LastWriterWinsStateCodec[A: JsonValueCodec]
       : JsonValueCodec[CausalStore[Map[Dot, TimedVal[A]]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
+  @nowarn("msg=never used")
   implicit def LastWriterWinsEmbeddedCodec[A: JsonValueCodec]: JsonValueCodec[Map[Dot, TimedVal[A]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
@@ -95,18 +102,21 @@ object JsoniterCodecs {
 
   /** MVRegister */
 
+  @nowarn("msg=never used")
   implicit def MVRegisterStateCodec[A: JsonValueCodec]: JsonValueCodec[CausalStore[Map[Dot, A]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
+  @nowarn("msg=never used")
   implicit def MVRegisterEmbeddedCodec[A: JsonValueCodec]: JsonValueCodec[Map[Dot, A]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   /** ORMap */
-
+  @nowarn("msg=never used")
   implicit def ORMapStateCodec[K: JsonValueCodec, V: JsonValueCodec]
       : JsonValueCodec[CausalStore[Map[K, V]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
+  @nowarn("msg=never used")
   implicit def ORMapEmbeddedCodec[K: JsonValueCodec, V: JsonValueCodec]: JsonValueCodec[Map[K, V]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
@@ -123,7 +133,7 @@ object JsoniterCodecs {
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   /** RGA */
-
+  @nowarn("msg=never used")
   implicit def RGAStateCodec[E: JsonValueCodec]
       : JsonValueCodec[CausalStore[(Epoche[Map[GListNode[TimedVal[Dot]], Elem[TimedVal[Dot]]]], Map[Dot, RGANode[E]])]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
@@ -139,5 +149,6 @@ object JsoniterCodecs {
 
   /** TwoPSet */
 
+  @nowarn("msg=never used")
   implicit def TwoPSetStateCodec[E: JsonValueCodec]: JsonValueCodec[(Set[E], Set[E])] = JsonCodecMaker.make
 }

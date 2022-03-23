@@ -67,7 +67,7 @@ object RRecovery extends Main {
     shapes.transform(racket2.shape :: _)
     racket2.posY.observe(
       _ => (),
-      { e =>
+      { _ =>
         shapes.transform(_.filter(_ != racket2.shape))
       }
     )

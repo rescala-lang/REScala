@@ -19,7 +19,7 @@ case class Presentation[T, +S](
 //
 // shape
 //
-sealed abstract class Shape[T: Numeric] {
+sealed abstract class Shape[T] {
   def toDouble: Shape[Double]
   def toInt: Shape[Int]
 }
@@ -28,7 +28,7 @@ sealed abstract class Shape[T: Numeric] {
 // point
 //
 object Point {
-  implicit def fromPoint[T: Numeric](p: Point[T]) = (p.x, p.y)
+  implicit def fromPoint[T](p: Point[T]) = (p.x, p.y)
   implicit def toPoint[T: Numeric](p: (T, T))     = Point(p._1, p._2)
 }
 
@@ -56,12 +56,11 @@ object Line {
   implicit def toLine[T, A, B](l: (A, B))(implicit
       ev$1: A => Point[T],
       ev$2: B => Point[T],
-      ev$3: Numeric[T]
   ): Line[T] =
     Line(l._1, l._2)
 }
 
-case class Line[T: Numeric](from: Point[T], to: Point[T]) extends Shape[T] {
+case class Line[T](from: Point[T], to: Point[T]) extends Shape[T] {
   def toDouble = Line(from.toDouble, to.toDouble)
   def toInt    = Line(from.toInt, to.toInt)
 

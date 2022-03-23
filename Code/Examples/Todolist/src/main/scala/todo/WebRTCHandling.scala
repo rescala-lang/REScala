@@ -37,7 +37,7 @@ case class WebRTCHandling(registry: Registry) {
 
     val hb = button(
       "host",
-      onclick := { uie: UIEvent =>
+      onclick := { _: UIEvent =>
         val res = webrtcIntermediate(WebRTC.offer())
         res.session.foreach(showSession)
         pendingServer = Some(res)
@@ -47,7 +47,7 @@ case class WebRTCHandling(registry: Registry) {
 
     val cb = button(
       "connect",
-      onclick := { uie: UIEvent =>
+      onclick := { _: UIEvent =>
         val cs = readFromString(renderedTa.value)(codec)
         val connector = pendingServer match {
           case None => // we are client

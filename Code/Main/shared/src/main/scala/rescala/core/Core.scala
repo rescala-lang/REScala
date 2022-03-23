@@ -2,7 +2,7 @@ package rescala.core
 
 import rescala.operator.RExceptions
 
-import scala.annotation.implicitNotFound
+import scala.annotation.{implicitNotFound, nowarn}
 import scala.util.DynamicVariable
 
 trait Core {
@@ -94,7 +94,7 @@ trait Core {
     }
 
     /** hook for schedulers to globally collect all created resources, usually does nothing */
-    protected[this] def register(reactive: ReSource): Unit = ()
+    protected[this] def register(@nowarn("msg=never used") reactive: ReSource): Unit = ()
 
     /** Correctly initializes [[ReSource]]s */
     final private[rescala] def createSource[V, T <: ReSource](

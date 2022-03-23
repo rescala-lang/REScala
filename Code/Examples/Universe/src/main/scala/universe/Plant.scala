@@ -16,7 +16,7 @@ class Plant(implicit world: World) extends BoardElement {
     // germinate: spawn a new plant in proximity to this one
     world.plan {
       world.board.getPosition(this).foreach { mypos =>
-        world.board.nearestFree(mypos).foreach { target =>
+        world.board.nearestFree(mypos).foreach { _ =>
           world.spawn(new Plant)
         }
       }

@@ -22,7 +22,7 @@ import scala.annotation.tailrec
 class PhilosopherCompetition {
 
   @Benchmark
-  def eat(comp: Competition, params: ThreadParams, work: Workload): Unit = {
+  def eat(comp: Competition, params: ThreadParams): Unit = {
     import comp.stableTable.Seating
     val myBlock = comp.blocks(params.getThreadIndex % comp.blocks.length)
     val bo      = new Backoff()

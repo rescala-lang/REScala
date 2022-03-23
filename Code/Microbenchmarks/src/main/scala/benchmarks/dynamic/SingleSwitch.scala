@@ -4,7 +4,6 @@ import java.util.concurrent.TimeUnit
 
 import benchmarks.{EngineParam, Step}
 import org.openjdk.jmh.annotations._
-import org.openjdk.jmh.infra.BenchmarkParams
 import rescala.Schedulers
 import rescala.interface.RescalaInterface
 
@@ -26,7 +25,7 @@ class SingleSwitch {
   var isManual: Boolean = false
 
   @Setup
-  def setup(params: BenchmarkParams, step: Step, engineParam: EngineParam): Unit = {
+  def setup(step: Step, engineParam: EngineParam): Unit = {
     engine = engineParam.engine
     source = Var(step.get())
     val d1 = Var("true")

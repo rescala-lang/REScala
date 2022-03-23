@@ -7,7 +7,6 @@ import org.eclipse.jetty.servlet.ServletContextHandler
 import org.eclipse.jetty.websocket.api.{Session, WebSocketAdapter}
 import org.eclipse.jetty.websocket.client.WebSocketClient
 import org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer
-import org.eclipse.jetty.websocket.server.{JettyServerUpgradeRequest, JettyServerUpgradeResponse}
 import rescala.extra.encrdt.encrypted.statebased._
 import rescala.extra.encrdt.sync.ConnectionManager
 
@@ -58,9 +57,6 @@ trait WebSocketReplica extends Replica {
 
   object ReplicaWsAdapter {
     def apply(): ReplicaWsAdapter = new ReplicaWsAdapter()
-
-    def apply(req: JettyServerUpgradeRequest, res: JettyServerUpgradeResponse): ReplicaWsAdapter =
-      ReplicaWsAdapter.apply()
   }
 
   def start(): Unit = {
@@ -75,7 +71,7 @@ trait WebSocketReplica extends Replica {
     JettyWebSocketServletContainerInitializer.configure(
       ctxHandler,
       (ctx, container) => {
-        container.addMapping("/", (r, s) => ReplicaWsAdapter.apply(r, s))
+        container.addMapping("/", (_, _) => ReplicaWsAdapter.apply())
         container.setIdleTimeout(Duration.ZERO)
         ctx.setSessionTimeout(0)
         container.setMaxBinaryMessageSize(Long.MaxValue)

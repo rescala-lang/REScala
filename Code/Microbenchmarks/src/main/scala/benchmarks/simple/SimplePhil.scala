@@ -1,10 +1,10 @@
 package benchmarks.simple
 
-import java.util.concurrent.TimeUnit
-
-import benchmarks.{EngineParam, Step}
+import benchmarks.EngineParam
 import org.openjdk.jmh.annotations._
 import rescala.interface.RescalaInterface
+
+import java.util.concurrent.TimeUnit
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -49,7 +49,7 @@ class SimplePhil {
   def build(): (Var[Philosopher], Signal[Vision]) = buildPhil()
 
   @Benchmark
-  def buildAndPropagate(step: Step): Unit = {
+  def buildAndPropagate(): Unit = {
     val (p, v) = buildPhil()
     p.set(Eating)
     p.set(Thinking)

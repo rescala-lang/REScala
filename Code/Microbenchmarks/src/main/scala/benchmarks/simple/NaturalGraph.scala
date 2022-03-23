@@ -1,12 +1,10 @@
 package benchmarks.simple
 
-import java.util.concurrent.TimeUnit
-
 import benchmarks.{EngineParam, Step, Workload}
 import org.openjdk.jmh.annotations._
-import org.openjdk.jmh.infra.BenchmarkParams
-
 import rescala.interface.RescalaInterface
+
+import java.util.concurrent.TimeUnit
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -25,7 +23,7 @@ class NaturalGraph {
   var result: List[Signal[Int]] = _
 
   @Setup
-  def setup(params: BenchmarkParams, step: Step, engineParam: EngineParam, work: Workload): Unit = {
+  def setup(step: Step, engineParam: EngineParam, work: Workload): Unit = {
     engine = engineParam.engine
 
     def inc(source: Signal[Int]): Signal[Int] =

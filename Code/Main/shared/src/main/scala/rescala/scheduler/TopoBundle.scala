@@ -3,6 +3,7 @@ package rescala.scheduler
 import rescala.core.Core
 import rescala.operator.ObserveBundle
 
+import scala.annotation.nowarn
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 trait TopoBundle extends Core with ObserveBundle {
@@ -81,7 +82,7 @@ trait TopoBundle extends Core with ObserveBundle {
 
     def reset(r: ReSource) = r.state.reset(r.commit(r.state.value))
 
-    def beforeCleanupHook(all: Seq[ReSource], initialWrites: Set[ReSource]): Unit = ()
+    def beforeCleanupHook(@nowarn all: Seq[ReSource], @nowarn initialWrites: Set[ReSource]): Unit = ()
 
     override def forceNewTransaction[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R): R =
       synchronized {

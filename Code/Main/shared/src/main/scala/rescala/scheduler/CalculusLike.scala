@@ -42,7 +42,7 @@ trait CalculusLike extends Core {
       if (needsReevaluation || requiresReev(reactive)) {
         println(s"creation evaluation $reactive")
         // evaluate immediately to support some higher order + creation nonsense
-        Reevaluate.evaluate(reactive, r => true, FTransaction(this))
+        Reevaluate.evaluate(reactive, _ => true, FTransaction(this))
       }
     }
 

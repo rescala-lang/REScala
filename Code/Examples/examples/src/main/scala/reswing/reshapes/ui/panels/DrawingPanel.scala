@@ -89,9 +89,9 @@ class DrawingPanel(val state: DrawingSpaceState) extends Panel {
   (state.selectedShape.changed ||        // #IF //#EF
     state.shapes.changed ||              // #IF //#EF
     state.strokeWidth.changed ||         // #IF //#EF
-    state.color.changed) += canvasChange // #IF //#HDL
+    state.color.changed) += (_ => canvasChange()) // #IF //#HDL
 
-  def canvasChange(x: Any) = repaint()
+  def canvasChange() = repaint()
 }
 
 /** This trait draws intersection points between all drawn shapes */

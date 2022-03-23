@@ -1,12 +1,10 @@
 package benchmarks.errorprop
 
-import java.util.concurrent.TimeUnit
-
 import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations._
-import org.openjdk.jmh.infra.BenchmarkParams
 import rescala.interface.RescalaInterface
 
+import java.util.concurrent.TimeUnit
 import scala.util.Try
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -29,7 +27,7 @@ class MonadicErrors {
   var isMonadic: Boolean = _
 
   @Setup
-  def setup(params: BenchmarkParams, size: Size, engineParam: EngineParam, work: Workload) = {
+  def setup(size: Size, engineParam: EngineParam, work: Workload) = {
     engine = engineParam.engine
     if (isMonadic) {
       val source                  = Evt[Try[Int]]()

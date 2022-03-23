@@ -55,7 +55,7 @@ class CrdtSyncWebSocketServer[S](
 
   JettyWebSocketServletContainerInitializer.configure(
     ctxHandler,
-    (servletContext, container) => {
+    (_, container) => {
       container.addMapping("/", webSocketCreator)
       container.setIdleTimeout(Duration.ZERO)
     }

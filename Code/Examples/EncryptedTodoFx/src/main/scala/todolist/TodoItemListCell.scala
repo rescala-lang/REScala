@@ -41,7 +41,7 @@ class TodoItemListCell extends ListCell[UUID] {
       }
       setGraphic(rootContainer)
 
-      subscriptions :+ textField.text.onChange { (source: ObservableValue[String, String], oldVal, newVal) =>
+      subscriptions :+ textField.text.onChange { (_: ObservableValue[String, String], _, newVal) =>
         val uuid = getItem
         if (uuid != null) todoProperty match {
           case Some(property) => TodoListController.changeTodo(uuid, property.value.copy(description = newVal))
@@ -50,7 +50,7 @@ class TodoItemListCell extends ListCell[UUID] {
       }
 
       subscriptions :+ checkBox.selectedProperty.onChange {
-        (observable: ObservableValue[Boolean, java.lang.Boolean], oldVal, newVal) =>
+        (_: ObservableValue[Boolean, java.lang.Boolean], _, newVal) =>
           val uuid = getItem
           if (uuid != null) todoProperty match {
             case Some(property) => TodoListController.changeTodo(uuid, property.value.copy(completed = newVal))
@@ -59,7 +59,7 @@ class TodoItemListCell extends ListCell[UUID] {
       }
 
       subscriptions :+ todoProperty.get.onChange(
-        (observable: ObservableValue[TodoEntry, TodoEntry], before: TodoEntry, after: TodoEntry) =>
+        (_: ObservableValue[TodoEntry, TodoEntry], before: TodoEntry, after: TodoEntry) =>
           Platform.runLater {
             if (textField.getText == before.description && before.description != after.description) {
               textField.setText(after.description)

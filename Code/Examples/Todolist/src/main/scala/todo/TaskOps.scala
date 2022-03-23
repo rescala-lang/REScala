@@ -6,8 +6,9 @@ import rescala.extra.lattices.delta.crdt.reactive.ListRDT
 import rescala.extra.lattices.delta.crdt.reactive.ListRDT._
 
 import java.util.concurrent.ThreadLocalRandom
+import scala.annotation.nowarn
 
-class TaskOps(taskRefs: TaskReferences) {
+class TaskOps(@nowarn taskRefs: TaskReferences) {
 
   type State = ListRDT[TaskRef]
 

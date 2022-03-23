@@ -1,6 +1,6 @@
 package benchmarks.chatserver
 
-import benchmarks.{EngineParam, Size, Workload}
+import benchmarks.{EngineParam, Size}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
 import rescala.Schedulers
@@ -51,7 +51,7 @@ class BenchState {
   var locks: Array[Lock]                = null
 
   @Setup
-  def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam, size: Size) = {
+  def setup(params: BenchmarkParams, engineParam: EngineParam, size: Size) = {
     engine = engineParam.engine
 
     val threads = params.getThreads

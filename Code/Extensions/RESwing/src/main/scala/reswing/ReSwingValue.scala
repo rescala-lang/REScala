@@ -3,6 +3,8 @@ package reswing
 import rescala.default._
 import rescala.operator.cutOutOfUserComputation
 
+import scala.annotation.nowarn
+
 /** Combines reactive values from the application and from the `Swing` library */
 sealed abstract class ReSwingValue[T] {
   protected def signal: Lazy[Signal[T]]
@@ -58,7 +60,7 @@ final case class ReSwingSignalValue[T](private val value: Lazy[Signal[T]]) exten
 object ReSwingValue {
 
   /** Does not cause the `Swing` library to use a specific value. */
-  implicit def apply[T](value: Unit): ReSwingNoValue[T] = ReSwingNoValue[T]()
+  implicit def apply[T](@nowarn value: Unit): ReSwingNoValue[T] = ReSwingNoValue[T]()
 
   /** Sets the given value once.
     * After this, does not cause the `Swing` library to use a specific value.
