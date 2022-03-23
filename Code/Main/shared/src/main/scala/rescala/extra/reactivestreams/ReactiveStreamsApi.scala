@@ -113,8 +113,7 @@ class ReactiveStreamsApi(val api: RescalaInterface) {
         ticket.tx.initializer.create[Pulse[T], SubscriptionReactive[T]](
           Set(dependency),
           Pulse.empty,
-          needsReevaluation = false,
-          new CreationTicket(new ScopeSearch(Left(ticket.tx)), name)
+          needsReevaluation = false
         ) {
           state => new SubscriptionReactive[T](state, dependency, subscriber, fac, name)
         }

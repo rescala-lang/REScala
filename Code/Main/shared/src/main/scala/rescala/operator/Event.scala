@@ -310,8 +310,7 @@ trait EventBundle extends EventCompatBundle {
         val internal = initTurn.initializer.create[(Pulse[T], Pulse[Diff[T]]), ChangeEventImpl[T]](
           Set[ReSource](signal),
           (Pulse.NoChange, Pulse.NoChange),
-          needsReevaluation = true,
-          ticket
+          needsReevaluation = true
         ) { state =>
           new ChangeEventImpl[T](state, signal, ticket.rename)
         }

@@ -85,7 +85,6 @@ trait Core {
         incoming: Set[ReSource],
         initValue: V,
         needsReevaluation: Boolean,
-        creationTicket: CreationTicket
     )(instantiateReactive: State[V] => T): T = {
       val state    = makeDerivedStructState[V](initValue)
       val reactive = instantiateReactive(state)
@@ -100,7 +99,6 @@ trait Core {
     /** Correctly initializes [[ReSource]]s */
     final private[rescala] def createSource[V, T <: ReSource](
         intv: V,
-        creationTicket: CreationTicket
     )(instantiateReactive: State[V] => T): T = {
       val state    = makeSourceStructState[V](intv)
       val reactive = instantiateReactive(state)
@@ -266,10 +264,10 @@ trait Core {
         initValue: V,
         needsReevaluation: Boolean
     )(instantiateReactive: State[V] => T): T = {
-      scope.embedTransaction(_.initializer.create(incoming, initValue, needsReevaluation, this)(instantiateReactive))
+      scope.embedTransaction(_.initializer.create(incoming, initValue, needsReevaluation)(instantiateReactive))
     }
     private[rescala] def createSource[V, T <: ReSource](intv: V)(instantiateReactive: State[V] => T): T = {
-      scope.embedTransaction(_.initializer.createSource(intv, this)(instantiateReactive))
+      scope.embedTransaction(_.initializer.createSource(intv)(instantiateReactive))
     }
   }
 
