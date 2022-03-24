@@ -1,8 +1,10 @@
 package de.ckuessner
-package causality.impl
+package encrdt.causality.impl
 
-import de.ckuessner.causality.impl.Defs.Time
-import de.ckuessner.encrdt.lattices.SemiLattice
+import encrdt.causality.impl.Defs.Time
+import encrdt.lattices.SemiLattice
+
+import scala.collection.mutable
 
 case class ArrayRanges(inner: Array[Time], used: Int) {
 
@@ -102,9 +104,62 @@ object ArrayRanges {
     new ArrayRanges(content, content.length)
   }
 
-  // this is horrible in performance, please fix
-  def from(it: Iterator[Time]): ArrayRanges =
-    it.foldLeft(ArrayRanges.empty)((range, time) => range.add(time))
+  def from(it: Iterator[Time]): ArrayRanges = {
+    val sorted = it.toArray.sortInPlace() // TODO: could be optimized further, but should be fast if already sorted
+    if (sorted.isEmpty) return ArrayRanges.empty
+
+    val newInternal = mutable.ArrayBuilder.make[Time]
+
+    var lastMin = sorted(0)
+    var lastMax = sorted(0) - 1
+
+    for (time <- sorted) {
+      if (time == lastMax + 1) {
+        lastMax = time
+      } else {
+        newInternal += lastMin
+        newInternal += lastMax
+        lastMin = time
+        lastMax = time
+      }
+    }
+
+    newInternal += lastMin
+    newInternal += lastMax
+
+    ArrayRanges(newInternal.result(), newInternal.length)
+  }
+
+  def intersect(left: ArrayRanges, right: ArrayRanges): ArrayRanges = {
+    val newInner = mutable.ArrayBuilder.make[Time]
+
+    var lIndex = 0
+    var rIndex = 0
+
+    while (lIndex < left.used && rIndex < right.used) {
+      val lMin = left.inner(lIndex)
+      val lMax = left.inner(lIndex + 1)
+      val rMin = right.inner(rIndex)
+      val rMax = right.inner(rIndex + 1)
+
+      if (lMin > rMax) {
+        rIndex += 2
+      } else if (rMin > lMax) {
+        lIndex += 2
+      } else {
+        val newMin: Time = Math.max(lMin, rMin)
+        val newMax: Time = Math.min(lMax, rMax)
+
+        newInner += newMin
+        newInner += newMax
+
+        if (newMax == rMax) rIndex += 2
+        if (newMax == lMax) lIndex += 2
+      }
+    }
+
+    ArrayRanges(newInner.result(), newInner.length)
+  }
 
   implicit val latticeInstance: SemiLattice[ArrayRanges] = _ merge _
 }

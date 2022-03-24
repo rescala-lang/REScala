@@ -1,8 +1,8 @@
 package de.ckuessner
 package encrdt.causality
 
-import de.ckuessner.causality.impl.ArrayCausalContext
-import de.ckuessner.encrdt.causality.DotStore.{Dot, DotSet}
+import encrdt.causality.DotStore.{Dot, DotSet}
+import encrdt.causality.impl.ArrayCausalContext
 
 // Can be optimized using Concise Version Vectors / Interval Version Vectors
 case class CausalContext(acc: ArrayCausalContext) {

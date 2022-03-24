@@ -1,10 +1,10 @@
 package de.ckuessner
-package causality.impl
+package encrdt.causality.impl
 
-import de.ckuessner.causality.impl.Defs.{Id, Time}
-import de.ckuessner.encrdt.causality.DotStore.Dot
-import de.ckuessner.encrdt.causality.LamportClock
-import de.ckuessner.encrdt.lattices.SemiLattice
+import encrdt.causality.DotStore.Dot
+import encrdt.causality.LamportClock
+import encrdt.causality.impl.Defs.{Id, Time}
+import encrdt.lattices.SemiLattice
 
 object Defs {
   type Id   = String
@@ -41,12 +41,12 @@ case class ArrayCausalContext(internal: Map[Id, ArrayRanges]) {
 
   def intersect(other: ArrayCausalContext): ArrayCausalContext =
     ArrayCausalContext {
-      internal.iterator.filter { case (id, _) => other.internal.contains(id) }.map {
-        case (id, range) =>
-          val otherRange = other.internal(id)
-          val res        = ArrayRanges.from(range.iterator.filter(otherRange.contains))
-          id -> res
-      }.toMap
+      internal.flatMap { case (id, ranges) =>
+        other.internal.get(id) match {
+          case Some(otherRanges) => Some(id -> ArrayRanges.intersect(ranges, otherRanges))
+          case None => None
+        }
+      }
     }
 
   def union(other: ArrayCausalContext): ArrayCausalContext = ArrayCausalContext.contextLattice.merged(this, other)
