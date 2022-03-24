@@ -1,8 +1,7 @@
 package de.ckuessner
 package encrdt.encrypted.deltabased
 
-import encrdt.causality.{CausalContext, DotSetPartialOrdering}
-import encrdt.causality.DotStore.Dot
+import encrdt.causality.CausalContext
 
 import scala.collection.mutable
 
@@ -13,7 +12,6 @@ trait DeltaPruning {
   protected def prune(receivedDeltaGroup: EncryptedDeltaGroup): Unit = {
     encryptedDeltaGroupStore.filterInPlace(subsumedDeltaGroup =>
       !(subsumedDeltaGroup.dottedVersionVector.acc <= receivedDeltaGroup.dottedVersionVector.acc)
-
     )
   }
 }

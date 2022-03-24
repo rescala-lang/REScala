@@ -1,8 +1,7 @@
 package de.ckuessner
 package encrdt.encrypted.deltabased
 
-import de.ckuessner.encrdt.causality.CausalContext
-import encrdt.causality.DotStore.Dot
+import encrdt.causality.CausalContext
 
 import scala.collection.mutable
 
