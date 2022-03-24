@@ -117,15 +117,15 @@ object ArrayRanges {
       if (time == lastMax + 1) {
         lastMax = time
       } else {
-        newInternal += lastMin
-        newInternal += lastMax
+        newInternal += lastMin     // from lastMin
+        newInternal += lastMax + 1 // until lastMax (exclusive)
         lastMin = time
         lastMax = time
       }
     }
 
-    newInternal += lastMin
-    newInternal += lastMax
+    newInternal += lastMin     // from lastMin
+    newInternal += lastMax + 1 // until lastMax (exclusive)
 
     ArrayRanges(newInternal.result(), newInternal.length)
   }
@@ -138,9 +138,9 @@ object ArrayRanges {
 
     while (lIndex < left.used && rIndex < right.used) {
       val lMin = left.inner(lIndex)
-      val lMax = left.inner(lIndex + 1)
+      val lMax = left.inner(lIndex + 1) - 1
       val rMin = right.inner(rIndex)
-      val rMax = right.inner(rIndex + 1)
+      val rMax = right.inner(rIndex + 1) - 1
 
       if (lMin > rMax) {
         rIndex += 2
@@ -150,8 +150,8 @@ object ArrayRanges {
         val newMin: Time = Math.max(lMin, rMin)
         val newMax: Time = Math.min(lMax, rMax)
 
-        newInner += newMin
-        newInner += newMax
+        newInner += newMin     // From newMin
+        newInner += newMax + 1 // to newMax (but range is exclusive, so +1)
 
         if (newMax == rMax) rIndex += 2
         if (newMax == lMax) lIndex += 2
