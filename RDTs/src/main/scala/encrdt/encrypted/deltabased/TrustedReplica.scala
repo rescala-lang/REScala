@@ -4,8 +4,10 @@ package encrdt.encrypted.deltabased
 import encrdt.causality.DotStore.{Dot, DotSet}
 import encrdt.causality.{CausalContext, LamportClock}
 import encrdt.crdts.interfaces.Crdt
+
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.Aead
+import de.ckuessner.encrdt.causality.impl.ArrayCausalContext
 
 import scala.collection.mutable
 
@@ -36,7 +38,7 @@ abstract class TrustedReplica[T](val replicaId: String,
   def localChange(state: T): Unit = {
     val eventDot = nextDot()
     dottedVersionVector.add(eventDot)
-    val encryptedDelta = DecryptedDeltaGroup(state, Set(eventDot)).encrypt(aead)
+    val encryptedDelta = DecryptedDeltaGroup(state, ArrayCausalContext.single(eventDot)).encrypt(aead)
     disseminate(encryptedDelta)
   }
 }

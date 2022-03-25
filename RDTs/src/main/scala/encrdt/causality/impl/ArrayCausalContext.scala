@@ -43,13 +43,27 @@ case class ArrayCausalContext(internal: Map[Id, ArrayRanges]) {
     ArrayCausalContext {
       internal.flatMap { case (id, ranges) =>
         other.internal.get(id) match {
-          case Some(otherRanges) => Some(id -> ArrayRanges.intersect(ranges, otherRanges))
-          case None => None
+          case Some(otherRanges) =>
+            val intersection = ranges intersect otherRanges
+            if (intersection.isEmpty) None
+            else Some(id -> intersection)
+          case None              => None
         }
       }
     }
 
   def union(other: ArrayCausalContext): ArrayCausalContext = ArrayCausalContext.contextLattice.merged(this, other)
+
+  def subtract(other: ArrayCausalContext): ArrayCausalContext = {
+    ArrayCausalContext(
+      internal.map { case left@(id, leftRanges) =>
+        other.internal.get(id) match {
+          case Some(rightRanges) => id -> (leftRanges subtract rightRanges)
+          case None => left
+        }
+      }.filterNot(_._2.isEmpty)
+    )
+  }
 
   def contains(d: Dot): Boolean = internal.get(d.replicaId).exists(_.contains(d.time))
 
@@ -67,11 +81,13 @@ case class ArrayCausalContext(internal: Map[Id, ArrayRanges]) {
     tree.iterator.forall(time => cond(LamportClock(time, id)))
   }
 
-  def <= (other: ArrayCausalContext): Boolean = intersect(other) == this
+  def <=(other: ArrayCausalContext): Boolean = intersect(other) == this
 }
 
 object ArrayCausalContext {
   def single(replicaId: Id, time: Long): ArrayCausalContext = empty.add(replicaId, time)
+
+  def single(lamportClock: LamportClock): ArrayCausalContext = empty.add(lamportClock.replicaId, lamportClock.time)
 
   val empty: ArrayCausalContext = ArrayCausalContext(Map.empty)
 

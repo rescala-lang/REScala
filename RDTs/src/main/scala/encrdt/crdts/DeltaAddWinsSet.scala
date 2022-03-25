@@ -7,6 +7,8 @@ import encrdt.crdts.DeltaAddWinsSet.DeltaAddWinsSetLattice
 import encrdt.crdts.interfaces.SetCrdt
 import encrdt.lattices.{Causal, SemiLattice}
 
+import de.ckuessner.encrdt.causality.impl.ArrayCausalContext
+
 class DeltaAddWinsSet[E](val replicaId: String,
                          initialState: DeltaAddWinsSetLattice[E] = Causal.bottom[DotMap[E, DotSet]]
                         ) extends SetCrdt[E] {
@@ -53,8 +55,8 @@ object DeltaAddWinsSet {
                  ): DeltaAddWinsSetLattice[E] = {
 
     val newDot = set.causalContext.clockOf(replicaId).advance(replicaId)
-    val deltaDotStore: DotMap[E, DotSet] = Map(element -> Set(newDot))
-    val deltaCausalContext = CausalContext(set.dotStore.getOrElse(element, DotStore[DotSet].bottom) + newDot)
+    val deltaDotStore: DotMap[E, DotSet] = Map(element -> ArrayCausalContext.single(newDot))
+    val deltaCausalContext = CausalContext(set.dotStore.getOrElse(element, DotStore[DotSet].bottom).add(newDot.replicaId, newDot.time))
     Causal(deltaDotStore, deltaCausalContext)
   }
 
