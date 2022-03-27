@@ -9,8 +9,6 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import test.kofre.DataGenerator.{*, given}
 import kofre.causality.VectorClock
 
-import javax.swing.plaf.multi.MultiListUI
-
 class VectorClockLattice extends LatticeMergeTest[VectorClock]
 class LWWLatice          extends LatticeMergeTest[LastWriterWins[Int]]
 class OrSetLatice        extends LatticeMergeTest[ORSet[Int]]
