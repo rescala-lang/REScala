@@ -10,6 +10,8 @@ import scala.language.implicitConversions
 
 class ArrayRangesTest extends AnyFlatSpec {
 
+  def ar(times: (Time, Time)*): ArrayRanges = ArrayRanges(times)
+
   "intersect" should "work" in {
     var left  = ArrayRanges(Seq((1, 2)))
     var right = ArrayRanges(Seq((1, 2)))
@@ -146,6 +148,47 @@ class ArrayRangesTest extends AnyFlatSpec {
 
   it should "work if both are empty" in {
     (ArrayRanges.empty subtract ArrayRanges.empty) shouldEqual ArrayRanges.empty
+  }
+
+  "<=" should "work for singles on left and right" in {
+    ArrayRanges(Seq((1,2))) <= ArrayRanges(Seq((1,2))) shouldBe true
+    ArrayRanges(Seq((1,2))) <= ArrayRanges(Seq((0,2))) shouldBe true
+    ArrayRanges(Seq((1,2))) <= ArrayRanges(Seq((1,3))) shouldBe true
+    ArrayRanges(Seq((1,2))) <= ArrayRanges(Seq((0,2))) shouldBe true
+    ArrayRanges(Seq((1,2))) <= ArrayRanges(Seq((0,3))) shouldBe true
+    ArrayRanges(Seq((1,2))) <= ArrayRanges(Seq((0,3))) shouldBe true
+
+    ArrayRanges(Seq((0,2))) <= ArrayRanges(Seq((1,2))) shouldBe false
+    ArrayRanges(Seq((1,3))) <= ArrayRanges(Seq((1,2))) shouldBe false
+    ArrayRanges(Seq((0,2))) <= ArrayRanges(Seq((1,2))) shouldBe false
+    ArrayRanges(Seq((0,3))) <= ArrayRanges(Seq((1,2))) shouldBe false
+    ArrayRanges(Seq((0,3))) <= ArrayRanges(Seq((1,2))) shouldBe false
+  }
+
+  it should "work for empty" in {
+    ArrayRanges(Seq((1,2))) <= ArrayRanges.empty shouldBe false
+    ArrayRanges(Seq((1,2),(4,5))) <= ArrayRanges.empty shouldBe false
+
+    ArrayRanges.empty <= ArrayRanges.empty shouldBe true
+    ArrayRanges.empty <= ArrayRanges(Seq((1,2))) shouldBe true
+  }
+
+  it should "work for longer ranges" in {
+    ar((1,2),(3,5)) <= ar((1,5)) shouldBe true
+    ar((1,2),(3,5)) <= ar((0,5)) shouldBe true
+    ar((1,2),(3,5)) <= ar((1,6)) shouldBe true
+    ar((1,2),(3,5)) <= ar((0,6)) shouldBe true
+
+    ar((1,2)) <= ar((1,2),(3,5),(6,10)) shouldBe true
+    ar((4,5)) <= ar((1,2),(3,5),(6,10)) shouldBe true
+    ar((6,8)) <= ar((1,2),(3,5),(6,10)) shouldBe true
+
+    ar((11,20)) <= ar((1,2),(3,5),(6,10)) shouldBe false
+
+    ar((1,2), (4,5)) <= ar((1,2)) shouldBe false
+    ar((1,2), (4,5)) <= ar((1,2),(5,6)) shouldBe false
+    ar((1,2), (4,5)) <= ar((1,5),(10,11)) shouldBe true
+    ar((1,2), (4,5)) <= ar((1,4),(10,11)) shouldBe false
   }
 
 }
