@@ -11,6 +11,8 @@ case class ArrayCausalContext(internal: Map[Id, ArrayRanges]) {
 
   def clockOf(replicaId: Id): Option[Dot] = max(replicaId)
 
+  def add(dot: Dot): ArrayCausalContext = add(dot.replicaId, dot.time)
+
   def add(replicaId: Id, time: Time): ArrayCausalContext =
     ArrayCausalContext(internal.updated(
       replicaId,

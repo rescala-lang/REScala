@@ -4,6 +4,7 @@ import kofre.Defs.Id
 import kofre.causality.{Dot, VectorClock}
 import kofre.{Defs, Lattice}
 
+import scala.annotation.tailrec
 import scala.math.PartialOrdering
 
 case class VectorClock(timestamps: Map[Id, Defs.Time]) {
@@ -24,6 +25,24 @@ object VectorClock {
   given lattice: Lattice[VectorClock] =
     given Lattice[Defs.Time] = _ max _
     Lattice.derived
+
+  val vectorClockTotalOrdering: Ordering[VectorClock] = new Ordering[VectorClock] {
+    override def compare(x: VectorClock, y: VectorClock): Int =
+      vectorClockOrdering.tryCompare(x, y) match
+        case Some(v) => v
+        case None =>
+          @tailrec
+          def smaller(remaining: List[Id]): Int = remaining match {
+            case h :: t =>
+              val l = x.timestamps.getOrElse(h, 0l)
+              val r = y.timestamps.getOrElse(h, 0l)
+              val res = Ordering[Defs.Time].compare(l, r)
+              if (res == 0) then smaller(t) else res
+            case Nil => 0
+          }
+          val ids = (x.timestamps.keysIterator ++ y.timestamps.keysIterator).toList.sorted
+          smaller(ids)
+  }
 
   given vectorClockOrdering: PartialOrdering[VectorClock] = new PartialOrdering[VectorClock] {
     override def tryCompare(x: VectorClock, y: VectorClock): Option[Int] = {

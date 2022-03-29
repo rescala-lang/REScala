@@ -1,13 +1,13 @@
 package test.kofre
 
-import kofre.primitives.{LastWriterWins, MultiValueRegister}
+import kofre.causality.VectorClock
+import kofre.primitives.{CausalQueue, LastWriterWins, MultiValueRegister}
 import kofre.sets.ORSet
 import kofre.{Defs, Lattice}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import test.kofre.DataGenerator.{*, given}
-import kofre.causality.VectorClock
 
 class VectorClockLattice extends LatticeMergeTest[VectorClock]
 class LWWLatice          extends LatticeMergeTest[LastWriterWins[Int]]

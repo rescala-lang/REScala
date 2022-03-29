@@ -1,6 +1,6 @@
 package test.kofre
 
-import kofre.primitives.{LastWriterWins, MultiValueRegister}
+import kofre.primitives.{CausalQueue, LastWriterWins, MultiValueRegister}
 import kofre.sets.ORSet
 import kofre.{Defs, Lattice}
 import org.scalacheck.{Arbitrary, Gen}
@@ -38,5 +38,13 @@ object DataGenerator {
       value   <- Arbitrary.arbitrary[A]
     } yield (version, value)
     val map = Gen.listOf(pairgen).map(vs => MultiValueRegister(vs.toMap))
+    Arbitrary(map)
+
+  given arbCausalQueue[A: Arbitrary]: Arbitrary[CausalQueue[A]] =
+    val pairgen = for {
+      id <- arbId.arbitrary
+      value   <- Arbitrary.arbitrary[A]
+    } yield (id, value)
+    val map = Gen.listOf(pairgen).map(_.foldLeft(CausalQueue.empty[A]){case (acc, (id, value)) => acc.enqueue(value, id) })
     Arbitrary(map)
 }
