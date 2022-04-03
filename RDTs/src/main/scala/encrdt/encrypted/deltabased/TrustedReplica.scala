@@ -1,22 +1,18 @@
 package de.ckuessner
 package encrdt.encrypted.deltabased
 
-import encrdt.causality.DotStore.{Dot, DotSet}
+import encrdt.causality.DotStore.Dot
+import encrdt.causality.impl.ArrayCausalContext
 import encrdt.causality.{CausalContext, LamportClock}
 import encrdt.crdts.interfaces.Crdt
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.Aead
-import de.ckuessner.encrdt.causality.impl.ArrayCausalContext
 
-import scala.collection.mutable
-
-abstract class TrustedReplica[T](val replicaId: String,
-                                 val crdt: Crdt[T],
-                                 private val aead: Aead)
-                                (implicit val stateJsonCodec: JsonValueCodec[T],
-                                 implicit val dotSetJsonCodec: JsonValueCodec[CausalContext]
-                                ) extends Replica {
+abstract class TrustedReplica[T](val replicaId: String, val crdt: Crdt[T], private val aead: Aead)(
+    implicit val stateJsonCodec: JsonValueCodec[T],
+    implicit val dotSetJsonCodec: JsonValueCodec[CausalContext]
+) extends Replica {
 
   protected var dottedVersionVector: CausalContext = CausalContext()
 
@@ -29,7 +25,7 @@ abstract class TrustedReplica[T](val replicaId: String,
 
   def receive(encryptedDeltaGroup: EncryptedDeltaGroup): Unit = {
     val decryptedState: DecryptedDeltaGroup[T] = encryptedDeltaGroup.decrypt(aead)
-    dottedVersionVector =  dottedVersionVector.merged(decryptedState.dottedVersionVector)
+    dottedVersionVector = dottedVersionVector.merged(decryptedState.dottedVersionVector)
     // TODO: synchronize
     // TODO: Non-causally consistent unless underlying CRDT handles causal consistency
     crdt.merge(decryptedState.deltaGroup)
