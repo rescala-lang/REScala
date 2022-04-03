@@ -60,6 +60,7 @@ class Board(val width: Int, val height: Int) {
     if (isFree(newPos) && !isFree(pos)) {
       val e = clear(pos)
       elements.put(newPos, e.get)
+      ()
     }
   }
 

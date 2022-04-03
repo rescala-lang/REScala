@@ -257,6 +257,7 @@ trait TaskBundle extends FullMVBundle {
           doBranchDiff(retainBranch, out)
           for (dep <- out) new NotificationWithFollowFrame(turn, dep, changed, succTxn).fork()
           createReevaluation(succTxn).fork()
+          ()
       }
     }
 

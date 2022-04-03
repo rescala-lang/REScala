@@ -69,5 +69,6 @@ class LociDist[Api <: RescalaInterface](val api: Api) {
       println(s"removing remote $remoteRef")
       observers(remoteRef).disconnect()
     }
+    ()
   }
 }

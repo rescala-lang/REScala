@@ -14,12 +14,13 @@ object Dependencies {
     val circeCore                = "0.14.1"
     val decline                  = "2.2.0"
     val fastparse                = "2.3.3"
+    val jetty                    = "9.4.46.v20220331"
     val jol                      = "0.16"
-    val jsoniterScalaCore        = "2.13.3"
+    val jsoniterScalaCore        = "2.13.11"
     val jsoup                    = "1.14.3"
     val normalizecss             = "8.0.1"
     val okHttp                   = "4.9.3"
-    val pprint                   = "0.7.1"
+    val pprint                   = "0.7.3"
     val reactiveStreams          = "1.0.3"
     val retypecheck              = "0.10.0"
     val scala211                 = "2.11.12"
@@ -31,11 +32,11 @@ object Dependencies {
     val scalaSwing               = "3.0.0"
     val scalacheck               = "1.15.4"
     val scalactic                = "3.0.0"
-    val scalajsDom               = "2.0.0"
+    val scalajsDom               = "2.1.0"
     val scalatags                = "0.11.1"
     val scalatest                = "3.2.11"
     val scalatestpluscheck       = "3.2.11.0"
-    val scribe                   = "3.6.7"
+    val scribe                   = "3.8.2"
     val sourcecode               = "0.2.8"
     val tomlScala                = "0.2.2"
     val upickle                  = "1.5.0"
@@ -48,6 +49,7 @@ object Dependencies {
   val catsCollection  = Def.setting("org.typelevel" %%% "cats-collections-core" % V.catsCollection)
   val decline         = Def.setting("com.monovore" %%% "decline" % V.decline)
   val fastparse       = Def.setting("com.lihaoyi" %%% "fastparse" % V.fastparse)
+  val jetty           = Def.setting("org.eclipse.jetty" % "jetty-rewrite" % V.jetty)
   val jol             = Def.setting("org.openjdk.jol" % "jol-core" % V.jol)
   val jsoup           = Def.setting("org.jsoup" % "jsoup" % V.jsoup)
   val normalizecss    = Def.setting("org.webjars.npm" % "normalize.css" % V.normalizecss)
@@ -92,7 +94,7 @@ object Dependencies {
     val wsAkka        = generic("communicator-ws-akka")
     val wsWeb         = generic("communicator-ws-webnative")
     val wsJavalin     = generic("communicator-ws-javalin")
-    val wsJetty       = generic("communicator-ws-jetty")
+    val wsJetty       = Def.setting(Seq(generic("communicator-ws-jetty").value, jetty.value))
   }
 
 }

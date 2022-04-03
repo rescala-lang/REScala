@@ -33,7 +33,7 @@ object LinePaintingEScala extends SimpleSwingApplication {
 
     /* Attach handlers to the EScala events */
     mousePressed += { p =>
-      moveTo(p); requestFocusInWindow()
+      moveTo(p); requestFocusInWindow(); ()
     }
     mouseDragged += { lineTo(_) }
     mouseReleased += { lineTo(_) }

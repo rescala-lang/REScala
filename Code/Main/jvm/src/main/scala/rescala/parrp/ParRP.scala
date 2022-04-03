@@ -57,14 +57,14 @@ trait ParRP extends Levelbased {
     override def releasePhase(): Unit = key.releaseAll()
 
     /** allow turn to handle dynamic access to reactives */
-    override def beforeDynamicDependencyInteraction(dependency: ReSource): Unit = acquireShared(dependency)
+    override def beforeDynamicDependencyInteraction(dependency: ReSource): Unit = { acquireShared(dependency); () }
 
     /** lock all reactives reachable from the initial sources
       * retry when acquire returns false
       */
     override def preparationPhase(initialWrites: Set[ReSource]): Unit = {
       val toVisit                 = new java.util.ArrayDeque[ReSource](10)
-      val offer: ReSource => Unit = toVisit.offer
+      val offer: ReSource => Unit = toVisit.addLast
       initialWrites.foreach(offer)
       val priorKey = priorTurn.fold[Key[ParRPInterTurn]](null)(_.key)
 

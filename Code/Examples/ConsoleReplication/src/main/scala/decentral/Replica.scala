@@ -92,7 +92,8 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
     registry.bindSbj(receiveCheckpointBinding) { (remoteRef: RemoteRef, msg: CheckpointMessage) =>
       msg match {
         case CheckpointMessage(cp @ Checkpoint(replicaID, counter), changes) =>
-          if (checkpoints.contains(replicaID) && checkpoints(replicaID) >= counter) () else {
+          if (checkpoints.contains(replicaID) && checkpoints(replicaID) >= counter) ()
+          else {
             set = set.applyDelta(Delta(remoteRef.toString, changes)).resetDeltaBuffer()
 
             unboundRemoteChanges =
@@ -112,6 +113,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
   def sendCheckpoint(msg: CheckpointMessage, rr: RemoteRef): Unit = {
     val receiveCheckpoint = registry.lookup(receiveCheckpointBinding, rr)
     receiveCheckpoint(msg)
+    ()
   }
 
   def createCheckpoint(atoms: List[SetState]): Unit = {
@@ -160,24 +162,27 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
     }
   }
 
-  def monitorJoin(): Unit = registry.remoteJoined.monitor { rr =>
-    registry.lookup(getCheckpointsBinding, rr)().map { remoteCheckpoints =>
-      checkpoints.foreachEntry { (replicaID, counter) =>
-        val remoteCounter = remoteCheckpoints.getOrElse(replicaID, 0)
+  def monitorJoin(): Unit = {
+    registry.remoteJoined.monitor { rr =>
+      registry.lookup(getCheckpointsBinding, rr)().map { remoteCheckpoints =>
+        checkpoints.foreachEntry { (replicaID, counter) =>
+          val remoteCounter = remoteCheckpoints.getOrElse(replicaID, 0)
 
-        (remoteCounter + 1 to counter).foreach { n =>
-          val cp      = Checkpoint(replicaID, n)
-          val changes = checkpointMap(cp)
+          (remoteCounter + 1 to counter).foreach { n =>
+            val cp      = Checkpoint(replicaID, n)
+            val changes = checkpointMap(cp)
 
-          sendCheckpoint(CheckpointMessage(cp, changes), rr)
+            sendCheckpoint(CheckpointMessage(cp, changes), rr)
+          }
         }
       }
+
+      val unboundChanges = unboundLocalChanges.foldLeft(unboundRemoteChanges) { UIJDLattice[SetState].merge }
+
+      if (unboundChanges != UIJDLattice[SetState].bottom)
+        sendDelta(unboundChanges, rr)
     }
-
-    val unboundChanges = unboundLocalChanges.foldLeft(unboundRemoteChanges) { UIJDLattice[SetState].merge }
-
-    if (unboundChanges != UIJDLattice[SetState].bottom)
-      sendDelta(unboundChanges, rr)
+    ()
   }
 
   def run(): Unit = {

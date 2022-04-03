@@ -52,7 +52,7 @@ class SmashingParticles {
     contents = new Panel() {
       preferredSize = new Dimension(600, 600)
       override def paintComponent(g: Graphics2D): Unit = {
-        toDraw.map(x => x(g))
+        toDraw.foreach(x => x(g))
       }
     }
   }

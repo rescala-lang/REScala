@@ -69,6 +69,7 @@ class TodoItemListCell extends ListCell[UUID] {
             }
           }
       )
+      ()
     }
   }
 

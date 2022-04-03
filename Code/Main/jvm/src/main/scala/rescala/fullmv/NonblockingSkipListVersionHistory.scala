@@ -1278,6 +1278,7 @@ trait FullMvStateBundle extends FullMVBundle {
             }
           } finally {
             x.unlock()
+            ()
           }
         case otherwise =>
           Thread.`yield`()

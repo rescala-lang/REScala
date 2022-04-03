@@ -122,6 +122,7 @@ trait Levelbased extends Twoversion {
       */
     def enqueue(minLevel: Int, needsEvaluate: Boolean = true)(dep: Derived): Unit = {
       elements.offer(QueueElement(dep.state.level(), dep, minLevel, needsEvaluate))
+      ()
     }
 
     /** Handles a queue element by applying the given evaluator to it and scheduling the next elements for evaluation

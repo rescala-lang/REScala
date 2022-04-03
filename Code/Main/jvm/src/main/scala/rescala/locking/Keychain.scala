@@ -37,6 +37,7 @@ class Keychain[InterTurn](init: Key[InterTurn]) {
     }
     other.fallthrough.foreach { case (k, a) => addFallthrough(k, a) }
     keys.addAll(other.keys)
+    ()
   }
 
   def release(key: Key[InterTurn]): Unit = {

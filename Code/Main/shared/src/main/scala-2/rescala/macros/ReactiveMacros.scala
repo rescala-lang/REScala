@@ -98,7 +98,7 @@ class ReactiveMacros(val c: blackbox.Context) {
   }
 
   def fixNullTypes(tree: Tree): Unit =
-    tree.foreach(t => if (t.tpe == null) internal.setType(t, NoType))
+    tree.foreach(t => if (t.tpe == null) {internal.setType(t, NoType) ; () } )
 
   object ForceCutOut
   class PrefixManipulation {

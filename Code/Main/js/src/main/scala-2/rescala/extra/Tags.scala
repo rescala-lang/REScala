@@ -156,6 +156,7 @@ class Tags[Api <: RescalaInterface](val api: Api) {
             t.asInstanceOf[Input].value = value.asInstanceOf[String]
           implicitly[AttrValue[T]].apply(t, a, value)
         })(engine)
+        ()
       }
     }
 
@@ -174,6 +175,7 @@ class Tags[Api <: RescalaInterface](val api: Api) {
         Observe.strong(signal, fireImmediately = true)(tagObserver(t, signal)({ value =>
           tstyle.apply(t, s, value)
         }))(engine)
+        ()
       }
     }
 

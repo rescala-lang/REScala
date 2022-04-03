@@ -49,5 +49,6 @@ abstract class Peer {
         case None =>
       }
     }
+    ()
   }
 }

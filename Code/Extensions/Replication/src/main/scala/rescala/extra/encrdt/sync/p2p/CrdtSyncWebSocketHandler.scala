@@ -78,6 +78,7 @@ class CrdtSyncWebSocketHandler[S](
       s"websocket to $remoteReplicaId@${getRemote.getRemoteAddress} closed (removing handler) with $statusCode - $reason"
     )
     connectionManager.removeHandler(this)
+    ()
   }
 
   override def onWebSocketError(cause: Throwable): Unit = {
@@ -87,6 +88,7 @@ class CrdtSyncWebSocketHandler[S](
       LOG.error(s"websocket received error (removing handler): $cause")
     }
     connectionManager.removeHandler(this)
+    ()
   }
 
   def close(): Unit = {

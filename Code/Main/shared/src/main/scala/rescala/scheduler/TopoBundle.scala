@@ -63,6 +63,7 @@ trait TopoBundle extends Core with ObserveBundle {
         // do nothing, this reactive is reached by normal propagation later
       } else if (needsReevaluation || requiresReev) {
         Util.evaluate(reactive, TopoTransaction(this), afterCommitObservers)
+        ()
       } else if (predecessorsDone) reactive.state.done = true
     }
 

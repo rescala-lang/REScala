@@ -43,6 +43,7 @@ private[reswing] trait ReSwingEventConnection {
       if (value.isInstanceOf[ReSwingEventIn[_]])
         delayedInitEvents += { () =>
           value += { v => inSyncEDT { setter(v) } }
+          ()
         }
       value
     }
@@ -50,6 +51,7 @@ private[reswing] trait ReSwingEventConnection {
       if (value.isInstanceOf[ReSwingEventIn[_]])
         delayedInitEvents += { () =>
           value += { _ => inSyncEDT { setter() } }
+          ()
         }
       value
     }

@@ -70,11 +70,12 @@ object Main extends App {
     Dialog.showMessage(null, "This url is not valid", "Invalid url", Message.Error, EmptyIcon)
 
   private def setupGuiEvents(): Unit = {
-    app.requestURLAddition += { url => checker.check(url) } // #HDL
+    app.requestURLAddition += { url => checker.check(url); () } // #HDL
 
     val guardedTick = tick && { _ => app.refreshAllowed.value } // #EVT //#EF
 
     (app.refresh || guardedTick) += { _ => fetcher.fetchAll() } // #EF //#HDL
+    ()
   }
 
   private def loadURLs(path: String): Option[Seq[String]] = {

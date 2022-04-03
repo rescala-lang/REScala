@@ -169,7 +169,7 @@ class MillDrawer(val game: MillGame) extends ReComponent(preferredSize = new Dim
       })
   }
 
-  indexClicked += { index => game.playerInput(index) } // #HDL
+  indexClicked += { index => game.playerInput(index); () } // #HDL
 
   presentation.changed += { _ => this.repaint() } // #HDL
 

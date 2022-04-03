@@ -239,6 +239,7 @@ class TextArea extends ReComponent {
     val point = pointFromPosition(caret.position.readValueOnce)
     peer.peer.scrollRectToVisible(new Rectangle(point.x - 8, point.y, 16, 2 * lineHeight))
     caret.steady.restart
+    ()
   }
 
   buffer.length.changed || caret.visible.changed ||

@@ -21,7 +21,8 @@ trait EventMediator {
   */
 object CentralizedEvents extends EventMediator {
   def mediate(fetcher: Fetcher, parser: XmlParser, store: FeedStore, checker: UrlChecker): Unit = {
-    fetcher.rssFetched += { case (xml, url) => parser.parseRSS(xml, url) } // #HDL
+    fetcher.rssFetched += { case (xml, url) => parser.parseRSS(xml, url); () } // #HDL
+    ()
   }
 }
 
@@ -35,5 +36,6 @@ object SimpleReporter extends EventMediator {
     parser.itemParsed += { _ => println("An item was parsed") }      // #HDL
 
     fetcher.state.changed += println _ // #IF //#HDL
+    ()
   }
 }

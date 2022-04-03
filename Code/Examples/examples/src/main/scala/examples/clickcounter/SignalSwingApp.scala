@@ -11,6 +11,7 @@ trait ReactiveText {
   def text_=(value: Signal[String]): Unit = {
     this.text_=(value.now)
     value.changed += { (t: String) => this.text_=(t) }
+    ()
   }
 }
 class ReactiveLabel extends Label with ReactiveText

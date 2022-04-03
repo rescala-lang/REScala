@@ -37,8 +37,10 @@ class P2PConnectionManager[S](val localReplicaId: String, localStateProvider: ()
     broadcast(State(writeToString(newState)))
   }
 
-  override def connectToReplica(remoteReplicaId: String, uri: URI): Unit =
+  override def connectToReplica(remoteReplicaId: String, uri: URI): Unit = {
     addPendingConnection(remoteReplicaId, crdtSyncWebSocketClient.connect(remoteReplicaId, uri))
+    ()
+  }
 
   def connectToNewPeers(peers: Map[String, String]): Unit = {
     peers.filter { case (rId, rAddrUri) =>

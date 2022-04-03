@@ -64,7 +64,7 @@ class Elevator(val nFloors: Int) {
     (reachedFloor.map((_: Int) => true) || stoppedWaiting.map((_: Any) => false)).latest(false)
 
   // Define some behavior with events
-  stoppedWaiting += { _ => queue.dequeue() } // move to the next destination
+  stoppedWaiting += { _ => queue.dequeue(); () } // move to the next destination
   callToFloor += { queue enqueue _ }
   // enqueue a new floor
 

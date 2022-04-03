@@ -32,8 +32,8 @@ case class TaskRef(id: String) {
   lazy val cached: TaskRefData = TaskReferences.lookupOrCreateTaskRef(id, None)
 
   def task: Signal[LWWRegister[TaskData]] = cached.task
-  def tag: TypedTag[LI]                                  = cached.tag
-  def removed: Event[String]                             = cached.removed
+  def tag: TypedTag[LI]                   = cached.tag
+  def removed: Event[String]              = cached.removed
 }
 
 final class TaskRefData(
@@ -55,7 +55,7 @@ object TaskReferences {
   var taskrefObj: TaskReferences = null
 
   def lookupOrCreateTaskRef(id: String, task: Option[TaskData]): TaskRefData = {
-    TaskReferences.taskRefMap.getOrElseUpdate(id, {taskrefObj.createTaskRef(id, task) })
+    TaskReferences.taskRefMap.getOrElseUpdate(id, { taskrefObj.createTaskRef(id, task) })
   }
 
   def apply(toggleAll: Event[UIEvent], storePrefix: String): TaskReferences = {
@@ -64,7 +64,6 @@ object TaskReferences {
     taskrefs
   }
 }
-
 
 class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
 
@@ -143,7 +142,9 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
       Events.fromCallback[UIEvent](cb => button(`class` := "destroy", onclick := cb))
 
     val editInput = edittext.data(value := taskData.map(_.desc)).render
-    editDiv.event.observe(_ => setTimeout(0) { editInput.focus() })
+    editDiv.event.observe { _ =>
+      setTimeout(0) { editInput.focus() }; ()
+    }
 
     val listItem = li(
       `class` := editingV.map(if (_) "editing" else "no-editing"),

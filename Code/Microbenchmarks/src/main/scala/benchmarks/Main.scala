@@ -14,5 +14,6 @@ object Main {
 //      //.addProfiler(classOf[StackProfiler])
       .build()
     new Runner(opt).run()
+    ()
   }
 }

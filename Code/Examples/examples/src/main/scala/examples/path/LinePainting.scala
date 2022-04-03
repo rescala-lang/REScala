@@ -18,6 +18,7 @@ object LinePainting extends SimpleSwingApplication {
       case e: MousePressed =>
         moveTo(e.point)
         requestFocusInWindow()
+        ()
       case e: MouseDragged  => lineTo(e.point)
       case e: MouseReleased => lineTo(e.point)
       case KeyTyped(_, 'c', _, _) =>

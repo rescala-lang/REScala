@@ -67,6 +67,7 @@ class SyncedTodoListCrdt(val replicaId: String) {
     connectionManager.stop()
     crdtExecutorService.shutdown()
     crdtExecutorService.awaitTermination(500, MILLISECONDS)
+    ()
   }
 
   def get(key: UUID): Option[TodoEntry] =

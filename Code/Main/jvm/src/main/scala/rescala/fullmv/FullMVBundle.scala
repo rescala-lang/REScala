@@ -273,7 +273,10 @@ trait FullMVBundle extends Core {
         } else {
           ensurePredecessorReplication(startAt, clock)
           val (knownPreds, knownClock) = clockedPredecessors
-          if (clock < knownClock) replicator.newPredecessors(knownPreds, knownClock)
+          if (clock < knownClock) {
+            replicator.newPredecessors(knownPreds, knownClock)
+            ()
+          }
         }
       }
     }
@@ -347,8 +350,10 @@ trait FullMVBundle extends Core {
           val succReev = new Reevaluation(succTxn, reactive)
           if (ForkJoinTask.inForkJoinPool()) {
             succReev.fork()
+            ()
           } else {
             host.threadPool.submit(succReev)
+            ()
           }
         case (true, PureNotifyOnly(out)) if out.isEmpty =>
           activeBranchDifferential(TurnPhase.Executing, -1)

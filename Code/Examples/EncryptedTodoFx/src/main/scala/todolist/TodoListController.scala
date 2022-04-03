@@ -51,12 +51,14 @@ object TodoListController {
     crdt.put(uuid, todoEntry)
     uuidToTodoEntryProperties.put(uuid, ObjectProperty[TodoEntry](todoEntry))
     observableUuidList.add(uuid)
+    ()
   }
 
   def removeTodo(uuid: UUID): Unit = {
     crdt.remove(uuid)
     observableUuidList.remove(uuid)
     uuidToTodoEntryProperties.remove(uuid)
+    ()
   }
 
   def changeTodo(uuid: UUID, changedEntry: TodoEntry): Unit = {

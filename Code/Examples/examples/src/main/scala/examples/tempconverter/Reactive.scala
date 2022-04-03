@@ -20,6 +20,7 @@ trait ReactiveText extends Reactor {
   def text_=(value: Signal[String]): Unit = {
     this.text_=(value.now)
     value.changed += { (t: String) => this.text_=(t) }
+    ()
   }
   // out signal
   lazy val text_out = Signal { userSet() }

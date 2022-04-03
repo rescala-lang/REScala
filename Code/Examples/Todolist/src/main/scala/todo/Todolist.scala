@@ -23,7 +23,7 @@ object Todolist {
 
     document.body.replaceChild(div.render, document.body.firstElementChild)
     document.body.appendChild(webrtc.webrtcHandlingArea.render)
-
+    ()
   }
 
 }
