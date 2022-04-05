@@ -26,6 +26,7 @@ class ReevaluationBundle[T <: RescalaInterface](val api: T) {
     }
     def assert(elements: A*)(implicit pos: org.scalactic.source.Position): Unit = {
       Assertions.assert(results === elements.toList)
+      ()
     }
     def assertClear(elements: A*)(implicit pos: org.scalactic.source.Position): Unit = {
       assert(elements: _*)

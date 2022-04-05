@@ -15,7 +15,7 @@ class EvaluationOrderWithHigherOrderSignalsTest extends RETests {
     val initialX = "initialValue"
     val newX     = if (changeX == SetChanged) "changedValue" else initialX
 
-    val results = for (i <- 0 to 10) yield {
+    val results = for (_ <- 0 to 10) yield {
 
       val x  = Var(initialX)(scheduler)
       val x4 = x.map(identity)(scheduler).map(identity)(scheduler).map(identity)(scheduler).map(identity)(scheduler)

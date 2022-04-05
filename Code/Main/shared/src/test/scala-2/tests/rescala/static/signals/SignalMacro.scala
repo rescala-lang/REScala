@@ -73,7 +73,7 @@ class SignalMacro extends RETests {
 
       abstract class A { def obj(): Unit }
       val a = new A {
-        def obj() =
+        def obj(): Unit = {
           new {
             val evt              = Evt[Int]()
             val sig: Signal[Int] = Signal { 2 * evt.latest(0).apply() }
@@ -81,6 +81,8 @@ class SignalMacro extends RETests {
             e = evt
             s = sig
           }
+          ()
+        }
       }
 
       a.obj()

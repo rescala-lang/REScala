@@ -18,7 +18,7 @@ class InvariantsTest extends RETests with ScalaCheckDrivenPropertyChecks with Ma
       val s: Signal[Int] = e.count()
 
       s.specify(
-        Invariant { a => a < n }
+        Invariant[Int] { a => a < n }
       )
 
       1 to n foreach { i => e.fire(i) }

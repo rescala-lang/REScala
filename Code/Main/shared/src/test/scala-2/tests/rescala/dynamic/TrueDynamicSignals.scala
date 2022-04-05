@@ -217,7 +217,7 @@ class TrueDynamicSignals extends RETests {
     test("basic Higher Order Signal can Be Accessed") {
       val v                       = Var(42)
       val s1: Signal[Int]         = v.map(identity)
-      val s2: Signal[Signal[Int]] = Signals.dynamic() { t => s1 }
+      val s2: Signal[Signal[Int]] = Signals.dynamic() { _ => s1 }
 
       assert(s2.readValueOnce.readValueOnce == 42)
 

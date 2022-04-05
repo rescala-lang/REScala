@@ -4,8 +4,8 @@ import rescala.core.{ReName}
 import rescala.interface.RescalaInterface
 import tests.rescala.concurrency.philosophers.PhilosopherTable._
 
-class DynamicPhilosopherTable[S](philosopherCount: Int, work: Long)(ri: RescalaInterface)
-    extends PhilosopherTable(philosopherCount, work)(ri) {
+class DynamicPhilosopherTable[S](philosopherCount: Int)(ri: RescalaInterface)
+    extends PhilosopherTable(philosopherCount)(ri) {
   import interface.{Var, Signal, implicitScheduler}
 
   override def createTable(tableSize: Int): Seq[Seating] = {

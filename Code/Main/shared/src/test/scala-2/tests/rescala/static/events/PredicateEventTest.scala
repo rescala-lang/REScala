@@ -10,8 +10,8 @@ class PredicateEventTest extends RETests {
       var test = 0
       var cond = false
       val e1   = Evt[Int]()
-      val e2   = e1 filter ((x: Int) => cond)
-      e2 += ((x: Int) => { test += 1 })
+      val e2   = e1 filter ((_: Int) => cond)
+      e2 += ((_: Int) => { test += 1 })
 
       e1.fire(10)
       e1.fire(10)
@@ -30,7 +30,7 @@ class PredicateEventTest extends RETests {
       val e2 = e1.collect {
         case e if cond => e
       }
-      e2 += ((x: Int) => { test += 1 })
+      e2 += ((_: Int) => { test += 1 })
 
       e1.fire(10)
       e1.fire(10)

@@ -3,7 +3,6 @@ package tests.distribution.delta
 import kofre.decompose.interfaces.LexCounterInterface.LexPair
 import kofre.decompose.interfaces.LexCounterInterface.LexPair._
 import kofre.decompose.UIJDLattice._
-import kofre.decompose.UIJDLattice
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -285,13 +284,13 @@ class PairAsUIJDLatticeTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChe
 }
 
 object LexPairGenerators {
-  def genLexPair[A: UIJDLattice, B: UIJDLattice](implicit arbA: Arbitrary[A], arbB: Arbitrary[B]): Gen[LexPair[A, B]] =
+  def genLexPair[A, B](implicit arbA: Arbitrary[A], arbB: Arbitrary[B]): Gen[LexPair[A, B]] =
     for {
       a <- arbA.arbitrary
       b <- arbB.arbitrary
     } yield LexPair(a, b)
 
-  implicit def arbLexPair[A: UIJDLattice, B: UIJDLattice](implicit
+  implicit def arbLexPair[A, B](implicit
       arbA: Arbitrary[A],
       arbB: Arbitrary[B]
   ): Arbitrary[LexPair[A, B]] =

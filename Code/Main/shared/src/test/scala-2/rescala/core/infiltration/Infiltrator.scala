@@ -15,7 +15,7 @@ class Infiltrator(val api: RescalaInterface with Levelbased) {
     if (api.isInstanceOf[Levelbased]) {
       reactive.state match {
         case rb: LevelState[_] => {
-          val rblevel = maybe.forceNewTransaction() { at =>
+          val rblevel = maybe.forceNewTransaction() { _ =>
             rb.level()
           }
           assert(rblevel == level, s"$text, $reactive level was $rblevel but expected $level")

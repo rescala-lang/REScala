@@ -32,10 +32,10 @@ class OR_EventTest extends RETests {
       val e2       = e1 map (_ * 2)
       val e3       = e1 map (_ * 2)
       val e2_OR_e3 = e2 || e3
-      e1 += { _ => test.incrementAndGet() }
-      e2 += { _ => test.incrementAndGet() }
-      e3 += { _ => test.incrementAndGet() }
-      e2_OR_e3 += { _ => test.incrementAndGet() }
+      e1 += { _ => test.incrementAndGet(); () }
+      e2 += { _ => test.incrementAndGet(); () }
+      e3 += { _ => test.incrementAndGet(); () }
+      e2_OR_e3 += { _ => test.incrementAndGet(); () }
 
       e1.fire(10)
       assert(test.get == 4)

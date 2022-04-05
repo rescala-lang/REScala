@@ -207,7 +207,7 @@ class FlattenTest extends RETests {
     test("basic Higher Order Signal can be dereferenced") {
       val v                       = Var(42)
       val s1: Signal[Int]         = v.map(identity)
-      val s2: Signal[Signal[Int]] = Signals.dynamic() { t => s1 }
+      val s2: Signal[Signal[Int]] = Signals.dynamic() { _ => s1 }
       val sDeref                  = s2.flatten
 
       assert(sDeref.readValueOnce == 42)
@@ -219,7 +219,7 @@ class FlattenTest extends RETests {
     test("basic Higher Order Signal deref Fires Change") {
       val v                            = Var(42)
       val sValue: Signal[Int]          = v.map(identity)
-      val sHigher: Signal[Signal[Int]] = Signals.dynamic() { t => sValue }
+      val sHigher: Signal[Signal[Int]] = Signals.dynamic() { _ => sValue }
       val sDeref                       = sHigher.flatten
 
       var sDerefChanged  = false
@@ -274,8 +274,8 @@ class FlattenTest extends RETests {
 
       val v                               = Var(42)
       val s0: Signal[Int]                 = v.map(identity)
-      val s1: Signal[Signal[Int]]         = Signals.static() { t => s0 }
-      val s2: Signal[Signal[Signal[Int]]] = Signals.static() { t => s1 }
+      val s1: Signal[Signal[Int]]         = Signals.static() { _ => s0 }
+      val s2: Signal[Signal[Signal[Int]]] = Signals.static() { _ => s1 }
 
       val sDeref1   = s1.flatten
       val sDeref2   = s2.flatten.flatten
@@ -307,7 +307,7 @@ class FlattenTest extends RETests {
       val doubled = count.map(_ * 2)
       val mod2    = count.map(_ % 2)
 
-      val listOfSignals: Signal[List[Signal[Int]]] = Signals.static() { t => List(doubled, count) }
+      val listOfSignals: Signal[List[Signal[Int]]] = Signals.static() { _ => List(doubled, count) }
       val selected: Signal[Signal[Int]]            = Signal { listOfSignals.value.apply(mod2()) }
       val dereferenced                             = selected.flatten
 

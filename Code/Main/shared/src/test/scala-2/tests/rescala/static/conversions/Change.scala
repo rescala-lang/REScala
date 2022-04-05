@@ -14,7 +14,7 @@ class Change extends RETests {
       val v1            = Var(1)
       val s1            = v1.map { _ + 1 }
       val e: Event[Int] = s1.changed
-      e += ((x: Int) => { test += 1 })
+      e += ((_: Int) => { test += 1 })
 
       assert(test == 0)
     }
@@ -24,7 +24,7 @@ class Change extends RETests {
       val v1            = Var(1)
       val s1            = v1.map { _ + 1 }
       val e: Event[Int] = s1.changed
-      e += ((x: Int) => { test += 1 })
+      e += ((_: Int) => { test += 1 })
 
       v1 set 2
       assert(test == 1)
@@ -51,7 +51,7 @@ class Change extends RETests {
       val v1             = Var(1)
       val s1             = v1.map { _ + 1 }
       val e: Event[Unit] = s1.changedTo(1)
-      e += ((x: Unit) => { test += 1 })
+      e += ((_: Unit) => { test += 1 })
 
       assert(test == 0)
     }
@@ -61,7 +61,7 @@ class Change extends RETests {
       val v1             = Var(1)
       val s1             = v1.map { _ + 1 }
       val e: Event[Unit] = s1.changedTo(3)
-      e += ((x: Unit) => { test += 1 })
+      e += ((_: Unit) => { test += 1 })
 
       v1 set 2
       assert(test == 1)
@@ -75,7 +75,7 @@ class Change extends RETests {
       val v1   = Var(1)
       val s1   = v1.map { _ + 1 }
       val e    = s1.change
-      e += { x => test += 1 }
+      e += { _ => test += 1 }
 
       assert(test == 0)
     }
@@ -85,7 +85,7 @@ class Change extends RETests {
       val v1   = Var(1)
       val s1   = v1.map { _ + 1 }
       val e    = s1.change
-      e += { x => test += 1 }
+      e += { _ => test += 1 }
 
       assert(test === 0)
       assert(s1.readValueOnce === 2)

@@ -11,7 +11,7 @@ class except_EventTest extends RETests {
       val e1           = Evt[Int]()
       val e2           = Evt[Int]()
       val e1_except_e2 = e1 \ e2
-      e1_except_e2 += ((x: Int) => { test += 1 })
+      e1_except_e2 += ((_: Int) => { test += 1 })
 
       e1.fire(10)
       assert(test == 1)
@@ -23,7 +23,7 @@ class except_EventTest extends RETests {
       val e1           = Evt[Int]()
       val e2           = Evt[Int]()
       val e1_except_e2 = e1 \ e2
-      e1_except_e2 += ((x: Int) => { test += 1 })
+      e1_except_e2 += ((_: Int) => { test += 1 })
 
       e2.fire(10)
       assert(test == 0)
@@ -39,7 +39,7 @@ class except_EventTest extends RETests {
       val e2           = e1 map ((x: Int) => x * 2)
       val e3           = e1 filter (_ => cond)
       val e2_except_e3 = e2 \ e3
-      e2_except_e3 += ((x: Int) => { test += 1 })
+      e2_except_e3 += ((_: Int) => { test += 1 })
 
       e1.fire(10)
       assert(test == 1)

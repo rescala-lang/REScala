@@ -20,7 +20,7 @@ class ObserverCreation extends RETests {
     test("event Handlers Can Be Removed") {
       var test = 0
       val e1   = Evt[Int]()("e1")
-      val f    = (x: Int) => { test += 1 }
+      val f    = (_: Int) => { test += 1 }
       val o    = e1.observe(f)("e1Observer")
       e1.fire(10)
       e1.fire(10)

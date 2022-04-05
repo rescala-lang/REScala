@@ -17,7 +17,7 @@ class OOPropertiesEventTest extends RETests {
 
       class A {
         val e1 = Evt[Int]()
-        e1 += ((x: Int) => { test += 1 })
+        e1 += ((_: Int) => { test += 1 })
       }
       class B extends A {
         e1.fire(10)
@@ -34,7 +34,7 @@ class OOPropertiesEventTest extends RETests {
         val e1 = Evt[Int]()
       }
       class B extends A {
-        e1 += ((x: Int) => { test += 1 })
+        e1 += ((_: Int) => { test += 1 })
         e1.fire(10)
       }
       new B()
@@ -49,7 +49,7 @@ class OOPropertiesEventTest extends RETests {
         class A {
           lazy val e1: Event[Int] = Evt[Int]()
           // this will force e1 which is overridden below
-          e1 += ((x: Int) => { test += 1 })
+          e1 += ((_: Int) => { test += 1 })
         }
 
         class B extends A {
@@ -57,7 +57,7 @@ class OOPropertiesEventTest extends RETests {
           val e3 = Evt[Int]()
           // but this override here requires e2 and e3 which are not yet initialized
           override lazy val e1: Event[Int] = e2 || e3
-          e1 += ((x: Int) => { test += 1 })
+          e1 += ((_: Int) => { test += 1 })
           e2.fire(10)
         }
         new B()
@@ -79,7 +79,7 @@ class OOPropertiesEventTest extends RETests {
         val e2                    = Evt[Y]()
         val e3                    = Evt[Y]()
         override val e1: Event[X] = e2 || e3
-        e1 += ((x: X) => { test += 1 })
+        e1 += ((_: X) => { test += 1 })
         e2.fire(new Y)
       }
       new B()

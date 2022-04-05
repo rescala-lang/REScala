@@ -1,5 +1,6 @@
 package rescala.extra.invariant
 
+import scala.annotation.nowarn
 import scala.reflect.macros.blackbox
 
 object Invariant {
@@ -7,7 +8,8 @@ object Invariant {
 }
 
 class InvariantInterface(val c: blackbox.Context) {
-  def createInvariantImpl[T](inv: c.Expr[T => Boolean]): c.Expr[Invariant[T]] = {
+  @nowarn("msg=is never used")
+  def createInvariantImpl[T: c.WeakTypeTag](inv: c.Expr[T => Boolean]): c.Expr[Invariant[T]] = {
     import c.universe._
 
     val invariantRep     = showCode(inv.tree)

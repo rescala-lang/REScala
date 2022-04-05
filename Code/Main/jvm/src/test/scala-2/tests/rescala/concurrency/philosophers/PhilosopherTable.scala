@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import rescala.interface.RescalaInterface
 import rescala.parrp.Backoff
 
-class PhilosopherTable(philosopherCount: Int, work: Long)(val interface: RescalaInterface) {
+class PhilosopherTable(philosopherCount: Int)(val interface: RescalaInterface) {
   import interface._
   import tests.rescala.concurrency.philosophers.PhilosopherTable._
 
@@ -17,6 +17,7 @@ class PhilosopherTable(philosopherCount: Int, work: Long)(val interface: Rescala
     seating.vision.observe { state =>
       if (state == Eating) {
         eaten.incrementAndGet()
+        ()
       }
     }(s"Observer ${seating.vision}")
   }

@@ -14,7 +14,7 @@ import tests.distribution.delta.crdt.basic.NetworkGenerators._
 import scala.collection.mutable
 
 object RGAGenerators {
-  def makeRGA[E: JsonValueCodec](
+  def makeRGA[E](
       inserted: List[(Int, E)],
       removed: List[Int],
       ae: AntiEntropy[RGA.State[E]]

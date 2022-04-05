@@ -9,7 +9,7 @@ class EventTest extends RETests {
     test("handlers Are Executed") {
       var test = 0
       val e1   = Evt[Int]()
-      e1 += ((x: Int) => { test += 1 })
+      e1 += ((_: Int) => { test += 1 })
       e1.fire(10)
       e1.fire(10)
       assert(test == 2)
@@ -34,10 +34,10 @@ class EventTest extends RETests {
     test("function Is Called") {
       var test = 0
 
-      def f(x: Int): Unit = { test += 1 }
+      def f: Unit = { test += 1 }
 
       val e1 = Evt[Int]()
-      e1 += f
+      e1 += (_ => f)
 
       e1.fire(10)
       e1.fire(10)
@@ -48,9 +48,9 @@ class EventTest extends RETests {
 
       var test             = 0
       val e                = Evt[Int]()
-      def m1(x: Int): Unit = { test += 1 }
+      def m1: Unit = { test += 1 }
 
-      e += m1
+      e += (_ => m1)
       e.fire(10)
       e.fire(10)
       assert(test == 2)

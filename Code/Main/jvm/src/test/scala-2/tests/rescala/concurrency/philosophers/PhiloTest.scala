@@ -11,8 +11,8 @@ class PhiloTest extends AnyFunSuite {
   def `eat!`(engine: RescalaInterface, dynamic: Boolean): Unit = {
     val size = 3
     val table =
-      if (!dynamic) new PhilosopherTable(size, 0)(engine)
-      else new DynamicPhilosopherTable(size, 0)(engine)
+      if (!dynamic) new PhilosopherTable(size)(engine)
+      else new DynamicPhilosopherTable(size)(engine)
 
     @volatile var cancel = false
 
@@ -45,6 +45,7 @@ class PhiloTest extends AnyFunSuite {
       case (_, Success(_)) => false
     }
     assert(threadFailures.isEmpty, threadFailures.size.toString + " threads failed.")
+    ()
   }
 
   test("eating Contests Spinning") { `eat!`(rescala.Schedulers.parrp, dynamic = false) }

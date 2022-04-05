@@ -6,7 +6,7 @@ import scala.concurrent.{Await, Future, Promise, TimeoutException}
 import scala.concurrent.duration._
 import scala.util.{Failure, Try}
 
-class Spawn[T] private (thread: Thread, future: Future[T]) {
+class Spawn[T] private (future: Future[T]) {
   def await(millis: Long): T = {
     Await.result(future, millis.millisecond)
   }
@@ -32,6 +32,6 @@ object Spawn {
     val t = desiredName.fold(new Thread(runnable))(new Thread(runnable, _))
     t.start()
     latch.await()
-    new Spawn[T](t, promise.future)
+    new Spawn[T](promise.future)
   }
 }

@@ -20,13 +20,14 @@ object DotStoreGenerators {
 
   implicit val arbDotSet: Arbitrary[Set[Dot]] = Arbitrary(genDotSet)
 
-  def genDotFun[A: UIJDLattice](implicit g: Gen[A]): Gen[DotFun[A]] = for {
+
+  def genDotFun[A](implicit g: Gen[A]): Gen[DotFun[A]] = for {
     n      <- Gen.posNum[Int]
     dots   <- Gen.containerOfN[List, Dot](n, genDot)
     values <- Gen.containerOfN[List, A](n, g)
   } yield (dots zip values).toMap
 
-  implicit def arbDotFun[A: UIJDLattice](implicit g: Gen[A]): Arbitrary[DotFun[A]] = Arbitrary(genDotFun)
+  implicit def arbDotFun[A](implicit g: Gen[A]): Arbitrary[DotFun[A]] = Arbitrary(genDotFun)
 
   def genDotMap[K, V: DotStore](implicit gk: Gen[K], gv: Gen[V]): Gen[DotMap[K, V]] = (for {
     n      <- Gen.posNum[Int]

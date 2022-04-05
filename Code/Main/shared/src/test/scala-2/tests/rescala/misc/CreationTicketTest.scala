@@ -30,7 +30,7 @@ class CreationTicketTest extends RETests {
       }
 
       test("some Dynamic Some Implicit") {
-        engine.transaction() { (dynamicTurn: AdmissionTicket) =>
+        engine.transaction() { (_: AdmissionTicket) =>
           implicit val implicitTurn: Transaction = getTurn
           assert(implicitly[CreationTicket].scope.self === Left(implicitTurn))
           assert(implicitly[CreationTicket].scope.embedTransaction(identity) === implicitTurn)
@@ -43,7 +43,7 @@ class CreationTicketTest extends RETests {
           implicit def it: Transaction = closureDefinition
           () => implicitly[CreationTicket]
         }
-        engine.transaction() { dynamic =>
+        engine.transaction() { _ =>
           assert(closure().scope.self === Left(closureDefinition))
           assert(closure().scope.embedTransaction(identity) === closureDefinition)
         }
@@ -51,7 +51,7 @@ class CreationTicketTest extends RETests {
 
       test("dynamic In Closures") {
         val closure: () => engine.CreationTicket = {
-          engine.transaction() { t => () => implicitly[CreationTicket] }
+          engine.transaction() { _ => () => implicitly[CreationTicket] }
         }
         engine.transaction() { dynamic =>
           assert(closure().scope.self === Right(engine.scheduler))
