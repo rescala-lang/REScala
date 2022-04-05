@@ -25,8 +25,8 @@ class FindInterp extends ExprMap {
 inline def dottyEventExpression[T](inline expr: Option[T]): Event[T] =
   ${ detectImpl('expr) }
 
-def detectImpl[T: Type](expr: Expr[Option[T]])(using Quotes): Expr[Event[T]] =
-  import quotes.reflect.*
+def detectImpl[T: Type](expr: Expr[Option[T]])(using q: Quotes): Expr[Event[T]] =
+  import q.reflect.*
 
   class ReplaceInterp(replacement: Map[Expr[MacroAccess[_, _]], Term], staticTicket: Tree) extends ExprMap {
 

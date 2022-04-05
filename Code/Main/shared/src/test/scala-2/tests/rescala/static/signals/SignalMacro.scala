@@ -37,7 +37,7 @@ class SignalMacro extends RETests {
 
       var test           = 0
       val e              = Evt[Int]()
-      val s: Signal[Int] = Signal { 2 * e.latest(0).apply() }
+      val s: Signal[Int] = Signal { 2 * e.latest(0).value }
 
       s.changed += { _ => test += 1 }
       assert(s.readValueOnce === 0)
