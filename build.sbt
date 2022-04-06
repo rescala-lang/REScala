@@ -8,7 +8,7 @@ ThisBuild / incOptions        := (ThisBuild / incOptions).value.withLogRecompile
 noPublish
 
 lazy val cfg = new {
-  val base: Def.SettingsDefinition = strict +: commonCrossBuildVersions +: scalaVersion_213
+  val base: Def.SettingsDefinition = commonCrossBuildVersions +: (strict ++ scalaVersion_213)
 }
 
 lazy val rescalaProject = project.in(file(".")).settings(cfg.base, noPublish).aggregate(

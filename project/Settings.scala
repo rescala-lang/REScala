@@ -72,8 +72,8 @@ object Settings {
     "-Ywarn-numeric-widen",          // Warn when numerics are widened.
     "-Ywarn-unused:params",          // Warn if a value parameter is unused.
     // "-Ywarn-unused:patvars",      // Warn if a variable bound in a pattern is unused.
-    "-Ywarn-value-discard",          // Warn when non-Unit expression results are unused.
-    "-Xlint:nonlocal-return",        // A return statement used an exception for flow control.
+    "-Ywarn-value-discard",   // Warn when non-Unit expression results are unused.
+    "-Xlint:nonlocal-return", // A return statement used an exception for flow control.
     // "-Xlint:eta-zero",            // Warn on ambiguity between applying f and eta expanding.
   )
   lazy val scalacOptions12plus: Seq[String] = Seq(
@@ -110,7 +110,8 @@ object Settings {
   )
 
   val strictCompile = Compile / compile / scalacOptions += "-Xfatal-warnings"
-  val strict        = scalacOptions += "-Xfatal-warnings"
+  val strict =
+    List(Compile / compile / scalacOptions += "-Xfatal-warnings", Test / compile / scalacOptions += "-Xfatal-warnings")
 
   val legacyStgResolver =
     resolvers += ("STG old bintray repo" at "http://www.st.informatik.tu-darmstadt.de/maven/")
