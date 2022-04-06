@@ -11,7 +11,7 @@ case class RaftState[T](
     leaderVotes: Set[Vote] = Set.empty,
     valueProposals: Set[Propose[T]] = Set.empty[Propose[T]]
 ) {
-  val consensusSize: Int = (participants.size + 1) / 2
+  val consensusSize: Int = (participants.size + 2) / 2
 
   val (
     currentTerm: Int,
@@ -79,19 +79,45 @@ case class RaftState[T](
   def supportLeader(me: Id): RaftState[T] =
     Lattice.merge(this, supportLeaderDelta(me))
 
+  lazy val byRound: IndexedSeq[Set[Propose[T]]] = {
+    val grouped = valueProposals.groupBy(_.pos)
+    Range(0, nextProposal).map { pos => grouped.getOrElse(pos, Set.empty) }
+  }
+
+  // TODO: this still has an issue when votes for old terms come in
   lazy val values: List[T] = {
+    def decision(proposals: Set[Propose[T]]): Option[Option[T]] = {
+      val (size, value) =
+        proposals.groupBy(_.value).map(g => (g._2.size, Some(g._1))).maxByOption(_._1).getOrElse((0, None))
+      if (size >= consensusSize) Some(value)
+      else {
+        val term = proposals.headOption.fold(-1)(_.term)
+        if (term != currentTerm) DecisionImpossible
+        else {
+          val undecided = participants.size - proposals.size
+          if (undecided + size >= consensusSize) Undecided
+          else {
+            DecisionImpossible
+          }
+        }
+      }
+    }
     valueProposals
-      .groupBy(p => (p.pos, p.value))
+      .groupBy(p => p.pos)
       .iterator
-      .filter { _._2.size >= consensusSize }
-      .map(_._1)
-      .toList
-      .sortBy(_._1)
-      .map(_._2)
+      .map(g => (g._1, decision(g._2)))
+      .toList.sortBy(_._1)
+      .iterator.map(_._2)
+      .takeWhile(_.isDefined)
+      .flatten.flatten.toList
+
   }
 }
 
 object RaftState {
+
+  private val DecisionImpossible = Some(None)
+  private val Undecided          = None
 
   case class Vote(term: Int, leader: Id, voter: Id)
   case class Propose[T](term: Int, voter: Id, pos: Int, value: T)
