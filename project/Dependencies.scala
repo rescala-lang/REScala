@@ -16,7 +16,7 @@ object Dependencies {
     val fastparse                = "2.3.3"
     val jetty                    = "9.4.46.v20220331"
     val jol                      = "0.16"
-    val jsoniterScalaCore        = "2.13.11"
+    val jsoniterScalaCore        = "2.13.3" // this is the latest version supporting Scala 2.11 and java 8
     val jsoup                    = "1.14.3"
     val normalizecss             = "8.0.1"
     val okHttp                   = "4.9.3"
