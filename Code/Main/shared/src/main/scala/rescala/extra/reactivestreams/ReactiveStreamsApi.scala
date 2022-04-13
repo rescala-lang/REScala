@@ -34,73 +34,73 @@ class ReactiveStreamsApi(val api: RescalaInterface) {
       }
   }
 
+  class REPublisher[T](dependency: Readable[Pulse[T]], fac: Scheduler) extends Publisher[T] {
+
+    override def subscribe(s: Subscriber[_ >: T]): Unit = {
+      val sub = REPublisher.subscription(dependency, s, fac)
+      s.onSubscribe(sub)
+    }
+
+  }
+
+  class SubscriptionReactive[T](
+      bud: State[Pulse[T]],
+      dependency: Readable[Pulse[T]],
+      subscriber: Subscriber[_ >: T],
+      name: ReName
+  ) extends Base[Pulse[T]](bud, name)
+      with Derived
+      with Subscription {
+
+    var requested: Long = 0
+    var cancelled       = false
+
+    override protected[rescala] def reevaluate(rein: ReIn): Rout = {
+      rein.dependStatic(dependency).toOptionTry match {
+        case None => rein
+        case Some(tryValue) =>
+          synchronized {
+            while (requested <= 0 && !cancelled) wait(100)
+            if (cancelled) {
+              rein.trackDependencies(Set.empty)
+              rein
+            } else {
+              requested -= 1
+              tryValue match {
+                case Success(v) =>
+                  subscriber.onNext(v)
+                  rein
+                case Failure(t) =>
+                  subscriber.onError(t)
+                  cancelled = true
+                  rein.trackDependencies(Set.empty)
+                  rein
+              }
+            }
+          }
+      }
+    }
+
+    override protected[rescala] def commit(base: Pulse[T]): Pulse[T] = base
+
+    override def cancel(): Unit = {
+      synchronized {
+        cancelled = true
+        notifyAll()
+      }
+    }
+
+    override def request(n: Long): Unit =
+      synchronized {
+        requested += n
+        notifyAll()
+      }
+  }
+
   object REPublisher {
 
     def apply[T](dependency: Readable[Pulse[T]])(implicit fac: Scheduler): REPublisher[T] =
       new REPublisher[T](dependency, fac)
-
-    class REPublisher[T](dependency: Readable[Pulse[T]], fac: Scheduler) extends Publisher[T] {
-
-      override def subscribe(s: Subscriber[_ >: T]): Unit = {
-        val sub = subscription(dependency, s, fac)
-        s.onSubscribe(sub)
-      }
-
-    }
-
-    class SubscriptionReactive[T](
-        bud: State[Pulse[T]],
-        dependency: Readable[Pulse[T]],
-        subscriber: Subscriber[_ >: T],
-        name: ReName
-    ) extends Base[Pulse[T]](bud, name)
-        with Derived
-        with Subscription {
-
-      var requested: Long = 0
-      var cancelled       = false
-
-      override protected[rescala] def reevaluate(rein: ReIn): Rout = {
-        rein.dependStatic(dependency).toOptionTry match {
-          case None => rein
-          case Some(tryValue) =>
-            synchronized {
-              while (requested <= 0 && !cancelled) wait(100)
-              if (cancelled) {
-                rein.trackDependencies(Set.empty)
-                rein
-              } else {
-                requested -= 1
-                tryValue match {
-                  case Success(v) =>
-                    subscriber.onNext(v)
-                    rein
-                  case Failure(t) =>
-                    subscriber.onError(t)
-                    cancelled = true
-                    rein.trackDependencies(Set.empty)
-                    rein
-                }
-              }
-            }
-        }
-      }
-
-      override protected[rescala] def commit(base: Pulse[T]): Pulse[T] = base
-
-      override def cancel(): Unit = {
-        synchronized {
-          cancelled = true
-          notifyAll()
-        }
-      }
-
-      override def request(n: Long): Unit =
-        synchronized {
-          requested += n
-          notifyAll()
-        }
-    }
 
     def subscription[T](
         dependency: Readable[Pulse[T]],
