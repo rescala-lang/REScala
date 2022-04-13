@@ -98,7 +98,7 @@ class ReactiveMacros(val c: blackbox.Context) {
   }
 
   def fixNullTypes(tree: Tree): Unit =
-    tree.foreach(t => if (t.tpe == null) {internal.setType(t, NoType) ; () } )
+    tree.foreach(t => if (t.tpe == null) { internal.setType(t, NoType); () })
 
   object ForceCutOut
   class PrefixManipulation {
@@ -274,7 +274,7 @@ class ReactiveMacros(val c: blackbox.Context) {
           c.warning(
             tree.pos,
             "Using `now` inside a reactive expression does not create a dependency, " +
-              "and can result in glitches. Use `apply` instead."
+              "and can result in glitches. Use `value` instead."
           )
           super.transform(tree)
         // Access every reactive through the ticket argument
