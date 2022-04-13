@@ -10,7 +10,11 @@ object Main {
     def iReturnThee = iAmThree
 
     val derived = dottyEventExpression[Int] {
-      (iAmAnEvt.value, iAmToo.value) match {
+      def a: Signal[Int] = Var(5)
+      val b = 4
+      class c()
+      object d
+      (iAmAnEvt.value, Some(a.value): Option[Int]) match {
         case (None, b)          => b
         case (a, None)          => a
         case (Some(a), Some(b)) => Some(a + b)

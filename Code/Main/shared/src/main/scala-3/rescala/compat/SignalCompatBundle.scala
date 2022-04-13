@@ -9,7 +9,7 @@ import rescala.macros.ReadableMacroBundle
 trait SignalCompatBundle extends ReadableMacroBundle {
   selfType: Operators =>
 
-  trait SignalCompat[+T] extends Readable[T] {
+  trait SignalCompat[+T] extends ReadableMacro[T] {
     selfType: Signal[T] =>
 
     /** Return a Signal with f applied to the value

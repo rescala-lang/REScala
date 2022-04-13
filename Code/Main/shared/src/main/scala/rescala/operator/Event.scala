@@ -50,7 +50,7 @@ trait EventBundle extends EventCompatBundle {
     * @groupname accessors Accessors and observers
     * @groupprio accessor 5
     */
-  trait Event[+T] extends ReSource with EventCompat[T] with ReadableMacro[Option[T]] with Disconnectable {
+  trait Event[+T] extends EventCompat[T] with Disconnectable {
 
     implicit def internalAccess(v: Value): Pulse[T]
     def resource: Readable[Option[T]] = this
