@@ -2,9 +2,13 @@ package kofre.decompose.interfaces
 
 import kofre.Lattice.Operators
 import kofre.decompose.*
-import kofre.syntax.{DeltaMutator, DeltaQuery}
+import kofre.syntax.{DeltaMutator, DeltaQuery, OpsSyntaxHelper}
 import kofre.decompose.UIJDLattice.Operators
 
+/** A LexCounter is a Delta CRDT modeling a counter.
+  *
+  * It uses lexicographic pairs to allow counter decrements as well as increments.
+  */
 object LexCounterInterface {
 
   /** A LexPair is a lexicographic pair of two values that is used with a lexicographical ordering in the state of
@@ -39,35 +43,22 @@ object LexCounterInterface {
       }
   }
 
-  type State = Map[String, LexPair[Int, Int]]
+  type LexCounter = Map[String, LexPair[Int, Int]]
 
-  trait LexCounterCompanion {
-    type State = LexCounterInterface.State
+  implicit class LexCounterSyntax[C, E](container: C) extends OpsSyntaxHelper[C, LexCounter](container) {
+
+    def value(using QueryP): Int = current.values.map(_.snd).sum
+
+    def inc()(using MutationIDP): C =
+      current.get(replicaID) match {
+        case None                => Map(replicaID -> LexPair(0, 1))
+        case Some(LexPair(l, r)) => Map(replicaID -> LexPair(l, r + 1))
+      }
+
+    def dec()(using MutationIDP): C =
+      current.get(replicaID) match {
+        case None                => Map(replicaID -> LexPair(1, -1))
+        case Some(LexPair(l, r)) => Map(replicaID -> LexPair(l + 1, r - 1))
+      }
   }
-
-  def value: DeltaQuery[State, Int] = state => state.values.map(_.snd).sum
-
-  def inc(): DeltaMutator[State] = (replicaID, state) =>
-    state.get(replicaID) match {
-      case None                => Map(replicaID -> LexPair(0, 1))
-      case Some(LexPair(l, r)) => Map(replicaID -> LexPair(l, r + 1))
-    }
-
-  def dec(): DeltaMutator[State] = (replicaID, state) =>
-    state.get(replicaID) match {
-      case None                => Map(replicaID -> LexPair(1, -1))
-      case Some(LexPair(l, r)) => Map(replicaID -> LexPair(l + 1, r - 1))
-    }
-}
-
-/** A LexCounter is a Delta CRDT modeling a counter.
-  *
-  * It uses lexicographic pairs to allow counter decrements as well as increments.
-  */
-abstract class LexCounterInterface[Wrapper] extends CRDTInterface[LexCounterInterface.State, Wrapper] {
-  def value: Int = query(LexCounterInterface.value)
-
-  def inc(): Wrapper = mutate(LexCounterInterface.inc())
-
-  def dec(): Wrapper = mutate(LexCounterInterface.dec())
 }
