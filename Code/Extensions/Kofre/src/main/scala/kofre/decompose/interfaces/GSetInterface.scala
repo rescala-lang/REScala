@@ -1,23 +1,16 @@
 package kofre.decompose.interfaces
 
 import kofre.decompose.*
-import kofre.syntax.{DeltaMutator, DeltaQuery}
-
-object GSetInterface {
-  type State[E] = Set[E]
-
-  trait GSetCompanion {
-    type State[E] = GSetInterface.State[E]
-  }
-
-  def elements[E]: DeltaQuery[State[E], Set[E]] = state => state
-
-  def insert[E](element: E): DeltaMutator[State[E]] = (_, _) => Set(element)
-}
+import kofre.decompose.interfaces.GMapInterface.GMap
+import kofre.syntax.{ArdtOpsContains, DeltaMutator, DeltaQuery, OpsSyntaxHelper}
 
 /** A GSet is a Delta CRDT modeling a simple grow-only set. */
-abstract class GSetInterface[E, Wrapper] extends CRDTInterface[GSetInterface.State[E], Wrapper] {
-  def elements: Set[E] = query(GSetInterface.elements)
+object GSetInterface {
 
-  def insert(element: E): Wrapper = mutate(GSetInterface.insert(element))
+  implicit class GSetSyntax[C, E](container: C) extends OpsSyntaxHelper[C, Set[E]](container) {
+
+    def elements(using QueryP): Set[E] = current
+
+    def insert(element: E)(using MutationP): C = Set(element)
+  }
 }

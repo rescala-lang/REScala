@@ -2,6 +2,7 @@ package kofre.protocol
 
 import kofre.decompose.*
 import kofre.decompose.interfaces.GSetInterface
+import kofre.decompose.interfaces.GSetInterface.GSetSyntax
 import kofre.protocol.AuctionInterface.Bid.User
 import kofre.syntax.DeltaMutator
 
@@ -35,7 +36,7 @@ object AuctionInterface {
   }
 
   case class AuctionData(
-      bids: GSetInterface.State[Bid] = UIJDLattice[GSetInterface.State[Bid]].bottom,
+      bids: Set[Bid] = UIJDLattice[Set[Bid]].bottom,
       status: Status = UIJDLattice[Status].bottom,
       winner: Option[User] = None
   )
@@ -44,14 +45,14 @@ object AuctionInterface {
     implicit val AuctionDataAsUIJDLattice: UIJDLattice[AuctionData] = new UIJDLattice[AuctionData] {
       override def leq(left: AuctionData, right: AuctionData): Boolean = (left, right) match {
         case (AuctionData(lb, ls, _), AuctionData(rb, rs, _)) =>
-          UIJDLattice[GSetInterface.State[Bid]].leq(lb, rb) && UIJDLattice[Status].leq(ls, rs)
+          UIJDLattice[Set[Bid]].leq(lb, rb) && UIJDLattice[Status].leq(ls, rs)
       }
 
       override def decompose(state: AuctionData): Iterable[AuctionInterface.State] =
         state match {
           case AuctionData(bids, status, _) =>
             bids.map(b =>
-              AuctionData(bids = GSetInterface.insert(b)("", UIJDLattice[GSetInterface.State[Bid]].bottom))
+              AuctionData(bids = UIJDLattice[Set[Bid]].bottom.insert(b))
             ) ++ (status match {
               case Open   => Set()
               case Closed => Set(AuctionData(status = Closed))
@@ -62,7 +63,7 @@ object AuctionInterface {
 
       override def merge(left: AuctionData, right: AuctionData): AuctionData = (left, right) match {
         case (AuctionData(lb, ls, _), AuctionData(rb, rs, _)) =>
-          val bidsMerged   = UIJDLattice[GSetInterface.State[Bid]].merge(lb, rb)
+          val bidsMerged   = UIJDLattice[Set[Bid]].merge(lb, rb)
           val statusMerged = UIJDLattice[Status].merge(ls, rs)
           val winnerMerged = statusMerged match {
             case Open   => None
@@ -78,7 +79,7 @@ object AuctionInterface {
 
   def bid(userId: User, price: Int): DeltaMutator[State] = {
     case (replicaID, AuctionData(bids, _, _)) =>
-      AuctionData(bids = GSetInterface.insert(Bid(userId, price))(replicaID, bids))
+      AuctionData(bids = bids.insert(Bid(userId, price)))
   }
 
   def close(): DeltaMutator[State] = (_, _) => AuctionData(status = Closed)
