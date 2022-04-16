@@ -4,10 +4,11 @@ import kofre.causality.{CausalContext, Dot}
 import kofre.decompose.*
 import kofre.syntax.{AllPermissionsCtx, DeltaMutator, DeltaQuery, MutateCtx}
 import kofre.decompose.DotStore.{DotFun, DotLess, DotPair}
-import kofre.decompose.interfaces.GListInterface.GListAsUIJDLattice
+import kofre.decompose.interfaces.GListInterface.{GListAsUIJDLattice, GListSyntax}
 import kofre.dotbased.CausalStore
 import kofre.primitives.Epoche
 import kofre.decompose.interfaces.EpocheInterface.EpocheSyntax
+import kofre.syntax.AllPermissionsCtx.withID
 
 object RGAInterface {
 
@@ -38,23 +39,23 @@ object RGAInterface {
     }
   }
 
-  type State[E] = CausalStore[(Epoche[GListInterface.State[Dot]], DotFun[RGANode[E]])]
+  type State[E] = CausalStore[(Epoche[GListInterface.GList[Dot]], DotFun[RGANode[E]])]
 
   trait RGACompanion {
     type State[E]    = RGAInterface.State[E]
-    type Embedded[E] = (Epoche[GListInterface.State[Dot]], DotFun[RGANode[E]])
+    type Embedded[E] = (Epoche[GListInterface.GList[Dot]], DotFun[RGANode[E]])
 
-    implicit val ForcedWriteAsUIJDLattice: UIJDLattice[Epoche[GListInterface.State[Dot]]] =
-      Epoche.epocheAsUIJDLattice[GListInterface.State[Dot]]
+    implicit val ForcedWriteAsUIJDLattice: UIJDLattice[Epoche[GListInterface.GList[Dot]]] =
+      Epoche.epocheAsUIJDLattice[GListInterface.GList[Dot]]
   }
 
   private class DeltaStateFactory[E] {
     val bottom: State[E] = UIJDLattice[State[E]].bottom
 
     def make(
-        epoche: Epoche[GListInterface.State[Dot]] = bottom.store._1,
-        df: DotFun[RGANode[E]] = bottom.store._2,
-        cc: C = bottom.context
+              epoche: Epoche[GListInterface.GList[Dot]] = bottom.store._1,
+              df: DotFun[RGANode[E]] = bottom.store._2,
+              cc: C = bottom.context
     ): State[E] = CausalStore((epoche, df), cc)
   }
 
@@ -62,7 +63,7 @@ object RGAInterface {
 
   def read[E](i: Int): DeltaQuery[State[E], Option[E]] = {
     case CausalStore((fw, df), _) =>
-      GListInterface.toLazyList(fw.value).map(df).collect {
+      fw.value.toLazyList.map(df).collect {
         case Alive(tv) => tv.value
       }.lift(i)
   }
@@ -77,7 +78,7 @@ object RGAInterface {
 
   def toList[E]: DeltaQuery[State[E], List[E]] = {
     case CausalStore((fw, df), _) =>
-      GListInterface.toList(fw.value).map(df).collect {
+      new GListSyntax(fw.value).toList.map(df).collect {
         case Alive(tv) => tv.value
       }
   }
@@ -88,7 +89,7 @@ object RGAInterface {
 
   private def findInsertIndex[E](state: State[E], n: Int): Option[Int] = state match {
     case CausalStore((fw, df), _) =>
-      GListInterface.toLazyList(fw.value).zip(LazyList.from(1)).filter {
+      fw.value.toLazyList.zip(LazyList.from(1)).filter {
         case (dot, _) => df(dot) match {
             case Alive(_) => true
             case Dead()   => false
@@ -103,9 +104,8 @@ object RGAInterface {
       findInsertIndex(state, i) match {
         case None => deltaState[E].bottom
         case Some(glistInsertIndex) =>
-          val m          = GListInterface.insert(glistInsertIndex, nextDot)
-          val glistDelta = fw.map(m(replicaID, _))
-          val dfDelta    = DotFun[RGANode[E]].empty + (nextDot -> Alive(TimedVal(e, replicaID)))
+          val glistDelta = fw.map(_.insert(glistInsertIndex, nextDot)(using withID(replicaID)))
+          val dfDelta = DotFun[RGANode[E]].empty + (nextDot -> Alive(TimedVal(e, replicaID)))
 
           deltaState[E].make(
             epoche = glistDelta,
@@ -126,8 +126,7 @@ object RGAInterface {
       findInsertIndex(state, i) match {
         case None => deltaState[E].bottom
         case Some(glistInsertIndex) =>
-          val m          = GListInterface.insertAll(glistInsertIndex, nextDots)
-          val glistDelta = fw.map(m(replicaID, _))
+          val glistDelta = fw.map(_.insertAll(glistInsertIndex, nextDots)(using withID(replicaID)))
           val dfDelta    = DotFun[RGANode[E]].empty ++ (nextDots zip elems.map(e => Alive(TimedVal(e, replicaID))))
 
           deltaState[E].make(
@@ -141,7 +140,7 @@ object RGAInterface {
   private def updateRGANode[E](state: State[E], i: Int, newNode: RGANode[E]): State[E] =
     state match {
       case CausalStore((fw, df), _) =>
-        GListInterface.toLazyList(fw.value).filter { dot =>
+        fw.value.toLazyList.filter { dot =>
           df(dot) match {
             case Alive(_) => true
             case Dead()   => false
@@ -187,7 +186,7 @@ object RGAInterface {
           case (dot, Dead()) => dot
         }.toSet
 
-        val golistPurged = GListInterface.without(epoche.value, toRemove)
+        val golistPurged = epoche.value.without(toRemove)
 
         deltaState[E].make(
           epoche = epoche.epocheWrite(golistPurged),

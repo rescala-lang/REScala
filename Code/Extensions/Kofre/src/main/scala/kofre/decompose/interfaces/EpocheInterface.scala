@@ -5,11 +5,11 @@ import kofre.decompose.UIJDLattice
 import kofre.decompose.interfaces.GCounterInterface.GCounter
 import kofre.primitives.Epoche
 import kofre.syntax.AllPermissionsCtx.withID
-import kofre.syntax.{DeltaMutator, DeltaQuery, OpsSyntaxHelper}
+import kofre.syntax.{ArdtOpsContains, DeltaMutator, DeltaQuery, OpsSyntaxHelper}
 
 object EpocheInterface {
 
-  implicit class EpocheSyntax[C, E](container: C) extends OpsSyntaxHelper[C, Epoche[E]](container) {
+  implicit class EpocheSyntax[C, E](container: C)(using ArdtOpsContains[C, Epoche[E]]) extends OpsSyntaxHelper[C, Epoche[E]](container) {
     def read(using QueryP): E = current.value
 
     def write(value: E)(using MutationP): C       = current.copy(value = value)

@@ -4,7 +4,7 @@ import kofre.causality.CausalContext
 import kofre.decompose.DotStore.DotSet
 import kofre.decompose.{CRDTInterface, UIJDLattice}
 import kofre.dotbased.CausalStore
-import kofre.syntax.{AllPermissionsCtx, DeltaMutator, DeltaQuery, OpsSyntaxHelper}
+import kofre.syntax.{AllPermissionsCtx, ArdtOpsContains, DeltaMutator, DeltaQuery, OpsSyntaxHelper}
 
 /** A GMap (Grow-only Map) is a Delta CRDT that models a map from an arbitrary key type to nested Delta CRDTs.
   * In contrast to [[ORMapInterface]], key/value pairs cannot be removed from this map. However, due to the smaller internal
@@ -21,9 +21,8 @@ object GMapInterface {
     type State[K, V] = GMapInterface.GMap[K, V]
   }
 
-  
-
-  implicit class GMapSyntax[C, K, V](container: C) extends OpsSyntaxHelper[C, GMap[K, V]](container) {
+  implicit class GMapSyntax[C, K, V](container: C)(using aoc: ArdtOpsContains[C, GMap[K, V]])
+      extends OpsSyntaxHelper[C, GMap[K, V]](container) {
 
     def contains(k: K)(using QueryP): Boolean = current.contains(k)
 
@@ -35,7 +34,7 @@ object GMapInterface {
     def mutateKey(k: K)(m: V => V)(using MutationIDP, UIJDLattice[V]): C = Map(k -> m(queryKey(k)))
 
     def mutateKeyCtx(k: K)(m: AllPermissionsCtx[V, V] => V => V)(using MutationIDP, UIJDLattice[V]): C = {
-      Map(k -> m(AllPermissionsCtx.withID[V,V](replicaID))(queryKey(k)))
+      Map(k -> m(AllPermissionsCtx.withID[V, V](replicaID))(queryKey(k)))
     }
   }
 

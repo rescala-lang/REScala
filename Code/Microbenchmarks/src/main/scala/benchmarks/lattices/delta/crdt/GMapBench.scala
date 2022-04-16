@@ -26,7 +26,7 @@ class GMapBench {
   def setup(): Unit = {
     map = (0 until numEntries).foldLeft(ReactiveDeltaCRDT[GMap[Int, EWFlag]]("a")) {
       case (rdc, i) =>
-        new GMapSyntax[SUT, Int, EWFlag](rdc).mutateKeyCtx(i)(arg => _.enable()(arg))
+        rdc.mutateKeyCtx(i)(arg => _.enable()(arg))
     }
   }
 
@@ -46,8 +46,8 @@ class GMapBench {
   def queryAllEntries(): Iterable[Boolean] = map.queryAllEntries().map(_.read)
 
   @Benchmark
-  def mutateExisting(): SUT = new GMapSyntax[SUT, Int, EWFlag](map).mutateKeyCtx(0)((arg) => _.disable()(arg))
+  def mutateExisting(): SUT = map.mutateKeyCtx(0)((arg) => _.disable()(arg))
 
   @Benchmark
-  def mutateMissing(): SUT = new GMapSyntax[SUT, Int, EWFlag](map).mutateKeyCtx(0)((arg) => _.enable()(arg))
+  def mutateMissing(): SUT = map.mutateKeyCtx(0)((arg) => _.enable()(arg))
 }

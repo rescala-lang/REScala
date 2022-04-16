@@ -1,25 +1,29 @@
 package kofre.decompose.interfaces
 
 import kofre.decompose.*
-import kofre.syntax.{DeltaMutator, DeltaQuery}
+import kofre.primitives.Epoche
+import kofre.syntax.{DeltaMutator, DeltaQuery, OpsSyntaxHelper}
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
 
+/** A GList is a Delta CRDT modeling a grow-only list where list elements can neither be removed nor modified.
+  *
+  * Concurrent inserts at the same index i are resolved by the timestamps of the insert operations: the later insert
+  * will be at index i while the earlier insert will be pushed to index i+1.
+  *
+  * Note: GList is implemented as a linked list, thus the time needed to execute operations at the end of the list will
+  * scale linearly with the length of the list. Similarly, toList always has to iterate the whole list, so for applications
+  * that don't always need the whole list you should consider using toLazyList instead.
+  */
 object GListInterface {
   sealed trait GListNode[E]
   case class Head[E]()         extends GListNode[E]
   case class Elem[E](value: E) extends GListNode[E]
 
-  type State[E] = Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]]
+  type GList[E] = Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]]
 
-  trait GListCompanion {
-    type State[E] = GListInterface.State[E]
-
-    implicit def GListAsUIJDLattice[E]: UIJDLattice[State[E]] = GListInterface.GListAsUIJDLattice[E]
-  }
-
-  implicit def GListAsUIJDLattice[E]: UIJDLattice[State[E]] =
+  implicit def GListAsUIJDLattice[E]: UIJDLattice[GList[E]] =
     new UIJDLattice[Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]]] {
       override def leq(
           left: Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]],
@@ -52,7 +56,7 @@ object GListInterface {
         }
 
       @tailrec
-      private def insertRec(left: State[E], right: State[E], current: GListNode[TimedVal[E]]): State[E] =
+      private def insertRec(left: GList[E], right: GList[E], current: GListNode[TimedVal[E]]): GList[E] =
         right.get(current) match {
           case None => left
           case Some(next) =>
@@ -75,96 +79,77 @@ object GListInterface {
         }
     }
 
-  @tailrec
-  private def findNth[E](state: State[E], current: GListNode[TimedVal[E]], i: Int): Option[GListNode[TimedVal[E]]] = {
-    if (i == 0) Some(current)
-    else state.get(current) match {
-      case None       => None
-      case Some(elem) => findNth(state, elem, i - 1)
-    }
-  }
+  implicit class GListSyntax[C, E](container: C) extends OpsSyntaxHelper[C, GList[E]](container) {
 
-  def read[E](i: Int): DeltaQuery[State[E], Option[E]] = state =>
-    findNth(state, Head[TimedVal[E]](), i + 1).flatMap {
-      case Head()  => None
-      case Elem(e) => Some(e.value)
-    }
-
-  @tailrec
-  private def toListRec[E](state: State[E], current: GListNode[TimedVal[E]], acc: ListBuffer[E]): ListBuffer[E] =
-    state.get(current) match {
-      case None                  => acc
-      case Some(next @ Elem(tv)) => toListRec(state, next, acc.append(tv.value))
-    }
-
-  def toList[E]: DeltaQuery[State[E], List[E]] =
-    state => toListRec(state, Head[TimedVal[E]](), ListBuffer.empty[E]).toList
-
-  def toLazyList[E]: DeltaQuery[State[E], LazyList[E]] = state =>
-    LazyList.unfold[E, GListNode[TimedVal[E]]](Head[TimedVal[E]]()) { node =>
-      state.get(node) match {
-        case None                  => None
-        case Some(next @ Elem(tv)) => Some((tv.value, next))
+    @tailrec
+    private def findNth(state: GList[E], current: GListNode[TimedVal[E]], i: Int): Option[GListNode[TimedVal[E]]] = {
+      if (i == 0) Some(current)
+      else state.get(current) match {
+        case None       => None
+        case Some(elem) => findNth(state, elem, i - 1)
       }
     }
 
-  def size[E]: DeltaQuery[State[E], Int] = state => state.size
-
-  def insert[E](i: Int, e: E): DeltaMutator[State[E]] = (replicaID, state) => {
-    findNth(state, Head[TimedVal[E]](), i) match {
-      case None       => Map.empty
-      case Some(pred) => Map(pred -> Elem(TimedVal(e, replicaID)))
-    }
-  }
-
-  def insertAll[E](i: Int, elems: Iterable[E]): DeltaMutator[State[E]] = (replicaID, state) => {
-    if (elems.isEmpty)
-      UIJDLattice[State[E]].bottom
-    else
-      findNth(state, Head[TimedVal[E]](), i) match {
-        case None => Map.empty
-        case Some(after) =>
-          val order = elems.map(e => Elem(TimedVal(e, replicaID)))
-          Map((List(after) ++ order.init) zip order: _*)
+    def read(i: Int)(using QueryP): Option[E] =
+      findNth(current, Head[TimedVal[E]](), i + 1).flatMap {
+        case Head()  => None
+        case Elem(e) => Some(e.value)
       }
-  }
 
-  @tailrec
-  private def withoutRec[E](state: State[E], current: GListNode[TimedVal[E]], elems: Set[E]): State[E] =
-    state.get(current) match {
-      case None => state
-      case Some(next @ Elem(tv)) if elems.contains(tv.value) =>
-        val edgeRemoved = state.get(next) match {
-          case Some(nextnext) => state.removed(current).removed(next) + (current -> nextnext)
-          case None           => state.removed(current).removed(next)
+    @tailrec
+    private def toListRec(state: GList[E], current: GListNode[TimedVal[E]], acc: ListBuffer[E]): ListBuffer[E] =
+      state.get(current) match {
+        case None                  => acc
+        case Some(next @ Elem(tv)) => toListRec(state, next, acc.append(tv.value))
+      }
+
+    def toList(using QueryP): List[E] =
+      toListRec(current, Head[TimedVal[E]](), ListBuffer.empty[E]).toList
+
+    def toLazyList(using QueryP):  LazyList[E] =
+      LazyList.unfold[E, GListNode[TimedVal[E]]](Head[TimedVal[E]]()) { node =>
+        current.get(node) match {
+          case None                  => None
+          case Some(next @ Elem(tv)) => Some((tv.value, next))
         }
+      }
 
-        withoutRec(edgeRemoved, current, elems)
-      case Some(next) => withoutRec(state, next, elems)
+    def size(using QueryP): Int = current.size
+
+    def insert(i: Int, e: E)(using MutationIDP): C = {
+      findNth(current, Head[TimedVal[E]](), i) match {
+        case None       => Map.empty
+        case Some(pred) => Map(pred -> Elem(TimedVal(e, replicaID)))
+      }
     }
 
-  def without[E](state: State[E], elems: Set[E]): State[E] = withoutRec(state, Head[TimedVal[E]](), elems)
-}
+    def insertAll(i: Int, elems: Iterable[E])(using MutationIDP): C = {
+      if (elems.isEmpty)
+        UIJDLattice[GList[E]].bottom
+      else
+        findNth(current, Head[TimedVal[E]](), i) match {
+          case None => Map.empty
+          case Some(after) =>
+            val order = elems.map(e => Elem(TimedVal(e, replicaID)))
+            Map((List(after) ++ order.init) zip order: _*)
+        }
+    }
 
-/** A GList is a Delta CRDT modeling a grow-only list where list elements can neither be removed nor modified.
-  *
-  * Concurrent inserts at the same index i are resolved by the timestamps of the insert operations: the later insert
-  * will be at index i while the earlier insert will be pushed to index i+1.
-  *
-  * Note: GList is implemented as a linked list, thus the time needed to execute operations at the end of the list will
-  * scale linearly with the length of the list. Similarly, toList always has to iterate the whole list, so for applications
-  * that don't always need the whole list you should consider using toLazyList instead.
-  */
-abstract class GListInterface[E, Wrapper] extends CRDTInterface[GListInterface.State[E], Wrapper] {
-  def read(i: Int): Option[E] = query(GListInterface.read(i))
+    @tailrec
+    private def withoutRec(state: GList[E], current: GListNode[TimedVal[E]], elems: Set[E]): GList[E] =
+      state.get(current) match {
+        case None => state
+        case Some(next @ Elem(tv)) if elems.contains(tv.value) =>
+          val edgeRemoved = state.get(next) match {
+            case Some(nextnext) => state.removed(current).removed(next) + (current -> nextnext)
+            case None           => state.removed(current).removed(next)
+          }
 
-  def toList: List[E] = query(GListInterface.toList)
+          withoutRec(edgeRemoved, current, elems)
+        case Some(next) => withoutRec(state, next, elems)
+      }
 
-  def toLazyList: LazyList[E] = query(GListInterface.toLazyList)
+    def without(elems: Set[E])(using MutationP): C = withoutRec(current, Head[TimedVal[E]](), elems)
+  }
 
-  def size: Int = query(GListInterface.size)
-
-  def insert(i: Int, e: E): Wrapper = mutate(GListInterface.insert(i, e))
-
-  def insertAll(i: Int, elems: Iterable[E]): Wrapper = mutate(GListInterface.insertAll(i, elems))
 }

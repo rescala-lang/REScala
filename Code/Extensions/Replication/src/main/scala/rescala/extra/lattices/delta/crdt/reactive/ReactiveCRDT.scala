@@ -1,7 +1,7 @@
 package rescala.extra.lattices.delta.crdt.reactive
 
 import kofre.decompose.{CRDTInterface, Delta, UIJDLattice}
-import kofre.syntax.AllPermissionsCtx
+import kofre.syntax.{AllPermissionsCtx, ArdtOpsContains}
 
 /** ReactiveCRDTs are Delta CRDTs that store applied deltas in their deltaBuffer attribute. Middleware should regularly
   * take these deltas and ship them to other replicas, using applyDelta to apply them on the remote state. After deltas
@@ -40,6 +40,8 @@ class ReactiveDeltaCRDT[State](
 }
 
 object ReactiveDeltaCRDT {
+
+  implicit def containesRelation[State]: ArdtOpsContains[ReactiveDeltaCRDT[State], State] = new ArdtOpsContains[ReactiveDeltaCRDT[State], State] {}
 
   implicit def reactiveDeltaCRDTPermissions[L: UIJDLattice]: AllPermissionsCtx[ReactiveDeltaCRDT[L], L] =
     CRDTInterface.crdtInterfaceContextPermissions[L, ReactiveDeltaCRDT[L]]
