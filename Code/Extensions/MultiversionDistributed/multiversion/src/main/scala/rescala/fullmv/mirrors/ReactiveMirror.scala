@@ -5,6 +5,7 @@ import rescala.fullmv._
 import rescala.fullmv.sgt.synchronization.SubsumableLockBundle
 import rescala.fullmv.tasks.TaskBundle
 
+import scala.annotation.nowarn
 import scala.concurrent.duration.Duration
 
 trait ReactiveMirrorBundle extends FullMVTurnReflectionBundle {
@@ -35,6 +36,7 @@ trait ReactiveMirrorBundle extends FullMVTurnReflectionBundle {
     }
   }
 
+  @nowarn
   class ReactiveMirror[A](
       val getValue: FullMVTurn => A,
       val reflectionProxy: ReactiveReflectionProxy[A],

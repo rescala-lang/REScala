@@ -7,7 +7,7 @@ import rescala.fullmv.mirrors.{Mirror, ReactiveMirrorBundle, ReactiveReflectionB
 import rescala.fullmv.sgt.synchronization.SubsumableLockBundle
 import rescala.fullmv.tasks.TaskBundle
 import rescala.interface.RescalaInterface
-import rescala.operator.{DefaultImplementations, EventBundle, ObserveBundle, Pulse, SignalBundle, Sources}
+import rescala.operator.{EventBundle, ObserveBundle, Pulse, SignalBundle}
 
 import scala.concurrent.duration.Duration
 

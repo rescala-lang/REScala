@@ -85,8 +85,8 @@ trait ReactiveReflectionBundle extends FullMVBundle {
   ) extends Base[P](initialState, rename)
       with ReactiveReflection[P] {
     val _buffer                                           = new ConcurrentHashMap[FullMVTurn, P]()
-    override def buffer(turn: FullMVTurn, value: P): Unit = _buffer.put(turn, value)
-    override def submit(action: FullMVAction): Unit       = host.threadPool.submit(action)
+    override def buffer(turn: FullMVTurn, value: P): Unit = { _buffer.put(turn, value); () }
+    override def submit(action: FullMVAction): Unit       = {host.threadPool.submit(action); () }
 
     override protected[rescala] def commit(base: Value): Value = throw new IllegalStateException(
       "TODO: this is not implemented, commit is a new method that enables reactives to change their value on commit (such as events dropping back to no value). Not sure how to map that to reactive reflections?"
@@ -96,14 +96,14 @@ trait ReactiveReflectionBundle extends FullMVBundle {
       val turn  = input.tx
       val value = _buffer.remove(turn)
       if (value == null) {
-        if (ignoreTurn.contains(turn)) {
+        if (ignoreTurn.contains(turn.initializer)) {
           ignoreTurn = None
         } else {
           throw new AssertionError(s"$this was reevaluated for $turn but no value was buffered.")
         }
         input
       } else {
-        if (ignoreTurn.contains(turn)) ignoreTurn = None
+        if (ignoreTurn.contains(turn.initializer)) ignoreTurn = None
         input.withValue(value)
       }
     }

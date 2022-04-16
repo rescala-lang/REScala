@@ -45,6 +45,7 @@ object FakeDelayer {
         fakeDelay.toMillis,
         TimeUnit.MILLISECONDS
       )
+      ()
     }
   }
 
@@ -53,7 +54,7 @@ object FakeDelayer {
       future
     } else {
       if (FakeDelayer.executor == null) throw new IllegalStateException("Fake delay must be explicitly .enable()'d!")
-      val promise = Promise[V]
+      val promise = Promise[V]()
       val id      = i.incrementAndGet()
       if (LOGGING)
         println(

@@ -1,17 +1,17 @@
 package rescala.fullmv.transmitter
 
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
-import java.util.concurrent.{ConcurrentHashMap, ThreadLocalRandom}
+import loci.transmitter._
 import rescala.compat.SignalCompatBundle
 import rescala.fullmv.TurnPhase.Type
+import rescala.fullmv._
 import rescala.fullmv.mirrors._
 import rescala.fullmv.sgt.synchronization._
-import rescala.fullmv._
-import loci.transmitter._
 import rescala.fullmv.tasks.TaskBundle
 import rescala.operator.{EventBundle, Pulse, SignalBundle}
 
-import scala.annotation.tailrec
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
+import java.util.concurrent.{ConcurrentHashMap, ThreadLocalRandom}
+import scala.annotation.{nowarn, tailrec}
 import scala.concurrent._
 import scala.util.{Failure, Success}
 
@@ -186,6 +186,7 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
             Initialize(
               initValues.map {
                 case (t, p, Some((s, c)), Some(v)) => ((t, p, s, c), v)
+                case _ => throw new IllegalStateException("initializing message from tuple failed")
               },
               if (maybeFirstFrame != Host.dummyGuid)
                 Some((maybeFirstFrame, maybeFirstPhase, maybeFirstFrameTree.get._1, maybeFirstFrameTree.get._2))
@@ -407,10 +408,11 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
       baos.toByteArray
     }
     sealed trait Pluse[+P] {
+      @nowarn
       def toPulse: Pulse[P] =
         this match {
           case Pluse.NoChange        => Pulse.NoChange
-          case Pluse.Value(v)        => Pulse.Value(v)
+          case Pluse.Value(v)       => Pulse.Value(v)
           case Pluse.Exceptional(se) => Pulse.Exceptional(deserializeThrowable(se))
         }
     }
@@ -423,10 +425,13 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
         }
       }
       case object NoChange                                           extends Pluse[Nothing]
+      @nowarn
       final case class Value[+P](update: P)                          extends Pluse[P]
+      @nowarn
       final case class Exceptional(serializedThrowable: Array[Byte]) extends Pluse[Nothing]
     }
 
+    @nowarn
     implicit def fullvmPluseTransmittable[T, I, U](implicit
         transmittable: Transmittable[(Option[T], Option[Array[Byte]]), I, (Option[U], Option[Array[Byte]])]
     ): DelegatingTransmittable[Pluse[T], I, Pluse[U]] {
@@ -464,11 +469,11 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
       ConnectedTransmittable(
         provide = (value, context) => {
           val signal = new DistributedSignal[T, I](Pulse.empty)
-          signal.send(value, context.remote, context.endpoint)
+          signal.send(value, context.endpoint)
         },
         receive = (value, context) => {
           val signal = new DistributedSignal[T, I](Pulse.empty)
-          signal.receive(value, context.remote, context.endpoint)
+          signal.receive(value, context.endpoint)
         }
       )
 
@@ -485,11 +490,11 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
       ConnectedTransmittable(
         provide = (value, context) => {
           val event = new DistributedEvent[T, I](Pulse.empty)
-          event.send(value, context.remote, context.endpoint)
+          event.send(value, context.endpoint)
         },
         receive = (value, context) => {
           val event = new DistributedEvent[T, I](Pulse.empty)
-          event.receive(value, context.remote, context.endpoint)
+          event.receive(value, context.endpoint)
         }
       )
   }
@@ -572,7 +577,6 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
 
     def send(
         reactive: R[P],
-        remote: RemoteRef,
         endpoint: EndPointWithInfrastructure[Msg]
     ): MessageWithInfrastructure[Msg] = {
       if (ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host sending $reactive")
@@ -669,7 +673,6 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
 
     def getKnownLocalTurnParameterInstance(
         bundle: TurnPushBundle,
-        endpoint: EndPointWithInfrastructure[Msg]
     ): FullMVTurn = {
       val turn = host.getInstance(bundle._1).get
       if (turn.isInstanceOf[FullMVTurnReflection]) turn.asInstanceOf[FullMVTurnReflection].asyncNewPhase(bundle._2)
@@ -734,7 +737,6 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
 
     def receive(
         value: MessageWithInfrastructure[Msg],
-        remote: RemoteRef,
         endpoint: EndPointWithInfrastructure[Msg]
     ): R[P] = {
       if (ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host receiving a value")
@@ -876,6 +878,7 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
           }
         case AsyncNewPhase(bundle) =>
           localTurnReflectionReceiverInstance(bundle)
+          ()
         case AsyncAddPredecessorReplicator(receiver, startAt, clock) =>
           localTurnReceiverInstance(receiver) match {
             case Some(turn) =>
@@ -922,7 +925,7 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
             s"someone tried to share possible transitive predecessors with $receiver, which should thus not have been possible to be deallocated"
           )
           maybeTurn.get.maybeNewReachableSubtree(
-            getKnownLocalTurnParameterInstance(attachBelow, endpoint),
+            getKnownLocalTurnParameterInstance(attachBelow),
             tree.map { lookUpLocalTurnParameterInstance(_, endpoint) }
           )
         case AddPredecessor(receiver, predecessorTree) =>
@@ -1111,7 +1114,8 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
         )
         assert(
           host.getInstance(guid) match {
-            case Some(instance) => instance eq replicator
+            case Some(instance) =>
+              (instance: AnyRef) eq (replicator: AnyRef)
             case None           => replicator.asInstanceOf[FullMVTurnReflection].phase == TurnPhase.Completed
           },
           s"replicator should eq turn instance and should be hosted or completed"
@@ -1131,7 +1135,7 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
         )
         assert(
           host.getInstance(guid) match {
-            case Some(instance) => instance eq replicator
+            case Some(instance) => (instance: AnyRef) eq (replicator: AnyRef)
             case None           => replicator.asInstanceOf[FullMVTurnReflection].phase == TurnPhase.Completed
           },
           s"replicator should eq turn instance and should be hosted or completed"

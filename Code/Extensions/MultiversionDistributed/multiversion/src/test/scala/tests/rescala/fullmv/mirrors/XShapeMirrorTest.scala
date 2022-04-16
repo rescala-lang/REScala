@@ -1,14 +1,13 @@
 package tests.rescala.fullmv.mirrors
 
-import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
-
 import org.scalatest.funsuite.AnyFunSuite
-import rescala.fullmv.DistributedFullMVApi.{FullMVEngine, Var, Evt, Signal, Event, ReactiveLocalClone}
+import rescala.fullmv.DistributedFullMVApi.{FullMVEngine, ReactiveLocalClone, Signal, Var}
 import tests.rescala.testtools.Spawn
 
+import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
 import scala.annotation.tailrec
-import scala.concurrent.duration._
 import scala.concurrent.TimeoutException
+import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
 class XShapeMirrorTest extends AnyFunSuite {
@@ -22,8 +21,8 @@ class XShapeMirrorTest extends AnyFunSuite {
     val counter     = new AtomicInteger(0)
     def nextValue() = Data(name, counter.getAndIncrement)
 
-    val source = Var(nextValue)
-    def step() = source.set(nextValue)
+    val source = Var(nextValue())
+    def step() = source.set(nextValue())
   }
 
   test("X-shaped serializability") {
@@ -42,7 +41,6 @@ class XShapeMirrorTest extends AnyFunSuite {
     }
 
     object topHost extends FullMVEngine(Duration.Zero, "top")
-    import topHost._
 
     val mergeFromLeft  = ReactiveLocalClone(leftMerge, topHost)
     val mergeFromRight = ReactiveLocalClone(rightMerge, topHost)
@@ -117,7 +115,7 @@ class XShapeMirrorTest extends AnyFunSuite {
     val scoreRight = workerRight.awaitTry(500)
     val scores     = Array(scoreLeft, scoreRight)
     println("X-Shape mirror stress test thread results:")
-    println("\t" + scores.zipWithIndex.map { case (count, idx) => idx + ": " + count }.mkString("\n\t"))
+    println("\t" + scores.zipWithIndex.map { case (count, idx) => idx.toString + ": " + count }.mkString("\n\t"))
     scores.find {
       case Failure(ex: TimeoutException) => false
       case Failure(_)                    => true
