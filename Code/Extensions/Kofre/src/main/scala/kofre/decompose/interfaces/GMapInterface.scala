@@ -1,31 +1,10 @@
 package kofre.decompose.interfaces
 
-import kofre.syntax.{DeltaMutator, DeltaQuery}
+import kofre.causality.CausalContext
+import kofre.decompose.DotStore.DotSet
 import kofre.decompose.{CRDTInterface, UIJDLattice}
-
-object GMapInterface {
-  type State[K, V] = Map[K, V]
-
-  trait GMapCompanion {
-    type State[K, V] = GMapInterface.State[K, V]
-  }
-
-  def contains[K, V: UIJDLattice](k: K): DeltaQuery[State[K, V], Boolean] = state => state.contains(k)
-
-  def queryKey[K, V: UIJDLattice, A](k: K, q: DeltaQuery[V, A]): DeltaQuery[State[K, V], A] = state =>
-    q(state.getOrElse(k, UIJDLattice[V].bottom))
-
-  def queryAllEntries[K, V: UIJDLattice, A](q: DeltaQuery[V, A]): DeltaQuery[State[K, V], Iterable[A]] = state =>
-    state.values.map(q)
-
-  def mutateKey[K, V: UIJDLattice](k: K, m: DeltaMutator[V]): DeltaMutator[State[K, V]] = (replicaID, state) => {
-    val v = state.getOrElse(k, UIJDLattice[V].bottom)
-
-    val vDelta = m(replicaID, v)
-
-    Map(k -> vDelta)
-  }
-}
+import kofre.dotbased.CausalStore
+import kofre.syntax.{AllPermissionsCtx, DeltaMutator, DeltaQuery, OpsSyntaxHelper}
 
 /** A GMap (Grow-only Map) is a Delta CRDT that models a map from an arbitrary key type to nested Delta CRDTs.
   * In contrast to [[ORMapInterface]], key/value pairs cannot be removed from this map. However, due to the smaller internal
@@ -35,13 +14,29 @@ object GMapInterface {
   * by a CRDT Interface method of the nested CRDT. For example, to enable a nested EWFlag, one would pass `EWFlagInterface.enable()`
   * as the DeltaMutator to mutateKey.
   */
-abstract class GMapInterface[K, V: UIJDLattice, Wrapper] extends CRDTInterface[GMapInterface.State[K, V], Wrapper] {
+object GMapInterface {
+  type GMap[K, V] = Map[K, V]
 
-  def contains(k: K): Boolean = query(GMapInterface.contains(k))
+  trait GMapCompanion {
+    type State[K, V] = GMapInterface.GMap[K, V]
+  }
 
-  def queryKey[A](k: K, q: DeltaQuery[V, A]): A = query(GMapInterface.queryKey(k, q))
+  
 
-  def queryAllEntries[A](q: DeltaQuery[V, A]): Iterable[A] = query(GMapInterface.queryAllEntries(q))
+  implicit class GMapSyntax[C, K, V](container: C) extends OpsSyntaxHelper[C, GMap[K, V]](container) {
 
-  def mutateKey(k: K, m: DeltaMutator[V]): Wrapper = mutate(GMapInterface.mutateKey(k, m))
+    def contains(k: K)(using QueryP): Boolean = current.contains(k)
+
+    def queryKey(k: K)(using QueryP, UIJDLattice[V]): V =
+      current.getOrElse(k, UIJDLattice[V].bottom)
+
+    def queryAllEntries()(using QueryP): Iterable[V] = current.values
+
+    def mutateKey(k: K)(m: V => V)(using MutationIDP, UIJDLattice[V]): C = Map(k -> m(queryKey(k)))
+
+    def mutateKeyCtx(k: K)(m: AllPermissionsCtx[V, V] => V => V)(using MutationIDP, UIJDLattice[V]): C = {
+      Map(k -> m(AllPermissionsCtx.withID[V,V](replicaID))(queryKey(k)))
+    }
+  }
+
 }
