@@ -1,8 +1,9 @@
-package kofre.decompose.interfaces
+package kofre.protocol
 
 import kofre.decompose.*
+import kofre.decompose.interfaces.GSetInterface
+import kofre.protocol.AuctionInterface.Bid.User
 import kofre.syntax.DeltaMutator
-import kofre.decompose.interfaces.AuctionInterface.Bid.User
 
 object AuctionInterface {
   sealed trait Status

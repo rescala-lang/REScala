@@ -2,9 +2,10 @@ package kofre.decompose.interfaces
 
 import kofre.decompose.*
 import kofre.syntax.{AllPermissionsCtx, DeltaMutator}
-import kofre.decompose.interfaces.AuctionInterface.Bid.User
+import kofre.protocol.AuctionInterface.Bid.User
 import kofre.decompose.interfaces.RubisInterface.{AID, UserAsUIJDLattice}
 import kofre.decompose.interfaces.AWSetInterface.AWSetSyntax
+import kofre.protocol.AuctionInterface
 
 object RubisInterface {
   type AID = String

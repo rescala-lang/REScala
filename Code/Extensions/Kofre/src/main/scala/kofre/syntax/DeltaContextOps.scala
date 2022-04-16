@@ -4,6 +4,13 @@ import kofre.Defs.Id
 import kofre.decompose.interfaces.GCounterInterface.GCounter
 import kofre.{Defs, Lattice}
 
+/** The basic idea behind this machinery is to allow lattices of type L to be stored in a Container of type C.
+  * In the simplest case C = L and the lattice is used as is.
+  * More complex containers contain additional information such as the replica ID
+  * or a set of deltas since the last synchronization.
+  * No matter the concrete container, they should all offer the same API to the underlying lattice.
+  */
+
 trait QueryCtx[C, L]:
   def query(c: C): L
 trait MutateCtx[C, L] extends QueryCtx[C, L]:
@@ -33,12 +40,13 @@ trait OpsSyntaxHelper[C, L](container: C) {
   final type MutationIDP = AllPermissionsCtx[C, L]
   final type QueryP      = QueryCtx[C, L]
   final type MutationP   = MutateCtx[C, L]
+  final type IdentifierP = IdentifierCtx[C]
 
   final type MutationID = MutationIDP ?=> C
   final type Mutation   = MutationP ?=> C
   final type Query[T]   = QueryP ?=> T
 
-  final protected def current(using perm: QueryCtx[C, L]): L                  = perm.query(container)
-  final protected def replicaID(using perm: IdentifierCtx[C]): Defs.Id        = perm.replicaId(container)
-  final protected given mutate(using perm: MutateCtx[C, L]): Conversion[L, C] = perm.mutate(container, _)
+  final protected def current(using perm: QueryP): L                    = perm.query(container)
+  final protected def replicaID(using perm: IdentifierP): Defs.Id       = perm.replicaId(container)
+  final protected given mutate(using perm: MutationP): Conversion[L, C] = perm.mutate(container, _)
 }
