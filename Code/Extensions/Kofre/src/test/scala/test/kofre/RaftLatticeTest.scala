@@ -9,7 +9,8 @@ class RaftLatticeTest extends AnyFreeSpec {
 
   "basic interaction" in {
 
-    val initial = RaftState[String](Set("a", "b", "perm"), Set(Vote(0, "a", "a"), Vote(0, "a", "b"), Vote(0, "a", "perm")))
+    val initial =
+      RaftState[String](Set("a", "b", "perm"), Set(Vote(0, "a", "a"), Vote(0, "a", "b"), Vote(0, "a", "perm")))
 
     assert(initial.leader === "a")
     assert(initial.nextProposal === 0)

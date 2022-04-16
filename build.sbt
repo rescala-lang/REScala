@@ -92,8 +92,12 @@ lazy val examples = project.in(file("Code/Examples/examples"))
 
 lazy val universe = project.in(file("Code/Examples/Universe"))
   .dependsOn(rescalaJVM)
-  .settings(cfg.base, noPublish, name := "rescala-universe",
-            libraryDependencies += "org.scala-lang.modules" %% "scala-parallel-collections" % "1.0.0")
+  .settings(
+    cfg.base,
+    name := "rescala-universe",
+    noPublish,
+    libraryDependencies += "org.scala-lang.modules" %% "scala-parallel-collections" % "1.0.0"
+  )
   .enablePlugins(JavaAppPackaging)
 
 lazy val todolist = project.in(file("Code/Examples/Todolist"))

@@ -18,13 +18,13 @@ object QueryCtx:
   given identityQuery[A]: QueryCtx[A, A] = MutateCtx.identityDeltaMutate
 object MutateCtx:
   given identityDeltaMutate[A]: MutateCtx[A, A] with
-    override def query(c: A): A = c
+    override def query(c: A): A            = c
     override def mutate(c: A, delta: A): A = delta
 object AllPermissionsCtx:
   def withID[C, L](id: Id)(using mctx: MutateCtx[C, L]): AllPermissionsCtx[C, L] = new AllPermissionsCtx[C, L]:
     def mutate(c: C, delta: L): C = mctx.mutate(c, delta)
-    def replicaId(c: C): Id = id
-    def query(c: C): L = mctx.query(c)
+    def replicaId(c: C): Id       = id
+    def query(c: C): L            = mctx.query(c)
 
 /** Helps to define operations that update any container [[C]] containing values of type [[L]]
   * using a scheme where mutations return deltas which are systematically applied.

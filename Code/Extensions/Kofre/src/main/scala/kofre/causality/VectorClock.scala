@@ -34,8 +34,8 @@ object VectorClock {
           @tailrec
           def smaller(remaining: List[Id]): Int = remaining match {
             case h :: t =>
-              val l = x.timestamps.getOrElse(h, 0l)
-              val r = y.timestamps.getOrElse(h, 0l)
+              val l   = x.timestamps.getOrElse(h, 0L)
+              val r   = y.timestamps.getOrElse(h, 0L)
               val res = Ordering[Defs.Time].compare(l, r)
               if (res == 0) then smaller(t) else res
             case Nil => 0

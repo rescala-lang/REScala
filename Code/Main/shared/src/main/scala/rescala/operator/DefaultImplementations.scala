@@ -4,7 +4,7 @@ import rescala.core._
 import rescala.operator.Pulse.NoChange
 
 trait DefaultImplementations {
-  self: Operators  =>
+  self: Operators =>
 
   /** @param isDynamicWithStaticDeps [[scala.None]] means static dependencies only,
     *                                [[scala.Some]] means dynamic with the given static ones for optimization

@@ -4,7 +4,6 @@ import kofre.causality.CausalContext
 import kofre.dotbased.{CausalStore, DotStore}
 import kofre.dotbased.DotStore.DotFun
 
-
 object DeltaMultiValueRegister {
   type DeltaMultiValueRegisterLattice[V] = CausalStore[DotFun[V]]
 
@@ -25,7 +24,7 @@ object DeltaMultiValueRegister {
     CausalStore(
       DotStore[DotFun[V]].empty,
       CausalContext.fromSet(register.store.keySet)
-      )
+    )
 
   def read[V](register: DeltaMultiValueRegisterLattice[V]): Set[V] = {
     register.store.values.toSet

@@ -8,10 +8,10 @@ import kofre.dotbased.CausalStore
 
 object MVRegisterInterface {
   type State[A] = CausalStore[DotFun[A]]
-  type C = CausalContext
+  type C        = CausalContext
 
   trait MVRegisterCompanion {
-    type State[A] = MVRegisterInterface.State[A]
+    type State[A]    = MVRegisterInterface.State[A]
     type Embedded[A] = DotFun[A]
   }
 
@@ -19,8 +19,8 @@ object MVRegisterInterface {
     val bottom: State[A] = UIJDLattice[State[A]].bottom
 
     def make(
-              df: DotFun[A] = bottom.store,
-              cc: CausalContext = bottom.context
+        df: DotFun[A] = bottom.store,
+        cc: CausalContext = bottom.context
     ): State[A] = CausalStore(df, cc)
   }
 

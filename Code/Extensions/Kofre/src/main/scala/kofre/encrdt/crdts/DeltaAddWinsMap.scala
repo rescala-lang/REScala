@@ -20,15 +20,15 @@ object DeltaAddWinsMap {
     * @return The delta of the recursive delta-mutation
     */
   def deltaMutate[K, V: DotStore](
-                                   key: K,
-                                   deltaMutator: CausalStore[V] => CausalStore[V],
-                                   map: DeltaAddWinsMapLattice[K, V]
+      key: K,
+      deltaMutator: CausalStore[V] => CausalStore[V],
+      map: DeltaAddWinsMapLattice[K, V]
   ): DeltaAddWinsMapLattice[K, V] = {
 
     deltaMutator(CausalStore(
       map.store.getOrElse(key, DotStore[V].empty),
       map.context
-      )) match {
+    )) match {
       case CausalStore(dotStore, causalContext) => CausalStore(
           Map(key -> dotStore),
           causalContext
@@ -44,9 +44,10 @@ object DeltaAddWinsMap {
     * @tparam V The type of the value (needs to be a Delta CRDT)
     * @return The delta that contains the removal (and nothing else)
     */
-  def deltaRemove[K, V: DotStore](key: K, map: DeltaAddWinsMapLattice[K, V]): DeltaAddWinsMapLattice[K, V] = CausalStore(
-    DotStore[DotMap[K, V]].empty,
-    CausalContext.fromSet(DotStore[V].dots(map.store.getOrElse(key, DotStore[V].empty)))
+  def deltaRemove[K, V: DotStore](key: K, map: DeltaAddWinsMapLattice[K, V]): DeltaAddWinsMapLattice[K, V] =
+    CausalStore(
+      DotStore[DotMap[K, V]].empty,
+      CausalContext.fromSet(DotStore[V].dots(map.store.getOrElse(key, DotStore[V].empty)))
     )
 
   /** Returns the '''delta''' that removes all values from the `map`.
@@ -59,5 +60,5 @@ object DeltaAddWinsMap {
   def deltaClear[K, V: DotStore](map: DeltaAddWinsMapLattice[K, V]): DeltaAddWinsMapLattice[K, V] = CausalStore(
     DotStore[DotMap[K, V]].empty,
     CausalContext.fromSet(DotStore[DotMap[K, V]].dots(map.store))
-    )
+  )
 }

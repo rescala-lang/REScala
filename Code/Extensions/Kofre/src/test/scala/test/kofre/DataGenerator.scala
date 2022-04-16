@@ -12,7 +12,7 @@ object DataGenerator {
 
   given arbVersion: Arbitrary[VectorClock] = Arbitrary(for {
     ids: Set[Defs.Id] <- Gen.nonEmptyListOf(arbId.arbitrary).map(_.toSet)
-    value: List[Long]   <- Gen.listOfN(ids.size, Gen.oneOf(0L to 100L))
+    value: List[Long] <- Gen.listOfN(ids.size, Gen.oneOf(0L to 100L))
   } yield VectorClock.fromMap(ids.zip(value).toMap))
 
   given arbLww: Arbitrary[LastWriterWins[Int]] = Arbitrary(
@@ -42,9 +42,11 @@ object DataGenerator {
 
   given arbCausalQueue[A: Arbitrary]: Arbitrary[CausalQueue[A]] =
     val pairgen = for {
-      id <- arbId.arbitrary
-      value   <- Arbitrary.arbitrary[A]
+      id    <- arbId.arbitrary
+      value <- Arbitrary.arbitrary[A]
     } yield (id, value)
-    val map = Gen.listOf(pairgen).map(_.foldLeft(CausalQueue.empty[A]){case (acc, (id, value)) => acc.enqueue(value, id) })
+    val map = Gen.listOf(pairgen).map(_.foldLeft(CausalQueue.empty[A]) { case (acc, (id, value)) =>
+      acc.enqueue(value, id)
+    })
     Arbitrary(map)
 }

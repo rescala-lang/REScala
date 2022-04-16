@@ -9,7 +9,6 @@ import kofre.dotbased.CausalStore
 import kofre.primitives.Epoche
 import kofre.decompose.interfaces.EpocheInterface.EpocheSyntax
 
-
 object RGAInterface {
 
   type C = CausalContext
@@ -104,9 +103,9 @@ object RGAInterface {
       findInsertIndex(state, i) match {
         case None => deltaState[E].bottom
         case Some(glistInsertIndex) =>
-          val m = GListInterface.insert(glistInsertIndex, nextDot)
+          val m          = GListInterface.insert(glistInsertIndex, nextDot)
           val glistDelta = fw.map(m(replicaID, _))
-          val dfDelta = DotFun[RGANode[E]].empty + (nextDot -> Alive(TimedVal(e, replicaID)))
+          val dfDelta    = DotFun[RGANode[E]].empty + (nextDot -> Alive(TimedVal(e, replicaID)))
 
           deltaState[E].make(
             epoche = glistDelta,

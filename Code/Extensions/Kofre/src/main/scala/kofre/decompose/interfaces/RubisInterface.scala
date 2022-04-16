@@ -6,7 +6,6 @@ import kofre.decompose.interfaces.AuctionInterface.Bid.User
 import kofre.decompose.interfaces.RubisInterface.{AID, UserAsUIJDLattice}
 import kofre.decompose.interfaces.AWSetInterface.AWSetSyntax
 
-
 object RubisInterface {
   type AID = String
 
@@ -24,9 +23,9 @@ object RubisInterface {
     val bottom: State = UIJDLattice[State].bottom
 
     def make(
-              userRequests: AWSetInterface.AWSet[(User, String)] = bottom._1,
-              users: Map[User, String] = bottom._2,
-              auctions: Map[AID, AuctionInterface.State] = bottom._3
+        userRequests: AWSetInterface.AWSet[(User, String)] = bottom._1,
+        users: Map[User, String] = bottom._2,
+        auctions: Map[AID, AuctionInterface.State] = bottom._3
     ): State = (userRequests, users, auctions)
   }
 
@@ -95,7 +94,7 @@ object RubisInterface {
   * This auction system was in part modeled after the Rice University Bidding System (RUBiS) proposed by Cecchet et al. in
   * "Performance and Scalability of EJB Applications", see [[https://www.researchgate.net/publication/2534515_Performance_and_Scalability_of_EJB_Applications here]]
   */
-abstract class RubisInterface[ Wrapper] extends CRDTInterface[RubisInterface.State, Wrapper] {
+abstract class RubisInterface[Wrapper] extends CRDTInterface[RubisInterface.State, Wrapper] {
   def placeBid(auctionId: AID, userId: User, price: Int): Wrapper =
     mutate(RubisInterface.placeBid(auctionId, userId, price))
 

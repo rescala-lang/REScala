@@ -6,6 +6,7 @@ import kofre.syntax.{DeltaMutator, DeltaQuery}
 import kofre.decompose.UIJDLattice.Operators
 
 object LexCounterInterface {
+
   /** A LexPair is a lexicographic pair of two values that is used with a lexicographical ordering in the state of
     * [[interfaces.LexCounterInterface]].
     */
@@ -19,7 +20,7 @@ object LexCounterInterface {
         override def leq(left: LexPair[A, B], right: LexPair[A, B]): Boolean =
           UIJDLattice[A].leq(left.fst, right.fst) && (
             !UIJDLattice[A].leq(right.fst, left.fst) || UIJDLattice[B].leq(left.snd, right.snd)
-            )
+          )
 
         /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
         override def decompose(state: LexPair[A, B]): Iterable[LexPair[A, B]] =
@@ -32,12 +33,11 @@ object LexCounterInterface {
 
           if (lfleq && !rfleq) right
           else if (rfleq && !lfleq) left
-               else if (lfleq && rfleq) LexPair(left.fst, left.snd merge right.snd)
-                    else LexPair(left.fst merge right.fst, UIJDLattice[B].bottom)
+          else if (lfleq && rfleq) LexPair(left.fst, left.snd merge right.snd)
+          else LexPair(left.fst merge right.fst, UIJDLattice[B].bottom)
         }
       }
   }
-
 
   type State = Map[String, LexPair[Int, Int]]
 

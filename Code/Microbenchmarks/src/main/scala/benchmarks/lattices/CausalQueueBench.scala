@@ -28,31 +28,28 @@ class CausalQueueBench {
 
   @Setup
   def setup(): Unit = {
-    lca = (1 to size).foldLeft(CausalQueue.empty[Int]){ (q, e) => q.enqueue(e, "lca") }
+    lca = (1 to size).foldLeft(CausalQueue.empty[Int]) { (q, e) => q.enqueue(e, "lca") }
   }
 
   def make(base: CausalQueue[Int], ops: Int, prefix: String) = {
-    val s = ops / 2
-    val added = (1 to s).foldLeft(base){(acc, v) => acc.enqueue(v, prefix)}
-    (1 to s).foldLeft(added){(acc, _) => acc.dequeue()}
+    val s     = ops / 2
+    val added = (1 to s).foldLeft(base) { (acc, v) => acc.enqueue(v, prefix) }
+    (1 to s).foldLeft(added) { (acc, _) => acc.dequeue() }
   }
 
   @Benchmark
   def create(): CausalQueue[Int] = make(lca, operations, "")
 
-
   @Benchmark
   def createAndMerge(): CausalQueue[Int] = {
-    val left = make(lca, operations, "left")
+    val left  = make(lca, operations, "left")
     val right = make(lca, operations, "right")
 
     val res = left merge right
     res
   }
 
-
 }
-
 
 @BenchmarkMode(Array(Mode.AverageTime))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -73,27 +70,25 @@ class CausalQueueBenchWithRGA {
 
   @Setup
   def setup(): Unit = {
-    lca = (1 to size).foldLeft(Sequence.empty[Int]){ (q, e) => q.prepend(e) }
+    lca = (1 to size).foldLeft(Sequence.empty[Int]) { (q, e) => q.prepend(e) }
   }
 
   def make(base: RGA[Int], ops: Int) = {
-    val s = ops / 2
-    val added = (1 to s).foldLeft(base){(acc, v) => acc.prepend(v)}
-    (1 to s).foldLeft(added){(acc, _) => acc.remove(Seq(acc.vertexIterator.next()))}
+    val s     = ops / 2
+    val added = (1 to s).foldLeft(base) { (acc, v) => acc.prepend(v) }
+    (1 to s).foldLeft(added) { (acc, _) => acc.remove(Seq(acc.vertexIterator.next())) }
   }
 
   @Benchmark
   def create(): RGA[Int] = make(lca, operations)
 
-
   @Benchmark
   def createAndMerge(): RGA[Int] = {
-    val left = make(lca, operations)
+    val left  = make(lca, operations)
     val right = make(lca, operations)
 
     val res = left merge right
     res
   }
-
 
 }

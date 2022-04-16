@@ -95,9 +95,10 @@ class AddWinsSetBench {
 
 object Codecs {
 
-  implicit val dotUJsonCodec: upickle.default.ReadWriter[Dot]            = upickle.default.macroRW
-  implicit val itRangeCodec: upickle.default.ReadWriter[IntTree.Range]   = upickle.default.macroRW
-  implicit val itTreeCodec: upickle.default.ReadWriter[IntTree.Tree]     = upickle.default.macroRW
+  implicit val dotUJsonCodec: upickle.default.ReadWriter[Dot]                   = upickle.default.macroRW
+  implicit val itRangeCodec: upickle.default.ReadWriter[IntTree.Range]          = upickle.default.macroRW
+  implicit val itTreeEmptyCodec: upickle.default.ReadWriter[IntTree.Empty.type] = upickle.default.macroRW
+  implicit val itTreeCodec: upickle.default.ReadWriter[IntTree.Tree]            = upickle.default.macroRW
 
   implicit val arrayRangesCodec: upickle.default.ReadWriter[ArrayRanges] = upickle.default.macroRW
   implicit val contextCodec: upickle.default.ReadWriter[CausalContext]   = upickle.default.macroRW

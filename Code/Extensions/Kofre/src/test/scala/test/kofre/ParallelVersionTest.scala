@@ -5,7 +5,6 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import kofre.primitives.{MultiValueRegister}
 
-
 import scala.Console.in
 import scala.collection.Seq
 import test.kofre.DataGenerator.arbVersion

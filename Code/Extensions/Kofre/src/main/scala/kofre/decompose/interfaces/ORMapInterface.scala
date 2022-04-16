@@ -8,10 +8,10 @@ import kofre.dotbased.CausalStore
 
 object ORMapInterface {
   type State[K, V] = CausalStore[DotMap[K, V]]
-  type C = CausalContext
+  type C           = CausalContext
 
   trait ORMapCompanion {
-    type State[K, V] = ORMapInterface.State[K, V]
+    type State[K, V]    = ORMapInterface.State[K, V]
     type Embedded[K, V] = DotMap[K, V]
   }
 
@@ -19,8 +19,8 @@ object ORMapInterface {
     val bottom: State[K, V] = UIJDLattice[State[K, V]].bottom
 
     def make(
-              dm: DotMap[K, V] = bottom.store,
-              cc: C = bottom.context
+        dm: DotMap[K, V] = bottom.store,
+        cc: C = bottom.context
     ): State[K, V] = CausalStore(dm, cc)
   }
 
@@ -36,8 +36,7 @@ object ORMapInterface {
       q(CausalStore(v, cc))
   }
 
-  def queryAllEntries[K, V: DotStore, A](q: DeltaQuery[CausalStore[V], A])
-      : DeltaQuery[State[K, V], Iterable[A]] = {
+  def queryAllEntries[K, V: DotStore, A](q: DeltaQuery[CausalStore[V], A]): DeltaQuery[State[K, V], Iterable[A]] = {
     case CausalStore(dm, cc) =>
       dm.values.map(v => q(CausalStore(v, cc)))
   }
@@ -102,7 +101,7 @@ object ORMapInterface {
   * by a CRDT Interface method of the nested CRDT. For example, to enable a nested EWFlag, one would pass `EWFlagInterface.enable()`
   * as the DeltaMutator to mutateKey.
   */
-abstract class ORMapInterface[K, V: DotStore,  Wrapper]
+abstract class ORMapInterface[K, V: DotStore, Wrapper]
     extends CRDTInterface[ORMapInterface.State[K, V], Wrapper] {
 
   def queryKey[A](k: K, q: DeltaQuery[CausalStore[V], A]): A = query(ORMapInterface.queryKey(k, q))

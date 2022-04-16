@@ -20,7 +20,7 @@ case class ArrayRanges(inner: Array[Time], used: Int) {
     val pos = if res < 0 then -res - 1 else res
     if pos >= used then false
     else if pos % 2 == 0
-    // found a start
+      // found a start
     then inner(pos) == x
     // found an end
     else x < inner(pos)
@@ -34,8 +34,8 @@ case class ArrayRanges(inner: Array[Time], used: Int) {
   def next: Option[Time] = Option.when(used != 0)(inner(used - 1))
 
   def iterator: Iterator[Time] = new Iterator[Time] {
-    var pos = 0
-    var value = if used == 0 then 0 else inner(0)
+    var pos                       = 0
+    var value                     = if used == 0 then 0 else inner(0)
     override def hasNext: Boolean = used > pos
     override def next(): Time =
       val res = value
@@ -48,8 +48,8 @@ case class ArrayRanges(inner: Array[Time], used: Int) {
   }
 
   def merge(other: ArrayRanges): ArrayRanges = {
-    var leftPos  = 0
-    var rightPos = 0
+    var leftPos   = 0
+    var rightPos  = 0
     var mergedPos = 0
 
     val merged = new Array[Time](used + other.used)
@@ -90,8 +90,6 @@ case class ArrayRanges(inner: Array[Time], used: Int) {
     new ArrayRanges(merged, mergedPos)
 
   }
-
-
 
   def intersect(right: ArrayRanges): ArrayRanges = {
     var newInnerNextIndex = 0

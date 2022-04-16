@@ -14,10 +14,10 @@ import scala.concurrent.duration.Duration
 import scala.util.DynamicVariable
 
 object DistributedFullMVApi extends FullMVBundle with FullMVTurnLocalCloneBundle with Mirror with TurnImplBundle
-                            with TaskBundle with FullMvStateBundle with SubsumableLockBundle with FullMVTurnReflectionBundle
-                            with ReactiveLocalCloneBundle with RescalaInterface with SignalCompatBundle with EventBundle with SignalBundle
-                            with Sources with DefaultImplementations with ObserveBundle with Core
-                            with ReactiveReflectionBundle with ReactiveMirrorBundle with ReactiveTransmittableBundle {
+    with TaskBundle with FullMvStateBundle with SubsumableLockBundle with FullMVTurnReflectionBundle
+    with ReactiveLocalCloneBundle with RescalaInterface with SignalCompatBundle with EventBundle with SignalBundle
+    with Sources with DefaultImplementations with ObserveBundle with Core
+    with ReactiveReflectionBundle with ReactiveMirrorBundle with ReactiveTransmittableBundle {
 
   val scopedScheduler: DynamicVariable[FullMVEngine] = new DynamicVariable(new FullMVEngine(
     Duration.Inf,

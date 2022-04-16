@@ -11,7 +11,7 @@ object Main {
 
     val derived = dottyEventExpression[Int] {
       def a: Signal[Int] = Var(5)
-      val b = 4
+      val b              = 4
       class c()
       object d
       (iAmAnEvt.value, Some(a.value): Option[Int]) match {

@@ -10,7 +10,7 @@ object EWFlagInterface {
   type State = CausalStore[DotSet]
 
   trait EWFlagCompanion {
-    type State = EWFlagInterface.State
+    type State    = EWFlagInterface.State
     type Embedded = DotSet
   }
 
@@ -18,8 +18,8 @@ object EWFlagInterface {
     val bottom: State = UIJDLattice[State].bottom
 
     def make(
-              ds: DotSet = bottom.store,
-              cc: CausalContext = bottom.context
+        ds: DotSet = bottom.store,
+        cc: CausalContext = bottom.context
     ): State = CausalStore(ds, cc)
   }
 

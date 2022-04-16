@@ -12,7 +12,7 @@ import kofre.dotbased.CausalStore
   */
 object AWSetInterface {
   type Embedded[E] = DotMap[E, DotSet]
-  type AWSet[E] = CausalStore[Embedded[E]]
+  type AWSet[E]    = CausalStore[Embedded[E]]
 
   extension [C, E](container: C) def asAWSet: AWSetSyntax[C, E] = AWSetSyntax(container)
 

@@ -13,7 +13,7 @@ object Codecs {
   implicit val taskRefCodec: JsonValueCodec[TaskRef] = JsonCodecMaker.make
 
   implicit val codecState: JsonValueCodec[ListRDT.State[TaskRef]] = RGAStateCodec
-  implicit val codecRGA: JsonValueCodec[ListRDT[TaskRef]]         =
+  implicit val codecRGA: JsonValueCodec[ListRDT[TaskRef]] =
     new JsonValueCodec[ListRDT[TaskRef]] {
       override def decodeValue(
           in: JsonReader,

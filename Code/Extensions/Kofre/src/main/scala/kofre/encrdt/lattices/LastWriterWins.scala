@@ -2,7 +2,6 @@ package kofre.encrdt.lattices
 import kofre.Lattice
 import scala.math.Ordering.Implicits.infixOrderingOps
 
-
 /** Lattice with the least-upper-bound defined by the timeStamp.
   * Timestamps must be unique, totally ordered, consistent with causal order.
   */

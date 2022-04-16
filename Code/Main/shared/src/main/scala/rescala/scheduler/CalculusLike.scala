@@ -224,10 +224,14 @@ trait CalculusLike extends Core {
         dynamicOk: ReSource => Boolean,
         transaction: FTransaction
     ): (Boolean, Boolean) = {
-      val dt = new ReevTicket[reactive.Value](transaction, reactive.state.value, new AccessHandler {
-        override def dynamicAccess(input: ReSource): input.Value = input.state.value
-        override def staticAccess(input: ReSource): input.Value = input.state.value
-      })
+      val dt = new ReevTicket[reactive.Value](
+        transaction,
+        reactive.state.value,
+        new AccessHandler {
+          override def dynamicAccess(input: ReSource): input.Value = input.state.value
+          override def staticAccess(input: ReSource): input.Value  = input.state.value
+        }
+      )
 
       val reev = reactive.reevaluate(dt)
 

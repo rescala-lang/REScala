@@ -73,9 +73,10 @@ object DeltaAddWinsLastWriterWinsMap {
   def bottom[K, V]: DeltaAddWinsLastWriterWinsMapLattice[K, V] =
     DeltaAddWinsMap.bottom[K, DotFun[(V, (Instant, String))]]
 
-  implicit def timestampedValueLattice[V](using Ordering[(Instant, String)]): Lattice[(V, (Instant, String))] = (left, right) =>
-    // note, this is incorrect when both are equal
-    if left._2 <= right._2 then right else left
+  implicit def timestampedValueLattice[V](using Ordering[(Instant, String)]): Lattice[(V, (Instant, String))] =
+    (left, right) =>
+      // note, this is incorrect when both are equal
+      if left._2 <= right._2 then right else left
 
   type StateType[K, V] = DeltaAddWinsMapLattice[K, DotFun[(V, (Instant, String))]]
 }

@@ -4,7 +4,6 @@ import rescala.default._
 import rescala.extra.lattices.delta.crdt.reactive.ReactiveDeltaCRDT
 import kofre.decompose.interfaces.AWSetInterface.AWSetSyntax
 
-
 case class Appointment(start: Int, end: Int)
 
 class CalendarProgram(id: String, synchronizationPoint: String => (=> Unit) => Unit) {

@@ -20,9 +20,10 @@ class AWSetBench {
 
   var set: ReactiveDeltaCRDT[AWSet[Int]] = _
 
-  def createBySize(size: Int): ReactiveDeltaCRDT[AWSet[Int]] = (0 until size).foldLeft(ReactiveDeltaCRDT[AWSet[Int]]("a")) {
-    case (s, e) => s.add(e)
-  }
+  def createBySize(size: Int): ReactiveDeltaCRDT[AWSet[Int]] =
+    (0 until size).foldLeft(ReactiveDeltaCRDT[AWSet[Int]]("a")) {
+      case (s, e) => s.add(e)
+    }
 
   @Setup
   def setup(): Unit = {

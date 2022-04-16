@@ -6,7 +6,6 @@ import kofre.decompose.{CRDTInterface, UIJDLattice}
 import kofre.syntax.{AllPermissionsCtx, DeltaMutator, DeltaQuery, FixedIdCtx, IdentifierCtx, OpsSyntaxHelper, QueryCtx}
 import kofre.syntax.AllPermissionsCtx.withID
 
-
 /** A PNCounter (Positive-Negative Counter) is a Delta CRDT modeling a counter.
   *
   * It is composed of two grow-only counters (see [[GCounterInterface]]) to enable both increments and decrements of the counter value.

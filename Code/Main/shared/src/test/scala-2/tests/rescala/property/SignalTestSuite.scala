@@ -86,7 +86,7 @@ class SignalTestSuite extends RETests with ScalaCheckDrivenPropertyChecks with M
       val s: Signal[Option[Int]] = e.latestOption()
 
       var latest: Option[Int] = None
-      s.observe {lo => assert(lo == latest); ()}
+      s.observe { lo => assert(lo == latest); () }
 
       assert(s.readValueOnce.isEmpty)
       1 to n foreach { i =>

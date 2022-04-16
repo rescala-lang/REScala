@@ -18,8 +18,8 @@ object SyncMessage {
 
   case class AppointmentMessage(state: CalendarState, target: String) extends SyncMessage
   case class RaftMessage(state: RaftState[Token])                     extends SyncMessage
-  case class WantMessage(state: AWSet[Token])    extends SyncMessage
-  case class FreeMessage(state: AWSet[Token])    extends SyncMessage
+  case class WantMessage(state: AWSet[Token])                         extends SyncMessage
+  case class FreeMessage(state: AWSet[Token])                         extends SyncMessage
 
 }
 

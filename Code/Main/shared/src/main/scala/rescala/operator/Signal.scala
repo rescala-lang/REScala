@@ -12,7 +12,7 @@ object SignalMacroImpl {
 }
 
 trait SignalBundle extends SignalCompatBundle {
-  selfType: Operators  =>
+  selfType: Operators =>
 
   /** Time changing value derived from the dependencies.
     *

@@ -7,7 +7,6 @@ import kofre.protocol.RaftState
 import rescala.extra.lattices.delta.crdt.reactive.ReactiveDeltaCRDT
 import kofre.decompose.interfaces.AWSetInterface.AWSetSyntax
 
-
 import scala.util.Random
 
 case class Token(id: Long, owner: String, value: String) {
@@ -22,9 +21,9 @@ case class RaftTokens(
 ) {
 
   def owned(value: String): List[Token] = {
-    val freed = tokenFreed.elements
+    val freed  = tokenFreed.elements
     val owners = tokenAgreement.values.filter(t => t.value == value && !freed.contains(t))
-    val mine = owners.filter(_.owner == replicaID)
+    val mine   = owners.filter(_.owner == replicaID)
     // return all ownership tokens if this replica owns the oldest one
     if (mine.headOption == owners.headOption) mine else Nil
   }

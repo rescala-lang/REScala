@@ -27,7 +27,7 @@ abstract class RETests extends AnyFreeSpec with TableDrivenPropertyChecks {
 
   def multiEngined(block: RescalaInterface => Any): Unit = {
     for (engine <- tests.rescala.testtools.TestEngines.all) {
-      s"Testing $engine" - {block(engine); ()}
+      s"Testing $engine" - { block(engine); () }
     }
   }
 

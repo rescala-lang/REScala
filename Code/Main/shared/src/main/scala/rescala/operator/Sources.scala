@@ -3,7 +3,7 @@ package rescala.operator
 import rescala.core.ReName
 
 trait Sources {
-  self: Operators  =>
+  self: Operators =>
 
   trait Source[T] extends ReSource {
     final def admit(value: T)(implicit ticket: AdmissionTicket): Unit = admitPulse(Pulse.Value(value))

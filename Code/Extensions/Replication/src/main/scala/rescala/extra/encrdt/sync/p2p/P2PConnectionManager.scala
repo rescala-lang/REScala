@@ -27,7 +27,7 @@ class P2PConnectionManager[S](val localReplicaId: String, localStateProvider: ()
 
   private def broadcast(message: Message): Unit = {
     LOG.info(s"Broadcasting $message to ${handlers.asScala.values.toList}")
-    handlers.forEach { (_ , handler) =>
+    handlers.forEach { (_, handler) =>
       handler.sendMessage(message)
     }
   }

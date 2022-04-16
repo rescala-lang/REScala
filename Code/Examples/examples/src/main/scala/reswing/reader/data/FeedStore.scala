@@ -21,7 +21,7 @@ class FeedStore(
 
   @nowarn("msg=parameter value items in anonymous function is never used") // yeah right
   val itemAdded: Event[RSSItem] = addItem && { item => // #EVT //#EF
-     (for {
+    (for {
       channel <- item.srcChannel
       items   <- channels.value get channel
       if !(items.value contains item)

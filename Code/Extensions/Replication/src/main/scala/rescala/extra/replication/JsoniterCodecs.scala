@@ -20,7 +20,6 @@ object JsoniterCodecs {
 
   implicit val SetCContextCodec: JsonValueCodec[Set[Dot]] = JsonCodecMaker.make
 
-
   implicit val DietCodec: JsonValueCodec[Diet[Long]] = new JsonValueCodec[Diet[Long]] {
     override def decodeValue(in: JsonReader, default: Diet[Long]): Diet[Long] = {
       var result = Diet.empty[Long]
@@ -88,8 +87,7 @@ object JsoniterCodecs {
 
   /** LastWriterWins */
   @nowarn("msg=never used")
-  implicit def LastWriterWinsStateCodec[A: JsonValueCodec]
-      : JsonValueCodec[CausalStore[Map[Dot, TimedVal[A]]]] =
+  implicit def LastWriterWinsStateCodec[A: JsonValueCodec]: JsonValueCodec[CausalStore[Map[Dot, TimedVal[A]]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   @nowarn("msg=never used")
@@ -112,8 +110,7 @@ object JsoniterCodecs {
 
   /** ORMap */
   @nowarn("msg=never used")
-  implicit def ORMapStateCodec[K: JsonValueCodec, V: JsonValueCodec]
-      : JsonValueCodec[CausalStore[Map[K, V]]] =
+  implicit def ORMapStateCodec[K: JsonValueCodec, V: JsonValueCodec]: JsonValueCodec[CausalStore[Map[K, V]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   @nowarn("msg=never used")
@@ -134,8 +131,10 @@ object JsoniterCodecs {
 
   /** RGA */
   @nowarn("msg=never used")
-  implicit def RGAStateCodec[E: JsonValueCodec]
-      : JsonValueCodec[CausalStore[(Epoche[Map[GListNode[TimedVal[Dot]], Elem[TimedVal[Dot]]]], Map[Dot, RGANode[E]])]] =
+  implicit def RGAStateCodec[E: JsonValueCodec]: JsonValueCodec[CausalStore[(
+      Epoche[Map[GListNode[TimedVal[Dot]], Elem[TimedVal[Dot]]]],
+      Map[Dot, RGANode[E]]
+  )]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   /** Rubis */

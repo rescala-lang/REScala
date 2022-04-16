@@ -44,9 +44,9 @@ final case class ReSwingValueValue[T](private val value: T) extends ReSwingValue
 }
 
 final case class ReSwingEventValue[T](private val value: Lazy[Event[T]]) extends ReSwingValue[T] {
-  protected val signal                        = Lazy { (value() || event()) latest latestValue }
-  private[reswing] def fixed                  = false
-  private[reswing] def get                    = latestValue
+  protected val signal       = Lazy { (value() || event()) latest latestValue }
+  private[reswing] def fixed = false
+  private[reswing] def get   = latestValue
   private[reswing] def use(setter: T => Unit) = {
     value() += { value => if (get != value) setter(value) }
     ()

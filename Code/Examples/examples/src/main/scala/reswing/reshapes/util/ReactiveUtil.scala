@@ -12,7 +12,9 @@ object ReactiveUtil {
 
     def apply[T](e: => Event[T]): Event[T] = {
       val ev = Evt[T]()
-      events += { () => e.observe(ev.fire); () }
+      events += { () =>
+        e.observe(ev.fire); ()
+      }
       ev
     }
 

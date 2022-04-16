@@ -138,7 +138,8 @@ object Pulse {
 
   /** wrap a pulse generating function to store eventual exceptions into an exceptional pulse */
   def tryCatch[P](f: => Pulse[P], onEmpty: Pulse[P] = Pulse.empty): Pulse[P] =
-    try f catch {
+    try f
+    catch {
       case ufe: ObservedException      => throw ufe
       case npe: NullPointerException   => throw npe
       case EmptySignalControlThrowable => onEmpty

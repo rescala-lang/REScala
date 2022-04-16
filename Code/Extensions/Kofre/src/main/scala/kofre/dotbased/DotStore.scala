@@ -110,7 +110,7 @@ object DotStore {
           val value = DotStore[A].merge(
             CausalStore(left.store.getOrElse(id, empty), left.context),
             CausalStore(right.store.getOrElse(id, empty), right.context)
-            )
+          )
           (id, value.store)
         }.filter { _._2 != empty }
           .toMap

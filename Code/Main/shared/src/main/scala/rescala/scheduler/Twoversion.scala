@@ -24,7 +24,7 @@ trait Twoversion extends Core {
       owner = token
     }
     def base(@nowarn token: Token): V = current
-    def get(token: Token): V  = { if (token eq owner) update else current }
+    def get(token: Token): V          = { if (token eq owner) update else current }
 
     def commit(r: V => V): Unit = {
       if (update != null) current = r(update)

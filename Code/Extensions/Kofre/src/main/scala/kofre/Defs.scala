@@ -16,7 +16,7 @@ object Defs {
   val random: Random = scala.util.Random()
 
   def predefined(s: String): Id = s
-  def zeroId: Id                  = ""
+  def zeroId: Id                = ""
 
   /** Generates unique identifiers for use by CRDTs */
   def genId(): Id =

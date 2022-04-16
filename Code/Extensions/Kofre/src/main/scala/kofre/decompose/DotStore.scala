@@ -116,8 +116,8 @@ object DotStore {
     override def dots(ds: DotMap[K, V]): Set[Dot] = ds.values.flatMap(DotStore[V].dots(_)).toSet
 
     override def mergePartial(
-                               left: CausalStore[DotMap[K, V]],
-                               right: CausalStore[DotMap[K, V]]
+        left: CausalStore[DotMap[K, V]],
+        right: CausalStore[DotMap[K, V]]
     ): DotMap[K, V] = {
       def mergeHelp(l: V, r: V): Option[V] = {
         val mergedVal = DotStore[V].mergePartial(CausalStore(l, left.context), CausalStore(r, right.context))
@@ -191,8 +191,10 @@ object DotStore {
     override def mergePartial(left: CausalStore[(A, B)], right: CausalStore[(A, B)]): (A, B) =
       (left, right) match {
         case (CausalStore((left1, left2), leftCContext), CausalStore((right1, right2), rightCContext)) =>
-          val stateMerged1 = DotStore[A].mergePartial(CausalStore(left1, leftCContext), CausalStore(right1, rightCContext))
-          val stateMerged2 = DotStore[B].mergePartial(CausalStore(left2, leftCContext), CausalStore(right2, rightCContext))
+          val stateMerged1 =
+            DotStore[A].mergePartial(CausalStore(left1, leftCContext), CausalStore(right1, rightCContext))
+          val stateMerged2 =
+            DotStore[B].mergePartial(CausalStore(left2, leftCContext), CausalStore(right2, rightCContext))
 
           (stateMerged1, stateMerged2)
       }

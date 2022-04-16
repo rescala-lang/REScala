@@ -4,7 +4,6 @@ import kofre.decompose.interfaces.RCounterInterface
 import kofre.decompose.interfaces.RCounterInterface.{RCounterCompanion, State}
 import kofre.decompose.{Delta, UIJDLattice}
 
-
 /** [[ReactiveCRDT Reactive]] implementation of [[rescala.extra.lattices.delta.interfaces.RCounterInterface RCounterInterface]]
   *
   * Instead of the class constructor, you should use the apply method of the companion object to create new instances.

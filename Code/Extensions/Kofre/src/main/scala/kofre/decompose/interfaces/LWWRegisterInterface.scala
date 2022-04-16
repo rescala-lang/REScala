@@ -7,7 +7,7 @@ object LWWRegisterInterface {
   type State[A] = MVRegisterInterface.State[TimedVal[A]]
 
   trait LWWRegisterCompanion {
-    type State[A] = LWWRegisterInterface.State[A]
+    type State[A]    = LWWRegisterInterface.State[A]
     type Embedded[A] = DotFun[TimedVal[A]]
   }
 

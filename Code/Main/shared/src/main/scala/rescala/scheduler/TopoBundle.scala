@@ -194,15 +194,19 @@ trait TopoBundle extends Core with ObserveBundle {
         afterCommitObservers: ListBuffer[Observation]
     ): Boolean = {
       var potentialGlitch = false
-      val dt = new ReevTicket[reactive.Value](creationTicket, reactive.state.value, new AccessHandler {
-        override def dynamicAccess(input: ReSource): input.Value = {
-          if (input.state.discovered && !input.state.done) {
-            potentialGlitch = true
+      val dt = new ReevTicket[reactive.Value](
+        creationTicket,
+        reactive.state.value,
+        new AccessHandler {
+          override def dynamicAccess(input: ReSource): input.Value = {
+            if (input.state.discovered && !input.state.done) {
+              potentialGlitch = true
+            }
+            input.state.value
           }
-          input.state.value
+          override def staticAccess(input: ReSource): input.Value = input.state.value
         }
-        override def staticAccess(input: ReSource): input.Value = input.state.value
-      })
+      )
       val reev = reactive.reevaluate(dt)
       reev.inputs().foreach { newDeps =>
         val incoming = reactive.state.incoming

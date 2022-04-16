@@ -37,7 +37,7 @@ class OperatorFusionTest extends FunSuite {
 
     var x  = 0
     val e  = api.Evt[Int]()
-    val e2 = e && (_  % 2 == 0)
+    val e2 = e && (_ % 2 == 0)
     val e3 = e2 && (_ % 3 == 0)
     assert(g.numNodes == 3, "Graph should contain 3 nodes before fusion")
 

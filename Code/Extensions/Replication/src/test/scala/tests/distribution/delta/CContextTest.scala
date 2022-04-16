@@ -65,7 +65,7 @@ class DietMapCContextTest extends AnyFreeSpec with ScalaCheckDrivenPropertyCheck
         case Dot(i, n) if i == id => n
       }
 
-      cc.max( id) match {
+      cc.max(id) match {
         case Some(Dot(i, c)) =>
           assert(
             i == id,

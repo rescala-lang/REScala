@@ -16,5 +16,5 @@ object GCounterInterface {
       def value(using QueryP): Int = current.valuesIterator.sum
 
       def inc()(using MutationIDP): C = Map(replicaID -> (current.getOrElse(replicaID, 0) + 1))
-  }
+    }
 }

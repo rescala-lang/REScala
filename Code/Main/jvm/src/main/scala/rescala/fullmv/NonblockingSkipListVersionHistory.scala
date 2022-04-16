@@ -19,6 +19,7 @@ case class Written[V](valueForSelf: V, valueForFuture: V) extends MaybeWritten[V
 
 trait FullMvStateBundle extends FullMVBundle {
   selfType: Mirror with TurnImplBundle with TaskBundle with SubsumableLockBundle =>
+
   /** A node version history datastructure
     *
     * @param init             the initial creating transaction

@@ -31,7 +31,7 @@ object RCounterInterface {
   type State = CausalStore[DotFun[(Int, Int)]]
 
   trait RCounterCompanion {
-    type State = RCounterInterface.State
+    type State    = RCounterInterface.State
     type Embedded = DotFun[(Int, Int)]
   }
 
@@ -44,7 +44,7 @@ object RCounterInterface {
     CausalStore(
       df.getOrElse(bottom.store),
       cc
-      )
+    )
   }
 
   def value: DeltaQuery[State, Int] = {
@@ -109,7 +109,7 @@ object RCounterInterface {
   * This counter was originally proposed by Baquera et al.
   * in "The problem with embedded CRDT counters and a solution", see [[https://dl.acm.org/doi/abs/10.1145/2911151.2911159?casa_token=D7n88K9dW7gAAAAA:m3WhHMFZxoCwGFk8DVoqJXBJpwJwrqKMLqtgKo_TSiwU_ErWgOZjo4UqYqDCb-bG3iJlXc_Ti7aB9w here]]
   */
-abstract class RCounterInterface[ Wrapper] extends CRDTInterface[RCounterInterface.State, Wrapper] {
+abstract class RCounterInterface[Wrapper] extends CRDTInterface[RCounterInterface.State, Wrapper] {
   def value: Int = query(RCounterInterface.value)
 
   def fresh(): Wrapper = mutate(RCounterInterface.fresh)

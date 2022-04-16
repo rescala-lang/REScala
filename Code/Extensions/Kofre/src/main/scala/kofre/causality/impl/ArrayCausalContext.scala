@@ -67,7 +67,7 @@ case class ArrayCausalContext(internal: Map[Id, ArrayRanges]) {
 object ArrayCausalContext {
   def single(replicaId: Id, time: Long): ArrayCausalContext = empty.add(replicaId, time)
 
-  val empty: ArrayCausalContext         = ArrayCausalContext(Map.empty)
+  val empty: ArrayCausalContext = ArrayCausalContext(Map.empty)
 
   def one(dot: Dot): ArrayCausalContext = empty.add(dot.replicaId, dot.time)
 
