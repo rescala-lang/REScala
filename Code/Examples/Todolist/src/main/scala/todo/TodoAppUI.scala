@@ -21,7 +21,6 @@ import todo.Codecs._
 import todo.Todolist.replicaId
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax
 
-
 class TodoAppUI(val storagePrefix: String) {
 
   implicit val stringCodec: JsonValueCodec[String] = JsonCodecMaker.make
@@ -65,8 +64,9 @@ class TodoAppUI(val storagePrefix: String) {
       Binding[ListRDT.State[TaskRef] => Unit]("tasklist")
     )
 
-    val tasksList: Signal[List[TaskRef]]     = tasksRDT.map { _.toList }
-    val tasksData: Signal[List[TaskData]]    = Signal.dynamic { tasksList.value.flatMap(_.task.value.read) }
+    val tasksList: Signal[List[TaskRef]] = tasksRDT.map { _.toList }
+    val tasksData: Signal[List[TaskData]] =
+      Signal.dynamic { tasksList.value.flatMap(l => new LWWRegisterSyntax(l.task.value).read) }
     val taskTags: Signal[List[TypedTag[LI]]] = Signal { tasksList.value.map(_.tag) }
 
     val largeheader = window.location.hash.substring(1)
