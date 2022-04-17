@@ -1,38 +1,26 @@
 package kofre.decompose.interfaces
 
 import kofre.decompose.*
-import kofre.syntax.{DeltaMutator, DeltaQuery}
-
-object TwoPSetInterface {
-  type State[E] = (Set[E], Set[E])
-
-  trait TwoPSetCompanion {
-    type State[E] = TwoPSetInterface.State[E]
-  }
-
-  private def deltaState[E](
-      add: Set[E] = Set.empty[E],
-      remove: Set[E] = Set.empty[E]
-  ): State[E] = (add, remove)
-
-  def elements[E]: DeltaQuery[State[E], Set[E]] = {
-    case (add, remove) => add diff remove
-  }
-
-  def insert[E](element: E): DeltaMutator[State[E]] = (_, _) => deltaState(add = Set(element))
-
-  def remove[E](element: E): DeltaMutator[State[E]] = (_, _) => deltaState(remove = Set(element))
-}
+import kofre.decompose.interfaces.PNCounterModule.PNCounter
+import kofre.syntax.{DeltaMutator, DeltaQuery, OpsSyntaxHelper}
 
 /** A TwoPSet (Two-Phase Set) is a Delta CRDT modeling a set.
   *
   * The set is modeled as two grow-only sets, a set of added elements and a set of removed elements. Because of this,
   * elements that were removed from the set once can never be re-added.
   */
-abstract class TwoPSetInterface[E, Wrapper] extends CRDTInterface[TwoPSetInterface.State[E], Wrapper] {
-  def elements: Set[E] = query(TwoPSetInterface.elements)
+object TwoPSetInterface {
+  type TwoPSet[E] = (Set[E], Set[E])
 
-  def insert(element: E): Wrapper = mutate(TwoPSetInterface.insert(element))
+  implicit class TwoPSetSyntax[C, E](container: C) extends OpsSyntaxHelper[C, TwoPSet[E]](container) {
 
-  def remove(element: E): Wrapper = mutate(TwoPSetInterface.remove(element))
+    def elements(using QueryP): Set[E] = {
+      val (add, remove) = current
+      add diff remove
+    }
+
+    def insert(element: E)(using MutationP): C = (Set(element), Set.empty)
+
+    def remove(element: E)(using MutationP): C = (Set.empty, Set(element))
+  }
 }

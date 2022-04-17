@@ -1,8 +1,8 @@
 package rescala.extra.lattices.delta.crdt.basic
 
-import kofre.decompose.interfaces.RubisInterface
-import kofre.decompose.interfaces.RubisInterface.{RubisCompanion, State}
-import kofre.decompose.{UIJDLattice}
+import kofre.protocol.RubisInterface.{RubisCompanion, State}
+import kofre.decompose.UIJDLattice
+import kofre.protocol.RubisInterface
 
 import rescala.extra.replication.AntiEntropy
 

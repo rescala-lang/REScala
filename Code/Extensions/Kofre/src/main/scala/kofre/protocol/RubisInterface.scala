@@ -1,11 +1,12 @@
-package kofre.decompose.interfaces
+package kofre.protocol
 
 import kofre.decompose.*
-import kofre.syntax.{AllPermissionsCtx, DeltaMutator}
-import kofre.protocol.AuctionInterface.Bid.User
-import kofre.decompose.interfaces.RubisInterface.{AID, UserAsUIJDLattice}
+import kofre.decompose.interfaces.AWSetInterface
 import kofre.decompose.interfaces.AWSetInterface.AWSetSyntax
 import kofre.protocol.AuctionInterface
+import kofre.protocol.AuctionInterface.Bid.User
+import kofre.protocol.RubisInterface.{AID, UserAsUIJDLattice}
+import kofre.syntax.{AllPermissionsCtx, DeltaMutator}
 
 object RubisInterface {
   type AID = String
