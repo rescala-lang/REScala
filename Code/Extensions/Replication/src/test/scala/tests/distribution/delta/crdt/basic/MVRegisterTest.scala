@@ -2,7 +2,8 @@ package tests.distribution.delta.crdt.basic
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import kofre.decompose.{UIJDLattice}
+import kofre.decompose.UIJDLattice
+import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -10,6 +11,7 @@ import rescala.extra.lattices.delta.JsoniterCodecs._
 import rescala.extra.lattices.delta.crdt.basic._
 import rescala.extra.replication.AntiEntropy
 import tests.distribution.delta.crdt.basic.NetworkGenerators._
+import kofre.decompose.interfaces.MVRegisterInterface.MVRegisterSyntax
 
 import scala.collection.mutable
 import scala.util.Random
@@ -18,16 +20,16 @@ object MVRegisterGenerators {
   def genMVRegister[A: UIJDLattice](implicit
       a: Arbitrary[A],
       cA: JsonValueCodec[A],
-  ): Gen[MVRegister[A]] = for {
+  ): Gen[AntiEntropyCRDT[MVRegister[A]]] = for {
     values <- Gen.containerOf[List, A](a.arbitrary)
     nClear <- Gen.posNum[Short]
   } yield {
     val network = new Network(0, 0, 0)
-    val ae      = new AntiEntropy[MVRegister.State[A]]("a", network, mutable.Buffer())
+    val ae      = new AntiEntropy[MVRegister[A]]("a", network, mutable.Buffer())
 
     val ops = Random.shuffle(values.indices ++ List.fill(nClear.toInt)(-1))
 
-    ops.foldLeft(MVRegister(ae)) {
+    ops.foldLeft(AntiEntropyCRDT[MVRegister[A]](ae)) {
       case (r, -1) => r.clear()
       case (r, n)  => r.write(values(n))
     }
@@ -36,7 +38,7 @@ object MVRegisterGenerators {
   implicit def arbMVRegister[A: UIJDLattice](implicit
       a: Arbitrary[A],
       cA: JsonValueCodec[A],
-  ): Arbitrary[MVRegister[A]] =
+  ): Arbitrary[AntiEntropyCRDT[MVRegister[A]]] =
     Arbitrary(genMVRegister)
 }
 
@@ -45,7 +47,7 @@ class MVRegisterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
   implicit val intCodec: JsonValueCodec[Int] = JsonCodecMaker.make
 
-  "write" in forAll { (reg: MVRegister[Int], v: Int) =>
+  "write" in forAll { (reg: AntiEntropyCRDT[MVRegister[Int]], v: Int) =>
     val written = reg.write(v)
 
     assert(
@@ -54,7 +56,7 @@ class MVRegisterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     )
   }
 
-  "clear" in forAll { reg: MVRegister[Int] =>
+  "clear" in forAll { reg: AntiEntropyCRDT[MVRegister[Int]] =>
     val cleared = reg.clear()
 
     assert(
@@ -66,11 +68,11 @@ class MVRegisterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent write" in forAll { (vA: Int, vB: Int) =>
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropy[MVRegister.State[Int]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[MVRegister.State[Int]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[MVRegister[Int]]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[MVRegister[Int]]("b", network, mutable.Buffer("a"))
 
-    val ra0 = MVRegister[Int](aea).write(vA)
-    val rb0 = MVRegister[Int](aeb).write(vB)
+    val ra0 = AntiEntropyCRDT[MVRegister[Int]](aea).write(vA)
+    val rb0 = AntiEntropyCRDT[MVRegister[Int]](aeb).write(vB)
 
     AntiEntropy.sync(aea, aeb)
 
@@ -90,11 +92,11 @@ class MVRegisterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent write/clear" in forAll { v: Int =>
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropy[MVRegister.State[Int]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[MVRegister.State[Int]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[MVRegister[Int]]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[MVRegister[Int]]("b", network, mutable.Buffer("a"))
 
-    val ra0 = MVRegister[Int](aea).write(v)
-    val rb0 = MVRegister[Int](aeb).clear()
+    val ra0 = AntiEntropyCRDT[MVRegister[Int]](aea).write(v)
+    val rb0 = AntiEntropyCRDT[MVRegister[Int]](aeb).clear()
 
     AntiEntropy.sync(aea, aeb)
 
@@ -113,17 +115,17 @@ class MVRegisterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
   "convergence" in forAll {
     (valuesA: List[Int], nClearA: Short, valuesB: List[Int], nClearB: Short, network: Network) =>
-      val aea = new AntiEntropy[MVRegister.State[Int]]("a", network, mutable.Buffer("b"))
-      val aeb = new AntiEntropy[MVRegister.State[Int]]("b", network, mutable.Buffer("a"))
+      val aea = new AntiEntropy[MVRegister[Int]]("a", network, mutable.Buffer("b"))
+      val aeb = new AntiEntropy[MVRegister[Int]]("b", network, mutable.Buffer("a"))
 
       val opsA = Random.shuffle(valuesA.indices ++ List.fill(nClearA.toInt)(-1))
       val opsB = Random.shuffle(valuesB.indices ++ List.fill(nClearB.toInt)(-1))
 
-      val ra0 = opsA.foldLeft(MVRegister(aea)) {
+      val ra0 = opsA.foldLeft(AntiEntropyCRDT[MVRegister[Int]](aea)) {
         case (r, -1) => r.clear()
         case (r, n)  => r.write(valuesA(n))
       }
-      val rb0 = opsB.foldLeft(MVRegister(aeb)) {
+      val rb0 = opsB.foldLeft(AntiEntropyCRDT[MVRegister[Int]](aeb)) {
         case (r, -1) => r.clear()
         case (r, n)  => r.write(valuesB(n))
       }

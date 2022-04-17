@@ -2,6 +2,7 @@ package tests.distribution.delta.crdt.basic
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
+import kofre.decompose.interfaces.TwoPSetInterface.TwoPSet
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -9,18 +10,19 @@ import rescala.extra.lattices.delta.JsoniterCodecs._
 import rescala.extra.lattices.delta.crdt.basic._
 import rescala.extra.replication.AntiEntropy
 import tests.distribution.delta.crdt.basic.NetworkGenerators._
+import kofre.decompose.interfaces.TwoPSetInterface.TwoPSetSyntax
 
 import scala.collection.mutable
 
 object TwoPSetGenerators {
-  def genTwoPSet[E: Arbitrary](implicit c: JsonValueCodec[E]): Gen[TwoPSet[E]] = for {
+  def genTwoPSet[E: Arbitrary](implicit c: JsonValueCodec[E]): Gen[AntiEntropyCRDT[TwoPSet[E]]] = for {
     added   <- Gen.containerOf[List, E](Arbitrary.arbitrary[E])
     n       <- Gen.choose(0, added.size)
     removed <- Gen.pick(n, added)
   } yield {
     val network = new Network(0, 0, 0)
-    val ae      = new AntiEntropy[TwoPSet.State[E]]("a", network, mutable.Buffer())
-    val setAdded = added.foldLeft(TwoPSet(ae)) {
+    val ae      = new AntiEntropy[TwoPSet[E]]("a", network, mutable.Buffer())
+    val setAdded = added.foldLeft(AntiEntropyCRDT[TwoPSet[E]](ae)) {
       case (set, e) => set.insert(e)
     }
     removed.foldLeft(setAdded) {
@@ -28,7 +30,7 @@ object TwoPSetGenerators {
     }
   }
 
-  implicit def arbTwoPSet[E: Arbitrary](implicit c: JsonValueCodec[E]): Arbitrary[TwoPSet[E]] = Arbitrary(genTwoPSet)
+  implicit def arbTwoPSet[E: Arbitrary](implicit c: JsonValueCodec[E]): Arbitrary[AntiEntropyCRDT[TwoPSet[E]]] = Arbitrary(genTwoPSet)
 }
 
 class TowPSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
@@ -38,9 +40,9 @@ class TowPSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
   "insert" in forAll { (insert: List[Int], remove: List[Int], e: Int) =>
     val network = new Network(0, 0, 0)
-    val ae      = new AntiEntropy[TwoPSet.State[Int]]("a", network, mutable.Buffer())
+    val ae      = new AntiEntropy[TwoPSet[Int]]("a", network, mutable.Buffer())
 
-    val setInserted = insert.foldLeft(TwoPSet[Int](ae)) {
+    val setInserted = insert.foldLeft(AntiEntropyCRDT[TwoPSet[Int]](ae)) {
       case (s, e) => s.insert(e)
     }
 
@@ -56,7 +58,7 @@ class TowPSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     )
   }
 
-  "remove" in forAll { (set: TwoPSet[Int], e: Int) =>
+  "remove" in forAll { (set: AntiEntropyCRDT[TwoPSet[Int]], e: Int) =>
     val removed = set.remove(e)
 
     assert(
@@ -68,16 +70,16 @@ class TowPSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent insert/remove" in forAll { (addOrRemoveA: Either[Int, Int], addOrRemoveB: Either[Int, Int]) =>
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropy[TwoPSet.State[Int]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[TwoPSet.State[Int]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[TwoPSet[Int]]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[TwoPSet[Int]]("b", network, mutable.Buffer("a"))
 
     val sa0 = addOrRemoveA match {
-      case Left(e)  => TwoPSet(aea).insert(e)
-      case Right(e) => TwoPSet(aea).remove(e)
+      case Left(e)  => AntiEntropyCRDT[TwoPSet[Int]](aea).insert(e)
+      case Right(e) => AntiEntropyCRDT[TwoPSet[Int]](aea).remove(e)
     }
     val sb0 = addOrRemoveB match {
-      case Left(e)  => TwoPSet(aeb).insert(e)
-      case Right(e) => TwoPSet(aeb).remove(e)
+      case Left(e)  => AntiEntropyCRDT[TwoPSet[Int]](aeb).insert(e)
+      case Right(e) => AntiEntropyCRDT[TwoPSet[Int]](aeb).remove(e)
     }
 
     AntiEntropy.sync(aea, aeb)
@@ -102,16 +104,16 @@ class TowPSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
   "convergence" in forAll {
     (insertA: List[Int], removeA: List[Int], insertB: List[Int], removeB: List[Int], network: Network) =>
-      val aea = new AntiEntropy[TwoPSet.State[Int]]("a", network, mutable.Buffer("b"))
-      val aeb = new AntiEntropy[TwoPSet.State[Int]]("b", network, mutable.Buffer("a"))
+      val aea = new AntiEntropy[TwoPSet[Int]]("a", network, mutable.Buffer("b"))
+      val aeb = new AntiEntropy[TwoPSet[Int]]("b", network, mutable.Buffer("a"))
 
-      val insertedA = insertA.foldLeft(TwoPSet[Int](aea)) {
+      val insertedA = insertA.foldLeft(AntiEntropyCRDT[TwoPSet[Int]](aea)) {
         case (s, e) => s.insert(e)
       }
       val sa0 = removeA.foldLeft(insertedA) {
         case (s, e) => s.remove(e)
       }
-      val insertedB = insertB.foldLeft(TwoPSet[Int](aeb)) {
+      val insertedB = insertB.foldLeft(AntiEntropyCRDT[TwoPSet[Int]](aeb)) {
         case (s, e) => s.insert(e)
       }
       val sb0 = removeB.foldLeft(insertedB) {

@@ -10,7 +10,9 @@ import rescala.extra.lattices.delta.JsoniterCodecs._
 import rescala.extra.lattices.delta.crdt.basic._
 import rescala.extra.replication.AntiEntropy
 import kofre.decompose.interfaces.AWSetInterface.AWSetSyntax
+import kofre.decompose.interfaces.ORMapInterface.ORMap
 import kofre.syntax.AllPermissionsCtx
+import kofre.decompose.interfaces.ORMapInterface.ORMapSyntax
 
 import scala.collection.mutable
 
@@ -20,7 +22,7 @@ class ORMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "mutateKey/queryKey" in { (add: List[Int], remove: List[Int], k: Int) =>
     val network = new Network(0, 0, 0)
     val aea =
-      new AntiEntropy[ORMap.State[Int, AWSetInterface.Embedded[Int]]]("a", network, mutable.Buffer())
+      new AntiEntropy[ORMap[Int, AWSetInterface.Embedded[Int]]]("a", network, mutable.Buffer())
     val aeb = new AntiEntropy[AWSet[Int]]("b", network, mutable.Buffer())
 
     val set = {
@@ -29,21 +31,22 @@ class ORMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
       }
 
       remove.foldLeft(added) {
-        case (s, e) => s.remove(e)
+        case (s, e) => new AWSetSyntax(s).remove(e)
       }
     }
 
     val map = {
-      val added = add.foldLeft(ORMap[Int, AWSetInterface.Embedded[Int]](aea)) {
-        case (m, e) => m.mutateKey(k, (id, st) => st.add(e)(AllPermissionsCtx.withID(id)))
+      val added = add.foldLeft(AntiEntropyCRDT[ORMap[Int, AWSetInterface.Embedded[Int]]](aea)) {
+        case (m, e) =>
+          m.mutateKey(k, (id, st) => st.add(e)(AllPermissionsCtx.withID(id)))
       }
 
       remove.foldLeft(added) {
-        case (m, e) => m.mutateKey(k, (id, st) => st.remove(e)(AllPermissionsCtx.withID(id)))
+        case (m, e) => m.mutateKey(k, (id, st) => st.remove(e)(AllPermissionsCtx.withID(id), implicitly))
       }
     }
 
-    val mapElements = map.queryKey(k, (st) => st.elements)
+    val mapElements = map.queryKey(k).elements
 
     assert(
       mapElements == set.elements,
@@ -54,24 +57,24 @@ class ORMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "remove" in { (add: List[Int], remove: List[Int], k: Int) =>
     val network = new Network(0, 0, 0)
     val aea =
-      new AntiEntropy[ORMap.State[Int, AWSetInterface.Embedded[Int]]]("a", network, mutable.Buffer())
+      new AntiEntropy[ORMap[Int, AWSetInterface.Embedded[Int]]]("a", network, mutable.Buffer())
     val aeb = new AntiEntropy[AWSet[Int]]("b", network, mutable.Buffer())
 
     val empty = AntiEntropyCRDT[AWSet[Int]](aeb)
 
     val map = {
-      val added = add.foldLeft(ORMap[Int, AWSetInterface.Embedded[Int]](aea)) {
+      val added = add.foldLeft(AntiEntropyCRDT[ORMap[Int, AWSetInterface.Embedded[Int]]](aea)) {
         case (m, e) => m.mutateKey(k, (id, st) => st.add(e)(AllPermissionsCtx.withID(id)))
       }
 
       remove.foldLeft(added) {
-        case (m, e) => m.mutateKey(k, (id, st) => st.remove(e)(AllPermissionsCtx.withID(id)))
+        case (m, e) => m.mutateKey(k, (id, st) => st.remove(e)(AllPermissionsCtx.withID(id), implicitly))
       }
     }
 
     val removed = map.remove(k)
 
-    val queryResult = removed.queryKey(k, _.elements)
+    val queryResult = removed.queryKey(k).elements
 
     assert(
       queryResult == empty.elements,

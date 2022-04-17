@@ -2,6 +2,7 @@ package tests.distribution.delta.crdt.basic
 
 import com.github.plokhotnyuk.jsoniter_scala.core._
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
+import kofre.decompose.interfaces.GSetInterface.GSet
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -9,22 +10,23 @@ import rescala.extra.lattices.delta.JsoniterCodecs._
 import rescala.extra.lattices.delta.crdt.basic._
 import rescala.extra.replication.AntiEntropy
 import tests.distribution.delta.crdt.basic.NetworkGenerators._
+import kofre.decompose.interfaces.GSetInterface.GSetSyntax
 
 import scala.collection.mutable
 
 object GSetGenerators {
-  def genGSet[E: JsonValueCodec](implicit e: Arbitrary[E]): Gen[GSet[E]] = for {
+  def genGSet[E: JsonValueCodec](implicit e: Arbitrary[E]): Gen[AntiEntropyCRDT[GSet[E]]] = for {
     elements <- Gen.containerOf[List, E](e.arbitrary)
   } yield {
     val network = new Network(0, 0, 0)
-    val ae      = new AntiEntropy[GSet.State[E]]("a", network, mutable.Buffer())
+    val ae      = new AntiEntropy[GSet[E]]("a", network, mutable.Buffer())
 
-    elements.foldLeft(GSet[E](ae)) {
+    elements.foldLeft(AntiEntropyCRDT[GSet[E]](ae)) {
       case (set, e) => set.insert(e)
     }
   }
 
-  implicit def arbGSet[E: JsonValueCodec](implicit e: Arbitrary[E]): Arbitrary[GSet[E]] = Arbitrary(genGSet)
+  implicit def arbGSet[E: JsonValueCodec](implicit e: Arbitrary[E]): Arbitrary[AntiEntropyCRDT[GSet[E]]] = Arbitrary(genGSet)
 }
 
 class GSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
@@ -32,7 +34,7 @@ class GSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
   implicit val intCodec: JsonValueCodec[Int] = JsonCodecMaker.make
 
-  "insert" in forAll { (set: GSet[Int], e: Int) =>
+  "insert" in forAll { (set: AntiEntropyCRDT[GSet[Int]], e: Int) =>
     val setInserted = set.insert(e)
 
     assert(
@@ -44,11 +46,11 @@ class GSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent insert" in forAll { (e: Int, e1: Int, e2: Int) =>
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropy[GSet.State[Int]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[GSet.State[Int]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[GSet[Int]]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[GSet[Int]]("b", network, mutable.Buffer("a"))
 
-    val sa0 = GSet[Int](aea).insert(e)
-    val sb0 = GSet[Int](aeb).insert(e)
+    val sa0 = AntiEntropyCRDT[GSet[Int]](aea).insert(e)
+    val sb0 = AntiEntropyCRDT[GSet[Int]](aeb).insert(e)
 
     AntiEntropy.sync(aea, aeb)
 
@@ -83,13 +85,13 @@ class GSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   }
 
   "convergence" in forAll { (insertedA: List[Int], insertedB: List[Int], network: Network) =>
-    val aea = new AntiEntropy[GSet.State[Int]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[GSet.State[Int]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[GSet[Int]]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[GSet[Int]]("b", network, mutable.Buffer("a"))
 
-    val sa0 = insertedA.foldLeft(GSet[Int](aea)) {
+    val sa0 = insertedA.foldLeft(AntiEntropyCRDT[GSet[Int]](aea)) {
       case (set, e) => set.insert(e)
     }
-    val sb0 = insertedB.foldLeft(GSet[Int](aeb)) {
+    val sb0 = insertedB.foldLeft(AntiEntropyCRDT[GSet[Int]](aeb)) {
       case (set, e) => set.insert(e)
     }
 

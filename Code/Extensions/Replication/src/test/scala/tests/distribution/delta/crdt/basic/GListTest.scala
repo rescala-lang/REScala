@@ -2,7 +2,7 @@ package tests.distribution.delta.crdt.basic
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import kofre.decompose.interfaces.GListInterface.GListAsUIJDLattice
+import kofre.decompose.interfaces.GListInterface.{GList, GListAsUIJDLattice}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -14,18 +14,18 @@ import tests.distribution.delta.crdt.basic.NetworkGenerators._
 import scala.collection.mutable
 
 object GListGenerators {
-  def genGList[E: JsonValueCodec](implicit e: Arbitrary[E]): Gen[GList[E]] = for {
+  def genGList[E: JsonValueCodec](implicit e: Arbitrary[E]): Gen[AntiEntropyCRDT[GList[E]]] = for {
     elems <- Gen.containerOf[List, E](e.arbitrary)
   } yield {
     val network = new Network(0, 0, 0)
-    val ae      = new AntiEntropy[GList.State[E]]("a", network, mutable.Buffer())
+    val ae      = new AntiEntropy[GList[E]]("a", network, mutable.Buffer())
 
-    elems.foldLeft(GList(ae)) {
+    elems.foldLeft(AntiEntropyCRDT[GList[E]](ae)) {
       case (list, el) => list.insert(0, el)
     }
   }
 
-  implicit def arbGList[E: JsonValueCodec](implicit e: Arbitrary[E]): Arbitrary[GList[E]] = Arbitrary(genGList)
+  implicit def arbGList[E: JsonValueCodec](implicit e: Arbitrary[E]): Arbitrary[AntiEntropyCRDT[GList[E]]] = Arbitrary(genGList)
 }
 
 class GListTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
@@ -33,7 +33,7 @@ class GListTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
   implicit val IntCodec: JsonValueCodec[Int] = JsonCodecMaker.make
 
-  "size, toList, read" in forAll { (list: GList[Int], readIdx: Int) =>
+  "size, toList, read" in forAll { (list: AntiEntropyCRDT[GList[Int]], readIdx: Int) =>
     val l = list.toList
 
     assert(
@@ -46,7 +46,7 @@ class GListTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     )
   }
 
-  "insert" in forAll { (list: GList[Int], n: Int, e: Int) =>
+  "insert" in forAll { (list: AntiEntropyCRDT[GList[Int]], n: Int, e: Int) =>
     val l = list.toList
 
     val inserted = list.insert(n, e)
@@ -74,7 +74,7 @@ class GListTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     }
   }
 
-  "toLazyList" in forAll { (list: GList[Int]) =>
+  "toLazyList" in forAll { (list: AntiEntropyCRDT[GList[Int]]) =>
     val l     = list.toList
     val lazyl = list.toLazyList.toList
 
@@ -87,15 +87,15 @@ class GListTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent insert" in forAll { (base: List[Int], n1: Int, e1: Int, n2: Int, e2: Int) =>
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropy[GList.State[Int]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[GList.State[Int]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[GList[Int]]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[GList[Int]]("b", network, mutable.Buffer("a"))
 
-    val la0 = base.reverse.foldLeft(GList(aea)) {
+    val la0 = base.reverse.foldLeft(AntiEntropyCRDT[GList[Int]](aea)) {
       case (l, e) => l.insert(0, e)
     }
 
     AntiEntropy.sync(aea, aeb)
-    val lb0 = GList(aeb).processReceivedDeltas()
+    val lb0 = AntiEntropyCRDT[GList[Int]](aeb).processReceivedDeltas()
 
     val size = base.size
     val idx1 = if (size == 0) 0 else math.floorMod(n1, size)
@@ -123,16 +123,16 @@ class GListTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   }
 
   "convergence" in forAll { (base: List[Int], insertedA: List[Int], insertedB: List[Int], network: Network) =>
-    val aea = new AntiEntropy[GList.State[Int]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[GList.State[Int]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[GList[Int]]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[GList[Int]]("b", network, mutable.Buffer("a"))
 
-    val la0 = base.reverse.foldLeft(GList(aea)) {
+    val la0 = base.reverse.foldLeft(AntiEntropyCRDT[GList[Int]](aea)) {
       case (l, e) => l.insert(0, e)
     }
     network.startReliablePhase()
     AntiEntropy.sync(aea, aeb)
     network.endReliablePhase()
-    val lb0 = GList(aeb).processReceivedDeltas()
+    val lb0 = AntiEntropyCRDT[GList[Int]](aeb).processReceivedDeltas()
 
     val la1 = insertedA.foldLeft(la0) { (l, e) => l.insert(e, e) }
     val lb1 = insertedB.foldLeft(lb0) { (l, e) => l.insert(e, e) }

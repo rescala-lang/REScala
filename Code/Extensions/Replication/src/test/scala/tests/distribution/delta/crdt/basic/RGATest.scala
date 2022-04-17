@@ -6,10 +6,11 @@ import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.lattices.delta.JsoniterCodecs._
-import rescala.extra.lattices.delta.crdt.basic.RGA._
 import rescala.extra.lattices.delta.crdt.basic._
 import rescala.extra.replication.AntiEntropy
 import tests.distribution.delta.crdt.basic.NetworkGenerators._
+import kofre.decompose.interfaces.RGAInterface.RGA
+import kofre.decompose.interfaces.RGAInterface.RGASyntax
 
 import scala.collection.mutable
 
@@ -17,9 +18,9 @@ object RGAGenerators {
   def makeRGA[E](
       inserted: List[(Int, E)],
       removed: List[Int],
-      ae: AntiEntropy[RGA.State[E]]
-  ): RGA[E] = {
-    val afterInsert = inserted.foldLeft(RGA(ae)) {
+      ae: AntiEntropy[RGA[E]]
+  ): AntiEntropyCRDT[RGA[E]] = {
+    val afterInsert = inserted.foldLeft(AntiEntropyCRDT[RGA[E]](ae)) {
       case (rga, (i, e)) => rga.insert(i, e)
     }
 
@@ -28,7 +29,7 @@ object RGAGenerators {
     }
   }
 
-  def genRGA[E: JsonValueCodec](implicit e: Arbitrary[E]): Gen[RGA[E]] = for {
+  def genRGA[E: JsonValueCodec](implicit e: Arbitrary[E]): Gen[AntiEntropyCRDT[RGA[E]]] = for {
     nInserted       <- Arbitrary.arbitrary[Byte].map(_.toInt.abs)
     insertedIndices <- Gen.containerOfN[List, Int](nInserted, Arbitrary.arbitrary[Int])
     insertedValues  <- Gen.containerOfN[List, E](nInserted, e.arbitrary)
@@ -36,14 +37,14 @@ object RGAGenerators {
   } yield {
     val network = new Network(0, 0, 0)
 
-    val ae = new AntiEntropy[RGA.State[E]]("a", network, mutable.Buffer())
+    val ae = new AntiEntropy[RGA[E]]("a", network, mutable.Buffer())
 
     makeRGA(insertedIndices zip insertedValues, removed, ae)
   }
 
   implicit def arbRGA[E: JsonValueCodec](implicit
       e: Arbitrary[E],
-  ): Arbitrary[RGA[E]] =
+  ): Arbitrary[AntiEntropyCRDT[RGA[E]]] =
     Arbitrary(genRGA)
 }
 
@@ -52,7 +53,7 @@ class RGATest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
   implicit val IntCodec: JsonValueCodec[Int] = JsonCodecMaker.make
 
-  "size, toList, read" in forAll { (rga: RGA[Int], readIdx: Int) =>
+  "size, toList, read" in forAll { (rga: AntiEntropyCRDT[RGA[Int]], readIdx: Int) =>
     val listInitial = rga.toList
 
     assert(
@@ -66,7 +67,7 @@ class RGATest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     )
   }
 
-  "insert" in forAll { (rga: RGA[Int], insertIdx: Int, insertValue: Int) =>
+  "insert" in forAll { (rga: AntiEntropyCRDT[RGA[Int]], insertIdx: Int, insertValue: Int) =>
     val inserted = rga.insert(insertIdx, insertValue)
 
     assert(
@@ -79,7 +80,7 @@ class RGATest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     )
   }
 
-  "delete" in forAll { (rga: RGA[Int], deleteIdx: Int) =>
+  "delete" in forAll { (rga: AntiEntropyCRDT[RGA[Int]], deleteIdx: Int) =>
     val deleted = rga.delete(deleteIdx)
 
     assert(
@@ -92,7 +93,7 @@ class RGATest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     )
   }
 
-  "update" in forAll { (rga: RGA[Int], updateIdx: Int, updateValue: Int) =>
+  "update" in forAll { (rga: AntiEntropyCRDT[RGA[Int]], updateIdx: Int, updateValue: Int) =>
     val updated = rga.update(updateIdx, updateValue)
 
     assert(
@@ -113,12 +114,12 @@ class RGATest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     (inserted: List[(Int, Int)], removed: List[Int], n1: Int, e1: Int, n2: Int, e2: Int) =>
       val network = new Network(0, 0, 0)
 
-      val aea = new AntiEntropy[RGA.State[Int]]("a", network, mutable.Buffer("b"))
-      val aeb = new AntiEntropy[RGA.State[Int]]("b", network, mutable.Buffer("a"))
+      val aea = new AntiEntropy[RGA[Int]]("a", network, mutable.Buffer("b"))
+      val aeb = new AntiEntropy[RGA[Int]]("b", network, mutable.Buffer("a"))
 
       val la0 = makeRGA(inserted, removed, aea)
       AntiEntropy.sync(aea, aeb)
-      val lb0 = RGA(aeb).processReceivedDeltas()
+      val lb0 = AntiEntropyCRDT[RGA[Int]](aeb).processReceivedDeltas()
 
       val size = la0.size
       val idx1 = if (size == 0) 0 else math.floorMod(n1, size)
@@ -148,12 +149,12 @@ class RGATest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent delete" in forAll { (inserted: List[(Int, Int)], removed: List[Int], n: Int, n1: Int, n2: Int) =>
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropy[RGA.State[Int]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[RGA.State[Int]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[RGA[Int]]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[RGA[Int]]("b", network, mutable.Buffer("a"))
 
     val la0 = makeRGA(inserted, removed, aea)
     AntiEntropy.sync(aea, aeb)
-    val lb0 = RGA(aeb).processReceivedDeltas()
+    val lb0 = AntiEntropyCRDT[RGA[Int]](aeb).processReceivedDeltas()
 
     val idx = if (la0.size == 0) 0 else math.floorMod(n, la0.size)
 
@@ -199,12 +200,12 @@ class RGATest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent insert update" in forAll { (inserted: List[(Int, Int)], removed: List[Int], n: Int, e1: Int, e2: Int) =>
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropy[RGA.State[Int]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[RGA.State[Int]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[RGA[Int]]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[RGA[Int]]("b", network, mutable.Buffer("a"))
 
     val la0 = makeRGA(inserted, removed, aea)
     AntiEntropy.sync(aea, aeb)
-    val lb0 = RGA(aeb).processReceivedDeltas()
+    val lb0 = AntiEntropyCRDT[RGA[Int]](aeb).processReceivedDeltas()
 
     val idx = if (la0.size == 0) 0 else math.floorMod(n, la0.size)
 
@@ -226,12 +227,12 @@ class RGATest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent insert delete" in forAll { (inserted: List[(Int, Int)], removed: List[Int], n: Int, e: Int) =>
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropy[RGA.State[Int]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[RGA.State[Int]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[RGA[Int]]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[RGA[Int]]("b", network, mutable.Buffer("a"))
 
     val la0 = makeRGA(inserted, removed, aea)
     AntiEntropy.sync(aea, aeb)
-    val lb0 = RGA(aeb).processReceivedDeltas()
+    val lb0 = AntiEntropyCRDT[RGA[Int]](aeb).processReceivedDeltas()
 
     val idx = if (la0.size == 0) 0 else math.floorMod(n, la0.size)
 
@@ -253,12 +254,12 @@ class RGATest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent update delete" in forAll { (inserted: List[(Int, Int)], removed: List[Int], n: Int, e: Int) =>
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropy[RGA.State[Int]]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[RGA.State[Int]]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[RGA[Int]]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[RGA[Int]]("b", network, mutable.Buffer("a"))
 
     val la0 = makeRGA(inserted, removed, aea)
     AntiEntropy.sync(aea, aeb)
-    val lb0 = RGA(aeb).processReceivedDeltas()
+    val lb0 = AntiEntropyCRDT[RGA[Int]](aeb).processReceivedDeltas()
 
     val idx = if (la0.size == 0) 0 else math.floorMod(n, la0.size)
 
@@ -285,14 +286,14 @@ class RGATest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
         network: Network
     ) =>
       {
-        val aea = new AntiEntropy[RGA.State[Int]]("a", network, mutable.Buffer("b"))
-        val aeb = new AntiEntropy[RGA.State[Int]]("b", network, mutable.Buffer("a"))
+        val aea = new AntiEntropy[RGA[Int]]("a", network, mutable.Buffer("b"))
+        val aeb = new AntiEntropy[RGA[Int]]("b", network, mutable.Buffer("a"))
 
         val la0 = makeRGA(inserted, removed, aea)
         network.startReliablePhase()
         AntiEntropy.sync(aea, aeb)
         network.endReliablePhase()
-        val lb0 = RGA(aeb).processReceivedDeltas()
+        val lb0 = AntiEntropyCRDT[RGA[Int]](aeb).processReceivedDeltas()
 
         val la1 = {
           val inserted = insertedAB._1.foldLeft(la0) {

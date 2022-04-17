@@ -34,19 +34,19 @@ object ORMapInterface {
 
   private def deltaState[K, V: DotStore]: DeltaStateFactory[K, V] = new DeltaStateFactory[K, V]
 
-  implicit class ORMapSyntax[C, K, V: DotStore](container: C)(using ArdtOpsContains[C, ORMap[K, V]])
+  implicit class ORMapSyntax[C, K, V](container: C)(using ArdtOpsContains[C, ORMap[K, V]])
       extends OpsSyntaxHelper[C, ORMap[K, V]](container) {
 
     def contains(k: K)(using QueryP): Boolean = current.store.contains(k)
 
-    def queryKey[A](k: K)(using QueryP): CausalStore[V] = {
+    def queryKey[A](k: K)(using QueryP, DotStore[V]): CausalStore[V] = {
       CausalStore(current.store.getOrElse(k, DotStore[V].empty), current.context)
     }
 
     def queryAllEntries(using QueryP): Iterable[CausalStore[V]] =
       current.store.values.map(v => CausalStore(v, current.context))
 
-    def mutateKey(k: K, m: DeltaMutator[CausalStore[V]])(using MutationIDP): C = {
+    def mutateKey(k: K, m: DeltaMutator[CausalStore[V]])(using MutationIDP,  DotStore[V]): C = {
         val v = current.store.getOrElse(k, DotStore[V].empty)
 
         m(replicaID, CausalStore(v, current.context)) match {
@@ -58,7 +58,7 @@ object ORMapInterface {
         }
     }
 
-    def remove(k: K)(using MutationIDP): C = {
+    def remove(k: K)(using MutationIDP,  DotStore[V]): C = {
       val v = current.store.getOrElse(k, DotStore[V].empty)
 
       deltaState[K, V].make(
@@ -66,7 +66,7 @@ object ORMapInterface {
       )
     }
 
-    def removeAll(keys: Iterable[K])(using MutationIDP): C = {
+    def removeAll(keys: Iterable[K])(using MutationIDP,  DotStore[V]): C = {
       val values = keys.map(k => current.store.getOrElse(k, DotStore[V].empty))
       val dots = values.foldLeft(Set.empty[Dot]) {
         case (set, v) => set union DotStore[V].dots(v)
@@ -77,7 +77,7 @@ object ORMapInterface {
       )
     }
 
-    def removeByValue(cond: CausalStore[V] => Boolean)(using MutationIDP): C = {
+    def removeByValue(cond: CausalStore[V] => Boolean)(using MutationIDP,  DotStore[V]): C = {
       val toRemove = current.store.values.collect {
         case v if cond(CausalStore(v, current.context)) => DotStore[V].dots(v)
       }.fold(Set())(_ union _)
@@ -87,7 +87,7 @@ object ORMapInterface {
       )
     }
 
-    def clear()(using MutationIDP): C = {
+    def clear()(using MutationIDP,  DotStore[V]): C = {
       deltaState[K, V].make(
         cc = CausalContext.fromSet(DotMap[K, V].dots(current.store))
       )
