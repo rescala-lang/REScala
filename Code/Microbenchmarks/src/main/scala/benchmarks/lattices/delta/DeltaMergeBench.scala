@@ -1,11 +1,11 @@
 package benchmarks.lattices.delta
 
+import kofre.causality.{CausalContext, Dot}
+import kofre.decompose.UIJDLattice
+import kofre.decompose.interfaces.RGAInterface.{RGA, RGASyntax}
+import kofre.syntax.AllPermissionsCtx.withID
 import org.openjdk.jmh.annotations
 import org.openjdk.jmh.annotations._
-import rescala.extra.lattices.delta.crdt.reactive._
-import kofre.decompose.interfaces.RGAInterface
-import kofre.decompose.UIJDLattice
-import kofre.causality.{CausalContext, Dot}
 
 import java.util.concurrent.TimeUnit
 
@@ -21,9 +21,9 @@ class DeltaMergeBench {
   @Param(Array("1", "10", "100", "1000"))
   var size: Long = _
 
-  var fullState: ListRDT.State[Long]         = _
-  var plusOneState: ListRDT.State[Long]      = _
-  var plusOneDeltaState: ListRDT.State[Long] = _
+  var fullState: RGA[Long]         = _
+  var plusOneState: RGA[Long]      = _
+  var plusOneDeltaState: RGA[Long] = _
 
   def makeCContext(replicaID: String): CausalContext = {
     val dots = (0L until size).map(Dot(replicaID, _)).toSet
@@ -32,36 +32,36 @@ class DeltaMergeBench {
 
   @Setup
   def setup(): Unit = {
-    val baseState = UIJDLattice[ListRDT.State[Long]].bottom
+    val baseState = UIJDLattice[RGA[Long]].bottom
 
-    val deltaState = RGAInterface.insertAll[Long](0, 0L to size).apply("", baseState)
-    fullState = UIJDLattice[ListRDT.State[Long]].merge(baseState, deltaState)
+    val deltaState = baseState.insertAll(0, 0L to size)(withID(""))
+    fullState = UIJDLattice[RGA[Long]].merge(baseState, deltaState)
 
-    plusOneDeltaState = RGAInterface.insert[Long](0, size).apply("", fullState)
-    plusOneState = UIJDLattice[ListRDT.State[Long]].merge(fullState, plusOneDeltaState)
+    plusOneDeltaState = fullState.insert(0, size)(withID(""))
+    plusOneState = UIJDLattice[RGA[Long]].merge(fullState, plusOneDeltaState)
   }
 
   @Benchmark
-  def fullMerge: ListRDT.State[Long] = {
-    UIJDLattice[ListRDT.State[Long]].merge(fullState, plusOneState)
+  def fullMerge: RGA[Long] = {
+    UIJDLattice[RGA[Long]].merge(fullState, plusOneState)
   }
 
   @Benchmark
-  def fullDiff: Option[ListRDT.State[Long]] = {
-    UIJDLattice[ListRDT.State[Long]].diff(fullState, plusOneState)
+  def fullDiff: Option[RGA[Long]] = {
+    UIJDLattice[RGA[Long]].diff(fullState, plusOneState)
   }
 
   @Benchmark
-  def deltaMerge: ListRDT.State[Long] = {
-    UIJDLattice[ListRDT.State[Long]].diff(fullState, plusOneDeltaState) match {
+  def deltaMerge: RGA[Long] = {
+    UIJDLattice[RGA[Long]].diff(fullState, plusOneDeltaState) match {
       case Some(stateDiff) =>
-        UIJDLattice[ListRDT.State[Long]].merge(fullState, stateDiff)
+        UIJDLattice[RGA[Long]].merge(fullState, stateDiff)
       case None => fullState
     }
   }
 
   @Benchmark
-  def deltaMergeNoDiff: ListRDT.State[Long] = {
-    UIJDLattice[ListRDT.State[Long]].merge(fullState, plusOneDeltaState)
+  def deltaMergeNoDiff: RGA[Long] = {
+    UIJDLattice[RGA[Long]].merge(fullState, plusOneDeltaState)
   }
 }

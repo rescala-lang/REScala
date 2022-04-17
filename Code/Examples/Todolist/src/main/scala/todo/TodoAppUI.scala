@@ -10,8 +10,6 @@ import org.scalajs.dom.{UIEvent, window}
 import rescala.default.Events.CBResult
 import rescala.default._
 import rescala.extra.Tags._
-import rescala.extra.lattices.delta.crdt.reactive.ListRDT
-import rescala.extra.lattices.delta.crdt.reactive.ListRDT._
 import rescala.extra.replication.LociDist
 import scalatags.JsDom
 import scalatags.JsDom.all._
@@ -20,6 +18,8 @@ import scalatags.JsDom.{Attr, TypedTag}
 import todo.Codecs._
 import todo.Todolist.replicaId
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax
+import kofre.decompose.interfaces.RGAInterface.{RGA, RGASyntax}
+import rescala.extra.lattices.delta.crdt.reactive.ReactiveDeltaCRDT
 
 class TodoAppUI(val storagePrefix: String) {
 
@@ -46,22 +46,22 @@ class TodoAppUI(val storagePrefix: String) {
     val taskrefs = TaskReferences(toggleAll.event, storagePrefix)
     val taskOps  = new TaskOps(taskrefs)
 
-    val deltaEvt = Evt[Delta[ListRDT.State[TaskRef]]]
+    val deltaEvt = Evt[Delta[RGA[TaskRef]]]
 
-    val tasksRDT: Signal[ListRDT[TaskRef]] =
-      Storing.storedAs(storagePrefix, ListRDT.empty[TaskRef](replicaId)) { init =>
+    val tasksRDT: Signal[ReactiveDeltaCRDT[RGA[TaskRef]]] =
+      Storing.storedAs(storagePrefix, ReactiveDeltaCRDT[RGA[TaskRef]](replicaId)) { init =>
         Events.foldAll(init) { current =>
           Seq(
             createTodo.event act taskOps.handleCreateTodo(current),
             removeAll.event dyn { dt => _ => taskOps.handleRemoveAll(current, dt) },
-            current.toList.map(_.removed) act taskOps.handleRemove(current),
+            new RGASyntax(current).toList.map(_.removed) act taskOps.handleRemove(current),
             deltaEvt act taskOps.handleDelta(current)
           )
         }
       }(codecRGA)
 
     LociDist.distributeDeltaCRDT(tasksRDT, deltaEvt, Todolist.registry)(
-      Binding[ListRDT.State[TaskRef] => Unit]("tasklist")
+      Binding[RGA[TaskRef] => Unit]("tasklist")
     )
 
     val tasksList: Signal[List[TaskRef]] = tasksRDT.map { _.toList }

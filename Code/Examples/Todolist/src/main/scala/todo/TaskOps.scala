@@ -2,16 +2,16 @@ package todo
 
 import rescala.default._
 import kofre.decompose.Delta
-import rescala.extra.lattices.delta.crdt.reactive.ListRDT
-import rescala.extra.lattices.delta.crdt.reactive.ListRDT._
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax
+import kofre.decompose.interfaces.RGAInterface.{RGA, RGASyntax}
+import rescala.extra.lattices.delta.crdt.reactive.ReactiveDeltaCRDT
 
 import java.util.concurrent.ThreadLocalRandom
 import scala.annotation.nowarn
 
 class TaskOps(@nowarn taskRefs: TaskReferences) {
 
-  type State = ListRDT[TaskRef]
+  type State = ReactiveDeltaCRDT[RGA[TaskRef]]
 
   def handleCreateTodo(state: => State)(desc: String): State = {
     val taskid = s"Task(${ThreadLocalRandom.current().nextLong().toHexString})"
@@ -38,12 +38,12 @@ class TaskOps(@nowarn taskRefs: TaskReferences) {
     }
   }
 
-  def handleDelta(s: => State)(delta: Delta[ListRDT.State[TaskRef]]): State = {
+  def handleDelta(s: => State)(delta: Delta[RGA[TaskRef]]): State = {
     val list = s
 
     val newList = list.resetDeltaBuffer().applyDelta(delta)
 
-    val oldIDs = list.toList.toSet
+    val oldIDs = new RGASyntax(list).toList.toSet
     val newIDs = newList.toList.toSet
 
     val removed = oldIDs -- newIDs
