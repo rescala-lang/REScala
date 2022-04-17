@@ -1,5 +1,6 @@
 package todo
 
+import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegister
 import loci.registry.Binding
 import loci.serializer.jsoniterScala.jsoniteScalaBasedSerializable
 import loci.transmitter.IdenticallyTransmittable
@@ -8,13 +9,13 @@ import org.scalajs.dom.html.{Input, LI}
 import rescala.default._
 import rescala.extra.Tags._
 import rescala.extra.lattices.delta.JsoniterCodecs._
-import rescala.extra.lattices.delta.crdt.reactive.LWWRegister
-import kofre.decompose.interfaces.MVRegisterInterface
 import kofre.decompose.{Delta, TimedVal}
+import rescala.extra.lattices.delta.crdt.reactive.ReactiveDeltaCRDT
 import rescala.extra.replication.LociDist
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all._
 import todo.Todolist.replicaId
+import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax
 
 import scala.Function.const
 import scala.collection.mutable
@@ -31,13 +32,13 @@ case class TaskData(
 case class TaskRef(id: String) {
   lazy val cached: TaskRefData = TaskReferences.lookupOrCreateTaskRef(id, None)
 
-  def task: Signal[LWWRegister[TaskData]] = cached.task
-  def tag: TypedTag[LI]                   = cached.tag
-  def removed: Event[String]              = cached.removed
+  def task: Signal[ReactiveDeltaCRDT[LWWRegister[TaskData]]] = cached.task
+  def tag: TypedTag[LI]                                      = cached.tag
+  def removed: Event[String]                                 = cached.removed
 }
 
 final class TaskRefData(
-    val task: Signal[LWWRegister[TaskData]],
+    val task: Signal[ReactiveDeltaCRDT[LWWRegister[TaskData]]],
     val tag: TypedTag[LI],
     val removed: Event[String],
     val id: String,
@@ -69,20 +70,18 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
 
   import todo.Codecs.todoTaskCodec
 
-  implicit val transmittableLWW: IdenticallyTransmittable[LWWRegister.State[TaskData]] =
+  implicit val transmittableLWW: IdenticallyTransmittable[LWWRegister[TaskData]] =
     IdenticallyTransmittable()
 
   def createTaskRef(
       taskID: String,
       task: Option[TaskData],
   ): TaskRefData = {
-    val lwwInit = LWWRegister[TaskData](replicaId)
+    val lwwInit = ReactiveDeltaCRDT[LWWRegister[TaskData]](replicaId)
 
     val lww = task match {
-      case None => lwwInit.mutate((replicaID, state) =>
-          MVRegisterInterface.write[TimedVal[TaskData]](
-            TimedVal(TaskData("<empty>"), replicaID, 0, 0)
-          ).apply(replicaID, state)
+      case None =>  new kofre.decompose.interfaces.MVRegisterInterface.MVRegisterSyntax(lwwInit).write(
+          TimedVal(TaskData("<empty>"), lwwInit.replicaID, 0, 0)
         )
       case Some(v) => lwwInit.write(v)
     }
@@ -107,7 +106,7 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
 
     val doneEv = toggleAll || doneClick.event
 
-    val deltaEvt = Evt[Delta[LWWRegister.State[TaskData]]]()
+    val deltaEvt = Evt[Delta[LWWRegister[TaskData]]]()
 
     // type Carrier = LWWRegister.State[TaskData, DietMapCContext]
     //
@@ -133,7 +132,7 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
     }(Codecs.codecLww)
 
     LociDist.distributeDeltaCRDT(crdt, deltaEvt, Todolist.registry)(
-      Binding[LWWRegister.State[TaskData] => Unit](taskID)
+      Binding[LWWRegister[TaskData] => Unit](taskID)
     )
 
     val taskData = crdt.map(_.read.getOrElse(TaskData(desc = "LWW Empty")))

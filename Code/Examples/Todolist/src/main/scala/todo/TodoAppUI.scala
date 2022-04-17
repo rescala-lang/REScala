@@ -19,6 +19,8 @@ import scalatags.JsDom.tags2.section
 import scalatags.JsDom.{Attr, TypedTag}
 import todo.Codecs._
 import todo.Todolist.replicaId
+import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax
+
 
 class TodoAppUI(val storagePrefix: String) {
 

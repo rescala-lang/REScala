@@ -4,6 +4,7 @@ import rescala.default._
 import kofre.decompose.Delta
 import rescala.extra.lattices.delta.crdt.reactive.ListRDT
 import rescala.extra.lattices.delta.crdt.reactive.ListRDT._
+import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax
 
 import java.util.concurrent.ThreadLocalRandom
 import scala.annotation.nowarn

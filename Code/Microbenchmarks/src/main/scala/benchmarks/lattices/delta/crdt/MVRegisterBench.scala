@@ -1,7 +1,9 @@
 package benchmarks.lattices.delta.crdt
 
+import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
 import org.openjdk.jmh.annotations._
-import rescala.extra.lattices.delta.crdt.reactive.MVRegister
+import rescala.extra.lattices.delta.crdt.reactive.ReactiveDeltaCRDT
+import kofre.decompose.interfaces.MVRegisterInterface.MVRegisterSyntax
 
 import java.util.concurrent.TimeUnit
 
@@ -17,13 +19,13 @@ class MVRegisterBench {
   @Param(Array("0", "1", "10", "100", "1000"))
   var numWrites: Int = _
 
-  var reg: MVRegister[Int] = _
+  var reg: ReactiveDeltaCRDT[MVRegister[Int]] = _
 
   @Setup
   def setup(): Unit = {
-    reg = (0 until numWrites).foldLeft(MVRegister[Int]("-1")) {
+    reg = (0 until numWrites).foldLeft(ReactiveDeltaCRDT[MVRegister[Int]]("-1")) {
       case (r, i) =>
-        val delta = MVRegister[Int](i.toString).write(i).deltaBuffer.head
+        val delta = ReactiveDeltaCRDT[MVRegister[Int]](i.toString).write(i).deltaBuffer.head
         r.applyDelta(delta)
     }
   }
@@ -32,8 +34,8 @@ class MVRegisterBench {
   def read(): Set[Int] = reg.read
 
   @Benchmark
-  def write(): MVRegister[Int] = reg.write(-1)
+  def write(): ReactiveDeltaCRDT[MVRegister[Int]] = reg.write(-1)
 
   @Benchmark
-  def clear(): MVRegister[Int] = reg.clear()
+  def clear(): ReactiveDeltaCRDT[MVRegister[Int]] = reg.clear()
 }

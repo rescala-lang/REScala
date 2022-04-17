@@ -45,7 +45,7 @@ object LexCounterInterface {
 
   type LexCounter = Map[String, LexPair[Int, Int]]
 
-  implicit class LexCounterSyntax[C, E](container: C) extends OpsSyntaxHelper[C, LexCounter](container) {
+  implicit class LexCounterSyntax[C](container: C) extends OpsSyntaxHelper[C, LexCounter](container) {
 
     def value(using QueryP): Int = current.values.map(_.snd).sum
 
