@@ -2,9 +2,10 @@ package benchmarks.lattices.delta.crdt
 
 import kofre.decompose.DotStore.DotSet
 import kofre.decompose.interfaces.EWFlagInterface.EWFlagSyntax
+import kofre.decompose.interfaces.ORMapInterface.{ORMap, ORMapSyntax}
 import kofre.syntax.AllPermissionsCtx.withID
 import org.openjdk.jmh.annotations._
-import rescala.extra.lattices.delta.crdt.reactive.ORMap
+import rescala.extra.lattices.delta.crdt.reactive.ReactiveDeltaCRDT
 
 import java.util.concurrent.TimeUnit
 
@@ -20,22 +21,22 @@ class ORMapBench {
   @Param(Array("1", "10", "100", "1000"))
   var numEntries: Int = _
 
-  type SUT = ORMap[Int, DotSet]
+  type SUT = ReactiveDeltaCRDT[ORMap[Int, DotSet]]
 
   var map: SUT = _
 
   @Setup
   def setup(): Unit = {
-    map = (0 until numEntries).foldLeft(ORMap[Int, DotSet]("a")) {
-      case (m, i) => m.mutateKey(i, (r, b) => b.enable()(withID(r)))
+    map = (0 until numEntries).foldLeft(ReactiveDeltaCRDT[ORMap[Int, DotSet]]("a")) {
+      case (m, i) => new ORMapSyntax(m).mutateKey(i, (r, b) => b.enable()(withID(r)))
     }
   }
 
   @Benchmark
-  def queryExisting(): Boolean = map.queryKey(0, _.read)
+  def queryExisting(): Boolean = map.queryKey(0).read
 
   @Benchmark
-  def queryMissing(): Boolean = map.queryKey(-1, _.read)
+  def queryMissing(): Boolean = map.queryKey(-1).read
 
   @Benchmark
   def containsExisting(): Boolean = map.contains(0)
@@ -44,7 +45,7 @@ class ORMapBench {
   def containsMissing(): Boolean = map.contains(-1)
 
   @Benchmark
-  def queryAllEntries(): Iterable[Boolean] = map.queryAllEntries(_.read)
+  def queryAllEntries(): Iterable[Boolean] = map.queryAllEntries.map(_.read)
 
   @Benchmark
   def mutateExisting(): SUT = map.mutateKey(0, (r, b) => b.disable()(withID(r)))

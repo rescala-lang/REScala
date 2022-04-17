@@ -2,97 +2,10 @@ package kofre.decompose.interfaces
 
 import kofre.causality.{CausalContext, Dot}
 import kofre.decompose.*
-import kofre.syntax.{DeltaMutator, DeltaQuery}
+import kofre.syntax.{ArdtOpsContains, DeltaMutator, DeltaQuery, OpsSyntaxHelper}
 import kofre.decompose.DotStore.*
+import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
 import kofre.dotbased.CausalStore
-
-object ORMapInterface {
-  type State[K, V] = CausalStore[DotMap[K, V]]
-  type C           = CausalContext
-
-  trait ORMapCompanion {
-    type State[K, V]    = ORMapInterface.State[K, V]
-    type Embedded[K, V] = DotMap[K, V]
-  }
-
-  private class DeltaStateFactory[K, V: DotStore] {
-    val bottom: State[K, V] = UIJDLattice[State[K, V]].bottom
-
-    def make(
-        dm: DotMap[K, V] = bottom.store,
-        cc: C = bottom.context
-    ): State[K, V] = CausalStore(dm, cc)
-  }
-
-  private def deltaState[K, V: DotStore]: DeltaStateFactory[K, V] = new DeltaStateFactory[K, V]
-
-  def contains[K, V: DotStore](k: K): DeltaQuery[State[K, V], Boolean] = {
-    case CausalStore(dm, _) => dm.contains(k)
-  }
-
-  def queryKey[K, V: DotStore, A](k: K, q: DeltaQuery[CausalStore[V], A]): DeltaQuery[State[K, V], A] = {
-    case CausalStore(dm, cc) =>
-      val v = dm.getOrElse(k, DotStore[V].empty)
-      q(CausalStore(v, cc))
-  }
-
-  def queryAllEntries[K, V: DotStore, A](q: DeltaQuery[CausalStore[V], A]): DeltaQuery[State[K, V], Iterable[A]] = {
-    case CausalStore(dm, cc) =>
-      dm.values.map(v => q(CausalStore(v, cc)))
-  }
-
-  def mutateKey[K, V: DotStore](k: K, m: DeltaMutator[CausalStore[V]]): DeltaMutator[State[K, V]] = {
-    case (replicaID, CausalStore(dm, cc)) =>
-      val v = dm.getOrElse(k, DotStore[V].empty)
-
-      m(replicaID, CausalStore(v, cc)) match {
-        case CausalStore(stateDelta, ccDelta) =>
-          deltaState[K, V].make(
-            dm = DotMap[K, V].empty.updated(k, stateDelta),
-            cc = ccDelta
-          )
-      }
-  }
-
-  def remove[K, V: DotStore](k: K): DeltaMutator[State[K, V]] = {
-    case (_, CausalStore(dm, _)) =>
-      val v = dm.getOrElse(k, DotStore[V].empty)
-
-      deltaState[K, V].make(
-        cc = CausalContext.fromSet(DotStore[V].dots(v))
-      )
-  }
-
-  def removeAll[K, V: DotStore](keys: Iterable[K]): DeltaMutator[State[K, V]] = {
-    case (_, CausalStore(dm, _)) =>
-      val values = keys.map(k => dm.getOrElse(k, DotStore[V].empty))
-      val dots = values.foldLeft(Set.empty[Dot]) {
-        case (set, v) => set union DotStore[V].dots(v)
-      }
-
-      deltaState[K, V].make(
-        cc = CausalContext.fromSet(dots)
-      )
-  }
-
-  def removeByValue[K, V: DotStore](cond: CausalStore[V] => Boolean): DeltaMutator[State[K, V]] = {
-    case (_, CausalStore(dm, cc)) =>
-      val toRemove = dm.values.collect {
-        case v if cond(CausalStore(v, cc)) => DotStore[V].dots(v)
-      }.fold(Set())(_ union _)
-
-      deltaState[K, V].make(
-        cc = CausalContext.fromSet(toRemove)
-      )
-  }
-
-  def clear[K, V: DotStore]: DeltaMutator[State[K, V]] = {
-    case (_, CausalStore(dm, _)) =>
-      deltaState[K, V].make(
-        cc = CausalContext.fromSet(DotMap[K, V].dots(dm))
-      )
-  }
-}
 
 /** An ORMap (Observed-Remove Map) is a Delta CRDT that models a map from an arbitrary key type to nested causal Delta CRDTs.
   * In contrast to [[GMapInterface]], ORMap allows the removal of key/value pairs from the map.
@@ -101,24 +14,83 @@ object ORMapInterface {
   * by a CRDT Interface method of the nested CRDT. For example, to enable a nested EWFlag, one would pass `EWFlagInterface.enable()`
   * as the DeltaMutator to mutateKey.
   */
-abstract class ORMapInterface[K, V: DotStore, Wrapper]
-    extends CRDTInterface[ORMapInterface.State[K, V], Wrapper] {
+object ORMapInterface {
+  type ORMap[K, V] = CausalStore[DotMap[K, V]]
+  type C           = CausalContext
 
-  def queryKey[A](k: K, q: DeltaQuery[CausalStore[V], A]): A = query(ORMapInterface.queryKey(k, q))
+  trait ORMapCompanion {
+    type State[K, V]    = ORMapInterface.ORMap[K, V]
+    type Embedded[K, V] = DotMap[K, V]
+  }
 
-  def contains(k: K): Boolean = query(ORMapInterface.contains(k))
+  private class DeltaStateFactory[K, V: DotStore] {
+    val bottom: ORMap[K, V] = UIJDLattice[ORMap[K, V]].bottom
 
-  def queryAllEntries[A](q: DeltaQuery[CausalStore[V], A]): Iterable[A] = query(ORMapInterface.queryAllEntries(q))
+    def make(
+        dm: DotMap[K, V] = bottom.store,
+        cc: C = bottom.context
+    ): ORMap[K, V] = CausalStore(dm, cc)
+  }
 
-  def mutateKey(k: K, m: DeltaMutator[CausalStore[V]]): Wrapper =
-    mutate(ORMapInterface.mutateKey(k, m))
+  private def deltaState[K, V: DotStore]: DeltaStateFactory[K, V] = new DeltaStateFactory[K, V]
 
-  def remove(k: K): Wrapper = mutate(ORMapInterface.remove(k))
+  implicit class ORMapSyntax[C, K, V: DotStore](container: C)(using ArdtOpsContains[C, ORMap[K, V]])
+      extends OpsSyntaxHelper[C, ORMap[K, V]](container) {
 
-  def removeAll(keys: Iterable[K]): Wrapper = mutate(ORMapInterface.removeAll(keys))
+    def contains(k: K)(using QueryP): Boolean = current.store.contains(k)
 
-  def removeByValue(cond: CausalStore[V] => Boolean): Wrapper =
-    mutate(ORMapInterface.removeByValue(cond))
+    def queryKey[A](k: K)(using QueryP): CausalStore[V] = {
+      CausalStore(current.store.getOrElse(k, DotStore[V].empty), current.context)
+    }
 
-  def clear(): Wrapper = mutate(ORMapInterface.clear)
+    def queryAllEntries(using QueryP): Iterable[CausalStore[V]] =
+      current.store.values.map(v => CausalStore(v, current.context))
+
+    def mutateKey(k: K, m: DeltaMutator[CausalStore[V]])(using MutationIDP): C = {
+        val v = current.store.getOrElse(k, DotStore[V].empty)
+
+        m(replicaID, CausalStore(v, current.context)) match {
+          case CausalStore(stateDelta, ccDelta) =>
+            deltaState[K, V].make(
+              dm = DotMap[K, V].empty.updated(k, stateDelta),
+              cc = ccDelta
+            )
+        }
+    }
+
+    def remove(k: K)(using MutationIDP): C = {
+      val v = current.store.getOrElse(k, DotStore[V].empty)
+
+      deltaState[K, V].make(
+        cc = CausalContext.fromSet(DotStore[V].dots(v))
+      )
+    }
+
+    def removeAll(keys: Iterable[K])(using MutationIDP): C = {
+      val values = keys.map(k => current.store.getOrElse(k, DotStore[V].empty))
+      val dots = values.foldLeft(Set.empty[Dot]) {
+        case (set, v) => set union DotStore[V].dots(v)
+      }
+
+      deltaState[K, V].make(
+        cc = CausalContext.fromSet(dots)
+      )
+    }
+
+    def removeByValue(cond: CausalStore[V] => Boolean)(using MutationIDP): C = {
+      val toRemove = current.store.values.collect {
+        case v if cond(CausalStore(v, current.context)) => DotStore[V].dots(v)
+      }.fold(Set())(_ union _)
+
+      deltaState[K, V].make(
+        cc = CausalContext.fromSet(toRemove)
+      )
+    }
+
+    def clear()(using MutationIDP): C = {
+      deltaState[K, V].make(
+        cc = CausalContext.fromSet(DotMap[K, V].dots(current.store))
+      )
+    }
+  }
 }
