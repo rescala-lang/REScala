@@ -2,12 +2,21 @@ package kofre.decompose.interfaces
 
 import kofre.causality.CausalContext
 import kofre.decompose.*
-import kofre.syntax.{DeltaMutator, DeltaQuery}
+import kofre.syntax.{DeltaMutator, DeltaQuery, OpsSyntaxHelper}
 import kofre.decompose.DotStore.*
+import kofre.decompose.interfaces.PNCounterModule.PNCounter
 import kofre.dotbased.CausalStore
 
+
+/** An RCounter (Resettable Counter/Add Wins Counter) is a Delta CRDT modeling a counter.
+  *
+  * Calling fresh after every time that deltas are shipped to other replicas prevents subsequent increment/decrement
+  * operations to be overwritten by concurrent reset operations.
+  *
+  * This counter was originally proposed by Baquera et al.
+  * in "The problem with embedded CRDT counters and a solution", see [[https://dl.acm.org/doi/abs/10.1145/2911151.2911159?casa_token=D7n88K9dW7gAAAAA:m3WhHMFZxoCwGFk8DVoqJXBJpwJwrqKMLqtgKo_TSiwU_ErWgOZjo4UqYqDCb-bG3iJlXc_Ti7aB9w here]]
+  */
 object RCounterInterface {
-  type C = CausalContext
   implicit def IntPairAsUIJDLattice: UIJDLattice[(Int, Int)] = new UIJDLattice[(Int, Int)] {
     override def leq(left: (Int, Int), right: (Int, Int)): Boolean = (left, right) match {
       case ((linc, ldec), (rinc, rdec)) =>
@@ -28,18 +37,13 @@ object RCounterInterface {
     override def bottom: (Int, Int) = (0, 0)
   }
 
-  type State = CausalStore[DotFun[(Int, Int)]]
-
-  trait RCounterCompanion {
-    type State    = RCounterInterface.State
-    type Embedded = DotFun[(Int, Int)]
-  }
+  type RCounter = CausalStore[DotFun[(Int, Int)]]
 
   private def deltaState(
       df: Option[DotFun[(Int, Int)]] = None,
       cc: C
-  ): State = {
-    val bottom = UIJDLattice[State].bottom
+  ): RCounter = {
+    val bottom = UIJDLattice[RCounter].bottom
 
     CausalStore(
       df.getOrElse(bottom.store),
@@ -47,76 +51,55 @@ object RCounterInterface {
     )
   }
 
-  def value: DeltaQuery[State, Int] = {
-    case CausalStore(df, _) =>
-      df.values.foldLeft(0) {
+  implicit class RCounterSyntax[C](container: C) extends OpsSyntaxHelper[C, RCounter](container) {
+
+    def value(using QueryP): Int = {
+      current.store.values.foldLeft(0) {
         case (counter, (inc, dec)) => counter + inc - dec
       }
-  }
+    }
 
-  /** Without using fresh, reset wins over concurrent increments/decrements
-    * When using fresh after every time deltas are shipped to other replicas, increments/decrements win over concurrent resets
-    */
-  def fresh: DeltaMutator[State] = {
-    case (replicaID, CausalStore(_, cc)) =>
-      val nextDot = cc.nextDot(replicaID)
+    /** Without using fresh, reset wins over concurrent increments/decrements
+      * When using fresh after every time deltas are shipped to other replicas, increments/decrements win over concurrent resets
+      */
+    def fresh()(using MutationIDP): C = {
+      val nextDot = current.context.nextDot(replicaID)
 
       deltaState(
         df = Some(DotFun[(Int, Int)].empty + (nextDot -> ((0, 0)))),
         cc = CausalContext.one(nextDot)
       )
-  }
+    }
 
-  private def update(u: (Int, Int)): DeltaMutator[State] = {
-    case (replicaID, CausalStore(df, cc)) =>
-      cc.max(replicaID) match {
-        case Some(currentDot) if df.contains(currentDot) =>
-          val newCounter = (df(currentDot), u) match {
+    private def update(u: (Int, Int))(using MutationIDP): C = {
+      current.context.max(replicaID) match {
+        case Some(currentDot) if current.store.contains(currentDot) =>
+          val newCounter = (current.store(currentDot), u) match {
             case ((linc, ldec), (rinc, rdec)) => (linc + rinc, ldec + rdec)
           }
 
           deltaState(
-            df = Some(df + (currentDot -> newCounter)),
+            df = Some(current.store + (currentDot -> newCounter)),
             cc = CausalContext.one(currentDot)
           )
         case _ =>
-          val nextDot = cc.nextDot(replicaID)
+          val nextDot = current.context.nextDot(replicaID)
 
           deltaState(
             df = Some(DotFun[(Int, Int)].empty + (nextDot -> u)),
             cc = CausalContext.one(nextDot)
           )
       }
-  }
+    }
 
-  def increment: DeltaMutator[State] = update((1, 0))
+    def increment()(using MutationIDP): C = update((1, 0))
 
-  def decrement: DeltaMutator[State] = update((0, 1))
+    def decrement()(using MutationIDP): C = update((0, 1))
 
-  def reset: DeltaMutator[State] = {
-    case (_, CausalStore(df, _)) =>
+    def reset()(using MutationIDP): C = {
       deltaState(
-        cc = CausalContext.fromSet(df.keySet)
+        cc = CausalContext.fromSet(current.store.keySet)
       )
+    }
   }
-}
-
-/** An RCounter (Resettable Counter/Add Wins Counter) is a Delta CRDT modeling a counter.
-  *
-  * Calling fresh after every time that deltas are shipped to other replicas prevents subsequent increment/decrement
-  * operations to be overwritten by concurrent reset operations.
-  *
-  * This counter was originally proposed by Baquera et al.
-  * in "The problem with embedded CRDT counters and a solution", see [[https://dl.acm.org/doi/abs/10.1145/2911151.2911159?casa_token=D7n88K9dW7gAAAAA:m3WhHMFZxoCwGFk8DVoqJXBJpwJwrqKMLqtgKo_TSiwU_ErWgOZjo4UqYqDCb-bG3iJlXc_Ti7aB9w here]]
-  */
-abstract class RCounterInterface[Wrapper] extends CRDTInterface[RCounterInterface.State, Wrapper] {
-  def value: Int = query(RCounterInterface.value)
-
-  def fresh(): Wrapper = mutate(RCounterInterface.fresh)
-
-  def increment(): Wrapper = mutate(RCounterInterface.increment)
-
-  def decrement(): Wrapper = mutate(RCounterInterface.decrement)
-
-  def reset(): Wrapper = mutate(RCounterInterface.reset)
 }
