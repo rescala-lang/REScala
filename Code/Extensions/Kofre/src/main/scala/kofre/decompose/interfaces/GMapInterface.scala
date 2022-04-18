@@ -4,7 +4,7 @@ import kofre.causality.CausalContext
 import kofre.decompose.DotStore.DotSet
 import kofre.decompose.{CRDTInterface, UIJDLattice}
 import kofre.dotbased.CausalStore
-import kofre.syntax.{AllPermissionsCtx, ArdtOpsContains, DeltaMutator, DeltaQuery, OpsSyntaxHelper}
+import kofre.syntax.{AllPermissionsCtx, ArdtOpsContains, DeltaMutator, OpsSyntaxHelper}
 
 /** A GMap (Grow-only Map) is a Delta CRDT that models a map from an arbitrary key type to nested Delta CRDTs.
   * In contrast to [[ORMapInterface]], key/value pairs cannot be removed from this map. However, due to the smaller internal

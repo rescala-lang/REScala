@@ -2,7 +2,7 @@ package kofre.decompose.interfaces
 
 import kofre.decompose.*
 import kofre.primitives.Epoche
-import kofre.syntax.{DeltaMutator, DeltaQuery, OpsSyntaxHelper}
+import kofre.syntax.{DeltaMutator, OpsSyntaxHelper}
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer

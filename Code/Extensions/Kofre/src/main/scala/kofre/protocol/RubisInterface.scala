@@ -3,11 +3,22 @@ package kofre.protocol
 import kofre.decompose.*
 import kofre.decompose.interfaces.AWSetInterface
 import kofre.decompose.interfaces.AWSetInterface.AWSetSyntax
+import kofre.decompose.interfaces.EWFlagInterface.EWFlag
 import kofre.protocol.AuctionInterface
 import kofre.protocol.AuctionInterface.Bid.User
 import kofre.protocol.RubisInterface.{AID, UserAsUIJDLattice}
-import kofre.syntax.{AllPermissionsCtx, DeltaMutator}
+import kofre.syntax.{AllPermissionsCtx, DeltaMutator, OpsSyntaxHelper}
 
+/** A Rubis (Rice University Bidding System) is a Delta CRDT modeling an auction system.
+  *
+  * Bids can only be placed on auctions that were previously opened and with a previously registered userId. When an auction
+  * is closed, concurrently placed bids are still accepted and may thus change the winner of the auction. To prevent two
+  * replicas from concurrently registering the same userId, requests for registering a new userId must be resolved by a
+  * central replica using resolveRegisterUser.
+  *
+  * This auction system was in part modeled after the Rice University Bidding System (RUBiS) proposed by Cecchet et al. in
+  * "Performance and Scalability of EJB Applications", see [[https://www.researchgate.net/publication/2534515_Performance_and_Scalability_of_EJB_Applications here]]
+  */
 object RubisInterface {
   type AID = String
 
@@ -33,43 +44,45 @@ object RubisInterface {
 
   private def deltaState: DeltaStateFactory = new DeltaStateFactory
 
-  def placeBid(auctionId: AID, userId: User, price: Int): DeltaMutator[State] = {
-    case (replicaID, (_, users, m)) =>
+  implicit class RubisSyntax[C](container: C) extends OpsSyntaxHelper[C, State](container) {
+
+    def placeBid(auctionId: AID, userId: User, price: Int)(using MutationIDP): C = {
+      val (_, users, m) = current
       val newMap =
         if (users.get(userId).contains(replicaID) && m.contains(auctionId)) {
           m.updatedWith(auctionId) { _.map(a => AuctionInterface.bid(userId, price)(replicaID, a)) }
         } else Map.empty[AID, AuctionInterface.State]
 
       deltaState.make(auctions = newMap)
-  }
+    }
 
-  def closeAuction(auctionId: AID): DeltaMutator[State] = {
-    case (replicaID, (_, _, m)) =>
+    def closeAuction(auctionId: AID)(using MutationIDP): C = {
+      val (_, _, m) = current
       val newMap =
         if (m.contains(auctionId)) {
           m.updatedWith(auctionId) { _.map(a => AuctionInterface.close()(replicaID, a)) }
         } else Map.empty[AID, AuctionInterface.State]
 
       deltaState.make(auctions = newMap)
-  }
+    }
 
-  def openAuction(auctionId: AID): DeltaMutator[State] = {
-    case (_, (_, _, m)) =>
+    def openAuction(auctionId: AID)(using MutationIDP): C = {
+      val (_, _, m) = current
       val newMap =
         if (m.contains(auctionId)) Map.empty[AID, AuctionInterface.State]
         else Map(auctionId -> UIJDLattice[AuctionInterface.State].bottom)
 
       deltaState.make(auctions = newMap)
-  }
+    }
 
-  def requestRegisterUser(userId: User): DeltaMutator[State] = {
-    case (replicaID, (req, users, _)) =>
+    def requestRegisterUser(userId: User)(using MutationIDP): C = {
+      val (req, users, _) = current
       if (users.contains(userId)) deltaState.make()
       else deltaState.make(userRequests = req.add(userId -> replicaID)(using AllPermissionsCtx.withID(replicaID)))
-  }
+    }
 
-  def resolveRegisterUser(): DeltaMutator[State] = {
-    case (replicaID, (req, users, _)) =>
+    def resolveRegisterUser()(using MutationIDP): C = {
+      val (req, users, _) = current
       val newUsers = req.elements.foldLeft(Map.empty[User, String]) {
         case (newlyRegistered, (uid, rid)) =>
           if ((users ++ newlyRegistered).contains(uid))
@@ -83,30 +96,6 @@ object RubisInterface {
         userRequests = req.clear(),
         users = newUsers
       )
+    }
   }
-}
-
-/** A Rubis (Rice University Bidding System) is a Delta CRDT modeling an auction system.
-  *
-  * Bids can only be placed on auctions that were previously opened and with a previously registered userId. When an auction
-  * is closed, concurrently placed bids are still accepted and may thus change the winner of the auction. To prevent two
-  * replicas from concurrently registering the same userId, requests for registering a new userId must be resolved by a
-  * central replica using resolveRegisterUser.
-  *
-  * This auction system was in part modeled after the Rice University Bidding System (RUBiS) proposed by Cecchet et al. in
-  * "Performance and Scalability of EJB Applications", see [[https://www.researchgate.net/publication/2534515_Performance_and_Scalability_of_EJB_Applications here]]
-  */
-abstract class RubisInterface[Wrapper] extends CRDTInterface[RubisInterface.State, Wrapper] {
-  def placeBid(auctionId: AID, userId: User, price: Int): Wrapper =
-    mutate(RubisInterface.placeBid(auctionId, userId, price))
-
-  def closeAuction(auctionId: AID): Wrapper = mutate(RubisInterface.closeAuction(auctionId))
-
-  def openAuction(auctionId: AID): Wrapper = mutate(RubisInterface.openAuction(auctionId))
-
-  def requestRegisterUser(userId: User): Wrapper = mutate(RubisInterface.requestRegisterUser(userId))
-
-  def resolveRegisterUser(): Wrapper = mutate(RubisInterface.resolveRegisterUser())
-
-  def printState(): Unit = println(state)
 }

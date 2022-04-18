@@ -1,6 +1,6 @@
 package kofre.decompose.interfaces
 import kofre.decompose.*
-import kofre.syntax.{AllPermissionsCtx, ArdtOpsContains, DeltaMutator, DeltaQuery, OpsSyntaxHelper}
+import kofre.syntax.{AllPermissionsCtx, ArdtOpsContains, DeltaMutator, OpsSyntaxHelper}
 import kofre.decompose.DotStore.DotFun
 import kofre.decompose.interfaces.LexCounterInterface.LexCounter
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegisterSyntax

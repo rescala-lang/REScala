@@ -2,7 +2,7 @@ package kofre.decompose.interfaces
 
 import kofre.causality.{CausalContext, Dot}
 import kofre.decompose.*
-import kofre.syntax.{DeltaMutator, DeltaQuery, OpsSyntaxHelper}
+import kofre.syntax.{DeltaMutator, OpsSyntaxHelper}
 import kofre.decompose.DotStore.*
 import kofre.dotbased.CausalStore
 

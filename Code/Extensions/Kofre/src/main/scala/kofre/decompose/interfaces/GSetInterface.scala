@@ -2,7 +2,7 @@ package kofre.decompose.interfaces
 
 import kofre.decompose.*
 import kofre.decompose.interfaces.GMapInterface.GMap
-import kofre.syntax.{ArdtOpsContains, DeltaMutator, DeltaQuery, OpsSyntaxHelper}
+import kofre.syntax.{ArdtOpsContains, DeltaMutator, OpsSyntaxHelper}
 
 /** A GSet is a Delta CRDT modeling a simple grow-only set. */
 object GSetInterface {
