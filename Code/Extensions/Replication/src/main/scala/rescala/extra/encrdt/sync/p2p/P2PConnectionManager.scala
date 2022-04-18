@@ -1,20 +1,23 @@
 package rescala.extra.encrdt.sync.p2p
 
+
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToString}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import rescala.extra.encrdt.sync.ConnectionManager
-import rescala.extra.encrdt.sync.client_server.LOG
-import rescala.extra.encrdt.sync.p2p.P2PConnectionManager._
+import rescala.extra.encrdt.sync.p2p.P2PConnectionManager.{Message, State}
 
 import java.net.{InetSocketAddress, URI}
 import java.util.concurrent.ConcurrentHashMap
 import scala.jdk.CollectionConverters.ConcurrentMapHasAsScala
 
-class P2PConnectionManager[S](val localReplicaId: String, localStateProvider: () => S, stateReceivedHandler: S => Unit)(
-    implicit stateJsonCodec: JsonValueCodec[S]
-) extends ConnectionManager[S] {
+class P2PConnectionManager[S](val localReplicaId: String,
+                              localStateProvider: () => S,
+                              stateReceivedHandler: S => Unit)
+                             (implicit stateJsonCodec: JsonValueCodec[S]
+                             ) extends ConnectionManager[S] {
 
-  private val handlers           = new ConcurrentHashMap[String, CrdtSyncWebSocketHandler[S]]()
+
+  private val handlers = new ConcurrentHashMap[String, CrdtSyncWebSocketHandler[S]]()
   private val pendingConnections = new ConcurrentHashMap[String, CrdtSyncWebSocketHandler[S]]()
 
   private val crdtSyncWebSocketClient =
@@ -26,7 +29,7 @@ class P2PConnectionManager[S](val localReplicaId: String, localStateProvider: ()
   crdtSyncWebSocketServer.start()
 
   private def broadcast(message: Message): Unit = {
-    LOG.info(s"Broadcasting $message to ${handlers.asScala.values.toList}")
+    println(s"Broadcasting $message to ${handlers.asScala.values.toList}")
     handlers.forEach { (_, handler) =>
       handler.sendMessage(message)
     }
@@ -46,7 +49,7 @@ class P2PConnectionManager[S](val localReplicaId: String, localStateProvider: ()
     peers.filter { case (rId, rAddrUri) =>
       // don't connect to invalid replica (shouldn't happen)
       if (rAddrUri == null) {
-        LOG.warn(s"Received no URI for replica $rId")
+        println(s"Received no URI for replica $rId")
         false
       } else
         rId != localReplicaId // don't connect to local replica,
@@ -71,7 +74,7 @@ class P2PConnectionManager[S](val localReplicaId: String, localStateProvider: ()
     if (pendingConnections.get(remoteReplicaId) == handler) {
       if (handler == handlers.computeIfAbsent(remoteReplicaId, _ => handler)) {
         if (pendingConnections.remove(remoteReplicaId, handler)) {
-          LOG.debug(s"Promoted handler for $remoteReplicaId")
+          println(s"Promoted handler for $remoteReplicaId")
           return true
         }
       }
@@ -80,21 +83,17 @@ class P2PConnectionManager[S](val localReplicaId: String, localStateProvider: ()
   }
 
   private def createHandler(remoteReplicaId: String): CrdtSyncWebSocketHandler[S] = new CrdtSyncWebSocketHandler[S](
-    localReplicaId,
-    remoteReplicaId,
-    this,
-    stateReceivedHandler,
-    localStateProvider
+    localReplicaId, remoteReplicaId, this, stateReceivedHandler, localStateProvider
   )
 
   def removeHandler(handler: CrdtSyncWebSocketHandler[S]): Boolean = {
     var removed = false
     if (pendingConnections.remove(handler.remoteReplicaId, handler)) {
-      LOG.debug(s"Removing pending handler for ${handler.remoteReplicaId}")
+      println(s"Removing pending handler for ${handler.remoteReplicaId}")
       removed = true
     }
     if (handlers.remove(handler.remoteReplicaId, handler)) {
-      LOG.debug(s"Removing handler for ${handler.remoteReplicaId}")
+      println(s"Removing handler for ${handler.remoteReplicaId}")
       removed = true
     }
     removed
@@ -109,21 +108,21 @@ class P2PConnectionManager[S](val localReplicaId: String, localStateProvider: ()
             // Tests if string is valid URI
             URI.create(s"ws://${inetAddress.getHostName}:${inetAddress.getPort}/").toString
           case _ =>
-            LOG.warn(s"Cannot create uri from non-InetSocketAddress SocketAddress: $address")
+            println(s"Cannot create uri from non-InetSocketAddress SocketAddress: $address")
             null
         }
       } catch {
         case _: IllegalArgumentException =>
-          LOG.warn(s"Received invalid peer address for $rId: $address")
+          println(s"Received invalid peer address for $rId: $address")
           null
       }
     }
   }.filterNot { case (_, uri) => uri == null }
 
-  override def remoteAddresses: Set[String] = peers.map { case (rId, uri) => s"$rId@$uri" }.toSet
+  override def remoteAddresses: Set[String] = peers.map { case (rId, uri) => s"$rId@$uri"}.toSet
 
   def stop(): Unit = {
-    LOG.info("Stopping ConnectionManager")
+    println("Stopping ConnectionManager")
     handlers.forEach((_, handler) => handler.close())
     crdtSyncWebSocketClient.stop()
     crdtSyncWebSocketServer.stop()

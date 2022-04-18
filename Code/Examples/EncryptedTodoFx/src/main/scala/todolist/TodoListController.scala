@@ -1,6 +1,5 @@
 package todolist
 
-import rescala.extra.encrdt.sync.client_server.LOG
 import javafx.collections.{FXCollections, ObservableList}
 import scalafx.application.Platform
 import scalafx.beans.property.ObjectProperty
@@ -63,12 +62,12 @@ object TodoListController {
 
   def changeTodo(uuid: UUID, changedEntry: TodoEntry): Unit = {
     if (uuid == null || changedEntry == null) {
-      LOG.warn("uuid null for " + changedEntry)
+      println("uuid null for " + changedEntry)
     } else {
       val oldTodo = crdt.get(uuid)
       if (oldTodo.contains(changedEntry)) return
 
-      LOG.debug(s"$uuid -> $changedEntry changed from $oldTodo")
+      println(s"$uuid -> $changedEntry changed from $oldTodo")
       uuidToTodoEntryProperties(uuid).set(changedEntry)
       crdt.put(uuid, changedEntry)
     }

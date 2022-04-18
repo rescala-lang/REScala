@@ -10,8 +10,31 @@ import scala.collection.mutable.ListBuffer
 
 case class ArrayRanges(inner: Array[Time], used: Int) {
 
-  override def equals(obj: Any): Boolean = obj match
+  override def equals(obj: Any): Boolean = obj match {
     case ar: ArrayRanges => inner.iterator.take(used).sameElements(ar.inner.iterator.take(ar.used))
+  }
+
+  def <= (right: ArrayRanges): Boolean = {
+    if (isEmpty) return true
+    if (right.isEmpty) return false
+
+    var leftIndex = 0
+    var rightIndex = 0
+
+    while (leftIndex < used) {
+      if (rightIndex >= right.used) return false
+      val leftLower = inner(leftIndex)
+      val leftUpper = inner(leftIndex+1)
+      val rightLower = right.inner(rightIndex)
+      val rightUpper = right.inner(rightIndex+1)
+
+      if (leftLower > rightUpper) rightIndex += 2
+      else if (leftLower < rightLower || leftUpper > rightUpper) return false
+           else leftIndex += 2
+    }
+
+    return true
+  }
 
   override def toString: String = s"ArrayRanges(${inner.toSeq.take(used).toString()})"
 

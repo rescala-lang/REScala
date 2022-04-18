@@ -4,6 +4,7 @@ import kofre.Defs.{Id, Time}
 import kofre.Lattice
 import kofre.causality.Dot
 
+
 case class CausalContext(internal: Map[Id, ArrayRanges]) {
 
   def rangeAt(replicaId: Id): ArrayRanges = internal.getOrElse(replicaId, ArrayRanges.empty)
@@ -36,15 +37,29 @@ case class CausalContext(internal: Map[Id, ArrayRanges]) {
 
   def intersect(other: CausalContext): CausalContext =
     CausalContext {
-      internal.iterator.filter { case (id, _) => other.internal.contains(id) }.map {
-        case (id, range) =>
-          val otherRange = other.internal(id)
-          val res        = ArrayRanges.from(range.iterator.filter(otherRange.contains))
-          id -> res
-      }.toMap
+      internal.flatMap { case (id, ranges) =>
+        other.internal.get(id) match {
+          case Some(otherRanges) =>
+            val intersection = ranges intersect otherRanges
+            if (intersection.isEmpty) None
+            else Some(id -> intersection)
+          case None              => None
+        }
+      }
     }
 
   def union(other: CausalContext): CausalContext = CausalContext.contextLattice.merge(this, other)
+
+  def subtract(other: CausalContext): CausalContext = {
+    CausalContext(
+      internal.map { case left@(id, leftRanges) =>
+        other.internal.get(id) match {
+          case Some(rightRanges) => id -> (leftRanges subtract rightRanges)
+          case None => left
+        }
+      }.filterNot(_._2.isEmpty)
+      )
+  }
 
   def contains(d: Dot): Boolean = internal.get(d.replicaId).exists(_.contains(d.time))
 
@@ -56,19 +71,24 @@ case class CausalContext(internal: Map[Id, ArrayRanges]) {
 
   def decompose(exclude: Dot => Boolean): Iterable[CausalContext] =
     internal.flatMap { (id, tree) =>
-      tree.iterator.map(time => Dot(id, time)).filterNot(exclude).map(CausalContext.one)
+      tree.iterator.map(time => Dot(id, time)).filterNot(exclude).map(CausalContext.single)
     }
   def forall(cond: Dot => Boolean): Boolean = internal.forall { (id, tree) =>
     tree.iterator.forall(time => cond(Dot(id, time)))
+  }
+
+  def <= (other: CausalContext): Boolean = internal.forall {
+    case (id, leftRange) => leftRange <= other.rangeAt(id)
   }
 }
 
 object CausalContext {
   def single(replicaId: Id, time: Long): CausalContext = empty.add(replicaId, time)
 
+
   val empty: CausalContext = CausalContext(Map.empty)
 
-  def one(dot: Dot): CausalContext = empty.add(dot.replicaId, dot.time)
+  def single(dot: Dot): CausalContext = empty.add(dot.replicaId, dot.time)
 
   implicit val contextLattice: Lattice[CausalContext] = new Lattice[CausalContext] {
     override def merge(left: CausalContext, right: CausalContext): CausalContext = {

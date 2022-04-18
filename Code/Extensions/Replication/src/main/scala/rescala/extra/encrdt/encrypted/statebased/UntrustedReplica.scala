@@ -2,9 +2,10 @@ package rescala.extra.encrdt.encrypted.statebased
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.Aead
-import kofre.Lattice
-import kofre.Lattice.Operators
 import kofre.causality.VectorClock
+import rescala.extra.encrdt.encrypted.statebased.EncryptedState
+import kofre.Lattice.Operators
+import kofre.Lattice
 
 abstract class UntrustedReplica(initialStates: Set[EncryptedState]) extends Replica {
   protected var stateStore: Set[EncryptedState] = initialStates
@@ -22,23 +23,21 @@ abstract class UntrustedReplica(initialStates: Set[EncryptedState]) extends Repl
   }
 
   def receive(newState: EncryptedState): Unit = {
-    if (!(newState.versionVector <= versionVector)) {
+    if (!VectorClock.vectorClockOrdering.lteq(newState.versionVector, versionVector)) {
       // Update VersionVector
       versionVector = versionVector.merge(newState.versionVector)
       // newState is actually new (i.e., contains new updates)
       disseminate(newState)
     } else {
       // received state may already be subsumed by some state in the stateStore
-      if (stateStore.exists(oldState => newState.versionVector <= oldState.versionVector)) {
+      if (stateStore.exists(oldState => VectorClock.vectorClockOrdering.lteq(newState.versionVector, oldState.versionVector))) {
         // The newState is already subsumed by a single state in the stateStore
         return
       }
     }
 
     stateStore = leastUpperBound(
-      stateStore.filterNot(oldState =>
-        oldState.versionVector <= newState.versionVector
-      ) + newState
+      stateStore.filterNot(oldState => VectorClock.vectorClockOrdering.lteq(oldState.versionVector, newState.versionVector)) + newState
     )
 
     Console.println(stateStore.map(_.versionVector))
@@ -53,8 +52,8 @@ abstract class UntrustedReplica(initialStates: Set[EncryptedState]) extends Repl
         .map(_._1.versionVector)
         .foldLeft(VectorClock.zero) { case (a: VectorClock, b: VectorClock) => a.merge(b) }
 
-      // Check if this state is subsumed by the merged state of all other values
-      state.versionVector <= mergeOfAllOtherVersionVectors
+      // Check if this state is subsumed by the merge state of all other values
+      VectorClock.vectorClockOrdering.lteq(state.versionVector, mergeOfAllOtherVersionVectors)
     }
 
     val indexedStates = states.zipWithIndex
@@ -81,5 +80,15 @@ abstract class UntrustedReplica(initialStates: Set[EncryptedState]) extends Repl
     }
 
     rec(indexedStates)
+  }
+}
+
+object UntrustedReplica {
+  object encStatePOrd extends PartialOrdering[EncryptedState] {
+    override def tryCompare(x: EncryptedState, y: EncryptedState): Option[Int] =
+      VectorClock.vectorClockOrdering.tryCompare(x.versionVector, y.versionVector)
+
+    override def lteq(x: EncryptedState, y: EncryptedState): Boolean =
+      VectorClock.vectorClockOrdering.lteq(x.versionVector, y.versionVector)
   }
 }

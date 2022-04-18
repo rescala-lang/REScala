@@ -4,6 +4,7 @@ import kofre.Lattice
 import kofre.causality.{CausalContext, Dot}
 import kofre.dotbased.DotStore
 import kofre.dotbased.DotStore.{DotFun, DotMap, DotSet}
+import kofre.Lattice.Operators
 
 case class CausalStore[A](store: A, context: CausalContext)
 
@@ -13,14 +14,12 @@ object CausalStore {
 
   // (s, c) ⨆ (s', c') = ((s ∩ s') ∪ (s \ c') ∪ (s' \ c), c ∪ c')
   implicit def CausalWithDotSetLattice: Lattice[CausalStore[DotSet]] = (left, right) => {
-    val inBoth = left.store & right.store
-    val newInLeft =
-      left.store.filterNot(dot => dot.time <= right.context.clockOf(dot.replicaId).fold(-1L)(_.time))
-    val newInRight =
-      right.store.filterNot(dot => dot.time <= left.context.clockOf(dot.replicaId).fold(-1L)(_.time))
+    val inBoth     = left.store intersect right.store
+    val newInLeft  = left.store subtract right.context
+    val newInRight = right.store subtract left.context
 
-    val mergedCausalContext = left.context.union(right.context)
-    CausalStore(inBoth ++ newInLeft ++ newInRight, mergedCausalContext)
+    val mergeCausalContext = left.context.merge(right.context)
+    CausalStore(inBoth union newInLeft union newInRight, mergeCausalContext)
   }
 
   // (m, c) ⨆ (m', c') = ( {k -> m(k) ⨆ m'(k) | k ∈ dom m ∩ dom m'} ∪
@@ -34,23 +33,23 @@ object CausalStore {
       }).toMap
         ++ left.store.filterNot { case (dot, _) => right.context.contains(dot) }
         ++ right.store.filterNot { case (dot, _) => left.context.contains(dot) },
-      left.context.union(right.context)
+      left.context.merge(right.context)
     )
   }
 
   // (m, c) ⨆ (m', c') = ( {k -> v(k) | k ∈ dom m ∩ dom m' ∧ v(k) ≠ ⊥}, c ∪ c')
   //                      where v(k) = fst((m(k), c) ⨆ (m'(k), c'))
   implicit def CausalWithDotMapLattice[K, V: DotStore](implicit
-      vSemiLattice: Lattice[CausalStore[V]]
+      vLattice: Lattice[CausalStore[V]]
   ): Lattice[CausalStore[DotMap[K, V]]] =
     (left: CausalStore[DotMap[K, V]], right: CausalStore[DotMap[K, V]]) =>
       CausalStore(
         ((left.store.keySet union right.store.keySet) map { key =>
-          val leftCausal  = CausalStore(left.store.getOrElse(key, DotStore[V].empty), left.context)
-          val rightCausal = CausalStore(right.store.getOrElse(key, DotStore[V].empty), right.context)
-          key -> Lattice[CausalStore[V]].merge(leftCausal, rightCausal).store
+          val leftCausalStore  = CausalStore(left.store.getOrElse(key, DotStore[V].empty), left.context)
+          val rightCausalStore = CausalStore(right.store.getOrElse(key, DotStore[V].empty), right.context)
+          key -> Lattice[CausalStore[V]].merge(leftCausalStore, rightCausalStore).store
         } filterNot {
-          case (key, dotStore) => DotStore[V].empty == dotStore
+          case (key, store) => DotStore[V].empty == store
         }).toMap,
         left.context.union(right.context)
       )

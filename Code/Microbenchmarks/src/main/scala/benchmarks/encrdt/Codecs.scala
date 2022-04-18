@@ -1,32 +1,54 @@
 package benchmarks.encrdt
 
-import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter}
+
+import benchmarks.encrdt.todolist.ToDoEntry
+import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
-import kofre.causality.Dot
+import kofre.Defs.{Id, Time}
+import kofre.causality.{ArrayRanges, CausalContext, Dot}
+import kofre.dotbased.DotStore.DotSet
 import kofre.encrdt.crdts.{AddWinsLastWriterWinsMap, DeltaAddWinsLastWriterWinsMap}
 
-import java.time.Instant
+import java.util.UUID
 
 object Codecs {
   implicit val awlwwmapJsonCodec: JsonValueCodec[AddWinsLastWriterWinsMap.LatticeType[String, String]] =
-    JsonCodecMaker.make[AddWinsLastWriterWinsMap.LatticeType[String, String]]
+    JsonCodecMaker.make(CodecMakerConfig.withSetMaxInsertNumber(Int.MaxValue).withMapMaxInsertNumber(Int.MaxValue))
 
-  implicit val dotMapAsSetCodec: JsonValueCodec[Set[(Dot, (String, (Instant, String)))]] = JsonCodecMaker.make
-  implicit val dotMapCodec: JsonValueCodec[Map[Dot, (String, (Instant, String))]] =
-    new JsonValueCodec[Map[Dot, (String, (Instant, String))]] {
-      override def decodeValue(
-          in: JsonReader,
-          default: Map[Dot, (String, (Instant, String))]
-      ): Map[Dot, (String, (Instant, String))] =
-        dotMapAsSetCodec.decodeValue(in, Set.empty).toMap
+  implicit val dotSetCodec: JsonValueCodec[DotSet] = new JsonValueCodec[DotSet] {
+    private val optimizedArrayCausalContextCodec: JsonValueCodec[Map[Id, Array[Time]]] = JsonCodecMaker.make
 
-      override def encodeValue(x: Map[Dot, (String, (Instant, String))], out: JsonWriter): Unit =
-        dotMapAsSetCodec.encodeValue(x.toSet, out)
+    override def decodeValue(in: JsonReader, default: DotSet): DotSet =
+      CausalContext(optimizedArrayCausalContextCodec.decodeValue(in, Map.empty).map {
+        case (id, times) => id -> ArrayRanges(times, times.length)
+      })
 
-      override def nullValue: Map[Dot, (String, (Instant, String))] =
-        Map.empty
-    }
+    override def encodeValue(x: DotSet, out: JsonWriter): Unit = optimizedArrayCausalContextCodec.encodeValue(
+      x.internal.map { case (id, ranges) =>
+        id -> {
+          if (ranges.used == ranges.inner.length) ranges.inner
+          else Array.copyOf(ranges.inner, ranges.used)
+        }
+      },
+      out
+    )
+
+    override def nullValue: DotSet = CausalContext.empty
+  }
 
   implicit val deltaAwlwwmapJsonCodec: JsonValueCodec[DeltaAddWinsLastWriterWinsMap.StateType[String, String]] =
-    JsonCodecMaker.make(CodecMakerConfig.withAllowRecursiveTypes(true))
+    JsonCodecMaker.make(CodecMakerConfig.withSetMaxInsertNumber(Int.MaxValue).withMapMaxInsertNumber(Int.MaxValue))
+
+  implicit val lamportClockKeyCodec: JsonKeyCodec[Dot] = new JsonKeyCodec[Dot] {
+    override def decodeKey(in: JsonReader): Dot = {
+      val inputString = in.readKeyAsString()
+      val index       = inputString.indexOf('@')
+      Dot(inputString.substring(index + 1), inputString.substring(0, index).toLong)
+    }
+
+    override def encodeKey(x: Dot, out: JsonWriter): Unit = out.writeKey(s"${x.time}@${x.replicaId}")
+  }
+
+  implicit val toDoMapCodec: JsonValueCodec[DeltaAddWinsLastWriterWinsMap.StateType[UUID, ToDoEntry]] =
+    JsonCodecMaker.make(CodecMakerConfig.withSetMaxInsertNumber(Int.MaxValue).withMapMaxInsertNumber(Int.MaxValue))
 }

@@ -7,28 +7,24 @@ import org.eclipse.jetty.servlet.ServletContextHandler
 import org.eclipse.jetty.websocket.api.{Session, WebSocketAdapter}
 import org.eclipse.jetty.websocket.client.WebSocketClient
 import org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer
-import rescala.extra.encrdt.encrypted.statebased._
+import org.eclipse.jetty.websocket.server.{JettyServerUpgradeRequest, JettyServerUpgradeResponse}
+import rescala.extra.encrdt.encrypted.statebased.{DecryptedState, EncryptedState, Replica, TrustedReplica, UntrustedReplica}
 import rescala.extra.encrdt.sync.ConnectionManager
 
 import java.net.URI
 import java.time.Duration
-
-object LOG {
-  def debug(s: String) = println(s)
-  def error(s: String) = println(s)
-  def warn(s: String)  = println(s)
-  def info(s: String)  = println(s)
-}
+import scala.annotation.nowarn
 
 trait WebSocketReplica extends Replica {
-  protected var server: Server         = _
+  protected var server: Server = _
   protected var replicas: Set[Session] = Set.empty
+
 
   override protected def disseminate(encryptedState: EncryptedState): Unit = {
     val serialized = writeToString(encryptedState)
     replicas = replicas.filter(sess => sess.isOpen)
     replicas.foreach(session => session.getRemote.sendString(serialized))
-    LOG.debug(s"Disseminating ${encryptedState.versionVector}")
+    println(s"Disseminating ${encryptedState.versionVector}")
   }
 
   protected def newReplicaAdded(session: Session): Unit
@@ -47,16 +43,20 @@ trait WebSocketReplica extends Replica {
 
     override def onWebSocketError(cause: Throwable): Unit = {
       super.onWebSocketError(cause)
-      LOG.error(cause.toString)
+      println(cause.toString)
     }
 
     override def onWebSocketClose(statusCode: Int, reason: String): Unit = {
-      LOG.warn(s"websocket ${super.getSession.getRemoteAddress} closed (removing handler) with $statusCode - $reason")
+      println(s"websocket ${super.getSession.getRemoteAddress} closed (removing handler) with $statusCode - $reason")
     }
   }
 
   object ReplicaWsAdapter {
     def apply(): ReplicaWsAdapter = new ReplicaWsAdapter()
+
+    @nowarn("msg=is never used")
+    def apply(req: JettyServerUpgradeRequest, res: JettyServerUpgradeResponse): ReplicaWsAdapter =
+      ReplicaWsAdapter.apply()
   }
 
   def start(): Unit = {
@@ -68,27 +68,24 @@ trait WebSocketReplica extends Replica {
     ctxHandler.setContextPath("/")
     server.setHandler(ctxHandler)
 
-    JettyWebSocketServletContainerInitializer.configure(
-      ctxHandler,
-      (ctx, container) => {
-        container.addMapping("/", (_, _) => ReplicaWsAdapter.apply())
-        container.setIdleTimeout(Duration.ZERO)
-        ctx.setSessionTimeout(0)
-        container.setMaxBinaryMessageSize(Long.MaxValue)
-        container.setMaxTextMessageSize(Long.MaxValue)
-      }
-    )
+    JettyWebSocketServletContainerInitializer.configure(ctxHandler, (ctx, container) => {
+      container.addMapping("/", (r,s) => ReplicaWsAdapter.apply(r,s))
+      container.setIdleTimeout(Duration.ZERO)
+      ctx.setSessionTimeout(0)
+      container.setMaxBinaryMessageSize(Long.MaxValue)
+      container.setMaxTextMessageSize(Long.MaxValue)
+    })
 
     server.start()
 
-    LOG.debug("Server started")
+    println("Server started")
   }
 
   def stop(): Unit = {
     if (server == null) return
     replicas.foreach(session => session.disconnect())
     server.stop()
-    LOG.debug("Server stopped")
+    println("Server stopped")
   }
 
   def uri: URI = {
@@ -107,13 +104,13 @@ class UntrustedReplicaWebSocketServer extends UntrustedReplica(Set.empty) with W
     stateStore.foreach(state => {
       session.getRemote.sendString(writeToString(state))
     })
-    LOG.info(s"New connection: ${session.getRemote.getRemoteAddress}")
+    println(s"New connection: ${session.getRemote.getRemoteAddress}")
   }
 }
 
-abstract class TrustedReplicaWebSocketClient[T](replicaId: String, aead: Aead)(implicit
-    val jsonValueCodec: JsonValueCodec[T]
-) extends TrustedReplica[T](replicaId, aead) with WebSocketReplica with ConnectionManager[T] {
+abstract class TrustedReplicaWebSocketClient[T](replicaId: String, aead: Aead)
+                                               (implicit val jsonValueCodec: JsonValueCodec[T])
+  extends TrustedReplica[T](replicaId, aead) with WebSocketReplica with ConnectionManager[T] {
 
   private val webSocketClient: WebSocketClient = new WebSocketClient()
   webSocketClient.setIdleTimeout(Duration.ZERO) // Infinite timeout
@@ -125,12 +122,12 @@ abstract class TrustedReplicaWebSocketClient[T](replicaId: String, aead: Aead)(i
     replicas = replicas + session
     val encryptedState = DecryptedState(localState(), versionVector).encrypt(aead)
     session.getRemote.sendString(writeToString(encryptedState))
-    LOG.info(s"Connected to ${session.getRemote.getRemoteAddress}")
+    println(s"Connected to ${session.getRemote.getRemoteAddress}")
   }
 
   def connectToReplica(remoteReplicaId: String, uri: URI): Unit = {
     webSocketClient.connect(new ReplicaWsAdapter(), uri)
-    LOG.info(s"Connecting to $uri")
+    println(s"Connecting to $uri")
   }
 
   override def stop(): Unit = {

@@ -49,8 +49,8 @@ object DeltaAddWinsSet {
   def deltaAdd[E](replicaId: String, element: E, set: DeltaAddWinsSetLattice[E]): DeltaAddWinsSetLattice[E] = {
 
     val newDot                           = set.context.clockOf(replicaId).get.advance
-    val deltaDotStore: DotMap[E, DotSet] = Map(element -> Set(newDot))
-    val deltaCausalContext = CausalContext.fromSet(set.store.getOrElse(element, DotStore[DotSet].empty) + newDot)
+    val deltaDotStore: DotMap[E, DotSet] = Map(element -> CausalContext.single(newDot))
+    val deltaCausalContext = set.store.getOrElse(element, DotStore[DotSet].empty).add(newDot)
     CausalStore(deltaDotStore, deltaCausalContext)
   }
 
@@ -65,7 +65,7 @@ object DeltaAddWinsSet {
     */
   def deltaRemove[E](element: E, set: DeltaAddWinsSetLattice[E]): DeltaAddWinsSetLattice[E] = CausalStore(
     DotStore[DotMap[E, DotSet]].empty,
-    CausalContext.fromSet(set.store.getOrElse(element, DotStore[DotSet].empty))
+    set.store.getOrElse(element, DotStore[DotSet].empty)
   )
 
   /** Returns the '''delta''' that removes all elements from the `set`.

@@ -6,13 +6,14 @@ import scala.compiletime.summonAll
 import scala.deriving.Mirror
 
 /** Well, its technically a semilattice, but that is just more to type. */
-trait Lattice[A]:
+trait Lattice[A] {
   /** By assumption: associative, commutative, idempotent.
     *
     * For use with Delta CRDTs, this function should be optimized for the case
     * that left >> right, i.e., that left is the current state and right the delta
     */
   def merge(left: A, right: A): A
+}
 
 object Lattice {
   def apply[A](implicit ev: Lattice[A]): Lattice[A] = ev

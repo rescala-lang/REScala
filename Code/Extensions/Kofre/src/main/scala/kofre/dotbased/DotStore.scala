@@ -26,7 +26,7 @@ trait DotStore[Store] {
 }
 
 object DotStore {
-  type DotSet       = Set[Dot]
+  type DotSet       = CausalContext
   type DotFun[V]    = Map[Dot, V]
   type DotMap[K, V] = Map[K, V]
 

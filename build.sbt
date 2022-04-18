@@ -256,7 +256,8 @@ lazy val microbench = project.in(file("Code/Microbenchmarks"))
     cfg.base,
     noPublish,
     // (Compile / mainClass) := Some("org.openjdk.jmh.Main"),
-    libraryDependencies ++= circeAll.value :+ catsCollection.value :+ upickle.value,
+    libraryDependencies ++= circeAll.value,
+    libraryDependencies ++= List(catsCollection.value, upickle.value, betterFiles.value),
     libraryDependencies ++= jsoniterScalaAll.value,
     jolSettings,
     TaskKey[Unit]("compileJmh") := Seq(pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh / compile).dependOn.value

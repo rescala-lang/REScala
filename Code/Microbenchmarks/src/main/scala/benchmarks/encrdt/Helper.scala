@@ -8,7 +8,6 @@ import java.security.Security
 import java.util.UUID
 
 object Helper {
-
   def uuidKeyValuePairs(size: Int): Array[(String, String)] = {
     val arr = new Array[(String, String)](size)
     for (i <- arr.indices) {
@@ -26,8 +25,11 @@ object Helper {
   }
 
   def setupAead(keyTemplateString: String): Aead = {
-    Conscrypt.checkAvailability()
-    Security.addProvider(Conscrypt.newProvider)
+    if (Conscrypt.isAvailable) {
+      Conscrypt.checkAvailability()
+      Security.addProvider(Conscrypt.newProvider)
+    } else
+      System.err.println("Conscrypt could not be loaded, continuing anyway")
     AeadConfig.register()
     val keyset: KeysetHandle = KeysetHandle.generateNew(KeyTemplates.get(keyTemplateString))
     keyset.getPrimitive(classOf[Aead])

@@ -55,7 +55,7 @@ object DotStore {
     }
 
     override def decompose(state: CausalStore[Set[Dot]]): Iterable[CausalStore[Set[Dot]]] = {
-      val added   = for (d <- state.store) yield CausalStore(Set(d), CausalContext.one(d))
+      val added   = for (d <- state.store) yield CausalStore(Set(d), CausalContext.single(d))
       val removed = state.context.decompose(state.store.contains).map(CausalStore(DotSet.empty, _))
       removed ++ added
     }
@@ -99,7 +99,7 @@ object DotStore {
 
     override def decompose(state: CausalStore[Map[Dot, A]]): Iterable[CausalStore[Map[Dot, A]]] = {
       val added = for (d <- DotFun[A].dots(state.store); v <- UIJDLattice[A].decompose(state.store(d)))
-        yield CausalStore(Map(d -> v), CausalContext.one(d))
+        yield CausalStore(Map(d -> v), CausalContext.single(d))
 
       val removed =
         state.context.decompose(DotFun[A].dots(state.store).contains).map(CausalStore(DotFun[A].empty, _))

@@ -1,25 +1,29 @@
 package kofre.encrdt.crdts
-import kofre.Lattice
-import kofre.causality.Dot
-import kofre.dotbased.DotStore
-import kofre.dotbased.DotStore.DotFun
+
+import de.ckuessner.encrdt.crdts.interfaces.{Crdt, MapCrdt}
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap.{DeltaAddWinsLastWriterWinsMapLattice, timestampedValueLattice}
 import kofre.encrdt.crdts.DeltaAddWinsMap.DeltaAddWinsMapLattice
-import scala.math.Ordering.Implicits.infixOrderingOps
+import kofre.encrdt.lattices.LastWriterWinsTagLattice.lwwLattice
+import kofre.dotbased.DotStore.{DotFun, DotMap}
+import kofre.Lattice
+import kofre.dotbased.CausalStore
 
+import math.Ordering.Implicits.infixOrderingOps
 import java.time.Instant
+import scala.collection.mutable.ArrayBuffer
 
 class DeltaAddWinsLastWriterWinsMap[K, V](
     val replicaId: String,
     initialState: DeltaAddWinsLastWriterWinsMapLattice[K, V] = DeltaAddWinsLastWriterWinsMap.bottom[K, V],
     initialDeltas: Vector[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = Vector()
-) {
-  var _state: DeltaAddWinsLastWriterWinsMapLattice[K, V]          = initialState
-  var _deltas: Vector[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = initialDeltas
+) extends MapCrdt[K, V]  with Crdt[DeltaAddWinsLastWriterWinsMapLattice[K, V]]{
+  protected var _state: DeltaAddWinsLastWriterWinsMapLattice[K, V]               = initialState
+  protected val _deltas: ArrayBuffer[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = ArrayBuffer.from(initialDeltas)
 
   def state: DeltaAddWinsLastWriterWinsMapLattice[K, V] = _state
 
-  def deltas: Vector[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = _deltas
+  def deltas: Vector[DeltaAddWinsLastWriterWinsMapLattice[K, V]] =
+    _deltas.toVector // TODO: Maybe change this to another type
 
   def get(key: K): Option[V] =
     _state.store
@@ -51,6 +55,21 @@ class DeltaAddWinsLastWriterWinsMap[K, V](
   def remove(key: K): Unit =
     mutate(DeltaAddWinsMap.deltaRemove(key, _state))
 
+  def removeDelta(key: K): DeltaAddWinsMapLattice[K, DotFun[(V, (Instant, String))]] = {
+    val delta = DeltaAddWinsMap.deltaRemove(key, _state)
+    mutate(delta)
+    delta
+  }
+
+  def removeAllDelta(keys: Seq[K]): DeltaAddWinsMapLattice[K, DotFun[(V, (Instant, String))]] = {
+    val subDeltas = keys.map(DeltaAddWinsMap.deltaRemove(_, _state))
+    val delta = subDeltas.reduce((left, right) =>
+      Lattice[DeltaAddWinsLastWriterWinsMapLattice[K, V]].merge(left, right)
+    )
+    mutate(delta)
+    delta
+  }
+
   def values: Map[K, V] =
     _state.store.map { case (k, mvReg) =>
       k -> mvReg.values.maxBy(_._2)._1
@@ -61,7 +80,7 @@ class DeltaAddWinsLastWriterWinsMap[K, V](
   }
 
   private def mutate(delta: DeltaAddWinsLastWriterWinsMapLattice[K, V]): Unit = {
-    _deltas = _deltas.appended(delta)
+    _deltas.append(delta)
     _state = Lattice[DeltaAddWinsLastWriterWinsMapLattice[K, V]].merge(_state, delta)
   }
 }
@@ -79,4 +98,7 @@ object DeltaAddWinsLastWriterWinsMap {
       if left._2 <= right._2 then right else left
 
   type StateType[K, V] = DeltaAddWinsMapLattice[K, DotFun[(V, (Instant, String))]]
+
+  given deltaAddWinsMapLattice[K, V]: Lattice[StateType[K, V]] = CausalStore.CausalWithDotMapLattice
+
 }

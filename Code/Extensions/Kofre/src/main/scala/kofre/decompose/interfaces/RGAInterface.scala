@@ -132,7 +132,7 @@ object RGAInterface {
           deltaState[E].make(
             epoche = glistDelta,
             df = dfDelta,
-            cc = CausalContext.one(nextDot)
+            cc = CausalContext.single(nextDot)
           )
       }
     }

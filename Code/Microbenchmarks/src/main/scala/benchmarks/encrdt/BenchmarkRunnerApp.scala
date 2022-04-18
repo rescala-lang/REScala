@@ -23,15 +23,18 @@ object BenchmarkRunnerApp extends App {
 
   val results: util.Collection[RunResult] = new Runner(jmhOptions).run()
 
-  println("Running size benchmarks")
 
+  println("Running ToDo App Benchmarks")
+  ToDoAppBenchmark.main(Array.empty)
+
+  println("Running size benchmarks")
   private val sizeBenchmarks = List[Callable[Unit]](
     () => DeltaStateBasedUntrustedReplicaSizeBenchmark.main(Array.empty),
     () => DeltaStateBasedUntrustedReplicaSizeBenchmarkLinearScaling.main(Array.empty),
-    () => StateBasedUntrustedReplicaSizeBenchmark.main(Array.empty)
+    () => StateBasedUntrustedReplicaSizeBenchmark.main(Array.empty),
   )
 
-  private val executorService = Executors.newFixedThreadPool(3)
+  private val executorService = Executors.newFixedThreadPool(4)
   sizeBenchmarks.foreach((task: Callable[Unit]) => executorService.submit(task))
   executorService.shutdown()
   executorService.awaitTermination(1, TimeUnit.HOURS)
