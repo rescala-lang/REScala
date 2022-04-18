@@ -4,7 +4,6 @@ import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
 import kofre.dotbased.{AddWinsSet, AddWinsSetO}
 import kofre.causality.{ArrayRanges, CausalContext, Dot}
-import kofre.causality.impl.IntTree
 import kofre.{Defs, Lattice}
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -96,22 +95,12 @@ class AddWinsSetBench {
 object Codecs {
 
   implicit val dotUJsonCodec: upickle.default.ReadWriter[Dot]                   = upickle.default.macroRW
-  implicit val itRangeCodec: upickle.default.ReadWriter[IntTree.Range]          = upickle.default.macroRW
-  implicit val itTreeEmptyCodec: upickle.default.ReadWriter[IntTree.Empty.type] = upickle.default.macroRW
-  implicit val itTreeCodec: upickle.default.ReadWriter[IntTree.Tree]            = upickle.default.macroRW
 
   implicit val arrayRangesCodec: upickle.default.ReadWriter[ArrayRanges] = upickle.default.macroRW
   implicit val contextCodec: upickle.default.ReadWriter[CausalContext]   = upickle.default.macroRW
 
   implicit val awsOUJsonCodec: upickle.default.ReadWriter[AddWinsSetO[String]] = upickle.default.macroRW
   implicit val awsUJsonCodec: upickle.default.ReadWriter[AddWinsSet[String]]   = upickle.default.macroRW
-
-  // import io.circe.generic.auto._
-  //
-  // implicit val awsOCirceCodec: io.circe.Encoder[AddWinsSetO[String]] =
-  //  io.circe.generic.semiauto.deriveEncoder: @scala.annotation.nowarn
-  // implicit val awsCirceCodec: io.circe.Encoder[AddWinsSet[String]] =
-  //  io.circe.generic.semiauto.deriveEncoder: @scala.annotation.nowarn
 
   import com.github.plokhotnyuk.jsoniter_scala.core._
   import com.github.plokhotnyuk.jsoniter_scala.macros._
