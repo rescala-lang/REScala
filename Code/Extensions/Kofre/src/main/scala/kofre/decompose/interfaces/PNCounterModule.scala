@@ -2,7 +2,7 @@ package kofre.decompose.interfaces
 
 import kofre.Defs.Id
 import kofre.decompose.interfaces.GCounterInterface.{GCounter, asGcounter}
-import kofre.decompose.{CRDTInterface, UIJDLattice}
+import kofre.decompose.{UIJDLattice}
 import kofre.syntax.{AllPermissionsCtx, FixedIdCtx, IdentifierCtx, OpsSyntaxHelper, QueryCtx}
 import kofre.syntax.AllPermissionsCtx.withID
 
