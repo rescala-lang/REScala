@@ -7,7 +7,7 @@ import kofre.decompose.interfaces.EWFlagInterface.EWFlag
 import kofre.protocol.AuctionInterface
 import kofre.protocol.AuctionInterface.Bid.User
 import kofre.protocol.RubisInterface.{AID, UserAsUIJDLattice}
-import kofre.syntax.{AllPermissionsCtx, DeltaMutator, OpsSyntaxHelper}
+import kofre.syntax.{AllPermissionsCtx, OpsSyntaxHelper}
 
 /** A Rubis (Rice University Bidding System) is a Delta CRDT modeling an auction system.
   *
@@ -22,7 +22,7 @@ import kofre.syntax.{AllPermissionsCtx, DeltaMutator, OpsSyntaxHelper}
 object RubisInterface {
   type AID = String
 
-  type State = (AWSetInterface.AWSet[(User, String)], Map[User, String], Map[AID, AuctionInterface.State])
+  type State = (AWSetInterface.AWSet[(User, String)], Map[User, String], Map[AID, AuctionInterface.AuctionData])
 
   trait RubisCompanion {
     type State = RubisInterface.State
@@ -38,7 +38,7 @@ object RubisInterface {
     def make(
         userRequests: AWSetInterface.AWSet[(User, String)] = bottom._1,
         users: Map[User, String] = bottom._2,
-        auctions: Map[AID, AuctionInterface.State] = bottom._3
+        auctions: Map[AID, AuctionInterface.AuctionData] = bottom._3
     ): State = (userRequests, users, auctions)
   }
 
@@ -50,8 +50,8 @@ object RubisInterface {
       val (_, users, m) = current
       val newMap =
         if (users.get(userId).contains(replicaID) && m.contains(auctionId)) {
-          m.updatedWith(auctionId) { _.map(a => AuctionInterface.bid(userId, price)(replicaID, a)) }
-        } else Map.empty[AID, AuctionInterface.State]
+          m.updatedWith(auctionId) { _.map(a => a.bid(userId, price)) }
+        } else Map.empty[AID, AuctionInterface.AuctionData]
 
       deltaState.make(auctions = newMap)
     }
@@ -60,8 +60,8 @@ object RubisInterface {
       val (_, _, m) = current
       val newMap =
         if (m.contains(auctionId)) {
-          m.updatedWith(auctionId) { _.map(a => AuctionInterface.close()(replicaID, a)) }
-        } else Map.empty[AID, AuctionInterface.State]
+          m.updatedWith(auctionId) { _.map(a => a.close()) }
+        } else Map.empty[AID, AuctionInterface.AuctionData]
 
       deltaState.make(auctions = newMap)
     }
@@ -69,8 +69,8 @@ object RubisInterface {
     def openAuction(auctionId: AID)(using MutationIDP): C = {
       val (_, _, m) = current
       val newMap =
-        if (m.contains(auctionId)) Map.empty[AID, AuctionInterface.State]
-        else Map(auctionId -> UIJDLattice[AuctionInterface.State].bottom)
+        if (m.contains(auctionId)) Map.empty[AID, AuctionInterface.AuctionData]
+        else Map(auctionId -> UIJDLattice[AuctionInterface.AuctionData].bottom)
 
       deltaState.make(auctions = newMap)
     }

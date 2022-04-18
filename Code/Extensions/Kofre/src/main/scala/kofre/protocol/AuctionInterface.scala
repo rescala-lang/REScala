@@ -1,10 +1,11 @@
 package kofre.protocol
 
 import kofre.decompose.*
+import kofre.decompose.interfaces.EWFlagInterface.EWFlag
 import kofre.decompose.interfaces.GSetInterface
 import kofre.decompose.interfaces.GSetInterface.GSetSyntax
 import kofre.protocol.AuctionInterface.Bid.User
-import kofre.syntax.DeltaMutator
+import kofre.syntax.OpsSyntaxHelper
 
 object AuctionInterface {
   sealed trait Status
@@ -48,7 +49,7 @@ object AuctionInterface {
           UIJDLattice[Set[Bid]].leq(lb, rb) && UIJDLattice[Status].leq(ls, rs)
       }
 
-      override def decompose(state: AuctionData): Iterable[AuctionInterface.State] =
+      override def decompose(state: AuctionData): Iterable[AuctionData] =
         state match {
           case AuctionData(bids, status, _) =>
             bids.map(b =>
@@ -75,12 +76,10 @@ object AuctionInterface {
     }
   }
 
-  type State = AuctionData
+  implicit class AuctionSyntax[C](container: C) extends OpsSyntaxHelper[C, AuctionData](container) {
+    def bid(userId: User, price: Int)(using MutationP): C =
+      AuctionData(bids = current.bids.insert(Bid(userId, price)))
 
-  def bid(userId: User, price: Int): DeltaMutator[State] = {
-    case (replicaID, AuctionData(bids, _, _)) =>
-      AuctionData(bids = bids.insert(Bid(userId, price)))
+    def close()(using MutationP): C = AuctionData(status = Closed)
   }
-
-  def close(): DeltaMutator[State] = (_, _) => AuctionData(status = Closed)
 }

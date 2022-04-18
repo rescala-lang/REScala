@@ -2,7 +2,7 @@ package kofre.decompose.interfaces
 
 import kofre.Lattice.Operators
 import kofre.decompose.*
-import kofre.syntax.{DeltaMutator, OpsSyntaxHelper}
+import kofre.syntax.OpsSyntaxHelper
 import kofre.decompose.UIJDLattice.Operators
 
 /** A LexCounter is a Delta CRDT modeling a counter.

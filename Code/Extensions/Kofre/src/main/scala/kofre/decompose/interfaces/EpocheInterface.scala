@@ -5,7 +5,7 @@ import kofre.decompose.UIJDLattice
 import kofre.decompose.interfaces.GCounterInterface.GCounter
 import kofre.primitives.Epoche
 import kofre.syntax.AllPermissionsCtx.withID
-import kofre.syntax.{ArdtOpsContains, DeltaMutator, OpsSyntaxHelper}
+import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper}
 
 object EpocheInterface {
 

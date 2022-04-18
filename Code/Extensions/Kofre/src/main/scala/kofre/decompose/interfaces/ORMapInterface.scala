@@ -1,8 +1,9 @@
 package kofre.decompose.interfaces
 
+import kofre.Defs
 import kofre.causality.{CausalContext, Dot}
 import kofre.decompose.*
-import kofre.syntax.{ArdtOpsContains, DeltaMutator, OpsSyntaxHelper}
+import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper}
 import kofre.decompose.DotStore.*
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
 import kofre.dotbased.CausalStore
@@ -46,7 +47,7 @@ object ORMapInterface {
     def queryAllEntries(using QueryP): Iterable[CausalStore[V]] =
       current.store.values.map(v => CausalStore(v, current.context))
 
-    def mutateKey(k: K, m: DeltaMutator[CausalStore[V]])(using MutationIDP,  DotStore[V]): C = {
+    def mutateKey(k: K, m: (Defs.Id, CausalStore[V]) => CausalStore[V])(using MutationIDP, DotStore[V]): C = {
         val v = current.store.getOrElse(k, DotStore[V].empty)
 
         m(replicaID, CausalStore(v, current.context)) match {
