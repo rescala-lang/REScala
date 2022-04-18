@@ -1,6 +1,6 @@
-package rescala.extra.lattices.delta.crdt.basic
+package rescala.extra.replication.containers
 
-import kofre.decompose.{CRDTInterface, Delta, UIJDLattice}
+import kofre.decompose.{Delta, UIJDLattice}
 import kofre.syntax.{AllPermissionsCtx, ArdtOpsContains}
 import rescala.extra.replication.AntiEntropy
 

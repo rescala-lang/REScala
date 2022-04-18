@@ -5,7 +5,7 @@ import kofre.decompose.interfaces.EWFlagInterface.EWFlagSyntax
 import kofre.decompose.interfaces.ORMapInterface.{ORMap, ORMapSyntax}
 import kofre.syntax.AllPermissionsCtx.withID
 import org.openjdk.jmh.annotations._
-import rescala.extra.lattices.delta.crdt.reactive.ReactiveDeltaCRDT
+import rescala.extra.replication.containers.ReactiveDeltaCRDT
 
 import java.util.concurrent.TimeUnit
 

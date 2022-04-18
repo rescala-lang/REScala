@@ -6,7 +6,7 @@ import kofre.decompose.{Delta, UIJDLattice}
 import loci.communicator.tcp.TCP
 import loci.registry.Registry
 import loci.transmitter.{RemoteAccessException, RemoteRef}
-import rescala.extra.lattices.delta.crdt.reactive.ReactiveDeltaCRDT
+import rescala.extra.replication.containers.ReactiveDeltaCRDT
 
 import java.util.concurrent._
 import scala.concurrent.Future

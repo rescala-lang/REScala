@@ -3,7 +3,7 @@ package benchmarks.lattices.delta.crdt
 import kofre.decompose.interfaces.EWFlagInterface.{EWFlag, EWFlagSyntax}
 import kofre.decompose.interfaces.GMapInterface.{GMap, GMapSyntax}
 import org.openjdk.jmh.annotations._
-import rescala.extra.lattices.delta.crdt.reactive.ReactiveDeltaCRDT
+import rescala.extra.replication.containers.ReactiveDeltaCRDT
 
 import java.util.concurrent.TimeUnit
 

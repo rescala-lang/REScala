@@ -1,4 +1,4 @@
-package rescala.extra.lattices.delta.crdt.basic
+package rescala.extra.replication.containers
 
 import scala.collection.mutable
 import scala.util.Random

@@ -8,9 +8,9 @@ import kofre.syntax.AllPermissionsCtx
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.lattices.delta.JsoniterCodecs._
-import rescala.extra.lattices.delta.crdt.basic.{AntiEntropyCRDT, Network}
 import rescala.extra.replication.AntiEntropy
 import kofre.decompose.interfaces.GMapInterface.GMapSyntax
+import rescala.extra.replication.containers.{AntiEntropyCRDT, Network}
 
 import scala.collection.mutable
 

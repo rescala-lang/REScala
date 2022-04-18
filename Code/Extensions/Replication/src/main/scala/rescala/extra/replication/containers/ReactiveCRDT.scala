@@ -1,6 +1,6 @@
-package rescala.extra.lattices.delta.crdt.reactive
+package rescala.extra.replication.containers
 
-import kofre.decompose.{CRDTInterface, Delta, UIJDLattice}
+import kofre.decompose.{Delta, UIJDLattice}
 import kofre.syntax.{AllPermissionsCtx, ArdtOpsContains}
 
 /** ReactiveCRDTs are Delta CRDTs that store applied deltas in their deltaBuffer attribute. Middleware should regularly

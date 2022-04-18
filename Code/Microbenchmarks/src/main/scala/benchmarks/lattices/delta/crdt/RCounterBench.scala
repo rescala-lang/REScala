@@ -1,9 +1,9 @@
 package benchmarks.lattices.delta.crdt
 
 import org.openjdk.jmh.annotations._
-import rescala.extra.lattices.delta.crdt.reactive.ReactiveDeltaCRDT
 import kofre.decompose.interfaces.RCounterInterface.RCounter
 import kofre.decompose.interfaces.RCounterInterface.RCounterSyntax
+import rescala.extra.replication.containers.ReactiveDeltaCRDT
 
 import java.util.concurrent.TimeUnit
 

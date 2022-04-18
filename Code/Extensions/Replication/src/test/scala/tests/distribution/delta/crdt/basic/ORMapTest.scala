@@ -7,12 +7,13 @@ import kofre.decompose.interfaces.AWSetInterface.AWSet
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.lattices.delta.JsoniterCodecs._
-import rescala.extra.lattices.delta.crdt.basic._
+
 import rescala.extra.replication.AntiEntropy
 import kofre.decompose.interfaces.AWSetInterface.AWSetSyntax
 import kofre.decompose.interfaces.ORMapInterface.ORMap
 import kofre.syntax.AllPermissionsCtx
 import kofre.decompose.interfaces.ORMapInterface.ORMapSyntax
+import rescala.extra.replication.containers.{AntiEntropyCRDT, Network}
 
 import scala.collection.mutable
 

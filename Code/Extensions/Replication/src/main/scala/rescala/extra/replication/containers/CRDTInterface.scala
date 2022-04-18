@@ -1,7 +1,8 @@
-package kofre.decompose
+package rescala.extra.replication.containers
 
 import kofre.Defs
 import kofre.Defs.Id
+import kofre.decompose.{Delta, UIJDLattice}
 import kofre.syntax.AllPermissionsCtx
 
 trait CRDTInterface[State, Wrapper] {

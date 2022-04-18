@@ -3,7 +3,7 @@ package rescala.extra.replication
 import kofre.decompose.{Delta, UIJDLattice}
 import loci.registry.{Binding, Registry}
 import loci.transmitter.RemoteRef
-import rescala.extra.lattices.delta.crdt.reactive.ReactiveCRDT
+import rescala.extra.replication.containers.ReactiveCRDT
 import rescala.interface.RescalaInterface
 import scribe.Execution.global
 

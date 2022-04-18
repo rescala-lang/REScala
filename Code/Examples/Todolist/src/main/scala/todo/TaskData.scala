@@ -10,12 +10,12 @@ import rescala.default._
 import rescala.extra.Tags._
 import rescala.extra.lattices.delta.JsoniterCodecs._
 import kofre.decompose.{Delta, TimedVal}
-import rescala.extra.lattices.delta.crdt.reactive.ReactiveDeltaCRDT
 import rescala.extra.replication.LociDist
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all._
 import todo.Todolist.replicaId
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax
+import rescala.extra.replication.containers.ReactiveDeltaCRDT
 
 import scala.Function.const
 import scala.collection.mutable

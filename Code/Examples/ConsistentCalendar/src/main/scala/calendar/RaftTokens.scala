@@ -4,8 +4,8 @@ import kofre.Lattice
 import kofre.decompose.Delta
 import kofre.decompose.interfaces.AWSetInterface.AWSet
 import kofre.protocol.RaftState
-import rescala.extra.lattices.delta.crdt.reactive.ReactiveDeltaCRDT
 import kofre.decompose.interfaces.AWSetInterface.AWSetSyntax
+import rescala.extra.replication.containers.ReactiveDeltaCRDT
 
 import scala.util.Random
 

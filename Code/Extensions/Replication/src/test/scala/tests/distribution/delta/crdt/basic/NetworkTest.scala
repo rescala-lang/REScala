@@ -3,7 +3,7 @@ package tests.distribution.delta.crdt.basic
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import rescala.extra.lattices.delta.crdt.basic.Network
+import rescala.extra.replication.containers.Network
 
 object NetworkGenerators {
   val genNetwork: Gen[Network] = for {

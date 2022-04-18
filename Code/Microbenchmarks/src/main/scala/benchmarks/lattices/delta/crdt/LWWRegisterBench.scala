@@ -2,8 +2,8 @@ package benchmarks.lattices.delta.crdt
 
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegister
 import org.openjdk.jmh.annotations._
-import rescala.extra.lattices.delta.crdt.reactive.ReactiveDeltaCRDT
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax
+import rescala.extra.replication.containers.ReactiveDeltaCRDT
 
 import java.util.concurrent.TimeUnit
 

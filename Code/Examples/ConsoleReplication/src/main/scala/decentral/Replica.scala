@@ -4,7 +4,7 @@ import decentral.Bindings._
 import kofre.decompose.interfaces.AWSetInterface.{AWSet, AWSetSyntax}
 import kofre.decompose.{Delta, UIJDLattice}
 import loci.transmitter.{RemoteAccessException, RemoteRef}
-import rescala.extra.lattices.delta.crdt.reactive.ReactiveDeltaCRDT
+import rescala.extra.replication.containers.ReactiveDeltaCRDT
 
 import scala.concurrent.Future
 import scala.io.StdIn.readLine
