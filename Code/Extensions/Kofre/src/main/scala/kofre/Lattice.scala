@@ -18,7 +18,6 @@ object Lattice {
   def apply[A](implicit ev: Lattice[A]): Lattice[A] = ev
   def merge[A: Lattice](left: A, right: A): A       = apply[A].merge(left, right)
 
-  // this seems to have 2.13 compatibility compared to extension methods
   implicit class Operators[A: Lattice](left: A):
     infix def merge(right: A): A = Lattice[A].merge(left, right)
 

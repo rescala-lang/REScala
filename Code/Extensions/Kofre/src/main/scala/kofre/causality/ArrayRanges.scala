@@ -1,12 +1,12 @@
-package kofre.causality.impl
+package kofre.causality
 
-import java.util
-import scala.annotation.tailrec
-import scala.collection.mutable.ListBuffer
 import kofre.Defs.Time
 import kofre.Lattice
 
+import java.util
+import scala.annotation.tailrec
 import scala.collection.IndexedSeqView
+import scala.collection.mutable.ListBuffer
 
 case class ArrayRanges(inner: Array[Time], used: Int) {
 

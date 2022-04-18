@@ -1,10 +1,10 @@
 package test.kofre
 
+import kofre.causality.ArrayRanges
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import kofre.dotbased.{AddWinsSetO}
-import kofre.causality.impl.ArrayRanges
+import kofre.dotbased.AddWinsSetO
 
 class ArrayRangesTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 

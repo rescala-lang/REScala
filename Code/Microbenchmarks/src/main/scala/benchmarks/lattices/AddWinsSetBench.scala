@@ -3,8 +3,8 @@ package benchmarks.lattices
 import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
 import kofre.dotbased.{AddWinsSet, AddWinsSetO}
-import kofre.causality.{CausalContext, Dot}
-import kofre.causality.impl.{ArrayRanges, IntTree}
+import kofre.causality.{ArrayRanges, CausalContext, Dot}
+import kofre.causality.impl.IntTree
 import kofre.{Defs, Lattice}
 
 @BenchmarkMode(Array(Mode.Throughput))

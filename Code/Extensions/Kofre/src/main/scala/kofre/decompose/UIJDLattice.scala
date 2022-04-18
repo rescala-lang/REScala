@@ -21,7 +21,7 @@ trait UIJDLattice[A] extends Lattice[A] {
 }
 
 /** reuse existing lattice instance to implement a UIJDLattice */
-trait UIJDFromLattice[A](using lattice: Lattice[A]) extends UIJDLattice[A] {
+trait UIJDFromLattice[A](lattice: Lattice[A]) extends UIJDLattice[A] {
   export lattice.merge
 }
 
@@ -29,25 +29,24 @@ object UIJDLattice {
   def apply[A](implicit l: UIJDLattice[A]): UIJDLattice[A] = l
   def bottom[A](implicit l: UIJDLattice[A]): A             = l.bottom
 
-  // this seems to have better 2.13 compatibility
   implicit class Operators[A: UIJDLattice](left: A):
     def <=(right: A): Boolean  = UIJDLattice[A].leq(left, right)
     def decompose: Iterable[A] = UIJDLattice[A].decompose(left)
 
-  implicit def IntAsUIJDLattice: UIJDLattice[Int] = new UIJDFromLattice[Int](using _ max _) {
+  given IntAsUIJDLattice: UIJDLattice[Int] = new UIJDFromLattice[Int](_ max _) {
     override def leq(left: Int, right: Int): Boolean  = left <= right
     override def decompose(state: Int): Iterable[Int] = List(state)
     override def bottom: Int                          = 0
   }
 
-  implicit def SetAsUIJDLattice[A]: UIJDLattice[Set[A]] = new UIJDFromLattice[Set[A]](using setLattice) {
+  given SetAsUIJDLattice[A]: UIJDLattice[Set[A]] = new UIJDFromLattice[Set[A]](setLattice) {
     override def leq(left: Set[A], right: Set[A]): Boolean  = left subsetOf right
     override def decompose(state: Set[A]): Iterable[Set[A]] = state.map(Set(_))
     override def bottom: Set[A]                             = Set.empty[A]
   }
 
-  implicit def OptionAsUIJDLattice[A: UIJDLattice]: UIJDLattice[Option[A]] =
-    new UIJDFromLattice[Option[A]](using optionLattice) {
+  given OptionAsUIJDLattice[A: UIJDLattice]: UIJDLattice[Option[A]] =
+    new UIJDFromLattice[Option[A]](optionLattice) {
       override def leq(left: Option[A], right: Option[A]): Boolean = (left, right) match {
         case (None, _)          => true
         case (Some(_), None)    => false
@@ -62,8 +61,8 @@ object UIJDLattice {
       override def bottom: Option[A] = Option.empty[A]
     }
 
-  implicit def MapAsUIJDLattice[K, V: UIJDLattice]: UIJDLattice[Map[K, V]] =
-    new UIJDFromLattice[Map[K, V]](using mapLattice) {
+  given MapAsUIJDLattice[K, V: UIJDLattice]: UIJDLattice[Map[K, V]] =
+    new UIJDFromLattice[Map[K, V]](mapLattice) {
       override def leq(left: Map[K, V], right: Map[K, V]): Boolean =
         left.keySet.forall { k =>
           left.get(k) <= right.get(k)
@@ -79,8 +78,8 @@ object UIJDLattice {
       override def bottom: Map[K, V] = Map.empty[K, V]
     }
 
-  implicit def PairAsUIJDLattice[A: UIJDLattice, B: UIJDLattice]: UIJDLattice[(A, B)] =
-    new UIJDFromLattice[(A, B)](using Lattice.derived) {
+  given PairAsUIJDLattice[A: UIJDLattice, B: UIJDLattice]: UIJDLattice[(A, B)] =
+    new UIJDFromLattice[(A, B)](Lattice.derived) {
       override def bottom: (A, B) = (UIJDLattice[A].bottom, UIJDLattice[B].bottom)
 
       override def leq(left: (A, B), right: (A, B)): Boolean = (left, right) match {
@@ -96,8 +95,8 @@ object UIJDLattice {
       }
     }
 
-  implicit def TripleAsUIJDLattice[A: UIJDLattice, B: UIJDLattice, C: UIJDLattice]: UIJDLattice[(A, B, C)] =
-    new UIJDFromLattice[(A, B, C)](using Lattice.derived) {
+  given TripleAsUIJDLattice[A: UIJDLattice, B: UIJDLattice, C: UIJDLattice]: UIJDLattice[(A, B, C)] =
+    new UIJDFromLattice[(A, B, C)](Lattice.derived) {
       override def leq(left: (A, B, C), right: (A, B, C)): Boolean = (left, right) match {
         case ((la, lb, lc), (ra, rb, rc)) =>
           (la <= ra) && (lb <= rb) && (lc <= rc)
@@ -128,8 +127,8 @@ object UIJDLattice {
     val ccMerged = left.context merge right.context
     CausalStore[D](dsMerged, ccMerged)
 
-  implicit def CausalAsUIJDLattice[D: DotStore]: UIJDLattice[CausalStore[D]] =
-    new UIJDFromLattice[CausalStore[D]](using causalLattice) {
+  given CausalAsUIJDLattice[D: DotStore]: UIJDLattice[CausalStore[D]] =
+    new UIJDFromLattice[CausalStore[D]](causalLattice) {
       override def leq(left: CausalStore[D], right: CausalStore[D]): Boolean = DotStore[D].leq(left, right)
 
       /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
