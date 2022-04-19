@@ -4,7 +4,7 @@ import kofre.Defs
 import kofre.causality.{CausalContext, Dot}
 import kofre.decompose.*
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper}
-import kofre.decompose.DotStore.*
+import kofre.decompose.DecomposableDotStore.*
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
 import kofre.dotbased.CausalStore
 
@@ -24,7 +24,7 @@ object ORMapInterface {
     type Embedded[K, V] = DotMap[K, V]
   }
 
-  private class DeltaStateFactory[K, V: DotStore] {
+  private class DeltaStateFactory[K, V: DecomposableDotStore] {
     val bottom: ORMap[K, V] = UIJDLattice[ORMap[K, V]].bottom
 
     def make(
@@ -33,22 +33,22 @@ object ORMapInterface {
     ): ORMap[K, V] = CausalStore(dm, cc)
   }
 
-  private def deltaState[K, V: DotStore]: DeltaStateFactory[K, V] = new DeltaStateFactory[K, V]
+  private def deltaState[K, V: DecomposableDotStore]: DeltaStateFactory[K, V] = new DeltaStateFactory[K, V]
 
   implicit class ORMapSyntax[C, K, V](container: C)(using ArdtOpsContains[C, ORMap[K, V]])
       extends OpsSyntaxHelper[C, ORMap[K, V]](container) {
 
     def contains(k: K)(using QueryP): Boolean = current.store.contains(k)
 
-    def queryKey[A](k: K)(using QueryP, DotStore[V]): CausalStore[V] = {
-      CausalStore(current.store.getOrElse(k, DotStore[V].empty), current.context)
+    def queryKey[A](k: K)(using QueryP, DecomposableDotStore[V]): CausalStore[V] = {
+      CausalStore(current.store.getOrElse(k, DecomposableDotStore[V].empty), current.context)
     }
 
     def queryAllEntries(using QueryP): Iterable[CausalStore[V]] =
       current.store.values.map(v => CausalStore(v, current.context))
 
-    def mutateKey(k: K, m: (Defs.Id, CausalStore[V]) => CausalStore[V])(using MutationIDP, DotStore[V]): C = {
-        val v = current.store.getOrElse(k, DotStore[V].empty)
+    def mutateKey(k: K, m: (Defs.Id, CausalStore[V]) => CausalStore[V])(using MutationIDP, DecomposableDotStore[V]): C = {
+        val v = current.store.getOrElse(k, DecomposableDotStore[V].empty)
 
         m(replicaID, CausalStore(v, current.context)) match {
           case CausalStore(stateDelta, ccDelta) =>
@@ -59,18 +59,18 @@ object ORMapInterface {
         }
     }
 
-    def remove(k: K)(using MutationIDP,  DotStore[V]): C = {
-      val v = current.store.getOrElse(k, DotStore[V].empty)
+    def remove(k: K)(using MutationIDP, DecomposableDotStore[V]): C = {
+      val v = current.store.getOrElse(k, DecomposableDotStore[V].empty)
 
       deltaState[K, V].make(
-        cc = DotStore[V].dots(v)
+        cc = DecomposableDotStore[V].dots(v)
       )
     }
 
-    def removeAll(keys: Iterable[K])(using MutationIDP,  DotStore[V]): C = {
-      val values = keys.map(k => current.store.getOrElse(k, DotStore[V].empty))
+    def removeAll(keys: Iterable[K])(using MutationIDP, DecomposableDotStore[V]): C = {
+      val values = keys.map(k => current.store.getOrElse(k, DecomposableDotStore[V].empty))
       val dots = values.foldLeft(CausalContext.empty) {
-        case (set, v) => set union DotStore[V].dots(v)
+        case (set, v) => set union DecomposableDotStore[V].dots(v)
       }
 
       deltaState[K, V].make(
@@ -78,9 +78,9 @@ object ORMapInterface {
       )
     }
 
-    def removeByValue(cond: CausalStore[V] => Boolean)(using MutationIDP,  DotStore[V]): C = {
+    def removeByValue(cond: CausalStore[V] => Boolean)(using MutationIDP, DecomposableDotStore[V]): C = {
       val toRemove = current.store.values.collect {
-        case v if cond(CausalStore(v, current.context)) => DotStore[V].dots(v)
+        case v if cond(CausalStore(v, current.context)) => DecomposableDotStore[V].dots(v)
       }.fold(CausalContext.empty)(_ union _)
 
       deltaState[K, V].make(
@@ -88,7 +88,7 @@ object ORMapInterface {
       )
     }
 
-    def clear()(using MutationIDP,  DotStore[V]): C = {
+    def clear()(using MutationIDP, DecomposableDotStore[V]): C = {
       deltaState[K, V].make(
         cc = DotMap[K, V].dots(current.store)
       )

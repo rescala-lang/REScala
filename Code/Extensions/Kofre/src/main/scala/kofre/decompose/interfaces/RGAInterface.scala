@@ -3,7 +3,7 @@ package kofre.decompose.interfaces
 import kofre.causality.{CausalContext, Dot}
 import kofre.decompose.*
 import kofre.syntax.{AllPermissionsCtx, ArdtOpsContains, MutateCtx, OpsSyntaxHelper}
-import kofre.decompose.DotStore.{DotFun, DotLess, DotPair}
+import kofre.decompose.DecomposableDotStore.{DotFun, DotLess, DotPair}
 import kofre.decompose.interfaces.GListInterface.{GListAsUIJDLattice, GListSyntax}
 import kofre.dotbased.CausalStore
 import kofre.primitives.Epoche
