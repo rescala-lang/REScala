@@ -12,8 +12,6 @@ import kofre.causality.{CausalContext, Dot}
   * with some bonus operations. But not quite.
   */
 trait DotStore[Store] {
-  def add(a: Store, d: Dot): Store
-
   def dots(a: Store): CausalContext
 
   def empty: Store
@@ -33,7 +31,6 @@ object DotStore {
   // Todo: V should be a SemiLattice according to paper
   implicit def dotFunDotStore[V]: DotStore[DotFun[V]] = new DotStore[DotFun[V]] {
 
-    override def add(a: DotFun[V], d: Dot): DotFun[V] = ???
     override def empty: DotFun[V]                     = Map.empty
 
     override def merge(left: CausalStore[DotFun[V]], right: CausalStore[DotFun[V]]): CausalStore[DotFun[V]] = ???
@@ -56,8 +53,6 @@ object DotStore {
     new DotStore[CausalContext] {
       type Store = CausalContext
 
-      override def add(a: Store, d: Dot): Store = a.add(d.replicaId, d.time)
-
       override def dots(a: Store): CausalContext = a
 
       override def empty: Store = CausalContext.empty
@@ -73,8 +68,6 @@ object DotStore {
     new DotStore[Set[Dot]] {
       type Store = Set[Dot]
 
-      override def add(a: Store, d: Dot): Store = a + d
-
       override def dots(a: Store): CausalContext = CausalContext.fromSet(a)
 
       override def empty: Store = Set.empty
@@ -89,8 +82,6 @@ object DotStore {
   implicit def DotMapInstance[Key, A](implicit dsl: DotStore[A]): DotStore[Map[Key, A]] =
     new DotStore[Map[Key, A]] {
       type Store = Map[Key, A]
-
-      override def add(a: Store, d: Dot): Store = a.view.mapValues(v => dsl.add(v, d)).toMap
 
       override def dots(a: Store): CausalContext = a.valuesIterator.foldLeft(CausalContext.empty)((acc, v) => acc.union(dsl.dots(v)))
 
