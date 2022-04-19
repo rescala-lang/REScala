@@ -29,7 +29,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
 
   var unboundLocalChanges: List[SetState] = List()
 
-  var unboundRemoteChanges: SetState = UIJDLattice[SetState].bottom
+  var unboundRemoteChanges: SetState = UIJDLattice[SetState].empty
 
   def sendDeltaRecursive(
       remoteReceiveDelta: SetState => Future[Unit],
@@ -97,7 +97,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
             set = set.applyDelta(Delta(remoteRef.toString, changes)).resetDeltaBuffer()
 
             unboundRemoteChanges =
-              UIJDLattice[SetState].diff(changes, unboundRemoteChanges).getOrElse(UIJDLattice[SetState].bottom)
+              UIJDLattice[SetState].diff(changes, unboundRemoteChanges).getOrElse(UIJDLattice[SetState].empty)
 
             checkpoints = checkpoints.updated(replicaID, counter)
 
@@ -179,7 +179,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
 
       val unboundChanges = unboundLocalChanges.foldLeft(unboundRemoteChanges) { UIJDLattice[SetState].merge }
 
-      if (unboundChanges != UIJDLattice[SetState].bottom)
+      if (unboundChanges != UIJDLattice[SetState].empty)
         sendDelta(unboundChanges, rr)
     }
     ()

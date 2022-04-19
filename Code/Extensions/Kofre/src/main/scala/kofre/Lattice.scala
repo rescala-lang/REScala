@@ -13,6 +13,9 @@ trait Lattice[A] {
     * that left >> right, i.e., that left is the current state and right the delta
     */
   def merge(left: A, right: A): A
+
+  /** Lattice order is derived from merge, but should be overridden for efficiency */
+  def leq(left: A, right: A): Boolean = merge(left, right) == right
 }
 
 object Lattice {

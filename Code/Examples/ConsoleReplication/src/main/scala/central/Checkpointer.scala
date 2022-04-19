@@ -16,7 +16,7 @@ class Checkpointer(listenPort: Int) {
 
   val minCheckpointSize: Int = 10
 
-  val bottom: SetState = UIJDLattice[SetState].bottom
+  val bottom: SetState = UIJDLattice[SetState].empty
 
   var fullState: SetState = bottom
 

@@ -20,7 +20,7 @@ object Epoche {
         UIJDLattice[E].decompose(v).map(Epoche(c, _))
     }
 
-    override def bottom: Epoche[E] = Epoche(0, UIJDLattice[E].bottom)
+    override def empty: Epoche[E] = Epoche(0, UIJDLattice[E].empty)
 
     /** By assumption: associative, commutative, idempotent. */
     override def merge(left: Epoche[E], right: Epoche[E]): Epoche[E] = (left, right) match {

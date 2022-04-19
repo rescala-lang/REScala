@@ -21,7 +21,7 @@ object AuctionInterface {
 
       override def decompose(state: Status): Iterable[Status] = List(state)
 
-      override def bottom: Status = Open
+      override def empty: Status = Open
 
       override def merge(left: Status, right: Status): Status = (left, right) match {
         case (Open, Open) => Open
@@ -37,9 +37,9 @@ object AuctionInterface {
   }
 
   case class AuctionData(
-      bids: Set[Bid] = UIJDLattice[Set[Bid]].bottom,
-      status: Status = UIJDLattice[Status].bottom,
-      winner: Option[User] = None
+                          bids: Set[Bid] = UIJDLattice[Set[Bid]].empty,
+                          status: Status = UIJDLattice[Status].empty,
+                          winner: Option[User] = None
   )
 
   case object AuctionData {
@@ -53,14 +53,14 @@ object AuctionInterface {
         state match {
           case AuctionData(bids, status, _) =>
             bids.map(b =>
-              AuctionData(bids = UIJDLattice[Set[Bid]].bottom.insert(b))
+              AuctionData(bids = UIJDLattice[Set[Bid]].empty.insert(b))
             ) ++ (status match {
               case Open   => Set()
               case Closed => Set(AuctionData(status = Closed))
             })
         }
 
-      override def bottom: AuctionData = AuctionData()
+      override def empty: AuctionData = AuctionData()
 
       override def merge(left: AuctionData, right: AuctionData): AuctionData = (left, right) match {
         case (AuctionData(lb, ls, _), AuctionData(rb, rs, _)) =>

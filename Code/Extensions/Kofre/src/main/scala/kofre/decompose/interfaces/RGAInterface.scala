@@ -48,7 +48,7 @@ object RGAInterface {
       /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
       override def decompose(state: RGANode[A]): Iterable[RGANode[A]] = List(state)
 
-      override def bottom: RGANode[A] = throw new UnsupportedOperationException("RGANode does not have a bottom value")
+      override def empty: RGANode[A] = throw new UnsupportedOperationException("RGANode does not have a bottom value")
 
       /** By assumption: associative, commutative, idempotent. */
       override def merge(left: RGANode[A], right: RGANode[A]): RGANode[A] = (left, right) match {
@@ -69,7 +69,7 @@ object RGAInterface {
   }
 
   private class DeltaStateFactory[E] {
-    val bottom: RGA[E] = UIJDLattice[RGA[E]].bottom
+    val bottom: RGA[E] = UIJDLattice[RGA[E]].empty
 
     def make(
         epoche: Epoche[GListInterface.GList[Dot]] = bottom.store._1,

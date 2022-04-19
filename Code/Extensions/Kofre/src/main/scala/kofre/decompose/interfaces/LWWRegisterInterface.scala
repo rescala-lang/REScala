@@ -22,7 +22,7 @@ object LWWRegisterInterface {
 
     def map(f: A => A)(using MutationIDP): C =
       read.map(f) match {
-        case None    => UIJDLattice[LWWRegister[A]].bottom
+        case None    => UIJDLattice[LWWRegister[A]].empty
         case Some(v) => write(v)
       }
 

@@ -45,5 +45,5 @@ object AntiEntropyCRDT {
     * @param antiEntropy AntiEntropy instance used for exchanging deltas with other replicas
     */
   def apply[State: UIJDLattice](antiEntropy: AntiEntropy[State]): AntiEntropyCRDT[State] =
-    new AntiEntropyCRDT(UIJDLattice[State].bottom, antiEntropy)
+    new AntiEntropyCRDT(UIJDLattice[State].empty, antiEntropy)
 }

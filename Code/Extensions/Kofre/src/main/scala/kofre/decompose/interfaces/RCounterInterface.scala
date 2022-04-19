@@ -34,7 +34,7 @@ object RCounterInterface {
         (linc max rinc, ldec max rdec)
     }
 
-    override def bottom: (Int, Int) = (0, 0)
+    override def empty: (Int, Int) = (0, 0)
   }
 
   type RCounter = CausalStore[DotFun[(Int, Int)]]
@@ -43,7 +43,7 @@ object RCounterInterface {
       df: Option[DotFun[(Int, Int)]] = None,
       cc: CausalContext
   ): RCounter = {
-    val bottom = UIJDLattice[RCounter].bottom
+    val bottom = UIJDLattice[RCounter].empty
 
     CausalStore(
       df.getOrElse(bottom.store),

@@ -23,7 +23,7 @@ class SecureToDoListClient(
 
   private val uuidToDeltaGroupMap: mutable.Map[UUID, DecryptedDeltaGroup[ToDoMapLattice]] = mutable.Map.empty
   private var cleanupDeltaGroup: DecryptedDeltaGroup[ToDoMapLattice] =
-    DecryptedDeltaGroup(CausalStore.bottom, CausalContext.empty)
+    DecryptedDeltaGroup(CausalStore.empty, CausalContext.empty)
 
   private var _disseminatedDataInBytes: Long = 0
   def disseminatedDataInBytes: Long          = _disseminatedDataInBytes

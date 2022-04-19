@@ -8,7 +8,7 @@ import kofre.encrdt.crdts.DeltaAddWinsSet.DeltaAddWinsSetLattice
 
 class DeltaAddWinsSet[E](
     val replicaId: String,
-    initialState: DeltaAddWinsSetLattice[E] = CausalStore.bottom[DotMap[E, DotSet]]
+    initialState: DeltaAddWinsSetLattice[E] = CausalStore(Map.empty, CausalContext.empty)
 ) {
 
   private var _state: DeltaAddWinsSetLattice[E]         = initialState
@@ -50,7 +50,7 @@ object DeltaAddWinsSet {
 
     val newDot                           = set.context.clockOf(replicaId).get.advance
     val deltaDotStore: DotMap[E, DotSet] = Map(element -> CausalContext.single(newDot))
-    val deltaCausalContext = set.store.getOrElse(element, DotStore[DotSet].empty).add(newDot)
+    val deltaCausalContext = set.store.getOrElse(element, CausalContext.empty).add(newDot)
     CausalStore(deltaDotStore, deltaCausalContext)
   }
 
@@ -64,9 +64,9 @@ object DeltaAddWinsSet {
     * @return The delta of the remove
     */
   def deltaRemove[E](element: E, set: DeltaAddWinsSetLattice[E]): DeltaAddWinsSetLattice[E] = CausalStore(
-    DotStore[DotMap[E, DotSet]].empty,
-    set.store.getOrElse(element, DotStore[DotSet].empty)
-  )
+    Map.empty,
+    set.store.getOrElse(element, CausalContext.empty)
+    )
 
   /** Returns the '''delta''' that removes all elements from the `set`.
     *
@@ -77,7 +77,7 @@ object DeltaAddWinsSet {
     * @return The delta of the clear
     */
   def deltaClear[E](set: DeltaAddWinsSetLattice[E]): DeltaAddWinsSetLattice[E] = CausalStore(
-    DotStore[DotMap[E, DotSet]].empty,
+    Map.empty,
     DotStore[DotMap[E, DotSet]].dots(set.store)
-  )
+    )
 }

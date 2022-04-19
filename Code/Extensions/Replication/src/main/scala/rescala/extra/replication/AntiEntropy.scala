@@ -35,7 +35,7 @@ class AntiEntropy[A: UIJDLattice](
 
   private val ackMap: mutable.Map.WithDefault[String, Int] = new mutable.Map.WithDefault(mutable.Map(), _ => -1)
 
-  private var fullState: A = UIJDLattice[A].bottom
+  private var fullState: A = UIJDLattice[A].empty
 
   implicit val AckMsgCodec: JsonValueCodec[AckMsg] = JsonCodecMaker.make
 

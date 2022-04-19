@@ -27,7 +27,7 @@ object GMapInterface {
     def contains(k: K)(using QueryP): Boolean = current.contains(k)
 
     def queryKey(k: K)(using QueryP, UIJDLattice[V]): V =
-      current.getOrElse(k, UIJDLattice[V].bottom)
+      current.getOrElse(k, UIJDLattice[V].empty)
 
     def queryAllEntries()(using QueryP): Iterable[V] = current.values
 

@@ -32,7 +32,7 @@ class LociDist[Api <: RescalaInterface](val api: Api) {
 
       // Send full state to initialize remote
       val currentState = signal.readValueOnce.state
-      if (currentState != UIJDLattice[A].bottom) remoteUpdate(currentState)
+      if (currentState != UIJDLattice[A].empty) remoteUpdate(currentState)
 
       // Whenever the crdt is changed propagate the delta
       // Praktisch wäre etwas wie crdt.observeDelta

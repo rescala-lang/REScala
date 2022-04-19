@@ -38,7 +38,7 @@ object GListInterface {
           : Iterable[Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]]] =
         state.toList.map((edge: (GListNode[TimedVal[E]], Elem[TimedVal[E]])) => Map(edge))
 
-      override def bottom: Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]] = Map.empty
+      override def empty: Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]] = Map.empty
 
       @tailrec
       private def insertEdge(
@@ -125,7 +125,7 @@ object GListInterface {
 
     def insertAll(i: Int, elems: Iterable[E])(using MutationIDP): C = {
       if (elems.isEmpty)
-        UIJDLattice[GList[E]].bottom
+        UIJDLattice[GList[E]].empty
       else
         findNth(current, Head[TimedVal[E]](), i) match {
           case None => Map.empty

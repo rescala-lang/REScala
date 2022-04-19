@@ -24,7 +24,7 @@ object ORMapInterface {
   }
 
   private class DeltaStateFactory[K, V: DecomposableDotStore] {
-    val bottom: ORMap[K, V] = UIJDLattice[ORMap[K, V]].bottom
+    val bottom: ORMap[K, V] = UIJDLattice[ORMap[K, V]].empty
 
     def make(
         dm: DotMap[K, V] = bottom.store,

@@ -33,7 +33,7 @@ object RubisInterface {
   implicit val UserAsUIJDLattice: UIJDLattice[User] = UIJDLattice.AtomicUIJDLattice[User]
 
   private class DeltaStateFactory {
-    val bottom: State = UIJDLattice[State].bottom
+    val bottom: State = UIJDLattice[State].empty
 
     def make(
         userRequests: AWSetInterface.AWSet[(User, String)] = bottom._1,
@@ -70,7 +70,7 @@ object RubisInterface {
       val (_, _, m) = current
       val newMap =
         if (m.contains(auctionId)) Map.empty[AID, AuctionInterface.AuctionData]
-        else Map(auctionId -> UIJDLattice[AuctionInterface.AuctionData].bottom)
+        else Map(auctionId -> UIJDLattice[AuctionInterface.AuctionData].empty)
 
       deltaState.make(auctions = newMap)
     }

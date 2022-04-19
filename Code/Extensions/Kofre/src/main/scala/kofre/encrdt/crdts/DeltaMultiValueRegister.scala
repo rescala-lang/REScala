@@ -22,9 +22,9 @@ object DeltaMultiValueRegister {
 
   def deltaClear[V: Lattice](register: DeltaMultiValueRegisterLattice[V]): DeltaMultiValueRegisterLattice[V] =
     CausalStore(
-      DotStore[DotFun[V]].empty,
+      Map.empty,
       CausalContext.fromSet(register.store.keySet)
-    )
+      )
 
   def read[V](register: DeltaMultiValueRegisterLattice[V]): Set[V] = {
     register.store.values.toSet

@@ -32,7 +32,7 @@ class DeltaMergeBench {
 
   @Setup
   def setup(): Unit = {
-    val baseState = UIJDLattice[RGA[Long]].bottom
+    val baseState = UIJDLattice[RGA[Long]].empty
 
     val deltaState = baseState.insertAll(0, 0L to size)(withID(""))
     fullState = UIJDLattice[RGA[Long]].merge(baseState, deltaState)

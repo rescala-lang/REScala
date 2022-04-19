@@ -13,9 +13,9 @@ import java.time.Instant
 import scala.collection.mutable.ArrayBuffer
 
 class DeltaAddWinsLastWriterWinsMap[K, V](
-    val replicaId: String,
-    initialState: DeltaAddWinsLastWriterWinsMapLattice[K, V] = DeltaAddWinsLastWriterWinsMap.bottom[K, V],
-    initialDeltas: Vector[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = Vector()
+                                           val replicaId: String,
+                                           initialState: DeltaAddWinsLastWriterWinsMapLattice[K, V] = DeltaAddWinsLastWriterWinsMap.empty[K, V],
+                                           initialDeltas: Vector[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = Vector()
 ) extends MapCrdt[K, V]  with Crdt[DeltaAddWinsLastWriterWinsMapLattice[K, V]]{
   protected var _state: DeltaAddWinsLastWriterWinsMapLattice[K, V]               = initialState
   protected val _deltas: ArrayBuffer[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = ArrayBuffer.from(initialDeltas)
@@ -89,8 +89,8 @@ object DeltaAddWinsLastWriterWinsMap {
   type DeltaAddWinsLastWriterWinsMapLattice[K, V] =
     DeltaAddWinsMapLattice[K, DotFun[(V, (Instant, String))]]
 
-  def bottom[K, V]: DeltaAddWinsLastWriterWinsMapLattice[K, V] =
-    DeltaAddWinsMap.bottom[K, DotFun[(V, (Instant, String))]]
+  def empty[K, V]: DeltaAddWinsLastWriterWinsMapLattice[K, V] =
+    DeltaAddWinsMap.empty[K, DotFun[(V, (Instant, String))]]
 
   implicit def timestampedValueLattice[V](using Ordering[(Instant, String)]): Lattice[(V, (Instant, String))] =
     (left, right) =>

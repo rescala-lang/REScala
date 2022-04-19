@@ -51,5 +51,5 @@ object ReactiveDeltaCRDT {
     * @param replicaID Unique id of the replica that this instance is located on
     */
   def apply[State: UIJDLattice](replicaID: String): ReactiveDeltaCRDT[State] =
-    new ReactiveDeltaCRDT[State](UIJDLattice[State].bottom, replicaID, List())
+    new ReactiveDeltaCRDT[State](UIJDLattice[State].empty, replicaID, List())
 }

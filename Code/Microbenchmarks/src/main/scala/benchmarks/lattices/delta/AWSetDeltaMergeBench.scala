@@ -32,7 +32,7 @@ class AWSetDeltaMergeBench {
 
   @Setup
   def setup(): Unit = {
-    val baseState = UIJDLattice[AWSet[Long]].bottom
+    val baseState = UIJDLattice[AWSet[Long]].empty
 
     val deltaState = baseState.addAll(0L to size)(AllPermissionsCtx.withID(""))
     fullState = UIJDLattice[AWSet[Long]].merge(baseState, deltaState)

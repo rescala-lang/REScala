@@ -27,7 +27,7 @@ class AWSetComparisonBench {
   var setAStatePlusOne: State = _
 
   private def createSet(replicaID: String): State = {
-    (0 until setSize).foldLeft(UIJDLattice[State].bottom) { (s, i) =>
+    (0 until setSize).foldLeft(UIJDLattice[State].empty) { (s, i) =>
       val delta = s.add(s"${i.toString}$replicaID")(AllPermissionsCtx.withID(replicaID))
       UIJDLattice[State].merge(s, delta)
     }

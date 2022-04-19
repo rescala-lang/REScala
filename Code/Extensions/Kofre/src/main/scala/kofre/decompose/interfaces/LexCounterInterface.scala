@@ -19,7 +19,7 @@ object LexCounterInterface {
   case object LexPair {
     implicit def LexPairAsUIJDLattice[A: UIJDLattice, B: UIJDLattice]: UIJDLattice[LexPair[A, B]] =
       new UIJDLattice[LexPair[A, B]] {
-        override def bottom: LexPair[A, B] = LexPair(UIJDLattice[A].bottom, UIJDLattice[B].bottom)
+        override def empty: LexPair[A, B] = LexPair(UIJDLattice[A].empty, UIJDLattice[B].empty)
 
         override def leq(left: LexPair[A, B], right: LexPair[A, B]): Boolean =
           UIJDLattice[A].leq(left.fst, right.fst) && (
@@ -38,7 +38,7 @@ object LexCounterInterface {
           if (lfleq && !rfleq) right
           else if (rfleq && !lfleq) left
           else if (lfleq && rfleq) LexPair(left.fst, left.snd merge right.snd)
-          else LexPair(left.fst merge right.fst, UIJDLattice[B].bottom)
+          else LexPair(left.fst merge right.fst, UIJDLattice[B].empty)
         }
       }
   }

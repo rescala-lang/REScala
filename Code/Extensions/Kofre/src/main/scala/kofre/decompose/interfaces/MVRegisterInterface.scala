@@ -30,8 +30,8 @@ object MVRegisterInterface {
 
     def clear()(using MutationIDP, UIJDLattice[MVRegister[A]]): C =
       CausalStore(
-        UIJDLattice[MVRegister[A]].bottom.store,
+        UIJDLattice[MVRegister[A]].empty.store,
         CausalContext.fromSet(current.store.keySet)
-      )
+        )
   }
 }

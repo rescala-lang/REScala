@@ -31,7 +31,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
   var checkpoint: Int = 0
 
-  var changesSinceCP: SetState = UIJDLattice[SetState].bottom
+  var changesSinceCP: SetState = UIJDLattice[SetState].empty
 
   var remoteToAddress: Map[RemoteRef, (String, Int)] = Map()
 

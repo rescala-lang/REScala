@@ -27,10 +27,10 @@ object AWSetInterface {
     def add(e: E)(using MutationIDP): C = {
       val CausalStore(dm, cc) = current
       val nextDot             = cc.max(replicaID).fold(Dot(replicaID, 0))(_.advance)
-      val v                   = dm.getOrElse(e, DotSet.empty)
+      val v                   = dm.getOrElse(e, CausalContext.empty)
 
       deltaState[E].make(
-        dm = DotMap[E, CausalContext].empty.updated(e, CausalContext.single(nextDot)),
+        dm = Map(e -> CausalContext.single(nextDot)),
         cc = v add nextDot
       )
     }
@@ -55,7 +55,7 @@ object AWSetInterface {
 
     def remove(e: E)(using MutationP): C = {
       val CausalStore(dm, _) = current
-      val v                  = dm.getOrElse(e, DotSet.empty)
+      val v                  = dm.getOrElse(e, CausalContext.empty)
 
       deltaState[E].make(
         cc = v
@@ -80,7 +80,7 @@ object AWSetInterface {
       val CausalStore(dm, _) = current
       val removedDots = dm.collect {
         case (k, v) if cond(k) => v
-      }.foldLeft(DotSet.empty)(_ union _)
+      }.foldLeft(CausalContext.empty)(_ union _)
 
       deltaState[E].make(
         cc = removedDots
@@ -97,7 +97,7 @@ object AWSetInterface {
   }
 
   private class DeltaStateFactory[E] {
-    val bottom: AWSet[E] = UIJDLattice[AWSet[E]].bottom
+    val bottom: AWSet[E] = UIJDLattice[AWSet[E]].empty
 
     def make(
         dm: DotMap[E, CausalContext] = bottom.store,
