@@ -7,6 +7,8 @@ import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import test.kofre.DataGenerator.*
+import kofre.Lattice.Operators
+import kofre.Lattice
 
 class DotSetTests extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
@@ -36,8 +38,8 @@ class DotSetTests extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     val c2 = s2 ++ t2
 
     // commutativity
-    val m1 = DotStore.merge(CausalStore(s1, CausalContext.fromSet(c1)), CausalStore(s2, CausalContext.fromSet(c2)))
-    val m2 = DotStore.merge(CausalStore(s2, CausalContext.fromSet(c2)), CausalStore(s1, CausalContext.fromSet(c1)))
+    val m1 = Lattice.merge(CausalStore(s1, CausalContext.fromSet(c1)), CausalStore(s2, CausalContext.fromSet(c2)))
+    val m2 = Lattice.merge(CausalStore(s2, CausalContext.fromSet(c2)), CausalStore(s1, CausalContext.fromSet(c1)))
     assert(m1 == m2)
 
     // check if all elements were added to the new causal context

@@ -21,7 +21,7 @@ case class AddWinsSet[A](store: Map[A, CausalContext], context: CausalContext) {
 
   /** Adding an element adds it to the current dot store as well as to the causal context (past). */
   def addΔ(element: A, replicaID: Id): AddWinsSet[A] = {
-    val dot     = DotStore.next(replicaID, context)
+    val dot     = context.nextDot(replicaID)
     val onlyDot = CausalContext.single(dot)
     AddWinsSet(Map(element -> onlyDot), store.get(element).fold(onlyDot)(_ add dot))
   }

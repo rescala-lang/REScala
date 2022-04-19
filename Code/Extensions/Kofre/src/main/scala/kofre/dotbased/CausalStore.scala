@@ -13,7 +13,17 @@ object CausalStore {
   def bottom[D: DotStore]: CausalStore[D] = CausalStore(DotStore[D].empty, CausalContext.empty)
 
   // (s, c) ⨆ (s', c') = ((s ∩ s') ∪ (s \ c') ∪ (s' \ c), c ∪ c')
-  implicit def CausalWithDotSetLattice: Lattice[CausalStore[DotSet]] = (left, right) => {
+  implicit def CausalWithDotSetLattice: Lattice[CausalStore[Set[Dot]]] = (left, right) => {
+    val inBoth     = left.store intersect right.store
+    val newInLeft  = left.store diff right.context.toSet
+    val newInRight = right.store diff left.context.toSet
+
+    val mergeCausalContext = left.context.merge(right.context)
+    CausalStore(inBoth union newInLeft union newInRight, mergeCausalContext)
+  }
+
+  // (s, c) ⨆ (s', c') = ((s ∩ s') ∪ (s \ c') ∪ (s' \ c), c ∪ c')
+  implicit def CausalWithContextSetLattice: Lattice[CausalStore[CausalContext]] = (left, right) => {
     val inBoth     = left.store intersect right.store
     val newInLeft  = left.store subtract right.context
     val newInRight = right.store subtract left.context

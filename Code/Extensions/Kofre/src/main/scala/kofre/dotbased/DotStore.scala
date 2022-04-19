@@ -24,6 +24,9 @@ trait DotStore[Store] {
 }
 
 object DotStore {
+
+  def apply[A](implicit dotStore: DotStore[A]): dotStore.type = dotStore
+
   type DotSet       = CausalContext
   type DotFun[V]    = Map[Dot, V]
   type DotMap[K, V] = Map[K, V]
@@ -38,14 +41,6 @@ object DotStore {
     override def dots(dotStore: DotFun[V]): CausalContext = CausalContext.fromSet(dotStore.keySet)
 
   }
-
-  def next[A: DotStore](id: Id, c: A): Dot = DotStore[A].dots(c).nextDot(id)
-
-  def merge[A: DotStore](left: CausalStore[A], right: CausalStore[A]): CausalStore[A] = {
-    DotStore[A].merge(left, right)
-  }
-
-  def apply[A](implicit dotStore: DotStore[A]): dotStore.type = dotStore
 
   // instances
 
