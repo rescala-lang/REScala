@@ -11,7 +11,7 @@ import kofre.dotbased.CausalStore
   * When an element is concurrently added and removed/cleared from the set then the add operation wins, i.e. the resulting set contains the element.
   */
 object AWSetInterface {
-  type Embedded[E] = DotMap[E, DotSet]
+  type Embedded[E] = DotMap[E, CausalContext]
   type AWSet[E]    = CausalStore[Embedded[E]]
 
   extension [C, E](container: C) def asAWSet: AWSetSyntax[C, E] = AWSetSyntax(container)
@@ -26,15 +26,15 @@ object AWSetInterface {
       val v                   = dm.getOrElse(e, DotSet.empty)
 
       deltaState[E].make(
-        dm = DotMap[E, DotSet].empty.updated(e, Set(nextDot)),
-        cc = CausalContext.fromSet(v + nextDot)
+        dm = DotMap[E, CausalContext].empty.updated(e, CausalContext.single(nextDot)),
+        cc = v add nextDot
       )
     }
 
     def addAll(elems: Iterable[E])(using MutationIDP): C = {
       val CausalStore(dm, cc) = current
       val nextCounter         = cc.nextTime(replicaID)
-      val nextDots            = (nextCounter until nextCounter + elems.size).toSet.map(Dot(replicaID, _))
+      val nextDots            = CausalContext.fromSet((nextCounter until nextCounter + elems.size).map(Dot(replicaID, _)))
 
       val ccontextSet = elems.foldLeft(nextDots) {
         case (dots, e) => dm.get(e) match {
@@ -44,8 +44,8 @@ object AWSetInterface {
       }
 
       deltaState[E].make(
-        dm = (elems zip nextDots.map(Set(_))).toMap,
-        cc = CausalContext.fromSet(ccontextSet)
+        dm = (elems zip nextDots.iterator.map(CausalContext.single)).toMap,
+        cc = ccontextSet
       )
     }
 
@@ -54,13 +54,13 @@ object AWSetInterface {
       val v                  = dm.getOrElse(e, DotSet.empty)
 
       deltaState[E].make(
-        cc = CausalContext.fromSet(v)
+        cc = v
       )
     }
 
     def removeAll(elems: Iterable[E])(using MutationP): C = {
       val CausalStore(dm, _) = current
-      val dotsToRemove = elems.foldLeft(Set.empty[Dot]) {
+      val dotsToRemove = elems.foldLeft(CausalContext.empty) {
         case (dots, e) => dm.get(e) match {
             case Some(ds) => dots union ds
             case None     => dots
@@ -68,7 +68,7 @@ object AWSetInterface {
       }
 
       deltaState[E].make(
-        cc = CausalContext.fromSet(dotsToRemove)
+        cc = dotsToRemove
       )
     }
 
@@ -79,14 +79,14 @@ object AWSetInterface {
       }.foldLeft(DotSet.empty)(_ union _)
 
       deltaState[E].make(
-        cc = CausalContext.fromSet(removedDots)
+        cc = removedDots
       )
     }
 
     def clear()(using MutationP): C = {
       val CausalStore(dm, _) = current
       deltaState[E].make(
-        cc = CausalContext.fromSet(DotMap[E, DotSet].dots(dm))
+        cc = DotMap[E, CausalContext].dots(dm)
       )
     }
 
@@ -96,8 +96,8 @@ object AWSetInterface {
     val bottom: AWSet[E] = UIJDLattice[AWSet[E]].bottom
 
     def make(
-        dm: DotMap[E, DotSet] = bottom.store,
-        cc: C = bottom.context
+        dm: DotMap[E, CausalContext] = bottom.store,
+        cc: CausalContext = bottom.context
     ): AWSet[E] = CausalStore(dm, cc)
   }
 

@@ -1,26 +1,12 @@
 package tests.distribution.delta
 
 import kofre.causality.{CausalContext, Dot}
-import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-object CContextGenerators {
+
+class CausalContextTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   import DotStoreGenerators._
-
-  val genSetCContext: Gen[Set[Dot]] = genDotSet
-
-  implicit val arbSetCContext: Arbitrary[Set[Dot]] = Arbitrary(genSetCContext)
-
-  val genDietMapCContext: Gen[CausalContext] = for {
-    ds <- genDotSet
-  } yield CausalContext.fromSet(ds)
-
-  implicit val arbDietMapCContext: Arbitrary[CausalContext] = Arbitrary(genDietMapCContext)
-}
-
-class DietMapCContextTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
-  import CContextGenerators._
 
   "empty" in assert(
     CausalContext.empty.toSet.isEmpty,

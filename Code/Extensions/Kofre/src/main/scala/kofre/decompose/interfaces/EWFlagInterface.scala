@@ -12,22 +12,22 @@ import kofre.primitives.Epoche
   * When the flag is concurrently disabled and enabled then the enable operation wins, i.e. the resulting flag is enabled.
   */
 object EWFlagInterface {
-  type EWFlag = CausalStore[DotSet]
+  type EWFlag = CausalStore[CausalContext]
 
   implicit class EWFlagSyntax[C](container: C) extends OpsSyntaxHelper[C, EWFlag](container) {
-    def read(using QueryP): Boolean = current.store.nonEmpty
+    def read(using QueryP): Boolean = !current.store.isEmpty
 
     def enable()(using MutationIDP): C = {
       val nextDot = current.context.nextDot(replicaID)
       CausalStore(
-        Set(nextDot),
-        CausalContext.fromSet(current.store + nextDot)
+        CausalContext.single(nextDot),
+        current.store add nextDot
       )
     }
     def disable()(using MutationP): C = {
       CausalStore(
-        DotSet.empty,
-        CausalContext.fromSet(current.store)
+        CausalContext.empty,
+        current.store
       )
     }
   }

@@ -18,6 +18,12 @@ object DotStoreGenerators {
 
   val genDotSet: Gen[Set[Dot]] = Gen.containerOf[Set, Dot](genDot)
 
+  val genDietMapCContext: Gen[CausalContext] = for {
+    ds <- genDotSet
+  } yield CausalContext.fromSet(ds)
+
+  implicit val arbDietMapCContext: Arbitrary[CausalContext] = Arbitrary(genDietMapCContext)
+
   implicit val arbDotSet: Arbitrary[Set[Dot]] = Arbitrary(genDotSet)
 
   def genDotFun[A](implicit g: Gen[A]): Gen[DotFun[A]] = for {
@@ -33,7 +39,7 @@ object DotStoreGenerators {
     keys   <- Gen.containerOfN[List, K](n, gk)
     values <- Gen.containerOfN[List, V](n, gv)
   } yield (keys zip values).toMap).suchThat { m =>
-    val dotsIter = m.values.flatMap(DotStore[V].dots)
+    val dotsIter = m.values.flatMap(v => DotStore[V].dots(v).iterator)
     val dotsSet  = dotsIter.toSet
     dotsIter.size == dotsSet.size
   }
@@ -45,7 +51,7 @@ object DotStoreGenerators {
 class DotSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   import DotStoreGenerators._
 
-  "dots" in forAll { ds: Set[Dot] =>
+  "dots" in forAll { ds: CausalContext =>
     assert(
       DotSet.dots(ds) == ds,
       s"DotSet.dots should return the set itself, but ${DotSet.dots(ds)} does not equal $ds"
@@ -57,21 +63,21 @@ class DotSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     s"DotSet.empty should be empty, but ${DotSet.empty} is not empty"
   )
 
-  "merge" in forAll { (dsA: Set[Dot], deletedA: Set[Dot], dsB: Set[Dot], deletedB: Set[Dot]) =>
+  "merge" in forAll { (dsA: CausalContext, deletedA: CausalContext, dsB: CausalContext, deletedB: CausalContext) =>
     val ccA = dsA union deletedA
     val ccB = dsB union deletedB
 
-    val CausalStore(dsMerged, ccMerged) = UIJDLattice[CausalStore[DotSet]].merge(
-      CausalStore(dsA, CausalContext.fromSet(ccA)),
-      CausalStore(dsB, CausalContext.fromSet(ccB))
+    val CausalStore(dsMerged, ccMerged) = UIJDLattice[CausalStore[CausalContext]].merge(
+      CausalStore(dsA, ccA),
+      CausalStore(dsB, ccB)
     )
 
     assert(
-      ccMerged == CausalContext.fromSet(ccA union ccB),
+      ccMerged == (ccA union ccB),
       s"DotSet.merge should have the same effect as set union on the causal context, but $ccMerged does not equal ${ccA union ccB}"
     )
     assert(
-      dsMerged subsetOf (dsA union dsB),
+      dsMerged.toSet subsetOf (dsA union dsB).toSet,
       s"DotSet.merge should not add new elements to the DotSet, but $dsMerged is not a subset of ${dsA union dsB}"
     )
     assert(
@@ -84,37 +90,37 @@ class DotSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     )
   }
 
-  "leq" in forAll { (dsA: Set[Dot], deletedA: Set[Dot], dsB: Set[Dot], deletedB: Set[Dot]) =>
+  "leq" in forAll { (dsA: CausalContext, deletedA: CausalContext, dsB: CausalContext, deletedB: CausalContext) =>
     val ccA = dsA union deletedA
     val ccB = dsB union deletedB
 
     assert(
-      DotSet.leq(CausalStore(dsA, CausalContext.fromSet(ccA)), CausalStore(dsA, CausalContext.fromSet(ccA))),
+      DotSet.leq(CausalStore(dsA, ccA), CausalStore(dsA, ccA)),
       s"DotSet.leq should be reflexive, but returns false when applied to ($dsA, $ccA, $dsA, $ccA)"
     )
 
-    val CausalStore(dsMerged, ccMerged) = UIJDLattice[CausalStore[DotSet]].merge(
-      CausalStore(dsA, CausalContext.fromSet(ccA)),
-      CausalStore(dsB, CausalContext.fromSet(ccB))
+    val CausalStore(dsMerged, ccMerged) = UIJDLattice[CausalStore[CausalContext]].merge(
+      CausalStore(dsA, ccA),
+      CausalStore(dsB, ccB)
     )
 
     assert(
-      DotSet.leq(CausalStore(dsA, CausalContext.fromSet(ccA)), CausalStore(dsMerged, ccMerged)),
+      DotSet.leq(CausalStore(dsA, ccA), CausalStore(dsMerged, ccMerged)),
       s"The result of DotSet.merge should be larger than its lhs, but DotSet.leq returns false when applied to ($dsA, $ccA, $dsMerged, $ccMerged)"
     )
     assert(
-      DotSet.leq(CausalStore(dsB, CausalContext.fromSet(ccB)), CausalStore(dsMerged, ccMerged)),
+      DotSet.leq(CausalStore(dsB, ccB), CausalStore(dsMerged, ccMerged)),
       s"The result of DotSet.merge should be larger than its rhs, but DotSet.leq returns false when applied to ($dsB, $ccB, $dsMerged, $ccMerged)"
     )
   }
 
-  "decompose" in forAll { (ds: Set[Dot], deleted: Set[Dot]) =>
+  "decompose" in forAll { (ds: CausalContext, deleted: CausalContext) =>
     val cc = ds union deleted
 
-    val decomposed = DotSet.decompose(CausalStore(ds, CausalContext.fromSet(cc)))
-    val CausalStore(dsMerged, ccMerged) = decomposed.foldLeft(CausalStore(Set.empty[Dot], CausalContext.empty)) {
+    val decomposed = DotSet.decompose(CausalStore(ds, cc))
+    val CausalStore(dsMerged, ccMerged) = decomposed.foldLeft(CausalStore(CausalContext.empty, CausalContext.empty)) {
       case (CausalStore(dsA, ccA), CausalStore(dsB, ccB)) =>
-        UIJDLattice[CausalStore[DotSet]].merge(CausalStore(dsA, ccA), CausalStore(dsB, ccB))
+        UIJDLattice[CausalStore[CausalContext]].merge(CausalStore(dsA, ccA), CausalStore(dsB, ccB))
     }
 
     assert(
@@ -122,7 +128,7 @@ class DotSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
       s"Merging the list of atoms returned by DotSet.decompose should produce an equal DotSet, but $dsMerged does not equal $ds (while decomposed was $decomposed)"
     )
     assert(
-      ccMerged == CausalContext.fromSet(cc),
+      ccMerged == cc,
       s"Merging the list of atoms returned by DotSet.decompose should produce an equal Causal Context, but $ccMerged does not equal $cc"
     )
   }
@@ -133,7 +139,7 @@ class DotFunTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
   "dots" in forAll { df: DotFun[Int] =>
     assert(
-      DotFun[Int].dots(df) == df.keySet,
+      DotFun[Int].dots(df).toSet == df.keySet,
       s"DotFun.dots should return the keys of the DotFun itself, but ${DotFun[Int].dots(df)} does not equal $df"
     )
   }
@@ -143,7 +149,7 @@ class DotFunTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     s"DotFun.empty should be empty, but ${DotFun[Int].empty} is not empty"
   )
 
-  "merge" in forAll { (dfA: DotFun[Int], deletedA: Set[Dot], dfB: DotFun[Int], deletedB: Set[Dot]) =>
+  "merge" in forAll { (dfA: DotFun[Int], deletedA: CausalContext, dfB: DotFun[Int], deletedB: CausalContext) =>
     val dotsA = DotFun[Int].dots(dfA)
     val dotsB = DotFun[Int].dots(dfB)
     val ccA   = dotsA union deletedA
@@ -151,17 +157,17 @@ class DotFunTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
     val CausalStore(dfMerged, ccMerged) =
       UIJDLattice[CausalStore[DotFun[Int]]].merge(
-        CausalStore(dfA, CausalContext.fromSet(ccA)),
-        CausalStore(dfB, CausalContext.fromSet(ccB))
+        CausalStore(dfA, ccA),
+        CausalStore(dfB, ccB)
       )
     val dotsMerged = DotFun[Int].dots(dfMerged)
 
     assert(
-      ccMerged == CausalContext.fromSet(ccA union ccB),
+      ccMerged == (ccA union ccB),
       s"DotFun.merge should have the same effect as set union on the causal context, but $ccMerged does not equal ${ccA union ccB}"
     )
     assert(
-      dotsMerged subsetOf (dotsA union dotsB),
+      dotsMerged.toSet subsetOf (dotsA union dotsB).toSet,
       s"DotFun.merge should not add new elements to the DotSet, but $dotsMerged is not a subset of ${dotsA union dotsB}"
     )
     assert(
@@ -173,7 +179,7 @@ class DotFunTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
       s"The DotFun resulting from DotFun.merge should not contain dots that were deleted on the rhs, but $dotsMerged contains elements from ${deletedB diff dotsB}"
     )
 
-    (dotsA intersect dotsB).foreach { d =>
+    (dotsA intersect dotsB).iterator.foreach { d =>
       assert(
         dfMerged(d) == UIJDLattice[Int].merge(dfA(d), dfB(d)),
         s"If a dot is used as key in both DotFuns then the corresponding values should be merged in the result of DotFun.merge, but ${dfMerged(
@@ -182,14 +188,14 @@ class DotFunTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
       )
     }
 
-    (dotsA diff ccB).foreach { d =>
+    (dotsA diff ccB).iterator.foreach { d =>
       assert(
         dfMerged(d) == dfA(d),
         s"If a dot only appears on the lhs of DotFun.merge then resulting DotFun should have the same mapping as the lhs, but ${dfMerged(d)} does not equal ${dfA(d)}"
       )
     }
 
-    (dotsB diff ccA).foreach { d =>
+    (dotsB diff ccA).iterator.foreach { d =>
       assert(
         dfMerged(d) == dfB(d),
         s"If a dot only appears on the rhs of DotFun.merge then resulting DotFun should have the same mapping as the rhs, but ${dfMerged(d)} does not equal ${dfB(d)}"
@@ -197,35 +203,35 @@ class DotFunTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     }
   }
 
-  "leq" in forAll { (dfA: DotFun[Int], deletedA: Set[Dot], dfB: DotFun[Int], deletedB: Set[Dot]) =>
+  "leq" in forAll { (dfA: DotFun[Int], deletedA: CausalContext, dfB: DotFun[Int], deletedB: CausalContext) =>
     val ccA = DotFun[Int].dots(dfA) union deletedA
     val ccB = DotFun[Int].dots(dfB) union deletedB
 
     assert(
-      DotFun[Int].leq(CausalStore(dfA, CausalContext.fromSet(ccA)), CausalStore(dfA, CausalContext.fromSet(ccA))),
+      DotFun[Int].leq(CausalStore(dfA, ccA), CausalStore(dfA, ccA)),
       s"DotFun.leq should be reflexive, but returns false when applied to ($dfA, $ccA, $dfA, $ccA)"
     )
 
     val CausalStore(dfMerged, ccMerged) =
       UIJDLattice[CausalStore[DotFun[Int]]].merge(
-        CausalStore(dfA, CausalContext.fromSet(ccA)),
-        CausalStore(dfB, CausalContext.fromSet(ccB))
+        CausalStore(dfA, (ccA)),
+        CausalStore(dfB, (ccB))
       )
 
     assert(
-      DotFun[Int].leq(CausalStore(dfA, CausalContext.fromSet(ccA)), CausalStore(dfMerged, ccMerged)),
+      DotFun[Int].leq(CausalStore(dfA, (ccA)), CausalStore(dfMerged, ccMerged)),
       s"The result of DotFun.merge should be larger than its lhs, but DotFun.leq returns false when applied to ($dfA, $ccA, $dfMerged, $ccMerged)"
     )
     assert(
-      DotFun[Int].leq(CausalStore(dfB, CausalContext.fromSet(ccB)), CausalStore(dfMerged, ccMerged)),
+      DotFun[Int].leq(CausalStore(dfB, (ccB)), CausalStore(dfMerged, ccMerged)),
       s"The result of DotFun.merge should be larger than its rhs, but DotFun.leq returns false when applied to ($dfB, $ccB, $dfMerged, $ccMerged)"
     )
   }
 
-  "decompose" in forAll { (df: DotFun[Int], deleted: Set[Dot]) =>
+  "decompose" in forAll { (df: DotFun[Int], deleted: CausalContext) =>
     val cc = DotFun[Int].dots(df) union deleted
 
-    val decomposed = DotFun[Int].decompose(CausalStore(df, CausalContext.fromSet(cc)))
+    val decomposed = DotFun[Int].decompose(CausalStore(df, (cc)))
     val CausalStore(dfMerged, ccMerged) = decomposed.foldLeft(CausalStore(DotFun[Int].empty, CausalContext.empty)) {
       case (CausalStore(dfA, ccA), CausalStore(dfB, ccB)) =>
         UIJDLattice[CausalStore[DotFun[Int]]].merge(CausalStore(dfA, ccA), CausalStore(dfB, ccB))
@@ -236,7 +242,7 @@ class DotFunTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
       s"Merging the list of atoms returned by DotFun.decompose should produce an equal DotFun, but $dfMerged does not equal $df"
     )
     assert(
-      ccMerged == CausalContext.fromSet(cc),
+      ccMerged == (cc),
       s"Merging the list of atoms returned by DotFun.decompose should produce an equal Causal Context, but $ccMerged does not equal $cc"
     )
   }
@@ -245,38 +251,38 @@ class DotFunTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 class DotMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   import DotStoreGenerators._
 
-  "dots" in forAll { dm: DotMap[Int, DotSet] =>
+  "dots" in forAll { dm: DotMap[Int, CausalContext] =>
     assert(
-      DotMap[Int, DotSet].dots(dm) == dm.values.flatMap(DotSet.dots).toSet,
-      s"DotMap.dots should return the keys of the DotMap itself, but ${DotMap[Int, DotSet].dots(dm)} does not equal $dm"
+      DotMap[Int, CausalContext].dots(dm).toSet == dm.values.flatMap(DotSet.dots(_).iterator).toSet,
+      s"DotMap.dots should return the keys of the DotMap itself, but ${DotMap[Int, CausalContext].dots(dm)} does not equal $dm"
     )
   }
 
   "empty" in assert(
-    DotMap[Int, DotSet].empty.isEmpty,
-    s"DotMap.empty should be empty, but ${DotMap[Int, DotSet].empty} is not empty"
+    DotMap[Int, CausalContext].empty.isEmpty,
+    s"DotMap.empty should be empty, but ${DotMap[Int, CausalContext].empty} is not empty"
   )
 
   "merge" in forAll {
-    (dmA: DotMap[Int, DotSet], deletedA: Set[Dot], dmB: DotMap[Int, DotSet], deletedB: Set[Dot]) =>
-      val dotsA = DotMap[Int, DotSet].dots(dmA)
-      val dotsB = DotMap[Int, DotSet].dots(dmB)
+    (dmA: DotMap[Int, CausalContext], deletedA: CausalContext, dmB: DotMap[Int, CausalContext], deletedB: CausalContext) =>
+      val dotsA = DotMap[Int, CausalContext].dots(dmA)
+      val dotsB = DotMap[Int, CausalContext].dots(dmB)
       val ccA   = dotsA union deletedA
       val ccB   = dotsB union deletedB
 
       val CausalStore(dmMerged, ccMerged) =
-        UIJDLattice[CausalStore[DotMap[Int, DotSet]]].merge(
-          CausalStore(dmA, CausalContext.fromSet(ccA)),
-          CausalStore(dmB, CausalContext.fromSet(ccB))
+        UIJDLattice[CausalStore[DotMap[Int, CausalContext]]].merge(
+          CausalStore(dmA, (ccA)),
+          CausalStore(dmB, (ccB))
         )
-      val dotsMerged = DotMap[Int, DotSet].dots(dmMerged)
+      val dotsMerged = DotMap[Int, CausalContext].dots(dmMerged)
 
       assert(
-        ccMerged == CausalContext.fromSet(ccA union ccB),
+        ccMerged == (ccA union ccB),
         s"DotMap.merge should have the same effect as set union on the causal context, but $ccMerged does not equal ${ccA union ccB}"
       )
       assert(
-        dotsMerged subsetOf (dotsA union dotsB),
+        dotsMerged.toSet subsetOf (dotsA union dotsB).toSet,
         s"DotMap.merge should not add new elements to the DotSet, but $dotsMerged is not a subset of ${dotsA union dotsB}"
       )
       assert(
@@ -293,8 +299,8 @@ class DotMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
         (dmA.keySet union dmB.keySet).foreach { k =>
           val vMerged =
             DotSet.mergePartial(
-              CausalStore(dmA.getOrElse(k, DotSet.empty), CausalContext.fromSet(ccA)),
-              CausalStore(dmB.getOrElse(k, DotSet.empty), CausalContext.fromSet(ccB))
+              CausalStore(dmA.getOrElse(k, DotSet.empty), (ccA)),
+              CausalStore(dmB.getOrElse(k, DotSet.empty), (ccB))
             )
 
           assert(
@@ -306,50 +312,50 @@ class DotMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   }
 
   "leq" ignore forAll {
-    (dmA: DotMap[Int, DotSet], deletedA: Set[Dot], dmB: DotMap[Int, DotSet], deletedB: Set[Dot]) =>
-      val ccA = DotMap[Int, DotSet].dots(dmA) union deletedA
-      val ccB = DotMap[Int, DotSet].dots(dmB) union deletedB
+    (dmA: DotMap[Int, CausalContext], deletedA: CausalContext, dmB: DotMap[Int, CausalContext], deletedB: CausalContext) =>
+      val ccA = DotMap[Int, CausalContext].dots(dmA) union deletedA
+      val ccB = DotMap[Int, CausalContext].dots(dmB) union deletedB
 
     assert(
-      DotMap[Int, DotSet].leq(
-        CausalStore(dmA, CausalContext.fromSet(ccA)),
-        CausalStore(dmA, CausalContext.fromSet(ccA))
+      DotMap[Int, CausalContext].leq(
+        CausalStore(dmA, (ccA)),
+        CausalStore(dmA, (ccA))
       ),
       s"DotMap.leq should be reflexive, but returns false when applied to ($dmA, $ccA, $dmA, $ccA)"
     )
 
     val CausalStore(dmMerged, ccMerged) =
-      UIJDLattice[CausalStore[DotMap[Int, DotSet]]].merge(
-        CausalStore(dmA, CausalContext.fromSet(ccA)),
-        CausalStore(dmB, CausalContext.fromSet(ccB))
+      UIJDLattice[CausalStore[DotMap[Int, CausalContext]]].merge(
+        CausalStore(dmA, (ccA)),
+        CausalStore(dmB, (ccB))
       )
 
     assert(
-      DotMap[Int, DotSet].leq(CausalStore(dmA, CausalContext.fromSet(ccA)), CausalStore(dmMerged, ccMerged)),
+      DotMap[Int, CausalContext].leq(CausalStore(dmA, (ccA)), CausalStore(dmMerged, ccMerged)),
       s"The result of DotMap.merge should be larger than its lhs, but DotMap.leq returns false when applied to ($dmA, $ccA, $dmMerged, $ccMerged)"
     )
     assert(
-      DotMap[Int, DotSet].leq(CausalStore(dmB, CausalContext.fromSet(ccB)), CausalStore(dmMerged, ccMerged)),
+      DotMap[Int, CausalContext].leq(CausalStore(dmB, (ccB)), CausalStore(dmMerged, ccMerged)),
       s"The result of DotMap.merge should be larger than its rhs, but DotMap.leq returns false when applied to ($dmB, $ccB, $dmMerged, $ccMerged)"
     )
   }
 
-  "decompose" in forAll { (dm: DotMap[Int, DotSet], deleted: Set[Dot]) =>
-    val cc = DotMap[Int, DotSet].dots(dm) union deleted
+  "decompose" in forAll { (dm: DotMap[Int, CausalContext], deleted: CausalContext) =>
+    val cc = DotMap[Int, CausalContext].dots(dm) union deleted
 
-    val decomposed = DotMap[Int, DotSet].decompose(CausalStore(dm, CausalContext.fromSet(cc)))
+    val decomposed = DotMap[Int, CausalContext].decompose(CausalStore(dm, (cc)))
     val CausalStore(dmMerged, ccMerged) =
-      decomposed.foldLeft(CausalStore(DotMap[Int, DotSet].empty, CausalContext.empty)) {
+      decomposed.foldLeft(CausalStore(DotMap[Int, CausalContext].empty, CausalContext.empty)) {
         case (CausalStore(dmA, ccA), CausalStore(dmB, ccB)) =>
-          UIJDLattice[CausalStore[DotMap[Int, DotSet]]].merge(CausalStore(dmA, ccA), CausalStore(dmB, ccB))
+          UIJDLattice[CausalStore[DotMap[Int, CausalContext]]].merge(CausalStore(dmA, ccA), CausalStore(dmB, ccB))
       }
 
-    val dotsIter      = dm.values.flatMap(DotSet.dots)
+    val dotsIter      = dm.values.flatMap(DotSet.dots(_).iterator)
     val dotsSet       = dotsIter.toSet
     val duplicateDots = dotsIter.size != dotsSet.size
 
     assert(
-      ccMerged == CausalContext.fromSet(cc),
+      ccMerged == (cc),
       s"Merging the list of atoms returned by DotMap.decompose should produce an equal DotMap, but $dmMerged does not equal $dm"
     )
     assert(

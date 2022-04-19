@@ -10,8 +10,8 @@ class AWSetDeltaFold[E, B](acc: B, onAdd: (B, E) => B, onRemove: (B, E) => B) {
   def apply(currentState: AWSetInterface.AWSet[E], deltaState: AWSetInterface.AWSet[E]): AWSetDeltaFold[E, B] =
     deltaState match {
       case CausalStore(dm, cc) =>
-        val removedDots = cc.toSet diff DotMap[E, DotSet].dots(dm)
-        val removedElems = removedDots.flatMap { dot =>
+        val removedDots = cc diff DotMap[E, CausalContext].dots(dm)
+        val removedElems = removedDots.iterator.flatMap { dot =>
           currentState.store.collect {
             case (e, ds) if ds.contains(dot) => e
           }

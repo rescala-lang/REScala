@@ -63,34 +63,34 @@ object ORMapInterface {
       val v = current.store.getOrElse(k, DotStore[V].empty)
 
       deltaState[K, V].make(
-        cc = CausalContext.fromSet(DotStore[V].dots(v))
+        cc = DotStore[V].dots(v)
       )
     }
 
     def removeAll(keys: Iterable[K])(using MutationIDP,  DotStore[V]): C = {
       val values = keys.map(k => current.store.getOrElse(k, DotStore[V].empty))
-      val dots = values.foldLeft(Set.empty[Dot]) {
+      val dots = values.foldLeft(CausalContext.empty) {
         case (set, v) => set union DotStore[V].dots(v)
       }
 
       deltaState[K, V].make(
-        cc = CausalContext.fromSet(dots)
+        cc = dots
       )
     }
 
     def removeByValue(cond: CausalStore[V] => Boolean)(using MutationIDP,  DotStore[V]): C = {
       val toRemove = current.store.values.collect {
         case v if cond(CausalStore(v, current.context)) => DotStore[V].dots(v)
-      }.fold(Set())(_ union _)
+      }.fold(CausalContext.empty)(_ union _)
 
       deltaState[K, V].make(
-        cc = CausalContext.fromSet(toRemove)
+        cc = toRemove
       )
     }
 
     def clear()(using MutationIDP,  DotStore[V]): C = {
       deltaState[K, V].make(
-        cc = CausalContext.fromSet(DotMap[K, V].dots(current.store))
+        cc = DotMap[K, V].dots(current.store)
       )
     }
   }

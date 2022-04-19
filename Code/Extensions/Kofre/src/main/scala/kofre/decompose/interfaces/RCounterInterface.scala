@@ -41,7 +41,7 @@ object RCounterInterface {
 
   private def deltaState(
       df: Option[DotFun[(Int, Int)]] = None,
-      cc: C
+      cc: CausalContext
   ): RCounter = {
     val bottom = UIJDLattice[RCounter].bottom
 

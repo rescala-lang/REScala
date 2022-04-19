@@ -1,5 +1,6 @@
 package benchmarks.lattices.delta.crdt
 
+import kofre.causality.CausalContext
 import kofre.decompose.DotStore.DotSet
 import kofre.decompose.interfaces.EWFlagInterface.EWFlagSyntax
 import kofre.decompose.interfaces.ORMapInterface.{ORMap, ORMapSyntax}
@@ -21,13 +22,13 @@ class ORMapBench {
   @Param(Array("1", "10", "100", "1000"))
   var numEntries: Int = _
 
-  type SUT = ReactiveDeltaCRDT[ORMap[Int, DotSet]]
+  type SUT = ReactiveDeltaCRDT[ORMap[Int, CausalContext]]
 
   var map: SUT = _
 
   @Setup
   def setup(): Unit = {
-    map = (0 until numEntries).foldLeft(ReactiveDeltaCRDT[ORMap[Int, DotSet]]("a")) {
+    map = (0 until numEntries).foldLeft(ReactiveDeltaCRDT[ORMap[Int, CausalContext]]("a")) {
       case (m, i) => new ORMapSyntax(m).mutateKey(i, (r, b) => b.enable()(withID(r)))
     }
   }

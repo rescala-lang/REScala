@@ -51,7 +51,7 @@ object JsoniterCodecs {
     override def nullValue: Diet[Long] = null
   }
 
-  implicit val intTreeCContextCodec: JsonValueCodec[CausalContext] =
+  implicit val CausalContextCodec: JsonValueCodec[CausalContext] =
     JsonCodecMaker.make(CodecMakerConfig.withAllowRecursiveTypes(true))
 
   /** AWSet */
@@ -66,7 +66,7 @@ object JsoniterCodecs {
 
   /** EWFlag */
 
-  implicit def EWFlagStateCodec: JsonValueCodec[CausalStore[Set[Dot]]] = JsonCodecMaker.make
+  implicit def EWFlagStateCodec: JsonValueCodec[CausalStore[CausalContext]] = JsonCodecMaker.make
 
   // implicit def EWFlagEmbeddedCodec: JsonValueCodec[Set[Dot]] = JsonCodecMaker.make
 
