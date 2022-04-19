@@ -5,6 +5,7 @@ import kofre.causality.{CausalContext, Dot}
 import kofre.dotbased.DotStore
 import kofre.dotbased.DotStore.{DotFun, DotMap, DotSet}
 import kofre.Lattice.Operators
+import kofre.decompose.UIJDLattice
 
 case class CausalStore[A](store: A, context: CausalContext)
 
@@ -13,24 +14,10 @@ object CausalStore {
   def empty[D: DotStore]: CausalStore[D] = CausalStore(DotStore[D].empty, CausalContext.empty)
 
   // (s, c) ⨆ (s', c') = ((s ∩ s') ∪ (s \ c') ∪ (s' \ c), c ∪ c')
-  implicit def CausalWithDotSetLattice: Lattice[CausalStore[Set[Dot]]] = (left, right) => {
-    val inBoth     = left.store intersect right.store
-    val newInLeft  = left.store diff right.context.toSet
-    val newInRight = right.store diff left.context.toSet
-
-    val mergeCausalContext = left.context.merge(right.context)
-    CausalStore(inBoth union newInLeft union newInRight, mergeCausalContext)
-  }
+  implicit def CausalWithDotSetLattice: Lattice[CausalStore[Set[Dot]]] = UIJDLattice.CausalAsUIJDLattice
 
   // (s, c) ⨆ (s', c') = ((s ∩ s') ∪ (s \ c') ∪ (s' \ c), c ∪ c')
-  implicit def CausalWithContextSetLattice: Lattice[CausalStore[CausalContext]] = (left, right) => {
-    val inBoth     = left.store intersect right.store
-    val newInLeft  = left.store subtract right.context
-    val newInRight = right.store subtract left.context
-
-    val mergeCausalContext = left.context.merge(right.context)
-    CausalStore(inBoth union newInLeft union newInRight, mergeCausalContext)
-  }
+  implicit def CausalWithContextSetLattice: Lattice[CausalStore[CausalContext]] = UIJDLattice.CausalAsUIJDLattice
 
   // (m, c) ⨆ (m', c') = ( {k -> m(k) ⨆ m'(k) | k ∈ dom m ∩ dom m'} ∪
   //                       {(d, v) ∈ m  | d ∉ c'} ∪
