@@ -1,7 +1,5 @@
 package kofre.decompose.containers
 
-import kofre.decompose.replication.AntiEntropy
-
 import scala.collection.mutable
 import scala.util.Random
 

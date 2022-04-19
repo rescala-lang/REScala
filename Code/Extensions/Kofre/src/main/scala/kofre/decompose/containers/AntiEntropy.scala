@@ -1,4 +1,4 @@
-package kofre.decompose.replication
+package kofre.decompose.containers
 
 import kofre.Defs
 import kofre.decompose.Delta

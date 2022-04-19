@@ -1,6 +1,5 @@
 package kofre.decompose.containers
 
-import kofre.decompose.replication.AntiEntropy
 import kofre.decompose.{Delta, UIJDLattice}
 import kofre.syntax.{AllPermissionsCtx, ArdtOpsContains}
 

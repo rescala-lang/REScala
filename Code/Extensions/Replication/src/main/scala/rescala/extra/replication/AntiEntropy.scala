@@ -25,7 +25,7 @@ class AntiEntropy[A: UIJDLattice](
     val replicaID: String,
     network: Network,
     neighbors: mutable.Buffer[String] = mutable.Buffer()
-)(implicit val codec: JsonValueCodec[A]) extends kofre.decompose.replication.AntiEntropy[A] {
+)(implicit val codec: JsonValueCodec[A]) extends kofre.decompose.containers.AntiEntropy[A] {
 
   private val deltaBufferOut: mutable.Map[Int, Delta[A]] = mutable.Map()
 
