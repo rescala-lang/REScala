@@ -1,8 +1,8 @@
 package benchmarks.lattices.delta.crdt
 
+import kofre.decompose.containers.ReactiveDeltaCRDT
 import kofre.decompose.interfaces.AWSetInterface.{AWSet, AWSetSyntax}
 import org.openjdk.jmh.annotations._
-import rescala.extra.replication.containers.ReactiveDeltaCRDT
 
 import java.util.concurrent.TimeUnit
 

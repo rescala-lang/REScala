@@ -1,4 +1,4 @@
-package rescala.extra.replication.containers
+package kofre.decompose.containers
 
 import kofre.Defs
 import kofre.Defs.Id

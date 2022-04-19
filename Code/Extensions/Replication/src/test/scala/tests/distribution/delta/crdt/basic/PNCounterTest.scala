@@ -7,7 +7,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.lattices.delta.JsoniterCodecs._
 
 import rescala.extra.replication.AntiEntropy
-import rescala.extra.replication.containers.{AntiEntropyCRDT, Network}
+import kofre.decompose.containers.{AntiEntropyCRDT, Network}
 import tests.distribution.delta.crdt.basic.NetworkGenerators._
 
 import scala.collection.mutable

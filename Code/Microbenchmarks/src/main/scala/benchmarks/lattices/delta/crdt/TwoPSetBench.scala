@@ -3,7 +3,7 @@ package benchmarks.lattices.delta.crdt
 import kofre.decompose.interfaces.TwoPSetInterface.TwoPSet
 import org.openjdk.jmh.annotations._
 import kofre.decompose.interfaces.TwoPSetInterface.TwoPSetSyntax
-import rescala.extra.replication.containers.ReactiveDeltaCRDT
+import kofre.decompose.containers.ReactiveDeltaCRDT
 
 import java.util.concurrent.TimeUnit
 

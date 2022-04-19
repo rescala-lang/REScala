@@ -19,7 +19,7 @@ import todo.Codecs._
 import todo.Todolist.replicaId
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax
 import kofre.decompose.interfaces.RGAInterface.{RGA, RGASyntax}
-import rescala.extra.replication.containers.ReactiveDeltaCRDT
+import kofre.decompose.containers.ReactiveDeltaCRDT
 
 class TodoAppUI(val storagePrefix: String) {
 

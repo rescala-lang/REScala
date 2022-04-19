@@ -11,7 +11,7 @@ import rescala.extra.lattices.delta.JsoniterCodecs._
 import rescala.extra.replication.AntiEntropy
 import tests.distribution.delta.crdt.basic.NetworkGenerators._
 import kofre.decompose.interfaces.GSetInterface.GSetSyntax
-import rescala.extra.replication.containers.{AntiEntropyCRDT, Network}
+import kofre.decompose.containers.{AntiEntropyCRDT, Network}
 
 import scala.collection.mutable
 

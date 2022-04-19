@@ -1,14 +1,14 @@
-package rescala.extra.replication.containers
+package kofre.decompose.containers
 
+import kofre.decompose.replication.AntiEntropy
 import kofre.decompose.{Delta, UIJDLattice}
 import kofre.syntax.{AllPermissionsCtx, ArdtOpsContains}
-import rescala.extra.replication.AntiEntropy
 
-/** BasicCRDTs are Delta CRDTs that use [[AntiEntropy]] and [[Network]] as Middleware for exchanging deltas between replicas.
+/** BasicCRDTs are Delta CRDTs that use [[JsoniterAntiEntropy]] and [[Network]] as Middleware for exchanging deltas between replicas.
   * They cannot actually be used on multiple connected replicas, but are useful for locally testing the behavior of
   * Delta CRDTs.
   *
-  * Generated deltas are automatically propagated to the registered [[AntiEntropy]] instance, but to apply deltas received
+  * Generated deltas are automatically propagated to the registered [[JsoniterAntiEntropy]] instance, but to apply deltas received
   * by the AntiEntropy instance you need to explicitly call processReceivedDeltas on the CRDT.
   */
 trait BasicCRDT[State, Wrapper] extends CRDTInterface[State, Wrapper] {

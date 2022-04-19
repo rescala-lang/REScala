@@ -13,7 +13,7 @@ import kofre.decompose.interfaces.AWSetInterface.AWSetSyntax
 import kofre.decompose.interfaces.ORMapInterface.ORMap
 import kofre.syntax.AllPermissionsCtx
 import kofre.decompose.interfaces.ORMapInterface.ORMapSyntax
-import rescala.extra.replication.containers.{AntiEntropyCRDT, Network}
+import kofre.decompose.containers.{AntiEntropyCRDT, Network}
 
 import scala.collection.mutable
 

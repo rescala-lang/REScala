@@ -1,9 +1,9 @@
 package rescala.extra.replication
 
+import kofre.decompose.containers.ReactiveCRDT
 import kofre.decompose.{Delta, UIJDLattice}
 import loci.registry.{Binding, Registry}
 import loci.transmitter.RemoteRef
-import rescala.extra.replication.containers.ReactiveCRDT
 import rescala.interface.RescalaInterface
 import scribe.Execution.global
 

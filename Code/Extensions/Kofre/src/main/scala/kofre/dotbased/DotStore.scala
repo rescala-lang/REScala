@@ -14,7 +14,7 @@ import kofre.causality.{CausalContext, Dot}
 trait DotStore[Store] {
   def add(a: Store, d: Dot): Store
 
-  def dots(a: Store): Set[Dot]
+  def dots(a: Store): CausalContext
 
   def empty: Store
 
@@ -38,15 +38,11 @@ object DotStore {
 
     override def merge(left: CausalStore[DotFun[V]], right: CausalStore[DotFun[V]]): CausalStore[DotFun[V]] = ???
 
-    override def dots(dotStore: DotFun[V]): Set[Dot] = dotStore.keySet
+    override def dots(dotStore: DotFun[V]): CausalContext = CausalContext.fromSet(dotStore.keySet)
 
   }
 
-  def next[A: DotStore](id: Id, c: A): Dot = {
-    val dotsWithId = DotStore[A].dots(c).filter(_.replicaId == id)
-    val maxCount   = if (dotsWithId.isEmpty) 0 else dotsWithId.map(_.time).max
-    Dot(id, maxCount + 1)
-  }
+  def next[A: DotStore](id: Id, c: A): Dot = DotStore[A].dots(c).nextDot(id)
 
   def merge[A: DotStore](left: CausalStore[A], right: CausalStore[A]): CausalStore[A] = {
     DotStore[A].merge(left, right)
@@ -62,7 +58,7 @@ object DotStore {
 
       override def add(a: Store, d: Dot): Store = a.add(d.replicaId, d.time)
 
-      override def dots(a: Store): Set[Dot] = a.toSet
+      override def dots(a: Store): CausalContext = a
 
       override def empty: Store = CausalContext.empty
 
@@ -79,7 +75,7 @@ object DotStore {
 
       override def add(a: Store, d: Dot): Store = a + d
 
-      override def dots(a: Store): Store = a
+      override def dots(a: Store): CausalContext = CausalContext.fromSet(a)
 
       override def empty: Store = Set.empty
 
@@ -96,7 +92,7 @@ object DotStore {
 
       override def add(a: Store, d: Dot): Store = a.view.mapValues(v => dsl.add(v, d)).toMap
 
-      override def dots(a: Store): Set[Dot] = a.valuesIterator.flatMap(dsl.dots).toSet
+      override def dots(a: Store): CausalContext = a.valuesIterator.foldLeft(CausalContext.empty)((acc, v) => acc.union(dsl.dots(v)))
 
       override def empty: Store = Map.empty
 

@@ -5,7 +5,7 @@ import kofre.decompose.Delta
 import kofre.decompose.interfaces.AWSetInterface.AWSet
 import kofre.protocol.RaftState
 import kofre.decompose.interfaces.AWSetInterface.AWSetSyntax
-import rescala.extra.replication.containers.ReactiveDeltaCRDT
+import kofre.decompose.containers.ReactiveDeltaCRDT
 
 import scala.util.Random
 

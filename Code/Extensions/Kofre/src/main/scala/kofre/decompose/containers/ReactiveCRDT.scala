@@ -1,4 +1,4 @@
-package rescala.extra.replication.containers
+package kofre.decompose.containers
 
 import kofre.decompose.{Delta, UIJDLattice}
 import kofre.syntax.{AllPermissionsCtx, ArdtOpsContains}

@@ -11,7 +11,7 @@ import scala.util.Random
 
 object AWTestHelper {
   def merge[T](crdt: AddWinsSet[T], delta: AddWinsSet[T]): AddWinsSet[T] = {
-    DotStore.DotMapInstance[T, Set[Dot]].merge(crdt, delta)
+    DotStore.DotMapInstance[T, CausalContext].merge(crdt, delta)
   }
 }
 

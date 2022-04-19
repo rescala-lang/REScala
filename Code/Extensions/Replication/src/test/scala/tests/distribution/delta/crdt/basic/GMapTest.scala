@@ -10,7 +10,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.lattices.delta.JsoniterCodecs._
 import rescala.extra.replication.AntiEntropy
 import kofre.decompose.interfaces.GMapInterface.GMapSyntax
-import rescala.extra.replication.containers.{AntiEntropyCRDT, Network}
+import kofre.decompose.containers.{AntiEntropyCRDT, Network}
 
 import scala.collection.mutable
 

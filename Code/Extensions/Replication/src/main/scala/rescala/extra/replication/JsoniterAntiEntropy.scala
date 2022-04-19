@@ -4,7 +4,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReaderException, JsonValu
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import kofre.decompose.containers.Network
 import kofre.decompose.{Delta, UIJDLattice}
-import rescala.extra.replication.AntiEntropy.{AckMsg, DeltaMsg}
+import rescala.extra.replication.JsoniterAntiEntropy.{AckMsg, DeltaMsg}
 
 import scala.collection.mutable
 
@@ -21,11 +21,11 @@ import scala.collection.mutable
   * @param neighbors The neighbors that this replica can communicate with directly
   * @tparam A State type of the CRDT that this anti-entropy algorithm is used with
   */
-class AntiEntropy[A: UIJDLattice](
+class JsoniterAntiEntropy[A: UIJDLattice](
     val replicaID: String,
     network: Network,
     neighbors: mutable.Buffer[String] = mutable.Buffer()
-)(implicit val codec: JsonValueCodec[A]) extends kofre.decompose.replication.AntiEntropy[A] {
+)(implicit val codec: JsonValueCodec[A]) {
 
   private val deltaBufferOut: mutable.Map[Int, Delta[A]] = mutable.Map()
 
@@ -122,11 +122,11 @@ class AntiEntropy[A: UIJDLattice](
   }
 }
 
-object AntiEntropy {
+object JsoniterAntiEntropy {
   case class DeltaMsg[A](delta: Delta[A], seqNum: Int)
   case class AckMsg(from: String, seqNum: Int)
 
-  def sync[A](ae: AntiEntropy[A]*): Unit = {
+  def sync[A](ae: JsoniterAntiEntropy[A]*): Unit = {
     ae.foreach(_.sendChangesToAllNeighbors())
     ae.foreach(_.receiveFromNetwork())
   }

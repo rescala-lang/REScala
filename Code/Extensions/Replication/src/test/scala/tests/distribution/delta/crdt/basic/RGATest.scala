@@ -11,7 +11,7 @@ import rescala.extra.replication.AntiEntropy
 import tests.distribution.delta.crdt.basic.NetworkGenerators._
 import kofre.decompose.interfaces.RGAInterface.RGA
 import kofre.decompose.interfaces.RGAInterface.RGASyntax
-import rescala.extra.replication.containers.{AntiEntropyCRDT, Network}
+import kofre.decompose.containers.{AntiEntropyCRDT, Network}
 
 import scala.collection.mutable
 

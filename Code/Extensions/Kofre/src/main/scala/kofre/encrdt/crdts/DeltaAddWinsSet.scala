@@ -78,6 +78,6 @@ object DeltaAddWinsSet {
     */
   def deltaClear[E](set: DeltaAddWinsSetLattice[E]): DeltaAddWinsSetLattice[E] = CausalStore(
     DotStore[DotMap[E, DotSet]].empty,
-    CausalContext.fromSet(DotStore[DotMap[E, DotSet]].dots(set.store))
+    DotStore[DotMap[E, DotSet]].dots(set.store)
   )
 }

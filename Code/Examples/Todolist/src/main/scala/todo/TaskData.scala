@@ -15,7 +15,7 @@ import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all._
 import todo.Todolist.replicaId
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax
-import rescala.extra.replication.containers.ReactiveDeltaCRDT
+import kofre.decompose.containers.ReactiveDeltaCRDT
 
 import scala.Function.const
 import scala.collection.mutable

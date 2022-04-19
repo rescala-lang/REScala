@@ -2,7 +2,7 @@ package calendar
 import kofre.decompose.interfaces.AWSetInterface.AWSet
 import rescala.default._
 import kofre.decompose.interfaces.AWSetInterface.AWSetSyntax
-import rescala.extra.replication.containers.ReactiveDeltaCRDT
+import kofre.decompose.containers.ReactiveDeltaCRDT
 
 case class Appointment(start: Int, end: Int)
 

@@ -1,12 +1,12 @@
 package central
 
 import central.Bindings._
+import kofre.decompose.containers.ReactiveDeltaCRDT
 import kofre.decompose.interfaces.AWSetInterface.{AWSet, AWSetSyntax}
 import kofre.decompose.{Delta, UIJDLattice}
 import loci.communicator.tcp.TCP
 import loci.registry.Registry
 import loci.transmitter.{RemoteAccessException, RemoteRef}
-import rescala.extra.replication.containers.ReactiveDeltaCRDT
 
 import java.util.concurrent._
 import scala.concurrent.Future
