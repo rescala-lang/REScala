@@ -1,11 +1,11 @@
 package test.kofre
 
+import kofre.Lattice.Operators
+import kofre.causality.{CausalContext, Dot}
+import kofre.dotbased.{AddWinsSet, DotStore}
 import org.scalacheck.Arbitrary
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import kofre.dotbased.{AddWinsSet, DotStore}
-import kofre.Lattice.Operators
-import kofre.causality.{CausalContext, Dot}
 
 import scala.util.Random
 

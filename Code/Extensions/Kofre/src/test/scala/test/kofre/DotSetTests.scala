@@ -1,17 +1,14 @@
 package test.kofre
 
+import kofre.causality.{CausalContext, Dot}
+import kofre.dotbased.DotStore.*
+import kofre.dotbased.{CausalStore, DotStore}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import kofre.dotbased.DotStore.*
-import kofre.causality.CausalContext
-import kofre.causality.Dot
-import kofre.dotbased.{CausalStore, DotStore}
-import DataGenerator.*
-
+import test.kofre.DataGenerator.*
 
 class DotSetTests extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
-
 
   "Manual Tests" in {
     val d1 = Dot("1", 1)

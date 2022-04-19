@@ -1,12 +1,12 @@
 package test.kofre
 
+import kofre.causality.{CausalContext, Dot, VectorClock}
+import kofre.decompose.DotStore
+import kofre.decompose.DotStore.{DotFun, DotMap}
 import kofre.primitives.{CausalQueue, LastWriterWins, MultiValueRegister}
 import kofre.sets.ORSet
 import kofre.{Defs, Lattice}
 import org.scalacheck.{Arbitrary, Gen}
-import kofre.causality.{CausalContext, Dot, VectorClock}
-import kofre.decompose.DotStore
-import kofre.decompose.DotStore.{DotFun, DotMap}
 
 object DataGenerator {
 

@@ -1,8 +1,8 @@
 package test.kofre
 
-import org.scalatest.freespec.AnyFreeSpec
 import kofre.Lattice
 import kofre.rga.{DeltaSequence, Vertex}
+import org.scalatest.freespec.AnyFreeSpec
 
 class DeltaSequenceCrdtTest extends AnyFreeSpec {
 

@@ -1,9 +1,9 @@
 package test.kofre
 
-import org.scalatest.freespec.AnyFreeSpec
-import kofre.protocol.RaftState.Vote
 import kofre.Lattice
 import kofre.protocol.RaftState
+import kofre.protocol.RaftState.Vote
+import org.scalatest.freespec.AnyFreeSpec
 
 class RaftLatticeTest extends AnyFreeSpec {
 

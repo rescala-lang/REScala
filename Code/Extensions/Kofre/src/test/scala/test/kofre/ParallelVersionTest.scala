@@ -1,15 +1,14 @@
 package test.kofre
 
+import kofre.causality.VectorClock
+import kofre.primitives.MultiValueRegister
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import kofre.primitives.{MultiValueRegister}
+import test.kofre.DataGenerator.arbVersion
 
 import scala.Console.in
 import scala.collection.Seq
-import test.kofre.DataGenerator.arbVersion
-
-import kofre.causality.VectorClock
 
 class ParallelVersionTest extends AnyFreeSpec, ScalaCheckDrivenPropertyChecks {
 

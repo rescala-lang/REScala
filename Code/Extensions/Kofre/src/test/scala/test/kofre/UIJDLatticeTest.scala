@@ -1,12 +1,11 @@
 package test.kofre
 
+import kofre.decompose.UIJDLattice.{*, given}
 import kofre.decompose.interfaces.LexCounterInterface.LexPair
-import kofre.decompose.interfaces.LexCounterInterface.LexPair._
-import kofre.decompose.UIJDLattice._
+import kofre.decompose.interfaces.LexCounterInterface.LexPair.*
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import kofre.decompose.UIJDLattice.{given}
 
 class IntAsUIJDLatticeTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "leq" in forAll { (a: Int, b: Int, c: Int) =>
@@ -299,7 +298,7 @@ object LexPairGenerators {
 }
 
 class LexPairAsUIJDLatticeTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
-  import LexPairGenerators._
+  import LexPairGenerators.*
 
   "leq" in forAll { (a: LexPair[Set[Int], Set[Int]], b: LexPair[Set[Int], Set[Int]], c: LexPair[Set[Int], Set[Int]]) =>
     assert(
