@@ -23,7 +23,7 @@ class DotSetTests extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     val c1 = Set(d1)
     val c2 = Set(d1, d2) // d1 is already deleted in the second causal context
 
-    val mergedStore = DotStore[Set[Dot]].merge(
+    val mergedStore = Lattice.merge(
       CausalStore(s1, CausalContext.fromSet(c1)),
       CausalStore(s2, CausalContext.fromSet(c2))
     ).store

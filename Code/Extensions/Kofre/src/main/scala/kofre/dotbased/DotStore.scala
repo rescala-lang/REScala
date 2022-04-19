@@ -13,14 +13,7 @@ import kofre.causality.{CausalContext, Dot}
   */
 trait DotStore[Store] {
   def dots(a: Store): CausalContext
-
   def empty: Store
-
-  /** The new element contains all the dots that are either
-    * contained in both dotstores or contained in one of the dotstores but not in the causal context (history) of the
-    * other one.
-    */
-  def merge(left: CausalStore[Store], right: CausalStore[Store]): CausalStore[Store]
 }
 
 object DotStore {
@@ -33,74 +26,27 @@ object DotStore {
 
   // instances
 
-  // Todo: V should be a SemiLattice according to paper
   implicit def dotFunDotStore[V]: DotStore[DotFun[V]] = new DotStore[DotFun[V]] {
-
-    override def empty: DotFun[V] = Map.empty
-
-    override def merge(left: CausalStore[DotFun[V]], right: CausalStore[DotFun[V]]): CausalStore[DotFun[V]] = ???
-
+    override def empty: DotFun[V]                         = Map.empty
     override def dots(dotStore: DotFun[V]): CausalContext = CausalContext.fromSet(dotStore.keySet)
-
   }
 
   implicit val CausalContextDotStoreInstance: DotStore[CausalContext] =
     new DotStore[CausalContext] {
-      type Store = CausalContext
-
-      override def dots(a: Store): CausalContext = a
-
-      override def empty: Store = CausalContext.empty
-
-      override def merge(left: CausalStore[Store], right: CausalStore[Store]): CausalStore[Store] = {
-        val common      = left.store intersect right.store
-        val newElements = (left.store diff right.context) union (right.store diff left.context)
-        CausalStore(common union newElements, left.context union right.context)
-      }
+      override def dots(a: CausalContext): CausalContext = a
+      override def empty: CausalContext                  = CausalContext.empty
     }
 
   implicit val DotSetInstance: DotStore[Set[Dot]] =
     new DotStore[Set[Dot]] {
-      type Store = Set[Dot]
-
-      override def dots(a: Store): CausalContext = CausalContext.fromSet(a)
-
-      override def empty: Store = Set.empty
-
-      override def merge(left: CausalStore[Store], right: CausalStore[Store]): CausalStore[Store] = {
-        val common      = left.store intersect right.store
-        val newElements = (left.store diff right.context.toSet) union (right.store diff left.context.toSet)
-        CausalStore(common union newElements, left.context union right.context)
-      }
+      override def dots(a: Set[Dot]): CausalContext = CausalContext.fromSet(a)
+      override def empty: Set[Dot]                  = Set.empty
     }
 
   implicit def DotMapInstance[Key, A: DotStore]: DotStore[Map[Key, A]] =
     new DotStore[Map[Key, A]] {
-      type Store = Map[Key, A]
-
-      override def dots(a: Store): CausalContext =
+      override def dots(a: Map[Key, A]): CausalContext =
         a.valuesIterator.foldLeft(CausalContext.empty)((acc, v) => acc.union(DotStore[A].dots(v)))
-
-      override def empty: Store = Map.empty
-
-      override def merge(left: CausalStore[Store], right: CausalStore[Store]): CausalStore[Store] = {
-
-        val empty = DotStore[A].empty
-
-        // The new store is everything both sides have seen and everything that is new.
-        // If something is missing from the store (but in the context) it has been deleted.
-        val newStore: Store = (left.store.keySet union right.store.keySet).map { id =>
-          val value = DotStore[A].merge(
-            CausalStore(left.store.getOrElse(id, empty), left.context),
-            CausalStore(right.store.getOrElse(id, empty), right.context)
-          )
-          (id, value.store)
-        }.filter { _._2 != empty }
-          .toMap
-
-        // the merged state has seen everything from both sides
-        val newContext = left.context union right.context
-        CausalStore(newStore, newContext)
-      }
+      override def empty: Map[Key, A] = Map.empty
     }
 }
