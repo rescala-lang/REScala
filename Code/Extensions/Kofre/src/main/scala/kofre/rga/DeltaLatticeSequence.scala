@@ -2,7 +2,7 @@ package kofre.rga
 
 import kofre.Defs.Id
 import kofre.Lattice
-import kofre.dotbased.AddWinsSetO
+import kofre.dotbased.AddWinsSet
 
 import scala.collection.AbstractIterator
 
@@ -22,7 +22,7 @@ case class DeltaSequenceOrder(inner: Map[Vertex, Vertex]) {
     DeltaSequenceOrder(inner ++ addRightEdgeDelta(left, insertee).inner)
 }
 
-case class DeltaSequence[A](vertices: AddWinsSetO[Vertex], edges: DeltaSequenceOrder, values: Map[Vertex, A]) {
+case class DeltaSequence[A](vertices: AddWinsSet[Vertex], edges: DeltaSequenceOrder, values: Map[Vertex, A]) {
 
   def successor(v: Vertex): Option[Vertex] = {
     edges.inner.get(v) match {
@@ -93,7 +93,7 @@ object DeltaSequence {
   }
 
   def empty[A]: DeltaSequence[A] =
-    DeltaSequence(AddWinsSetO.empty.add(Vertex.start, Vertex.start.id), DeltaSequenceOrder(Map()), Map.empty)
+    DeltaSequence(AddWinsSet.empty.add(Vertex.start, Vertex.start.id), DeltaSequenceOrder(Map()), Map.empty)
 
   implicit def deltaSequenceLattice[A]: Lattice[DeltaSequence[A]] =
     new Lattice[DeltaSequence[A]] {

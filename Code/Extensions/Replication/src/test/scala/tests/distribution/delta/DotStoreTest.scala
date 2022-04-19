@@ -264,7 +264,12 @@ class DotMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   )
 
   "merge" in forAll {
-    (dmA: DotMap[Int, CausalContext], deletedA: CausalContext, dmB: DotMap[Int, CausalContext], deletedB: CausalContext) =>
+    (
+        dmA: DotMap[Int, CausalContext],
+        deletedA: CausalContext,
+        dmB: DotMap[Int, CausalContext],
+        deletedB: CausalContext
+    ) =>
       val dotsA = DotMap[Int, CausalContext].dots(dmA)
       val dotsB = DotMap[Int, CausalContext].dots(dmB)
       val ccA   = dotsA union deletedA
@@ -312,7 +317,12 @@ class DotMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   }
 
   "leq" ignore forAll {
-    (dmA: DotMap[Int, CausalContext], deletedA: CausalContext, dmB: DotMap[Int, CausalContext], deletedB: CausalContext) =>
+    (
+        dmA: DotMap[Int, CausalContext],
+        deletedA: CausalContext,
+        dmB: DotMap[Int, CausalContext],
+        deletedB: CausalContext
+    ) =>
       val ccA = DotMap[Int, CausalContext].dots(dmA) union deletedA
       val ccB = DotMap[Int, CausalContext].dots(dmB) union deletedB
 
@@ -358,9 +368,13 @@ class DotMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
       ccMerged == (cc),
       s"Merging the list of atoms returned by DotMap.decompose should produce an equal DotMap, but $dmMerged does not equal $dm"
     )
-    assert(
-      duplicateDots || dm.keys.forall(k => dm(k).toSet == dmMerged.getOrElse(k, DotSet.empty)),
-      s"Merging the list of atoms returned by DotMap.decompose should produce an equal Causal Context, but $ccMerged does not equal $cc"
-    )
+    if (!duplicateDots) {
+      dm.keys.foreach { k =>
+        assert(
+          dm(k).toSet == dmMerged.getOrElse(k, DotSet.empty).toSet,
+          s"Merging the list of atoms returned by DotMap.decompose should produce an equal Causal Context, but on key $k the $ccMerged does not equal $cc"
+        )
+      }
+    }
   }
 }

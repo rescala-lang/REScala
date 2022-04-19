@@ -14,29 +14,37 @@ case class ArrayRanges(inner: Array[Time], used: Int) {
     case ar: ArrayRanges => inner.iterator.take(used).sameElements(ar.inner.iterator.take(ar.used))
   }
 
-  def <= (right: ArrayRanges): Boolean = {
+  override def hashCode(): Int = {
+    inner.iterator.take(used).hashCode()
+  }
+
+  override def toString(): String = inner.iterator.take(used).grouped(2).map {
+    case (Seq(s, e)) =>
+      val einc = e - 1
+      if s == einc then s"$s" else s"$s:$e"
+  }.mkString("[", ", ", "]")
+
+  def <=(right: ArrayRanges): Boolean = {
     if (isEmpty) return true
     if (right.isEmpty) return false
 
-    var leftIndex = 0
+    var leftIndex  = 0
     var rightIndex = 0
 
     while (leftIndex < used) {
       if (rightIndex >= right.used) return false
-      val leftLower = inner(leftIndex)
-      val leftUpper = inner(leftIndex+1)
+      val leftLower  = inner(leftIndex)
+      val leftUpper  = inner(leftIndex + 1)
       val rightLower = right.inner(rightIndex)
-      val rightUpper = right.inner(rightIndex+1)
+      val rightUpper = right.inner(rightIndex + 1)
 
       if (leftLower > rightUpper) rightIndex += 2
       else if (leftLower < rightLower || leftUpper > rightUpper) return false
-           else leftIndex += 2
+      else leftIndex += 2
     }
 
     return true
   }
-
-  override def toString: String = s"ArrayRanges(${inner.toSeq.take(used).toString()})"
 
   def contains(x: Time): Boolean = {
     val res = java.util.Arrays.binarySearch(inner, 0, used, x)
@@ -228,10 +236,6 @@ case class ArrayRanges(inner: Array[Time], used: Int) {
     ) {}
 
     ArrayRanges(newInner, newInnerNextIndex)
-  }
-
-  override def hashCode(): Int = {
-    inner.take(used).hashCode()
   }
 }
 

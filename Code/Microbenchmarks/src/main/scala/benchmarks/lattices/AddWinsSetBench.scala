@@ -2,7 +2,7 @@ package benchmarks.lattices
 
 import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
-import kofre.dotbased.{AddWinsSet, AddWinsSetO}
+import kofre.dotbased.{AddWinsSet}
 import kofre.causality.{ArrayRanges, CausalContext, Dot}
 import kofre.{Defs, Lattice}
 
@@ -99,14 +99,11 @@ object Codecs {
   implicit val arrayRangesCodec: upickle.default.ReadWriter[ArrayRanges] = upickle.default.macroRW
   implicit val contextCodec: upickle.default.ReadWriter[CausalContext]   = upickle.default.macroRW
 
-  implicit val awsOUJsonCodec: upickle.default.ReadWriter[AddWinsSetO[String]] = upickle.default.macroRW
   implicit val awsUJsonCodec: upickle.default.ReadWriter[AddWinsSet[String]]   = upickle.default.macroRW
 
   import com.github.plokhotnyuk.jsoniter_scala.core._
   import com.github.plokhotnyuk.jsoniter_scala.macros._
 
-  implicit val awsOJsoiterCodec: JsonValueCodec[AddWinsSetO[String]] =
-    JsonCodecMaker.make(CodecMakerConfig.withAllowRecursiveTypes(true))
   implicit val awsJsoiterCodec: JsonValueCodec[AddWinsSet[String]] =
     JsonCodecMaker.make(CodecMakerConfig.withAllowRecursiveTypes(true))
 
