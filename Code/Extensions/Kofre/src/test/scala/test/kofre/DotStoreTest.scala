@@ -1,4 +1,4 @@
-package tests.distribution.delta
+package test.kofre
 
 import kofre.causality.{CausalContext, Dot}
 import kofre.decompose.DotStore._
@@ -51,7 +51,7 @@ object DotStoreGenerators {
 class DotSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   import DotStoreGenerators._
 
-  "dots" in forAll { ds: CausalContext =>
+  "dots" in forAll { (ds: CausalContext) =>
     assert(
       DotSet.dots(ds) == ds,
       s"DotSet.dots should return the set itself, but ${DotSet.dots(ds)} does not equal $ds"
@@ -137,7 +137,7 @@ class DotSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 class DotFunTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   import DotStoreGenerators._
 
-  "dots" in forAll { df: DotFun[Int] =>
+  "dots" in forAll { (df: DotFun[Int]) =>
     assert(
       DotFun[Int].dots(df).toSet == df.keySet,
       s"DotFun.dots should return the keys of the DotFun itself, but ${DotFun[Int].dots(df)} does not equal $df"
@@ -251,7 +251,7 @@ class DotFunTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 class DotMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   import DotStoreGenerators._
 
-  "dots" in forAll { dm: DotMap[Int, CausalContext] =>
+  "dots" in forAll { (dm: DotMap[Int, CausalContext]) =>
     assert(
       DotMap[Int, CausalContext].dots(dm).toSet == dm.values.flatMap(DotSet.dots(_).iterator).toSet,
       s"DotMap.dots should return the keys of the DotMap itself, but ${DotMap[Int, CausalContext].dots(dm)} does not equal $dm"
@@ -326,28 +326,28 @@ class DotMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
       val ccA = DotMap[Int, CausalContext].dots(dmA) union deletedA
       val ccB = DotMap[Int, CausalContext].dots(dmB) union deletedB
 
-    assert(
-      DotMap[Int, CausalContext].leq(
-        CausalStore(dmA, (ccA)),
-        CausalStore(dmA, (ccA))
-      ),
-      s"DotMap.leq should be reflexive, but returns false when applied to ($dmA, $ccA, $dmA, $ccA)"
-    )
-
-    val CausalStore(dmMerged, ccMerged) =
-      UIJDLattice[CausalStore[DotMap[Int, CausalContext]]].merge(
-        CausalStore(dmA, (ccA)),
-        CausalStore(dmB, (ccB))
+      assert(
+        DotMap[Int, CausalContext].leq(
+          CausalStore(dmA, (ccA)),
+          CausalStore(dmA, (ccA))
+        ),
+        s"DotMap.leq should be reflexive, but returns false when applied to ($dmA, $ccA, $dmA, $ccA)"
       )
 
-    assert(
-      DotMap[Int, CausalContext].leq(CausalStore(dmA, (ccA)), CausalStore(dmMerged, ccMerged)),
-      s"The result of DotMap.merge should be larger than its lhs, but DotMap.leq returns false when applied to ($dmA, $ccA, $dmMerged, $ccMerged)"
-    )
-    assert(
-      DotMap[Int, CausalContext].leq(CausalStore(dmB, (ccB)), CausalStore(dmMerged, ccMerged)),
-      s"The result of DotMap.merge should be larger than its rhs, but DotMap.leq returns false when applied to ($dmB, $ccB, $dmMerged, $ccMerged)"
-    )
+      val CausalStore(dmMerged, ccMerged) =
+        UIJDLattice[CausalStore[DotMap[Int, CausalContext]]].merge(
+          CausalStore(dmA, (ccA)),
+          CausalStore(dmB, (ccB))
+        )
+
+      assert(
+        DotMap[Int, CausalContext].leq(CausalStore(dmA, (ccA)), CausalStore(dmMerged, ccMerged)),
+        s"The result of DotMap.merge should be larger than its lhs, but DotMap.leq returns false when applied to ($dmA, $ccA, $dmMerged, $ccMerged)"
+      )
+      assert(
+        DotMap[Int, CausalContext].leq(CausalStore(dmB, (ccB)), CausalStore(dmMerged, ccMerged)),
+        s"The result of DotMap.merge should be larger than its rhs, but DotMap.leq returns false when applied to ($dmB, $ccB, $dmMerged, $ccMerged)"
+      )
   }
 
   "decompose" in forAll { (dm: DotMap[Int, CausalContext], deleted: CausalContext) =>

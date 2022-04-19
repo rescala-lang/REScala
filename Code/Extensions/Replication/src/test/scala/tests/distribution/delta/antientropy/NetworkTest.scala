@@ -1,4 +1,4 @@
-package tests.distribution.delta.crdt.basic
+package tests.distribution.delta.antientropy
 
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec

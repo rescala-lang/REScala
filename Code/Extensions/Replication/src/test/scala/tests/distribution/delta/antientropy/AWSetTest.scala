@@ -1,4 +1,4 @@
-package tests.distribution.delta.crdt.basic
+package tests.distribution.delta.antientropy
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
@@ -9,7 +9,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.lattices.delta.JsoniterCodecs._
 import rescala.extra.replication.AntiEntropy
-import tests.distribution.delta.crdt.basic.NetworkGenerators._
+import NetworkGenerators._
 import kofre.decompose.interfaces.AWSetInterface.AWSetSyntax
 import kofre.decompose.containers.{AntiEntropyCRDT, Network}
 

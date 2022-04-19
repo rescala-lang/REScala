@@ -10,39 +10,26 @@ import kofre.syntax.{AllPermissionsCtx, ArdtOpsContains}
   * Generated deltas are automatically propagated to the registered [[JsoniterAntiEntropy]] instance, but to apply deltas received
   * by the AntiEntropy instance you need to explicitly call processReceivedDeltas on the CRDT.
   */
-trait BasicCRDT[State, Wrapper] extends CRDTInterface[State, Wrapper] {
-  protected val antiEntropy: AntiEntropy[State]
-
+class AntiEntropyCRDT[State](
+    val state: State,
+    protected val antiEntropy: AntiEntropy[State]
+) extends CRDTInterface[State, AntiEntropyCRDT[State]] {
   override val replicaID: String = antiEntropy.replicaID
 
-  protected def copy(state: State = state): Wrapper
-
-  override def applyDelta(delta: Delta[State])(implicit u: UIJDLattice[State]): Wrapper = delta match {
+  override def applyDelta(delta: Delta[State])(implicit u: UIJDLattice[State]): AntiEntropyCRDT[State] = delta match {
     case Delta(origin, deltaState) =>
       UIJDLattice[State].diff(state, deltaState) match {
         case Some(stateDiff) =>
           val stateMerged = UIJDLattice[State].merge(state, stateDiff)
           antiEntropy.recordChange(Delta(origin, stateDiff), stateMerged)
-          copy(state = stateMerged)
-        case None => this.asInstanceOf[Wrapper]
+          new AntiEntropyCRDT[State](stateMerged, antiEntropy)
+        case None => this.asInstanceOf[AntiEntropyCRDT[State]]
       }
   }
 
-  def processReceivedDeltas()(implicit u: UIJDLattice[State]): Wrapper = antiEntropy.getReceivedDeltas.foldLeft(this) {
-    (crdt, delta) => crdt.applyDelta(delta).asInstanceOf[BasicCRDT[State, Wrapper]]
-  }.asInstanceOf[Wrapper]
-}
-
-/** [[BasicCRDT Basic]] implementation
-  *
-  * Instead of the class constructor, you should use the apply method of the companion object to create new instances.
-  */
-class AntiEntropyCRDT[State](
-    val state: State,
-    protected val antiEntropy: AntiEntropy[State]
-) extends BasicCRDT[State, AntiEntropyCRDT[State]] {
-
-  override protected def copy(state: State): AntiEntropyCRDT[State] = new AntiEntropyCRDT[State](state, antiEntropy)
+  def processReceivedDeltas()(implicit u: UIJDLattice[State]): AntiEntropyCRDT[State] = antiEntropy.getReceivedDeltas.foldLeft(this) {
+    (crdt, delta) => crdt.applyDelta(delta)
+  }
 }
 
 object AntiEntropyCRDT {

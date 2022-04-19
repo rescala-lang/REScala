@@ -1,4 +1,4 @@
-package tests.distribution.delta.crdt.basic
+package tests.distribution.delta.antientropy
 
 import kofre.decompose.interfaces.RCounterInterface.RCounter
 import org.scalacheck.{Arbitrary, Gen}
@@ -7,7 +7,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.lattices.delta.JsoniterCodecs._
 
 import rescala.extra.replication.AntiEntropy
-import tests.distribution.delta.crdt.basic.NetworkGenerators._
+import NetworkGenerators._
 import kofre.decompose.interfaces.RCounterInterface.RCounterSyntax
 import kofre.decompose.containers.{AntiEntropyCRDT, Network}
 

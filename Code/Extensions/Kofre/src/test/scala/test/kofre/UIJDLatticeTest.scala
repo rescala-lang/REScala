@@ -1,4 +1,4 @@
-package tests.distribution.delta
+package test.kofre
 
 import kofre.decompose.interfaces.LexCounterInterface.LexPair
 import kofre.decompose.interfaces.LexCounterInterface.LexPair._
@@ -6,6 +6,7 @@ import kofre.decompose.UIJDLattice._
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import kofre.decompose.UIJDLattice.{given}
 
 class IntAsUIJDLatticeTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "leq" in forAll { (a: Int, b: Int, c: Int) =>
@@ -46,7 +47,7 @@ class IntAsUIJDLatticeTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChec
     )
   }
 
-  "decompose" in forAll { i: Int =>
+  "decompose" in forAll { (i: Int) =>
     val decomposed = IntAsUIJDLattice.decompose(i)
     val merged     = decomposed.reduceOption(IntAsUIJDLattice.merge)
 
@@ -100,7 +101,7 @@ class SetAsUIJDLatticeTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChec
     )
   }
 
-  "decompose" in forAll { s: Set[Int] =>
+  "decompose" in forAll { (s: Set[Int]) =>
     val decomposed = SetAsUIJDLattice.decompose(s)
     val merged     = decomposed.reduceOption(SetAsUIJDLattice[Int].merge)
 
@@ -154,7 +155,7 @@ class OptionAsUIJDLatticeTest extends AnyFreeSpec with ScalaCheckDrivenPropertyC
     )
   }
 
-  "decompose" in forAll { o: Option[Int] =>
+  "decompose" in forAll { (o: Option[Int]) =>
     val decomposed = OptionAsUIJDLattice[Int].decompose(o)
     val merged     = decomposed.reduceOption(OptionAsUIJDLattice[Int].merge)
 
@@ -211,7 +212,7 @@ class MapAsUIJDLatticeTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChec
     )
   }
 
-  "decompose" in forAll { m: Map[Int, Int] =>
+  "decompose" in forAll { (m: Map[Int, Int]) =>
     val decomposed = MapAsUIJDLattice[Int, Int].decompose(m)
     val merged     = decomposed.reduceOption(MapAsUIJDLattice[Int, Int].merge)
 
@@ -268,7 +269,7 @@ class PairAsUIJDLatticeTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChe
     )
   }
 
-  "decompose" in forAll { p: (Set[Int], Set[Int]) =>
+  "decompose" in forAll { (p: (Set[Int], Set[Int])) =>
     val decomposed = PairAsUIJDLattice[Set[Int], Set[Int]].decompose(p)
     val merged     = decomposed.reduceOption(PairAsUIJDLattice[Set[Int], Set[Int]].merge)
 
@@ -342,7 +343,7 @@ class LexPairAsUIJDLatticeTest extends AnyFreeSpec with ScalaCheckDrivenProperty
       )
   }
 
-  "decompose" in forAll { m: LexPair[Set[Int], Set[Int]] =>
+  "decompose" in forAll { (m: LexPair[Set[Int], Set[Int]]) =>
     val decomposed = LexPairAsUIJDLattice[Set[Int], Set[Int]].decompose(m)
     val merged     = decomposed.reduceOption(LexPairAsUIJDLattice[Set[Int], Set[Int]].merge)
 

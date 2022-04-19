@@ -1,4 +1,4 @@
-package tests.distribution.delta.crdt.basic
+package tests.distribution.delta.antientropy
 
 import kofre.decompose.interfaces.EWFlagInterface.{EWFlag, EWFlagSyntax}
 import org.scalacheck.{Arbitrary, Gen}
@@ -7,7 +7,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.lattices.delta.JsoniterCodecs._
 import rescala.extra.replication.AntiEntropy
 import kofre.decompose.containers.{AntiEntropyCRDT, Network}
-import tests.distribution.delta.crdt.basic.NetworkGenerators._
+import NetworkGenerators._
 
 import scala.collection.mutable
 import scala.util.Random

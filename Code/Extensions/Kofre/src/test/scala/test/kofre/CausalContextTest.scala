@@ -1,4 +1,4 @@
-package tests.distribution.delta
+package test.kofre
 
 import kofre.causality.{CausalContext, Dot}
 import org.scalatest.freespec.AnyFreeSpec
@@ -13,7 +13,7 @@ class CausalContextTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks 
     s"DietMapCContext.empty should be empty, but ${CausalContext.empty} is not empty"
   )
 
-  "contains" in forAll { cc: CausalContext =>
+  "contains" in forAll { (cc: CausalContext) =>
     (cc.toSet).foreach { d =>
       assert(
         cc.contains(d),
@@ -22,7 +22,7 @@ class CausalContextTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks 
     }
   }
 
-  "to/fromSet" in forAll { ds: Set[Dot] =>
+  "to/fromSet" in forAll { (ds: Set[Dot]) =>
     assert(
       CausalContext.fromSet(ds).toSet == ds,
       s"DietMapCContext.toSet and DietMapCContext.fromSet should be inverse operations, but ${CausalContext.fromSet(ds).toSet} does not equal $ds"

@@ -1,6 +1,6 @@
-package tests.distribution.delta.crdt.basic
+package tests.distribution.delta.antientropy
 
-import kofre.decompose.interfaces.LexCounterInterface.LexCounter
+import kofre.decompose.interfaces.PNCounterModule.{PNCounter, PNCounterSyntax}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -8,19 +8,19 @@ import rescala.extra.lattices.delta.JsoniterCodecs._
 
 import rescala.extra.replication.AntiEntropy
 import kofre.decompose.containers.{AntiEntropyCRDT, Network}
-import tests.distribution.delta.crdt.basic.NetworkGenerators._
+import NetworkGenerators._
 
 import scala.collection.mutable
 
-object LexCounterGenerators {
-  val genLexCounter: Gen[AntiEntropyCRDT[LexCounter]] = for {
+object PNCounterGenerator {
+  val genPNCounter: Gen[AntiEntropyCRDT[PNCounter]] = for {
     nInc <- Gen.posNum[Int]
     nDec <- Gen.posNum[Int]
   } yield {
     val network = new Network(0, 0, 0)
-    val ae      = new AntiEntropy[LexCounter]("a", network, mutable.Buffer())
+    val ae      = new AntiEntropy[PNCounter]("a", network, mutable.Buffer())
 
-    val inced = (0 to nInc).foldLeft(AntiEntropyCRDT[LexCounter](ae)) {
+    val inced = (0 to nInc).foldLeft(AntiEntropyCRDT(ae)) {
       case (c, _) => c.inc()
     }
 
@@ -29,13 +29,13 @@ object LexCounterGenerators {
     }
   }
 
-  implicit val arbLexCounter: Arbitrary[AntiEntropyCRDT[LexCounter]] = Arbitrary(genLexCounter)
+  implicit val arbPNCounter: Arbitrary[AntiEntropyCRDT[PNCounter]] = Arbitrary(genPNCounter)
 }
 
-class LexCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
-  import LexCounterGenerators._
+class PNCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
+  import PNCounterGenerator._
 
-  "inc" in forAll { counter: AntiEntropyCRDT[LexCounter] =>
+  "inc" in forAll { counter: AntiEntropyCRDT[PNCounter] =>
     val inced = counter.inc()
 
     assert(
@@ -44,7 +44,7 @@ class LexCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     )
   }
 
-  "dec" in forAll { counter: AntiEntropyCRDT[LexCounter] =>
+  "dec" in forAll { counter: AntiEntropyCRDT[PNCounter] =>
     val deced = counter.dec()
 
     assert(
@@ -56,11 +56,11 @@ class LexCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent" in forAll { (incOrDecA: Boolean, incOrDecB: Boolean) =>
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropy[LexCounter]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[LexCounter]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[PNCounter]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[PNCounter]("b", network, mutable.Buffer("a"))
 
-    val ca0 = if (incOrDecA) AntiEntropyCRDT[LexCounter](aea).inc() else AntiEntropyCRDT[LexCounter](aea).dec()
-    val cb0 = if (incOrDecB) AntiEntropyCRDT[LexCounter](aeb).inc() else AntiEntropyCRDT[LexCounter](aeb).dec()
+    val ca0 = if (incOrDecA) AntiEntropyCRDT[PNCounter](aea).inc() else AntiEntropyCRDT[PNCounter](aea).dec()
+    val cb0 = if (incOrDecB) AntiEntropyCRDT[PNCounter](aeb).inc() else AntiEntropyCRDT[PNCounter](aeb).dec()
 
     AntiEntropy.sync(aea, aeb)
 
@@ -81,16 +81,16 @@ class LexCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   }
 
   "convergence" in forAll { (incA: Short, decA: Short, incB: Short, decB: Short, network: Network) =>
-    val aea = new AntiEntropy[LexCounter]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[LexCounter]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[PNCounter]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[PNCounter]("b", network, mutable.Buffer("a"))
 
-    val incedA = (0 until incA.toInt).foldLeft(AntiEntropyCRDT[LexCounter](aea)) {
+    val incedA = (0 until incA.toInt).foldLeft(AntiEntropyCRDT[PNCounter](aea)) {
       case (c, _) => c.inc()
     }
     val ca0 = (0 until decA.toInt).foldLeft(incedA) {
       case (c, _) => c.dec()
     }
-    val incedB = (0 until incB.toInt).foldLeft(AntiEntropyCRDT[LexCounter](aeb)) {
+    val incedB = (0 until incB.toInt).foldLeft(AntiEntropyCRDT[PNCounter](aeb)) {
       case (c, _) => c.inc()
     }
     val cb0 = (0 until decB.toInt).foldLeft(incedB) {
