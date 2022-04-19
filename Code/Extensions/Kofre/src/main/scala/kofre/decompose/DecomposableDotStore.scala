@@ -60,53 +60,6 @@ object DecomposableDotStore {
     }
   }
 
-  /** DotFun is a dot store implementation that maps dots to values of a Lattice type. See [[interfaces.MVRegisterInterface]]
-    * for a usage example.
-    */
-  type DotFun[A] = Map[Dot, A]
-  implicit def DotFun[A: UIJDLattice]: DecomposableDotStore[Map[Dot, A]] = new DecomposableDotStore[Map[Dot, A]] {
-    override def dots(ds: Map[Dot, A]): CausalContext = CausalContext.fromSet(ds.keySet)
-
-    override def mergePartial(left: CausalStore[Map[Dot, A]], right: CausalStore[Map[Dot, A]]): Map[Dot, A] = {
-      val fromLeft = left.store.filter { case (dot, _) => !right.context.contains(dot) }
-
-      right.store.foldLeft(fromLeft) {
-        case (m, (dot, r)) =>
-          left.store.get(dot) match {
-            case None =>
-              if (left.context.contains(dot)) m
-              else m.updated(dot, r)
-            case Some(l) => m.updated(dot, UIJDLattice[A].merge(l, r))
-          }
-      }
-    }
-
-    override def empty: Map[Dot, A] = Map.empty[Dot, A]
-
-    override def leq(left: CausalStore[Map[Dot, A]], right: CausalStore[Map[Dot, A]]): Boolean = {
-      val firstCondition = left.context.forall(right.context.contains)
-      val secondCondition = right.store.keySet.forall { k =>
-        left.store.get(k).forall { l => UIJDLattice[A].leq(l, right.store(k)) }
-      }
-      val thirdCondition = {
-        val diff = left.context.diff(DotFun[A].dots(left.store))
-        DotFun[A].dots(right.store).intersect(diff).isEmpty
-      }
-
-      firstCondition && secondCondition && thirdCondition
-    }
-
-    override def decompose(state: CausalStore[Map[Dot, A]]): Iterable[CausalStore[Map[Dot, A]]] = {
-      val added = for (d <- DotFun[A].dots(state.store).iterator; v <- UIJDLattice[A].decompose(state.store(d)))
-        yield CausalStore(Map(d -> v), CausalContext.single(d))
-
-      val removed =
-        state.context.decompose(DotFun[A].dots(state.store).contains).map(CausalStore(DotFun[A].empty, _))
-
-      removed ++ added
-    }
-  }
-
   /** DotMap is a dot store implementation that maps keys of an arbitrary type K to values of a dot store type V. See
     * [[interfaces.ORMapInterface]] for a usage example.
     */
@@ -115,9 +68,9 @@ object DecomposableDotStore {
     override def dots(ds: DotMap[K, V]): CausalContext = ds.values.foldLeft(CausalContext.empty)((acc, v) => acc merge DecomposableDotStore[V].dots(v))
 
     override def mergePartial(
-        left: CausalStore[DotMap[K, V]],
-        right: CausalStore[DotMap[K, V]]
-    ): DotMap[K, V] = {
+                               left: CausalStore[DotMap[K, V]],
+                               right: CausalStore[DotMap[K, V]]
+                             ): DotMap[K, V] = {
       def mergeHelp(l: V, r: V): Option[V] = {
         val mergedVal = DecomposableDotStore[V].mergePartial(CausalStore(l, left.context), CausalStore(r, right.context))
         if (mergedVal == DecomposableDotStore[V].empty) None
@@ -221,6 +174,54 @@ object DecomposableDotStore {
     }
 
     override def empty: (A, B) = (DecomposableDotStore[A].empty, DecomposableDotStore[B].empty)
+  }
+
+
+  /** DotFun is a dot store implementation that maps dots to values of a Lattice type. See [[interfaces.MVRegisterInterface]]
+    * for a usage example.
+    */
+  type DotFun[A] = Map[Dot, A]
+  implicit def DotFun[A: UIJDLattice]: DecomposableDotStore[Map[Dot, A]] = new DecomposableDotStore[Map[Dot, A]] {
+    override def dots(ds: Map[Dot, A]): CausalContext = CausalContext.fromSet(ds.keySet)
+
+    override def mergePartial(left: CausalStore[Map[Dot, A]], right: CausalStore[Map[Dot, A]]): Map[Dot, A] = {
+      val fromLeft = left.store.filter { case (dot, _) => !right.context.contains(dot) }
+
+      right.store.foldLeft(fromLeft) {
+        case (m, (dot, r)) =>
+          left.store.get(dot) match {
+            case None =>
+              if (left.context.contains(dot)) m
+              else m.updated(dot, r)
+            case Some(l) => m.updated(dot, UIJDLattice[A].merge(l, r))
+          }
+      }
+    }
+
+    override def empty: Map[Dot, A] = Map.empty[Dot, A]
+
+    override def leq(left: CausalStore[Map[Dot, A]], right: CausalStore[Map[Dot, A]]): Boolean = {
+      val firstCondition = left.context.forall(right.context.contains)
+      val secondCondition = right.store.keySet.forall { k =>
+        left.store.get(k).forall { l => UIJDLattice[A].leq(l, right.store(k)) }
+      }
+      val thirdCondition = {
+        val diff = left.context.diff(DotFun[A].dots(left.store))
+        DotFun[A].dots(right.store).intersect(diff).isEmpty
+      }
+
+      firstCondition && secondCondition && thirdCondition
+    }
+
+    override def decompose(state: CausalStore[Map[Dot, A]]): Iterable[CausalStore[Map[Dot, A]]] = {
+      val added = for (d <- DotFun[A].dots(state.store).iterator; v <- UIJDLattice[A].decompose(state.store(d)))
+        yield CausalStore(Map(d -> v), CausalContext.single(d))
+
+      val removed =
+        state.context.decompose(DotFun[A].dots(state.store).contains).map(CausalStore(DotFun[A].empty, _))
+
+      removed ++ added
+    }
   }
 
   /** DotLess is a dot store implementation that, in combination with [[DotPair]], allows to compose non-causal CRDTs

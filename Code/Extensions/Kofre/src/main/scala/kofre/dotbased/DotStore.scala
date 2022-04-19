@@ -31,18 +31,18 @@ object DotStore {
   type DotFun[V]    = Map[Dot, V]
   type DotMap[K, V] = Map[K, V]
 
+  // instances
+
   // Todo: V should be a SemiLattice according to paper
   implicit def dotFunDotStore[V]: DotStore[DotFun[V]] = new DotStore[DotFun[V]] {
 
-    override def empty: DotFun[V]                     = Map.empty
+    override def empty: DotFun[V] = Map.empty
 
     override def merge(left: CausalStore[DotFun[V]], right: CausalStore[DotFun[V]]): CausalStore[DotFun[V]] = ???
 
     override def dots(dotStore: DotFun[V]): CausalContext = CausalContext.fromSet(dotStore.keySet)
 
   }
-
-  // instances
 
   implicit val CausalContextDotStoreInstance: DotStore[CausalContext] =
     new DotStore[CausalContext] {
@@ -74,11 +74,12 @@ object DotStore {
       }
     }
 
-  implicit def DotMapInstance[Key, A](implicit dsl: DotStore[A]): DotStore[Map[Key, A]] =
+  implicit def DotMapInstance[Key, A: DotStore]: DotStore[Map[Key, A]] =
     new DotStore[Map[Key, A]] {
       type Store = Map[Key, A]
 
-      override def dots(a: Store): CausalContext = a.valuesIterator.foldLeft(CausalContext.empty)((acc, v) => acc.union(dsl.dots(v)))
+      override def dots(a: Store): CausalContext =
+        a.valuesIterator.foldLeft(CausalContext.empty)((acc, v) => acc.union(DotStore[A].dots(v)))
 
       override def empty: Store = Map.empty
 
