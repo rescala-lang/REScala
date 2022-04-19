@@ -28,7 +28,7 @@ class CrdtSyncWebSocketServer[S](val localReplicaId: String,
 
       val remoteReplicaId = req.getHeader(REPLICAID_HEADER)
 
-      if (remoteReplicaId.isBlank) {
+      if (remoteReplicaId.forall(Character.isWhitespace)) {
         println(s"ReplicaId header is blank, refusing connection from ${req.getRemoteSocketAddress}")
         null
       } else {
