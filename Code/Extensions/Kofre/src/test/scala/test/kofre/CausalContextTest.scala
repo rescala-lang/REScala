@@ -3,10 +3,9 @@ package test.kofre
 import kofre.causality.{CausalContext, Dot}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-
+import DataGenerator.*
 
 class CausalContextTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
-  import DotStoreGenerators._
 
   "empty" in assert(
     CausalContext.empty.toSet.isEmpty,

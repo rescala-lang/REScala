@@ -7,49 +7,9 @@ import kofre.dotbased.CausalStore
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-
-object DotStoreGenerators {
-  val genDot: Gen[Dot] = for {
-    replicaID <- Gen.stringOfN(2, Gen.alphaChar)
-    counter   <- Gen.posNum[Long]
-  } yield Dot(replicaID, counter)
-
-  implicit val arbDot: Arbitrary[Dot] = Arbitrary(genDot)
-
-  val genDotSet: Gen[Set[Dot]] = Gen.containerOf[Set, Dot](genDot)
-
-  val genDietMapCContext: Gen[CausalContext] = for {
-    ds <- genDotSet
-  } yield CausalContext.fromSet(ds)
-
-  implicit val arbDietMapCContext: Arbitrary[CausalContext] = Arbitrary(genDietMapCContext)
-
-  implicit val arbDotSet: Arbitrary[Set[Dot]] = Arbitrary(genDotSet)
-
-  def genDotFun[A](implicit g: Gen[A]): Gen[DotFun[A]] = for {
-    n      <- Gen.posNum[Int]
-    dots   <- Gen.containerOfN[List, Dot](n, genDot)
-    values <- Gen.containerOfN[List, A](n, g)
-  } yield (dots zip values).toMap
-
-  implicit def arbDotFun[A](implicit g: Gen[A]): Arbitrary[DotFun[A]] = Arbitrary(genDotFun)
-
-  def genDotMap[K, V: DotStore](implicit gk: Gen[K], gv: Gen[V]): Gen[DotMap[K, V]] = (for {
-    n      <- Gen.posNum[Int]
-    keys   <- Gen.containerOfN[List, K](n, gk)
-    values <- Gen.containerOfN[List, V](n, gv)
-  } yield (keys zip values).toMap).suchThat { m =>
-    val dotsIter = m.values.flatMap(v => DotStore[V].dots(v).iterator)
-    val dotsSet  = dotsIter.toSet
-    dotsIter.size == dotsSet.size
-  }
-
-  implicit def arbDotMap[K, V: DotStore](implicit gk: Gen[K], gv: Gen[V]): Arbitrary[DotMap[K, V]] =
-    Arbitrary(genDotMap)
-}
+import DataGenerator.*
 
 class DotSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
-  import DotStoreGenerators._
 
   "dots" in forAll { (ds: CausalContext) =>
     assert(
@@ -135,7 +95,6 @@ class DotSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 }
 
 class DotFunTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
-  import DotStoreGenerators._
 
   "dots" in forAll { (df: DotFun[Int]) =>
     assert(
@@ -249,7 +208,6 @@ class DotFunTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 }
 
 class DotMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
-  import DotStoreGenerators._
 
   "dots" in forAll { (dm: DotMap[Int, CausalContext]) =>
     assert(

@@ -7,24 +7,11 @@ import kofre.dotbased.DotStore.*
 import kofre.causality.CausalContext
 import kofre.causality.Dot
 import kofre.dotbased.{CausalStore, DotStore}
+import DataGenerator.*
 
-object DotSetGenerator {
-  implicit val genDot: Arbitrary[Dot] = Arbitrary(for {
-    id    <- Gen.oneOf('a' to 'g')
-    value <- Gen.oneOf(0 to 100)
-  } yield Dot(id.toString, value))
-
-  implicit val genSet: Arbitrary[Set[Dot]] = Arbitrary(for {
-    ids <- Gen.listOf(Gen.oneOf('a' to 'z').map(_.toString)).map(_.toSet)
-    if ids.nonEmpty
-    value <- Gen.listOfN(ids.size, Gen.oneOf(0 to 100))
-    dots  <- ids.zip(value).map(e => Dot(e._1, e._2))
-  } yield dots)
-}
 
 class DotSetTests extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
-  import DotSetGenerator._
 
   "Manual Tests" in {
     val d1 = Dot("1", 1)
