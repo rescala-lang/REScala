@@ -17,7 +17,6 @@ import kofre.dotbased.CausalStore
   */
 object ORMapInterface {
   type ORMap[K, V] = CausalStore[DotMap[K, V]]
-  type C           = CausalContext
 
   trait ORMapCompanion {
     type State[K, V]    = ORMapInterface.ORMap[K, V]
@@ -29,7 +28,7 @@ object ORMapInterface {
 
     def make(
         dm: DotMap[K, V] = bottom.store,
-        cc: C = bottom.context
+        cc: CausalContext = bottom.context
     ): ORMap[K, V] = CausalStore(dm, cc)
   }
 

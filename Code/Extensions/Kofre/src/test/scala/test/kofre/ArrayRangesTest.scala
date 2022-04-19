@@ -1,7 +1,6 @@
 package test.kofre
 
 import kofre.causality.ArrayRanges
-import kofre.dotbased.AddWinsSet
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks

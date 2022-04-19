@@ -13,12 +13,16 @@ import kofre.dotbased.CausalStore
 object AWSetInterface {
   type Embedded[E] = DotMap[E, CausalContext]
   type AWSet[E]    = CausalStore[Embedded[E]]
+  object AWSet:
+    def empty[E]: AWSet[E] = CausalStore(Map.empty, CausalContext.empty)
 
   extension [C, E](container: C) def asAWSet: AWSetSyntax[C, E] = AWSetSyntax(container)
 
   implicit class AWSetSyntax[C, E](container: C) extends OpsSyntaxHelper[C, AWSet[E]](container) {
 
     def elements(using QueryP): Set[E] = current.store.keySet
+
+    def contains(elem: E)(using QueryP): Boolean = current.store.contains(elem)
 
     def add(e: E)(using MutationIDP): C = {
       val CausalStore(dm, cc) = current

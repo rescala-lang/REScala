@@ -2,7 +2,9 @@ package kofre.rga
 
 import kofre.Defs.Id
 import kofre.Lattice
-import kofre.dotbased.AddWinsSet
+import kofre.decompose.interfaces.AWSetInterface.AWSet
+import kofre.decompose.interfaces.AWSetInterface.AWSetSyntax
+import kofre.syntax.AllPermissionsCtx
 
 import scala.collection.AbstractIterator
 
@@ -22,7 +24,7 @@ case class DeltaSequenceOrder(inner: Map[Vertex, Vertex]) {
     DeltaSequenceOrder(inner ++ addRightEdgeDelta(left, insertee).inner)
 }
 
-case class DeltaSequence[A](vertices: AddWinsSet[Vertex], edges: DeltaSequenceOrder, values: Map[Vertex, A]) {
+case class DeltaSequence[A](vertices: AWSet[Vertex], edges: DeltaSequenceOrder, values: Map[Vertex, A]) {
 
   def successor(v: Vertex): Option[Vertex] = {
     edges.inner.get(v) match {
@@ -34,7 +36,7 @@ case class DeltaSequence[A](vertices: AddWinsSet[Vertex], edges: DeltaSequenceOr
 
   def addRightDelta(replica: Id, left: Vertex, insertee: Vertex, value: A): DeltaSequence[A] = {
     val newEdges    = edges.addRightEdgeDelta(left, insertee)
-    val newVertices = vertices.addΔ(insertee, replica)
+    val newVertices = vertices.add(insertee)(using AllPermissionsCtx.withID(replica))
     val newValues   = Map(insertee -> value)
     DeltaSequence(newVertices, newEdges, newValues)
   }
@@ -50,7 +52,7 @@ case class DeltaSequence[A](vertices: AddWinsSet[Vertex], edges: DeltaSequenceOr
     Lattice.merge(this, prependDelta(replica, value))
 
   def removeDelta(v: Vertex): DeltaSequence[A] =
-    copy(vertices = vertices.removeΔ(v))
+    copy(vertices = vertices.remove(v))
 
   def filterDelta(keep: A => Boolean): DeltaSequence[A] = {
     val removed = values.collect { case (k, v) if !keep(v) => k }
@@ -93,7 +95,7 @@ object DeltaSequence {
   }
 
   def empty[A]: DeltaSequence[A] =
-    DeltaSequence(AddWinsSet.empty.add(Vertex.start, Vertex.start.id), DeltaSequenceOrder(Map()), Map.empty)
+    DeltaSequence(AWSet.empty[kofre.rga.Vertex].add(Vertex.start)(using AllPermissionsCtx.withID(Vertex.start.id)), DeltaSequenceOrder(Map()), Map.empty)
 
   implicit def deltaSequenceLattice[A]: Lattice[DeltaSequence[A]] =
     new Lattice[DeltaSequence[A]] {
@@ -105,7 +107,7 @@ object DeltaSequence {
       }
 
       override def merge(left: DeltaSequence[A], right: DeltaSequence[A]): DeltaSequence[A] = {
-        val newVertices = right.vertices.toSet.filter(!left.edges.inner.contains(_))
+        val newVertices = right.vertices.elements.filter(!left.edges.inner.contains(_))
 
         // build map of old insertion positions of the new vertices
         val oldPositions = right.edges.inner.foldLeft(Map.empty[Vertex, Vertex]) {
