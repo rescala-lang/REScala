@@ -9,7 +9,7 @@ class AddWinsLastWriterWinsMap[K, V](
       AddWinsMapLattice[K, LastWriterWins[V, CausalTimeTag]]()
 ) {
 
-  private var _state = initialState
+  private var _state: AddWinsMapLattice[K, LastWriterWins[V, CausalTimeTag]] = initialState
 
   def state: LatticeType[K, V] = _state
 

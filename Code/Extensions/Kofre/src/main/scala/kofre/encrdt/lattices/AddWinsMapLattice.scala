@@ -20,14 +20,5 @@ case class AddWinsMapLattice[K, V](
 }
 
 object AddWinsMapLattice {
-
-  implicit def AddWinsLattice[K, V: Lattice]: Lattice[AddWinsMapLattice[K, V]] =
-    (left: AddWinsMapLattice[K, V], right: AddWinsMapLattice[K, V]) => {
-      val keys = Lattice.merge(left.keys, right.keys)
-      val mappings = keys.values.map { key =>
-        key -> Lattice.merge(left.mappings.get(key), right.mappings.get(key)).get
-      }.toMap
-
-      AddWinsMapLattice(keys, mappings)
-    }
+  given AddWinsLattice[K, V: Lattice]: Lattice[AddWinsMapLattice[K, V]] = Lattice.derived
 }
