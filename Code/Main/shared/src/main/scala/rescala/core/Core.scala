@@ -5,26 +5,6 @@ import rescala.operator.RExceptions
 import scala.annotation.{implicitNotFound, nowarn}
 import scala.util.DynamicVariable
 
-trait ReValued {
-  type Value
-  protected[rescala] def name: ReName
-  protected[rescala] def commit(base: Value): Value
-}
-
-/** Common macro accessors for [[rescala.operator.SignalBundle.Signal]] and [[rescala.operator.EventBundle.Event]]
-  *
-  * @tparam A return type of the accessor
-  * @groupname accessor Accessor and observers
-  */
-trait ReadAs[+A] extends ReValued {
-
-  /** Interprets the internal type to the external type
-    *
-    * @group internal
-    */
-  def read(v: Value): A
-}
-
 trait Core {
 
   /** In case you wondered why everything in REScala is in these weird bundle traits, this is why.
@@ -36,11 +16,12 @@ trait Core {
   type State[_]
 
   /** Source of (reactive) values. */
-  trait ReSource extends ReValued {
+  trait ReSource {
+    type Value
     protected[rescala] def state: State[Value]
+    protected[rescala] def name: ReName
+    protected[rescala] def commit(base: Value): Value
   }
-
-  trait ReadAs[+A] extends ReSource with rescala.core.ReadAs[A]
 
   /** A reactive value is something that can be reevaluated */
   trait Derived extends ReSource {
@@ -64,6 +45,20 @@ trait Core {
       extends ReSource {
     override type Value = V
     override def toString: String = s"${name.str}($state)"
+  }
+
+  /** Common macro accessors for [[rescala.operator.SignalBundle.Signal]] and [[rescala.operator.EventBundle.Event]]
+    *
+    * @tparam A return type of the accessor
+    * @groupname accessor Accessor and observers
+    */
+  trait ReadAs[+A] extends ReSource {
+
+    /** Interprets the internal type to the external type
+      *
+      * @group internal
+      */
+    def read(v: Value): A
   }
 
   /** Encapsulates an action changing a single source. */
