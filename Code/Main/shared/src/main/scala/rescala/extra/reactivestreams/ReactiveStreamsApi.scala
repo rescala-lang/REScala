@@ -34,7 +34,7 @@ class ReactiveStreamsApi(val api: RescalaInterface) {
       }
   }
 
-  class REPublisher[T](dependency: Readable[Pulse[T]], fac: Scheduler) extends Publisher[T] {
+  class REPublisher[T](dependency: ReadAs[Pulse[T]], fac: Scheduler) extends Publisher[T] {
 
     override def subscribe(s: Subscriber[_ >: T]): Unit = {
       val sub = REPublisher.subscription(dependency, s, fac)
@@ -45,7 +45,7 @@ class ReactiveStreamsApi(val api: RescalaInterface) {
 
   class SubscriptionReactive[T](
       bud: State[Pulse[T]],
-      dependency: Readable[Pulse[T]],
+      dependency: ReadAs[Pulse[T]],
       subscriber: Subscriber[_ >: T],
       name: ReName
   ) extends Base[Pulse[T]](bud, name)
@@ -99,11 +99,11 @@ class ReactiveStreamsApi(val api: RescalaInterface) {
 
   object REPublisher {
 
-    def apply[T](dependency: Readable[Pulse[T]])(implicit fac: Scheduler): REPublisher[T] =
+    def apply[T](dependency: ReadAs[Pulse[T]])(implicit fac: Scheduler): REPublisher[T] =
       new REPublisher[T](dependency, fac)
 
     def subscription[T](
-        dependency: Readable[Pulse[T]],
+        dependency: ReadAs[Pulse[T]],
         subscriber: Subscriber[_ >: T],
         fac: Scheduler
     ): SubscriptionReactive[T] = {

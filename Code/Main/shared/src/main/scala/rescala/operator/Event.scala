@@ -53,7 +53,7 @@ trait EventBundle extends EventCompatBundle {
   trait Event[+T] extends EventCompat[T] with Disconnectable {
 
     implicit def internalAccess(v: Value): Pulse[T]
-    def resource: Readable[Option[T]] = this
+    def resource: ReadAs[Option[T]] = this
 
     /** Interprets the pulse of the event by converting to an option
       *

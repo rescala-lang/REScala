@@ -5,6 +5,26 @@ import rescala.operator.RExceptions
 import scala.annotation.{implicitNotFound, nowarn}
 import scala.util.DynamicVariable
 
+trait ReValued {
+  type Value
+  protected[rescala] def name: ReName
+  protected[rescala] def commit(base: Value): Value
+}
+
+/** Common macro accessors for [[rescala.operator.SignalBundle.Signal]] and [[rescala.operator.EventBundle.Event]]
+  *
+  * @tparam A return type of the accessor
+  * @groupname accessor Accessor and observers
+  */
+trait ReadAs[+A] extends ReValued {
+
+  /** Interprets the internal type to the external type
+    *
+    * @group internal
+    */
+  def read(v: Value): A
+}
+
 trait Core {
 
   /** In case you wondered why everything in REScala is in these weird bundle traits, this is why.
@@ -16,12 +36,11 @@ trait Core {
   type State[_]
 
   /** Source of (reactive) values. */
-  trait ReSource {
-    type Value
+  trait ReSource extends ReValued {
     protected[rescala] def state: State[Value]
-    protected[rescala] def name: ReName
-    protected[rescala] def commit(base: Value): Value
   }
+
+  trait ReadAs[+A] extends ReSource with rescala.core.ReadAs[A]
 
   /** A reactive value is something that can be reevaluated */
   trait Derived extends ReSource {
@@ -45,20 +64,6 @@ trait Core {
       extends ReSource {
     override type Value = V
     override def toString: String = s"${name.str}($state)"
-  }
-
-  /** Common macro accessors for [[rescala.operator.SignalBundle.Signal]] and [[rescala.operator.EventBundle.Event]]
-    *
-    * @tparam A return type of the accessor
-    * @groupname accessor Accessor and observers
-    */
-  trait Readable[+A] extends ReSource {
-
-    /** Interprets the internal type to the external type
-      *
-      * @group internal
-      */
-    def read(v: Value): A
   }
 
   /** Encapsulates an action changing a single source. */
@@ -130,13 +135,13 @@ trait Core {
   /** User facing low level API to access values in a static context. */
   sealed abstract class StaticTicket(val tx: Transaction) {
     private[rescala] def collectStatic(reactive: ReSource): reactive.Value
-    final def dependStatic[A](reactive: Readable[A]): A = reactive.read(collectStatic(reactive))
+    final def dependStatic[A](reactive: ReadAs[A]): A = reactive.read(collectStatic(reactive))
   }
 
   /** User facing low level API to access values in a dynamic context. */
   abstract class DynamicTicket(tx: Transaction) extends StaticTicket(tx) {
     private[rescala] def collectDynamic(reactive: ReSource): reactive.Value
-    final def depend[A](reactive: Readable[A]): A = reactive.read(collectDynamic(reactive))
+    final def depend[A](reactive: ReadAs[A]): A = reactive.read(collectDynamic(reactive))
   }
 
   trait AccessHandler {
@@ -250,7 +255,7 @@ trait Core {
     }
 
     /** convenience method as many case studies depend on this being available directly on the AT */
-    def now[A](reactive: Readable[A]): A = tx.now(reactive)
+    def now[A](reactive: ReadAs[A]): A = tx.now(reactive)
 
     private[rescala] var wrapUp: Transaction => Unit = null
   }
@@ -321,7 +326,7 @@ trait Core {
     */
   trait Transaction {
 
-    final def now[A](reactive: Readable[A]): A = {
+    final def now[A](reactive: ReadAs[A]): A = {
       RExceptions.toExternalReadException(reactive, reactive.read(access(reactive)))
     }
     private[rescala] def access(reactive: ReSource): reactive.Value
@@ -338,7 +343,7 @@ trait Core {
       forceNewTransaction(initialWrites.toSet, admissionPhase)
     }
     def forceNewTransaction[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R): R
-    private[rescala] def singleReadValueOnce[A](reactive: Readable[A]): A
+    private[rescala] def singleReadValueOnce[A](reactive: ReadAs[A]): A
 
     /** Name of the scheduler, used for helpful error messages. */
     def schedulerName: String

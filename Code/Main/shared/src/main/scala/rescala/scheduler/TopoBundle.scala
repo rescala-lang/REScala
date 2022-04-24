@@ -142,7 +142,7 @@ trait TopoBundle extends Core with ObserveBundle {
         res
       }
 
-    override private[rescala] def singleReadValueOnce[A](reactive: Readable[A]): A = {
+    override private[rescala] def singleReadValueOnce[A](reactive: ReadAs[A]): A = {
       val id = reactive
       id.read(id.state.value)
     }

@@ -53,7 +53,7 @@ trait Twoversion extends Core {
     */
   trait TwoVersionScheduler[Tx <: TwoVersionTransaction]
       extends SchedulerImpl[Tx] {
-    private[rescala] def singleReadValueOnce[A](reactive: Readable[A]): A =
+    private[rescala] def singleReadValueOnce[A](reactive: ReadAs[A]): A =
       reactive.read(reactive.state.base(null))
 
     /** goes through the whole turn lifecycle

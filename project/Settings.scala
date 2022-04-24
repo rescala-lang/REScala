@@ -3,10 +3,10 @@
 
 import sbt.Keys._
 import sbt._
+import Dependencies.{Versions => V}
+
 
 object Settings {
-
-  import Dependencies.{Versions => V}
 
   val commonCrossBuildVersions = crossScalaVersions := Seq(V.scala211, V.scala212, V.scala213, V.scala3)
 

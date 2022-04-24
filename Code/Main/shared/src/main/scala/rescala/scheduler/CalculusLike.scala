@@ -121,7 +121,7 @@ trait CalculusLike extends Core {
           idle = true
         }
       }
-    override private[rescala] def singleReadValueOnce[A](reactive: Readable[A]): A =
+    override private[rescala] def singleReadValueOnce[A](reactive: ReadAs[A]): A =
       reactive.read(reactive.state.value)
   }
 

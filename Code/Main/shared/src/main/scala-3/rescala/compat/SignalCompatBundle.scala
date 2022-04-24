@@ -2,9 +2,8 @@ package rescala.compat
 
 import rescala.core.Core
 import rescala.interface.RescalaInterface
-import rescala.operator.{SignalBundle, cutOutOfUserComputation}
-import rescala.operator.Operators
 import rescala.macros.ReadableMacroBundle
+import rescala.operator.{Operators, SignalBundle, cutOutOfUserComputation}
 
 trait SignalCompatBundle extends ReadableMacroBundle {
   selfType: Operators =>
@@ -37,10 +36,7 @@ trait SignalCompatBundle extends ReadableMacroBundle {
     * @group create
     */
   object Signal {
-    def apply[T](expr: DynamicTicket ?=> T)(implicit ticket: CreationTicket): Signal[T] =
-      Signals.dynamic()(expr(using _))
-    def dynamic[T](expr: DynamicTicket ?=> T)(implicit ticket: CreationTicket): Signal[T] =
-      Signals.dynamic()(expr(using _))
+    inline def apply[T](inline expr: T)(using ct: CreationTicket): Signal[T] = ${rescala.macros.signalMacro[T, selfType.type , StaticTicket, Signal]('expr, 'selfType, 'ct)}
   }
 
 }

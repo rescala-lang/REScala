@@ -28,7 +28,7 @@ trait SignalBundle extends SignalCompatBundle {
     override type Value <: Pulse[T]
     override def read(v: Value): T                             = v.get
     override protected[rescala] def commit(base: Value): Value = base
-    def resource: Readable[T]                                  = this
+    def resource: ReadAs[T]                                  = this
 
     /** Returns the current value of the signal
       * However, using now is in most cases not what you want.

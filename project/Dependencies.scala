@@ -13,6 +13,7 @@ object Dependencies {
     val catsCollection     = "0.9.2"
     val circeCore          = "0.14.1"
     val decline            = "2.2.0"
+    val directories        = "26"
     val fastparse          = "2.3.3"
     val jetty              = "9.4.46.v20220331"
     val jol                = "0.16"
@@ -48,6 +49,7 @@ object Dependencies {
   val catsCore           = Def.setting("org.typelevel" %%% "cats-core" % V.catsCore)
   val catsCollection     = Def.setting("org.typelevel" %%% "cats-collections-core" % V.catsCollection)
   val decline            = Def.setting("com.monovore" %%% "decline" % V.decline)
+  val directories        = Def.setting("dev.dirs" % "directories" % V.directories)
   val fastparse          = Def.setting("com.lihaoyi" %%% "fastparse" % V.fastparse)
   val jetty              = Def.setting("org.eclipse.jetty" % "jetty-rewrite" % V.jetty)
   val jol                = Def.setting("org.openjdk.jol" % "jol-core" % V.jol)

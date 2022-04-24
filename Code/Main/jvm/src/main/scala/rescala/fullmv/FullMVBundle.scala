@@ -1,6 +1,6 @@
 package rescala.fullmv
 
-import rescala.core.Core
+import rescala.core.{Core}
 import rescala.fullmv.NotificationBranchResult.ReevOutBranchResult._
 import rescala.fullmv.NotificationBranchResult._
 import rescala.fullmv.mirrors.{Host, HostImpl, _}
@@ -138,7 +138,7 @@ trait FullMVBundle extends Core {
       override def reportFailure(cause: Throwable): Unit = cause.printStackTrace()
     }
 
-    override private[rescala] def singleReadValueOnce[A](reactive: Readable[A]) =
+    override private[rescala] def singleReadValueOnce[A](reactive: ReadAs[A]) =
       reactive.read(reactive.state.latestValue)
 
     override def forceNewTransaction[R](declaredWrites: Set[ReSource], admissionPhase: (AdmissionTicket) => R): R = {

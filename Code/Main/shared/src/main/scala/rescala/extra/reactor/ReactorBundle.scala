@@ -100,7 +100,7 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
       input.withValue(resState)
     }
 
-    override def resource: Readable[T] = this
+    override def resource: ReadAs[T] = this
 
     def now(implicit scheduler: Scheduler): T = scheduler.singleReadValueOnce(this)
   }

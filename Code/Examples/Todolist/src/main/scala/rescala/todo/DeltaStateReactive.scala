@@ -7,11 +7,11 @@ case class DeltaWithState[Delta, DState](delta: Seq[Delta], state: DState)
 
 class DeltaStateReactive[Delta, Combined](
     initState: State[DeltaWithState[Delta, Combined]],
-    deltaInput: Readable[Delta],
+    deltaInput: ReadAs[Delta],
     applyDelta: (Combined, Delta) => Combined,
     handlers: Seq[(DynamicTicket, Combined) => Delta],
     override protected[rescala] val name: ReName,
-) extends Derived with Readable[DeltaWithState[Delta, Combined]] {
+) extends Derived with ReadAs[DeltaWithState[Delta, Combined]] {
   override type Value = DeltaWithState[Delta, Combined]
   override protected[rescala] def state: State[Value]        = initState
   override protected[rescala] def commit(base: Value): Value = base.copy(delta = Nil)
@@ -35,7 +35,7 @@ class DeltaStateReactive[Delta, Combined](
 object DeltaStateReactive {
   def create[DState, Delta](
       init: DState,
-      deltaInput: Readable[Delta],
+      deltaInput: ReadAs[Delta],
       applyDelta: (DState, Delta) => DState,
       handlers: Seq[(DynamicTicket, DState) => Delta]
   )(implicit name: ReName, creationTicket: CreationTicket): DeltaStateReactive[Delta, DState] =

@@ -53,7 +53,7 @@ trait Sources {
     * @tparam S Struct type used for the propagation of the signal
     */
   class Var[A] private[rescala] (initialState: State[Pulse[A]], name: ReName) extends Base[Pulse[A]](initialState, name)
-      with Source[A] with Signal[A] with Readable[A] {
+      with Source[A] with Signal[A] with ReadAs[A] {
     override type Value = Pulse[A]
 
     override val resource: Signal[A] = this

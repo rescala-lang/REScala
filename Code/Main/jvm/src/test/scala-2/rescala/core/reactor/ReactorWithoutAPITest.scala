@@ -12,8 +12,8 @@ class ReactorWithoutAPITest extends RETests {
   class Reactor[T](
       initState: State[ReactorStage[T]]
   ) extends Derived
-      with Readable[T]
-      with MacroAccess[T, Readable[T]] {
+      with ReadAs[T]
+      with MacroAccess[T, ReadAs[T]] {
 
     override type Value = ReactorStage[T]
 
@@ -64,7 +64,7 @@ class ReactorWithoutAPITest extends RETests {
       */
     override protected[rescala] def commit(base: ReactorStage[T]): ReactorStage[T] = base
 
-    override def resource: Readable[T] = this
+    override def resource: ReadAs[T] = this
 
     def now: T = scheduler.forceNewTransaction(this)(at => at.now(this))
   }

@@ -7,7 +7,7 @@ class WithoutAPITest extends RETests {
   multiEngined { engine =>
     import engine._
 
-    class CustomSource[T](initState: State[T]) extends ReSource with Readable[T] {
+    class CustomSource[T](initState: State[T]) extends ReSource with ReadAs[T] {
       outer =>
 
       override type Value = T
@@ -30,9 +30,9 @@ class WithoutAPITest extends RETests {
 
     class CustomDerivedString(
         initState: State[String],
-        inputSource: Readable[String]
+        inputSource: ReadAs[String]
     ) extends Derived
-        with Readable[String] {
+        with ReadAs[String] {
       override type Value = String
       override protected[rescala] def state: State[Value]        = initState
       override protected[rescala] def name: ReName               = "I am a name"
@@ -56,7 +56,7 @@ class WithoutAPITest extends RETests {
 
       assert(transaction(customSource) { _.now(customSource) } === "Hi!")
 
-      val customDerived: Readable[String] =
+      val customDerived: ReadAs[String] =
         implicitly[CreationTicket]
           .create(
             Set(customSource),

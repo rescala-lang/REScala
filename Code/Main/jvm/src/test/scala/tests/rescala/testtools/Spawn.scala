@@ -1,9 +1,8 @@
 package tests.rescala.testtools
 
 import java.util.concurrent.CountDownLatch
-
-import scala.concurrent.{Await, Future, Promise, TimeoutException}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future, Promise, TimeoutException}
 import scala.util.{Failure, Try}
 
 class Spawn[T] private (future: Future[T]) {
