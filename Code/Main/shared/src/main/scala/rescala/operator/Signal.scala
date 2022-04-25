@@ -171,6 +171,16 @@ trait SignalBundle extends SignalCompatBundle {
       }
     }
 
+    /** creates a new static signal depending on the dependencies, reevaluating the function */
+    @cutOutOfUserComputation
+    def staticNoVarargs[T](dependencies: Seq[ReSource])(expr: StaticTicket => T)(implicit
+                                                                    ct: CreationTicket
+    ): Signal[T] = {
+      ct.create[Pulse[T], SignalImpl[T]](dependencies.toSet, Pulse.empty, needsReevaluation = true) {
+        state => new SignalImpl[T](state, ignore2(expr), ct.rename, None)
+      }
+    }
+
     /** creates a signal that has dynamic dependencies (which are detected at runtime with Signal.apply(turn)) */
     @cutOutOfUserComputation
     def dynamic[T](dependencies: ReSource*)(expr: DynamicTicket => T)(implicit

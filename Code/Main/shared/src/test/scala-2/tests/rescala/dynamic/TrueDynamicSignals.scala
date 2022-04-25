@@ -277,5 +277,36 @@ class TrueDynamicSignals extends RETests {
       assertLevel(`dynamic signal changing from level 1 to level 4`, 5)
     }
 
+    test("graph cost example") {
+
+      def mini(x: Var[Map[Signal[Int], Int]]): Signal[Int] =
+        Signal.dynamic {
+          val (node, value) = x().minBy { case (n, v) => n() + v }
+          node() + value
+        }
+
+      val root = Signal { 0 }
+
+      val parentA = Var(Map(root -> 2))
+      val WeightA = mini(parentA)
+
+      assert(WeightA.readValueOnce == 2)
+
+      val parentB = Var(Map(root -> 1))
+      val WeightB = mini(parentB)
+
+      assert(WeightB.readValueOnce == 1)
+
+      val parentC = Var(Map(WeightA -> 3, WeightB -> 10))
+      val WeightC = mini(parentC)
+
+      assert(WeightC.readValueOnce == 5)
+
+      parentC.transform(_ + (WeightB -> 1))
+
+      assert(WeightC.readValueOnce == 2)
+
+    }
+
   }
 }

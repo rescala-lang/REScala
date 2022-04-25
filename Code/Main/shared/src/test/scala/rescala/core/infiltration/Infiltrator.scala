@@ -11,10 +11,16 @@ class Infiltrator(val api: RescalaInterface with Levelbased) {
       reactive: ReSource,
       level: Int,
       text: String = "level did not match"
-  )(implicit maybe: Scheduler) = {
-    val rblevel = maybe.forceNewTransaction() { _ =>
-      reactive.state.level()
+  )(implicit maybe: Scheduler) =
+    if (api.isInstanceOf[Levelbased] && reactive.state.isInstanceOf[LevelState[_]]) {
+      reactive.state match {
+        case rb: LevelState[_] => {
+          val rblevel = maybe.forceNewTransaction() { _ =>
+            rb.level()
+          }
+          assert(rblevel == level, s"$text, $reactive level was $rblevel but expected $level")
+        }
+        case _ =>
+      }
     }
-    assert(rblevel == level, s"$text, $reactive level was $rblevel but expected $level")
-  }
 }

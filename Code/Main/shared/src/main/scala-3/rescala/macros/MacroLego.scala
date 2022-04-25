@@ -2,21 +2,33 @@ package rescala.macros
 
 import rescala.macros.MacroAccess
 import rescala.operator.Operators
+import rescala.core.Core
 
 import scala.quoted.*
 
-
 //def eventMacro[T: Type](expr: Expr[Option[T]])(using q: Quotes): Expr[Event[T]] = MacroLego.makeEvent(expr)
 
-def signalMacro[T: Type, Ops <: Operators: Type, StaticTicket <: Operators#StaticTicket, Signal[_]](
+def signalMacro[T: Type, Ops <: Operators: Type, Signal[_]](
     expr: Expr[T],
     api: Expr[Ops],
-    creation: Expr[Operators#CreationTicket]
+    creation: Expr[Core#CreationTicket]
 )(using q: Quotes): Expr[Signal[T]] =
-  MacroLego[Ops, StaticTicket](api, creation).makeSignal[T](expr).asInstanceOf[Signal[T]].asInstanceOf[Expr[Signal[T]]]
+  MacroLego[Ops](null.asInstanceOf[Ops], api.asInstanceOf, creation)
+    .makeSignal[T](expr).asInstanceOf
 
-class MacroLego[Ops <: Operators: Type, StaticTicket <: Operators#StaticTicket](api: Expr[Ops], outerCreation: Expr[Operators#CreationTicket])(using
+class MacroLego[Ops <: Operators: Type](
+    val fakeApi: Ops,
+    api: Expr[fakeApi.type],
+    outerCreation: Expr[Core#CreationTicket]
+)(using
     val quotes: Quotes
+)(using
+    Type[fakeApi.StaticTicket],
+    Type[fakeApi.ReSource],
+    Type[fakeApi.Signal],
+    Type[fakeApi.Event],
+    Type[fakeApi.ReadAs],
+    Type[fakeApi.DynamicTicket]
 ) {
 
   import quotes.reflect.*
@@ -55,35 +67,46 @@ class MacroLego[Ops <: Operators: Type, StaticTicket <: Operators#StaticTicket](
         case '{ (${ x }: MacroAccess[_, _]).value } =>
           foundAbstractions ::= x
           e
+        case '{ (${ x }: MacroAccess[_, _]).apply() } =>
+          foundAbstractions ::= x
+          e
         case _ => transformChildren(e)
       }
 
     }
   }
-
 
   class ReplaceInterp(replacement: Map[Expr[MacroAccess[_, _]], Term], ticket: Tree) extends ExprMap {
 
     override def transform[T](e: Expr[T])(using Type[T])(using Quotes): Expr[T] = {
       import quotes.reflect.*
+
+      def replaceAccess(xy: Expr[MacroAccess[_, _]]) = {
+        val wideType = TypeRepr.of[T].widen.asType
+        replacement.get(xy) match
+          case Some(replaced) =>
+            val term = replaced.asExpr
+            val res = Apply(
+              TypeApply(Select.unique(ticket.asExpr.asTerm, "dependStatic"), List(Inferred(TypeRepr.of[T].widen))),
+              List(term.asTerm)
+              ).asExpr
+            // '{ (${ ticket.asExprOf[fakeApi.StaticTicket] }.dependStatic[T](${ term })) }
+            res.asInstanceOf[Expr[T]]
+          case None =>
+            val term = xy.asExprOf[fakeApi.ReadAs[T]]
+            '{ (${ ticket.asExprOf[fakeApi.DynamicTicket] }.depend[T](${ term })) }
+        end match
+      }
+
       e match {
-        case '{ (${ xy }: MacroAccess[vt, interp]).value } =>
-          val wideType = TypeRepr.of[T].widen.asType
-          replacement.get(xy) match
-            case Some(replaced) =>
-              println(replaced)
-              val term = replaced.asExprOf[Operators#ReadAs[T]]
-              '{ (${ ticket.asExprOf[StaticTicket] }.dependStatic[T](${ term.asInstanceOf[Expr[Nothing]] })) }
-            case None =>
-              val term = xy.asExprOf[Operators#ReadAs[T]]
-              '{ (${ ticket.asExprOf[Operators#DynamicTicket] }.depend[T](${ term.asInstanceOf[Expr[Nothing]] })) }
-          end match
+        case '{ (${ xy }: MacroAccess[_, _]).value } => replaceAccess(xy)
+        case '{ (${ xy }: MacroAccess[_, _]).apply() } => replaceAccess(xy)
         case _ => transformChildren(e)
       }
     }
   }
 
-  def makeSignal[T: Type](expr: Expr[T]): Expr[Operators#Signal[T]] = {
+  def makeSignal[T: Type](expr: Expr[T]): Expr[fakeApi.Signal[T]] = {
     val fi = FindInterp()
     fi.transform(expr)
     val definitions = FindDefs()
@@ -95,7 +118,7 @@ class MacroLego[Ops <: Operators: Type, StaticTicket <: Operators#StaticTicket](
 
     val funType = MethodType.apply(List("ticket"))(
       (_: MethodType) =>
-        List(if isStatic then TypeRepr.of[StaticTicket] else TypeRepr.of[Operators#DynamicTicket]),
+        List(if isStatic then TypeRepr.of[fakeApi.StaticTicket] else TypeRepr.of[Core#DynamicTicket]),
       (_: MethodType) => TypeRepr.of[T]
     )
 
@@ -111,22 +134,53 @@ class MacroLego[Ops <: Operators: Type, StaticTicket <: Operators#StaticTicket](
         }
       )
       if isStatic then
-        '{
-          $api.Signals.static(
-            ${ Expr.ofSeq(defs.toSeq.map(_.asExprOf[Operators#ReSource].asInstanceOf[Expr[Nothing]])) }: _*
+        val res = '{
+          ${ api.asInstanceOf[Expr[fakeApi.type]] }.Signals.static[T](
+            ${ Expr.ofSeq[Nothing](defs.toSeq.map(_.asExprOf[fakeApi.ReSource].asInstanceOf[Expr[Nothing]])) }: _*
           ) {
-            ${ rdef.asExprOf[StaticTicket => T] }
+            ${ rdef.asExprOf[fakeApi.StaticTicket => T].asInstanceOf[Expr[Nothing]] }
           }(using ${ outerCreation.asInstanceOf[Expr[Nothing]] })
         }.asTerm
+
+
+        val resOther = {
+          Apply(
+            Apply(
+              Apply(
+                TypeApply(
+                  Select.unique(
+                    Select.unique(api.asTerm, "Signals"),
+                    "staticNoVarargs"
+                  ),
+                  List(TypeTree.of[T])
+                ),
+                List(
+                  Repeated(defs, TypeTree.of[fakeApi.ReSource])
+                )
+              ),
+              List(Block(
+                Nil,
+                Inlined(
+                  None,
+                  Nil,
+                  rdef
+                )
+              ))
+            ),
+            List(Inlined(None, Nil, outerCreation.asTerm))
+          )
+        }
+
+        resOther
       else
         '{
-          $api.Signals.dynamic(${
-            Expr.ofSeq(defs.toSeq.map(_.asExprOf[Operators#ReSource].asInstanceOf[Expr[Nothing]]))
+          $api.Signals.dynamic[T](${
+            Expr.ofSeq(defs.toSeq.map(_.asExprOf[Core#ReSource].asInstanceOf[Expr[Nothing]]))
           }: _*) {
-            ${ rdef.asExprOf[Operators#DynamicTicket => T] }
+            ${ rdef.asExprOf[Core#DynamicTicket => T] }
           }(using ${ outerCreation.asInstanceOf[Expr[Nothing]] })
         }.asTerm
-    }.asExprOf[Operators#Signal[T]]
+    }.asExpr.asInstanceOf[Expr[fakeApi.Signal[T]]]
     println(s"res ${res.show}")
     res
   }
@@ -143,7 +197,7 @@ class MacroLego[Ops <: Operators: Type, StaticTicket <: Operators#StaticTicket](
 
     val funType = MethodType.apply(List("ticket"))(
       (_: MethodType) =>
-        List(if isStatic then TypeRepr.of[StaticTicket] else TypeRepr.of[Operators#DynamicTicket]),
+        List(if isStatic then TypeRepr.of[fakeApi.StaticTicket] else TypeRepr.of[Core#DynamicTicket]),
       (_: MethodType) => TypeRepr.of[Option[T]]
     )
 
@@ -161,20 +215,20 @@ class MacroLego[Ops <: Operators: Type, StaticTicket <: Operators#StaticTicket](
       if isStatic then
         '{
           $api.Events.static(
-            ${ Expr.ofSeq(defs.toSeq.map(_.asExprOf[Operators#ReSource].asInstanceOf[Expr[Nothing]])) }: _*
+            ${ Expr.ofSeq(defs.toSeq.map(_.asExprOf[Core#ReSource].asInstanceOf[Expr[Nothing]])) }: _*
           ) {
-            ${ rdef.asExprOf[StaticTicket => Option[T]] }
+            ${ rdef.asExprOf[fakeApi.StaticTicket => Option[T]].asInstanceOf[Expr[Nothing]] }
           }(using ${ outerCreation.asInstanceOf[Expr[Nothing]] })
         }.asTerm
       else
         '{
           $api.Events.dynamic(${
-            Expr.ofSeq(defs.toSeq.map(_.asExprOf[Operators#ReSource].asInstanceOf[Expr[Nothing]]))
+            Expr.ofSeq(defs.toSeq.map(_.asExprOf[Core#ReSource].asInstanceOf[Expr[Nothing]]))
           }: _*) {
-            ${ rdef.asExprOf[Operators#DynamicTicket => Option[T]] }
+            ${ rdef.asExprOf[Core#DynamicTicket => Option[T]] }
           }(using ${ outerCreation.asInstanceOf[Expr[Nothing]] })
         }.asTerm
-    }.asExprOf[Operators#Event[T]]
+    }.asExprOf[fakeApi.Event[T]]
     println(s"res ${res.show}")
     res
   }
