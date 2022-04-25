@@ -127,7 +127,7 @@ class MacroLego[Ops <: Operators: Type](
     fi.transform(expr)
     val definitions    = FindDefs().foldTree(Nil, expr.asTerm)(Symbol.spliceOwner)
     val containsSymbol = ContainsSymbol(definitions)
-    println(s"contains symbols: ${definitions}")
+    //println(s"contains symbols: ${definitions}")
     val found    = fi.foundAbstractions.filterNot(containsSymbol.inTree)
     val isStatic = (fi.static && found == fi.foundAbstractions)
 
@@ -175,7 +175,7 @@ class MacroLego[Ops <: Operators: Type](
         List(Inlined(None, Nil, outerCreation.asTerm))
       )
     }.asExpr
-    println(s"res ${res.show}")
+    //println(s"res ${res.show}")
 
     res
   }

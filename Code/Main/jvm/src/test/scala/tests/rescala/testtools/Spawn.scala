@@ -26,6 +26,7 @@ object Spawn {
       override def run(): Unit = {
         latch.countDown()
         promise.complete(Try(f))
+        ()
       }
     }
     val t = desiredName.fold(new Thread(runnable))(new Thread(runnable, _))

@@ -20,7 +20,6 @@ class Infiltrator(val api: RescalaInterface with Levelbased) {
           }
           assert(rblevel == level, s"$text, $reactive level was $rblevel but expected $level")
         }
-        case _ =>
       }
     }
 }
