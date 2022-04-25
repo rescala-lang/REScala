@@ -151,7 +151,7 @@ class ReactiveMacros(val c: blackbox.Context) {
       CT,
       StaticTicket: c.WeakTypeTag,
       ScopeSearch: c.WeakTypeTag,
-      LowPriorityImplicitObject: c.WeakTypeTag,
+      LowPriorityImplicitObject: c.WeakTypeTag
   ](
       init: c.Expr[A]
   )(op: c.Expr[(A, T) => A])(ticket: c.Expr[CT]): c.Tree = {

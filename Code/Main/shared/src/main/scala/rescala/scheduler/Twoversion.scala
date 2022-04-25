@@ -150,9 +150,9 @@ trait Twoversion extends Core {
     val toCommit  = ListBuffer[ReSource]()
     val observers = ListBuffer[Observation]()
 
-    override def schedule(commitable: ReSource): Unit = toCommit += commitable
+    override def schedule(commitable: ReSource): Unit = {toCommit += commitable; ()}
 
-    def observe(f: Observation): Unit = observers += f
+    def observe(f: Observation): Unit = {observers += f; ()}
 
     override def commitPhase(): Unit = toCommit.foreach { r => r.state.commit(r.commit) }
 

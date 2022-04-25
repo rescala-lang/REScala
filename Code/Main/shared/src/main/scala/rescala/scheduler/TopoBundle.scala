@@ -158,6 +158,7 @@ trait TopoBundle extends Core with ObserveBundle {
           rem.state.discovered = true
           rem.state.outgoing.foreach(_toposort)
           sorted += rem
+          ()
         }
       }
 

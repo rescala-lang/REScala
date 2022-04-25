@@ -84,7 +84,7 @@ trait Core {
     final private[rescala] def create[V, T <: Derived](
         incoming: Set[ReSource],
         initValue: V,
-        needsReevaluation: Boolean,
+        needsReevaluation: Boolean
     )(instantiateReactive: State[V] => T): T = {
       val state    = makeDerivedStructState[V](initValue)
       val reactive = instantiateReactive(state)
@@ -98,7 +98,7 @@ trait Core {
 
     /** Correctly initializes [[ReSource]]s */
     final private[rescala] def createSource[V, T <: ReSource](
-        intv: V,
+        intv: V
     )(instantiateReactive: State[V] => T): T = {
       val state    = makeSourceStructState[V](intv)
       val reactive = instantiateReactive(state)

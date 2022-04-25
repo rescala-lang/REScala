@@ -70,10 +70,7 @@ object Settings {
     "-Xlint:type-parameter-shadow",  // A local type parameter shadows a type already in scope.
     "-Ywarn-dead-code",              // Warn when dead code is identified.
     "-Ywarn-numeric-widen",          // Warn when numerics are widened.
-    "-Ywarn-unused:params",          // Warn if a value parameter is unused.
-    // "-Ywarn-unused:patvars",      // Warn if a variable bound in a pattern is unused.
     "-Ywarn-value-discard",   // Warn when non-Unit expression results are unused.
-    "-Xlint:nonlocal-return", // A return statement used an exception for flow control.
     // "-Xlint:eta-zero",            // Warn on ambiguity between applying f and eta expanding.
   )
   lazy val scalacOptions12plus: Seq[String] = Seq(
@@ -84,7 +81,9 @@ object Settings {
     "-Ywarn-unused:imports",   // Warn if an import selector is not referenced.
     "-Ywarn-unused:locals",    // Warn if a local definition is unused.
     "-Ywarn-unused:privates",  // Warn if a private member is unused.
-  )
+    "-Ywarn-unused:params",          // Warn if a value parameter is unused.
+    // "-Ywarn-unused:patvars",      // Warn if a variable bound in a pattern is unused.
+    )
   lazy val scalaOptions12minus: Seq[String] = Seq(
     // do not work on 2.13
     "-Ywarn-inaccessible", // Warn about inaccessible types in method signatures.
@@ -98,7 +97,8 @@ object Settings {
     "-Xfuture",                         // Turn on future language features.
   )
   lazy val scalaOptions13: Seq[String] = Seq(
-    "-Ytasty-reader"
+    "-Ytasty-reader",
+    "-Xlint:nonlocal-return", // A return statement used an exception for flow control.
     // "-Xsource:3"
   )
   lazy val scalaOptions3 = Seq(

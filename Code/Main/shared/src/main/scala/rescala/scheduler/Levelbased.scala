@@ -54,6 +54,7 @@ trait Levelbased extends Twoversion {
     private def enqueueOutgoing(head: ReSource, minLevel: Int): Unit = {
       head.state.outgoing.foreach(levelQueue.enqueue(minLevel))
       _propagating += head
+      ()
     }
 
     private def nextLevel(dependencies: Set[ReSource]): Int =

@@ -36,6 +36,8 @@ lazy val rescalaAll = project.in(file("Code")).settings(cfg.base, noPublish).agg
   rescalaNative,
 )
 
+val CcsO = Compile / compile / scalacOptions
+
 lazy val rescala = crossProject(JSPlatform, JVMPlatform, NativePlatform).in(file("Code/Main"))
   .settings(
     name := "rescala",
@@ -46,6 +48,7 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform, NativePlatform).in(file
     Compile / doc / scalacOptions += "-groups",
     // fullmv does not survive this check, but I want to keep it in the shared settings
     scalacOptions := scalacOptions.value.filter(_ != "-Ysafe-init"),
+    CcsO := (if(`is 3`(scalaVersion.value)) CcsO.value.filter(_ != "-Xfatal-warnings") else CcsO.value),
     publishSonatype,
     libraryDependencies ++= Seq(
       sourcecode.value,
@@ -58,6 +61,7 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform, NativePlatform).in(file
     ),
     libraryDependencies ++= (if (`is 3`(scalaVersion.value)) None
                              else Some(scalaOrganization.value % "scala-reflect" % scalaVersion.value % "provided"))
+
   )
   .jsSettings(
     Test / compile / scalacOptions += "-P:scalajs:nowarnGlobalExecutionContext",
