@@ -7,18 +7,14 @@ import rescala.interface.RescalaInterface
 class ReevaluationBundle[T <: RescalaInterface](val api: T) {
   import api._
 
-  class ReevaluationTracker[A] private () extends Matchers {
+  class ReevaluationTracker[A, R[_]](reactive: R[A])(implicit turnSource: CreationTicket) extends Matchers {
 
     var results: List[A] = Nil
     /* should be private but is unused */
-    var strongRef: AnyRef = _ // to prevent fake observers from being prematurely gc'd
-    def this(signal: Signal[A])(implicit turnSource: CreationTicket) = {
-      this()
-      strongRef = signal.map(reev)(turnSource)
-    }
-    def this(event: Event[A])(implicit turnSource: CreationTicket) = {
-      this()
-      strongRef = event.map(reev)(turnSource)
+    // to prevent fake observers from being prematurely gc'd
+    var strongRef: AnyRef = reactive match {
+      case signal: Signal[A] => signal.map(reev)(turnSource)
+      case event: Event[A] => event.map(reev)(turnSource)
     }
     def reev(v1: A): A = {
       results ::= v1

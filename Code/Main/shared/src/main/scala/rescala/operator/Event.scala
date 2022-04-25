@@ -277,20 +277,26 @@ trait EventBundle extends EventCompatBundle {
 
     /** the basic method to create static events */
     @cutOutOfUserComputation
-    def staticNamed[T](name: String, dependencies: ReSource*)(calculate: StaticTicket => Pulse[T])(implicit
+    def staticNamed[T](name: String, dependencies: ReSource*)(expr: StaticTicket => Pulse[T])(implicit
         ticket: CreationTicket
     ): Event[T] = {
       ticket.create[Pulse[T], EventImpl[T]](dependencies.toSet, Pulse.NoChange, needsReevaluation = false) {
-        state => new EventImpl[T](state, calculate, name, None)
+        state => new EventImpl[T](state, expr, name, None)
       }
     }
 
     /** Creates static events */
     @cutOutOfUserComputation
-    def static[T](dependencies: ReSource*)(calculate: StaticTicket => Option[T])(implicit
+    def static[T](dependencies: ReSource*)(expr: StaticTicket => Option[T])(implicit
         ticket: CreationTicket
     ): Event[T] =
-      staticNamed(ticket.rename.str, dependencies: _*)(st => Pulse.fromOption(calculate(st)))
+      staticNamed(ticket.rename.str, dependencies: _*)(st => Pulse.fromOption(expr(st)))
+
+    /** Creates static events */
+    @cutOutOfUserComputation
+    def staticNoVarargs[T](dependencies: Seq[ReSource])(expr: StaticTicket => Option[T])(implicit
+        ticket: CreationTicket
+    ): Event[T] = static(dependencies: _*)(expr)
 
     /** Creates dynamic events */
     @cutOutOfUserComputation
@@ -302,6 +308,12 @@ trait EventBundle extends EventCompatBundle {
         new EventImpl[T](state, expr.andThen(Pulse.fromOption), ticket.rename, Some(staticDeps))
       }
     }
+
+    /** Creates dynamic events */
+    @cutOutOfUserComputation
+    def dynamicNoVarargs[T](dependencies: Seq[ReSource])(expr: DynamicTicket => Option[T])(implicit
+        ticket: CreationTicket
+    ): Event[T] = dynamic(dependencies: _*)(expr)
 
     /** Creates change events */
     @cutOutOfUserComputation

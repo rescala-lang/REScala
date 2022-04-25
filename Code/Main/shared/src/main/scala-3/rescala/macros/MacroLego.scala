@@ -14,7 +14,19 @@ def signalMacro[T: Type, Ops <: Operators: Type, Signal[_]](
     creation: Expr[Core#CreationTicket]
 )(using q: Quotes): Expr[Signal[T]] =
   MacroLego[Ops](null.asInstanceOf[Ops], api.asInstanceOf, creation)
-    .makeSignal[T](expr).asInstanceOf
+    .makeReactive[[A] =>> A, T](expr, ReactiveType.Signal).asInstanceOf[Expr[Signal[T]]]
+
+def eventMacro[T: Type, Ops <: Operators: Type, Event[_]](
+    expr: Expr[Option[T]],
+    api: Expr[Ops],
+    creation: Expr[Core#CreationTicket]
+)(using q: Quotes): Expr[Event[T]] =
+  MacroLego[Ops](null.asInstanceOf[Ops], api.asInstanceOf, creation)
+    .makeReactive[Option, T](expr, ReactiveType.Event).asInstanceOf[Expr[Event[T]]]
+
+
+enum ReactiveType:
+  case Event, Signal
 
 class MacroLego[Ops <: Operators: Type](
     val fakeApi: Ops,
@@ -34,8 +46,8 @@ class MacroLego[Ops <: Operators: Type](
     override def foldTree(acc: List[Symbol], tree: Tree)(owner: Symbol): List[Symbol] =
       val accd = tree match {
         case d: Definition => d.symbol :: acc
-        case b: Bind => b.symbol :: acc
-        case other => acc
+        case b: Bind       => b.symbol :: acc
+        case other         => acc
       }
       foldOverTree(accd, tree)(owner)
   }
@@ -58,7 +70,7 @@ class MacroLego[Ops <: Operators: Type](
   class FindInterp() extends ExprMap {
 
     var foundAbstractions: List[Expr[MacroAccess[_, _]]] = Nil
-    var static = true
+    var static                                           = true
 
     override def transform[T](e: Expr[T])(using Type[T])(using q: Quotes): Expr[T] = {
       import q.reflect.*
@@ -72,11 +84,10 @@ class MacroLego[Ops <: Operators: Type](
           static = false
         e
 
-
       e match
-        case '{ (${ x }: MacroAccess[_, _]).value } => handleFind(x)
+        case '{ (${ x }: MacroAccess[_, _]).value }   => handleFind(x)
         case '{ (${ x }: MacroAccess[_, _]).apply() } => handleFind(x)
-        case _ => transformChildren(e)
+        case _                                        => transformChildren(e)
 
     }
   }
@@ -97,7 +108,7 @@ class MacroLego[Ops <: Operators: Type](
       def replaceAccess[A: Type, B: Type](xy: Expr[MacroAccess[A, B]]) = {
         replacement.get(xy) match
           case Some(replaced) => accessTree[A, B](true, replaced.asExpr.asTerm)
-          case None           =>
+          case None =>
             val xye = transform(xy)
             accessTree[A, B](false, xye.asTerm)
         end match
@@ -111,10 +122,10 @@ class MacroLego[Ops <: Operators: Type](
     }
   }
 
-  def makeSignal[T: Type](expr: Expr[T]): Expr[fakeApi.Signal[T]] = {
+  def makeReactive[F[_]: Type,  T: Type](expr: Expr[F[T]], rtype: ReactiveType): Expr[Any] = {
     val fi = FindInterp()
     fi.transform(expr)
-    val definitions = FindDefs().foldTree(Nil, expr.asTerm)(Symbol.spliceOwner)
+    val definitions    = FindDefs().foldTree(Nil, expr.asTerm)(Symbol.spliceOwner)
     val containsSymbol = ContainsSymbol(definitions)
     println(s"contains symbols: ${definitions}")
     val found    = fi.foundAbstractions.filterNot(containsSymbol.inTree)
@@ -123,7 +134,7 @@ class MacroLego[Ops <: Operators: Type](
     val funType = MethodType.apply(List("ticket"))(
       (_: MethodType) =>
         List(if isStatic then TypeRepr.of[fakeApi.StaticTicket] else TypeRepr.of[fakeApi.DynamicTicket]),
-      (_: MethodType) => TypeRepr.of[T]
+      (_: MethodType) => TypeRepr.of[F[T]]
     )
 
     val res = ValDef.let(Symbol.spliceOwner, found.map(_.asTerm)) { defs =>
@@ -143,7 +154,7 @@ class MacroLego[Ops <: Operators: Type](
           Apply(
             TypeApply(
               Select.unique(
-                Select.unique(api.asTerm, "Signals"),
+                Select.unique(api.asTerm, if rtype == ReactiveType.Event then "Events" else "Signals"),
                 if isStatic then "staticNoVarargs" else "dynamicNoVarargs"
               ),
               List(TypeTree.of[T])
@@ -163,57 +174,10 @@ class MacroLego[Ops <: Operators: Type](
         ),
         List(Inlined(None, Nil, outerCreation.asTerm))
       )
-    }.asExpr.asInstanceOf[Expr[fakeApi.Signal[T]]]
+    }.asExpr
     println(s"res ${res.show}")
+
     res
   }
-
-  // def makeEvent[T: Type](expr: Expr[Option[T]]) = {
-  //  val fi = FindInterp()
-  //  fi.transform(expr)
-  //  val definitions = FindDefs()
-  //  definitions.transform(expr)
-  //  val containsSymbol = ContainsSymbol(definitions.foundDefinitions)
-  //  println(s"contains symbols: ${definitions.foundDefinitions}")
-  //  val found    = fi.foundAbstractions.filterNot(containsSymbol.inTree)
-  //  val isStatic = (found == fi.foundAbstractions)
-  //
-  //  val funType = MethodType.apply(List("ticket"))(
-  //    (_: MethodType) =>
-  //      List(if isStatic then TypeRepr.of[fakeApi.StaticTicket] else TypeRepr.of[Core#DynamicTicket]),
-  //    (_: MethodType) => TypeRepr.of[Option[T]]
-  //  )
-  //
-  //  val res = ValDef.let(Symbol.spliceOwner, found.map(_.asTerm)) { defs =>
-  //    val replacementMap = found.zip(defs).toMap
-  //    // val rdef = DefDef(exprSym, {params =>
-  //    val rdef = Lambda(
-  //      Symbol.spliceOwner,
-  //      funType,
-  //      { (sym, params) =>
-  //        val staticTicket = params.head
-  //        ReplaceInterp(replacementMap, staticTicket).transform(expr).asTerm.changeOwner(sym)
-  //      }
-  //    )
-  //    if isStatic then
-  //      '{
-  //        $api.Events.static(
-  //          ${ Expr.ofSeq(defs.toSeq.map(_.asExprOf[Core#ReSource].asInstanceOf[Expr[Nothing]])) }: _*
-  //        ) {
-  //          ${ rdef.asExprOf[fakeApi.StaticTicket => Option[T]].asInstanceOf[Expr[Nothing]] }
-  //        }(using ${ outerCreation.asInstanceOf[Expr[Nothing]] })
-  //      }.asTerm
-  //    else
-  //      '{
-  //        $api.Events.dynamic(${
-  //          Expr.ofSeq(defs.toSeq.map(_.asExprOf[Core#ReSource].asInstanceOf[Expr[Nothing]]))
-  //        }: _*) {
-  //          ${ rdef.asExprOf[Core#DynamicTicket => Option[T]] }
-  //        }(using ${ outerCreation.asInstanceOf[Expr[Nothing]] })
-  //      }.asTerm
-  //  }.asExprOf[fakeApi.Event[T]]
-  //  println(s"res ${res.show}")
-  //  res
-  // }
 
 }

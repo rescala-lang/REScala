@@ -7,7 +7,7 @@ import rescala.operator.Operators
 import rescala.macros.ReadableMacroBundle
 
 trait EventCompatBundle extends ReadableMacroBundle {
-  selfType: Operators =>
+  moduleType: Operators =>
 
   trait EventCompat[+T] extends ReadableMacro[Option[T]] {
     selfType: Event[T] =>
@@ -16,21 +16,21 @@ trait EventCompatBundle extends ReadableMacroBundle {
       * @group operator
       */
     @cutOutOfUserComputation
-    final def filter(expression: T => Boolean)(implicit ticket: CreationTicket): Event[T] =
-      Events.staticNamed(s"(filter $this)", this)(st => st.collectStatic(this).filter(expression))
+    final inline def filter(inline expression: T => Boolean)(implicit ticket: CreationTicket): Event[T] =
+      Event { this.value.filter(expression) }
 
     /** Collects the results from a partial function
       * @group operator
       */
-    final def collect[U](expression: PartialFunction[T, U])(implicit ticket: CreationTicket): Event[U] =
-      Events.staticNamed(s"(collect $this)", this) { st => st.collectStatic(this).collect(expression) }
+    final inline def collect[U](inline expression: PartialFunction[T, U])(implicit ticket: CreationTicket): Event[U] =
+      Event { this.value.collect(expression) }
 
     /** Transform the event.
       * @group operator
       */
     @cutOutOfUserComputation
-    final def map[A](expression: T => A)(implicit ticket: CreationTicket): Event[A] =
-      Events.staticNamed(s"(map $this)", this)(st => st.collectStatic(this).map(expression))
+    final inline def map[B](inline expression: T => B)(implicit ticket: CreationTicket): Event[B] =
+      Event { this.value.map(expression) }
 
     /** Folds events with a given operation to create a Signal.
       * @group conversion
@@ -50,8 +50,10 @@ trait EventCompatBundle extends ReadableMacroBundle {
     * @group create
     */
   object Event {
-    def apply[T](expr: DynamicTicket ?=> Option[T])(using CreationTicket): Event[T]   = Events.dynamic()(expr(using _))
-    def dynamic[T](expr: DynamicTicket ?=> Option[T])(using CreationTicket): Event[T] = Events.dynamic()(expr(using _))
+    inline def apply[T](inline expr: Option[T])(using ct: CreationTicket): Event[T] =
+      ${ rescala.macros.eventMacro[T, moduleType.type, Event]('expr, 'moduleType, 'ct) }
+    inline def dynamic[T](inline expr: Option[T])(using ct: CreationTicket): Event[T] =
+      ${ rescala.macros.eventMacro[T, moduleType.type, Event]('expr, 'moduleType, 'ct) }
   }
 
 }
