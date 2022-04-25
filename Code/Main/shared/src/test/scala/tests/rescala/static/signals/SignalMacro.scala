@@ -155,7 +155,7 @@ class SignalMacro extends RETests {
       trait T {
         import engine1._
         type A
-        lazy val v: Var[A]
+        val v: Var[A]
         val s = Signal { v() }
       }
       object o extends T {

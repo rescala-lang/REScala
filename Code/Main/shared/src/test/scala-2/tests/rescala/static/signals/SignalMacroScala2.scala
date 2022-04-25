@@ -1,6 +1,5 @@
 package tests.rescala.static.signals
 
-import rescala.operator.cutOutOfUserComputation
 import tests.rescala.testtools.RETests
 
 class SignalMacroScala2 extends RETests {
