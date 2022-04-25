@@ -28,7 +28,7 @@ trait SignalBundle extends SignalCompatBundle {
     override type Value <: Pulse[T]
     override def read(v: Value): T                             = v.get
     override protected[rescala] def commit(base: Value): Value = base
-    def resource: ReadAs[T]                                  = this
+    def resource: ReadAs[T]                                    = this
 
     /** Returns the current value of the signal
       * However, using now is in most cases not what you want.
@@ -174,12 +174,8 @@ trait SignalBundle extends SignalCompatBundle {
     /** creates a new static signal depending on the dependencies, reevaluating the function */
     @cutOutOfUserComputation
     def staticNoVarargs[T](dependencies: Seq[ReSource])(expr: StaticTicket => T)(implicit
-                                                                    ct: CreationTicket
-    ): Signal[T] = {
-      ct.create[Pulse[T], SignalImpl[T]](dependencies.toSet, Pulse.empty, needsReevaluation = true) {
-        state => new SignalImpl[T](state, ignore2(expr), ct.rename, None)
-      }
-    }
+        ct: CreationTicket
+    ): Signal[T] = static(dependencies: _*)(expr)
 
     /** creates a signal that has dynamic dependencies (which are detected at runtime with Signal.apply(turn)) */
     @cutOutOfUserComputation
@@ -191,6 +187,12 @@ trait SignalBundle extends SignalCompatBundle {
         state => new SignalImpl[T](state, ignore2(expr), ct.rename, Some(staticDeps))
       }
     }
+
+    /** creates a signal that has dynamic dependencies (which are detected at runtime with Signal.apply(turn)) */
+    @cutOutOfUserComputation
+    def dynamicNoVarargs[T](dependencies: Seq[ReSource])(expr: DynamicTicket => T)(implicit
+        ct: CreationTicket
+    ): Signal[T] = dynamic(dependencies: _*)(expr)
 
     /** converts a future to a signal */
     @cutOutOfUserComputation

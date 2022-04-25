@@ -145,13 +145,7 @@ class SignalMacro extends RETests {
       assert(sig.readValueOnce == 11)
     }
 
-    test("pattern Matching Anonymous Function") {
-      val s1 = Signal { List(Some(1), Some(2), None, Some(4), None) }
-      val s2 = Signal {
-        s1() collect { case Some(n) => n }
-      }
-      assert(s2.readValueOnce === List(1, 2, 4))
-    }
+
 
     test("abstract Type Member") {
       // the renamed engines are a workaround for this bug: https://issues.scala-lang.org/browse/SI-10036

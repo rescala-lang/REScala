@@ -7,6 +7,26 @@ class SignalMacroScala2 extends RETests {
   multiEngined { engine =>
     import engine._
 
+    test("pattern Matching Anonymous Function Nested Signals") {
+      val v1 = Var(1)
+      val v2 = Var(2)
+      val s1 = Signal { List(Some(v1), None, Some(v2), None) }
+      val s2 = Signal.dynamic {
+        s1() collect { case Some(n) => n() }
+      }
+      assert(s2.readValueOnce === List(1, 2))
+      v1.set(10)
+      assert(s2.readValueOnce === List(10, 2))
+    }
+
+    test("pattern Matching Anonymous Function") {
+      val s1 = Signal { List(Some(1), Some(2), None, Some(4), None) }
+      val s2 = Signal {
+        s1() collect { case Some(n) => n }
+      }
+      assert(s2.readValueOnce === List(1, 2, 4))
+    }
+
     test("case Classes And Objects") {
       // would fail due to https://issues.scala-lang.org/browse/SI-5467
       // if we didn't work around un-type-checking issues

@@ -78,18 +78,6 @@ class TrueDynamicSignals extends RETests {
       assert(testsig.readValueOnce === 2)
     }
 
-    test("pattern Matching Anonymous Function Nested Signals") {
-      val v1 = Var(1)
-      val v2 = Var(2)
-      val s1 = Signal { List(Some(v1), None, Some(v2), None) }
-      val s2 = Signal.dynamic {
-        s1() collect { case Some(n) => n() }
-      }
-      assert(s2.readValueOnce === List(1, 2))
-      v1.set(10)
-      assert(s2.readValueOnce === List(10, 2))
-    }
-
     test("outer And Inner Values") {
       val v = Var(0)
       object obj {

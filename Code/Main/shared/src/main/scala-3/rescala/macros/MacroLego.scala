@@ -24,22 +24,20 @@ class MacroLego[Ops <: Operators: Type](
     val quotes: Quotes
 )(using
     Type[fakeApi.StaticTicket],
+    Type[fakeApi.DynamicTicket],
     Type[fakeApi.ReSource],
-    Type[fakeApi.Signal],
-    Type[fakeApi.Event],
-    Type[fakeApi.ReadAs],
-    Type[fakeApi.DynamicTicket]
 ) {
 
   import quotes.reflect.*
 
-  class FindDefs() extends ExprMapHack {
-    var foundDefinitions: List[Symbol] = Nil
-
-    override def transform[T](e: Expr[T])(using Type[T])(using Quotes): Expr[T] = transformChildren(e)
-
-    override def touchDefinition(using q2: Quotes)(definition: q2.reflect.Definition): Unit =
-      foundDefinitions = definition.symbol.asInstanceOf[Symbol] :: foundDefinitions
+  class FindDefs extends TreeAccumulator[List[Symbol]] {
+    override def foldTree(acc: List[Symbol], tree: Tree)(owner: Symbol): List[Symbol] =
+      val accd = tree match {
+        case d: Definition => d.symbol :: acc
+        case b: Bind => b.symbol :: acc
+        case other => acc
+      }
+      foldOverTree(accd, tree)(owner)
   }
 
   class ContainsSymbol(defs: List[Symbol]) extends ExprMap {
@@ -60,18 +58,25 @@ class MacroLego[Ops <: Operators: Type](
   class FindInterp() extends ExprMap {
 
     var foundAbstractions: List[Expr[MacroAccess[_, _]]] = Nil
+    var static = true
 
     override def transform[T](e: Expr[T])(using Type[T])(using q: Quotes): Expr[T] = {
       import q.reflect.*
-      e match {
-        case '{ (${ x }: MacroAccess[_, _]).value } =>
+
+      def handleFind(x: Expr[MacroAccess[_, _]]) =
+        val before = foundAbstractions
+        transform(x)
+        // we do not find things with nested things inside
+        if before == foundAbstractions then
           foundAbstractions ::= x
-          e
-        case '{ (${ x }: MacroAccess[_, _]).apply() } =>
-          foundAbstractions ::= x
-          e
+          static = false
+        e
+
+
+      e match
+        case '{ (${ x }: MacroAccess[_, _]).value } => handleFind(x)
+        case '{ (${ x }: MacroAccess[_, _]).apply() } => handleFind(x)
         case _ => transformChildren(e)
-      }
 
     }
   }
@@ -81,44 +86,43 @@ class MacroLego[Ops <: Operators: Type](
     override def transform[T](e: Expr[T])(using Type[T])(using Quotes): Expr[T] = {
       import quotes.reflect.*
 
-      def replaceAccess(xy: Expr[MacroAccess[_, _]]) = {
-        val wideType = TypeRepr.of[T].widen.asType
+      def accessTree[A: Type, B: Type](static: Boolean, accessed: Term) = Apply(
+        TypeApply(
+          Select.unique(ticket.asExpr.asTerm, if static then "dependStatic" else "depend"),
+          List(TypeTree.of[A])
+        ),
+        List(accessed)
+      ).asExpr
+
+      def replaceAccess[A: Type, B: Type](xy: Expr[MacroAccess[A, B]]) = {
         replacement.get(xy) match
-          case Some(replaced) =>
-            val term = replaced.asExpr
-            val res = Apply(
-              TypeApply(Select.unique(ticket.asExpr.asTerm, "dependStatic"), List(Inferred(TypeRepr.of[T].widen))),
-              List(term.asTerm)
-              ).asExpr
-            // '{ (${ ticket.asExprOf[fakeApi.StaticTicket] }.dependStatic[T](${ term })) }
-            res.asInstanceOf[Expr[T]]
-          case None =>
-            val term = xy.asExprOf[fakeApi.ReadAs[T]]
-            '{ (${ ticket.asExprOf[fakeApi.DynamicTicket] }.depend[T](${ term })) }
+          case Some(replaced) => accessTree[A, B](true, replaced.asExpr.asTerm)
+          case None           =>
+            val xye = transform(xy)
+            accessTree[A, B](false, xye.asTerm)
         end match
       }
 
-      e match {
-        case '{ (${ xy }: MacroAccess[_, _]).value } => replaceAccess(xy)
-        case '{ (${ xy }: MacroAccess[_, _]).apply() } => replaceAccess(xy)
-        case _ => transformChildren(e)
-      }
+      val res = e match
+        case '{ (${ xy }: MacroAccess[a, b]).value }   => replaceAccess[a, b](xy)
+        case '{ (${ xy }: MacroAccess[a, b]).apply() } => replaceAccess[a, b](xy)
+        case _                                         => transformChildren(e)
+      res.asInstanceOf[Expr[T]]
     }
   }
 
   def makeSignal[T: Type](expr: Expr[T]): Expr[fakeApi.Signal[T]] = {
     val fi = FindInterp()
     fi.transform(expr)
-    val definitions = FindDefs()
-    definitions.transform(expr)
-    val containsSymbol = ContainsSymbol(definitions.foundDefinitions)
-    println(s"contains symbols: ${definitions.foundDefinitions}")
+    val definitions = FindDefs().foldTree(Nil, expr.asTerm)(Symbol.spliceOwner)
+    val containsSymbol = ContainsSymbol(definitions)
+    println(s"contains symbols: ${definitions}")
     val found    = fi.foundAbstractions.filterNot(containsSymbol.inTree)
-    val isStatic = (found == fi.foundAbstractions)
+    val isStatic = (fi.static && found == fi.foundAbstractions)
 
     val funType = MethodType.apply(List("ticket"))(
       (_: MethodType) =>
-        List(if isStatic then TypeRepr.of[fakeApi.StaticTicket] else TypeRepr.of[Core#DynamicTicket]),
+        List(if isStatic then TypeRepr.of[fakeApi.StaticTicket] else TypeRepr.of[fakeApi.DynamicTicket]),
       (_: MethodType) => TypeRepr.of[T]
     )
 
@@ -133,104 +137,83 @@ class MacroLego[Ops <: Operators: Type](
           ReplaceInterp(replacementMap, staticTicket).transform(expr).asTerm.changeOwner(sym)
         }
       )
-      if isStatic then
-        val res = '{
-          ${ api.asInstanceOf[Expr[fakeApi.type]] }.Signals.static[T](
-            ${ Expr.ofSeq[Nothing](defs.toSeq.map(_.asExprOf[fakeApi.ReSource].asInstanceOf[Expr[Nothing]])) }: _*
-          ) {
-            ${ rdef.asExprOf[fakeApi.StaticTicket => T].asInstanceOf[Expr[Nothing]] }
-          }(using ${ outerCreation.asInstanceOf[Expr[Nothing]] })
-        }.asTerm
 
-
-        val resOther = {
+      Apply(
+        Apply(
           Apply(
-            Apply(
-              Apply(
-                TypeApply(
-                  Select.unique(
-                    Select.unique(api.asTerm, "Signals"),
-                    "staticNoVarargs"
-                  ),
-                  List(TypeTree.of[T])
-                ),
-                List(
-                  Repeated(defs, TypeTree.of[fakeApi.ReSource])
-                )
+            TypeApply(
+              Select.unique(
+                Select.unique(api.asTerm, "Signals"),
+                if isStatic then "staticNoVarargs" else "dynamicNoVarargs"
               ),
-              List(Block(
-                Nil,
-                Inlined(
-                  None,
-                  Nil,
-                  rdef
-                )
-              ))
+              List(TypeTree.of[T])
             ),
-            List(Inlined(None, Nil, outerCreation.asTerm))
-          )
-        }
-
-        resOther
-      else
-        '{
-          $api.Signals.dynamic[T](${
-            Expr.ofSeq(defs.toSeq.map(_.asExprOf[Core#ReSource].asInstanceOf[Expr[Nothing]]))
-          }: _*) {
-            ${ rdef.asExprOf[Core#DynamicTicket => T] }
-          }(using ${ outerCreation.asInstanceOf[Expr[Nothing]] })
-        }.asTerm
+            List(
+              Repeated(defs, TypeTree.of[fakeApi.ReSource])
+            )
+          ),
+          List(Block(
+            Nil,
+            Inlined(
+              None,
+              Nil,
+              rdef
+            )
+          ))
+        ),
+        List(Inlined(None, Nil, outerCreation.asTerm))
+      )
     }.asExpr.asInstanceOf[Expr[fakeApi.Signal[T]]]
     println(s"res ${res.show}")
     res
   }
 
-  def makeEvent[T: Type](expr: Expr[Option[T]]) = {
-    val fi = FindInterp()
-    fi.transform(expr)
-    val definitions = FindDefs()
-    definitions.transform(expr)
-    val containsSymbol = ContainsSymbol(definitions.foundDefinitions)
-    println(s"contains symbols: ${definitions.foundDefinitions}")
-    val found    = fi.foundAbstractions.filterNot(containsSymbol.inTree)
-    val isStatic = (found == fi.foundAbstractions)
-
-    val funType = MethodType.apply(List("ticket"))(
-      (_: MethodType) =>
-        List(if isStatic then TypeRepr.of[fakeApi.StaticTicket] else TypeRepr.of[Core#DynamicTicket]),
-      (_: MethodType) => TypeRepr.of[Option[T]]
-    )
-
-    val res = ValDef.let(Symbol.spliceOwner, found.map(_.asTerm)) { defs =>
-      val replacementMap = found.zip(defs).toMap
-      // val rdef = DefDef(exprSym, {params =>
-      val rdef = Lambda(
-        Symbol.spliceOwner,
-        funType,
-        { (sym, params) =>
-          val staticTicket = params.head
-          ReplaceInterp(replacementMap, staticTicket).transform(expr).asTerm.changeOwner(sym)
-        }
-      )
-      if isStatic then
-        '{
-          $api.Events.static(
-            ${ Expr.ofSeq(defs.toSeq.map(_.asExprOf[Core#ReSource].asInstanceOf[Expr[Nothing]])) }: _*
-          ) {
-            ${ rdef.asExprOf[fakeApi.StaticTicket => Option[T]].asInstanceOf[Expr[Nothing]] }
-          }(using ${ outerCreation.asInstanceOf[Expr[Nothing]] })
-        }.asTerm
-      else
-        '{
-          $api.Events.dynamic(${
-            Expr.ofSeq(defs.toSeq.map(_.asExprOf[Core#ReSource].asInstanceOf[Expr[Nothing]]))
-          }: _*) {
-            ${ rdef.asExprOf[Core#DynamicTicket => Option[T]] }
-          }(using ${ outerCreation.asInstanceOf[Expr[Nothing]] })
-        }.asTerm
-    }.asExprOf[fakeApi.Event[T]]
-    println(s"res ${res.show}")
-    res
-  }
+  // def makeEvent[T: Type](expr: Expr[Option[T]]) = {
+  //  val fi = FindInterp()
+  //  fi.transform(expr)
+  //  val definitions = FindDefs()
+  //  definitions.transform(expr)
+  //  val containsSymbol = ContainsSymbol(definitions.foundDefinitions)
+  //  println(s"contains symbols: ${definitions.foundDefinitions}")
+  //  val found    = fi.foundAbstractions.filterNot(containsSymbol.inTree)
+  //  val isStatic = (found == fi.foundAbstractions)
+  //
+  //  val funType = MethodType.apply(List("ticket"))(
+  //    (_: MethodType) =>
+  //      List(if isStatic then TypeRepr.of[fakeApi.StaticTicket] else TypeRepr.of[Core#DynamicTicket]),
+  //    (_: MethodType) => TypeRepr.of[Option[T]]
+  //  )
+  //
+  //  val res = ValDef.let(Symbol.spliceOwner, found.map(_.asTerm)) { defs =>
+  //    val replacementMap = found.zip(defs).toMap
+  //    // val rdef = DefDef(exprSym, {params =>
+  //    val rdef = Lambda(
+  //      Symbol.spliceOwner,
+  //      funType,
+  //      { (sym, params) =>
+  //        val staticTicket = params.head
+  //        ReplaceInterp(replacementMap, staticTicket).transform(expr).asTerm.changeOwner(sym)
+  //      }
+  //    )
+  //    if isStatic then
+  //      '{
+  //        $api.Events.static(
+  //          ${ Expr.ofSeq(defs.toSeq.map(_.asExprOf[Core#ReSource].asInstanceOf[Expr[Nothing]])) }: _*
+  //        ) {
+  //          ${ rdef.asExprOf[fakeApi.StaticTicket => Option[T]].asInstanceOf[Expr[Nothing]] }
+  //        }(using ${ outerCreation.asInstanceOf[Expr[Nothing]] })
+  //      }.asTerm
+  //    else
+  //      '{
+  //        $api.Events.dynamic(${
+  //          Expr.ofSeq(defs.toSeq.map(_.asExprOf[Core#ReSource].asInstanceOf[Expr[Nothing]]))
+  //        }: _*) {
+  //          ${ rdef.asExprOf[Core#DynamicTicket => Option[T]] }
+  //        }(using ${ outerCreation.asInstanceOf[Expr[Nothing]] })
+  //      }.asTerm
+  //  }.asExprOf[fakeApi.Event[T]]
+  //  println(s"res ${res.show}")
+  //  res
+  // }
 
 }
