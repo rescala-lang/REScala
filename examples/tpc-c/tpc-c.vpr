@@ -1,0 +1,22 @@
+// sources
+field districts: AWSet[District]
+field stocks: AWSet[Stocks]
+field orderLines: AWSet[OrderLine]
+field items: AWSet[Item]
+field newOrders: AWSet[NewOrder]
+field paymentHistory: AWSet[Payment]
+field customers: AWSet[Customer]
+field warehouses: AWSet[Warehouse]
+field orders: AWSet[Order]
+// derived
+define customerBalance(customers, orderLines) customers + orderLines + customerYTD + TODO
+define WarehouseYTD(districts, warehouses) warehouses + districts + districtYTD + TODO
+define orderLnCnt(orderLines, orders) orders + orderLines + TODO
+define nextOrderId(districts, orders) districts + orders + TODO
+define DistrictYTD(districts, paymentHistory) districts + paymentHistory + TODO
+define CustomerYTD(customers, paymentHistory) customers + paymentHistory + TODO
+// invariants
+define inv_2528() forall d: District :: d in Districts ==> size(getNewOrdersPerDistrict(d)) == getNewOrdersPerDistrict(d).map(_.id()).max() - getNewOrdersPerDistrict(d).map(_.id()).min() + 1
+
+// transactions
+
