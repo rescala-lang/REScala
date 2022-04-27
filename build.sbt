@@ -64,7 +64,7 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform, NativePlatform).in(file
 
   )
   .jsSettings(
-    Test / compile / scalacOptions += "-P:scalajs:nowarnGlobalExecutionContext",
+    Test / compile / scalacOptions ++= (if(`is 3`(scalaVersion.value)) List.empty else List("-P:scalajs:nowarnGlobalExecutionContext")),
     libraryDependencies += scalatags.value % "provided,test",
     jsEnv                                 := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
   )
