@@ -122,7 +122,22 @@ class MacroLego[Ops <: Operators: Type](
     }
   }
 
+  class ReplaceImplicitTickets(ticket: Term) extends ExprMap {
+
+    override def transform[T](e: Expr[T])(using Type[T])(using Quotes): Expr[T] = {
+      import quotes.reflect.*
+
+      e.asTerm match
+        //case '{(${ss}: fakeApi.ScopeSearch.type).fromSchedulerImplicit(using ${_}: fakeApi.DynamicScope)} =>
+        //  '{$ss.fromTicketImplicit($ticket)}.asExprOf[T]
+        case Apply(Select(ss, "fromSchedulerImplicit"), _) => Apply(Select.unique(ss, "fromTicketImplicit"), List(ticket)).asExprOf[T]
+        case other => transformChildren(e)
+    }
+  }
+
   def makeReactive[F[_]: Type,  T: Type](expr: Expr[F[T]], rtype: ReactiveType): Expr[Any] = {
+    println(expr.show)
+    println(expr.asTerm.show(using Printer.TreeStructure))
     val fi = FindInterp()
     fi.transform(expr)
     val definitions    = FindDefs().foldTree(Nil, expr.asTerm)(Symbol.spliceOwner)
@@ -145,7 +160,10 @@ class MacroLego[Ops <: Operators: Type](
         funType,
         { (sym, params) =>
           val staticTicket = params.head
-          ReplaceInterp(replacementMap, staticTicket).transform(expr).asTerm.changeOwner(sym)
+          val cutOut = ReplaceInterp(replacementMap, staticTicket).transform(expr)
+          val res = new ReplaceImplicitTickets(staticTicket.asInstanceOf[Term]).transform(cutOut).asTerm.changeOwner(sym)
+          println(res.show)
+          res
         }
       )
 
