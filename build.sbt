@@ -1,11 +1,12 @@
 lazy val root = (project in file("."))
   .settings(
     name := "lore",
-    scalaVersion := "3.1.0",
-    libraryDependencies += "org.typelevel" %% "cats-core"         % "2.6.1",
-    libraryDependencies += "org.typelevel" %% "cats-effect"       % "3.2.9",
+    scalaVersion := "3.1.2",
+    libraryDependencies += "org.typelevel" %% "cats-core"         % "2.7.0",
+    libraryDependencies += "org.typelevel" %% "cats-effect"       % "3.3.11",
     libraryDependencies += "com.monovore"  %% "decline"           % "2.2.0",
     libraryDependencies += ("org.scalameta" %% "scalafmt-core"  % "3.0.8").cross(CrossVersion.for3Use2_13),
+    libraryDependencies += "org.typelevel" %% "cats-parse" % "0.3.6",
     // test dependencies
     libraryDependencies += "io.monix" %% "minitest" % "2.9.6" % Test,
     libraryDependencies += "org.typelevel" %% "core" % "1.2.0" % Test,
