@@ -6,23 +6,16 @@ import rescala.core.Core
 
 import scala.quoted.*
 
-//def eventMacro[T: Type](expr: Expr[Option[T]])(using q: Quotes): Expr[Event[T]] = MacroLego.makeEvent(expr)
-
-def signalMacro[T: Type, Ops <: Operators: Type, Signal[_]](
-    expr: Expr[T],
+def reactiveMacro[T: Type, F[_]: Type, Ops <: Operators: Type, Reactive[_]](
+    expr: Expr[F[T]],
     api: Expr[Ops],
-    creation: Expr[Core#CreationTicket]
-)(using q: Quotes): Expr[Signal[T]] =
-  MacroLego[Ops](null.asInstanceOf[Ops], api.asInstanceOf, creation)
-    .makeReactive[[A] =>> A, T](expr, ReactiveType.Signal).asInstanceOf[Expr[Signal[T]]]
-
-def eventMacro[T: Type, Ops <: Operators: Type, Event[_]](
-    expr: Expr[Option[T]],
-    api: Expr[Ops],
-    creation: Expr[Core#CreationTicket]
-)(using q: Quotes): Expr[Event[T]] =
-  MacroLego[Ops](null.asInstanceOf[Ops], api.asInstanceOf, creation)
-    .makeReactive[Option, T](expr, ReactiveType.Event).asInstanceOf[Expr[Event[T]]]
+    creation: Expr[Core#CreationTicket],
+    reactiveType: Expr[String],
+    forceStatic: Expr[Boolean]
+)(using q: Quotes): Expr[Reactive[T]] =
+  val rt = if reactiveType.valueOrAbort == "Signal" then ReactiveType.Signal else ReactiveType.Event
+  MacroLego[Ops](null.asInstanceOf[Ops], api.asInstanceOf, creation, forceStatic.valueOrAbort)
+    .makeReactive[F, T](expr, rt).asInstanceOf[Expr[Reactive[T]]]
 
 
 enum ReactiveType:
@@ -31,7 +24,8 @@ enum ReactiveType:
 class MacroLego[Ops <: Operators: Type](
     val fakeApi: Ops,
     api: Expr[fakeApi.type],
-    outerCreation: Expr[Core#CreationTicket]
+    outerCreation: Expr[Core#CreationTicket],
+    forceStatic: Boolean
 )(using
     val quotes: Quotes
 )(using
@@ -81,7 +75,9 @@ class MacroLego[Ops <: Operators: Type](
         // we do not find things with nested things inside
         if before == foundAbstractions then
           foundAbstractions ::= x
+        else
           static = false
+          if (static) report.error("dynamic access in static reactive", foundAbstractions.head)
         e
 
       e match
@@ -136,8 +132,6 @@ class MacroLego[Ops <: Operators: Type](
   }
 
   def makeReactive[F[_]: Type,  T: Type](expr: Expr[F[T]], rtype: ReactiveType): Expr[Any] = {
-    println(expr.show)
-    println(expr.asTerm.show(using Printer.TreeStructure))
     val fi = FindInterp()
     fi.transform(expr)
     val definitions    = FindDefs().foldTree(Nil, expr.asTerm)(Symbol.spliceOwner)
@@ -145,6 +139,8 @@ class MacroLego[Ops <: Operators: Type](
     //println(s"contains symbols: ${definitions}")
     val found    = fi.foundAbstractions.filterNot(containsSymbol.inTree)
     val isStatic = (fi.static && found == fi.foundAbstractions)
+    if (forceStatic && !isStatic)
+      report.error("dynamic access in static reactive", fi.foundAbstractions.diff(found).head)
 
     val funType = MethodType.apply(List("ticket"))(
       (_: MethodType) =>
@@ -162,7 +158,6 @@ class MacroLego[Ops <: Operators: Type](
           val staticTicket = params.head
           val cutOut = ReplaceInterp(replacementMap, staticTicket).transform(expr)
           val res = new ReplaceImplicitTickets(staticTicket.asInstanceOf[Term]).transform(cutOut).asTerm.changeOwner(sym)
-          println(res.show)
           res
         }
       )
