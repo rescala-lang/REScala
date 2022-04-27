@@ -135,9 +135,13 @@ class MacroLego[Ops <: Operators: Type](
     val fi = FindInterp()
     fi.transform(expr)
     val definitions    = FindDefs().foldTree(Nil, expr.asTerm)(Symbol.spliceOwner)
-    val containsSymbol = ContainsSymbol(definitions)
+
     //println(s"contains symbols: ${definitions}")
-    val found    = fi.foundAbstractions.filterNot(containsSymbol.inTree)
+    val found    = fi.foundAbstractions.filterNot{ fa =>
+      val defInside = FindDefs().foldTree(Nil, fa.asTerm)(Symbol.spliceOwner)
+      val containsSymbol = ContainsSymbol(definitions.diff(defInside))
+      containsSymbol.inTree(fa)
+    }
     val isStatic = (fi.static && found == fi.foundAbstractions)
     if (forceStatic && !isStatic)
       report.error("dynamic access in static reactive", fi.foundAbstractions.diff(found).head)
