@@ -14,13 +14,31 @@ object Parser:
   val number: P[Number] = digit.rep.string.map(Integer.parseInt(_))
   val argT: P[TArgT] =
     (((id <* sp.? ~ P.char(':')) <* sp.rep0) ~ id).map { // args with type
-      case (l: ID, r: Type) => TArgT(l, r)
+      (l: ID, r: Type) => TArgT(l, r)
     }
 
   // basic terms
   val _var: P[TVar] = id.map(TVar(_)) // variables
 
-  // bolean expressions
+  // boolean expressions
+  val booleanExpr: P[TBoolean] = quantifier | implication
+  val implication: P[TBoolean] =
+    (equality ~ (P.string("==>").surroundedBy(ws) *> equality).?).map {
+      case (left, None)        => left
+      case (left, Some(right)) => TImpl(left = left, right = right)
+    }
+  val equality: P[TBoolean] =
+    (inequality ~ (P.string("==").surroundedBy(ws) *> inequality).?).map {
+      case (left, None)        => left
+      case (left, Some(right)) => TEq(left = left, right = right)
+    }
+  val inequality: P[TBoolean] =
+    (conjunction ~ (P.string("=/=") *> conjunction).?).map {
+      case (left, None)        => left
+      case (left, Some(right)) => TIneq(left = left, right = right)
+    }
+  val conjunction: P[TBoolean] = ???
+  // quantifiers
   val quantifierVars: P[NonEmptyList[TArgT]] =
     (argT <* ws).repSep(P.char(',') <* ws)
   val triggers: P0[List[TViper]] = P.unit.as(List[TViper]())
@@ -30,10 +48,13 @@ object Parser:
     ) ~ ws) ~ triggers ~ booleanExpr).map { case ((vars, triggers), body) =>
       TForall(vars = vars, triggers = triggers, body = body)
     }
-  val exists: P[TExists] = ???
+  val exists: P[TExists] =
+    ((P.string("exists") ~ ws *> quantifierVars <* P
+      .string("::")
+      .surroundedBy(ws)) ~ booleanExpr).map { case (vars, body) =>
+      TExists(vars = vars, body = body)
+    }
   val quantifier: P[TQuantifier] = forall | exists
-  val implication: P[TImpl] = ???
-  val booleanExpr: P[TBoolean] = quantifier | implication
 
   // programs are sequences of terms
   val term: P[Term] = _var

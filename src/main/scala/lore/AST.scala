@@ -64,7 +64,7 @@ object AST:
 
     sealed trait TQuantifier extends TBoolean
     case class TForall(vars: NonEmptyList[TArgT], triggers: Seq[TViper], body: Term) extends TQuantifier
-    case class TExists(vars: Seq[TArgT], triggers: Seq[TViper], body: Term) extends TQuantifier
+    case class TExists(vars: NonEmptyList[TArgT], body: Term) extends TQuantifier
 
     // parantheses
     case class TParens(inner: Term) extends Term
