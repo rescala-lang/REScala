@@ -38,7 +38,7 @@ lazy val rescalaAll = project.in(file("Code")).settings(cfg.base, noPublish).agg
 
 val CcsO = Compile / compile / scalacOptions
 
-lazy val rescala = crossProject(JSPlatform, JVMPlatform, NativePlatform).in(file("Code/Main"))
+lazy val rescala = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file("Code/Main"))
   .settings(
     name := "rescala",
     cfg.base,
@@ -176,7 +176,7 @@ lazy val rescalafx = project.in(file("Code/Extensions/javafx"))
   .dependsOn(rescalaJVM)
   .settings(name := "rescalafx", cfg.base, noPublish, addScalafxDependencies)
 
-lazy val kofre = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure)
+lazy val kofre = crossProject(JVMPlatform, JSPlatform).crossType(CrossType.Pure)
   .in(file("Code/Extensions/Kofre"))
   .settings(
     name := "kofre",
@@ -187,7 +187,7 @@ lazy val kofre = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure)
 lazy val kofreJS  = kofre.js
 lazy val kofreJVM = kofre.jvm
 
-lazy val replication = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure)
+lazy val replication = crossProject(JVMPlatform, JSPlatform).crossType(CrossType.Pure)
   .in(file("Code/Extensions/Replication"))
   .dependsOn(rescala % "compile->compile;test->test")
   .dependsOn(kofre)
