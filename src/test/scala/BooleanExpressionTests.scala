@@ -1,80 +1,84 @@
+package lore
 import minitest._
 import lore.AST._
-import lore.Parser
+import cats.parse.{Parser => P}
 
-// object BooleanExpressionParsing extends SimpleTestSuite {
-//   test("disjunction") {
-//     def p[_: P] = P(Parser.disjunction ~ End)
+object BooleanExpressionParsing extends SimpleTestSuite {
+  test("disjunction") {
+    val p = Parser.disjunction
 
-//     val expr = "x || true"
-//     parse(expr, p(_)) match {
-//       case Success(Disjunction(_,ID(_,_), True(_)), index) => ()
-//       case f: Failure => fail(f.trace().longAggregateMsg)
-//       case x => fail(s"Failed to parse disjunction: $x")
-//     }
+    val expr = "x || true"
+    p.parseAll(expr) match
+      case Right(TDisj(TVar("x"), TTrue)) => ()
+      case Left(error) => fail(error.expected.head.toString)
+      case x => fail(s"Failed to parse as disjunction: $x")
+    
 
-//     val expr2 = "x || true || false"
-//     parse(expr2, p(_)) match {
-//       case Success(Disjunction(_, ID(_,_), Disjunction(_, True(_), False(_))), index) => ()
-//       case f: Failure => fail(f.trace().longAggregateMsg)
-//       case x => fail(s"Failed to parse disjunction: $x")
-//     }
-//   }
+    val expr2 = "x || true || false"
+    p.parseAll(expr2) match
+      case Right(TDisj(_,_)) => ()
+      case Left(error) => fail(error.expected.head.toString)
+      case x => fail(s"Failed to parse as disjunction: $x")
+  }
 
-//   test("conjunction") {
-//     def p[_: P] = P(Parser.conjunction ~ End)
+  test("conjunction") {
+    val p = Parser.conjunction
 
-//     val expr = "x && true"
-//     parse(expr, p(_)) match {
-//       case Success(AST.Conjunction(_, AST.ID(_,_), AST.True(_)), index) => ()
-//       case f: Failure => fail(f.trace().longAggregateMsg)
-//       case x => fail(s"Failed to parse as conjunction: $x")
-//     }
+    val expr = "x && true"
+    p.parse(expr) match
+      case Right((parsed, TConj(TVar(_),TTrue))) => (println(parsed))
+      case Left(error) => fail(error.expected.toString)
+      case x => fail(s"Failed to parse as conjunction: $x")
 
-//     val expr2 = "x && true && false"
-//     parse(expr2, p(_)) match {
-//       case Success(Conjunction(_, ID(_,_), Conjunction(_, True(_), False(_))), index) => ()
-//       case f: Failure => fail(f.trace().longAggregateMsg)
-//       case x => fail(s"Failed to parse as conjunction: $x")
-//     }
+    val expr2 = "x && true && false"
+    p.parseAll(expr2) match
+      case Right(TConj(TVar(_),TConj(TTrue, TFalse))) => ()
+      case Left(error) => fail(error.expected.head.toString)
+      case x => fail(s"Failed to parse as conjunction: $x")
 
-//     parse("x || true && false", p(_)) match {
-//       case Success(Conjunction(_, Disjunction(_, ID(_,_), True(_)), False(_)), index) => ()
-//       case f: Failure => fail(f.trace().longAggregateMsg)
-//       case x => fail(s"Failed to parse as conjunction: $x")
-//     }
+    p.parseAll("x || true && false") match
+      case Right(TConj(TDisj(TVar("x"),TTrue), TFalse)) => ()
+      case Left(error) => fail(error.expected.head.toString)
+      case x => fail(s"Failed to parse as conjunction: $x")
 
-//     parse("false || true && foo", p(_)) match {
-//       case Success(Conjunction(0,_,_), index) => ()
-//       case f: Failure => fail(f.trace().longAggregateMsg)
-//       case x => fail(s"Failed to parse as conjunction: $x")
-//     }
-//   }
+    p.parseAll("false || true && foo") match
+      case Right(TConj(TDisj(TFalse, TTrue), TVar("foo"))) => ()
+      case Left(error) => fail(error.expected.head.toString)
+      case x => fail(s"Failed to parse as conjunction: $x")
+  }
 
-//   test("inequality") {
-//     def p[_: P] = P(Parser.inequality ~ End)
+  test("inequality") {
+    val p = Parser.inequality
 
-//     parse("false != true", p(_)) match {
-//       case Success(Inequality(0, False(_), True(_)), index) => ()
-//       case f: Failure => fail(f.trace().longAggregateMsg)
-//       case x => fail(s"Failed to parse inequality: $x")
-//     }
+    p.parseAll("false != true") match
+      case Right(TIneq(TFalse, TTrue)) => ()
+      case Left(error) => fail(error.expected.toString)
+      case x => fail(s"Failed to parse inequality: $x")
+    
 
-//     parse("true != false && true", p(_)) match {
-//       case Success(Inequality(_,
-//         True(_),
-//         Conjunction(_, False(_), True(_))),
-//         index) => ()
-//       case f: Failure => fail(f.trace().longAggregateMsg)
-//       case x => fail(s"Failed to parse inequality: $x")
-//     }
+    p.parseAll("true != false && true") match
+      case Right(TIneq(TTrue, TConj(TFalse, TTrue))) => ()
+      case Left(error) => fail(error.expected.toString)
+      case x => fail(s"Failed to parse inequality: $x")
 
-//     parse("true != false && true || x && foo()", p(_)) match {
-//       case Success(Inequality(_, _,_), index) => ()
-//       case f: Failure => fail(f.trace().longAggregateMsg)
-//       case x => fail(s"Failed to parse inequality: $x")
-//     }
-//   }
+    p.parseAll("true != false && true || x && y") match
+      case Right(TIneq(
+        TTrue,
+        TConj(
+            TFalse,
+            TConj(
+                TDisj(
+                    TTrue,
+                    TVar("x")
+                ),
+                TVar("y")
+            )
+        )
+      )) => ()
+      case Left(error) => fail(error.expected.toString)
+      case x => fail(s"Failed to parse inequality: $x")
+
+  }
 
 //   test("equality") {
 //     def p[_: P] = P(Parser.equality ~ End)
@@ -183,4 +187,4 @@ import lore.Parser
 //       case x => fail(s"Failed to parse as number comparison: $x")
 //     }
 //   }
-// }
+}

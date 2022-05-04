@@ -49,8 +49,8 @@ object AST:
 
     // boolean expressions
     sealed trait TBoolean extends Term
-    case class TTrue() extends TBoolean
-    case class TFalse() extends TBoolean
+    case object TTrue extends TBoolean
+    case object TFalse extends TBoolean
     case class TLt(left: Term, right: Term) extends TBoolean
     case class TGt(left: Term, right: Term) extends TBoolean
     case class TLeq(left: Term, right: Term) extends TBoolean
