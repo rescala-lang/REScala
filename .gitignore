@@ -36,3 +36,9 @@
 .idea/modules
 *.iml
 *.ipr
+
+# IntelliJ
+out/
+
+# target directories
+**/target
