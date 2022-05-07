@@ -1,9 +1,9 @@
 package test.kofre
 
 import kofre.causality.{CausalContext, Dot}
-import kofre.decompose.WithContextDecompose.*
-import kofre.decompose.{WithContextDecompose, UIJDLattice}
-import kofre.contextual.WithContext
+import kofre.contextual.WithContextDecompose.*
+import kofre.decompose.UIJDLattice
+import kofre.contextual.{WithContext, WithContextDecompose}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks

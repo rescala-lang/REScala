@@ -3,7 +3,7 @@ package kofre.decompose
 import kofre.Lattice
 import kofre.Lattice.{Operators, mapLattice, optionLattice, setLattice}
 import kofre.causality.CausalContext
-import kofre.contextual.WithContext
+import kofre.contextual.{WithContext, WithContextDecompose}
 import kofre.Bottom
 
 trait Decompose[A] {
@@ -123,13 +123,8 @@ object UIJDLattice {
       else throw new UnsupportedOperationException(s"Can't merge atomic type A, left: $left, right: $right")
   }
 
-  given contextLattice[D: WithContextDecompose]: Lattice[WithContext[D]] = (left, right) =>
-    val dsMerged = WithContextDecompose[D].mergePartial(left, right)
-    val ccMerged = left.context merge right.context
-    WithContext[D](dsMerged, ccMerged)
-
   given contextUIJDLattice[D](using wcd: WithContextDecompose[D]): UIJDLattice[WithContext[D]] =
-    new UIJDFromLattice[WithContext[D]](contextLattice) {
+    new UIJDFromLattice[WithContext[D]](Lattice.contextLattice) {
       export wcd.decompose
       // needs manual override as export can not override :(
       override def lteq(left: WithContext[D], right: WithContext[D]): Boolean = wcd.lteq(left, right)

@@ -3,7 +3,7 @@ package kofre.decompose.interfaces
 import kofre.causality.CausalContext
 import kofre.decompose.*
 import kofre.syntax.OpsSyntaxHelper
-import kofre.decompose.WithContextDecompose.DotFun
+import kofre.contextual.WithContextDecompose.DotFun
 import kofre.causality.Dot
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegister
 import kofre.contextual.WithContext

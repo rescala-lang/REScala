@@ -1,8 +1,8 @@
 package test.kofre
 
 import kofre.causality.{CausalContext, Dot, VectorClock}
-import kofre.decompose.WithContextDecompose
-import kofre.decompose.WithContextDecompose.{DotFun, DotMap}
+import kofre.contextual.WithContextDecompose
+import kofre.contextual.WithContextDecompose.{DotFun, DotMap}
 import kofre.primitives.{CausalQueue, LastWriterWins, MultiValueRegister}
 import kofre.sets.ORSet
 import kofre.{Defs, Lattice}

@@ -3,9 +3,9 @@ package kofre.decompose.interfaces
 import kofre.causality.{CausalContext, Dot}
 import kofre.decompose.*
 import kofre.syntax.{AllPermissionsCtx, ArdtOpsContains, MutateCtx, OpsSyntaxHelper}
-import kofre.decompose.WithContextDecompose.{DotFun, DotPair}
+import kofre.contextual.WithContextDecompose.{DotFun, DotPair}
 import kofre.decompose.interfaces.GListInterface.{GListAsUIJDLattice, GListSyntax}
-import kofre.contextual.WithContext
+import kofre.contextual.{WithContext, WithContextDecompose}
 import kofre.primitives.Epoche
 import kofre.decompose.interfaces.EpocheInterface.EpocheSyntax
 import kofre.decompose.interfaces.RCounterInterface.RCounter

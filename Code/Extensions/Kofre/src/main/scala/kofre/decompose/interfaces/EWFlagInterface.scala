@@ -3,7 +3,7 @@ package kofre.decompose.interfaces
 import kofre.causality.CausalContext
 import kofre.decompose.*
 import kofre.syntax.OpsSyntaxHelper
-import kofre.decompose.WithContextDecompose.*
+import kofre.contextual.WithContextDecompose.*
 import kofre.contextual.WithContext
 import kofre.primitives.Epoche
 

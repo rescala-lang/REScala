@@ -4,7 +4,7 @@ import kofre.Lattice
 import kofre.causality.{CausalContext, Dot}
 import kofre.contextual.AsCausalContext
 import kofre.Lattice.Operators
-import kofre.decompose.{WithContextDecompose, UIJDLattice}
+import kofre.decompose.UIJDLattice
 import kofre.Bottom
 
 import scala.annotation.targetName
