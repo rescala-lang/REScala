@@ -21,10 +21,10 @@ object PNCounterModule {
 
     def inc()(using MutationIDP): C =
       val pos = current._1.asGcounter.inc()(using withID(replicaID))
-      mutate(pos, DecomposeLattice.bottom)
+      mutate(pos, Map.empty)
 
     def dec()(using MutationIDP): C =
       val neg = current._2.asGcounter.inc()(using withID(replicaID))
-      mutate(DecomposeLattice.bottom, neg)
+      mutate(Map.empty, neg)
   }
 }

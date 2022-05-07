@@ -35,7 +35,7 @@ object DecomposeLattice {
     def <=(right: A): Boolean  = DecomposeLattice[A].lteq(left, right)
     def decompose: Iterable[A] = DecomposeLattice[A].decompose(left)
 
-  given IntAsUIJDLattice: DecomposeLattice[Int] = new DecomposeFromLattice[Int](_ max _) {
+  val IntAsUIJDLattice: DecomposeLattice[Int] = new DecomposeFromLattice[Int](_ max _) {
     override def lteq(left: Int, right: Int): Boolean  = left <= right
     override def decompose(state: Int): Iterable[Int] = List(state)
     override def empty: Int                          = 0
