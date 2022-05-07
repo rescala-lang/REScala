@@ -197,14 +197,11 @@ class ArrayRangesTest2 extends AnyFlatSpec {
     ArrayRanges(Seq((1, 2))) <= ArrayRanges(Seq((1, 2))) shouldBe true
     ArrayRanges(Seq((1, 2))) <= ArrayRanges(Seq((0, 2))) shouldBe true
     ArrayRanges(Seq((1, 2))) <= ArrayRanges(Seq((1, 3))) shouldBe true
-    ArrayRanges(Seq((1, 2))) <= ArrayRanges(Seq((0, 2))) shouldBe true
-    ArrayRanges(Seq((1, 2))) <= ArrayRanges(Seq((0, 3))) shouldBe true
     ArrayRanges(Seq((1, 2))) <= ArrayRanges(Seq((0, 3))) shouldBe true
 
     ArrayRanges(Seq((0, 2))) <= ArrayRanges(Seq((1, 2))) shouldBe false
     ArrayRanges(Seq((1, 3))) <= ArrayRanges(Seq((1, 2))) shouldBe false
     ArrayRanges(Seq((0, 2))) <= ArrayRanges(Seq((1, 2))) shouldBe false
-    ArrayRanges(Seq((0, 3))) <= ArrayRanges(Seq((1, 2))) shouldBe false
     ArrayRanges(Seq((0, 3))) <= ArrayRanges(Seq((1, 2))) shouldBe false
   }
 
