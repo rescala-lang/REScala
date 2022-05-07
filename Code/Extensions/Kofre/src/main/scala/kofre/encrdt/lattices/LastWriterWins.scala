@@ -1,8 +1,6 @@
 package kofre.encrdt.lattices
 import kofre.Lattice
 
-import java.time.Instant
-
 /** Lattice with the least-upper-bound defined by the timeStamp.
   * Timestamps must be unique, totally ordered, consistent with causal order.
   */
