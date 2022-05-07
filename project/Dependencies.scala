@@ -17,7 +17,8 @@ object Dependencies {
     val fastparse          = "2.3.3"
     val jetty              = "9.4.46.v20220331"
     val jol                = "0.16"
-    val jsoniterScalaCore  = "2.13.3" // this is the latest version supporting Scala 2.11 and java 8
+    val jsoniterScalaCore  = "2.13.20"
+    val jsoniterScalaOld   = "2.13.3" // this is the latest version supporting Scala 2.11 and java 8
     val jsoup              = "1.14.3"
     val normalizecss       = "8.0.1"
     val okHttp             = "4.9.3"
@@ -73,10 +74,14 @@ object Dependencies {
   val tomlScala          = Def.setting("tech.sparse" %%% "toml-scala" % V.tomlScala)
   val upickle            = Def.setting("com.lihaoyi" %% "upickle" % V.upickle)
 
-  val jsoniterScalaAll = Def.setting(Seq(
-    ("com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % V.jsoniterScalaCore exclude ("io.github.cquiroz", s"scala-java-time-tzdb_sjs1_${scalaVersion.value.substring(0, 4)}")),
-    "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % V.jsoniterScalaCore
-  ))
+  val jsoniterScalaAll = Def.setting{
+    val jsoniterVersion = if (Settings.`is 2.11`(scalaVersion.value))
+           V.jsoniterScalaOld
+      else V.jsoniterScalaCore
+    Seq(
+    ("com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % jsoniterVersion exclude ("io.github.cquiroz", s"scala-java-time-tzdb_sjs1_${scalaVersion.value.substring(0, 4)}")),
+    "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % jsoniterVersion
+  )}
 
   val circeAll = Def.setting(Seq("core", "generic", "generic-extras", "parser")
     .map(n => "io.circe" %%% s"circe-$n" % V.circeCore))
