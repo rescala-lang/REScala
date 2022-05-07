@@ -5,7 +5,7 @@ import kofre.decompose.*
 import kofre.syntax.{AllPermissionsCtx, ArdtOpsContains, MutateCtx, OpsSyntaxHelper}
 import kofre.decompose.WithContextDecompose.{DotFun, DotPair}
 import kofre.decompose.interfaces.GListInterface.{GListAsUIJDLattice, GListSyntax}
-import kofre.dotbased.WithContext
+import kofre.contextual.WithContext
 import kofre.primitives.Epoche
 import kofre.decompose.interfaces.EpocheInterface.EpocheSyntax
 import kofre.decompose.interfaces.RCounterInterface.RCounter

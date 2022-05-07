@@ -6,7 +6,7 @@ import kofre.decompose.*
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper}
 import kofre.decompose.WithContextDecompose.*
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
-import kofre.dotbased.{WithContext, WithContextMerge}
+import kofre.contextual.{WithContext, WithContextMerge}
 
 /** An ORMap (Observed-Remove Map) is a Delta CRDT that models a map from an arbitrary key type to nested causal Delta CRDTs.
   * In contrast to [[GMapInterface]], ORMap allows the removal of key/value pairs from the map.

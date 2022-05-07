@@ -3,7 +3,7 @@ package kofre.decompose.experimental
 import kofre.causality.CausalContext
 import kofre.decompose.WithContextDecompose.{DotMap, DotSet}
 import kofre.decompose.interfaces.AWSetInterface
-import kofre.dotbased.WithContext
+import kofre.contextual.WithContext
 
 class AWSetDeltaFold[E, B](acc: B, onAdd: (B, E) => B, onRemove: (B, E) => B) {
   type C = CausalContext

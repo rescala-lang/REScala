@@ -6,7 +6,7 @@ import kofre.syntax.OpsSyntaxHelper
 import kofre.decompose.WithContextDecompose.DotFun
 import kofre.causality.Dot
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegister
-import kofre.dotbased.WithContext
+import kofre.contextual.WithContext
 
 /** An MVRegister (Multi-Value Register) is a Delta CRDT modeling a register.
   *

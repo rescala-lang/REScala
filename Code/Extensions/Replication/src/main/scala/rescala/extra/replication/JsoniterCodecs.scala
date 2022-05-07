@@ -10,7 +10,7 @@ import kofre.decompose.interfaces.RGAInterface.RGANode
 import kofre.decompose.TimedVal
 import kofre.causality.{CausalContext, Dot}
 import kofre.decompose.interfaces.LexCounterInterface.LexPair
-import kofre.dotbased.WithContext
+import kofre.contextual.WithContext
 
 import scala.annotation.nowarn
 

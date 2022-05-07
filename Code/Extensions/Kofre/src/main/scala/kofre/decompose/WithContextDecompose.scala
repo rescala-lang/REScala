@@ -2,7 +2,7 @@ package kofre.decompose
 
 import kofre.{Bottom, Lattice}
 import kofre.causality.{CausalContext, Dot}
-import kofre.dotbased.{AsCausalContext, WithContext, WithContextMerge}
+import kofre.contextual.{AsCausalContext, WithContext, WithContextMerge}
 import kofre.Lattice.Operators
 
 

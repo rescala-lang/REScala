@@ -3,7 +3,7 @@ package kofre.decompose
 import kofre.Lattice
 import kofre.Lattice.{Operators, mapLattice, optionLattice, setLattice}
 import kofre.causality.CausalContext
-import kofre.dotbased.WithContext
+import kofre.contextual.WithContext
 import kofre.Bottom
 
 trait Decompose[A] {

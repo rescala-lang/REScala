@@ -1,4 +1,4 @@
-package kofre.dotbased
+package kofre.contextual
 
 import kofre.Defs.Id
 import kofre.Lattice

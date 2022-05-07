@@ -5,7 +5,7 @@ import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap.{DeltaAddWinsLastWriterW
 import kofre.encrdt.crdts.DeltaAddWinsMap.DeltaAddWinsMapLattice
 import kofre.encrdt.lattices.LastWriterWinsTagLattice.lwwLattice
 import kofre.Lattice
-import kofre.dotbased.WithContext
+import kofre.contextual.WithContext
 import kofre.causality.Dot
 
 import math.Ordering.Implicits.infixOrderingOps

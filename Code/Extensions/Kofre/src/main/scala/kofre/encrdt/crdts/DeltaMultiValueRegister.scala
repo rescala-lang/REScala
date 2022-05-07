@@ -1,7 +1,7 @@
 package kofre.encrdt.crdts
 import kofre.Lattice
 import kofre.causality.{CausalContext, Dot}
-import kofre.dotbased.{AsCausalContext, WithContext}
+import kofre.contextual.{AsCausalContext, WithContext}
 
 object DeltaMultiValueRegister {
   type DeltaMultiValueRegisterLattice[V] = WithContext[Map[Dot, V]]

@@ -9,7 +9,7 @@ import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap.DeltaAddWinsLastWriterWinsMapLattice
 import rescala.extra.encrdt.encrypted.deltabased.{DecryptedDeltaGroup, EncryptedDeltaGroup, TrustedReplica, UntrustedReplica}
 import benchmarks.encrdt.Codecs._
-import kofre.dotbased.WithContext
+import kofre.contextual.WithContext
 
 import java.util.UUID
 import scala.collection.mutable

@@ -4,7 +4,7 @@ import kofre.causality.{CausalContext, Dot}
 import kofre.decompose.*
 import kofre.syntax.OpsSyntaxHelper
 import kofre.decompose.WithContextDecompose.*
-import kofre.dotbased.WithContext
+import kofre.contextual.WithContext
 
 /** An AWSet (Add-Wins Set) is a Delta CRDT modeling a set.
   *

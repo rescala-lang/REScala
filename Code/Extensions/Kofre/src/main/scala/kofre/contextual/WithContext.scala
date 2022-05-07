@@ -1,8 +1,8 @@
-package kofre.dotbased
+package kofre.contextual
 
 import kofre.Lattice
 import kofre.causality.{CausalContext, Dot}
-import kofre.dotbased.AsCausalContext
+import kofre.contextual.AsCausalContext
 import kofre.Lattice.Operators
 import kofre.decompose.{WithContextDecompose, UIJDLattice}
 
