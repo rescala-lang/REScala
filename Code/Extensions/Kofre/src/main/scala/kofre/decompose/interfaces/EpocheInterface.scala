@@ -1,7 +1,7 @@
 package kofre.decompose.interfaces
 
 import kofre.Defs
-import kofre.decompose.UIJDLattice
+import kofre.decompose.DecomposeLattice
 import kofre.decompose.interfaces.GCounterInterface.GCounter
 import kofre.primitives.Epoche
 import kofre.syntax.AllPermissionsCtx.withID

@@ -1,7 +1,7 @@
 package benchmarks.lattices.delta
 
 import kofre.causality.{CausalContext, Dot}
-import kofre.decompose.UIJDLattice
+import kofre.decompose.DecomposeLattice
 import kofre.decompose.interfaces.RGAInterface.{RGA, RGASyntax}
 import kofre.syntax.AllPermissionsCtx.withID
 import org.openjdk.jmh.annotations
@@ -32,36 +32,36 @@ class DeltaMergeBench {
 
   @Setup
   def setup(): Unit = {
-    val baseState = UIJDLattice[RGA[Long]].empty
+    val baseState = DecomposeLattice[RGA[Long]].empty
 
     val deltaState = baseState.insertAll(0, 0L to size)(withID(""))
-    fullState = UIJDLattice[RGA[Long]].merge(baseState, deltaState)
+    fullState = DecomposeLattice[RGA[Long]].merge(baseState, deltaState)
 
     plusOneDeltaState = fullState.insert(0, size)(withID(""))
-    plusOneState = UIJDLattice[RGA[Long]].merge(fullState, plusOneDeltaState)
+    plusOneState = DecomposeLattice[RGA[Long]].merge(fullState, plusOneDeltaState)
   }
 
   @Benchmark
   def fullMerge: RGA[Long] = {
-    UIJDLattice[RGA[Long]].merge(fullState, plusOneState)
+    DecomposeLattice[RGA[Long]].merge(fullState, plusOneState)
   }
 
   @Benchmark
   def fullDiff: Option[RGA[Long]] = {
-    UIJDLattice[RGA[Long]].diff(fullState, plusOneState)
+    DecomposeLattice[RGA[Long]].diff(fullState, plusOneState)
   }
 
   @Benchmark
   def deltaMerge: RGA[Long] = {
-    UIJDLattice[RGA[Long]].diff(fullState, plusOneDeltaState) match {
+    DecomposeLattice[RGA[Long]].diff(fullState, plusOneDeltaState) match {
       case Some(stateDiff) =>
-        UIJDLattice[RGA[Long]].merge(fullState, stateDiff)
+        DecomposeLattice[RGA[Long]].merge(fullState, stateDiff)
       case None => fullState
     }
   }
 
   @Benchmark
   def deltaMergeNoDiff: RGA[Long] = {
-    UIJDLattice[RGA[Long]].merge(fullState, plusOneDeltaState)
+    DecomposeLattice[RGA[Long]].merge(fullState, plusOneDeltaState)
   }
 }

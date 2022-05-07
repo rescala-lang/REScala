@@ -27,7 +27,7 @@ object ORMapInterface {
 
     given WithContextDecompose[Map[K, V]] = WithContextDecompose.DotMap[K, V]
 
-    val bottom: ORMap[K, V] = UIJDLattice[ORMap[K, V]].empty
+    val bottom: ORMap[K, V] = DecomposeLattice[ORMap[K, V]].empty
 
     def make(
         dm: Map[K, V] = bottom.store,

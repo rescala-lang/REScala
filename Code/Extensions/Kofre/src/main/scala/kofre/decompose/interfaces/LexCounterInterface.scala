@@ -3,7 +3,7 @@ package kofre.decompose.interfaces
 import kofre.Lattice.Operators
 import kofre.decompose.*
 import kofre.syntax.OpsSyntaxHelper
-import kofre.decompose.UIJDLattice.Operators
+import kofre.decompose.DecomposeLattice.Operators
 
 /** A LexCounter is a Delta CRDT modeling a counter.
   *
@@ -17,18 +17,18 @@ object LexCounterInterface {
   case class LexPair[A, B](fst: A, snd: B)
 
   case object LexPair {
-    implicit def LexPairAsUIJDLattice[A: UIJDLattice, B: UIJDLattice]: UIJDLattice[LexPair[A, B]] =
-      new UIJDLattice[LexPair[A, B]] {
-        override def empty: LexPair[A, B] = LexPair(UIJDLattice[A].empty, UIJDLattice[B].empty)
+    implicit def LexPairAsUIJDLattice[A: DecomposeLattice, B: DecomposeLattice]: DecomposeLattice[LexPair[A, B]] =
+      new DecomposeLattice[LexPair[A, B]] {
+        override def empty: LexPair[A, B] = LexPair(DecomposeLattice[A].empty, DecomposeLattice[B].empty)
 
         override def lteq(left: LexPair[A, B], right: LexPair[A, B]): Boolean =
-          UIJDLattice[A].lteq(left.fst, right.fst) && (
-            !UIJDLattice[A].lteq(right.fst, left.fst) || UIJDLattice[B].lteq(left.snd, right.snd)
+          DecomposeLattice[A].lteq(left.fst, right.fst) && (
+            !DecomposeLattice[A].lteq(right.fst, left.fst) || DecomposeLattice[B].lteq(left.snd, right.snd)
           )
 
         /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
         override def decompose(state: LexPair[A, B]): Iterable[LexPair[A, B]] =
-          UIJDLattice[B].decompose(state.snd).map(LexPair(state.fst, _))
+          DecomposeLattice[B].decompose(state.snd).map(LexPair(state.fst, _))
 
         /** By assumption: associative, commutative, idempotent. */
         override def merge(left: LexPair[A, B], right: LexPair[A, B]): LexPair[A, B] = {
@@ -38,7 +38,7 @@ object LexCounterInterface {
           if (lfleq && !rfleq) right
           else if (rfleq && !lfleq) left
           else if (lfleq && rfleq) LexPair(left.fst, left.snd merge right.snd)
-          else LexPair(left.fst merge right.fst, UIJDLattice[B].empty)
+          else LexPair(left.fst merge right.fst, DecomposeLattice[B].empty)
         }
       }
   }

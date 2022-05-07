@@ -1,7 +1,7 @@
 package rescala.extra.replication
 
 import kofre.decompose.containers.ReactiveCRDT
-import kofre.decompose.{Delta, UIJDLattice}
+import kofre.decompose.{Delta, DecomposeLattice}
 import loci.registry.{Binding, Registry}
 import loci.transmitter.RemoteRef
 import rescala.interface.RescalaInterface
@@ -15,7 +15,7 @@ object LociDist extends LociDist[rescala.default.type](rescala.default)
 class LociDist[Api <: RescalaInterface](val api: Api) {
   import api._
 
-  def distributeDeltaCRDT[A: UIJDLattice](
+  def distributeDeltaCRDT[A: DecomposeLattice](
       signal: Signal[ReactiveCRDT[A, _]],
       deltaEvt: Evt[Delta[A]],
       registry: Registry
@@ -32,7 +32,7 @@ class LociDist[Api <: RescalaInterface](val api: Api) {
 
       // Send full state to initialize remote
       val currentState = signal.readValueOnce.state
-      if (currentState != UIJDLattice[A].empty) remoteUpdate(currentState)
+      if (currentState != DecomposeLattice[A].empty) remoteUpdate(currentState)
 
       // Whenever the crdt is changed propagate the delta
       // Praktisch wäre etwas wie crdt.observeDelta
@@ -41,12 +41,12 @@ class LociDist[Api <: RescalaInterface](val api: Api) {
           case Delta(replicaID, deltaState) if replicaID != remoteRef.toString => deltaState
         } ++ resendBuffer.get(remoteRef).toList
 
-        val combinedState = deltaStateList.reduceOption(UIJDLattice[A].merge)
+        val combinedState = deltaStateList.reduceOption(DecomposeLattice[A].merge)
 
         combinedState.foreach { s =>
           val mergedResendBuffer = resendBuffer.updatedWith(remoteRef) {
             case None       => Some(s)
-            case Some(prev) => Some(UIJDLattice[A].merge(prev, s))
+            case Some(prev) => Some(DecomposeLattice[A].merge(prev, s))
           }
 
           if (remoteRef.connected) {

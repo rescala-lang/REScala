@@ -38,7 +38,7 @@ object RGAInterface {
   case class Dead[A]()                extends RGANode[A]
 
   object RGANode {
-    implicit def RGANodeAsUIJDLattice[A]: UIJDLattice[RGANode[A]] = new UIJDLattice[RGANode[A]] {
+    implicit def RGANodeAsUIJDLattice[A]: DecomposeLattice[RGANode[A]] = new DecomposeLattice[RGANode[A]] {
       override def lteq(left: RGANode[A], right: RGANode[A]): Boolean = (left, right) match {
         case (Dead(), _)            => false
         case (_, Dead())            => true
@@ -52,7 +52,7 @@ object RGAInterface {
 
       /** By assumption: associative, commutative, idempotent. */
       override def merge(left: RGANode[A], right: RGANode[A]): RGANode[A] = (left, right) match {
-        case (Alive(lv), Alive(rv)) => Alive(UIJDLattice[TimedVal[A]].merge(lv, rv))
+        case (Alive(lv), Alive(rv)) => Alive(DecomposeLattice[TimedVal[A]].merge(lv, rv))
         case _                      => Dead()
       }
     }
@@ -64,13 +64,13 @@ object RGAInterface {
     type State[E]    = RGAInterface.RGA[E]
     type Embedded[E] = (Epoche[GListInterface.GList[Dot]], Map[Dot, RGANode[E]])
 
-    implicit val ForcedWriteAsUIJDLattice: UIJDLattice[Epoche[GListInterface.GList[Dot]]] =
+    implicit val ForcedWriteAsUIJDLattice: DecomposeLattice[Epoche[GListInterface.GList[Dot]]] =
       Epoche.epocheAsUIJDLattice[GListInterface.GList[Dot]]
   }
 
   private class DeltaStateFactory[E] {
     given WithContextDecompose[Epoche[GListInterface.GList[Dot]]] = WithContextDecompose.UIJDLatticeAsDecomposableDotStore
-    val bottom: RGA[E] = UIJDLattice[RGA[E]].empty
+    val bottom: RGA[E] = DecomposeLattice[RGA[E]].empty
 
     def make(
         epoche: Epoche[GListInterface.GList[Dot]] = bottom.store._1,

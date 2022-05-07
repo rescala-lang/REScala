@@ -13,7 +13,7 @@ object AuctionInterface {
   case object Closed extends Status
 
   object Status {
-    implicit val StatusAsUIJDLattice: UIJDLattice[Status] = new UIJDLattice[Status] {
+    implicit val StatusAsUIJDLattice: DecomposeLattice[Status] = new DecomposeLattice[Status] {
       override def lteq(left: Status, right: Status): Boolean = (left, right) match {
         case (Closed, Open) => false
         case _              => true
@@ -37,23 +37,23 @@ object AuctionInterface {
   }
 
   case class AuctionData(
-                          bids: Set[Bid] = UIJDLattice[Set[Bid]].empty,
-                          status: Status = UIJDLattice[Status].empty,
+                          bids: Set[Bid] = DecomposeLattice[Set[Bid]].empty,
+                          status: Status = DecomposeLattice[Status].empty,
                           winner: Option[User] = None
   )
 
   case object AuctionData {
-    implicit val AuctionDataAsUIJDLattice: UIJDLattice[AuctionData] = new UIJDLattice[AuctionData] {
+    implicit val AuctionDataAsUIJDLattice: DecomposeLattice[AuctionData] = new DecomposeLattice[AuctionData] {
       override def lteq(left: AuctionData, right: AuctionData): Boolean = (left, right) match {
         case (AuctionData(lb, ls, _), AuctionData(rb, rs, _)) =>
-          UIJDLattice[Set[Bid]].lteq(lb, rb) && UIJDLattice[Status].lteq(ls, rs)
+          DecomposeLattice[Set[Bid]].lteq(lb, rb) && DecomposeLattice[Status].lteq(ls, rs)
       }
 
       override def decompose(state: AuctionData): Iterable[AuctionData] =
         state match {
           case AuctionData(bids, status, _) =>
             bids.map(b =>
-              AuctionData(bids = UIJDLattice[Set[Bid]].empty.insert(b))
+              AuctionData(bids = DecomposeLattice[Set[Bid]].empty.insert(b))
             ) ++ (status match {
               case Open   => Set()
               case Closed => Set(AuctionData(status = Closed))
@@ -64,8 +64,8 @@ object AuctionInterface {
 
       override def merge(left: AuctionData, right: AuctionData): AuctionData = (left, right) match {
         case (AuctionData(lb, ls, _), AuctionData(rb, rs, _)) =>
-          val bidsMerged   = UIJDLattice[Set[Bid]].merge(lb, rb)
-          val statusMerged = UIJDLattice[Status].merge(ls, rs)
+          val bidsMerged   = DecomposeLattice[Set[Bid]].merge(lb, rb)
+          val statusMerged = DecomposeLattice[Status].merge(ls, rs)
           val winnerMerged = statusMerged match {
             case Open   => None
             case Closed => bidsMerged.maxByOption(_.bid).map(_.userId)

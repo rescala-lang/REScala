@@ -97,7 +97,7 @@ object AWSetInterface {
   }
 
   private class DeltaStateFactory[E] {
-    val bottom: AWSet[E] = UIJDLattice[AWSet[E]].empty
+    val bottom: AWSet[E] = DecomposeLattice[AWSet[E]].empty
 
     def make(
         dm: Map[E, CausalContext] = bottom.store,

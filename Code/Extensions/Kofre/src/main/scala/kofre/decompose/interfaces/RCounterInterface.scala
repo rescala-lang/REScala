@@ -18,7 +18,7 @@ import kofre.causality.Dot
   * in "The problem with embedded CRDT counters and a solution", see [[https://dl.acm.org/doi/abs/10.1145/2911151.2911159?casa_token=D7n88K9dW7gAAAAA:m3WhHMFZxoCwGFk8DVoqJXBJpwJwrqKMLqtgKo_TSiwU_ErWgOZjo4UqYqDCb-bG3iJlXc_Ti7aB9w here]]
   */
 object RCounterInterface {
-  implicit def IntPairAsUIJDLattice: UIJDLattice[(Int, Int)] = new UIJDLattice[(Int, Int)] {
+  implicit def IntPairAsUIJDLattice: DecomposeLattice[(Int, Int)] = new DecomposeLattice[(Int, Int)] {
     override def lteq(left: (Int, Int), right: (Int, Int)): Boolean = (left, right) match {
       case ((linc, ldec), (rinc, rdec)) =>
         linc <= rinc && ldec <= rdec
@@ -44,7 +44,7 @@ object RCounterInterface {
       df: Option[Map[Dot, (Int, Int)]] = None,
       cc: CausalContext
   ): RCounter = {
-    val bottom = UIJDLattice[RCounter].empty
+    val bottom = DecomposeLattice[RCounter].empty
 
     WithContext(
       df.getOrElse(bottom.store),

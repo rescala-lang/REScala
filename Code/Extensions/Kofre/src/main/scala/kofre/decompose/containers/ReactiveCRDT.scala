@@ -1,6 +1,6 @@
 package kofre.decompose.containers
 
-import kofre.decompose.{Delta, UIJDLattice}
+import kofre.decompose.{Delta, DecomposeLattice}
 import kofre.syntax.{AllPermissionsCtx, ArdtOpsContains}
 
 /** ReactiveCRDTs are Delta CRDTs that store applied deltas in their deltaBuffer attribute. Middleware should regularly
@@ -12,11 +12,11 @@ trait ReactiveCRDT[State, Wrapper] extends CRDTInterface[State, Wrapper] {
 
   protected def copy(state: State = state, deltaBuffer: List[Delta[State]] = deltaBuffer): Wrapper
 
-  override def applyDelta(delta: Delta[State])(implicit u: UIJDLattice[State]): Wrapper = delta match {
+  override def applyDelta(delta: Delta[State])(implicit u: DecomposeLattice[State]): Wrapper = delta match {
     case Delta(origin, deltaState) =>
-      UIJDLattice[State].diff(state, deltaState) match {
+      DecomposeLattice[State].diff(state, deltaState) match {
         case Some(stateDiff) =>
-          val stateMerged = UIJDLattice[State].merge(state, stateDiff)
+          val stateMerged = DecomposeLattice[State].merge(state, stateDiff)
           copy(state = stateMerged, deltaBuffer = Delta(origin, stateDiff) :: deltaBuffer)
         case None => this.asInstanceOf[Wrapper]
       }
@@ -43,13 +43,13 @@ object ReactiveDeltaCRDT {
 
   implicit def containesRelation[State]: ArdtOpsContains[ReactiveDeltaCRDT[State], State] = new ArdtOpsContains[ReactiveDeltaCRDT[State], State] {}
 
-  implicit def reactiveDeltaCRDTPermissions[L: UIJDLattice]: AllPermissionsCtx[ReactiveDeltaCRDT[L], L] =
+  implicit def reactiveDeltaCRDTPermissions[L: DecomposeLattice]: AllPermissionsCtx[ReactiveDeltaCRDT[L], L] =
     CRDTInterface.crdtInterfaceContextPermissions[L, ReactiveDeltaCRDT[L]]
 
   /** Creates a new PNCounter instance
     *
     * @param replicaID Unique id of the replica that this instance is located on
     */
-  def apply[State: UIJDLattice](replicaID: String): ReactiveDeltaCRDT[State] =
-    new ReactiveDeltaCRDT[State](UIJDLattice[State].empty, replicaID, List())
+  def apply[State: DecomposeLattice](replicaID: String): ReactiveDeltaCRDT[State] =
+    new ReactiveDeltaCRDT[State](DecomposeLattice[State].empty, replicaID, List())
 }

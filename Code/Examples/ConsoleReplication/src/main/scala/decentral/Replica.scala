@@ -3,7 +3,7 @@ package decentral
 import decentral.Bindings._
 import kofre.decompose.containers.ReactiveDeltaCRDT
 import kofre.decompose.interfaces.AWSetInterface.{AWSet, AWSetSyntax}
-import kofre.decompose.{Delta, UIJDLattice}
+import kofre.decompose.{Delta, DecomposeLattice}
 import loci.transmitter.{RemoteAccessException, RemoteRef}
 
 import scala.concurrent.Future
@@ -29,7 +29,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
 
   var unboundLocalChanges: List[SetState] = List()
 
-  var unboundRemoteChanges: SetState = UIJDLattice[SetState].empty
+  var unboundRemoteChanges: SetState = DecomposeLattice[SetState].empty
 
   def sendDeltaRecursive(
       remoteReceiveDelta: SetState => Future[Unit],
@@ -41,7 +41,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
           case RemoteAccessException.RemoteException(name, _) if name.contains("JsonReaderException") =>
             val (firstHalf, secondHalf) = {
               val a =
-                if (atoms.isEmpty) UIJDLattice[SetState].decompose(merged)
+                if (atoms.isEmpty) DecomposeLattice[SetState].decompose(merged)
                 else atoms
 
               val atomsSize = a.size
@@ -49,8 +49,8 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
               (a.take(atomsSize / 2), a.drop(atomsSize / 2))
             }
 
-            sendDeltaRecursive(remoteReceiveDelta, firstHalf, firstHalf.reduce(UIJDLattice[SetState].merge))
-            sendDeltaRecursive(remoteReceiveDelta, secondHalf, secondHalf.reduce(UIJDLattice[SetState].merge))
+            sendDeltaRecursive(remoteReceiveDelta, firstHalf, firstHalf.reduce(DecomposeLattice[SetState].merge))
+            sendDeltaRecursive(remoteReceiveDelta, secondHalf, secondHalf.reduce(DecomposeLattice[SetState].merge))
           case _ => e.printStackTrace()
         }
 
@@ -65,7 +65,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
     registry.remotes.foreach { rr =>
       set.deltaBuffer.collect {
         case Delta(replicaID, deltaState) if replicaID != rr.toString => deltaState
-      }.reduceOption(UIJDLattice[SetState].merge).foreach(sendDelta(_, rr))
+      }.reduceOption(DecomposeLattice[SetState].merge).foreach(sendDelta(_, rr))
     }
 
     set = set.resetDeltaBuffer()
@@ -80,7 +80,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
     set.deltaBuffer.headOption match {
       case None =>
       case Some(Delta(_, deltaState)) =>
-        unboundRemoteChanges = UIJDLattice[SetState].merge(unboundRemoteChanges, deltaState)
+        unboundRemoteChanges = DecomposeLattice[SetState].merge(unboundRemoteChanges, deltaState)
 
         propagateDeltas()
 
@@ -97,7 +97,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
             set = set.applyDelta(Delta(remoteRef.toString, changes)).resetDeltaBuffer()
 
             unboundRemoteChanges =
-              UIJDLattice[SetState].diff(changes, unboundRemoteChanges).getOrElse(UIJDLattice[SetState].empty)
+              DecomposeLattice[SetState].diff(changes, unboundRemoteChanges).getOrElse(DecomposeLattice[SetState].empty)
 
             checkpoints = checkpoints.updated(replicaID, counter)
 
@@ -121,7 +121,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
     checkpoints = checkpoints.updated(id, newCounter)
 
     val newCheckpoint = Checkpoint(id, newCounter)
-    val changes       = atoms.reduce(UIJDLattice[SetState].merge)
+    val changes       = atoms.reduce(DecomposeLattice[SetState].merge)
     checkpointMap = checkpointMap.updated(newCheckpoint, changes)
 
     registry.remotes.foreach { sendCheckpoint(CheckpointMessage(newCheckpoint, changes), _) }
@@ -144,7 +144,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
     if (set.deltaBuffer.isEmpty) return
 
     unboundLocalChanges = set.deltaBuffer.foldLeft(unboundLocalChanges) { (list, delta) =>
-      list.prependedAll(UIJDLattice[SetState].decompose(delta.deltaState))
+      list.prependedAll(DecomposeLattice[SetState].decompose(delta.deltaState))
     }
 
     if (unboundLocalChanges.size < minAtomsForCheckpoint) {
@@ -153,7 +153,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
       createCheckpoints()
 
       if (unboundLocalChanges.nonEmpty) {
-        val delta = unboundLocalChanges.reduce(UIJDLattice[SetState].merge)
+        val delta = unboundLocalChanges.reduce(DecomposeLattice[SetState].merge)
 
         registry.remotes.foreach { sendDelta(delta, _) }
       }
@@ -177,9 +177,9 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
         }
       }
 
-      val unboundChanges = unboundLocalChanges.foldLeft(unboundRemoteChanges) { UIJDLattice[SetState].merge }
+      val unboundChanges = unboundLocalChanges.foldLeft(unboundRemoteChanges) {DecomposeLattice[SetState].merge }
 
-      if (unboundChanges != UIJDLattice[SetState].empty)
+      if (unboundChanges != DecomposeLattice[SetState].empty)
         sendDelta(unboundChanges, rr)
     }
     ()

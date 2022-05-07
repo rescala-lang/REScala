@@ -8,7 +8,7 @@ import loci.transmitter.{RemoteAccessException, RemoteRef}
 import central.SyncMessage.{AppointmentMessage, CalendarState, FreeMessage, RaftMessage, WantMessage}
 import kofre.decompose.interfaces.AWSetInterface.AWSet
 import kofre.decompose.interfaces.AWSetInterface.AWSetSyntax
-import kofre.decompose.{Delta, UIJDLattice}
+import kofre.decompose.{Delta, DecomposeLattice}
 
 import java.util.concurrent._
 import scala.concurrent.Future
@@ -71,7 +71,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
       calendar.replicated.foreach { case (id, set) =>
         set.now.deltaBuffer.collect {
           case Delta(replicaID, deltaState) if replicaID != rr.toString => deltaState
-        }.reduceOption(UIJDLattice[CalendarState].merge).foreach(sendRecursive(
+        }.reduceOption(DecomposeLattice[CalendarState].merge).foreach(sendRecursive(
           remoteReceiveSyncMessage,
           _,
           id
@@ -80,13 +80,13 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
       tokens.want.deltaBuffer.collect {
         case Delta(replicaID, deltaState) if replicaID != rr.toString => deltaState
-      }.reduceOption(UIJDLattice[AWSet[Token]].merge).foreach { state =>
+      }.reduceOption(DecomposeLattice[AWSet[Token]].merge).foreach { state =>
         remoteReceiveSyncMessage(WantMessage(state))
       }
 
       tokens.tokenFreed.deltaBuffer.collect {
         case Delta(replicaID, deltaState) if replicaID != rr.toString => deltaState
-      }.reduceOption(UIJDLattice[AWSet[Token]].merge).foreach { state =>
+      }.reduceOption(DecomposeLattice[AWSet[Token]].merge).foreach { state =>
         remoteReceiveSyncMessage(FreeMessage(state))
       }
 
@@ -101,7 +101,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
       merged: CalendarState
   ): (Iterable[CalendarState], Iterable[CalendarState]) = {
     val a =
-      if (atoms.isEmpty) UIJDLattice[CalendarState].decompose(merged)
+      if (atoms.isEmpty) DecomposeLattice[CalendarState].decompose(merged)
       else atoms
 
     val atomsSize = a.size
@@ -120,8 +120,8 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
             case RemoteAccessException.RemoteException(name, _) if name.contains("JsonReaderException") =>
               val (firstHalf, secondHalf) = splitState(atoms, merged)
 
-              attemptSend(firstHalf, firstHalf.reduce(UIJDLattice[CalendarState].merge))
-              attemptSend(secondHalf, secondHalf.reduce(UIJDLattice[CalendarState].merge))
+              attemptSend(firstHalf, firstHalf.reduce(DecomposeLattice[CalendarState].merge))
+              attemptSend(secondHalf, secondHalf.reduce(DecomposeLattice[CalendarState].merge))
             case _ => e.printStackTrace()
           }
 

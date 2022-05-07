@@ -1,7 +1,7 @@
 package central
 
 import central.Bindings._
-import kofre.decompose.UIJDLattice
+import kofre.decompose.DecomposeLattice
 import loci.communicator.tcp.TCP
 import loci.registry.Registry
 
@@ -16,7 +16,7 @@ class Checkpointer(listenPort: Int) {
 
   val minCheckpointSize: Int = 10
 
-  val bottom: SetState = UIJDLattice[SetState].empty
+  val bottom: SetState = DecomposeLattice[SetState].empty
 
   var fullState: SetState = bottom
 
@@ -25,13 +25,13 @@ class Checkpointer(listenPort: Int) {
       case SyncMessage(cp, deltaState) =>
         val apply = (cp + 1 to checkpoint).map(checkpointToDelta).toList
 
-        UIJDLattice[SetState].diff(fullState, deltaState) match {
+        DecomposeLattice[SetState].diff(fullState, deltaState) match {
           case None =>
             println(s"No new changes since checkpoint")
             CheckpointMessage(checkpoint, apply, bottom)
 
           case Some(newChanges) =>
-            val newAtoms = UIJDLattice[SetState].decompose(newChanges)
+            val newAtoms = DecomposeLattice[SetState].decompose(newChanges)
 
             if (newAtoms.size < minCheckpointSize) {
               println(s"Only ${newAtoms.size} new atoms, no new checkpoint created")
@@ -39,7 +39,7 @@ class Checkpointer(listenPort: Int) {
             } else {
               checkpoint += 1
               checkpointToDelta = checkpointToDelta.updated(checkpoint, newChanges)
-              fullState = UIJDLattice[SetState].merge(fullState, newChanges)
+              fullState = DecomposeLattice[SetState].merge(fullState, newChanges)
               println(s"Created checkpoint $checkpoint")
 
               CheckpointMessage(checkpoint, apply, bottom)

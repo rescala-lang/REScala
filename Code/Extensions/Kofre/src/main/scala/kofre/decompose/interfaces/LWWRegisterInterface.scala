@@ -15,14 +15,14 @@ object LWWRegisterInterface {
   implicit class LWWRegisterSyntax[C, A](container: C)(using ArdtOpsContains[C, LWWRegister[A]]) extends OpsSyntaxHelper[C, LWWRegister[A]](container) {
 
     def read(using QueryP): Option[A] =
-      MVRegisterSyntax(current).read.reduceOption(UIJDLattice[TimedVal[A]].merge).map(_.value)
+      MVRegisterSyntax(current).read.reduceOption(DecomposeLattice[TimedVal[A]].merge).map(_.value)
 
     def write(v: A)(using MutationIDP): C =
       MVRegisterSyntax(current).write(TimedVal(v, replicaID))(using AllPermissionsCtx.withID(replicaID))
 
     def map(f: A => A)(using MutationIDP): C =
       read.map(f) match {
-        case None    => UIJDLattice[LWWRegister[A]].empty
+        case None    => DecomposeLattice[LWWRegister[A]].empty
         case Some(v) => write(v)
       }
 

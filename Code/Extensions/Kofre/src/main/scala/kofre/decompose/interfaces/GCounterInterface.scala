@@ -2,7 +2,7 @@ package kofre.decompose.interfaces
 
 import kofre.decompose.*
 import kofre.syntax.{OpsSyntaxHelper, QueryCtx}
-import kofre.decompose.UIJDLattice.*
+import kofre.decompose.DecomposeLattice.*
 
 /** A GCounter is a Delta CRDT modeling an increment-only counter. */
 object GCounterInterface {

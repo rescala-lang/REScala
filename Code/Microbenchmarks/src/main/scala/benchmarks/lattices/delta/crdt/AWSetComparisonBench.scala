@@ -1,7 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
 import org.openjdk.jmh.annotations._
-import kofre.decompose.UIJDLattice
+import kofre.decompose.DecomposeLattice
 import kofre.decompose.interfaces.AWSetInterface.{AWSet, AWSetSyntax}
 import kofre.syntax.AllPermissionsCtx
 
@@ -27,9 +27,9 @@ class AWSetComparisonBench {
   var setAStatePlusOne: State = _
 
   private def createSet(replicaID: String): State = {
-    (0 until setSize).foldLeft(UIJDLattice[State].empty) { (s, i) =>
+    (0 until setSize).foldLeft(DecomposeLattice[State].empty) { (s, i) =>
       val delta = s.add(s"${i.toString}$replicaID")(AllPermissionsCtx.withID(replicaID))
-      UIJDLattice[State].merge(s, delta)
+      DecomposeLattice[State].merge(s, delta)
     }
   }
 
@@ -39,7 +39,7 @@ class AWSetComparisonBench {
     setBState = createSet("b")
 
     plusOneDelta = setBState.add("hallo welt")(AllPermissionsCtx.withID("b"))
-    setAStatePlusOne = UIJDLattice[State].merge(setAState, setBState)
+    setAStatePlusOne = DecomposeLattice[State].merge(setAState, setBState)
   }
 
   @Benchmark
@@ -49,14 +49,14 @@ class AWSetComparisonBench {
   def addOne(): State = setAState.add("Hallo Welt")(AllPermissionsCtx.withID("a"))
 
   @Benchmark
-  def merge(): State = UIJDLattice[State].merge(setAState, setBState)
+  def merge(): State = DecomposeLattice[State].merge(setAState, setBState)
 
   @Benchmark
-  def mergeSelf(): State = UIJDLattice[State].merge(setAState, setBState)
+  def mergeSelf(): State = DecomposeLattice[State].merge(setAState, setBState)
 
   @Benchmark
-  def mergeSelfPlusOne(): State = UIJDLattice[State].merge(setAState, setAStatePlusOne)
+  def mergeSelfPlusOne(): State = DecomposeLattice[State].merge(setAState, setAStatePlusOne)
 
   @Benchmark
-  def mergeDelta(): State = UIJDLattice[State].merge(setAState, plusOneDelta)
+  def mergeDelta(): State = DecomposeLattice[State].merge(setAState, plusOneDelta)
 }

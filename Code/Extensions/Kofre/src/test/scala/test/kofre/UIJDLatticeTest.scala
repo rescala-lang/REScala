@@ -1,13 +1,13 @@
 package test.kofre
 
-import kofre.decompose.UIJDLattice.{*, given}
+import kofre.decompose.DecomposeLattice.{*, given}
 import kofre.decompose.interfaces.LexCounterInterface.LexPair
 import kofre.decompose.interfaces.LexCounterInterface.LexPair.*
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-class IntAsUIJDLatticeTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
+class IntAsDecomposeLatticeTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "leq" in forAll { (a: Int, b: Int, c: Int) =>
     assert(
       IntAsUIJDLattice.lteq(a, a),
@@ -61,7 +61,7 @@ class IntAsUIJDLatticeTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChec
   }
 }
 
-class SetAsUIJDLatticeTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
+class SetAsDecomposeLatticeTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "leq" in forAll { (a: Set[Int], b: Set[Int], c: Set[Int]) =>
     assert(
       SetAsUIJDLattice.lteq(a, a),
@@ -115,7 +115,7 @@ class SetAsUIJDLatticeTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChec
   }
 }
 
-class OptionAsUIJDLatticeTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
+class OptionAsDecomposeLatticeTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "leq" in forAll { (a: Option[Int], b: Option[Int], c: Option[Int]) =>
     assert(
       OptionAsUIJDLattice[Int].lteq(a, a),
@@ -169,7 +169,7 @@ class OptionAsUIJDLatticeTest extends AnyFreeSpec with ScalaCheckDrivenPropertyC
   }
 }
 
-class MapAsUIJDLatticeTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
+class MapAsDecomposeLatticeTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "leq" in forAll { (a: Map[Int, Int], b: Map[Int, Int], c: Map[Int, Int]) =>
     assert(
       MapAsUIJDLattice[Int, Int].lteq(a, a),
@@ -226,7 +226,7 @@ class MapAsUIJDLatticeTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChec
   }
 }
 
-class PairAsUIJDLatticeTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
+class PairAsDecomposeLatticeTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "leq" in forAll { (a: (Set[Int], Set[Int]), b: (Set[Int], Set[Int]), c: (Set[Int], Set[Int])) =>
     assert(
       PairAsUIJDLattice[Set[Int], Set[Int]].lteq(a, a),
@@ -297,7 +297,7 @@ object LexPairGenerators {
     Arbitrary(genLexPair)
 }
 
-class LexPairAsUIJDLatticeTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
+class LexPairAsDecomposeLatticeTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   import LexPairGenerators.*
 
   "leq" in forAll { (a: LexPair[Set[Int], Set[Int]], b: LexPair[Set[Int], Set[Int]], c: LexPair[Set[Int], Set[Int]]) =>

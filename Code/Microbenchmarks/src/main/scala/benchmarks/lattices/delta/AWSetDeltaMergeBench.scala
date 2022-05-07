@@ -2,7 +2,7 @@ package benchmarks.lattices.delta
 
 import org.openjdk.jmh.annotations
 import org.openjdk.jmh.annotations._
-import kofre.decompose.UIJDLattice
+import kofre.decompose.DecomposeLattice
 import kofre.causality.{CausalContext, Dot}
 import kofre.decompose.interfaces.AWSetInterface.{AWSet, AWSetSyntax}
 import kofre.syntax.AllPermissionsCtx
@@ -32,36 +32,36 @@ class AWSetDeltaMergeBench {
 
   @Setup
   def setup(): Unit = {
-    val baseState = UIJDLattice[AWSet[Long]].empty
+    val baseState = DecomposeLattice[AWSet[Long]].empty
 
     val deltaState = baseState.addAll(0L to size)(AllPermissionsCtx.withID(""))
-    fullState = UIJDLattice[AWSet[Long]].merge(baseState, deltaState)
+    fullState = DecomposeLattice[AWSet[Long]].merge(baseState, deltaState)
 
     plusOneDeltaState = fullState.add(size)(AllPermissionsCtx.withID(""))
-    plusOneState = UIJDLattice[AWSet[Long]].merge(fullState, plusOneDeltaState)
+    plusOneState = DecomposeLattice[AWSet[Long]].merge(fullState, plusOneDeltaState)
   }
 
   @Benchmark
   def fullMerge: AWSet[Long] = {
-    UIJDLattice[AWSet[Long]].merge(fullState, plusOneState)
+    DecomposeLattice[AWSet[Long]].merge(fullState, plusOneState)
   }
 
   @Benchmark
   def fullDiff: Option[AWSet[Long]] = {
-    UIJDLattice[AWSet[Long]].diff(fullState, plusOneState)
+    DecomposeLattice[AWSet[Long]].diff(fullState, plusOneState)
   }
 
   @Benchmark
   def deltaMerge: AWSet[Long] = {
-    UIJDLattice[AWSet[Long]].diff(fullState, plusOneDeltaState) match {
+    DecomposeLattice[AWSet[Long]].diff(fullState, plusOneDeltaState) match {
       case Some(stateDiff) =>
-        UIJDLattice[AWSet[Long]].merge(fullState, stateDiff)
+        DecomposeLattice[AWSet[Long]].merge(fullState, stateDiff)
       case None => fullState
     }
   }
 
   @Benchmark
   def deltaMergeNoDiff: AWSet[Long] = {
-    UIJDLattice[AWSet[Long]].merge(fullState, plusOneDeltaState)
+    DecomposeLattice[AWSet[Long]].merge(fullState, plusOneDeltaState)
   }
 }

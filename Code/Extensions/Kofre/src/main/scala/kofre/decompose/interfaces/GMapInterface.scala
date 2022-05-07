@@ -2,7 +2,7 @@ package kofre.decompose.interfaces
 
 import kofre.causality.CausalContext
 import kofre.contextual.WithContextDecompose.DotSet
-import kofre.decompose.UIJDLattice
+import kofre.decompose.DecomposeLattice
 import kofre.contextual.WithContext
 import kofre.syntax.{AllPermissionsCtx, ArdtOpsContains, OpsSyntaxHelper}
 
@@ -26,14 +26,14 @@ object GMapInterface {
 
     def contains(k: K)(using QueryP): Boolean = current.contains(k)
 
-    def queryKey(k: K)(using QueryP, UIJDLattice[V]): V =
-      current.getOrElse(k, UIJDLattice[V].empty)
+    def queryKey(k: K)(using QueryP, DecomposeLattice[V]): V =
+      current.getOrElse(k, DecomposeLattice[V].empty)
 
     def queryAllEntries()(using QueryP): Iterable[V] = current.values
 
-    def mutateKey(k: K)(m: V => V)(using MutationIDP, UIJDLattice[V]): C = Map(k -> m(queryKey(k)))
+    def mutateKey(k: K)(m: V => V)(using MutationIDP, DecomposeLattice[V]): C = Map(k -> m(queryKey(k)))
 
-    def mutateKeyCtx(k: K)(m: AllPermissionsCtx[V, V] => V => V)(using MutationIDP, UIJDLattice[V]): C = {
+    def mutateKeyCtx(k: K)(m: AllPermissionsCtx[V, V] => V => V)(using MutationIDP, DecomposeLattice[V]): C = {
       Map(k -> m(AllPermissionsCtx.withID[V, V](replicaID))(queryKey(k)))
     }
   }

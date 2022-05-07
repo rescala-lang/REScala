@@ -3,7 +3,7 @@ package rescala.extra.replication
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReaderException, JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import kofre.decompose.containers.Network
-import kofre.decompose.{Delta, UIJDLattice}
+import kofre.decompose.{Delta, DecomposeLattice}
 import rescala.extra.replication.AntiEntropy.{AckMsg, DeltaMsg}
 
 import scala.collection.mutable
@@ -21,7 +21,7 @@ import scala.collection.mutable
   * @param neighbors The neighbors that this replica can communicate with directly
   * @tparam A State type of the CRDT that this anti-entropy algorithm is used with
   */
-class AntiEntropy[A: UIJDLattice](
+class AntiEntropy[A: DecomposeLattice](
     val replicaID: String,
     network: Network,
     neighbors: mutable.Buffer[String] = mutable.Buffer()
@@ -35,7 +35,7 @@ class AntiEntropy[A: UIJDLattice](
 
   private val ackMap: mutable.Map.WithDefault[String, Int] = new mutable.Map.WithDefault(mutable.Map(), _ => -1)
 
-  private var fullState: A = UIJDLattice[A].empty
+  private var fullState: A = DecomposeLattice[A].empty
 
   implicit val AckMsgCodec: JsonValueCodec[AckMsg] = JsonCodecMaker.make
 
@@ -97,7 +97,7 @@ class AntiEntropy[A: UIJDLattice](
       deltaBufferOut.collect {
         case (n, Delta(origin, deltaState)) if n >= ackMap(to) && origin != to => deltaState
       } reduceOption { (left: A, right: A) =>
-        UIJDLattice[A].merge(left, right)
+        DecomposeLattice[A].merge(left, right)
       } map { deltaState => DeltaMsg(Delta(replicaID, deltaState), nextSeqNum) }
     }
   }

@@ -110,7 +110,7 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
 
     // type Carrier = LWWRegister.State[TaskData, DietMapCContext]
     //
-    // val merge = implicitly[UIJDLattice[Carrier]]
+    // val merge = implicitly[DecomposeLattice[Carrier]]
     //
     // val crdtAlt = DeltaStateReactive.create[Carrier, Carrier](
     //  lww,

@@ -3,7 +3,7 @@ package kofre.contextual
 import kofre.Lattice.Operators
 import kofre.causality.{CausalContext, Dot}
 import kofre.contextual.{AsCausalContext, WithContext, WithContextMerge}
-import kofre.decompose.{Decompose, UIJDLattice, interfaces}
+import kofre.decompose.{Decompose, DecomposeLattice, interfaces}
 import kofre.contextual.WithContextDecompose
 import kofre.{Bottom, Lattice}
 
@@ -119,44 +119,39 @@ object WithContextDecompose {
   /** DotFun is a dot store implementation that maps dots to values of a Lattice type. See [[interfaces.MVRegisterInterface]]
     * for a usage example.
     */
-  implicit def DotFun[A: UIJDLattice]: WithContextDecompose[Map[Dot, A]] = new WithContextDecompose[Map[Dot, A]] {
-    override def dots(ds: Map[Dot, A]): CausalContext = CausalContext.fromSet(ds.keySet)
+  implicit def DotFun[A: DecomposeLattice]: WithContextDecompose[Map[Dot, A]] =
+    new ComposeFrom[Map[Dot, A]](AsCausalContext.dotFunDotStore, WithContextMerge.perDot[A]) {
 
-    private val wcm = WithContextMerge.perDot[A]
-    export wcm.mergePartial
+      override def lteq(left: WithContext[Map[Dot, A]], right: WithContext[Map[Dot, A]]): Boolean = {
+        val firstCondition = left.context.forall(right.context.contains)
+        val secondCondition = right.store.keySet.forall { k =>
+          left.store.get(k).forall { l => DecomposeLattice[A].lteq(l, right.store(k)) }
+        }
+        val thirdCondition = {
+          val diff = left.context.diff(DotFun[A].dots(left.store))
+          DotFun[A].dots(right.store).intersect(diff).isEmpty
+        }
 
-    override def empty: Map[Dot, A] = Map.empty[Dot, A]
-
-    override def lteq(left: WithContext[Map[Dot, A]], right: WithContext[Map[Dot, A]]): Boolean = {
-      val firstCondition = left.context.forall(right.context.contains)
-      val secondCondition = right.store.keySet.forall { k =>
-        left.store.get(k).forall { l => UIJDLattice[A].lteq(l, right.store(k)) }
-      }
-      val thirdCondition = {
-        val diff = left.context.diff(DotFun[A].dots(left.store))
-        DotFun[A].dots(right.store).intersect(diff).isEmpty
+        firstCondition && secondCondition && thirdCondition
       }
 
-      firstCondition && secondCondition && thirdCondition
+      override def decompose(state: WithContext[Map[Dot, A]]): Iterable[WithContext[Map[Dot, A]]] = {
+        val added = for (d <- DotFun[A].dots(state.store).iterator; v <- DecomposeLattice[A].decompose(state.store(d)))
+          yield WithContext(Map(d -> v), CausalContext.single(d))
+
+        val removed =
+          state.context.decompose(DotFun[A].dots(state.store).contains).map(WithContext(DotFun[A].empty, _))
+
+        removed ++ added
+      }
     }
-
-    override def decompose(state: WithContext[Map[Dot, A]]): Iterable[WithContext[Map[Dot, A]]] = {
-      val added = for (d <- DotFun[A].dots(state.store).iterator; v <- UIJDLattice[A].decompose(state.store(d)))
-        yield WithContext(Map(d -> v), CausalContext.single(d))
-
-      val removed =
-        state.context.decompose(DotFun[A].dots(state.store).contains).map(WithContext(DotFun[A].empty, _))
-
-      removed ++ added
-    }
-  }
 
   /** DotLess is a dot store implementation that, in combination with [[DotPair]], allows to compose non-causal CRDTs
     * with causal CRDTs. For a usage example, see [[interfaces.RGAInterface]], where the implicit presence of DotLess is
     * necessary so that the non-causal [[interfaces.EpocheInterface]] can be part of the [[DotPair]] that makes up
     * the state.
     */
-  implicit def UIJDLatticeAsDecomposableDotStore[A: UIJDLattice]: WithContextDecompose[A] =
+  implicit def UIJDLatticeAsDecomposableDotStore[A: DecomposeLattice]: WithContextDecompose[A] =
     new WithContextDecompose[A] {
       override def dots(ds: A): CausalContext = CausalContext.empty
 
@@ -164,12 +159,12 @@ object WithContextDecompose {
         Lattice[A].merge(left.store, right.store)
 
       override def lteq(left: WithContext[A], right: WithContext[A]): Boolean =
-        UIJDLattice[A].lteq(left.store, right.store)
+        DecomposeLattice[A].lteq(left.store, right.store)
 
       override def decompose(state: WithContext[A]): Iterable[WithContext[A]] = {
-        UIJDLattice[A].decompose(state.store).map(WithContext(_, CausalContext.empty))
+        DecomposeLattice[A].decompose(state.store).map(WithContext(_, CausalContext.empty))
       }
 
-      override def empty: A = UIJDLattice[A].empty
+      override def empty: A = DecomposeLattice[A].empty
     }
 }

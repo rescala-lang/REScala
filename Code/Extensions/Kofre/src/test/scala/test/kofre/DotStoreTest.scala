@@ -2,7 +2,7 @@ package test.kofre
 
 import kofre.causality.{CausalContext, Dot}
 import kofre.contextual.WithContextDecompose.*
-import kofre.decompose.UIJDLattice
+import kofre.decompose.DecomposeLattice
 import kofre.contextual.{WithContext, WithContextDecompose}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
@@ -27,7 +27,7 @@ class DotSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     val ccA = dsA union deletedA
     val ccB = dsB union deletedB
 
-    val WithContext(dsMerged, ccMerged) = UIJDLattice[WithContext[CausalContext]].merge(
+    val WithContext(dsMerged, ccMerged) = DecomposeLattice[WithContext[CausalContext]].merge(
       WithContext(dsA, ccA),
       WithContext(dsB, ccB)
     )
@@ -59,7 +59,7 @@ class DotSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
       s"DotSet.leq should be reflexive, but returns false when applied to ($dsA, $ccA, $dsA, $ccA)"
     )
 
-    val WithContext(dsMerged, ccMerged) = UIJDLattice[WithContext[CausalContext]].merge(
+    val WithContext(dsMerged, ccMerged) = DecomposeLattice[WithContext[CausalContext]].merge(
       WithContext(dsA, ccA),
       WithContext(dsB, ccB)
     )
@@ -80,7 +80,7 @@ class DotSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     val decomposed = DotSet.decompose(WithContext(ds, cc))
     val WithContext(dsMerged, ccMerged) = decomposed.foldLeft(WithContext(CausalContext.empty, CausalContext.empty)) {
       case (WithContext(dsA, ccA), WithContext(dsB, ccB)) =>
-        UIJDLattice[WithContext[CausalContext]].merge(WithContext(dsA, ccA), WithContext(dsB, ccB))
+        DecomposeLattice[WithContext[CausalContext]].merge(WithContext(dsA, ccA), WithContext(dsB, ccB))
     }
 
     assert(
@@ -115,7 +115,7 @@ class DotFunTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     val ccB   = dotsB union deletedB
 
     val WithContext(dfMerged, ccMerged) =
-      UIJDLattice[WithContext[Map[Dot, Int]]].merge(
+      DecomposeLattice[WithContext[Map[Dot, Int]]].merge(
         WithContext(dfA, ccA),
         WithContext(dfB, ccB)
       )
@@ -140,11 +140,11 @@ class DotFunTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
     (dotsA intersect dotsB).iterator.foreach { d =>
       assert(
-        dfMerged(d) == UIJDLattice[Int].merge(dfA(d), dfB(d)),
+        dfMerged(d) == DecomposeLattice[Int].merge(dfA(d), dfB(d)),
         s"If a dot is used as key in both DotFuns then the corresponding values should be merged in the result of DotFun.merge, but ${dfMerged(
             d
-          )} does not equal ${UIJDLattice[Int].merge(dfA(d), dfB(d))}"
-      )
+          )} does not equal ${DecomposeLattice[Int].merge(dfA(d), dfB(d))}"
+        )
     }
 
     (dotsA diff ccB).iterator.foreach { d =>
@@ -172,7 +172,7 @@ class DotFunTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     )
 
     val WithContext(dfMerged, ccMerged) =
-      UIJDLattice[WithContext[Map[Dot, Int]]].merge(
+      DecomposeLattice[WithContext[Map[Dot, Int]]].merge(
         WithContext(dfA, (ccA)),
         WithContext(dfB, (ccB))
       )
@@ -193,7 +193,7 @@ class DotFunTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     val decomposed = DotFun[Int].decompose(WithContext(df, (cc)))
     val WithContext(dfMerged, ccMerged) = decomposed.foldLeft(WithContext(DotFun[Int].empty, CausalContext.empty)) {
       case (WithContext(dfA, ccA), WithContext(dfB, ccB)) =>
-        UIJDLattice[WithContext[Map[Dot, Int]]].merge(WithContext(dfA, ccA), WithContext(dfB, ccB))
+        DecomposeLattice[WithContext[Map[Dot, Int]]].merge(WithContext(dfA, ccA), WithContext(dfB, ccB))
     }
 
     assert(
@@ -234,7 +234,7 @@ class DotMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
       val ccB   = dotsB union deletedB
 
       val WithContext(dmMerged, ccMerged) =
-        UIJDLattice[WithContext[Map[Int, CausalContext]]].merge(
+        DecomposeLattice[WithContext[Map[Int, CausalContext]]].merge(
           WithContext(dmA, (ccA)),
           WithContext(dmB, (ccB))
         )
@@ -293,7 +293,7 @@ class DotMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
       )
 
       val WithContext(dmMerged, ccMerged) =
-        UIJDLattice[WithContext[Map[Int, CausalContext]]].merge(
+        DecomposeLattice[WithContext[Map[Int, CausalContext]]].merge(
           WithContext(dmA, (ccA)),
           WithContext(dmB, (ccB))
         )
@@ -315,7 +315,7 @@ class DotMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     val WithContext(dmMerged, ccMerged) =
       decomposed.foldLeft(WithContext(DotMap[Int, CausalContext].empty, CausalContext.empty)) {
         case (WithContext(dmA, ccA), WithContext(dmB, ccB)) =>
-          UIJDLattice[WithContext[Map[Int, CausalContext]]].merge(WithContext(dmA, ccA), WithContext(dmB, ccB))
+          DecomposeLattice[WithContext[Map[Int, CausalContext]]].merge(WithContext(dmA, ccA), WithContext(dmB, ccB))
       }
 
     val dotsIter      = dm.values.flatMap(DotSet.dots(_).iterator)

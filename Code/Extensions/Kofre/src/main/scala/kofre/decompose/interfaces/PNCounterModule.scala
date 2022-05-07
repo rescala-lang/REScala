@@ -2,7 +2,7 @@ package kofre.decompose.interfaces
 
 import kofre.Defs.Id
 import kofre.decompose.interfaces.GCounterInterface.{GCounter, asGcounter}
-import kofre.decompose.{UIJDLattice}
+import kofre.decompose.DecomposeLattice
 import kofre.syntax.{AllPermissionsCtx, FixedIdCtx, IdentifierCtx, OpsSyntaxHelper, QueryCtx}
 import kofre.syntax.AllPermissionsCtx.withID
 
@@ -21,10 +21,10 @@ object PNCounterModule {
 
     def inc()(using MutationIDP): C =
       val pos = current._1.asGcounter.inc()(using withID(replicaID))
-      mutate(pos, UIJDLattice.bottom)
+      mutate(pos, DecomposeLattice.bottom)
 
     def dec()(using MutationIDP): C =
       val neg = current._2.asGcounter.inc()(using withID(replicaID))
-      mutate(UIJDLattice.bottom, neg)
+      mutate(DecomposeLattice.bottom, neg)
   }
 }

@@ -22,7 +22,7 @@ object TimedVal {
   def apply[A](value: A, replicaID: String): TimedVal[A] =
     TimedVal(value, replicaID, System.nanoTime(), System.currentTimeMillis())
 
-  implicit def TimedValAsUIJDLattice[A]: UIJDLattice[TimedVal[A]] = new UIJDLattice[TimedVal[A]] {
+  implicit def TimedValAsUIJDLattice[A]: DecomposeLattice[TimedVal[A]] = new DecomposeLattice[TimedVal[A]] {
     override def lteq(left: TimedVal[A], right: TimedVal[A]): Boolean = left.timestamp <= right.timestamp
 
     /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */

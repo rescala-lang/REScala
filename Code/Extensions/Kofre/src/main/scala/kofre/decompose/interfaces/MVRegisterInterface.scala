@@ -29,9 +29,9 @@ object MVRegisterInterface {
       )
     }
 
-    def clear()(using MutationIDP, UIJDLattice[MVRegister[A]]): C =
+    def clear()(using MutationIDP, DecomposeLattice[MVRegister[A]]): C =
       WithContext(
-        UIJDLattice[MVRegister[A]].empty.store,
+        DecomposeLattice[MVRegister[A]].empty.store,
         CausalContext.fromSet(current.store.keySet)
         )
   }

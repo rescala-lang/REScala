@@ -23,8 +23,8 @@ object GListInterface {
 
   type GList[E] = Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]]
 
-  implicit def GListAsUIJDLattice[E]: UIJDLattice[GList[E]] =
-    new UIJDLattice[Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]]] {
+  implicit def GListAsUIJDLattice[E]: DecomposeLattice[GList[E]] =
+    new DecomposeLattice[Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]]] {
       override def lteq(
           left: Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]],
           right: Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]]
@@ -125,7 +125,7 @@ object GListInterface {
 
     def insertAll(i: Int, elems: Iterable[E])(using MutationIDP): C = {
       if (elems.isEmpty)
-        UIJDLattice[GList[E]].empty
+        DecomposeLattice[GList[E]].empty
       else
         findNth(current, Head[TimedVal[E]](), i) match {
           case None => Map.empty
