@@ -1,3 +1,5 @@
 publishLocal:
-	sbtn "project rescalaAll" "++publishLocal"
+	sbtn '++ rescalaAll / publishLocal'
 
+runSimpleCaseStudy:
+	sbtn 'examples / run'
