@@ -1,12 +1,13 @@
 package kofre.protocol
 
+import kofre.Bottom
+import kofre.contextual.WithContextDecompose
 import kofre.decompose.*
 import kofre.decompose.interfaces.AWSetInterface
 import kofre.decompose.interfaces.AWSetInterface.AWSetSyntax
 import kofre.decompose.interfaces.EWFlagInterface.EWFlag
 import kofre.protocol.AuctionInterface
 import kofre.protocol.AuctionInterface.Bid.User
-import kofre.protocol.RubisInterface.{AID, UserAsUIJDLattice}
 import kofre.syntax.{AllPermissionsCtx, OpsSyntaxHelper}
 
 /** A Rubis (Rice University Bidding System) is a Delta CRDT modeling an auction system.
@@ -24,16 +25,8 @@ object RubisInterface {
 
   type State = (AWSetInterface.AWSet[(User, String)], Map[User, String], Map[AID, AuctionInterface.AuctionData])
 
-  trait RubisCompanion {
-    type State = RubisInterface.State
-
-    implicit val UserAsUIJDLattice: DecomposeLattice[User] = RubisInterface.UserAsUIJDLattice
-  }
-
-  implicit val UserAsUIJDLattice: DecomposeLattice[User] = DecomposeLattice.AtomicUIJDLattice[User]
-
   private class DeltaStateFactory {
-    val bottom: State = DecomposeLattice[State].empty
+    val bottom: State = (Bottom.empty, Map.empty, Map.empty)
 
     def make(
         userRequests: AWSetInterface.AWSet[(User, String)] = bottom._1,

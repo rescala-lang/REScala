@@ -31,6 +31,7 @@ object DecomposeLattice {
   def bottom[A](implicit l: DecomposeLattice[A]): A             = l.empty
 
   implicit class Operators[A: DecomposeLattice](left: A):
+    @scala.annotation.targetName("lteq")
     def <=(right: A): Boolean  = DecomposeLattice[A].lteq(left, right)
     def decompose: Iterable[A] = DecomposeLattice[A].decompose(left)
 
@@ -113,15 +114,6 @@ object DecomposeLattice {
 
       override def empty: (A, B, C) = (DecomposeLattice[A].empty, DecomposeLattice[B].empty, DecomposeLattice[C].empty)
     }
-
-  def AtomicUIJDLattice[A]: DecomposeLattice[A] = new DecomposeLattice[A] {
-    override def lteq(left: A, right: A): Boolean  = false
-    override def decompose(state: A): Iterable[A] = List(state)
-    override def empty: A = throw new UnsupportedOperationException("Can't compute bottom of atomic type A")
-    override def merge(left: A, right: A): A =
-      if left == right then left
-      else throw new UnsupportedOperationException(s"Can't merge atomic type A, left: $left, right: $right")
-  }
 
   given contextUIJDLattice[D](using wcd: WithContextDecompose[D]): DecomposeLattice[WithContext[D]] =
     new DecomposeFromLattice[WithContext[D]](Lattice.contextLattice) {
