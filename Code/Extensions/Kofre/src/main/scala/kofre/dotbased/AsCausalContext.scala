@@ -24,7 +24,7 @@ object AsCausalContext {
     override def dots(dotStore: Map[Dot, V]): CausalContext = CausalContext.fromSet(dotStore.keySet)
   }
 
-  given CausalContextDotStoreInstance: AsCausalContext[CausalContext] with {
+  given causalContextInstance: AsCausalContext[CausalContext] with {
     override def dots(a: CausalContext): CausalContext = a
     override def empty: CausalContext                  = CausalContext.empty
   }
@@ -34,9 +34,16 @@ object AsCausalContext {
     override def empty: Set[Dot]                  = Set.empty
   }
 
-  given DotMapInstance[Key, A: AsCausalContext]: AsCausalContext[Map[Key, A]] with {
-    override def dots(a: Map[Key, A]): CausalContext =
+  given DotMapInstance[K, A: AsCausalContext]: AsCausalContext[Map[K, A]] with {
+    override def dots(a: Map[K, A]): CausalContext =
       a.valuesIterator.foldLeft(CausalContext.empty)((acc, v) => acc.union(AsCausalContext[A].dots(v)))
-    override def empty: Map[Key, A] = Map.empty
+    override def empty: Map[K, A] = Map.empty
+  }
+
+  given DotPairInstance[A: AsCausalContext, B: AsCausalContext]: AsCausalContext[(A, B)] with {
+    override def dots(ds: (A, B)): CausalContext =
+      val (ds1, ds2) = ds
+      ds1.asContext union ds2.asContext
+    override def empty: (A, B) = (Bottom.empty[A], Bottom.empty[B])
   }
 }

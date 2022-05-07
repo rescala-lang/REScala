@@ -1,7 +1,7 @@
 package kofre.decompose.interfaces
 import kofre.decompose.*
 import kofre.syntax.{AllPermissionsCtx, ArdtOpsContains, OpsSyntaxHelper}
-import kofre.decompose.DecomposableDotStore.DotFun
+import kofre.decompose.WithContextDecompose.DotFun
 import kofre.decompose.interfaces.LexCounterInterface.LexCounter
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegisterSyntax
 

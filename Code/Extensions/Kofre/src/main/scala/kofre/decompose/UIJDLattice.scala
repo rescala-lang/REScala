@@ -123,19 +123,17 @@ object UIJDLattice {
       else throw new UnsupportedOperationException(s"Can't merge atomic type A, left: $left, right: $right")
   }
 
-  given contextLattice[D: DecomposableDotStore]: Lattice[WithContext[D]] = (left, right) =>
-    val dsMerged = DecomposableDotStore[D].mergePartial(left, right)
+  given contextLattice[D: WithContextDecompose]: Lattice[WithContext[D]] = (left, right) =>
+    val dsMerged = WithContextDecompose[D].mergePartial(left, right)
     val ccMerged = left.context merge right.context
     WithContext[D](dsMerged, ccMerged)
 
-  given contextUIJDLattice[D: DecomposableDotStore]: UIJDLattice[WithContext[D]] =
+  given contextUIJDLattice[D](using wcd: WithContextDecompose[D]): UIJDLattice[WithContext[D]] =
     new UIJDFromLattice[WithContext[D]](contextLattice) {
-      override def lteq(left: WithContext[D], right: WithContext[D]): Boolean = DecomposableDotStore[D].lteq(left, right)
-
-      /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
-      override def decompose(state: WithContext[D]): Iterable[WithContext[D]] = DecomposableDotStore[D].decompose(state)
-
-      override def empty: WithContext[D] = WithContext(DecomposableDotStore[D].empty, CausalContext.empty)
+      export wcd.decompose
+      // needs manual override as export can not override :(
+      override def lteq(left: WithContext[D], right: WithContext[D]): Boolean = wcd.lteq(left, right)
+      override def empty: WithContext[D] = WithContext(wcd.empty, CausalContext.empty)
     }
 
 }

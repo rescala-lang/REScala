@@ -1,7 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
 import kofre.causality.CausalContext
-import kofre.decompose.DecomposableDotStore.DotSet
+import kofre.decompose.WithContextDecompose.DotSet
 import kofre.decompose.interfaces.EWFlagInterface.EWFlagSyntax
 import kofre.decompose.interfaces.ORMapInterface.{ORMap, ORMapSyntax}
 import kofre.syntax.AllPermissionsCtx.withID

@@ -1,7 +1,7 @@
 package kofre.decompose.experimental
 
 import kofre.causality.CausalContext
-import kofre.decompose.DecomposableDotStore.{DotMap, DotSet}
+import kofre.decompose.WithContextDecompose.{DotMap, DotSet}
 import kofre.decompose.interfaces.AWSetInterface
 import kofre.dotbased.WithContext
 

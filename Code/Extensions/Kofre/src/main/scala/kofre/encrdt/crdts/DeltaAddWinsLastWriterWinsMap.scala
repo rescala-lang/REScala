@@ -90,7 +90,7 @@ object DeltaAddWinsLastWriterWinsMap {
     DeltaAddWinsMapLattice[K, Map[Dot, (V, (Instant, String))]]
 
   def empty[K, V]: DeltaAddWinsLastWriterWinsMapLattice[K, V] =
-    DeltaAddWinsMap.empty[K, Map[Dot, (V, (Instant, String))]]
+    DeltaAddWinsMap.empty
 
   implicit def timestampedValueLattice[V](using Ordering[(Instant, String)]): Lattice[(V, (Instant, String))] =
     (left, right) =>

@@ -3,7 +3,7 @@ package kofre.decompose.interfaces
 import kofre.causality.CausalContext
 import kofre.decompose.*
 import kofre.syntax.OpsSyntaxHelper
-import kofre.decompose.DecomposableDotStore.*
+import kofre.decompose.WithContextDecompose.*
 import kofre.decompose.interfaces.PNCounterModule.PNCounter
 import kofre.dotbased.WithContext
 import kofre.causality.Dot
