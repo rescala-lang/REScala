@@ -2,7 +2,7 @@ package tests.distribution.delta.antientropy
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import kofre.decompose.UIJDLattice
+import kofre.decompose.DecomposeLattice
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
@@ -18,7 +18,7 @@ import scala.collection.mutable
 import scala.util.Random
 
 object MVRegisterGenerators {
-  def genMVRegister[A: UIJDLattice](implicit
+  def genMVRegister[A: DecomposeLattice](implicit
       a: Arbitrary[A],
       cA: JsonValueCodec[A],
   ): Gen[AntiEntropyCRDT[MVRegister[A]]] = for {
@@ -36,7 +36,7 @@ object MVRegisterGenerators {
     }
   }
 
-  implicit def arbMVRegister[A: UIJDLattice](implicit
+  implicit def arbMVRegister[A: DecomposeLattice](implicit
       a: Arbitrary[A],
       cA: JsonValueCodec[A],
   ): Arbitrary[AntiEntropyCRDT[MVRegister[A]]] =
