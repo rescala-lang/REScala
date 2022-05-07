@@ -1,6 +1,7 @@
 package kofre.encrdt.crdts
 import kofre.Lattice
-import kofre.encrdt.lattices.{CausalTimeTag, LastWriterWins}
+import kofre.encrdt.lattices.CausalTimeTag
+import kofre.primitives.LastWriterWins
 
 class LastWriterWinsRegister[T](initialState: LastWriterWins[CausalTimeTag, T], val replicaId: String) {
 

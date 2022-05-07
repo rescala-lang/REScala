@@ -4,7 +4,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, J
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import kofre.causality.Dot
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap
-import kofre.encrdt.lattices.LastWriterWins
+import kofre.primitives.LastWriterWins
 import rescala.extra.encrdt.sync.ConnectionManager
 import scalafx.application.Platform
 import todolist.SyncedTodoListCrdt.StateType

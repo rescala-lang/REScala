@@ -17,7 +17,7 @@ object DataGenerator {
     value: List[Long] <- Gen.listOfN(ids.size, Gen.oneOf(0L to 100L))
   } yield VectorClock.fromMap(ids.zip(value).toMap))
 
-  given arbLww: Arbitrary[LastWriterWins[Int]] = Arbitrary(
+  given arbLww: Arbitrary[LastWriterWins[Defs.Time, Int]] = Arbitrary(
     for {
       time  <- Gen.long
       value <- Gen.choose(Int.MinValue, Int.MaxValue)

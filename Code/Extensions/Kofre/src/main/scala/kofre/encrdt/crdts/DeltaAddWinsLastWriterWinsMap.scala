@@ -6,7 +6,7 @@ import kofre.encrdt.crdts.DeltaAddWinsMap.DeltaAddWinsMapLattice
 import kofre.Lattice
 import kofre.contextual.WithContext
 import kofre.causality.Dot
-import kofre.encrdt.lattices.LastWriterWins
+import kofre.primitives.LastWriterWins
 
 import math.Ordering.Implicits.infixOrderingOps
 import java.time.Instant

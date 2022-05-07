@@ -10,7 +10,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import test.kofre.DataGenerator.{*, given}
 
 class VectorClockLattice extends LatticeMergeTest[VectorClock]
-class LWWLatice          extends LatticeMergeTest[LastWriterWins[Int]]
+class LWWLatice          extends LatticeMergeTest[LastWriterWins[Defs.Time, Int]]
 class OrSetLatice        extends LatticeMergeTest[ORSet[Int]]
 class MVRLattice         extends LatticeMergeTest[MultiValueRegister[Int]]
 

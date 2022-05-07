@@ -1,7 +1,8 @@
 package kofre.encrdt.crdts
 import kofre.Lattice
 import kofre.encrdt.crdts.AddWinsLastWriterWinsMap.LatticeType
-import kofre.encrdt.lattices.{AddWinsMapLattice, CausalTimeTag, LastWriterWins}
+import kofre.encrdt.lattices.{AddWinsMapLattice, CausalTimeTag}
+import kofre.primitives.LastWriterWins
 
 class AddWinsLastWriterWinsMap[K, V](
     val replicaId: String,
