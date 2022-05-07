@@ -1,6 +1,5 @@
 package rescala.macros
 
-import rescala.core.Core
 import rescala.operator.cutOutOfUserComputation
 import retypecheck._
 
@@ -26,7 +25,8 @@ class ReactiveMacros(val c: blackbox.Context) {
       StaticTicket: c.WeakTypeTag,
       DynamicTicket: c.WeakTypeTag,
       ScopeSearch: c.WeakTypeTag,
-      LowPriorityImplicitObject: c.WeakTypeTag
+      LowPriorityImplicitObject: c.WeakTypeTag,
+      ResourceType: c.WeakTypeTag
   ](expression: Tree)(ticket: c.Tree): c.Tree = {
     ReactiveExpressionWithAPI[
       A,
@@ -35,7 +35,8 @@ class ReactiveMacros(val c: blackbox.Context) {
       StaticTicket,
       DynamicTicket,
       ScopeSearch,
-      LowPriorityImplicitObject
+      LowPriorityImplicitObject,
+      ResourceType
     ](expression)(ticket)(None)
   }
 
@@ -46,12 +47,13 @@ class ReactiveMacros(val c: blackbox.Context) {
       StaticTicket: c.WeakTypeTag,
       DynamicTicket: c.WeakTypeTag,
       ScopeSearch: c.WeakTypeTag,
-      LowPriorityImplicitObject: c.WeakTypeTag
+      LowPriorityImplicitObject: c.WeakTypeTag,
+      ResourceType: c.WeakTypeTag
   ](expression: Tree)(ticket: c.Tree)(prefixManipulation: Option[PrefixManipulation]): c.Tree = {
     if (c.hasErrors) return compileErrorsAst
 
     val forceStatic = !(weakTypeOf[IsStatic] <:< weakTypeOf[MacroTags.Dynamic])
-    val lego        = new MacroLego[ScopeSearch, LowPriorityImplicitObject](expression, forceStatic)
+    val lego        = new MacroLego[ScopeSearch, LowPriorityImplicitObject, ResourceType](expression, forceStatic)
 
     val dependencies   = lego.detections.detectedStaticReactives
     val isStatic       = lego.detections.detectedDynamicReactives.isEmpty
@@ -60,7 +62,7 @@ class ReactiveMacros(val c: blackbox.Context) {
 
     val wrt = weakTypeOf[ReactiveType]
 
-    val resolved                       = wrt.asSeenFrom(getBundle, wrt.typeSymbol.owner)
+    val resolved                       = wrt.asSeenFrom(new BundleAcquisiton[ResourceType].getBundle, wrt.typeSymbol.owner)
     val tq"$resolvedTree.$tpname.type" = ReTyper(c).createTypeTree(resolved, c.enclosingPosition)
 
     val body = q"""$resolvedTree.${tpname.toTermName}.$creationMethod[${weakTypeOf[A]}](
@@ -76,12 +78,13 @@ class ReactiveMacros(val c: blackbox.Context) {
       Capability: c.WeakTypeTag,
       DynamicTicket: c.WeakTypeTag,
       ScopeSearch: c.WeakTypeTag,
-      LowPriorityImplicitObject: c.WeakTypeTag
+      LowPriorityImplicitObject: c.WeakTypeTag,
+      ResourceType: c.WeakTypeTag
   ](expression: Tree): c.Tree = {
     if (c.hasErrors) return compileErrorsAst
 
     val forceStatic = !(weakTypeOf[Capability] <:< weakTypeOf[DynamicTicket])
-    val lego        = new MacroLego[ScopeSearch, LowPriorityImplicitObject](expression, forceStatic)
+    val lego        = new MacroLego[ScopeSearch, LowPriorityImplicitObject, ResourceType](expression, forceStatic)
 
     val dependencies = lego.detections.detectedStaticReactives
     val isStatic     = lego.detections.detectedDynamicReactives.isEmpty
@@ -124,7 +127,8 @@ class ReactiveMacros(val c: blackbox.Context) {
       StaticTicket: c.WeakTypeTag,
       DynamicTicket: c.WeakTypeTag,
       ScopeSearch: c.WeakTypeTag,
-      LowPriorityImplicitObject: c.WeakTypeTag
+      LowPriorityImplicitObject: c.WeakTypeTag,
+      ResourceType: c.WeakTypeTag
   ](expression: c.Tree)(ticket: c.Tree): c.Tree = {
     if (c.hasErrors) return compileErrorsAst
 
@@ -139,7 +143,8 @@ class ReactiveMacros(val c: blackbox.Context) {
       StaticTicket,
       DynamicTicket,
       ScopeSearch,
-      LowPriorityImplicitObject
+      LowPriorityImplicitObject,
+      ResourceType
     ](computation)(ticket)(Some(pm))
   }
 
@@ -151,7 +156,8 @@ class ReactiveMacros(val c: blackbox.Context) {
       CT,
       StaticTicket: c.WeakTypeTag,
       ScopeSearch: c.WeakTypeTag,
-      LowPriorityImplicitObject: c.WeakTypeTag
+      LowPriorityImplicitObject: c.WeakTypeTag,
+      ResourceType: c.WeakTypeTag
   ](
       init: c.Expr[A]
   )(op: c.Expr[(A, T) => A])(ticket: c.Expr[CT]): c.Tree = {
@@ -163,12 +169,12 @@ class ReactiveMacros(val c: blackbox.Context) {
     val computation = q"""$funcImpl.apply[${weakTypeOf[T]}, ${weakTypeOf[A]}](_, ${pm.prefixValue}, $op)"""
     fixNullTypes(computation)
 
-    val lego       = new MacroLego[ScopeSearch, LowPriorityImplicitObject](computation, forceStatic = true)
+    val lego       = new MacroLego[ScopeSearch, LowPriorityImplicitObject, ResourceType](computation, forceStatic = true)
     val detections = lego.detections.detectedStaticReactives
 
     val wrt = weakTypeOf[ReactiveType]
 
-    val resolved                       = wrt.asSeenFrom(getBundle, wrt.typeSymbol.owner)
+    val resolved                       = wrt.asSeenFrom(new BundleAcquisiton[ResourceType].getBundle, wrt.typeSymbol.owner)
     val tq"$resolvedTree.$tpname.type" = ReTyper(c).createTypeTree(resolved, c.enclosingPosition)
 
     val body = q"""$resolvedTree.${tpname.toTermName}.fold[${weakTypeOf[A]}](Set(..$detections), $init)(
@@ -180,47 +186,50 @@ class ReactiveMacros(val c: blackbox.Context) {
 
   // here be dragons
 
-  val reSourceType: c.universe.Type = typeOf[Core#ReSource]
+  class BundleAcquisiton[ResourceType: c.WeakTypeTag] {
 
-  def underlying(tpe: Type): Type =
-    if (tpe ne tpe.dealias)
-      underlying(tpe.dealias)
-    else if (tpe ne tpe.widen)
-      underlying(tpe.widen)
-    else
-      tpe
+    val reSourceType: c.universe.Type = weakTypeOf[ResourceType]
 
-  def underlyingReSourceType(tpe: Type): Type =
-    underlying(tpe) match {
-      case RefinedType(parents, _) =>
-        underlyingReSourceType(parents.find(_ <:< reSourceType).get)
-      case tpe =>
+    def underlying(tpe: Type): Type =
+      if (tpe ne tpe.dealias)
+        underlying(tpe.dealias)
+      else if (tpe ne tpe.widen)
+        underlying(tpe.widen)
+      else
         tpe
+
+    def underlyingReSourceType(tpe: Type): Type =
+      underlying(tpe) match {
+        case RefinedType(parents, _) =>
+          underlyingReSourceType(parents.find(_ <:< reSourceType).get)
+        case tpe =>
+          tpe
+      }
+
+    def getBundle: Type = {
+      val ntype = c.prefix.tree.tpe
+      underlyingReSourceType(ntype) match {
+        case TypeRef(tn, _, _) => tn: Type
+      }
     }
 
-  def getBundle: Type = {
-    val ntype = c.prefix.tree.tpe
-    underlyingReSourceType(ntype) match {
-      case TypeRef(tn, _, _) => tn: Type
+    def getBundledClass(tpe: Type) = {
+
+      def doMagic(tpe: Type) = {
+        val tn = getBundle
+        tpe.asSeenFrom(tn, tpe.typeSymbol.owner).dealias
+      }
+
+      def getMember(name: String) = {
+        val tn = getBundle
+        tn.member(TypeName(name))
+      }
+
+      doMagic(getMember(tpe.typeSymbol.name.toString).asType.toType)
     }
   }
 
-  def getBundledClass(tpe: Type) = {
-
-    def doMagic(tpe: Type) = {
-      val tn = getBundle
-      tpe.asSeenFrom(tn, tpe.typeSymbol.owner).dealias
-    }
-
-    def getMember(name: String) = {
-      val tn = getBundle
-      tn.member(TypeName(name))
-    }
-
-    doMagic(getMember(tpe.typeSymbol.name.toString).asType.toType)
-  }
-
-  class MacroLego[CreationTicket: c.WeakTypeTag, LowPriorityCreationImplicits: c.WeakTypeTag](
+  class MacroLego[CreationTicket: c.WeakTypeTag, LowPriorityCreationImplicits: c.WeakTypeTag, ResourceType: c.WeakTypeTag](
       tree: Tree,
       forceStatic: Boolean
   ) {
@@ -231,12 +240,12 @@ class ReactiveMacros(val c: blackbox.Context) {
     val cutOut     = new CutOutTransformer(weAnalysis)
     val cutOutTree = cutOut.transform(tree)
     val detections =
-      new RewriteTransformer[CreationTicket, LowPriorityCreationImplicits](weAnalysis, ticketIdent, forceStatic)
+      new RewriteTransformer[CreationTicket, LowPriorityCreationImplicits, ResourceType](weAnalysis, ticketIdent, forceStatic)
     val rewrittenTree = detections transform cutOutTree
 
     def contextualizedExpression(contextType: Type) = {
 
-      q"{$ticketTermName: ${getBundledClass(contextType)} => $rewrittenTree }"
+      q"{$ticketTermName: ${new BundleAcquisiton[ResourceType].getBundledClass(contextType)} => $rewrittenTree }"
     }
 
     def wrapFinalize(body: Tree, prefixManipulation: Option[PrefixManipulation]): Tree = {
@@ -249,7 +258,7 @@ class ReactiveMacros(val c: blackbox.Context) {
 
   object IsCutOut
 
-  class RewriteTransformer[CreationTicket: c.WeakTypeTag, LowPriorityCreationImplicits: c.WeakTypeTag](
+  class RewriteTransformer[CreationTicket: c.WeakTypeTag, LowPriorityCreationImplicits: c.WeakTypeTag, ResourceType: c.WeakTypeTag](
       weAnalysis: WholeExpressionAnalysis,
       ticketIdent: Ident,
       requireStatic: Boolean
@@ -266,15 +275,15 @@ class ReactiveMacros(val c: blackbox.Context) {
         // TODO: this was disabled because of the bundle hack, need to figure out how to access creation ticket again
         case turnSource @ Apply(Select(ctleft, TermName("fromSchedulerImplicit")), _)
             if turnSource.tpe.typeSymbol.name == weakTypeOf[CreationTicket].typeSymbol.name
-              && turnSource.symbol.owner == symbolOf[LowPriorityCreationImplicits] =>
-          val ct = getBundledClass(weakTypeOf[CreationTicket])
+            && turnSource.symbol.owner == symbolOf[LowPriorityCreationImplicits] =>
+          val ct = new BundleAcquisiton[ResourceType].getBundledClass(weakTypeOf[CreationTicket])
           q"""new $ct(${termNames.ROOTPKG}.scala.Left($ticketIdent.tx))"""
 
         case tree @ Select(reactive, TermName("now")) =>
           c.warning(
             tree.pos,
             "Using `now` inside a reactive expression does not create a dependency, " +
-              "and can result in glitches. Use `value` instead."
+            "and can result in glitches. Use `value` instead."
           )
           super.transform(tree)
         // Access every reactive through the ticket argument
@@ -361,9 +370,9 @@ class ReactiveMacros(val c: blackbox.Context) {
       tree.forAll { t =>
         !symbolsDefinedInsideMacroExpression.contains(t.symbol) &&
         (internal.attachments(t).contains[IsCutOut.type]
-          || (t.symbol != null
-            && (t.symbol.isType
-              || (t.symbol.isTerm && t.symbol.asTerm.isStable))))
+        || (t.symbol != null
+        && (t.symbol.isType
+        || (t.symbol.isTerm && t.symbol.asTerm.isStable))))
       }
 
     /** - is not a reactive value resulting from a function that is
@@ -418,8 +427,8 @@ class ReactiveMacros(val c: blackbox.Context) {
     c.warning(
       c.enclosingPosition,
       "internal warning: tree type was null, " +
-        "this should not happen but the signal may still work\n" +
-        s"Offending tree: $tree"
+      "this should not happen but the signal may still work\n" +
+      s"Offending tree: $tree"
     )
 
   def isInterpretable(tree: Tree): Boolean = {
@@ -508,7 +517,7 @@ class ReactiveMacros(val c: blackbox.Context) {
       c.warning(
         pos,
         "Statement may either be unnecessary or have side effects. " +
-          "Signal expressions should have no side effects."
+        "Signal expressions should have no side effects."
       )
 
     expression foreach {

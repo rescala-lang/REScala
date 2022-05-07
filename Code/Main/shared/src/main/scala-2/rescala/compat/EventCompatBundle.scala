@@ -24,7 +24,8 @@ trait EventCompatBundle extends ReadableMacroBundle {
         StaticTicket,
         DynamicTicket,
         ScopeSearch,
-        LowPriorityScopeImplicits
+        LowPriorityScopeImplicits,
+        ReSource
       ]
 
     /** Filters the event, only propagating the value when the filter is true.
@@ -41,7 +42,8 @@ trait EventCompatBundle extends ReadableMacroBundle {
         StaticTicket,
         DynamicTicket,
         ScopeSearch,
-        LowPriorityScopeImplicits
+        LowPriorityScopeImplicits,
+        ReSource
       ]
 
     /** Filters the event, only propagating the value when the filter is true.
@@ -59,7 +61,8 @@ trait EventCompatBundle extends ReadableMacroBundle {
         StaticTicket,
         DynamicTicket,
         ScopeSearch,
-        LowPriorityScopeImplicits
+        LowPriorityScopeImplicits,
+        ReSource
       ]
 
     /** Transform the event.
@@ -76,7 +79,8 @@ trait EventCompatBundle extends ReadableMacroBundle {
         StaticTicket,
         DynamicTicket,
         ScopeSearch,
-        LowPriorityScopeImplicits
+        LowPriorityScopeImplicits,
+        ReSource
       ]
 
     /** Folds events with a given operation to create a Signal.
@@ -92,7 +96,8 @@ trait EventCompatBundle extends ReadableMacroBundle {
         CreationTicket,
         StaticTicket,
         ScopeSearch,
-        LowPriorityScopeImplicits
+        LowPriorityScopeImplicits,
+        ReSource
       ]
 
   }
@@ -113,7 +118,8 @@ trait EventCompatBundle extends ReadableMacroBundle {
         StaticTicket,
         DynamicTicket,
         ScopeSearch,
-        LowPriorityScopeImplicits
+        LowPriorityScopeImplicits,
+        ReSource
       ]
     final def static[A](expression: Option[A])(implicit ticket: CreationTicket): Event[A] =
       macro rescala.macros.ReactiveMacros.ReactiveExpression[
@@ -123,7 +129,8 @@ trait EventCompatBundle extends ReadableMacroBundle {
         StaticTicket,
         DynamicTicket,
         ScopeSearch,
-        LowPriorityScopeImplicits
+        LowPriorityScopeImplicits,
+        ReSource
       ]
     final def dynamic[A](expression: Option[A])(implicit ticket: CreationTicket): Event[A] =
       macro rescala.macros.ReactiveMacros.ReactiveExpression[
@@ -133,7 +140,8 @@ trait EventCompatBundle extends ReadableMacroBundle {
         StaticTicket,
         DynamicTicket,
         ScopeSearch,
-        LowPriorityScopeImplicits
+        LowPriorityScopeImplicits,
+        ReSource
       ]
   }
 
