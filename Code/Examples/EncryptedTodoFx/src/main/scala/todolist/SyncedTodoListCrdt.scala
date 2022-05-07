@@ -1,12 +1,13 @@
 package todolist
 
-import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap
-import rescala.extra.encrdt.sync.ConnectionManager
-import todolist.SyncedTodoListCrdt.StateType
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import kofre.causality.Dot
+import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap
+import kofre.encrdt.lattices.LastWriterWins
+import rescala.extra.encrdt.sync.ConnectionManager
 import scalafx.application.Platform
+import todolist.SyncedTodoListCrdt.StateType
 
 import java.net.URI
 import java.time.Instant
@@ -101,21 +102,21 @@ class SyncedTodoListCrdt(val replicaId: String) {
 object SyncedTodoListCrdt {
   type StateType = DeltaAddWinsLastWriterWinsMap.StateType[UUID, TodoEntry]
 
-  private implicit val dotMapAsSetCodec: JsonValueCodec[Set[(Dot, (TodoEntry, (Instant, String)))]] =
+  private implicit val dotMapAsSetCodec: JsonValueCodec[Set[(Dot, (TodoEntry, LastWriterWins[Instant, String]))]] =
     JsonCodecMaker.make
   @nowarn
-  private implicit val dotMapCodec: JsonValueCodec[Map[Dot, (TodoEntry, (Instant, String))]] =
-    new JsonValueCodec[Map[Dot, (TodoEntry, (Instant, String))]] {
+  private implicit val dotMapCodec: JsonValueCodec[Map[Dot, (TodoEntry, LastWriterWins[Instant, String])]] =
+    new JsonValueCodec[Map[Dot, (TodoEntry, LastWriterWins[Instant, String])]] {
       override def decodeValue(
           in: JsonReader,
-          default: Map[Dot, (TodoEntry, (Instant, String))]
-      ): Map[Dot, (TodoEntry, (Instant, String))] =
+          default: Map[Dot, (TodoEntry, LastWriterWins[Instant, String])]
+      ): Map[Dot, (TodoEntry, LastWriterWins[Instant, String])] =
         dotMapAsSetCodec.decodeValue(in, Set.empty).toMap
 
-      override def encodeValue(x: Map[Dot, (TodoEntry, (Instant, String))], out: JsonWriter): Unit =
+      override def encodeValue(x: Map[Dot, (TodoEntry, LastWriterWins[Instant, String])], out: JsonWriter): Unit =
         dotMapAsSetCodec.encodeValue(x.toSet, out)
 
-      override def nullValue: Map[Dot, (TodoEntry, (Instant, String))] =
+      override def nullValue: Map[Dot, (TodoEntry, LastWriterWins[Instant, String])] =
         Map.empty
     }
 

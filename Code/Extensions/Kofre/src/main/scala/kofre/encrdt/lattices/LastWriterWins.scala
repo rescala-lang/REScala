@@ -1,13 +1,18 @@
 package kofre.encrdt.lattices
 import kofre.Lattice
-import scala.math.Ordering.Implicits.infixOrderingOps
+
+import java.time.Instant
 
 /** Lattice with the least-upper-bound defined by the timeStamp.
   * Timestamps must be unique, totally ordered, consistent with causal order.
   */
-case class LastWriterWins[A, T](payload: A, timestamp: T)
+case class LastWriterWins[T, A](timestamp: T, payload: A)
 
 object LastWriterWins {
-  implicit def LWWRegLattice[T, O](using Ordering[O]): Lattice[LastWriterWins[T, O]] =
-    (left, right) => if left.timestamp <= right.timestamp then right else left
+  implicit def LWWRegLattice[O, T](using Ordering[O]): Lattice[LastWriterWins[O, T]] =
+    (left, right) => if Ordering[O].lteq(left.timestamp, right.timestamp) then right else left
+
+  given [O: Ordering, A]: Ordering[LastWriterWins[O, A]] with {
+    override def compare(x: LastWriterWins[O, A], y: LastWriterWins[O, A]): Int = Ordering[O].compare(x.timestamp, y.timestamp)
+  }
 }

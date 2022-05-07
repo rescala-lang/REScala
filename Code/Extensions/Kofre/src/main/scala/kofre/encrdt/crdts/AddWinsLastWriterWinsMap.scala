@@ -5,11 +5,11 @@ import kofre.encrdt.lattices.{AddWinsMapLattice, CausalTimeTag, LastWriterWins}
 
 class AddWinsLastWriterWinsMap[K, V](
     val replicaId: String,
-    initialState: AddWinsMapLattice[K, LastWriterWins[V, CausalTimeTag]] =
-      AddWinsMapLattice[K, LastWriterWins[V, CausalTimeTag]]()
+    initialState: AddWinsMapLattice[K, LastWriterWins[CausalTimeTag, V]] =
+      AddWinsMapLattice[K, LastWriterWins[CausalTimeTag, V]]()
 ) {
 
-  private var _state: AddWinsMapLattice[K, LastWriterWins[V, CausalTimeTag]] = initialState
+  private var _state: AddWinsMapLattice[K, LastWriterWins[CausalTimeTag, V]] = initialState
 
   def state: LatticeType[K, V] = _state
 
@@ -21,13 +21,13 @@ class AddWinsLastWriterWinsMap[K, V](
       case None           => CausalTimeTag().advance(replicaId)
     }
 
-    _state = _state.added(key, LastWriterWins(value, timeStamp), replicaId)
+    _state = _state.added(key, LastWriterWins(timeStamp, value), replicaId)
   }
 
   def remove(key: K): Unit = _state = _state.removed(key)
 
   def values: Map[K, V] =
-    _state.values.map { case (k, LastWriterWins(v, _)) => k -> v }
+    _state.values.map { case (k, LastWriterWins(_, v)) => k -> v }
 
   def merge(otherState: LatticeType[K, V]): Unit = {
     _state = Lattice.merge(_state, otherState)
@@ -35,5 +35,5 @@ class AddWinsLastWriterWinsMap[K, V](
 }
 
 object AddWinsLastWriterWinsMap {
-  type LatticeType[K, V] = AddWinsMapLattice[K, LastWriterWins[V, CausalTimeTag]]
+  type LatticeType[K, V] = AddWinsMapLattice[K, LastWriterWins[CausalTimeTag, V]]
 }
