@@ -1,10 +1,12 @@
 import clangast.decl.*
 import clangast.expr.*
-import clangast.expr.binaryop.*
+// import clangast.expr.binaryop.*
 import clangast.stmt.*
 import clangast.types.*
 
 import scala.annotation.targetName
+
+import scala.quoted.*
 
 package object clangast {
   given Conversion[CType, CQualType] = CQualType(_)
@@ -25,4 +27,10 @@ package object clangast {
     
   extension (i: Int)
     def lit: CIntegerLiteral = CIntegerLiteral(i)
+
+  extension[T] (o: Option[Expr[T]])
+    def toExpr(using Quotes, Type[T]): Expr[Option[T]] = o match {
+      case None => '{ None }
+      case Some(expr) => '{ Some($expr) }
+    }
 }

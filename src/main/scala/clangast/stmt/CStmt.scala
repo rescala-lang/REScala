@@ -2,4 +2,8 @@ package clangast.stmt
 
 import clangast.CASTNode
 
-trait CStmt extends CASTNode
+import scala.quoted.{Expr, Quotes}
+
+trait CStmt extends CASTNode {
+  override def toExpr(using Quotes): Expr[CStmt]
+}
