@@ -46,6 +46,8 @@ lazy val rescala = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file
     // scaladoc
     autoAPIMappings := true,
     Compile / doc / scalacOptions += "-groups",
+    // dotty seems to be currently unable to compile the docs … ?
+    Compile / doc := ( if(`is 3`(scalaVersion.value)) file("target/dummy/doc") else (Compile / doc).value ),
     // fullmv does not survive this check, but I want to keep it in the shared settings
     scalacOptions := scalacOptions.value.filter(_ != "-Ysafe-init"),
     CcsO := (if(`is 3`(scalaVersion.value)) CcsO.value.filter(_ != "-Xfatal-warnings") else CcsO.value),
