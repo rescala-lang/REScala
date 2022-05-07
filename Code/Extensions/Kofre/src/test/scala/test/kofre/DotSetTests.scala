@@ -2,7 +2,7 @@ package test.kofre
 
 import kofre.causality.{CausalContext, Dot}
 import kofre.dotbased.DotStore.*
-import kofre.dotbased.{CausalStore, DotStore}
+import kofre.dotbased.{WithContext, DotStore}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -24,8 +24,8 @@ class DotSetTests extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     val c2 = Set(d1, d2) // d1 is already deleted in the second causal context
 
     val mergedStore = Lattice.merge(
-      CausalStore(s1, CausalContext.fromSet(c1)),
-      CausalStore(s2, CausalContext.fromSet(c2))
+      WithContext(s1, CausalContext.fromSet(c1)),
+      WithContext(s2, CausalContext.fromSet(c2))
     ).store
 
     assert(!mergedStore.contains(d1))
@@ -38,8 +38,8 @@ class DotSetTests extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     val c2 = s2 ++ t2
 
     // commutativity
-    val m1 = Lattice.merge(CausalStore(s1, CausalContext.fromSet(c1)), CausalStore(s2, CausalContext.fromSet(c2)))
-    val m2 = Lattice.merge(CausalStore(s2, CausalContext.fromSet(c2)), CausalStore(s1, CausalContext.fromSet(c1)))
+    val m1 = Lattice.merge(WithContext(s1, CausalContext.fromSet(c1)), WithContext(s2, CausalContext.fromSet(c2)))
+    val m2 = Lattice.merge(WithContext(s2, CausalContext.fromSet(c2)), WithContext(s1, CausalContext.fromSet(c1)))
     assert(m1 == m2)
 
     // check if all elements were added to the new causal context

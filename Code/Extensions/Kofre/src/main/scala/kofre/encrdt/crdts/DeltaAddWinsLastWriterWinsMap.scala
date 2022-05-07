@@ -4,9 +4,9 @@ import de.ckuessner.encrdt.crdts.interfaces.{Crdt, MapCrdt}
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap.{DeltaAddWinsLastWriterWinsMapLattice, timestampedValueLattice}
 import kofre.encrdt.crdts.DeltaAddWinsMap.DeltaAddWinsMapLattice
 import kofre.encrdt.lattices.LastWriterWinsTagLattice.lwwLattice
-import kofre.dotbased.DotStore.{DotFun, DotMap}
+import kofre.dotbased.DotStore.DotFun
 import kofre.Lattice
-import kofre.dotbased.CausalStore
+import kofre.dotbased.WithContext
 
 import math.Ordering.Implicits.infixOrderingOps
 import java.time.Instant
@@ -99,6 +99,6 @@ object DeltaAddWinsLastWriterWinsMap {
 
   type StateType[K, V] = DeltaAddWinsMapLattice[K, DotFun[(V, (Instant, String))]]
 
-  given deltaAddWinsMapLattice[K, V]: Lattice[StateType[K, V]] = CausalStore.CausalWithDotMapLattice
+  given deltaAddWinsMapLattice[K, V]: Lattice[StateType[K, V]] = WithContext.CausalWithDotMapLattice
 
 }

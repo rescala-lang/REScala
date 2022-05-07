@@ -5,7 +5,7 @@ import kofre.decompose.*
 import kofre.syntax.OpsSyntaxHelper
 import kofre.decompose.DecomposableDotStore.*
 import kofre.decompose.interfaces.PNCounterModule.PNCounter
-import kofre.dotbased.CausalStore
+import kofre.dotbased.WithContext
 
 
 /** An RCounter (Resettable Counter/Add Wins Counter) is a Delta CRDT modeling a counter.
@@ -37,7 +37,7 @@ object RCounterInterface {
     override def empty: (Int, Int) = (0, 0)
   }
 
-  type RCounter = CausalStore[DotFun[(Int, Int)]]
+  type RCounter = WithContext[DotFun[(Int, Int)]]
 
   private def deltaState(
       df: Option[DotFun[(Int, Int)]] = None,
@@ -45,7 +45,7 @@ object RCounterInterface {
   ): RCounter = {
     val bottom = UIJDLattice[RCounter].empty
 
-    CausalStore(
+    WithContext(
       df.getOrElse(bottom.store),
       cc
     )

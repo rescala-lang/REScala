@@ -1,14 +1,13 @@
 package kofre.encrdt.crdts
 
 import kofre.Lattice
-import kofre.dotbased.{CausalStore, DotStore}
-import kofre.dotbased.DotStore.{DotMap, DotSet}
+import kofre.dotbased.{WithContext, DotStore}
 import kofre.causality.CausalContext
 import kofre.encrdt.crdts.DeltaAddWinsSet.DeltaAddWinsSetLattice
 
 class DeltaAddWinsSet[E](
     val replicaId: String,
-    initialState: DeltaAddWinsSetLattice[E] = CausalStore(Map.empty, CausalContext.empty)
+    initialState: DeltaAddWinsSetLattice[E] = WithContext(Map.empty, CausalContext.empty)
 ) {
 
   private var _state: DeltaAddWinsSetLattice[E]         = initialState
@@ -34,7 +33,7 @@ class DeltaAddWinsSet[E](
 
 // See: Delta state replicated data types (https://doi.org/10.1016/j.jpdc.2017.08.003)
 object DeltaAddWinsSet {
-  type DeltaAddWinsSetLattice[E] = CausalStore[DotMap[E, DotSet]]
+  type DeltaAddWinsSetLattice[E] = WithContext[Map[E, CausalContext]]
 
   /** Returns the '''delta''' that adds the element to the `set`.
     *
@@ -49,9 +48,9 @@ object DeltaAddWinsSet {
   def deltaAdd[E](replicaId: String, element: E, set: DeltaAddWinsSetLattice[E]): DeltaAddWinsSetLattice[E] = {
 
     val newDot                           = set.context.clockOf(replicaId).get.advance
-    val deltaDotStore: DotMap[E, DotSet] = Map(element -> CausalContext.single(newDot))
+    val deltaDotStore: Map[E, CausalContext] = Map(element -> CausalContext.single(newDot))
     val deltaCausalContext = set.store.getOrElse(element, CausalContext.empty).add(newDot)
-    CausalStore(deltaDotStore, deltaCausalContext)
+    WithContext(deltaDotStore, deltaCausalContext)
   }
 
   /** Returns the '''delta''' that removes the element from the `set`.
@@ -63,7 +62,7 @@ object DeltaAddWinsSet {
     * @tparam E Type of the elements in the set
     * @return The delta of the remove
     */
-  def deltaRemove[E](element: E, set: DeltaAddWinsSetLattice[E]): DeltaAddWinsSetLattice[E] = CausalStore(
+  def deltaRemove[E](element: E, set: DeltaAddWinsSetLattice[E]): DeltaAddWinsSetLattice[E] = WithContext(
     Map.empty,
     set.store.getOrElse(element, CausalContext.empty)
     )
@@ -76,8 +75,8 @@ object DeltaAddWinsSet {
     * @tparam E Type of the elements in the set
     * @return The delta of the clear
     */
-  def deltaClear[E](set: DeltaAddWinsSetLattice[E]): DeltaAddWinsSetLattice[E] = CausalStore(
+  def deltaClear[E](set: DeltaAddWinsSetLattice[E]): DeltaAddWinsSetLattice[E] = WithContext(
     Map.empty,
-    DotStore[DotMap[E, DotSet]].dots(set.store)
+    DotStore[Map[E, CausalContext]].dots(set.store)
     )
 }

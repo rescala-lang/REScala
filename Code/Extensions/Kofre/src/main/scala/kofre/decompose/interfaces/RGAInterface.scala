@@ -5,7 +5,7 @@ import kofre.decompose.*
 import kofre.syntax.{AllPermissionsCtx, ArdtOpsContains, MutateCtx, OpsSyntaxHelper}
 import kofre.decompose.DecomposableDotStore.{DotFun, DotLess, DotPair}
 import kofre.decompose.interfaces.GListInterface.{GListAsUIJDLattice, GListSyntax}
-import kofre.dotbased.CausalStore
+import kofre.dotbased.WithContext
 import kofre.primitives.Epoche
 import kofre.decompose.interfaces.EpocheInterface.EpocheSyntax
 import kofre.decompose.interfaces.RCounterInterface.RCounter
@@ -58,7 +58,7 @@ object RGAInterface {
     }
   }
 
-  type RGA[E] = CausalStore[(Epoche[GListInterface.GList[Dot]], DotFun[RGANode[E]])]
+  type RGA[E] = WithContext[(Epoche[GListInterface.GList[Dot]], DotFun[RGANode[E]])]
 
   trait RGACompanion {
     type State[E]    = RGAInterface.RGA[E]
@@ -75,7 +75,7 @@ object RGAInterface {
         epoche: Epoche[GListInterface.GList[Dot]] = bottom.store._1,
         df: DotFun[RGANode[E]] = bottom.store._2,
         cc: CausalContext = bottom.context
-    ): RGA[E] = CausalStore((epoche, df), cc)
+    ): RGA[E] = WithContext((epoche, df), cc)
   }
 
   private def deltaState[E]: DeltaStateFactory[E] = new DeltaStateFactory[E]
@@ -110,7 +110,7 @@ object RGAInterface {
     }
 
     private def findInsertIndex(state: RGA[E], n: Int): Option[Int] = state match {
-      case CausalStore((fw, df), _) =>
+      case WithContext((fw, df), _) =>
         fw.value.toLazyList.zip(LazyList.from(1)).filter {
           case (dot, _) => df(dot) match {
               case Alive(_) => true
@@ -184,7 +184,7 @@ object RGAInterface {
         newNode: RGANode[E]
     ): RGA[E] =
       state match {
-        case CausalStore((_, df), _) =>
+        case WithContext((_, df), _) =>
           val toUpdate = df.toList.collect {
             case (d, Alive(tv)) if cond(tv.value) => d
           }
@@ -215,7 +215,7 @@ object RGAInterface {
     }
 
     def clear()(using MutationIDP): C = {
-      val (_, CausalStore(_, cc)) = current.store
+      val (_, WithContext(_, cc)) = current.store
       deltaState[E].make(
         cc = cc
       )

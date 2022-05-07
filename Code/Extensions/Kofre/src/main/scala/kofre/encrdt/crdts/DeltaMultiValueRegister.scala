@@ -1,11 +1,11 @@
 package kofre.encrdt.crdts
 import kofre.Lattice
 import kofre.causality.CausalContext
-import kofre.dotbased.{CausalStore, DotStore}
+import kofre.dotbased.{WithContext, DotStore}
 import kofre.dotbased.DotStore.DotFun
 
 object DeltaMultiValueRegister {
-  type DeltaMultiValueRegisterLattice[V] = CausalStore[DotFun[V]]
+  type DeltaMultiValueRegisterLattice[V] = WithContext[DotFun[V]]
 
   def deltaWrite[V](
       value: V,
@@ -14,14 +14,14 @@ object DeltaMultiValueRegister {
   ): DeltaMultiValueRegisterLattice[V] = {
 
     val dot = register.context.clockOf(replicaId).get.advance
-    CausalStore(
+    WithContext(
       Map(dot -> value),
       CausalContext.fromSet(register.store.keySet + dot)
     )
   }
 
   def deltaClear[V: Lattice](register: DeltaMultiValueRegisterLattice[V]): DeltaMultiValueRegisterLattice[V] =
-    CausalStore(
+    WithContext(
       Map.empty,
       CausalContext.fromSet(register.store.keySet)
       )

@@ -3,7 +3,7 @@ package kofre.decompose
 import kofre.Lattice
 import kofre.Lattice.{Operators, mapLattice, optionLattice, setLattice}
 import kofre.causality.CausalContext
-import kofre.dotbased.CausalStore
+import kofre.dotbased.WithContext
 
 trait Bottom[A] { def empty: A }
 trait Decompose[A] {
@@ -123,19 +123,19 @@ object UIJDLattice {
       else throw new UnsupportedOperationException(s"Can't merge atomic type A, left: $left, right: $right")
   }
 
-  given causalLattice[D: DecomposableDotStore]: Lattice[CausalStore[D]] = (left, right) =>
+  given causalLattice[D: DecomposableDotStore]: Lattice[WithContext[D]] = (left, right) =>
     val dsMerged = DecomposableDotStore[D].mergePartial(left, right)
     val ccMerged = left.context merge right.context
-    CausalStore[D](dsMerged, ccMerged)
+    WithContext[D](dsMerged, ccMerged)
 
-  given CausalAsUIJDLattice[D: DecomposableDotStore]: UIJDLattice[CausalStore[D]] =
-    new UIJDFromLattice[CausalStore[D]](causalLattice) {
-      override def leq(left: CausalStore[D], right: CausalStore[D]): Boolean = DecomposableDotStore[D].leq(left, right)
+  given CausalAsUIJDLattice[D: DecomposableDotStore]: UIJDLattice[WithContext[D]] =
+    new UIJDFromLattice[WithContext[D]](causalLattice) {
+      override def leq(left: WithContext[D], right: WithContext[D]): Boolean = DecomposableDotStore[D].leq(left, right)
 
       /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
-      override def decompose(state: CausalStore[D]): Iterable[CausalStore[D]] = DecomposableDotStore[D].decompose(state)
+      override def decompose(state: WithContext[D]): Iterable[WithContext[D]] = DecomposableDotStore[D].decompose(state)
 
-      override def empty: CausalStore[D] = CausalStore(DecomposableDotStore[D].empty, CausalContext.empty)
+      override def empty: WithContext[D] = WithContext(DecomposableDotStore[D].empty, CausalContext.empty)
     }
 
 }

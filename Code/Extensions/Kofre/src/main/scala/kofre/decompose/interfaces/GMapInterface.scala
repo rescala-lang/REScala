@@ -3,7 +3,7 @@ package kofre.decompose.interfaces
 import kofre.causality.CausalContext
 import kofre.decompose.DecomposableDotStore.DotSet
 import kofre.decompose.UIJDLattice
-import kofre.dotbased.CausalStore
+import kofre.dotbased.WithContext
 import kofre.syntax.{AllPermissionsCtx, ArdtOpsContains, OpsSyntaxHelper}
 
 /** A GMap (Grow-only Map) is a Delta CRDT that models a map from an arbitrary key type to nested Delta CRDTs.

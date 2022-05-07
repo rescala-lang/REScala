@@ -20,9 +20,7 @@ object DotStore {
 
   def apply[A](implicit dotStore: DotStore[A]): dotStore.type = dotStore
 
-  type DotSet       = CausalContext
   type DotFun[V]    = Map[Dot, V]
-  type DotMap[K, V] = Map[K, V]
 
   // instances
 
