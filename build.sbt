@@ -69,7 +69,6 @@ lazy val rescala = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file
     jsEnv                                 := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
   )
   .nativeSettings(
-    crossScalaVersions := crossScalaVersions.value.filter(_ != Dependencies.Versions.scala3),
     nativeLinkStubs    := true
   )
 
@@ -88,6 +87,7 @@ lazy val examples = project.in(file("Code/Examples/examples"))
     name := "rescala-examples",
     cfg.base,
     noPublish,
+    fork := true,
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-xml"   % "1.3.0",
       "org.scala-lang.modules" %% "scala-swing" % "3.0.0"
