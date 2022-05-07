@@ -1,8 +1,9 @@
 package kofre.syntax
 
-import kofre.Defs.Id
+import kofre.base.Defs.Id
 import kofre.decompose.interfaces.GCounterInterface.GCounter
-import kofre.{Defs, Lattice}
+import kofre.base.Lattice
+import kofre.base.Defs
 
 /** The basic idea behind this machinery is to allow lattices of type L to be stored in a Container of type C.
   * In the simplest case C = L and the lattice is used as is.

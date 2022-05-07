@@ -7,8 +7,8 @@ import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import test.kofre.DataGenerator.*
-import kofre.Lattice.Operators
-import kofre.Lattice
+import kofre.base.Lattice.Operators
+import kofre.base.Lattice
 
 class DotSetTests extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 

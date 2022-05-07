@@ -3,7 +3,7 @@ package rescala.extra.encrdt.encrypted.statebased
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.Aead
 import kofre.causality.VectorClock
-import kofre.Lattice.Operators
+import kofre.base.Lattice.Operators
 
 abstract class TrustedReplica[T](val localReplicaId: String,
                                  private val aead: Aead)

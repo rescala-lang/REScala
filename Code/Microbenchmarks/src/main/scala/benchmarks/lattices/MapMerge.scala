@@ -1,6 +1,6 @@
 package benchmarks.lattices
 
-import kofre.Lattice
+import kofre.base.Lattice
 import org.openjdk.jmh.annotations._
 
 import java.util.concurrent.TimeUnit

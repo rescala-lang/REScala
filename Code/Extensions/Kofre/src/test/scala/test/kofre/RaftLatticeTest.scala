@@ -1,6 +1,6 @@
 package test.kofre
 
-import kofre.Lattice
+import kofre.base.Lattice
 import kofre.protocol.RaftState
 import kofre.protocol.RaftState.Vote
 import org.scalatest.freespec.AnyFreeSpec

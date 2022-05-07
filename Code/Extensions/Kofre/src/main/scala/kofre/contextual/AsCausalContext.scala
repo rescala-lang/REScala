@@ -1,9 +1,9 @@
 package kofre.contextual
 
-import kofre.Defs.Id
-import kofre.Lattice
+import kofre.base.Defs.Id
+import kofre.base.Lattice
+import kofre.base.Bottom
 import kofre.causality.{CausalContext, Dot}
-import kofre.Bottom
 
 /** See: Dot stores in delta state replicated data types
   *

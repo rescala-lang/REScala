@@ -3,7 +3,7 @@ package kofre.encrdt.crdts
 import de.ckuessner.encrdt.crdts.interfaces.{Crdt, MapCrdt}
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap.{DeltaAddWinsLastWriterWinsMapLattice, timestampedValueLattice}
 import kofre.encrdt.crdts.DeltaAddWinsMap.DeltaAddWinsMapLattice
-import kofre.Lattice
+import kofre.base.Lattice
 import kofre.contextual.WithContext
 import kofre.causality.Dot
 import kofre.primitives.LastWriterWins

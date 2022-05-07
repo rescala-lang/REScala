@@ -1,4 +1,4 @@
-package kofre
+package kofre.base
 
 import kofre.contextual.{WithContext, WithContextDecompose}
 

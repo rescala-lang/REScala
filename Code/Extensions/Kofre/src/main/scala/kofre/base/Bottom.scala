@@ -1,4 +1,4 @@
-package kofre
+package kofre.base
 
 import kofre.contextual.WithContextDecompose
 import kofre.decompose.{Decompose, DecomposeLattice}

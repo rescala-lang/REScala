@@ -1,6 +1,6 @@
 package rescala.extra.encrdt.encrypted.deltabased
 
-import kofre.Lattice._
+import kofre.base.Lattice._
 
 
 import kofre.causality.CausalContext

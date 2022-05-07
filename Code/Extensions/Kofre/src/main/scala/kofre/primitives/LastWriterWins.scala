@@ -1,6 +1,6 @@
 package kofre.primitives
 
-import kofre.Lattice
+import kofre.base.Lattice
 
 
 /** Lattice with the least-upper-bound defined by the timeStamp.

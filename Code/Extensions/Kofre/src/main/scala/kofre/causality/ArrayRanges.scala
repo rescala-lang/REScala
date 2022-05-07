@@ -1,7 +1,7 @@
 package kofre.causality
 
-import kofre.Defs.Time
-import kofre.Lattice
+import kofre.base.Defs.Time
+import kofre.base.Lattice
 
 import java.util
 import scala.annotation.tailrec

@@ -1,7 +1,7 @@
 package kofre.primitives
 
-import kofre.Defs.Id
-import kofre.Lattice
+import kofre.base.Defs.Id
+import kofre.base.Lattice
 
 case class PosNegCounter(positiveCounts: Map[Id, Int], negativeCounts: Map[Id, Int]) {
 

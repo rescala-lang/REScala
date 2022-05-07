@@ -1,6 +1,6 @@
 package benchmarks.lattices
 
-import kofre.Lattice.Operators
+import kofre.base.Lattice.Operators
 import kofre.primitives.CausalQueue
 import org.openjdk.jmh.annotations._
 import kofre.rga.Sequence.RGA

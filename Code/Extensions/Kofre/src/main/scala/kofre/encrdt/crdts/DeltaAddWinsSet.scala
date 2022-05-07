@@ -1,6 +1,6 @@
 package kofre.encrdt.crdts
 
-import kofre.Lattice
+import kofre.base.Lattice
 import kofre.contextual.{WithContext, AsCausalContext}
 import kofre.causality.CausalContext
 import kofre.encrdt.crdts.DeltaAddWinsSet.DeltaAddWinsSetLattice

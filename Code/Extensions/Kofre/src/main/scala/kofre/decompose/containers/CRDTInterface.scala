@@ -1,7 +1,7 @@
 package kofre.decompose.containers
 
-import kofre.Defs
-import kofre.Defs.Id
+import kofre.base.Defs.Id
+import kofre.base.Defs
 import kofre.decompose.{Delta, DecomposeLattice}
 import kofre.syntax.AllPermissionsCtx
 

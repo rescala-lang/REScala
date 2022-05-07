@@ -4,7 +4,7 @@ package benchmarks.encrdt
 import benchmarks.encrdt.todolist.ToDoEntry
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
-import kofre.Defs.{Id, Time}
+import kofre.base.Defs.{Id, Time}
 import kofre.causality.{ArrayRanges, CausalContext, Dot}
 import kofre.encrdt.crdts.{AddWinsLastWriterWinsMap, DeltaAddWinsLastWriterWinsMap}
 

@@ -4,7 +4,8 @@ import kofre.causality.{CausalContext, Dot}
 
 import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
-import kofre.{Defs, Lattice}
+import kofre.base.Lattice
+import kofre.base.Defs
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)

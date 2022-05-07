@@ -1,6 +1,6 @@
 package calendar
 
-import kofre.Lattice
+import kofre.base.Lattice
 import kofre.decompose.Delta
 import kofre.decompose.interfaces.AWSetInterface.AWSet
 import kofre.protocol.RaftState

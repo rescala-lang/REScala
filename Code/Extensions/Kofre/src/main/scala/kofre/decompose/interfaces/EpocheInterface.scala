@@ -1,6 +1,6 @@
 package kofre.decompose.interfaces
 
-import kofre.Defs
+import kofre.base.Defs
 import kofre.decompose.DecomposeLattice
 import kofre.decompose.interfaces.GCounterInterface.GCounter
 import kofre.primitives.Epoche

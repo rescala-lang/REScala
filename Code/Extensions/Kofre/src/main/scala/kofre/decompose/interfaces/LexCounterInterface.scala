@@ -1,6 +1,6 @@
 package kofre.decompose.interfaces
 
-import kofre.Lattice.Operators
+import kofre.base.Lattice.Operators
 import kofre.decompose.*
 import kofre.syntax.OpsSyntaxHelper
 import kofre.decompose.DecomposeLattice.Operators

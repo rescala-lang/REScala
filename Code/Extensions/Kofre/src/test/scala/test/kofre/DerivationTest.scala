@@ -1,6 +1,7 @@
 package test.kofre
 import kofre.causality.VectorClock
-import kofre.{Defs, Lattice}
+import kofre.base.Lattice
+import kofre.base.Defs
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import test.kofre.DataGenerator.arbId

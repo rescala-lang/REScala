@@ -6,8 +6,8 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import com.google.crypto.tink.Aead
 import kofre.causality.VectorClock
 import kofre.encrdt.lattices.MultiValueRegisterLattice
-import kofre.Lattice
-import kofre.Lattice._
+import kofre.base.Lattice
+import kofre.base.Lattice._
 import rescala.extra.encrdt.encrypted.statebased.DecryptedState.vectorClockJsonCodec
 
 import scala.util.{Failure, Success, Try}

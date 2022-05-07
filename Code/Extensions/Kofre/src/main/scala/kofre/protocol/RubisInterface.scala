@@ -1,6 +1,6 @@
 package kofre.protocol
 
-import kofre.Bottom
+import kofre.base.Bottom
 import kofre.contextual.WithContextDecompose
 import kofre.decompose.*
 import kofre.decompose.interfaces.AWSetInterface

@@ -1,6 +1,6 @@
 package kofre.rga
 
-import kofre.Lattice
+import kofre.base.Lattice
 
 import scala.collection.immutable.HashMap
 

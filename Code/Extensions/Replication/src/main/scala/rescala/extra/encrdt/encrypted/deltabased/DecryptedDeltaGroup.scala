@@ -3,7 +3,7 @@ package rescala.extra.encrdt.encrypted.deltabased
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToArray}
 import com.google.crypto.tink.Aead
 import kofre.causality.CausalContext
-import kofre.Lattice
+import kofre.base.Lattice
 
 case class DecryptedDeltaGroup[T](deltaGroup: T, dottedVersionVector: CausalContext) {
   def encrypt(aead: Aead)(implicit

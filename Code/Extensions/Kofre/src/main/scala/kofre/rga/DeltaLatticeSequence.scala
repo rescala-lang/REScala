@@ -1,7 +1,7 @@
 package kofre.rga
 
-import kofre.Defs.Id
-import kofre.Lattice
+import kofre.base.Defs.Id
+import kofre.base.Lattice
 import kofre.decompose.interfaces.AWSetInterface.AWSet
 import kofre.decompose.interfaces.AWSetInterface.AWSetSyntax
 import kofre.syntax.AllPermissionsCtx

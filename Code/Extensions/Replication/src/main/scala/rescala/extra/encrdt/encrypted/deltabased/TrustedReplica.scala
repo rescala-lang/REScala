@@ -5,7 +5,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.Aead
 import de.ckuessner.encrdt.crdts.interfaces.Crdt
 import kofre.causality.{CausalContext, Dot}
-import kofre.Lattice.Operators
+import kofre.base.Lattice.Operators
 
 abstract class TrustedReplica[T](val replicaId: String, val crdt: Crdt[T], private val aead: Aead)(
     implicit val stateJsonCodec: JsonValueCodec[T],

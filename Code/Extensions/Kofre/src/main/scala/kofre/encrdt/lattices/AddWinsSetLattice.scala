@@ -1,6 +1,6 @@
 package kofre.encrdt.lattices
-import kofre.Lattice
-import kofre.Lattice.Operators
+import kofre.base.Lattice
+import kofre.base.Lattice.Operators
 import kofre.causality.{Dot, VectorClock}
 
 case class AddWinsSetLattice[T](

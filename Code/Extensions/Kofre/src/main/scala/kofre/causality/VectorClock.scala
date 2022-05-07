@@ -1,8 +1,9 @@
 package kofre.causality
 
-import kofre.Defs.Id
+import kofre.base.Defs.Id
 import kofre.causality.{Dot, VectorClock}
-import kofre.{Defs, Lattice}
+import kofre.base.Lattice
+import kofre.base.Defs
 
 import scala.annotation.tailrec
 import scala.math.PartialOrdering

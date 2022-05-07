@@ -1,4 +1,4 @@
-package kofre
+package kofre.base
 
 import java.util.{Base64, UUID}
 import scala.util.Random

@@ -3,7 +3,8 @@ package test.kofre
 import kofre.causality.VectorClock
 import kofre.primitives.{CausalQueue, LastWriterWins, MultiValueRegister}
 import kofre.sets.ORSet
-import kofre.{Defs, Lattice}
+import kofre.base.Lattice
+import kofre.base.Defs
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks

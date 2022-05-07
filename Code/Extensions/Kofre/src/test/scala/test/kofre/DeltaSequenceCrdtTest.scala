@@ -1,6 +1,6 @@
 package test.kofre
 
-import kofre.Lattice
+import kofre.base.Lattice
 import kofre.rga.{DeltaSequence, Vertex}
 import org.scalatest.freespec.AnyFreeSpec
 

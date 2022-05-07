@@ -4,8 +4,8 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.Aead
 import kofre.causality.VectorClock
 import rescala.extra.encrdt.encrypted.statebased.EncryptedState
-import kofre.Lattice.Operators
-import kofre.Lattice
+import kofre.base.Lattice.Operators
+import kofre.base.Lattice
 
 abstract class UntrustedReplica(initialStates: Set[EncryptedState]) extends Replica {
   protected var stateStore: Set[EncryptedState] = initialStates

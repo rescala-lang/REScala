@@ -1,6 +1,6 @@
 package test.kofre
 
-import kofre.Defs.Time
+import kofre.base.Defs.Time
 import kofre.causality.ArrayRanges
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers.{*, given}

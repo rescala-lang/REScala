@@ -1,5 +1,5 @@
 package kofre.encrdt.lattices
-import kofre.Lattice
+import kofre.base.Lattice
 case class AddWinsMapLattice[K, V](
     keys: AddWinsSetLattice[K] = AddWinsSetLattice[K](),
     mappings: Map[K, V] = Map[K, V]()

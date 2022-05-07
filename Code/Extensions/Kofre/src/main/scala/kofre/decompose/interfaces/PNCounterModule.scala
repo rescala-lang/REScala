@@ -1,6 +1,6 @@
 package kofre.decompose.interfaces
 
-import kofre.Defs.Id
+import kofre.base.Defs.Id
 import kofre.decompose.interfaces.GCounterInterface.{GCounter, asGcounter}
 import kofre.decompose.DecomposeLattice
 import kofre.syntax.{AllPermissionsCtx, FixedIdCtx, IdentifierCtx, OpsSyntaxHelper, QueryCtx}

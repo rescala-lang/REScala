@@ -1,8 +1,8 @@
 package kofre.primitives
 
-import kofre.Defs.Id
-import kofre.Lattice
-import kofre.Lattice.Operators
+import kofre.base.Defs.Id
+import kofre.base.Lattice
+import kofre.base.Lattice.Operators
 import kofre.causality.VectorClock
 
 import scala.annotation.tailrec

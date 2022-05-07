@@ -1,5 +1,5 @@
 package kofre.encrdt.crdts
-import kofre.Lattice
+import kofre.base.Lattice
 import kofre.causality.{CausalContext, Dot}
 import kofre.contextual.{AsCausalContext, WithContext}
 

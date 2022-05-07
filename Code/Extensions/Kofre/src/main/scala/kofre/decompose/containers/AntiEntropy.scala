@@ -1,6 +1,6 @@
 package kofre.decompose.containers
 
-import kofre.Defs
+import kofre.base.Defs
 import kofre.decompose.Delta
 
 trait AntiEntropy[A] {

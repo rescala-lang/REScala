@@ -1,7 +1,7 @@
 package kofre.causality
 
-import kofre.Defs
-import kofre.Defs.Id
+import kofre.base.Defs.Id
+import kofre.base.Defs
 
 /** Dots are another name for lamport clocks.
   * Dots are globally unique counters that are used to track causality in causal CRDTs. To guarantee global uniqueness,

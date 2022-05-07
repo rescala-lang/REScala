@@ -1,10 +1,10 @@
 package kofre.decompose
 
-import kofre.Lattice
-import kofre.Lattice.{Operators, mapLattice, optionLattice, setLattice}
+import kofre.base.Lattice
+import kofre.base.Lattice.{Operators, mapLattice, optionLattice, setLattice}
+import kofre.base.Bottom
 import kofre.causality.CausalContext
 import kofre.contextual.{WithContext, WithContextDecompose}
-import kofre.Bottom
 
 trait Decompose[A] {
   /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */

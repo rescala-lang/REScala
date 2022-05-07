@@ -1,5 +1,5 @@
 package kofre.encrdt.crdts
-import kofre.Lattice
+import kofre.base.Lattice
 import kofre.encrdt.lattices.AddWinsSetLattice
 
 class AddWinsSet[T](val replicaId: String) {

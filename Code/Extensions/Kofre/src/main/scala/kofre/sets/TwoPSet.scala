@@ -1,6 +1,6 @@
 package kofre.sets
 
-import kofre.Lattice
+import kofre.base.Lattice
 
 /** Two phase set where elements can be added and removed but never added again. */
 case class TwoPSet[A](entries: Set[A], tombstones: Set[A]) {

@@ -5,7 +5,8 @@ import kofre.contextual.WithContextDecompose
 import kofre.contextual.WithContextDecompose.{DotFun, DotMap}
 import kofre.primitives.{CausalQueue, LastWriterWins, MultiValueRegister}
 import kofre.sets.ORSet
-import kofre.{Defs, Lattice}
+import kofre.base.Lattice
+import kofre.base.Defs
 import org.scalacheck.{Arbitrary, Gen}
 
 object DataGenerator {

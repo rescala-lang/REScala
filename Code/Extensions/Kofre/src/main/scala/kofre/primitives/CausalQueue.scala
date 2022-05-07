@@ -1,8 +1,8 @@
 package kofre.primitives
 
-import kofre.Lattice
-import kofre.Defs
-import kofre.Lattice.Operators
+import kofre.base.Lattice
+import kofre.base.Lattice.Operators
+import kofre.base.Defs
 import kofre.causality.{CausalContext, Dot, VectorClock}
 import kofre.primitives.CausalQueue.QueueElement
 

@@ -1,6 +1,6 @@
 package kofre.rga
 
-import kofre.Defs
+import kofre.base.Defs
 import kofre.rga.Vertex.Timestamp
 
 case class Vertex(timestamp: Timestamp, id: Defs.Id)
