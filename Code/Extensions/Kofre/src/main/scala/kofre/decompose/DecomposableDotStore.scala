@@ -1,6 +1,6 @@
 package kofre.decompose
 
-import kofre.Lattice
+import kofre.{Bottom, Lattice}
 import kofre.causality.{CausalContext, Dot}
 import kofre.dotbased.{AsCausalContext, WithContext, WithContextMerge}
 import kofre.Lattice.Operators
@@ -9,7 +9,7 @@ import kofre.Lattice.Operators
 /** DecomposableDotStore is the typeclass trait for dot stores, data structures that are part of causal CRDTs and make use of dots to
   * track causality.
   */
-trait DecomposableDotStore[A] extends WithContextMerge[A], Decompose[WithContext[A]] {
+trait DecomposableDotStore[A] extends WithContextMerge[A], Decompose[WithContext[A]], AsCausalContext[A] {
 
   def dots(state: A): CausalContext
 
@@ -30,12 +30,7 @@ object DecomposableDotStore {
   implicit def DotSet: DecomposableDotStore[CausalContext] = new DecomposableDotStore[CausalContext] {
     override def dots(ds: CausalContext): CausalContext = ds
 
-    override def mergePartial(left: WithContext[CausalContext], right: WithContext[CausalContext]): CausalContext = {
-      val fromLeft  = left.store subtract right.context
-      val fromRight = right.store.subtract(left.context subtract left.store )
-
-      fromLeft union fromRight
-    }
+    export WithContextMerge.causalContext.mergePartial
 
     override def empty: CausalContext = CausalContext.empty
 
@@ -62,12 +57,12 @@ object DecomposableDotStore {
   /** DotMap is a dot store implementation that maps keys of an arbitrary type K to values of a dot store type V. See
     * [[interfaces.ORMapInterface]] for a usage example.
     */
-  implicit def DotMap[K, V: DecomposableDotStore]: DecomposableDotStore[Map[K, V]] = new DecomposableDotStore[Map[K, V]] {
-    override def dots(ds: Map[K, V]): CausalContext = ds.values.foldLeft(CausalContext.empty)((acc, v) => acc merge DecomposableDotStore[V].dots(v))
+  implicit def DotMap[K, V: AsCausalContext: WithContextMerge: DecomposableDotStore]: DecomposableDotStore[Map[K, V]] = new DecomposableDotStore[Map[K, V]] {
+    override def dots(ds: Map[K, V]): CausalContext = ds.values.foldLeft(CausalContext.empty)((acc, v) => acc merge AsCausalContext[V].dots(v))
 
     given AsCausalContext[V] with {
-      override def dots(a:  V): CausalContext = DecomposableDotStore[V].dots(a)
-      override def empty: V = DecomposableDotStore[V].empty
+      override def dots(a:  V): CausalContext = AsCausalContext[V].dots(a)
+      override def empty: V = Bottom.empty[V]
     }
 
     val withContextMerge: WithContextMerge[Map[K, V]] = WithContextMerge.dotMapMerge
@@ -79,8 +74,8 @@ object DecomposableDotStore {
       val firstCondition = left.context.forall(right.context.contains)
 
       def secondConditionHelper(keys: Iterable[K]): Boolean = keys.forall { k =>
-        val leftV  = left.store.getOrElse(k, DecomposableDotStore[V].empty)
-        val rightV = right.store.getOrElse(k, DecomposableDotStore[V].empty)
+        val leftV  = left.store.getOrElse(k, Bottom.empty[V])
+        val rightV = right.store.getOrElse(k, Bottom.empty[V])
 
         DecomposableDotStore[V].lteq(WithContext(leftV, left.context), WithContext(rightV, right.context))
       }
@@ -94,7 +89,7 @@ object DecomposableDotStore {
       val added = for {
         k <- state.store.keys
         WithContext(atomicV, atomicCC) <- {
-          val v = state.store.getOrElse(k, DecomposableDotStore[V].empty)
+          val v = state.store.getOrElse(k, Bottom.empty[V])
           DecomposableDotStore[V].decompose(WithContext(v, DecomposableDotStore[V].dots(v)))
         }
       } yield WithContext(Map.empty[K, V].updated(k, atomicV), atomicCC)
@@ -114,16 +109,8 @@ object DecomposableDotStore {
       case (ds1, ds2) => DecomposableDotStore[A].dots(ds1) union DecomposableDotStore[B].dots(ds2)
     }
 
-    override def mergePartial(left: WithContext[(A, B)], right: WithContext[(A, B)]): (A, B) =
-      (left, right) match {
-        case (WithContext((left1, left2), leftCContext), WithContext((right1, right2), rightCContext)) =>
-          val stateMerged1 =
-            DecomposableDotStore[A].mergePartial(WithContext(left1, leftCContext), WithContext(right1, rightCContext))
-          val stateMerged2 =
-            DecomposableDotStore[B].mergePartial(WithContext(left2, leftCContext), WithContext(right2, rightCContext))
-
-          (stateMerged1, stateMerged2)
-      }
+    val withContextMerge: WithContextMerge[(A, B)] = WithContextMerge.pairPartialMerge
+    export withContextMerge.mergePartial
 
     override def lteq(left: WithContext[(A, B)], right: WithContext[(A, B)]): Boolean =
       (left, right) match {
@@ -136,18 +123,18 @@ object DecomposableDotStore {
       case WithContext((state1, state2), cc) =>
         val decomposed1 = DecomposableDotStore[A].decompose(WithContext(state1, cc)).map {
           case WithContext(atomicState, atomicCC) =>
-            WithContext((atomicState, DecomposableDotStore[B].empty), atomicCC)
+            WithContext((atomicState, Bottom.empty[B]), atomicCC)
         }
 
         val decomposed2 = DecomposableDotStore[B].decompose(WithContext(state2, cc)).map {
           case WithContext(atomicState, atomicCC) =>
-            WithContext((DecomposableDotStore[A].empty, atomicState), atomicCC)
+            WithContext((Bottom.empty[A], atomicState), atomicCC)
         }
 
         decomposed1 ++ decomposed2
     }
 
-    override def empty: (A, B) = (DecomposableDotStore[A].empty, DecomposableDotStore[B].empty)
+    override def empty: (A, B) = (Bottom.empty[A], Bottom.empty[B])
   }
 
 

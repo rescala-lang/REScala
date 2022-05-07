@@ -17,7 +17,7 @@ class DotSetTests extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     val d2 = Dot("2", 1)
 
     val s1 = Set(d1)
-    assert(DotSetInstance.dots(s1).contains(d1))
+    assert(AsCausalContext[Set[Dot]].dots(s1).contains(d1))
 
     val s2 = Set(d2)
     val c1 = Set(d1)

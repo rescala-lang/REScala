@@ -3,12 +3,13 @@ package kofre.dotbased
 import kofre.Defs.Id
 import kofre.Lattice
 import kofre.causality.{CausalContext, Dot}
+import kofre.Bottom
 
 /** See: Dot stores in delta state replicated data types
   *
   * But here, a dot store is something that can be seen as a CausalContext
   */
-trait AsCausalContext[A] {
+trait AsCausalContext[A] extends Bottom[A] {
   def dots(a: A): CausalContext
   extension (a: A) def asContext: CausalContext = dots(a)
   def empty: A

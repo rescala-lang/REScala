@@ -6,7 +6,7 @@ import kofre.decompose.*
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper}
 import kofre.decompose.DecomposableDotStore.*
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
-import kofre.dotbased.WithContext
+import kofre.dotbased.{WithContext, WithContextMerge}
 
 /** An ORMap (Observed-Remove Map) is a Delta CRDT that models a map from an arbitrary key type to nested causal Delta CRDTs.
   * In contrast to [[GMapInterface]], ORMap allows the removal of key/value pairs from the map.
@@ -24,6 +24,9 @@ object ORMapInterface {
   }
 
   private class DeltaStateFactory[K, V: DecomposableDotStore] {
+
+    given DecomposableDotStore[Map[K, V]] = DecomposableDotStore.DotMap[K, V]
+
     val bottom: ORMap[K, V] = UIJDLattice[ORMap[K, V]].empty
 
     def make(
@@ -46,16 +49,19 @@ object ORMapInterface {
     def queryAllEntries(using QueryP): Iterable[WithContext[V]] =
       current.store.values.map(v => WithContext(v, current.context))
 
-    def mutateKey(k: K, m: (Defs.Id, WithContext[V]) => WithContext[V])(using MutationIDP, DecomposableDotStore[V]): C = {
-        val v = current.store.getOrElse(k, DecomposableDotStore[V].empty)
+    def mutateKey(k: K, m: (Defs.Id, WithContext[V]) => WithContext[V])(using
+        MutationIDP,
+        DecomposableDotStore[V]
+    ): C = {
+      val v = current.store.getOrElse(k, DecomposableDotStore[V].empty)
 
-        m(replicaID, WithContext(v, current.context)) match {
-          case WithContext(stateDelta, ccDelta) =>
-            deltaState[K, V].make(
-              dm = DotMap[K, V].empty.updated(k, stateDelta),
-              cc = ccDelta
-            )
-        }
+      m(replicaID, WithContext(v, current.context)) match {
+        case WithContext(stateDelta, ccDelta) =>
+          deltaState[K, V].make(
+            dm = DotMap[K, V].empty.updated(k, stateDelta),
+            cc = ccDelta
+          )
+      }
     }
 
     def remove(k: K)(using MutationIDP, DecomposableDotStore[V]): C = {

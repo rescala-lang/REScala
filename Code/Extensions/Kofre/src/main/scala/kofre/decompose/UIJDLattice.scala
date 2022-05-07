@@ -4,8 +4,8 @@ import kofre.Lattice
 import kofre.Lattice.{Operators, mapLattice, optionLattice, setLattice}
 import kofre.causality.CausalContext
 import kofre.dotbased.WithContext
+import kofre.Bottom
 
-trait Bottom[A] { def empty: A }
 trait Decompose[A] {
   /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
   def decompose(a: A): Iterable[A]
