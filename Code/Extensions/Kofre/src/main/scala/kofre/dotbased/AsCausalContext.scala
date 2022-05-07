@@ -4,7 +4,7 @@ import kofre.Defs.Id
 import kofre.Lattice
 import kofre.causality.{CausalContext, Dot}
 
-/** See: Dot stores in delta state replicated data types (https://doi.org/10.1016/j.jpdc.2017.08.003)
+/** See: Dot stores in delta state replicated data types
   *
   * But here, a dot store is something that can be seen as a CausalContext
   */
@@ -17,13 +17,9 @@ object AsCausalContext {
 
   def apply[A](implicit dotStore: AsCausalContext[A]): dotStore.type = dotStore
 
-  type DotFun[V]    = Map[Dot, V]
-
-  // instances
-
-  implicit def dotFunDotStore[V]: AsCausalContext[DotFun[V]] = new AsCausalContext[DotFun[V]] {
-    override def empty: DotFun[V]                         = Map.empty
-    override def dots(dotStore: DotFun[V]): CausalContext = CausalContext.fromSet(dotStore.keySet)
+  implicit def dotFunDotStore[V]: AsCausalContext[Map[Dot, V]] = new AsCausalContext[Map[Dot, V]] {
+    override def empty: Map[Dot, V]                         = Map.empty
+    override def dots(dotStore: Map[Dot, V]): CausalContext = CausalContext.fromSet(dotStore.keySet)
   }
 
   implicit val CausalContextDotStoreInstance: AsCausalContext[CausalContext] =

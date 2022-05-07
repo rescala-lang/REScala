@@ -55,7 +55,7 @@ class DotSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     val ccB = dsB union deletedB
 
     assert(
-      DotSet.leq(WithContext(dsA, ccA), WithContext(dsA, ccA)),
+      DotSet.lteq(WithContext(dsA, ccA), WithContext(dsA, ccA)),
       s"DotSet.leq should be reflexive, but returns false when applied to ($dsA, $ccA, $dsA, $ccA)"
     )
 
@@ -65,11 +65,11 @@ class DotSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     )
 
     assert(
-      DotSet.leq(WithContext(dsA, ccA), WithContext(dsMerged, ccMerged)),
+      DotSet.lteq(WithContext(dsA, ccA), WithContext(dsMerged, ccMerged)),
       s"The result of DotSet.merge should be larger than its lhs, but DotSet.leq returns false when applied to ($dsA, $ccA, $dsMerged, $ccMerged)"
     )
     assert(
-      DotSet.leq(WithContext(dsB, ccB), WithContext(dsMerged, ccMerged)),
+      DotSet.lteq(WithContext(dsB, ccB), WithContext(dsMerged, ccMerged)),
       s"The result of DotSet.merge should be larger than its rhs, but DotSet.leq returns false when applied to ($dsB, $ccB, $dsMerged, $ccMerged)"
     )
   }
@@ -167,7 +167,7 @@ class DotFunTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     val ccB = DotFun[Int].dots(dfB) union deletedB
 
     assert(
-      DotFun[Int].leq(WithContext(dfA, ccA), WithContext(dfA, ccA)),
+      DotFun[Int].lteq(WithContext(dfA, ccA), WithContext(dfA, ccA)),
       s"DotFun.leq should be reflexive, but returns false when applied to ($dfA, $ccA, $dfA, $ccA)"
     )
 
@@ -178,11 +178,11 @@ class DotFunTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
       )
 
     assert(
-      DotFun[Int].leq(WithContext(dfA, (ccA)), WithContext(dfMerged, ccMerged)),
+      DotFun[Int].lteq(WithContext(dfA, (ccA)), WithContext(dfMerged, ccMerged)),
       s"The result of DotFun.merge should be larger than its lhs, but DotFun.leq returns false when applied to ($dfA, $ccA, $dfMerged, $ccMerged)"
     )
     assert(
-      DotFun[Int].leq(WithContext(dfB, (ccB)), WithContext(dfMerged, ccMerged)),
+      DotFun[Int].lteq(WithContext(dfB, (ccB)), WithContext(dfMerged, ccMerged)),
       s"The result of DotFun.merge should be larger than its rhs, but DotFun.leq returns false when applied to ($dfB, $ccB, $dfMerged, $ccMerged)"
     )
   }
@@ -285,7 +285,7 @@ class DotMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
       val ccB = DotMap[Int, CausalContext].dots(dmB) union deletedB
 
       assert(
-        DotMap[Int, CausalContext].leq(
+        DotMap[Int, CausalContext].lteq(
           WithContext(dmA, (ccA)),
           WithContext(dmA, (ccA))
         ),
@@ -299,11 +299,11 @@ class DotMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
         )
 
       assert(
-        DotMap[Int, CausalContext].leq(WithContext(dmA, (ccA)), WithContext(dmMerged, ccMerged)),
+        DotMap[Int, CausalContext].lteq(WithContext(dmA, (ccA)), WithContext(dmMerged, ccMerged)),
         s"The result of DotMap.merge should be larger than its lhs, but DotMap.leq returns false when applied to ($dmA, $ccA, $dmMerged, $ccMerged)"
       )
       assert(
-        DotMap[Int, CausalContext].leq(WithContext(dmB, (ccB)), WithContext(dmMerged, ccMerged)),
+        DotMap[Int, CausalContext].lteq(WithContext(dmB, (ccB)), WithContext(dmMerged, ccMerged)),
         s"The result of DotMap.merge should be larger than its rhs, but DotMap.leq returns false when applied to ($dmB, $ccB, $dmMerged, $ccMerged)"
       )
   }

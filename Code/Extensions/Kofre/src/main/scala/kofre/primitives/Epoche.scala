@@ -9,9 +9,9 @@ case class Epoche[E](counter: Defs.Time, value: E)
 object Epoche {
 
   given epocheAsUIJDLattice[E: UIJDLattice]: UIJDLattice[Epoche[E]] = new UIJDLattice[Epoche[E]] {
-    override def leq(left: Epoche[E], right: Epoche[E]): Boolean = (left, right) match {
+    override def lteq(left: Epoche[E], right: Epoche[E]): Boolean = (left, right) match {
       case (Epoche(cLeft, vLeft), Epoche(cRight, vRight)) =>
-        cLeft < cRight || (cLeft == cRight && UIJDLattice[E].leq(vLeft, vRight))
+        cLeft < cRight || (cLeft == cRight && UIJDLattice[E].lteq(vLeft, vRight))
     }
 
     /** Decomposes a lattice state into ic unique irredundant join decomposition of join-irreducible states */

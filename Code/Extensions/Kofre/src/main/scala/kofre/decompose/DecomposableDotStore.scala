@@ -9,15 +9,16 @@ import kofre.Lattice.Operators
 /** DecomposableDotStore is the typeclass trait for dot stores, data structures that are part of causal CRDTs and make use of dots to
   * track causality.
   */
-trait DecomposableDotStore[A] extends WithContextMerge[A] {
+trait DecomposableDotStore[A] extends WithContextMerge[A], Decompose[WithContext[A]] {
 
   def dots(state: A): CausalContext
 
-  def leq(left: WithContext[A], right: WithContext[A]): Boolean
+  def lteq(left: WithContext[A], right: WithContext[A]): Boolean
 
   def decompose(state: WithContext[A]): Iterable[WithContext[A]]
 
   def empty: A
+
 }
 
 object DecomposableDotStore {
@@ -38,7 +39,7 @@ object DecomposableDotStore {
 
     override def empty: CausalContext = CausalContext.empty
 
-    override def leq(left: WithContext[CausalContext], right: WithContext[CausalContext]): Boolean = {
+    override def lteq(left: WithContext[CausalContext], right: WithContext[CausalContext]): Boolean = {
       val firstCondition = left.context.forall(right.context.contains)
 
       val secondCondition = {
@@ -98,14 +99,14 @@ object DecomposableDotStore {
 
     override def empty: Map[K, V] = Map.empty[K, V]
 
-    override def leq(left: WithContext[Map[K, V]], right: WithContext[Map[K, V]]): Boolean = {
+    override def lteq(left: WithContext[Map[K, V]], right: WithContext[Map[K, V]]): Boolean = {
       val firstCondition = left.context.forall(right.context.contains)
 
       def secondConditionHelper(keys: Iterable[K]): Boolean = keys.forall { k =>
         val leftV  = left.store.getOrElse(k, DecomposableDotStore[V].empty)
         val rightV = right.store.getOrElse(k, DecomposableDotStore[V].empty)
 
-        DecomposableDotStore[V].leq(WithContext(leftV, left.context), WithContext(rightV, right.context))
+        DecomposableDotStore[V].lteq(WithContext(leftV, left.context), WithContext(rightV, right.context))
       }
 
       val secondCondition = secondConditionHelper(left.store.keys) && secondConditionHelper(right.store.keys)
@@ -148,11 +149,11 @@ object DecomposableDotStore {
           (stateMerged1, stateMerged2)
       }
 
-    override def leq(left: WithContext[(A, B)], right: WithContext[(A, B)]): Boolean =
+    override def lteq(left: WithContext[(A, B)], right: WithContext[(A, B)]): Boolean =
       (left, right) match {
         case (WithContext((left1, left2), leftCContext), WithContext((right1, right2), rightCContext)) =>
-          DecomposableDotStore[A].leq(WithContext(left1, leftCContext), WithContext(right1, rightCContext)) &&
-          DecomposableDotStore[B].leq(WithContext(left2, leftCContext), WithContext(right2, rightCContext))
+          DecomposableDotStore[A].lteq(WithContext(left1, leftCContext), WithContext(right1, rightCContext)) &&
+          DecomposableDotStore[B].lteq(WithContext(left2, leftCContext), WithContext(right2, rightCContext))
       }
 
     override def decompose(state: WithContext[(A, B)]): Iterable[WithContext[(A, B)]] = state match {
@@ -182,15 +183,15 @@ object DecomposableDotStore {
   implicit def DotFun[A: UIJDLattice]: DecomposableDotStore[Map[Dot, A]] = new DecomposableDotStore[Map[Dot, A]] {
     override def dots(ds: Map[Dot, A]): CausalContext = CausalContext.fromSet(ds.keySet)
 
-    private val wcm = WithContext.withContextFun[A]
+    private val wcm = WithContextMerge.perDot[A]
     export wcm.mergePartial
 
     override def empty: Map[Dot, A] = Map.empty[Dot, A]
 
-    override def leq(left: WithContext[Map[Dot, A]], right: WithContext[Map[Dot, A]]): Boolean = {
+    override def lteq(left: WithContext[Map[Dot, A]], right: WithContext[Map[Dot, A]]): Boolean = {
       val firstCondition = left.context.forall(right.context.contains)
       val secondCondition = right.store.keySet.forall { k =>
-        left.store.get(k).forall { l => UIJDLattice[A].leq(l, right.store(k)) }
+        left.store.get(k).forall { l => UIJDLattice[A].lteq(l, right.store(k)) }
       }
       val thirdCondition = {
         val diff = left.context.diff(DotFun[A].dots(left.store))
@@ -216,14 +217,14 @@ object DecomposableDotStore {
     * necessary so that the non-causal [[interfaces.EpocheInterface]] can be part of the [[DotPair]] that makes up
     * the state.
     */
-  def UIJDLatticeAsDecomposableDotStore[A: UIJDLattice]: DecomposableDotStore[A] = new DecomposableDotStore[A] {
+  implicit def UIJDLatticeAsDecomposableDotStore[A: UIJDLattice]: DecomposableDotStore[A] = new DecomposableDotStore[A] {
     override def dots(ds: A): CausalContext = CausalContext.empty
 
     override def mergePartial(left: WithContext[A], right: WithContext[A]): A =
       Lattice[A].merge(left.store, right.store)
 
-    override def leq(left: WithContext[A], right: WithContext[A]): Boolean =
-      UIJDLattice[A].leq(left.store, right.store)
+    override def lteq(left: WithContext[A], right: WithContext[A]): Boolean =
+      UIJDLattice[A].lteq(left.store, right.store)
 
     override def decompose(state: WithContext[A]): Iterable[WithContext[A]] = {
       UIJDLattice[A].decompose(state.store).map(WithContext(_, CausalContext.empty))

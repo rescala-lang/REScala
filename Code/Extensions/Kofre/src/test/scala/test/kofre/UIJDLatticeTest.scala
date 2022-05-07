@@ -10,12 +10,12 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 class IntAsUIJDLatticeTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "leq" in forAll { (a: Int, b: Int, c: Int) =>
     assert(
-      IntAsUIJDLattice.leq(a, a),
+      IntAsUIJDLattice.lteq(a, a),
       s"leq should be reflexive, but $a is not leq $a"
     )
 
     assert(
-      !(IntAsUIJDLattice.leq(a, b) && IntAsUIJDLattice.leq(b, c)) || IntAsUIJDLattice.leq(a, c),
+      !(IntAsUIJDLattice.lteq(a, b) && IntAsUIJDLattice.lteq(b, c)) || IntAsUIJDLattice.lteq(a, c),
       s"leq should be transitive, but $a leq $b and $b leq $c and $a is not leq $c"
     )
   }
@@ -64,12 +64,12 @@ class IntAsUIJDLatticeTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChec
 class SetAsUIJDLatticeTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "leq" in forAll { (a: Set[Int], b: Set[Int], c: Set[Int]) =>
     assert(
-      SetAsUIJDLattice.leq(a, a),
+      SetAsUIJDLattice.lteq(a, a),
       s"leq should be reflexive, but $a is not leq $a"
     )
 
     assert(
-      !(SetAsUIJDLattice.leq(a, b) && SetAsUIJDLattice.leq(b, c)) || SetAsUIJDLattice.leq(a, c),
+      !(SetAsUIJDLattice.lteq(a, b) && SetAsUIJDLattice.lteq(b, c)) || SetAsUIJDLattice.lteq(a, c),
       s"leq should be transitive, but $a leq $b and $b leq $c and $a is not leq $c"
     )
   }
@@ -118,12 +118,12 @@ class SetAsUIJDLatticeTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChec
 class OptionAsUIJDLatticeTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "leq" in forAll { (a: Option[Int], b: Option[Int], c: Option[Int]) =>
     assert(
-      OptionAsUIJDLattice[Int].leq(a, a),
+      OptionAsUIJDLattice[Int].lteq(a, a),
       s"leq should be reflexive, but $a is not leq $a"
     )
 
     assert(
-      !(OptionAsUIJDLattice[Int].leq(a, b) && OptionAsUIJDLattice[Int].leq(b, c)) || OptionAsUIJDLattice[Int].leq(a, c),
+      !(OptionAsUIJDLattice[Int].lteq(a, b) && OptionAsUIJDLattice[Int].lteq(b, c)) || OptionAsUIJDLattice[Int].lteq(a, c),
       s"leq should be transitive, but $a leq $b and $b leq $c and $a is not leq $c"
     )
   }
@@ -172,12 +172,12 @@ class OptionAsUIJDLatticeTest extends AnyFreeSpec with ScalaCheckDrivenPropertyC
 class MapAsUIJDLatticeTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "leq" in forAll { (a: Map[Int, Int], b: Map[Int, Int], c: Map[Int, Int]) =>
     assert(
-      MapAsUIJDLattice[Int, Int].leq(a, a),
+      MapAsUIJDLattice[Int, Int].lteq(a, a),
       s"leq should be reflexive, but $a is not leq $a"
     )
 
     assert(
-      !(MapAsUIJDLattice[Int, Int].leq(a, b) && MapAsUIJDLattice[Int, Int].leq(b, c)) || MapAsUIJDLattice[Int, Int].leq(
+      !(MapAsUIJDLattice[Int, Int].lteq(a, b) && MapAsUIJDLattice[Int, Int].lteq(b, c)) || MapAsUIJDLattice[Int, Int].lteq(
         a,
         c
       ),
@@ -229,15 +229,15 @@ class MapAsUIJDLatticeTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChec
 class PairAsUIJDLatticeTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "leq" in forAll { (a: (Set[Int], Set[Int]), b: (Set[Int], Set[Int]), c: (Set[Int], Set[Int])) =>
     assert(
-      PairAsUIJDLattice[Set[Int], Set[Int]].leq(a, a),
+      PairAsUIJDLattice[Set[Int], Set[Int]].lteq(a, a),
       s"leq should be reflexive, but $a is not leq $a"
     )
 
     assert(
-      !(PairAsUIJDLattice[Set[Int], Set[Int]].leq(a, b) && PairAsUIJDLattice[Set[Int], Set[Int]].leq(
+      !(PairAsUIJDLattice[Set[Int], Set[Int]].lteq(a, b) && PairAsUIJDLattice[Set[Int], Set[Int]].lteq(
         b,
         c
-      )) || PairAsUIJDLattice[Set[Int], Set[Int]].leq(a, c),
+      )) || PairAsUIJDLattice[Set[Int], Set[Int]].lteq(a, c),
       s"leq should be transitive, but $a leq $b and $b leq $c and $a is not leq $c"
     )
   }
@@ -302,15 +302,15 @@ class LexPairAsUIJDLatticeTest extends AnyFreeSpec with ScalaCheckDrivenProperty
 
   "leq" in forAll { (a: LexPair[Set[Int], Set[Int]], b: LexPair[Set[Int], Set[Int]], c: LexPair[Set[Int], Set[Int]]) =>
     assert(
-      LexPairAsUIJDLattice[Set[Int], Set[Int]].leq(a, a),
+      LexPairAsUIJDLattice[Set[Int], Set[Int]].lteq(a, a),
       s"leq should be reflexive, but $a is not leq $a"
     )
 
     assert(
-      !(LexPairAsUIJDLattice[Set[Int], Set[Int]].leq(a, b) && LexPairAsUIJDLattice[Set[Int], Set[Int]].leq(
+      !(LexPairAsUIJDLattice[Set[Int], Set[Int]].lteq(a, b) && LexPairAsUIJDLattice[Set[Int], Set[Int]].lteq(
         b,
         c
-      )) || LexPairAsUIJDLattice[Set[Int], Set[Int]].leq(a, c),
+      )) || LexPairAsUIJDLattice[Set[Int], Set[Int]].lteq(a, c),
       s"leq should be transitive, but $a leq $b and $b leq $c and $a is not leq $c"
     )
   }

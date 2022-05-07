@@ -21,9 +21,9 @@ object LexCounterInterface {
       new UIJDLattice[LexPair[A, B]] {
         override def empty: LexPair[A, B] = LexPair(UIJDLattice[A].empty, UIJDLattice[B].empty)
 
-        override def leq(left: LexPair[A, B], right: LexPair[A, B]): Boolean =
-          UIJDLattice[A].leq(left.fst, right.fst) && (
-            !UIJDLattice[A].leq(right.fst, left.fst) || UIJDLattice[B].leq(left.snd, right.snd)
+        override def lteq(left: LexPair[A, B], right: LexPair[A, B]): Boolean =
+          UIJDLattice[A].lteq(left.fst, right.fst) && (
+            !UIJDLattice[A].lteq(right.fst, left.fst) || UIJDLattice[B].lteq(left.snd, right.snd)
           )
 
         /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */

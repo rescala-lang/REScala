@@ -16,7 +16,7 @@ trait UIJDLattice[A] extends Lattice[A], Bottom[A], Decompose[A] {
 
   /** computes delta without state */
   def diff(state: A, delta: A): Option[A] = {
-    decompose(delta).filter(!leq(_, state)).reduceOption(merge)
+    decompose(delta).filter(!lteq(_, state)).reduceOption(merge)
   }
 
 }
@@ -31,24 +31,24 @@ object UIJDLattice {
   def bottom[A](implicit l: UIJDLattice[A]): A             = l.empty
 
   implicit class Operators[A: UIJDLattice](left: A):
-    def <=(right: A): Boolean  = UIJDLattice[A].leq(left, right)
+    def <=(right: A): Boolean  = UIJDLattice[A].lteq(left, right)
     def decompose: Iterable[A] = UIJDLattice[A].decompose(left)
 
   given IntAsUIJDLattice: UIJDLattice[Int] = new UIJDFromLattice[Int](_ max _) {
-    override def leq(left: Int, right: Int): Boolean  = left <= right
+    override def lteq(left: Int, right: Int): Boolean  = left <= right
     override def decompose(state: Int): Iterable[Int] = List(state)
     override def empty: Int                          = 0
   }
 
   given SetAsUIJDLattice[A]: UIJDLattice[Set[A]] = new UIJDFromLattice[Set[A]](setLattice) {
-    override def leq(left: Set[A], right: Set[A]): Boolean  = left subsetOf right
+    override def lteq(left: Set[A], right: Set[A]): Boolean  = left subsetOf right
     override def decompose(state: Set[A]): Iterable[Set[A]] = state.map(Set(_))
     override def empty: Set[A]                             = Set.empty[A]
   }
 
   given OptionAsUIJDLattice[A: UIJDLattice]: UIJDLattice[Option[A]] =
     new UIJDFromLattice[Option[A]](optionLattice) {
-      override def leq(left: Option[A], right: Option[A]): Boolean = (left, right) match {
+      override def lteq(left: Option[A], right: Option[A]): Boolean = (left, right) match {
         case (None, _)          => true
         case (Some(_), None)    => false
         case (Some(l), Some(r)) => l <= r
@@ -64,7 +64,7 @@ object UIJDLattice {
 
   given MapAsUIJDLattice[K, V: UIJDLattice]: UIJDLattice[Map[K, V]] =
     new UIJDFromLattice[Map[K, V]](mapLattice) {
-      override def leq(left: Map[K, V], right: Map[K, V]): Boolean =
+      override def lteq(left: Map[K, V], right: Map[K, V]): Boolean =
         left.keySet.forall { k =>
           left.get(k) <= right.get(k)
         }
@@ -83,7 +83,7 @@ object UIJDLattice {
     new UIJDFromLattice[(A, B)](Lattice.derived) {
       override def empty: (A, B) = (UIJDLattice[A].empty, UIJDLattice[B].empty)
 
-      override def leq(left: (A, B), right: (A, B)): Boolean = (left, right) match {
+      override def lteq(left: (A, B), right: (A, B)): Boolean = (left, right) match {
         case ((ll, lr), (rl, rr)) =>
           (ll <= rl) && (lr <= rr)
       }
@@ -98,7 +98,7 @@ object UIJDLattice {
 
   given TripleAsUIJDLattice[A: UIJDLattice, B: UIJDLattice, C: UIJDLattice]: UIJDLattice[(A, B, C)] =
     new UIJDFromLattice[(A, B, C)](Lattice.derived) {
-      override def leq(left: (A, B, C), right: (A, B, C)): Boolean = (left, right) match {
+      override def lteq(left: (A, B, C), right: (A, B, C)): Boolean = (left, right) match {
         case ((la, lb, lc), (ra, rb, rc)) =>
           (la <= ra) && (lb <= rb) && (lc <= rc)
       }
@@ -115,7 +115,7 @@ object UIJDLattice {
     }
 
   def AtomicUIJDLattice[A]: UIJDLattice[A] = new UIJDLattice[A] {
-    override def leq(left: A, right: A): Boolean  = false
+    override def lteq(left: A, right: A): Boolean  = false
     override def decompose(state: A): Iterable[A] = List(state)
     override def empty: A = throw new UnsupportedOperationException("Can't compute bottom of atomic type A")
     override def merge(left: A, right: A): A =
@@ -130,7 +130,7 @@ object UIJDLattice {
 
   given contextUIJDLattice[D: DecomposableDotStore]: UIJDLattice[WithContext[D]] =
     new UIJDFromLattice[WithContext[D]](contextLattice) {
-      override def leq(left: WithContext[D], right: WithContext[D]): Boolean = DecomposableDotStore[D].leq(left, right)
+      override def lteq(left: WithContext[D], right: WithContext[D]): Boolean = DecomposableDotStore[D].lteq(left, right)
 
       /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
       override def decompose(state: WithContext[D]): Iterable[WithContext[D]] = DecomposableDotStore[D].decompose(state)

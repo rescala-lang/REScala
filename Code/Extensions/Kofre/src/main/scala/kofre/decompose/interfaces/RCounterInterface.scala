@@ -19,7 +19,7 @@ import kofre.causality.Dot
   */
 object RCounterInterface {
   implicit def IntPairAsUIJDLattice: UIJDLattice[(Int, Int)] = new UIJDLattice[(Int, Int)] {
-    override def leq(left: (Int, Int), right: (Int, Int)): Boolean = (left, right) match {
+    override def lteq(left: (Int, Int), right: (Int, Int)): Boolean = (left, right) match {
       case ((linc, ldec), (rinc, rdec)) =>
         linc <= rinc && ldec <= rdec
     }

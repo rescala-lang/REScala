@@ -39,7 +39,7 @@ object RGAInterface {
 
   object RGANode {
     implicit def RGANodeAsUIJDLattice[A]: UIJDLattice[RGANode[A]] = new UIJDLattice[RGANode[A]] {
-      override def leq(left: RGANode[A], right: RGANode[A]): Boolean = (left, right) match {
+      override def lteq(left: RGANode[A], right: RGANode[A]): Boolean = (left, right) match {
         case (Dead(), _)            => false
         case (_, Dead())            => true
         case (Alive(lv), Alive(rv)) => rv.laterThan(lv)

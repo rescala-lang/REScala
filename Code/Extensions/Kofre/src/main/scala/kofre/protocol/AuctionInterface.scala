@@ -14,7 +14,7 @@ object AuctionInterface {
 
   object Status {
     implicit val StatusAsUIJDLattice: UIJDLattice[Status] = new UIJDLattice[Status] {
-      override def leq(left: Status, right: Status): Boolean = (left, right) match {
+      override def lteq(left: Status, right: Status): Boolean = (left, right) match {
         case (Closed, Open) => false
         case _              => true
       }
@@ -44,9 +44,9 @@ object AuctionInterface {
 
   case object AuctionData {
     implicit val AuctionDataAsUIJDLattice: UIJDLattice[AuctionData] = new UIJDLattice[AuctionData] {
-      override def leq(left: AuctionData, right: AuctionData): Boolean = (left, right) match {
+      override def lteq(left: AuctionData, right: AuctionData): Boolean = (left, right) match {
         case (AuctionData(lb, ls, _), AuctionData(rb, rs, _)) =>
-          UIJDLattice[Set[Bid]].leq(lb, rb) && UIJDLattice[Status].leq(ls, rs)
+          UIJDLattice[Set[Bid]].lteq(lb, rb) && UIJDLattice[Status].lteq(ls, rs)
       }
 
       override def decompose(state: AuctionData): Iterable[AuctionData] =

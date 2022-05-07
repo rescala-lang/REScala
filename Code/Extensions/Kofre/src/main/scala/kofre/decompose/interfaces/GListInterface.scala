@@ -25,7 +25,7 @@ object GListInterface {
 
   implicit def GListAsUIJDLattice[E]: UIJDLattice[GList[E]] =
     new UIJDLattice[Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]]] {
-      override def leq(
+      override def lteq(
           left: Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]],
           right: Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]]
       ): Boolean =
