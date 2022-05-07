@@ -58,11 +58,11 @@ object RGAInterface {
     }
   }
 
-  type RGA[E] = WithContext[(Epoche[GListInterface.GList[Dot]], DotFun[RGANode[E]])]
+  type RGA[E] = WithContext[(Epoche[GListInterface.GList[Dot]], Map[Dot, RGANode[E]])]
 
   trait RGACompanion {
     type State[E]    = RGAInterface.RGA[E]
-    type Embedded[E] = (Epoche[GListInterface.GList[Dot]], DotFun[RGANode[E]])
+    type Embedded[E] = (Epoche[GListInterface.GList[Dot]], Map[Dot, RGANode[E]])
 
     implicit val ForcedWriteAsUIJDLattice: UIJDLattice[Epoche[GListInterface.GList[Dot]]] =
       Epoche.epocheAsUIJDLattice[GListInterface.GList[Dot]]
@@ -73,7 +73,7 @@ object RGAInterface {
 
     def make(
         epoche: Epoche[GListInterface.GList[Dot]] = bottom.store._1,
-        df: DotFun[RGANode[E]] = bottom.store._2,
+        df: Map[Dot, RGANode[E]] = bottom.store._2,
         cc: CausalContext = bottom.context
     ): RGA[E] = WithContext((epoche, df), cc)
   }

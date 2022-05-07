@@ -2,8 +2,8 @@ package kofre.dotbased
 
 import kofre.Lattice
 import kofre.causality.{CausalContext, Dot}
-import kofre.dotbased.DotStore
-import kofre.dotbased.DotStore.DotFun
+import kofre.dotbased.AsCausalContext
+import kofre.dotbased.AsCausalContext.DotFun
 import kofre.Lattice.Operators
 import kofre.decompose.{DecomposableDotStore, UIJDLattice}
 
@@ -16,7 +16,7 @@ trait WithContextMerge[A] {
 
 // See: Delta state replicated data types (https://doi.org/10.1016/j.jpdc.2017.08.003)
 object WithContext {
-  def empty[D: DotStore]: WithContext[D] = WithContext(DotStore[D].empty, CausalContext.empty)
+  def empty[D: AsCausalContext]: WithContext[D] = WithContext(AsCausalContext[D].empty, CausalContext.empty)
 
 
   // (s, c) ⨆ (s', c') = ((s ∩ s') ∪ (s \ c') ∪ (s' \ c), c ∪ c')
@@ -55,17 +55,17 @@ object WithContext {
 
   // (m, c) ⨆ (m', c') = ( {k -> v(k) | k ∈ dom m ∩ dom m' ∧ v(k) ≠ ⊥}, c ∪ c')
   //                      where v(k) = fst((m(k), c) ⨆ (m'(k), c'))
-  implicit def CausalWithDotMapLattice[K, V: DotStore](implicit
-      vLattice: Lattice[WithContext[V]]
+  implicit def CausalWithDotMapLattice[K, V: AsCausalContext](implicit
+                                                              vLattice: Lattice[WithContext[V]]
   ): Lattice[WithContext[Map[K, V]]] =
     (left: WithContext[Map[K, V]], right: WithContext[Map[K, V]]) =>
       WithContext(
         ((left.store.keySet union right.store.keySet) map { key =>
-          val leftCausalStore  = WithContext(left.store.getOrElse(key, DotStore[V].empty), left.context)
-          val rightCausalStore = WithContext(right.store.getOrElse(key, DotStore[V].empty), right.context)
+          val leftCausalStore  = WithContext(left.store.getOrElse(key, AsCausalContext[V].empty), left.context)
+          val rightCausalStore = WithContext(right.store.getOrElse(key, AsCausalContext[V].empty), right.context)
           key -> Lattice.merge(leftCausalStore, rightCausalStore).store
         } filterNot {
-          case (key, store) => DotStore[V].empty == store
+          case (key, store) => AsCausalContext[V].empty == store
         }).toMap,
         left.context.union(right.context)
       )

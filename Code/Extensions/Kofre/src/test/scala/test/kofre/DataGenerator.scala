@@ -69,15 +69,15 @@ object DataGenerator {
 
   implicit val arbDotSet: Arbitrary[Set[Dot]] = Arbitrary(genDotSet)
 
-  def genDotFun[A](implicit g: Gen[A]): Gen[DotFun[A]] = for {
+  def genDotFun[A](implicit g: Gen[A]): Gen[Map[Dot, A]] = for {
     n      <- Gen.posNum[Int]
     dots   <- Gen.containerOfN[List, Dot](n, genDot)
     values <- Gen.containerOfN[List, A](n, g)
   } yield (dots zip values).toMap
 
-  implicit def arbDotFun[A](implicit g: Gen[A]): Arbitrary[DotFun[A]] = Arbitrary(genDotFun)
+  implicit def arbDotFun[A](implicit g: Gen[A]): Arbitrary[Map[Dot, A]] = Arbitrary(genDotFun)
 
-  def genDotMap[K, V: DecomposableDotStore](implicit gk: Gen[K], gv: Gen[V]): Gen[DotMap[K, V]] = (for {
+  def genDotMap[K, V: DecomposableDotStore](implicit gk: Gen[K], gv: Gen[V]): Gen[Map[K, V]] = (for {
     n      <- Gen.posNum[Int]
     keys   <- Gen.containerOfN[List, K](n, gk)
     values <- Gen.containerOfN[List, V](n, gv)
@@ -87,6 +87,6 @@ object DataGenerator {
     dotsIter.size == dotsSet.size
   }
 
-  implicit def arbDotMap[K, V: DecomposableDotStore](implicit gk: Gen[K], gv: Gen[V]): Arbitrary[DotMap[K, V]] =
+  implicit def arbDotMap[K, V: DecomposableDotStore](implicit gk: Gen[K], gv: Gen[V]): Arbitrary[Map[K, V]] =
     Arbitrary(genDotMap)
 }

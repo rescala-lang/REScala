@@ -11,7 +11,7 @@ import kofre.dotbased.WithContext
   * When an element is concurrently added and removed/cleared from the set then the add operation wins, i.e. the resulting set contains the element.
   */
 object AWSetInterface {
-  type Embedded[E] = DotMap[E, CausalContext]
+  type Embedded[E] = Map[E, CausalContext]
   type AWSet[E]    = WithContext[Embedded[E]]
   object AWSet:
     def empty[E]: AWSet[E] = WithContext(Map.empty, CausalContext.empty)
@@ -100,7 +100,7 @@ object AWSetInterface {
     val bottom: AWSet[E] = UIJDLattice[AWSet[E]].empty
 
     def make(
-        dm: DotMap[E, CausalContext] = bottom.store,
+        dm: Map[E, CausalContext] = bottom.store,
         cc: CausalContext = bottom.context
     ): AWSet[E] = WithContext(dm, cc)
   }

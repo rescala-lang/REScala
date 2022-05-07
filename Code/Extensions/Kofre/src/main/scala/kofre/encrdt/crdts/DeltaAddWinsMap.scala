@@ -1,14 +1,14 @@
 package kofre.encrdt.crdts
 
-import kofre.dotbased.DotStore.*
+import kofre.dotbased.AsCausalContext.*
 import kofre.causality.CausalContext
-import kofre.dotbased.{WithContext, DotStore}
+import kofre.dotbased.{WithContext, AsCausalContext}
 
 // See: Delta state replicated data types (https://doi.org/10.1016/j.jpdc.2017.08.003)
 object DeltaAddWinsMap {
   type DeltaAddWinsMapLattice[K, V] = WithContext[Map[K, V]]
 
-  def empty[K, V: DotStore]: DeltaAddWinsMapLattice[K, V] = WithContext(Map.empty, CausalContext.empty)
+  def empty[K, V: AsCausalContext]: DeltaAddWinsMapLattice[K, V] = WithContext(Map.empty, CausalContext.empty)
 
   /** Returns the '''delta''' that contains the recursive mutation performed by the `deltaMutator`.
     *
@@ -19,14 +19,14 @@ object DeltaAddWinsMap {
     * @tparam V The type of the value (needs to be a Delta CRDT)
     * @return The delta of the recursive delta-mutation
     */
-  def deltaMutate[K, V: DotStore](
+  def deltaMutate[K, V: AsCausalContext](
                                    key: K,
                                    deltaMutator: WithContext[V] => WithContext[V],
                                    map: DeltaAddWinsMapLattice[K, V]
   ): DeltaAddWinsMapLattice[K, V] = {
 
     deltaMutator(WithContext(
-      map.store.getOrElse(key, DotStore[V].empty),
+      map.store.getOrElse(key, AsCausalContext[V].empty),
       map.context
       )) match {
       case WithContext(dotStore, causalContext) => WithContext(
@@ -44,10 +44,10 @@ object DeltaAddWinsMap {
     * @tparam V The type of the value (needs to be a Delta CRDT)
     * @return The delta that contains the removal (and nothing else)
     */
-  def deltaRemove[K, V: DotStore](key: K, map: DeltaAddWinsMapLattice[K, V]): DeltaAddWinsMapLattice[K, V] =
+  def deltaRemove[K, V: AsCausalContext](key: K, map: DeltaAddWinsMapLattice[K, V]): DeltaAddWinsMapLattice[K, V] =
     WithContext(
       Map.empty,
-      map.store.get(key).map(DotStore[V].dots).getOrElse(CausalContext.empty)
+      map.store.get(key).map(AsCausalContext[V].dots).getOrElse(CausalContext.empty)
       )
 
   /** Returns the '''delta''' that removes all values from the `map`.
@@ -57,8 +57,8 @@ object DeltaAddWinsMap {
     * @tparam V The type of the value (needs to be a Delta CRDT)
     * @return The delta that contains the removal of all mappings
     */
-  def deltaClear[K, V: DotStore](map: DeltaAddWinsMapLattice[K, V]): DeltaAddWinsMapLattice[K, V] = WithContext(
+  def deltaClear[K, V: AsCausalContext](map: DeltaAddWinsMapLattice[K, V]): DeltaAddWinsMapLattice[K, V] = WithContext(
     Map.empty,
-    DotStore[Map[K, V]].dots(map.store)
+    AsCausalContext[Map[K, V]].dots(map.store)
     )
 }

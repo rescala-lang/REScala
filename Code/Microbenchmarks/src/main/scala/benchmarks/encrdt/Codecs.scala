@@ -6,7 +6,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, Jso
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import kofre.Defs.{Id, Time}
 import kofre.causality.{ArrayRanges, CausalContext, Dot}
-import kofre.dotbased.DotStore.DotSet
+import kofre.dotbased.AsCausalContext.DotSet
 import kofre.encrdt.crdts.{AddWinsLastWriterWinsMap, DeltaAddWinsLastWriterWinsMap}
 
 import java.util.UUID

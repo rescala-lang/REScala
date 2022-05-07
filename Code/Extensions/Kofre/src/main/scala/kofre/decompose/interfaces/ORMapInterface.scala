@@ -16,18 +16,18 @@ import kofre.dotbased.WithContext
   * as the DeltaMutator to mutateKey.
   */
 object ORMapInterface {
-  type ORMap[K, V] = WithContext[DotMap[K, V]]
+  type ORMap[K, V] = WithContext[Map[K, V]]
 
   trait ORMapCompanion {
     type State[K, V]    = ORMapInterface.ORMap[K, V]
-    type Embedded[K, V] = DotMap[K, V]
+    type Embedded[K, V] = Map[K, V]
   }
 
   private class DeltaStateFactory[K, V: DecomposableDotStore] {
     val bottom: ORMap[K, V] = UIJDLattice[ORMap[K, V]].empty
 
     def make(
-        dm: DotMap[K, V] = bottom.store,
+        dm: Map[K, V] = bottom.store,
         cc: CausalContext = bottom.context
     ): ORMap[K, V] = WithContext(dm, cc)
   }

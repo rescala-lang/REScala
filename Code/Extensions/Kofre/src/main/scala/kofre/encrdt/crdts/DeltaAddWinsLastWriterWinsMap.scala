@@ -4,7 +4,7 @@ import de.ckuessner.encrdt.crdts.interfaces.{Crdt, MapCrdt}
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap.{DeltaAddWinsLastWriterWinsMapLattice, timestampedValueLattice}
 import kofre.encrdt.crdts.DeltaAddWinsMap.DeltaAddWinsMapLattice
 import kofre.encrdt.lattices.LastWriterWinsTagLattice.lwwLattice
-import kofre.dotbased.DotStore.DotFun
+import kofre.dotbased.AsCausalContext.DotFun
 import kofre.Lattice
 import kofre.dotbased.WithContext
 

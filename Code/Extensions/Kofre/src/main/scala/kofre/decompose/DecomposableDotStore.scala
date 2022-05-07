@@ -61,14 +61,13 @@ object DecomposableDotStore {
   /** DotMap is a dot store implementation that maps keys of an arbitrary type K to values of a dot store type V. See
     * [[interfaces.ORMapInterface]] for a usage example.
     */
-  type DotMap[K, V] = Map[K, V]
-  implicit def DotMap[K, V: DecomposableDotStore]: DecomposableDotStore[DotMap[K, V]] = new DecomposableDotStore[DotMap[K, V]] {
-    override def dots(ds: DotMap[K, V]): CausalContext = ds.values.foldLeft(CausalContext.empty)((acc, v) => acc merge DecomposableDotStore[V].dots(v))
+  implicit def DotMap[K, V: DecomposableDotStore]: DecomposableDotStore[Map[K, V]] = new DecomposableDotStore[Map[K, V]] {
+    override def dots(ds: Map[K, V]): CausalContext = ds.values.foldLeft(CausalContext.empty)((acc, v) => acc merge DecomposableDotStore[V].dots(v))
 
     override def mergePartial(
-                               left: WithContext[DotMap[K, V]],
-                               right: WithContext[DotMap[K, V]]
-                             ): DotMap[K, V] = {
+                               left: WithContext[Map[K, V]],
+                               right: WithContext[Map[K, V]]
+                             ): Map[K, V] = {
       def mergeHelp(l: V, r: V): Option[V] = {
         val mergedVal = DecomposableDotStore[V].mergePartial(WithContext(l, left.context), WithContext(r, right.context))
         if (mergedVal == DecomposableDotStore[V].empty) None
@@ -97,9 +96,9 @@ object DecomposableDotStore {
       }
     }
 
-    override def empty: DotMap[K, V] = Map.empty[K, V]
+    override def empty: Map[K, V] = Map.empty[K, V]
 
-    override def leq(left: WithContext[DotMap[K, V]], right: WithContext[DotMap[K, V]]): Boolean = {
+    override def leq(left: WithContext[Map[K, V]], right: WithContext[Map[K, V]]): Boolean = {
       val firstCondition = left.context.forall(right.context.contains)
 
       def secondConditionHelper(keys: Iterable[K]): Boolean = keys.forall { k =>
@@ -114,17 +113,17 @@ object DecomposableDotStore {
       firstCondition && secondCondition
     }
 
-    override def decompose(state: WithContext[DotMap[K, V]]): Iterable[WithContext[DotMap[K, V]]] = {
+    override def decompose(state: WithContext[Map[K, V]]): Iterable[WithContext[Map[K, V]]] = {
       val added = for {
         k <- state.store.keys
         WithContext(atomicV, atomicCC) <- {
           val v = state.store.getOrElse(k, DecomposableDotStore[V].empty)
           DecomposableDotStore[V].decompose(WithContext(v, DecomposableDotStore[V].dots(v)))
         }
-      } yield WithContext(DotMap[K, V].empty.updated(k, atomicV), atomicCC)
+      } yield WithContext(Map.empty[K, V].updated(k, atomicV), atomicCC)
 
       val removed =
-        state.context.decompose(DotMap[K, V].dots(state.store).contains).map(WithContext(DotMap[K, V].empty, _))
+        state.context.decompose(DotMap[K, V].dots(state.store).contains).map(WithContext(Map.empty[K, V], _))
 
       added ++ removed
     }
@@ -180,9 +179,6 @@ object DecomposableDotStore {
   /** DotFun is a dot store implementation that maps dots to values of a Lattice type. See [[interfaces.MVRegisterInterface]]
     * for a usage example.
     */
-  type DotFun[A] = Map[Dot, A]
-
-
   implicit def DotFun[A: UIJDLattice]: DecomposableDotStore[Map[Dot, A]] = new DecomposableDotStore[Map[Dot, A]] {
     override def dots(ds: Map[Dot, A]): CausalContext = CausalContext.fromSet(ds.keySet)
 

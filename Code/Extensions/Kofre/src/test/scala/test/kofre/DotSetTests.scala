@@ -1,8 +1,8 @@
 package test.kofre
 
 import kofre.causality.{CausalContext, Dot}
-import kofre.dotbased.DotStore.*
-import kofre.dotbased.{WithContext, DotStore}
+import kofre.dotbased.AsCausalContext.*
+import kofre.dotbased.{WithContext, AsCausalContext}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks

@@ -4,6 +4,7 @@ import kofre.causality.CausalContext
 import kofre.decompose.*
 import kofre.syntax.OpsSyntaxHelper
 import kofre.decompose.DecomposableDotStore.DotFun
+import kofre.causality.Dot
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegister
 import kofre.dotbased.WithContext
 
@@ -13,7 +14,7 @@ import kofre.dotbased.WithContext
   * When multiple values are written concurrently, reading the MVRegister returns a set holding all these values.
   */
 object MVRegisterInterface {
-  type MVRegister[A] = WithContext[DotFun[A]]
+  type MVRegister[A] = WithContext[Map[Dot, A]]
 
   implicit class MVRegisterSyntax[C, A](container: C) extends OpsSyntaxHelper[C, MVRegister[A]](container) {
 

@@ -1,7 +1,7 @@
 package kofre.encrdt.crdts
 
 import kofre.Lattice
-import kofre.dotbased.{WithContext, DotStore}
+import kofre.dotbased.{WithContext, AsCausalContext}
 import kofre.causality.CausalContext
 import kofre.encrdt.crdts.DeltaAddWinsSet.DeltaAddWinsSetLattice
 
@@ -77,6 +77,6 @@ object DeltaAddWinsSet {
     */
   def deltaClear[E](set: DeltaAddWinsSetLattice[E]): DeltaAddWinsSetLattice[E] = WithContext(
     Map.empty,
-    DotStore[Map[E, CausalContext]].dots(set.store)
+    AsCausalContext[Map[E, CausalContext]].dots(set.store)
     )
 }
