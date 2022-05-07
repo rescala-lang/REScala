@@ -2,7 +2,7 @@ package kofre.decompose
 
 import kofre.Lattice
 import kofre.causality.{CausalContext, Dot}
-import kofre.dotbased.{WithContext, WithContextMerge}
+import kofre.dotbased.{AsCausalContext, WithContext, WithContextMerge}
 import kofre.Lattice.Operators
 
 
@@ -65,37 +65,13 @@ object DecomposableDotStore {
   implicit def DotMap[K, V: DecomposableDotStore]: DecomposableDotStore[Map[K, V]] = new DecomposableDotStore[Map[K, V]] {
     override def dots(ds: Map[K, V]): CausalContext = ds.values.foldLeft(CausalContext.empty)((acc, v) => acc merge DecomposableDotStore[V].dots(v))
 
-    override def mergePartial(
-                               left: WithContext[Map[K, V]],
-                               right: WithContext[Map[K, V]]
-                             ): Map[K, V] = {
-      def mergeHelp(l: V, r: V): Option[V] = {
-        val mergedVal = DecomposableDotStore[V].mergePartial(WithContext(l, left.context), WithContext(r, right.context))
-        if (mergedVal == DecomposableDotStore[V].empty) None
-        else Some(mergedVal)
-      }
-
-      var rightSet = right.context
-
-      val added = right.store.foldLeft(left.store) { case (currentLeft, (k, r)) =>
-        rightSet = rightSet.subtract(DecomposableDotStore[V].dots(r))
-        currentLeft.updatedWith(k) {
-          case None    => mergeHelp(DecomposableDotStore[V].empty, r)
-          case Some(l) => mergeHelp(l, r)
-        }
-      }
-
-      if (rightSet.isEmpty) added
-      else {
-        added.foldLeft(added) { case (current, (k, l)) =>
-          if (right.store.contains(k)) current
-          else mergeHelp(l, DecomposableDotStore[V].empty) match {
-            case None         => current.removed(k)
-            case Some(merged) => current.updated(k, merged)
-          }
-        }
-      }
+    given AsCausalContext[V] with {
+      override def dots(a:  V): CausalContext = DecomposableDotStore[V].dots(a)
+      override def empty: V = DecomposableDotStore[V].empty
     }
+
+    val withContextMerge: WithContextMerge[Map[K, V]] = WithContextMerge.dotMapMerge
+    export withContextMerge.mergePartial
 
     override def empty: Map[K, V] = Map.empty[K, V]
 

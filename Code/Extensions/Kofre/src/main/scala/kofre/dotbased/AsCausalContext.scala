@@ -10,6 +10,7 @@ import kofre.causality.{CausalContext, Dot}
   */
 trait AsCausalContext[A] {
   def dots(a: A): CausalContext
+  extension (a: A) def asContext: CausalContext = dots(a)
   def empty: A
 }
 
@@ -17,27 +18,24 @@ object AsCausalContext {
 
   def apply[A](implicit dotStore: AsCausalContext[A]): dotStore.type = dotStore
 
-  implicit def dotFunDotStore[V]: AsCausalContext[Map[Dot, V]] = new AsCausalContext[Map[Dot, V]] {
+  given dotFunDotStore[V]: AsCausalContext[Map[Dot, V]] with {
     override def empty: Map[Dot, V]                         = Map.empty
     override def dots(dotStore: Map[Dot, V]): CausalContext = CausalContext.fromSet(dotStore.keySet)
   }
 
-  implicit val CausalContextDotStoreInstance: AsCausalContext[CausalContext] =
-    new AsCausalContext[CausalContext] {
-      override def dots(a: CausalContext): CausalContext = a
-      override def empty: CausalContext                  = CausalContext.empty
-    }
+  given CausalContextDotStoreInstance: AsCausalContext[CausalContext] with {
+    override def dots(a: CausalContext): CausalContext = a
+    override def empty: CausalContext                  = CausalContext.empty
+  }
 
-  implicit val DotSetInstance: AsCausalContext[Set[Dot]] =
-    new AsCausalContext[Set[Dot]] {
-      override def dots(a: Set[Dot]): CausalContext = CausalContext.fromSet(a)
-      override def empty: Set[Dot]                  = Set.empty
-    }
+  given DotSetInstance: AsCausalContext[Set[Dot]] with {
+    override def dots(a: Set[Dot]): CausalContext = CausalContext.fromSet(a)
+    override def empty: Set[Dot]                  = Set.empty
+  }
 
-  implicit def DotMapInstance[Key, A: AsCausalContext]: AsCausalContext[Map[Key, A]] =
-    new AsCausalContext[Map[Key, A]] {
-      override def dots(a: Map[Key, A]): CausalContext =
-        a.valuesIterator.foldLeft(CausalContext.empty)((acc, v) => acc.union(AsCausalContext[A].dots(v)))
-      override def empty: Map[Key, A] = Map.empty
-    }
+  given DotMapInstance[Key, A: AsCausalContext]: AsCausalContext[Map[Key, A]] with {
+    override def dots(a: Map[Key, A]): CausalContext =
+      a.valuesIterator.foldLeft(CausalContext.empty)((acc, v) => acc.union(AsCausalContext[A].dots(v)))
+    override def empty: Map[Key, A] = Map.empty
+  }
 }
