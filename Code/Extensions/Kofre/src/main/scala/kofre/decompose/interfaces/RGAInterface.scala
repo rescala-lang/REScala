@@ -3,7 +3,7 @@ package kofre.decompose.interfaces
 import kofre.causality.{CausalContext, Dot}
 import kofre.decompose.*
 import kofre.syntax.{AllPermissionsCtx, ArdtOpsContains, MutateCtx, OpsSyntaxHelper}
-import kofre.decompose.DecomposableDotStore.{DotFun, DotLess, DotPair}
+import kofre.decompose.DecomposableDotStore.{DotFun, DotPair}
 import kofre.decompose.interfaces.GListInterface.{GListAsUIJDLattice, GListSyntax}
 import kofre.dotbased.WithContext
 import kofre.primitives.Epoche
@@ -69,6 +69,7 @@ object RGAInterface {
   }
 
   private class DeltaStateFactory[E] {
+    given DecomposableDotStore[Epoche[GListInterface.GList[Dot]]] = DecomposableDotStore.UIJDLatticeAsDecomposableDotStore
     val bottom: RGA[E] = UIJDLattice[RGA[E]].empty
 
     def make(

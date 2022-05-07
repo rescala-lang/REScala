@@ -20,10 +20,13 @@ object WithContext {
 
 
   // (s, c) ⨆ (s', c') = ((s ∩ s') ∪ (s \ c') ∪ (s' \ c), c ∪ c')
-  implicit def CausalWithDotSetLattice: Lattice[WithContext[Set[Dot]]] = UIJDLattice.CausalAsUIJDLattice
+  implicit def CausalWithDotSetLattice: Lattice[WithContext[Set[Dot]]] = {
+    given DecomposableDotStore[Set[Dot]] = DecomposableDotStore.UIJDLatticeAsDecomposableDotStore
+    UIJDLattice.contextUIJDLattice
+  }
 
   // (s, c) ⨆ (s', c') = ((s ∩ s') ∪ (s \ c') ∪ (s' \ c), c ∪ c')
-  implicit def CausalWithContextSetLattice: Lattice[WithContext[CausalContext]] = UIJDLattice.CausalAsUIJDLattice
+  implicit def CausalWithContextSetLattice: Lattice[WithContext[CausalContext]] = UIJDLattice.contextUIJDLattice
 
 
   given withContextFun[A: Lattice]: WithContextMerge[Map[Dot, A]] with {
@@ -52,12 +55,11 @@ object WithContext {
       left.context.merge(right.context)
     )
   }
+  
 
   // (m, c) ⨆ (m', c') = ( {k -> v(k) | k ∈ dom m ∩ dom m' ∧ v(k) ≠ ⊥}, c ∪ c')
   //                      where v(k) = fst((m(k), c) ⨆ (m'(k), c'))
-  implicit def CausalWithDotMapLattice[K, V: AsCausalContext](implicit
-                                                              vLattice: Lattice[WithContext[V]]
-  ): Lattice[WithContext[Map[K, V]]] =
+  implicit def CausalWithDotMapLattice[K, V: AsCausalContext](implicit vlattice: Lattice[WithContext[V]]): Lattice[WithContext[Map[K, V]]] =
     (left: WithContext[Map[K, V]], right: WithContext[Map[K, V]]) =>
       WithContext(
         ((left.store.keySet union right.store.keySet) map { key =>

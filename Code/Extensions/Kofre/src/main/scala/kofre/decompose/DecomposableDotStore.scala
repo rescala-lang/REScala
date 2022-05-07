@@ -216,8 +216,7 @@ object DecomposableDotStore {
     * necessary so that the non-causal [[interfaces.EpocheInterface]] can be part of the [[DotPair]] that makes up
     * the state.
     */
-  type DotLess[A] = A
-  implicit def DotLess[A: UIJDLattice]: DecomposableDotStore[A] = new DecomposableDotStore[A] {
+  def UIJDLatticeAsDecomposableDotStore[A: UIJDLattice]: DecomposableDotStore[A] = new DecomposableDotStore[A] {
     override def dots(ds: A): CausalContext = CausalContext.empty
 
     override def mergePartial(left: WithContext[A], right: WithContext[A]): A =

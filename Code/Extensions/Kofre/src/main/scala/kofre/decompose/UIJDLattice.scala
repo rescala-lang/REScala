@@ -123,13 +123,13 @@ object UIJDLattice {
       else throw new UnsupportedOperationException(s"Can't merge atomic type A, left: $left, right: $right")
   }
 
-  given causalLattice[D: DecomposableDotStore]: Lattice[WithContext[D]] = (left, right) =>
+  given contextLattice[D: DecomposableDotStore]: Lattice[WithContext[D]] = (left, right) =>
     val dsMerged = DecomposableDotStore[D].mergePartial(left, right)
     val ccMerged = left.context merge right.context
     WithContext[D](dsMerged, ccMerged)
 
-  given CausalAsUIJDLattice[D: DecomposableDotStore]: UIJDLattice[WithContext[D]] =
-    new UIJDFromLattice[WithContext[D]](causalLattice) {
+  given contextUIJDLattice[D: DecomposableDotStore]: UIJDLattice[WithContext[D]] =
+    new UIJDFromLattice[WithContext[D]](contextLattice) {
       override def leq(left: WithContext[D], right: WithContext[D]): Boolean = DecomposableDotStore[D].leq(left, right)
 
       /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
