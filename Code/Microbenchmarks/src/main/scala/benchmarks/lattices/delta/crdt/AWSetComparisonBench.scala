@@ -2,7 +2,7 @@ package benchmarks.lattices.delta.crdt
 
 import kofre.base.DecomposeLattice
 import org.openjdk.jmh.annotations._
-import kofre.decompose.interfaces.AWSetInterface.{AWSet, AWSetSyntax}
+import kofre.predef.AddWinsSet.{AWSet, AWSetSyntax}
 import kofre.syntax.AllPermissionsCtx
 
 import java.util.concurrent.TimeUnit

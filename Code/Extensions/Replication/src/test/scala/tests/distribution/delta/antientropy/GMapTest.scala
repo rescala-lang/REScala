@@ -2,7 +2,7 @@ package tests.distribution.delta.antientropy
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import kofre.decompose.interfaces.AWSetInterface.{AWSet, AWSetSyntax}
+import kofre.predef.AddWinsSet.{AWSet, AWSetSyntax}
 import kofre.decompose.interfaces.GMapInterface.GMap
 import kofre.syntax.AllPermissionsCtx
 import org.scalatest.freespec.AnyFreeSpec

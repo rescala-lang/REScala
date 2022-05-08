@@ -2,18 +2,15 @@ package tests.distribution.delta.antientropy
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import kofre.decompose.interfaces.AWSetInterface
-import kofre.decompose.interfaces.AWSetInterface.AWSet
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.lattices.delta.JsoniterCodecs._
-
 import rescala.extra.replication.AntiEntropy
-import kofre.decompose.interfaces.AWSetInterface.AWSetSyntax
 import kofre.decompose.interfaces.ORMapInterface.ORMap
 import kofre.syntax.AllPermissionsCtx
 import kofre.decompose.interfaces.ORMapInterface.ORMapSyntax
 import kofre.decompose.containers.{AntiEntropyCRDT, Network}
+import kofre.predef.AddWinsSet
 
 import scala.collection.mutable
 
@@ -23,31 +20,31 @@ class ORMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "mutateKey/queryKey" in { (add: List[Int], remove: List[Int], k: Int) =>
     val network = new Network(0, 0, 0)
     val aea =
-      new AntiEntropy[ORMap[Int, AWSetInterface.Embedded[Int]]]("a", network, mutable.Buffer())
-    val aeb = new AntiEntropy[AWSet[Int]]("b", network, mutable.Buffer())
+      new AntiEntropy[ORMap[Int, AddWinsSet.Embedded[Int]]]("a", network, mutable.Buffer())
+    val aeb = new AntiEntropy[AddWinsSet[Int]]("b", network, mutable.Buffer())
 
     val set = {
-      val added = add.foldLeft(AntiEntropyCRDT[AWSet[Int]](aeb)) {
+      val added = add.foldLeft(AntiEntropyCRDT(aeb)) {
         case (s, e) => s.add(e)
       }
 
       remove.foldLeft(added) {
-        case (s, e) => new AWSetSyntax(s).remove(e)
+        case (s, e) => s.remove(e)
       }
     }
 
     val map = {
-      val added = add.foldLeft(AntiEntropyCRDT[ORMap[Int, AWSetInterface.Embedded[Int]]](aea)) {
+      val added = add.foldLeft(AntiEntropyCRDT[ORMap[Int, AddWinsSet.Embedded[Int]]](aea)) {
         case (m, e) =>
-          m.mutateKey(k, (id, st) => st.add(e)(AllPermissionsCtx.withID(id)))
+          m.mutateKey(k, (id, st) => AddWinsSet(st).add(e)(AllPermissionsCtx.withID(id)).inner)
       }
 
       remove.foldLeft(added) {
-        case (m, e) => m.mutateKey(k, (id, st) => st.remove(e)(AllPermissionsCtx.withID(id), implicitly))
+        case (m, e) => m.mutateKey(k, (id, st) => AddWinsSet(st).remove(e)(AllPermissionsCtx.withID(id)).inner)
       }
     }
 
-    val mapElements = map.queryKey(k).elements
+    val mapElements = AddWinsSet(map.queryKey(k)).elements
 
     assert(
       mapElements == set.elements,
@@ -58,14 +55,14 @@ class ORMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "remove" in { (add: List[Int], remove: List[Int], k: Int) =>
     val network = new Network(0, 0, 0)
     val aea =
-      new AntiEntropy[ORMap[Int, AWSetInterface.Embedded[Int]]]("a", network, mutable.Buffer())
-    val aeb = new AntiEntropy[AWSet[Int]]("b", network, mutable.Buffer())
+      new AntiEntropy[ORMap[Int, AddWinsSet.Embedded[Int]]]("a", network, mutable.Buffer())
+    val aeb = new AntiEntropy[AddWinsSet[Int]]("b", network, mutable.Buffer())
 
-    val empty = AntiEntropyCRDT[AWSet[Int]](aeb)
+    val empty = AntiEntropyCRDT[AddWinsSet[Int]](aeb)
 
     val map = {
-      val added = add.foldLeft(AntiEntropyCRDT[ORMap[Int, AWSetInterface.Embedded[Int]]](aea)) {
-        case (m, e) => m.mutateKey(k, (id, st) => st.add(e)(AllPermissionsCtx.withID(id)))
+      val added = add.foldLeft(AntiEntropyCRDT[ORMap[Int, AddWinsSet.Embedded[Int]]](aea)) {
+        case (m, e) => m.mutateKey(k, (id, st) => AddWinsSet(st).add(e)(AllPermissionsCtx.withID(id)).inner)
       }
 
       remove.foldLeft(added) {
@@ -75,7 +72,7 @@ class ORMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
     val removed = map.remove(k)
 
-    val queryResult = removed.queryKey(k).elements
+    val queryResult = AddWinsSet(removed.queryKey(k)).elements
 
     assert(
       queryResult == empty.elements,

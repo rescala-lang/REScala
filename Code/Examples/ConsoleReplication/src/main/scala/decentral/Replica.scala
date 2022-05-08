@@ -3,7 +3,7 @@ package decentral
 import decentral.Bindings._
 import kofre.base.DecomposeLattice
 import kofre.decompose.containers.ReactiveDeltaCRDT
-import kofre.decompose.interfaces.AWSetInterface.{AWSet, AWSetSyntax}
+import kofre.predef.AddWinsSet.{AWSet, AWSetSyntax}
 import kofre.decompose.Delta
 import loci.transmitter.{RemoteAccessException, RemoteRef}
 

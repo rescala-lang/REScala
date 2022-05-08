@@ -10,7 +10,7 @@ import kofre.decompose.TimedVal
 import kofre.causality.{CausalContext, Dot}
 import kofre.decompose.interfaces.LexCounterInterface.LexPair
 import kofre.contextual.WithContext
-import kofre.predef.{Epoche, GrowOnlyCounter, PosNegCounter}
+import kofre.predef.{AddWinsSet, Epoche, GrowOnlyCounter, PosNegCounter}
 
 import scala.annotation.nowarn
 
@@ -57,7 +57,7 @@ object JsoniterCodecs {
   /** AWSet */
 
   @nowarn("msg=never used")
-  implicit def AWSetStateCodec[E: JsonValueCodec]: JsonValueCodec[WithContext[Map[E, Set[Dot]]]] =
+  implicit def AWSetStateCodec[E: JsonValueCodec]: JsonValueCodec[AddWinsSet[E]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   @nowarn("msg=never used")

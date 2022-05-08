@@ -2,8 +2,9 @@ package kofre.rga
 
 import kofre.base.Defs.Id
 import kofre.base.Lattice
-import kofre.decompose.interfaces.AWSetInterface.AWSet
-import kofre.decompose.interfaces.AWSetInterface.AWSetSyntax
+import kofre.predef.AddWinsSet.AWSet
+import kofre.predef.AddWinsSet.AWSetSyntax
+import kofre.predef.AddWinsSet
 import kofre.syntax.AllPermissionsCtx
 
 import scala.collection.AbstractIterator
@@ -95,7 +96,7 @@ object DeltaSequence {
   }
 
   def empty[A]: DeltaSequence[A] =
-    DeltaSequence(AWSet.empty[kofre.rga.Vertex].add(Vertex.start)(using AllPermissionsCtx.withID(Vertex.start.id)), DeltaSequenceOrder(Map()), Map.empty)
+    DeltaSequence(AddWinsSet.empty[kofre.rga.Vertex].add(Vertex.start)(using AllPermissionsCtx.withID(Vertex.start.id)), DeltaSequenceOrder(Map()), Map.empty)
 
   implicit def deltaSequenceLattice[A]: Lattice[DeltaSequence[A]] =
     new Lattice[DeltaSequence[A]] {

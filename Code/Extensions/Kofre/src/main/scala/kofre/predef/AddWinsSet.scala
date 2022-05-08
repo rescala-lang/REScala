@@ -1,32 +1,39 @@
-package kofre.decompose.interfaces
+package kofre.predef
 
 import kofre.base.DecomposeLattice
 import kofre.causality.{CausalContext, Dot}
-import kofre.decompose.*
-import kofre.syntax.OpsSyntaxHelper
-import kofre.contextual.WithContextDecompose.*
 import kofre.contextual.WithContext
+import kofre.contextual.WithContextDecompose.*
+import kofre.decompose.*
+import kofre.predef.AddWinsSet
+import kofre.predef.AddWinsSet.Embedded
+import kofre.syntax.OpsSyntaxHelper
+
+
+case class AddWinsSet[E](inner: WithContext[Embedded[E]])
 
 /** An AWSet (Add-Wins Set) is a Delta CRDT modeling a set.
   *
   * When an element is concurrently added and removed/cleared from the set then the add operation wins, i.e. the resulting set contains the element.
   */
-object AWSetInterface {
+object AddWinsSet {
   type Embedded[E] = Map[E, CausalContext]
-  type AWSet[E]    = WithContext[Embedded[E]]
-  object AWSet:
-    def empty[E]: AWSet[E] = WithContext(Map.empty, CausalContext.empty)
+  type AWSet[E]    = AddWinsSet[E]
+
+  def empty[E]: AWSet[E] = AddWinsSet(WithContext(Map.empty, CausalContext.empty))
 
   extension [C, E](container: C) def asAWSet: AWSetSyntax[C, E] = AWSetSyntax(container)
 
+  given awsetLattice[E]: DecomposeLattice[AddWinsSet[E]] = DecomposeLattice.derived
+
   implicit class AWSetSyntax[C, E](container: C) extends OpsSyntaxHelper[C, AWSet[E]](container) {
 
-    def elements(using QueryP): Set[E] = current.store.keySet
+    def elements(using QueryP): Set[E] = current.inner.store.keySet
 
-    def contains(elem: E)(using QueryP): Boolean = current.store.contains(elem)
+    def contains(elem: E)(using QueryP): Boolean = current.inner.store.contains(elem)
 
     def add(e: E)(using MutationIDP): C = {
-      val WithContext(dm, cc) = current
+      val WithContext(dm, cc) = current.inner
       val nextDot             = cc.max(replicaID).fold(Dot(replicaID, 0))(_.advance)
       val v                   = dm.getOrElse(e, CausalContext.empty)
 
@@ -37,7 +44,7 @@ object AWSetInterface {
     }
 
     def addAll(elems: Iterable[E])(using MutationIDP): C = {
-      val WithContext(dm, cc) = current
+      val WithContext(dm, cc) = current.inner
       val nextCounter         = cc.nextTime(replicaID)
       val nextDots            = CausalContext.fromSet((nextCounter until nextCounter + elems.size).map(Dot(replicaID, _)))
 
@@ -55,7 +62,7 @@ object AWSetInterface {
     }
 
     def remove(e: E)(using MutationP): C = {
-      val WithContext(dm, _) = current
+      val WithContext(dm, _) = current.inner
       val v                  = dm.getOrElse(e, CausalContext.empty)
 
       deltaState[E].make(
@@ -64,7 +71,7 @@ object AWSetInterface {
     }
 
     def removeAll(elems: Iterable[E])(using MutationP): C = {
-      val WithContext(dm, _) = current
+      val WithContext(dm, _) = current.inner
       val dotsToRemove       = elems.foldLeft(CausalContext.empty) {
         case (dots, e) => dm.get(e) match {
             case Some(ds) => dots union ds
@@ -78,7 +85,7 @@ object AWSetInterface {
     }
 
     def removeBy(cond: E => Boolean)(using MutationP): C = {
-      val WithContext(dm, _) = current
+      val WithContext(dm, _) = current.inner
       val removedDots        = dm.collect {
         case (k, v) if cond(k) => v
       }.foldLeft(CausalContext.empty)(_ union _)
@@ -89,7 +96,7 @@ object AWSetInterface {
     }
 
     def clear()(using MutationP): C = {
-      val WithContext(dm, _) = current
+      val WithContext(dm, _) = current.inner
       deltaState[E].make(
         cc = DotMap[E, CausalContext].dots(dm)
       )
@@ -98,12 +105,11 @@ object AWSetInterface {
   }
 
   private class DeltaStateFactory[E] {
-    val bottom: AWSet[E] = DecomposeLattice[AWSet[E]].empty
 
     def make(
-        dm: Map[E, CausalContext] = bottom.store,
-        cc: CausalContext = bottom.context
-    ): AWSet[E] = WithContext(dm, cc)
+        dm: Map[E, CausalContext] = empty.inner.store,
+        cc: CausalContext = empty.inner.context
+    ): AWSet[E] = AddWinsSet(WithContext(dm, cc))
   }
 
   private def deltaState[E]: DeltaStateFactory[E] = new DeltaStateFactory[E]

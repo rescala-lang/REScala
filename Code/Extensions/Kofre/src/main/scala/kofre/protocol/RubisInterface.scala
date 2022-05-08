@@ -3,9 +3,9 @@ package kofre.protocol
 import kofre.base.{Bottom, DecomposeLattice}
 import kofre.contextual.WithContextDecompose
 import kofre.decompose.*
-import kofre.decompose.interfaces.AWSetInterface
-import kofre.decompose.interfaces.AWSetInterface.AWSetSyntax
+import kofre.predef.AddWinsSet.AWSetSyntax
 import kofre.decompose.interfaces.EWFlagInterface.EWFlag
+import kofre.predef.AddWinsSet
 import kofre.protocol.AuctionInterface
 import kofre.protocol.AuctionInterface.Bid.User
 import kofre.syntax.{AllPermissionsCtx, OpsSyntaxHelper}
@@ -23,15 +23,15 @@ import kofre.syntax.{AllPermissionsCtx, OpsSyntaxHelper}
 object RubisInterface {
   type AID = String
 
-  type State = (AWSetInterface.AWSet[(User, String)], Map[User, String], Map[AID, AuctionInterface.AuctionData])
+  type State = (AddWinsSet.AWSet[(User, String)], Map[User, String], Map[AID, AuctionInterface.AuctionData])
 
   private class DeltaStateFactory {
-    val bottom: State = (Bottom.empty, Map.empty, Map.empty)
+    val bottom: State = (AddWinsSet.empty, Map.empty, Map.empty)
 
     def make(
-        userRequests: AWSetInterface.AWSet[(User, String)] = bottom._1,
-        users: Map[User, String] = bottom._2,
-        auctions: Map[AID, AuctionInterface.AuctionData] = bottom._3
+              userRequests: AddWinsSet.AWSet[(User, String)] = bottom._1,
+              users: Map[User, String] = bottom._2,
+              auctions: Map[AID, AuctionInterface.AuctionData] = bottom._3
     ): State = (userRequests, users, auctions)
   }
 

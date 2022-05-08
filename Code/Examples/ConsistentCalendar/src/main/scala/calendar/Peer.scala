@@ -7,8 +7,8 @@ import loci.registry.Registry
 import loci.transmitter.{RemoteAccessException, RemoteRef}
 import central.SyncMessage.{AppointmentMessage, CalendarState, FreeMessage, RaftMessage, WantMessage}
 import kofre.base.DecomposeLattice
-import kofre.decompose.interfaces.AWSetInterface.AWSet
-import kofre.decompose.interfaces.AWSetInterface.AWSetSyntax
+import kofre.predef.AddWinsSet.AWSet
+import kofre.predef.AddWinsSet.AWSetSyntax
 import kofre.decompose.Delta
 
 import java.util.concurrent._
