@@ -1,7 +1,6 @@
 package kofre.syntax
 
 import kofre.base.Defs.Id
-import kofre.decompose.interfaces.GCounterInterface.GCounter
 import kofre.base.Lattice
 import kofre.base.Defs
 

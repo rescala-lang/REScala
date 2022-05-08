@@ -1,37 +1,35 @@
 package tests.distribution.delta.antientropy
 
-import kofre.decompose.interfaces.GCounterInterface.GCounter
-import kofre.decompose.interfaces.GCounterInterface.GCounter.GCounterSyntax
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.lattices.delta.JsoniterCodecs._
-
 import rescala.extra.replication.AntiEntropy
 import kofre.decompose.containers.{AntiEntropyCRDT, Network}
 import NetworkGenerators._
+import kofre.predef.GrowOnlyCounter
 
 import scala.collection.mutable
 
 object GCounterGenerators {
-  val genGCounter: Gen[AntiEntropyCRDT[GCounter]] = for {
+  val genGCounter: Gen[AntiEntropyCRDT[GrowOnlyCounter]] = for {
     n <- Gen.posNum[Int]
   } yield {
     val network = new Network(0, 0, 0)
-    val ae      = new AntiEntropy[GCounter]("a", network, mutable.Buffer())
+    val ae      = new AntiEntropy[GrowOnlyCounter]("a", network, mutable.Buffer())
 
-    (0 until n).foldLeft(AntiEntropyCRDT[GCounter](ae)) {
+    (0 until n).foldLeft(AntiEntropyCRDT[GrowOnlyCounter](ae)) {
       case (c, _) => c.inc()
     }
   }
 
-  implicit val arbGCounter: Arbitrary[AntiEntropyCRDT[GCounter]] = Arbitrary(genGCounter)
+  implicit val arbGCounter: Arbitrary[AntiEntropyCRDT[GrowOnlyCounter]] = Arbitrary(genGCounter)
 }
 
 class GCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   import GCounterGenerators._
 
-  "inc" in forAll { counter: AntiEntropyCRDT[GCounter] =>
+  "inc" in forAll { counter: AntiEntropyCRDT[GrowOnlyCounter] =>
     val counterInc = counter.inc()
 
     assert(
@@ -43,11 +41,11 @@ class GCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent inc" in {
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropy[GCounter]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[GCounter]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[GrowOnlyCounter]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[GrowOnlyCounter]("b", network, mutable.Buffer("a"))
 
-    val ca0 = AntiEntropyCRDT[GCounter](aea).inc()
-    val cb0 = AntiEntropyCRDT[GCounter](aeb).inc()
+    val ca0 = AntiEntropyCRDT[GrowOnlyCounter](aea).inc()
+    val cb0 = AntiEntropyCRDT[GrowOnlyCounter](aeb).inc()
 
     AntiEntropy.sync(aea, aeb)
 
@@ -65,13 +63,13 @@ class GCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   }
 
   "convergence" in forAll { (incA: Short, incB: Short, network: Network) =>
-    val aea = new AntiEntropy[GCounter]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[GCounter]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[GrowOnlyCounter]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[GrowOnlyCounter]("b", network, mutable.Buffer("a"))
 
-    val ca0 = (0 until incA.toInt).foldLeft(AntiEntropyCRDT[GCounter](aea)) {
+    val ca0 = (0 until incA.toInt).foldLeft(AntiEntropyCRDT[GrowOnlyCounter](aea)) {
       case (c, _) => c.inc()
     }
-    val cb0 = (0 until incB.toInt).foldLeft(AntiEntropyCRDT[GCounter](aeb)) {
+    val cb0 = (0 until incB.toInt).foldLeft(AntiEntropyCRDT[GrowOnlyCounter](aeb)) {
       case (c, _) => c.inc()
     }
 

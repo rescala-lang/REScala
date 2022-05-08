@@ -10,7 +10,7 @@ import kofre.decompose.TimedVal
 import kofre.causality.{CausalContext, Dot}
 import kofre.decompose.interfaces.LexCounterInterface.LexPair
 import kofre.contextual.WithContext
-import kofre.predef.{Epoche, PosNegCounter}
+import kofre.predef.{Epoche, GrowOnlyCounter, PosNegCounter}
 
 import scala.annotation.nowarn
 
@@ -71,8 +71,8 @@ object JsoniterCodecs {
   // implicit def EWFlagEmbeddedCodec: JsonValueCodec[Set[Dot]] = JsonCodecMaker.make
 
   /** GCounter */
-
-  implicit def GCounterStateCodec: JsonValueCodec[Map[String, Int]] = JsonCodecMaker.make
+  implicit def MapStringIntStateCodec: JsonValueCodec[Map[String, Int]] = JsonCodecMaker.make
+  implicit def GCounterStateCodec: JsonValueCodec[GrowOnlyCounter] = JsonCodecMaker.make
 
   /** GList */
 
