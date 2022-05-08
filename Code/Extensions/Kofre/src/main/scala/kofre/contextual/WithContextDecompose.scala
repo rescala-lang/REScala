@@ -3,10 +3,10 @@ package kofre.contextual
 import kofre.base.Lattice.Operators
 import kofre.causality.{CausalContext, Dot}
 import kofre.contextual.{AsCausalContext, WithContext, WithContextMerge}
-import kofre.decompose.{Decompose, DecomposeLattice, interfaces}
+import kofre.decompose.interfaces
 import kofre.contextual.WithContextDecompose
-import kofre.base.Lattice
-import kofre.base.Bottom
+import kofre.base.{DecomposeLattice, Lattice}
+import kofre.base.{Bottom, Decompose}
 
 /** DecomposableDotStore is the typeclass trait for dot stores,
   * data structures that are part of causal CRDTs and make use of dots to track causality.

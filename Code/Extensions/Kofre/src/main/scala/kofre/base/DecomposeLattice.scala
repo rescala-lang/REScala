@@ -1,19 +1,13 @@
-package kofre.decompose
+package kofre.base
 
-import kofre.base.Lattice
 import kofre.base.Lattice.{Operators, mapLattice, optionLattice, setLattice}
-import kofre.base.Bottom
+import kofre.base.{Bottom, Decompose, Lattice}
 import kofre.causality.CausalContext
 import kofre.contextual.{WithContext, WithContextDecompose}
 
 import scala.compiletime.summonAll
 import scala.deriving.Mirror
 
-trait Decompose[A] {
-
-  /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
-  def decompose(a: A): Iterable[A]
-}
 
 /** Extends the Lattice typeclass with the ability to compare states through unique irredundant join decomposition */
 trait DecomposeLattice[A] extends Lattice[A], Bottom[A], Decompose[A] {
@@ -25,14 +19,14 @@ trait DecomposeLattice[A] extends Lattice[A], Bottom[A], Decompose[A] {
 
 }
 
-/** reuse existing lattice instance to implement a DecomposeLattice */
-trait DecomposeFromLattice[A](lattice: Lattice[A]) extends DecomposeLattice[A] {
-  export lattice.merge
-}
-
 object DecomposeLattice {
   def apply[A](implicit l: DecomposeLattice[A]): DecomposeLattice[A] = l
   def bottom[A](implicit l: DecomposeLattice[A]): A                  = l.empty
+
+  /** reuse existing lattice instance to implement a DecomposeLattice */
+  trait DecomposeFromLattice[A](lattice: Lattice[A]) extends DecomposeLattice[A] {
+    export lattice.merge
+  }
 
   implicit class Operators[A: DecomposeLattice](left: A):
     @scala.annotation.targetName("lteq")
@@ -89,6 +83,9 @@ object DecomposeLattice {
   given TripleAsUIJDLattice[A: DecomposeLattice, B: DecomposeLattice, C: DecomposeLattice]
       : DecomposeLattice[(A, B, C)] = derived
 
+  inline def tupleAsDecomposeLattice[T <: Tuple: Mirror.ProductOf]: DecomposeLattice[T] = derived
+
+
   given contextUIJDLattice[D](using wcd: WithContextDecompose[D]): DecomposeLattice[WithContext[D]] =
     new DecomposeFromLattice[WithContext[D]](Lattice.contextLattice) {
       export wcd.decompose
@@ -112,7 +109,7 @@ object DecomposeLattice {
     override def empty: T =
       pm.fromProduct(
         lattices.map[[α] =>> Any](
-          [t] => (l: t) => l.asInstanceOf[kofre.decompose.DecomposeLattice[Any]].empty
+          [t] => (l: t) => l.asInstanceOf[DecomposeLattice[Any]].empty
         )
       )
 

@@ -1,7 +1,6 @@
 package kofre.primitives
 
-import kofre.base.Defs
-import kofre.decompose.DecomposeLattice
+import kofre.base.{DecomposeLattice, Defs}
 import kofre.decompose.interfaces.EpocheInterface
 
 case class Epoche[E](counter: Defs.Time, value: E)

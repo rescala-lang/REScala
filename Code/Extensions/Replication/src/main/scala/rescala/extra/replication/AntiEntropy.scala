@@ -2,8 +2,9 @@ package rescala.extra.replication
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReaderException, JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
+import kofre.base.DecomposeLattice
 import kofre.decompose.containers.Network
-import kofre.decompose.{Delta, DecomposeLattice}
+import kofre.decompose.Delta
 import rescala.extra.replication.AntiEntropy.{AckMsg, DeltaMsg}
 
 import scala.collection.mutable

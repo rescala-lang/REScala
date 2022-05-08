@@ -1,8 +1,8 @@
 package test.kofre
 
+import kofre.base.DecomposeLattice
 import kofre.causality.{CausalContext, Dot}
 import kofre.contextual.WithContextDecompose.*
-import kofre.decompose.DecomposeLattice
 import kofre.contextual.{WithContext, WithContextDecompose}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec

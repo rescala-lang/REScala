@@ -1,5 +1,7 @@
 package kofre.decompose
 
+import kofre.base.DecomposeLattice
+
 /** TimedVal is a case class for values that allows chronological ordering of values based on their time of creation.
   * In the case that two values from two different replicas have the exact same timestamp, the lexical ordering of the
   * ids of the two replicas is used to decide the ordering of the values. If two values from the same replica have the

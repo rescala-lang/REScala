@@ -1,7 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
+import kofre.base.DecomposeLattice
 import org.openjdk.jmh.annotations._
-import kofre.decompose.DecomposeLattice
 import kofre.decompose.interfaces.AWSetInterface.{AWSet, AWSetSyntax}
 import kofre.syntax.AllPermissionsCtx
 

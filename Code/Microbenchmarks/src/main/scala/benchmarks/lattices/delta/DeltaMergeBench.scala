@@ -1,7 +1,7 @@
 package benchmarks.lattices.delta
 
+import kofre.base.DecomposeLattice
 import kofre.causality.{CausalContext, Dot}
-import kofre.decompose.DecomposeLattice
 import kofre.decompose.interfaces.RGAInterface.{RGA, RGASyntax}
 import kofre.syntax.AllPermissionsCtx.withID
 import org.openjdk.jmh.annotations

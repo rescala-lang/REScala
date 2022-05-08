@@ -1,11 +1,10 @@
 package kofre.contextual
 
-import kofre.base.Lattice
+import kofre.base.{DecomposeLattice, Lattice}
 import kofre.causality.{CausalContext, Dot}
 import kofre.contextual.AsCausalContext
 import kofre.base.Lattice.Operators
 import kofre.base.Bottom
-import kofre.decompose.DecomposeLattice
 
 import scala.annotation.targetName
 

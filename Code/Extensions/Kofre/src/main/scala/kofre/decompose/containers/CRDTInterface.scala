@@ -1,8 +1,8 @@
 package kofre.decompose.containers
 
 import kofre.base.Defs.Id
-import kofre.base.Defs
-import kofre.decompose.{Delta, DecomposeLattice}
+import kofre.base.{DecomposeLattice, Defs}
+import kofre.decompose.Delta
 import kofre.syntax.AllPermissionsCtx
 
 trait CRDTInterface[State, Wrapper] {

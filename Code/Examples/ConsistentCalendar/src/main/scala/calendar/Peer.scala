@@ -6,9 +6,10 @@ import loci.communicator.tcp.TCP
 import loci.registry.Registry
 import loci.transmitter.{RemoteAccessException, RemoteRef}
 import central.SyncMessage.{AppointmentMessage, CalendarState, FreeMessage, RaftMessage, WantMessage}
+import kofre.base.DecomposeLattice
 import kofre.decompose.interfaces.AWSetInterface.AWSet
 import kofre.decompose.interfaces.AWSetInterface.AWSetSyntax
-import kofre.decompose.{Delta, DecomposeLattice}
+import kofre.decompose.Delta
 
 import java.util.concurrent._
 import scala.concurrent.Future

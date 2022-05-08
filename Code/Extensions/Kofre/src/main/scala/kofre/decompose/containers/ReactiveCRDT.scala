@@ -1,6 +1,7 @@
 package kofre.decompose.containers
 
-import kofre.decompose.{Delta, DecomposeLattice}
+import kofre.base.DecomposeLattice
+import kofre.decompose.Delta
 import kofre.syntax.{AllPermissionsCtx, ArdtOpsContains}
 
 /** ReactiveCRDTs are Delta CRDTs that store applied deltas in their deltaBuffer attribute. Middleware should regularly

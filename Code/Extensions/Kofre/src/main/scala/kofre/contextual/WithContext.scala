@@ -1,10 +1,9 @@
 package kofre.contextual
 
-import kofre.base.Lattice
+import kofre.base.{DecomposeLattice, Lattice}
 import kofre.causality.{CausalContext, Dot}
 import kofre.contextual.AsCausalContext
 import kofre.base.Lattice.Operators
-import kofre.decompose.DecomposeLattice
 
 case class WithContext[A](store: A, context: CausalContext)
 

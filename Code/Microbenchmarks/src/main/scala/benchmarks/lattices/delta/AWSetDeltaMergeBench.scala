@@ -1,8 +1,8 @@
 package benchmarks.lattices.delta
 
+import kofre.base.DecomposeLattice
 import org.openjdk.jmh.annotations
 import org.openjdk.jmh.annotations._
-import kofre.decompose.DecomposeLattice
 import kofre.causality.{CausalContext, Dot}
 import kofre.decompose.interfaces.AWSetInterface.{AWSet, AWSetSyntax}
 import kofre.syntax.AllPermissionsCtx

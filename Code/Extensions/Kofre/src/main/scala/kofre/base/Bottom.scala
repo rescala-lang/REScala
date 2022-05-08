@@ -1,7 +1,6 @@
 package kofre.base
 
 import kofre.contextual.WithContextDecompose
-import kofre.decompose.{Decompose, DecomposeLattice}
 
 /** Bottom.empty is the identity of Lattice.merge */
 trait Bottom[A] {

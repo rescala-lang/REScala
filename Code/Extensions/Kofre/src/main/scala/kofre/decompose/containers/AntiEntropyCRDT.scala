@@ -1,6 +1,7 @@
 package kofre.decompose.containers
 
-import kofre.decompose.{Delta, DecomposeLattice}
+import kofre.base.DecomposeLattice
+import kofre.decompose.Delta
 import kofre.syntax.{AllPermissionsCtx, ArdtOpsContains}
 
 /** BasicCRDTs are Delta CRDTs that use [[JsoniterAntiEntropy]] and [[Network]] as Middleware for exchanging deltas between replicas.

@@ -1,9 +1,10 @@
 package decentral
 
 import decentral.Bindings._
+import kofre.base.DecomposeLattice
 import kofre.decompose.containers.ReactiveDeltaCRDT
 import kofre.decompose.interfaces.AWSetInterface.{AWSet, AWSetSyntax}
-import kofre.decompose.{Delta, DecomposeLattice}
+import kofre.decompose.Delta
 import loci.transmitter.{RemoteAccessException, RemoteRef}
 
 import scala.concurrent.Future

@@ -1,7 +1,7 @@
 package central
 
 import central.Bindings._
-import kofre.decompose.DecomposeLattice
+import kofre.base.DecomposeLattice
 import loci.communicator.tcp.TCP
 import loci.registry.Registry
 

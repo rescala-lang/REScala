@@ -1,7 +1,8 @@
 package rescala.extra.replication
 
+import kofre.base.DecomposeLattice
 import kofre.decompose.containers.ReactiveCRDT
-import kofre.decompose.{Delta, DecomposeLattice}
+import kofre.decompose.Delta
 import loci.registry.{Binding, Registry}
 import loci.transmitter.RemoteRef
 import rescala.interface.RescalaInterface

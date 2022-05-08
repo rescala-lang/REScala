@@ -1,6 +1,6 @@
 package test.kofre
 
-import kofre.decompose.DecomposeLattice.{*, given}
+import kofre.base.DecomposeLattice.{*, given}
 import kofre.decompose.interfaces.LexCounterInterface.LexPair
 import kofre.decompose.interfaces.LexCounterInterface.LexPair.*
 import org.scalacheck.{Arbitrary, Gen}

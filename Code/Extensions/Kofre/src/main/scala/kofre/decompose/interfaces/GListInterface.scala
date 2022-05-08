@@ -1,5 +1,6 @@
 package kofre.decompose.interfaces
 
+import kofre.base.DecomposeLattice
 import kofre.decompose.*
 import kofre.primitives.Epoche
 import kofre.syntax.OpsSyntaxHelper

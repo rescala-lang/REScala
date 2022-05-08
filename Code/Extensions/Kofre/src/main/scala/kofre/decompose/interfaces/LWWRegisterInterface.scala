@@ -1,4 +1,5 @@
 package kofre.decompose.interfaces
+import kofre.base.DecomposeLattice
 import kofre.decompose.*
 import kofre.syntax.{AllPermissionsCtx, ArdtOpsContains, OpsSyntaxHelper}
 import kofre.contextual.WithContextDecompose.DotFun

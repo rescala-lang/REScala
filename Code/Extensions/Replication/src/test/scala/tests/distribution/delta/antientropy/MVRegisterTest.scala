@@ -2,7 +2,6 @@ package tests.distribution.delta.antientropy
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import kofre.decompose.DecomposeLattice
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
@@ -11,6 +10,7 @@ import rescala.extra.lattices.delta.JsoniterCodecs._
 
 import rescala.extra.replication.AntiEntropy
 import NetworkGenerators._
+import kofre.base.DecomposeLattice
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegisterSyntax
 import kofre.decompose.containers.{AntiEntropyCRDT, Network}
 
