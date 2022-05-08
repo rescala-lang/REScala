@@ -28,23 +28,23 @@ trait DecomposeFromLattice[A](lattice: Lattice[A]) extends DecomposeLattice[A] {
 
 object DecomposeLattice {
   def apply[A](implicit l: DecomposeLattice[A]): DecomposeLattice[A] = l
-  def bottom[A](implicit l: DecomposeLattice[A]): A             = l.empty
+  def bottom[A](implicit l: DecomposeLattice[A]): A                  = l.empty
 
   implicit class Operators[A: DecomposeLattice](left: A):
     @scala.annotation.targetName("lteq")
     def <=(right: A): Boolean  = DecomposeLattice[A].lteq(left, right)
     def decompose: Iterable[A] = DecomposeLattice[A].decompose(left)
 
-  val IntAsUIJDLattice: DecomposeLattice[Int] = new DecomposeFromLattice[Int](_ max _) {
-    override def lteq(left: Int, right: Int): Boolean  = left <= right
+  given IntAsUIJDLattice: DecomposeLattice[Int] = new DecomposeFromLattice[Int](_ max _) {
+    override def lteq(left: Int, right: Int): Boolean = left <= right
     override def decompose(state: Int): Iterable[Int] = List(state)
-    override def empty: Int                          = 0
+    override def empty: Int                           = 0
   }
 
   given SetAsUIJDLattice[A]: DecomposeLattice[Set[A]] = new DecomposeFromLattice[Set[A]](setLattice) {
-    override def lteq(left: Set[A], right: Set[A]): Boolean  = left subsetOf right
+    override def lteq(left: Set[A], right: Set[A]): Boolean = left subsetOf right
     override def decompose(state: Set[A]): Iterable[Set[A]] = state.map(Set(_))
-    override def empty: Set[A]                             = Set.empty[A]
+    override def empty: Set[A]                              = Set.empty[A]
   }
 
   given OptionAsUIJDLattice[A: DecomposeLattice]: DecomposeLattice[Option[A]] =
