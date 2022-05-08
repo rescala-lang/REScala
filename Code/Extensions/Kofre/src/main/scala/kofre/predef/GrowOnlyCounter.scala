@@ -3,7 +3,7 @@ package kofre.predef
 import kofre.base.DecomposeLattice.*
 import kofre.base.{DecomposeLattice, Defs}
 import kofre.decompose.*
-import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, QueryCtx}
+import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermQuery}
 
 // this could be an opaque type, but interop
 case class GrowOnlyCounter(inner: Map[Defs.Id, Int]) derives DecomposeLattice

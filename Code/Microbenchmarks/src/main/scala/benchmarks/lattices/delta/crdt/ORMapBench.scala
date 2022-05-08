@@ -4,7 +4,7 @@ import kofre.causality.CausalContext
 import kofre.contextual.WithContextDecompose.DotSet
 import kofre.decompose.interfaces.EWFlagInterface.EnableWinsFlagOps
 import kofre.decompose.interfaces.ORMapInterface.{ORMap, ORMapSyntax}
-import kofre.syntax.AllPermissionsCtx.withID
+import kofre.syntax.PermIdMutate.withID
 import org.openjdk.jmh.annotations._
 import kofre.decompose.containers.ReactiveDeltaCRDT
 

@@ -3,6 +3,8 @@ package kofre.syntax
 import kofre.base.Defs.Id
 import kofre.base.Lattice
 import kofre.base.Defs
+import kofre.causality.CausalContext
+import kofre.contextual.WithContext
 
 /** The basic idea behind this machinery is to allow lattices of type L to be stored in a Container of type C.
   * In the simplest case C = L and the lattice is used as is.
@@ -11,24 +13,28 @@ import kofre.base.Defs
   * No matter the concrete container, they should all offer the same API to the underlying lattice.
   */
 
-trait QueryCtx[C, L]:
+trait PermQuery[C, L]:
   def query(c: C): L
-trait MutateCtx[C, L] extends QueryCtx[C, L]:
+trait PermMutate[C, L] extends PermQuery[C, L]:
   def mutate(c: C, delta: L): C
-trait IdentifierCtx[C]:
+trait PermId[C]:
   def replicaId(c: C): Id
-class FixedIdCtx[C](id: Id) extends IdentifierCtx[C]:
+class FixedId[C](id: Id) extends PermId[C]:
   override def replicaId(c: C): Id = id
-trait AllPermissionsCtx[C, L] extends IdentifierCtx[C], MutateCtx[C, L]
+trait PermCausal[C]:
+  def context(c: C): CausalContext
+trait PermCausalMutate[C, L]:
+  def mutateContext(container: C, withContext: WithContext[L]): C
+trait PermIdMutate[C, L] extends PermId[C], PermMutate[C, L]
 
-object QueryCtx:
-  given identityQuery[A]: QueryCtx[A, A] = MutateCtx.identityDeltaMutate
-object MutateCtx:
-  given identityDeltaMutate[A]: MutateCtx[A, A] with
+object PermQuery:
+  given identityQuery[A]: PermQuery[A, A] = PermMutate.identityDeltaMutate
+object PermMutate:
+  given identityDeltaMutate[A]: PermMutate[A, A] with
     override def query(c: A): A            = c
     override def mutate(c: A, delta: A): A = delta
-object AllPermissionsCtx:
-  def withID[C, L](id: Id)(using mctx: MutateCtx[C, L]): AllPermissionsCtx[C, L] = new AllPermissionsCtx[C, L]:
+object PermIdMutate:
+  def withID[C, L](id: Id)(using mctx: PermMutate[C, L]): PermIdMutate[C, L] = new PermIdMutate[C, L]:
     def mutate(c: C, delta: L): C = mctx.mutate(c, delta)
     def replicaId(c: C): Id       = id
     def query(c: C): L            = mctx.query(c)
@@ -44,10 +50,12 @@ object ArdtOpsContains:
   * using a scheme where mutations return deltas which are systematically applied.
   */
 trait OpsSyntaxHelper[C, L](container: C) {
-  final type MutationIDP = AllPermissionsCtx[C, L]
-  final type QueryP      = QueryCtx[C, L]
-  final type MutationP   = MutateCtx[C, L]
-  final type IdentifierP = IdentifierCtx[C]
+  final type MutationIDP = PermIdMutate[C, L]
+  final type QueryP      = PermQuery[C, L]
+  final type MutationP   = PermMutate[C, L]
+  final type IdentifierP = PermId[C]
+  final type CausalP     = PermCausal[C]
+  final type CausalMutation = PermCausalMutate[C, L]
 
   final type MutationID = MutationIDP ?=> C
   final type Mutation   = MutationP ?=> C
@@ -56,4 +64,7 @@ trait OpsSyntaxHelper[C, L](container: C) {
   final protected def current(using perm: QueryP): L                    = perm.query(container)
   final protected def replicaID(using perm: IdentifierP): Defs.Id       = perm.replicaId(container)
   final protected given mutate(using perm: MutationP): Conversion[L, C] = perm.mutate(container, _)
+  final protected def context(using perm: CausalP): CausalContext       = perm.context(container)
+  final protected given causalMutate(using perm: CausalMutation): Conversion[WithContext[L], C]       = perm.mutateContext(container, _)
+
 }

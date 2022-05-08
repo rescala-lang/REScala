@@ -2,8 +2,8 @@ package kofre.predef
 
 import kofre.base.DecomposeLattice
 import kofre.base.Defs.Id
-import kofre.syntax.AllPermissionsCtx.withID
-import kofre.syntax.{AllPermissionsCtx, ArdtOpsContains, FixedIdCtx, IdentifierCtx, OpsSyntaxHelper, QueryCtx}
+import kofre.syntax.PermIdMutate.withID
+import kofre.syntax.{PermIdMutate, ArdtOpsContains, FixedId, PermId, OpsSyntaxHelper, PermQuery}
 
 case class PosNegCounter(pos: GrowOnlyCounter, neg: GrowOnlyCounter) derives DecomposeLattice
 

@@ -3,7 +3,7 @@ package kofre.decompose.containers
 import kofre.base.Defs.Id
 import kofre.base.{DecomposeLattice, Defs}
 import kofre.decompose.Delta
-import kofre.syntax.AllPermissionsCtx
+import kofre.syntax.PermIdMutate
 
 trait CRDTInterface[State, Wrapper] {
   val state: State
@@ -14,8 +14,8 @@ trait CRDTInterface[State, Wrapper] {
 }
 
 object CRDTInterface {
-  def crdtInterfaceContextPermissions[L: DecomposeLattice, B <: CRDTInterface[L, B]]: AllPermissionsCtx[B, L] =
-    new AllPermissionsCtx[B, L] {
+  def crdtInterfaceContextPermissions[L: DecomposeLattice, B <: CRDTInterface[L, B]]: PermIdMutate[B, L] =
+    new PermIdMutate[B, L] {
       override def replicaId(c: B): Id       = c.replicaID
       override def mutate(c: B, delta: L): B = c.applyDelta(Delta(c.replicaID, delta))
       override def query(c: B): L            = c.state

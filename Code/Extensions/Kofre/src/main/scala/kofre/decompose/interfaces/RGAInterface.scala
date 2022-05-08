@@ -3,13 +3,13 @@ package kofre.decompose.interfaces
 import kofre.base.DecomposeLattice
 import kofre.causality.{CausalContext, Dot}
 import kofre.decompose.*
-import kofre.syntax.{AllPermissionsCtx, ArdtOpsContains, MutateCtx, OpsSyntaxHelper}
+import kofre.syntax.{PermIdMutate, ArdtOpsContains, PermMutate, OpsSyntaxHelper}
 import kofre.contextual.WithContextDecompose.{DotFun, DotPair}
 import kofre.decompose.interfaces.GListInterface.{GListAsUIJDLattice, GListSyntax}
 import kofre.contextual.{WithContext, WithContextDecompose}
 import kofre.decompose.interfaces.RCounterInterface.RCounter
 import kofre.predef.Epoche
-import kofre.syntax.AllPermissionsCtx.withID
+import kofre.syntax.PermIdMutate.withID
 
 /** An RGA (Replicated Growable Array) is a Delta CRDT modeling a list.
   *

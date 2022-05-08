@@ -4,8 +4,8 @@ import kofre.base.Lattice
 import kofre.causality.CausalContext
 import kofre.contextual.WithContext
 import kofre.predef.AddWinsSet
-import kofre.syntax.AllPermissionsCtx
-import kofre.syntax.AllPermissionsCtx.withID
+import kofre.syntax.PermIdMutate
+import kofre.syntax.PermIdMutate.withID
 
 case class AddWinsMapLattice[K, V](
     keys: WithContext[Map[K, CausalContext]] = AddWinsSet.empty[K].inner,

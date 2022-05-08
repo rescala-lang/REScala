@@ -2,7 +2,7 @@ package kofre.decompose.containers
 
 import kofre.base.DecomposeLattice
 import kofre.decompose.Delta
-import kofre.syntax.{AllPermissionsCtx, ArdtOpsContains}
+import kofre.syntax.{PermIdMutate, ArdtOpsContains}
 
 /** ReactiveCRDTs are Delta CRDTs that store applied deltas in their deltaBuffer attribute. Middleware should regularly
   * take these deltas and ship them to other replicas, using applyDelta to apply them on the remote state. After deltas
@@ -44,7 +44,7 @@ object ReactiveDeltaCRDT {
 
   implicit def containesRelation[State]: ArdtOpsContains[ReactiveDeltaCRDT[State], State] = new ArdtOpsContains[ReactiveDeltaCRDT[State], State] {}
 
-  implicit def reactiveDeltaCRDTPermissions[L: DecomposeLattice]: AllPermissionsCtx[ReactiveDeltaCRDT[L], L] =
+  implicit def reactiveDeltaCRDTPermissions[L: DecomposeLattice]: PermIdMutate[ReactiveDeltaCRDT[L], L] =
     CRDTInterface.crdtInterfaceContextPermissions[L, ReactiveDeltaCRDT[L]]
 
   /** Creates a new PNCounter instance

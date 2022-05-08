@@ -2,7 +2,7 @@ package kofre.decompose.containers
 
 import kofre.base.DecomposeLattice
 import kofre.decompose.Delta
-import kofre.syntax.{AllPermissionsCtx, ArdtOpsContains}
+import kofre.syntax.{PermIdMutate, ArdtOpsContains}
 
 /** BasicCRDTs are Delta CRDTs that use [[JsoniterAntiEntropy]] and [[Network]] as Middleware for exchanging deltas between replicas.
   * They cannot actually be used on multiple connected replicas, but are useful for locally testing the behavior of
@@ -38,7 +38,7 @@ object AntiEntropyCRDT {
   implicit def containesRelation[State]: ArdtOpsContains[AntiEntropyCRDT[State], State] =
     new ArdtOpsContains[AntiEntropyCRDT[State], State] {}
 
-  implicit def antiEntropyPermissions[L: DecomposeLattice]: AllPermissionsCtx[AntiEntropyCRDT[L], L] =
+  implicit def antiEntropyPermissions[L: DecomposeLattice]: PermIdMutate[AntiEntropyCRDT[L], L] =
     CRDTInterface.crdtInterfaceContextPermissions[L, AntiEntropyCRDT[L]]
 
   /** Creates a new PNCounter instance

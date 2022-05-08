@@ -7,7 +7,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.lattices.delta.JsoniterCodecs._
 import rescala.extra.replication.AntiEntropy
 import kofre.decompose.interfaces.ORMapInterface.ORMap
-import kofre.syntax.AllPermissionsCtx
+import kofre.syntax.PermIdMutate
 import kofre.decompose.interfaces.ORMapInterface.ORMapSyntax
 import kofre.decompose.containers.{AntiEntropyCRDT, Network}
 import kofre.predef.AddWinsSet
@@ -36,11 +36,11 @@ class ORMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     val map = {
       val added = add.foldLeft(AntiEntropyCRDT[ORMap[Int, AddWinsSet.Embedded[Int]]](aea)) {
         case (m, e) =>
-          m.mutateKey(k, (id, st) => AddWinsSet(st).add(e)(AllPermissionsCtx.withID(id)).inner)
+          m.mutateKey(k, (id, st) => AddWinsSet(st).add(e)(PermIdMutate.withID(id)).inner)
       }
 
       remove.foldLeft(added) {
-        case (m, e) => m.mutateKey(k, (id, st) => AddWinsSet(st).remove(e)(AllPermissionsCtx.withID(id)).inner)
+        case (m, e) => m.mutateKey(k, (id, st) => AddWinsSet(st).remove(e)(PermIdMutate.withID(id)).inner)
       }
     }
 
@@ -62,11 +62,11 @@ class ORMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
     val map = {
       val added = add.foldLeft(AntiEntropyCRDT[ORMap[Int, AddWinsSet.Embedded[Int]]](aea)) {
-        case (m, e) => m.mutateKey(k, (id, st) => AddWinsSet(st).add(e)(AllPermissionsCtx.withID(id)).inner)
+        case (m, e) => m.mutateKey(k, (id, st) => AddWinsSet(st).add(e)(PermIdMutate.withID(id)).inner)
       }
 
       remove.foldLeft(added) {
-        case (m, e) => m.mutateKey(k, (id, st) => st.remove(e)(AllPermissionsCtx.withID(id), implicitly))
+        case (m, e) => m.mutateKey(k, (id, st) => st.remove(e)(PermIdMutate.withID(id), implicitly))
       }
     }
 

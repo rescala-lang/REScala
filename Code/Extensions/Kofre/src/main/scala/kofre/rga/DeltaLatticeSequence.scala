@@ -4,7 +4,7 @@ import kofre.base.Defs.Id
 import kofre.base.Lattice
 import kofre.predef.AddWinsSet
 import kofre.predef.AddWinsSet
-import kofre.syntax.AllPermissionsCtx
+import kofre.syntax.PermIdMutate
 
 import scala.collection.AbstractIterator
 
@@ -36,7 +36,7 @@ case class DeltaSequence[A](vertices: AddWinsSet[Vertex], edges: DeltaSequenceOr
 
   def addRightDelta(replica: Id, left: Vertex, insertee: Vertex, value: A): DeltaSequence[A] = {
     val newEdges    = edges.addRightEdgeDelta(left, insertee)
-    val newVertices = vertices.add(insertee)(using AllPermissionsCtx.withID(replica))
+    val newVertices = vertices.add(insertee)(using PermIdMutate.withID(replica))
     val newValues   = Map(insertee -> value)
     DeltaSequence(newVertices, newEdges, newValues)
   }
@@ -95,7 +95,7 @@ object DeltaSequence {
   }
 
   def empty[A]: DeltaSequence[A] =
-    DeltaSequence(AddWinsSet.empty[kofre.rga.Vertex].add(Vertex.start)(using AllPermissionsCtx.withID(Vertex.start.id)), DeltaSequenceOrder(Map()), Map.empty)
+    DeltaSequence(AddWinsSet.empty[kofre.rga.Vertex].add(Vertex.start)(using PermIdMutate.withID(Vertex.start.id)), DeltaSequenceOrder(Map()), Map.empty)
 
   implicit def deltaSequenceLattice[A]: Lattice[DeltaSequence[A]] =
     new Lattice[DeltaSequence[A]] {

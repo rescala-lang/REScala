@@ -5,7 +5,7 @@ import org.openjdk.jmh.annotations
 import org.openjdk.jmh.annotations._
 import kofre.causality.{CausalContext, Dot}
 import kofre.predef.AddWinsSet
-import kofre.syntax.AllPermissionsCtx
+import kofre.syntax.PermIdMutate
 
 import java.util.concurrent.TimeUnit
 
@@ -34,10 +34,10 @@ class AWSetDeltaMergeBench {
   def setup(): Unit = {
     val baseState = DecomposeLattice[AddWinsSet[Long]].empty
 
-    val deltaState = baseState.addAll(0L to size)(AllPermissionsCtx.withID(""))
+    val deltaState = baseState.addAll(0L to size)(PermIdMutate.withID(""))
     fullState = DecomposeLattice[AddWinsSet[Long]].merge(baseState, deltaState)
 
-    plusOneDeltaState = fullState.add(size)(AllPermissionsCtx.withID(""))
+    plusOneDeltaState = fullState.add(size)(PermIdMutate.withID(""))
     plusOneState = DecomposeLattice[AddWinsSet[Long]].merge(fullState, plusOneDeltaState)
   }
 

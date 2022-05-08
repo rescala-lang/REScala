@@ -1,7 +1,7 @@
 package kofre.decompose.interfaces
 import kofre.base.DecomposeLattice
 import kofre.decompose.*
-import kofre.syntax.{AllPermissionsCtx, ArdtOpsContains, OpsSyntaxHelper}
+import kofre.syntax.{PermIdMutate, ArdtOpsContains, OpsSyntaxHelper}
 import kofre.contextual.WithContextDecompose.DotFun
 import kofre.decompose.interfaces.LexCounterInterface.LexCounter
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegisterSyntax
@@ -19,7 +19,7 @@ object LWWRegisterInterface {
       MVRegisterSyntax(current).read.reduceOption(DecomposeLattice[TimedVal[A]].merge).map(_.value)
 
     def write(v: A)(using MutationIDP): C =
-      MVRegisterSyntax(current).write(TimedVal(v, replicaID))(using AllPermissionsCtx.withID(replicaID))
+      MVRegisterSyntax(current).write(TimedVal(v, replicaID))(using PermIdMutate.withID(replicaID))
 
     def map(f: A => A)(using MutationIDP): C =
       read.map(f) match {
@@ -27,6 +27,6 @@ object LWWRegisterInterface {
         case Some(v) => write(v)
       }
 
-    def clear()(using MutationIDP): C = MVRegisterSyntax(current).clear()(using AllPermissionsCtx.withID(replicaID))
+    def clear()(using MutationIDP): C = MVRegisterSyntax(current).clear()(using PermIdMutate.withID(replicaID))
   }
 }

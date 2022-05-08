@@ -3,7 +3,7 @@ package tests.distribution.delta.antientropy
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import kofre.decompose.interfaces.GMapInterface.GMap
-import kofre.syntax.AllPermissionsCtx
+import kofre.syntax.PermIdMutate
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.lattices.delta.JsoniterCodecs._
@@ -27,7 +27,7 @@ class GMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     }
 
     val map = add.foldLeft(AntiEntropyCRDT[GMap[Int, AddWinsSet[Int]]](aea)) {
-      case (m, e) => m.mutateKey(k)((st) => st.add(e)(AllPermissionsCtx.withID(m.replicaID)))
+      case (m, e) => m.mutateKey(k)((st) => st.add(e)(PermIdMutate.withID(m.replicaID)))
     }
 
     val mapElements = map.queryKey(k).elements

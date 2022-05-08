@@ -1,7 +1,7 @@
 package kofre.predef
 
 import kofre.base.{DecomposeLattice, Defs}
-import kofre.syntax.AllPermissionsCtx.withID
+import kofre.syntax.PermIdMutate.withID
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper}
 
 case class Epoche[E](counter: Defs.Time, value: E)

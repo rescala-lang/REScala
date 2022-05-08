@@ -8,7 +8,7 @@ import kofre.decompose.interfaces.EWFlagInterface.EWFlag
 import kofre.predef.AddWinsSet
 import kofre.protocol.AuctionInterface
 import kofre.protocol.AuctionInterface.Bid.User
-import kofre.syntax.{AllPermissionsCtx, OpsSyntaxHelper}
+import kofre.syntax.{PermIdMutate, OpsSyntaxHelper}
 
 /** A Rubis (Rice University Bidding System) is a Delta CRDT modeling an auction system.
   *
@@ -71,7 +71,7 @@ object RubisInterface {
     def requestRegisterUser(userId: User)(using MutationIDP): C = {
       val (req, users, _) = current
       if (users.contains(userId)) deltaState.make()
-      else deltaState.make(userRequests = req.add(userId -> replicaID)(using AllPermissionsCtx.withID(replicaID)))
+      else deltaState.make(userRequests = req.add(userId -> replicaID)(using PermIdMutate.withID(replicaID)))
     }
 
     def resolveRegisterUser()(using MutationIDP): C = {

@@ -3,7 +3,7 @@ package benchmarks.lattices.delta
 import kofre.base.DecomposeLattice
 import kofre.causality.{CausalContext, Dot}
 import kofre.decompose.interfaces.RGAInterface.{RGA, RGASyntax}
-import kofre.syntax.AllPermissionsCtx.withID
+import kofre.syntax.PermIdMutate.withID
 import org.openjdk.jmh.annotations
 import org.openjdk.jmh.annotations._
 
