@@ -8,7 +8,9 @@ import kofre.contextual.{WithContext, WithContextDecompose}
 import scala.compiletime.summonAll
 import scala.deriving.Mirror
 
-/** Extends the Lattice typeclass with the ability to compare states through unique irredundant join decomposition */
+/** Decomposition tries to decompose a lattice into its smallest constituents.
+  * The only requirement is that merging the decomposed results produces the original state.
+  * Requires a bottom to enable automatic decomposition of Product types */
 trait DecomposeLattice[A] extends Lattice[A], Bottom[A], Decompose[A] {
 
   /** computes delta without state */
