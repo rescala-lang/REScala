@@ -8,7 +8,6 @@ import kofre.contextual.{WithContext, WithContextDecompose}
 import scala.compiletime.summonAll
 import scala.deriving.Mirror
 
-
 /** Extends the Lattice typeclass with the ability to compare states through unique irredundant join decomposition */
 trait DecomposeLattice[A] extends Lattice[A], Bottom[A], Decompose[A] {
 
@@ -80,7 +79,6 @@ object DecomposeLattice {
 
   inline def tupleAsDecomposeLattice[T <: Tuple: Mirror.ProductOf]: DecomposeLattice[T] = derived
 
-
   given contextUIJDLattice[D](using wcd: WithContextDecompose[D]): DecomposeLattice[WithContext[D]] =
     new DecomposeFromLattice[WithContext[D]](Lattice.contextLattice) {
       export wcd.decompose
@@ -91,15 +89,20 @@ object DecomposeLattice {
 
   inline def derived[T <: Product](using pm: Mirror.ProductOf[T]): DecomposeLattice[T] = {
     val lattices: Tuple = summonAll[Tuple.Map[pm.MirroredElemTypes, DecomposeLattice]]
-    val base            = Lattice.derived[T]
-    new ProductDecomposeLattice[T](lattices, base, pm)
+    new ProductDecomposeLattice[T](lattices, pm)
   }
 
-  class ProductDecomposeLattice[T <: Product](lattices: Tuple, base: Lattice[T], pm: Mirror.ProductOf[T])
+  class ProductDecomposeLattice[T <: Product](lattices: Tuple, pm: Mirror.ProductOf[T])
       extends DecomposeLattice[T] {
-    export base.merge
 
     private def lat(i: Int): DecomposeLattice[Any] = lattices.productElement(i).asInstanceOf[DecomposeLattice[Any]]
+
+    override def merge(left: T, right: T): T =
+      pm.fromProduct(new Product {
+        def canEqual(that: Any): Boolean = false
+        def productArity: Int            = lattices.productArity
+        def productElement(i: Int): Any  = lat(i).merge(left.productElement(i), right.productElement(i))
+      })
 
     override def empty: T =
       pm.fromProduct(

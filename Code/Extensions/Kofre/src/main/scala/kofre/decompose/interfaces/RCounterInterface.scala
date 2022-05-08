@@ -5,7 +5,6 @@ import kofre.causality.CausalContext
 import kofre.decompose.*
 import kofre.syntax.OpsSyntaxHelper
 import kofre.contextual.WithContextDecompose.*
-import kofre.decompose.interfaces.PNCounterModule.PNCounter
 import kofre.contextual.WithContext
 import kofre.causality.Dot
 

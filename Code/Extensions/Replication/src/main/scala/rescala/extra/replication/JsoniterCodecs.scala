@@ -4,13 +4,13 @@ import cats.collections.Diet
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import kofre.protocol.AuctionInterface.AuctionData
-import kofre.primitives.Epoche
 import kofre.decompose.interfaces.GListInterface.{Elem, GListNode}
 import kofre.decompose.interfaces.RGAInterface.RGANode
 import kofre.decompose.TimedVal
 import kofre.causality.{CausalContext, Dot}
 import kofre.decompose.interfaces.LexCounterInterface.LexPair
 import kofre.contextual.WithContext
+import kofre.predef.{Epoche, PosNegCounter}
 
 import scala.annotation.nowarn
 
@@ -119,7 +119,7 @@ object JsoniterCodecs {
 
   /** PNCounter */
 
-  implicit def PNCounterStateCodec: JsonValueCodec[(Map[String, Int], Map[String, Int])] = JsonCodecMaker.make
+  implicit def PNCounterStateCodec: JsonValueCodec[PosNegCounter] = JsonCodecMaker.make
 
   /** RCounter */
 

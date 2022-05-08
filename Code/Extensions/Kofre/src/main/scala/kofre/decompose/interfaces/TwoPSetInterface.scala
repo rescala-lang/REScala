@@ -1,7 +1,6 @@
 package kofre.decompose.interfaces
 
 import kofre.decompose.*
-import kofre.decompose.interfaces.PNCounterModule.PNCounter
 import kofre.syntax.OpsSyntaxHelper
 
 /** A TwoPSet (Two-Phase Set) is a Delta CRDT modeling a set.

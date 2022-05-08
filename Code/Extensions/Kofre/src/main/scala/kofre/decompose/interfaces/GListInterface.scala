@@ -2,7 +2,7 @@ package kofre.decompose.interfaces
 
 import kofre.base.DecomposeLattice
 import kofre.decompose.*
-import kofre.primitives.Epoche
+import kofre.predef.Epoche
 import kofre.syntax.OpsSyntaxHelper
 
 import scala.annotation.tailrec
