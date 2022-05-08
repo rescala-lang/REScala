@@ -1,9 +1,9 @@
 package test.kofre
 
 import kofre.base.DecomposeLattice
-import kofre.causality.{CausalContext, Dot}
+import kofre.causality.{ArrayRanges, CausalContext, Dot}
 import kofre.contextual.ContextDecompose.*
-import kofre.contextual.{WithContext, ContextDecompose}
+import kofre.contextual.{ContextDecompose, WithContext}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -144,7 +144,7 @@ class DotFunTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
         s"If a dot is used as key in both DotFuns then the corresponding values should be merged in the result of DotFun.merge, but ${dfMerged(
             d
           )} does not equal ${DecomposeLattice[Int].merge(dfA(d), dfB(d))}"
-        )
+      )
     }
 
     (dotsA diff ccB).iterator.foreach { d =>
