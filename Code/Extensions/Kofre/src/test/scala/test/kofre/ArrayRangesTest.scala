@@ -20,10 +20,10 @@ class ArrayRangesTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     val a = ArrayRanges(Seq[(Long, Long)]((5, 10), (20, 40)))
     val b = ArrayRanges(Seq[(Long, Long)]((10, 20)))
 
-    assert(empty.merge(b) == b)
-    assert(b.merge(empty) == b)
+    assert(empty.union(b) == b)
+    assert(b.union(empty) == b)
 
-    assert(a.merge(b) == ArrayRanges(Seq[(Long, Long)]((5, 40))))
+    assert(a.union(b) == ArrayRanges(Seq[(Long, Long)]((5, 40))))
   }
 
 }

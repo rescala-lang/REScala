@@ -1,13 +1,14 @@
 package kofre.causality
 
 import kofre.base.Defs.Time
-import kofre.base.Lattice
+import kofre.base.{DecomposeLattice, Lattice}
 
 import java.util
 import scala.annotation.tailrec
 import scala.collection.IndexedSeqView
 import scala.collection.mutable.ListBuffer
 
+/** Efficient storage of a set of [[Time]] when most stored values are contiguous ranges */
 case class ArrayRanges(inner: Array[Time], used: Int) {
 
   override def equals(obj: Any): Boolean = obj match {
@@ -24,6 +25,7 @@ case class ArrayRanges(inner: Array[Time], used: Int) {
       if s == einc then s"$s" else s"$s:$e"
   }.mkString("[", ", ", "]")
 
+  @scala.annotation.targetName("lteq")
   def <=(right: ArrayRanges): Boolean = {
     if (isEmpty) return true
     if (right.isEmpty) return false
@@ -60,7 +62,7 @@ case class ArrayRanges(inner: Array[Time], used: Int) {
   def isEmpty: Boolean = used == 0
 
   def add(x: Time): ArrayRanges =
-    merge(new ArrayRanges(Array(x, x + 1), 2))
+    union(new ArrayRanges(Array(x, x + 1), 2))
 
   def next: Option[Time] = Option.when(used != 0)(inner(used - 1))
 
@@ -78,7 +80,10 @@ case class ArrayRanges(inner: Array[Time], used: Int) {
       res
   }
 
-  def merge(other: ArrayRanges): ArrayRanges = {
+  /** Traverses both ranges simultaneously to produce output ranges.
+    * Only allocates a single result array (size is the sum of the used size),
+    * and traverses each input once fully. */
+  def union(other: ArrayRanges): ArrayRanges = {
     var leftPos   = 0
     var rightPos  = 0
     var mergedPos = 0
@@ -237,6 +242,11 @@ case class ArrayRanges(inner: Array[Time], used: Int) {
 
     ArrayRanges(newInner, newInnerNextIndex)
   }
+
+  def decomposed: Iterable[ArrayRanges] = {
+    inner.view.slice(0, used).sliding(2,2).map(r => ArrayRanges(r.toArray, 2)).iterator.toIterable
+  }
+
 }
 
 object ArrayRanges {
@@ -274,5 +284,10 @@ object ArrayRanges {
     ArrayRanges(newInternal, newInternalNextIndex)
   }
 
-  given latticeInstance: Lattice[ArrayRanges] = _ merge _
+  given latticeInstance: DecomposeLattice[ArrayRanges] with {
+    override def decompose(a: ArrayRanges): Iterable[ArrayRanges] = a.decomposed
+    override def lteq(left: ArrayRanges, right: ArrayRanges): Boolean = left <= right
+    override def merge(left: ArrayRanges, right: ArrayRanges): ArrayRanges = left union right
+    override def empty: ArrayRanges = ArrayRanges.empty
+  }
 }

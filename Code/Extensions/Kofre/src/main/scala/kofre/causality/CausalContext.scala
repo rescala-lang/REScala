@@ -1,9 +1,16 @@
 package kofre.causality
 
 import kofre.base.Defs.{Id, Time}
-import kofre.base.Lattice
+import kofre.base.{DecomposeLattice, Lattice}
 import kofre.causality.Dot
 
+
+/** Essentially a more efficient version of a [[ Set[Dot] ]].
+  * It typically tracks all dots known within some scope.
+  *
+  * The name refers to that a single causally replicated RDT would have a single causal context.
+  * But this data structure may also be used inside a single delta, or for other metadata within the value of an RDT.
+  * */
 case class CausalContext(internal: Map[Id, ArrayRanges]) {
 
   def isEmpty: Boolean = internal.forall((_, r) => r.isEmpty)
@@ -82,11 +89,7 @@ object CausalContext {
 
   def single(dot: Dot): CausalContext = empty.add(dot.replicaId, dot.time)
 
-  implicit val contextLattice: Lattice[CausalContext] = new Lattice[CausalContext] {
-    override def merge(left: CausalContext, right: CausalContext): CausalContext = {
-      CausalContext(Lattice.merge(left.internal, right.internal))
-    }
-  }
+  implicit val contextLattice: DecomposeLattice[CausalContext] = DecomposeLattice.derived
 
   def fromSet(dots: Iterable[Dot]): CausalContext = CausalContext(dots.groupBy(_.replicaId).map {
     (key, times) =>

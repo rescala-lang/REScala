@@ -1,6 +1,6 @@
 package benchmarks.lattices.delta.crdt
 
-import kofre.decompose.interfaces.EWFlagInterface.{EWFlag, EWFlagSyntax}
+import kofre.decompose.interfaces.EWFlagInterface.{EWFlag, EnableWinsFlagOps}
 import kofre.decompose.interfaces.GMapInterface.{GMap, GMapSyntax}
 import org.openjdk.jmh.annotations._
 import kofre.decompose.containers.ReactiveDeltaCRDT

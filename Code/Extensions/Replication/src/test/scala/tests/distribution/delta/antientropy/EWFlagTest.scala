@@ -1,6 +1,6 @@
 package tests.distribution.delta.antientropy
 
-import kofre.decompose.interfaces.EWFlagInterface.{EWFlag, EWFlagSyntax}
+import kofre.decompose.interfaces.EWFlagInterface.{EWFlag, EnableWinsFlagOps}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks

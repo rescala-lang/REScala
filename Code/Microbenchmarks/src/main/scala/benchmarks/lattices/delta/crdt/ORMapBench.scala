@@ -2,7 +2,7 @@ package benchmarks.lattices.delta.crdt
 
 import kofre.causality.CausalContext
 import kofre.contextual.WithContextDecompose.DotSet
-import kofre.decompose.interfaces.EWFlagInterface.EWFlagSyntax
+import kofre.decompose.interfaces.EWFlagInterface.EnableWinsFlagOps
 import kofre.decompose.interfaces.ORMapInterface.{ORMap, ORMapSyntax}
 import kofre.syntax.AllPermissionsCtx.withID
 import org.openjdk.jmh.annotations._

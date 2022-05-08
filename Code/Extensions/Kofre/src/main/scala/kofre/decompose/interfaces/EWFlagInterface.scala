@@ -14,7 +14,9 @@ import kofre.predef.Epoche
 object EWFlagInterface {
   type EWFlag = WithContext[CausalContext]
 
-  implicit class EWFlagSyntax[C](container: C) extends OpsSyntaxHelper[C, EWFlag](container) {
+  /** Its enabled if there is a value in the store.
+    * It relies on the external context to track removals. */
+  implicit class EnableWinsFlagOps[C](container: C) extends OpsSyntaxHelper[C, EWFlag](container) {
     def read(using QueryP): Boolean = !current.store.isEmpty
 
     def enable()(using MutationIDP): C = {
