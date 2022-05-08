@@ -4,14 +4,14 @@ import rescala.default._
 import kofre.decompose.Delta
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax
 import kofre.decompose.interfaces.RGAInterface.{RGA, RGASyntax}
-import kofre.decompose.containers.ReactiveDeltaCRDT
+import kofre.decompose.containers.DeltaBufferRDT
 
 import java.util.concurrent.ThreadLocalRandom
 import scala.annotation.nowarn
 
 class TaskOps(@nowarn taskRefs: TaskReferences) {
 
-  type State = ReactiveDeltaCRDT[RGA[TaskRef]]
+  type State = DeltaBufferRDT[RGA[TaskRef]]
 
   def handleCreateTodo(state: => State)(desc: String): State = {
     val taskid = s"Task(${ThreadLocalRandom.current().nextLong().toHexString})"

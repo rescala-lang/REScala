@@ -1,6 +1,6 @@
 package benchmarks.lattices.delta.crdt
 
-import kofre.decompose.containers.ReactiveDeltaCRDT
+import kofre.decompose.containers.DeltaBufferRDT
 import kofre.decompose.interfaces.EnableWinsFlag.{EWFlagPlain, EnableWinsFlagOps}
 import kofre.decompose.interfaces.GMapInterface.GMap
 import kofre.decompose.interfaces.GMapInterface.GMapSyntax
@@ -24,12 +24,12 @@ class GMapBench {
 
 
   type Contained = GMap[Int, EWFlagPlain]
-  type SUT = ReactiveDeltaCRDT[Contained]
+  type SUT = DeltaBufferRDT[Contained]
   var map: SUT = _
 
   @Setup
   def setup(): Unit = {
-    map = (0 until numEntries).foldLeft(ReactiveDeltaCRDT[Contained]("a")) {
+    map = (0 until numEntries).foldLeft(DeltaBufferRDT[Contained]("a")) {
       case (rdc: SUT, i) =>
         rdc.mutateKeyNamedCtx(i)((ewf: WithNamedContext[EWFlagPlain]) => ewf.enable())
     }

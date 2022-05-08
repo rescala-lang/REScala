@@ -3,7 +3,7 @@ package benchmarks.lattices.delta.crdt
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegister
 import org.openjdk.jmh.annotations._
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax
-import kofre.decompose.containers.ReactiveDeltaCRDT
+import kofre.decompose.containers.DeltaBufferRDT
 
 import java.util.concurrent.TimeUnit
 
@@ -16,13 +16,13 @@ import java.util.concurrent.TimeUnit
 @State(Scope.Thread)
 class LWWRegisterBench {
 
-  var empty: ReactiveDeltaCRDT[LWWRegister[Int]] = _
-  var full: ReactiveDeltaCRDT[LWWRegister[Int]]  = _
+  var empty: DeltaBufferRDT[LWWRegister[Int]] = _
+  var full: DeltaBufferRDT[LWWRegister[Int]]  = _
 
   @Setup
   def setup(): Unit = {
-    empty = ReactiveDeltaCRDT[LWWRegister[Int]]("a")
-    full = ReactiveDeltaCRDT[LWWRegister[Int]]("b").write(0)
+    empty = DeltaBufferRDT[LWWRegister[Int]]("a")
+    full = DeltaBufferRDT[LWWRegister[Int]]("b").write(0)
   }
 
   @Benchmark
@@ -32,20 +32,20 @@ class LWWRegisterBench {
   def readFull(): Option[Int] = full.read
 
   @Benchmark
-  def writeEmpty(): ReactiveDeltaCRDT[LWWRegister[Int]] = empty.write(1)
+  def writeEmpty(): DeltaBufferRDT[LWWRegister[Int]] = empty.write(1)
 
   @Benchmark
-  def writeFull(): ReactiveDeltaCRDT[LWWRegister[Int]] = full.write(1)
+  def writeFull(): DeltaBufferRDT[LWWRegister[Int]] = full.write(1)
 
   @Benchmark
-  def mapEmpty(): ReactiveDeltaCRDT[LWWRegister[Int]] = empty.map(_ + 1)
+  def mapEmpty(): DeltaBufferRDT[LWWRegister[Int]] = empty.map(_ + 1)
 
   @Benchmark
-  def mapFull(): ReactiveDeltaCRDT[LWWRegister[Int]] = full.map(_ + 1)
+  def mapFull(): DeltaBufferRDT[LWWRegister[Int]] = full.map(_ + 1)
 
   @Benchmark
-  def clearEmpty(): ReactiveDeltaCRDT[LWWRegister[Int]] = empty.clear()
+  def clearEmpty(): DeltaBufferRDT[LWWRegister[Int]] = empty.clear()
 
   @Benchmark
-  def clearFull(): ReactiveDeltaCRDT[LWWRegister[Int]] = full.clear()
+  def clearFull(): DeltaBufferRDT[LWWRegister[Int]] = full.clear()
 }

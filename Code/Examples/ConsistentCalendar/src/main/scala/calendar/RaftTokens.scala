@@ -5,7 +5,7 @@ import kofre.decompose.Delta
 import kofre.predef.AddWinsSet
 import kofre.protocol.RaftState
 import kofre.predef.AddWinsSet.AWSetSyntax
-import kofre.decompose.containers.ReactiveDeltaCRDT
+import kofre.decompose.containers.DeltaBufferRDT
 
 import scala.util.Random
 
@@ -16,8 +16,8 @@ case class Token(id: Long, owner: String, value: String) {
 case class RaftTokens(
                        replicaID: String,
                        tokenAgreement: RaftState[Token],
-                       want: ReactiveDeltaCRDT[AddWinsSet[Token]],
-                       tokenFreed: ReactiveDeltaCRDT[AddWinsSet[Token]]
+                       want: DeltaBufferRDT[AddWinsSet[Token]],
+                       tokenFreed: DeltaBufferRDT[AddWinsSet[Token]]
 ) {
 
   def owned(value: String): List[Token] = {
@@ -75,5 +75,5 @@ case class RaftTokens(
 
 object RaftTokens {
   def init(replicaID: String): RaftTokens =
-    RaftTokens(replicaID, RaftState(Set(replicaID)), ReactiveDeltaCRDT(replicaID), ReactiveDeltaCRDT(replicaID))
+    RaftTokens(replicaID, RaftState(Set(replicaID)), DeltaBufferRDT(replicaID), DeltaBufferRDT(replicaID))
 }

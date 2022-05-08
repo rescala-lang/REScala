@@ -19,7 +19,7 @@ import todo.Codecs._
 import todo.Todolist.replicaId
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax
 import kofre.decompose.interfaces.RGAInterface.{RGA, RGASyntax}
-import kofre.decompose.containers.ReactiveDeltaCRDT
+import kofre.decompose.containers.DeltaBufferRDT
 
 class TodoAppUI(val storagePrefix: String) {
 
@@ -48,8 +48,8 @@ class TodoAppUI(val storagePrefix: String) {
 
     val deltaEvt = Evt[Delta[RGA[TaskRef]]]
 
-    val tasksRDT: Signal[ReactiveDeltaCRDT[RGA[TaskRef]]] =
-      Storing.storedAs(storagePrefix, ReactiveDeltaCRDT[RGA[TaskRef]](replicaId)) { init =>
+    val tasksRDT: Signal[DeltaBufferRDT[RGA[TaskRef]]] =
+      Storing.storedAs(storagePrefix, DeltaBufferRDT[RGA[TaskRef]](replicaId)) { init =>
         Events.foldAll(init) { current =>
           Seq(
             createTodo.event act taskOps.handleCreateTodo(current),

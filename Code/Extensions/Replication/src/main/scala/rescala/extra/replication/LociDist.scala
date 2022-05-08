@@ -1,7 +1,7 @@
 package rescala.extra.replication
 
 import kofre.base.DecomposeLattice
-import kofre.decompose.containers.ReactiveDeltaCRDT
+import kofre.decompose.containers.DeltaBufferRDT
 import kofre.decompose.Delta
 import loci.registry.{Binding, Registry}
 import loci.transmitter.RemoteRef
@@ -17,9 +17,9 @@ class LociDist[Api <: RescalaInterface](val api: Api) {
   import api._
 
   def distributeDeltaCRDT[A: DecomposeLattice](
-      signal: Signal[ReactiveDeltaCRDT[A]],
-      deltaEvt: Evt[Delta[A]],
-      registry: Registry
+                                                signal: Signal[DeltaBufferRDT[A]],
+                                                deltaEvt: Evt[Delta[A]],
+                                                registry: Registry
   )(binding: Binding[A => Unit, A => Future[Unit]]): Unit = {
     registry.bindSbj(binding) { (remoteRef: RemoteRef, deltaState: A) =>
       deltaEvt.fire(Delta(remoteRef.toString, deltaState))

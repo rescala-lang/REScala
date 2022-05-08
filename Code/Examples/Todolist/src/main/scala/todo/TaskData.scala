@@ -15,7 +15,7 @@ import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all._
 import todo.Todolist.replicaId
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax
-import kofre.decompose.containers.ReactiveDeltaCRDT
+import kofre.decompose.containers.DeltaBufferRDT
 
 import scala.Function.const
 import scala.collection.mutable
@@ -32,16 +32,16 @@ case class TaskData(
 case class TaskRef(id: String) {
   lazy val cached: TaskRefData = TaskReferences.lookupOrCreateTaskRef(id, None)
 
-  def task: Signal[ReactiveDeltaCRDT[LWWRegister[TaskData]]] = cached.task
+  def task: Signal[DeltaBufferRDT[LWWRegister[TaskData]]] = cached.task
   def tag: TypedTag[LI]                                      = cached.tag
   def removed: Event[String]                                 = cached.removed
 }
 
 final class TaskRefData(
-    val task: Signal[ReactiveDeltaCRDT[LWWRegister[TaskData]]],
-    val tag: TypedTag[LI],
-    val removed: Event[String],
-    val id: String,
+                         val task: Signal[DeltaBufferRDT[LWWRegister[TaskData]]],
+                         val tag: TypedTag[LI],
+                         val removed: Event[String],
+                         val id: String,
 ) {
   override def hashCode(): Int = id.hashCode
   override def equals(obj: Any): Boolean = obj match {
@@ -77,7 +77,7 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
       taskID: String,
       task: Option[TaskData],
   ): TaskRefData = {
-    val lwwInit = ReactiveDeltaCRDT[LWWRegister[TaskData]](replicaId)
+    val lwwInit = DeltaBufferRDT[LWWRegister[TaskData]](replicaId)
 
     val lww = task match {
       case None =>  new kofre.decompose.interfaces.MVRegisterInterface.MVRegisterSyntax(lwwInit).write(

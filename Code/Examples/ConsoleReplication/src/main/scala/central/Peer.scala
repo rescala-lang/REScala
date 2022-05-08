@@ -2,7 +2,7 @@ package central
 
 import central.Bindings._
 import kofre.base.DecomposeLattice
-import kofre.decompose.containers.ReactiveDeltaCRDT
+import kofre.decompose.containers.DeltaBufferRDT
 import kofre.decompose.Delta
 import kofre.predef.AddWinsSet
 import loci.communicator.tcp.TCP
@@ -28,7 +28,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
   val size: String     = "size"
   val exit: String     = "exit"
 
-  var set: ReactiveDeltaCRDT[AddWinsSet[Int]] = ReactiveDeltaCRDT(id)
+  var set: DeltaBufferRDT[AddWinsSet[Int]] = DeltaBufferRDT(id)
 
   var checkpoint: Int = 0
 

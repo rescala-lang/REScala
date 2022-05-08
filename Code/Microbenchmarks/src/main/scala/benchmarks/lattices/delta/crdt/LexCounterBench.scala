@@ -2,7 +2,7 @@ package benchmarks.lattices.delta.crdt
 
 import kofre.decompose.interfaces.LexCounterInterface.LexCounter
 import org.openjdk.jmh.annotations._
-import kofre.decompose.containers.ReactiveDeltaCRDT
+import kofre.decompose.containers.DeltaBufferRDT
 
 import java.util.concurrent.TimeUnit
 
@@ -18,13 +18,13 @@ class LexCounterBench {
   @Param(Array("1", "10", "100", "1000"))
   var numReplicas: Int = _
 
-  var counter: ReactiveDeltaCRDT[LexCounter] = _
+  var counter: DeltaBufferRDT[LexCounter] = _
 
   @Setup
   def setup(): Unit = {
-    counter = (1 until numReplicas).foldLeft(ReactiveDeltaCRDT[LexCounter]("0").inc()) {
+    counter = (1 until numReplicas).foldLeft(DeltaBufferRDT[LexCounter]("0").inc()) {
       case (c, n) =>
-        val delta = ReactiveDeltaCRDT[LexCounter](n.toString).inc().deltaBuffer.head
+        val delta = DeltaBufferRDT[LexCounter](n.toString).inc().deltaBuffer.head
         c.applyDelta(delta)
     }
   }
@@ -33,8 +33,8 @@ class LexCounterBench {
   def value(): Int = counter.value
 
   @Benchmark
-  def inc(): ReactiveDeltaCRDT[LexCounter] = counter.inc()
+  def inc(): DeltaBufferRDT[LexCounter] = counter.inc()
 
   @Benchmark
-  def dec(): ReactiveDeltaCRDT[LexCounter] = counter.dec()
+  def dec(): DeltaBufferRDT[LexCounter] = counter.dec()
 }

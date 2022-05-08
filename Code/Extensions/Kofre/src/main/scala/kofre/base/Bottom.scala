@@ -8,6 +8,7 @@ trait Bottom[A] {
 }
 object Bottom {
   def empty[A](using bottom: Bottom[A]): A = bottom.empty
+  def apply[A](using bottom: Bottom[A]): Bottom[A] = bottom
 
   given decomposeBottom[A](using dl: DecomposeLattice[A]): Bottom[A] = dl
 }

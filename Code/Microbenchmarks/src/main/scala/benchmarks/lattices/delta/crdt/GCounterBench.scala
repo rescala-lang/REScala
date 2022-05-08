@@ -1,7 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
 import org.openjdk.jmh.annotations._
-import kofre.decompose.containers.ReactiveDeltaCRDT
+import kofre.decompose.containers.DeltaBufferRDT
 import kofre.predef.GrowOnlyCounter
 
 import java.util.concurrent.TimeUnit
@@ -18,13 +18,13 @@ class GCounterBench {
   @Param(Array("1", "10", "100", "1000"))
   var numReplicas: Int = _
 
-  var counter: ReactiveDeltaCRDT[GrowOnlyCounter] = _
+  var counter: DeltaBufferRDT[GrowOnlyCounter] = _
 
   @Setup
   def setup(): Unit = {
-    counter = (1 until numReplicas).foldLeft(ReactiveDeltaCRDT[GrowOnlyCounter]("0").inc()) {
+    counter = (1 until numReplicas).foldLeft(DeltaBufferRDT[GrowOnlyCounter]("0").inc()) {
       case (c, n) =>
-        val delta = ReactiveDeltaCRDT[GrowOnlyCounter](n.toString).inc().deltaBuffer.head
+        val delta = DeltaBufferRDT[GrowOnlyCounter](n.toString).inc().deltaBuffer.head
         c.applyDelta(delta)
     }
   }
@@ -33,5 +33,5 @@ class GCounterBench {
   def value(): Int = counter.value
 
   @Benchmark
-  def inc(): ReactiveDeltaCRDT[GrowOnlyCounter] = counter.inc()
+  def inc(): DeltaBufferRDT[GrowOnlyCounter] = counter.inc()
 }

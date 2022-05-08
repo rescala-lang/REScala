@@ -2,7 +2,7 @@ package benchmarks.lattices.delta.crdt
 
 import org.openjdk.jmh.annotations._
 import kofre.predef.PosNegCounter
-import kofre.decompose.containers.ReactiveDeltaCRDT
+import kofre.decompose.containers.DeltaBufferRDT
 
 import java.util.concurrent.TimeUnit
 
@@ -18,13 +18,13 @@ class PNCounterBench {
   @Param(Array("1", "10", "100", "1000"))
   var numReplicas: Int = _
 
-  var counter: ReactiveDeltaCRDT[PosNegCounter] = _
+  var counter: DeltaBufferRDT[PosNegCounter] = _
 
   @Setup
   def setup(): Unit = {
-    counter = (1 until numReplicas).foldLeft(ReactiveDeltaCRDT[PosNegCounter]("0").inc()) {
+    counter = (1 until numReplicas).foldLeft(DeltaBufferRDT[PosNegCounter]("0").inc()) {
       case (c, n) =>
-        val delta = ReactiveDeltaCRDT[PosNegCounter](n.toString).inc().deltaBuffer.head
+        val delta = DeltaBufferRDT[PosNegCounter](n.toString).inc().deltaBuffer.head
         c.applyDelta(delta)
     }
   }
@@ -33,8 +33,8 @@ class PNCounterBench {
   def value(): Int = counter.value
 
   @Benchmark
-  def inc(): ReactiveDeltaCRDT[PosNegCounter] = counter.inc()
+  def inc(): DeltaBufferRDT[PosNegCounter] = counter.inc()
 
   @Benchmark
-  def dec(): ReactiveDeltaCRDT[PosNegCounter] = counter.dec()
+  def dec(): DeltaBufferRDT[PosNegCounter] = counter.dec()
 }

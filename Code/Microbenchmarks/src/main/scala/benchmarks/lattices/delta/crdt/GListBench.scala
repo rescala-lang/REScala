@@ -2,7 +2,7 @@ package benchmarks.lattices.delta.crdt
 
 import kofre.decompose.interfaces.GListInterface.GList
 import org.openjdk.jmh.annotations._
-import kofre.decompose.containers.ReactiveDeltaCRDT
+import kofre.decompose.containers.DeltaBufferRDT
 
 import java.util.concurrent.TimeUnit
 
@@ -18,11 +18,11 @@ class GListBench {
   @Param(Array("0", "1", "10", "100", "1000"))
   var listSize: Int = _
 
-  var list: ReactiveDeltaCRDT[GList[Int]] = _
+  var list: DeltaBufferRDT[GList[Int]] = _
 
   @Setup
   def setup(): Unit = {
-    list = (0 until listSize).foldLeft(ReactiveDeltaCRDT[GList[Int]]("a")) {
+    list = (0 until listSize).foldLeft(DeltaBufferRDT[GList[Int]]("a")) {
       case (c, i) => c.insert(0, i)
     }
   }
@@ -40,8 +40,8 @@ class GListBench {
   def readLast(): Option[Int] = list.read(listSize - 1)
 
   @Benchmark
-  def insertStart(): ReactiveDeltaCRDT[GList[Int]]  = list.insert(0, -1)
+  def insertStart(): DeltaBufferRDT[GList[Int]]  = list.insert(0, -1)
 
   @Benchmark
-  def insertEnd(): ReactiveDeltaCRDT[GList[Int]]  = list.insert(listSize, -1)
+  def insertEnd(): DeltaBufferRDT[GList[Int]]  = list.insert(listSize, -1)
 }

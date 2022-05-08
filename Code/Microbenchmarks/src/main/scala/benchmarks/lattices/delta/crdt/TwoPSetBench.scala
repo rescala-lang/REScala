@@ -3,7 +3,7 @@ package benchmarks.lattices.delta.crdt
 import kofre.decompose.interfaces.TwoPSetInterface.TwoPSet
 import org.openjdk.jmh.annotations._
 import kofre.decompose.interfaces.TwoPSetInterface.TwoPSetSyntax
-import kofre.decompose.containers.ReactiveDeltaCRDT
+import kofre.decompose.containers.DeltaBufferRDT
 
 import java.util.concurrent.TimeUnit
 
@@ -19,11 +19,11 @@ class TwoPSetBench {
   @Param(Array("0", "1", "10", "100", "1000"))
   var size: Int = _
 
-  var set: ReactiveDeltaCRDT[TwoPSet[Int]] = _
+  var set: DeltaBufferRDT[TwoPSet[Int]] = _
 
   @Setup
   def setup(): Unit = {
-    set = (0 until size).foldLeft(ReactiveDeltaCRDT[TwoPSet[Int]]("a")) {
+    set = (0 until size).foldLeft(DeltaBufferRDT[TwoPSet[Int]]("a")) {
       case (s, e) => s.insert(e)
     }
   }
@@ -32,8 +32,8 @@ class TwoPSetBench {
   def elements(): Set[Int] = set.elements
 
   @Benchmark
-  def insert(): ReactiveDeltaCRDT[TwoPSet[Int]] = set.insert(-1)
+  def insert(): DeltaBufferRDT[TwoPSet[Int]] = set.insert(-1)
 
   @Benchmark
-  def remove(): ReactiveDeltaCRDT[TwoPSet[Int]] = set.remove(0)
+  def remove(): DeltaBufferRDT[TwoPSet[Int]] = set.remove(0)
 }

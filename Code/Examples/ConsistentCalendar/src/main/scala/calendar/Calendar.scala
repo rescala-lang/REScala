@@ -2,16 +2,16 @@ package calendar
 import kofre.predef.AddWinsSet
 import rescala.default._
 import kofre.predef.AddWinsSet.AWSetSyntax
-import kofre.decompose.containers.ReactiveDeltaCRDT
+import kofre.decompose.containers.DeltaBufferRDT
 
 case class Appointment(start: Int, end: Int)
 
 class CalendarProgram(id: String, synchronizationPoint: String => (=> Unit) => Unit) {
 
-  type Calendar = ReactiveDeltaCRDT[AddWinsSet[Appointment]]
+  type Calendar = DeltaBufferRDT[AddWinsSet[Appointment]]
 
-  val work     = Var[Calendar](ReactiveDeltaCRDT(id))
-  val vacation = Var[Calendar](ReactiveDeltaCRDT(id))
+  val work     = Var[Calendar](DeltaBufferRDT(id))
+  val vacation = Var[Calendar](DeltaBufferRDT(id))
 
   val replicated = Map("work" -> work, "vacation" -> vacation)
 

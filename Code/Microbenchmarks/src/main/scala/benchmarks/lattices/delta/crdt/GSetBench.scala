@@ -2,7 +2,7 @@ package benchmarks.lattices.delta.crdt
 
 import org.openjdk.jmh.annotations._
 import kofre.decompose.interfaces.GSetInterface.GSetSyntax
-import kofre.decompose.containers.ReactiveDeltaCRDT
+import kofre.decompose.containers.DeltaBufferRDT
 
 import java.util.concurrent.TimeUnit
 
@@ -17,11 +17,11 @@ class GSetBench {
   @Param(Array("0", "1", "10", "100", "1000"))
   var size: Int = _
 
-  var set: ReactiveDeltaCRDT[Set[Int]] = _
+  var set: DeltaBufferRDT[Set[Int]] = _
 
   @Setup
   def setup(): Unit = {
-    set = (0 until size).foldLeft(ReactiveDeltaCRDT[Set[Int]]("a")) {
+    set = (0 until size).foldLeft(DeltaBufferRDT[Set[Int]]("a")) {
       case (s, e) => s.insert(e)
     }
   }
@@ -30,5 +30,5 @@ class GSetBench {
   def elements(): Set[Int] = set.elements
 
   @Benchmark
-  def insert(): ReactiveDeltaCRDT[Set[Int]] = set.insert(-1)
+  def insert(): DeltaBufferRDT[Set[Int]] = set.insert(-1)
 }
