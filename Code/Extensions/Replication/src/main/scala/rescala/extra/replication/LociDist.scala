@@ -1,8 +1,9 @@
 package rescala.extra.replication
 
 import kofre.base.DecomposeLattice
+import kofre.contextual.WithContext
 import kofre.decompose.containers.DeltaBufferRDT
-import kofre.decompose.Delta
+import kofre.syntax.WithNamedContext
 import loci.registry.{Binding, Registry}
 import loci.transmitter.RemoteRef
 import rescala.interface.RescalaInterface
@@ -16,38 +17,38 @@ object LociDist extends LociDist[rescala.default.type](rescala.default)
 class LociDist[Api <: RescalaInterface](val api: Api) {
   import api._
 
-  def distributeDeltaCRDT[A: DecomposeLattice](
-                                                signal: Signal[DeltaBufferRDT[A]],
-                                                deltaEvt: Evt[Delta[A]],
-                                                registry: Registry
-  )(binding: Binding[A => Unit, A => Future[Unit]]): Unit = {
-    registry.bindSbj(binding) { (remoteRef: RemoteRef, deltaState: A) =>
-      deltaEvt.fire(Delta(remoteRef.toString, deltaState))
+  def distributeDeltaCRDT[A](
+      signal: Signal[DeltaBufferRDT[A]],
+      deltaEvt: Evt[WithNamedContext[A]],
+      registry: Registry
+  )(binding: Binding[WithContext[A] => Unit, WithContext[A] => Future[Unit]])(implicit dcl: DecomposeLattice[WithContext[A]]): Unit = {
+    registry.bindSbj(binding) { (remoteRef: RemoteRef, deltaState: WithContext[A]) =>
+      deltaEvt.fire(WithNamedContext(remoteRef.toString, deltaState))
     }
 
     var observers    = Map[RemoteRef, Disconnectable]()
-    var resendBuffer = Map[RemoteRef, A]()
+    var resendBuffer = Map[RemoteRef, WithContext[A]]()
 
     def registerRemote(remoteRef: RemoteRef): Unit = {
-      val remoteUpdate: A => Future[Unit] = registry.lookup(binding, remoteRef)
+      val remoteUpdate: WithContext[A] => Future[Unit] = registry.lookup(binding, remoteRef)
 
       // Send full state to initialize remote
       val currentState = signal.readValueOnce.state
-      if (currentState != DecomposeLattice[A].empty) remoteUpdate(currentState)
+      if (currentState != dcl.empty) remoteUpdate(currentState)
 
       // Whenever the crdt is changed propagate the delta
       // Praktisch wäre etwas wie crdt.observeDelta
       val observer = signal.observe { s =>
         val deltaStateList = s.deltaBuffer.collect {
-          case Delta(replicaID, cc, deltaState) if replicaID != remoteRef.toString => deltaState
+          case WithNamedContext(replicaID, deltaState) if replicaID != remoteRef.toString => deltaState
         } ++ resendBuffer.get(remoteRef).toList
 
-        val combinedState = deltaStateList.reduceOption(DecomposeLattice[A].merge)
+        val combinedState = deltaStateList.reduceOption(DecomposeLattice[WithContext[A]].merge)
 
         combinedState.foreach { s =>
           val mergedResendBuffer = resendBuffer.updatedWith(remoteRef) {
             case None       => Some(s)
-            case Some(prev) => Some(DecomposeLattice[A].merge(prev, s))
+            case Some(prev) => Some(DecomposeLattice[WithContext[A]].merge(prev, s))
           }
 
           if (remoteRef.connected) {

@@ -1,13 +1,13 @@
 package kofre.protocol
 
 import kofre.base.{Bottom, DecomposeLattice}
-import kofre.contextual.ContextDecompose
+import kofre.contextual.{ContextDecompose, WithContext}
 import kofre.decompose.*
 import kofre.predef.AddWinsSet.AWSetSyntax
 import kofre.predef.AddWinsSet
 import kofre.protocol.AuctionInterface
 import kofre.protocol.AuctionInterface.Bid.User
-import kofre.syntax.{PermIdMutate, OpsSyntaxHelper}
+import kofre.syntax.{OpsSyntaxHelper, PermIdMutate}
 
 /** A Rubis (Rice University Bidding System) is a Delta CRDT modeling an auction system.
   *
@@ -28,9 +28,9 @@ object RubisInterface {
     val bottom: State = (AddWinsSet.empty, Map.empty, Map.empty)
 
     def make(
-              userRequests: AddWinsSet[(User, String)] = bottom._1,
-              users: Map[User, String] = bottom._2,
-              auctions: Map[AID, AuctionInterface.AuctionData] = bottom._3
+        userRequests: AddWinsSet[(User, String)] = bottom._1,
+        users: Map[User, String] = bottom._2,
+        auctions: Map[AID, AuctionInterface.AuctionData] = bottom._3
     ): State = (userRequests, users, auctions)
   }
 
@@ -67,13 +67,15 @@ object RubisInterface {
       deltaState.make(auctions = newMap)
     }
 
-    def requestRegisterUser(userId: User)(using MutationIDP): C = {
+    def requestRegisterUser(userId: User)(using CausalMutation, CausalP, QueryP, IdentifierP): C = {
       val (req, users, _) = current
-      if (users.contains(userId)) deltaState.make()
-      else deltaState.make(userRequests = req.add(userId -> replicaID)(using PermIdMutate.withID(replicaID)))
+      if (users.contains(userId)) WithContext(deltaState.make(), context)
+      else
+        val merged = WithContext(req, context).named(replicaID).add(userId -> replicaID).inner
+        WithContext(deltaState.make(userRequests = merged.store), merged.context)
     }
 
-    def resolveRegisterUser()(using MutationIDP): C = {
+    def resolveRegisterUser()(using MutationIDP, CausalP): C = {
       val (req, users, _) = current
       val newUsers = req.elements.foldLeft(Map.empty[User, String]) {
         case (newlyRegistered, (uid, rid)) =>
@@ -85,7 +87,7 @@ object RubisInterface {
       }
 
       deltaState.make(
-        userRequests = req.clear(),
+        userRequests = WithContext(req, context).clear().store,
         users = newUsers
       )
     }

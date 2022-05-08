@@ -12,9 +12,7 @@ import kofre.predef.Epoche
   *
   * When the flag is concurrently disabled and enabled then the enable operation wins, i.e. the resulting flag is enabled.
   */
-case class EnableWinsFlag(inner: CausalContext) {
-  export inner.*
-}
+case class EnableWinsFlag(inner: CausalContext)
 
 object EnableWinsFlag {
 
@@ -24,13 +22,13 @@ object EnableWinsFlag {
     * It relies on the external context to track removals.
     */
   implicit class EnableWinsFlagOps[C](container: C) extends OpsSyntaxHelper[C, EnableWinsFlag](container) {
-    def read(using QueryP): Boolean = !current.isEmpty
+    def read(using QueryP): Boolean = !current.inner.isEmpty
 
     def enable()(using IdentifierP, QueryP, CausalMutation, CausalP): C = {
       val nextDot = context.nextDot(replicaID)
       WithContext(
         EnableWinsFlag(CausalContext.single(nextDot)),
-        current add nextDot
+        current.inner add nextDot
       )
     }
     def disable()(using QueryP, CausalMutation): C = {

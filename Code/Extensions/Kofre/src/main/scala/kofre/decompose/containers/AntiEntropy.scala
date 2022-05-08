@@ -10,6 +10,5 @@ trait AntiEntropy[A] {
   def replicaID: Defs.Id
   def recordChange(delta: WithNamedContext[A], state: WithContext[A]): Unit
   def getReceivedDeltas: List[WithNamedContext[A]]
-  def context: CausalContext
   def state: WithContext[A]
 }

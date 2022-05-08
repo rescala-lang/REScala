@@ -3,9 +3,8 @@ package rescala.extra.replication
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReaderException, JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import kofre.base.DecomposeLattice
-import kofre.causality.CausalContext
+import kofre.contextual.WithContext
 import kofre.decompose.containers.Network
-import kofre.decompose.Delta
 import kofre.syntax.WithNamedContext
 import rescala.extra.replication.AntiEntropy.{AckMsg, DeltaMsg}
 
@@ -24,24 +23,24 @@ import scala.collection.mutable
   * @param neighbors The neighbors that this replica can communicate with directly
   * @tparam A State type of the CRDT that this anti-entropy algorithm is used with
   */
-class AntiEntropy[A: DecomposeLattice](
+class AntiEntropy[A](
     val replicaID: String,
     network: Network,
     neighbors: mutable.Buffer[String] = mutable.Buffer()
-)(implicit val codec: JsonValueCodec[A]) extends kofre.decompose.containers.AntiEntropy[A] {
+)(implicit val codec: JsonValueCodec[A], withContextLattice: DecomposeLattice[WithContext[A]]) extends kofre.decompose.containers.AntiEntropy[A] {
 
-  private var mutableContext: CausalContext = CausalContext.empty
-  def context: CausalContext = mutableContext
+  override def state: WithContext[A] = fullState
 
-  private val deltaBufferOut: mutable.Map[Int, Delta[A]] = mutable.Map()
 
-  private var deltaBufferIn: List[Delta[A]] = List()
+  private val deltaBufferOut: mutable.Map[Int, WithNamedContext[A]] = mutable.Map()
+
+  private var deltaBufferIn: List[WithNamedContext[A]] = List()
 
   private var nextSeqNum: Int = 0
 
   private val ackMap: mutable.Map.WithDefault[String, Int] = new mutable.Map.WithDefault(mutable.Map(), _ => -1)
 
-  private var fullState: A = DecomposeLattice[A].empty
+  private var fullState: WithContext[A] = DecomposeLattice[WithContext[A]].empty
 
   implicit val AckMsgCodec: JsonValueCodec[AckMsg] = JsonCodecMaker.make
 
@@ -55,15 +54,14 @@ class AntiEntropy[A: DecomposeLattice](
     neighbors.append(newNeighbor)
   }
 
-  def recordChange(delta: WithNamedContext[A], state: A): Unit = {
+  def recordChange(delta: WithNamedContext[A], state: WithContext[A]): Unit = {
     fullState = state
 
-    mutableContext = mutableContext.union(delta.inner.context)
     deltaBufferOut.update(nextSeqNum, delta)
     nextSeqNum += 1
   }
 
-  def getReceivedDeltas: List[Delta[A]] = {
+  def getReceivedDeltas: List[WithNamedContext[A]] = {
     val deltas = deltaBufferIn
     deltaBufferIn = List()
     deltas
@@ -99,13 +97,13 @@ class AntiEntropy[A: DecomposeLattice](
 
   private def prepareDeltaMsg(to: String): Option[DeltaMsg[A]] = {
     if (deltaBufferOut.isEmpty || deltaBufferOut.keySet.min > ackMap(to))
-      Some(DeltaMsg(Delta(replicaID, fullState), nextSeqNum))
+      Some(DeltaMsg(WithNamedContext(replicaID, fullState), nextSeqNum))
     else {
       deltaBufferOut.collect {
-        case (n, Delta(origin, cc, deltaState)) if n >= ackMap(to) && origin != to => deltaState
-      } reduceOption { (left: A, right: A) =>
-        DecomposeLattice[A].merge(left, right)
-      } map { deltaState => DeltaMsg(Delta(replicaID, deltaState), nextSeqNum) }
+        case (n, WithNamedContext(origin, deltaState)) if n >= ackMap(to) && origin != to => deltaState
+      } reduceOption { (left: WithContext[A], right: WithContext[A]) =>
+        DecomposeLattice[WithContext[A]].merge(left, right)
+      } map { deltaState => DeltaMsg(WithNamedContext(replicaID, deltaState), nextSeqNum) }
     }
   }
 
@@ -130,7 +128,7 @@ class AntiEntropy[A: DecomposeLattice](
 }
 
 object AntiEntropy {
-  case class DeltaMsg[A](delta: Delta[A], seqNum: Int)
+  case class DeltaMsg[A](delta: WithNamedContext[A], seqNum: Int)
   case class AckMsg(from: String, seqNum: Int)
 
   def sync[A](ae: AntiEntropy[A]*): Unit = {

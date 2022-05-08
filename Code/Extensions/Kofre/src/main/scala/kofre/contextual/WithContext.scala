@@ -4,16 +4,21 @@ import kofre.base.{Bottom, DecomposeLattice, Lattice}
 import kofre.causality.{CausalContext, Dot}
 import kofre.contextual.AsCausalContext
 import kofre.base.Lattice.Operators
-import kofre.syntax.{ArdtOpsContains, PermCausal, PermCausalMutate, PermQuery}
+import kofre.syntax.{ArdtOpsContains, PermCausal, PermCausalMutate, PermQuery, WithNamedContext}
 
 case class WithContext[A](store: A, context: CausalContext) {
   def map[B](f: A => B): WithContext[B] = WithContext(f(store), context)
+  def named(id: kofre.base.Defs.Id): WithNamedContext[A] = WithNamedContext(id, this)
 }
 
 /** Implicit aliases in companion object for search path */
 object WithContext {
 
   def empty[A: Bottom]: WithContext[A] = WithContext(Bottom.empty[A], CausalContext.empty)
+
+  given bottomInstance[A: Bottom]: Bottom[WithContext[A]] with {
+    override def empty: WithContext[A] = WithContext.this.empty
+  }
 
   given CausalWithDotFunLattice[V: Lattice]: Lattice[WithContext[Map[Dot, V]]] = ContextLattice.perDot
   given CausalWithDotSetLattice: Lattice[WithContext[Set[Dot]]] =
