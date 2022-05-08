@@ -7,6 +7,7 @@ import kofre.primitives.{CausalQueue, LastWriterWins, MultiValueRegister}
 import kofre.sets.ORSet
 import kofre.base.Lattice
 import kofre.base.Defs
+import kofre.predef.{GrowOnlyCounter, PosNegCounter}
 import org.scalacheck.{Arbitrary, Gen}
 
 object DataGenerator {
@@ -23,6 +24,17 @@ object DataGenerator {
       time  <- Gen.long
       value <- Gen.choose(Int.MinValue, Int.MaxValue)
     } yield LastWriterWins(time, value)
+  )
+
+  given arbGcounter: Arbitrary[GrowOnlyCounter] = Arbitrary(
+    Gen.mapOf[Defs.Id, Int](Gen.zip(arbId.arbitrary, Arbitrary.arbitrary[Int])).map(GrowOnlyCounter(_))
+  )
+
+  given arbPosNeg: Arbitrary[PosNegCounter] = Arbitrary(
+    for {
+      pos <- arbGcounter.arbitrary
+      neg <- arbGcounter.arbitrary
+    } yield (PosNegCounter(pos, neg))
   )
 
   given Lattice[Int] = _ max _
