@@ -21,8 +21,6 @@ object AddWinsSet {
 
   def empty[E]: AddWinsSet[E] = AddWinsSet(WithContext(Map.empty, CausalContext.empty))
 
-  extension [C, E](container: C) def asAWSet: AWSetSyntax[C, E] = AWSetSyntax(container)
-
   given awsetLattice[E]: DecomposeLattice[AddWinsSet[E]] = DecomposeLattice.derived
 
   implicit class AWSetSyntax[C, E](container: C) extends OpsSyntaxHelper[C, AddWinsSet[E]](container) {
