@@ -6,7 +6,11 @@ import kofre.base.Bottom
 import kofre.causality.CausalContext
 import kofre.contextual.{WithContext, WithContextDecompose}
 
+import scala.compiletime.summonAll
+import scala.deriving.Mirror
+
 trait Decompose[A] {
+
   /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
   def decompose(a: A): Iterable[A]
 }
@@ -80,40 +84,10 @@ object DecomposeLattice {
       override def empty: Map[K, V] = Map.empty[K, V]
     }
 
-  given PairAsUIJDLattice[A: DecomposeLattice, B: DecomposeLattice]: DecomposeLattice[(A, B)] =
-    new DecomposeFromLattice[(A, B)](Lattice.derived) {
-      override def empty: (A, B) = (DecomposeLattice[A].empty, DecomposeLattice[B].empty)
+  given PairAsUIJDLattice[A: DecomposeLattice, B: DecomposeLattice]: DecomposeLattice[(A, B)] = derived
 
-      override def lteq(left: (A, B), right: (A, B)): Boolean = (left, right) match {
-        case ((ll, lr), (rl, rr)) =>
-          (ll <= rl) && (lr <= rr)
-      }
-
-      override def decompose(state: (A, B)): Iterable[(A, B)] = state match {
-        case (left, right) =>
-          val leftDecomposed  = left.decompose.map { (_, DecomposeLattice[B].empty) }
-          val rightDecomposed = right.decompose.map { (DecomposeLattice[A].empty, _) }
-          leftDecomposed ++ rightDecomposed
-      }
-    }
-
-  given TripleAsUIJDLattice[A: DecomposeLattice, B: DecomposeLattice, C: DecomposeLattice]: DecomposeLattice[(A, B, C)] =
-    new DecomposeFromLattice[(A, B, C)](Lattice.derived) {
-      override def lteq(left: (A, B, C), right: (A, B, C)): Boolean = (left, right) match {
-        case ((la, lb, lc), (ra, rb, rc)) =>
-          (la <= ra) && (lb <= rb) && (lc <= rc)
-      }
-
-      override def decompose(state: (A, B, C)): Iterable[(A, B, C)] = state match {
-        case (a, b, c) =>
-          val aDecomposed = a.decompose.map { (_, DecomposeLattice[B].empty, DecomposeLattice[C].empty) }
-          val bDecomposed = b.decompose.map { (DecomposeLattice[A].empty, _, DecomposeLattice[C].empty) }
-          val cDecomposed = c.decompose.map { (DecomposeLattice[A].empty, DecomposeLattice[B].empty, _) }
-          aDecomposed ++ bDecomposed ++ cDecomposed
-      }
-
-      override def empty: (A, B, C) = (DecomposeLattice[A].empty, DecomposeLattice[B].empty, DecomposeLattice[C].empty)
-    }
+  given TripleAsUIJDLattice[A: DecomposeLattice, B: DecomposeLattice, C: DecomposeLattice]
+      : DecomposeLattice[(A, B, C)] = derived
 
   given contextUIJDLattice[D](using wcd: WithContextDecompose[D]): DecomposeLattice[WithContext[D]] =
     new DecomposeFromLattice[WithContext[D]](Lattice.contextLattice) {
@@ -123,4 +97,38 @@ object DecomposeLattice {
       override def empty: WithContext[D] = WithContext(wcd.empty, CausalContext.empty)
     }
 
+  inline def derived[T <: Product](using pm: Mirror.ProductOf[T]): DecomposeLattice[T] = {
+    val lattices: Tuple = summonAll[Tuple.Map[pm.MirroredElemTypes, DecomposeLattice]]
+    val base            = Lattice.derived[T]
+    new ProductDecomposeLattice[T](lattices, base, pm)
+  }
+
+  class ProductDecomposeLattice[T <: Product](lattices: Tuple, base: Lattice[T], pm: Mirror.ProductOf[T])
+      extends DecomposeLattice[T] {
+    export base.merge
+
+    private def lat(i: Int): DecomposeLattice[Any] = lattices.productElement(i).asInstanceOf[DecomposeLattice[Any]]
+
+    override def empty: T =
+      pm.fromProduct(
+        lattices.map[[α] =>> Any](
+          [t] => (l: t) => l.asInstanceOf[kofre.decompose.DecomposeLattice[Any]].empty
+        )
+      )
+
+    override def decompose(a: T): Iterable[T] =
+      Range(0, lattices.productArity).flatMap { j =>
+        lat(j).decompose(a.productElement(j)).map { elem =>
+          pm.fromProduct(new Product {
+            def canEqual(that: Any): Boolean = false
+            def productArity: Int            = lattices.productArity
+            def productElement(i: Int): Any  = if i == j then elem else lat(i).empty
+          })
+        }
+      }
+
+    override def lteq(left: T, right: T): Boolean = Range(0, lattices.productArity).forall { i =>
+      lat(i).lteq(left.productElement(i), right.productElement(i))
+    }
+  }
 }
