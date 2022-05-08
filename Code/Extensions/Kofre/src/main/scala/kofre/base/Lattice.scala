@@ -21,6 +21,7 @@ trait Lattice[A] {
   def lteq(left: A, right: A): Boolean = merge(left, right) == right
 
   extension (left: A) def <=(right: A): Boolean  = lteq(left, right)
+  extension (left: A) def merged(right: A): A = merge(left, right)
 }
 
 object Lattice {
