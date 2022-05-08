@@ -23,13 +23,13 @@ import kofre.syntax.{AllPermissionsCtx, OpsSyntaxHelper}
 object RubisInterface {
   type AID = String
 
-  type State = (AddWinsSet.AWSet[(User, String)], Map[User, String], Map[AID, AuctionInterface.AuctionData])
+  type State = (AddWinsSet[(User, String)], Map[User, String], Map[AID, AuctionInterface.AuctionData])
 
   private class DeltaStateFactory {
     val bottom: State = (AddWinsSet.empty, Map.empty, Map.empty)
 
     def make(
-              userRequests: AddWinsSet.AWSet[(User, String)] = bottom._1,
+              userRequests: AddWinsSet[(User, String)] = bottom._1,
               users: Map[User, String] = bottom._2,
               auctions: Map[AID, AuctionInterface.AuctionData] = bottom._3
     ): State = (userRequests, users, auctions)

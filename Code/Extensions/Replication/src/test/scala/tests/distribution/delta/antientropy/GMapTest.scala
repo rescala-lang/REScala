@@ -2,7 +2,6 @@ package tests.distribution.delta.antientropy
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import kofre.predef.AddWinsSet.{AWSet, AWSetSyntax}
 import kofre.decompose.interfaces.GMapInterface.GMap
 import kofre.syntax.AllPermissionsCtx
 import org.scalatest.freespec.AnyFreeSpec
@@ -11,6 +10,7 @@ import rescala.extra.lattices.delta.JsoniterCodecs._
 import rescala.extra.replication.AntiEntropy
 import kofre.decompose.interfaces.GMapInterface.GMapSyntax
 import kofre.decompose.containers.{AntiEntropyCRDT, Network}
+import kofre.predef.AddWinsSet
 
 import scala.collection.mutable
 
@@ -19,14 +19,14 @@ class GMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
   "mutateKey/queryKey" in { (add: List[Int], k: Int) =>
     val network = new Network(0, 0, 0)
-    val aea     = new AntiEntropy[GMap[Int, AWSet[Int]]]("a", network, mutable.Buffer())
-    val aeb     = new AntiEntropy[AWSet[Int]]("b", network, mutable.Buffer())
+    val aea     = new AntiEntropy[GMap[Int, AddWinsSet[Int]]]("a", network, mutable.Buffer())
+    val aeb     = new AntiEntropy[AddWinsSet[Int]]("b", network, mutable.Buffer())
 
-    val set = add.foldLeft(AntiEntropyCRDT[AWSet[Int]](aeb)) {
+    val set = add.foldLeft(AntiEntropyCRDT[AddWinsSet[Int]](aeb)) {
       case (s, e) => s.add(e)
     }
 
-    val map = add.foldLeft(AntiEntropyCRDT[GMap[Int, AWSet[Int]]](aea)) {
+    val map = add.foldLeft(AntiEntropyCRDT[GMap[Int, AddWinsSet[Int]]](aea)) {
       case (m, e) => m.mutateKey(k)((st) => st.add(e)(AllPermissionsCtx.withID(m.replicaID)))
     }
 

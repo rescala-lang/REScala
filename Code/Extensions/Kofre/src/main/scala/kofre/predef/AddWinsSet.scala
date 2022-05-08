@@ -12,21 +12,20 @@ import kofre.syntax.OpsSyntaxHelper
 
 case class AddWinsSet[E](inner: WithContext[Embedded[E]])
 
-/** An AWSet (Add-Wins Set) is a Delta CRDT modeling a set.
+/** An AddWinsSet (Add-Wins Set) is a Delta CRDT modeling a set.
   *
   * When an element is concurrently added and removed/cleared from the set then the add operation wins, i.e. the resulting set contains the element.
   */
 object AddWinsSet {
   type Embedded[E] = Map[E, CausalContext]
-  type AWSet[E]    = AddWinsSet[E]
 
-  def empty[E]: AWSet[E] = AddWinsSet(WithContext(Map.empty, CausalContext.empty))
+  def empty[E]: AddWinsSet[E] = AddWinsSet(WithContext(Map.empty, CausalContext.empty))
 
   extension [C, E](container: C) def asAWSet: AWSetSyntax[C, E] = AWSetSyntax(container)
 
   given awsetLattice[E]: DecomposeLattice[AddWinsSet[E]] = DecomposeLattice.derived
 
-  implicit class AWSetSyntax[C, E](container: C) extends OpsSyntaxHelper[C, AWSet[E]](container) {
+  implicit class AWSetSyntax[C, E](container: C) extends OpsSyntaxHelper[C, AddWinsSet[E]](container) {
 
     def elements(using QueryP): Set[E] = current.inner.store.keySet
 
@@ -109,7 +108,7 @@ object AddWinsSet {
     def make(
         dm: Map[E, CausalContext] = empty.inner.store,
         cc: CausalContext = empty.inner.context
-    ): AWSet[E] = AddWinsSet(WithContext(dm, cc))
+    ): AddWinsSet[E] = AddWinsSet(WithContext(dm, cc))
   }
 
   private def deltaState[E]: DeltaStateFactory[E] = new DeltaStateFactory[E]

@@ -3,8 +3,8 @@ package central
 import central.Bindings._
 import kofre.base.DecomposeLattice
 import kofre.decompose.containers.ReactiveDeltaCRDT
-import kofre.predef.AddWinsSet.{AWSet, AWSetSyntax}
 import kofre.decompose.Delta
+import kofre.predef.AddWinsSet
 import loci.communicator.tcp.TCP
 import loci.registry.Registry
 import loci.transmitter.{RemoteAccessException, RemoteRef}
@@ -28,7 +28,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
   val size: String     = "size"
   val exit: String     = "exit"
 
-  var set: ReactiveDeltaCRDT[AWSet[Int]] = ReactiveDeltaCRDT(id)
+  var set: ReactiveDeltaCRDT[AddWinsSet[Int]] = ReactiveDeltaCRDT(id)
 
   var checkpoint: Int = 0
 
@@ -82,7 +82,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
   def sendRecursive(
       remoteReceiveSyncMessage: SyncMessage => Future[Unit],
-      delta: AWSet[Int]
+      delta: AddWinsSet[Int]
   ): Unit = new FutureTask[Unit](() => {
     def attemptSend(atoms: Iterable[SetState], merged: SetState): Unit = {
       remoteReceiveSyncMessage(SyncMessage(checkpoint, merged)).failed.foreach {

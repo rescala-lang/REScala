@@ -4,7 +4,7 @@ import kofre.base.DecomposeLattice
 import org.openjdk.jmh.annotations
 import org.openjdk.jmh.annotations._
 import kofre.causality.{CausalContext, Dot}
-import kofre.predef.AddWinsSet.{AWSet, AWSetSyntax}
+import kofre.predef.AddWinsSet
 import kofre.syntax.AllPermissionsCtx
 
 import java.util.concurrent.TimeUnit
@@ -21,9 +21,9 @@ class AWSetDeltaMergeBench {
   @Param(Array("1", "10", "100", "1000"))
   var size: Long = _
 
-  var fullState: AWSet[Long]         = _
-  var plusOneState: AWSet[Long]      = _
-  var plusOneDeltaState: AWSet[Long] = _
+  var fullState: AddWinsSet[Long]         = _
+  var plusOneState: AddWinsSet[Long]      = _
+  var plusOneDeltaState: AddWinsSet[Long] = _
 
   def makeCContext(replicaID: String): CausalContext = {
     val dots = (0L until size).map(Dot(replicaID, _)).toSet
@@ -32,36 +32,36 @@ class AWSetDeltaMergeBench {
 
   @Setup
   def setup(): Unit = {
-    val baseState = DecomposeLattice[AWSet[Long]].empty
+    val baseState = DecomposeLattice[AddWinsSet[Long]].empty
 
     val deltaState = baseState.addAll(0L to size)(AllPermissionsCtx.withID(""))
-    fullState = DecomposeLattice[AWSet[Long]].merge(baseState, deltaState)
+    fullState = DecomposeLattice[AddWinsSet[Long]].merge(baseState, deltaState)
 
     plusOneDeltaState = fullState.add(size)(AllPermissionsCtx.withID(""))
-    plusOneState = DecomposeLattice[AWSet[Long]].merge(fullState, plusOneDeltaState)
+    plusOneState = DecomposeLattice[AddWinsSet[Long]].merge(fullState, plusOneDeltaState)
   }
 
   @Benchmark
-  def fullMerge: AWSet[Long] = {
-    DecomposeLattice[AWSet[Long]].merge(fullState, plusOneState)
+  def fullMerge: AddWinsSet[Long] = {
+    DecomposeLattice[AddWinsSet[Long]].merge(fullState, plusOneState)
   }
 
   @Benchmark
-  def fullDiff: Option[AWSet[Long]] = {
-    DecomposeLattice[AWSet[Long]].diff(fullState, plusOneState)
+  def fullDiff: Option[AddWinsSet[Long]] = {
+    DecomposeLattice[AddWinsSet[Long]].diff(fullState, plusOneState)
   }
 
   @Benchmark
-  def deltaMerge: AWSet[Long] = {
-    DecomposeLattice[AWSet[Long]].diff(fullState, plusOneDeltaState) match {
+  def deltaMerge: AddWinsSet[Long] = {
+    DecomposeLattice[AddWinsSet[Long]].diff(fullState, plusOneDeltaState) match {
       case Some(stateDiff) =>
-        DecomposeLattice[AWSet[Long]].merge(fullState, stateDiff)
+        DecomposeLattice[AddWinsSet[Long]].merge(fullState, stateDiff)
       case None => fullState
     }
   }
 
   @Benchmark
-  def deltaMergeNoDiff: AWSet[Long] = {
-    DecomposeLattice[AWSet[Long]].merge(fullState, plusOneDeltaState)
+  def deltaMergeNoDiff: AddWinsSet[Long] = {
+    DecomposeLattice[AddWinsSet[Long]].merge(fullState, plusOneDeltaState)
   }
 }

@@ -54,7 +54,7 @@ object JsoniterCodecs {
   implicit val CausalContextCodec: JsonValueCodec[CausalContext] =
     JsonCodecMaker.make(CodecMakerConfig.withAllowRecursiveTypes(true))
 
-  /** AWSet */
+  /** AddWinsSet */
 
   @nowarn("msg=never used")
   implicit def AWSetStateCodec[E: JsonValueCodec]: JsonValueCodec[AddWinsSet[E]] =

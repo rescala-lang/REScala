@@ -2,7 +2,7 @@ package central
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import kofre.predef.AddWinsSet.AWSet
+import kofre.predef.AddWinsSet
 import loci.registry.Binding
 import loci.transmitter.IdenticallyTransmittable
 import loci.serializer.jsoniterScala._
@@ -12,7 +12,7 @@ import scala.concurrent.Future
 
 object Bindings {
 
-  type SetState = AWSet[Int]
+  type SetState = AddWinsSet[Int]
 
   case class SyncMessage(cp: Int, deltaState: SetState)
 

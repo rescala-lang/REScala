@@ -7,7 +7,7 @@ import loci.registry.Registry
 import loci.transmitter.{RemoteAccessException, RemoteRef}
 import central.SyncMessage.{AppointmentMessage, CalendarState, FreeMessage, RaftMessage, WantMessage}
 import kofre.base.DecomposeLattice
-import kofre.predef.AddWinsSet.AWSet
+import kofre.predef.AddWinsSet
 import kofre.predef.AddWinsSet.AWSetSyntax
 import kofre.decompose.Delta
 
@@ -81,13 +81,13 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
       tokens.want.deltaBuffer.collect {
         case Delta(replicaID, deltaState) if replicaID != rr.toString => deltaState
-      }.reduceOption(DecomposeLattice[AWSet[Token]].merge).foreach { state =>
+      }.reduceOption(DecomposeLattice[AddWinsSet[Token]].merge).foreach { state =>
         remoteReceiveSyncMessage(WantMessage(state))
       }
 
       tokens.tokenFreed.deltaBuffer.collect {
         case Delta(replicaID, deltaState) if replicaID != rr.toString => deltaState
-      }.reduceOption(DecomposeLattice[AWSet[Token]].merge).foreach { state =>
+      }.reduceOption(DecomposeLattice[AddWinsSet[Token]].merge).foreach { state =>
         remoteReceiveSyncMessage(FreeMessage(state))
       }
 
@@ -111,9 +111,9 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
   }
 
   def sendRecursive(
-      remoteReceiveSyncMessage: SyncMessage => Future[Unit],
-      delta: AWSet[Appointment],
-      crdtid: String,
+                     remoteReceiveSyncMessage: SyncMessage => Future[Unit],
+                     delta: AddWinsSet[Appointment],
+                     crdtid: String,
   ): Unit = new FutureTask[Unit](() => {
     def attemptSend(atoms: Iterable[CalendarState], merged: CalendarState): Unit = {
       remoteReceiveSyncMessage(AppointmentMessage(merged, crdtid)).failed.foreach {

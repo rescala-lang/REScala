@@ -7,7 +7,7 @@ import kofre.predef.AddWinsSet
 
 class AWSetDeltaFold[E, B](acc: B, onAdd: (B, E) => B, onRemove: (B, E) => B) {
   type C = CausalContext
-  def apply(currentState: AddWinsSet.AWSet[E], deltaState: AddWinsSet.AWSet[E]): AWSetDeltaFold[E, B] =
+  def apply(currentState: AddWinsSet[E], deltaState: AddWinsSet[E]): AWSetDeltaFold[E, B] =
     deltaState match {
       case AddWinsSet(WithContext(dm, cc)) =>
         val removedDots = cc diff DotMap[E, CausalContext].dots(dm)

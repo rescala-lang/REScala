@@ -2,8 +2,7 @@ package kofre.rga
 
 import kofre.base.Defs.Id
 import kofre.base.Lattice
-import kofre.predef.AddWinsSet.AWSet
-import kofre.predef.AddWinsSet.AWSetSyntax
+import kofre.predef.AddWinsSet
 import kofre.predef.AddWinsSet
 import kofre.syntax.AllPermissionsCtx
 
@@ -25,7 +24,7 @@ case class DeltaSequenceOrder(inner: Map[Vertex, Vertex]) {
     DeltaSequenceOrder(inner ++ addRightEdgeDelta(left, insertee).inner)
 }
 
-case class DeltaSequence[A](vertices: AWSet[Vertex], edges: DeltaSequenceOrder, values: Map[Vertex, A]) {
+case class DeltaSequence[A](vertices: AddWinsSet[Vertex], edges: DeltaSequenceOrder, values: Map[Vertex, A]) {
 
   def successor(v: Vertex): Option[Vertex] = {
     edges.inner.get(v) match {

@@ -3,8 +3,8 @@ package decentral
 import decentral.Bindings._
 import kofre.base.DecomposeLattice
 import kofre.decompose.containers.ReactiveDeltaCRDT
-import kofre.predef.AddWinsSet.{AWSet, AWSetSyntax}
 import kofre.decompose.Delta
+import kofre.predef.AddWinsSet
 import loci.transmitter.{RemoteAccessException, RemoteRef}
 
 import scala.concurrent.Future
@@ -22,7 +22,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
   val minAtomsForCheckpoint = 100
   val maxAtomsForCheckpoint = 500
 
-  var set: ReactiveDeltaCRDT[AWSet[Int]] = ReactiveDeltaCRDT(id)
+  var set: ReactiveDeltaCRDT[AddWinsSet[Int]] = ReactiveDeltaCRDT(id)
 
   var checkpoints: Map[String, Int] = Map(id -> 0)
 

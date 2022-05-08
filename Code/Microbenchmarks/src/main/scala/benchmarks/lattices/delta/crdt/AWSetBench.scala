@@ -1,7 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
 import kofre.decompose.containers.ReactiveDeltaCRDT
-import kofre.predef.AddWinsSet.{AWSet, AWSetSyntax}
+import kofre.predef.AddWinsSet
 import org.openjdk.jmh.annotations._
 
 import java.util.concurrent.TimeUnit
@@ -18,10 +18,10 @@ class AWSetBench {
   @Param(Array("0", "1", "10", "100", "1000"))
   var size: Int = _
 
-  var set: ReactiveDeltaCRDT[AWSet[Int]] = _
+  var set: ReactiveDeltaCRDT[AddWinsSet[Int]] = _
 
-  def createBySize(size: Int): ReactiveDeltaCRDT[AWSet[Int]] =
-    (0 until size).foldLeft(ReactiveDeltaCRDT[AWSet[Int]]("a")) {
+  def createBySize(size: Int): ReactiveDeltaCRDT[AddWinsSet[Int]] =
+    (0 until size).foldLeft(ReactiveDeltaCRDT[AddWinsSet[Int]]("a")) {
       case (s, e) => s.add(e)
     }
 
@@ -34,23 +34,23 @@ class AWSetBench {
   def elements(): Set[Int] = set.elements
 
   @Benchmark
-  def add(): ReactiveDeltaCRDT[AWSet[Int]] = set.add(-1)
+  def add(): ReactiveDeltaCRDT[AddWinsSet[Int]] = set.add(-1)
 
   @Benchmark
-  def addAll(): ReactiveDeltaCRDT[AWSet[Int]] = ReactiveDeltaCRDT[AWSet[Int]]("a").addAll(0 until size)
+  def addAll(): ReactiveDeltaCRDT[AddWinsSet[Int]] = ReactiveDeltaCRDT[AddWinsSet[Int]]("a").addAll(0 until size)
 
   @Benchmark
-  def remove(): ReactiveDeltaCRDT[AWSet[Int]] = set.remove(0)
+  def remove(): ReactiveDeltaCRDT[AddWinsSet[Int]] = set.remove(0)
 
   @Benchmark
-  def removeBy(): ReactiveDeltaCRDT[AWSet[Int]] = set.removeBy((e: Int) => e == 0)
+  def removeBy(): ReactiveDeltaCRDT[AddWinsSet[Int]] = set.removeBy((e: Int) => e == 0)
 
   @Benchmark
-  def removeAll(): ReactiveDeltaCRDT[AWSet[Int]] = set.removeAll(set.elements)
+  def removeAll(): ReactiveDeltaCRDT[AddWinsSet[Int]] = set.removeAll(set.elements)
 
   @Benchmark
-  def clear(): ReactiveDeltaCRDT[AWSet[Int]] = set.clear()
+  def clear(): ReactiveDeltaCRDT[AddWinsSet[Int]] = set.clear()
 
   @Benchmark
-  def construct(): ReactiveDeltaCRDT[AWSet[Int]] = createBySize(size)
+  def construct(): ReactiveDeltaCRDT[AddWinsSet[Int]] = createBySize(size)
 }

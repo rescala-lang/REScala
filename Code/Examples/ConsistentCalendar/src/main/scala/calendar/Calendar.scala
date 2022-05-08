@@ -1,5 +1,5 @@
 package calendar
-import kofre.predef.AddWinsSet.AWSet
+import kofre.predef.AddWinsSet
 import rescala.default._
 import kofre.predef.AddWinsSet.AWSetSyntax
 import kofre.decompose.containers.ReactiveDeltaCRDT
@@ -8,7 +8,7 @@ case class Appointment(start: Int, end: Int)
 
 class CalendarProgram(id: String, synchronizationPoint: String => (=> Unit) => Unit) {
 
-  type Calendar = ReactiveDeltaCRDT[AWSet[Appointment]]
+  type Calendar = ReactiveDeltaCRDT[AddWinsSet[Appointment]]
 
   val work     = Var[Calendar](ReactiveDeltaCRDT(id))
   val vacation = Var[Calendar](ReactiveDeltaCRDT(id))

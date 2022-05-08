@@ -2,7 +2,7 @@ package calendar
 
 import kofre.base.Lattice
 import kofre.decompose.Delta
-import kofre.predef.AddWinsSet.AWSet
+import kofre.predef.AddWinsSet
 import kofre.protocol.RaftState
 import kofre.predef.AddWinsSet.AWSetSyntax
 import kofre.decompose.containers.ReactiveDeltaCRDT
@@ -14,10 +14,10 @@ case class Token(id: Long, owner: String, value: String) {
 }
 
 case class RaftTokens(
-    replicaID: String,
-    tokenAgreement: RaftState[Token],
-    want: ReactiveDeltaCRDT[AWSet[Token]],
-    tokenFreed: ReactiveDeltaCRDT[AWSet[Token]]
+                       replicaID: String,
+                       tokenAgreement: RaftState[Token],
+                       want: ReactiveDeltaCRDT[AddWinsSet[Token]],
+                       tokenFreed: ReactiveDeltaCRDT[AddWinsSet[Token]]
 ) {
 
   def owned(value: String): List[Token] = {
@@ -56,11 +56,11 @@ case class RaftTokens(
     } else copy(tokenAgreement = generalDuties)
   }
 
-  def applyWant(state: Delta[AWSet[Token]]): RaftTokens = {
+  def applyWant(state: Delta[AddWinsSet[Token]]): RaftTokens = {
     copy(want = want.applyDelta(state))
   }
 
-  def applyFree(state: Delta[AWSet[Token]]): RaftTokens = {
+  def applyFree(state: Delta[AddWinsSet[Token]]): RaftTokens = {
     copy(tokenFreed = tokenFreed.applyDelta(state))
   }
 

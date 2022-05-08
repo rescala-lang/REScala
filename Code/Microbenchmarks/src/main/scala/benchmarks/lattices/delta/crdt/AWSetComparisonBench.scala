@@ -1,8 +1,8 @@
 package benchmarks.lattices.delta.crdt
 
 import kofre.base.DecomposeLattice
+import kofre.predef.AddWinsSet
 import org.openjdk.jmh.annotations._
-import kofre.predef.AddWinsSet.{AWSet, AWSetSyntax}
 import kofre.syntax.AllPermissionsCtx
 
 import java.util.concurrent.TimeUnit
@@ -19,7 +19,7 @@ class AWSetComparisonBench {
   @Param(Array("0", "1", "10", "100", "1000"))
   var setSize: Int = _
 
-  type State = AWSet[String]
+  type State = AddWinsSet[String]
 
   var setAState: State        = _
   var setBState: State        = _
