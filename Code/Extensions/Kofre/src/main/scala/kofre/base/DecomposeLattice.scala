@@ -3,7 +3,7 @@ package kofre.base
 import kofre.base.Lattice.{Operators, mapLattice, optionLattice, setLattice}
 import kofre.base.{Bottom, Decompose, Lattice}
 import kofre.causality.CausalContext
-import kofre.contextual.{WithContext, WithContextDecompose}
+import kofre.contextual.{WithContext, ContextDecompose}
 
 import scala.compiletime.summonAll
 import scala.deriving.Mirror
@@ -81,7 +81,7 @@ object DecomposeLattice {
 
   inline def tupleAsDecomposeLattice[T <: Tuple: Mirror.ProductOf]: DecomposeLattice[T] = derived
 
-  given contextUIJDLattice[D](using wcd: WithContextDecompose[D]): DecomposeLattice[WithContext[D]] =
+  given contextUIJDLattice[D](using wcd: ContextDecompose[D]): DecomposeLattice[WithContext[D]] =
     new DecomposeFromLattice[WithContext[D]](Lattice.contextLattice) {
       export wcd.decompose
       // needs manual override as export can not override :(

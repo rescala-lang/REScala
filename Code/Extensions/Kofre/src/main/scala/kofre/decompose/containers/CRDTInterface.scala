@@ -3,30 +3,30 @@ package kofre.decompose.containers
 import kofre.base.Defs.Id
 import kofre.base.{DecomposeLattice, Defs}
 import kofre.causality.CausalContext
-import kofre.contextual.WithContext
+import kofre.contextual.{ContextDecompose, ContextLattice, WithContext}
+import kofre.syntax.WithNamedContext
 import kofre.decompose.Delta
 import kofre.syntax.{PermCausal, PermCausalMutate, PermIdMutate, PermQuery}
 
 trait CRDTInterface[State, Wrapper] {
-  val state: State
+
+  val state: WithContext[State]
 
   val replicaID: Defs.Id
 
-  def applyDelta(delta: Delta[State])(implicit u: DecomposeLattice[State]): Wrapper
-
-  def context: CausalContext
+  def applyDelta(delta: WithNamedContext[State])(implicit u: DecomposeLattice[WithContext[State]]): Wrapper
 }
 
 object CRDTInterface {
-  def crdtInterfaceContextPermissions[L: DecomposeLattice, B <: CRDTInterface[L, B]]: PermIdMutate[B, L] =
+  def plainPermission[L: ContextDecompose, B <: CRDTInterface[L, B]]: PermIdMutate[B, L] =
     new PermIdMutate[B, L] {
       override def replicaId(c: B): Id       = c.replicaID
       override def mutate(c: B, delta: L): B = c.applyDelta(Delta(c.replicaID, CausalContext.empty, delta))
-      override def query(c: B): L            = c.state
+      override def query(c: B): L            = c.state.store
     }
 
   def contextPermissions[L, B <: CRDTInterface[L, B]](using
-      DecomposeLattice[L]
+      ContextDecompose[L]
   ): PermCausalMutate[B, L] with PermCausal[B] =
     new PermCausalMutate[B, L] with PermCausal[B] {
       override def mutateContext(
@@ -34,7 +34,7 @@ object CRDTInterface {
           withContext: WithContext[L]
       ): B =
         container.applyDelta(Delta(container.replicaID, withContext.context, withContext.store))
-      override def context(c: B): CausalContext = c.context
+      override def context(c: B): CausalContext = c.state.context
     }
 
   /** workaround to make existing syntax compile with different context decomposition */

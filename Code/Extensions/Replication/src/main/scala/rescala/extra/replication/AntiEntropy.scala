@@ -6,6 +6,7 @@ import kofre.base.DecomposeLattice
 import kofre.causality.CausalContext
 import kofre.decompose.containers.Network
 import kofre.decompose.Delta
+import kofre.syntax.WithNamedContext
 import rescala.extra.replication.AntiEntropy.{AckMsg, DeltaMsg}
 
 import scala.collection.mutable
@@ -54,10 +55,10 @@ class AntiEntropy[A: DecomposeLattice](
     neighbors.append(newNeighbor)
   }
 
-  def recordChange(delta: Delta[A], state: A): Unit = {
+  def recordChange(delta: WithNamedContext[A], state: A): Unit = {
     fullState = state
 
-    mutableContext = mutableContext.union(delta.context)
+    mutableContext = mutableContext.union(delta.inner.context)
     deltaBufferOut.update(nextSeqNum, delta)
     nextSeqNum += 1
   }

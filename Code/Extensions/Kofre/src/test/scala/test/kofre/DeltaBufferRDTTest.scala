@@ -21,9 +21,6 @@ class DeltaBufferRDTTest extends AnyFreeSpec {
     assert(dbe2.read)
     assert(dbe2.deltaBuffer.size == 2)
 
-    println(s"${dbe2.state}\n${dbe2.deltaBuffer}")
-
-
   }
 
 }

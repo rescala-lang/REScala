@@ -2,23 +2,41 @@ package kofre.contextual
 
 import kofre.base.Lattice.Operators
 import kofre.causality.{CausalContext, Dot}
-import kofre.contextual.{AsCausalContext, WithContext, WithContextMerge}
+import kofre.contextual.{AsCausalContext, WithContext, ContextLattice}
 import kofre.decompose.interfaces
-import kofre.contextual.WithContextDecompose
+import kofre.contextual.ContextDecompose
 import kofre.base.{DecomposeLattice, Lattice}
 import kofre.base.{Bottom, Decompose}
+import scala.compiletime.summonInline
+import scala.deriving.Mirror
+
+import scala.annotation.implicitNotFound
 
 /** DecomposableDotStore is the typeclass trait for dot stores,
   * data structures that are part of causal CRDTs and make use of dots to track causality.
   */
-trait WithContextDecompose[A] extends WithContextMerge[A], Decompose[WithContext[A]], AsCausalContext[A] {
+trait ContextDecompose[A] extends ContextLattice[A], Decompose[WithContext[A]], AsCausalContext[A] {
   def lteq(left: WithContext[A], right: WithContext[A]): Boolean
 }
 
-object WithContextDecompose {
-  def apply[A](implicit ds: WithContextDecompose[A]): WithContextDecompose[A] = ds
+object ContextDecompose {
+  def apply[A](implicit ds: ContextDecompose[A]): ContextDecompose[A] = ds
 
-  abstract class ComposeFrom[A](acc: AsCausalContext[A], wcm: WithContextMerge[A]) extends WithContextDecompose[A] {
+  private[kofre] inline def product1ContextDecompose[A, P <: Product](using
+      pm: Mirror.ProductOf[P],
+      innerCD: ContextDecompose[A]
+  ): ContextDecompose[P] =  new {
+    private def access(a: P): A = a.productElement(0).asInstanceOf[A]
+    override def dots(a: P): CausalContext = innerCD.dots(access(a))
+    override def empty: P                  = pm.fromProduct(Tuple1(innerCD.empty))
+    override def decompose(a: WithContext[P]): Iterable[WithContext[P]] =
+      innerCD.decompose(a.map(access)).map(_.map(v => pm.fromProduct(Tuple1(v))))
+    override def mergePartial(left: WithContext[P], right: WithContext[P]): P =
+      pm.fromProduct(Tuple1(innerCD.mergePartial(left.map(access), right.map(access))))
+    override def lteq(left: WithContext[P], right: WithContext[P]): Boolean = innerCD.lteq(left.map(access), right.map(access))
+  }
+
+  abstract class ComposeFrom[A](acc: AsCausalContext[A], wcm: ContextLattice[A]) extends ContextDecompose[A] {
     export acc.*
     export wcm.mergePartial
   }
@@ -26,8 +44,8 @@ object WithContextDecompose {
   /** DotSet is a dot store implementation that is simply a set of dots. See [[interfaces.EnableWinsFlag]] for a
     * usage example.
     */
-  implicit def DotSet: WithContextDecompose[CausalContext] =
-    new ComposeFrom[CausalContext](AsCausalContext.causalContextInstance, WithContextMerge.causalContext) {
+  implicit def DotSet: ContextDecompose[CausalContext] =
+    new ComposeFrom[CausalContext](AsCausalContext.causalContextInstance, ContextLattice.causalContext) {
 
       override def lteq(left: WithContext[CausalContext], right: WithContext[CausalContext]): Boolean = {
         val firstCondition = left.context.forall(right.context.contains)
@@ -45,7 +63,7 @@ object WithContextDecompose {
           for (d <- state.store.iterator) yield
             val single = CausalContext.single(d)
             WithContext(single, single)
-        val removed = state.context.decompose(state.store.contains).map(WithContext(CausalContext.empty, _))
+        val removed = state.context.subtract(state.store).decomposed.map(WithContext(CausalContext.empty, _))
         removed ++ added
       }
     }
@@ -53,8 +71,8 @@ object WithContextDecompose {
   /** DotMap is a dot store implementation that maps keys of an arbitrary type K to values of a dot store type V. See
     * [[interfaces.ORMapInterface]] for a usage example.
     */
-  implicit def DotMap[K, V: WithContextDecompose]: WithContextDecompose[Map[K, V]] =
-    new ComposeFrom[Map[K, V]](AsCausalContext.DotMapInstance, WithContextMerge.dotMapMerge) {
+  implicit def DotMap[K, V: ContextDecompose]: ContextDecompose[Map[K, V]] =
+    new ComposeFrom[Map[K, V]](AsCausalContext.DotMapInstance, ContextLattice.dotMapLattice) {
 
       override def lteq(left: WithContext[Map[K, V]], right: WithContext[Map[K, V]]): Boolean = {
         val firstCondition = left.context.forall(right.context.contains)
@@ -63,7 +81,7 @@ object WithContextDecompose {
           val leftV  = left.store.getOrElse(k, Bottom.empty[V])
           val rightV = right.store.getOrElse(k, Bottom.empty[V])
 
-          WithContextDecompose[V].lteq(WithContext(leftV, left.context), WithContext(rightV, right.context))
+          ContextDecompose[V].lteq(WithContext(leftV, left.context), WithContext(rightV, right.context))
         }
 
         val secondCondition = secondConditionHelper(left.store.keys) && secondConditionHelper(right.store.keys)
@@ -76,12 +94,12 @@ object WithContextDecompose {
           k <- state.store.keys
           WithContext(atomicV, atomicCC) <- {
             val v = state.store.getOrElse(k, Bottom.empty[V])
-            WithContextDecompose[V].decompose(WithContext(v, WithContextDecompose[V].dots(v)))
+            ContextDecompose[V].decompose(WithContext(v, ContextDecompose[V].dots(v)))
           }
         } yield WithContext(Map.empty[K, V].updated(k, atomicV), atomicCC)
 
         val removed =
-          state.context.decompose(dots(state.store).contains).map(WithContext(Map.empty[K, V], _))
+          state.context.subtract(dots(state.store)).decomposed.map(WithContext(Map.empty[K, V], _))
 
         added ++ removed
       }
@@ -90,24 +108,24 @@ object WithContextDecompose {
   /** DotPair is a dot store implementation that allows the composition of two dot stores in a pair. See [[interfaces.RGAInterface]]
     * for a usage example
     */
-  implicit def DotPair[A: WithContextDecompose, B: WithContextDecompose]: WithContextDecompose[(A, B)] =
-    new ComposeFrom[(A, B)](AsCausalContext.DotPairInstance, WithContextMerge.pairPartialMerge) {
+  implicit def DotPair[A: ContextDecompose, B: ContextDecompose]: ContextDecompose[(A, B)] =
+    new ComposeFrom[(A, B)](AsCausalContext.DotPairInstance, ContextLattice.pairPartialLattice) {
 
       override def lteq(left: WithContext[(A, B)], right: WithContext[(A, B)]): Boolean =
         (left, right) match {
           case (WithContext((left1, left2), leftCContext), WithContext((right1, right2), rightCContext)) =>
-            WithContextDecompose[A].lteq(WithContext(left1, leftCContext), WithContext(right1, rightCContext)) &&
-            WithContextDecompose[B].lteq(WithContext(left2, leftCContext), WithContext(right2, rightCContext))
+            ContextDecompose[A].lteq(WithContext(left1, leftCContext), WithContext(right1, rightCContext)) &&
+            ContextDecompose[B].lteq(WithContext(left2, leftCContext), WithContext(right2, rightCContext))
         }
 
       override def decompose(state: WithContext[(A, B)]): Iterable[WithContext[(A, B)]] = state match {
         case WithContext((state1, state2), cc) =>
-          val decomposed1 = WithContextDecompose[A].decompose(WithContext(state1, cc)).map {
+          val decomposed1 = ContextDecompose[A].decompose(WithContext(state1, cc)).map {
             case WithContext(atomicState, atomicCC) =>
               WithContext((atomicState, Bottom.empty[B]), atomicCC)
           }
 
-          val decomposed2 = WithContextDecompose[B].decompose(WithContext(state2, cc)).map {
+          val decomposed2 = ContextDecompose[B].decompose(WithContext(state2, cc)).map {
             case WithContext(atomicState, atomicCC) =>
               WithContext((Bottom.empty[A], atomicState), atomicCC)
           }
@@ -120,8 +138,8 @@ object WithContextDecompose {
   /** DotFun is a dot store implementation that maps dots to values of a Lattice type. See [[interfaces.MVRegisterInterface]]
     * for a usage example.
     */
-  implicit def DotFun[A: DecomposeLattice]: WithContextDecompose[Map[Dot, A]] =
-    new ComposeFrom[Map[Dot, A]](AsCausalContext.dotFunDotStore, WithContextMerge.perDot[A]) {
+  implicit def DotFun[A: DecomposeLattice]: ContextDecompose[Map[Dot, A]] =
+    new ComposeFrom[Map[Dot, A]](AsCausalContext.dotFunDotStore, ContextLattice.perDot[A]) {
 
       override def lteq(left: WithContext[Map[Dot, A]], right: WithContext[Map[Dot, A]]): Boolean = {
         val firstCondition = left.context.forall(right.context.contains)
@@ -141,7 +159,7 @@ object WithContextDecompose {
           yield WithContext(Map(d -> v), CausalContext.single(d))
 
         val removed =
-          state.context.decompose(DotFun[A].dots(state.store).contains).map(WithContext(DotFun[A].empty, _))
+          state.context.subtract(DotFun[A].dots(state.store)).decomposed.map(WithContext(DotFun[A].empty, _))
 
         removed ++ added
       }
@@ -152,8 +170,8 @@ object WithContextDecompose {
     * necessary so that the non-causal [[interfaces.EpocheInterface]] can be part of the [[DotPair]] that makes up
     * the state.
     */
-  implicit def UIJDLatticeAsDecomposableDotStore[A: DecomposeLattice]: WithContextDecompose[A] =
-    new WithContextDecompose[A] {
+  def UIJDLatticeAsDecomposableDotStore[A: DecomposeLattice]: ContextDecompose[A] =
+    new ContextDecompose[A] {
       override def dots(ds: A): CausalContext = CausalContext.empty
 
       override def mergePartial(left: WithContext[A], right: WithContext[A]): A =

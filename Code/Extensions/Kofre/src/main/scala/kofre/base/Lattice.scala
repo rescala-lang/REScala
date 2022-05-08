@@ -1,6 +1,6 @@
 package kofre.base
 
-import kofre.contextual.{WithContext, WithContextDecompose}
+import kofre.contextual.{WithContext, ContextDecompose}
 
 import scala.annotation.targetName
 import scala.collection.immutable.HashMap
@@ -19,6 +19,11 @@ trait Lattice[A] {
 
   /** Lattice order is derived from merge, but should be overridden for efficiency */
   def lteq(left: A, right: A): Boolean = merge(left, right) == right
+
+  def bimap[B](to: A => B, from: B => A): Lattice[B] = new Lattice[B] {
+    override def merge(left: B, right: B): B = to(Lattice.this.merge(from(left), from(right)))
+    override def lteq(left: B, right: B): Boolean = Lattice.this.lteq(from(left), from(right))
+  }
 
   extension (left: A) def <=(right: A): Boolean  = lteq(left, right)
   extension (left: A) def merged(right: A): A = merge(left, right)
@@ -65,8 +70,8 @@ object Lattice {
 
   given functionLattice[K, V: Lattice]: Lattice[K => V] = (left, right) => k => left(k) merge right(k)
 
-  given contextLattice[D: WithContextDecompose]: Lattice[WithContext[D]] = (left, right) =>
-    val dsMerged = WithContextDecompose[D].mergePartial(left, right)
+  given contextLattice[D: ContextDecompose]: Lattice[WithContext[D]] = (left, right) =>
+    val dsMerged = ContextDecompose[D].mergePartial(left, right)
     val ccMerged = left.context merge right.context
     WithContext[D](dsMerged, ccMerged)
 

@@ -4,7 +4,7 @@ import kofre.base.DecomposeLattice
 import kofre.causality.CausalContext
 import kofre.decompose.*
 import kofre.syntax.OpsSyntaxHelper
-import kofre.contextual.WithContextDecompose.*
+import kofre.contextual.ContextDecompose.*
 import kofre.contextual.WithContext
 import kofre.causality.Dot
 

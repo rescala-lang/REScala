@@ -2,8 +2,8 @@ package test.kofre
 
 import kofre.base.DecomposeLattice
 import kofre.causality.{CausalContext, Dot}
-import kofre.contextual.WithContextDecompose.*
-import kofre.contextual.{WithContext, WithContextDecompose}
+import kofre.contextual.ContextDecompose.*
+import kofre.contextual.{WithContext, ContextDecompose}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks

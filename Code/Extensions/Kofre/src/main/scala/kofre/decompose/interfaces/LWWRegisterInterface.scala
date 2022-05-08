@@ -2,7 +2,7 @@ package kofre.decompose.interfaces
 import kofre.base.DecomposeLattice
 import kofre.decompose.*
 import kofre.syntax.{PermIdMutate, ArdtOpsContains, OpsSyntaxHelper}
-import kofre.contextual.WithContextDecompose.DotFun
+import kofre.contextual.ContextDecompose.DotFun
 import kofre.decompose.interfaces.LexCounterInterface.LexCounter
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegisterSyntax
 

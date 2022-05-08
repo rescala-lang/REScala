@@ -4,19 +4,22 @@ import kofre.base.DecomposeLattice
 import kofre.causality.CausalContext
 import kofre.decompose.*
 import kofre.syntax.OpsSyntaxHelper
-import kofre.contextual.WithContextDecompose.*
-import kofre.contextual.WithContext
+import kofre.contextual.ContextDecompose.*
+import kofre.contextual.{ContextDecompose, WithContext}
 import kofre.predef.Epoche
 
 /** An EWFlag (Enable-Wins Flag) is a Delta CRDT modeling a boolean flag.
   *
   * When the flag is concurrently disabled and enabled then the enable operation wins, i.e. the resulting flag is enabled.
   */
-case class EnableWinsFlag(inner: CausalContext) derives DecomposeLattice {
+case class EnableWinsFlag(inner: CausalContext) {
   export inner.*
 }
 
 object EnableWinsFlag {
+
+  given latticeEWF: ContextDecompose[EnableWinsFlag] = ContextDecompose.product1ContextDecompose[CausalContext, EnableWinsFlag]
+
   /** It is enabled if there is a value in the store.
     * It relies on the external context to track removals.
     */

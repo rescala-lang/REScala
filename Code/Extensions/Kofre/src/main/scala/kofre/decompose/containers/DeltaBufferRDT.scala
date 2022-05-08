@@ -1,39 +1,36 @@
 package kofre.decompose.containers
 
-import kofre.base.DecomposeLattice
+import kofre.base.{Bottom, DecomposeLattice}
 import kofre.causality.CausalContext
-import kofre.contextual.WithContext
+import kofre.contextual.{ContextDecompose, ContextLattice, WithContext}
 import kofre.decompose.Delta
-import kofre.syntax.{ArdtOpsContains, PermCausal, PermCausalMutate, PermIdMutate, PermQuery}
+import kofre.syntax.{ArdtOpsContains, PermCausal, PermCausalMutate, PermIdMutate, PermQuery, WithNamedContext}
 
 /** ReactiveCRDTs are Delta CRDTs that store applied deltas in their deltaBuffer attribute. Middleware should regularly
   * take these deltas and ship them to other replicas, using applyDelta to apply them on the remote state. After deltas
   * have been read and propagated by the middleware, it should call resetDeltaBuffer to empty the deltaBuffer.
   */
 class DeltaBufferRDT[State](
-    val state: State,
+    val state: WithContext[State],
     val replicaID: String,
-    val context: CausalContext,
-    val deltaBuffer: List[Delta[State]]
+    val deltaBuffer: List[WithNamedContext[State]]
 ) extends CRDTInterface[State, DeltaBufferRDT[State]] {
 
   def copy(
-      state: State = state,
-      context: CausalContext = context,
-      deltaBuffer: List[Delta[State]] = deltaBuffer
+      state: WithContext[State] = state,
+      deltaBuffer: List[WithNamedContext[State]] = deltaBuffer
   ): DeltaBufferRDT[State] =
-    new DeltaBufferRDT[State](state, replicaID, context, deltaBuffer)
+    new DeltaBufferRDT[State](state, replicaID, deltaBuffer)
 
-  override def applyDelta(delta: Delta[State])(implicit u: DecomposeLattice[State]): DeltaBufferRDT[State] =
+  override def applyDelta(delta: WithNamedContext[State])(implicit u: DecomposeLattice[WithContext[State]]): DeltaBufferRDT[State] =
     delta match {
-      case Delta(origin, context, deltaState) =>
-        DecomposeLattice[State].diff(state, deltaState) match {
+      case WithNamedContext(origin, delta) =>
+        DecomposeLattice[WithContext[State]].diff(state, delta) match {
           case Some(stateDiff) =>
-            val stateMerged = DecomposeLattice[State].merge(state, stateDiff)
+            val stateMerged = DecomposeLattice[WithContext[State]].merge(state, stateDiff)
             copy(
               state = stateMerged,
-              context = this.context merged context,
-              deltaBuffer = Delta(origin, context, stateDiff) :: deltaBuffer
+              deltaBuffer = WithNamedContext(origin, stateDiff) :: deltaBuffer
             )
           case None => this.asInstanceOf[DeltaBufferRDT[State]]
         }
@@ -47,17 +44,17 @@ object DeltaBufferRDT {
   implicit def containsRelation[State]: ArdtOpsContains[DeltaBufferRDT[State], State] =
     new ArdtOpsContains[DeltaBufferRDT[State], State] {}
 
-  implicit def reactiveDeltaCRDTPermissions[L: DecomposeLattice]: PermIdMutate[DeltaBufferRDT[L], L] =
-    CRDTInterface.crdtInterfaceContextPermissions[L, DeltaBufferRDT[L]]
+  implicit def reactiveDeltaCRDTPermissions[L: ContextDecompose]: PermIdMutate[DeltaBufferRDT[L], L] =
+    CRDTInterface.plainPermission[L, DeltaBufferRDT[L]]
 
   implicit def contextPermissions[L](using
-      DecomposeLattice[L]
+      ContextDecompose[L]
   ): PermCausalMutate[DeltaBufferRDT[L], L] with PermCausal[DeltaBufferRDT[L]] = CRDTInterface.contextPermissions
 
   /** Creates a new PNCounter instance
     *
     * @param replicaID Unique id of the replica that this instance is located on
     */
-  def apply[State: DecomposeLattice](replicaID: String): DeltaBufferRDT[State] =
-    new DeltaBufferRDT[State](DecomposeLattice[State].empty, replicaID, CausalContext.empty, List())
+  def apply[State](replicaID: String)(using bot: Bottom[WithContext[State]]): DeltaBufferRDT[State] =
+    new DeltaBufferRDT[State](bot.empty, replicaID, List())
 }

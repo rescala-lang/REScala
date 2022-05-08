@@ -1,7 +1,7 @@
 package kofre.protocol
 
 import kofre.base.{Bottom, DecomposeLattice}
-import kofre.contextual.WithContextDecompose
+import kofre.contextual.ContextDecompose
 import kofre.decompose.*
 import kofre.predef.AddWinsSet.AWSetSyntax
 import kofre.predef.AddWinsSet

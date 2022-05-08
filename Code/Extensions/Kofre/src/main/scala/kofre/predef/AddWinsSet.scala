@@ -3,7 +3,7 @@ package kofre.predef
 import kofre.base.DecomposeLattice
 import kofre.causality.{CausalContext, Dot}
 import kofre.contextual.WithContext
-import kofre.contextual.WithContextDecompose.*
+import kofre.contextual.ContextDecompose.*
 import kofre.decompose.*
 import kofre.predef.AddWinsSet
 import kofre.predef.AddWinsSet.Embedded

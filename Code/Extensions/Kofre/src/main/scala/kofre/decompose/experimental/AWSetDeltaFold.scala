@@ -1,7 +1,7 @@
 package kofre.decompose.experimental
 
 import kofre.causality.CausalContext
-import kofre.contextual.WithContextDecompose.{DotMap, DotSet}
+import kofre.contextual.ContextDecompose.{DotMap, DotSet}
 import kofre.contextual.WithContext
 import kofre.predef.AddWinsSet
 
