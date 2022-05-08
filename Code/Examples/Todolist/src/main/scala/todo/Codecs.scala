@@ -2,6 +2,7 @@ package todo
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
+import kofre.causality.CausalContext
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegister
 import kofre.decompose.interfaces.RGAInterface.RGA
 import loci.transmitter.IdenticallyTransmittable
@@ -21,7 +22,7 @@ object Codecs {
           default: ReactiveDeltaCRDT[RGA[TaskRef]]
       ): ReactiveDeltaCRDT[RGA[TaskRef]] = {
         val state = codecState.decodeValue(in, default.state)
-        new ReactiveDeltaCRDT[RGA[TaskRef]](state, replicaId, List())
+        new ReactiveDeltaCRDT[RGA[TaskRef]](state, replicaId, CausalContext.empty, List())
       }
       override def encodeValue(x: ReactiveDeltaCRDT[RGA[TaskRef]], out: JsonWriter): Unit =
         codecState.encodeValue(x.state, out)
@@ -43,7 +44,7 @@ object Codecs {
     new JsonValueCodec[LwC] {
       override def decodeValue(in: JsonReader, default: LwC): LwC = {
         val state: LWWRegister[TaskData] = codecLwwState.decodeValue(in, default.state)
-        new ReactiveDeltaCRDT[LWWRegister[TaskData]](state, replicaId, List())
+        new ReactiveDeltaCRDT[LWWRegister[TaskData]](state, replicaId, CausalContext.empty, List())
       }
       override def encodeValue(x: LwC, out: JsonWriter): Unit = codecLwwState.encodeValue(x.state, out)
       override def nullValue: LwC = {

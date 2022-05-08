@@ -1,7 +1,7 @@
 package rescala.extra.replication
 
 import kofre.base.DecomposeLattice
-import kofre.decompose.containers.ReactiveCRDT
+import kofre.decompose.containers.ReactiveDeltaCRDT
 import kofre.decompose.Delta
 import loci.registry.{Binding, Registry}
 import loci.transmitter.RemoteRef
@@ -17,7 +17,7 @@ class LociDist[Api <: RescalaInterface](val api: Api) {
   import api._
 
   def distributeDeltaCRDT[A: DecomposeLattice](
-      signal: Signal[ReactiveCRDT[A, _]],
+      signal: Signal[ReactiveDeltaCRDT[A]],
       deltaEvt: Evt[Delta[A]],
       registry: Registry
   )(binding: Binding[A => Unit, A => Future[Unit]]): Unit = {
@@ -37,9 +37,9 @@ class LociDist[Api <: RescalaInterface](val api: Api) {
 
       // Whenever the crdt is changed propagate the delta
       // Praktisch wäre etwas wie crdt.observeDelta
-      observers += (remoteRef -> signal.observe { s =>
+      val observer = signal.observe { s =>
         val deltaStateList = s.deltaBuffer.collect {
-          case Delta(replicaID, deltaState) if replicaID != remoteRef.toString => deltaState
+          case Delta(replicaID, cc, deltaState) if replicaID != remoteRef.toString => deltaState
         } ++ resendBuffer.get(remoteRef).toList
 
         val combinedState = deltaStateList.reduceOption(DecomposeLattice[A].merge)
@@ -61,7 +61,8 @@ class LociDist[Api <: RescalaInterface](val api: Api) {
             resendBuffer = mergedResendBuffer
           }
         }
-      })
+      }
+      observers += (remoteRef -> observer)
     }
 
     registry.remoteJoined.monitor(registerRemote)

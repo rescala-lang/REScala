@@ -60,7 +60,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
       val remoteReceiveSyncMessage = registry.lookup(receiveSyncMessageBinding, rr)
 
       set.deltaBuffer.collect {
-        case Delta(replicaID, deltaState) if replicaID != rr.toString => deltaState
+        case Delta(replicaID, cc, deltaState) if replicaID != rr.toString => deltaState
       }.reduceOption(DecomposeLattice[SetState].merge).foreach(sendRecursive(
         remoteReceiveSyncMessage,
         _

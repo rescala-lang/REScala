@@ -65,7 +65,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
   def propagateDeltas(): Unit = {
     registry.remotes.foreach { rr =>
       set.deltaBuffer.collect {
-        case Delta(replicaID, deltaState) if replicaID != rr.toString => deltaState
+        case Delta(replicaID, cc, deltaState) if replicaID != rr.toString => deltaState
       }.reduceOption(DecomposeLattice[SetState].merge).foreach(sendDelta(_, rr))
     }
 
@@ -80,7 +80,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
 
     set.deltaBuffer.headOption match {
       case None =>
-      case Some(Delta(_, deltaState)) =>
+      case Some(Delta(_, cc, deltaState)) =>
         unboundRemoteChanges = DecomposeLattice[SetState].merge(unboundRemoteChanges, deltaState)
 
         propagateDeltas()

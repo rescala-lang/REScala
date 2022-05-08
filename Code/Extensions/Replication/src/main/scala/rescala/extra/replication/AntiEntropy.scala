@@ -96,7 +96,7 @@ class AntiEntropy[A: DecomposeLattice](
       Some(DeltaMsg(Delta(replicaID, fullState), nextSeqNum))
     else {
       deltaBufferOut.collect {
-        case (n, Delta(origin, deltaState)) if n >= ackMap(to) && origin != to => deltaState
+        case (n, Delta(origin, cc, deltaState)) if n >= ackMap(to) && origin != to => deltaState
       } reduceOption { (left: A, right: A) =>
         DecomposeLattice[A].merge(left, right)
       } map { deltaState => DeltaMsg(Delta(replicaID, deltaState), nextSeqNum) }

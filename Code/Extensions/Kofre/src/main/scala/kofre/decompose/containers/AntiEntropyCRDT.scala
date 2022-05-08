@@ -1,8 +1,9 @@
 package kofre.decompose.containers
 
 import kofre.base.DecomposeLattice
+import kofre.contextual.WithContext
 import kofre.decompose.Delta
-import kofre.syntax.{PermIdMutate, ArdtOpsContains}
+import kofre.syntax.{ArdtOpsContains, PermCausal, PermCausalMutate, PermIdMutate}
 
 /** BasicCRDTs are Delta CRDTs that use [[JsoniterAntiEntropy]] and [[Network]] as Middleware for exchanging deltas between replicas.
   * They cannot actually be used on multiple connected replicas, but are useful for locally testing the behavior of
@@ -17,29 +18,36 @@ class AntiEntropyCRDT[State](
 ) extends CRDTInterface[State, AntiEntropyCRDT[State]] {
   override val replicaID: String = antiEntropy.replicaID
 
-  override def applyDelta(delta: Delta[State])(implicit u: DecomposeLattice[State]): AntiEntropyCRDT[State] = delta match {
-    case Delta(origin, deltaState) =>
-      DecomposeLattice[State].diff(state, deltaState) match {
-        case Some(stateDiff) =>
-          val stateMerged = DecomposeLattice[State].merge(state, stateDiff)
-          antiEntropy.recordChange(Delta(origin, stateDiff), stateMerged)
-          new AntiEntropyCRDT[State](stateMerged, antiEntropy)
-        case None => this.asInstanceOf[AntiEntropyCRDT[State]]
-      }
-  }
+  override def applyDelta(delta: Delta[State])(implicit u: DecomposeLattice[State]): AntiEntropyCRDT[State] =
+    delta match {
+      case Delta(origin, context, deltaState) =>
+        DecomposeLattice[State].diff(state, deltaState) match {
+          case Some(stateDiff) =>
+            val stateMerged = DecomposeLattice[State].merge(state, stateDiff)
+            antiEntropy.recordChange(Delta(origin, context, stateDiff), stateMerged)
+            new AntiEntropyCRDT[State](stateMerged, antiEntropy)
+          case None => this.asInstanceOf[AntiEntropyCRDT[State]]
+        }
+    }
 
-  def processReceivedDeltas()(implicit u: DecomposeLattice[State]): AntiEntropyCRDT[State] = antiEntropy.getReceivedDeltas.foldLeft(this) {
-    (crdt, delta) => crdt.applyDelta(delta)
-  }
+  def processReceivedDeltas()(implicit u: DecomposeLattice[State]): AntiEntropyCRDT[State] =
+    antiEntropy.getReceivedDeltas.foldLeft(this) {
+      (crdt, delta) => crdt.applyDelta(delta)
+    }
 }
 
 object AntiEntropyCRDT {
 
-  implicit def containesRelation[State]: ArdtOpsContains[AntiEntropyCRDT[State], State] =
+  given containsRelation[State]: ArdtOpsContains[AntiEntropyCRDT[State], State] =
     new ArdtOpsContains[AntiEntropyCRDT[State], State] {}
 
-  implicit def antiEntropyPermissions[L: DecomposeLattice]: PermIdMutate[AntiEntropyCRDT[L], L] =
+  given antiEntropyPermissions[L: DecomposeLattice]: PermIdMutate[AntiEntropyCRDT[L], L] =
     CRDTInterface.crdtInterfaceContextPermissions[L, AntiEntropyCRDT[L]]
+
+  given contextPermissions[L](using
+      DecomposeLattice[WithContext[L]]
+  ): (PermCausalMutate[AntiEntropyCRDT[WithContext[L]], L] with PermCausal[AntiEntropyCRDT[WithContext[L]]]) =
+    CRDTInterface.contextPermissions
 
   /** Creates a new PNCounter instance
     *

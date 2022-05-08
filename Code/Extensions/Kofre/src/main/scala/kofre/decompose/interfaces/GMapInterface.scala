@@ -4,7 +4,7 @@ import kofre.base.DecomposeLattice
 import kofre.causality.CausalContext
 import kofre.contextual.WithContextDecompose.DotSet
 import kofre.contextual.WithContext
-import kofre.syntax.{PermIdMutate, ArdtOpsContains, OpsSyntaxHelper}
+import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermIdMutate, WithNamedContext}
 
 /** A GMap (Grow-only Map) is a Delta CRDT that models a map from an arbitrary key type to nested Delta CRDTs.
   * In contrast to [[ORMapInterface]], key/value pairs cannot be removed from this map. However, due to the smaller internal
@@ -35,6 +35,10 @@ object GMapInterface {
 
     def mutateKeyCtx(k: K)(m: PermIdMutate[V, V] => V => V)(using MutationIDP, DecomposeLattice[V]): C = {
       Map(k -> m(PermIdMutate.withID[V, V](replicaID))(queryKey(k)))
+    }
+
+    def mutateKeyNamedCtx(k: K)(m: WithNamedContext[V] => WithNamedContext[V])(using MutationIDP, DecomposeLattice[V], CausalP): C = {
+      Map(k -> m(WithNamedContext(replicaID, WithContext(queryKey(k), context))).inner.store)
     }
   }
 

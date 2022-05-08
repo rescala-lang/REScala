@@ -4,7 +4,7 @@ import kofre.base.{Bottom, DecomposeLattice}
 import kofre.contextual.WithContextDecompose
 import kofre.decompose.*
 import kofre.predef.AddWinsSet.AWSetSyntax
-import kofre.decompose.interfaces.EWFlagInterface.EWFlag
+import kofre.decompose.interfaces.EnableWinsFlag.EWFlag
 import kofre.predef.AddWinsSet
 import kofre.protocol.AuctionInterface
 import kofre.protocol.AuctionInterface.Bid.User

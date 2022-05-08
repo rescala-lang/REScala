@@ -3,7 +3,7 @@ package kofre.decompose.interfaces
 import kofre.base.{DecomposeLattice, Defs}
 import kofre.causality.{CausalContext, Dot}
 import kofre.decompose.*
-import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper}
+import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, WithNamedContext}
 import kofre.contextual.WithContextDecompose.*
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
 import kofre.contextual.{WithContext, WithContextDecompose, WithContextMerge}
@@ -50,8 +50,8 @@ object ORMapInterface {
       current.store.values.map(v => WithContext(v, current.context))
 
     def mutateKey(k: K, m: (Defs.Id, WithContext[V]) => WithContext[V])(using
-                                                                        MutationIDP,
-                                                                        WithContextDecompose[V]
+        MutationIDP,
+        WithContextDecompose[V]
     ): C = {
       val v = current.store.getOrElse(k, WithContextDecompose[V].empty)
 
@@ -62,6 +62,18 @@ object ORMapInterface {
             cc = ccDelta
           )
       }
+    }
+
+    def mutateKeyNamedCtx(k: K)(m: WithNamedContext[V] => WithNamedContext[V])(using
+        MutationIDP,
+        WithContextDecompose[V]
+    ): C = {
+      val v = current.store.getOrElse(k, WithContextDecompose[V].empty)
+      val WithContext(stateDelta, ccDelta) = m(WithNamedContext(replicaID, WithContext(v, current.context))).inner
+      deltaState[K, V].make(
+        dm = DotMap[K, V].empty.updated(k, stateDelta),
+        cc = ccDelta
+      )
     }
 
     def remove(k: K)(using MutationIDP, WithContextDecompose[V]): C = {

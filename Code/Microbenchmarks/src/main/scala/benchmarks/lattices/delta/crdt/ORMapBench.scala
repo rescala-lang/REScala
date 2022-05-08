@@ -2,9 +2,8 @@ package benchmarks.lattices.delta.crdt
 
 import kofre.causality.CausalContext
 import kofre.contextual.WithContextDecompose.DotSet
-import kofre.decompose.interfaces.EWFlagInterface.EnableWinsFlagOps
+import kofre.decompose.interfaces.EnableWinsFlag.EnableWinsFlagOps
 import kofre.decompose.interfaces.ORMapInterface.{ORMap, ORMapSyntax}
-import kofre.syntax.PermIdMutate.withID
 import org.openjdk.jmh.annotations._
 import kofre.decompose.containers.ReactiveDeltaCRDT
 
@@ -29,7 +28,7 @@ class ORMapBench {
   @Setup
   def setup(): Unit = {
     map = (0 until numEntries).foldLeft(ReactiveDeltaCRDT[ORMap[Int, CausalContext]]("a")) {
-      case (m, i) => new ORMapSyntax(m).mutateKey(i, (r, b) => b.enable()(withID(r)))
+      case (m, i) => new ORMapSyntax(m).mutateKeyNamedCtx(i)(_.enable())
     }
   }
 
@@ -49,10 +48,10 @@ class ORMapBench {
   def queryAllEntries(): Iterable[Boolean] = map.queryAllEntries.map(_.read)
 
   @Benchmark
-  def mutateExisting(): SUT = map.mutateKey(0, (r, b) => b.disable()(withID(r)))
+  def mutateExisting(): SUT = map.mutateKeyNamedCtx(0)(_.disable())
 
   @Benchmark
-  def mutateMissing(): SUT = map.mutateKey(-1, (r, b) => b.enable()(withID(r)))
+  def mutateMissing(): SUT = map.mutateKeyNamedCtx(-1)(_.enable())
 
   @Benchmark
   def removeExisting(): SUT = map.remove(0)

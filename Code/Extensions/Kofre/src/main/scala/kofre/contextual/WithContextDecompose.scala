@@ -23,7 +23,7 @@ object WithContextDecompose {
     export wcm.mergePartial
   }
 
-  /** DotSet is a dot store implementation that is simply a set of dots. See [[interfaces.EWFlagInterface]] for a
+  /** DotSet is a dot store implementation that is simply a set of dots. See [[interfaces.EnableWinsFlag]] for a
     * usage example.
     */
   implicit def DotSet: WithContextDecompose[CausalContext] =

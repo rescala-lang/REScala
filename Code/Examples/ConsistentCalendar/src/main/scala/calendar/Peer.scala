@@ -71,7 +71,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
       calendar.replicated.foreach { case (id, set) =>
         set.now.deltaBuffer.collect {
-          case Delta(replicaID, deltaState) if replicaID != rr.toString => deltaState
+          case Delta(replicaID, cc, deltaState) if replicaID != rr.toString => deltaState
         }.reduceOption(DecomposeLattice[CalendarState].merge).foreach(sendRecursive(
           remoteReceiveSyncMessage,
           _,
@@ -80,13 +80,13 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
       }
 
       tokens.want.deltaBuffer.collect {
-        case Delta(replicaID, deltaState) if replicaID != rr.toString => deltaState
+        case Delta(replicaID, cc, deltaState) if replicaID != rr.toString => deltaState
       }.reduceOption(DecomposeLattice[AddWinsSet[Token]].merge).foreach { state =>
         remoteReceiveSyncMessage(WantMessage(state))
       }
 
       tokens.tokenFreed.deltaBuffer.collect {
-        case Delta(replicaID, deltaState) if replicaID != rr.toString => deltaState
+        case Delta(replicaID, cc, deltaState) if replicaID != rr.toString => deltaState
       }.reduceOption(DecomposeLattice[AddWinsSet[Token]].merge).foreach { state =>
         remoteReceiveSyncMessage(FreeMessage(state))
       }

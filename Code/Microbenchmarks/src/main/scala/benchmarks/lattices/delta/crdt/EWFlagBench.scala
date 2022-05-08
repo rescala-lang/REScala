@@ -1,6 +1,6 @@
 package benchmarks.lattices.delta.crdt
 
-import kofre.decompose.interfaces.EWFlagInterface.{EWFlag, EnableWinsFlagOps}
+import kofre.decompose.interfaces.EnableWinsFlag.{EWFlagPlain, EnableWinsFlagOps}
 import org.openjdk.jmh.annotations._
 import kofre.decompose.containers.ReactiveDeltaCRDT
 
@@ -15,13 +15,13 @@ import java.util.concurrent.TimeUnit
 @State(Scope.Thread)
 class EWFlagBench {
 
-  var flagEnabled: ReactiveDeltaCRDT[EWFlag]  = _
-  var flagDisabled: ReactiveDeltaCRDT[EWFlag] = _
+  var flagEnabled: ReactiveDeltaCRDT[EWFlagPlain] = _
+  var flagDisabled: ReactiveDeltaCRDT[EWFlagPlain]     = _
 
   @Setup
   def setup(): Unit = {
-    flagEnabled = ReactiveDeltaCRDT[EWFlag]("a").enable()
-    flagDisabled = ReactiveDeltaCRDT[EWFlag]("b").disable()
+    flagEnabled = ReactiveDeltaCRDT[EWFlagPlain]("a").enable()
+    flagDisabled = ReactiveDeltaCRDT[EWFlagPlain]("b").disable()
   }
 
   @Benchmark
@@ -31,14 +31,14 @@ class EWFlagBench {
   def readDisabled(): Boolean = flagDisabled.read
 
   @Benchmark
-  def enableEnabled(): ReactiveDeltaCRDT[EWFlag] = flagEnabled.enable()
+  def enableEnabled(): ReactiveDeltaCRDT[EWFlagPlain] = flagEnabled.enable()
 
   @Benchmark
-  def enableDisabled(): ReactiveDeltaCRDT[EWFlag] = flagDisabled.enable()
+  def enableDisabled(): ReactiveDeltaCRDT[EWFlagPlain] = flagDisabled.enable()
 
   @Benchmark
-  def disableEnabled(): ReactiveDeltaCRDT[EWFlag] = flagEnabled.disable()
+  def disableEnabled(): ReactiveDeltaCRDT[EWFlagPlain] = flagEnabled.disable()
 
   @Benchmark
-  def disableDisabled(): ReactiveDeltaCRDT[EWFlag] = flagDisabled.disable()
+  def disableDisabled(): ReactiveDeltaCRDT[EWFlagPlain] = flagDisabled.disable()
 }

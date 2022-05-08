@@ -9,19 +9,19 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import test.kofre.DataGenerator.*
 import kofre.base.Lattice.Operators
 import kofre.base.Lattice
-import kofre.decompose.interfaces.EWFlagInterface.*
+import kofre.decompose.interfaces.EnableWinsFlag.*
 import kofre.syntax.WithNamedContext
 
 class SyntaxTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
   "Manual Tests" in {
 
-    val flag: WithNamedContext[EWFlag] = WithNamedContext("me", WithContext(CausalContext.empty, CausalContext.empty))
+    val flag: WithNamedContext[EWFlagPlain] = WithNamedContext("me", WithContext(CausalContext.empty, CausalContext.empty))
 
     assert(!flag.read)
-    val enabled = flag.enable
+    val enabled = flag.enable()
     assert(enabled.read)
-    val disabled = enabled.disable
+    val disabled = enabled.disable()
     assert(!disabled.read)
 
   }

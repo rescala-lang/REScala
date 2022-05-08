@@ -1,9 +1,11 @@
 package benchmarks.lattices.delta.crdt
 
-import kofre.decompose.interfaces.EWFlagInterface.{EWFlag, EnableWinsFlagOps}
-import kofre.decompose.interfaces.GMapInterface.{GMap, GMapSyntax}
-import org.openjdk.jmh.annotations._
 import kofre.decompose.containers.ReactiveDeltaCRDT
+import kofre.decompose.interfaces.EnableWinsFlag.{EWFlagPlain, EnableWinsFlagOps}
+import kofre.decompose.interfaces.GMapInterface.GMap
+import kofre.decompose.interfaces.GMapInterface.GMapSyntax
+import kofre.syntax.WithNamedContext
+import org.openjdk.jmh.annotations._
 
 import java.util.concurrent.TimeUnit
 
@@ -19,14 +21,17 @@ class GMapBench {
   @Param(Array("1", "10", "100", "1000"))
   var numEntries: Int = _
 
-  type SUT = ReactiveDeltaCRDT[GMap[Int, EWFlag]]
+
+
+  type Contained = GMap[Int, EWFlagPlain]
+  type SUT = ReactiveDeltaCRDT[Contained]
   var map: SUT = _
 
   @Setup
   def setup(): Unit = {
-    map = (0 until numEntries).foldLeft(ReactiveDeltaCRDT[GMap[Int, EWFlag]]("a")) {
-      case (rdc, i) =>
-        rdc.mutateKeyCtx(i)(arg => _.enable()(arg))
+    map = (0 until numEntries).foldLeft(ReactiveDeltaCRDT[Contained]("a")) {
+      case (rdc: SUT, i) =>
+        rdc.mutateKeyNamedCtx(i)((ewf: WithNamedContext[EWFlagPlain]) => ewf.enable())
     }
   }
 
@@ -46,8 +51,9 @@ class GMapBench {
   def queryAllEntries(): Iterable[Boolean] = map.queryAllEntries().map(_.read)
 
   @Benchmark
-  def mutateExisting(): SUT = map.mutateKeyCtx(0)((arg) => _.disable()(arg))
+  def mutateExisting(): SUT = map.mutateKeyNamedCtx(0)(_.disable())
 
   @Benchmark
-  def mutateMissing(): SUT = map.mutateKeyCtx(0)((arg) => _.enable()(arg))
+  def mutateMissing(): SUT =
+    map.mutateKeyNamedCtx(0)(_.enable())
 }

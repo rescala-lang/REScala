@@ -11,22 +11,24 @@ import kofre.predef.Epoche
   *
   * When the flag is concurrently disabled and enabled then the enable operation wins, i.e. the resulting flag is enabled.
   */
-object EWFlagInterface {
-  type EWFlag = CausalContext
-  
+object EnableWinsFlag {
+  type EWFlag = WithContext[EWFlagPlain]
+  type EWFlagPlain = CausalContext
+
   /** Its enabled if there is a value in the store.
-    * It relies on the external context to track removals. */
-  implicit class EnableWinsFlagOps[C](container: C) extends OpsSyntaxHelper[C, EWFlag](container) {
+    * It relies on the external context to track removals.
+    */
+  implicit class EnableWinsFlagOps[C](container: C) extends OpsSyntaxHelper[C, EWFlagPlain](container) {
     def read(using QueryP): Boolean = !current.isEmpty
 
-    def enable(using QueryP, IdentifierP, CausalMutation, CausalP): C = {
+    def enable()(using IdentifierP, QueryP, CausalMutation, CausalP): C = {
       val nextDot = context.nextDot(replicaID)
       WithContext(
         CausalContext.single(nextDot),
         current add nextDot
       )
     }
-    def disable(using QueryP, CausalMutation): C = {
+    def disable()(using QueryP, CausalMutation): C = {
       WithContext(
         CausalContext.empty,
         current

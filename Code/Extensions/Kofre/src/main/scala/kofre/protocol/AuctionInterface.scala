@@ -2,7 +2,7 @@ package kofre.protocol
 
 import kofre.base.DecomposeLattice
 import kofre.decompose.*
-import kofre.decompose.interfaces.EWFlagInterface.EWFlag
+import kofre.decompose.interfaces.EnableWinsFlag.EWFlag
 import kofre.decompose.interfaces.GSetInterface
 import kofre.decompose.interfaces.GSetInterface.GSetSyntax
 import kofre.protocol.AuctionInterface.Bid.User
