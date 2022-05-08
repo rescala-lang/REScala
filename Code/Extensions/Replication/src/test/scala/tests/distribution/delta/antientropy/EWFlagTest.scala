@@ -1,6 +1,5 @@
 package tests.distribution.delta.antientropy
 
-import kofre.decompose.interfaces.EnableWinsFlag.{EWFlag, EnableWinsFlagOps}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -8,21 +7,22 @@ import rescala.extra.lattices.delta.JsoniterCodecs._
 import rescala.extra.replication.AntiEntropy
 import kofre.decompose.containers.{AntiEntropyCRDT, Network}
 import NetworkGenerators._
+import kofre.decompose.interfaces.EnableWinsFlag
 
 import scala.collection.mutable
 import scala.util.Random
 
 object EWFlagGenerators {
-  def genEWFlag: Gen[AntiEntropyCRDT[EWFlag]] = for {
+  def genEWFlag: Gen[AntiEntropyCRDT[EnableWinsFlag]] = for {
     nEnable  <- Gen.posNum[Int]
     nDisable <- Gen.posNum[Int]
   } yield {
     val network = new Network(0, 0, 0)
-    val ae      = new AntiEntropy[EWFlag]("a", network, mutable.Buffer())
+    val ae      = new AntiEntropy[EnableWinsFlag]("a", network, mutable.Buffer())
 
     val ops = Random.shuffle(List.fill(nEnable)(1) ++ List.fill(nDisable)(0))
 
-    ops.foldLeft(AntiEntropyCRDT[EWFlag](ae)) {
+    ops.foldLeft(AntiEntropyCRDT[EnableWinsFlag](ae)) {
       case (f, 0) => f.disable()
       case (f, 1) => f.enable()
       // default case is only needed to stop the compiler from complaining about non-exhaustive match
@@ -30,13 +30,13 @@ object EWFlagGenerators {
     }
   }
 
-  implicit def arbEWFlag: Arbitrary[AntiEntropyCRDT[EWFlag]] = Arbitrary(genEWFlag)
+  implicit def arbEWFlag: Arbitrary[AntiEntropyCRDT[EnableWinsFlag]] = Arbitrary(genEWFlag)
 }
 
 class EWFlagTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   import EWFlagGenerators._
 
-  "enable" in forAll { flag: AntiEntropyCRDT[EWFlag] =>
+  "enable" in forAll { flag: AntiEntropyCRDT[EnableWinsFlag] =>
     val flagEnabled = flag.enable()
 
     assert(
@@ -45,7 +45,7 @@ class EWFlagTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     )
   }
 
-  "disable" in forAll { flag: AntiEntropyCRDT[EWFlag] =>
+  "disable" in forAll { flag: AntiEntropyCRDT[EnableWinsFlag] =>
     val flagDisabled = flag.disable()
 
     assert(
@@ -57,11 +57,11 @@ class EWFlagTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent enable" in {
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropy[EWFlag]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[EWFlag]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[EnableWinsFlag]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[EnableWinsFlag]("b", network, mutable.Buffer("a"))
 
-    val fa0 = AntiEntropyCRDT[EWFlag](aea).enable()
-    val fb0 = AntiEntropyCRDT[EWFlag](aeb).enable()
+    val fa0 = AntiEntropyCRDT[EnableWinsFlag](aea).enable()
+    val fb0 = AntiEntropyCRDT[EnableWinsFlag](aeb).enable()
 
     AntiEntropy.sync(aea, aeb)
 
@@ -81,11 +81,11 @@ class EWFlagTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent disable" in {
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropy[EWFlag]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[EWFlag]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[EnableWinsFlag]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[EnableWinsFlag]("b", network, mutable.Buffer("a"))
 
-    val fa0 = AntiEntropyCRDT[EWFlag](aea)
-    val fb0 = AntiEntropyCRDT[EWFlag](aeb)
+    val fa0 = AntiEntropyCRDT[EnableWinsFlag](aea)
+    val fb0 = AntiEntropyCRDT[EnableWinsFlag](aeb)
 
     val fa1 = fa0.disable()
     val fb1 = fb0.disable()
@@ -108,11 +108,11 @@ class EWFlagTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "concurrent enable/disable" in {
     val network = new Network(0, 0, 0)
 
-    val aea = new AntiEntropy[EWFlag]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[EWFlag]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[EnableWinsFlag]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[EnableWinsFlag]("b", network, mutable.Buffer("a"))
 
-    val fa0 = AntiEntropyCRDT[EWFlag](aea).enable()
-    val fb0 = AntiEntropyCRDT[EWFlag](aeb).disable()
+    val fa0 = AntiEntropyCRDT[EnableWinsFlag](aea).enable()
+    val fb0 = AntiEntropyCRDT[EnableWinsFlag](aeb).disable()
 
     AntiEntropy.sync(aea, aeb)
 
@@ -130,19 +130,19 @@ class EWFlagTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   }
 
   "convergence" in forAll { (enableA: Short, disableA: Short, enableB: Short, disableB: Short, network: Network) =>
-    val aea = new AntiEntropy[EWFlag]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[EWFlag]("b", network, mutable.Buffer("a"))
+    val aea = new AntiEntropy[EnableWinsFlag]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[EnableWinsFlag]("b", network, mutable.Buffer("a"))
 
     val opsA = Random.shuffle(List.fill(enableA.toInt)(1) ++ List.fill(disableA.toInt)(0))
     val opsB = Random.shuffle(List.fill(enableB.toInt)(1) ++ List.fill(disableB.toInt)(0))
 
-    val fa0 = opsA.foldLeft(AntiEntropyCRDT[EWFlag](aea)) {
+    val fa0 = opsA.foldLeft(AntiEntropyCRDT[EnableWinsFlag](aea)) {
       case (f, 0) => f.disable()
       case (f, 1) => f.enable()
       // default case is only needed to stop the compiler from complaining about non-exhaustive match
       case (f, _) => f
     }
-    val fb0 = opsB.foldLeft(AntiEntropyCRDT[EWFlag](aeb)) {
+    val fb0 = opsB.foldLeft(AntiEntropyCRDT[EnableWinsFlag](aeb)) {
       case (f, 0) => f.disable()
       case (f, 1) => f.enable()
       // default case is only needed to stop the compiler from complaining about non-exhaustive match

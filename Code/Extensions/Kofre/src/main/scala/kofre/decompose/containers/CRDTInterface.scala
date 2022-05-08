@@ -13,6 +13,8 @@ trait CRDTInterface[State, Wrapper] {
   val replicaID: Defs.Id
 
   def applyDelta(delta: Delta[State])(implicit u: DecomposeLattice[State]): Wrapper
+
+  def context: CausalContext
 }
 
 object CRDTInterface {
@@ -23,16 +25,16 @@ object CRDTInterface {
       override def query(c: B): L            = c.state
     }
 
-  def contextPermissions[L, B <: CRDTInterface[WithContext[L], B]](using
-      DecomposeLattice[WithContext[L]]
+  def contextPermissions[L, B <: CRDTInterface[L, B]](using
+      DecomposeLattice[L]
   ): PermCausalMutate[B, L] with PermCausal[B] =
     new PermCausalMutate[B, L] with PermCausal[B] {
       override def mutateContext(
           container: B,
           withContext: WithContext[L]
       ): B =
-        container.applyDelta(Delta(container.replicaID, CausalContext.empty, withContext))
-      override def context(c: B): CausalContext = c.state.context
+        container.applyDelta(Delta(container.replicaID, withContext.context, withContext.store))
+      override def context(c: B): CausalContext = c.context
     }
 
   /** workaround to make existing syntax compile with different context decomposition */

@@ -30,7 +30,11 @@ class DeltaBufferRDT[State](
         DecomposeLattice[State].diff(state, deltaState) match {
           case Some(stateDiff) =>
             val stateMerged = DecomposeLattice[State].merge(state, stateDiff)
-            copy(state = stateMerged, context = this.context merged context, deltaBuffer = Delta(origin, context, stateDiff) :: deltaBuffer)
+            copy(
+              state = stateMerged,
+              context = this.context merged context,
+              deltaBuffer = Delta(origin, context, stateDiff) :: deltaBuffer
+            )
           case None => this.asInstanceOf[DeltaBufferRDT[State]]
         }
     }
@@ -48,17 +52,7 @@ object DeltaBufferRDT {
 
   implicit def contextPermissions[L](using
       DecomposeLattice[L]
-  ): PermCausalMutate[DeltaBufferRDT[L], L] with PermCausal[DeltaBufferRDT[L]] = {
-    type B = DeltaBufferRDT[L]
-    new PermCausalMutate[B, L] with PermCausal[B] {
-      override def mutateContext(
-          container: B,
-          withContext: WithContext[L]
-      ): B =
-        container.applyDelta(Delta(container.replicaID, withContext.context, withContext.store))
-      override def context(c: B): CausalContext = c.context
-    }
-  }
+  ): PermCausalMutate[DeltaBufferRDT[L], L] with PermCausal[DeltaBufferRDT[L]] = CRDTInterface.contextPermissions
 
   /** Creates a new PNCounter instance
     *

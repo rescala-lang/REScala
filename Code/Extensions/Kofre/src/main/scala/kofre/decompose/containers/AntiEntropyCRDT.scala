@@ -1,6 +1,7 @@
 package kofre.decompose.containers
 
 import kofre.base.DecomposeLattice
+import kofre.causality.CausalContext
 import kofre.contextual.WithContext
 import kofre.decompose.Delta
 import kofre.syntax.{ArdtOpsContains, PermCausal, PermCausalMutate, PermIdMutate}
@@ -17,6 +18,8 @@ class AntiEntropyCRDT[State](
     protected val antiEntropy: AntiEntropy[State]
 ) extends CRDTInterface[State, AntiEntropyCRDT[State]] {
   override val replicaID: String = antiEntropy.replicaID
+
+  override def context: CausalContext = antiEntropy.context
 
   override def applyDelta(delta: Delta[State])(implicit u: DecomposeLattice[State]): AntiEntropyCRDT[State] =
     delta match {
@@ -45,8 +48,8 @@ object AntiEntropyCRDT {
     CRDTInterface.crdtInterfaceContextPermissions[L, AntiEntropyCRDT[L]]
 
   given contextPermissions[L](using
-      DecomposeLattice[WithContext[L]]
-  ): (PermCausalMutate[AntiEntropyCRDT[WithContext[L]], L] with PermCausal[AntiEntropyCRDT[WithContext[L]]]) =
+      DecomposeLattice[L]
+  ): (PermCausalMutate[AntiEntropyCRDT[L], L] with PermCausal[AntiEntropyCRDT[L]]) =
     CRDTInterface.contextPermissions
 
   /** Creates a new PNCounter instance

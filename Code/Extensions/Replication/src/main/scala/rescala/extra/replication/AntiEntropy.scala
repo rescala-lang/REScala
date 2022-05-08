@@ -3,6 +3,7 @@ package rescala.extra.replication
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReaderException, JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import kofre.base.DecomposeLattice
+import kofre.causality.CausalContext
 import kofre.decompose.containers.Network
 import kofre.decompose.Delta
 import rescala.extra.replication.AntiEntropy.{AckMsg, DeltaMsg}
@@ -27,6 +28,9 @@ class AntiEntropy[A: DecomposeLattice](
     network: Network,
     neighbors: mutable.Buffer[String] = mutable.Buffer()
 )(implicit val codec: JsonValueCodec[A]) extends kofre.decompose.containers.AntiEntropy[A] {
+
+  private var mutableContext: CausalContext = CausalContext.empty
+  def context: CausalContext = mutableContext
 
   private val deltaBufferOut: mutable.Map[Int, Delta[A]] = mutable.Map()
 
@@ -53,6 +57,7 @@ class AntiEntropy[A: DecomposeLattice](
   def recordChange(delta: Delta[A], state: A): Unit = {
     fullState = state
 
+    mutableContext = mutableContext.union(delta.context)
     deltaBufferOut.update(nextSeqNum, delta)
     nextSeqNum += 1
   }

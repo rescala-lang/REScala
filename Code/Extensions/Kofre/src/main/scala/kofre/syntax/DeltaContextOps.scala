@@ -13,18 +13,21 @@ import scala.annotation.implicitNotFound
   * No matter the concrete container, they should all offer the same API to the underlying lattice.
   */
 
-@implicitNotFound("Requires query to extract »${L}«\nfrom »${C}")
+@implicitNotFound("Unsure how to extract »${L}«\nfrom »${C}")
 trait PermQuery[C, L]:
   def query(c: C): L
   def focus[M](q: L => M): PermQuery[C, M] = (c: C) => q(PermQuery.this.query(c))
 trait PermMutate[C, L] extends PermQuery[C, L]:
   def mutate(c: C, delta: L): C
+@implicitNotFound(
+  "Requires a replica ID.\nWhich seems unavailable in »${C}«\nMissing a container?"
+  )
 trait PermId[C]:
   def replicaId(c: C): Id
 class FixedId[C](id: Id) extends PermId[C]:
   override def replicaId(c: C): Id = id
 @implicitNotFound(
-  "Requires causal context permission.\nUnsure how to extract context from »${C}«"
+  "Requires causal context permission.\nNo context in »${C}«\nMissing a container?"
   )
 trait PermCausal[C]:
   def context(c: C): CausalContext

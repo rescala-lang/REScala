@@ -2,8 +2,7 @@ package test.kofre
 
 import kofre.base.{Bottom, Defs, Lattice}
 import kofre.decompose.containers.DeltaBufferRDT
-import kofre.decompose.interfaces.EnableWinsFlag.EWFlagPlain
-import kofre.decompose.interfaces.EnableWinsFlag.EnableWinsFlagOps
+import kofre.decompose.interfaces.EnableWinsFlag
 import kofre.rga.{DeltaSequence, Vertex}
 import org.scalatest.freespec.AnyFreeSpec
 
@@ -11,9 +10,9 @@ class DeltaBufferRDTTest extends AnyFreeSpec {
 
   "basic interaction" in {
 
-    val dbe = DeltaBufferRDT[EWFlagPlain](Defs.genId())
+    val dbe = DeltaBufferRDT[EnableWinsFlag](Defs.genId())
 
-    assert(dbe.state === Bottom.empty[EWFlagPlain])
+    assert(dbe.state === Bottom.empty[EnableWinsFlag])
     assert(!dbe.read)
     assert(dbe.deltaBuffer === List.empty)
 

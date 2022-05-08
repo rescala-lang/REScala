@@ -10,6 +10,7 @@ import kofre.decompose.TimedVal
 import kofre.causality.{CausalContext, Dot}
 import kofre.decompose.interfaces.LexCounterInterface.LexPair
 import kofre.contextual.WithContext
+import kofre.decompose.interfaces.EnableWinsFlag
 import kofre.predef.{AddWinsSet, Epoche, GrowOnlyCounter, PosNegCounter}
 
 import scala.annotation.nowarn
@@ -66,7 +67,8 @@ object JsoniterCodecs {
 
   /** EWFlag */
 
-  implicit def EWFlagStateCodec: JsonValueCodec[WithContext[CausalContext]] = JsonCodecMaker.make
+  // implicit def EWFlagStateCodec: JsonValueCodec[WithContext[CausalContext]] = JsonCodecMaker.make
+  implicit def EWFlagStateCodec: JsonValueCodec[EnableWinsFlag] = JsonCodecMaker.make
 
   // implicit def EWFlagEmbeddedCodec: JsonValueCodec[Set[Dot]] = JsonCodecMaker.make
 

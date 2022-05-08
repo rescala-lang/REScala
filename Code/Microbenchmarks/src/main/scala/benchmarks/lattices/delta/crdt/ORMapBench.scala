@@ -1,11 +1,9 @@
 package benchmarks.lattices.delta.crdt
 
-import kofre.causality.CausalContext
-import kofre.contextual.WithContextDecompose.DotSet
-import kofre.decompose.interfaces.EnableWinsFlag.EnableWinsFlagOps
+import kofre.decompose.containers.DeltaBufferRDT
+import kofre.decompose.interfaces.EnableWinsFlag
 import kofre.decompose.interfaces.ORMapInterface.{ORMap, ORMapSyntax}
 import org.openjdk.jmh.annotations._
-import kofre.decompose.containers.DeltaBufferRDT
 
 import java.util.concurrent.TimeUnit
 
@@ -21,13 +19,13 @@ class ORMapBench {
   @Param(Array("1", "10", "100", "1000"))
   var numEntries: Int = _
 
-  type SUT = DeltaBufferRDT[ORMap[Int, CausalContext]]
+  type SUT = DeltaBufferRDT[ORMap[Int, EnableWinsFlag]]
 
   var map: SUT = _
 
   @Setup
   def setup(): Unit = {
-    map = (0 until numEntries).foldLeft(DeltaBufferRDT[ORMap[Int, CausalContext]]("a")) {
+    map = (0 until numEntries).foldLeft(DeltaBufferRDT[ORMap[Int, EnableWinsFlag]]("a")) {
       case (m, i) => new ORMapSyntax(m).mutateKeyNamedCtx(i)(_.enable())
     }
   }
