@@ -19,6 +19,8 @@ trait Lattice[A] {
 
   /** Lattice order is derived from merge, but should be overridden for efficiency */
   def lteq(left: A, right: A): Boolean = merge(left, right) == right
+
+  extension (left: A) def <=(right: A): Boolean  = lteq(left, right)
 }
 
 object Lattice {

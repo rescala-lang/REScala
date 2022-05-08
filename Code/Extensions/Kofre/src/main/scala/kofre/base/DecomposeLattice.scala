@@ -28,11 +28,6 @@ object DecomposeLattice {
     export lattice.merge
   }
 
-  implicit class Operators[A: DecomposeLattice](left: A):
-    @scala.annotation.targetName("lteq")
-    def <=(right: A): Boolean  = DecomposeLattice[A].lteq(left, right)
-    def decompose: Iterable[A] = DecomposeLattice[A].decompose(left)
-
   given IntAsUIJDLattice: DecomposeLattice[Int] = new DecomposeFromLattice[Int](_ max _) {
     override def lteq(left: Int, right: Int): Boolean = left <= right
     override def decompose(state: Int): Iterable[Int] = List(state)
@@ -55,7 +50,7 @@ object DecomposeLattice {
 
       override def decompose(state: Option[A]): Iterable[Option[A]] = state match {
         case None    => List.empty[Option[A]]
-        case Some(v) => v.decompose.map(Some(_))
+        case Some(v) => v.decomposed.map(Some(_))
       }
 
       override def empty: Option[A] = Option.empty[A]

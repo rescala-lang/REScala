@@ -4,7 +4,6 @@ import kofre.base.DecomposeLattice
 import kofre.base.Lattice.Operators
 import kofre.decompose.*
 import kofre.syntax.OpsSyntaxHelper
-import kofre.base.DecomposeLattice.Operators
 
 /** A LexCounter is a Delta CRDT modeling a counter.
   *
