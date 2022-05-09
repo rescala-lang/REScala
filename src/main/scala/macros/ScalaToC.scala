@@ -434,6 +434,15 @@ object ScalaToC {
     CConditionalOperator(condExpr, thenpExpr, elsepExpr)
   }
 
+  def compileReturn(using Quotes)(ret: quotes.reflect.Return, ctx: TranslationContext): CReturnStmt = {
+    import quotes.reflect.*
+
+    ret.expr match {
+      case Literal(UnitConstant) => CReturnStmt()
+      case term => CReturnStmt(Some(compileTermToCExpr(term, ctx)))
+    }
+  }
+
   def compileWhile(using Quotes)(whileTerm: quotes.reflect.While, ctx: TranslationContext): CWhileStmt = {
     import quotes.reflect.*
 
