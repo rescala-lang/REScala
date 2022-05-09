@@ -282,11 +282,9 @@ object ScalaToC {
           expr1,
           expr2
         )
-      case Apply(TypeApply(Select(Ident(s"Tuple$n"), "apply"), _), l) =>
+      case Apply(Select(_, "apply"), l) if isProductApply(apply) =>
         CCallExpr(CDeclRefExpr(getRecordCreator(apply.tpe, ctx)), l.map(compileTermToCExpr(_, ctx)))
-      case Apply(Select(_, "apply"), l) if isCaseApply(apply) =>
-        CCallExpr(CDeclRefExpr(getRecordCreator(apply.tpe, ctx)), l.map(compileTermToCExpr(_, ctx)))
-      case Apply(TypeApply(Select(_, "apply"), _), l) if isCaseApply(apply) =>
+      case Apply(TypeApply(Select(_, "apply"), _), l) if isProductApply(apply) =>
         CCallExpr(CDeclRefExpr(getRecordCreator(apply.tpe, ctx)), l.map(compileTermToCExpr(_, ctx)))
       case Apply(Select(left, "=="), List(right)) if left.tpe <:< TypeRepr.of[Product] =>
         CCallExpr(
@@ -371,7 +369,7 @@ object ScalaToC {
       tpe <:< TypeRepr.of[Double]
   }
 
-  def isCaseApply(using Quotes)(apply: quotes.reflect.Apply): Boolean = {
+  def isProductApply(using Quotes)(apply: quotes.reflect.Apply): Boolean = {
     import quotes.reflect.*
 
     apply match {
