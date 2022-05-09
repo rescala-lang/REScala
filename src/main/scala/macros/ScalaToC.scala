@@ -192,6 +192,11 @@ object ScalaToC {
 
     if (canCompileToCUnaryOperator(qualifier, name)) {
       compileSelectToCUnaryOperator(select, ctx)
+    } else if (isProductFieldAccess(qualifier, name)) {
+      val recordDecl = getRecordDecl(qualifier.tpe, ctx)
+
+      // When is the arrow necessary?
+      CMemberExpr(compileTermToCExpr(qualifier, ctx), recordDecl.fields.find(_.name.equals(name)).get)
     } else {
       throw new MatchError(select.show(using Printer.TreeStructure))
     }
@@ -225,6 +230,12 @@ object ScalaToC {
       case "unary_!" => CNotExpr(CParenExpr(subExpr))
       case _ => throw new MatchError(select.show(using Printer.TreeStructure))
     }
+  }
+
+  def isProductFieldAccess(using Quotes)(term: quotes.reflect.Term, name: String): Boolean = {
+    import quotes.reflect.*
+
+    (term.tpe <:< TypeRepr.of[Product]) && term.tpe.classSymbol.get.caseFields.exists(_.name.equals(name))
   }
 
   def compileLiteral(using Quotes)(literal: quotes.reflect.Literal, ctx: TranslationContext): CExpr = {
