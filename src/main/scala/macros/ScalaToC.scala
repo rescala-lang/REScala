@@ -128,6 +128,7 @@ object ScalaToC {
       case Block(List(defDef: DefDef), _: Closure) => compileDefDef(defDef, ctx)
       case block: Block => compileBlockToCCompoundStmt(block, ctx)
       case ifTerm: If => compileIfToCIfStmt(ifTerm, ctx)
+      case ret: Return => compileReturn(ret, ctx)
       case inlined: Inlined => compileTerm(inlined.underlyingArgument, ctx)
       case whileTerm: While => compileWhile(whileTerm, ctx)
       case typed: Typed => compileTerm(typed.expr, ctx)
@@ -287,6 +288,24 @@ object ScalaToC {
         CCallExpr(CDeclRefExpr(getRecordCreator(apply.tpe, ctx)), l.map(compileTermToCExpr(_, ctx)))
       case Apply(TypeApply(Select(_, "apply"), _), l) if isCaseApply(apply) =>
         CCallExpr(CDeclRefExpr(getRecordCreator(apply.tpe, ctx)), l.map(compileTermToCExpr(_, ctx)))
+      case Apply(Select(left, "=="), List(right)) if left.tpe <:< TypeRepr.of[Product] =>
+        CCallExpr(
+          CDeclRefExpr(getRecordEquals(left.tpe, ctx)),
+          List(
+            compileTermToCExpr(left, ctx),
+            compileTermToCExpr(right, ctx)
+          )
+        )
+      case Apply(Select(left, "!="), List(right)) if left.tpe <:< TypeRepr.of[Product] =>
+        CNotExpr(
+          CCallExpr(
+            CDeclRefExpr(getRecordEquals(left.tpe, ctx)),
+            List(
+              compileTermToCExpr(left, ctx),
+              compileTermToCExpr(right, ctx)
+            )
+          )
+        )
       case Apply(Select(qualifier, name), List(_)) if canCompileToCBinaryOperator(qualifier, name) =>
         compileApplyToCBinaryOperator(apply, ctx)
       case _ => throw new MatchError(apply.show(using Printer.TreeStructure))
@@ -516,6 +535,62 @@ object ScalaToC {
     decl
   }
 
+  def getRecordEquals(using Quotes)(tpe: quotes.reflect.TypeRepr, ctx: TranslationContext): CFunctionDecl =
+    getRecordEquals(getRecordDecl(tpe, ctx), ctx)
+
+  def getRecordEquals(recordDecl: CRecordDecl, ctx: TranslationContext): CFunctionDecl = {
+    ctx.nameToRecordEquals.get(recordDecl.name) match {
+      case Some(decl) => decl
+      case None =>
+        val decl = buildRecordEquals(recordDecl, ctx)
+        ctx.nameToRecordEquals.put(recordDecl.name, decl)
+        decl
+    }
+  }
+
+  def buildRecordEquals(recordDecl: CRecordDecl, ctx: TranslationContext): CFunctionDecl = {
+    val name = "equals_" + recordDecl.name
+
+    val paramLeft = CParmVarDecl("left", CRecordType(recordDecl))
+    val paramRight = CParmVarDecl("right", CRecordType(recordDecl))
+    val parameters = List(paramLeft, paramRight)
+
+    val returnType = CBoolType
+
+    val comparisons: List[CStmt] = recordDecl.fields.map { f =>
+      val cond = f.declaredType.unqualType match {
+        case CRecordType(rd) =>
+          val eq = getRecordEquals(rd, ctx)
+          CNotExpr(
+            CCallExpr(
+              CDeclRefExpr(eq),
+              List(
+                CMemberExpr(CDeclRefExpr(paramLeft), f),
+                CMemberExpr(CDeclRefExpr(paramRight), f)
+              )
+            )
+          )
+        case _ =>
+          CNotEqualsExpr(
+            CMemberExpr(CDeclRefExpr(paramLeft), f),
+            CMemberExpr(CDeclRefExpr(paramRight), f)
+          )
+      }
+
+      CIfStmt(
+        cond,
+        CReturnStmt(Some(CFalseLiteral))
+      )
+    }
+    val body = CCompoundStmt(comparisons.appended(CReturnStmt(Some(CTrueLiteral))))
+
+    val decl = CFunctionDecl(name, parameters, returnType, Some(body))
+
+    println(decl.textgen)
+
+    decl
+  }
+
   def getRecordDecl(using Quotes)(tpe: quotes.reflect.TypeRepr, ctx: TranslationContext): CRecordDecl = {
     import quotes.reflect.*
 
@@ -537,7 +612,11 @@ object ScalaToC {
 
     tpe match {
       case AppliedType(_, typeArgs) =>
-        symbolName + "_" + typeArgs.map(_.typeSymbol.name).mkString("_")
+        val typeArgNames = typeArgs.map { t =>
+          if t <:< TypeRepr.of[Product] then recordName(t)
+          else t.typeSymbol.name
+        }
+        symbolName + "_" + typeArgNames.mkString("_")
       case _ => symbolName
     }
   }
