@@ -478,14 +478,15 @@ object ScalaToC {
   def compileTypeRepr(using Quotes)(tpe: quotes.reflect.TypeRepr, ctx: TranslationContext): CType = {
     import quotes.reflect.*
 
-    if tpe.typeSymbol == TypeRepr.of[Boolean].typeSymbol then CBoolType
-    else if tpe.typeSymbol == TypeRepr.of[Byte].typeSymbol then CCharType
-    else if tpe.typeSymbol == TypeRepr.of[Char].typeSymbol then CCharType
-    else if tpe.typeSymbol == TypeRepr.of[Short].typeSymbol then CShortType
-    else if tpe.typeSymbol == TypeRepr.of[Int].typeSymbol then CIntegerType
-    else if tpe.typeSymbol == TypeRepr.of[Long].typeSymbol then CLongType
-    else if tpe.typeSymbol == TypeRepr.of[Float].typeSymbol then CFloatType
-    else if tpe.typeSymbol == TypeRepr.of[Double].typeSymbol then CDoubleType
+    if tpe =:= TypeRepr.of[Boolean] then CBoolType
+    else if tpe =:= TypeRepr.of[Byte] then CCharType
+    else if tpe =:= TypeRepr.of[Char] then CCharType
+    else if tpe =:= TypeRepr.of[Short] then CShortType
+    else if tpe =:= TypeRepr.of[Int] then CIntegerType
+    else if tpe =:= TypeRepr.of[Long] then CLongType
+    else if tpe =:= TypeRepr.of[Float] then CFloatType
+    else if tpe =:= TypeRepr.of[Double] then CDoubleType
+    else if tpe =:= TypeRepr.of[Unit] then CVoidType
     else if tpe <:< TypeRepr.of[Product] then CRecordType(getRecordDecl(tpe, ctx))
     else throw new MatchError(tpe.show(using Printer.TypeReprStructure))
   }
