@@ -74,6 +74,6 @@ object AST:
 
     // Scala stuff
     // field access
-    case class TFAcc(parent: Term, field: ID, args: Seq[Term])
+    case class TFAcc(parent: Term, field: ID, args: Seq[Term]) extends Term
     // function call
-    case class TFunC(name: ID, args: Seq[Term])
+    case class TFunC(name: ID, args: Seq[Term]) extends Term

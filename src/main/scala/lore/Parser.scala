@@ -2,7 +2,7 @@ package lore
 
 import AST._
 import cats.parse.{Parser => P, Parser0 => P0, Rfc5234}
-import cats.parse.Rfc5234.{alpha, digit, sp}
+import cats.parse.Rfc5234.{alpha, char, digit, sp}
 import cats.implicits._
 import cats._
 import cats.data.NonEmptyList
@@ -10,8 +10,8 @@ import cats.data.NonEmptyList
 object Parser:
   // helpers
   val ws: P0[Unit] = sp.rep0.void // whitespace
-  val id: P[ID] = alpha.rep.string
-  val number: P[Number] = digit.rep.string.map(Integer.parseInt(_))
+  val id: P[ID] = (alpha ~ (alpha | digit).rep0).string
+  val number: P[TNum] = digit.rep.string.map(i => TNum(Integer.parseInt(i)))
   val argT: P[TArgT] =
     (((id <* sp.? ~ P.char(':')) <* sp.rep0) ~ id).map { // args with type
       (l: ID, r: Type) => TArgT(l, r)
@@ -24,31 +24,37 @@ object Parser:
   val booleanExpr: P[Term] = P.defer(quantifier | implication)
 
   // primitives
-  val tru: P[TBoolean] = P.string("true").surroundedBy(ws).as(TTrue)
-  val fls: P[TBoolean] = P.string("false").surroundedBy(ws).as(TFalse)
+  val tru: P[TBoolean] = P.string("true").as(TTrue)
+  val fls: P[TBoolean] = P.string("false").as(TFalse)
   val parens: P[Term] = // parantheses
     (ws.soft ~ P.char('(') ~ ws).with1 *> P
       .defer(implication) <* P.char(')').surroundedBy(ws)
   val boolFactor: P[Term] =
     P.defer(
-      tru.backtrack | fls.backtrack | parens | inSet.backtrack | numComp.backtrack | methodCall.backtrack | functionCall.backtrack | _var
+      tru.backtrack | fls.backtrack | parens
+      // | inSet.backtrack  TODO
+      // | numComp.backtrack TODO
+        | fieldAcc.backtrack
+        | functionCall.backtrack
+        | _var
     )
 
   // helper for boolean expressions with two sides
-  val boolTpl = (factor: P[Term], seperator: String) =>
-    factor ~ (ws.soft ~ P.string(seperator) ~ ws *> factor).?
+  val boolTpl = (factor: P[Term], seperator: P[Unit]) =>
+    factor ~ ((ws.soft ~ seperator.backtrack ~ ws) *> factor).?
   val implication: P[Term] =
-    P.defer(boolTpl(equality, "==>")).map {
+    P.defer(boolTpl(equality, P.string("==>"))).map {
       case (left, None)        => left
       case (left, Some(right)) => TImpl(left = left, right = right)
     }
   val equality: P[Term] =
-    P.defer(boolTpl(inequality, "==")).map {
-      case (left, None)        => left
-      case (left, Some(right)) => TEq(left = left, right = right)
-    }
+    P.defer(boolTpl(inequality, ((P.string("==")) ~ P.char('>').unary_!).void))
+      .map {
+        case (left, None)        => left
+        case (left, Some(right)) => TEq(left = left, right = right)
+      }
   val inequality: P[Term] =
-    P.defer(boolTpl(conjunction, "!=")).map {
+    P.defer(boolTpl(conjunction, P.string("!="))).map {
       case (left, None)        => left
       case (left, Some(right)) => TIneq(left = left, right = right)
     }
@@ -101,14 +107,35 @@ object Parser:
   val quantifier: P[TQuantifier] = forall | exists
 
   // object orientation
-  val args = term.repSep0(P.char(',') ~ ws)
-  val fieldAcc = id ~ P.char('.') ~ (P.char('(') *> args <* (ws ~ P.char(')'))).?
-  val functionCall = P
+  val args = P.defer0(term.repSep0(P.char(',') ~ ws))
+  val objFactor = P.defer(functionCall.backtrack | _var)
+  val fieldAcc: P[TFAcc] =
+    P.defer(
+      objFactor.soft ~
+        (P.char('.') *> id ~ (P.char('(') *> args <* (ws ~ P.char(')'))).?).rep
+    ).map((parent, rest) => evalFieldAcc(parent, rest.toList))
+  def evalFieldAcc(s: (Term, List[(ID, Option[List[Term]])])): TFAcc =
+    s match 
+      case (parent: TFAcc, Nil) => parent
+      case (parent, (field, args) :: Nil) =>
+        TFAcc(parent = parent, field = field, args = args.getOrElse(Seq()))
+      case (parent, (field, args) :: rest) =>
+        evalFieldAcc(
+          TFAcc(parent = parent, field = field, args = args.getOrElse(Seq())),
+          rest
+        )
+      case _ =>
+        throw new IllegalArgumentException(s"Not a valid field access: $s")
+    
+  val functionCall: P[TFunC] = P
     .defer(id ~ (P.char('(') *> args) <* P.char(')'))
     .map { (id, arg) =>
       TFunC(name = id, args = arg)
     }
 
   // programs are sequences of terms
-  val term: P[Term] = _var
+  val term: P[Term] =
+    P.defer(
+      fieldAcc.backtrack | functionCall.backtrack | booleanExpr.backtrack | number | _var
+    )
   val prog: P[NonEmptyList[Term]] = term.repSep(ws).between(ws, P.end)

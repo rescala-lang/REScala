@@ -8,6 +8,39 @@ import cats.data.NonEmptyList
 def printExp(e: NonEmptyList[Expectation]) =
   e.toString
 
+object SimpleParsing extends SimpleTestSuite {
+  test("function call") {
+    assertResult(Right(TFunC("foo", List(TNum(1), TNum(2))))) {
+      Parser.functionCall.parseAll("foo(1,2)")
+    }
+  }
+
+  test("field access") {
+    assertResult(Right(TFAcc(TVar("foo"), "bar", List(TNum(1), TFalse)))) {
+      Parser.fieldAcc.parseAll("foo.bar(1, false)")
+    }
+
+    assertResult(
+      Right(
+        TFAcc(
+          TFAcc(
+            TVar("foo"),
+            "bar",
+            List(TEq(TTrue, TFalse))
+          ),
+          "baz",
+          List()
+        )
+      )
+    ) {
+      Parser.fieldAcc.parseAll("foo.bar(true == false).baz")
+    }
+
+    assertResult(Right(TFAcc(TFunC("size", List(TVar("d2"))), "max", List()))) {
+      Parser.fieldAcc.parseAll("size(d2).max")
+    }
+  }
+}
 object BooleanExpressionParsing extends SimpleTestSuite {
   test("disjunction") {
     val p = Parser.disjunction
@@ -125,80 +158,84 @@ object BooleanExpressionParsing extends SimpleTestSuite {
 
   }
 
-//   test("implication") {
-//     def p[_: P] = P(Parser.implication ~ End)
+  test("implication") {
+    val p = Parser.implication
 
-//     parse("true ==> false") match {
-//       case Success(Implication(0, True(_), False(_)), index) => ()
-//       case Left(error) => fail(printExp(error.expected))
-//       case x => fail(s"Failed to parse as implication: $x")
-//     }
+    assertResult(Right(TImpl(TTrue, TFalse))) {
+      p.parseAll("true==>false")
+    }
 
-//     parse("false || true ==> false") match {
-//       case Success(Implication(0, _, _), index) => ()
-//       case Left(error) => fail(printExp(error.expected))
-//       case x => fail(s"Failed to parse as implication: $x")
-//     }
+    assertResult(Right(TImpl(TDisj(TFalse, TTrue), TFalse))) {
+      p.parseAll("false || true ==> false")
+    }
 
-//     parse("false ==> false || true && foo() == false") match {
-//       case Success(Implication(0, _, _), index) => ()
-//       case Left(error) => fail(printExp(error.expected))
-//       case x => fail(s"Failed to parse as implication: $x")
-//     }
+    assertResult(
+      Right(
+        TImpl(
+          TFalse,
+          TEq(TConj(TDisj(TFalse, TTrue), TFunC("foo", List())), TFalse)
+        )
+      )
+    ) {
+      p.parseAll("false ==> false || true && foo() == false")
+    }
 
-//     parse("false != true ==> false || true && foo() == false") match {
-//       case Success(i @ Implication(0, _, _), index) => ()
-//       case Left(error) => fail(printExp(error.expected))
-//       case x => fail(s"Failed to parse as implication: $x")
-//     }
-//   }
+    assertResult(
+      Right(
+        TImpl(
+          TIneq(TFalse, TTrue),
+          TEq(
+            TConj(
+              TDisj(TFalse, TTrue),
+              TFunC("foo", List())
+            ),
+            TFalse
+          )
+        )
+      )
+    ) {
+      p.parseAll("false != true ==> false || true && foo() == false")
+    }
+  }
 
-//   test("parentheses") {
-//     def p[_: P] = P(Parser.booleanExpression ~ End)
+  test("parentheses") {
+    val p = Parser.booleanExpr
 
-//     parse("(true || false) ==> false") match {
-//       case Success(Implication(0, _,_), index) => ()
-//       case Left(error) => fail(printExp(error.expected))
-//       case x => fail(s"Failed to parse as boolean expression: $x")
-//     }
+    assertResult(Right(TImpl(TDisj(TTrue, TFalse), TFalse))) {
+      p.parseAll("(true || false) ==> false")
+    }
 
-//     parse("false || true ==> (false)") match {
-//       case Success(Implication(0, _, _), index) => ()
-//       case Left(error) => fail(printExp(error.expected))
-//       case x => fail(s"Failed to parse as boolean expression: $x")
-//     }
+    assertResult(Right(TImpl(TDisj(TFalse, TTrue), TFalse))) {
+      p.parseAll("false || true ==> (false)")
+    }
 
-//     parse("false || (true && foo()) == false") match {
-//       case Success(Equality(0, _, _), index) => ()
-//       case Left(error) => fail(printExp(error.expected))
-//       case x => fail(s"Failed to parse as boolean expression: $x")
-//     }
+    assertResult(
+      Right(TEq(TDisj(TFalse, TConj(TTrue, TFunC("foo", List()))), TFalse))
+    ) {
+      p.parseAll("false || (true && foo()) == false")
+    }
 
-//     parse("false != (true ==> false)") match {
-//       case Success(Inequality(0, _, Implication(10,_,_)), index) => ()
-//       case Left(error) => fail(printExp(error.expected))
-//       case x => fail(s"Failed to parse as boolean expression: $x")
-//     }
+    assertResult(Right(TIneq(TFalse, TImpl(TTrue, TFalse)))) {
+      p.parseAll("false != (true ==> false)")
+    }
 
-//     parse("false != (true ==> false") match {
-//       case f: Failure => ()
-//       case x => fail("This should fail!")
-//     }
-//   }
+    // this should fail
+    p.parseAll("false != (true ==> false") match
+      case Left(e: cats.parse.Parser.Error) => ()
+      case _                                => fail("This should fail!")
+  }
 
-//   test("number comparison") {
-//     def p[_: P] = P(Parser.booleanExpression ~ End)
+  test("number comparison") {
+    val p = Parser.booleanExpr
 
-//     parse("a >= 0") match {
-//       case Success(Geq(0, _,_), index) => ()
-//       case Left(error) => fail(printExp(error.expected))
-//       case x => fail(s"Failed to parse as number comparison: $x")
-//     }
+    assertResult(Right(TGeq(TVar("a"), TNum(0)))) {
+      p.parseAll("a >= 0")
+    }
 
-//     parse("foo(bar) < 0 == false") match {
-//       case Success(Equality(0, Lt(_,_,_), False(_)), index) => ()
-//       case Left(error) => fail(printExp(error.expected))
-//       case x => fail(s"Failed to parse as number comparison: $x")
-//     }
-//   }
+    assertResult(
+      Right(TEq(TLt(TFunC("foo", List(TVar("bar"))), TNum(0)), TFalse))
+    ) {
+      "foo(bar) < 0 == false"
+    }
+  }
 }
