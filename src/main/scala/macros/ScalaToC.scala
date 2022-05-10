@@ -82,6 +82,7 @@ object ScalaToC {
 
     val body = rhs.map { (t: Term) => t match
       case block: Block => compileBlockToFunctionBody(block, ctx)
+      case Return(expr, _) => CCompoundStmt(List(CReturnStmt(Some(compileTermToCExpr(expr, ctx)))))
       case term => CCompoundStmt(List(CReturnStmt(Some(compileTermToCExpr(term, ctx)))))
     }
 
@@ -126,6 +127,7 @@ object ScalaToC {
       case apply: Apply => compileApply(apply, ctx)
       case assign: Assign => compileAssign(assign, ctx)
       case Block(List(defDef: DefDef), _: Closure) => compileDefDef(defDef, ctx)
+      case Block(List(defDef: DefDef), Literal(UnitConstant())) => compileDefDef(defDef, ctx)
       case block: Block => compileBlockToCCompoundStmt(block, ctx)
       case ifTerm: If => compileIfToCIfStmt(ifTerm, ctx)
       case ret: Return => compileReturn(ret, ctx)
@@ -253,7 +255,7 @@ object ScalaToC {
       case Literal(DoubleConstant(x)) => CDoubleLiteral(x)
       case Literal(CharConstant(x)) => CCharacterLiteral(x)
       case Literal(StringConstant(x)) => CStringLiteral(x)
-      case Literal(NullConstant) => CNullLiteral
+      case Literal(NullConstant()) => CNullLiteral
       case _ => throw new MatchError(literal.show(using Printer.TreeStructure))
     }
   }
@@ -403,9 +405,10 @@ object ScalaToC {
 
     val compiledStatements = block.statements.map(compileStatementToCStmt(_, ctx))
 
-    val compiledExpression = compileTermToCStmt(block.expr, ctx)
-
-    val stmtList = compiledStatements.appended(compiledExpression)
+    val stmtList = block.expr.match {
+      case Literal(UnitConstant()) => compiledStatements
+      case _ => compiledStatements.appended(compileTermToCStmt(block.expr, ctx))
+    }
 
     CCompoundStmt(stmtList)
   }
@@ -417,9 +420,13 @@ object ScalaToC {
 
     val compiledStatements = statements.map(compileStatementToCStmt(_, ctx))
 
-    val returnStatement = CReturnStmt(Some(compileTermToCExpr(expr, ctx)))
-
-    val stmtList = compiledStatements.appended(returnStatement)
+    val stmtList = expr match {
+      case Literal(UnitConstant()) => compiledStatements
+      case _ if expr.tpe =:= TypeRepr.of[Unit] =>
+        compiledStatements.appended(compileTermToCStmt(expr, ctx))
+      case ret: Return => compiledStatements.appended(compileReturn(ret, ctx))
+      case _ => compiledStatements.appended(CReturnStmt(Some(compileTermToCExpr(expr, ctx))))
+    }
 
     CCompoundStmt(stmtList)
   }
