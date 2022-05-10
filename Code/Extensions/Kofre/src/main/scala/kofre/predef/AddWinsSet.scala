@@ -29,7 +29,7 @@ object AddWinsSet {
 
     def contains(elem: E)(using QueryP): Boolean = current.inner.contains(elem)
 
-    def add(e: E)(using PCausal, CausalMutation, QueryP, IdentifierP): C = {
+    def add(e: E)(using CausalP, CausalMutationP, QueryP, IdentifierP): C = {
       val dm      = current.inner
       val cc      = context
       val nextDot = cc.max(replicaID).fold(Dot(replicaID, 0))(_.advance)
@@ -38,10 +38,10 @@ object AddWinsSet {
       deltaState[E].make(
         dm = Map(e -> CausalContext.single(nextDot)),
         cc = v add nextDot
-      )
+      ).mutator
     }
 
-    def addAll(elems: Iterable[E])(using IdentifierP, PCausal, CausalMutation, QueryP): C = {
+    def addAll(elems: Iterable[E])(using IdentifierP, CausalP, CausalMutationP, QueryP): C = {
       val dm          = current.inner
       val cc          = context
       val nextCounter = cc.nextTime(replicaID)
@@ -57,19 +57,19 @@ object AddWinsSet {
       deltaState[E].make(
         dm = (elems zip nextDots.iterator.map(CausalContext.single)).toMap,
         cc = ccontextSet
-      )
+      ).mutator
     }
 
-    def remove(e: E)(using QueryP, CausalMutation): C = {
+    def remove(e: E)(using QueryP, CausalMutationP): C = {
       val dm = current.inner
       val v  = dm.getOrElse(e, CausalContext.empty)
 
       deltaState[E].make(
         cc = v
-      )
+      ).mutator
     }
 
-    def removeAll(elems: Iterable[E])(using QueryP, CausalMutation): C = {
+    def removeAll(elems: Iterable[E])(using QueryP, CausalMutationP): C = {
       val dm = current.inner
       val dotsToRemove = elems.foldLeft(CausalContext.empty) {
         case (dots, e) => dm.get(e) match {
@@ -80,10 +80,10 @@ object AddWinsSet {
 
       deltaState[E].make(
         cc = dotsToRemove
-      )
+      ).mutator
     }
 
-    def removeBy(cond: E => Boolean)(using QueryP, CausalMutation): C = {
+    def removeBy(cond: E => Boolean)(using QueryP, CausalMutationP): C = {
       val dm = current.inner
       val removedDots = dm.collect {
         case (k, v) if cond(k) => v
@@ -91,14 +91,14 @@ object AddWinsSet {
 
       deltaState[E].make(
         cc = removedDots
-      )
+      ).mutator
     }
 
-    def clear()(using QueryP, CausalMutation): C = {
+    def clear()(using QueryP, CausalMutationP): C = {
       val dm = current.inner
       deltaState[E].make(
         cc = DotMap[E, CausalContext].dots(dm)
-      )
+      ).mutator
     }
 
   }

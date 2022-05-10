@@ -20,10 +20,10 @@ trait ContextDecompose[A] extends ContextLattice[A], Decompose[WithContext[A]], 
 object ContextDecompose {
   def apply[A](implicit ds: ContextDecompose[A]): ContextDecompose[A] = ds
 
-  given product1ContextDecompose[P <: Product, A](using
+  def product1ContextDecompose[P <: Product, A](using
       pm: Mirror.Product { type MirroredType = P; type MirroredMonoType = P; type MirroredElemTypes = Tuple1[A] },
       innerCD: ContextDecompose[A]
-  ): ContextDecompose[P] with {
+  ): ContextDecompose[P] = new {
     private def access(a: P): A            = Tuple.fromProductTyped(a)._1
     override def dots(a: P): CausalContext = innerCD.dots(access(a))
     override def empty: P                  = pm.fromProduct(Tuple1(innerCD.empty))

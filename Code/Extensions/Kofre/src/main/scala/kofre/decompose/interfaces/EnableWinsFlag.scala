@@ -24,18 +24,18 @@ object EnableWinsFlag {
   implicit class EnableWinsFlagOps[C](container: C) extends OpsSyntaxHelper[C, EnableWinsFlag](container) {
     def read(using QueryP): Boolean = !current.inner.isEmpty
 
-    def enable()(using IdentifierP, QueryP, CausalMutation, PCausal): C = {
+    def enable()(using IdentifierP, QueryP, CausalMutationP, CausalP): C = {
       val nextDot = context.nextDot(replicaID)
       WithContext(
         EnableWinsFlag(CausalContext.single(nextDot)),
         current.inner add nextDot
-      )
+      ).mutator
     }
-    def disable()(using QueryP, CausalMutation): C = {
+    def disable()(using QueryP, CausalMutationP): C = {
       WithContext(
         EnableWinsFlag(CausalContext.empty),
         current.inner
-      )
+      ).mutator
     }
   }
 

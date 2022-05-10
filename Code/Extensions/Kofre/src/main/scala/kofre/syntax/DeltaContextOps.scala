@@ -19,16 +19,17 @@ trait PermQuery[C, L]:
   def focus[M](q: L => M): PermQuery[C, M] = (c: C) => q(PermQuery.this.query(c))
 trait PermMutate[C, L] extends PermQuery[C, L]:
   def mutate(c: C, delta: L): C
+
 @implicitNotFound(
   "Requires a replica ID.\nWhich seems unavailable in »${C}«\nMissing a container?"
-  )
+)
 trait PermId[C]:
   def replicaId(c: C): Id
 class FixedId[C](id: Id) extends PermId[C]:
   override def replicaId(c: C): Id = id
 @implicitNotFound(
   "Requires causal context permission.\nNo context in »${C}«\nMissing a container?"
-  )
+)
 trait PermCausal[C]:
   def context(c: C): CausalContext
 @implicitNotFound(
@@ -56,19 +57,19 @@ object PermIdMutate:
 @implicitNotFound("Could not show that »${C}\ncontains ${L}")
 trait ArdtOpsContains[C, L]
 object ArdtOpsContains:
-  given identityContains[L]: ArdtOpsContains[L, L] with {}
+  given identityContains[L]: ArdtOpsContains[L, L] with                                                             {}
   given transitiveContains[A, B, C](using ArdtOpsContains[A, B], ArdtOpsContains[B, C]): ArdtOpsContains[A, C] with {}
 
 /** Helps to define operations that update any container [[C]] containing values of type [[L]]
   * using a scheme where mutations return deltas which are systematically applied.
   */
 trait OpsSyntaxHelper[C, L](container: C) {
-  final type MutationIDP    = PermIdMutate[C, L]
-  final type QueryP         = PermQuery[C, L]
-  final type MutationP      = PermMutate[C, L]
-  final type IdentifierP    = PermId[C]
-  final type PCausal        = PermCausal[C]
-  final type CausalMutation = PermCausalMutate[C, L]
+  final type MutationIDP     = PermIdMutate[C, L]
+  final type QueryP          = PermQuery[C, L]
+  final type MutationP       = PermMutate[C, L]
+  final type IdentifierP     = PermId[C]
+  final type CausalP         = PermCausal[C]
+  final type CausalMutationP = PermCausalMutate[C, L]
 
   final type MutationID = MutationIDP ?=> C
   final type Mutation   = MutationP ?=> C
@@ -77,8 +78,10 @@ trait OpsSyntaxHelper[C, L](container: C) {
   final protected def current(using perm: QueryP): L                    = perm.query(container)
   final protected def replicaID(using perm: IdentifierP): Defs.Id       = perm.replicaId(container)
   final protected given mutate(using perm: MutationP): Conversion[L, C] = perm.mutate(container, _)
-  final protected def context(using perm: PCausal): CausalContext       = perm.context(container)
-  final protected given causalMutate(using perm: CausalMutation): Conversion[WithContext[L], C] =
-    perm.mutateContext(container, _)
+  //extension (l: L)(using perm: MutationP) def mutated = perm.mutate(container, l)
+  final protected def context(using perm: CausalP): CausalContext       = perm.context(container)
+  //final protected given causalMutate(using perm: CausalMutationP): Conversion[WithContext[L], C] =
+  //  perm.mutateContext(container, _)
+  extension (l: WithContext[L])(using perm: CausalMutationP) def mutator = perm.mutateContext(container, l)
 
 }

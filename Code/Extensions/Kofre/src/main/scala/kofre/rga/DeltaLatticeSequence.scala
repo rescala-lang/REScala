@@ -7,9 +7,9 @@ import kofre.decompose.interfaces.EnableWinsFlag
 import kofre.predef.AddWinsSet
 import kofre.predef.AddWinsSet
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermIdMutate, WithNamedContext}
-import kofre.contextual.WithContext
+import kofre.contextual.{ContextLattice, WithContext}
 
-import scala.collection.AbstractIterator
+import scala.collection.{AbstractIterator, immutable}
 
 case class DeltaSequenceOrder(inner: Map[Vertex, Vertex]) {
 
@@ -52,55 +52,56 @@ object DeltaSequence {
       }
     }
 
-    def addRightDelta(replica: Id, left: Vertex, insertee: Vertex, value: A)(using
-        CausalMutation,
-    ): DeltaSequence[A] = {
+    def addRightDelta(replica: Id, left: Vertex, insertee: Vertex, value: A)(using CausalMutationP): C = {
       val newEdges    = current.edges.addRightEdgeDelta(left, insertee)
-      val newVertices = context.wrap(current.vertices).named(replica).add(insertee)
+      val newVertices = context.wrap(current.vertices).named(replica).add(insertee).inner
       val newValues   = Map(insertee -> value)
-      newVertices.context.wrap(DeltaSequence(newVertices.store, newEdges, newValues))
+      newVertices.context.wrap(DeltaSequence(newVertices.store, newEdges, newValues)).mutator
     }
 
-    def prependDelta(replica: Id, value: A)(using CausalMutation): DeltaSequence[A] =
+    def prependDelta(replica: Id, value: A)(using CausalMutationP): C =
       addRightDelta(replica, Vertex.start, Vertex.fresh(), value)
 
-    def removeDelta(v: Vertex)(using CausalMutation): DeltaSequence[A] =
-      context.wrap(current.vertices).remove(v).map(vert => copy(vertices = vert))
+    def removeDelta(v: Vertex)(using CausalMutationP): C =
+      context.wrap(current.vertices).remove(v).map(vert => current.copy(vertices = vert)).mutator
 
-
-    def filterDelta(keep: A => Boolean)(using CausalMutation): DeltaSequence[A] = {
-      val removed = values.collect { case (k, v) if !keep(v) => k }
-      removed.map(this.removeDelta).foldLeft(DeltaSequence.empty[A]) { case (l, r) => Lattice.merge(l, r) }
+    def filterDelta(keep: A => Boolean)(using CausalMutationP): C = {
+      val removed: immutable.Iterable[Vertex] = current.values.collect { case (k, v) if !keep(v) => k }
+      removed.foldLeft(context.wrap(current: DeltaSequence[A])) {
+        case (curr, toRemove) =>
+          val delta = curr.removeDelta(toRemove)
+          Lattice.merge(curr, delta)
+      }.mutator
     }
 
-    def toList(using QueryP) = iterator.toList
+      def toList(using QueryP): List[A] = iterator.toList
 
-    def iterator(using QueryP): Iterator[A] = vertexIterator.map(v => values(v))
+      def iterator(using QueryP): Iterator[A] = vertexIterator.map(v => current.values(v))
 
-    def vertexIterator(using QueryP): Iterator[Vertex] =
-      new AbstractIterator[Vertex] {
-        var lastVertex: Vertex = Vertex.start
+      def vertexIterator(using QueryP): Iterator[Vertex] =
+        new AbstractIterator[Vertex] {
+          var lastVertex: Vertex = Vertex.start
 
-        var currentSuccessor: Option[Vertex] = successor(lastVertex)
+          var currentSuccessor: Option[Vertex] = successor(lastVertex)
 
-        override def hasNext: Boolean = currentSuccessor.isDefined
+          override def hasNext: Boolean = currentSuccessor.isDefined
 
-        override def next(): Vertex = {
-          currentSuccessor match {
-            case Some(v) =>
-              lastVertex = v
-              currentSuccessor = successor(v)
-              v
-            case _ => throw new NoSuchElementException(
-                "Requesting iterator value after Vertex.end!"
-              )
+          override def next(): Vertex = {
+            currentSuccessor match {
+              case Some(v) =>
+                lastVertex = v
+                currentSuccessor = successor(v)
+                v
+              case _ => throw new NoSuchElementException(
+                  "Requesting iterator value after Vertex.end!"
+                )
+            }
           }
         }
-      }
   }
 
-  implicit def deltaSequenceLattice[A]: Lattice[DeltaSequence[A]] =
-    new Lattice[DeltaSequence[A]] {
+  implicit def deltaSequenceLattice[A]: ContextLattice[DeltaSequence[A]] =
+    new ContextLattice[DeltaSequence[A]] {
 
       private val noMapConflictsLattice: Lattice[A] = new Lattice[A] {
         override def merge(left: A, right: A): A =
@@ -108,25 +109,28 @@ object DeltaSequence {
           else throw new IllegalStateException(s"assumed there would be no conflict, but have $left and $right")
       }
 
-      override def merge(left: DeltaSequence[A], right: DeltaSequence[A]): DeltaSequence[A] = {
-        val newVertices = right.vertices.elements.filter(!left.edges.inner.contains(_))
+      override def mergePartial(
+          left: WithContext[DeltaSequence[A]],
+          right: WithContext[DeltaSequence[A]]
+      ): DeltaSequence[A] = {
+        val newVertices = right.store.vertices.elements.filter(!left.store.edges.inner.contains(_))
 
         // build map of old insertion positions of the new vertices
-        val oldPositions = right.edges.inner.foldLeft(Map.empty[Vertex, Vertex]) {
+        val oldPositions = right.store.edges.inner.foldLeft(Map.empty[Vertex, Vertex]) {
           case (m, (u, v)) => if (newVertices.contains(v)) m + (v -> u) else m
         }
 
-        val newEdges = newVertices.foldLeft(left.edges) {
+        val newEdges = newVertices.foldLeft(left.store.edges) {
           case (merged, v) =>
             merged.addRightEdge(oldPositions(v), v)
         }
-        val vertices = Lattice.merge(left.vertices, right.vertices)
-        val values   = Lattice.merge(left.values, right.values)(Lattice.mapLattice(noMapConflictsLattice))
+        val vertices = left.map(_.vertices) conmerge right.map(_.vertices)
+        val values   = Lattice.merge(left.store.values, right.store.values)(Lattice.mapLattice(noMapConflictsLattice))
 
         DeltaSequence(
           vertices = vertices,
           edges = newEdges,
-          values = values.view.filterKeys(vertices.contains).toMap: @scala.annotation.nowarn()
+          values = values.view.filterKeys(vertices.contains).toMap
         )
       }
     }

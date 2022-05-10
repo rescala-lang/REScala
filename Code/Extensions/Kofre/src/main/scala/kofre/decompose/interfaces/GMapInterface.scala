@@ -37,7 +37,7 @@ object GMapInterface {
       Map(k -> m(PermIdMutate.withID[V, V](replicaID))(queryKey(k)))
     }
 
-    def mutateKeyNamedCtx(k: K)(m: WithNamedContext[V] => WithNamedContext[V])(using MutationIDP, DecomposeLattice[V], PCausal): C = {
+    def mutateKeyNamedCtx(k: K)(m: WithNamedContext[V] => WithNamedContext[V])(using MutationIDP, DecomposeLattice[V], CausalP): C = {
       Map(k -> m(WithNamedContext(replicaID, WithContext(queryKey(k), context))).inner.store)
     }
   }

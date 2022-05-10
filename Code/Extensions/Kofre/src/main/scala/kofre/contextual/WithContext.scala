@@ -15,6 +15,7 @@ case class WithContext[A](store: A, context: CausalContext) {
 object WithContext {
 
   def empty[A: Bottom]: WithContext[A] = WithContext(Bottom.empty[A], CausalContext.empty)
+  def apply[A](a: A): WithContext[A] = WithContext(a, CausalContext.empty)
 
   given bottomInstance[A: Bottom]: Bottom[WithContext[A]] with {
     override def empty: WithContext[A] = WithContext.this.empty
@@ -30,8 +31,7 @@ object WithContext {
   given CausalWithDotMapLattice[K, V: AsCausalContext: ContextLattice]: Lattice[WithContext[Map[K, V]]] =
     ContextLattice.dotMapLattice
 
-  given syntaxPermissions[L](using DecomposeLattice[WithContext[L]]): PermQuery[WithContext[L], L]
-    with PermCausal[WithContext[L]] with PermCausalMutate[WithContext[L], L]
+  given syntaxPermissions[L](using ContextLattice[L]): PermCausalMutate[WithContext[L], L]
     with {
     override def mutateContext(c: WithContext[L], delta: WithContext[L]): WithContext[L] = c merged delta
     override def query(c: WithContext[L]): L                                             = c.store
