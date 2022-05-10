@@ -48,7 +48,7 @@ object Parser:
       case (left, Some(right)) => TImpl(left = left, right = right)
     }
   val equality: P[Term] =
-    P.defer(boolTpl(inequality, ((P.string("==")) ~ P.char('>').unary_!).void))
+    P.defer(boolTpl(inequality, P.string("==") <* P.char('>').unary_!))
       .map {
         case (left, None)        => left
         case (left, Some(right)) => TEq(left = left, right = right)
