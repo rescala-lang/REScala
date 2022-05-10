@@ -32,9 +32,9 @@ object CRDTInterface {
       override def mutateContext(
           container: B,
           withContext: WithContext[L]
-      ): B =
-        container.applyDelta(Delta(container.replicaID, withContext.context, withContext.store))
+      ): B = container.applyDelta(Delta(container.replicaID, withContext.context, withContext.store))
       override def context(c: B): CausalContext = c.state.context
+      override def query(c: B): L               = c.state.store
     }
 
   /** workaround to make existing syntax compile with different context decomposition */
