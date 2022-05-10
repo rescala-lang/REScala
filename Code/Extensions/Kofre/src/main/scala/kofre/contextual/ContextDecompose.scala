@@ -1,16 +1,14 @@
 package kofre.contextual
 
 import kofre.base.Lattice.Operators
+import kofre.base.{Bottom, Decompose, DecomposeLattice, Lattice}
 import kofre.causality.{CausalContext, Dot}
-import kofre.contextual.{AsCausalContext, WithContext, ContextLattice}
+import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, WithContext}
 import kofre.decompose.interfaces
-import kofre.contextual.ContextDecompose
-import kofre.base.{DecomposeLattice, Lattice}
-import kofre.base.{Bottom, Decompose}
-import scala.compiletime.summonInline
-import scala.deriving.Mirror
 
 import scala.annotation.implicitNotFound
+import scala.compiletime.{erasedValue, summonInline}
+import scala.deriving.Mirror
 
 /** DecomposableDotStore is the typeclass trait for dot stores,
   * data structures that are part of causal CRDTs and make use of dots to track causality.
@@ -22,18 +20,19 @@ trait ContextDecompose[A] extends ContextLattice[A], Decompose[WithContext[A]], 
 object ContextDecompose {
   def apply[A](implicit ds: ContextDecompose[A]): ContextDecompose[A] = ds
 
-  private[kofre] inline def product1ContextDecompose[A, P <: Product](using
-      pm: Mirror.ProductOf[P],
+  given product1ContextDecompose[P <: Product, A](using
+      pm: Mirror.Product { type MirroredType = P; type MirroredMonoType = P; type MirroredElemTypes = Tuple1[A] },
       innerCD: ContextDecompose[A]
-  ): ContextDecompose[P] =  new {
-    private def access(a: P): A = a.productElement(0).asInstanceOf[A]
+  ): ContextDecompose[P] with {
+    private def access(a: P): A            = Tuple.fromProductTyped(a)._1
     override def dots(a: P): CausalContext = innerCD.dots(access(a))
     override def empty: P                  = pm.fromProduct(Tuple1(innerCD.empty))
     override def decompose(a: WithContext[P]): Iterable[WithContext[P]] =
       innerCD.decompose(a.map(access)).map(_.map(v => pm.fromProduct(Tuple1(v))))
     override def mergePartial(left: WithContext[P], right: WithContext[P]): P =
       pm.fromProduct(Tuple1(innerCD.mergePartial(left.map(access), right.map(access))))
-    override def lteq(left: WithContext[P], right: WithContext[P]): Boolean = innerCD.lteq(left.map(access), right.map(access))
+    override def lteq(left: WithContext[P], right: WithContext[P]): Boolean =
+      innerCD.lteq(left.map(access), right.map(access))
   }
 
   abstract class ComposeFrom[A](acc: AsCausalContext[A], wcm: ContextLattice[A]) extends ContextDecompose[A] {

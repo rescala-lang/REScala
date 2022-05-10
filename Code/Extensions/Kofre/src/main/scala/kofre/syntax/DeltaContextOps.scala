@@ -34,7 +34,7 @@ trait PermCausal[C]:
 @implicitNotFound(
   "Requires context mutation permission.\nUnsure how to extract context from »${C}«\nto modify »${L}«"
 )
-trait PermCausalMutate[C, L]:
+trait PermCausalMutate[C, L] extends PermCausal[C], PermQuery[C, L]:
   def mutateContext(container: C, withContext: WithContext[L]): C
 trait PermIdMutate[C, L] extends PermId[C], PermMutate[C, L]
 
@@ -67,7 +67,7 @@ trait OpsSyntaxHelper[C, L](container: C) {
   final type QueryP         = PermQuery[C, L]
   final type MutationP      = PermMutate[C, L]
   final type IdentifierP    = PermId[C]
-  final type CausalP        = PermCausal[C]
+  final type PCausal        = PermCausal[C]
   final type CausalMutation = PermCausalMutate[C, L]
 
   final type MutationID = MutationIDP ?=> C
@@ -77,7 +77,7 @@ trait OpsSyntaxHelper[C, L](container: C) {
   final protected def current(using perm: QueryP): L                    = perm.query(container)
   final protected def replicaID(using perm: IdentifierP): Defs.Id       = perm.replicaId(container)
   final protected given mutate(using perm: MutationP): Conversion[L, C] = perm.mutate(container, _)
-  final protected def context(using perm: CausalP): CausalContext       = perm.context(container)
+  final protected def context(using perm: PCausal): CausalContext       = perm.context(container)
   final protected given causalMutate(using perm: CausalMutation): Conversion[WithContext[L], C] =
     perm.mutateContext(container, _)
 

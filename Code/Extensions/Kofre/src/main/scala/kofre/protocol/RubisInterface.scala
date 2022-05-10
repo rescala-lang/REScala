@@ -67,7 +67,7 @@ object RubisInterface {
       deltaState.make(auctions = newMap)
     }
 
-    def requestRegisterUser(userId: User)(using CausalMutation, CausalP, QueryP, IdentifierP): C = {
+    def requestRegisterUser(userId: User)(using CausalMutation, PCausal, QueryP, IdentifierP): C = {
       val (req, users, _) = current
       if (users.contains(userId)) WithContext(deltaState.make(), context)
       else
@@ -75,7 +75,7 @@ object RubisInterface {
         WithContext(deltaState.make(userRequests = merged.store), merged.context)
     }
 
-    def resolveRegisterUser()(using MutationIDP, CausalP): C = {
+    def resolveRegisterUser()(using MutationIDP, PCausal): C = {
       val (req, users, _) = current
       val newUsers = req.elements.foldLeft(Map.empty[User, String]) {
         case (newlyRegistered, (uid, rid)) =>

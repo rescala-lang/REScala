@@ -29,7 +29,7 @@ object AddWinsSet {
 
     def contains(elem: E)(using QueryP): Boolean = current.inner.contains(elem)
 
-    def add(e: E)(using CausalP, CausalMutation, QueryP, IdentifierP): C = {
+    def add(e: E)(using PCausal, CausalMutation, QueryP, IdentifierP): C = {
       val dm      = current.inner
       val cc      = context
       val nextDot = cc.max(replicaID).fold(Dot(replicaID, 0))(_.advance)
@@ -41,7 +41,7 @@ object AddWinsSet {
       )
     }
 
-    def addAll(elems: Iterable[E])(using IdentifierP, CausalP, CausalMutation, QueryP): C = {
+    def addAll(elems: Iterable[E])(using IdentifierP, PCausal, CausalMutation, QueryP): C = {
       val dm          = current.inner
       val cc          = context
       val nextCounter = cc.nextTime(replicaID)

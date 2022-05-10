@@ -3,6 +3,7 @@ package kofre.causality
 import kofre.base.Defs.{Id, Time}
 import kofre.base.{DecomposeLattice, Lattice}
 import kofre.causality.Dot
+import kofre.contextual.WithContext
 
 
 /** Essentially a more efficient version of a [[ Set[Dot] ]].
@@ -12,6 +13,8 @@ import kofre.causality.Dot
   * But this data structure may also be used inside a single delta, or for other metadata within the value of an RDT.
   * */
 case class CausalContext(internal: Map[Id, ArrayRanges]) {
+
+  def wrap[A](a: A): WithContext[A] = WithContext(a, this)
 
   def isEmpty: Boolean = internal.forall((_, r) => r.isEmpty)
 

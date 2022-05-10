@@ -16,7 +16,7 @@ case class EnableWinsFlag(inner: CausalContext)
 
 object EnableWinsFlag {
 
-  given latticeEWF: ContextDecompose[EnableWinsFlag] = ContextDecompose.product1ContextDecompose[CausalContext, EnableWinsFlag]
+  //given latticeEWF: ContextDecompose[EnableWinsFlag] = ContextDecompose.product1ContextDecompose
 
   /** It is enabled if there is a value in the store.
     * It relies on the external context to track removals.
@@ -24,7 +24,7 @@ object EnableWinsFlag {
   implicit class EnableWinsFlagOps[C](container: C) extends OpsSyntaxHelper[C, EnableWinsFlag](container) {
     def read(using QueryP): Boolean = !current.inner.isEmpty
 
-    def enable()(using IdentifierP, QueryP, CausalMutation, CausalP): C = {
+    def enable()(using IdentifierP, QueryP, CausalMutation, PCausal): C = {
       val nextDot = context.nextDot(replicaID)
       WithContext(
         EnableWinsFlag(CausalContext.single(nextDot)),
