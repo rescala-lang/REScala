@@ -123,6 +123,7 @@ object ScalaToC {
 
     term match {
       case ref: Ref => compileRef(ref, ctx)
+      case Literal(UnitConstant()) => CNullStmt
       case literal: Literal => compileLiteral(literal, ctx)
       case apply: Apply => compileApply(apply, ctx)
       case assign: Assign => compileAssign(assign, ctx)
@@ -130,6 +131,7 @@ object ScalaToC {
       case Block(List(defDef: DefDef), Literal(UnitConstant())) => compileDefDef(defDef, ctx)
       case block: Block => compileBlockToCCompoundStmt(block, ctx)
       case ifTerm: If => compileIfToCIfStmt(ifTerm, ctx)
+      case matchTerm: Match => compileMatchToCIfStmt(matchTerm, ctx)
       case ret: Return => compileReturn(ret, ctx)
       case inlined: Inlined => compileTerm(inlined.underlyingArgument, ctx)
       case whileTerm: While => compileWhile(whileTerm, ctx)
@@ -456,6 +458,92 @@ object ScalaToC {
     val elsepExpr = compileTermToCExpr(elsep, ctx)
 
     CConditionalOperator(condExpr, thenpExpr, elsepExpr)
+  }
+
+  def compileMatchToCIfStmt(using Quotes)(matchTerm: quotes.reflect.Match, ctx: TranslationContext): CIfStmt = {
+    import quotes.reflect.*
+
+    val Match(scrutinee, cases) = matchTerm
+
+    val (lastCond, lastDecls, lastStmtList) = compileCaseDef(cases.last, scrutinee, ctx)
+    val lastIf = CIfStmt(
+      lastCond.getOrElse(CTrueLiteral),
+      CCompoundStmt(
+        lastDecls.map(CDeclStmt(_)) ++ lastStmtList
+      )
+    )
+
+    cases.init.foldRight(lastIf) {
+      case (cd, nextIf) =>
+        val (cond, decls, stmtList) = compileCaseDef(cd, scrutinee, ctx)
+
+        CIfStmt(
+          cond.getOrElse(CTrueLiteral),
+          CCompoundStmt(
+            decls.map(CDeclStmt(_)) ++ stmtList
+          ),
+          Some(nextIf)
+        )
+    }
+  }
+
+  def compileCaseDef(using Quotes)(caseDef: quotes.reflect.CaseDef, scrutinee: quotes.reflect.Term, ctx: TranslationContext): (Option[CExpr], List[CVarDecl], List[CStmt]) = {
+    import quotes.reflect.*
+
+    val CaseDef(pattern, guard, rhs) = caseDef
+
+    val (patternCond, bindings) = compilePattern(pattern, compileTermToCExpr(scrutinee, ctx), scrutinee.tpe, ctx)
+
+    bindings.foreach { decl => ctx.nameToDecl.put(decl.name, decl) }
+
+    val stmtsList = compileTermToCStmt(rhs, ctx) match {
+      case CNullStmt => List()
+      case CCompoundStmt(stmts) => stmts
+      case stmt => List(stmt)
+    }
+
+    guard match {
+      case None => (patternCond, bindings, stmtsList)
+      case Some(guardExpr) =>
+        val guardCompiled = compileTermToCExpr(guardExpr, ctx)
+        // map guard, replacing refs to bindings with member expressions
+
+        val combinedCond = patternCond.fold(guardCompiled) { c => CAndExpr(c, guardCompiled) }
+
+        (Some(combinedCond), bindings, stmtsList)
+    }
+  }
+
+  def compilePattern(using Quotes)(pattern: quotes.reflect.Tree, prefix: CExpr, prefixType: quotes.reflect.TypeRepr, ctx: TranslationContext): (Option[CExpr], List[CVarDecl]) = {
+    import quotes.reflect.*
+
+    pattern match {
+      case Wildcard() => (None, List())
+      case term: Term =>
+        (Some(CEqualsExpr(prefix, compileTermToCExpr(term, ctx))), Nil)
+      case Bind(name, subPattern) =>
+        val (subCond, subDecls) = compilePattern(subPattern, prefix, prefixType, ctx)
+
+        (subCond, CVarDecl(name, compileTypeRepr(prefixType, ctx), Some(prefix)) :: subDecls)
+      case Unapply(_, _, subPatterns) =>
+        val fieldSymbols = prefixType.classSymbol.get.caseFields.filter(_.isValDef)
+        val recordDecl = getRecordDecl(prefixType, ctx)
+        val subPrefixes = fieldSymbols.map(fs => CMemberExpr(prefix, recordDecl.fields.find(f => fs.name.strip().equals(f.name)).get))
+        val subPrefixTypes = fieldSymbols.map(prefixType.memberType)
+
+        (subPatterns zip (subPrefixes zip subPrefixTypes)).foldLeft((Option.empty[CExpr], List.empty[CVarDecl])) {
+          case ((cond, decls), (subPattern, (subPrefix, subPrefixType))) =>
+            val (subCond, subDecls) = compilePattern(subPattern, subPrefix, subPrefixType, ctx)
+
+            val combinedCond = (cond, subCond) match {
+              case (None, _) => subCond
+              case (_, None) => cond
+              case (Some(c1), Some(c2)) => Some(CAndExpr(c1, c2))
+            }
+
+            (combinedCond, subDecls ++ decls)
+        }
+    }
   }
 
   def compileReturn(using Quotes)(ret: quotes.reflect.Return, ctx: TranslationContext): CReturnStmt = {
