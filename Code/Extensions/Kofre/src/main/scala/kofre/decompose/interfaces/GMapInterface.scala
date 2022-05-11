@@ -31,14 +31,14 @@ object GMapInterface {
 
     def queryAllEntries()(using QueryP): Iterable[V] = current.values
 
-    def mutateKey(k: K)(m: V => V)(using MutationIDP, DecomposeLattice[V]): C = Map(k -> m(queryKey(k)))
+    def mutateKey(k: K)(m: V => V)(using MutationIdP, DecomposeLattice[V]): C = Map(k -> m(queryKey(k))).mutator
 
-    def mutateKeyCtx(k: K)(m: PermIdMutate[V, V] => V => V)(using MutationIDP, DecomposeLattice[V]): C = {
-      Map(k -> m(PermIdMutate.withID[V, V](replicaID))(queryKey(k)))
+    def mutateKeyCtx(k: K)(m: PermIdMutate[V, V] => V => V)(using MutationIdP, DecomposeLattice[V]): C = {
+      Map(k -> m(PermIdMutate.withID[V, V](replicaID))(queryKey(k))).mutator
     }
 
-    def mutateKeyNamedCtx(k: K)(m: WithNamedContext[V] => WithNamedContext[V])(using MutationIDP, DecomposeLattice[V], CausalP): C = {
-      Map(k -> m(WithNamedContext(replicaID, WithContext(queryKey(k), context))).inner.store)
+    def mutateKeyNamedCtx(k: K)(m: WithNamedContext[V] => WithNamedContext[V])(using MutationIdP, DecomposeLattice[V], CausalP): C = {
+      Map(k -> m(WithNamedContext(replicaID, WithContext(queryKey(k), context))).inner.store).mutator
     }
   }
 

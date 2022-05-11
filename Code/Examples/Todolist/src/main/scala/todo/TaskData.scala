@@ -1,21 +1,23 @@
 package todo
 
+import kofre.contextual.WithContext
+import kofre.decompose.TimedVal
+import kofre.decompose.containers.DeltaBufferRDT
+import kofre.decompose.interfaces.LWWRegisterInterface
+import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegister
+import kofre.decompose.interfaces.MVRegisterInterface.MVRegisterSyntax
+import kofre.syntax.WithNamedContext
 import loci.registry.Binding
-import loci.serializer.jsoniterScala.jsoniteScalaBasedSerializable
 import loci.transmitter.IdenticallyTransmittable
 import org.scalajs.dom.UIEvent
 import org.scalajs.dom.html.{Input, LI}
 import rescala.default._
 import rescala.extra.Tags._
-import rescala.extra.lattices.delta.JsoniterCodecs._
-import kofre.decompose.{Delta, TimedVal}
 import rescala.extra.replication.LociDist
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all._
 import todo.Todolist.replicaId
-import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax
-import kofre.decompose.containers.DeltaBufferRDT
 
 import scala.Function.const
 import scala.collection.mutable
@@ -33,15 +35,15 @@ case class TaskRef(id: String) {
   lazy val cached: TaskRefData = TaskReferences.lookupOrCreateTaskRef(id, None)
 
   def task: Signal[DeltaBufferRDT[LWWRegister[TaskData]]] = cached.task
-  def tag: TypedTag[LI]                                      = cached.tag
-  def removed: Event[String]                                 = cached.removed
+  def tag: TypedTag[LI]                                   = cached.tag
+  def removed: Event[String]                              = cached.removed
 }
 
 final class TaskRefData(
-                         val task: Signal[DeltaBufferRDT[LWWRegister[TaskData]]],
-                         val tag: TypedTag[LI],
-                         val removed: Event[String],
-                         val id: String,
+    val task: Signal[DeltaBufferRDT[LWWRegister[TaskData]]],
+    val tag: TypedTag[LI],
+    val removed: Event[String],
+    val id: String,
 ) {
   override def hashCode(): Int = id.hashCode
   override def equals(obj: Any): Boolean = obj match {
@@ -68,8 +70,6 @@ object TaskReferences {
 
 class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
 
-  import todo.Codecs.todoTaskCodec
-
   implicit val transmittableLWW: IdenticallyTransmittable[LWWRegister[TaskData]] =
     IdenticallyTransmittable()
 
@@ -79,11 +79,9 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
   ): TaskRefData = {
     val lwwInit = DeltaBufferRDT[LWWRegister[TaskData]](replicaId)
 
-    val lww = task match {
-      case None =>  new kofre.decompose.interfaces.MVRegisterInterface.MVRegisterSyntax(lwwInit).write(
-          TimedVal(TaskData("<empty>"), lwwInit.replicaID, 0, 0)
-        )
-      case Some(v) => lwwInit.write(v)
+    val lww: DeltaBufferRDT[LWWRegister[TaskData]] = task match {
+      case None => (MVRegisterSyntax(lwwInit).write(TimedVal(TaskData("<empty>"), lwwInit.replicaID, 0, 0)))
+      case Some(v) => LWWRegisterInterface.LWWRegisterSyntax(lwwInit).write(v)
     }
 
     val edittext = Events.fromCallback[UIEvent] { inputChange =>
@@ -106,7 +104,7 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
 
     val doneEv = toggleAll || doneClick.event
 
-    val deltaEvt = Evt[Delta[LWWRegister[TaskData]]]()
+    val deltaEvt = Evt[WithNamedContext[LWWRegister[TaskData]]]()
 
     // type Carrier = LWWRegister.State[TaskData, DietMapCContext]
     //
@@ -121,7 +119,7 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
     //  )
     // )
 
-    val crdt = Storing.storedAs(s"$storePrefix$taskID", lww) { init =>
+    val crdt= Storing.storedAs(s"$storePrefix$taskID", lww) { init =>
       Events.foldAll(init)(current =>
         Seq(
           doneEv act { _ => current.resetDeltaBuffer().map(_.toggle()) },
@@ -132,10 +130,10 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
     }(Codecs.codecLww)
 
     LociDist.distributeDeltaCRDT(crdt, deltaEvt, Todolist.registry)(
-      Binding[LWWRegister[TaskData] => Unit](taskID)
+      Binding[WithContext[LWWRegister[TaskData]] => Unit](taskID)
     )
 
-    val taskData = crdt.map(_.read.getOrElse(TaskData(desc = "LWW Empty")))
+    val taskData = crdt.map(x => LWWRegisterInterface.LWWRegisterSyntax(x).read.getOrElse(TaskData(desc = "LWW Empty")))
 
     val removeButton =
       Events.fromCallback[UIEvent](cb => button(`class` := "destroy", onclick := cb))

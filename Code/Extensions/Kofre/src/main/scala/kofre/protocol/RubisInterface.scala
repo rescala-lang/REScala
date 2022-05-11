@@ -38,33 +38,33 @@ object RubisInterface {
 
   implicit class RubisSyntax[C](container: C) extends OpsSyntaxHelper[C, State](container) {
 
-    def placeBid(auctionId: AID, userId: User, price: Int)(using MutationIDP): C = {
+    def placeBid(auctionId: AID, userId: User, price: Int)(using MutationIdP): C = {
       val (_, users, m) = current
       val newMap =
         if (users.get(userId).contains(replicaID) && m.contains(auctionId)) {
           m.updatedWith(auctionId) { _.map(a => a.bid(userId, price)) }
         } else Map.empty[AID, AuctionInterface.AuctionData]
 
-      deltaState.make(auctions = newMap)
+      deltaState.make(auctions = newMap).mutator
     }
 
-    def closeAuction(auctionId: AID)(using MutationIDP): C = {
+    def closeAuction(auctionId: AID)(using MutationIdP): C = {
       val (_, _, m) = current
       val newMap =
         if (m.contains(auctionId)) {
           m.updatedWith(auctionId) { _.map(a => a.close()) }
         } else Map.empty[AID, AuctionInterface.AuctionData]
 
-      deltaState.make(auctions = newMap)
+      deltaState.make(auctions = newMap).mutator
     }
 
-    def openAuction(auctionId: AID)(using MutationIDP): C = {
+    def openAuction(auctionId: AID)(using MutationIdP): C = {
       val (_, _, m) = current
       val newMap =
         if (m.contains(auctionId)) Map.empty[AID, AuctionInterface.AuctionData]
         else Map(auctionId -> DecomposeLattice[AuctionInterface.AuctionData].empty)
 
-      deltaState.make(auctions = newMap)
+      deltaState.make(auctions = newMap).mutator
     }
 
     def requestRegisterUser(userId: User)(using CausalMutationP, CausalP, QueryP, IdentifierP): C = {
@@ -75,7 +75,7 @@ object RubisInterface {
         WithContext(deltaState.make(userRequests = merged.store), merged.context).mutator
     }
 
-    def resolveRegisterUser()(using MutationIDP, CausalP): C = {
+    def resolveRegisterUser()(using MutationIdP, CausalP): C = {
       val (req, users, _) = current
       val newUsers = req.elements.foldLeft(Map.empty[User, String]) {
         case (newlyRegistered, (uid, rid)) =>
@@ -90,6 +90,6 @@ object RubisInterface {
         userRequests = WithContext(req, context).clear().store,
         users = newUsers
       )
-    }
+    }.mutator
   }
 }

@@ -49,16 +49,16 @@ object LexCounterInterface {
 
     def value(using QueryP): Int = current.values.map(_.snd).sum
 
-    def inc()(using MutationIDP): C =
+    def inc()(using MutationIdP): C =
       current.get(replicaID) match {
-        case None                => Map(replicaID -> LexPair(0, 1))
-        case Some(LexPair(l, r)) => Map(replicaID -> LexPair(l, r + 1))
+        case None                => Map(replicaID -> LexPair(0, 1)).mutator
+        case Some(LexPair(l, r)) => Map(replicaID -> LexPair(l, r + 1)).mutator
       }
 
-    def dec()(using MutationIDP): C =
+    def dec()(using MutationIdP): C =
       current.get(replicaID) match {
-        case None                => Map(replicaID -> LexPair(1, -1))
-        case Some(LexPair(l, r)) => Map(replicaID -> LexPair(l + 1, r - 1))
+        case None                => Map(replicaID -> LexPair(1, -1)).mutator
+        case Some(LexPair(l, r)) => Map(replicaID -> LexPair(l + 1, r - 1)).mutator
       }
   }
 }

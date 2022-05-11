@@ -18,23 +18,16 @@ trait CRDTInterface[State, Wrapper] {
 }
 
 object CRDTInterface {
-  def plainPermission[L: ContextDecompose, B <: CRDTInterface[L, B]]: PermIdMutate[B, L] =
-    new PermIdMutate[B, L] {
+  def allPermissions[L: ContextDecompose, B <: CRDTInterface[L, B]]: PermIdMutate[B, L] with PermCausalMutate[B, L] =
+    new PermIdMutate[B, L] with PermCausalMutate[B, L] {
       override def replicaId(c: B): Id       = c.replicaID
       override def mutate(c: B, delta: L): B = c.applyDelta(Delta(c.replicaID, CausalContext.empty, delta))
       override def query(c: B): L            = c.state.store
-    }
-
-  def contextPermissions[L, B <: CRDTInterface[L, B]](using
-      ContextDecompose[L]
-  ): PermCausalMutate[B, L] with PermCausal[B] =
-    new PermCausalMutate[B, L] with PermCausal[B] {
       override def mutateContext(
           container: B,
           withContext: WithContext[L]
       ): B = container.applyDelta(Delta(container.replicaID, withContext.context, withContext.store))
       override def context(c: B): CausalContext = c.state.context
-      override def query(c: B): L               = c.state.store
     }
 
   /** workaround to make existing syntax compile with different context decomposition */

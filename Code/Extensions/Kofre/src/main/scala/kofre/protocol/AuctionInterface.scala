@@ -78,8 +78,8 @@ object AuctionInterface {
 
   implicit class AuctionSyntax[C](container: C) extends OpsSyntaxHelper[C, AuctionData](container) {
     def bid(userId: User, price: Int)(using MutationP): C =
-      AuctionData(bids = current.bids.insert(Bid(userId, price)))
+      AuctionData(bids = current.bids.insert(Bid(userId, price))).mutator
 
-    def close()(using MutationP): C = AuctionData(status = Closed)
+    def close()(using MutationP): C = AuctionData(status = Closed).mutator
   }
 }

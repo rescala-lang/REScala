@@ -43,13 +43,8 @@ object AntiEntropyCRDT {
   given containsRelation[State]: ArdtOpsContains[AntiEntropyCRDT[State], State] =
     new ArdtOpsContains[AntiEntropyCRDT[State], State] {}
 
-  given antiEntropyPermissions[L: ContextDecompose]: PermIdMutate[AntiEntropyCRDT[L], L] =
-    CRDTInterface.plainPermission[L, AntiEntropyCRDT[L]]
-
-  given contextPermissions[L](using
-      ContextDecompose[L]
-  ): (PermCausalMutate[AntiEntropyCRDT[L], L] with PermCausal[AntiEntropyCRDT[L]]) =
-    CRDTInterface.contextPermissions
+  given allPermissions[L: ContextDecompose]: (PermIdMutate[AntiEntropyCRDT[L], L] & PermCausalMutate[AntiEntropyCRDT[L], L]) =
+    CRDTInterface.allPermissions
 
   /** Creates a new PNCounter instance
     *

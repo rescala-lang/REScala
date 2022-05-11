@@ -2,9 +2,10 @@ package central
 
 import central.Bindings._
 import kofre.base.DecomposeLattice
+import kofre.contextual.WithContext
 import kofre.decompose.containers.DeltaBufferRDT
-import kofre.decompose.Delta
 import kofre.predef.AddWinsSet
+import kofre.syntax.WithNamedContext
 import loci.communicator.tcp.TCP
 import loci.registry.Registry
 import loci.transmitter.{RemoteAccessException, RemoteRef}
@@ -60,7 +61,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
       val remoteReceiveSyncMessage = registry.lookup(receiveSyncMessageBinding, rr)
 
       set.deltaBuffer.collect {
-        case Delta(replicaID, cc, deltaState) if replicaID != rr.toString => deltaState
+        case WithNamedContext(replicaID, deltaState) if replicaID != rr.toString => deltaState
       }.reduceOption(DecomposeLattice[SetState].merge).foreach(sendRecursive(
         remoteReceiveSyncMessage,
         _
@@ -82,7 +83,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
   def sendRecursive(
       remoteReceiveSyncMessage: SyncMessage => Future[Unit],
-      delta: AddWinsSet[Int]
+      delta: WithContext[AddWinsSet[Int]]
   ): Unit = new FutureTask[Unit](() => {
     def attemptSend(atoms: Iterable[SetState], merged: SetState): Unit = {
       remoteReceiveSyncMessage(SyncMessage(checkpoint, merged)).failed.foreach {
@@ -122,7 +123,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
             case Success(CheckpointMessage(cp, apply, keep)) =>
               if (cp > checkpoint) checkpoint = cp
-              set = apply.foldLeft(set)((s, d) => s.applyDelta(Delta(id, d))).resetDeltaBuffer()
+              set = apply.foldLeft(set)((s, d) => s.applyDelta(WithNamedContext(id, d))).resetDeltaBuffer()
               changesSinceCP = keep
           }
         }
@@ -133,7 +134,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
   def processChangesForCheckpointing(): Unit = {
     changesSinceCP = set.deltaBuffer.foldLeft(changesSinceCP) { (acc, delta) =>
-      DecomposeLattice[SetState].merge(acc, delta.deltaState)
+      DecomposeLattice[SetState].merge(acc, delta.inner)
     }
 
     assessCheckpointRecursive()
@@ -149,7 +150,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
         assessCheckpointRecursive()
       }
 
-      val delta = Delta(remoteRef.toString, deltaState)
+      val delta = WithNamedContext(remoteRef.toString, deltaState)
       set = set.applyDelta(delta)
 
       processChangesForCheckpointing()

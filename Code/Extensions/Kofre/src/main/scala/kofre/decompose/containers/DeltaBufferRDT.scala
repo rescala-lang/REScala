@@ -41,15 +41,10 @@ class DeltaBufferRDT[State](
 
 object DeltaBufferRDT {
 
-  implicit def containsRelation[State]: ArdtOpsContains[DeltaBufferRDT[State], State] =
-    new ArdtOpsContains[DeltaBufferRDT[State], State] {}
+  given containsRelation[State]: ArdtOpsContains[DeltaBufferRDT[State], State] = new ArdtOpsContains[DeltaBufferRDT[State], State] {}
 
-  implicit def reactiveDeltaCRDTPermissions[L: ContextDecompose]: PermIdMutate[DeltaBufferRDT[L], L] =
-    CRDTInterface.plainPermission[L, DeltaBufferRDT[L]]
 
-  implicit def contextPermissions[L](using
-      ContextDecompose[L]
-  ): PermCausalMutate[DeltaBufferRDT[L], L] with PermCausal[DeltaBufferRDT[L]] = CRDTInterface.contextPermissions
+  given contextPermissions[L: ContextDecompose]: (PermIdMutate[DeltaBufferRDT[L], L] & PermCausalMutate[DeltaBufferRDT[L], L]) = CRDTInterface.allPermissions
 
   /** Creates a new PNCounter instance
     *

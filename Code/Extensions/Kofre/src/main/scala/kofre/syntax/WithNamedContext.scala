@@ -12,7 +12,7 @@ object WithNamedContext {
   def empty[A: Bottom](replicaId: Defs.Id) = new WithNamedContext(replicaId, WithContext(Bottom.empty[A], CausalContext.empty))
 
   def apply[L](replicaID: Defs.Id, inner: WithContext[L]): WithNamedContext[L] = new WithNamedContext(replicaID, inner)
-  def unapply[L](wnc: WithNamedContext[L]): Option[(Defs.Id, WithContext[L])] = Some((wnc.replicaID, wnc.inner))
+  def unapply[L](wnc: WithNamedContext[L]): Some[(Defs.Id, WithContext[L])] = Some((wnc.replicaID, wnc.inner))
 
   given permissions[L](using DecomposeLattice[WithContext[L]]): PermQuery[WithNamedContext[L], L]
     with PermId[WithNamedContext[L]] with PermCausal[WithNamedContext[L]] with PermCausalMutate[WithNamedContext[L], L]

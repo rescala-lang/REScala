@@ -22,18 +22,18 @@ object PosNegCounter {
       val neg = current._2.value
       pos - neg
 
-    def inc()(using MutationIDP): C =
+    def inc()(using MutationIdP): C =
       val pos = current._1.inc()(using withID(replicaID))
-      PosNegCounter(pos, GrowOnlyCounter.zero)
+      PosNegCounter(pos, GrowOnlyCounter.zero).mutator
 
-    def dec()(using MutationIDP): C =
+    def dec()(using MutationIdP): C =
       val neg = current._2.inc()(using withID(replicaID))
-      PosNegCounter(GrowOnlyCounter.zero, neg)
+      PosNegCounter(GrowOnlyCounter.zero, neg).mutator
 
-    def add(delta: Int)(using MutationIDP): C = {
+    def add(delta: Int)(using MutationIdP): C = {
       if (delta > 0) PosNegCounter(current.pos.inc(delta)(using withID(replicaID)), GrowOnlyCounter.zero)
       else if (delta < 0) PosNegCounter(GrowOnlyCounter.zero, current.neg.inc(-delta)(using withID(replicaID)))
       else PosNegCounter.zero
-    }
+    }.mutator
   }
 }

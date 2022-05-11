@@ -12,8 +12,8 @@ object Epoche {
       extends OpsSyntaxHelper[C, Epoche[E]](container) {
     def read(using QueryP): E = current.value
 
-    def write(value: E)(using MutationP): C       = current.copy(value = value)
-    def epocheWrite(value: E)(using MutationP): C = Epoche(current.counter + 1, value)
+    def write(value: E)(using MutationP): C       = current.copy(value = value).mutator
+    def epocheWrite(value: E)(using MutationP): C = Epoche(current.counter + 1, value).mutator
 
     def map(f: E => E)(using MutationP): C = write(f(current.value))
   }

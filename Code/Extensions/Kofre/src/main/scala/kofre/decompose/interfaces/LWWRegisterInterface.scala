@@ -1,8 +1,9 @@
 package kofre.decompose.interfaces
 import kofre.base.DecomposeLattice
 import kofre.decompose.*
-import kofre.syntax.{PermIdMutate, ArdtOpsContains, OpsSyntaxHelper}
+import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermIdMutate}
 import kofre.contextual.ContextDecompose.DotFun
+import kofre.contextual.WithContext
 import kofre.decompose.interfaces.LexCounterInterface.LexCounter
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegisterSyntax
 
@@ -18,15 +19,15 @@ object LWWRegisterInterface {
     def read(using QueryP): Option[A] =
       MVRegisterSyntax(current).read.reduceOption(DecomposeLattice[TimedVal[A]].merge).map(_.value)
 
-    def write(v: A)(using MutationIDP): C =
-      MVRegisterSyntax(current).write(TimedVal(v, replicaID))(using PermIdMutate.withID(replicaID))
+    def write(v: A)(using CausalMutationP, IdentifierP): C =
+      MVRegisterSyntax(context.wrap(current).named(replicaID)).write(TimedVal(v, replicaID)).inner.mutator
 
-    def map(f: A => A)(using MutationIDP): C =
+    def map(f: A => A)(using CausalMutationP, IdentifierP): C =
       read.map(f) match {
-        case None    => DecomposeLattice[LWWRegister[A]].empty
+        case None    => WithContext(DecomposeLattice[LWWRegister[A]].empty).mutator
         case Some(v) => write(v)
       }
 
-    def clear()(using MutationIDP): C = MVRegisterSyntax(current).clear()(using PermIdMutate.withID(replicaID))
+    def clear()(using CausalMutationP): C = context.wrap(current).clear().mutator
   }
 }

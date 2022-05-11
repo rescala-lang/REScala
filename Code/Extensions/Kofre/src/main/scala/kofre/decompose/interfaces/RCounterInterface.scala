@@ -63,16 +63,16 @@ object RCounterInterface {
     /** Without using fresh, reset wins over concurrent increments/decrements
       * When using fresh after every time deltas are shipped to other replicas, increments/decrements win over concurrent resets
       */
-    def fresh()(using MutationIDP): C = {
+    def fresh()(using MutationIdP): C = {
       val nextDot = current.context.nextDot(replicaID)
 
       deltaState(
         df = Some(DotFun[(Int, Int)].empty + (nextDot -> ((0, 0)))),
         cc = CausalContext.single(nextDot)
-      )
+      ).mutator
     }
 
-    private def update(u: (Int, Int))(using MutationIDP): C = {
+    private def update(u: (Int, Int))(using MutationIdP): C = {
       current.context.max(replicaID) match {
         case Some(currentDot) if current.store.contains(currentDot) =>
           val newCounter = (current.store(currentDot), u) match {
@@ -82,25 +82,25 @@ object RCounterInterface {
           deltaState(
             df = Some(current.store + (currentDot -> newCounter)),
             cc = CausalContext.single(currentDot)
-          )
+          ).mutator
         case _ =>
           val nextDot = current.context.nextDot(replicaID)
 
           deltaState(
             df = Some(DotFun[(Int, Int)].empty + (nextDot -> u)),
             cc = CausalContext.single(nextDot)
-          )
+          ).mutator
       }
     }
 
-    def increment()(using MutationIDP): C = update((1, 0))
+    def increment()(using MutationIdP): C = update((1, 0))
 
-    def decrement()(using MutationIDP): C = update((0, 1))
+    def decrement()(using MutationIdP): C = update((0, 1))
 
-    def reset()(using MutationIDP): C = {
+    def reset()(using MutationIdP): C = {
       deltaState(
         cc = CausalContext.fromSet(current.store.keySet)
-      )
+      ).mutator
     }
   }
 }

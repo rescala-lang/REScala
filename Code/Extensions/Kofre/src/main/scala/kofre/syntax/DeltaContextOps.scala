@@ -37,6 +37,9 @@ trait PermCausal[C]:
 )
 trait PermCausalMutate[C, L] extends PermCausal[C], PermQuery[C, L]:
   def mutateContext(container: C, withContext: WithContext[L]): C
+@implicitNotFound(
+  "Requires query, id, and mutation permission.\nUnsure how to extract ID from »${C}«\nto modify »${L}«"
+)
 trait PermIdMutate[C, L] extends PermId[C], PermMutate[C, L]
 
 object PermQuery:
@@ -64,24 +67,22 @@ object ArdtOpsContains:
   * using a scheme where mutations return deltas which are systematically applied.
   */
 trait OpsSyntaxHelper[C, L](container: C) {
-  final type MutationIDP     = PermIdMutate[C, L]
+  final type MutationIdP     = PermIdMutate[C, L]
   final type QueryP          = PermQuery[C, L]
   final type MutationP       = PermMutate[C, L]
   final type IdentifierP     = PermId[C]
   final type CausalP         = PermCausal[C]
   final type CausalMutationP = PermCausalMutate[C, L]
 
-  final type MutationID = MutationIDP ?=> C
+  final type MutationID = MutationIdP ?=> C
   final type Mutation   = MutationP ?=> C
   final type Query[T]   = QueryP ?=> T
 
-  final protected def current(using perm: QueryP): L                    = perm.query(container)
-  final protected def replicaID(using perm: IdentifierP): Defs.Id       = perm.replicaId(container)
-  final protected given mutate(using perm: MutationP): Conversion[L, C] = perm.mutate(container, _)
-  //extension (l: L)(using perm: MutationP) def mutated = perm.mutate(container, l)
-  final protected def context(using perm: CausalP): CausalContext       = perm.context(container)
-  //final protected given causalMutate(using perm: CausalMutationP): Conversion[WithContext[L], C] =
-  //  perm.mutateContext(container, _)
+  final protected def current(using perm: QueryP): L                                     = perm.query(container)
+  final protected def replicaID(using perm: IdentifierP): Defs.Id                        = perm.replicaId(container)
+  extension [A](c: WithContext[A]) def inheritId(using IdentifierP): WithNamedContext[A] = c.named(replicaID)
+  final protected def context(using perm: CausalP): CausalContext                        = perm.context(container)
+  extension (l: L)(using perm: MutationP) def mutator                                    = perm.mutate(container, l)
   extension (l: WithContext[L])(using perm: CausalMutationP) def mutator = perm.mutateContext(container, l)
 
 }

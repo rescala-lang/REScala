@@ -58,7 +58,8 @@ object RGAInterface {
     }
   }
 
-  type RGA[E] = WithContext[(Epoche[GListInterface.GList[Dot]], Map[Dot, RGANode[E]])]
+  type RGAEmbed[E] = (Epoche[GListInterface.GList[Dot]], Map[Dot, RGANode[E]])
+  type RGA[E] = WithContext[RGAEmbed[E]]
 
   trait RGACompanion {
     type State[E]    = RGAInterface.RGA[E]
@@ -120,7 +121,7 @@ object RGAInterface {
         }.map(_._2).prepended(0).lift(n)
     }
 
-    def insert(i: Int, e: E)(using MutationIDP): C = {
+    def insert(i: Int, e: E)(using MutationIdP): C = {
       val (fw, df) = current.store
       val nextDot  = current.context.nextDot(replicaID)
 
@@ -136,9 +137,9 @@ object RGAInterface {
             cc = CausalContext.single(nextDot)
           )
       }
-    }
+    }.mutator
 
-    def insertAll(i: Int, elems: Iterable[E])(using MutationIDP): C = {
+    def insertAll(i: Int, elems: Iterable[E])(using MutationIdP): C = {
       val (fw, df) = current.store
       val nextDot  = current.context.nextDot(replicaID)
 
@@ -158,7 +159,7 @@ object RGAInterface {
             cc = CausalContext.fromSet(nextDots.toSet)
           )
       }
-    }
+    }.mutator
 
     private def updateRGANode(state: RGA[E], i: Int, newNode: RGANode[E]): RGA[E] = {
       val (fw, df) = state.store
@@ -174,10 +175,10 @@ object RGAInterface {
       }
     }
 
-    def update(i: Int, e: E)(using MutationIDP): C =
-      updateRGANode(current, i, Alive(TimedVal(e, replicaID)))
+    def update(i: Int, e: E)(using MutationIdP): C =
+      updateRGANode(current, i, Alive(TimedVal(e, replicaID))).mutator
 
-    def delete(i: Int)(using MutationIDP): C = updateRGANode(current, i, Dead[E]())
+    def delete(i: Int)(using MutationIdP): C = updateRGANode(current, i, Dead[E]()).mutator
 
     private def updateRGANodeBy(
         state: RGA[E],
@@ -195,13 +196,13 @@ object RGAInterface {
           deltaState[E].make(df = dfDelta)
       }
 
-    def updateBy(cond: E => Boolean, e: E)(using MutationIDP): C =
-      updateRGANodeBy(current, cond, Alive(TimedVal(e, replicaID)))
+    def updateBy(cond: E => Boolean, e: E)(using MutationIdP): C =
+      updateRGANodeBy(current, cond, Alive(TimedVal(e, replicaID))).mutator
 
-    def deleteBy(cond: E => Boolean)(using MutationIDP): C =
-      updateRGANodeBy(current, cond, Dead[E]())
+    def deleteBy(cond: E => Boolean)(using MutationIdP): C =
+      updateRGANodeBy(current, cond, Dead[E]()).mutator
 
-    def purgeTombstones()(using MutationIDP): C = {
+    def purgeTombstones()(using MutationIdP): C = {
       val (epoche, df) = current.store
       val toRemove = df.collect {
         case (dot, Dead()) => dot
@@ -212,23 +213,23 @@ object RGAInterface {
       deltaState[E].make(
         epoche = epoche.epocheWrite(golistPurged),
         cc = CausalContext.fromSet(toRemove)
-      )
+      ).mutator
     }
 
-    def clear()(using MutationIDP): C = {
+    def clear()(using MutationIdP): C = {
       val (_, WithContext(_, cc)) = current.store
       deltaState[E].make(
         cc = cc
-      )
+      ).mutator
     }
 
-    def prepend(e: E)(using MutationIDP): C = insert(0, e)
+    def prepend(e: E)(using MutationIdP): C = insert(0, e)
 
-    def append(e: E)(using MutationIDP): C = insert(size, e)
+    def append(e: E)(using MutationIdP): C = insert(size, e)
 
-    def prependAll(elems: Iterable[E])(using MutationIDP): C = insertAll(0, elems)
+    def prependAll(elems: Iterable[E])(using MutationIdP): C = insertAll(0, elems)
 
-    def appendAll(elems: Iterable[E])(using MutationIDP): C = insertAll(size, elems)
+    def appendAll(elems: Iterable[E])(using MutationIdP): C = insertAll(size, elems)
 
   }
 }

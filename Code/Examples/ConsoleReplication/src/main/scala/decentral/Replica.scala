@@ -3,8 +3,8 @@ package decentral
 import decentral.Bindings._
 import kofre.base.DecomposeLattice
 import kofre.decompose.containers.DeltaBufferRDT
-import kofre.decompose.Delta
 import kofre.predef.AddWinsSet
+import kofre.syntax.WithNamedContext
 import loci.transmitter.{RemoteAccessException, RemoteRef}
 
 import scala.concurrent.Future
@@ -65,7 +65,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
   def propagateDeltas(): Unit = {
     registry.remotes.foreach { rr =>
       set.deltaBuffer.collect {
-        case Delta(replicaID, cc, deltaState) if replicaID != rr.toString => deltaState
+        case WithNamedContext(replicaID, deltaState) if replicaID != rr.toString => deltaState
       }.reduceOption(DecomposeLattice[SetState].merge).foreach(sendDelta(_, rr))
     }
 
@@ -75,12 +75,12 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
   def bindGetCheckpoints(): Unit = registry.bind(getCheckpointsBinding) { () => checkpoints }
 
   def bindReceiveDelta(): Unit = registry.bindSbj(receiveDeltaBinding) { (remoteRef: RemoteRef, deltaState: SetState) =>
-    val delta = Delta(remoteRef.toString, deltaState)
+    val delta = WithNamedContext(remoteRef.toString, deltaState)
     set = set.applyDelta(delta)
 
     set.deltaBuffer.headOption match {
       case None =>
-      case Some(Delta(_, cc, deltaState)) =>
+      case Some(WithNamedContext(_, deltaState)) =>
         unboundRemoteChanges = DecomposeLattice[SetState].merge(unboundRemoteChanges, deltaState)
 
         propagateDeltas()
@@ -95,7 +95,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
         case CheckpointMessage(cp @ Checkpoint(replicaID, counter), changes) =>
           if (checkpoints.contains(replicaID) && checkpoints(replicaID) >= counter) ()
           else {
-            set = set.applyDelta(Delta(remoteRef.toString, changes)).resetDeltaBuffer()
+            set = set.applyDelta(WithNamedContext(remoteRef.toString, changes)).resetDeltaBuffer()
 
             unboundRemoteChanges =
               DecomposeLattice[SetState].diff(changes, unboundRemoteChanges).getOrElse(DecomposeLattice[SetState].empty)
@@ -145,7 +145,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
     if (set.deltaBuffer.isEmpty) return
 
     unboundLocalChanges = set.deltaBuffer.foldLeft(unboundLocalChanges) { (list, delta) =>
-      list.prependedAll(DecomposeLattice[SetState].decompose(delta.deltaState))
+      list.prependedAll(DecomposeLattice[SetState].decompose(delta.inner))
     }
 
     if (unboundLocalChanges.size < minAtomsForCheckpoint) {

@@ -18,8 +18,8 @@ object TwoPSetInterface {
       add diff remove
     }
 
-    def insert(element: E)(using MutationP): C = (Set(element), Set.empty)
+    def insert(element: E)(using MutationP): C = (Set(element), Set.empty).mutator
 
-    def remove(element: E)(using MutationP): C = (Set.empty, Set(element))
+    def remove(element: E)(using MutationP): C = (Set.empty, Set(element)).mutator
   }
 }

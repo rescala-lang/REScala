@@ -117,14 +117,14 @@ object GListInterface {
 
     def size(using QueryP): Int = current.size
 
-    def insert(i: Int, e: E)(using MutationIDP): C = {
+    def insert(i: Int, e: E)(using MutationIdP): C = {
       findNth(current, Head[TimedVal[E]](), i) match {
         case None       => Map.empty
         case Some(pred) => Map(pred -> Elem(TimedVal(e, replicaID)))
       }
-    }
+    }.mutator
 
-    def insertAll(i: Int, elems: Iterable[E])(using MutationIDP): C = {
+    def insertAll(i: Int, elems: Iterable[E])(using MutationIdP): C = {
       if (elems.isEmpty)
         DecomposeLattice[GList[E]].empty
       else
@@ -134,7 +134,7 @@ object GListInterface {
             val order = elems.map(e => Elem(TimedVal(e, replicaID)))
             Map((List(after) ++ order.init) zip order: _*)
         }
-    }
+    }.mutator
 
     @tailrec
     private def withoutRec(state: GList[E], current: GListNode[TimedVal[E]], elems: Set[E]): GList[E] =
@@ -150,7 +150,7 @@ object GListInterface {
         case Some(next) => withoutRec(state, next, elems)
       }
 
-    def without(elems: Set[E])(using MutationP): C = withoutRec(current, Head[TimedVal[E]](), elems)
+    def without(elems: Set[E])(using MutationP): C = withoutRec(current, Head[TimedVal[E]](), elems).mutator
   }
 
 }

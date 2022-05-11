@@ -50,7 +50,7 @@ object ORMapInterface {
       current.store.values.map(v => WithContext(v, current.context))
 
     def mutateKey(k: K, m: (Defs.Id, WithContext[V]) => WithContext[V])(using
-                                                                        MutationIDP,
+                                                                        MutationIdP,
                                                                         ContextDecompose[V]
     ): C = {
       val v = current.store.getOrElse(k, ContextDecompose[V].empty)
@@ -60,12 +60,12 @@ object ORMapInterface {
           deltaState[K, V].make(
             dm = DotMap[K, V].empty.updated(k, stateDelta),
             cc = ccDelta
-          )
+          ).mutator
       }
     }
 
     def mutateKeyNamedCtx(k: K)(m: WithNamedContext[V] => WithNamedContext[V])(using
-                                                                               MutationIDP,
+                                                                               MutationIdP,
                                                                                ContextDecompose[V]
     ): C = {
       val v = current.store.getOrElse(k, ContextDecompose[V].empty)
@@ -73,18 +73,18 @@ object ORMapInterface {
       deltaState[K, V].make(
         dm = DotMap[K, V].empty.updated(k, stateDelta),
         cc = ccDelta
-      )
+      ).mutator
     }
 
-    def remove(k: K)(using MutationIDP, ContextDecompose[V]): C = {
+    def remove(k: K)(using MutationIdP, ContextDecompose[V]): C = {
       val v = current.store.getOrElse(k, ContextDecompose[V].empty)
 
       deltaState[K, V].make(
         cc = ContextDecompose[V].dots(v)
-      )
+      ).mutator
     }
 
-    def removeAll(keys: Iterable[K])(using MutationIDP, ContextDecompose[V]): C = {
+    def removeAll(keys: Iterable[K])(using MutationIdP, ContextDecompose[V]): C = {
       val values = keys.map(k => current.store.getOrElse(k, ContextDecompose[V].empty))
       val dots = values.foldLeft(CausalContext.empty) {
         case (set, v) => set union ContextDecompose[V].dots(v)
@@ -92,23 +92,23 @@ object ORMapInterface {
 
       deltaState[K, V].make(
         cc = dots
-      )
+      ).mutator
     }
 
-    def removeByValue(cond: WithContext[V] => Boolean)(using MutationIDP, ContextDecompose[V]): C = {
+    def removeByValue(cond: WithContext[V] => Boolean)(using MutationIdP, ContextDecompose[V]): C = {
       val toRemove = current.store.values.collect {
         case v if cond(WithContext(v, current.context)) => ContextDecompose[V].dots(v)
       }.fold(CausalContext.empty)(_ union _)
 
       deltaState[K, V].make(
         cc = toRemove
-      )
+      ).mutator
     }
 
-    def clear()(using MutationIDP, ContextDecompose[V]): C = {
+    def clear()(using MutationIdP, ContextDecompose[V]): C = {
       deltaState[K, V].make(
         cc = DotMap[K, V].dots(current.store)
-      )
+      ).mutator
     }
   }
 }

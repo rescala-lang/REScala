@@ -2,6 +2,7 @@ package decentral
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
+import kofre.contextual.WithContext
 import kofre.predef.AddWinsSet
 import loci.registry.Binding
 import loci.serializer.jsoniterScala._
@@ -11,7 +12,7 @@ import rescala.extra.lattices.delta.JsoniterCodecs._
 import scala.concurrent.Future
 
 object Bindings {
-  type SetState = AddWinsSet[Int]
+  type SetState = WithContext[AddWinsSet[Int]]
 
   case class CheckpointMessage(cp: Checkpoint, changes: SetState)
 

@@ -13,6 +13,6 @@ object GSetInterface {
 
     def elements(using QueryP): Set[E] = current
 
-    def insert(element: E)(using MutationP): C = Set(element)
+    def insert(element: E)(using MutationP): C = Set(element).mutator
   }
 }

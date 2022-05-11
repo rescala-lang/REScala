@@ -15,9 +15,9 @@ object GrowOnlyCounter {
   implicit class GrowOnlyCounterSyntax[C](container: C)(using aoc: ArdtOpsContains[C, GrowOnlyCounter]) extends OpsSyntaxHelper[C, GrowOnlyCounter](container) {
     def value(using QueryP): Int = current.inner.valuesIterator.sum
 
-    def inc()(using MutationIDP): C = GrowOnlyCounter(Map(replicaID -> (current.inner.getOrElse(replicaID, 0) + 1)))
-    def inc(amount: Int)(using MutationIDP): C =
+    def inc()(using MutationIdP): C = GrowOnlyCounter(Map(replicaID -> (current.inner.getOrElse(replicaID, 0) + 1))).mutator
+    def inc(amount: Int)(using MutationIdP): C =
       require(amount >= 0, "may not decrease counter")
-      GrowOnlyCounter(Map(replicaID -> (current.inner.getOrElse(replicaID, 0) + amount)))
+      GrowOnlyCounter(Map(replicaID -> (current.inner.getOrElse(replicaID, 0) + amount))).mutator
   }
 }
