@@ -1,4 +1,6 @@
 package clangast.stmt
+import clangast.traversal.CASTMapper
+
 import scala.quoted.{Expr, Quotes}
 
 case class CCompoundStmt(body: List[CStmt]) extends CStmt {
@@ -14,4 +16,7 @@ case class CCompoundStmt(body: List[CStmt]) extends CStmt {
 
     '{ CCompoundStmt($bodyExpr) }
   }
+
+  override def mapChildren(mapper: CASTMapper): CCompoundStmt =
+    CCompoundStmt(body.map(mapper.mapCStmt))
 }

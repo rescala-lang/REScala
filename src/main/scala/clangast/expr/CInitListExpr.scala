@@ -1,4 +1,6 @@
 package clangast.expr
+import clangast.traversal.CASTMapper
+
 import scala.quoted.{Expr, Quotes}
 
 case class CInitListExpr(inits: List[CExpr]) extends CExpr {
@@ -9,4 +11,7 @@ case class CInitListExpr(inits: List[CExpr]) extends CExpr {
 
     '{ CInitListExpr($initsExpr) }
   }
+
+  override def mapChildren(mapper: CASTMapper): CInitListExpr =
+    CInitListExpr(inits.map(mapper.mapCExpr))
 }

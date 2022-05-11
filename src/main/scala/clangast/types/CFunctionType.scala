@@ -1,4 +1,7 @@
 package clangast.types
+import clangast.CASTNode
+import clangast.traversal.CASTMapper
+
 import scala.quoted.{Expr, Quotes}
 
 case class CFunctionType(paramTypes: List[CQualType], returnType: CQualType) extends CType {
@@ -8,4 +11,7 @@ case class CFunctionType(paramTypes: List[CQualType], returnType: CQualType) ext
 
     '{ CFunctionType($paramTypesExpr, $returnTypeExpr) }
   }
+
+  override def mapChildren(mapper: CASTMapper): CFunctionType =
+    CFunctionType(paramTypes.map(mapper.mapCQualType), mapper.mapCQualType(returnType))
 }

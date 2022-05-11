@@ -1,6 +1,7 @@
 package clangast.stmt
 
 import clangast.expr.CExpr
+import clangast.traversal.CASTMapper
 
 import scala.quoted.{Expr, Quotes}
 
@@ -12,4 +13,7 @@ case class CExprStmt(expr: CExpr) extends CStmt {
 
     '{ CExprStmt($exprExpr) }
   }
+
+  override def mapChildren(mapper: CASTMapper): CExprStmt =
+    CExprStmt(mapper.mapCExpr(expr))
 }

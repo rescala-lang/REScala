@@ -1,4 +1,6 @@
 package clangast.expr
+import clangast.traversal.CASTMapper
+
 import scala.quoted.{Expr, Quotes}
 
 case class CParenExpr(subExpr: CExpr) extends CExpr {
@@ -9,4 +11,6 @@ case class CParenExpr(subExpr: CExpr) extends CExpr {
 
     '{ CParenExpr($subExprExpr) }
   }
+
+  override def mapChildren(mapper: CASTMapper): CParenExpr = CParenExpr(mapper.mapCExpr(subExpr))
 }

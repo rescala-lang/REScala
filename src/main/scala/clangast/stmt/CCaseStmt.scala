@@ -1,6 +1,7 @@
 package clangast.stmt
 
 import clangast.expr.CExpr
+import clangast.traversal.CASTMapper
 
 import scala.quoted.{Expr, Quotes}
 
@@ -17,4 +18,7 @@ case class CCaseStmt(cond: CExpr, body: List[CStmt]) extends CSwitchCase {
 
     '{ CCaseStmt($condExpr, $bodyExpr) }
   }
+
+  override def mapChildren(mapper: CASTMapper): CCaseStmt =
+    CCaseStmt(mapper.mapCExpr(cond), body.map(mapper.mapCStmt))
 }

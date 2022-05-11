@@ -1,7 +1,8 @@
 package clangast.types
 
-import clangast.toExpr
+import clangast.{CASTNode, toExpr}
 import clangast.expr.CExpr
+import clangast.traversal.CASTMapper
 
 import scala.quoted.{Expr, Quotes}
 
@@ -20,4 +21,7 @@ case class CArrayType(elementType: CQualType, sizeExpr: Option[CExpr] = None) ex
 
     '{ CArrayType($elementTypeExpr, $sizeExprExpr) }
   }
+
+  override def mapChildren(mapper: CASTMapper): CArrayType =
+    CArrayType(mapper.mapCQualType(elementType), sizeExpr.map(mapper.mapCExpr))
 }

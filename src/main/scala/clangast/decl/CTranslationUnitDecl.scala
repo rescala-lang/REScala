@@ -1,4 +1,6 @@
 package clangast.decl
+import clangast.traversal.CASTMapper
+
 import scala.quoted.{Expr, Quotes}
 
 case class CTranslationUnitDecl(children: List[CDecl]) extends CDecl with CDeclContext {
@@ -11,4 +13,7 @@ case class CTranslationUnitDecl(children: List[CDecl]) extends CDecl with CDeclC
 
     '{ CTranslationUnitDecl($childrenExpr) }
   }
+
+  override def mapChildren(mapper: CASTMapper): CTranslationUnitDecl =
+    CTranslationUnitDecl(children.map(mapper.mapCDecl))
 }

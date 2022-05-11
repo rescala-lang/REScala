@@ -2,6 +2,7 @@ package clangast.stmt
 
 import clangast.toExpr
 import clangast.expr.CExpr
+import clangast.traversal.CASTMapper
 
 import scala.quoted.{Expr, Quotes}
 
@@ -17,4 +18,12 @@ case class CForStmt(init: Option[CStmt], cond: Option[CExpr], inc: Option[CExpr]
 
     '{ CForStmt($initExpr, $condExpr, $incExpr, $bodyExpr) }
   }
+
+  override def mapChildren(mapper: CASTMapper): CForStmt =
+    CForStmt(
+      init.map(mapper.mapCStmt),
+      cond.map(mapper.mapCExpr),
+      inc.map(mapper.mapCExpr),
+      mapper.mapCStmt(body)
+    )
 }

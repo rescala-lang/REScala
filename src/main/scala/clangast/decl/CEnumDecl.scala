@@ -1,10 +1,11 @@
 package clangast.decl
 
+import clangast.traversal.CASTMapper
 import clangast.types.{CEnumType, CQualType, CType}
 
 import scala.quoted.{Expr, Quotes}
 
-case class CEnumDecl(name: String, integerType: CQualType, enumConstants: List[CEnumConstantDeclaration]) extends CTypeDecl with CDeclContext {
+case class CEnumDecl(name: String, integerType: CQualType, enumConstants: List[CEnumConstantDecl]) extends CTypeDecl with CDeclContext {
   override def getTypeForDecl: CType = CEnumType(this)
   
   override def decls: List[CDecl] = enumConstants
@@ -19,4 +20,11 @@ case class CEnumDecl(name: String, integerType: CQualType, enumConstants: List[C
 
     '{ CEnumDecl($nameExpr, $integerTypeExpr, $enumConstantsExpr) }
   }
+
+  override def mapChildren(mapper: CASTMapper): CEnumDecl =
+    CEnumDecl(
+      name,
+      mapper.mapCQualType(integerType),
+      enumConstants.map(mapper.mapCEnumConstantDecl)
+    )
 }

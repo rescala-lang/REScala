@@ -1,4 +1,5 @@
 package clangast.decl
+import clangast.traversal.CASTMapper
 import clangast.types.{CRecordType, CType}
 
 import scala.quoted.{Expr, Quotes}
@@ -22,4 +23,7 @@ case class CRecordDecl(name: String, fields: List[CFieldDecl]) extends CTypeDecl
 
     '{ CRecordDecl($nameExpr, $fieldsExpr) }
   }
+
+  override def mapChildren(mapper: CASTMapper): CRecordDecl =
+    CRecordDecl(name, fields.map(mapper.mapCFieldDecl))
 }

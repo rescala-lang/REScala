@@ -2,6 +2,7 @@ package clangast.decl
 
 import clangast.toExpr
 import clangast.expr.CExpr
+import clangast.traversal.CASTMapper
 import clangast.types.CQualType
 
 import scala.quoted.{Expr, Quotes}
@@ -25,4 +26,7 @@ case class CVarDecl(name: String, declaredType: CQualType, init: Option[CExpr] =
 
     '{ CVarDecl($nameExpr, $declaredTypeExpr, $initExpr) }
   }
+
+  override def mapChildren(mapper: CASTMapper): CVarDecl =
+    CVarDecl(name, mapper.mapCQualType(declaredType), init.map(mapper.mapCExpr))
 }

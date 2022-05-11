@@ -1,4 +1,6 @@
 package clangast.expr
+import clangast.traversal.CASTMapper
+
 import scala.quoted.{Expr, Quotes}
 
 case class CConditionalOperator(cond: CExpr, trueExpr: CExpr, falseExpr: CExpr) extends CExpr {
@@ -11,4 +13,7 @@ case class CConditionalOperator(cond: CExpr, trueExpr: CExpr, falseExpr: CExpr) 
 
     '{ CConditionalOperator($condExpr, $trueExprExpr, $falseExprExpr) }
   }
+
+  override def mapChildren(mapper: CASTMapper): CConditionalOperator =
+    CConditionalOperator(mapper.mapCExpr(cond), mapper.mapCExpr(trueExpr), mapper.mapCExpr(falseExpr))
 }

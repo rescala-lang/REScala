@@ -1,4 +1,6 @@
 package clangast.expr
+import clangast.traversal.CASTMapper
+
 import scala.quoted.{Expr, Quotes}
 
 case class CCallExpr(callee: CExpr, args: List[CExpr]) extends CExpr {
@@ -10,4 +12,7 @@ case class CCallExpr(callee: CExpr, args: List[CExpr]) extends CExpr {
 
     '{ CCallExpr($calleeExpr, $argsExpr) }
   }
+
+  override def mapChildren(mapper: CASTMapper): CCallExpr =
+    CCallExpr(mapper.mapCExpr(callee), args.map(mapper.mapCExpr))
 }

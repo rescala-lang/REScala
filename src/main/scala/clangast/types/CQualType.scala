@@ -1,6 +1,7 @@
 package clangast.types
 
 import clangast.CASTNode
+import clangast.traversal.CASTMapper
 
 import scala.quoted.*
 
@@ -17,4 +18,7 @@ case class CQualType(unqualType: CType, isConst: Boolean = false) extends CASTNo
 
     '{ CQualType($unqualTypeExpr, $isConstExpr) }
   }
+
+  override def mapChildren(mapper: CASTMapper): CQualType =
+    CQualType(mapper.mapCType(unqualType), isConst)
 }

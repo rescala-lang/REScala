@@ -1,6 +1,7 @@
 package clangast.expr
 
 import clangast.decl.CValueDecl
+import clangast.traversal.CASTMapper
 
 import scala.quoted.{Expr, Quotes}
 
@@ -16,4 +17,7 @@ case class CMemberExpr(base: CExpr, memberDecl: CValueDecl, isArrow: Boolean = f
 
     '{ CMemberExpr($baseExpr, $memberDeclExpr, $isArrowExpr) }
   }
+
+  override def mapChildren(mapper: CASTMapper): CMemberExpr =
+    CMemberExpr(mapper.mapCExpr(base), mapper.mapCValueDecl(memberDecl), isArrow)
 }

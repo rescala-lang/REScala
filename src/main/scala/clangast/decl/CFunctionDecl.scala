@@ -4,6 +4,7 @@ import clangast.toExpr
 import clangast.stmt.{CCompoundStmt, CDeclStmt, CStmt}
 import clangast.types.{CFunctionType, CQualType}
 import clangast.given
+import clangast.traversal.CASTMapper
 
 import scala.quoted.{Expr, Quotes}
 
@@ -33,4 +34,12 @@ case class CFunctionDecl(name: String, parameters: List[CParmVarDecl], returnTyp
 
     '{ CFunctionDecl($nameExpr, $parametersExpr, $returnTypeExpr, $bodyExpr) }
   }
+
+  override def mapChildren(mapper: CASTMapper): CFunctionDecl =
+    CFunctionDecl(
+      name,
+      parameters.map(mapper.mapCParmVarDecl),
+      mapper.mapCQualType(returnType),
+      body.map(mapper.mapCCompoundStmt)
+    )
 }

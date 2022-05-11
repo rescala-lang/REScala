@@ -1,6 +1,7 @@
 package clangast.expr.unaryop
 
 import clangast.expr.CExpr
+import clangast.traversal.CASTMapper
 
 import scala.quoted.{Expr, Quotes}
 
@@ -12,4 +13,7 @@ case class CAddressExpr(operand: CExpr) extends CUnaryOperator {
 
     '{ CAddressExpr($operandExpr) }
   }
+
+  override def mapChildren(mapper: CASTMapper): CAddressExpr =
+    CAddressExpr(mapper.mapCExpr(operand))
 }

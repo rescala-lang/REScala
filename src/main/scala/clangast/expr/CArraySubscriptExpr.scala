@@ -1,4 +1,6 @@
 package clangast.expr
+import clangast.traversal.CASTMapper
+
 import scala.quoted.{Expr, Quotes}
 
 case class CArraySubscriptExpr(base: CExpr, idx: CExpr) extends CExpr {
@@ -10,4 +12,7 @@ case class CArraySubscriptExpr(base: CExpr, idx: CExpr) extends CExpr {
 
     '{ CArraySubscriptExpr($baseExpr, $idxExpr) }
   }
+
+  override def mapChildren(mapper: CASTMapper): CArraySubscriptExpr =
+    CArraySubscriptExpr(mapper.mapCExpr(base), mapper.mapCExpr(idx))
 }

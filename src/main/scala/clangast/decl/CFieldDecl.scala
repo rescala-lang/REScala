@@ -1,4 +1,5 @@
 package clangast.decl
+import clangast.traversal.CASTMapper
 import clangast.types.CQualType
 
 import scala.quoted.{Expr, Quotes}
@@ -14,4 +15,7 @@ case class CFieldDecl(name: String, declaredType: CQualType) extends CValueDecl 
 
     '{ CFieldDecl($nameExpr, $declaredTypeExpr) }
   }
+
+  override def mapChildren(mapper: CASTMapper): CFieldDecl =
+    CFieldDecl(name, mapper.mapCQualType(declaredType))
 }

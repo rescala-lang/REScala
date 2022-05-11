@@ -1,6 +1,7 @@
 package clangast.stmt
 
 import clangast.expr.CExpr
+import clangast.traversal.CASTMapper
 
 import scala.quoted.{Expr, Quotes}
 
@@ -13,4 +14,7 @@ case class CWhileStmt(cond: CExpr, body: CCompoundStmt) extends CStmt {
 
     '{ CWhileStmt($condExpr, $bodyExpr) }
   }
+
+  override def mapChildren(mapper: CASTMapper): CWhileStmt =
+    CWhileStmt(mapper.mapCExpr(cond), mapper.mapCCompoundStmt(body))
 }

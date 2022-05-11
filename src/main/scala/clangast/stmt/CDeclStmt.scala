@@ -1,6 +1,7 @@
 package clangast.stmt
 
 import clangast.decl.CDecl
+import clangast.traversal.CASTMapper
 
 import scala.quoted.{Expr, Quotes}
 
@@ -12,4 +13,7 @@ case class CDeclStmt(decl: CDecl) extends CStmt {
 
     '{ CDeclStmt($declExpr) }
   }
+
+  override def mapChildren(mapper: CASTMapper): CDeclStmt =
+    CDeclStmt(mapper.mapCDecl(decl))
 }

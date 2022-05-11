@@ -1,5 +1,6 @@
 package clangast.decl
 
+import clangast.traversal.CASTMapper
 import clangast.types.{CQualType, CType, CTypedefType}
 
 import scala.quoted.{Expr, Quotes}
@@ -15,4 +16,7 @@ case class CTypedefDecl(name: String, underlyingType: CQualType) extends CTypeDe
     
     '{ CTypedefDecl($nameExpr, $underlyingTypeExpr) }
   }
+
+  override def mapChildren(mapper: CASTMapper): CTypedefDecl =
+    CTypedefDecl(name, mapper.mapCQualType(underlyingType))
 }

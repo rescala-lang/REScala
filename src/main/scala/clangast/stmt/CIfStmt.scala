@@ -1,7 +1,8 @@
 package clangast.stmt
 
-import clangast.toExpr
-import clangast.expr.CExpr
+import clangast.{CASTNode, toExpr}
+import clangast.expr.{CExpr, given}
+import clangast.traversal.CASTMapper
 
 import scala.quoted.{Expr, Quotes}
 
@@ -21,4 +22,11 @@ case class CIfStmt(cond: CExpr, thenBranch: CStmt, elseBranch: Option[CStmt] = N
 
     '{ CIfStmt($condExpr, $thenBranchExpr, $elseBranchExpr) }
   }
+
+  override def mapChildren(mapper: CASTMapper): CIfStmt =
+    CIfStmt(
+      mapper.mapCExpr(cond),
+      mapper.mapCStmt(thenBranch),
+      elseBranch.map(mapper.mapCStmt)
+    )
 }

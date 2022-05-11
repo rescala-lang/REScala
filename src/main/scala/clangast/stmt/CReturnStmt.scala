@@ -2,6 +2,7 @@ package clangast.stmt
 
 import clangast.toExpr
 import clangast.expr.CExpr
+import clangast.traversal.CASTMapper
 
 import scala.quoted.{Expr, Quotes}
 
@@ -15,4 +16,7 @@ case class CReturnStmt(retVal: Option[CExpr] = None) extends CStmt {
 
     '{ CReturnStmt($retValExpr) }
   }
+
+  override def mapChildren(mapper: CASTMapper): CReturnStmt =
+    CReturnStmt(retVal.map(mapper.mapCExpr))
 }

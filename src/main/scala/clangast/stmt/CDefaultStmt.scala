@@ -1,4 +1,6 @@
 package clangast.stmt
+import clangast.traversal.CASTMapper
+
 import scala.quoted.{Expr, Quotes}
 
 case class CDefaultStmt(body: List[CStmt]) extends CSwitchCase {
@@ -13,4 +15,7 @@ case class CDefaultStmt(body: List[CStmt]) extends CSwitchCase {
 
     '{ CDefaultStmt($bodyExpr) }
   }
+
+  override def mapChildren(mapper: CASTMapper): CDefaultStmt =
+    CDefaultStmt(body.map(mapper.mapCStmt))
 }

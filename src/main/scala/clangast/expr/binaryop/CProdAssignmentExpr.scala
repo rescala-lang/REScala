@@ -1,6 +1,7 @@
 package clangast.expr.binaryop
 
 import clangast.expr.CExpr
+import clangast.traversal.CASTMapper
 
 import scala.quoted.{Expr, Quotes}
 
@@ -13,4 +14,7 @@ case class CProdAssignmentExpr(lhs: CExpr, rhs: CExpr) extends CBinaryOperator {
 
     '{ CProdAssignmentExpr($lhsExpr, $rhsExpr) }
   }
+
+  override def mapChildren(mapper: CASTMapper): CProdAssignmentExpr =
+    CProdAssignmentExpr(mapper.mapCExpr(lhs), mapper.mapCExpr(rhs))
 }

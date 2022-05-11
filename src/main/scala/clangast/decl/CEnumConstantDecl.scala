@@ -2,11 +2,12 @@ package clangast.decl
 
 import clangast.toExpr
 import clangast.expr.CExpr
+import clangast.traversal.CASTMapper
 import clangast.types.CQualType
 
 import scala.quoted.{Expr, Quotes}
 
-case class CEnumConstantDeclaration(name: String, initExpr: Option[CExpr]) extends CValueDecl {
+case class CEnumConstantDecl(name: String, initExpr: Option[CExpr]) extends CValueDecl {
   override def getType: CQualType = ???
   
   override def textgen: String = initExpr match {
@@ -14,10 +15,13 @@ case class CEnumConstantDeclaration(name: String, initExpr: Option[CExpr]) exten
     case Some(expr) => name + " = " + expr.textgen
   }
 
-  override def toExpr(using Quotes): Expr[CEnumConstantDeclaration] = {
+  override def toExpr(using Quotes): Expr[CEnumConstantDecl] = {
     val nameExpr = Expr(name)
     val initExprExpr = initExpr.map(_.toExpr).toExpr
 
-    '{ CEnumConstantDeclaration($nameExpr, $initExprExpr) }
+    '{ CEnumConstantDecl($nameExpr, $initExprExpr) }
   }
+
+  override def mapChildren(mapper: CASTMapper): CEnumConstantDecl =
+    CEnumConstantDecl(name, initExpr.map(mapper.mapCExpr))
 }
