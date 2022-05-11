@@ -1,11 +1,11 @@
 package calendar
 
 import kofre.base.Lattice
-import kofre.decompose.Delta
-import kofre.predef.AddWinsSet
-import kofre.protocol.RaftState
-import kofre.predef.AddWinsSet.AWSetSyntax
 import kofre.decompose.containers.DeltaBufferRDT
+import kofre.predef.AddWinsSet
+import kofre.predef.AddWinsSet.AWSetSyntax
+import kofre.protocol.RaftState
+import kofre.syntax.WithNamedContext
 
 import scala.util.Random
 
@@ -56,11 +56,11 @@ case class RaftTokens(
     } else copy(tokenAgreement = generalDuties)
   }
 
-  def applyWant(state: Delta[AddWinsSet[Token]]): RaftTokens = {
+  def applyWant(state: WithNamedContext[AddWinsSet[Token]]): RaftTokens = {
     copy(want = want.applyDelta(state))
   }
 
-  def applyFree(state: Delta[AddWinsSet[Token]]): RaftTokens = {
+  def applyFree(state: WithNamedContext[AddWinsSet[Token]]): RaftTokens = {
     copy(tokenFreed = tokenFreed.applyDelta(state))
   }
 

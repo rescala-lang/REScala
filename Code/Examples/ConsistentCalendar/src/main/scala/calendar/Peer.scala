@@ -2,14 +2,15 @@ package central
 
 import calendar.{Appointment, CalendarProgram, RaftTokens, Token}
 import central.Bindings._
+import central.SyncMessage.{AppointmentMessage, CalendarState, FreeMessage, RaftMessage, WantMessage}
+import kofre.base.DecomposeLattice
+import kofre.contextual.{ContextDecompose, WithContext}
+import kofre.predef.AddWinsSet
+import kofre.predef.AddWinsSet.AWSetSyntax
+import kofre.syntax.WithNamedContext
 import loci.communicator.tcp.TCP
 import loci.registry.Registry
 import loci.transmitter.{RemoteAccessException, RemoteRef}
-import central.SyncMessage.{AppointmentMessage, CalendarState, FreeMessage, RaftMessage, WantMessage}
-import kofre.base.DecomposeLattice
-import kofre.predef.AddWinsSet
-import kofre.predef.AddWinsSet.AWSetSyntax
-import kofre.decompose.Delta
 
 import java.util.concurrent._
 import scala.concurrent.Future
@@ -71,7 +72,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
       calendar.replicated.foreach { case (id, set) =>
         set.now.deltaBuffer.collect {
-          case Delta(replicaID, cc, deltaState) if replicaID != rr.toString => deltaState
+          case WithNamedContext(replicaID, deltaState) if replicaID != rr.toString => deltaState
         }.reduceOption(DecomposeLattice[CalendarState].merge).foreach(sendRecursive(
           remoteReceiveSyncMessage,
           _,
@@ -80,14 +81,14 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
       }
 
       tokens.want.deltaBuffer.collect {
-        case Delta(replicaID, cc, deltaState) if replicaID != rr.toString => deltaState
-      }.reduceOption(DecomposeLattice[AddWinsSet[Token]].merge).foreach { state =>
+        case WithNamedContext(replicaID, deltaState) if replicaID != rr.toString => deltaState
+      }.reduceOption(DecomposeLattice[WithContext[AddWinsSet[Token]]].merge).foreach { state =>
         remoteReceiveSyncMessage(WantMessage(state))
       }
 
       tokens.tokenFreed.deltaBuffer.collect {
-        case Delta(replicaID, cc, deltaState) if replicaID != rr.toString => deltaState
-      }.reduceOption(DecomposeLattice[AddWinsSet[Token]].merge).foreach { state =>
+        case WithNamedContext(replicaID, deltaState) if replicaID != rr.toString => deltaState
+      }.reduceOption(ContextDecompose[AddWinsSet[Token]].merge).foreach { state =>
         remoteReceiveSyncMessage(FreeMessage(state))
       }
 
@@ -112,7 +113,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
   def sendRecursive(
                      remoteReceiveSyncMessage: SyncMessage => Future[Unit],
-                     delta: AddWinsSet[Appointment],
+                     delta: WithContext[AddWinsSet[Appointment]],
                      crdtid: String,
   ): Unit = new FutureTask[Unit](() => {
     def attemptSend(atoms: Iterable[CalendarState], merged: CalendarState): Unit = {
@@ -152,13 +153,13 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
         message match {
           case AppointmentMessage(deltaState, id) =>
-            val delta = Delta(remoteRef.toString, deltaState)
+            val delta = WithNamedContext(remoteRef.toString, deltaState)
             val set   = calendar.replicated(id)
             set.transform(_.applyDelta(delta))
           case WantMessage(state) =>
-            tokens = tokens.applyWant(Delta(remoteRef.toString, state))
+            tokens = tokens.applyWant(WithNamedContext(remoteRef.toString, state))
           case FreeMessage(state) =>
-            tokens = tokens.applyFree(Delta(remoteRef.toString, state))
+            tokens = tokens.applyFree(WithNamedContext(remoteRef.toString, state))
           case RaftMessage(state) => {
             tokens = tokens.applyRaft(state)
           }
