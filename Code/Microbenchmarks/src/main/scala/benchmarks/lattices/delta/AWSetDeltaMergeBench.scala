@@ -1,12 +1,10 @@
 package benchmarks.lattices.delta
 
-import kofre.base.DecomposeLattice
-import org.openjdk.jmh.annotations
-import org.openjdk.jmh.annotations._
 import kofre.causality.{CausalContext, Dot}
 import kofre.contextual.{ContextDecompose, ContextLattice, WithContext}
 import kofre.predef.AddWinsSet
-import kofre.syntax.PermIdMutate
+import org.openjdk.jmh.annotations
+import org.openjdk.jmh.annotations._
 
 import java.util.concurrent.TimeUnit
 
@@ -54,15 +52,15 @@ class AWSetDeltaMergeBench {
 
   @Benchmark
   def deltaMerge: WithContext[AddWinsSet[Long]] = {
-    ContextLattice[AddWinsSet[Long]].diff(fullState, plusOneDeltaState) match {
+    ContextDecompose[AddWinsSet[Long]].diff(fullState, plusOneDeltaState) match {
       case Some(stateDiff) =>
-        DecomposeLattice[AddWinsSet[Long]].merge(fullState, stateDiff)
+        ContextDecompose[AddWinsSet[Long]].merge(fullState, stateDiff)
       case None => fullState
     }
   }
 
   @Benchmark
   def deltaMergeNoDiff: WithContext[AddWinsSet[Long]] = {
-    DecomposeLattice[AddWinsSet[Long]].merge(fullState, plusOneDeltaState)
+    ContextDecompose[AddWinsSet[Long]].merge(fullState, plusOneDeltaState)
   }
 }

@@ -17,6 +17,7 @@ import scala.annotation.implicitNotFound
 trait PermQuery[C, L]:
   def query(c: C): L
   def focus[M](q: L => M): PermQuery[C, M] = (c: C) => q(PermQuery.this.query(c))
+@implicitNotFound("Requires mutation permission.\nUnsure to modify »${L}«\nwithin »${C}«")
 trait PermMutate[C, L] extends PermQuery[C, L]:
   def mutate(c: C, delta: L): C
 

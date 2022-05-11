@@ -31,7 +31,10 @@ import kofre.syntax.PermIdMutate.withID
   * for collaborative applications", see [[https://www.sciencedirect.com/science/article/pii/S0743731510002716?casa_token=lQaLin7aEvcAAAAA:Esc3h3WvkFHUcvhalTPPvV5HbJge91D4-2jyKiSlz8GBDjx31l4xvfH8DIstmQ973PVi46ckXHg here]]
   */
 
+case class RGA[E](order: Epoche[GListInterface.GList[Dot]], meta: Map[Dot, RGAInterface.RGANode[E]])
 object RGAInterface {
+
+  def empty[E]: RGA[E] = RGA(Epoche.empty, Map.empty)
 
   sealed trait RGANode[A]
   case class Alive[A](v: TimedVal[A]) extends RGANode[A]
@@ -58,41 +61,30 @@ object RGAInterface {
     }
   }
 
-  type RGAEmbed[E] = (Epoche[GListInterface.GList[Dot]], Map[Dot, RGANode[E]])
-  type RGA[E] = WithContext[RGAEmbed[E]]
-
-  trait RGACompanion {
-    type State[E]    = RGAInterface.RGA[E]
-    type Embedded[E] = (Epoche[GListInterface.GList[Dot]], Map[Dot, RGANode[E]])
-
-    implicit val ForcedWriteAsUIJDLattice: DecomposeLattice[Epoche[GListInterface.GList[Dot]]] =
-      Epoche.epocheAsUIJDLattice[GListInterface.GList[Dot]]
-  }
-
   private class DeltaStateFactory[E] {
     given ContextDecompose[Epoche[GListInterface.GList[Dot]]] = ContextDecompose.UIJDLatticeAsDecomposableDotStore
-    val bottom: RGA[E] = WithContext.empty
 
     def make(
-        epoche: Epoche[GListInterface.GList[Dot]] = bottom.store._1,
-        df: Map[Dot, RGANode[E]] = bottom.store._2,
-        cc: CausalContext = bottom.context
-    ): RGA[E] = WithContext((epoche, df), cc)
+        epoche: Epoche[GListInterface.GList[Dot]] = empty._1,
+        df: Map[Dot, RGANode[E]] = empty._2,
+        cc: CausalContext = CausalContext.empty
+    ): WithContext[RGA[E]] = WithContext(RGA(epoche, df), cc)
   }
 
   private def deltaState[E]: DeltaStateFactory[E] = new DeltaStateFactory[E]
 
-  implicit class RGASyntax[C, E](container: C)(using ArdtOpsContains[C, RGA[E]]) extends OpsSyntaxHelper[C, RGA[E]](container) {
+  implicit class RGASyntax[C, E](container: C)(using ArdtOpsContains[C, RGA[E]])
+      extends OpsSyntaxHelper[C, RGA[E]](container) {
 
     def read(i: Int)(using QueryP): Option[E] = {
-      val (fw, df) = current.store
+      val RGA(fw, df) = current
       fw.value.toLazyList.map(df).collect {
         case Alive(tv) => tv.value
       }.lift(i)
     }
 
     def size(using QueryP): Int = {
-      val (_, df) = current.store
+      val RGA(_, df) = current
       df.values.count {
         case Dead()   => false
         case Alive(_) => true
@@ -100,19 +92,19 @@ object RGAInterface {
     }
 
     def toList(using QueryP): List[E] = {
-      val (fw, df) = current.store
+      val RGA(fw, df) = current
       new GListSyntax(fw.value).toList.map(df).collect {
         case Alive(tv) => tv.value
       }
     }
 
     def sequence(using QueryP): Long = {
-      val (fw, _) = current.store
+      val RGA(fw, _) = current
       fw.counter
     }
 
     private def findInsertIndex(state: RGA[E], n: Int): Option[Int] = state match {
-      case WithContext((fw, df), _) =>
+      case RGA(fw, df) =>
         fw.value.toLazyList.zip(LazyList.from(1)).filter {
           case (dot, _) => df(dot) match {
               case Alive(_) => true
@@ -121,12 +113,12 @@ object RGAInterface {
         }.map(_._2).prepended(0).lift(n)
     }
 
-    def insert(i: Int, e: E)(using MutationIdP): C = {
-      val (fw, df) = current.store
-      val nextDot  = current.context.nextDot(replicaID)
+    def insert(i: Int, e: E)(using CausalMutationP, IdentifierP): C = {
+      val RGA(fw, df) = current
+      val nextDot     = context.nextDot(replicaID)
 
       findInsertIndex(current, i) match {
-        case None => deltaState[E].bottom
+        case None => WithContext(RGAInterface.empty[E])
         case Some(glistInsertIndex) =>
           val glistDelta = fw.map(gl => GListSyntax(gl).insert(glistInsertIndex, nextDot)(using withID(replicaID)))
           val dfDelta    = DotFun[RGANode[E]].empty.store + (nextDot -> Alive(TimedVal(e, replicaID)))
@@ -139,19 +131,20 @@ object RGAInterface {
       }
     }.mutator
 
-    def insertAll(i: Int, elems: Iterable[E])(using MutationP, IdentifierP): C = {
-      val (fw, df) = current.store
-      val nextDot  = current.context.nextDot(replicaID)
+    def insertAll(i: Int, elems: Iterable[E])(using CausalMutationP, IdentifierP): C = {
+      val RGA(fw, df) = current
+      val nextDot     = context.nextDot(replicaID)
 
       val nextDots = List.iterate(nextDot, elems.size) {
         case Dot(c, r) => Dot(c + 1, r)
       }
 
       findInsertIndex(current, i) match {
-        case None => deltaState[E].bottom
+        case None => WithContext(RGAInterface.empty)
         case Some(glistInsertIndex) =>
-          val glistDelta = fw.map(gl => GListSyntax(gl).insertAll(glistInsertIndex, nextDots)(using summon, withID(replicaID)))
-          val dfDelta    = DotFun[RGANode[E]].empty.store ++ (nextDots zip elems.map(e => Alive(TimedVal(e, replicaID))))
+          val glistDelta =
+            fw.map(gl => GListSyntax(gl).insertAll(glistInsertIndex, nextDots)(using summon, withID(replicaID)))
+          val dfDelta = DotFun[RGANode[E]].empty.store ++ (nextDots zip elems.map(e => Alive(TimedVal(e, replicaID))))
 
           deltaState[E].make(
             epoche = glistDelta,
@@ -161,49 +154,48 @@ object RGAInterface {
       }
     }.mutator
 
-    private def updateRGANode(state: RGA[E], i: Int, newNode: RGANode[E]): RGA[E] = {
-      val (fw, df) = state.store
+    private def updateRGANode(state: RGA[E], i: Int, newNode: RGANode[E]): WithContext[RGA[E]] = {
+      val RGA(fw, df) = state
       fw.value.toLazyList.filter { dot =>
         df(dot) match {
           case Alive(_) => true
           case Dead()   => false
         }
       }.lift(i) match {
-        case None => deltaState[E].bottom
+        case None => WithContext(RGAInterface.empty)
         case Some(d) =>
           deltaState[E].make(df = DotFun[RGANode[E]].empty.store + (d -> newNode))
       }
     }
 
-    def update(i: Int, e: E)(using MutationIdP): C =
+    def update(i: Int, e: E)(using CausalMutationP, IdentifierP): C =
       updateRGANode(current, i, Alive(TimedVal(e, replicaID))).mutator
 
-    def delete(i: Int)(using MutationIdP): C = updateRGANode(current, i, Dead[E]()).mutator
+    def delete(i: Int)(using CausalMutationP, IdentifierP): C = updateRGANode(current, i, Dead[E]()).mutator
 
     private def updateRGANodeBy(
         state: RGA[E],
         cond: E => Boolean,
         newNode: RGANode[E]
-    ): RGA[E] =
-      state match {
-        case WithContext((_, df), _) =>
-          val toUpdate = df.toList.collect {
-            case (d, Alive(tv)) if cond(tv.value) => d
-          }
-
-          val dfDelta = DotFun[RGANode[E]].empty.store ++ toUpdate.map(_ -> newNode)
-
-          deltaState[E].make(df = dfDelta)
+    ): WithContext[RGA[E]] = {
+      val RGA(_, df) = state
+      val toUpdate = df.toList.collect {
+        case (d, Alive(tv)) if cond(tv.value) => d
       }
 
-    def updateBy(cond: E => Boolean, e: E)(using MutationIdP): C =
+      val dfDelta = DotFun[RGANode[E]].empty.store ++ toUpdate.map(_ -> newNode)
+
+      deltaState[E].make(df = dfDelta)
+    }
+
+    def updateBy(cond: E => Boolean, e: E)(using CausalMutationP, IdentifierP): C =
       updateRGANodeBy(current, cond, Alive(TimedVal(e, replicaID))).mutator
 
-    def deleteBy(cond: E => Boolean)(using MutationIdP): C =
+    def deleteBy(cond: E => Boolean)(using CausalMutationP, IdentifierP): C =
       updateRGANodeBy(current, cond, Dead[E]()).mutator
 
-    def purgeTombstones()(using MutationIdP): C = {
-      val (epoche, df) = current.store
+    def purgeTombstones()(using CausalMutationP, IdentifierP): C = {
+      val RGA(epoche, df) = current
       val toRemove = df.collect {
         case (dot, Dead()) => dot
       }.toSet
@@ -216,20 +208,19 @@ object RGAInterface {
       ).mutator
     }
 
-    def clear()(using MutationIdP): C = {
-      val (_, WithContext(_, cc)) = current.store
+    def clear()(using CausalMutationP): C = {
       deltaState[E].make(
-        cc = cc
+        cc = context
       ).mutator
     }
 
-    def prepend(e: E)(using MutationIdP): C = insert(0, e)
+    def prepend(e: E)(using CausalMutationP, IdentifierP): C = insert(0, e)
 
-    def append(e: E)(using MutationIdP): C = insert(size, e)
+    def append(e: E)(using CausalMutationP, IdentifierP): C = insert(size, e)
 
-    def prependAll(elems: Iterable[E])(using MutationIdP): C = insertAll(0, elems)
+    def prependAll(elems: Iterable[E])(using CausalMutationP, IdentifierP): C = insertAll(0, elems)
 
-    def appendAll(elems: Iterable[E])(using MutationIdP): C = insertAll(size, elems)
+    def appendAll(elems: Iterable[E])(using CausalMutationP, IdentifierP): C = insertAll(size, elems)
 
   }
 }

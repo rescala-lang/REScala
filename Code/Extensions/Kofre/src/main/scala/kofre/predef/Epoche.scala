@@ -1,12 +1,15 @@
 package kofre.predef
 
-import kofre.base.{DecomposeLattice, Defs}
+import kofre.base.{Bottom, DecomposeLattice, Defs}
 import kofre.syntax.PermIdMutate.withID
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper}
 
 case class Epoche[E](counter: Defs.Time, value: E)
 
 object Epoche {
+
+  def empty[E: Bottom]: Epoche[E] = Epoche(0, Bottom[E].empty)
+
 
   implicit class EpocheSyntax[C, E](container: C)(using ArdtOpsContains[C, Epoche[E]])
       extends OpsSyntaxHelper[C, Epoche[E]](container) {
@@ -19,6 +22,8 @@ object Epoche {
   }
 
   given epocheAsUIJDLattice[E: DecomposeLattice]: DecomposeLattice[Epoche[E]] = new DecomposeLattice[Epoche[E]] {
+
+    override def empty: Epoche[E] = Epoche.empty
     override def lteq(left: Epoche[E], right: Epoche[E]): Boolean = (left, right) match {
       case (Epoche(cLeft, vLeft), Epoche(cRight, vRight)) =>
         cLeft < cRight || (cLeft == cRight && DecomposeLattice[E].lteq(vLeft, vRight))
@@ -30,7 +35,6 @@ object Epoche {
         DecomposeLattice[E].decompose(v).map(Epoche(c, _))
     }
 
-    override def empty: Epoche[E] = Epoche(0, DecomposeLattice[E].empty)
 
     /** By assumption: associative, commutative, idempotent. */
     override def merge(left: Epoche[E], right: Epoche[E]): Epoche[E] = (left, right) match {
