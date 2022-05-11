@@ -20,7 +20,7 @@ object LWWRegisterInterface {
       MVRegisterSyntax(current).read.reduceOption(DecomposeLattice[TimedVal[A]].merge).map(_.value)
 
     def write(v: A)(using CausalMutationP, IdentifierP): C =
-      MVRegisterSyntax(context.wrap(current).named(replicaID)).write(TimedVal(v, replicaID)).inner.mutator
+      MVRegisterSyntax(context.wrap(current).named(replicaID)).write(TimedVal(v, replicaID)).anon.mutator
 
     def map(f: A => A)(using CausalMutationP, IdentifierP): C =
       read.map(f) match {

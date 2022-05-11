@@ -145,7 +145,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
     if (set.deltaBuffer.isEmpty) return
 
     unboundLocalChanges = set.deltaBuffer.foldLeft(unboundLocalChanges) { (list, delta) =>
-      list.prependedAll(DecomposeLattice[SetState].decompose(delta.inner))
+      list.prependedAll(DecomposeLattice[SetState].decompose(delta.anon))
     }
 
     if (unboundLocalChanges.size < minAtomsForCheckpoint) {

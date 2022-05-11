@@ -34,7 +34,7 @@ object DeltaSequence {
   def empty[A]: DeltaSequence[A] =
     val addStart = WithContext(AddWinsSet.empty[kofre.rga.Vertex], CausalContext.empty).named(Vertex.start.id).add(
       Vertex.start
-    ).inner
+    ).anon
     DeltaSequence(
       addStart.store,
       DeltaSequenceOrder(Map()),
@@ -54,7 +54,7 @@ object DeltaSequence {
 
     def addRightDelta(replica: Id, left: Vertex, insertee: Vertex, value: A)(using CausalMutationP): C = {
       val newEdges    = current.edges.addRightEdgeDelta(left, insertee)
-      val newVertices = context.wrap(current.vertices).named(replica).add(insertee).inner
+      val newVertices = context.wrap(current.vertices).named(replica).add(insertee).anon
       val newValues   = Map(insertee -> value)
       newVertices.context.wrap(DeltaSequence(newVertices.store, newEdges, newValues)).mutator
     }

@@ -3,14 +3,16 @@ package kofre.base
 import kofre.base.Lattice.{Operators, mapLattice, optionLattice, setLattice}
 import kofre.base.{Bottom, Decompose, Lattice}
 import kofre.causality.CausalContext
-import kofre.contextual.{WithContext, ContextDecompose}
+import kofre.contextual.{ContextDecompose, WithContext}
 
+import scala.annotation.implicitNotFound
 import scala.compiletime.summonAll
 import scala.deriving.Mirror
 
 /** Decomposition tries to decompose a lattice into its smallest constituents.
   * The only requirement is that merging the decomposed results produces the original state.
   * Requires a bottom to enable automatic decomposition of Product types */
+@implicitNotFound("Not a decompose lattice »${A}«")
 trait DecomposeLattice[A] extends Lattice[A], Bottom[A], Decompose[A] {
 
   /** computes delta without state */
@@ -86,7 +88,7 @@ object DecomposeLattice {
       export wcd.decompose
       // needs manual override as export can not override :(
       override def lteq(left: WithContext[D], right: WithContext[D]): Boolean = wcd.lteq(left, right)
-      override def empty: WithContext[D] = WithContext(wcd.empty, CausalContext.empty)
+      override def empty: WithContext[D] = WithContext(wcd.empty.store, CausalContext.empty)
     }
 
   inline def derived[T <: Product](using pm: Mirror.ProductOf[T]): DecomposeLattice[T] = {

@@ -2,7 +2,7 @@ package kofre.predef
 
 import kofre.base.DecomposeLattice
 import kofre.causality.{CausalContext, Dot}
-import kofre.contextual.{ContextDecompose, WithContext}
+import kofre.contextual.{AsCausalContext, ContextDecompose, WithContext}
 import kofre.contextual.ContextDecompose.*
 import kofre.decompose.*
 import kofre.predef.AddWinsSet
@@ -97,7 +97,7 @@ object AddWinsSet {
     def clear()(using QueryP, CausalMutationP): C = {
       val dm = current.inner
       deltaState[E].make(
-        cc = DotMap[E, CausalContext].dots(dm)
+        cc = AsCausalContext.DotMapInstance.dots(dm)
       ).mutator
     }
 

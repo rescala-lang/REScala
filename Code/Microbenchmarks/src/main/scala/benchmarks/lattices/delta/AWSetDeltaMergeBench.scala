@@ -4,6 +4,7 @@ import kofre.base.DecomposeLattice
 import org.openjdk.jmh.annotations
 import org.openjdk.jmh.annotations._
 import kofre.causality.{CausalContext, Dot}
+import kofre.contextual.{ContextDecompose, ContextLattice, WithContext}
 import kofre.predef.AddWinsSet
 import kofre.syntax.PermIdMutate
 
@@ -21,9 +22,9 @@ class AWSetDeltaMergeBench {
   @Param(Array("1", "10", "100", "1000"))
   var size: Long = _
 
-  var fullState: AddWinsSet[Long]         = _
-  var plusOneState: AddWinsSet[Long]      = _
-  var plusOneDeltaState: AddWinsSet[Long] = _
+  var fullState: WithContext[AddWinsSet[Long]]         = _
+  var plusOneState: WithContext[AddWinsSet[Long]]      = _
+  var plusOneDeltaState: WithContext[AddWinsSet[Long]] = _
 
   def makeCContext(replicaID: String): CausalContext = {
     val dots = (0L until size).map(Dot(replicaID, _)).toSet
@@ -32,28 +33,28 @@ class AWSetDeltaMergeBench {
 
   @Setup
   def setup(): Unit = {
-    val baseState = DecomposeLattice[AddWinsSet[Long]].empty
+    val baseState = WithContext(AddWinsSet.empty[Long])
 
-    val deltaState = baseState.addAll(0L to size)(PermIdMutate.withID(""))
-    fullState = DecomposeLattice[AddWinsSet[Long]].merge(baseState, deltaState)
+    val deltaState = baseState.named("").addAll(0L to size).anon
+    fullState = ContextLattice[AddWinsSet[Long]].merge(baseState, deltaState)
 
-    plusOneDeltaState = fullState.add(size)(PermIdMutate.withID(""))
-    plusOneState = DecomposeLattice[AddWinsSet[Long]].merge(fullState, plusOneDeltaState)
+    plusOneDeltaState = fullState.named("").add(size).anon
+    plusOneState = ContextLattice[AddWinsSet[Long]].merge(fullState, plusOneDeltaState)
   }
 
   @Benchmark
-  def fullMerge: AddWinsSet[Long] = {
-    DecomposeLattice[AddWinsSet[Long]].merge(fullState, plusOneState)
+  def fullMerge: WithContext[AddWinsSet[Long]] = {
+    ContextLattice[AddWinsSet[Long]].merge(fullState, plusOneState)
   }
 
   @Benchmark
-  def fullDiff: Option[AddWinsSet[Long]] = {
-    DecomposeLattice[AddWinsSet[Long]].diff(fullState, plusOneState)
+  def fullDiff: Option[WithContext[AddWinsSet[Long]]] = {
+    ContextDecompose[AddWinsSet[Long]].diff(fullState, plusOneState)
   }
 
   @Benchmark
-  def deltaMerge: AddWinsSet[Long] = {
-    DecomposeLattice[AddWinsSet[Long]].diff(fullState, plusOneDeltaState) match {
+  def deltaMerge: WithContext[AddWinsSet[Long]] = {
+    ContextLattice[AddWinsSet[Long]].diff(fullState, plusOneDeltaState) match {
       case Some(stateDiff) =>
         DecomposeLattice[AddWinsSet[Long]].merge(fullState, stateDiff)
       case None => fullState
@@ -61,7 +62,7 @@ class AWSetDeltaMergeBench {
   }
 
   @Benchmark
-  def deltaMergeNoDiff: AddWinsSet[Long] = {
+  def deltaMergeNoDiff: WithContext[AddWinsSet[Long]] = {
     DecomposeLattice[AddWinsSet[Long]].merge(fullState, plusOneDeltaState)
   }
 }

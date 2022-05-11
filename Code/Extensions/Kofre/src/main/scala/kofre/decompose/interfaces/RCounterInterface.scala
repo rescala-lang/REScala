@@ -67,7 +67,7 @@ object RCounterInterface {
       val nextDot = current.context.nextDot(replicaID)
 
       deltaState(
-        df = Some(DotFun[(Int, Int)].empty + (nextDot -> ((0, 0)))),
+        df = Some(DotFun[(Int, Int)].empty.store + (nextDot -> ((0, 0)))),
         cc = CausalContext.single(nextDot)
       ).mutator
     }
@@ -87,7 +87,7 @@ object RCounterInterface {
           val nextDot = current.context.nextDot(replicaID)
 
           deltaState(
-            df = Some(DotFun[(Int, Int)].empty + (nextDot -> u)),
+            df = Some(DotFun[(Int, Int)].empty.store + (nextDot -> u)),
             cc = CausalContext.single(nextDot)
           ).mutator
       }

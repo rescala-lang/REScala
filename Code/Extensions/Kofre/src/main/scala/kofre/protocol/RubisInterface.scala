@@ -71,7 +71,7 @@ object RubisInterface {
       val (req, users, _) = current
       if (users.contains(userId)) WithContext(deltaState.make(), context).mutator
       else
-        val merged = WithContext(req, context).named(replicaID).add(userId -> replicaID).inner
+        val merged = WithContext(req, context).named(replicaID).add(userId -> replicaID).anon
         WithContext(deltaState.make(userRequests = merged.store), merged.context).mutator
     }
 

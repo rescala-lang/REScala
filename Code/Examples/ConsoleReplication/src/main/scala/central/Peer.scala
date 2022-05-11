@@ -134,7 +134,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
   def processChangesForCheckpointing(): Unit = {
     changesSinceCP = set.deltaBuffer.foldLeft(changesSinceCP) { (acc, delta) =>
-      DecomposeLattice[SetState].merge(acc, delta.inner)
+      DecomposeLattice[SetState].merge(acc, delta.anon)
     }
 
     assessCheckpointRecursive()

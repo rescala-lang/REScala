@@ -38,7 +38,7 @@ object GMapInterface {
     }
 
     def mutateKeyNamedCtx(k: K)(m: WithNamedContext[V] => WithNamedContext[V])(using MutationIdP, DecomposeLattice[V], CausalP): C = {
-      Map(k -> m(WithNamedContext(replicaID, WithContext(queryKey(k), context))).inner.store).mutator
+      Map(k -> m(WithNamedContext(replicaID, WithContext(queryKey(k), context))).anon.store).mutator
     }
   }
 

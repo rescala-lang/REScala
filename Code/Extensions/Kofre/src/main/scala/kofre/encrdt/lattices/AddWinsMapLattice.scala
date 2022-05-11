@@ -8,13 +8,13 @@ import kofre.syntax.{PermIdMutate, WithNamedContext}
 import kofre.syntax.PermIdMutate.withID
 
 case class AddWinsMapLattice[K, V](
-    keys: WithContext[AddWinsSet[K]] = WithContext.empty[AddWinsSet[K]],
+    keys: WithContext[AddWinsSet[K]] = WithContext(AddWinsSet.empty[K]),
     mappings: Map[K, V] = Map[K, V]()
 ) {
   def values: Map[K, V] = mappings
 
   def added(key: K, value: V, replicaId: String): AddWinsMapLattice[K, V] = {
-    val newKeys = keys merged keys.named(replicaId).add(key).inner
+    val newKeys = keys merged keys.named(replicaId).add(key).anon
     val newMap  = mappings + (key -> value)
     AddWinsMapLattice(newKeys, newMap)
   }

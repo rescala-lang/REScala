@@ -71,7 +71,7 @@ object RGAInterface {
 
   private class DeltaStateFactory[E] {
     given ContextDecompose[Epoche[GListInterface.GList[Dot]]] = ContextDecompose.UIJDLatticeAsDecomposableDotStore
-    val bottom: RGA[E] = DecomposeLattice[RGA[E]].empty
+    val bottom: RGA[E] = WithContext.empty
 
     def make(
         epoche: Epoche[GListInterface.GList[Dot]] = bottom.store._1,
@@ -129,7 +129,7 @@ object RGAInterface {
         case None => deltaState[E].bottom
         case Some(glistInsertIndex) =>
           val glistDelta = fw.map(gl => GListSyntax(gl).insert(glistInsertIndex, nextDot)(using withID(replicaID)))
-          val dfDelta    = DotFun[RGANode[E]].empty + (nextDot -> Alive(TimedVal(e, replicaID)))
+          val dfDelta    = DotFun[RGANode[E]].empty.store + (nextDot -> Alive(TimedVal(e, replicaID)))
 
           deltaState[E].make(
             epoche = glistDelta,
@@ -151,7 +151,7 @@ object RGAInterface {
         case None => deltaState[E].bottom
         case Some(glistInsertIndex) =>
           val glistDelta = fw.map(gl => GListSyntax(gl).insertAll(glistInsertIndex, nextDots)(using withID(replicaID)))
-          val dfDelta    = DotFun[RGANode[E]].empty ++ (nextDots zip elems.map(e => Alive(TimedVal(e, replicaID))))
+          val dfDelta    = DotFun[RGANode[E]].empty.store ++ (nextDots zip elems.map(e => Alive(TimedVal(e, replicaID))))
 
           deltaState[E].make(
             epoche = glistDelta,
@@ -171,7 +171,7 @@ object RGAInterface {
       }.lift(i) match {
         case None => deltaState[E].bottom
         case Some(d) =>
-          deltaState[E].make(df = DotFun[RGANode[E]].empty + (d -> newNode))
+          deltaState[E].make(df = DotFun[RGANode[E]].empty.store + (d -> newNode))
       }
     }
 
@@ -191,7 +191,7 @@ object RGAInterface {
             case (d, Alive(tv)) if cond(tv.value) => d
           }
 
-          val dfDelta = DotFun[RGANode[E]].empty ++ toUpdate.map(_ -> newNode)
+          val dfDelta = DotFun[RGANode[E]].empty.store ++ toUpdate.map(_ -> newNode)
 
           deltaState[E].make(df = dfDelta)
       }
