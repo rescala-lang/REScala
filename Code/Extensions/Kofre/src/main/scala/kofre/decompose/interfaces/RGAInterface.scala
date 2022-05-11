@@ -139,7 +139,7 @@ object RGAInterface {
       }
     }.mutator
 
-    def insertAll(i: Int, elems: Iterable[E])(using MutationIdP): C = {
+    def insertAll(i: Int, elems: Iterable[E])(using MutationP, IdentifierP): C = {
       val (fw, df) = current.store
       val nextDot  = current.context.nextDot(replicaID)
 
@@ -150,7 +150,7 @@ object RGAInterface {
       findInsertIndex(current, i) match {
         case None => deltaState[E].bottom
         case Some(glistInsertIndex) =>
-          val glistDelta = fw.map(gl => GListSyntax(gl).insertAll(glistInsertIndex, nextDots)(using withID(replicaID)))
+          val glistDelta = fw.map(gl => GListSyntax(gl).insertAll(glistInsertIndex, nextDots)(using summon, withID(replicaID)))
           val dfDelta    = DotFun[RGANode[E]].empty.store ++ (nextDots zip elems.map(e => Alive(TimedVal(e, replicaID))))
 
           deltaState[E].make(

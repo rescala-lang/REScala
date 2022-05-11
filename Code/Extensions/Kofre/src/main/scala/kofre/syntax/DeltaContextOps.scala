@@ -38,7 +38,7 @@ trait PermCausal[C]:
 trait PermCausalMutate[C, L] extends PermCausal[C], PermQuery[C, L]:
   def mutateContext(container: C, withContext: WithContext[L]): C
 @implicitNotFound(
-  "Requires query, id, and mutation permission.\nUnsure how to extract ID from »${C}«\nto modify »${L}«"
+  "Requires query, id, and mutation permission.\nUnsure how to extract them from »${C}«\nto modify »${L}«"
 )
 trait PermIdMutate[C, L] extends PermId[C], PermMutate[C, L]
 

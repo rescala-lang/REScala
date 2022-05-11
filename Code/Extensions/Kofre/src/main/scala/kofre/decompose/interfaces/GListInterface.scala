@@ -124,7 +124,7 @@ object GListInterface {
       }
     }.mutator
 
-    def insertAll(i: Int, elems: Iterable[E])(using MutationIdP): C = {
+    def insertAll(i: Int, elems: Iterable[E])(using MutationP, IdentifierP): C = {
       if (elems.isEmpty)
         DecomposeLattice[GList[E]].empty
       else
