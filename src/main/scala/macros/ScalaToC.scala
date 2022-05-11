@@ -7,6 +7,7 @@ import clangast.expr.*
 import clangast.expr.binaryop.*
 import clangast.expr.unaryop.*
 import clangast.stmt.*
+import clangast.traversal.CASTMapper
 import clangast.types.*
 
 import scala.annotation.tailrec
@@ -505,8 +506,13 @@ object ScalaToC {
     guard match {
       case None => (patternCond, bindings, stmtsList)
       case Some(guardExpr) =>
-        val guardCompiled = compileTermToCExpr(guardExpr, ctx)
-        // map guard, replacing refs to bindings with member expressions
+        val replaceBoundIdentifiers = new CASTMapper {
+          override protected val mapCExprHook: PartialFunction[CExpr, CExpr] = {
+            case CDeclRefExpr(decl: CVarDecl) if bindings.contains(decl) => decl.init.get
+          }
+        }
+
+        val guardCompiled = replaceBoundIdentifiers.mapCExpr(compileTermToCExpr(guardExpr, ctx))
 
         val combinedCond = patternCond.fold(guardCompiled) { c => CAndExpr(c, guardCompiled) }
 
