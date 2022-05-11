@@ -3,7 +3,7 @@ package todo
 import rescala.default._
 import kofre.decompose.Delta
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax
-import kofre.decompose.interfaces.RGAInterface.{RGA, RGASyntax}
+import kofre.decompose.interfaces.RGA.{RGA, RGAOps}
 import kofre.decompose.containers.DeltaBufferRDT
 
 import java.util.concurrent.ThreadLocalRandom
@@ -43,7 +43,7 @@ class TaskOps(@nowarn taskRefs: TaskReferences) {
 
     val newList = list.resetDeltaBuffer().applyDelta(delta)
 
-    val oldIDs = new RGASyntax(list).toList.toSet
+    val oldIDs = new RGAOps(list).toList.toSet
     val newIDs = newList.toList.toSet
 
     val removed = oldIDs -- newIDs

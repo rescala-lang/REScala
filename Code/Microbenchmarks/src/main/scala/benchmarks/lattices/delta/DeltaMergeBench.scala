@@ -1,10 +1,9 @@
 package benchmarks.lattices.delta
 
-import kofre.base.{Bottom, DecomposeLattice}
+import kofre.base.Bottom
 import kofre.causality.{CausalContext, Dot}
-import kofre.contextual.WithContext
-import kofre.decompose.interfaces.RGAInterface.{RGA, RGASyntax}
-import kofre.syntax.PermIdMutate.withID
+import kofre.contextual.{ContextDecompose, WithContext}
+import kofre.decompose.interfaces.RGA
 import org.openjdk.jmh.annotations
 import org.openjdk.jmh.annotations._
 
@@ -33,36 +32,37 @@ class DeltaMergeBench {
 
   @Setup
   def setup(): Unit = {
-    val baseState: RGA[Long] = Bottom.empty[RGA[Long]]
+    val baseState: WithContext[RGA[Long]] = Bottom.empty[WithContext[RGA[Long]]]
 
-    val deltaState = RGASyntax(baseState.named("")).insertAll(0, 0L to size).anon
-    fullState = DecomposeLattice[RGA[Long]].merge(baseState, deltaState)
+    val deltaState: WithContext[RGA[Long]] =
+      baseState.named("").insertAll(0, 0L to size).anon
+    fullState = ContextDecompose[RGA[Long]].merge(baseState, deltaState)
 
-    plusOneDeltaState = fullState.insert(0, size)(withID(""))
-    plusOneState = DecomposeLattice[RGA[Long]].merge(fullState, plusOneDeltaState)
+    plusOneDeltaState = fullState.named("").insert(0, size).anon
+    plusOneState = ContextDecompose[RGA[Long]].merge(fullState, plusOneDeltaState)
   }
 
   @Benchmark
-  def fullMerge: RGA[Long] = {
-    DecomposeLattice[RGA[Long]].merge(fullState, plusOneState)
+  def fullMerge: WithContext[RGA[Long]] = {
+    ContextDecompose[RGA[Long]].merge(fullState, plusOneState)
   }
 
   @Benchmark
-  def fullDiff: Option[RGA[Long]] = {
-    DecomposeLattice[RGA[Long]].diff(fullState, plusOneState)
+  def fullDiff: Option[WithContext[RGA[Long]]] = {
+    ContextDecompose[RGA[Long]].diff(fullState, plusOneState)
   }
 
   @Benchmark
-  def deltaMerge: RGA[Long] = {
-    DecomposeLattice[RGA[Long]].diff(fullState, plusOneDeltaState) match {
+  def deltaMerge: WithContext[RGA[Long]] = {
+    ContextDecompose[RGA[Long]].diff(fullState, plusOneDeltaState) match {
       case Some(stateDiff) =>
-        DecomposeLattice[RGA[Long]].merge(fullState, stateDiff)
+        ContextDecompose[RGA[Long]].merge(fullState, stateDiff)
       case None => fullState
     }
   }
 
   @Benchmark
-  def deltaMergeNoDiff: RGA[Long] = {
-    DecomposeLattice[RGA[Long]].merge(fullState, plusOneDeltaState)
+  def deltaMergeNoDiff: WithContext[RGA[Long]] = {
+    ContextDecompose[RGA[Long]].merge(fullState, plusOneDeltaState)
   }
 }

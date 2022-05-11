@@ -3,7 +3,7 @@ package kofre.decompose.interfaces
 import kofre.base.DecomposeLattice
 import kofre.causality.CausalContext
 import kofre.contextual.ContextDecompose.DotSet
-import kofre.contextual.WithContext
+import kofre.contextual.{ContextDecompose, ContextLattice, WithContext}
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermIdMutate, WithNamedContext}
 
 /** A GMap (Grow-only Map) is a Delta CRDT that models a map from an arbitrary key type to nested Delta CRDTs.
@@ -21,24 +21,27 @@ object GMapInterface {
     type State[K, V] = GMapInterface.GMap[K, V]
   }
 
+
+  def empty[K, V]: GMap[K, V] = Map.empty
+
   implicit class GMapSyntax[C, K, V](container: C)(using aoc: ArdtOpsContains[C, GMap[K, V]])
       extends OpsSyntaxHelper[C, GMap[K, V]](container) {
 
     def contains(k: K)(using QueryP): Boolean = current.contains(k)
 
-    def queryKey(k: K)(using QueryP, DecomposeLattice[V]): V =
-      current.getOrElse(k, DecomposeLattice[V].empty)
+    def queryKey(k: K)(using QueryP, ContextDecompose[V]): V =
+      current.getOrElse(k, ContextDecompose[V].empty.store)
 
     def queryAllEntries()(using QueryP): Iterable[V] = current.values
 
-    def mutateKey(k: K)(m: V => V)(using MutationIdP, DecomposeLattice[V]): C = Map(k -> m(queryKey(k))).mutator
+    def mutateKey(k: K)(m: V => V)(using MutationIdP, ContextDecompose[V]): C = Map(k -> m(queryKey(k))).mutator
 
-    def mutateKeyCtx(k: K)(m: PermIdMutate[V, V] => V => V)(using MutationIdP, DecomposeLattice[V]): C = {
+    def mutateKeyCtx(k: K)(m: PermIdMutate[V, V] => V => V)(using MutationIdP, ContextDecompose[V]): C = {
       Map(k -> m(PermIdMutate.withID[V, V](replicaID))(queryKey(k))).mutator
     }
 
-    def mutateKeyNamedCtx(k: K)(m: WithNamedContext[V] => WithNamedContext[V])(using MutationIdP, DecomposeLattice[V], CausalP): C = {
-      Map(k -> m(WithNamedContext(replicaID, WithContext(queryKey(k), context))).anon.store).mutator
+    def mutateKeyNamedCtx(k: K)(m: WithNamedContext[V] => WithNamedContext[V])(using CausalMutationP, IdentifierP, ContextDecompose[V]): C = {
+      m(WithNamedContext(replicaID, WithContext(queryKey(k), context))).anon.map(v => Map(k -> v)).mutator
     }
   }
 

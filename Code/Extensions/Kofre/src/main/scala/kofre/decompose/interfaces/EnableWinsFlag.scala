@@ -1,6 +1,6 @@
 package kofre.decompose.interfaces
 
-import kofre.base.DecomposeLattice
+import kofre.base.{Bottom, DecomposeLattice}
 import kofre.causality.CausalContext
 import kofre.decompose.*
 import kofre.syntax.OpsSyntaxHelper
@@ -16,7 +16,9 @@ case class EnableWinsFlag(inner: CausalContext)
 
 object EnableWinsFlag {
 
-  //given latticeEWF: ContextDecompose[EnableWinsFlag] = ContextDecompose.product1ContextDecompose
+  given latticeEWF: ContextDecompose[EnableWinsFlag] = ContextDecompose.derived
+
+  val empty: EnableWinsFlag = EnableWinsFlag(CausalContext.empty)
 
   /** It is enabled if there is a value in the store.
     * It relies on the external context to track removals.

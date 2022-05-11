@@ -21,7 +21,7 @@ object AddWinsSet {
 
   def empty[E]: AddWinsSet[E] = AddWinsSet(Map.empty)
 
-  given contextDecompose[E]: ContextDecompose[AddWinsSet[E]] = ContextDecompose.product1ContextDecompose
+  given contextDecompose[E]: ContextDecompose[AddWinsSet[E]] = ContextDecompose.derived
 
   implicit class AWSetSyntax[C, E](container: C) extends OpsSyntaxHelper[C, AddWinsSet[E]](container) {
 

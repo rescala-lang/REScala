@@ -3,7 +3,7 @@ package kofre.decompose.interfaces
 import kofre.base.DecomposeLattice
 import kofre.decompose.*
 import kofre.predef.Epoche
-import kofre.syntax.OpsSyntaxHelper
+import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper}
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
@@ -80,7 +80,7 @@ object GListInterface {
         }
     }
 
-  implicit class GListSyntax[C, E](container: C) extends OpsSyntaxHelper[C, GList[E]](container) {
+  implicit class GListSyntax[C, E](container: C)(using ArdtOpsContains[C, GList[E]]) extends OpsSyntaxHelper[C, GList[E]](container) {
 
     @tailrec
     private def findNth(state: GList[E], current: GListNode[TimedVal[E]], i: Int): Option[GListNode[TimedVal[E]]] = {

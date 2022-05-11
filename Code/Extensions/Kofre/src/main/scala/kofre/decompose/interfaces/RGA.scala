@@ -1,12 +1,12 @@
 package kofre.decompose.interfaces
 
-import kofre.base.DecomposeLattice
+import kofre.base.{Bottom, DecomposeLattice}
 import kofre.causality.{CausalContext, Dot}
 import kofre.decompose.*
-import kofre.syntax.{PermIdMutate, ArdtOpsContains, PermMutate, OpsSyntaxHelper}
+import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermIdMutate, PermMutate}
 import kofre.contextual.ContextDecompose.{DotFun, DotPair}
 import kofre.decompose.interfaces.GListInterface.{GListAsUIJDLattice, GListSyntax}
-import kofre.contextual.{WithContext, ContextDecompose}
+import kofre.contextual.{ContextDecompose, ContextLattice, WithContext}
 import kofre.decompose.interfaces.RCounterInterface.RCounter
 import kofre.predef.Epoche
 import kofre.syntax.PermIdMutate.withID
@@ -31,10 +31,15 @@ import kofre.syntax.PermIdMutate.withID
   * for collaborative applications", see [[https://www.sciencedirect.com/science/article/pii/S0743731510002716?casa_token=lQaLin7aEvcAAAAA:Esc3h3WvkFHUcvhalTPPvV5HbJge91D4-2jyKiSlz8GBDjx31l4xvfH8DIstmQ973PVi46ckXHg here]]
   */
 
-case class RGA[E](order: Epoche[GListInterface.GList[Dot]], meta: Map[Dot, RGAInterface.RGANode[E]])
-object RGAInterface {
+case class RGA[E](order: Epoche[GListInterface.GList[Dot]], meta: Map[Dot, RGA.RGANode[E]])
+object RGA {
 
   def empty[E]: RGA[E] = RGA(Epoche.empty, Map.empty)
+
+  given rgaContext[E]: ContextDecompose[RGA[E]] = ContextDecompose.derived[RGA[E]]
+
+  given bottom[E]: Bottom[RGA[E]] = new:
+    override def empty: RGA[E] = RGA.empty
 
   sealed trait RGANode[A]
   case class Alive[A](v: TimedVal[A]) extends RGANode[A]
@@ -73,7 +78,7 @@ object RGAInterface {
 
   private def deltaState[E]: DeltaStateFactory[E] = new DeltaStateFactory[E]
 
-  implicit class RGASyntax[C, E](container: C)(using ArdtOpsContains[C, RGA[E]])
+  implicit class RGAOps[C, E](container: C)(using ArdtOpsContains[C, RGA[E]])
       extends OpsSyntaxHelper[C, RGA[E]](container) {
 
     def read(i: Int)(using QueryP): Option[E] = {
@@ -118,7 +123,7 @@ object RGAInterface {
       val nextDot     = context.nextDot(replicaID)
 
       findInsertIndex(current, i) match {
-        case None => WithContext(RGAInterface.empty[E])
+        case None => WithContext(RGA.empty[E])
         case Some(glistInsertIndex) =>
           val glistDelta = fw.map(gl => GListSyntax(gl).insert(glistInsertIndex, nextDot)(using withID(replicaID)))
           val dfDelta    = DotFun[RGANode[E]].empty.store + (nextDot -> Alive(TimedVal(e, replicaID)))
@@ -140,7 +145,7 @@ object RGAInterface {
       }
 
       findInsertIndex(current, i) match {
-        case None => WithContext(RGAInterface.empty)
+        case None => WithContext(RGA.empty)
         case Some(glistInsertIndex) =>
           val glistDelta =
             fw.map(gl => GListSyntax(gl).insertAll(glistInsertIndex, nextDots)(using summon, withID(replicaID)))
@@ -162,7 +167,7 @@ object RGAInterface {
           case Dead()   => false
         }
       }.lift(i) match {
-        case None => WithContext(RGAInterface.empty)
+        case None => WithContext(RGA.empty)
         case Some(d) =>
           deltaState[E].make(df = DotFun[RGANode[E]].empty.store + (d -> newNode))
       }

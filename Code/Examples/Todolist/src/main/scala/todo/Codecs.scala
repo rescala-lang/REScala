@@ -7,7 +7,7 @@ import kofre.causality.Dot
 import kofre.contextual.WithContext
 import kofre.decompose.containers.DeltaBufferRDT
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegister
-import kofre.decompose.interfaces.RGAInterface.{RGA, RGAEmbed}
+import kofre.decompose.interfaces.RGA
 import loci.transmitter.IdenticallyTransmittable
 import rescala.extra.lattices.delta.JsoniterCodecs._
 import todo.Todolist.replicaId
@@ -23,19 +23,19 @@ object Codecs {
     override def encodeKey(x: Dot, out: JsonWriter): Unit = out.writeKey(s"${x.time}-${x.replicaId}")
   }
 
-  implicit val codecState: JsonValueCodec[RGA[TaskRef]]               = RGAStateCodec
-  implicit val codecRGA: JsonValueCodec[DeltaBufferRDT[RGAEmbed[TaskRef]]] =
-    new JsonValueCodec[DeltaBufferRDT[RGAEmbed[TaskRef]]] {
+  implicit val codecState: JsonValueCodec[WithContext[RGA[TaskRef]]]               = RGAStateCodec
+  implicit val codecRGA: JsonValueCodec[DeltaBufferRDT[RGA[TaskRef]]] =
+    new JsonValueCodec[DeltaBufferRDT[RGA[TaskRef]]] {
       override def decodeValue(
           in: JsonReader,
-          default: DeltaBufferRDT[RGAEmbed[TaskRef]]
-      ): DeltaBufferRDT[RGAEmbed[TaskRef]] = {
+          default: DeltaBufferRDT[RGA[TaskRef]]
+      ): DeltaBufferRDT[RGA[TaskRef]] = {
         val state = codecState.decodeValue(in, default.state)
-        new DeltaBufferRDT[RGAEmbed[TaskRef]](state, replicaId, List())
+        new DeltaBufferRDT[RGA[TaskRef]](state, replicaId, List())
       }
-      override def encodeValue(x: DeltaBufferRDT[RGAEmbed[TaskRef]], out: JsonWriter): Unit =
+      override def encodeValue(x: DeltaBufferRDT[RGA[TaskRef]], out: JsonWriter): Unit =
         codecState.encodeValue(x.state, out)
-      override def nullValue: DeltaBufferRDT[RGAEmbed[TaskRef]] = DeltaBufferRDT[RGAEmbed[TaskRef]](replicaId)
+      override def nullValue: DeltaBufferRDT[RGA[TaskRef]] = DeltaBufferRDT[RGA[TaskRef]](replicaId)
     }
 
   implicit val transmittableList: IdenticallyTransmittable[RGA[TaskRef]] =

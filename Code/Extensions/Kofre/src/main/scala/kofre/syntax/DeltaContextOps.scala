@@ -75,15 +75,11 @@ trait OpsSyntaxHelper[C, L](container: C) {
   final type CausalP         = PermCausal[C]
   final type CausalMutationP = PermCausalMutate[C, L]
 
-  final type MutationID = MutationIdP ?=> C
-  final type Mutation   = MutationP ?=> C
-  final type Query[T]   = QueryP ?=> T
-
   final protected def current(using perm: QueryP): L                                     = perm.query(container)
   final protected def replicaID(using perm: IdentifierP): Defs.Id                        = perm.replicaId(container)
   extension [A](c: WithContext[A]) def inheritId(using IdentifierP): WithNamedContext[A] = c.named(replicaID)
   final protected def context(using perm: CausalP): CausalContext                        = perm.context(container)
-  extension (l: L)(using perm: MutationP) def mutator                                    = perm.mutate(container, l)
+  extension (l: L)(using perm: MutationP) def mutator: C                                 = perm.mutate(container, l)
   extension (l: WithContext[L])(using perm: CausalMutationP) def mutator = perm.mutateContext(container, l)
 
 }

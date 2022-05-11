@@ -5,9 +5,10 @@ import kofre.causality.{CausalContext, Dot}
 import kofre.contextual.AsCausalContext
 import kofre.base.Lattice.Operators
 import kofre.syntax.{ArdtOpsContains, PermCausal, PermCausalMutate, PermQuery, WithNamedContext}
+import scala.util.NotGiven
 
 case class WithContext[A](store: A, context: CausalContext) {
-  def map[B](f: A => B): WithContext[B] = WithContext(f(store), context)
+  def map[B](f: A => B): WithContext[B]                  = WithContext(f(store), context)
   def named(id: kofre.base.Defs.Id): WithNamedContext[A] = WithNamedContext(id, this)
 }
 
@@ -15,9 +16,9 @@ case class WithContext[A](store: A, context: CausalContext) {
 object WithContext {
 
   def empty[A: Bottom]: WithContext[A] = WithContext(Bottom.empty[A], CausalContext.empty)
-  def apply[A](a: A): WithContext[A] = WithContext(a, CausalContext.empty)
+  def apply[A](a: A): WithContext[A]   = WithContext(a, CausalContext.empty)
 
-  given bottomInstance[A: Bottom]: Bottom[WithContext[A]] with {
+  given bottomInstance[A: Bottom](using NotGiven[Bottom[WithContext[A]]]): Bottom[WithContext[A]] with {
     override def empty: WithContext[A] = WithContext.this.empty
   }
 
@@ -31,6 +32,7 @@ object WithContext {
   given CausalWithDotMapLattice[K, V: AsCausalContext: ContextLattice]: Lattice[WithContext[Map[K, V]]] =
     ContextLattice.dotMapLattice
 
+  given latticeLift[L: DecomposeLattice]: DecomposeLattice[WithContext[L]] = DecomposeLattice.derived
   given syntaxPermissions[L](using ContextLattice[L]): PermCausalMutate[WithContext[L], L]
     with {
     override def mutateContext(c: WithContext[L], delta: WithContext[L]): WithContext[L] = c merged delta

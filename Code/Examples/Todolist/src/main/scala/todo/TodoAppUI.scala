@@ -18,7 +18,7 @@ import scalatags.JsDom.{Attr, TypedTag}
 import todo.Codecs._
 import todo.Todolist.replicaId
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax
-import kofre.decompose.interfaces.RGAInterface.{RGA, RGASyntax}
+import kofre.decompose.interfaces.RGA.{RGA, RGAOps}
 import kofre.decompose.containers.DeltaBufferRDT
 
 class TodoAppUI(val storagePrefix: String) {
@@ -54,9 +54,9 @@ class TodoAppUI(val storagePrefix: String) {
           Seq(
             createTodo.event act taskOps.handleCreateTodo(current),
             removeAll.event dyn { dt => _ => taskOps.handleRemoveAll(current, dt) },
-            new RGASyntax(current).toList.map(_.removed) act taskOps.handleRemove(current),
+            new RGAOps(current).toList.map(_.removed) act taskOps.handleRemove(current),
             deltaEvt act taskOps.handleDelta(current)
-          )
+            )
         }
       }(codecRGA)
 

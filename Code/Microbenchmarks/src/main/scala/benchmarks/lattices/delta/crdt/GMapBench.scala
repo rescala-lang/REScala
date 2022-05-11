@@ -1,7 +1,9 @@
 package benchmarks.lattices.delta.crdt
 
+import kofre.base.DecomposeLattice
+import kofre.contextual.{ContextDecompose, ContextLattice}
 import kofre.decompose.containers.DeltaBufferRDT
-import kofre.decompose.interfaces.EnableWinsFlag
+import kofre.decompose.interfaces.{EnableWinsFlag, GMapInterface}
 import kofre.decompose.interfaces.GMapInterface.GMap
 import kofre.decompose.interfaces.GMapInterface.GMapSyntax
 import org.openjdk.jmh.annotations._
@@ -28,9 +30,9 @@ class GMapBench {
 
   @Setup
   def setup(): Unit = {
-    map = (0 until numEntries).foldLeft(DeltaBufferRDT[Contained]("a")) {
+    map = (0 until numEntries).foldLeft(DeltaBufferRDT.empty("a", GMapInterface.empty[Int, EnableWinsFlag]): SUT) {
       case (rdc: SUT, i) =>
-        rdc.mutateKeyNamedCtx(i)(_.enable())
+        rdc.mutateKeyNamedCtx(i)(_.enable())(DeltaBufferRDT.contextPermissions, DeltaBufferRDT.contextPermissions, implicitly[ContextDecompose[EnableWinsFlag]])
     }
   }
 

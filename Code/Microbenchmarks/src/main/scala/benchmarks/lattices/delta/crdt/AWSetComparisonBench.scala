@@ -1,9 +1,9 @@
 package benchmarks.lattices.delta.crdt
 
 import kofre.base.DecomposeLattice
+import kofre.contextual.WithContext
 import kofre.predef.AddWinsSet
 import org.openjdk.jmh.annotations._
-import kofre.syntax.PermIdMutate
 
 import java.util.concurrent.TimeUnit
 
@@ -19,7 +19,7 @@ class AWSetComparisonBench {
   @Param(Array("0", "1", "10", "100", "1000"))
   var setSize: Int = _
 
-  type State = AddWinsSet[String]
+  type State = WithContext[AddWinsSet[String]]
 
   var setAState: State        = _
   var setBState: State        = _
@@ -28,7 +28,7 @@ class AWSetComparisonBench {
 
   private def createSet(replicaID: String): State = {
     (0 until setSize).foldLeft(DecomposeLattice[State].empty) { (s, i) =>
-      val delta = s.add(s"${i.toString}$replicaID")(PermIdMutate.withID(replicaID))
+      val delta = s.named(replicaID).add(s"${i.toString}$replicaID").anon
       DecomposeLattice[State].merge(s, delta)
     }
   }
@@ -38,7 +38,7 @@ class AWSetComparisonBench {
     setAState = createSet("a")
     setBState = createSet("b")
 
-    plusOneDelta = setBState.add("hallo welt")(PermIdMutate.withID("b"))
+    plusOneDelta = setBState.named("b").add("hallo welt").anon
     setAStatePlusOne = DecomposeLattice[State].merge(setAState, setBState)
   }
 
@@ -46,7 +46,7 @@ class AWSetComparisonBench {
   def create(): State = createSet("c")
 
   @Benchmark
-  def addOne(): State = setAState.add("Hallo Welt")(PermIdMutate.withID("a"))
+  def addOne(): State = setAState.named("a").add("Hallo Welt").anon
 
   @Benchmark
   def merge(): State = DecomposeLattice[State].merge(setAState, setBState)

@@ -1,6 +1,7 @@
 package kofre.predef
 
 import kofre.base.{Bottom, DecomposeLattice, Defs}
+import kofre.contextual.ContextDecompose
 import kofre.syntax.PermIdMutate.withID
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper}
 
@@ -9,6 +10,8 @@ case class Epoche[E](counter: Defs.Time, value: E)
 object Epoche {
 
   def empty[E: Bottom]: Epoche[E] = Epoche(0, Bottom[E].empty)
+
+  given contextDecompose[E: DecomposeLattice]: ContextDecompose[Epoche[E]] = ContextDecompose.UIJDLatticeAsDecomposableDotStore
 
 
   implicit class EpocheSyntax[C, E](container: C)(using ArdtOpsContains[C, Epoche[E]])

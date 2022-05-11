@@ -20,7 +20,7 @@ class EWFlagBench {
 
   @Setup
   def setup(): Unit = {
-    flagEnabled = DeltaBufferRDT[EnableWinsFlag]("a").enable()
+    flagEnabled = DeltaBufferRDT.empty("a", EnableWinsFlag.empty).enable()
     flagDisabled = DeltaBufferRDT[EnableWinsFlag]("b").disable()
   }
 

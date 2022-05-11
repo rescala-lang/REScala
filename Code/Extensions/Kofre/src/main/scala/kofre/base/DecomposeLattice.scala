@@ -83,14 +83,6 @@ object DecomposeLattice {
 
   inline def tupleAsDecomposeLattice[T <: Tuple: Mirror.ProductOf]: DecomposeLattice[T] = derived
 
-  given contextUIJDLattice[D](using wcd: ContextDecompose[D]): DecomposeLattice[WithContext[D]] =
-    new DecomposeFromLattice[WithContext[D]](Lattice.contextLattice) {
-      export wcd.decompose
-      // needs manual override as export can not override :(
-      override def lteq(left: WithContext[D], right: WithContext[D]): Boolean = wcd.lteq(left, right)
-      override def empty: WithContext[D] = WithContext(wcd.empty.store, CausalContext.empty)
-    }
-
   inline def derived[T <: Product](using pm: Mirror.ProductOf[T]): DecomposeLattice[T] = {
     val lattices: Tuple = summonAll[Tuple.Map[pm.MirroredElemTypes, DecomposeLattice]]
     new ProductDecomposeLattice[T](lattices, pm)

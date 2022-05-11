@@ -9,8 +9,8 @@ import rescala.extra.lattices.delta.JsoniterCodecs._
 
 import rescala.extra.replication.AntiEntropy
 import NetworkGenerators._
-import kofre.decompose.interfaces.RGAInterface.RGA
-import kofre.decompose.interfaces.RGAInterface.RGASyntax
+import kofre.decompose.interfaces.RGA.RGA
+import kofre.decompose.interfaces.RGA.RGAOps
 import kofre.decompose.containers.{AntiEntropyCRDT, Network}
 
 import scala.collection.mutable

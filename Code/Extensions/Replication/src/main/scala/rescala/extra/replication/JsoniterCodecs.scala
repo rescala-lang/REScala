@@ -5,12 +5,12 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, J
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import kofre.protocol.AuctionInterface.AuctionData
 import kofre.decompose.interfaces.GListInterface.{Elem, GListNode}
-import kofre.decompose.interfaces.RGAInterface.RGANode
+import kofre.decompose.interfaces.RGA.RGANode
 import kofre.decompose.TimedVal
 import kofre.causality.{CausalContext, Dot}
 import kofre.decompose.interfaces.LexCounterInterface.LexPair
 import kofre.contextual.WithContext
-import kofre.decompose.interfaces.EnableWinsFlag
+import kofre.decompose.interfaces.{EnableWinsFlag, RGA}
 import kofre.predef.{AddWinsSet, Epoche, GrowOnlyCounter, PosNegCounter}
 
 import scala.annotation.nowarn
@@ -74,7 +74,7 @@ object JsoniterCodecs {
 
   /** GCounter */
   implicit def MapStringIntStateCodec: JsonValueCodec[Map[String, Int]] = JsonCodecMaker.make
-  implicit def GCounterStateCodec: JsonValueCodec[GrowOnlyCounter] = JsonCodecMaker.make
+  implicit def GCounterStateCodec: JsonValueCodec[GrowOnlyCounter]      = JsonCodecMaker.make
 
   /** GList */
 
@@ -132,12 +132,17 @@ object JsoniterCodecs {
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   /** RGA */
+
   @nowarn("msg=never used")
-  implicit def RGAStateCodec[E: JsonValueCodec]: JsonValueCodec[WithContext[(
-      Epoche[Map[GListNode[TimedVal[Dot]], Elem[TimedVal[Dot]]]],
-      Map[Dot, RGANode[E]]
-  )]] =
-    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
+  implicit def RGAStateCodec[E: JsonValueCodec]: JsonValueCodec[WithContext[RGA[E]]] = {
+    implicit def RGAleftCodec
+        : JsonValueCodec[Epoche[Map[GListNode[TimedVal[Dot]], Elem[TimedVal[Dot]]]]] =
+      JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
+
+    implicit def RGArightCodec: JsonValueCodec[Map[Dot, RGANode[E]]] =
+      JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
+    JsonCodecMaker.make
+  }
 
   /** Rubis */
 

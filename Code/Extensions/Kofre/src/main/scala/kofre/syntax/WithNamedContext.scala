@@ -24,4 +24,6 @@ object WithNamedContext {
     override def query(c: WithNamedContext[L]): L               = c.anon.store
     override def context(c: WithNamedContext[L]): CausalContext = c.anon.context
   }
+
+  given syntaxPassthrough[L]: ArdtOpsContains[WithNamedContext[L], L] = new ArdtOpsContains[WithNamedContext[L], L] {}
 }

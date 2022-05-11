@@ -1,6 +1,6 @@
 package kofre.decompose.containers
 
-import kofre.base.{Bottom, DecomposeLattice}
+import kofre.base.{Bottom, DecomposeLattice, Defs}
 import kofre.causality.CausalContext
 import kofre.contextual.{ContextDecompose, ContextLattice, WithContext}
 import kofre.decompose.Delta
@@ -44,7 +44,9 @@ object DeltaBufferRDT {
   given containsRelation[State]: ArdtOpsContains[DeltaBufferRDT[State], State] = new ArdtOpsContains[DeltaBufferRDT[State], State] {}
 
 
-  given contextPermissions[L: ContextDecompose]: (PermIdMutate[DeltaBufferRDT[L], L] & PermCausalMutate[DeltaBufferRDT[L], L]) = CRDTInterface.allPermissions
+  given contextPermissions[L: ContextDecompose]: (PermIdMutate[DeltaBufferRDT[L], L] & PermCausalMutate[DeltaBufferRDT[L], L]) = CRDTInterface.dottedPermissions
+
+  given fullPermission[L: DecomposeLattice]:  PermIdMutate[DeltaBufferRDT[L], L] = CRDTInterface.fullPermissions
 
   /** Creates a new PNCounter instance
     *
@@ -52,4 +54,6 @@ object DeltaBufferRDT {
     */
   def apply[State](replicaID: String)(using bot: Bottom[WithContext[State]]): DeltaBufferRDT[State] =
     new DeltaBufferRDT[State](bot.empty, replicaID, List())
+
+  def empty[State](replicaID: Defs.Id, init: State): DeltaBufferRDT[State] = new DeltaBufferRDT[State](WithContext(init), replicaID, List())
 }
