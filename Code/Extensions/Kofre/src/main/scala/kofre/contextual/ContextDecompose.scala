@@ -13,6 +13,7 @@ import scala.deriving.Mirror
 /** DecomposableDotStore is the typeclass trait for dot stores,
   * data structures that are part of causal CRDTs and make use of dots to track causality.
   */
+@implicitNotFound("Not a decomposable lattice in a context: »${A}«")
 trait ContextDecompose[A] extends ContextLattice[A], DecomposeLattice[WithContext[A]] {
   def lteq(left: WithContext[A], right: WithContext[A]): Boolean
 }
