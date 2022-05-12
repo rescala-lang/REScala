@@ -4,6 +4,7 @@ import kofre.decompose.interfaces.TwoPSetInterface.TwoPSet
 import org.openjdk.jmh.annotations._
 import kofre.decompose.interfaces.TwoPSetInterface.TwoPSetSyntax
 import kofre.decompose.containers.DeltaBufferRDT
+import kofre.decompose.interfaces.TwoPSetInterface
 
 import java.util.concurrent.TimeUnit
 
@@ -23,7 +24,7 @@ class TwoPSetBench {
 
   @Setup
   def setup(): Unit = {
-    set = (0 until size).foldLeft(DeltaBufferRDT[TwoPSet[Int]]("a")) {
+    set = (0 until size).foldLeft(DeltaBufferRDT("a", TwoPSetInterface.empty[Int])) {
       case (s, e) => s.insert(e)
     }
   }

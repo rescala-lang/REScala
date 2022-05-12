@@ -25,7 +25,7 @@ class RGABench {
 
   @Setup
   def setup(): Unit = {
-    rga = DeltaBufferRDT[RGA[Int]]("a").appendAll(0 until rgaSize)
+    rga = DeltaBufferRDT("a", RGA.empty[Int]).appendAll(0 until rgaSize)
     rgaCleared = rga.clear()
   }
 

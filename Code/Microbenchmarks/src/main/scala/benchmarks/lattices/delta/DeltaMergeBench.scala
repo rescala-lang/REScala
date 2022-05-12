@@ -1,6 +1,5 @@
 package benchmarks.lattices.delta
 
-import kofre.base.Bottom
 import kofre.causality.{CausalContext, Dot}
 import kofre.contextual.{ContextDecompose, WithContext}
 import kofre.decompose.interfaces.RGA
@@ -32,7 +31,7 @@ class DeltaMergeBench {
 
   @Setup
   def setup(): Unit = {
-    val baseState: WithContext[RGA[Long]] = Bottom.empty[WithContext[RGA[Long]]]
+    val baseState: WithContext[RGA[Long]] = WithContext(RGA.empty)
 
     val deltaState: WithContext[RGA[Long]] =
       baseState.named("").insertAll(0, 0L to size).anon

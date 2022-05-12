@@ -15,6 +15,8 @@ import kofre.contextual.WithContext
   * When multiple values are written concurrently, reading the MVRegister returns a set holding all these values.
   */
 object MVRegisterInterface {
+  def empty[A]: MVRegister[A] = Map.empty
+
   type MVRegister[A] = Map[Dot, A]
 
   implicit class MVRegisterSyntax[C, A](container: C) extends OpsSyntaxHelper[C, MVRegister[A]](container) {

@@ -1,33 +1,17 @@
 package kofre.rga
 
 import kofre.base.Defs.Id
-import kofre.base.Lattice
+import kofre.base.{DecomposeLattice, Lattice}
 import kofre.causality.CausalContext
 import kofre.decompose.interfaces.EnableWinsFlag
 import kofre.predef.AddWinsSet
 import kofre.predef.AddWinsSet
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermIdMutate, WithNamedContext}
-import kofre.contextual.{ContextLattice, WithContext}
+import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, WithContext}
 
 import scala.collection.{AbstractIterator, immutable}
 
-case class DeltaSequenceOrder(inner: Map[Vertex, Vertex]) {
-
-  def addRightEdgeDelta(left: Vertex, insertee: Vertex): DeltaSequenceOrder = {
-    inner.get(left) match {
-      case None        => DeltaSequenceOrder(Map(left -> insertee))
-      case Some(right) =>
-        // sort order during merge based on most recent on towards start
-        if (right.timestamp > insertee.timestamp) addRightEdgeDelta(right, insertee)
-        else DeltaSequenceOrder(Map((left -> insertee), (insertee -> right)))
-    }
-  }
-
-  def addRightEdge(left: Vertex, insertee: Vertex): DeltaSequenceOrder =
-    DeltaSequenceOrder(inner ++ addRightEdgeDelta(left, insertee).inner)
-}
-
-case class DeltaSequence[A](vertices: AddWinsSet[Vertex], edges: DeltaSequenceOrder, values: Map[Vertex, A])
+case class DeltaSequence[A](vertices: AddWinsSet[Vertex], edges: DeltaSequence.DeltaSequenceOrder, values: Map[Vertex, A])
 
 object DeltaSequence {
 
@@ -40,6 +24,23 @@ object DeltaSequence {
       DeltaSequenceOrder(Map()),
       Map.empty,
     )
+
+  case class DeltaSequenceOrder(inner: Map[Vertex, Vertex]) {
+
+    def addRightEdgeDelta(left: Vertex, insertee: Vertex): DeltaSequenceOrder = {
+      inner.get(left) match {
+        case None        => DeltaSequenceOrder(Map(left -> insertee))
+        case Some(right) =>
+          // sort order during merge based on most recent on towards start
+          if (right.timestamp > insertee.timestamp) addRightEdgeDelta(right, insertee)
+          else DeltaSequenceOrder(Map((left -> insertee), (insertee -> right)))
+      }
+    }
+
+    def addRightEdge(left: Vertex, insertee: Vertex): DeltaSequenceOrder =
+      DeltaSequenceOrder(inner ++ addRightEdgeDelta(left, insertee).inner)
+  }
+
 
   implicit class DeltaSequenceOps[C, A](container: C)(using ArdtOpsContains[C, DeltaSequence[A]])
       extends OpsSyntaxHelper[C, DeltaSequence[A]](container) {
@@ -100,8 +101,13 @@ object DeltaSequence {
       }
   }
 
-  implicit def deltaSequenceLattice[A]: ContextLattice[DeltaSequence[A]] =
-    new ContextLattice[DeltaSequence[A]] {
+  given deltaSequenceLattice[A]: ContextDecompose[DeltaSequence[A]] =
+    new ContextDecompose[DeltaSequence[A]] {
+
+
+      override def decompose(a: WithContext[DeltaSequence[A]]): Iterable[WithContext[DeltaSequence[A]]] = Iterable(a)
+      override def empty: WithContext[DeltaSequence[A]] = WithContext(DeltaSequence.empty)
+
 
       private val noMapConflictsLattice: Lattice[A] = (left: A, right: A) =>
         if (left == right) left

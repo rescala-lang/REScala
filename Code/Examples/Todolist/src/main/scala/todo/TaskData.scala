@@ -73,10 +73,10 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
       taskID: String,
       task: Option[TaskData],
   ): TaskRefData = {
-    val lwwInit = DeltaBufferRDT[LWWRegister[TaskData]](replicaId)
+    val lwwInit = DeltaBufferRDT(replicaId, LWWRegisterInterface.empty[TaskData])
 
     val lww: DeltaBufferRDT[LWWRegister[TaskData]] = task match {
-      case None => (MVRegisterSyntax(lwwInit).write(TimedVal(TaskData("<empty>"), lwwInit.replicaID, 0, 0)))
+      case None => (MVRegisterSyntax(lwwInit).write(TimedVal(TaskData("<empty>"), lwwInit.replicaID, 0, 0))(DeltaBufferRDT.contextPermissions, DeltaBufferRDT.contextPermissions))
       case Some(v) => LWWRegisterInterface.LWWRegisterSyntax(lwwInit).write(v)
     }
 

@@ -24,7 +24,7 @@ class GCounterBench {
   def setup(): Unit = {
     counter = (1 until numReplicas).foldLeft(DeltaBufferRDT.empty("0", GrowOnlyCounter.zero).inc()) {
       case (c, n) =>
-        val delta = DeltaBufferRDT[GrowOnlyCounter](n.toString).inc().deltaBuffer.head
+        val delta = DeltaBufferRDT(n.toString, GrowOnlyCounter.zero).inc().deltaBuffer.head
         c.applyDelta(delta)
     }
   }

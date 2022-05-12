@@ -4,6 +4,7 @@ import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
 import org.openjdk.jmh.annotations._
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegisterSyntax
 import kofre.decompose.containers.DeltaBufferRDT
+import kofre.decompose.interfaces.MVRegisterInterface
 
 import java.util.concurrent.TimeUnit
 
@@ -23,9 +24,9 @@ class MVRegisterBench {
 
   @Setup
   def setup(): Unit = {
-    reg = (0 until numWrites).foldLeft(DeltaBufferRDT[MVRegister[Int]]("-1")) {
+    reg = (0 until numWrites).foldLeft(DeltaBufferRDT("-1", MVRegisterInterface.empty[Int])) {
       case (r, i) =>
-        val delta = DeltaBufferRDT[MVRegister[Int]](i.toString).write(i).deltaBuffer.head
+        val delta = DeltaBufferRDT(i.toString, MVRegisterInterface.empty[Int]).write(i).deltaBuffer.head
         r.applyDelta(delta)
     }
   }

@@ -9,6 +9,8 @@ import kofre.syntax.OpsSyntaxHelper
   * elements that were removed from the set once can never be re-added.
   */
 object TwoPSetInterface {
+  def empty[E]: TwoPSet[E] = (Set.empty, Set.empty)
+
   type TwoPSet[E] = (Set[E], Set[E])
 
   implicit class TwoPSetSyntax[C, E](container: C) extends OpsSyntaxHelper[C, TwoPSet[E]](container) {

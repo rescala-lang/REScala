@@ -1,7 +1,7 @@
 package test.kofre
 
 import kofre.causality.{CausalContext, Dot, VectorClock}
-import kofre.contextual.ContextDecompose
+import kofre.contextual.{AsCausalContext, ContextDecompose}
 import kofre.contextual.ContextDecompose.{DotFun, DotMap}
 import kofre.primitives.{CausalQueue, LastWriterWins, MultiValueRegister}
 import kofre.sets.ORSet
@@ -90,16 +90,16 @@ object DataGenerator {
 
   implicit def arbDotFun[A](implicit g: Gen[A]): Arbitrary[Map[Dot, A]] = Arbitrary(genDotFun)
 
-  def genDotMap[K, V: ContextDecompose](implicit gk: Gen[K], gv: Gen[V]): Gen[Map[K, V]] = (for {
+  def genDotMap[K, V: AsCausalContext](implicit gk: Gen[K], gv: Gen[V]): Gen[Map[K, V]] = (for {
     n      <- Gen.posNum[Int]
     keys   <- Gen.containerOfN[List, K](n, gk)
     values <- Gen.containerOfN[List, V](n, gv)
   } yield (keys zip values).toMap).suchThat { m =>
-    val dotsIter = m.values.flatMap(v => ContextDecompose[V].dots(v).iterator)
+    val dotsIter = m.values.flatMap(v => AsCausalContext[V].dots(v).iterator)
     val dotsSet  = dotsIter.toSet
     dotsIter.size == dotsSet.size
   }
 
-  implicit def arbDotMap[K, V: ContextDecompose](implicit gk: Gen[K], gv: Gen[V]): Arbitrary[Map[K, V]] =
+  implicit def arbDotMap[K, V: AsCausalContext](implicit gk: Gen[K], gv: Gen[V]): Arbitrary[Map[K, V]] =
     Arbitrary(genDotMap)
 }

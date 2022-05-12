@@ -21,7 +21,7 @@ class AWSetBench {
   var set: DeltaBufferRDT[AddWinsSet[Int]] = _
 
   def createBySize(size: Int): DeltaBufferRDT[AddWinsSet[Int]] =
-    (0 until size).foldLeft(DeltaBufferRDT[AddWinsSet[Int]]("a")) {
+    (0 until size).foldLeft(DeltaBufferRDT.empty("a", AddWinsSet.empty[Int])) {
       case (s, e) => s.add(e)
     }
 
@@ -37,7 +37,7 @@ class AWSetBench {
   def add(): DeltaBufferRDT[AddWinsSet[Int]] = set.add(-1)
 
   @Benchmark
-  def addAll(): DeltaBufferRDT[AddWinsSet[Int]] = DeltaBufferRDT[AddWinsSet[Int]]("a").addAll(0 until size)
+  def addAll(): DeltaBufferRDT[AddWinsSet[Int]] = DeltaBufferRDT.empty("a", AddWinsSet.empty[Int]).addAll(0 until size)
 
   @Benchmark
   def remove(): DeltaBufferRDT[AddWinsSet[Int]] = set.remove(0)

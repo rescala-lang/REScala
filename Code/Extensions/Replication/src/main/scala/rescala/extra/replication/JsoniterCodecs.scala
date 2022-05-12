@@ -1,7 +1,7 @@
 package rescala.extra.lattices.delta
 
 import cats.collections.Diet
-import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter}
+import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import kofre.protocol.AuctionInterface.AuctionData
 import kofre.decompose.interfaces.GListInterface.{Elem, GListNode}
@@ -10,7 +10,7 @@ import kofre.decompose.TimedVal
 import kofre.causality.{CausalContext, Dot}
 import kofre.decompose.interfaces.LexCounterInterface.LexPair
 import kofre.contextual.WithContext
-import kofre.decompose.interfaces.{EnableWinsFlag, RGA}
+import kofre.decompose.interfaces.{EnableWinsFlag, GMap, RGA}
 import kofre.predef.{AddWinsSet, Epoche, GrowOnlyCounter, PosNegCounter}
 
 import scala.annotation.nowarn
@@ -157,4 +157,17 @@ object JsoniterCodecs {
 
   @nowarn("msg=never used")
   implicit def TwoPSetStateCodec[E: JsonValueCodec]: JsonValueCodec[(Set[E], Set[E])] = JsonCodecMaker.make
+
+  @nowarn("msg=never used")
+  implicit def gmapCodec[K: JsonKeyCodec, V: JsonValueCodec]: JsonValueCodec[GMap[K, V]] = JsonCodecMaker.make
+
+
+
+
+  @nowarn("msg=never used")
+  implicit def withContextWrapper[E: JsonValueCodec]: JsonValueCodec[WithContext[E]] = JsonCodecMaker.make
+
+
+  implicit def spcecificCodec:  JsonValueCodec[WithContext[GMap[Int, AddWinsSet[Int]]]] = JsonCodecMaker.make
+
 }

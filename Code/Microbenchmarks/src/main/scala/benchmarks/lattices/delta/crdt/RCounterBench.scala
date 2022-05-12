@@ -4,6 +4,7 @@ import org.openjdk.jmh.annotations._
 import kofre.decompose.interfaces.RCounterInterface.RCounter
 import kofre.decompose.interfaces.RCounterInterface.RCounterSyntax
 import kofre.decompose.containers.DeltaBufferRDT
+import kofre.decompose.interfaces.RCounterInterface
 
 import java.util.concurrent.TimeUnit
 
@@ -23,9 +24,9 @@ class RCounterBench {
 
   @Setup
   def setup(): Unit = {
-    counter = (1 until numReplicas).foldLeft(DeltaBufferRDT[RCounter]("0").increment()) {
+    counter = (1 until numReplicas).foldLeft(DeltaBufferRDT("0", RCounterInterface.zero).increment()) {
       case (c, n) =>
-        val delta = DeltaBufferRDT[RCounter](n.toString).increment().deltaBuffer.head
+        val delta = DeltaBufferRDT(n.toString, RCounterInterface.zero).increment().deltaBuffer.head
         c.applyDelta(delta)
     }
   }

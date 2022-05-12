@@ -3,7 +3,7 @@ package test.kofre
 import kofre.base.DecomposeLattice
 import kofre.causality.{ArrayRanges, CausalContext, Dot}
 import kofre.contextual.ContextDecompose.*
-import kofre.contextual.{ContextDecompose, WithContext}
+import kofre.contextual.{AsCausalContext, ContextDecompose, WithContext}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -13,13 +13,13 @@ class DotSetTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
   "dots" in forAll { (ds: CausalContext) =>
     assert(
-      DotSet.dots(ds) == ds,
-      s"DotSet.dots should return the set itself, but ${DotSet.dots(ds)} does not equal $ds"
+      AsCausalContext[CausalContext].dots(ds) == ds,
+      s"DotSet.dots should return the set itself, but ${AsCausalContext[CausalContext].dots(ds)} does not equal $ds"
     )
   }
 
   "empty" in assert(
-    DotSet.empty.isEmpty,
+    AsCausalContext[CausalContext].empty.isEmpty,
     s"DotSet.empty should be empty, but ${DotSet.empty} is not empty"
   )
 
@@ -98,19 +98,19 @@ class DotFunTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
   "dots" in forAll { (df: Map[Dot, Int]) =>
     assert(
-      DotFun[Int].dots(df).toSet == df.keySet,
-      s"DotFun.dots should return the keys of the DotFun itself, but ${DotFun[Int].dots(df)} does not equal $df"
+      AsCausalContext[Map[Dot, Int]].dots(df).toSet == df.keySet,
+      s"DotFun.dots should return the keys of the DotFun itself, but ${AsCausalContext[Map[Dot, Int]].dots(df)} does not equal $df"
     )
   }
 
   "empty" in assert(
-    DotFun[Int].empty.isEmpty,
+    AsCausalContext[Map[Dot, Int]].empty.isEmpty,
     s"DotFun.empty should be empty, but ${DotFun[Int].empty} is not empty"
   )
 
   "merge" in forAll { (dfA: Map[Dot, Int], deletedA: CausalContext, dfB: Map[Dot, Int], deletedB: CausalContext) =>
-    val dotsA = DotFun[Int].dots(dfA)
-    val dotsB = DotFun[Int].dots(dfB)
+    val dotsA = AsCausalContext[Map[Dot, Int]].dots(dfA)
+    val dotsB = AsCausalContext[Map[Dot, Int]].dots(dfB)
     val ccA   = dotsA union deletedA
     val ccB   = dotsB union deletedB
 
@@ -119,7 +119,7 @@ class DotFunTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
         WithContext(dfA, ccA),
         WithContext(dfB, ccB)
       )
-    val dotsMerged = DotFun[Int].dots(dfMerged)
+    val dotsMerged = AsCausalContext[Map[Dot, Int]].dots(dfMerged)
 
     assert(
       ccMerged == (ccA union ccB),
@@ -163,8 +163,8 @@ class DotFunTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   }
 
   "leq" in forAll { (dfA: Map[Dot, Int], deletedA: CausalContext, dfB: Map[Dot, Int], deletedB: CausalContext) =>
-    val ccA = DotFun[Int].dots(dfA) union deletedA
-    val ccB = DotFun[Int].dots(dfB) union deletedB
+    val ccA = AsCausalContext[Map[Dot, Int]].dots(dfA) union deletedA
+    val ccB = AsCausalContext[Map[Dot, Int]].dots(dfB) union deletedB
 
     assert(
       DotFun[Int].lteq(WithContext(dfA, ccA), WithContext(dfA, ccA)),
@@ -188,13 +188,14 @@ class DotFunTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   }
 
   "decompose" in forAll { (df: Map[Dot, Int], deleted: CausalContext) =>
-    val cc = DotFun[Int].dots(df) union deleted
+    val cc = AsCausalContext[Map[Dot, Int]].dots(df) union deleted
 
-    val decomposed = DotFun[Int].decompose(WithContext(df, (cc)))
-    val WithContext(dfMerged, ccMerged) = decomposed.foldLeft(WithContext(DotFun[Int].empty, CausalContext.empty)) {
-      case (WithContext(dfA, ccA), WithContext(dfB, ccB)) =>
-        DecomposeLattice[WithContext[Map[Dot, Int]]].merge(WithContext(dfA, ccA), WithContext(dfB, ccB))
-    }
+    val decomposed = DotFun[Int].decompose(WithContext(df, cc))
+    val WithContext(dfMerged, ccMerged) =
+      decomposed.foldLeft(WithContext(DotFun[Int].empty.store, CausalContext.empty)) {
+        case (WithContext(dfA, ccA), WithContext(dfB, ccB)) =>
+          DecomposeLattice[WithContext[Map[Dot, Int]]].merge(WithContext(dfA, ccA), WithContext(dfB, ccB))
+      }
 
     assert(
       dfMerged == df,
@@ -211,14 +212,16 @@ class DotMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
   "dots" in forAll { (dm: Map[Int, CausalContext]) =>
     assert(
-      DotMap[Int, CausalContext].dots(dm).toSet == dm.values.flatMap(DotSet.dots(_).iterator).toSet,
-      s"DotMap.dots should return the keys of the DotMap itself, but ${DotMap[Int, CausalContext].dots(dm)} does not equal $dm"
+      AsCausalContext[Map[Int, CausalContext]].dots(dm).toSet == dm.values.flatMap(
+        AsCausalContext[CausalContext].dots(_).iterator
+      ).toSet,
+      s"DotMap.dots should return the keys of the DotMap itself, but ${AsCausalContext[Map[Int, CausalContext]].dots(dm)} does not equal $dm"
     )
   }
 
   "empty" in assert(
-    DotMap[Int, CausalContext].empty.isEmpty,
-    s"DotMap.empty should be empty, but ${DotMap[Int, CausalContext].empty} is not empty"
+    AsCausalContext[Map[Int, CausalContext]].empty.isEmpty,
+    s"DotMap.empty should be empty, but ${AsCausalContext[Map[Int, CausalContext]].empty} is not empty"
   )
 
   "merge" in forAll {
@@ -228,8 +231,8 @@ class DotMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
         dmB: Map[Int, CausalContext],
         deletedB: CausalContext
     ) =>
-      val dotsA = DotMap[Int, CausalContext].dots(dmA)
-      val dotsB = DotMap[Int, CausalContext].dots(dmB)
+      val dotsA = AsCausalContext[Map[Int, CausalContext]].dots(dmA)
+      val dotsB = AsCausalContext[Map[Int, CausalContext]].dots(dmB)
       val ccA   = dotsA union deletedA
       val ccB   = dotsB union deletedB
 
@@ -238,7 +241,7 @@ class DotMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
           WithContext(dmA, (ccA)),
           WithContext(dmB, (ccB))
         )
-      val dotsMerged = DotMap[Int, CausalContext].dots(dmMerged)
+      val dotsMerged = AsCausalContext[Map[Int, CausalContext]].dots(dmMerged)
 
       assert(
         ccMerged == (ccA union ccB),
@@ -262,8 +265,8 @@ class DotMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
         (dmA.keySet union dmB.keySet).foreach { k =>
           val vMerged =
             DotSet.mergePartial(
-              WithContext(dmA.getOrElse(k, DotSet.empty), (ccA)),
-              WithContext(dmB.getOrElse(k, DotSet.empty), (ccB))
+              WithContext(dmA.getOrElse(k, CausalContext.empty), (ccA)),
+              WithContext(dmB.getOrElse(k, CausalContext.empty), (ccB))
             )
 
           assert(
@@ -281,8 +284,8 @@ class DotMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
         dmB: Map[Int, CausalContext],
         deletedB: CausalContext
     ) =>
-      val ccA = DotMap[Int, CausalContext].dots(dmA) union deletedA
-      val ccB = DotMap[Int, CausalContext].dots(dmB) union deletedB
+      val ccA = AsCausalContext[Map[Int, CausalContext]].dots(dmA) union deletedA
+      val ccB = AsCausalContext[Map[Int, CausalContext]].dots(dmB) union deletedB
 
       assert(
         DotMap[Int, CausalContext].lteq(
@@ -309,16 +312,20 @@ class DotMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   }
 
   "decompose" in forAll { (dm: Map[Int, CausalContext], deleted: CausalContext) =>
-    val cc = DotMap[Int, CausalContext].dots(dm) union deleted
+    val cc = AsCausalContext[Map[Int, CausalContext]].dots(dm) union deleted
 
-    val decomposed = DotMap[Int, CausalContext].decompose(WithContext(dm, (cc)))
-    val WithContext(dmMerged, ccMerged) =
-      decomposed.foldLeft(WithContext(DotMap[Int, CausalContext].empty, CausalContext.empty)) {
+    val decomposed: Iterable[WithContext[Map[Int, CausalContext]]] =
+      DotMap[Int, CausalContext].decompose(WithContext(dm, (cc)))
+    val wc: WithContext[Map[Int, CausalContext]] =
+      decomposed.foldLeft(WithContext(AsCausalContext[Map[Int, CausalContext]].empty, CausalContext.empty)) {
         case (WithContext(dmA, ccA), WithContext(dmB, ccB)) =>
           DecomposeLattice[WithContext[Map[Int, CausalContext]]].merge(WithContext(dmA, ccA), WithContext(dmB, ccB))
       }
 
-    val dotsIter      = dm.values.flatMap(DotSet.dots(_).iterator)
+    val dmMerged: Map[Int, CausalContext] = wc.store
+    val ccMerged                          = wc.context
+
+    val dotsIter      = dm.values.flatMap(_.iterator)
     val dotsSet       = dotsIter.toSet
     val duplicateDots = dotsIter.size != dotsSet.size
 
@@ -329,7 +336,7 @@ class DotMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     if (!duplicateDots) {
       dm.keys.foreach { k =>
         assert(
-          dm(k).toSet == dmMerged.getOrElse(k, DotSet.empty).toSet,
+          dm(k).toSet == dmMerged.getOrElse(k, CausalContext.empty).toSet,
           s"Merging the list of atoms returned by DotMap.decompose should produce an equal Causal Context, but on key $k the $ccMerged does not equal $cc"
         )
       }

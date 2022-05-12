@@ -3,6 +3,7 @@ package benchmarks.lattices.delta.crdt
 import kofre.decompose.interfaces.GListInterface.GList
 import org.openjdk.jmh.annotations._
 import kofre.decompose.containers.DeltaBufferRDT
+import kofre.decompose.interfaces.GListInterface
 
 import java.util.concurrent.TimeUnit
 
@@ -22,7 +23,7 @@ class GListBench {
 
   @Setup
   def setup(): Unit = {
-    list = (0 until listSize).foldLeft(DeltaBufferRDT[GList[Int]]("a")) {
+    list = (0 until listSize).foldLeft(DeltaBufferRDT("a", GListInterface.empty[Int])) {
       case (c, i) => c.insert(0, i)
     }
   }

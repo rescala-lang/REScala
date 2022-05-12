@@ -51,7 +51,7 @@ class TodoAppUI(val storagePrefix: String) {
     val deltaEvt = Evt[WithNamedContext[RGA[TaskRef]]]
 
     val tasksRDT: Signal[DeltaBufferRDT[RGA[TaskRef]]] =
-      Storing.storedAs(storagePrefix, DeltaBufferRDT[RGA[TaskRef]](replicaId)) { init =>
+      Storing.storedAs(storagePrefix, DeltaBufferRDT(replicaId, RGA.empty[TaskRef])) { init =>
         Events.foldAll(init) { current =>
           Seq(
             createTodo.event act taskOps.handleCreateTodo(current),

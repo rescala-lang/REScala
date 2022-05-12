@@ -29,7 +29,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
   val size: String     = "size"
   val exit: String     = "exit"
 
-  var set: DeltaBufferRDT[AddWinsSet[Int]] = DeltaBufferRDT(id)
+  var set: DeltaBufferRDT[AddWinsSet[Int]] = DeltaBufferRDT.empty(id, AddWinsSet.empty)
 
   var checkpoint: Int = 0
 

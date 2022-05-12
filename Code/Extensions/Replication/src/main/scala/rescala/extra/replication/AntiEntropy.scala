@@ -3,7 +3,7 @@ package rescala.extra.replication
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReaderException, JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import kofre.base.DecomposeLattice
-import kofre.contextual.WithContext
+import kofre.contextual.{ContextDecompose, WithContext}
 import kofre.decompose.containers.Network
 import kofre.syntax.WithNamedContext
 import rescala.extra.replication.AntiEntropy.{AckMsg, DeltaMsg}
@@ -27,7 +27,7 @@ class AntiEntropy[A](
     val replicaID: String,
     network: Network,
     neighbors: mutable.Buffer[String] = mutable.Buffer()
-)(implicit val codec: JsonValueCodec[A], withContextLattice: DecomposeLattice[WithContext[A]]) extends kofre.decompose.containers.AntiEntropy[A] {
+)(implicit val codec: JsonValueCodec[WithContext[A]], withContextLattice: ContextDecompose[A]) extends kofre.decompose.containers.AntiEntropy[A] {
 
   override def state: WithContext[A] = fullState
 

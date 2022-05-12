@@ -11,6 +11,8 @@ import kofre.syntax.OpsSyntaxHelper
   */
 object LexCounterInterface {
 
+  def empty: LexCounter = Map.empty
+
   /** A LexPair is a lexicographic pair of two values that is used with a lexicographical ordering in the state of
     * [[interfaces.LexCounterInterface]].
     */

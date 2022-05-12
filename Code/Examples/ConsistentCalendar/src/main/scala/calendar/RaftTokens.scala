@@ -75,5 +75,5 @@ case class RaftTokens(
 
 object RaftTokens {
   def init(replicaID: String): RaftTokens =
-    RaftTokens(replicaID, RaftState(Set(replicaID)), DeltaBufferRDT(replicaID), DeltaBufferRDT(replicaID))
+    RaftTokens(replicaID, RaftState(Set(replicaID)), DeltaBufferRDT(replicaID, AddWinsSet.empty[Token]), DeltaBufferRDT(replicaID,AddWinsSet.empty[Token]))
 }

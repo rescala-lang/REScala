@@ -18,6 +18,9 @@ import kofre.causality.Dot
   * in "The problem with embedded CRDT counters and a solution", see [[https://dl.acm.org/doi/abs/10.1145/2911151.2911159?casa_token=D7n88K9dW7gAAAAA:m3WhHMFZxoCwGFk8DVoqJXBJpwJwrqKMLqtgKo_TSiwU_ErWgOZjo4UqYqDCb-bG3iJlXc_Ti7aB9w here]]
   */
 object RCounterInterface {
+
+  val zero: RCounter = WithContext(Map.empty)
+
   implicit def IntPairAsUIJDLattice: DecomposeLattice[(Int, Int)] = new DecomposeLattice[(Int, Int)] {
     override def lteq(left: (Int, Int), right: (Int, Int)): Boolean = (left, right) match {
       case ((linc, ldec), (rinc, rdec)) =>

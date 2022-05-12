@@ -22,6 +22,7 @@ object AddWinsSet {
   def empty[E]: AddWinsSet[E] = AddWinsSet(Map.empty)
 
   given contextDecompose[E]: ContextDecompose[AddWinsSet[E]] = ContextDecompose.derived
+  given asCausalContext[E]: AsCausalContext[AddWinsSet[E]] = AsCausalContext.derived
 
   implicit class AWSetSyntax[C, E](container: C) extends OpsSyntaxHelper[C, AddWinsSet[E]](container) {
 
@@ -97,7 +98,7 @@ object AddWinsSet {
     def clear()(using QueryP, CausalMutationP): C = {
       val dm = current.inner
       deltaState[E].make(
-        cc = AsCausalContext.DotMapInstance.dots(dm)
+        cc = AsCausalContext.DotMapInstance[E, CausalContext].dots(dm)
       ).mutator
     }
 

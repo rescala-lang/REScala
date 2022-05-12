@@ -22,7 +22,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
   val minAtomsForCheckpoint = 100
   val maxAtomsForCheckpoint = 500
 
-  var set: DeltaBufferRDT[AddWinsSet[Int]] = DeltaBufferRDT(id)
+  var set: DeltaBufferRDT[AddWinsSet[Int]] = DeltaBufferRDT.empty(id, AddWinsSet.empty)
 
   var checkpoints: Map[String, Int] = Map(id -> 0)
 

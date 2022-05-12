@@ -7,7 +7,6 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.lattices.delta.JsoniterCodecs._
 import rescala.extra.replication.AntiEntropy
 import kofre.decompose.interfaces.ORMapInterface.ORMap
-import kofre.syntax.PermIdMutate
 import kofre.decompose.interfaces.ORMapInterface.ORMapSyntax
 import kofre.decompose.containers.{AntiEntropyCRDT, Network}
 import kofre.predef.AddWinsSet
@@ -36,15 +35,15 @@ class ORMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     val map = {
       val added = add.foldLeft(AntiEntropyCRDT[ORMap[Int, AddWinsSet.Embedded[Int]]](aea)) {
         case (m, e) =>
-          m.mutateKey(k, (id, st) => AddWinsSet(st).add(e)(PermIdMutate.withID(id)).inner)
+          m.mutateKeyNamedCtx(k)(_.map(AddWinsSet(_)).add(e).map(_.inner))
       }
 
       remove.foldLeft(added) {
-        case (m, e) => m.mutateKey(k, (id, st) => AddWinsSet(st).remove(e)(PermIdMutate.withID(id)).inner)
+        case (m, e) => m.mutateKeyNamedCtx(k)(_.map(AddWinsSet(_)).remove(e).map(_.inner))
       }
     }
 
-    val mapElements = AddWinsSet(map.queryKey(k)).elements
+    val mapElements = map.queryKey(k).map(AddWinsSet(_)).elements
 
     assert(
       mapElements == set.elements,
@@ -62,17 +61,17 @@ class ORMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
 
     val map = {
       val added = add.foldLeft(AntiEntropyCRDT[ORMap[Int, AddWinsSet.Embedded[Int]]](aea)) {
-        case (m, e) => m.mutateKey(k, (id, st) => AddWinsSet(st).add(e)(PermIdMutate.withID(id)).inner)
+        case (m, e) => m.mutateKeyNamedCtx(k)(_.map(AddWinsSet(_)).add(e).map(_.inner))
       }
 
       remove.foldLeft(added) {
-        case (m, e) => m.mutateKey(k, (id, st) => st.remove(e)(PermIdMutate.withID(id), implicitly))
+        case (m, e) => m.mutateKeyNamedCtx(k)(_.map(AddWinsSet(_)).remove(e).map(_.inner))
       }
     }
 
     val removed = map.remove(k)
 
-    val queryResult = AddWinsSet(removed.queryKey(k)).elements
+    val queryResult = removed.queryKey(k).map(AddWinsSet(_)).elements
 
     assert(
       queryResult == empty.elements,

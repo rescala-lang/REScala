@@ -19,7 +19,7 @@ object GCounterGenerators {
     val ae      = new AntiEntropy[GrowOnlyCounter]("a", network, mutable.Buffer())
 
     (0 until n).foldLeft(AntiEntropyCRDT[GrowOnlyCounter](ae)) {
-      case (c, _) => c.inc()
+      case (c, _) => c.inc()(AntiEntropyCRDT.allPermissions)
     }
   }
 

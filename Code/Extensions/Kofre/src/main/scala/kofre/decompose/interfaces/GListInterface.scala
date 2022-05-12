@@ -23,6 +23,8 @@ object GListInterface {
   case class Elem[E](value: E) extends GListNode[E]
 
   type GList[E] = Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]]
+  
+  def empty[E]: GList[E] = Map.empty
 
   implicit def GListAsUIJDLattice[E]: DecomposeLattice[GList[E]] =
     new DecomposeLattice[Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]]] {

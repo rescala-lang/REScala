@@ -22,9 +22,9 @@ class PNCounterBench {
 
   @Setup
   def setup(): Unit = {
-    counter = (1 until numReplicas).foldLeft(DeltaBufferRDT[PosNegCounter]("0").inc()) {
+    counter = (1 until numReplicas).foldLeft(DeltaBufferRDT("0", PosNegCounter.zero).inc()) {
       case (c, n) =>
-        val delta = DeltaBufferRDT[PosNegCounter](n.toString).inc().deltaBuffer.head
+        val delta = DeltaBufferRDT(n.toString, PosNegCounter.zero).inc().deltaBuffer.head
         c.applyDelta(delta)
     }
   }

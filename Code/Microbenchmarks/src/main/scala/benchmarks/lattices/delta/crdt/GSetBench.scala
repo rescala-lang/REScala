@@ -21,7 +21,7 @@ class GSetBench {
 
   @Setup
   def setup(): Unit = {
-    set = (0 until size).foldLeft(DeltaBufferRDT[Set[Int]]("a")) {
+    set = (0 until size).foldLeft(DeltaBufferRDT("a", Set.empty[Int])) {
       case (s, e) => s.insert(e)
     }
   }

@@ -53,4 +53,6 @@ object DeltaBufferRDT {
     new DeltaBufferRDT[State](bot.empty, replicaID, List())
 
   def empty[State](replicaID: Defs.Id, init: State): DeltaBufferRDT[State] = new DeltaBufferRDT[State](WithContext(init), replicaID, List())
+
+  def apply[State](replicaID: Defs.Id, init: State): DeltaBufferRDT[State] = empty(replicaID, init)
 }
