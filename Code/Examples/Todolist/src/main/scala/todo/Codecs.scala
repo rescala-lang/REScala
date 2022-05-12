@@ -38,7 +38,7 @@ object Codecs {
       override def nullValue: DeltaBufferRDT[RGA[TaskRef]] = DeltaBufferRDT[RGA[TaskRef]](replicaId)
     }
 
-  implicit val transmittableList: IdenticallyTransmittable[RGA[TaskRef]] =
+  implicit val transmittableList: IdenticallyTransmittable[WithContext[RGA[TaskRef]]] =
     IdenticallyTransmittable()
 
   implicit val todoTaskCodec: JsonValueCodec[TaskData] = JsonCodecMaker.make
@@ -62,4 +62,6 @@ object Codecs {
       }
     }
 
+  
+  
 }

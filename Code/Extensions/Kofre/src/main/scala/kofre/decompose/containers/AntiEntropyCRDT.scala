@@ -40,9 +40,6 @@ class AntiEntropyCRDT[State](
 
 object AntiEntropyCRDT {
 
-  given containsRelation[State]: ArdtOpsContains[AntiEntropyCRDT[State], State] =
-    new ArdtOpsContains[AntiEntropyCRDT[State], State] {}
-
   given allPermissions[L: ContextDecompose]: (PermIdMutate[AntiEntropyCRDT[L], L] & PermCausalMutate[AntiEntropyCRDT[L], L]) =
     CRDTInterface.dottedPermissions
 

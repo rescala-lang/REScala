@@ -4,6 +4,8 @@ import kofre.base.Defs.Id
 import kofre.base.{DecomposeLattice, Defs, Lattice}
 import kofre.causality.CausalContext
 import kofre.contextual.WithContext
+import kofre.decompose.containers.{AntiEntropyCRDT, DeltaBufferRDT}
+
 import scala.annotation.implicitNotFound
 
 /** The basic idea behind this machinery is to allow lattices of type L to be stored in a Container of type C.
@@ -61,8 +63,12 @@ object PermIdMutate:
 @implicitNotFound("Could not show that »${C}\ncontains ${L}")
 trait ArdtOpsContains[C, L]
 object ArdtOpsContains:
-  given identityContains[L]: ArdtOpsContains[L, L] with                                                             {}
-  given transitiveContains[A, B, C](using ArdtOpsContains[A, B], ArdtOpsContains[B, C]): ArdtOpsContains[A, C] with {}
+  given identityContains[L]: ArdtOpsContains[L, L]                                                             = new {}
+  given transitiveContains[A, B, C](using ArdtOpsContains[A, B], ArdtOpsContains[B, C]): ArdtOpsContains[A, C] = new {}
+  given deltaBufferContains[State]: ArdtOpsContains[DeltaBufferRDT[State], State] =
+    new ArdtOpsContains[DeltaBufferRDT[State], State] {}
+  given antiEntropyContains[State]: ArdtOpsContains[AntiEntropyCRDT[State], State] =
+    new ArdtOpsContains[AntiEntropyCRDT[State], State] {}
 
 /** Helps to define operations that update any container [[C]] containing values of type [[L]]
   * using a scheme where mutations return deltas which are systematically applied.

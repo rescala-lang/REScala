@@ -1,10 +1,11 @@
 package todo
 
-import rescala.default._
-import kofre.decompose.Delta
-import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax
-import kofre.decompose.interfaces.RGA.{RGA, RGAOps}
 import kofre.decompose.containers.DeltaBufferRDT
+import kofre.decompose.interfaces.RGA
+import kofre.decompose.interfaces.RGA.RGAOps
+import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax
+import kofre.syntax.WithNamedContext
+import rescala.default._
 
 import java.util.concurrent.ThreadLocalRandom
 import scala.annotation.nowarn
@@ -38,12 +39,12 @@ class TaskOps(@nowarn taskRefs: TaskReferences) {
     }
   }
 
-  def handleDelta(s: => State)(delta: Delta[RGA[TaskRef]]): State = {
-    val list = s
+  def handleDelta(state: => State)(delta: WithNamedContext[RGA[TaskRef]]): State = {
+    val deltaBuffered = state
 
-    val newList = list.resetDeltaBuffer().applyDelta(delta)
+    val newList = deltaBuffered.resetDeltaBuffer().applyDelta(delta)
 
-    val oldIDs = new RGAOps(list).toList.toSet
+    val oldIDs = new RGAOps[State, TaskRef](deltaBuffered).toList.toSet
     val newIDs = newList.toList.toSet
 
     val removed = oldIDs -- newIDs

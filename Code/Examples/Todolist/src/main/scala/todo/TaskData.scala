@@ -9,7 +9,6 @@ import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegister
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegisterSyntax
 import kofre.syntax.WithNamedContext
 import loci.registry.Binding
-import loci.transmitter.IdenticallyTransmittable
 import org.scalajs.dom.UIEvent
 import org.scalajs.dom.html.{Input, LI}
 import rescala.default._
@@ -70,9 +69,6 @@ object TaskReferences {
 
 class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
 
-  implicit val transmittableLWW: IdenticallyTransmittable[LWWRegister[TaskData]] =
-    IdenticallyTransmittable()
-
   def createTaskRef(
       taskID: String,
       task: Option[TaskData],
@@ -128,6 +124,10 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
         )
       )
     }(Codecs.codecLww)
+
+    import Codecs.transmittableLWW
+    import Codecs.codecLwwState
+    import loci.serializer.jsoniterScala._
 
     LociDist.distributeDeltaCRDT(crdt, deltaEvt, Todolist.registry)(
       Binding[WithContext[LWWRegister[TaskData]] => Unit](taskID)

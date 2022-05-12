@@ -41,9 +41,6 @@ class DeltaBufferRDT[State](
 
 object DeltaBufferRDT {
 
-  given containsRelation[State]: ArdtOpsContains[DeltaBufferRDT[State], State] = new ArdtOpsContains[DeltaBufferRDT[State], State] {}
-
-
   given contextPermissions[L: ContextDecompose]: (PermIdMutate[DeltaBufferRDT[L], L] & PermCausalMutate[DeltaBufferRDT[L], L]) = CRDTInterface.dottedPermissions
 
   given fullPermission[L: DecomposeLattice]:  PermIdMutate[DeltaBufferRDT[L], L] = CRDTInterface.fullPermissions

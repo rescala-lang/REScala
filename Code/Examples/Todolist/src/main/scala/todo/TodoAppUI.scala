@@ -2,7 +2,7 @@ package todo
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import kofre.decompose.Delta
+import kofre.contextual.WithContext
 import loci.registry.Binding
 import loci.serializer.jsoniterScala._
 import org.scalajs.dom.html.{Div, Input, LI}
@@ -18,8 +18,10 @@ import scalatags.JsDom.{Attr, TypedTag}
 import todo.Codecs._
 import todo.Todolist.replicaId
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax
-import kofre.decompose.interfaces.RGA.{RGA, RGAOps}
+import kofre.decompose.interfaces.RGA
 import kofre.decompose.containers.DeltaBufferRDT
+import kofre.decompose.interfaces.RGA.RGAOps
+import kofre.syntax.WithNamedContext
 
 class TodoAppUI(val storagePrefix: String) {
 
@@ -46,7 +48,7 @@ class TodoAppUI(val storagePrefix: String) {
     val taskrefs = TaskReferences(toggleAll.event, storagePrefix)
     val taskOps  = new TaskOps(taskrefs)
 
-    val deltaEvt = Evt[Delta[RGA[TaskRef]]]
+    val deltaEvt = Evt[WithNamedContext[RGA[TaskRef]]]
 
     val tasksRDT: Signal[DeltaBufferRDT[RGA[TaskRef]]] =
       Storing.storedAs(storagePrefix, DeltaBufferRDT[RGA[TaskRef]](replicaId)) { init =>
@@ -61,7 +63,7 @@ class TodoAppUI(val storagePrefix: String) {
       }(codecRGA)
 
     LociDist.distributeDeltaCRDT(tasksRDT, deltaEvt, Todolist.registry)(
-      Binding[RGA[TaskRef] => Unit]("tasklist")
+      Binding[WithContext[RGA[TaskRef]] => Unit]("tasklist")
     )
 
     val tasksList: Signal[List[TaskRef]] = tasksRDT.map { _.toList }
