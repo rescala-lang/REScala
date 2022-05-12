@@ -74,9 +74,9 @@ object ContextLattice {
   given dotMapLattice[K, V: ContextLattice: Bottom]: ContextLattice[Map[K, V]] with {
     override def mergePartial(left: WithContext[Map[K, V]], right: WithContext[Map[K, V]]): Map[K, V] = {
       (left.store.keySet union right.store.keySet).flatMap { key =>
-        val leftCausalStore  = WithContext(left.store.getOrElse(key, Bottom.empty[V]), left.context)
-        val rightCausalStore = WithContext(right.store.getOrElse(key, Bottom.empty[V]), right.context)
-        val res              = ContextLattice[V].mergePartial(leftCausalStore, rightCausalStore)
+        val leftCausalStore  = left.map(_.getOrElse(key, Bottom.empty[V]))
+        val rightCausalStore = right.map(_.getOrElse(key, Bottom.empty[V]))
+        val res              = leftCausalStore conmerge rightCausalStore
         if Bottom.empty[V] == res then None else Some(key -> res)
       }.toMap
     }

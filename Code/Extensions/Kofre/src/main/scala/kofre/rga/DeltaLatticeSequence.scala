@@ -74,40 +74,38 @@ object DeltaSequence {
       }.mutator
     }
 
-      def toList(using QueryP): List[A] = iterator.toList
+    def toList(using QueryP): List[A] = iterator.toList
 
-      def iterator(using QueryP): Iterator[A] = vertexIterator.map(v => current.values(v))
+    def iterator(using QueryP): Iterator[A] = vertexIterator.map(v => current.values(v))
 
-      def vertexIterator(using QueryP): Iterator[Vertex] =
-        new AbstractIterator[Vertex] {
-          var lastVertex: Vertex = Vertex.start
+    def vertexIterator(using QueryP): Iterator[Vertex] =
+      new AbstractIterator[Vertex] {
+        var lastVertex: Vertex = Vertex.start
 
-          var currentSuccessor: Option[Vertex] = successor(lastVertex)
+        var currentSuccessor: Option[Vertex] = successor(lastVertex)
 
-          override def hasNext: Boolean = currentSuccessor.isDefined
+        override def hasNext: Boolean = currentSuccessor.isDefined
 
-          override def next(): Vertex = {
-            currentSuccessor match {
-              case Some(v) =>
-                lastVertex = v
-                currentSuccessor = successor(v)
-                v
-              case _ => throw new NoSuchElementException(
-                  "Requesting iterator value after Vertex.end!"
-                )
-            }
+        override def next(): Vertex = {
+          currentSuccessor match {
+            case Some(v) =>
+              lastVertex = v
+              currentSuccessor = successor(v)
+              v
+            case _ => throw new NoSuchElementException(
+                "Requesting iterator value after Vertex.end!"
+              )
           }
         }
+      }
   }
 
   implicit def deltaSequenceLattice[A]: ContextLattice[DeltaSequence[A]] =
     new ContextLattice[DeltaSequence[A]] {
 
-      private val noMapConflictsLattice: Lattice[A] = new Lattice[A] {
-        override def merge(left: A, right: A): A =
-          if (left == right) left
-          else throw new IllegalStateException(s"assumed there would be no conflict, but have $left and $right")
-      }
+      private val noMapConflictsLattice: Lattice[A] = (left: A, right: A) =>
+        if (left == right) left
+        else throw new IllegalStateException(s"assumed there would be no conflict, but have $left and $right")
 
       override def mergePartial(
           left: WithContext[DeltaSequence[A]],

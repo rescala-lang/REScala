@@ -1,7 +1,7 @@
 package kofre.base
 
 import kofre.base.Lattice.{Operators, mapLattice, optionLattice, setLattice}
-import kofre.base.{Bottom, Decompose, Lattice}
+import kofre.base.{Bottom, Lattice}
 import kofre.causality.CausalContext
 import kofre.contextual.{ContextDecompose, WithContext}
 
@@ -11,14 +11,24 @@ import scala.deriving.Mirror
 
 /** Decomposition tries to decompose a lattice into its smallest constituents.
   * The only requirement is that merging the decomposed results produces the original state.
-  * Requires a bottom to enable automatic decomposition of Product types */
+  * Requires a bottom to enable automatic decomposition of Product types
+  */
 @implicitNotFound("Not a decompose lattice »${A}«")
-trait DecomposeLattice[A] extends Lattice[A], Bottom[A], Decompose[A] {
+trait DecomposeLattice[A] extends Lattice[A], Bottom[A] {
 
   /** computes delta without state */
   def diff(state: A, delta: A): Option[A] = {
     decompose(delta).filter(!lteq(_, state)).reduceOption(merge)
   }
+
+  /** Decompose a state into smaller parts.
+    * Note that the goal here is small individual storage size at reasonable computational cost.
+    * Minimalism of returned results is not guaranteed.
+    * It is also not guaranteed that the result does not overlap.
+    */
+  def decompose(a: A): Iterable[A]
+
+  extension (a: A) def decomposed: Iterable[A] = decompose(a)
 
 }
 

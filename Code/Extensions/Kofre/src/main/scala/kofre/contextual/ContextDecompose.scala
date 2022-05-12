@@ -1,7 +1,7 @@
 package kofre.contextual
 
 import kofre.base.Lattice.Operators
-import kofre.base.{Bottom, Decompose, DecomposeLattice, Lattice}
+import kofre.base.{Bottom, DecomposeLattice, Lattice}
 import kofre.causality.{CausalContext, Dot}
 import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, WithContext}
 import kofre.decompose.interfaces
@@ -10,6 +10,7 @@ import scala.annotation.implicitNotFound
 import scala.compiletime.{erasedValue, summonInline}
 import scala.deriving.Mirror
 import scala.compiletime.summonAll
+
 
 /** DecomposableDotStore is the typeclass trait for dot stores,
   * data structures that are part of causal CRDTs and make use of dots to track causality.
