@@ -5,7 +5,9 @@ import kofre.base.Defs.Id
 import kofre.causality.CausalContext
 import kofre.contextual.{WithContext, ContextLattice}
 
-class WithNamedContext[L](val replicaID: Defs.Id, val anon: WithContext[L])
+class WithNamedContext[L](val replicaID: Defs.Id, val anon: WithContext[L]) {
+  def map[B](f: L => B): WithNamedContext[B] = new WithNamedContext(replicaID, anon.map(f))
+}
 
 object WithNamedContext {
 

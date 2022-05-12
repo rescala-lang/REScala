@@ -47,6 +47,8 @@ object ContextLattice {
     }
   }
 
+  given liftLattice[A: Lattice]: ContextLattice[A] = (left, right) => Lattice[A].merge(left.store, right.store)
+
   /** The context describes dots that have been seen.
     * The store describes which value is associated for a given dot.
     * Dots that are removed from the store are considered deleted.

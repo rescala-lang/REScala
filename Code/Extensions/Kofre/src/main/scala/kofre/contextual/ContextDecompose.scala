@@ -11,11 +11,10 @@ import scala.compiletime.{erasedValue, summonInline}
 import scala.deriving.Mirror
 import scala.compiletime.summonAll
 
-
 /** DecomposableDotStore is the typeclass trait for dot stores,
   * data structures that are part of causal CRDTs and make use of dots to track causality.
   */
-@implicitNotFound("Not a lattice when in a context: »${A}«")
+@implicitNotFound("Not a decompose lattice when in a context: »${A}«")
 trait ContextDecompose[A] extends ContextLattice[A], DecomposeLattice[WithContext[A]]
 
 object ContextDecompose {
@@ -59,9 +58,10 @@ object ContextDecompose {
         }
       }
 
-    override def lteq(left: WithContext[T], right: WithContext[T]): Boolean = Range(0, lattices.productArity).forall { i =>
-      lat(i).lteq(left.map(_.productElement(i)), right.map(_.productElement(i)))
-    }
+    override def lteq(left: WithContext[T], right: WithContext[T]): Boolean =
+      Range(0, lattices.productArity).forall { i =>
+        lat(i).lteq(left.map(_.productElement(i)), right.map(_.productElement(i)))
+      }
   }
 
   abstract class FromConlattice[A](wcm: ContextLattice[A]) extends ContextDecompose[A] {
@@ -106,16 +106,13 @@ object ContextDecompose {
       override def empty: WithContext[Map[K, V]] = WithContext(Map.empty)
 
       override def lteq(left: WithContext[Map[K, V]], right: WithContext[Map[K, V]]): Boolean = {
-        val firstCondition = left.context.forall(right.context.contains)
+        def firstCondition = (left.context subtract right.context).isEmpty
 
         def secondConditionHelper(keys: Iterable[K]): Boolean = keys.forall { k =>
-          val leftV  = left.store.getOrElse(k, Bottom.empty[V])
-          val rightV = right.store.getOrElse(k, Bottom.empty[V])
-
-          ContextDecompose[V].lteq(WithContext(leftV, left.context), WithContext(rightV, right.context))
+          left.map(_.getOrElse(k, Bottom.empty[V])) <= right.map(_.getOrElse(k, Bottom.empty[V]))
         }
 
-        val secondCondition = secondConditionHelper(left.store.keys) && secondConditionHelper(right.store.keys)
+        def secondCondition = secondConditionHelper(left.store.keys) && secondConditionHelper(right.store.keys)
 
         firstCondition && secondCondition
       }

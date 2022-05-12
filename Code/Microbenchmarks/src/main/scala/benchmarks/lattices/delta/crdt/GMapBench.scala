@@ -1,11 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
-import kofre.base.DecomposeLattice
-import kofre.contextual.{ContextDecompose, ContextLattice}
 import kofre.decompose.containers.DeltaBufferRDT
-import kofre.decompose.interfaces.{EnableWinsFlag, GMapInterface}
-import kofre.decompose.interfaces.GMapInterface.GMap
-import kofre.decompose.interfaces.GMapInterface.GMapSyntax
+import kofre.decompose.interfaces.{EnableWinsFlag, GMap}
 import org.openjdk.jmh.annotations._
 
 import java.util.concurrent.TimeUnit
@@ -30,31 +26,31 @@ class GMapBench {
 
   @Setup
   def setup(): Unit = {
-    map = (0 until numEntries).foldLeft(DeltaBufferRDT.empty("a", GMapInterface.empty[Int, EnableWinsFlag]): SUT) {
+    map = (0 until numEntries).foldLeft(DeltaBufferRDT.empty("a", GMap.empty[Int, EnableWinsFlag]): SUT) {
       case (rdc: SUT, i) =>
-        rdc.mutateKeyNamedCtx(i)(_.enable())(DeltaBufferRDT.contextPermissions, DeltaBufferRDT.contextPermissions, implicitly[ContextDecompose[EnableWinsFlag]])
+        rdc.mutateKeyNamedCtx(i, EnableWinsFlag.empty)(_.enable())
     }
   }
 
   @Benchmark
-  def queryExisting(): Boolean = map.queryKey(0).read
+  def queryExisting() = map.queryKey(0).map(_.read)
 
   @Benchmark
-  def queryMissing(): Boolean = map.queryKey(-1).read
+  def queryMissing() = map.queryKey(-1).map(_.read)
 
   @Benchmark
-  def containsExisting(): Boolean = map.contains(0)
+  def containsExisting() = map.contains(0)
 
   @Benchmark
-  def containsMissing(): Boolean = map.contains(-1)
+  def containsMissing() = map.contains(-1)
 
   @Benchmark
   def queryAllEntries(): Iterable[Boolean] = map.queryAllEntries().map(_.read)
 
   @Benchmark
-  def mutateExisting(): SUT = map.mutateKeyNamedCtx(0)(_.disable())
+  def mutateExisting(): SUT = map.mutateKeyNamedCtx(0, EnableWinsFlag.empty)(_.disable())
 
   @Benchmark
   def mutateMissing(): SUT =
-    map.mutateKeyNamedCtx(0)(_.enable())
+    map.mutateKeyNamedCtx(0, EnableWinsFlag.empty)(_.enable())
 }

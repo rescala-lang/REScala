@@ -2,13 +2,13 @@ package tests.distribution.delta.antientropy
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import kofre.decompose.interfaces.GMapInterface.GMap
+import kofre.decompose.interfaces.GrowMap.GMap
 import kofre.syntax.PermIdMutate
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.lattices.delta.JsoniterCodecs._
 import rescala.extra.replication.AntiEntropy
-import kofre.decompose.interfaces.GMapInterface.GMapSyntax
+import kofre.decompose.interfaces.GrowMap.GMapSyntax
 import kofre.decompose.containers.{AntiEntropyCRDT, Network}
 import kofre.predef.AddWinsSet
 

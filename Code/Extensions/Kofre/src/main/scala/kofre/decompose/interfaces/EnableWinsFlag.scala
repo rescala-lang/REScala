@@ -5,7 +5,7 @@ import kofre.causality.CausalContext
 import kofre.decompose.*
 import kofre.syntax.OpsSyntaxHelper
 import kofre.contextual.ContextDecompose.*
-import kofre.contextual.{ContextDecompose, WithContext}
+import kofre.contextual.{AsCausalContext, ContextDecompose, WithContext}
 import kofre.predef.Epoche
 
 /** An EWFlag (Enable-Wins Flag) is a Delta CRDT modeling a boolean flag.
@@ -17,6 +17,10 @@ case class EnableWinsFlag(inner: CausalContext)
 object EnableWinsFlag {
 
   given latticeEWF: ContextDecompose[EnableWinsFlag] = ContextDecompose.derived
+  given asCausalContextEWF: AsCausalContext[EnableWinsFlag] with {
+    override def dots(a: EnableWinsFlag): CausalContext = a.inner
+    override def empty: EnableWinsFlag = EnableWinsFlag.empty
+  }
 
   val empty: EnableWinsFlag = EnableWinsFlag(CausalContext.empty)
 
@@ -26,14 +30,14 @@ object EnableWinsFlag {
   implicit class EnableWinsFlagOps[C](container: C) extends OpsSyntaxHelper[C, EnableWinsFlag](container) {
     def read(using QueryP): Boolean = !current.inner.isEmpty
 
-    def enable()(using IdentifierP, QueryP, CausalMutationP, CausalP): C = {
+    def enable()(using CausalMutationP, IdentifierP): C = {
       val nextDot = context.nextDot(replicaID)
       WithContext(
         EnableWinsFlag(CausalContext.single(nextDot)),
         current.inner add nextDot
       ).mutator
     }
-    def disable()(using QueryP, CausalMutationP): C = {
+    def disable()(using CausalMutationP): C = {
       WithContext(
         EnableWinsFlag(CausalContext.empty),
         current.inner

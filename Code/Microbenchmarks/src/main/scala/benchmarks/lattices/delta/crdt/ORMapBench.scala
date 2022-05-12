@@ -1,7 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
 import kofre.decompose.containers.DeltaBufferRDT
-import kofre.decompose.interfaces.EnableWinsFlag
+import kofre.decompose.interfaces.{EnableWinsFlag, ORMapInterface}
 import kofre.decompose.interfaces.ORMapInterface.{ORMap, ORMapSyntax}
 import org.openjdk.jmh.annotations._
 
@@ -25,7 +25,7 @@ class ORMapBench {
 
   @Setup
   def setup(): Unit = {
-    map = (0 until numEntries).foldLeft(DeltaBufferRDT[ORMap[Int, EnableWinsFlag]]("a")) {
+    map = (0 until numEntries).foldLeft(DeltaBufferRDT.empty[ORMap[Int, EnableWinsFlag]]("a", ORMapInterface.empty)) {
       case (m, i) => new ORMapSyntax(m).mutateKeyNamedCtx(i)(_.enable())
     }
   }

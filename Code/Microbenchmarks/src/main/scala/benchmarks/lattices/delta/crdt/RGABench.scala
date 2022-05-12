@@ -1,8 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
-import kofre.decompose.interfaces.RGA.RGA
+import kofre.decompose.interfaces.RGA
 import org.openjdk.jmh.annotations._
-import kofre.decompose.interfaces.RGA.RGAOps
 import kofre.decompose.containers.DeltaBufferRDT
 
 import java.util.concurrent.TimeUnit
