@@ -31,6 +31,14 @@ object ScalaToC {
   }
 
   inline def scalaToC(inline funName: String)(inline expr: Any): CASTNode = ${ scalaToCCode('expr, 'funName) }
+  
+  def compileAnonFun(f: Expr[_], funName: Expr[String])(using Quotes): Expr[CFunctionDecl] = {
+    import quotes.reflect.*
+    
+    compileTerm(f.asTerm, new TranslationContext()) match {
+      case funDecl: CFunctionDecl => funDecl.copy(name = funName.value.get).toExpr
+    }
+  }
 
   def compileTree(using Quotes)(tree: quotes.reflect.Tree, ctx: TranslationContext): CASTNode = {
     import quotes.reflect.*
