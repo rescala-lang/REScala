@@ -2,7 +2,7 @@ package benchmarks.lattices.delta.crdt
 
 import kofre.base.DecomposeLattice
 import kofre.contextual.WithContext
-import kofre.predef.AddWinsSet
+import kofre.datatypes.AddWinsSet
 import org.openjdk.jmh.annotations._
 
 import java.util.concurrent.TimeUnit

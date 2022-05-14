@@ -4,8 +4,8 @@ import kofre.base.Defs.Id
 import kofre.base.{DecomposeLattice, Lattice}
 import kofre.time.Dots
 import kofre.decompose.interfaces.EnableWinsFlag
-import kofre.predef.AddWinsSet
-import kofre.predef.AddWinsSet
+import kofre.datatypes.AddWinsSet
+import kofre.datatypes.AddWinsSet
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermIdMutate, WithNamedContext}
 import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, WithContext}
 

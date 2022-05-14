@@ -3,7 +3,7 @@ package decentral
 import decentral.Bindings._
 import kofre.base.DecomposeLattice
 import kofre.decompose.containers.DeltaBufferRDT
-import kofre.predef.AddWinsSet
+import kofre.datatypes.AddWinsSet
 import kofre.syntax.WithNamedContext
 import loci.transmitter.{RemoteAccessException, RemoteRef}
 

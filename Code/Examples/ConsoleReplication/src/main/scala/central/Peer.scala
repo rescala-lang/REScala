@@ -4,7 +4,7 @@ import central.Bindings._
 import kofre.base.DecomposeLattice
 import kofre.contextual.WithContext
 import kofre.decompose.containers.DeltaBufferRDT
-import kofre.predef.AddWinsSet
+import kofre.datatypes.AddWinsSet
 import kofre.syntax.WithNamedContext
 import loci.communicator.tcp.TCP
 import loci.registry.Registry

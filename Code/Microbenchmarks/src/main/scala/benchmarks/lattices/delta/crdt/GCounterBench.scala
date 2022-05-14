@@ -2,7 +2,7 @@ package benchmarks.lattices.delta.crdt
 
 import org.openjdk.jmh.annotations._
 import kofre.decompose.containers.DeltaBufferRDT
-import kofre.predef.GrowOnlyCounter
+import kofre.datatypes.GrowOnlyCounter
 
 import java.util.concurrent.TimeUnit
 

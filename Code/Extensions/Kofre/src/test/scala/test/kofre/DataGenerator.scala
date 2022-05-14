@@ -5,7 +5,7 @@ import kofre.base.{Defs, Lattice}
 import kofre.time.{Dots, Dot, VectorClock}
 import kofre.contextual.{AsCausalContext, ContextDecompose}
 import kofre.dotted.{DotFun, DotMap, DotSet}
-import kofre.predef.{GrowOnlyCounter, PosNegCounter}
+import kofre.datatypes.{GrowOnlyCounter, PosNegCounter}
 import kofre.primitives.{CausalQueue, LastWriterWins, MultiValueRegister}
 import kofre.sets.ORSet
 import org.scalacheck.{Arbitrary, Gen}

@@ -1,7 +1,7 @@
 package tests.distribution.delta.antientropy
 
 import kofre.decompose.containers.{AntiEntropyCRDT, Network}
-import kofre.predef.GrowOnlyCounter
+import kofre.datatypes.GrowOnlyCounter
 import org.scalacheck.Prop._
 import org.scalacheck.{Arbitrary, Gen}
 import rescala.extra.lattices.delta.JsoniterCodecs._

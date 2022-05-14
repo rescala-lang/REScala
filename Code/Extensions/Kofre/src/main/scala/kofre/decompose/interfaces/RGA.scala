@@ -8,7 +8,7 @@ import kofre.decompose.interfaces.GListInterface.{GListAsUIJDLattice, GListSynta
 import kofre.contextual.{ContextDecompose, ContextLattice, WithContext}
 import kofre.decompose.interfaces.RCounterInterface.RCounter
 import kofre.dotted.DotFun
-import kofre.predef.Epoche
+import kofre.datatypes.Epoche
 import kofre.syntax.PermIdMutate.withID
 
 /** An RGA (Replicated Growable Array) is a Delta CRDT modeling a list.

@@ -3,7 +3,7 @@ package kofre.encrdt.lattices
 import kofre.base.{DecomposeLattice, Lattice}
 import kofre.time.Dots
 import kofre.contextual.WithContext
-import kofre.predef.AddWinsSet
+import kofre.datatypes.AddWinsSet
 import kofre.syntax.{PermIdMutate, WithNamedContext}
 import kofre.syntax.PermIdMutate.withID
 

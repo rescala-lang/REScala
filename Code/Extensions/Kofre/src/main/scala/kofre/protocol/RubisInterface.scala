@@ -3,8 +3,8 @@ package kofre.protocol
 import kofre.base.{Bottom, DecomposeLattice}
 import kofre.contextual.{ContextDecompose, WithContext}
 import kofre.decompose.*
-import kofre.predef.AddWinsSet.AWSetSyntax
-import kofre.predef.AddWinsSet
+import kofre.datatypes.AddWinsSet.AWSetSyntax
+import kofre.datatypes.AddWinsSet
 import kofre.protocol.AuctionInterface
 import kofre.protocol.AuctionInterface.Bid.User
 import kofre.syntax.{OpsSyntaxHelper, PermIdMutate}

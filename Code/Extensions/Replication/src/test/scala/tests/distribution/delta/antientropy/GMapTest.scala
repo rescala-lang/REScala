@@ -6,7 +6,7 @@ import kofre.decompose.interfaces.GMap
 import rescala.extra.lattices.delta.JsoniterCodecs._
 import rescala.extra.replication.AntiEntropy
 import kofre.decompose.containers.{AntiEntropyCRDT, Network}
-import kofre.predef.AddWinsSet
+import kofre.datatypes.AddWinsSet
 import scala.collection.mutable
 
 class GMapTest extends munit.ScalaCheckSuite {

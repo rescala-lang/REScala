@@ -1,7 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
 import org.openjdk.jmh.annotations._
-import kofre.predef.PosNegCounter
+import kofre.datatypes.PosNegCounter
 import kofre.decompose.containers.DeltaBufferRDT
 
 import java.util.concurrent.TimeUnit

@@ -5,8 +5,8 @@ import central.Bindings._
 import central.SyncMessage.{AppointmentMessage, CalendarState, FreeMessage, RaftMessage, WantMessage}
 import kofre.base.DecomposeLattice
 import kofre.contextual.{ContextDecompose, WithContext}
-import kofre.predef.AddWinsSet
-import kofre.predef.AddWinsSet.AWSetSyntax
+import kofre.datatypes.AddWinsSet
+import kofre.datatypes.AddWinsSet.AWSetSyntax
 import kofre.syntax.WithNamedContext
 import loci.communicator.tcp.TCP
 import loci.registry.Registry

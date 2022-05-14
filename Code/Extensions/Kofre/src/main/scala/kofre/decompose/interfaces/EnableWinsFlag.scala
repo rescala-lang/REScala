@@ -7,7 +7,7 @@ import kofre.syntax.OpsSyntaxHelper
 import kofre.contextual.ContextDecompose.*
 import kofre.contextual.{AsCausalContext, ContextDecompose, WithContext}
 import kofre.dotted.DotSet
-import kofre.predef.Epoche
+import kofre.datatypes.Epoche
 
 /** An EWFlag (Enable-Wins Flag) is a Delta CRDT modeling a boolean flag.
   *

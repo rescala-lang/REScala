@@ -7,7 +7,7 @@ import rescala.extra.lattices.delta.JsoniterCodecs._
 import rescala.extra.replication.AntiEntropy
 import NetworkGenerators._
 import kofre.decompose.containers.{AntiEntropyCRDT, Network}
-import kofre.predef.AddWinsSet
+import kofre.datatypes.AddWinsSet
 import org.scalacheck.Prop._
 
 import scala.collection.mutable

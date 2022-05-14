@@ -3,7 +3,7 @@ package decentral
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import kofre.contextual.WithContext
-import kofre.predef.AddWinsSet
+import kofre.datatypes.AddWinsSet
 import loci.registry.Binding
 import loci.serializer.jsoniterScala._
 import loci.transmitter.IdenticallyTransmittable

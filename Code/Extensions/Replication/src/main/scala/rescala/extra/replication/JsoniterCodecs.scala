@@ -15,7 +15,7 @@ import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
 import kofre.decompose.interfaces.ORMapInterface.ORMap
 import kofre.decompose.interfaces.RCounterInterface.RCounter
 import kofre.decompose.interfaces.{EnableWinsFlag, GMap, RGA}
-import kofre.predef.{AddWinsSet, Epoche, GrowOnlyCounter, PosNegCounter}
+import kofre.datatypes.{AddWinsSet, Epoche, GrowOnlyCounter, PosNegCounter}
 
 import scala.annotation.nowarn
 

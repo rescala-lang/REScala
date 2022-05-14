@@ -8,7 +8,7 @@ import rescala.extra.lattices.delta.JsoniterCodecs._
 import com.github.plokhotnyuk.jsoniter_scala.macros._
 import com.github.plokhotnyuk.jsoniter_scala.core._
 import kofre.contextual.WithContext
-import kofre.predef.AddWinsSet
+import kofre.datatypes.AddWinsSet
 import kofre.protocol.RaftState
 
 import scala.concurrent.Future

@@ -2,8 +2,8 @@ package calendar
 
 import kofre.base.Lattice
 import kofre.decompose.containers.DeltaBufferRDT
-import kofre.predef.AddWinsSet
-import kofre.predef.AddWinsSet.AWSetSyntax
+import kofre.datatypes.AddWinsSet
+import kofre.datatypes.AddWinsSet.AWSetSyntax
 import kofre.protocol.RaftState
 import kofre.syntax.WithNamedContext
 

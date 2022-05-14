@@ -1,6 +1,6 @@
 package tests.distribution.delta.antientropy
 
-import kofre.predef.PosNegCounter
+import kofre.datatypes.PosNegCounter
 import org.scalacheck.{Arbitrary, Gen}
 import rescala.extra.lattices.delta.JsoniterCodecs._
 

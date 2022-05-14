@@ -1,4 +1,4 @@
-package kofre.predef
+package kofre.datatypes
 
 import kofre.base.{Bottom, DecomposeLattice, Defs}
 import kofre.contextual.ContextDecompose

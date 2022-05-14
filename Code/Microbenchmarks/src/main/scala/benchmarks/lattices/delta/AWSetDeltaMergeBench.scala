@@ -2,7 +2,7 @@ package benchmarks.lattices.delta
 
 import kofre.time.{Dots, Dot}
 import kofre.contextual.{ContextDecompose, ContextLattice, WithContext}
-import kofre.predef.AddWinsSet
+import kofre.datatypes.AddWinsSet
 import org.openjdk.jmh.annotations
 import org.openjdk.jmh.annotations._
 

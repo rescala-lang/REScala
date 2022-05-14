@@ -1,4 +1,4 @@
-package kofre.predef
+package kofre.datatypes
 
 import kofre.base.DecomposeLattice
 import kofre.base.Defs.Id

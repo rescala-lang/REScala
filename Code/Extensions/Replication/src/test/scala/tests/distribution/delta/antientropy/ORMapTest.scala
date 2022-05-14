@@ -7,7 +7,7 @@ import rescala.extra.replication.AntiEntropy
 import kofre.decompose.interfaces.ORMapInterface.{ORMap, contextDecompose}
 import kofre.decompose.interfaces.ORMapInterface.ORMapSyntax
 import kofre.decompose.containers.{AntiEntropyCRDT, Network}
-import kofre.predef.AddWinsSet
+import kofre.datatypes.AddWinsSet
 
 import scala.collection.mutable
 
