@@ -205,12 +205,12 @@ class MapAsDecomposeLatticeTest extends munit.ScalaCheckSuite {
   property("leq") {
     forAll { (a: Map[Int, Int], b: Map[Int, Int], c: Map[Int, Int]) =>
       assert(
-        MapAsUIJDLattice[Int, Int].lteq(a, a),
+        mapLattice[Int, Int].lteq(a, a),
         s"leq should be reflexive, but $a is not leq $a"
-      )
+        )
 
       assert(
-        !(MapAsUIJDLattice[Int, Int].lteq(a, b) && MapAsUIJDLattice[Int, Int].lteq(b, c)) || MapAsUIJDLattice[
+        !(mapLattice[Int, Int].lteq(a, b) && mapLattice[Int, Int].lteq(b, c)) || mapLattice[
           Int,
           Int
         ].lteq(
@@ -224,8 +224,8 @@ class MapAsDecomposeLatticeTest extends munit.ScalaCheckSuite {
 
   property("merge") {
     forAll { (a: Map[Int, Int], b: Map[Int, Int], c: Map[Int, Int]) =>
-      val mergeAB    = MapAsUIJDLattice[Int, Int].merge(a, b)
-      val mergeTwice = MapAsUIJDLattice[Int, Int].merge(mergeAB, b)
+      val mergeAB    = mapLattice[Int, Int].merge(a, b)
+      val mergeTwice = mapLattice[Int, Int].merge(mergeAB, b)
 
       assertEquals(
         mergeTwice,
@@ -233,7 +233,7 @@ class MapAsDecomposeLatticeTest extends munit.ScalaCheckSuite {
         s"merge should be idempotent, but $mergeTwice does not equal $mergeAB"
       )
 
-      val mergeBA = MapAsUIJDLattice[Int, Int].merge(b, a)
+      val mergeBA = mapLattice[Int, Int].merge(b, a)
 
       assertEquals(
         mergeBA,
@@ -241,9 +241,9 @@ class MapAsDecomposeLatticeTest extends munit.ScalaCheckSuite {
         s"merge should be commutative, but $mergeBA does not equal $mergeAB"
       )
 
-      val mergeAB_C = MapAsUIJDLattice[Int, Int].merge(mergeAB, c)
-      val mergeBC   = MapAsUIJDLattice[Int, Int].merge(b, c)
-      val mergeA_BC = MapAsUIJDLattice[Int, Int].merge(a, mergeBC)
+      val mergeAB_C = mapLattice[Int, Int].merge(mergeAB, c)
+      val mergeBC   = mapLattice[Int, Int].merge(b, c)
+      val mergeA_BC = mapLattice[Int, Int].merge(a, mergeBC)
 
       assertEquals(
         mergeA_BC,
@@ -255,8 +255,8 @@ class MapAsDecomposeLatticeTest extends munit.ScalaCheckSuite {
 
   property("decompose") {
     forAll { (m: Map[Int, Int]) =>
-      val decomposed = MapAsUIJDLattice[Int, Int].decompose(m)
-      val merged     = decomposed.reduceOption(MapAsUIJDLattice[Int, Int].merge)
+      val decomposed = mapLattice[Int, Int].decompose(m)
+      val merged     = decomposed.reduceOption(mapLattice[Int, Int].merge)
 
       merged match {
         case None =>

@@ -1,6 +1,5 @@
 package kofre.base
 
-import kofre.base.Lattice.{Operators, mapLattice, optionLattice, setLattice}
 import kofre.base.{Bottom, Lattice}
 import kofre.time.Dots
 import kofre.dotted.{DottedDecompose, Dotted}
@@ -45,13 +44,13 @@ object DecomposeLattice {
     override def decompose(state: Int): Iterable[Int] = List(state)
   }
 
-  given setLattice[A]: DecomposeLattice[Set[A]] = new DecomposeFromLattice[Set[A]](setLattice) {
+  given setLattice[A]: DecomposeLattice[Set[A]] = new DecomposeFromLattice[Set[A]](Lattice.setLattice) {
     override def lteq(left: Set[A], right: Set[A]): Boolean = left subsetOf right
     override def decompose(state: Set[A]): Iterable[Set[A]] = state.map(Set(_))
   }
 
   given optionLattice[A: DecomposeLattice]: DecomposeLattice[Option[A]] =
-    new DecomposeFromLattice[Option[A]](optionLattice) {
+    new DecomposeFromLattice[Option[A]](Lattice.optionLattice) {
       override def lteq(left: Option[A], right: Option[A]): Boolean = (left, right) match {
         case (None, _)          => true
         case (Some(_), None)    => false
@@ -64,8 +63,8 @@ object DecomposeLattice {
       }
     }
 
-  given MapAsUIJDLattice[K, V: DecomposeLattice]: DecomposeLattice[Map[K, V]] =
-    new DecomposeFromLattice[Map[K, V]](mapLattice) {
+  given mapLattice[K, V: DecomposeLattice]: DecomposeLattice[Map[K, V]] =
+    new DecomposeFromLattice[Map[K, V]](Lattice.mapLattice) {
       override def lteq(left: Map[K, V], right: Map[K, V]): Boolean =
         left.keySet.forall { k =>
           left.get(k) <= right.get(k)
