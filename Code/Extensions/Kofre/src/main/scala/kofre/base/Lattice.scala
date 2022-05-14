@@ -79,11 +79,13 @@ object Lattice {
     val lattices = summonAll[Tuple.Map[pm.MirroredElemTypes, Lattice]].toIArray.map(_.asInstanceOf[Lattice[Any]])
     ProductLattice(pm, lattices)
 
-  class ProductLattice[T <: Product](pm: Mirror.ProductOf[T], lattices: Seq[Lattice[Any]]) extends Lattice[T]:
+
+  class ProductLattice[T <: Product](pm: Mirror.ProductOf[T], lattices: Seq[Lattice[Any]]) extends Lattice[T] {
     override def merge(left: T, right: T): T =
       pm.fromProduct(new Product {
         def canEqual(that: Any): Boolean = false
         def productArity: Int            = lattices.length
         def productElement(i: Int): Any  = lattices(i).merge(left.productElement(i), right.productElement(i))
       })
+  }
 }

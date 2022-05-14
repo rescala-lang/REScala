@@ -90,12 +90,14 @@ class DotSetTest extends munit.ScalaCheckSuite {
           DecomposeLattice[WithContext[CausalContext]].merge(WithContext(dsA, ccA), WithContext(dsB, ccB))
       }
 
-      assert(
-        dsMerged == ds,
+      assertEquals(
+        dsMerged,
+        ds,
         s"Merging the list of atoms returned by DotSet.decompose should produce an equal DotSet, but $dsMerged does not equal $ds (while decomposed was $decomposed)"
       )
-      assert(
-        ccMerged == cc,
+      assertEquals(
+        ccMerged,
+        cc,
         s"Merging the list of atoms returned by DotSet.decompose should produce an equal Causal Context, but $ccMerged does not equal $cc"
       )
     }

@@ -6,7 +6,9 @@ import kofre.contextual.ContextDecompose.*
 import kofre.contextual.{AsCausalContext, ContextDecompose, WithContext}
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
-import test.kofre.DataGenerator.*
+import test.kofre.DataGenerator.{arbCausalQueue, *}
+
+import scala.annotation.tailrec
 
 class DotMapTest extends munit.ScalaCheckSuite {
 
@@ -119,8 +121,22 @@ class DotMapTest extends munit.ScalaCheckSuite {
     }
 
   }
+
+  @tailrec
+  private def removeDuplicates(
+      start: List[(Int, CausalContext)],
+      acc: Map[Int, CausalContext],
+      con: CausalContext
+  ): Map[Int, CausalContext] =
+    start match
+      case Nil         => acc
+      case (i, c) :: t => removeDuplicates(t, acc + (i -> c.subtract(con)), con union c)
+
   property("decompose") {
-    forAll { (dm: Map[Int, CausalContext], deleted: CausalContext) =>
+    forAll { (dmdup: Map[Int, CausalContext], deleted: CausalContext) =>
+
+      val dm = removeDuplicates(dmdup.toList, Map.empty, CausalContext.empty)
+
       val cc = AsCausalContext[Map[Int, CausalContext]].dots(dm) union deleted
 
       val decomposed: Iterable[WithContext[Map[Int, CausalContext]]] =
@@ -134,21 +150,17 @@ class DotMapTest extends munit.ScalaCheckSuite {
       val dmMerged: Map[Int, CausalContext] = wc.store
       val ccMerged                          = wc.context
 
-      val dotsIter      = dm.values.flatMap(_.iterator)
-      val dotsSet       = dotsIter.toSet
-      val duplicateDots = dotsIter.size != dotsSet.size
-
-      assert(
-        ccMerged == (cc),
+      assertEquals(
+        ccMerged,
+        cc,
         s"Merging the list of atoms returned by DotMap.decompose should produce an equal DotMap, but $dmMerged does not equal $dm"
       )
-      if (!duplicateDots) {
-        dm.keys.foreach { k =>
-          assert(
-            dm(k).toSet == dmMerged.getOrElse(k, CausalContext.empty).toSet,
-            s"Merging the list of atoms returned by DotMap.decompose should produce an equal Causal Context, but on key $k the $ccMerged does not equal $cc"
-          )
-        }
+      dm.keys.foreach { k =>
+        assertEquals(
+          dm(k),
+          dmMerged.getOrElse(k, CausalContext.empty),
+          s"Merging the list of atoms returned by DotMap.decompose should produce an equal Causal Context, but on key $k the $ccMerged does not equal $cc"
+        )
       }
     }
   }
