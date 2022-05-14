@@ -1,9 +1,8 @@
-package kofre.contextual
+package kofre.dotted
 
 import kofre.base.Defs.Id
-import kofre.base.Lattice
-import kofre.base.Bottom
-import kofre.time.{Dots, Dot}
+import kofre.base.{Bottom, Lattice}
+import kofre.time.{Dot, Dots}
 
 import scala.compiletime.summonAll
 import scala.deriving.Mirror

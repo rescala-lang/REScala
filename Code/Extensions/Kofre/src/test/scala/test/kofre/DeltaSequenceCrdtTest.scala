@@ -1,8 +1,8 @@
 package test.kofre
 
 import kofre.base.Lattice
-import kofre.contextual.Dotted
 import kofre.decompose.containers.DeltaBufferRDT
+import kofre.dotted.Dotted
 import kofre.rga.{DeltaSequence, Vertex}
 
 class DeltaSequenceCrdtTest extends munit.FunSuite {

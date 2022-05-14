@@ -1,15 +1,13 @@
-package kofre.contextual
+package kofre.dotted
 
 import kofre.base.Lattice.Operators
 import kofre.base.{Bottom, DecomposeLattice, Lattice}
-import kofre.time.{Dots, Dot}
-import kofre.contextual.{HasDots, ContextDecompose, ContextLattice, Dotted}
 import kofre.decompose.interfaces
+import kofre.time.{Dot, Dots}
 
 import scala.annotation.implicitNotFound
-import scala.compiletime.{erasedValue, summonInline}
+import scala.compiletime.{erasedValue, summonAll, summonInline}
 import scala.deriving.Mirror
-import scala.compiletime.summonAll
 
 /** DecomposableDotStore is the typeclass trait for dot stores,
   * data structures that are part of causal CRDTs and make use of dots to track time.

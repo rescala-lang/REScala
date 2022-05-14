@@ -1,9 +1,9 @@
 package kofre.decompose.interfaces
 
 import kofre.base.DecomposeLattice
-import kofre.contextual.ContextDecompose
 import kofre.decompose.*
 import kofre.datatypes.Epoche
+import kofre.dotted.ContextDecompose
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper}
 
 import scala.annotation.tailrec

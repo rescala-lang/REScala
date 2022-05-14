@@ -1,8 +1,7 @@
 package kofre.encrdt.crdts
 import kofre.base.Lattice
 import kofre.time.{Dots, Dot}
-import kofre.contextual.{HasDots, Dotted}
-import kofre.dotted.DotFun
+import kofre.dotted.{DotFun, Dotted, HasDots}
 
 object DeltaMultiValueRegister {
   type DeltaMultiValueRegisterLattice[V] = Dotted[DotFun[V]]

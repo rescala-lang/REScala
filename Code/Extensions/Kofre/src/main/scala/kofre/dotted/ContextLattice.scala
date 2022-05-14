@@ -1,10 +1,8 @@
-package kofre.contextual
+package kofre.dotted
 
-import kofre.base.{DecomposeLattice, Lattice}
-import kofre.time.{Dots, Dot}
-import kofre.contextual.HasDots
 import kofre.base.Lattice.Operators
-import kofre.base.Bottom
+import kofre.base.{Bottom, DecomposeLattice, Lattice}
+import kofre.time.{Dot, Dots}
 
 import scala.annotation.targetName
 

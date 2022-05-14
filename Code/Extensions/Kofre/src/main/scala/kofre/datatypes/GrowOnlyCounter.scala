@@ -2,8 +2,8 @@ package kofre.datatypes
 
 import kofre.base.DecomposeLattice.*
 import kofre.base.{DecomposeLattice, Defs}
-import kofre.contextual.ContextDecompose
 import kofre.decompose.*
+import kofre.dotted.ContextDecompose
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermQuery}
 
 // this could be an opaque type, but interop

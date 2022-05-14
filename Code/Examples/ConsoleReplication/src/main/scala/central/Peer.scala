@@ -2,9 +2,9 @@ package central
 
 import central.Bindings._
 import kofre.base.DecomposeLattice
-import kofre.contextual.Dotted
 import kofre.decompose.containers.DeltaBufferRDT
 import kofre.datatypes.AddWinsSet
+import kofre.dotted.Dotted
 import kofre.syntax.DottedName
 import loci.communicator.tcp.TCP
 import loci.registry.Registry

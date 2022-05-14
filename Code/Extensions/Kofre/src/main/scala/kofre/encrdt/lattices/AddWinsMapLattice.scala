@@ -2,8 +2,8 @@ package kofre.encrdt.lattices
 
 import kofre.base.{DecomposeLattice, Lattice}
 import kofre.time.Dots
-import kofre.contextual.Dotted
 import kofre.datatypes.AddWinsSet
+import kofre.dotted.Dotted
 import kofre.syntax.{PermIdMutate, DottedName}
 import kofre.syntax.PermIdMutate.withID
 

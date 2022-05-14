@@ -2,7 +2,7 @@ package kofre.datatypes
 
 import kofre.base.DecomposeLattice
 import kofre.base.Defs.Id
-import kofre.contextual.ContextDecompose
+import kofre.dotted.ContextDecompose
 import kofre.syntax.PermIdMutate.withID
 import kofre.syntax.{ArdtOpsContains, FixedId, OpsSyntaxHelper, PermId, PermIdMutate, PermQuery}
 

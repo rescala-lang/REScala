@@ -2,8 +2,7 @@ package kofre.dotted
 
 import kofre.base.Bottom
 import kofre.time.Dots
-import kofre.contextual.ContextDecompose.FromConlattice
-import kofre.contextual.{HasDots, ContextDecompose, ContextLattice, Dotted}
+import kofre.dotted.ContextDecompose.FromConlattice
 import kofre.decompose.interfaces
 
 case class DotMap[K, V](repr: Map[K, V]) {

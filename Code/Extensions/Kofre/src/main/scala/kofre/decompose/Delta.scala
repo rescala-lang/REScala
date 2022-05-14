@@ -1,9 +1,9 @@
 package kofre.decompose
 
 import kofre.base.Defs
+import kofre.dotted.Dotted
 import kofre.time.Dots
 import kofre.syntax.DottedName
-import kofre.contextual.Dotted
 
 /** A Delta combines a delta state from the same state space as the CRDT state with the id of the replica propagating it.
   *

@@ -3,11 +3,11 @@ package kofre.decompose.containers
 import kofre.base.Defs.Id
 import kofre.base.{DecomposeLattice, Defs}
 import kofre.time.Dots
-import kofre.contextual.{ContextDecompose, ContextLattice, Dotted}
 import kofre.syntax.DottedName
 import kofre.decompose.Delta
 import kofre.syntax.{PermCausal, PermCausalMutate, PermIdMutate, PermQuery}
 import kofre.base.Lattice
+import kofre.dotted.{ContextDecompose, ContextLattice, Dotted}
 
 trait CRDTInterface[State, Wrapper] {
 

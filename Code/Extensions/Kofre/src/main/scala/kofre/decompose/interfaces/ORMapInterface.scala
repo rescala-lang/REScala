@@ -4,10 +4,8 @@ import kofre.base.{Bottom, DecomposeLattice, Defs}
 import kofre.time.{Dots, Dot}
 import kofre.decompose.*
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, DottedName}
-import kofre.contextual.ContextDecompose.*
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
-import kofre.contextual.{HasDots, ContextDecompose, ContextLattice, Dotted}
-import kofre.dotted.DotMap
+import kofre.dotted.{ContextDecompose, ContextLattice, DotMap, Dotted, HasDots}
 
 /** An ORMap (Observed-Remove Map) is a Delta CRDT that models a map from an arbitrary key type to nested causal Delta CRDTs.
   * In contrast to [[GrowMap]], ORMap allows the removal of key/value pairs from the map.

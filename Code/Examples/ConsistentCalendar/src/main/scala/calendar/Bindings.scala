@@ -7,8 +7,8 @@ import loci.serializer.jsoniterScala._
 import rescala.extra.lattices.delta.JsoniterCodecs._
 import com.github.plokhotnyuk.jsoniter_scala.macros._
 import com.github.plokhotnyuk.jsoniter_scala.core._
-import kofre.contextual.Dotted
 import kofre.datatypes.AddWinsSet
+import kofre.dotted.Dotted
 import kofre.protocol.RaftState
 
 import scala.concurrent.Future

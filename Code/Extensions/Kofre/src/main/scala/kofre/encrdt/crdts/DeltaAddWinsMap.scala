@@ -1,10 +1,9 @@
 package kofre.encrdt.crdts
 
 import kofre.base.Bottom
-import kofre.contextual.HasDots.*
+import kofre.dotted.HasDots.*
 import kofre.time.Dots
-import kofre.contextual.{HasDots, Dotted}
-import kofre.dotted.{DotFun, DotMap}
+import kofre.dotted.{DotFun, DotMap, Dotted, HasDots}
 
 // See: Delta state replicated data types (https://doi.org/10.1016/j.jpdc.2017.08.003)
 object DeltaAddWinsMap {

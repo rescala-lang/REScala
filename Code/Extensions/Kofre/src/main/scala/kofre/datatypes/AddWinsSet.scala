@@ -2,10 +2,9 @@ package kofre.datatypes
 
 import kofre.base.DecomposeLattice
 import kofre.time.{Dots, Dot}
-import kofre.contextual.{HasDots, ContextDecompose, Dotted}
-import kofre.contextual.ContextDecompose.*
+import kofre.dotted.ContextDecompose.*
 import kofre.decompose.*
-import kofre.dotted.{DotMap, DotSet}
+import kofre.dotted.{ContextDecompose, DotMap, DotSet, Dotted, HasDots}
 import kofre.datatypes.AddWinsSet
 import kofre.syntax.OpsSyntaxHelper
 

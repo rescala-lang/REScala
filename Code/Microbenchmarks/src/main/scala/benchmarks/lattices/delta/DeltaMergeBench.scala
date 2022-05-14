@@ -1,8 +1,8 @@
 package benchmarks.lattices.delta
 
 import kofre.time.{Dots, Dot}
-import kofre.contextual.{ContextDecompose, Dotted}
 import kofre.decompose.interfaces.RGA
+import kofre.dotted.{ContextDecompose, Dotted}
 import org.openjdk.jmh.annotations
 import org.openjdk.jmh.annotations._
 

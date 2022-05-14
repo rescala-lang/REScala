@@ -4,12 +4,11 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, Jso
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import kofre.base.Defs
 import kofre.time.Dot
-import kofre.contextual.Dotted
 import kofre.decompose.TimedVal
 import kofre.decompose.containers.DeltaBufferRDT
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegister
 import kofre.decompose.interfaces.{LWWRegisterInterface, RGA}
-import kofre.dotted.DotFun
+import kofre.dotted.{DotFun, Dotted}
 import loci.transmitter.IdenticallyTransmittable
 import rescala.extra.lattices.delta.JsoniterCodecs._
 import todo.Todolist.replicaId

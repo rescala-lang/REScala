@@ -2,8 +2,8 @@ package kofre.decompose.containers
 
 import kofre.base.{Bottom, DecomposeLattice, Defs}
 import kofre.time.Dots
-import kofre.contextual.{ContextDecompose, ContextLattice, Dotted}
 import kofre.decompose.Delta
+import kofre.dotted.{ContextDecompose, ContextLattice, Dotted}
 import kofre.syntax.{ArdtOpsContains, PermCausal, PermCausalMutate, PermIdMutate, PermQuery, DottedName}
 
 /** ReactiveCRDTs are Delta CRDTs that store applied deltas in their deltaBuffer attribute. Middleware should regularly

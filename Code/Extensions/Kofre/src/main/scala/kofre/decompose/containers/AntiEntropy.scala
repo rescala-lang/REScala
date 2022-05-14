@@ -3,8 +3,8 @@ package kofre.decompose.containers
 import kofre.base.Defs
 import kofre.time.Dots
 import kofre.decompose.Delta
+import kofre.dotted.Dotted
 import kofre.syntax.DottedName
-import kofre.contextual.Dotted
 
 trait AntiEntropy[A] {
   def replicaID: Defs.Id

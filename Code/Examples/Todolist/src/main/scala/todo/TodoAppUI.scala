@@ -2,7 +2,6 @@ package todo
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import kofre.contextual.Dotted
 import loci.registry.Binding
 import loci.serializer.jsoniterScala._
 import org.scalajs.dom.html.{Div, Input, LI}
@@ -21,6 +20,7 @@ import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax
 import kofre.decompose.interfaces.RGA
 import kofre.decompose.containers.DeltaBufferRDT
 import kofre.decompose.interfaces.RGA.RGAOps
+import kofre.dotted.Dotted
 import kofre.syntax.DottedName
 
 class TodoAppUI(val storagePrefix: String) {

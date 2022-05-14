@@ -1,6 +1,6 @@
 package kofre.base
 
-import kofre.contextual.{HasDots, ContextDecompose, Dotted}
+import kofre.dotted.{ContextDecompose, Dotted, HasDots}
 
 /** Bottom.empty is the identity of Lattice.merge */
 trait Bottom[A] {

@@ -1,8 +1,8 @@
 package rescala.extra.replication
 
 import kofre.base.DecomposeLattice
-import kofre.contextual.Dotted
 import kofre.decompose.containers.DeltaBufferRDT
+import kofre.dotted.Dotted
 import kofre.syntax.DottedName
 import loci.registry.{Binding, Registry}
 import loci.transmitter.RemoteRef

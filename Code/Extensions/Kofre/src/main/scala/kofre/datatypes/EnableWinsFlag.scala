@@ -1,11 +1,9 @@
 package kofre.datatypes
 
 import kofre.base.{Bottom, DecomposeLattice}
-import kofre.contextual.ContextDecompose.*
-import kofre.contextual.{HasDots, ContextDecompose, Dotted}
 import kofre.datatypes.Epoche
 import kofre.decompose.*
-import kofre.dotted.DotSet
+import kofre.dotted.{ContextDecompose, DotSet, Dotted, HasDots}
 import kofre.syntax.OpsSyntaxHelper
 import kofre.time.Dots
 

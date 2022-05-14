@@ -1,11 +1,10 @@
-package kofre.contextual
+package kofre.dotted
 
-import kofre.base.{Bottom, DecomposeLattice, Lattice}
-import kofre.time.{Dots, Dot}
-import kofre.contextual.HasDots
 import kofre.base.Lattice.Operators
+import kofre.base.{Bottom, DecomposeLattice, Lattice}
 import kofre.dotted.{DotFun, DotSet}
-import kofre.syntax.{ArdtOpsContains, PermCausal, PermCausalMutate, PermQuery, DottedName}
+import kofre.syntax.{ArdtOpsContains, DottedName, PermCausal, PermCausalMutate, PermQuery}
+import kofre.time.{Dot, Dots}
 
 import scala.util.NotGiven
 

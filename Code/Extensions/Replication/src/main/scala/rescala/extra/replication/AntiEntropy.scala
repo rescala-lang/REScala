@@ -3,8 +3,8 @@ package rescala.extra.replication
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReaderException, JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import kofre.base.DecomposeLattice
-import kofre.contextual.{ContextDecompose, Dotted}
 import kofre.decompose.containers.Network
+import kofre.dotted.{ContextDecompose, Dotted}
 import kofre.syntax.DottedName
 import rescala.extra.replication.AntiEntropy.{AckMsg, DeltaMsg}
 

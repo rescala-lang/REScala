@@ -2,8 +2,8 @@ package kofre.time
 
 import kofre.base.Defs.{Id, Time}
 import kofre.base.{DecomposeLattice, Lattice}
+import kofre.dotted.Dotted
 import kofre.time.Dot
-import kofre.contextual.Dotted
 
 
 /** Essentially a more efficient version of a [[ Set[Dot] ]].

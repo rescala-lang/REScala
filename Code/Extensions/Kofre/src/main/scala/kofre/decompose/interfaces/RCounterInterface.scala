@@ -4,10 +4,8 @@ import kofre.base.DecomposeLattice
 import kofre.time.Dots
 import kofre.decompose.*
 import kofre.syntax.OpsSyntaxHelper
-import kofre.contextual.ContextDecompose.*
-import kofre.contextual.Dotted
 import kofre.time.Dot
-import kofre.dotted.DotFun
+import kofre.dotted.{DotFun, Dotted}
 
 
 /** An RCounter (Resettable Counter/Add Wins Counter) is a Delta CRDT modeling a counter.

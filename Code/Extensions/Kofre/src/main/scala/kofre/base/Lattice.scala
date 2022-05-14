@@ -1,6 +1,6 @@
 package kofre.base
 
-import kofre.contextual.{Dotted, ContextDecompose}
+import kofre.dotted.{ContextDecompose, Dotted}
 
 import scala.annotation.targetName
 import scala.collection.immutable.HashMap

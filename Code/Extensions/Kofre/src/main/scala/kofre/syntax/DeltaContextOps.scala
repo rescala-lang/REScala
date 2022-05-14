@@ -3,8 +3,8 @@ package kofre.syntax
 import kofre.base.Defs.Id
 import kofre.base.{DecomposeLattice, Defs, Lattice}
 import kofre.time.Dots
-import kofre.contextual.Dotted
 import kofre.decompose.containers.{AntiEntropyCRDT, DeltaBufferRDT}
+import kofre.dotted.Dotted
 
 import scala.annotation.implicitNotFound
 

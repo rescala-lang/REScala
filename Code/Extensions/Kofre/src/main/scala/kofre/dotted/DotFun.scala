@@ -1,10 +1,9 @@
 package kofre.dotted
 
 import kofre.base.{Bottom, DecomposeLattice, Lattice}
-import kofre.time.{Dots, Dot}
-import kofre.contextual.ContextDecompose.FromConlattice
-import kofre.contextual.{HasDots, ContextDecompose, ContextLattice, Dotted}
+import kofre.dotted.ContextDecompose.FromConlattice
 import kofre.decompose.interfaces
+import kofre.time.{Dot, Dots}
 
 import scala.annotation.targetName
 

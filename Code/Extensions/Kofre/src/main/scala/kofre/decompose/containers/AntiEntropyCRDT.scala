@@ -2,8 +2,8 @@ package kofre.decompose.containers
 
 import kofre.base.DecomposeLattice
 import kofre.time.Dots
-import kofre.contextual.{ContextDecompose, ContextLattice, Dotted}
 import kofre.decompose.Delta
+import kofre.dotted.{ContextDecompose, ContextLattice, Dotted}
 import kofre.syntax.{ArdtOpsContains, PermCausal, PermCausalMutate, PermIdMutate, DottedName}
 
 /** BasicCRDTs are Delta CRDTs that use [[JsoniterAntiEntropy]] and [[Network]] as Middleware for exchanging deltas between replicas.

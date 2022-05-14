@@ -5,9 +5,8 @@ import kofre.time.{Dots, Dot}
 import kofre.decompose.*
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermIdMutate, PermMutate}
 import kofre.decompose.interfaces.GListInterface.{GListAsUIJDLattice, GListSyntax}
-import kofre.contextual.{ContextDecompose, ContextLattice, Dotted}
 import kofre.decompose.interfaces.RCounterInterface.RCounter
-import kofre.dotted.DotFun
+import kofre.dotted.{ContextDecompose, ContextLattice, DotFun, Dotted}
 import kofre.datatypes.Epoche
 import kofre.syntax.PermIdMutate.withID
 

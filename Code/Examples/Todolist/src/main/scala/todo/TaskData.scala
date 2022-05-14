@@ -1,12 +1,12 @@
 package todo
 
-import kofre.contextual.Dotted
 import kofre.decompose.TimedVal
 import kofre.decompose.containers.DeltaBufferRDT
 import kofre.decompose.interfaces.LWWRegisterInterface
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegister
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegisterSyntax
+import kofre.dotted.Dotted
 import kofre.syntax.DottedName
 import loci.registry.Binding
 import org.scalajs.dom.UIEvent

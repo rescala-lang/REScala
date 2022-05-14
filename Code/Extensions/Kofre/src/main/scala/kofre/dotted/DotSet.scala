@@ -1,8 +1,7 @@
 package kofre.dotted
 
 import kofre.time.{Dot, Dots}
-import kofre.contextual.ContextDecompose.FromConlattice
-import kofre.contextual.{HasDots, ContextDecompose, ContextLattice, Dotted}
+import kofre.dotted.ContextDecompose.FromConlattice
 import kofre.datatypes.EnableWinsFlag
 import kofre.decompose.interfaces
 

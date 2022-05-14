@@ -2,8 +2,7 @@ package test.kofre
 
 import kofre.base.DecomposeLattice
 import kofre.time.{Dots, Dot}
-import kofre.contextual.{HasDots, Dotted}
-import kofre.dotted.DotFun
+import kofre.dotted.{DotFun, Dotted, HasDots}
 import org.scalacheck.Prop.*
 import test.kofre.DataGenerator.*
 

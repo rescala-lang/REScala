@@ -1,8 +1,8 @@
 package benchmarks.lattices.delta.crdt
 
 import kofre.base.DecomposeLattice
-import kofre.contextual.Dotted
 import kofre.datatypes.AddWinsSet
+import kofre.dotted.Dotted
 import org.openjdk.jmh.annotations._
 
 import java.util.concurrent.TimeUnit

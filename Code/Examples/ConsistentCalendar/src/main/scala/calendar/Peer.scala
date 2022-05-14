@@ -4,9 +4,9 @@ import calendar.{Appointment, CalendarProgram, RaftTokens, Token}
 import central.Bindings._
 import central.SyncMessage.{AppointmentMessage, CalendarState, FreeMessage, RaftMessage, WantMessage}
 import kofre.base.DecomposeLattice
-import kofre.contextual.{ContextDecompose, Dotted}
 import kofre.datatypes.AddWinsSet
 import kofre.datatypes.AddWinsSet.AWSetSyntax
+import kofre.dotted.{ContextDecompose, Dotted}
 import kofre.syntax.DottedName
 import loci.communicator.tcp.TCP
 import loci.registry.Registry

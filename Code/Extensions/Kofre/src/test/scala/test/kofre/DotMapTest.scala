@@ -2,9 +2,8 @@ package test.kofre
 
 import kofre.base.DecomposeLattice
 import kofre.time.{ArrayRanges, Dots, Dot}
-import kofre.contextual.ContextDecompose.*
-import kofre.contextual.{HasDots, ContextDecompose, ContextLattice, Dotted}
-import kofre.dotted.{DotFun, DotMap, DotSet}
+import kofre.dotted.ContextDecompose.*
+import kofre.dotted.{ContextDecompose, ContextLattice, DotFun, DotMap, DotSet, Dotted, HasDots}
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 import test.kofre.DataGenerator.*
