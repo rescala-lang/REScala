@@ -1,13 +1,12 @@
 package tests.distribution.delta.antientropy
 
 import org.scalacheck.{Arbitrary, Gen}
-import org.scalatest.freespec.AnyFreeSpec
-import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.lattices.delta.JsoniterCodecs._
 import rescala.extra.replication.AntiEntropy
 import kofre.decompose.containers.{AntiEntropyCRDT, Network}
 import NetworkGenerators._
 import kofre.decompose.interfaces.EnableWinsFlag
+import org.scalacheck.Prop._
 
 import scala.collection.mutable
 import scala.util.Random
@@ -33,28 +32,28 @@ object EWFlagGenerators {
   implicit def arbEWFlag: Arbitrary[AntiEntropyCRDT[EnableWinsFlag]] = Arbitrary(genEWFlag)
 }
 
-class EWFlagTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
+class EWFlagTest extends munit.ScalaCheckSuite {
   import EWFlagGenerators._
 
-  "enable" in forAll { flag: AntiEntropyCRDT[EnableWinsFlag] =>
+  property("enable") {forAll { flag: AntiEntropyCRDT[EnableWinsFlag] =>
     val flagEnabled = flag.enable()
 
     assert(
       flagEnabled.read,
       s"After enabling the flag it should read true, but $flagEnabled.read returns false"
     )
-  }
+  }}
 
-  "disable" in forAll { flag: AntiEntropyCRDT[EnableWinsFlag] =>
+  property("disable") {forAll { flag: AntiEntropyCRDT[EnableWinsFlag] =>
     val flagDisabled = flag.disable()
 
     assert(
       !flagDisabled.read,
       s"After disabling the flag it should read false, but $flagDisabled.false returns true"
     )
-  }
+  }}
 
-  "concurrent enable" in {
+  test("concurrent enable") {
     val network = new Network(0, 0, 0)
 
     val aea = new AntiEntropy[EnableWinsFlag]("a", network, mutable.Buffer("b"))
@@ -78,7 +77,7 @@ class EWFlagTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     )
   }
 
-  "concurrent disable" in {
+  test("concurrent disable") {
     val network = new Network(0, 0, 0)
 
     val aea = new AntiEntropy[EnableWinsFlag]("a", network, mutable.Buffer("b"))
@@ -105,7 +104,7 @@ class EWFlagTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     )
   }
 
-  "concurrent enable/disable" in {
+  test("concurrent enable/disable") {
     val network = new Network(0, 0, 0)
 
     val aea = new AntiEntropy[EnableWinsFlag]("a", network, mutable.Buffer("b"))
@@ -129,7 +128,7 @@ class EWFlagTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     )
   }
 
-  "convergence" in forAll { (enableA: Short, disableA: Short, enableB: Short, disableB: Short, network: Network) =>
+  property("convergence") {forAll { (enableA: Short, disableA: Short, enableB: Short, disableB: Short, network: Network) =>
     val aea = new AntiEntropy[EnableWinsFlag]("a", network, mutable.Buffer("b"))
     val aeb = new AntiEntropy[EnableWinsFlag]("b", network, mutable.Buffer("a"))
 
@@ -160,5 +159,5 @@ class EWFlagTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
       fa1.read == fb1.read,
       s"After synchronization messages were reliably exchanged all replicas should converge, but ${fa1.read} does not equal ${fb1.read}"
     )
-  }
+  }}
 }

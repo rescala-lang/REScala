@@ -11,7 +11,7 @@ import kofre.base.Lattice
 
 trait CRDTInterface[State, Wrapper] {
 
-  val state: WithContext[State]
+  def state: WithContext[State]
 
   val replicaID: Defs.Id
 

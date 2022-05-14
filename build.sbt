@@ -201,6 +201,7 @@ lazy val replication = crossProject(JVMPlatform, JSPlatform).crossType(CrossType
       loci.circe.value,
       loci.upickle.value,
       catsCollection.value,
+      munitScalacheck.value,
       "com.google.crypto.tink" % "tink"                   % "1.6.1",
       "org.conscrypt"          % "conscrypt-openjdk-uber" % "2.5.2",
     ),
@@ -211,6 +212,7 @@ lazy val replication = crossProject(JVMPlatform, JSPlatform).crossType(CrossType
         "org.eclipse.jetty.websocket" % "websocket-jetty-api"    % jettyVersion,
         "org.eclipse.jetty.websocket" % "websocket-jetty-server" % jettyVersion,
         "org.eclipse.jetty.websocket" % "websocket-jetty-client" % jettyVersion,
+        munit.value,
       )
     },
     publishOnly213

@@ -18,9 +18,9 @@ class AntiEntropyCRDT[State](
 ) extends CRDTInterface[State, AntiEntropyCRDT[State]] {
   override val replicaID: String = antiEntropy.replicaID
 
-  override val state: WithContext[State] = antiEntropy.state
+  override def state: WithContext[State] = antiEntropy.state
 
-  override def applyDelta(delta: WithNamedContext[State])(implicit u: DecomposeLattice[WithContext[State]]): AntiEntropyCRDT[State] =
+  override def applyDelta(delta: WithNamedContext[State])(using DecomposeLattice[WithContext[State]]): AntiEntropyCRDT[State] =
     delta match {
       case WithNamedContext(origin, deltaCtx) =>
         DecomposeLattice[WithContext[State]].diff(state, deltaCtx) match {
