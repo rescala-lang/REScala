@@ -1,4 +1,4 @@
-package kofre.decompose.interfaces
+package kofre.datatypes
 
 import kofre.base.{Bottom, DecomposeLattice}
 import kofre.decompose.*

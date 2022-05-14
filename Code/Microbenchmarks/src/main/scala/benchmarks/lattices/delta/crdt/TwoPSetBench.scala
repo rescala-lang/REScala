@@ -1,7 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
+import kofre.datatypes.TwoPSet
 import kofre.decompose.containers.DeltaBufferRDT
-import kofre.decompose.interfaces.TwoPSet
 import org.openjdk.jmh.annotations._
 
 import java.util.concurrent.TimeUnit

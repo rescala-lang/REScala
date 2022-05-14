@@ -1,6 +1,6 @@
 package kofre.rga
 
-import kofre.decompose.interfaces.TwoPSet
+import kofre.datatypes.TwoPSet
 
 trait SetLike[A, F] {
   def add(set: F, value: A): F

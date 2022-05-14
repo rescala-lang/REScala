@@ -1,7 +1,7 @@
 package kofre.rga
 
 import kofre.base.Lattice
-import kofre.decompose.interfaces.TwoPSet
+import kofre.datatypes.TwoPSet
 
 object Sequence {
 
