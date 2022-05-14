@@ -29,9 +29,9 @@ object TwoPhaseSet {
 
     def contains(element: E)(using QueryP): Boolean = current.added.contains(element) && !current.removed.contains(element)
 
-    def insert(element: E)(using MutationP): C = TwoPSet(Set(element), Set.empty).mutator
+    def insert(element: E)(using MutationP): C = TwoPhaseSet(Set(element), Set.empty).mutator
 
-    def remove(element: E)(using MutationP): C = TwoPSet(Set.empty, Set(element)).mutator
-    def removeAll(elements: Set[E])(using MutationP): C = TwoPSet(Set.empty, elements).mutator
+    def remove(element: E)(using MutationP): C = TwoPhaseSet(Set.empty, Set(element)).mutator
+    def removeAll(elements: Set[E])(using MutationP): C = TwoPhaseSet(Set.empty, elements).mutator
   }
 }
