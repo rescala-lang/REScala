@@ -19,7 +19,7 @@ class ORMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "mutateKey/queryKey" in { (add: List[Int], remove: List[Int], k: Int) =>
     val network = new Network(0, 0, 0)
     val aea =
-      new AntiEntropy[ORMap[Int, AddWinsSet.Embedded[Int]]]("a", network, mutable.Buffer())
+      new AntiEntropy[ORMap[Int, AddWinsSet[Int]]]("a", network, mutable.Buffer())
     val aeb = new AntiEntropy[AddWinsSet[Int]]("b", network, mutable.Buffer())
 
     val set = {
@@ -33,17 +33,17 @@ class ORMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     }
 
     val map = {
-      val added = add.foldLeft(AntiEntropyCRDT[ORMap[Int, AddWinsSet.Embedded[Int]]](aea)) {
+      val added = add.foldLeft(AntiEntropyCRDT[ORMap[Int, AddWinsSet[Int]]](aea)) {
         case (m, e) =>
-          m.mutateKeyNamedCtx(k)(_.map(AddWinsSet(_)).add(e).map(_.inner))
+          m.mutateKeyNamedCtx(k)(_.add(e))
       }
 
       remove.foldLeft(added) {
-        case (m, e) => m.mutateKeyNamedCtx(k)(_.map(AddWinsSet(_)).remove(e).map(_.inner))
+        case (m, e) => m.mutateKeyNamedCtx(k)(_.remove(e))
       }
     }
 
-    val mapElements = map.queryKey(k).map(AddWinsSet(_)).elements
+    val mapElements = map.queryKey(k).elements
 
     assert(
       mapElements == set.elements,
@@ -54,24 +54,24 @@ class ORMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
   "remove" in { (add: List[Int], remove: List[Int], k: Int) =>
     val network = new Network(0, 0, 0)
     val aea =
-      new AntiEntropy[ORMap[Int, AddWinsSet.Embedded[Int]]]("a", network, mutable.Buffer())
+      new AntiEntropy[ORMap[Int, AddWinsSet[Int]]]("a", network, mutable.Buffer())
     val aeb = new AntiEntropy[AddWinsSet[Int]]("b", network, mutable.Buffer())
 
     val empty = AntiEntropyCRDT[AddWinsSet[Int]](aeb)
 
     val map = {
-      val added = add.foldLeft(AntiEntropyCRDT[ORMap[Int, AddWinsSet.Embedded[Int]]](aea)) {
-        case (m, e) => m.mutateKeyNamedCtx(k)(_.map(AddWinsSet(_)).add(e).map(_.inner))
+      val added = add.foldLeft(AntiEntropyCRDT[ORMap[Int, AddWinsSet[Int]]](aea)) {
+        case (m, e) => m.mutateKeyNamedCtx(k)(_.add(e))
       }
 
       remove.foldLeft(added) {
-        case (m, e) => m.mutateKeyNamedCtx(k)(_.map(AddWinsSet(_)).remove(e).map(_.inner))
+        case (m, e) => m.mutateKeyNamedCtx(k)(_.remove(e))
       }
     }
 
     val removed = map.remove(k)
 
-    val queryResult = removed.queryKey(k).map(AddWinsSet(_)).elements
+    val queryResult = removed.queryKey(k).elements
 
     assert(
       queryResult == empty.elements,

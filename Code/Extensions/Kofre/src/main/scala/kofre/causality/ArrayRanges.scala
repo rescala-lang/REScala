@@ -9,7 +9,7 @@ import scala.collection.IndexedSeqView
 import scala.collection.mutable.ListBuffer
 
 /** Efficient storage of a set of [[Time]] when most stored values are contiguous ranges */
-class ArrayRanges private (private val inner: Array[Time], private val used: Int) {
+class ArrayRanges (val inner: Array[Time], val used: Int) {
 
   override def equals(obj: Any): Boolean = obj match {
     case ar: ArrayRanges => inner.iterator.take(used).sameElements(ar.inner.iterator.take(ar.used))

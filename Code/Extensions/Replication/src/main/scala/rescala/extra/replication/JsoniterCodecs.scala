@@ -3,11 +3,12 @@ package rescala.extra.lattices.delta
 import cats.collections.Diet
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
+import kofre.base.Defs.Time
 import kofre.protocol.AuctionInterface.AuctionData
 import kofre.decompose.interfaces.GListInterface.{Elem, GListNode}
 import kofre.decompose.interfaces.RGA.RGANode
 import kofre.decompose.TimedVal
-import kofre.causality.{CausalContext, Dot}
+import kofre.causality.{ArrayRanges, CausalContext, Dot}
 import kofre.decompose.interfaces.LexCounterInterface.LexPair
 import kofre.contextual.WithContext
 import kofre.decompose.interfaces.{EnableWinsFlag, GMap, RGA}
@@ -51,6 +52,18 @@ object JsoniterCodecs {
 
     override def nullValue: Diet[Long] = null
   }
+
+  implicit val arrayOfLongCodec: JsonValueCodec[Array[Time]] = JsonCodecMaker.make
+
+  implicit val arrayRangesCodec: JsonValueCodec[ArrayRanges] =
+    new JsonValueCodec[ArrayRanges] {
+      override def decodeValue(in: JsonReader, default: ArrayRanges): ArrayRanges = {
+        val ar = arrayOfLongCodec.decodeValue(in, Array())
+        new ArrayRanges(ar, ar.length)
+      }
+      override def encodeValue(x: ArrayRanges, out: JsonWriter): Unit = arrayOfLongCodec.encodeValue(x.inner.slice(0, x.used), out)
+      override def nullValue: ArrayRanges = null
+    }
 
   implicit val CausalContextCodec: JsonValueCodec[CausalContext] =
     JsonCodecMaker.make(CodecMakerConfig.withAllowRecursiveTypes(true))
