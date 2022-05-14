@@ -4,7 +4,7 @@ import kofre.base.DecomposeLattice
 import kofre.time.Dots
 import kofre.contextual.{ContextDecompose, ContextLattice, Dotted}
 import kofre.decompose.Delta
-import kofre.syntax.{ArdtOpsContains, PermCausal, PermCausalMutate, PermIdMutate, WithNamedContext}
+import kofre.syntax.{ArdtOpsContains, PermCausal, PermCausalMutate, PermIdMutate, DottedName}
 
 /** BasicCRDTs are Delta CRDTs that use [[JsoniterAntiEntropy]] and [[Network]] as Middleware for exchanging deltas between replicas.
   * They cannot actually be used on multiple connected replicas, but are useful for locally testing the behavior of
@@ -20,13 +20,13 @@ class AntiEntropyCRDT[State](
 
   override def state: Dotted[State] = antiEntropy.state
 
-  override def applyDelta(delta: WithNamedContext[State])(using DecomposeLattice[Dotted[State]]): AntiEntropyCRDT[State] =
+  override def applyDelta(delta: DottedName[State])(using DecomposeLattice[Dotted[State]]): AntiEntropyCRDT[State] =
     delta match {
-      case WithNamedContext(origin, deltaCtx) =>
+      case DottedName(origin, deltaCtx) =>
         DecomposeLattice[Dotted[State]].diff(state, deltaCtx) match {
           case Some(stateDiff) =>
             val stateMerged = DecomposeLattice[Dotted[State]].merge(state, stateDiff)
-            antiEntropy.recordChange(WithNamedContext(origin, stateDiff), stateMerged)
+            antiEntropy.recordChange(DottedName(origin, stateDiff), stateMerged)
           case None =>
         }
         this

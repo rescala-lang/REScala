@@ -4,7 +4,7 @@ import kofre.base.{Bottom, DecomposeLattice, Defs}
 import kofre.time.Dots
 import kofre.contextual.{ContextDecompose, ContextLattice, Dotted}
 import kofre.decompose.Delta
-import kofre.syntax.{ArdtOpsContains, PermCausal, PermCausalMutate, PermIdMutate, PermQuery, WithNamedContext}
+import kofre.syntax.{ArdtOpsContains, PermCausal, PermCausalMutate, PermIdMutate, PermQuery, DottedName}
 
 /** ReactiveCRDTs are Delta CRDTs that store applied deltas in their deltaBuffer attribute. Middleware should regularly
   * take these deltas and ship them to other replicas, using applyDelta to apply them on the remote state. After deltas
@@ -13,24 +13,24 @@ import kofre.syntax.{ArdtOpsContains, PermCausal, PermCausalMutate, PermIdMutate
 class DeltaBufferRDT[State](
                              val state: Dotted[State],
                              val replicaID: String,
-                             val deltaBuffer: List[WithNamedContext[State]]
+                             val deltaBuffer: List[DottedName[State]]
 ) extends CRDTInterface[State, DeltaBufferRDT[State]] {
 
   def copy(
             state: Dotted[State] = state,
-            deltaBuffer: List[WithNamedContext[State]] = deltaBuffer
+            deltaBuffer: List[DottedName[State]] = deltaBuffer
   ): DeltaBufferRDT[State] =
     new DeltaBufferRDT[State](state, replicaID, deltaBuffer)
 
-  override def applyDelta(delta: WithNamedContext[State])(implicit u: DecomposeLattice[Dotted[State]]): DeltaBufferRDT[State] =
+  override def applyDelta(delta: DottedName[State])(implicit u: DecomposeLattice[Dotted[State]]): DeltaBufferRDT[State] =
     delta match {
-      case WithNamedContext(origin, delta) =>
+      case DottedName(origin, delta) =>
         DecomposeLattice[Dotted[State]].diff(state, delta) match {
           case Some(stateDiff) =>
             val stateMerged = DecomposeLattice[Dotted[State]].merge(state, stateDiff)
             copy(
               state = stateMerged,
-              deltaBuffer = WithNamedContext(origin, stateDiff) :: deltaBuffer
+              deltaBuffer = DottedName(origin, stateDiff) :: deltaBuffer
             )
           case None => this.asInstanceOf[DeltaBufferRDT[State]]
         }

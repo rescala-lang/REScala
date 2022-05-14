@@ -6,7 +6,7 @@ import kofre.time.{Dots, Dot}
 import kofre.contextual.AsCausalContext.*
 import kofre.contextual.{AsCausalContext, Dotted}
 import kofre.datatypes.EnableWinsFlag
-import kofre.syntax.WithNamedContext
+import kofre.syntax.DottedName
 import org.scalacheck.{Arbitrary, Gen}
 import test.kofre.DataGenerator.*
 
@@ -14,7 +14,7 @@ class SyntaxTest extends munit.FunSuite {
 
   test("Manual Tests") {
 
-    val flag: WithNamedContext[EnableWinsFlag] = WithNamedContext.empty("me")
+    val flag: DottedName[EnableWinsFlag] = DottedName.empty("me")
 
     assert(!flag.read)
     val enabled = flag.enable()

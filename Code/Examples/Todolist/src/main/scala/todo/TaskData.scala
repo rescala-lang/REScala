@@ -7,7 +7,7 @@ import kofre.decompose.interfaces.LWWRegisterInterface
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegister
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegisterSyntax
-import kofre.syntax.WithNamedContext
+import kofre.syntax.DottedName
 import loci.registry.Binding
 import org.scalajs.dom.UIEvent
 import org.scalajs.dom.html.{Input, LI}
@@ -100,7 +100,7 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
 
     val doneEv = toggleAll || doneClick.event
 
-    val deltaEvt = Evt[WithNamedContext[LWWRegister[TaskData]]]()
+    val deltaEvt = Evt[DottedName[LWWRegister[TaskData]]]()
 
     // type Carrier = LWWRegister.State[TaskData, DietMapCContext]
     //

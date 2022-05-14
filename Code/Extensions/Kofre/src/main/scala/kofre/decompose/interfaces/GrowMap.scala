@@ -4,7 +4,7 @@ import kofre.base.DecomposeLattice
 import kofre.time.Dots
 import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, Dotted}
 import kofre.dotted.DotMap
-import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermIdMutate, WithNamedContext}
+import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermIdMutate, DottedName}
 
 /** A GMap (Grow-only Map) is a Delta CRDT that models a map from an arbitrary key type to nested Delta CRDTs.
   * In contrast to [[ORMapInterface]], key/value pairs cannot be removed from this map. However, due to the smaller internal
@@ -40,7 +40,7 @@ object GrowMap {
       GrowMap(Map(k -> m(PermIdMutate.withID[V, V](replicaID))(queryKey(k)))).mutator
     }
 
-    def mutateKeyNamedCtx(k: K, default: => V)(m: WithNamedContext[V] => WithNamedContext[V])(using CausalMutationP, IdentifierP): C = {
+    def mutateKeyNamedCtx(k: K, default: => V)(m: DottedName[V] => DottedName[V])(using CausalMutationP, IdentifierP): C = {
       m(Dotted(queryKey(k).getOrElse(default), context).named(replicaID)).anon.map(v => GrowMap(Map(k -> v))).mutator
     }
   }

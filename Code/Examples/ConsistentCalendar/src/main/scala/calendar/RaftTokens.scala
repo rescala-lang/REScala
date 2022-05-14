@@ -5,7 +5,7 @@ import kofre.decompose.containers.DeltaBufferRDT
 import kofre.datatypes.AddWinsSet
 import kofre.datatypes.AddWinsSet.AWSetSyntax
 import kofre.protocol.RaftState
-import kofre.syntax.WithNamedContext
+import kofre.syntax.DottedName
 
 import scala.util.Random
 
@@ -56,11 +56,11 @@ case class RaftTokens(
     } else copy(tokenAgreement = generalDuties)
   }
 
-  def applyWant(state: WithNamedContext[AddWinsSet[Token]]): RaftTokens = {
+  def applyWant(state: DottedName[AddWinsSet[Token]]): RaftTokens = {
     copy(want = want.applyDelta(state))
   }
 
-  def applyFree(state: WithNamedContext[AddWinsSet[Token]]): RaftTokens = {
+  def applyFree(state: DottedName[AddWinsSet[Token]]): RaftTokens = {
     copy(tokenFreed = tokenFreed.applyDelta(state))
   }
 

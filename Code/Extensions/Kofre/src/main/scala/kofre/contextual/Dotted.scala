@@ -5,13 +5,13 @@ import kofre.time.{Dots, Dot}
 import kofre.contextual.AsCausalContext
 import kofre.base.Lattice.Operators
 import kofre.dotted.{DotFun, DotSet}
-import kofre.syntax.{ArdtOpsContains, PermCausal, PermCausalMutate, PermQuery, WithNamedContext}
+import kofre.syntax.{ArdtOpsContains, PermCausal, PermCausalMutate, PermQuery, DottedName}
 
 import scala.util.NotGiven
 
 case class Dotted[A](store: A, context: Dots) {
   def map[B](f: A => B): Dotted[B]                  = Dotted(f(store), context)
-  def named(id: kofre.base.Defs.Id): WithNamedContext[A] = WithNamedContext(id, this)
+  def named(id: kofre.base.Defs.Id): DottedName[A] = DottedName(id, this)
 }
 
 /** Implicit aliases in companion object for search path */

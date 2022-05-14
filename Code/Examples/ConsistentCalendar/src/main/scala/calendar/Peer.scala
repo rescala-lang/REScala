@@ -7,7 +7,7 @@ import kofre.base.DecomposeLattice
 import kofre.contextual.{ContextDecompose, Dotted}
 import kofre.datatypes.AddWinsSet
 import kofre.datatypes.AddWinsSet.AWSetSyntax
-import kofre.syntax.WithNamedContext
+import kofre.syntax.DottedName
 import loci.communicator.tcp.TCP
 import loci.registry.Registry
 import loci.transmitter.{RemoteAccessException, RemoteRef}
@@ -72,7 +72,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
       calendar.replicated.foreach { case (id, set) =>
         set.now.deltaBuffer.collect {
-          case WithNamedContext(replicaID, deltaState) if replicaID != rr.toString => deltaState
+          case DottedName(replicaID, deltaState) if replicaID != rr.toString => deltaState
         }.reduceOption(DecomposeLattice[CalendarState].merge).foreach(sendRecursive(
           remoteReceiveSyncMessage,
           _,
@@ -81,13 +81,13 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
       }
 
       tokens.want.deltaBuffer.collect {
-        case WithNamedContext(replicaID, deltaState) if replicaID != rr.toString => deltaState
+        case DottedName(replicaID, deltaState) if replicaID != rr.toString => deltaState
       }.reduceOption(DecomposeLattice[Dotted[AddWinsSet[Token]]].merge).foreach { state =>
         remoteReceiveSyncMessage(WantMessage(state))
       }
 
       tokens.tokenFreed.deltaBuffer.collect {
-        case WithNamedContext(replicaID, deltaState) if replicaID != rr.toString => deltaState
+        case DottedName(replicaID, deltaState) if replicaID != rr.toString => deltaState
       }.reduceOption(ContextDecompose[AddWinsSet[Token]].merge).foreach { state =>
         remoteReceiveSyncMessage(FreeMessage(state))
       }
@@ -153,13 +153,13 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
         message match {
           case AppointmentMessage(deltaState, id) =>
-            val delta = WithNamedContext(remoteRef.toString, deltaState)
+            val delta = DottedName(remoteRef.toString, deltaState)
             val set   = calendar.replicated(id)
             set.transform(_.applyDelta(delta))
           case WantMessage(state) =>
-            tokens = tokens.applyWant(WithNamedContext(remoteRef.toString, state))
+            tokens = tokens.applyWant(DottedName(remoteRef.toString, state))
           case FreeMessage(state) =>
-            tokens = tokens.applyFree(WithNamedContext(remoteRef.toString, state))
+            tokens = tokens.applyFree(DottedName(remoteRef.toString, state))
           case RaftMessage(state) => {
             tokens = tokens.applyRaft(state)
           }

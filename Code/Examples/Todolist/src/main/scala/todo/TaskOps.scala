@@ -4,7 +4,7 @@ import kofre.decompose.containers.DeltaBufferRDT
 import kofre.decompose.interfaces.RGA
 import kofre.decompose.interfaces.RGA.RGAOps
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax
-import kofre.syntax.WithNamedContext
+import kofre.syntax.DottedName
 import rescala.default._
 
 import java.util.concurrent.ThreadLocalRandom
@@ -39,7 +39,7 @@ class TaskOps(@nowarn taskRefs: TaskReferences) {
     }
   }
 
-  def handleDelta(state: => State)(delta: WithNamedContext[RGA[TaskRef]]): State = {
+  def handleDelta(state: => State)(delta: DottedName[RGA[TaskRef]]): State = {
     val deltaBuffered = state
 
     val newList = deltaBuffered.resetDeltaBuffer().applyDelta(delta)

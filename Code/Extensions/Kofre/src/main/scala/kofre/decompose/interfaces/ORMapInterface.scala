@@ -3,7 +3,7 @@ package kofre.decompose.interfaces
 import kofre.base.{Bottom, DecomposeLattice, Defs}
 import kofre.time.{Dots, Dot}
 import kofre.decompose.*
-import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, WithNamedContext}
+import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, DottedName}
 import kofre.contextual.ContextDecompose.*
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
 import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, Dotted}
@@ -56,14 +56,14 @@ object ORMapInterface {
       }
     }
 
-    def mutateKeyNamedCtx(k: K)(m: WithNamedContext[V] => WithNamedContext[V])(using
-        CausalMutationP,
-        IdentifierP,
-        AsCausalContext[V],
-        ContextDecompose[V]
+    def mutateKeyNamedCtx(k: K)(m: DottedName[V] => DottedName[V])(using
+                                                                   CausalMutationP,
+                                                                   IdentifierP,
+                                                                   AsCausalContext[V],
+                                                                   ContextDecompose[V]
     ): C = {
       val v                           = current.getOrElse(k, Bottom[V].empty)
-      val Dotted(stateDelta, ccDelta) = m(WithNamedContext(replicaID, Dotted(v, context))).anon
+      val Dotted(stateDelta, ccDelta) = m(DottedName(replicaID, Dotted(v, context))).anon
       make[K, V](
         dm = DotMap(Map(k -> stateDelta)),
         cc = ccDelta

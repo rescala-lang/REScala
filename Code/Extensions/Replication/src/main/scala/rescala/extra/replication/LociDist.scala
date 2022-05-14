@@ -3,7 +3,7 @@ package rescala.extra.replication
 import kofre.base.DecomposeLattice
 import kofre.contextual.Dotted
 import kofre.decompose.containers.DeltaBufferRDT
-import kofre.syntax.WithNamedContext
+import kofre.syntax.DottedName
 import loci.registry.{Binding, Registry}
 import loci.transmitter.RemoteRef
 import rescala.interface.RescalaInterface
@@ -18,12 +18,12 @@ class LociDist[Api <: RescalaInterface](val api: Api) {
   import api._
 
   def distributeDeltaCRDT[A](
-      signal: Signal[DeltaBufferRDT[A]],
-      deltaEvt: Evt[WithNamedContext[A]],
-      registry: Registry
+                              signal: Signal[DeltaBufferRDT[A]],
+                              deltaEvt: Evt[DottedName[A]],
+                              registry: Registry
   )(binding: Binding[Dotted[A] => Unit, Dotted[A] => Future[Unit]])(implicit dcl: DecomposeLattice[Dotted[A]]): Unit = {
     registry.bindSbj(binding) { (remoteRef: RemoteRef, deltaState: Dotted[A]) =>
-      deltaEvt.fire(WithNamedContext(remoteRef.toString, deltaState))
+      deltaEvt.fire(DottedName(remoteRef.toString, deltaState))
     }
 
     var observers    = Map[RemoteRef, Disconnectable]()
@@ -40,7 +40,7 @@ class LociDist[Api <: RescalaInterface](val api: Api) {
       // Praktisch wäre etwas wie crdt.observeDelta
       val observer = signal.observe { s =>
         val deltaStateList = s.deltaBuffer.collect {
-          case WithNamedContext(replicaID, deltaState) if replicaID != remoteRef.toString => deltaState
+          case DottedName(replicaID, deltaState) if replicaID != remoteRef.toString => deltaState
         } ++ resendBuffer.get(remoteRef).toList
 
         val combinedState = deltaStateList.reduceOption(DecomposeLattice[Dotted[A]].merge)

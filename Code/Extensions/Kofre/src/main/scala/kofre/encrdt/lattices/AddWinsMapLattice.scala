@@ -4,7 +4,7 @@ import kofre.base.{DecomposeLattice, Lattice}
 import kofre.time.Dots
 import kofre.contextual.Dotted
 import kofre.datatypes.AddWinsSet
-import kofre.syntax.{PermIdMutate, WithNamedContext}
+import kofre.syntax.{PermIdMutate, DottedName}
 import kofre.syntax.PermIdMutate.withID
 
 case class AddWinsMapLattice[K, V](

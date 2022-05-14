@@ -21,7 +21,7 @@ import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax
 import kofre.decompose.interfaces.RGA
 import kofre.decompose.containers.DeltaBufferRDT
 import kofre.decompose.interfaces.RGA.RGAOps
-import kofre.syntax.WithNamedContext
+import kofre.syntax.DottedName
 
 class TodoAppUI(val storagePrefix: String) {
 
@@ -48,7 +48,7 @@ class TodoAppUI(val storagePrefix: String) {
     val taskrefs = TaskReferences(toggleAll.event, storagePrefix)
     val taskOps  = new TaskOps(taskrefs)
 
-    val deltaEvt = Evt[WithNamedContext[RGA[TaskRef]]]
+    val deltaEvt = Evt[DottedName[RGA[TaskRef]]]
 
     val tasksRDT: Signal[DeltaBufferRDT[RGA[TaskRef]]] =
       Storing.storedAs(storagePrefix, DeltaBufferRDT(replicaId, RGA.empty[TaskRef])) { init =>

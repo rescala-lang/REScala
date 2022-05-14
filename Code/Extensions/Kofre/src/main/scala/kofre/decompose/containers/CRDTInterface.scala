@@ -4,7 +4,7 @@ import kofre.base.Defs.Id
 import kofre.base.{DecomposeLattice, Defs}
 import kofre.time.Dots
 import kofre.contextual.{ContextDecompose, ContextLattice, Dotted}
-import kofre.syntax.WithNamedContext
+import kofre.syntax.DottedName
 import kofre.decompose.Delta
 import kofre.syntax.{PermCausal, PermCausalMutate, PermIdMutate, PermQuery}
 import kofre.base.Lattice
@@ -15,7 +15,7 @@ trait CRDTInterface[State, Wrapper] {
 
   val replicaID: Defs.Id
 
-  def applyDelta(delta: WithNamedContext[State])(implicit u: DecomposeLattice[Dotted[State]]): Wrapper
+  def applyDelta(delta: DottedName[State])(implicit u: DecomposeLattice[Dotted[State]]): Wrapper
 }
 
 object CRDTInterface {
@@ -27,14 +27,14 @@ object CRDTInterface {
       override def mutateContext(
           container: B,
           withContext: Dotted[L]
-      ): B = container.applyDelta(WithNamedContext(container.replicaID, withContext))
+      ): B = container.applyDelta(DottedName(container.replicaID, withContext))
       override def context(c: B): Dots = c.state.context
     }
 
   def fullPermissions[L: DecomposeLattice, B <: CRDTInterface[L, B]]: PermIdMutate[B, L] =
     new PermIdMutate[B, L] {
       override def replicaId(c: B): Id       = c.replicaID
-      override def mutate(c: B, delta: L): B = c.applyDelta(WithNamedContext(c.replicaID, Dotted(delta)))
+      override def mutate(c: B, delta: L): B = c.applyDelta(DottedName(c.replicaID, Dotted(delta)))
       override def query(c: B): L            = c.state.store
     }
 
