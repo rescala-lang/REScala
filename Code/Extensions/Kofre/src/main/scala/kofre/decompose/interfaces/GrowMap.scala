@@ -2,7 +2,7 @@ package kofre.decompose.interfaces
 
 import kofre.base.DecomposeLattice
 import kofre.time.Dots
-import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, Dotted}
+import kofre.contextual.{HasDots, ContextDecompose, ContextLattice, Dotted}
 import kofre.dotted.DotMap
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermIdMutate, DottedName}
 
@@ -21,7 +21,7 @@ object GrowMap {
   def empty[K, V]: GrowMap[K, V] = GrowMap(Map.empty)
 
   given decomposeLattice[K, V: DecomposeLattice]: DecomposeLattice[GrowMap[K, V]] = DecomposeLattice.derived
-  given contextLattice[K, V: ContextDecompose: AsCausalContext]: ContextDecompose[GrowMap[K, V]] =
+  given contextLattice[K, V: ContextDecompose: HasDots]: ContextDecompose[GrowMap[K, V]] =
     given ContextDecompose[Map[K, V]] = DotMap.contextDecompose[K, V].contextbimap[Map[K, V]](_.map(_.repr), _.map(DotMap.apply))
     ContextDecompose.derived
 

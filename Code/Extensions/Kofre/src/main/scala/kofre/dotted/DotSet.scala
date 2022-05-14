@@ -2,7 +2,7 @@ package kofre.dotted
 
 import kofre.time.{Dot, Dots}
 import kofre.contextual.ContextDecompose.FromConlattice
-import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, Dotted}
+import kofre.contextual.{HasDots, ContextDecompose, ContextLattice, Dotted}
 import kofre.datatypes.EnableWinsFlag
 import kofre.decompose.interfaces
 
@@ -16,7 +16,7 @@ object DotSet {
 
   def empty: DotSet = DotSet(Dots.empty)
 
-  given asCausalContext: AsCausalContext[DotSet] with {
+  given hasDots: HasDots[DotSet] with {
     override def dots(a: DotSet): Dots = a.repr
   }
 

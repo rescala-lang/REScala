@@ -2,7 +2,7 @@ package kofre.datatypes
 
 import kofre.base.DecomposeLattice
 import kofre.time.{Dots, Dot}
-import kofre.contextual.{AsCausalContext, ContextDecompose, Dotted}
+import kofre.contextual.{HasDots, ContextDecompose, Dotted}
 import kofre.contextual.ContextDecompose.*
 import kofre.decompose.*
 import kofre.dotted.{DotMap, DotSet}
@@ -20,7 +20,7 @@ object AddWinsSet {
   def empty[E]: AddWinsSet[E] = AddWinsSet(DotMap.empty)
 
   given contextDecompose[E]: ContextDecompose[AddWinsSet[E]] = ContextDecompose.derived
-  given asCausalContext[E]: AsCausalContext[AddWinsSet[E]] = AsCausalContext.derived
+  given asCausalContext[E]: HasDots[AddWinsSet[E]] = HasDots.derived
 
   implicit class AWSetSyntax[C, E](container: C) extends OpsSyntaxHelper[C, AddWinsSet[E]](container) {
 

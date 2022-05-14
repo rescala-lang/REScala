@@ -1,7 +1,7 @@
 package kofre.encrdt.crdts
 import kofre.base.Lattice
 import kofre.time.{Dots, Dot}
-import kofre.contextual.{AsCausalContext, Dotted}
+import kofre.contextual.{HasDots, Dotted}
 import kofre.dotted.DotFun
 
 object DeltaMultiValueRegister {

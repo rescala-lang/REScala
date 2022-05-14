@@ -3,11 +3,11 @@ package kofre.dotted
 import kofre.base.Bottom
 import kofre.time.Dots
 import kofre.contextual.ContextDecompose.FromConlattice
-import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, Dotted}
+import kofre.contextual.{HasDots, ContextDecompose, ContextLattice, Dotted}
 import kofre.decompose.interfaces
 
 case class DotMap[K, V](repr: Map[K, V]) {
-  def dots(using ccv: AsCausalContext[V]): Dots =
+  def dots(using ccv: HasDots[V]): Dots =
     repr.valuesIterator.foldLeft(Dots.empty)((acc, v) => acc.union(ccv.dots(v)))
   export repr.{repr as _, *}
 }
@@ -19,7 +19,7 @@ object DotMap {
 
   def empty[K, V]: DotMap[K, V] = DotMap(Map.empty)
 
-  given asCausalContext[K, V: AsCausalContext]: AsCausalContext[DotMap[K, V]] with {
+  given hasDots[K, V: HasDots]: HasDots[DotMap[K, V]] with {
     override def dots(a: DotMap[K, V]): Dots = a.dots
 
   }
@@ -38,7 +38,7 @@ object DotMap {
     }
   }
 
-  given contextDecompose[K, V: ContextDecompose: AsCausalContext]: ContextDecompose[DotMap[K, V]] =
+  given contextDecompose[K, V: ContextDecompose: HasDots]: ContextDecompose[DotMap[K, V]] =
     new FromConlattice[DotMap[K, V]](contextLattice) {
 
       override def empty: Dotted[DotMap[K, V]] = Dotted(DotMap.empty)
@@ -60,7 +60,7 @@ object DotMap {
           k <- state.store.keys
           Dotted(atomicV, atomicCC) <- {
             val v = state.store.getOrElse(k, Bottom.empty[V])
-            ContextDecompose[V].decompose(Dotted(v, AsCausalContext[V].dots(v)))
+            ContextDecompose[V].decompose(Dotted(v, HasDots[V].dots(v)))
           }
         } yield Dotted(DotMap(Map(k -> atomicV)), atomicCC)
 

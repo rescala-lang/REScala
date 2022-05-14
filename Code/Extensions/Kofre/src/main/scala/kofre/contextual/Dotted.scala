@@ -2,7 +2,7 @@ package kofre.contextual
 
 import kofre.base.{Bottom, DecomposeLattice, Lattice}
 import kofre.time.{Dots, Dot}
-import kofre.contextual.AsCausalContext
+import kofre.contextual.HasDots
 import kofre.base.Lattice.Operators
 import kofre.dotted.{DotFun, DotSet}
 import kofre.syntax.{ArdtOpsContains, PermCausal, PermCausalMutate, PermQuery, DottedName}

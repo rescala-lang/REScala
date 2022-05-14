@@ -12,21 +12,21 @@ import scala.deriving.Mirror
   *
   * But here, a dot store is something that can be seen as a Dots
   */
-trait AsCausalContext[A] {
+trait HasDots[A] {
   def dots(a: A): Dots
 }
 
-object AsCausalContext {
+object HasDots {
 
-  def apply[A](using dotStore: AsCausalContext[A]): dotStore.type = dotStore
+  def apply[A](using dotStore: HasDots[A]): dotStore.type = dotStore
 
-  inline def derived[T <: Product](using pm: Mirror.ProductOf[T]): AsCausalContext[T] =
+  inline def derived[T <: Product](using pm: Mirror.ProductOf[T]): HasDots[T] =
     val lattices =
-      summonAll[Tuple.Map[pm.MirroredElemTypes, AsCausalContext]].toIArray.map(_.asInstanceOf[AsCausalContext[Any]])
-    ProductAsCausalContext(pm, lattices)
+      summonAll[Tuple.Map[pm.MirroredElemTypes, HasDots]].toIArray.map(_.asInstanceOf[HasDots[Any]])
+    new ProductHasDots(pm, lattices)
 
-  class ProductAsCausalContext[T <: Product](pm: Mirror.ProductOf[T], children: IArray[AsCausalContext[Any]])
-      extends AsCausalContext[T] {
+  class ProductHasDots[T <: Product](pm: Mirror.ProductOf[T], children: IArray[HasDots[Any]])
+    extends HasDots[T] {
     override def dots(a: T): Dots = Range(0, a.productArity).foldLeft(Dots.empty) { (c, i) =>
       c.union(children(i).dots(a.productElement(i)))
     }

@@ -6,7 +6,7 @@ import kofre.decompose.*
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, DottedName}
 import kofre.contextual.ContextDecompose.*
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
-import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, Dotted}
+import kofre.contextual.{HasDots, ContextDecompose, ContextLattice, Dotted}
 import kofre.dotted.DotMap
 
 /** An ORMap (Observed-Remove Map) is a Delta CRDT that models a map from an arbitrary key type to nested causal Delta CRDTs.
@@ -21,7 +21,7 @@ object ORMapInterface {
 
   def empty[K, V]: ORMap[K, V] = DotMap.empty
 
-  given contextDecompose[K, V: ContextDecompose: AsCausalContext]: ContextDecompose[ORMap[K, V]] = DotMap.contextDecompose
+  given contextDecompose[K, V: ContextDecompose: HasDots]: ContextDecompose[ORMap[K, V]] = DotMap.contextDecompose
 
 
   def make[K, V](
@@ -34,7 +34,7 @@ object ORMapInterface {
 
     def contains(k: K)(using QueryP): Boolean = current.contains(k)
 
-    def queryKey[A](k: K)(using QueryP, CausalP, ContextDecompose[V], AsCausalContext[V]): Dotted[V] = {
+    def queryKey[A](k: K)(using QueryP, CausalP, ContextDecompose[V], HasDots[V]): Dotted[V] = {
       Dotted(current.getOrElse(k, Bottom[V].empty), context)
     }
 
@@ -43,7 +43,7 @@ object ORMapInterface {
                                                               CausalMutationP,
                                                               IdentifierP,
                                                               ContextDecompose[V],
-                                                              AsCausalContext[V]
+                                                              HasDots[V]
     ): C = {
       val v = current.getOrElse(k, Bottom[V].empty)
 
@@ -59,7 +59,7 @@ object ORMapInterface {
     def mutateKeyNamedCtx(k: K)(m: DottedName[V] => DottedName[V])(using
                                                                    CausalMutationP,
                                                                    IdentifierP,
-                                                                   AsCausalContext[V],
+                                                                   HasDots[V],
                                                                    ContextDecompose[V]
     ): C = {
       val v                           = current.getOrElse(k, Bottom[V].empty)
@@ -70,18 +70,18 @@ object ORMapInterface {
       ).mutator
     }
 
-    def remove(k: K)(using CausalMutationP, ContextDecompose[V], AsCausalContext[V]): C = {
+    def remove(k: K)(using CausalMutationP, ContextDecompose[V], HasDots[V]): C = {
       val v = current.getOrElse(k, Bottom[V].empty)
 
       make[K, V](
-        cc = AsCausalContext[V].dots(v)
+        cc = HasDots[V].dots(v)
       ).mutator
     }
 
-    def removeAll(keys: Iterable[K])(using CausalMutationP, ContextDecompose[V], AsCausalContext[V]): C = {
+    def removeAll(keys: Iterable[K])(using CausalMutationP, ContextDecompose[V], HasDots[V]): C = {
       val values = keys.map(k => current.getOrElse(k, Bottom[V].empty))
       val dots = values.foldLeft(Dots.empty) {
-        case (set, v) => set union AsCausalContext[V].dots(v)
+        case (set, v) => set union HasDots[V].dots(v)
       }
 
       make(
@@ -89,9 +89,9 @@ object ORMapInterface {
       ).mutator
     }
 
-    def removeByValue(cond: Dotted[V] => Boolean)(using CausalMutationP, ContextDecompose[V], AsCausalContext[V]): C = {
+    def removeByValue(cond: Dotted[V] => Boolean)(using CausalMutationP, ContextDecompose[V], HasDots[V]): C = {
       val toRemove = current.values.collect {
-        case v if cond(Dotted(v, context)) => AsCausalContext[V].dots(v)
+        case v if cond(Dotted(v, context)) => HasDots[V].dots(v)
       }.fold(Dots.empty)(_ union _)
 
       make(
@@ -99,7 +99,7 @@ object ORMapInterface {
       ).mutator
     }
 
-    def clear()(using CausalMutationP, ContextDecompose[V], AsCausalContext[V]): C = {
+    def clear()(using CausalMutationP, ContextDecompose[V], HasDots[V]): C = {
       make(
         cc = current.dots
       ).mutator

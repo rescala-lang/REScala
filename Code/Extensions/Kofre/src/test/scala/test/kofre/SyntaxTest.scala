@@ -3,8 +3,8 @@ package test.kofre
 import kofre.base.Lattice
 import kofre.base.Lattice.Operators
 import kofre.time.{Dots, Dot}
-import kofre.contextual.AsCausalContext.*
-import kofre.contextual.{AsCausalContext, Dotted}
+import kofre.contextual.HasDots.*
+import kofre.contextual.{HasDots, Dotted}
 import kofre.datatypes.EnableWinsFlag
 import kofre.syntax.DottedName
 import org.scalacheck.{Arbitrary, Gen}

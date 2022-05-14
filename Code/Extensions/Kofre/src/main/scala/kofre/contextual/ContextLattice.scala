@@ -2,7 +2,7 @@ package kofre.contextual
 
 import kofre.base.{DecomposeLattice, Lattice}
 import kofre.time.{Dots, Dot}
-import kofre.contextual.AsCausalContext
+import kofre.contextual.HasDots
 import kofre.base.Lattice.Operators
 import kofre.base.Bottom
 

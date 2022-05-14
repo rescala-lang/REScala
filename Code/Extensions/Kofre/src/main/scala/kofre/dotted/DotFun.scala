@@ -3,7 +3,7 @@ package kofre.dotted
 import kofre.base.{Bottom, DecomposeLattice, Lattice}
 import kofre.time.{Dots, Dot}
 import kofre.contextual.ContextDecompose.FromConlattice
-import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, Dotted}
+import kofre.contextual.{HasDots, ContextDecompose, ContextLattice, Dotted}
 import kofre.decompose.interfaces
 
 import scala.annotation.targetName
@@ -43,7 +43,7 @@ object DotFun {
     })
   }
 
-  given dotStore[V]: AsCausalContext[DotFun[V]] with {
+  given dotStore[V]: HasDots[DotFun[V]] with {
     override def dots(dotStore: DotFun[V]): Dots = Dots.fromSet(dotStore.repr.keySet)
   }
 

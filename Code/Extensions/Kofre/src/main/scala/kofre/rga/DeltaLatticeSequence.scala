@@ -6,7 +6,7 @@ import kofre.time.Dots
 import kofre.datatypes.{AddWinsSet, EnableWinsFlag}
 import kofre.datatypes.AddWinsSet
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermIdMutate, DottedName}
-import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, Dotted}
+import kofre.contextual.{HasDots, ContextDecompose, ContextLattice, Dotted}
 
 import scala.collection.{AbstractIterator, immutable}
 
