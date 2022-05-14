@@ -47,10 +47,10 @@ lazy val rescala = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file
     autoAPIMappings := true,
     Compile / doc / scalacOptions += "-groups",
     // dotty seems to be currently unable to compile the docs … ?
-    Compile / doc := ( if(`is 3`(scalaVersion.value)) file("target/dummy/doc") else (Compile / doc).value ),
+    Compile / doc := (if (`is 3`(scalaVersion.value)) file("target/dummy/doc") else (Compile / doc).value),
     // fullmv does not survive this check, but I want to keep it in the shared settings
     scalacOptions := scalacOptions.value.filter(_ != "-Ysafe-init"),
-    CcsO := (if(`is 3`(scalaVersion.value)) CcsO.value.filter(_ != "-Xfatal-warnings") else CcsO.value),
+    CcsO          := (if (`is 3`(scalaVersion.value)) CcsO.value.filter(_ != "-Xfatal-warnings") else CcsO.value),
     publishSonatype,
     libraryDependencies ++= Seq(
       sourcecode.value,
@@ -63,15 +63,15 @@ lazy val rescala = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file
     ),
     libraryDependencies ++= (if (`is 3`(scalaVersion.value)) None
                              else Some(scalaOrganization.value % "scala-reflect" % scalaVersion.value % "provided"))
-
   )
   .jsSettings(
-    Test / compile / scalacOptions ++= (if(`is 3`(scalaVersion.value)) List.empty else List("-P:scalajs:nowarnGlobalExecutionContext")),
+    Test / compile / scalacOptions ++= (if (`is 3`(scalaVersion.value)) List.empty
+                                        else List("-P:scalajs:nowarnGlobalExecutionContext")),
     libraryDependencies += scalatags.value % "provided,test",
     jsEnv                                 := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
   )
   .nativeSettings(
-    nativeLinkStubs    := true
+    nativeLinkStubs := true
   )
 
 lazy val rescalaJVM = rescala.jvm
@@ -183,7 +183,6 @@ lazy val kofre = crossProject(JVMPlatform, JSPlatform).crossType(CrossType.Pure)
   .settings(
     name := "kofre",
     scalaVersion_3,
-    Test / test / fork               := true,
     publishSonatype,
     libraryDependencies ++= List(scalatest.value, scalatestpluscheck.value, munit.value, munitScalacheck.value),
   )
