@@ -150,12 +150,18 @@ class RCounterTest extends munit.ScalaCheckSuite {
     forAll { op: Boolean =>
       val network = new Network(0, 0, 0)
 
-      val aea = new AntiEntropy[RCounter]("a", network, mutable.Buffer("b"))
-      val aeb = new AntiEntropy[RCounter]("b", network, mutable.Buffer("a"))
+      val aea        = new AntiEntropy[RCounter]("a", network, mutable.Buffer("b"))
+      val aeb        = new AntiEntropy[RCounter]("b", network, mutable.Buffer("a"))
+      val sequential = AntiEntropyCRDT(new AntiEntropy[RCounter]("c", network, mutable.Buffer("c")))
 
       val ca0 = AntiEntropyCRDT[RCounter](aea).increment()
       AntiEntropy.sync(aea, aeb)
       val cb0 = AntiEntropyCRDT[RCounter](aeb).processReceivedDeltas()
+
+      sequential.increment()
+
+      assertEquals(ca0.value, sequential.value, s"${ca0.state} ${sequential.state}")
+      assertEquals(ca0.value, cb0.value, s"${ca0.state}\n${cb0.state}")
 
       val ca1 = if (op) ca0.fresh().increment() else ca0.fresh().decrement()
       val cb1 = cb0.reset()
@@ -165,15 +171,24 @@ class RCounterTest extends munit.ScalaCheckSuite {
       val ca2 = ca1.processReceivedDeltas()
       val cb2 = cb1.processReceivedDeltas()
 
-      val sequential = if (op) cb1.increment() else cb1.decrement()
+      sequential.reset()
+      if (op) sequential.increment() else sequential.decrement()
 
-      assert(
-        ca2.value == sequential.value,
-        s"Concurrent increment/decrement with fresh and reset should have the same result as executing increment/decrement sequentially after reset, but ${ca2.value} does not equal ${sequential.value}"
+      assertEquals(
+        ca2.value,
+        cb2.value,
+        s"Concurrent increment/decrement with fresh and reset should have the same result as executing increment/decrement sequentially after reset"
       )
-      assert(
-        cb2.value == sequential.value,
-        s"Concurrent increment/decrement with fresh and reset should have the same result as executing increment/decrement sequentially after reset, but ${cb2.value} does not equal ${sequential.value}"
+
+      assertEquals(
+        ca2.value,
+        sequential.value,
+        s"Concurrent increment/decrement with fresh and reset should have the same result as executing increment/decrement sequentially after reset.\n${ca2.state}\n${sequential.state}"
+      )
+      assertEquals(
+        cb2.value,
+        sequential.value,
+        s"Concurrent increment/decrement with fresh and reset should have the same result as executing increment/decrement sequentially after reset."
       )
     }
   }
