@@ -116,7 +116,7 @@ class RCounterTest extends munit.ScalaCheckSuite {
     }
   }
 
-  test("concurrent reset and increment/decrement without fresh".only) {
+  test("concurrent reset and increment/decrement without fresh") {
     val network = new Network(0, 0, 0)
 
     val aea = new AntiEntropy[RCounter]("a", network, mutable.Buffer("b"))
