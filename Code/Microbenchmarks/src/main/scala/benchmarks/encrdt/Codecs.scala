@@ -19,7 +19,7 @@ object Codecs {
 
     override def decodeValue(in: JsonReader, default: CausalContext): CausalContext =
       CausalContext(optimizedArrayCausalContextCodec.decodeValue(in, Map.empty).map {
-        case (id, times) => id -> ArrayRanges(times, times.length)
+        case (id, times) => id -> new ArrayRanges(times, times.length)
       })
 
     override def encodeValue(x: CausalContext, out: JsonWriter): Unit = optimizedArrayCausalContextCodec.encodeValue(

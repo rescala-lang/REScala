@@ -5,9 +5,11 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import kofre.base.Defs
 import kofre.causality.Dot
 import kofre.contextual.WithContext
+import kofre.decompose.TimedVal
 import kofre.decompose.containers.DeltaBufferRDT
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegister
 import kofre.decompose.interfaces.{LWWRegisterInterface, RGA}
+import kofre.dotted.DotFun
 import loci.transmitter.IdenticallyTransmittable
 import rescala.extra.lattices.delta.JsoniterCodecs._
 import todo.Todolist.replicaId
@@ -43,7 +45,7 @@ object Codecs {
 
   implicit val todoTaskCodec: JsonValueCodec[TaskData] = JsonCodecMaker.make
 
-  implicit val codecLwwState: JsonValueCodec[WithContext[LWWRegister[TaskData]]] = JsonCodecMaker.make
+  implicit val codecLwwState: JsonValueCodec[WithContext[DotFun[TimedVal[TaskData]]]] = JsonCodecMaker.make
 
   implicit val transmittableLWW: IdenticallyTransmittable[WithContext[LWWRegister[TaskData]]] =
     IdenticallyTransmittable()
