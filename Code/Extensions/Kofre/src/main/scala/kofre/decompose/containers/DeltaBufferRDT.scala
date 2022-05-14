@@ -2,7 +2,6 @@ package kofre.decompose.containers
 
 import kofre.base.{Bottom, DecomposeLattice, Defs}
 import kofre.time.Dots
-import kofre.decompose.Delta
 import kofre.dotted.{DottedDecompose, DottedLattice, Dotted}
 import kofre.syntax.{ArdtOpsContains, PermCausal, PermCausalMutate, PermIdMutate, PermQuery, DottedName}
 
