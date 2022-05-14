@@ -10,18 +10,20 @@ import kofre.syntax.{ArdtOpsContains, PermCausal, PermCausalMutate, PermIdMutate
   * have been read and propagated by the middleware, it should call resetDeltaBuffer to empty the deltaBuffer.
   */
 class DeltaBufferRDT[State](
-                             val state: Dotted[State],
-                             val replicaID: String,
-                             val deltaBuffer: List[DottedName[State]]
+    val state: Dotted[State],
+    val replicaID: String,
+    val deltaBuffer: List[DottedName[State]]
 ) extends CRDTInterface[State, DeltaBufferRDT[State]] {
 
   def copy(
-            state: Dotted[State] = state,
-            deltaBuffer: List[DottedName[State]] = deltaBuffer
+      state: Dotted[State] = state,
+      deltaBuffer: List[DottedName[State]] = deltaBuffer
   ): DeltaBufferRDT[State] =
     new DeltaBufferRDT[State](state, replicaID, deltaBuffer)
 
-  override def applyDelta(delta: DottedName[State])(implicit u: DecomposeLattice[Dotted[State]]): DeltaBufferRDT[State] =
+  override def applyDelta(delta: DottedName[State])(implicit
+      u: DecomposeLattice[Dotted[State]]
+  ): DeltaBufferRDT[State] =
     delta match {
       case DottedName(origin, delta) =>
         DecomposeLattice[Dotted[State]].diff(state, delta) match {
@@ -40,9 +42,10 @@ class DeltaBufferRDT[State](
 
 object DeltaBufferRDT {
 
-  given contextPermissions[L: DottedDecompose]: (PermIdMutate[DeltaBufferRDT[L], L] & PermCausalMutate[DeltaBufferRDT[L], L]) = CRDTInterface.dottedPermissions
+  given contextPermissions[L: DottedDecompose]
+      : (PermIdMutate[DeltaBufferRDT[L], L] & PermCausalMutate[DeltaBufferRDT[L], L]) = CRDTInterface.dottedPermissions
 
-  given fullPermission[L: DecomposeLattice]:  PermIdMutate[DeltaBufferRDT[L], L] = CRDTInterface.fullPermissions
+  given fullPermission[L: DecomposeLattice]: PermIdMutate[DeltaBufferRDT[L], L] = CRDTInterface.fullPermissions
 
   /** Creates a new PNCounter instance
     *
@@ -51,7 +54,8 @@ object DeltaBufferRDT {
   def apply[State](replicaID: String)(using bot: Bottom[Dotted[State]]): DeltaBufferRDT[State] =
     new DeltaBufferRDT[State](bot.empty, replicaID, List())
 
-  def empty[State](replicaID: Defs.Id, init: State): DeltaBufferRDT[State] = new DeltaBufferRDT[State](Dotted(init), replicaID, List())
+  def empty[State](replicaID: Defs.Id, init: State): DeltaBufferRDT[State] =
+    new DeltaBufferRDT[State](Dotted(init), replicaID, List())
 
   def apply[State](replicaID: Defs.Id, init: State): DeltaBufferRDT[State] = empty(replicaID, init)
 }
