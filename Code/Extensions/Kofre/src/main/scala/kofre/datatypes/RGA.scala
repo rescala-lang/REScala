@@ -3,9 +3,9 @@ package kofre.datatypes
 import kofre.base.{Bottom, DecomposeLattice}
 import kofre.datatypes.{Epoche, TimedVal}
 import kofre.decompose.*
+import kofre.decompose.interfaces.GListInterface
 import kofre.decompose.interfaces.GListInterface.{GListAsUIJDLattice, GListSyntax}
 import kofre.decompose.interfaces.RCounterInterface.RCounter
-import kofre.decompose.interfaces.{GListInterface}
 import kofre.dotted.{DotFun, Dotted, DottedDecompose, DottedLattice}
 import kofre.syntax.PermIdMutate.withID
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermIdMutate, PermMutate}
