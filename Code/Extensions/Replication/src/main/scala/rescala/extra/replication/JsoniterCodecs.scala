@@ -11,6 +11,7 @@ import kofre.decompose.TimedVal
 import kofre.causality.{ArrayRanges, CausalContext, Dot}
 import kofre.decompose.interfaces.LexCounterInterface.LexPair
 import kofre.contextual.WithContext
+import kofre.decompose.interfaces.RCounterInterface.RCounter
 import kofre.decompose.interfaces.{EnableWinsFlag, GMap, RGA}
 import kofre.predef.{AddWinsSet, Epoche, GrowOnlyCounter, PosNegCounter}
 
@@ -138,11 +139,9 @@ object JsoniterCodecs {
 
   /** RCounter */
 
-  implicit def RCounterStateCodec: JsonValueCodec[WithContext[Map[Dot, (Int, Int)]]] =
+  implicit def RCounterStateCodec: JsonValueCodec[RCounter] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
-  implicit def RCounterEmbeddedCodec: JsonValueCodec[Map[Dot, (Int, Int)]] =
-    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   /** RGA */
 

@@ -3,7 +3,7 @@ package test.kofre
 import kofre.base.Defs.Time
 import kofre.base.{Defs, Lattice}
 import kofre.causality.{CausalContext, Dot, VectorClock}
-import kofre.contextual.ContextDecompose.{DotMap}
+import kofre.contextual.ContextDecompose.DotMap
 import kofre.contextual.{AsCausalContext, ContextDecompose}
 import kofre.dotted.DotFun
 import kofre.predef.{GrowOnlyCounter, PosNegCounter}

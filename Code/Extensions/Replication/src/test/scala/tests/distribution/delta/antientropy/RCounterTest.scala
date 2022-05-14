@@ -126,12 +126,8 @@ class RCounterTest extends munit.ScalaCheckSuite {
     AntiEntropy.sync(aea, aeb)
     val cb0 = AntiEntropyCRDT[RCounter](aeb).processReceivedDeltas()
 
-    println(s"${ca0.state}\n${cb0.state}")
-
     val ca1 = ca0.increment()
     val cb1 = cb0.reset()
-
-    println(s"${ca1.state}\n${cb1.state}")
 
     AntiEntropy.sync(aea, aeb)
 
