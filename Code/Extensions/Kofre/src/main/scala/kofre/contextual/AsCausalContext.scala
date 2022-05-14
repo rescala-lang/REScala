@@ -14,8 +14,6 @@ import scala.deriving.Mirror
   */
 trait AsCausalContext[A] extends Bottom[A] {
   def dots(a: A): CausalContext
-  extension (a: A) def asContext: CausalContext = dots(a)
-  def empty: A
 }
 
 object AsCausalContext {
@@ -43,7 +41,7 @@ object AsCausalContext {
   given DotPairInstance[A: AsCausalContext, B: AsCausalContext]: AsCausalContext[(A, B)] with {
     override def dots(ds: (A, B)): CausalContext =
       val (ds1, ds2) = ds
-      ds1.asContext union ds2.asContext
+      AsCausalContext[A].dots(ds1) union AsCausalContext[B].dots(ds2)
     override def empty: (A, B) = (Bottom.empty[A], Bottom.empty[B])
   }
 

@@ -8,7 +8,15 @@ import kofre.decompose.interfaces
 
 import scala.annotation.targetName
 
+/** The context describes dots that have been seen.
+  * The store describes which value is associated for a given dot.
+  * Dots that are removed from the store are considered deleted.
+  * All others are merged as for normal maps.
+  *
+  * The delta CRDT paper calls this a DotFun
+  */
 case class DotFun[A](repr: Map[Dot, A]) {
+  def dots: CausalContext = CausalContext.fromSet(repr.keySet)
   @targetName("add")
   def +(tup: (Dot, A)): DotFun[A] = DotFun(repr + tup)
   export repr.{+ as _, repr as _, *}
@@ -18,13 +26,6 @@ object DotFun {
 
   def empty[A]: DotFun[A] = DotFun(Map.empty)
 
-  /** The context describes dots that have been seen.
-    * The store describes which value is associated for a given dot.
-    * Dots that are removed from the store are considered deleted.
-    * All others are merged as for normal maps.
-    *
-    * The delta CRDT paper calls this a DotFun
-    */
   given perDotLattice[A: Lattice]: ContextLattice[DotFun[A]] = (left, right) => {
     val fromLeft = left.store.repr.filter { case (dot, _) => !right.context.contains(dot) }
 

@@ -12,8 +12,8 @@ class DotFunTest extends munit.ScalaCheckSuite {
   property("dots") {
     forAll { (df: DotFun[Int]) =>
       assert(
-        AsCausalContext[DotFun[Int]].dots(df).toSet == df.keySet,
-        s"DotFun.dots should return the keys of the DotFun itself, but ${AsCausalContext[DotFun[Int]].dots(df)} does not equal $df"
+        df.dots.toSet == df.keySet,
+        s"DotFun.dots should return the keys of the DotFun itself, but ${df.dots} does not equal $df"
       )
     }
   }
@@ -27,8 +27,8 @@ class DotFunTest extends munit.ScalaCheckSuite {
 
   property("merge") {
     forAll { (dfA: DotFun[Int], deletedA: CausalContext, dfB: DotFun[Int], deletedB: CausalContext) =>
-      val dotsA = AsCausalContext[DotFun[Int]].dots(dfA)
-      val dotsB = AsCausalContext[DotFun[Int]].dots(dfB)
+      val dotsA = dfA.dots
+      val dotsB = dfB.dots
       val ccA   = dotsA union deletedA
       val ccB   = dotsB union deletedB
 
@@ -37,7 +37,7 @@ class DotFunTest extends munit.ScalaCheckSuite {
           WithContext(dfA, ccA),
           WithContext(dfB, ccB)
         )
-      val dotsMerged = AsCausalContext[DotFun[Int]].dots(dfMerged)
+      val dotsMerged = dfMerged.dots
 
       assert(
         ccMerged == (ccA union ccB),
@@ -83,8 +83,8 @@ class DotFunTest extends munit.ScalaCheckSuite {
 
   property("leq") {
     forAll { (dfA: DotFun[Int], deletedA: CausalContext, dfB: DotFun[Int], deletedB: CausalContext) =>
-      val ccA = AsCausalContext[DotFun[Int]].dots(dfA) union deletedA
-      val ccB = AsCausalContext[DotFun[Int]].dots(dfB) union deletedB
+      val ccA = dfA.dots union deletedA
+      val ccB = dfB.dots union deletedB
 
       assert(
         DotFun.perDotDecompose[Int].lteq(WithContext(dfA, ccA), WithContext(dfA, ccA)),
@@ -124,7 +124,7 @@ class DotFunTest extends munit.ScalaCheckSuite {
 
   property("decompose recompose") {
     forAll { (df: DotFun[Int], deleted: CausalContext) =>
-      val cc = AsCausalContext[DotFun[Int]].dots(df) union deleted
+      val cc = df.dots union deleted
 
       val withContext = WithContext(df, cc)
 
