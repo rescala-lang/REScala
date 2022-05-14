@@ -1,6 +1,6 @@
 package todo
 
-import kofre.decompose.TimedVal
+import kofre.datatypes.TimedVal
 import kofre.decompose.containers.DeltaBufferRDT
 import kofre.decompose.interfaces.LWWRegisterInterface
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax

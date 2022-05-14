@@ -3,8 +3,8 @@ package todo
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import kofre.base.Defs
+import kofre.datatypes.TimedVal
 import kofre.time.Dot
-import kofre.decompose.TimedVal
 import kofre.decompose.containers.DeltaBufferRDT
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegister
 import kofre.decompose.interfaces.{LWWRegisterInterface, RGA}

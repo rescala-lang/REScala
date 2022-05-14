@@ -7,14 +7,13 @@ import kofre.base.Defs.Time
 import kofre.protocol.AuctionInterface.AuctionData
 import kofre.decompose.interfaces.GListInterface.{Elem, GListNode}
 import kofre.decompose.interfaces.RGA.RGANode
-import kofre.decompose.TimedVal
 import kofre.time.{ArrayRanges, Dots, Dot}
 import kofre.decompose.interfaces.LexCounterInterface.LexPair
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
 import kofre.decompose.interfaces.ORMapInterface.ORMap
 import kofre.decompose.interfaces.RCounterInterface.RCounter
 import kofre.decompose.interfaces.{GrowMap, RGA}
-import kofre.datatypes.{AddWinsSet, EnableWinsFlag, Epoche, GrowOnlyCounter, PosNegCounter}
+import kofre.datatypes.{AddWinsSet, EnableWinsFlag, Epoche, GrowOnlyCounter, PosNegCounter, TimedVal}
 import kofre.dotted.Dotted
 
 import scala.annotation.nowarn

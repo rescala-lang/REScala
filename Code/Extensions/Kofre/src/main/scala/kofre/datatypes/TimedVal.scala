@@ -1,4 +1,4 @@
-package kofre.decompose
+package kofre.datatypes
 
 import kofre.base.DecomposeLattice
 
@@ -13,19 +13,19 @@ import kofre.base.DecomposeLattice
 case class TimedVal[A](value: A, replicaID: String, nanoTime: Long, timestamp: Long) {
   def laterThan(other: TimedVal[A]): Boolean =
     this.timestamp > other.timestamp ||
-      this.timestamp == other.timestamp &&
-      (
-        this.replicaID > other.replicaID ||
-          this.replicaID == other.replicaID && this.nanoTime > other.nanoTime
-      )
+    this.timestamp == other.timestamp &&
+    (
+      this.replicaID > other.replicaID ||
+      this.replicaID == other.replicaID && this.nanoTime > other.nanoTime
+    )
 }
 
 object TimedVal {
   def apply[A](value: A, replicaID: String): TimedVal[A] =
     TimedVal(value, replicaID, System.nanoTime(), System.currentTimeMillis())
 
-  implicit def TimedValAsUIJDLattice[A]: DecomposeLattice[TimedVal[A]] = new DecomposeLattice[TimedVal[A]] {
-    override def lteq(left: TimedVal[A], right: TimedVal[A]): Boolean = left.timestamp <= right.timestamp
+  implicit def decomposeLattice[A]: DecomposeLattice[TimedVal[A]] = new DecomposeLattice[TimedVal[A]] {
+    override def lteq(left: TimedVal[A], right: TimedVal[A]): Boolean = !left.laterThan(right)
 
     /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
     override def decompose(state: TimedVal[A]): Iterable[TimedVal[A]] = List(state)

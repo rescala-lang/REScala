@@ -2,7 +2,7 @@ package kofre.decompose.interfaces
 
 import kofre.base.DecomposeLattice
 import kofre.decompose.*
-import kofre.datatypes.Epoche
+import kofre.datatypes.{Epoche, TimedVal}
 import kofre.dotted.DottedDecompose
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper}
 
