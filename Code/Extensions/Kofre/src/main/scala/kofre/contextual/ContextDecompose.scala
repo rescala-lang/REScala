@@ -52,7 +52,7 @@ object ContextDecompose {
             pm.fromProduct(new Product {
               def canEqual(that: Any): Boolean = false
               def productArity: Int            = lattices.productArity
-              def productElement(i: Int): Any  = if i == j then elem else lat(i).empty
+              def productElement(i: Int): Any  = if i == j then elem else lat(i).empty.store
             })
           }
         }

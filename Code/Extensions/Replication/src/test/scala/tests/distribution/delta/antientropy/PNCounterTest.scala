@@ -36,19 +36,21 @@ class PosNegCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks 
   import PosNegCounterGenerator._
 
   "inc" in forAll { counter: AntiEntropyCRDT[PosNegCounter] =>
+    val before = counter.value
     val inced = counter.inc()
 
     assert(
-      inced.value == counter.value + 1,
+      inced.value == before + 1,
       s"Incrementing the counter should increase its value by 1, but ${inced.value} does not equal ${counter.value} + 1"
     )
   }
 
   "dec" in forAll { counter: AntiEntropyCRDT[PosNegCounter] =>
+    val before = counter.value
     val deced = counter.dec()
 
     assert(
-      deced.value == counter.value - 1,
+      deced.value == before - 1,
       s"Decrementing the counter should decrease its value by 1, but ${deced.value} does not equal ${counter.value} - 1"
     )
   }
@@ -58,6 +60,7 @@ class PosNegCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks 
 
     val aea = new AntiEntropy[PosNegCounter]("a", network, mutable.Buffer("b"))
     val aeb = new AntiEntropy[PosNegCounter]("b", network, mutable.Buffer("a"))
+    val aec = new AntiEntropy[PosNegCounter]("c", network, mutable.Buffer("c"))
 
     val ca0 = if (incOrDecA) AntiEntropyCRDT[PosNegCounter](aea).inc() else AntiEntropyCRDT[PosNegCounter](aea).dec()
     val cb0 = if (incOrDecB) AntiEntropyCRDT[PosNegCounter](aeb).inc() else AntiEntropyCRDT[PosNegCounter](aeb).dec()
@@ -67,7 +70,9 @@ class PosNegCounterTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks 
     val ca1 = ca0.processReceivedDeltas()
     val cb1 = cb0.processReceivedDeltas()
 
-    val sequential = if (incOrDecB) ca0.inc() else ca0.dec()
+    val sequential = AntiEntropyCRDT(aec)
+    if (incOrDecA) sequential.inc() else sequential.dec()
+    if (incOrDecB) sequential.inc() else sequential.dec()
 
     assert(
       ca1.value == sequential.value,
