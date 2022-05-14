@@ -7,7 +7,7 @@ import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, With
 import kofre.dotted.{DotFun, DotMap, DotSet}
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
-import test.kofre.DataGenerator.{arbCausalQueue, *}
+import test.kofre.DataGenerator.*
 
 import scala.annotation.tailrec
 
@@ -17,20 +17,20 @@ class DotMapTest extends munit.ScalaCheckSuite {
 
   property("dots") {
     forAll { (dm: TestedMap) =>
-      assert(
-        AsCausalContext[TestedMap].dots(dm).toSet == dm.values.flatMap(
+      assertEquals(
+        dm.dots.toSet,
+        clue(dm).values.flatMap(
           _.dots.iterator
         ).toSet,
-        s"DotMap.dots should return the keys of the DotMap itself, but ${AsCausalContext[TestedMap].dots(dm)} does not equal $dm"
+        s"DotMap.dots should return the keys of the DotMap itself,"
       )
     }
-
   }
   test("empty") {
     assert(
       DotFun.empty.isEmpty,
       s"DotMap.empty should be empty, but ${DotFun.empty} is not empty"
-      )
+    )
 
   }
   property("merge") {
@@ -105,7 +105,7 @@ class DotMapTest extends munit.ScalaCheckSuite {
             WithContext(dmA, (ccA))
           ),
           s"DotMap.leq should be reflexive, but returns false when applied to ($dmA, $ccA, $dmA, $ccA)"
-          )
+        )
 
         val WithContext(dmMerged, ccMerged) =
           DecomposeLattice[WithContext[TestedMap]].merge(
@@ -151,7 +151,7 @@ class DotMapTest extends munit.ScalaCheckSuite {
         }
 
       val dmMerged: TestedMap = wc.store
-      val ccMerged                          = wc.context
+      val ccMerged            = wc.context
 
       assertEquals(
         ccMerged,

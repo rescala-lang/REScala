@@ -90,23 +90,26 @@ object DataGenerator {
 
   implicit def arbDotFun[A](implicit g: Arbitrary[A]): Arbitrary[DotFun[A]] = Arbitrary(genDotFun)
 
-  def genDotMap[K, V: AsCausalContext](implicit gk: Arbitrary[K], gv: Arbitrary[V]): Gen[Map[K, V]] = (for {
+  def makeUnique(rem: List[CausalContext], acc: List[CausalContext], state: CausalContext): List[CausalContext] =
+    rem match
+      case Nil => acc
+      case h :: t => makeUnique(t, h.subtract(state) :: acc, state union h)
+
+  def genDotMap[K](implicit gk: Arbitrary[K]): Gen[Map[K, CausalContext]] = (for {
     n      <- Gen.posNum[Int]
-    keys   <- Gen.containerOfN[List, K](n, gk.arbitrary)
-    values <- Gen.containerOfN[List, V](n, gv.arbitrary)
-  } yield (keys zip values).toMap).suchThat { m =>
-    val dotsIter = m.values.flatMap(v => AsCausalContext[V].dots(v).iterator)
-    val dotsSet  = dotsIter.toSet
-    dotsIter.size == dotsSet.size
-  }
+    keys   <- Gen.listOfN(n, gk.arbitrary)
+    dupvalues <- Gen.listOfN(n, arbDietMapCContext.arbitrary)
+  } yield {
+    (keys zip makeUnique(dupvalues, Nil, CausalContext.empty)).toMap
+  })
 
   implicit val arbrealDotSet: Arbitrary[DotSet] = Arbitrary(genDietMapCContext.map(DotSet.apply))
 
-  implicit def arbDotMap[K, V: AsCausalContext](implicit gk: Arbitrary[K], gv: Arbitrary[V]): Arbitrary[Map[K, V]] =
-    Arbitrary(genDotMap)
+  implicit def arbDotMap[K](implicit gk: Arbitrary[K]): Arbitrary[Map[K, DotSet]] =
+    Arbitrary(genDotMap[K].map{_.map((k, v) => k -> DotSet(v)) })
 
-  implicit def arbRealDotmap[K, V: AsCausalContext](implicit gk: Arbitrary[K], gv: Arbitrary[V]): Arbitrary[DotMap[K, V]] =
-    Arbitrary(genDotMap[K, V].map(DotMap.apply))
+  implicit def arbRealDotmap[K](implicit gk: Arbitrary[K]): Arbitrary[DotMap[K, DotSet]] =
+    Arbitrary(arbDotMap.arbitrary.map(DotMap.apply))
 
   case class SmallTimeSet(s: Set[Time])
 
