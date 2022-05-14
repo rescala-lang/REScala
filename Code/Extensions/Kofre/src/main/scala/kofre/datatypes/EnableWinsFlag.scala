@@ -1,13 +1,14 @@
-package kofre.decompose.interfaces
+package kofre.datatypes
 
 import kofre.base.{Bottom, DecomposeLattice}
-import kofre.time.Dots
-import kofre.decompose.*
-import kofre.syntax.OpsSyntaxHelper
 import kofre.contextual.ContextDecompose.*
 import kofre.contextual.{AsCausalContext, ContextDecompose, WithContext}
-import kofre.dotted.DotSet
 import kofre.datatypes.Epoche
+import kofre.decompose.*
+import kofre.decompose.interfaces.EnableWinsFlag
+import kofre.dotted.DotSet
+import kofre.syntax.OpsSyntaxHelper
+import kofre.time.Dots
 
 /** An EWFlag (Enable-Wins Flag) is a Delta CRDT modeling a boolean flag.
   *

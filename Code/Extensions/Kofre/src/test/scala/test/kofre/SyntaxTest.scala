@@ -5,7 +5,7 @@ import kofre.base.Lattice.Operators
 import kofre.time.{Dots, Dot}
 import kofre.contextual.AsCausalContext.*
 import kofre.contextual.{AsCausalContext, WithContext}
-import kofre.decompose.interfaces.EnableWinsFlag
+import kofre.datatypes.EnableWinsFlag
 import kofre.syntax.WithNamedContext
 import org.scalacheck.{Arbitrary, Gen}
 import test.kofre.DataGenerator.*

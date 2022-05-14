@@ -1,7 +1,8 @@
 package benchmarks.lattices.delta.crdt
 
+import kofre.datatypes.EnableWinsFlag
 import kofre.decompose.containers.DeltaBufferRDT
-import kofre.decompose.interfaces.{EnableWinsFlag, ORMapInterface}
+import kofre.decompose.interfaces.ORMapInterface
 import kofre.decompose.interfaces.ORMapInterface.{ORMap, ORMapSyntax}
 import org.openjdk.jmh.annotations._
 

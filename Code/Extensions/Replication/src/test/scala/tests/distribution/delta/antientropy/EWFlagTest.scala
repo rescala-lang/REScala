@@ -5,7 +5,7 @@ import rescala.extra.lattices.delta.JsoniterCodecs._
 import rescala.extra.replication.AntiEntropy
 import kofre.decompose.containers.{AntiEntropyCRDT, Network}
 import NetworkGenerators._
-import kofre.decompose.interfaces.EnableWinsFlag
+import kofre.datatypes.EnableWinsFlag
 import org.scalacheck.Prop._
 
 import scala.collection.mutable

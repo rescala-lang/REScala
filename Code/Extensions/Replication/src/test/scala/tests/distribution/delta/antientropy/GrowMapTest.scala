@@ -2,26 +2,26 @@ package tests.distribution.delta.antientropy
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import kofre.decompose.interfaces.GMap
+import kofre.decompose.interfaces.GrowMap
 import rescala.extra.lattices.delta.JsoniterCodecs._
 import rescala.extra.replication.AntiEntropy
 import kofre.decompose.containers.{AntiEntropyCRDT, Network}
 import kofre.datatypes.AddWinsSet
 import scala.collection.mutable
 
-class GMapTest extends munit.ScalaCheckSuite {
+class GrowMapTest extends munit.ScalaCheckSuite {
   implicit val intCodec: JsonValueCodec[Int] = JsonCodecMaker.make
 
   test("mutateKey/queryKey") { (add: List[Int], k: Int) =>
     val network = new Network(0, 0, 0)
-    val aea     = new AntiEntropy[GMap[Int, AddWinsSet[Int]]]("a", network, mutable.Buffer())
+    val aea     = new AntiEntropy[GrowMap[Int, AddWinsSet[Int]]]("a", network, mutable.Buffer())
     val aeb     = new AntiEntropy[AddWinsSet[Int]]("b", network, mutable.Buffer())
 
     val set = add.foldLeft(AntiEntropyCRDT[AddWinsSet[Int]](aeb)) {
       case (s, e) => s.add(e)
     }
 
-    val map = add.foldLeft(AntiEntropyCRDT[GMap[Int, AddWinsSet[Int]]](aea)) {
+    val map = add.foldLeft(AntiEntropyCRDT[GrowMap[Int, AddWinsSet[Int]]](aea)) {
       case (m, e) => m.mutateKeyNamedCtx(k, AddWinsSet.empty[Int])((st) => st.add(e))
     }
 

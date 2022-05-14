@@ -1,8 +1,8 @@
 package test.kofre
 
 import kofre.base.{Bottom, Defs, Lattice}
+import kofre.datatypes.EnableWinsFlag
 import kofre.decompose.containers.DeltaBufferRDT
-import kofre.decompose.interfaces.EnableWinsFlag
 
 class DeltaBufferRDTTest extends munit.FunSuite {
 

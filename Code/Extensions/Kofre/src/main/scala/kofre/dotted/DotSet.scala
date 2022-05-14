@@ -3,6 +3,7 @@ package kofre.dotted
 import kofre.time.{Dot, Dots}
 import kofre.contextual.ContextDecompose.FromConlattice
 import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, WithContext}
+import kofre.datatypes.EnableWinsFlag
 import kofre.decompose.interfaces
 
 
@@ -29,7 +30,7 @@ object DotSet {
     }
   }
 
-  /** DotSet is a dot store implementation that is simply a set of dots. See [[interfaces.EnableWinsFlag]] for a
+  /** DotSet is a dot store implementation that is simply a set of dots. See [[EnableWinsFlag]] for a
     * usage example.
     */
   given contextDecompose: ContextDecompose[DotSet] =

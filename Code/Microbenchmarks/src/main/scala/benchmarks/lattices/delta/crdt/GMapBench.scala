@@ -1,7 +1,8 @@
 package benchmarks.lattices.delta.crdt
 
+import kofre.datatypes.EnableWinsFlag
 import kofre.decompose.containers.DeltaBufferRDT
-import kofre.decompose.interfaces.{EnableWinsFlag, GMap}
+import kofre.decompose.interfaces.GrowMap
 import org.openjdk.jmh.annotations._
 
 import java.util.concurrent.TimeUnit
@@ -21,7 +22,7 @@ class GMapBench {
 
 
 
-  type Contained = GMap[Int, EnableWinsFlag]
+  type Contained = GrowMap[Int, EnableWinsFlag]
   type SUT = DeltaBufferRDT[Contained]
   var map: SUT = _
 
@@ -29,7 +30,7 @@ class GMapBench {
   def setup(): Unit = {
 
 
-    map = (0 until numEntries).foldLeft(DeltaBufferRDT.empty("a", GMap.empty[Int, EnableWinsFlag]): SUT) {
+    map = (0 until numEntries).foldLeft(DeltaBufferRDT.empty("a", GrowMap.empty[Int, EnableWinsFlag]): SUT) {
       case (rdc: SUT, i) =>
         rdc.mutateKeyNamedCtx(i, EnableWinsFlag.empty)(_.enable())
     }
