@@ -4,10 +4,8 @@ import kofre.base.DecomposeLattice
 import kofre.causality.{CausalContext, Dot}
 import kofre.contextual.ContextDecompose.DotFun
 import kofre.contextual.{AsCausalContext, WithContext}
-import org.scalatest.freespec.AnyFreeSpec
-import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import test.kofre.DataGenerator.*
 import org.scalacheck.Prop.*
+import test.kofre.DataGenerator.*
 
 class DotFunTest extends munit.ScalaCheckSuite {
 
@@ -122,7 +120,6 @@ class DotFunTest extends munit.ScalaCheckSuite {
         assert(dec <= withContext)
       }
 
-
       val WithContext(dfMerged, ccMerged) =
         decomposed.foldLeft(WithContext(DotFun[Int].empty.store, CausalContext.empty)) {
           case (WithContext(dfA, ccA), WithContext(dfB, ccB)) =>
@@ -130,11 +127,16 @@ class DotFunTest extends munit.ScalaCheckSuite {
         }
 
       assertEquals(dfMerged, df)
-      assertEquals(ccMerged, cc, {
-        val decc = decomposed.filter(_.context.rangeAt("c").isEmpty.unary_!)
-        val contexts = decc.map(_.context)
-        s"${cc.contains(Dot("c", 78))}, ${ccMerged.contains(Dot("c", 78))}, \n${contexts}\n${cc.rangeAt("c")}\n${contexts.reduceLeft(_ merged _)}\n${decc}\n${decc.mkString("--", "\n--", "")}"
-      })
+      assertEquals(
+        ccMerged,
+        cc, {
+          val decc     = decomposed.filter(_.context.rangeAt("c").isEmpty.unary_!)
+          val contexts = decc.map(_.context)
+          s"${cc.contains(Dot("c", 78))}, ${ccMerged.contains(Dot("c", 78))}, \n${contexts}\n${cc.rangeAt(
+              "c"
+            )}\n${contexts.reduceLeft(_ merged _)}\n${decc}\n${decc.mkString("--", "\n--", "")}"
+        }
+      )
     }
   }
 }

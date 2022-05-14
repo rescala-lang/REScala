@@ -3,7 +3,6 @@ package test.kofre
 import kofre.base.{Bottom, Defs, Lattice}
 import kofre.decompose.containers.DeltaBufferRDT
 import kofre.decompose.interfaces.EnableWinsFlag
-import org.scalatest.freespec.AnyFreeSpec
 
 class DeltaBufferRDTTest extends munit.FunSuite {
 

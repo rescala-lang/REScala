@@ -3,18 +3,17 @@ package test.kofre
 import kofre.base.Lattice
 import kofre.protocol.RaftState
 import kofre.protocol.RaftState.Vote
-import org.scalatest.freespec.AnyFreeSpec
 
-class RaftLatticeTest extends AnyFreeSpec {
+class RaftLatticeTest extends munit.FunSuite {
 
-  "basic interaction" in {
+  test("basic interaction") {
 
     val initial =
       RaftState[String](Set("a", "b", "perm"), Set(Vote(0, "a", "a"), Vote(0, "a", "b"), Vote(0, "a", "perm")))
 
-    assert(initial.leader === "a")
-    assert(initial.nextProposal === 0)
-    assert(initial.consensusSize === 2)
+    assertEquals(initial.leader, "a")
+    assertEquals(initial.nextProposal, 0)
+    assertEquals(initial.consensusSize, 2)
     val proposition = initial.proposeDelta("a", "new proposal")
 
     val proposaled = Lattice.merge(initial, proposition)
@@ -23,26 +22,26 @@ class RaftLatticeTest extends AnyFreeSpec {
 
     val proposaled2 = Lattice.merge(proposaled, p2)
 
-    assert(proposaled2.values === List())
+    assertEquals(proposaled2.values, List())
 
     val s1 = proposaled2.supportProposalDelta("b")
     val s2 = proposaled2.supportProposalDelta("perm")
 
-    assert(Lattice.merge(proposaled2, s1).values === List("new proposal", "another proposal"))
-    assert(Lattice.merge(proposaled2, s2).values === List("new proposal", "another proposal"))
-    assert(Lattice.merge(Lattice.merge(proposaled2, s2), s1).values === List("new proposal", "another proposal"))
+    assertEquals(Lattice.merge(proposaled2, s1).values, List("new proposal", "another proposal"))
+    assertEquals(Lattice.merge(proposaled2, s2).values, List("new proposal", "another proposal"))
+    assertEquals(Lattice.merge(Lattice.merge(proposaled2, s2), s1).values, List("new proposal", "another proposal"))
 
   }
 
-  "another interaction" in {
+  test("another interaction") {
     val participants = Set("a", "b", "perm")
     val afterFirstVote = RaftState[String](participants)
       .becomeCandidate("a")
       .supportLeader("b")
       .supportLeader("perm")
 
-    assert(afterFirstVote.leader === "a")
-    assert(afterFirstVote.currentTerm === 1)
+    assertEquals(afterFirstVote.leader, "a")
+    assertEquals(afterFirstVote.currentTerm, 1)
 
     // kinda split between a and b, but perm is still fine with everyone
 
@@ -52,9 +51,9 @@ class RaftLatticeTest extends AnyFreeSpec {
       .supportLeader("b")
       .supportProposal("perm")
 
-    assert(afterProposalAndSplit.leader == "a")
-    assert(afterProposalAndSplit.currentTerm == 1)
-    assert(afterProposalAndSplit.values == List("As first proposal"))
+    assertEquals(afterProposalAndSplit.leader, "a")
+    assertEquals(afterProposalAndSplit.currentTerm, 1)
+    assertEquals(afterProposalAndSplit.values, List("As first proposal"))
 
     val bsRiseToPower = afterProposalAndSplit
       .propose("b", "Bs proposal before acceptance")
@@ -63,9 +62,9 @@ class RaftLatticeTest extends AnyFreeSpec {
       .propose("b", "Bs proposal after acceptance")
       .supportProposal("perm")
 
-    assert(bsRiseToPower.leader == "b")
-    assert(bsRiseToPower.currentTerm == 2)
-    assert(bsRiseToPower.values == List("As first proposal", "Bs proposal after acceptance"))
+    assertEquals(bsRiseToPower.leader, "b")
+    assertEquals(bsRiseToPower.currentTerm, 2)
+    assertEquals(bsRiseToPower.values, List("As first proposal", "Bs proposal after acceptance"))
 
   }
 

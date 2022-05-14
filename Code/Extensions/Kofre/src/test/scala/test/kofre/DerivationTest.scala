@@ -1,9 +1,7 @@
 package test.kofre
+import kofre.base.{Defs, Lattice}
 import kofre.causality.VectorClock
-import kofre.base.Lattice
-import kofre.base.Defs
 import org.scalacheck.{Arbitrary, Gen}
-import org.scalatest.freespec.AnyFreeSpec
 import test.kofre.DataGenerator.arbId
 
 case class SomeProductType[A, B](paramA: A, paramB: B) derives Lattice

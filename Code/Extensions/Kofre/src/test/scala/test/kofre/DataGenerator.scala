@@ -1,14 +1,13 @@
 package test.kofre
 
+import kofre.base.Defs.Time
+import kofre.base.{Defs, Lattice}
 import kofre.causality.{CausalContext, Dot, VectorClock}
-import kofre.contextual.{AsCausalContext, ContextDecompose}
 import kofre.contextual.ContextDecompose.{DotFun, DotMap}
+import kofre.contextual.{AsCausalContext, ContextDecompose}
+import kofre.predef.{GrowOnlyCounter, PosNegCounter}
 import kofre.primitives.{CausalQueue, LastWriterWins, MultiValueRegister}
 import kofre.sets.ORSet
-import kofre.base.Lattice
-import kofre.base.Defs
-import kofre.base.Defs.Time
-import kofre.predef.{GrowOnlyCounter, PosNegCounter}
 import org.scalacheck.{Arbitrary, Gen}
 
 object DataGenerator {
@@ -107,6 +106,6 @@ object DataGenerator {
   case class SmallTimeSet(s: Set[Time])
 
   given Arbitrary[SmallTimeSet] = Arbitrary(for {
-    contents <- Gen.listOf(Gen.chooseNum(0l, 100l))
+    contents <- Gen.listOf(Gen.chooseNum(0L, 100L))
   } yield (SmallTimeSet(contents.toSet)))
 }

@@ -2,25 +2,25 @@ package test.kofre
 
 import kofre.causality.VectorClock
 import kofre.primitives.MultiValueRegister
+import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
-import org.scalatest.freespec.AnyFreeSpec
-import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import test.kofre.DataGenerator.arbVersion
 
 import scala.Console.in
 import scala.collection.Seq
 
-class ParallelVersionTest extends AnyFreeSpec, ScalaCheckDrivenPropertyChecks {
+class ParallelVersionTest extends munit.ScalaCheckSuite {
 
   given Arbitrary[List[VectorClock]] = Arbitrary(Gen.nonEmptyListOf(arbVersion.arbitrary))
 
-  "works" in forAll { (a: List[VectorClock]) =>
-    val rem = MultiValueRegister.parallelVersionSubset(a, Nil)
-    if a.nonEmpty then assert(rem.nonEmpty, "should keep some version")
+  property("works") {
+    forAll { (a: List[VectorClock]) =>
+      val rem = MultiValueRegister.parallelVersionSubset(a, Nil)
+      if a.nonEmpty then assert(rem.nonEmpty, "should keep some version")
 
-    val thrownAway = a.filterNot(rem.contains)
-    thrownAway.foreach(g => assert(rem.exists(r => g <= r), "removed must be subsumed"))
-    rem.foreach(r => rem.foreach(a => assert(!(a < r), "remaining must be incomparable")))
+      val thrownAway = a.filterNot(rem.contains)
+      thrownAway.foreach(g => assert(rem.exists(r => g <= r), "removed must be subsumed"))
+      rem.foreach(r => rem.foreach(a => assert(!(a < r), "remaining must be incomparable")))
+    }
   }
-
 }
