@@ -6,14 +6,14 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodec
 import kofre.base.Defs.Time
 import kofre.protocol.AuctionInterface.AuctionData
 import kofre.decompose.interfaces.GListInterface.{Elem, GListNode}
-import kofre.decompose.interfaces.RGA.RGANode
+import kofre.datatypes.RGA.RGANode
 import kofre.time.{ArrayRanges, Dots, Dot}
 import kofre.decompose.interfaces.LexCounterInterface.LexPair
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
 import kofre.decompose.interfaces.ORMapInterface.ORMap
 import kofre.decompose.interfaces.RCounterInterface.RCounter
-import kofre.decompose.interfaces.{GrowMap, RGA}
-import kofre.datatypes.{AddWinsSet, EnableWinsFlag, Epoche, GrowOnlyCounter, PosNegCounter, TimedVal}
+import kofre.decompose.interfaces.GrowMap
+import kofre.datatypes.{AddWinsSet, EnableWinsFlag, Epoche, GrowOnlyCounter, PosNegCounter, RGA, TimedVal}
 import kofre.dotted.Dotted
 
 import scala.annotation.nowarn

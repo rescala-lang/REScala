@@ -2,6 +2,7 @@ package todo
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
+import kofre.datatypes.RGA
 import loci.registry.Binding
 import loci.serializer.jsoniterScala._
 import org.scalajs.dom.html.{Div, Input, LI}
@@ -17,9 +18,7 @@ import scalatags.JsDom.{Attr, TypedTag}
 import todo.Codecs._
 import todo.Todolist.replicaId
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax
-import kofre.decompose.interfaces.RGA
 import kofre.decompose.containers.DeltaBufferRDT
-import kofre.decompose.interfaces.RGA.RGAOps
 import kofre.dotted.Dotted
 import kofre.syntax.DottedName
 
@@ -56,7 +55,7 @@ class TodoAppUI(val storagePrefix: String) {
           Seq(
             createTodo.event act taskOps.handleCreateTodo(current),
             removeAll.event dyn { dt => _ => taskOps.handleRemoveAll(current, dt) },
-            new RGAOps(current).toList.map(_.removed) act taskOps.handleRemove(current),
+            current.toList.map(_.removed) act taskOps.handleRemove(current),
             deltaEvt act taskOps.handleDelta(current)
             )
         }

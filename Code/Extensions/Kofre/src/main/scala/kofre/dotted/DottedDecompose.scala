@@ -2,6 +2,7 @@ package kofre.dotted
 
 import kofre.base.Lattice.Operators
 import kofre.base.{Bottom, DecomposeLattice, Lattice}
+import kofre.datatypes.RGA
 import kofre.decompose.interfaces
 import kofre.time.{Dot, Dots}
 
@@ -68,7 +69,7 @@ object DottedDecompose {
   }
 
   /** DotLess is a dot store implementation that, in combination with [[DotPair]], allows to compose non-causal CRDTs
-    * with causal CRDTs. For a usage example, see [[interfaces.RGA]], where the implicit presence of DotLess is
+    * with causal CRDTs. For a usage example, see [[RGA]], where the implicit presence of DotLess is
     * necessary so that the non-causal [[interfaces.EpocheInterface]] can be part of the [[DotPair]] that makes up
     * the state.
     *

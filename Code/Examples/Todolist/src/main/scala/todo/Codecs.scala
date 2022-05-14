@@ -3,11 +3,11 @@ package todo
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import kofre.base.Defs
-import kofre.datatypes.TimedVal
+import kofre.datatypes.{RGA, TimedVal}
 import kofre.time.Dot
 import kofre.decompose.containers.DeltaBufferRDT
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegister
-import kofre.decompose.interfaces.{LWWRegisterInterface, RGA}
+import kofre.decompose.interfaces.LWWRegisterInterface
 import kofre.dotted.{DotFun, Dotted}
 import loci.transmitter.IdenticallyTransmittable
 import rescala.extra.lattices.delta.JsoniterCodecs._

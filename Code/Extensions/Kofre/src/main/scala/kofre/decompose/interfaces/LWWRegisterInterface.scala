@@ -3,7 +3,6 @@ import kofre.base.DecomposeLattice
 import kofre.datatypes.TimedVal
 import kofre.decompose.*
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermIdMutate}
-import kofre.decompose.interfaces.LexCounterInterface.LexCounter
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegisterSyntax
 import kofre.dotted.{DotFun, Dotted}
 

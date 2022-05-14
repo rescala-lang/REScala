@@ -1,8 +1,7 @@
 package todo
 
+import kofre.datatypes.RGA
 import kofre.decompose.containers.DeltaBufferRDT
-import kofre.decompose.interfaces.RGA
-import kofre.decompose.interfaces.RGA.RGAOps
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax
 import kofre.syntax.DottedName
 import rescala.default._
@@ -44,7 +43,7 @@ class TaskOps(@nowarn taskRefs: TaskReferences) {
 
     val newList = deltaBuffered.resetDeltaBuffer().applyDelta(delta)
 
-    val oldIDs = new RGAOps[State, TaskRef](deltaBuffered).toList.toSet
+    val oldIDs = deltaBuffered.toList.toSet
     val newIDs = newList.toList.toSet
 
     val removed = oldIDs -- newIDs

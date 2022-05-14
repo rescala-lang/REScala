@@ -1,14 +1,15 @@
-package kofre.decompose.interfaces
+package kofre.datatypes
 
 import kofre.base.{Bottom, DecomposeLattice}
-import kofre.time.{Dot, Dots}
+import kofre.datatypes.{Epoche, TimedVal}
 import kofre.decompose.*
-import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermIdMutate, PermMutate}
 import kofre.decompose.interfaces.GListInterface.{GListAsUIJDLattice, GListSyntax}
 import kofre.decompose.interfaces.RCounterInterface.RCounter
+import kofre.decompose.interfaces.{GListInterface}
 import kofre.dotted.{DotFun, Dotted, DottedDecompose, DottedLattice}
-import kofre.datatypes.{Epoche, TimedVal}
 import kofre.syntax.PermIdMutate.withID
+import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermIdMutate, PermMutate}
+import kofre.time.{Dot, Dots}
 
 /** An RGA (Replicated Growable Array) is a Delta CRDT modeling a list.
   *
@@ -33,7 +34,7 @@ import kofre.syntax.PermIdMutate.withID
 case class RGA[E](order: Epoche[GListInterface.GList[Dot]], meta: DotFun[RGA.RGANode[E]])
 object RGA {
 
-  def empty[E]: RGA[E] = RGA(Epoche.empty, DotFun.empty)
+  def empty[E]: RGA[E] = kofre.datatypes.RGA(Epoche.empty, DotFun.empty)
 
   given rgaContext[E]: DottedDecompose[RGA[E]] = DottedDecompose.derived[RGA[E]]
 
