@@ -7,6 +7,7 @@ import kofre.syntax.OpsSyntaxHelper
 import kofre.contextual.ContextDecompose.*
 import kofre.contextual.WithContext
 import kofre.causality.Dot
+import kofre.dotted.DotFun
 
 
 /** An RCounter (Resettable Counter/Add Wins Counter) is a Delta CRDT modeling a counter.
@@ -19,7 +20,7 @@ import kofre.causality.Dot
   */
 object RCounterInterface {
 
-  val zero: RCounter = WithContext(Map.empty)
+  val zero: RCounter = DotFun.empty
 
   implicit def IntPairAsUIJDLattice: DecomposeLattice[(Int, Int)] = new DecomposeLattice[(Int, Int)] {
     override def lteq(left: (Int, Int), right: (Int, Int)): Boolean = (left, right) match {
@@ -41,16 +42,14 @@ object RCounterInterface {
     override def empty: (Int, Int) = (0, 0)
   }
 
-  type RCounter = WithContext[Map[Dot, (Int, Int)]]
+  type RCounter = DotFun[(Int, Int)]
 
   private def deltaState(
-      df: Option[Map[Dot, (Int, Int)]] = None,
+      df: Option[DotFun[(Int, Int)]] = None,
       cc: CausalContext
-  ): RCounter = {
-    val bottom = DecomposeLattice[RCounter].empty
-
+  ): WithContext[RCounter] = {
     WithContext(
-      df.getOrElse(bottom.store),
+      df.getOrElse(DotFun.empty),
       cc
     )
   }
@@ -58,7 +57,7 @@ object RCounterInterface {
   implicit class RCounterSyntax[C](container: C) extends OpsSyntaxHelper[C, RCounter](container) {
 
     def value(using QueryP): Int = {
-      current.store.values.foldLeft(0) {
+      current.repr.values.foldLeft(0) {
         case (counter, (inc, dec)) => counter + inc - dec
       }
     }
@@ -66,43 +65,43 @@ object RCounterInterface {
     /** Without using fresh, reset wins over concurrent increments/decrements
       * When using fresh after every time deltas are shipped to other replicas, increments/decrements win over concurrent resets
       */
-    def fresh()(using MutationIdP): C = {
-      val nextDot = current.context.nextDot(replicaID)
+    def fresh()(using CausalMutationP, IdentifierP): C = {
+      val nextDot = context.nextDot(replicaID)
 
       deltaState(
-        df = Some(DotFun[(Int, Int)].empty.store + (nextDot -> ((0, 0)))),
+        df = Some(DotFun.empty[(Int, Int)] + (nextDot -> ((0, 0)))),
         cc = CausalContext.single(nextDot)
       ).mutator
     }
 
-    private def update(u: (Int, Int))(using MutationIdP): C = {
-      current.context.max(replicaID) match {
-        case Some(currentDot) if current.store.contains(currentDot) =>
-          val newCounter = (current.store(currentDot), u) match {
+    private def update(u: (Int, Int))(using CausalMutationP, IdentifierP): C = {
+      context.max(replicaID) match {
+        case Some(currentDot) if current.repr.contains(currentDot) =>
+          val newCounter = (current(currentDot), u) match {
             case ((linc, ldec), (rinc, rdec)) => (linc + rinc, ldec + rdec)
           }
 
           deltaState(
-            df = Some(current.store + (currentDot -> newCounter)),
+            df = Some(current + (currentDot -> newCounter)),
             cc = CausalContext.single(currentDot)
           ).mutator
         case _ =>
-          val nextDot = current.context.nextDot(replicaID)
+          val nextDot = context.nextDot(replicaID)
 
           deltaState(
-            df = Some(DotFun[(Int, Int)].empty.store + (nextDot -> u)),
+            df = Some(DotFun.empty[(Int, Int)] + (nextDot -> u)),
             cc = CausalContext.single(nextDot)
           ).mutator
       }
     }
 
-    def increment()(using MutationIdP): C = update((1, 0))
+    def increment()(using CausalMutationP, IdentifierP): C = update((1, 0))
 
-    def decrement()(using MutationIdP): C = update((0, 1))
+    def decrement()(using CausalMutationP, IdentifierP): C = update((0, 1))
 
-    def reset()(using MutationIdP): C = {
+    def reset()(using CausalMutationP): C = {
       deltaState(
-        cc = CausalContext.fromSet(current.store.keySet)
+        cc = CausalContext.fromSet(current.keySet)
       ).mutator
     }
   }

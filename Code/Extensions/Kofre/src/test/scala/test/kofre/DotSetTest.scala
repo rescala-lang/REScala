@@ -78,9 +78,9 @@ class DotSetTest extends munit.ScalaCheckSuite {
         s"The result of DotSet.merge should be larger than its rhs, but DotSet.leq returns false when applied to ($dsB, $ccB, $dsMerged, $ccMerged)"
       )
     }
-
   }
-  property("decompose") {
+
+  property("decompose all") {
     forAll { (ds: CausalContext, deleted: CausalContext) =>
       val cc = ds union deleted
 

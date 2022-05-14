@@ -169,43 +169,7 @@ object ContextDecompose extends LowPriorityContextDecompose {
 
     }
 
-  /** DotFun is a dot store implementation that maps dots to values of a Lattice type. See [[interfaces.MVRegisterInterface]]
-    * for a usage example.
-    */
-  implicit def DotFun[A: DecomposeLattice]: ContextDecompose[Map[Dot, A]] =
-    new FromConlattice[Map[Dot, A]](ContextLattice.perDot[A]) {
-      private def dots(a: Map[Dot, A]): CausalContext = AsCausalContext.dotFunDotStore.dots(a)
 
-      override def empty: WithContext[Map[Dot, A]] = WithContext(Map.empty)
-
-      override def lteq(left: WithContext[Map[Dot, A]], right: WithContext[Map[Dot, A]]): Boolean = {
-        val firstCondition = left.context.forall(right.context.contains)
-        val secondCondition = right.store.keySet.forall { k =>
-          left.store.get(k).forall { l => DecomposeLattice[A].lteq(l, right.store(k)) }
-        }
-        val thirdCondition = {
-          val diff = left.context.diff(dots(left.store))
-          dots(right.store).intersect(diff).isEmpty
-        }
-
-        firstCondition && secondCondition && thirdCondition
-      }
-
-      override def decompose(state: WithContext[Map[Dot, A]]): Iterable[WithContext[Map[Dot, A]]] = {
-        val added: Iterator[WithContext[Map[Dot, A]]] = for {
-          d <- dots(state.store).iterator
-          v <- DecomposeLattice[A].decompose(state.store(d))
-        } yield WithContext(Map(d -> v), CausalContext.single(d))
-
-        val removed =
-          state.context.subtract(dots(state.store)).decomposed.map(WithContext(
-            AsCausalContext.dotFunDotStore[A].empty,
-            _
-          ))
-
-        removed ++ added
-      }
-    }
 
   /** DotLess is a dot store implementation that, in combination with [[DotPair]], allows to compose non-causal CRDTs
     * with causal CRDTs. For a usage example, see [[interfaces.RGA]], where the implicit presence of DotLess is

@@ -2,7 +2,8 @@ package kofre.encrdt.crdts
 
 import kofre.contextual.AsCausalContext.*
 import kofre.causality.CausalContext
-import kofre.contextual.{WithContext, AsCausalContext}
+import kofre.contextual.{AsCausalContext, WithContext}
+import kofre.dotted.DotFun
 
 // See: Delta state replicated data types (https://doi.org/10.1016/j.jpdc.2017.08.003)
 object DeltaAddWinsMap {

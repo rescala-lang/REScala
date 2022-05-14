@@ -25,9 +25,11 @@ class AntiEntropyCRDT[State](
       case WithNamedContext(origin, deltaCtx) =>
         DecomposeLattice[WithContext[State]].diff(state, deltaCtx) match {
           case Some(stateDiff) =>
+            println(s"on $replicaID processing \n$stateDiff, applying to \n$state")
             val stateMerged = DecomposeLattice[WithContext[State]].merge(state, stateDiff)
             antiEntropy.recordChange(WithNamedContext(origin, stateDiff), stateMerged)
           case None =>
+            println(s"on $replicaID filtered:\n$deltaCtx\n${state}\n${state.decomposed}")
         }
         this
     }

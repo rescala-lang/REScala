@@ -2,42 +2,42 @@ package test.kofre
 
 import kofre.base.DecomposeLattice
 import kofre.causality.{CausalContext, Dot}
-import kofre.contextual.ContextDecompose.DotFun
 import kofre.contextual.{AsCausalContext, WithContext}
+import kofre.dotted.DotFun
 import org.scalacheck.Prop.*
 import test.kofre.DataGenerator.*
 
 class DotFunTest extends munit.ScalaCheckSuite {
 
   property("dots") {
-    forAll { (df: Map[Dot, Int]) =>
+    forAll { (df: DotFun[Int]) =>
       assert(
-        AsCausalContext[Map[Dot, Int]].dots(df).toSet == df.keySet,
-        s"DotFun.dots should return the keys of the DotFun itself, but ${AsCausalContext[Map[Dot, Int]].dots(df)} does not equal $df"
+        AsCausalContext[DotFun[Int]].dots(df).toSet == df.keySet,
+        s"DotFun.dots should return the keys of the DotFun itself, but ${AsCausalContext[DotFun[Int]].dots(df)} does not equal $df"
       )
     }
   }
 
   test("empty") {
     assert(
-      AsCausalContext[Map[Dot, Int]].empty.isEmpty,
-      s"DotFun.empty should be empty, but ${DotFun[Int].empty} is not empty"
+      DotFun.empty[Int].isEmpty,
+      s"DotFun.empty should be empty, but ${DotFun.empty[Int]} is not empty"
     )
   }
 
   property("merge") {
-    forAll { (dfA: Map[Dot, Int], deletedA: CausalContext, dfB: Map[Dot, Int], deletedB: CausalContext) =>
-      val dotsA = AsCausalContext[Map[Dot, Int]].dots(dfA)
-      val dotsB = AsCausalContext[Map[Dot, Int]].dots(dfB)
+    forAll { (dfA: DotFun[Int], deletedA: CausalContext, dfB: DotFun[Int], deletedB: CausalContext) =>
+      val dotsA = AsCausalContext[DotFun[Int]].dots(dfA)
+      val dotsB = AsCausalContext[DotFun[Int]].dots(dfB)
       val ccA   = dotsA union deletedA
       val ccB   = dotsB union deletedB
 
       val WithContext(dfMerged, ccMerged) =
-        DecomposeLattice[WithContext[Map[Dot, Int]]].merge(
+        DecomposeLattice[WithContext[DotFun[Int]]].merge(
           WithContext(dfA, ccA),
           WithContext(dfB, ccB)
         )
-      val dotsMerged = AsCausalContext[Map[Dot, Int]].dots(dfMerged)
+      val dotsMerged = AsCausalContext[DotFun[Int]].dots(dfMerged)
 
       assert(
         ccMerged == (ccA union ccB),
@@ -82,48 +82,62 @@ class DotFunTest extends munit.ScalaCheckSuite {
   }
 
   property("leq") {
-    forAll { (dfA: Map[Dot, Int], deletedA: CausalContext, dfB: Map[Dot, Int], deletedB: CausalContext) =>
-      val ccA = AsCausalContext[Map[Dot, Int]].dots(dfA) union deletedA
-      val ccB = AsCausalContext[Map[Dot, Int]].dots(dfB) union deletedB
+    forAll { (dfA: DotFun[Int], deletedA: CausalContext, dfB: DotFun[Int], deletedB: CausalContext) =>
+      val ccA = AsCausalContext[DotFun[Int]].dots(dfA) union deletedA
+      val ccB = AsCausalContext[DotFun[Int]].dots(dfB) union deletedB
 
       assert(
-        DotFun[Int].lteq(WithContext(dfA, ccA), WithContext(dfA, ccA)),
+        DotFun.perDotDecompose[Int].lteq(WithContext(dfA, ccA), WithContext(dfA, ccA)),
         s"DotFun.leq should be reflexive, but returns false when applied to ($dfA, $ccA, $dfA, $ccA)"
       )
 
       val WithContext(dfMerged, ccMerged) =
-        DecomposeLattice[WithContext[Map[Dot, Int]]].merge(
+        DecomposeLattice[WithContext[DotFun[Int]]].merge(
           WithContext(dfA, (ccA)),
           WithContext(dfB, (ccB))
         )
 
       assert(
-        DotFun[Int].lteq(WithContext(dfA, (ccA)), WithContext(dfMerged, ccMerged)),
+        DotFun.perDotDecompose[Int].lteq(WithContext(dfA, (ccA)), WithContext(dfMerged, ccMerged)),
         s"The result of DotFun.merge should be larger than its lhs, but DotFun.leq returns false when applied to ($dfA, $ccA, $dfMerged, $ccMerged)"
       )
       assert(
-        DotFun[Int].lteq(WithContext(dfB, (ccB)), WithContext(dfMerged, ccMerged)),
+        DotFun.perDotDecompose[Int].lteq(WithContext(dfB, (ccB)), WithContext(dfMerged, ccMerged)),
         s"The result of DotFun.merge should be larger than its rhs, but DotFun.leq returns false when applied to ($dfB, $ccB, $dfMerged, $ccMerged)"
       )
     }
   }
 
+  test("decompose") {
+    type D = WithContext[DotFun[Set[Int]]]
+
+    val dot = Dot("a", 0)
+    val cc  = CausalContext.fromSet(Set(dot))
+
+    val data =
+      WithContext[DotFun[Set[Int]]](DotFun(Map(dot -> Set(1, 2, 3))), cc)
+    val dec: Iterable[D] = data.decomposed
+    val rec              = dec.reduceLeft(_ merged _)
+
+    assertEquals(rec, data)
+  }
+
   property("decompose recompose") {
-    forAll { (df: Map[Dot, Int], deleted: CausalContext) =>
-      val cc = AsCausalContext[Map[Dot, Int]].dots(df) union deleted
+    forAll { (df: DotFun[Int], deleted: CausalContext) =>
+      val cc = AsCausalContext[DotFun[Int]].dots(df) union deleted
 
       val withContext = WithContext(df, cc)
 
-      val decomposed: Iterable[WithContext[Map[Dot, Int]]] = DotFun[Int].decompose(withContext)
+      val decomposed: Iterable[WithContext[DotFun[Int]]] = DotFun.perDotDecompose.decompose(withContext)
 
       decomposed.foreach { dec =>
         assert(dec <= withContext)
       }
 
       val WithContext(dfMerged, ccMerged) =
-        decomposed.foldLeft(WithContext(DotFun[Int].empty.store, CausalContext.empty)) {
+        decomposed.foldLeft(WithContext(DotFun.empty[Int], CausalContext.empty)) {
           case (WithContext(dfA, ccA), WithContext(dfB, ccB)) =>
-            DecomposeLattice[WithContext[Map[Dot, Int]]].merge(WithContext(dfA, ccA), WithContext(dfB, ccB))
+            DecomposeLattice[WithContext[DotFun[Int]]].merge(WithContext(dfA, ccA), WithContext(dfB, ccB))
         }
 
       assertEquals(dfMerged, df)

@@ -4,7 +4,9 @@ import kofre.base.{Bottom, DecomposeLattice, Lattice}
 import kofre.causality.{CausalContext, Dot}
 import kofre.contextual.AsCausalContext
 import kofre.base.Lattice.Operators
+import kofre.dotted.DotFun
 import kofre.syntax.{ArdtOpsContains, PermCausal, PermCausalMutate, PermQuery, WithNamedContext}
+
 import scala.util.NotGiven
 
 case class WithContext[A](store: A, context: CausalContext) {
@@ -22,7 +24,7 @@ object WithContext {
     override def empty: WithContext[A] = WithContext.this.empty
   }
 
-  given CausalWithDotFunLattice[V: Lattice]: Lattice[WithContext[Map[Dot, V]]] = ContextLattice.perDot
+  given CausalWithDotFunLattice[V: Lattice]: Lattice[WithContext[DotFun[V]]] = kofre.dotted.DotFun.perDotLattice
   given CausalWithDotSetLattice: Lattice[WithContext[Set[Dot]]] =
     ContextLattice.causalContext.bimap[WithContext[Set[Dot]]](
       _.map(_.toSet),

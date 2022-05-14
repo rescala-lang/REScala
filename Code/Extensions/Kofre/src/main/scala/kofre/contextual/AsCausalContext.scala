@@ -22,10 +22,7 @@ object AsCausalContext {
 
   def apply[A](using dotStore: AsCausalContext[A]): dotStore.type = dotStore
 
-  given dotFunDotStore[V]: AsCausalContext[Map[Dot, V]] with {
-    override def empty: Map[Dot, V]                         = Map.empty
-    override def dots(dotStore: Map[Dot, V]): CausalContext = CausalContext.fromSet(dotStore.keySet)
-  }
+
 
   given causalContextInstance: AsCausalContext[CausalContext] with {
     override def dots(a: CausalContext): CausalContext = a

@@ -49,26 +49,7 @@ object ContextLattice {
 
   given liftLattice[A: Lattice]: ContextLattice[A] = (left, right) => Lattice[A].merge(left.store, right.store)
 
-  /** The context describes dots that have been seen.
-    * The store describes which value is associated for a given dot.
-    * Dots that are removed from the store are considered deleted.
-    * All others are merged as for normal maps.
-    *
-    * The delta CRDT paper calls this a DotFun
-    */
-  given perDot[A: Lattice]: ContextLattice[Map[Dot, A]] = (left, right) => {
-    val fromLeft = left.store.filter { case (dot, _) => !right.context.contains(dot) }
 
-    right.store.foldLeft(fromLeft) {
-      case (m, (dot, r)) =>
-        left.store.get(dot) match {
-          case None =>
-            if (left.context.contains(dot)) m
-            else m.updated(dot, r)
-          case Some(l) => m.updated(dot, Lattice[A].merge(l, r))
-        }
-    }
-  }
 
   /** This essentially lifts the [[ContextLattice]] of [[V]] to a [[ Map[K, V] ] ]].
     * Recursively merging values present in both maps with the given context.

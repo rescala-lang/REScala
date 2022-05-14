@@ -4,10 +4,11 @@ import kofre.base.{Bottom, DecomposeLattice}
 import kofre.causality.{CausalContext, Dot}
 import kofre.decompose.*
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermIdMutate, PermMutate}
-import kofre.contextual.ContextDecompose.{DotFun, DotPair}
+import kofre.contextual.ContextDecompose.{DotPair}
 import kofre.decompose.interfaces.GListInterface.{GListAsUIJDLattice, GListSyntax}
 import kofre.contextual.{ContextDecompose, ContextLattice, WithContext}
 import kofre.decompose.interfaces.RCounterInterface.RCounter
+import kofre.dotted.DotFun
 import kofre.predef.Epoche
 import kofre.syntax.PermIdMutate.withID
 
@@ -31,10 +32,10 @@ import kofre.syntax.PermIdMutate.withID
   * for collaborative applications", see [[https://www.sciencedirect.com/science/article/pii/S0743731510002716?casa_token=lQaLin7aEvcAAAAA:Esc3h3WvkFHUcvhalTPPvV5HbJge91D4-2jyKiSlz8GBDjx31l4xvfH8DIstmQ973PVi46ckXHg here]]
   */
 
-case class RGA[E](order: Epoche[GListInterface.GList[Dot]], meta: Map[Dot, RGA.RGANode[E]])
+case class RGA[E](order: Epoche[GListInterface.GList[Dot]], meta: DotFun[RGA.RGANode[E]])
 object RGA {
 
-  def empty[E]: RGA[E] = RGA(Epoche.empty, Map.empty)
+  def empty[E]: RGA[E] = RGA(Epoche.empty, DotFun.empty)
 
   given rgaContext[E]: ContextDecompose[RGA[E]] = ContextDecompose.derived[RGA[E]]
 
@@ -71,7 +72,7 @@ object RGA {
 
     def make(
         epoche: Epoche[GListInterface.GList[Dot]] = empty._1,
-        df: Map[Dot, RGANode[E]] = empty._2,
+        df: DotFun[RGANode[E]] = DotFun.empty,
         cc: CausalContext = CausalContext.empty
     ): WithContext[RGA[E]] = WithContext(RGA(epoche, df), cc)
   }
@@ -83,7 +84,7 @@ object RGA {
 
     def read(i: Int)(using QueryP): Option[E] = {
       val RGA(fw, df) = current
-      fw.value.toLazyList.map(df).collect {
+      fw.value.toLazyList.map(df.repr).collect {
         case Alive(tv) => tv.value
       }.lift(i)
     }
@@ -98,7 +99,7 @@ object RGA {
 
     def toList(using QueryP): List[E] = {
       val RGA(fw, df) = current
-      new GListSyntax(fw.value).toList.map(df).collect {
+      new GListSyntax(fw.value).toList.map(df.repr).collect {
         case Alive(tv) => tv.value
       }
     }
@@ -126,7 +127,7 @@ object RGA {
         case None => WithContext(RGA.empty[E])
         case Some(glistInsertIndex) =>
           val glistDelta = fw.map(gl => GListSyntax(gl).insert(glistInsertIndex, nextDot)(using withID(replicaID)))
-          val dfDelta    = DotFun[RGANode[E]].empty.store + (nextDot -> Alive(TimedVal(e, replicaID)))
+          val dfDelta    = DotFun.empty[RGANode[E]] + (nextDot -> Alive(TimedVal(e, replicaID)))
 
           deltaState[E].make(
             epoche = glistDelta,
@@ -149,11 +150,11 @@ object RGA {
         case Some(glistInsertIndex) =>
           val glistDelta =
             fw.map(gl => GListSyntax(gl).insertAll(glistInsertIndex, nextDots)(using summon, withID(replicaID)))
-          val dfDelta = DotFun[RGANode[E]].empty.store ++ (nextDots zip elems.map(e => Alive(TimedVal(e, replicaID))))
+          val dfDelta = DotFun.empty[RGANode[E]] ++ (nextDots zip elems.map(e => Alive(TimedVal(e, replicaID))))
 
           deltaState[E].make(
             epoche = glistDelta,
-            df = dfDelta,
+            df = DotFun(dfDelta),
             cc = CausalContext.fromSet(nextDots.toSet)
           )
       }
@@ -169,7 +170,7 @@ object RGA {
       }.lift(i) match {
         case None => WithContext(RGA.empty)
         case Some(d) =>
-          deltaState[E].make(df = DotFun[RGANode[E]].empty.store + (d -> newNode))
+          deltaState[E].make(df = DotFun.empty[RGANode[E]] + (d -> newNode))
       }
     }
 
@@ -188,9 +189,9 @@ object RGA {
         case (d, Alive(tv)) if cond(tv.value) => d
       }
 
-      val dfDelta = DotFun[RGANode[E]].empty.store ++ toUpdate.map(_ -> newNode)
+      val dfDelta = DotFun.empty[RGANode[E]] ++ toUpdate.map(_ -> newNode)
 
-      deltaState[E].make(df = dfDelta)
+      deltaState[E].make(df = DotFun(dfDelta))
     }
 
     def updateBy(cond: E => Boolean, e: E)(using CausalMutationP, IdentifierP): C =
