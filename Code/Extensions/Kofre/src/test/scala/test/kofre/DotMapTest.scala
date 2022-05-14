@@ -41,8 +41,8 @@ class DotMapTest extends munit.ScalaCheckSuite {
           dmB: TestedMap,
           deletedB: CausalContext
       ) =>
-        val dotsA = AsCausalContext[TestedMap].dots(dmA)
-        val dotsB = AsCausalContext[TestedMap].dots(dmB)
+        val dotsA = dmA.dots
+        val dotsB = dmB.dots
         val ccA   = dotsA union deletedA
         val ccB   = dotsB union deletedB
 
@@ -51,7 +51,7 @@ class DotMapTest extends munit.ScalaCheckSuite {
             WithContext(dmA, (ccA)),
             WithContext(dmB, (ccB))
           )
-        val dotsMerged = AsCausalContext[TestedMap].dots(dmMerged)
+        val dotsMerged = dmMerged.dots
 
         assert(
           ccMerged == (ccA union ccB),
@@ -96,8 +96,8 @@ class DotMapTest extends munit.ScalaCheckSuite {
           dmB: TestedMap,
           deletedB: CausalContext
       ) =>
-        val ccA = AsCausalContext[TestedMap].dots(dmA) union deletedA
-        val ccB = AsCausalContext[TestedMap].dots(dmB) union deletedB
+        val ccA = dmA.dots union deletedA
+        val ccB = dmB.dots union deletedB
 
         assert(
           ContextLattice[TestedMap].lteq(
@@ -140,7 +140,7 @@ class DotMapTest extends munit.ScalaCheckSuite {
 
       val dm: TestedMap = removeDuplicates(dmdup.toList, DotMap.empty, CausalContext.empty)
 
-      val cc = AsCausalContext[TestedMap].dots(dm) union deleted
+      val cc = dm.dots union deleted
 
       val decomposed: Iterable[WithContext[TestedMap]] =
         ContextDecompose[TestedMap].decompose(WithContext(dm, (cc)))

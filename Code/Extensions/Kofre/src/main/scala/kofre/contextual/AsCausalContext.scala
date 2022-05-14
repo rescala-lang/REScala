@@ -20,16 +20,6 @@ object AsCausalContext {
 
   def apply[A](using dotStore: AsCausalContext[A]): dotStore.type = dotStore
 
-  given DotSetInstance: AsCausalContext[Set[Dot]] with {
-    override def dots(a: Set[Dot]): CausalContext = CausalContext.fromSet(a)
-  }
-
-  given DotPairInstance[A: AsCausalContext, B: AsCausalContext]: AsCausalContext[(A, B)] with {
-    override def dots(ds: (A, B)): CausalContext =
-      val (ds1, ds2) = ds
-      AsCausalContext[A].dots(ds1) union AsCausalContext[B].dots(ds2)
-  }
-
   inline def derived[T <: Product](using pm: Mirror.ProductOf[T]): AsCausalContext[T] =
     val lattices =
       summonAll[Tuple.Map[pm.MirroredElemTypes, AsCausalContext]].toIArray.map(_.asInstanceOf[AsCausalContext[Any]])
