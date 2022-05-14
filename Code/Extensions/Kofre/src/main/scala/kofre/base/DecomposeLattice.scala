@@ -2,7 +2,7 @@ package kofre.base
 
 import kofre.base.Lattice.{Operators, mapLattice, optionLattice, setLattice}
 import kofre.base.{Bottom, Lattice}
-import kofre.causality.CausalContext
+import kofre.time.Dots
 import kofre.contextual.{ContextDecompose, WithContext}
 
 import scala.annotation.implicitNotFound

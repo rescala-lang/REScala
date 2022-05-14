@@ -3,7 +3,7 @@ package todo
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import kofre.base.Defs
-import kofre.causality.Dot
+import kofre.time.Dot
 import kofre.contextual.WithContext
 import kofre.decompose.TimedVal
 import kofre.decompose.containers.DeltaBufferRDT

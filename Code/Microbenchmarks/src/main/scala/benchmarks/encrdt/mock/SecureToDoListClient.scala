@@ -4,7 +4,7 @@ package benchmarks.encrdt.mock
 import benchmarks.encrdt.mock.SecureToDoListClient.{ToDoMapLattice, mergeDecryptedDeltas}
 import benchmarks.encrdt.todolist.ToDoEntry
 import com.google.crypto.tink.Aead
-import kofre.causality.CausalContext
+import kofre.time.Dots
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap.DeltaAddWinsLastWriterWinsMapLattice
 import rescala.extra.encrdt.encrypted.deltabased.{DecryptedDeltaGroup, EncryptedDeltaGroup, TrustedReplica, UntrustedReplica}
@@ -24,7 +24,7 @@ class SecureToDoListClient(
 
   private val uuidToDeltaGroupMap: mutable.Map[UUID, DecryptedDeltaGroup[ToDoMapLattice]] = mutable.Map.empty
   private var cleanupDeltaGroup: DecryptedDeltaGroup[ToDoMapLattice] =
-    DecryptedDeltaGroup(WithContext(DotMap.empty, CausalContext.empty), CausalContext.empty)
+    DecryptedDeltaGroup(WithContext(DotMap.empty, Dots.empty), Dots.empty)
 
   private var _disseminatedDataInBytes: Long = 0
   def disseminatedDataInBytes: Long          = _disseminatedDataInBytes
@@ -80,7 +80,7 @@ class SecureToDoListClient(
 
     val newCleanupDelta = mergeDecryptedDeltas(
       mergeDecryptedDeltas(mergedOldDeltas, cleanupDeltaGroup),
-      DecryptedDeltaGroup(delta, CausalContext.single(eventDot))
+      DecryptedDeltaGroup(delta, Dots.single(eventDot))
     )
     cleanupDeltaGroup = newCleanupDelta
 
@@ -98,7 +98,7 @@ class SecureToDoListClient(
           oldUuidDeltaGroup.dottedVersionVector.add(eventDot)
         )
 
-      case None => DecryptedDeltaGroup(delta, CausalContext.single(eventDot))
+      case None => DecryptedDeltaGroup(delta, Dots.single(eventDot))
     }
     uuidToDeltaGroupMap.put(uuid, newDelta)
 

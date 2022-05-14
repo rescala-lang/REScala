@@ -1,7 +1,7 @@
 package kofre.protocol
 
 import kofre.base.Lattice.merge
-import kofre.causality.VectorClock
+import kofre.time.VectorClock
 import kofre.base.Lattice
 import kofre.base.Defs
 

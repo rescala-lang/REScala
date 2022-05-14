@@ -1,6 +1,6 @@
 package benchmarks.lattices.delta
 
-import kofre.causality.{CausalContext, Dot}
+import kofre.time.{Dots, Dot}
 import kofre.contextual.{ContextDecompose, WithContext}
 import kofre.decompose.interfaces.RGA
 import org.openjdk.jmh.annotations
@@ -24,9 +24,9 @@ class DeltaMergeBench {
   var plusOneState: WithContext[RGA[Long]]      = _
   var plusOneDeltaState: WithContext[RGA[Long]] = _
 
-  def makeCContext(replicaID: String): CausalContext = {
+  def makeCContext(replicaID: String): Dots = {
     val dots = (0L until size).map(Dot(replicaID, _)).toSet
-    CausalContext.fromSet(dots)
+    Dots.fromSet(dots)
   }
 
   @Setup

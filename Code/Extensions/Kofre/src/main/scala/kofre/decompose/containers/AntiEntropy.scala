@@ -1,7 +1,7 @@
 package kofre.decompose.containers
 
 import kofre.base.Defs
-import kofre.causality.CausalContext
+import kofre.time.Dots
 import kofre.decompose.Delta
 import kofre.syntax.WithNamedContext
 import kofre.contextual.WithContext

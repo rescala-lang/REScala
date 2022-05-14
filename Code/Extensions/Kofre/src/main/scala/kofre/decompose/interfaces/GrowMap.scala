@@ -1,7 +1,7 @@
 package kofre.decompose.interfaces
 
 import kofre.base.DecomposeLattice
-import kofre.causality.CausalContext
+import kofre.time.Dots
 import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, WithContext}
 import kofre.dotted.DotMap
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermIdMutate, WithNamedContext}

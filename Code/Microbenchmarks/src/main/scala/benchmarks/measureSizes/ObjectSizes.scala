@@ -1,6 +1,6 @@
 package rescala.benchmarks.measureSizes
 
-import kofre.causality.ArrayRanges
+import kofre.time.ArrayRanges
 import org.openjdk.jol.info.GraphLayout
 import rescala.{Schedulers, default}
 

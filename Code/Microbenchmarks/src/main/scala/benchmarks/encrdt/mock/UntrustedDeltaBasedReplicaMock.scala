@@ -5,7 +5,7 @@ package benchmarks.encrdt.mock
 import benchmarks.encrdt.Codecs
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToString
 import com.google.crypto.tink.Aead
-import kofre.causality.CausalContext
+import kofre.time.Dots
 import rescala.extra.encrdt.encrypted.deltabased.{EncryptedDeltaGroup, UntrustedReplica}
 
 import java.io.PrintWriter
@@ -17,7 +17,7 @@ class UntrustedDeltaBasedReplicaMock extends UntrustedReplica {
   override protected def prune(encryptedDeltaGroup: EncryptedDeltaGroup): Unit  = {}
   override protected def disseminate(encryptedState: EncryptedDeltaGroup): Unit = {}
 
-  def getCausalContext: CausalContext = dottedVersionVector
+  def getCausalContext: Dots = dottedVersionVector
 
   def size(): Long = {
     encryptedDeltaGroupStore.toList.map { delta =>

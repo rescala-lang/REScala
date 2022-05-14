@@ -1,7 +1,7 @@
 package kofre.dotted
 
 import kofre.base.{Bottom, DecomposeLattice, Lattice}
-import kofre.causality.{CausalContext, Dot}
+import kofre.time.{Dots, Dot}
 import kofre.contextual.ContextDecompose.FromConlattice
 import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, WithContext}
 import kofre.decompose.interfaces
@@ -16,7 +16,7 @@ import scala.annotation.targetName
   * The delta CRDT paper calls this a DotFun
   */
 case class DotFun[A](repr: Map[Dot, A]) {
-  def dots: CausalContext = CausalContext.fromSet(repr.keySet)
+  def dots: Dots = Dots.fromSet(repr.keySet)
   @targetName("add")
   def +(tup: (Dot, A)): DotFun[A] = DotFun(repr + tup)
   export repr.{+ as _, repr as _, *}
@@ -44,7 +44,7 @@ object DotFun {
   }
 
   given dotStore[V]: AsCausalContext[DotFun[V]] with {
-    override def dots(dotStore: DotFun[V]): CausalContext = CausalContext.fromSet(dotStore.repr.keySet)
+    override def dots(dotStore: DotFun[V]): Dots = Dots.fromSet(dotStore.repr.keySet)
   }
 
   /** DotFun is a dot store implementation that maps dots to values of a Lattice type. See [[interfaces.MVRegisterInterface]]
@@ -52,7 +52,7 @@ object DotFun {
     */
   given perDotDecompose[A: DecomposeLattice]: ContextDecompose[DotFun[A]] =
     new FromConlattice[DotFun[A]](perDotLattice[A]) {
-      private def dots(a: DotFun[A]): CausalContext = dotStore.dots(a)
+      private def dots(a: DotFun[A]): Dots = dotStore.dots(a)
 
       override def empty: WithContext[DotFun[A]] = WithContext(DotFun.empty)
 
@@ -73,7 +73,7 @@ object DotFun {
         val added: Iterator[WithContext[DotFun[A]]] = for {
           d <- dots(state.store).iterator
           v <- DecomposeLattice[A].decompose(state.store.repr(d))
-        } yield WithContext(DotFun(Map(d -> v)), CausalContext.single(d))
+        } yield WithContext(DotFun(Map(d -> v)), Dots.single(d))
 
         val removed =
           state.context.subtract(dots(state.store)).decomposed.map(WithContext(

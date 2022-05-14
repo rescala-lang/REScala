@@ -2,7 +2,7 @@ package kofre.rga
 
 import kofre.base.Defs.Id
 import kofre.base.{DecomposeLattice, Lattice}
-import kofre.causality.CausalContext
+import kofre.time.Dots
 import kofre.decompose.interfaces.EnableWinsFlag
 import kofre.predef.AddWinsSet
 import kofre.predef.AddWinsSet
@@ -16,7 +16,7 @@ case class DeltaSequence[A](vertices: AddWinsSet[Vertex], edges: DeltaSequence.D
 object DeltaSequence {
 
   def empty[A]: DeltaSequence[A] =
-    val addStart = WithContext(AddWinsSet.empty[kofre.rga.Vertex], CausalContext.empty).named(Vertex.start.id).add(
+    val addStart = WithContext(AddWinsSet.empty[kofre.rga.Vertex], Dots.empty).named(Vertex.start.id).add(
       Vertex.start
     ).anon
     DeltaSequence(

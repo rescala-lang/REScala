@@ -1,7 +1,7 @@
 package test.kofre
 
 import kofre.base.DecomposeLattice
-import kofre.causality.{CausalContext, Dot}
+import kofre.time.{Dots, Dot}
 import kofre.contextual.{AsCausalContext, WithContext}
 import kofre.dotted.DotFun
 import org.scalacheck.Prop.*
@@ -26,7 +26,7 @@ class DotFunTest extends munit.ScalaCheckSuite {
   }
 
   property("merge") {
-    forAll { (dfA: DotFun[Int], deletedA: CausalContext, dfB: DotFun[Int], deletedB: CausalContext) =>
+    forAll { (dfA: DotFun[Int], deletedA: Dots, dfB: DotFun[Int], deletedB: Dots) =>
       val dotsA = dfA.dots
       val dotsB = dfB.dots
       val ccA   = dotsA union deletedA
@@ -82,7 +82,7 @@ class DotFunTest extends munit.ScalaCheckSuite {
   }
 
   property("leq") {
-    forAll { (dfA: DotFun[Int], deletedA: CausalContext, dfB: DotFun[Int], deletedB: CausalContext) =>
+    forAll { (dfA: DotFun[Int], deletedA: Dots, dfB: DotFun[Int], deletedB: Dots) =>
       val ccA = dfA.dots union deletedA
       val ccB = dfB.dots union deletedB
 
@@ -112,7 +112,7 @@ class DotFunTest extends munit.ScalaCheckSuite {
     type D = WithContext[DotFun[Set[Int]]]
 
     val dot = Dot("a", 0)
-    val cc  = CausalContext.fromSet(Set(dot))
+    val cc  = Dots.fromSet(Set(dot))
 
     val data =
       WithContext[DotFun[Set[Int]]](DotFun(Map(dot -> Set(1, 2, 3))), cc)
@@ -123,7 +123,7 @@ class DotFunTest extends munit.ScalaCheckSuite {
   }
 
   property("decompose recompose") {
-    forAll { (df: DotFun[Int], deleted: CausalContext) =>
+    forAll { (df: DotFun[Int], deleted: Dots) =>
       val cc = df.dots union deleted
 
       val withContext = WithContext(df, cc)
@@ -135,7 +135,7 @@ class DotFunTest extends munit.ScalaCheckSuite {
       }
 
       val WithContext(dfMerged, ccMerged) =
-        decomposed.foldLeft(WithContext(DotFun.empty[Int], CausalContext.empty)) {
+        decomposed.foldLeft(WithContext(DotFun.empty[Int], Dots.empty)) {
           case (WithContext(dfA, ccA), WithContext(dfB, ccB)) =>
             DecomposeLattice[WithContext[DotFun[Int]]].merge(WithContext(dfA, ccA), WithContext(dfB, ccB))
         }

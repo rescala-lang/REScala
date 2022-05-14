@@ -1,8 +1,8 @@
-package kofre.causality
+package kofre.time
 
 import kofre.base.Defs.{Id, Time}
 import kofre.base.{DecomposeLattice, Lattice}
-import kofre.causality.Dot
+import kofre.time.Dot
 import kofre.contextual.WithContext
 
 
@@ -12,7 +12,7 @@ import kofre.contextual.WithContext
   * The name refers to that a single causally replicated RDT would have a single causal context.
   * But this data structure may also be used inside a single delta, or for other metadata within the value of an RDT.
   * */
-case class CausalContext(internal: Map[Id, ArrayRanges]) {
+case class Dots(internal: Map[Id, ArrayRanges]) {
 
   def wrap[A](a: A): WithContext[A] = WithContext(a, this)
 
@@ -22,10 +22,10 @@ case class CausalContext(internal: Map[Id, ArrayRanges]) {
 
   def clockOf(replicaId: Id): Option[Dot] = max(replicaId)
 
-  def add(dot: Dot): CausalContext = add(dot.replicaId, dot.time)
+  def add(dot: Dot): Dots = add(dot.replicaId, dot.time)
 
-  def add(replicaId: Id, time: Time): CausalContext =
-    CausalContext(internal.updated(
+  def add(replicaId: Id, time: Time): Dots =
+    Dots(internal.updated(
       replicaId,
       rangeAt(replicaId).add(time)
     ))
@@ -34,10 +34,10 @@ case class CausalContext(internal: Map[Id, ArrayRanges]) {
 
   def nextDot(replicaId: Id): Dot = Dot(replicaId, nextTime(replicaId))
 
-  def diff(extern: CausalContext): CausalContext = subtract(extern)
+  def diff(extern: Dots): Dots = subtract(extern)
 
-  def subtract(other: CausalContext): CausalContext = {
-    CausalContext(
+  def subtract(other: Dots): Dots = {
+    Dots(
       internal.map { case left @ (id, leftRanges) =>
         other.internal.get(id) match {
           case Some(rightRanges) => id -> (leftRanges subtract rightRanges)
@@ -47,8 +47,8 @@ case class CausalContext(internal: Map[Id, ArrayRanges]) {
     )
   }
 
-  def intersect(other: CausalContext): CausalContext =
-    CausalContext {
+  def intersect(other: Dots): Dots =
+    Dots {
       internal.flatMap { case (id, ranges) =>
         other.internal.get(id) match {
           case Some(otherRanges) =>
@@ -60,7 +60,7 @@ case class CausalContext(internal: Map[Id, ArrayRanges]) {
       }
     }
 
-  def union(other: CausalContext): CausalContext = CausalContext.contextLattice.merge(this, other)
+  def union(other: Dots): Dots = Dots.contextLattice.merge(this, other)
 
   def contains(d: Dot): Boolean = internal.get(d.replicaId).exists(_.contains(d.time))
 
@@ -76,21 +76,21 @@ case class CausalContext(internal: Map[Id, ArrayRanges]) {
     tree.iterator.forall(time => cond(Dot(id, time)))
   }
 
-  def <=(other: CausalContext): Boolean = internal.forall {
+  def <=(other: Dots): Boolean = internal.forall {
     case (id, leftRange) => leftRange <= other.rangeAt(id)
   }
 }
 
-object CausalContext {
-  def single(replicaId: Id, time: Long): CausalContext = empty.add(replicaId, time)
+object Dots {
+  def single(replicaId: Id, time: Long): Dots = empty.add(replicaId, time)
 
-  val empty: CausalContext = CausalContext(Map.empty)
+  val empty: Dots = Dots(Map.empty)
 
-  def single(dot: Dot): CausalContext = empty.add(dot.replicaId, dot.time)
+  def single(dot: Dot): Dots = empty.add(dot.replicaId, dot.time)
 
-  implicit val contextLattice: DecomposeLattice[CausalContext] = DecomposeLattice.derived
+  implicit val contextLattice: DecomposeLattice[Dots] = DecomposeLattice.derived
 
-  def fromSet(dots: Iterable[Dot]): CausalContext = CausalContext(dots.groupBy(_.replicaId).map {
+  def fromSet(dots: Iterable[Dot]): Dots = Dots(dots.groupBy(_.replicaId).map {
     (key, times) =>
       key -> ArrayRanges.from(times.iterator.map(_.time))
   })

@@ -1,7 +1,7 @@
 package kofre.decompose.interfaces
 
 import kofre.base.{Bottom, DecomposeLattice}
-import kofre.causality.{CausalContext, Dot}
+import kofre.time.{Dots, Dot}
 import kofre.decompose.*
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermIdMutate, PermMutate}
 import kofre.decompose.interfaces.GListInterface.{GListAsUIJDLattice, GListSyntax}
@@ -72,7 +72,7 @@ object RGA {
     def make(
         epoche: Epoche[GListInterface.GList[Dot]] = empty._1,
         df: DotFun[RGANode[E]] = DotFun.empty,
-        cc: CausalContext = CausalContext.empty
+        cc: Dots = Dots.empty
     ): WithContext[RGA[E]] = WithContext(RGA(epoche, df), cc)
   }
 
@@ -131,7 +131,7 @@ object RGA {
           deltaState[E].make(
             epoche = glistDelta,
             df = dfDelta,
-            cc = CausalContext.single(nextDot)
+            cc = Dots.single(nextDot)
           )
       }
     }.mutator
@@ -154,7 +154,7 @@ object RGA {
           deltaState[E].make(
             epoche = glistDelta,
             df = DotFun(dfDelta),
-            cc = CausalContext.fromSet(nextDots.toSet)
+            cc = Dots.fromSet(nextDots.toSet)
           )
       }
     }.mutator
@@ -209,7 +209,7 @@ object RGA {
 
       deltaState[E].make(
         epoche = epoche.epocheWrite(golistPurged),
-        cc = CausalContext.fromSet(toRemove)
+        cc = Dots.fromSet(toRemove)
       ).mutator
     }
 

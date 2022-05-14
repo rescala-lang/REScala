@@ -2,7 +2,7 @@ package kofre.encrdt.crdts
 
 import kofre.base.Bottom
 import kofre.contextual.AsCausalContext.*
-import kofre.causality.CausalContext
+import kofre.time.Dots
 import kofre.contextual.{AsCausalContext, WithContext}
 import kofre.dotted.{DotFun, DotMap}
 
@@ -10,7 +10,7 @@ import kofre.dotted.{DotFun, DotMap}
 object DeltaAddWinsMap {
   type DeltaAddWinsMapLattice[K, V] = WithContext[DotMap[K, V]]
 
-  def empty[K, V: AsCausalContext]: DeltaAddWinsMapLattice[K, V] = WithContext(DotMap.empty, CausalContext.empty)
+  def empty[K, V: AsCausalContext]: DeltaAddWinsMapLattice[K, V] = WithContext(DotMap.empty, Dots.empty)
 
   /** Returns the '''delta''' that contains the recursive mutation performed by the `deltaMutator`.
     *
@@ -50,7 +50,7 @@ object DeltaAddWinsMap {
   def deltaRemove[K, V: AsCausalContext](key: K, map: DeltaAddWinsMapLattice[K, V]): DeltaAddWinsMapLattice[K, V] =
     WithContext(
       DotMap.empty,
-      map.store.get(key).map(AsCausalContext[V].dots).getOrElse(CausalContext.empty)
+      map.store.get(key).map(AsCausalContext[V].dots).getOrElse(Dots.empty)
     )
 
   /** Returns the '''delta''' that removes all values from the `map`.

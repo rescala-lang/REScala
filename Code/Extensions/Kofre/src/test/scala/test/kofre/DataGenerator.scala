@@ -2,7 +2,7 @@ package test.kofre
 
 import kofre.base.Defs.Time
 import kofre.base.{Defs, Lattice}
-import kofre.causality.{CausalContext, Dot, VectorClock}
+import kofre.time.{Dots, Dot, VectorClock}
 import kofre.contextual.{AsCausalContext, ContextDecompose}
 import kofre.dotted.{DotFun, DotMap, DotSet}
 import kofre.predef.{GrowOnlyCounter, PosNegCounter}
@@ -74,11 +74,11 @@ object DataGenerator {
 
   val genDotSet: Gen[Set[Dot]] = Gen.containerOf[Set, Dot](genDot)
 
-  val genDietMapCContext: Gen[CausalContext] = for {
+  val genDietMapCContext: Gen[Dots] = for {
     ds <- genDotSet
-  } yield CausalContext.fromSet(ds)
+  } yield Dots.fromSet(ds)
 
-  implicit val arbDietMapCContext: Arbitrary[CausalContext] = Arbitrary(genDietMapCContext)
+  implicit val arbDietMapCContext: Arbitrary[Dots] = Arbitrary(genDietMapCContext)
 
   implicit val arbDotSet: Arbitrary[Set[Dot]] = Arbitrary(genDotSet)
 
@@ -90,17 +90,17 @@ object DataGenerator {
 
   implicit def arbDotFun[A](implicit g: Arbitrary[A]): Arbitrary[DotFun[A]] = Arbitrary(genDotFun)
 
-  def makeUnique(rem: List[CausalContext], acc: List[CausalContext], state: CausalContext): List[CausalContext] =
+  def makeUnique(rem: List[Dots], acc: List[Dots], state: Dots): List[Dots] =
     rem match
       case Nil => acc
       case h :: t => makeUnique(t, h.subtract(state) :: acc, state union h)
 
-  def genDotMap[K](implicit gk: Arbitrary[K]): Gen[Map[K, CausalContext]] = (for {
+  def genDotMap[K](implicit gk: Arbitrary[K]): Gen[Map[K, Dots]] = (for {
     n      <- Gen.posNum[Int]
     keys   <- Gen.listOfN(n, gk.arbitrary)
     dupvalues <- Gen.listOfN(n, arbDietMapCContext.arbitrary)
   } yield {
-    (keys zip makeUnique(dupvalues, Nil, CausalContext.empty)).toMap
+    (keys zip makeUnique(dupvalues, Nil, Dots.empty)).toMap
   })
 
   implicit val arbrealDotSet: Arbitrary[DotSet] = Arbitrary(genDietMapCContext.map(DotSet.apply))

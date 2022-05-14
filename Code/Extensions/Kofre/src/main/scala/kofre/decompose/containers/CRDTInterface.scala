@@ -2,7 +2,7 @@ package kofre.decompose.containers
 
 import kofre.base.Defs.Id
 import kofre.base.{DecomposeLattice, Defs}
-import kofre.causality.CausalContext
+import kofre.time.Dots
 import kofre.contextual.{ContextDecompose, ContextLattice, WithContext}
 import kofre.syntax.WithNamedContext
 import kofre.decompose.Delta
@@ -22,13 +22,13 @@ object CRDTInterface {
   def dottedPermissions[L: ContextDecompose, B <: CRDTInterface[L, B]]: PermIdMutate[B, L] with PermCausalMutate[B, L] =
     new PermIdMutate[B, L] with PermCausalMutate[B, L] {
       override def replicaId(c: B): Id       = c.replicaID
-      override def mutate(c: B, delta: L): B = c.applyDelta(Delta(c.replicaID, CausalContext.empty, delta))
+      override def mutate(c: B, delta: L): B = c.applyDelta(Delta(c.replicaID, Dots.empty, delta))
       override def query(c: B): L            = c.state.store
       override def mutateContext(
           container: B,
           withContext: WithContext[L]
       ): B = container.applyDelta(WithNamedContext(container.replicaID, withContext))
-      override def context(c: B): CausalContext = c.state.context
+      override def context(c: B): Dots = c.state.context
     }
 
   def fullPermissions[L: DecomposeLattice, B <: CRDTInterface[L, B]]: PermIdMutate[B, L] =

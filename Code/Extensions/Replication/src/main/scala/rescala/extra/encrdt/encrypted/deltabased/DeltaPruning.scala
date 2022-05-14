@@ -1,11 +1,11 @@
 package rescala.extra.encrdt.encrypted.deltabased
 
-import kofre.causality.CausalContext
+import kofre.time.Dots
 
 import scala.collection.mutable
 
 trait DeltaPruning {
-  protected var dottedVersionVector: CausalContext
+  protected var dottedVersionVector: Dots
   protected var encryptedDeltaGroupStore: mutable.Set[EncryptedDeltaGroup]
 
   protected def prune(receivedDeltaGroup: EncryptedDeltaGroup): Unit = {

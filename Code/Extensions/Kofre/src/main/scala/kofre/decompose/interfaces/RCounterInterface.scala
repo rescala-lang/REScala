@@ -1,12 +1,12 @@
 package kofre.decompose.interfaces
 
 import kofre.base.DecomposeLattice
-import kofre.causality.CausalContext
+import kofre.time.Dots
 import kofre.decompose.*
 import kofre.syntax.OpsSyntaxHelper
 import kofre.contextual.ContextDecompose.*
 import kofre.contextual.WithContext
-import kofre.causality.Dot
+import kofre.time.Dot
 import kofre.dotted.DotFun
 
 
@@ -46,7 +46,7 @@ object RCounterInterface {
 
   private def deltaState(
       df: Option[DotFun[(Int, Int)]] = None,
-      cc: CausalContext
+      cc: Dots
   ): WithContext[RCounter] = {
     WithContext(
       df.getOrElse(DotFun.empty),
@@ -70,7 +70,7 @@ object RCounterInterface {
 
       deltaState(
         df = Some(DotFun.empty[(Int, Int)] + (nextDot -> ((0, 0)))),
-        cc = CausalContext.single(nextDot)
+        cc = Dots.single(nextDot)
       ).mutator
     }
 
@@ -83,14 +83,14 @@ object RCounterInterface {
 
           deltaState(
             df = Some(current + (currentDot -> newCounter)),
-            cc = CausalContext.single(currentDot)
+            cc = Dots.single(currentDot)
           ).mutator
         case _ =>
           val nextDot = context.nextDot(replicaID)
 
           deltaState(
             df = Some(DotFun.empty[(Int, Int)] + (nextDot -> u)),
-            cc = CausalContext.single(nextDot)
+            cc = Dots.single(nextDot)
           ).mutator
       }
     }
@@ -101,7 +101,7 @@ object RCounterInterface {
 
     def reset()(using CausalMutationP): C = {
       deltaState(
-        cc = CausalContext.fromSet(current.keySet)
+        cc = Dots.fromSet(current.keySet)
       ).mutator
     }
   }

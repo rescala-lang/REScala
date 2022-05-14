@@ -1,20 +1,20 @@
 package test.kofre
 
-import kofre.causality.{CausalContext, Dot}
+import kofre.time.{Dots, Dot}
 import org.scalacheck.Prop.*
 import test.kofre.DataGenerator.*
 
-class CausalContextTest extends munit.ScalaCheckSuite {
+class DotsTest extends munit.ScalaCheckSuite {
 
   test("empty") {
     assert(
-      CausalContext.empty.toSet.isEmpty,
-      s"DietMapCContext.empty should be empty, but ${CausalContext.empty} is not empty"
-    )
+      Dots.empty.toSet.isEmpty,
+      s"DietMapCContext.empty should be empty, but ${Dots.empty} is not empty"
+      )
   }
 
   property("contains") {
-    forAll { (cc: CausalContext) =>
+    forAll { (cc: Dots) =>
       (cc.toSet).foreach { d =>
         assert(
           cc.contains(d),
@@ -27,14 +27,14 @@ class CausalContextTest extends munit.ScalaCheckSuite {
   property("to/fromSet") {
     forAll { (ds: Set[Dot]) =>
       assert(
-        CausalContext.fromSet(ds).toSet == ds,
-        s"DietMapCContext.toSet and DietMapCContext.fromSet should be inverse operations, but ${CausalContext.fromSet(ds).toSet} does not equal $ds"
-      )
+        Dots.fromSet(ds).toSet == ds,
+        s"DietMapCContext.toSet and DietMapCContext.fromSet should be inverse operations, but ${Dots.fromSet(ds).toSet} does not equal $ds"
+        )
     }
   }
 
   property("union") {
-    forAll { (cca: CausalContext, ccb: CausalContext) =>
+    forAll { (cca: Dots, ccb: Dots) =>
       val ccunion = (cca union ccb)
 
       val seta     = cca.toSet
@@ -49,7 +49,7 @@ class CausalContextTest extends munit.ScalaCheckSuite {
   }
 
   property("max") {
-    forAll { (cc: CausalContext, randId: String) =>
+    forAll { (cc: Dots, randId: String) =>
       val asSet = cc.toSet
       val ids   = asSet.map(_.replicaId) + randId
 
@@ -79,7 +79,7 @@ class CausalContextTest extends munit.ScalaCheckSuite {
   }
 
   property("nextDot") {
-    forAll { (cc: CausalContext, randId: String) =>
+    forAll { (cc: Dots, randId: String) =>
       val asSet = (cc.toSet)
       val ids   = asSet.map(_.replicaId) + randId
 

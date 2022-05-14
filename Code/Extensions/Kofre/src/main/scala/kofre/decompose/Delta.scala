@@ -1,7 +1,7 @@
 package kofre.decompose
 
 import kofre.base.Defs
-import kofre.causality.CausalContext
+import kofre.time.Dots
 import kofre.syntax.WithNamedContext
 import kofre.contextual.WithContext
 
@@ -10,7 +10,7 @@ import kofre.contextual.WithContext
   * @tparam A Type of the delta state
   */
 object Delta {
-  def apply[A](replicaID: Defs.Id, delta: A): WithNamedContext[A] = WithNamedContext(replicaID, WithContext(delta, CausalContext.empty))
-  def apply[A](replicaID: Defs.Id, context: CausalContext, delta: A): WithNamedContext[A] = WithNamedContext(replicaID, WithContext(delta, context))
-  def unapply[A](wnc: WithNamedContext[A]): Option[(Defs.Id, CausalContext, A)] = Some((wnc.replicaID, wnc.anon.context, wnc.anon.store))
+  def apply[A](replicaID: Defs.Id, delta: A): WithNamedContext[A] = WithNamedContext(replicaID, WithContext(delta, Dots.empty))
+  def apply[A](replicaID: Defs.Id, context: Dots, delta: A): WithNamedContext[A] = WithNamedContext(replicaID, WithContext(delta, context))
+  def unapply[A](wnc: WithNamedContext[A]): Option[(Defs.Id, Dots, A)] = Some((wnc.replicaID, wnc.anon.context, wnc.anon.store))
 }

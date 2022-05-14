@@ -3,7 +3,7 @@ package kofre.primitives
 import kofre.base.Defs.Id
 import kofre.base.Lattice
 import kofre.base.Lattice.Operators
-import kofre.causality.VectorClock
+import kofre.time.VectorClock
 
 import scala.annotation.tailrec
 

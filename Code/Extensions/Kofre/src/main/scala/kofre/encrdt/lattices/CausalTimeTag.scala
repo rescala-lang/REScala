@@ -1,7 +1,7 @@
 package kofre.encrdt.lattices
 import kofre.base.Lattice
 import kofre.base.Lattice.Operators
-import kofre.causality.VectorClock
+import kofre.time.VectorClock
 import kofre.encrdt.lattices.CausalTimeTag.lwwTimeOrd
 
 import java.time.Instant

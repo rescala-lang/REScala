@@ -2,7 +2,7 @@ package todolist
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
-import kofre.causality.Dot
+import kofre.time.Dot
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap
 import kofre.primitives.LastWriterWins
 import rescala.extra.encrdt.sync.ConnectionManager

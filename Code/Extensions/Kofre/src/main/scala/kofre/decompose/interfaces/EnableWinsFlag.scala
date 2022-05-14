@@ -1,7 +1,7 @@
 package kofre.decompose.interfaces
 
 import kofre.base.{Bottom, DecomposeLattice}
-import kofre.causality.CausalContext
+import kofre.time.Dots
 import kofre.decompose.*
 import kofre.syntax.OpsSyntaxHelper
 import kofre.contextual.ContextDecompose.*
@@ -19,7 +19,7 @@ object EnableWinsFlag {
 
   given contextDecompose: ContextDecompose[EnableWinsFlag] = ContextDecompose.derived
   given asCausalContextEWF: AsCausalContext[EnableWinsFlag] with {
-    override def dots(a: EnableWinsFlag): CausalContext = a.inner.repr
+    override def dots(a: EnableWinsFlag): Dots = a.inner.repr
   }
 
   val empty: EnableWinsFlag = EnableWinsFlag(DotSet.empty)
@@ -33,15 +33,15 @@ object EnableWinsFlag {
     def enable()(using CausalMutationP, IdentifierP): C = {
       val nextDot = context.nextDot(replicaID)
       WithContext(
-        EnableWinsFlag(DotSet(CausalContext.single(nextDot))),
+        EnableWinsFlag(DotSet(Dots.single(nextDot))),
         current.inner.repr add nextDot
-      ).mutator
+        ).mutator
     }
     def disable()(using CausalMutationP): C = {
       WithContext(
-        EnableWinsFlag(DotSet(CausalContext.empty)),
+        EnableWinsFlag(DotSet(Dots.empty)),
         current.inner.repr
-      ).mutator
+        ).mutator
     }
   }
 

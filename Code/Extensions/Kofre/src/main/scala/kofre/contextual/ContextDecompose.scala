@@ -2,7 +2,7 @@ package kofre.contextual
 
 import kofre.base.Lattice.Operators
 import kofre.base.{Bottom, DecomposeLattice, Lattice}
-import kofre.causality.{CausalContext, Dot}
+import kofre.time.{Dots, Dot}
 import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, WithContext}
 import kofre.decompose.interfaces
 
@@ -12,7 +12,7 @@ import scala.deriving.Mirror
 import scala.compiletime.summonAll
 
 /** DecomposableDotStore is the typeclass trait for dot stores,
-  * data structures that are part of causal CRDTs and make use of dots to track causality.
+  * data structures that are part of causal CRDTs and make use of dots to track time.
   */
 @implicitNotFound("Not a decompose lattice when in a context: »${A}«")
 trait ContextDecompose[A] extends ContextLattice[A], DecomposeLattice[WithContext[A]] {
@@ -92,7 +92,7 @@ object ContextDecompose {
         DecomposeLattice[A].lteq(left.store, right.store)
 
       override def decompose(state: WithContext[A]): Iterable[WithContext[A]] = {
-        DecomposeLattice[A].decompose(state.store).map(WithContext(_, CausalContext.empty))
+        DecomposeLattice[A].decompose(state.store).map(WithContext(_, Dots.empty))
       }
 
       override def empty: WithContext[A] = WithContext(DecomposeLattice[A].empty)

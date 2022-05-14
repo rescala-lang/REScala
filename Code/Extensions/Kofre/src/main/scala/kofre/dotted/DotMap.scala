@@ -1,14 +1,14 @@
 package kofre.dotted
 
 import kofre.base.Bottom
-import kofre.causality.CausalContext
+import kofre.time.Dots
 import kofre.contextual.ContextDecompose.FromConlattice
 import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, WithContext}
 import kofre.decompose.interfaces
 
 case class DotMap[K, V](repr: Map[K, V]) {
-  def dots(using ccv: AsCausalContext[V]): CausalContext =
-    repr.valuesIterator.foldLeft(CausalContext.empty)((acc, v) => acc.union(ccv.dots(v)))
+  def dots(using ccv: AsCausalContext[V]): Dots =
+    repr.valuesIterator.foldLeft(Dots.empty)((acc, v) => acc.union(ccv.dots(v)))
   export repr.{repr as _, *}
 }
 
@@ -20,7 +20,7 @@ object DotMap {
   def empty[K, V]: DotMap[K, V] = DotMap(Map.empty)
 
   given asCausalContext[K, V: AsCausalContext]: AsCausalContext[DotMap[K, V]] with {
-    override def dots(a: DotMap[K, V]): CausalContext = a.dots
+    override def dots(a: DotMap[K, V]): Dots = a.dots
 
   }
 

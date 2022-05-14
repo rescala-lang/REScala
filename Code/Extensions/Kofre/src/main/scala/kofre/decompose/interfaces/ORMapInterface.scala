@@ -1,7 +1,7 @@
 package kofre.decompose.interfaces
 
 import kofre.base.{Bottom, DecomposeLattice, Defs}
-import kofre.causality.{CausalContext, Dot}
+import kofre.time.{Dots, Dot}
 import kofre.decompose.*
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, WithNamedContext}
 import kofre.contextual.ContextDecompose.*
@@ -26,7 +26,7 @@ object ORMapInterface {
 
   def make[K, V](
       dm: DotMap[K, V] = DotMap.empty[K, V],
-      cc: CausalContext = CausalContext.empty
+      cc: Dots = Dots.empty
   ): WithContext[ORMap[K, V]] = WithContext(dm, cc)
 
   implicit class ORMapSyntax[C, K, V](container: C)(using ArdtOpsContains[C, ORMap[K, V]])
@@ -80,7 +80,7 @@ object ORMapInterface {
 
     def removeAll(keys: Iterable[K])(using CausalMutationP, ContextDecompose[V], AsCausalContext[V]): C = {
       val values = keys.map(k => current.getOrElse(k, Bottom[V].empty))
-      val dots = values.foldLeft(CausalContext.empty) {
+      val dots = values.foldLeft(Dots.empty) {
         case (set, v) => set union AsCausalContext[V].dots(v)
       }
 
@@ -92,7 +92,7 @@ object ORMapInterface {
     def removeByValue(cond: WithContext[V] => Boolean)(using CausalMutationP, ContextDecompose[V], AsCausalContext[V]): C = {
       val toRemove = current.values.collect {
         case v if cond(WithContext(v, context)) => AsCausalContext[V].dots(v)
-      }.fold(CausalContext.empty)(_ union _)
+      }.fold(Dots.empty)(_ union _)
 
       make(
         cc = toRemove

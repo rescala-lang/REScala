@@ -2,7 +2,7 @@ package kofre.syntax
 
 import kofre.base.{Bottom, DecomposeLattice, Defs}
 import kofre.base.Defs.Id
-import kofre.causality.CausalContext
+import kofre.time.Dots
 import kofre.contextual.{WithContext, ContextLattice}
 
 class WithNamedContext[L](val replicaID: Defs.Id, val anon: WithContext[L]) {
@@ -11,7 +11,7 @@ class WithNamedContext[L](val replicaID: Defs.Id, val anon: WithContext[L]) {
 
 object WithNamedContext {
 
-  def empty[A: Bottom](replicaId: Defs.Id) = new WithNamedContext(replicaId, WithContext(Bottom.empty[A], CausalContext.empty))
+  def empty[A: Bottom](replicaId: Defs.Id) = new WithNamedContext(replicaId, WithContext(Bottom.empty[A], Dots.empty))
 
   def apply[L](replicaID: Defs.Id, inner: WithContext[L]): WithNamedContext[L] = new WithNamedContext(replicaID, inner)
   def unapply[L](wnc: WithNamedContext[L]): Some[(Defs.Id, WithContext[L])] = Some((wnc.replicaID, wnc.anon))
@@ -24,7 +24,7 @@ object WithNamedContext {
       val res = c.anon merged delta
       WithNamedContext(c.replicaID, c.anon merged delta)
     override def query(c: WithNamedContext[L]): L               = c.anon.store
-    override def context(c: WithNamedContext[L]): CausalContext = c.anon.context
+    override def context(c: WithNamedContext[L]): Dots = c.anon.context
   }
 
   given syntaxPassthrough[L]: ArdtOpsContains[WithNamedContext[L], L] = new ArdtOpsContains[WithNamedContext[L], L] {}

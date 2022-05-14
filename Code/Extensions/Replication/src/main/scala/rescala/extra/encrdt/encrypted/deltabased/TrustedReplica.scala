@@ -4,15 +4,15 @@ package rescala.extra.encrdt.encrypted.deltabased
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.Aead
 import de.ckuessner.encrdt.crdts.interfaces.Crdt
-import kofre.causality.{CausalContext, Dot}
+import kofre.time.{Dots, Dot}
 import kofre.base.Lattice.Operators
 
 abstract class TrustedReplica[T](val replicaId: String, val crdt: Crdt[T], private val aead: Aead)(
     implicit val stateJsonCodec: JsonValueCodec[T],
-    implicit val dotSetJsonCodec: JsonValueCodec[CausalContext]
+    implicit val dotSetJsonCodec: JsonValueCodec[Dots]
 ) extends Replica {
 
-  protected var dottedVersionVector: CausalContext = CausalContext.empty
+  protected var dottedVersionVector: Dots = Dots.empty
 
   private var lastDot = Dot(replicaId, 0)
 
@@ -32,7 +32,7 @@ abstract class TrustedReplica[T](val replicaId: String, val crdt: Crdt[T], priva
   def localChange(state: T): Unit = {
     val eventDot = nextDot()
     dottedVersionVector.add(eventDot)
-    val encryptedDelta = DecryptedDeltaGroup(state, CausalContext.single(eventDot)).encrypt(aead)
+    val encryptedDelta = DecryptedDeltaGroup(state, Dots.single(eventDot)).encrypt(aead)
     disseminate(encryptedDelta)
   }
 }

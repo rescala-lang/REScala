@@ -1,7 +1,7 @@
 package kofre.encrdt.lattices
 
 import kofre.base.{DecomposeLattice, Lattice}
-import kofre.causality.CausalContext
+import kofre.time.Dots
 import kofre.contextual.WithContext
 import kofre.predef.AddWinsSet
 import kofre.syntax.{PermIdMutate, WithNamedContext}

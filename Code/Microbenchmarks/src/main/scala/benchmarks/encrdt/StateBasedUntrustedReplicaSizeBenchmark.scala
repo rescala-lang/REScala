@@ -2,7 +2,7 @@ package benchmarks.encrdt
 
 import benchmarks.encrdt.Codecs.deltaAwlwwmapJsonCodec
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToArray
-import kofre.causality.VectorClock
+import kofre.time.VectorClock
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap.StateType
 import rescala.extra.encrdt.encrypted.statebased.{DecryptedState, EncryptedState, UntrustedReplica}

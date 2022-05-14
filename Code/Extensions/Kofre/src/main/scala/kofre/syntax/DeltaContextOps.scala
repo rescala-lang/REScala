@@ -2,7 +2,7 @@ package kofre.syntax
 
 import kofre.base.Defs.Id
 import kofre.base.{DecomposeLattice, Defs, Lattice}
-import kofre.causality.CausalContext
+import kofre.time.Dots
 import kofre.contextual.WithContext
 import kofre.decompose.containers.{AntiEntropyCRDT, DeltaBufferRDT}
 
@@ -34,7 +34,7 @@ class FixedId[C](id: Id) extends PermId[C]:
   "Requires causal context permission.\nNo context in »${C}«\nMissing a container?"
 )
 trait PermCausal[C]:
-  def context(c: C): CausalContext
+  def context(c: C): Dots
 @implicitNotFound(
   "Requires context mutation permission.\nUnsure how to extract context from »${C}«\nto modify »${L}«"
 )
@@ -84,7 +84,7 @@ trait OpsSyntaxHelper[C, L](container: C) {
   final protected def current(using perm: QueryP): L                                     = perm.query(container)
   final protected def replicaID(using perm: IdentifierP): Defs.Id                        = perm.replicaId(container)
   extension [A](c: WithContext[A]) def inheritId(using IdentifierP): WithNamedContext[A] = c.named(replicaID)
-  final protected def context(using perm: CausalP): CausalContext                        = perm.context(container)
+  final protected def context(using perm: CausalP): Dots                        = perm.context(container)
   extension (l: L)(using perm: MutationP) def mutator: C                                 = perm.mutate(container, l)
   extension (l: WithContext[L])(using perm: CausalMutationP) def mutator = perm.mutateContext(container, l)
 

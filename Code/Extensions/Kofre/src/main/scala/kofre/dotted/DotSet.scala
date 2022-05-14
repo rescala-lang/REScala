@@ -1,22 +1,22 @@
 package kofre.dotted
 
-import kofre.causality.{Dot, CausalContext}
+import kofre.time.{Dot, Dots}
 import kofre.contextual.ContextDecompose.FromConlattice
 import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, WithContext}
 import kofre.decompose.interfaces
 
 
-case class DotSet(repr: CausalContext) {
-  def dots: CausalContext = repr
+case class DotSet(repr: Dots) {
+  def dots: Dots = repr
   export repr.*
 }
 
 object DotSet {
 
-  def empty: DotSet = DotSet(CausalContext.empty)
+  def empty: DotSet = DotSet(Dots.empty)
 
   given asCausalContext: AsCausalContext[DotSet] with {
-    override def dots(a: DotSet): CausalContext = a.repr
+    override def dots(a: DotSet): Dots = a.repr
   }
 
   /** This essentially tracks the currently present dots, and all dots */
@@ -51,7 +51,7 @@ object DotSet {
       override def decompose(state: WithContext[DotSet]): Iterable[WithContext[DotSet]] = {
         val added =
           for (d <- state.store.repr.iterator) yield
-            val single = DotSet(CausalContext.single(d))
+            val single = DotSet(Dots.single(d))
             WithContext(single, single.repr)
         val removed = state.context.subtract(state.store.repr).decomposed.map(WithContext(DotSet.empty, _))
         removed ++ added

@@ -1,7 +1,7 @@
 package test.kofre
 
 import kofre.base.{DecomposeLattice, Defs, Lattice}
-import kofre.causality.VectorClock
+import kofre.time.VectorClock
 import kofre.predef.{GrowOnlyCounter, PosNegCounter}
 import kofre.primitives.{CausalQueue, LastWriterWins, MultiValueRegister}
 import kofre.sets.ORSet

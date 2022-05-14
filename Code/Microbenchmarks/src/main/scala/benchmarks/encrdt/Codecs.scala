@@ -5,7 +5,7 @@ import benchmarks.encrdt.todolist.ToDoEntry
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import kofre.base.Defs.{Id, Time}
-import kofre.causality.{ArrayRanges, CausalContext, Dot}
+import kofre.time.{ArrayRanges, Dots, Dot}
 import kofre.encrdt.crdts.{AddWinsLastWriterWinsMap, DeltaAddWinsLastWriterWinsMap}
 
 import java.util.UUID
@@ -14,15 +14,15 @@ object Codecs {
   implicit val awlwwmapJsonCodec: JsonValueCodec[AddWinsLastWriterWinsMap.LatticeType[String, String]] =
     JsonCodecMaker.make(CodecMakerConfig.withSetMaxInsertNumber(Int.MaxValue).withMapMaxInsertNumber(Int.MaxValue))
 
-  implicit val dotSetCodec: JsonValueCodec[CausalContext] = new JsonValueCodec[CausalContext] {
+  implicit val dotSetCodec: JsonValueCodec[Dots] = new JsonValueCodec[Dots] {
     private val optimizedArrayCausalContextCodec: JsonValueCodec[Map[Id, Array[Time]]] = JsonCodecMaker.make
 
-    override def decodeValue(in: JsonReader, default: CausalContext): CausalContext =
-      CausalContext(optimizedArrayCausalContextCodec.decodeValue(in, Map.empty).map {
+    override def decodeValue(in: JsonReader, default: Dots): Dots =
+      Dots(optimizedArrayCausalContextCodec.decodeValue(in, Map.empty).map {
         case (id, times) => id -> new ArrayRanges(times, times.length)
       })
 
-    override def encodeValue(x: CausalContext, out: JsonWriter): Unit = optimizedArrayCausalContextCodec.encodeValue(
+    override def encodeValue(x: Dots, out: JsonWriter): Unit = optimizedArrayCausalContextCodec.encodeValue(
       x.internal.map { case (id, ranges) =>
         id -> {
           if (ranges.used == ranges.inner.length) ranges.inner
@@ -32,7 +32,7 @@ object Codecs {
       out
     )
 
-    override def nullValue: CausalContext = CausalContext.empty
+    override def nullValue: Dots = Dots.empty
   }
 
   implicit val deltaAwlwwmapJsonCodec: JsonValueCodec[DeltaAddWinsLastWriterWinsMap.StateType[String, String]] =

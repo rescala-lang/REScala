@@ -1,6 +1,6 @@
 package benchmarks.lattices
 
-import kofre.causality.{CausalContext, Dot}
+import kofre.time.{Dots, Dot}
 
 import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
@@ -19,16 +19,16 @@ class ContextBench {
   @Param(Array("1", "1000"))
   var size: Long = _
 
-  var rep1Set: CausalContext        = _
-  var rep1SetPlusOne: CausalContext = _
-  var rep2Set: CausalContext        = _
+  var rep1Set: Dots        = _
+  var rep1SetPlusOne: Dots = _
+  var rep2Set: Dots        = _
   val rep1id                        = Defs.genId()
   val rep2id                        = Defs.genId()
-  var rep1single: CausalContext     = _
+  var rep1single: Dots = _
 
-  private def makeRep(rep: Defs.Id, mul: Long, off: Long, len: Long): CausalContext = {
+  private def makeRep(rep: Defs.Id, mul: Long, off: Long, len: Long): Dots = {
     val ranges = Range.Long(0L, size, 1).map(i => Range.Long(i * mul + off, i * mul + len + off, 1))
-    CausalContext.fromSet(ranges.flatten.iterator.map(Dot(rep, _)).toSet)
+    Dots.fromSet(ranges.flatten.iterator.map(Dot(rep, _)).toSet)
   }
 
   @Setup
@@ -36,7 +36,7 @@ class ContextBench {
     rep1Set = makeRep(rep1id, 10, 0, 7)
     rep2Set = makeRep(rep2id, 10, 5, 7)
     rep1SetPlusOne = rep1Set.add(rep2id, 5)
-    rep1single = CausalContext.empty.add(rep1id, size + 10)
+    rep1single = Dots.empty.add(rep1id, size + 10)
   }
 
   @Benchmark

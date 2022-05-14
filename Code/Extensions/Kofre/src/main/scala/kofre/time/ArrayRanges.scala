@@ -1,4 +1,4 @@
-package kofre.causality
+package kofre.time
 
 import kofre.base.Defs.Time
 import kofre.base.{DecomposeLattice, Lattice}

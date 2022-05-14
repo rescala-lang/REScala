@@ -1,7 +1,7 @@
 package test.kofre
 
 import kofre.base.{DecomposeLattice, Lattice}
-import kofre.causality.{CausalContext, Dot}
+import kofre.time.{Dots, Dot}
 import kofre.contextual.{AsCausalContext, WithContext}
 import kofre.dotted.DotSet
 import org.scalacheck.Prop
@@ -30,9 +30,9 @@ class DotSetTest extends munit.ScalaCheckSuite {
     val c2 = Set(d1, d2) // d1 is already deleted in the second causal context
 
     val mergedStore = Lattice.merge(
-      WithContext(s1, CausalContext.fromSet(c1)),
-      WithContext(s2, CausalContext.fromSet(c2))
-    ).store
+      WithContext(s1, Dots.fromSet(c1)),
+      WithContext(s2, Dots.fromSet(c2))
+      ).store
 
     assert(!mergedStore.contains(d1))
     assert(mergedStore.contains(d2))
@@ -44,8 +44,8 @@ class DotSetTest extends munit.ScalaCheckSuite {
       val c2 = s2 ++ t2
 
       // commutativity
-      val m1 = Lattice.merge(WithContext(s1, CausalContext.fromSet(c1)), WithContext(s2, CausalContext.fromSet(c2)))
-      val m2 = Lattice.merge(WithContext(s2, CausalContext.fromSet(c2)), WithContext(s1, CausalContext.fromSet(c1)))
+      val m1 = Lattice.merge(WithContext(s1, Dots.fromSet(c1)), WithContext(s2, Dots.fromSet(c2)))
+      val m2 = Lattice.merge(WithContext(s2, Dots.fromSet(c2)), WithContext(s1, Dots.fromSet(c1)))
       assert(m1 == m2)
 
       // check if all elements were added to the new causal context
@@ -74,7 +74,7 @@ class DotSetTest extends munit.ScalaCheckSuite {
   }
 
   property("merge 2") {
-    forAll { (dsA: CausalContext, deletedA: CausalContext, dsB: CausalContext, deletedB: CausalContext) =>
+    forAll { (dsA: Dots, deletedA: Dots, dsB: Dots, deletedB: Dots) =>
       val ccA = dsA union deletedA
       val ccB = dsB union deletedB
 
@@ -103,7 +103,7 @@ class DotSetTest extends munit.ScalaCheckSuite {
 
   }
   property("leq") {
-    forAll { (dsA: CausalContext, deletedA: CausalContext, dsB: CausalContext, deletedB: CausalContext) =>
+    forAll { (dsA: Dots, deletedA: Dots, dsB: Dots, deletedB: Dots) =>
       val ccA = dsA union deletedA
       val ccB = dsB union deletedB
 
@@ -112,7 +112,7 @@ class DotSetTest extends munit.ScalaCheckSuite {
         s"DotSet.leq should be reflexive, but returns false when applied to ($dsA, $ccA, $dsA, $ccA)"
       )
 
-      val WithContext(dsMerged, ccMerged) = DecomposeLattice[WithContext[CausalContext]].merge(
+      val WithContext(dsMerged, ccMerged) = DecomposeLattice[WithContext[Dots]].merge(
         WithContext(dsA, ccA),
         WithContext(dsB, ccB)
       )
@@ -129,13 +129,13 @@ class DotSetTest extends munit.ScalaCheckSuite {
   }
 
   property("decompose all") {
-    forAll { (ds: CausalContext, deleted: CausalContext) =>
+    forAll { (ds: Dots, deleted: Dots) =>
       val cc = ds union deleted
 
       val decomposed = WithContext(ds, cc).decomposed
-      val WithContext(dsMerged, ccMerged) = decomposed.foldLeft(WithContext(CausalContext.empty, CausalContext.empty)) {
+      val WithContext(dsMerged, ccMerged) = decomposed.foldLeft(WithContext(Dots.empty, Dots.empty)) {
         case (WithContext(dsA, ccA), WithContext(dsB, ccB)) =>
-          DecomposeLattice[WithContext[CausalContext]].merge(WithContext(dsA, ccA), WithContext(dsB, ccB))
+          DecomposeLattice[WithContext[Dots]].merge(WithContext(dsA, ccA), WithContext(dsB, ccB))
       }
 
       assertEquals(

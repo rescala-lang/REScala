@@ -1,10 +1,10 @@
 package kofre.decompose.interfaces
 
 import kofre.base.DecomposeLattice
-import kofre.causality.CausalContext
+import kofre.time.Dots
 import kofre.decompose.*
 import kofre.syntax.OpsSyntaxHelper
-import kofre.causality.Dot
+import kofre.time.Dot
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegister
 import kofre.contextual.WithContext
 import kofre.dotted.DotFun
@@ -28,14 +28,14 @@ object MVRegisterInterface {
 
       WithContext(
         DotFun(Map(nextDot -> v)),
-        CausalContext.fromSet(current.keySet + nextDot)
-      ).mutator
+        Dots.fromSet(current.keySet + nextDot)
+        ).mutator
     }
 
     def clear()(using CausalMutationP): C =
       WithContext(
         MVRegisterInterface.empty,
-        CausalContext.fromSet(current.keySet)
-      ).mutator
+        Dots.fromSet(current.keySet)
+        ).mutator
   }
 }

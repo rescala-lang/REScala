@@ -3,17 +3,17 @@ package kofre.contextual
 import kofre.base.Defs.Id
 import kofre.base.Lattice
 import kofre.base.Bottom
-import kofre.causality.{CausalContext, Dot}
+import kofre.time.{Dots, Dot}
 
 import scala.compiletime.summonAll
 import scala.deriving.Mirror
 
 /** See: Dot stores in delta state replicated data types
   *
-  * But here, a dot store is something that can be seen as a CausalContext
+  * But here, a dot store is something that can be seen as a Dots
   */
 trait AsCausalContext[A] {
-  def dots(a: A): CausalContext
+  def dots(a: A): Dots
 }
 
 object AsCausalContext {
@@ -27,7 +27,7 @@ object AsCausalContext {
 
   class ProductAsCausalContext[T <: Product](pm: Mirror.ProductOf[T], children: IArray[AsCausalContext[Any]])
       extends AsCausalContext[T] {
-    override def dots(a: T): CausalContext = Range(0, a.productArity).foldLeft(CausalContext.empty) { (c, i) =>
+    override def dots(a: T): Dots = Range(0, a.productArity).foldLeft(Dots.empty) { (c, i) =>
       c.union(children(i).dots(a.productElement(i)))
     }
 

@@ -4,7 +4,7 @@ import benchmarks.encrdt.Codecs.{deltaAwlwwmapJsonCodec, dotSetCodec}
 import benchmarks.encrdt.mock.UntrustedDeltaBasedReplicaMock
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToArray
 import com.google.crypto.tink.Aead
-import kofre.causality.{CausalContext, Dot}
+import kofre.time.{Dots, Dot}
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap
 import rescala.extra.encrdt.encrypted.deltabased.DecryptedDeltaGroup
 
@@ -32,7 +32,7 @@ object DeltaStateBasedUntrustedReplicaSizeBenchmark extends App with DeltaStateU
       val entry = dummyKeyValuePairs(i)
       benchmarkSharedCurrentDot = benchmarkSharedCurrentDot.advance
       val delta    = benchmarkSharedCrdt.putDelta(entry._1, entry._2)
-      val encDelta = DecryptedDeltaGroup(delta, CausalContext.single(benchmarkSharedCurrentDot)).encrypt(aead)
+      val encDelta = DecryptedDeltaGroup(delta, Dots.single(benchmarkSharedCurrentDot)).encrypt(aead)
       benchmarkSharedUntrustedReplica.receive(encDelta)
     }
 
@@ -47,7 +47,7 @@ object DeltaStateBasedUntrustedReplicaSizeBenchmark extends App with DeltaStateU
           val entry = dummyKeyValuePairs(i)
           localDot = localDot.advance
           val delta    = crdt.putDelta(entry._1, entry._2)
-          val encDelta = DecryptedDeltaGroup(delta, CausalContext.single(localDot)).encrypt(aead)
+          val encDelta = DecryptedDeltaGroup(delta, Dots.single(localDot)).encrypt(aead)
           untrustedReplica.receive(encDelta)
         }
 
@@ -59,7 +59,7 @@ object DeltaStateBasedUntrustedReplicaSizeBenchmark extends App with DeltaStateU
           val delta = replicaSpecificCrdt.putDelta(entry._1, entry._2)
           unmergedDeltas = unmergedDeltas :+ delta
           val dot      = Dot(replicaId.toString, 1)
-          val encState = DecryptedDeltaGroup(delta, CausalContext.single(dot)).encrypt(aead)
+          val encState = DecryptedDeltaGroup(delta, Dots.single(dot)).encrypt(aead)
           untrustedReplica.receive(encState)
         }
 
@@ -99,7 +99,7 @@ object DeltaStateBasedUntrustedReplicaSizeBenchmarkLinearScaling extends App
     val entry = dummyKeyValuePairs(i)
     val delta = crdt.putDelta(entry._1, entry._2)
     currentDot = currentDot.advance
-    val encDelta = DecryptedDeltaGroup(delta, CausalContext.single(currentDot)).encrypt(aead)
+    val encDelta = DecryptedDeltaGroup(delta, Dots.single(currentDot)).encrypt(aead)
     untrustedReplica.receive(encDelta)
 
     if ((i + 1) % 1_000 == 0) {

@@ -1,7 +1,7 @@
 package test.kofre
 
 import kofre.base.Defs.Time
-import kofre.causality.{ArrayRanges, Dot}
+import kofre.time.{ArrayRanges, Dot}
 import org.scalacheck.Prop.*
 import test.kofre.DataGenerator.*
 

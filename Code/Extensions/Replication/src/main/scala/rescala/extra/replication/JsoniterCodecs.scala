@@ -8,7 +8,7 @@ import kofre.protocol.AuctionInterface.AuctionData
 import kofre.decompose.interfaces.GListInterface.{Elem, GListNode}
 import kofre.decompose.interfaces.RGA.RGANode
 import kofre.decompose.TimedVal
-import kofre.causality.{ArrayRanges, CausalContext, Dot}
+import kofre.time.{ArrayRanges, Dots, Dot}
 import kofre.decompose.interfaces.LexCounterInterface.LexPair
 import kofre.contextual.WithContext
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
@@ -68,7 +68,7 @@ object JsoniterCodecs {
       override def nullValue: ArrayRanges = null
     }
 
-  implicit val CausalContextCodec: JsonValueCodec[CausalContext] =
+  implicit val CausalContextCodec: JsonValueCodec[Dots] =
     JsonCodecMaker.make(CodecMakerConfig.withAllowRecursiveTypes(true))
 
   /** AddWinsSet */
@@ -83,7 +83,7 @@ object JsoniterCodecs {
 
   /** EWFlag */
 
-  // implicit def EWFlagStateCodec: JsonValueCodec[WithContext[CausalContext]] = JsonCodecMaker.make
+  // implicit def EWFlagStateCodec: JsonValueCodec[WithContext[Dots]] = JsonCodecMaker.make
   implicit def EWFlagStateCodec: JsonValueCodec[EnableWinsFlag] = JsonCodecMaker.make
 
   // implicit def EWFlagEmbeddedCodec: JsonValueCodec[Set[Dot]] = JsonCodecMaker.make

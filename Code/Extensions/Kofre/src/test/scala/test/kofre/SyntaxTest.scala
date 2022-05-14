@@ -2,7 +2,7 @@ package test.kofre
 
 import kofre.base.Lattice
 import kofre.base.Lattice.Operators
-import kofre.causality.{CausalContext, Dot}
+import kofre.time.{Dots, Dot}
 import kofre.contextual.AsCausalContext.*
 import kofre.contextual.{AsCausalContext, WithContext}
 import kofre.decompose.interfaces.EnableWinsFlag

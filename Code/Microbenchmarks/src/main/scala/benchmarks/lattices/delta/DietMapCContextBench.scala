@@ -1,7 +1,7 @@
 package benchmarks.lattices.delta
 
 import org.openjdk.jmh.annotations._
-import kofre.causality.{CausalContext, Dot}
+import kofre.time.{Dots, Dot}
 
 import java.util.concurrent.TimeUnit
 
@@ -17,23 +17,23 @@ class DietMapCContextBench {
   @Param(Array("1", "1000"))
   var size: Long = _
 
-  var cca: CausalContext       = _
-  var ccb: CausalContext       = _
-  var cca1: CausalContext      = _
-  var ccaSingle: CausalContext = _
+  var cca: Dots       = _
+  var ccb: Dots       = _
+  var cca1: Dots      = _
+  var ccaSingle: Dots = _
 
-  private def makeCContext(replicaID: String, mul: Long, off: Long, len: Long): CausalContext = {
+  private def makeCContext(replicaID: String, mul: Long, off: Long, len: Long): Dots = {
     val ranges = Range.Long(0L, size, 1).map(i => Range.Long(i * mul + off, i * mul + len + off, 1))
     val dots   = ranges.flatten.map(Dot(replicaID, _)).toSet
-    CausalContext.fromSet(dots)
+    Dots.fromSet(dots)
   }
 
   @Setup
   def setup(): Unit = {
     cca = makeCContext("a", 10, 0, 7)
     ccb = makeCContext("b", 10, 5, 7)
-    cca1 = cca.union(CausalContext.fromSet(Set(Dot("b", 5))))
-    ccaSingle = CausalContext.fromSet(Set(Dot("a", size + 10)))
+    cca1 = cca.union(Dots.fromSet(Set(Dot("b", 5))))
+    ccaSingle = Dots.fromSet(Set(Dot("a", size + 10)))
   }
 
   @Benchmark

@@ -1,7 +1,7 @@
-package kofre.causality
+package kofre.time
 
 import kofre.base.Defs.Id
-import kofre.causality.{Dot, VectorClock}
+import kofre.time.{Dot, VectorClock}
 import kofre.base.Lattice
 import kofre.base.Defs
 

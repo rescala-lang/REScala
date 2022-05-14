@@ -3,12 +3,12 @@ package rescala.extra.encrdt.encrypted.deltabased
 import kofre.base.Lattice._
 
 
-import kofre.causality.CausalContext
+import kofre.time.Dots
 
 import scala.collection.mutable
 
 abstract class UntrustedReplica(initialDeltaGroups: Set[EncryptedDeltaGroup] = Set.empty) extends Replica {
-  protected var dottedVersionVector: CausalContext                         = CausalContext.empty
+  protected var dottedVersionVector: Dots                                  = Dots.empty
   protected var encryptedDeltaGroupStore: mutable.Set[EncryptedDeltaGroup] = mutable.Set.from(initialDeltaGroups)
 
   override def receive(encryptedDeltaGroup: EncryptedDeltaGroup): Unit = {

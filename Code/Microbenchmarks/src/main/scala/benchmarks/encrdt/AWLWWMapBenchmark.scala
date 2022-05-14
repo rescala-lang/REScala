@@ -3,7 +3,7 @@ package benchmarks.encrdt
 import benchmarks.encrdt.Codecs.awlwwmapJsonCodec
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToArray
 import com.google.crypto.tink.Aead
-import kofre.causality.VectorClock
+import kofre.time.VectorClock
 import kofre.encrdt.crdts.AddWinsLastWriterWinsMap
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
@@ -74,9 +74,9 @@ class AWLWWMapBenchmark {
     for (entry <- putBenchmarkState.dummyKeyValuePairs) {
       // Update crdt
       crdt.put(entry._1, entry._2)
-      // Track causality information used for encrypted crdt
+      // Track time information used for encrypted crdt
       versionVector = versionVector.inc(replicaId)
-      // Serialize/Encrypt/Authenticate state with attached causality
+      // Serialize/Encrypt/Authenticate state with attached time
       val serialState = writeToArray(crdt.state)
       val serialVectorClock = writeToArray(versionVector)
       val encryptedState = aead.encrypt(serialState, serialVectorClock)
@@ -122,7 +122,7 @@ class SerializeOnlyBenchmarkState {
     for (entry <- dummyKeyValuePairs) {
       // Update crdt
       crdt.put(entry._1, entry._2)
-      // Track causality information used for encrypted crdt
+      // Track time information used for encrypted crdt
       versionVector = versionVector.inc(replicaId)
     }
 

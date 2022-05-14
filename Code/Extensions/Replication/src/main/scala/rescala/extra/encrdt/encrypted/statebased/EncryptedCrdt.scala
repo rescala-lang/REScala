@@ -4,7 +4,7 @@ package rescala.extra.encrdt.encrypted.statebased
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import com.google.crypto.tink.Aead
-import kofre.causality.VectorClock
+import kofre.time.VectorClock
 import kofre.encrdt.lattices.MultiValueRegisterLattice
 import kofre.base.Lattice
 import kofre.base.Lattice._

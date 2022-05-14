@@ -1,7 +1,7 @@
 package kofre.decompose.containers
 
 import kofre.base.{Bottom, DecomposeLattice, Defs}
-import kofre.causality.CausalContext
+import kofre.time.Dots
 import kofre.contextual.{ContextDecompose, ContextLattice, WithContext}
 import kofre.decompose.Delta
 import kofre.syntax.{ArdtOpsContains, PermCausal, PermCausalMutate, PermIdMutate, PermQuery, WithNamedContext}

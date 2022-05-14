@@ -3,12 +3,12 @@ package kofre.primitives
 import kofre.base.Lattice
 import kofre.base.Lattice.Operators
 import kofre.base.Defs
-import kofre.causality.{CausalContext, Dot, VectorClock}
+import kofre.time.{Dots, Dot, VectorClock}
 import kofre.primitives.CausalQueue.QueueElement
 
 import scala.collection.immutable.Queue
 
-case class CausalQueue[T](values: Queue[QueueElement[T]], latest: VectorClock, removed: CausalContext) {
+case class CausalQueue[T](values: Queue[QueueElement[T]], latest: VectorClock, removed: Dots) {
   def enqueue(e: T, replicaID: Defs.Id): CausalQueue[T] =
     val dot  = latest.inc(replicaID)
     val time = latest merge dot
@@ -22,7 +22,7 @@ case class CausalQueue[T](values: Queue[QueueElement[T]], latest: VectorClock, r
 object CausalQueue:
   case class QueueElement[T](value: T, dot: Dot, order: VectorClock)
 
-  def empty[T]: CausalQueue[T] = CausalQueue(Queue(), VectorClock.zero, CausalContext.empty)
+  def empty[T]: CausalQueue[T] = CausalQueue(Queue(), VectorClock.zero, Dots.empty)
 
   given lattice[A: Ordering]: Lattice[CausalQueue[A]] = (left, right) =>
     val removed = left.removed merge right.removed

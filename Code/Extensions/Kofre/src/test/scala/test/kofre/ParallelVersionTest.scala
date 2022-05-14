@@ -1,6 +1,6 @@
 package test.kofre
 
-import kofre.causality.VectorClock
+import kofre.time.VectorClock
 import kofre.primitives.MultiValueRegister
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}

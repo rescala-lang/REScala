@@ -1,6 +1,6 @@
 package benchmarks.lattices
 
-import kofre.causality.ArrayRanges
+import kofre.time.ArrayRanges
 import org.openjdk.jmh.annotations._
 
 import java.util.concurrent.TimeUnit

@@ -1,7 +1,7 @@
 package test.kofre
 
 import kofre.base.DecomposeLattice
-import kofre.causality.{ArrayRanges, CausalContext, Dot}
+import kofre.time.{ArrayRanges, Dots, Dot}
 import kofre.contextual.ContextDecompose.*
 import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, WithContext}
 import kofre.dotted.{DotFun, DotMap, DotSet}
@@ -36,10 +36,10 @@ class DotMapTest extends munit.ScalaCheckSuite {
   property("merge") {
     forAll {
       (
-          dmA: TestedMap,
-          deletedA: CausalContext,
-          dmB: TestedMap,
-          deletedB: CausalContext
+      dmA: TestedMap,
+      deletedA: Dots,
+      dmB: TestedMap,
+      deletedB: Dots
       ) =>
         val dotsA = dmA.dots
         val dotsB = dmB.dots
@@ -91,10 +91,10 @@ class DotMapTest extends munit.ScalaCheckSuite {
   property("leq") {
     forAll {
       (
-          dmA: TestedMap,
-          deletedA: CausalContext,
-          dmB: TestedMap,
-          deletedB: CausalContext
+      dmA: TestedMap,
+      deletedA: Dots,
+      dmB: TestedMap,
+      deletedB: Dots
       ) =>
         val ccA = dmA.dots union deletedA
         val ccB = dmB.dots union deletedB
@@ -129,23 +129,23 @@ class DotMapTest extends munit.ScalaCheckSuite {
   private def removeDuplicates(
       start: List[(Int, DotSet)],
       acc: TestedMap,
-      con: CausalContext
+      con: Dots
   ): TestedMap =
     start match
       case Nil         => acc
       case (i, c) :: t => removeDuplicates(t, DotMap(acc + (i -> DotSet(c.subtract(con)))), con union c.repr)
 
   property("decompose") {
-    forAll { (dmdup: TestedMap, deleted: CausalContext) =>
+    forAll { (dmdup: TestedMap, deleted: Dots) =>
 
-      val dm: TestedMap = removeDuplicates(dmdup.toList, DotMap.empty, CausalContext.empty)
+      val dm: TestedMap = removeDuplicates(dmdup.toList, DotMap.empty, Dots.empty)
 
       val cc = dm.dots union deleted
 
       val decomposed: Iterable[WithContext[TestedMap]] =
         ContextDecompose[TestedMap].decompose(WithContext(dm, (cc)))
       val wc: WithContext[TestedMap] =
-        decomposed.foldLeft(WithContext(DotMap.empty[Int, DotSet], CausalContext.empty)) {
+        decomposed.foldLeft(WithContext(DotMap.empty[Int, DotSet], Dots.empty)) {
           case (WithContext(dmA, ccA), WithContext(dmB, ccB)) =>
             DecomposeLattice[WithContext[TestedMap]].merge(WithContext(dmA, ccA), WithContext(dmB, ccB))
         }
