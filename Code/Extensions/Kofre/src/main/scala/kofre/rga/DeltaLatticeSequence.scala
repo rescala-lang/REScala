@@ -121,12 +121,13 @@ object DeltaSequence {
 
         // build map of old insertion positions of the new vertices
         val oldPositions = right.store.edges.inner.foldLeft(Map.empty[Vertex, Vertex]) {
-          case (m, (u, v)) => if (newVertices.contains(v)) m + (v -> u) else m
+          case (m, (u, v)) => if (newVertices.contains(v)) {m + (v -> u)} else m
         }
 
         val newEdges = newVertices.foldLeft(left.store.edges) {
           case (merged, v) =>
-            merged.addRightEdge(oldPositions(v), v)
+            if (v == Vertex.start) merged
+            else merged.addRightEdge(oldPositions(v), v)
         }
         val vertices = left.map(_.vertices) conmerge right.map(_.vertices)
         val values   = Lattice.merge(left.store.values, right.store.values)(Lattice.mapLattice(noMapConflictsLattice))

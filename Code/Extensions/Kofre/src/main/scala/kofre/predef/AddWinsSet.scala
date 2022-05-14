@@ -6,7 +6,6 @@ import kofre.contextual.{AsCausalContext, ContextDecompose, WithContext}
 import kofre.contextual.ContextDecompose.*
 import kofre.decompose.*
 import kofre.predef.AddWinsSet
-import kofre.predef.AddWinsSet.Embedded
 import kofre.syntax.OpsSyntaxHelper
 
 /** An AddWinsSet (Add-Wins Set) is a Delta CRDT modeling a set.
@@ -17,7 +16,6 @@ case class AddWinsSet[E](inner: Map[E, CausalContext])
 
 
 object AddWinsSet {
-  type Embedded[E] = Map[E, CausalContext]
 
   def empty[E]: AddWinsSet[E] = AddWinsSet(Map.empty)
 
