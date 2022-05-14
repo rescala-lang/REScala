@@ -30,7 +30,7 @@ This repository contains mutliple subprojects, the most important ones are:
   * __examples__: misc examples involing swing, time, datastructures (no reswing, using swing directly)
   * __examples-reswing__: misc reswing examples
   * __Mill__: mill game using reswing
-  * __paroli-chat__: console application demoing distributed CRTDs
+  * __paroli-chat__: console application demoing distributed CRDTs
   * __PongDemo__: application design demonstrating, showing multiple steps of adding features to a reactive application
   * __RSSReader__: imperative/reactive versions of a reswing RSS reader (actual network request, no support for failures yet)
   * __Shapes__: reswing drawing application
