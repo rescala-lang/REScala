@@ -3,11 +3,12 @@ package kofre.encrdt.crdts
 import de.ckuessner.encrdt.crdts.interfaces.{Crdt, MapCrdt}
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap.{DeltaAddWinsLastWriterWinsMapLattice, timestampedValueLattice}
 import kofre.encrdt.crdts.DeltaAddWinsMap.DeltaAddWinsMapLattice
-import kofre.base.Lattice
-import kofre.contextual.WithContext
+import kofre.base.{Bottom, Lattice}
+import kofre.contextual.{ContextDecompose, ContextLattice, WithContext}
 import kofre.causality.Dot
-import kofre.dotted.DotFun
+import kofre.dotted.{DotFun, DotMap}
 import kofre.primitives.LastWriterWins
+import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap.deltaAddWinsMapLattice
 
 import math.Ordering.Implicits.infixOrderingOps
 import java.time.Instant
@@ -37,6 +38,7 @@ class DeltaAddWinsLastWriterWinsMap[K, V](
     mutate(
       DeltaAddWinsMap.deltaMutate(
         key,
+        DotFun.empty,
         DeltaMultiValueRegister.deltaWrite((value, LastWriterWins(Instant.now(), replicaId)), replicaId, _),
         _state
       )
@@ -46,6 +48,7 @@ class DeltaAddWinsLastWriterWinsMap[K, V](
     val delta: DeltaAddWinsLastWriterWinsMapLattice[K, V] =
       DeltaAddWinsMap.deltaMutate(
         key,
+        DotFun.empty,
         m => DeltaMultiValueRegister.deltaWrite((value, LastWriterWins(Instant.now(), replicaId)), replicaId, m),
         _state
       )
@@ -65,7 +68,7 @@ class DeltaAddWinsLastWriterWinsMap[K, V](
   def removeAllDelta(keys: Seq[K]): DeltaAddWinsLastWriterWinsMapLattice[K, V] = {
     val subDeltas = keys.map(DeltaAddWinsMap.deltaRemove(_, _state))
     val delta = subDeltas.reduce((left, right) =>
-      Lattice[DeltaAddWinsLastWriterWinsMapLattice[K, V]].merge(left, right)
+      DeltaAddWinsLastWriterWinsMap.deltaAddWinsMapLattice[K, V].merge(left, right)
     )
     mutate(delta)
     delta
@@ -102,6 +105,8 @@ object DeltaAddWinsLastWriterWinsMap {
 
   type StateType[K, V] = DeltaAddWinsLastWriterWinsMapLattice[K, V]
 
-  given deltaAddWinsMapLattice[K, V]: Lattice[StateType[K, V]] = WithContext.CausalWithDotMapLattice
+  given deltaAddWinsMapLattice[K, V]: Lattice[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = {
+    DotMap.contextLattice
+  }
 
 }

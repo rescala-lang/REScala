@@ -1,6 +1,6 @@
 package kofre.dotted
 
-import kofre.base.{DecomposeLattice, Lattice}
+import kofre.base.{Bottom, DecomposeLattice, Lattice}
 import kofre.causality.{CausalContext, Dot}
 import kofre.contextual.ContextDecompose.FromConlattice
 import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, WithContext}
@@ -26,6 +26,9 @@ object DotFun {
 
   def empty[A]: DotFun[A] = DotFun(Map.empty)
 
+  given bottom[A]: Bottom[DotFun[A]] with
+    override def empty: DotFun[A] = DotFun.empty
+
   given perDotLattice[A: Lattice]: ContextLattice[DotFun[A]] = (left, right) => {
     val fromLeft = left.store.repr.filter { case (dot, _) => !right.context.contains(dot) }
 
@@ -41,7 +44,6 @@ object DotFun {
   }
 
   given dotStore[V]: AsCausalContext[DotFun[V]] with {
-    override def empty: DotFun[V]                         = DotFun.empty
     override def dots(dotStore: DotFun[V]): CausalContext = CausalContext.fromSet(dotStore.repr.keySet)
   }
 

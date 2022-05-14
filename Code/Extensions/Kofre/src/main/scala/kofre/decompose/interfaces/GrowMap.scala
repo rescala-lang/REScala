@@ -2,8 +2,8 @@ package kofre.decompose.interfaces
 
 import kofre.base.DecomposeLattice
 import kofre.causality.CausalContext
-import kofre.contextual.ContextDecompose.DotSet
 import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, WithContext}
+import kofre.dotted.DotMap
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermIdMutate, WithNamedContext}
 
 /** A GMap (Grow-only Map) is a Delta CRDT that models a map from an arbitrary key type to nested Delta CRDTs.
@@ -20,7 +20,10 @@ object GMap {
 
   def empty[K, V]: GMap[K, V] = GMap(Map.empty)
 
-  given contextLattice[K, V: ContextDecompose: AsCausalContext]: ContextDecompose[GMap[K, V]] = ContextDecompose.derived[GMap[K, V]]
+  given decomposeLattice[K, V: DecomposeLattice]: DecomposeLattice[GMap[K, V]] = DecomposeLattice.derived
+  given contextLattice[K, V: ContextDecompose: AsCausalContext]: ContextDecompose[GMap[K, V]] =
+    given ContextDecompose[Map[K, V]] = DotMap.contextDecompose[K, V].contextbimap[Map[K, V]](_.map(_.repr), _.map(DotMap.apply))
+    ContextDecompose.derived
 
   implicit class GMapSyntax[C, K, V](container: C)(using aoc: ArdtOpsContains[C, GMap[K, V]])
       extends OpsSyntaxHelper[C, GMap[K, V]](container) {

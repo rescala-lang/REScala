@@ -37,33 +37,8 @@ trait ContextLattice[A] extends Lattice[WithContext[A]] {
 object ContextLattice {
   def apply[A](using wcm: ContextLattice[A]): ContextLattice[A] = wcm
 
-  /** This essentially tracks the currently present dots, and all dots */
-  given causalContext: ContextLattice[CausalContext] with {
-    override def mergePartial(left: WithContext[CausalContext], right: WithContext[CausalContext]): CausalContext = {
-      val fromLeft  = left.store subtract right.context
-      val fromRight = right.store.subtract(left.context subtract left.store)
-
-      fromLeft union fromRight
-    }
-  }
-
   given liftLattice[A: Lattice]: ContextLattice[A] = (left, right) => Lattice[A].merge(left.store, right.store)
 
-
-
-  /** This essentially lifts the [[ContextLattice]] of [[V]] to a [[ Map[K, V] ] ]].
-    * Recursively merging values present in both maps with the given context.
-    */
-  given dotMapLattice[K, V: ContextLattice: Bottom]: ContextLattice[Map[K, V]] with {
-    override def mergePartial(left: WithContext[Map[K, V]], right: WithContext[Map[K, V]]): Map[K, V] = {
-      (left.store.keySet union right.store.keySet).flatMap { key =>
-        val leftCausalStore  = left.map(_.getOrElse(key, Bottom.empty[V]))
-        val rightCausalStore = right.map(_.getOrElse(key, Bottom.empty[V]))
-        val res              = leftCausalStore conmerge rightCausalStore
-        if Bottom.empty[V] == res then None else Some(key -> res)
-      }.toMap
-    }
-  }
 
   given pairPartialLattice[A: ContextLattice, B: ContextLattice]: ContextLattice[(A, B)] with {
     override def mergePartial(left: WithContext[(A, B)], right: WithContext[(A, B)]): (A, B) =

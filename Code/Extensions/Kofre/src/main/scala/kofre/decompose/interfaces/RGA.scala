@@ -4,7 +4,6 @@ import kofre.base.{Bottom, DecomposeLattice}
 import kofre.causality.{CausalContext, Dot}
 import kofre.decompose.*
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermIdMutate, PermMutate}
-import kofre.contextual.ContextDecompose.{DotPair}
 import kofre.decompose.interfaces.GListInterface.{GListAsUIJDLattice, GListSyntax}
 import kofre.contextual.{ContextDecompose, ContextLattice, WithContext}
 import kofre.decompose.interfaces.RCounterInterface.RCounter

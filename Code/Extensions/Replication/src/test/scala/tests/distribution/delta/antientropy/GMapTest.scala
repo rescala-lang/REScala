@@ -2,7 +2,6 @@ package tests.distribution.delta.antientropy
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import kofre.contextual.ContextDecompose
 import kofre.decompose.interfaces.GMap
 import rescala.extra.lattices.delta.JsoniterCodecs._
 import rescala.extra.replication.AntiEntropy
@@ -12,9 +11,6 @@ import scala.collection.mutable
 
 class GMapTest extends munit.ScalaCheckSuite {
   implicit val intCodec: JsonValueCodec[Int] = JsonCodecMaker.make
-
-  implicit val xcdGmap: ContextDecompose[GMap[Int, AddWinsSet[Int]]] =
-    GMap.contextLattice[Int, AddWinsSet[Int]](AddWinsSet.contextDecompose, AddWinsSet.asCausalContext)
 
   test("mutateKey/queryKey") { (add: List[Int], k: Int) =>
     val network = new Network(0, 0, 0)

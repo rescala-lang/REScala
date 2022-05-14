@@ -1,15 +1,16 @@
 package kofre.encrdt.crdts
 
+import kofre.base.Bottom
 import kofre.contextual.AsCausalContext.*
 import kofre.causality.CausalContext
 import kofre.contextual.{AsCausalContext, WithContext}
-import kofre.dotted.DotFun
+import kofre.dotted.{DotFun, DotMap}
 
 // See: Delta state replicated data types (https://doi.org/10.1016/j.jpdc.2017.08.003)
 object DeltaAddWinsMap {
-  type DeltaAddWinsMapLattice[K, V] = WithContext[Map[K, V]]
+  type DeltaAddWinsMapLattice[K, V] = WithContext[DotMap[K, V]]
 
-  def empty[K, V: AsCausalContext]: DeltaAddWinsMapLattice[K, V] = WithContext(Map.empty, CausalContext.empty)
+  def empty[K, V: AsCausalContext]: DeltaAddWinsMapLattice[K, V] = WithContext(DotMap.empty, CausalContext.empty)
 
   /** Returns the '''delta''' that contains the recursive mutation performed by the `deltaMutator`.
     *
@@ -21,17 +22,18 @@ object DeltaAddWinsMap {
     * @return The delta of the recursive delta-mutation
     */
   def deltaMutate[K, V: AsCausalContext](
-                                   key: K,
-                                   deltaMutator: WithContext[V] => WithContext[V],
-                                   map: DeltaAddWinsMapLattice[K, V]
+      key: K,
+      default: => V,
+      deltaMutator: WithContext[V] => WithContext[V],
+      map: DeltaAddWinsMapLattice[K, V]
   ): DeltaAddWinsMapLattice[K, V] = {
 
     deltaMutator(WithContext(
-      map.store.getOrElse(key, AsCausalContext[V].empty),
+      map.store.getOrElse(key, default),
       map.context
-      )) match {
+    )) match {
       case WithContext(dotStore, causalContext) => WithContext(
-          Map(key -> dotStore),
+          DotMap(Map(key -> dotStore)),
           causalContext
         )
     }
@@ -47,9 +49,9 @@ object DeltaAddWinsMap {
     */
   def deltaRemove[K, V: AsCausalContext](key: K, map: DeltaAddWinsMapLattice[K, V]): DeltaAddWinsMapLattice[K, V] =
     WithContext(
-      Map.empty,
+      DotMap.empty,
       map.store.get(key).map(AsCausalContext[V].dots).getOrElse(CausalContext.empty)
-      )
+    )
 
   /** Returns the '''delta''' that removes all values from the `map`.
     *
@@ -59,7 +61,7 @@ object DeltaAddWinsMap {
     * @return The delta that contains the removal of all mappings
     */
   def deltaClear[K, V: AsCausalContext](map: DeltaAddWinsMapLattice[K, V]): DeltaAddWinsMapLattice[K, V] = WithContext(
-    Map.empty,
-    AsCausalContext[Map[K, V]].dots(map.store)
-    )
+    DotMap.empty,
+    map.store.dots
+  )
 }

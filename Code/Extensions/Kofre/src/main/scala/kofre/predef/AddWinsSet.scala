@@ -5,6 +5,7 @@ import kofre.causality.{CausalContext, Dot}
 import kofre.contextual.{AsCausalContext, ContextDecompose, WithContext}
 import kofre.contextual.ContextDecompose.*
 import kofre.decompose.*
+import kofre.dotted.{DotMap, DotSet}
 import kofre.predef.AddWinsSet
 import kofre.syntax.OpsSyntaxHelper
 
@@ -12,12 +13,11 @@ import kofre.syntax.OpsSyntaxHelper
   *
   * When an element is concurrently added and removed/cleared from the set then the add operation wins, i.e. the resulting set contains the element.
   */
-case class AddWinsSet[E](inner: Map[E, CausalContext])
-
+case class AddWinsSet[E](inner: DotMap[E, DotSet])
 
 object AddWinsSet {
 
-  def empty[E]: AddWinsSet[E] = AddWinsSet(Map.empty)
+  def empty[E]: AddWinsSet[E] = AddWinsSet(DotMap.empty)
 
   given contextDecompose[E]: ContextDecompose[AddWinsSet[E]] = ContextDecompose.derived
   given asCausalContext[E]: AsCausalContext[AddWinsSet[E]] = AsCausalContext.derived
@@ -32,11 +32,11 @@ object AddWinsSet {
       val dm      = current.inner
       val cc      = context
       val nextDot = cc.max(replicaID).fold(Dot(replicaID, 0))(_.advance)
-      val v       = dm.getOrElse(e, CausalContext.empty)
+      val v: DotSet       = dm.getOrElse(e, DotSet.empty)
 
       deltaState[E].make(
-        dm = Map(e -> CausalContext.single(nextDot)),
-        cc = v add nextDot
+        dm = DotMap(Map(e -> DotSet(CausalContext.single(nextDot)))),
+        cc = v.repr add nextDot
       ).mutator
     }
 
@@ -48,23 +48,23 @@ object AddWinsSet {
 
       val ccontextSet = elems.foldLeft(nextDots) {
         case (dots, e) => dm.get(e) match {
-            case Some(ds) => dots union ds
+            case Some(ds) => dots union ds.repr
             case None     => dots
           }
       }
 
       deltaState[E].make(
-        dm = (elems zip nextDots.iterator.map(CausalContext.single)).toMap,
+        dm = DotMap((elems zip nextDots.iterator.map(dot => DotSet(CausalContext.single(dot)))).toMap),
         cc = ccontextSet
       ).mutator
     }
 
     def remove(e: E)(using QueryP, CausalMutationP): C = {
       val dm = current.inner
-      val v  = dm.getOrElse(e, CausalContext.empty)
+      val v  = dm.getOrElse(e, DotSet.empty)
 
       deltaState[E].make(
-        cc = v
+        cc = v.repr
       ).mutator
     }
 
@@ -72,7 +72,7 @@ object AddWinsSet {
       val dm = current.inner
       val dotsToRemove = elems.foldLeft(CausalContext.empty) {
         case (dots, e) => dm.get(e) match {
-            case Some(ds) => dots union ds
+            case Some(ds) => dots union ds.repr
             case None     => dots
           }
       }
@@ -86,7 +86,7 @@ object AddWinsSet {
       val dm = current.inner
       val removedDots = dm.collect {
         case (k, v) if cond(k) => v
-      }.foldLeft(CausalContext.empty)(_ union _)
+      }.foldLeft(CausalContext.empty)(_ union _.repr)
 
       deltaState[E].make(
         cc = removedDots
@@ -96,7 +96,7 @@ object AddWinsSet {
     def clear()(using QueryP, CausalMutationP): C = {
       val dm = current.inner
       deltaState[E].make(
-        cc = AsCausalContext.DotMapInstance[E, CausalContext].dots(dm)
+        cc = dm.dots
       ).mutator
     }
 
@@ -105,7 +105,7 @@ object AddWinsSet {
   private class DeltaStateFactory[E] {
 
     def make(
-        dm: Map[E, CausalContext] = Map.empty,
+        dm: DotMap[E, DotSet] = DotMap.empty,
         cc: CausalContext = CausalContext.empty
     ): WithContext[AddWinsSet[E]] = WithContext(AddWinsSet(dm), cc)
   }

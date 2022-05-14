@@ -4,6 +4,7 @@ import kofre.base.DecomposeLattice
 import kofre.causality.{ArrayRanges, CausalContext, Dot}
 import kofre.contextual.ContextDecompose.*
 import kofre.contextual.{AsCausalContext, ContextDecompose, WithContext}
+import kofre.dotted.{DotMap, DotSet}
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 import test.kofre.DataGenerator.{arbCausalQueue, *}
@@ -12,43 +13,45 @@ import scala.annotation.tailrec
 
 class DotMapTest extends munit.ScalaCheckSuite {
 
+  type TestedMap = DotMap[Int, DotSet]
+
   property("dots") {
-    forAll { (dm: Map[Int, CausalContext]) =>
+    forAll { (dm: TestedMap) =>
       assert(
-        AsCausalContext[Map[Int, CausalContext]].dots(dm).toSet == dm.values.flatMap(
-          AsCausalContext[CausalContext].dots(_).iterator
+        AsCausalContext[TestedMap].dots(dm).toSet == dm.values.flatMap(
+          _.dots.iterator
         ).toSet,
-        s"DotMap.dots should return the keys of the DotMap itself, but ${AsCausalContext[Map[Int, CausalContext]].dots(dm)} does not equal $dm"
+        s"DotMap.dots should return the keys of the DotMap itself, but ${AsCausalContext[TestedMap].dots(dm)} does not equal $dm"
       )
     }
 
   }
   test("empty") {
     assert(
-      AsCausalContext[Map[Int, CausalContext]].empty.isEmpty,
-      s"DotMap.empty should be empty, but ${AsCausalContext[Map[Int, CausalContext]].empty} is not empty"
+      AsCausalContext[TestedMap].empty.isEmpty,
+      s"DotMap.empty should be empty, but ${AsCausalContext[TestedMap].empty} is not empty"
     )
 
   }
   property("merge") {
     forAll {
       (
-          dmA: Map[Int, CausalContext],
+          dmA: TestedMap,
           deletedA: CausalContext,
-          dmB: Map[Int, CausalContext],
+          dmB: TestedMap,
           deletedB: CausalContext
       ) =>
-        val dotsA = AsCausalContext[Map[Int, CausalContext]].dots(dmA)
-        val dotsB = AsCausalContext[Map[Int, CausalContext]].dots(dmB)
+        val dotsA = AsCausalContext[TestedMap].dots(dmA)
+        val dotsB = AsCausalContext[TestedMap].dots(dmB)
         val ccA   = dotsA union deletedA
         val ccB   = dotsB union deletedB
 
         val WithContext(dmMerged, ccMerged) =
-          DecomposeLattice[WithContext[Map[Int, CausalContext]]].merge(
+          DecomposeLattice[WithContext[TestedMap]].merge(
             WithContext(dmA, (ccA)),
             WithContext(dmB, (ccB))
           )
-        val dotsMerged = AsCausalContext[Map[Int, CausalContext]].dots(dmMerged)
+        val dotsMerged = AsCausalContext[TestedMap].dots(dmMerged)
 
         assert(
           ccMerged == (ccA union ccB),
@@ -88,16 +91,16 @@ class DotMapTest extends munit.ScalaCheckSuite {
   property("leq") {
     forAll {
       (
-          dmA: Map[Int, CausalContext],
+          dmA: TestedMap,
           deletedA: CausalContext,
-          dmB: Map[Int, CausalContext],
+          dmB: TestedMap,
           deletedB: CausalContext
       ) =>
-        val ccA = AsCausalContext[Map[Int, CausalContext]].dots(dmA) union deletedA
-        val ccB = AsCausalContext[Map[Int, CausalContext]].dots(dmB) union deletedB
+        val ccA = AsCausalContext[TestedMap].dots(dmA) union deletedA
+        val ccB = AsCausalContext[TestedMap].dots(dmB) union deletedB
 
         assert(
-          DotMap[Int, CausalContext].lteq(
+          DotTestedMap.lteq(
             WithContext(dmA, (ccA)),
             WithContext(dmA, (ccA))
           ),
@@ -105,17 +108,17 @@ class DotMapTest extends munit.ScalaCheckSuite {
         )
 
         val WithContext(dmMerged, ccMerged) =
-          DecomposeLattice[WithContext[Map[Int, CausalContext]]].merge(
+          DecomposeLattice[WithContext[TestedMap]].merge(
             WithContext(dmA, (ccA)),
             WithContext(dmB, (ccB))
           )
 
         assert(
-          DotMap[Int, CausalContext].lteq(WithContext(dmA, (ccA)), WithContext(dmMerged, ccMerged)),
+          DotTestedMap.lteq(WithContext(dmA, (ccA)), WithContext(dmMerged, ccMerged)),
           s"The result of DotMap.merge should be larger than its lhs, but DotMap.leq returns false when applied to ($dmA, $ccA, $dmMerged, $ccMerged)"
         )
         assert(
-          DotMap[Int, CausalContext].lteq(WithContext(dmB, (ccB)), WithContext(dmMerged, ccMerged)),
+          DotTestedMap.lteq(WithContext(dmB, (ccB)), WithContext(dmMerged, ccMerged)),
           s"The result of DotMap.merge should be larger than its rhs, but DotMap.leq returns false when applied to ($dmB, $ccB, $dmMerged, $ccMerged)"
         )
     }
@@ -125,29 +128,29 @@ class DotMapTest extends munit.ScalaCheckSuite {
   @tailrec
   private def removeDuplicates(
       start: List[(Int, CausalContext)],
-      acc: Map[Int, CausalContext],
+      acc: TestedMap,
       con: CausalContext
-  ): Map[Int, CausalContext] =
+  ): TestedMap =
     start match
       case Nil         => acc
       case (i, c) :: t => removeDuplicates(t, acc + (i -> c.subtract(con)), con union c)
 
   property("decompose") {
-    forAll { (dmdup: Map[Int, CausalContext], deleted: CausalContext) =>
+    forAll { (dmdup: TestedMap, deleted: CausalContext) =>
 
       val dm = removeDuplicates(dmdup.toList, Map.empty, CausalContext.empty)
 
-      val cc = AsCausalContext[Map[Int, CausalContext]].dots(dm) union deleted
+      val cc = AsCausalContext[TestedMap].dots(dm) union deleted
 
-      val decomposed: Iterable[WithContext[Map[Int, CausalContext]]] =
-        DotMap[Int, CausalContext].decompose(WithContext(dm, (cc)))
-      val wc: WithContext[Map[Int, CausalContext]] =
-        decomposed.foldLeft(WithContext(AsCausalContext[Map[Int, CausalContext]].empty, CausalContext.empty)) {
+      val decomposed: Iterable[WithContext[TestedMap]] =
+        DotTestedMap.decompose(WithContext(dm, (cc)))
+      val wc: WithContext[TestedMap] =
+        decomposed.foldLeft(WithContext(AsCausalContext[TestedMap].empty, CausalContext.empty)) {
           case (WithContext(dmA, ccA), WithContext(dmB, ccB)) =>
-            DecomposeLattice[WithContext[Map[Int, CausalContext]]].merge(WithContext(dmA, ccA), WithContext(dmB, ccB))
+            DecomposeLattice[WithContext[TestedMap]].merge(WithContext(dmA, ccA), WithContext(dmB, ccB))
         }
 
-      val dmMerged: Map[Int, CausalContext] = wc.store
+      val dmMerged: TestedMap = wc.store
       val ccMerged                          = wc.context
 
       assertEquals(

@@ -4,7 +4,7 @@ import kofre.base.{Bottom, DecomposeLattice, Lattice}
 import kofre.causality.{CausalContext, Dot}
 import kofre.contextual.AsCausalContext
 import kofre.base.Lattice.Operators
-import kofre.dotted.DotFun
+import kofre.dotted.{DotFun, DotSet}
 import kofre.syntax.{ArdtOpsContains, PermCausal, PermCausalMutate, PermQuery, WithNamedContext}
 
 import scala.util.NotGiven
@@ -26,13 +26,10 @@ object WithContext {
 
   given CausalWithDotFunLattice[V: Lattice]: Lattice[WithContext[DotFun[V]]] = kofre.dotted.DotFun.perDotLattice
   given CausalWithDotSetLattice: Lattice[WithContext[Set[Dot]]] =
-    ContextLattice.causalContext.bimap[WithContext[Set[Dot]]](
-      _.map(_.toSet),
-      _.map(CausalContext.fromSet)
+    DotSet.contextLattice.bimap[WithContext[Set[Dot]]](
+      _.map(_.repr.toSet),
+      _.map(s => DotSet(CausalContext.fromSet(s)))
     )
-  given CausalWithContextSetLattice: Lattice[WithContext[CausalContext]] = ContextLattice.causalContext
-  given CausalWithDotMapLattice[K, V: AsCausalContext: ContextLattice]: Lattice[WithContext[Map[K, V]]] =
-    ContextLattice.dotMapLattice
 
   given latticeLift[L: DecomposeLattice]: DecomposeLattice[WithContext[L]] = DecomposeLattice.derived
   given syntaxPermissions[L](using ContextLattice[L]): PermCausalMutate[WithContext[L], L]

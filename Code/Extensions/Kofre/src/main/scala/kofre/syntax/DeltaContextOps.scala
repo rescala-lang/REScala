@@ -15,7 +15,7 @@ import scala.annotation.implicitNotFound
   * No matter the concrete container, they should all offer the same API to the underlying lattice.
   */
 
-@implicitNotFound("Unsure how to extract »${L}«\nfrom »${C}")
+@implicitNotFound("Requires query permission »${L}«\nfrom »${C}")
 trait PermQuery[C, L]:
   def query(c: C): L
   def focus[M](q: L => M): PermQuery[C, M] = (c: C) => q(PermQuery.this.query(c))

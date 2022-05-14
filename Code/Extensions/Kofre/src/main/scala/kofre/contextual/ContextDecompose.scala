@@ -15,7 +15,14 @@ import scala.compiletime.summonAll
   * data structures that are part of causal CRDTs and make use of dots to track causality.
   */
 @implicitNotFound("Not a decompose lattice when in a context: »${A}«")
-trait ContextDecompose[A] extends ContextLattice[A], DecomposeLattice[WithContext[A]]
+trait ContextDecompose[A] extends ContextLattice[A], DecomposeLattice[WithContext[A]] {
+  def contextbimap[B](to: WithContext[A] => WithContext[B], from: WithContext[B] => WithContext[A]): ContextDecompose[B] = new ContextDecompose[B] {
+    override def lteq(left: WithContext[B], right: WithContext[B]): Boolean = ContextDecompose.this.lteq(from(left), from(right))
+    override def decompose(a: WithContext[B]): Iterable[WithContext[B]] = ContextDecompose.this.decompose(from(a)).map(to)
+    override def mergePartial(left: WithContext[B], right: WithContext[B]): B = to(WithContext(ContextDecompose.this.mergePartial(from(left), from(right)))).store
+    override def empty: WithContext[B] = to(ContextDecompose.this.empty)
+  }
+}
 
 object ContextDecompose {
   def apply[A](implicit ds: ContextDecompose[A]): ContextDecompose[A] = ds
@@ -67,107 +74,6 @@ object ContextDecompose {
   abstract class FromConlattice[A](wcm: ContextLattice[A]) extends ContextDecompose[A] {
     export wcm.mergePartial
   }
-
-  /** DotSet is a dot store implementation that is simply a set of dots. See [[interfaces.EnableWinsFlag]] for a
-    * usage example.
-    */
-  implicit def DotSet: ContextDecompose[CausalContext] =
-    new FromConlattice[CausalContext](ContextLattice.causalContext) {
-
-      override def empty: WithContext[CausalContext] = WithContext(CausalContext.empty)
-
-      override def lteq(left: WithContext[CausalContext], right: WithContext[CausalContext]): Boolean = {
-        val firstCondition = left.context.forall(right.context.contains)
-
-        val secondCondition = {
-          val diff = left.context.diff(left.store)
-          right.store.intersect(diff).isEmpty
-        }
-
-        firstCondition && secondCondition
-      }
-
-      override def decompose(state: WithContext[CausalContext]): Iterable[WithContext[CausalContext]] = {
-        val added =
-          for (d <- state.store.iterator) yield
-            val single = CausalContext.single(d)
-            WithContext(single, single)
-        val removed = state.context.subtract(state.store).decomposed.map(WithContext(CausalContext.empty, _))
-        removed ++ added
-      }
-    }
-
-  /** DotMap is a dot store implementation that maps keys of an arbitrary type K to values of a dot store type V. See
-    * [[interfaces.ORMapInterface]] for a usage example.
-    */
-  implicit def DotMap[K, V: ContextDecompose: AsCausalContext]: ContextDecompose[Map[K, V]] =
-    new FromConlattice[Map[K, V]](ContextLattice.dotMapLattice) {
-
-      override def empty: WithContext[Map[K, V]] = WithContext(Map.empty)
-
-      override def lteq(left: WithContext[Map[K, V]], right: WithContext[Map[K, V]]): Boolean = {
-        def firstCondition = (left.context subtract right.context).isEmpty
-
-        def secondConditionHelper(keys: Iterable[K]): Boolean = keys.forall { k =>
-          left.map(_.getOrElse(k, Bottom.empty[V])) <= right.map(_.getOrElse(k, Bottom.empty[V]))
-        }
-
-        def secondCondition = secondConditionHelper(left.store.keys) && secondConditionHelper(right.store.keys)
-
-        firstCondition && secondCondition
-      }
-
-      override def decompose(state: WithContext[Map[K, V]]): Iterable[WithContext[Map[K, V]]] = {
-        val added = for {
-          k <- state.store.keys
-          WithContext(atomicV, atomicCC) <- {
-            val v = state.store.getOrElse(k, Bottom.empty[V])
-            ContextDecompose[V].decompose(WithContext(v, AsCausalContext[V].dots(v)))
-          }
-        } yield WithContext(Map.empty[K, V].updated(k, atomicV), atomicCC)
-
-        val removed =
-          state.context.subtract(AsCausalContext.DotMapInstance.dots(state.store)).decomposed.map(WithContext(
-            Map.empty[K, V],
-            _
-          ))
-
-        added ++ removed
-      }
-    }
-
-  /** DotPair is a dot store implementation that allows the composition of two dot stores in a pair. See [[interfaces.RGA]]
-    * for a usage example
-    */
-  implicit def DotPair[A: ContextDecompose: AsCausalContext, B: ContextDecompose: AsCausalContext]
-      : ContextDecompose[(A, B)] =
-    new FromConlattice[(A, B)](ContextLattice.pairPartialLattice) {
-
-      override def empty: WithContext[(A, B)] = WithContext((Bottom[A].empty, Bottom[B].empty))
-
-      override def lteq(left: WithContext[(A, B)], right: WithContext[(A, B)]): Boolean =
-        (left, right) match {
-          case (WithContext((left1, left2), leftCContext), WithContext((right1, right2), rightCContext)) =>
-            ContextDecompose[A].lteq(WithContext(left1, leftCContext), WithContext(right1, rightCContext)) &&
-            ContextDecompose[B].lteq(WithContext(left2, leftCContext), WithContext(right2, rightCContext))
-        }
-
-      override def decompose(state: WithContext[(A, B)]): Iterable[WithContext[(A, B)]] = state match {
-        case WithContext((state1, state2), cc) =>
-          val decomposed1 = ContextDecompose[A].decompose(WithContext(state1, cc)).map {
-            case WithContext(atomicState, atomicCC) =>
-              WithContext((atomicState, Bottom.empty[B]), atomicCC)
-          }
-
-          val decomposed2 = ContextDecompose[B].decompose(WithContext(state2, cc)).map {
-            case WithContext(atomicState, atomicCC) =>
-              WithContext((Bottom.empty[A], atomicState), atomicCC)
-          }
-
-          decomposed1 ++ decomposed2
-      }
-
-    }
 
   /** DotLess is a dot store implementation that, in combination with [[DotPair]], allows to compose non-causal CRDTs
     * with causal CRDTs. For a usage example, see [[interfaces.RGA]], where the implicit presence of DotLess is

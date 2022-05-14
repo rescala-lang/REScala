@@ -7,6 +7,7 @@ import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, WithNamedContext}
 import kofre.contextual.ContextDecompose.*
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
 import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, WithContext}
+import kofre.dotted.DotMap
 
 /** An ORMap (Observed-Remove Map) is a Delta CRDT that models a map from an arbitrary key type to nested causal Delta CRDTs.
   * In contrast to [[GrowMap]], ORMap allows the removal of key/value pairs from the map.
@@ -16,25 +17,17 @@ import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, With
   * as the DeltaMutator to mutateKey.
   */
 object ORMapInterface {
-  type ORMap[K, V] = Map[K, V]
+  type ORMap[K, V] = DotMap[K, V]
 
-  def empty[K, V]: ORMap[K, V] = Map.empty
+  def empty[K, V]: ORMap[K, V] = DotMap.empty
 
-  given contextDecompose[K, V: ContextDecompose: AsCausalContext]: ContextDecompose[ORMap[K, V]] = ContextDecompose.DotMap
+  given contextDecompose[K, V: ContextDecompose: AsCausalContext]: ContextDecompose[ORMap[K, V]] = DotMap.contextDecompose
 
-  private class DeltaStateFactory[K, V: ContextDecompose: AsCausalContext] {
 
-    given ContextDecompose[Map[K, V]] = ContextDecompose.DotMap[K, V]
-
-    val bottom: WithContext[ORMap[K, V]] = ContextDecompose[ORMap[K, V]].empty
-
-    def make(
-        dm: Map[K, V] = bottom.store,
-        cc: CausalContext = bottom.context
-    ): WithContext[ORMap[K, V]] = WithContext(dm, cc)
-  }
-
-  private def deltaState[K, V: ContextDecompose: AsCausalContext]: DeltaStateFactory[K, V] = new DeltaStateFactory[K, V]
+  def make[K, V](
+      dm: DotMap[K, V] = DotMap.empty[K, V],
+      cc: CausalContext = CausalContext.empty
+  ): WithContext[ORMap[K, V]] = WithContext(dm, cc)
 
   implicit class ORMapSyntax[C, K, V](container: C)(using ArdtOpsContains[C, ORMap[K, V]])
       extends OpsSyntaxHelper[C, ORMap[K, V]](container) {
@@ -56,8 +49,8 @@ object ORMapInterface {
 
       m(replicaID, context.wrap(v)) match {
         case WithContext(stateDelta, ccDelta) =>
-          deltaState[K, V].make(
-            dm = DotMap[K, V].empty.store.updated(k, stateDelta),
+          make[K, V](
+            dm = DotMap(Map(k -> stateDelta)),
             cc = ccDelta
           ).mutator
       }
@@ -71,8 +64,8 @@ object ORMapInterface {
     ): C = {
       val v                                = current.getOrElse(k, Bottom[V].empty)
       val WithContext(stateDelta, ccDelta) = m(WithNamedContext(replicaID, WithContext(v, context))).anon
-      deltaState[K, V].make(
-        dm = DotMap[K, V].empty.store.updated(k, stateDelta),
+      make[K, V](
+        dm = DotMap(Map(k -> stateDelta)),
         cc = ccDelta
       ).mutator
     }
@@ -80,18 +73,18 @@ object ORMapInterface {
     def remove(k: K)(using CausalMutationP, ContextDecompose[V], AsCausalContext[V]): C = {
       val v = current.getOrElse(k, Bottom[V].empty)
 
-      deltaState[K, V].make(
+      make[K, V](
         cc = AsCausalContext[V].dots(v)
       ).mutator
     }
 
     def removeAll(keys: Iterable[K])(using CausalMutationP, ContextDecompose[V], AsCausalContext[V]): C = {
-      val values = keys.map(k => current.getOrElse(k, AsCausalContext[V].empty))
+      val values = keys.map(k => current.getOrElse(k, Bottom[V].empty))
       val dots = values.foldLeft(CausalContext.empty) {
         case (set, v) => set union AsCausalContext[V].dots(v)
       }
 
-      deltaState[K, V].make(
+      make(
         cc = dots
       ).mutator
     }
@@ -101,14 +94,14 @@ object ORMapInterface {
         case v if cond(WithContext(v, context)) => AsCausalContext[V].dots(v)
       }.fold(CausalContext.empty)(_ union _)
 
-      deltaState[K, V].make(
+      make(
         cc = toRemove
       ).mutator
     }
 
     def clear()(using CausalMutationP, ContextDecompose[V], AsCausalContext[V]): C = {
-      deltaState[K, V].make(
-        cc = AsCausalContext[Map[K, V]].dots(current)
+      make(
+        cc = current.dots
       ).mutator
     }
   }

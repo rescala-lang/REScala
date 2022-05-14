@@ -12,7 +12,6 @@ object Bottom {
 
   // Forwarders when bottom is requested but on of the others could work
   given decomposeBottom[A](using dl: DecomposeLattice[A]): Bottom[A] = dl
-  given asCausalContextBottom[A](using acc: AsCausalContext[A]): Bottom[A] = acc
   given withoutContextBottom[A](using acc: ContextDecompose[A]): Bottom[A] with
     def empty: A = acc.empty.store
 }

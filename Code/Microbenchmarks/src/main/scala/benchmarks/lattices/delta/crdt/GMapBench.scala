@@ -20,12 +20,15 @@ class GMapBench {
 
 
 
+
   type Contained = GMap[Int, EnableWinsFlag]
   type SUT = DeltaBufferRDT[Contained]
   var map: SUT = _
 
   @Setup
   def setup(): Unit = {
+
+
     map = (0 until numEntries).foldLeft(DeltaBufferRDT.empty("a", GMap.empty[Int, EnableWinsFlag]): SUT) {
       case (rdc: SUT, i) =>
         rdc.mutateKeyNamedCtx(i, EnableWinsFlag.empty)(_.enable())
