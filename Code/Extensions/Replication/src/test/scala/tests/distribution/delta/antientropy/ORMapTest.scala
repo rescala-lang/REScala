@@ -2,8 +2,6 @@ package tests.distribution.delta.antientropy
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import org.scalatest.freespec.AnyFreeSpec
-import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.lattices.delta.JsoniterCodecs._
 import rescala.extra.replication.AntiEntropy
 import kofre.decompose.interfaces.ORMapInterface.{ORMap, contextDecompose}
@@ -13,10 +11,10 @@ import kofre.predef.AddWinsSet
 
 import scala.collection.mutable
 
-class ORMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
+class ORMapTest extends munit.ScalaCheckSuite {
   implicit val intCodec: JsonValueCodec[Int] = JsonCodecMaker.make
 
-  "mutateKey/queryKey" in { (add: List[Int], remove: List[Int], k: Int) =>
+  test("mutateKey/queryKey") { (add: List[Int], remove: List[Int], k: Int) =>
     val network = new Network(0, 0, 0)
     val aea =
       new AntiEntropy[ORMap[Int, AddWinsSet[Int]]]("a", network, mutable.Buffer())
@@ -51,7 +49,7 @@ class ORMapTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
     )
   }
 
-  "remove" in { (add: List[Int], remove: List[Int], k: Int) =>
+  test("remove") { (add: List[Int], remove: List[Int], k: Int) =>
     val network = new Network(0, 0, 0)
     val aea =
       new AntiEntropy[ORMap[Int, AddWinsSet[Int]]]("a", network, mutable.Buffer())

@@ -1,9 +1,8 @@
 package tests.distribution.delta.antientropy
 
-import org.scalacheck.{Arbitrary, Gen}
-import org.scalatest.freespec.AnyFreeSpec
-import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import kofre.decompose.containers.Network
+import org.scalacheck.Prop._
+import org.scalacheck.{Arbitrary, Gen}
 
 object NetworkGenerators {
   val genNetwork: Gen[Network] = for {
@@ -15,10 +14,9 @@ object NetworkGenerators {
   implicit val arbNetwork: Arbitrary[Network] = Arbitrary(genNetwork)
 }
 
-class NetworkTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
+class NetworkTest extends munit.ScalaCheckSuite {
   import NetworkGenerators._
-
-  "sendMessage/receiveMessages" in forAll { (msgs: List[Array[Byte]], replicaID: String) =>
+  property("sendMessage/receiveMessages") { forAll { (msgs: List[Array[Byte]], replicaID: String) =>
     val network = new Network(0, 0, 0)
     msgs.foreach(network.sendMessage("a", _))
 
@@ -49,8 +47,8 @@ class NetworkTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
       s"After receiving the messages there should not be any messages left to received, but $rcvdAfter is not empty"
     )
   }
-
-  "loss" in forAll { msg: Array[Byte] =>
+}
+  property("loss") { forAll { msg: Array[Byte] =>
     val network = new Network(1, 0, 0)
 
     network.sendMessage("a", msg)
@@ -62,8 +60,8 @@ class NetworkTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
       s"In a network with 100% loss chance no messages should be received, but $rcvd is not empty"
     )
   }
-
-  "duplicate" in forAll { msg: Array[Byte] =>
+}
+  property("duplicate") { forAll { msg: Array[Byte] =>
     val network = new Network(0, 1, 0)
 
     network.sendMessage("a", msg)
@@ -95,8 +93,8 @@ class NetworkTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
       s"In a network with 100% duplicate chance a message should be able to be received infinitely often, but after receiving 5 time $rcvd1 does not contain ${msg.mkString("Array(", ", ", ")")}"
     )
   }
-
-  "delay" in forAll { msg: Array[Byte] =>
+}
+  property("delay") { forAll { msg: Array[Byte] =>
     val network = new Network(0, 0, 1)
 
     network.sendMessage("a", msg)
@@ -107,8 +105,8 @@ class NetworkTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
       s"In a network with 100% delay chance no message should ever arrive, but $rcvd is not empty"
     )
   }
-
-  "reliablePhase" in forAll { (msg: Array[Byte], network: Network) =>
+}
+  property("reliablePhase") {forAll { (msg: Array[Byte], network: Network) =>
     network.startReliablePhase()
     network.sendMessage("a", msg)
 
@@ -119,4 +117,5 @@ class NetworkTest extends AnyFreeSpec with ScalaCheckDrivenPropertyChecks {
       s"When the network is in a reliable phase all sent messages should be received, but $rcvd does not contain ${msg.mkString("Array(", ", ", ")")}"
     )
   }
+}
 }
