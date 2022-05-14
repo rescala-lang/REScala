@@ -2,27 +2,18 @@ package test.kofre
 
 import kofre.base.DecomposeLattice
 import kofre.causality.CausalContext
-import kofre.contextual.ContextDecompose.DotSet
 import kofre.contextual.{AsCausalContext, WithContext}
+import kofre.dotted.DotSet
 import org.scalacheck.Prop.*
 import test.kofre.DataGenerator.*
 
 class DotSetTest extends munit.ScalaCheckSuite {
 
-  property("dots") {
-    forAll { (ds: CausalContext) =>
-      assert(
-        AsCausalContext[CausalContext].dots(ds) == ds,
-        s"DotSet.dots should return the set itself, but ${AsCausalContext[CausalContext].dots(ds)} does not equal $ds"
-      )
-    }
-
-  }
   test("empty") {
     assert(
-      AsCausalContext[CausalContext].empty.isEmpty,
+      DotSet.empty.isEmpty,
       s"DotSet.empty should be empty, but ${DotSet.empty} is not empty"
-    )
+      )
 
   }
   property("merge") {
@@ -60,7 +51,7 @@ class DotSetTest extends munit.ScalaCheckSuite {
       val ccB = dsB union deletedB
 
       assert(
-        DotSet.lteq(WithContext(dsA, ccA), WithContext(dsA, ccA)),
+        WithContext(dsA, ccA) <= WithContext(dsA, ccA),
         s"DotSet.leq should be reflexive, but returns false when applied to ($dsA, $ccA, $dsA, $ccA)"
       )
 
@@ -70,11 +61,11 @@ class DotSetTest extends munit.ScalaCheckSuite {
       )
 
       assert(
-        DotSet.lteq(WithContext(dsA, ccA), WithContext(dsMerged, ccMerged)),
+        WithContext(dsA, ccA) <= WithContext(dsMerged, ccMerged),
         s"The result of DotSet.merge should be larger than its lhs, but DotSet.leq returns false when applied to ($dsA, $ccA, $dsMerged, $ccMerged)"
       )
       assert(
-        DotSet.lteq(WithContext(dsB, ccB), WithContext(dsMerged, ccMerged)),
+        WithContext(dsB, ccB) <= WithContext(dsMerged, ccMerged),
         s"The result of DotSet.merge should be larger than its rhs, but DotSet.leq returns false when applied to ($dsB, $ccB, $dsMerged, $ccMerged)"
       )
     }
@@ -84,7 +75,7 @@ class DotSetTest extends munit.ScalaCheckSuite {
     forAll { (ds: CausalContext, deleted: CausalContext) =>
       val cc = ds union deleted
 
-      val decomposed = DotSet.decompose(WithContext(ds, cc))
+      val decomposed = WithContext(ds, cc).decomposed
       val WithContext(dsMerged, ccMerged) = decomposed.foldLeft(WithContext(CausalContext.empty, CausalContext.empty)) {
         case (WithContext(dsA, ccA), WithContext(dsB, ccB)) =>
           DecomposeLattice[WithContext[CausalContext]].merge(WithContext(dsA, ccA), WithContext(dsB, ccB))

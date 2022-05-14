@@ -8,13 +8,14 @@ import kofre.decompose.interfaces
 
 case class DotSet(repr: CausalContext) {
   def dots: CausalContext = repr
+  export repr.*
 }
 
 object DotSet {
 
   def empty: DotSet = DotSet(CausalContext.empty)
 
-  given DotSetInstance: AsCausalContext[DotSet] with {
+  given asCausalContext: AsCausalContext[DotSet] with {
     override def dots(a: DotSet): CausalContext = a.repr
   }
 

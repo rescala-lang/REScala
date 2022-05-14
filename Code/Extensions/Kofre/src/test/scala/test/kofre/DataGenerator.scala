@@ -3,9 +3,8 @@ package test.kofre
 import kofre.base.Defs.Time
 import kofre.base.{Defs, Lattice}
 import kofre.causality.{CausalContext, Dot, VectorClock}
-import kofre.contextual.ContextDecompose.DotMap
 import kofre.contextual.{AsCausalContext, ContextDecompose}
-import kofre.dotted.{DotFun, DotMap}
+import kofre.dotted.{DotFun, DotMap, DotSet}
 import kofre.predef.{GrowOnlyCounter, PosNegCounter}
 import kofre.primitives.{CausalQueue, LastWriterWins, MultiValueRegister}
 import kofre.sets.ORSet
@@ -101,11 +100,13 @@ object DataGenerator {
     dotsIter.size == dotsSet.size
   }
 
+  implicit val arbrealDotSet: Arbitrary[DotSet] = Arbitrary(genDietMapCContext.map(DotSet.apply))
+
   implicit def arbDotMap[K, V: AsCausalContext](implicit gk: Arbitrary[K], gv: Arbitrary[V]): Arbitrary[Map[K, V]] =
     Arbitrary(genDotMap)
 
   implicit def arbRealDotmap[K, V: AsCausalContext](implicit gk: Arbitrary[K], gv: Arbitrary[V]): Arbitrary[DotMap[K, V]] =
-    Arbitrary(genDotMap.map(DotMap.apply))
+    Arbitrary(genDotMap[K, V].map(DotMap.apply))
 
   case class SmallTimeSet(s: Set[Time])
 
