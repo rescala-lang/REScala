@@ -11,7 +11,7 @@ object Epoche {
 
   def empty[E: Bottom]: Epoche[E] = Epoche(0, Bottom[E].empty)
 
-  given contextDecompose[E: DecomposeLattice]: ContextDecompose[Epoche[E]] = ContextDecompose.UIJDLatticeAsDecomposableDotStore
+  given contextDecompose[E: DecomposeLattice]: ContextDecompose[Epoche[E]] = ContextDecompose.liftDecomposeLattice
 
 
   implicit class EpocheSyntax[C, E](container: C)(using ArdtOpsContains[C, Epoche[E]])

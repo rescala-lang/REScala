@@ -17,7 +17,7 @@ import scala.compiletime.summonAll
 @implicitNotFound("Not a decompose lattice when in a context: »${A}«")
 trait ContextDecompose[A] extends ContextLattice[A], DecomposeLattice[WithContext[A]]
 
-object ContextDecompose extends LowPriorityContextDecompose {
+object ContextDecompose {
   def apply[A](implicit ds: ContextDecompose[A]): ContextDecompose[A] = ds
 
   inline def derived[T <: Product](using pm: Mirror.ProductOf[T]): ContextDecompose[T] = {
@@ -169,14 +169,15 @@ object ContextDecompose extends LowPriorityContextDecompose {
 
     }
 
-
-
   /** DotLess is a dot store implementation that, in combination with [[DotPair]], allows to compose non-causal CRDTs
     * with causal CRDTs. For a usage example, see [[interfaces.RGA]], where the implicit presence of DotLess is
     * necessary so that the non-causal [[interfaces.EpocheInterface]] can be part of the [[DotPair]] that makes up
     * the state.
+    *
+    * Note, implementing this marks the type as independent of its context,
+    * beware types with different possible interpretations.
     */
-  def UIJDLatticeAsDecomposableDotStore[A: DecomposeLattice]: ContextDecompose[A] =
+  def liftDecomposeLattice[A: DecomposeLattice]: ContextDecompose[A] =
     new ContextDecompose[A] {
       override def mergePartial(left: WithContext[A], right: WithContext[A]): A =
         Lattice[A].merge(left.store, right.store)
@@ -190,14 +191,4 @@ object ContextDecompose extends LowPriorityContextDecompose {
 
       override def empty: WithContext[A] = WithContext(DecomposeLattice[A].empty)
     }
-}
-
-trait LowPriorityContextDecompose {
-  given liftLattice[A: DecomposeLattice]: ContextDecompose[A] with {
-    override def decompose(a: WithContext[A]): Iterable[WithContext[A]] =
-      DecomposeLattice[A].decompose(a.store).map(r => WithContext(r, a.context))
-    override def mergePartial(left: WithContext[A], right: WithContext[A]): A =
-      DecomposeLattice[A].merge(left.store, right.store)
-    override def empty: WithContext[A] = WithContext(DecomposeLattice[A].empty)
-  }
 }

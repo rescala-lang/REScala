@@ -6,7 +6,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import rescala.extra.lattices.delta.JsoniterCodecs._
 import rescala.extra.replication.AntiEntropy
-import kofre.decompose.interfaces.ORMapInterface.ORMap
+import kofre.decompose.interfaces.ORMapInterface.{ORMap, contextDecompose}
 import kofre.decompose.interfaces.ORMapInterface.ORMapSyntax
 import kofre.decompose.containers.{AntiEntropyCRDT, Network}
 import kofre.predef.AddWinsSet

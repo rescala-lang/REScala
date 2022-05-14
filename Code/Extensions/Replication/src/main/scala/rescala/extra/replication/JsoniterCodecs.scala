@@ -11,6 +11,7 @@ import kofre.decompose.TimedVal
 import kofre.causality.{ArrayRanges, CausalContext, Dot}
 import kofre.decompose.interfaces.LexCounterInterface.LexPair
 import kofre.contextual.WithContext
+import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
 import kofre.decompose.interfaces.RCounterInterface.RCounter
 import kofre.decompose.interfaces.{EnableWinsFlag, GMap, RGA}
 import kofre.predef.{AddWinsSet, Epoche, GrowOnlyCounter, PosNegCounter}
@@ -117,11 +118,7 @@ object JsoniterCodecs {
   /** MVRegister */
 
   @nowarn("msg=never used")
-  implicit def MVRegisterStateCodec[A: JsonValueCodec]: JsonValueCodec[WithContext[Map[Dot, A]]] =
-    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
-
-  @nowarn("msg=never used")
-  implicit def MVRegisterEmbeddedCodec[A: JsonValueCodec]: JsonValueCodec[Map[Dot, A]] =
+  implicit def MVRegisterEmbeddedCodec[A: JsonValueCodec]: JsonValueCodec[MVRegister[A]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   /** ORMap */

@@ -20,6 +20,8 @@ object ORMapInterface {
 
   def empty[K, V]: ORMap[K, V] = Map.empty
 
+  given contextDecompose[K, V: ContextDecompose: AsCausalContext]: ContextDecompose[ORMap[K, V]] = ContextDecompose.DotMap
+
   private class DeltaStateFactory[K, V: ContextDecompose: AsCausalContext] {
 
     given ContextDecompose[Map[K, V]] = ContextDecompose.DotMap[K, V]

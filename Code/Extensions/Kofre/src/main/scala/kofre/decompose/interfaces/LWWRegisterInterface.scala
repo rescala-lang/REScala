@@ -5,6 +5,7 @@ import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermIdMutate}
 import kofre.contextual.WithContext
 import kofre.decompose.interfaces.LexCounterInterface.LexCounter
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegisterSyntax
+import kofre.dotted.DotFun
 
 /** An LWW (Last Writer Wins) is a Delta CRDT modeling a register.
   *
@@ -12,7 +13,7 @@ import kofre.decompose.interfaces.MVRegisterInterface.MVRegisterSyntax
   */
 object LWWRegisterInterface {
   type LWWRegister[A] = MVRegisterInterface.MVRegister[TimedVal[A]]
-  def empty[A]: LWWRegister[A] = Map.empty
+  def empty[A]: LWWRegister[A] = DotFun.empty
 
   implicit class LWWRegisterSyntax[C, A](container: C)(using ArdtOpsContains[C, LWWRegister[A]]) extends OpsSyntaxHelper[C, LWWRegister[A]](container) {
 
@@ -24,7 +25,7 @@ object LWWRegisterInterface {
 
     def map(f: A => A)(using CausalMutationP, IdentifierP): C =
       read.map(f) match {
-        case None    => WithContext(DecomposeLattice[LWWRegister[A]].empty).mutator
+        case None    => WithContext(LWWRegisterInterface.empty).mutator
         case Some(v) => write(v)
       }
 

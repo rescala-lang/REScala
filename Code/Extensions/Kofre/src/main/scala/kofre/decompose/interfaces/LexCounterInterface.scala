@@ -2,6 +2,7 @@ package kofre.decompose.interfaces
 
 import kofre.base.DecomposeLattice
 import kofre.base.Lattice.Operators
+import kofre.contextual.ContextDecompose
 import kofre.decompose.*
 import kofre.syntax.OpsSyntaxHelper
 
@@ -46,6 +47,8 @@ object LexCounterInterface {
   }
 
   type LexCounter = Map[String, LexPair[Int, Int]]
+
+  given contextDecompose: ContextDecompose[LexCounter] = ContextDecompose.liftDecomposeLattice
 
   implicit class LexCounterSyntax[C](container: C) extends OpsSyntaxHelper[C, LexCounter](container) {
 

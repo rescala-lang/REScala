@@ -2,8 +2,9 @@ package kofre.predef
 
 import kofre.base.DecomposeLattice
 import kofre.base.Defs.Id
+import kofre.contextual.ContextDecompose
 import kofre.syntax.PermIdMutate.withID
-import kofre.syntax.{PermIdMutate, ArdtOpsContains, FixedId, PermId, OpsSyntaxHelper, PermQuery}
+import kofre.syntax.{ArdtOpsContains, FixedId, OpsSyntaxHelper, PermId, PermIdMutate, PermQuery}
 
 case class PosNegCounter(pos: GrowOnlyCounter, neg: GrowOnlyCounter) derives DecomposeLattice
 
@@ -14,6 +15,8 @@ case class PosNegCounter(pos: GrowOnlyCounter, neg: GrowOnlyCounter) derives Dec
 object PosNegCounter {
 
   val zero: PosNegCounter = PosNegCounter(GrowOnlyCounter.zero, GrowOnlyCounter.zero)
+
+  given contextDecompose: ContextDecompose[PosNegCounter] = ContextDecompose.liftDecomposeLattice
 
   implicit class PNCounterSyntax[C](container: C)(using ArdtOpsContains[C, PosNegCounter])
       extends OpsSyntaxHelper[C, PosNegCounter](container) {

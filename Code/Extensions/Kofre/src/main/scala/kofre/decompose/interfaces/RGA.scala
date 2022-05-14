@@ -68,7 +68,7 @@ object RGA {
   }
 
   private class DeltaStateFactory[E] {
-    given ContextDecompose[Epoche[GListInterface.GList[Dot]]] = ContextDecompose.UIJDLatticeAsDecomposableDotStore
+    given ContextDecompose[Epoche[GListInterface.GList[Dot]]] = ContextDecompose.liftDecomposeLattice
 
     def make(
         epoche: Epoche[GListInterface.GList[Dot]] = empty._1,

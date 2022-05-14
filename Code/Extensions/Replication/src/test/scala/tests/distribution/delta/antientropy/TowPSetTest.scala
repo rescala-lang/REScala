@@ -2,7 +2,7 @@ package tests.distribution.delta.antientropy
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import kofre.decompose.interfaces.TwoPSetInterface.TwoPSet
+import kofre.decompose.interfaces.TwoPSetInterface.{TwoPSet, contextDecompose}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks

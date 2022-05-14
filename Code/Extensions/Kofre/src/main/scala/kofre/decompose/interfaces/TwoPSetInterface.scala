@@ -1,5 +1,6 @@
 package kofre.decompose.interfaces
 
+import kofre.contextual.ContextDecompose
 import kofre.decompose.*
 import kofre.syntax.OpsSyntaxHelper
 
@@ -12,6 +13,8 @@ object TwoPSetInterface {
   def empty[E]: TwoPSet[E] = (Set.empty, Set.empty)
 
   type TwoPSet[E] = (Set[E], Set[E])
+
+  given contextDecompose[E]: ContextDecompose[TwoPSet[E]] = ContextDecompose.liftDecomposeLattice
 
   implicit class TwoPSetSyntax[C, E](container: C) extends OpsSyntaxHelper[C, TwoPSet[E]](container) {
 

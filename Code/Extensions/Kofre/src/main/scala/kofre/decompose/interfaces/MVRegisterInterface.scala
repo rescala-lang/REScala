@@ -7,6 +7,7 @@ import kofre.syntax.OpsSyntaxHelper
 import kofre.causality.Dot
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegister
 import kofre.contextual.WithContext
+import kofre.dotted.DotFun
 
 /** An MVRegister (Multi-Value Register) is a Delta CRDT modeling a register.
   *
@@ -14,9 +15,9 @@ import kofre.contextual.WithContext
   * When multiple values are written concurrently, reading the MVRegister returns a set holding all these values.
   */
 object MVRegisterInterface {
-  def empty[A]: MVRegister[A] = Map.empty
+  def empty[A]: MVRegister[A] = DotFun.empty
 
-  type MVRegister[A] = Map[Dot, A]
+  type MVRegister[A] = DotFun[A]
 
   implicit class MVRegisterSyntax[C, A](container: C) extends OpsSyntaxHelper[C, MVRegister[A]](container) {
 
@@ -26,14 +27,14 @@ object MVRegisterInterface {
       val nextDot = context.nextDot(replicaID)
 
       WithContext(
-        Map(nextDot -> v),
+        DotFun(Map(nextDot -> v)),
         CausalContext.fromSet(current.keySet + nextDot)
       ).mutator
     }
 
-    def clear()(using CausalMutationP, DecomposeLattice[MVRegister[A]]): C =
+    def clear()(using CausalMutationP): C =
       WithContext(
-        DecomposeLattice[MVRegister[A]].empty,
+        MVRegisterInterface.empty,
         CausalContext.fromSet(current.keySet)
       ).mutator
   }
