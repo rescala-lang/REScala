@@ -7,7 +7,7 @@ import rescala.extra.lattices.delta.JsoniterCodecs._
 
 import rescala.extra.replication.AntiEntropy
 import NetworkGenerators._
-import kofre.datatypes.TwoPSet
+import kofre.datatypes.TwoPhaseSet
 import kofre.decompose.containers.{AntiEntropyCRDT, Network}
 
 import org.scalacheck.Prop._
@@ -15,14 +15,14 @@ import org.scalacheck.Prop._
 import scala.collection.mutable
 
 object TwoPSetGenerators {
-  def genTwoPSet[E: Arbitrary](implicit c: JsonValueCodec[E]): Gen[AntiEntropyCRDT[TwoPSet[E]]] = for {
+  def genTwoPSet[E: Arbitrary](implicit c: JsonValueCodec[E]): Gen[AntiEntropyCRDT[TwoPhaseSet[E]]] = for {
     added   <- Gen.containerOf[List, E](Arbitrary.arbitrary[E])
     n       <- Gen.choose(0, added.size)
     removed <- Gen.pick(n, added)
   } yield {
     val network = new Network(0, 0, 0)
-    val ae      = new AntiEntropy[TwoPSet[E]]("a", network, mutable.Buffer())(implicitly, twoPSetContext[E], implicitly)
-    val setAdded = added.foldLeft(AntiEntropyCRDT[TwoPSet[E]](ae)) {
+    val ae      = new AntiEntropy[TwoPhaseSet[E]]("a", network, mutable.Buffer())(implicitly, twoPSetContext[E], implicitly)
+    val setAdded = added.foldLeft(AntiEntropyCRDT[TwoPhaseSet[E]](ae)) {
       case (set, e) => set.insert(e)
     }
     removed.foldLeft(setAdded) {
@@ -30,7 +30,7 @@ object TwoPSetGenerators {
     }
   }
 
-  implicit def arbTwoPSet[E: Arbitrary](implicit c: JsonValueCodec[E]): Arbitrary[AntiEntropyCRDT[TwoPSet[E]]] =
+  implicit def arbTwoPSet[E: Arbitrary](implicit c: JsonValueCodec[E]): Arbitrary[AntiEntropyCRDT[TwoPhaseSet[E]]] =
     Arbitrary(genTwoPSet)
 }
 
@@ -41,9 +41,9 @@ class TowPSetTest extends munit.ScalaCheckSuite {
   property("insert") {
     forAll { (insert: List[Int], remove: List[Int], e: Int) =>
       val network = new Network(0, 0, 0)
-      val ae      = new AntiEntropy[TwoPSet[Int]]("a", network, mutable.Buffer())
+      val ae      = new AntiEntropy[TwoPhaseSet[Int]]("a", network, mutable.Buffer())
 
-      val setInserted = insert.foldLeft(AntiEntropyCRDT[TwoPSet[Int]](ae)) {
+      val setInserted = insert.foldLeft(AntiEntropyCRDT[TwoPhaseSet[Int]](ae)) {
         case (s, e) => s.insert(e)
       }
 
@@ -60,7 +60,7 @@ class TowPSetTest extends munit.ScalaCheckSuite {
     }
   }
   property("remove") {
-    forAll { (set: AntiEntropyCRDT[TwoPSet[Int]], e: Int) =>
+    forAll { (set: AntiEntropyCRDT[TwoPhaseSet[Int]], e: Int) =>
       val removed = set.remove(e)
 
       assert(
@@ -73,16 +73,16 @@ class TowPSetTest extends munit.ScalaCheckSuite {
     forAll { (addOrRemoveA: Either[Int, Int], addOrRemoveB: Either[Int, Int]) =>
       val network = new Network(0, 0, 0)
 
-      val aea = new AntiEntropy[TwoPSet[Int]]("a", network, mutable.Buffer("b"))
-      val aeb = new AntiEntropy[TwoPSet[Int]]("b", network, mutable.Buffer("a"))
+      val aea = new AntiEntropy[TwoPhaseSet[Int]]("a", network, mutable.Buffer("b"))
+      val aeb = new AntiEntropy[TwoPhaseSet[Int]]("b", network, mutable.Buffer("a"))
 
       val sa0 = addOrRemoveA match {
-        case Left(e)  => AntiEntropyCRDT[TwoPSet[Int]](aea).insert(e)
-        case Right(e) => AntiEntropyCRDT[TwoPSet[Int]](aea).remove(e)
+        case Left(e)  => AntiEntropyCRDT[TwoPhaseSet[Int]](aea).insert(e)
+        case Right(e) => AntiEntropyCRDT[TwoPhaseSet[Int]](aea).remove(e)
       }
       val sb0 = addOrRemoveB match {
-        case Left(e)  => AntiEntropyCRDT[TwoPSet[Int]](aeb).insert(e)
-        case Right(e) => AntiEntropyCRDT[TwoPSet[Int]](aeb).remove(e)
+        case Left(e)  => AntiEntropyCRDT[TwoPhaseSet[Int]](aeb).insert(e)
+        case Right(e) => AntiEntropyCRDT[TwoPhaseSet[Int]](aeb).remove(e)
       }
 
       AntiEntropy.sync(aea, aeb)
@@ -108,16 +108,16 @@ class TowPSetTest extends munit.ScalaCheckSuite {
   property("convergence") {
     forAll {
       (insertA: List[Int], removeA: List[Int], insertB: List[Int], removeB: List[Int], network: Network) =>
-        val aea = new AntiEntropy[TwoPSet[Int]]("a", network, mutable.Buffer("b"))
-        val aeb = new AntiEntropy[TwoPSet[Int]]("b", network, mutable.Buffer("a"))
+        val aea = new AntiEntropy[TwoPhaseSet[Int]]("a", network, mutable.Buffer("b"))
+        val aeb = new AntiEntropy[TwoPhaseSet[Int]]("b", network, mutable.Buffer("a"))
 
-        val insertedA = insertA.foldLeft(AntiEntropyCRDT[TwoPSet[Int]](aea)) {
+        val insertedA = insertA.foldLeft(AntiEntropyCRDT[TwoPhaseSet[Int]](aea)) {
           case (s, e) => s.insert(e)
         }
         val sa0 = removeA.foldLeft(insertedA) {
           case (s, e) => s.remove(e)
         }
-        val insertedB = insertB.foldLeft(AntiEntropyCRDT[TwoPSet[Int]](aeb)) {
+        val insertedB = insertB.foldLeft(AntiEntropyCRDT[TwoPhaseSet[Int]](aeb)) {
           case (s, e) => s.insert(e)
         }
         val sb0 = removeB.foldLeft(insertedB) {

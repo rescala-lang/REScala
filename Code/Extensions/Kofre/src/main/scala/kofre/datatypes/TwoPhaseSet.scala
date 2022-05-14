@@ -5,23 +5,23 @@ import kofre.decompose.*
 import kofre.dotted.DottedDecompose
 import kofre.syntax.OpsSyntaxHelper
 
-/** A TwoPSet (Two-Phase Set) is a Delta CRDT modeling a set.
+/** A TwoPhaseSet (Two-Phase Set) is a Delta CRDT modeling a set.
   *
   * The set is modeled as two grow-only sets, a set of added elements and a set of removed elements. Because of this,
   * elements that were removed from the set once can never be re-added.
   */
 
-case class TwoPSet[E](added: Set[E], removed: Set[E])
+case class TwoPhaseSet[E](added: Set[E], removed: Set[E])
 
-object TwoPSet {
-  def empty[E]: TwoPSet[E] = TwoPSet(Set.empty, Set.empty)
+object TwoPhaseSet {
+  def empty[E]: TwoPhaseSet[E] = TwoPhaseSet(Set.empty, Set.empty)
 
-  given bottom[E]: Bottom[TwoPSet[E]] with { override def empty: TwoPSet[E] = TwoPSet.empty }
+  given bottom[E]: Bottom[TwoPhaseSet[E]] with { override def empty: TwoPhaseSet[E] = TwoPhaseSet.empty }
 
-  given decomposeLattice[E]: DecomposeLattice[TwoPSet[E]] = DecomposeLattice.derived
-  given contextDecompose[E]: DottedDecompose[TwoPSet[E]]  = DottedDecompose.liftDecomposeLattice
+  given decomposeLattice[E]: DecomposeLattice[TwoPhaseSet[E]] = DecomposeLattice.derived
+  given contextDecompose[E]: DottedDecompose[TwoPhaseSet[E]]  = DottedDecompose.liftDecomposeLattice
 
-  implicit class TwoPSetSyntax[C, E](container: C) extends OpsSyntaxHelper[C, TwoPSet[E]](container) {
+  implicit class TwoPSetOps[C, E](container: C) extends OpsSyntaxHelper[C, TwoPhaseSet[E]](container) {
 
     def elements(using QueryP): Set[E] = {
       current.added diff current.removed

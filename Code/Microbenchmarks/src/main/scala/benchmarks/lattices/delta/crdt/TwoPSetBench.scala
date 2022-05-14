@@ -1,6 +1,6 @@
 package benchmarks.lattices.delta.crdt
 
-import kofre.datatypes.TwoPSet
+import kofre.datatypes.TwoPhaseSet
 import kofre.decompose.containers.DeltaBufferRDT
 import org.openjdk.jmh.annotations._
 
@@ -18,11 +18,11 @@ class TwoPSetBench {
   @Param(Array("0", "1", "10", "100", "1000"))
   var size: Int = _
 
-  var set: DeltaBufferRDT[TwoPSet[Int]] = _
+  var set: DeltaBufferRDT[TwoPhaseSet[Int]] = _
 
   @Setup
   def setup(): Unit = {
-    set = (0 until size).foldLeft(DeltaBufferRDT("a", TwoPSet.empty[Int])) {
+    set = (0 until size).foldLeft(DeltaBufferRDT("a", TwoPhaseSet.empty[Int])) {
       case (s, e) => s.insert(e)
     }
   }
@@ -31,8 +31,8 @@ class TwoPSetBench {
   def elements(): Set[Int] = set.elements
 
   @Benchmark
-  def insert(): DeltaBufferRDT[TwoPSet[Int]] = set.insert(-1)
+  def insert(): DeltaBufferRDT[TwoPhaseSet[Int]] = set.insert(-1)
 
   @Benchmark
-  def remove(): DeltaBufferRDT[TwoPSet[Int]] = set.remove(0)
+  def remove(): DeltaBufferRDT[TwoPhaseSet[Int]] = set.remove(0)
 }
