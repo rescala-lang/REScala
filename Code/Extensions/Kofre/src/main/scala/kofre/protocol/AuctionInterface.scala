@@ -1,6 +1,6 @@
 package kofre.protocol
 
-import kofre.base.DecomposeLattice
+import kofre.base.{Bottom, DecomposeLattice}
 import kofre.decompose.*
 import kofre.decompose.interfaces.GSetInterface
 import kofre.decompose.interfaces.GSetInterface.GSetSyntax
@@ -21,8 +21,6 @@ object AuctionInterface {
 
       override def decompose(state: Status): Iterable[Status] = List(state)
 
-      override def empty: Status = Open
-
       override def merge(left: Status, right: Status): Status = (left, right) match {
         case (Open, Open) => Open
         case _            => Closed
@@ -37,12 +35,13 @@ object AuctionInterface {
   }
 
   case class AuctionData(
-                          bids: Set[Bid] = DecomposeLattice[Set[Bid]].empty,
-                          status: Status = DecomposeLattice[Status].empty,
-                          winner: Option[User] = None
+      bids: Set[Bid] = Set.empty,
+      status: Status = Open,
+      winner: Option[User] = None
   )
 
   case object AuctionData {
+
     implicit val AuctionDataAsUIJDLattice: DecomposeLattice[AuctionData] = new DecomposeLattice[AuctionData] {
       override def lteq(left: AuctionData, right: AuctionData): Boolean = (left, right) match {
         case (AuctionData(lb, ls, _), AuctionData(rb, rs, _)) =>
@@ -53,14 +52,12 @@ object AuctionInterface {
         state match {
           case AuctionData(bids, status, _) =>
             bids.map(b =>
-              AuctionData(bids = DecomposeLattice[Set[Bid]].empty.insert(b))
+              AuctionData(bids = Set(b))
             ) ++ (status match {
               case Open   => Set()
               case Closed => Set(AuctionData(status = Closed))
             })
         }
-
-      override def empty: AuctionData = AuctionData()
 
       override def merge(left: AuctionData, right: AuctionData): AuctionData = (left, right) match {
         case (AuctionData(lb, ls, _), AuctionData(rb, rs, _)) =>

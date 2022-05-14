@@ -37,10 +37,8 @@ object DotMap {
     }
   }
 
-  given contextDecompose[K, V: DottedDecompose: HasDots]: DottedDecompose[DotMap[K, V]] =
+  given contextDecompose[K, V: DottedDecompose: HasDots: Bottom]: DottedDecompose[DotMap[K, V]] =
     new FromConlattice[DotMap[K, V]](dottedLattice) {
-
-      override def empty: Dotted[DotMap[K, V]] = Dotted(DotMap.empty)
 
       override def lteq(left: Dotted[DotMap[K, V]], right: Dotted[DotMap[K, V]]): Boolean = {
         def firstCondition = (left.context subtract right.context).isEmpty

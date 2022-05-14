@@ -19,10 +19,6 @@ object Dotted {
   def empty[A: Bottom]: Dotted[A] = Dotted(Bottom.empty[A], Dots.empty)
   def apply[A](a: A): Dotted[A]   = Dotted(a, Dots.empty)
 
-  given bottomInstance[A: Bottom](using NotGiven[Bottom[Dotted[A]]]): Bottom[Dotted[A]] with {
-    override def empty: Dotted[A] = Dotted.this.empty
-  }
-
   given CausalWithDotFunLattice[V: Lattice]: Lattice[Dotted[DotFun[V]]] = kofre.dotted.DotFun.perDotLattice
   given CausalWithDotSetLattice: Lattice[Dotted[Set[Dot]]] =
     DotSet.dottedLattice.bimap[Dotted[Set[Dot]]](
@@ -30,7 +26,7 @@ object Dotted {
       _.map(s => DotSet(Dots.fromSet(s)))
     )
 
-  given latticeLift[L: DecomposeLattice]: DecomposeLattice[Dotted[L]] = DecomposeLattice.derived
+  given latticeLift[L: DecomposeLattice: Bottom]: DecomposeLattice[Dotted[L]] = DecomposeLattice.derived
   given syntaxPermissions[L](using DottedLattice[L]): PermCausalMutate[Dotted[L], L]
     with {
     override def mutateContext(c: Dotted[L], delta: Dotted[L]): Dotted[L] = c merged delta

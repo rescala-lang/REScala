@@ -2,9 +2,9 @@ package rescala.extra.replication
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReaderException, JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import kofre.base.DecomposeLattice
+import kofre.base.{Bottom, DecomposeLattice}
 import kofre.decompose.containers.Network
-import kofre.dotted.{DottedDecompose, Dotted}
+import kofre.dotted.{Dotted, DottedDecompose}
 import kofre.syntax.DottedName
 import rescala.extra.replication.AntiEntropy.{AckMsg, DeltaMsg}
 
@@ -23,7 +23,7 @@ import scala.collection.mutable
   * @param neighbors The neighbors that this replica can communicate with directly
   * @tparam A State type of the CRDT that this anti-entropy algorithm is used with
   */
-class AntiEntropy[A](
+class AntiEntropy[A: Bottom](
     val replicaID: String,
     network: Network,
     neighbors: mutable.Buffer[String] = mutable.Buffer()
@@ -40,7 +40,7 @@ class AntiEntropy[A](
 
   private val ackMap: mutable.Map.WithDefault[String, Int] = new mutable.Map.WithDefault(mutable.Map(), _ => -1)
 
-  private var fullState: Dotted[A] = DecomposeLattice[Dotted[A]].empty
+  private var fullState: Dotted[A] = Bottom.dotted.empty
 
   implicit val AckMsgCodec: JsonValueCodec[AckMsg] = JsonCodecMaker.make
 

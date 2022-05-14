@@ -105,8 +105,6 @@ object DeltaSequence {
 
 
       override def decompose(a: Dotted[DeltaSequence[A]]): Iterable[Dotted[DeltaSequence[A]]] = Iterable(a)
-      override def empty: Dotted[DeltaSequence[A]] = Dotted(DeltaSequence.empty)
-
 
       private val noMapConflictsLattice: Lattice[A] = (left: A, right: A) =>
         if (left == right) left

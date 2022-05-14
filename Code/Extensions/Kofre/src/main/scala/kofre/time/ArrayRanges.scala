@@ -294,6 +294,5 @@ object ArrayRanges {
     override def decompose(a: ArrayRanges): Iterable[ArrayRanges]          = a.decomposed
     override def lteq(left: ArrayRanges, right: ArrayRanges): Boolean      = left <= right
     override def merge(left: ArrayRanges, right: ArrayRanges): ArrayRanges = left union right
-    override def empty: ArrayRanges                                        = ArrayRanges.empty
   }
 }

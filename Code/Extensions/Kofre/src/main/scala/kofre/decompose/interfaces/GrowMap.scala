@@ -1,9 +1,9 @@
 package kofre.decompose.interfaces
 
-import kofre.base.DecomposeLattice
+import kofre.base.{Bottom, DecomposeLattice}
 import kofre.time.Dots
-import kofre.dotted.{DottedDecompose, DottedLattice, DotMap, Dotted, HasDots}
-import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermIdMutate, DottedName}
+import kofre.dotted.{DotMap, Dotted, DottedDecompose, DottedLattice, HasDots}
+import kofre.syntax.{ArdtOpsContains, DottedName, OpsSyntaxHelper, PermIdMutate}
 
 /** A GMap (Grow-only Map) is a Delta CRDT that models a map from an arbitrary key type to nested Delta CRDTs.
   * In contrast to [[ORMapInterface]], key/value pairs cannot be removed from this map. However, due to the smaller internal
@@ -13,14 +13,14 @@ import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermIdMutate, DottedName}
   * by a CRDT Interface method of the nested CRDT. For example, to enable a nested EWFlag, one would pass `EWFlagInterface.enable()`
   * as the DeltaMutator to mutateKey.
   */
-case class GrowMap[K, V](inner: Map[K, V])
+case class GrowMap[K, V](inner: Map[K, V]) derives Bottom
 
 object GrowMap {
 
   def empty[K, V]: GrowMap[K, V] = GrowMap(Map.empty)
 
   given decomposeLattice[K, V: DecomposeLattice]: DecomposeLattice[GrowMap[K, V]] = DecomposeLattice.derived
-  given contextLattice[K, V: DottedDecompose: HasDots]: DottedDecompose[GrowMap[K, V]] =
+  given contextLattice[K, V: DottedDecompose: HasDots: Bottom]: DottedDecompose[GrowMap[K, V]] =
     given DottedDecompose[Map[K, V]] = DotMap.contextDecompose[K, V].contextbimap[Map[K, V]](_.map(_.repr), _.map(DotMap.apply))
     DottedDecompose.derived
 

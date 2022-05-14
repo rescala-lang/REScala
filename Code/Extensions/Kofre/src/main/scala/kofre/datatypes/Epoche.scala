@@ -26,7 +26,6 @@ object Epoche {
 
   given epocheAsUIJDLattice[E: DecomposeLattice]: DecomposeLattice[Epoche[E]] = new DecomposeLattice[Epoche[E]] {
 
-    override def empty: Epoche[E] = Epoche.empty
     override def lteq(left: Epoche[E], right: Epoche[E]): Boolean = (left, right) match {
       case (Epoche(cLeft, vLeft), Epoche(cRight, vRight)) =>
         cLeft < cRight || (cLeft == cRight && DecomposeLattice[E].lteq(vLeft, vRight))

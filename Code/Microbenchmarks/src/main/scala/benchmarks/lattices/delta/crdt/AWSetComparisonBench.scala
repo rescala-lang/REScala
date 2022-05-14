@@ -27,7 +27,7 @@ class AWSetComparisonBench {
   var setAStatePlusOne: State = _
 
   private def createSet(replicaID: String): State = {
-    (0 until setSize).foldLeft(DecomposeLattice[State].empty) { (s, i) =>
+    (0 until setSize).foldLeft(Dotted(AddWinsSet.empty[String])) { (s, i) =>
       val delta = s.named(replicaID).add(s"${i.toString}$replicaID").anon
       DecomposeLattice[State].merge(s, delta)
     }

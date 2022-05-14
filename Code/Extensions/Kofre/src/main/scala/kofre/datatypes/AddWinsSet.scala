@@ -1,10 +1,10 @@
 package kofre.datatypes
 
-import kofre.base.DecomposeLattice
-import kofre.time.{Dots, Dot}
+import kofre.base.{Bottom, DecomposeLattice}
+import kofre.time.{Dot, Dots}
 import kofre.dotted.DottedDecompose.*
 import kofre.decompose.*
-import kofre.dotted.{DottedDecompose, DotMap, DotSet, Dotted, HasDots}
+import kofre.dotted.{DotMap, DotSet, Dotted, DottedDecompose, HasDots}
 import kofre.datatypes.AddWinsSet
 import kofre.syntax.OpsSyntaxHelper
 
@@ -18,8 +18,10 @@ object AddWinsSet {
 
   def empty[E]: AddWinsSet[E] = AddWinsSet(DotMap.empty)
 
+  given bottom[E]: Bottom[AddWinsSet[E]] with { override def empty: AddWinsSet[E] = AddWinsSet.empty }
+
   given contextDecompose[E]: DottedDecompose[AddWinsSet[E]] = DottedDecompose.derived
-  given asCausalContext[E]: HasDots[AddWinsSet[E]] = HasDots.derived
+  given asCausalContext[E]: HasDots[AddWinsSet[E]]          = HasDots.derived
 
   implicit class AWSetSyntax[C, E](container: C) extends OpsSyntaxHelper[C, AddWinsSet[E]](container) {
 
@@ -28,15 +30,15 @@ object AddWinsSet {
     def contains(elem: E)(using QueryP): Boolean = current.inner.contains(elem)
 
     def add(e: E)(using CausalP, CausalMutationP, QueryP, IdentifierP): C = {
-      val dm      = current.inner
-      val cc      = context
-      val nextDot = cc.max(replicaID).fold(Dot(replicaID, 0))(_.advance)
-      val v: DotSet       = dm.getOrElse(e, DotSet.empty)
+      val dm        = current.inner
+      val cc        = context
+      val nextDot   = cc.max(replicaID).fold(Dot(replicaID, 0))(_.advance)
+      val v: DotSet = dm.getOrElse(e, DotSet.empty)
 
       deltaState[E].make(
         dm = DotMap(Map(e -> DotSet(Dots.single(nextDot)))),
         cc = v.repr add nextDot
-        ).mutator
+      ).mutator
     }
 
     def addAll(elems: Iterable[E])(using IdentifierP, CausalP, CausalMutationP, QueryP): C = {
@@ -55,7 +57,7 @@ object AddWinsSet {
       deltaState[E].make(
         dm = DotMap((elems zip nextDots.iterator.map(dot => DotSet(Dots.single(dot)))).toMap),
         cc = ccontextSet
-        ).mutator
+      ).mutator
     }
 
     def remove(e: E)(using QueryP, CausalMutationP): C = {

@@ -33,7 +33,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
   var checkpoint: Int = 0
 
-  var changesSinceCP: SetState = DecomposeLattice[SetState].empty
+  var changesSinceCP: SetState = Dotted(AddWinsSet.empty[Int])
 
   var remoteToAddress: Map[RemoteRef, (String, Int)] = Map()
 

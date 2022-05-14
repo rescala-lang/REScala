@@ -2,6 +2,8 @@ package central
 
 import central.Bindings._
 import kofre.base.DecomposeLattice
+import kofre.datatypes.AddWinsSet
+import kofre.dotted.Dotted
 import loci.communicator.tcp.TCP
 import loci.registry.Registry
 
@@ -16,7 +18,7 @@ class Checkpointer(listenPort: Int) {
 
   val minCheckpointSize: Int = 10
 
-  val bottom: SetState = DecomposeLattice[SetState].empty
+  val bottom: SetState = Dotted(AddWinsSet.empty[Int])
 
   var fullState: SetState = bottom
 

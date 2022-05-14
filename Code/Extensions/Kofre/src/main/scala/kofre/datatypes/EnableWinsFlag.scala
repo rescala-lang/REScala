@@ -11,7 +11,7 @@ import kofre.time.Dots
   *
   * When the flag is concurrently disabled and enabled then the enable operation wins, i.e. the resulting flag is enabled.
   */
-case class EnableWinsFlag(inner: DotSet)
+case class EnableWinsFlag(inner: DotSet) derives Bottom
 
 object EnableWinsFlag {
 

@@ -10,21 +10,21 @@ class IntAsDecomposeLatticeTest extends munit.ScalaCheckSuite {
   property("leq") {
     forAll { (a: Int, b: Int, c: Int) =>
       assert(
-        IntAsUIJDLattice.lteq(a, a),
+        intMaxLattice.lteq(a, a),
         s"leq should be reflexive, but $a is not leq $a"
-      )
+        )
 
       assert(
-        !(IntAsUIJDLattice.lteq(a, b) && IntAsUIJDLattice.lteq(b, c)) || IntAsUIJDLattice.lteq(a, c),
+        !(intMaxLattice.lteq(a, b) && intMaxLattice.lteq(b, c)) || intMaxLattice.lteq(a, c),
         s"leq should be transitive, but $a leq $b and $b leq $c and $a is not leq $c"
-      )
+        )
     }
   }
 
   property("merge") {
     forAll { (a: Int, b: Int, c: Int) =>
-      val mergeAB    = IntAsUIJDLattice.merge(a, b)
-      val mergeTwice = IntAsUIJDLattice.merge(mergeAB, b)
+      val mergeAB    = intMaxLattice.merge(a, b)
+      val mergeTwice = intMaxLattice.merge(mergeAB, b)
 
       assertEquals(
         mergeTwice,
@@ -32,7 +32,7 @@ class IntAsDecomposeLatticeTest extends munit.ScalaCheckSuite {
         s"merge should be idempotent, but $mergeTwice does not equal $mergeAB"
       )
 
-      val mergeBA = IntAsUIJDLattice.merge(b, a)
+      val mergeBA = intMaxLattice.merge(b, a)
 
       assertEquals(
         mergeBA,
@@ -40,9 +40,9 @@ class IntAsDecomposeLatticeTest extends munit.ScalaCheckSuite {
         s"merge should be commutative, but $mergeBA does not equal $mergeAB"
       )
 
-      val mergeAB_C = IntAsUIJDLattice.merge(mergeAB, c)
-      val mergeBC   = IntAsUIJDLattice.merge(b, c)
-      val mergeA_BC = IntAsUIJDLattice.merge(a, mergeBC)
+      val mergeAB_C = intMaxLattice.merge(mergeAB, c)
+      val mergeBC   = intMaxLattice.merge(b, c)
+      val mergeA_BC = intMaxLattice.merge(a, mergeBC)
 
       assertEquals(
         mergeA_BC,
@@ -54,8 +54,8 @@ class IntAsDecomposeLatticeTest extends munit.ScalaCheckSuite {
 
   property("decompose") {
     forAll { (i: Int) =>
-      val decomposed = IntAsUIJDLattice.decompose(i)
-      val merged     = decomposed.reduceOption(IntAsUIJDLattice.merge)
+      val decomposed = intMaxLattice.decompose(i)
+      val merged     = decomposed.reduceOption(intMaxLattice.merge)
 
       merged match {
         case None =>
@@ -74,21 +74,21 @@ class SetAsDecomposeLatticeTest extends munit.ScalaCheckSuite {
   property("leq") {
     forAll { (a: Set[Int], b: Set[Int], c: Set[Int]) =>
       assert(
-        SetAsUIJDLattice.lteq(a, a),
+        setLattice.lteq(a, a),
         s"leq should be reflexive, but $a is not leq $a"
-      )
+        )
 
       assert(
-        !(SetAsUIJDLattice.lteq(a, b) && SetAsUIJDLattice.lteq(b, c)) || SetAsUIJDLattice.lteq(a, c),
+        !(setLattice.lteq(a, b) && setLattice.lteq(b, c)) || setLattice.lteq(a, c),
         s"leq should be transitive, but $a leq $b and $b leq $c and $a is not leq $c"
-      )
+        )
     }
   }
 
   property("merge") {
     forAll { (a: Set[Int], b: Set[Int], c: Set[Int]) =>
-      val mergeAB    = SetAsUIJDLattice.merge(a, b)
-      val mergeTwice = SetAsUIJDLattice.merge(mergeAB, b)
+      val mergeAB    = setLattice.merge(a, b)
+      val mergeTwice = setLattice.merge(mergeAB, b)
 
       assertEquals(
         mergeTwice,
@@ -96,7 +96,7 @@ class SetAsDecomposeLatticeTest extends munit.ScalaCheckSuite {
         s"merge should be idempotent, but $mergeTwice does not equal $mergeAB"
       )
 
-      val mergeBA = SetAsUIJDLattice.merge(b, a)
+      val mergeBA = setLattice.merge(b, a)
 
       assertEquals(
         mergeBA,
@@ -104,9 +104,9 @@ class SetAsDecomposeLatticeTest extends munit.ScalaCheckSuite {
         s"merge should be commutative, but $mergeBA does not equal $mergeAB"
       )
 
-      val mergeAB_C = SetAsUIJDLattice.merge(mergeAB, c)
-      val mergeBC   = SetAsUIJDLattice.merge(b, c)
-      val mergeA_BC = SetAsUIJDLattice.merge(a, mergeBC)
+      val mergeAB_C = setLattice.merge(mergeAB, c)
+      val mergeBC   = setLattice.merge(b, c)
+      val mergeA_BC = setLattice.merge(a, mergeBC)
 
       assertEquals(
         mergeA_BC,
@@ -118,8 +118,8 @@ class SetAsDecomposeLatticeTest extends munit.ScalaCheckSuite {
 
   property("decompose") {
     forAll { (s: Set[Int]) =>
-      val decomposed = SetAsUIJDLattice.decompose(s)
-      val merged     = decomposed.reduceOption(SetAsUIJDLattice[Int].merge)
+      val decomposed = setLattice.decompose(s)
+      val merged     = decomposed.reduceOption(setLattice[Int].merge)
 
       merged match {
         case None =>
@@ -138,12 +138,12 @@ class OptionAsDecomposeLatticeTest extends munit.ScalaCheckSuite {
   property("leq") {
     forAll { (a: Option[Int], b: Option[Int], c: Option[Int]) =>
       assert(
-        OptionAsUIJDLattice[Int].lteq(a, a),
+        optionLattice[Int].lteq(a, a),
         s"leq should be reflexive, but $a is not leq $a"
-      )
+        )
 
       assert(
-        !(OptionAsUIJDLattice[Int].lteq(a, b) && OptionAsUIJDLattice[Int].lteq(b, c)) || OptionAsUIJDLattice[Int].lteq(
+        !(optionLattice[Int].lteq(a, b) && optionLattice[Int].lteq(b, c)) || optionLattice[Int].lteq(
           a,
           c
         ),
@@ -154,8 +154,8 @@ class OptionAsDecomposeLatticeTest extends munit.ScalaCheckSuite {
 
   property("merge") {
     forAll { (a: Option[Int], b: Option[Int], c: Option[Int]) =>
-      val mergeAB    = OptionAsUIJDLattice[Int].merge(a, b)
-      val mergeTwice = OptionAsUIJDLattice[Int].merge(mergeAB, b)
+      val mergeAB    = optionLattice[Int].merge(a, b)
+      val mergeTwice = optionLattice[Int].merge(mergeAB, b)
 
       assertEquals(
         mergeTwice,
@@ -163,7 +163,7 @@ class OptionAsDecomposeLatticeTest extends munit.ScalaCheckSuite {
         s"merge should be idempotent, but $mergeTwice does not equal $mergeAB"
       )
 
-      val mergeBA = OptionAsUIJDLattice[Int].merge(b, a)
+      val mergeBA = optionLattice[Int].merge(b, a)
 
       assertEquals(
         mergeBA,
@@ -171,9 +171,9 @@ class OptionAsDecomposeLatticeTest extends munit.ScalaCheckSuite {
         s"merge should be commutative, but $mergeBA does not equal $mergeAB"
       )
 
-      val mergeAB_C = OptionAsUIJDLattice[Int].merge(mergeAB, c)
-      val mergeBC   = OptionAsUIJDLattice[Int].merge(b, c)
-      val mergeA_BC = OptionAsUIJDLattice[Int].merge(a, mergeBC)
+      val mergeAB_C = optionLattice[Int].merge(mergeAB, c)
+      val mergeBC   = optionLattice[Int].merge(b, c)
+      val mergeA_BC = optionLattice[Int].merge(a, mergeBC)
 
       assertEquals(
         mergeA_BC,
@@ -185,8 +185,8 @@ class OptionAsDecomposeLatticeTest extends munit.ScalaCheckSuite {
 
   property("decompose") {
     forAll { (o: Option[Int]) =>
-      val decomposed = OptionAsUIJDLattice[Int].decompose(o)
-      val merged     = decomposed.reduceOption(OptionAsUIJDLattice[Int].merge)
+      val decomposed = optionLattice[Int].decompose(o)
+      val merged     = decomposed.reduceOption(optionLattice[Int].merge)
 
       merged match {
         case None =>

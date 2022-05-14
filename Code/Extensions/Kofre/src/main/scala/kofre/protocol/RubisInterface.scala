@@ -62,7 +62,7 @@ object RubisInterface {
       val (_, _, m) = current
       val newMap =
         if (m.contains(auctionId)) Map.empty[AID, AuctionInterface.AuctionData]
-        else Map(auctionId -> DecomposeLattice[AuctionInterface.AuctionData].empty)
+        else Map(auctionId -> AuctionInterface.AuctionData())
 
       deltaState.make(auctions = newMap).mutator
     }

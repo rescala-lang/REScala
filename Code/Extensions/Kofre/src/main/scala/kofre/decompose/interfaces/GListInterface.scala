@@ -1,6 +1,6 @@
 package kofre.decompose.interfaces
 
-import kofre.base.DecomposeLattice
+import kofre.base.{Bottom, DecomposeLattice}
 import kofre.decompose.*
 import kofre.datatypes.{Epoche, TimedVal}
 import kofre.dotted.DottedDecompose
@@ -43,8 +43,6 @@ object GListInterface {
       override def decompose(state: Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]])
           : Iterable[Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]]] =
         state.toList.map((edge: (GListNode[TimedVal[E]], Elem[TimedVal[E]])) => Map(edge))
-
-      override def empty: Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]] = Map.empty
 
       @tailrec
       private def insertEdge(
@@ -131,7 +129,7 @@ object GListInterface {
 
     def insertAll(i: Int, elems: Iterable[E])(using MutationP, IdentifierP): C = {
       if (elems.isEmpty)
-        DecomposeLattice[GList[E]].empty
+        GListInterface.empty[E]
       else
         findNth(current, Head[TimedVal[E]](), i) match {
           case None => Map.empty

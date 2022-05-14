@@ -4,6 +4,7 @@ import decentral.Bindings._
 import kofre.base.DecomposeLattice
 import kofre.decompose.containers.DeltaBufferRDT
 import kofre.datatypes.AddWinsSet
+import kofre.dotted.Dotted
 import kofre.syntax.DottedName
 import loci.transmitter.{RemoteAccessException, RemoteRef}
 
@@ -30,7 +31,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
 
   var unboundLocalChanges: List[SetState] = List()
 
-  var unboundRemoteChanges: SetState = DecomposeLattice[SetState].empty
+  var unboundRemoteChanges: SetState = Dotted(AddWinsSet.empty[Int])
 
   def sendDeltaRecursive(
       remoteReceiveDelta: SetState => Future[Unit],
@@ -98,7 +99,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
             set = set.applyDelta(DottedName(remoteRef.toString, changes)).resetDeltaBuffer()
 
             unboundRemoteChanges =
-              DecomposeLattice[SetState].diff(changes, unboundRemoteChanges).getOrElse(DecomposeLattice[SetState].empty)
+              DecomposeLattice[SetState].diff(changes, unboundRemoteChanges).getOrElse(Dotted(AddWinsSet.empty))
 
             checkpoints = checkpoints.updated(replicaID, counter)
 
@@ -180,7 +181,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
 
       val unboundChanges = unboundLocalChanges.foldLeft(unboundRemoteChanges) {DecomposeLattice[SetState].merge }
 
-      if (unboundChanges != DecomposeLattice[SetState].empty)
+      if (unboundChanges != Dotted(AddWinsSet.empty))
         sendDelta(unboundChanges, rr)
     }
     ()

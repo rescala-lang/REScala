@@ -1,6 +1,6 @@
 package rescala.extra.replication
 
-import kofre.base.DecomposeLattice
+import kofre.base.{Bottom, DecomposeLattice}
 import kofre.decompose.containers.DeltaBufferRDT
 import kofre.dotted.Dotted
 import kofre.syntax.DottedName
@@ -18,10 +18,10 @@ class LociDist[Api <: RescalaInterface](val api: Api) {
   import api._
 
   def distributeDeltaCRDT[A](
-                              signal: Signal[DeltaBufferRDT[A]],
-                              deltaEvt: Evt[DottedName[A]],
-                              registry: Registry
-  )(binding: Binding[Dotted[A] => Unit, Dotted[A] => Future[Unit]])(implicit dcl: DecomposeLattice[Dotted[A]]): Unit = {
+      signal: Signal[DeltaBufferRDT[A]],
+      deltaEvt: Evt[DottedName[A]],
+      registry: Registry
+  )(binding: Binding[Dotted[A] => Unit, Dotted[A] => Future[Unit]])(implicit dcl: DecomposeLattice[Dotted[A]], bottom: Bottom[Dotted[A]]): Unit = {
     registry.bindSbj(binding) { (remoteRef: RemoteRef, deltaState: Dotted[A]) =>
       deltaEvt.fire(DottedName(remoteRef.toString, deltaState))
     }
@@ -34,7 +34,7 @@ class LociDist[Api <: RescalaInterface](val api: Api) {
 
       // Send full state to initialize remote
       val currentState = signal.readValueOnce.state
-      if (currentState != dcl.empty) remoteUpdate(currentState)
+      if (currentState != bottom.empty) remoteUpdate(currentState)
 
       // Whenever the crdt is changed propagate the delta
       // Praktisch wäre etwas wie crdt.observeDelta

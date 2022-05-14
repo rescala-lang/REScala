@@ -1,5 +1,6 @@
 package kofre.decompose.interfaces
 
+import kofre.base.DecomposeLattice
 import kofre.decompose.*
 import kofre.dotted.DottedDecompose
 import kofre.syntax.OpsSyntaxHelper
@@ -14,6 +15,7 @@ object TwoPSetInterface {
 
   type TwoPSet[E] = (Set[E], Set[E])
 
+  given decomposeLattice[E]: DecomposeLattice[TwoPSet[E]] = DecomposeLattice.derived
   given contextDecompose[E]: DottedDecompose[TwoPSet[E]] = DottedDecompose.liftDecomposeLattice
 
   implicit class TwoPSetSyntax[C, E](container: C) extends OpsSyntaxHelper[C, TwoPSet[E]](container) {

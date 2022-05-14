@@ -1,6 +1,6 @@
 package kofre.decompose.interfaces
 
-import kofre.base.DecomposeLattice
+import kofre.base.{Bottom, DecomposeLattice}
 import kofre.base.Lattice.Operators
 import kofre.decompose.*
 import kofre.dotted.DottedDecompose
@@ -20,10 +20,8 @@ object LexCounterInterface {
   case class LexPair[A, B](fst: A, snd: B)
 
   case object LexPair {
-    implicit def LexPairAsUIJDLattice[A: DecomposeLattice, B: DecomposeLattice]: DecomposeLattice[LexPair[A, B]] =
+    implicit def LexPairAsUIJDLattice[A: DecomposeLattice: Bottom, B: DecomposeLattice: Bottom]: DecomposeLattice[LexPair[A, B]] =
       new DecomposeLattice[LexPair[A, B]] {
-        override def empty: LexPair[A, B] = LexPair(DecomposeLattice[A].empty, DecomposeLattice[B].empty)
-
         override def lteq(left: LexPair[A, B], right: LexPair[A, B]): Boolean =
           DecomposeLattice[A].lteq(left.fst, right.fst) && (
             !DecomposeLattice[A].lteq(right.fst, left.fst) || DecomposeLattice[B].lteq(left.snd, right.snd)
@@ -41,14 +39,18 @@ object LexCounterInterface {
           if (lfleq && !rfleq) right
           else if (rfleq && !lfleq) left
           else if (lfleq && rfleq) LexPair(left.fst, left.snd merge right.snd)
-          else LexPair(left.fst merge right.fst, DecomposeLattice[B].empty)
+          else LexPair(left.fst merge right.fst, Bottom[B].empty)
         }
       }
   }
 
   type LexCounter = Map[String, LexPair[Int, Int]]
 
-  given contextDecompose: DottedDecompose[LexCounter] = DottedDecompose.liftDecomposeLattice
+  given contextDecompose: DottedDecompose[LexCounter] = {
+    given Bottom[Int] with { def empty: Int =  Int.MinValue }
+    given DecomposeLattice[Int] = DecomposeLattice.intMaxLattice
+    DottedDecompose.liftDecomposeLattice
+  }
 
   implicit class LexCounterSyntax[C](container: C) extends OpsSyntaxHelper[C, LexCounter](container) {
 

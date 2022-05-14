@@ -36,8 +36,6 @@ object RCounterInterface {
       case ((linc, ldec), (rinc, rdec)) =>
         (linc max rinc, ldec max rdec)
     }
-
-    override def empty: (Int, Int) = (0, 0)
   }
 
   type RCounter = DotFun[(Int, Int)]

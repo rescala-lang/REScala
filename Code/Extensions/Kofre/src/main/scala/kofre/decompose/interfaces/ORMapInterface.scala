@@ -19,7 +19,7 @@ object ORMapInterface {
 
   def empty[K, V]: ORMap[K, V] = DotMap.empty
 
-  given contextDecompose[K, V: DottedDecompose: HasDots]: DottedDecompose[ORMap[K, V]] = DotMap.contextDecompose
+  given contextDecompose[K, V: DottedDecompose: HasDots: Bottom]: DottedDecompose[ORMap[K, V]] = DotMap.contextDecompose
 
 
   def make[K, V](
@@ -32,7 +32,7 @@ object ORMapInterface {
 
     def contains(k: K)(using QueryP): Boolean = current.contains(k)
 
-    def queryKey[A](k: K)(using QueryP, CausalP, DottedDecompose[V], HasDots[V]): Dotted[V] = {
+    def queryKey[A](k: K)(using QueryP, CausalP, Bottom[V]): Dotted[V] = {
       Dotted(current.getOrElse(k, Bottom[V].empty), context)
     }
 
@@ -40,8 +40,7 @@ object ORMapInterface {
     def mutateKey(k: K, m: (Defs.Id, Dotted[V]) => Dotted[V])(using
                                                               CausalMutationP,
                                                               IdentifierP,
-                                                              DottedDecompose[V],
-                                                              HasDots[V]
+                                                              Bottom[V]
     ): C = {
       val v = current.getOrElse(k, Bottom[V].empty)
 
@@ -57,8 +56,7 @@ object ORMapInterface {
     def mutateKeyNamedCtx(k: K)(m: DottedName[V] => DottedName[V])(using
                                                                    CausalMutationP,
                                                                    IdentifierP,
-                                                                   HasDots[V],
-                                                                   DottedDecompose[V]
+                                                                   Bottom[V]
     ): C = {
       val v                           = current.getOrElse(k, Bottom[V].empty)
       val Dotted(stateDelta, ccDelta) = m(DottedName(replicaID, Dotted(v, context))).anon
@@ -68,7 +66,7 @@ object ORMapInterface {
       ).mutator
     }
 
-    def remove(k: K)(using CausalMutationP, DottedDecompose[V], HasDots[V]): C = {
+    def remove(k: K)(using CausalMutationP, Bottom[V], HasDots[V]): C = {
       val v = current.getOrElse(k, Bottom[V].empty)
 
       make[K, V](
@@ -76,7 +74,7 @@ object ORMapInterface {
       ).mutator
     }
 
-    def removeAll(keys: Iterable[K])(using CausalMutationP, DottedDecompose[V], HasDots[V]): C = {
+    def removeAll(keys: Iterable[K])(using CausalMutationP, Bottom[V], HasDots[V]): C = {
       val values = keys.map(k => current.getOrElse(k, Bottom[V].empty))
       val dots = values.foldLeft(Dots.empty) {
         case (set, v) => set union HasDots[V].dots(v)

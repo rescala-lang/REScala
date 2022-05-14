@@ -14,7 +14,7 @@ import scala.deriving.Mirror
   * Requires a bottom to enable automatic decomposition of Product types
   */
 @implicitNotFound("Not a decompose lattice »${A}«")
-trait DecomposeLattice[A] extends Lattice[A], Bottom[A] {
+trait DecomposeLattice[A] extends Lattice[A] {
 
   /** computes delta without state */
   def diff(state: A, delta: A): Option[A] = {
@@ -34,26 +34,23 @@ trait DecomposeLattice[A] extends Lattice[A], Bottom[A] {
 
 object DecomposeLattice {
   def apply[A](implicit l: DecomposeLattice[A]): DecomposeLattice[A] = l
-  def bottom[A](implicit l: DecomposeLattice[A]): A                  = l.empty
 
   /** reuse existing lattice instance to implement a DecomposeLattice */
   trait DecomposeFromLattice[A](lattice: Lattice[A]) extends DecomposeLattice[A] {
     export lattice.merge
   }
 
-  given IntAsUIJDLattice: DecomposeLattice[Int] = new DecomposeFromLattice[Int](_ max _) {
+  given intMaxLattice: DecomposeLattice[Int] = new DecomposeFromLattice[Int](_ max _) {
     override def lteq(left: Int, right: Int): Boolean = left <= right
     override def decompose(state: Int): Iterable[Int] = List(state)
-    override def empty: Int                           = 0
   }
 
-  given SetAsUIJDLattice[A]: DecomposeLattice[Set[A]] = new DecomposeFromLattice[Set[A]](setLattice) {
+  given setLattice[A]: DecomposeLattice[Set[A]] = new DecomposeFromLattice[Set[A]](setLattice) {
     override def lteq(left: Set[A], right: Set[A]): Boolean = left subsetOf right
     override def decompose(state: Set[A]): Iterable[Set[A]] = state.map(Set(_))
-    override def empty: Set[A]                              = Set.empty[A]
   }
 
-  given OptionAsUIJDLattice[A: DecomposeLattice]: DecomposeLattice[Option[A]] =
+  given optionLattice[A: DecomposeLattice]: DecomposeLattice[Option[A]] =
     new DecomposeFromLattice[Option[A]](optionLattice) {
       override def lteq(left: Option[A], right: Option[A]): Boolean = (left, right) match {
         case (None, _)          => true
@@ -65,8 +62,6 @@ object DecomposeLattice {
         case None    => List.empty[Option[A]]
         case Some(v) => v.decomposed.map(Some(_))
       }
-
-      override def empty: Option[A] = Option.empty[A]
     }
 
   given MapAsUIJDLattice[K, V: DecomposeLattice]: DecomposeLattice[Map[K, V]] =
@@ -82,26 +77,25 @@ object DecomposeLattice {
           case s              => s
         }
       }
-
-      override def empty: Map[K, V] = Map.empty[K, V]
     }
 
-  given PairAsUIJDLattice[A: DecomposeLattice, B: DecomposeLattice]: DecomposeLattice[(A, B)] = derived
+  // explicit pairs are for scala 2 compat
+  given PairAsUIJDLattice[A: DecomposeLattice: Bottom, B: DecomposeLattice: Bottom]: DecomposeLattice[(A, B)] = derived
 
-  given TripleAsUIJDLattice[A: DecomposeLattice, B: DecomposeLattice, C: DecomposeLattice]
+  given TripleAsUIJDLattice[A: DecomposeLattice: Bottom, B: DecomposeLattice: Bottom, C: DecomposeLattice: Bottom]
       : DecomposeLattice[(A, B, C)] = derived
-
-  inline def tupleAsDecomposeLattice[T <: Tuple: Mirror.ProductOf]: DecomposeLattice[T] = derived
 
   inline def derived[T <: Product](using pm: Mirror.ProductOf[T]): DecomposeLattice[T] = {
     val lattices: Tuple = summonAll[Tuple.Map[pm.MirroredElemTypes, DecomposeLattice]]
-    new ProductDecomposeLattice[T](lattices, pm)
+    val bottoms: Tuple = summonAll[Tuple.Map[pm.MirroredElemTypes, Bottom]]
+    new ProductDecomposeLattice[T](lattices, bottoms, pm)
   }
 
-  class ProductDecomposeLattice[T <: Product](lattices: Tuple, pm: Mirror.ProductOf[T])
+  class ProductDecomposeLattice[T <: Product](lattices: Tuple, bottoms: Tuple, pm: Mirror.ProductOf[T])
       extends DecomposeLattice[T] {
 
     private def lat(i: Int): DecomposeLattice[Any] = lattices.productElement(i).asInstanceOf[DecomposeLattice[Any]]
+    private def bot(i: Int): Bottom[Any] = bottoms.productElement(i).asInstanceOf[Bottom[Any]]
 
     override def merge(left: T, right: T): T =
       pm.fromProduct(new Product {
@@ -110,20 +104,13 @@ object DecomposeLattice {
         def productElement(i: Int): Any  = lat(i).merge(left.productElement(i), right.productElement(i))
       })
 
-    override def empty: T =
-      pm.fromProduct(
-        lattices.map[[α] =>> Any](
-          [t] => (l: t) => l.asInstanceOf[DecomposeLattice[Any]].empty
-        )
-      )
-
     override def decompose(a: T): Iterable[T] =
       Range(0, lattices.productArity).flatMap { j =>
         lat(j).decompose(a.productElement(j)).map { elem =>
           pm.fromProduct(new Product {
             def canEqual(that: Any): Boolean = false
             def productArity: Int            = lattices.productArity
-            def productElement(i: Int): Any  = if i == j then elem else lat(i).empty
+            def productElement(i: Int): Any  = if i == j then elem else bot(i).empty
           })
         }
       }

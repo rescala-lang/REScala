@@ -45,7 +45,7 @@ object DeltaBufferRDT {
   given contextPermissions[L: DottedDecompose]
       : (PermIdMutate[DeltaBufferRDT[L], L] & PermCausalMutate[DeltaBufferRDT[L], L]) = CRDTInterface.dottedPermissions
 
-  given fullPermission[L: DecomposeLattice]: PermIdMutate[DeltaBufferRDT[L], L] = CRDTInterface.fullPermissions
+  given fullPermission[L: DecomposeLattice: Bottom]: PermIdMutate[DeltaBufferRDT[L], L] = CRDTInterface.fullPermissions
 
   /** Creates a new PNCounter instance
     *

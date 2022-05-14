@@ -1,6 +1,6 @@
 package test.kofre
 
-import kofre.base.{DecomposeLattice, Defs, Lattice}
+import kofre.base.{Bottom, DecomposeLattice, Defs, Lattice}
 import kofre.time.VectorClock
 import kofre.datatypes.{GrowOnlyCounter, PosNegCounter}
 import kofre.primitives.{CausalQueue, LastWriterWins, MultiValueRegister}
@@ -13,14 +13,14 @@ class GrowDecomposes   extends DecomposeProperties[GrowOnlyCounter]
 class PosNegDecomposes extends DecomposeProperties[PosNegCounter]
 class TupleDecomposes  extends DecomposeProperties[(Set[Int], GrowOnlyCounter)]
 
-abstract class DecomposeProperties[A: Arbitrary: DecomposeLattice] extends munit.ScalaCheckSuite {
+abstract class DecomposeProperties[A: Arbitrary: DecomposeLattice: Bottom] extends munit.ScalaCheckSuite {
 
   test("decomposition") {
     forAll { (counter: A) =>
 
       val decomposed = counter.decomposed
 
-      val empty = DecomposeLattice[A].empty
+      val empty = Bottom[A].empty
 
       decomposed.foreach { d =>
         assert(Lattice[A].lteq(d, counter), "decompose not smaller")

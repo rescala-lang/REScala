@@ -55,8 +55,6 @@ object RGA {
       /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
       override def decompose(state: RGANode[A]): Iterable[RGANode[A]] = List(state)
 
-      override def empty: RGANode[A] = throw new UnsupportedOperationException("RGANode does not have a bottom value")
-
       /** By assumption: associative, commutative, idempotent. */
       override def merge(left: RGANode[A], right: RGANode[A]): RGANode[A] = (left, right) match {
         case (Alive(lv), Alive(rv)) => Alive(DecomposeLattice[TimedVal[A]].merge(lv, rv))

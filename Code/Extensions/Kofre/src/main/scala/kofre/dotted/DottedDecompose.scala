@@ -18,7 +18,6 @@ trait DottedDecompose[A] extends DottedLattice[A], DecomposeLattice[Dotted[A]] {
     override def lteq(left: Dotted[B], right: Dotted[B]): Boolean = DottedDecompose.this.lteq(from(left), from(right))
     override def decompose(a: Dotted[B]): Iterable[Dotted[B]] = DottedDecompose.this.decompose(from(a)).map(to)
     override def mergePartial(left: Dotted[B], right: Dotted[B]): B = to(Dotted(DottedDecompose.this.mergePartial(from(left), from(right)))).store
-    override def empty: Dotted[B] = to(DottedDecompose.this.empty)
   }
 }
 
@@ -27,13 +26,15 @@ object DottedDecompose {
 
   inline def derived[T <: Product](using pm: Mirror.ProductOf[T]): DottedDecompose[T] = {
     val lattices: Tuple = summonAll[Tuple.Map[pm.MirroredElemTypes, DottedDecompose]]
-    new ProductDottedDecompose[T](lattices, pm)
+    val bottoms: Tuple = summonAll[Tuple.Map[pm.MirroredElemTypes, DottedDecompose]]
+    new ProductDottedDecompose[T](lattices, bottoms, pm)
   }
 
-  class ProductDottedDecompose[T <: Product](lattices: Tuple, pm: Mirror.ProductOf[T])
+  class ProductDottedDecompose[T <: Product](lattices: Tuple, bottoms: Tuple, pm: Mirror.ProductOf[T])
     extends DottedDecompose[T] {
 
     private def lat(i: Int): DottedDecompose[Any] = lattices.productElement(i).asInstanceOf[DottedDecompose[Any]]
+    private def bot(i: Int): Bottom[Any] = bottoms.productElement(i).asInstanceOf[Bottom[Any]]
 
     override def mergePartial(left: Dotted[T], right: Dotted[T]): T =
       pm.fromProduct(new Product {
@@ -43,13 +44,6 @@ object DottedDecompose {
           lat(i).mergePartial(left.map(_.productElement(i)), right.map(_.productElement(i)))
       })
 
-    override def empty: Dotted[T] =
-      Dotted(pm.fromProduct(
-        lattices.map[[α] =>> Any](
-          [t] => (l: t) => l.asInstanceOf[DottedDecompose[Any]].empty.store
-        )
-      ))
-
     override def decompose(a: Dotted[T]): Iterable[Dotted[T]] =
       Range(0, lattices.productArity).flatMap { j =>
         lat(j).decompose(a.map(_.productElement(j))).map {
@@ -57,7 +51,7 @@ object DottedDecompose {
             pm.fromProduct(new Product {
               def canEqual(that: Any): Boolean = false
               def productArity: Int            = lattices.productArity
-              def productElement(i: Int): Any  = if i == j then elem else lat(i).empty.store
+              def productElement(i: Int): Any  = if i == j then elem else bot(i).empty
             })
           }
         }
@@ -92,7 +86,5 @@ object DottedDecompose {
       override def decompose(state: Dotted[A]): Iterable[Dotted[A]] = {
         DecomposeLattice[A].decompose(state.store).map(Dotted(_, Dots.empty))
       }
-
-      override def empty: Dotted[A] = Dotted(DecomposeLattice[A].empty)
     }
 }

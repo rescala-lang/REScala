@@ -25,9 +25,6 @@ object DotFun {
 
   def empty[A]: DotFun[A] = DotFun(Map.empty)
 
-  given bottom[A]: Bottom[DotFun[A]] with
-    override def empty: DotFun[A] = DotFun.empty
-
   given perDotLattice[A: Lattice]: DottedLattice[DotFun[A]] = (left, right) => {
     val fromLeft = left.store.repr.filter { case (dot, _) => !right.context.contains(dot) }
 
@@ -52,8 +49,6 @@ object DotFun {
   given perDotDecompose[A: DecomposeLattice]: DottedDecompose[DotFun[A]] =
     new FromConlattice[DotFun[A]](perDotLattice[A]) {
       private def dots(a: DotFun[A]): Dots = dotStore.dots(a)
-
-      override def empty: Dotted[DotFun[A]] = Dotted(DotFun.empty)
 
       override def lteq(left: Dotted[DotFun[A]], right: Dotted[DotFun[A]]): Boolean = {
         val firstCondition = left.context.forall(right.context.contains)

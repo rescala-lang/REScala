@@ -35,8 +35,6 @@ object DotSet {
   given contextDecompose: DottedDecompose[DotSet] =
     new FromConlattice[DotSet](dottedLattice) {
 
-      override def empty: Dotted[DotSet] = Dotted(DotSet.empty)
-
       override def lteq(left: Dotted[DotSet], right: Dotted[DotSet]): Boolean = {
         val firstCondition = left.context.forall(right.context.contains)
 

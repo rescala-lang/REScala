@@ -1,12 +1,11 @@
 package kofre.decompose.containers
 
 import kofre.base.Defs.Id
-import kofre.base.{DecomposeLattice, Defs}
+import kofre.base.{Bottom, DecomposeLattice, Defs, Lattice}
 import kofre.time.Dots
 import kofre.syntax.DottedName
 import kofre.syntax.{PermCausal, PermCausalMutate, PermIdMutate, PermQuery}
-import kofre.base.Lattice
-import kofre.dotted.{DottedDecompose, DottedLattice, Dotted}
+import kofre.dotted.{Dotted, DottedDecompose, DottedLattice}
 
 trait CRDTInterface[State, Wrapper] {
 
@@ -30,7 +29,7 @@ object CRDTInterface {
       override def context(c: B): Dots = c.state.context
     }
 
-  def fullPermissions[L: DecomposeLattice, B <: CRDTInterface[L, B]]: PermIdMutate[B, L] =
+  def fullPermissions[L: DecomposeLattice: Bottom, B <: CRDTInterface[L, B]]: PermIdMutate[B, L] =
     new PermIdMutate[B, L] {
       override def replicaId(c: B): Id       = c.replicaID
       override def mutate(c: B, delta: L): B = c.applyDelta(DottedName(c.replicaID, Dotted(delta)))

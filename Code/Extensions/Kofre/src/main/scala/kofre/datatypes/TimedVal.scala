@@ -30,8 +30,6 @@ object TimedVal {
     /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
     override def decompose(state: TimedVal[A]): Iterable[TimedVal[A]] = List(state)
 
-    override def empty: TimedVal[A] = throw new UnsupportedOperationException("TimedVal does not have a bottom value")
-
     /** By assumption: associative, commutative, idempotent. */
     override def merge(left: TimedVal[A], right: TimedVal[A]): TimedVal[A] =
       if (left.laterThan(right)) left else right
