@@ -7,13 +7,13 @@ import kofre.base.Defs.Time
 import kofre.protocol.AuctionInterface.AuctionData
 import kofre.decompose.interfaces.GListInterface.{Elem, GListNode}
 import kofre.datatypes.RGA.RGANode
-import kofre.time.{ArrayRanges, Dots, Dot}
+import kofre.time.{ArrayRanges, Dot, Dots}
 import kofre.decompose.interfaces.LexCounterInterface.LexPair
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
 import kofre.decompose.interfaces.ORMapInterface.ORMap
 import kofre.decompose.interfaces.RCounterInterface.RCounter
-import kofre.decompose.interfaces.GrowMap
-import kofre.datatypes.{AddWinsSet, EnableWinsFlag, Epoche, GrowOnlyCounter, PosNegCounter, RGA, TimedVal}
+import kofre.datatypes.{AddWinsSet, EnableWinsFlag, Epoche, GrowMap, GrowOnlyCounter, PosNegCounter, RGA, TimedVal}
+import kofre.decompose.interfaces.TwoPSet
 import kofre.dotted.Dotted
 
 import scala.annotation.nowarn
@@ -162,7 +162,7 @@ object JsoniterCodecs {
   /** TwoPSet */
 
   @nowarn("msg=never used")
-  implicit def TwoPSetStateCodec[E: JsonValueCodec]: JsonValueCodec[(Set[E], Set[E])] = JsonCodecMaker.make
+  implicit def TwoPSetStateCodec[E: JsonValueCodec]: JsonValueCodec[TwoPSet[E]] = JsonCodecMaker.make
 
   @nowarn("msg=never used")
   implicit def gmapCodec[K: JsonKeyCodec, V: JsonValueCodec]: JsonValueCodec[GrowMap[K, V]] = JsonCodecMaker.make
@@ -172,6 +172,8 @@ object JsoniterCodecs {
 
   @nowarn("msg=never used")
   implicit def withContextWrapper[E: JsonValueCodec]: JsonValueCodec[Dotted[E]] = JsonCodecMaker.make
+
+  implicit def twoPSetContext[E: JsonValueCodec]: JsonValueCodec[Dotted[TwoPSet[E]]] = withContextWrapper(TwoPSetStateCodec)
 
 
   implicit def spcecificCodec:  JsonValueCodec[Dotted[GrowMap[Int, AddWinsSet[Int]]]] = JsonCodecMaker.make

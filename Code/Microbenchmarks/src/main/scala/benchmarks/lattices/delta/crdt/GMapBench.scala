@@ -1,8 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
-import kofre.datatypes.EnableWinsFlag
+import kofre.datatypes.{EnableWinsFlag, GrowMap}
 import kofre.decompose.containers.DeltaBufferRDT
-import kofre.decompose.interfaces.GrowMap
 import org.openjdk.jmh.annotations._
 
 import java.util.concurrent.TimeUnit

@@ -2,13 +2,13 @@ package tests.distribution.delta.antientropy
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import kofre.decompose.interfaces.TwoPSetInterface.{TwoPSet, contextDecompose}
+import kofre.decompose.interfaces.TwoPSet
 import org.scalacheck.{Arbitrary, Gen}
 import rescala.extra.lattices.delta.JsoniterCodecs._
 
 import rescala.extra.replication.AntiEntropy
 import NetworkGenerators._
-import kofre.decompose.interfaces.TwoPSetInterface.TwoPSetSyntax
+import kofre.decompose.interfaces.TwoPSet.TwoPSetSyntax
 import kofre.decompose.containers.{AntiEntropyCRDT, Network}
 
 import org.scalacheck.Prop._
@@ -22,7 +22,7 @@ object TwoPSetGenerators {
     removed <- Gen.pick(n, added)
   } yield {
     val network = new Network(0, 0, 0)
-    val ae      = new AntiEntropy[TwoPSet[E]]("a", network, mutable.Buffer())
+    val ae      = new AntiEntropy[TwoPSet[E]]("a", network, mutable.Buffer())(implicitly, twoPSetContext[E], implicitly)
     val setAdded = added.foldLeft(AntiEntropyCRDT[TwoPSet[E]](ae)) {
       case (set, e) => set.insert(e)
     }

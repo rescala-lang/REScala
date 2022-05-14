@@ -2,11 +2,10 @@ package tests.distribution.delta.antientropy
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import kofre.decompose.interfaces.GrowMap
 import rescala.extra.lattices.delta.JsoniterCodecs._
 import rescala.extra.replication.AntiEntropy
 import kofre.decompose.containers.{AntiEntropyCRDT, Network}
-import kofre.datatypes.AddWinsSet
+import kofre.datatypes.{AddWinsSet, GrowMap}
 import scala.collection.mutable
 
 class GrowMapTest extends munit.ScalaCheckSuite {

@@ -1,7 +1,7 @@
 package kofre.decompose.interfaces
 
+import kofre.datatypes.GrowMap
 import kofre.decompose.*
-import kofre.decompose.interfaces.GrowMap
 import kofre.dotted.DottedDecompose
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper}
 
