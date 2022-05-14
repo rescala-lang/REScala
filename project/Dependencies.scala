@@ -20,6 +20,7 @@ object Dependencies {
     val jsoniterScalaCore  = "2.13.20"
     val jsoniterScalaOld   = "2.13.3" // this is the latest version supporting Scala 2.11 and java 8
     val jsoup              = "1.14.3"
+    val munit              = "0.7.29"
     val normalizecss       = "8.0.1"
     val okHttp             = "4.9.3"
     val pprint             = "0.7.3"
@@ -55,6 +56,8 @@ object Dependencies {
   val jetty              = Def.setting("org.eclipse.jetty" % "jetty-rewrite" % V.jetty)
   val jol                = Def.setting("org.openjdk.jol" % "jol-core" % V.jol)
   val jsoup              = Def.setting("org.jsoup" % "jsoup" % V.jsoup)
+  val munit              = Def.setting("org.scalameta" %%% "munit" % V.munit % Test)
+  val munitScalacheck    = Def.setting("org.scalameta" %%% "munit-scalacheck" % V.munit % Test)
   val normalizecss       = Def.setting("org.webjars.npm" % "normalize.css" % V.normalizecss)
   val okHttp             = Def.setting("com.squareup.okhttp3" % "okhttp" % V.okHttp)
   val pprint             = Def.setting("com.lihaoyi" %%% "pprint" % V.pprint)
@@ -74,14 +77,15 @@ object Dependencies {
   val tomlScala          = Def.setting("tech.sparse" %%% "toml-scala" % V.tomlScala)
   val upickle            = Def.setting("com.lihaoyi" %% "upickle" % V.upickle)
 
-  val jsoniterScalaAll = Def.setting{
+  val jsoniterScalaAll = Def.setting {
     val jsoniterVersion = if (Settings.`is 2.11`(scalaVersion.value))
-           V.jsoniterScalaOld
-      else V.jsoniterScalaCore
+      V.jsoniterScalaOld
+    else V.jsoniterScalaCore
     Seq(
-    ("com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % jsoniterVersion exclude ("io.github.cquiroz", s"scala-java-time-tzdb_sjs1_${scalaVersion.value.substring(0, 4)}")),
-    "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % jsoniterVersion
-  )}
+      ("com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % jsoniterVersion exclude ("io.github.cquiroz", s"scala-java-time-tzdb_sjs1_${scalaVersion.value.substring(0, 4)}")),
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % jsoniterVersion
+    )
+  }
 
   val circeAll = Def.setting(Seq("core", "generic", "generic-extras", "parser")
     .map(n => "io.circe" %%% s"circe-$n" % V.circeCore))

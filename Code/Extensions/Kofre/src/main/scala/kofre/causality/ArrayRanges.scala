@@ -9,7 +9,7 @@ import scala.collection.IndexedSeqView
 import scala.collection.mutable.ListBuffer
 
 /** Efficient storage of a set of [[Time]] when most stored values are contiguous ranges */
-case class ArrayRanges(inner: Array[Time], used: Int) {
+class ArrayRanges private (private val inner: Array[Time], private val used: Int) {
 
   override def equals(obj: Any): Boolean = obj match {
     case ar: ArrayRanges => inner.iterator.take(used).sameElements(ar.inner.iterator.take(ar.used))
@@ -22,7 +22,7 @@ case class ArrayRanges(inner: Array[Time], used: Int) {
   override def toString(): String = inner.iterator.take(used).grouped(2).map {
     case (Seq(s, e)) =>
       val einc = e - 1
-      if s == einc then s"$s" else s"$s:$e"
+      if s == einc then s"$s" else s"$s:$einc"
   }.mkString("[", ", ", "]")
 
   @scala.annotation.targetName("lteq")
@@ -82,7 +82,8 @@ case class ArrayRanges(inner: Array[Time], used: Int) {
 
   /** Traverses both ranges simultaneously to produce output ranges.
     * Only allocates a single result array (size is the sum of the used size),
-    * and traverses each input once fully. */
+    * and traverses each input once fully.
+    */
   def union(other: ArrayRanges): ArrayRanges = {
     var leftPos   = 0
     var rightPos  = 0
@@ -157,7 +158,7 @@ case class ArrayRanges(inner: Array[Time], used: Int) {
       }
     }
 
-    ArrayRanges(newInner, newInnerNextIndex)
+    new ArrayRanges(newInner, newInnerNextIndex)
   }
 
   def subtract(right: ArrayRanges): ArrayRanges = {
@@ -230,21 +231,26 @@ case class ArrayRanges(inner: Array[Time], used: Int) {
           // Look at next left range
           nextLeft()
         }
-      } else if (lMin < rMin) { // overlap after start of left until end of left
+      } else { // overlap after start of left until end of left
         // Add parts of left range
         includeRangeInclusive(lMin, rMin - 1) // Exclude rMin
-        // Look at next left range
-        nextLeft()
-      } else {
-        throw new IllegalStateException()
+        if (lMax < rMax) { // l is completely removed
+          // Look at next left range
+          nextLeft()
+        }
+        else { // l is only partially removed
+          // increase left pointer to after right and recur
+          lMin = rMax
+          true
+        }
       }
     ) {}
 
-    ArrayRanges(newInner, newInnerNextIndex)
+    new ArrayRanges(newInner, newInnerNextIndex)
   }
 
   def decomposed: Iterable[ArrayRanges] = {
-    inner.view.slice(0, used).sliding(2,2).map(r => ArrayRanges(r.toArray, 2)).iterator.toIterable
+    inner.view.slice(0, used).sliding(2, 2).map(r => new ArrayRanges(r.toArray, 2)).iterator.toIterable
   }
 
 }
@@ -252,8 +258,8 @@ case class ArrayRanges(inner: Array[Time], used: Int) {
 object ArrayRanges {
   val empty: ArrayRanges = new ArrayRanges(Array.empty[Time], 0)
   def apply(elements: Seq[(Time, Time)]): ArrayRanges =
-    val content = elements.flatMap(t => Iterable(t._1, t._2)).toArray
-    new ArrayRanges(content, content.length)
+    elements.map((s, e) => new ArrayRanges(Array(s, e), 2)).foldLeft(ArrayRanges.empty)(_ union _)
+  def elems(elems: Time*): ArrayRanges = from(elems.iterator)
 
   def from(it: Iterator[Time]): ArrayRanges = {
     val sorted = it.toArray.sortInPlace() // TODO: could be optimized further, but should be fast if already sorted
@@ -281,13 +287,13 @@ object ArrayRanges {
     newInternal(newInternalNextIndex + 1) = lastMax + 1 // until lastMax (exclusive)
     newInternalNextIndex += 2
 
-    ArrayRanges(newInternal, newInternalNextIndex)
+    new ArrayRanges(newInternal, newInternalNextIndex)
   }
 
   given latticeInstance: DecomposeLattice[ArrayRanges] with {
-    override def decompose(a: ArrayRanges): Iterable[ArrayRanges] = a.decomposed
-    override def lteq(left: ArrayRanges, right: ArrayRanges): Boolean = left <= right
+    override def decompose(a: ArrayRanges): Iterable[ArrayRanges]          = a.decomposed
+    override def lteq(left: ArrayRanges, right: ArrayRanges): Boolean      = left <= right
     override def merge(left: ArrayRanges, right: ArrayRanges): ArrayRanges = left union right
-    override def empty: ArrayRanges = ArrayRanges.empty
+    override def empty: ArrayRanges                                        = ArrayRanges.empty
   }
 }

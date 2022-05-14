@@ -6,20 +6,22 @@ import kofre.decompose.interfaces.EnableWinsFlag
 import kofre.rga.{DeltaSequence, Vertex}
 import org.scalatest.freespec.AnyFreeSpec
 
-class DeltaBufferRDTTest extends AnyFreeSpec {
+class DeltaBufferRDTTest extends munit.FunSuite {
 
-  "basic interaction" in {
+  test("basic interaction") {
 
     val dbe = DeltaBufferRDT[EnableWinsFlag](Defs.genId())
 
-    assert(dbe.state === Bottom.empty[EnableWinsFlag])
+    assertEquals(dbe.state.store, Bottom.empty[EnableWinsFlag])
     assert(!dbe.read)
-    assert(dbe.deltaBuffer === List.empty)
+    assertEquals(dbe.deltaBuffer, List.empty)
 
-    val dbe2 = dbe.enable().enable().disable()
+    val dis = dbe.enable().enable()
+    assert(dis.read)
+    val en = dis.disable()
 
-    assert(dbe2.read)
-    assert(dbe2.deltaBuffer.size == 2)
+    assert(!en.read)
+    assertEquals(en.deltaBuffer.size, 3)
 
   }
 

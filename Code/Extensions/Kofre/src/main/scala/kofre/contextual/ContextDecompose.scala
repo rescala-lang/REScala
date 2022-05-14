@@ -192,10 +192,10 @@ object ContextDecompose extends LowPriorityContextDecompose {
       }
 
       override def decompose(state: WithContext[Map[Dot, A]]): Iterable[WithContext[Map[Dot, A]]] = {
-        val added: Iterator[WithContext[Map[Dot, A]]] = for (
-          d <- dots(state.store).iterator; v <- DecomposeLattice[A].decompose(state.store(d))
-        )
-          yield WithContext(Map(d -> v), CausalContext.single(d))
+        val added: Iterator[WithContext[Map[Dot, A]]] = for {
+          d <- dots(state.store).iterator
+          v <- DecomposeLattice[A].decompose(state.store(d))
+        } yield WithContext(Map(d -> v), CausalContext.single(d))
 
         val removed =
           state.context.subtract(dots(state.store)).decomposed.map(WithContext(

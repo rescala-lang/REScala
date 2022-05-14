@@ -185,7 +185,7 @@ lazy val kofre = crossProject(JVMPlatform, JSPlatform).crossType(CrossType.Pure)
     scalaVersion_3,
     Test / test / fork               := true,
     publishSonatype,
-    libraryDependencies ++= List(scalatest.value, scalatestpluscheck.value),
+    libraryDependencies ++= List(scalatest.value, scalatestpluscheck.value, munit.value, munitScalacheck.value),
   )
 lazy val kofreJS  = kofre.js
 lazy val kofreJVM = kofre.jvm

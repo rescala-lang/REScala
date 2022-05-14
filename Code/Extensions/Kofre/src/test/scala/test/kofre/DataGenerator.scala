@@ -7,6 +7,7 @@ import kofre.primitives.{CausalQueue, LastWriterWins, MultiValueRegister}
 import kofre.sets.ORSet
 import kofre.base.Lattice
 import kofre.base.Defs
+import kofre.base.Defs.Time
 import kofre.predef.{GrowOnlyCounter, PosNegCounter}
 import org.scalacheck.{Arbitrary, Gen}
 
@@ -102,4 +103,10 @@ object DataGenerator {
 
   implicit def arbDotMap[K, V: AsCausalContext](implicit gk: Gen[K], gv: Gen[V]): Arbitrary[Map[K, V]] =
     Arbitrary(genDotMap)
+
+  case class SmallTimeSet(s: Set[Time])
+
+  given Arbitrary[SmallTimeSet] = Arbitrary(for {
+    contents <- Gen.listOf(Gen.chooseNum(0l, 100l))
+  } yield (SmallTimeSet(contents.toSet)))
 }
