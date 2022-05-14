@@ -6,7 +6,7 @@ import kofre.time.Dots
 import kofre.datatypes.{AddWinsSet, EnableWinsFlag}
 import kofre.datatypes.AddWinsSet
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermIdMutate, DottedName}
-import kofre.dotted.{ContextDecompose, ContextLattice, Dotted, HasDots}
+import kofre.dotted.{DottedDecompose, DottedLattice, Dotted, HasDots}
 
 import scala.collection.{AbstractIterator, immutable}
 
@@ -100,8 +100,8 @@ object DeltaSequence {
       }
   }
 
-  given deltaSequenceLattice[A]: ContextDecompose[DeltaSequence[A]] =
-    new ContextDecompose[DeltaSequence[A]] {
+  given deltaSequenceLattice[A]: DottedDecompose[DeltaSequence[A]] =
+    new DottedDecompose[DeltaSequence[A]] {
 
 
       override def decompose(a: Dotted[DeltaSequence[A]]): Iterable[Dotted[DeltaSequence[A]]] = Iterable(a)
@@ -128,7 +128,7 @@ object DeltaSequence {
             if (v == Vertex.start) merged
             else merged.addRightEdge(oldPositions(v), v)
         }
-        val vertices = left.map(_.vertices) conmerge right.map(_.vertices)
+        val vertices = left.map(_.vertices) dotmerge right.map(_.vertices)
         val values   = Lattice.merge(left.store.values, right.store.values)(Lattice.mapLattice(noMapConflictsLattice))
 
         DeltaSequence(

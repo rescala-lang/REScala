@@ -4,7 +4,7 @@ import kofre.base.{Bottom, DecomposeLattice}
 import kofre.decompose.*
 import kofre.datatypes.AddWinsSet.AWSetSyntax
 import kofre.datatypes.AddWinsSet
-import kofre.dotted.{ContextDecompose, Dotted}
+import kofre.dotted.{DottedDecompose, Dotted}
 import kofre.protocol.AuctionInterface
 import kofre.protocol.AuctionInterface.Bid.User
 import kofre.syntax.{OpsSyntaxHelper, PermIdMutate}

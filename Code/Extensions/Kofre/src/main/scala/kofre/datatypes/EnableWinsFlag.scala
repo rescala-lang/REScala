@@ -3,7 +3,7 @@ package kofre.datatypes
 import kofre.base.{Bottom, DecomposeLattice}
 import kofre.datatypes.Epoche
 import kofre.decompose.*
-import kofre.dotted.{ContextDecompose, DotSet, Dotted, HasDots}
+import kofre.dotted.{DottedDecompose, DotSet, Dotted, HasDots}
 import kofre.syntax.OpsSyntaxHelper
 import kofre.time.Dots
 
@@ -15,7 +15,7 @@ case class EnableWinsFlag(inner: DotSet)
 
 object EnableWinsFlag {
 
-  given contextDecompose: ContextDecompose[EnableWinsFlag] = ContextDecompose.derived
+  given contextDecompose: DottedDecompose[EnableWinsFlag] = DottedDecompose.derived
   given hasDotsEWF: HasDots[EnableWinsFlag] with {
     override def dots(a: EnableWinsFlag): Dots = a.inner.repr
   }

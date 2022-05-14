@@ -2,7 +2,7 @@ package kofre.dotted
 
 import kofre.base.Bottom
 import kofre.time.Dots
-import kofre.dotted.ContextDecompose.FromConlattice
+import kofre.dotted.DottedDecompose.FromConlattice
 import kofre.decompose.interfaces
 
 case class DotMap[K, V](repr: Map[K, V]) {
@@ -23,22 +23,22 @@ object DotMap {
 
   }
 
-  /** This essentially lifts the [[ContextLattice]] of [[V]] to a [[ DotMap[K, V ] ]].
+  /** This essentially lifts the [[DottedLattice]] of [[V]] to a [[ DotMap[K, V ] ]].
     * Recursively merging values present in both maps with the given context.
     */
-  given contextLattice[K, V: ContextLattice: Bottom]: ContextLattice[DotMap[K, V]] with {
+  given dottedLattice[K, V: DottedLattice: Bottom]: DottedLattice[DotMap[K, V]] with {
     override def mergePartial(left: Dotted[DotMap[K, V]], right: Dotted[DotMap[K, V]]): DotMap[K, V] = {
       DotMap((left.store.repr.keySet union right.store.repr.keySet).flatMap { key =>
         val leftCausalStore  = left.map(_.getOrElse(key, Bottom.empty[V]))
         val rightCausalStore = right.map(_.getOrElse(key, Bottom.empty[V]))
-        val res              = leftCausalStore conmerge rightCausalStore
+        val res              = leftCausalStore dotmerge rightCausalStore
         if Bottom.empty[V] == res then None else Some(key -> res)
       }.toMap)
     }
   }
 
-  given contextDecompose[K, V: ContextDecompose: HasDots]: ContextDecompose[DotMap[K, V]] =
-    new FromConlattice[DotMap[K, V]](contextLattice) {
+  given contextDecompose[K, V: DottedDecompose: HasDots]: DottedDecompose[DotMap[K, V]] =
+    new FromConlattice[DotMap[K, V]](dottedLattice) {
 
       override def empty: Dotted[DotMap[K, V]] = Dotted(DotMap.empty)
 
@@ -59,7 +59,7 @@ object DotMap {
           k <- state.store.keys
           Dotted(atomicV, atomicCC) <- {
             val v = state.store.getOrElse(k, Bottom.empty[V])
-            ContextDecompose[V].decompose(Dotted(v, HasDots[V].dots(v)))
+            DottedDecompose[V].decompose(Dotted(v, HasDots[V].dots(v)))
           }
         } yield Dotted(DotMap(Map(k -> atomicV)), atomicCC)
 

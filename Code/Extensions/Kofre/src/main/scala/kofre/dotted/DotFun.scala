@@ -1,7 +1,7 @@
 package kofre.dotted
 
 import kofre.base.{Bottom, DecomposeLattice, Lattice}
-import kofre.dotted.ContextDecompose.FromConlattice
+import kofre.dotted.DottedDecompose.FromConlattice
 import kofre.decompose.interfaces
 import kofre.time.{Dot, Dots}
 
@@ -28,7 +28,7 @@ object DotFun {
   given bottom[A]: Bottom[DotFun[A]] with
     override def empty: DotFun[A] = DotFun.empty
 
-  given perDotLattice[A: Lattice]: ContextLattice[DotFun[A]] = (left, right) => {
+  given perDotLattice[A: Lattice]: DottedLattice[DotFun[A]] = (left, right) => {
     val fromLeft = left.store.repr.filter { case (dot, _) => !right.context.contains(dot) }
 
     DotFun(right.store.repr.foldLeft(fromLeft) {
@@ -49,7 +49,7 @@ object DotFun {
   /** DotFun is a dot store implementation that maps dots to values of a Lattice type. See [[interfaces.MVRegisterInterface]]
     * for a usage example.
     */
-  given perDotDecompose[A: DecomposeLattice]: ContextDecompose[DotFun[A]] =
+  given perDotDecompose[A: DecomposeLattice]: DottedDecompose[DotFun[A]] =
     new FromConlattice[DotFun[A]](perDotLattice[A]) {
       private def dots(a: DotFun[A]): Dots = dotStore.dots(a)
 

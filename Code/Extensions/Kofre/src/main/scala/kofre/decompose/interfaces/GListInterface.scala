@@ -3,7 +3,7 @@ package kofre.decompose.interfaces
 import kofre.base.DecomposeLattice
 import kofre.decompose.*
 import kofre.datatypes.Epoche
-import kofre.dotted.ContextDecompose
+import kofre.dotted.DottedDecompose
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper}
 
 import scala.annotation.tailrec
@@ -27,7 +27,7 @@ object GListInterface {
 
   def empty[E]: GList[E] = Map.empty
 
-  given contextDecompose[E]: ContextDecompose[GList[E]] = ContextDecompose.liftDecomposeLattice
+  given contextDecompose[E]: DottedDecompose[GList[E]] = DottedDecompose.liftDecomposeLattice
 
   implicit def GListAsUIJDLattice[E]: DecomposeLattice[GList[E]] =
     new DecomposeLattice[Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]]] {

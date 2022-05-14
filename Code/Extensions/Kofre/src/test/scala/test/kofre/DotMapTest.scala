@@ -2,8 +2,8 @@ package test.kofre
 
 import kofre.base.DecomposeLattice
 import kofre.time.{ArrayRanges, Dots, Dot}
-import kofre.dotted.ContextDecompose.*
-import kofre.dotted.{ContextDecompose, ContextLattice, DotFun, DotMap, DotSet, Dotted, HasDots}
+import kofre.dotted.DottedDecompose.*
+import kofre.dotted.{DottedDecompose, DottedLattice, DotFun, DotMap, DotSet, Dotted, HasDots}
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 import test.kofre.DataGenerator.*
@@ -35,10 +35,10 @@ class DotMapTest extends munit.ScalaCheckSuite {
   property("merge") {
     forAll {
       (
-      dmA: TestedMap,
-      deletedA: Dots,
-      dmB: TestedMap,
-      deletedB: Dots
+          dmA: TestedMap,
+          deletedA: Dots,
+          dmB: TestedMap,
+          deletedB: Dots
       ) =>
         val dotsA = dmA.dots
         val dotsB = dmB.dots
@@ -49,8 +49,8 @@ class DotMapTest extends munit.ScalaCheckSuite {
           DecomposeLattice[Dotted[TestedMap]].merge(
             Dotted(dmA, (ccA)),
             Dotted(dmB, (ccB))
-            )
-        val dotsMerged                 = dmMerged.dots
+          )
+        val dotsMerged = dmMerged.dots
 
         assert(
           ccMerged == (ccA union ccB),
@@ -73,10 +73,8 @@ class DotMapTest extends munit.ScalaCheckSuite {
         if (dotsA.intersect(dotsB).isEmpty) {
           (dmA.keySet union dmB.keySet).foreach { k =>
             val vMerged =
-              DotSet.contextLattice.mergePartial(
-                Dotted(dmA.getOrElse(k, DotSet.empty), (ccA)),
-                Dotted(dmB.getOrElse(k, DotSet.empty), (ccB))
-                )
+              Dotted(dmA.getOrElse(k, DotSet.empty), (ccA)) dotmerge
+              Dotted(dmB.getOrElse(k, DotSet.empty), (ccB))
 
             assert(
               vMerged.isEmpty || dmMerged(k) == vMerged,
@@ -90,19 +88,19 @@ class DotMapTest extends munit.ScalaCheckSuite {
   property("leq") {
     forAll {
       (
-      dmA: TestedMap,
-      deletedA: Dots,
-      dmB: TestedMap,
-      deletedB: Dots
+          dmA: TestedMap,
+          deletedA: Dots,
+          dmB: TestedMap,
+          deletedB: Dots
       ) =>
         val ccA = dmA.dots union deletedA
         val ccB = dmB.dots union deletedB
 
         assert(
-          ContextLattice[TestedMap].lteq(
+          DottedLattice[TestedMap].lteq(
             Dotted(dmA, (ccA)),
             Dotted(dmA, (ccA))
-            ),
+          ),
           s"DotMap.leq should be reflexive, but returns false when applied to ($dmA, $ccA, $dmA, $ccA)"
         )
 
@@ -110,16 +108,16 @@ class DotMapTest extends munit.ScalaCheckSuite {
           DecomposeLattice[Dotted[TestedMap]].merge(
             Dotted(dmA, (ccA)),
             Dotted(dmB, (ccB))
-            )
+          )
 
         assert(
-          ContextLattice[TestedMap].lteq(Dotted(dmA, (ccA)), Dotted(dmMerged, ccMerged)),
+          DottedLattice[TestedMap].lteq(Dotted(dmA, (ccA)), Dotted(dmMerged, ccMerged)),
           s"The result of DotMap.merge should be larger than its lhs, but DotMap.leq returns false when applied to ($dmA, $ccA, $dmMerged, $ccMerged)"
-          )
+        )
         assert(
-          ContextLattice[TestedMap].lteq(Dotted(dmB, (ccB)), Dotted(dmMerged, ccMerged)),
+          DottedLattice[TestedMap].lteq(Dotted(dmB, (ccB)), Dotted(dmMerged, ccMerged)),
           s"The result of DotMap.merge should be larger than its rhs, but DotMap.leq returns false when applied to ($dmB, $ccB, $dmMerged, $ccMerged)"
-          )
+        )
     }
 
   }
@@ -142,8 +140,8 @@ class DotMapTest extends munit.ScalaCheckSuite {
       val cc = dm.dots union deleted
 
       val decomposed: Iterable[Dotted[TestedMap]] =
-        ContextDecompose[TestedMap].decompose(Dotted(dm, (cc)))
-      val wc: Dotted[TestedMap]                   =
+        DottedDecompose[TestedMap].decompose(Dotted(dm, (cc)))
+      val wc: Dotted[TestedMap] =
         decomposed.foldLeft(Dotted(DotMap.empty[Int, DotSet], Dots.empty)) {
           case (Dotted(dmA, ccA), Dotted(dmB, ccB)) =>
             DecomposeLattice[Dotted[TestedMap]].merge(Dotted(dmA, ccA), Dotted(dmB, ccB))

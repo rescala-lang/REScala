@@ -7,7 +7,7 @@ import kofre.syntax.DottedName
 import kofre.decompose.Delta
 import kofre.syntax.{PermCausal, PermCausalMutate, PermIdMutate, PermQuery}
 import kofre.base.Lattice
-import kofre.dotted.{ContextDecompose, ContextLattice, Dotted}
+import kofre.dotted.{DottedDecompose, DottedLattice, Dotted}
 
 trait CRDTInterface[State, Wrapper] {
 
@@ -19,7 +19,7 @@ trait CRDTInterface[State, Wrapper] {
 }
 
 object CRDTInterface {
-  def dottedPermissions[L: ContextDecompose, B <: CRDTInterface[L, B]]: PermIdMutate[B, L] with PermCausalMutate[B, L] =
+  def dottedPermissions[L: DottedDecompose, B <: CRDTInterface[L, B]]: PermIdMutate[B, L] with PermCausalMutate[B, L] =
     new PermIdMutate[B, L] with PermCausalMutate[B, L] {
       override def replicaId(c: B): Id       = c.replicaID
       override def mutate(c: B, delta: L): B = c.applyDelta(Delta(c.replicaID, Dots.empty, delta))

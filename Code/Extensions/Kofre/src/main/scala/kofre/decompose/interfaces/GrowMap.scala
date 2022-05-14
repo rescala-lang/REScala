@@ -2,7 +2,7 @@ package kofre.decompose.interfaces
 
 import kofre.base.DecomposeLattice
 import kofre.time.Dots
-import kofre.dotted.{ContextDecompose, ContextLattice, DotMap, Dotted, HasDots}
+import kofre.dotted.{DottedDecompose, DottedLattice, DotMap, Dotted, HasDots}
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermIdMutate, DottedName}
 
 /** A GMap (Grow-only Map) is a Delta CRDT that models a map from an arbitrary key type to nested Delta CRDTs.
@@ -20,9 +20,9 @@ object GrowMap {
   def empty[K, V]: GrowMap[K, V] = GrowMap(Map.empty)
 
   given decomposeLattice[K, V: DecomposeLattice]: DecomposeLattice[GrowMap[K, V]] = DecomposeLattice.derived
-  given contextLattice[K, V: ContextDecompose: HasDots]: ContextDecompose[GrowMap[K, V]] =
-    given ContextDecompose[Map[K, V]] = DotMap.contextDecompose[K, V].contextbimap[Map[K, V]](_.map(_.repr), _.map(DotMap.apply))
-    ContextDecompose.derived
+  given contextLattice[K, V: DottedDecompose: HasDots]: DottedDecompose[GrowMap[K, V]] =
+    given DottedDecompose[Map[K, V]] = DotMap.contextDecompose[K, V].contextbimap[Map[K, V]](_.map(_.repr), _.map(DotMap.apply))
+    DottedDecompose.derived
 
   implicit class GMapSyntax[C, K, V](container: C)(using aoc: ArdtOpsContains[C, GrowMap[K, V]])
       extends OpsSyntaxHelper[C, GrowMap[K, V]](container) {

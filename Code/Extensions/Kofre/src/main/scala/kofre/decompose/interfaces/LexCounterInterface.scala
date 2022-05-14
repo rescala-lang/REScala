@@ -3,7 +3,7 @@ package kofre.decompose.interfaces
 import kofre.base.DecomposeLattice
 import kofre.base.Lattice.Operators
 import kofre.decompose.*
-import kofre.dotted.ContextDecompose
+import kofre.dotted.DottedDecompose
 import kofre.syntax.OpsSyntaxHelper
 
 /** A LexCounter is a Delta CRDT modeling a counter.
@@ -48,7 +48,7 @@ object LexCounterInterface {
 
   type LexCounter = Map[String, LexPair[Int, Int]]
 
-  given contextDecompose: ContextDecompose[LexCounter] = ContextDecompose.liftDecomposeLattice
+  given contextDecompose: DottedDecompose[LexCounter] = DottedDecompose.liftDecomposeLattice
 
   implicit class LexCounterSyntax[C](container: C) extends OpsSyntaxHelper[C, LexCounter](container) {
 

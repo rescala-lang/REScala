@@ -1,7 +1,7 @@
 package kofre.datatypes
 
 import kofre.base.{Bottom, DecomposeLattice, Defs}
-import kofre.dotted.ContextDecompose
+import kofre.dotted.DottedDecompose
 import kofre.syntax.PermIdMutate.withID
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper}
 
@@ -11,7 +11,7 @@ object Epoche {
 
   def empty[E: Bottom]: Epoche[E] = Epoche(0, Bottom[E].empty)
 
-  given contextDecompose[E: DecomposeLattice]: ContextDecompose[Epoche[E]] = ContextDecompose.liftDecomposeLattice
+  given contextDecompose[E: DecomposeLattice]: DottedDecompose[Epoche[E]] = DottedDecompose.liftDecomposeLattice
 
 
   implicit class EpocheSyntax[C, E](container: C)(using ArdtOpsContains[C, Epoche[E]])

@@ -1,6 +1,6 @@
 package kofre.base
 
-import kofre.dotted.{ContextDecompose, Dotted}
+import kofre.dotted.{DottedDecompose, Dotted}
 
 import scala.annotation.targetName
 import scala.collection.immutable.HashMap
@@ -70,8 +70,8 @@ object Lattice {
 
   given functionLattice[K, V: Lattice]: Lattice[K => V] = (left, right) => k => left(k) merge right(k)
 
-  given contextLattice[D: ContextDecompose]: Lattice[Dotted[D]] = (left, right) =>
-    val dsMerged = ContextDecompose[D].mergePartial(left, right)
+  given contextLattice[D: DottedDecompose]: Lattice[Dotted[D]] = (left, right) =>
+    val dsMerged = DottedDecompose[D].mergePartial(left, right)
     val ccMerged = left.context merge right.context
     Dotted[D](dsMerged, ccMerged)
 

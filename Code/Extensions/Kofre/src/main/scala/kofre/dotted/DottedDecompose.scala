@@ -13,27 +13,27 @@ import scala.deriving.Mirror
   * data structures that are part of causal CRDTs and make use of dots to track time.
   */
 @implicitNotFound("Not a decompose lattice when in a context: »${A}«")
-trait ContextDecompose[A] extends ContextLattice[A], DecomposeLattice[Dotted[A]] {
-  def contextbimap[B](to: Dotted[A] => Dotted[B], from: Dotted[B] => Dotted[A]): ContextDecompose[B] = new ContextDecompose[B] {
-    override def lteq(left: Dotted[B], right: Dotted[B]): Boolean = ContextDecompose.this.lteq(from(left), from(right))
-    override def decompose(a: Dotted[B]): Iterable[Dotted[B]] = ContextDecompose.this.decompose(from(a)).map(to)
-    override def mergePartial(left: Dotted[B], right: Dotted[B]): B = to(Dotted(ContextDecompose.this.mergePartial(from(left), from(right)))).store
-    override def empty: Dotted[B] = to(ContextDecompose.this.empty)
+trait DottedDecompose[A] extends DottedLattice[A], DecomposeLattice[Dotted[A]] {
+  def contextbimap[B](to: Dotted[A] => Dotted[B], from: Dotted[B] => Dotted[A]): DottedDecompose[B] = new DottedDecompose[B] {
+    override def lteq(left: Dotted[B], right: Dotted[B]): Boolean = DottedDecompose.this.lteq(from(left), from(right))
+    override def decompose(a: Dotted[B]): Iterable[Dotted[B]] = DottedDecompose.this.decompose(from(a)).map(to)
+    override def mergePartial(left: Dotted[B], right: Dotted[B]): B = to(Dotted(DottedDecompose.this.mergePartial(from(left), from(right)))).store
+    override def empty: Dotted[B] = to(DottedDecompose.this.empty)
   }
 }
 
-object ContextDecompose {
-  def apply[A](implicit ds: ContextDecompose[A]): ContextDecompose[A] = ds
+object DottedDecompose {
+  def apply[A](implicit ds: DottedDecompose[A]): DottedDecompose[A] = ds
 
-  inline def derived[T <: Product](using pm: Mirror.ProductOf[T]): ContextDecompose[T] = {
-    val lattices: Tuple = summonAll[Tuple.Map[pm.MirroredElemTypes, ContextDecompose]]
-    new ProductContextDecompose[T](lattices, pm)
+  inline def derived[T <: Product](using pm: Mirror.ProductOf[T]): DottedDecompose[T] = {
+    val lattices: Tuple = summonAll[Tuple.Map[pm.MirroredElemTypes, DottedDecompose]]
+    new ProductDottedDecompose[T](lattices, pm)
   }
 
-  class ProductContextDecompose[T <: Product](lattices: Tuple, pm: Mirror.ProductOf[T])
-      extends ContextDecompose[T] {
+  class ProductDottedDecompose[T <: Product](lattices: Tuple, pm: Mirror.ProductOf[T])
+    extends DottedDecompose[T] {
 
-    private def lat(i: Int): ContextDecompose[Any] = lattices.productElement(i).asInstanceOf[ContextDecompose[Any]]
+    private def lat(i: Int): DottedDecompose[Any] = lattices.productElement(i).asInstanceOf[DottedDecompose[Any]]
 
     override def mergePartial(left: Dotted[T], right: Dotted[T]): T =
       pm.fromProduct(new Product {
@@ -46,7 +46,7 @@ object ContextDecompose {
     override def empty: Dotted[T] =
       Dotted(pm.fromProduct(
         lattices.map[[α] =>> Any](
-          [t] => (l: t) => l.asInstanceOf[ContextDecompose[Any]].empty.store
+          [t] => (l: t) => l.asInstanceOf[DottedDecompose[Any]].empty.store
         )
       ))
 
@@ -69,7 +69,7 @@ object ContextDecompose {
       }
   }
 
-  abstract class FromConlattice[A](wcm: ContextLattice[A]) extends ContextDecompose[A] {
+  abstract class FromConlattice[A](wcm: DottedLattice[A]) extends DottedDecompose[A] {
     export wcm.mergePartial
   }
 
@@ -81,8 +81,8 @@ object ContextDecompose {
     * Note, implementing this marks the type as independent of its context,
     * beware types with different possible interpretations.
     */
-  def liftDecomposeLattice[A: DecomposeLattice]: ContextDecompose[A] =
-    new ContextDecompose[A] {
+  def liftDecomposeLattice[A: DecomposeLattice]: DottedDecompose[A] =
+    new DottedDecompose[A] {
       override def mergePartial(left: Dotted[A], right: Dotted[A]): A =
         Lattice[A].merge(left.store, right.store)
 

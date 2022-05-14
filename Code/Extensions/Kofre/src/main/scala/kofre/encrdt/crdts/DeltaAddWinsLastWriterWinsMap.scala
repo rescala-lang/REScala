@@ -5,7 +5,7 @@ import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap.{DeltaAddWinsLastWriterW
 import kofre.encrdt.crdts.DeltaAddWinsMap.DeltaAddWinsMapLattice
 import kofre.base.{Bottom, Lattice}
 import kofre.time.Dot
-import kofre.dotted.{ContextDecompose, ContextLattice, DotFun, DotMap, Dotted}
+import kofre.dotted.{DottedDecompose, DottedLattice, DotFun, DotMap, Dotted}
 import kofre.primitives.LastWriterWins
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap.deltaAddWinsMapLattice
 
@@ -105,7 +105,7 @@ object DeltaAddWinsLastWriterWinsMap {
   type StateType[K, V] = DeltaAddWinsLastWriterWinsMapLattice[K, V]
 
   given deltaAddWinsMapLattice[K, V]: Lattice[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = {
-    DotMap.contextLattice
+    DotMap.dottedLattice
   }
 
 }

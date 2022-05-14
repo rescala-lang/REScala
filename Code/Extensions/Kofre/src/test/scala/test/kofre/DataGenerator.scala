@@ -3,7 +3,7 @@ package test.kofre
 import kofre.base.Defs.Time
 import kofre.base.{Defs, Lattice}
 import kofre.time.{Dots, Dot, VectorClock}
-import kofre.dotted.{ContextDecompose, DotFun, DotMap, DotSet, HasDots}
+import kofre.dotted.{DottedDecompose, DotFun, DotMap, DotSet, HasDots}
 import kofre.datatypes.{GrowOnlyCounter, PosNegCounter}
 import kofre.primitives.{CausalQueue, LastWriterWins, MultiValueRegister}
 import kofre.sets.ORSet

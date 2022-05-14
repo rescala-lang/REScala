@@ -2,7 +2,7 @@ package benchmarks.lattices.delta
 
 import kofre.time.{Dots, Dot}
 import kofre.decompose.interfaces.RGA
-import kofre.dotted.{ContextDecompose, Dotted}
+import kofre.dotted.{DottedDecompose, Dotted}
 import org.openjdk.jmh.annotations
 import org.openjdk.jmh.annotations._
 
@@ -35,33 +35,33 @@ class DeltaMergeBench {
 
     val deltaState: Dotted[RGA[Long]] =
       baseState.named("").insertAll(0, 0L to size).anon
-    fullState = ContextDecompose[RGA[Long]].merge(baseState, deltaState)
+    fullState = DottedDecompose[RGA[Long]].merge(baseState, deltaState)
 
     plusOneDeltaState = fullState.named("").insert(0, size).anon
-    plusOneState = ContextDecompose[RGA[Long]].merge(fullState, plusOneDeltaState)
+    plusOneState = DottedDecompose[RGA[Long]].merge(fullState, plusOneDeltaState)
   }
 
   @Benchmark
   def fullMerge: Dotted[RGA[Long]] = {
-    ContextDecompose[RGA[Long]].merge(fullState, plusOneState)
+    DottedDecompose[RGA[Long]].merge(fullState, plusOneState)
   }
 
   @Benchmark
   def fullDiff: Option[Dotted[RGA[Long]]] = {
-    ContextDecompose[RGA[Long]].diff(fullState, plusOneState)
+    DottedDecompose[RGA[Long]].diff(fullState, plusOneState)
   }
 
   @Benchmark
   def deltaMerge: Dotted[RGA[Long]] = {
-    ContextDecompose[RGA[Long]].diff(fullState, plusOneDeltaState) match {
+    DottedDecompose[RGA[Long]].diff(fullState, plusOneDeltaState) match {
       case Some(stateDiff) =>
-        ContextDecompose[RGA[Long]].merge(fullState, stateDiff)
+        DottedDecompose[RGA[Long]].merge(fullState, stateDiff)
       case None => fullState
     }
   }
 
   @Benchmark
   def deltaMergeNoDiff: Dotted[RGA[Long]] = {
-    ContextDecompose[RGA[Long]].merge(fullState, plusOneDeltaState)
+    DottedDecompose[RGA[Long]].merge(fullState, plusOneDeltaState)
   }
 }

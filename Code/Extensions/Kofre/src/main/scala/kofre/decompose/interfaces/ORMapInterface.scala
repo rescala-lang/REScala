@@ -5,7 +5,7 @@ import kofre.time.{Dots, Dot}
 import kofre.decompose.*
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, DottedName}
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
-import kofre.dotted.{ContextDecompose, ContextLattice, DotMap, Dotted, HasDots}
+import kofre.dotted.{DottedDecompose, DottedLattice, DotMap, Dotted, HasDots}
 
 /** An ORMap (Observed-Remove Map) is a Delta CRDT that models a map from an arbitrary key type to nested causal Delta CRDTs.
   * In contrast to [[GrowMap]], ORMap allows the removal of key/value pairs from the map.
@@ -19,7 +19,7 @@ object ORMapInterface {
 
   def empty[K, V]: ORMap[K, V] = DotMap.empty
 
-  given contextDecompose[K, V: ContextDecompose: HasDots]: ContextDecompose[ORMap[K, V]] = DotMap.contextDecompose
+  given contextDecompose[K, V: DottedDecompose: HasDots]: DottedDecompose[ORMap[K, V]] = DotMap.contextDecompose
 
 
   def make[K, V](
@@ -32,7 +32,7 @@ object ORMapInterface {
 
     def contains(k: K)(using QueryP): Boolean = current.contains(k)
 
-    def queryKey[A](k: K)(using QueryP, CausalP, ContextDecompose[V], HasDots[V]): Dotted[V] = {
+    def queryKey[A](k: K)(using QueryP, CausalP, DottedDecompose[V], HasDots[V]): Dotted[V] = {
       Dotted(current.getOrElse(k, Bottom[V].empty), context)
     }
 
@@ -40,7 +40,7 @@ object ORMapInterface {
     def mutateKey(k: K, m: (Defs.Id, Dotted[V]) => Dotted[V])(using
                                                               CausalMutationP,
                                                               IdentifierP,
-                                                              ContextDecompose[V],
+                                                              DottedDecompose[V],
                                                               HasDots[V]
     ): C = {
       val v = current.getOrElse(k, Bottom[V].empty)
@@ -58,7 +58,7 @@ object ORMapInterface {
                                                                    CausalMutationP,
                                                                    IdentifierP,
                                                                    HasDots[V],
-                                                                   ContextDecompose[V]
+                                                                   DottedDecompose[V]
     ): C = {
       val v                           = current.getOrElse(k, Bottom[V].empty)
       val Dotted(stateDelta, ccDelta) = m(DottedName(replicaID, Dotted(v, context))).anon
@@ -68,7 +68,7 @@ object ORMapInterface {
       ).mutator
     }
 
-    def remove(k: K)(using CausalMutationP, ContextDecompose[V], HasDots[V]): C = {
+    def remove(k: K)(using CausalMutationP, DottedDecompose[V], HasDots[V]): C = {
       val v = current.getOrElse(k, Bottom[V].empty)
 
       make[K, V](
@@ -76,7 +76,7 @@ object ORMapInterface {
       ).mutator
     }
 
-    def removeAll(keys: Iterable[K])(using CausalMutationP, ContextDecompose[V], HasDots[V]): C = {
+    def removeAll(keys: Iterable[K])(using CausalMutationP, DottedDecompose[V], HasDots[V]): C = {
       val values = keys.map(k => current.getOrElse(k, Bottom[V].empty))
       val dots = values.foldLeft(Dots.empty) {
         case (set, v) => set union HasDots[V].dots(v)
@@ -87,7 +87,7 @@ object ORMapInterface {
       ).mutator
     }
 
-    def removeByValue(cond: Dotted[V] => Boolean)(using CausalMutationP, ContextDecompose[V], HasDots[V]): C = {
+    def removeByValue(cond: Dotted[V] => Boolean)(using CausalMutationP, DottedDecompose[V], HasDots[V]): C = {
       val toRemove = current.values.collect {
         case v if cond(Dotted(v, context)) => HasDots[V].dots(v)
       }.fold(Dots.empty)(_ union _)
@@ -97,7 +97,7 @@ object ORMapInterface {
       ).mutator
     }
 
-    def clear()(using CausalMutationP, ContextDecompose[V], HasDots[V]): C = {
+    def clear()(using CausalMutationP, DottedDecompose[V], HasDots[V]): C = {
       make(
         cc = current.dots
       ).mutator

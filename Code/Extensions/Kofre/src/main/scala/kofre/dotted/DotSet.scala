@@ -1,7 +1,7 @@
 package kofre.dotted
 
 import kofre.time.{Dot, Dots}
-import kofre.dotted.ContextDecompose.FromConlattice
+import kofre.dotted.DottedDecompose.FromConlattice
 import kofre.datatypes.EnableWinsFlag
 import kofre.decompose.interfaces
 
@@ -20,7 +20,7 @@ object DotSet {
   }
 
   /** This essentially tracks the currently present dots, and all dots */
-  given contextLattice: ContextLattice[DotSet] with {
+  given dottedLattice: DottedLattice[DotSet] with {
     override def mergePartial(left: Dotted[DotSet], right: Dotted[DotSet]): DotSet = {
       val fromLeft  = left.store.repr subtract right.context
       val fromRight = right.store.repr.subtract(left.context subtract left.store.repr)
@@ -32,8 +32,8 @@ object DotSet {
   /** DotSet is a dot store implementation that is simply a set of dots. See [[EnableWinsFlag]] for a
     * usage example.
     */
-  given contextDecompose: ContextDecompose[DotSet] =
-    new FromConlattice[DotSet](contextLattice) {
+  given contextDecompose: DottedDecompose[DotSet] =
+    new FromConlattice[DotSet](dottedLattice) {
 
       override def empty: Dotted[DotSet] = Dotted(DotSet.empty)
 

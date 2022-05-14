@@ -4,7 +4,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReaderException, JsonValu
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import kofre.base.DecomposeLattice
 import kofre.decompose.containers.Network
-import kofre.dotted.{ContextDecompose, Dotted}
+import kofre.dotted.{DottedDecompose, Dotted}
 import kofre.syntax.DottedName
 import rescala.extra.replication.AntiEntropy.{AckMsg, DeltaMsg}
 
@@ -27,7 +27,7 @@ class AntiEntropy[A](
     val replicaID: String,
     network: Network,
     neighbors: mutable.Buffer[String] = mutable.Buffer()
-)(implicit val codec: JsonValueCodec[Dotted[A]], withContextLattice: ContextDecompose[A]) extends kofre.decompose.containers.AntiEntropy[A] {
+)(implicit val codec: JsonValueCodec[Dotted[A]], withContextLattice: DottedDecompose[A]) extends kofre.decompose.containers.AntiEntropy[A] {
 
   override def state: Dotted[A] = fullState
 

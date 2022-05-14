@@ -2,7 +2,7 @@ package kofre.datatypes
 
 import kofre.base.DecomposeLattice
 import kofre.base.Defs.Id
-import kofre.dotted.ContextDecompose
+import kofre.dotted.DottedDecompose
 import kofre.syntax.PermIdMutate.withID
 import kofre.syntax.{ArdtOpsContains, FixedId, OpsSyntaxHelper, PermId, PermIdMutate, PermQuery}
 
@@ -16,7 +16,7 @@ object PosNegCounter {
 
   val zero: PosNegCounter = PosNegCounter(GrowOnlyCounter.zero, GrowOnlyCounter.zero)
 
-  given contextDecompose: ContextDecompose[PosNegCounter] = ContextDecompose.liftDecomposeLattice
+  given contextDecompose: DottedDecompose[PosNegCounter] = DottedDecompose.liftDecomposeLattice
 
   implicit class PNCounterSyntax[C](container: C)(using ArdtOpsContains[C, PosNegCounter])
       extends OpsSyntaxHelper[C, PosNegCounter](container) {

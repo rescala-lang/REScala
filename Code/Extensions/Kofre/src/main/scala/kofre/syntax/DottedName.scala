@@ -3,7 +3,7 @@ package kofre.syntax
 import kofre.base.{Bottom, DecomposeLattice, Defs}
 import kofre.base.Defs.Id
 import kofre.time.Dots
-import kofre.dotted.{ContextLattice, Dotted}
+import kofre.dotted.{DottedLattice, Dotted}
 
 class DottedName[L](val replicaID: Defs.Id, val anon: Dotted[L]) {
   def map[B](f: L => B): DottedName[B] = new DottedName(replicaID, anon.map(f))

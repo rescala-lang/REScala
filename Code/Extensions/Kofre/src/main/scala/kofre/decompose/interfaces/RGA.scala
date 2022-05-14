@@ -6,7 +6,7 @@ import kofre.decompose.*
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermIdMutate, PermMutate}
 import kofre.decompose.interfaces.GListInterface.{GListAsUIJDLattice, GListSyntax}
 import kofre.decompose.interfaces.RCounterInterface.RCounter
-import kofre.dotted.{ContextDecompose, ContextLattice, DotFun, Dotted}
+import kofre.dotted.{DottedDecompose, DottedLattice, DotFun, Dotted}
 import kofre.datatypes.Epoche
 import kofre.syntax.PermIdMutate.withID
 
@@ -35,7 +35,7 @@ object RGA {
 
   def empty[E]: RGA[E] = RGA(Epoche.empty, DotFun.empty)
 
-  given rgaContext[E]: ContextDecompose[RGA[E]] = ContextDecompose.derived[RGA[E]]
+  given rgaContext[E]: DottedDecompose[RGA[E]] = DottedDecompose.derived[RGA[E]]
 
   given bottom[E]: Bottom[RGA[E]] = new:
     override def empty: RGA[E] = RGA.empty
@@ -66,7 +66,7 @@ object RGA {
   }
 
   private class DeltaStateFactory[E] {
-    given ContextDecompose[Epoche[GListInterface.GList[Dot]]] = ContextDecompose.liftDecomposeLattice
+    given DottedDecompose[Epoche[GListInterface.GList[Dot]]] = DottedDecompose.liftDecomposeLattice
 
     def make(
         epoche: Epoche[GListInterface.GList[Dot]] = empty._1,

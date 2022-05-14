@@ -1,7 +1,7 @@
 package kofre.decompose.interfaces
 
 import kofre.decompose.*
-import kofre.dotted.ContextDecompose
+import kofre.dotted.DottedDecompose
 import kofre.syntax.OpsSyntaxHelper
 
 /** A TwoPSet (Two-Phase Set) is a Delta CRDT modeling a set.
@@ -14,7 +14,7 @@ object TwoPSetInterface {
 
   type TwoPSet[E] = (Set[E], Set[E])
 
-  given contextDecompose[E]: ContextDecompose[TwoPSet[E]] = ContextDecompose.liftDecomposeLattice
+  given contextDecompose[E]: DottedDecompose[TwoPSet[E]] = DottedDecompose.liftDecomposeLattice
 
   implicit class TwoPSetSyntax[C, E](container: C) extends OpsSyntaxHelper[C, TwoPSet[E]](container) {
 

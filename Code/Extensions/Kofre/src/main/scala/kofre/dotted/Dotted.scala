@@ -25,13 +25,13 @@ object Dotted {
 
   given CausalWithDotFunLattice[V: Lattice]: Lattice[Dotted[DotFun[V]]] = kofre.dotted.DotFun.perDotLattice
   given CausalWithDotSetLattice: Lattice[Dotted[Set[Dot]]] =
-    DotSet.contextLattice.bimap[Dotted[Set[Dot]]](
+    DotSet.dottedLattice.bimap[Dotted[Set[Dot]]](
       _.map(_.repr.toSet),
       _.map(s => DotSet(Dots.fromSet(s)))
     )
 
   given latticeLift[L: DecomposeLattice]: DecomposeLattice[Dotted[L]] = DecomposeLattice.derived
-  given syntaxPermissions[L](using ContextLattice[L]): PermCausalMutate[Dotted[L], L]
+  given syntaxPermissions[L](using DottedLattice[L]): PermCausalMutate[Dotted[L], L]
     with {
     override def mutateContext(c: Dotted[L], delta: Dotted[L]): Dotted[L] = c merged delta
     override def query(c: Dotted[L]): L                                             = c.store

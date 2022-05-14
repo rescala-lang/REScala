@@ -20,7 +20,7 @@ import scala.annotation.targetName
   *
   * Separating into a [[mergePartial]] allows extracting the context into the outermost layer reducing metadata overhead.
   */
-trait ContextLattice[A] extends Lattice[Dotted[A]] {
+trait DottedLattice[A] extends Lattice[Dotted[A]] {
   def mergePartial(left: Dotted[A], right: Dotted[A]): A
 
   def merge(left: Dotted[A], right: Dotted[A]): Dotted[A] =
@@ -29,21 +29,20 @@ trait ContextLattice[A] extends Lattice[Dotted[A]] {
       left.context.merge(right.context)
     )
 
-  extension (left: Dotted[A]) def conmerge(right: Dotted[A]): A = mergePartial(left, right)
+  extension (left: Dotted[A]) def dotmerge(right: Dotted[A]): A = mergePartial(left, right)
 }
 
-object ContextLattice {
-  def apply[A](using wcm: ContextLattice[A]): ContextLattice[A] = wcm
+object DottedLattice {
+  def apply[A](using wcm: DottedLattice[A]): DottedLattice[A] = wcm
 
-  given liftLattice[A: Lattice]: ContextLattice[A] = (left, right) => Lattice[A].merge(left.store, right.store)
+  given liftLattice[A: Lattice]: DottedLattice[A] = (left, right) => Lattice[A].merge(left.store, right.store)
 
-
-  given pairPartialLattice[A: ContextLattice, B: ContextLattice]: ContextLattice[(A, B)] with {
+  given pairPartialLattice[A: DottedLattice, B: DottedLattice]: DottedLattice[(A, B)] with {
     override def mergePartial(left: Dotted[(A, B)], right: Dotted[(A, B)]): (A, B) =
       val Dotted((left1, left2), leftCContext)    = left
       val Dotted((right1, right2), rightCContext) = right
-      val stateMerged1                            = Dotted(left1, leftCContext) conmerge Dotted(right1, rightCContext)
-      val stateMerged2                            = Dotted(left2, leftCContext) conmerge Dotted(right2, rightCContext)
+      val stateMerged1                            = Dotted(left1, leftCContext) dotmerge Dotted(right1, rightCContext)
+      val stateMerged2                            = Dotted(left2, leftCContext) dotmerge Dotted(right2, rightCContext)
       (stateMerged1, stateMerged2)
   }
 }

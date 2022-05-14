@@ -6,7 +6,7 @@ import central.SyncMessage.{AppointmentMessage, CalendarState, FreeMessage, Raft
 import kofre.base.DecomposeLattice
 import kofre.datatypes.AddWinsSet
 import kofre.datatypes.AddWinsSet.AWSetSyntax
-import kofre.dotted.{ContextDecompose, Dotted}
+import kofre.dotted.{DottedDecompose, Dotted}
 import kofre.syntax.DottedName
 import loci.communicator.tcp.TCP
 import loci.registry.Registry
@@ -88,7 +88,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
       tokens.tokenFreed.deltaBuffer.collect {
         case DottedName(replicaID, deltaState) if replicaID != rr.toString => deltaState
-      }.reduceOption(ContextDecompose[AddWinsSet[Token]].merge).foreach { state =>
+      }.reduceOption(DottedDecompose[AddWinsSet[Token]].merge).foreach { state =>
         remoteReceiveSyncMessage(FreeMessage(state))
       }
 

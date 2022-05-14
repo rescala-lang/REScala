@@ -3,7 +3,7 @@ package kofre.decompose.containers
 import kofre.base.DecomposeLattice
 import kofre.time.Dots
 import kofre.decompose.Delta
-import kofre.dotted.{ContextDecompose, ContextLattice, Dotted}
+import kofre.dotted.{DottedDecompose, DottedLattice, Dotted}
 import kofre.syntax.{ArdtOpsContains, PermCausal, PermCausalMutate, PermIdMutate, DottedName}
 
 /** BasicCRDTs are Delta CRDTs that use [[JsoniterAntiEntropy]] and [[Network]] as Middleware for exchanging deltas between replicas.
@@ -40,7 +40,7 @@ class AntiEntropyCRDT[State](
 
 object AntiEntropyCRDT {
 
-  given allPermissions[L: ContextDecompose]: (PermIdMutate[AntiEntropyCRDT[L], L] & PermCausalMutate[AntiEntropyCRDT[L], L]) =
+  given allPermissions[L: DottedDecompose]: (PermIdMutate[AntiEntropyCRDT[L], L] & PermCausalMutate[AntiEntropyCRDT[L], L]) =
     CRDTInterface.dottedPermissions
 
   /** Creates a new PNCounter instance

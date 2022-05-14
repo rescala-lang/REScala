@@ -3,7 +3,7 @@ package kofre.decompose.containers
 import kofre.base.{Bottom, DecomposeLattice, Defs}
 import kofre.time.Dots
 import kofre.decompose.Delta
-import kofre.dotted.{ContextDecompose, ContextLattice, Dotted}
+import kofre.dotted.{DottedDecompose, DottedLattice, Dotted}
 import kofre.syntax.{ArdtOpsContains, PermCausal, PermCausalMutate, PermIdMutate, PermQuery, DottedName}
 
 /** ReactiveCRDTs are Delta CRDTs that store applied deltas in their deltaBuffer attribute. Middleware should regularly
@@ -41,7 +41,7 @@ class DeltaBufferRDT[State](
 
 object DeltaBufferRDT {
 
-  given contextPermissions[L: ContextDecompose]: (PermIdMutate[DeltaBufferRDT[L], L] & PermCausalMutate[DeltaBufferRDT[L], L]) = CRDTInterface.dottedPermissions
+  given contextPermissions[L: DottedDecompose]: (PermIdMutate[DeltaBufferRDT[L], L] & PermCausalMutate[DeltaBufferRDT[L], L]) = CRDTInterface.dottedPermissions
 
   given fullPermission[L: DecomposeLattice]:  PermIdMutate[DeltaBufferRDT[L], L] = CRDTInterface.fullPermissions
 

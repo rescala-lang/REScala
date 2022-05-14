@@ -3,7 +3,7 @@ package kofre.datatypes
 import kofre.base.DecomposeLattice.*
 import kofre.base.{DecomposeLattice, Defs}
 import kofre.decompose.*
-import kofre.dotted.ContextDecompose
+import kofre.dotted.DottedDecompose
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermQuery}
 
 // this could be an opaque type, but interop
@@ -13,7 +13,7 @@ case class GrowOnlyCounter(inner: Map[Defs.Id, Int]) derives DecomposeLattice
 object GrowOnlyCounter {
   def zero: GrowOnlyCounter = GrowOnlyCounter(Map.empty)
 
-  given contextDecompose: ContextDecompose[GrowOnlyCounter] = ContextDecompose.liftDecomposeLattice
+  given contextDecompose: DottedDecompose[GrowOnlyCounter] = DottedDecompose.liftDecomposeLattice
 
   implicit class GrowOnlyCounterSyntax[C](container: C)(using aoc: ArdtOpsContains[C, GrowOnlyCounter]) extends OpsSyntaxHelper[C, GrowOnlyCounter](container) {
     def value(using QueryP): Int = current.inner.valuesIterator.sum
