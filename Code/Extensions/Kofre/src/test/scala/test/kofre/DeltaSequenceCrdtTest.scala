@@ -1,7 +1,7 @@
 package test.kofre
 
 import kofre.base.Lattice
-import kofre.contextual.WithContext
+import kofre.contextual.Dotted
 import kofre.decompose.containers.DeltaBufferRDT
 import kofre.rga.{DeltaSequence, Vertex}
 

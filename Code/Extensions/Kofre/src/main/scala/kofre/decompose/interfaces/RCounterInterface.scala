@@ -5,7 +5,7 @@ import kofre.time.Dots
 import kofre.decompose.*
 import kofre.syntax.OpsSyntaxHelper
 import kofre.contextual.ContextDecompose.*
-import kofre.contextual.WithContext
+import kofre.contextual.Dotted
 import kofre.time.Dot
 import kofre.dotted.DotFun
 
@@ -47,8 +47,8 @@ object RCounterInterface {
   private def deltaState(
       df: Option[DotFun[(Int, Int)]] = None,
       cc: Dots
-  ): WithContext[RCounter] = {
-    WithContext(
+  ): Dotted[RCounter] = {
+    Dotted(
       df.getOrElse(DotFun.empty),
       cc
     )

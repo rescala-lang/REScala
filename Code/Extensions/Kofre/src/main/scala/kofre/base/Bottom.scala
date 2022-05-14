@@ -1,6 +1,6 @@
 package kofre.base
 
-import kofre.contextual.{AsCausalContext, ContextDecompose, WithContext}
+import kofre.contextual.{AsCausalContext, ContextDecompose, Dotted}
 
 /** Bottom.empty is the identity of Lattice.merge */
 trait Bottom[A] {

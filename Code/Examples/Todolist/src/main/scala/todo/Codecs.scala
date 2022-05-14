@@ -4,7 +4,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, Jso
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import kofre.base.Defs
 import kofre.time.Dot
-import kofre.contextual.WithContext
+import kofre.contextual.Dotted
 import kofre.decompose.TimedVal
 import kofre.decompose.containers.DeltaBufferRDT
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegister
@@ -25,7 +25,7 @@ object Codecs {
     override def encodeKey(x: Dot, out: JsonWriter): Unit = out.writeKey(s"${x.time}-${x.replicaId}")
   }
 
-  implicit val codecState: JsonValueCodec[WithContext[RGA[TaskRef]]]               = RGAStateCodec
+  implicit val codecState: JsonValueCodec[Dotted[RGA[TaskRef]]]       = RGAStateCodec
   implicit val codecRGA: JsonValueCodec[DeltaBufferRDT[RGA[TaskRef]]] =
     new JsonValueCodec[DeltaBufferRDT[RGA[TaskRef]]] {
       override def decodeValue(
@@ -40,21 +40,21 @@ object Codecs {
       override def nullValue: DeltaBufferRDT[RGA[TaskRef]] = DeltaBufferRDT(replicaId, RGA.empty[TaskRef])
     }
 
-  implicit val transmittableList: IdenticallyTransmittable[WithContext[RGA[TaskRef]]] =
+  implicit val transmittableList: IdenticallyTransmittable[Dotted[RGA[TaskRef]]] =
     IdenticallyTransmittable()
 
   implicit val todoTaskCodec: JsonValueCodec[TaskData] = JsonCodecMaker.make
 
-  implicit val codecLwwState: JsonValueCodec[WithContext[DotFun[TimedVal[TaskData]]]] = JsonCodecMaker.make
+  implicit val codecLwwState: JsonValueCodec[Dotted[DotFun[TimedVal[TaskData]]]] = JsonCodecMaker.make
 
-  implicit val transmittableLWW: IdenticallyTransmittable[WithContext[LWWRegister[TaskData]]] =
+  implicit val transmittableLWW: IdenticallyTransmittable[Dotted[LWWRegister[TaskData]]] =
     IdenticallyTransmittable()
 
   type LwC = DeltaBufferRDT[LWWRegister[TaskData]]
   implicit val codecLww: JsonValueCodec[LwC] =
     new JsonValueCodec[LwC] {
       override def decodeValue(in: JsonReader, default: LwC): LwC = {
-        val state: WithContext[LWWRegister[TaskData]] = codecLwwState.decodeValue(in, default.state)
+        val state: Dotted[LWWRegister[TaskData]] = codecLwwState.decodeValue(in, default.state)
         new DeltaBufferRDT[LWWRegister[TaskData]](state, replicaId, List())
       }
       override def encodeValue(x: LwC, out: JsonWriter): Unit = codecLwwState.encodeValue(x.state, out)

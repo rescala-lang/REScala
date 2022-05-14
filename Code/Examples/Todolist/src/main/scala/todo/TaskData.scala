@@ -1,6 +1,6 @@
 package todo
 
-import kofre.contextual.WithContext
+import kofre.contextual.Dotted
 import kofre.decompose.TimedVal
 import kofre.decompose.containers.DeltaBufferRDT
 import kofre.decompose.interfaces.LWWRegisterInterface
@@ -130,7 +130,7 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
     import loci.serializer.jsoniterScala._
 
     LociDist.distributeDeltaCRDT(crdt, deltaEvt, Todolist.registry)(
-      Binding[WithContext[LWWRegister[TaskData]] => Unit](taskID)
+      Binding[Dotted[LWWRegister[TaskData]] => Unit](taskID)
     )
 
     val taskData = crdt.map(x => LWWRegisterInterface.LWWRegisterSyntax(x).read.getOrElse(TaskData(desc = "LWW Empty")))

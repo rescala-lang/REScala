@@ -3,7 +3,7 @@ package kofre.contextual
 import kofre.base.Lattice.Operators
 import kofre.base.{Bottom, DecomposeLattice, Lattice}
 import kofre.time.{Dots, Dot}
-import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, WithContext}
+import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, Dotted}
 import kofre.decompose.interfaces
 
 import scala.annotation.implicitNotFound
@@ -15,12 +15,12 @@ import scala.compiletime.summonAll
   * data structures that are part of causal CRDTs and make use of dots to track time.
   */
 @implicitNotFound("Not a decompose lattice when in a context: »${A}«")
-trait ContextDecompose[A] extends ContextLattice[A], DecomposeLattice[WithContext[A]] {
-  def contextbimap[B](to: WithContext[A] => WithContext[B], from: WithContext[B] => WithContext[A]): ContextDecompose[B] = new ContextDecompose[B] {
-    override def lteq(left: WithContext[B], right: WithContext[B]): Boolean = ContextDecompose.this.lteq(from(left), from(right))
-    override def decompose(a: WithContext[B]): Iterable[WithContext[B]] = ContextDecompose.this.decompose(from(a)).map(to)
-    override def mergePartial(left: WithContext[B], right: WithContext[B]): B = to(WithContext(ContextDecompose.this.mergePartial(from(left), from(right)))).store
-    override def empty: WithContext[B] = to(ContextDecompose.this.empty)
+trait ContextDecompose[A] extends ContextLattice[A], DecomposeLattice[Dotted[A]] {
+  def contextbimap[B](to: Dotted[A] => Dotted[B], from: Dotted[B] => Dotted[A]): ContextDecompose[B] = new ContextDecompose[B] {
+    override def lteq(left: Dotted[B], right: Dotted[B]): Boolean = ContextDecompose.this.lteq(from(left), from(right))
+    override def decompose(a: Dotted[B]): Iterable[Dotted[B]] = ContextDecompose.this.decompose(from(a)).map(to)
+    override def mergePartial(left: Dotted[B], right: Dotted[B]): B = to(Dotted(ContextDecompose.this.mergePartial(from(left), from(right)))).store
+    override def empty: Dotted[B] = to(ContextDecompose.this.empty)
   }
 }
 
@@ -37,7 +37,7 @@ object ContextDecompose {
 
     private def lat(i: Int): ContextDecompose[Any] = lattices.productElement(i).asInstanceOf[ContextDecompose[Any]]
 
-    override def mergePartial(left: WithContext[T], right: WithContext[T]): T =
+    override def mergePartial(left: Dotted[T], right: Dotted[T]): T =
       pm.fromProduct(new Product {
         def canEqual(that: Any): Boolean = false
         def productArity: Int            = lattices.productArity
@@ -45,14 +45,14 @@ object ContextDecompose {
           lat(i).mergePartial(left.map(_.productElement(i)), right.map(_.productElement(i)))
       })
 
-    override def empty: WithContext[T] =
-      WithContext(pm.fromProduct(
+    override def empty: Dotted[T] =
+      Dotted(pm.fromProduct(
         lattices.map[[α] =>> Any](
           [t] => (l: t) => l.asInstanceOf[ContextDecompose[Any]].empty.store
         )
       ))
 
-    override def decompose(a: WithContext[T]): Iterable[WithContext[T]] =
+    override def decompose(a: Dotted[T]): Iterable[Dotted[T]] =
       Range(0, lattices.productArity).flatMap { j =>
         lat(j).decompose(a.map(_.productElement(j))).map {
           _.map { elem =>
@@ -65,7 +65,7 @@ object ContextDecompose {
         }
       }
 
-    override def lteq(left: WithContext[T], right: WithContext[T]): Boolean =
+    override def lteq(left: Dotted[T], right: Dotted[T]): Boolean =
       Range(0, lattices.productArity).forall { i =>
         lat(i).lteq(left.map(_.productElement(i)), right.map(_.productElement(i)))
       }
@@ -85,16 +85,16 @@ object ContextDecompose {
     */
   def liftDecomposeLattice[A: DecomposeLattice]: ContextDecompose[A] =
     new ContextDecompose[A] {
-      override def mergePartial(left: WithContext[A], right: WithContext[A]): A =
+      override def mergePartial(left: Dotted[A], right: Dotted[A]): A =
         Lattice[A].merge(left.store, right.store)
 
-      override def lteq(left: WithContext[A], right: WithContext[A]): Boolean =
+      override def lteq(left: Dotted[A], right: Dotted[A]): Boolean =
         DecomposeLattice[A].lteq(left.store, right.store)
 
-      override def decompose(state: WithContext[A]): Iterable[WithContext[A]] = {
-        DecomposeLattice[A].decompose(state.store).map(WithContext(_, Dots.empty))
+      override def decompose(state: Dotted[A]): Iterable[Dotted[A]] = {
+        DecomposeLattice[A].decompose(state.store).map(Dotted(_, Dots.empty))
       }
 
-      override def empty: WithContext[A] = WithContext(DecomposeLattice[A].empty)
+      override def empty: Dotted[A] = Dotted(DecomposeLattice[A].empty)
     }
 }

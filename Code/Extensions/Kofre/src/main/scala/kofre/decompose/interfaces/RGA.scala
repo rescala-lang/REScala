@@ -5,7 +5,7 @@ import kofre.time.{Dots, Dot}
 import kofre.decompose.*
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermIdMutate, PermMutate}
 import kofre.decompose.interfaces.GListInterface.{GListAsUIJDLattice, GListSyntax}
-import kofre.contextual.{ContextDecompose, ContextLattice, WithContext}
+import kofre.contextual.{ContextDecompose, ContextLattice, Dotted}
 import kofre.decompose.interfaces.RCounterInterface.RCounter
 import kofre.dotted.DotFun
 import kofre.datatypes.Epoche
@@ -73,7 +73,7 @@ object RGA {
         epoche: Epoche[GListInterface.GList[Dot]] = empty._1,
         df: DotFun[RGANode[E]] = DotFun.empty,
         cc: Dots = Dots.empty
-    ): WithContext[RGA[E]] = WithContext(RGA(epoche, df), cc)
+    ): Dotted[RGA[E]] = Dotted(RGA(epoche, df), cc)
   }
 
   private def deltaState[E]: DeltaStateFactory[E] = new DeltaStateFactory[E]
@@ -123,7 +123,7 @@ object RGA {
       val nextDot     = context.nextDot(replicaID)
 
       findInsertIndex(current, i) match {
-        case None => WithContext(RGA.empty[E])
+        case None => Dotted(RGA.empty[E])
         case Some(glistInsertIndex) =>
           val glistDelta = fw.map(gl => GListSyntax(gl).insert(glistInsertIndex, nextDot)(using withID(replicaID)))
           val dfDelta    = DotFun.empty[RGANode[E]] + (nextDot -> Alive(TimedVal(e, replicaID)))
@@ -145,7 +145,7 @@ object RGA {
       }
 
       findInsertIndex(current, i) match {
-        case None => WithContext(RGA.empty)
+        case None => Dotted(RGA.empty)
         case Some(glistInsertIndex) =>
           val glistDelta =
             fw.map(gl => GListSyntax(gl).insertAll(glistInsertIndex, nextDots)(using summon, withID(replicaID)))
@@ -159,7 +159,7 @@ object RGA {
       }
     }.mutator
 
-    private def updateRGANode(state: RGA[E], i: Int, newNode: RGANode[E]): WithContext[RGA[E]] = {
+    private def updateRGANode(state: RGA[E], i: Int, newNode: RGANode[E]): Dotted[RGA[E]] = {
       val RGA(fw, df) = state
       fw.value.toLazyList.filter { dot =>
         df(dot) match {
@@ -167,7 +167,7 @@ object RGA {
           case Dead()   => false
         }
       }.lift(i) match {
-        case None => WithContext(RGA.empty)
+        case None => Dotted(RGA.empty)
         case Some(d) =>
           deltaState[E].make(df = DotFun.empty[RGANode[E]] + (d -> newNode))
       }
@@ -182,7 +182,7 @@ object RGA {
         state: RGA[E],
         cond: E => Boolean,
         newNode: RGANode[E]
-    ): WithContext[RGA[E]] = {
+    ): Dotted[RGA[E]] = {
       val RGA(_, df) = state
       val toUpdate = df.toList.collect {
         case (d, Alive(tv)) if cond(tv.value) => d

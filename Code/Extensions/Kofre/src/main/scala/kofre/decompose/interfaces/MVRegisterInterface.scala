@@ -6,7 +6,7 @@ import kofre.decompose.*
 import kofre.syntax.OpsSyntaxHelper
 import kofre.time.Dot
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegister
-import kofre.contextual.WithContext
+import kofre.contextual.Dotted
 import kofre.dotted.DotFun
 
 /** An MVRegister (Multi-Value Register) is a Delta CRDT modeling a register.
@@ -26,14 +26,14 @@ object MVRegisterInterface {
     def write(v: A)(using CausalMutationP, IdentifierP): C = {
       val nextDot = context.nextDot(replicaID)
 
-      WithContext(
+      Dotted(
         DotFun(Map(nextDot -> v)),
         Dots.fromSet(current.keySet + nextDot)
         ).mutator
     }
 
     def clear()(using CausalMutationP): C =
-      WithContext(
+      Dotted(
         MVRegisterInterface.empty,
         Dots.fromSet(current.keySet)
         ).mutator

@@ -3,7 +3,7 @@ package kofre.base
 import kofre.base.Lattice.{Operators, mapLattice, optionLattice, setLattice}
 import kofre.base.{Bottom, Lattice}
 import kofre.time.Dots
-import kofre.contextual.{ContextDecompose, WithContext}
+import kofre.contextual.{ContextDecompose, Dotted}
 
 import scala.annotation.implicitNotFound
 import scala.compiletime.summonAll

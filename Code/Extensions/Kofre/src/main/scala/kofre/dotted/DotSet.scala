@@ -2,7 +2,7 @@ package kofre.dotted
 
 import kofre.time.{Dot, Dots}
 import kofre.contextual.ContextDecompose.FromConlattice
-import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, WithContext}
+import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, Dotted}
 import kofre.datatypes.EnableWinsFlag
 import kofre.decompose.interfaces
 
@@ -22,7 +22,7 @@ object DotSet {
 
   /** This essentially tracks the currently present dots, and all dots */
   given contextLattice: ContextLattice[DotSet] with {
-    override def mergePartial(left: WithContext[DotSet], right: WithContext[DotSet]): DotSet = {
+    override def mergePartial(left: Dotted[DotSet], right: Dotted[DotSet]): DotSet = {
       val fromLeft  = left.store.repr subtract right.context
       val fromRight = right.store.repr.subtract(left.context subtract left.store.repr)
 
@@ -36,9 +36,9 @@ object DotSet {
   given contextDecompose: ContextDecompose[DotSet] =
     new FromConlattice[DotSet](contextLattice) {
 
-      override def empty: WithContext[DotSet] = WithContext(DotSet.empty)
+      override def empty: Dotted[DotSet] = Dotted(DotSet.empty)
 
-      override def lteq(left: WithContext[DotSet], right: WithContext[DotSet]): Boolean = {
+      override def lteq(left: Dotted[DotSet], right: Dotted[DotSet]): Boolean = {
         val firstCondition = left.context.forall(right.context.contains)
 
         val secondCondition = {
@@ -49,12 +49,12 @@ object DotSet {
         firstCondition && secondCondition
       }
 
-      override def decompose(state: WithContext[DotSet]): Iterable[WithContext[DotSet]] = {
+      override def decompose(state: Dotted[DotSet]): Iterable[Dotted[DotSet]] = {
         val added =
           for (d <- state.store.repr.iterator) yield
             val single = DotSet(Dots.single(d))
-            WithContext(single, single.repr)
-        val removed = state.context.subtract(state.store.repr).decomposed.map(WithContext(DotSet.empty, _))
+            Dotted(single, single.repr)
+        val removed = state.context.subtract(state.store.repr).decomposed.map(Dotted(DotSet.empty, _))
         removed ++ added
       }
     }

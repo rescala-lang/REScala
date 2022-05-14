@@ -3,7 +3,7 @@ package test.kofre
 import kofre.base.DecomposeLattice
 import kofre.time.{ArrayRanges, Dots, Dot}
 import kofre.contextual.ContextDecompose.*
-import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, WithContext}
+import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, Dotted}
 import kofre.dotted.{DotFun, DotMap, DotSet}
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
@@ -46,12 +46,12 @@ class DotMapTest extends munit.ScalaCheckSuite {
         val ccA   = dotsA union deletedA
         val ccB   = dotsB union deletedB
 
-        val WithContext(dmMerged, ccMerged) =
-          DecomposeLattice[WithContext[TestedMap]].merge(
-            WithContext(dmA, (ccA)),
-            WithContext(dmB, (ccB))
-          )
-        val dotsMerged = dmMerged.dots
+        val Dotted(dmMerged, ccMerged) =
+          DecomposeLattice[Dotted[TestedMap]].merge(
+            Dotted(dmA, (ccA)),
+            Dotted(dmB, (ccB))
+            )
+        val dotsMerged                 = dmMerged.dots
 
         assert(
           ccMerged == (ccA union ccB),
@@ -75,9 +75,9 @@ class DotMapTest extends munit.ScalaCheckSuite {
           (dmA.keySet union dmB.keySet).foreach { k =>
             val vMerged =
               DotSet.contextLattice.mergePartial(
-                WithContext(dmA.getOrElse(k, DotSet.empty), (ccA)),
-                WithContext(dmB.getOrElse(k, DotSet.empty), (ccB))
-              )
+                Dotted(dmA.getOrElse(k, DotSet.empty), (ccA)),
+                Dotted(dmB.getOrElse(k, DotSet.empty), (ccB))
+                )
 
             assert(
               vMerged.isEmpty || dmMerged(k) == vMerged,
@@ -101,26 +101,26 @@ class DotMapTest extends munit.ScalaCheckSuite {
 
         assert(
           ContextLattice[TestedMap].lteq(
-            WithContext(dmA, (ccA)),
-            WithContext(dmA, (ccA))
-          ),
+            Dotted(dmA, (ccA)),
+            Dotted(dmA, (ccA))
+            ),
           s"DotMap.leq should be reflexive, but returns false when applied to ($dmA, $ccA, $dmA, $ccA)"
         )
 
-        val WithContext(dmMerged, ccMerged) =
-          DecomposeLattice[WithContext[TestedMap]].merge(
-            WithContext(dmA, (ccA)),
-            WithContext(dmB, (ccB))
-          )
+        val Dotted(dmMerged, ccMerged) =
+          DecomposeLattice[Dotted[TestedMap]].merge(
+            Dotted(dmA, (ccA)),
+            Dotted(dmB, (ccB))
+            )
 
         assert(
-          ContextLattice[TestedMap].lteq(WithContext(dmA, (ccA)), WithContext(dmMerged, ccMerged)),
+          ContextLattice[TestedMap].lteq(Dotted(dmA, (ccA)), Dotted(dmMerged, ccMerged)),
           s"The result of DotMap.merge should be larger than its lhs, but DotMap.leq returns false when applied to ($dmA, $ccA, $dmMerged, $ccMerged)"
-        )
+          )
         assert(
-          ContextLattice[TestedMap].lteq(WithContext(dmB, (ccB)), WithContext(dmMerged, ccMerged)),
+          ContextLattice[TestedMap].lteq(Dotted(dmB, (ccB)), Dotted(dmMerged, ccMerged)),
           s"The result of DotMap.merge should be larger than its rhs, but DotMap.leq returns false when applied to ($dmB, $ccB, $dmMerged, $ccMerged)"
-        )
+          )
     }
 
   }
@@ -142,12 +142,12 @@ class DotMapTest extends munit.ScalaCheckSuite {
 
       val cc = dm.dots union deleted
 
-      val decomposed: Iterable[WithContext[TestedMap]] =
-        ContextDecompose[TestedMap].decompose(WithContext(dm, (cc)))
-      val wc: WithContext[TestedMap] =
-        decomposed.foldLeft(WithContext(DotMap.empty[Int, DotSet], Dots.empty)) {
-          case (WithContext(dmA, ccA), WithContext(dmB, ccB)) =>
-            DecomposeLattice[WithContext[TestedMap]].merge(WithContext(dmA, ccA), WithContext(dmB, ccB))
+      val decomposed: Iterable[Dotted[TestedMap]] =
+        ContextDecompose[TestedMap].decompose(Dotted(dm, (cc)))
+      val wc: Dotted[TestedMap]                   =
+        decomposed.foldLeft(Dotted(DotMap.empty[Int, DotSet], Dots.empty)) {
+          case (Dotted(dmA, ccA), Dotted(dmB, ccB)) =>
+            DecomposeLattice[Dotted[TestedMap]].merge(Dotted(dmA, ccA), Dotted(dmB, ccB))
         }
 
       val dmMerged: TestedMap = wc.store

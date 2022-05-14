@@ -2,7 +2,7 @@ package kofre.decompose.containers
 
 import kofre.base.DecomposeLattice
 import kofre.time.Dots
-import kofre.contextual.{ContextDecompose, ContextLattice, WithContext}
+import kofre.contextual.{ContextDecompose, ContextLattice, Dotted}
 import kofre.decompose.Delta
 import kofre.syntax.{ArdtOpsContains, PermCausal, PermCausalMutate, PermIdMutate, WithNamedContext}
 
@@ -18,21 +18,21 @@ class AntiEntropyCRDT[State](
 ) extends CRDTInterface[State, AntiEntropyCRDT[State]] {
   override val replicaID: String = antiEntropy.replicaID
 
-  override def state: WithContext[State] = antiEntropy.state
+  override def state: Dotted[State] = antiEntropy.state
 
-  override def applyDelta(delta: WithNamedContext[State])(using DecomposeLattice[WithContext[State]]): AntiEntropyCRDT[State] =
+  override def applyDelta(delta: WithNamedContext[State])(using DecomposeLattice[Dotted[State]]): AntiEntropyCRDT[State] =
     delta match {
       case WithNamedContext(origin, deltaCtx) =>
-        DecomposeLattice[WithContext[State]].diff(state, deltaCtx) match {
+        DecomposeLattice[Dotted[State]].diff(state, deltaCtx) match {
           case Some(stateDiff) =>
-            val stateMerged = DecomposeLattice[WithContext[State]].merge(state, stateDiff)
+            val stateMerged = DecomposeLattice[Dotted[State]].merge(state, stateDiff)
             antiEntropy.recordChange(WithNamedContext(origin, stateDiff), stateMerged)
           case None =>
         }
         this
     }
 
-  def processReceivedDeltas()(implicit u: DecomposeLattice[WithContext[State]]): AntiEntropyCRDT[State] =
+  def processReceivedDeltas()(implicit u: DecomposeLattice[Dotted[State]]): AntiEntropyCRDT[State] =
     antiEntropy.getReceivedDeltas.foldLeft(this) {
       (crdt, delta) => crdt.applyDelta(delta)
     }

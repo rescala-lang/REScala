@@ -2,14 +2,14 @@ package kofre.encrdt.lattices
 
 import kofre.base.{DecomposeLattice, Lattice}
 import kofre.time.Dots
-import kofre.contextual.WithContext
+import kofre.contextual.Dotted
 import kofre.datatypes.AddWinsSet
 import kofre.syntax.{PermIdMutate, WithNamedContext}
 import kofre.syntax.PermIdMutate.withID
 
 case class AddWinsMapLattice[K, V](
-    keys: WithContext[AddWinsSet[K]] = WithContext(AddWinsSet.empty[K]),
-    mappings: Map[K, V] = Map[K, V]()
+                                    keys: Dotted[AddWinsSet[K]] = Dotted(AddWinsSet.empty[K]),
+                                    mappings: Map[K, V] = Map[K, V]()
 ) {
   def values: Map[K, V] = mappings
 

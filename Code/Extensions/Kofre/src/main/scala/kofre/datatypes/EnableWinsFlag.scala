@@ -2,10 +2,9 @@ package kofre.datatypes
 
 import kofre.base.{Bottom, DecomposeLattice}
 import kofre.contextual.ContextDecompose.*
-import kofre.contextual.{AsCausalContext, ContextDecompose, WithContext}
+import kofre.contextual.{AsCausalContext, ContextDecompose, Dotted}
 import kofre.datatypes.Epoche
 import kofre.decompose.*
-import kofre.decompose.interfaces.EnableWinsFlag
 import kofre.dotted.DotSet
 import kofre.syntax.OpsSyntaxHelper
 import kofre.time.Dots
@@ -33,13 +32,13 @@ object EnableWinsFlag {
 
     def enable()(using CausalMutationP, IdentifierP): C = {
       val nextDot = context.nextDot(replicaID)
-      WithContext(
+      Dotted(
         EnableWinsFlag(DotSet(Dots.single(nextDot))),
         current.inner.repr add nextDot
         ).mutator
     }
     def disable()(using CausalMutationP): C = {
-      WithContext(
+      Dotted(
         EnableWinsFlag(DotSet(Dots.empty)),
         current.inner.repr
         ).mutator

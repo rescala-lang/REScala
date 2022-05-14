@@ -1,7 +1,7 @@
 package rescala.extra.replication
 
 import kofre.base.DecomposeLattice
-import kofre.contextual.WithContext
+import kofre.contextual.Dotted
 import kofre.decompose.containers.DeltaBufferRDT
 import kofre.syntax.WithNamedContext
 import loci.registry.{Binding, Registry}
@@ -21,16 +21,16 @@ class LociDist[Api <: RescalaInterface](val api: Api) {
       signal: Signal[DeltaBufferRDT[A]],
       deltaEvt: Evt[WithNamedContext[A]],
       registry: Registry
-  )(binding: Binding[WithContext[A] => Unit, WithContext[A] => Future[Unit]])(implicit dcl: DecomposeLattice[WithContext[A]]): Unit = {
-    registry.bindSbj(binding) { (remoteRef: RemoteRef, deltaState: WithContext[A]) =>
+  )(binding: Binding[Dotted[A] => Unit, Dotted[A] => Future[Unit]])(implicit dcl: DecomposeLattice[Dotted[A]]): Unit = {
+    registry.bindSbj(binding) { (remoteRef: RemoteRef, deltaState: Dotted[A]) =>
       deltaEvt.fire(WithNamedContext(remoteRef.toString, deltaState))
     }
 
     var observers    = Map[RemoteRef, Disconnectable]()
-    var resendBuffer = Map[RemoteRef, WithContext[A]]()
+    var resendBuffer = Map[RemoteRef, Dotted[A]]()
 
     def registerRemote(remoteRef: RemoteRef): Unit = {
-      val remoteUpdate: WithContext[A] => Future[Unit] = registry.lookup(binding, remoteRef)
+      val remoteUpdate: Dotted[A] => Future[Unit] = registry.lookup(binding, remoteRef)
 
       // Send full state to initialize remote
       val currentState = signal.readValueOnce.state
@@ -43,12 +43,12 @@ class LociDist[Api <: RescalaInterface](val api: Api) {
           case WithNamedContext(replicaID, deltaState) if replicaID != remoteRef.toString => deltaState
         } ++ resendBuffer.get(remoteRef).toList
 
-        val combinedState = deltaStateList.reduceOption(DecomposeLattice[WithContext[A]].merge)
+        val combinedState = deltaStateList.reduceOption(DecomposeLattice[Dotted[A]].merge)
 
         combinedState.foreach { s =>
           val mergedResendBuffer = resendBuffer.updatedWith(remoteRef) {
             case None       => Some(s)
-            case Some(prev) => Some(DecomposeLattice[WithContext[A]].merge(prev, s))
+            case Some(prev) => Some(DecomposeLattice[Dotted[A]].merge(prev, s))
           }
 
           if (remoteRef.connected) {

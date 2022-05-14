@@ -2,7 +2,7 @@ package kofre.decompose.interfaces
 import kofre.base.DecomposeLattice
 import kofre.decompose.*
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermIdMutate}
-import kofre.contextual.WithContext
+import kofre.contextual.Dotted
 import kofre.decompose.interfaces.LexCounterInterface.LexCounter
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegisterSyntax
 import kofre.dotted.DotFun
@@ -25,7 +25,7 @@ object LWWRegisterInterface {
 
     def map(f: A => A)(using CausalMutationP, IdentifierP): C =
       read.map(f) match {
-        case None    => WithContext(LWWRegisterInterface.empty).mutator
+        case None    => Dotted(LWWRegisterInterface.empty).mutator
         case Some(v) => write(v)
       }
 

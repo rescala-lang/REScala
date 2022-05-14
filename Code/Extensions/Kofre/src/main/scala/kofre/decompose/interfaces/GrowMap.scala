@@ -2,7 +2,7 @@ package kofre.decompose.interfaces
 
 import kofre.base.DecomposeLattice
 import kofre.time.Dots
-import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, WithContext}
+import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, Dotted}
 import kofre.dotted.DotMap
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermIdMutate, WithNamedContext}
 
@@ -41,7 +41,7 @@ object GrowMap {
     }
 
     def mutateKeyNamedCtx(k: K, default: => V)(m: WithNamedContext[V] => WithNamedContext[V])(using CausalMutationP, IdentifierP): C = {
-      m(WithContext(queryKey(k).getOrElse(default), context).named(replicaID)).anon.map(v => GrowMap(Map(k -> v))).mutator
+      m(Dotted(queryKey(k).getOrElse(default), context).named(replicaID)).anon.map(v => GrowMap(Map(k -> v))).mutator
     }
   }
 

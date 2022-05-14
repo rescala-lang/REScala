@@ -2,7 +2,7 @@ package todo
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import kofre.contextual.WithContext
+import kofre.contextual.Dotted
 import loci.registry.Binding
 import loci.serializer.jsoniterScala._
 import org.scalajs.dom.html.{Div, Input, LI}
@@ -63,7 +63,7 @@ class TodoAppUI(val storagePrefix: String) {
       }(codecRGA)
 
     LociDist.distributeDeltaCRDT(tasksRDT, deltaEvt, Todolist.registry)(
-      Binding[WithContext[RGA[TaskRef]] => Unit]("tasklist")
+      Binding[Dotted[RGA[TaskRef]] => Unit]("tasklist")
     )
 
     val tasksList: Signal[List[TaskRef]] = tasksRDT.map { _.toList }

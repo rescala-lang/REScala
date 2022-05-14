@@ -9,7 +9,7 @@ import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap.DeltaAddWinsLastWriterWinsMapLattice
 import rescala.extra.encrdt.encrypted.deltabased.{DecryptedDeltaGroup, EncryptedDeltaGroup, TrustedReplica, UntrustedReplica}
 import benchmarks.encrdt.Codecs._
-import kofre.contextual.WithContext
+import kofre.contextual.Dotted
 import kofre.dotted.DotMap
 
 import java.util.UUID
@@ -24,7 +24,7 @@ class SecureToDoListClient(
 
   private val uuidToDeltaGroupMap: mutable.Map[UUID, DecryptedDeltaGroup[ToDoMapLattice]] = mutable.Map.empty
   private var cleanupDeltaGroup: DecryptedDeltaGroup[ToDoMapLattice] =
-    DecryptedDeltaGroup(WithContext(DotMap.empty, Dots.empty), Dots.empty)
+    DecryptedDeltaGroup(Dotted(DotMap.empty, Dots.empty), Dots.empty)
 
   private var _disseminatedDataInBytes: Long = 0
   def disseminatedDataInBytes: Long          = _disseminatedDataInBytes

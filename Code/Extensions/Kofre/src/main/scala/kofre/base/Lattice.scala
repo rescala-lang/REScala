@@ -1,6 +1,6 @@
 package kofre.base
 
-import kofre.contextual.{WithContext, ContextDecompose}
+import kofre.contextual.{Dotted, ContextDecompose}
 
 import scala.annotation.targetName
 import scala.collection.immutable.HashMap
@@ -70,10 +70,10 @@ object Lattice {
 
   given functionLattice[K, V: Lattice]: Lattice[K => V] = (left, right) => k => left(k) merge right(k)
 
-  given contextLattice[D: ContextDecompose]: Lattice[WithContext[D]] = (left, right) =>
+  given contextLattice[D: ContextDecompose]: Lattice[Dotted[D]] = (left, right) =>
     val dsMerged = ContextDecompose[D].mergePartial(left, right)
     val ccMerged = left.context merge right.context
-    WithContext[D](dsMerged, ccMerged)
+    Dotted[D](dsMerged, ccMerged)
 
   inline def derived[T <: Product](using pm: Mirror.ProductOf[T]): Lattice[T] =
     val lattices = summonAll[Tuple.Map[pm.MirroredElemTypes, Lattice]].toIArray.map(_.asInstanceOf[Lattice[Any]])

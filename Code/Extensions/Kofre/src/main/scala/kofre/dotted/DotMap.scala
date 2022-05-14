@@ -3,7 +3,7 @@ package kofre.dotted
 import kofre.base.Bottom
 import kofre.time.Dots
 import kofre.contextual.ContextDecompose.FromConlattice
-import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, WithContext}
+import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, Dotted}
 import kofre.decompose.interfaces
 
 case class DotMap[K, V](repr: Map[K, V]) {
@@ -28,7 +28,7 @@ object DotMap {
     * Recursively merging values present in both maps with the given context.
     */
   given contextLattice[K, V: ContextLattice: Bottom]: ContextLattice[DotMap[K, V]] with {
-    override def mergePartial(left: WithContext[DotMap[K, V]], right: WithContext[DotMap[K, V]]): DotMap[K, V] = {
+    override def mergePartial(left: Dotted[DotMap[K, V]], right: Dotted[DotMap[K, V]]): DotMap[K, V] = {
       DotMap((left.store.repr.keySet union right.store.repr.keySet).flatMap { key =>
         val leftCausalStore  = left.map(_.getOrElse(key, Bottom.empty[V]))
         val rightCausalStore = right.map(_.getOrElse(key, Bottom.empty[V]))
@@ -41,9 +41,9 @@ object DotMap {
   given contextDecompose[K, V: ContextDecompose: AsCausalContext]: ContextDecompose[DotMap[K, V]] =
     new FromConlattice[DotMap[K, V]](contextLattice) {
 
-      override def empty: WithContext[DotMap[K, V]] = WithContext(DotMap.empty)
+      override def empty: Dotted[DotMap[K, V]] = Dotted(DotMap.empty)
 
-      override def lteq(left: WithContext[DotMap[K, V]], right: WithContext[DotMap[K, V]]): Boolean = {
+      override def lteq(left: Dotted[DotMap[K, V]], right: Dotted[DotMap[K, V]]): Boolean = {
         def firstCondition = (left.context subtract right.context).isEmpty
 
         def secondConditionHelper(keys: Iterable[K]): Boolean = keys.forall { k =>
@@ -55,17 +55,17 @@ object DotMap {
         firstCondition && secondCondition
       }
 
-      override def decompose(state: WithContext[DotMap[K, V]]): Iterable[WithContext[DotMap[K, V]]] = {
+      override def decompose(state: Dotted[DotMap[K, V]]): Iterable[Dotted[DotMap[K, V]]] = {
         val added = for {
           k <- state.store.keys
-          WithContext(atomicV, atomicCC) <- {
+          Dotted(atomicV, atomicCC) <- {
             val v = state.store.getOrElse(k, Bottom.empty[V])
-            ContextDecompose[V].decompose(WithContext(v, AsCausalContext[V].dots(v)))
+            ContextDecompose[V].decompose(Dotted(v, AsCausalContext[V].dots(v)))
           }
-        } yield WithContext(DotMap(Map(k -> atomicV)), atomicCC)
+        } yield Dotted(DotMap(Map(k -> atomicV)), atomicCC)
 
         val removed =
-          state.context.subtract(state.store.dots).decomposed.map(WithContext(
+          state.context.subtract(state.store.dots).decomposed.map(Dotted(
             DotMap.empty[K, V],
             _
           ))

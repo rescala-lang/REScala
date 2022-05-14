@@ -6,7 +6,7 @@ import kofre.time.Dots
 import kofre.datatypes.{AddWinsSet, EnableWinsFlag}
 import kofre.datatypes.AddWinsSet
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermIdMutate, WithNamedContext}
-import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, WithContext}
+import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, Dotted}
 
 import scala.collection.{AbstractIterator, immutable}
 
@@ -15,7 +15,7 @@ case class DeltaSequence[A](vertices: AddWinsSet[Vertex], edges: DeltaSequence.D
 object DeltaSequence {
 
   def empty[A]: DeltaSequence[A] =
-    val addStart = WithContext(AddWinsSet.empty[kofre.rga.Vertex], Dots.empty).named(Vertex.start.id).add(
+    val addStart = Dotted(AddWinsSet.empty[kofre.rga.Vertex], Dots.empty).named(Vertex.start.id).add(
       Vertex.start
     ).anon
     DeltaSequence(
@@ -104,8 +104,8 @@ object DeltaSequence {
     new ContextDecompose[DeltaSequence[A]] {
 
 
-      override def decompose(a: WithContext[DeltaSequence[A]]): Iterable[WithContext[DeltaSequence[A]]] = Iterable(a)
-      override def empty: WithContext[DeltaSequence[A]] = WithContext(DeltaSequence.empty)
+      override def decompose(a: Dotted[DeltaSequence[A]]): Iterable[Dotted[DeltaSequence[A]]] = Iterable(a)
+      override def empty: Dotted[DeltaSequence[A]] = Dotted(DeltaSequence.empty)
 
 
       private val noMapConflictsLattice: Lattice[A] = (left: A, right: A) =>
@@ -113,8 +113,8 @@ object DeltaSequence {
         else throw new IllegalStateException(s"assumed there would be no conflict, but have $left and $right")
 
       override def mergePartial(
-          left: WithContext[DeltaSequence[A]],
-          right: WithContext[DeltaSequence[A]]
+                                 left: Dotted[DeltaSequence[A]],
+                                 right: Dotted[DeltaSequence[A]]
       ): DeltaSequence[A] = {
         val newVertices = right.store.vertices.elements.filter(!left.store.edges.inner.contains(_))
 

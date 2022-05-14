@@ -1,7 +1,7 @@
 package kofre.protocol
 
 import kofre.base.{Bottom, DecomposeLattice}
-import kofre.contextual.{ContextDecompose, WithContext}
+import kofre.contextual.{ContextDecompose, Dotted}
 import kofre.decompose.*
 import kofre.datatypes.AddWinsSet.AWSetSyntax
 import kofre.datatypes.AddWinsSet
@@ -69,10 +69,10 @@ object RubisInterface {
 
     def requestRegisterUser(userId: User)(using CausalMutationP, CausalP, QueryP, IdentifierP): C = {
       val (req, users, _) = current
-      if (users.contains(userId)) WithContext(deltaState.make(), context).mutator
+      if (users.contains(userId)) Dotted(deltaState.make(), context).mutator
       else
-        val merged = WithContext(req, context).named(replicaID).add(userId -> replicaID).anon
-        WithContext(deltaState.make(userRequests = merged.store), merged.context).mutator
+        val merged = Dotted(req, context).named(replicaID).add(userId -> replicaID).anon
+        Dotted(deltaState.make(userRequests = merged.store), merged.context).mutator
     }
 
     def resolveRegisterUser()(using MutationIdP, CausalP): C = {
@@ -87,9 +87,9 @@ object RubisInterface {
       }
 
       deltaState.make(
-        userRequests = WithContext(req, context).clear().store,
+        userRequests = Dotted(req, context).clear().store,
         users = newUsers
-      )
+        )
     }.mutator
   }
 }

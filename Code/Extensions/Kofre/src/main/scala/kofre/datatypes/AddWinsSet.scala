@@ -2,7 +2,7 @@ package kofre.datatypes
 
 import kofre.base.DecomposeLattice
 import kofre.time.{Dots, Dot}
-import kofre.contextual.{AsCausalContext, ContextDecompose, WithContext}
+import kofre.contextual.{AsCausalContext, ContextDecompose, Dotted}
 import kofre.contextual.ContextDecompose.*
 import kofre.decompose.*
 import kofre.dotted.{DotMap, DotSet}
@@ -107,7 +107,7 @@ object AddWinsSet {
     def make(
         dm: DotMap[E, DotSet] = DotMap.empty,
         cc: Dots = Dots.empty
-    ): WithContext[AddWinsSet[E]] = WithContext(AddWinsSet(dm), cc)
+    ): Dotted[AddWinsSet[E]] = Dotted(AddWinsSet(dm), cc)
   }
 
   private def deltaState[E]: DeltaStateFactory[E] = new DeltaStateFactory[E]

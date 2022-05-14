@@ -4,7 +4,7 @@ import calendar.{Appointment, CalendarProgram, RaftTokens, Token}
 import central.Bindings._
 import central.SyncMessage.{AppointmentMessage, CalendarState, FreeMessage, RaftMessage, WantMessage}
 import kofre.base.DecomposeLattice
-import kofre.contextual.{ContextDecompose, WithContext}
+import kofre.contextual.{ContextDecompose, Dotted}
 import kofre.datatypes.AddWinsSet
 import kofre.datatypes.AddWinsSet.AWSetSyntax
 import kofre.syntax.WithNamedContext
@@ -82,7 +82,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
       tokens.want.deltaBuffer.collect {
         case WithNamedContext(replicaID, deltaState) if replicaID != rr.toString => deltaState
-      }.reduceOption(DecomposeLattice[WithContext[AddWinsSet[Token]]].merge).foreach { state =>
+      }.reduceOption(DecomposeLattice[Dotted[AddWinsSet[Token]]].merge).foreach { state =>
         remoteReceiveSyncMessage(WantMessage(state))
       }
 
@@ -113,7 +113,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
   def sendRecursive(
                      remoteReceiveSyncMessage: SyncMessage => Future[Unit],
-                     delta: WithContext[AddWinsSet[Appointment]],
+                     delta: Dotted[AddWinsSet[Appointment]],
                      crdtid: String,
   ): Unit = new FutureTask[Unit](() => {
     def attemptSend(atoms: Iterable[CalendarState], merged: CalendarState): Unit = {

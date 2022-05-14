@@ -2,7 +2,7 @@ package test.kofre
 
 import kofre.base.DecomposeLattice
 import kofre.time.{Dots, Dot}
-import kofre.contextual.{AsCausalContext, WithContext}
+import kofre.contextual.{AsCausalContext, Dotted}
 import kofre.dotted.DotFun
 import org.scalacheck.Prop.*
 import test.kofre.DataGenerator.*
@@ -32,12 +32,12 @@ class DotFunTest extends munit.ScalaCheckSuite {
       val ccA   = dotsA union deletedA
       val ccB   = dotsB union deletedB
 
-      val WithContext(dfMerged, ccMerged) =
-        DecomposeLattice[WithContext[DotFun[Int]]].merge(
-          WithContext(dfA, ccA),
-          WithContext(dfB, ccB)
-        )
-      val dotsMerged = dfMerged.dots
+      val Dotted(dfMerged, ccMerged) =
+        DecomposeLattice[Dotted[DotFun[Int]]].merge(
+          Dotted(dfA, ccA),
+          Dotted(dfB, ccB)
+          )
+      val dotsMerged                 = dfMerged.dots
 
       assert(
         ccMerged == (ccA union ccB),
@@ -87,35 +87,35 @@ class DotFunTest extends munit.ScalaCheckSuite {
       val ccB = dfB.dots union deletedB
 
       assert(
-        DotFun.perDotDecompose[Int].lteq(WithContext(dfA, ccA), WithContext(dfA, ccA)),
+        DotFun.perDotDecompose[Int].lteq(Dotted(dfA, ccA), Dotted(dfA, ccA)),
         s"DotFun.leq should be reflexive, but returns false when applied to ($dfA, $ccA, $dfA, $ccA)"
-      )
-
-      val WithContext(dfMerged, ccMerged) =
-        DecomposeLattice[WithContext[DotFun[Int]]].merge(
-          WithContext(dfA, (ccA)),
-          WithContext(dfB, (ccB))
         )
 
+      val Dotted(dfMerged, ccMerged) =
+        DecomposeLattice[Dotted[DotFun[Int]]].merge(
+          Dotted(dfA, (ccA)),
+          Dotted(dfB, (ccB))
+          )
+
       assert(
-        DotFun.perDotDecompose[Int].lteq(WithContext(dfA, (ccA)), WithContext(dfMerged, ccMerged)),
+        DotFun.perDotDecompose[Int].lteq(Dotted(dfA, (ccA)), Dotted(dfMerged, ccMerged)),
         s"The result of DotFun.merge should be larger than its lhs, but DotFun.leq returns false when applied to ($dfA, $ccA, $dfMerged, $ccMerged)"
-      )
+        )
       assert(
-        DotFun.perDotDecompose[Int].lteq(WithContext(dfB, (ccB)), WithContext(dfMerged, ccMerged)),
+        DotFun.perDotDecompose[Int].lteq(Dotted(dfB, (ccB)), Dotted(dfMerged, ccMerged)),
         s"The result of DotFun.merge should be larger than its rhs, but DotFun.leq returns false when applied to ($dfB, $ccB, $dfMerged, $ccMerged)"
-      )
+        )
     }
   }
 
   test("decompose") {
-    type D = WithContext[DotFun[Set[Int]]]
+    type D = Dotted[DotFun[Set[Int]]]
 
     val dot = Dot("a", 0)
     val cc  = Dots.fromSet(Set(dot))
 
     val data =
-      WithContext[DotFun[Set[Int]]](DotFun(Map(dot -> Set(1, 2, 3))), cc)
+      Dotted[DotFun[Set[Int]]](DotFun(Map(dot -> Set(1, 2, 3))), cc)
     val dec: Iterable[D] = data.decomposed
     val rec              = dec.reduceLeft(_ merged _)
 
@@ -126,18 +126,18 @@ class DotFunTest extends munit.ScalaCheckSuite {
     forAll { (df: DotFun[Int], deleted: Dots) =>
       val cc = df.dots union deleted
 
-      val withContext = WithContext(df, cc)
+      val withContext = Dotted(df, cc)
 
-      val decomposed: Iterable[WithContext[DotFun[Int]]] = DotFun.perDotDecompose.decompose(withContext)
+      val decomposed: Iterable[Dotted[DotFun[Int]]] = DotFun.perDotDecompose.decompose(withContext)
 
       decomposed.foreach { dec =>
         assert(dec <= withContext)
       }
 
-      val WithContext(dfMerged, ccMerged) =
-        decomposed.foldLeft(WithContext(DotFun.empty[Int], Dots.empty)) {
-          case (WithContext(dfA, ccA), WithContext(dfB, ccB)) =>
-            DecomposeLattice[WithContext[DotFun[Int]]].merge(WithContext(dfA, ccA), WithContext(dfB, ccB))
+      val Dotted(dfMerged, ccMerged) =
+        decomposed.foldLeft(Dotted(DotFun.empty[Int], Dots.empty)) {
+          case (Dotted(dfA, ccA), Dotted(dfB, ccB)) =>
+            DecomposeLattice[Dotted[DotFun[Int]]].merge(Dotted(dfA, ccA), Dotted(dfB, ccB))
         }
 
       assertEquals(dfMerged, df)

@@ -3,7 +3,7 @@ package kofre.time
 import kofre.base.Defs.{Id, Time}
 import kofre.base.{DecomposeLattice, Lattice}
 import kofre.time.Dot
-import kofre.contextual.WithContext
+import kofre.contextual.Dotted
 
 
 /** Essentially a more efficient version of a [[ Set[Dot] ]].
@@ -14,7 +14,7 @@ import kofre.contextual.WithContext
   * */
 case class Dots(internal: Map[Id, ArrayRanges]) {
 
-  def wrap[A](a: A): WithContext[A] = WithContext(a, this)
+  def wrap[A](a: A): Dotted[A] = Dotted(a, this)
 
   def isEmpty: Boolean = internal.forall((_, r) => r.isEmpty)
 

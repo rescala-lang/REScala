@@ -2,7 +2,7 @@ package kofre.decompose.containers
 
 import kofre.base.{Bottom, DecomposeLattice, Defs}
 import kofre.time.Dots
-import kofre.contextual.{ContextDecompose, ContextLattice, WithContext}
+import kofre.contextual.{ContextDecompose, ContextLattice, Dotted}
 import kofre.decompose.Delta
 import kofre.syntax.{ArdtOpsContains, PermCausal, PermCausalMutate, PermIdMutate, PermQuery, WithNamedContext}
 
@@ -11,23 +11,23 @@ import kofre.syntax.{ArdtOpsContains, PermCausal, PermCausalMutate, PermIdMutate
   * have been read and propagated by the middleware, it should call resetDeltaBuffer to empty the deltaBuffer.
   */
 class DeltaBufferRDT[State](
-    val state: WithContext[State],
-    val replicaID: String,
-    val deltaBuffer: List[WithNamedContext[State]]
+                             val state: Dotted[State],
+                             val replicaID: String,
+                             val deltaBuffer: List[WithNamedContext[State]]
 ) extends CRDTInterface[State, DeltaBufferRDT[State]] {
 
   def copy(
-      state: WithContext[State] = state,
-      deltaBuffer: List[WithNamedContext[State]] = deltaBuffer
+            state: Dotted[State] = state,
+            deltaBuffer: List[WithNamedContext[State]] = deltaBuffer
   ): DeltaBufferRDT[State] =
     new DeltaBufferRDT[State](state, replicaID, deltaBuffer)
 
-  override def applyDelta(delta: WithNamedContext[State])(implicit u: DecomposeLattice[WithContext[State]]): DeltaBufferRDT[State] =
+  override def applyDelta(delta: WithNamedContext[State])(implicit u: DecomposeLattice[Dotted[State]]): DeltaBufferRDT[State] =
     delta match {
       case WithNamedContext(origin, delta) =>
-        DecomposeLattice[WithContext[State]].diff(state, delta) match {
+        DecomposeLattice[Dotted[State]].diff(state, delta) match {
           case Some(stateDiff) =>
-            val stateMerged = DecomposeLattice[WithContext[State]].merge(state, stateDiff)
+            val stateMerged = DecomposeLattice[Dotted[State]].merge(state, stateDiff)
             copy(
               state = stateMerged,
               deltaBuffer = WithNamedContext(origin, stateDiff) :: deltaBuffer
@@ -49,10 +49,10 @@ object DeltaBufferRDT {
     *
     * @param replicaID Unique id of the replica that this instance is located on
     */
-  def apply[State](replicaID: String)(using bot: Bottom[WithContext[State]]): DeltaBufferRDT[State] =
+  def apply[State](replicaID: String)(using bot: Bottom[Dotted[State]]): DeltaBufferRDT[State] =
     new DeltaBufferRDT[State](bot.empty, replicaID, List())
 
-  def empty[State](replicaID: Defs.Id, init: State): DeltaBufferRDT[State] = new DeltaBufferRDT[State](WithContext(init), replicaID, List())
+  def empty[State](replicaID: Defs.Id, init: State): DeltaBufferRDT[State] = new DeltaBufferRDT[State](Dotted(init), replicaID, List())
 
   def apply[State](replicaID: Defs.Id, init: State): DeltaBufferRDT[State] = empty(replicaID, init)
 }

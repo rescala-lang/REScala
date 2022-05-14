@@ -22,16 +22,16 @@ import scala.annotation.targetName
   *
   * Separating into a [[mergePartial]] allows extracting the context into the outermost layer reducing metadata overhead.
   */
-trait ContextLattice[A] extends Lattice[WithContext[A]] {
-  def mergePartial(left: WithContext[A], right: WithContext[A]): A
+trait ContextLattice[A] extends Lattice[Dotted[A]] {
+  def mergePartial(left: Dotted[A], right: Dotted[A]): A
 
-  def merge(left: WithContext[A], right: WithContext[A]): WithContext[A] =
-    WithContext(
+  def merge(left: Dotted[A], right: Dotted[A]): Dotted[A] =
+    Dotted(
       mergePartial(left, right),
       left.context.merge(right.context)
     )
 
-  extension (left: WithContext[A]) def conmerge(right: WithContext[A]): A = mergePartial(left, right)
+  extension (left: Dotted[A]) def conmerge(right: Dotted[A]): A = mergePartial(left, right)
 }
 
 object ContextLattice {
@@ -41,11 +41,11 @@ object ContextLattice {
 
 
   given pairPartialLattice[A: ContextLattice, B: ContextLattice]: ContextLattice[(A, B)] with {
-    override def mergePartial(left: WithContext[(A, B)], right: WithContext[(A, B)]): (A, B) =
-      val WithContext((left1, left2), leftCContext)    = left
-      val WithContext((right1, right2), rightCContext) = right
-      val stateMerged1 = WithContext(left1, leftCContext) conmerge WithContext(right1, rightCContext)
-      val stateMerged2 = WithContext(left2, leftCContext) conmerge WithContext(right2, rightCContext)
+    override def mergePartial(left: Dotted[(A, B)], right: Dotted[(A, B)]): (A, B) =
+      val Dotted((left1, left2), leftCContext)    = left
+      val Dotted((right1, right2), rightCContext) = right
+      val stateMerged1                            = Dotted(left1, leftCContext) conmerge Dotted(right1, rightCContext)
+      val stateMerged2                            = Dotted(left2, leftCContext) conmerge Dotted(right2, rightCContext)
       (stateMerged1, stateMerged2)
   }
 }

@@ -3,7 +3,7 @@ package kofre.syntax
 import kofre.base.Defs.Id
 import kofre.base.{DecomposeLattice, Defs, Lattice}
 import kofre.time.Dots
-import kofre.contextual.WithContext
+import kofre.contextual.Dotted
 import kofre.decompose.containers.{AntiEntropyCRDT, DeltaBufferRDT}
 
 import scala.annotation.implicitNotFound
@@ -39,7 +39,7 @@ trait PermCausal[C]:
   "Requires context mutation permission.\nUnsure how to extract context from »${C}«\nto modify »${L}«"
 )
 trait PermCausalMutate[C, L] extends PermCausal[C], PermQuery[C, L]:
-  def mutateContext(container: C, withContext: WithContext[L]): C
+  def mutateContext(container: C, withContext: Dotted[L]): C
 @implicitNotFound(
   "Requires query, id, and mutation permission.\nUnsure how to extract them from »${C}«\nto modify »${L}«"
 )
@@ -83,9 +83,9 @@ trait OpsSyntaxHelper[C, L](container: C) {
 
   final protected def current(using perm: QueryP): L                                     = perm.query(container)
   final protected def replicaID(using perm: IdentifierP): Defs.Id                        = perm.replicaId(container)
-  extension [A](c: WithContext[A]) def inheritId(using IdentifierP): WithNamedContext[A] = c.named(replicaID)
+  extension [A](c: Dotted[A]) def inheritId(using IdentifierP): WithNamedContext[A] = c.named(replicaID)
   final protected def context(using perm: CausalP): Dots                        = perm.context(container)
   extension (l: L)(using perm: MutationP) def mutator: C                                 = perm.mutate(container, l)
-  extension (l: WithContext[L])(using perm: CausalMutationP) def mutator = perm.mutateContext(container, l)
+  extension (l: Dotted[L])(using perm: CausalMutationP) def mutator = perm.mutateContext(container, l)
 
 }

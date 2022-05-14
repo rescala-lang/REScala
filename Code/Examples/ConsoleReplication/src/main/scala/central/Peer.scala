@@ -2,7 +2,7 @@ package central
 
 import central.Bindings._
 import kofre.base.DecomposeLattice
-import kofre.contextual.WithContext
+import kofre.contextual.Dotted
 import kofre.decompose.containers.DeltaBufferRDT
 import kofre.datatypes.AddWinsSet
 import kofre.syntax.WithNamedContext
@@ -83,7 +83,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
   def sendRecursive(
       remoteReceiveSyncMessage: SyncMessage => Future[Unit],
-      delta: WithContext[AddWinsSet[Int]]
+      delta: Dotted[AddWinsSet[Int]]
   ): Unit = new FutureTask[Unit](() => {
     def attemptSend(atoms: Iterable[SetState], merged: SetState): Unit = {
       remoteReceiveSyncMessage(SyncMessage(checkpoint, merged)).failed.foreach {

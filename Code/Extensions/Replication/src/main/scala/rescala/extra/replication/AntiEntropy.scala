@@ -3,7 +3,7 @@ package rescala.extra.replication
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReaderException, JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import kofre.base.DecomposeLattice
-import kofre.contextual.{ContextDecompose, WithContext}
+import kofre.contextual.{ContextDecompose, Dotted}
 import kofre.decompose.containers.Network
 import kofre.syntax.WithNamedContext
 import rescala.extra.replication.AntiEntropy.{AckMsg, DeltaMsg}
@@ -27,9 +27,9 @@ class AntiEntropy[A](
     val replicaID: String,
     network: Network,
     neighbors: mutable.Buffer[String] = mutable.Buffer()
-)(implicit val codec: JsonValueCodec[WithContext[A]], withContextLattice: ContextDecompose[A]) extends kofre.decompose.containers.AntiEntropy[A] {
+)(implicit val codec: JsonValueCodec[Dotted[A]], withContextLattice: ContextDecompose[A]) extends kofre.decompose.containers.AntiEntropy[A] {
 
-  override def state: WithContext[A] = fullState
+  override def state: Dotted[A] = fullState
 
 
   private val deltaBufferOut: mutable.Map[Int, WithNamedContext[A]] = mutable.Map()
@@ -40,7 +40,7 @@ class AntiEntropy[A](
 
   private val ackMap: mutable.Map.WithDefault[String, Int] = new mutable.Map.WithDefault(mutable.Map(), _ => -1)
 
-  private var fullState: WithContext[A] = DecomposeLattice[WithContext[A]].empty
+  private var fullState: Dotted[A] = DecomposeLattice[Dotted[A]].empty
 
   implicit val AckMsgCodec: JsonValueCodec[AckMsg] = JsonCodecMaker.make
 
@@ -54,7 +54,7 @@ class AntiEntropy[A](
     neighbors.append(newNeighbor)
   }
 
-  def recordChange(delta: WithNamedContext[A], state: WithContext[A]): Unit = {
+  def recordChange(delta: WithNamedContext[A], state: Dotted[A]): Unit = {
     fullState = state
 
     deltaBufferOut.update(nextSeqNum, delta)
@@ -101,8 +101,8 @@ class AntiEntropy[A](
     else {
       deltaBufferOut.collect {
         case (n, WithNamedContext(origin, deltaState)) if n >= ackMap(to) && origin != to => deltaState
-      } reduceOption { (left: WithContext[A], right: WithContext[A]) =>
-        DecomposeLattice[WithContext[A]].merge(left, right)
+      } reduceOption { (left: Dotted[A], right: Dotted[A]) =>
+        DecomposeLattice[Dotted[A]].merge(left, right)
       } map { deltaState => DeltaMsg(WithNamedContext(replicaID, deltaState), nextSeqNum) }
     }
   }

@@ -1,7 +1,7 @@
 package benchmarks.lattices.delta
 
 import kofre.time.{Dots, Dot}
-import kofre.contextual.{ContextDecompose, WithContext}
+import kofre.contextual.{ContextDecompose, Dotted}
 import kofre.decompose.interfaces.RGA
 import org.openjdk.jmh.annotations
 import org.openjdk.jmh.annotations._
@@ -20,9 +20,9 @@ class DeltaMergeBench {
   @Param(Array("1", "10", "100", "1000"))
   var size: Long = _
 
-  var fullState: WithContext[RGA[Long]]         = _
-  var plusOneState: WithContext[RGA[Long]]      = _
-  var plusOneDeltaState: WithContext[RGA[Long]] = _
+  var fullState: Dotted[RGA[Long]]         = _
+  var plusOneState: Dotted[RGA[Long]]      = _
+  var plusOneDeltaState: Dotted[RGA[Long]] = _
 
   def makeCContext(replicaID: String): Dots = {
     val dots = (0L until size).map(Dot(replicaID, _)).toSet
@@ -31,9 +31,9 @@ class DeltaMergeBench {
 
   @Setup
   def setup(): Unit = {
-    val baseState: WithContext[RGA[Long]] = WithContext(RGA.empty)
+    val baseState: Dotted[RGA[Long]] = Dotted(RGA.empty)
 
-    val deltaState: WithContext[RGA[Long]] =
+    val deltaState: Dotted[RGA[Long]] =
       baseState.named("").insertAll(0, 0L to size).anon
     fullState = ContextDecompose[RGA[Long]].merge(baseState, deltaState)
 
@@ -42,17 +42,17 @@ class DeltaMergeBench {
   }
 
   @Benchmark
-  def fullMerge: WithContext[RGA[Long]] = {
+  def fullMerge: Dotted[RGA[Long]] = {
     ContextDecompose[RGA[Long]].merge(fullState, plusOneState)
   }
 
   @Benchmark
-  def fullDiff: Option[WithContext[RGA[Long]]] = {
+  def fullDiff: Option[Dotted[RGA[Long]]] = {
     ContextDecompose[RGA[Long]].diff(fullState, plusOneState)
   }
 
   @Benchmark
-  def deltaMerge: WithContext[RGA[Long]] = {
+  def deltaMerge: Dotted[RGA[Long]] = {
     ContextDecompose[RGA[Long]].diff(fullState, plusOneDeltaState) match {
       case Some(stateDiff) =>
         ContextDecompose[RGA[Long]].merge(fullState, stateDiff)
@@ -61,7 +61,7 @@ class DeltaMergeBench {
   }
 
   @Benchmark
-  def deltaMergeNoDiff: WithContext[RGA[Long]] = {
+  def deltaMergeNoDiff: Dotted[RGA[Long]] = {
     ContextDecompose[RGA[Long]].merge(fullState, plusOneDeltaState)
   }
 }

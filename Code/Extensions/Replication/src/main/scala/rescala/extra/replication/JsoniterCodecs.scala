@@ -10,7 +10,7 @@ import kofre.decompose.interfaces.RGA.RGANode
 import kofre.decompose.TimedVal
 import kofre.time.{ArrayRanges, Dots, Dot}
 import kofre.decompose.interfaces.LexCounterInterface.LexPair
-import kofre.contextual.WithContext
+import kofre.contextual.Dotted
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
 import kofre.decompose.interfaces.ORMapInterface.ORMap
 import kofre.decompose.interfaces.RCounterInterface.RCounter
@@ -83,7 +83,7 @@ object JsoniterCodecs {
 
   /** EWFlag */
 
-  // implicit def EWFlagStateCodec: JsonValueCodec[WithContext[Dots]] = JsonCodecMaker.make
+  // implicit def EWFlagStateCodec: JsonValueCodec[Dotted[Dots]] = JsonCodecMaker.make
   implicit def EWFlagStateCodec: JsonValueCodec[EnableWinsFlag] = JsonCodecMaker.make
 
   // implicit def EWFlagEmbeddedCodec: JsonValueCodec[Set[Dot]] = JsonCodecMaker.make
@@ -105,7 +105,7 @@ object JsoniterCodecs {
 
   /** LastWriterWins */
   @nowarn("msg=never used")
-  implicit def LastWriterWinsStateCodec[A: JsonValueCodec]: JsonValueCodec[WithContext[Map[Dot, TimedVal[A]]]] =
+  implicit def LastWriterWinsStateCodec[A: JsonValueCodec]: JsonValueCodec[Dotted[Map[Dot, TimedVal[A]]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   @nowarn("msg=never used")
@@ -141,7 +141,7 @@ object JsoniterCodecs {
   /** RGA */
 
   @nowarn("msg=never used")
-  implicit def RGAStateCodec[E: JsonValueCodec]: JsonValueCodec[WithContext[RGA[E]]] = {
+  implicit def RGAStateCodec[E: JsonValueCodec]: JsonValueCodec[Dotted[RGA[E]]] = {
     implicit def RGAleftCodec
         : JsonValueCodec[Epoche[Map[GListNode[TimedVal[Dot]], Elem[TimedVal[Dot]]]]] =
       JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
@@ -154,7 +154,7 @@ object JsoniterCodecs {
   /** Rubis */
 
   implicit def RubisStateCodec: JsonValueCodec[(
-      WithContext[Map[(String, String), Set[Dot]]],
+      Dotted[Map[(String, String), Set[Dot]]],
       Map[String, String],
       Map[String, AuctionData]
   )] =
@@ -172,9 +172,9 @@ object JsoniterCodecs {
 
 
   @nowarn("msg=never used")
-  implicit def withContextWrapper[E: JsonValueCodec]: JsonValueCodec[WithContext[E]] = JsonCodecMaker.make
+  implicit def withContextWrapper[E: JsonValueCodec]: JsonValueCodec[Dotted[E]] = JsonCodecMaker.make
 
 
-  implicit def spcecificCodec:  JsonValueCodec[WithContext[GrowMap[Int, AddWinsSet[Int]]]] = JsonCodecMaker.make
+  implicit def spcecificCodec:  JsonValueCodec[Dotted[GrowMap[Int, AddWinsSet[Int]]]] = JsonCodecMaker.make
 
 }

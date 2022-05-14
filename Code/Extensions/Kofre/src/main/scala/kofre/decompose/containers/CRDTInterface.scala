@@ -3,7 +3,7 @@ package kofre.decompose.containers
 import kofre.base.Defs.Id
 import kofre.base.{DecomposeLattice, Defs}
 import kofre.time.Dots
-import kofre.contextual.{ContextDecompose, ContextLattice, WithContext}
+import kofre.contextual.{ContextDecompose, ContextLattice, Dotted}
 import kofre.syntax.WithNamedContext
 import kofre.decompose.Delta
 import kofre.syntax.{PermCausal, PermCausalMutate, PermIdMutate, PermQuery}
@@ -11,11 +11,11 @@ import kofre.base.Lattice
 
 trait CRDTInterface[State, Wrapper] {
 
-  def state: WithContext[State]
+  def state: Dotted[State]
 
   val replicaID: Defs.Id
 
-  def applyDelta(delta: WithNamedContext[State])(implicit u: DecomposeLattice[WithContext[State]]): Wrapper
+  def applyDelta(delta: WithNamedContext[State])(implicit u: DecomposeLattice[Dotted[State]]): Wrapper
 }
 
 object CRDTInterface {
@@ -26,7 +26,7 @@ object CRDTInterface {
       override def query(c: B): L            = c.state.store
       override def mutateContext(
           container: B,
-          withContext: WithContext[L]
+          withContext: Dotted[L]
       ): B = container.applyDelta(WithNamedContext(container.replicaID, withContext))
       override def context(c: B): Dots = c.state.context
     }
@@ -34,10 +34,10 @@ object CRDTInterface {
   def fullPermissions[L: DecomposeLattice, B <: CRDTInterface[L, B]]: PermIdMutate[B, L] =
     new PermIdMutate[B, L] {
       override def replicaId(c: B): Id       = c.replicaID
-      override def mutate(c: B, delta: L): B = c.applyDelta(WithNamedContext(c.replicaID, WithContext(delta)))
+      override def mutate(c: B, delta: L): B = c.applyDelta(WithNamedContext(c.replicaID, Dotted(delta)))
       override def query(c: B): L            = c.state.store
     }
 
   /** workaround to make existing syntax compile with different context decomposition */
-  //given focussedPermission[C, L](using outer: PermQuery[C, WithContext[L]]): PermQuery[C, L] = outer.focus(_.store)
+  //given focussedPermission[C, L](using outer: PermQuery[C, Dotted[L]]): PermQuery[C, L] = outer.focus(_.store)
 }

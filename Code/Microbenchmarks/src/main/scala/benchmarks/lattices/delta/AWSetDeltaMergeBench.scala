@@ -1,7 +1,7 @@
 package benchmarks.lattices.delta
 
 import kofre.time.{Dots, Dot}
-import kofre.contextual.{ContextDecompose, ContextLattice, WithContext}
+import kofre.contextual.{ContextDecompose, ContextLattice, Dotted}
 import kofre.datatypes.AddWinsSet
 import org.openjdk.jmh.annotations
 import org.openjdk.jmh.annotations._
@@ -20,9 +20,9 @@ class AWSetDeltaMergeBench {
   @Param(Array("1", "10", "100", "1000"))
   var size: Long = _
 
-  var fullState: WithContext[AddWinsSet[Long]]         = _
-  var plusOneState: WithContext[AddWinsSet[Long]]      = _
-  var plusOneDeltaState: WithContext[AddWinsSet[Long]] = _
+  var fullState: Dotted[AddWinsSet[Long]]         = _
+  var plusOneState: Dotted[AddWinsSet[Long]]      = _
+  var plusOneDeltaState: Dotted[AddWinsSet[Long]] = _
 
   def makeCContext(replicaID: String): Dots = {
     val dots = (0L until size).map(Dot(replicaID, _)).toSet
@@ -31,7 +31,7 @@ class AWSetDeltaMergeBench {
 
   @Setup
   def setup(): Unit = {
-    val baseState = WithContext(AddWinsSet.empty[Long])
+    val baseState = Dotted(AddWinsSet.empty[Long])
 
     val deltaState = baseState.named("").addAll(0L to size).anon
     fullState = ContextLattice[AddWinsSet[Long]].merge(baseState, deltaState)
@@ -41,17 +41,17 @@ class AWSetDeltaMergeBench {
   }
 
   @Benchmark
-  def fullMerge: WithContext[AddWinsSet[Long]] = {
+  def fullMerge: Dotted[AddWinsSet[Long]] = {
     ContextLattice[AddWinsSet[Long]].merge(fullState, plusOneState)
   }
 
   @Benchmark
-  def fullDiff: Option[WithContext[AddWinsSet[Long]]] = {
+  def fullDiff: Option[Dotted[AddWinsSet[Long]]] = {
     ContextDecompose[AddWinsSet[Long]].diff(fullState, plusOneState)
   }
 
   @Benchmark
-  def deltaMerge: WithContext[AddWinsSet[Long]] = {
+  def deltaMerge: Dotted[AddWinsSet[Long]] = {
     ContextDecompose[AddWinsSet[Long]].diff(fullState, plusOneDeltaState) match {
       case Some(stateDiff) =>
         ContextDecompose[AddWinsSet[Long]].merge(fullState, stateDiff)
@@ -60,7 +60,7 @@ class AWSetDeltaMergeBench {
   }
 
   @Benchmark
-  def deltaMergeNoDiff: WithContext[AddWinsSet[Long]] = {
+  def deltaMergeNoDiff: Dotted[AddWinsSet[Long]] = {
     ContextDecompose[AddWinsSet[Long]].merge(fullState, plusOneDeltaState)
   }
 }

@@ -3,7 +3,7 @@ package kofre.dotted
 import kofre.base.{Bottom, DecomposeLattice, Lattice}
 import kofre.time.{Dots, Dot}
 import kofre.contextual.ContextDecompose.FromConlattice
-import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, WithContext}
+import kofre.contextual.{AsCausalContext, ContextDecompose, ContextLattice, Dotted}
 import kofre.decompose.interfaces
 
 import scala.annotation.targetName
@@ -54,9 +54,9 @@ object DotFun {
     new FromConlattice[DotFun[A]](perDotLattice[A]) {
       private def dots(a: DotFun[A]): Dots = dotStore.dots(a)
 
-      override def empty: WithContext[DotFun[A]] = WithContext(DotFun.empty)
+      override def empty: Dotted[DotFun[A]] = Dotted(DotFun.empty)
 
-      override def lteq(left: WithContext[DotFun[A]], right: WithContext[DotFun[A]]): Boolean = {
+      override def lteq(left: Dotted[DotFun[A]], right: Dotted[DotFun[A]]): Boolean = {
         val firstCondition = left.context.forall(right.context.contains)
         val secondCondition = right.store.repr.keySet.forall { k =>
           left.store.repr.get(k).forall { l => DecomposeLattice[A].lteq(l, right.store.repr(k)) }
@@ -69,14 +69,14 @@ object DotFun {
         firstCondition && secondCondition && thirdCondition
       }
 
-      override def decompose(state: WithContext[DotFun[A]]): Iterable[WithContext[DotFun[A]]] = {
-        val added: Iterator[WithContext[DotFun[A]]] = for {
+      override def decompose(state: Dotted[DotFun[A]]): Iterable[Dotted[DotFun[A]]] = {
+        val added: Iterator[Dotted[DotFun[A]]] = for {
           d <- dots(state.store).iterator
           v <- DecomposeLattice[A].decompose(state.store.repr(d))
-        } yield WithContext(DotFun(Map(d -> v)), Dots.single(d))
+        } yield Dotted(DotFun(Map(d -> v)), Dots.single(d))
 
         val removed =
-          state.context.subtract(dots(state.store)).decomposed.map(WithContext(
+          state.context.subtract(dots(state.store)).decomposed.map(Dotted(
             DotFun.empty[A],
             _
           ))
