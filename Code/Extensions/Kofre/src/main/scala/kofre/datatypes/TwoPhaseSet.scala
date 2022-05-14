@@ -21,7 +21,7 @@ object TwoPhaseSet {
   given decomposeLattice[E]: DecomposeLattice[TwoPhaseSet[E]] = DecomposeLattice.derived
   given contextDecompose[E]: DottedDecompose[TwoPhaseSet[E]]  = DottedDecompose.liftDecomposeLattice
 
-  implicit class TwoPSetOps[C, E](container: C) extends OpsSyntaxHelper[C, TwoPhaseSet[E]](container) {
+  implicit class TwoPhaseSetOps[C, E](container: C) extends OpsSyntaxHelper[C, TwoPhaseSet[E]](container) {
 
     def elements(using QueryP): Set[E] = {
       current.added diff current.removed
