@@ -412,7 +412,7 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
       def toPulse: Pulse[P] =
         this match {
           case Pluse.NoChange        => Pulse.NoChange
-          case Pluse.Value(v)       => Pulse.Value(v)
+          case Pluse.Value(v)        => Pulse.Value(v)
           case Pluse.Exceptional(se) => Pulse.Exceptional(deserializeThrowable(se))
         }
     }
@@ -424,9 +424,9 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
           case Pulse.Exceptional(t) => Pluse.Exceptional(serializeThrowable(t))
         }
       }
-      case object NoChange                                           extends Pluse[Nothing]
+      case object NoChange extends Pluse[Nothing]
       @nowarn
-      final case class Value[+P](update: P)                          extends Pluse[P]
+      final case class Value[+P](update: P) extends Pluse[P]
       @nowarn
       final case class Exceptional(serializedThrowable: Array[Byte]) extends Pluse[Nothing]
     }
@@ -1116,7 +1116,7 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
           host.getInstance(guid) match {
             case Some(instance) =>
               (instance: AnyRef) eq (replicator: AnyRef)
-            case None           => replicator.asInstanceOf[FullMVTurnReflection].phase == TurnPhase.Completed
+            case None => replicator.asInstanceOf[FullMVTurnReflection].phase == TurnPhase.Completed
           },
           s"replicator should eq turn instance and should be hosted or completed"
         )

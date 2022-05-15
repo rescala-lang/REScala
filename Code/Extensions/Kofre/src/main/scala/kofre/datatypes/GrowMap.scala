@@ -21,7 +21,8 @@ object GrowMap {
 
   given decomposeLattice[K, V: DecomposeLattice]: DecomposeLattice[GrowMap[K, V]] = DecomposeLattice.derived
   given contextLattice[K, V: DottedDecompose: HasDots: Bottom]: DottedDecompose[GrowMap[K, V]] =
-    given DottedDecompose[Map[K, V]] = DotMap.contextDecompose[K, V].contextbimap[Map[K, V]](_.map(_.repr), _.map(DotMap.apply))
+    given DottedDecompose[Map[K, V]] =
+      DotMap.contextDecompose[K, V].contextbimap[Map[K, V]](_.map(_.repr), _.map(DotMap.apply))
     DottedDecompose.derived
 
   implicit class GMapSyntax[C, K, V](container: C)(using aoc: ArdtOpsContains[C, GrowMap[K, V]])
@@ -39,7 +40,10 @@ object GrowMap {
       GrowMap(Map(k -> m(PermIdMutate.withID[V, V](replicaID))(queryKey(k)))).mutator
     }
 
-    def mutateKeyNamedCtx(k: K, default: => V)(m: DottedName[V] => DottedName[V])(using CausalMutationP, IdentifierP): C = {
+    def mutateKeyNamedCtx(k: K, default: => V)(m: DottedName[V] => DottedName[V])(using
+        CausalMutationP,
+        IdentifierP
+    ): C = {
       m(Dotted(queryKey(k).getOrElse(default), context).named(replicaID)).anon.map(v => GrowMap(Map(k -> v))).mutator
     }
   }

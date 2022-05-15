@@ -9,7 +9,7 @@ object EventWindows extends App {
   val window = e.last(5)
   val mean = Signal {
     window().sum /
-      window().length
+    window().length
   }
   mean.changed += { println(_) }
 

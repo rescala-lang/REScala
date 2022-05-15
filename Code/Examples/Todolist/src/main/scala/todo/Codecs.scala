@@ -16,7 +16,7 @@ import todo.Todolist.replicaId
 object Codecs {
 
   implicit val taskRefCodec: JsonValueCodec[TaskRef] = JsonCodecMaker.make
-  implicit val dotKeyCodec: JsonKeyCodec[Dot]   = new JsonKeyCodec[Dot] {
+  implicit val dotKeyCodec: JsonKeyCodec[Dot] = new JsonKeyCodec[Dot] {
     override def decodeKey(in: JsonReader): Dot = {
       val Array(time, id) = in.readKeyAsString().split("-", 2)
       Dot(id.asInstanceOf[Defs.Id], time.asInstanceOf[Defs.Time])
@@ -24,7 +24,7 @@ object Codecs {
     override def encodeKey(x: Dot, out: JsonWriter): Unit = out.writeKey(s"${x.time}-${x.replicaId}")
   }
 
-  implicit val codecState: JsonValueCodec[Dotted[RGA[TaskRef]]]       = RGAStateCodec
+  implicit val codecState: JsonValueCodec[Dotted[RGA[TaskRef]]] = RGAStateCodec
   implicit val codecRGA: JsonValueCodec[DeltaBufferRDT[RGA[TaskRef]]] =
     new JsonValueCodec[DeltaBufferRDT[RGA[TaskRef]]] {
       override def decodeValue(
@@ -62,7 +62,5 @@ object Codecs {
         DeltaBufferRDT(replicaId, LWWRegisterInterface.empty[TaskData])
       }
     }
-
-
 
 }

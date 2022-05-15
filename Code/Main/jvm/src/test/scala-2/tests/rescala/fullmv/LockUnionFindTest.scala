@@ -174,8 +174,8 @@ class LockUnionFindTest extends AnyFunSuite {
 
     assert(
       (lock1.refCount.get === 2 && lock2.refCount.get <= 0)
-        ||
-          (lock1.refCount.get <= 0 && lock2.refCount.get === 2)
+      ||
+      (lock1.refCount.get <= 0 && lock2.refCount.get === 2)
     )
   }
 

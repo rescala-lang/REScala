@@ -18,16 +18,12 @@ class GMapBench {
   @Param(Array("1", "10", "100", "1000"))
   var numEntries: Int = _
 
-
-
-
   type Contained = GrowMap[Int, EnableWinsFlag]
-  type SUT = DeltaBufferRDT[Contained]
+  type SUT       = DeltaBufferRDT[Contained]
   var map: SUT = _
 
   @Setup
   def setup(): Unit = {
-
 
     map = (0 until numEntries).foldLeft(DeltaBufferRDT.empty("a", GrowMap.empty[Int, EnableWinsFlag]): SUT) {
       case (rdc: SUT, i) =>

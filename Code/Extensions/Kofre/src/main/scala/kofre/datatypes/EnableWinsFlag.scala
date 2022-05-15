@@ -33,13 +33,13 @@ object EnableWinsFlag {
       Dotted(
         EnableWinsFlag(DotSet(Dots.single(nextDot))),
         current.inner.repr add nextDot
-        ).mutator
+      ).mutator
     }
     def disable()(using CausalMutationP): C = {
       Dotted(
         EnableWinsFlag(DotSet(Dots.empty)),
         current.inner.repr
-        ).mutator
+      ).mutator
     }
   }
 

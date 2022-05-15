@@ -21,12 +21,12 @@ trait Lattice[A] {
   def lteq(left: A, right: A): Boolean = merge(left, right) == right
 
   def bimap[B](to: A => B, from: B => A): Lattice[B] = new Lattice[B] {
-    override def merge(left: B, right: B): B = to(Lattice.this.merge(from(left), from(right)))
+    override def merge(left: B, right: B): B      = to(Lattice.this.merge(from(left), from(right)))
     override def lteq(left: B, right: B): Boolean = Lattice.this.lteq(from(left), from(right))
   }
 
-  extension (left: A) def <=(right: A): Boolean  = lteq(left, right)
-  extension (left: A) def merged(right: A): A = merge(left, right)
+  extension (left: A) def <=(right: A): Boolean = lteq(left, right)
+  extension (left: A) def merged(right: A): A   = merge(left, right)
 }
 
 object Lattice {
@@ -78,7 +78,6 @@ object Lattice {
   inline def derived[T <: Product](using pm: Mirror.ProductOf[T]): Lattice[T] =
     val lattices = summonAll[Tuple.Map[pm.MirroredElemTypes, Lattice]].toIArray.map(_.asInstanceOf[Lattice[Any]])
     ProductLattice(pm, lattices)
-
 
   class ProductLattice[T <: Product](pm: Mirror.ProductOf[T], lattices: Seq[Lattice[Any]]) extends Lattice[T] {
     override def merge(left: T, right: T): T =

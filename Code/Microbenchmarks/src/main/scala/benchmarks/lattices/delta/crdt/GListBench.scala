@@ -41,8 +41,8 @@ class GListBench {
   def readLast(): Option[Int] = list.read(listSize - 1)
 
   @Benchmark
-  def insertStart(): DeltaBufferRDT[GList[Int]]  = list.insert(0, -1)
+  def insertStart(): DeltaBufferRDT[GList[Int]] = list.insert(0, -1)
 
   @Benchmark
-  def insertEnd(): DeltaBufferRDT[GList[Int]]  = list.insert(listSize, -1)
+  def insertEnd(): DeltaBufferRDT[GList[Int]] = list.insert(listSize, -1)
 }

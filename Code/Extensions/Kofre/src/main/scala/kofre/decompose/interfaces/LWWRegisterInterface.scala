@@ -14,7 +14,8 @@ object LWWRegisterInterface {
   type LWWRegister[A] = MVRegisterInterface.MVRegister[TimedVal[A]]
   def empty[A]: LWWRegister[A] = DotFun.empty
 
-  implicit class LWWRegisterSyntax[C, A](container: C)(using ArdtOpsContains[C, LWWRegister[A]]) extends OpsSyntaxHelper[C, LWWRegister[A]](container) {
+  implicit class LWWRegisterSyntax[C, A](container: C)(using ArdtOpsContains[C, LWWRegister[A]])
+      extends OpsSyntaxHelper[C, LWWRegister[A]](container) {
 
     def read(using QueryP): Option[A] =
       MVRegisterSyntax(current).read.reduceOption(DecomposeLattice[TimedVal[A]].merge).map(_.value)

@@ -7,7 +7,6 @@ import kofre.syntax.OpsSyntaxHelper
 import kofre.time.Dot
 import kofre.dotted.{DotFun, Dotted}
 
-
 /** An RCounter (Resettable Counter/Add Wins Counter) is a Delta CRDT modeling a counter.
   *
   * Calling fresh after every time that deltas are shipped to other replicas prevents subsequent increment/decrement

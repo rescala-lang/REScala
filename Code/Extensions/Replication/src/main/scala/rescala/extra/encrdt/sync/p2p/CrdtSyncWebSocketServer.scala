@@ -1,6 +1,5 @@
 package rescala.extra.encrdt.sync.p2p
 
-
 import org.eclipse.jetty.server.{Server, ServerConnector}
 import org.eclipse.jetty.servlet.ServletContextHandler
 import org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer
@@ -10,11 +9,13 @@ import rescala.extra.encrdt.sync.p2p.P2PConnectionManager.REPLICAID_HEADER
 import java.net.URI
 import java.time.Duration
 
-class CrdtSyncWebSocketServer[S](val localReplicaId: String,
-                                 private val connectionManager: P2PConnectionManager[S],
-                                 private val handlerFactory: String => CrdtSyncWebSocketHandler[S]) {
+class CrdtSyncWebSocketServer[S](
+    val localReplicaId: String,
+    private val connectionManager: P2PConnectionManager[S],
+    private val handlerFactory: String => CrdtSyncWebSocketHandler[S]
+) {
 
-  private val server = new Server() // TODO: pass thread-pool?
+  private val server    = new Server() // TODO: pass thread-pool?
   private val connector = new ServerConnector(server)
   server.addConnector(connector)
 
@@ -49,10 +50,13 @@ class CrdtSyncWebSocketServer[S](val localReplicaId: String,
 
     }
 
-  JettyWebSocketServletContainerInitializer.configure(ctxHandler, (_, container) => {
-    container.addMapping("/", webSocketCreator)
-    container.setIdleTimeout(Duration.ZERO)
-  })
+  JettyWebSocketServletContainerInitializer.configure(
+    ctxHandler,
+    (_, container) => {
+      container.addMapping("/", webSocketCreator)
+      container.setIdleTimeout(Duration.ZERO)
+    }
+  )
 
   def uri: URI = {
     if (server.getURI == null) null

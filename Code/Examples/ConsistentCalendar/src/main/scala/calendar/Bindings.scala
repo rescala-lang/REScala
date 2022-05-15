@@ -19,8 +19,8 @@ object SyncMessage {
 
   case class AppointmentMessage(state: CalendarState, target: String) extends SyncMessage
   case class RaftMessage(state: RaftState[Token])                     extends SyncMessage
-  case class WantMessage(state: Dotted[AddWinsSet[Token]]) extends SyncMessage
-  case class FreeMessage(state: Dotted[AddWinsSet[Token]]) extends SyncMessage
+  case class WantMessage(state: Dotted[AddWinsSet[Token]])            extends SyncMessage
+  case class FreeMessage(state: Dotted[AddWinsSet[Token]])            extends SyncMessage
 
 }
 

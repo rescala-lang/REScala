@@ -13,6 +13,6 @@ object SetLike {
     override def contains(set: Set[A], value: A): Boolean = set.contains(value)
 
   given twoPSetLike[A]: SetLike[A, TwoPhaseSet[A]] = new:
-    override def add(set: TwoPhaseSet[A], value: A): TwoPhaseSet[A]   = set.insert(value)
-    override def contains(set: TwoPhaseSet[A], value: A): Boolean = set.contains(value)
+    override def add(set: TwoPhaseSet[A], value: A): TwoPhaseSet[A] = set.insert(value)
+    override def contains(set: TwoPhaseSet[A], value: A): Boolean   = set.contains(value)
 }

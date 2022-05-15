@@ -1,7 +1,5 @@
 package benchmarks.encrdt.mock
 
-
-
 import benchmarks.encrdt.Codecs
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToString
 import com.google.crypto.tink.Aead

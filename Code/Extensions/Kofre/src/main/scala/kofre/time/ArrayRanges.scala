@@ -9,7 +9,7 @@ import scala.collection.IndexedSeqView
 import scala.collection.mutable.ListBuffer
 
 /** Efficient storage of a set of [[Time]] when most stored values are contiguous ranges */
-class ArrayRanges (val inner: Array[Time], val used: Int) {
+class ArrayRanges(val inner: Array[Time], val used: Int) {
 
   override def equals(obj: Any): Boolean = obj match {
     case ar: ArrayRanges => inner.iterator.take(used).sameElements(ar.inner.iterator.take(ar.used))
@@ -234,11 +234,10 @@ class ArrayRanges (val inner: Array[Time], val used: Int) {
       } else { // overlap after start of left until end of left
         // Add parts of left range
         includeRangeInclusive(lMin, rMin - 1) // Exclude rMin
-        if (lMax < rMax) { // l is completely removed
+        if (lMax < rMax) {                    // l is completely removed
           // Look at next left range
           nextLeft()
-        }
-        else { // l is only partially removed
+        } else { // l is only partially removed
           // increase left pointer to after right and recur
           lMin = rMax
           true

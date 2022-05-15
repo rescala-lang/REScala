@@ -76,10 +76,10 @@ class ServerDialog extends CustomDialog {
 
   def inputIsValid() =
     hostname != null &&
-      hostname.length > 0 &&
-      commandPort > 0 &&
-      exchangePort > 0 &&
-      listenerPort > 0
+    hostname.length > 0 &&
+    commandPort > 0 &&
+    exchangePort > 0 &&
+    listenerPort > 0
 }
 
 class NewTabDialog extends CustomDialog {

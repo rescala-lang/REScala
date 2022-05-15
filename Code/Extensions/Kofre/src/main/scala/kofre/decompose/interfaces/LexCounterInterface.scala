@@ -20,7 +20,8 @@ object LexCounterInterface {
   case class LexPair[A, B](fst: A, snd: B)
 
   case object LexPair {
-    implicit def LexPairAsUIJDLattice[A: DecomposeLattice: Bottom, B: DecomposeLattice: Bottom]: DecomposeLattice[LexPair[A, B]] =
+    implicit def LexPairAsUIJDLattice[A: DecomposeLattice: Bottom, B: DecomposeLattice: Bottom]
+        : DecomposeLattice[LexPair[A, B]] =
       new DecomposeLattice[LexPair[A, B]] {
         override def lteq(left: LexPair[A, B], right: LexPair[A, B]): Boolean =
           DecomposeLattice[A].lteq(left.fst, right.fst) && (
@@ -47,7 +48,7 @@ object LexCounterInterface {
   type LexCounter = Map[String, LexPair[Int, Int]]
 
   given contextDecompose: DottedDecompose[LexCounter] = {
-    given Bottom[Int] with { def empty: Int =  Int.MinValue }
+    given Bottom[Int] with { def empty: Int = Int.MinValue }
     given DecomposeLattice[Int] = DecomposeLattice.intMaxLattice
     DottedDecompose.liftDecomposeLattice
   }

@@ -129,7 +129,7 @@ class TextArea extends ReComponent {
 
   protected def posInLinebreak(p: Int) =
     p > 0 && p < buffer.length.readValueOnce &&
-      buffer(p - 1) == '\r' && buffer(p) == '\n'
+    buffer(p - 1) == '\r' && buffer(p) == '\n'
 
   protected def removeSelection(): Unit = {
     val selStart = min(caret.dot.readValueOnce, caret.mark.readValueOnce)
@@ -196,9 +196,9 @@ class TextArea extends ReComponent {
         case Key.End =>
           val offset =
             caret.offset.readValueOnce +
-              buffer.iterable.readValueOnce.iterator.drop(caret.offset.readValueOnce).takeWhile {
-                ch => ch != '\r' && ch != '\n'
-              }.size
+            buffer.iterable.readValueOnce.iterator.drop(caret.offset.readValueOnce).takeWhile {
+              ch => ch != '\r' && ch != '\n'
+            }.size
           if (shift) caret.dot = offset else caret.offset = offset
         case _ =>
       }
@@ -243,7 +243,7 @@ class TextArea extends ReComponent {
   }
 
   buffer.length.changed || caret.visible.changed ||
-    caret.dot.changed || caret.mark.changed += { _ => this.repaint() }
+  caret.dot.changed || caret.mark.changed += { _ => this.repaint() }
 
   override def paintComponent(g: Graphics2D): Unit = {
     super.paintComponent(g)

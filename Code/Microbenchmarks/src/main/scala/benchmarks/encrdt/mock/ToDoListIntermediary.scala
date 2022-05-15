@@ -2,7 +2,6 @@ package benchmarks.encrdt.mock
 
 import rescala.extra.encrdt.encrypted.deltabased.{DeltaPruning, EncryptedDeltaGroup, UntrustedReplica}
 
-
 class ToDoListIntermediary extends UntrustedReplica with DeltaPruning with IntermediarySizeInfo {
   def sizeInBytes: Long = {
     encryptedDeltaGroupStore.iterator.map { encDelta =>
@@ -19,7 +18,6 @@ class ToDoListIntermediary extends UntrustedReplica with DeltaPruning with Inter
   }
 
   def numberStoredDeltas: Int = encryptedDeltaGroupStore.size
-
 
   override protected def disseminate(encryptedState: EncryptedDeltaGroup): Unit = {}
 }

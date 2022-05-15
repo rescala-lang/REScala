@@ -5,13 +5,12 @@ import kofre.base.{DecomposeLattice, Lattice}
 import kofre.dotted.Dotted
 import kofre.time.Dot
 
-
 /** Essentially a more efficient version of a [[ Set[Dot] ]].
   * It typically tracks all dots known within some scope.
   *
   * The name refers to that a single causally replicated RDT would have a single causal context.
   * But this data structure may also be used inside a single delta, or for other metadata within the value of an RDT.
-  * */
+  */
 case class Dots(internal: Map[Id, ArrayRanges]) {
 
   def wrap[A](a: A): Dotted[A] = Dotted(a, this)

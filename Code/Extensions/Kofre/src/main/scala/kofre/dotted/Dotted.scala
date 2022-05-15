@@ -9,7 +9,7 @@ import kofre.time.{Dot, Dots}
 import scala.util.NotGiven
 
 case class Dotted[A](store: A, context: Dots) {
-  def map[B](f: A => B): Dotted[B]                  = Dotted(f(store), context)
+  def map[B](f: A => B): Dotted[B]                 = Dotted(f(store), context)
   def named(id: kofre.base.Defs.Id): DottedName[A] = DottedName(id, this)
 }
 
@@ -30,8 +30,8 @@ object Dotted {
   given syntaxPermissions[L](using DottedLattice[L]): PermCausalMutate[Dotted[L], L]
     with {
     override def mutateContext(c: Dotted[L], delta: Dotted[L]): Dotted[L] = c merged delta
-    override def query(c: Dotted[L]): L                                             = c.store
-    override def context(c: Dotted[L]): Dots                               = c.context
+    override def query(c: Dotted[L]): L                                   = c.store
+    override def context(c: Dotted[L]): Dots                              = c.context
   }
 
   given syntaxPassthrough[L]: ArdtOpsContains[Dotted[L], L] = new ArdtOpsContains[Dotted[L], L] {}

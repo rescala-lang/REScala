@@ -1,6 +1,5 @@
 package benchmarks.encrdt.mock.insecure
 
-
 import benchmarks.encrdt.mock.SecureToDoListClient.ToDoMapLattice
 import benchmarks.encrdt.mock.{SecureToDoListClient, ToDoListIntermediary}
 import benchmarks.encrdt.todolist.ToDoEntry

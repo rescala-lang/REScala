@@ -5,7 +5,6 @@ import kofre.dotted.DottedDecompose.FromConlattice
 import kofre.datatypes.EnableWinsFlag
 import kofre.decompose.interfaces
 
-
 case class DotSet(repr: Dots) {
   def dots: Dots = repr
   export repr.*

@@ -7,8 +7,10 @@ import rescala.extra.encrdt.sync.p2p.P2PConnectionManager.REPLICAID_HEADER
 import java.net.URI
 import java.time.Duration
 
-class CrdtSyncWebSocketClient[S](val localReplicaId: String,
-                                 private val handlerFactory: String => CrdtSyncWebSocketHandler[S]) {
+class CrdtSyncWebSocketClient[S](
+    val localReplicaId: String,
+    private val handlerFactory: String => CrdtSyncWebSocketHandler[S]
+) {
 
   private val webSocketClient: WebSocketClient = new WebSocketClient()
   webSocketClient.setIdleTimeout(Duration.ZERO) // Infinite timeout

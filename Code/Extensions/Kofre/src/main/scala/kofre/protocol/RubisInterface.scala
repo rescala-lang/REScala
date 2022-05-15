@@ -89,7 +89,7 @@ object RubisInterface {
       deltaState.make(
         userRequests = Dotted(req, context).clear().store,
         users = newUsers
-        )
+      )
     }.mutator
   }
 }

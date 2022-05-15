@@ -39,7 +39,8 @@ class AntiEntropyCRDT[State](
 
 object AntiEntropyCRDT {
 
-  given allPermissions[L: DottedDecompose]: (PermIdMutate[AntiEntropyCRDT[L], L] & PermCausalMutate[AntiEntropyCRDT[L], L]) =
+  given allPermissions[L: DottedDecompose]
+      : (PermIdMutate[AntiEntropyCRDT[L], L] & PermCausalMutate[AntiEntropyCRDT[L], L]) =
     CRDTInterface.dottedPermissions
 
   /** Creates a new PNCounter instance

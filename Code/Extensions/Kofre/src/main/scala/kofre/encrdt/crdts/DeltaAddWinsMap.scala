@@ -21,10 +21,10 @@ object DeltaAddWinsMap {
     * @return The delta of the recursive delta-mutation
     */
   def deltaMutate[K, V: HasDots](
-                                          key: K,
-                                          default: => V,
-                                          deltaMutator: Dotted[V] => Dotted[V],
-                                          map: DeltaAddWinsMapLattice[K, V]
+      key: K,
+      default: => V,
+      deltaMutator: Dotted[V] => Dotted[V],
+      map: DeltaAddWinsMapLattice[K, V]
   ): DeltaAddWinsMapLattice[K, V] = {
 
     deltaMutator(Dotted(

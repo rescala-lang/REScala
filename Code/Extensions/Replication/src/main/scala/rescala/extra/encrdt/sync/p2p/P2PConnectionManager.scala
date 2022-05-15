@@ -1,6 +1,5 @@
 package rescala.extra.encrdt.sync.p2p
 
-
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToString}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import rescala.extra.encrdt.sync.ConnectionManager
@@ -10,14 +9,11 @@ import java.net.{InetSocketAddress, URI}
 import java.util.concurrent.ConcurrentHashMap
 import scala.jdk.CollectionConverters.ConcurrentMapHasAsScala
 
-class P2PConnectionManager[S](val localReplicaId: String,
-                              localStateProvider: () => S,
-                              stateReceivedHandler: S => Unit)
-                             (implicit stateJsonCodec: JsonValueCodec[S]
-                             ) extends ConnectionManager[S] {
+class P2PConnectionManager[S](val localReplicaId: String, localStateProvider: () => S, stateReceivedHandler: S => Unit)(
+    implicit stateJsonCodec: JsonValueCodec[S]
+) extends ConnectionManager[S] {
 
-
-  private val handlers = new ConcurrentHashMap[String, CrdtSyncWebSocketHandler[S]]()
+  private val handlers           = new ConcurrentHashMap[String, CrdtSyncWebSocketHandler[S]]()
   private val pendingConnections = new ConcurrentHashMap[String, CrdtSyncWebSocketHandler[S]]()
 
   private val crdtSyncWebSocketClient =
@@ -83,7 +79,11 @@ class P2PConnectionManager[S](val localReplicaId: String,
   }
 
   private def createHandler(remoteReplicaId: String): CrdtSyncWebSocketHandler[S] = new CrdtSyncWebSocketHandler[S](
-    localReplicaId, remoteReplicaId, this, stateReceivedHandler, localStateProvider
+    localReplicaId,
+    remoteReplicaId,
+    this,
+    stateReceivedHandler,
+    localStateProvider
   )
 
   def removeHandler(handler: CrdtSyncWebSocketHandler[S]): Boolean = {
@@ -119,7 +119,7 @@ class P2PConnectionManager[S](val localReplicaId: String,
     }
   }.filterNot { case (_, uri) => uri == null }
 
-  override def remoteAddresses: Set[String] = peers.map { case (rId, uri) => s"$rId@$uri"}.toSet
+  override def remoteAddresses: Set[String] = peers.map { case (rId, uri) => s"$rId@$uri" }.toSet
 
   def stop(): Unit = {
     println("Stopping ConnectionManager")

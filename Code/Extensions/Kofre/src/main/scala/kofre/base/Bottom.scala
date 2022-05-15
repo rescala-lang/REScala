@@ -22,7 +22,7 @@ object Bottom {
     override def empty: Set[V] = Set.empty
   }
 
-  given intMaxBottom: Bottom[Int] with {override def empty: Int = Int.MinValue}
+  given intMaxBottom: Bottom[Int] with { override def empty: Int = Int.MinValue }
 
   given dotMap[K, V]: Bottom[DotMap[K, V]]   = Bottom.derived
   given dotFun[V]: Bottom[DotFun[V]]         = Bottom.derived

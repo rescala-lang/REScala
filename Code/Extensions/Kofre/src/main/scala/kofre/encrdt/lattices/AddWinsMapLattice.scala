@@ -8,8 +8,8 @@ import kofre.syntax.{PermIdMutate, DottedName}
 import kofre.syntax.PermIdMutate.withID
 
 case class AddWinsMapLattice[K, V](
-                                    keys: Dotted[AddWinsSet[K]] = Dotted(AddWinsSet.empty[K]),
-                                    mappings: Map[K, V] = Map[K, V]()
+    keys: Dotted[AddWinsSet[K]] = Dotted(AddWinsSet.empty[K]),
+    mappings: Map[K, V] = Map[K, V]()
 ) {
   def values: Map[K, V] = mappings
 

@@ -5,9 +5,9 @@ import com.google.crypto.tink.Aead
 import kofre.time.VectorClock
 import kofre.base.Lattice.Operators
 
-abstract class TrustedReplica[T](val localReplicaId: String,
-                                 private val aead: Aead)
-                                (implicit val stateJsonCodec: JsonValueCodec[T]) extends Replica {
+abstract class TrustedReplica[T](val localReplicaId: String, private val aead: Aead)(implicit
+    val stateJsonCodec: JsonValueCodec[T]
+) extends Replica {
 
   var versionVector: VectorClock = VectorClock.zero
 

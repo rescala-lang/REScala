@@ -1,6 +1,5 @@
 package benchmarks.encrdt.mock.insecure
 
-
 import benchmarks.encrdt.mock.{DisseminationStats, ToDoListClient}
 import benchmarks.encrdt.mock.insecure.AlternativeInsecureToDoListClient.ToDoListState
 import benchmarks.encrdt.todolist.ToDoEntry

@@ -86,7 +86,7 @@ object DecomposeLattice {
 
   inline def derived[T <: Product](using pm: Mirror.ProductOf[T]): DecomposeLattice[T] = {
     val lattices: Tuple = summonAll[Tuple.Map[pm.MirroredElemTypes, DecomposeLattice]]
-    val bottoms: Tuple = summonAll[Tuple.Map[pm.MirroredElemTypes, Bottom]]
+    val bottoms: Tuple  = summonAll[Tuple.Map[pm.MirroredElemTypes, Bottom]]
     new ProductDecomposeLattice[T](lattices, bottoms, pm)
   }
 
@@ -94,7 +94,7 @@ object DecomposeLattice {
       extends DecomposeLattice[T] {
 
     private def lat(i: Int): DecomposeLattice[Any] = lattices.productElement(i).asInstanceOf[DecomposeLattice[Any]]
-    private def bot(i: Int): Bottom[Any] = bottoms.productElement(i).asInstanceOf[Bottom[Any]]
+    private def bot(i: Int): Bottom[Any]           = bottoms.productElement(i).asInstanceOf[Bottom[Any]]
 
     override def merge(left: T, right: T): T =
       pm.fromProduct(new Product {

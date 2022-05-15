@@ -1,6 +1,5 @@
 package rescala.extra.encrdt.encrypted.statebased
 
-
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import com.google.crypto.tink.Aead
@@ -30,8 +29,8 @@ class EncryptedCrdt(initialState: MultiValueRegisterLattice[EncryptedState] = Mu
     } reduce ((leftTry: Try[DecryptedState[T]], rightTry: Try[DecryptedState[T]]) => {
       (leftTry, rightTry) match {
         case (Success(left), Success(right)) => Success(
-          DecryptedState(Lattice[T].merge(left.state, right.state), left.versionVector.merge(right.versionVector))
-        )
+            DecryptedState(Lattice[T].merge(left.state, right.state), left.versionVector.merge(right.versionVector))
+          )
         case (Failure(e), _) => Failure(e)
         case (_, Failure(e)) => Failure(e)
       }
@@ -46,8 +45,8 @@ case class EncryptedState(stateCiphertext: Array[Byte], serialVersionVector: Arr
   lazy val versionVector: VectorClock = readFromArray[VectorClock](serialVersionVector)
 
   def decrypt[T](aead: Aead)(implicit tJsonCodec: JsonValueCodec[T]): DecryptedState[T] = {
-    val plainText = aead.decrypt(stateCiphertext, serialVersionVector)
-    val state = readFromArray[T](plainText)
+    val plainText     = aead.decrypt(stateCiphertext, serialVersionVector)
+    val state         = readFromArray[T](plainText)
     val versionVector = readFromArray[VectorClock](serialVersionVector)
     DecryptedState(state, versionVector)
   }

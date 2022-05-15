@@ -80,7 +80,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
     set = set.applyDelta(delta)
 
     set.deltaBuffer.headOption match {
-      case None                            =>
+      case None =>
       case Some(DottedName(_, deltaState)) =>
         unboundRemoteChanges = DecomposeLattice[SetState].merge(unboundRemoteChanges, deltaState)
 
@@ -179,7 +179,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
         }
       }
 
-      val unboundChanges = unboundLocalChanges.foldLeft(unboundRemoteChanges) {DecomposeLattice[SetState].merge }
+      val unboundChanges = unboundLocalChanges.foldLeft(unboundRemoteChanges) { DecomposeLattice[SetState].merge }
 
       if (unboundChanges != Dotted(AddWinsSet.empty))
         sendDelta(unboundChanges, rr)

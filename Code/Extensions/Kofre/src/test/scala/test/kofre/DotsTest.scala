@@ -10,7 +10,7 @@ class DotsTest extends munit.ScalaCheckSuite {
     assert(
       Dots.empty.toSet.isEmpty,
       s"DietMapCContext.empty should be empty, but ${Dots.empty} is not empty"
-      )
+    )
   }
 
   property("contains") {
@@ -29,7 +29,7 @@ class DotsTest extends munit.ScalaCheckSuite {
       assert(
         Dots.fromSet(ds).toSet == ds,
         s"DietMapCContext.toSet and DietMapCContext.fromSet should be inverse operations, but ${Dots.fromSet(ds).toSet} does not equal $ds"
-        )
+      )
     }
   }
 

@@ -28,13 +28,13 @@ object MVRegisterInterface {
       Dotted(
         DotFun(Map(nextDot -> v)),
         Dots.fromSet(current.keySet + nextDot)
-        ).mutator
+      ).mutator
     }
 
     def clear()(using CausalMutationP): C =
       Dotted(
         MVRegisterInterface.empty,
         Dots.fromSet(current.keySet)
-        ).mutator
+      ).mutator
   }
 }

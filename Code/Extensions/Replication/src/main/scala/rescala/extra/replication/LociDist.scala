@@ -21,7 +21,10 @@ class LociDist[Api <: RescalaInterface](val api: Api) {
       signal: Signal[DeltaBufferRDT[A]],
       deltaEvt: Evt[DottedName[A]],
       registry: Registry
-  )(binding: Binding[Dotted[A] => Unit, Dotted[A] => Future[Unit]])(implicit dcl: DecomposeLattice[Dotted[A]], bottom: Bottom[Dotted[A]]): Unit = {
+  )(binding: Binding[Dotted[A] => Unit, Dotted[A] => Future[Unit]])(implicit
+      dcl: DecomposeLattice[Dotted[A]],
+      bottom: Bottom[Dotted[A]]
+  ): Unit = {
     registry.bindSbj(binding) { (remoteRef: RemoteRef, deltaState: Dotted[A]) =>
       deltaEvt.fire(DottedName(remoteRef.toString, deltaState))
     }

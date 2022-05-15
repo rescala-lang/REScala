@@ -57,7 +57,7 @@ class TodoAppUI(val storagePrefix: String) {
             removeAll.event dyn { dt => _ => taskOps.handleRemoveAll(current, dt) },
             current.toList.map(_.removed) act taskOps.handleRemove(current),
             deltaEvt act taskOps.handleDelta(current)
-            )
+          )
         }
       }(codecRGA)
 

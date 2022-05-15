@@ -38,10 +38,11 @@ class LexCounterTest extends munit.ScalaCheckSuite {
   property("inc") {
     forAll { counter: AntiEntropyCRDT[LexCounter] =>
       val before = counter.value
-      val inced = counter.inc()
+      val inced  = counter.inc()
 
       assertEquals(
-        inced.value , before + 1,
+        inced.value,
+        before + 1,
         s"Incrementing the counter should increase its value by 1, but ${inced.value} does not equal ${counter.value} + 1"
       )
     }
@@ -50,10 +51,11 @@ class LexCounterTest extends munit.ScalaCheckSuite {
   property("dec") {
     forAll { counter: AntiEntropyCRDT[LexCounter] =>
       val before = counter.value
-      val deced = counter.dec()
+      val deced  = counter.dec()
 
       assertEquals(
-        deced.value , before - 1,
+        deced.value,
+        before - 1,
         s"Decrementing the counter should decrease its value by 1, but ${deced.value} does not equal ${counter.value} - 1"
       )
     }
@@ -85,7 +87,8 @@ class LexCounterTest extends munit.ScalaCheckSuite {
       )
 
       assertEquals(
-        cb1.value , sequential.value,
+        cb1.value,
+        sequential.value,
         s"Concurrent execution of increment or decrement should be equivalent to any sequential execution, but ${cb1.value} does not equal ${sequential.value}"
       )
     }

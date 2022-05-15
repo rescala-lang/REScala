@@ -1,6 +1,5 @@
 package benchmarks.encrdt.mock
 
-
 import benchmarks.encrdt.todolist.ToDoEntry
 
 import java.util.UUID

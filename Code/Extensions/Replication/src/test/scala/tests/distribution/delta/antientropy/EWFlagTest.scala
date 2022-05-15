@@ -35,23 +35,27 @@ object EWFlagGenerators {
 class EWFlagTest extends munit.ScalaCheckSuite {
   import EWFlagGenerators._
 
-  property("enable") {forAll { flag: AntiEntropyCRDT[EnableWinsFlag] =>
-    val flagEnabled = flag.enable()
+  property("enable") {
+    forAll { flag: AntiEntropyCRDT[EnableWinsFlag] =>
+      val flagEnabled = flag.enable()
 
-    assert(
-      flagEnabled.read,
-      s"After enabling the flag it should read true, but $flagEnabled.read returns false"
-    )
-  }}
+      assert(
+        flagEnabled.read,
+        s"After enabling the flag it should read true, but $flagEnabled.read returns false"
+      )
+    }
+  }
 
-  property("disable") {forAll { flag: AntiEntropyCRDT[EnableWinsFlag] =>
-    val flagDisabled = flag.disable()
+  property("disable") {
+    forAll { flag: AntiEntropyCRDT[EnableWinsFlag] =>
+      val flagDisabled = flag.disable()
 
-    assert(
-      !flagDisabled.read,
-      s"After disabling the flag it should read false, but $flagDisabled.false returns true"
-    )
-  }}
+      assert(
+        !flagDisabled.read,
+        s"After disabling the flag it should read false, but $flagDisabled.false returns true"
+      )
+    }
+  }
 
   test("concurrent enable") {
     val network = new Network(0, 0, 0)
@@ -128,36 +132,38 @@ class EWFlagTest extends munit.ScalaCheckSuite {
     )
   }
 
-  property("convergence") {forAll { (enableA: Short, disableA: Short, enableB: Short, disableB: Short, network: Network) =>
-    val aea = new AntiEntropy[EnableWinsFlag]("a", network, mutable.Buffer("b"))
-    val aeb = new AntiEntropy[EnableWinsFlag]("b", network, mutable.Buffer("a"))
+  property("convergence") {
+    forAll { (enableA: Short, disableA: Short, enableB: Short, disableB: Short, network: Network) =>
+      val aea = new AntiEntropy[EnableWinsFlag]("a", network, mutable.Buffer("b"))
+      val aeb = new AntiEntropy[EnableWinsFlag]("b", network, mutable.Buffer("a"))
 
-    val opsA = Random.shuffle(List.fill(enableA.toInt)(1) ++ List.fill(disableA.toInt)(0))
-    val opsB = Random.shuffle(List.fill(enableB.toInt)(1) ++ List.fill(disableB.toInt)(0))
+      val opsA = Random.shuffle(List.fill(enableA.toInt)(1) ++ List.fill(disableA.toInt)(0))
+      val opsB = Random.shuffle(List.fill(enableB.toInt)(1) ++ List.fill(disableB.toInt)(0))
 
-    val fa0 = opsA.foldLeft(AntiEntropyCRDT[EnableWinsFlag](aea)) {
-      case (f, 0) => f.disable()
-      case (f, 1) => f.enable()
-      // default case is only needed to stop the compiler from complaining about non-exhaustive match
-      case (f, _) => f
+      val fa0 = opsA.foldLeft(AntiEntropyCRDT[EnableWinsFlag](aea)) {
+        case (f, 0) => f.disable()
+        case (f, 1) => f.enable()
+        // default case is only needed to stop the compiler from complaining about non-exhaustive match
+        case (f, _) => f
+      }
+      val fb0 = opsB.foldLeft(AntiEntropyCRDT[EnableWinsFlag](aeb)) {
+        case (f, 0) => f.disable()
+        case (f, 1) => f.enable()
+        // default case is only needed to stop the compiler from complaining about non-exhaustive match
+        case (f, _) => f
+      }
+
+      AntiEntropy.sync(aea, aeb)
+      network.startReliablePhase()
+      AntiEntropy.sync(aea, aeb)
+
+      val fa1 = fa0.processReceivedDeltas()
+      val fb1 = fb0.processReceivedDeltas()
+
+      assert(
+        fa1.read == fb1.read,
+        s"After synchronization messages were reliably exchanged all replicas should converge, but ${fa1.read} does not equal ${fb1.read}"
+      )
     }
-    val fb0 = opsB.foldLeft(AntiEntropyCRDT[EnableWinsFlag](aeb)) {
-      case (f, 0) => f.disable()
-      case (f, 1) => f.enable()
-      // default case is only needed to stop the compiler from complaining about non-exhaustive match
-      case (f, _) => f
-    }
-
-    AntiEntropy.sync(aea, aeb)
-    network.startReliablePhase()
-    AntiEntropy.sync(aea, aeb)
-
-    val fa1 = fa0.processReceivedDeltas()
-    val fb1 = fb0.processReceivedDeltas()
-
-    assert(
-      fa1.read == fb1.read,
-      s"After synchronization messages were reliably exchanged all replicas should converge, but ${fa1.read} does not equal ${fb1.read}"
-    )
-  }}
+  }
 }

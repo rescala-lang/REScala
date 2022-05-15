@@ -65,9 +65,9 @@ object Shape {
 
     def shapeProps(shape: Shape, elem: Elem) =
       elem %
-        Attribute(None, "stroke-width", Text(shape.strokeWidth.toString), Null) %
-        Attribute(None, "color", Text(shape.color.getRGB.toString), Null) %
-        Attribute(None, "current", Text(shape.current.toString), Null)
+      Attribute(None, "stroke-width", Text(shape.strokeWidth.toString), Null) %
+      Attribute(None, "color", Text(shape.color.getRGB.toString), Null) %
+      Attribute(None, "current", Text(shape.current.toString), Null)
 
     <shapes> {
       shapes map {

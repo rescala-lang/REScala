@@ -1,6 +1,5 @@
 package benchmarks.encrdt.mock.insecure
 
-
 import benchmarks.encrdt.mock.IntermediarySizeInfo
 import benchmarks.encrdt.todolist.ToDoEntry
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}

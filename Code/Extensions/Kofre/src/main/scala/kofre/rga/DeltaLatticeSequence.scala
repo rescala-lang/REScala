@@ -10,7 +10,11 @@ import kofre.dotted.{DottedDecompose, DottedLattice, Dotted, HasDots}
 
 import scala.collection.{AbstractIterator, immutable}
 
-case class DeltaSequence[A](vertices: AddWinsSet[Vertex], edges: DeltaSequence.DeltaSequenceOrder, values: Map[Vertex, A])
+case class DeltaSequence[A](
+    vertices: AddWinsSet[Vertex],
+    edges: DeltaSequence.DeltaSequenceOrder,
+    values: Map[Vertex, A]
+)
 
 object DeltaSequence {
 
@@ -39,7 +43,6 @@ object DeltaSequence {
     def addRightEdge(left: Vertex, insertee: Vertex): DeltaSequenceOrder =
       DeltaSequenceOrder(inner ++ addRightEdgeDelta(left, insertee).inner)
   }
-
 
   implicit class DeltaSequenceOps[C, A](container: C)(using ArdtOpsContains[C, DeltaSequence[A]])
       extends OpsSyntaxHelper[C, DeltaSequence[A]](container) {
@@ -103,7 +106,6 @@ object DeltaSequence {
   given deltaSequenceLattice[A]: DottedDecompose[DeltaSequence[A]] =
     new DottedDecompose[DeltaSequence[A]] {
 
-
       override def decompose(a: Dotted[DeltaSequence[A]]): Iterable[Dotted[DeltaSequence[A]]] = Iterable(a)
 
       private val noMapConflictsLattice: Lattice[A] = (left: A, right: A) =>
@@ -111,14 +113,15 @@ object DeltaSequence {
         else throw new IllegalStateException(s"assumed there would be no conflict, but have $left and $right")
 
       override def mergePartial(
-                                 left: Dotted[DeltaSequence[A]],
-                                 right: Dotted[DeltaSequence[A]]
+          left: Dotted[DeltaSequence[A]],
+          right: Dotted[DeltaSequence[A]]
       ): DeltaSequence[A] = {
         val newVertices = right.store.vertices.elements.filter(!left.store.edges.inner.contains(_))
 
         // build map of old insertion positions of the new vertices
         val oldPositions = right.store.edges.inner.foldLeft(Map.empty[Vertex, Vertex]) {
-          case (m, (u, v)) => if (newVertices.contains(v)) {m + (v -> u)} else m
+          case (m, (u, v)) => if (newVertices.contains(v)) { m + (v -> u) }
+            else m
         }
 
         val newEdges = newVertices.foldLeft(left.store.edges) {

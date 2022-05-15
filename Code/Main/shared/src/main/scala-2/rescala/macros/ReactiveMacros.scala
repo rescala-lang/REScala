@@ -62,7 +62,7 @@ class ReactiveMacros(val c: blackbox.Context) {
 
     val wrt = weakTypeOf[ReactiveType]
 
-    val resolved                       = wrt.asSeenFrom(new BundleAcquisiton[ResourceType].getBundle, wrt.typeSymbol.owner)
+    val resolved = wrt.asSeenFrom(new BundleAcquisiton[ResourceType].getBundle, wrt.typeSymbol.owner)
     val tq"$resolvedTree.$tpname.type" = ReTyper(c).createTypeTree(resolved, c.enclosingPosition)
 
     val body = q"""$resolvedTree.${tpname.toTermName}.$creationMethod[${weakTypeOf[A]}](
@@ -169,12 +169,12 @@ class ReactiveMacros(val c: blackbox.Context) {
     val computation = q"""$funcImpl.apply[${weakTypeOf[T]}, ${weakTypeOf[A]}](_, ${pm.prefixValue}, $op)"""
     fixNullTypes(computation)
 
-    val lego       = new MacroLego[ScopeSearch, LowPriorityImplicitObject, ResourceType](computation, forceStatic = true)
+    val lego = new MacroLego[ScopeSearch, LowPriorityImplicitObject, ResourceType](computation, forceStatic = true)
     val detections = lego.detections.detectedStaticReactives
 
     val wrt = weakTypeOf[ReactiveType]
 
-    val resolved                       = wrt.asSeenFrom(new BundleAcquisiton[ResourceType].getBundle, wrt.typeSymbol.owner)
+    val resolved = wrt.asSeenFrom(new BundleAcquisiton[ResourceType].getBundle, wrt.typeSymbol.owner)
     val tq"$resolvedTree.$tpname.type" = ReTyper(c).createTypeTree(resolved, c.enclosingPosition)
 
     val body = q"""$resolvedTree.${tpname.toTermName}.fold[${weakTypeOf[A]}](Set(..$detections), $init)(
@@ -229,7 +229,11 @@ class ReactiveMacros(val c: blackbox.Context) {
     }
   }
 
-  class MacroLego[CreationTicket: c.WeakTypeTag, LowPriorityCreationImplicits: c.WeakTypeTag, ResourceType: c.WeakTypeTag](
+  class MacroLego[
+      CreationTicket: c.WeakTypeTag,
+      LowPriorityCreationImplicits: c.WeakTypeTag,
+      ResourceType: c.WeakTypeTag
+  ](
       tree: Tree,
       forceStatic: Boolean
   ) {
@@ -240,7 +244,11 @@ class ReactiveMacros(val c: blackbox.Context) {
     val cutOut     = new CutOutTransformer(weAnalysis)
     val cutOutTree = cutOut.transform(tree)
     val detections =
-      new RewriteTransformer[CreationTicket, LowPriorityCreationImplicits, ResourceType](weAnalysis, ticketIdent, forceStatic)
+      new RewriteTransformer[CreationTicket, LowPriorityCreationImplicits, ResourceType](
+        weAnalysis,
+        ticketIdent,
+        forceStatic
+      )
     val rewrittenTree = detections transform cutOutTree
 
     def contextualizedExpression(contextType: Type) = {
@@ -258,7 +266,11 @@ class ReactiveMacros(val c: blackbox.Context) {
 
   object IsCutOut
 
-  class RewriteTransformer[CreationTicket: c.WeakTypeTag, LowPriorityCreationImplicits: c.WeakTypeTag, ResourceType: c.WeakTypeTag](
+  class RewriteTransformer[
+      CreationTicket: c.WeakTypeTag,
+      LowPriorityCreationImplicits: c.WeakTypeTag,
+      ResourceType: c.WeakTypeTag
+  ](
       weAnalysis: WholeExpressionAnalysis,
       ticketIdent: Ident,
       requireStatic: Boolean

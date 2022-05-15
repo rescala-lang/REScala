@@ -115,13 +115,13 @@ abstract class Animal(implicit world: World) extends BoardElement {
   private val energyDrain: Signal[Int] =
     Signal.static {
       (world.board.animalsAlive.value / (world.board.width + world.board.height)) +
-        (age.value / 2) +
-        (state.value match {
-          case Moving(_)      => Animal.MoveCost
-          case Procreating(_) => Animal.ProcreateCost
-          case FallPrey       => Animal.AttackAmount
-          case _              => 0
-        })
+      (age.value / 2) +
+      (state.value match {
+        case Moving(_)      => Animal.MoveCost
+        case Procreating(_) => Animal.ProcreateCost
+        case FallPrey       => Animal.AttackAmount
+        case _              => 0
+      })
     }
 
   private val energyGain: Signal[Int] =

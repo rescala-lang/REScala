@@ -27,10 +27,10 @@ class AntiEntropy[A: Bottom](
     val replicaID: String,
     network: Network,
     neighbors: mutable.Buffer[String] = mutable.Buffer()
-)(implicit val codec: JsonValueCodec[Dotted[A]], withContextLattice: DottedDecompose[A]) extends kofre.decompose.containers.AntiEntropy[A] {
+)(implicit val codec: JsonValueCodec[Dotted[A]], withContextLattice: DottedDecompose[A])
+    extends kofre.decompose.containers.AntiEntropy[A] {
 
   override def state: Dotted[A] = fullState
-
 
   private val deltaBufferOut: mutable.Map[Int, DottedName[A]] = mutable.Map()
 

@@ -25,7 +25,7 @@ object HasDots {
     new ProductHasDots(pm, lattices)
 
   class ProductHasDots[T <: Product](pm: Mirror.ProductOf[T], children: IArray[HasDots[Any]])
-    extends HasDots[T] {
+      extends HasDots[T] {
     override def dots(a: T): Dots = Range(0, a.productArity).foldLeft(Dots.empty) { (c, i) =>
       c.union(children(i).dots(a.productElement(i)))
     }

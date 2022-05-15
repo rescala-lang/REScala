@@ -10,8 +10,8 @@ class CalendarProgram(id: String, synchronizationPoint: String => (=> Unit) => U
 
   type Calendar = DeltaBufferRDT[AddWinsSet[Appointment]]
 
-  val work     = Var[Calendar](DeltaBufferRDT(id,AddWinsSet.empty[Appointment]))
-  val vacation = Var[Calendar](DeltaBufferRDT(id,AddWinsSet.empty[Appointment]))
+  val work     = Var[Calendar](DeltaBufferRDT(id, AddWinsSet.empty[Appointment]))
+  val vacation = Var[Calendar](DeltaBufferRDT(id, AddWinsSet.empty[Appointment]))
 
   val replicated = Map("work" -> work, "vacation" -> vacation)
 

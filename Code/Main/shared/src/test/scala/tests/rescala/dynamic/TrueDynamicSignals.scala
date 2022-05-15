@@ -86,7 +86,7 @@ class TrueDynamicSignals extends RETests {
 
       val evt = Evt[Int]()
       val testsig = Signal.dynamic {
-        obj.sig.value + ( evt latest -1).value
+        obj.sig.value + (evt latest -1).value
       }
 
       assert(testsig.readValueOnce === -1)

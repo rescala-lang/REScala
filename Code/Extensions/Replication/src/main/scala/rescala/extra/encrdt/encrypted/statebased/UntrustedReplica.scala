@@ -30,14 +30,20 @@ abstract class UntrustedReplica(initialStates: Set[EncryptedState]) extends Repl
       disseminate(newState)
     } else {
       // received state may already be subsumed by some state in the stateStore
-      if (stateStore.exists(oldState => VectorClock.vectorClockOrdering.lteq(newState.versionVector, oldState.versionVector))) {
+      if (
+        stateStore.exists(oldState =>
+          VectorClock.vectorClockOrdering.lteq(newState.versionVector, oldState.versionVector)
+        )
+      ) {
         // The newState is already subsumed by a single state in the stateStore
         return
       }
     }
 
     stateStore = leastUpperBound(
-      stateStore.filterNot(oldState => VectorClock.vectorClockOrdering.lteq(oldState.versionVector, newState.versionVector)) + newState
+      stateStore.filterNot(oldState =>
+        VectorClock.vectorClockOrdering.lteq(oldState.versionVector, newState.versionVector)
+      ) + newState
     )
 
     Console.println(stateStore.map(_.versionVector))

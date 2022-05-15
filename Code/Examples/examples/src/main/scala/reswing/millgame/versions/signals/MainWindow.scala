@@ -27,7 +27,7 @@ object MainWindow extends SimpleSwingApplication {
       game.remainCountChanged += { count => // #HDL
         ui.counterBar.text =
           "White: " + count(White) + " / " +
-            "Black: " + count(Black)
+          "Black: " + count(Black)
       }
 
       setSystemLookAndFeel()
@@ -153,20 +153,20 @@ class MillDrawer(val game: MillGame) extends ReComponent(preferredSize = new Dim
       Presentation(backgroundRect(), color = Color.GRAY),
       Presentation(board(), color = new Color(239, 228, 176))
     ) ++
-      // possible moves
-      (moveLines() map { Presentation(_, color = new Color(0, 0, 0, 80), width = 5) }) ++
-      // lines on the board
-      (lines() map { Presentation(_) }) ++
-      // dots on the lines
-      (coordinates() map { p => Presentation(Circle(p, DotRadius)) }) ++
-      // stones
-      (game.board.stonesVar().zipWithIndex collect {
-        case (color, i) if color != Empty =>
-          Presentation(
-            Circle(coordinates()(i), StoneRadius),
-            color = if (color == Black) Color.BLACK else Color.WHITE
-          )
-      })
+    // possible moves
+    (moveLines() map { Presentation(_, color = new Color(0, 0, 0, 80), width = 5) }) ++
+    // lines on the board
+    (lines() map { Presentation(_) }) ++
+    // dots on the lines
+    (coordinates() map { p => Presentation(Circle(p, DotRadius)) }) ++
+    // stones
+    (game.board.stonesVar().zipWithIndex collect {
+      case (color, i) if color != Empty =>
+        Presentation(
+          Circle(coordinates()(i), StoneRadius),
+          color = if (color == Black) Color.BLACK else Color.WHITE
+        )
+    })
   }
 
   indexClicked += { index =>

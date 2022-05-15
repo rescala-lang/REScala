@@ -2,7 +2,6 @@ package rescala.extra.encrdt.encrypted.deltabased
 
 import kofre.base.Lattice._
 
-
 import kofre.time.Dots
 
 import scala.collection.mutable

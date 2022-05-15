@@ -31,7 +31,7 @@ class DotSetTest extends munit.ScalaCheckSuite {
     val mergedStore = Lattice.merge(
       Dotted(s1, Dots.fromSet(c1)),
       Dotted(s2, Dots.fromSet(c2))
-      ).store
+    ).store
 
     assert(!mergedStore.contains(d1))
     assert(mergedStore.contains(d2))
@@ -80,7 +80,7 @@ class DotSetTest extends munit.ScalaCheckSuite {
       val Dotted(dsMerged, ccMerged) = DecomposeLattice[Dotted[DotSet]].merge(
         Dotted(DotSet(dsA), ccA),
         Dotted(DotSet(dsB), ccB)
-        )
+      )
 
       assert(
         ccMerged == (ccA union ccB),
@@ -109,21 +109,21 @@ class DotSetTest extends munit.ScalaCheckSuite {
       assert(
         Dotted(dsA, ccA) <= Dotted(dsA, ccA),
         s"DotSet.leq should be reflexive, but returns false when applied to ($dsA, $ccA, $dsA, $ccA)"
-        )
+      )
 
       val Dotted(dsMerged, ccMerged) = DecomposeLattice[Dotted[Dots]].merge(
         Dotted(dsA, ccA),
         Dotted(dsB, ccB)
-        )
+      )
 
       assert(
         Dotted(dsA, ccA) <= Dotted(dsMerged, ccMerged),
         s"The result of DotSet.merge should be larger than its lhs, but DotSet.leq returns false when applied to ($dsA, $ccA, $dsMerged, $ccMerged)"
-        )
+      )
       assert(
         Dotted(dsB, ccB) <= Dotted(dsMerged, ccMerged),
         s"The result of DotSet.merge should be larger than its rhs, but DotSet.leq returns false when applied to ($dsB, $ccB, $dsMerged, $ccMerged)"
-        )
+      )
     }
   }
 
@@ -131,7 +131,7 @@ class DotSetTest extends munit.ScalaCheckSuite {
     forAll { (ds: Dots, deleted: Dots) =>
       val cc = ds union deleted
 
-      val decomposed                 = Dotted(ds, cc).decomposed
+      val decomposed = Dotted(ds, cc).decomposed
       val Dotted(dsMerged, ccMerged) = decomposed.foldLeft(Dotted(Dots.empty, Dots.empty)) {
         case (Dotted(dsA, ccA), Dotted(dsB, ccB)) =>
           DecomposeLattice[Dotted[Dots]].merge(Dotted(dsA, ccA), Dotted(dsB, ccB))

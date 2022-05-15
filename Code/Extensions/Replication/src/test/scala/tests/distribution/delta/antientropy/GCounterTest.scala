@@ -30,7 +30,7 @@ class GCounterTest extends munit.ScalaCheckSuite {
 
   property("inc") {
     forAll { counter: AntiEntropyCRDT[GrowOnlyCounter] =>
-      val before = counter.value
+      val before     = counter.value
       val counterInc = counter.inc()
 
       assertEquals(

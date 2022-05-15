@@ -23,7 +23,6 @@ object BenchmarkRunnerApp extends App {
 
   val results: util.Collection[RunResult] = new Runner(jmhOptions).run()
 
-
   println("Running ToDo App Benchmarks")
   ToDoAppBenchmark.main(Array.empty)
 

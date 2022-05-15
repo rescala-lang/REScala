@@ -5,7 +5,6 @@ import sbt.Keys._
 import sbt._
 import Dependencies.{Versions => V}
 
-
 object Settings {
 
   val commonCrossBuildVersions = crossScalaVersions := Seq(V.scala211, V.scala212, V.scala213, V.scala3)
@@ -70,7 +69,7 @@ object Settings {
     "-Xlint:type-parameter-shadow",  // A local type parameter shadows a type already in scope.
     "-Ywarn-dead-code",              // Warn when dead code is identified.
     "-Ywarn-numeric-widen",          // Warn when numerics are widened.
-    "-Ywarn-value-discard",   // Warn when non-Unit expression results are unused.
+    "-Ywarn-value-discard",          // Warn when non-Unit expression results are unused.
     // "-Xlint:eta-zero",            // Warn on ambiguity between applying f and eta expanding.
   )
   lazy val scalacOptions12plus: Seq[String] = Seq(
@@ -81,9 +80,9 @@ object Settings {
     "-Ywarn-unused:imports",   // Warn if an import selector is not referenced.
     "-Ywarn-unused:locals",    // Warn if a local definition is unused.
     "-Ywarn-unused:privates",  // Warn if a private member is unused.
-    "-Ywarn-unused:params",          // Warn if a value parameter is unused.
+    "-Ywarn-unused:params",    // Warn if a value parameter is unused.
     // "-Ywarn-unused:patvars",      // Warn if a variable bound in a pattern is unused.
-    )
+  )
   lazy val scalaOptions12minus: Seq[String] = Seq(
     // do not work on 2.13
     "-Ywarn-inaccessible", // Warn about inaccessible types in method signatures.

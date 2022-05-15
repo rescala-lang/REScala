@@ -151,9 +151,15 @@ class SignalTestSuite extends RETests {
       val s2 = v.map { 3 * _ }
       val s3 = Signals.lift(s1, s2) { _ + _ }
 
-      s1.changed += { (_) => test.incrementAndGet(); () }
-      s2.changed += { (_) => test.incrementAndGet(); () }
-      s3.changed += { (_) => test.incrementAndGet(); () }
+      s1.changed += { (_) =>
+        test.incrementAndGet(); ()
+      }
+      s2.changed += { (_) =>
+        test.incrementAndGet(); ()
+      }
+      s3.changed += { (_) =>
+        test.incrementAndGet(); ()
+      }
 
       assert(test.get == 0)
 

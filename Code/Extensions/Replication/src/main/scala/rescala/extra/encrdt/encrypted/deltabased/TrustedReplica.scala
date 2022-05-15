@@ -1,6 +1,5 @@
 package rescala.extra.encrdt.encrypted.deltabased
 
-
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.Aead
 import kofre.time.{Dots, Dot}

@@ -17,7 +17,6 @@ def reactiveMacro[T: Type, F[_]: Type, Ops <: Operators: Type, Reactive[_]](
   MacroLego[Ops](null.asInstanceOf[Ops], api.asInstanceOf, creation, forceStatic.valueOrAbort)
     .makeReactive[F, T](expr, rt).asInstanceOf[Expr[Reactive[T]]]
 
-
 enum ReactiveType:
   case Event, Signal
 
@@ -124,21 +123,22 @@ class MacroLego[Ops <: Operators: Type](
       import quotes.reflect.*
 
       e.asTerm match
-        //case '{(${ss}: fakeApi.ScopeSearch.type).fromSchedulerImplicit(using ${_}: fakeApi.DynamicScope)} =>
+        // case '{(${ss}: fakeApi.ScopeSearch.type).fromSchedulerImplicit(using ${_}: fakeApi.DynamicScope)} =>
         //  '{$ss.fromTicketImplicit($ticket)}.asExprOf[T]
-        case Apply(Select(ss, "fromSchedulerImplicit"), _) => Apply(Select.unique(ss, "fromTicketImplicit"), List(ticket)).asExprOf[T]
+        case Apply(Select(ss, "fromSchedulerImplicit"), _) =>
+          Apply(Select.unique(ss, "fromTicketImplicit"), List(ticket)).asExprOf[T]
         case other => transformChildren(e)
     }
   }
 
-  def makeReactive[F[_]: Type,  T: Type](expr: Expr[F[T]], rtype: ReactiveType): Expr[Any] = {
+  def makeReactive[F[_]: Type, T: Type](expr: Expr[F[T]], rtype: ReactiveType): Expr[Any] = {
     val fi = FindInterp()
     fi.transform(expr)
-    val definitions    = FindDefs().foldTree(Nil, expr.asTerm)(Symbol.spliceOwner)
+    val definitions = FindDefs().foldTree(Nil, expr.asTerm)(Symbol.spliceOwner)
 
-    //println(s"contains symbols: ${definitions}")
-    val found    = fi.foundAbstractions.filterNot{ fa =>
-      val defInside = FindDefs().foldTree(Nil, fa.asTerm)(Symbol.spliceOwner)
+    // println(s"contains symbols: ${definitions}")
+    val found = fi.foundAbstractions.filterNot { fa =>
+      val defInside      = FindDefs().foldTree(Nil, fa.asTerm)(Symbol.spliceOwner)
       val containsSymbol = ContainsSymbol(definitions.diff(defInside))
       containsSymbol.inTree(fa)
     }
@@ -160,8 +160,9 @@ class MacroLego[Ops <: Operators: Type](
         funType,
         { (sym, params) =>
           val staticTicket = params.head
-          val cutOut = ReplaceInterp(replacementMap, staticTicket).transform(expr)
-          val res = new ReplaceImplicitTickets(staticTicket.asInstanceOf[Term]).transform(cutOut).asTerm.changeOwner(sym)
+          val cutOut       = ReplaceInterp(replacementMap, staticTicket).transform(expr)
+          val res =
+            new ReplaceImplicitTickets(staticTicket.asInstanceOf[Term]).transform(cutOut).asTerm.changeOwner(sym)
           res
         }
       )
@@ -192,7 +193,7 @@ class MacroLego[Ops <: Operators: Type](
         List(Inlined(None, Nil, outerCreation.asTerm))
       )
     }.asExpr
-    //println(s"res ${res.show}")
+    // println(s"res ${res.show}")
 
     res
   }

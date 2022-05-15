@@ -15,11 +15,13 @@ import scala.deriving.Mirror
   */
 @implicitNotFound("Not a decompose lattice when in a context: »${A}«")
 trait DottedDecompose[A] extends DottedLattice[A], DecomposeLattice[Dotted[A]] {
-  def contextbimap[B](to: Dotted[A] => Dotted[B], from: Dotted[B] => Dotted[A]): DottedDecompose[B] = new DottedDecompose[B] {
-    override def lteq(left: Dotted[B], right: Dotted[B]): Boolean = DottedDecompose.this.lteq(from(left), from(right))
-    override def decompose(a: Dotted[B]): Iterable[Dotted[B]] = DottedDecompose.this.decompose(from(a)).map(to)
-    override def mergePartial(left: Dotted[B], right: Dotted[B]): B = to(Dotted(DottedDecompose.this.mergePartial(from(left), from(right)))).store
-  }
+  def contextbimap[B](to: Dotted[A] => Dotted[B], from: Dotted[B] => Dotted[A]): DottedDecompose[B] =
+    new DottedDecompose[B] {
+      override def lteq(left: Dotted[B], right: Dotted[B]): Boolean = DottedDecompose.this.lteq(from(left), from(right))
+      override def decompose(a: Dotted[B]): Iterable[Dotted[B]]     = DottedDecompose.this.decompose(from(a)).map(to)
+      override def mergePartial(left: Dotted[B], right: Dotted[B]): B =
+        to(Dotted(DottedDecompose.this.mergePartial(from(left), from(right)))).store
+    }
 }
 
 object DottedDecompose {
@@ -27,15 +29,15 @@ object DottedDecompose {
 
   inline def derived[T <: Product](using pm: Mirror.ProductOf[T]): DottedDecompose[T] = {
     val lattices: Tuple = summonAll[Tuple.Map[pm.MirroredElemTypes, DottedDecompose]]
-    val bottoms: Tuple = summonAll[Tuple.Map[pm.MirroredElemTypes, Bottom]]
+    val bottoms: Tuple  = summonAll[Tuple.Map[pm.MirroredElemTypes, Bottom]]
     new ProductDottedDecompose[T](lattices, bottoms, pm)
   }
 
   class ProductDottedDecompose[T <: Product](lattices: Tuple, bottoms: Tuple, pm: Mirror.ProductOf[T])
-    extends DottedDecompose[T] {
+      extends DottedDecompose[T] {
 
     private def lat(i: Int): DottedDecompose[Any] = lattices.productElement(i).asInstanceOf[DottedDecompose[Any]]
-    private def bot(i: Int): Bottom[Any] = bottoms.productElement(i).asInstanceOf[Bottom[Any]]
+    private def bot(i: Int): Bottom[Any]          = bottoms.productElement(i).asInstanceOf[Bottom[Any]]
 
     override def mergePartial(left: Dotted[T], right: Dotted[T]): T =
       pm.fromProduct(new Product {

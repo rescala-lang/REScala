@@ -37,5 +37,5 @@ object CRDTInterface {
     }
 
   /** workaround to make existing syntax compile with different context decomposition */
-  //given focussedPermission[C, L](using outer: PermQuery[C, Dotted[L]]): PermQuery[C, L] = outer.focus(_.store)
+  // given focussedPermission[C, L](using outer: PermQuery[C, Dotted[L]]): PermQuery[C, L] = outer.focus(_.store)
 }

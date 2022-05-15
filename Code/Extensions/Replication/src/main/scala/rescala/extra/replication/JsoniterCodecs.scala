@@ -12,7 +12,9 @@ import kofre.decompose.interfaces.LexCounterInterface.LexPair
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
 import kofre.decompose.interfaces.ORMapInterface.ORMap
 import kofre.decompose.interfaces.RCounterInterface.RCounter
-import kofre.datatypes.{AddWinsSet, EnableWinsFlag, Epoche, GrowMap, GrowOnlyCounter, PosNegCounter, RGA, TimedVal, TwoPhaseSet}
+import kofre.datatypes.{
+  AddWinsSet, EnableWinsFlag, Epoche, GrowMap, GrowOnlyCounter, PosNegCounter, RGA, TimedVal, TwoPhaseSet
+}
 import kofre.dotted.Dotted
 
 import scala.annotation.nowarn
@@ -62,7 +64,8 @@ object JsoniterCodecs {
         val ar = arrayOfLongCodec.decodeValue(in, Array())
         new ArrayRanges(ar, ar.length)
       }
-      override def encodeValue(x: ArrayRanges, out: JsonWriter): Unit = arrayOfLongCodec.encodeValue(x.inner.slice(0, x.used), out)
+      override def encodeValue(x: ArrayRanges, out: JsonWriter): Unit =
+        arrayOfLongCodec.encodeValue(x.inner.slice(0, x.used), out)
       override def nullValue: ArrayRanges = null
     }
 
@@ -125,7 +128,6 @@ object JsoniterCodecs {
   implicit def ORMapStateCodec[K: JsonValueCodec, V: JsonValueCodec]: JsonValueCodec[ORMap[K, V]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
-
   /** PNCounter */
 
   implicit def PNCounterStateCodec: JsonValueCodec[PosNegCounter] = JsonCodecMaker.make
@@ -135,13 +137,11 @@ object JsoniterCodecs {
   implicit def RCounterStateCodec: JsonValueCodec[RCounter] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
-
   /** RGA */
 
   @nowarn("msg=never used")
   implicit def RGAStateCodec[E: JsonValueCodec]: JsonValueCodec[Dotted[RGA[E]]] = {
-    implicit def RGAleftCodec
-        : JsonValueCodec[Epoche[Map[GListNode[TimedVal[Dot]], Elem[TimedVal[Dot]]]]] =
+    implicit def RGAleftCodec: JsonValueCodec[Epoche[Map[GListNode[TimedVal[Dot]], Elem[TimedVal[Dot]]]]] =
       JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
     implicit def RGArightCodec: JsonValueCodec[Map[Dot, RGANode[E]]] =
@@ -166,15 +166,12 @@ object JsoniterCodecs {
   @nowarn("msg=never used")
   implicit def gmapCodec[K: JsonKeyCodec, V: JsonValueCodec]: JsonValueCodec[GrowMap[K, V]] = JsonCodecMaker.make
 
-
-
-
   @nowarn("msg=never used")
   implicit def withContextWrapper[E: JsonValueCodec]: JsonValueCodec[Dotted[E]] = JsonCodecMaker.make
 
-  implicit def twoPSetContext[E: JsonValueCodec]: JsonValueCodec[Dotted[TwoPhaseSet[E]]] = withContextWrapper(TwoPSetStateCodec)
+  implicit def twoPSetContext[E: JsonValueCodec]: JsonValueCodec[Dotted[TwoPhaseSet[E]]] =
+    withContextWrapper(TwoPSetStateCodec)
 
-
-  implicit def spcecificCodec:  JsonValueCodec[Dotted[GrowMap[Int, AddWinsSet[Int]]]] = JsonCodecMaker.make
+  implicit def spcecificCodec: JsonValueCodec[Dotted[GrowMap[Int, AddWinsSet[Int]]]] = JsonCodecMaker.make
 
 }

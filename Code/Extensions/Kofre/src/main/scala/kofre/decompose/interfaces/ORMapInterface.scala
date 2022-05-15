@@ -22,7 +22,6 @@ object ORMapInterface {
 
   given contextDecompose[K, V: DottedDecompose: HasDots: Bottom]: DottedDecompose[ORMap[K, V]] = DotMap.contextDecompose
 
-
   def make[K, V](
       dm: DotMap[K, V] = DotMap.empty[K, V],
       cc: Dots = Dots.empty
@@ -39,9 +38,9 @@ object ORMapInterface {
 
     def queryAllEntries(using QueryP): Iterable[V] = current.values
     def mutateKey(k: K, m: (Defs.Id, Dotted[V]) => Dotted[V])(using
-                                                              CausalMutationP,
-                                                              IdentifierP,
-                                                              Bottom[V]
+        CausalMutationP,
+        IdentifierP,
+        Bottom[V]
     ): C = {
       val v = current.getOrElse(k, Bottom[V].empty)
 
@@ -55,9 +54,9 @@ object ORMapInterface {
     }
 
     def mutateKeyNamedCtx(k: K)(m: DottedName[V] => DottedName[V])(using
-                                                                   CausalMutationP,
-                                                                   IdentifierP,
-                                                                   Bottom[V]
+        CausalMutationP,
+        IdentifierP,
+        Bottom[V]
     ): C = {
       val v                           = current.getOrElse(k, Bottom[V].empty)
       val Dotted(stateDelta, ccDelta) = m(DottedName(replicaID, Dotted(v, context))).anon

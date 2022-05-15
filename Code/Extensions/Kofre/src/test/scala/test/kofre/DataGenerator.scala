@@ -91,21 +91,22 @@ object DataGenerator {
 
   def makeUnique(rem: List[Dots], acc: List[Dots], state: Dots): List[Dots] =
     rem match
-      case Nil => acc
+      case Nil    => acc
       case h :: t => makeUnique(t, h.subtract(state) :: acc, state union h)
 
-  def genDotMap[K](implicit gk: Arbitrary[K]): Gen[Map[K, Dots]] = (for {
-    n      <- Gen.posNum[Int]
-    keys   <- Gen.listOfN(n, gk.arbitrary)
-    dupvalues <- Gen.listOfN(n, arbDietMapCContext.arbitrary)
-  } yield {
-    (keys zip makeUnique(dupvalues, Nil, Dots.empty)).toMap
-  })
+  def genDotMap[K](implicit gk: Arbitrary[K]): Gen[Map[K, Dots]] =
+    (for {
+      n         <- Gen.posNum[Int]
+      keys      <- Gen.listOfN(n, gk.arbitrary)
+      dupvalues <- Gen.listOfN(n, arbDietMapCContext.arbitrary)
+    } yield {
+      (keys zip makeUnique(dupvalues, Nil, Dots.empty)).toMap
+    })
 
   implicit val arbrealDotSet: Arbitrary[DotSet] = Arbitrary(genDietMapCContext.map(DotSet.apply))
 
   implicit def arbDotMap[K](implicit gk: Arbitrary[K]): Arbitrary[Map[K, DotSet]] =
-    Arbitrary(genDotMap[K].map{_.map((k, v) => k -> DotSet(v)) })
+    Arbitrary(genDotMap[K].map { _.map((k, v) => k -> DotSet(v)) })
 
   implicit def arbRealDotmap[K](implicit gk: Arbitrary[K]): Arbitrary[DotMap[K, DotSet]] =
     Arbitrary(arbDotMap.arbitrary.map(DotMap.apply))

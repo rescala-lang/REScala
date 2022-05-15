@@ -86,7 +86,7 @@ class RGATest extends munit.ScalaCheckSuite {
     forAll { (rga: AntiEntropyCRDT[RGA[Int]], deleteIdx: Int) =>
       val sizebefore = rga.size
       val listbefore = rga.toList
-      val deleted = rga.delete(deleteIdx)
+      val deleted    = rga.delete(deleteIdx)
 
       assert(
         deleteIdx < 0 || deleteIdx >= sizebefore || deleted.size == sizebefore - 1,

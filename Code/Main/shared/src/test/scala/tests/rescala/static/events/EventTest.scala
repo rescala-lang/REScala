@@ -46,8 +46,8 @@ class EventTest extends RETests {
 
     test("events With Method Handlers With Parameter") {
 
-      var test     = 0
-      val e        = Evt[Int]()
+      var test       = 0
+      val e          = Evt[Int]()
       def m1(): Unit = { test += 1 }
 
       e += (_ => m1())

@@ -50,7 +50,7 @@ class GListTest extends munit.ScalaCheckSuite {
   property("insert") {
     forAll { (list: AntiEntropyCRDT[GList[Int]], n: Int, e: Int) =>
       val szeBefore = list.size
-      val l = list.toList
+      val l         = list.toList
 
       val inserted = list.insert(n, e)
 

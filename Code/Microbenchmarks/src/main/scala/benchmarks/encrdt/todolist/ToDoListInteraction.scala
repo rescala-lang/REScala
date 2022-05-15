@@ -11,4 +11,3 @@ case class CompleteToDoItem(uuid: UUID) extends ToDoListInteraction
 //case class ChangeToDoItemText(uuid: UUID, newText: String) extends ToDoListInteraction
 
 case class RemoveToDoItems(uuids: Seq[UUID]) extends ToDoListInteraction
-

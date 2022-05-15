@@ -37,7 +37,7 @@ trait ParRP extends Levelbased {
           wlo.fold(true)(_ eq key)
         },
         s"buffer ${pulsing.state}, controlled by ${pulsing.state.lock} with owner ${pulsing.state.lock.getOwner}" +
-          s" was written by $this who locks with $key, by now the owner is ${pulsing.state.lock.getOwner}"
+        s" was written by $this who locks with $key, by now the owner is ${pulsing.state.lock.getOwner}"
       )
       super.writeState(pulsing)(value)
     }

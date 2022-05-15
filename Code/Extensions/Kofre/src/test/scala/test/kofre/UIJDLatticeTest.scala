@@ -12,12 +12,12 @@ class IntAsDecomposeLatticeTest extends munit.ScalaCheckSuite {
       assert(
         intMaxLattice.lteq(a, a),
         s"leq should be reflexive, but $a is not leq $a"
-        )
+      )
 
       assert(
         !(intMaxLattice.lteq(a, b) && intMaxLattice.lteq(b, c)) || intMaxLattice.lteq(a, c),
         s"leq should be transitive, but $a leq $b and $b leq $c and $a is not leq $c"
-        )
+      )
     }
   }
 
@@ -76,12 +76,12 @@ class SetAsDecomposeLatticeTest extends munit.ScalaCheckSuite {
       assert(
         setLattice.lteq(a, a),
         s"leq should be reflexive, but $a is not leq $a"
-        )
+      )
 
       assert(
         !(setLattice.lteq(a, b) && setLattice.lteq(b, c)) || setLattice.lteq(a, c),
         s"leq should be transitive, but $a leq $b and $b leq $c and $a is not leq $c"
-        )
+      )
     }
   }
 
@@ -140,7 +140,7 @@ class OptionAsDecomposeLatticeTest extends munit.ScalaCheckSuite {
       assert(
         optionLattice[Int].lteq(a, a),
         s"leq should be reflexive, but $a is not leq $a"
-        )
+      )
 
       assert(
         !(optionLattice[Int].lteq(a, b) && optionLattice[Int].lteq(b, c)) || optionLattice[Int].lteq(
@@ -207,7 +207,7 @@ class MapAsDecomposeLatticeTest extends munit.ScalaCheckSuite {
       assert(
         mapLattice[Int, Int].lteq(a, a),
         s"leq should be reflexive, but $a is not leq $a"
-        )
+      )
 
       assert(
         !(mapLattice[Int, Int].lteq(a, b) && mapLattice[Int, Int].lteq(b, c)) || mapLattice[

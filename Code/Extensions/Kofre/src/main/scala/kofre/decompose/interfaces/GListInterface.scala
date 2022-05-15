@@ -83,7 +83,8 @@ object GListInterface {
         }
     }
 
-  implicit class GListSyntax[C, E](container: C)(using ArdtOpsContains[C, GList[E]]) extends OpsSyntaxHelper[C, GList[E]](container) {
+  implicit class GListSyntax[C, E](container: C)(using ArdtOpsContains[C, GList[E]])
+      extends OpsSyntaxHelper[C, GList[E]](container) {
 
     @tailrec
     private def findNth(state: GList[E], current: GListNode[TimedVal[E]], i: Int): Option[GListNode[TimedVal[E]]] = {
@@ -110,7 +111,7 @@ object GListInterface {
     def toList(using QueryP): List[E] =
       toListRec(current, Head[TimedVal[E]](), ListBuffer.empty[E]).toList
 
-    def toLazyList(using QueryP):  LazyList[E] =
+    def toLazyList(using QueryP): LazyList[E] =
       LazyList.unfold[E, GListNode[TimedVal[E]]](Head[TimedVal[E]]()) { node =>
         current.get(node) match {
           case None                  => None

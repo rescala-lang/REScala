@@ -8,7 +8,9 @@ import org.eclipse.jetty.websocket.api.{Session, WebSocketAdapter}
 import org.eclipse.jetty.websocket.client.WebSocketClient
 import org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer
 import org.eclipse.jetty.websocket.server.{JettyServerUpgradeRequest, JettyServerUpgradeResponse}
-import rescala.extra.encrdt.encrypted.statebased.{DecryptedState, EncryptedState, Replica, TrustedReplica, UntrustedReplica}
+import rescala.extra.encrdt.encrypted.statebased.{
+  DecryptedState, EncryptedState, Replica, TrustedReplica, UntrustedReplica
+}
 import rescala.extra.encrdt.sync.ConnectionManager
 
 import java.net.URI
@@ -16,9 +18,8 @@ import java.time.Duration
 import scala.annotation.nowarn
 
 trait WebSocketReplica extends Replica {
-  protected var server: Server = _
+  protected var server: Server         = _
   protected var replicas: Set[Session] = Set.empty
-
 
   override protected def disseminate(encryptedState: EncryptedState): Unit = {
     val serialized = writeToString(encryptedState)
@@ -68,13 +69,16 @@ trait WebSocketReplica extends Replica {
     ctxHandler.setContextPath("/")
     server.setHandler(ctxHandler)
 
-    JettyWebSocketServletContainerInitializer.configure(ctxHandler, (ctx, container) => {
-      container.addMapping("/", (r,s) => ReplicaWsAdapter.apply(r,s))
-      container.setIdleTimeout(Duration.ZERO)
-      ctx.setSessionTimeout(0)
-      container.setMaxBinaryMessageSize(Long.MaxValue)
-      container.setMaxTextMessageSize(Long.MaxValue)
-    })
+    JettyWebSocketServletContainerInitializer.configure(
+      ctxHandler,
+      (ctx, container) => {
+        container.addMapping("/", (r, s) => ReplicaWsAdapter.apply(r, s))
+        container.setIdleTimeout(Duration.ZERO)
+        ctx.setSessionTimeout(0)
+        container.setMaxBinaryMessageSize(Long.MaxValue)
+        container.setMaxTextMessageSize(Long.MaxValue)
+      }
+    )
 
     server.start()
 
@@ -108,9 +112,9 @@ class UntrustedReplicaWebSocketServer extends UntrustedReplica(Set.empty) with W
   }
 }
 
-abstract class TrustedReplicaWebSocketClient[T](replicaId: String, aead: Aead)
-                                               (implicit val jsonValueCodec: JsonValueCodec[T])
-  extends TrustedReplica[T](replicaId, aead) with WebSocketReplica with ConnectionManager[T] {
+abstract class TrustedReplicaWebSocketClient[T](replicaId: String, aead: Aead)(implicit
+    val jsonValueCodec: JsonValueCodec[T]
+) extends TrustedReplica[T](replicaId, aead) with WebSocketReplica with ConnectionManager[T] {
 
   private val webSocketClient: WebSocketClient = new WebSocketClient()
   webSocketClient.setIdleTimeout(Duration.ZERO) // Infinite timeout

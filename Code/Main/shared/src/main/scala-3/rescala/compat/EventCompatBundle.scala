@@ -53,7 +53,9 @@ trait EventCompatBundle extends ReadableMacroBundle {
     inline def apply[T](inline expr: Option[T])(using ct: CreationTicket): Event[T] =
       ${ rescala.macros.reactiveMacro[T, Option, moduleType.type, Event]('expr, 'moduleType, 'ct, '{ "Event" }, 'true) }
     inline def dynamic[T](inline expr: Option[T])(using ct: CreationTicket): Event[T] =
-      ${ rescala.macros.reactiveMacro[T, Option, moduleType.type, Event]('expr, 'moduleType, 'ct, '{ "Event" }, 'false) }
+      ${
+        rescala.macros.reactiveMacro[T, Option, moduleType.type, Event]('expr, 'moduleType, 'ct, '{ "Event" }, 'false)
+      }
   }
 
 }

@@ -145,10 +145,6 @@ class SignalMacro extends RETests {
       assert(sig.readValueOnce == 11)
     }
 
-
-
-
-
     test("default Arguments") {
       val s = Signal {
         def a(v: Int, i: Int = 8, j: Int, k: Int = 8) = v + i + j + k
