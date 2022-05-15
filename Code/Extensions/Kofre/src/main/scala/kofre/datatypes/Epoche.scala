@@ -13,6 +13,7 @@ object Epoche {
 
   given contextDecompose[E: DecomposeLattice]: DottedDecompose[Epoche[E]] = DottedDecompose.liftDecomposeLattice
 
+  given bottom[E: Bottom]: Bottom[Epoche[E]] with { override def empty: Epoche[E] = Epoche.empty }
 
   implicit class EpocheSyntax[C, E](container: C)(using ArdtOpsContains[C, Epoche[E]])
       extends OpsSyntaxHelper[C, Epoche[E]](container) {
@@ -36,7 +37,6 @@ object Epoche {
       case Epoche(c, v) =>
         DecomposeLattice[E].decompose(v).map(Epoche(c, _))
     }
-
 
     /** By assumption: associative, commutative, idempotent. */
     override def merge(left: Epoche[E], right: Epoche[E]): Epoche[E] = (left, right) match {

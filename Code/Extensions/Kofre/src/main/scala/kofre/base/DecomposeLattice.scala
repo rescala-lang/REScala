@@ -1,8 +1,8 @@
 package kofre.base
 
 import kofre.base.{Bottom, Lattice}
+import kofre.dotted.{Dotted, DottedDecompose}
 import kofre.time.Dots
-import kofre.dotted.{DottedDecompose, Dotted}
 
 import scala.annotation.implicitNotFound
 import scala.compiletime.summonAll
