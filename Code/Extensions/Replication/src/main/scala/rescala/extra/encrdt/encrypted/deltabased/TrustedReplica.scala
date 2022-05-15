@@ -3,11 +3,10 @@ package rescala.extra.encrdt.encrypted.deltabased
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.Aead
-import de.ckuessner.encrdt.crdts.interfaces.Crdt
 import kofre.time.{Dots, Dot}
 import kofre.base.Lattice.Operators
 
-abstract class TrustedReplica[T](val replicaId: String, val crdt: Crdt[T], private val aead: Aead)(
+abstract class TrustedReplica[T](val replicaId: String, mutate: T => Unit, private val aead: Aead)(
     implicit val stateJsonCodec: JsonValueCodec[T],
     implicit val dotSetJsonCodec: JsonValueCodec[Dots]
 ) extends Replica {
@@ -26,7 +25,7 @@ abstract class TrustedReplica[T](val replicaId: String, val crdt: Crdt[T], priva
     dottedVersionVector = dottedVersionVector.merge(decryptedState.dottedVersionVector)
     // TODO: synchronize
     // TODO: Non-causally consistent unless underlying CRDT handles causal consistency
-    crdt.merge(decryptedState.deltaGroup)
+    mutate(decryptedState.deltaGroup)
   }
 
   def localChange(state: T): Unit = {

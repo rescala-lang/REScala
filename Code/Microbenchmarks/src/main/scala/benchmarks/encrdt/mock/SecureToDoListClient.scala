@@ -19,7 +19,7 @@ class SecureToDoListClient(
     crdt: DeltaAddWinsLastWriterWinsMap[UUID, ToDoEntry],
     aead: Aead,
     private val intermediary: UntrustedReplica
-) extends TrustedReplica[ToDoMapLattice](replicaId, crdt, aead) with ToDoListClient {
+) extends TrustedReplica[ToDoMapLattice](replicaId, crdt.merge,  aead) with ToDoListClient {
 
   private val uuidToDeltaGroupMap: mutable.Map[UUID, DecryptedDeltaGroup[ToDoMapLattice]] = mutable.Map.empty
   private var cleanupDeltaGroup: DecryptedDeltaGroup[ToDoMapLattice] =

@@ -1,11 +1,10 @@
 package kofre.encrdt.crdts
 
-import de.ckuessner.encrdt.crdts.interfaces.{Crdt, MapCrdt}
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap.{DeltaAddWinsLastWriterWinsMapLattice, timestampedValueLattice}
 import kofre.encrdt.crdts.DeltaAddWinsMap.DeltaAddWinsMapLattice
 import kofre.base.{Bottom, Lattice}
 import kofre.time.Dot
-import kofre.dotted.{DottedDecompose, DottedLattice, DotFun, DotMap, Dotted}
+import kofre.dotted.{DotFun, DotMap, Dotted, DottedDecompose, DottedLattice}
 import kofre.primitives.LastWriterWins
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap.deltaAddWinsMapLattice
 
@@ -17,7 +16,7 @@ class DeltaAddWinsLastWriterWinsMap[K, V](
     val replicaId: String,
     initialState: DeltaAddWinsLastWriterWinsMapLattice[K, V] = DeltaAddWinsLastWriterWinsMap.empty[K, V],
     initialDeltas: Vector[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = Vector()
-) extends MapCrdt[K, V] with Crdt[DeltaAddWinsLastWriterWinsMapLattice[K, V]] {
+) {
   protected var _state: DeltaAddWinsLastWriterWinsMapLattice[K, V]               = initialState
   protected val _deltas: ArrayBuffer[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = ArrayBuffer.from(initialDeltas)
 
