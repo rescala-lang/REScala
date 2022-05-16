@@ -1,7 +1,6 @@
 package reactive
 
-import clangast.given
-import clangast.lit
+import clangast.{StdIncludes, lit, given}
 import clangast.decl.{CFunctionDecl, CParmVarDecl, CTranslationUnitDecl, CValueDecl, CVarDecl}
 import clangast.expr.{CCallExpr, CConditionalOperator, CDeclRefExpr, CExpr, CTrueLiteral}
 import clangast.expr.binaryop.{CAssignmentExpr, CNotEqualsExpr}
@@ -100,7 +99,7 @@ class GraphCompiler(outputs: List[ReSource]) {
     }
   }
 
-  def valueRef(r: ReSource): CDeclRefExpr = 
+  def valueRef(r: ReSource): CDeclRefExpr =
     r match {
       case s: Source[_] => CDeclRefExpr(sourceValueParameters(s))
       case f: Fold[_] => CDeclRefExpr(globalVariables(f))
@@ -203,7 +202,8 @@ class GraphCompiler(outputs: List[ReSource]) {
     }
 
     CTranslationUnitDecl(
-       globalVarDecls ++ functionDecls ++ List(updateFunction)
+      globalVarDecls ++ functionDecls ++ List(updateFunction),
+      List(StdIncludes.stdbool)
     )
   }
 }
