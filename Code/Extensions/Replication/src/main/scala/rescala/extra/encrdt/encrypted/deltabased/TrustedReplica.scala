@@ -7,7 +7,7 @@ import kofre.base.Lattice.Operators
 
 abstract class TrustedReplica[T](val replicaId: String, mutate: T => Unit, private val aead: Aead)(
     implicit val stateJsonCodec: JsonValueCodec[T],
-    implicit val dotSetJsonCodec: JsonValueCodec[Dots]
+    val dotSetJsonCodec: JsonValueCodec[Dots]
 ) extends Replica {
 
   protected var dottedVersionVector: Dots = Dots.empty

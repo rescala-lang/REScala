@@ -1,21 +1,18 @@
 package rescala.extra.lattices.delta
 
-import cats.collections.Diet
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import kofre.base.Defs.Time
-import kofre.protocol.AuctionInterface.AuctionData
-import kofre.decompose.interfaces.GListInterface.{Elem, GListNode}
 import kofre.datatypes.RGA.RGANode
-import kofre.time.{ArrayRanges, Dot, Dots}
+import kofre.datatypes.{AddWinsSet, EnableWinsFlag, Epoche, GrowMap, GrowOnlyCounter, PosNegCounter, RGA, TimedVal, TwoPhaseSet}
+import kofre.decompose.interfaces.GListInterface.{GList, GListElem, GListNode}
 import kofre.decompose.interfaces.LexCounterInterface.LexPair
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
 import kofre.decompose.interfaces.ORMapInterface.ORMap
 import kofre.decompose.interfaces.RCounterInterface.RCounter
-import kofre.datatypes.{
-  AddWinsSet, EnableWinsFlag, Epoche, GrowMap, GrowOnlyCounter, PosNegCounter, RGA, TimedVal, TwoPhaseSet
-}
 import kofre.dotted.Dotted
+import kofre.protocol.AuctionInterface.AuctionData
+import kofre.time.{ArrayRanges, Dot, Dots}
 
 import scala.annotation.nowarn
 
@@ -24,37 +21,6 @@ object JsoniterCodecs {
   /** Causal Context */
 
   implicit val SetCContextCodec: JsonValueCodec[Set[Dot]] = JsonCodecMaker.make
-
-  implicit val DietCodec: JsonValueCodec[Diet[Long]] = new JsonValueCodec[Diet[Long]] {
-    override def decodeValue(in: JsonReader, default: Diet[Long]): Diet[Long] = {
-      var result = Diet.empty[Long]
-
-      in.isNextToken('"')
-
-      while (!in.isNextToken('"')) {
-        in.rollbackToken()
-
-        in.nextToken() match {
-          case 'R' =>
-            while (!in.isNextToken('(')) {}
-            val lower = in.readLong()
-            in.isNextToken(',')
-            val upper = in.readLong()
-            result = result + cats.collections.Range(lower, upper)
-            in.isNextToken(')')
-          case _ =>
-        }
-      }
-
-      result
-    }
-
-    override def encodeValue(x: Diet[Long], out: JsonWriter): Unit = {
-      out.writeVal(x.toString)
-    }
-
-    override def nullValue: Diet[Long] = null
-  }
 
   implicit val arrayOfLongCodec: JsonValueCodec[Array[Time]] = JsonCodecMaker.make
 
@@ -96,8 +62,39 @@ object JsoniterCodecs {
   /** GList */
 
   @nowarn("msg=never used")
-  implicit def GListStateCodec[E: JsonValueCodec]: JsonValueCodec[Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]]] =
-    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
+  def mapArrayCodec[A: JsonValueCodec, B: JsonValueCodec]: JsonValueCodec[Map[A, B]] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
+
+
+  @nowarn("msg=never used")
+  def timedTupleCodec[A: JsonValueCodec]: JsonValueCodec[(A, String, Long, Long)] = JsonCodecMaker.make
+
+  @nowarn("msg=never used")
+  implicit def timedValCodec[A: JsonValueCodec]: JsonValueCodec[TimedVal[A]] = new JsonValueCodec[TimedVal[A]] {
+    override def decodeValue(in: JsonReader, default: TimedVal[A]): TimedVal[A] = {
+      val (a,b,c,d) = timedTupleCodec[A].decodeValue(in, if (default == null) null else (default.value, default.replicaID, default.nanoTime, default.timestamp))
+      TimedVal(a,b,c,d)
+    }
+    override def encodeValue(x: TimedVal[A], out: JsonWriter): Unit =
+      timedTupleCodec[A].encodeValue((x.value, x.replicaID, x.nanoTime, x.timestamp), out)
+    override def nullValue: TimedVal[A] = null
+  }
+
+  implicit def elemCodec[E2](implicit e2c: JsonValueCodec[E2]): JsonValueCodec[GListElem[E2]] = new JsonValueCodec[GListElem[E2]] {
+    override def decodeValue(in: JsonReader, default: GListElem[E2]): GListElem[E2] = GListElem(e2c.decodeValue(in, default.value))
+    override def encodeValue(x: GListElem[E2], out: JsonWriter): Unit = e2c.encodeValue(x.value, out)
+    override def nullValue: GListElem[E2] = null
+  }
+
+  @nowarn("msg=never used")
+  implicit def glistNodeCodec[E2: JsonValueCodec]: JsonValueCodec[GListNode[E2]] = {
+    JsonCodecMaker.make
+  }
+
+
+  @nowarn("msg=never used")
+  implicit def GListStateCodec[E: JsonValueCodec]: JsonValueCodec[GList[E]] = {
+    mapArrayCodec[GListNode[TimedVal[E]], GListElem[TimedVal[E]]](glistNodeCodec(timedValCodec), JsonCodecMaker.make)
+  }
 
   /** GSet */
 
@@ -141,7 +138,7 @@ object JsoniterCodecs {
 
   @nowarn("msg=never used")
   implicit def RGAStateCodec[E: JsonValueCodec]: JsonValueCodec[Dotted[RGA[E]]] = {
-    implicit def RGAleftCodec: JsonValueCodec[Epoche[Map[GListNode[TimedVal[Dot]], Elem[TimedVal[Dot]]]]] =
+    implicit def RGAleftCodec: JsonValueCodec[Epoche[Map[GListNode[TimedVal[Dot]], GListElem[TimedVal[Dot]]]]] =
       JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
     implicit def RGArightCodec: JsonValueCodec[Map[Dot, RGANode[E]]] =
@@ -167,7 +164,17 @@ object JsoniterCodecs {
   implicit def gmapCodec[K: JsonKeyCodec, V: JsonValueCodec]: JsonValueCodec[GrowMap[K, V]] = JsonCodecMaker.make
 
   @nowarn("msg=never used")
-  implicit def withContextWrapper[E: JsonValueCodec]: JsonValueCodec[Dotted[E]] = JsonCodecMaker.make
+  implicit def withContextWrapper[E: JsonValueCodec]: JsonValueCodec[Dotted[E]] = {
+    def dottedTuple: JsonValueCodec[(E, Dots)] = JsonCodecMaker.make
+    new JsonValueCodec[Dotted[E]] {
+      override def decodeValue(in: JsonReader, default: Dotted[E]): Dotted[E] = {
+        val (a, b) = dottedTuple.decodeValue(in, if (default == null) null else (default.store, default.context))
+        Dotted(a, b)
+      }
+      override def encodeValue(x: Dotted[E], out: JsonWriter): Unit = dottedTuple.encodeValue((x.store, x.context), out)
+      override def nullValue: Dotted[E] = null
+    }
+  }
 
   implicit def twoPSetContext[E: JsonValueCodec]: JsonValueCodec[Dotted[TwoPhaseSet[E]]] =
     withContextWrapper(TwoPSetStateCodec)

@@ -77,10 +77,7 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
 
     val lww: DeltaBufferRDT[LWWRegister[TaskData]] = task match {
       case None => (
-        MVRegisterSyntax(lwwInit).write(TimedVal(TaskData("<empty>"), lwwInit.replicaID, 0, 0))(
-          DeltaBufferRDT.contextPermissions,
-          DeltaBufferRDT.contextPermissions
-        )
+        MVRegisterSyntax(lwwInit).write(TimedVal(TaskData("<empty>"), lwwInit.replicaID, 0, 0))
       )
       case Some(v) => LWWRegisterInterface.LWWRegisterSyntax(lwwInit).write(v)
     }
@@ -89,7 +86,7 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
       input(`class` := "edit", `type` := "text", onchange := inputChange, onblur := inputChange)
     }
 
-    val edittextStr = edittext.event.map { e: UIEvent =>
+    val edittextStr = edittext.event.map { (e: UIEvent) =>
       val myinput = e.target.asInstanceOf[Input]
       myinput.value.trim
     }

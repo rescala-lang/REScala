@@ -26,7 +26,7 @@ object Storing {
     }
     val sig = create(init)
     sig.observe(
-      { ft: A =>
+      { (ft: A) =>
         println(s"storing $key")
         dom.window.localStorage.setItem(key, writeToString(ft))
       },

@@ -47,7 +47,7 @@ class TodoAppUI(val storagePrefix: String) {
     val taskrefs = TaskReferences(toggleAll.event, storagePrefix)
     val taskOps  = new TaskOps(taskrefs)
 
-    val deltaEvt = Evt[DottedName[RGA[TaskRef]]]
+    val deltaEvt = Evt[DottedName[RGA[TaskRef]]]()
 
     val tasksRDT: Signal[DeltaBufferRDT[RGA[TaskRef]]] =
       Storing.storedAs(storagePrefix, DeltaBufferRDT(replicaId, RGA.empty[TaskRef])) { init =>
@@ -115,7 +115,7 @@ class TodoAppUI(val storagePrefix: String) {
     val todoInputField: Input = handler.data.render
 
     val handlerEvent =
-      handler.event.map { e: UIEvent =>
+      handler.event.map { (e: UIEvent) =>
         e.preventDefault()
         val res = todoInputField.value.trim
         todoInputField.value = ""

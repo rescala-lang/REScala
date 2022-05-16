@@ -10,14 +10,13 @@ object Dependencies {
   object Versions {
     val betterFiles        = "3.9.1"
     val catsCore           = "2.6.1"
-    val catsCollection     = "0.9.2"
     val circeCore          = "0.14.1"
     val decline            = "2.2.0"
     val directories        = "26"
     val fastparse          = "2.3.3"
     val jetty              = "9.4.46.v20220331"
     val jol                = "0.16"
-    val jsoniterScalaCore  = "2.13.20"
+    val jsoniterScalaCore  = "2.13.22"
     val jsoniterScalaOld   = "2.13.3" // this is the latest version supporting Scala 2.11 and java 8
     val jsoup              = "1.14.3"
     val munit              = "0.7.29"
@@ -33,7 +32,7 @@ object Dependencies {
     val scalaJavaTime      = "2.3.0"
     val scalaLoci          = "0.5.0"
     val scalaSwing         = "3.0.0"
-    val scalacheck         = "1.15.4"
+    val scalacheck         = "1.16.0"
     val scalactic          = "3.0.0"
     val scalajsDom         = "2.1.0"
     val scalatags          = "0.11.1"
@@ -49,7 +48,6 @@ object Dependencies {
 
   val betterFiles        = Def.setting("com.github.pathikrit" %% "better-files" % V.betterFiles)
   val catsCore           = Def.setting("org.typelevel" %%% "cats-core" % V.catsCore)
-  val catsCollection     = Def.setting("org.typelevel" %%% "cats-collections-core" % V.catsCollection)
   val decline            = Def.setting("com.monovore" %%% "decline" % V.decline)
   val directories        = Def.setting("dev.dirs" % "directories" % V.directories)
   val fastparse          = Def.setting("com.lihaoyi" %%% "fastparse" % V.fastparse)

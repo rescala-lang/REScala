@@ -19,41 +19,41 @@ import scala.collection.mutable.ListBuffer
   * that don't always need the whole list you should consider using toLazyList instead.
   */
 object GListInterface {
-  sealed trait GListNode[E]
-  case class Head[E]()         extends GListNode[E]
-  case class Elem[E](value: E) extends GListNode[E]
+  sealed trait GListNode[+E]
+  case class GListHead() extends GListNode[Nothing]
+  case class GListElem[E](value: E) extends GListNode[E]
 
-  type GList[E] = Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]]
+  type GList[E] = Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]]
 
   def empty[E]: GList[E] = Map.empty
 
   given contextDecompose[E]: DottedDecompose[GList[E]] = DottedDecompose.liftDecomposeLattice
 
   implicit def GListAsUIJDLattice[E]: DecomposeLattice[GList[E]] =
-    new DecomposeLattice[Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]]] {
+    new DecomposeLattice[Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]]] {
       override def lteq(
-          left: Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]],
-          right: Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]]
+                         left: Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]],
+                         right: Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]]
       ): Boolean =
         left.keys.forall { k =>
           right.get(k).contains(left(k))
         }
 
       /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
-      override def decompose(state: Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]])
-          : Iterable[Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]]] =
-        state.toList.map((edge: (GListNode[TimedVal[E]], Elem[TimedVal[E]])) => Map(edge))
+      override def decompose(state: Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]])
+          : Iterable[Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]]] =
+        state.toList.map((edge: (GListNode[TimedVal[E]], GListElem[TimedVal[E]])) => Map(edge))
 
       @tailrec
       private def insertEdge(
-          state: Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]],
-          edge: (GListNode[TimedVal[E]], Elem[TimedVal[E]])
-      ): Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]] =
+                              state: Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]],
+                              edge: (GListNode[TimedVal[E]], GListElem[TimedVal[E]])
+      ): Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]] =
         edge match {
-          case (l, r @ Elem(e1)) =>
+          case (l, r @ GListElem(e1)) =>
             state.get(l) match {
-              case None => state + edge
-              case Some(next @ Elem(e2)) =>
+              case None                       => state + edge
+              case Some(next @ GListElem(e2)) =>
                 if (e1.laterThan(e2)) state + edge + (r -> next)
                 else insertEdge(state, next -> r)
             }
@@ -75,9 +75,9 @@ object GListInterface {
 
       /** By assumption: associative, commutative, idempotent. */
       override def merge(
-          left: Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]],
-          right: Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]]
-      ): Map[GListNode[TimedVal[E]], Elem[TimedVal[E]]] =
+                          left: Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]],
+                          right: Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]]
+      ): Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]] =
         (right.keySet -- right.values).foldLeft(left) { (state, startNode) =>
           insertRec(state, right, startNode)
         }
@@ -96,35 +96,35 @@ object GListInterface {
     }
 
     def read(i: Int)(using QueryP): Option[E] =
-      findNth(current, Head[TimedVal[E]](), i + 1).flatMap {
-        case Head()  => None
-        case Elem(e) => Some(e.value)
+      findNth(current, GListHead(), i + 1).flatMap {
+        case GListHead()  => None
+        case GListElem(e) => Some(e.value)
       }
 
     @tailrec
     private def toListRec(state: GList[E], current: GListNode[TimedVal[E]], acc: ListBuffer[E]): ListBuffer[E] =
       state.get(current) match {
-        case None                  => acc
-        case Some(next @ Elem(tv)) => toListRec(state, next, acc.append(tv.value))
+        case None                       => acc
+        case Some(next @ GListElem(tv)) => toListRec(state, next, acc.append(tv.value))
       }
 
     def toList(using QueryP): List[E] =
-      toListRec(current, Head[TimedVal[E]](), ListBuffer.empty[E]).toList
+      toListRec(current, GListHead(), ListBuffer.empty[E]).toList
 
     def toLazyList(using QueryP): LazyList[E] =
-      LazyList.unfold[E, GListNode[TimedVal[E]]](Head[TimedVal[E]]()) { node =>
+      LazyList.unfold[E, GListNode[TimedVal[E]]](GListHead()) { node =>
         current.get(node) match {
-          case None                  => None
-          case Some(next @ Elem(tv)) => Some((tv.value, next))
+          case None                       => None
+          case Some(next @ GListElem(tv)) => Some((tv.value, next))
         }
       }
 
     def size(using QueryP): Int = current.size
 
     def insert(i: Int, e: E)(using MutationIdP): C = {
-      findNth(current, Head[TimedVal[E]](), i) match {
+      findNth(current, GListHead(), i) match {
         case None       => Map.empty
-        case Some(pred) => Map(pred -> Elem(TimedVal(e, replicaID)))
+        case Some(pred) => Map(pred -> GListElem(TimedVal(e, replicaID)))
       }
     }.mutator
 
@@ -132,10 +132,10 @@ object GListInterface {
       if (elems.isEmpty)
         GListInterface.empty[E]
       else
-        findNth(current, Head[TimedVal[E]](), i) match {
+        findNth(current, GListHead(), i) match {
           case None => Map.empty
           case Some(after) =>
-            val order = elems.map(e => Elem(TimedVal(e, replicaID)))
+            val order = elems.map(e => GListElem(TimedVal(e, replicaID)))
             Map((List(after) ++ order.init) zip order: _*)
         }
     }.mutator
@@ -143,18 +143,18 @@ object GListInterface {
     @tailrec
     private def withoutRec(state: GList[E], current: GListNode[TimedVal[E]], elems: Set[E]): GList[E] =
       state.get(current) match {
-        case None => state
-        case Some(next @ Elem(tv)) if elems.contains(tv.value) =>
+        case None                                                   => state
+        case Some(next @ GListElem(tv)) if elems.contains(tv.value) =>
           val edgeRemoved = state.get(next) match {
             case Some(nextnext) => state.removed(current).removed(next) + (current -> nextnext)
             case None           => state.removed(current).removed(next)
           }
 
           withoutRec(edgeRemoved, current, elems)
-        case Some(next) => withoutRec(state, next, elems)
+        case Some(next)                                             => withoutRec(state, next, elems)
       }
 
-    def without(elems: Set[E])(using MutationP): C = withoutRec(current, Head[TimedVal[E]](), elems).mutator
+    def without(elems: Set[E])(using MutationP): C = withoutRec(current, GListHead(), elems).mutator
   }
 
 }

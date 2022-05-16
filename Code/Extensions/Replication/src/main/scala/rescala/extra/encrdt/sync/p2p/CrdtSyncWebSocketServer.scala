@@ -50,14 +50,6 @@ class CrdtSyncWebSocketServer[S](
 
     }
 
-  JettyWebSocketServletContainerInitializer.configure(
-    ctxHandler,
-    (_, container) => {
-      container.addMapping("/", webSocketCreator)
-      container.setIdleTimeout(Duration.ZERO)
-    }
-  )
-
   def uri: URI = {
     if (server.getURI == null) null
     else URI.create(server.getURI.toString.replace("http", "ws"))
@@ -66,6 +58,15 @@ class CrdtSyncWebSocketServer[S](
   def stop(): Unit = server.stop()
 
   def start(): Unit = {
+
+    JettyWebSocketServletContainerInitializer.configure(
+      ctxHandler,
+      (_, container) => {
+        container.addMapping("/", webSocketCreator)
+        container.setIdleTimeout(Duration.ZERO)
+      }
+    )
+
     server.start()
   }
 }

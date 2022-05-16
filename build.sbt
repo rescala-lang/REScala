@@ -113,14 +113,12 @@ lazy val todolist = project.in(file("Code/Examples/Todolist"))
     cfg.base,
     noPublish,
     name := "todolist",
-    libraryDependencies ++= circeAll.value ++ jsoniterScalaAll.value ++ Seq(
-      loci.circe.value,
+    libraryDependencies ++= jsoniterScalaAll.value ++ Seq(
       scalatags.value,
       loci.webrtc.value,
       loci.jsoniterScala.value,
-      catsCollection.value,
     ),
-    scalacOptions += "-P:scalajs:nowarnGlobalExecutionContext",
+    scalacOptions += (if (`is 3`(scalaVersion.value)) "" else "-P:scalajs:nowarnGlobalExecutionContext"),
     scalaJSUseMainModuleInitializer := true,
   )
 
@@ -200,7 +198,6 @@ lazy val replication = crossProject(JVMPlatform, JSPlatform).crossType(CrossType
       loci.communication.value,
       loci.circe.value,
       loci.upickle.value,
-      catsCollection.value,
       munitScalacheck.value,
       "com.google.crypto.tink" % "tink"                   % "1.6.1",
       "org.conscrypt"          % "conscrypt-openjdk-uber" % "2.5.2",
@@ -265,7 +262,7 @@ lazy val microbench = project.in(file("Code/Microbenchmarks"))
     noPublish,
     // (Compile / mainClass) := Some("org.openjdk.jmh.Main"),
     libraryDependencies ++= circeAll.value,
-    libraryDependencies ++= List(catsCollection.value, upickle.value, betterFiles.value),
+    libraryDependencies ++= List(upickle.value, betterFiles.value),
     libraryDependencies ++= jsoniterScalaAll.value,
     jolSettings,
     TaskKey[Unit]("compileJmh") := Seq(pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh / compile).dependOn.value
