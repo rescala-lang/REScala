@@ -14,6 +14,7 @@ import macros.CompileTree.*
 import macros.CompileStatement.*
 import macros.CompileDefinition.*
 import macros.CompileTerm.*
+import macros.CompileType.*
 
 import scala.annotation.tailrec
 import scala.quoted.*
@@ -49,5 +50,11 @@ object ScalaToC {
     import quotes.reflect.*
 
     compileTermToCExpr(e.asTerm, new TranslationContext()).toExpr
+  }
+  
+  def compileType[T](using Quotes, Type[T]): Expr[CType] = {
+    import quotes.reflect.*
+    
+    compileTypeRepr(TypeRepr.of[T], new TranslationContext()).toExpr
   }
 }

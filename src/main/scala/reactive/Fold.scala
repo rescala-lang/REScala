@@ -2,12 +2,15 @@ package reactive
 
 import clangast.decl.CFunctionDecl
 import clangast.expr.CExpr
+import clangast.types.CType
 import macros.{ScalaToC, TranslationContext}
 
 import scala.quoted.*
 
-case class Fold[V](init: CExpr, lines: List[FLine[_, V]]) extends Event[V] {
+case class Fold[V](init: CExpr, cType: CType, lines: List[FLine[_, V]]) extends Event[V] {
   override def inputs: List[ReSource] = lines.map(_.input)
+
+  override val baseName: String = "fold"
 }
 
 object Fold {
@@ -15,12 +18,13 @@ object Fold {
     import quotes.reflect.*
 
     val initCAST = ScalaToC.compileExpr(init)
+    val tpeCAST = ScalaToC.compileType[R]
     val fCAST = ScalaToC.compileAnonFun(f, funName)
 
-    '{ Fold($initCAST, List(FLine($input, $fCAST))) }
+    '{ Fold($initCAST, $tpeCAST, List(FLine($input, $fCAST))) }
   }
 }
 
 extension [V] (inline input: Event[V])
-  inline def fold[R](inline init: R)(inline name: String = "fold")(inline f: (R, V) => R): Fold[R] =
-    ${ Fold.foldCode('input, 'init, 'f, 'name) }
+  inline def fold[R](inline init: R)(inline funName: String = "fold")(inline f: (R, V) => R): Fold[R] =
+    ${ Fold.foldCode('input, 'init, 'f, 'funName) }

@@ -4,5 +4,8 @@ ThisBuild / scalaVersion := "3.1.2"
 
 lazy val root = (project in file("."))
   .settings(
-    name := "ReactiFiMacros"
+    name := "ReactiFiMacros",
+    scalacOptions ++= Seq(
+      "-Yretain-trees"
+    )
   )

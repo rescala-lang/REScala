@@ -7,6 +7,8 @@ import scala.quoted.*
 
 case class Filter[V](input: Event[V], f: CFunctionDecl) extends Event[V] {
   override def inputs: List[ReSource] = List(input)
+
+  override val baseName: String = "filter"
 }
 
 object Filter {
@@ -19,5 +21,5 @@ object Filter {
   }
 }
 
-extension [V] (inline input: Event[V]) inline def filter(inline name: String = "filter")(inline f: V => Boolean): Filter[V] =
-  ${ Filter.filterCode('input, 'f, 'name) }
+extension [V] (inline input: Event[V]) inline def filter(inline funName: String = "filter")(inline f: V => Boolean): Filter[V] =
+  ${ Filter.filterCode('input, 'f, 'funName) }
