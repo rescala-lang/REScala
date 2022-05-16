@@ -37,7 +37,7 @@ object CompileDefinition {
 
     val decl = CFunctionDecl(name, compiledParams, compileTypeRepr(returnTpt.tpe, ctx), body)
 
-    ctx.nameToDecl.put(name, decl)
+    ctx.nameToFunctionDecl.put(name, decl)
 
     decl
   }

@@ -9,6 +9,8 @@ class TranslationContext {
   
   val nameToRecordDecl: mutable.Map[String, CRecordDecl] = mutable.Map()
   
+  val nameToFunctionDecl: mutable.Map[String, CFunctionDecl] = mutable.Map()
+  
   val nameToRecordCreator: mutable.Map[String, CFunctionDecl] = mutable.Map()
   
   val nameToRecordEquals: mutable.Map[String, CFunctionDecl] = mutable.Map()
