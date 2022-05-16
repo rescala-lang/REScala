@@ -38,10 +38,9 @@ object Bottom {
 
   class ProductBottom[T <: Product](pm: Mirror.ProductOf[T], bottoms: Tuple) extends Bottom[T] {
     override def empty: T =
+      type Unbottom[A] = A match { case Bottom[b] => b }
       pm.fromProduct(
-        bottoms.map[[α] =>> Any](
-          [t] => (l: t) => l.asInstanceOf[Bottom[Any]].empty
-        )
+        bottoms.map([β] => (b: β) => b match { case b: Bottom[_] => b.empty }: Unbottom[β])
       )
   }
 
