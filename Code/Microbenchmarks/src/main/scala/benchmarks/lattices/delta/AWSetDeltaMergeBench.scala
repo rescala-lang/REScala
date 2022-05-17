@@ -1,8 +1,9 @@
 package benchmarks.lattices.delta
 
-import kofre.time.{Dots, Dot}
+import kofre.base.Lattice
 import kofre.datatypes.AddWinsSet
-import kofre.dotted.{DottedDecompose, DottedLattice, Dotted}
+import kofre.dotted.{Dotted, DottedDecompose}
+import kofre.time.{Dot, Dots}
 import org.openjdk.jmh.annotations
 import org.openjdk.jmh.annotations._
 
@@ -34,15 +35,15 @@ class AWSetDeltaMergeBench {
     val baseState = Dotted(AddWinsSet.empty[Long])
 
     val deltaState = baseState.named("").addAll(0L to size).anon
-    fullState = DottedLattice[AddWinsSet[Long]].merge(baseState, deltaState)
+    fullState = Lattice[Dotted[AddWinsSet[Long]]].merge(baseState, deltaState)
 
     plusOneDeltaState = fullState.named("").add(size).anon
-    plusOneState = DottedLattice[AddWinsSet[Long]].merge(fullState, plusOneDeltaState)
+    plusOneState = Lattice[Dotted[AddWinsSet[Long]]].merge(fullState, plusOneDeltaState)
   }
 
   @Benchmark
   def fullMerge: Dotted[AddWinsSet[Long]] = {
-    DottedLattice[AddWinsSet[Long]].merge(fullState, plusOneState)
+    Lattice[Dotted[AddWinsSet[Long]]].merge(fullState, plusOneState)
   }
 
   @Benchmark

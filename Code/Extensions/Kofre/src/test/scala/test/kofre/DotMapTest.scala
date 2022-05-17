@@ -7,6 +7,7 @@ import kofre.dotted.{DottedDecompose, DottedLattice, DotFun, DotMap, DotSet, Dot
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 import test.kofre.DataGenerator.*
+import kofre.base.Lattice
 
 import scala.annotation.tailrec
 
@@ -97,10 +98,7 @@ class DotMapTest extends munit.ScalaCheckSuite {
         val ccB = dmB.dots union deletedB
 
         assert(
-          DottedLattice[TestedMap].lteq(
-            Dotted(dmA, (ccA)),
-            Dotted(dmA, (ccA))
-          ),
+          Dotted(dmA, (ccA)) <= Dotted(dmA, (ccA)),
           s"DotMap.leq should be reflexive, but returns false when applied to ($dmA, $ccA, $dmA, $ccA)"
         )
 
@@ -111,11 +109,11 @@ class DotMapTest extends munit.ScalaCheckSuite {
           )
 
         assert(
-          DottedLattice[TestedMap].lteq(Dotted(dmA, (ccA)), Dotted(dmMerged, ccMerged)),
+          Dotted(dmA, (ccA)) <= Dotted(dmMerged, ccMerged),
           s"The result of DotMap.merge should be larger than its lhs, but DotMap.leq returns false when applied to ($dmA, $ccA, $dmMerged, $ccMerged)"
         )
         assert(
-          DottedLattice[TestedMap].lteq(Dotted(dmB, (ccB)), Dotted(dmMerged, ccMerged)),
+          Dotted(dmB, (ccB)) <= Dotted(dmMerged, ccMerged),
           s"The result of DotMap.merge should be larger than its rhs, but DotMap.leq returns false when applied to ($dmB, $ccB, $dmMerged, $ccMerged)"
         )
     }
