@@ -40,7 +40,7 @@ object Bottom {
     override def empty: T =
       type Unbottom[A] = A match { case Bottom[b] => b }
       pm.fromProduct(
-        bottoms.map([β] => (b: β) => b match { case b: Bottom[_] => b.empty }: Unbottom[β])
+        bottoms.map([β] => (b: β) => (b match { case b: Bottom[_] => b.empty }): Unbottom[β])
       )
   }
 
