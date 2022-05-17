@@ -79,21 +79,10 @@ object JsoniterCodecs {
     override def nullValue: TimedVal[A] = null
   }
 
-  implicit def elemCodec[E2](implicit e2c: JsonValueCodec[E2]): JsonValueCodec[GListElem[E2]] = new JsonValueCodec[GListElem[E2]] {
-    override def decodeValue(in: JsonReader, default: GListElem[E2]): GListElem[E2] = GListElem(e2c.decodeValue(in, default.value))
-    override def encodeValue(x: GListElem[E2], out: JsonWriter): Unit = e2c.encodeValue(x.value, out)
-    override def nullValue: GListElem[E2] = null
-  }
-
-  @nowarn("msg=never used")
-  implicit def glistNodeCodec[E2: JsonValueCodec]: JsonValueCodec[GListNode[E2]] = {
-    JsonCodecMaker.make
-  }
-
 
   @nowarn("msg=never used")
   implicit def GListStateCodec[E: JsonValueCodec]: JsonValueCodec[GList[E]] = {
-    mapArrayCodec[GListNode[TimedVal[E]], GListElem[TimedVal[E]]](glistNodeCodec(timedValCodec), JsonCodecMaker.make)
+    mapArrayCodec[GListNode[TimedVal[E]], GListElem[TimedVal[E]]](JsonCodecMaker.make, JsonCodecMaker.make)
   }
 
   /** GSet */
