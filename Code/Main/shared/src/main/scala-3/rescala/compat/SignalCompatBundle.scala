@@ -15,8 +15,8 @@ trait SignalCompatBundle extends ReadableMacroBundle {
       * @group operator
       */
     @cutOutOfUserComputation
-    final def map[B](expression: T => B)(implicit ticket: CreationTicket): Signal[B] =
-      Signals.static(this)(st => expression(st.collectStatic(this).get))
+    final inline def map[B](inline expression: T => B)(using ct: CreationTicket): Signal[B] =
+      Signal.dynamic(expression(this.value))
 
   }
 
