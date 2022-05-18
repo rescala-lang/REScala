@@ -60,32 +60,7 @@ object CompileApply {
         )
       case Apply(Select(qualifier, name), List(_)) if canCompileToCBinaryOperator(qualifier, name) =>
         compileApplyToCBinaryOperator(apply, ctx)
-      case Apply(i: Ident, args) if isDefDefIdent(i) =>
-        val defDef = i.symbol.tree.asInstanceOf[DefDef]
-        val fDecl = getFunctionDecl(defDef, ctx)
-        CCallExpr(CDeclRefExpr(fDecl), args.map(compileTermToCExpr(_, ctx)))
       case _ => throw new MatchError(apply.show(using Printer.TreeStructure))
-    }
-  }
-
-  def isDefDefIdent(using Quotes)(ident: quotes.reflect.Ident): Boolean = {
-    import quotes.reflect.*
-
-    ident.symbol.tree match {
-      case _: DefDef => true
-      case _ => false
-    }
-  }
-
-  def getFunctionDecl(using Quotes)(defDef: quotes.reflect.DefDef, ctx: TranslationContext): CFunctionDecl = {
-    import quotes.reflect.*
-
-    ctx.nameToFunctionDecl.get(defDef.name) match {
-      case Some(decl) => decl
-      case None =>
-        val decl = compileDefDef(defDef, ctx)
-        ctx.nameToFunctionDecl.put(defDef.name, decl)
-        decl
     }
   }
 
