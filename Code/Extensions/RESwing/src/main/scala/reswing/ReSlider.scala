@@ -23,7 +23,7 @@ class ReSlider(
     maximumSize: ReSwingValue[Dimension] = (),
     preferredSize: ReSwingValue[Dimension] = ()
 ) extends ReComponent(background, foreground, font, enabled, minimumSize, maximumSize, preferredSize) {
-  override protected lazy val peer = new Slider with ComponentMixin
+  override protected lazy val peer: Slider with ComponentMixin = new Slider with ComponentMixin
 
   min.using({ () => peer.min }, peer.min_= _, "minimum")
   max.using({ () => peer.max }, peer.max_= _, "maximum")

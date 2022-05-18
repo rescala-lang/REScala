@@ -26,7 +26,7 @@ object Main extends App {
   val store   = new FeedStore(parser.channelParsed, parser.itemParsed)
   val app = new GUI(
     store,
-    (store.itemAdded map { x: RSSItem => // #EF
+    (store.itemAdded map { (x: RSSItem) => // #EF
       (x.srcChannel map (_.title) getOrElse "<unknown>") + ": " + x.title
     }) latest "",    // #IF
     Signal.dynamic { // #SIG

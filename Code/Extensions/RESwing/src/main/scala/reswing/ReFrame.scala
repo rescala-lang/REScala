@@ -13,7 +13,7 @@ class ReFrame(
     preferredSize: ReSwingValue[Dimension] = ()
 ) extends ReWindow(contents, size, location, bounds, minimumSize, maximumSize, preferredSize)
     with ReRichWindow {
-  override protected lazy val peer = new Frame
+  override protected lazy val peer: Frame = new Frame
 }
 
 object ReFrame {

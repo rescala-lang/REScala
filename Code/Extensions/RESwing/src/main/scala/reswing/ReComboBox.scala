@@ -1,6 +1,6 @@
 package reswing
 
-import scala.swing.{Color, ComboBox, Dimension, Font}
+import scala.swing.{Color, ComboBox, Dimension, Font, Publisher}
 import scala.swing.event.{ListChanged, ListElementsAdded, ListElementsRemoved, SelectionChanged}
 
 class ReComboBox[A](
@@ -15,7 +15,7 @@ class ReComboBox[A](
     maximumSize: ReSwingValue[Dimension] = (),
     preferredSize: ReSwingValue[Dimension] = ()
 ) extends ReComponent(background, foreground, font, enabled, minimumSize, maximumSize, preferredSize) {
-  override protected lazy val peer = new ComboBox[A](Seq.empty[A]) with ComponentMixin
+  final override protected lazy val peer: ComboBox[A] with ComponentMixin = new ComboBox[A](Seq.empty[A]) with ComponentMixin
 
   protected val javaPeer = peer.peer.asInstanceOf[javax.swing.JComboBox[A]]
 
@@ -67,7 +67,7 @@ class ReComboBox[A](
       val index: ReSwingValue[Int],
       val item: ReSwingValue[Option[A]]
   ) {
-    protected[ReComboBox] val peer = ReComboBox.this.peer.selection
+    protected[ReComboBox] val peer: ReComboBox.this.peer.selection.type = ReComboBox.this.peer.selection
 
     index.using({ () => peer.index }, peer.index = _, (peer, classOf[SelectionChanged]))
     item.using(
@@ -80,7 +80,7 @@ class ReComboBox[A](
   }
 
   object ReSelection {
-    implicit def toSelection(selection: ReSelection) = selection.peer
+    implicit def toSelection(selection: ReSelection): selection.peer.type = selection.peer
   }
 
   object selection extends ReSelection(`selection.index`, `selection.item`)

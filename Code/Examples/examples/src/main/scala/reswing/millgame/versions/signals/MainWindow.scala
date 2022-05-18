@@ -37,7 +37,7 @@ object MainWindow extends SimpleSwingApplication {
       contents = ui
     }
 
-  lazy val ui = new BoxPanel(Orientation.Vertical) {
+  object ui extends BoxPanel(Orientation.Vertical) {
     val statusBar = new ReLabel(
       text = Signal { game.stateVar().text }, // #SIG
       preferredSize = ReSwingValue(new Dimension(Integer.MAX_VALUE, 64)),
@@ -96,7 +96,7 @@ class MillDrawer(val game: MillGame) extends ReComponent(preferredSize = new Dim
   }
 
   val lines = Signal { // #SIG
-    MillBoard.lines map { indices =>
+    MillBoardRenamed.lines map { indices =>
       Line(coordinates()(indices.head.index), coordinates()(indices.last.index))
     }
   }
@@ -138,7 +138,7 @@ class MillDrawer(val game: MillGame) extends ReComponent(preferredSize = new Dim
   }
 
   val indexClicked =
-    (mouse.clicks.released map { e: MouseReleased => // #EF
+    (mouse.clicks.released map { (e: MouseReleased) => // #EF
       val index = coordinates.value.indexWhere {
         p => (p distance ((e.point.x, e.point.y))) < ClickArea
       }

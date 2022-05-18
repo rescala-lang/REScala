@@ -44,19 +44,19 @@ import scala.swing.event.Event
 private[reswing] trait ReSwingValueConnection {
   protected def peer: UIElement
 
-  protected implicit def toReSwingValueConnector[T](signal: ReSwingValue[T]) =
+  protected implicit def toReSwingValueConnector[T](signal: ReSwingValue[T]): ReSwingValueConnector[T] =
     new ReSwingValueConnector(signal)
 
-  protected implicit def toChangingProperty(name: String) =
+  protected implicit def toChangingProperty(name: String): ChangingProperty =
     Left(name): ChangingProperty
 
-  protected implicit def toChangingProperty(reaction: (Publisher, Class[_])) =
+  protected implicit def toChangingProperty(reaction: (Publisher, Class[_])): ChangingProperty =
     Right(reaction): ChangingProperty
 
-  protected implicit def toChangingProperty(reaction: Class[_]) =
+  protected implicit def toChangingProperty(reaction: Class[_]): ChangingProperty =
     Right((peer, reaction)): ChangingProperty
 
-  protected def ReSwingValue[T] = (): ReSwingValue[T]
+  protected def ReSwingValue[T]: ReSwingValue[T] = (): ReSwingValue[T]
 
   /** Represents a `Swing` property that is used to react on value changes
     * to update the reactive value accordingly.
@@ -158,12 +158,12 @@ private[reswing] trait ReSwingValueConnection {
     }
   }
 
-  private val delayedInitValues  = ListBuffer.empty[() => Unit]
-  private val changingReactions  = Map.empty[Class[_], ListBuffer[() => Unit]]
+  private val delayedInitValues: ListBuffer[() => Unit] = ListBuffer.empty[() => Unit]
+  private val changingReactions                         = Map.empty[Class[_], ListBuffer[() => Unit]]
   private val changingProperties = Map.empty[String, ListBuffer[() => Unit]]
   private val enforcedProperties = Map.empty[String, () => Unit]
 
-  private val reactor = new Reactor {
+  private val reactor: Reactor = new Reactor {
     reactions += {
       case e: Event =>
         for (signals <- changingReactions get e.getClass; signal <- signals)
@@ -184,7 +184,7 @@ private[reswing] trait ReSwingValueConnection {
   })
 
   peer.peer.addHierarchyListener(new HierarchyListener {
-    def hierarchyChanged(e: HierarchyEvent) =
+    def hierarchyChanged(e: HierarchyEvent): Unit =
       if ((e.getChangeFlags & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0) {
         initReSwingValueConnection()
         peer.peer.removeHierarchyListener(this)

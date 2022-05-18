@@ -13,9 +13,10 @@ import scala.swing.Component
 import scala.swing.event.Key
 
 class TextArea extends ReComponent {
-  override protected lazy val peer = new Component with ComponentMixin {
-    override lazy val peer: JScrollableComponent = new JScrollableComponent with SuperMixin
+  object localPeer extends Component with ComponentMixin {
+    override lazy val peer: JScrollableComponent with SuperMixin = new JScrollableComponent with SuperMixin
   }
+  override protected lazy val peer: localPeer.type = localPeer
 
   protected def stringWidth = peer.peer.metrics.stringWidth _
   protected def lineHeight  = peer.peer.unitHeight
@@ -26,7 +27,7 @@ class TextArea extends ReComponent {
   protected lazy val buffer = new GapBuffer
 
   def this(text: String) = {
-    this
+    this()
     buffer.insert(text)
   }
 

@@ -47,7 +47,7 @@ class Fisheye {
   val Max_Y     = 200
   val initPoint = Signal { 30 }
 
-  implicit val mouse = new Mouse
+  implicit val mouse: Mouse = new Mouse
 
   var boxes: List[Box] = Nil
   def addBox(color: java.awt.Color): Unit = {

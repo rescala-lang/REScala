@@ -47,7 +47,7 @@ class ReCheckBox(
       maximumSize,
       preferredSize
     ) {
-  override protected lazy val peer = new CheckBox with ComponentMixin
+  override protected lazy val peer: CheckBox with ComponentMixin = new CheckBox with ComponentMixin
 }
 
 object ReCheckBox {

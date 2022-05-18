@@ -39,7 +39,7 @@ object ReShapes extends SimpleSwingApplication {
       contents = ui
     }
 
-  val ui = new BorderPanel {
+  object ui extends BorderPanel {
     val tabbedPane          = new TabbedPane
     val strokeInputPanel    = new StrokeInputPanel
     val shapeSelectionPanel = new ShapeSelectionPanel
@@ -56,7 +56,7 @@ object ReShapes extends SimpleSwingApplication {
     }) = Position.East
   }
 
-  val menu = new MenuBar {
+  object menu extends MenuBar {
     val undo = new ReMenuItem(
       "Undo",
       enabled = Signal.dynamic { // #SIG //#IS( // )

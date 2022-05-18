@@ -11,7 +11,7 @@ sealed abstract class ReSwingValue[T] {
   protected val event: Lazy[Evt[T]] = Lazy { Evt[T]() }
   protected var latestValue         = null.asInstanceOf[T]
 
-  private var init = null: ReSwingValue[T] => Unit
+  private var init = null: (ReSwingValue[T] => Unit)
 
   final protected def toSignal: Signal[T] = {
     initPerform()

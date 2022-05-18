@@ -46,8 +46,8 @@ class EventVersion {
   val hasTicked = Evt[Unit]() // Can be afterExec
 
   // handle bouncing
-  val xBounce = x.changed && (x => x < 0 || x + Size > Max_X)
-  val yBounce = y.changed && (y => y < 0 || y + Size > Max_Y)
+  val xBounce = x.changed.filter (x => x < 0 || x + Size > Max_X)
+  val yBounce = y.changed.filter (y => y < 0 || y + Size > Max_Y)
   xBounce += { _ => speed.x = -speed.x }
   yBounce += { _ => speed.y = -speed.y }
 

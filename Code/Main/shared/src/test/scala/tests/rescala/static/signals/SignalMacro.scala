@@ -18,6 +18,20 @@ class SignalMacro extends RETests {
 
     }
 
+    test("regression test for macro with more than 4 signals") {
+      val source = Signal(1)
+
+      Signal {
+        (
+          source.value,
+          source.value,
+          source.value,
+          source.value,
+          source.value
+        )
+      }
+    }
+
     test("nested mapping over event") {
       var test = 0
 

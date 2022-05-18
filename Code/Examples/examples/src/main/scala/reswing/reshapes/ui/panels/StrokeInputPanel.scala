@@ -41,8 +41,8 @@ class StrokeInputPanel extends FlowPanel {
 class ColorWindow extends Frame {
   title = "Choose color"
 
-  private val colorChooser = new Component {
-    override lazy val peer = new JColorChooser
+  private object colorChooser extends Component {
+    override lazy val peer: JColorChooser = new JColorChooser
   }
 
   contents = new BoxPanel(Orientation.Vertical) {

@@ -27,7 +27,7 @@ class ReAbstractButton(
     maximumSize: ReSwingValue[Dimension] = (),
     preferredSize: ReSwingValue[Dimension] = ()
 ) extends ReComponent(background, foreground, font, enabled, minimumSize, maximumSize, preferredSize) {
-  override protected lazy val peer = new AbstractButton with ComponentMixin
+  override protected lazy val peer: AbstractButton with ComponentMixin = new AbstractButton with ComponentMixin
 
   text.using({ () => peer.text }, peer.text_= _, "text")
   selected.using({ () => peer.selected }, peer.selected_= _, classOf[ButtonClicked])

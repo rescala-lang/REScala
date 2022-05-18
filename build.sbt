@@ -1,14 +1,14 @@
 import java.nio.file.Files
-
 import Dependencies._
 import Settings._
+import sbt.Def
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 ThisBuild / incOptions        := (ThisBuild / incOptions).value.withLogRecompileOnMacro(false)
 noPublish
 
 lazy val cfg = new {
-  val base: Def.SettingsDefinition = commonCrossBuildVersions +: (strict ++ scalaVersion_213)
+  val base      : Def.SettingsDefinition = commonCrossBuildVersions +: (scalaVersion_213)
 }
 
 lazy val rescalaProject = project.in(file(".")).settings(cfg.base, noPublish).aggregate(
@@ -20,7 +20,6 @@ lazy val rescalaProject = project.in(file(".")).settings(cfg.base, noPublish).ag
   replicationJVM,
   rescalaJS,
   rescalaJVM,
-  rescalaNative,
   rescalafx,
   reswing,
   todolist,
@@ -33,7 +32,6 @@ lazy val rescalaProject = project.in(file(".")).settings(cfg.base, noPublish).ag
 lazy val rescalaAll = project.in(file("Code")).settings(cfg.base, noPublish).aggregate(
   rescalaJS,
   rescalaJVM,
-  rescalaNative,
 )
 
 val CcsO = Compile / compile / scalacOptions
@@ -48,8 +46,6 @@ lazy val rescala = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file
     Compile / doc / scalacOptions += "-groups",
     // dotty seems to be currently unable to compile the docs … ?
     Compile / doc := (if (`is 3`(scalaVersion.value)) file("target/dummy/doc") else (Compile / doc).value),
-    // fullmv does not survive this check, but I want to keep it in the shared settings
-    scalacOptions := scalacOptions.value.filter(_ != "-Ysafe-init"),
     CcsO          := (if (`is 3`(scalaVersion.value)) CcsO.value.filter(_ != "-Xfatal-warnings") else CcsO.value),
     publishSonatype,
     libraryDependencies ++= Seq(
@@ -91,7 +87,7 @@ lazy val examples = project.in(file("Code/Examples/examples"))
     noPublish,
     fork := true,
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-xml"   % "1.3.0",
+      ("org.scala-lang.modules" %% "scala-xml"   % "1.3.0").cross(CrossVersion.for3Use2_13),
       "org.scala-lang.modules" %% "scala-swing" % "3.0.0"
     )
   )

@@ -32,7 +32,7 @@ class CatchUp {
   val SizeY     = 32
 
   val tick = Evt[Unit]()
-  val time = tick.iterate(0.0) { acc: Double => (acc + 0.1) % (math.Pi * 2) }
+  val time = tick.iterate(0.0) { (acc: Double) => (acc + 0.1) % (math.Pi * 2) }
 
   // Mouse position
   val mouse  = new Mouse
@@ -47,7 +47,10 @@ class CatchUp {
 
   // Old mouse position, some time ago
   val mouseDelayed: Signal[Point] = Signal {
-    mouse.position.changed.last(20).value.headOption.getOrElse(mouse.position.value)
+    mouse.position.changed.last(20).value.headOption match {
+      case None => mouse.position.value
+      case Some(v) => v
+    }
   }
   val delayedX = Signal { mouseDelayed().getX.toInt }
   val delayedY = Signal { mouseDelayed().getY.toInt }
@@ -62,8 +65,8 @@ class CatchUp {
   val scoreString = Signal { "You caught up " + numberOfHits() + " times." }
 
   // GUI redrawing code
-  val stateChanged = mouse.position.changed || [Any] tick
-  stateChanged += { _ => frame.repaint() }
+  val stateChanged = mouse.position.changed.|| [Any](tick)
+  stateChanged += { (_) => frame.repaint() }
 
   // GUI
   val frame: MainFrame = new MainFrame {

@@ -15,7 +15,7 @@ trait SignalCompatBundle extends ReadableMacroBundle {
       * @group operator
       */
     @cutOutOfUserComputation
-    final inline def map[B](inline expression: T => B)(using ct: CreationTicket): Signal[B] =
+    final inline def map[B](inline expression: T => B)(implicit ct: CreationTicket): Signal[B] =
       Signal.dynamic(expression(this.value))
 
   }

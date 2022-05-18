@@ -28,7 +28,17 @@ object ORacketMultiBall extends Main {
     val width  = Var(10)
 
     val posX = fieldWidth.map(w => (if (isRight) 1 else -1) * (w / 2 - 25))
-    val posY = Signal { math.max(math.min(inputY(), (fieldHeight() - height()) / 2), -(fieldHeight() - height()) / 2) }
+    val posY = {
+      Signal {
+        math.max(
+          math.min(
+            inputY.value,
+            (fieldHeight.value - height.value) / 2
+          ),
+          -(fieldHeight.value - height.value) / 2
+        )
+      }
+    }
 
     def collisionWith(collider: Shape): Event[Unit] = {
       val collisionBoxHeight = Signal { height() + collider.hitboxHeight() }

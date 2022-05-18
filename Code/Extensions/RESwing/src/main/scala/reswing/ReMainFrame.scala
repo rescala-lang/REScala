@@ -12,7 +12,7 @@ class ReMainFrame(
     maximumSize: ReSwingValue[Dimension] = (),
     preferredSize: ReSwingValue[Dimension] = ()
 ) extends ReFrame(contents, title, size, location, bounds, minimumSize, maximumSize, preferredSize) {
-  override protected lazy val peer = new MainFrame
+  override protected lazy val peer: MainFrame = new MainFrame
 }
 
 object ReMainFrame {

@@ -20,7 +20,7 @@ class ReLabel(
     maximumSize: ReSwingValue[Dimension] = (),
     preferredSize: ReSwingValue[Dimension] = ()
 ) extends ReComponent(background, foreground, font, enabled, minimumSize, maximumSize, preferredSize) {
-  override protected lazy val peer = new Label with ComponentMixin
+  override protected lazy val peer: Label with ComponentMixin = new Label with ComponentMixin
 
   text.using({ () => peer.text }, peer.text_= _, "text")
 

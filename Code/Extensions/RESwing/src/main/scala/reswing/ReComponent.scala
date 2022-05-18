@@ -13,7 +13,7 @@ abstract class ReComponent(
     preferredSize: ReSwingValue[Dimension] = ()
 ) extends ReUIElement(minimumSize, maximumSize, preferredSize) {
 
-  override protected lazy val peer = new Component with ComponentMixin
+  override protected lazy val peer: CompItem with ComponentMixin = new Component with ComponentMixin
 
   val hasFocus = ReSwingValue.using({ () => peer.hasFocus }, classOf[FocusGained], classOf[FocusLost])
 

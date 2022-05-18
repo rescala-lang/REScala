@@ -31,7 +31,7 @@ class ReDynamicComboBox[A](
     val selectIndices: ReSwingEvent[Seq[Int]] = ()
 ) extends ReComponent {
 
-  override protected lazy val peer = new DynamicComboBox[A] with ComponentMixin
+  override protected lazy val peer: DynamicComboBox[A] with ComponentMixin = new DynamicComboBox[A] with ComponentMixin
 
   options.using(() => peer.getChoices, peer.setChoices _, classOf[Nothing])
   selection.using(() => peer.selection.index, peer.selection.index_= _, (peer.selection, classOf[SelectionChanged]))

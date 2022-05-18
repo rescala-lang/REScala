@@ -35,10 +35,10 @@ class UrlChecker {
   }
 
   private lazy val checkSuccessful: Event[CheckResult] = // #EVT
-    check.after && { t: AfterCheck => t._2.isRight } map { t: AfterCheck => t._2 } // #EF //#EF
+    check.after && { (t: AfterCheck) => t._2.isRight } map { (t: AfterCheck) => t._2 } // #EF //#EF
 
   private lazy val checkFailed: Event[CheckResult] = // #EVT
-    check.after && { t: AfterCheck => t._2.isLeft } map { t: AfterCheck => t._2 } // #EF //#EF
+    check.after && { (t: AfterCheck) => t._2.isLeft } map { (t: AfterCheck) => t._2 } // #EF //#EF
 
   private lazy val checkedOption: Event[Option[URL]] = // #EVT
     (checkSuccessful || checkFailed) map {
@@ -50,7 +50,7 @@ class UrlChecker {
 
   /** Fired for every valid url checked */
   lazy val checkedURL: Event[URL] = checkedOption && // #EVT //#EF
-    { t: Option[URL] => t.isDefined } map { t: Option[URL] => t.get } // #EF
+    { (t: Option[URL]) => t.isDefined } map { t: Option[URL] => t.get } // #EF
 
   /** Only fires if the checked url is valid */
   lazy val urlIsValid: Event[Unit] = checkSuccessful.dropParam // #EVT //#EF

@@ -26,11 +26,11 @@ class XmlParser {
 
   lazy val itemParsed: Event[RSSItem] = // #EVT
     ((parseItem.after map discardArgument[Option[RSSItem]]) &&                         // #EF //#EF
-    { parseSuccessfull(_) } map { o: Option[RSSItem] => o.get }) || explicitItemParsed // #EF
+    { parseSuccessfull(_) } map { (o: Option[RSSItem]) => o.get }) || explicitItemParsed // #EF
 
   lazy val channelParsed: Event[RSSChannel] = // #EVT
     (parseChannel.after map discardArgument[Option[RSSChannel]]) && // #EF //#EF
-    { parseSuccessfull(_) } map { o: Option[RSSChannel] => o.get }  // #EF
+    { parseSuccessfull(_) } map { (o: Option[RSSChannel]) => o.get }  // #EF
 
   lazy val entityParsed = channelParsed.dropParam || itemParsed.dropParam // #EVT //#EF //#EF
 

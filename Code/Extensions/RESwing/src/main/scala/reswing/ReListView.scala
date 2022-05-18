@@ -23,7 +23,7 @@ class ReListView[A](
     maximumSize: ReSwingValue[Dimension] = (),
     preferredSize: ReSwingValue[Dimension] = ()
 ) extends ReComponent(background, foreground, font, enabled, minimumSize, maximumSize, preferredSize) {
-  override protected lazy val peer = new ListView[A] with ComponentMixin
+  final override protected lazy val peer: ListView[A] with ComponentMixin = new ListView[A] with ComponentMixin
 
   protected val javaPeer = peer.peer.asInstanceOf[javax.swing.JList[A]]
 
@@ -89,7 +89,7 @@ class ReListView[A](
       val intervalMode: ReSwingValue[IntervalMode.Value],
       val listDataSync: ReSwingValue[Boolean]
   ) {
-    protected[ReListView] val peer = ReListView.this.peer.selection
+    protected[ReListView] val peer: ReListView.this.peer.selection.type = ReListView.this.peer.selection
 
     private[ReListView] var listDataSyncVar = false
 
@@ -122,7 +122,7 @@ class ReListView[A](
   }
 
   object ReSelection {
-    implicit def toSelection(selection: ReSelection) = selection.peer
+    implicit def toSelection(selection: ReSelection): selection.peer.type = selection.peer
   }
 
   object selection

@@ -49,7 +49,7 @@ class ReTextArea(
       maximumSize,
       preferredSize
     ) {
-  override protected lazy val peer =
+  override protected lazy val peer: TextArea with ComponentMixin =
     new TextArea(null, rows, columns) with ComponentMixin
 
   tabSize.using({ () => peer.tabSize }, peer.tabSize_= _, "tabSize")

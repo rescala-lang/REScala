@@ -19,6 +19,13 @@ trait EventCompatBundle extends ReadableMacroBundle {
     final inline def filter(inline expression: T => Boolean)(implicit ticket: CreationTicket): Event[T] =
       Event { this.value.filter(expression) }
 
+    /** Filters the event, only propagating the value when the filter is true.
+      * @group operator
+      */
+    @cutOutOfUserComputation
+    final infix inline def && (inline expression: T => Boolean)(implicit ticket: CreationTicket): Event[T] =
+      Event { this.value.filter(expression) }
+
     /** Collects the results from a partial function
       * @group operator
       */

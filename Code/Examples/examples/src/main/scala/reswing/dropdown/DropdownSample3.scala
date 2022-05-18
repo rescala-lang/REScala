@@ -35,7 +35,7 @@ object DropdownSample3 extends SimpleSwingApplication {
   val outputString        = Signal { currentSelectedItem().getOrElse("Nothing") }
   val outputField         = new ReTextField(text = outputString)
 
-  lazy val frame = new MainFrame {
+  object frame extends MainFrame {
     title = "Dropdown example 3"
     val fields = new BoxPanel(Orientation.Vertical) {
 

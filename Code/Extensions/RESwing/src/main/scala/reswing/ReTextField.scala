@@ -46,7 +46,7 @@ class ReTextField(
       maximumSize,
       preferredSize
     ) {
-  override protected lazy val peer =
+  override protected lazy val peer: TextField with ComponentMixin =
     new TextField(null, columns) with ComponentMixin
 
   horizontalAlignment.using({ () => peer.horizontalAlignment }, peer.horizontalAlignment = _, "horizontalAlignment")

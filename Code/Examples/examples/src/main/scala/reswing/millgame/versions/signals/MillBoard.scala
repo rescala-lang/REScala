@@ -14,7 +14,7 @@ class MillBoard {
 
   /* slots by the 16 lines of the game */
   val lines = Signal { // #SIG
-    MillBoard.lines map { _ map { slot => stonesVar()(slot.index) } }
+    MillBoardRenamed.lines map {_ map { slot => stonesVar()(slot.index) } }
   }
 
   /* lines mapped to owners */
@@ -60,7 +60,7 @@ class MillBoard {
   }
   val canMove: Signal[(SlotIndex, SlotIndex) => Boolean] = Signal { // #SIG
     val jumpAllowed = canJump()
-    (from, to) => jumpAllowed(from, to) && MillBoard.isConnected(from, to)
+    (from, to) => jumpAllowed(from, to) && MillBoardRenamed.isConnected(from, to)
   }
 
   def place(slot: SlotIndex, color: Slot) = this(slot) = color
@@ -82,14 +82,14 @@ class MillBoard {
   }
 
   val possibleMoves: Signal[Seq[(SlotIndex, SlotIndex)]] = Signal { // #SIG
-    MillBoard.indices flatMap { from =>
-      MillBoard.indices collect { case to if canMove()(from, to) => from -> to }
+    MillBoardRenamed.indices flatMap { from =>
+      MillBoardRenamed.indices collect { case to if canMove()(from, to) => from -> to }
     }
   }
 
   val possibleJumps: Signal[Seq[(SlotIndex, SlotIndex)]] = Signal { // #SIG
-    MillBoard.indices flatMap { from =>
-      MillBoard.indices collect { case to if canJump()(from, to) => from -> to }
+    MillBoardRenamed.indices flatMap { from =>
+      MillBoardRenamed.indices collect { case to if canJump()(from, to) => from -> to }
     }
   }
 

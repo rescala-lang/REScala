@@ -102,15 +102,16 @@ object Settings {
   )
   lazy val scalaOptions3 = Seq(
     "-language:implicitConversions",
-    "-Ysafe-init",
     "-print-tasty",
-    "-Wunused:all"
+    "-Wunused:all",
     // "-Yexplicit-nulls",
   )
 
   val strictCompile = Compile / compile / scalacOptions += "-Xfatal-warnings"
   val strict =
     List(Compile / compile / scalacOptions += "-Xfatal-warnings", Test / compile / scalacOptions += "-Xfatal-warnings")
+  val safeInit       = scalacOptions += "-Ysafe-init"
+  val dottyMigration = scalacOptions ++= List("-rewrite", "-source", "3.0-migration")
 
   val legacyStgResolver =
     resolvers += ("STG old bintray repo" at "http://www.st.informatik.tu-darmstadt.de/maven/")
