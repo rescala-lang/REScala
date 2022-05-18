@@ -53,29 +53,26 @@ class MacroLego[Ops <: Operators: Type](
       else foldOverTree(x, tree)(owner)
   }
 
-  class FindInterp() extends ExprMap {
+  class FindInterp() extends TreeAccumulator[(List[Term], Boolean)] {
 
-    var foundAbstractions: List[Expr[MacroAccess[_, _]]] = Nil
-    var static                                           = true
+    override def foldTree(
+        acc: (List[quotes.reflect.Term], Boolean),
+        tree: quotes.reflect.Tree
+    )(owner: quotes.reflect.Symbol): (List[quotes.reflect.Term], Boolean) = {
 
-    override def transform[T](e: Expr[T])(using Type[T])(using q: Quotes): Expr[T] = {
-      import q.reflect.*
-
-      def handleFind(x: Expr[MacroAccess[_, _]]) =
-        val before = foundAbstractions
-        transform(x)
+      def handleFind(x: Term): (List[Term], Boolean) =
+        val before = acc._1
+        val res = foldTree((Nil, false), x)(owner)
         // we do not find things with nested things inside
-        if before == foundAbstractions then
-          foundAbstractions ::= x
-        else
-          static = false
-          if (static) report.error("dynamic access in static reactive", foundAbstractions.head)
-        e
+        if (res._1.nonEmpty) then (res._1, false)
+        else (x :: acc._1, acc._2)
 
-      e match
-        case '{ (${ x }: MacroAccess[_, _]).value }   => handleFind(x)
-        case '{ (${ x }: MacroAccess[_, _]).apply() } => handleFind(x)
-        case _                                        => transformChildren(e)
+      if !tree.isExpr then foldOverTree(acc, tree)(owner)
+      else
+        tree.asExpr match
+          case '{ (${ x }: MacroAccess[_, _]).value }   => handleFind(x.asTerm)
+          case '{ (${ x }: MacroAccess[_, _]).apply() } => handleFind(x.asTerm)
+          case _                                        => foldOverTree(acc, tree)(owner)
 
     }
   }
@@ -115,7 +112,6 @@ class MacroLego[Ops <: Operators: Type](
 
   class ReplaceImplicitTickets(ticket: Term) extends TreeMap {
 
-
     override def transformTerm(tree: quotes.reflect.Term)(owner: quotes.reflect.Symbol): quotes.reflect.Term = {
       tree match
         // case '{(${ss}: fakeApi.ScopeSearch.type).fromSchedulerImplicit(using ${_}: fakeApi.DynamicScope)} =>
@@ -127,19 +123,20 @@ class MacroLego[Ops <: Operators: Type](
   }
 
   def makeReactive[F[_]: Type, T: Type](expr: Expr[F[T]], rtype: ReactiveType): Expr[Any] = {
-    val fi = FindInterp()
-    fi.transform(expr)
+    val fi = FindInterp().foldTree((Nil, true), expr.asTerm)(Symbol.spliceOwner)
+    val foundAbstractions = fi._1
+    val foundStatic = fi._2
     val definitions = FindDefs().foldTree(Nil, expr.asTerm)(Symbol.spliceOwner)
 
     // println(s"contains symbols: ${definitions}")
-    val found = fi.foundAbstractions.filterNot { fa =>
-      val defInside      = FindDefs().foldTree(Nil, fa.asTerm)(Symbol.spliceOwner)
+    val found = foundAbstractions.filterNot { fa =>
+      val defInside      = FindDefs().foldTree(Nil, fa)(Symbol.spliceOwner)
       val containsSymbol = ContainsSymbol(definitions.diff(defInside))
-      containsSymbol.foldTree(false, fa.asTerm)(Symbol.spliceOwner)
+      containsSymbol.foldTree(false, fa)(Symbol.spliceOwner)
     }
-    val isStatic = (fi.static && found == fi.foundAbstractions)
+    val isStatic = (foundStatic && found == foundAbstractions)
     if (forceStatic && !isStatic)
-      report.error("dynamic access in static reactive", fi.foundAbstractions.diff(found).head)
+      report.error("dynamic access in static reactive", foundAbstractions.diff(found).head.asExpr)
 
     val funType = MethodType.apply(List("ticket"))(
       (_: MethodType) =>
@@ -147,9 +144,8 @@ class MacroLego[Ops <: Operators: Type](
       (_: MethodType) => TypeRepr.of[F[T]]
     )
 
-    val foundTerms = found.map(_.asTerm)
-    val res = ValDef.let(Symbol.spliceOwner, foundTerms) { defs =>
-      val replacementMap = scala.collection.immutable.ListMap.from(foundTerms.zip(defs))
+    val res = ValDef.let(Symbol.spliceOwner, found) { defs =>
+      val replacementMap = scala.collection.immutable.ListMap.from(found.zip(defs))
       // val rdef = DefDef(exprSym, {params =>
       val rdef = Lambda(
         Symbol.spliceOwner,
@@ -158,7 +154,9 @@ class MacroLego[Ops <: Operators: Type](
           val staticTicket = params.head
           val cutOut       = ReplaceInterp(replacementMap, staticTicket).transformTree(expr.asTerm)(sym).asExprOf[F[T]]
           val res =
-            new ReplaceImplicitTickets(staticTicket.asInstanceOf[Term]).transformTerm(cutOut.asTerm)(Symbol.spliceOwner).changeOwner(sym)
+            new ReplaceImplicitTickets(staticTicket.asInstanceOf[Term]).transformTerm(cutOut.asTerm)(
+              Symbol.spliceOwner
+            ).changeOwner(sym)
           res
         }
       )
