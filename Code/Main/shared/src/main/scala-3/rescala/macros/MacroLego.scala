@@ -45,19 +45,12 @@ class MacroLego[Ops <: Operators: Type](
       foldOverTree(accd, tree)(owner)
   }
 
-  class ContainsSymbol(defs: List[Symbol]) extends ExprMap {
-    private var result = false
-    def takeResult() =
-      val r = result
-      result = false
-      r
-    override def transform[T](e: Expr[T])(using Type[T])(using q: Quotes): Expr[T] =
-      if defs.contains(e.asTerm.symbol.asInstanceOf[Symbol]) then result = true
-      transformChildren(e)
+  class ContainsSymbol(defs: List[quotes.reflect.Symbol]) extends TreeAccumulator[Boolean] {
+    import quotes.reflect.*
 
-    def inTree[T](e: Expr[T])(using Type[T], Quotes): Boolean =
-      transform(e)
-      takeResult()
+    override def foldTree(x: Boolean, tree: Tree)(owner: Symbol): Boolean =
+      if defs.contains(tree.symbol) then true
+      else foldOverTree(x, tree)(owner)
   }
 
   class FindInterp() extends ExprMap {
@@ -140,7 +133,7 @@ class MacroLego[Ops <: Operators: Type](
     val found = fi.foundAbstractions.filterNot { fa =>
       val defInside      = FindDefs().foldTree(Nil, fa.asTerm)(Symbol.spliceOwner)
       val containsSymbol = ContainsSymbol(definitions.diff(defInside))
-      containsSymbol.inTree(fa)
+      containsSymbol.foldTree(false, fa.asTerm)(Symbol.spliceOwner)
     }
     val isStatic = (fi.static && found == fi.foundAbstractions)
     if (forceStatic && !isStatic)
