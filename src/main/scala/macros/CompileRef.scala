@@ -3,6 +3,7 @@ package macros
 import clangast.expr.{CDeclRefExpr, CExpr}
 import macros.ScalaToC.*
 import macros.CompileSelect.*
+import macros.CompileTerm.compileTermToCExpr
 
 import scala.quoted.*
 
@@ -25,6 +26,10 @@ object CompileRef {
       case Some(decl) => CDeclRefExpr(decl)
       // (maybe?) if no decl exists in ctx, use an unchecked string-based reference instead
       // can't create a new variable declaration because I don't know how to follow an ident to its definition
-      case None => throw new MatchError(ident.show(using Printer.TreeStructure))
+      case None =>
+        ident.symbol.tree match {
+          case ValDef(_, _, Some(term)) => compileTermToCExpr(term, ctx)
+          case _ => throw new MatchError(ident.show(using Printer.TreeStructure))
+        }
   }
 }
