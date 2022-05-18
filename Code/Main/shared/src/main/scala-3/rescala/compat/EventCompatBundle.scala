@@ -17,27 +17,27 @@ trait EventCompatBundle extends ReadableMacroBundle {
       */
     @cutOutOfUserComputation
     final inline def filter(inline expression: T => Boolean)(implicit ticket: CreationTicket): Event[T] =
-      Event { this.value.filter(expression) }
+      Event.dynamic { this.value.filter(expression) }
 
     /** Filters the event, only propagating the value when the filter is true.
       * @group operator
       */
     @cutOutOfUserComputation
     final infix inline def && (inline expression: T => Boolean)(implicit ticket: CreationTicket): Event[T] =
-      Event { this.value.filter(expression) }
+      Event.dynamic { this.value.filter(expression) }
 
     /** Collects the results from a partial function
       * @group operator
       */
     final inline def collect[U](inline expression: PartialFunction[T, U])(implicit ticket: CreationTicket): Event[U] =
-      Event { this.value.collect(expression) }
+      Event.dynamic { this.value.collect(expression) }
 
     /** Transform the event.
       * @group operator
       */
     @cutOutOfUserComputation
     final inline def map[B](inline expression: T => B)(implicit ticket: CreationTicket): Event[B] =
-      Event { this.value.map(expression) }
+      Event.dynamic { this.value.map(expression) }
 
     /** Folds events with a given operation to create a Signal.
       * @group conversion

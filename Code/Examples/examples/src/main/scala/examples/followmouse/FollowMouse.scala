@@ -54,7 +54,7 @@ class FollowMouse {
     contents = new Panel() {
 
       /** forward mouse events to EScala wrapper class. Should be replaced once reactive GUI lib is complete */
-      listenTo(mouse.moves, mouse.clicks)
+      listenTo(this.mouse.moves, this.mouse.clicks)
       reactions += FollowMouse.this.mouse.react
 
       preferredSize = new Dimension(Max_X, Max_Y)

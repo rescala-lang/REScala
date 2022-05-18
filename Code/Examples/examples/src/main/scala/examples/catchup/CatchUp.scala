@@ -73,7 +73,7 @@ class CatchUp {
     title = "Catch up!"
     resizable = false
     contents = new Panel() {
-      listenTo(mouse.moves, mouse.clicks)
+      listenTo(this.mouse.moves, this.mouse.clicks)
 
       /** forward mouse events to EScala wrapper class.
         * Should be replaced once reactive GUI lib is complete

@@ -62,9 +62,9 @@ class MacroLego[Ops <: Operators: Type](
 
       def handleFind(x: Term): (List[Term], Boolean) =
         val before = acc._1
-        val res = foldTree((Nil, false), x)(owner)
+        val res = foldTree((Nil, true), x)(owner)
         // we do not find things with nested things inside
-        if (res._1.nonEmpty) then (res._1, false)
+        if (res._1.nonEmpty) then (acc._1, false)
         else (x :: acc._1, acc._2)
 
       if !tree.isExpr then foldOverTree(acc, tree)(owner)
@@ -135,8 +135,9 @@ class MacroLego[Ops <: Operators: Type](
       containsSymbol.foldTree(false, fa)(Symbol.spliceOwner)
     }
     val isStatic = (foundStatic && found == foundAbstractions)
-    if (forceStatic && !isStatic)
+    if (forceStatic && !isStatic) {
       report.error("dynamic access in static reactive", foundAbstractions.diff(found).head.asExpr)
+    }
 
     val funType = MethodType.apply(List("ticket"))(
       (_: MethodType) =>

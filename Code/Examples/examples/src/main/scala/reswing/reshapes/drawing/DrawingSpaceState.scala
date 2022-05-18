@@ -17,7 +17,7 @@ class DrawingSpaceState {
   final lazy val selectedShape: Signal[Shape] = // #SIG
     ((shapes.changed && { shapes => // #IF  //#EF
       !(shapes contains selectedShape.value)
-    } map { _: Any => null }) ||
+    } map { (_: Any) => null }) ||
     (select && { shape => // #EF
       shape == null || (shapes.value contains shape)
     })) latest null // #IF
@@ -49,9 +49,9 @@ class DrawingSpaceState {
   private case class Clear()                   extends CommandType
 
   private lazy val commandInvoked: Event[CommandType] =
-    ((executed || execute) map { command: Command => Execute(command) }) || // #EF //#EF //#EF
-    ((reverted || revert) map { command: Command => Revert(command) }) ||   // #EF //#EF //#EF
-    (clear map { _: Unit => Clear() })                                      // #EF
+    ((executed || execute) map { (command: Command) => Execute(command) }) || // #EF //#EF //#EF
+    ((reverted || revert) map { (command: Command) => Revert(command) }) ||   // #EF //#EF //#EF
+    (clear map { (_: Unit) => Clear() })                                      // #EF
 
   private lazy val commandsShapes: Signal[(List[Command], List[Shape])] = // #SIG
     commandInvoked.fold((List.empty[Command], List.empty[Shape])) { // #IF

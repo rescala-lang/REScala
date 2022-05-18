@@ -21,7 +21,7 @@ class CommandPanel extends BoxPanel(Orientation.Vertical) {
   val buttonsEvents = Signal { // #SIG
     commands() map { command =>
       val button = new ReButton(command.description) // #IS( //#EVT )
-      (button: Component, button.clicked map { _: Any => command })
+      (button: Component, button.clicked map { (_: Any) => command })
     }
   }
 

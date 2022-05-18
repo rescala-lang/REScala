@@ -78,10 +78,10 @@ object ReShapes extends SimpleSwingApplication {
     lazy val update = Evt[Unit]() // #EVT
 
     private lazy val itemsEvents: Signal[Seq[(Component, Event[Command])]] = // #SIG
-      (update map { _: Any => // #EF
+      (update map { (_: Any) => // #EF
         (ui.tabbedPane.pages filter { tab => tab.index != ui.tabbedPane.selection.index } map { (tab: Page) =>
           val item = new ReMenuItem(tab.title) // #IS( // )
-          val command = item.clicked map { _: Any => // #EF
+          val command = item.clicked map { (_: Any) => // #EF
             new MergeDrawingSpaces(panelDrawingSpaceStates(tab)._1)
           }
           (item: Component, command)
@@ -152,7 +152,7 @@ object ReShapes extends SimpleSwingApplication {
           override lazy val executed: Event[Command] = // #EVT
             value(panel.drawn || ui.shapePanel.deleted || menu.merged) && (_ => isCurrentState) // #EF //#EF //#EF
           override lazy val reverted: Event[Command] = value(ui.commandPanel.revert || // #EVT //#EF
-            (menu.undo.clicked map { _: Any => commands.value.head })) && (_ => isCurrentState) // #EF //#EF
+            (menu.undo.clicked map { (_: Any) => commands.value.head })) && (_ => isCurrentState) // #EF //#EF
         }
 
         (state, panel)

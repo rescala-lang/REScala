@@ -50,7 +50,7 @@ class UrlChecker {
 
   /** Fired for every valid url checked */
   lazy val checkedURL: Event[URL] = checkedOption && // #EVT //#EF
-    { (t: Option[URL]) => t.isDefined } map { t: Option[URL] => t.get } // #EF
+    { (t: Option[URL]) => t.isDefined } map { (t: Option[URL]) => t.get } // #EF
 
   /** Only fires if the checked url is valid */
   lazy val urlIsValid: Event[Unit] = checkSuccessful.dropParam // #EVT //#EF

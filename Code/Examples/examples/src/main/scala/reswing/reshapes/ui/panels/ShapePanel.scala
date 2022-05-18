@@ -28,7 +28,7 @@ class ShapePanel extends BoxPanel(Orientation.Vertical) {
   val shapesPanel = new ReBoxPanel(
     orientation = Orientation.Vertical,
     contents = Signal[Seq[Component]] { // #SIG
-      shapeViews() map { shapeView: ShapeView => shapeView: Component }
+      shapeViews() map { (shapeView: ShapeView) => shapeView: Component }
     }
   )
 
@@ -46,7 +46,7 @@ class ShapeView(shape: Shape, state: DrawingSpaceState) extends ReBoxPanel(Orien
   val deleteButton = new ReButton("delete")
 
   val deleted: Event[DeleteShape] = // #EVT
-    deleteButton.clicked map { _: Any => new DeleteShape(shape) } // #EF
+    deleteButton.clicked map { (_: Any) => new DeleteShape(shape) } // #EF
 
   peer.background = NOT_SELECTED_COLOR
   peer.contents += new Label(shape.toString)

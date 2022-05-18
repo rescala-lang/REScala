@@ -7,7 +7,7 @@ import rescala.default._
 class Timer(delay0: Int) {
   val peer: swing.Timer = new swing.Timer(delay0, null) {
     override def fireActionPerformed(e: java.awt.event.ActionEvent): Unit = {
-      Timer.this.isRunning set isRunning(); fired.fire()
+      Timer.this.isRunning set this.isRunning(); fired.fire()
     }
   }
 
