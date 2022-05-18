@@ -36,7 +36,7 @@ class EWFlagTest extends munit.ScalaCheckSuite {
   import EWFlagGenerators._
 
   property("enable") {
-    forAll { flag: AntiEntropyCRDT[EnableWinsFlag] =>
+    forAll { (flag: AntiEntropyCRDT[EnableWinsFlag]) =>
       val flagEnabled = flag.enable()
 
       assert(
@@ -47,7 +47,7 @@ class EWFlagTest extends munit.ScalaCheckSuite {
   }
 
   property("disable") {
-    forAll { flag: AntiEntropyCRDT[EnableWinsFlag] =>
+    forAll { (flag: AntiEntropyCRDT[EnableWinsFlag]) =>
       val flagDisabled = flag.disable()
 
       assert(

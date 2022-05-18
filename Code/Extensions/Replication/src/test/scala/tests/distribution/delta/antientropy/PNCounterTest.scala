@@ -34,7 +34,7 @@ object PosNegCounterGenerator {
 class PosNegCounterTest extends munit.ScalaCheckSuite {
   import PosNegCounterGenerator._
   property("inc") {
-    forAll { counter: AntiEntropyCRDT[PosNegCounter] =>
+    forAll { (counter: AntiEntropyCRDT[PosNegCounter]) =>
       val before = counter.value
       val inced  = counter.inc()
 
@@ -45,7 +45,7 @@ class PosNegCounterTest extends munit.ScalaCheckSuite {
     }
   }
   property("dec") {
-    forAll { counter: AntiEntropyCRDT[PosNegCounter] =>
+    forAll { (counter: AntiEntropyCRDT[PosNegCounter]) =>
       val before = counter.value
       val deced  = counter.dec()
 

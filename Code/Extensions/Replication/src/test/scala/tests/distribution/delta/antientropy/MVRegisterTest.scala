@@ -57,7 +57,7 @@ class MVRegisterTest extends munit.ScalaCheckSuite {
     }
   }
   property("clear") {
-    forAll { reg: AntiEntropyCRDT[MVRegister[Int]] =>
+    forAll { (reg: AntiEntropyCRDT[MVRegister[Int]]) =>
       val cleared = reg.clear()
 
       assert(
@@ -92,7 +92,7 @@ class MVRegisterTest extends munit.ScalaCheckSuite {
     }
   }
   property("concurrent write/clear") {
-    forAll { v: Int =>
+    forAll { (v: Int) =>
       val network = new Network(0, 0, 0)
 
       val aea = new AntiEntropy[MVRegister[Int]]("a", network, mutable.Buffer("b"))

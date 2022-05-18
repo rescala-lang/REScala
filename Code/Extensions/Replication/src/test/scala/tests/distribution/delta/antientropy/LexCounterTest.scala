@@ -36,7 +36,7 @@ class LexCounterTest extends munit.ScalaCheckSuite {
   import LexCounterGenerators._
 
   property("inc") {
-    forAll { counter: AntiEntropyCRDT[LexCounter] =>
+    forAll { (counter: AntiEntropyCRDT[LexCounter]) =>
       val before = counter.value
       val inced  = counter.inc()
 
@@ -49,7 +49,7 @@ class LexCounterTest extends munit.ScalaCheckSuite {
 
   }
   property("dec") {
-    forAll { counter: AntiEntropyCRDT[LexCounter] =>
+    forAll { (counter: AntiEntropyCRDT[LexCounter]) =>
       val before = counter.value
       val deced  = counter.dec()
 

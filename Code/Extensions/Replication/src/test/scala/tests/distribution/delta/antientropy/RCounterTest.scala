@@ -36,7 +36,7 @@ class RCounterTest extends munit.ScalaCheckSuite {
   import RCounterGenerators._
 
   property("increment") {
-    forAll { counter: AntiEntropyCRDT[RCounter] =>
+    forAll { (counter: AntiEntropyCRDT[RCounter]) =>
       val orig        = counter.value
       val incremented = counter.increment()
 
@@ -48,7 +48,7 @@ class RCounterTest extends munit.ScalaCheckSuite {
   }
 
   property("decrement") {
-    forAll { counter: AntiEntropyCRDT[RCounter] =>
+    forAll { (counter: AntiEntropyCRDT[RCounter]) =>
       val orig        = counter.value
       val decremented = counter.decrement()
 
@@ -60,7 +60,7 @@ class RCounterTest extends munit.ScalaCheckSuite {
   }
 
   property("fresh") {
-    forAll { counter: AntiEntropyCRDT[RCounter] =>
+    forAll { (counter: AntiEntropyCRDT[RCounter]) =>
       val orig  = counter.value
       val fresh = counter.fresh()
 
@@ -72,7 +72,7 @@ class RCounterTest extends munit.ScalaCheckSuite {
   }
 
   property("reset") {
-    forAll { counter: AntiEntropyCRDT[RCounter] =>
+    forAll { (counter: AntiEntropyCRDT[RCounter]) =>
       val reset = counter.reset()
 
       assertEquals(reset.value, 0, s"${reset.state}")
@@ -147,7 +147,7 @@ class RCounterTest extends munit.ScalaCheckSuite {
   }
 
   property("concurrent reset and increment/decrement with fresh") {
-    forAll { op: Boolean =>
+    forAll { (op: Boolean) =>
       val network = new Network(0, 0, 0)
 
       val aea        = new AntiEntropy[RCounter]("a", network, mutable.Buffer("b"))

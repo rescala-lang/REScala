@@ -18,7 +18,7 @@ object GCounterGenerators {
     val ae      = new AntiEntropy[GrowOnlyCounter]("a", network, mutable.Buffer())
 
     (0 until n).foldLeft(AntiEntropyCRDT[GrowOnlyCounter](ae)) {
-      case (c, _) => c.inc()(AntiEntropyCRDT.allPermissions)
+      case (c, _) => c.inc()
     }
   }
 
@@ -29,7 +29,7 @@ class GCounterTest extends munit.ScalaCheckSuite {
   import GCounterGenerators._
 
   property("inc") {
-    forAll { counter: AntiEntropyCRDT[GrowOnlyCounter] =>
+    forAll { (counter: AntiEntropyCRDT[GrowOnlyCounter]) =>
       val before     = counter.value
       val counterInc = counter.inc()
 

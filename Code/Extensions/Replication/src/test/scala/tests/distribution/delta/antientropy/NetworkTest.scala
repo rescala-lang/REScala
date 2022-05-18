@@ -50,7 +50,7 @@ class NetworkTest extends munit.ScalaCheckSuite {
     }
   }
   property("loss") {
-    forAll { msg: Array[Byte] =>
+    forAll { (msg: Array[Byte]) =>
       val network = new Network(1, 0, 0)
 
       network.sendMessage("a", msg)
@@ -64,7 +64,7 @@ class NetworkTest extends munit.ScalaCheckSuite {
     }
   }
   property("duplicate") {
-    forAll { msg: Array[Byte] =>
+    forAll { (msg: Array[Byte]) =>
       val network = new Network(0, 1, 0)
 
       network.sendMessage("a", msg)
@@ -98,7 +98,7 @@ class NetworkTest extends munit.ScalaCheckSuite {
     }
   }
   property("delay") {
-    forAll { msg: Array[Byte] =>
+    forAll { (msg: Array[Byte]) =>
       val network = new Network(0, 0, 1)
 
       network.sendMessage("a", msg)

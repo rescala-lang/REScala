@@ -110,8 +110,11 @@ object Settings {
   val strictCompile = Compile / compile / scalacOptions += "-Xfatal-warnings"
   val strict =
     List(Compile / compile / scalacOptions += "-Xfatal-warnings", Test / compile / scalacOptions += "-Xfatal-warnings")
-  val safeInit       = scalacOptions += "-Ysafe-init"
-  val dottyMigration = scalacOptions ++= List("-rewrite", "-source", "3.0-migration")
+  val safeInit = scalacOptions += "-Ysafe-init"
+  val dottyMigration = List(
+    Compile / compile / scalacOptions ++= List("-rewrite", "-source", "3.0-migration"),
+    Test / compile / scalacOptions ++= List("-rewrite", "-source", "3.0-migration")
+  )
 
   val legacyStgResolver =
     resolvers += ("STG old bintray repo" at "http://www.st.informatik.tu-darmstadt.de/maven/")

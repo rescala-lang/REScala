@@ -69,7 +69,7 @@ class AWSetTest extends munit.ScalaCheckSuite {
     }
   }
   property("clear") {
-    forAll { set: AntiEntropyCRDT[AddWinsSet[Int]] =>
+    forAll { (set: AntiEntropyCRDT[AddWinsSet[Int]]) =>
       val cleared = set.clear()
 
       assert(
