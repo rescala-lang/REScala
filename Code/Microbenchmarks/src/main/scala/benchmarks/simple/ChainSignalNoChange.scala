@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit
 class ChainSignalNoChange {
 
   var engine: RescalaInterface = _
-  lazy val stableEngine        = engine
+  final lazy val stableEngine        = engine
   import stableEngine._
 
   var source: Var[Int]    = _

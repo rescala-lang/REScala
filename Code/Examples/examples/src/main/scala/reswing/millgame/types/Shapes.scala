@@ -12,8 +12,8 @@ case class Presentation[T, +S](
     color: Color = Color.BLACK,
     width: T = 1
 )(implicit ev$1: S => Shape[T], ev$2: Numeric[T]) {
-  def toDouble = Presentation(shape.toDouble, color, width.toDouble)
-  def toInt    = Presentation(shape.toInt, color, width.toInt)
+  def toDouble = Presentation(ev$1(shape).toDouble, color, width.toDouble)
+  def toInt    = Presentation(ev$1(shape).toInt, color, width.toInt)
 }
 
 //
@@ -57,7 +57,7 @@ object Line {
       ev$1: A => Point[T],
       ev$2: B => Point[T],
   ): Line[T] =
-    Line(l._1, l._2)
+    Line(ev$1(l._1), ev$2(l._2))
 }
 
 case class Line[T](from: Point[T], to: Point[T]) extends Shape[T] {

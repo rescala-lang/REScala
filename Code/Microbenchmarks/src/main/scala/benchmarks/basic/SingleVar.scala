@@ -18,7 +18,7 @@ import java.util.concurrent.locks.{ReadWriteLock, ReentrantReadWriteLock}
 class SingleVar {
 
   var engine: RescalaInterface              = _
-  lazy val engineT                          = engine
+  final lazy val engineT                          = engine
   implicit def scheduler: engineT.Scheduler = engineT.scheduler
 
   var source: engineT.Var[Boolean] = _

@@ -3,12 +3,10 @@ package benchmarks.philosophers
 import java.util
 import java.util.concurrent.locks.{Lock, ReentrantLock}
 import java.util.concurrent.{ThreadLocalRandom, TimeUnit}
-
-import benchmarks.philosophers.PhilosopherTable.{Thinking}
+import benchmarks.philosophers.PhilosopherTable.{Philosopher, Thinking}
 import benchmarks.{BusyThreads, EngineParam, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
-
 import rescala.parrp.Backoff
 
 import scala.annotation.tailrec
@@ -93,7 +91,7 @@ class Competition extends BusyThreads {
 
   var table: PhilosopherTable = _
 
-  lazy val stableTable = table
+  final lazy val stableTable = table
   import stableTable.Seating
 
   var blocks: Array[Array[Seating]] = _
@@ -124,7 +122,9 @@ class Competition extends BusyThreads {
   def cleanEating(): Unit = {
     // print(s"actually eaten: ${ table.eaten.get() } measured: ")
     table.eaten.set(0)
-    table.seatings.foreach(_.philosopher.set(Thinking)(stableTable.engine.scheduler))
+    stableTable.seatings.foreach{seat =>
+      val phil: stableTable.engine.Var[Philosopher] = seat.philosopher
+      phil.set(Thinking)(stableTable.engine.scheduler)}
   }
 
   final def deal[A](initialDeck: List[A], numberOfHands: Int): List[List[A]] = {

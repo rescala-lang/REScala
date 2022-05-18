@@ -92,7 +92,7 @@ abstract class PaperPhilosophers(val size: Int, val engine: RescalaInterface, dy
             val prevIdx   = (idx - 1 + size) % size
             val leftFork  = forks(prevIdx)
             val rightFork = forks(idx)
-            Signal.static[Sight] {
+            Signal[Sight] {
               computeForkStatic(idx, (leftFork(), rightFork()))
             }
         }

@@ -17,7 +17,7 @@ import scala.util.Try
 class MonadicErrors {
 
   var engine: RescalaInterface = _
-  lazy val stableEngine        = engine
+  final lazy val stableEngine        = engine
   import stableEngine._
 
   var fire: Int => Unit       = _

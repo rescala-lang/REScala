@@ -16,8 +16,8 @@ import java.util.concurrent.TimeUnit
 @State(Scope.Thread)
 class BaselineNextBenchmark {
   var engine: RescalaInterface = _
-  lazy val stableEngine        = engine
-  lazy val reactorApi          = new ReactorBundle[stableEngine.type](stableEngine)
+  final lazy val stableEngine        = engine
+  final lazy val reactorApi          = new ReactorBundle[stableEngine.type](stableEngine)
   import reactorApi._
   import stableEngine._
 

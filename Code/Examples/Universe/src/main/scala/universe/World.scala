@@ -10,7 +10,7 @@ import scala.util.Random
   */
 class World(val width: Int = 100, val height: Int = 100) {
 
-  implicit val world = this
+  implicit val world: World = this
 
   val board      = new Board(width, height)
   val time       = new Time

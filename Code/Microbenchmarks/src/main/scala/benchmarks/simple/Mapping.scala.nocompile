@@ -11,7 +11,7 @@ abstract class SomeState {
 
   var riparam: RIParam = _
 
-  lazy val RI: ReactiveInterface = riparam.RI
+  final lazy val RI: ReactiveInterface = riparam.RI
 
   var input: AtomicInteger = new AtomicInteger(0)
   var source: RI.IVar[Int] = _

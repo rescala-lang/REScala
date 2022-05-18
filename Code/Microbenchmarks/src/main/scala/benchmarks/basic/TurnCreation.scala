@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit
 class TurnCreation {
 
   var engine: RescalaInterface = _
-  lazy val stableEngine        = engine
+  final lazy val stableEngine        = engine
 
   @Setup
   def setup(engineParam: EngineParam) = {

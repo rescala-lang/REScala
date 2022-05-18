@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit
 @State(Scope.Benchmark)
 class LowContentionSerialOrder extends BusyThreads {
   var engine: RescalaInterface = _
-  lazy val stableEngine        = engine
+  final lazy val stableEngine        = engine
   import stableEngine._
   var sources: Array[Var[Int]]        = _
   var grid: Array[Array[Signal[Int]]] = _

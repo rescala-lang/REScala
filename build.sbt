@@ -98,7 +98,7 @@ lazy val universe = project.in(file("Code/Examples/Universe"))
     cfg.base,
     name := "rescala-universe",
     noPublish,
-    libraryDependencies += "org.scala-lang.modules" %% "scala-parallel-collections" % "1.0.0"
+    libraryDependencies += ("org.scala-lang.modules" %% "scala-parallel-collections" % "1.0.0").cross(CrossVersion.for3Use2_13)
   )
   .enablePlugins(JavaAppPackaging)
 
@@ -124,7 +124,7 @@ lazy val encryptedTodo = project.in(file("Code/Examples/EncryptedTodoFx"))
     cfg.base,
     noPublish,
     name := "encryptedTodo",
-    libraryDependencies ++= circeAll.value ++ jsoniterScalaAll.value,
+    libraryDependencies ++= jsoniterScalaAll.value,
     addScalafxDependencies,
   )
 
@@ -258,7 +258,7 @@ lazy val microbench = project.in(file("Code/Microbenchmarks"))
     noPublish,
     // (Compile / mainClass) := Some("org.openjdk.jmh.Main"),
     libraryDependencies ++= circeAll.value,
-    libraryDependencies ++= List(upickle.value, betterFiles.value),
+    libraryDependencies ++= List(upickle.value, betterFiles.value.cross(CrossVersion.for3Use2_13)),
     libraryDependencies ++= jsoniterScalaAll.value,
     jolSettings,
     TaskKey[Unit]("compileJmh") := Seq(pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh / compile).dependOn.value

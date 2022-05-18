@@ -36,11 +36,11 @@ trait SignalCompatBundle extends ReadableMacroBundle {
     * @group create
     */
   object Signal {
-    inline def apply[T](inline expr: T)(using ct: CreationTicket): Signal[T] = ${
+    inline def apply[T](inline expr: T)(implicit ct: CreationTicket): Signal[T] = ${
       rescala.macros.reactiveMacro[T, [x] =>> x, selfType.type, Signal]('expr, 'selfType, 'ct, '{ "Signal" }, 'true)
     }
 
-    inline def dynamic[T](inline expr: T)(using ct: CreationTicket): Signal[T] = ${
+    inline def dynamic[T](inline expr: T)(implicit ct: CreationTicket): Signal[T] = ${
       rescala.macros.reactiveMacro[T, [x] =>> x, selfType.type, Signal]('expr, 'selfType, 'ct, '{ "Signal" }, 'false)
     }
   }

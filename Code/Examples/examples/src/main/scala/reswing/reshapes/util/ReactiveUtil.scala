@@ -4,7 +4,7 @@ import rescala.default._
 import scala.collection.mutable.ListBuffer
 
 object ReactiveUtil {
-  private class BilateralValue {
+  class BilateralValue {
 
     private val events = ListBuffer[() => Unit]()
 

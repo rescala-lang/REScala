@@ -43,7 +43,7 @@ class ChatBench {
 class BenchState {
 
   var engine: RescalaInterface = _
-  lazy val stableEngine        = engine
+  final lazy val stableEngine        = engine
   import stableEngine._
 
   var cs: ChatServer[stableEngine.type] = _
