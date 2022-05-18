@@ -80,33 +80,36 @@ class MacroLego[Ops <: Operators: Type](
     }
   }
 
-  class ReplaceInterp(replacement: Map[Expr[MacroAccess[_, _]], Term], ticket: Tree) extends ExprMap {
+  class ReplaceInterp(replacement: Map[Term, Term], ticket: Tree) extends TreeMap {
 
-    override def transform[T](e: Expr[T])(using Type[T])(using Quotes): Expr[T] = {
-      import quotes.reflect.*
+    val matpe = TypeTree.of[MacroAccess[_, _]]
 
-      def accessTree[A: Type, B: Type](static: Boolean, accessed: Term) = Apply(
+    override def transformTerm(tree: quotes.reflect.Term)(owner: quotes.reflect.Symbol): quotes.reflect.Term = {
+      def accessTree(a: TypeTree)(static: Boolean, accessed: Term): Term = Apply(
         TypeApply(
           Select.unique(ticket.asExpr.asTerm, if static then "dependStatic" else "depend"),
-          List(TypeTree.of[A])
+          List(a)
         ),
         List(accessed)
-      ).asExpr
+      )
 
-      def replaceAccess[A: Type, B: Type](xy: Expr[MacroAccess[A, B]]) = {
+      def replaceAccess(a: TypeTree, xy: Term): Term = {
         replacement.get(xy) match
-          case Some(replaced) => accessTree[A, B](true, replaced.asExpr.asTerm)
+          case Some(replaced) => accessTree(a)(true, replaced.asExpr.asTerm)
           case None =>
-            val xye = transform(xy)
-            accessTree[A, B](false, xye.asTerm)
+            val xye = transformTree(xy)(owner).asInstanceOf[Term]
+            accessTree(a)(false, xye)
         end match
       }
 
-      val res = e match
-        case '{ (${ xy }: MacroAccess[a, b]).value }   => replaceAccess[a, b](xy)
-        case '{ (${ xy }: MacroAccess[a, b]).apply() } => replaceAccess[a, b](xy)
-        case _                                         => transformChildren(e)
-      res.asInstanceOf[Expr[T]]
+      val res = if (!tree.isExpr) then super.transformTerm(tree)(owner)
+      else
+        tree.asExpr match {
+          case '{ (${ xy }: MacroAccess[α, β]).value }   => replaceAccess(TypeTree.of[α], xy.asTerm)
+          case '{ (${ xy }: MacroAccess[α, β]).apply() } => replaceAccess(TypeTree.of[α], xy.asTerm)
+          case _                                         => super.transformTerm(tree)(owner)
+        }
+      res
     }
   }
 
@@ -145,15 +148,16 @@ class MacroLego[Ops <: Operators: Type](
       (_: MethodType) => TypeRepr.of[F[T]]
     )
 
-    val res = ValDef.let(Symbol.spliceOwner, found.map(_.asTerm)) { defs =>
-      val replacementMap = scala.collection.immutable.ListMap.from(found.zip(defs))
+    val foundTerms = found.map(_.asTerm)
+    val res = ValDef.let(Symbol.spliceOwner, foundTerms) { defs =>
+      val replacementMap = scala.collection.immutable.ListMap.from(foundTerms.zip(defs))
       // val rdef = DefDef(exprSym, {params =>
       val rdef = Lambda(
         Symbol.spliceOwner,
         funType,
         { (sym, params) =>
           val staticTicket = params.head
-          val cutOut       = ReplaceInterp(replacementMap, staticTicket).transform(expr)
+          val cutOut       = ReplaceInterp(replacementMap, staticTicket).transformTree(expr.asTerm)(sym).asExprOf[F[T]]
           val res =
             new ReplaceImplicitTickets(staticTicket.asInstanceOf[Term]).transform(cutOut).asTerm.changeOwner(sym)
           res
