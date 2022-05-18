@@ -145,7 +145,7 @@ class MacroLego[Ops <: Operators: Type](
     )
 
     val res = ValDef.let(Symbol.spliceOwner, found) { defs =>
-      val replacementMap = scala.collection.immutable.ListMap.from(found.zip(defs))
+      val replacementMap = found.zip(defs).toMap
       // val rdef = DefDef(exprSym, {params =>
       val rdef = Lambda(
         Symbol.spliceOwner,
