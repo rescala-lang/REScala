@@ -1,12 +1,13 @@
 package reactive
 
+import clangast.WithContext
 import clangast.types.CType
 import macros.ScalaToC
 
 import scala.annotation.targetName
 import scala.quoted.*
 
-case class Or[V](left: Event[V], right: Event[V], cType: CType) extends Event[V] {
+case class Or[V](left: Event[V], right: Event[V], cType: WithContext[CType]) extends Event[V] {
   override def inputs: List[ReSource] = List(left, right)
 
   override val baseName: String = "or"

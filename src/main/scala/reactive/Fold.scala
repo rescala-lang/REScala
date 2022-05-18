@@ -1,5 +1,6 @@
 package reactive
 
+import clangast.WithContext
 import clangast.decl.CFunctionDecl
 import clangast.expr.CExpr
 import clangast.types.CType
@@ -7,7 +8,7 @@ import macros.{ScalaToC, TranslationContext}
 
 import scala.quoted.*
 
-case class Fold[V](init: CExpr, cType: CType, lines: List[FLine[_, V]]) extends Event[V] {
+case class Fold[V](init: WithContext[CExpr], cType: WithContext[CType], lines: List[FLine[_, V]]) extends Event[V] {
   override def inputs: List[ReSource] = lines.map(_.input)
 
   override val baseName: String = "fold"

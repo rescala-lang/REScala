@@ -1,6 +1,6 @@
 package reactive
 
-import clangast.{StdIncludes, lit, given}
+import clangast.{CASTNode, StdIncludes, WithContext, lit, given}
 import clangast.decl.{CFunctionDecl, CParmVarDecl, CTranslationUnitDecl, CValueDecl, CVarDecl}
 import clangast.expr.{CCallExpr, CConditionalOperator, CDeclRefExpr, CExpr, CTrueLiteral}
 import clangast.expr.binaryop.{CAssignmentExpr, CNotEqualsExpr}
@@ -55,19 +55,32 @@ class GraphCompiler(outputs: List[ReSource]) {
     sorted.toList
   }
 
-  val functionDefinitions: Map[ReSource, List[CFunctionDecl]] = Map.from(allNodes.collect {
-    case r@Filter(_, f) => r -> List(f)
-    case r@Map1(_, _, f) => r -> List(f)
-    case r@Map2(_, _, _, f) => r -> List(f)
-    case r@Fold(_, _, lines) => r -> lines.map(_.f)
-  })
+  val functionDefinitions: List[CFunctionDecl] = topological.collect {
+    case Filter(_, f) => List(f.node)
+    case Map1(_, _, f) => List(f.node)
+    case Map2(_, _, _, f) => List(f.node)
+    case Fold(_, _, lines) => lines.map(_.f.node)
+  }.flatten
+
+  val contexts: List[WithContext[?]] = topological.collect {
+    case Source(_, tpe) => List(tpe)
+    case Map1(_, _, f) => List(f)
+    case Map2(_, _, _, f) => List(f)
+    case Filter(_, f) => List(f)
+    case Fold(init, _, lines) => init :: lines.map(_.f)
+  }.flatten
+  
+  def appendWithoutDuplicates[T](l: List[List[T]]): List[T] = l.foldLeft((List.empty[T], Set.empty[T])) {
+    case ((accList, accSet), innerList) =>
+      (accList ++ innerList.filterNot(accSet.contains), accSet ++ innerList)
+  }._1
 
   val globalVariables: Map[Fold[?], CVarDecl] = Map.from(allNodes.collect {
-    case f@Fold(init, cType, _) => f -> CVarDecl(f.valueName, cType, Some(init))
+    case f@Fold(init, cType, _) => f -> CVarDecl(f.valueName, cType.node, Some(init.node))
   })
 
   val sourceValueParameters: Map[Source[?], CParmVarDecl] = Map.from(allNodes.collect {
-    case s@Source(_, cType) => s -> CParmVarDecl(s.valueName, cType)
+    case s@Source(_, cType) => s -> CParmVarDecl(s.valueName, cType.node)
   })
 
   val sourceValidParameters: Map[Source[?], CParmVarDecl] = Map.from(allNodes.collect {
@@ -75,10 +88,10 @@ class GraphCompiler(outputs: List[ReSource]) {
   })
 
   val localVariables: Map[ReSource, CVarDecl] = Map.from(allNodes.collect {
-    case r@Map1(_, cType, _) => r -> CVarDecl(r.valueName, cType)
-    case r@Map2(_, _, cType, _) => r -> CVarDecl(r.valueName, cType)
+    case r@Map1(_, cType, _) => r -> CVarDecl(r.valueName, cType.node)
+    case r@Map2(_, _, cType, _) => r -> CVarDecl(r.valueName, cType.node)
     case r@Filter(_, _) => r -> CVarDecl(r.valueName, CBoolType)
-    case r@Or(_, _, cType) => r -> CVarDecl(r.valueName, cType)
+    case r@Or(_, _, cType) => r -> CVarDecl(r.valueName, cType.node)
   })
 
   val updateConditions: Map[ReSource, UpdateCondition] = {
@@ -126,17 +139,17 @@ class GraphCompiler(outputs: List[ReSource]) {
       case r@Map1(input, _, f) =>
         List(updateAssignment(
           valueRef(r),
-          CCallExpr(CDeclRefExpr(f), List(valueRef(input)))
+          CCallExpr(CDeclRefExpr(f.node), List(valueRef(input)))
         ))
       case r@Map2(left, right, _, f) =>
         List(updateAssignment(
           valueRef(r),
-          CCallExpr(CDeclRefExpr(f), List(valueRef(left), valueRef(right)))
+          CCallExpr(CDeclRefExpr(f.node), List(valueRef(left), valueRef(right)))
         ))
       case r@Filter(input, f) =>
         List(updateAssignment(
           CDeclRefExpr(localVariables(r)),
-          CCallExpr(CDeclRefExpr(f), List(valueRef(input)))
+          CCallExpr(CDeclRefExpr(f.node), List(valueRef(input)))
         ))
       case r@Snapshot(_, _) => List(updateAssignment(valueRef(r), 0.lit))
       case r@Or(left, right, _) =>
@@ -152,7 +165,7 @@ class GraphCompiler(outputs: List[ReSource]) {
         case List(FLine(input, f)) =>
           List(updateAssignment(
             valueRef(r),
-            CCallExpr(CDeclRefExpr(f), List(valueRef(r), valueRef(input)))
+            CCallExpr(CDeclRefExpr(f.node), List(valueRef(r), valueRef(input)))
           ))
         case _ =>
           lines.map {
@@ -161,7 +174,7 @@ class GraphCompiler(outputs: List[ReSource]) {
                 updateConditions(input).compile,
                 updateAssignment(
                   valueRef(r),
-                  CCallExpr(CDeclRefExpr(f), List(valueRef(r), valueRef(input)))
+                  CCallExpr(CDeclRefExpr(f.node), List(valueRef(r), valueRef(input)))
                 )
               )
           }
@@ -193,17 +206,21 @@ class GraphCompiler(outputs: List[ReSource]) {
   }
 
   val translationUnit: CTranslationUnitDecl = {
+    val includes = appendWithoutDuplicates(List(StdIncludes.stdbool) :: contexts.map(_.includes))
+    val recordDecls = appendWithoutDuplicates(contexts.map(_.recordDecls))
+    val helperFunctionDecls = appendWithoutDuplicates(contexts.map(_.functionDecls))
+    
     val globalVarDecls = topological.collect {
       case f: Fold[_] => globalVariables(f)
     }
 
-    val functionDecls = topological.flatMap {
-      functionDefinitions.getOrElse(_, List())
-    }
-
     CTranslationUnitDecl(
-      globalVarDecls ++ functionDecls ++ List(updateFunction),
-      List(StdIncludes.stdbool)
+      recordDecls ++
+        helperFunctionDecls ++
+        globalVarDecls ++
+        functionDefinitions ++
+        List(updateFunction),
+      includes
     )
   }
 }

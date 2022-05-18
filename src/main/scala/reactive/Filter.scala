@@ -1,11 +1,12 @@
 package reactive
 
+import clangast.WithContext
 import clangast.decl.CFunctionDecl
 import macros.ScalaToC
 
 import scala.quoted.*
 
-case class Filter[V](input: Event[V], f: CFunctionDecl) extends Event[V] {
+case class Filter[V](input: Event[V], f: WithContext[CFunctionDecl]) extends Event[V] {
   override def inputs: List[ReSource] = List(input)
 
   override val baseName: String = "filter"

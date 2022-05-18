@@ -38,23 +38,35 @@ object ScalaToC {
 
   inline def scalaToC(inline funName: String)(inline expr: Any): CASTNode = ${ scalaToCCode('expr, 'funName) }
 
-  def compileAnonFun(f: Expr[_], funName: Expr[String])(using Quotes): Expr[CFunctionDecl] = {
+  def compileAnonFun(f: Expr[_], funName: Expr[String])(using Quotes): Expr[WithContext[CFunctionDecl]] = {
     import quotes.reflect.*
 
-    compileTerm(f.asTerm, new TranslationContext()) match {
-      case funDecl: CFunctionDecl => funDecl.copy(name = funName.value.get).toExpr
+    val ctx = new TranslationContext()
+
+    val (originalName, compiledF) = compileTerm(f.asTerm, ctx) match {
+      case funDecl: CFunctionDecl => (funDecl.name, funDecl.copy(name = funName.value.get))
     }
+
+    WithContext(compiledF, ctx, originalName).toExpr
   }
 
-  def compileExpr(e: Expr[_])(using Quotes): Expr[CExpr] = {
+  def compileExpr(e: Expr[_])(using Quotes): Expr[WithContext[CExpr]] = {
     import quotes.reflect.*
 
-    compileTermToCExpr(e.asTerm, new TranslationContext()).toExpr
+    val ctx = new TranslationContext()
+
+    val compiledExpr = compileTermToCExpr(e.asTerm, ctx)
+
+    WithContext(compiledExpr, ctx).toExpr
   }
   
-  def compileType[T](using Quotes, Type[T]): Expr[CType] = {
+  def compileType[T](using Quotes, Type[T]): Expr[WithContext[CType]] = {
     import quotes.reflect.*
+
+    val ctx = new TranslationContext()
     
-    compileTypeRepr(TypeRepr.of[T], new TranslationContext()).toExpr
+    val compiledTypeRepr = compileTypeRepr(TypeRepr.of[T], ctx)
+
+    WithContext(compiledTypeRepr, ctx).toExpr
   }
 }

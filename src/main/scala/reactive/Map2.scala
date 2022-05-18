@@ -1,12 +1,13 @@
 package reactive
 
+import clangast.WithContext
 import clangast.decl.CFunctionDecl
 import clangast.types.CType
 import macros.ScalaToC
 
 import scala.quoted.*
 
-case class Map2[A, B, R](l: Event[A], r: Event[B], cType: CType, f: CFunctionDecl) extends Event[R] {
+case class Map2[A, B, R](l: Event[A], r: Event[B], cType: WithContext[CType], f: WithContext[CFunctionDecl]) extends Event[R] {
   override def inputs: List[ReSource] = List(l, r)
 
   override val baseName: String = "map2"

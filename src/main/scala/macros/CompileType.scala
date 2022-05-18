@@ -75,11 +75,7 @@ object CompileType {
       CReturnStmt(Some(CDeclRefExpr(temp)))
     ))
 
-    val decl = CFunctionDecl(name, parameters, returnType, Some(body))
-
-    println(decl.textgen)
-
-    decl
+    CFunctionDecl(name, parameters, returnType, Some(body))
   }
 
   def getRecordEquals(using Quotes)(tpe: quotes.reflect.TypeRepr, ctx: TranslationContext): CFunctionDecl =
@@ -131,11 +127,7 @@ object CompileType {
     }
     val body = CCompoundStmt(comparisons.appended(CReturnStmt(Some(CTrueLiteral))))
 
-    val decl = CFunctionDecl(name, parameters, returnType, Some(body))
-
-    println(decl.textgen)
-
-    decl
+    CFunctionDecl(name, parameters, returnType, Some(body))
   }
 
   def getRecordDecl(using Quotes)(tpe: quotes.reflect.TypeRepr, ctx: TranslationContext): CRecordDecl = {
@@ -157,7 +149,7 @@ object CompileType {
 
     val symbolName = tpe.classSymbol.get.name
 
-    tpe match {
+    tpe.widen match {
       case AppliedType(_, typeArgs) =>
         val typeArgNames = typeArgs.map { t =>
           if t <:< TypeRepr.of[Product] then recordName(t)
@@ -178,10 +170,6 @@ object CompileType {
         CFieldDecl(symbol.name.strip(), compileTypeRepr(tpe.memberType(symbol), ctx))
     }
 
-    val decl = CRecordDecl(recordName(tpe), fields)
-
-    println(decl.textgen)
-
-    decl
+    CRecordDecl(recordName(tpe), fields)
   }
 }

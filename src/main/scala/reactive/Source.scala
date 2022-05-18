@@ -1,11 +1,12 @@
 package reactive
 
+import clangast.WithContext
 import clangast.types.CType
 import macros.ScalaToC
 
 import scala.quoted.*
 
-case class Source[V](name: String, cType: CType) extends Event[V] {
+case class Source[V](name: String, cType: WithContext[CType]) extends Event[V] {
   override def inputs: List[ReSource] = Nil
 
   override val baseName: String = "source"
