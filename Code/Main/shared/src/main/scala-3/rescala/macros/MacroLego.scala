@@ -113,17 +113,16 @@ class MacroLego[Ops <: Operators: Type](
     }
   }
 
-  class ReplaceImplicitTickets(ticket: Term) extends ExprMap {
+  class ReplaceImplicitTickets(ticket: Term) extends TreeMap {
 
-    override def transform[T](e: Expr[T])(using Type[T])(using Quotes): Expr[T] = {
-      import quotes.reflect.*
 
-      e.asTerm match
+    override def transformTerm(tree: quotes.reflect.Term)(owner: quotes.reflect.Symbol): quotes.reflect.Term = {
+      tree match
         // case '{(${ss}: fakeApi.ScopeSearch.type).fromSchedulerImplicit(using ${_}: fakeApi.DynamicScope)} =>
         //  '{$ss.fromTicketImplicit($ticket)}.asExprOf[T]
         case Apply(Select(ss, "fromSchedulerImplicit"), _) =>
-          Apply(Select.unique(ss, "fromTicketImplicit"), List(ticket)).asExprOf[T]
-        case other => transformChildren(e)
+          Apply(Select.unique(ss, "fromTicketImplicit"), List(ticket))
+        case other => super.transformTerm(tree)(owner)
     }
   }
 
@@ -159,7 +158,7 @@ class MacroLego[Ops <: Operators: Type](
           val staticTicket = params.head
           val cutOut       = ReplaceInterp(replacementMap, staticTicket).transformTree(expr.asTerm)(sym).asExprOf[F[T]]
           val res =
-            new ReplaceImplicitTickets(staticTicket.asInstanceOf[Term]).transform(cutOut).asTerm.changeOwner(sym)
+            new ReplaceImplicitTickets(staticTicket.asInstanceOf[Term]).transformTerm(cutOut.asTerm)(Symbol.spliceOwner).changeOwner(sym)
           res
         }
       )
