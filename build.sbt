@@ -1,4 +1,3 @@
-import java.nio.file.Files
 import Dependencies._
 import Settings._
 import sbt.Def
