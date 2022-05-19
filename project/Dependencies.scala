@@ -30,7 +30,7 @@ object Dependencies {
     val scala213           = "2.13.8"
     val scala3             = "3.1.3-RC3"
     val scalaJavaTime      = "2.3.0"
-    val scalaLoci          = "0.5.0-10-gadcba86"
+    val scalaLoci          = "0.5.0"
     val scalaSwing         = "3.0.0"
     val scalacheck         = "1.16.0"
     val scalactic          = "3.0.0"
