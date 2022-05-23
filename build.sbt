@@ -3,7 +3,7 @@ lazy val root = (project in file("."))
     name := "lore",
     scalaVersion := "3.1.2",
     libraryDependencies += "org.typelevel" %% "cats-core"         % "2.7.0",
-    libraryDependencies += "org.typelevel" %% "cats-effect"       % "3.3.11",
+    libraryDependencies += "org.typelevel" %% "cats-effect"       % "3.3.12",
     libraryDependencies += "com.monovore"  %% "decline"           % "2.2.0",
     libraryDependencies += ("org.scalameta" %% "scalafmt-core"  % "3.0.8").cross(CrossVersion.for3Use2_13),
     libraryDependencies += "org.typelevel" %% "cats-parse" % "0.3.7",
@@ -14,8 +14,19 @@ lazy val root = (project in file("."))
   )
   .settings(
     // native-image flag "--initialize-at-build-time" is required for Cats Effect applications
-    nativeImageOptions ++= List("--initialize-at-build-time", "--no-fallback",
-    // "--report-unsupported-elements-at-runtime", // makes application crash in certain cases
+    nativeImageOptions ++= List(
+    "--initialize-at-build-time",
+    "--no-fallback",
+
+
+    // disable tracing and fiber dumps this is needed due to the new fiber dumps functionality. see https://typelevel.org/cats-effect/docs/core/native-image
+    "-Dcats.effect.tracing.mode=none",
+    // "--report-unsupported-elements-at-runtime", // alternative: makes application crash in certain cases
+
+    // this could be used to support tracing? https://github.com/scalameta/sbt-native-image#nativeimagerunagent
+    // s"-H:ReflectionConfigurationFiles=${target.value / "native-image-configs" / "reflect-config.json"}",
+    // s"-H:ConfigurationFileDirectories=${target.value / "native-image-configs" }",
+    // "-H:+JNI",
     ))
   .enablePlugins(NativeImagePlugin)
   .settings(Compile / mainClass := Some("fr.Compiler"))
