@@ -6,7 +6,7 @@ lazy val root = (project in file("."))
     libraryDependencies += "org.typelevel" %% "cats-effect"       % "3.3.11",
     libraryDependencies += "com.monovore"  %% "decline"           % "2.2.0",
     libraryDependencies += ("org.scalameta" %% "scalafmt-core"  % "3.0.8").cross(CrossVersion.for3Use2_13),
-    libraryDependencies += "org.typelevel" %% "cats-parse" % "0.3.6",
+    libraryDependencies += "org.typelevel" %% "cats-parse" % "0.3.7",
     // test dependencies
     libraryDependencies += "io.monix" %% "minitest" % "2.9.6" % Test,
     libraryDependencies += "org.typelevel" %% "core" % "1.2.0" % Test,
