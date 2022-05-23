@@ -16,9 +16,29 @@ object Parser:
     (((id <* sp.? ~ P.char(':')) <* sp.rep0) ~ id).map { // args with type
       (l: ID, r: Type) => TArgT(l, r)
     }
+  // helper definition for parsing sequences of expressions
+  val parseSeq = (factor: P[Term], separator: P[String]) =>
+    ((ws.soft.with1 *> factor) ~
+      (((ws.soft.with1 *> separator <* ws))
+        ~ factor).rep0)
 
   // basic terms
   val _var: P[TVar] = id.map(TVar(_)) // variables
+
+  // arithmetic expressions
+  val arithmExpr: P[Term] = P.defer(addSub)
+  val addSub: P[Term] =
+    P.defer(parseSeq(divMul, P.stringIn(List("+", "-"))).map(evalArithm))
+  val divMul: P[Term] =
+    P.defer(parseSeq(divMul, P.stringIn(List("/", "*"))).map(evalArithm))
+  def evalArithm(seq: (Term, List[(String, Term)])): Term = seq match
+    case (x, Nil)            => x
+    case (l, ("*", r) :: xs) => TMul(left = l, right = evalArithm(r, xs))
+    case (l, ("/", r) :: xs) => TDiv(left = l, right = evalArithm(r, xs))
+    case (l, ("+", r) :: xs) => TAdd(left = l, right = evalArithm(r, xs))
+    case (l, ("-", r) :: xs) => TSub(left = l, right = evalArithm(r, xs))
+    case sth =>
+      throw new IllegalArgumentException(s"Not an arithmetic expression: $sth")
 
   // boolean expressions
   val booleanExpr: P[Term] = P.defer(quantifier | implication)
@@ -32,8 +52,8 @@ object Parser:
   val boolFactor: P[Term] =
     P.defer(
       tru.backtrack | fls.backtrack | parens
-      // | inSet.backtrack  TODO
-      // | numComp.backtrack TODO
+      // | inSet.backtrack TODO
+        | numComp.backtrack
         | fieldAcc.backtrack
         | functionCall.backtrack
         | _var
@@ -60,11 +80,8 @@ object Parser:
     }
 
   // helper for boolean expressions with arbitrarily long sequences like && and ||
-  val boolSeq = (factor: P[Term], seperator: String) =>
-    ((ws.soft.with1 *> factor) ~
-      (((ws.soft ~ P.string(seperator) ~ ws)).void
-        .as(seperator)
-        .with1 ~ factor).rep0).map(evalBoolSeq)
+  val boolSeq = (factor: P[Term], separator: String) =>
+    parseSeq(factor, P.string(separator).as(separator)).map(evalBoolSeq)
   val conjunction: P[Term] =
     P.defer(boolSeq(disjunction, "&&"))
   val disjunction: P[Term] =
@@ -86,7 +103,17 @@ object Parser:
       TInSet(left, right)
     }
 
-  val numComp: P[Term] = P.string("TODO").as(TTrue) // TODO: number comparison
+  val numComp: P[TBoolean] = (
+      _var.as(TVar("foo")) ~ (ws.soft.with1 *> P
+        .stringIn(List("<=", ">=", "<", ">")) <* ws) ~ _var.as(TVar("foo"))
+    )
+    .map { case ((l, op), r) =>
+      op match
+        case "<=" => TLeq(left = l, right = r)
+        case ">=" => TGeq(left = l, right = r)
+        case "<"  => TLt(left = l, right = r)
+        case ">"  => TGt(left = l, right = r)
+    }
 
   // quantifiers
   val quantifierVars: P[NonEmptyList[TArgT]] =
@@ -115,7 +142,7 @@ object Parser:
         (P.char('.') *> id ~ (P.char('(') *> args <* (ws ~ P.char(')'))).?).rep
     ).map((parent, rest) => evalFieldAcc(parent, rest.toList))
   def evalFieldAcc(s: (Term, List[(ID, Option[List[Term]])])): TFAcc =
-    s match 
+    s match
       case (parent: TFAcc, Nil) => parent
       case (parent, (field, args) :: Nil) =>
         TFAcc(parent = parent, field = field, args = args.getOrElse(Seq()))
@@ -126,7 +153,8 @@ object Parser:
         )
       case _ =>
         throw new IllegalArgumentException(s"Not a valid field access: $s")
-    
+
+  // functions
   val functionCall: P[TFunC] = P
     .defer(id ~ (P.char('(') *> args) <* P.char(')'))
     .map { (id, arg) =>
