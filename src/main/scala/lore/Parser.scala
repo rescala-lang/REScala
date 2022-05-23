@@ -57,8 +57,10 @@ object Parser:
       .defer(implication) <* P.char(')').surroundedBy(ws)
   val boolFactor: P[Term] =
     P.defer(
-      tru.backtrack | fls.backtrack | boolParens
-      // | inSet.backtrack TODO
+      tru.backtrack
+        | fls.backtrack
+        | boolParens.backtrack
+        | inSet.backtrack
         | numComp.backtrack
         | fieldAcc.backtrack
         | functionCall.backtrack
@@ -104,7 +106,9 @@ object Parser:
 
   // set expressions
   val inSet: P[TBoolean] = P
-    .defer(((ws.with1 *> term <* ws).soft <* P.string("in")) ~ term.surroundedBy(ws))
+    .defer(
+      ((ws.with1 *> term <* ws).soft <* P.string("in")) ~ term.surroundedBy(ws)
+    )
     .map { (left, right) =>
       TInSet(left, right)
     }
@@ -172,6 +176,6 @@ object Parser:
   // programs are sequences of terms
   val term: P[Term] =
     P.defer(
-      fieldAcc.backtrack | functionCall.backtrack | booleanExpr.backtrack | number | _var
+      fieldAcc.backtrack | functionCall.backtrack | booleanExpr.backtrack | number.backtrack | _var
     )
   val prog: P[NonEmptyList[Term]] = term.repSep(ws).between(ws, P.end)
