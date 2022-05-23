@@ -13,12 +13,12 @@ object Dependencies {
     val circeCore          = "0.14.1"
     val decline            = "2.2.0"
     val directories        = "26"
-    val fastparse          = "2.3.3"
+    val fastparse          = "2.3.3-16-3da4b3"
     val jetty              = "9.4.46.v20220331"
     val jol                = "0.16"
-    val jsoniterScalaCore  = "2.13.22"
+    val jsoniterScalaCore  = "2.13.25"
     val jsoniterScalaOld   = "2.13.3" // this is the latest version supporting Scala 2.11 and java 8
-    val jsoup              = "1.14.3"
+    val jsoup              = "1.15.1"
     val munit              = "0.7.29"
     val normalizecss       = "8.0.1"
     val okHttp             = "4.9.3"
@@ -41,7 +41,7 @@ object Dependencies {
     val scribe             = "3.8.2"
     val sourcecode         = "0.2.8"
     val tomlScala          = "0.2.2"
-    val upickle            = "1.6.0"
+    val upickle            = "2.0.0"
   }
 
   import Dependencies.{Versions => V}
