@@ -3,6 +3,7 @@ package macros
 import clangast.given
 import clangast.decl.{CDecl, CFunctionDecl, CParmVarDecl, CVarDecl}
 import clangast.stmt.{CCompoundStmt, CReturnStmt}
+import macros.CompileApply.*
 import macros.ScalaToC.*
 import macros.CompileTerm.*
 import macros.CompileType.*
@@ -45,11 +46,14 @@ object CompileDefinition {
   def compileValDefToCVarDecl(using Quotes)(valDef: quotes.reflect.ValDef, ctx: TranslationContext): CVarDecl = {
     import quotes.reflect.*
 
-    val ValDef(name, tpt, rhs) = valDef
+    val decl = valDef match {
+      case ValDef(name, tpt, Some(apply@Apply(Select(_, "apply"), _))) if isProductApply(apply) =>
+        CVarDecl(name, compileTypeRepr(tpt.tpe, ctx), Some(compileApplyToCDesignatedInitExpr(apply, ctx)))
+      case ValDef(name, tpt, rhs) =>
+        CVarDecl(name, compileTypeRepr(tpt.tpe, ctx), rhs.map(compileTermToCExpr(_, ctx)))
+    }
 
-    val decl = CVarDecl(name, compileTypeRepr(tpt.tpe, ctx), rhs.map(compileTermToCExpr(_, ctx)))
-
-    ctx.nameToDecl.put(name, decl)
+    ctx.nameToDecl.put(valDef.name, decl)
 
     decl
   }

@@ -76,8 +76,24 @@ class GraphCompiler(outputs: List[ReSource]) {
   }._1
 
   val globalVariables: Map[Fold[?], CVarDecl] = Map.from(allNodes.collect {
-    case f@Fold(init, cType, _) => f -> CVarDecl(f.valueName, cType.node, Some(init.node))
+    case f@Fold(_, cType, _) => f -> CVarDecl(f.valueName, cType.node, None)
   })
+
+  val startup: CFunctionDecl =
+    CFunctionDecl(
+      "reactifiStartup",
+      List(),
+      CVoidType,
+      Some(CCompoundStmt(
+        globalVariables.map {
+          case (Fold(init, _, _), varDecl) =>
+            CExprStmt(CAssignmentExpr(
+              CDeclRefExpr(varDecl),
+              init.node
+            ))
+        }.toList
+      ))
+    )
 
   val sourceValueParameters: Map[Source[?], CParmVarDecl] = Map.from(allNodes.collect {
     case s@Source(_, cType) => s -> CParmVarDecl(s.valueName, cType.node)
@@ -219,7 +235,7 @@ class GraphCompiler(outputs: List[ReSource]) {
         helperFunctionDecls ++
         globalVarDecls ++
         functionDefinitions ++
-        List(updateFunction),
+        List(startup, updateFunction),
       includes
     )
   }

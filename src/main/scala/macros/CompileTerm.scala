@@ -54,6 +54,7 @@ object CompileTerm {
     term match {
       case block: Block => compileBlockToCStmtExpr(block, ctx)
       case ifTerm: If => compileIfToCConditionalOperator(ifTerm, ctx)
+      case matchTerm: Match => compileMatchToCStmtExpr(matchTerm, ctx)
       case _ =>
         compileTerm(term, ctx) match {
           case expr: CExpr => expr

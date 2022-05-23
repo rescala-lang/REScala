@@ -122,4 +122,14 @@ object CompileApply {
       case _ => false
     }
   }
+  
+  def compileApplyToCDesignatedInitExpr(using Quotes)(apply: quotes.reflect.Apply, ctx: TranslationContext): CDesignatedInitExpr = {
+    import quotes.reflect.*
+    
+    apply match {
+      case Apply(Select(_, "apply"), l) if isProductApply(apply) =>
+        val recordDecl = getRecordDecl(apply.tpe, ctx)
+        CDesignatedInitExpr(recordDecl.fields.map(_.name) zip l.map(compileTermToCExpr(_, ctx)))
+    }
+  }
 }

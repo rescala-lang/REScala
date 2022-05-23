@@ -40,6 +40,49 @@ object CompileMatch {
     }
   }
 
+  def compileMatchToCStmtExpr(using Quotes)(matchTerm: quotes.reflect.Match, ctx: TranslationContext): CStmtExpr = {
+    import quotes.reflect.*
+
+    val Match(scrutinee, cases) = matchTerm
+
+    val resDecl = CVarDecl("_res", compileTypeRepr(matchTerm.tpe, ctx), None)
+
+    def convertLastToAssign(stmts: List[CStmt]): List[CStmt] = {
+      stmts.last match {
+        case CExprStmt(expr) =>
+          val assign = CExprStmt(CAssignmentExpr(CDeclRefExpr(resDecl), expr))
+          stmts.init.appended(assign)
+      }
+    }
+
+    val (lastCond, lastDecls, lastStmtList) = compileCaseDef(cases.last, scrutinee, ctx)
+    val lastIf = CIfStmt(
+      lastCond.getOrElse(CTrueLiteral),
+      CCompoundStmt(
+        lastDecls.map(CDeclStmt(_)) ++ convertLastToAssign(lastStmtList)
+      )
+    )
+
+    val outerIf = cases.init.foldRight(lastIf) {
+      case (cd, nextIf) =>
+        val (cond, decls, stmtList) = compileCaseDef(cd, scrutinee, ctx)
+
+        CIfStmt(
+          cond.getOrElse(CTrueLiteral),
+          CCompoundStmt(
+            decls.map(CDeclStmt(_)) ++ convertLastToAssign(stmtList)
+          ),
+          Some(nextIf)
+        )
+    }
+
+    CStmtExpr(CCompoundStmt(List(
+      resDecl,
+      outerIf,
+      CExprStmt(CDeclRefExpr(resDecl))
+    )))
+  }
+
   def compileCaseDef(using Quotes)(caseDef: quotes.reflect.CaseDef, scrutinee: quotes.reflect.Term, ctx: TranslationContext): (Option[CExpr], List[CVarDecl], List[CStmt]) = {
     import quotes.reflect.*
 
