@@ -18,8 +18,8 @@ object Parser:
     }
   // helper definition for parsing sequences of expressions
   val parseSeq = (factor: P[Term], separator: P[String]) =>
-    ((ws.soft.with1 *> factor) ~
-      (((ws.soft.with1 *> separator <* ws))
+    ((ws.with1.soft *> factor) ~
+      (((ws.with1.soft *> separator <* ws))
         ~ factor).rep0)
 
   // basic terms
@@ -28,9 +28,15 @@ object Parser:
   // arithmetic expressions
   val arithmExpr: P[Term] = P.defer(addSub)
   val addSub: P[Term] =
-    P.defer(parseSeq(divMul, P.stringIn(List("+", "-"))).map(evalArithm))
+    P.defer(parseSeq(divMul, P.stringIn(List("+", "-")))).map(evalArithm)
   val divMul: P[Term] =
-    P.defer(parseSeq(divMul, P.stringIn(List("/", "*"))).map(evalArithm))
+    P.defer(parseSeq(arithFactor, P.stringIn(List("/", "*")))).map(evalArithm)
+  val parens: P[Term] =
+    (ws.soft ~ P.char('(') ~ ws).with1 *> arithmExpr <* ws ~ P.char(')')
+  val arithFactor: P[Term] =
+    P.defer(
+      parens.backtrack | fieldAcc.backtrack | functionCall.backtrack | number.backtrack | _var
+    )
   def evalArithm(seq: (Term, List[(String, Term)])): Term = seq match
     case (x, Nil)            => x
     case (l, ("*", r) :: xs) => TMul(left = l, right = evalArithm(r, xs))
@@ -46,12 +52,12 @@ object Parser:
   // primitives
   val tru: P[TBoolean] = P.string("true").as(TTrue)
   val fls: P[TBoolean] = P.string("false").as(TFalse)
-  val parens: P[Term] = // parantheses
+  val boolParens: P[Term] = // parantheses
     (ws.soft ~ P.char('(') ~ ws).with1 *> P
       .defer(implication) <* P.char(')').surroundedBy(ws)
   val boolFactor: P[Term] =
     P.defer(
-      tru.backtrack | fls.backtrack | parens
+      tru.backtrack | fls.backtrack | boolParens
       // | inSet.backtrack TODO
         | numComp.backtrack
         | fieldAcc.backtrack
@@ -60,8 +66,8 @@ object Parser:
     )
 
   // helper for boolean expressions with two sides
-  val boolTpl = (factor: P[Term], seperator: P[Unit]) =>
-    factor ~ ((ws.soft ~ seperator.backtrack ~ ws) *> factor).?
+  val boolTpl = (factor: P[Term], separator: P[Unit]) =>
+    factor ~ ((ws.soft ~ separator.backtrack ~ ws) *> factor).?
   val implication: P[Term] =
     P.defer(boolTpl(equality, P.string("==>"))).map {
       case (left, None)        => left
@@ -98,14 +104,16 @@ object Parser:
 
   // set expressions
   val inSet: P[TBoolean] = P
-    .defer((term.surroundedBy(ws) <* P.string("in")) ~ term.surroundedBy(ws))
+    .defer(((ws.with1 *> term <* ws).soft <* P.string("in")) ~ term.surroundedBy(ws))
     .map { (left, right) =>
       TInSet(left, right)
     }
 
-  val numComp: P[TBoolean] = (
-      _var.as(TVar("foo")) ~ (ws.soft.with1 *> P
-        .stringIn(List("<=", ">=", "<", ">")) <* ws) ~ _var.as(TVar("foo"))
+  // number comparisons
+  val numComp: P[TBoolean] = P
+    .defer(
+      arithmExpr ~ (ws.soft.with1 *> P
+        .stringIn(List("<=", ">=", "<", ">")) <* ws) ~ arithmExpr
     )
     .map { case ((l, op), r) =>
       op match

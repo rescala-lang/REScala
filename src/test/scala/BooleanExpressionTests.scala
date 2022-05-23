@@ -4,43 +4,11 @@ import lore.AST._
 import cats.parse.{Parser => P}
 import cats.parse.Parser.Expectation
 import cats.data.NonEmptyList
+import SimpleParsing.assertParses
 
 def printExp(e: NonEmptyList[Expectation]) =
   e.toString
 
-object SimpleParsing extends SimpleTestSuite {
-  test("function call") {
-    assertResult(Right(TFunC("foo", List(TNum(1), TNum(2))))) {
-      Parser.functionCall.parseAll("foo(1,2)")
-    }
-  }
-
-  test("field access") {
-    assertResult(Right(TFAcc(TVar("foo"), "bar", List(TNum(1), TFalse)))) {
-      Parser.fieldAcc.parseAll("foo.bar(1, false)")
-    }
-
-    assertResult(
-      Right(
-        TFAcc(
-          TFAcc(
-            TVar("foo"),
-            "bar",
-            List(TEq(TTrue, TFalse))
-          ),
-          "baz",
-          List()
-        )
-      )
-    ) {
-      Parser.fieldAcc.parseAll("foo.bar(true == false).baz")
-    }
-
-    assertResult(Right(TFAcc(TFunC("size", List(TVar("d2"))), "max", List()))) {
-      Parser.fieldAcc.parseAll("size(d2).max")
-    }
-  }
-}
 object BooleanExpressionParsing extends SimpleTestSuite {
   test("disjunction") {
     val p = Parser.disjunction
@@ -235,7 +203,17 @@ object BooleanExpressionParsing extends SimpleTestSuite {
     assertResult(
       Right(TEq(TLt(TFunC("foo", List(TVar("bar"))), TNum(0)), TFalse))
     ) {
-      "foo(bar) < 0 == false"
+      p.parseAll("foo(bar) < 0 == false")
     }
+  }
+
+  test("in set") {
+    val p = Parser.inSet
+
+    assertResult(Right(TInSet(TNum(12), TVar("a")))){
+      p.parseAll("12 in a")
+    }
+
+    assertParses(p, "foo(true) in X.mySet")
   }
 }
