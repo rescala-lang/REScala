@@ -35,7 +35,7 @@ object Parser:
     (ws.soft ~ P.char('(') ~ ws).with1 *> arithmExpr <* ws ~ P.char(')')
   val arithFactor: P[Term] =
     P.defer(
-      parens.backtrack | fieldAcc.backtrack | functionCall.backtrack | number.backtrack | _var
+      parens | fieldAcc | functionCall | number.backtrack | _var
     )
   def evalArithm(seq: (Term, List[(String, Term)])): Term = seq match
     case (x, Nil)            => x
@@ -54,18 +54,16 @@ object Parser:
   val fls: P[TBoolean] = P.string("false").as(TFalse)
   val boolParens: P[Term] = // parantheses
     (ws.soft ~ P.char('(') ~ ws).with1 *> P
-      .defer(implication) <* P.char(')').surroundedBy(ws)
+      .defer(implication) <* ws ~ P.char(')')
   val boolFactor: P[Term] =
-    P.defer(
-      tru.backtrack
-        | fls.backtrack
-        | boolParens.backtrack
-        | inSet.backtrack
-        | numComp.backtrack
-        | fieldAcc.backtrack
-        | functionCall.backtrack
-        | _var
-    )
+    boolParens
+      | P.defer(inSet)
+      | P.defer(numComp)
+      | P.defer(fieldAcc)
+      | P.defer(functionCall)
+      | tru.backtrack
+      | fls.backtrack
+      | _var
 
   // helper for boolean expressions with two sides
   val boolTpl = (factor: P[Term], separator: P[Unit]) =>
@@ -105,20 +103,22 @@ object Parser:
         throw new IllegalArgumentException(s"Not a boolean expression: $sth")
 
   // set expressions
+  val inSetFactor: P[Term] =
+    P.defer(fieldAcc | functionCall | number.backtrack | _var)
   val inSet: P[TBoolean] = P
     .defer(
-      ((ws.with1 *> term <* ws).soft <* P.string("in")) ~ term.surroundedBy(ws)
+      ((ws.with1 *> inSetFactor <* ws).soft <* P
+        .string("in") ~ ws) ~ inSetFactor
     )
     .map { (left, right) =>
       TInSet(left, right)
     }
 
   // number comparisons
-  val numComp: P[TBoolean] = P
-    .defer(
-      arithmExpr ~ (ws.soft.with1 *> P
-        .stringIn(List("<=", ">=", "<", ">")) <* ws) ~ arithmExpr
-    )
+  val numComp: P[TBoolean] = (
+    arithmExpr.soft ~ (ws.soft.with1 *> P
+      .stringIn(List("<=", ">=", "<", ">")) <* ws) ~ arithmExpr
+  )
     .map { case ((l, op), r) =>
       op match
         case "<=" => TLeq(left = l, right = r)
@@ -147,7 +147,7 @@ object Parser:
 
   // object orientation
   val args = P.defer0(term.repSep0(P.char(',') ~ ws))
-  val objFactor = P.defer(functionCall.backtrack | _var)
+  val objFactor = P.defer(functionCall | _var)
   val fieldAcc: P[TFAcc] =
     P.defer(
       objFactor.soft ~
@@ -167,15 +167,13 @@ object Parser:
         throw new IllegalArgumentException(s"Not a valid field access: $s")
 
   // functions
-  val functionCall: P[TFunC] = P
-    .defer(id ~ (P.char('(') *> args) <* P.char(')'))
+  val functionCall: P[TFunC] = (id.soft ~ (P.char('(') *> args) <* P.char(')'))
     .map { (id, arg) =>
       TFunC(name = id, args = arg)
     }
 
   // programs are sequences of terms
   val term: P[Term] =
-    P.defer(
-      fieldAcc.backtrack | functionCall.backtrack | booleanExpr.backtrack | number.backtrack | _var
-    )
+    fieldAcc | functionCall | booleanExpr | number.backtrack | _var
+
   val prog: P[NonEmptyList[Term]] = term.repSep(ws).between(ws, P.end)
