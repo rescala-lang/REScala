@@ -10,7 +10,6 @@ object Universe {
     val width        = 100
     val height       = 100
     val repetitions  = 5
-    val threadCounts = Range.inclusive(1, 8)
 
     val genCsv = !args.headOption.contains("nocsv")
 
@@ -25,11 +24,10 @@ object Universe {
       StandardOpenOption.CREATE
     )
 
-    for (repetition <- 0 to repetitions; threads <- threadCounts) {
-      println(s"rep: $repetition, threads: $threads")
+    for (repetition <- 0 to repetitions) {
+      println(s"rep: $repetition")
 
       System.gc()
-      Globals.setParallelism(threads)
 
       val world = new World(width, height)
 
@@ -45,7 +43,7 @@ object Universe {
       if (repetition > 0 && genCsv) {
         Files.write(
           Paths.get(outfile),
-          s"""$repetition,$threads,$duration,"${Globals.engineName}","UniverseCaseStudy",$height,$width,$nAnimals,$nPlants${"\n"}""".getBytes(),
+          s"""$repetition,$duration,"${Globals.engineName}","UniverseCaseStudy",$height,$width,$nAnimals,$nPlants${"\n"}""".getBytes(),
           StandardOpenOption.APPEND
         )
       }

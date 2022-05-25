@@ -2,7 +2,6 @@ package universe
 
 import universe.Globals.engine._
 
-import scala.collection.parallel.CollectionConverters._
 import scala.util.Random
 
 /** A World object unites a space (Board object), time (Time object), and a random object
@@ -24,9 +23,7 @@ class World(val width: Int = 100, val height: Int = 100) {
   def tick() = {
     time.tick.fire()
     board.removeDead()
-    val pc = board.elements.par
-    pc.tasksupport = Globals.taskSupport
-    pc.foreach { case (pos, be) => be.doStep(pos) }
+    board.elements.foreach { case (pos, be) => be.doStep(pos) }
   }
 
   /** batch spawns n Animals and m Plants */
@@ -64,9 +61,7 @@ class World(val width: Int = 100, val height: Int = 100) {
   def spawn(element: BoardElement, pos: Pos) = board.add(element, pos)
   def plan(f: => Unit)                       = synchronized(updates ::= (() => f))
   def runPlan() = {
-    val pc = updates.par
-    pc.tasksupport = Globals.taskSupport
-    pc.foreach { u =>
+    updates.foreach { u =>
       try {
         u()
       } catch {

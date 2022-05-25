@@ -2,43 +2,38 @@ import Dependencies._
 import Settings._
 import sbt.Def
 
-Global / onChangedBuildSource := ReloadOnSourceChanges
-ThisBuild / incOptions        := (ThisBuild / incOptions).value.withLogRecompileOnMacro(false)
 noPublish
 
-lazy val cfg = new {
-  val base      : Def.SettingsDefinition = commonCrossBuildVersions +: (scalaVersion_213)
-}
+val commonSettings = commonCrossBuildVersions +: (scalaVersion_213)
 
-lazy val rescalaProject = project.in(file(".")).settings(cfg.base, noPublish).aggregate(
+val CcsO = Compile / compile / scalacOptions
+
+lazy val rescalaProject = project.in(file(".")).settings(commonSettings, noPublish).aggregate(
   examples,
-  kofreJS,
-  kofreJVM,
+  kofre.js,
+  kofre.jvm,
   microbench,
-  replicationJS,
-  replicationJVM,
-  rescalaJS,
-  rescalaJVM,
+  replication.js,
+  replication.jvm,
+  rescala.js,
+  rescala.jvm,
   rescalafx,
   reswing,
   todolist,
-  universe,
   encryptedTodo,
   consoleReplication,
   consistentCalendar,
 )
 
-lazy val rescalaAll = project.in(file("Code")).settings(cfg.base, noPublish).aggregate(
-  rescalaJS,
-  rescalaJVM,
+lazy val rescalaAll = project.in(file("Code")).settings(commonSettings, noPublish).aggregate(
+  rescala.js,
+  rescala.jvm,
 )
-
-val CcsO = Compile / compile / scalacOptions
 
 lazy val rescala = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file("Code/Main"))
   .settings(
     name := "rescala",
-    cfg.base,
+    commonSettings,
     scalacOptions += (if (`is 3`(scalaVersion.value)) "" else "-Xdisable-assertions"),
     // scaladoc
     autoAPIMappings := true,
@@ -47,65 +42,41 @@ lazy val rescala = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file
     Compile / doc := (if (`is 3`(scalaVersion.value)) file("target/dummy/doc") else (Compile / doc).value),
     CcsO          := (if (`is 3`(scalaVersion.value)) CcsO.value.filter(_ != "-Xfatal-warnings") else CcsO.value),
     publishSonatype,
+    scalaReflectProvided,
     libraryDependencies ++= Seq(
       sourcecode.value,
-      retypecheck.value.cross(CrossVersion.for3Use2_13),
       reactiveStreams.value,
       scalatest.value,
-      if (`is 2.11`(scalaVersion.value))
-        "org.scalatestplus" %%% "scalacheck-1-15" % "3.2.4.0-M1" % "test"
-      else scalatestpluscheck.value,
-    ),
-    libraryDependencies ++= (if (`is 3`(scalaVersion.value)) None
-                             else Some(scalaOrganization.value % "scala-reflect" % scalaVersion.value % "provided"))
+      scalatestpluscheck.value,
+    ) ++ retypecheck.value,
   )
   .jsSettings(
-    Test / compile / scalacOptions ++= (if (`is 3`(scalaVersion.value)) List.empty
-                                        else List("-P:scalajs:nowarnGlobalExecutionContext")),
     libraryDependencies += scalatags.value % "provided,test",
-    jsEnv                                 := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
+    jsAcceptUnfairGlobalTasks,
+    jsEnvDom,
   )
-  .nativeSettings(
-    nativeLinkStubs := true
-  )
-
-lazy val rescalaJVM = rescala.jvm
-
-lazy val rescalaJS = rescala.js
-
-lazy val rescalaNative = rescala.native
 
 // =====================================================================================
 // Examples
 
 lazy val examples = project.in(file("Code/Examples/examples"))
-  .dependsOn(rescalaJVM, reswing)
+  .dependsOn(rescala.jvm, reswing)
   .settings(
     name := "rescala-examples",
-    cfg.base,
+    commonSettings,
     noPublish,
     fork := true,
     libraryDependencies ++= Seq(
       ("org.scala-lang.modules" %% "scala-xml"   % "1.3.0").cross(CrossVersion.for3Use2_13),
-      "org.scala-lang.modules" %% "scala-swing" % "3.0.0"
+      "org.scala-lang.modules"  %% "scala-swing" % "3.0.0"
     )
   )
 
-lazy val universe = project.in(file("Code/Examples/Universe"))
-  .dependsOn(rescalaJVM)
-  .settings(
-    cfg.base,
-    name := "rescala-universe",
-    noPublish,
-    libraryDependencies += ("org.scala-lang.modules" %% "scala-parallel-collections" % "1.0.0").cross(CrossVersion.for3Use2_13)
-  )
-  .enablePlugins(JavaAppPackaging)
-
 lazy val todolist = project.in(file("Code/Examples/Todolist"))
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(rescalaJS, replicationJS)
+  .dependsOn(replication.js)
   .settings(
-    cfg.base,
+    commonSettings,
     noPublish,
     name := "todolist",
     libraryDependencies ++= jsoniterScalaAll.value ++ Seq(
@@ -118,21 +89,22 @@ lazy val todolist = project.in(file("Code/Examples/Todolist"))
   )
 
 lazy val encryptedTodo = project.in(file("Code/Examples/EncryptedTodoFx"))
-  .dependsOn(replicationJVM)
+  .dependsOn(replication.jvm)
   .settings(
-    cfg.base,
+    commonSettings,
     noPublish,
     name := "encryptedTodo",
     libraryDependencies ++= jsoniterScalaAll.value,
-    addScalafxDependencies,
+    scalaFxDependencies,
+    fork := true,
   )
 
 lazy val consoleReplication = project.in(file("Code/Examples/ConsoleReplication"))
-  .dependsOn(rescalaJVM, replicationJVM)
+  .dependsOn(rescala.jvm, replication.jvm)
   .enablePlugins(JavaAppPackaging)
   .settings(
     name := "console replication",
-    cfg.base,
+    commonSettings,
     noPublish,
     fork               := true,
     run / connectInput := true,
@@ -145,11 +117,11 @@ lazy val consoleReplication = project.in(file("Code/Examples/ConsoleReplication"
   )
 
 lazy val consistentCalendar = project.in(file("Code/Examples/ConsistentCalendar"))
-  .dependsOn(rescalaJVM, replicationJVM)
+  .dependsOn(rescala.jvm, replication.jvm)
   .enablePlugins(JavaAppPackaging)
   .settings(
     name := "consistent-calendar",
-    cfg.base,
+    commonSettings,
     noPublish,
     fork               := true,
     run / connectInput := true,
@@ -164,12 +136,12 @@ lazy val consistentCalendar = project.in(file("Code/Examples/ConsistentCalendar"
 // Extensions
 
 lazy val reswing = project.in(file("Code/Extensions/RESwing"))
-  .settings(name := "reswing", cfg.base, noPublish, libraryDependencies += scalaSwing.value)
-  .dependsOn(rescalaJVM)
+  .settings(name := "reswing", commonSettings, noPublish, libraryDependencies += scalaSwing.value)
+  .dependsOn(rescala.jvm)
 
 lazy val rescalafx = project.in(file("Code/Extensions/javafx"))
-  .dependsOn(rescalaJVM)
-  .settings(name := "rescalafx", cfg.base, noPublish, addScalafxDependencies)
+  .dependsOn(rescala.jvm)
+  .settings(name := "rescalafx", commonSettings, noPublish, scalaFxDependencies, fork := true)
 
 lazy val kofre = crossProject(JVMPlatform, JSPlatform).crossType(CrossType.Pure)
   .in(file("Code/Extensions/Kofre"))
@@ -179,8 +151,6 @@ lazy val kofre = crossProject(JVMPlatform, JSPlatform).crossType(CrossType.Pure)
     publishSonatype,
     libraryDependencies ++= List(munit.value, munitScalacheck.value),
   )
-lazy val kofreJS  = kofre.js
-lazy val kofreJVM = kofre.jvm
 
 lazy val replication = crossProject(JVMPlatform, JSPlatform).crossType(CrossType.Pure)
   .in(file("Code/Extensions/Replication"))
@@ -188,7 +158,7 @@ lazy val replication = crossProject(JVMPlatform, JSPlatform).crossType(CrossType
   .dependsOn(kofre)
   .settings(
     name := "replication",
-    cfg.base,
+    commonSettings,
     libraryDependencies ++= jsoniterScalaAll.value ++ Seq(
       loci.communication.value,
       loci.circe.value,
@@ -210,12 +180,9 @@ lazy val replication = crossProject(JVMPlatform, JSPlatform).crossType(CrossType
     publishOnly213
   )
 
-lazy val replicationJS  = replication.js
-lazy val replicationJVM = replication.jvm
-
 lazy val distributedFullmv = project.in(file("Code/Extensions/MultiversionDistributed/multiversion"))
   .settings(
-    cfg.base,
+    commonSettings,
     name := "fullmv-distributed-multiversion",
     noPublish,
     libraryDependencies ++= circeAll.value,
@@ -227,24 +194,23 @@ lazy val distributedFullmv = project.in(file("Code/Extensions/MultiversionDistri
       loci.upickle.value,
     )
   )
-  .dependsOn(rescalaJVM, rescalaJVM % "test->test")
+  .dependsOn(rescala.jvm % "compile->compile;test->test")
 
 lazy val distributedFullMVExamples = project.in(file("Code/Extensions/MultiversionDistributed/examples"))
   .enablePlugins(JmhPlugin)
-  .settings(name := "fullmv-distributed-examples", cfg.base, noPublish)
+  .settings(name := "fullmv-distributed-examples", commonSettings, noPublish)
   .dependsOn(distributedFullmv % "test->test")
   .dependsOn(distributedFullmv % "compile->test")
-  .dependsOn(rescalaJVM % "test->test")
+  .dependsOn(rescala.jvm % "test->test")
   .enablePlugins(JavaAppPackaging)
 
 lazy val distributedFullMVBenchmarks = project.in(file("Code/Extensions/MultiversionDistributed/benchmarks"))
   .enablePlugins(JmhPlugin)
   .settings(
     name := "fullmv-distributed-benchmarks",
-    cfg.base,
+    commonSettings,
     noPublish,
-    (Compile / mainClass)       := Some("org.openjdk.jmh.Main"),
-    TaskKey[Unit]("compileJmh") := Seq(pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh / compile).dependOn.value
+    (Compile / mainClass) := Some("org.openjdk.jmh.Main"),
   )
   .dependsOn(distributedFullmv % "compile->test")
   .enablePlugins(JavaAppPackaging)
@@ -253,17 +219,17 @@ lazy val microbench = project.in(file("Code/Microbenchmarks"))
   .enablePlugins(JmhPlugin)
   .settings(
     name := "microbenchmarks",
-    cfg.base,
+    commonSettings,
     noPublish,
     // (Compile / mainClass) := Some("org.openjdk.jmh.Main"),
-    libraryDependencies ++= circeAll.value,
-    libraryDependencies ++= List(upickle.value, betterFiles.value.cross(CrossVersion.for3Use2_13)),
-    libraryDependencies ++= jsoniterScalaAll.value,
+    libraryDependencies ++= circeAll.value ++ jsoniterScalaAll.value ++ List(
+      upickle.value,
+      betterFiles.value.cross(CrossVersion.for3Use2_13)
+    ),
     jolSettings,
-    TaskKey[Unit]("compileJmh") := Seq(pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh / compile).dependOn.value
   )
   .enablePlugins(JavaAppPackaging)
-  .dependsOn(rescalaJVM, replicationJVM, kofreJVM)
+  .dependsOn(rescala.jvm, replication.jvm, kofre.jvm)
 
 // =====================================================================================
 // custom tasks
@@ -301,25 +267,3 @@ lazy val publishSonatype = Def.settings(
   },
   publishMavenStyle := true
 )
-
-// Add JavaFX dependencies, should probably match whatever the scalafx version was tested against:
-// https://www.scalafx.org/news/releases/
-// then again, the announcement for 12.0.2 seems incorrect …
-lazy val addScalafxDependencies = {
-  // Determine OS version of JavaFX binaries
-  val osName = System.getProperty("os.name") match {
-    case n if n.startsWith("Linux")   => "linux"
-    case n if n.startsWith("Mac")     => "mac"
-    case n if n.startsWith("Windows") => "win"
-    case _                            => throw new Exception("Unknown platform!")
-  }
-  Seq(
-    libraryDependencies ++= Seq(
-      "org.scalafx" %% "scalafx" % "17.0.1-R26",
-      scalaSwing.value,
-    ),
-    libraryDependencies ++= Seq("base", "controls", "fxml", "graphics", "media", "swing", "web").map(m =>
-      "org.openjfx" % s"javafx-$m" % "17.0.2" classifier osName
-    )
-  )
-}

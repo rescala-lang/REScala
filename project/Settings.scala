@@ -4,6 +4,7 @@
 import sbt.Keys._
 import sbt._
 import Dependencies.{Versions => V}
+import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.jsEnv
 
 object Settings {
 
@@ -116,6 +117,7 @@ object Settings {
     Test / compile / scalacOptions ++= List("-rewrite", "-source", "3.0-migration")
   )
 
+  // the resolver itself is probably not used by any project, but kept around for historical documentation purposes
   val legacyStgResolver =
     resolvers += ("STG old bintray repo" at "http://www.st.informatik.tu-darmstadt.de/maven/")
       .withAllowInsecureProtocol(true)
@@ -126,7 +128,8 @@ object Settings {
     publishArtifact   := false,
     packagedArtifacts := Map.empty,
     publish           := {},
-    publishLocal      := {}
+    publishLocal      := {},
+    publishM2         := {}
   )
 
   val publishOnly213 =
@@ -137,9 +140,23 @@ object Settings {
       publishLocal      := (if (`is 2.13`(scalaVersion.value)) publishLocal.value else {})
     )
 
+  // this is a tool to analyse memory consumption/layout
   val jolSettings = Seq(
     javaOptions += "-Djdk.attach.allowAttachSelf",
     fork := true,
     libraryDependencies += Dependencies.jol.value
   )
+
+  // see https://www.scala-js.org/news/2021/12/10/announcing-scalajs-1.8.0/#the-default-executioncontextglobal-is-now-deprecated
+  val jsAcceptUnfairGlobalTasks = Def.settings(
+    scalacOptions ++=
+    (if (`is 3`(scalaVersion.value)) List.empty
+     else List("-P:scalajs:nowarnGlobalExecutionContext")),
+    Test / scalacOptions ++=
+    (if (`is 3`(scalaVersion.value)) List.empty
+     else List("-P:scalajs:nowarnGlobalExecutionContext")),
+  )
+
+  // sse https://www.scala-js.org/doc/project/js-environments.html
+  val jsEnvDom = jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
 }

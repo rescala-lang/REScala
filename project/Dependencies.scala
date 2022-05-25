@@ -3,6 +3,7 @@
 
 import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
 import sbt._
+import Settings.{`is 3`, `is 2.11`}
 import sbt.Keys._
 
 object Dependencies {
@@ -19,7 +20,7 @@ object Dependencies {
     val jsoniterScalaCore  = "2.13.25"
     val jsoniterScalaOld   = "2.13.3" // this is the latest version supporting Scala 2.11 and java 8
     val jsoup              = "1.15.1"
-    val munit              = "0.7.29"
+    val munit              = "1.0.0-M4"
     val normalizecss       = "8.0.1"
     val okHttp             = "4.9.3"
     val pprint             = "0.7.3"
@@ -46,34 +47,39 @@ object Dependencies {
 
   import Dependencies.{Versions => V}
 
-  val betterFiles        = Def.setting("com.github.pathikrit" %% "better-files" % V.betterFiles)
-  val catsCore           = Def.setting("org.typelevel" %%% "cats-core" % V.catsCore)
-  val decline            = Def.setting("com.monovore" %%% "decline" % V.decline)
-  val directories        = Def.setting("dev.dirs" % "directories" % V.directories)
-  val fastparse          = Def.setting("com.lihaoyi" %%% "fastparse" % V.fastparse)
-  val jetty              = Def.setting("org.eclipse.jetty" % "jetty-rewrite" % V.jetty)
-  val jol                = Def.setting("org.openjdk.jol" % "jol-core" % V.jol)
-  val jsoup              = Def.setting("org.jsoup" % "jsoup" % V.jsoup)
-  val munit              = Def.setting("org.scalameta" %%% "munit" % V.munit % Test)
-  val munitScalacheck    = Def.setting("org.scalameta" %%% "munit-scalacheck" % V.munit % Test)
-  val normalizecss       = Def.setting("org.webjars.npm" % "normalize.css" % V.normalizecss)
-  val okHttp             = Def.setting("com.squareup.okhttp3" % "okhttp" % V.okHttp)
-  val pprint             = Def.setting("com.lihaoyi" %%% "pprint" % V.pprint)
-  val reactiveStreams    = Def.setting("org.reactivestreams" % "reactive-streams" % V.reactiveStreams)
-  val retypecheck        = Def.setting("io.github.scala-loci" %% "retypecheck" % V.retypecheck)
-  val scalacheck         = Def.setting("org.scalacheck" %%% "scalacheck" % V.scalacheck % "test")
-  val scalactic          = Def.setting("org.scalactic" %% "scalactic" % V.scalactic)
-  val scalaJavaTime      = Def.setting("io.github.cquiroz" %%% "scala-java-time" % V.scalaJavaTime)
-  val scalajsDom         = Def.setting("org.scala-js" %%% "scalajs-dom" % V.scalajsDom)
-  val scalaSwing         = Def.setting("org.scala-lang.modules" %% "scala-swing" % V.scalaSwing)
-  val scalatags          = Def.setting("com.lihaoyi" %%% "scalatags" % V.scalatags)
-  val scalatest          = Def.setting("org.scalatest" %%% "scalatest" % V.scalatest % "test")
-  val scalatestpluscheck = Def.setting("org.scalatestplus" %%% "scalacheck-1-15" % V.scalatestpluscheck % "test")
-  val scribe             = Def.setting("com.outr" %%% "scribe" % V.scribe)
-  val scribeSlf4j        = Def.setting("com.outr" %% "scribe-slf4j" % V.scribe)
-  val sourcecode         = Def.setting("com.lihaoyi" %%% "sourcecode" % V.sourcecode)
-  val tomlScala          = Def.setting("tech.sparse" %%% "toml-scala" % V.tomlScala)
-  val upickle            = Def.setting("com.lihaoyi" %% "upickle" % V.upickle)
+  val betterFiles     = Def.setting("com.github.pathikrit" %% "better-files" % V.betterFiles)
+  val catsCore        = Def.setting("org.typelevel" %%% "cats-core" % V.catsCore)
+  val decline         = Def.setting("com.monovore" %%% "decline" % V.decline)
+  val directories     = Def.setting("dev.dirs" % "directories" % V.directories)
+  val fastparse       = Def.setting("com.lihaoyi" %%% "fastparse" % V.fastparse)
+  val jetty           = Def.setting("org.eclipse.jetty" % "jetty-rewrite" % V.jetty)
+  val jol             = Def.setting("org.openjdk.jol" % "jol-core" % V.jol)
+  val jsoup           = Def.setting("org.jsoup" % "jsoup" % V.jsoup)
+  val munit           = Def.setting("org.scalameta" %%% "munit" % V.munit % Test)
+  val munitScalacheck = Def.setting("org.scalameta" %%% "munit-scalacheck" % V.munit % Test)
+  val normalizecss    = Def.setting("org.webjars.npm" % "normalize.css" % V.normalizecss)
+  val okHttp          = Def.setting("com.squareup.okhttp3" % "okhttp" % V.okHttp)
+  val pprint          = Def.setting("com.lihaoyi" %%% "pprint" % V.pprint)
+  val reactiveStreams = Def.setting("org.reactivestreams" % "reactive-streams" % V.reactiveStreams)
+  val retypecheck =
+    Def.setting(if (`is 3`(scalaVersion.value)) None
+    else Some("io.github.scala-loci" %% "retypecheck" % V.retypecheck))
+  val scalacheck    = Def.setting("org.scalacheck" %%% "scalacheck" % V.scalacheck % "test")
+  val scalactic     = Def.setting("org.scalactic" %% "scalactic" % V.scalactic)
+  val scalaJavaTime = Def.setting("io.github.cquiroz" %%% "scala-java-time" % V.scalaJavaTime)
+  val scalajsDom    = Def.setting("org.scala-js" %%% "scalajs-dom" % V.scalajsDom)
+  val scalaSwing    = Def.setting("org.scala-lang.modules" %% "scala-swing" % V.scalaSwing)
+  val scalatags     = Def.setting("com.lihaoyi" %%% "scalatags" % V.scalatags)
+  val scalatest     = Def.setting("org.scalatest" %%% "scalatest" % V.scalatest % "test")
+  val scalatestpluscheck =
+    Def.setting(if (`is 2.11`(scalaVersion.value))
+      "org.scalatestplus"    %%% "scalacheck-1-15" % "3.2.4.0-M1"         % "test"
+    else "org.scalatestplus" %%% "scalacheck-1-15" % V.scalatestpluscheck % "test")
+  val scribe      = Def.setting("com.outr" %%% "scribe" % V.scribe)
+  val scribeSlf4j = Def.setting("com.outr" %% "scribe-slf4j" % V.scribe)
+  val sourcecode  = Def.setting("com.lihaoyi" %%% "sourcecode" % V.sourcecode)
+  val tomlScala   = Def.setting("tech.sparse" %%% "toml-scala" % V.tomlScala)
+  val upickle     = Def.setting("com.lihaoyi" %% "upickle" % V.upickle)
 
   val jsoniterScalaAll = Def.setting {
     val jsoniterVersion = if (Settings.`is 2.11`(scalaVersion.value))
@@ -84,6 +90,10 @@ object Dependencies {
       "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % jsoniterVersion
     )
   }
+
+  val scalaReflectProvided = libraryDependencies ++=
+    (if (`is 3`(scalaVersion.value)) None
+     else Some(scalaOrganization.value % "scala-reflect" % scalaVersion.value % "provided"))
 
   val circeAll = Def.setting(Seq("core", "generic", "parser")
     .map(n => "io.circe" %%% s"circe-$n" % V.circeCore))
@@ -104,6 +114,28 @@ object Dependencies {
     val wsWeb         = generic("communicator-ws-webnative")
     val wsJavalin     = generic("communicator-ws-javalin")
     val wsJetty       = Def.setting(Seq(generic("communicator-ws-jetty").value, jetty.value))
+  }
+
+  // Add JavaFX dependencies, should probably match whatever the scalafx version was tested against:
+  // https://www.scalafx.org/news/releases/
+  // then again, the announcement for 12.0.2 seems incorrect …
+  lazy val scalaFxDependencies = {
+    // Determine OS version of JavaFX binaries
+    val osName = System.getProperty("os.name") match {
+      case n if n.startsWith("Linux")   => "linux"
+      case n if n.startsWith("Mac")     => "mac"
+      case n if n.startsWith("Windows") => "win"
+      case _                            => throw new Exception("Unknown platform!")
+    }
+    Seq(
+      libraryDependencies ++= Seq(
+        "org.scalafx" %% "scalafx" % "17.0.1-R26",
+        scalaSwing.value,
+      ),
+      libraryDependencies ++= Seq("base", "controls", "fxml", "graphics", "media", "swing", "web").map(m =>
+        "org.openjfx" % s"javafx-$m" % "18.0.1" classifier osName
+      )
+    )
   }
 
 }
