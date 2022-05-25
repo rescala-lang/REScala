@@ -48,7 +48,7 @@ class CatchUp {
   // Old mouse position, some time ago
   val mouseDelayed: Signal[Point] = Signal {
     mouse.position.changed.last(20).value.headOption match {
-      case None => mouse.position.value
+      case None    => mouse.position.value
       case Some(v) => v
     }
   }
@@ -65,7 +65,7 @@ class CatchUp {
   val scoreString = Signal { "You caught up " + numberOfHits() + " times." }
 
   // GUI redrawing code
-  val stateChanged = mouse.position.changed.|| [Any](tick)
+  val stateChanged = mouse.position.changed.||[Any](tick)
   stateChanged += { (_) => frame.repaint() }
 
   // GUI

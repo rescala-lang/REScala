@@ -5,11 +5,11 @@ import java.nio.file.{Files, Paths, StandardOpenOption}
 object Universe {
 
   def main(args: Array[String]): Unit = {
-    val nAnimals     = 100
-    val nPlants      = 300
-    val width        = 100
-    val height       = 100
-    val repetitions  = 5
+    val nAnimals    = 100
+    val nPlants     = 300
+    val width       = 100
+    val height      = 100
+    val repetitions = 5
 
     val genCsv = !args.headOption.contains("nocsv")
 

@@ -25,7 +25,7 @@ class ReTextComponent(
     preferredSize: ReSwingValue[Dimension] = ()
 ) extends ReComponent(background, foreground, font, enabled, minimumSize, maximumSize, preferredSize) {
   override protected lazy val peer: TextComponent with ComponentMixin = new TextComponent with ComponentMixin
-  final lazy val localPeer             : TextComponent with ComponentMixin = peer
+  final lazy val localPeer: TextComponent with ComponentMixin         = peer
 
   val selected = ReSwingValue.using({ () => peer.selected }, (caret.peer, classOf[CaretUpdate]))
 
@@ -46,7 +46,8 @@ class ReTextComponent(
       val blinkRate: ReSwingValue[Int],
       val color: ReSwingValue[Color]
   ) {
-    protected[ReTextComponent] val peer: ReTextComponent.this.localPeer.caret.type = ReTextComponent.this.localPeer.caret
+    protected[ReTextComponent] val peer: ReTextComponent.this.localPeer.caret.type =
+      ReTextComponent.this.localPeer.caret
 
     val dot  = ReSwingValue.using({ () => peer.dot }, (peer, classOf[CaretUpdate]))
     val mark = ReSwingValue.using({ () => peer.mark }, (peer, classOf[CaretUpdate]))

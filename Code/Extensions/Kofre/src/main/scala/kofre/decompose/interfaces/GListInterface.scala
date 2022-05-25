@@ -20,7 +20,7 @@ import scala.collection.mutable.ListBuffer
   */
 object GListInterface {
   sealed trait GListNode[+E]
-  case class GListHead() extends GListNode[Nothing]
+  case class GListHead()            extends GListNode[Nothing]
   case class GListElem[E](value: E) extends GListNode[E]
 
   type GList[E] = Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]]
@@ -32,8 +32,8 @@ object GListInterface {
   implicit def GListAsUIJDLattice[E]: DecomposeLattice[GList[E]] =
     new DecomposeLattice[Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]]] {
       override def lteq(
-                         left: Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]],
-                         right: Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]]
+          left: Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]],
+          right: Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]]
       ): Boolean =
         left.keys.forall { k =>
           right.get(k).contains(left(k))
@@ -46,13 +46,13 @@ object GListInterface {
 
       @tailrec
       private def insertEdge(
-                              state: Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]],
-                              edge: (GListNode[TimedVal[E]], GListElem[TimedVal[E]])
+          state: Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]],
+          edge: (GListNode[TimedVal[E]], GListElem[TimedVal[E]])
       ): Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]] =
         edge match {
           case (l, r @ GListElem(e1)) =>
             state.get(l) match {
-              case None                       => state + edge
+              case None => state + edge
               case Some(next @ GListElem(e2)) =>
                 if (e1.laterThan(e2)) state + edge + (r -> next)
                 else insertEdge(state, next -> r)
@@ -75,8 +75,8 @@ object GListInterface {
 
       /** By assumption: associative, commutative, idempotent. */
       override def merge(
-                          left: Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]],
-                          right: Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]]
+          left: Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]],
+          right: Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]]
       ): Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]] =
         (right.keySet -- right.values).foldLeft(left) { (state, startNode) =>
           insertRec(state, right, startNode)
@@ -143,7 +143,7 @@ object GListInterface {
     @tailrec
     private def withoutRec(state: GList[E], current: GListNode[TimedVal[E]], elems: Set[E]): GList[E] =
       state.get(current) match {
-        case None                                                   => state
+        case None => state
         case Some(next @ GListElem(tv)) if elems.contains(tv.value) =>
           val edgeRemoved = state.get(next) match {
             case Some(nextnext) => state.removed(current).removed(next) + (current -> nextnext)
@@ -151,7 +151,7 @@ object GListInterface {
           }
 
           withoutRec(edgeRemoved, current, elems)
-        case Some(next)                                             => withoutRec(state, next, elems)
+        case Some(next) => withoutRec(state, next, elems)
       }
 
     def without(elems: Set[E])(using MutationP): C = withoutRec(current, GListHead(), elems).mutator

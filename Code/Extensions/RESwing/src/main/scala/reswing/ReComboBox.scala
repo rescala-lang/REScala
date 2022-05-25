@@ -15,7 +15,8 @@ class ReComboBox[A](
     maximumSize: ReSwingValue[Dimension] = (),
     preferredSize: ReSwingValue[Dimension] = ()
 ) extends ReComponent(background, foreground, font, enabled, minimumSize, maximumSize, preferredSize) {
-  final override protected lazy val peer: ComboBox[A] with ComponentMixin = new ComboBox[A](Seq.empty[A]) with ComponentMixin
+  final override protected lazy val peer: ComboBox[A] with ComponentMixin =
+    new ComboBox[A](Seq.empty[A]) with ComponentMixin
 
   protected val javaPeer = peer.peer.asInstanceOf[javax.swing.JComboBox[A]]
 

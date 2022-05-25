@@ -23,7 +23,7 @@ trait EventCompatBundle extends ReadableMacroBundle {
       * @group operator
       */
     @cutOutOfUserComputation
-    final infix inline def && (inline expression: T => Boolean)(implicit ticket: CreationTicket): Event[T] =
+    final infix inline def &&(inline expression: T => Boolean)(implicit ticket: CreationTicket): Event[T] =
       Event.dynamic { this.value.filter(expression) }
 
     /** Collects the results from a partial function

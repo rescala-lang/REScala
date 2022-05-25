@@ -28,13 +28,13 @@ sealed abstract class Shape[T] {
 // point
 //
 object Point {
-  implicit def fromPoint[T](p: Point[T]): (T, T) = (p.x, p.y)
+  implicit def fromPoint[T](p: Point[T]): (T, T)        = (p.x, p.y)
   implicit def toPoint[T: Numeric](p: (T, T)): Point[T] = Point(p._1, p._2)
 }
 
 case class Point[@specialized(Int, Double) T: Numeric](x: T, y: T) extends Shape[T] {
   def toDouble: Point[Double] = Point(x.toDouble, y.toDouble)
-  def toInt: Point[Int] = Point(x.toInt, y.toInt)
+  def toInt: Point[Int]       = Point(x.toInt, y.toInt)
 
   def +(p: Point[T]) = Point(x + p.x, y + p.y)
   def -(p: Point[T]) = Point(x - p.x, y - p.y)

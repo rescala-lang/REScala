@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit
 class Creation {
 
   var engine: RescalaInterface = _
-  final lazy val stableEngine        = engine
+  final lazy val stableEngine  = engine
   import stableEngine._
 
   @Setup

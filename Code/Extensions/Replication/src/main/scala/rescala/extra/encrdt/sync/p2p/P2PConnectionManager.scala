@@ -66,18 +66,26 @@ class P2PConnectionManager[S](val localReplicaId: String, localStateProvider: ()
 
   def addPendingConnection(remoteReplicaId: String, handler: CrdtSyncWebSocketHandler[S]): Boolean = {
     if (!handlers.contains(remoteReplicaId))
-      handler == pendingConnections.computeIfAbsent(remoteReplicaId, new function.Function[Any, CrdtSyncWebSocketHandler[S]] {
-        override def apply(t: Any): CrdtSyncWebSocketHandler[S] = handler
-      })
+      handler == pendingConnections.computeIfAbsent(
+        remoteReplicaId,
+        new function.Function[Any, CrdtSyncWebSocketHandler[S]] {
+          override def apply(t: Any): CrdtSyncWebSocketHandler[S] = handler
+        }
+      )
     else false
   }
 
   def promoteHandler(handler: CrdtSyncWebSocketHandler[S]): Boolean = {
     val remoteReplicaId = handler.remoteReplicaId
     if (pendingConnections.get(remoteReplicaId) == handler) {
-      if (handler == handlers.computeIfAbsent(remoteReplicaId, new function.Function[Any, CrdtSyncWebSocketHandler[S]] {
-        override def apply(t: Any): CrdtSyncWebSocketHandler[S] = handler
-      })) {
+      if (
+        handler == handlers.computeIfAbsent(
+          remoteReplicaId,
+          new function.Function[Any, CrdtSyncWebSocketHandler[S]] {
+            override def apply(t: Any): CrdtSyncWebSocketHandler[S] = handler
+          }
+        )
+      ) {
         if (pendingConnections.remove(remoteReplicaId, handler)) {
           println(s"Promoted handler for $remoteReplicaId")
           return true
@@ -132,7 +140,7 @@ class P2PConnectionManager[S](val localReplicaId: String, localStateProvider: ()
 
   def stop(): Unit = {
     println("Stopping ConnectionManager")
-    handlers.forEach( new BiConsumer[Any, CrdtSyncWebSocketHandler[S]] {
+    handlers.forEach(new BiConsumer[Any, CrdtSyncWebSocketHandler[S]] {
       override def accept(t: Any, handler: CrdtSyncWebSocketHandler[S]): Unit = handler.close()
     })
     crdtSyncWebSocketClient.stop()

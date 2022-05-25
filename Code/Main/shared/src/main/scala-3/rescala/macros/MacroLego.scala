@@ -62,7 +62,7 @@ class MacroLego[Ops <: Operators: Type](
 
       def handleFind(x: Term): (List[Term], Boolean) =
         val before = acc._1
-        val res = foldTree((Nil, true), x)(owner)
+        val res    = foldTree((Nil, true), x)(owner)
         // we do not find things with nested things inside
         if (res._1.nonEmpty) then (acc._1, false)
         else (x :: acc._1, acc._2)
@@ -123,10 +123,10 @@ class MacroLego[Ops <: Operators: Type](
   }
 
   def makeReactive[F[_]: Type, T: Type](expr: Expr[F[T]], rtype: ReactiveType): Expr[Any] = {
-    val fi = FindInterp().foldTree((Nil, true), expr.asTerm)(Symbol.spliceOwner)
+    val fi                = FindInterp().foldTree((Nil, true), expr.asTerm)(Symbol.spliceOwner)
     val foundAbstractions = fi._1
-    val foundStatic = fi._2
-    val definitions = FindDefs().foldTree(Nil, expr.asTerm)(Symbol.spliceOwner)
+    val foundStatic       = fi._2
+    val definitions       = FindDefs().foldTree(Nil, expr.asTerm)(Symbol.spliceOwner)
 
     // println(s"contains symbols: ${definitions}")
     val found = foundAbstractions.filterNot { fa =>

@@ -14,7 +14,7 @@ class MillBoard {
 
   /* slots by the 16 lines of the game */
   val lines = Signal { // #SIG
-    MillBoardRenamed.lines map {_ map { slot => stonesVar()(slot.index) } }
+    MillBoardRenamed.lines map { _ map { slot => stonesVar()(slot.index) } }
   }
 
   /* lines mapped to owners */

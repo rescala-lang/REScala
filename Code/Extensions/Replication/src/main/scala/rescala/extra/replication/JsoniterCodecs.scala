@@ -4,7 +4,9 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, Jso
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import kofre.base.Defs.Time
 import kofre.datatypes.RGA.RGANode
-import kofre.datatypes.{AddWinsSet, EnableWinsFlag, Epoche, GrowMap, GrowOnlyCounter, PosNegCounter, RGA, TimedVal, TwoPhaseSet}
+import kofre.datatypes.{
+  AddWinsSet, EnableWinsFlag, Epoche, GrowMap, GrowOnlyCounter, PosNegCounter, RGA, TimedVal, TwoPhaseSet
+}
 import kofre.decompose.interfaces.GListInterface.{GList, GListElem, GListNode}
 import kofre.decompose.interfaces.LexCounterInterface.LexPair
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
@@ -62,8 +64,8 @@ object JsoniterCodecs {
   /** GList */
 
   @nowarn("msg=never used")
-  def mapArrayCodec[A: JsonValueCodec, B: JsonValueCodec]: JsonValueCodec[Map[A, B]] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
-
+  def mapArrayCodec[A: JsonValueCodec, B: JsonValueCodec]: JsonValueCodec[Map[A, B]] =
+    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   @nowarn("msg=never used")
   def timedTupleCodec[A: JsonValueCodec]: JsonValueCodec[(A, String, Long, Long)] = JsonCodecMaker.make
@@ -71,14 +73,17 @@ object JsoniterCodecs {
   @nowarn("msg=never used")
   implicit def timedValCodec[A: JsonValueCodec]: JsonValueCodec[TimedVal[A]] = new JsonValueCodec[TimedVal[A]] {
     override def decodeValue(in: JsonReader, default: TimedVal[A]): TimedVal[A] = {
-      val (a,b,c,d) = timedTupleCodec[A].decodeValue(in, if (default == null) null else (default.value, default.replicaID, default.nanoTime, default.timestamp))
-      TimedVal(a,b,c,d)
+      val (a, b, c, d) = timedTupleCodec[A].decodeValue(
+        in,
+        if (default == null) null
+        else (default.value, default.replicaID, default.nanoTime, default.timestamp)
+      )
+      TimedVal(a, b, c, d)
     }
     override def encodeValue(x: TimedVal[A], out: JsonWriter): Unit =
       timedTupleCodec[A].encodeValue((x.value, x.replicaID, x.nanoTime, x.timestamp), out)
     override def nullValue: TimedVal[A] = null
   }
-
 
   @nowarn("msg=never used")
   implicit def GListStateCodec[E: JsonValueCodec]: JsonValueCodec[GList[E]] = {
@@ -161,7 +166,7 @@ object JsoniterCodecs {
         Dotted(a, b)
       }
       override def encodeValue(x: Dotted[E], out: JsonWriter): Unit = dottedTuple.encodeValue((x.store, x.context), out)
-      override def nullValue: Dotted[E] = null
+      override def nullValue: Dotted[E]                             = null
     }
   }
 

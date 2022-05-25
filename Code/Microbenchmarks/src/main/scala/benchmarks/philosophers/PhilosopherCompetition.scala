@@ -122,9 +122,10 @@ class Competition extends BusyThreads {
   def cleanEating(): Unit = {
     // print(s"actually eaten: ${ table.eaten.get() } measured: ")
     table.eaten.set(0)
-    stableTable.seatings.foreach{seat =>
+    stableTable.seatings.foreach { seat =>
       val phil: stableTable.engine.Var[Philosopher] = seat.philosopher
-      phil.set(Thinking)(stableTable.engine.scheduler)}
+      phil.set(Thinking)(stableTable.engine.scheduler)
+    }
   }
 
   final def deal[A](initialDeck: List[A], numberOfHands: Int): List[List[A]] = {

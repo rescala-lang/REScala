@@ -16,8 +16,8 @@ import java.util.concurrent.TimeUnit
 @State(Scope.Thread)
 class ReadBenchmark {
   var engine: RescalaInterface = _
-  final lazy val stableEngine        = engine
-  final lazy val reactorApi          = new ReactorBundle[stableEngine.type](stableEngine)
+  final lazy val stableEngine  = engine
+  final lazy val reactorApi    = new ReactorBundle[stableEngine.type](stableEngine)
 
   import reactorApi._
   import stableEngine._

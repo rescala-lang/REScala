@@ -43,7 +43,7 @@ class FollowMouse {
   val y = Signal { mouseY() + yOffset().toInt }
 
   // redraw code
-  val stateChanged = mouse.position.changed .|| [Any](tick)
+  val stateChanged = mouse.position.changed.||[Any](tick)
   stateChanged += { _ => frame.repaint() }
 
   // drawing code

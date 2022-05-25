@@ -160,8 +160,8 @@ private[reswing] trait ReSwingValueConnection {
 
   private val delayedInitValues: ListBuffer[() => Unit] = ListBuffer.empty[() => Unit]
   private val changingReactions                         = Map.empty[Class[_], ListBuffer[() => Unit]]
-  private val changingProperties = Map.empty[String, ListBuffer[() => Unit]]
-  private val enforcedProperties = Map.empty[String, () => Unit]
+  private val changingProperties                        = Map.empty[String, ListBuffer[() => Unit]]
+  private val enforcedProperties                        = Map.empty[String, () => Unit]
 
   private val reactor: Reactor = new Reactor {
     reactions += {

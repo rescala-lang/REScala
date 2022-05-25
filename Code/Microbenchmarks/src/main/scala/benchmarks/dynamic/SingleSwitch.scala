@@ -17,7 +17,7 @@ import rescala.interface.RescalaInterface
 class SingleSwitch {
 
   var engine: RescalaInterface = _
-  final lazy val stableEngine        = engine
+  final lazy val stableEngine  = engine
   import stableEngine._
 
   var source: Var[Int] = _
