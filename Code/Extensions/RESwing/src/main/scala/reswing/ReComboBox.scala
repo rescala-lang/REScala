@@ -1,6 +1,6 @@
 package reswing
 
-import scala.swing.{Color, ComboBox, Dimension, Font, Publisher}
+import scala.swing.{Color, ComboBox, Dimension, Font}
 import scala.swing.event.{ListChanged, ListElementsAdded, ListElementsRemoved, SelectionChanged}
 
 class ReComboBox[A](
