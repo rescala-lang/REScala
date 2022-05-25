@@ -150,11 +150,11 @@ object Settings {
   // see https://www.scala-js.org/news/2021/12/10/announcing-scalajs-1.8.0/#the-default-executioncontextglobal-is-now-deprecated
   val jsAcceptUnfairGlobalTasks = Def.settings(
     scalacOptions ++=
-    (if (`is 3`(scalaVersion.value)) List.empty
-     else List("-P:scalajs:nowarnGlobalExecutionContext")),
+      (if (`is 3`(scalaVersion.value)) List.empty
+       else List("-P:scalajs:nowarnGlobalExecutionContext")),
     Test / scalacOptions ++=
-    (if (`is 3`(scalaVersion.value)) List.empty
-     else List("-P:scalajs:nowarnGlobalExecutionContext")),
+      (if (`is 3`(scalaVersion.value)) List.empty
+       else List("-P:scalajs:nowarnGlobalExecutionContext")),
   )
 
   // sse https://www.scala-js.org/doc/project/js-environments.html
