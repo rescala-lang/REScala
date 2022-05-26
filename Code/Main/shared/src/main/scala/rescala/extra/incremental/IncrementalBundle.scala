@@ -443,7 +443,7 @@ trait IncrementalBundle extends Core {
       }
 
     def addInTx(delta: Delta[T])(implicit ticket: AdmissionTicket): Unit = {
-      delta match {
+      (delta: @unchecked) match {
         case Addition(value) => {
           val counter = elements.getOrElse(value, 0)
           if (counter == 0)

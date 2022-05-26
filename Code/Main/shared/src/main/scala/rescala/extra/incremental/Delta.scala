@@ -3,7 +3,7 @@ package rescala.extra.incremental
 /** Deltas represent a change that will happen on reactive sequences. This could be adding, removing or no change at all
   * @tparam T type of the value the Delta holds
   */
-trait Delta[+T] {
+sealed trait Delta[+T] {
 
   /** Filters the value of the Delta.
     * If accepted by the filter function the Delta is returned, otherwise NoChange is returned

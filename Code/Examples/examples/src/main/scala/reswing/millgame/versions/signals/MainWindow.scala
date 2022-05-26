@@ -18,8 +18,6 @@ object MainWindow extends SimpleSwingApplication {
 
   def top =
     new MainFrame {
-      import scala.language.reflectiveCalls
-
       game.gameWon += { winner => // #HDL
         Dialog.showMessage(ui, "Game won by " + winner, "Game ended", Dialog.Message.Info)
       }

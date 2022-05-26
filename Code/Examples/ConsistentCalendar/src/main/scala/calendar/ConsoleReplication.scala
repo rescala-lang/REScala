@@ -23,7 +23,7 @@ object Commandline {
 
     (idArg, listenPortArg, connectArg).mapN {
       case (id, listenPort, connections) =>
-        val ipsAndPorts = connections.map {
+        val ipsAndPorts = connections.collect {
           case ipAndPort(ip, port) => (ip, port.toInt)
         }
 

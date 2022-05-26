@@ -26,7 +26,6 @@ class TodoAppUI(val storagePrefix: String) {
 
   implicit val stringCodec: JsonValueCodec[String] = JsonCodecMaker.make
 
-  @scala.annotation.nowarn // Auto-application to `()`
   def getContents(): TypedTag[Div] = {
 
     val todoInputTag: JsDom.TypedTag[Input] = input(

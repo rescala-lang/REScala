@@ -17,7 +17,6 @@ import reswing.ReMenuItem.toMenuItem
 import reswing.{ReMenu, ReMenuItem, ReSwingValue}
 
 import scala.collection.mutable.HashMap
-import scala.language.reflectiveCalls
 import scala.swing.BorderPanel.Position
 import scala.swing.TabbedPane.Page
 import scala.swing.{

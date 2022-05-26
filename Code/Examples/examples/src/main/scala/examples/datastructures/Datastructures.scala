@@ -45,7 +45,7 @@ class SStack[T] {
   // methods mutating the state of the SQueue
   def push(elem: T): Unit = _stack.transform(elem :: _)
   def pop(): T = {
-    val out :: rest = _stack.now: @scala.annotation.nowarn
+    val out :: rest = _stack.now
     _stack.set(rest)
     out
   }

@@ -6,8 +6,6 @@ noPublish
 
 val commonSettings = commonCrossBuildVersions +: (scalaVersion_213)
 
-val CcsO = Compile / compile / scalacOptions
-
 lazy val rescalaProject = project.in(file(".")).settings(commonSettings, noPublish).aggregate(
   examples,
   kofre.js,
@@ -34,13 +32,11 @@ lazy val rescala = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file
   .settings(
     name := "rescala",
     commonSettings,
-    scalacOptions += (if (`is 3`(scalaVersion.value)) "" else "-Xdisable-assertions"),
     // scaladoc
     autoAPIMappings := true,
     Compile / doc / scalacOptions += "-groups",
     // dotty seems to be currently unable to compile the docs … ?
     Compile / doc := (if (`is 3`(scalaVersion.value)) file("target/dummy/doc") else (Compile / doc).value),
-    CcsO          := (if (`is 3`(scalaVersion.value)) CcsO.value.filter(_ != "-Xfatal-warnings") else CcsO.value),
     publishSonatype,
     scalaReflectProvided,
     libraryDependencies ++= Seq(
@@ -84,7 +80,7 @@ lazy val todolist = project.in(file("Code/Examples/Todolist"))
       loci.webrtc.value,
       loci.jsoniterScala.value,
     ),
-    scalacOptions += (if (`is 3`(scalaVersion.value)) "" else "-P:scalajs:nowarnGlobalExecutionContext"),
+    jsAcceptUnfairGlobalTasks,
     scalaJSUseMainModuleInitializer := true,
   )
 

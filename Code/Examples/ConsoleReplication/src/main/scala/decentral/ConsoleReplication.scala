@@ -27,7 +27,7 @@ object Commandline {
 
     (idArg, listenPortArg, connectArg, initSizeArg).mapN {
       case (id, listenPort, connectTo, initSize) =>
-        val ipsAndPorts = connectTo.map {
+        val ipsAndPorts = connectTo.collect {
           case ipAndPort(ip, port) => (ip, port.toInt)
         }
 

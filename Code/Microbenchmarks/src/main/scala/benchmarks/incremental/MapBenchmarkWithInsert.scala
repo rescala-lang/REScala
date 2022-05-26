@@ -26,7 +26,7 @@ class MapBenchmarkWithInsert {
   var reactMappedSeq: ReactiveDeltaSeq[Int] = _
 
   @Setup(Level.Invocation)
-  def prepare: Unit = {
+  def prepare(): Unit = {
     addEvent = Evt[Int]()
     val seq = addEvent.fold(Seq.range(1, arg))((s, x) => {
       s :+ x

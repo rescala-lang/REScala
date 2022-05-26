@@ -70,7 +70,6 @@ object JsoniterCodecs {
   @nowarn("msg=never used")
   def timedTupleCodec[A: JsonValueCodec]: JsonValueCodec[(A, String, Long, Long)] = JsonCodecMaker.make
 
-  @nowarn("msg=never used")
   implicit def timedValCodec[A: JsonValueCodec]: JsonValueCodec[TimedVal[A]] = new JsonValueCodec[TimedVal[A]] {
     override def decodeValue(in: JsonReader, default: TimedVal[A]): TimedVal[A] = {
       val (a, b, c, d) = timedTupleCodec[A].decodeValue(

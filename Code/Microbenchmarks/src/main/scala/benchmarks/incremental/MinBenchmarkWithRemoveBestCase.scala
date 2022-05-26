@@ -27,7 +27,7 @@ class MinBenchmarkWithRemoveBestCase {
   var reactMinOfSeq: Signal[Option[Int]] = _
 
   @Setup(Level.Invocation)
-  def prepare: Unit = {
+  def prepare(): Unit = {
     removeEvent = Evt[Int]()
     val seq = removeEvent.fold((1 to arg).toList)((s, x) => {
       s diff Seq(x)

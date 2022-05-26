@@ -12,7 +12,7 @@ class ReevaluationBundle[T <: RescalaInterface](val api: T) {
     var results: List[A] = Nil
     /* should be private but is unused */
     // to prevent fake observers from being prematurely gc'd
-    var strongRef: AnyRef = reactive match {
+    var strongRef: AnyRef = (reactive: @unchecked) match {
       case signal: Signal[_] => signal.map(reev)(turnSource)
       case event: Event[_]   => event.map(reev)(turnSource)
     }

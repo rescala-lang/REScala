@@ -249,7 +249,7 @@ class ArrayRanges(val inner: Array[Time], val used: Int) {
   }
 
   def decomposed: Iterable[ArrayRanges] = {
-    inner.view.slice(0, used).sliding(2, 2).map(r => new ArrayRanges(r.toArray, 2)).iterator.toIterable
+    inner.view.slice(0, used).sliding(2, 2).map(r => new ArrayRanges(r.toArray, 2)).to(Iterable)
   }
 
 }

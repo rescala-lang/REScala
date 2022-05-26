@@ -27,7 +27,7 @@ class MinBenchmarkWithInsertOfNotMin {
   var reactMinOfSeq: Signal[Option[Int]] = _
 
   @Setup(Level.Invocation)
-  def prepare: Unit = {
+  def prepare(): Unit = {
     addEvent = Evt[Int]()
     val seq = addEvent.fold((1 to arg).toList)((s, x) => {
       s :+ x

@@ -72,7 +72,6 @@ object DropdownSample3 extends SimpleSwingApplication {
   def addField(initText: String): Unit = {
     val n   = nFields.readValueOnce + 1
     val col = new ReTextField(text = initText, columns = 30)
-    import scala.language.reflectiveCalls
     frame.fields.contents += new FlowPanel {
       contents += new Label("Value " + n + ":")
       contents += col
