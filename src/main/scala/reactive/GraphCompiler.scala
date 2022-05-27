@@ -133,6 +133,7 @@ class GraphCompiler(outputs: List[ReSource]) {
       case s: Source[_] => CDeclRefExpr(sourceValueParameters(s))
       case f: Fold[_] => CDeclRefExpr(globalVariables(f))
       case Filter(input, _) => valueRef(input)
+      case Snapshot(_, fold) => valueRef(fold)
       case _ => CDeclRefExpr(localVariables(r))
     }
 
@@ -167,7 +168,7 @@ class GraphCompiler(outputs: List[ReSource]) {
           CDeclRefExpr(localVariables(r)),
           CCallExpr(CDeclRefExpr(f.node), List(valueRef(input)))
         ))
-      case r@Snapshot(_, _) => List(updateAssignment(valueRef(r), 0.lit))
+      case r@Snapshot(_, _) => List()
       case r@Or(left, right, _) =>
         List(updateAssignment(
           valueRef(r),
