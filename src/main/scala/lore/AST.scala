@@ -10,9 +10,9 @@ object AST:
 
     // helper types
     type ID = String
-    type Type = String
+    sealed case class Type(name: String, inner: Option[Type])
     type Number = Int
-    case class TArgT(name: ID, _type: Type) extends Term // arguments with type annotation
+    case class TArgT(name: ID, _type: Type) extends Term // argument with type annotation
 
     // basic terms
     case class TVar(name: ID) extends Term // variable
@@ -23,6 +23,7 @@ object AST:
     // derived forms
     case class TSeq(left: Term, right: Term) extends Term // sequence
     case class TArrow(left: Term, right: Term) extends Term // anonymous functions
+    case class TType(name: ID, _type: Type) // type aliases
     
     // reactives
     sealed trait TReactive extends Term

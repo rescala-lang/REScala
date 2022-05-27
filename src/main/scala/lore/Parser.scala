@@ -13,9 +13,17 @@ object Parser:
   val id: P[ID] = (alpha ~ (alpha | digit).rep0).string
   val number: P[TNum] = digit.rep.string.map(i => TNum(Integer.parseInt(i)))
   val argT: P[TArgT] =
-    (((id <* sp.? ~ P.char(':')) <* sp.rep0) ~ id).map { // args with type
-      (l: ID, r: Type) => TArgT(l, r)
+    (((id <* sp.? ~ P.char(':')) <* sp.rep0) ~ typeName).map { // args with type
+      (l, r) => TArgT(l, r)
     }
+  val typeName: P[Type] = P.recursive{
+    rec => (id ~ (P.char('[') ~ ws *> rec <* ws ~ P.char(']')).?)
+    .map{
+      case (outer, Some(inner)) => Type(outer, Some(inner))
+      case (name, None) => Type(name, None)
+    }
+  }
+
   // helper definition for parsing sequences of expressions
   val parseSeq = (factor: P[Term], separator: P[String]) =>
     ((ws.with1.soft *> factor) ~
