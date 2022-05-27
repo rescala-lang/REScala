@@ -54,14 +54,29 @@ object SimpleParsing extends SimpleTestSuite:
     }
   }
 
-//   test("typename") {
-//     val expr = "List[Int]"
-//     val p = Parser.prog
-//     assertParses(p, expr)
-//   }
+  test("typename") {
+    val expr = "List[Int]"
+    val p = Parser.typeName
+    assertParses(p, expr)
+  }
 
-//   test("complex typename") {
-//     val expr = "Map[Int, String]"
-//     val p = Parser.prog
-//     assertParses(p, expr)
-//   }
+  test("complex typename") {
+    val expr = "Map[Int, String]"
+    val p = Parser.typeName
+    assertParses(p, expr)
+  }
+
+  test("type alias") {
+    val expr = "type Calendar = AWSet[Appointment]"
+    val p = Parser.typeAlias
+    assertResult(
+      Right(
+        TTypeAl(
+          "Calendar",
+          Type("AWSet", List(Type("Appointment", List.empty)))
+        )
+      )
+    ) {
+      p.parseAll(expr)
+    }
+  }

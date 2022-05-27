@@ -16,7 +16,12 @@ object WholeProgramParsing extends SimpleTestSuite:
   def readProg(path: Path): String =
     String(Files.readAllBytes(path), StandardCharsets.UTF_8)
 
-  test("calendar") {
+  test("calendar old") {
       val prog = readProg(Path.of("examples/calendar.fr"))
+      assertParses(Parser.prog, prog)
+  }
+
+  test("calendar new") {
+      val prog = readProg(Path.of("examples/calendar_new.lore"))
       assertParses(Parser.prog, prog)
   }

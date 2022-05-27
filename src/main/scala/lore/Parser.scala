@@ -16,17 +16,19 @@ object Parser:
     (((id <* sp.? ~ P.char(':')) <* sp.rep0) ~ typeName).map { // args with type
       (l, r) => TArgT(l, r)
     }
-  val typeName: P[Type] = P.recursive{
-    rec => (id ~ (P.char('[') ~ ws *> rec <* ws ~ P.char(']')).?)
-    .map{
-      case (outer, Some(inner)) => Type(outer, Some(inner))
-      case (name, None) => Type(name, None)
-    }
+  val typeName: P[Type] = P.recursive { rec =>
+    (id ~ (P.char('[') ~ ws *> rec.repSep(P.char(',') ~ ws) <* ws ~ P.char(
+      ']'
+    )).?)
+      .map {
+        case (outer, Some(inner)) => Type(outer, inner.toList)
+        case (outer, None)        => Type(outer, List.empty)
+      }
   }
 
   // helper definition for parsing sequences of expressions
   val parseSeq = (factor: P[Term], separator: P[String]) =>
-    ((ws.with1.soft *> factor) ~
+    (factor ~
       (((ws.with1.soft *> separator <* ws))
         ~ factor).rep0)
 
@@ -40,7 +42,7 @@ object Parser:
   val divMul: P[Term] =
     P.defer(parseSeq(arithFactor, P.stringIn(List("/", "*")))).map(evalArithm)
   val parens: P[Term] =
-    (ws.soft ~ P.char('(') ~ ws).with1 *> arithmExpr <* ws ~ P.char(')')
+    (P.char('(') ~ ws).with1 *> arithmExpr <* ws ~ P.char(')')
   val arithFactor: P[Term] =
     P.defer(
       parens | fieldAcc | functionCall | number.backtrack | _var
@@ -61,7 +63,7 @@ object Parser:
   val tru: P[TBoolean] = P.string("true").as(TTrue)
   val fls: P[TBoolean] = P.string("false").as(TFalse)
   val boolParens: P[Term] = // parantheses
-    (ws.soft ~ P.char('(') ~ ws).with1 *> P
+    (P.char('(') ~ ws).with1 *> P
       .defer(implication) <* ws ~ P.char(')')
   val boolFactor: P[Term] =
     boolParens
@@ -115,7 +117,7 @@ object Parser:
     P.defer(fieldAcc | functionCall | number.backtrack | _var)
   val inSet: P[TBoolean] = P
     .defer(
-      ((ws.with1 *> inSetFactor <* ws).soft <* P
+      ((inSetFactor <* ws).soft <* P
         .string("in") ~ ws) ~ inSetFactor
     )
     .map { (left, right) =>
@@ -180,8 +182,12 @@ object Parser:
       TFunC(name = id, args = arg)
     }
 
+  // type aliases
+  val typeAlias: P[TTypeAl] =
+    (P.string("type") ~ ws *> id ~ (P.char('=').surroundedBy(ws) *> typeName))
+      .map((n, t) => TTypeAl(name = n, _type = t))
+
   // programs are sequences of terms
   val term: P[Term] =
-    fieldAcc | functionCall | booleanExpr | number.backtrack | _var
-
-  val prog: P[NonEmptyList[Term]] = term.repSep(ws).between(ws, P.end)
+    fieldAcc | functionCall | typeAlias | booleanExpr | number.backtrack | _var
+  val prog: P[NonEmptyList[Term]] = term.repSep(ws).between(ws, ws ~ P.end)

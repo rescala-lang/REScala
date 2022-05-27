@@ -13,7 +13,7 @@ object BooleanExpressionParsing extends SimpleTestSuite {
   test("disjunction") {
     val p = Parser.disjunction
 
-    val expr = " x || true"
+    val expr = "x || true"
     p.parseAll(expr) match
       case Right(TDisj(TVar("x"), TTrue)) => ()
       case Left(error)                    => fail(error.expected.head.toString)
