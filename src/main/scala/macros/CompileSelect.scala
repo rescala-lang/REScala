@@ -16,9 +16,11 @@ object CompileSelect {
     // This handles selecting fields on standard data structures
 
     val handleProduct = CompileProduct.compileSelect(ctx)
+    val handleArray = CompileArray.compileSelect(ctx)
 
     select match {
       case handleProduct(expr) => expr
+      case handleArray(expr) => expr
       case Select(qualifier, name) if canCompileToCUnaryOperator(qualifier, name) =>
         compileSelectToCUnaryOperator(select, ctx)
       case _ => throw new MatchError(select.show(using Printer.TreeStructure))

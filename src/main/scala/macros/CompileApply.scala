@@ -43,6 +43,8 @@ object CompileApply {
         )
       case Apply(Select(qualifier, name), List(_)) if canCompileToCBinaryOperator(qualifier, name) =>
         compileApplyToCBinaryOperator(apply, ctx)
+      case Apply(inner, List(Apply(TypeApply(Select(Ident("ClassTag"), "apply"), _), _))) =>
+        compileTermToCExpr(inner, ctx)
       case Apply(inner, List(Select(Apply(TypeApply(Select(Ident("ClassTag"), "apply"), _), _), "wrap"))) =>
         // assume that this ClassTag magic can be ignored for our purposes
         compileTermToCExpr(inner, ctx)

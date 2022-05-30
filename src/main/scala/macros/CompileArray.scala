@@ -27,7 +27,42 @@ object CompileArray {
         val creator = getArrayCreator(apply.tpe, ctx)
 
         CCallExpr(CDeclRefExpr(creator), CIntegerLiteral(elems.length) :: elems)
+      case Apply(Select(arr, "apply"), List(idx)) if arr.tpe <:< TypeRepr.of[Array[?]] =>
+        arrayIndexAccess(arr, idx, ctx)
+      case Apply(Select(arr, "update"), List(idx, v)) if arr.tpe <:< TypeRepr.of[Array[?]] =>
+        CAssignmentExpr(
+          arrayIndexAccess(arr, idx, ctx),
+          compileTermToCExpr(v, ctx)
+        )
     }
+  }
+  
+  def compileSelect(using Quotes)(ctx: TranslationContext): PartialFunction[quotes.reflect.Select, CExpr] = select => {
+    import quotes.reflect.*
+    
+    select match {
+      case Select(arr, "length") =>
+        val recordDecl = getArrayRecordDecl(arr.tpe, ctx)
+        val lengthField = recordDecl.fields.find(_.name.equals("length")).get
+        
+        CMemberExpr(
+          compileTermToCExpr(arr, ctx),
+          lengthField
+        )
+    }
+  }
+
+  def arrayIndexAccess(using Quotes)(arr: quotes.reflect.Term, idx: quotes.reflect.Term, ctx: TranslationContext): CArraySubscriptExpr = {
+    val recordDecl = getArrayRecordDecl(arr.tpe, ctx)
+    val dataField = recordDecl.fields.find(_.name.equals("data")).get
+
+    CArraySubscriptExpr(
+      CMemberExpr(
+        compileTermToCExpr(arr, ctx),
+        dataField
+      ),
+      compileTermToCExpr(idx, ctx)
+    )
   }
 
   def arrayApply(using Quotes): PartialFunction[quotes.reflect.Apply, List[quotes.reflect.Term]] = apply => {
