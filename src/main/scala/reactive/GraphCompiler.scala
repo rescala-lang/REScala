@@ -1,10 +1,11 @@
 package reactive
 
-import clangast.{CASTNode, StdIncludes, WithContext, lit, given}
+import clangast.{CASTNode, WithContext, lit, given}
 import clangast.decl.{CFunctionDecl, CParmVarDecl, CTranslationUnitDecl, CValueDecl, CVarDecl}
 import clangast.expr.{CCallExpr, CConditionalOperator, CDeclRefExpr, CExpr, CTrueLiteral}
 import clangast.expr.binaryop.{CAssignmentExpr, CNotEqualsExpr}
 import clangast.stmt.{CCompoundStmt, CDeclStmt, CExprStmt, CIfStmt, CStmt}
+import clangast.stubs.StdBoolH
 import clangast.types.{CBoolType, CIntegerType, CVoidType}
 
 import scala.annotation.tailrec
@@ -223,7 +224,7 @@ class GraphCompiler(outputs: List[ReSource]) {
   }
 
   val translationUnit: CTranslationUnitDecl = {
-    val includes = appendWithoutDuplicates(List(StdIncludes.stdbool) :: contexts.map(_.includes))
+    val includes = appendWithoutDuplicates(List(StdBoolH.include) :: contexts.map(_.includes))
     val recordDecls = appendWithoutDuplicates(contexts.map(_.recordDecls))
     val helperFunctionDecls = appendWithoutDuplicates(contexts.map(_.functionDecls))
     
