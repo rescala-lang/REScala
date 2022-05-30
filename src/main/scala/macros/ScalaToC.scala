@@ -23,14 +23,11 @@ object ScalaToC {
   def scalaToCCode[T](expr: Expr[T], funName: Expr[String])(using Quotes): Expr[CASTNode] = {
     import quotes.reflect.*
 
-    println(expr.asTerm.show(using Printer.TreeStructure))
-
     val cast = compileTree(expr.asTerm, new TranslationContext()) match {
       case funDecl: CFunctionDecl => funDecl.copy(name = funName.value.get)
       case astNode => astNode
     }
 
-    println(cast)
     println(cast.textgen)
 
     cast.toExpr

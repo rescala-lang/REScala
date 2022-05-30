@@ -18,7 +18,7 @@ object CompileApply {
     // There is no general case here, instead just multiple special cases for different types of functions applied
     // such as those that can be translated to operator and methods on standard data structures that need to be given
     // as C code
-    
+
     val handleProduct = CompileProduct.compileApply(ctx)
     val handleArray = CompileArray.compileApply(ctx)
     
@@ -43,6 +43,9 @@ object CompileApply {
         )
       case Apply(Select(qualifier, name), List(_)) if canCompileToCBinaryOperator(qualifier, name) =>
         compileApplyToCBinaryOperator(apply, ctx)
+      case Apply(inner, List(Select(Apply(TypeApply(Select(Ident("ClassTag"), "apply"), _), _), "wrap"))) =>
+        // assume that this ClassTag magic can be ignored for our purposes
+        compileTermToCExpr(inner, ctx)
       case _ => throw new MatchError(apply.show(using Printer.TreeStructure))
     }
   }
@@ -91,6 +94,15 @@ object CompileApply {
       case ">" => CParenExpr(CGreaterThanExpr(lhs, rhs))
       case ">=" => CParenExpr(CGreaterEqualsExpr(lhs, rhs))
       case _ => throw new MatchError(apply.show(using Printer.TreeStructure))
+    }
+  }
+
+  def varArgs(using Quotes): PartialFunction[List[quotes.reflect.Term], List[quotes.reflect.Term]] = args => {
+    import quotes.reflect.*
+
+    args match {
+      case List(x, Typed(Repeated(xs, _), _)) => x :: xs
+      case List(Typed(Repeated(xs, _), _)) => xs
     }
   }
 }

@@ -12,6 +12,7 @@ import clangast.types.*
 
 import CompileTerm.compileTermToCExpr
 import CompileType.*
+import CompileApply.varArgs
 
 import scala.quoted.*
 
@@ -20,12 +21,21 @@ object CompileArray {
     import quotes.reflect.*
 
     apply match {
-      case Apply(Select(Ident("Array"), "apply"), List(x, Typed(Repeated(xs, _), _))) =>
-        val elems = (x :: xs).map(compileTermToCExpr(_, ctx))
+      case this.arrayApply(args) =>
+        val elems = args.map(compileTermToCExpr(_, ctx))
 
         val creator = getArrayCreator(apply.tpe, ctx)
 
         CCallExpr(CDeclRefExpr(creator), CIntegerLiteral(elems.length) :: elems)
+    }
+  }
+
+  def arrayApply(using Quotes): PartialFunction[quotes.reflect.Apply, List[quotes.reflect.Term]] = apply => {
+    import quotes.reflect.*
+
+    apply match {
+      case Apply(Select(Ident("Array"), "apply"), varArgs(args)) => args
+      case Apply(TypeApply(Select(Ident("Array"), "apply"), _), varArgs(args)) => args
     }
   }
 
@@ -36,7 +46,7 @@ object CompileArray {
   def compileArrayTypeToCRecordDecl(using Quotes)(tpe: quotes.reflect.TypeRepr, ctx: TranslationContext): CRecordDecl = {
     import quotes.reflect.*
 
-    val AppliedType(_, List(elemType)) = tpe
+    val typeArgs(List(elemType)) = tpe
 
     val dataField = CFieldDecl("data", CPointerType(compileTypeRepr(elemType, ctx)))
     val lengthField = CFieldDecl("length", CIntegerType)

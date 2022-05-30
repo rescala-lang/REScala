@@ -45,8 +45,6 @@ object CompileType {
     else throw new MatchError(tpe.show(using Printer.TypeReprStructure))
   }
 
-
-
   def typeName(using Quotes)(tpe: quotes.reflect.TypeRepr): String = {
     import quotes.reflect.*
 
@@ -61,6 +59,16 @@ object CompileType {
       }
     } else {
       tpe.typeSymbol.name
+    }
+  }
+
+  def typeArgs(using Quotes): PartialFunction[quotes.reflect.TypeRepr, List[quotes.reflect.TypeRepr]] = tpe => {
+    import quotes.reflect.*
+
+    tpe match {
+      case MethodType(_, _, AppliedType(_, typeArgs)) => typeArgs
+      case AppliedType(_, typeArgs) => typeArgs
+      case _ => throw new MatchError(tpe.show(using Printer.TypeReprStructure))
     }
   }
 }
