@@ -8,7 +8,13 @@ import clangast.traversal.CASTMapper
 
 import scala.quoted.{Expr, Quotes}
 
-case class CFunctionDecl(name: String, parameters: List[CParmVarDecl], returnType: CQualType, body: Option[CCompoundStmt] = None) extends CValueDecl with CDeclContext {
+case class CFunctionDecl(
+  name: String,
+  parameters: List[CParmVarDecl],
+  returnType: CQualType,
+  body: Option[CCompoundStmt] = None,
+  variadic: Boolean = false
+) extends CValueDecl with CDeclContext {
   override def getType: CQualType = CFunctionType(parameters.map(_.declaredType), returnType)
 
   override def decls: List[CDecl] = body match {
@@ -19,7 +25,9 @@ case class CFunctionDecl(name: String, parameters: List[CParmVarDecl], returnTyp
   }
 
   override def textgen: String =
-    val decl = s"${returnType.textgen} $name(${parameters.map(_.textgen).mkString(", ")})"
+    val params = parameters.map(_.textgen).mkString(", ") + (if variadic then ", ..." else "")
+    
+    val decl = s"${returnType.textgen} $name($params)"
 
     body match {
       case None => decl + ";"
@@ -29,10 +37,11 @@ case class CFunctionDecl(name: String, parameters: List[CParmVarDecl], returnTyp
   override def toExpr(using Quotes): Expr[CFunctionDecl] = {
     val nameExpr = Expr(name)
     val parametersExpr = Expr.ofList(parameters.map(_.toExpr))
+    val variadicExpr = Expr(variadic)
     val returnTypeExpr = returnType.toExpr
     val bodyExpr = body.map(_.toExpr).toExpr
 
-    '{ CFunctionDecl($nameExpr, $parametersExpr, $returnTypeExpr, $bodyExpr) }
+    '{ CFunctionDecl($nameExpr, $parametersExpr, $returnTypeExpr, $bodyExpr, $variadicExpr) }
   }
 
   override def mapChildren(mapper: CASTMapper): CFunctionDecl =
@@ -40,6 +49,7 @@ case class CFunctionDecl(name: String, parameters: List[CParmVarDecl], returnTyp
       name,
       parameters.map(mapper.mapCParmVarDecl),
       mapper.mapCQualType(returnType),
-      body.map(mapper.mapCCompoundStmt)
+      body.map(mapper.mapCCompoundStmt),
+      variadic
     )
 }
