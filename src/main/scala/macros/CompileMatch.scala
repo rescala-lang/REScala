@@ -9,6 +9,7 @@ import clangast.traversal.CASTMapper
 import macros.ScalaToC.*
 import macros.CompileTerm.*
 import macros.CompileType.*
+import macros.CompileProduct.getProductRecordDecl
 
 import scala.quoted.*
 
@@ -128,7 +129,7 @@ object CompileMatch {
         (subCond, CVarDecl(name, compileTypeRepr(prefixType, ctx), Some(prefix)) :: subDecls)
       case Unapply(_, _, subPatterns) =>
         val fieldSymbols = prefixType.classSymbol.get.caseFields.filter(_.isValDef)
-        val recordDecl = getRecordDecl(prefixType, ctx)
+        val recordDecl = getProductRecordDecl(prefixType, ctx)
         val subPrefixes = fieldSymbols.map(fs => CMemberExpr(prefix, recordDecl.fields.find(f => fs.name.strip().equals(f.name)).get))
         val subPrefixTypes = fieldSymbols.map(prefixType.memberType)
 

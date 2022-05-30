@@ -18,8 +18,13 @@ object CompileApply {
     // There is no general case here, instead just multiple special cases for different types of functions applied
     // such as those that can be translated to operator and methods on standard data structures that need to be given
     // as C code
-
+    
+    val handleProduct = CompileProduct.compileApply(ctx)
+    val handleArray = CompileArray.compileApply(ctx)
+    
     apply match {
+      case handleProduct(expr) => expr
+      case handleArray(expr) => expr
       case Apply(Ident("println"), List(arg)) =>
         // needs unlinked CCallStmt (name of function instead of reference)
         // alternatively, provide mock definitions for library functions
@@ -35,28 +40,6 @@ object CompileApply {
           CGreaterThanExpr(expr1, expr2),
           expr1,
           expr2
-        )
-      case Apply(Select(_, "apply"), l) if isProductApply(apply) =>
-        CCallExpr(CDeclRefExpr(getRecordCreator(apply.tpe, ctx)), l.map(compileTermToCExpr(_, ctx)))
-      case Apply(TypeApply(Select(_, "apply"), _), l) if isProductApply(apply) =>
-        CCallExpr(CDeclRefExpr(getRecordCreator(apply.tpe, ctx)), l.map(compileTermToCExpr(_, ctx)))
-      case Apply(Select(left, "=="), List(right)) if left.tpe <:< TypeRepr.of[Product] =>
-        CCallExpr(
-          CDeclRefExpr(getRecordEquals(left.tpe, ctx)),
-          List(
-            compileTermToCExpr(left, ctx),
-            compileTermToCExpr(right, ctx)
-          )
-        )
-      case Apply(Select(left, "!="), List(right)) if left.tpe <:< TypeRepr.of[Product] =>
-        CNotExpr(
-          CCallExpr(
-            CDeclRefExpr(getRecordEquals(left.tpe, ctx)),
-            List(
-              compileTermToCExpr(left, ctx),
-              compileTermToCExpr(right, ctx)
-            )
-          )
         )
       case Apply(Select(qualifier, name), List(_)) if canCompileToCBinaryOperator(qualifier, name) =>
         compileApplyToCBinaryOperator(apply, ctx)
@@ -108,28 +91,6 @@ object CompileApply {
       case ">" => CParenExpr(CGreaterThanExpr(lhs, rhs))
       case ">=" => CParenExpr(CGreaterEqualsExpr(lhs, rhs))
       case _ => throw new MatchError(apply.show(using Printer.TreeStructure))
-    }
-  }
-
-  def isProductApply(using Quotes)(apply: quotes.reflect.Apply): Boolean = {
-    import quotes.reflect.*
-
-    apply match {
-      case Apply(Select(i, "apply"), _) =>
-        (apply.tpe <:< TypeRepr.of[Product]) && (apply.tpe.classSymbol.get == i.tpe.classSymbol.get.companionClass)
-      case Apply(TypeApply(Select(i, "apply"), _), _) =>
-        (apply.tpe <:< TypeRepr.of[Product]) && (apply.tpe.classSymbol.get == i.tpe.classSymbol.get.companionClass)
-      case _ => false
-    }
-  }
-  
-  def compileApplyToCDesignatedInitExpr(using Quotes)(apply: quotes.reflect.Apply, ctx: TranslationContext): CDesignatedInitExpr = {
-    import quotes.reflect.*
-    
-    apply match {
-      case Apply(Select(_, "apply"), l) if isProductApply(apply) =>
-        val recordDecl = getRecordDecl(apply.tpe, ctx)
-        CDesignatedInitExpr(recordDecl.fields.map(_.name) zip l.map(compileTermToCExpr(_, ctx)))
     }
   }
 }

@@ -46,9 +46,10 @@ object CompileDefinition {
   def compileValDefToCVarDecl(using Quotes)(valDef: quotes.reflect.ValDef, ctx: TranslationContext): CVarDecl = {
     import quotes.reflect.*
 
+    val handleProduct = CompileProduct.compileValDefToCVarDecl(ctx)
+
     val decl = valDef match {
-      case ValDef(name, tpt, Some(apply@Apply(Select(_, "apply"), _))) if isProductApply(apply) =>
-        CVarDecl(name, compileTypeRepr(tpt.tpe, ctx), Some(compileApplyToCDesignatedInitExpr(apply, ctx)))
+      case handleProduct(decl) => decl
       case ValDef(name, tpt, rhs) =>
         CVarDecl(name, compileTypeRepr(tpt.tpe, ctx), rhs.map(compileTermToCExpr(_, ctx)))
     }

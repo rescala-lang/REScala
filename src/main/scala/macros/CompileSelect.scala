@@ -13,21 +13,15 @@ object CompileSelect {
     import quotes.reflect.*
 
     // Select with function calls should already be handled by outer apply
-    // Check that this select is either on a case class or tuple
-    // compile to a MemberExpr using a struct definition from the ctx
-    // if no struct definition exists yet, create a new one
+    // This handles selecting fields on standard data structures
 
-    val Select(qualifier, name) = select
+    val handleProduct = CompileProduct.compileSelect(ctx)
 
-    if (canCompileToCUnaryOperator(qualifier, name)) {
-      compileSelectToCUnaryOperator(select, ctx)
-    } else if (isProductFieldAccess(qualifier, name)) {
-      val recordDecl = getRecordDecl(qualifier.tpe, ctx)
-
-      // When is the arrow necessary?
-      CMemberExpr(compileTermToCExpr(qualifier, ctx), recordDecl.fields.find(_.name.equals(name)).get)
-    } else {
-      throw new MatchError(select.show(using Printer.TreeStructure))
+    select match {
+      case handleProduct(expr) => expr
+      case Select(qualifier, name) if canCompileToCUnaryOperator(qualifier, name) =>
+        compileSelectToCUnaryOperator(select, ctx)
+      case _ => throw new MatchError(select.show(using Printer.TreeStructure))
     }
   }
 
@@ -59,11 +53,5 @@ object CompileSelect {
       case "unary_!" => CNotExpr(CParenExpr(subExpr))
       case _ => throw new MatchError(select.show(using Printer.TreeStructure))
     }
-  }
-
-  def isProductFieldAccess(using Quotes)(term: quotes.reflect.Term, name: String): Boolean = {
-    import quotes.reflect.*
-
-    (term.tpe <:< TypeRepr.of[Product]) && term.tpe.classSymbol.get.caseFields.exists(_.name.equals(name))
   }
 }
