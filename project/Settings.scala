@@ -14,8 +14,8 @@ object Settings {
   val commonCrossBuildVersions = crossScalaVersions := Seq(V.scala211, V.scala212, V.scala213, V.scala3)
 
   val optionsOverride = tpolecatScalacOptions ~= {opts =>
-    // unused patvars are sometimes nice for documentation purposes
-    opts -- Set(ScalacOptions.warnUnusedPatVars)
+    // unused patvars are nice for documentation purposes
+    opts -- Set(ScalacOptions.warnUnusedPatVars, ScalacOptions.privateWarnUnusedPatVars)
   }
 
   val scalaVersion_211 = Def.settings(
