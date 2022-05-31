@@ -24,5 +24,9 @@ object Map1 {
   }
 }
 
-extension [A] (inline input: Event[A]) inline def map[R](inline funName: String = "map")(inline f: A => R): Map1[A, R] =
-  ${ Map1.mapCode('input, 'f, 'funName) }
+extension [A] (inline input: Event[A])
+  inline def map[R](inline funName: String = "map")(inline f: A => R): Map1[A, R] =
+    ${ Map1.mapCode('input, 'f, 'funName) }
+    
+  inline def observe(inline funName: String = "observe")(inline f: A => Unit): Map1[A, Unit] =
+    ${ Map1.mapCode('input, 'f, 'funName) }
