@@ -6,7 +6,7 @@ import rescala.core.Core
 
 import scala.quoted.*
 
-def reactiveMacro[T: Type, F[_]: Type, Ops <: Operators: Type, Reactive[_]](
+def reactiveMacro[T: Type, F[_]: Type, Ops <: Core: Type, Reactive[_]](
     expr: Expr[F[T]],
     api: Expr[Ops],
     creation: Expr[Core#CreationTicket],
@@ -20,7 +20,7 @@ def reactiveMacro[T: Type, F[_]: Type, Ops <: Operators: Type, Reactive[_]](
 enum ReactiveType:
   case Event, Signal
 
-class MacroLego[Ops <: Operators: Type](
+class MacroLego[Ops <: Core: Type](
     val fakeApi: Ops,
     api: Expr[fakeApi.type],
     outerCreation: Expr[Core#CreationTicket],
