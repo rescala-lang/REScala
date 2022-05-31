@@ -4,7 +4,14 @@ import sbt.Def
 
 noPublish
 
-val commonSettings = commonCrossBuildVersions +: jitpackResolver +: (scalaVersion_3)
+val commonSettings = commonCrossBuildVersions +: jitpackResolver +: {
+  scala.sys.env.get("re_scala_version") match {
+    case Some("211") => scalaVersion_211
+    case Some("212") => scalaVersion_212
+    case Some("213") => scalaVersion_213
+    case _           => scalaVersion_3
+  }
+}
 
 lazy val rescalaProject = project.in(file(".")).settings(commonSettings, noPublish).aggregate(
   examples,
