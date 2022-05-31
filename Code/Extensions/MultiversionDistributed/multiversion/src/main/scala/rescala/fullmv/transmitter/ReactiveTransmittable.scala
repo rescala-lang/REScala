@@ -910,7 +910,7 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
         case AcquireRemoteBranchIfAtMost(receiver, phase) =>
           localTurnReceiverInstance(receiver) match {
             case Some(turn) =>
-              turn.acquireRemoteBranchIfPhaseAtMost(phase).map(AcquireRemoteBranchResponse)(
+              turn.acquireRemoteBranchIfPhaseAtMost(phase).map(AcquireRemoteBranchResponse.apply)(
                 FullMVUtil.notWorthToMoveToTaskpool
               )
             case None =>

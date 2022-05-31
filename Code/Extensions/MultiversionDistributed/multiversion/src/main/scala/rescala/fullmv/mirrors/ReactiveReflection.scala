@@ -17,7 +17,7 @@ trait ReactiveReflectionBundle extends FullMVBundle {
     override def asyncIncrementFrame(turn: FullMVTurn): Unit = {
       submit(new Framing(turn, this) {
         override def doCompute(): Unit = {
-          turn.newBranchFromRemote(TurnPhase.Framing)
+          this.turn.newBranchFromRemote(TurnPhase.Framing)
           super.doCompute()
         }
         override def toString: String = "Remote" + super.toString
@@ -27,7 +27,7 @@ trait ReactiveReflectionBundle extends FullMVBundle {
     override def asyncIncrementSupersedeFrame(turn: FullMVTurn, supersede: FullMVTurn): Unit = {
       submit(new SupersedeFraming(turn, this, supersede) {
         override def doCompute(): Unit = {
-          turn.newBranchFromRemote(TurnPhase.Framing)
+          this.turn.newBranchFromRemote(TurnPhase.Framing)
           super.doCompute()
         }
         override def toString: String = "Remote" + super.toString
@@ -37,7 +37,7 @@ trait ReactiveReflectionBundle extends FullMVBundle {
     override def asyncResolvedUnchanged(turn: FullMVTurn): Unit = {
       submit(new Notification(turn, this, changed = false) {
         override def doCompute(): Unit = {
-          turn.newBranchFromRemote(TurnPhase.Executing)
+          this.turn.newBranchFromRemote(TurnPhase.Executing)
           super.doCompute()
         }
         override def toString: String = "Remote" + super.toString
@@ -47,7 +47,7 @@ trait ReactiveReflectionBundle extends FullMVBundle {
     override def asyncResolvedUnchangedFollowFrame(turn: FullMVTurn, followFrame: FullMVTurn): Unit = {
       submit(new NotificationWithFollowFrame(turn, this, changed = false, followFrame) {
         override def doCompute(): Unit = {
-          turn.newBranchFromRemote(TurnPhase.Executing)
+          this.turn.newBranchFromRemote(TurnPhase.Executing)
           super.doCompute()
         }
         override def toString: String = "Remote" + super.toString
@@ -57,8 +57,8 @@ trait ReactiveReflectionBundle extends FullMVBundle {
     override def asyncNewValue(turn: FullMVTurn, value: P): Unit = {
       submit(new Notification(turn, this, changed = true) {
         override def doCompute(): Unit = {
-          turn.newBranchFromRemote(TurnPhase.Executing)
-          buffer(turn, value)
+          this.turn.newBranchFromRemote(TurnPhase.Executing)
+          buffer(this.turn, value)
           super.doCompute()
         }
         override def toString: String = "Remote" + super.toString
@@ -68,8 +68,8 @@ trait ReactiveReflectionBundle extends FullMVBundle {
     override def asyncNewValueFollowFrame(turn: FullMVTurn, value: P, followFrame: FullMVTurn): Unit = {
       submit(new NotificationWithFollowFrame(turn, this, changed = true, followFrame) {
         override def doCompute(): Unit = {
-          turn.newBranchFromRemote(TurnPhase.Executing)
-          buffer(turn, value)
+          this.turn.newBranchFromRemote(TurnPhase.Executing)
+          buffer(this.turn, value)
           super.doCompute()
         }
         override def toString: String = "Remote" + super.toString
