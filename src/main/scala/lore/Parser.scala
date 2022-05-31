@@ -1,5 +1,6 @@
 package lore
 
+import scala.language.implicitConversions
 import AST._
 import cats.parse.{Parser => P, Parser0 => P0, Rfc5234}
 import cats.parse.Rfc5234.{alpha, char, digit, sp}
@@ -12,10 +13,10 @@ object Parser:
   val ws: P0[Unit] = sp.rep0.void // whitespace
   val id: P[ID] = (alpha ~ (alpha | digit).rep0).string
   val number: P[TNum] = digit.rep.string.map(i => TNum(Integer.parseInt(i)))
-  val argT: P[TArgT] =
-    (((id <* sp.? ~ P.char(':')) <* sp.rep0) ~ typeName).map { // args with type
-      (l, r) => TArgT(l, r)
-    }
+  val argT: P[TArgT] = // args with type
+    (((id <* sp.? ~ P.char(':')) <* sp.rep0) ~ typeName).map((id, typ) =>
+      TArgT(id, typ)
+    )
   val typeName: P[Type] = P.recursive { rec =>
     (id ~ (P.char('[') ~ ws *> rec.repSep(P.char(',') ~ ws) <* ws ~ P.char(
       ']'
@@ -139,7 +140,7 @@ object Parser:
 
   // quantifiers
   val quantifierVars: P[NonEmptyList[TArgT]] =
-    (argT <* ws).repSep(P.char(',') <* ws)
+    (argT).repSep(P.char(',').surroundedBy(ws))
   val triggers: P0[List[TViper]] = P.unit.as(List[TViper]())
   val forall: P[TForall] =
     (((P.string("forall") ~ ws *> quantifierVars) <* P.string(
@@ -154,6 +155,26 @@ object Parser:
       TExists(vars = vars, body = body)
     }
   val quantifier: P[TQuantifier] = forall | exists
+
+  // reactives
+  val reactive: P[TReactive] = source | derived
+  val source: P[TSource] =
+    P.defer(P.string("Source(") ~ ws *> term <* P.char(')')).map((body) =>
+      TSource(body)
+    )
+  val derived: P[TDerived] =
+    P.defer(P.string("Derived{") ~ ws *> term <* P.char('}')).map((body) =>
+      TDerived(body)
+    )
+
+  // bindings
+  val bindingLeftSide: P[TArgT] =
+    (P.string("val") ~ ws *> argT <* P.char('=').surroundedBy(ws))
+  val binding: P[TAbs] =
+    P.defer((bindingLeftSide <* P.char('=').surroundedBy(ws)) ~ term).map {
+      case (TArgT(name, _type), term) =>
+        TAbs(name = name, _type = _type, body = term)
+    }
 
   // object orientation
   val args = P.defer0(term.repSep0(P.char(',') ~ ws))
