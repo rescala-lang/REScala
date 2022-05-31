@@ -114,8 +114,6 @@ class MacroLego[Ops <: Core: Type](
 
     override def transformTerm(tree: quotes.reflect.Term)(owner: quotes.reflect.Symbol): quotes.reflect.Term = {
       tree match
-        // case '{(${ss}: fakeApi.ScopeSearch.type).fromSchedulerImplicit(using ${_}: fakeApi.DynamicScope)} =>
-        //  '{$ss.fromTicketImplicit($ticket)}.asExprOf[T]
         case Apply(Select(ss, "fromSchedulerImplicit"), _) =>
           Apply(Select.unique(ss, "fromTicketImplicit"), List(ticket))
         case other => super.transformTerm(tree)(owner)
@@ -128,7 +126,6 @@ class MacroLego[Ops <: Core: Type](
     val foundStatic       = fi._2
     val definitions       = FindDefs().foldTree(Nil, expr.asTerm)(Symbol.spliceOwner)
 
-    // println(s"contains symbols: ${definitions}")
     val found = foundAbstractions.filterNot { fa =>
       val defInside      = FindDefs().foldTree(Nil, fa)(Symbol.spliceOwner)
       val containsSymbol = ContainsSymbol(definitions.diff(defInside))
@@ -176,19 +173,11 @@ class MacroLego[Ops <: Core: Type](
               Repeated(defs, TypeTree.of[fakeApi.ReSource])
             )
           ),
-          List(Block(
-            Nil,
-            Inlined(
-              None,
-              Nil,
-              rdef
-            )
-          ))
+          List(rdef)
         ),
-        List(Inlined(None, Nil, outerCreation.asTerm))
+        List(outerCreation.asTerm)
       )
     }.asExpr
-    // println(s"res ${res.show}")
 
     res
   }
