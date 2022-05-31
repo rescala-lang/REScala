@@ -14,10 +14,10 @@ object Dependencies {
     val circeCore          = "0.14.1"
     val decline            = "2.2.0"
     val directories        = "26"
-    val fastparse          = "2.3.3-16-3da4b3"
+    val fastparse          = "2.3.3-35-06d972"
     val jetty              = "9.4.46.v20220331"
     val jol                = "0.16"
-    val jsoniterScalaCore  = "2.13.25"
+    val jsoniterScalaCore  = "2.13.27"
     val jsoniterScalaOld   = "2.13.3" // this is the latest version supporting Scala 2.11 and java 8
     val jsoup              = "1.15.1"
     val munit              = "1.0.0-M4"
@@ -31,7 +31,7 @@ object Dependencies {
     val scala213           = "2.13.8"
     val scala3             = "3.1.3-RC4"
     val scalaJavaTime      = "2.3.0"
-    val scalaLoci          = "0.5.0"
+    val scalaLoci          = "609b4c1b58"
     val scalaSwing         = "3.0.0"
     val scalacheck         = "1.16.0"
     val scalactic          = "3.0.0"
@@ -40,6 +40,7 @@ object Dependencies {
     val scalatest          = "3.2.12"
     val scalatestpluscheck = "3.2.11.0"
     val scribe             = "3.8.2"
+    val slips              = "3e80b7d8eb"
     val sourcecode         = "0.2.8"
     val tomlScala          = "0.2.2"
     val upickle            = "2.0.0"
@@ -98,9 +99,16 @@ object Dependencies {
   val circeAll = Def.setting(Seq("core", "generic", "parser")
     .map(n => "io.circe" %%% s"circe-$n" % V.circeCore))
 
+  object slips {
+    val logging  = Def.setting("de.rmgk.slips" %%% "logging" % V.slips)
+    val chain    = Def.setting("de.rmgk.slips" %%% "chain" % V.slips)
+    val category = Def.setting("de.rmgk.slips" %%% "category" % V.slips)
+    val scip     = Def.setting("de.rmgk.slips" %%% "scip" % V.slips)
+  }
+
   object loci {
     def generic(n: String): Def.Initialize[sbt.ModuleID] =
-      if (V.scalaLoci.size > 20)
+      if (!V.scalaLoci.contains("."))
         Def.setting("com.github.scala-loci.scala-loci" %%% s"scala-loci-$n" % V.scalaLoci)
       else Def.setting("io.github.scala-loci"          %%% s"scala-loci-$n" % V.scalaLoci)
 

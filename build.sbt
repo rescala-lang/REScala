@@ -4,7 +4,7 @@ import sbt.Def
 
 noPublish
 
-val commonSettings = commonCrossBuildVersions +: (scalaVersion_213)
+val commonSettings = commonCrossBuildVersions +: jitpackResolver +: (scalaVersion_3)
 
 lazy val rescalaProject = project.in(file(".")).settings(commonSettings, noPublish).aggregate(
   examples,

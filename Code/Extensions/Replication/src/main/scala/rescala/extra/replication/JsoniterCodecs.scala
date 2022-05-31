@@ -84,7 +84,7 @@ object JsoniterCodecs {
     override def nullValue: TimedVal[A] = null
   }
 
-  @nowarn("msg=never used")
+  @nowarn()
   implicit def GListStateCodec[E: JsonValueCodec]: JsonValueCodec[GList[E]] = {
     mapArrayCodec[GListNode[TimedVal[E]], GListElem[TimedVal[E]]](JsonCodecMaker.make, JsonCodecMaker.make)
   }
@@ -129,7 +129,7 @@ object JsoniterCodecs {
 
   /** RGA */
 
-  @nowarn("msg=never used")
+  @nowarn()
   implicit def RGAStateCodec[E: JsonValueCodec]: JsonValueCodec[Dotted[RGA[E]]] = {
     implicit def RGAleftCodec: JsonValueCodec[Epoche[Map[GListNode[TimedVal[Dot]], GListElem[TimedVal[Dot]]]]] =
       JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
