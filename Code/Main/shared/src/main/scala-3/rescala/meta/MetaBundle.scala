@@ -32,14 +32,11 @@ class MetaBundle extends rescala.core.Core {
   }
 
   object Signal {
-    inline def apply[T](inline expr: T)(implicit ct: CreationTicket): Signal[T] = ${
-      rescala.macros.reactiveMacro[T, [x] =>> x, bundle.type, Signal]('expr, 'bundle, 'ct, '{ "Signal" }, 'true)
+    // the below macro basically produces code that ".Signals.staticNoVarargs" on the given "bundle.type".
+    inline def apply[T](inline expr: T)(implicit ct: CreationTicket): Signal[T] = {
+      val (dependencies, fun) = rescala.macros.getDependencies[[α]=>>α, T, MReSource,  StaticTicket, true](expr)
+      Signal(dependencies, ct.rename)
     }
-  }
-
-  object Signals {
-    def staticNoVarargs[T](dependencies: Seq[ReSource])(expr: StaticTicket => T)(using ct: CreationTicket): Signal[T] =
-      Signal(dependencies.map(_.state), ct.rename)
   }
 
 

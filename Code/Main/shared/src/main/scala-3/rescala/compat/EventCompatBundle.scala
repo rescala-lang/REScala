@@ -7,7 +7,7 @@ import rescala.operator.Operators
 import rescala.macros.ReadableMacroBundle
 
 trait EventCompatBundle extends ReadableMacroBundle {
-  moduleType: Operators =>
+  bundle: Operators =>
 
   trait EventCompat[+T] extends ReadableMacro[Option[T]] {
     selfType: Event[T] =>
@@ -57,12 +57,18 @@ trait EventCompatBundle extends ReadableMacroBundle {
     * @group create
     */
   object Event {
-    inline def apply[T](inline expr: Option[T])(using ct: CreationTicket): Event[T] =
-      ${ rescala.macros.reactiveMacro[T, Option, moduleType.type, Event]('expr, 'moduleType, 'ct, '{ "Event" }, 'true) }
-    inline def dynamic[T](inline expr: Option[T])(using ct: CreationTicket): Event[T] =
-      ${
-        rescala.macros.reactiveMacro[T, Option, moduleType.type, Event]('expr, 'moduleType, 'ct, '{ "Event" }, 'false)
-      }
+    inline def apply[T](inline expr: Option[T])(using ct: CreationTicket): Event[T] = {
+      val (sources, fun) = rescala.macros.getDependencies[Option, T, ReSource, StaticTicket, true](expr)
+      bundle.Events.static(sources: _*)(fun)
+      // ${ rescala.macros.reactiveMacro[T, Option, moduleType.type, Event]('expr, 'moduleType, 'ct, '{ "Event" }, 'true) }
+    }
+    inline def dynamic[T](inline expr: Option[T])(using ct: CreationTicket): Event[T] = {
+      val (sources, fun) = rescala.macros.getDependencies[Option, T, ReSource, DynamicTicket, false](expr)
+      bundle.Events.dynamic(sources: _*)(fun)
+      // ${
+      //  rescala.macros.reactiveMacro[T, Option, moduleType.type, Event]('expr, 'moduleType, 'ct, '{ "Event" }, 'false)
+      // }
+    }
   }
 
 }

@@ -6,32 +6,22 @@ import rescala.core.Core
 
 import scala.quoted.*
 
-def reactiveMacro[T: Type, F[_]: Type, Ops <: Core: Type, Reactive[_]](
-    expr: Expr[F[T]],
-    api: Expr[Ops],
-    creation: Expr[Core#CreationTicket],
-    reactiveType: Expr[String],
-    forceStatic: Expr[Boolean]
-)(using q: Quotes): Expr[Reactive[T]] =
-  val rt = if reactiveType.valueOrAbort == "Signal" then ReactiveType.Signal else ReactiveType.Event
-  MacroLego[Ops](null.asInstanceOf[Ops], api.asInstanceOf, creation, forceStatic.valueOrAbort)
-    .makeReactive[F, T](expr, rt).asInstanceOf[Expr[Reactive[T]]]
+inline def getDependencies[F[_], T, ReSource, Ticket, ForceStatic <: Boolean](inline expr: F[T])
+    : (List[ReSource], Ticket => F[T]) =
+  ${ rescala.macros.reactiveMacro[T, F, ReSource, Ticket, ForceStatic]('expr) }
 
-enum ReactiveType:
-  case Event, Signal
+def reactiveMacro[T: Type, F[_]: Type, ReSource: Type, Ticket: Type, ForceStatic <: Boolean: Type](
+    expr: Expr[F[T]]
+)(using q: Quotes): Expr[(List[ReSource], Ticket => F[T])] =
+  import q.reflect.*
+  val forceStatic =
+    Type.valueOfConstant[ForceStatic].getOrElse(report.errorAndAbort("requires literal type for force static"))
+  MacroLego[ReSource, Ticket](forceStatic)
+    .makeReactive[F, T](expr).asInstanceOf[Expr[(List[ReSource], Ticket => F[T])]]
 
-class MacroLego[Ops <: Core: Type](
-    val fakeApi: Ops,
-    api: Expr[fakeApi.type],
-    outerCreation: Expr[Core#CreationTicket],
+class MacroLego[ReSource: Type, Ticket: Type](
     forceStatic: Boolean
-)(using
-    val quotes: Quotes
-)(using
-    Type[fakeApi.StaticTicket],
-    Type[fakeApi.DynamicTicket],
-    Type[fakeApi.ReSource],
-) {
+)(using val quotes: Quotes) {
 
   import quotes.reflect.*
 
@@ -120,7 +110,7 @@ class MacroLego[Ops <: Core: Type](
     }
   }
 
-  def makeReactive[F[_]: Type, T: Type](expr: Expr[F[T]], rtype: ReactiveType): Expr[Any] = {
+  def makeReactive[F[_]: Type, T: Type](expr: Expr[F[T]]): Expr[Any] = {
     val fi                = FindInterp().foldTree((Nil, true), expr.asTerm)(Symbol.spliceOwner)
     val foundAbstractions = fi._1
     val foundStatic       = fi._2
@@ -133,12 +123,14 @@ class MacroLego[Ops <: Core: Type](
     }
     val isStatic = (foundStatic && found == foundAbstractions)
     if (forceStatic && !isStatic) {
-      report.error("dynamic access in static reactive", foundAbstractions.diff(found).head.asExpr)
+      report.error(
+        "dynamic access in static reactive",
+        foundAbstractions.diff(found).headOption.map(_.asExpr).getOrElse(expr)
+      )
     }
 
     val funType = MethodType.apply(List("ticket"))(
-      (_: MethodType) =>
-        List(if isStatic then TypeRepr.of[fakeApi.StaticTicket] else TypeRepr.of[fakeApi.DynamicTicket]),
+      (_: MethodType) => List(TypeRepr.of[Ticket]),
       (_: MethodType) => TypeRepr.of[F[T]]
     )
 
@@ -159,24 +151,12 @@ class MacroLego[Ops <: Core: Type](
         }
       )
 
-      Apply(
-        Apply(
-          Apply(
-            TypeApply(
-              Select.unique(
-                Select.unique(api.asTerm, if rtype == ReactiveType.Event then "Events" else "Signals"),
-                if isStatic then "staticNoVarargs" else "dynamicNoVarargs"
-              ),
-              List(TypeTree.of[T])
-            ),
-            List(
-              Repeated(defs, TypeTree.of[fakeApi.ReSource])
-            )
-          ),
-          List(rdef)
-        ),
-        List(outerCreation.asTerm)
-      )
+      '{
+        (
+          List.from(${ Expr.ofList(defs.map(_.asExprOf[ReSource])) }),
+          ${ rdef.asExprOf[Ticket => F[T]] }
+        )
+      }.asTerm
     }.asExpr
 
     res

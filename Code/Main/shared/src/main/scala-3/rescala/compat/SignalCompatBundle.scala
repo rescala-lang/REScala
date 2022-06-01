@@ -6,11 +6,9 @@ import rescala.macros.ReadableMacroBundle
 import rescala.operator.{Operators, SignalBundle, cutOutOfUserComputation}
 
 trait SignalCompatBundle extends ReadableMacroBundle {
-  selfType: Operators =>
+  bundle: Operators =>
 
   trait SignalCompat[+T] extends ReadableMacro[T] {
-    selfType: Signal[T] =>
-
     /** Return a Signal with f applied to the value
       * @group operator
       */
@@ -36,13 +34,21 @@ trait SignalCompatBundle extends ReadableMacroBundle {
     * @group create
     */
   object Signal {
-    inline def apply[T](inline expr: T)(implicit ct: CreationTicket): Signal[T] = ${
-      rescala.macros.reactiveMacro[T, [x] =>> x, selfType.type, Signal]('expr, 'selfType, 'ct, '{ "Signal" }, 'true)
+    inline def apply[T](inline expr: T)(implicit ct: CreationTicket): Signal[T] =  {
+      val (sources, fun) = rescala.macros.getDependencies[[α]=>>α, T, ReSource, StaticTicket, true](expr)
+      bundle.Signals.static(sources: _*)(fun)
+      //  ${
+      //  rescala.macros.reactiveMacro[T, [x] =>> x, selfType.type, Signal]('expr, 'selfType, 'ct, '{ "Signal" }, 'true)
+      //}
     }
 
-    inline def dynamic[T](inline expr: T)(implicit ct: CreationTicket): Signal[T] = ${
-      rescala.macros.reactiveMacro[T, [x] =>> x, selfType.type, Signal]('expr, 'selfType, 'ct, '{ "Signal" }, 'false)
-    }
+
+    inline def dynamic[T](inline expr: T)(implicit ct: CreationTicket): Signal[T] =
+      {
+        val (sources, fun) = rescala.macros.getDependencies[[α]=>>α, T, ReSource, DynamicTicket, false](expr)
+        bundle.Signals.dynamic(sources: _*)(fun)
+        //${rescala.macros.reactiveMacro[T, [x] =>> x, selfType.type, Signal]('expr, 'selfType, 'ct, '{ "Signal" }, 'false)}
+      }
   }
 
 }
