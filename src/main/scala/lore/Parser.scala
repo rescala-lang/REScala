@@ -157,13 +157,13 @@ object Parser:
   val quantifier: P[TQuantifier] = forall | exists
 
   // reactives
-  val reactive: P[TReactive] = source | derived
+  val reactive: P[TReactive] = P.defer(source | derived)
   val source: P[TSource] =
-    P.defer(P.string("Source(") ~ ws *> term <* P.char(')')).map((body) =>
+    (P.string("Source(") ~ ws *> P.defer(term) <* P.char(')')).map((body) =>
       TSource(body)
     )
   val derived: P[TDerived] =
-    P.defer(P.string("Derived{") ~ ws *> term <* P.char('}')).map((body) =>
+    (P.string("Derived{") ~ ws *> P.defer(term) <* P.char('}')).map((body) =>
       TDerived(body)
     )
 
