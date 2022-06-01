@@ -96,7 +96,13 @@ object MetaBundleExample {
     val emapped = Event { esource.value.map(_.toUpperCase()) }
 
     // filtering is not a special thing, REScala just interprets the returned option as “do not continue activation”.
-    val filtered = Event { emapped.value.filter(_.contains("I")) }
+    val filtered = Event { emapped.value.filter(_.contains("i")) }
+
+    // this is the basic zip operation on events
+    val zipped = Event { (emapped.value, filtered.value) match
+      case (Some(left), Some(right)) => Some((left, right))
+      case _ => None
+    }
 
     // this is how snapshot is implemented in REScala
     // we just access the derived signal every time the esource activates
@@ -106,7 +112,10 @@ object MetaBundleExample {
     // fold is kinda the only special operation that is normally needed
     val foldResult = esource.fold("") { (acc, next) => acc + next }
 
-    val all = Signal { (foldResult.value, snapshotLike.value, filtered.value) }
+    // folds can make use of other reactives
+    val foldResultWithMoreStuff = esource.fold("") { (acc, next) => acc + next + derived.value }
+
+    val all = Signal { (foldResult.value, snapshotLike.value, filtered.value, foldResultWithMoreStuff, zipped.value) }
 
     println(all)
 
