@@ -3,18 +3,18 @@ package lore
 import scala.language.implicitConversions
 import AST._
 import cats.parse.{Parser => P, Parser0 => P0, Rfc5234}
-import cats.parse.Rfc5234.{alpha, char, digit, sp}
+import cats.parse.Rfc5234.{alpha, char, digit, lf, wsp}
 import cats.implicits._
 import cats._
 import cats.data.NonEmptyList
 
 object Parser:
   // helpers
-  val ws: P0[Unit] = sp.rep0.void // whitespace
+  val ws: P0[Unit] = wsp.rep0.void // whitespace
   val id: P[ID] = (alpha ~ (alpha | digit).rep0).string
   val number: P[TNum] = digit.rep.string.map(i => TNum(Integer.parseInt(i)))
   val argT: P[TArgT] = // args with type
-    (((id <* sp.? ~ P.char(':')) <* sp.rep0) ~ typeName).map((id, typ) =>
+    (((id <* ws ~ P.char(':')) <* ws) ~ typeName).map((id, typ) =>
       TArgT(id, typ)
     )
   val typeName: P[Type] = P.recursive { rec =>
@@ -210,5 +210,5 @@ object Parser:
 
   // programs are sequences of terms
   val term: P[Term] =
-    fieldAcc | functionCall | typeAlias | booleanExpr | number.backtrack | _var
-  val prog: P[NonEmptyList[Term]] = term.repSep(ws).between(ws, ws ~ P.end)
+    fieldAcc | functionCall | typeAlias | binding | booleanExpr | number.backtrack | _var
+  val prog: P[NonEmptyList[Term]] = term.repSep(ws | lf).between(ws, ws ~ P.end)

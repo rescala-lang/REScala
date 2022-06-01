@@ -1,4 +1,4 @@
-type Calendar = AWSet[Appointment] 
+type Calendar = AWSet[Appointment]
 val work: Source[Calendar] = Source(AWSet())     
 val vacation: Source[Calendar] = Source(AWSet()) 
 
