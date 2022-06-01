@@ -58,16 +58,12 @@ trait EventCompatBundle extends ReadableMacroBundle {
     */
   object Event {
     inline def apply[T](inline expr: Option[T])(using ct: CreationTicket): Event[T] = {
-      val (sources, fun) = rescala.macros.getDependencies[Option, T, ReSource, StaticTicket, true](expr)
+      val (sources, fun) = rescala.macros.getDependencies[Option[T], ReSource, StaticTicket, true](expr)
       bundle.Events.static(sources: _*)(fun)
-      // ${ rescala.macros.reactiveMacro[T, Option, moduleType.type, Event]('expr, 'moduleType, 'ct, '{ "Event" }, 'true) }
     }
     inline def dynamic[T](inline expr: Option[T])(using ct: CreationTicket): Event[T] = {
-      val (sources, fun) = rescala.macros.getDependencies[Option, T, ReSource, DynamicTicket, false](expr)
+      val (sources, fun) = rescala.macros.getDependencies[Option[T], ReSource, DynamicTicket, false](expr)
       bundle.Events.dynamic(sources: _*)(fun)
-      // ${
-      //  rescala.macros.reactiveMacro[T, Option, moduleType.type, Event]('expr, 'moduleType, 'ct, '{ "Event" }, 'false)
-      // }
     }
   }
 

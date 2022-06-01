@@ -6,18 +6,18 @@ import rescala.core.Core
 
 import scala.quoted.*
 
-inline def getDependencies[F[_], T, ReSource, Ticket, ForceStatic <: Boolean](inline expr: F[T])
-    : (List[ReSource], Ticket => F[T]) =
-  ${ rescala.macros.reactiveMacro[T, F, ReSource, Ticket, ForceStatic]('expr) }
+inline def getDependencies[Res, ReSource, Ticket, ForceStatic <: Boolean](inline expr: Res)
+    : (List[ReSource], Ticket => Res) =
+  ${ rescala.macros.reactiveMacro[Res, ReSource, Ticket, ForceStatic]('expr) }
 
-def reactiveMacro[T: Type, F[_]: Type, ReSource: Type, Ticket: Type, ForceStatic <: Boolean: Type](
-    expr: Expr[F[T]]
-)(using q: Quotes): Expr[(List[ReSource], Ticket => F[T])] =
+def reactiveMacro[Res: Type, ReSource: Type, Ticket: Type, ForceStatic <: Boolean: Type](
+    expr: Expr[Res]
+)(using q: Quotes): Expr[(List[ReSource], Ticket => Res)] =
   import q.reflect.*
   val forceStatic =
     Type.valueOfConstant[ForceStatic].getOrElse(report.errorAndAbort("requires literal type for force static"))
   MacroLego[ReSource, Ticket](forceStatic)
-    .makeReactive[F, T](expr).asInstanceOf[Expr[(List[ReSource], Ticket => F[T])]]
+    .makeReactive[Res](expr).asInstanceOf[Expr[(List[ReSource], Ticket => Res)]]
 
 class MacroLego[ReSource: Type, Ticket: Type](
     forceStatic: Boolean
@@ -110,7 +110,7 @@ class MacroLego[ReSource: Type, Ticket: Type](
     }
   }
 
-  def makeReactive[F[_]: Type, T: Type](expr: Expr[F[T]]): Expr[Any] = {
+  def makeReactive[Res: Type](expr: Expr[Res]): Expr[Any] = {
     val fi                = FindInterp().foldTree((Nil, true), expr.asTerm)(Symbol.spliceOwner)
     val foundAbstractions = fi._1
     val foundStatic       = fi._2
@@ -131,7 +131,7 @@ class MacroLego[ReSource: Type, Ticket: Type](
 
     val funType = MethodType.apply(List("ticket"))(
       (_: MethodType) => List(TypeRepr.of[Ticket]),
-      (_: MethodType) => TypeRepr.of[F[T]]
+      (_: MethodType) => TypeRepr.of[Res]
     )
 
     val res = ValDef.let(Symbol.spliceOwner, found) { defs =>
@@ -142,7 +142,7 @@ class MacroLego[ReSource: Type, Ticket: Type](
         funType,
         { (sym, params) =>
           val staticTicket = params.head
-          val cutOut       = ReplaceInterp(replacementMap, staticTicket).transformTree(expr.asTerm)(sym).asExprOf[F[T]]
+          val cutOut       = ReplaceInterp(replacementMap, staticTicket).transformTree(expr.asTerm)(sym).asExprOf[Res]
           val res =
             new ReplaceImplicitTickets(staticTicket.asInstanceOf[Term]).transformTerm(cutOut.asTerm)(
               Symbol.spliceOwner
@@ -154,7 +154,7 @@ class MacroLego[ReSource: Type, Ticket: Type](
       '{
         (
           List.from(${ Expr.ofList(defs.map(_.asExprOf[ReSource])) }),
-          ${ rdef.asExprOf[Ticket => F[T]] }
+          ${ rdef.asExprOf[Ticket => Res] }
         )
       }.asTerm
     }.asExpr
