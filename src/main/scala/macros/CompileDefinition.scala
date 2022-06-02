@@ -24,7 +24,7 @@ object CompileDefinition {
   def compileDefDef(using Quotes)(defDef: quotes.reflect.DefDef, ctx: TranslationContext): CFunctionDecl = {
     import quotes.reflect.*
 
-    val DefDef(name, _, returnTpt, rhs) = defDef
+    val DefDef(defName, _, returnTpt, rhs) = defDef
 
     val params = defDef.termParamss.flatMap(_.params)
 
@@ -36,9 +36,17 @@ object CompileDefinition {
       case term => CCompoundStmt(List(CReturnStmt(Some(compileTermToCExpr(term, ctx)))))
     }
 
-    val decl = CFunctionDecl(name, compiledParams, compileTypeRepr(returnTpt.tpe, ctx), body)
+    val inferredName = try {
+      defDef.symbol.owner.owner.name
+    } catch {
+      case _: Exception => defName
+    }
 
-    ctx.nameToFunctionDecl.put(name, decl)
+    val cname = if defName.equals("$anonfun") then inferredName else defName
+
+    val decl = CFunctionDecl(cname, compiledParams, compileTypeRepr(returnTpt.tpe, ctx), body)
+
+    ctx.nameToFunctionDecl.put(cname, decl)
 
     decl
   }
