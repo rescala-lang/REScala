@@ -48,6 +48,12 @@ object CompileApply {
       case Apply(inner, List(Select(Apply(TypeApply(Select(Ident("ClassTag"), "apply"), _), _), "wrap"))) =>
         // assume that this ClassTag magic can be ignored for our purposes
         compileTermToCExpr(inner, ctx)
+      case Apply(helper@Ident(name), args) if helper.tpe <:< TypeRepr.of[CHelperFun] =>
+        // TODO: Lookup helper function somewhere
+        CCallExpr(
+          ???,
+          args.map(compileTermToCExpr(_, ctx))
+        )
       case _ => throw new MatchError(apply.show(using Printer.TreeStructure))
     }
   }

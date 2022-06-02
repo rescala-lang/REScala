@@ -47,6 +47,16 @@ object ScalaToC {
     WithContext(compiledF, ctx, originalName).toExpr
   }
 
+  def compileFun(f: Expr[_])(using Quotes): Expr[WithContext[CFunctionDecl]] = {
+    import quotes.reflect.*
+
+    val ctx = new TranslationContext()
+
+    val compiledF = compileTerm(f.asTerm, ctx) match { case funDecl: CFunctionDecl => funDecl }
+
+    WithContext(compiledF, ctx).toExpr
+  }
+
   def compileExpr(e: Expr[_])(using Quotes): Expr[WithContext[CExpr]] = {
     import quotes.reflect.*
 
