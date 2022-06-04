@@ -2,7 +2,7 @@ package reactive
 
 import clangast.WithContext
 import clangast.decl.CFunctionDecl
-import macros.ScalaToC
+import compiler.MacroCompiler
 
 import scala.quoted.*
 
@@ -13,14 +13,14 @@ case class Filter[V](input: Event[V], f: WithContext[CFunctionDecl]) extends Eve
 }
 
 object Filter {
-  def filterCode[V](input: Expr[Event[V]], f: Expr[V => Boolean], funName: Expr[String])(using Quotes, Type[V]): Expr[Filter[V]] = {
-    import quotes.reflect.*
-    
-    val cast = ScalaToC.compileAnonFun(f, funName)
-    
-    '{ Filter($input, $cast) }
+  class FilterFactory[V](input: Event[V]) {
+    inline def apply[C <: MacroCompiler](inline funName: String = "filter")(inline f: V => Boolean)(using mc: C): Filter[V] =
+      Filter(
+        input,
+        mc.compileAnonFun(f, funName)
+      )
   }
 }
 
-extension [V] (inline input: Event[V]) inline def filter(inline funName: String = "filter")(inline f: V => Boolean): Filter[V] =
-  ${ Filter.filterCode('input, 'f, 'funName) }
+extension [V] (input: Event[V])
+  inline def filter: Filter.FilterFactory[V] = new Filter.FilterFactory(input)

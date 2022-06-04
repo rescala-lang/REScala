@@ -2,8 +2,9 @@ package reactive
 
 import clangast.WithContext
 import clangast.decl.CFunctionDecl
+import clangast.traversal.CASTMapper
 import clangast.types.CType
-import macros.ScalaToC
+import compiler.MacroCompiler
 
 import scala.quoted.*
 
@@ -14,19 +15,18 @@ case class Map1[A, R](input: Event[A], cType: WithContext[CType], f: WithContext
 }
 
 object Map1 {
-  def mapCode[A, R](input: Expr[Event[A]], f: Expr[A => R], funName: Expr[String])(using Quotes, Type[A], Type[R]): Expr[Map1[A, R]] = {
-    import quotes.reflect.*
-
-    val fCAST = ScalaToC.compileAnonFun(f, funName)
-    val tpeCAST = ScalaToC.compileType[R]
-
-    '{ Map1($input, $tpeCAST, $fCAST) }
+  class Map1Factory[A, R](input: Event[A]) {
+    inline def apply[C <: MacroCompiler](inline funName: String)(inline f: A => R)(using mc: C): Map1[A, R] =
+      Map1(
+        input,
+        mc.compileType[R],
+        mc.compileAnonFun(f, funName)
+      )
   }
 }
 
-extension [A] (inline input: Event[A])
-  inline def map[R](inline funName: String = "map")(inline f: A => R): Map1[A, R] =
-    ${ Map1.mapCode('input, 'f, 'funName) }
+extension [A] (input: Event[A])
+  inline def map[R]: Map1.Map1Factory[A, R] = new Map1.Map1Factory(input)
     
-  inline def observe(inline funName: String = "observe")(inline f: A => Unit): Map1[A, Unit] =
-    ${ Map1.mapCode('input, 'f, 'funName) }
+  inline def observe[C <: MacroCompiler](inline funName: String = "observe")(inline f: A => Unit)(using mc: C): Map1[A, Unit] =
+    map(funName)(f)

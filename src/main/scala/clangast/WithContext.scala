@@ -1,7 +1,7 @@
 package clangast
 
 import clangast.decl.{CFunctionDecl, CInclude, CRecordDecl}
-import macros.TranslationContext
+import compiler.TranslationContext
 
 import scala.quoted.*
 

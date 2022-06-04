@@ -2,7 +2,7 @@ package reactive
 
 import clangast.WithContext
 import clangast.types.CType
-import macros.ScalaToC
+import compiler.MacroCompiler
 
 import scala.annotation.targetName
 import scala.quoted.*
@@ -14,15 +14,16 @@ case class Or[V](left: Event[V], right: Event[V], cType: WithContext[CType]) ext
 }
 
 object Or {
-  def orCode[V](left: Expr[Event[V]], right: Expr[Event[V]])(using Quotes, Type[V]): Expr[Or[V]] = {
-    import quotes.reflect.*
-
-    val tpeCAST = ScalaToC.compileType[V]
-
-    '{ Or($left, $right, $tpeCAST) }
+  class OrFactory[V](left: Event[V]) {
+    inline def apply[C <: MacroCompiler](inline right: Event[V])(using mc: C): Or[V] =
+      Or(
+        left,
+        right,
+        mc.compileType[V]
+      )
   }
 }
 
-extension [V] (inline left: Event[V])
+extension [V] (left: Event[V])
   @targetName("or")
-  inline def ||(inline right: Event[V]): Or[V] = ${ Or.orCode('left, 'right) }
+  inline def || : Or.OrFactory[V] = new Or.OrFactory(left)

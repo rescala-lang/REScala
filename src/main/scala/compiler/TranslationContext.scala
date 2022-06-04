@@ -1,4 +1,4 @@
-package macros
+package compiler
 
 import clangast.decl.{CFunctionDecl, CInclude, CRecordDecl, CValueDecl}
 

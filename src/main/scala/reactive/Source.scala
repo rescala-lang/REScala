@@ -2,7 +2,7 @@ package reactive
 
 import clangast.WithContext
 import clangast.types.CType
-import macros.ScalaToC
+import compiler.MacroCompiler
 
 import scala.quoted.*
 
@@ -17,13 +17,10 @@ case class Source[V](name: String, cType: WithContext[CType]) extends Event[V] {
 }
 
 object Source {
-  def sourceCode[V](name: Expr[String])(using Quotes, Type[V]): Expr[Source[V]] = {
-    import quotes.reflect.*
-    
-    val tpeCAST = ScalaToC.compileType[V]
-    
-    '{ Source($name, $tpeCAST) }
+  class SourceFactory[V] {
+    inline def apply[C <: MacroCompiler](inline name: String)(using mc: C): Source[V] =
+      new Source[V](name, mc.compileType[V])
   }
-  
-  inline def apply[V](inline name: String): Source[V] = ${ sourceCode[V]('name) }
+
+  inline def apply[V]: SourceFactory[V] = new SourceFactory
 }

@@ -4,7 +4,7 @@ import clangast.WithContext
 import clangast.decl.CFunctionDecl
 import clangast.expr.CExpr
 import clangast.types.CType
-import macros.{ScalaToC, TranslationContext}
+import compiler.MacroCompiler
 
 import scala.quoted.*
 
@@ -15,17 +15,15 @@ case class Fold[V](init: WithContext[CExpr], cType: WithContext[CType], lines: L
 }
 
 object Fold {
-  def foldCode[V, R](input: Expr[Event[V]], init: Expr[R], f: Expr[(R, V) => R], funName: Expr[String])(using Quotes, Type[V], Type[R]): Expr[Fold[R]] = {
-    import quotes.reflect.*
-
-    val initCAST = ScalaToC.compileExpr(init)
-    val tpeCAST = ScalaToC.compileType[R]
-    val fCAST = ScalaToC.compileAnonFun(f, funName)
-
-    '{ Fold($initCAST, $tpeCAST, List(FLine($input, $fCAST))) }
+  class FoldFactory[V, R](input: Event[V]) {
+    inline def apply[C <: MacroCompiler](inline init: R)(inline funName: String = "fold")(inline f: (R, V) => R)(using mc: C): Fold[R] =
+      Fold(
+        mc.compileExpr(init),
+        mc.compileType[R],
+        List(FLine(input, mc.compileAnonFun(f, funName)))
+      )
   }
 }
 
-extension [V] (inline input: Event[V])
-  inline def fold[R](inline init: R)(inline funName: String = "fold")(inline f: (R, V) => R): Fold[R] =
-    ${ Fold.foldCode('input, 'init, 'f, 'funName) }
+extension [V] (input: Event[V])
+  inline def fold[R]: Fold.FoldFactory[V, R] = new Fold.FoldFactory(input)
