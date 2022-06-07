@@ -24,7 +24,7 @@ case class WithContext[T <: CASTNode](
 object WithContext {
   def apply[T <: CASTNode](node: T, ctx: TranslationContext, excludeFunction: String = ""): WithContext[T] = {
     val includes = ctx.includes.toList
-    val recordDecls = ctx.nameToRecordDecl.values.toList
+    val recordDecls = ctx.orderedRecordDecls.toList
     val functionDecls =
       ctx.nameToRecordCreator.values.toList ++
         ctx.nameToRecordEquals.values ++

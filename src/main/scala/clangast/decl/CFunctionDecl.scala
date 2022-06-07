@@ -52,4 +52,6 @@ case class CFunctionDecl(
       body.map(mapper.mapCCompoundStmt),
       variadic
     )
+    
+  def declOnly: CFunctionDecl = this.copy(body = None)
 }

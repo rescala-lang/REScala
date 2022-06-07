@@ -11,6 +11,18 @@ class TranslationContext {
   
   val nameToRecordDecl: mutable.Map[String, CRecordDecl] = mutable.Map()
   
+  val orderedRecordDecls: mutable.ListBuffer[CRecordDecl] = mutable.ListBuffer()
+
+  def getOrElseUpdateRecordDecl(key: String, updated: => CRecordDecl): CRecordDecl = {
+    nameToRecordDecl.get(key) match {
+      case Some(decl) => decl
+      case None =>
+        nameToRecordDecl.put(key, updated)
+        orderedRecordDecls.append(updated)
+        updated
+    }
+  }
+  
   val nameToFunctionDecl: mutable.Map[String, CFunctionDecl] = mutable.Map()
   
   val nameToRecordCreator: mutable.Map[String, CFunctionDecl] = mutable.Map()

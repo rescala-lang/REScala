@@ -86,7 +86,7 @@ object CompileArray extends PartialCompiler {
   }
 
   private def getArrayRecordDecl(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: TranslationContext, cascade: CompilerCascade): CRecordDecl = {
-    ctx.nameToRecordDecl.getOrElseUpdate(typeName(tpe), compileArrayTypeToCRecordDecl(tpe))
+    ctx.getOrElseUpdateRecordDecl(typeName(tpe), compileArrayTypeToCRecordDecl(tpe))
   }
 
   private def compileArrayTypeToCRecordDecl(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: TranslationContext, cascade: CompilerCascade): CRecordDecl = {

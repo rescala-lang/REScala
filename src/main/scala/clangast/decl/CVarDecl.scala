@@ -29,4 +29,6 @@ case class CVarDecl(name: String, declaredType: CQualType, init: Option[CExpr] =
 
   override def mapChildren(mapper: CASTMapper): CVarDecl =
     CVarDecl(name, mapper.mapCQualType(declaredType), init.map(mapper.mapCExpr))
+    
+  def declOnly: CVarDecl = this.copy(init = None)
 }

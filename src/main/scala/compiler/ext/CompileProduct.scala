@@ -196,7 +196,7 @@ object CompileProduct extends PartialCompiler {
   }
 
   private def getProductRecordDecl(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: TranslationContext, cascade: CompilerCascade): CRecordDecl = {
-    ctx.nameToRecordDecl.getOrElseUpdate(typeName(tpe), compileProductTypeToCRecordDecl(tpe))
+    ctx.getOrElseUpdateRecordDecl(typeName(tpe), compileProductTypeToCRecordDecl(tpe))
   }
 
   private def compileProductTypeToCRecordDecl(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: TranslationContext, cascade: CompilerCascade): CRecordDecl = {
