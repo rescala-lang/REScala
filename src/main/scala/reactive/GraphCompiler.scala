@@ -6,7 +6,7 @@ import clangast.expr.{CCallExpr, CConditionalOperator, CDeclRefExpr, CExpr, CTru
 import clangast.expr.binaryop.{CAssignmentExpr, CNotEqualsExpr}
 import clangast.stmt.{CCompoundStmt, CDeclStmt, CExprStmt, CIfStmt, CStmt}
 import clangast.stubs.StdBoolH
-import clangast.types.{CBoolType, CIntegerType, CVoidType}
+import clangast.types.{CBoolType, CIntegerType, CQualType, CVoidType}
 import compiler.HelperFunCollection
 
 import java.io.{File, FileWriter}
@@ -105,7 +105,7 @@ class GraphCompiler(outputs: List[ReSource])(using hfc: HelperFunCollection) {
   })
 
   private val localVariables: Map[ReSource, CVarDecl] = Map.from(allNodes.collect {
-    case r@Map1(_, cType, _) => r -> CVarDecl(r.valueName, cType.node)
+    case r@Map1(_, cType, f) if f.node.returnType != CQualType(CVoidType) => r -> CVarDecl(r.valueName, cType.node)
     case r@Map2(_, _, cType, _) => r -> CVarDecl(r.valueName, cType.node)
     case r@Filter(_, _) => r -> CVarDecl(r.valueName, CBoolType)
     case r@Or(_, _, cType) => r -> CVarDecl(r.valueName, cType.node)
@@ -155,6 +155,8 @@ class GraphCompiler(outputs: List[ReSource])(using hfc: HelperFunCollection) {
       )
 
     val updates = sameCond.flatMap {
+      case Map1(input, _, f) if f.node.returnType == CQualType(CVoidType) =>
+        List(CExprStmt(CCallExpr(CDeclRefExpr(f.node), List(valueRef(input)))))
       case r@Map1(input, _, f) =>
         List(updateAssignment(
           valueRef(r),
