@@ -44,12 +44,6 @@ object CompileApply extends PartialCompiler {
         case Apply(inner, List(Select(Apply(TypeApply(Select(Ident("ClassTag"), "apply"), _), _), "wrap"))) =>
           // assume that this ClassTag magic can be ignored for our purposes
           cascade.compileTermToCExpr(inner)
-        case Apply(helper@Ident(name), args) if helper.tpe <:< TypeRepr.of[CHelperFun] =>
-          // TODO: Lookup helper function somewhere
-          CCallExpr(
-            ???,
-            args.map(cascade.compileTermToCExpr)
-          )
       }
     }
 

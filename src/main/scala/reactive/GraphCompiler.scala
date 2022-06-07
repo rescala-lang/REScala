@@ -7,11 +7,12 @@ import clangast.expr.binaryop.{CAssignmentExpr, CNotEqualsExpr}
 import clangast.stmt.{CCompoundStmt, CDeclStmt, CExprStmt, CIfStmt, CStmt}
 import clangast.stubs.StdBoolH
 import clangast.types.{CBoolType, CIntegerType, CVoidType}
+import compiler.HelperFunCollection
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ArrayBuffer
 
-class GraphCompiler(outputs: List[ReSource]) {
+class GraphCompiler(outputs: List[ReSource])(using hfc: HelperFunCollection) {
   val allNodes: Set[ReSource] = flattenGraph(outputs, Set())
   val sources: Set[Source[_]] = allNodes.collect { case s: Source[_] => s }
 
@@ -69,7 +70,10 @@ class GraphCompiler(outputs: List[ReSource]) {
     case Map2(_, _, _, f) => List(f)
     case Filter(_, f) => List(f)
     case Fold(init, _, lines) => init :: lines.map(_.f)
-  }.flatten
+  }.flatten ++ hfc.helperFuns.map {
+    case WithContext(f, includes, recordDecls, functionDecls) =>
+      WithContext(f, includes, recordDecls, f :: functionDecls)
+  }
   
   def appendWithoutDuplicates[T](l: List[List[T]]): List[T] = l.foldLeft((List.empty[T], Set.empty[T])) {
     case ((accList, accSet), innerList) =>

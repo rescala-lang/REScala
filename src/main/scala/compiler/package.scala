@@ -14,5 +14,9 @@ package object compiler {
     CompileType
   )
 
-  val standardCascade: CompilerCascade = CompileArray ~>: CompileProduct ~>: minimalCascade
+  val standardCascade: CompilerCascade =
+    CompileHelperFun
+      ~>: CompileArray
+      ~>: CompileProduct
+      ~>: minimalCascade
 }
