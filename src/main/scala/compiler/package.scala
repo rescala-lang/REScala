@@ -18,5 +18,6 @@ package object compiler {
     CompileHelperFun
       ~>: CompileArray
       ~>: CompileProduct
+      ~>: CompileString
       ~>: minimalCascade
 }

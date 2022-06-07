@@ -16,12 +16,6 @@ object CompileApply extends PartialCompiler {
       import quotes.reflect.*
     
       {
-        case Apply(Ident("println"), List(arg)) =>
-          // TODO: currently only works with String arguments
-          CCallExpr(
-            CDeclRefExpr(StdIOH.printf),
-            List(cascade.compileTermToCExpr(arg))
-          )
         case Apply(Select(Select(Ident("math"), "package"), "max"), List(arg1, arg2)) =>
           val v1 = CVarDecl("_v1", cascade.compileTypeRepr(arg1.tpe), Some(cascade.compileTermToCExpr(arg1)))
           val v2 = CVarDecl("_v2", cascade.compileTypeRepr(arg2.tpe), Some(cascade.compileTermToCExpr(arg2)))

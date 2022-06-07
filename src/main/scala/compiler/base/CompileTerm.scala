@@ -72,7 +72,6 @@ object CompileTerm extends PartialCompiler {
         case Literal(FloatConstant(x)) => CFloatLiteral(x)
         case Literal(DoubleConstant(x)) => CDoubleLiteral(x)
         case Literal(CharConstant(x)) => CCharacterLiteral(x)
-        case Literal(StringConstant(x)) => CStringLiteral(x)
         case Literal(NullConstant()) => CNullLiteral
       }
     }
