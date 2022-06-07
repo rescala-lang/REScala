@@ -2,7 +2,7 @@ package compiler.base
 
 import clangast.given
 import clangast.decl.{CDecl, CFunctionDecl, CParmVarDecl, CVarDecl}
-import clangast.stmt.{CCompoundStmt, CReturnStmt}
+import clangast.stmt.{CCompoundStmt, CExprStmt, CReturnStmt}
 import compiler.{CompilerCascade, PartialCompiler, TranslationContext}
 
 import scala.quoted.*
@@ -32,6 +32,7 @@ object CompileDefinition extends PartialCompiler {
         t match
           case block: Block => cascade.compileBlockToFunctionBody(block)
           case Return(expr, _) => CCompoundStmt(List(CReturnStmt(Some(cascade.compileTermToCExpr(expr)))))
+          case term if term.tpe =:= TypeRepr.of[Unit] => CCompoundStmt(List(CExprStmt(cascade.compileTermToCExpr(term))))
           case term => CCompoundStmt(List(CReturnStmt(Some(cascade.compileTermToCExpr(term)))))
       }
   
