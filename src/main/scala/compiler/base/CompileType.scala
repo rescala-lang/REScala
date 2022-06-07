@@ -13,15 +13,23 @@ object CompileType extends PartialCompiler {
       import quotes.reflect.*
 
       {
+        case ConstantType(_: BooleanConstant) => CBoolType
         case tpe if tpe =:= TypeRepr.of[Boolean] => CBoolType
+        case ConstantType(_: ByteConstant) => CCharType
         case tpe if tpe =:= TypeRepr.of[Byte] => CCharType
+        case ConstantType(_: CharConstant) => CCharType
         case tpe if tpe =:= TypeRepr.of[Char] => CCharType
+        case ConstantType(_: ShortConstant) => CShortType
         case tpe if tpe =:= TypeRepr.of[Short] => CShortType
-        case ConstantType(IntConstant(_)) => CIntegerType
+        case ConstantType(_: IntConstant) => CIntegerType
         case tpe if tpe =:= TypeRepr.of[Int] => CIntegerType
+        case ConstantType(_: LongConstant) => CLongType
         case tpe if tpe =:= TypeRepr.of[Long] => CLongType
+        case ConstantType(_: FloatConstant) => CFloatType
         case tpe if tpe =:= TypeRepr.of[Float] => CFloatType
+        case ConstantType(_: DoubleConstant) => CDoubleType
         case tpe if tpe =:= TypeRepr.of[Double] => CDoubleType
+        case ConstantType(_: UnitConstant) => CVoidType
         case tpe if tpe =:= TypeRepr.of[Unit] => CVoidType
       }
     }
