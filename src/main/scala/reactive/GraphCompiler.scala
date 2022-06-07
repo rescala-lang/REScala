@@ -318,7 +318,7 @@ class GraphCompiler(outputs: List[ReSource])(using hfc: HelperFunCollection) {
     val content =
       s"""
          |build:
-         |  $compiler $appC $mainC $mainH $libC $libH -o $appOut
+         |\t$compiler $appC $mainC $mainH $libC $libH -o $appOut
       """.strip().stripMargin
 
     writeFile(pathToDir + "/Makefile", content)
