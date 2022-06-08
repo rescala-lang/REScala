@@ -10,7 +10,7 @@ import scala.quoted.*
 trait MacroCompiler {
   protected def cascade: CompilerCascade = standardCascade
   
-  inline def compileTree(t: Any): WithContext[CASTNode]
+  inline def compileTree(inline t: Any): WithContext[CASTNode]
   
   protected def compileTreeCode(t: Expr[_])(using Quotes): Expr[WithContext[CASTNode]] = {
     import quotes.reflect.*
@@ -20,7 +20,7 @@ trait MacroCompiler {
     WithContext(cascade.compileTree(t.asTerm), ctx).toExpr
   }
   
-  inline def compileExpr(e: Any): WithContext[CExpr]
+  inline def compileExpr(inline e: Any): WithContext[CExpr]
   
   protected def compileExprCode(e: Expr[_])(using Quotes): Expr[WithContext[CExpr]] = {
     import quotes.reflect.*
@@ -30,7 +30,7 @@ trait MacroCompiler {
     WithContext(cascade.compileTermToCExpr(e.asTerm), ctx).toExpr
   }
   
-  inline def compileFun(f: AnyRef): WithContext[CFunctionDecl]
+  inline def compileFun(inline f: AnyRef): WithContext[CFunctionDecl]
   
   protected def compileFunCode(f: Expr[_])(using Quotes): Expr[WithContext[CFunctionDecl]] = {
     import quotes.reflect.*
@@ -66,5 +66,13 @@ trait MacroCompiler {
     val compiledTypeRepr = cascade.compileTypeRepr(TypeRepr.of[T])
 
     WithContext(compiledTypeRepr, ctx).toExpr
+  }
+
+  inline def valName: String
+
+  protected def valNameCode(using Quotes): Expr[String] = {
+    import quotes.reflect.*
+
+    Expr(Symbol.spliceOwner.owner.name)
   }
 }

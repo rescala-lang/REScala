@@ -37,7 +37,7 @@ object CompileDefinition extends PartialCompiler {
       }
   
       val inferredName = try {
-        defDef.symbol.owner.owner.name
+        Symbol.spliceOwner.owner.name
       } catch {
         case _: Exception => defName
       }

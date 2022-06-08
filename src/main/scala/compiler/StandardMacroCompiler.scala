@@ -8,19 +8,19 @@ import clangast.types.CType
 import scala.quoted.*
 
 object StandardMacroCompiler extends MacroCompiler {
-  override inline def compileTree(t: Any): WithContext[CASTNode] =
+  override inline def compileTree(inline t: Any): WithContext[CASTNode] =
     ${ compileTreeCode('t) }
 
   override protected def compileTreeCode(t: Expr[_])(using Quotes): Expr[WithContext[CASTNode]] =
     super.compileTreeCode(t)
 
-  override inline def compileExpr(e: Any): WithContext[CExpr] =
+  override inline def compileExpr(inline e: Any): WithContext[CExpr] =
     ${ compileExprCode('e) }
 
   override protected def compileExprCode(e: Expr[_])(using Quotes): Expr[WithContext[CExpr]] =
     super.compileExprCode(e)
 
-  override inline def compileFun(f: AnyRef): WithContext[CFunctionDecl] =
+  override inline def compileFun(inline f: AnyRef): WithContext[CFunctionDecl] =
     ${ compileFunCode('f) }
 
   override protected def compileFunCode(f: Expr[_])(using Quotes): Expr[WithContext[CFunctionDecl]] =
@@ -37,4 +37,9 @@ object StandardMacroCompiler extends MacroCompiler {
 
   override protected def compileTypeCode[T](using Quotes, Type[T]): Expr[WithContext[CType]] =
     super.compileTypeCode[T]
+
+  override inline def valName: String =
+    $ { valNameCode }
+
+  override protected def valNameCode(using Quotes): Expr[String] = super.valNameCode
 }

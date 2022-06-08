@@ -1,19 +1,22 @@
 package reactive
 
-import clangast.{CASTNode, WithContext, lit, given}
-import clangast.decl.{CFunctionDecl, CInclude, CParmVarDecl, CTranslationUnitDecl, CValueDecl, CVarDecl}
-import clangast.expr.{CCallExpr, CConditionalOperator, CDeclRefExpr, CExpr, CTrueLiteral}
-import clangast.expr.binaryop.{CAssignmentExpr, CNotEqualsExpr}
-import clangast.stmt.{CCompoundStmt, CDeclStmt, CExprStmt, CIfStmt, CStmt}
+import clangast.*
+import clangast.given
+import clangast.decl.*
+import clangast.expr.*
+import clangast.expr.binaryop.*
+import clangast.stmt.*
 import clangast.stubs.StdBoolH
-import clangast.types.{CBoolType, CIntegerType, CQualType, CVoidType}
-import compiler.HelperFunCollection
+import clangast.traversal.CASTMapper
+import clangast.types.*
+import compiler.ext.CTransactionStatement
+import compiler.{CMainFunction, HelperFunCollection}
 
 import java.io.{File, FileWriter}
 import scala.annotation.tailrec
 import scala.collection.mutable.ArrayBuffer
 
-class GraphCompiler(outputs: List[ReSource])(using hfc: HelperFunCollection) {
+class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunction.empty)(using hfc: HelperFunCollection) {
   private val allNodes: Set[ReSource] = flattenGraph(outputs, Set())
   private val sources: Set[Source[_]] = allNodes.collect { case s: Source[_] => s }
 
@@ -74,7 +77,7 @@ class GraphCompiler(outputs: List[ReSource])(using hfc: HelperFunCollection) {
   }.flatten ++ hfc.helperFuns.map {
     case WithContext(f, includes, recordDecls, functionDecls) =>
       WithContext(f, includes, recordDecls, f :: functionDecls)
-  }
+  } appended mainFun.f
 
   private val globalVariables: Map[Fold[?], CVarDecl] = Map.from(allNodes.collect {
     case f@Fold(_, cType, _) => f -> CVarDecl(f.valueName, cType.node, None)
@@ -124,7 +127,7 @@ class GraphCompiler(outputs: List[ReSource])(using hfc: HelperFunCollection) {
           acc.updated(f, f.inputs.foldLeft(UpdateCondition.empty) { (cond, input) => cond.or(acc(input)) })
       }
     }.map {
-      case (f: Filter[_]) -> cond => f -> UpdateCondition(cond.normalized.map(_.filter(_ != localVariables(f))))
+      case (f: Filter[_], cond) => f -> UpdateCondition(cond.normalized.map(_.filter(_ != localVariables(f))))
       case other => other
     }
   }
@@ -310,8 +313,37 @@ class GraphCompiler(outputs: List[ReSource])(using hfc: HelperFunCollection) {
     writeFile(pathToDir + "/" + libH, libHTU.textgen)
   }
 
+  private val appCTU: CTranslationUnitDecl = {
+    val includes = mainInclude :: libInclude :: mainFun.f.includes
+
+    val transactionMapper = new CASTMapper {
+      override protected val mapCStmtHook: PartialFunction[CStmt, CStmt] = {
+        case CTransactionStatement(args) =>
+          val tempDecls = sourcesTopological.map { source =>
+            val initExpr = args.collectFirst {
+              case (sourceName, expr) if sourceName.equals(source.name) => expr
+            }
+
+            CVarDecl(source.valueName, source.cType.node, initExpr)
+          }
+
+          val updateCall = CCallExpr(
+            CDeclRefExpr(updateFunction),
+            tempDecls.flatMap { varDecl => List(CDeclRefExpr(varDecl), if varDecl.init.isDefined then CTrueLiteral else CFalseLiteral) }
+          )
+
+          CCompoundStmt(tempDecls.map(CDeclStmt.apply).appended(updateCall))
+      }
+    }
+
+    CTranslationUnitDecl(
+      includes,
+      List(transactionMapper.mapCValueDecl(mainFun.f.node))
+    )
+  }
+
   private def writeApp(pathToDir: String): Unit = {
-    writeFile(pathToDir + "/" + appC, "")
+    writeFile(pathToDir + "/" + appC, appCTU.textgen)
   }
 
   private def writeMakeFile(pathToDir: String, compiler: String): Unit = {

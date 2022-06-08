@@ -4,6 +4,7 @@ import clangast.WithContext
 import clangast.types.CType
 import compiler.MacroCompiler
 
+import scala.annotation.targetName
 import scala.quoted.*
 
 case class Source[V](name: String, cType: WithContext[CType]) extends Event[V] {
@@ -14,13 +15,11 @@ case class Source[V](name: String, cType: WithContext[CType]) extends Event[V] {
   override def valueName: String = name
   
   val validName: String = valueName + "_valid"
+
+  @targetName("assign")
+  def :=(v: V): Unit = ???
 }
 
 object Source {
-  class SourceFactory[V] {
-    inline def apply[C <: MacroCompiler](inline name: String)(using mc: C): Source[V] =
-      new Source[V](name, mc.compileType[V])
-  }
-
-  inline def apply[V]: SourceFactory[V] = new SourceFactory
+  inline def apply[V, C <: MacroCompiler]()(using mc: C): Source[V] = new Source[V](mc.valName, mc.compileType[V])
 }

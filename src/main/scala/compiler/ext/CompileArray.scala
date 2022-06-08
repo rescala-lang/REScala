@@ -17,7 +17,7 @@ import scala.quoted.*
 
 object CompileArray extends PartialCompiler {
   override def compileApply(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
-  PartialFunction[quotes.reflect.Apply, CExpr] = {
+    PartialFunction[quotes.reflect.Apply, CExpr] = {
       import quotes.reflect.*
     
       {
@@ -172,10 +172,6 @@ object CompileArray extends PartialCompiler {
       CReturnStmt(Some(CDeclRefExpr(arrDecl)))
     ))
 
-    val decl = CFunctionDecl(name, List(lengthParam), returnType, Some(body), variadic = true)
-
-    println(decl.textgen)
-
-    decl
+    CFunctionDecl(name, List(lengthParam), returnType, Some(body), variadic = true)
   }
 }
