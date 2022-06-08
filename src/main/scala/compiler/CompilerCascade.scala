@@ -14,10 +14,10 @@ class CompilerCascade(val partialCompilers: List[PartialCompiler]) {
   given CompilerCascade = this
 
   @targetName("flowTo")
-  inline def ~~>(other: CompilerCascade): CompilerCascade = new CompilerCascade(this.partialCompilers ++ other.partialCompilers)
+  def ~~>(other: CompilerCascade): CompilerCascade = new CompilerCascade(this.partialCompilers ++ other.partialCompilers)
   
   @targetName("prepend")
-  inline def ~>:(pc: PartialCompiler): CompilerCascade = new CompilerCascade(pc :: this.partialCompilers)
+  def ~>:(pc: PartialCompiler): CompilerCascade = new CompilerCascade(pc :: this.partialCompilers)
 
   private def reducePartialsForTree[R](using Quotes): [A <: quotes.reflect.Tree] => (PartialCompiler => PartialFunction[A, R]) => A => R =
     [A <: quotes.reflect.Tree] => (m: PartialCompiler => PartialFunction[A, R]) =>
