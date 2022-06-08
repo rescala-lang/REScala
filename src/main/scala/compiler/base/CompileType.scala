@@ -1,5 +1,6 @@
 package compiler.base
 
+import clangast.stubs.StdBoolH
 import clangast.types.*
 import compiler.ext.CompileArray.getArrayRecordDecl
 import compiler.ext.CompileProduct.getProductRecordDecl
@@ -13,8 +14,12 @@ object CompileType extends PartialCompiler {
       import quotes.reflect.*
 
       {
-        case ConstantType(_: BooleanConstant) => CBoolType
-        case tpe if tpe =:= TypeRepr.of[Boolean] => CBoolType
+        case ConstantType(_: BooleanConstant) =>
+          ctx.includes.add(StdBoolH.include)
+          CBoolType
+        case tpe if tpe =:= TypeRepr.of[Boolean] =>
+          ctx.includes.add(StdBoolH.include)
+          CBoolType
         case ConstantType(_: ByteConstant) => CCharType
         case tpe if tpe =:= TypeRepr.of[Byte] => CCharType
         case ConstantType(_: CharConstant) => CCharType
