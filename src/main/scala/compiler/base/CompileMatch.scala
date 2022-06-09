@@ -86,7 +86,7 @@ object CompileMatch extends MatchPC {
       }
     }
 
-  def compileCaseDef(using Quotes)(using ctx: ValueDeclTC, cascade: CompilerCascade):
+  private def compileCaseDefImpl(using Quotes)(using ctx: ValueDeclTC, cascade: CompilerCascade):
     PartialFunction[(quotes.reflect.CaseDef, quotes.reflect.Term), (Option[CExpr], List[CVarDecl], List[CStmt])] = {
       import quotes.reflect.*
 
@@ -121,11 +121,9 @@ object CompileMatch extends MatchPC {
       }
     }
 
-  override def compileCaseDef(using q: Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+  override def compileCaseDef(using Quotes)(using TranslationContext, CompilerCascade):
     PartialFunction[(quotes.reflect.CaseDef, quotes.reflect.Term), (Option[CExpr], List[CVarDecl], List[CStmt])] =
-      ctx match {
-        case c: ValueDeclTC => compileCaseDef(using q)(using c, cascade)
-      }
+      ensureCtx[ValueDeclTC](compileCaseDefImpl)
 
   override def compilePattern(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
     PartialFunction[(quotes.reflect.Tree, CExpr, quotes.reflect.TypeRepr), (Option[CExpr], List[CVarDecl])] = {

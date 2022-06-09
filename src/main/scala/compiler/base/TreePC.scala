@@ -13,8 +13,5 @@ trait TreePC extends PartialCompiler {
 
 extension (p: PartialCompiler) {
   def compileTree(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[quotes.reflect.Tree, CASTNode] = p match {
-      case treePC: TreePC => treePC.compileTree
-      case _ => PartialFunction.empty
-    }
+    PartialFunction[quotes.reflect.Tree, CASTNode] = PartialCompiler.ensurePC[TreePC](p, _.compileTree)
 }

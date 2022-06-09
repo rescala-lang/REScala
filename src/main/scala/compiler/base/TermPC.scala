@@ -49,74 +49,38 @@ trait TermPC extends PartialCompiler {
 
 extension (p: PartialCompiler) {
   def compileTerm(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[quotes.reflect.Term, CASTNode] = p match {
-      case termPC: TermPC => termPC.compileTerm
-      case _ => PartialFunction.empty
-    }
+    PartialFunction[quotes.reflect.Term, CASTNode] = PartialCompiler.ensurePC[TermPC](p, _.compileTerm)
 
   def compileTermToCStmt(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[quotes.reflect.Term, CStmt] = p match {
-      case termPC: TermPC => termPC.compileTermToCStmt
-      case _ => PartialFunction.empty
-    }
+    PartialFunction[quotes.reflect.Term, CStmt] = PartialCompiler.ensurePC[TermPC](p, _.compileTermToCStmt)
 
   def compileTermToCExpr(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[quotes.reflect.Term, CExpr] = p match {
-      case termPC: TermPC => termPC.compileTermToCExpr
-      case _ => PartialFunction.empty
-    }
+    PartialFunction[quotes.reflect.Term, CExpr] = PartialCompiler.ensurePC[TermPC](p, _.compileTermToCExpr)
 
   def compileLiteral(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[quotes.reflect.Literal, CExpr] = p match {
-      case termPC: TermPC => termPC.compileLiteral
-      case _ => PartialFunction.empty
-    }
+    PartialFunction[quotes.reflect.Literal, CExpr] = PartialCompiler.ensurePC[TermPC](p, _.compileLiteral)
 
   def compileAssign(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[quotes.reflect.Assign, CAssignmentExpr] = p match {
-      case termPC: TermPC => termPC.compileAssign
-      case _ => PartialFunction.empty
-    }
+    PartialFunction[quotes.reflect.Assign, CAssignmentExpr] = PartialCompiler.ensurePC[TermPC](p, _.compileAssign)
 
   def compileBlockToCStmtExpr(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[quotes.reflect.Block, CStmtExpr] = p match {
-      case termPC: TermPC => termPC.compileBlockToCStmtExpr
-      case _ => PartialFunction.empty
-    }
+    PartialFunction[quotes.reflect.Block, CStmtExpr] = PartialCompiler.ensurePC[TermPC](p, _.compileBlockToCStmtExpr)
 
   def compileBlockToCCompoundStmt(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[quotes.reflect.Block, CCompoundStmt] = p match {
-      case termPC: TermPC => termPC.compileBlockToCCompoundStmt
-      case _ => PartialFunction.empty
-    }
+    PartialFunction[quotes.reflect.Block, CCompoundStmt] = PartialCompiler.ensurePC[TermPC](p, _.compileBlockToCCompoundStmt)
 
   def compileBlockToFunctionBody(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[quotes.reflect.Block, CCompoundStmt] = p match {
-      case termPC: TermPC => termPC.compileBlockToFunctionBody
-      case _ => PartialFunction.empty
-    }
+    PartialFunction[quotes.reflect.Block, CCompoundStmt] = PartialCompiler.ensurePC[TermPC](p, _.compileBlockToFunctionBody)
 
   def compileIfToCIfStmt(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[quotes.reflect.If, CIfStmt] = p match {
-      case termPC: TermPC => termPC.compileIfToCIfStmt
-      case _ => PartialFunction.empty
-    }
+    PartialFunction[quotes.reflect.If, CIfStmt] = PartialCompiler.ensurePC[TermPC](p, _.compileIfToCIfStmt)
 
   def compileIfToCConditionalOperator(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[quotes.reflect.If, CConditionalOperator] = p match {
-      case termPC: TermPC => termPC.compileIfToCConditionalOperator
-      case _ => PartialFunction.empty
-    }
+    PartialFunction[quotes.reflect.If, CConditionalOperator] = PartialCompiler.ensurePC[TermPC](p, _.compileIfToCConditionalOperator)
 
   def compileReturn(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[quotes.reflect.Return, CReturnStmt] = p match {
-      case termPC: TermPC => termPC.compileReturn
-      case _ => PartialFunction.empty
-    }
+    PartialFunction[quotes.reflect.Return, CReturnStmt] = PartialCompiler.ensurePC[TermPC](p, _.compileReturn)
 
   def compileWhile(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[quotes.reflect.While, CWhileStmt] = p match {
-      case termPC: TermPC => termPC.compileWhile
-      case _ => PartialFunction.empty
-    }
+    PartialFunction[quotes.reflect.While, CWhileStmt] = PartialCompiler.ensurePC[TermPC](p, _.compileWhile)
 }

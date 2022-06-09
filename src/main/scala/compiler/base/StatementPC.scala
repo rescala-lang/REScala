@@ -17,14 +17,8 @@ trait StatementPC extends PartialCompiler {
 
 extension (p: PartialCompiler) {
   def compileStatement(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[quotes.reflect.Statement, CASTNode] = p match {
-      case statementPC: StatementPC => statementPC.compileStatement
-      case _ => PartialFunction.empty
-    }
+    PartialFunction[quotes.reflect.Statement, CASTNode] = PartialCompiler.ensurePC[StatementPC](p, _.compileStatement)
 
   def compileStatementToCStmt(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[quotes.reflect.Statement, CStmt] = p match {
-      case statementPC: StatementPC => statementPC.compileStatementToCStmt
-      case _ => PartialFunction.empty
-    }
+    PartialFunction[quotes.reflect.Statement, CStmt] = PartialCompiler.ensurePC[StatementPC](p, _.compileStatementToCStmt)
 }

@@ -13,8 +13,5 @@ trait SelectPC extends PartialCompiler {
 
 extension (p: PartialCompiler) {
   def compileSelect(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[quotes.reflect.Select, CExpr] = p match {
-      case selectPC: SelectPC => selectPC.compileSelect
-      case _ => PartialFunction.empty
-    }
+    PartialFunction[quotes.reflect.Select, CExpr] = PartialCompiler.ensurePC[SelectPC](p, _.compileSelect)
 }

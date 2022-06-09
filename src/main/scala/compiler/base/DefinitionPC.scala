@@ -22,26 +22,14 @@ trait DefinitionPC extends PartialCompiler {
 
 extension (p: PartialCompiler) {
   def compileDefinition(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[quotes.reflect.Definition, CDecl] = p match {
-      case definitionPC: DefinitionPC => definitionPC.compileDefinition
-      case _ => PartialFunction.empty
-    }
+    PartialFunction[quotes.reflect.Definition, CDecl] = PartialCompiler.ensurePC[DefinitionPC](p, _.compileDefinition)
 
   def compileDefDef(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[quotes.reflect.DefDef, CFunctionDecl] = p match {
-      case definitionPC: DefinitionPC => definitionPC.compileDefDef
-      case _ => PartialFunction.empty
-    }
+    PartialFunction[quotes.reflect.DefDef, CFunctionDecl] = PartialCompiler.ensurePC[DefinitionPC](p, _.compileDefDef)
 
   def compileValDefToCVarDecl(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[quotes.reflect.ValDef, CVarDecl] = p match {
-      case definitionPC: DefinitionPC => definitionPC.compileValDefToCVarDecl
-      case _ => PartialFunction.empty
-    }
+    PartialFunction[quotes.reflect.ValDef, CVarDecl] = PartialCompiler.ensurePC[DefinitionPC](p, _.compileValDefToCVarDecl)
 
   def compileValDefToCParmVarDecl(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[quotes.reflect.ValDef, CParmVarDecl] = p match {
-      case definitionPC: DefinitionPC => definitionPC.compileValDefToCParmVarDecl
-      case _ => PartialFunction.empty
-    }
+    PartialFunction[quotes.reflect.ValDef, CParmVarDecl] = PartialCompiler.ensurePC[DefinitionPC](p, _.compileValDefToCParmVarDecl)
 }

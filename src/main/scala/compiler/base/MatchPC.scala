@@ -24,26 +24,16 @@ trait MatchPC extends PartialCompiler {
 
 extension (p: PartialCompiler) {
   def compileMatchToCIfStmt(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[quotes.reflect.Match, CIfStmt] = p match {
-      case matchPC: MatchPC => matchPC.compileMatchToCIfStmt
-      case _ => PartialFunction.empty
-    }
+    PartialFunction[quotes.reflect.Match, CIfStmt] = PartialCompiler.ensurePC[MatchPC](p, _.compileMatchToCIfStmt)
 
   def compileMatchToCStmtExpr(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[quotes.reflect.Match, CStmtExpr] = p match {
-      case matchPC: MatchPC => matchPC.compileMatchToCStmtExpr
-      case _ => PartialFunction.empty
-    }
+    PartialFunction[quotes.reflect.Match, CStmtExpr] = PartialCompiler.ensurePC[MatchPC](p, _.compileMatchToCStmtExpr)
 
   def compileCaseDef(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[(quotes.reflect.CaseDef, quotes.reflect.Term), (Option[CExpr], List[CVarDecl], List[CStmt])] = p match {
-      case matchPC: MatchPC => matchPC.compileCaseDef
-      case _ => PartialFunction.empty
-    }
+    PartialFunction[(quotes.reflect.CaseDef, quotes.reflect.Term), (Option[CExpr], List[CVarDecl], List[CStmt])] =
+      PartialCompiler.ensurePC[MatchPC](p, _.compileCaseDef)
 
   def compilePattern(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[(quotes.reflect.Tree, CExpr, quotes.reflect.TypeRepr), (Option[CExpr], List[CVarDecl])] = p match {
-      case matchPC: MatchPC => matchPC.compilePattern
-      case _ => PartialFunction.empty
-    }
+    PartialFunction[(quotes.reflect.Tree, CExpr, quotes.reflect.TypeRepr), (Option[CExpr], List[CVarDecl])] =
+      PartialCompiler.ensurePC[MatchPC](p, _.compilePattern)
 }

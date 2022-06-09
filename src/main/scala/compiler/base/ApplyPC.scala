@@ -13,8 +13,5 @@ trait ApplyPC extends PartialCompiler {
 
 extension (p: PartialCompiler) {
   def compileApply(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[quotes.reflect.Apply, CExpr] = p match {
-      case applyPC: ApplyPC => applyPC.compileApply
-      case _ => PartialFunction.empty
-    }
+    PartialFunction[quotes.reflect.Apply, CExpr] = PartialCompiler.ensurePC[ApplyPC](p, _.compileApply)
 }

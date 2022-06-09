@@ -31,7 +31,7 @@ object CompileString extends TermPC with ApplyPC with TypePC {
       }
     }
 
-  def compileApply(using Quotes)(using ctx: IncludeTC, cascade: CompilerCascade):
+  private def compileApplyImpl(using Quotes)(using ctx: IncludeTC, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.Apply, CExpr] = {
       import quotes.reflect.*
   
@@ -83,10 +83,8 @@ object CompileString extends TermPC with ApplyPC with TypePC {
       }
     }
 
-  override def compileApply(using q: Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
-    PartialFunction[quotes.reflect.Apply, CExpr] = ctx match {
-      case c: IncludeTC => compileApply(using q)(using c, cascade)
-    }
+  override def compileApply(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.Apply, CExpr] = ensureCtx[IncludeTC](compileApplyImpl)
 
   private def printf(format: String, arg: CExpr): CExpr =
     CCallExpr(

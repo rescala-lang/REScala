@@ -16,14 +16,8 @@ trait RefPC extends PartialCompiler {
 
 extension (p: PartialCompiler) {
   def compileRef(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[quotes.reflect.Ref, CExpr] = p match {
-      case refPC: RefPC => refPC.compileRef
-      case _ => PartialFunction.empty
-    }
+    PartialFunction[quotes.reflect.Ref, CExpr] = PartialCompiler.ensurePC[RefPC](p, _.compileRef)
 
   def compileIdent(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[quotes.reflect.Ident, CExpr] = p match {
-      case refPC: RefPC => refPC.compileIdent
-      case _ => PartialFunction.empty
-    }
+    PartialFunction[quotes.reflect.Ident, CExpr] = PartialCompiler.ensurePC[RefPC](p, _.compileIdent)
 }

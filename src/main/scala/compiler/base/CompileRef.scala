@@ -17,16 +17,13 @@ object CompileRef extends RefPC {
       }
     }
 
-  def compileIdent(using Quotes)(using ctx: ValueDeclTC, cascade: CompilerCascade):
+  private def compileIdentImpl(using Quotes)(using ctx: ValueDeclTC, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.Ident, CExpr] = ((ident: quotes.reflect.Ident) => {
       import quotes.reflect.*
 
       ctx.nameToDecl.get(ident.name).map(CDeclRefExpr.apply)
     }).unlift
 
-  override def compileIdent(using q: Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
-    PartialFunction[quotes.reflect.Ident, CExpr] = ctx match {
-      case c: ValueDeclTC => compileIdent(using q)(using c, cascade)
-      case _ => PartialFunction.empty
-    }
+  override def compileIdent(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.Ident, CExpr] = ensureCtx[ValueDeclTC](compileIdentImpl)
 }

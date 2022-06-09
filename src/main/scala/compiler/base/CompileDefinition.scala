@@ -19,7 +19,7 @@ object CompileDefinition extends DefinitionPC {
       }
     }
 
-  def compileDefDef(using Quotes)(using ctx: FunctionDeclTC, cascade: CompilerCascade):
+  private def compileDefDefImpl(using Quotes)(using ctx: FunctionDeclTC, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.DefDef, CFunctionDecl] = defDef => {
       import quotes.reflect.*
   
@@ -52,13 +52,10 @@ object CompileDefinition extends DefinitionPC {
       decl
     }
 
-  override def compileDefDef(using q: Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
-    PartialFunction[quotes.reflect.DefDef, CFunctionDecl] = ctx match {
-      case c: FunctionDeclTC => compileDefDef(using q)(using c, cascade)
-      case _ => PartialFunction.empty
-    }
+  override def compileDefDef(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.DefDef, CFunctionDecl] = ensureCtx[FunctionDeclTC](compileDefDefImpl)
 
-  def compileValDefToCVarDecl(using Quotes)(using ctx: ValueDeclTC, cascade: CompilerCascade):
+  private def compileValDefToCVarDeclImpl(using Quotes)(using ctx: ValueDeclTC, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.ValDef, CVarDecl] = {
       import quotes.reflect.*
     
@@ -72,13 +69,10 @@ object CompileDefinition extends DefinitionPC {
       }
     }
 
-  override def compileValDefToCVarDecl(using q: Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
-    PartialFunction[quotes.reflect.ValDef, CVarDecl] = ctx match {
-      case c: ValueDeclTC => compileValDefToCVarDecl(using q)(using c, cascade)
-      case _ => PartialFunction.empty
-    }
+  override def compileValDefToCVarDecl(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.ValDef, CVarDecl] = ensureCtx[ValueDeclTC](compileValDefToCVarDeclImpl)
 
-  def compileValDefToCParmVarDecl(using Quotes)(using ctx: ValueDeclTC, cascade: CompilerCascade):
+  private def compileValDefToCParmVarDeclImpl(using Quotes)(using ctx: ValueDeclTC, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.ValDef, CParmVarDecl] = {
       import quotes.reflect.*
     
@@ -92,9 +86,6 @@ object CompileDefinition extends DefinitionPC {
       }
     }
 
-  override def compileValDefToCParmVarDecl(using q: Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
-    PartialFunction[quotes.reflect.ValDef, CParmVarDecl] = ctx match {
-      case c: ValueDeclTC => compileValDefToCParmVarDecl(using q)(using c, cascade)
-      case _ => PartialFunction.empty
-    }
+  override def compileValDefToCParmVarDecl(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.ValDef, CParmVarDecl] = ensureCtx[ValueDeclTC](compileValDefToCParmVarDeclImpl)
 }

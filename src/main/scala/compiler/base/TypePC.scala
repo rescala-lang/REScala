@@ -19,20 +19,11 @@ trait TypePC extends PartialCompiler {
 
 extension (p: PartialCompiler) {
   def compileTypeRepr(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[quotes.reflect.TypeRepr, CType] = p match {
-      case typePC: TypePC => typePC.compileTypeRepr
-      case _ => PartialFunction.empty
-    }
+    PartialFunction[quotes.reflect.TypeRepr, CType] = PartialCompiler.ensurePC[TypePC](p, _.compileTypeRepr)
 
   def typeName(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[quotes.reflect.TypeRepr, String] = p match {
-      case typePC: TypePC => typePC.typeName
-      case _ => PartialFunction.empty
-    }
+    PartialFunction[quotes.reflect.TypeRepr, String] = PartialCompiler.ensurePC[TypePC](p, _.typeName)
 
   def classTypeName(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[quotes.reflect.TypeRepr, String] = p match {
-      case typePC: TypePC => typePC.classTypeName
-      case _ => PartialFunction.empty
-    }
+    PartialFunction[quotes.reflect.TypeRepr, String] = PartialCompiler.ensurePC[TypePC](p, _.classTypeName)
 }

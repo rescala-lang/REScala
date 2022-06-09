@@ -14,7 +14,7 @@ import compiler.context.{RecordDeclTC, TranslationContext}
 import scala.quoted.*
 
 object CompileProduct extends DefinitionPC with SelectPC with ApplyPC with MatchPC with TypePC {
-  def compileValDefToCVarDecl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+  private def compileValDefToCVarDeclImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.ValDef, CVarDecl] = {
       import quotes.reflect.*
 
@@ -26,13 +26,10 @@ object CompileProduct extends DefinitionPC with SelectPC with ApplyPC with Match
       }
     }
 
-  override def compileValDefToCVarDecl(using q: Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
-    PartialFunction[quotes.reflect.ValDef, CVarDecl] = ctx match {
-      case c: RecordDeclTC => compileValDefToCVarDecl(using q)(using c, cascade)
-      case _ => PartialFunction.empty
-    }
+  override def compileValDefToCVarDecl(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.ValDef, CVarDecl] = ensureCtx[RecordDeclTC](compileValDefToCVarDeclImpl)
 
-  def compileSelect(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+  private def compileSelectImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.Select, CExpr] = {
       import quotes.reflect.*
 
@@ -44,13 +41,10 @@ object CompileProduct extends DefinitionPC with SelectPC with ApplyPC with Match
       }
     }
 
-  override def compileSelect(using q: Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
-    PartialFunction[quotes.reflect.Select, CExpr] = ctx match {
-      case c: RecordDeclTC => compileSelect(using q)(using c, cascade)
-      case _ => PartialFunction.empty
-    }
+  override def compileSelect(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.Select, CExpr] = ensureCtx[RecordDeclTC](compileSelectImpl)
 
-  def compileApply(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+  private def compileApplyImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.Apply, CExpr] = {
       import quotes.reflect.*
 
@@ -80,13 +74,10 @@ object CompileProduct extends DefinitionPC with SelectPC with ApplyPC with Match
       }
     }
 
-  override def compileApply(using q: Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
-    PartialFunction[quotes.reflect.Apply, CExpr] = ctx match {
-      case c: RecordDeclTC => compileApply(using q)(using c, cascade)
-      case _ => PartialFunction.empty
-    }
+  override def compileApply(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.Apply, CExpr] = ensureCtx[RecordDeclTC](compileApplyImpl)
 
-  def compilePattern(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+  private def compilePatternImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
     PartialFunction[(quotes.reflect.Tree, CExpr, quotes.reflect.TypeRepr), (Option[CExpr], List[CVarDecl])] = {
       import quotes.reflect.*
 
@@ -112,13 +103,11 @@ object CompileProduct extends DefinitionPC with SelectPC with ApplyPC with Match
       }
     }
 
-  override def compilePattern(using q: Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
-    PartialFunction[(quotes.reflect.Tree, CExpr, quotes.reflect.TypeRepr), (Option[CExpr], List[CVarDecl])] = ctx match {
-      case c: RecordDeclTC => compilePattern(using q)(using c, cascade)
-      case _ => PartialFunction.empty
-    }
+  override def compilePattern(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[(quotes.reflect.Tree, CExpr, quotes.reflect.TypeRepr), (Option[CExpr], List[CVarDecl])] =
+      ensureCtx[RecordDeclTC](compilePatternImpl)
 
-  def compileTypeRepr(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+  private def compileTypeReprImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.TypeRepr, CType] = {
       import quotes.reflect.*
     
@@ -128,11 +117,8 @@ object CompileProduct extends DefinitionPC with SelectPC with ApplyPC with Match
       }
     }
 
-  override def compileTypeRepr(using q: Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
-    PartialFunction[quotes.reflect.TypeRepr, CType] = ctx match {
-      case c: RecordDeclTC => compileTypeRepr(using q)(using c, cascade)
-      case _ => PartialFunction.empty
-    }
+  override def compileTypeRepr(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CType] = ensureCtx[RecordDeclTC](compileTypeReprImpl)
 
   override def typeName(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.TypeRepr, String] = {
