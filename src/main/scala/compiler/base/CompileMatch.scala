@@ -6,18 +6,19 @@ import clangast.expr.binaryop.{CAndExpr, CAssignmentExpr, CEqualsExpr}
 import clangast.expr.*
 import clangast.stmt.*
 import clangast.traversal.CASTMapper
-import compiler.{CompilerCascade, PartialCompiler, TranslationContext}
+import compiler.context.{TranslationContext, ValueDeclTC}
+import compiler.CompilerCascade
 
 import scala.quoted.*
 
-object CompileMatch extends PartialCompiler {
+object CompileMatch extends MatchPC {
   override def compileMatchToCIfStmt(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.Match, CIfStmt] = {
       import quotes.reflect.*
 
       {
         case Match(scrutinee, cases) =>
-          val (lastCond, lastDecls, lastStmtList) = cascade.compileCaseDef(cases.last, scrutinee)
+          val (lastCond, lastDecls, lastStmtList) = cascade.dispatch(_.compileCaseDef)(cases.last, scrutinee)
           val lastIf = CIfStmt(
             lastCond.getOrElse(CTrueLiteral),
             CCompoundStmt(
@@ -27,7 +28,7 @@ object CompileMatch extends PartialCompiler {
 
           cases.init.foldRight(lastIf) {
             case (cd, nextIf) =>
-              val (cond, decls, stmtList) = cascade.compileCaseDef(cd, scrutinee)
+              val (cond, decls, stmtList) = cascade.dispatch(_.compileCaseDef)(cd, scrutinee)
 
               CIfStmt(
                 cond.getOrElse(CTrueLiteral),
@@ -46,7 +47,7 @@ object CompileMatch extends PartialCompiler {
 
       {
         case matchTerm @ Match(scrutinee, cases) =>
-          val resDecl = CVarDecl("_res", cascade.compileTypeRepr(matchTerm.tpe), None)
+          val resDecl = CVarDecl("_res", cascade.dispatch(_.compileTypeRepr)(matchTerm.tpe), None)
 
           def convertLastToAssign(stmts: List[CStmt]): List[CStmt] = {
             stmts.last match {
@@ -56,7 +57,7 @@ object CompileMatch extends PartialCompiler {
             }
           }
 
-          val (lastCond, lastDecls, lastStmtList) = cascade.compileCaseDef(cases.last, scrutinee)
+          val (lastCond, lastDecls, lastStmtList) = cascade.dispatch(_.compileCaseDef)(cases.last, scrutinee)
           val lastIf = CIfStmt(
             lastCond.getOrElse(CTrueLiteral),
             CCompoundStmt(
@@ -66,7 +67,7 @@ object CompileMatch extends PartialCompiler {
 
           val outerIf = cases.init.foldRight(lastIf) {
             case (cd, nextIf) =>
-              val (cond, decls, stmtList) = cascade.compileCaseDef(cd, scrutinee)
+              val (cond, decls, stmtList) = cascade.dispatch(_.compileCaseDef)(cd, scrutinee)
 
               CIfStmt(
                 cond.getOrElse(CTrueLiteral),
@@ -85,17 +86,18 @@ object CompileMatch extends PartialCompiler {
       }
     }
 
-  override def compileCaseDef(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+  def compileCaseDef(using Quotes)(using ctx: ValueDeclTC, cascade: CompilerCascade):
     PartialFunction[(quotes.reflect.CaseDef, quotes.reflect.Term), (Option[CExpr], List[CVarDecl], List[CStmt])] = {
       import quotes.reflect.*
 
       {
         case (CaseDef(pattern, guard, rhs), scrutinee) =>
-          val (patternCond, bindings) = cascade.compilePattern(pattern, cascade.compileTermToCExpr(scrutinee), scrutinee.tpe)
+          val compiledScrutinee = cascade.dispatch(_.compileTermToCExpr)(scrutinee)
+          val (patternCond, bindings) = cascade.dispatch(_.compilePattern)(pattern, compiledScrutinee, scrutinee.tpe)
 
           bindings.foreach { decl => ctx.nameToDecl.put(decl.name, decl) }
 
-          val stmtsList = cascade.compileTermToCStmt(rhs) match {
+          val stmtsList = cascade.dispatch(_.compileTermToCStmt)(rhs) match {
             case CNullStmt => List()
             case CCompoundStmt(stmts) => stmts
             case stmt => List(stmt)
@@ -110,7 +112,7 @@ object CompileMatch extends PartialCompiler {
                 }
               }
 
-              val guardCompiled = replaceBoundIdentifiers.mapCExpr(cascade.compileTermToCExpr(guardExpr))
+              val guardCompiled = replaceBoundIdentifiers.mapCExpr(cascade.dispatch(_.compileTermToCExpr)(guardExpr))
 
               val combinedCond = patternCond.fold(guardCompiled) { c => CAndExpr(c, guardCompiled) }
 
@@ -119,6 +121,12 @@ object CompileMatch extends PartialCompiler {
       }
     }
 
+  override def compileCaseDef(using q: Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+    PartialFunction[(quotes.reflect.CaseDef, quotes.reflect.Term), (Option[CExpr], List[CVarDecl], List[CStmt])] =
+      ctx match {
+        case c: ValueDeclTC => compileCaseDef(using q)(using c, cascade)
+      }
+
   override def compilePattern(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
     PartialFunction[(quotes.reflect.Tree, CExpr, quotes.reflect.TypeRepr), (Option[CExpr], List[CVarDecl])] = {
       import quotes.reflect.*
@@ -126,11 +134,11 @@ object CompileMatch extends PartialCompiler {
       {
         case (Wildcard(), _, _) => (None, List())
         case (term: Term, prefix, _) =>
-          (Some(CEqualsExpr(prefix, cascade.compileTermToCExpr(term))), Nil)
+          (Some(CEqualsExpr(prefix, cascade.dispatch(_.compileTermToCExpr)(term))), Nil)
         case (Bind(name, subPattern), prefix, prefixType) =>
-          val (subCond, subDecls) = cascade.compilePattern(subPattern, prefix, prefixType)
+          val (subCond, subDecls) = cascade.dispatch(_.compilePattern)(subPattern, prefix, prefixType)
 
-          (subCond, CVarDecl(name, cascade.compileTypeRepr(prefixType), Some(prefix)) :: subDecls)
+          (subCond, CVarDecl(name, cascade.dispatch(_.compileTypeRepr)(prefixType), Some(prefix)) :: subDecls)
       }
     }
 }

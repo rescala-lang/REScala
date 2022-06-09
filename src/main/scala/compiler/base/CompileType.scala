@@ -2,14 +2,13 @@ package compiler.base
 
 import clangast.stubs.StdBoolH
 import clangast.types.*
-import compiler.ext.CompileArray.getArrayRecordDecl
-import compiler.ext.CompileProduct.getProductRecordDecl
-import compiler.{CompilerCascade, PartialCompiler, TranslationContext}
+import compiler.context.{IncludeTC, TranslationContext}
+import compiler.CompilerCascade
 
 import scala.quoted.*
 
-object CompileType extends PartialCompiler {
-  override def compileTypeRepr(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+object CompileType extends TypePC {
+  def compileTypeRepr(using Quotes)(using ctx: IncludeTC, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.TypeRepr, CType] = {
       import quotes.reflect.*
 
@@ -39,6 +38,11 @@ object CompileType extends PartialCompiler {
       }
     }
 
+  override def compileTypeRepr(using q: Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CType] = ctx match {
+      case c: IncludeTC => compileTypeRepr(using q)(using c, cascade)
+    }
+
   def isNumberType(using Quotes)(tpe: quotes.reflect.TypeRepr): Boolean = {
     import quotes.reflect.*
 
@@ -51,22 +55,28 @@ object CompileType extends PartialCompiler {
       tpe <:< TypeRepr.of[Double]
   }
 
-  def typeName(using Quotes)(tpe: quotes.reflect.TypeRepr): String = {
-    import quotes.reflect.*
+  override def typeName(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, String] = {
+      import quotes.reflect.*
+    
+      {
+        case tpe => tpe.typeSymbol.name
+      }
+    }
 
-    if (tpe <:< TypeRepr.of[Product] || tpe <:< TypeRepr.of[Array[?]]) {
+  override def classTypeName(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, String] = tpe => {
+      import quotes.reflect.*
+    
       val className = tpe.classSymbol.get.name
 
       tpe.widen match {
         case AppliedType(_, typeArgs) =>
-          val typeArgNames = typeArgs.map(typeName)
+          val typeArgNames = typeArgs.map(cascade.dispatch(_.typeName))
           className + "_" + typeArgNames.mkString("_")
         case _ => className
       }
-    } else {
-      tpe.typeSymbol.name
     }
-  }
 
   def typeArgs(using Quotes): PartialFunction[quotes.reflect.TypeRepr, List[quotes.reflect.TypeRepr]] = tpe => {
     import quotes.reflect.*

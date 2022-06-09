@@ -1,4 +1,4 @@
-package compiler
+package api
 
 import clangast.WithContext
 import clangast.decl.CFunctionDecl

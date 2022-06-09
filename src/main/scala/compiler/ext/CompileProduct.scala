@@ -7,27 +7,64 @@ import clangast.expr.unaryop.CNotExpr
 import clangast.expr.*
 import clangast.stmt.{CCompoundStmt, CIfStmt, CReturnStmt, CStmt}
 import clangast.types.{CBoolType, CRecordType, CType}
-import compiler.{CompilerCascade, PartialCompiler, TranslationContext}
-import compiler.base.CompileType.typeName
+import compiler.CompilerCascade
+import compiler.base.*
+import compiler.context.{RecordDeclTC, TranslationContext}
 
 import scala.quoted.*
 
-object CompileProduct extends PartialCompiler {
-  override def compileApply(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+object CompileProduct extends DefinitionPC with SelectPC with ApplyPC with MatchPC with TypePC {
+  def compileValDefToCVarDecl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.ValDef, CVarDecl] = {
+      import quotes.reflect.*
+
+      {
+        case ValDef(name, tpt, Some(apply@Apply(Select(_, "apply"), l))) if isProductApply(apply) =>
+          val recordDecl = getProductRecordDecl(apply.tpe)
+          val init = CDesignatedInitExpr(recordDecl.fields.map(_.name) zip l.map(cascade.dispatch(_.compileTermToCExpr)))
+          CVarDecl(name, cascade.dispatch(_.compileTypeRepr)(tpt.tpe), Some(init))
+      }
+    }
+
+  override def compileValDefToCVarDecl(using q: Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.ValDef, CVarDecl] = ctx match {
+      case c: RecordDeclTC => compileValDefToCVarDecl(using q)(using c, cascade)
+      case _ => PartialFunction.empty
+    }
+
+  def compileSelect(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.Select, CExpr] = {
+      import quotes.reflect.*
+
+      {
+        case Select(qualifier, name) if isProductFieldAccess(qualifier, name) =>
+          val recordDecl = getProductRecordDecl(qualifier.tpe)
+
+          CMemberExpr(cascade.dispatch(_.compileTermToCExpr)(qualifier), recordDecl.fields.find(_.name.equals(name)).get)
+      }
+    }
+
+  override def compileSelect(using q: Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.Select, CExpr] = ctx match {
+      case c: RecordDeclTC => compileSelect(using q)(using c, cascade)
+      case _ => PartialFunction.empty
+    }
+
+  def compileApply(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.Apply, CExpr] = {
       import quotes.reflect.*
 
       {
         case apply @ Apply(Select(_, "apply"), l) if isProductApply(apply) =>
-          CCallExpr(CDeclRefExpr(getProductCreator(apply.tpe)), l.map(cascade.compileTermToCExpr))
+          CCallExpr(CDeclRefExpr(getProductCreator(apply.tpe)), l.map(cascade.dispatch(_.compileTermToCExpr)))
         case apply @ Apply(TypeApply(Select(_, "apply"), _), l) if isProductApply(apply) =>
-          CCallExpr(CDeclRefExpr(getProductCreator(apply.tpe)), l.map(cascade.compileTermToCExpr))
+          CCallExpr(CDeclRefExpr(getProductCreator(apply.tpe)), l.map(cascade.dispatch(_.compileTermToCExpr)))
         case Apply(Select(left, "=="), List(right)) if left.tpe <:< TypeRepr.of[Product] =>
           CCallExpr(
             CDeclRefExpr(getProductEquals(left.tpe)),
             List(
-              cascade.compileTermToCExpr(left),
-              cascade.compileTermToCExpr(right)
+              cascade.dispatch(_.compileTermToCExpr)(left),
+              cascade.dispatch(_.compileTermToCExpr)(right)
             )
           )
         case Apply(Select(left, "!="), List(right)) if left.tpe <:< TypeRepr.of[Product] =>
@@ -35,21 +72,74 @@ object CompileProduct extends PartialCompiler {
             CCallExpr(
               CDeclRefExpr(getProductEquals(left.tpe)),
               List(
-                cascade.compileTermToCExpr(left),
-                cascade.compileTermToCExpr(right)
+                cascade.dispatch(_.compileTermToCExpr)(left),
+                cascade.dispatch(_.compileTermToCExpr)(right)
               )
             )
           )
       }
     }
 
-  override def compileTypeRepr(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+  override def compileApply(using q: Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.Apply, CExpr] = ctx match {
+      case c: RecordDeclTC => compileApply(using q)(using c, cascade)
+      case _ => PartialFunction.empty
+    }
+
+  def compilePattern(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+    PartialFunction[(quotes.reflect.Tree, CExpr, quotes.reflect.TypeRepr), (Option[CExpr], List[CVarDecl])] = {
+      import quotes.reflect.*
+
+      {
+        case (Unapply(_, _, subPatterns), prefix, prefixType) if prefixType <:< TypeRepr.of[Product] =>
+          val fieldSymbols = prefixType.classSymbol.get.caseFields.filter(_.isValDef)
+          val recordDecl = getProductRecordDecl(prefixType)
+          val subPrefixes = fieldSymbols.map(fs => CMemberExpr(prefix, recordDecl.fields.find(f => fs.name.strip().equals(f.name)).get))
+          val subPrefixTypes = fieldSymbols.map(prefixType.memberType)
+
+          (subPatterns zip (subPrefixes zip subPrefixTypes)).foldLeft((Option.empty[CExpr], List.empty[CVarDecl])) {
+            case ((cond, decls), (subPattern, (subPrefix, subPrefixType))) =>
+              val (subCond, subDecls) = cascade.dispatch(_.compilePattern)(subPattern, subPrefix, subPrefixType)
+
+              val combinedCond = (cond, subCond) match {
+                case (None, _) => subCond
+                case (_, None) => cond
+                case (Some(c1), Some(c2)) => Some(CAndExpr(c1, c2))
+              }
+
+              (combinedCond, subDecls ++ decls)
+          }
+      }
+    }
+
+  override def compilePattern(using q: Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+    PartialFunction[(quotes.reflect.Tree, CExpr, quotes.reflect.TypeRepr), (Option[CExpr], List[CVarDecl])] = ctx match {
+      case c: RecordDeclTC => compilePattern(using q)(using c, cascade)
+      case _ => PartialFunction.empty
+    }
+
+  def compileTypeRepr(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.TypeRepr, CType] = {
       import quotes.reflect.*
     
       {
         case tpe if tpe <:< TypeRepr.of[Product] =>
           CRecordType(getProductRecordDecl(tpe))
+      }
+    }
+
+  override def compileTypeRepr(using q: Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CType] = ctx match {
+      case c: RecordDeclTC => compileTypeRepr(using q)(using c, cascade)
+      case _ => PartialFunction.empty
+    }
+
+  override def typeName(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, String] = {
+      import quotes.reflect.*
+
+      {
+        case tpe if tpe <:< TypeRepr.of[Product] => cascade.dispatch(_.classTypeName)(tpe)
       }
     }
 
@@ -65,17 +155,22 @@ object CompileProduct extends PartialCompiler {
     }
   }
 
-  override def compileSelect(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
-    PartialFunction[quotes.reflect.Select, CExpr] = {
-      import quotes.reflect.*
+  private def getProductRecordDecl(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CRecordDecl = {
+    ctx.getOrElseUpdateRecordDecl(cascade.dispatch(_.typeName)(tpe), compileProductTypeToCRecordDecl(tpe))
+  }
 
-      {
-        case Select(qualifier, name) if isProductFieldAccess(qualifier, name) =>
-          val recordDecl = getProductRecordDecl(qualifier.tpe)
+  private def compileProductTypeToCRecordDecl(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: TranslationContext, cascade: CompilerCascade): CRecordDecl = {
+    import quotes.reflect.*
 
-          CMemberExpr(cascade.compileTermToCExpr(qualifier), recordDecl.fields.find(_.name.equals(name)).get)
-      }
+    val classSymbol = tpe.classSymbol.get
+
+    val fields = classSymbol.caseFields.collect {
+      case symbol if symbol.isValDef =>
+        CFieldDecl(symbol.name.strip(), cascade.dispatch(_.compileTypeRepr)(tpe.memberType(symbol)))
     }
+
+    CRecordDecl(cascade.dispatch(_.typeName)(tpe), fields)
+  }
 
   private def isProductFieldAccess(using Quotes)(term: quotes.reflect.Term, name: String): Boolean = {
     import quotes.reflect.*
@@ -83,46 +178,8 @@ object CompileProduct extends PartialCompiler {
     (term.tpe <:< TypeRepr.of[Product]) && term.tpe.classSymbol.get.caseFields.exists(_.name.equals(name))
   }
 
-  override def compileValDefToCVarDecl(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
-    PartialFunction[quotes.reflect.ValDef, CVarDecl] = {
-      import quotes.reflect.*
-
-      {
-        case ValDef(name, tpt, Some(apply@Apply(Select(_, "apply"), l))) if isProductApply(apply) =>
-          val recordDecl = getProductRecordDecl(apply.tpe)
-          val init = CDesignatedInitExpr(recordDecl.fields.map(_.name) zip l.map(cascade.compileTermToCExpr))
-          CVarDecl(name, cascade.compileTypeRepr(tpt.tpe), Some(init))
-      }
-    }
-
-  override def compilePattern(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
-    PartialFunction[(quotes.reflect.Tree, CExpr, quotes.reflect.TypeRepr), (Option[CExpr], List[CVarDecl])] = {
-      import quotes.reflect.*
-
-      {
-        case (Unapply(_, _, subPatterns), prefix, prefixType) if prefixType <:< TypeRepr.of[Product] =>
-          val fieldSymbols = prefixType.classSymbol.get.caseFields.filter(_.isValDef)
-          val recordDecl = getProductRecordDecl(prefixType)
-          val subPrefixes = fieldSymbols.map(fs => CMemberExpr(prefix, recordDecl.fields.find(f => fs.name.strip().equals(f.name)).get))
-          val subPrefixTypes = fieldSymbols.map(prefixType.memberType)
-
-          (subPatterns zip (subPrefixes zip subPrefixTypes)).foldLeft((Option.empty[CExpr], List.empty[CVarDecl])) {
-            case ((cond, decls), (subPattern, (subPrefix, subPrefixType))) =>
-              val (subCond, subDecls) = cascade.compilePattern(subPattern, subPrefix, subPrefixType)
-
-              val combinedCond = (cond, subCond) match {
-                case (None, _) => subCond
-                case (_, None) => cond
-                case (Some(c1), Some(c2)) => Some(CAndExpr(c1, c2))
-              }
-
-              (combinedCond, subDecls ++ decls)
-          }
-      }
-    }
-
-  private def getProductCreator(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: TranslationContext, cascade: CompilerCascade): CFunctionDecl = {
-    ctx.nameToRecordCreator.getOrElseUpdate(typeName(tpe), buildProductCreator(getProductRecordDecl(tpe)))
+  private def getProductCreator(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    ctx.nameToRecordCreator.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe), buildProductCreator(getProductRecordDecl(tpe)))
   }
 
   private def buildProductCreator(recordDecl: CRecordDecl): CFunctionDecl = {
@@ -149,14 +206,14 @@ object CompileProduct extends PartialCompiler {
     CFunctionDecl(name, parameters, returnType, Some(body))
   }
 
-  private def getProductEquals(using Quotes)(tpe: quotes.reflect.TypeRepr)(using TranslationContext, CompilerCascade): CFunctionDecl =
+  private def getProductEquals(using Quotes)(tpe: quotes.reflect.TypeRepr)(using RecordDeclTC, CompilerCascade): CFunctionDecl =
     getProductEquals(getProductRecordDecl(tpe))
 
-  private def getProductEquals(recordDecl: CRecordDecl)(using ctx: TranslationContext, cascade: CompilerCascade): CFunctionDecl = {
+  private def getProductEquals(recordDecl: CRecordDecl)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
     ctx.nameToRecordEquals.getOrElseUpdate(recordDecl.name, buildProductEquals(recordDecl))
   }
 
-  private def buildProductEquals(recordDecl: CRecordDecl)(using TranslationContext, CompilerCascade): CFunctionDecl = {
+  private def buildProductEquals(recordDecl: CRecordDecl)(using RecordDeclTC, CompilerCascade): CFunctionDecl = {
     val name = "equals_" + recordDecl.name
 
     val paramLeft = CParmVarDecl("left", CRecordType(recordDecl))
@@ -193,22 +250,5 @@ object CompileProduct extends PartialCompiler {
     val body = CCompoundStmt(comparisons.appended(CReturnStmt(Some(CTrueLiteral))))
 
     CFunctionDecl(name, parameters, returnType, Some(body))
-  }
-
-  private def getProductRecordDecl(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: TranslationContext, cascade: CompilerCascade): CRecordDecl = {
-    ctx.getOrElseUpdateRecordDecl(typeName(tpe), compileProductTypeToCRecordDecl(tpe))
-  }
-
-  private def compileProductTypeToCRecordDecl(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: TranslationContext, cascade: CompilerCascade): CRecordDecl = {
-    import quotes.reflect.*
-
-    val classSymbol = tpe.classSymbol.get
-
-    val fields = classSymbol.caseFields.collect {
-      case symbol if symbol.isValDef =>
-        CFieldDecl(symbol.name.strip(), cascade.compileTypeRepr(tpe.memberType(symbol)))
-    }
-
-    CRecordDecl(typeName(tpe), fields)
   }
 }

@@ -1,7 +1,7 @@
 package clangast
 
 import clangast.decl.{CFunctionDecl, CInclude, CRecordDecl}
-import compiler.TranslationContext
+import compiler.context.{FunctionDeclTC, IncludeTC, RecordDeclTC, TranslationContext}
 
 import scala.quoted.*
 
@@ -22,7 +22,8 @@ case class WithContext[T <: CASTNode](
 }
 
 object WithContext {
-  def apply[T <: CASTNode](node: T, ctx: TranslationContext, excludeFunction: String = ""): WithContext[T] = {
+  type RequiredTC = IncludeTC & RecordDeclTC & FunctionDeclTC
+  def apply[T <: CASTNode](node: T, ctx: RequiredTC, excludeFunction: String = ""): WithContext[T] = {
     val includes = ctx.includes.toList
     val recordDecls = ctx.orderedRecordDecls.toList
     val functionDecls =

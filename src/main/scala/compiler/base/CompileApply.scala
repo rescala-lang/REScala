@@ -6,19 +6,20 @@ import clangast.expr.binaryop.*
 import clangast.expr.*
 import clangast.stmt.CCompoundStmt
 import clangast.stubs.StdIOH
-import compiler.{CHelperFun, CompilerCascade, PartialCompiler, TranslationContext}
+import compiler.context.TranslationContext
+import compiler.CompilerCascade
 
 import scala.quoted.*
 
-object CompileApply extends PartialCompiler {
+object CompileApply extends ApplyPC {
   override def compileApply(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.Apply, CExpr] = {
       import quotes.reflect.*
     
       {
         case Apply(Select(Select(Ident("math"), "package"), "max"), List(arg1, arg2)) =>
-          val v1 = CVarDecl("_v1", cascade.compileTypeRepr(arg1.tpe), Some(cascade.compileTermToCExpr(arg1)))
-          val v2 = CVarDecl("_v2", cascade.compileTypeRepr(arg2.tpe), Some(cascade.compileTermToCExpr(arg2)))
+          val v1 = CVarDecl("_v1", cascade.dispatch(_.compileTypeRepr)(arg1.tpe), Some(cascade.dispatch(_.compileTermToCExpr)(arg1)))
+          val v2 = CVarDecl("_v2", cascade.dispatch(_.compileTypeRepr)(arg2.tpe), Some(cascade.dispatch(_.compileTermToCExpr)(arg2)))
 
           val cond = CConditionalOperator(
             CGreaterThanExpr(CDeclRefExpr(v1), CDeclRefExpr(v2)),
@@ -34,10 +35,10 @@ object CompileApply extends PartialCompiler {
         case apply@Apply(Select(qualifier, name), List(_)) if canCompileToCBinaryOperator(qualifier, name) =>
           compileApplyToCBinaryOperator(apply)
         case Apply(inner, List(Apply(TypeApply(Select(Ident("ClassTag"), "apply"), _), _))) =>
-          cascade.compileTermToCExpr(inner)
+          cascade.dispatch(_.compileTermToCExpr)(inner)
         case Apply(inner, List(Select(Apply(TypeApply(Select(Ident("ClassTag"), "apply"), _), _), "wrap"))) =>
           // assume that this ClassTag magic can be ignored for our purposes
-          cascade.compileTermToCExpr(inner)
+          cascade.dispatch(_.compileTermToCExpr)(inner)
       }
     }
 
@@ -63,8 +64,8 @@ object CompileApply extends PartialCompiler {
 
     val Apply(Select(qualifier, name), List(arg)) = apply
 
-    val lhs = cascade.compileTermToCExpr(qualifier)
-    val rhs = cascade.compileTermToCExpr(arg)
+    val lhs = cascade.dispatch(_.compileTermToCExpr)(qualifier)
+    val rhs = cascade.dispatch(_.compileTermToCExpr)(arg)
 
     name match {
       case "+" if CompileType.isNumberType(arg.tpe) => CParenExpr(CPlusExpr(lhs, rhs))

@@ -1,16 +1,12 @@
-package compiler
+package compiler.context
 
-import clangast.decl.{CFunctionDecl, CInclude, CRecordDecl, CValueDecl}
+import clangast.decl.{CFunctionDecl, CRecordDecl}
 
 import scala.collection.mutable
 
-class TranslationContext {
-  val includes: mutable.Set[CInclude] = mutable.Set()
-  
-  val nameToDecl: mutable.Map[String, CValueDecl] = mutable.Map()
-  
+trait RecordDeclTC extends TranslationContext {
   val nameToRecordDecl: mutable.Map[String, CRecordDecl] = mutable.Map()
-  
+
   val orderedRecordDecls: mutable.ListBuffer[CRecordDecl] = mutable.ListBuffer()
 
   def getOrElseUpdateRecordDecl(key: String, updated: => CRecordDecl): CRecordDecl = {
@@ -22,10 +18,8 @@ class TranslationContext {
         updated
     }
   }
-  
-  val nameToFunctionDecl: mutable.Map[String, CFunctionDecl] = mutable.Map()
-  
+
   val nameToRecordCreator: mutable.Map[String, CFunctionDecl] = mutable.Map()
-  
+
   val nameToRecordEquals: mutable.Map[String, CFunctionDecl] = mutable.Map()
 }

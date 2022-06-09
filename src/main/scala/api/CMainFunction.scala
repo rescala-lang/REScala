@@ -1,11 +1,11 @@
-package compiler
+package api
 
 import clangast.*
 import clangast.given
-import clangast.WithContext
 import clangast.decl.CFunctionDecl
 import clangast.stmt.{CCompoundStmt, CReturnStmt}
 import clangast.types.CIntegerType
+import compiler.MacroCompiler
 
 class CMainFunction(val f: WithContext[CFunctionDecl])
 

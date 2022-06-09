@@ -4,30 +4,37 @@ import clangast.{CASTNode, WithContext}
 import clangast.decl.CFunctionDecl
 import clangast.expr.CExpr
 import clangast.types.CType
+import compiler.context.TranslationContext
+import compiler.base.*
+import compiler.ext.*
 
 import scala.quoted.*
 
 trait MacroCompiler {
-  protected def cascade: CompilerCascade = standardCascade
+  given cascade: CompilerCascade
+
+  type CTX <: WithContext.RequiredTC
+
+  protected def createTranslationContext(): CTX
   
   inline def compileTree(inline t: Any): WithContext[CASTNode]
   
   protected def compileTreeCode(t: Expr[_])(using Quotes): Expr[WithContext[CASTNode]] = {
     import quotes.reflect.*
     
-    given ctx: TranslationContext = new TranslationContext()
+    given ctx: CTX = createTranslationContext()
     
-    WithContext(cascade.compileTree(t.asTerm), ctx).toExpr
+    WithContext(cascade.dispatch(_.compileTree)(t.asTerm), ctx).toExpr
   }
   
   inline def compileExpr(inline e: Any): WithContext[CExpr]
   
   protected def compileExprCode(e: Expr[_])(using Quotes): Expr[WithContext[CExpr]] = {
     import quotes.reflect.*
+
+    given ctx: CTX = createTranslationContext()
     
-    given ctx: TranslationContext = new TranslationContext()
-    
-    WithContext(cascade.compileTermToCExpr(e.asTerm), ctx).toExpr
+    WithContext(cascade.dispatch(_.compileTermToCExpr)(e.asTerm), ctx).toExpr
   }
   
   inline def compileFun(inline f: AnyRef): WithContext[CFunctionDecl]
@@ -35,9 +42,9 @@ trait MacroCompiler {
   protected def compileFunCode(f: Expr[_])(using Quotes): Expr[WithContext[CFunctionDecl]] = {
     import quotes.reflect.*
 
-    given ctx: TranslationContext = new TranslationContext()
+    given ctx: CTX = createTranslationContext()
 
-    val compiledF = cascade.compileTerm(f.asTerm) match { case funDecl: CFunctionDecl => funDecl }
+    val compiledF = cascade.dispatch(_.compileTerm)(f.asTerm) match { case funDecl: CFunctionDecl => funDecl }
 
     WithContext(compiledF, ctx, compiledF.name).toExpr
   }
@@ -47,9 +54,9 @@ trait MacroCompiler {
   protected def compileAnonFunCode(f: Expr[_], funName: Expr[String])(using Quotes): Expr[WithContext[CFunctionDecl]] = {
     import quotes.reflect.*
 
-    given ctx: TranslationContext = new TranslationContext()
+    given ctx: CTX = createTranslationContext()
 
-    val (originalName, compiledF) = cascade.compileTerm(f.asTerm) match {
+    val (originalName, compiledF) = cascade.dispatch(_.compileTerm)(f.asTerm) match {
       case funDecl: CFunctionDecl => (funDecl.name, funDecl.copy(name = funName.valueOrAbort))
     }
 
@@ -61,9 +68,9 @@ trait MacroCompiler {
   protected def compileTypeCode[T](using Quotes, Type[T]): Expr[WithContext[CType]] = {
     import quotes.reflect.*
 
-    given ctx: TranslationContext = new TranslationContext()
+    given ctx: CTX = createTranslationContext()
 
-    val compiledTypeRepr = cascade.compileTypeRepr(TypeRepr.of[T])
+    val compiledTypeRepr = cascade.dispatch(_.compileTypeRepr)(TypeRepr.of[T])
 
     WithContext(compiledTypeRepr, ctx).toExpr
   }

@@ -1,4 +1,4 @@
-package reactive
+package api
 
 case class Snapshot[B](input: Event[_], fold: Fold[B]) extends Event[B] {
   override def inputs: List[ReSource] = List(input, fold)

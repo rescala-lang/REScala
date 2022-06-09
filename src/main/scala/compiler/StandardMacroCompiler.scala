@@ -8,6 +8,12 @@ import clangast.types.CType
 import scala.quoted.*
 
 object StandardMacroCompiler extends MacroCompiler {
+  override given cascade: CompilerCascade = standardCascade
+
+  override type CTX = StandardContext
+
+  override protected def createTranslationContext(): CTX = createStandardContext()
+  
   override inline def compileTree(inline t: Any): WithContext[CASTNode] =
     ${ compileTreeCode('t) }
 

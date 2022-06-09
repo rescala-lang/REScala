@@ -1,4 +1,5 @@
 import compiler.base.*
+import compiler.context.*
 import compiler.ext.*
 
 package object compiler {
@@ -14,6 +15,10 @@ package object compiler {
     CompileType
   )
 
+  trait MinimalContext extends IncludeTC with ValueDeclTC with FunctionDeclTC with RecordDeclTC
+
+  def createMinimalContext(): MinimalContext = new MinimalContext {}
+
   val standardCascade: CompilerCascade =
     CompileMainFunction
       ~>: CompileHelperFun
@@ -21,4 +26,8 @@ package object compiler {
       ~>: CompileProduct
       ~>: CompileString
       ~>: minimalCascade
+
+  trait StandardContext extends MinimalContext
+
+  def createStandardContext(): StandardContext = new StandardContext {}
 }

@@ -2,18 +2,19 @@ package compiler.base
 
 import clangast.CASTNode
 import clangast.stmt.{CDeclStmt, CStmt}
-import compiler.{CompilerCascade, PartialCompiler, TranslationContext}
+import compiler.context.TranslationContext
+import compiler.CompilerCascade
 
 import scala.quoted.*
 
-object CompileStatement extends PartialCompiler {
+object CompileStatement extends StatementPC {
   override def compileStatement(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.Statement, CASTNode] = {
       import quotes.reflect.*
     
       {
-        case definition: Definition => cascade.compileDefinition(definition)
-        case term: Term => cascade.compileTerm(term)
+        case definition: Definition => cascade.dispatch(_.compileDefinition)(definition)
+        case term: Term => cascade.dispatch(_.compileTerm)(term)
       }
     }
 
@@ -22,8 +23,8 @@ object CompileStatement extends PartialCompiler {
       import quotes.reflect.*
     
       {
-        case definition: Definition => CDeclStmt(cascade.compileDefinition(definition))
-        case term: Term => cascade.compileTermToCStmt(term)
+        case definition: Definition => CDeclStmt(cascade.dispatch(_.compileDefinition)(definition))
+        case term: Term => cascade.dispatch(_.compileTermToCStmt)(term)
       }
     }
 }

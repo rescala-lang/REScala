@@ -2,11 +2,12 @@ package compiler.base
 
 import clangast.expr.unaryop.*
 import clangast.expr.{CExpr, CParenExpr}
-import compiler.{CompilerCascade, PartialCompiler, TranslationContext}
+import compiler.context.TranslationContext
+import compiler.CompilerCascade
 
 import scala.quoted.*
 
-object CompileSelect extends PartialCompiler {
+object CompileSelect extends SelectPC {
   override def compileSelect(using Quotes)(using TranslationContext, CompilerCascade):
     PartialFunction[quotes.reflect.Select, CExpr] = {
       import quotes.reflect.*
@@ -36,7 +37,7 @@ object CompileSelect extends PartialCompiler {
 
     val Select(qualifier, name) = select
 
-    val subExpr = cascade.compileTermToCExpr(qualifier)
+    val subExpr = cascade.dispatch(_.compileTermToCExpr)(qualifier)
 
     name match {
       case "unary_+" => CUnaryPlusExpr(CParenExpr(subExpr))
