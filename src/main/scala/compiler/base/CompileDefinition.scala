@@ -33,7 +33,7 @@ object CompileDefinition extends DefinitionPC {
         t match
           case block: Block => cascade.dispatch(_.compileBlockToFunctionBody)(block)
           case Return(expr, _) => CCompoundStmt(List(CReturnStmt(Some(cascade.dispatch(_.compileTermToCExpr)(expr)))))
-          case term if term.tpe =:= TypeRepr.of[Unit] => CCompoundStmt(List(CExprStmt(cascade.dispatch(_.compileTermToCExpr)(term))))
+          case term if term.tpe =:= TypeRepr.of[Unit] => CCompoundStmt(List(cascade.dispatch(_.compileTermToCStmt)(term)))
           case term => CCompoundStmt(List(CReturnStmt(Some(cascade.dispatch(_.compileTermToCExpr)(term)))))
       }
   
