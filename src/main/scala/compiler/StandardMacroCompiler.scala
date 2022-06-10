@@ -32,11 +32,11 @@ object StandardMacroCompiler extends MacroCompiler {
   override protected def compileFunCode(f: Expr[_])(using Quotes): Expr[WithContext[CFunctionDecl]] =
     super.compileFunCode(f)
 
-  override inline def compileAnonFun(inline f: AnyRef, inline funName: String): WithContext[CFunctionDecl] =
-    ${ compileAnonFunCode('f, 'funName) }
+  override inline def compileAnonFun(inline f: AnyRef): WithContext[CFunctionDecl] =
+    ${ compileAnonFunCode('f) }
 
-  override protected def compileAnonFunCode(f: Expr[_], funName: Expr[String])(using Quotes): Expr[WithContext[CFunctionDecl]] =
-    super.compileAnonFunCode(f, funName)
+  override protected def compileAnonFunCode(f: Expr[_])(using Quotes): Expr[WithContext[CFunctionDecl]] =
+    super.compileAnonFunCode(f)
 
   override inline def compileType[T]: WithContext[CType] =
     ${ compileTypeCode[T] }
@@ -45,7 +45,7 @@ object StandardMacroCompiler extends MacroCompiler {
     super.compileTypeCode[T]
 
   override inline def valName: String =
-    $ { valNameCode }
+    ${ valNameCode }
 
   override protected def valNameCode(using Quotes): Expr[String] = super.valNameCode
 }

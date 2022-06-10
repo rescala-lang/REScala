@@ -44,30 +44,30 @@ trait MacroCompiler {
 
     given ctx: CTX = createTranslationContext()
 
-    val compiledF = cascade.dispatch(_.compileTerm)(f.asTerm) match { case funDecl: CFunctionDecl => funDecl }
-
-    WithContext(
-      compiledF,
-      ctx,
-      { case CFunctionDecl(compiledF.name, _, _, _, _) => true }
-    ).toExpr
-  }
-  
-  inline def compileAnonFun(inline f: AnyRef, inline funName: String): WithContext[CFunctionDecl]
-
-  protected def compileAnonFunCode(f: Expr[_], funName: Expr[String])(using Quotes): Expr[WithContext[CFunctionDecl]] = {
-    import quotes.reflect.*
-
-    given ctx: CTX = createTranslationContext()
-
     val (originalName, compiledF) = cascade.dispatch(_.compileTerm)(f.asTerm) match {
-      case funDecl: CFunctionDecl => (funDecl.name, funDecl.copy(name = funName.valueOrAbort))
+      case funDecl: CFunctionDecl => (funDecl.name, funDecl.copy(name = Symbol.spliceOwner.owner.name))
     }
 
     WithContext(
       compiledF,
       ctx,
       { case CFunctionDecl(`originalName`, _, _, _, _) => true }
+    ).toExpr
+  }
+  
+  inline def compileAnonFun(inline f: AnyRef): WithContext[CFunctionDecl]
+
+  protected def compileAnonFunCode(f: Expr[_])(using Quotes): Expr[WithContext[CFunctionDecl]] = {
+    import quotes.reflect.*
+
+    given ctx: CTX = createTranslationContext()
+
+    val compiledF = cascade.dispatch(_.compileTerm)(f.asTerm) match { case funDecl: CFunctionDecl => funDecl }
+
+    WithContext(
+      compiledF,
+      ctx,
+      { case CFunctionDecl(compiledF.name, _, _, _, _) => true }
     ).toExpr
   }
 

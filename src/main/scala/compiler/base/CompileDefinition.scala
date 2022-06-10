@@ -36,12 +36,9 @@ object CompileDefinition extends DefinitionPC {
           case term if term.tpe =:= TypeRepr.of[Unit] => CCompoundStmt(List(cascade.dispatch(_.compileTermToCStmt)(term)))
           case term => CCompoundStmt(List(CReturnStmt(Some(cascade.dispatch(_.compileTermToCExpr)(term)))))
       }
-  
-      val inferredName = try {
-        Symbol.spliceOwner.owner.name
-      } catch {
-        case _: Exception => defName
-      }
+
+      val pos = defDef.pos
+      val inferredName = "anonfun_" + pos.sourceFile.name.stripSuffix(".scala") + "_" + (pos.startLine + 1) + "_" + (pos.startColumn + 1)
   
       val cname = if defName.equals("$anonfun") then inferredName else defName
   

@@ -14,10 +14,10 @@ case class Filter[V](input: Event[V], f: WithContext[CFunctionDecl]) extends Eve
 
 object Filter {
   class FilterFactory[V](input: Event[V]) {
-    inline def apply[C <: MacroCompiler](inline funName: String = "filter")(inline f: V => Boolean)(using mc: C): Filter[V] =
+    inline def apply[C <: MacroCompiler](inline f: V => Boolean)(using mc: C): Filter[V] =
       Filter(
         input,
-        mc.compileAnonFun(f, funName)
+        mc.compileAnonFun(f)
       )
   }
 }

@@ -15,12 +15,12 @@ case class Map2[A, B, R](l: Event[A], r: Event[B], cType: WithContext[CType], f:
 
 object Map2 {
   class Map2Factory[A, B, R](l: Event[A]) {
-    inline def apply[C <: MacroCompiler](inline r: Event[B])(inline funName: String = "map2")(inline f: (A, B) => R)(using mc: C): Map2[A, B, R] =
+    inline def apply[C <: MacroCompiler](inline r: Event[B])(inline f: (A, B) => R)(using mc: C): Map2[A, B, R] =
       Map2(
         l,
         r,
         mc.compileType[R],
-        mc.compileAnonFun(f, funName)
+        mc.compileAnonFun(f)
       )
   }
 }

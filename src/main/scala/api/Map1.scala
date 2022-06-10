@@ -16,11 +16,11 @@ case class Map1[A, R](input: Event[A], cType: WithContext[CType], f: WithContext
 
 object Map1 {
   class Map1Factory[A, R](input: Event[A]) {
-    inline def apply[C <: MacroCompiler](inline funName: String)(inline f: A => R)(using mc: C): Map1[A, R] =
+    inline def apply[C <: MacroCompiler](inline f: A => R)(using mc: C): Map1[A, R] =
       Map1(
         input,
         mc.compileType[R],
-        mc.compileAnonFun(f, funName)
+        mc.compileAnonFun(f)
       )
   }
 }
@@ -28,5 +28,5 @@ object Map1 {
 extension [A] (input: Event[A])
   inline def map[R]: Map1.Map1Factory[A, R] = new Map1.Map1Factory(input)
     
-  inline def observe[C <: MacroCompiler](inline funName: String = "observe")(inline f: A => Unit)(using mc: C): Map1[A, Unit] =
-    map(funName)(f)
+  inline def observe[C <: MacroCompiler](inline f: A => Unit)(using mc: C): Map1[A, Unit] =
+    map(f)

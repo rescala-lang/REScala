@@ -16,11 +16,11 @@ case class Fold[V](init: WithContext[CExpr], cType: WithContext[CType], lines: L
 
 object Fold {
   class FoldFactory[V, R](input: Event[V]) {
-    inline def apply[C <: MacroCompiler](inline init: R)(inline funName: String = "fold")(inline f: (R, V) => R)(using mc: C): Fold[R] =
+    inline def apply[C <: MacroCompiler](inline init: R)(inline f: (R, V) => R)(using mc: C): Fold[R] =
       Fold(
         mc.compileExpr(init),
         mc.compileType[R],
-        List(FLine(input, mc.compileAnonFun(f, funName)))
+        List(FLine(input, mc.compileAnonFun(f)))
       )
   }
 }
