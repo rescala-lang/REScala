@@ -5,23 +5,11 @@ import clangast.decl.{CFunctionDecl, CRecordDecl}
 import scala.collection.mutable
 
 trait RecordDeclTC extends TranslationContext {
-  val nameToRecordDecl: mutable.Map[String, CRecordDecl] = mutable.Map()
+  val nameToRecordDecl: MappingLabel[String, CRecordDecl] = MappingLabel(typeDecls.append)
 
-  val orderedRecordDecls: mutable.ListBuffer[CRecordDecl] = mutable.ListBuffer()
+  val nameToRecordCreator: MappingLabel[String, CFunctionDecl] = MappingLabel(valueDecls.append)
 
-  def getOrElseUpdateRecordDecl(key: String, updated: => CRecordDecl): CRecordDecl = {
-    nameToRecordDecl.get(key) match {
-      case Some(decl) => decl
-      case None =>
-        nameToRecordDecl.put(key, updated)
-        orderedRecordDecls.append(updated)
-        updated
-    }
-  }
-
-  val nameToRecordCreator: mutable.Map[String, CFunctionDecl] = mutable.Map()
-
-  val nameToRecordEquals: mutable.Map[String, CFunctionDecl] = mutable.Map()
+  val nameToRecordEquals: MappingLabel[String, CFunctionDecl] = MappingLabel(valueDecls.append)
   
-  val nameToRecordPrinter: mutable.Map[String, CFunctionDecl] = mutable.Map()
+  val nameToRecordPrinter: MappingLabel[String, CFunctionDecl] = MappingLabel(valueDecls.append)
 }

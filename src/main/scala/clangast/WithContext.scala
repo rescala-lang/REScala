@@ -1,37 +1,27 @@
 package clangast
 
-import clangast.decl.{CFunctionDecl, CInclude, CRecordDecl}
-import compiler.context.{FunctionDeclTC, IncludeTC, RecordDeclTC, TranslationContext}
+import clangast.decl.{CInclude, CTypeDecl, CValueDecl}
+import compiler.context.TranslationContext
 
 import scala.quoted.*
 
 case class WithContext[T <: CASTNode](
                                        node: T,
                                        includes: List[CInclude],
-                                       recordDecls: List[CRecordDecl],
-                                       functionDecls: List[CFunctionDecl]
+                                       typeDecls: List[CTypeDecl],
+                                       valueDecls: List[CValueDecl]
                                      ) {
   def toExpr(using Quotes, Type[T]): Expr[WithContext[T]] = {
     val nodeExpr = node.toExpr.asInstanceOf[Expr[T]]
     val includesExpr = Expr.ofList(includes.map(_.toExpr))
-    val recordDeclsExpr = Expr.ofList(recordDecls.map(_.toExpr))
-    val functionDeclsExpr = Expr.ofList(functionDecls.map(_.toExpr))
+    val typeDeclsExpr = Expr.ofList(typeDecls.map(_.toExpr))
+    val valueDeclsExpr = Expr.ofList(valueDecls.map(_.toExpr))
 
-    '{ WithContext($nodeExpr, $includesExpr, $recordDeclsExpr, $functionDeclsExpr) }
+    '{ WithContext($nodeExpr, $includesExpr, $typeDeclsExpr, $valueDeclsExpr) }
   }
 }
 
 object WithContext {
-  type RequiredTC = IncludeTC & RecordDeclTC & FunctionDeclTC
-  def apply[T <: CASTNode](node: T, ctx: RequiredTC, excludeFunction: String = ""): WithContext[T] = {
-    val includes = ctx.includes.toList
-    val recordDecls = ctx.orderedRecordDecls.toList
-    val functionDecls =
-      ctx.nameToRecordCreator.values.toList ++
-        ctx.nameToRecordEquals.values ++
-        ctx.nameToRecordPrinter.values ++
-        ctx.nameToFunctionDecl.values.filterNot(_.name.equals(excludeFunction))
-
-    WithContext(node, includes, recordDecls, functionDecls)
-  }
+  def apply[T <: CASTNode](node: T, ctx: TranslationContext, excludeValue: PartialFunction[CValueDecl, Boolean] = _ => false): WithContext[T] =
+    WithContext(node, ctx.includesList, ctx.typeDeclList, ctx.valueDeclList.filterNot(excludeValue.orElse(_ => false)))
 }

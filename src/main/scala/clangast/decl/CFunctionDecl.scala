@@ -53,5 +53,5 @@ case class CFunctionDecl(
       variadic
     )
     
-  def declOnly: CFunctionDecl = this.copy(body = None)
+  override def declOnly: CFunctionDecl = this.copy(body = None)
 }

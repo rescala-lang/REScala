@@ -2,22 +2,22 @@ package compiler.base
 
 import clangast.stubs.StdBoolH
 import clangast.types.*
-import compiler.context.{IncludeTC, TranslationContext}
+import compiler.context.TranslationContext
 import compiler.CompilerCascade
 
 import scala.quoted.*
 
 object CompileType extends TypePC {
-  def compileTypeRepr(using Quotes)(using ctx: IncludeTC, cascade: CompilerCascade):
+  override def compileTypeRepr(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.TypeRepr, CType] = {
       import quotes.reflect.*
 
       {
         case ConstantType(_: BooleanConstant) =>
-          ctx.includes.add(StdBoolH.include)
+          ctx.addInclude(StdBoolH.include)
           CBoolType
         case tpe if tpe =:= TypeRepr.of[Boolean] =>
-          ctx.includes.add(StdBoolH.include)
+          ctx.addInclude(StdBoolH.include)
           CBoolType
         case ConstantType(_: ByteConstant) => CCharType
         case tpe if tpe =:= TypeRepr.of[Byte] => CCharType
@@ -36,11 +36,6 @@ object CompileType extends TypePC {
         case ConstantType(_: UnitConstant) => CVoidType
         case tpe if tpe =:= TypeRepr.of[Unit] => CVoidType
       }
-    }
-
-  override def compileTypeRepr(using q: Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
-    PartialFunction[quotes.reflect.TypeRepr, CType] = ctx match {
-      case c: IncludeTC => compileTypeRepr(using q)(using c, cascade)
     }
 
   def isNumberType(using Quotes)(tpe: quotes.reflect.TypeRepr): Boolean = {

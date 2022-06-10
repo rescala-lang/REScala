@@ -7,6 +7,8 @@ import scala.quoted.{Expr, Quotes}
 
 trait CValueDecl extends CNamedDecl {
   def getType: CQualType
+  
+  def declOnly: CValueDecl = this
 
   override def toExpr(using Quotes): Expr[CValueDecl]
 

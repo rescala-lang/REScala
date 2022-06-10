@@ -286,23 +286,23 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
   private val libCTU: CTranslationUnitDecl = {
     val includes = libInclude :: Set.from(contexts.flatMap(_.includes)).toList
 
-    val helperFunctionDecls = Set.from(contexts.flatMap(_.functionDecls)).toList
+    val valueDecls = Set.from(contexts.flatMap(_.valueDecls)).toList
 
     CTranslationUnitDecl(
       includes,
-      helperFunctionDecls
+      valueDecls
     )
   }
 
   private val libHTU: CTranslationUnitDecl = {
     val includes = Set.from(contexts.flatMap(_.includes)).toList
 
-    val recordDecls = appendWithoutDuplicates(contexts.map(_.recordDecls))
-    val helperFunctionDecls = Set.from(contexts.flatMap(_.functionDecls)).toList.map(_.declOnly)
+    val typeDecls = appendWithoutDuplicates(contexts.map(_.typeDecls))
+    val valueDecls = Set.from(contexts.flatMap(_.valueDecls)).toList.map(_.declOnly)
 
     CTranslationUnitDecl(
       includes,
-      recordDecls ++ helperFunctionDecls,
+      typeDecls ++ valueDecls,
       Some("REACTIFI_LIB")
     )
   }

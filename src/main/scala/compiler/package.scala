@@ -15,7 +15,7 @@ package object compiler {
     CompileType
   )
 
-  trait MinimalContext extends IncludeTC with ValueDeclTC with FunctionDeclTC with RecordDeclTC
+  trait MinimalContext extends ValueDeclTC with FunctionDeclTC with RecordDeclTC
 
   def createMinimalContext(): MinimalContext = new MinimalContext {}
 

@@ -13,7 +13,7 @@ import scala.quoted.*
 trait MacroCompiler {
   given cascade: CompilerCascade
 
-  type CTX <: WithContext.RequiredTC
+  type CTX <: TranslationContext
 
   protected def createTranslationContext(): CTX
   
@@ -46,7 +46,11 @@ trait MacroCompiler {
 
     val compiledF = cascade.dispatch(_.compileTerm)(f.asTerm) match { case funDecl: CFunctionDecl => funDecl }
 
-    WithContext(compiledF, ctx, compiledF.name).toExpr
+    WithContext(
+      compiledF,
+      ctx,
+      { case CFunctionDecl(compiledF.name, _, _, _, _) => true }
+    ).toExpr
   }
   
   inline def compileAnonFun(inline f: AnyRef, inline funName: String): WithContext[CFunctionDecl]
@@ -60,7 +64,11 @@ trait MacroCompiler {
       case funDecl: CFunctionDecl => (funDecl.name, funDecl.copy(name = funName.valueOrAbort))
     }
 
-    WithContext(compiledF, ctx, originalName).toExpr
+    WithContext(
+      compiledF,
+      ctx,
+      { case CFunctionDecl(`originalName`, _, _, _, _) => true }
+    ).toExpr
   }
 
   inline def compileType[T]: WithContext[CType]

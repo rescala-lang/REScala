@@ -9,7 +9,7 @@ import clangast.stmt.{CCompoundStmt, CIfStmt, CReturnStmt, CStmt}
 import clangast.types.{CBoolType, CRecordType, CType, CVoidType}
 import compiler.CompilerCascade
 import compiler.base.*
-import compiler.context.{IncludeTC, RecordDeclTC, TranslationContext}
+import compiler.context.{RecordDeclTC, TranslationContext}
 
 import scala.quoted.*
 
@@ -129,7 +129,7 @@ object CompileProduct extends DefinitionPC with SelectPC with ApplyPC with Match
       }
     }
 
-  def compilePrintImpl(using Quotes)(using ctx: IncludeTC & RecordDeclTC, cascade: CompilerCascade):
+  def compilePrintImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
     PartialFunction[(CExpr, quotes.reflect.TypeRepr), CStmt] = {
       import quotes.reflect.*
 
@@ -140,7 +140,7 @@ object CompileProduct extends DefinitionPC with SelectPC with ApplyPC with Match
     }
 
   override def compilePrint(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[(CExpr, quotes.reflect.TypeRepr), CStmt] = ensureCtx[IncludeTC & RecordDeclTC](compilePrintImpl)
+    PartialFunction[(CExpr, quotes.reflect.TypeRepr), CStmt] = ensureCtx[RecordDeclTC](compilePrintImpl)
 
   private def isProductApply(using Quotes)(apply: quotes.reflect.Apply): Boolean = {
     import quotes.reflect.*
@@ -155,7 +155,7 @@ object CompileProduct extends DefinitionPC with SelectPC with ApplyPC with Match
   }
 
   private def getProductRecordDecl(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CRecordDecl = {
-    ctx.getOrElseUpdateRecordDecl(cascade.dispatch(_.typeName)(tpe), compileProductTypeToCRecordDecl(tpe))
+    ctx.nameToRecordDecl.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe), compileProductTypeToCRecordDecl(tpe))
   }
 
   private def compileProductTypeToCRecordDecl(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: TranslationContext, cascade: CompilerCascade): CRecordDecl = {
@@ -251,11 +251,11 @@ object CompileProduct extends DefinitionPC with SelectPC with ApplyPC with Match
     CFunctionDecl(name, parameters, returnType, Some(body))
   }
 
-  private def getProductPrinter(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC & IncludeTC, cascade: CompilerCascade): CFunctionDecl = {
+  private def getProductPrinter(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
     ctx.nameToRecordPrinter.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe), buildProductPrinter(tpe))
   }
 
-  private def buildProductPrinter(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC & IncludeTC, cascade: CompilerCascade): CFunctionDecl = {
+  private def buildProductPrinter(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
     import quotes.reflect.*
 
     val recordDecl = getProductRecordDecl(tpe)
