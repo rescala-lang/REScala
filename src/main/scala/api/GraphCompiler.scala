@@ -335,9 +335,14 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
       }
     }
 
+    val transformedMainFun = transactionMapper.mapCValueDecl(mainFun.f.node) match {
+      case f @ CFunctionDecl(_, _, _, Some(CCompoundStmt(body)), _) =>
+        f.copy(body = Some(CCompoundStmt(CCallExpr(CDeclRefExpr(startup), List()) :: body)))
+    }
+
     CTranslationUnitDecl(
       includes,
-      List(transactionMapper.mapCValueDecl(mainFun.f.node))
+      List(transformedMainFun)
     )
   }
 
