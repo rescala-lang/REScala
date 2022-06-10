@@ -1,8 +1,8 @@
 package compiler.ext
 
 import clangast.expr.*
-import clangast.given
-import clangast.stmt.{CExprStmt, CStmt}
+import clangast.{CASTNode, given}
+import clangast.stmt.{CCompoundStmt, CExprStmt, CStmt}
 import clangast.stubs.StdIOH
 import clangast.types.{CCharType, CPointerType, CType}
 import compiler.context.{IncludeTC, TranslationContext}
@@ -11,7 +11,7 @@ import compiler.base.*
 
 import scala.quoted.*
 
-object CompileString extends TermPC with ApplyPC with TypePC {
+object CompileString extends TermPC with TypePC with StringPC {
   override def compileLiteral(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.Literal, CExpr] = {
       import quotes.reflect.*
@@ -20,7 +20,31 @@ object CompileString extends TermPC with ApplyPC with TypePC {
         case Literal(StringConstant(x)) => CStringLiteral(x)
       }
     }
+
+  private def compileTermImpl(using Quotes)(using ctx: IncludeTC, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.Term, CASTNode] = {
+      import quotes.reflect.*
   
+      {
+        case Apply(Ident("print"), List(arg)) =>
+          cascade.dispatch(_.compilePrint)(
+            cascade.dispatch(_.compileTermToCExpr)(arg),
+            arg.tpe
+          )
+        case Apply(Ident("println"), List(arg)) =>
+          CCompoundStmt(List(
+            cascade.dispatch(_.compilePrint)(
+              cascade.dispatch(_.compileTermToCExpr)(arg),
+              arg.tpe
+            ),
+            printf("\\n")
+          ))
+      }
+    }
+
+  override def compileTerm(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.Term, CASTNode] = ensureCtx[IncludeTC](compileTermImpl)
+
   override def compileTypeRepr(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.TypeRepr, CType] = {
       import quotes.reflect.*
@@ -31,54 +55,37 @@ object CompileString extends TermPC with ApplyPC with TypePC {
       }
     }
 
-  private def compileApplyImpl(using Quotes)(using ctx: IncludeTC, cascade: CompilerCascade):
-    PartialFunction[quotes.reflect.Apply, CExpr] = {
+  def compilePrintImpl(using Quotes)(using ctx: IncludeTC, cascade: CompilerCascade):
+    PartialFunction[(CExpr, quotes.reflect.TypeRepr), CStmt] = {
       import quotes.reflect.*
-  
+
       {
-        case Apply(Ident("print"), List(arg)) if arg.tpe <:< TypeRepr.of[Boolean] =>
+        case (expr, tpe) if tpe <:< TypeRepr.of[Boolean] =>
           printf(
             "%s",
             CConditionalOperator(
-              cascade.dispatch(_.compileTermToCExpr)(arg),
+              expr,
               CStringLiteral("true"),
               CStringLiteral("false")
             )
           )
-        case Apply(Ident("println"), List(arg)) if arg.tpe <:< TypeRepr.of[Boolean] =>
-          printf(
-            "%s\\n",
-            CConditionalOperator(
-              cascade.dispatch(_.compileTermToCExpr)(arg),
-              CStringLiteral("true"),
-              CStringLiteral("false")
-            )
-          )
-        case Apply(Ident("print"), List(arg)) if arg.tpe <:< TypeRepr.of[Byte | Short | Int | Long] =>
-          printf("%d", cascade.dispatch(_.compileTermToCExpr)(arg))
-        case Apply(Ident("println"), List(arg)) if arg.tpe <:< TypeRepr.of[Byte | Short | Int | Long] =>
-          printf("%d\\n", cascade.dispatch(_.compileTermToCExpr)(arg))
-        case Apply(Ident("print"), List(arg)) if arg.tpe <:< TypeRepr.of[Char] =>
-          printf("%c", cascade.dispatch(_.compileTermToCExpr)(arg))
-        case Apply(Ident("println"), List(arg)) if arg.tpe <:< TypeRepr.of[Char] =>
-          printf("%c\\n", cascade.dispatch(_.compileTermToCExpr)(arg))
-        case Apply(Ident("print"), List(arg)) if arg.tpe <:< TypeRepr.of[Float | Double] =>
-          printf("%f", cascade.dispatch(_.compileTermToCExpr)(arg))
-        case Apply(Ident("println"), List(arg)) if arg.tpe <:< TypeRepr.of[Float | Double] =>
-          printf("%f\\n", cascade.dispatch(_.compileTermToCExpr)(arg))
-        case Apply(Ident("print"), List(arg)) if arg.tpe <:< TypeRepr.of[String] =>
-          printf("%s", cascade.dispatch(_.compileTermToCExpr)(arg))
-        case Apply(Ident("println"), List(arg)) if arg.tpe <:< TypeRepr.of[String] =>
-          printf("%s\\n", cascade.dispatch(_.compileTermToCExpr)(arg))
+        case (expr, tpe) if tpe <:< TypeRepr.of[Byte | Short | Int | Long] =>
+          printf("%d", expr)
+        case (expr, tpe) if tpe <:< TypeRepr.of[Char] =>
+          printf("%c", expr)
+        case (expr, tpe) if tpe <:< TypeRepr.of[Float | Double] =>
+          printf("%f", expr)
+        case (expr, tpe) if tpe <:< TypeRepr.of[String] =>
+          printf("%s", expr)
       }
     }
 
-  override def compileApply(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[quotes.reflect.Apply, CExpr] = ensureCtx[IncludeTC](compileApplyImpl)
+  override def compilePrint(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[(CExpr, quotes.reflect.TypeRepr), CStmt] = ensureCtx[IncludeTC](compilePrintImpl)
 
-  private def printf(format: String, arg: CExpr)(using IncludeTC): CExpr =
+  def printf(format: String, args: CExpr*)(using IncludeTC): CExpr =
     CCallExpr(
       CDeclRefExpr(StdIOH.printf),
-      List(CStringLiteral(format), arg)
+      CStringLiteral(format) :: args.toList
     )
 }
