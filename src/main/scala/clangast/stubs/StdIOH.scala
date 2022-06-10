@@ -1,12 +1,13 @@
 package clangast.stubs
 
 import clangast.decl.{CFunctionDecl, CInclude}
+import compiler.context.IncludeTC
 
-object StdIOH {
-  val include: CInclude = CInclude("stdio.h")
+object StdIOH extends CLibraryStub {
+  override val include: CInclude = CInclude("stdio.h")
 
-  val printf: CFunctionDecl = CFunctionStub("printf")
-  val sprintf: CFunctionDecl = CFunctionStub("sprintf")
-  val scanf: CFunctionDecl = CFunctionStub("scanf")
-  val sscanf: CFunctionDecl = CFunctionStub("sscanf")
+  def printf(using IncludeTC): CFunctionDecl = includeStub(CFunctionStub("printf"))
+  def sprintf(using IncludeTC): CFunctionDecl = includeStub(CFunctionStub("sprintf"))
+  def scanf(using IncludeTC): CFunctionDecl = includeStub(CFunctionStub("scanf"))
+  def sscanf(using IncludeTC): CFunctionDecl = includeStub(CFunctionStub("sscanf"))
 }

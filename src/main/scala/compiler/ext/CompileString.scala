@@ -37,7 +37,6 @@ object CompileString extends TermPC with ApplyPC with TypePC {
   
       {
         case Apply(Ident("print"), List(arg)) if arg.tpe <:< TypeRepr.of[Boolean] =>
-          ctx.includes.add(StdIOH.include)
           printf(
             "%s",
             CConditionalOperator(
@@ -47,7 +46,6 @@ object CompileString extends TermPC with ApplyPC with TypePC {
             )
           )
         case Apply(Ident("println"), List(arg)) if arg.tpe <:< TypeRepr.of[Boolean] =>
-          ctx.includes.add(StdIOH.include)
           printf(
             "%s\\n",
             CConditionalOperator(
@@ -57,28 +55,20 @@ object CompileString extends TermPC with ApplyPC with TypePC {
             )
           )
         case Apply(Ident("print"), List(arg)) if arg.tpe <:< TypeRepr.of[Byte | Short | Int | Long] =>
-          ctx.includes.add(StdIOH.include)
           printf("%d", cascade.dispatch(_.compileTermToCExpr)(arg))
         case Apply(Ident("println"), List(arg)) if arg.tpe <:< TypeRepr.of[Byte | Short | Int | Long] =>
-          ctx.includes.add(StdIOH.include)
           printf("%d\\n", cascade.dispatch(_.compileTermToCExpr)(arg))
         case Apply(Ident("print"), List(arg)) if arg.tpe <:< TypeRepr.of[Char] =>
-          ctx.includes.add(StdIOH.include)
           printf("%c", cascade.dispatch(_.compileTermToCExpr)(arg))
         case Apply(Ident("println"), List(arg)) if arg.tpe <:< TypeRepr.of[Char] =>
-          ctx.includes.add(StdIOH.include)
           printf("%c\\n", cascade.dispatch(_.compileTermToCExpr)(arg))
         case Apply(Ident("print"), List(arg)) if arg.tpe <:< TypeRepr.of[Float | Double] =>
-          ctx.includes.add(StdIOH.include)
           printf("%f", cascade.dispatch(_.compileTermToCExpr)(arg))
         case Apply(Ident("println"), List(arg)) if arg.tpe <:< TypeRepr.of[Float | Double] =>
-          ctx.includes.add(StdIOH.include)
           printf("%f\\n", cascade.dispatch(_.compileTermToCExpr)(arg))
         case Apply(Ident("print"), List(arg)) if arg.tpe <:< TypeRepr.of[String] =>
-          ctx.includes.add(StdIOH.include)
           printf("%s", cascade.dispatch(_.compileTermToCExpr)(arg))
         case Apply(Ident("println"), List(arg)) if arg.tpe <:< TypeRepr.of[String] =>
-          ctx.includes.add(StdIOH.include)
           printf("%s\\n", cascade.dispatch(_.compileTermToCExpr)(arg))
       }
     }
@@ -86,7 +76,7 @@ object CompileString extends TermPC with ApplyPC with TypePC {
   override def compileApply(using Quotes)(using TranslationContext, CompilerCascade):
     PartialFunction[quotes.reflect.Apply, CExpr] = ensureCtx[IncludeTC](compileApplyImpl)
 
-  private def printf(format: String, arg: CExpr): CExpr =
+  private def printf(format: String, arg: CExpr)(using IncludeTC): CExpr =
     CCallExpr(
       CDeclRefExpr(StdIOH.printf),
       List(CStringLiteral(format), arg)

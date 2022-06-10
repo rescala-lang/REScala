@@ -118,9 +118,6 @@ object CompileArray extends SelectPC with ApplyPC with TypePC {
 
     val returnType = CRecordType(recordDecl)
 
-    ctx.includes.add(StdLibH.include)
-    ctx.includes.add(StdArgH.include)
-
     val dataField = recordDecl.fields.find(_.name.equals("data")).get
 
     val elemType = dataField match {
