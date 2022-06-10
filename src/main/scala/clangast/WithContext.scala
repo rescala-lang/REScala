@@ -29,6 +29,7 @@ object WithContext {
     val functionDecls =
       ctx.nameToRecordCreator.values.toList ++
         ctx.nameToRecordEquals.values ++
+        ctx.nameToRecordPrinter.values ++
         ctx.nameToFunctionDecl.values.filterNot(_.name.equals(excludeFunction))
 
     WithContext(node, includes, recordDecls, functionDecls)

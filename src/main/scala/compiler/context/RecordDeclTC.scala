@@ -22,4 +22,6 @@ trait RecordDeclTC extends TranslationContext {
   val nameToRecordCreator: mutable.Map[String, CFunctionDecl] = mutable.Map()
 
   val nameToRecordEquals: mutable.Map[String, CFunctionDecl] = mutable.Map()
+  
+  val nameToRecordPrinter: mutable.Map[String, CFunctionDecl] = mutable.Map()
 }
