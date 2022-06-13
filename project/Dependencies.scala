@@ -14,28 +14,27 @@ object Dependencies {
     val circeCore          = "0.14.1"
     val decline            = "2.2.0"
     val directories        = "26"
-    val fastparse          = "2.3.3-35-06d972"
     val jetty              = "9.4.46.v20220331"
     val jol                = "0.16"
     val jsoniterScalaCore  = "2.13.27"
     val jsoniterScalaOld   = "2.13.3" // this is the latest version supporting Scala 2.11 and java 8
     val jsoup              = "1.15.1"
-    val munit              = "1.0.0-M4"
+    val munit              = "1.0.0-M5"
     val normalizecss       = "8.0.1"
     val okHttp             = "4.9.3"
     val pprint             = "0.7.3"
-    val reactiveStreams    = "1.0.3"
+    val reactiveStreams    = "1.0.4"
     val retypecheck        = "0.10.0"
     val scala211           = "2.11.12"
     val scala212           = "2.12.15"
     val scala213           = "2.13.8"
-    val scala3             = "3.1.3-RC4"
+    val scala3             = "3.1.3-RC5"
     val scalaJavaTime      = "2.3.0"
     val scalaLoci          = "609b4c1b58"
     val scalaSwing         = "3.0.0"
     val scalacheck         = "1.16.0"
     val scalactic          = "3.0.0"
-    val scalajsDom         = "2.1.0"
+    val scalajsDom         = "2.2.0"
     val scalatags          = "0.11.1"
     val scalatest          = "3.2.12"
     val scalatestpluscheck = "3.2.11.0"
@@ -52,7 +51,6 @@ object Dependencies {
   val catsCore        = Def.setting("org.typelevel" %%% "cats-core" % V.catsCore)
   val decline         = Def.setting("com.monovore" %%% "decline" % V.decline)
   val directories     = Def.setting("dev.dirs" % "directories" % V.directories)
-  val fastparse       = Def.setting("com.lihaoyi" %%% "fastparse" % V.fastparse)
   val jetty           = Def.setting("org.eclipse.jetty" % "jetty-rewrite" % V.jetty)
   val jol             = Def.setting("org.openjdk.jol" % "jol-core" % V.jol)
   val jsoup           = Def.setting("org.jsoup" % "jsoup" % V.jsoup)
@@ -121,7 +119,7 @@ object Dependencies {
     val wsAkka        = generic("communicator-ws-akka")
     val wsWeb         = generic("communicator-ws-webnative")
     val wsJavalin     = generic("communicator-ws-javalin")
-    val wsJetty       = Def.setting(Seq(generic("communicator-ws-jetty").value, jetty.value))
+    val wsJetty       = generic("communicator-ws-jetty")
   }
 
   // Add JavaFX dependencies, should probably match whatever the scalafx version was tested against:
