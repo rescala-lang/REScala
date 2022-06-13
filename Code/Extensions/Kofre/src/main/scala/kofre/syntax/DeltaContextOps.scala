@@ -64,9 +64,9 @@ object PermIdMutate:
 @implicitNotFound("Could not show that »${C}\ncontains ${L}")
 trait ArdtOpsContains[C, L]
 object ArdtOpsContains:
-  given identityContains[L](using NotGiven[L =:= AntiEntropyCRDT[_]]): ArdtOpsContains[L, L] = new {}
-  given deltaBufferContains[State]: ArdtOpsContains[DeltaBufferRDT[State], State]            = new {}
-  given antiEntropyContains[State]: ArdtOpsContains[AntiEntropyCRDT[State], State]           = new {}
+  given identityContains[L]: ArdtOpsContains[L, L]                                 = new {}
+  given deltaBufferContains[State]: ArdtOpsContains[DeltaBufferRDT[State], State]  = new {}
+  given antiEntropyContains[State]: ArdtOpsContains[AntiEntropyCRDT[State], State] = new {}
   // given transitiveContains[A, B, C](using ArdtOpsContains[A, B], ArdtOpsContains[B, C]): ArdtOpsContains[A, C] = new {}
 
 /** Helps to define operations that update any container [[C]] containing values of type [[L]]

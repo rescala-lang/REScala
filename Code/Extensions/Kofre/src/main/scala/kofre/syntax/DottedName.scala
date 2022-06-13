@@ -27,5 +27,6 @@ object DottedName {
     override def context(c: DottedName[L]): Dots = c.anon.context
   }
 
-  given syntaxPassthrough[K, L](using ArdtOpsContains[K, L]): ArdtOpsContains[DottedName[K], L] = new {}
+  given syntaxPassthroughTrans[K, L](using ArdtOpsContains[K, L]): ArdtOpsContains[DottedName[K], L] = new {}
+  given syntaxPassthrough[L]: ArdtOpsContains[DottedName[L], L]                                      = new {}
 }
