@@ -580,7 +580,7 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
         endpoint: EndPointWithInfrastructure[Msg]
     ): MessageWithInfrastructure[Msg] = {
       if (ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host sending $reactive")
-      endpoint.receive.foreach { mwi: MessageWithInfrastructure[Msg] =>
+      endpoint.receive.foreach { (mwi: MessageWithInfrastructure[Msg]) =>
         if (ReactiveTransmittable.DEBUG)
           println(s"[${Thread.currentThread().getName}] sender $host receive incoming $mwi")
         val (requestId: Long, msg: Msg) = mwi
@@ -748,7 +748,7 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
         println(
           s"[${Thread.currentThread().getName}] $host instantiating $reflection, requesting initialization starting at $turn"
         )
-      endpoint.receive.foreach { mwi: MessageWithInfrastructure[Msg] =>
+      endpoint.receive.foreach { (mwi: MessageWithInfrastructure[Msg]) =>
         if (ReactiveTransmittable.DEBUG)
           println(s"[${Thread.currentThread().getName}] receiver $host receive incoming $mwi")
         val (requestId: Long, msg: Msg) = mwi

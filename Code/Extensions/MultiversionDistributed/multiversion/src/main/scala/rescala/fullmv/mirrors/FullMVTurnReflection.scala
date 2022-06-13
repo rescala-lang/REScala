@@ -53,7 +53,7 @@ trait FullMVTurnReflectionBundle extends FullMVBundle {
       if (
         before == null && predecessorIndex.compareAndSet(
           null,
-          (FullMVTurnReflection.buildIndex(startAt), startAt, clock)
+          (rescala.fullmv.mirrors.FullMVTurnReflection.buildIndex(startAt), startAt, clock)
         )
       ) {
         proxy.asyncAddPredecessorReplicator(this, startAt, clock)
@@ -99,7 +99,7 @@ trait FullMVTurnReflectionBundle extends FullMVBundle {
     override def newPredecessors(predecessors: TransactionSpanningTreeNode[FullMVTurn], clock: Int): Future[Unit] = {
       //  override def asyncNewPredecessors(predecessors: TransactionSpanningTreeNode[FullMVTurn]): Unit = {
       if (phase < TurnPhase.Completed) {
-        val newPreds = FullMVTurnReflection.buildIndex(predecessors)
+        val newPreds = rescala.fullmv.mirrors.FullMVTurnReflection.buildIndex(predecessors)
 
         @inline
         @tailrec def retryCommitWhileNewer(): Future[Unit] = {
