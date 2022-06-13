@@ -85,6 +85,8 @@ object CompileApply extends ApplyPC {
       case "<=" => CParenExpr(CLessEqualsExpr(lhs, rhs))
       case ">" => CParenExpr(CGreaterThanExpr(lhs, rhs))
       case ">=" => CParenExpr(CGreaterEqualsExpr(lhs, rhs))
+      case "&&" => CParenExpr(CAndExpr(lhs, rhs))
+      case "||" => CParenExpr(COrExpr(lhs, rhs))
       case _ => throw new MatchError(apply.show(using Printer.TreeStructure))
     }
   }
