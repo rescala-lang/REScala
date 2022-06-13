@@ -6,8 +6,8 @@ import rescala.operator.Pulse.NoChange
 trait DefaultImplementations {
   self: Operators =>
 
-  /** @param isDynamicWithStaticDeps [[scala.None]] means static dependencies only,
-    *                                [[scala.Some]] means dynamic with the given static ones for optimization
+  /** @param isDynamicWithStaticDeps None means static dependencies only,
+    *                                Some means dynamic with the given static ones for optimization
     */
   class SignalImpl[T](
       initial: State[Pulse[T]],

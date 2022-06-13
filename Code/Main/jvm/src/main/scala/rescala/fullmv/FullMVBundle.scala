@@ -365,7 +365,7 @@ trait FullMVBundle extends Core {
     }
 
     def discover(node: ReSource, addOutgoing: Derived): Unit = {
-      val r @ (successorWrittenVersions, maybeFollowFrame) = node.state.discover(this, addOutgoing)
+      val /*r @*/ (successorWrittenVersions, maybeFollowFrame) = node.state.discover(this, addOutgoing)
 //    assert((successorWrittenVersions ++ maybeFollowFrame).forall(retrofit => retrofit == this || retrofit.isTransitivePredecessor(this)), s"$this retrofitting contains predecessors: discover $node -> $addOutgoing retrofits $r from ${node.state}")
       if (FullMVUtil.DEBUG)
         println(
@@ -376,7 +376,7 @@ trait FullMVBundle extends Core {
     }
 
     def drop(node: ReSource, removeOutgoing: Derived): Unit = {
-      val r @ (successorWrittenVersions, maybeFollowFrame) = node.state.drop(this, removeOutgoing)
+      val /*r @*/ (successorWrittenVersions, maybeFollowFrame) = node.state.drop(this, removeOutgoing)
 //    assert((successorWrittenVersions ++ maybeFollowFrame).forall(retrofit => retrofit == this || retrofit.isTransitivePredecessor(this)), s"$this retrofitting contains predecessors: drop $node -> $removeOutgoing retrofits $r from ${node.state}")
       if (FullMVUtil.DEBUG)
         println(

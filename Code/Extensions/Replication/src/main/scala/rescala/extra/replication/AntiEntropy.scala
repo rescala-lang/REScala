@@ -10,7 +10,7 @@ import rescala.extra.replication.AntiEntropy.{AckMsg, DeltaMsg}
 
 import scala.collection.mutable
 
-/** This class can be used together with [[Network]] to test Delta CRDTs locally. It is an implementation of the anti-entropy
+/** This class can be used together with Network to test Delta CRDTs locally. It is an implementation of the anti-entropy
   * algorithm proposed by Almeida et al. in "Delta State Replicated Data Types", see [[https://arxiv.org/pdf/1603.01529.pdf here]].
   * It also includes the modifications proposed by Enes et al. in "Efficient Synchronization of State-based CRDTs",
   * see [[https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8731395 here]].
@@ -19,7 +19,7 @@ import scala.collection.mutable
   * on all AntiEntropy instances.
   *
   * @param replicaID Unique id of the replica that this instance is placed on
-  * @param network The [[Network]] that is used for exchanging deltas with other replicas
+  * @param network The Network that is used for exchanging deltas with other replicas
   * @param neighbors The neighbors that this replica can communicate with directly
   * @tparam A State type of the CRDT that this anti-entropy algorithm is used with
   */
