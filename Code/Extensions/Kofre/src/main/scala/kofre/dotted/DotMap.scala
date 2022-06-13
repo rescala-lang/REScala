@@ -1,6 +1,7 @@
 package kofre.dotted
 
 import kofre.base.Bottom
+import kofre.datatypes.ObserveRemoveMap
 import kofre.time.Dots
 import kofre.dotted.DottedDecompose.FromConlattice
 import kofre.decompose.interfaces
@@ -12,7 +13,7 @@ case class DotMap[K, V](repr: Map[K, V]) {
 }
 
 /** DotMap is a dot store implementation that maps keys of an arbitrary type K to values of a dot store type V. See
-  * [[interfaces.ORMapInterface]] for a usage example.
+  * [[ObserveRemoveMap]] for a usage example.
   */
 object DotMap {
 

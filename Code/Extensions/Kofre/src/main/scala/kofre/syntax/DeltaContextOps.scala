@@ -7,6 +7,7 @@ import kofre.decompose.containers.{AntiEntropyCRDT, DeltaBufferRDT}
 import kofre.dotted.Dotted
 
 import scala.annotation.implicitNotFound
+import scala.util.NotGiven
 
 /** The basic idea behind this machinery is to allow lattices of type L to be stored in a Container of type C.
   * In the simplest case C = L and the lattice is used as is.
@@ -63,12 +64,10 @@ object PermIdMutate:
 @implicitNotFound("Could not show that »${C}\ncontains ${L}")
 trait ArdtOpsContains[C, L]
 object ArdtOpsContains:
-  given identityContains[L]: ArdtOpsContains[L, L]                                                             = new {}
-  given transitiveContains[A, B, C](using ArdtOpsContains[A, B], ArdtOpsContains[B, C]): ArdtOpsContains[A, C] = new {}
-  given deltaBufferContains[State]: ArdtOpsContains[DeltaBufferRDT[State], State] =
-    new ArdtOpsContains[DeltaBufferRDT[State], State] {}
-  given antiEntropyContains[State]: ArdtOpsContains[AntiEntropyCRDT[State], State] =
-    new ArdtOpsContains[AntiEntropyCRDT[State], State] {}
+  given identityContains[L](using NotGiven[L =:= AntiEntropyCRDT[_]]): ArdtOpsContains[L, L] = new {}
+  given deltaBufferContains[State]: ArdtOpsContains[DeltaBufferRDT[State], State]            = new {}
+  given antiEntropyContains[State]: ArdtOpsContains[AntiEntropyCRDT[State], State]           = new {}
+  // given transitiveContains[A, B, C](using ArdtOpsContains[A, B], ArdtOpsContains[B, C]): ArdtOpsContains[A, C] = new {}
 
 /** Helps to define operations that update any container [[C]] containing values of type [[L]]
   * using a scheme where mutations return deltas which are systematically applied.

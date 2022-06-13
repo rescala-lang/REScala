@@ -34,5 +34,5 @@ object Dotted {
     override def context(c: Dotted[L]): Dots                              = c.context
   }
 
-  given syntaxPassthrough[L]: ArdtOpsContains[Dotted[L], L] = new ArdtOpsContains[Dotted[L], L] {}
+  given syntaxPassthrough[K, L](using ArdtOpsContains[K, L]): ArdtOpsContains[Dotted[K], L] = new {}
 }

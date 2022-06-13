@@ -6,7 +6,7 @@ import kofre.dotted.DottedDecompose.*
 import kofre.decompose.*
 import kofre.dotted.{DotMap, DotSet, Dotted, DottedDecompose, HasDots}
 import kofre.datatypes.AddWinsSet
-import kofre.syntax.OpsSyntaxHelper
+import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper}
 
 /** An AddWinsSet (Add-Wins Set) is a Delta CRDT modeling a set.
   *
@@ -23,7 +23,7 @@ object AddWinsSet {
   given contextDecompose[E]: DottedDecompose[AddWinsSet[E]] = DottedDecompose.derived
   given asCausalContext[E]: HasDots[AddWinsSet[E]]          = HasDots.derived
 
-  implicit class AWSetSyntax[C, E](container: C) extends OpsSyntaxHelper[C, AddWinsSet[E]](container) {
+  implicit class AWSetSyntax[C, E](container: C)(using ArdtOpsContains[C, AddWinsSet[E]]) extends OpsSyntaxHelper[C, AddWinsSet[E]](container) {
 
     def elements(using QueryP): Set[E] = current.inner.keySet
 

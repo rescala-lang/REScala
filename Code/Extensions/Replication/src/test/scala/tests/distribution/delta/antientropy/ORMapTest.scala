@@ -4,10 +4,9 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import rescala.extra.lattices.delta.JsoniterCodecs._
 import rescala.extra.replication.AntiEntropy
-import kofre.decompose.interfaces.ORMapInterface.{ORMap, contextDecompose}
-import kofre.decompose.interfaces.ORMapInterface.ORMapSyntax
+import kofre.datatypes.ObserveRemoveMap.contextDecompose
 import kofre.decompose.containers.{AntiEntropyCRDT, Network}
-import kofre.datatypes.AddWinsSet
+import kofre.datatypes.{AddWinsSet, ObserveRemoveMap}
 
 import scala.collection.mutable
 
@@ -16,12 +15,11 @@ class ORMapTest extends munit.ScalaCheckSuite {
 
   test("mutateKey/queryKey") { (add: List[Int], remove: List[Int], k: Int) =>
     val network = new Network(0, 0, 0)
-    val aea =
-      new AntiEntropy[ORMap[Int, AddWinsSet[Int]]]("a", network, mutable.Buffer())
-    val aeb = new AntiEntropy[AddWinsSet[Int]]("b", network, mutable.Buffer())
+    val aea     = new AntiEntropy[ObserveRemoveMap[Int, AddWinsSet[Int]]]("a", network, mutable.Buffer())
+    val aeb     = new AntiEntropy[AddWinsSet[Int]]("b", network, mutable.Buffer())
 
     val set = {
-      val added = add.foldLeft(AntiEntropyCRDT(aeb)) {
+      val added: AntiEntropyCRDT[AddWinsSet[Int]] = add.foldLeft(AntiEntropyCRDT(aeb)) {
         case (s, e) => s.add(e)
       }
 
@@ -31,7 +29,7 @@ class ORMapTest extends munit.ScalaCheckSuite {
     }
 
     val map = {
-      val added = add.foldLeft(AntiEntropyCRDT[ORMap[Int, AddWinsSet[Int]]](aea)) {
+      val added = add.foldLeft(AntiEntropyCRDT[ObserveRemoveMap[Int, AddWinsSet[Int]]](aea)) {
         case (m, e) =>
           m.mutateKeyNamedCtx(k)(_.add(e))
       }
@@ -45,20 +43,20 @@ class ORMapTest extends munit.ScalaCheckSuite {
 
     assert(
       mapElements == set.elements,
-      s"Mutating/Querying a key in an ORMap should have the same behavior as modifying a standalone CRDT of that type, but $mapElements does not equal ${set.elements}"
+      s"Mutating/Querying a key in an ObserveRemoveMap should have the same behavior as modifying a standalone CRDT of that type, but $mapElements does not equal ${set.elements}"
     )
   }
 
   test("remove") { (add: List[Int], remove: List[Int], k: Int) =>
     val network = new Network(0, 0, 0)
     val aea =
-      new AntiEntropy[ORMap[Int, AddWinsSet[Int]]]("a", network, mutable.Buffer())
+      new AntiEntropy[ObserveRemoveMap[Int, AddWinsSet[Int]]]("a", network, mutable.Buffer())
     val aeb = new AntiEntropy[AddWinsSet[Int]]("b", network, mutable.Buffer())
 
     val empty = AntiEntropyCRDT[AddWinsSet[Int]](aeb)
 
     val map = {
-      val added = add.foldLeft(AntiEntropyCRDT[ORMap[Int, AddWinsSet[Int]]](aea)) {
+      val added = add.foldLeft(AntiEntropyCRDT[ObserveRemoveMap[Int, AddWinsSet[Int]]](aea)) {
         case (m, e) => m.mutateKeyNamedCtx(k)(_.add(e))
       }
 

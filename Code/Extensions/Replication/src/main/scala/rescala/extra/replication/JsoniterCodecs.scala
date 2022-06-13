@@ -4,13 +4,10 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, Jso
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import kofre.base.Defs.Time
 import kofre.datatypes.RGA.RGANode
-import kofre.datatypes.{
-  AddWinsSet, EnableWinsFlag, Epoche, GrowMap, GrowOnlyCounter, PosNegCounter, RGA, TimedVal, TwoPhaseSet
-}
+import kofre.datatypes.{AddWinsSet, EnableWinsFlag, Epoche, GrowMap, GrowOnlyCounter, ObserveRemoveMap, PosNegCounter, RGA, TimedVal, TwoPhaseSet}
 import kofre.decompose.interfaces.GListInterface.{GList, GListElem, GListNode}
 import kofre.decompose.interfaces.LexCounterInterface.LexPair
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
-import kofre.decompose.interfaces.ORMapInterface.ORMap
 import kofre.decompose.interfaces.RCounterInterface.RCounter
 import kofre.dotted.Dotted
 import kofre.protocol.AuctionInterface.AuctionData
@@ -113,9 +110,9 @@ object JsoniterCodecs {
   implicit def MVRegisterEmbeddedCodec[A: JsonValueCodec]: JsonValueCodec[MVRegister[A]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
-  /** ORMap */
+  /** ObserveRemoveMap */
   @nowarn("msg=never used")
-  implicit def ORMapStateCodec[K: JsonValueCodec, V: JsonValueCodec]: JsonValueCodec[ORMap[K, V]] =
+  implicit def ORMapStateCodec[K: JsonValueCodec, V: JsonValueCodec]: JsonValueCodec[ObserveRemoveMap[K, V]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   /** PNCounter */

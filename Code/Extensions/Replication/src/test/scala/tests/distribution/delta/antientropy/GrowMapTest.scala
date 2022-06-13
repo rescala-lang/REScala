@@ -28,7 +28,7 @@ class GrowMapTest extends munit.ScalaCheckSuite {
 
     assert(
       mapElements == set.elements,
-      s"Mutating/Querying a key in an ORMap should have the same behavior as modifying a standalone CRDT of that type, but $mapElements does not equal ${set.elements}"
+      s"Mutating/Querying a key in an ObserveRemoveMap should have the same behavior as modifying a standalone CRDT of that type, but $mapElements does not equal ${set.elements}"
     )
   }
 }
