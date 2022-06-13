@@ -1,9 +1,11 @@
 import compiler.base.*
 import compiler.context.*
+import compiler.debug.CompileDebug
 import compiler.ext.*
 
 package object compiler {
   val minimalCascade: CompilerCascade = CompilerCascade(
+    CompileDebug,
     CompileApply,
     CompileDefinition,
     CompileMatch,
