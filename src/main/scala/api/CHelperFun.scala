@@ -4,31 +4,38 @@ import clangast.WithContext
 import clangast.decl.CFunctionDecl
 import compiler.*
 
+import scala.annotation.compileTimeOnly
 import scala.quoted.*
 
 trait CHelperFun(val f: WithContext[CFunctionDecl])
 
 class CHelperFun0[R](f: WithContext[CFunctionDecl]) extends CHelperFun(f) {
+  @compileTimeOnly("This method can only be used in expressions that are translated to C code")
   def apply(): R = ???
 }
 
 class CHelperFun1[T1, R](f: WithContext[CFunctionDecl]) extends CHelperFun(f) {
+  @compileTimeOnly("This method can only be used in expressions that are translated to C code")
   def apply(a1: T1): R = ???
 }
 
 class CHelperFun2[T1, T2, R](f: WithContext[CFunctionDecl]) extends CHelperFun(f) {
+  @compileTimeOnly("This method can only be used in expressions that are translated to C code")
   def apply(a1: T1, a2: T2): R = ???
 }
 
 class CHelperFun3[T1, T2, T3, R](f: WithContext[CFunctionDecl]) extends CHelperFun(f) {
+  @compileTimeOnly("This method can only be used in expressions that are translated to C code")
   def apply(a1: T1, a2: T2, a3: T3): R = ???
 }
 
 class CHelperFun4[T1, T2, T3, T4, R](f: WithContext[CFunctionDecl]) extends CHelperFun(f) {
+  @compileTimeOnly("This method can only be used in expressions that are translated to C code")
   def apply(a1: T1, a2: T2, a3: T3, a4: T4): R = ???
 }
 
 class CHelperFun5[T1, T2, T3, T4, T5, R](f: WithContext[CFunctionDecl]) extends CHelperFun(f) {
+  @compileTimeOnly("This method can only be used in expressions that are translated to C code")
   def apply(a1: T1, a2: T2, a3: T3, a4: T4, a5: T5): R = ???
 }
 

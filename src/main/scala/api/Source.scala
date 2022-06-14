@@ -4,7 +4,7 @@ import clangast.WithContext
 import clangast.types.CType
 import compiler.MacroCompiler
 
-import scala.annotation.targetName
+import scala.annotation.{compileTimeOnly, targetName}
 import scala.quoted.*
 
 case class Source[V](name: String, cType: WithContext[CType]) extends Event[V] {
@@ -16,6 +16,7 @@ case class Source[V](name: String, cType: WithContext[CType]) extends Event[V] {
   
   val validName: String = valueName + "_valid"
 
+  @compileTimeOnly("This method can only be used in the parameters of CMainFunction.startTransaction")
   @targetName("assign")
   def :=(v: V): Unit = ???
 }

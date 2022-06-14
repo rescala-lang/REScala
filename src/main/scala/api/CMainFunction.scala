@@ -7,6 +7,8 @@ import clangast.stmt.{CCompoundStmt, CReturnStmt}
 import clangast.types.CIntegerType
 import compiler.MacroCompiler
 
+import scala.annotation.compileTimeOnly
+
 class CMainFunction(val f: WithContext[CFunctionDecl])
 
 object CMainFunction {
@@ -33,5 +35,6 @@ object CMainFunction {
     )
   }
 
+  @compileTimeOnly("This method can only be used inside of a CMainFunction")
   def startTransaction(assignments: Any*): Unit = ???
 }
