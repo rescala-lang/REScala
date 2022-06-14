@@ -4,6 +4,7 @@ import clangast.given
 import clangast.decl.CVarDecl
 import clangast.expr.binaryop.*
 import clangast.expr.*
+import clangast.expr.unaryop.CNotExpr
 import clangast.stmt.CCompoundStmt
 import clangast.stubs.StdIOH
 import compiler.context.TranslationContext
@@ -34,11 +35,35 @@ object CompileApply extends ApplyPC {
           )))
         case apply@Apply(Select(qualifier, name), List(_)) if canCompileToCBinaryOperator(qualifier, name) =>
           compileApplyToCBinaryOperator(apply)
+        case Apply(Select(left, "=="), List(right)) =>
+          cascade.dispatch(_.compileEquals)(
+            cascade.dispatch(_.compileTermToCExpr)(left),
+            left.tpe,
+            cascade.dispatch(_.compileTermToCExpr)(right),
+            right.tpe,
+          )
+        case Apply(Select(left, "!="), List(right)) =>
+          CNotExpr(cascade.dispatch(_.compileEquals)(
+            cascade.dispatch(_.compileTermToCExpr)(left),
+            left.tpe,
+            cascade.dispatch(_.compileTermToCExpr)(right),
+            right.tpe,
+          ))
         case Apply(inner, List(Apply(TypeApply(Select(Ident("ClassTag"), "apply"), _), _))) =>
           cascade.dispatch(_.compileTermToCExpr)(inner)
         case Apply(inner, List(Select(Apply(TypeApply(Select(Ident("ClassTag"), "apply"), _), _), "wrap"))) =>
           // assume that this ClassTag magic can be ignored for our purposes
           cascade.dispatch(_.compileTermToCExpr)(inner)
+      }
+    }
+
+  override def compileEquals(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[(CExpr, quotes.reflect.TypeRepr, CExpr, quotes.reflect.TypeRepr), CExpr] = {
+      import quotes.reflect.*
+
+      {
+        case (leftExpr, _, rightExpr, _) =>
+          CParenExpr(CEqualsExpr(leftExpr, rightExpr))
       }
     }
 

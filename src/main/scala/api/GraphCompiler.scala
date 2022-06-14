@@ -251,7 +251,7 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
   }
 
   private val mainHTU: CTranslationUnitDecl = {
-    val includes = libInclude :: Set.from(StdBoolH.include :: contexts.flatMap(_.includes)).toList
+    val includes = libInclude :: Set.from(contexts.flatMap(_.includes)).toList
 
     val globalVarDecls = topological.collect {
       case f: Fold[_] => globalVariables(f).declOnly

@@ -13,12 +13,8 @@ object CompileType extends TypePC {
       import quotes.reflect.*
 
       {
-        case ConstantType(_: BooleanConstant) =>
-          ctx.addInclude(StdBoolH.include)
-          CBoolType
-        case tpe if tpe =:= TypeRepr.of[Boolean] =>
-          ctx.addInclude(StdBoolH.include)
-          CBoolType
+        case ConstantType(_: BooleanConstant) => StdBoolH.bool
+        case tpe if tpe =:= TypeRepr.of[Boolean] => StdBoolH.bool
         case ConstantType(_: ByteConstant) => CCharType
         case tpe if tpe =:= TypeRepr.of[Byte] => CCharType
         case ConstantType(_: CharConstant) => CCharType

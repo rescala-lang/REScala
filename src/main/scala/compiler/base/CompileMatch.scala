@@ -139,4 +139,10 @@ object CompileMatch extends MatchPC {
           (subCond, CVarDecl(name, cascade.dispatch(_.compileTypeRepr)(prefixType), Some(prefix)) :: subDecls)
       }
     }
+  
+  def combineCond(left: Option[CExpr], right: Option[CExpr]): Option[CExpr] = (left, right) match {
+    case (None, _) => right
+    case (_, None) => left
+    case (Some(c1), Some(c2)) => Some(CAndExpr(c1, c2))
+  }
 }

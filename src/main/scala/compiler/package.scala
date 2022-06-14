@@ -24,6 +24,7 @@ package object compiler {
   val standardCascade: CompilerCascade =
     CompileMainFunction
       ~>: CompileHelperFun
+      ~>: CompileOption
       ~>: CompileArray
       ~>: CompileProduct
       ~>: CompileString
