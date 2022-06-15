@@ -17,7 +17,7 @@ import compiler.context.{RecordDeclTC, TranslationContext}
 
 import scala.quoted.*
 
-object CompileArray extends SelectPC with ApplyPC with TypePC with StringPC {
+object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with StringPC {
   private def compileSelectImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.Select, CExpr] = {
       import quotes.reflect.*
@@ -39,6 +39,22 @@ object CompileArray extends SelectPC with ApplyPC with TypePC with StringPC {
       import quotes.reflect.*
     
       {
+        case apply @ Apply(Apply(TypeApply(Select(Ident("Array"), "fill"), _), List(n)), List(elem)) =>
+          CCallExpr(
+            getArrayFill(apply.tpe).ref,
+            List(
+              cascade.dispatch(_.compileTermToCExpr)(n),
+              cascade.dispatch(_.compileTermToCExpr)(elem)
+            )
+          )
+        case apply @ Apply(TypeApply(Select(Ident("Array"), "ofDim"), _), List(n)) =>
+          CCallExpr(
+            getArrayFill(apply.tpe).ref,
+            List(
+              cascade.dispatch(_.compileTermToCExpr)(n),
+              0.lit
+            )
+          )
         case apply @ this.arrayApply(args) =>
           val elems = args.map(cascade.dispatch(_.compileTermToCExpr))
 
@@ -55,6 +71,35 @@ object CompileArray extends SelectPC with ApplyPC with TypePC with StringPC {
 
   override def compileApply(using Quotes)(using TranslationContext, CompilerCascade):
     PartialFunction[quotes.reflect.Apply, CExpr] = ensureCtx[RecordDeclTC](compileApplyImpl)
+
+  private def compilePatternImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+  PartialFunction[(quotes.reflect.Tree, CExpr, quotes.reflect.TypeRepr), (Option[CExpr], List[CVarDecl])] = {
+    import quotes.reflect.*
+
+    {
+      case (Unapply(TypeApply(Select(Ident("Array"), "unapplySeq"), _), _, subPatterns), prefix, prefixType) =>
+        val typeArgs(List(elemType)) = prefixType.widen
+
+        val lengthCond = CEqualsExpr(CMemberExpr(prefix, lengthField), CIntegerLiteral(subPatterns.length))
+
+        subPatterns.zipWithIndex.foldLeft((Option[CExpr](lengthCond), List.empty[CVarDecl])) {
+          case ((cond, decls), (subPattern, i)) =>
+            val (subCond, subDecls) = cascade.dispatch(_.compilePattern)(
+              subPattern,
+              CArraySubscriptExpr(CMemberExpr(prefix, dataField), i.lit),
+              elemType
+            )
+
+            val combinedCond = CompileMatch.combineCond(cond, subCond)
+
+            (combinedCond, subDecls ++ decls)
+        }
+    }
+  }
+
+  override def compilePattern(using Quotes)(using TranslationContext, CompilerCascade):
+  PartialFunction[(quotes.reflect.Tree, CExpr, quotes.reflect.TypeRepr), (Option[CExpr], List[CVarDecl])] =
+    ensureCtx[RecordDeclTC](compilePatternImpl)
 
   def compileEqualsImpl(using Quotes)(using RecordDeclTC, CompilerCascade):
     PartialFunction[(CExpr, quotes.reflect.TypeRepr, CExpr, quotes.reflect.TypeRepr), CExpr] = {
@@ -136,6 +181,7 @@ object CompileArray extends SelectPC with ApplyPC with TypePC with StringPC {
   }
 
   val CREATE = "CREATE"
+  val FILL = "FILL"
   val PRINT = "PRINT"
 
   private def getArrayCreator(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
@@ -211,6 +257,64 @@ object CompileArray extends SelectPC with ApplyPC with TypePC with StringPC {
       ),
       cascade.dispatch(_.compileTermToCExpr)(idx)
     )
+  }
+
+  private def getArrayFill(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> FILL, buildArrayFill(getArrayRecordDecl(tpe)))
+  }
+
+  private def buildArrayFill(recordDecl: CRecordDecl)(using ctx: TranslationContext): CFunctionDecl = {
+    val CFieldDecl(_, CQualType(CPointerType(elemType), _)) = recordDecl.getField(dataField)
+
+    val name = "fill_" + recordDecl.name
+
+    val nParam = CParmVarDecl("n", CIntegerType)
+    val elemParam = CParmVarDecl("elem", elemType)
+
+    val arrDecl =
+      CVarDecl(
+        "arr",
+        recordDecl.getTypeForDecl,
+        Some(CDesignatedInitExpr(List(
+          dataField -> CCastExpr(
+            CCallExpr(
+              StdLibH.calloc.ref,
+              List(
+                nParam.ref,
+                CSizeofExpr(Left(elemType.unqualType))
+              )
+            ),
+            CPointerType(elemType)
+          ),
+          lengthField -> nParam.ref
+        )))
+      )
+
+    val iDecl = CVarDecl("i", CIntegerType, Some(0.lit))
+
+    val loop =
+      CForStmt(
+        Some(iDecl),
+        Some(CLessThanExpr(iDecl.ref, nParam.ref)),
+        Some(CIncExpr(iDecl.ref)),
+        CCompoundStmt(List(
+          CAssignmentExpr(
+            CArraySubscriptExpr(
+              CMemberExpr(arrDecl.ref, dataField),
+              iDecl.ref
+            ),
+            elemParam.ref
+          )
+        ))
+      )
+
+    val body = CCompoundStmt(List(
+      arrDecl,
+      loop,
+      CReturnStmt(Some(arrDecl.ref))
+    ))
+
+    CFunctionDecl(name, List(nParam, elemParam), recordDecl.getTypeForDecl, Some(body))
   }
 
   private def getArrayPrinter(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
