@@ -25,7 +25,7 @@ object CompileTerm extends TermPC {
         case Block(List(defDef: DefDef), Literal(UnitConstant())) => cascade.dispatch(_.compileDefDef)(defDef)
         case block: Block => cascade.dispatch(_.compileBlockToCCompoundStmt)(block)
         case ifTerm: If => cascade.dispatch(_.compileIfToCIfStmt)(ifTerm)
-        case matchTerm: Match => cascade.dispatch(_.compileMatchToCIfStmt)(matchTerm)
+        case matchTerm: Match => cascade.dispatch(_.compileMatchToCStmt)(matchTerm)
         case ret: Return => cascade.dispatch(_.compileReturn)(ret)
         case inlined: Inlined => cascade.dispatch(_.compileTerm)(inlined.underlyingArgument)
         case whileTerm: While => cascade.dispatch(_.compileWhile)(whileTerm)
@@ -50,7 +50,7 @@ object CompileTerm extends TermPC {
       term match {
         case block: Block => Some(cascade.dispatch(_.compileBlockToCStmtExpr)(block))
         case ifTerm: If => Some(cascade.dispatch(_.compileIfToCConditionalOperator)(ifTerm))
-        case matchTerm: Match => Some(cascade.dispatch(_.compileMatchToCStmtExpr)(matchTerm))
+        case matchTerm: Match => Some(cascade.dispatch(_.compileMatchToCExpr)(matchTerm))
         case _ =>
           cascade.dispatch(_.compileTerm)(term) match {
             case expr: CExpr => Some(expr)

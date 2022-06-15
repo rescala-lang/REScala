@@ -12,13 +12,19 @@ import compiler.CompilerCascade
 import scala.quoted.*
 
 object CompileMatch extends MatchPC {
-  override def compileMatchToCIfStmt(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
-    PartialFunction[quotes.reflect.Match, CIfStmt] = {
+  override def compileMatchToCStmt(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.Match, CStmt] = {
       import quotes.reflect.*
 
       {
         case Match(scrutinee, cases) =>
-          val (lastCond, lastDecls, lastStmtList) = cascade.dispatch(_.compileCaseDef)(cases.last, scrutinee)
+          val scrutineeDecl = CVarDecl(
+            "_scrutinee",
+            cascade.dispatch(_.compileTypeRepr)(scrutinee.tpe),
+            Some(cascade.dispatch(_.compileTermToCExpr)(scrutinee))
+          )
+          
+          val (lastCond, lastDecls, lastStmtList) = cascade.dispatch(_.compileCaseDef)(cases.last, CDeclRefExpr(scrutineeDecl), scrutinee.tpe)
           val lastIf = CIfStmt(
             lastCond.getOrElse(CTrueLiteral),
             CCompoundStmt(
@@ -26,9 +32,9 @@ object CompileMatch extends MatchPC {
             )
           )
 
-          cases.init.foldRight(lastIf) {
+          val ifStmt = cases.init.foldRight(lastIf) {
             case (cd, nextIf) =>
-              val (cond, decls, stmtList) = cascade.dispatch(_.compileCaseDef)(cd, scrutinee)
+              val (cond, decls, stmtList) = cascade.dispatch(_.compileCaseDef)(cd, CDeclRefExpr(scrutineeDecl), scrutinee.tpe)
 
               CIfStmt(
                 cond.getOrElse(CTrueLiteral),
@@ -38,16 +44,26 @@ object CompileMatch extends MatchPC {
                 Some(nextIf)
               )
           }
+          
+          CCompoundStmt(List(
+            scrutineeDecl,
+            ifStmt
+          ))
       }
     }
 
-  override def compileMatchToCStmtExpr(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
-    PartialFunction[quotes.reflect.Match, CStmtExpr] = {
+  override def compileMatchToCExpr(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.Match, CExpr] = {
       import quotes.reflect.*
 
       {
         case matchTerm @ Match(scrutinee, cases) =>
           val resDecl = CVarDecl("_res", cascade.dispatch(_.compileTypeRepr)(matchTerm.tpe), None)
+          val scrutineeDecl = CVarDecl(
+            "_scrutinee",
+            cascade.dispatch(_.compileTypeRepr)(scrutinee.tpe),
+            Some(cascade.dispatch(_.compileTermToCExpr)(scrutinee))
+          )
 
           def convertLastToAssign(stmts: List[CStmt]): List[CStmt] = {
             stmts.last match {
@@ -57,7 +73,7 @@ object CompileMatch extends MatchPC {
             }
           }
 
-          val (lastCond, lastDecls, lastStmtList) = cascade.dispatch(_.compileCaseDef)(cases.last, scrutinee)
+          val (lastCond, lastDecls, lastStmtList) = cascade.dispatch(_.compileCaseDef)(cases.last, CDeclRefExpr(scrutineeDecl), scrutinee.tpe)
           val lastIf = CIfStmt(
             lastCond.getOrElse(CTrueLiteral),
             CCompoundStmt(
@@ -67,7 +83,7 @@ object CompileMatch extends MatchPC {
 
           val outerIf = cases.init.foldRight(lastIf) {
             case (cd, nextIf) =>
-              val (cond, decls, stmtList) = cascade.dispatch(_.compileCaseDef)(cd, scrutinee)
+              val (cond, decls, stmtList) = cascade.dispatch(_.compileCaseDef)(cd, CDeclRefExpr(scrutineeDecl), scrutinee.tpe)
 
               CIfStmt(
                 cond.getOrElse(CTrueLiteral),
@@ -78,22 +94,26 @@ object CompileMatch extends MatchPC {
               )
           }
 
-          CStmtExpr(CCompoundStmt(List(
+          val res = CStmtExpr(CCompoundStmt(List(
             resDecl,
+            scrutineeDecl,
             outerIf,
             CExprStmt(CDeclRefExpr(resDecl))
           )))
+
+          println(res.textgen)
+
+          res
       }
     }
 
   private def compileCaseDefImpl(using Quotes)(using ctx: ValueDeclTC, cascade: CompilerCascade):
-    PartialFunction[(quotes.reflect.CaseDef, quotes.reflect.Term), (Option[CExpr], List[CVarDecl], List[CStmt])] = {
+    PartialFunction[(quotes.reflect.CaseDef, CExpr, quotes.reflect.TypeRepr), (Option[CExpr], List[CVarDecl], List[CStmt])] = {
       import quotes.reflect.*
 
       {
-        case (CaseDef(pattern, guard, rhs), scrutinee) =>
-          val compiledScrutinee = cascade.dispatch(_.compileTermToCExpr)(scrutinee)
-          val (patternCond, bindings) = cascade.dispatch(_.compilePattern)(pattern, compiledScrutinee, scrutinee.tpe)
+        case (CaseDef(pattern, guard, rhs), scrutineeExpr, scrutineeType) =>
+          val (patternCond, bindings) = cascade.dispatch(_.compilePattern)(pattern, scrutineeExpr, scrutineeType)
 
           bindings.foreach { decl => ctx.nameToDecl.put(decl.name, decl) }
 
@@ -122,7 +142,7 @@ object CompileMatch extends MatchPC {
     }
 
   override def compileCaseDef(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[(quotes.reflect.CaseDef, quotes.reflect.Term), (Option[CExpr], List[CVarDecl], List[CStmt])] =
+    PartialFunction[(quotes.reflect.CaseDef, CExpr, quotes.reflect.TypeRepr), (Option[CExpr], List[CVarDecl], List[CStmt])] =
       ensureCtx[ValueDeclTC](compileCaseDefImpl)
 
   override def compilePattern(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
