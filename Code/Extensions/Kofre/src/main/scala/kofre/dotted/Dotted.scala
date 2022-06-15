@@ -19,12 +19,6 @@ object Dotted {
   def empty[A: Bottom]: Dotted[A] = Dotted(Bottom.empty[A], Dots.empty)
   def apply[A](a: A): Dotted[A]   = Dotted(a, Dots.empty)
 
-  given CausalWithDotSetLattice: DecomposeLattice[Dotted[Set[Dot]]] =
-    DotSet.contextDecompose.contextbimap[Set[Dot]](
-      _.map(_.repr.toSet),
-      _.map(s => DotSet(Dots.fromSet(s)))
-    )
-
   given latticeLift[L: DecomposeLattice: Bottom]: DecomposeLattice[Dotted[L]] = DecomposeLattice.derived
 
   given syntaxPermissions[L](using DottedLattice[L]): PermCausalMutate[Dotted[L], L]

@@ -78,9 +78,7 @@ object DecomposeLattice {
       }
     }
 
-  // explicit pairs are for scala 2 compat
   given PairAsUIJDLattice[A: DecomposeLattice: Bottom, B: DecomposeLattice: Bottom]: DecomposeLattice[(A, B)] = derived
-
   given TripleAsUIJDLattice[A: DecomposeLattice: Bottom, B: DecomposeLattice: Bottom, C: DecomposeLattice: Bottom]
       : DecomposeLattice[(A, B, C)] = derived
 
