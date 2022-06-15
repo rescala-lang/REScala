@@ -118,7 +118,7 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
           val recordDecl = getOptionRecordDecl(prefixType)
           val cond = CNotExpr(CMemberExpr(prefix, getDefinedField(recordDecl)))
           (Some(cond), List())
-        case (TypedOrTest(Unapply(_, _, List(subPattern)), _), prefix, prefixType) if prefixType <:< TypeRepr.of[Option[?]] =>
+        case (TypedOrTest(Unapply(TypeApply(Select(Ident("Some"), "unapply"), _), _, List(subPattern)), _), prefix, prefixType) =>
           val recordDecl = getOptionRecordDecl(prefixType)
           val subPrefix = CMemberExpr(prefix, getValField(recordDecl))
           val typeArgs(List(subPrefixType)) = prefixType.widen
