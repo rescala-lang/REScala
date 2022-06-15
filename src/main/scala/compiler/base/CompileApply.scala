@@ -23,9 +23,9 @@ object CompileApply extends ApplyPC {
           val v2 = CVarDecl("_v2", cascade.dispatch(_.compileTypeRepr)(arg2.tpe), Some(cascade.dispatch(_.compileTermToCExpr)(arg2)))
 
           val cond = CConditionalOperator(
-            CGreaterThanExpr(CDeclRefExpr(v1), CDeclRefExpr(v2)),
-            CDeclRefExpr(v1),
-            CDeclRefExpr(v2)
+            CGreaterThanExpr(v1.ref, v2.ref),
+            v1.ref,
+            v2.ref
           )
           
           CStmtExpr(CCompoundStmt(List(

@@ -22,10 +22,8 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
 
       {
         case Select(either, "isLeft") if either.tpe <:< TypeRepr.of[Either[?, ?]] =>
-          val isRightField = getIsRightField(getEitherRecordDecl(either.tpe))
           CNotExpr(CMemberExpr(cascade.dispatch(_.compileTermToCExpr)(either), isRightField))
         case Select(either, "isRight") if either.tpe <:< TypeRepr.of[Either[?, ?]] =>
-          val isRightField = getIsRightField(getEitherRecordDecl(either.tpe))
           CMemberExpr(cascade.dispatch(_.compileTermToCExpr)(either), isRightField)
       }
     }
@@ -40,12 +38,12 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
       {
         case apply @ Apply(TypeApply(Select(Ident("Left"), "apply"), _), List(inner)) =>
           CCallExpr(
-            CDeclRefExpr(getLeftCreator(apply.tpe)),
+            getLeftCreator(apply.tpe).ref,
             List(cascade.dispatch(_.compileTermToCExpr)(inner))
           )
         case apply @ Apply(TypeApply(Select(Ident("Right"), "apply"), _), List(inner)) =>
           CCallExpr(
-            CDeclRefExpr(getRightCreator(apply.tpe)),
+            getRightCreator(apply.tpe).ref,
             List(cascade.dispatch(_.compileTermToCExpr)(inner))
           )
       }
@@ -61,7 +59,7 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
       {
         case (leftExpr, leftType, rightExpr, _) if leftType <:< TypeRepr.of[Either[?, ?]] =>
           CCallExpr(
-            CDeclRefExpr(getEitherEquals(leftType)),
+            getEitherEquals(leftType).ref,
             List(leftExpr, rightExpr)
           )
       }
@@ -77,11 +75,10 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
 
       {
         case (TypedOrTest(Unapply(TypeApply(Select(Ident("Left"), "unapply"), _), _, List(subPattern)), _), prefix, prefixType) =>
-          val recordDecl = getEitherRecordDecl(prefixType)
-          val subPrefix = CMemberExpr(prefix, getLeftField(recordDecl))
+          val subPrefix = CMemberExpr(prefix, leftField)
           val typeArgs(List(leftType, _)) = prefixType.widen
 
-          val isLeftCond = CNotExpr(CMemberExpr(prefix, getIsRightField(recordDecl)))
+          val isLeftCond = CNotExpr(CMemberExpr(prefix, isRightField))
 
           val (subCond, subDecls) = cascade.dispatch(_.compilePattern)(subPattern, subPrefix, leftType)
 
@@ -89,11 +86,10 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
 
           (combinedCond, subDecls)
         case (TypedOrTest(Unapply(TypeApply(Select(Ident("Right"), "unapply"), _), _, List(subPattern)), _), prefix, prefixType) =>
-          val recordDecl = getEitherRecordDecl(prefixType)
-          val subPrefix = CMemberExpr(prefix, getRightField(recordDecl))
+          val subPrefix = CMemberExpr(prefix, rightField)
           val typeArgs(List(_, rightType)) = prefixType.widen
 
-          val isRightCond = CMemberExpr(prefix, getIsRightField(recordDecl))
+          val isRightCond = CMemberExpr(prefix, isRightField)
 
           val (subCond, subDecls) = cascade.dispatch(_.compilePattern)(subPattern, subPrefix, rightType)
 
@@ -113,7 +109,7 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
 
       {
         case tpe if tpe <:< TypeRepr.of[Either[?, ?]] =>
-          CRecordType(getEitherRecordDecl(tpe))
+          getEitherRecordDecl(tpe).getTypeForDecl
       }
     }
 
@@ -135,7 +131,7 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
   
       {
         case (expr, tpe) if tpe <:< TypeRepr.of[Either[?, ?]] =>
-          CCallExpr(CDeclRefExpr(getEitherPrinter(tpe)), List(expr))
+          CCallExpr(getEitherPrinter(tpe).ref, List(expr))
       }
     }
 
@@ -146,24 +142,24 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
     ctx.nameToRecordDecl.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe), compileEitherTypeToCRecordDecl(tpe))
   }
 
+  private val leftField = "left"
+  private val rightField = "right"
+  private val isRightField = "isRight"
+  
   private def compileEitherTypeToCRecordDecl(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: TranslationContext, cascade: CompilerCascade): CRecordDecl = {
     import quotes.reflect.*
 
     val typeArgs(List(leftType, rightType)) = tpe
 
-    val leftField = CFieldDecl("left", cascade.dispatch(_.compileTypeRepr)(leftType))
-    val rightField = CFieldDecl("right", cascade.dispatch(_.compileTypeRepr)(rightType))
-    val isRightField = CFieldDecl("isRight", StdBoolH.bool)
+    val leftFieldDecl = CFieldDecl(leftField, cascade.dispatch(_.compileTypeRepr)(leftType))
+    val rightFieldDecl = CFieldDecl(rightField, cascade.dispatch(_.compileTypeRepr)(rightType))
+    val isRightFieldDecl = CFieldDecl(isRightField, StdBoolH.bool)
 
     CRecordDecl(
       "Either_" + cascade.dispatch(_.typeName)(leftType) + "_" + cascade.dispatch(_.typeName)(rightType),
-      List(leftField, rightField, isRightField)
+      List(leftFieldDecl, rightFieldDecl, isRightFieldDecl)
     )
   }
-
-  private def getLeftField(recordDecl: CRecordDecl): CFieldDecl = recordDecl.getField("left")
-  private def getRightField(recordDecl: CRecordDecl): CFieldDecl = recordDecl.getField("right")
-  private def getIsRightField(recordDecl: CRecordDecl): CFieldDecl = recordDecl.getField("isRight")
 
   private val CREATE_LEFT = "CREATE_LEFT"
   private val CREATE_RIGHT = "CREATE_RIGHT"
@@ -181,20 +177,20 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
   private def buildLeftCreator(recordDecl: CRecordDecl)(using ctx: TranslationContext): CFunctionDecl = {
     val name = "createLeft_" + recordDecl.name
 
-    val leftParam = CParmVarDecl("left", getLeftField(recordDecl).declaredType)
+    val leftParam = CParmVarDecl("left", recordDecl.getField(leftField).declaredType)
 
     val eitherDecl = CVarDecl(
-      "eith",
+      "either",
       recordDecl.getTypeForDecl,
       Some(CDesignatedInitExpr(List(
-        "left" -> CDeclRefExpr(leftParam),
-        "isRight" -> CFalseLiteral
+        leftField -> leftParam.ref,
+        isRightField -> CFalseLiteral
       )))
     )
 
     val body = CCompoundStmt(List(
       eitherDecl,
-      CReturnStmt(Some(CDeclRefExpr(eitherDecl)))
+      CReturnStmt(Some(eitherDecl.ref))
     ))
 
     CFunctionDecl(name, List(leftParam), recordDecl.getTypeForDecl, Some(body))
@@ -203,20 +199,20 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
   private def buildRightCreator(recordDecl: CRecordDecl)(using ctx: TranslationContext): CFunctionDecl = {
     val name = "createRight_" + recordDecl.name
 
-    val rightParam = CParmVarDecl("right", getRightField(recordDecl).declaredType)
+    val rightParam = CParmVarDecl("right", recordDecl.getField(rightField).declaredType)
 
     val eitherDecl = CVarDecl(
       "eith",
       recordDecl.getTypeForDecl,
       Some(CDesignatedInitExpr(List(
-        "right" -> CDeclRefExpr(rightParam),
-        "isRight" -> CTrueLiteral
+        rightField -> rightParam.ref,
+        isRightField -> CTrueLiteral
       )))
     )
 
     val body = CCompoundStmt(List(
       eitherDecl,
-      CReturnStmt(Some(CDeclRefExpr(eitherDecl)))
+      CReturnStmt(Some(eitherDecl.ref))
     ))
 
     CFunctionDecl(name, List(rightParam), recordDecl.getTypeForDecl, Some(body))
@@ -230,9 +226,6 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
     import quotes.reflect.*
 
     val recordDecl = getEitherRecordDecl(tpe)
-    val leftField = getLeftField(recordDecl)
-    val rightField = getRightField(recordDecl)
-    val isRightField = getIsRightField(recordDecl)
     val typeArgs(List(leftType, rightType)) = tpe.widen
 
     val name = "equals_" + recordDecl.name
@@ -243,25 +236,25 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
     val equalsExpr = COrExpr(
       CAndExpr(
         CAndExpr(
-          CMemberExpr(CDeclRefExpr(paramLeft), isRightField),
-          CMemberExpr(CDeclRefExpr(paramRight), isRightField)
+          CMemberExpr(paramLeft.ref, isRightField),
+          CMemberExpr(paramRight.ref, isRightField)
         ),
         cascade.dispatch(_.compileEquals)(
-          CMemberExpr(CDeclRefExpr(paramLeft), rightField),
+          CMemberExpr(paramLeft.ref, rightField),
           rightType,
-          CMemberExpr(CDeclRefExpr(paramRight), rightField),
+          CMemberExpr(paramRight.ref, rightField),
           rightType,
         )
       ),
       CAndExpr(
         CAndExpr(
-          CNotExpr(CMemberExpr(CDeclRefExpr(paramLeft), isRightField)),
-          CNotExpr(CMemberExpr(CDeclRefExpr(paramRight), isRightField))
+          CNotExpr(CMemberExpr(paramLeft.ref, isRightField)),
+          CNotExpr(CMemberExpr(paramRight.ref, isRightField))
         ),
         cascade.dispatch(_.compileEquals)(
-          CMemberExpr(CDeclRefExpr(paramLeft), leftField),
+          CMemberExpr(paramLeft.ref, leftField),
           leftType,
-          CMemberExpr(CDeclRefExpr(paramRight), leftField),
+          CMemberExpr(paramRight.ref, leftField),
           leftType,
         )
       )
@@ -280,9 +273,6 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
     import quotes.reflect.*
 
     val recordDecl = getEitherRecordDecl(tpe)
-    val leftField = getLeftField(recordDecl)
-    val rightField = getRightField(recordDecl)
-    val isRightField = getIsRightField(recordDecl)
     val typeArgs(List(leftType, rightType)) = tpe.widen
 
     val name = "print_" + recordDecl.name
@@ -291,18 +281,18 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
 
     val body = CCompoundStmt(List(
       CIfStmt(
-        CMemberExpr(CDeclRefExpr(eitherParam), isRightField),
+        CMemberExpr(eitherParam.ref, isRightField),
         CCompoundStmt(List(
           CompileString.printf("Right("),
           cascade.dispatch(_.compilePrint)(
-            CMemberExpr(CDeclRefExpr(eitherParam), rightField),
+            CMemberExpr(eitherParam.ref, rightField),
             rightType
           ),
         )),
         Some(CCompoundStmt(List(
           CompileString.printf("Left("),
           cascade.dispatch(_.compilePrint)(
-            CMemberExpr(CDeclRefExpr(eitherParam), leftField),
+            CMemberExpr(eitherParam.ref, leftField),
             leftType
           ),
         )))

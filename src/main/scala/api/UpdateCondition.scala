@@ -26,7 +26,7 @@ case class UpdateCondition(normalized: Set[Set[CValueDecl]]) {
     }
 
   private def compileAnd(s: Set[CValueDecl]): CExpr = {
-    val l = s.toList.map(CDeclRefExpr.apply)
+    val l = s.toList.map(_.ref)
 
     CParenExpr(l.tail.foldLeft(l.head)(CAndExpr.apply))
   }

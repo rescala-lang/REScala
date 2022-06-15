@@ -23,8 +23,8 @@ object CompileMatch extends MatchPC {
             cascade.dispatch(_.compileTypeRepr)(scrutinee.tpe),
             Some(cascade.dispatch(_.compileTermToCExpr)(scrutinee))
           )
-          
-          val (lastCond, lastDecls, lastStmtList) = cascade.dispatch(_.compileCaseDef)(cases.last, CDeclRefExpr(scrutineeDecl), scrutinee.tpe)
+
+          val (lastCond, lastDecls, lastStmtList) = cascade.dispatch(_.compileCaseDef)(cases.last, scrutineeDecl.ref, scrutinee.tpe)
           val lastIf = CIfStmt(
             lastCond.getOrElse(CTrueLiteral),
             CCompoundStmt(
@@ -34,7 +34,7 @@ object CompileMatch extends MatchPC {
 
           val ifStmt = cases.init.foldRight(lastIf) {
             case (cd, nextIf) =>
-              val (cond, decls, stmtList) = cascade.dispatch(_.compileCaseDef)(cd, CDeclRefExpr(scrutineeDecl), scrutinee.tpe)
+              val (cond, decls, stmtList) = cascade.dispatch(_.compileCaseDef)(cd, scrutineeDecl.ref, scrutinee.tpe)
 
               CIfStmt(
                 cond.getOrElse(CTrueLiteral),
@@ -44,7 +44,7 @@ object CompileMatch extends MatchPC {
                 Some(nextIf)
               )
           }
-          
+
           CCompoundStmt(List(
             scrutineeDecl,
             ifStmt
@@ -68,12 +68,12 @@ object CompileMatch extends MatchPC {
           def convertLastToAssign(stmts: List[CStmt]): List[CStmt] = {
             stmts.last match {
               case CExprStmt(expr) =>
-                val assign = CExprStmt(CAssignmentExpr(CDeclRefExpr(resDecl), expr))
+                val assign = CExprStmt(CAssignmentExpr(resDecl.ref, expr))
                 stmts.init.appended(assign)
             }
           }
 
-          val (lastCond, lastDecls, lastStmtList) = cascade.dispatch(_.compileCaseDef)(cases.last, CDeclRefExpr(scrutineeDecl), scrutinee.tpe)
+          val (lastCond, lastDecls, lastStmtList) = cascade.dispatch(_.compileCaseDef)(cases.last, scrutineeDecl.ref, scrutinee.tpe)
           val lastIf = CIfStmt(
             lastCond.getOrElse(CTrueLiteral),
             CCompoundStmt(
@@ -83,7 +83,7 @@ object CompileMatch extends MatchPC {
 
           val outerIf = cases.init.foldRight(lastIf) {
             case (cd, nextIf) =>
-              val (cond, decls, stmtList) = cascade.dispatch(_.compileCaseDef)(cd, CDeclRefExpr(scrutineeDecl), scrutinee.tpe)
+              val (cond, decls, stmtList) = cascade.dispatch(_.compileCaseDef)(cd, scrutineeDecl.ref, scrutinee.tpe)
 
               CIfStmt(
                 cond.getOrElse(CTrueLiteral),
@@ -94,16 +94,12 @@ object CompileMatch extends MatchPC {
               )
           }
 
-          val res = CStmtExpr(CCompoundStmt(List(
+          CStmtExpr(CCompoundStmt(List(
             resDecl,
             scrutineeDecl,
             outerIf,
-            CExprStmt(CDeclRefExpr(resDecl))
+            CExprStmt(resDecl.ref)
           )))
-
-          println(res.textgen)
-
-          res
       }
     }
 
@@ -128,7 +124,8 @@ object CompileMatch extends MatchPC {
             case Some(guardExpr) =>
               val replaceBoundIdentifiers = new CASTMapper {
                 override protected val mapCExprHook: PartialFunction[CExpr, CExpr] = {
-                  case CDeclRefExpr(decl: CVarDecl) if bindings.contains(decl) => decl.init.get
+                  case CDeclRefExpr(declName) if bindings.exists(_.name.equals(declName)) =>
+                    bindings.find(_.name.equals(declName)).get.init.get
                 }
               }
 

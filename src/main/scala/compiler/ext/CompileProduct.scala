@@ -37,9 +37,7 @@ object CompileProduct extends DefinitionPC with SelectPC with ApplyPC with Match
 
       {
         case Select(qualifier, name) if isProductFieldAccess(qualifier, name) =>
-          val recordDecl = getProductRecordDecl(qualifier.tpe)
-
-          CMemberExpr(cascade.dispatch(_.compileTermToCExpr)(qualifier), recordDecl.getField(name))
+          CMemberExpr(cascade.dispatch(_.compileTermToCExpr)(qualifier), name)
       }
     }
 
@@ -52,9 +50,9 @@ object CompileProduct extends DefinitionPC with SelectPC with ApplyPC with Match
 
       {
         case apply @ Apply(Select(_, "apply"), l) if isProductApply(apply) =>
-          CCallExpr(CDeclRefExpr(getProductCreator(apply.tpe)), l.map(cascade.dispatch(_.compileTermToCExpr)))
+          CCallExpr(getProductCreator(apply.tpe).ref, l.map(cascade.dispatch(_.compileTermToCExpr)))
         case apply @ Apply(TypeApply(Select(_, "apply"), _), l) if isProductApply(apply) =>
-          CCallExpr(CDeclRefExpr(getProductCreator(apply.tpe)), l.map(cascade.dispatch(_.compileTermToCExpr)))
+          CCallExpr(getProductCreator(apply.tpe).ref, l.map(cascade.dispatch(_.compileTermToCExpr)))
       }
     }
 
@@ -68,7 +66,7 @@ object CompileProduct extends DefinitionPC with SelectPC with ApplyPC with Match
       {
         case (leftExpr, leftType, rightExpr, _) if leftType <:< TypeRepr.of[Product] =>
           CCallExpr(
-            CDeclRefExpr(getProductEquals(leftType)),
+            getProductEquals(leftType).ref,
             List(leftExpr, rightExpr)
           )
       }
@@ -85,8 +83,7 @@ object CompileProduct extends DefinitionPC with SelectPC with ApplyPC with Match
       {
         case (Unapply(_, _, subPatterns), prefix, prefixType) if prefixType <:< TypeRepr.of[Product] =>
           val fieldSymbols = prefixType.classSymbol.get.caseFields.filter(_.isValDef)
-          val recordDecl = getProductRecordDecl(prefixType)
-          val subPrefixes = fieldSymbols.map(fs => CMemberExpr(prefix, recordDecl.getField(fs.name.strip())))
+          val subPrefixes = fieldSymbols.map(fs => CMemberExpr(prefix, fs.name.strip()))
           val subPrefixTypes = fieldSymbols.map(prefixType.memberType)
 
           (subPatterns zip (subPrefixes zip subPrefixTypes)).foldLeft((Option.empty[CExpr], List.empty[CVarDecl])) {
@@ -110,7 +107,7 @@ object CompileProduct extends DefinitionPC with SelectPC with ApplyPC with Match
     
       {
         case tpe if tpe <:< TypeRepr.of[Product] =>
-          CRecordType(getProductRecordDecl(tpe))
+          getProductRecordDecl(tpe).getTypeForDecl
       }
     }
 
@@ -132,7 +129,7 @@ object CompileProduct extends DefinitionPC with SelectPC with ApplyPC with Match
 
       {
         case (expr, tpe) if tpe <:< TypeRepr.of[Product] =>
-          CCallExpr(CDeclRefExpr(getProductPrinter(tpe)), List(expr))
+          CCallExpr(getProductPrinter(tpe).ref, List(expr))
       }
     }
 
@@ -193,12 +190,12 @@ object CompileProduct extends DefinitionPC with SelectPC with ApplyPC with Match
       "prod",
       recordDecl.getTypeForDecl,
       Some(CDesignatedInitExpr(
-        parameters.map { p => (p.name, CDeclRefExpr(p)) }
+        parameters.map { p => (p.name, p.ref) }
       ))
     )
     val body = CCompoundStmt(List(
       prodDecl,
-      CReturnStmt(Some(CDeclRefExpr(prodDecl)))
+      CReturnStmt(Some(prodDecl.ref))
     ))
 
     CFunctionDecl(name, parameters, recordDecl.getTypeForDecl, Some(body))
@@ -213,8 +210,8 @@ object CompileProduct extends DefinitionPC with SelectPC with ApplyPC with Match
 
     val name = "equals_" + recordDecl.name
 
-    val paramLeft = CParmVarDecl("left", CRecordType(recordDecl))
-    val paramRight = CParmVarDecl("right", CRecordType(recordDecl))
+    val paramLeft = CParmVarDecl("left", recordDecl.getTypeForDecl)
+    val paramRight = CParmVarDecl("right", recordDecl.getTypeForDecl)
     val parameters = List(paramLeft, paramRight)
 
     val classSymbol = tpe.classSymbol.get
@@ -223,9 +220,9 @@ object CompileProduct extends DefinitionPC with SelectPC with ApplyPC with Match
       case symbol if symbol.isValDef =>
         val memberType = tpe.memberType(symbol)
         cascade.dispatch(_.compileEquals)(
-          CMemberExpr(CDeclRefExpr(paramLeft), recordDecl.getField(symbol.name.strip())),
+          CMemberExpr(paramLeft.ref, symbol.name.strip()),
           memberType,
-          CMemberExpr(CDeclRefExpr(paramRight), recordDecl.getField(symbol.name.strip())),
+          CMemberExpr(paramRight.ref, symbol.name.strip()),
           memberType
         )
     }
@@ -252,7 +249,7 @@ object CompileProduct extends DefinitionPC with SelectPC with ApplyPC with Match
 
     val printFields = recordDecl.fields.zip(fieldTypes).flatMap { (f, t) =>
       val printField = cascade.dispatch(_.compilePrint)(
-        CMemberExpr(CDeclRefExpr(productParam), f),
+        CMemberExpr(productParam.ref, f.name),
         t
       )
 

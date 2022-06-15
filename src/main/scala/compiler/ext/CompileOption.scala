@@ -22,7 +22,7 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
 
       {
         case ValDef(name, tpt, Some(Ident("None"))) =>
-          val init = CCallExpr(CDeclRefExpr(getNoneCreator(tpt.tpe)), List())
+          val init = CCallExpr(getNoneCreator(tpt.tpe).ref, List())
           val decl = CVarDecl(name, cascade.dispatch(_.compileTypeRepr)(tpt.tpe), Some(init))
           ctx.nameToDecl.put(name, decl)
           decl
@@ -37,9 +37,9 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
       import quotes.reflect.*
 
       {
-        case TypeApply(Select(Ident("Option"), "empty"), List(wrappedType)) =>
+        case t @ TypeApply(Select(Ident("Option"), "empty"), _) =>
           CCallExpr(
-            CDeclRefExpr(getNoneCreator(TypeRepr.of[Option].appliedTo(wrappedType.tpe))),
+            getNoneCreator(t.tpe).ref,
             List()
           )
       }
@@ -54,13 +54,10 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
 
       {
         case Select(opt, "get") if opt.tpe <:< TypeRepr.of[Option[?]] =>
-          val valField = getValField(getOptionRecordDecl(opt.tpe))
           CMemberExpr(cascade.dispatch(_.compileTermToCExpr)(opt), valField)
         case Select(opt, "isDefined") if opt.tpe <:< TypeRepr.of[Option[?]] =>
-          val definedField = getDefinedField(getOptionRecordDecl(opt.tpe))
           CMemberExpr(cascade.dispatch(_.compileTermToCExpr)(opt), definedField)
         case Select(opt, "isEmpty") if opt.tpe <:< TypeRepr.of[Option[?]] =>
-          val definedField = getDefinedField(getOptionRecordDecl(opt.tpe))
           CNotExpr(CMemberExpr(cascade.dispatch(_.compileTermToCExpr)(opt), definedField))
       }
     }
@@ -75,12 +72,12 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
       {
         case Apply(TypeApply(Select(Ident("Some"), "apply"), _), List(inner)) =>
           CCallExpr(
-            CDeclRefExpr(getSomeCreator(TypeRepr.of[Option].appliedTo(inner.tpe))),
+            getSomeCreator(TypeRepr.of[Option].appliedTo(inner.tpe)).ref,
             List(cascade.dispatch(_.compileTermToCExpr)(inner))
           )
         case Apply(TypeApply(Select(opt, "getOrElse"), _), List(defaultVal)) =>
           CCallExpr(
-            CDeclRefExpr(getGetOrElse(opt.tpe)),
+            getGetOrElse(opt.tpe).ref,
             List(
               cascade.dispatch(_.compileTermToCExpr)(opt),
               cascade.dispatch(_.compileTermToCExpr)(defaultVal)
@@ -99,7 +96,7 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
       {
         case (leftExpr, leftType, rightExpr, _) if leftType <:< TypeRepr.of[Product] =>
           CCallExpr(
-            CDeclRefExpr(getOptionEquals(leftType)),
+            getOptionEquals(leftType).ref,
             List(leftExpr, rightExpr)
           )
       }
@@ -114,16 +111,14 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
       import quotes.reflect.*
 
       {
-        case (Ident("None"), prefix, prefixType) =>
-          val recordDecl = getOptionRecordDecl(prefixType)
-          val cond = CNotExpr(CMemberExpr(prefix, getDefinedField(recordDecl)))
+        case (Ident("None"), prefix, _) =>
+          val cond = CNotExpr(CMemberExpr(prefix, definedField))
           (Some(cond), List())
         case (TypedOrTest(Unapply(TypeApply(Select(Ident("Some"), "unapply"), _), _, List(subPattern)), _), prefix, prefixType) =>
-          val recordDecl = getOptionRecordDecl(prefixType)
-          val subPrefix = CMemberExpr(prefix, getValField(recordDecl))
+          val subPrefix = CMemberExpr(prefix, valField)
           val typeArgs(List(subPrefixType)) = prefixType.widen
 
-          val definedCond = CMemberExpr(prefix, getDefinedField(recordDecl))
+          val definedCond = CMemberExpr(prefix, definedField)
 
           val (subCond, subDecls) = cascade.dispatch(_.compilePattern)(subPattern, subPrefix, subPrefixType)
 
@@ -143,7 +138,7 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
 
       {
         case tpe if tpe <:< TypeRepr.of[Option[?]] =>
-          CRecordType(getOptionRecordDecl(tpe))
+          getOptionRecordDecl(tpe).getTypeForDecl
       }
     }
 
@@ -165,12 +160,15 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
 
       {
         case (expr, tpe) if tpe <:< TypeRepr.of[Option[?]] =>
-          CCallExpr(CDeclRefExpr(getOptionPrinter(tpe)), List(expr))
+          CCallExpr(getOptionPrinter(tpe).ref, List(expr))
       }
     }
 
   override def compilePrint(using Quotes)(using TranslationContext, CompilerCascade):
     PartialFunction[(CExpr, quotes.reflect.TypeRepr), CStmt] = ensureCtx[RecordDeclTC](compilePrintImpl)
+
+  private val valField = "val"
+  private val definedField = "defined"
 
   private def getOptionRecordDecl(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CRecordDecl = {
     ctx.nameToRecordDecl.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe), compileOptionTypeToCRecordDecl(tpe))
@@ -181,15 +179,11 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
 
     val typeArgs(List(wrappedType)) = tpe
 
-    val valField = CFieldDecl("val", cascade.dispatch(_.compileTypeRepr)(wrappedType))
-    val definedField = CFieldDecl("defined", StdBoolH.bool)
+    val valFieldDecl = CFieldDecl(valField, cascade.dispatch(_.compileTypeRepr)(wrappedType))
+    val definedFieldDecl = CFieldDecl(definedField, StdBoolH.bool)
 
-    CRecordDecl("Option_" + cascade.dispatch(_.typeName)(wrappedType), List(valField, definedField))
+    CRecordDecl("Option_" + cascade.dispatch(_.typeName)(wrappedType), List(valFieldDecl, definedFieldDecl))
   }
-
-  private def getValField(recordDecl: CRecordDecl): CFieldDecl = recordDecl.getField("val")
-
-  private def getDefinedField(recordDecl: CRecordDecl): CFieldDecl = recordDecl.getField("defined")
 
   private val CREATE_NONE = "CREATE_NONE"
   private val CREATE_SOME = "CREATE_SOME"
@@ -212,13 +206,13 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
       "opt",
       recordDecl.getTypeForDecl,
       Some(CDesignatedInitExpr(List(
-        "defined" -> CFalseLiteral
+        definedField -> CFalseLiteral
       )))
     )
 
     val body = CCompoundStmt(List(
       optDecl,
-      CReturnStmt(Some(CDeclRefExpr(optDecl)))
+      CReturnStmt(Some(optDecl.ref))
     ))
 
     CFunctionDecl(name, List(), recordDecl.getTypeForDecl, Some(body))
@@ -227,22 +221,21 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
   private def buildSomeCreator(recordDecl: CRecordDecl)(using ctx: TranslationContext): CFunctionDecl = {
     val name = "createSome_" + recordDecl.name
 
-    val valField = getValField(recordDecl)
 
-    val valParam = CParmVarDecl("val", valField.declaredType)
+    val valParam = CParmVarDecl("val", recordDecl.getField(valField).declaredType)
 
     val optDecl = CVarDecl(
       "opt",
       recordDecl.getTypeForDecl,
       Some(CDesignatedInitExpr(List(
-        "val" -> CDeclRefExpr(valParam),
-        "defined" -> CTrueLiteral
+        valField -> valParam.ref,
+        definedField -> CTrueLiteral
       )))
     )
 
     val body = CCompoundStmt(List(
       optDecl,
-      CReturnStmt(Some(CDeclRefExpr(optDecl)))
+      CReturnStmt(Some(optDecl.ref))
     ))
 
     CFunctionDecl(name, List(valParam), recordDecl.getTypeForDecl, Some(body))
@@ -255,21 +248,19 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
   private def buildGetOrElse(recordDecl: CRecordDecl)(using ctx: TranslationContext): CFunctionDecl = {
     val name = "getOrElse_" + recordDecl.name
 
-    val valField = getValField(recordDecl)
-    val definedField = getDefinedField(recordDecl)
-
     val optParam = CParmVarDecl("opt", recordDecl.getTypeForDecl)
-    val defaultValParam = CParmVarDecl("defaultVal", valField.declaredType)
+    val valType = recordDecl.getField(valField).declaredType
+    val defaultValParam = CParmVarDecl("defaultVal", valType)
 
     val body = CCompoundStmt(List(
       CConditionalOperator(
-        CMemberExpr(CDeclRefExpr(optParam), definedField),
-        CMemberExpr(CDeclRefExpr(optParam), valField),
-        CDeclRefExpr(defaultValParam)
+        CMemberExpr(optParam.ref, definedField),
+        CMemberExpr(optParam.ref, valField),
+        defaultValParam.ref
       )
     ))
 
-    CFunctionDecl(name, List(optParam, defaultValParam), valField.declaredType, Some(body))
+    CFunctionDecl(name, List(optParam, defaultValParam), valType, Some(body))
   }
 
   private def getOptionEquals(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
@@ -280,8 +271,6 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
     import quotes.reflect.*
 
     val recordDecl = getOptionRecordDecl(tpe)
-    val valField = getValField(recordDecl)
-    val definedField = getDefinedField(recordDecl)
     val typeArgs(List(wrappedType)) = tpe.widen
 
     val name = "equals_" + recordDecl.name
@@ -291,18 +280,18 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
 
     val equalsExpr = COrExpr(
       CAndExpr(
-        CNotExpr(CMemberExpr(CDeclRefExpr(paramLeft), definedField)),
-        CNotExpr(CMemberExpr(CDeclRefExpr(paramRight), definedField))
+        CNotExpr(CMemberExpr(paramLeft.ref, definedField)),
+        CNotExpr(CMemberExpr(paramRight.ref, definedField))
       ),
       CAndExpr(
         CAndExpr(
-          CMemberExpr(CDeclRefExpr(paramLeft), definedField),
-          CMemberExpr(CDeclRefExpr(paramRight), definedField)
+          CMemberExpr(paramLeft.ref, definedField),
+          CMemberExpr(paramRight.ref, definedField)
         ),
         cascade.dispatch(_.compileEquals)(
-          CMemberExpr(CDeclRefExpr(paramLeft), valField),
+          CMemberExpr(paramLeft.ref, valField),
           wrappedType,
-          CMemberExpr(CDeclRefExpr(paramRight), valField),
+          CMemberExpr(paramRight.ref, valField),
           wrappedType,
         )
       )
@@ -321,8 +310,6 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
     import quotes.reflect.*
 
     val recordDecl = getOptionRecordDecl(tpe)
-    val valField = getValField(recordDecl)
-    val definedField = getDefinedField(recordDecl)
     val typeArgs(List(wrappedType)) = tpe.widen
 
     val name = "print_" + recordDecl.name
@@ -331,11 +318,11 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
 
     val body = CCompoundStmt(List(
       CIfStmt(
-        CMemberExpr(CDeclRefExpr(optParam), definedField),
+        CMemberExpr(optParam.ref, definedField),
         CCompoundStmt(List(
           CompileString.printf("Some("),
           cascade.dispatch(_.compilePrint)(
-            CMemberExpr(CDeclRefExpr(optParam), valField),
+            CMemberExpr(optParam.ref, valField),
             wrappedType
           ),
           CompileString.printf(")")

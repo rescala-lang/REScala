@@ -79,7 +79,7 @@ object CompileString extends TermPC with TypePC with StringPC {
 
   def printf(format: String, args: CExpr*)(using TranslationContext): CExpr =
     CCallExpr(
-      CDeclRefExpr(StdIOH.printf),
+      StdIOH.printf.ref,
       CStringLiteral(format) :: args.toList
     )
 }

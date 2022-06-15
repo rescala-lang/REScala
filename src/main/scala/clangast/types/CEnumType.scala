@@ -4,12 +4,12 @@ import clangast.decl.CEnumDecl
 
 import scala.quoted.{Expr, Quotes}
 
-case class CEnumType(decl: CEnumDecl) extends CType {
-  override def textgen: String = s"enum ${decl.name}"
+case class CEnumType(declName: String) extends CType {
+  override def textgen: String = s"enum $declName"
 
   override def toExpr(using Quotes): Expr[CEnumType] = {
-    val declExpr = decl.toExpr
+    val declNameExpr = Expr(declName)
 
-    '{ CEnumType($declExpr) }
+    '{ CEnumType($declNameExpr) }
   }
 }

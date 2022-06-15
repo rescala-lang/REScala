@@ -21,7 +21,7 @@ object CompileRef extends RefPC {
     PartialFunction[quotes.reflect.Ident, CExpr] = ((ident: quotes.reflect.Ident) => {
       import quotes.reflect.*
 
-      ctx.nameToDecl.get(ident.name).map(CDeclRefExpr.apply)
+      ctx.nameToDecl.get(ident.name).map(_.ref)
     }).unlift
 
   override def compileIdent(using Quotes)(using TranslationContext, CompilerCascade):

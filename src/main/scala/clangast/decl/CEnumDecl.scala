@@ -6,7 +6,7 @@ import clangast.types.{CEnumType, CQualType, CType}
 import scala.quoted.{Expr, Quotes}
 
 case class CEnumDecl(name: String, integerType: CQualType, enumConstants: List[CEnumConstantDecl]) extends CTypeDecl with CDeclContext {
-  override def getTypeForDecl: CType = CEnumType(this)
+  override def getTypeForDecl: CType = CEnumType(name)
   
   override def decls: List[CDecl] = enumConstants
 

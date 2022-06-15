@@ -4,12 +4,12 @@ import clangast.decl.CTypedefDecl
 
 import scala.quoted.{Expr, Quotes}
 
-case class CTypedefType(decl: CTypedefDecl) extends CType {
-  override def textgen: String = decl.name
+case class CTypedefType(declName: String) extends CType {
+  override def textgen: String = declName
 
   override def toExpr(using Quotes): Expr[CTypedefType] = {
-    val declExpr = decl.toExpr
+    val declNameExpr = Expr(declName)
 
-    '{ CTypedefType($declExpr) }
+    '{ CTypedefType($declNameExpr) }
   }
 }

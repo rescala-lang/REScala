@@ -5,19 +5,19 @@ import clangast.traversal.CASTMapper
 
 import scala.quoted.{Expr, Quotes}
 
-case class CMemberExpr(base: CExpr, memberDecl: CValueDecl, isArrow: Boolean = false) extends CExpr {
+case class CMemberExpr(base: CExpr, memberName: String, isArrow: Boolean = false) extends CExpr {
   override def textgen: String =
-    if isArrow then base.textgen + "->" + memberDecl.name
-    else base.textgen + "." + memberDecl.name
+    if isArrow then base.textgen + "->" + memberName
+    else base.textgen + "." + memberName
 
   override def toExpr(using Quotes): Expr[CMemberExpr] = {
     val baseExpr = base.toExpr
-    val memberDeclExpr = memberDecl.toExpr
+    val memberNameExpr = Expr(memberName)
     val isArrowExpr = Expr(isArrow)
 
-    '{ CMemberExpr($baseExpr, $memberDeclExpr, $isArrowExpr) }
+    '{ CMemberExpr($baseExpr, $memberNameExpr, $isArrowExpr) }
   }
 
   override def mapChildren(mapper: CASTMapper): CMemberExpr =
-    CMemberExpr(mapper.mapCExpr(base), mapper.mapCValueDecl(memberDecl), isArrow)
+    CMemberExpr(mapper.mapCExpr(base), memberName, isArrow)
 }

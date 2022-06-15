@@ -1,7 +1,7 @@
 package compiler.ext
 
 import api.CHelperFun
-import clangast.expr.{CCallExpr, CExpr, CUnlinkedCallExpr}
+import clangast.expr.{CCallExpr, CDeclRefExpr, CExpr}
 import compiler.context.TranslationContext
 import compiler.CompilerCascade
 import compiler.base.*
@@ -15,8 +15,8 @@ object CompileHelperFun extends ApplyPC {
 
       {
         case Apply(Select(helper@Ident(name), "apply"), args) if helper.tpe <:< TypeRepr.of[CHelperFun] =>
-          CUnlinkedCallExpr(
-            name,
+          CCallExpr(
+            CDeclRefExpr(name),
             args.map(cascade.dispatch(_.compileTermToCExpr))
           )
       }

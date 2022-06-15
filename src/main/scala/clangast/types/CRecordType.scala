@@ -4,12 +4,12 @@ import clangast.decl.CRecordDecl
 
 import scala.quoted.{Expr, Quotes}
 
-case class CRecordType(decl: CRecordDecl) extends CType {
-  override def textgen: String = decl.name
+case class CRecordType(declName: String) extends CType {
+  override def textgen: String = declName
 
   override def toExpr(using Quotes): Expr[CRecordType] = {
-    val declExpr = decl.toExpr
+    val declNameExpr = Expr(declName)
 
-    '{ CRecordType($declExpr) }
+    '{ CRecordType($declNameExpr) }
   }
 }

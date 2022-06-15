@@ -4,12 +4,12 @@ import clangast.decl.CValueDecl
 
 import scala.quoted.{Expr, Quotes}
 
-case class CDeclRefExpr(decl: CValueDecl) extends CExpr {
-  override def textgen: String = decl.name
+case class CDeclRefExpr(declName: String) extends CExpr {
+  override def textgen: String = declName
 
   override def toExpr(using Quotes): Expr[CDeclRefExpr] = {
-    val declExpr = decl.toExpr
+    val declNameExpr = Expr(declName)
 
-    '{ CDeclRefExpr($declExpr) }
+    '{ CDeclRefExpr($declNameExpr) }
   }
 }

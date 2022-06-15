@@ -91,7 +91,7 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
         globalVariables.map {
           case (Fold(init, _, _), varDecl) =>
             CExprStmt(CAssignmentExpr(
-              CDeclRefExpr(varDecl),
+              varDecl.ref,
               init.node
             ))
         }.toList
@@ -134,11 +134,11 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
   @tailrec
   private def valueRef(r: ReSource): CDeclRefExpr =
     r match {
-      case s: Source[_] => CDeclRefExpr(sourceValueParameters(s))
-      case f: Fold[_] => CDeclRefExpr(globalVariables(f))
+      case s: Source[_] => sourceValueParameters(s).ref
+      case f: Fold[_] => globalVariables(f).ref
       case Filter(input, _) => valueRef(input)
       case Snapshot(_, fold) => valueRef(fold)
-      case _ => CDeclRefExpr(localVariables(r))
+      case _ => localVariables(r).ref
     }
 
   // TODO: free allocated memory
@@ -158,21 +158,21 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
 
     val updates = sameCond.flatMap {
       case Map1(input, _, f) if f.node.returnType == CQualType(CVoidType) =>
-        List(CExprStmt(CCallExpr(CDeclRefExpr(f.node), List(valueRef(input)))))
+        List(CExprStmt(CCallExpr(f.node.ref, List(valueRef(input)))))
       case r@Map1(input, _, f) =>
         List(updateAssignment(
           valueRef(r),
-          CCallExpr(CDeclRefExpr(f.node), List(valueRef(input)))
+          CCallExpr(f.node.ref, List(valueRef(input)))
         ))
       case r@Map2(left, right, _, f) =>
         List(updateAssignment(
           valueRef(r),
-          CCallExpr(CDeclRefExpr(f.node), List(valueRef(left), valueRef(right)))
+          CCallExpr(f.node.ref, List(valueRef(left), valueRef(right)))
         ))
       case r@Filter(input, f) =>
         List(updateAssignment(
-          CDeclRefExpr(localVariables(r)),
-          CCallExpr(CDeclRefExpr(f.node), List(valueRef(input)))
+          localVariables(r).ref,
+          CCallExpr(f.node.ref, List(valueRef(input)))
         ))
       case Snapshot(_, _) => List()
       case r@Or(left, right, _) =>
@@ -188,7 +188,7 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
         case List(FLine(input, f)) =>
           List(updateAssignment(
             valueRef(r),
-            CCallExpr(CDeclRefExpr(f.node), List(valueRef(r), valueRef(input)))
+            CCallExpr(f.node.ref, List(valueRef(r), valueRef(input)))
           ))
         case _ =>
           lines.map {
@@ -197,7 +197,7 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
                 updateConditions(input).compile,
                 updateAssignment(
                   valueRef(r),
-                  CCallExpr(CDeclRefExpr(f.node), List(valueRef(r), valueRef(input)))
+                  CCallExpr(f.node.ref, List(valueRef(r), valueRef(input)))
                 )
               )
           }
@@ -327,8 +327,8 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
           }
 
           val updateCall = CCallExpr(
-            CDeclRefExpr(updateFunction),
-            tempDecls.flatMap { varDecl => List(CDeclRefExpr(varDecl), if varDecl.init.isDefined then CTrueLiteral else CFalseLiteral) }
+            updateFunction.ref,
+            tempDecls.flatMap { varDecl => List(varDecl.ref, if varDecl.init.isDefined then CTrueLiteral else CFalseLiteral) }
           )
 
           CCompoundStmt(tempDecls.map(CDeclStmt.apply).appended(updateCall))
@@ -337,7 +337,7 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
 
     val transformedMainFun = transactionMapper.mapCValueDecl(mainFun.f.node) match {
       case f @ CFunctionDecl(_, _, _, Some(CCompoundStmt(body)), _) =>
-        f.copy(body = Some(CCompoundStmt(CCallExpr(CDeclRefExpr(startup), List()) :: body)))
+        f.copy(body = Some(CCompoundStmt(CCallExpr(startup.ref, List()) :: body)))
     }
 
     CTranslationUnitDecl(

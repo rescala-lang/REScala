@@ -5,7 +5,7 @@ import clangast.types.{CRecordType, CType}
 import scala.quoted.{Expr, Quotes}
 
 case class CRecordDecl(name: String, fields: List[CFieldDecl]) extends CTypeDecl with CDeclContext {
-  override def getTypeForDecl: CType = CRecordType(this)
+  override def getTypeForDecl: CType = CRecordType(name)
 
   override def decls: List[CDecl] = fields
 
