@@ -2,8 +2,6 @@ import Dependencies._
 import Settings._
 import sbt.Def
 
-noPublish
-
 val commonSettings = commonCrossBuildVersions +: jitpackResolver +: {
   scala.sys.env.get("re_scala_version") match {
     case Some("211") => scalaVersion_211
@@ -37,7 +35,6 @@ lazy val rescalaAll = project.in(file("Code")).settings(commonSettings, noPublis
 
 lazy val rescala = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file("Code/Main"))
   .settings(
-    name := "rescala",
     commonSettings,
     // scaladoc
     autoAPIMappings := true,
@@ -65,7 +62,6 @@ lazy val rescala = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file
 lazy val examples = project.in(file("Code/Examples/examples"))
   .dependsOn(rescala.jvm, reswing)
   .settings(
-    name := "rescala-examples",
     commonSettings,
     noPublish,
     fork := true,
@@ -81,7 +77,6 @@ lazy val todolist = project.in(file("Code/Examples/Todolist"))
   .settings(
     commonSettings,
     noPublish,
-    name := "todolist",
     libraryDependencies ++= jsoniterScalaAll.value ++ Seq(
       scalatags.value,
       loci.webrtc.value,
@@ -96,7 +91,6 @@ lazy val encryptedTodo = project.in(file("Code/Examples/EncryptedTodoFx"))
   .settings(
     commonSettings,
     noPublish,
-    name := "encryptedTodo",
     libraryDependencies ++= jsoniterScalaAll.value,
     scalaFxDependencies,
     fork := true,
@@ -106,7 +100,6 @@ lazy val consoleReplication = project.in(file("Code/Examples/ConsoleReplication"
   .dependsOn(rescala.jvm, replication.jvm)
   .enablePlugins(JavaAppPackaging)
   .settings(
-    name := "console replication",
     commonSettings,
     noPublish,
     fork               := true,
@@ -123,7 +116,6 @@ lazy val consistentCalendar = project.in(file("Code/Examples/ConsistentCalendar"
   .dependsOn(rescala.jvm, replication.jvm)
   .enablePlugins(JavaAppPackaging)
   .settings(
-    name := "consistent-calendar",
     commonSettings,
     noPublish,
     fork               := true,
@@ -139,17 +131,16 @@ lazy val consistentCalendar = project.in(file("Code/Examples/ConsistentCalendar"
 // Extensions
 
 lazy val reswing = project.in(file("Code/Extensions/RESwing"))
-  .settings(name := "reswing", commonSettings, noPublish, libraryDependencies += scalaSwing.value)
+  .settings(commonSettings, noPublish, libraryDependencies += scalaSwing.value)
   .dependsOn(rescala.jvm)
 
 lazy val rescalafx = project.in(file("Code/Extensions/javafx"))
   .dependsOn(rescala.jvm)
-  .settings(name := "rescalafx", commonSettings, noPublish, scalaFxDependencies, fork := true)
+  .settings(commonSettings, noPublish, scalaFxDependencies, fork := true)
 
 lazy val kofre = crossProject(JVMPlatform, JSPlatform).crossType(CrossType.Pure)
   .in(file("Code/Extensions/Kofre"))
   .settings(
-    name := "kofre",
     scalaVersion_3,
     publishSonatype,
     libraryDependencies ++= List(munit.value, munitScalacheck.value),
@@ -160,7 +151,6 @@ lazy val replication = crossProject(JVMPlatform, JSPlatform).crossType(CrossType
   .dependsOn(rescala % "compile->compile;test->test")
   .dependsOn(kofre)
   .settings(
-    name := "replication",
     commonSettings,
     libraryDependencies ++= jsoniterScalaAll.value ++ Seq(
       loci.communication.value,
@@ -186,7 +176,6 @@ lazy val replication = crossProject(JVMPlatform, JSPlatform).crossType(CrossType
 lazy val distributedFullmv = project.in(file("Code/Extensions/MultiversionDistributed/multiversion"))
   .settings(
     commonSettings,
-    name := "fullmv-distributed-multiversion",
     noPublish,
     libraryDependencies ++= circeAll.value,
     libraryDependencies ++= Seq(
@@ -201,7 +190,7 @@ lazy val distributedFullmv = project.in(file("Code/Extensions/MultiversionDistri
 
 lazy val distributedFullMVExamples = project.in(file("Code/Extensions/MultiversionDistributed/examples"))
   .enablePlugins(JmhPlugin)
-  .settings(name := "fullmv-distributed-examples", commonSettings, noPublish)
+  .settings(commonSettings, noPublish)
   .dependsOn(distributedFullmv % "test->test")
   .dependsOn(distributedFullmv % "compile->test")
   .dependsOn(rescala.jvm % "test->test")
@@ -210,7 +199,6 @@ lazy val distributedFullMVExamples = project.in(file("Code/Extensions/Multiversi
 lazy val distributedFullMVBenchmarks = project.in(file("Code/Extensions/MultiversionDistributed/benchmarks"))
   .enablePlugins(JmhPlugin)
   .settings(
-    name := "fullmv-distributed-benchmarks",
     commonSettings,
     noPublish,
     (Compile / mainClass) := Some("org.openjdk.jmh.Main"),
@@ -221,7 +209,6 @@ lazy val distributedFullMVBenchmarks = project.in(file("Code/Extensions/Multiver
 lazy val microbench = project.in(file("Code/Microbenchmarks"))
   .enablePlugins(JmhPlugin)
   .settings(
-    name := "microbenchmarks",
     commonSettings,
     noPublish,
     // (Compile / mainClass) := Some("org.openjdk.jmh.Main"),
