@@ -57,77 +57,6 @@ lazy val rescala = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file
   )
 
 // =====================================================================================
-// Examples
-
-lazy val examples = project.in(file("Code/Examples/examples"))
-  .dependsOn(rescala.jvm, reswing)
-  .settings(
-    commonSettings,
-    noPublish,
-    fork := true,
-    libraryDependencies ++= Seq(
-      ("org.scala-lang.modules" %% "scala-xml"   % "1.3.0").cross(CrossVersion.for3Use2_13),
-      "org.scala-lang.modules"  %% "scala-swing" % "3.0.0"
-    )
-  )
-
-lazy val todolist = project.in(file("Code/Examples/Todolist"))
-  .enablePlugins(ScalaJSPlugin)
-  .dependsOn(replication.js)
-  .settings(
-    commonSettings,
-    noPublish,
-    libraryDependencies ++= jsoniterScalaAll.value ++ Seq(
-      scalatags.value,
-      loci.webrtc.value,
-      loci.jsoniterScala.value,
-    ),
-    jsAcceptUnfairGlobalTasks,
-    scalaJSUseMainModuleInitializer := true,
-  )
-
-lazy val encryptedTodo = project.in(file("Code/Examples/EncryptedTodoFx"))
-  .dependsOn(replication.jvm)
-  .settings(
-    commonSettings,
-    noPublish,
-    libraryDependencies ++= jsoniterScalaAll.value,
-    scalaFxDependencies,
-    fork := true,
-  )
-
-lazy val consoleReplication = project.in(file("Code/Examples/ConsoleReplication"))
-  .dependsOn(rescala.jvm, replication.jvm)
-  .enablePlugins(JavaAppPackaging)
-  .settings(
-    commonSettings,
-    noPublish,
-    fork               := true,
-    run / connectInput := true,
-    libraryDependencies ++= Seq(
-      loci.tcp.value,
-      decline.value,
-      loci.jsoniterScala.value,
-    ),
-    (Compile / scalaSource) := baseDirectory.value
-  )
-
-lazy val consistentCalendar = project.in(file("Code/Examples/ConsistentCalendar"))
-  .dependsOn(rescala.jvm, replication.jvm)
-  .enablePlugins(JavaAppPackaging)
-  .settings(
-    commonSettings,
-    noPublish,
-    fork               := true,
-    run / connectInput := true,
-    libraryDependencies ++= Seq(
-      loci.tcp.value,
-      decline.value,
-      loci.jsoniterScala.value,
-    ),
-  )
-
-// =====================================================================================
 // Extensions
 
 lazy val reswing = project.in(file("Code/Extensions/RESwing"))
@@ -220,6 +149,77 @@ lazy val microbench = project.in(file("Code/Microbenchmarks"))
   )
   .enablePlugins(JavaAppPackaging)
   .dependsOn(rescala.jvm, replication.jvm, kofre.jvm)
+
+// =====================================================================================
+// Examples
+
+lazy val examples = project.in(file("Code/Examples/examples"))
+  .dependsOn(rescala.jvm, reswing)
+  .settings(
+    commonSettings,
+    noPublish,
+    fork := true,
+    libraryDependencies ++= Seq(
+      ("org.scala-lang.modules" %% "scala-xml"   % "1.3.0").cross(CrossVersion.for3Use2_13),
+      "org.scala-lang.modules"  %% "scala-swing" % "3.0.0"
+    )
+  )
+
+lazy val todolist = project.in(file("Code/Examples/Todolist"))
+  .enablePlugins(ScalaJSPlugin)
+  .dependsOn(replication.js)
+  .settings(
+    commonSettings,
+    noPublish,
+    libraryDependencies ++= jsoniterScalaAll.value ++ Seq(
+      scalatags.value,
+      loci.webrtc.value,
+      loci.jsoniterScala.value,
+    ),
+    jsAcceptUnfairGlobalTasks,
+    scalaJSUseMainModuleInitializer := true,
+  )
+
+lazy val encryptedTodo = project.in(file("Code/Examples/EncryptedTodoFx"))
+  .dependsOn(replication.jvm)
+  .settings(
+    commonSettings,
+    noPublish,
+    libraryDependencies ++= jsoniterScalaAll.value,
+    scalaFxDependencies,
+    fork := true,
+  )
+
+lazy val consoleReplication = project.in(file("Code/Examples/ConsoleReplication"))
+  .dependsOn(rescala.jvm, replication.jvm)
+  .enablePlugins(JavaAppPackaging)
+  .settings(
+    commonSettings,
+    noPublish,
+    fork               := true,
+    run / connectInput := true,
+    libraryDependencies ++= Seq(
+      loci.tcp.value,
+      decline.value,
+      loci.jsoniterScala.value,
+    ),
+    (Compile / scalaSource) := baseDirectory.value
+  )
+
+lazy val consistentCalendar = project.in(file("Code/Examples/ConsistentCalendar"))
+  .dependsOn(rescala.jvm, replication.jvm)
+  .enablePlugins(JavaAppPackaging)
+  .settings(
+    commonSettings,
+    noPublish,
+    fork               := true,
+    run / connectInput := true,
+    libraryDependencies ++= Seq(
+      loci.tcp.value,
+      decline.value,
+      loci.jsoniterScala.value,
+    ),
+  )
 
 // =====================================================================================
 // custom tasks
