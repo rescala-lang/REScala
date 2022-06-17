@@ -87,6 +87,9 @@ object MetaBundleExample {
       source.value + 1
     }
 
+    // val nested = Signal { Signal ( 4 ) }
+    // val flattened = Signal { nested.value.value }
+
     // kinda weird „constant“ event here, that makes not much sense, but provides the correct type for the rest
     val esource = Event { Some("Hi!") }
 
@@ -99,15 +102,20 @@ object MetaBundleExample {
     val filtered = Event { emapped.value.filter(_.contains("i")) }
 
     // this is the basic zip operation on events
-    val zipped = Event { (emapped.value, filtered.value) match
-      case (Some(left), Some(right)) => Some((left, right))
-      case _ => None
+    val zipped = Event {
+      (emapped.value, filtered.value) match
+        case (Some(left), Some(right)) => Some((left, right))
+        case _                         => None
     }
 
     // this is how snapshot is implemented in REScala
     // we just access the derived signal every time the esource activates
     // when derived activates without esource, then the expression returns None, which will cause propagation to stop
     val snapshotLike = Event { esource.value.map(_ => derived.value) }
+
+    extension [T](inline ev: MetaReactive[Option[T], RType.Event.type])
+      inline def map[R](inline expr: T => R): MetaReactive[Option[R], RType.Event.type] = Event { ev.value.map(expr) }
+    val snapshotLike2 = esource.map(_ => derived.value)
 
     // fold is kinda the only special operation that is normally needed
     val foldResult = esource.fold("") { (acc, next) => acc + next }
