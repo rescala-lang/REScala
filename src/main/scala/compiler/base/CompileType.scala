@@ -31,6 +31,7 @@ object CompileType extends TypePC {
         case tpe if tpe =:= TypeRepr.of[Double] => CDoubleType
         case ConstantType(_: UnitConstant) => CVoidType
         case tpe if tpe =:= TypeRepr.of[Unit] => CVoidType
+        case MethodType(_, _, tpe) => cascade.dispatch(_.compileTypeRepr)(tpe)
       }
     }
 
@@ -51,6 +52,7 @@ object CompileType extends TypePC {
       import quotes.reflect.*
     
       {
+        case MethodType(_, _, tpe) => cascade.dispatch(_.typeName)(tpe)
         case tpe => tpe.typeSymbol.name
       }
     }
