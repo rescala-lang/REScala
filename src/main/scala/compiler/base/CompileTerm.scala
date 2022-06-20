@@ -1,11 +1,14 @@
 package compiler.base
 
+import clangast.given
 import clangast.CASTNode
+import clangast.decl.CVarDecl
 import clangast.expr.binaryop.CAssignmentExpr
 import clangast.expr.*
 import clangast.stmt.*
 import compiler.context.TranslationContext
 import compiler.CompilerCascade
+import compiler.base.CompileDataStructure.{retain, release}
 
 import scala.annotation.tailrec
 import scala.quoted.*
@@ -39,6 +42,7 @@ object CompileTerm extends TermPC {
 
       PartialFunction.fromFunction(cascade.dispatch(_.compileTerm)).andThen {
         case stmt: CStmt => stmt
+        case CStmtExpr(cCompoundStmt) => cCompoundStmt
         case expr: CExpr => CExprStmt(expr)
       }
     }
@@ -78,12 +82,27 @@ object CompileTerm extends TermPC {
     }
 
   override def compileAssign(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
-    PartialFunction[quotes.reflect.Assign, CAssignmentExpr] = {
+    PartialFunction[quotes.reflect.Assign, CExpr] = {
       import quotes.reflect.*
 
       {
         case Assign(lhs, rhs) =>
-          CAssignmentExpr(cascade.dispatch(_.compileTermToCExpr)(lhs), cascade.dispatch(_.compileTermToCExpr)(rhs))
+          val lhsCompiled = cascade.dispatch(_.compileTermToCExpr)(lhs)
+          val rhsCompiled = cascade.dispatch(_.compileTermToCExpr)(rhs)
+
+          if cascade.dispatch(_.usesRefCount)(lhs.tpe) then
+            val tempDecl = CVarDecl("temp", cascade.dispatch(_.compileTypeRepr)(rhs.tpe), Some(lhsCompiled))
+
+            CStmtExpr(CCompoundStmt(List(
+              tempDecl,
+              CAssignmentExpr(
+                lhsCompiled,
+                retain(rhsCompiled, rhs.tpe)
+              ),
+              release(tempDecl.ref, lhs.tpe, CFalseLiteral).get
+            )))
+          else
+            CAssignmentExpr(lhsCompiled, rhsCompiled)
       }
     }
 

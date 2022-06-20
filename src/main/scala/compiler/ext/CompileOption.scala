@@ -11,11 +11,12 @@ import clangast.types.*
 import compiler.CompilerCascade
 import compiler.base.*
 import compiler.base.CompileType.typeArgs
+import compiler.base.CompileDataStructure.{retain, release}
 import compiler.context.{RecordDeclTC, TranslationContext, ValueDeclTC}
 
 import scala.quoted.*
 
-object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC with MatchPC with TypePC with StringPC {
+object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC with MatchPC with TypePC with DataStructurePC with StringPC {
   private def compileValDefToCVarDeclImpl(using Quotes)(using ctx: RecordDeclTC & ValueDeclTC, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.ValDef, CVarDecl] = {
       import quotes.reflect.*
@@ -154,6 +155,41 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
       }
     }
 
+  override def usesRefCount(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, Boolean] = {
+      import quotes.reflect.*
+
+      {
+        case tpe if tpe <:< TypeRepr.of[Option[?]] =>
+          val typeArgs(List(wrappedType)) = tpe.widen
+          cascade.dispatch(_.usesRefCount)(wrappedType)
+      }
+    }
+
+  private def compileRetainImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = {
+      import quotes.reflect.*
+
+      {
+        case tpe if tpe <:< TypeRepr.of[Option[?]] && usesRefCount(tpe) => getOptionRetain(tpe)
+      }
+    }
+
+  override def compileRetain(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = ensureCtx[RecordDeclTC](compileRetainImpl)
+
+  private def compileReleaseImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = {
+      import quotes.reflect.*
+
+      {
+        case tpe if tpe <:< TypeRepr.of[Option[?]] && usesRefCount(tpe) => getOptionRelease(tpe)
+      }
+    }
+
+  override def compileRelease(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = ensureCtx[RecordDeclTC](compileReleaseImpl)
+
   def compilePrintImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
     PartialFunction[(CExpr, quotes.reflect.TypeRepr), CStmt] = {
       import quotes.reflect.*
@@ -190,6 +226,8 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
   private val GET_OR_ELSE = "GET_OR_ELSE"
   private val EQUALS = "EQUALS"
   private val PRINT = "PRINT"
+  private val RETAIN = "RETAIN"
+  private val RELEASE = "RELEASE"
 
   private def getNoneCreator(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
     ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> CREATE_NONE, buildNoneCreator(getOptionRecordDecl(tpe)))
@@ -300,6 +338,56 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
     val body = CCompoundStmt(List(CReturnStmt(Some(equalsExpr))))
 
     CFunctionDecl(name, List(paramLeft, paramRight), StdBoolH.bool, Some(body))
+  }
+
+  private def getOptionRetain(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> RETAIN, buildOptionRetain(tpe))
+  }
+
+  private def buildOptionRetain(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    import quotes.reflect.*
+
+    val recordDecl = getOptionRecordDecl(tpe)
+    val typeArgs(List(wrappedType)) = tpe.widen
+
+    val name = "retain_" + recordDecl.name
+
+    val optParam = CParmVarDecl("opt", recordDecl.getTypeForDecl)
+
+    val body = CCompoundStmt(List(
+      CIfStmt(
+        CMemberExpr(optParam.ref, definedField),
+        retain(CMemberExpr(optParam.ref, valField), wrappedType)
+      ),
+      CReturnStmt(Some(optParam.ref))
+    ))
+
+    CFunctionDecl(name, List(optParam), recordDecl.getTypeForDecl, Some(body))
+  }
+
+  private def getOptionRelease(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> RELEASE, buildOptionRelease(tpe))
+  }
+
+  private def buildOptionRelease(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    import quotes.reflect.*
+
+    val recordDecl = getOptionRecordDecl(tpe)
+    val typeArgs(List(wrappedType)) = tpe.widen
+
+    val name = "release_" + recordDecl.name
+
+    val optParam = CParmVarDecl("opt", recordDecl.getTypeForDecl)
+    val keepWithZero = CParmVarDecl("keep_with_zero", StdBoolH.bool)
+
+    val body = CCompoundStmt(List(
+      CIfStmt(
+        CMemberExpr(optParam.ref, definedField),
+        release(CMemberExpr(optParam.ref, valField), wrappedType, keepWithZero.ref).get
+      )
+    ))
+
+    CFunctionDecl(name, List(optParam, keepWithZero), recordDecl.getTypeForDecl, Some(body))
   }
 
   private def getOptionPrinter(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {

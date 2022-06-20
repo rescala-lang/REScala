@@ -5,6 +5,7 @@ import clangast.decl.*
 import clangast.stmt.*
 import compiler.context.{FunctionDeclTC, TranslationContext, ValueDeclTC}
 import compiler.CompilerCascade
+import compiler.base.CompileDataStructure.retain
 
 import scala.quoted.*
 
@@ -58,7 +59,9 @@ object CompileDefinition extends DefinitionPC {
     
       {
         case ValDef(name, tpt, rhs) =>
-          val decl = CVarDecl(name, cascade.dispatch(_.compileTypeRepr)(tpt.tpe), rhs.map(cascade.dispatch(_.compileTermToCExpr)))
+          val init = rhs.map(cascade.dispatch(_.compileTermToCExpr)).map(retain(_, tpt.tpe))
+
+          val decl = CVarDecl(name, cascade.dispatch(_.compileTypeRepr)(tpt.tpe), init)
 
           ctx.nameToDecl.put(name, decl)
 

@@ -23,7 +23,7 @@ trait TermPC extends PartialCompiler {
     PartialFunction[quotes.reflect.Literal, CExpr] = PartialFunction.empty
 
   def compileAssign(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[quotes.reflect.Assign, CAssignmentExpr] = PartialFunction.empty
+    PartialFunction[quotes.reflect.Assign, CExpr] = PartialFunction.empty
 
   def compileBlockToCStmtExpr(using Quotes)(using TranslationContext, CompilerCascade):
     PartialFunction[quotes.reflect.Block, CStmtExpr] = PartialFunction.empty
@@ -61,7 +61,7 @@ extension (p: PartialCompiler) {
     PartialFunction[quotes.reflect.Literal, CExpr] = PartialCompiler.ensurePC[TermPC](p, _.compileLiteral)
 
   def compileAssign(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[quotes.reflect.Assign, CAssignmentExpr] = PartialCompiler.ensurePC[TermPC](p, _.compileAssign)
+    PartialFunction[quotes.reflect.Assign, CExpr] = PartialCompiler.ensurePC[TermPC](p, _.compileAssign)
 
   def compileBlockToCStmtExpr(using Quotes)(using TranslationContext, CompilerCascade):
     PartialFunction[quotes.reflect.Block, CStmtExpr] = PartialCompiler.ensurePC[TermPC](p, _.compileBlockToCStmtExpr)

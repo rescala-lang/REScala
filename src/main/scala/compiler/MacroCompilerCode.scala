@@ -66,6 +66,10 @@ trait MacroCompilerCode {
     import quotes.reflect.*
 
     given ctx: CTX = createTranslationContext()
+    
+    // make sure that release and retain for the given type are compiled for later use
+    cascade.dispatchLifted(_.compileRetain)(TypeRepr.of[T])
+    cascade.dispatchLifted(_.compileRelease)(TypeRepr.of[T])
 
     val compiledTypeRepr = cascade.dispatch(_.compileTypeRepr)(TypeRepr.of[T])
 

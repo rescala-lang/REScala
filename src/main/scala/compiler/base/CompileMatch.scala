@@ -8,6 +8,7 @@ import clangast.stmt.*
 import clangast.traversal.CASTMapper
 import compiler.context.{TranslationContext, ValueDeclTC}
 import compiler.CompilerCascade
+import compiler.base.CompileDataStructure.{retain, release}
 
 import scala.quoted.*
 
@@ -21,7 +22,12 @@ object CompileMatch extends MatchPC {
           val scrutineeDecl = CVarDecl(
             "_scrutinee",
             cascade.dispatch(_.compileTypeRepr)(scrutinee.tpe),
-            Some(cascade.dispatch(_.compileTermToCExpr)(scrutinee))
+            Some(
+              retain(
+                cascade.dispatch(_.compileTermToCExpr)(scrutinee),
+                scrutinee.tpe
+              )
+            )
           )
 
           val (lastCond, lastDecls, lastStmtList) = cascade.dispatch(_.compileCaseDef)(cases.last, scrutineeDecl.ref, scrutinee.tpe)
@@ -45,10 +51,10 @@ object CompileMatch extends MatchPC {
               )
           }
 
-          CCompoundStmt(List(
+          CCompoundStmt(List[CStmt](
             scrutineeDecl,
             ifStmt
-          ))
+          ) ++ release(scrutineeDecl.ref, scrutinee.tpe, CFalseLiteral))
       }
     }
 
@@ -62,13 +68,21 @@ object CompileMatch extends MatchPC {
           val scrutineeDecl = CVarDecl(
             "_scrutinee",
             cascade.dispatch(_.compileTypeRepr)(scrutinee.tpe),
-            Some(cascade.dispatch(_.compileTermToCExpr)(scrutinee))
+            Some(
+              retain(
+                cascade.dispatch(_.compileTermToCExpr)(scrutinee),
+                scrutinee.tpe
+              )
+            )
           )
 
           def convertLastToAssign(stmts: List[CStmt]): List[CStmt] = {
             stmts.last match {
               case CExprStmt(expr) =>
-                val assign = CExprStmt(CAssignmentExpr(resDecl.ref, expr))
+                val assign = CExprStmt(CAssignmentExpr(
+                  resDecl.ref,
+                  retain(expr, matchTerm.tpe)
+                ))
                 stmts.init.appended(assign)
             }
           }
@@ -94,12 +108,14 @@ object CompileMatch extends MatchPC {
               )
           }
 
-          CStmtExpr(CCompoundStmt(List(
+          CStmtExpr(CCompoundStmt(List[CStmt](
             resDecl,
             scrutineeDecl,
-            outerIf,
-            CExprStmt(resDecl.ref)
-          )))
+            outerIf) ++
+            release(scrutineeDecl.ref, scrutinee.tpe, CFalseLiteral) ++
+            release(resDecl.ref, matchTerm.tpe, CTrueLiteral) ++
+            List(CExprStmt(resDecl.ref))
+          ))
       }
     }
 

@@ -6,6 +6,7 @@ import compiler.ext.*
 package object compiler {
   val minimalCascade: CompilerCascade = CompilerCascade(
     CompileDebug,
+    CompileDataStructure,
     CompileApply,
     CompileDefinition,
     CompileMatch,

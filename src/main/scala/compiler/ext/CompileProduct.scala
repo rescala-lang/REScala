@@ -2,35 +2,21 @@ package compiler.ext
 
 import clangast.given
 import clangast.decl.*
-import clangast.expr.binaryop.{CAndExpr, CNotEqualsExpr}
-import clangast.expr.unaryop.CNotExpr
+import clangast.expr.binaryop.*
+import clangast.expr.unaryop.*
 import clangast.expr.*
-import clangast.stmt.{CCompoundStmt, CIfStmt, CReturnStmt, CStmt}
-import clangast.stubs.StdBoolH
-import clangast.types.{CBoolType, CRecordType, CType, CVoidType}
+import clangast.stmt.*
+import clangast.stubs.{StdBoolH, StdLibH}
+import clangast.types.*
 import compiler.CompilerCascade
 import compiler.base.*
 import compiler.base.CompileType.typeArgs
+import compiler.base.CompileDataStructure.{retain, release}
 import compiler.context.{RecordDeclTC, TranslationContext}
 
 import scala.quoted.*
 
-object CompileProduct extends DefinitionPC with SelectPC with ApplyPC with MatchPC with TypePC with StringPC {
-  private def compileValDefToCVarDeclImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
-    PartialFunction[quotes.reflect.ValDef, CVarDecl] = {
-      import quotes.reflect.*
-
-      {
-        case ValDef(name, tpt, Some(apply@Apply(Select(_, "apply"), l))) if isProductApply(apply) =>
-          val recordDecl = getProductRecordDecl(apply.tpe)
-          val init = CDesignatedInitExpr(recordDecl.fields.map(_.name) zip l.map(cascade.dispatch(_.compileTermToCExpr)))
-          CVarDecl(name, cascade.dispatch(_.compileTypeRepr)(tpt.tpe), Some(init))
-      }
-    }
-
-  override def compileValDefToCVarDecl(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[quotes.reflect.ValDef, CVarDecl] = ensureCtx[RecordDeclTC](compileValDefToCVarDeclImpl)
-
+object CompileProduct extends SelectPC with ApplyPC with MatchPC with TypePC with DataStructurePC with StringPC {
   private def compileSelectImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.Select, CExpr] = {
       import quotes.reflect.*
@@ -123,6 +109,41 @@ object CompileProduct extends DefinitionPC with SelectPC with ApplyPC with Match
       }
     }
 
+  override def usesRefCount(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, Boolean] = {
+      import quotes.reflect.*
+
+      {
+        case tpe if tpe <:< TypeRepr.of[Product] =>
+          val typeArgs(fieldTypes) = tpe.widen
+          fieldTypes.exists(cascade.dispatch(_.usesRefCount))
+      }
+    }
+
+  private def compileRetainImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = {
+      import quotes.reflect.*
+
+      {
+        case tpe if tpe <:< TypeRepr.of[Product] && usesRefCount(tpe) => getProductRetain(tpe)
+      }
+    }
+
+  override def compileRetain(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = ensureCtx[RecordDeclTC](compileRetainImpl)
+
+  private def compileReleaseImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = {
+      import quotes.reflect.*
+
+      {
+        case tpe if tpe <:< TypeRepr.of[Product] && usesRefCount(tpe) => getProductRelease(tpe)
+      }
+    }
+
+  override def compileRelease(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = ensureCtx[RecordDeclTC](compileReleaseImpl)
+
   def compilePrintImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
     PartialFunction[(CExpr, quotes.reflect.TypeRepr), CStmt] = {
       import quotes.reflect.*
@@ -139,6 +160,8 @@ object CompileProduct extends DefinitionPC with SelectPC with ApplyPC with Match
   private val CREATE = "CREATE"
   private val EQUALS = "EQUALS"
   private val PRINT = "PRINT"
+  private val RETAIN = "RETAIN"
+  private val RELEASE = "RELEASE"
 
   private def isProductApply(using Quotes)(apply: quotes.reflect.Apply): Boolean = {
     import quotes.reflect.*
@@ -232,6 +255,53 @@ object CompileProduct extends DefinitionPC with SelectPC with ApplyPC with Match
     val body = CCompoundStmt(List(CReturnStmt(Some(equalsExpr))))
 
     CFunctionDecl(name, parameters, StdBoolH.bool, Some(body))
+  }
+
+  private def getProductRetain(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> RETAIN, buildProductRetain(tpe))
+  }
+
+  private def buildProductRetain(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    import quotes.reflect.*
+
+    val recordDecl = getProductRecordDecl(tpe)
+    val typeArgs(fieldTypes) = tpe.widen
+
+    val name = "retain_" + recordDecl.name
+
+    val prodParam = CParmVarDecl("prod", recordDecl.getTypeForDecl)
+
+    val retainElems: List[CStmt] = recordDecl.fields.zip(fieldTypes).collect {
+      case (f, t) if cascade.dispatch(_.usesRefCount)(t) =>
+        retain(CMemberExpr(prodParam.ref, f.name), t)
+    }
+
+    val body = CCompoundStmt(retainElems.appended(CReturnStmt(Some(prodParam.ref))))
+
+    CFunctionDecl(name, List(prodParam), recordDecl.getTypeForDecl, Some(body))
+  }
+
+  private def getProductRelease(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> RELEASE, buildProductRelease(tpe))
+  }
+
+  private def buildProductRelease(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    import quotes.reflect.*
+
+    val recordDecl = getProductRecordDecl(tpe)
+    val typeArgs(fieldTypes) = tpe.widen
+
+    val name = "release_" + recordDecl.name
+
+    val prodParam = CParmVarDecl("prod", recordDecl.getTypeForDecl)
+    val keepWithZero = CParmVarDecl("keep_with_zero", StdBoolH.bool)
+
+    val releaseElems: List[CStmt] = recordDecl.fields.zip(fieldTypes).collect {
+      case (f, t) if cascade.dispatch(_.usesRefCount)(t) =>
+        release(CMemberExpr(prodParam.ref, f.name), t, keepWithZero.ref).get
+    }
+
+    CFunctionDecl(name, List(prodParam, keepWithZero), recordDecl.getTypeForDecl, Some(CCompoundStmt(releaseElems)))
   }
 
   private def getProductPrinter(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {

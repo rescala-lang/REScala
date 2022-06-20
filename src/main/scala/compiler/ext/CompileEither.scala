@@ -5,17 +5,18 @@ import clangast.decl.*
 import clangast.expr.*
 import clangast.expr.binaryop.{CAndExpr, COrExpr}
 import clangast.expr.unaryop.CNotExpr
-import clangast.stmt.{CCompoundStmt, CIfStmt, CReturnStmt, CStmt}
+import clangast.stmt.*
 import clangast.stubs.StdBoolH
 import clangast.types.{CRecordType, CType, CVoidType}
 import compiler.CompilerCascade
 import compiler.base.*
 import compiler.base.CompileType.typeArgs
+import compiler.base.CompileDataStructure.{retain, release}
 import compiler.context.{RecordDeclTC, TranslationContext}
 
 import scala.quoted.*
 
-object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with StringPC {
+object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with DataStructurePC with StringPC {
   private def compileSelectImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.Select, CExpr] = {
       import quotes.reflect.*
@@ -125,6 +126,41 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
       }
     }
 
+  override def usesRefCount(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, Boolean] = {
+      import quotes.reflect.*
+
+      {
+        case tpe if tpe <:< TypeRepr.of[Either[?, ?]] =>
+          val typeArgs(List(leftType, rightType)) = tpe.widen
+          cascade.dispatch(_.usesRefCount)(leftType) || cascade.dispatch(_.usesRefCount)(rightType)
+      }
+    }
+
+  private def compileRetainImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = {
+      import quotes.reflect.*
+
+      {
+        case tpe if tpe <:< TypeRepr.of[Either[?, ?]] && usesRefCount(tpe) => getEitherRetain(tpe)
+      }
+    }
+
+  override def compileRetain(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = ensureCtx[RecordDeclTC](compileRetainImpl)
+
+  private def compileReleaseImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = {
+      import quotes.reflect.*
+
+      {
+        case tpe if tpe <:< TypeRepr.of[Either[?, ?]] && usesRefCount(tpe) => getEitherRelease(tpe)
+      }
+    }
+
+  override def compileRelease(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = ensureCtx[RecordDeclTC](compileReleaseImpl)
+
   def compilePrintImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
     PartialFunction[(CExpr, quotes.reflect.TypeRepr), CStmt] = {
       import quotes.reflect.*
@@ -165,6 +201,8 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
   private val CREATE_RIGHT = "CREATE_RIGHT"
   private val EQUALS = "EQUALS"
   private val PRINT = "PRINT"
+  private val RETAIN = "RETAIN"
+  private val RELEASE = "RELEASE"
 
   private def getLeftCreator(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
     ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> CREATE_LEFT, buildLeftCreator(getEitherRecordDecl(tpe)))
@@ -263,6 +301,70 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
     val body = CCompoundStmt(List(CReturnStmt(Some(equalsExpr))))
 
     CFunctionDecl(name, List(paramLeft, paramRight), StdBoolH.bool, Some(body))
+  }
+
+  private def getEitherRetain(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> RETAIN, buildEitherRetain(tpe))
+  }
+
+  private def buildEitherRetain(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    import quotes.reflect.*
+
+    val recordDecl = getEitherRecordDecl(tpe)
+    val typeArgs(List(leftType, rightType)) = tpe.widen
+
+    val name = "retain_" + recordDecl.name
+
+    val eitherParam = CParmVarDecl("either", recordDecl.getTypeForDecl)
+
+    val retainLeft: CStmt = if cascade.dispatch(_.usesRefCount)(leftType) then
+      retain(CMemberExpr(eitherParam.ref, leftField), leftType)
+    else CNullStmt
+
+    val retainRight: CStmt = if cascade.dispatch(_.usesRefCount)(rightType) then
+      retain(CMemberExpr(eitherParam.ref, rightField), rightType)
+    else CNullStmt
+
+    val body = CCompoundStmt(List(
+      CIfStmt(
+        CMemberExpr(eitherParam.ref, isRightField),
+        retainRight,
+        Some(retainLeft)
+      ),
+      CReturnStmt(Some(eitherParam.ref))
+    ))
+
+    CFunctionDecl(name, List(eitherParam), recordDecl.getTypeForDecl, Some(body))
+  }
+
+  private def getEitherRelease(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> RELEASE, buildEitherRelease(tpe))
+  }
+
+  private def buildEitherRelease(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    import quotes.reflect.*
+
+    val recordDecl = getEitherRecordDecl(tpe)
+    val typeArgs(List(leftType, rightType)) = tpe.widen
+
+    val name = "release_" + recordDecl.name
+
+    val eitherParam = CParmVarDecl("either", recordDecl.getTypeForDecl)
+    val keepWithZero = CParmVarDecl("keep_with_zero", StdBoolH.bool)
+
+    val releaseLeft = release(CMemberExpr(eitherParam.ref, leftField), leftType, keepWithZero.ref).getOrElse(CNullStmt)
+
+    val releaseRight = release(CMemberExpr(eitherParam.ref, rightField), rightType, keepWithZero.ref).getOrElse(CNullStmt)
+
+    val body = CCompoundStmt(List(
+      CIfStmt(
+        CMemberExpr(eitherParam.ref, isRightField),
+        releaseRight,
+        Some(releaseLeft)
+      )
+    ))
+
+    CFunctionDecl(name, List(eitherParam, keepWithZero), recordDecl.getTypeForDecl, Some(body))
   }
 
   private def getEitherPrinter(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
