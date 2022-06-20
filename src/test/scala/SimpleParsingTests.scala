@@ -16,6 +16,30 @@ object SimpleParsing extends SimpleTestSuite:
     }
   }
 
+  test("id") {
+    assertResult(Right("a")) {
+      Parser.id.parseAll("a")
+    }
+  }
+
+  test("argT") {
+    assertResult(Right(TArgT("a", Type("Int", List())))) {
+      Parser.argT.parseAll("a : Int")
+    }
+  }
+
+  test("binding left") {
+    assertResult(Right(TArgT("a", Type("Int", List())))) {
+      Parser.bindingLeftSide.parseAll("val a : Int")
+    }
+  }
+
+  test("binding") {
+    assertResult(Right(TAbs("a", Type("Int", List()), TNum(12)))) {
+      Parser.binding.parseAll("val a : Int = 12")
+    }
+  }
+
   test("field access") {
     assertResult(Right(TFAcc(TVar("foo"), "bar", List(TNum(1), TFalse)))) {
       Parser.fieldAcc.parseAll("foo.bar(1, false)")
@@ -54,10 +78,72 @@ object SimpleParsing extends SimpleTestSuite:
     }
   }
 
+  test("reactive") {
+    val p = Parser.reactive
+    assertResult(Right(TSource(TFunC("AWSet", List())))) {
+      p.parseAll("Source(AWSet())")
+    }
+
+    assertResult(
+      Right(
+        TDerived(
+          TFAcc(
+            TFAcc(TVar("work"), "toSet", List()),
+            "union",
+            List(TFAcc(TVar("vacation"), "toSet", List()))
+          )
+        )
+      )
+    ) {
+      p.parseAll("Derived{ work.toSet.union(vacation.toSet) }")
+    }
+  }
+
+  test("named reactive") {
+    val p = Parser.binding
+    assertResult(
+      Right(
+        TAbs(
+          "a",
+          Type("Source", List(Type("Calendar", List()))),
+          TSource(TFunC("AWSet", List()))
+        )
+      )
+    ) {
+      p.parseAll("val a: Source[Calendar] = Source(AWSet())")
+    }
+
+    assertResult(
+      Right(
+        TAbs(
+          "a",
+          Type("Derived", List(Type("Set", List(Type("Appointment", List()))))),
+          TDerived(
+            TFAcc(
+              TFAcc(TVar("work"), "toSet", List()),
+              "union",
+              List(TFAcc(TVar("vacation"), "toSet", List()))
+            )
+          )
+        )
+      )
+    ) {
+      p.parseAll(
+        "val a: Derived[Set(Appointment)]   = Derived{ work.toSet.union(vacation.toSet) }"
+      )
+    }
+  }
+
   test("typename") {
     val expr = "List[Int]"
     val p = Parser.typeName
     assertParses(p, expr)
+
+    val expr2 = "AWSet[Appointment]"
+    assertParses(p, expr2)
+
+    val expr3 = "Int"
+    assertParses(p, expr3)
   }
 
   test("complex typename") {

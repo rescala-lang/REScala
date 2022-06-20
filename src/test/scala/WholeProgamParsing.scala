@@ -15,10 +15,20 @@ object WholeProgramParsing extends SimpleTestSuite:
   //     assertParses(Parser.prog, prog)
   // }
 
+  test("simple prog") {
+    val prog = """
+      |type Calendar = AWSet[Appointment]
+      |val work: Source[Calendar] = Source(AWSet())
+      |5 + 24 * 10 > 0 ==> true
+      |""".stripMargin
+
+    Parser.prog.parseAll(prog)
+  }
+
   test("calendar new") {
-      val prog = readProg(Path.of("examples/calendar_new.lore"))
-      val printer = new Prettyprint("calendar_new.lore", prog)
-      Parser.prog.parseAll(prog) match
-        case Left(e) => fail(printer.prettyprint(e))
-        case Right(e) => ()
+    val prog = readProg(Path.of("examples/calendar_new.lore"))
+    val printer = new Prettyprint("calendar_new.lore", prog)
+    Parser.prog.parseAll(prog) match
+      case Left(e)  => fail(printer.prettyprint(e))
+      case Right(e) => ()
   }

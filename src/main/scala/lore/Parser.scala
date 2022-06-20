@@ -11,10 +11,11 @@ import cats.data.NonEmptyList
 object Parser:
   // helpers
   val ws: P0[Unit] = wsp.rep0.void // whitespace
-  val id: P[ID] = (alpha ~ (alpha | digit).rep0).string
+  val id: P[ID] = (alpha ~ (alpha | digit | P.char('_')).rep0).string
+  val underscore: P[String] = P.char('_').as("_")
   val number: P[TNum] = digit.rep.string.map(i => TNum(Integer.parseInt(i)))
   val argT: P[TArgT] = // args with type
-    (((id <* ws ~ P.char(':')) <* ws) ~ typeName).map((id, typ) =>
+    ((id <* P.char(':').surroundedBy(ws)) ~ P.defer(typeName)).map((id, typ) =>
       TArgT(id, typ)
     )
   val typeName: P[Type] = P.recursive { rec =>
@@ -34,7 +35,7 @@ object Parser:
         ~ factor).rep0)
 
   // basic terms
-  val _var: P[TVar] = id.map(TVar(_)) // variables
+  val _var: P[TVar] = (id | underscore).map(TVar(_)) // variables
 
   // arithmetic expressions
   val arithmExpr: P[Term] = P.defer(addSub)
@@ -159,22 +160,26 @@ object Parser:
   // reactives
   val reactive: P[TReactive] = P.defer(source | derived)
   val source: P[TSource] =
-    (P.string("Source(") ~ ws *> P.defer(term) <* P.char(')')).map((body) =>
-      TSource(body)
+    (P.string("Source(") ~ ws *> P.defer(term) <* ws ~ P.char(')')).map(
+      (body) => TSource(body)
     )
   val derived: P[TDerived] =
-    (P.string("Derived{") ~ ws *> P.defer(term) <* P.char('}')).map((body) =>
-      TDerived(body)
+    (P.string("Derived{") ~ ws *> P.defer(term) <* ws ~ P.char('}')).map(
+      (body) => TDerived(body)
     )
 
   // bindings
+  val bindable =
+    P.defer(
+      fieldAcc | functionCall | typeAlias | reactive | booleanExpr | number.backtrack | _var
+    )
   val bindingLeftSide: P[TArgT] =
-    (P.string("val") ~ ws *> argT <* P.char('=').surroundedBy(ws))
+    (P.string("val") ~ ws *> P.defer(argT))
   val binding: P[TAbs] =
-    P.defer((bindingLeftSide <* P.char('=').surroundedBy(ws)) ~ term).map {
-      case (TArgT(name, _type), term) =>
+    P.defer((bindingLeftSide <* P.char('=').surroundedBy(ws)) ~ term)
+      .map { case (TArgT(name, _type), term) =>
         TAbs(name = name, _type = _type, body = term)
-    }
+      }
 
   // object orientation
   val args = P.defer0(term.repSep0(P.char(',') ~ ws))
@@ -210,5 +215,9 @@ object Parser:
 
   // programs are sequences of terms
   val term: P[Term] =
-    fieldAcc | functionCall | typeAlias | binding | booleanExpr | number.backtrack | _var
-  val prog: P[NonEmptyList[Term]] = term.repSep(ws | lf).between(ws, ws ~ P.end)
+    P.defer(
+      fieldAcc | functionCall | typeAlias | reactive | binding | booleanExpr | arithmExpr | number.backtrack | _var
+    )
+  val wsOrNl = (wsp | lf).rep0
+  val prog: P[NonEmptyList[Term]] =
+    term.repSep(wsOrNl).surroundedBy(wsOrNl) <* P.end
