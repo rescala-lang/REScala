@@ -166,7 +166,7 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
       case _ => localVariables(r).ref
     }
 
-  private def compileUpdates(reSources: List[ReSource]): List[CStmt] = {
+  private def compileUpdates(reSources: List[ReSource], toRelease: Set[ReSource]): List[CStmt] = {
     if (reSources.isEmpty) return Nil
 
     val condition = updateConditions(reSources.head)
@@ -252,15 +252,31 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
         CCompoundStmt(updates)
       )
 
-    if (otherCond.isEmpty) List(sameCondCode)
-    else sameCondCode :: compileUpdates(otherCond)
+    val stillUsed = otherCond.flatMap(_.inputs)
+    val released = toRelease.filterNot(stillUsed.contains)
+
+    val releaseCode = released.flatMap { resource =>
+      val cType = resource match {
+        case Map1(_, cType, _) => cType
+        case Map2(_, _, cType, _) => cType
+        case Or(_, _, cType) => cType
+      }
+
+      releaseRecordStmt(valueRef(resource), cType)
+    }
+
+    (sameCondCode :: releaseCode.toList) ++ compileUpdates(otherCond, toRelease.diff(released))
   }
 
   private val updateFunction: CFunctionDecl = {
     val params = sourcesTopological.flatMap { s => List(sourceValueParameters(s), sourceValidParameters(s)) }
 
     val localVarDecls = topological.flatMap(localVariables.get).map(CDeclStmt.apply)
-    val updates = compileUpdates(topological.filterNot(_.isInstanceOf[Source[?]]))
+    val toRelease: Set[ReSource] = localVariables.keySet.filter {
+      case _: Filter[?] => false
+      case _ => true
+    }
+    val updates = compileUpdates(topological.filterNot(_.isInstanceOf[Source[?]]), toRelease)
 
     val body =
       CCompoundStmt(
