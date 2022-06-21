@@ -1,4 +1,4 @@
-package central
+package calendar
 
 import calendar.{Appointment, Token}
 import loci.registry.Binding

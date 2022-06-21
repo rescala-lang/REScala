@@ -25,7 +25,6 @@ lazy val rescalaProject = project.in(file(".")).settings(commonSettings, noPubli
   todolist,
   encryptedTodo,
   consoleReplication,
-  consistentCalendar,
 )
 
 lazy val rescalaAll = project.in(file("Code")).settings(commonSettings, noPublish).aggregate(
@@ -208,21 +207,6 @@ lazy val consoleReplication = project.in(file("Code/Examples/ConsoleReplication"
       loci.jsoniterScala.value,
     ),
     (Compile / scalaSource) := baseDirectory.value
-  )
-
-lazy val consistentCalendar = project.in(file("Code/Examples/ConsistentCalendar"))
-  .dependsOn(rescala.jvm, replication.jvm)
-  .enablePlugins(JavaAppPackaging)
-  .settings(
-    commonSettings,
-    noPublish,
-    fork               := true,
-    run / connectInput := true,
-    libraryDependencies ++= Seq(
-      loci.tcp.value,
-      decline.value,
-      loci.jsoniterScala.value,
-    ),
   )
 
 // =====================================================================================

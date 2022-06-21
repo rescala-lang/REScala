@@ -1,8 +1,8 @@
-package central
+package calendar
 
 import calendar.{Appointment, CalendarProgram, RaftTokens, Token}
-import central.Bindings._
-import central.SyncMessage.{AppointmentMessage, CalendarState, FreeMessage, RaftMessage, WantMessage}
+import calendar.Bindings._
+import calendar.SyncMessage.{AppointmentMessage, CalendarState, FreeMessage, RaftMessage, WantMessage}
 import kofre.base.DecomposeLattice
 import kofre.datatypes.AddWinsSet
 import kofre.datatypes.AddWinsSet.AWSetSyntax

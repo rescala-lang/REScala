@@ -1,4 +1,4 @@
-package central
+package calendar
 
 import cats.implicits._
 import com.monovore.decline.{Command, CommandApp, Opts}
