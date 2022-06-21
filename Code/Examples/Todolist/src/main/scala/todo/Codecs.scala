@@ -1,7 +1,7 @@
 package todo
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, JsonValueCodec, JsonWriter}
-import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
+import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import kofre.base.Defs
 import kofre.datatypes.{RGA, TimedVal}
 import kofre.time.Dot
@@ -10,8 +10,9 @@ import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegister
 import kofre.decompose.interfaces.LWWRegisterInterface
 import kofre.dotted.{DotFun, Dotted}
 import loci.transmitter.IdenticallyTransmittable
-import rescala.extra.lattices.delta.JsoniterCodecs._
 import todo.Todolist.replicaId
+
+import scala.annotation.nowarn
 
 object Codecs {
 
@@ -24,7 +25,8 @@ object Codecs {
     override def encodeKey(x: Dot, out: JsonWriter): Unit = out.writeKey(s"${x.time}-${x.replicaId}")
   }
 
-  implicit val codecState: JsonValueCodec[Dotted[RGA[TaskRef]]] = RGAStateCodec
+  @nowarn()
+  implicit val codecState: JsonValueCodec[Dotted[RGA[TaskRef]]] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
   implicit val codecRGA: JsonValueCodec[DeltaBufferRDT[RGA[TaskRef]]] =
     new JsonValueCodec[DeltaBufferRDT[RGA[TaskRef]]] {
       override def decodeValue(

@@ -16,8 +16,7 @@ lazy val rescalaProject = project.in(file(".")).settings(commonSettings, noPubli
   kofre.js,
   kofre.jvm,
   microbench,
-  replication.js,
-  replication.jvm,
+  dtn,
   rescala.js,
   rescala.jvm,
   rescalafx,
@@ -74,24 +73,6 @@ lazy val kofre = crossProject(JVMPlatform, JSPlatform).crossType(CrossType.Pure)
     libraryDependencies ++= List(munit.value, munitScalacheck.value),
   )
 
-lazy val replication = crossProject(JVMPlatform, JSPlatform).crossType(CrossType.Pure)
-  .in(file("Code/Extensions/Replication"))
-  .dependsOn(rescala % "compile->compile;test->test")
-  .dependsOn(kofre)
-  .settings(
-    commonSettings,
-    libraryDependencies ++= jsoniterScalaAll.value ++ Seq(
-      loci.communication.value,
-      loci.circe.value,
-      loci.upickle.value,
-      munitScalacheck.value,
-      munit.value,
-      "com.softwaremill.sttp.client3" %% "core"           % "3.6.2",
-      "com.softwaremill.sttp.client3" %% "okhttp-backend" % "3.6.2",
-    ),
-    publishOnly213
-  )
-
 lazy val distributedFullmv = project.in(file("Code/Extensions/MultiversionDistributed/multiversion"))
   .settings(
     commonSettings,
@@ -138,10 +119,23 @@ lazy val microbench = project.in(file("Code/Microbenchmarks"))
     jolSettings,
   )
   .enablePlugins(JavaAppPackaging)
-  .dependsOn(rescala.jvm, replication.jvm, kofre.jvm)
+  .dependsOn(rescala.jvm, kofre.jvm)
 
 // =====================================================================================
 // Examples
+
+lazy val dtn = project.in(file("Code/Examples/DTN"))
+  .dependsOn(rescala.jvm)
+  .dependsOn(kofre.jvm)
+  .settings(
+    commonSettings,
+    libraryDependencies ++= jsoniterScalaAll.value ++ Seq(
+      munitScalacheck.value,
+      munit.value,
+      "com.softwaremill.sttp.client3" %% "core"           % "3.6.2",
+      "com.softwaremill.sttp.client3" %% "okhttp-backend" % "3.6.2",
+    ),
+  )
 
 lazy val examples = project.in(file("Code/Examples/examples"))
   .dependsOn(rescala.jvm, reswing)
@@ -157,7 +151,7 @@ lazy val examples = project.in(file("Code/Examples/examples"))
 
 lazy val todolist = project.in(file("Code/Examples/Todolist"))
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(replication.js)
+  .dependsOn(kofre.js, rescala.js)
   .settings(
     commonSettings,
     noPublish,
@@ -194,19 +188,21 @@ lazy val encryptedTodo = project.in(file("Code/Examples/EncryptedTodoFx"))
   )
 
 lazy val consoleReplication = project.in(file("Code/Examples/ConsoleReplication"))
-  .dependsOn(rescala.jvm, replication.jvm)
+  .dependsOn(rescala.jvm, kofre.jvm)
   .enablePlugins(JavaAppPackaging)
   .settings(
     commonSettings,
     noPublish,
     fork               := true,
     run / connectInput := true,
-    libraryDependencies ++= Seq(
+    libraryDependencies ++= jsoniterScalaAll.value ++ circeAll.value ++ Seq(
       loci.tcp.value,
       decline.value,
       loci.jsoniterScala.value,
+      munitScalacheck.value,
+      munit.value,
+      scalacheck.value,
     ),
-    (Compile / scalaSource) := baseDirectory.value
   )
 
 // =====================================================================================
