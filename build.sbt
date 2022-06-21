@@ -86,19 +86,10 @@ lazy val replication = crossProject(JVMPlatform, JSPlatform).crossType(CrossType
       loci.circe.value,
       loci.upickle.value,
       munitScalacheck.value,
-      "com.google.crypto.tink" % "tink"                   % "1.6.1",
-      "org.conscrypt"          % "conscrypt-openjdk-uber" % "2.5.2",
+      munit.value,
+      "com.softwaremill.sttp.client3" %% "core"           % "3.6.2",
+      "com.softwaremill.sttp.client3" %% "okhttp-backend" % "3.6.2",
     ),
-    libraryDependencies ++= {
-      val jettyVersion = "11.0.10"
-      Seq(
-        "org.eclipse.jetty"           % "jetty-server"           % jettyVersion,
-        "org.eclipse.jetty.websocket" % "websocket-jetty-api"    % jettyVersion,
-        "org.eclipse.jetty.websocket" % "websocket-jetty-server" % jettyVersion,
-        "org.eclipse.jetty.websocket" % "websocket-jetty-client" % jettyVersion,
-        munit.value,
-      )
-    },
     publishOnly213
   )
 
@@ -181,13 +172,26 @@ lazy val todolist = project.in(file("Code/Examples/Todolist"))
   )
 
 lazy val encryptedTodo = project.in(file("Code/Examples/EncryptedTodoFx"))
-  .dependsOn(replication.jvm)
+  .enablePlugins(JmhPlugin)
+  .dependsOn(kofre.jvm)
   .settings(
     commonSettings,
     noPublish,
     libraryDependencies ++= jsoniterScalaAll.value,
     scalaFxDependencies,
     fork := true,
+    libraryDependencies ++= {
+      val jettyVersion = "11.0.10"
+      Seq(
+        "org.eclipse.jetty"           % "jetty-server"           % jettyVersion,
+        "org.eclipse.jetty.websocket" % "websocket-jetty-api"    % jettyVersion,
+        "org.eclipse.jetty.websocket" % "websocket-jetty-server" % jettyVersion,
+        "org.eclipse.jetty.websocket" % "websocket-jetty-client" % jettyVersion,
+        "com.google.crypto.tink"      % "tink"                   % "1.6.1",
+        "org.conscrypt"               % "conscrypt-openjdk-uber" % "2.5.2",
+        betterFiles.value,
+      )
+    },
   )
 
 lazy val consoleReplication = project.in(file("Code/Examples/ConsoleReplication"))

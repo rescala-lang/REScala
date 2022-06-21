@@ -47,7 +47,7 @@ object Dependencies {
 
   import Dependencies.{Versions => V}
 
-  val betterFiles     = Def.setting("com.github.pathikrit" %% "better-files" % V.betterFiles)
+  val betterFiles     = Def.setting(("com.github.pathikrit" %% "better-files" % V.betterFiles).cross(CrossVersion.for3Use2_13))
   val catsCore        = Def.setting("org.typelevel" %%% "cats-core" % V.catsCore)
   val decline         = Def.setting("com.monovore" %%% "decline" % V.decline)
   val directories     = Def.setting("dev.dirs" % "directories" % V.directories)
