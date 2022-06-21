@@ -129,7 +129,7 @@ object SimpleParsing extends SimpleTestSuite:
       )
     ) {
       p.parseAll(
-        "val a: Derived[Set(Appointment)]   = Derived{ work.toSet.union(vacation.toSet) }"
+        "val a: Derived[Set[Appointment]]   = Derived{ work.toSet.union(vacation.toSet) }"
       )
     }
   }

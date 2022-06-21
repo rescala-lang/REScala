@@ -1,16 +1,19 @@
 package lore
 
-import scala.language.implicitConversions
 import AST._
 import cats.parse.{Parser => P, Parser0 => P0, Rfc5234}
 import cats.parse.Rfc5234.{alpha, char, digit, lf, wsp}
 import cats.implicits._
 import cats._
 import cats.data.NonEmptyList
+import scala.annotation.tailrec
 
 object Parser:
+  final case class ParsingException(message: String) extends Exception(message)
+
   // helpers
   val ws: P0[Unit] = wsp.rep0.void // whitespace
+  val wsOrNl = (wsp | lf).rep0 // any amount of whitespace or newlines
   val id: P[ID] = (alpha ~ (alpha | digit | P.char('_')).rep0).string
   val underscore: P[String] = P.char('_').as("_")
   val number: P[TNum] = digit.rep.string.map(i => TNum(Integer.parseInt(i)))
@@ -56,7 +59,7 @@ object Parser:
     case (l, ("+", r) :: xs) => TAdd(left = l, right = evalArithm(r, xs))
     case (l, ("-", r) :: xs) => TSub(left = l, right = evalArithm(r, xs))
     case sth =>
-      throw new IllegalArgumentException(s"Not an arithmetic expression: $sth")
+      throw new ParsingException(s"Not an arithmetic expression: $sth")
 
   // boolean expressions
   val booleanExpr: P[Term] = P.defer(quantifier | implication)
@@ -112,7 +115,7 @@ object Parser:
       case (root, ("&&", x) :: xs) =>
         TConj(left = root, right = evalBoolSeq(x, xs))
       case sth =>
-        throw new IllegalArgumentException(s"Not a boolean expression: $sth")
+        throw new ParsingException(s"Not a boolean expression: $sth")
 
   // set expressions
   val inSetFactor: P[Term] =
@@ -168,6 +171,39 @@ object Parser:
       (body) => TDerived(body)
     )
 
+  // interactions
+  val typeParam: P[List[Type]] =
+    P.char('[') *> P.defer0(typeName.repSep0(P.char(',').surroundedBy(ws))) <* P
+      .char(']')
+
+  val interaction: P[TInteraction] =
+    (P.string("Interaction") ~ ws *> typeParam ~ (ws *> typeParam))
+      .map((r, a) => TInteraction(reactiveTypes = r, argumentTypes = a))
+
+  // interaction enrichments
+  val enrichmentKeywords = List("requires", "ensures", "executes")
+  val interactionEnr: P[TInEn] =
+    ((interaction | _var).soft ~
+      ((((wsOrNl.with1.soft ~ P.char('.')).soft *>
+        P.stringIn(enrichmentKeywords)) <*
+        ws ~ P.char('{') ~ wsOrNl) ~ P.defer(term) <*
+        (wsOrNl ~ P.char('}'))).rep).map((root, enrichments) =>
+      evalEnrichments(root, enrichments.toList)
+    )
+
+  @tailrec
+  def evalEnrichments(s: (Term, List[(String, Term)])): TInEn =
+    s match
+      case (parent: TInEn, Nil) => parent
+      case (parent, (kw, inner) :: rest) =>
+        kw match
+          case "requires" => evalEnrichments(TReq(parent, inner), rest)
+          case "ensures"  => evalEnrichments(TEns(parent, inner), rest)
+          case "executes" => evalEnrichments(TExec(parent, inner), rest)
+          case "modifies" => evalEnrichments(TMod(parent, inner), rest)
+      case _ =>
+        throw new ParsingException(s"Not a valid interaction modifier: $s")
+
   // bindings
   val bindable =
     P.defer(
@@ -187,26 +223,37 @@ object Parser:
   val fieldAcc: P[TFAcc] =
     P.defer(
       objFactor.soft ~
-        (P.char('.') *> id ~ (P.char('(') *> args <* (ws ~ P.char(')'))).?).rep
+        (wsOrNl.soft.with1 ~ P
+          .char('.') *> id ~ (P.char('(') *> args <* (ws ~ P.char(')'))).?).rep
     ).map((parent, rest) => evalFieldAcc(parent, rest.toList))
+  @tailrec
   def evalFieldAcc(s: (Term, List[(ID, Option[List[Term]])])): TFAcc =
     s match
       case (parent: TFAcc, Nil) => parent
-      case (parent, (field, args) :: Nil) =>
-        TFAcc(parent = parent, field = field, args = args.getOrElse(Seq()))
       case (parent, (field, args) :: rest) =>
         evalFieldAcc(
           TFAcc(parent = parent, field = field, args = args.getOrElse(Seq())),
           rest
         )
       case _ =>
-        throw new IllegalArgumentException(s"Not a valid field access: $s")
+        throw new ParsingException(s"Not a valid field access: $s")
 
   // functions
   val functionCall: P[TFunC] = (id.soft ~ (P.char('(') *> args) <* P.char(')'))
     .map { (id, arg) =>
       TFunC(name = id, args = arg)
     }
+
+  private val lambdaVars: P[NonEmptyList[TVar]] =
+    (P.char('(') ~ ws *> _var.repSep(ws ~ P.char(',') ~ ws) <* P.char(')')) |
+      _var.map(NonEmptyList.one(_))
+  val lambdaFun: P[TArrow] =
+    ((lambdaVars.soft <* (wsOrNl.soft ~ P.string("=>"))).rep ~ P.defer(term))
+      .map((args, r) => rewriteLambda(args.toList, r))
+  def rewriteLambda(params: List[NonEmptyList[TVar]], right: Term): TArrow =
+    (params, right) match
+      case (Nil, r: TArrow) => r
+      case ()
 
   // type aliases
   val typeAlias: P[TTypeAl] =
@@ -216,8 +263,7 @@ object Parser:
   // programs are sequences of terms
   val term: P[Term] =
     P.defer(
-      fieldAcc | typeAlias | reactive | binding | functionCall | booleanExpr | arithmExpr | number.backtrack | _var
+      typeAlias | binding | reactive | functionCall | fieldAcc | interactionEnr | interaction | booleanExpr | arithmExpr | number.backtrack | _var
     )
-  val wsOrNl = (wsp | lf).rep0
   val prog: P[NonEmptyList[Term]] =
     term.repSep(wsOrNl).surroundedBy(wsOrNl) <* P.end

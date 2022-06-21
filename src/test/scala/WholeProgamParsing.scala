@@ -22,7 +22,7 @@ object WholeProgramParsing extends SimpleTestSuite:
       |5 + 24 * 10 > 0 ==> true
       |""".stripMargin
 
-    Parser.prog.parseAll(prog)
+    assert(Parser.prog.parseAll(prog).isRight)
   }
 
   test("calendar new") {
