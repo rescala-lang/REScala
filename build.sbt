@@ -90,7 +90,7 @@ lazy val replication = crossProject(JVMPlatform, JSPlatform).crossType(CrossType
       "org.conscrypt"          % "conscrypt-openjdk-uber" % "2.5.2",
     ),
     libraryDependencies ++= {
-      val jettyVersion = "11.0.9"
+      val jettyVersion = "11.0.10"
       Seq(
         "org.eclipse.jetty"           % "jetty-server"           % jettyVersion,
         "org.eclipse.jetty.websocket" % "websocket-jetty-api"    % jettyVersion,

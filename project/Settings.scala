@@ -8,12 +8,11 @@ import sbt._
 import Dependencies.{Versions => V}
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.jsEnv
 
-
 object Settings {
 
   val commonCrossBuildVersions = crossScalaVersions := Seq(V.scala211, V.scala212, V.scala213, V.scala3)
 
-  val optionsOverride = tpolecatScalacOptions ~= {opts =>
+  val optionsOverride = tpolecatScalacOptions ~= { opts =>
     // unused patvars are nice for documentation purposes
     opts -- Set(ScalacOptions.warnUnusedPatVars, ScalacOptions.privateWarnUnusedPatVars)
   }
@@ -39,7 +38,6 @@ object Settings {
     scalacOptions ++= settingsFor(scalaVersion.value)
   )
 
-
   def `is 2.11`(scalaVersion: String): Boolean =
     CrossVersion.partialVersion(scalaVersion).contains((2, 11))
   def `is 2.13`(scalaVersion: String): Boolean =
@@ -50,9 +48,8 @@ object Settings {
   def settingsFor(version: String) =
     version match {
       case a if a.startsWith("2.13") => List("-Ytasty-reader")
-      case other => Nil
+      case other                     => Nil
     }
-
 
   val safeInit = scalacOptions += "-Ysafe-init"
   val dottyMigration = List(
