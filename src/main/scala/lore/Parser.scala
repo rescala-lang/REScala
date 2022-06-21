@@ -216,7 +216,7 @@ object Parser:
   // programs are sequences of terms
   val term: P[Term] =
     P.defer(
-      fieldAcc | functionCall | typeAlias | reactive | binding | booleanExpr | arithmExpr | number.backtrack | _var
+      fieldAcc | typeAlias | reactive | binding | functionCall | booleanExpr | arithmExpr | number.backtrack | _var
     )
   val wsOrNl = (wsp | lf).rep0
   val prog: P[NonEmptyList[Term]] =
