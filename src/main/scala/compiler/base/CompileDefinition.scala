@@ -2,10 +2,11 @@ package compiler.base
 
 import clangast.given
 import clangast.decl.*
+import clangast.expr.{CFalseLiteral, CTrueLiteral}
 import clangast.stmt.*
 import compiler.context.{FunctionDeclTC, TranslationContext, ValueDeclTC}
 import compiler.CompilerCascade
-import compiler.base.CompileDataStructure.retain
+import compiler.base.CompileDataStructure.{release, retain}
 
 import scala.quoted.*
 
@@ -26,16 +27,53 @@ object CompileDefinition extends DefinitionPC {
   
       val DefDef(defName, _, returnTpt, rhs) = defDef
   
-      val params = defDef.termParamss.flatMap(_.params)
+      val params: List[ValDef] = defDef.termParamss.flatMap(_.params)
   
-      val compiledParams = params.map(cascade.dispatch(_.compileValDefToCParmVarDecl))
+      val compiledParams: List[CParmVarDecl] = params.map(cascade.dispatch(_.compileValDefToCParmVarDecl))
+
+      val returnType = cascade.dispatch(_.compileTypeRepr)(returnTpt.tpe)
+
+      val (retainParams, releaseParams): (List[CStmt], List[CStmt]) = (params zip compiledParams).collect {
+        case (p, cp) if cascade.dispatch(_.usesRefCount)(p.tpt.tpe) =>
+          (CExprStmt(retain(cp.ref, p.tpt.tpe)), release(cp.ref, p.tpt.tpe, CFalseLiteral).get)
+      }.unzip
   
-      val body = rhs.map { (t: Term) =>
+      val plainBody: Option[CCompoundStmt] = rhs.map { (t: Term) =>
         t match
           case block: Block => cascade.dispatch(_.compileBlockToFunctionBody)(block)
           case Return(expr, _) => CCompoundStmt(List(CReturnStmt(Some(cascade.dispatch(_.compileTermToCExpr)(expr)))))
           case term if term.tpe =:= TypeRepr.of[Unit] => CCompoundStmt(List(cascade.dispatch(_.compileTermToCStmt)(term)))
-          case term => CCompoundStmt(List(CReturnStmt(Some(cascade.dispatch(_.compileTermToCExpr)(term)))))
+          case _ => CCompoundStmt(List(CReturnStmt(Some(cascade.dispatch(_.compileTermToCExpr)(t)))))
+      }
+
+      val body = plainBody.map { ccStmt =>
+        val releaseLocalVars = CompileDataStructure.releaseLocalVars(ccStmt.body)
+        val resUsesRefCount = cascade.dispatch(_.usesRefCount)(returnTpt.tpe)
+
+        val (body, retainRes, releaseRes, returnRes) = ccStmt.body.last match {
+          case CReturnStmt(Some(retVal)) if releaseParams.length + releaseLocalVars.length > 0 && resUsesRefCount =>
+            val resDecl = CVarDecl("f_res", returnType, Some(retain(retVal, returnTpt.tpe)))
+            (
+              ccStmt.body.init,
+              Some[CStmt](resDecl),
+              release(resDecl.ref, returnTpt.tpe, CTrueLiteral),
+              Some(CReturnStmt(Some(resDecl.ref)))
+            )
+          case ret: CReturnStmt =>
+            (ccStmt.body.init, None, None, Some(ret))
+          case _ =>
+            (ccStmt.body, None, None, None)
+        }
+
+        CCompoundStmt(
+          retainParams ++
+            body ++
+            retainRes ++
+            releaseLocalVars ++
+            releaseParams ++
+            releaseRes ++
+            returnRes
+        )
       }
 
       val pos = defDef.pos
@@ -43,7 +81,7 @@ object CompileDefinition extends DefinitionPC {
   
       val cname = if defName.equals("$anonfun") then inferredName else defName
   
-      val decl = CFunctionDecl(cname, compiledParams, cascade.dispatch(_.compileTypeRepr)(returnTpt.tpe), body)
+      val decl = CFunctionDecl(cname, compiledParams, returnType, body)
   
       ctx.nameToFunctionDecl.put(cname, decl)
   
@@ -60,6 +98,9 @@ object CompileDefinition extends DefinitionPC {
       {
         case ValDef(name, tpt, rhs) =>
           val init = rhs.map(cascade.dispatch(_.compileTermToCExpr)).map(retain(_, tpt.tpe))
+
+          // Make sure that the release function for this type is in context when it has to be released
+          cascade.dispatchLifted(_.compileRelease)(tpt.tpe)
 
           val decl = CVarDecl(name, cascade.dispatch(_.compileTypeRepr)(tpt.tpe), init)
 

@@ -107,8 +107,33 @@ object CompileTerm extends TermPC {
     }
 
   override def compileBlockToCStmtExpr(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
-    PartialFunction[quotes.reflect.Block, CStmtExpr] =
-      PartialFunction.fromFunction(cascade.dispatch(_.compileBlockToCCompoundStmt).andThen(CStmtExpr.apply))
+    PartialFunction[quotes.reflect.Block, CStmtExpr] = {
+    import quotes.reflect.*
+
+    {
+      case Block(statements, expr) =>
+        val compiledStatements = statements.map(cascade.dispatch(_.compileStatementToCStmt))
+
+        val releaseLocalVars = CompileDataStructure.releaseLocalVars(compiledStatements)
+
+        val stmtList: List[CStmt] = expr.match {
+          case Literal(UnitConstant()) => compiledStatements ++ releaseLocalVars
+          case _ if cascade.dispatch(_.usesRefCount)(expr.tpe) && releaseLocalVars.nonEmpty =>
+            val blockResDecl = CVarDecl(
+              "block_res",
+              cascade.dispatch(_.compileTypeRepr)(expr.tpe),
+              Some(retain(cascade.dispatch(_.compileTermToCExpr)(expr), expr.tpe))
+            )
+            compiledStatements ++
+              List[CStmt](blockResDecl) ++
+              releaseLocalVars ++
+              List(release(blockResDecl.ref, expr.tpe, CTrueLiteral).get, blockResDecl.ref)
+          case _ => compiledStatements.appended(cascade.dispatch(_.compileTermToCExpr)(expr))
+        }
+
+        CStmtExpr(CCompoundStmt(stmtList))
+    }
+  }
 
   override def compileBlockToCCompoundStmt(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.Block, CCompoundStmt] = {
@@ -123,7 +148,9 @@ object CompileTerm extends TermPC {
             case _ => compiledStatements.appended(cascade.dispatch(_.compileTermToCStmt)(expr))
           }
 
-          CCompoundStmt(stmtList)
+          val releaseLocalVars = CompileDataStructure.releaseLocalVars(stmtList)
+
+          CCompoundStmt(stmtList ++ releaseLocalVars)
       }
     }
 

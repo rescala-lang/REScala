@@ -1,9 +1,10 @@
 package compiler.base
 
 import clangast.given
-import clangast.decl.CFunctionDecl
-import clangast.expr.{CCallExpr, CExpr}
-import clangast.stmt.CStmt
+import clangast.decl.{CFunctionDecl, CVarDecl}
+import clangast.expr.{CCallExpr, CExpr, CFalseLiteral}
+import clangast.stmt.{CDeclStmt, CStmt}
+import clangast.types.{CQualType, CRecordType}
 import compiler.{CompilerCascade, PartialCompiler}
 import compiler.context.TranslationContext
 
@@ -23,4 +24,20 @@ object CompileDataStructure extends DataStructurePC {
     cascade.dispatchLifted(_.compileRelease)(tpe).map { f =>
       CCallExpr(f.ref, List(expr, keepWithZero))
     }
+
+  def release(varDecl: CVarDecl, keepWithZero: CExpr)(using ctx: TranslationContext): Option[CStmt] =
+    varDecl.declaredType match {
+      case CQualType(CRecordType(declName), _) =>
+        val funName = "release_" + declName
+        ctx.valueDeclList.find {
+          case CFunctionDecl(`funName`, _, _, _, _) => true
+          case _ => false
+        }.map(f => CCallExpr(f.ref, List(varDecl.ref, keepWithZero)))
+      case _ => None
+    }
+
+  def releaseLocalVars(stmts: List[CStmt])(using TranslationContext): List[CStmt] = stmts.flatMap {
+    case CDeclStmt(varDecl: CVarDecl) => release(varDecl, CFalseLiteral)
+    case _ => None
+  }
 }

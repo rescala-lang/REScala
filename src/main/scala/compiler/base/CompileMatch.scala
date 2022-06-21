@@ -77,13 +77,17 @@ object CompileMatch extends MatchPC {
           )
 
           def convertLastToAssign(stmts: List[CStmt]): List[CStmt] = {
-            stmts.last match {
+            val (body, releases) = stmts.span {
+              case CExprStmt(CCallExpr(CDeclRefExpr(funName), _)) if funName.startsWith("release_") => false
+              case _ => true
+            }
+            body.last match {
               case CExprStmt(expr) =>
                 val assign = CExprStmt(CAssignmentExpr(
                   resDecl.ref,
                   retain(expr, matchTerm.tpe)
                 ))
-                stmts.init.appended(assign)
+                body.init.appended(assign) ++ releases
             }
           }
 
