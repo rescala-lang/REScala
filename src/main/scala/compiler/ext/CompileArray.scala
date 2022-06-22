@@ -117,7 +117,7 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
     PartialFunction[(quotes.reflect.Tree, CExpr, quotes.reflect.TypeRepr), (Option[CExpr], List[CVarDecl])] =
       ensureCtx[RecordDeclTC](compilePatternImpl)
 
-  def compileEqualsImpl(using Quotes)(using RecordDeclTC, CompilerCascade):
+  private def compileEqualsImpl(using Quotes)(using RecordDeclTC, CompilerCascade):
     PartialFunction[(CExpr, quotes.reflect.TypeRepr, CExpr, quotes.reflect.TypeRepr), CExpr] = {
       import quotes.reflect.*
 
@@ -140,7 +140,7 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
   
       {
         case tpe if tpe <:< TypeRepr.of[Array[?]] =>
-          getArrayRecordDecl(tpe).getTypeForDecl
+          getRecordDecl(tpe).getTypeForDecl
       }
     }
 
@@ -156,6 +156,22 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
       }
     }
 
+  override def compileTypeToCRecordDecl(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CRecordDecl] = {
+      import quotes.reflect.*
+
+      {
+        case tpe if tpe <:< TypeRepr.of[Array[?]] =>
+          val typeArgs(List(elemType)) = tpe
+
+          val dataFieldDecl = CFieldDecl(dataField, CPointerType(cascade.dispatch(_.compileTypeRepr)(elemType)))
+          val lengthFieldDecl = CFieldDecl(lengthField, CIntegerType)
+          val refCountFieldDecl = CFieldDecl(refCountField, CPointerType(CIntegerType))
+
+          CRecordDecl("Array_" + cascade.dispatch(_.typeName)(elemType), List(dataFieldDecl, lengthFieldDecl, refCountFieldDecl))
+      }
+    }
+
   override def usesRefCount(using Quotes)(using TranslationContext, CompilerCascade):
     PartialFunction[quotes.reflect.TypeRepr, Boolean] = {
       import quotes.reflect.*
@@ -165,31 +181,49 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
       }
     }
 
-  private def compileRetainImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
-    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = {
+  private def compileFreeImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+    PartialFunction[(CExpr, quotes.reflect.TypeRepr), CCompoundStmt] = {
       import quotes.reflect.*
 
       {
-        case tpe if tpe <:< TypeRepr.of[Array[?]] => getArrayRetain(tpe)
+        case (expr, tpe) if tpe <:< TypeRepr.of[Array[?]] =>
+          val typeArgs(List(elemType)) = tpe.widen
+
+          val propagateRelease = cascade.dispatch(_.usesRefCount)(elemType)
+
+          val freeThis: List[CStmt] = List(
+            CCallExpr(StdLibH.free.ref, List(CMemberExpr(expr, refCountField))),
+            CCallExpr(StdLibH.free.ref, List(CMemberExpr(expr, dataField)))
+          )
+
+          if propagateRelease then
+            val iter = CVarDecl("i", CIntegerType, Some(0.lit))
+
+            val loop = CForStmt(
+              Some(iter),
+              Some(CLessThanExpr(iter.ref, CMemberExpr(expr, lengthField))),
+              Some(CIncExpr(iter.ref)),
+              CCompoundStmt(List(
+                release(
+                  CArraySubscriptExpr(
+                    CMemberExpr(expr, dataField),
+                    iter.ref
+                  ),
+                  elemType,
+                  CFalseLiteral
+                ).get
+              ))
+            )
+
+            CCompoundStmt(loop :: freeThis)
+          else CCompoundStmt(freeThis)
       }
     }
 
-  override def compileRetain(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = ensureCtx[RecordDeclTC](compileRetainImpl)
+  override def compileFree(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[(CExpr, quotes.reflect.TypeRepr), CCompoundStmt] = ensureCtx[RecordDeclTC](compileFreeImpl)
 
-  private def compileReleaseImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
-    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = {
-      import quotes.reflect.*
-
-      {
-        case tpe if tpe <:< TypeRepr.of[Array[?]] => getArrayRelease(tpe)
-      }
-    }
-
-  override def compileRelease(using Quotes)(using TranslationContext, CompilerCascade):
-    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = ensureCtx[RecordDeclTC](compileReleaseImpl)
-
-  def compilePrintImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+  private def compilePrintImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
     PartialFunction[(CExpr, quotes.reflect.TypeRepr), CStmt] = {
       import quotes.reflect.*
 
@@ -206,22 +240,6 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
   private val lengthField: String = "length"
   private val refCountField: String = "refCount"
 
-  private def getArrayRecordDecl(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CRecordDecl = {
-    ctx.nameToRecordDecl.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe), compileArrayTypeToCRecordDecl(tpe))
-  }
-
-  private def compileArrayTypeToCRecordDecl(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: TranslationContext, cascade: CompilerCascade): CRecordDecl = {
-    import quotes.reflect.*
-
-    val typeArgs(List(elemType)) = tpe
-
-    val dataFieldDecl = CFieldDecl(dataField, CPointerType(cascade.dispatch(_.compileTypeRepr)(elemType)))
-    val lengthFieldDecl = CFieldDecl(lengthField, CIntegerType)
-    val refCountFieldDecl = CFieldDecl(refCountField, CPointerType(CIntegerType))
-
-    CRecordDecl("Array_" + cascade.dispatch(_.typeName)(elemType), List(dataFieldDecl, lengthFieldDecl, refCountFieldDecl))
-  }
-
   private def arrayApply(using Quotes): PartialFunction[quotes.reflect.Apply, List[quotes.reflect.Term]] = apply => {
     import quotes.reflect.*
 
@@ -234,8 +252,6 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
   val CREATE = "CREATE"
   val FILL = "FILL"
   val PRINT = "PRINT"
-  val RETAIN = "RETAIN"
-  val RELEASE = "RELEASE"
 
   private def getArrayCreator(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
     ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> CREATE, buildArrayCreator(tpe))
@@ -244,7 +260,7 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
   private def buildArrayCreator(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
     import quotes.reflect.*
 
-    val recordDecl = getArrayRecordDecl(tpe)
+    val recordDecl = getRecordDecl(tpe)
     val typeArgs(List(elemType)) = tpe.widen
 
     val name = "create_" + recordDecl.name
@@ -269,15 +285,7 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
             CPointerType(elemCType)
           ),
           lengthField -> lengthParam.ref,
-          refCountField -> CCastExpr(
-            CCallExpr(
-              StdLibH.malloc.ref,
-              List(
-                CSizeofExpr(Left(CIntegerType))
-              )
-            ),
-            CPointerType(CIntegerType)
-          )
+          allocRefCount(tpe).get
         )))
       )
 
@@ -334,7 +342,7 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
   }
 
   private def buildArrayFill(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
-    val recordDecl = getArrayRecordDecl(tpe)
+    val recordDecl = getRecordDecl(tpe)
     val CFieldDecl(_, CQualType(CPointerType(elemCType), _)) = recordDecl.getField(dataField)
 
     val typeArgs(List(elemType)) = tpe.widen
@@ -393,87 +401,6 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
     CFunctionDecl(name, List(nParam, elemParam), recordDecl.getTypeForDecl, Some(body))
   }
 
-  private def getArrayRetain(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
-    ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> RETAIN, buildArrayRetain(tpe))
-  }
-
-  private def buildArrayRetain(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
-    import quotes.reflect.*
-
-    val recordDecl = getArrayRecordDecl(tpe)
-
-    val name = "retain_" + recordDecl.name
-
-    val arrParam = CParmVarDecl("arr", recordDecl.getTypeForDecl)
-
-    val body = CCompoundStmt(List(
-      CIncExpr(CParenExpr(CDerefExpr(CMemberExpr(arrParam.ref, refCountField)))),
-      CReturnStmt(Some(arrParam.ref))
-    ))
-
-    CFunctionDecl(name, List(arrParam), recordDecl.getTypeForDecl, Some(body))
-  }
-
-  private def getArrayRelease(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
-    ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> RELEASE, buildArrayRelease(tpe))
-  }
-
-  private def buildArrayRelease(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
-    import quotes.reflect.*
-
-    val recordDecl = getArrayRecordDecl(tpe)
-    val typeArgs(List(elemType)) = tpe.widen
-
-    val name = "release_" + recordDecl.name
-
-    val arrParam = CParmVarDecl("arr", recordDecl.getTypeForDecl)
-    val keepWithZero = CParmVarDecl("keep_with_zero", StdBoolH.bool)
-
-    val propagateRelease = cascade.dispatch(_.usesRefCount)(elemType)
-
-    val thenPart = {
-      val freeThis: List[CStmt] = List(
-        CCallExpr(StdLibH.free.ref, List(CMemberExpr(arrParam.ref, refCountField))),
-        CCallExpr(StdLibH.free.ref, List(CMemberExpr(arrParam.ref, dataField)))
-      )
-
-      if propagateRelease then
-        val iter = CVarDecl("i", CIntegerType, Some(0.lit))
-
-        val loop = CForStmt(
-          Some(iter),
-          Some(CLessThanExpr(iter.ref, CMemberExpr(arrParam.ref, lengthField))),
-          Some(CIncExpr(iter.ref)),
-          CCompoundStmt(List(
-            release(
-              CArraySubscriptExpr(
-                CMemberExpr(arrParam.ref, dataField),
-                iter.ref
-              ),
-              elemType,
-              CFalseLiteral
-            ).get
-          ))
-        )
-
-        loop :: freeThis
-      else freeThis
-    }
-
-    val body = CCompoundStmt(List(
-      CDecExpr(CParenExpr(CDerefExpr(CMemberExpr(arrParam.ref, refCountField)))),
-      CIfStmt(
-        CAndExpr(
-          CLessEqualsExpr(CDerefExpr(CMemberExpr(arrParam.ref, refCountField)), 0.lit),
-          CNotExpr(keepWithZero.ref)
-        ),
-        CCompoundStmt(thenPart)
-      )
-    ))
-
-    CFunctionDecl(name, List(arrParam, keepWithZero), recordDecl.getTypeForDecl, Some(body))
-  }
-
   private def getArrayPrinter(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
     ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> PRINT, buildArrayPrinter(tpe))
   }
@@ -481,7 +408,7 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
   private def buildArrayPrinter(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
     import quotes.reflect.*
 
-    val recordDecl = getArrayRecordDecl(tpe)
+    val recordDecl = getRecordDecl(tpe)
     val typeArgs(List(elemType)) = tpe.widen
 
     val name = "print_" + recordDecl.name
