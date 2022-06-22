@@ -107,6 +107,17 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
     case _ => None
   }
 
+  private def usesRefCount(tpe: WithContext[CType]): Boolean = tpe.node match {
+    case CRecordType(declName) =>
+      val releaseFunName = "release_" + declName
+
+      tpe.valueDecls.exists {
+        case CFunctionDecl(`releaseFunName`, _, _, _, _) => true
+        case _ => false
+      }
+    case _ => false
+  }
+
   private val startup: CFunctionDecl =
     CFunctionDecl(
       "reactifiStartup",
@@ -136,6 +147,12 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
     case r@Map2(_, _, cType, _) => r -> CVarDecl(r.valueName, cType.node)
     case r@Filter(_, _) => r -> CVarDecl(r.valueName, CBoolType)
     case r@Or(_, _, cType) => r -> CVarDecl(r.valueName, cType.node)
+  })
+
+  private val wasAllocatedVariables: Map[ReSource, CVarDecl] = Map.from(allNodes.collect {
+    case r@Map1(_, cType, _) if usesRefCount(cType) => r -> CVarDecl(r.valueName + "_allocated", CBoolType, Some(CFalseLiteral))
+    case r@Map2(_, _, cType, _) if usesRefCount(cType) => r -> CVarDecl(r.valueName + "_allocated", CBoolType, Some(CFalseLiteral))
+    case r@Or(_, _, cType) if usesRefCount(cType) => r -> CVarDecl(r.valueName + "_allocated", CBoolType, Some(CFalseLiteral))
   })
 
   private val updateConditions: Map[ReSource, UpdateCondition] = {
@@ -172,40 +189,42 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
     val condition = updateConditions(reSources.head)
     val (sameCond, otherCond) = reSources.span { r => updateConditions(r) == condition }
 
-    def updateAssignment(target: CExpr, declaredType: WithContext[CType], rhs: CExpr, release: Boolean = false): CStmt =
-      releaseRecordStmt(target, declaredType) match {
+    def updateAssignment(reSource: ReSource, declaredType: WithContext[CType], rhs: CExpr, release: Boolean = false): List[CStmt] =
+      val tempDecl = CVarDecl("temp", declaredType.node, Some(valueRef(reSource)))
+      (releaseRecordStmt(tempDecl.ref, declaredType) match {
         case Some(releaseStmt) if release =>
-          val tempDecl = CVarDecl("temp", declaredType.node, Some(target))
           CCompoundStmt(List(
             tempDecl,
             CAssignmentExpr(
-              target,
+              valueRef(reSource),
               retainRecordExpr(rhs, declaredType)
             ),
             releaseStmt
           ))
         case _ =>
           CAssignmentExpr(
-            target,
+            valueRef(reSource),
             retainRecordExpr(rhs, declaredType)
           )
-      }
+      }) :: wasAllocatedVariables.get(reSource).map { allocated =>
+        CExprStmt(CAssignmentExpr(allocated.ref, CTrueLiteral))
+      }.toList
 
     val updates = sameCond.flatMap {
       case Map1(input, _, f) if f.node.returnType == CQualType(CVoidType) =>
         List(CExprStmt(CCallExpr(f.node.ref, List(valueRef(input)))))
       case r@Map1(input, cType, f) =>
-        List(updateAssignment(
-          valueRef(r),
+        updateAssignment(
+          r,
           cType,
           CCallExpr(f.node.ref, List(valueRef(input)))
-        ))
+        )
       case r@Map2(left, right, cType, f) =>
-        List(updateAssignment(
-          valueRef(r),
+        updateAssignment(
+          r,
           cType,
           CCallExpr(f.node.ref, List(valueRef(left), valueRef(right)))
-        ))
+        )
       case r@Filter(input, f) =>
         List[CStmt](CAssignmentExpr(
           localVariables(r).ref,
@@ -213,34 +232,34 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
         ))
       case Snapshot(_, _) => List()
       case r@Or(left, right, cType) =>
-        List(updateAssignment(
-          valueRef(r),
+        updateAssignment(
+          r,
           cType,
           CConditionalOperator(
             updateConditions(left).compile,
             valueRef(left),
             valueRef(right)
           )
-        ))
+        )
       case r@Fold(_, cType, lines) => lines match {
         case List(FLine(input, f)) =>
-          List(updateAssignment(
-            valueRef(r),
+          updateAssignment(
+            r,
             cType,
             CCallExpr(f.node.ref, List(valueRef(r), valueRef(input))),
             true
-          ))
+          )
         case _ =>
           lines.map {
             case FLine(input, f) =>
               CIfStmt(
                 updateConditions(input).compile,
-                updateAssignment(
-                  valueRef(r),
+                CCompoundStmt(updateAssignment(
+                  r,
                   cType,
                   CCallExpr(f.node.ref, List(valueRef(r), valueRef(input))),
                   true
-                )
+                ))
               )
           }
       }
@@ -256,13 +275,17 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
     val released = toRelease.filterNot(stillUsed.contains)
 
     val releaseCode = released.flatMap { resource =>
-      val cType = resource match {
-        case Map1(_, cType, _) => cType
-        case Map2(_, _, cType, _) => cType
-        case Or(_, _, cType) => cType
-      }
+      wasAllocatedVariables.get(resource) flatMap { allocated =>
+        val cType = resource match {
+          case Map1(_, cType, _) => cType
+          case Map2(_, _, cType, _) => cType
+          case Or(_, _, cType) => cType
+        }
 
-      releaseRecordStmt(valueRef(resource), cType)
+        releaseRecordStmt(valueRef(resource), cType) map { releaseStmt =>
+          CIfStmt(allocated.ref, releaseStmt)
+        }
+      }
     }
 
     (sameCondCode :: releaseCode.toList) ++ compileUpdates(otherCond, toRelease.diff(released))
@@ -271,7 +294,8 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
   private val updateFunction: CFunctionDecl = {
     val params = sourcesTopological.flatMap { s => List(sourceValueParameters(s), sourceValidParameters(s)) }
 
-    val localVarDecls = topological.flatMap(localVariables.get).map(CDeclStmt.apply)
+    val localVarDecls = topological.flatMap(r => localVariables.get(r).toList ++ wasAllocatedVariables.get(r).toList).map(CDeclStmt.apply)
+
     val toRelease: Set[ReSource] = localVariables.keySet.filter {
       case _: Filter[?] => false
       case _ => true
