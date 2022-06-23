@@ -29,9 +29,9 @@ class DotSetTest extends munit.ScalaCheckSuite {
     val c2 = Set(d1, d2) // d1 is already deleted in the second causal context
 
     val mergedStore = Lattice.merge(
-      Dotted(s1, Dots.fromSet(c1)),
-      Dotted(s2, Dots.fromSet(c2))
-    ).store
+      Dotted(DotSet.from(s1), Dots.from(c1)),
+      Dotted(DotSet.from(s2), Dots.from(c2))
+      ).store
 
     assert(!mergedStore.contains(d1))
     assert(mergedStore.contains(d2))
@@ -43,8 +43,8 @@ class DotSetTest extends munit.ScalaCheckSuite {
       val c2 = s2 ++ t2
 
       // commutativity
-      val m1 = Lattice.merge(Dotted(s1, Dots.fromSet(c1)), Dotted(s2, Dots.fromSet(c2)))
-      val m2 = Lattice.merge(Dotted(s2, Dots.fromSet(c2)), Dotted(s1, Dots.fromSet(c1)))
+      val m1 = Dotted(DotSet.from(s1), Dots.from(c1)) merge Dotted(DotSet.from(s2), Dots.from(c2))
+      val m2 = Dotted(DotSet.from(s2), Dots.from(c2)) merge Dotted(DotSet.from(s1), Dots.from(c1))
       assert(m1 == m2)
 
       // check if all elements were added to the new causal context
@@ -60,7 +60,7 @@ class DotSetTest extends munit.ScalaCheckSuite {
 
       // check that already deleted elements are not added again
       for (e <- deadElements) yield {
-        assert(!m1.store.contains(e))
+        assert(!m1.store.contains(e), s"$m1 ; $deadElements")
       }
 
       // check that the new store contains all new elements

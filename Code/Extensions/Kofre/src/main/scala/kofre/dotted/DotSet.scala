@@ -14,6 +14,8 @@ object DotSet {
 
   def empty: DotSet = DotSet(Dots.empty)
 
+  def from(it: IterableOnce[Dot]): DotSet = DotSet(Dots.from(it))
+
   given hasDots: HasDots[DotSet] with {
     override def dots(a: DotSet): Dots = a.repr
   }

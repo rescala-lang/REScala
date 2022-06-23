@@ -45,7 +45,7 @@ object AddWinsSet {
       val dm          = current.inner
       val cc          = context
       val nextCounter = cc.nextTime(replicaID)
-      val nextDots    = Dots.fromSet((nextCounter until nextCounter + elems.size).map(Dot(replicaID, _)))
+      val nextDots    = Dots.from((nextCounter until nextCounter + elems.size).map(Dot(replicaID, _)))
 
       val ccontextSet = elems.foldLeft(nextDots) {
         case (dots, e) => dm.get(e) match {

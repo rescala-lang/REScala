@@ -27,9 +27,9 @@ class DotsTest extends munit.ScalaCheckSuite {
   property("to/fromSet") {
     forAll { (ds: Set[Dot]) =>
       assert(
-        Dots.fromSet(ds).toSet == ds,
-        s"DietMapCContext.toSet and DietMapCContext.fromSet should be inverse operations, but ${Dots.fromSet(ds).toSet} does not equal $ds"
-      )
+        Dots.from(ds).toSet == ds,
+        s"DietMapCContext.toSet and DietMapCContext.from should be inverse operations, but ${Dots.from(ds).toSet} does not equal $ds"
+        )
     }
   }
 

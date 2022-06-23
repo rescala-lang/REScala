@@ -111,12 +111,12 @@ class DotFunTest extends munit.ScalaCheckSuite {
     type D = Dotted[DotFun[Set[Int]]]
 
     val dot = Dot("a", 0)
-    val cc  = Dots.fromSet(Set(dot))
+    val cc  = Dots.from(Set(dot))
 
     val data =
       Dotted[DotFun[Set[Int]]](DotFun(Map(dot -> Set(1, 2, 3))), cc)
     val dec: Iterable[D] = data.decomposed
-    val rec              = dec.reduceLeft(_ merged _)
+    val rec              = dec.reduceLeft(_ merge _)
 
     assertEquals(rec, data)
   }
@@ -147,7 +147,7 @@ class DotFunTest extends munit.ScalaCheckSuite {
           val contexts = decc.map(_.context)
           s"${cc.contains(Dot("c", 78))}, ${ccMerged.contains(Dot("c", 78))}, \n${contexts}\n${cc.rangeAt(
               "c"
-            )}\n${contexts.reduceLeft(_ merged _)}\n${decc}\n${decc.mkString("--", "\n--", "")}"
+            )}\n${contexts.reduceLeft(_ merge _)}\n${decc}\n${decc.mkString("--", "\n--", "")}"
         }
       )
     }

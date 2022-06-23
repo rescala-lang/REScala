@@ -96,7 +96,7 @@ object RCounterInterface {
 
     def reset()(using CausalMutationP): C = {
       deltaState(
-        cc = Dots.fromSet(current.keySet)
+        cc = Dots.from(current.keySet)
       ).mutator
     }
   }

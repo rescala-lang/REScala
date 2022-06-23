@@ -75,7 +75,7 @@ object DataGenerator {
 
   val genDietMapCContext: Gen[Dots] = for {
     ds <- genDotSet
-  } yield Dots.fromSet(ds)
+  } yield Dots.from(ds)
 
   implicit val arbDietMapCContext: Arbitrary[Dots] = Arbitrary(genDietMapCContext)
 

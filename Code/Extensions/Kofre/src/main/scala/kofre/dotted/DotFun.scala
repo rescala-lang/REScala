@@ -15,7 +15,7 @@ import scala.annotation.targetName
   * The delta CRDT paper calls this a DotFun
   */
 case class DotFun[A](repr: Map[Dot, A]) {
-  def dots: Dots = Dots.fromSet(repr.keySet)
+  def dots: Dots = Dots.from(repr.keySet)
   @targetName("add")
   def +(tup: (Dot, A)): DotFun[A] = DotFun(repr + tup)
   export repr.{+ as _, repr as _, *}
@@ -40,7 +40,7 @@ object DotFun {
   }
 
   given dotStore[V]: HasDots[DotFun[V]] with {
-    override def dots(dotStore: DotFun[V]): Dots = Dots.fromSet(dotStore.repr.keySet)
+    override def dots(dotStore: DotFun[V]): Dots = Dots.from(dotStore.repr.keySet)
   }
 
   /** DotFun is a dot store implementation that maps dots to values of a Lattice type. See [[interfaces.MVRegisterInterface]]

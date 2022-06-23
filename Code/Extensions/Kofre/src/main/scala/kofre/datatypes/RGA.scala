@@ -152,7 +152,7 @@ object RGA {
           deltaState[E].make(
             epoche = glistDelta,
             df = DotFun(dfDelta),
-            cc = Dots.fromSet(nextDots.toSet)
+            cc = Dots.from(nextDots.toSet)
           )
       }
     }.mutator
@@ -207,7 +207,7 @@ object RGA {
 
       deltaState[E].make(
         epoche = epoche.epocheWrite(golistPurged),
-        cc = Dots.fromSet(toRemove)
+        cc = Dots.from(toRemove)
       ).mutator
     }
 

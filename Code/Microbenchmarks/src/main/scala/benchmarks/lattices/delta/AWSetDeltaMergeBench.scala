@@ -27,7 +27,7 @@ class AWSetDeltaMergeBench {
 
   def makeCContext(replicaID: String): Dots = {
     val dots = (0L until size).map(Dot(replicaID, _)).toSet
-    Dots.fromSet(dots)
+    Dots.from(dots)
   }
 
   @Setup

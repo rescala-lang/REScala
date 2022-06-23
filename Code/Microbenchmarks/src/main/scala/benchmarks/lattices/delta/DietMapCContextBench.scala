@@ -25,15 +25,15 @@ class DietMapCContextBench {
   private def makeCContext(replicaID: String, mul: Long, off: Long, len: Long): Dots = {
     val ranges = Range.Long(0L, size, 1).map(i => Range.Long(i * mul + off, i * mul + len + off, 1))
     val dots   = ranges.flatten.map(Dot(replicaID, _)).toSet
-    Dots.fromSet(dots)
+    Dots.from(dots)
   }
 
   @Setup
   def setup(): Unit = {
     cca = makeCContext("a", 10, 0, 7)
     ccb = makeCContext("b", 10, 5, 7)
-    cca1 = cca.union(Dots.fromSet(Set(Dot("b", 5))))
-    ccaSingle = Dots.fromSet(Set(Dot("a", size + 10)))
+    cca1 = cca.union(Dots.from(Set(Dot("b", 5))))
+    ccaSingle = Dots.from(Set(Dot("a", size + 10)))
   }
 
   @Benchmark

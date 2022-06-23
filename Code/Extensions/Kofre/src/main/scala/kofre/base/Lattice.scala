@@ -25,8 +25,12 @@ trait Lattice[A] {
     override def lteq(left: B, right: B): Boolean = Lattice.this.lteq(from(left), from(right))
   }
 
-  extension (left: A) def <=(right: A): Boolean = lteq(left, right)
-  extension (left: A) def merged(right: A): A   = merge(left, right)
+  extension (left: A) {
+    /** Lattice order is derived from merge, but should be overridden for efficiency */
+    def <=(right: A): Boolean = this.merge(left, right) == right
+    @targetName("mergeInfix")
+    def merge(right: A): A = this.merge(left, right)
+  }
 }
 
 object Lattice {
@@ -47,7 +51,7 @@ object Lattice {
         case (false, true)  => Some(1)
     }
 
-    override def lteq(x: A, y: A): Boolean = Lattice[A].lteq(x, y)
+    override def lteq(x: A, y: A): Boolean = Lattice[A].<=(x)(y)
   }
 
   // /////////////// common instances below ///////////////
