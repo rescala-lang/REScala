@@ -198,8 +198,9 @@ object Parser:
   val args = P.defer0(term.repSep0(P.char(',') ~ ws))
   val objFactor = P.defer(interaction | functionCall | _var)
   val fieldAcc: P[TFAcc] =
-    P.defer(objFactor.soft ~ (round | P.defer(curly) | field).backtrack.rep)
-      .map((obj, calls) => evalFieldAcc(obj, calls.toList))
+    P.defer(
+      objFactor.soft ~ (round.backtrack | P.defer(curly).backtrack | field).rep
+    ).map((obj, calls) => evalFieldAcc(obj, calls.toList))
 
   enum callType:
     case round, curly, field
@@ -215,7 +216,8 @@ object Parser:
       (callType.curly, f, List(b))
     )
   val field =
-    (wsOrNl.with1 ~ P.char('.') *> id).map((callType.field, _, List[Term]()))
+    ((wsOrNl.with1.soft ~ P.char('.')) *> id)
+      .map((callType.field, _, List[Term]()))
   @tailrec
   def evalFieldAcc(s: (Term, List[(callType, String, List[Term])])): TFAcc =
     s match
