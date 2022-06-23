@@ -23,7 +23,7 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
 
       {
         case ValDef(name, tpt, Some(Ident("None"))) =>
-          val init = CCallExpr(getNoneCreator(tpt.tpe).ref, List())
+          val init = retain(CCallExpr(getNoneCreator(tpt.tpe).ref, List()), tpt.tpe)
           val decl = CVarDecl(name, cascade.dispatch(_.compileTypeRepr)(tpt.tpe), Some(init))
           ctx.nameToDecl.put(name, decl)
           decl
@@ -210,6 +210,19 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
   override def compileFree(using Quotes)(using TranslationContext, CompilerCascade):
     PartialFunction[(CExpr, quotes.reflect.TypeRepr), CCompoundStmt] = ensureCtx[RecordDeclTC](compileFreeImpl)
 
+  private def compileDeepCopyImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = {
+      import quotes.reflect.*
+
+      {
+        case tpe if tpe <:< TypeRepr.of[Option[?]] && cascade.dispatch(_.usesRefCount)(tpe) =>
+          getOptionDeepCopy(tpe)
+      }
+    }
+
+  override def compileDeepCopy(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = ensureCtx[RecordDeclTC](compileDeepCopyImpl)
+
   private def compilePrintImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
     PartialFunction[(CExpr, quotes.reflect.TypeRepr), CStmt] = {
       import quotes.reflect.*
@@ -345,6 +358,40 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
     val body = CCompoundStmt(List(CReturnStmt(Some(equalsExpr))))
 
     CFunctionDecl(name, List(paramLeft, paramRight), StdBoolH.bool, Some(body))
+  }
+
+  private def getOptionDeepCopy(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> DEEP_COPY, buildOptionDeepCopy(tpe))
+  }
+
+  private def buildOptionDeepCopy(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    import quotes.reflect.*
+
+    val recordDecl = getRecordDecl(tpe)
+    val typeArgs(List(wrappedType)) = tpe.widen
+
+    val name = "deepCopy_" + recordDecl.name
+
+    val optParam = CParmVarDecl("opt", recordDecl.getTypeForDecl)
+
+    val body = CCompoundStmt(List(
+      CIfStmt(
+        CMemberExpr(optParam.ref, definedField),
+        CReturnStmt(Some(CCallExpr(
+          getSomeCreator(tpe).ref,
+          List(CompileDataStructure.deepCopy(
+            CMemberExpr(optParam.ref, valField),
+            wrappedType
+          ))
+        ))),
+        Some(CReturnStmt(Some(CCallExpr(
+          getNoneCreator(tpe).ref,
+          List()
+        ))))
+      )
+    ))
+
+    CFunctionDecl(name, List(optParam), recordDecl.getTypeForDecl, Some(body))
   }
 
   private def getOptionPrinter(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {

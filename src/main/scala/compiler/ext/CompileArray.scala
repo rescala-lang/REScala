@@ -223,6 +223,19 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
   override def compileFree(using Quotes)(using TranslationContext, CompilerCascade):
     PartialFunction[(CExpr, quotes.reflect.TypeRepr), CCompoundStmt] = ensureCtx[RecordDeclTC](compileFreeImpl)
 
+  private def compileDeepCopyImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = {
+      import quotes.reflect.*
+
+      {
+        case tpe if tpe <:< TypeRepr.of[Array[?]] =>
+          getArrayDeepCopy(tpe)
+      }
+    }
+
+  override def compileDeepCopy(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = ensureCtx[RecordDeclTC](compileDeepCopyImpl)
+
   private def compilePrintImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
     PartialFunction[(CExpr, quotes.reflect.TypeRepr), CStmt] = {
       import quotes.reflect.*
@@ -367,7 +380,8 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
             ),
             CPointerType(elemCType)
           ),
-          lengthField -> nParam.ref
+          lengthField -> nParam.ref,
+          allocRefCount(tpe).get
         )))
       )
 
@@ -399,6 +413,74 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
     ))
 
     CFunctionDecl(name, List(nParam, elemParam), recordDecl.getTypeForDecl, Some(body))
+  }
+
+  private def getArrayDeepCopy(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> DEEP_COPY, buildArrayDeepCopy(tpe))
+  }
+
+  private def buildArrayDeepCopy(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    import quotes.reflect.*
+
+    val recordDecl = getRecordDecl(tpe)
+    val typeArgs(List(elemType)) = tpe.widen
+
+    val name = "deepCopy_" + recordDecl.name
+
+    val arrayParam = CParmVarDecl("arr", recordDecl.getTypeForDecl)
+    val lengthExpr = CMemberExpr(arrayParam.ref, lengthField)
+    val CQualType(CPointerType(elemCType), _) = recordDecl.getField(dataField).declaredType
+
+    val copyDecl =
+      CVarDecl(
+        "copy",
+        recordDecl.getTypeForDecl,
+        Some(CDesignatedInitExpr(List(
+          dataField -> CCastExpr(
+            CCallExpr(
+              StdLibH.calloc.ref,
+              List(
+                lengthExpr,
+                CSizeofExpr(Left(elemCType.unqualType))
+              )
+            ),
+            CPointerType(elemCType)
+          ),
+          lengthField -> lengthExpr,
+          allocRefCount(tpe).get
+        )))
+      )
+
+    val iter = CVarDecl("i", CIntegerType, Some(0.lit))
+
+    val loop = CForStmt(
+      Some(iter),
+      Some(CLessThanExpr(iter.ref, lengthExpr)),
+      Some(CIncExpr(iter.ref)),
+      CAssignmentExpr(
+        CArraySubscriptExpr(CMemberExpr(copyDecl.ref, dataField), iter.ref),
+        retain(
+          CompileDataStructure.deepCopy(
+            CArraySubscriptExpr(CMemberExpr(arrayParam.ref, dataField), iter.ref),
+            elemType
+          ),
+          elemType
+        )
+      )
+    )
+
+    val body = CCompoundStmt(List(
+      copyDecl,
+      loop,
+      CReturnStmt(Some(copyDecl.ref))
+    ))
+
+    CFunctionDecl(
+      name,
+      List(arrayParam),
+      recordDecl.getTypeForDecl,
+      Some(body),
+    )
   }
 
   private def getArrayPrinter(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {

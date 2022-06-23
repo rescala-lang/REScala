@@ -15,6 +15,10 @@ import scala.quoted.*
 trait DataStructurePC extends PartialCompiler {
   protected val refCountField = "refCount"
 
+  protected val RETAIN = "RETAIN"
+  protected val RELEASE = "RELEASE"
+  protected val DEEP_COPY = "DEEP_COPY"
+
   protected def getRecordDecl(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CRecordDecl = {
     ctx.nameToRecordDecl.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe), cascade.dispatch(_.compileTypeToCRecordDecl)(tpe))
   }
@@ -49,6 +53,9 @@ trait DataStructurePC extends PartialCompiler {
 
   def compileRelease(using Quotes)(using TranslationContext, CompilerCascade):
     PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = PartialFunction.empty
+  
+  def compileDeepCopy(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = PartialFunction.empty
 }
 
 extension (p: PartialCompiler) {
@@ -66,4 +73,7 @@ extension (p: PartialCompiler) {
 
   def compileRelease(using Quotes)(using TranslationContext, CompilerCascade):
     PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = PartialCompiler.ensurePC[DataStructurePC](p, _.compileRelease)
+
+  def compileDeepCopy(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = PartialCompiler.ensurePC[DataStructurePC](p, _.compileDeepCopy)
 }

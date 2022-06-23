@@ -15,6 +15,15 @@ import compiler.context.{RecordDeclTC, TranslationContext}
 import scala.quoted.*
 
 object CompileDataStructure extends DataStructurePC {
+  override def compileTypeToCRecordDecl(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CRecordDecl] = {
+      import quotes.reflect.*
+
+      {
+        case MethodType(_, _, tpe) => cascade.dispatch(_.compileTypeToCRecordDecl)(tpe)
+      }
+    }
+
   override def usesRefCount(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.TypeRepr, Boolean] = {
       import quotes.reflect.*
@@ -24,9 +33,6 @@ object CompileDataStructure extends DataStructurePC {
         case _ => false
       }
     }
-
-  private val RETAIN = "RETAIN"
-  private val RELEASE = "RELEASE"
 
   private def compileRetainImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = {
@@ -113,4 +119,10 @@ object CompileDataStructure extends DataStructurePC {
     case CDeclStmt(varDecl: CVarDecl) => release(varDecl, CFalseLiteral)
     case _ => None
   }
+
+  def deepCopy(using Quotes)(expr: CExpr, tpe: quotes.reflect.TypeRepr)(using ctx: TranslationContext, cascade: CompilerCascade): CExpr =
+    cascade.dispatchLifted(_.compileDeepCopy)(tpe) match {
+      case None => expr
+      case Some(f) => CCallExpr(f.ref, List(expr))
+    }
 }

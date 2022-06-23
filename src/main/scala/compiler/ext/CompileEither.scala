@@ -187,6 +187,19 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
   override def compileFree(using Quotes)(using TranslationContext, CompilerCascade):
     PartialFunction[(CExpr, quotes.reflect.TypeRepr), CCompoundStmt] = ensureCtx[RecordDeclTC](compileFreeImpl)
 
+  private def compileDeepCopyImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = {
+      import quotes.reflect.*
+
+      {
+        case tpe if tpe <:< TypeRepr.of[Either[?, ?]] && cascade.dispatch(_.usesRefCount)(tpe) =>
+          getEitherDeepCopy(tpe)
+      }
+    }
+
+  override def compileDeepCopy(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = ensureCtx[RecordDeclTC](compileDeepCopyImpl)
+
   private def compilePrintImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
     PartialFunction[(CExpr, quotes.reflect.TypeRepr), CStmt] = {
       import quotes.reflect.*
@@ -314,6 +327,49 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
     val body = CCompoundStmt(List(CReturnStmt(Some(equalsExpr))))
 
     CFunctionDecl(name, List(paramLeft, paramRight), StdBoolH.bool, Some(body))
+  }
+
+  private def getEitherDeepCopy(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> DEEP_COPY, buildEitherDeepCopy(tpe))
+  }
+
+  private def buildEitherDeepCopy(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    import quotes.reflect.*
+
+    val recordDecl = getRecordDecl(tpe)
+    val typeArgs(List(leftType, rightType)) = tpe.widen
+
+    val name = "deepCopy_" + recordDecl.name
+
+    val eitherParam = CParmVarDecl("either", recordDecl.getTypeForDecl)
+
+    val copyLeft =
+      CCallExpr(
+        getLeftCreator(tpe).ref,
+        List(CompileDataStructure.deepCopy(
+          CMemberExpr(eitherParam.ref, leftField),
+          leftType
+        ))
+      )
+
+    val copyRight =
+      CCallExpr(
+        getRightCreator(tpe).ref,
+        List(CompileDataStructure.deepCopy(
+          CMemberExpr(eitherParam.ref, rightField),
+          rightType
+        ))
+      )
+
+    val body = CCompoundStmt(List(
+      CIfStmt(
+        CMemberExpr(eitherParam.ref, isRightField),
+        CReturnStmt(Some(copyRight)),
+        Some(CReturnStmt(Some(copyLeft)))
+      )
+    ))
+
+    CFunctionDecl(name, List(eitherParam), recordDecl.getTypeForDecl, Some(body))
   }
 
   private def getEitherPrinter(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {

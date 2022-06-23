@@ -162,6 +162,19 @@ object CompileProduct extends SelectPC with ApplyPC with MatchPC with TypePC wit
   override def compileFree(using Quotes)(using TranslationContext, CompilerCascade):
     PartialFunction[(CExpr, quotes.reflect.TypeRepr), CCompoundStmt] = ensureCtx[RecordDeclTC](compileFreeImpl)
 
+  private def compileDeepCopyImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = {
+      import quotes.reflect.*
+
+      {
+        case tpe if tpe <:< TypeRepr.of[Product] && cascade.dispatch(_.usesRefCount)(tpe) =>
+          getProductDeepCopy(tpe)
+      }
+    }
+
+  override def compileDeepCopy(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = ensureCtx[RecordDeclTC](compileDeepCopyImpl)
+
   private def compilePrintImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
     PartialFunction[(CExpr, quotes.reflect.TypeRepr), CStmt] = {
       import quotes.reflect.*
@@ -258,6 +271,41 @@ object CompileProduct extends SelectPC with ApplyPC with MatchPC with TypePC wit
     val body = CCompoundStmt(List(CReturnStmt(Some(equalsExpr))))
 
     CFunctionDecl(name, parameters, StdBoolH.bool, Some(body))
+  }
+
+  private def getProductDeepCopy(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> DEEP_COPY, buildProductDeepCopy(tpe))
+  }
+
+  private def buildProductDeepCopy(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    import quotes.reflect.*
+
+    val recordDecl = getRecordDecl(tpe)
+
+    val name = "deepCopy_" + recordDecl.name
+    val productParam = CParmVarDecl("rec", recordDecl.getTypeForDecl)
+
+    val copy = CCallExpr(
+      getProductCreator(tpe).ref,
+      fieldSymbols(tpe) map { fs =>
+        val fieldType = tpe.memberType(fs)
+        CompileDataStructure.deepCopy(
+          CMemberExpr(productParam.ref, fs.name.strip()),
+          fieldType
+        )
+      }
+    )
+
+    val body = CCompoundStmt(List(
+      CReturnStmt(Some(copy))
+    ))
+
+    CFunctionDecl(
+      name,
+      List(productParam),
+      recordDecl.getTypeForDecl,
+      Some(body)
+    )
   }
 
   private def getProductPrinter(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
