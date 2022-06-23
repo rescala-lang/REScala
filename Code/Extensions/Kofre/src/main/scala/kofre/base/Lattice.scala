@@ -37,6 +37,11 @@ object Lattice {
   def apply[A](implicit ev: Lattice[A]): Lattice[A] = ev
   def merge[A: Lattice](left: A, right: A): A       = apply[A].merge(left, right)
 
+  /** Merge functions can throw away redundant information, if one constructs values directly (not by using operators)
+    * this could result in values that should be equal, but are not.
+    * Normalize fixes this. */
+  def normalize[A: Lattice](v: A): A = v merge v
+
   implicit class Operators[A: Lattice](left: A):
     infix def merge(right: A): A = Lattice[A].merge(left, right)
 

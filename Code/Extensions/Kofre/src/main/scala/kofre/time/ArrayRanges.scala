@@ -19,7 +19,7 @@ class ArrayRanges(val inner: Array[Time], val used: Int) {
     inner.iterator.take(used).hashCode()
   }
 
-  override def toString(): String = inner.iterator.take(used).grouped(2).map {
+  override def toString: String = inner.iterator.take(used).grouped(2).map {
     case (Seq(s, e)) =>
       val einc = e - 1
       if s == einc then s"$s" else s"$s:$einc"

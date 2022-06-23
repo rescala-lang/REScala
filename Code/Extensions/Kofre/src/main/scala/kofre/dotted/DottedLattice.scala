@@ -29,5 +29,8 @@ trait DottedLattice[A] extends Lattice[Dotted[A]] {
       left.context.merge(right.context)
     )
 
+  override def lteq(left: Dotted[A], right: Dotted[A]): Boolean =
+    if !(left.context <= right.context) then false
+    else super.lteq(left, right)
   extension (left: Dotted[A]) def dotmerge(right: Dotted[A]): A = mergePartial(left, right)
 }

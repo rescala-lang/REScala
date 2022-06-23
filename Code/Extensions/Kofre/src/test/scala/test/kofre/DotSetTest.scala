@@ -31,7 +31,7 @@ class DotSetTest extends munit.ScalaCheckSuite {
     val mergedStore = Lattice.merge(
       Dotted(DotSet.from(s1), Dots.from(c1)),
       Dotted(DotSet.from(s2), Dots.from(c2))
-      ).store
+    ).store
 
     assert(!mergedStore.contains(d1))
     assert(mergedStore.contains(d2))
@@ -103,25 +103,24 @@ class DotSetTest extends munit.ScalaCheckSuite {
   }
   property("leq") {
     forAll { (dsA: Dots, deletedA: Dots, dsB: Dots, deletedB: Dots) =>
-      val ccA = dsA union deletedA
-      val ccB = dsB union deletedB
+      val ccA        = dsA union deletedA
+      val ccB        = dsB union deletedB
+      val dottedSetA = Dotted(DotSet(dsA), ccA)
+      val dottedSetB = Dotted(DotSet(dsB), ccB)
 
       assert(
-        Dotted(dsA, ccA) <= Dotted(dsA, ccA),
+        dottedSetA <= dottedSetA,
         s"DotSet.leq should be reflexive, but returns false when applied to ($dsA, $ccA, $dsA, $ccA)"
       )
 
-      val Dotted(dsMerged, ccMerged) = DecomposeLattice[Dotted[Dots]].merge(
-        Dotted(dsA, ccA),
-        Dotted(dsB, ccB)
-      )
+      val dottedMerged @ Dotted(dsMerged, ccMerged) = dottedSetA merge dottedSetB
 
       assert(
-        Dotted(dsA, ccA) <= Dotted(dsMerged, ccMerged),
+        dottedSetA <= dottedMerged,
         s"The result of DotSet.merge should be larger than its lhs, but DotSet.leq returns false when applied to ($dsA, $ccA, $dsMerged, $ccMerged)"
       )
       assert(
-        Dotted(dsB, ccB) <= Dotted(dsMerged, ccMerged),
+        dottedSetB <= dottedMerged,
         s"The result of DotSet.merge should be larger than its rhs, but DotSet.leq returns false when applied to ($dsB, $ccB, $dsMerged, $ccMerged)"
       )
     }
@@ -131,11 +130,8 @@ class DotSetTest extends munit.ScalaCheckSuite {
     forAll { (ds: Dots, deleted: Dots) =>
       val cc = ds union deleted
 
-      val decomposed = Dotted(ds, cc).decomposed
-      val Dotted(dsMerged, ccMerged) = decomposed.foldLeft(Dotted(Dots.empty, Dots.empty)) {
-        case (Dotted(dsA, ccA), Dotted(dsB, ccB)) =>
-          DecomposeLattice[Dotted[Dots]].merge(Dotted(dsA, ccA), Dotted(dsB, ccB))
-      }
+      val decomposed                 = Dotted(DotSet.from(ds.iterator), cc).decomposed
+      val Dotted(DotSet(dsMerged), ccMerged) = decomposed.foldLeft(Dotted.empty[DotSet]) { _ merge _ }
 
       assertEquals(
         dsMerged,

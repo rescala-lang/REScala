@@ -32,7 +32,7 @@ object CRDTInterface {
   def fullPermissions[L: DecomposeLattice: Bottom, B <: CRDTInterface[L, B]]: PermIdMutate[B, L] =
     new PermIdMutate[B, L] {
       override def replicaId(c: B): Id       = c.replicaID
-      override def mutate(c: B, delta: L): B = c.applyDelta(DottedName(c.replicaID, Dotted(delta)))
+      override def mutate(c: B, delta: L): B = c.applyDelta(DottedName(c.replicaID, Dotted(delta)))(using Dotted.latticeLift)
       override def query(c: B): L            = c.state.store
     }
 

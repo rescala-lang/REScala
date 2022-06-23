@@ -98,7 +98,7 @@ class DotMapTest extends munit.ScalaCheckSuite {
         val ccB = dmB.dots union deletedB
 
         assert(
-          Dotted(dmA, (ccA)) <= Dotted(dmA, (ccA)),
+          Dotted(dmA, (ccA)) <= Lattice.normalize(Dotted(dmA, (ccA))),
           s"DotMap.leq should be reflexive, but returns false when applied to ($dmA, $ccA, $dmA, $ccA)"
         )
 
