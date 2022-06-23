@@ -1,0 +1,98 @@
+val a = NonEmptyList(
+  TTypeAl(Calendar, Type(AWSet, List(Type(Appointment, List())))),
+  TAbs(
+    work,
+    Type(Source, List(Type(Calendar, List()))),
+    TSource(TFunC(AWSet, List()))
+  ),
+  TAbs(
+    vacation,
+    Type(Source, List(Type(Calendar, List()))),
+    TSource(TFunC(AWSet, List()))
+  ),
+  TAbs(
+    all_appointments,
+    Type(Derived, List(Type(Set, List(Type(Appointment, List()))))),
+    TDerived(
+      TFCall(
+        TFCall(TVar(work), toSet, List()),
+        union,
+        List(TFCall(TVar(vacation), toSet, List()))
+      )
+    )
+  ),
+  TAbs(
+    remaining_vacation,
+    Type(Derived, List(Type(Int, List()))),
+    TDerived(
+      TSub(
+        TNum(30),
+        TFCall(
+          TFCall(
+            TFCall(TVar(vacation), toSet, List()),
+            map,
+            List(TFCall(TVar(_), days, List()))
+          ),
+          sum,
+          List()
+        )
+      )
+    )
+  ),
+  TAbs(
+    add_appointment,
+    Type(Unit, List()),
+    TEns(
+      TExec(
+        TReq(
+          TInteraction(
+            List(Type(Calendar, List())),
+            List(Type(Appointment, List())),
+            List(),
+            List(),
+            List(),
+            None
+          ),
+          TArrow(
+            TVar(cal),
+            TArrow(
+              TVar(a),
+              TLt(
+                TFunC(get_start, List(TVar(a))),
+                TFunC(get_end, List(TVar(a)))
+              )
+            )
+          )
+        ),
+        TArrow(
+          TVar(cal),
+          TArrow(TVar(a), TFCall(TVar(cal), add, List(TVar(a))))
+        )
+      ),
+      TArrow(
+        TVar(cal),
+        TArrow(TVar(a), TInSet(TVar(a), TFCall(TVar(cal), toSet, List())))
+      )
+    )
+  ),
+  TAbs(
+    add_vacation,
+    Type(Unit, List()),
+    TFCall(TVar(add_appointment), modifies, List(TVar(vacation)))
+  ),
+  TAbs(
+    add_work,
+    Type(Unit, List()),
+    TFCall(TVar(add_appointment), modifies, List(TVar(work)))
+  ),
+  TFCall(
+    TVar(UI),
+    display,
+    List(TVar(all_appointments), TVar(remaining_vacation))
+  ),
+  TFCurly(
+    TFCall(TVar(UI), vacationDialog, List()),
+    onConfirm,
+    TArrow(TVar(a), TFCall(TVar(add_vacation), apply, List(TVar(a))))
+  )
+)
