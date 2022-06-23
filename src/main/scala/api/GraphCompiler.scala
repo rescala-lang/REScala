@@ -69,10 +69,10 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
 
   private val contexts: List[WithContext[?]] = topological.collect {
     case Source(_, tpe) => List(tpe)
-    case Map1(_, _, f) => List(f)
-    case Map2(_, _, _, f) => List(f)
+    case Map1(_, tpe, f) => List(f, tpe)
+    case Map2(_, _, tpe, f) => List(f, tpe)
     case Filter(_, f) => List(f)
-    case Fold(init, _, lines) => init :: lines.map(_.f)
+    case Fold(init, tpe, lines) => init :: tpe :: lines.map(_.f)
   }.flatten ++ hfc.helperFuns.map {
     case WithContext(f, includes, recordDecls, functionDecls) =>
       WithContext(f, includes, recordDecls, f :: functionDecls)
@@ -86,9 +86,8 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
     case CRecordType(declName) =>
       val retainFunName = "retain_" + declName
 
-      tpe.valueDecls.find {
-        case CFunctionDecl(`retainFunName`, _, _, _, _) => true
-        case _ => false
+      tpe.valueDecls.collectFirst {
+        case f@CFunctionDecl(`retainFunName`, _, _, _, _) => f
       } match {
         case Some(retainFun) => CCallExpr(retainFun.ref, List(expr))
         case None => expr
@@ -100,9 +99,8 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
     case CRecordType(declName) =>
       val releaseFunName = "release_" + declName
 
-      tpe.valueDecls.find {
-        case CFunctionDecl(`releaseFunName`, _, _, _, _) => true
-        case _ => false
+      tpe.valueDecls.collectFirst {
+        case f@CFunctionDecl(`releaseFunName`, _, _, _, _) => f
       }.map(retainFun => CCallExpr(retainFun.ref, List(expr, if keepWithZero then CTrueLiteral else CFalseLiteral)))
     case _ => None
   }
@@ -116,6 +114,19 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
         case _ => false
       }
     case _ => false
+  }
+
+  private def deepCopy(expr: CExpr, tpe: WithContext[CType]): CExpr = tpe.node match {
+    case CRecordType(declName) =>
+      val deepCopyFunName = "deepCopy_" + declName
+
+      tpe.valueDecls.collectFirst {
+        case f@CFunctionDecl(`deepCopyFunName`, _, _, _, _) => f
+      } match {
+        case Some(deepCopyFun) => CCallExpr(deepCopyFun.ref, List(expr))
+        case None => expr
+      }
+    case _ => expr
   }
 
   private val startup: CFunctionDecl =
@@ -143,6 +154,7 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
   })
 
   private val localVariables: Map[ReSource, CVarDecl] = Map.from(allNodes.collect {
+    case r@Source(_, cType) if usesRefCount(cType) => r -> CVarDecl(r.valueName + "_copy", cType.node)
     case r@Map1(_, cType, f) if f.node.returnType != CQualType(CVoidType) => r -> CVarDecl(r.valueName, cType.node)
     case r@Map2(_, _, cType, _) => r -> CVarDecl(r.valueName, cType.node)
     case r@Filter(_, _) => r -> CVarDecl(r.valueName, CBoolType)
@@ -176,7 +188,7 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
   @tailrec
   private def valueRef(r: ReSource): CDeclRefExpr =
     r match {
-      case s: Source[_] => sourceValueParameters(s).ref
+      case s@Source(_, cType) if !usesRefCount(cType) => sourceValueParameters(s).ref
       case f: Fold[_] => globalVariables(f).ref
       case Filter(input, _) => valueRef(input)
       case Snapshot(_, fold) => valueRef(fold)
@@ -211,8 +223,16 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
       }.toList
 
     val updates = sameCond.flatMap {
+      case r@Source(_, cType) if usesRefCount(cType) =>
+        updateAssignment(
+          r,
+          cType,
+          deepCopy(sourceValueParameters(r).ref, cType)
+        )
+      case r@Source(_, _) =>
+        List[CStmt](CAssignmentExpr(valueRef(r), sourceValueParameters(r).ref))
       case Map1(input, _, f) if f.node.returnType == CQualType(CVoidType) =>
-        List(CExprStmt(CCallExpr(f.node.ref, List(valueRef(input)))))
+        List[CStmt](CCallExpr(f.node.ref, List(valueRef(input))))
       case r@Map1(input, cType, f) =>
         updateAssignment(
           r,
@@ -274,18 +294,23 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
     val stillUsed = otherCond.flatMap(_.inputs)
     val released = toRelease.filterNot(stillUsed.contains)
 
-    val releaseCode = released.flatMap { resource =>
-      wasAllocatedVariables.get(resource) flatMap { allocated =>
-        val cType = resource match {
-          case Map1(_, cType, _) => cType
-          case Map2(_, _, cType, _) => cType
-          case Or(_, _, cType) => cType
+    val releaseCode = released.flatMap {
+      case source @ Source(_, cType) =>
+        releaseRecordStmt(valueRef(source), cType) map { releaseStmt =>
+          CIfStmt(sourceValidParameters(source).ref, releaseStmt)
         }
+      case resource =>
+        wasAllocatedVariables.get(resource) flatMap { allocated =>
+          val cType = resource match {
+            case Map1(_, cType, _) => cType
+            case Map2(_, _, cType, _) => cType
+            case Or(_, _, cType) => cType
+          }
 
-        releaseRecordStmt(valueRef(resource), cType) map { releaseStmt =>
-          CIfStmt(allocated.ref, releaseStmt)
+          releaseRecordStmt(valueRef(resource), cType) map { releaseStmt =>
+            CIfStmt(allocated.ref, releaseStmt)
+          }
         }
-      }
     }
 
     (sameCondCode :: releaseCode.toList) ++ compileUpdates(otherCond, toRelease.diff(released))
@@ -300,7 +325,7 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
       case _: Filter[?] => false
       case _ => true
     }
-    val updates = compileUpdates(topological.filterNot(_.isInstanceOf[Source[?]]), toRelease)
+    val updates = compileUpdates(topological, toRelease)
 
     val body =
       CCompoundStmt(

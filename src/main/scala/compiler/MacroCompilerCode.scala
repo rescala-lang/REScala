@@ -67,9 +67,10 @@ trait MacroCompilerCode {
 
     given ctx: CTX = createTranslationContext()
     
-    // make sure that release and retain for the given type are compiled for later use
+    // make sure that release, retain and deepCopy for the given type are compiled for later use
     cascade.dispatchLifted(_.compileRetain)(TypeRepr.of[T])
     cascade.dispatchLifted(_.compileRelease)(TypeRepr.of[T])
+    cascade.dispatchLifted(_.compileDeepCopy)(TypeRepr.of[T])
 
     val compiledTypeRepr = cascade.dispatch(_.compileTypeRepr)(TypeRepr.of[T])
 
