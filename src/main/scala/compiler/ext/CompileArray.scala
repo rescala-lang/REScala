@@ -63,25 +63,12 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
         case Apply(Select(arr, "apply"), List(idx)) if arr.tpe <:< TypeRepr.of[Array[?]] =>
           arrayIndexAccess(arr, idx)
         case Apply(Select(arr, "update"), List(idx, v)) if arr.tpe <:< TypeRepr.of[Array[?]] =>
-          val tempDecl = CVarDecl("temp", compileTypeRepr(v.tpe), Some(arrayIndexAccess(arr, idx)))
-
-          if cascade.dispatch(_.usesRefCount)(v.tpe) then
-            CStmtExpr(CCompoundStmt(List(
-              tempDecl,
-              CAssignmentExpr(
-                arrayIndexAccess(arr, idx),
-                retain(
-                  cascade.dispatch(_.compileTermToCExpr)(v),
-                  v.tpe
-                )
-              ),
-              release(arrayIndexAccess(arr, idx), v.tpe, CFalseLiteral).get
-            )))
-          else
-            CAssignmentExpr(
-              arrayIndexAccess(arr, idx),
-              cascade.dispatch(_.compileTermToCExpr)(v),
-            )
+          arrayIndexUpdate(arr, idx, v)
+        case Apply(Apply(TypeApply(Ident("deepCopy"), _), List(arr)), List()) if arr.tpe <:< TypeRepr.of[Array[?]] =>
+          CCallExpr(
+            getArrayDeepCopy(arr.tpe).ref,
+            List(cascade.dispatch(_.compileTermToCExpr)(arr))
+          )
       }
     }
 
@@ -340,7 +327,7 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
     CFunctionDecl(name, List(lengthParam), recordDecl.getTypeForDecl, Some(body), variadic = true)
   }
 
-  private def arrayIndexAccess(using Quotes)(arr: quotes.reflect.Term, idx: quotes.reflect.Term)(using ctx: RecordDeclTC, cascade: CompilerCascade): CArraySubscriptExpr = {
+  private def arrayIndexAccess(using Quotes)(arr: quotes.reflect.Term, idx: quotes.reflect.Term)(using ctx: TranslationContext, cascade: CompilerCascade): CArraySubscriptExpr = {
     CArraySubscriptExpr(
       CMemberExpr(
         cascade.dispatch(_.compileTermToCExpr)(arr),
@@ -348,6 +335,29 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
       ),
       cascade.dispatch(_.compileTermToCExpr)(idx)
     )
+  }
+
+  private def arrayIndexUpdate(using Quotes)(arr: quotes.reflect.Term, idx: quotes.reflect.Term, v: quotes.reflect.Term)
+                              (using ctx: TranslationContext, cascade: CompilerCascade): CExpr = {
+    val tempDecl = CVarDecl("temp", compileTypeRepr(v.tpe), Some(arrayIndexAccess(arr, idx)))
+
+    if cascade.dispatch(_.usesRefCount)(v.tpe) then
+      CStmtExpr(CCompoundStmt(List(
+        tempDecl,
+        CAssignmentExpr(
+          arrayIndexAccess(arr, idx),
+          retain(
+            cascade.dispatch(_.compileTermToCExpr)(v),
+            v.tpe
+          )
+        ),
+        release(arrayIndexAccess(arr, idx), v.tpe, CFalseLiteral).get
+      )))
+    else
+      CAssignmentExpr(
+        arrayIndexAccess(arr, idx),
+        cascade.dispatch(_.compileTermToCExpr)(v),
+      )
   }
 
   private def getArrayFill(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {

@@ -39,6 +39,11 @@ object CompileProduct extends SelectPC with ApplyPC with MatchPC with TypePC wit
           CCallExpr(getProductCreator(apply.tpe).ref, l.map(cascade.dispatch(_.compileTermToCExpr)))
         case apply @ Apply(TypeApply(Select(_, "apply"), _), l) if isProductApply(apply) =>
           CCallExpr(getProductCreator(apply.tpe).ref, l.map(cascade.dispatch(_.compileTermToCExpr)))
+        case Apply(Apply(TypeApply(Ident("deepCopy"), _), List(prod)), List()) if prod.tpe <:< TypeRepr.of[Product] =>
+          CCallExpr(
+            getProductDeepCopy(prod.tpe).ref,
+            List(cascade.dispatch(_.compileTermToCExpr)(prod))
+          )
       }
     }
 

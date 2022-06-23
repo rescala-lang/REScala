@@ -76,13 +76,18 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
             getSomeCreator(TypeRepr.of[Option].appliedTo(inner.tpe)).ref,
             List(cascade.dispatch(_.compileTermToCExpr)(inner))
           )
-        case Apply(TypeApply(Select(opt, "getOrElse"), _), List(defaultVal)) =>
+        case Apply(TypeApply(Select(opt, "getOrElse"), _), List(defaultVal)) if opt.tpe <:< TypeRepr.of[Option[?]] =>
           CCallExpr(
             getGetOrElse(opt.tpe).ref,
             List(
               cascade.dispatch(_.compileTermToCExpr)(opt),
               cascade.dispatch(_.compileTermToCExpr)(defaultVal)
             )
+          )
+        case Apply(Apply(TypeApply(Ident("deepCopy"), _), List(opt)), List()) if opt.tpe <:< TypeRepr.of[Option[?]] =>
+          CCallExpr(
+            getOptionDeepCopy(opt.tpe).ref,
+            List(cascade.dispatch(_.compileTermToCExpr)(opt))
           )
       }
     }

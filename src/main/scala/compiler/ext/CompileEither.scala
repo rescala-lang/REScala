@@ -47,6 +47,11 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
             getRightCreator(apply.tpe).ref,
             List(cascade.dispatch(_.compileTermToCExpr)(inner))
           )
+        case Apply(Apply(TypeApply(Ident("deepCopy"), _), List(either)), List()) if either.tpe <:< TypeRepr.of[Either[?, ?]] =>
+          CCallExpr(
+            getEitherDeepCopy(either.tpe).ref,
+            List(cascade.dispatch(_.compileTermToCExpr)(either))
+          )
       }
     }
 
