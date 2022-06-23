@@ -44,13 +44,6 @@ object AST:
       executes: Option[Term] = None
   ) extends Term
 
-  // interaction enrichments (e.g. .ensures)
-  sealed trait TInEn extends Term
-  case class TReq(parent: Term, inner: Term) extends TInEn
-  case class TEns(parent: Term, inner: Term) extends TInEn
-  case class TMod(parent: Term, inner: Term) extends TInEn
-  case class TExec(parent: Term, inner: Term) extends TInEn
-
   // arithmetic expressions
   sealed trait TArith extends Term
   case class TNum(value: Number) extends TArith // numbers
@@ -90,6 +83,21 @@ object AST:
 
   // Scala stuff
   // field access
-  case class TFAcc(parent: Term, field: ID, args: Seq[Term]) extends Term
+  sealed trait TFAcc extends Term:
+    val parent: Term
+    val field: ID
+  case class TFCall(parent: Term, field: ID, args: List[Term]) extends TFAcc
+  case class TFCurly(parent: Term, field: ID, body: Term) extends TFAcc
   // function call
   case class TFunC(name: ID, args: Seq[Term]) extends Term
+
+  // interaction enrichments are special curly accesses
+  sealed trait TInEn extends TFAcc
+  case class TReq(parent: Term, inner: Term) extends TInEn:
+    final val field = "requires"
+  case class TEns(parent: Term, inner: Term) extends TInEn:
+    final val field = "ensures"
+  case class TMod(parent: Term, inner: Term) extends TInEn:
+    final val field = "modifies"
+  case class TExec(parent: Term, inner: Term) extends TInEn:
+    final val field = "executes"

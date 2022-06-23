@@ -41,14 +41,14 @@ object SimpleParsing extends SimpleTestSuite:
   }
 
   test("field access") {
-    assertResult(Right(TFAcc(TVar("foo"), "bar", List(TNum(1), TFalse)))) {
+    assertResult(Right(TFCall(TVar("foo"), "bar", List(TNum(1), TFalse)))) {
       Parser.fieldAcc.parseAll("foo.bar(1, false)")
     }
 
     assertResult(
       Right(
-        TFAcc(
-          TFAcc(
+        TFCall(
+          TFCall(
             TVar("foo"),
             "bar",
             List(TEq(TTrue, TFalse))
@@ -61,9 +61,17 @@ object SimpleParsing extends SimpleTestSuite:
       Parser.fieldAcc.parseAll("foo.bar(true == false).baz")
     }
 
-    assertResult(Right(TFAcc(TFunC("size", List(TVar("d2"))), "max", List()))) {
+    assertResult(
+      Right(TFCall(TFunC("size", List(TVar("d2"))), "max", List()))
+    ) {
       Parser.fieldAcc.parseAll("size(d2).max")
     }
+
+    assert(
+      Parser.fieldAcc
+        .parse("UI.vacationDialog.onConfirm{a => add_vacation.apply(a)}")
+        .isRight
+    )
   }
 
   test("arithmetic expression") {
@@ -87,10 +95,10 @@ object SimpleParsing extends SimpleTestSuite:
     assertResult(
       Right(
         TDerived(
-          TFAcc(
-            TFAcc(TVar("work"), "toSet", List()),
+          TFCall(
+            TFCall(TVar("work"), "toSet", List()),
             "union",
-            List(TFAcc(TVar("vacation"), "toSet", List()))
+            List(TFCall(TVar("vacation"), "toSet", List()))
           )
         )
       )
@@ -119,10 +127,10 @@ object SimpleParsing extends SimpleTestSuite:
           "a",
           Type("Derived", List(Type("Set", List(Type("Appointment", List()))))),
           TDerived(
-            TFAcc(
-              TFAcc(TVar("work"), "toSet", List()),
+            TFCall(
+              TFCall(TVar("work"), "toSet", List()),
               "union",
-              List(TFAcc(TVar("vacation"), "toSet", List()))
+              List(TFCall(TVar("vacation"), "toSet", List()))
             )
           )
         )

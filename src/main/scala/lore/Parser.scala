@@ -181,30 +181,6 @@ object Parser:
     (P.string("Interaction") ~ ws *> typeParam ~ (ws *> typeParam))
       .map((r, a) => TInteraction(reactiveTypes = r, argumentTypes = a))
 
-  // interaction enrichments
-  val enrichmentKeywords = List("requires", "ensures", "executes")
-  val interactionEnr: P[TInEn] =
-    ((interaction | _var).soft ~
-      ((((wsOrNl.with1.soft ~ P.char('.')).soft *>
-        P.stringIn(enrichmentKeywords)) <*
-        ws ~ P.char('{') ~ wsOrNl) ~ P.defer(term) <*
-        (wsOrNl ~ P.char('}'))).rep).map((root, enrichments) =>
-      evalEnrichments(root, enrichments.toList)
-    )
-
-  @tailrec
-  def evalEnrichments(s: (Term, List[(String, Term)])): TInEn =
-    s match
-      case (parent: TInEn, Nil) => parent
-      case (parent, (kw, inner) :: rest) =>
-        kw match
-          case "requires" => evalEnrichments(TReq(parent, inner), rest)
-          case "ensures"  => evalEnrichments(TEns(parent, inner), rest)
-          case "executes" => evalEnrichments(TExec(parent, inner), rest)
-          case "modifies" => evalEnrichments(TMod(parent, inner), rest)
-      case _ =>
-        throw new ParsingException(s"Not a valid interaction modifier: $s")
-
   // bindings
   val bindable =
     P.defer(
@@ -218,22 +194,47 @@ object Parser:
         TAbs(name = name, _type = _type, body = term)
       }
 
-  // object orientation
+  // object orientation (e.g. dot syntax)
   val args = P.defer0(term.repSep0(P.char(',') ~ ws))
-  val objFactor = P.defer(functionCall | _var)
+  val objFactor = P.defer(interaction | functionCall | _var)
   val fieldAcc: P[TFAcc] =
-    P.defer(
-      objFactor.soft ~
-        (wsOrNl.soft.with1 ~ P
-          .char('.') *> id ~ (P.char('(') *> args <* (ws ~ P.char(')'))).?).rep
-    ).map((parent, rest) => evalFieldAcc(parent, rest.toList))
+    P.defer(objFactor.soft ~ (round | P.defer(curly) | field).backtrack.rep)
+      .map((obj, calls) => evalFieldAcc(obj, calls.toList))
+
+  enum callType:
+    case round, curly, field
+  inline def callBuilder[A](open: P[Char], close: P[Unit], inner: P0[A]) =
+    (wsOrNl.with1 ~ P.char('.') *> id <* wsOrNl).soft ~
+      (open ~ wsOrNl *> inner <* wsOrNl) <* close
+  val round =
+    callBuilder(P.char('(').as('('), P.char(')'), args).map((f, a) =>
+      (callType.round, f, a)
+    )
+  val curly =
+    callBuilder(P.char('{').as('{'), P.char('}'), P.defer(term)).map((f, b) =>
+      (callType.curly, f, List(b))
+    )
+  val field =
+    (wsOrNl.with1 ~ P.char('.') *> id).map((callType.field, _, List[Term]()))
   @tailrec
-  def evalFieldAcc(s: (Term, List[(ID, Option[List[Term]])])): TFAcc =
+  def evalFieldAcc(s: (Term, List[(callType, String, List[Term])])): TFAcc =
     s match
       case (parent: TFAcc, Nil) => parent
-      case (parent, (field, args) :: rest) =>
+      case (parent, (callType.curly, field, b :: Nil) :: rest) =>
+        val el = field match
+          // check if this is an interaction enrichment
+          case "requires" => TReq(parent, b)
+          case "ensures"  => TEns(parent, b)
+          case "executes" => TExec(parent, b)
+          case "modifies" => TMod(parent, b)
+          case _          => TFCurly(parent = parent, field = field, body = b)
         evalFieldAcc(
-          TFAcc(parent = parent, field = field, args = args.getOrElse(Seq())),
+          el,
+          rest
+        )
+      case (parent, (_, field, args) :: rest) =>
+        evalFieldAcc(
+          TFCall(parent = parent, field = field, args = args),
           rest
         )
       case _ =>
@@ -266,7 +267,7 @@ object Parser:
   // programs are sequences of terms
   val term: P[Term] =
     P.defer(
-      typeAlias | binding | reactive | fieldAcc | interactionEnr | interaction | lambdaFun | booleanExpr | number.backtrack | _var
+      typeAlias | binding | reactive | fieldAcc | interaction | lambdaFun | booleanExpr | number.backtrack | _var
     )
   val prog: P[NonEmptyList[Term]] =
     term.repSep(wsOrNl).surroundedBy(wsOrNl) <* P.end

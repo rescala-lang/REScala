@@ -117,7 +117,7 @@ object BooleanExpressionParsing extends SimpleTestSuite {
       case Right(
             TEq(
               TFunC("size", _),
-              TFAcc(TFunC("size", _), "max", List())
+              TFCall(TFunC("size", _), "max", List())
             )
           ) =>
         ()
@@ -210,7 +210,7 @@ object BooleanExpressionParsing extends SimpleTestSuite {
   test("in set") {
     val p = Parser.inSet
 
-    assertResult(Right(TInSet(TNum(12), TVar("a")))){
+    assertResult(Right(TInSet(TNum(12), TVar("a")))) {
       p.parseAll("12 in a")
     }
 
