@@ -166,3 +166,24 @@ object SimpleParsing extends SimpleTestSuite:
       p.parseAll(expr)
     }
   }
+
+  test("lambda fun") {
+
+    assertResult(
+      Right(TArrow(TVar("x"), TVar("x")))
+    ) {
+      Parser.lambdaFun.parseAll("x => x")
+    }
+
+    assertResult(
+      Right(TArrow(TVar("x"), TArrow(TVar("x"), TVar("x"))))
+    ) {
+      Parser.lambdaFun.parseAll("x => x => x")
+    }
+
+    assertResult(
+      Right(TArrow(TVar("x"), TArrow(TVar("y"), TAdd(TVar("x"), TVar("y")))))
+    ) {
+      Parser.lambdaFun.parseAll("x => y => x + y")
+    }
+  }

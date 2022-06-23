@@ -72,12 +72,13 @@ object Parser:
       .defer(implication) <* ws ~ P.char(')')
   val boolFactor: P[Term] =
     boolParens
-      | P.defer(inSet)
-      | P.defer(numComp)
-      | P.defer(fieldAcc)
-      | P.defer(functionCall)
       | tru.backtrack
       | fls.backtrack
+      | P.defer(inSet)
+      | P.defer(numComp)
+      | P.defer(arithmExpr)
+      | P.defer(fieldAcc)
+      | P.defer(functionCall)
       | _var
 
   // helper for boolean expressions with two sides
@@ -248,12 +249,14 @@ object Parser:
     (P.char('(') ~ ws *> _var.repSep(ws ~ P.char(',') ~ ws) <* P.char(')')) |
       _var.map(NonEmptyList.one(_))
   val lambdaFun: P[TArrow] =
-    ((lambdaVars.soft <* (wsOrNl.soft ~ P.string("=>"))).rep ~ P.defer(term))
-      .map((args, r) => rewriteLambda(args.toList, r))
-  def rewriteLambda(params: List[NonEmptyList[TVar]], right: Term): TArrow =
+    ((((lambdaVars <* wsOrNl).soft <* P.string("=>")) <* wsOrNl).rep ~
+      P.defer(term))
+      .map((args, r) => rewriteLambda(args.flatten.toList.reverse, r))
+  def rewriteLambda(params: List[TVar], right: Term): TArrow =
     (params, right) match
       case (Nil, r: TArrow) => r
-      case ()
+      case (x :: xs, r)     => rewriteLambda(xs, TArrow(x, r))
+      case (Nil, r) => throw ParsingException(s"Not a valid lambda term: $r")
 
   // type aliases
   val typeAlias: P[TTypeAl] =
@@ -263,7 +266,7 @@ object Parser:
   // programs are sequences of terms
   val term: P[Term] =
     P.defer(
-      typeAlias | binding | reactive | functionCall | fieldAcc | interactionEnr | interaction | booleanExpr | arithmExpr | number.backtrack | _var
+      typeAlias | binding | reactive | fieldAcc | interactionEnr | interaction | lambdaFun | booleanExpr | number.backtrack | _var
     )
   val prog: P[NonEmptyList[Term]] =
     term.repSep(wsOrNl).surroundedBy(wsOrNl) <* P.end
