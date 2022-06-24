@@ -19,7 +19,7 @@ object Or {
       Or(
         left,
         right,
-        mc.compileType[V]
+        mc.compileType[Option[V]]
       )
   }
 }

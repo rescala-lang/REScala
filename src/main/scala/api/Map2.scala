@@ -19,7 +19,7 @@ object Map2 {
       Map2(
         l,
         r,
-        mc.compileType[R],
+        mc.compileType[Option[R]],
         mc.compileAnonFun(f)
       )
   }

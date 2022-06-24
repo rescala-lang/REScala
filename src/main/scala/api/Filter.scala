@@ -2,11 +2,12 @@ package api
 
 import clangast.WithContext
 import clangast.decl.CFunctionDecl
+import clangast.types.CType
 import compiler.MacroCompiler
 
 import scala.quoted.*
 
-case class Filter[V](input: Event[V], f: WithContext[CFunctionDecl]) extends Event[V] {
+case class Filter[V](input: Event[V], cType: WithContext[CType], f: WithContext[CFunctionDecl]) extends Event[V] {
   override def inputs: List[ReSource] = List(input)
 
   override val baseName: String = "filter"
@@ -17,6 +18,7 @@ object Filter {
     inline def apply[C <: MacroCompiler](inline f: V => Boolean)(using mc: C): Filter[V] =
       Filter(
         input,
+        mc.compileType[Option[V]],
         mc.compileAnonFun(f)
       )
   }

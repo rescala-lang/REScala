@@ -144,6 +144,8 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
 
       {
         case tpe if tpe <:< TypeRepr.of[Option[?]] =>
+          getSomeCreator(tpe)
+          getNoneCreator(tpe)
           getRecordDecl(tpe).getTypeForDecl
       }
     }

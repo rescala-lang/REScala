@@ -61,7 +61,7 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
   }
 
   private val functionDefinitions: List[CFunctionDecl] = topological.collect {
-    case Filter(_, f) => List(f.node)
+    case Filter(_, _, f) => List(f.node)
     case Map1(_, _, f) => List(f.node)
     case Map2(_, _, _, f) => List(f.node)
     case Fold(_, _, lines) => lines.map(_.f.node)
@@ -71,7 +71,9 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
     case Source(_, tpe) => List(tpe)
     case Map1(_, tpe, f) => List(f, tpe)
     case Map2(_, _, tpe, f) => List(f, tpe)
-    case Filter(_, f) => List(f)
+    case Filter(_, tpe, f) => List(f, tpe)
+    case Snapshot(_, _, tpe) => List(tpe)
+    case Or(_, _, tpe) => List(tpe)
     case Fold(init, tpe, lines) => init :: tpe :: lines.map(_.f)
   }.flatten ++ hfc.helperFuns.map {
     case WithContext(f, includes, recordDecls, functionDecls) =>
@@ -82,39 +84,69 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
     case f@Fold(_, cType, _) => f -> CVarDecl(f.valueName, cType.node, None)
   })
 
-  private def retainRecordExpr(expr: CExpr, tpe: WithContext[CType]): CExpr = tpe.node match {
+  private def retain(expr: CExpr, tpe: WithContext[CType]): CExpr = tpe.node match {
     case CRecordType(declName) =>
-      val retainFunName = "retain_" + declName
+      val funName = "retain_" + declName
 
       tpe.valueDecls.collectFirst {
-        case f@CFunctionDecl(`retainFunName`, _, _, _, _) => f
-      } match {
-        case Some(retainFun) => CCallExpr(retainFun.ref, List(expr))
-        case None => expr
-      }
+        case f@CFunctionDecl(`funName`, _, _, _, _) => CCallExpr(f.ref, List(expr))
+      }.getOrElse(expr)
     case _ => expr
   }
 
-  private def releaseRecordStmt(expr: CExpr, tpe: WithContext[CType], keepWithZero: Boolean = false): Option[CStmt] = tpe.node match {
+  private def release(expr: CExpr, tpe: WithContext[CType], keepWithZero: Boolean = false): Option[CStmt] = tpe.node match {
     case CRecordType(declName) =>
-      val releaseFunName = "release_" + declName
+      val funName = "release_" + declName
 
       tpe.valueDecls.collectFirst {
-        case f@CFunctionDecl(`releaseFunName`, _, _, _, _) => f
-      }.map(retainFun => CCallExpr(retainFun.ref, List(expr, if keepWithZero then CTrueLiteral else CFalseLiteral)))
+        case f@CFunctionDecl(`funName`, _, _, _, _) =>
+          CCallExpr(f.ref, List(expr, if keepWithZero then CTrueLiteral else CFalseLiteral))
+      }
     case _ => None
   }
 
   private def usesRefCount(tpe: WithContext[CType]): Boolean = tpe.node match {
     case CRecordType(declName) =>
-      val releaseFunName = "release_" + declName
+      val funName = "release_" + declName
 
       tpe.valueDecls.exists {
-        case CFunctionDecl(`releaseFunName`, _, _, _, _) => true
+        case CFunctionDecl(`funName`, _, _, _, _) => true
         case _ => false
       }
     case _ => false
   }
+
+  private def createSome(expr: CExpr, tpe: WithContext[CType]): CExpr = tpe.node match {
+    case CRecordType(declName) =>
+      val funName = "createSome_" + declName
+
+      tpe.valueDecls.collectFirst {
+        case f@CFunctionDecl(`funName`, _, _, _, _) => CCallExpr(f.ref, List(expr))
+      }.get
+    case _ => throw new MatchError(tpe)
+  }
+
+  private def createNone(tpe: WithContext[CType]): CExpr = tpe.node match {
+    case CRecordType(declName) =>
+      val funName = "createNone_" + declName
+
+      tpe.valueDecls.collectFirst {
+        case f@CFunctionDecl(`funName`, _, _, _, _) => CCallExpr(f.ref, List())
+      }.get
+    case _ => throw new MatchError(tpe)
+  }
+
+  private def activeVal(r: ReSource): CExpr = r match {
+    case f@Fold(_, _, _) => valueRef(f)
+    case _ => CMemberExpr(valueRef(r), "val")
+  }
+
+  private def optionVal(r: ReSource, cType: WithContext[CType]): CExpr = r match {
+    case f@Fold(_, _, _) => createSome(valueRef(f), cType)
+    case _ => valueRef(r)
+  }
+
+  private def dotDefined(expr: CExpr): CExpr = CMemberExpr(expr, "defined")
 
   private def deepCopy(expr: CExpr, tpe: WithContext[CType]): CExpr = tpe.node match {
     case CRecordType(declName) =>
@@ -139,59 +171,56 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
           case (Fold(init, tpe, _), varDecl) =>
             CExprStmt(CAssignmentExpr(
               varDecl.ref,
-              retainRecordExpr(init.node, tpe)
+              retain(init.node, tpe)
             ))
         }.toList
       ))
     )
 
-  private val sourceValueParameters: Map[Source[?], CParmVarDecl] = Map.from(allNodes.collect {
+  private val sourceParameters: Map[Source[?], CParmVarDecl] = Map.from(allNodes.collect {
     case s@Source(_, cType) => s -> CParmVarDecl(s.valueName, cType.node)
   })
 
-  private val sourceValidParameters: Map[Source[?], CParmVarDecl] = Map.from(allNodes.collect {
-    case s@Source(_, _) => s -> CParmVarDecl(s.validName, CBoolType)
-  })
+  private def eventVar(r: ReSource): CVarDecl =
+    CVarDecl(
+      r.valueName,
+      r.cType.node,
+      Some(CDesignatedInitExpr(List("defined" -> CFalseLiteral)))
+    )
 
   private val localVariables: Map[ReSource, CVarDecl] = Map.from(allNodes.collect {
-    case r@Source(_, cType) if usesRefCount(cType) => r -> CVarDecl(r.valueName + "_copy", cType.node)
-    case r@Map1(_, cType, f) if f.node.returnType != CQualType(CVoidType) => r -> CVarDecl(r.valueName, cType.node)
-    case r@Map2(_, _, cType, _) => r -> CVarDecl(r.valueName, cType.node)
-    case r@Filter(_, _) => r -> CVarDecl(r.valueName, CBoolType)
-    case r@Or(_, _, cType) => r -> CVarDecl(r.valueName, cType.node)
-  })
-
-  private val wasAllocatedVariables: Map[ReSource, CVarDecl] = Map.from(allNodes.collect {
-    case r@Map1(_, cType, _) if usesRefCount(cType) => r -> CVarDecl(r.valueName + "_allocated", CBoolType, Some(CFalseLiteral))
-    case r@Map2(_, _, cType, _) if usesRefCount(cType) => r -> CVarDecl(r.valueName + "_allocated", CBoolType, Some(CFalseLiteral))
-    case r@Or(_, _, cType) if usesRefCount(cType) => r -> CVarDecl(r.valueName + "_allocated", CBoolType, Some(CFalseLiteral))
+    case r@Source(_, cType) if usesRefCount(cType) => r -> eventVar(r).copy(name = r.valueName + "_copy")
+    case r@Map1(_, _, f) if f.node.returnType != CQualType(CVoidType) => r -> eventVar(r)
+    case r@Map2(_, _, _, _) => r -> eventVar(r)
+    case r@Filter(_, _, _) => r -> eventVar(r)
+    case r@Snapshot(_, _, _) => r -> eventVar(r)
+    case r@Or(_, _, _) => r -> eventVar(r)
   })
 
   private val updateConditions: Map[ReSource, UpdateCondition] = {
-    topological.foldLeft(Map.empty[ReSource, UpdateCondition]) { (acc, r) =>
+    val m = topological.foldLeft(Map.empty[ReSource, UpdateCondition]) { (acc, r) =>
       r match {
-        case s@Source(_, _) => acc.updated(s, UpdateCondition(sourceValidParameters(s)))
+        case s@Source(_, _) => acc.updated(s, UpdateCondition(dotDefined(sourceParameters(s).ref)))
         case m@Map1(input, _, _) => acc.updated(m, acc(input))
         case m@Map2(left, right, _, _) => acc.updated(m, acc(left).and(acc(right)))
-        case f@Filter(input, _) => acc.updated(f, acc(input).add(localVariables(f)))
-        case s@Snapshot(input, _) => acc.updated(s, acc(input))
+        case f@Filter(_, _, _) => acc.updated(f, UpdateCondition(dotDefined(valueRef(f))))
+        case s@Snapshot(e, _, _) => acc.updated(s, acc(e))
         case o@Or(left, right, _) => acc.updated(o, acc(left).or(acc(right)))
         case f@Fold(_, _, _) =>
           acc.updated(f, f.inputs.foldLeft(UpdateCondition.empty) { (cond, input) => cond.or(acc(input)) })
       }
-    }.map {
-      case (f: Filter[_], cond) => f -> UpdateCondition(cond.normalized.map(_.filter(_ != localVariables(f))))
+    }
+
+    m.map {
+      case (f: Filter[_], _) => f -> m(f.input)
       case other => other
     }
   }
 
-  @tailrec
   private def valueRef(r: ReSource): CDeclRefExpr =
     r match {
-      case s@Source(_, cType) if !usesRefCount(cType) => sourceValueParameters(s).ref
+      case s@Source(_, cType) if !usesRefCount(cType) => sourceParameters(s).ref
       case f: Fold[_] => globalVariables(f).ref
-      case Filter(input, _) => valueRef(input)
-      case Snapshot(_, fold) => valueRef(fold)
       case _ => localVariables(r).ref
     }
 
@@ -201,84 +230,88 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
     val condition = updateConditions(reSources.head)
     val (sameCond, otherCond) = reSources.span { r => updateConditions(r) == condition }
 
-    def updateAssignment(reSource: ReSource, declaredType: WithContext[CType], rhs: CExpr, release: Boolean = false): List[CStmt] =
+    def updateAssignment(reSource: ReSource, declaredType: WithContext[CType], rhs: CExpr, releaseAfter: Boolean = false): CStmt =
       val tempDecl = CVarDecl("temp", declaredType.node, Some(valueRef(reSource)))
-      (releaseRecordStmt(tempDecl.ref, declaredType) match {
-        case Some(releaseStmt) if release =>
+      release(tempDecl.ref, declaredType) match {
+        case Some(releaseStmt) if releaseAfter =>
           CCompoundStmt(List(
             tempDecl,
             CAssignmentExpr(
               valueRef(reSource),
-              retainRecordExpr(rhs, declaredType)
+              retain(rhs, declaredType)
             ),
             releaseStmt
           ))
         case _ =>
           CAssignmentExpr(
             valueRef(reSource),
-            retainRecordExpr(rhs, declaredType)
+            retain(rhs, declaredType)
           )
-      }) :: wasAllocatedVariables.get(reSource).map { allocated =>
-        CExprStmt(CAssignmentExpr(allocated.ref, CTrueLiteral))
-      }.toList
+      }
 
     val updates = sameCond.flatMap {
       case r@Source(_, cType) if usesRefCount(cType) =>
-        updateAssignment(
+        List(updateAssignment(
           r,
           cType,
-          deepCopy(sourceValueParameters(r).ref, cType)
-        )
-      case r@Source(_, _) => Nil
-      case Map1(input, _, f) if f.node.returnType == CQualType(CVoidType) =>
-        List[CStmt](CCallExpr(f.node.ref, List(valueRef(input))))
-      case r@Map1(input, cType, f) =>
-        updateAssignment(
-          r,
-          cType,
-          CCallExpr(f.node.ref, List(valueRef(input)))
-        )
-      case r@Map2(left, right, cType, f) =>
-        updateAssignment(
-          r,
-          cType,
-          CCallExpr(f.node.ref, List(valueRef(left), valueRef(right)))
-        )
-      case r@Filter(input, f) =>
-        List[CStmt](CAssignmentExpr(
-          localVariables(r).ref,
-          CCallExpr(f.node.ref, List(valueRef(input)))
+          deepCopy(sourceParameters(r).ref, cType)
         ))
-      case Snapshot(_, _) => List()
+      case Source(_, _) => Nil
+      case Map1(input, _, f) if f.node.returnType == CQualType(CVoidType) =>
+        List[CStmt](CCallExpr(f.node.ref, List(activeVal(input))))
+      case r@Map1(input, cType, f) =>
+        List(updateAssignment(
+          r,
+          cType,
+          createSome(CCallExpr(f.node.ref, List(activeVal(input))), cType)
+        ))
+      case r@Map2(left, right, cType, f) =>
+        List(updateAssignment(
+          r,
+          cType,
+          CCallExpr(f.node.ref, List(activeVal(left), activeVal(right)))
+        ))
+      case r@Filter(input, cType, f) =>
+        List(CIfStmt(
+          CCallExpr(f.node.ref, List(activeVal(input))),
+          updateAssignment(r, cType, optionVal(input, cType)),
+          Some(updateAssignment(r, cType, createNone(cType)))
+        ))
+      case r@Snapshot(_, input, cType) =>
+        List(updateAssignment(
+          r,
+          cType,
+          optionVal(input, cType)
+        ))
       case r@Or(left, right, cType) =>
-        updateAssignment(
+        List(updateAssignment(
           r,
           cType,
           CConditionalOperator(
             updateConditions(left).compile,
-            valueRef(left),
-            valueRef(right)
+            optionVal(left, cType),
+            optionVal(right, cType)
           )
-        )
+        ))
       case r@Fold(_, cType, lines) => lines match {
         case List(FLine(input, f)) =>
-          updateAssignment(
+          List(updateAssignment(
             r,
             cType,
-            CCallExpr(f.node.ref, List(valueRef(r), valueRef(input))),
+            CCallExpr(f.node.ref, List(activeVal(r), activeVal(input))),
             true
-          )
+          ))
         case _ =>
           lines.map {
             case FLine(input, f) =>
               CIfStmt(
                 updateConditions(input).compile,
-                CCompoundStmt(updateAssignment(
+                updateAssignment(
                   r,
                   cType,
-                  CCallExpr(f.node.ref, List(valueRef(r), valueRef(input))),
+                  CCallExpr(f.node.ref, List(activeVal(r), activeVal(input))),
                   true
-                ))
+                )
               )
           }
       }
@@ -294,37 +327,22 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
     val released = toRelease.filterNot(stillUsed.contains)
 
     val releaseCode = released.flatMap {
-      case source @ Source(_, cType) =>
-        releaseRecordStmt(valueRef(source), cType) map { releaseStmt =>
-          CIfStmt(sourceValidParameters(source).ref, releaseStmt)
+      case resource if usesRefCount(resource.cType) =>
+        release(valueRef(resource), resource.cType) map { releaseStmt =>
+          CIfStmt(dotDefined(valueRef(resource)), releaseStmt)
         }
-      case resource =>
-        wasAllocatedVariables.get(resource) flatMap { allocated =>
-          val cType = resource match {
-            case Map1(_, cType, _) => cType
-            case Map2(_, _, cType, _) => cType
-            case Or(_, _, cType) => cType
-          }
-
-          releaseRecordStmt(valueRef(resource), cType) map { releaseStmt =>
-            CIfStmt(allocated.ref, releaseStmt)
-          }
-        }
+      case _ => None
     }
 
     (sameCondCode :: releaseCode.toList) ++ compileUpdates(otherCond, toRelease.diff(released))
   }
 
   private val updateFunction: CFunctionDecl = {
-    val params = sourcesTopological.flatMap { s => List(sourceValueParameters(s), sourceValidParameters(s)) }
+    val params = sourcesTopological.map(sourceParameters)
 
-    val localVarDecls = topological.flatMap(r => localVariables.get(r).toList ++ wasAllocatedVariables.get(r).toList).map(CDeclStmt.apply)
+    val localVarDecls = topological.flatMap(localVariables.get).map(CDeclStmt.apply)
 
-    val toRelease: Set[ReSource] = localVariables.keySet.filter {
-      case _: Filter[?] => false
-      case _ => true
-    }
-    val updates = compileUpdates(topological, toRelease)
+    val updates = compileUpdates(topological, localVariables.keySet)
 
     val body =
       CCompoundStmt(
@@ -426,16 +444,13 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
         case CTransactionStatement(args) =>
           val tempDecls = sourcesTopological.map { source =>
             val initExpr = args.collectFirst {
-              case (sourceName, expr) if sourceName.equals(source.name) => expr
-            }
+              case (sourceName, expr) if sourceName.equals(source.name) => createSome(expr, source.cType)
+            }.getOrElse(createNone(source.cType))
 
-            CVarDecl(source.valueName, source.cType.node, initExpr)
+            CVarDecl(source.valueName, source.cType.node, Some(initExpr))
           }
 
-          val updateCall = CCallExpr(
-            updateFunction.ref,
-            tempDecls.flatMap { varDecl => List(varDecl.ref, if varDecl.init.isDefined then CTrueLiteral else CFalseLiteral) }
-          )
+          val updateCall = CCallExpr(updateFunction.ref, tempDecls.map(_.ref))
 
           CCompoundStmt(tempDecls.map(CDeclStmt.apply).appended(updateCall))
       }

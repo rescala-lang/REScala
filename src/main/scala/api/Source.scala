@@ -22,5 +22,5 @@ case class Source[V](name: String, cType: WithContext[CType]) extends Event[V] {
 }
 
 object Source {
-  inline def apply[V, C <: MacroCompiler]()(using mc: C): Source[V] = new Source[V](mc.valName, mc.compileType[V])
+  inline def apply[V, C <: MacroCompiler]()(using mc: C): Source[V] = new Source[V](mc.valName, mc.compileType[Option[V]])
 }
