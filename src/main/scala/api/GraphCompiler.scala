@@ -229,8 +229,7 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
           cType,
           deepCopy(sourceValueParameters(r).ref, cType)
         )
-      case r@Source(_, _) =>
-        List[CStmt](CAssignmentExpr(valueRef(r), sourceValueParameters(r).ref))
+      case r@Source(_, _) => Nil
       case Map1(input, _, f) if f.node.returnType == CQualType(CVoidType) =>
         List[CStmt](CCallExpr(f.node.ref, List(valueRef(input))))
       case r@Map1(input, cType, f) =>
