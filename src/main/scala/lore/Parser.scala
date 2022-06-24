@@ -199,14 +199,14 @@ object Parser:
   val objFactor = P.defer(interaction | functionCall | _var)
   val fieldAcc: P[TFAcc] =
     P.defer(
-      objFactor.soft ~ (round.backtrack | P.defer(curly).backtrack | field).rep
+      objFactor.soft ~ (round | curly | field).rep
     ).map((obj, calls) => evalFieldAcc(obj, calls.toList))
 
   enum callType:
     case round, curly, field
   inline def callBuilder[A](open: P[Char], close: P[Unit], inner: P0[A]) =
-    (wsOrNl.with1 ~ P.char('.') *> id <* wsOrNl).soft ~
-      (open ~ wsOrNl *> inner <* wsOrNl) <* close
+    ((wsOrNl.with1.soft ~ P.char('.') *> id <* wsOrNl).soft <* open) ~
+      (wsOrNl *> inner <* wsOrNl) <* close
   val round =
     callBuilder(P.char('(').as('('), P.char(')'), args).map((f, a) =>
       (callType.round, f, a)
