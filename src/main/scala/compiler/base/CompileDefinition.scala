@@ -66,12 +66,12 @@ object CompileDefinition extends DefinitionPC {
         }
 
         CCompoundStmt(
-          retainParams ++
+          (if retainParams.isEmpty then Nil else retainParams :+ CEmptyStmt) ++
             body ++
             retainRes ++
-            releaseLocalVars ++
-            releaseParams ++
-            releaseRes ++
+            (if releaseLocalVars.isEmpty then Nil else CEmptyStmt :: releaseLocalVars) ++
+            (if releaseParams.isEmpty then Nil else CEmptyStmt :: releaseParams) ++
+            (if releaseRes.isEmpty then Nil else CEmptyStmt :: releaseRes.toList) ++
             returnRes
         )
       }

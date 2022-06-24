@@ -53,7 +53,9 @@ object CompileMatch extends MatchPC {
 
           CCompoundStmt(List[CStmt](
             scrutineeDecl,
-            ifStmt
+            CEmptyStmt,
+            ifStmt,
+            CEmptyStmt
           ) ++ release(scrutineeDecl.ref, scrutinee.tpe, CFalseLiteral))
       }
     }
@@ -77,10 +79,14 @@ object CompileMatch extends MatchPC {
           )
 
           def convertLastToAssign(stmts: List[CStmt]): List[CStmt] = {
-            val (body, releases) = stmts.span {
+            val valueIdx = stmts.lastIndexWhere {
               case CExprStmt(CCallExpr(CDeclRefExpr(funName), _)) if funName.startsWith("release_") => false
-              case _ => true
+              case CExprStmt(_) => true
+              case _ => false
             }
+
+            val (body, releases) = stmts.splitAt(valueIdx + 1)
+
             body.last match {
               case CExprStmt(expr) =>
                 val assign = CExprStmt(CAssignmentExpr(
@@ -92,10 +98,13 @@ object CompileMatch extends MatchPC {
           }
 
           val (lastCond, lastDecls, lastStmtList) = cascade.dispatch(_.compileCaseDef)(cases.last, scrutineeDecl.ref, scrutinee.tpe)
+
+          val lastDeclStmts = lastDecls.map(CDeclStmt(_))
           val lastIf = CIfStmt(
             lastCond.getOrElse(CTrueLiteral),
             CCompoundStmt(
-              lastDecls.map(CDeclStmt(_)) ++ convertLastToAssign(lastStmtList)
+              (if lastDeclStmts.isEmpty then Nil else lastDeclStmts :+ CEmptyStmt) ++
+                convertLastToAssign(lastStmtList)
             )
           )
 
@@ -103,19 +112,26 @@ object CompileMatch extends MatchPC {
             case (cd, nextIf) =>
               val (cond, decls, stmtList) = cascade.dispatch(_.compileCaseDef)(cd, scrutineeDecl.ref, scrutinee.tpe)
 
+              val declStmts = decls.map(CDeclStmt(_))
+
               CIfStmt(
                 cond.getOrElse(CTrueLiteral),
                 CCompoundStmt(
-                  decls.map(CDeclStmt(_)) ++ convertLastToAssign(stmtList)
+                  (if declStmts.isEmpty then Nil else declStmts :+ CEmptyStmt) ++
+                    convertLastToAssign(stmtList)
                 ),
                 Some(nextIf)
               )
           }
 
-          CStmtExpr(CCompoundStmt(List[CStmt](
-            resDecl,
-            scrutineeDecl,
-            outerIf) ++
+          CStmtExpr(CCompoundStmt(
+            List[CStmt](
+              resDecl,
+              scrutineeDecl,
+              CEmptyStmt,
+              outerIf,
+              CEmptyStmt
+            ) ++
             release(scrutineeDecl.ref, scrutinee.tpe, CFalseLiteral) ++
             release(resDecl.ref, matchTerm.tpe, CTrueLiteral) ++
             List(CExprStmt(resDecl.ref))

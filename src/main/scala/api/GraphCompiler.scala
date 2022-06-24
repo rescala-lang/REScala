@@ -328,13 +328,13 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
 
     val releaseCode = released.flatMap {
       case resource if usesRefCount(resource.cType) =>
-        release(valueRef(resource), resource.cType) map { releaseStmt =>
+        CEmptyStmt :: (release(valueRef(resource), resource.cType) map { releaseStmt =>
           CIfStmt(dotDefined(valueRef(resource)), releaseStmt)
-        }
+        }).toList
       case _ => None
     }
 
-    (sameCondCode :: releaseCode.toList) ++ compileUpdates(otherCond, toRelease.diff(released))
+    (CEmptyStmt :: sameCondCode :: releaseCode.toList) ++ compileUpdates(otherCond, toRelease.diff(released))
   }
 
   private val updateFunction: CFunctionDecl = {

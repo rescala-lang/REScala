@@ -126,7 +126,7 @@ object CompileTerm extends TermPC {
             )
             compiledStatements ++
               List[CStmt](blockResDecl) ++
-              releaseLocalVars ++
+              (CEmptyStmt :: releaseLocalVars) ++
               List(release(blockResDecl.ref, expr.tpe, CTrueLiteral).get, blockResDecl.ref)
           case _ => compiledStatements.appended(cascade.dispatch(_.compileTermToCExpr)(expr))
         }
@@ -148,7 +148,10 @@ object CompileTerm extends TermPC {
             case _ => compiledStatements.appended(cascade.dispatch(_.compileTermToCStmt)(expr))
           }
 
-          val releaseLocalVars = CompileDataStructure.releaseLocalVars(stmtList)
+          val releaseLocalVars = CompileDataStructure.releaseLocalVars(stmtList) match {
+            case Nil => Nil
+            case l => CEmptyStmt :: l
+          }
 
           CCompoundStmt(stmtList ++ releaseLocalVars)
       }
