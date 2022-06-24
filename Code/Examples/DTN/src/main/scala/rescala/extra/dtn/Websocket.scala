@@ -52,11 +52,11 @@ given JsonValueCodec[PosNegCounter] = JsonCodecMaker.make
 
 class Replica[S: Lattice](val id: String, val service: String, @volatile var data: S, sendDelta: S => Any) {
   def applyRemoteDelta(delta: S): Unit = synchronized {
-    data = data merged delta
+    data = data merge delta
   }
 
   def applyLocalDelta(delta: S): Unit = synchronized {
-    data = data merged delta
+    data = data merge delta
     sendDelta(data)
   }
 }
