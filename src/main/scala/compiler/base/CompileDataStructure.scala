@@ -8,7 +8,7 @@ import clangast.expr.unaryop.{CDecExpr, CDerefExpr, CIncExpr, CNotExpr}
 import clangast.expr.{CArraySubscriptExpr, CCallExpr, CExpr, CFalseLiteral, CMemberExpr, CParenExpr}
 import clangast.stmt.{CCompoundStmt, CDeclStmt, CForStmt, CIfStmt, CReturnStmt, CStmt}
 import clangast.stubs.{StdBoolH, StdLibH}
-import clangast.types.{CIntegerType, CQualType, CRecordType}
+import clangast.types.{CIntegerType, CQualType, CRecordType, CVoidType}
 import compiler.{CompilerCascade, PartialCompiler}
 import compiler.context.{RecordDeclTC, TranslationContext}
 
@@ -85,7 +85,7 @@ object CompileDataStructure extends DataStructurePC {
               )
             ))
 
-            CFunctionDecl(name, List(param, keepWithZero), recordDecl.getTypeForDecl, Some(body))
+            CFunctionDecl(name, List(param, keepWithZero), CVoidType, Some(body))
           })
       }
     }
