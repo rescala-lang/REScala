@@ -56,7 +56,7 @@ object Lattice {
         case (false, true)  => Some(1)
     }
 
-    override def lteq(x: A, y: A): Boolean = Lattice[A].<=(x)(y)
+    override def lteq(x: A, y: A): Boolean = x <= y
   }
 
   // /////////////// common instances below ///////////////
