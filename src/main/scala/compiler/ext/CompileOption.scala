@@ -24,6 +24,7 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
       {
         case ValDef(name, tpt, Some(Ident("None"))) =>
           val init = retain(CCallExpr(getNoneCreator(tpt.tpe).ref, List()), tpt.tpe)
+          ctx.registerValueName(name)
           val decl = CVarDecl(name, cascade.dispatch(_.compileTypeRepr)(tpt.tpe), Some(init))
           ctx.nameToDecl.put(name, decl)
           decl

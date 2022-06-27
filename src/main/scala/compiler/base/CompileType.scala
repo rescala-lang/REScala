@@ -75,6 +75,7 @@ object CompileType extends TypePC {
     import quotes.reflect.*
 
     tpe match {
+      case AnnotatedType(AppliedType(_, typeArgs), _) => typeArgs
       case MethodType(_, _, AppliedType(_, typeArgs)) => typeArgs
       case AppliedType(_, typeArgs) => typeArgs
       case _ => throw new MatchError(tpe.show(using Printer.TypeReprStructure))

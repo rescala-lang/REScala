@@ -19,8 +19,9 @@ object CompileMatch extends MatchPC {
 
       {
         case Match(scrutinee, cases) =>
+          val scrutineeName = ctx.uniqueValueName("_scrutinee")
           val scrutineeDecl = CVarDecl(
-            "_scrutinee",
+            scrutineeName,
             cascade.dispatch(_.compileTypeRepr)(scrutinee.tpe),
             Some(
               retain(
@@ -66,9 +67,12 @@ object CompileMatch extends MatchPC {
 
       {
         case matchTerm @ Match(scrutinee, cases) =>
-          val resDecl = CVarDecl("_res", cascade.dispatch(_.compileTypeRepr)(matchTerm.tpe), None)
+          val resName = ctx.uniqueValueName("_res")
+          val resDecl = CVarDecl(resName, cascade.dispatch(_.compileTypeRepr)(matchTerm.tpe), None)
+          
+          val scrutineeName = ctx.uniqueValueName("_scrutinee")
           val scrutineeDecl = CVarDecl(
-            "_scrutinee",
+            scrutineeName,
             cascade.dispatch(_.compileTypeRepr)(scrutinee.tpe),
             Some(
               retain(
@@ -189,6 +193,7 @@ object CompileMatch extends MatchPC {
         case (Bind(name, subPattern), prefix, prefixType) =>
           val (subCond, subDecls) = cascade.dispatch(_.compilePattern)(subPattern, prefix, prefixType)
 
+          ctx.registerValueName(name)
           (subCond, CVarDecl(name, cascade.dispatch(_.compileTypeRepr)(prefixType), Some(prefix)) :: subDecls)
       }
     }

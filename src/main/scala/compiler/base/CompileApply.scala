@@ -19,8 +19,10 @@ object CompileApply extends ApplyPC {
     
       {
         case Apply(Select(Select(Ident("math"), "package"), "max"), List(arg1, arg2)) =>
-          val v1 = CVarDecl("_v1", cascade.dispatch(_.compileTypeRepr)(arg1.tpe), Some(cascade.dispatch(_.compileTermToCExpr)(arg1)))
-          val v2 = CVarDecl("_v2", cascade.dispatch(_.compileTypeRepr)(arg2.tpe), Some(cascade.dispatch(_.compileTermToCExpr)(arg2)))
+          val v1Name = ctx.uniqueValueName("_v1")
+          val v2Name = ctx.uniqueValueName("_v2")
+          val v1 = CVarDecl(v1Name, cascade.dispatch(_.compileTypeRepr)(arg1.tpe), Some(cascade.dispatch(_.compileTermToCExpr)(arg1)))
+          val v2 = CVarDecl(v2Name, cascade.dispatch(_.compileTypeRepr)(arg2.tpe), Some(cascade.dispatch(_.compileTermToCExpr)(arg2)))
 
           val cond = CConditionalOperator(
             CGreaterThanExpr(v1.ref, v2.ref),

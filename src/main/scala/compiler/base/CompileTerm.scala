@@ -91,7 +91,8 @@ object CompileTerm extends TermPC {
           val rhsCompiled = cascade.dispatch(_.compileTermToCExpr)(rhs)
 
           if cascade.dispatch(_.usesRefCount)(lhs.tpe) then
-            val tempDecl = CVarDecl("temp", cascade.dispatch(_.compileTypeRepr)(rhs.tpe), Some(lhsCompiled))
+            val tempName = ctx.uniqueValueName("_temp")
+            val tempDecl = CVarDecl(tempName, cascade.dispatch(_.compileTypeRepr)(rhs.tpe), Some(lhsCompiled))
 
             CStmtExpr(CCompoundStmt(List(
               tempDecl,
@@ -119,8 +120,9 @@ object CompileTerm extends TermPC {
         val stmtList: List[CStmt] = expr.match {
           case Literal(UnitConstant()) => compiledStatements ++ releaseLocalVars
           case _ if cascade.dispatch(_.usesRefCount)(expr.tpe) && releaseLocalVars.nonEmpty =>
+            val blockResName = ctx.uniqueValueName("block_res")
             val blockResDecl = CVarDecl(
-              "block_res",
+              blockResName,
               cascade.dispatch(_.compileTypeRepr)(expr.tpe),
               Some(retain(cascade.dispatch(_.compileTermToCExpr)(expr), expr.tpe))
             )

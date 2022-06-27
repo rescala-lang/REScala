@@ -30,6 +30,7 @@ object CompileDefinition extends DefinitionPC {
       val params: List[ValDef] = defDef.termParamss.flatMap(_.params)
   
       val compiledParams: List[CParmVarDecl] = params.map(cascade.dispatch(_.compileValDefToCParmVarDecl))
+      compiledParams.foreach(p => ctx.registerValueName(p.name))
 
       val returnType = cascade.dispatch(_.compileTypeRepr)(returnTpt.tpe)
 
@@ -52,7 +53,8 @@ object CompileDefinition extends DefinitionPC {
 
         val (body, retainRes, releaseRes, returnRes) = ccStmt.body.last match {
           case CReturnStmt(Some(retVal)) if releaseParams.length + releaseLocalVars.length > 0 && resUsesRefCount =>
-            val resDecl = CVarDecl("f_res", returnType, Some(retain(retVal, returnTpt.tpe)))
+            val resName = ctx.uniqueValueName("_f_res")
+            val resDecl = CVarDecl(resName, returnType, Some(retain(retVal, returnTpt.tpe)))
             (
               ccStmt.body.init,
               Some[CStmt](resDecl),
@@ -102,6 +104,7 @@ object CompileDefinition extends DefinitionPC {
           // Make sure that the release function for this type is in context when it has to be released
           cascade.dispatchLifted(_.compileRelease)(tpt.tpe)
 
+          ctx.registerValueName(name)
           val decl = CVarDecl(name, cascade.dispatch(_.compileTypeRepr)(tpt.tpe), init)
 
           ctx.nameToDecl.put(name, decl)
