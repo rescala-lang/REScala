@@ -1,5 +1,6 @@
 package compiler.base
 
+import clangast.expr.{CCharacterLiteral, CDoubleLiteral, CExpr, CFalseLiteral, CFloatLiteral, CIntegerLiteral, CLongLiteral}
 import clangast.stubs.StdBoolH
 import clangast.types.*
 import compiler.context.TranslationContext
@@ -70,6 +71,26 @@ object CompileType extends TypePC {
         case _ => className
       }
     }
+
+  override def defaultValue(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CExpr] = {
+      import quotes.reflect.*
+
+      {
+        case tpe if tpe =:= TypeRepr.of[Boolean] => CFalseLiteral
+        case tpe if tpe =:= TypeRepr.of[Byte] => CCharacterLiteral(0)
+        case tpe if tpe =:= TypeRepr.of[Char] => CCharacterLiteral(0)
+        case tpe if tpe =:= TypeRepr.of[Short] => CIntegerLiteral(0)
+        case tpe if tpe =:= TypeRepr.of[Int] => CIntegerLiteral(0)
+        case tpe if tpe =:= TypeRepr.of[Long] => CLongLiteral(0)
+        case tpe if tpe =:= TypeRepr.of[Float] => CFloatLiteral(0)
+        case tpe if tpe =:= TypeRepr.of[Double] => CDoubleLiteral(0)
+        case MethodType(_, _, tpe) => cascade.dispatch(_.defaultValue)(tpe)
+      }
+    }
+  
+  def hasDefaultValue(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: TranslationContext, cascade: CompilerCascade): Boolean =
+    cascade.dispatchLifted(_.defaultValue)(tpe).isDefined
 
   def typeArgs(using Quotes): PartialFunction[quotes.reflect.TypeRepr, List[quotes.reflect.TypeRepr]] = tpe => {
     import quotes.reflect.*

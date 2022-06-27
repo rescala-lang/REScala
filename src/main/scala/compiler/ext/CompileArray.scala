@@ -48,12 +48,12 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
               cascade.dispatch(_.compileTermToCExpr)(elem)
             )
           )
-        case apply @ Apply(TypeApply(Select(Ident("Array"), "ofDim"), _), List(n)) =>
+        case apply @ Apply(TypeApply(Select(Ident("Array"), "ofDim"), List(tpt)), List(n)) if CompileType.hasDefaultValue(tpt.tpe) =>
           CCallExpr(
             getArrayFill(apply.tpe).ref,
             List(
               cascade.dispatch(_.compileTermToCExpr)(n),
-              0.lit
+              cascade.dispatch(_.defaultValue)(tpt.tpe)
             )
           )
         case apply @ this.arrayApply(args) =>

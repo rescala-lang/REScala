@@ -52,6 +52,15 @@ object CompileString extends TermPC with TypePC with StringPC {
       }
     }
 
+  override def defaultValue(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CExpr] = {
+      import quotes.reflect.*
+    
+      {
+        case tpe if tpe <:< TypeRepr.of[String] => CStringLiteral("")
+      }
+    }
+
   override def compilePrint(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
     PartialFunction[(CExpr, quotes.reflect.TypeRepr), CStmt] = {
       import quotes.reflect.*

@@ -114,6 +114,22 @@ object CompileProduct extends SelectPC with ApplyPC with MatchPC with TypePC wit
       }
     }
 
+  private def defaultValueImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CExpr] = {
+      import quotes.reflect.*
+
+      {
+        case tpe if tpe <:< TypeRepr.of[Product] && hasDefaultValue(tpe) =>
+          CCallExpr(
+            getProductCreator(tpe).ref,
+            fieldSymbols(tpe).map(tpe.memberType).map(cascade.dispatch(_.defaultValue))
+          )
+      }
+    }
+
+  override def defaultValue(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CExpr] = ensureCtx[RecordDeclTC](defaultValueImpl)
+
   override def compileTypeToCRecordDecl(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.TypeRepr, CRecordDecl] = {
       import quotes.reflect.*
@@ -211,6 +227,10 @@ object CompileProduct extends SelectPC with ApplyPC with MatchPC with TypePC wit
 
   private def fieldSymbols(using Quotes)(tpe: quotes.reflect.TypeRepr): List[quotes.reflect.Symbol] =
     tpe.classSymbol.get.caseFields.filter(_.isValDef)
+
+  private def hasDefaultValue(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: TranslationContext, cascade: CompilerCascade): Boolean =
+    !cascade.dispatch(_.usesRefCount)(tpe) &&
+      fieldSymbols(tpe).map(tpe.memberType).forall(CompileType.hasDefaultValue)
 
   private def isProductFieldAccess(using Quotes)(term: quotes.reflect.Term, name: String): Boolean = {
     import quotes.reflect.*

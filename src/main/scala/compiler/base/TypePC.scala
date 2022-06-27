@@ -1,5 +1,6 @@
 package compiler.base
 
+import clangast.expr.CExpr
 import clangast.types.CType
 import compiler.{CompilerCascade, PartialCompiler}
 import compiler.context.TranslationContext
@@ -15,6 +16,9 @@ trait TypePC extends PartialCompiler {
 
   def classTypeName(using Quotes)(using TranslationContext, CompilerCascade):
     PartialFunction[quotes.reflect.TypeRepr, String] = PartialFunction.empty
+  
+  def defaultValue(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CExpr] = PartialFunction.empty
 }
 
 extension (p: PartialCompiler) {
@@ -26,4 +30,7 @@ extension (p: PartialCompiler) {
 
   def classTypeName(using Quotes)(using TranslationContext, CompilerCascade):
     PartialFunction[quotes.reflect.TypeRepr, String] = PartialCompiler.ensurePC[TypePC](p, _.classTypeName)
+
+  def defaultValue(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CExpr] = PartialCompiler.ensurePC[TypePC](p, _.defaultValue)
 }

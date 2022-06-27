@@ -163,6 +163,19 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
       }
     }
 
+  private def defaultValueImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CExpr] = {
+      import quotes.reflect.*
+    
+      {
+        case tpe if tpe <:< TypeRepr.of[Option[?]] && !cascade.dispatch(_.usesRefCount)(tpe) =>
+          CCallExpr(getNoneCreator(tpe).ref, List())
+      }
+    }
+
+  override def defaultValue(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CExpr] = ensureCtx[RecordDeclTC](defaultValueImpl)
+
   override def compileTypeToCRecordDecl(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.TypeRepr, CRecordDecl] = {
       import quotes.reflect.*
