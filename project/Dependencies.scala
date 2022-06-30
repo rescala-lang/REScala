@@ -16,13 +16,14 @@ object Dependencies {
     val directories        = "26"
     val jetty              = "9.4.46.v20220331"
     val jol                = "0.16"
-    val jsoniterScalaCore  = "2.13.30"
+    val jsoniterScalaCore  = "2.13.31"
     val jsoniterScalaOld   = "2.13.3" // this is the latest version supporting Scala 2.11 and java 8
     val jsoup              = "1.15.1"
-    val munit              = "1.0.0-M5"
+    val munit              = "1.0.0-M6"
     val normalizecss       = "8.0.1"
     val okHttp             = "4.10.0"
     val pprint             = "0.7.3"
+    val quicklens          = "1.8.8"
     val reactiveStreams    = "1.0.4"
     val retypecheck        = "0.10.0"
     val scala211           = "2.11.12"
@@ -38,6 +39,7 @@ object Dependencies {
     val scalatags          = "0.11.1"
     val scalatest          = "3.2.12"
     val scalatestpluscheck = "3.2.11.0"
+    val scopt              = "4.0.1"
     val scribe             = "3.8.3"
     val slips              = "3e80b7d8eb"
     val sourcecode         = "0.2.8"
@@ -59,6 +61,7 @@ object Dependencies {
   val normalizecss    = Def.setting("org.webjars.npm" % "normalize.css" % V.normalizecss)
   val okHttp          = Def.setting("com.squareup.okhttp3" % "okhttp" % V.okHttp)
   val pprint          = Def.setting("com.lihaoyi" %%% "pprint" % V.pprint)
+  val quicklens       = Def.setting("com.softwaremill.quicklens" %%% "quicklens" % V.quicklens)
   val reactiveStreams = Def.setting("org.reactivestreams" % "reactive-streams" % V.reactiveStreams)
   val retypecheck =
     Def.setting(if (`is 3`(scalaVersion.value)) None
@@ -74,6 +77,7 @@ object Dependencies {
     Def.setting(if (`is 2.11`(scalaVersion.value))
       "org.scalatestplus"    %%% "scalacheck-1-15" % "3.2.4.0-M1"         % "test"
     else "org.scalatestplus" %%% "scalacheck-1-15" % V.scalatestpluscheck % "test")
+  val scopt       = Def.setting("com.github.scopt" %%% "scopt" % V.scopt)
   val scribe      = Def.setting("com.outr" %%% "scribe" % V.scribe)
   val scribeSlf4j = Def.setting("com.outr" %% "scribe-slf4j" % V.scribe)
   val sourcecode  = Def.setting("com.lihaoyi" %%% "sourcecode" % V.sourcecode)

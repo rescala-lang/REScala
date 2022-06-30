@@ -174,7 +174,7 @@ lazy val encryptedTodo = project.in(file("Code/Examples/EncryptedTodoFx"))
     scalaFxDependencies,
     fork := true,
     libraryDependencies ++= {
-      val jettyVersion = "11.0.10"
+      val jettyVersion = "11.0.11"
       Seq(
         "org.eclipse.jetty"           % "jetty-server"           % jettyVersion,
         "org.eclipse.jetty.websocket" % "websocket-jetty-api"    % jettyVersion,

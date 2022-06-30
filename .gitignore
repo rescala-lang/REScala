@@ -33,3 +33,4 @@ out/
 .bsp/
 *.jfr
 Code/GUITest/reports/
+metals.sbt

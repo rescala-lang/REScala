@@ -3,26 +3,26 @@
 
 // scalajs 1.0
 addSbtPlugin("ch.epfl.scala" % "sbt-scalajs-bundler" % "0.20.0") // https://github.com/scalacenter/scalajs-bundler
-addSbtPlugin("org.scala-js"  % "sbt-scalajs"         % "1.10.0")
+addSbtPlugin("org.scala-js"  % "sbt-scalajs"         % "1.10.1")
 libraryDependencies += "org.scala-js" %% "scalajs-env-jsdom-nodejs" % "1.1.0"
 
 // scalanative
-addSbtPlugin("org.scala-native" % "sbt-scala-native" % "0.4.4")
+addSbtPlugin("org.scala-native" % "sbt-scala-native" % "0.4.5")
 
 // crossbuilding
 addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject"      % "1.2.0")
 addSbtPlugin("org.portable-scala" % "sbt-scala-native-crossproject" % "1.2.0")
 
-// operations
-addSbtPlugin("com.dwijnand"     % "sbt-dynver"          % "4.1.1") // https://github.com/dwijnand/sbt-dynver
-addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.8.1") // https://github.com/sbt/sbt-native-packager
+// sbt settings
+addSbtPlugin("com.dwijnand"              % "sbt-dynver"    % "4.1.1") // https://github.com/dwijnand/sbt-dynver
+addSbtPlugin("com.eed3si9n"              % "sbt-buildinfo" % "0.11.0")
+addSbtPlugin("io.github.davidgregory084" % "sbt-tpolecat"  % "0.3.1") // https://github.com/typelevel/sbt-tpolecat
+
+// packaging
+addSbtPlugin("com.github.sbt" % "sbt-native-packager" % "1.9.9") // https://github.com/sbt/sbt-native-packager
+addSbtPlugin("org.scalameta"  % "sbt-native-image"    % "0.3.2") // https://github.com/scalameta/sbt-native-image
+addSbtPlugin("com.github.sbt" % "sbt-pgp"             % "2.1.2")
 
 // tooling
-addSbtPlugin("pl.project13.scala"        % "sbt-jmh"       % "0.4.3")
-addSbtPlugin("org.irundaia.sbt"          % "sbt-sassify"   % "1.5.1")
-addSbtPlugin("com.github.sbt"            % "sbt-pgp"       % "2.1.2")
-addSbtPlugin("io.github.davidgregory084" % "sbt-tpolecat"  % "0.3.1")
-addSbtPlugin("com.eed3si9n"              % "sbt-buildinfo" % "0.11.0")
-
-// https://github.com/scalameta/sbt-native-image
-addSbtPlugin("org.scalameta" % "sbt-native-image" % "0.3.2")
+addSbtPlugin("pl.project13.scala" % "sbt-jmh"     % "0.4.3")
+addSbtPlugin("org.irundaia.sbt"   % "sbt-sassify" % "1.5.1")
