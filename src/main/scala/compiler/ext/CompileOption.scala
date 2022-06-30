@@ -332,11 +332,13 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
     val defaultValParam = CParmVarDecl("defaultVal", valType)
 
     val body = CCompoundStmt(List(
-      CConditionalOperator(
-        CMemberExpr(optParam.ref, definedField),
-        CMemberExpr(optParam.ref, valField),
-        defaultValParam.ref
-      )
+      CReturnStmt(Some(
+        CConditionalOperator(
+          CMemberExpr(optParam.ref, definedField),
+          CMemberExpr(optParam.ref, valField),
+          defaultValParam.ref
+        )
+      ))
     ))
 
     CFunctionDecl(name, List(optParam, defaultValParam), valType, Some(body))
