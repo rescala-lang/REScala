@@ -16,7 +16,6 @@ lazy val rescalaProject = project.in(file(".")).settings(commonSettings, noPubli
   kofre.js,
   kofre.jvm,
   microbench,
-  dtn,
   rescala.js,
   rescala.jvm,
   rescalafx,
@@ -124,19 +123,6 @@ lazy val microbench = project.in(file("Code/Microbenchmarks"))
 // =====================================================================================
 // Examples
 
-lazy val dtn = project.in(file("Code/Examples/DTN"))
-  .dependsOn(rescala.jvm)
-  .dependsOn(kofre.jvm)
-  .settings(
-    commonSettings,
-    libraryDependencies ++= jsoniterScalaAll.value ++ Seq(
-      munitScalacheck.value,
-      munit.value,
-      "com.softwaremill.sttp.client3" %% "core"           % "3.6.2",
-      "com.softwaremill.sttp.client3" %% "okhttp-backend" % "3.6.2",
-    ),
-  )
-
 lazy val examples = project.in(file("Code/Examples/examples"))
   .dependsOn(rescala.jvm, reswing)
   .settings(
@@ -195,6 +181,7 @@ lazy val consoleReplication = project.in(file("Code/Examples/ConsoleReplication"
     noPublish,
     fork               := true,
     run / connectInput := true,
+    jitpackResolver,
     libraryDependencies ++= jsoniterScalaAll.value ++ circeAll.value ++ Seq(
       loci.tcp.value,
       decline.value,
@@ -202,6 +189,7 @@ lazy val consoleReplication = project.in(file("Code/Examples/ConsoleReplication"
       munitScalacheck.value,
       munit.value,
       scalacheck.value,
+      slips.delay.value,
     ),
   )
 

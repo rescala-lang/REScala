@@ -41,7 +41,7 @@ object Dependencies {
     val scalatestpluscheck = "3.2.11.0"
     val scopt              = "4.0.1"
     val scribe             = "3.8.3"
-    val slips              = "3e80b7d8eb"
+    val slips              = "b4a6d6e54b"
     val sourcecode         = "0.2.8"
     val tomlScala          = "0.2.2"
     val upickle            = "2.0.0"
@@ -49,7 +49,8 @@ object Dependencies {
 
   import Dependencies.{Versions => V}
 
-  val betterFiles     = Def.setting(("com.github.pathikrit" %% "better-files" % V.betterFiles).cross(CrossVersion.for3Use2_13))
+  val betterFiles =
+    Def.setting(("com.github.pathikrit" %% "better-files" % V.betterFiles).cross(CrossVersion.for3Use2_13))
   val catsCore        = Def.setting("org.typelevel" %%% "cats-core" % V.catsCore)
   val decline         = Def.setting("com.monovore" %%% "decline" % V.decline)
   val directories     = Def.setting("dev.dirs" % "directories" % V.directories)
@@ -106,6 +107,7 @@ object Dependencies {
     val chain    = Def.setting("de.rmgk.slips" %%% "chain" % V.slips)
     val category = Def.setting("de.rmgk.slips" %%% "category" % V.slips)
     val scip     = Def.setting("de.rmgk.slips" %%% "scip" % V.slips)
+    val delay    = Def.setting("de.rmgk.slips" %%% "delay" % V.slips)
   }
 
   object loci {
