@@ -1,6 +1,7 @@
 package compiler
 
 import scala.annotation.compileTimeOnly
+import scala.collection.mutable
 
 object ExtensionMethods {
   extension[P <: Product] (p: P)
@@ -18,4 +19,8 @@ object ExtensionMethods {
   extension[L, R] (either: Either[L, R])
     @compileTimeOnly("This method can only be used in expressions that are translated to C code")
     def deepCopy(): Either[L, R] = ???
+
+  extension[K, V] (map: mutable.Map[K, V])
+    @compileTimeOnly("This method can only be used in expressions that are translated to C code")
+    def deepCopy(): mutable.Map[K, V] = ???
 }

@@ -238,7 +238,6 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
 
   private val dataField: String = "data"
   private val lengthField: String = "length"
-  private val refCountField: String = "refCount"
 
   private def arrayApply(using Quotes): PartialFunction[quotes.reflect.Apply, List[quotes.reflect.Term]] = apply => {
     import quotes.reflect.*
@@ -339,7 +338,11 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
 
   private def arrayIndexUpdate(using Quotes)(arr: quotes.reflect.Term, idx: quotes.reflect.Term, v: quotes.reflect.Term)
                               (using ctx: TranslationContext, cascade: CompilerCascade): CExpr = {
-    val tempDecl = CVarDecl("temp", compileTypeRepr(v.tpe), Some(arrayIndexAccess(arr, idx)))
+    val tempDecl = CVarDecl(
+      "temp",
+      cascade.dispatch(_.compileTypeRepr)(v.tpe),
+      Some(arrayIndexAccess(arr, idx))
+    )
 
     if cascade.dispatch(_.usesRefCount)(v.tpe) then
       CStmtExpr(CCompoundStmt(List(

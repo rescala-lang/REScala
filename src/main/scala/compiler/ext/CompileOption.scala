@@ -257,8 +257,8 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
   override def compilePrint(using Quotes)(using TranslationContext, CompilerCascade):
     PartialFunction[(CExpr, quotes.reflect.TypeRepr), CStmt] = ensureCtx[RecordDeclTC](compilePrintImpl)
 
-  private val valField = "val"
-  private val definedField = "defined"
+  val valField = "val"
+  val definedField = "defined"
 
   private val CREATE_NONE = "CREATE_NONE"
   private val CREATE_SOME = "CREATE_SOME"
@@ -266,11 +266,11 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
   private val EQUALS = "EQUALS"
   private val PRINT = "PRINT"
 
-  private def getNoneCreator(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+  def getNoneCreator(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
     ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> CREATE_NONE, buildNoneCreator(tpe))
   }
 
-  private def getSomeCreator(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+  def getSomeCreator(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
     ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> CREATE_SOME, buildSomeCreator(tpe))
   }
 
@@ -320,7 +320,7 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
     CFunctionDecl(name, List(valParam), recordDecl.getTypeForDecl, Some(body))
   }
 
-  private def getGetOrElse(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+  def getGetOrElse(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
     ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> GET_OR_ELSE, buildGetOrElse(getRecordDecl(tpe)))
   }
 

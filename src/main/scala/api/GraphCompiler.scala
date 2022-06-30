@@ -472,10 +472,16 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
   }
 
   private def writeMakeFile(pathToDir: String, compiler: String): Unit = {
+    val localIncludes = Set.from(contexts.flatMap(_.includes.filter(_.isLocal))).toList
+
+    val localFileString = localIncludes.flatMap { incl =>
+      List(incl.name, incl.name.init + "c")
+    }.mkString(" ", " ", "")
+
     val content =
       s"""
          |build:
-         |\t$compiler $appC $mainC $mainH $libC $libH -o $appOut
+         |\t$compiler $appC $mainC $mainH $libC $libH$localFileString -o $appOut
       """.strip().stripMargin
 
     writeFile(pathToDir + "/Makefile", content)

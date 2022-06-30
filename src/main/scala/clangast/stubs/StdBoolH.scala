@@ -7,8 +7,5 @@ import compiler.context.TranslationContext
 object StdBoolH extends CLibraryStub {
   override val include: CInclude = CInclude("stdbool.h")
 
-  def bool(using ctx: TranslationContext): CType = {
-    ctx.addInclude(include)
-    CBoolType
-  }
+  def bool(using ctx: TranslationContext): CType = includeStub(CBoolType)
 }

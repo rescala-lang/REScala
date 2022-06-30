@@ -82,7 +82,7 @@ object CompileString extends TermPC with TypePC with StringPC {
         case (expr, tpe) if tpe <:< TypeRepr.of[Float | Double] =>
           printf("%f", expr)
         case (expr, tpe) if tpe <:< TypeRepr.of[String] =>
-          printf("%s", expr)
+          printf("\\\"%s\\\"", expr)
       }
     }
 
