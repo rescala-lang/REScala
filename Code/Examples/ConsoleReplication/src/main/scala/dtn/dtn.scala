@@ -63,8 +63,6 @@ given JsonValueCodec[WsSendData] = JsonCodecMaker.make
 
 given JsonValueCodec[PosNegCounter] = JsonCodecMaker.make
 
-
-
 class Replica[S: Lattice: JsonValueCodec](val id: Id, dtnNodeId: String, val service: String, @volatile var data: S) {
 
   val connections: AtomicReference[List[WebSocket]] = {
@@ -103,7 +101,7 @@ class Replica[S: Lattice: JsonValueCodec](val id: Id, dtnNodeId: String, val ser
 
   def connectOn(uri: URI): Async[Any, Unit] =
     Async {
-      val listener = ReplicaListener(this)
+      val listener      = ReplicaListener(this)
       val ws: WebSocket = client.newWebSocketBuilder().buildAsync(uri, listener).toAsync.await
       println(s"starting ws handler")
       // select json communication
@@ -148,6 +146,14 @@ given fullPermission[L: DecomposeLattice: Bottom]: PermIdMutate[ReplicaMutator[L
 }
 given [L]: ArdtOpsContains[ReplicaMutator[L], L] = new {}
 
+def traverse[T](list: List[Async[Any, T]]): Async[Any, List[T]] = list match
+  case Nil => Async { Nil }
+  case h :: t => Async {
+      val hr   = h.await
+      val rest = traverse(t).await
+      hr :: rest
+    }
+
 @main def run(): Unit =
   val service = "dtn://rdt/~test"
 
@@ -158,19 +164,10 @@ given [L]: ArdtOpsContains[ReplicaMutator[L], L] = new {}
     val replica = Replica(Defs.genId(), nodeId, service, PosNegCounter.zero)
 
     val bundleString = sget(URI.create(s"$api/status/bundles")).await
-    val bundlesIds = readFromString[List[String]](bundleString)(JsonCodecMaker.make).map { id =>
+    val bundles = traverse(readFromString[List[String]](bundleString)(JsonCodecMaker.make).map { id =>
       bget(URI.create(s"$api/download?$id"))
-    }
+    }).await
 
-    def traverse[T](list: List[Async[Any, T]]): Async[Any, List[T]] = list match
-      case Nil => Async { Nil }
-      case h :: t => Async {
-          val hr   = h.await
-          val rest = traverse(t).await
-          hr :: rest
-        }
-
-    val bundles = traverse(bundlesIds).await
     bundles.foreach(b => println(new String(b)))
 
     replica.connectOn(URI.create(s"${api(using "ws")}/ws")).await
