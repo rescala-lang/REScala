@@ -8,6 +8,7 @@ object StdIOH extends CLibraryStub {
 
   def printf(using TranslationContext): CFunctionDecl = includeStub(CFunctionStub("printf"))
   def sprintf(using TranslationContext): CFunctionDecl = includeStub(CFunctionStub("sprintf"))
+  def snprintf(using TranslationContext): CFunctionDecl = includeStub(CFunctionStub("snprintf"))
   def scanf(using TranslationContext): CFunctionDecl = includeStub(CFunctionStub("scanf"))
   def sscanf(using TranslationContext): CFunctionDecl = includeStub(CFunctionStub("sscanf"))
 }

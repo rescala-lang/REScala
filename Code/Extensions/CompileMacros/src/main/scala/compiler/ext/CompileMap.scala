@@ -191,11 +191,11 @@ object CompileMap extends SelectPC with ApplyPC with MatchPC with TypePC with Da
   val PRINT = "PRINT"
   val PRINT_ITERATOR = "PRINT_ITERATOR"
 
-  private def validKeyType(using Quotes)(tpe: quotes.reflect.TypeRepr): Boolean = {
+  private def validKeyType(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: TranslationContext, cascade: CompilerCascade): Boolean = {
     import quotes.reflect.*
 
     val typeArgs(List(keyType, _)) = tpe
-    keyType <:< TypeRepr.of[String]
+    cascade.dispatch(_.hasInjectiveToString)(keyType)
   }
 
   private def getMapCreator(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
@@ -258,6 +258,12 @@ object CompileMap extends SelectPC with ApplyPC with MatchPC with TypePC with Da
     val mapParam = CParmVarDecl("map", recordDecl.getTypeForDecl)
     val keyParam = CParmVarDecl("key", keyCType)
 
+    val keyStringDecl = CVarDecl(
+      "keyString",
+      CPointerType(CCharType),
+      Some(cascade.dispatch(_.compileToString)(keyParam.ref, keyType))
+    )
+
     val valueHandleDecl = CVarDecl(
       "valueHandle",
       CPointerType(CPointerType(valueCType)),
@@ -277,11 +283,13 @@ object CompileMap extends SelectPC with ApplyPC with MatchPC with TypePC with Da
         HashmapH.hashmap_get.ref,
         List(
           CMemberExpr(mapParam.ref, dataField),
-          keyParam.ref,
+          keyStringDecl.ref,
           CCastExpr(valueHandleDecl.ref, CPointerType(HashmapH.any_t))
         )
       ))
     )
+
+    val freeKeyString = CCallExpr(StdLibH.free.ref, List(keyStringDecl.ref))
 
     val valueDecl = CVarDecl("value", valueCType, Some(CDerefExpr(CDerefExpr(valueHandleDecl.ref))))
 
@@ -307,8 +315,10 @@ object CompileMap extends SelectPC with ApplyPC with MatchPC with TypePC with Da
     )
 
     val body = CCompoundStmt(List(
+      keyStringDecl,
       valueHandleDecl,
       statusDecl,
+      freeKeyString,
       res
     ))
 
@@ -334,26 +344,6 @@ object CompileMap extends SelectPC with ApplyPC with MatchPC with TypePC with Da
     val keyParam = CParmVarDecl("key", keyCType)
     val valueParam = CParmVarDecl("value", valueCType)
 
-    val keyStringDecl = CVarDecl(
-      "keyString",
-      CPointerType(CCharType),
-      Some(CCastExpr(
-        CCallExpr(
-          StdLibH.malloc.ref,
-          List(CProdExpr(
-            CCallExpr(StringH.strlen.ref, List(keyParam.ref)),
-            CSizeofExpr(Left(CCharType))
-          ))
-        ),
-        CPointerType(CCharType)
-      ))
-    )
-
-    val keyCopy = CCallExpr(
-      StringH.strcpy.ref,
-      List(keyStringDecl.ref, keyParam.ref)
-    )
-
     val valuePointerDecl = CVarDecl(
       "valuePointer",
       CPointerType(valueCType),
@@ -372,14 +362,12 @@ object CompileMap extends SelectPC with ApplyPC with MatchPC with TypePC with Da
       HashmapH.hashmap_put.ref,
       List(
         CMemberExpr(mapParam.ref, dataField),
-        keyStringDecl.ref,
+        cascade.dispatch(_.compileToString)(keyParam.ref, keyType),
         CCastExpr(valuePointerDecl.ref, HashmapH.any_t)
       )
     )
 
     val body = CCompoundStmt(List(
-      keyStringDecl,
-      keyCopy,
       valuePointerDecl,
       valuePointerAssign,
       put
@@ -405,11 +393,23 @@ object CompileMap extends SelectPC with ApplyPC with MatchPC with TypePC with Da
     val mapParam = CParmVarDecl("map", recordDecl.getTypeForDecl)
     val keyParam = CParmVarDecl("key", keyCType)
 
+    val keyStringDecl = CVarDecl(
+      "keyString",
+      CPointerType(CCharType),
+      Some(cascade.dispatch(_.compileToString)(keyParam.ref, keyType))
+    )
+
+    val callRemove = CCallExpr(
+      HashmapH.hashmap_remove.ref,
+      List(CMemberExpr(mapParam.ref, dataField), keyStringDecl.ref)
+    )
+
+    val freeKeyString = CCallExpr(StdLibH.free.ref, List(keyStringDecl.ref))
+
     val body = CCompoundStmt(List(
-      CCallExpr(
-        HashmapH.hashmap_remove.ref,
-        List(CMemberExpr(mapParam.ref, dataField), keyParam.ref)
-      )
+      keyStringDecl,
+      callRemove,
+      freeKeyString
     ))
 
     CFunctionDecl(name, List(mapParam, keyParam), CVoidType, Some(body))
