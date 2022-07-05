@@ -1,12 +1,13 @@
 package compiler.ext
 
-import clangast.{CASTNode, given}
+import clangast.*
+import clangast.given
 import clangast.decl.*
-import clangast.expr.binaryop.{CAndExpr, CEqualsExpr, CNotEqualsExpr, COrExpr}
+import clangast.expr.binaryop.{CAndExpr, CAssignmentExpr, CEqualsExpr, CNotEqualsExpr, COrExpr, CPlusExpr}
 import clangast.expr.unaryop.{CDerefExpr, CNotExpr}
 import clangast.expr.*
 import clangast.stmt.{CCompoundStmt, CIfStmt, CReturnStmt, CStmt}
-import clangast.stubs.{StdBoolH, StdLibH}
+import clangast.stubs.{StdBoolH, StdLibH, StringH}
 import clangast.types.*
 import compiler.CompilerCascade
 import compiler.base.*
@@ -159,7 +160,9 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
       import quotes.reflect.*
 
       {
-        case tpe if tpe <:< TypeRepr.of[Option[?]] => cascade.dispatch(_.classTypeName)(tpe)
+        case tpe if tpe <:< TypeRepr.of[Option[?]] =>
+          val typeArgs(List(wrappedType)) = tpe.widen
+          cascade.dispatch(_.classTypeName)(TypeRepr.of[Option].appliedTo(wrappedType))
       }
     }
 
@@ -182,7 +185,7 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
   
       {
         case tpe if tpe <:< TypeRepr.of[Option[?]] =>
-          val typeArgs(List(wrappedType)) = tpe
+          val typeArgs(List(wrappedType)) = tpe.widen
 
           val valFieldDecl = CFieldDecl(valField, cascade.dispatch(_.compileTypeRepr)(wrappedType))
           val definedFieldDecl = CFieldDecl(definedField, StdBoolH.bool)
@@ -257,6 +260,30 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
   override def compilePrint(using Quotes)(using TranslationContext, CompilerCascade):
     PartialFunction[(CExpr, quotes.reflect.TypeRepr), CStmt] = ensureCtx[RecordDeclTC](compilePrintImpl)
 
+  def compileToStringImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+    PartialFunction[(CExpr, quotes.reflect.TypeRepr), CExpr] = {
+      import quotes.reflect.*
+
+      {
+        case (expr, tpe) if tpe <:< TypeRepr.of[Option[?]] =>
+          CCallExpr(getOptionToString(tpe).ref, List(expr))
+      }
+    }
+
+  override def compileToString(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+    PartialFunction[(CExpr, quotes.reflect.TypeRepr), CExpr] = ensureCtx[RecordDeclTC](compileToStringImpl)
+
+  override def hasInjectiveToString(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, Boolean] = {
+      import quotes.reflect.*
+
+      {
+        case tpe if tpe <:< TypeRepr.of[Option[?]] =>
+          val typeArgs(List(wrappedType)) = tpe.widen
+          cascade.dispatch(_.hasInjectiveToString)(wrappedType)
+      }
+    }
+
   val valField = "val"
   val definedField = "defined"
 
@@ -265,6 +292,7 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
   private val GET_OR_ELSE = "GET_OR_ELSE"
   private val EQUALS = "EQUALS"
   private val PRINT = "PRINT"
+  private val TO_STRING = "TO_STRING"
 
   def getNoneCreator(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
     ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> CREATE_NONE, buildNoneCreator(tpe))
@@ -447,5 +475,63 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
     ))
 
     CFunctionDecl(name, List(optParam), CVoidType, Some(body))
+  }
+
+  private def getOptionToString(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> TO_STRING, buildOptionToString(tpe))
+  }
+
+  private def buildOptionToString(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    import quotes.reflect.*
+
+    val recordDecl = getRecordDecl(tpe)
+    val typeArgs(List(wrappedType)) = tpe.widen
+
+    val name = "toString_" + recordDecl.name
+
+    val optParam = CParmVarDecl("opt", recordDecl.getTypeForDecl)
+
+    val valStringDecl = CVarDecl(
+      "valStr",
+      CPointerType(CCharType),
+      Some(cascade.dispatch(_.compileToString)(CMemberExpr(optParam.ref, valField), wrappedType))
+    )
+
+    val someStringDecl = CompileString.stringDecl(
+      "str",
+      CPlusExpr(6.lit, CCallExpr(StringH.strlen.ref, List(valStringDecl.ref)))
+    )
+
+    val someBranch = CCompoundStmt(List(
+      valStringDecl,
+      someStringDecl,
+      CompileString.sprintf(someStringDecl.ref, "Some(%s)", valStringDecl.ref),
+      CCallExpr(StdLibH.free.ref, List(valStringDecl.ref)),
+      CReturnStmt(Some(someStringDecl.ref))
+    ))
+
+    val noneStringDecl = CompileString.stringDecl("str", 4.lit)
+
+    val noneBranch = CCompoundStmt(List(
+      noneStringDecl,
+      CompileString.sprintf(noneStringDecl.ref, "None"),
+      CReturnStmt(Some(noneStringDecl.ref))
+    ))
+
+    CIfStmt(
+      CMemberExpr(optParam.ref, definedField),
+      someBranch,
+      Some(noneBranch)
+    )
+
+    val body = CCompoundStmt(List(
+      CIfStmt(
+        CMemberExpr(optParam.ref, definedField),
+        someBranch,
+        Some(noneBranch)
+      )
+    ))
+
+    CFunctionDecl(name, List(optParam), CPointerType(CCharType), Some(body))
   }
 }

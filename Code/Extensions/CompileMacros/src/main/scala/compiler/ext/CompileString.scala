@@ -15,7 +15,7 @@ import compiler.base.*
 
 import scala.quoted.*
 
-object CompileString extends TermPC with TypePC with StringPC {
+object CompileString extends TermPC with ApplyPC with TypePC with StringPC {
   override def compileLiteral(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.Literal, CExpr] = {
       import quotes.reflect.*
@@ -43,6 +43,19 @@ object CompileString extends TermPC with TypePC with StringPC {
             ),
             printf("\\n")
           ))
+      }
+    }
+
+  override def compileApply(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.Apply, CExpr] = {
+      import quotes.reflect.*
+
+      {
+        case Apply(Select(expr, "toString"), List()) =>
+          cascade.dispatch(_.compileToString)(
+            cascade.dispatch(_.compileTermToCExpr)(expr),
+            expr.tpe
+          )
       }
     }
 

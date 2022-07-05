@@ -1,17 +1,18 @@
 package compiler.ext
 
+import clangast.*
 import clangast.given
 import clangast.decl.*
 import clangast.expr.binaryop.*
 import clangast.expr.unaryop.*
 import clangast.expr.*
 import clangast.stmt.*
-import clangast.stubs.{StdBoolH, StdLibH}
+import clangast.stubs.{StdBoolH, StdIOH, StdLibH, StringH}
 import clangast.types.*
 import compiler.CompilerCascade
 import compiler.base.*
 import compiler.base.CompileType.typeArgs
-import compiler.base.CompileDataStructure.{retain, release}
+import compiler.base.CompileDataStructure.{release, retain}
 import compiler.context.{RecordDeclTC, TranslationContext}
 
 import scala.quoted.*
@@ -209,9 +210,34 @@ object CompileProduct extends SelectPC with ApplyPC with MatchPC with TypePC wit
   override def compilePrint(using Quotes)(using TranslationContext, CompilerCascade):
     PartialFunction[(CExpr, quotes.reflect.TypeRepr), CStmt] = ensureCtx[RecordDeclTC](compilePrintImpl)
 
+  def compileToStringImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+    PartialFunction[(CExpr, quotes.reflect.TypeRepr), CExpr] = {
+      import quotes.reflect.*
+
+      {
+        case (expr, tpe) if tpe <:< TypeRepr.of[Product] =>
+          CCallExpr(getProductToString(tpe).ref, List(expr))
+      }
+    }
+
+  override def compileToString(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+    PartialFunction[(CExpr, quotes.reflect.TypeRepr), CExpr] = ensureCtx[RecordDeclTC](compileToStringImpl)
+
+  override def hasInjectiveToString(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, Boolean] = {
+      import quotes.reflect.*
+
+      {
+        case tpe if tpe <:< TypeRepr.of[Product] =>
+          val typeArgs(fieldTypes) = tpe.widen
+          fieldTypes.forall(cascade.dispatch(_.hasInjectiveToString))
+      }
+    }
+
   private val CREATE = "CREATE"
   private val EQUALS = "EQUALS"
   private val PRINT = "PRINT"
+  private val TO_STRING = "TO_STRING"
 
   private def isProductApply(using Quotes)(apply: quotes.reflect.Apply): Boolean = {
     import quotes.reflect.*
@@ -368,6 +394,86 @@ object CompileProduct extends SelectPC with ApplyPC with MatchPC with TypePC wit
       name,
       List(productParam),
       CVoidType,
+      Some(body)
+    )
+  }
+
+  private def getProductToString(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> TO_STRING, buildProductToString(tpe))
+  }
+
+  private def buildProductToString(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    import quotes.reflect.*
+
+    val recordDecl = getRecordDecl(tpe)
+    val typeArgs(fieldTypes) = tpe.widen
+
+    val isTuple = recordDecl.name.startsWith("Tuple")
+
+    val name = "toString_" + recordDecl.name
+    val productParam = CParmVarDecl("rec", recordDecl.getTypeForDecl)
+
+    val fieldStringsDecl = CVarDecl(
+      "fieldStrings",
+      CArrayType(CPointerType(CCharType), Some(CIntegerLiteral(fieldTypes.length)))
+    )
+
+    val baseLength = if isTuple then 2 else 2 + tpe.classSymbol.get.name.length
+
+    val stringLengthDecl = CVarDecl(
+      "strLength",
+      CIntegerType,
+      Some(CIntegerLiteral(baseLength + 2 * (fieldTypes.length - 1)))
+    )
+
+    val fieldsToString: List[CStmt] = recordDecl.fields.zip(fieldTypes).zipWithIndex.flatMap {
+      case ((f, t), i) =>
+        val fieldToString = CAssignmentExpr(
+          CArraySubscriptExpr(fieldStringsDecl.ref, i.lit),
+          cascade.dispatch(_.compileToString)(
+            CMemberExpr(productParam.ref, f.name.strip()),
+            t
+          )
+        )
+
+        val addFieldStringLength = CPlusAssignmentExpr(
+          stringLengthDecl.ref,
+          CCallExpr(StringH.strlen.ref, List(CArraySubscriptExpr(fieldStringsDecl.ref, i.lit)))
+        )
+
+        List(fieldToString, addFieldStringLength)
+    }
+
+    val strDecl = CompileString.stringDecl("str", stringLengthDecl.ref)
+
+    val formatString = (if isTuple then "(" else tpe.classSymbol.get.name + "(") +
+      fieldTypes.map(_ => "%s").mkString(", ") + ")"
+
+    val sprintf = CCallExpr(
+      StdIOH.sprintf.ref,
+      strDecl.ref ::
+        CStringLiteral(formatString) ::
+        fieldTypes.indices.map(i => CArraySubscriptExpr(fieldStringsDecl.ref, i.lit)).toList
+    )
+
+    val freeFieldStrings = fieldTypes.indices.map[CStmt](
+      i => CCallExpr(StdLibH.free.ref, List(CArraySubscriptExpr(fieldStringsDecl.ref, i.lit)))
+    ).toList
+
+    val body = CCompoundStmt(List(
+      fieldStringsDecl,
+      stringLengthDecl,
+      CCompoundStmt(fieldsToString),
+      strDecl,
+      sprintf,
+      CCompoundStmt(freeFieldStrings),
+      CReturnStmt(Some(strDecl.ref))
+    ))
+
+    CFunctionDecl(
+      name,
+      List(productParam),
+      CPointerType(CCharType),
       Some(body)
     )
   }

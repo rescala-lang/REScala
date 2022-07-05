@@ -127,7 +127,7 @@ object CompileMap extends SelectPC with ApplyPC with MatchPC with TypePC with Da
 
       {
         case (expr, tpe) if tpe <:< TypeRepr.of[mutable.Map[?, ?]] =>
-          val typeArgs(List(_, valueType)) = tpe
+          val typeArgs(List(_, valueType)) = tpe.widen
 
           val releaseValues = cascade.dispatch(_.usesRefCount)(valueType)
 
@@ -194,7 +194,7 @@ object CompileMap extends SelectPC with ApplyPC with MatchPC with TypePC with Da
   private def validKeyType(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: TranslationContext, cascade: CompilerCascade): Boolean = {
     import quotes.reflect.*
 
-    val typeArgs(List(keyType, _)) = tpe
+    val typeArgs(List(keyType, _)) = tpe.widen
     cascade.dispatch(_.hasInjectiveToString)(keyType)
   }
 

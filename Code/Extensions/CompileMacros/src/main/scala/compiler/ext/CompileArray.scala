@@ -7,14 +7,14 @@ import clangast.expr.binaryop.*
 import clangast.expr.unaryop.*
 import clangast.expr.*
 import clangast.stmt.*
-import clangast.stubs.{StdArgH, StdBoolH, StdLibH}
+import clangast.stubs.{StdArgH, StdBoolH, StdLibH, StringH}
 import clangast.types.*
 import compiler.CompilerCascade
 import compiler.base.*
 import compiler.base.CompileType.typeArgs
 import compiler.base.CompileApply.varArgs
-import compiler.base.CompileDataStructure.{retain, release}
-import compiler.context.{RecordDeclTC, TranslationContext}
+import compiler.base.CompileDataStructure.{release, retain}
+import compiler.context.{FunctionDeclTC, RecordDeclTC, TranslationContext}
 
 import scala.quoted.*
 
@@ -149,7 +149,7 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
 
       {
         case tpe if tpe <:< TypeRepr.of[Array[?]] =>
-          val typeArgs(List(elemType)) = tpe
+          val typeArgs(List(elemType)) = tpe.widen
 
           val dataFieldDecl = CFieldDecl(dataField, CPointerType(cascade.dispatch(_.compileTypeRepr)(elemType)))
           val lengthFieldDecl = CFieldDecl(lengthField, CIntegerType)
@@ -236,6 +236,19 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
   override def compilePrint(using Quotes)(using TranslationContext, CompilerCascade):
     PartialFunction[(CExpr, quotes.reflect.TypeRepr), CStmt] = ensureCtx[RecordDeclTC](compilePrintImpl)
 
+  def compileToStringImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+    PartialFunction[(CExpr, quotes.reflect.TypeRepr), CExpr] = {
+      import quotes.reflect.*
+
+      {
+        case (expr, tpe) if tpe <:< TypeRepr.of[Array[?]] =>
+          CCallExpr(getArrayToString(tpe).ref, List(expr))
+      }
+  }
+
+  override def compileToString(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+    PartialFunction[(CExpr, quotes.reflect.TypeRepr), CExpr] = ensureCtx[RecordDeclTC](compileToStringImpl)
+
   private val dataField: String = "data"
   private val lengthField: String = "length"
 
@@ -251,6 +264,7 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
   val CREATE = "CREATE"
   val FILL = "FILL"
   val PRINT = "PRINT"
+  val TO_STRING = "TO_STRING"
 
   private def getArrayCreator(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
     ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> CREATE, buildArrayCreator(tpe))
@@ -539,6 +553,92 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
       List(arrayParam),
       CVoidType,
       Some(body),
+    )
+  }
+
+  private def getArrayToString(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> TO_STRING, buildArrayToString(tpe))
+  }
+
+  private def buildArrayToString(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    import quotes.reflect.*
+
+    val recordDecl = getRecordDecl(tpe)
+    val typeArgs(List(elemType)) = tpe.widen
+
+    val name = "toString_" + recordDecl.name
+
+    val arrayParam = CParmVarDecl("arr", recordDecl.getTypeForDecl)
+
+    val elemStringsDecl = CVarDecl(
+      "elemStrings",
+      CArrayType(CPointerType(CCharType), Some(CMemberExpr(arrayParam.ref, lengthField)))
+    )
+
+    val stringLengthDecl = CVarDecl("strLength", CIntegerType, Some(3.lit))
+
+    val iter = CVarDecl("i", CIntegerType, Some(0.lit))
+
+    val elemLoop = CForStmt(
+      Some(iter),
+      Some(CLessThanExpr(iter.ref, CMemberExpr(arrayParam.ref, lengthField))),
+      Some(CIncExpr(iter.ref)),
+      CCompoundStmt(List(
+        CAssignmentExpr(
+          CArraySubscriptExpr(elemStringsDecl.ref, iter.ref),
+          cascade.dispatch(_.compileToString)(
+            CArraySubscriptExpr(CMemberExpr(arrayParam.ref, dataField), iter.ref),
+            elemType
+          )
+        ),
+        CIfStmt(CGreaterThanExpr(iter.ref, 0.lit), CPlusAssignmentExpr(stringLengthDecl.ref, 2.lit)),
+        CPlusAssignmentExpr(
+          stringLengthDecl.ref,
+          CCallExpr(StringH.strlen.ref, List(CArraySubscriptExpr(elemStringsDecl.ref, iter.ref)))
+        )
+      ))
+    )
+
+    val strDecl = CVarDecl(
+      "str",
+      CPointerType(CCharType),
+      Some(CCastExpr(
+        CCallExpr(StdLibH.calloc.ref, List(stringLengthDecl.ref, CSizeofExpr(Left(CCharType)))),
+        CPointerType(CCharType)
+      ))
+    )
+
+    val openingBracket = CAssignmentExpr(CArraySubscriptExpr(strDecl.ref, 0.lit), CCharacterLiteral('['))
+
+    val concatLoop = CForStmt(
+      Some(iter),
+      Some(CLessThanExpr(iter.ref, CMemberExpr(arrayParam.ref, lengthField))),
+      Some(CIncExpr(iter.ref)),
+      CCompoundStmt(List(
+        CIfStmt(CGreaterThanExpr(iter.ref, 0.lit), CCallExpr(StringH.strcat.ref, List(strDecl.ref, CStringLiteral(", ")))),
+        CCallExpr(StringH.strcat.ref, List(strDecl.ref, CArraySubscriptExpr(elemStringsDecl.ref, iter.ref))),
+        CCallExpr(StdLibH.free.ref, List(CArraySubscriptExpr(elemStringsDecl.ref, iter.ref)))
+      ))
+    )
+
+    val closingBracket = CCallExpr(StringH.strcat.ref, List(strDecl.ref, CStringLiteral("]")))
+
+    val body = CCompoundStmt(List(
+      elemStringsDecl,
+      stringLengthDecl,
+      elemLoop,
+      strDecl,
+      openingBracket,
+      concatLoop,
+      closingBracket,
+      CReturnStmt(Some(strDecl.ref))
+    ))
+
+    CFunctionDecl(
+      name,
+      List(arrayParam),
+      CPointerType(CCharType),
+      Some(body)
     )
   }
 }

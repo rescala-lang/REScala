@@ -1,13 +1,14 @@
 package compiler.ext
 
+import clangast.*
 import clangast.given
 import clangast.decl.*
 import clangast.expr.*
-import clangast.expr.binaryop.{CAndExpr, COrExpr}
+import clangast.expr.binaryop.{CAndExpr, COrExpr, CPlusExpr}
 import clangast.expr.unaryop.CNotExpr
 import clangast.stmt.*
-import clangast.stubs.{StdBoolH, StdLibH}
-import clangast.types.{CIntegerType, CPointerType, CRecordType, CType, CVoidType}
+import clangast.stubs.{StdBoolH, StdLibH, StringH}
+import clangast.types.{CCharType, CIntegerType, CPointerType, CRecordType, CType, CVoidType}
 import compiler.CompilerCascade
 import compiler.base.*
 import compiler.base.CompileType.typeArgs
@@ -127,7 +128,9 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
       import quotes.reflect.*
 
       {
-        case tpe if tpe <:< TypeRepr.of[Either[?, ?]] => cascade.dispatch(_.classTypeName)(tpe)
+        case tpe if tpe <:< TypeRepr.of[Either[?, ?]] =>
+          val typeArgs(List(leftType, rightType)) = tpe.widen
+          cascade.dispatch(_.classTypeName)(TypeRepr.of[Either].appliedTo(List(leftType, rightType)))
       }
     }
 
@@ -137,7 +140,7 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
 
       {
         case tpe if tpe <:< TypeRepr.of[Either[?, ?]] =>
-          val typeArgs(List(leftType, rightType)) = tpe
+          val typeArgs(List(leftType, rightType)) = tpe.widen
 
           val leftFieldDecl = CFieldDecl(leftField, cascade.dispatch(_.compileTypeRepr)(leftType))
           val rightFieldDecl = CFieldDecl(rightField, cascade.dispatch(_.compileTypeRepr)(rightType))
@@ -218,6 +221,30 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
   override def compilePrint(using Quotes)(using TranslationContext, CompilerCascade):
     PartialFunction[(CExpr, quotes.reflect.TypeRepr), CStmt] = ensureCtx[RecordDeclTC](compilePrintImpl)
 
+  def compileToStringImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+    PartialFunction[(CExpr, quotes.reflect.TypeRepr), CExpr] = {
+      import quotes.reflect.*
+
+      {
+        case (expr, tpe) if tpe <:< TypeRepr.of[Either[?, ?]] =>
+          CCallExpr(getEitherToString(tpe).ref, List(expr))
+      }
+    }
+
+  override def compileToString(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+    PartialFunction[(CExpr, quotes.reflect.TypeRepr), CExpr] = ensureCtx[RecordDeclTC](compileToStringImpl)
+
+  override def hasInjectiveToString(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, Boolean] = {
+      import quotes.reflect.*
+
+      {
+        case tpe if tpe <:< TypeRepr.of[Either[?, ?]] =>
+          val typeArgs(List(leftType, rightType)) = tpe.widen
+          cascade.dispatch(_.hasInjectiveToString)(leftType) && cascade.dispatch(_.hasInjectiveToString)(rightType)
+      }
+    }
+
   private val leftField = "left"
   private val rightField = "right"
   private val isRightField = "isRight"
@@ -226,6 +253,7 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
   private val CREATE_RIGHT = "CREATE_RIGHT"
   private val EQUALS = "EQUALS"
   private val PRINT = "PRINT"
+  private val TO_STRING = "TO_STRING"
 
   private def getLeftCreator(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
     ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> CREATE_LEFT, buildLeftCreator(tpe))
@@ -413,5 +441,76 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
     ))
 
     CFunctionDecl(name, List(eitherParam), CVoidType, Some(body))
+  }
+
+  private def getEitherToString(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> TO_STRING, buildEitherToString(tpe))
+  }
+
+  private def buildEitherToString(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    import quotes.reflect.*
+
+    val recordDecl = getRecordDecl(tpe)
+    val typeArgs(List(leftType, rightType)) = tpe.widen
+
+    val name = "toString_" + recordDecl.name
+
+    val eitherParam = CParmVarDecl("either", recordDecl.getTypeForDecl)
+
+    val rightValStringDecl = CVarDecl(
+      "rightString",
+      CPointerType(CCharType),
+      Some(cascade.dispatch(_.compileToString)(CMemberExpr(eitherParam.ref, rightField), rightType))
+    )
+
+    val rightStringDecl = CompileString.stringDecl(
+      "str",
+      CPlusExpr(7.lit, CCallExpr(StringH.strlen.ref, List(rightValStringDecl.ref)))
+    )
+
+    val rightSprintf = CompileString.sprintf(rightStringDecl.ref, "Right(%s)", rightValStringDecl.ref)
+
+    val freeRight = CCallExpr(StdLibH.free.ref, List(rightValStringDecl.ref))
+
+    val rightBranch = CCompoundStmt(List(
+      rightValStringDecl,
+      rightStringDecl,
+      rightSprintf,
+      freeRight,
+      CReturnStmt(Some(rightStringDecl.ref))
+    ))
+
+    val leftValStringDecl = CVarDecl(
+      "leftString",
+      CPointerType(CCharType),
+      Some(cascade.dispatch(_.compileToString)(CMemberExpr(eitherParam.ref, leftField), leftType))
+    )
+
+    val leftStringDecl = CompileString.stringDecl(
+      "str",
+      CPlusExpr(6.lit, CCallExpr(StringH.strlen.ref, List(leftValStringDecl.ref)))
+    )
+
+    val leftSprintf = CompileString.sprintf(leftStringDecl.ref, "Left(%s)", leftValStringDecl.ref)
+
+    val freeLeft = CCallExpr(StdLibH.free.ref, List(leftValStringDecl.ref))
+
+    val leftBranch = CCompoundStmt(List(
+      leftValStringDecl,
+      leftStringDecl,
+      leftSprintf,
+      freeLeft,
+      CReturnStmt(Some(leftStringDecl.ref))
+    ))
+
+    val body = CCompoundStmt(List(
+      CIfStmt(
+        CMemberExpr(eitherParam.ref, isRightField),
+        rightBranch,
+        Some(leftBranch)
+      )
+    ))
+
+    CFunctionDecl(name, List(eitherParam), CPointerType(CCharType), Some(body))
   }
 }
