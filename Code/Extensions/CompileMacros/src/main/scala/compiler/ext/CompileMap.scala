@@ -7,12 +7,12 @@ import clangast.expr.binaryop.*
 import clangast.expr.unaryop.{CAddressExpr, CDerefExpr, CIncExpr}
 import clangast.expr.*
 import clangast.stmt.*
-import clangast.stubs.{HashmapH, StdLibH, StringH}
+import clangast.stubs.{HashmapH, StdBoolH, StdLibH, StringH}
 import clangast.types.*
 import compiler.CompilerCascade
 import compiler.base.*
 import compiler.base.CompileApply.varArgs
-import compiler.base.CompileDataStructure.{retain, release}
+import compiler.base.CompileDataStructure.{release, retain}
 import compiler.base.CompileType.typeArgs
 import compiler.context.{RecordDeclTC, TranslationContext}
 
@@ -28,22 +28,35 @@ object CompileMap extends SelectPC with ApplyPC with MatchPC with TypePC with Da
         case apply @ Apply(TypeApply(Select(Select(Ident("mutable"), "Map"), "apply"), _), List(Typed(Repeated(Nil, _), _))) =>
           CCallExpr(getMapCreator(apply.tpe).ref, List())
         case Apply(Select(map, "get"), List(key)) if map.tpe <:< TypeRepr.of[mutable.Map[?, ?]] =>
-          getForKey(map, key)
+          CCallExpr(
+            getMapGet(map.tpe).ref,
+            List(
+              cascade.dispatch(_.compileTermToCExpr)(map),
+              cascade.dispatch(_.compileTermToCExpr)(key)
+            )
+          )
         case Apply(Select(map, "apply"), List(key)) if map.tpe <:< TypeRepr.of[mutable.Map[?, ?]] =>
-          CMemberExpr(
-            getForKey(map, key),
-            CompileOption.valField
+          CCallExpr(
+            getMapApply(map.tpe).ref,
+            List(
+              cascade.dispatch(_.compileTermToCExpr)(map),
+              cascade.dispatch(_.compileTermToCExpr)(key)
+            )
           )
         case Apply(Select(map, "contains"), List(key)) if map.tpe <:< TypeRepr.of[mutable.Map[?, ?]] =>
-          CMemberExpr(
-            getForKey(map, key),
-            CompileOption.definedField
+          CCallExpr(
+            getMapContains(map.tpe).ref,
+            List(
+              cascade.dispatch(_.compileTermToCExpr)(map),
+              cascade.dispatch(_.compileTermToCExpr)(key)
+            )
           )
         case apply @ Apply(TypeApply(Select(map, "getOrElse"), _), List(key, default)) if map.tpe <:< TypeRepr.of[mutable.Map[?, ?]] =>
           CCallExpr(
-            CompileOption.getGetOrElse(TypeRepr.of[Option].appliedTo(apply.tpe)).ref,
+            getMapGetOrElse(map.tpe).ref,
             List(
-              getForKey(map, key),
+              cascade.dispatch(_.compileTermToCExpr)(map),
+              cascade.dispatch(_.compileTermToCExpr)(key),
               cascade.dispatch(_.compileTermToCExpr)(default)
             )
           )
@@ -184,6 +197,9 @@ object CompileMap extends SelectPC with ApplyPC with MatchPC with TypePC with Da
 
   val CREATE = "CREATE"
   val GET = "GET"
+  val APPLY = "APPLY"
+  val CONTAINS = "CONTAINS"
+  val GET_OR_ELSE = "GET_OR_ELSE"
   val UPDATE = "UPDATE"
   val REMOVE = "REMOVE"
   val RELEASE_ITERATOR = "RELEASE_ITERATOR"
@@ -226,15 +242,6 @@ object CompileMap extends SelectPC with ApplyPC with MatchPC with TypePC with Da
 
     CFunctionDecl(name, List(), recordDecl.getTypeForDecl, Some(body))
   }
-
-  private def getForKey(using Quotes)(map: quotes.reflect.Term, key: quotes.reflect.Term)(using ctx: RecordDeclTC, cascade: CompilerCascade): CExpr =
-    CCallExpr(
-      getMapGet(map.tpe).ref,
-      List(
-        cascade.dispatch(_.compileTermToCExpr)(map),
-        cascade.dispatch(_.compileTermToCExpr)(key)
-      )
-    )
 
   private def getMapGet(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
     ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> GET, buildMapGet(tpe))
@@ -323,6 +330,215 @@ object CompileMap extends SelectPC with ApplyPC with MatchPC with TypePC with Da
     ))
 
     CFunctionDecl(name, List(mapParam, keyParam), returnType, Some(body))
+  }
+
+  private def getMapApply(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> APPLY, buildMapApply(tpe))
+  }
+
+  private def buildMapApply(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    import quotes.reflect.*
+
+    val recordDecl = getRecordDecl(tpe)
+    val typeArgs(List(keyType, valueType)) = tpe.widen
+
+    val keyCType = cascade.dispatch(_.compileTypeRepr)(keyType)
+    val valueCType = cascade.dispatch(_.compileTypeRepr)(valueType)
+
+    val name = "apply_" + recordDecl.name
+
+    val mapParam = CParmVarDecl("map", recordDecl.getTypeForDecl)
+    val keyParam = CParmVarDecl("key", keyCType)
+
+    val keyStringDecl = CVarDecl(
+      "keyString",
+      CPointerType(CCharType),
+      Some(cascade.dispatch(_.compileToString)(keyParam.ref, keyType))
+    )
+
+    val valueHandleDecl = CVarDecl(
+      "valueHandle",
+      CPointerType(CPointerType(valueCType)),
+      Some(CCastExpr(
+        CCallExpr(
+          StdLibH.malloc.ref,
+          List(CSizeofExpr(Left(CPointerType(valueCType))))
+        ),
+        CPointerType(CPointerType(valueCType))
+      ))
+    )
+    
+    val getCall = CCallExpr(
+      HashmapH.hashmap_get.ref,
+      List(
+        CMemberExpr(mapParam.ref, dataField),
+        keyStringDecl.ref,
+        CCastExpr(valueHandleDecl.ref, CPointerType(HashmapH.any_t))
+      )
+    )
+
+    val freeKeyString = CCallExpr(StdLibH.free.ref, List(keyStringDecl.ref))
+
+    val valueDecl = CVarDecl("value", valueCType, Some(CDerefExpr(CDerefExpr(valueHandleDecl.ref))))
+
+    val freeValueHandle = CCallExpr(StdLibH.free.ref, List(valueHandleDecl.ref))
+
+    val body = CCompoundStmt(List(
+      keyStringDecl,
+      valueHandleDecl,
+      getCall,
+      freeKeyString,
+      valueDecl,
+      freeValueHandle,
+      CReturnStmt(Some(valueDecl.ref))
+    ))
+
+    CFunctionDecl(name, List(mapParam, keyParam), valueCType, Some(body))
+  }
+
+  private def getMapContains(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> CONTAINS, buildMapContains(tpe))
+  }
+
+  private def buildMapContains(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    import quotes.reflect.*
+
+    val recordDecl = getRecordDecl(tpe)
+    val typeArgs(List(keyType, valueType)) = tpe.widen
+
+    val keyCType = cascade.dispatch(_.compileTypeRepr)(keyType)
+    val valueCType = cascade.dispatch(_.compileTypeRepr)(valueType)
+
+    val name = "contains_" + recordDecl.name
+
+    val mapParam = CParmVarDecl("map", recordDecl.getTypeForDecl)
+    val keyParam = CParmVarDecl("key", keyCType)
+
+    val keyStringDecl = CVarDecl(
+      "keyString",
+      CPointerType(CCharType),
+      Some(cascade.dispatch(_.compileToString)(keyParam.ref, keyType))
+    )
+
+    val valueHandleDecl = CVarDecl(
+      "valueHandle",
+      CPointerType(CPointerType(valueCType)),
+      Some(CCastExpr(
+        CCallExpr(
+          StdLibH.malloc.ref,
+          List(CSizeofExpr(Left(CPointerType(valueCType))))
+        ),
+        CPointerType(CPointerType(valueCType))
+      ))
+    )
+
+    val statusDecl = CVarDecl(
+      "status",
+      CIntegerType,
+      Some(CCallExpr(
+        HashmapH.hashmap_get.ref,
+        List(
+          CMemberExpr(mapParam.ref, dataField),
+          keyStringDecl.ref,
+          CCastExpr(valueHandleDecl.ref, CPointerType(HashmapH.any_t))
+        )
+      ))
+    )
+
+    val freeKeyString = CCallExpr(StdLibH.free.ref, List(keyStringDecl.ref))
+
+    val freeValueHandle = CCallExpr(StdLibH.free.ref, List(valueHandleDecl.ref))
+
+    val body = CCompoundStmt(List(
+      keyStringDecl,
+      valueHandleDecl,
+      statusDecl,
+      freeKeyString,
+      freeValueHandle,
+      CReturnStmt(Some(CEqualsExpr(statusDecl.ref, HashmapH.MAP_OK.ref)))
+    ))
+
+    CFunctionDecl(name, List(mapParam, keyParam), StdBoolH.bool, Some(body))
+  }
+
+  private def getMapGetOrElse(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> GET_OR_ELSE, buildMapGetOrElse(tpe))
+  }
+
+  private def buildMapGetOrElse(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    import quotes.reflect.*
+
+    val recordDecl = getRecordDecl(tpe)
+    val typeArgs(List(keyType, valueType)) = tpe.widen
+
+    val keyCType = cascade.dispatch(_.compileTypeRepr)(keyType)
+    val valueCType = cascade.dispatch(_.compileTypeRepr)(valueType)
+
+    val name = "getOrElse_" + recordDecl.name
+
+    val mapParam = CParmVarDecl("map", recordDecl.getTypeForDecl)
+    val keyParam = CParmVarDecl("key", keyCType)
+    val defaultParam = CParmVarDecl("default", valueCType)
+
+    val keyStringDecl = CVarDecl(
+      "keyString",
+      CPointerType(CCharType),
+      Some(cascade.dispatch(_.compileToString)(keyParam.ref, keyType))
+    )
+
+    val valueHandleDecl = CVarDecl(
+      "valueHandle",
+      CPointerType(CPointerType(valueCType)),
+      Some(CCastExpr(
+        CCallExpr(
+          StdLibH.malloc.ref,
+          List(CSizeofExpr(Left(CPointerType(valueCType))))
+        ),
+        CPointerType(CPointerType(valueCType))
+      ))
+    )
+
+    val statusDecl = CVarDecl(
+      "status",
+      CIntegerType,
+      Some(CCallExpr(
+        HashmapH.hashmap_get.ref,
+        List(
+          CMemberExpr(mapParam.ref, dataField),
+          keyStringDecl.ref,
+          CCastExpr(valueHandleDecl.ref, CPointerType(HashmapH.any_t))
+        )
+      ))
+    )
+
+    val freeKeyString = CCallExpr(StdLibH.free.ref, List(keyStringDecl.ref))
+
+    val valueDecl = CVarDecl("value", valueCType, Some(CDerefExpr(CDerefExpr(valueHandleDecl.ref))))
+
+    val freeValueHandle = CCallExpr(StdLibH.free.ref, List(valueHandleDecl.ref))
+
+    val res = CIfStmt(
+      CEqualsExpr(statusDecl.ref, HashmapH.MAP_OK.ref),
+      CCompoundStmt(List(
+        valueDecl,
+        freeValueHandle,
+        CReturnStmt(Some(valueDecl.ref))
+      )),
+      Some(CCompoundStmt(List(
+        freeValueHandle,
+        CReturnStmt(Some(defaultParam.ref))
+      )))
+    )
+
+    val body = CCompoundStmt(List(
+      keyStringDecl,
+      valueHandleDecl,
+      statusDecl,
+      freeKeyString,
+      res
+    ))
+
+    CFunctionDecl(name, List(mapParam, keyParam), valueCType, Some(body))
   }
 
   private def getMapUpdate(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
@@ -462,7 +678,7 @@ object CompileMap extends SelectPC with ApplyPC with MatchPC with TypePC with Da
     val copyDecl = CVarDecl(
       "copy",
       recordDecl.getTypeForDecl,
-      Some(retain(CCallExpr(getMapCreator(tpe).ref, List()), tpe))
+      Some(CCallExpr(getMapCreator(tpe).ref, List()))
     )
 
     val iterate = CCallExpr(

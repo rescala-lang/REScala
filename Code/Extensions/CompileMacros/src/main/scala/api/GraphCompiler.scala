@@ -452,13 +452,27 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
 
           val updateCall = CCallExpr(updateFunction.ref, tempDecls.map(_.ref))
 
-          CCompoundStmt(tempDecls.map(CDeclStmt.apply).appended(updateCall))
+          val releases = tempDecls.zip(sourcesTopological).collect {
+            case (v, Source(_, cType)) if usesRefCount(cType) =>
+              release(v.ref, cType).get
+          }
+
+          CCompoundStmt(tempDecls.map(CDeclStmt.apply) ++ (updateCall :: releases))
       }
     }
 
     val transformedMainFun = transactionMapper.mapCValueDecl(mainFun.f.node) match {
       case f @ CFunctionDecl(_, _, _, Some(CCompoundStmt(body)), _) =>
-        f.copy(body = Some(CCompoundStmt(CCallExpr(startup.ref, List()) :: body)))
+        val releaseStmts: List[CStmt] = topological.collect {
+          case f@Fold(_, cType, _) if usesRefCount(cType) =>
+            release(globalVariables(f).ref, cType).get
+        }
+
+        val transformedBody: List[CStmt] =
+          (CExprStmt(CCallExpr(startup.ref, List())) ::
+            body.init ++ releaseStmts) :+ body.last
+
+        f.copy(body = Some(CCompoundStmt(transformedBody)))
     }
 
     CTranslationUnitDecl(
