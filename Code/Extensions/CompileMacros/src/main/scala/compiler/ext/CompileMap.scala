@@ -11,7 +11,6 @@ import clangast.stubs.{HashmapH, StdBoolH, StdLibH, StringH}
 import clangast.types.*
 import compiler.CompilerCascade
 import compiler.base.*
-import compiler.base.CompileApply.varArgs
 import compiler.base.CompileDataStructure.{release, retain}
 import compiler.base.CompileType.typeArgs
 import compiler.context.{RecordDeclTC, TranslationContext}
@@ -19,7 +18,7 @@ import compiler.context.{RecordDeclTC, TranslationContext}
 import scala.quoted.*
 import scala.collection.mutable
 
-object CompileMap extends SelectPC with ApplyPC with MatchPC with TypePC with DataStructurePC with StringPC {
+object CompileMap extends ApplyPC with TypePC with DataStructurePC with StringPC {
   private def compileApplyImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.Apply, CExpr] = {
       import quotes.reflect.*
@@ -51,7 +50,7 @@ object CompileMap extends SelectPC with ApplyPC with MatchPC with TypePC with Da
               cascade.dispatch(_.compileTermToCExpr)(key)
             )
           )
-        case apply @ Apply(TypeApply(Select(map, "getOrElse"), _), List(key, default)) if map.tpe <:< TypeRepr.of[mutable.Map[?, ?]] =>
+        case Apply(TypeApply(Select(map, "getOrElse"), _), List(key, default)) if map.tpe <:< TypeRepr.of[mutable.Map[?, ?]] =>
           CCallExpr(
             getMapGetOrElse(map.tpe).ref,
             List(
@@ -193,19 +192,19 @@ object CompileMap extends SelectPC with ApplyPC with MatchPC with TypePC with Da
   override def compilePrint(using Quotes)(using TranslationContext, CompilerCascade):
     PartialFunction[(CExpr, quotes.reflect.TypeRepr), CStmt] = ensureCtx[RecordDeclTC](compilePrintImpl)
 
-  private val dataField: String = "data"
+  val dataField: String = "data"
 
-  val CREATE = "CREATE"
-  val GET = "GET"
-  val APPLY = "APPLY"
-  val CONTAINS = "CONTAINS"
-  val GET_OR_ELSE = "GET_OR_ELSE"
-  val UPDATE = "UPDATE"
-  val REMOVE = "REMOVE"
-  val RELEASE_ITERATOR = "RELEASE_ITERATOR"
-  val DEEP_COPY_ITERATOR = "DEEP_COPY_ITERATOR"
-  val PRINT = "PRINT"
-  val PRINT_ITERATOR = "PRINT_ITERATOR"
+  private val CREATE = "CREATE"
+  private val GET = "GET"
+  private val APPLY = "APPLY"
+  private val CONTAINS = "CONTAINS"
+  private val GET_OR_ELSE = "GET_OR_ELSE"
+  private val UPDATE = "UPDATE"
+  private val REMOVE = "REMOVE"
+  private val RELEASE_ITERATOR = "RELEASE_ITERATOR"
+  private val DEEP_COPY_ITERATOR = "DEEP_COPY_ITERATOR"
+  private val PRINT = "PRINT"
+  private val PRINT_ITERATOR = "PRINT_ITERATOR"
 
   private def validKeyType(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: TranslationContext, cascade: CompilerCascade): Boolean = {
     import quotes.reflect.*
@@ -214,7 +213,7 @@ object CompileMap extends SelectPC with ApplyPC with MatchPC with TypePC with Da
     cascade.dispatch(_.hasInjectiveToString)(keyType)
   }
 
-  private def getMapCreator(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+  def getMapCreator(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
     ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> CREATE, buildMapCreator(tpe))
   }
 
@@ -396,7 +395,7 @@ object CompileMap extends SelectPC with ApplyPC with MatchPC with TypePC with Da
     CFunctionDecl(name, List(mapParam, keyParam), valueCType, Some(body))
   }
 
-  private def getMapContains(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+  def getMapContains(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
     ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> CONTAINS, buildMapContains(tpe))
   }
 
@@ -541,7 +540,7 @@ object CompileMap extends SelectPC with ApplyPC with MatchPC with TypePC with Da
     CFunctionDecl(name, List(mapParam, keyParam), valueCType, Some(body))
   }
 
-  private def getMapUpdate(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+  def getMapUpdate(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
     ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> UPDATE, buildMapUpdate(tpe))
   }
 
@@ -592,7 +591,7 @@ object CompileMap extends SelectPC with ApplyPC with MatchPC with TypePC with Da
     CFunctionDecl(name, List(mapParam, keyParam, valueParam), CVoidType, Some(body))
   }
 
-  private def getMapRemove(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+  def getMapRemove(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
     ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> REMOVE, buildMapRemove(tpe))
   }
 
@@ -662,7 +661,7 @@ object CompileMap extends SelectPC with ApplyPC with MatchPC with TypePC with Da
     CFunctionDecl(name, List(itemParam, keyParam, dataParam), CIntegerType, Some(body))
   }
 
-  private def getMapDeepCopy(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+  def getMapDeepCopy(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
     ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> DEEP_COPY, buildMapDeepCopy(tpe))
   }
 

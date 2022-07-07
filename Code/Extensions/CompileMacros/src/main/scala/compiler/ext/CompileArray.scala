@@ -261,10 +261,10 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
     }
   }
 
-  val CREATE = "CREATE"
-  val FILL = "FILL"
-  val PRINT = "PRINT"
-  val TO_STRING = "TO_STRING"
+  private val CREATE = "CREATE"
+  private val FILL = "FILL"
+  private val PRINT = "PRINT"
+  private val TO_STRING = "TO_STRING"
 
   private def getArrayCreator(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
     ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> CREATE, buildArrayCreator(tpe))
