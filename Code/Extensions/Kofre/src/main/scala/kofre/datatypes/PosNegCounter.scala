@@ -4,7 +4,7 @@ import kofre.base.{Bottom, DecomposeLattice}
 import kofre.base.Defs.Id
 import kofre.dotted.DottedDecompose
 import kofre.syntax.PermIdMutate.withID
-import kofre.syntax.{ArdtOpsContains, FixedId, OpsSyntaxHelper, PermId, PermIdMutate, PermQuery}
+import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermId, PermIdMutate, PermQuery}
 
 case class PosNegCounter(pos: GrowOnlyCounter, neg: GrowOnlyCounter) derives DecomposeLattice, Bottom
 

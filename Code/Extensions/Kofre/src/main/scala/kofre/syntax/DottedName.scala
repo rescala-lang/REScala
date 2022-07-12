@@ -21,7 +21,6 @@ object DottedName {
     with {
     override def replicaId(c: DottedName[L]): Id = c.replicaID
     override def mutateContext(c: DottedName[L], delta: Dotted[L]): DottedName[L] =
-      val res = c.anon merge delta
       DottedName(c.replicaID, c.anon merge delta)
     override def query(c: DottedName[L]): L      = c.anon.store
     override def context(c: DottedName[L]): Dots = c.anon.context
