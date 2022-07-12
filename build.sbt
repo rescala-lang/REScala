@@ -64,7 +64,7 @@ lazy val rescalafx = project.in(file("Code/Extensions/javafx"))
   .dependsOn(rescala.jvm)
   .settings(commonSettings, noPublish, scalaFxDependencies, fork := true)
 
-lazy val kofre = crossProject(JVMPlatform, JSPlatform).crossType(CrossType.Pure)
+lazy val kofre = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(CrossType.Pure)
   .in(file("Code/Extensions/Kofre"))
   .settings(
     scalaVersion_3,
@@ -72,7 +72,7 @@ lazy val kofre = crossProject(JVMPlatform, JSPlatform).crossType(CrossType.Pure)
     libraryDependencies ++= List(munit.value, munitScalacheck.value),
   )
 
-lazy val compileMacros = crossProject(JVMPlatform, JSPlatform).crossType(CrossType.Pure)
+lazy val compileMacros = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(CrossType.Pure)
   .in(file("Code/Extensions/CompileMacros"))
   .settings(scalaVersion_3)
   .dependsOn(rescala)

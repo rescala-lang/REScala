@@ -42,7 +42,7 @@ object Dependencies {
     val scopt              = "4.0.1"
     val scribe             = "3.8.3"
     val slips              = "b4a6d6e54b"
-    val sourcecode         = "0.2.8"
+    val sourcecode         = "0.3.0"
     val tomlScala          = "0.2.2"
     val upickle            = "2.0.0"
   }
