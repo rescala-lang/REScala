@@ -26,29 +26,38 @@ object BoundedCounter {
     def allocated(using IdentifierP, QueryP): Int = current.allocations.inner.getOrElse(replicaID, 0)
     def reserved(using IdentifierP, QueryP): Int =
       current.reservations.pos.inner.getOrElse(replicaID, 0) - current.reservations.neg.inner.getOrElse(replicaID, 0)
-    def available(using idp: IdentifierP, qp: QueryP): Int = reserved - allocated
+    def available(using IdentifierP, QueryP): Int = reserved - allocated
 
     def allocate(value: Int)(using MutationIdP): C = {
       if value < 0 || available < value then neutral
       else neutral.copy(allocations = current.allocations.inc(value)(using withID(replicaID)))
     }.mutator
 
+    def transfer(amount: Int, target: Id)(using MutationIdP): C = {
+      if amount > available(using withID(replicaID)) then neutral
+      else
+        neutral.copy(reservations =
+          current.reservations.add(amount)(using withID(target)) merge
+          current.reservations.add(-amount)(using withID(replicaID))
+        )
+    }.mutator
+
     def rebalance(using MutationIdP): C = {
-      val availableByReplica = current.participants.iterator.map(id => available(using idp = withID(id)) -> id).toList
-      val most         = availableByReplica.max
-      val least        = availableByReplica.min
+      val availableByReplica = current.participants.iterator.map(id => available(using withID(id)) -> id).toList
+      val most               = availableByReplica.max
+      val least              = availableByReplica.min
       if most._2 != replicaID then neutral
       else
         val diff: Int = (most._1 - least._1) / 2
-        neutral.copy(reservations =
-          current.reservations.add(diff)(using withID(least._2)) merge
-          current.reservations.add(-diff)(using withID(replicaID))
-        )
+        current.transfer(diff, least._2)(using withID(replicaID))
     }.mutator
 
     def invariantOk(using QueryP): Unit =
       assert(current.reservations.value == 0, s"incorrect reservations: ${current.reservations.value}")
-      assert(current.allocations.value <= current.reservations.neg.inner("initial-allocation"), s"allocation sum ${current.allocations.value} larger than initial reservations ${current.reservations.neg.inner("initial-allocation")}")
+      assert(
+        current.allocations.value <= current.reservations.neg.inner("initial-allocation"),
+        s"allocation sum ${current.allocations.value} larger than initial reservations ${current.reservations.neg.inner("initial-allocation")}"
+      )
   }
 
 }
