@@ -11,7 +11,7 @@ object CompileSelect extends SelectPC {
   override def compileSelect(using Quotes)(using TranslationContext, CompilerCascade):
     PartialFunction[quotes.reflect.Select, CExpr] = {
       import quotes.reflect.*
-    
+
       {
         case select@Select(qualifier, name) if canCompileToCUnaryOperator(qualifier, name) =>
           compileSelectToCUnaryOperator(select)

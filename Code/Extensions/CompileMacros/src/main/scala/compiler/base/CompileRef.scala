@@ -10,7 +10,7 @@ object CompileRef extends RefPC {
   override def compileRef(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.Ref, CExpr] = {
       import quotes.reflect.*
-    
+
       {
         case ident: Ident => cascade.dispatch(_.compileIdent)(ident)
         case select: Select => cascade.dispatch(_.compileSelect)(select)

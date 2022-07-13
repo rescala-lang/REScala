@@ -1,10 +1,18 @@
-package rescala.meta
+package rescala.api2
+
+import clangast.WithContext
+import clangast.decl.CFunctionDecl
+import clangast.types.CType
+import compiler.MacroCompiler
 import rescala.core.ReName
 import rescala.macros.MacroAccess
 import rescala.operator.RExceptions
 
 class MetaBundle extends rescala.core.Core {
   bundle =>
+
+  type MC <: MacroCompiler
+  val macroCompiler: MC
 
   // We flatten the scheduler and the API here, so we do not need a separate state
   override type State[A] = A
@@ -35,8 +43,14 @@ class MetaBundle extends rescala.core.Core {
   // but is fun to have
   // note, that this is generally quite close to REScala, which also does not really distinguish between signals and events,
   // but instead just has this single type which derives its semantics from the opaque `fun`, and the set of triggers which define when this activates
-  case class MetaReactive[T, RT <: RType](triggers: Set[MReSource], name: ReName, kind: RT, fun: StaticTicket => T)
-      extends MReSource
+  case class MetaReactive[T, RT <: RType](
+      triggers: Set[MReSource],
+      name: ReName,
+      kind: RT,
+      fun: StaticTicket => T,
+      cType: WithContext[CType],
+      f: WithContext[CFunctionDecl]
+  ) extends MReSource
       // the following two supertypes make this available as something that is accessed by the macro
       with MacroAccess[T, MReSource] with ReadAs[T] {
     override protected[rescala] def state: State[Unit] = ()
@@ -55,27 +69,49 @@ class MetaBundle extends rescala.core.Core {
 
   inline def Signal[T](inline expr: T)(using ct: CreationTicket): MetaReactive[T, RType.Signal.type] = {
     val (dependencies, fun) = getDeps(expr)
-    MetaReactive(dependencies.toSet, ct.rename, RType.Signal, fun)
+    MetaReactive(
+      dependencies.toSet,
+      ct.rename,
+      RType.Signal,
+      fun,
+      macroCompiler.compileType[T],
+      macroCompiler.compileAnonFun(() => expr)
+    )
   }
 
   inline def Event[T](inline expr: Option[T])(using ct: CreationTicket): MetaReactive[Option[T], RType.Event.type] = {
     val (dependencies, fun) = getDeps(expr)
-    MetaReactive(dependencies.toSet, ct.rename, RType.Event, fun)
+    MetaReactive(
+      dependencies.toSet,
+      ct.rename,
+      RType.Event,
+      fun,
+      macroCompiler.compileType[T],
+      macroCompiler.compileAnonFun(fun)
+    )
   }
 
   extension [T](mr: MetaReactive[Option[T], RType.Event.type])
-    inline def fold[S](init: S)(inline f: (S, T) => S)(using ct: CreationTicket): MetaReactive[S, RType.Fold.type] = {
+    inline def fold[S](inline init: S)(inline f: (S, T) => S)(using
+        ct: CreationTicket
+    ): MetaReactive[S, RType.Fold.type] = {
       val (deps, fun) = getDeps {
         f(init, mr.value.get)
       }
-      MetaReactive(deps.toSet, ct.rename, RType.Fold, fun)
+      MetaReactive(
+        deps.toSet,
+        ct.rename,
+        RType.Fold,
+        fun,
+        macroCompiler.compileType[T],
+        macroCompiler.compileAnonFun(fun)
+      )
     }
 
 }
 
 object MetaBundleExample {
-  val mb = new MetaBundle {}
-  import mb.*
+  import compiler.StandardBundle.*
 
   @main
   def run(): Unit = {
@@ -127,14 +163,14 @@ object MetaBundleExample {
 
     println(all)
 
-    // for testing, it would be cool to have a
-    def CinteropSource[T](v: T) = MetaReactive(Set.empty, ReName("c source"), RType.CInterop, _ => v)
-
-    // and then do something like
-
-    val source1 = CinteropSource(1)
-
-    val csig = Signal { source1.value * 10 }
+    //// for testing, it would be cool to have a
+    // def CinteropSource[T](v: T) = MetaReactive(Set.empty, ReName("c source"), RType.CInterop, _ => v)
+    //
+    //// and then do something like
+    //
+    // val source1 = CinteropSource(1)
+    //
+    // val csig = Signal { source1.value * 10 }
 
     // does not exists, but something like
     //   val compiled = csig.compile

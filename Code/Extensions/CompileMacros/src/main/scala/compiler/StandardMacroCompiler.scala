@@ -4,6 +4,7 @@ import clangast.{CASTNode, WithContext}
 import clangast.decl.CFunctionDecl
 import clangast.expr.CExpr
 import clangast.types.CType
+import rescala.api2.MetaBundle
 
 import scala.quoted.*
 
@@ -35,4 +36,9 @@ object StandardMacroCompiler extends MacroCompiler {
 
   override inline def valName: String =
     ${ valNameCode }
+}
+
+object StandardBundle extends MetaBundle {
+  type MC = StandardMacroCompiler.type
+  override val macroCompiler: MC = StandardMacroCompiler
 }

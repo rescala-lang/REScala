@@ -10,13 +10,13 @@ import compiler.ext.*
 
 import scala.quoted.*
 
-trait MacroCompiler {  
+trait MacroCompiler {
   inline def compileTree(inline t: Any): WithContext[CASTNode]
-  
+
   inline def compileExpr(inline e: Any): WithContext[CExpr]
-  
+
   inline def compileFun(inline f: AnyRef): WithContext[CFunctionDecl]
-  
+
   inline def compileAnonFun(inline f: AnyRef): WithContext[CFunctionDecl]
 
   inline def compileType[T]: WithContext[CType]
