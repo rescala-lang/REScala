@@ -187,6 +187,7 @@ lazy val consoleReplication = project.in(file("Code/Examples/ConsoleReplication"
     fork               := true,
     run / connectInput := true,
     jitpackResolver,
+    scalaVersion_3,
     libraryDependencies ++= jsoniterScalaAll.value ++ circeAll.value ++ Seq(
       loci.tcp.value,
       decline.value,
