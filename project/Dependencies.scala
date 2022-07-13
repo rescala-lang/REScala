@@ -38,7 +38,7 @@ object Dependencies {
     val scalajsDom         = "2.2.0"
     val scalatags          = "0.11.1"
     val scalatest          = "3.2.12"
-    val scalatestpluscheck = "3.2.11.0"
+    val scalatestpluscheck = "3.2.12.0"
     val scopt              = "4.0.1"
     val scribe             = "3.8.3"
     val slips              = "b4a6d6e54b"
@@ -77,7 +77,7 @@ object Dependencies {
   val scalatestpluscheck =
     Def.setting(if (`is 2.11`(scalaVersion.value))
       "org.scalatestplus"    %%% "scalacheck-1-15" % "3.2.4.0-M1"         % "test"
-    else "org.scalatestplus" %%% "scalacheck-1-15" % V.scalatestpluscheck % "test")
+    else "org.scalatestplus" %%% "scalacheck-1-16" % V.scalatestpluscheck % "test")
   val scopt       = Def.setting("com.github.scopt" %%% "scopt" % V.scopt)
   val scribe      = Def.setting("com.outr" %%% "scribe" % V.scribe)
   val scribeSlf4j = Def.setting("com.outr" %% "scribe-slf4j" % V.scribe)
