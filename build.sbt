@@ -11,7 +11,7 @@ val commonSettings = commonCrossBuildVersions +: jitpackResolver +: {
   }
 }
 
-lazy val rescalaProject = project.in(file(".")).settings(commonSettings, noPublish).aggregate(
+lazy val rescalaProject = project.in(file(".")).settings(noPublish).aggregate(
   examples,
   kofre.js,
   kofre.jvm,
@@ -182,12 +182,12 @@ lazy val consoleReplication = project.in(file("Code/Examples/ConsoleReplication"
   .dependsOn(rescala.jvm, kofre.jvm)
   .enablePlugins(JavaAppPackaging)
   .settings(
-    commonSettings,
+    scalaVersion_3,
+    jitpackResolver,
     noPublish,
     fork               := true,
     run / connectInput := true,
     jitpackResolver,
-    scalaVersion_3,
     libraryDependencies ++= jsoniterScalaAll.value ++ circeAll.value ++ Seq(
       loci.tcp.value,
       decline.value,
