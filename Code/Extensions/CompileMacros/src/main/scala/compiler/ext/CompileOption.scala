@@ -4,7 +4,7 @@ import clangast.*
 import clangast.given
 import clangast.decl.*
 import clangast.expr.binaryop.{CAndExpr, CAssignmentExpr, CEqualsExpr, CNotEqualsExpr, COrExpr, CPlusExpr}
-import clangast.expr.unaryop.{CDerefExpr, CNotExpr}
+import clangast.expr.unaryop.{CAddressExpr, CDerefExpr, CNotExpr}
 import clangast.expr.*
 import clangast.stmt.{CCompoundStmt, CIfStmt, CReturnStmt, CStmt}
 import clangast.stubs.{StdBoolH, StdLibH, StringH}
@@ -80,7 +80,7 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
           )
         case Apply(TypeApply(Select(opt, "getOrElse"), _), List(defaultVal)) if opt.tpe <:< TypeRepr.of[Option[?]] =>
           CCallExpr(
-            getGetOrElse(opt.tpe).ref,
+            getOptionGetOrElse(opt.tpe).ref,
             List(
               cascade.dispatch(_.compileTermToCExpr)(opt),
               cascade.dispatch(_.compileTermToCExpr)(defaultVal)
@@ -91,6 +91,10 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
             getOptionDeepCopy(opt.tpe).ref,
             List(cascade.dispatch(_.compileTermToCExpr)(opt))
           )
+        case Apply(TypeApply(Select(opt, "map"), _), List(f)) if opt.tpe <:< TypeRepr.of[Option[?]] =>
+          compileMap(opt, f)
+        case Apply(Select(opt, "filter"), List(f)) if opt.tpe <:< TypeRepr.of[Option[?]] =>
+          compileFilter(opt, f)
       }
     }
 
@@ -169,7 +173,7 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
   private def defaultValueImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.TypeRepr, CExpr] = {
       import quotes.reflect.*
-    
+
       {
         case tpe if tpe <:< TypeRepr.of[Option[?]] && !cascade.dispatch(_.usesRefCount)(tpe) =>
           CCallExpr(getNoneCreator(tpe).ref, List())
@@ -182,7 +186,7 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
   override def compileTypeToCRecordDecl(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.TypeRepr, CRecordDecl] = {
       import quotes.reflect.*
-  
+
       {
         case tpe if tpe <:< TypeRepr.of[Option[?]] =>
           val typeArgs(List(wrappedType)) = tpe.widen
@@ -216,7 +220,7 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
   private def compileFreeImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
     PartialFunction[(CExpr, quotes.reflect.TypeRepr), CCompoundStmt] = {
       import quotes.reflect.*
-  
+
       {
         case (expr, tpe) if tpe <:< TypeRepr.of[Option[?]] =>
           val typeArgs(List(wrappedType)) = tpe.widen
@@ -348,11 +352,11 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
     CFunctionDecl(name, List(valParam), recordDecl.getTypeForDecl, Some(body))
   }
 
-  def getGetOrElse(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
-    ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> GET_OR_ELSE, buildGetOrElse(getRecordDecl(tpe)))
+  def getOptionGetOrElse(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> GET_OR_ELSE, buildOptionGetOrElse(getRecordDecl(tpe)))
   }
 
-  private def buildGetOrElse(recordDecl: CRecordDecl)(using ctx: TranslationContext): CFunctionDecl = {
+  private def buildOptionGetOrElse(recordDecl: CRecordDecl)(using ctx: TranslationContext): CFunctionDecl = {
     val name = "getOrElse_" + recordDecl.name
 
     val optParam = CParmVarDecl("opt", recordDecl.getTypeForDecl)
@@ -443,6 +447,64 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
     ))
 
     CFunctionDecl(name, List(optParam), recordDecl.getTypeForDecl, Some(body))
+  }
+
+  private def compileMap(using Quotes)(opt: quotes.reflect.Term, f: quotes.reflect.Term)(using ctx: RecordDeclTC, cascade: CompilerCascade): CExpr = {
+    import quotes.reflect.*
+
+    val compiledF = cascade.dispatch(_.compileTerm)(f) match { case funDecl: CFunctionDecl => funDecl }
+
+    val recordDecl = getRecordDecl(opt.tpe)
+
+    val tempDecl = CVarDecl(
+      ctx.uniqueValueName("_temp"),
+      recordDecl.getTypeForDecl,
+      Some(cascade.dispatch(_.compileTermToCExpr)(opt))
+    )
+    val resDecl = CVarDecl(ctx.uniqueValueName("_res"), recordDecl.getTypeForDecl)
+
+    CStmtExpr(CCompoundStmt(List(
+      tempDecl,
+      resDecl,
+      CIfStmt(
+        CMemberExpr(tempDecl.ref, definedField),
+        CAssignmentExpr(
+          resDecl.ref,
+          CCallExpr(
+            getSomeCreator(opt.tpe).ref,
+            List(compiledF.inlineCall(List(CMemberExpr(tempDecl.ref, valField))))
+          )
+        ),
+        Some(CAssignmentExpr(resDecl.ref, CCallExpr(getNoneCreator(opt.tpe).ref, List())))
+      ),
+      resDecl.ref
+    )))
+  }
+
+  private def compileFilter(using Quotes)(opt: quotes.reflect.Term, f: quotes.reflect.Term)(using ctx: RecordDeclTC, cascade: CompilerCascade): CExpr = {
+    import quotes.reflect.*
+
+    val compiledF = cascade.dispatch(_.compileTerm)(f) match { case funDecl: CFunctionDecl => funDecl }
+
+    val recordDecl = getRecordDecl(opt.tpe)
+
+    val tempDecl = CVarDecl(
+      ctx.uniqueValueName("_temp"),
+      recordDecl.getTypeForDecl,
+      Some(cascade.dispatch(_.compileTermToCExpr)(opt))
+    )
+    val resDecl = CVarDecl(ctx.uniqueValueName("_res"), recordDecl.getTypeForDecl)
+
+    CStmtExpr(CCompoundStmt(List(
+      tempDecl,
+      resDecl,
+      CIfStmt(
+        CAndExpr(CMemberExpr(tempDecl.ref, definedField), compiledF.inlineCall(List(tempDecl.ref))),
+        CAssignmentExpr(resDecl.ref, tempDecl.ref),
+        Some(CAssignmentExpr(resDecl.ref, CCallExpr(getNoneCreator(opt.tpe).ref, List())))
+      ),
+      resDecl.ref
+    )))
   }
 
   private def getOptionPrinter(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {

@@ -19,7 +19,7 @@ object CompileString extends TermPC with ApplyPC with TypePC with StringPC {
   override def compileLiteral(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.Literal, CExpr] = {
       import quotes.reflect.*
-  
+
       {
         case Literal(StringConstant(x)) => CStringLiteral(x)
       }
@@ -28,7 +28,7 @@ object CompileString extends TermPC with ApplyPC with TypePC with StringPC {
   override def compileTerm(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.Term, CASTNode] = {
       import quotes.reflect.*
-  
+
       {
         case Apply(Ident("print"), List(arg)) =>
           cascade.dispatch(_.compilePrint)(
@@ -56,6 +56,11 @@ object CompileString extends TermPC with ApplyPC with TypePC with StringPC {
             cascade.dispatch(_.compileTermToCExpr)(expr),
             expr.tpe
           )
+        case Apply(Select(expr, "length"), List()) if expr.tpe <:< TypeRepr.of[String] =>
+          CCallExpr(
+            StringH.strlen.ref,
+            List(cascade.dispatch(_.compileTermToCExpr)(expr))
+          )
       }
     }
 
@@ -72,7 +77,7 @@ object CompileString extends TermPC with ApplyPC with TypePC with StringPC {
   override def defaultValue(using Quotes)(using TranslationContext, CompilerCascade):
     PartialFunction[quotes.reflect.TypeRepr, CExpr] = {
       import quotes.reflect.*
-    
+
       {
         case tpe if tpe <:< TypeRepr.of[String] => CStringLiteral("")
       }
