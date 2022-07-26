@@ -102,15 +102,15 @@ class Replica[S: Lattice: JsonValueCodec](val id: Id, dtnNodeId: String, val ser
   def connectOn(uri: URI): Async[Any, Unit] =
     Async {
       val listener      = ReplicaListener(this)
-      val ws: WebSocket = client.newWebSocketBuilder().buildAsync(uri, listener).toAsync.await
+      val ws: WebSocket = client.newWebSocketBuilder().buildAsync(uri, listener).toAsync.bind
       println(s"starting ws handler")
       // select json communication
-      ws.sendText("/json", true).toAsync.await
+      ws.sendText("/json", true).toAsync.bind
       // ask to receive messages on the the given path
-      ws.sendText(s"/subscribe ${service}", true).toAsync.await
+      ws.sendText(s"/subscribe ${service}", true).toAsync.bind
       ws.request(1) // start receiving
 
-      listener.modeSwitched.async.await
+      listener.modeSwitched.async.bind
 
       // enable sending
       connections.updateAndGet(ws :: _)
@@ -149,8 +149,8 @@ given [L]: ArdtOpsContains[ReplicaMutator[L], L] = new {}
 def traverse[T](list: List[Async[Any, T]]): Async[Any, List[T]] = list match
   case Nil => Async { Nil }
   case h :: t => Async {
-      val hr   = h.await
-      val rest = traverse(t).await
+      val hr   = h.bind
+      val rest = traverse(t).bind
       hr :: rest
     }
 
@@ -158,19 +158,19 @@ def traverse[T](list: List[Async[Any, T]]): Async[Any, List[T]] = list match
   val service = "dtn://rdt/~test"
 
   val res = Async[Unit] {
-    val nodeId = sget(URI.create(s"$api/status/nodeid")).await
-    sget(URI.create(s"$api/register?$service")).await
+    val nodeId = sget(URI.create(s"$api/status/nodeid")).bind
+    sget(URI.create(s"$api/register?$service")).bind
 
     val replica = Replica(Defs.genId(), nodeId, service, PosNegCounter.zero)
 
-    val bundleString = sget(URI.create(s"$api/status/bundles")).await
+    val bundleString = sget(URI.create(s"$api/status/bundles")).bind
     val bundles = traverse(readFromString[List[String]](bundleString)(JsonCodecMaker.make).map { id =>
       bget(URI.create(s"$api/download?$id"))
-    }).await
+    }).bind
 
     bundles.foreach(b => println(new String(b)))
 
-    replica.connectOn(URI.create(s"${api(using "ws")}/ws")).await
+    replica.connectOn(URI.create(s"${api(using "ws")}/ws")).bind
 
     Thread.sleep(1000)
 
