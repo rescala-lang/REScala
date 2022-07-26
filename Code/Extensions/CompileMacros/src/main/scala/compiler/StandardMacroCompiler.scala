@@ -18,7 +18,7 @@ object StandardMacroCompiler extends MacroCompiler {
   }
 
   export impl.*
-  
+
   override inline def compileTree(inline t: Any): WithContext[CASTNode] =
     ${ compileTreeCode('t) }
 
@@ -36,9 +36,4 @@ object StandardMacroCompiler extends MacroCompiler {
 
   override inline def valName: String =
     ${ valNameCode }
-}
-
-object StandardBundle extends MetaBundle {
-  type MC = StandardMacroCompiler.type
-  override val macroCompiler: MC = StandardMacroCompiler
 }

@@ -16,7 +16,7 @@ object CompileApply extends ApplyPC {
   override def compileApply(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.Apply, CExpr] = {
       import quotes.reflect.*
-    
+
       {
         case Apply(Select(Select(Ident("math"), "package"), "max"), List(arg1, arg2)) =>
           val v1Name = ctx.uniqueValueName("_v1")
@@ -29,7 +29,7 @@ object CompileApply extends ApplyPC {
             v1.ref,
             v2.ref
           )
-          
+
           CStmtExpr(CCompoundStmt(List(
             v1,
             v2,

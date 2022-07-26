@@ -83,11 +83,7 @@ object CompileDefinition extends DefinitionPC {
   
       val cname = if defName.equals("$anonfun") then inferredName else defName
   
-      val decl = CFunctionDecl(cname, compiledParams, returnType, body)
-  
-      ctx.nameToFunctionDecl.put(cname, decl)
-  
-      decl
+      CFunctionDecl(cname, compiledParams, returnType, body)
     }
 
   override def compileDefDef(using Quotes)(using TranslationContext, CompilerCascade):

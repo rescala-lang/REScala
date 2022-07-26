@@ -1,7 +1,8 @@
 package clangast.decl
 
+import clangast.expr.{CExpr, CStmtExpr}
 import clangast.toExpr
-import clangast.stmt.{CCompoundStmt, CDeclStmt, CStmt}
+import clangast.stmt.{CCompoundStmt, CDeclStmt, CReturnStmt, CStmt}
 import clangast.types.{CFunctionType, CQualType}
 import clangast.given
 import clangast.traversal.CASTMapper
@@ -26,7 +27,7 @@ case class CFunctionDecl(
 
   override def textgen: String =
     val params = parameters.map(_.textgen).mkString(", ") + (if variadic then ", ..." else "")
-    
+
     val decl = s"${returnType.textgen} $name($params)"
 
     body match {
@@ -52,6 +53,22 @@ case class CFunctionDecl(
       body.map(mapper.mapCCompoundStmt),
       variadic
     )
-    
+
   override def declOnly: CFunctionDecl = this.copy(body = None)
+
+  def inlineCall(args: List[CExpr]): CExpr = {
+    def argDecls: List[CStmt] = (args zip parameters).map {
+      case (a, p) => CVarDecl(p.name, p.declaredType, Some(a))
+    }
+
+    val mapper = new CASTMapper {
+      override protected val mapCStmtHook: PartialFunction[CStmt, CStmt] = {
+        case CReturnStmt(Some(retVal)) => retVal
+      }
+    }
+
+    val inlinedBody = CStmtExpr(mapper.mapCCompoundStmt(body.get))
+
+    CStmtExpr(CCompoundStmt(argDecls :+ inlinedBody))
+  }
 }

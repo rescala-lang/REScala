@@ -12,6 +12,9 @@ case class CFunctionType(paramTypes: List[CQualType], returnType: CQualType) ext
     '{ CFunctionType($paramTypesExpr, $returnTypeExpr) }
   }
 
+
+  override def typedVar(name: String): String = s"$returnType (*$name)(${paramTypes.mkString(", ")})"
+
   override def mapChildren(mapper: CASTMapper): CFunctionType =
     CFunctionType(paramTypes.map(mapper.mapCQualType), mapper.mapCQualType(returnType))
 }

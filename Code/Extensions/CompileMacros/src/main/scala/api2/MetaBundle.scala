@@ -3,15 +3,21 @@ package rescala.api2
 import clangast.WithContext
 import clangast.decl.CFunctionDecl
 import clangast.types.CType
-import compiler.MacroCompiler
+import compiler.*
+import compiler.context.ReactiveTC
+import compiler.debug.Debug
 import rescala.core.ReName
 import rescala.macros.MacroAccess
 import rescala.operator.RExceptions
 
-class MetaBundle extends rescala.core.Core {
+import scala.quoted.*
+
+transparent trait CompilerReactiveMarker
+
+trait MetaBundle extends rescala.core.Core {
   bundle =>
 
-  type MC <: MacroCompiler
+  type MC <: ReactiveMacroCompiler
   val macroCompiler: MC
 
   // We flatten the scheduler and the API here, so we do not need a separate state
@@ -47,12 +53,10 @@ class MetaBundle extends rescala.core.Core {
       triggers: Set[MReSource],
       name: ReName,
       kind: RT,
-      fun: StaticTicket => T,
-      cType: WithContext[CType],
-      f: WithContext[CFunctionDecl]
+      fun: StaticTicket => T
   ) extends MReSource
       // the following two supertypes make this available as something that is accessed by the macro
-      with MacroAccess[T, MReSource] with ReadAs[T] {
+      with MacroAccess[T, MReSource] with ReadAs[T] with CompilerReactiveMarker {
     override protected[rescala] def state: State[Unit] = ()
     override def resource: MReSource                   = this
     // can not implement, we lie about having a T, but there is also no execution logic, so this can never get called
@@ -73,9 +77,7 @@ class MetaBundle extends rescala.core.Core {
       dependencies.toSet,
       ct.rename,
       RType.Signal,
-      fun,
-      macroCompiler.compileType[T],
-      macroCompiler.compileAnonFun(() => expr)
+      fun
     )
   }
 
@@ -85,9 +87,7 @@ class MetaBundle extends rescala.core.Core {
       dependencies.toSet,
       ct.rename,
       RType.Event,
-      fun,
-      macroCompiler.compileType[T],
-      macroCompiler.compileAnonFun(fun)
+      fun
     )
   }
 
@@ -102,21 +102,67 @@ class MetaBundle extends rescala.core.Core {
         deps.toSet,
         ct.rename,
         RType.Fold,
-        fun,
-        macroCompiler.compileType[T],
-        macroCompiler.compileAnonFun(fun)
+        fun
       )
     }
 
 }
 
+object StandardBundle extends MetaBundle {
+  type MC = ReactiveMacroCompiler.type
+  override val macroCompiler: MC = ReactiveMacroCompiler
+
+  export macroCompiler.compileGraph
+}
+
 object MetaBundleExample {
-  import compiler.StandardBundle.*
+  import StandardBundle.*
 
   @main
   def run(): Unit = {
 
+    extension [T](inline ev: MetaReactive[Option[T], RType.Event.type])
+      inline def map[R](inline expr: T => R): MetaReactive[Option[R], RType.Event.type] = Event { ev.value.map(expr) }
+
     // did not bother to include sources, so just start with constant signals
+    compileGraph {
+      val source = Signal(5)
+
+      val inc = 1
+
+      val derived = Signal {
+        source.value + inc
+      }
+
+      val arraySignal = Signal {
+        val v = Array(derived.value)
+        println(v)
+        v
+      }
+
+      val esource = Event { Some("Hi!") }
+
+      val emapped = esource.map(str => str)
+
+      val arrayEvent = emapped.map { str => Array(str) }
+
+      val filtered = Event { emapped.value.filter(_.length == 3) }
+
+      def someTuple(a: String, b: String): Option[(String, String)] = Some((a, b))
+
+      val zipped = Event {
+        val v = (emapped.value, filtered.value) match
+          case (Some(left), Some(right)) => someTuple(left, right)
+          case _                         => Option.empty[(String, String)]
+        println(v)
+        v
+      }
+
+      val snapshotLike = Event { esource.value.map(_ => derived.value) }
+
+      val snapshotLike2 = esource.map(_ => derived.value)
+    }
+
     val source = Signal(5)
 
     val derived = Signal {
@@ -149,8 +195,6 @@ object MetaBundleExample {
     // when derived activates without esource, then the expression returns None, which will cause propagation to stop
     val snapshotLike = Event { esource.value.map(_ => derived.value) }
 
-    extension [T](inline ev: MetaReactive[Option[T], RType.Event.type])
-      inline def map[R](inline expr: T => R): MetaReactive[Option[R], RType.Event.type] = Event { ev.value.map(expr) }
     val snapshotLike2 = esource.map(_ => derived.value)
 
     // fold is kinda the only special operation that is normally needed
