@@ -91,8 +91,8 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
             getOptionDeepCopy(opt.tpe).ref,
             List(cascade.dispatch(_.compileTermToCExpr)(opt))
           )
-        case Apply(TypeApply(Select(opt, "map"), _), List(f)) if opt.tpe <:< TypeRepr.of[Option[?]] =>
-          compileMap(opt, f)
+        case apply @ Apply(TypeApply(Select(opt, "map"), _), List(f)) if opt.tpe <:< TypeRepr.of[Option[?]] =>
+          compileMap(opt, f, apply.tpe)
         case Apply(Select(opt, "filter"), List(f)) if opt.tpe <:< TypeRepr.of[Option[?]] =>
           compileFilter(opt, f)
       }
@@ -449,7 +449,8 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
     CFunctionDecl(name, List(optParam), recordDecl.getTypeForDecl, Some(body))
   }
 
-  private def compileMap(using Quotes)(opt: quotes.reflect.Term, f: quotes.reflect.Term)(using ctx: RecordDeclTC, cascade: CompilerCascade): CExpr = {
+  private def compileMap(using Quotes)(opt: quotes.reflect.Term, f: quotes.reflect.Term, resType: quotes.reflect.TypeRepr)
+                        (using ctx: RecordDeclTC, cascade: CompilerCascade): CExpr = {
     import quotes.reflect.*
 
     val compiledF = cascade.dispatch(_.compileTerm)(f) match { case funDecl: CFunctionDecl => funDecl }
@@ -461,7 +462,7 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
       recordDecl.getTypeForDecl,
       Some(cascade.dispatch(_.compileTermToCExpr)(opt))
     )
-    val resDecl = CVarDecl(ctx.uniqueValueName("_res"), recordDecl.getTypeForDecl)
+    val resDecl = CVarDecl(ctx.uniqueValueName("_res"), cascade.dispatch(_.compileTypeRepr)(resType))
 
     CStmtExpr(CCompoundStmt(List(
       tempDecl,
@@ -471,11 +472,11 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
         CAssignmentExpr(
           resDecl.ref,
           CCallExpr(
-            getSomeCreator(opt.tpe).ref,
+            getSomeCreator(resType).ref,
             List(compiledF.inlineCall(List(CMemberExpr(tempDecl.ref, valField))))
           )
         ),
-        Some(CAssignmentExpr(resDecl.ref, CCallExpr(getNoneCreator(opt.tpe).ref, List())))
+        Some(CAssignmentExpr(resDecl.ref, CCallExpr(getNoneCreator(resType).ref, List())))
       ),
       resDecl.ref
     )))
@@ -499,7 +500,7 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
       tempDecl,
       resDecl,
       CIfStmt(
-        CAndExpr(CMemberExpr(tempDecl.ref, definedField), compiledF.inlineCall(List(tempDecl.ref))),
+        CAndExpr(CMemberExpr(tempDecl.ref, definedField), compiledF.inlineCall(List(CMemberExpr(tempDecl.ref, valField)))),
         CAssignmentExpr(resDecl.ref, tempDecl.ref),
         Some(CAssignmentExpr(resDecl.ref, CCallExpr(getNoneCreator(opt.tpe).ref, List())))
       ),
