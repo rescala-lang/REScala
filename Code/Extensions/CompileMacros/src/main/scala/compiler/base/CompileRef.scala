@@ -21,7 +21,8 @@ object CompileRef extends RefPC {
     PartialFunction[quotes.reflect.Ident, CExpr] = ((ident: quotes.reflect.Ident) => {
       import quotes.reflect.*
 
-      ctx.nameToDecl.get(ident.name).map(_.ref)
+      // ident.name apparently is sometimes different from the name used in the symbol definition, so use ident.symbol.name instead
+      ctx.nameToDecl.get(ident.symbol.name).map(_.ref)
     }).unlift
 
   override def compileIdent(using Quotes)(using TranslationContext, CompilerCascade):

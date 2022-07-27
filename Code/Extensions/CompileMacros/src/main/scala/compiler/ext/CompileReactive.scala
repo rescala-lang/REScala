@@ -5,7 +5,7 @@ import clangast.*
 import clangast.given
 import clangast.decl.{CFunctionDecl, CParmVarDecl}
 import clangast.expr.{CCallExpr, CExpr, CIntegerLiteral, CMemberExpr}
-import clangast.stmt.{CCompoundStmt, CReturnStmt}
+import clangast.stmt.{CCompoundStmt, CReturnStmt, CStmt}
 import compiler.CompilerCascade
 import compiler.base.*
 import compiler.context.{FunctionDeclTC, ReactiveTC, TranslationContext, ValueDeclTC}
@@ -94,19 +94,31 @@ object CompileReactive extends SelectPC with ApplyPC with ReactivePC {
 
           if id.equals("Signal") then CompiledSignalExpr("signal" + posString, cFun, expr.tpe)
           else CompiledEvent("event" + posString, cFun, expr.tpe)
-        case inlined @ Inlined(Some(Apply(TypeApply(apply @ Apply(TypeApply(Ident(ext), _), _), _), List(f))), _, Typed(Inlined(Some(Apply(Apply(TypeApply(Ident(id), _), List(expr)), _)), _, _), _))
-          if List("Signal", "Event").contains(id) && inlined.tpe <:< TypeRepr.of[CompilerReactiveMarker] =>
-          val posString = "_" + (apply.pos.startLine + 1) + "_" + (apply.pos.startColumn + 1)
+        case this.inlinedExtensionCall(pos, ext, f, id, expr) =>
+          val posString = "_" + (pos.startLine + 1) + "_" + (pos.startColumn + 1)
 
           val fName = "anonfun_" + f.pos.sourceFile.name.stripSuffix(".scala") + "_" + (f.pos.startLine + 1) + "_" + (f.pos.startColumn + 1)
           val cFun = cascade.dispatch(_.compileReactiveExpr)(expr).copy(name = fName)
 
           if id.equals("Signal") then CompiledSignalExpr("signal" + posString, cFun, expr.tpe)
-          else {
-            CompiledEvent("event" + posString, cFun, expr.tpe, ext.equals("map"))
-          }
+          else CompiledEvent("event" + posString, cFun, expr.tpe, ext.equals("map"))
       }
     }
+
+  private def inlinedExtensionCall(using Quotes): PartialFunction[
+    quotes.reflect.Term,
+    (quotes.reflect.Position, String, quotes.reflect.Term, String, quotes.reflect.Term)
+  ] = term => {
+    import quotes.reflect.*
+
+    term match {
+      case inlined @ Inlined(Some(Apply(TypeApply(apply @ Apply(TypeApply(Ident(ext), _), _), _), List(f))), _, Typed(Inlined(Some(Apply(Apply(TypeApply(Ident(id), _), List(expr)), _)), _, _), _))
+        if List("Signal", "Event").contains(id) && inlined.tpe <:< TypeRepr.of[CompilerReactiveMarker] => (apply.pos, ext, f, id, expr)
+      case inlined @ Inlined(Some(Apply(apply @ Apply(TypeApply(Ident(ext), _), _), List(f))), _, Typed(Inlined(Some(Apply(Apply(TypeApply(Ident(id), _), List(expr)), _)), _, _), _))
+        if List("Signal", "Event").contains(id) && inlined.tpe <:< TypeRepr.of[CompilerReactiveMarker] =>
+        (apply.pos, ext, f, id, expr)
+    }
+  }
 
   override def compileReactive(using Quotes)(using TranslationContext, CompilerCascade):
     PartialFunction[quotes.reflect.Term, CompiledReactive] = ensureCtx[ReactiveTC](compileReactiveImpl)

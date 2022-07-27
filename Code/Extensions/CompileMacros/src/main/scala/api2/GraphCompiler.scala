@@ -70,7 +70,7 @@ class GraphCompiler(using Quotes)(reactives: List[CompiledReactive], appName: St
 
   private val startup: CFunctionDecl =
     CFunctionDecl(
-      "reactifiStartup",
+      appName + "_startup",
       List(),
       CVoidType,
       Some(CCompoundStmt(
@@ -247,7 +247,7 @@ class GraphCompiler(using Quotes)(reactives: List[CompiledReactive], appName: St
 
     val body = CCompoundStmt(localVarDecls ++ updates)
 
-    CFunctionDecl("executeTransaction", params, CVoidType, Some(body))
+    CFunctionDecl(appName + "_update", params, CVoidType, Some(body))
   }
 
   private val mainC: String = appName + "Main.c"

@@ -121,8 +121,23 @@ object MetaBundleExample {
   @main
   def run(): Unit = {
 
-    extension [T](inline ev: MetaReactive[Option[T], RType.Event.type])
-      inline def map[R](inline expr: T => R): MetaReactive[Option[R], RType.Event.type] = Event { ev.value.map(expr) }
+    extension [T](inline ev: MetaReactive[Option[T], RType.Event.type]) {
+      inline def map[R](inline f: T => R): MetaReactive[Option[R], RType.Event.type] = Event {
+        ev.value.map(f)
+      }
+
+      inline def observe(inline f: T => Unit): MetaReactive[Option[Int], RType.Event.type] = Event {
+        ev.value.foreach(f)
+        Option.empty[Int]
+      }
+    }
+
+    extension [T](inline sig: MetaReactive[T, RType.Signal.type]) {
+      inline def observeChange(inline f: T => Unit): MetaReactive[Option[Int], RType.Event.type] = Event {
+        f(sig.value)
+        Option.empty[Int]
+      }
+    }
 
     // did not bother to include sources, so just start with constant signals
     compileGraph {
@@ -134,11 +149,9 @@ object MetaBundleExample {
         source.value + inc
       }
 
-      val arraySignal = Signal {
-        val v = Array(derived.value)
-        println(v)
-        v
-      }
+      val arraySignal = Signal { Array(derived.value) }
+
+      arraySignal.observeChange(a => println(a))
 
       val esource = Event { Some("Hi!") }
 
@@ -151,12 +164,12 @@ object MetaBundleExample {
       def someTuple(a: String, b: String): Option[(String, String)] = Some((a, b))
 
       val zipped = Event {
-        val v = (emapped.value, filtered.value) match
+        (emapped.value, filtered.value) match
           case (Some(left), Some(right)) => someTuple(left, right)
           case _                         => Option.empty[(String, String)]
-        println(v)
-        v
       }
+
+      zipped.observe(t => println(t))
 
       val snapshotLike = Event { esource.value.map(_ => derived.value) }
 
