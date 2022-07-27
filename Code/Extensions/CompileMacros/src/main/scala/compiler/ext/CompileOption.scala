@@ -45,6 +45,8 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
             getNoneCreator(t.tpe).ref,
             List()
           )
+        case Apply(TypeApply(Select(opt, "foreach"), _), List(f)) if opt.tpe <:< TypeRepr.of[Option[?]] =>
+          compileForeach(opt, f)
       }
     }
 
@@ -506,6 +508,28 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
       ),
       resDecl.ref
     )))
+  }
+
+  private def compileForeach(using Quotes)(opt: quotes.reflect.Term, f: quotes.reflect.Term)(using ctx: RecordDeclTC, cascade: CompilerCascade): CStmt = {
+    import quotes.reflect.*
+
+    val compiledF = cascade.dispatch(_.compileTerm)(f) match { case funDecl: CFunctionDecl => funDecl }
+
+    val recordDecl = getRecordDecl(opt.tpe)
+
+    val tempDecl = CVarDecl(
+      ctx.uniqueValueName("_temp"),
+      recordDecl.getTypeForDecl,
+      Some(cascade.dispatch(_.compileTermToCExpr)(opt))
+    )
+
+    CCompoundStmt(List(
+      tempDecl,
+      CIfStmt(
+        CMemberExpr(tempDecl.ref, definedField),
+        compiledF.inlineCall(List(CMemberExpr(tempDecl.ref, valField)))
+      )
+    ))
   }
 
   private def getOptionPrinter(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {

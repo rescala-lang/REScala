@@ -3,7 +3,7 @@ package clangast.decl
 import clangast.expr.{CExpr, CStmtExpr}
 import clangast.toExpr
 import clangast.stmt.{CCompoundStmt, CDeclStmt, CReturnStmt, CStmt}
-import clangast.types.{CFunctionType, CQualType}
+import clangast.types.{CFunctionType, CQualType, CVoidType}
 import clangast.given
 import clangast.traversal.CASTMapper
 
@@ -67,7 +67,9 @@ case class CFunctionDecl(
       }
     }
 
-    val inlinedBody = CStmtExpr(mapper.mapCCompoundStmt(body.get))
+    val inlinedBody: CStmt =
+      if this.returnType.unqualType == CVoidType then mapper.mapCCompoundStmt(body.get)
+      else CStmtExpr(mapper.mapCCompoundStmt(body.get))
 
     CStmtExpr(CCompoundStmt(argDecls :+ inlinedBody))
   }
