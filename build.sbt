@@ -28,10 +28,11 @@ lazy val root = (project in file("."))
       // "-H:+JNI",
     ),
     nativeImageJvm := "graalvm-java17",
-    nativeImageVersion := "22.0.0"
+    nativeImageVersion := "22.0.0",
+    unmanagedSources / excludeFilter := "lore/ViperBackend.scala" | "lore/BackendUtils.scala"
   )
   .enablePlugins(NativeImagePlugin)
-  .settings(Compile / mainClass := Some("fr.Compiler"))
+// .settings(Compile / mainClass := Some("fr.Compiler"))
   .dependsOn(parser)
 
 lazy val parser = (project in file("parser"))

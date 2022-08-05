@@ -15,7 +15,7 @@ object Parser:
   val ws: P0[Unit] = wsp.rep0.void // whitespace
   val wsOrNl = (wsp | lf).rep0 // any amount of whitespace or newlines
   val id: P[ID] = (alpha ~ (alpha | digit | P.char('_')).rep0).string
-  val underscore: P[String] = P.char('_').as("_")
+  val underscore: P[ID] = P.char('_').as("_")
   val number: P[TNum] = digit.rep.string.map(i => TNum(Integer.parseInt(i)))
   val argT: P[TArgT] = // args with type
     ((id <* P.char(':').surroundedBy(ws)) ~ P.defer(typeName)).map((id, typ) =>
@@ -229,7 +229,7 @@ object Parser:
     ((wsOrNl.with1.soft ~ P.char('.')) *> id)
       .map((callType.field, _, List[Term]()))
   @tailrec
-  def evalFieldAcc(s: (Term, List[(callType, String, List[Term])])): TFAcc =
+  def evalFieldAcc(s: (Term, List[(callType, ID, List[Term])])): TFAcc =
     s match
       case (parent: TFAcc, Nil) => parent
       case (parent, (callType.curly, field, b :: Nil) :: rest) =>
