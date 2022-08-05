@@ -145,18 +145,18 @@ object Parser:
 
   // quantifiers
   val quantifierVars: P[NonEmptyList[TArgT]] =
-    (argT).repSep(P.char(',').surroundedBy(ws))
+    (argT).repSep(ws.soft ~ P.char(',') ~ wsOrNl)
   val triggers: P0[List[TViper]] = P.unit.as(List[TViper]())
   val forall: P[TForall] =
-    (((P.string("forall") ~ ws *> quantifierVars) <* P.string(
+    (((P.string("forall") ~ ws *> quantifierVars) <* wsOrNl ~ P.string(
       "::"
-    ) ~ ws) ~ triggers ~ booleanExpr).map { case ((vars, triggers), body) =>
+    ) ~ wsOrNl) ~ triggers ~ booleanExpr).map { case ((vars, triggers), body) =>
       TForall(vars = vars, triggers = triggers, body = body)
     }
   val exists: P[TExists] =
-    ((P.string("exists") ~ ws *> quantifierVars <* P
-      .string("::")
-      .surroundedBy(ws)) ~ booleanExpr).map { case (vars, body) =>
+    (((P.string("exists") ~ ws *> quantifierVars) <* wsOrNl ~ P.string(
+      "::"
+    ) ~ wsOrNl) ~ triggers ~ booleanExpr).map { case ((vars, triggers), body) =>
       TExists(vars = vars, body = body)
     }
   val quantifier: P[TQuantifier] = forall | exists
@@ -180,6 +180,16 @@ object Parser:
   val interaction: P[TInteraction] =
     (P.string("Interaction") ~ ws *> typeParam ~ (ws *> typeParam))
       .map((r, a) => TInteraction(reactiveTypes = r, argumentTypes = a))
+
+  // invariants
+  val invariant: P[TInvariant] =
+    (P.string("invariant") ~ wsOrNl *> booleanExpr).map {
+      case b: TBoolean => TInvariant(b)
+      case x =>
+        throw ParsingException(
+          s"Expected a boolean expression as invariant body but got: $x"
+        )
+    }
 
   // bindings
   val bindable =
@@ -269,7 +279,7 @@ object Parser:
   // programs are sequences of terms
   val term: P[Term] =
     P.defer(
-      typeAlias | binding | reactive | fieldAcc | interaction | lambdaFun | booleanExpr | number.backtrack | _var
+      typeAlias | binding | reactive | fieldAcc | interaction | invariant | lambdaFun | booleanExpr | number.backtrack | _var
     )
   val prog: P[NonEmptyList[Term]] =
     term.repSep(wsOrNl).surroundedBy(wsOrNl) <* P.end

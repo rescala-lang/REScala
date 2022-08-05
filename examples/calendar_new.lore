@@ -14,3 +14,8 @@ val add_work     : Unit = add_appointment.modifies(work)
 
 UI.display(all_appointments, remaining_vacation) 
 UI.vacationDialog.onConfirm{a => add_vacation.apply(a)} 
+
+invariant forall a: Appointment ::
+  a in all_appointments ==> get_start(a) < get_end(a)
+
+invariant remaining_vacation >= 0

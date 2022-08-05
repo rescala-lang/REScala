@@ -26,13 +26,13 @@ object AST:
   case class TArrow(left: Term, right: Term) extends Term // anonymous functions
   case class TTypeAl(name: ID, _type: Type) extends Term // type aliases
 
+  // Viper terms
+  case class TViper() extends Term
+
   // reactives
   sealed trait TReactive extends Term
   case class TSource(body: Term) extends TReactive
   case class TDerived(body: Term) extends TReactive
-
-  // Viper terms
-  case class TViper() extends Term
 
   // interactions
   case class TInteraction(
@@ -42,6 +42,11 @@ object AST:
       requires: List[TViper] = List(),
       ensures: List[TViper] = List(),
       executes: Option[Term] = None
+  ) extends Term
+
+  // invariants
+  case class TInvariant(
+      condition: TBoolean
   ) extends Term
 
   // arithmetic expressions

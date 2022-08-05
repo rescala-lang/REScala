@@ -29,6 +29,6 @@ object WholeProgramParsing extends SimpleTestSuite:
     val prog = readProg(Path.of("examples/calendar_new.lore"))
     val printer = new Prettyprint("calendar_new.lore", prog)
     Parser.prog.parseAll(prog) match
-      case Left(e)  => fail(printer.prettyprint(e))
-      case Right(e) => ()
+      case Left(e)  => fail(e.show)
+      case Right(e) => println(e)
   }
