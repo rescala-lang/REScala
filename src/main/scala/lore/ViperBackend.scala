@@ -5,62 +5,61 @@ import cats.implicits._
 
 object ViperBackend:
 
-//   def toViper(ast: Seq[Term]): String =
-//     // step 1: collect registry of all reactives
-//     // val graph: Map[String, TReactive] = allReactives(ast)
-//     val graph: Map[String, TReactive] = ???
+  def toViper(ast: Seq[Term]): String =
+    //// step 1: collect registry of all reactives
+    val graph: Map[String, TReactive] = allReactives(ast)
 
-//     // step 2: analyze invariants //
-//     val invariants: Seq[TInvariant] = ast.collect({ case i: TInvariant => i })
-//     // collect relevant reactives per invariant
-//     val reactivesPerInvariant: Map[TInvariant, Set[Reactive]] = invariants
-//       .map(i =>
-//         // get reactives that this invariant mentions
-//         val directDeps = uses(i).filter(name => graph.keySet.contains(name))
-//         // collect (transitive) inputs of these reactives
-//         val allDeps = directDeps.flatMap(name => getSubgraph(name, graph))
-//         (i, allDeps)
-//       )
-//       .toMap
+    // step 2: analyze invariants //
+    val invariants: Seq[TInvariant] = ast.collect({ case i: TInvariant => i })
 
-//     // compile invariants to macros
-//     // replace references to derived reactives with macro calls
-//     def transformer(expression: ParsedExpression) = expression match
-//       case id @ ID(index, name) if index >= 0 =>
-//         // check if is reference to derived reactive
-//         graph.get(name) match
-//           case Some(d: DerivedReactive) =>
-//             val args = uses(d)
-//               .filter(r => graph.keys.toSet.contains(r))
-//               .map(name => ID(-1, name))
-//               .toSeq
-//               .sortBy(_.name)
-//             Call(index, d.name, args)
-//           case _ => id
-//       case _ => expression
+    // collect relevant reactives per invariant
+    val reactivesPerInvariant: Map[TInvariant, Set[ID]] = invariants
+      .map(i =>
+        // get reactives that this invariant mentions
+        val directDeps = uses(i).filter(name => graph.keySet.contains(name))
+        // collect (transitive) inputs of these reactives
+        val allDeps = directDeps.flatMap(name => getSubgraph(name, graph))
+        (i, allDeps)
+      )
+      .toMap
 
-//     val invariantsCompiled: Seq[String] = invariants.map(i =>
-//       val transformed = traverseFromNode(i, transformer)
-//       invariantToMacro(
-//         transformed,
-//         reactivesPerInvariant(i)
-//           .collect({ case s: SourceReactive => s })
-//           .map(_.name.name)
-//       )
-//     )
+    // compile invariants to macros
+    // replace references to derived reactives with macro calls
+    def transformer(term: Term) = term match
+      case _var @ TVar(name) =>
+        // check if is reference to derived reactive
+        graph.get(name) match
+          case Some(d: DerivedReactive) =>
+            val args = uses(d)
+              .filter(r => graph.keys.toSet.contains(r))
+              .toSeq
+              .sortBy(_.name)
+            TFunC(d.name, args)
+          case _ => _var
+      case _ => term
 
-//     // step 3: compile reactives
-//     val sourcesCompiled: Seq[String] = graph.values
-//       .collect({ case s: SourceReactive => s })
-//       .map(
-//         sourceToField(_)
-//       )
-//       .toSeq
+    val invariantsCompiled: Seq[String] = invariants.map(i =>
+      val transformed = traverseFromNode(i, transformer)
+      invariantToMacro(
+        transformed,
+        reactivesPerInvariant(i)
+          .collect({ case s: TSource => s })
+          .map(_.name.name)
+      )
+    )
 
-//     val derivedCompiled: Seq[String] = graph.values
-//       .collect({ case d: DerivedReactive => d })
-//       .map(d => derivedToMacro(graph, d))
-//       .toSeq
+    // step 3: compile reactives
+    val sourcesCompiled: Seq[String] = graph.values
+      .collect({ case s: TSource => s })
+      .map(
+        sourceToField(_)
+      )
+      .toSeq
+
+    val derivedCompiled: Seq[String] = graph.values
+      .collect({ case d: TDerived => d })
+      .map(d => derivedToMacro(graph, d))
+      .toSeq
 
 //     // step 4: compile transactions
 //     val transactions: Seq[Transaction] = ast.collect({ case t: Transaction =>
@@ -68,16 +67,16 @@ object ViperBackend:
 //     })
 //     val transactionsCompiled = transactions.map(transactionToMethods(ast, _))
 
-//     s"""|// sources
-//           |${sourcesCompiled.mkString("\n")}
-//           |// derived
-//           |${derivedCompiled.mkString("\n")}
-//           |// invariants
-//           |${invariantsCompiled.mkString("\n")}
-//           |
-//           |// transactions
-//           |${transactionsCompiled.mkString("\n")}
-//           |""".stripMargin
+    s"""|// sources
+          |${sourcesCompiled.mkString("\n")}
+          |// derived
+          |${derivedCompiled.mkString("\n")}
+          |// invariants
+          |${invariantsCompiled.mkString("\n")}
+          |
+          |// transactions
+          |${transactionsCompiled.mkString("\n")}
+          |""".stripMargin
 
   // def invariantToMacro(invariant: Invariant, inputs: Set[String]): String =
   //     val inputsString = inputs.toSeq.sorted.mkString(", ")

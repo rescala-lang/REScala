@@ -1,14 +1,10 @@
 package lore
 import AST._
-import fr.AST.ParsedExpression
-import fr.AST.SourceReactive
-import fr.AST.DerivedReactive
-import fr.AST.DerivedReactive
 
-def traverseAST(
-    ast: Seq[Term],
-    transformer: ParsedExpression => ParsedExpression
-) = ???
+// def traverseAST(
+//     ast: Seq[Term],
+//     transformer: ParsedExpression => ParsedExpression
+// ) = ???
 
 // def traverseFromNode[A <: Term](
 //     node: A,
@@ -177,47 +173,50 @@ def traverseAST(
 //     case c: ClassCastException =>
 //       throw new Exception("AST transformation led to invalid AST.")
 
-// def allReactives(ast: Seq[ParsedExpression]): Map[String, Reactive] =
-//   ast.collect({ case r: Reactive => r }).map(r => (r.name.name, r)).toMap
+def allReactives(ast: Seq[Term]): Map[String, TReactive] =
+  ast.collect({ case TAbs(name, _type, r: TReactive) => (name, r) }).toMap
 
-// /** Returns the names of all ids that are used throughout the expression.
-//   */
-// def uses(e: ParsedExpression): Set[String] = e match
-//   case Precondition(index, body)  => uses(body)
-//   case Postcondition(index, body) => uses(body)
-//   case Invariant(index, body)     => uses(body)
-//   case Transaction(index, name, reactives, pre, post, args, body) =>
-//     reactives.flatten.flatMap(uses).toSet ++ pre.flatMap(uses).toSet ++
-//       post.flatMap(uses).toSet ++ uses(body)
-//   case ID(_, name)             => Set(name)
-//   case UnderScore(_)           => Set()
-//   case e: Reactive             => uses(e.body)
-//   case e: Binding              => uses(e.body)
-//   case Call(index, name, args) => Set(name.name) ++ args.flatMap(uses).toSet
-//   case MethodCall(index, parent, method, args) =>
-//     uses(parent) ++ args.flatMap(uses).toSet
-//   case Number(_, _)                        => Set()
-//   case Parens(index, inner)                => uses(inner)
-//   case Division(index, l, r)               => uses(l) ++ uses(r)
-//   case Multiplication(index, l, r)         => uses(l) ++ uses(r)
-//   case Addition(index, l, r)               => uses(l) ++ uses(r)
-//   case Substraction(index, l, r)           => uses(l) ++ uses(r)
-//   case True(_)                             => Set()
-//   case False(_)                            => Set()
-//   case BoolParens(_, inner)                => uses(inner)
-//   case Lt(index, l, r)                     => uses(l) ++ uses(r)
-//   case Gt(index, l, r)                     => uses(l) ++ uses(r)
-//   case Leq(index, l, r)                    => uses(l) ++ uses(r)
-//   case Geq(index, l, r)                    => uses(l) ++ uses(r)
-//   case Equality(index, l, r)               => uses(l) ++ uses(r)
-//   case Inequality(index, l, r)             => uses(l) ++ uses(r)
-//   case Disjunction(index, l, r)            => uses(l) ++ uses(r)
-//   case Conjunction(index, l, r)            => uses(l) ++ uses(r)
-//   case Implication(index, l, r)            => uses(l) ++ uses(r)
-//   case Forall(index, vars, triggers, body) => uses(body)
-//   case Exists(index, vars, body)           => uses(body)
-//   case e: StringExpr                       => Set()
-//   case InSet(index, l, r)                  => uses(l) ++ uses(r)
+/** Returns the names of all ids that are used throughout the expression.
+  *
+  * @param e
+  *   the expression
+  * @return
+  *   a set of all used IDs
+  */
+def uses(e: Term): Set[ID] = e match
+  case TInvariant(body) => uses(body)
+  case t: TInteraction =>
+    t.modifies.toSet ++ t.requires.flatMap(uses).toSet ++
+      t.ensures.flatMap(uses).toSet ++ t.executes.map(uses).getOrElse(Set.empty)
+  case t: TAbs                      => uses(t.body)
+  case TVar("_")                    => Set.empty
+  case TVar(name)                   => Set(name)
+  case t: TReactive                 => uses(t.body)
+  case TFunC(name, args)            => args.flatMap(uses).toSet
+  case TFCall(parent, field, args)  => uses(parent) ++ args.flatMap(uses)
+  case TFCurly(parent, field, body) => uses(parent) ++ uses(body)
+  case TParens(inner)               => uses(inner)
+  case TNum(_)                      => Set()
+  case TDiv(l, r)                   => uses(l) ++ uses(r)
+  case TMul(l, r)                   => uses(l) ++ uses(r)
+  case TAdd(l, r)                   => uses(l) ++ uses(r)
+  case TSub(l, r)                   => uses(l) ++ uses(r)
+  case TTrue                        => Set()
+  case TFalse                       => Set()
+  case TLt(l, r)                    => uses(l) ++ uses(r)
+  case TGt(l, r)                    => uses(l) ++ uses(r)
+  case TLeq(l, r)                   => uses(l) ++ uses(r)
+  case TGeq(l, r)                   => uses(l) ++ uses(r)
+  case TEq(l, r)                    => uses(l) ++ uses(r)
+  case TIneq(l, r)                  => uses(l) ++ uses(r)
+  case TDisj(l, r)                  => uses(l) ++ uses(r)
+  case TConj(l, r)                  => uses(l) ++ uses(r)
+  case TImpl(l, r)                  => uses(l) ++ uses(r)
+  case TForall(vars, triggers, body) =>
+    triggers.flatMap(uses).toSet ++ uses(body)
+  case TExists(vars, body) => uses(body)
+  case TInSet(l, r)        => uses(l) ++ uses(r)
+//   case e: StringExpr                 => Set()
 
 // def getDependants(
 //     reactive: Reactive,
@@ -230,19 +229,19 @@ def traverseAST(
 //     .toSet
 //   Set(reactive) ++ directChildren.flatMap(c => getDependants(c, ast))
 
-// /** Given the name of a reactive and the registry of all reactives, this
-//   * function returns all reactives that this one (transitively) depends on.
-//   */
-// def getSubgraph(
-//     reactiveName: String,
-//     graph: Map[String, Reactive]
-// ): Set[Reactive] =
-//   val reactive = graph.get(reactiveName)
-//   reactive match
-//     case Some(s: SourceReactive) => Set(s)
-//     case Some(d: DerivedReactive) =>
-//       val usedReactives =
-//         uses(d).filter(name => graph.keys.toSet.contains(name))
-//       Set(d) ++ usedReactives.flatMap(getSubgraph(_, graph))
-//     case None =>
-//       throw new Exception(s"Reactive ${reactiveName} not found in AST.")
+/** Given the name of a reactive and the registry of all reactives, this
+  * function returns all reactives that this one (transitively) depends on.
+  */
+def getSubgraph(
+    reactiveName: ID,
+    graph: Map[String, TReactive]
+): Set[ID] =
+  val reactive = graph.get(reactiveName)
+  reactive match
+    case Some(s: TSource) => Set(reactiveName)
+    case Some(d: TDerived) =>
+      val usedReactives =
+        uses(d).filter(name => graph.keys.toSet.contains(name))
+      Set(reactiveName) ++ usedReactives.flatMap(getSubgraph(_, graph))
+    case None =>
+      throw new Exception(s"Reactive ${reactiveName} not found in AST.")

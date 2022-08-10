@@ -30,7 +30,8 @@ object AST:
   case class TViper() extends Term
 
   // reactives
-  sealed trait TReactive extends Term
+  sealed trait TReactive extends Term:
+    val body: Term
   case class TSource(body: Term) extends TReactive
   case class TDerived(body: Term) extends TReactive
 
