@@ -171,7 +171,7 @@ lazy val encryptedTodo = project.in(file("Code/Examples/EncryptedTodoFx"))
         "org.eclipse.jetty.websocket" % "websocket-jetty-api"    % jettyVersion,
         "org.eclipse.jetty.websocket" % "websocket-jetty-server" % jettyVersion,
         "org.eclipse.jetty.websocket" % "websocket-jetty-client" % jettyVersion,
-        "com.google.crypto.tink"      % "tink"                   % "1.6.1",
+        "com.google.crypto.tink"      % "tink"                   % "1.7.0",
         "org.conscrypt"               % "conscrypt-openjdk-uber" % "2.5.2",
         betterFiles.value,
       )
