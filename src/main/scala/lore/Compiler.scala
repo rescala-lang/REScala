@@ -48,7 +48,8 @@ object Compiler extends IOApp:
     val subcommand = mainCommand.parse(args) match
       case h @ Left(Help(errors, _, _, _)) =>
         if errors.isEmpty
-        then return IO.println(h).as(ExitCode.Success) // --help flag given
+        then
+          return IO.println(h.value).as(ExitCode.Success) // --help flag given
         else
           return IO.println(h).as(ExitCode.Error) // parsing subcommands error
       case Right(s) =>
