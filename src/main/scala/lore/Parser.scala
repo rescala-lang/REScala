@@ -4,7 +4,6 @@ import AST._
 import cats.parse.{Parser => P, Parser0 => P0, Rfc5234}
 import cats.parse.Rfc5234.{alpha, char, digit, lf, wsp}
 import cats.implicits._
-import cats._
 import cats.data.NonEmptyList
 import scala.annotation.tailrec
 
@@ -283,3 +282,5 @@ object Parser:
     )
   val prog: P[NonEmptyList[Term]] =
     term.repSep(wsOrNl).surroundedBy(wsOrNl) <* P.end
+
+  def parse(p: String) = prog.parseAll(p)

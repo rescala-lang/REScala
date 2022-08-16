@@ -32,7 +32,7 @@ lazy val root = (project in file("."))
     unmanagedSources / excludeFilter := "lore/ViperBackend.scala" | "lore/BackendUtils.scala"
   )
   .enablePlugins(NativeImagePlugin)
-// .settings(Compile / mainClass := Some("fr.Compiler"))
+  .settings(Compile / mainClass := Some("lore.Compiler"))
   .dependsOn(parser)
 
 lazy val parser = (project in file("parser"))
