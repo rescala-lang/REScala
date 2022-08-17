@@ -18,16 +18,16 @@ object AST:
   case class TVar(name: ID) extends Term // variable
   case class TAbs(name: ID, _type: Type, body: Term)
       extends Term // abstractions
-  case class TApp(left: Term, right: Term) extends Term // application
-  case class TUnit() extends Term // unit
+  // case class TApp(left: Term, right: Term) extends Term // application
+  // case class TUnit() extends Term // unit
 
   // derived forms
-  case class TSeq(left: Term, right: Term) extends Term // sequence
+  // case class TSeq(left: Term, right: Term) extends Term // sequence
   case class TArrow(left: Term, right: Term) extends Term // anonymous functions
   case class TTypeAl(name: ID, _type: Type) extends Term // type aliases
 
   // Viper terms
-  case class TViper() extends Term
+  sealed trait TViper() extends Term
 
   // reactives
   sealed trait TReactive extends Term:
@@ -51,7 +51,7 @@ object AST:
   ) extends Term
 
   // arithmetic expressions
-  sealed trait TArith extends Term
+  sealed trait TArith extends Term with TViper
   case class TNum(value: Number) extends TArith // numbers
   case class TDiv(left: Term, right: Term) extends TArith // division
   case class TMul(left: Term, right: Term) extends TArith // multiplication
@@ -59,7 +59,7 @@ object AST:
   case class TSub(left: Term, right: Term) extends TArith // substraction
 
   // boolean expressions
-  sealed trait TBoolean extends Term
+  sealed trait TBoolean extends Term with TViper
   case object TTrue extends TBoolean
   case object TFalse extends TBoolean
   case class TLt(left: Term, right: Term) extends TBoolean
@@ -82,7 +82,7 @@ object AST:
   case class TExists(vars: NonEmptyList[TArgT], body: Term) extends TQuantifier
 
   // parantheses
-  case class TParens(inner: Term) extends Term
+  case class TParens(inner: Term) extends Term with TViper
 
   // strings
   case class TString(value: String) extends Term
@@ -92,18 +92,20 @@ object AST:
   sealed trait TFAcc extends Term:
     val parent: Term
     val field: ID
-  case class TFCall(parent: Term, field: ID, args: List[Term]) extends TFAcc
+  case class TFCall(parent: Term, field: ID, args: List[Term])
+      extends TFAcc
+      with TViper
   case class TFCurly(parent: Term, field: ID, body: Term) extends TFAcc
   // function call
-  case class TFunC(name: ID, args: Seq[Term]) extends Term
+  case class TFunC(name: ID, args: Seq[Term]) extends Term with TViper
 
   // interaction enrichments are special curly accesses
-  sealed trait TInEn extends TFAcc
-  case class TReq(parent: Term, inner: Term) extends TInEn:
-    final val field = "requires"
-  case class TEns(parent: Term, inner: Term) extends TInEn:
-    final val field = "ensures"
-  case class TMod(parent: Term, inner: Term) extends TInEn:
-    final val field = "modifies"
-  case class TExec(parent: Term, inner: Term) extends TInEn:
-    final val field = "executes"
+  // sealed trait TInEn extends TFAcc
+  // case class TReq(parent: Term, inner: Term) extends TInEn:
+  //   final val field = "requires"
+  // case class TEns(parent: Term, inner: Term) extends TInEn:
+  //   final val field = "ensures"
+  // case class TMod(parent: Term, inner: Term) extends TInEn:
+  //   final val field = "modifies"
+  // case class TExec(parent: Term, inner: Term) extends TInEn:
+  //   final val field = "executes"

@@ -232,15 +232,8 @@ object Parser:
     s match
       case (parent: TFAcc, Nil) => parent
       case (parent, (callType.curly, field, b :: Nil) :: rest) =>
-        val el = field match
-          // check if this is an interaction enrichment
-          case "requires" => TReq(parent, b)
-          case "ensures"  => TEns(parent, b)
-          case "executes" => TExec(parent, b)
-          case "modifies" => TMod(parent, b)
-          case _          => TFCurly(parent = parent, field = field, body = b)
         evalFieldAcc(
-          el,
+          TFCurly(parent = parent, field = field, body = b),
           rest
         )
       case (parent, (_, field, args) :: rest) =>
