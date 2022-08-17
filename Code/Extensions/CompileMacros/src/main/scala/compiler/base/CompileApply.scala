@@ -6,7 +6,8 @@ import clangast.expr.binaryop.*
 import clangast.expr.*
 import clangast.expr.unaryop.CNotExpr
 import clangast.stmt.CCompoundStmt
-import clangast.stubs.StdIOH
+import clangast.stubs.{StdBoolH, StdIOH}
+import clangast.types.*
 import compiler.context.TranslationContext
 import compiler.CompilerCascade
 
@@ -64,9 +65,15 @@ object CompileApply extends ApplyPC {
       import quotes.reflect.*
 
       {
-        case (leftExpr, _, rightExpr, _) =>
+        case (leftExpr, leftType, rightExpr, _) if isPrimitiveType(leftType) =>
           CParenExpr(CEqualsExpr(leftExpr, rightExpr))
       }
+    }
+
+  private def isPrimitiveType(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: TranslationContext, cascade: CompilerCascade): Boolean =
+    cascade.dispatch(_.compileTypeRepr)(tpe) match {
+      case CBoolType | CCharType | CDoubleType | CFloatType | CIntegerType | CLongType | CShortType | CPointerType(_) => true
+      case _ => false
     }
 
   private def canCompileToCBinaryOperator(using Quotes)(term: quotes.reflect.Term, name: String): Boolean = {

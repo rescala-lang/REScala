@@ -181,14 +181,16 @@ class GraphCompiler(using Quotes)(reactives: List[CompiledReactive], appName: St
 
     def signalUpdateAssignment(signal: CompiledSignal, rhs: CExpr): CStmt = {
       val tempDecl = CVarDecl("temp", signal.cType, Some(valueRef(signal)))
+      val oldDecl = CVarDecl("_old", signal.cType, Some(retain(deepCopy(valueRef(signal), signal.typeRepr), signal.typeRepr)))
 
-      val changedTest = cascade.dispatchLifted(_.compileEquals)(tempDecl.ref, signal.typeRepr, valueRef(signal), signal.typeRepr) match {
+      val changedTest = cascade.dispatchLifted(_.compileEquals)(oldDecl.ref, signal.typeRepr, valueRef(signal), signal.typeRepr) match {
         case Some(expr) => CNotExpr(CParenExpr(expr))
         case None => CTrueLiteral
       }
 
       CCompoundStmt(List[CStmt](
         tempDecl,
+        oldDecl,
         CAssignmentExpr(
           valueRef(signal),
           retain(rhs, signal.typeRepr)
@@ -197,7 +199,7 @@ class GraphCompiler(using Quotes)(reactives: List[CompiledReactive], appName: St
           signalChangedVars(signal).ref,
           changedTest
         )
-      ) ++ release(tempDecl.ref, signal.typeRepr, CFalseLiteral))
+      ) ++ release(oldDecl.ref, signal.typeRepr, CFalseLiteral) ++ release(tempDecl.ref, signal.typeRepr, CFalseLiteral))
     }
 
     val updates = sameCond.collect {

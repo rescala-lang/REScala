@@ -108,7 +108,7 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
       import quotes.reflect.*
 
       {
-        case (leftExpr, leftType, rightExpr, _) if leftType <:< TypeRepr.of[Product] =>
+        case (leftExpr, leftType, rightExpr, _) if leftType <:< TypeRepr.of[Option[?]] =>
           CCallExpr(
             getOptionEquals(leftType).ref,
             List(leftExpr, rightExpr)

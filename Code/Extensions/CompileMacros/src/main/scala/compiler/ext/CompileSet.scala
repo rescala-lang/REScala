@@ -3,7 +3,7 @@ package compiler.ext
 import clangast.*
 import clangast.given
 import clangast.decl.*
-import clangast.expr.binaryop.{CAssignmentExpr, CGreaterThanExpr}
+import clangast.expr.binaryop.{CAssignmentExpr, CEqualsExpr, CGreaterThanExpr}
 import clangast.expr.unaryop.{CAddressExpr, CDerefExpr, CIncExpr}
 import clangast.expr.*
 import clangast.stmt.{CCompoundStmt, CIfStmt, CReturnStmt, CStmt}
@@ -50,7 +50,7 @@ object CompileSet extends ApplyPC with TypePC with DataStructurePC with StringPC
               cascade.dispatch(_.compileTermToCExpr)(key)
             )
           )
-        case Apply(Apply(TypeApply(Ident("deepCopy"), _), List(set)), List()) if set.tpe <:< TypeRepr.of[Set[?]] =>
+        case Apply(Apply(TypeApply(Ident("deepCopy"), _), List(set)), List()) if set.tpe <:< TypeRepr.of[mutable.Set[?]] =>
           CCallExpr(
             CompileMap.getMapDeepCopy(mapType(set.tpe)).ref,
             List(cascade.dispatch(_.compileTermToCExpr)(set))
@@ -60,6 +60,23 @@ object CompileSet extends ApplyPC with TypePC with DataStructurePC with StringPC
 
   override def compileApply(using Quotes)(using TranslationContext, CompilerCascade):
     PartialFunction[quotes.reflect.Apply, CExpr] = ensureCtx[RecordDeclTC](compileApplyImpl)
+
+  private def compileEqualsImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+    PartialFunction[(CExpr, quotes.reflect.TypeRepr, CExpr, quotes.reflect.TypeRepr), CExpr] = {
+      import quotes.reflect.*
+
+      {
+        case (leftExpr, leftType, rightExpr, _) if leftType <:< TypeRepr.of[mutable.Set[?]] =>
+          CCallExpr(
+            CompileMap.getMapEquals(mapType(leftType)).ref,
+            List(leftExpr, rightExpr)
+          )
+      }
+    }
+
+  override def compileEquals(using Quotes)(using TranslationContext, CompilerCascade):
+  PartialFunction[(CExpr, quotes.reflect.TypeRepr, CExpr, quotes.reflect.TypeRepr), CExpr] =
+    ensureCtx[RecordDeclTC](compileEqualsImpl)
 
   private def compileTypeReprImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.TypeRepr, CType] = {
@@ -118,7 +135,7 @@ object CompileSet extends ApplyPC with TypePC with DataStructurePC with StringPC
       import quotes.reflect.*
 
       {
-        case tpe if tpe <:< TypeRepr.of[Set[?]] =>
+        case tpe if tpe <:< TypeRepr.of[mutable.Set[?]] =>
           cascade.dispatch(_.compileDeepCopy)(mapType(tpe))
       }
     }
@@ -232,16 +249,14 @@ object CompileSet extends ApplyPC with TypePC with DataStructurePC with StringPC
     val dataParam = CParmVarDecl("data", HashmapH.any_t)
 
     val counterDecl = CVarDecl("counterPointer", CPointerType(CIntegerType), Some(CCastExpr(itemParam.ref, CPointerType(CIntegerType))))
-    val valueDecl = CVarDecl("valuePointer", CPointerType(elemCType), Some(CCastExpr(dataParam.ref, CPointerType(elemCType))))
 
     val printComma = CIfStmt(CGreaterThanExpr(CDerefExpr(counterDecl.ref), 0.lit), CompileString.printf(", "))
-    val printKey = CompileString.printf("%s", keyParam.ref)
+    val printKey = CompileString.printf("\\\"%s\\\"", keyParam.ref)
 
     val incCounter = CIncExpr(CParenExpr(CDerefExpr(counterDecl.ref)))
 
     val body = CCompoundStmt(List(
       counterDecl,
-      valueDecl,
       printComma,
       printKey,
       incCounter,

@@ -87,6 +87,23 @@ object CompileMap extends ApplyPC with TypePC with DataStructurePC with StringPC
   override def compileApply(using Quotes)(using TranslationContext, CompilerCascade):
     PartialFunction[quotes.reflect.Apply, CExpr] = ensureCtx[RecordDeclTC](compileApplyImpl)
 
+  private def compileEqualsImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+    PartialFunction[(CExpr, quotes.reflect.TypeRepr, CExpr, quotes.reflect.TypeRepr), CExpr] = {
+      import quotes.reflect.*
+
+      {
+        case (leftExpr, leftType, rightExpr, _) if leftType <:< TypeRepr.of[mutable.Map[?, ?]] =>
+          CCallExpr(
+            getMapEquals(leftType).ref,
+            List(leftExpr, rightExpr)
+          )
+      }
+    }
+
+  override def compileEquals(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[(CExpr, quotes.reflect.TypeRepr, CExpr, quotes.reflect.TypeRepr), CExpr] =
+      ensureCtx[RecordDeclTC](compileEqualsImpl)
+
   private def compileTypeReprImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.TypeRepr, CType] = {
       import quotes.reflect.*
@@ -171,7 +188,7 @@ object CompileMap extends ApplyPC with TypePC with DataStructurePC with StringPC
       import quotes.reflect.*
 
       {
-        case tpe if tpe <:< TypeRepr.of[Map[?, ?]] =>
+        case tpe if tpe <:< TypeRepr.of[mutable.Map[?, ?]] =>
           getMapDeepCopy(tpe)
       }
     }
@@ -202,6 +219,8 @@ object CompileMap extends ApplyPC with TypePC with DataStructurePC with StringPC
   private val UPDATE = "UPDATE"
   private val REMOVE = "REMOVE"
   private val RELEASE_ITERATOR = "RELEASE_ITERATOR"
+  private val EQUALS = "EQUALS"
+  private val EQUALS_ITERATOR = "EQUALS_ITERATOR"
   private val DEEP_COPY_ITERATOR = "DEEP_COPY_ITERATOR"
   private val PRINT = "PRINT"
   private val PRINT_ITERATOR = "PRINT_ITERATOR"
@@ -366,7 +385,7 @@ object CompileMap extends ApplyPC with TypePC with DataStructurePC with StringPC
         CPointerType(CPointerType(valueCType))
       ))
     )
-    
+
     val getCall = CCallExpr(
       HashmapH.hashmap_get.ref,
       List(
@@ -656,6 +675,124 @@ object CompileMap extends ApplyPC with TypePC with DataStructurePC with StringPC
       valueDecl,
       releaseCall,
       CReturnStmt(Some(HashmapH.MAP_OK.ref))
+    ))
+
+    CFunctionDecl(name, List(itemParam, keyParam, dataParam), CIntegerType, Some(body))
+  }
+
+  def getMapEquals(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    ctx.recordFunMap.getOrElseUpdate(getRecordDecl(tpe).name -> EQUALS, buildMapEquals(tpe))
+  }
+
+  private def buildMapEquals(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    val recordDecl = getRecordDecl(tpe)
+
+    val name = "equals_" + recordDecl.name
+
+    val leftParam = CParmVarDecl("left", recordDecl.getTypeForDecl)
+    val rightParam = CParmVarDecl("right", recordDecl.getTypeForDecl)
+
+    def isSubSet(a: CExpr, b: CExpr): CExpr =
+      CEqualsExpr(
+        CCallExpr(
+          HashmapH.hashmap_iterate.ref,
+          List(
+            CMemberExpr(a, dataField),
+            CAddressExpr(getMapEqualsIterator(tpe).ref),
+            CCastExpr(CMemberExpr(b, dataField), HashmapH.any_t)
+          )
+        ),
+        HashmapH.MAP_OK.ref
+      )
+
+    val body = CCompoundStmt(List(
+      CReturnStmt(Some(CAndExpr(
+        isSubSet(leftParam.ref, rightParam.ref),
+        isSubSet(rightParam.ref, leftParam.ref)
+      )))
+    ))
+
+    CFunctionDecl(name, List(leftParam, rightParam), StdBoolH.bool, Some(body))
+  }
+
+  private def getMapEqualsIterator(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> EQUALS_ITERATOR, buildMapEqualsIterator(tpe))
+  }
+
+  private def buildMapEqualsIterator(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    import quotes.reflect.*
+
+    val recordDecl = getRecordDecl(tpe)
+    val typeArgs(List(_, valueType)) = tpe.widen
+
+    val valueCType = cascade.dispatch(_.compileTypeRepr)(valueType)
+
+    val name = "equalsIterator_" + recordDecl.name
+
+    val itemParam = CParmVarDecl("item", HashmapH.any_t)
+    val keyParam = CParmVarDecl("key", CPointerType(CCharType))
+    val dataParam = CParmVarDecl("data", HashmapH.any_t)
+
+    val valueDecl = CVarDecl(
+      "value",
+      valueCType,
+      Some(CDerefExpr(CParenExpr(CCastExpr(dataParam.ref, CPointerType(valueCType)))))
+    )
+    val otherDecl = CVarDecl("other", HashmapH.map_t, Some(CCastExpr(itemParam.ref, HashmapH.map_t)))
+    val otherValueDecl = CVarDecl(
+      "otherValue",
+      CPointerType(CPointerType(valueCType)),
+      Some(CCastExpr(
+        CCallExpr(
+          StdLibH.malloc.ref,
+          List(CSizeofExpr(Left(CPointerType(valueCType))))
+        ),
+        CPointerType(CPointerType(valueCType))
+      ))
+    )
+
+    val statusDecl = CVarDecl(
+      "status",
+      CIntegerType,
+      Some(CCallExpr(
+        HashmapH.hashmap_get.ref,
+        List(
+          otherDecl.ref,
+          keyParam.ref,
+          CCastExpr(otherValueDecl.ref, CPointerType(HashmapH.any_t))
+        )
+      ))
+    )
+
+    val retDecl = CVarDecl("ret", CIntegerType)
+    val retAssign = CIfStmt(
+      CAndExpr(
+        CEqualsExpr(statusDecl.ref, HashmapH.MAP_OK.ref),
+        CEqualsExpr(
+          CCallExpr(
+            StringH.strcmp.ref,
+            List(valueDecl.ref, CDerefExpr(CDerefExpr(otherValueDecl.ref)))
+          ),
+          0.lit
+        )
+      ),
+      CAssignmentExpr(retDecl.ref, HashmapH.MAP_OK.ref),
+      Some(CAssignmentExpr(retDecl.ref, HashmapH.MAP_MISSING.ref))
+    )
+
+    val freeHandle = CCallExpr(StdLibH.free.ref, List(otherValueDecl.ref))
+
+    val body = CCompoundStmt(List(
+      valueDecl,
+      otherDecl,
+      otherValueDecl,
+      CEmptyStmt,
+      statusDecl,
+      retDecl,
+      retAssign,
+      CEmptyStmt,
+      freeHandle,
+      CReturnStmt(Some(retDecl.ref))
     ))
 
     CFunctionDecl(name, List(itemParam, keyParam, dataParam), CIntegerType, Some(body))
