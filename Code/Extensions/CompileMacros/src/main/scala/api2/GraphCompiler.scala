@@ -5,6 +5,7 @@ import clangast.given
 import clangast.decl.*
 import clangast.expr.*
 import clangast.expr.binaryop.{CAssignmentExpr, COrExpr}
+import clangast.expr.unaryop.CNotExpr
 import clangast.stmt.*
 import clangast.stubs.StdBoolH
 import clangast.types.*
@@ -117,11 +118,16 @@ class GraphCompiler(using Quotes)(reactives: List[CompiledReactive], appName: St
     case r if !r.isSource && r.cType != CQualType(CVoidType) => r -> eventVar(r)
   }.toMap
 
+  private val signalChangedVars: Map[CompiledSignal, CVarDecl] = signals.map {
+    s => s -> CVarDecl(s.name + "_changed", StdBoolH.bool, Some(CFalseLiteral))
+  }.toMap
+
   extension (expr: CExpr)
     def defined: CExpr = CMemberExpr(expr, "defined")
     def value: CExpr = CMemberExpr(expr, "val")
 
   private def conditionAfterFilter(r: CompiledReactive, cond: Map[CompiledReactive, Set[CExpr]]): Set[CExpr] = r match {
+    case s: CompiledSignal => Set(signalChangedVars(s).ref)
     case s if s.isSource => cond(s)
     case e: CompiledEvent if !e.alwaysPropagates => Set(eventVariables(e).ref.defined)
     case _ => cond(r)
@@ -166,52 +172,52 @@ class GraphCompiler(using Quotes)(reactives: List[CompiledReactive], appName: St
     val (sameCond: List[CompiledReactive], otherConds: List[CompiledReactive]) =
       remainingReactives.span { r => updateConditions(r) == condition }
 
-    def updateAssignment(reactive: CompiledReactive, rhs: CExpr, releaseAfter: Boolean = false): CStmt =
-      val tempDecl = CVarDecl("temp", reactive.cType, Some(valueRef(reactive)))
-      release(tempDecl.ref, reactive.typeRepr, CFalseLiteral) match {
-        case Some(releaseStmt) if releaseAfter =>
-          CCompoundStmt(List(
-            tempDecl,
-            CAssignmentExpr(
-              valueRef(reactive),
-              retain(rhs, reactive.typeRepr)
-            ),
-            releaseStmt
-          ))
-        case _ =>
-          CAssignmentExpr(
-            valueRef(reactive),
-            retain(rhs, reactive.typeRepr)
-          )
-      }
+    def eventUpdateAssignment(event: CompiledReactive, rhs: CExpr): CStmt =
+      CAssignmentExpr(
+        valueRef(event),
+        retain(rhs, event.typeRepr)
+      )
+
+    def signalUpdateAssignment(signal: CompiledSignal, rhs: CExpr): CStmt = {
+      val tempDecl = CVarDecl("temp", signal.cType, Some(valueRef(signal)))
+      CCompoundStmt(List[CStmt](
+        tempDecl,
+        CAssignmentExpr(
+          valueRef(signal),
+          retain(rhs, signal.typeRepr)
+        ),
+        CAssignmentExpr(
+          signalChangedVars(signal).ref,
+          CNotExpr(cascade.dispatch(_.compileEquals)(tempDecl.ref, signal.typeRepr, valueRef(signal), signal.typeRepr))
+        )
+      ) ++ release(tempDecl.ref, signal.typeRepr, CFalseLiteral))
+    }
 
     val updates = sameCond.collect {
       case s: CompiledEvent if s.isSource && cascade.dispatch(_.usesRefCount)(s.typeRepr) =>
-        updateAssignment(s, deepCopy(sourceParameters(s).ref, s.typeRepr))
+        eventUpdateAssignment(s, deepCopy(sourceParameters(s).ref, s.typeRepr))
       case s: CompiledSignal if s.isSource =>
-        updateAssignment(s, deepCopy(sourceParameters(s).ref.value, s.typeRepr))
+        signalUpdateAssignment(s, deepCopy(sourceParameters(s).ref.value, s.typeRepr))
       case f: CompiledFold =>
-        updateAssignment(
+        signalUpdateAssignment(
           f,
           CCallExpr(
             f.updateFun.ref,
             valueRef(f) :: reactiveInputs(f).map(valueRef)
-          ),
-          true
+          )
         )
       case s: CompiledSignalExpr =>
-        updateAssignment(
+        signalUpdateAssignment(
           s,
           CCallExpr(
             s.updateFun.ref,
             reactiveInputs(s).map(valueRef)
-          ),
-          true
+          )
         )
       case e: CompiledEvent if e.cType == CVoidType =>
         CExprStmt(CCallExpr(e.updateFun.ref, reactiveInputs(e).map(valueRef)))
       case e: CompiledEvent if !e.isSource =>
-        updateAssignment(
+        eventUpdateAssignment(
           e,
           CCallExpr(
             e.updateFun.ref,
@@ -241,6 +247,7 @@ class GraphCompiler(using Quotes)(reactives: List[CompiledReactive], appName: St
 
     val localVarDecls = topological.collect {
       case e: CompiledEvent if eventVariables.contains(e) => CDeclStmt(eventVariables(e))
+      case s: CompiledSignal => CDeclStmt(signalChangedVars(s))
     }
 
     val updates = compileUpdates(topologicalByCond, eventVariables.keySet.toSet[CompiledReactive])
