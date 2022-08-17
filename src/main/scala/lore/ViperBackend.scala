@@ -2,6 +2,7 @@ package lore
 
 import AST._
 import cats.implicits._
+import java.util.UUID
 
 object ViperBackend:
 
@@ -29,12 +30,14 @@ object ViperBackend:
       case _var @ TVar(name) =>
         // check if is reference to derived reactive
         graph.get(name) match
-          case Some(d: DerivedReactive) =>
-            val args = uses(d)
+          case Some(d: TDerived) =>
+            val args: Seq[TVar] = uses(d)
+              // find every reactive that is used in d
               .filter(r => graph.keys.toSet.contains(r))
               .toSeq
-              .sortBy(_.name)
-            TFunC(d.name, args)
+              .sorted
+              .map(TVar(_))
+            TFunC(name, args)
           case _ => _var
       case _ => term
 
@@ -43,29 +46,32 @@ object ViperBackend:
       invariantToMacro(
         transformed,
         reactivesPerInvariant(i)
-          .collect({ case s: TSource => s })
-          .map(_.name.name)
+          .map(name => (name, graph(name)))
+          .collect({ case (name, s): (ID, TSource) => name })
       )
     )
 
     // step 3: compile reactives
-    val sourcesCompiled: Seq[String] = graph.values
-      .collect({ case s: TSource => s })
-      .map(
-        sourceToField(_)
-      )
-      .toSeq
+    val sourcesCompiled: Seq[String] = List("TODO source reactives")
+    // val sourcesCompiled: Seq[String] = graph.values
+    //   .collect({ case s: TSource => s })
+    //   .map(
+    //     sourceToField(_)
+    //   )
+    //   .toSeq
 
-    val derivedCompiled: Seq[String] = graph.values
-      .collect({ case d: TDerived => d })
-      .map(d => derivedToMacro(graph, d))
-      .toSeq
+    val derivedCompiled: Seq[String] = List("TODO derived reactives")
+    // val derivedCompiled: Seq[String] = graph.values
+    //   .collect({ case d: TDerived => d })
+    //   .map(d => derivedToMacro(graph, d))
+    //   .toSeq
 
 //     // step 4: compile transactions
 //     val transactions: Seq[Transaction] = ast.collect({ case t: Transaction =>
 //       t
 //     })
 //     val transactionsCompiled = transactions.map(transactionToMethods(ast, _))
+    val transactionsCompiled = List("TODO: Transactions")
 
     s"""|// sources
           |${sourcesCompiled.mkString("\n")}
@@ -78,9 +84,10 @@ object ViperBackend:
           |${transactionsCompiled.mkString("\n")}
           |""".stripMargin
 
-  // def invariantToMacro(invariant: Invariant, inputs: Set[String]): String =
-  //     val inputsString = inputs.toSeq.sorted.mkString(", ")
-  //     s"define inv_${invariant.index}($inputsString) ${expressionToViper(invariant.body)}"
+  def invariantToMacro(invariant: TInvariant, inputs: Set[ID]): String =
+    val inputsString = inputs.toSeq.sorted.mkString(", ")
+    val id = UUID.nameUUIDFromBytes(TInvariant.toString.getBytes).toString
+    s"define inv_$id($inputsString) ${expressionToViper(invariant.condition)}"
 
   // def sourceToField(source: SourceReactive): String =
   //     val typeAnn = source.typeAnn match
@@ -165,37 +172,54 @@ object ViperBackend:
   //     subtransactions.mkString("\n")
 
   def expressionToViper(expression: Term): String = expression match
-    case TTrue       => "true"
-    case TFalse      => "false"
-    case TEq(l, r)   => s"${expressionToViper(l)} == ${expressionToViper(r)}"
-    case TIneq(l, r) => s"${expressionToViper(l)} != ${expressionToViper(r)}"
-    case TDisj(l, r) => s"${expressionToViper(l)} || ${expressionToViper(r)}"
-    case TConj(l, r) => s"${expressionToViper(l)} && ${expressionToViper(r)}"
-    case TImpl(l, r) => s"${expressionToViper(l)} ==> ${expressionToViper(r)}"
-    case TLt(l, r)   => s"${expressionToViper(l)} < ${expressionToViper(r)}"
-    case TGt(l, r)   => s"${expressionToViper(l)} > ${expressionToViper(r)}"
-    case TLeq(l, r)  => s"${expressionToViper(l)} <= ${expressionToViper(r)}"
-    case TGeq(l, r)  => s"${expressionToViper(l)} >= ${expressionToViper(r)}"
-    case TForall(vars, triggers, body) =>
-      val varString =
-        vars.map { case TArgT(name, t) => s"$name: $t" }.toList.mkString(", ")
-      triggers match
-        case Nil => s"forall $varString :: ${expressionToViper(body)}"
-        case t =>
-          s"forall $varString :: {${t.map(expressionToViper).mkString(", ")}} ${expressionToViper(body)}"
-    case TAdd(l, r)     => s"${expressionToViper(l)} + ${expressionToViper(r)}"
-    case TSub(l, r)     => s"${expressionToViper(l)} - ${expressionToViper(r)}"
-    case TDiv(l, r)     => s"${expressionToViper(l)} / ${expressionToViper(r)}"
-    case TMul(l, r)     => s"${expressionToViper(l)} * ${expressionToViper(r)}"
-    case TNum(i)        => s"$i"
-    case TParens(inner) => s"(${expressionToViper(inner)})"
-    case TFunC(name, args) =>
-      val argsString = args.map(a => expressionToViper(a)).mkString(", ")
-      s"$name($argsString)"
-    case TFCall(parent, field, args) => // field call
-      val argsString = args.map(a => expressionToViper(a)).mkString(", ")
-      s"${expressionToViper(parent)}.$field($argsString)"
-    case TInSet(l, r) => s"${expressionToViper(l)} in ${expressionToViper(r)}"
+    case v: TViper =>
+      v match
+        case TTrue     => "true"
+        case TFalse    => "false"
+        case TEq(l, r) => s"${expressionToViper(l)} == ${expressionToViper(r)}"
+        case TIneq(l, r) =>
+          s"${expressionToViper(l)} != ${expressionToViper(r)}"
+        case TDisj(l, r) =>
+          s"${expressionToViper(l)} || ${expressionToViper(r)}"
+        case TConj(l, r) =>
+          s"${expressionToViper(l)} && ${expressionToViper(r)}"
+        case TImpl(l, r) =>
+          s"${expressionToViper(l)} ==> ${expressionToViper(r)}"
+        case TLt(l, r)  => s"${expressionToViper(l)} < ${expressionToViper(r)}"
+        case TGt(l, r)  => s"${expressionToViper(l)} > ${expressionToViper(r)}"
+        case TLeq(l, r) => s"${expressionToViper(l)} <= ${expressionToViper(r)}"
+        case TGeq(l, r) => s"${expressionToViper(l)} >= ${expressionToViper(r)}"
+        case TForall(vars, triggers, body) =>
+          val varString =
+            vars
+              .map { case TArgT(name, t) => s"$name: $t" }
+              .toList
+              .mkString(", ")
+          triggers match
+            case Nil => s"forall $varString :: ${expressionToViper(body)}"
+            case t =>
+              s"forall $varString :: {${t.map(expressionToViper).mkString(", ")}} ${expressionToViper(body)}"
+        case TExists(vars, body) =>
+          val varString =
+            vars
+              .map { case TArgT(name, t) => s"$name: $t" }
+              .toList
+              .mkString(", ")
+          s"exists $varString :: ${expressionToViper(body)}"
+        case TAdd(l, r) => s"${expressionToViper(l)} + ${expressionToViper(r)}"
+        case TSub(l, r) => s"${expressionToViper(l)} - ${expressionToViper(r)}"
+        case TDiv(l, r) => s"${expressionToViper(l)} / ${expressionToViper(r)}"
+        case TMul(l, r) => s"${expressionToViper(l)} * ${expressionToViper(r)}"
+        case TNum(i)    => s"$i"
+        case TParens(inner) => s"(${expressionToViper(inner)})"
+        case TFunC(name, args) =>
+          val argsString = args.map(a => expressionToViper(a)).mkString(", ")
+          s"$name($argsString)"
+        case TFCall(parent, field, args) => // field call
+          val argsString = args.map(a => expressionToViper(a)).mkString(", ")
+          s"${expressionToViper(parent)}.$field($argsString)"
+        case TInSet(l, r) =>
+          s"${expressionToViper(l)} in ${expressionToViper(r)}"
     case exp =>
       throw new IllegalArgumentException(
         s"Expression $exp not allowed in Viper expressions!"
