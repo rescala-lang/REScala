@@ -132,7 +132,7 @@ object MetaBundleExample {
       }
     }
 
-    extension [T](inline sig: MetaReactive[T, RType.Signal.type]) {
+    extension [T](inline sig: MetaReactive[T, RType.Signal.type] | MetaReactive[T, RType.Fold.type]) {
       inline def observeChange(inline f: T => Unit): MetaReactive[Option[Int], RType.Event.type] = Event {
         f(sig.value)
         Option.empty[Int]

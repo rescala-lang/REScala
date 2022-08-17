@@ -30,12 +30,13 @@ case class CompiledSignalExpr(
 case class CompiledFold(
   name: String,
   init: CExpr,
+  primaryInput: String,
   updateFun: CFunctionDecl,
   tpr: Any
 ) extends CompiledSignal {
   override def rename(newName: String): CompiledFold = this.copy(name = newName)
 
-  override def inputs: List[String] = updateFun.parameters.tail.map(_.name)
+  override def inputs: List[String] = primaryInput :: updateFun.parameters.drop(2).map(_.name)
 }
 
 case class CompiledEvent(name: String, updateFun: CFunctionDecl, tpr: Any, alwaysPropagates: Boolean = false) extends CompiledReactive {

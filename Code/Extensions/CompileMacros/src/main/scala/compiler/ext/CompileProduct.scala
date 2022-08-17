@@ -96,7 +96,7 @@ object CompileProduct extends SelectPC with ApplyPC with MatchPC with TypePC wit
   private def compileTypeReprImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.TypeRepr, CType] = {
       import quotes.reflect.*
-    
+
       {
         case tpe if tpe <:< TypeRepr.of[Product] =>
           getRecordDecl(tpe).getTypeForDecl
@@ -261,7 +261,7 @@ object CompileProduct extends SelectPC with ApplyPC with MatchPC with TypePC wit
   private def isProductFieldAccess(using Quotes)(term: quotes.reflect.Term, name: String): Boolean = {
     import quotes.reflect.*
 
-    (term.tpe <:< TypeRepr.of[Product]) && fieldSymbols(term.tpe).exists(_.name.equals(name))
+    (term.tpe <:< TypeRepr.of[Product]) && fieldSymbols(term.tpe).exists(_.name.strip().equals(name))
   }
 
   private def getProductCreator(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {

@@ -87,7 +87,7 @@ class GraphCompiler(using Quotes)(reactives: List[CompiledReactive], appName: St
                 typeRepr.asInstanceOf[TypeRepr]
               )
             ))
-          case (CompiledFold(_, init, _, typeRepr), varDecl) =>
+          case (CompiledFold(_, init, _, _, typeRepr), varDecl) =>
             CExprStmt(CAssignmentExpr(
               varDecl.ref,
               retain(init, typeRepr.asInstanceOf[TypeRepr])
@@ -137,6 +137,7 @@ class GraphCompiler(using Quotes)(reactives: List[CompiledReactive], appName: St
     topological.foldLeft(Map.empty[CompiledReactive, Set[CExpr]]) { (acc, r) =>
       r match {
         case s if s.isSource => acc.updated(s, Set(sourceParameters(s).ref.defined))
+        case f: CompiledFold => acc.updated(f, conditionAfterFilter(reactiveInputs(f).head, acc))
         case _ => acc.updated(r, reactiveInputs(r).map(conditionAfterFilter(_, acc)).reduce(_ union _))
       }
     }
@@ -180,6 +181,12 @@ class GraphCompiler(using Quotes)(reactives: List[CompiledReactive], appName: St
 
     def signalUpdateAssignment(signal: CompiledSignal, rhs: CExpr): CStmt = {
       val tempDecl = CVarDecl("temp", signal.cType, Some(valueRef(signal)))
+
+      val changedTest = cascade.dispatchLifted(_.compileEquals)(tempDecl.ref, signal.typeRepr, valueRef(signal), signal.typeRepr) match {
+        case Some(expr) => CNotExpr(CParenExpr(expr))
+        case None => CTrueLiteral
+      }
+
       CCompoundStmt(List[CStmt](
         tempDecl,
         CAssignmentExpr(
@@ -188,7 +195,7 @@ class GraphCompiler(using Quotes)(reactives: List[CompiledReactive], appName: St
         ),
         CAssignmentExpr(
           signalChangedVars(signal).ref,
-          CNotExpr(cascade.dispatch(_.compileEquals)(tempDecl.ref, signal.typeRepr, valueRef(signal), signal.typeRepr))
+          changedTest
         )
       ) ++ release(tempDecl.ref, signal.typeRepr, CFalseLiteral))
     }
@@ -203,7 +210,7 @@ class GraphCompiler(using Quotes)(reactives: List[CompiledReactive], appName: St
           f,
           CCallExpr(
             f.updateFun.ref,
-            valueRef(f) :: reactiveInputs(f).map(valueRef)
+            valueRef(f) :: valueRef(reactiveInputs(f).head).value :: reactiveInputs(f).tail.map(valueRef)
           )
         )
       case s: CompiledSignalExpr =>

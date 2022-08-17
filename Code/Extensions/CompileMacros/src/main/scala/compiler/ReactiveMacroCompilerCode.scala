@@ -50,9 +50,9 @@ trait ReactiveMacroCompilerCode extends MacroCompilerCode {
 
     given ctx: CTX = createTranslationContext()
 
-    val Inlined(_, _, Inlined(_, _, Block(stmts, _))) = graph.asTerm
+    val Inlined(_, _, Inlined(_, _, Block(stmts, expr))) = graph.asTerm
 
-    stmts.foreach(cascade.dispatch(_.compileReactiveTopLevelStmt))
+    (stmts :+ expr).foreach(cascade.dispatch(_.compileReactiveTopLevelStmt))
 
     val gc = new GraphCompiler(using summon[Quotes])(ctx.reactivesList, "metaBundleTest")
     gc.writeIntoDir("out", "gcc")

@@ -1,6 +1,6 @@
 package compiler.ext
 
-import api2.{CompiledEvent, CompiledReactive, CompiledSignalExpr}
+import api2.{CompiledEvent, CompiledFold, CompiledReactive, CompiledSignalExpr}
 import clangast.*
 import clangast.given
 import clangast.decl.{CFunctionDecl, CParmVarDecl}
@@ -75,6 +75,7 @@ object CompileReactive extends SelectPC with ApplyPC with ReactivePC {
         case defDef: DefDef =>
           val decl = cascade.dispatch(_.compileDefDef)(defDef)
           ctx.nameToFunctionDecl.put(decl.name, decl)
+        case _ =>
       }
     }
 
@@ -86,6 +87,14 @@ object CompileReactive extends SelectPC with ApplyPC with ReactivePC {
       import quotes.reflect.*
 
       {
+        case inlined @ Inlined(Some(Apply(Apply(Apply(TypeApply(apply @ Apply(TypeApply(Ident("fold"), _), List(Ident(primaryInput))), _), List(init)), List(f)), _)), _, _)
+          if inlined.tpe <:< TypeRepr.of[CompilerReactiveMarker] =>
+          val name = "signal_" + (apply.pos.startLine + 1) + "_" + (apply.pos.startColumn + 1)
+
+          val cFun = cascade.dispatch(_.compileReactiveExpr)(f)
+          val cInit = cascade.dispatch(_.compileTermToCExpr)(init)
+
+          CompiledFold(name, cInit, primaryInput, cFun, init.tpe)
         case inlined @ Inlined(Some(Apply(Apply(TypeApply(Ident(id), _), List(expr)), _)), _, _)
           if List("Signal", "Event").contains(id) && inlined.tpe <:< TypeRepr.of[CompilerReactiveMarker] =>
           val posString = "_" + (inlined.pos.startLine + 1) + "_" + (inlined.pos.startColumn + 1)
@@ -128,6 +137,13 @@ object CompileReactive extends SelectPC with ApplyPC with ReactivePC {
       import quotes.reflect.*
 
       {
+        case Block(List(), Block(List(f: DefDef), Closure(_, _))) =>
+          val cFun = cascade.dispatch(_.compileDefDef)(f)
+
+          val fullParams = cFun.parameters ++ ctx.inputParameters.values.toList
+          ctx.inputParameters.clear()
+
+          cFun.copy(parameters = fullParams)
         case term =>
           val compiledBlock = term match {
             case block: Block =>
