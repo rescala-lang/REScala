@@ -344,7 +344,12 @@ class GraphCompiler(using Quotes)(reactives: List[CompiledReactive], appName: St
         "main",
         List(),
         CIntegerType,
-        Some(CCompoundStmt(List(CCallExpr(startup.ref, List()), CEmptyStmt, CReturnStmt(Some(0.lit)))))
+        Some(CCompoundStmt(
+          List[CStmt](
+            CCallExpr(startup.ref, List()),
+            CEmptyStmt
+          ) ++ signals.flatMap(s => release(valueRef(s), s.typeRepr, CFalseLiteral)) :+ CReturnStmt(Some(0.lit))
+        ))
       ))
     )
 
