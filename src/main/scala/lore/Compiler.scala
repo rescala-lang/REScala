@@ -25,7 +25,7 @@ object Compiler extends IOApp:
   // def interprete(ast: Seq[AST.ParsedExpression]): IO[Unit] =
   //   IO.blocking(Interpreter.interprete(ast))
 
-  def toScala(ast: NonEmptyList[AST.Term], options: Options): String =
+  def toScala(ast: NonEmptyList[AST.Term], options: Options): IO[String] =
     ???
     // for
     //   result <- IO(ScalaBackend.toAmm(ast))
@@ -34,7 +34,7 @@ object Compiler extends IOApp:
     //     case Some(path) => writeFile(path, result)
     // yield result
 
-  def toViper(ast: NonEmptyList[AST.Term], options: Options): String =
+  def toViper(ast: NonEmptyList[AST.Term], options: Options): IO[String] =
     ???
     // for
     //   result <- IO(ViperBackend.toViper(ast))
@@ -71,8 +71,8 @@ object Compiler extends IOApp:
           (
             // run requested subroutines
             subcommand match
-              case ToRescala(_) => IO(toScala(ast, options))
-              case ToViper(_)   => IO(toViper(ast, options))
+              case ToRescala(_) => toScala(ast, options)
+              case ToViper(_)   => toViper(ast, options)
               case Parse(_)     => IO.println(ast)
           ).as(ExitCode.Success)
     yield result
