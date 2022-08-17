@@ -60,6 +60,17 @@ object AST:
 
   // boolean expressions
   sealed trait TBoolean extends Term with TViper
+  // trait TwoChildren:
+  //   val left: Term
+  //   val right: Term
+  // trait Traversable[A]:
+  //   extension (a: A) def traverse(fun: Term => Term): A
+
+  // given Traversable[TBoolean with TwoChildren] with
+  //   extension (t: TBoolean with TwoChildren)
+  //     def traverse(fun: Term => Term): TBoolean with TwoChildren =
+  //       t.copy(left = t.left, right = t.right)
+
   case object TTrue extends TBoolean
   case object TFalse extends TBoolean
   case class TLt(left: Term, right: Term) extends TBoolean
