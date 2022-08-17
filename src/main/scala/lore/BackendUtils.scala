@@ -38,7 +38,78 @@ def traverseFromNode[A <: Term](
         TSource(traverseFromNode(body, transformer))
       case TDerived(body) =>
         TDerived(traverseFromNode(body, transformer))
-      // case e => e // don't traverse in cases without children
+      case TAbs(name, _type, body) =>
+        TAbs(name, _type, traverseFromNode(body, transformer))
+      case TArrow(l, r) =>
+        TArrow(
+          traverseFromNode(l, transformer),
+          traverseFromNode(r, transformer)
+        )
+      case TDiv(l, r) =>
+        TDiv(traverseFromNode(l, transformer), traverseFromNode(r, transformer))
+      case TMul(l, r) =>
+        TMul(traverseFromNode(l, transformer), traverseFromNode(r, transformer))
+      case TAdd(l, r) =>
+        TAdd(traverseFromNode(l, transformer), traverseFromNode(r, transformer))
+      case TSub(l, r) =>
+        TSub(traverseFromNode(l, transformer), traverseFromNode(r, transformer))
+      case TLt(l, r) =>
+        TLt(traverseFromNode(l, transformer), traverseFromNode(r, transformer))
+      case TGt(l, r) =>
+        TGt(traverseFromNode(l, transformer), traverseFromNode(r, transformer))
+      case TLeq(l, r) =>
+        TLeq(traverseFromNode(l, transformer), traverseFromNode(r, transformer))
+      case TGeq(l, r) =>
+        TGeq(traverseFromNode(l, transformer), traverseFromNode(r, transformer))
+      case TEq(l, r) =>
+        TEq(traverseFromNode(l, transformer), traverseFromNode(r, transformer))
+      case TIneq(l, r) =>
+        TIneq(
+          traverseFromNode(l, transformer),
+          traverseFromNode(r, transformer)
+        )
+      case TDisj(l, r) =>
+        TDisj(
+          traverseFromNode(l, transformer),
+          traverseFromNode(r, transformer)
+        )
+      case TConj(l, r) =>
+        TConj(
+          traverseFromNode(l, transformer),
+          traverseFromNode(r, transformer)
+        )
+      case TImpl(l, r) =>
+        TImpl(
+          traverseFromNode(l, transformer),
+          traverseFromNode(r, transformer)
+        )
+      case TInSet(l, r) =>
+        TInSet(
+          traverseFromNode(l, transformer),
+          traverseFromNode(r, transformer)
+        )
+      case TForall(vars, triggers, body) =>
+        TForall(vars, triggers, traverseFromNode(body, transformer))
+      case TExists(vars, body) =>
+        TExists(vars = vars, body = traverseFromNode(body, transformer))
+      case TParens(inner) => TParens(traverseFromNode(inner, transformer))
+      case TFCall(parent, field, args) =>
+        TFCall(
+          traverseFromNode(parent, transformer),
+          field,
+          args.map(traverseFromNode(_, transformer))
+        )
+      case TFCurly(parent, field, body) =>
+        TFCurly(
+          traverseFromNode(parent, transformer),
+          field,
+          traverseFromNode(body, transformer)
+        )
+      case TFunC(name, args) =>
+        TFunC(name, args.map(traverseFromNode(_, transformer)))
+      case TArgT(_, _) | TVar(_) | TTypeAl(_, _) | TNum(_) | TTrue | TFalse |
+          TString(_) =>
+        transformed // don't traverse in cases without children
   try result.asInstanceOf[A]
   catch
     case c: ClassCastException =>
