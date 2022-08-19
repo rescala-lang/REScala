@@ -20,6 +20,9 @@ object AST:
   case class TVar(name: ID) extends Term // variable
   case class TAbs(name: ID, _type: Type, body: Term)
       extends Term // abstractions
+
+  // arithmetic expressions
+  case class TIf(cond: Term, _then: Term, _else: Option[Term]) extends Term
   // case class TApp(left: Term, right: Term) extends Term // application
   // case class TUnit() extends Term // unit
 

@@ -281,6 +281,15 @@ object Parser:
   val comment: P[Unit] =
     (P.string("//") ~ P.anyChar.repUntil(lf)).void
 
+  // if then else expressions
+  val ifThenElse: P[TIf] =
+    ((P.string("if") ~ wsOrNl *> P.defer(term) <* wsOrNl) ~
+      (P.string("then") ~ wsOrNl *> P.defer(term)) ~
+      (wsOrNl.soft ~ P.string("else") *> P.defer(term)).?)
+      .map { case ((cond, _then), _else) =>
+        TIf(cond, _then, _else)
+      }
+
   // programs are sequences of terms
   val term: P[Term] =
     P.defer(
