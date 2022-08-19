@@ -12,7 +12,10 @@ object Parser:
 
   // helpers
   val ws: P0[Unit] = wsp.rep0.void // whitespace
-  val wsOrNl = (wsp | lf).rep0 // any amount of whitespace or newlines
+  // val wsOrNl = (wsp | lf).rep0 // any amount of whitespace or newlines
+  val wsOrNl = (wsp | P.defer(comment) | lf).rep0
+  // val wsOrNl =
+  //   ((wsp.rep).? ~ comment.? ~ lf.?).rep0 // any amount of whitespace or newlines
   val id: P[ID] = (alpha ~ (alpha | digit | P.char('_')).rep0).string
   val underscore: P[ID] = P.char('_').as("_")
   val number: P[TNum] = digit.rep.string.map(i => TNum(Integer.parseInt(i)))
@@ -221,6 +224,7 @@ object Parser:
       objFactor.soft ~ (round | curly | field).rep
     ).map((obj, calls) => evalFieldAcc(obj, calls.toList))
 
+  // field accesses
   enum callType:
     case round, curly, field
   inline def callBuilder[A](open: P[Char], close: P[Unit], inner: P0[A]) =
@@ -280,6 +284,7 @@ object Parser:
     (P.string("type") ~ ws *> id ~ (P.char('=').surroundedBy(ws) *> typeName))
       .map((n, t) => TTypeAl(name = n, _type = t))
 
+  // comments
   val comment: P[Unit] =
     (P.string("//") ~ P.anyChar.repUntil(lf)).void
 
@@ -295,11 +300,9 @@ object Parser:
   // programs are sequences of terms
   val term: P[Term] =
     P.defer(
-      typeAlias | binding | reactive | fieldAcc | interaction | invariant | lambdaFun | booleanExpr | number.backtrack | _var
+      typeAlias | binding | reactive | fieldAcc | interaction | invariant | ifThenElse | lambdaFun | booleanExpr | number.backtrack | _var
     )
   val prog: P[NonEmptyList[Term]] =
-    (term <* (wsOrNl.with1.soft ~ comment).rep0)
-      .repSep(wsOrNl)
-      .surroundedBy(wsOrNl) <* P.end
+    term.repSep(wsOrNl).surroundedBy(wsOrNl) <* P.end
 
   def parse(p: String) = prog.parseAll(p)
