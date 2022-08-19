@@ -195,3 +195,18 @@ object SimpleParsing extends SimpleTestSuite:
       Parser.lambdaFun.parseAll("x => y => x + y")
     }
   }
+
+  test("comment") {
+    assertResult(
+      Right(())
+    ) {
+      Parser.comment.parseAll("// this is a comment")
+    }
+
+    assertResult(
+      Right(("\nlalala", ()))
+    ) {
+      Parser.comment.parse("""|// this is a comment
+                              |lalala""".stripMargin)
+    }
+  }

@@ -268,12 +268,17 @@ object Parser:
     (P.string("type") ~ ws *> id ~ (P.char('=').surroundedBy(ws) *> typeName))
       .map((n, t) => TTypeAl(name = n, _type = t))
 
+  val comment: P[Unit] =
+    (P.string("//") ~ P.anyChar.repUntil(lf)).void
+
   // programs are sequences of terms
   val term: P[Term] =
     P.defer(
       typeAlias | binding | reactive | fieldAcc | interaction | invariant | lambdaFun | booleanExpr | number.backtrack | _var
     )
   val prog: P[NonEmptyList[Term]] =
-    term.repSep(wsOrNl).surroundedBy(wsOrNl) <* P.end
+    (term <* (wsOrNl.with1.soft ~ comment).rep0)
+      .repSep(wsOrNl)
+      .surroundedBy(wsOrNl) <* P.end
 
   def parse(p: String) = prog.parseAll(p)
