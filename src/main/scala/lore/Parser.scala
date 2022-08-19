@@ -261,10 +261,12 @@ object Parser:
     }
 
   private val lambdaVars: P[NonEmptyList[TVar]] =
-    (P.char('(') ~ ws *> _var.repSep(ws ~ P.char(',') ~ ws) <* P.char(')')) |
+    (P.char('(') ~ ws *> _var.repSep(ws ~ P.char(',') ~ ws) <* P.char(
+      ')'
+    )) |
       _var.map(NonEmptyList.one(_))
   val lambdaFun: P[TArrow] =
-    ((((lambdaVars <* wsOrNl).soft <* P.string("=>")) <* wsOrNl).rep ~
+    ((((lambdaVars.backtrack <* wsOrNl).soft <* P.string("=>")) <* wsOrNl).rep ~
       P.defer(term))
       .map((args, r) => rewriteLambda(args.flatten.toList.reverse, r))
   def rewriteLambda(params: List[TVar], right: Term): TArrow =

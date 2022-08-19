@@ -164,6 +164,18 @@ object BooleanExpressionParsing extends SimpleTestSuite {
     ) {
       p.parseAll("false != true ==> false || true && foo() == false")
     }
+
+    assertResult(
+      Right(
+        TImpl(
+          TEq(TVar("thisUser"), TVar("user")),
+          TFunC("is_correct", Seq(TVar("user"), TVar("pass")))
+        )
+      )
+    ) {
+      p.parseAll("(thisUser == user ==> is_correct(user,pass))")
+    }
+
   }
 
   test("parentheses") {
