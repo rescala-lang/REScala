@@ -21,14 +21,24 @@ object Parser:
       TArgT(id, typ)
     )
   val typeName: P[Type] = P.recursive { rec =>
-    (id ~ (P.char('[') ~ ws *> rec.repSep(P.char(',') ~ ws) <* ws ~ P.char(
-      ']'
-    )).?)
+    (
+      tupleType(rec).map(TupleType(_)) | // tuple
+        (id ~ (P.char('[') *> innerType(rec) <* P.char(
+          ']'
+        )).?) // type with optional params
+    )
       .map {
-        case (outer, Some(inner)) => Type(outer, inner.toList)
-        case (outer, None)        => Type(outer, List.empty)
+        case (outer: ID, Some(inner): Some[NonEmptyList[Type]]) =>
+          SimpleType(outer, inner.toList)
+        case (outer: ID, none) => SimpleType(outer, List.empty)
+        case t @ TupleType(_)  => t
       }
   }
+
+  lazy val innerType = (t: P[Type]) =>
+    (ws.with1 *> t.repSep(P.char(',') ~ ws) <* ws)
+  lazy val tupleType =
+    (t: P[Type]) => P.char('(') *> innerType(t) <* P.char(')')
 
   // helper definition for parsing sequences of expressions
   val parseSeq = (factor: P[Term], separator: P[String]) =>

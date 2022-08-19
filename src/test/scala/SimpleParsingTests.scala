@@ -23,19 +23,19 @@ object SimpleParsing extends SimpleTestSuite:
   }
 
   test("argT") {
-    assertResult(Right(TArgT("a", Type("Int", List())))) {
+    assertResult(Right(TArgT("a", SimpleType("Int", List())))) {
       Parser.argT.parseAll("a : Int")
     }
   }
 
   test("binding left") {
-    assertResult(Right(TArgT("a", Type("Int", List())))) {
+    assertResult(Right(TArgT("a", SimpleType("Int", List())))) {
       Parser.bindingLeftSide.parseAll("val a : Int")
     }
   }
 
   test("binding") {
-    assertResult(Right(TAbs("a", Type("Int", List()), TNum(12)))) {
+    assertResult(Right(TAbs("a", SimpleType("Int", List()), TNum(12)))) {
       Parser.binding.parseAll("val a : Int = 12")
     }
   }
@@ -113,7 +113,7 @@ object SimpleParsing extends SimpleTestSuite:
       Right(
         TAbs(
           "a",
-          Type("Source", List(Type("Calendar", List()))),
+          SimpleType("Source", List(SimpleType("Calendar", List()))),
           TSource(TFunC("AWSet", List()))
         )
       )
@@ -125,7 +125,10 @@ object SimpleParsing extends SimpleTestSuite:
       Right(
         TAbs(
           "a",
-          Type("Derived", List(Type("Set", List(Type("Appointment", List()))))),
+          SimpleType(
+            "Derived",
+            List(SimpleType("Set", List(SimpleType("Appointment", List()))))
+          ),
           TDerived(
             TFCall(
               TFCall(TVar("work"), "toSet", List()),
@@ -167,7 +170,7 @@ object SimpleParsing extends SimpleTestSuite:
       Right(
         TTypeAl(
           "Calendar",
-          Type("AWSet", List(Type("Appointment", List.empty)))
+          SimpleType("AWSet", List(SimpleType("Appointment", List.empty)))
         )
       )
     ) {

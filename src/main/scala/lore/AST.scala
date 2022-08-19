@@ -9,7 +9,9 @@ object AST:
 
   // helper types
   type ID = String
-  sealed case class Type(name: String, inner: List[Type])
+  sealed trait Type
+  case class SimpleType(name: String, inner: List[Type]) extends Type
+  case class TupleType(inner: NonEmptyList[Type]) extends Type
   type Number = Int
   case class TArgT(name: ID, _type: Type)
       extends Term // argument with type annotation
