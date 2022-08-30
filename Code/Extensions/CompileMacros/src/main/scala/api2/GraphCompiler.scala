@@ -69,32 +69,39 @@ class GraphCompiler(using Quotes)(reactives: List[CompiledReactive], appName: St
     r => r -> CVarDecl(r.name, r.cType, None)
   }.toMap
 
-  private val startup: CFunctionDecl =
+  private val startup: CFunctionDecl = {
+    val initSignals = signalVariables.collect {
+      case (s@CompiledSignalExpr(_, updateFun, typeRepr), varDecl) =>
+        CExprStmt(CAssignmentExpr(
+          varDecl.ref,
+          retain(
+            CCallExpr(
+              updateFun.ref,
+              reactiveInputs(s) collect { case s: CompiledSignal => signalVariables(s).ref }
+            ),
+            typeRepr.asInstanceOf[TypeRepr]
+          )
+        ))
+      case (CompiledFold(_, init, _, _, typeRepr), varDecl) =>
+        CExprStmt(CAssignmentExpr(
+          varDecl.ref,
+          retain(init, typeRepr.asInstanceOf[TypeRepr])
+        ))
+    }.toList
+
+    val initGlobalVals = ctx.valueDeclList.collect[CStmt] {
+      case v @ CVarDecl(_, _, Some(init)) => CAssignmentExpr(v.ref, init)
+    }
+
     CFunctionDecl(
       appName + "_startup",
       List(),
       CVoidType,
       Some(CCompoundStmt(
-        signalVariables.collect {
-          case (s@CompiledSignalExpr(_, updateFun, typeRepr), varDecl) =>
-            CExprStmt(CAssignmentExpr(
-              varDecl.ref,
-              retain(
-                CCallExpr(
-                  updateFun.ref,
-                  reactiveInputs(s).collect { case s: CompiledSignal => signalVariables(s).ref }
-                ),
-                typeRepr.asInstanceOf[TypeRepr]
-              )
-            ))
-          case (CompiledFold(_, init, _, _, typeRepr), varDecl) =>
-            CExprStmt(CAssignmentExpr(
-              varDecl.ref,
-              retain(init, typeRepr.asInstanceOf[TypeRepr])
-            ))
-        }.toList
+        initGlobalVals ++ initSignals
       ))
     )
+  }
 
   private val sourceParameters: Map[CompiledReactive, CParmVarDecl] = sources.collect {
     case s: CompiledEvent if s.isSource => s -> CParmVarDecl(s.name, s.cType)
@@ -319,7 +326,10 @@ class GraphCompiler(using Quotes)(reactives: List[CompiledReactive], appName: St
   private val libCTU: CTranslationUnitDecl =
     CTranslationUnitDecl(
       libInclude :: ctx.includesList,
-      ctx.valueDeclList.sortBy(_.name)
+      ctx.valueDeclList.sortBy(_.name) map {
+        case CVarDecl(name, declaredType, Some(_)) => CVarDecl(name, declaredType)
+        case other => other
+      }
     )
 
   private val libHTU: CTranslationUnitDecl = {
