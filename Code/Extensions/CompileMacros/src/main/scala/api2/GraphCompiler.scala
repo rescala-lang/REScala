@@ -282,7 +282,11 @@ class GraphCompiler(using Quotes)(reactives: List[CompiledReactive], appName: St
         List[CStmt](
           CCallExpr(startup.ref, List()),
           CEmptyStmt
-        ) ++ signals.flatMap(s => release(valueRef(s), s.typeRepr, CFalseLiteral)) :+ CReturnStmt(Some(0.lit))
+        ) ++ signals.flatMap(s => release(valueRef(s), s.typeRepr, CFalseLiteral))
+          ++ ctx.valueDeclList.collect {
+            case v: CVarDecl => release(v, CFalseLiteral)
+          }.flatten
+          :+ CReturnStmt(Some(0.lit))
       ))
     )
 
