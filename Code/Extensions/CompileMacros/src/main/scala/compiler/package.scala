@@ -31,6 +31,7 @@ package object compiler {
       ~>: CompileOption
       ~>: CompileArray
       ~>: CompileProduct
+      ~>: CompileSerialization
       ~>: CompileString
       ~>: minimalCascade
 

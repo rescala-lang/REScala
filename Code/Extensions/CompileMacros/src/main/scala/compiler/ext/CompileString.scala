@@ -178,16 +178,6 @@ object CompileString extends TermPC with ApplyPC with TypePC with StringPC {
   override def compileToString(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
     PartialFunction[(CExpr, quotes.reflect.TypeRepr), CExpr] = ensureCtx[FunctionDeclTC](compileToStringImpl)
 
-  override def hasInjectiveToString(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
-    PartialFunction[quotes.reflect.TypeRepr, Boolean] = {
-      import quotes.reflect.*
-
-      {
-        case tpe if tpe <:< TypeRepr.of[Boolean | Char | Byte | Short | Int | Long | String] => true
-        case _ => false
-      }
-    }
-
   def printf(format: String, args: CExpr*)(using TranslationContext): CExpr =
     CCallExpr(
       StdIOH.printf.ref,

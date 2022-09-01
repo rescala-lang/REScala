@@ -273,6 +273,19 @@ class GraphCompiler(using Quotes)(reactives: List[CompiledReactive], appName: St
     CFunctionDecl(appName + "_update", params, CVoidType, Some(body))
   }
 
+  private val mainFun: CFunctionDecl =
+    CFunctionDecl(
+      "main",
+      List(),
+      CIntegerType,
+      Some(CCompoundStmt(
+        List[CStmt](
+          CCallExpr(startup.ref, List()),
+          CEmptyStmt
+        ) ++ signals.flatMap(s => release(valueRef(s), s.typeRepr, CFalseLiteral)) :+ CReturnStmt(Some(0.lit))
+      ))
+    )
+
   private val mainC: String = appName + "Main.c"
   private val mainH: String = appName + "Main.h"
   private val mainInclude: CInclude = CInclude(mainH, true)
@@ -350,17 +363,7 @@ class GraphCompiler(using Quotes)(reactives: List[CompiledReactive], appName: St
   private val appCTU: CTranslationUnitDecl =
     CTranslationUnitDecl(
       List(mainInclude, libInclude),
-      List(CFunctionDecl(
-        "main",
-        List(),
-        CIntegerType,
-        Some(CCompoundStmt(
-          List[CStmt](
-            CCallExpr(startup.ref, List()),
-            CEmptyStmt
-          ) ++ signals.flatMap(s => release(valueRef(s), s.typeRepr, CFalseLiteral)) :+ CReturnStmt(Some(0.lit))
-        ))
-      ))
+      List(mainFun)
     )
 
   private def writeApp(pathToDir: String): Unit = {

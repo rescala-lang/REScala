@@ -7,7 +7,7 @@ import clangast.expr.binaryop.*
 import clangast.expr.unaryop.*
 import clangast.expr.*
 import clangast.stmt.*
-import clangast.stubs.{StdArgH, StdBoolH, StdLibH, StringH}
+import clangast.stubs.{CJSONH, StdArgH, StdBoolH, StdLibH, StringH}
 import clangast.types.*
 import compiler.CompilerCascade
 import compiler.base.*
@@ -15,14 +15,15 @@ import compiler.base.CompileType.typeArgs
 import compiler.base.CompileApply.varArgs
 import compiler.base.CompileDataStructure.{release, retain}
 import compiler.context.{FunctionDeclTC, RecordDeclTC, TranslationContext}
+import compiler.ext.CompileSerialization.{deserialize, serialize}
 
 import scala.quoted.*
 
-object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with DataStructurePC with StringPC {
+object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with DataStructurePC with StringPC with SerializationPC {
   private def compileSelectImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.Select, CExpr] = {
       import quotes.reflect.*
-  
+
       {
         case Select(arr, "length") =>
           CMemberExpr(
@@ -34,11 +35,11 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
 
   override def compileSelect(using Quotes)(using TranslationContext, CompilerCascade):
     PartialFunction[quotes.reflect.Select, CExpr] = ensureCtx[RecordDeclTC](compileSelectImpl)
-  
+
   private def compileApplyImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.Apply, CExpr] = {
       import quotes.reflect.*
-    
+
       {
         case apply @ Apply(Apply(TypeApply(Select(Ident("Array"), "fill"), _), List(n)), List(elem)) =>
           CCallExpr(
@@ -124,7 +125,7 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
   private def compileTypeReprImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.TypeRepr, CType] = {
       import quotes.reflect.*
-  
+
       {
         case tpe if tpe <:< TypeRepr.of[Array[?]] =>
           getRecordDecl(tpe).getTypeForDecl
@@ -249,6 +250,32 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
   override def compileToString(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
     PartialFunction[(CExpr, quotes.reflect.TypeRepr), CExpr] = ensureCtx[RecordDeclTC](compileToStringImpl)
 
+  private def compileSerializeImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = {
+      import quotes.reflect.*
+
+      {
+        case tpe if tpe <:< TypeRepr.of[Array[?]] =>
+          getArraySerialize(tpe)
+      }
+    }
+
+  override def compileSerialize(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = ensureCtx[RecordDeclTC](compileSerializeImpl)
+
+  private def compileDeserializeImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = {
+      import quotes.reflect.*
+
+      {
+        case tpe if tpe <:< TypeRepr.of[Array[?]] =>
+          getArrayDeserialize(tpe)
+      }
+    }
+
+  override def compileDeserialize(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = ensureCtx[RecordDeclTC](compileDeserializeImpl)
+
   private val dataField: String = "data"
   private val lengthField: String = "length"
 
@@ -265,6 +292,31 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
   private val FILL = "FILL"
   private val PRINT = "PRINT"
   private val TO_STRING = "TO_STRING"
+
+  private def arrayStructInitializer(using Quotes)(tpe: quotes.reflect.TypeRepr, sizeExpr: CExpr)
+                                    (using ctx: RecordDeclTC, cascade: CompilerCascade): CExpr = {
+    import quotes.reflect.*
+
+    val recordDecl = getRecordDecl(tpe)
+    val CFieldDecl(_, CQualType(CPointerType(elemCType), _)) = recordDecl.getField(dataField)
+
+    val typeArgs(List(elemType)) = tpe.widen
+
+    CDesignatedInitExpr(List(
+      dataField -> CCastExpr(
+        CCallExpr(
+          StdLibH.calloc.ref,
+          List(
+            sizeExpr,
+            CSizeofExpr(Left(elemCType.unqualType))
+          )
+        ),
+        CPointerType(elemCType)
+      ),
+      lengthField -> sizeExpr,
+      allocRefCount(tpe).get
+    ))
+  }
 
   private def getArrayCreator(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
     ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> CREATE, buildArrayCreator(tpe))
@@ -286,20 +338,7 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
       CVarDecl(
         "arr",
         recordDecl.getTypeForDecl,
-        Some(CDesignatedInitExpr(List(
-          dataField -> CCastExpr(
-            CCallExpr(
-              StdLibH.calloc.ref,
-              List(
-                lengthParam.ref,
-                CSizeofExpr(Left(elemCType.unqualType))
-              )
-            ),
-            CPointerType(elemCType)
-          ),
-          lengthField -> lengthParam.ref,
-          allocRefCount(tpe).get
-        )))
+        Some(arrayStructInitializer(tpe, lengthParam.ref))
       )
 
     val argpDecl = CVarDecl("argp", StdArgH.va_list.getTypeForDecl)
@@ -396,20 +435,7 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
       CVarDecl(
         "arr",
         recordDecl.getTypeForDecl,
-        Some(CDesignatedInitExpr(List(
-          dataField -> CCastExpr(
-            CCallExpr(
-              StdLibH.calloc.ref,
-              List(
-                nParam.ref,
-                CSizeofExpr(Left(elemCType.unqualType))
-              )
-            ),
-            CPointerType(elemCType)
-          ),
-          lengthField -> nParam.ref,
-          allocRefCount(tpe).get
-        )))
+        Some(arrayStructInitializer(tpe, nParam.ref))
       )
 
     val iDecl = CVarDecl("i", CIntegerType, Some(0.lit))
@@ -640,5 +666,84 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
       CPointerType(CCharType),
       Some(body)
     )
+  }
+
+  private def getArraySerialize(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> SERIALIZE, buildArraySerialize(tpe))
+  }
+
+  private def buildArraySerialize(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    import quotes.reflect.*
+
+    val recordDecl = getRecordDecl(tpe)
+    val typeArgs(List(elemType)) = tpe.widen
+
+    val name = "serialize_" + recordDecl.name
+
+    val arrayParam = CParmVarDecl("arr", recordDecl.getTypeForDecl)
+
+    val jsonDecl = CVarDecl("json", CPointerType(CJSONH.cJSON), Some(CCallExpr(CJSONH.cJSON_CreateArray.ref, List())))
+
+    val iDecl = CVarDecl("i", CIntegerType, Some(0.lit))
+    val loop = CForStmt(
+      Some(iDecl),
+      Some(CLessThanExpr(iDecl.ref, CMemberExpr(arrayParam.ref, lengthField))),
+      Some(CIncExpr(iDecl.ref)),
+      CCallExpr(
+        CJSONH.cJSON_AddItemToArray.ref,
+        List(jsonDecl.ref, serialize(CArraySubscriptExpr(CMemberExpr(arrayParam.ref, dataField), iDecl.ref), elemType))
+      )
+    )
+
+    val body = CCompoundStmt(List(
+      jsonDecl,
+      loop,
+      CReturnStmt(Some(jsonDecl.ref))
+    ))
+
+    CFunctionDecl(name, List(arrayParam), CPointerType(CJSONH.cJSON), Some(body))
+  }
+
+  private def getArrayDeserialize(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> DESERIALIZE, buildArrayDeserialize(tpe))
+  }
+
+  private def buildArrayDeserialize(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    import quotes.reflect.*
+
+    val recordDecl = getRecordDecl(tpe)
+    val typeArgs(List(elemType)) = tpe.widen
+
+    val name = "deserialize_" + recordDecl.name
+
+    val jsonParam = CParmVarDecl("json", CPointerType(CJSONH.cJSON))
+
+    val sizeDecl = CVarDecl("size", CIntegerType, Some(CCallExpr(CJSONH.cJSON_GetArraySize.ref, List(jsonParam.ref))))
+
+    val arrDecl = CVarDecl(
+      "arr",
+      recordDecl.getTypeForDecl,
+      Some(arrayStructInitializer(tpe, sizeDecl.ref))
+    )
+
+    val iDecl = CVarDecl("i", CIntegerType, Some(0.lit))
+    val loop = CForStmt(
+      Some(iDecl),
+      Some(CLessThanExpr(iDecl.ref, sizeDecl.ref)),
+      Some(CIncExpr(iDecl.ref)),
+      CAssignmentExpr(
+        CArraySubscriptExpr(CMemberExpr(arrDecl.ref, dataField), iDecl.ref),
+        retain(deserialize(CCallExpr(CJSONH.cJSON_GetArrayItem.ref, List(jsonParam.ref, iDecl.ref)), elemType), elemType)
+      )
+    )
+
+    val body = CCompoundStmt(List(
+      sizeDecl,
+      arrDecl,
+      loop,
+      CReturnStmt(Some(arrDecl.ref))
+    ))
+
+    CFunctionDecl(name, List(jsonParam), recordDecl.getTypeForDecl, Some(body))
   }
 }

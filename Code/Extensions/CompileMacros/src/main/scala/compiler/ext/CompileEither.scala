@@ -4,20 +4,21 @@ import clangast.*
 import clangast.given
 import clangast.decl.*
 import clangast.expr.*
-import clangast.expr.binaryop.{CAndExpr, COrExpr, CPlusExpr}
+import clangast.expr.binaryop.{CAndExpr, CEqualsExpr, COrExpr, CPlusExpr}
 import clangast.expr.unaryop.CNotExpr
 import clangast.stmt.*
-import clangast.stubs.{StdBoolH, StdLibH, StringH}
+import clangast.stubs.{CJSONH, StdBoolH, StdLibH, StringH}
 import clangast.types.{CCharType, CIntegerType, CPointerType, CRecordType, CType, CVoidType}
 import compiler.CompilerCascade
 import compiler.base.*
 import compiler.base.CompileType.typeArgs
 import compiler.base.CompileDataStructure.{release, retain}
 import compiler.context.{RecordDeclTC, TranslationContext}
+import compiler.ext.CompileSerialization.{deserialize, serialize}
 
 import scala.quoted.*
 
-object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with DataStructurePC with StringPC {
+object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with DataStructurePC with StringPC with SerializationPC {
   private def compileSelectImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.Select, CExpr] = {
       import quotes.reflect.*
@@ -211,7 +212,7 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
   private def compilePrintImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
     PartialFunction[(CExpr, quotes.reflect.TypeRepr), CStmt] = {
       import quotes.reflect.*
-  
+
       {
         case (expr, tpe) if tpe <:< TypeRepr.of[Either[?, ?]] =>
           CCallExpr(getEitherPrinter(tpe).ref, List(expr))
@@ -234,16 +235,42 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
   override def compileToString(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
     PartialFunction[(CExpr, quotes.reflect.TypeRepr), CExpr] = ensureCtx[RecordDeclTC](compileToStringImpl)
 
-  override def hasInjectiveToString(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+  override def serializationRetainsEquality(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.TypeRepr, Boolean] = {
       import quotes.reflect.*
 
       {
         case tpe if tpe <:< TypeRepr.of[Either[?, ?]] =>
           val typeArgs(List(leftType, rightType)) = tpe.widen
-          cascade.dispatch(_.hasInjectiveToString)(leftType) && cascade.dispatch(_.hasInjectiveToString)(rightType)
+          cascade.dispatch(_.serializationRetainsEquality)(leftType) && cascade.dispatch(_.serializationRetainsEquality)(rightType)
       }
     }
+
+  private def compileSerializeImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = {
+      import quotes.reflect.*
+
+      {
+        case tpe if tpe <:< TypeRepr.of[Either[?, ?]] =>
+          getEitherSerialize(tpe)
+      }
+    }
+
+  override def compileSerialize(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = ensureCtx[RecordDeclTC](compileSerializeImpl)
+
+  private def compileDeserializeImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = {
+      import quotes.reflect.*
+
+      {
+        case tpe if tpe <:< TypeRepr.of[Either[?, ?]] =>
+          getEitherDeserialize(tpe)
+      }
+    }
+
+  override def compileDeserialize(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = ensureCtx[RecordDeclTC](compileDeserializeImpl)
 
   private val leftField = "left"
   private val rightField = "right"
@@ -512,5 +539,98 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
     ))
 
     CFunctionDecl(name, List(eitherParam), CPointerType(CCharType), Some(body))
+  }
+
+  private def getEitherSerialize(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> SERIALIZE, buildEitherSerialize(tpe))
+  }
+
+  private def buildEitherSerialize(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    import quotes.reflect.*
+
+    val recordDecl = getRecordDecl(tpe)
+    val typeArgs(List(leftType, rightType)) = tpe.widen
+
+    val name = "serialize_" + recordDecl.name
+
+    val eitherParam = CParmVarDecl("either", recordDecl.getTypeForDecl)
+
+    val jsonDecl = CVarDecl("json", CPointerType(CJSONH.cJSON), Some(CCallExpr(CJSONH.cJSON_CreateObject.ref, List())))
+
+    val leftBranch = CCompoundStmt(List(
+      CCallExpr(CJSONH.cJSON_AddStringToObject.ref, List(jsonDecl.ref, CStringLiteral("type"), CStringLiteral("Left"))),
+      CCallExpr(
+        CJSONH.cJSON_AddItemToObject.ref,
+        List(jsonDecl.ref, CStringLiteral("value"), serialize(CMemberExpr(eitherParam.ref, leftField), leftType))
+      )
+    ))
+
+    val rightBranch = CCompoundStmt(List(
+      CCallExpr(CJSONH.cJSON_AddStringToObject.ref, List(jsonDecl.ref, CStringLiteral("type"), CStringLiteral("Right"))),
+      CCallExpr(
+        CJSONH.cJSON_AddItemToObject.ref,
+        List(jsonDecl.ref, CStringLiteral("value"), serialize(CMemberExpr(eitherParam.ref, rightField), rightType))
+      )
+    ))
+
+    val body = CCompoundStmt(List(
+      jsonDecl,
+      CIfStmt(
+        CMemberExpr(eitherParam.ref, isRightField),
+        rightBranch,
+        Some(leftBranch)
+      ),
+      CReturnStmt(Some(jsonDecl.ref))
+    ))
+
+    CFunctionDecl(name, List(eitherParam), CPointerType(CJSONH.cJSON), Some(body))
+  }
+
+  private def getEitherDeserialize(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> DESERIALIZE, buildEitherDeserialize(tpe))
+  }
+
+  private def buildEitherDeserialize(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    import quotes.reflect.*
+
+    val recordDecl = getRecordDecl(tpe)
+    val typeArgs(List(leftType, rightType)) = tpe.widen
+
+    val name = "deserialize_" + recordDecl.name
+
+    val jsonParam = CParmVarDecl("json", CPointerType(CJSONH.cJSON))
+
+    val leftBranch = CReturnStmt(Some(
+      CCallExpr(
+        getLeftCreator(tpe).ref,
+        List(deserialize(CCallExpr(CJSONH.cJSON_GetObjectItem.ref, List(jsonParam.ref, CStringLiteral("value"))), leftType))
+      )
+    ))
+
+    val rightBranch = CReturnStmt(Some(
+      CCallExpr(
+        getRightCreator(tpe).ref,
+        List(deserialize(CCallExpr(CJSONH.cJSON_GetObjectItem.ref, List(jsonParam.ref, CStringLiteral("value"))), rightType))
+      )
+    ))
+
+    val body = CCompoundStmt(List(
+      CIfStmt(
+        CEqualsExpr(
+          CCallExpr(
+            StringH.strcmp.ref,
+            List(
+              CJSONH.valuestring(CCallExpr(CJSONH.cJSON_GetObjectItem.ref, List(jsonParam.ref, CStringLiteral("type")))),
+              CStringLiteral("Right")
+            )
+          ),
+          0.lit
+        ),
+        rightBranch,
+        Some(leftBranch)
+      )
+    ))
+
+    CFunctionDecl(name, List(jsonParam), recordDecl.getTypeForDecl, Some(body))
   }
 }

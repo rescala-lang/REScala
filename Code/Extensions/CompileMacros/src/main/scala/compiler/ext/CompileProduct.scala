@@ -7,17 +7,18 @@ import clangast.expr.binaryop.*
 import clangast.expr.unaryop.*
 import clangast.expr.*
 import clangast.stmt.*
-import clangast.stubs.{StdBoolH, StdIOH, StdLibH, StringH}
+import clangast.stubs.{CJSONH, StdBoolH, StdIOH, StdLibH, StringH}
 import clangast.types.*
 import compiler.CompilerCascade
 import compiler.base.*
 import compiler.base.CompileType.typeArgs
 import compiler.base.CompileDataStructure.{release, retain}
 import compiler.context.{RecordDeclTC, TranslationContext}
+import compiler.ext.CompileSerialization.{deserialize, serialize}
 
 import scala.quoted.*
 
-object CompileProduct extends SelectPC with ApplyPC with MatchPC with TypePC with DataStructurePC with StringPC {
+object CompileProduct extends SelectPC with ApplyPC with MatchPC with TypePC with DataStructurePC with StringPC with SerializationPC {
   private def compileSelectImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.Select, CExpr] = {
       import quotes.reflect.*
@@ -156,8 +157,7 @@ object CompileProduct extends SelectPC with ApplyPC with MatchPC with TypePC wit
 
       {
         case tpe if tpe <:< TypeRepr.of[Product] =>
-          val typeArgs(fieldTypes) = tpe.widen
-          fieldTypes.exists(cascade.dispatch(_.usesRefCount))
+          fieldTypes(tpe).exists(cascade.dispatch(_.usesRefCount))
       }
     }
 
@@ -168,9 +168,8 @@ object CompileProduct extends SelectPC with ApplyPC with MatchPC with TypePC wit
       {
         case (expr, tpe) if tpe <:< TypeRepr.of[Product] =>
           val recordDecl = getRecordDecl(tpe)
-          val typeArgs(fieldTypes) = tpe.widen
 
-          val releaseElems: List[CStmt] = recordDecl.fields.zip(fieldTypes).collect {
+          val releaseElems: List[CStmt] = recordDecl.fields.zip(fieldTypes(tpe)).collect {
             case (f, t) if cascade.dispatch(_.usesRefCount)(t) =>
               release(CMemberExpr(expr, f.name), t, CFalseLiteral).get
           }
@@ -223,16 +222,41 @@ object CompileProduct extends SelectPC with ApplyPC with MatchPC with TypePC wit
   override def compileToString(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
     PartialFunction[(CExpr, quotes.reflect.TypeRepr), CExpr] = ensureCtx[RecordDeclTC](compileToStringImpl)
 
-  override def hasInjectiveToString(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+  override def serializationRetainsEquality(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.TypeRepr, Boolean] = {
       import quotes.reflect.*
 
       {
         case tpe if tpe <:< TypeRepr.of[Product] =>
-          val typeArgs(fieldTypes) = tpe.widen
-          fieldTypes.forall(cascade.dispatch(_.hasInjectiveToString))
+          fieldTypes(tpe).forall(cascade.dispatch(_.serializationRetainsEquality))
       }
     }
+
+  private def compileSerializeImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = {
+      import quotes.reflect.*
+
+      {
+        case tpe if tpe <:< TypeRepr.of[Product] =>
+          getProductSerialize(tpe)
+      }
+    }
+
+  override def compileSerialize(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = ensureCtx[RecordDeclTC](compileSerializeImpl)
+
+  private def compileDeserializeImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = {
+      import quotes.reflect.*
+
+      {
+        case tpe if tpe <:< TypeRepr.of[Product] =>
+          getProductDeserialize(tpe)
+      }
+    }
+
+  override def compileDeserialize(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = ensureCtx[RecordDeclTC](compileDeserializeImpl)
 
   private val CREATE = "CREATE"
   private val EQUALS = "EQUALS"
@@ -253,6 +277,9 @@ object CompileProduct extends SelectPC with ApplyPC with MatchPC with TypePC wit
 
   private def fieldSymbols(using Quotes)(tpe: quotes.reflect.TypeRepr): List[quotes.reflect.Symbol] =
     tpe.classSymbol.get.caseFields.filter(_.isValDef)
+
+  private def fieldTypes(using Quotes)(tpe: quotes.reflect.TypeRepr): List[quotes.reflect.TypeRepr] =
+    fieldSymbols(tpe).map(tpe.memberType)
 
   private def hasDefaultValue(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: TranslationContext, cascade: CompilerCascade): Boolean =
     !cascade.dispatch(_.usesRefCount)(tpe) &&
@@ -367,12 +394,11 @@ object CompileProduct extends SelectPC with ApplyPC with MatchPC with TypePC wit
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(tpe)
-    val typeArgs(fieldTypes) = tpe.widen
 
     val name = "print_" + recordDecl.name
     val productParam = CParmVarDecl("rec", recordDecl.getTypeForDecl)
 
-    val printFields = recordDecl.fields.zip(fieldTypes).flatMap { (f, t) =>
+    val printFields = recordDecl.fields.zip(fieldTypes(tpe)).flatMap { (f, t) =>
       val printField = cascade.dispatch(_.compilePrint)(
         CMemberExpr(productParam.ref, f.name),
         t
@@ -406,7 +432,7 @@ object CompileProduct extends SelectPC with ApplyPC with MatchPC with TypePC wit
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(tpe)
-    val typeArgs(fieldTypes) = tpe.widen
+    val numFields = recordDecl.fields.length
 
     val isTuple = recordDecl.name.startsWith("Tuple")
 
@@ -415,7 +441,7 @@ object CompileProduct extends SelectPC with ApplyPC with MatchPC with TypePC wit
 
     val fieldStringsDecl = CVarDecl(
       "fieldStrings",
-      CArrayType(CPointerType(CCharType), Some(CIntegerLiteral(fieldTypes.length)))
+      CArrayType(CPointerType(CCharType), Some(CIntegerLiteral(numFields)))
     )
 
     val baseLength = if isTuple then 2 else 2 + tpe.classSymbol.get.name.length
@@ -423,10 +449,10 @@ object CompileProduct extends SelectPC with ApplyPC with MatchPC with TypePC wit
     val stringLengthDecl = CVarDecl(
       "strLength",
       CIntegerType,
-      Some(CIntegerLiteral(baseLength + 2 * (fieldTypes.length - 1)))
+      Some(CIntegerLiteral(baseLength + 2 * (numFields - 1)))
     )
 
-    val fieldsToString: List[CStmt] = recordDecl.fields.zip(fieldTypes).zipWithIndex.flatMap {
+    val fieldsToString: List[CStmt] = recordDecl.fields.zip(fieldTypes(tpe)).zipWithIndex.flatMap {
       case ((f, t), i) =>
         val fieldToString = CAssignmentExpr(
           CArraySubscriptExpr(fieldStringsDecl.ref, i.lit),
@@ -447,16 +473,16 @@ object CompileProduct extends SelectPC with ApplyPC with MatchPC with TypePC wit
     val strDecl = CompileString.stringDecl("str", stringLengthDecl.ref)
 
     val formatString = (if isTuple then "(" else tpe.classSymbol.get.name + "(") +
-      fieldTypes.map(_ => "%s").mkString(", ") + ")"
+      fieldTypes(tpe).map(_ => "%s").mkString(", ") + ")"
 
     val sprintf = CCallExpr(
       StdIOH.sprintf.ref,
       strDecl.ref ::
         CStringLiteral(formatString) ::
-        fieldTypes.indices.map(i => CArraySubscriptExpr(fieldStringsDecl.ref, i.lit)).toList
+        (0 until numFields).indices.map(i => CArraySubscriptExpr(fieldStringsDecl.ref, i.lit)).toList
     )
 
-    val freeFieldStrings = fieldTypes.indices.map[CStmt](
+    val freeFieldStrings = (0 until numFields).map[CStmt](
       i => CCallExpr(StdLibH.free.ref, List(CArraySubscriptExpr(fieldStringsDecl.ref, i.lit)))
     ).toList
 
@@ -476,5 +502,71 @@ object CompileProduct extends SelectPC with ApplyPC with MatchPC with TypePC wit
       CPointerType(CCharType),
       Some(body)
     )
+  }
+
+  private def getProductSerialize(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> SERIALIZE, buildProductSerialize(tpe))
+  }
+
+  private def buildProductSerialize(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    import quotes.reflect.*
+
+    val recordDecl = getRecordDecl(tpe)
+    val isTuple = recordDecl.name.startsWith("Tuple")
+
+    val name = "serialize_" + recordDecl.name
+
+    val prodParam = CParmVarDecl("prod", recordDecl.getTypeForDecl)
+
+    val body = if (isTuple) {
+      val jsonDecl = CVarDecl("json", CPointerType(CJSONH.cJSON), Some(CCallExpr(CJSONH.cJSON_CreateArray.ref, List())))
+      val addFields = recordDecl.fields.zip(fieldTypes(tpe)).map[CStmt] { (field, tpe) =>
+        CCallExpr(
+          CJSONH.cJSON_AddItemToArray.ref,
+          List(jsonDecl.ref, serialize(CMemberExpr(prodParam.ref, field.name), tpe))
+        )
+      }
+      CCompoundStmt((CDeclStmt(jsonDecl) :: addFields) :+ CReturnStmt(Some(jsonDecl.ref)))
+    } else {
+      val jsonDecl = CVarDecl("json", CPointerType(CJSONH.cJSON), Some(CCallExpr(CJSONH.cJSON_CreateObject.ref, List())))
+      val addFields = recordDecl.fields.zip(fieldTypes(tpe)).map[CStmt] { (field, tpe) =>
+        CCallExpr(
+          CJSONH.cJSON_AddItemToObject.ref,
+          List(jsonDecl.ref, CStringLiteral(field.name), serialize(CMemberExpr(prodParam.ref, field.name), tpe))
+        )
+      }
+      CCompoundStmt((CDeclStmt(jsonDecl) :: addFields) :+ CReturnStmt(Some(jsonDecl.ref)))
+    }
+
+    CFunctionDecl(name, List(prodParam), CPointerType(CJSONH.cJSON), Some(body))
+  }
+
+  private def getProductDeserialize(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> DESERIALIZE, buildProductDeserialize(tpe))
+  }
+
+  private def buildProductDeserialize(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    import quotes.reflect.*
+
+    val recordDecl = getRecordDecl(tpe)
+    val isTuple = recordDecl.name.startsWith("Tuple")
+
+    val name = "deserialize_" + recordDecl.name
+
+    val jsonParam = CParmVarDecl("json", CPointerType(CJSONH.cJSON))
+
+    val params = if (isTuple) {
+      fieldTypes(tpe).zipWithIndex map { (tpe, i) =>
+        deserialize(CCallExpr(CJSONH.cJSON_GetArrayItem.ref, List(jsonParam.ref, CIntegerLiteral(i))), tpe)
+      }
+    } else {
+      recordDecl.fields.zip(fieldTypes(tpe)) map { (field, tpe) =>
+        deserialize(CCallExpr(CJSONH.cJSON_GetObjectItem.ref, List(jsonParam.ref, CStringLiteral(field.name))), tpe)
+      }
+    }
+
+    val body = CCompoundStmt(List(CReturnStmt(Some(CCallExpr(getProductCreator(tpe).ref, params)))))
+
+    CFunctionDecl(name, List(jsonParam), recordDecl.getTypeForDecl, Some(body))
   }
 }

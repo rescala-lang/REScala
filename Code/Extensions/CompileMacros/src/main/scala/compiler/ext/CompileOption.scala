@@ -7,17 +7,18 @@ import clangast.expr.binaryop.{CAndExpr, CAssignmentExpr, CEqualsExpr, CNotEqual
 import clangast.expr.unaryop.{CAddressExpr, CDerefExpr, CNotExpr}
 import clangast.expr.*
 import clangast.stmt.{CCompoundStmt, CIfStmt, CReturnStmt, CStmt}
-import clangast.stubs.{StdBoolH, StdLibH, StringH}
+import clangast.stubs.{CJSONH, StdBoolH, StdLibH, StringH}
 import clangast.types.*
 import compiler.CompilerCascade
 import compiler.base.*
 import compiler.base.CompileType.typeArgs
 import compiler.base.CompileDataStructure.{release, retain}
+import compiler.ext.CompileSerialization.{serialize, deserialize}
 import compiler.context.{RecordDeclTC, TranslationContext, ValueDeclTC}
 
 import scala.quoted.*
 
-object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC with MatchPC with TypePC with DataStructurePC with StringPC {
+object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC with MatchPC with TypePC with DataStructurePC with StringPC with SerializationPC {
   private def compileValDefToCVarDeclImpl(using Quotes)(using ctx: RecordDeclTC & ValueDeclTC, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.ValDef, CVarDecl] = {
       import quotes.reflect.*
@@ -279,16 +280,42 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
   override def compileToString(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
     PartialFunction[(CExpr, quotes.reflect.TypeRepr), CExpr] = ensureCtx[RecordDeclTC](compileToStringImpl)
 
-  override def hasInjectiveToString(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+  override def serializationRetainsEquality(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.TypeRepr, Boolean] = {
       import quotes.reflect.*
 
       {
         case tpe if tpe <:< TypeRepr.of[Option[?]] =>
           val typeArgs(List(wrappedType)) = tpe.widen
-          cascade.dispatch(_.hasInjectiveToString)(wrappedType)
+          cascade.dispatch(_.serializationRetainsEquality)(wrappedType)
       }
     }
+
+  private def compileSerializeImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = {
+      import quotes.reflect.*
+
+      {
+        case tpe if tpe <:< TypeRepr.of[Option[?]] =>
+          getOptionSerialize(tpe)
+      }
+    }
+
+  override def compileSerialize(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = ensureCtx[RecordDeclTC](compileSerializeImpl)
+
+  private def compileDeserializeImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = {
+      import quotes.reflect.*
+
+      {
+        case tpe if tpe <:< TypeRepr.of[Option[?]] =>
+          getOptionDeserialize(tpe)
+      }
+    }
+
+  override def compileDeserialize(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = ensureCtx[RecordDeclTC](compileDeserializeImpl)
 
   val valField = "val"
   val definedField = "defined"
@@ -605,12 +632,6 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
       CReturnStmt(Some(noneStringDecl.ref))
     ))
 
-    CIfStmt(
-      CMemberExpr(optParam.ref, definedField),
-      someBranch,
-      Some(noneBranch)
-    )
-
     val body = CCompoundStmt(List(
       CIfStmt(
         CMemberExpr(optParam.ref, definedField),
@@ -620,5 +641,68 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
     ))
 
     CFunctionDecl(name, List(optParam), CPointerType(CCharType), Some(body))
+  }
+
+  private def getOptionSerialize(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> SERIALIZE, buildOptionSerialize(tpe))
+  }
+
+  private def buildOptionSerialize(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    import quotes.reflect.*
+
+    val recordDecl = getRecordDecl(tpe)
+    val typeArgs(List(wrappedType)) = tpe.widen
+
+    val name = "serialize_" + recordDecl.name
+
+    val optParam = CParmVarDecl("opt", recordDecl.getTypeForDecl)
+
+    val someBranch = CReturnStmt(Some(serialize(CMemberExpr(optParam.ref, valField), wrappedType)))
+
+    val noneBranch = CReturnStmt(Some(CCallExpr(CJSONH.cJSON_CreateNull.ref, List())))
+
+    val body = CCompoundStmt(List(
+      CIfStmt(
+        CMemberExpr(optParam.ref, definedField),
+        someBranch,
+        Some(noneBranch)
+      )
+    ))
+
+    CFunctionDecl(name, List(optParam), CPointerType(CJSONH.cJSON), Some(body))
+  }
+
+  private def getOptionDeserialize(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> DESERIALIZE, buildOptionDeserialize(tpe))
+  }
+
+  private def buildOptionDeserialize(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    import quotes.reflect.*
+
+    val recordDecl = getRecordDecl(tpe)
+    val typeArgs(List(wrappedType)) = tpe.widen
+
+    val name = "deserialize_" + recordDecl.name
+
+    val jsonParam = CParmVarDecl("json", CPointerType(CJSONH.cJSON))
+
+    val someBranch = CReturnStmt(Some(
+      CCallExpr(
+        getSomeCreator(tpe).ref,
+        List(deserialize(jsonParam.ref, wrappedType))
+      )
+    ))
+
+    val noneBranch = CReturnStmt(Some(CCallExpr(getNoneCreator(tpe).ref, List())))
+
+    val body = CCompoundStmt(List(
+      CIfStmt(
+        CCallExpr(CJSONH.cJSON_IsNull.ref, List(jsonParam.ref)),
+        noneBranch,
+        Some(someBranch)
+      )
+    ))
+
+    CFunctionDecl(name, List(jsonParam), recordDecl.getTypeForDecl, Some(body))
   }
 }

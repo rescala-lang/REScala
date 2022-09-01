@@ -7,18 +7,19 @@ import clangast.expr.binaryop.{CAssignmentExpr, CEqualsExpr, CGreaterThanExpr}
 import clangast.expr.unaryop.{CAddressExpr, CDerefExpr, CIncExpr}
 import clangast.expr.*
 import clangast.stmt.{CCompoundStmt, CIfStmt, CReturnStmt, CStmt}
-import clangast.stubs.{HashmapH, StdLibH}
+import clangast.stubs.{CJSONH, HashmapH, StdLibH}
 import clangast.types.*
 import compiler.CompilerCascade
 import compiler.base.*
 import compiler.base.CompileDataStructure.{release, retain}
 import compiler.base.CompileType.typeArgs
 import compiler.context.{RecordDeclTC, TranslationContext}
+import compiler.ext.CompileSerialization.{deserialize, serialize}
 
 import scala.quoted.*
 import scala.collection.mutable
 
-object CompileSet extends ApplyPC with TypePC with DataStructurePC with StringPC {
+object CompileSet extends ApplyPC with TypePC with DataStructurePC with StringPC with SerializationPC {
   private def compileApplyImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.Apply, CExpr] = {
       import quotes.reflect.*
@@ -153,6 +154,32 @@ object CompileSet extends ApplyPC with TypePC with DataStructurePC with StringPC
   override def compilePrint(using Quotes)(using TranslationContext, CompilerCascade):
     PartialFunction[(CExpr, quotes.reflect.TypeRepr), CStmt] = ensureCtx[RecordDeclTC](compilePrintImpl)
 
+  private def compileSerializeImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = {
+      import quotes.reflect.*
+
+      {
+        case tpe if tpe <:< TypeRepr.of[mutable.Set[?]] =>
+          getSetSerialize(tpe)
+      }
+    }
+
+  override def compileSerialize(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = ensureCtx[RecordDeclTC](compileSerializeImpl)
+
+  private def compileDeserializeImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = {
+      import quotes.reflect.*
+
+      {
+        case tpe if tpe <:< TypeRepr.of[mutable.Set[?]] =>
+          getSetDeserialize(tpe)
+      }
+    }
+
+  override def compileDeserialize(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = ensureCtx[RecordDeclTC](compileDeserializeImpl)
+
   private def mapType(using Quotes)(tpe: quotes.reflect.TypeRepr): quotes.reflect.TypeRepr = {
     import quotes.reflect.*
 
@@ -163,6 +190,7 @@ object CompileSet extends ApplyPC with TypePC with DataStructurePC with StringPC
   private val ADD = "ADD"
   private val PRINT_SET = "PRINT_SET"
   private val PRINT_SET_ITERATOR = "PRINT_SET_ITERATOR"
+  private val SERIALIZE_ITERATOR = "SERIALIZE_ITERATOR"
 
   private def getSetAdd(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
     ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> ADD, buildSetAdd(tpe))
@@ -264,5 +292,98 @@ object CompileSet extends ApplyPC with TypePC with DataStructurePC with StringPC
     ))
 
     CFunctionDecl(name, List(itemParam, keyParam, dataParam), CIntegerType, Some(body))
+  }
+
+  private def getSetSerialize(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> SERIALIZE, buildSetSerialize(tpe))
+  }
+
+  private def buildSetSerialize(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    import quotes.reflect.*
+
+    val recordDecl = getRecordDecl(mapType(tpe))
+
+    val name = "serializeSet_" + recordDecl.name
+
+    val setParam = CParmVarDecl("set", recordDecl.getTypeForDecl)
+
+    val jsonDecl = CVarDecl("json", CPointerType(CJSONH.cJSON), Some(CCallExpr(CJSONH.cJSON_CreateArray.ref, List())))
+
+    val iterate = CCallExpr(
+      HashmapH.hashmap_iterate.ref,
+      List(
+        CMemberExpr(setParam.ref, CompileMap.dataField),
+        CAddressExpr(getSetSerializeIterator(tpe).ref),
+        CCastExpr(jsonDecl.ref, HashmapH.any_t)
+      )
+    )
+
+    val body = CCompoundStmt(List(
+      jsonDecl,
+      iterate,
+      CReturnStmt(Some(jsonDecl.ref))
+    ))
+
+    CFunctionDecl(name, List(setParam), CPointerType(CJSONH.cJSON), Some(body))
+  }
+
+  private def getSetSerializeIterator(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> SERIALIZE_ITERATOR, buildSetSerializeIterator(tpe))
+  }
+
+  private def buildSetSerializeIterator(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    import quotes.reflect.*
+
+    val recordDecl = getRecordDecl(mapType(tpe))
+
+    val name = "serializeSetIterator_" + recordDecl.name
+
+    val itemParam = CParmVarDecl("item", HashmapH.any_t)
+    val keyParam = CParmVarDecl("key", CPointerType(CCharType))
+    val dataParam = CParmVarDecl("data", HashmapH.any_t)
+
+    val jsonDecl = CVarDecl("json", CPointerType(CJSONH.cJSON), Some(CCastExpr(itemParam.ref, CPointerType(CJSONH.cJSON))))
+
+    val body = CCompoundStmt(List(
+      jsonDecl,
+      CCallExpr(
+        CJSONH.cJSON_AddItemToArray.ref,
+        List(jsonDecl.ref, CCallExpr(CJSONH.cJSON_Parse.ref, List(keyParam.ref)))
+      ),
+      CReturnStmt(Some(HashmapH.MAP_OK.ref))
+    ))
+
+    CFunctionDecl(name, List(itemParam, keyParam, dataParam), CIntegerType, Some(body))
+  }
+
+  private def getSetDeserialize(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    ctx.recordFunMap.getOrElseUpdate(cascade.dispatch(_.typeName)(tpe) -> DESERIALIZE, buildSetDeserialize(tpe))
+  }
+
+  private def buildSetDeserialize(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
+    import quotes.reflect.*
+
+    val recordDecl = getRecordDecl(mapType(tpe))
+    val typeArgs(List(valueType)) = tpe.widen
+
+    val name = "deserializeSet_" + recordDecl.name
+
+    val jsonParam = CParmVarDecl("json", CPointerType(CJSONH.cJSON))
+
+    val setDecl = CVarDecl("set", recordDecl.getTypeForDecl, Some(CCallExpr(CompileMap.getMapCreator(tpe).ref, List())))
+
+    val elemDecl = CVarDecl("elem", CPointerType(CJSONH.cJSON))
+    val loop = CJSONH.cJSON_ArrayForEach(elemDecl.ref, jsonParam.ref, CCompoundStmt(List(
+      CCallExpr(getSetAdd(tpe).ref, List(setDecl.ref, deserialize(elemDecl.ref, valueType)))
+    )))
+
+    val body = CCompoundStmt(List(
+      setDecl,
+      elemDecl,
+      loop,
+      CReturnStmt(Some(setDecl.ref))
+    ))
+
+    CFunctionDecl(name, List(jsonParam), recordDecl.getTypeForDecl, Some(body))
   }
 }
