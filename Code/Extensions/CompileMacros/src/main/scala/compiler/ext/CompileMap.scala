@@ -1017,8 +1017,9 @@ object CompileMap extends ApplyPC with TypePC with DataStructurePC with StringPC
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(tpe)
-    val typeArgs(List(_, valueType)) = tpe.widen
+    val typeArgs(List(keyType, valueType)) = tpe.widen
 
+    val keyCType = cascade.dispatch(_.compileTypeRepr)(keyType)
     val valueCType = cascade.dispatch(_.compileTypeRepr)(valueType)
 
     val name = "printIterator_" + recordDecl.name
@@ -1031,7 +1032,13 @@ object CompileMap extends ApplyPC with TypePC with DataStructurePC with StringPC
     val valueDecl = CVarDecl("valuePointer", CPointerType(valueCType), Some(CCastExpr(dataParam.ref, CPointerType(valueCType))))
 
     val printComma = CIfStmt(CGreaterThanExpr(CDerefExpr(counterDecl.ref), 0.lit), CompileString.printf(", "))
-    val printKey = CompileString.printf("\\\"%s\\\" -> ", keyParam.ref)
+    val keyJson = CVarDecl("keyJson", CPointerType(CJSONH.cJSON), Some(CCallExpr(CJSONH.cJSON_Parse.ref, List(keyParam.ref))))
+    val parsedKey = CVarDecl("parsedKey", keyCType, Some(deserialize(keyJson.ref, keyType)))
+    val printKey = cascade.dispatch(_.compilePrint)(parsedKey.ref, keyType)
+    val releaseKey = CCompoundStmt(
+      CCallExpr(CJSONH.cJSON_Delete.ref, List(keyJson.ref)) :: release(parsedKey.ref, keyType, CFalseLiteral).toList
+    )
+    val printArrow = CompileString.printf(" -> ")
     val printValue = cascade.dispatch(_.compilePrint)(CDerefExpr(valueDecl.ref), valueType)
 
     val incCounter = CIncExpr(CParenExpr(CDerefExpr(counterDecl.ref)))
@@ -1040,7 +1047,11 @@ object CompileMap extends ApplyPC with TypePC with DataStructurePC with StringPC
       counterDecl,
       valueDecl,
       printComma,
+      keyJson,
+      parsedKey,
       printKey,
+      releaseKey,
+      printArrow,
       printValue,
       incCounter,
       CReturnStmt(Some(HashmapH.MAP_OK.ref))

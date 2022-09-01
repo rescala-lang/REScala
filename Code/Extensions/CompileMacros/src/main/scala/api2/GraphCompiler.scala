@@ -4,10 +4,10 @@ import clangast.*
 import clangast.given
 import clangast.decl.*
 import clangast.expr.*
-import clangast.expr.binaryop.{CAssignmentExpr, COrExpr}
+import clangast.expr.binaryop.{CAssignmentExpr, CGreaterThanExpr, CLessThanExpr, COrExpr}
 import clangast.expr.unaryop.CNotExpr
 import clangast.stmt.*
-import clangast.stubs.StdBoolH
+import clangast.stubs.{CJSONH, DyadH, StdBoolH, StdLibH}
 import clangast.types.*
 import compiler.CompilerCascade
 import compiler.context.TranslationContext
@@ -23,6 +23,7 @@ class GraphCompiler(using Quotes)(reactives: List[CompiledReactive], appName: St
   import quotes.reflect.*
 
   private val sources: List[CompiledReactive] = reactives.filter(_.isSource)
+  sources.foreach(s => cascade.dispatchLifted(_.compileDeserialize)(TypeRepr.of[Option].appliedTo(s.typeRepr)))
   private val signals: List[CompiledSignal] = reactives.collect { case s: CompiledSignal => s }
   private val events: List[CompiledEvent] = reactives.collect { case e: CompiledEvent => e }
 
@@ -273,22 +274,100 @@ class GraphCompiler(using Quotes)(reactives: List[CompiledReactive], appName: St
     CFunctionDecl(appName + "_update", params, CVoidType, Some(body))
   }
 
-  private val mainFun: CFunctionDecl =
+  private val onData: CFunctionDecl = {
+    val eDecl = CParmVarDecl("e", CPointerType(DyadH.dyad_Event))
+    val jsonDecl = CVarDecl(
+      "json",
+      CPointerType(CJSONH.cJSON),
+      Some(CCallExpr(CJSONH.cJSON_Parse.ref, List(CMemberExpr(eDecl.ref, DyadH.dataField, true))))
+    )
+
+    CFunctionDecl(
+      "onData",
+      List(eDecl),
+      CVoidType,
+      Some(CCompoundStmt(List(
+        jsonDecl,
+        CCallExpr(CJSONH.cJSON_Delete.ref, List(jsonDecl.ref))
+      )))
+    )
+  }
+
+  private val onAccept: CFunctionDecl = {
+    val eDecl = CParmVarDecl("e", CPointerType(DyadH.dyad_Event))
+
+    CFunctionDecl(
+      "onAccept",
+      List(eDecl),
+      CVoidType,
+      Some(CCompoundStmt(List(
+        CCallExpr(
+          DyadH.dyad_addListener.ref,
+          List(
+            CMemberExpr(eDecl.ref, DyadH.remoteField, true),
+            DyadH.DYAD_EVENT_DATA.ref,
+            onData.ref,
+            CNullLiteral
+          )
+        )
+      )))
+    )
+  }
+
+  private val mainFun: CFunctionDecl = {
+    val argc = CParmVarDecl("argc", CIntegerType)
+    val argv = CParmVarDecl("argv", CArrayType(CPointerType(CCharType)))
+
+    val checkArgs = CIfStmt(
+      CLessThanExpr(argc.ref, 2.lit),
+      CCompoundStmt(List(
+        CompileString.printf("Listen port expected as command line argument\\n"),
+        CReturnStmt(Some(1.lit))
+      ))
+    )
+
+    val streamDecl = CVarDecl("s", CPointerType(DyadH.dyad_Stream), Some(CCallExpr(DyadH.dyad_newStream.ref, List())))
+    val registerOnAccept = CCallExpr(
+      DyadH.dyad_addListener.ref,
+      List(streamDecl.ref, DyadH.DYAD_EVENT_ACCEPT.ref, onAccept.ref, CNullLiteral)
+    )
+    val startListening = CCallExpr(
+      DyadH.dyad_listen.ref,
+      List(
+        streamDecl.ref,
+        CCallExpr(StdLibH.atoi.ref, List(CArraySubscriptExpr(argv.ref, 1.lit))))
+    )
+
+    val dyadUpdateLoop = CWhileStmt(
+      CGreaterThanExpr(CCallExpr(DyadH.dyad_getStreamCount.ref, List()), 0.lit),
+      CCompoundStmt(List(CCallExpr(DyadH.dyad_update.ref, List())))
+    )
+
+    val releaseSignals = signals.flatMap(s => release(valueRef(s), s.typeRepr, CFalseLiteral))
+    val releaseGlobals = ctx.valueDeclList.collect {
+      case v: CVarDecl => release(v, CFalseLiteral)
+    }.flatten
+
     CFunctionDecl(
       "main",
-      List(),
+      List(argc, argv),
       CIntegerType,
       Some(CCompoundStmt(
         List[CStmt](
+          checkArgs, CEmptyStmt,
           CCallExpr(startup.ref, List()),
-          CEmptyStmt
-        ) ++ signals.flatMap(s => release(valueRef(s), s.typeRepr, CFalseLiteral))
-          ++ ctx.valueDeclList.collect {
-            case v: CVarDecl => release(v, CFalseLiteral)
-          }.flatten
+          CCallExpr(DyadH.dyad_init.ref, List()), CEmptyStmt,
+          streamDecl,
+          registerOnAccept,
+          startListening, CEmptyStmt,
+          dyadUpdateLoop, CEmptyStmt,
+          CCallExpr(DyadH.dyad_shutdown.ref, List())
+        ) ++ releaseSignals
+          ++ releaseGlobals
           :+ CReturnStmt(Some(0.lit))
       ))
     )
+  }
 
   private val mainC: String = appName + "Main.c"
   private val mainH: String = appName + "Main.h"
@@ -366,8 +445,8 @@ class GraphCompiler(using Quotes)(reactives: List[CompiledReactive], appName: St
 
   private val appCTU: CTranslationUnitDecl =
     CTranslationUnitDecl(
-      List(mainInclude, libInclude),
-      List(mainFun)
+      List(mainInclude, libInclude) ++ ctx.includesList,
+      List(onData, onAccept, mainFun)
     )
 
   private def writeApp(pathToDir: String): Unit = {

@@ -290,16 +290,18 @@ object CompileSet extends ApplyPC with TypePC with DataStructurePC with StringPC
     val dataParam = CParmVarDecl("data", HashmapH.any_t)
 
     val counterDecl = CVarDecl("counterPointer", CPointerType(CIntegerType), Some(CCastExpr(itemParam.ref, CPointerType(CIntegerType))))
+    val elemDecl = CVarDecl("elemPointer", CPointerType(elemCType), Some(CCastExpr(dataParam.ref, CPointerType(elemCType))))
 
     val printComma = CIfStmt(CGreaterThanExpr(CDerefExpr(counterDecl.ref), 0.lit), CompileString.printf(", "))
-    val printKey = CompileString.printf("\\\"%s\\\"", keyParam.ref)
+    val printElem = cascade.dispatch(_.compilePrint)(CDerefExpr(elemDecl.ref), elemType)
 
     val incCounter = CIncExpr(CParenExpr(CDerefExpr(counterDecl.ref)))
 
     val body = CCompoundStmt(List(
       counterDecl,
+      elemDecl,
       printComma,
-      printKey,
+      printElem,
       incCounter,
       CReturnStmt(Some(HashmapH.MAP_OK.ref))
     ))

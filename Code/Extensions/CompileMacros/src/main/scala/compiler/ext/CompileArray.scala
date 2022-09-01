@@ -263,6 +263,17 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
   override def compileToString(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
     PartialFunction[(CExpr, quotes.reflect.TypeRepr), CExpr] = ensureCtx[RecordDeclTC](compileToStringImpl)
 
+  override def serializationRetainsEquality(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, Boolean] = {
+      import quotes.reflect.*
+  
+      {
+        case tpe if tpe <:< TypeRepr.of[Array[?]] =>
+          val typeArgs(List(elemType)) = tpe.widen
+          cascade.dispatch(_.serializationRetainsEquality)(elemType)
+      }
+    }
+  
   private def compileSerializeImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = {
       import quotes.reflect.*
@@ -312,8 +323,6 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
 
     val recordDecl = getRecordDecl(tpe)
     val CFieldDecl(_, CQualType(CPointerType(elemCType), _)) = recordDecl.getField(dataField)
-
-    val typeArgs(List(elemType)) = tpe.widen
 
     CDesignatedInitExpr(List(
       dataField -> CCastExpr(

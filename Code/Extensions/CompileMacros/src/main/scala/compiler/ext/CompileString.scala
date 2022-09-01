@@ -7,15 +7,15 @@ import clangast.decl.{CFunctionDecl, CParmVarDecl, CVarDecl}
 import clangast.expr.*
 import clangast.expr.binaryop.CPlusExpr
 import clangast.stmt.{CCompoundStmt, CExprStmt, CReturnStmt, CStmt}
-import clangast.stubs.{StdBoolH, StdIOH, StdLibH, StringH}
-import clangast.types.{CCharType, CPointerType, CType}
+import clangast.stubs.{CJSONH, StdBoolH, StdIOH, StdLibH, StringH}
+import clangast.types.{CCharType, CIntegerType, CPointerType, CType}
 import compiler.context.{FunctionDeclTC, TranslationContext}
 import compiler.CompilerCascade
 import compiler.base.*
 
 import scala.quoted.*
 
-object CompileString extends TermPC with ApplyPC with TypePC with StringPC {
+object CompileString extends TermPC with ApplyPC with TypePC with StringPC with SerializationPC {
   override def compileLiteral(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.Literal, CExpr] = {
       import quotes.reflect.*
@@ -177,6 +177,54 @@ object CompileString extends TermPC with ApplyPC with TypePC with StringPC {
 
   override def compileToString(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
     PartialFunction[(CExpr, quotes.reflect.TypeRepr), CExpr] = ensureCtx[FunctionDeclTC](compileToStringImpl)
+
+  override def compileDeserialize(using Quotes)(using TranslationContext, CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = {
+      import quotes.reflect.*
+
+      {
+        case tpe if tpe <:< TypeRepr.of[String] =>
+          getStringDeserialize()
+      }
+    }
+
+  private def getStringDeserialize()(using ctx: TranslationContext): CFunctionDecl = {
+    ctx.valueDeclList.collect {
+      case funDecl @ CFunctionDecl("deserialize_String", _, _, _, _) => funDecl
+    } match {
+      case List(funDecl) => funDecl
+      case _ =>
+        val funDecl = buildStringDeserialize()
+        ctx.addValueDecl(funDecl)
+        funDecl
+    }
+  }
+
+  private def buildStringDeserialize()(using ctx: TranslationContext): CFunctionDecl = {
+    val name = "deserialize_String"
+
+    val jsonParam = CParmVarDecl("json", CPointerType(CJSONH.cJSON))
+
+    val lengthDecl = CVarDecl(
+      "length",
+      CIntegerType,
+      Some(CCallExpr(StringH.strlen.ref, List(CJSONH.valuestring(jsonParam.ref))))
+    )
+    val copyDecl = CVarDecl(
+      "copy",
+      CPointerType(CCharType),
+      Some(CCastExpr(CCallExpr(StdLibH.calloc.ref, List(lengthDecl.ref, CSizeofExpr(Left(CCharType)))), CPointerType(CCharType)))
+    )
+
+    val body = CCompoundStmt(List(
+      lengthDecl,
+      copyDecl,
+      CCallExpr(StringH.strcpy.ref, List(copyDecl.ref, CJSONH.valuestring(jsonParam.ref))),
+      CReturnStmt(Some(copyDecl.ref))
+    ))
+
+    CFunctionDecl(name, List(jsonParam), CPointerType(CCharType), Some(body))
+  }
 
   def printf(format: String, args: CExpr*)(using TranslationContext): CExpr =
     CCallExpr(

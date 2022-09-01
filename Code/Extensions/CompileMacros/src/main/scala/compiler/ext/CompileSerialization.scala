@@ -53,8 +53,6 @@ object CompileSerialization extends SerializationPC {
         CJSONH.valuedouble(expr)
       case _ if tpe <:< TypeRepr.of[Float] =>
         CParenExpr(CCastExpr(CJSONH.valuedouble(expr), CFloatType))
-      case _ if tpe <:< TypeRepr.of[String] =>
-        CJSONH.valuestring(expr)
       case _ => CCallExpr(cascade.dispatch(_.compileDeserialize)(tpe).ref, List(expr))
     }
   }
