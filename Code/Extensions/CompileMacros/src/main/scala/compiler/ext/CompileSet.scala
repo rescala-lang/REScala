@@ -102,6 +102,19 @@ object CompileSet extends ApplyPC with TypePC with DataStructurePC with StringPC
       }
     }
 
+  private def defaultValueImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CExpr] = {
+      import quotes.reflect.*
+
+      {
+        case tpe if tpe <:< TypeRepr.of[mutable.Set[?]] =>
+          CCallExpr(CompileMap.getMapCreator(mapType(tpe)).ref, List())
+      }
+    }
+
+  override def defaultValue(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CExpr] = ensureCtx[RecordDeclTC](defaultValueImpl)
+
   override def compileTypeToCRecordDecl(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.TypeRepr, CRecordDecl] = {
       import quotes.reflect.*

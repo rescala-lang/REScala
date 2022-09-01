@@ -144,6 +144,19 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
       }
     }
 
+  private def defaultValueImpl(using Quotes)(using ctx: RecordDeclTC, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CExpr] = {
+      import quotes.reflect.*
+  
+      {
+        case tpe if tpe <:< TypeRepr.of[Array[?]] =>
+          CCallExpr(getArrayCreator(tpe).ref, List())
+      }
+    }
+
+  override def defaultValue(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
+    PartialFunction[quotes.reflect.TypeRepr, CExpr] = ensureCtx[RecordDeclTC](defaultValueImpl)
+
   override def compileTypeToCRecordDecl(using Quotes)(using ctx: TranslationContext, cascade: CompilerCascade):
     PartialFunction[quotes.reflect.TypeRepr, CRecordDecl] = {
       import quotes.reflect.*
