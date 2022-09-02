@@ -1,6 +1,6 @@
 package compiler
 
-import api2.{CompiledSignalExpr, GraphCompiler}
+import api2.{CompiledReactive, CompiledSignalExpr, GraphCompiler}
 import clangast.*
 import clangast.given
 import clangast.WithContext
@@ -52,9 +52,14 @@ trait ReactiveMacroCompilerCode extends MacroCompilerCode {
 
     val Inlined(_, _, Inlined(_, _, Block(stmts, expr))) = graph.asTerm
 
-    (stmts :+ expr).foreach(cascade.dispatch(_.compileReactiveTopLevelStmt))
+    stmts.foreach(cascade.dispatch(_.compileReactiveTopLevelStmt))
 
-    val gc = new GraphCompiler(using summon[Quotes])(ctx.reactivesList, "metaBundleTest")
+    val outputReactives = expr match {
+      case Apply(TypeApply(Select(_, "apply"), _), l) =>
+        l.collect { case i: Ident => ctx.reactivesList.find(_.name.equals(i.name)) }.flatten
+    }
+
+    val gc = new GraphCompiler(using summon[Quotes])(ctx.reactivesList, outputReactives, "metaBundleTest")
     gc.writeIntoDir("out", "gcc")
 
     '{()}

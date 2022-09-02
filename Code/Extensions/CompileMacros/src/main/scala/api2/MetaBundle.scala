@@ -6,11 +6,13 @@ import clangast.types.CType
 import compiler.*
 import compiler.context.ReactiveTC
 import compiler.debug.Debug
+import compiler.ExtensionMethods.*
 import rescala.core.ReName
 import rescala.macros.MacroAccess
 import rescala.operator.RExceptions
 
 import scala.quoted.*
+import scala.collection.mutable
 
 transparent trait CompilerReactiveMarker
 
@@ -174,6 +176,15 @@ object MetaBundleExample {
       val snapshotLike = Event { esource.value.map(_ => derived.value) }
 
       val snapshotLike2 = esource.map(_ => derived.value)
+
+      val foldResult = esource.fold(mutable.Set[String]()) { (acc, next) =>
+        acc.add(next)
+        acc
+      }
+
+      foldResult.observeChange(s => println(s))
+
+      (arraySignal, arrayEvent, snapshotLike)
     }
 
     val source = Signal(5)

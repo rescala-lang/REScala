@@ -14,12 +14,17 @@ import compiler.context.TranslationContext
 import compiler.base.*
 import compiler.base.CompileDataStructure.{deepCopy, release, retain}
 import compiler.ext.*
+import compiler.ext.CompileSerialization.{serialize, deserialize}
 
 import java.io.{File, FileWriter}
 import scala.collection.mutable.ArrayBuffer
 import scala.quoted.*
 
-class GraphCompiler(using Quotes)(reactives: List[CompiledReactive], appName: String)(using ctx: TranslationContext, cascade: CompilerCascade) {
+class GraphCompiler(using Quotes)(
+  reactives: List[CompiledReactive],
+  outputReactives: List[CompiledReactive],
+  appName: String
+)(using ctx: TranslationContext, cascade: CompilerCascade) {
   import quotes.reflect.*
 
   private val sources: List[CompiledReactive] = reactives.filter(_.isSource)
@@ -128,6 +133,10 @@ class GraphCompiler(using Quotes)(reactives: List[CompiledReactive], appName: St
 
   private val signalChangedVars: Map[CompiledSignal, CVarDecl] = signals.map {
     s => s -> CVarDecl(s.name + "_changed", StdBoolH.bool, Some(CFalseLiteral))
+  }.toMap
+
+  private val jsonVars: Map[CompiledReactive, CVarDecl] = outputReactives.map {
+    r => r -> CVarDecl(r.name + "_json", CPointerType(CJSONH.cJSON))
   }.toMap
 
   extension (expr: CExpr)
@@ -248,6 +257,20 @@ class GraphCompiler(using Quotes)(reactives: List[CompiledReactive], appName: St
     val stillUsed = otherConds ++ otherConds.flatMap(reactiveInputs)
     val released = toRelease.filterNot(stillUsed.contains)
 
+    val serialization = CEmptyStmt :: sameCond.collect[CStmt] {
+      case e: CompiledEvent if jsonVars.contains(e) =>
+        CAssignmentExpr(jsonVars(e).ref, serialize(valueRef(e), e.typeRepr))
+      case s: CompiledSignal if jsonVars.contains(s) =>
+        CAssignmentExpr(
+          jsonVars(s).ref,
+          CConditionalOperator(
+            signalChangedVars(s).ref,
+            serialize(valueRef(s), s.typeRepr),
+            CCallExpr(CJSONH.cJSON_CreateNull.ref, List())
+          )
+        )
+    }
+
     val releaseCode = released.flatMap {
       case r if cascade.dispatch(_.usesRefCount)(r.typeRepr) =>
         CEmptyStmt :: (release(valueRef(r), r.typeRepr, CFalseLiteral) map { releaseStmt =>
@@ -256,30 +279,55 @@ class GraphCompiler(using Quotes)(reactives: List[CompiledReactive], appName: St
       case _ => None
     }
 
-    (CEmptyStmt :: sameCondCode :: releaseCode.toList) ++ compileUpdates(otherConds, toRelease.diff(released))
+    (CEmptyStmt :: sameCondCode :: (serialization ++ releaseCode.toList)) ++ compileUpdates(otherConds, toRelease.diff(released))
   }
 
   private val updateFunction: CFunctionDecl = {
-    val params = sourcesTopological.map(sourceParameters)
+    val jsonParam = CParmVarDecl("json", CPointerType(CJSONH.cJSON))
+    val params = jsonParam :: sourcesTopological.map(sourceParameters)
 
     val localVarDecls = topological.collect {
       case e: CompiledEvent if eventVariables.contains(e) => CDeclStmt(eventVariables(e))
       case s: CompiledSignal => CDeclStmt(signalChangedVars(s))
     }
 
+    val jsonVarDecls = CEmptyStmt :: jsonVars.values.toList.map(CDeclStmt.apply)
+
     val updates = compileUpdates(topologicalByCond, eventVariables.keySet.toSet[CompiledReactive])
 
-    val body = CCompoundStmt(localVarDecls ++ updates)
+    val fillJson = CEmptyStmt ::
+      jsonVars.values.map[CStmt](jsonVar => CCallExpr(CJSONH.cJSON_AddItemToArray.ref, List(jsonParam.ref, jsonVar.ref))).toList
+
+    val body = CCompoundStmt(localVarDecls ++ jsonVarDecls ++ updates ++ fillJson)
 
     CFunctionDecl(appName + "_update", params, CVoidType, Some(body))
   }
 
   private val onData: CFunctionDecl = {
     val eDecl = CParmVarDecl("e", CPointerType(DyadH.dyad_Event))
+
     val jsonDecl = CVarDecl(
       "json",
       CPointerType(CJSONH.cJSON),
       Some(CCallExpr(CJSONH.cJSON_Parse.ref, List(CMemberExpr(eDecl.ref, DyadH.dataField, true))))
+    )
+
+    val outputMsgDecl = CVarDecl("outputMsg", CPointerType(CJSONH.cJSON), Some(CCallExpr(CJSONH.cJSON_CreateArray.ref, List())))
+
+    val deserializedSources = sourcesTopological.zipWithIndex.map {
+      case (e: CompiledEvent, i) =>
+        deserialize(CCallExpr(CJSONH.cJSON_GetArrayItem.ref, List(jsonDecl.ref, i.lit)), e.typeRepr)
+      case (s: CompiledSignal, i) =>
+        deserialize(CCallExpr(CJSONH.cJSON_GetArrayItem.ref, List(jsonDecl.ref, i.lit)), TypeRepr.of[Option].appliedTo(s.typeRepr))
+    }
+
+    val writeOutput = CCallExpr(
+      DyadH.dyad_writef.ref,
+      List(
+        CMemberExpr(eDecl.ref, DyadH.streamField, true),
+        CStringLiteral("%s\\n"),
+        CCallExpr(CJSONH.cJSON_Print.ref, List(outputMsgDecl.ref))
+      )
     )
 
     CFunctionDecl(
@@ -288,6 +336,10 @@ class GraphCompiler(using Quotes)(reactives: List[CompiledReactive], appName: St
       CVoidType,
       Some(CCompoundStmt(List(
         jsonDecl,
+        outputMsgDecl,
+        CCallExpr(updateFunction.ref, outputMsgDecl.ref :: deserializedSources),
+        writeOutput,
+        CCallExpr(CJSONH.cJSON_Delete.ref, List(outputMsgDecl.ref)),
         CCallExpr(CJSONH.cJSON_Delete.ref, List(jsonDecl.ref))
       )))
     )
