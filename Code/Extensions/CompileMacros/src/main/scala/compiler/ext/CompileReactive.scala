@@ -6,6 +6,7 @@ import clangast.given
 import clangast.decl.{CFunctionDecl, CParmVarDecl}
 import clangast.expr.{CCallExpr, CExpr, CIntegerLiteral, CMemberExpr}
 import clangast.stmt.{CCompoundStmt, CReturnStmt, CStmt}
+import clangast.types.CVoidType
 import compiler.CompilerCascade
 import compiler.base.*
 import compiler.context.{FunctionDeclTC, ReactiveTC, TranslationContext, ValueDeclTC}
@@ -20,24 +21,26 @@ object CompileReactive extends SelectPC with ApplyPC with ReactivePC {
       import quotes.reflect.*
 
       {
-        case select @ Select(event @ Ident(eventName), "value") if event.tpe <:< TypeRepr.of[MacroAccess[?, ?]] =>
-          val eventParam = ctx.inputParameters.getOrElseUpdate(
-            eventName, {
-              CParmVarDecl(eventName, cascade.dispatch(_.compileTypeRepr)(select.tpe))
-            }
-          )
-
-          eventParam.ref
-        case select @ Select(i @ Inlined(_, _, event @ Ident(eventName)), "value") if event.tpe <:< TypeRepr.of[MacroAccess[?, ?]] =>
-          val eventParam = ctx.inputParameters.getOrElseUpdate(
-            eventName, {
-              CParmVarDecl(eventName, cascade.dispatch(_.compileTypeRepr)(select.tpe))
-            }
+        case this.eventValueAccess(eventName, tpe) =>
+          val (eventParam, _) = ctx.inputParameters.getOrElseUpdate(
+            eventName,
+            (CParmVarDecl(eventName, cascade.dispatch(_.compileTypeRepr)(tpe)), tpe.asInstanceOf[Object])
           )
 
           eventParam.ref
       }
     }
+
+  private def eventValueAccess(using Quotes): PartialFunction[quotes.reflect.Term, (String, quotes.reflect.TypeRepr)] = {
+    import quotes.reflect.*
+
+    {
+      case select @ Select(event @ Ident(eventName), "value") if event.tpe <:< TypeRepr.of[MacroAccess[?, ?]] =>
+        (eventName, select.tpe)
+      case select @ Select(Inlined(_, _, event @ Ident(eventName)), "value") if event.tpe <:< TypeRepr.of[MacroAccess[?, ?]] =>
+        (eventName, select.tpe)
+    }
+  }
 
   override def compileSelect(using Quotes)(using TranslationContext, CompilerCascade):
     PartialFunction[quotes.reflect.Select, CExpr] = ensureCtx[ReactiveTC](compileSelectImpl)
@@ -121,11 +124,21 @@ object CompileReactive extends SelectPC with ApplyPC with ReactivePC {
     import quotes.reflect.*
 
     term match {
-      case inlined @ Inlined(Some(Apply(TypeApply(apply @ Apply(TypeApply(Ident(ext), _), _), _), List(f))), _, Typed(Inlined(Some(Apply(Apply(TypeApply(Ident(id), _), List(expr)), _)), _, _), _))
+      case inlined @ Inlined(Some(Apply(TypeApply(apply @ Apply(TypeApply(Ident(ext), _), _), _), List(f))), _, this.reactiveExpression(id, expr))
         if List("Signal", "Event").contains(id) && inlined.tpe <:< TypeRepr.of[CompilerReactiveMarker] => (apply.pos, ext, f, id, expr)
-      case inlined @ Inlined(Some(Apply(apply @ Apply(TypeApply(Ident(ext), _), _), List(f))), _, Typed(Inlined(Some(Apply(Apply(TypeApply(Ident(id), _), List(expr)), _)), _, _), _))
-        if List("Signal", "Event").contains(id) && inlined.tpe <:< TypeRepr.of[CompilerReactiveMarker] =>
-        (apply.pos, ext, f, id, expr)
+      case inlined @ Inlined(Some(Apply(apply @ Apply(TypeApply(Ident(ext), _), _), List(f))), _, this.reactiveExpression(id, expr))
+        if List("Signal", "Event").contains(id) && inlined.tpe <:< TypeRepr.of[CompilerReactiveMarker] => (apply.pos, ext, f, id, expr)
+    }
+  }
+
+  private def reactiveExpression(using Quotes): PartialFunction[quotes.reflect.Term, (String, quotes.reflect.Term)] = {
+    import quotes.reflect.*
+
+    {
+      case Typed(Inlined(Some(Apply(Apply(TypeApply(Ident(id), _), List(expr)), _)), _, _), _)
+        if List("Signal", "Event").contains(id) => (id, expr)
+      case Typed(Inlined(Some(Apply(Apply(TypeApply(Select(_, id), _), List(expr)), _)), _, _), _)
+        if List("Signal", "Event").contains(id) => (id, expr)
     }
   }
 
@@ -140,7 +153,9 @@ object CompileReactive extends SelectPC with ApplyPC with ReactivePC {
         case Block(List(), Block(List(f: DefDef), Closure(_, _))) =>
           val cFun = cascade.dispatch(_.compileDefDef)(f)
 
-          val fullParams = cFun.parameters ++ ctx.inputParameters.values.toList
+          ctx.createMissingSources()
+
+          val fullParams = cFun.parameters ++ ctx.inputParameters.values.map(_._1).toList
           ctx.inputParameters.clear()
 
           cFun.copy(parameters = fullParams)
@@ -157,7 +172,9 @@ object CompileReactive extends SelectPC with ApplyPC with ReactivePC {
           val inferredName =
             "anonfun_" + pos.sourceFile.name.stripSuffix(".scala") + "_" + (pos.startLine + 1) + "_" + (pos.startColumn + 1)
 
-          val params = ctx.inputParameters.values.toList
+          ctx.createMissingSources()
+
+          val params = ctx.inputParameters.values.map(_._1).toList
           ctx.inputParameters.clear()
 
           CFunctionDecl(

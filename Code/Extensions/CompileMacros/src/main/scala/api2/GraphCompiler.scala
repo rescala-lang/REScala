@@ -28,7 +28,6 @@ class GraphCompiler(using Quotes)(
   import quotes.reflect.*
 
   private val sources: List[CompiledReactive] = reactives.filter(_.isSource)
-  sources.foreach(s => cascade.dispatchLifted(_.compileDeserialize)(TypeRepr.of[Option].appliedTo(s.typeRepr)))
   private val signals: List[CompiledSignal] = reactives.collect { case s: CompiledSignal => s }
   private val events: List[CompiledEvent] = reactives.collect { case e: CompiledEvent => e }
 
@@ -69,7 +68,10 @@ class GraphCompiler(using Quotes)(
     sorted.toList
   }
 
-  private val updateFunctions: List[CFunctionDecl] = reactives.map(_.updateFun)
+  private val updateFunctions: List[CFunctionDecl] = reactives.collect {
+    case s: CompiledSignal => s.updateFun
+    case r if !r.isSource => r.updateFun
+  }
 
   private val signalVariables: Map[CompiledSignal, CVarDecl] = signals.map {
     r => r -> CVarDecl(r.name, r.cType, None)
@@ -522,6 +524,7 @@ class GraphCompiler(using Quotes)(
   }
 
   def writeIntoDir(pathToDir: String, compiler: String): Unit = {
+    new File(pathToDir).mkdirs()
     writeMain(pathToDir)
     writeLib(pathToDir)
     writeApp(pathToDir)

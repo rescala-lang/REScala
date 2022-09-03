@@ -9,9 +9,7 @@ import compiler.ext.CompileReactive
 import rescala.api2.MetaBundle
 
 trait ReactiveMacroCompiler extends MacroCompiler {
-  inline def compileReactiveExpr(inline e: Any): WithContext[CFunctionDecl]
-
-  inline def compileGraph(inline e: Any): Unit
+  inline def compileGraph(inline appName: String)(inline graph: Any): Unit
 }
 
 object ReactiveMacroCompiler extends ReactiveMacroCompiler {
@@ -43,9 +41,6 @@ object ReactiveMacroCompiler extends ReactiveMacroCompiler {
   override inline def valName: String =
     ${ valNameCode }
 
-  override inline def compileReactiveExpr(inline e: Any): WithContext[CFunctionDecl] =
-    ${ compileReactiveExprCode('e) }
-
-  override inline def compileGraph(inline graph: Any): Unit =
-    ${ compileGraphCode('graph) }
+  override inline def compileGraph(inline appName: String)(inline graph: Any): Unit =
+    ${ compileGraphCode('appName)('graph) }
 }

@@ -74,39 +74,60 @@ trait MetaBundle extends rescala.core.Core {
     rescala.macros.getDependencies[T, MReSource, StaticTicket, true](expr)
 
   inline def Signal[T](inline expr: T)(using ct: CreationTicket): MetaReactive[T, RType.Signal.type] = {
-    val (dependencies, fun) = getDeps(expr)
-    MetaReactive(
-      dependencies.toSet,
-      ct.rename,
-      RType.Signal,
-      fun
-    )
+//    val (dependencies, fun) = getDeps(expr)
+//    MetaReactive(
+//      dependencies.toSet,
+//      ct.rename,
+//      RType.Signal,
+//      fun
+//    )
+    ???
   }
 
   inline def Event[T](inline expr: Option[T])(using ct: CreationTicket): MetaReactive[Option[T], RType.Event.type] = {
-    val (dependencies, fun) = getDeps(expr)
-    MetaReactive(
-      dependencies.toSet,
-      ct.rename,
-      RType.Event,
-      fun
-    )
+//    val (dependencies, fun) = getDeps(expr)
+//    MetaReactive(
+//      dependencies.toSet,
+//      ct.rename,
+//      RType.Event,
+//      fun
+//    )
+    ???
   }
 
   extension [T](mr: MetaReactive[Option[T], RType.Event.type])
     inline def fold[S](inline init: S)(inline f: (S, T) => S)(using
         ct: CreationTicket
     ): MetaReactive[S, RType.Fold.type] = {
-      val (deps, fun) = getDeps {
-        f(init, mr.value.get)
-      }
-      MetaReactive(
-        deps.toSet,
-        ct.rename,
-        RType.Fold,
-        fun
-      )
+//      val (deps, fun) = getDeps {
+//        f(init, mr.value.get)
+//      }
+//      MetaReactive(
+//        deps.toSet,
+//        ct.rename,
+//        RType.Fold,
+//        fun
+//      )
+      ???
     }
+
+  extension[T] (inline ev: MetaReactive[Option[T], RType.Event.type] ) {
+    inline def map[R](inline f: T => R): MetaReactive[Option[R], RType.Event.type] = Event {
+      ev.value.map(f)
+    }
+
+    inline def observe(inline f: T => Unit): MetaReactive[Option[Int], RType.Event.type] = Event {
+      ev.value.foreach(f)
+      Option.empty[Int]
+    }
+  }
+
+  extension[T] (inline sig: MetaReactive[T, RType.Signal.type] | MetaReactive[T, RType.Fold.type] ) {
+    inline def observeChange(inline f: T => Unit): MetaReactive[Option[Int], RType.Event.type] = Event {
+      f(sig.value)
+      Option.empty[Int]
+    }
+  }
 
 }
 
@@ -123,26 +144,8 @@ object MetaBundleExample {
   @main
   def run(): Unit = {
 
-    extension [T](inline ev: MetaReactive[Option[T], RType.Event.type]) {
-      inline def map[R](inline f: T => R): MetaReactive[Option[R], RType.Event.type] = Event {
-        ev.value.map(f)
-      }
-
-      inline def observe(inline f: T => Unit): MetaReactive[Option[Int], RType.Event.type] = Event {
-        ev.value.foreach(f)
-        Option.empty[Int]
-      }
-    }
-
-    extension [T](inline sig: MetaReactive[T, RType.Signal.type] | MetaReactive[T, RType.Fold.type]) {
-      inline def observeChange(inline f: T => Unit): MetaReactive[Option[Int], RType.Event.type] = Event {
-        f(sig.value)
-        Option.empty[Int]
-      }
-    }
-
     // did not bother to include sources, so just start with constant signals
-    compileGraph {
+    compileGraph("metaBundleTest") {
       val source = Signal(5)
 
       val inc = 1
@@ -184,7 +187,7 @@ object MetaBundleExample {
 
       foldResult.observeChange(s => println(s))
 
-      (arraySignal, arrayEvent, snapshotLike)
+      List(arraySignal, arrayEvent, snapshotLike)
     }
 
     val source = Signal(5)
