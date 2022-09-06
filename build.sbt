@@ -74,7 +74,10 @@ lazy val kofre = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType
 
 lazy val compileMacros = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(CrossType.Pure)
   .in(file("Code/Extensions/CompileMacros"))
-  .settings(scalaVersion_3)
+  .settings(
+    scalaVersion_3,
+    libraryDependencies ++= jsoniterScalaAll.value
+  )
   .dependsOn(rescala)
 
 lazy val distributedFullmv = project.in(file("Code/Extensions/MultiversionDistributed/multiversion"))
