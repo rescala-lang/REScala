@@ -196,7 +196,7 @@ object CompileSet extends ApplyPC with TypePC with DataStructurePC with StringPC
   private def mapType(using Quotes)(tpe: quotes.reflect.TypeRepr): quotes.reflect.TypeRepr = {
     import quotes.reflect.*
 
-    val typeArgs(List(elemType)) = tpe.widen
+    val typeArgs(List(elemType)) = tpe.widen: @unchecked
     TypeRepr.of[mutable.Map].appliedTo(List(elemType, elemType))
   }
 
@@ -213,7 +213,7 @@ object CompileSet extends ApplyPC with TypePC with DataStructurePC with StringPC
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(mapType(tpe))
-    val typeArgs(List(elemType)) = tpe.widen
+    val typeArgs(List(elemType)) = tpe.widen: @unchecked
 
     val elemCType = cascade.dispatch(_.compileTypeRepr)(elemType)
 
@@ -279,7 +279,7 @@ object CompileSet extends ApplyPC with TypePC with DataStructurePC with StringPC
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(mapType(tpe))
-    val typeArgs(List(elemType)) = tpe.widen
+    val typeArgs(List(elemType)) = tpe.widen: @unchecked
 
     val elemCType = cascade.dispatch(_.compileTypeRepr)(elemType)
 
@@ -379,7 +379,7 @@ object CompileSet extends ApplyPC with TypePC with DataStructurePC with StringPC
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(mapType(tpe))
-    val typeArgs(List(valueType)) = tpe.widen
+    val typeArgs(List(valueType)) = tpe.widen: @unchecked
 
     val name = "deserializeSet_" + recordDecl.name
 

@@ -170,7 +170,7 @@ object CompileMap extends ApplyPC with TypePC with DataStructurePC with StringPC
 
       {
         case (expr, tpe) if tpe <:< TypeRepr.of[mutable.Map[?, ?]] =>
-          val typeArgs(List(_, valueType)) = tpe.widen
+          val typeArgs(List(_, valueType)) = tpe.widen: @unchecked
 
           val releaseValues = cascade.dispatch(_.usesRefCount)(valueType)
 
@@ -269,7 +269,7 @@ object CompileMap extends ApplyPC with TypePC with DataStructurePC with StringPC
   private def validKeyType(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: TranslationContext, cascade: CompilerCascade): Boolean = {
     import quotes.reflect.*
 
-    val typeArgs(List(keyType, _)) = tpe.widen
+    val typeArgs(List(keyType, _)) = tpe.widen: @unchecked
     cascade.dispatch(_.serializationRetainsEquality)(keyType)
   }
 
@@ -310,7 +310,7 @@ object CompileMap extends ApplyPC with TypePC with DataStructurePC with StringPC
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(tpe)
-    val typeArgs(List(keyType, valueType)) = tpe.widen
+    val typeArgs(List(keyType, valueType)) = tpe.widen: @unchecked
 
     val valueOptionType = TypeRepr.of[Option].appliedTo(valueType)
 
@@ -402,7 +402,7 @@ object CompileMap extends ApplyPC with TypePC with DataStructurePC with StringPC
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(tpe)
-    val typeArgs(List(keyType, valueType)) = tpe.widen
+    val typeArgs(List(keyType, valueType)) = tpe.widen: @unchecked
 
     val keyCType = cascade.dispatch(_.compileTypeRepr)(keyType)
     val valueCType = cascade.dispatch(_.compileTypeRepr)(valueType)
@@ -469,7 +469,7 @@ object CompileMap extends ApplyPC with TypePC with DataStructurePC with StringPC
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(tpe)
-    val typeArgs(List(keyType, valueType)) = tpe.widen
+    val typeArgs(List(keyType, valueType)) = tpe.widen: @unchecked
 
     val keyCType = cascade.dispatch(_.compileTypeRepr)(keyType)
     val valueCType = cascade.dispatch(_.compileTypeRepr)(valueType)
@@ -537,7 +537,7 @@ object CompileMap extends ApplyPC with TypePC with DataStructurePC with StringPC
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(tpe)
-    val typeArgs(List(keyType, valueType)) = tpe.widen
+    val typeArgs(List(keyType, valueType)) = tpe.widen: @unchecked
 
     val keyCType = cascade.dispatch(_.compileTypeRepr)(keyType)
     val valueCType = cascade.dispatch(_.compileTypeRepr)(valueType)
@@ -620,7 +620,7 @@ object CompileMap extends ApplyPC with TypePC with DataStructurePC with StringPC
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(tpe)
-    val typeArgs(List(keyType, valueType)) = tpe.widen
+    val typeArgs(List(keyType, valueType)) = tpe.widen: @unchecked
 
     val keyCType = cascade.dispatch(_.compileTypeRepr)(keyType)
     val valueCType = cascade.dispatch(_.compileTypeRepr)(valueType)
@@ -681,7 +681,7 @@ object CompileMap extends ApplyPC with TypePC with DataStructurePC with StringPC
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(tpe)
-    val typeArgs(List(keyType, _)) = tpe.widen
+    val typeArgs(List(keyType, _)) = tpe.widen: @unchecked
 
     val keyCType = cascade.dispatch(_.compileTypeRepr)(keyType)
 
@@ -723,7 +723,7 @@ object CompileMap extends ApplyPC with TypePC with DataStructurePC with StringPC
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(tpe)
-    val typeArgs(List(_, valueType)) = tpe.widen
+    val typeArgs(List(_, valueType)) = tpe.widen: @unchecked
 
     val valueCType = cascade.dispatch(_.compileTypeRepr)(valueType)
 
@@ -789,7 +789,7 @@ object CompileMap extends ApplyPC with TypePC with DataStructurePC with StringPC
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(tpe)
-    val typeArgs(List(_, valueType)) = tpe.widen
+    val typeArgs(List(_, valueType)) = tpe.widen: @unchecked
 
     val valueCType = cascade.dispatch(_.compileTypeRepr)(valueType)
 
@@ -909,7 +909,7 @@ object CompileMap extends ApplyPC with TypePC with DataStructurePC with StringPC
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(tpe)
-    val typeArgs(List(_, valueType)) = tpe.widen
+    val typeArgs(List(_, valueType)) = tpe.widen: @unchecked
 
     val valueCType = cascade.dispatch(_.compileTypeRepr)(valueType)
 
@@ -1017,7 +1017,7 @@ object CompileMap extends ApplyPC with TypePC with DataStructurePC with StringPC
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(tpe)
-    val typeArgs(List(keyType, valueType)) = tpe.widen
+    val typeArgs(List(keyType, valueType)) = tpe.widen: @unchecked
 
     val keyCType = cascade.dispatch(_.compileTypeRepr)(keyType)
     val valueCType = cascade.dispatch(_.compileTypeRepr)(valueType)
@@ -1101,7 +1101,7 @@ object CompileMap extends ApplyPC with TypePC with DataStructurePC with StringPC
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(tpe)
-    val typeArgs(List(_, valueType)) = tpe.widen
+    val typeArgs(List(_, valueType)) = tpe.widen: @unchecked
 
     val valueCType = cascade.dispatch(_.compileTypeRepr)(valueType)
 
@@ -1146,7 +1146,7 @@ object CompileMap extends ApplyPC with TypePC with DataStructurePC with StringPC
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(tpe)
-    val typeArgs(List(keyType, valueType)) = tpe.widen
+    val typeArgs(List(keyType, valueType)) = tpe.widen: @unchecked
 
     val name = "deserialize_" + recordDecl.name
 

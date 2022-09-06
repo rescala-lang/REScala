@@ -131,7 +131,7 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
           (Some(cond), List())
         case (TypedOrTest(Unapply(TypeApply(Select(Ident("Some"), "unapply"), _), _, List(subPattern)), _), prefix, prefixType) =>
           val subPrefix = CMemberExpr(prefix, valField)
-          val typeArgs(List(subPrefixType)) = prefixType.widen
+          val typeArgs(List(subPrefixType)) = prefixType.widen: @unchecked
 
           val definedCond = CMemberExpr(prefix, definedField)
 
@@ -168,7 +168,7 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
 
       {
         case tpe if tpe <:< TypeRepr.of[Option[?]] =>
-          val typeArgs(List(wrappedType)) = tpe.widen
+          val typeArgs(List(wrappedType)) = tpe.widen: @unchecked
           cascade.dispatch(_.classTypeName)(TypeRepr.of[Option].appliedTo(wrappedType))
       }
     }
@@ -192,7 +192,7 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
 
       {
         case tpe if tpe <:< TypeRepr.of[Option[?]] =>
-          val typeArgs(List(wrappedType)) = tpe.widen
+          val typeArgs(List(wrappedType)) = tpe.widen: @unchecked
 
           val valFieldDecl = CFieldDecl(valField, cascade.dispatch(_.compileTypeRepr)(wrappedType))
           val definedFieldDecl = CFieldDecl(definedField, StdBoolH.bool)
@@ -215,7 +215,7 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
 
       {
         case tpe if tpe <:< TypeRepr.of[Option[?]] =>
-          val typeArgs(List(wrappedType)) = tpe.widen
+          val typeArgs(List(wrappedType)) = tpe.widen: @unchecked
           cascade.dispatch(_.usesRefCount)(wrappedType)
       }
     }
@@ -226,7 +226,7 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
 
       {
         case (expr, tpe) if tpe <:< TypeRepr.of[Option[?]] =>
-          val typeArgs(List(wrappedType)) = tpe.widen
+          val typeArgs(List(wrappedType)) = tpe.widen: @unchecked
 
           CCompoundStmt(List(
             CIfStmt(
@@ -286,7 +286,7 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
 
       {
         case tpe if tpe <:< TypeRepr.of[Option[?]] =>
-          val typeArgs(List(wrappedType)) = tpe.widen
+          val typeArgs(List(wrappedType)) = tpe.widen: @unchecked
           cascade.dispatch(_.serializationRetainsEquality)(wrappedType)
       }
     }
@@ -356,7 +356,7 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
   }
 
   private def buildSomeCreator(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
-    val typeArgs(List(wrappedType)) = tpe.widen
+    val typeArgs(List(wrappedType)) = tpe.widen: @unchecked
     val recordDecl = getRecordDecl(tpe)
     val name = "createSome_" + recordDecl.name
 
@@ -413,7 +413,7 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(tpe)
-    val typeArgs(List(wrappedType)) = tpe.widen
+    val typeArgs(List(wrappedType)) = tpe.widen: @unchecked
 
     val name = "equals_" + recordDecl.name
 
@@ -452,7 +452,7 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(tpe)
-    val typeArgs(List(wrappedType)) = tpe.widen
+    val typeArgs(List(wrappedType)) = tpe.widen: @unchecked
 
     val name = "deepCopy_" + recordDecl.name
 
@@ -567,7 +567,7 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(tpe)
-    val typeArgs(List(wrappedType)) = tpe.widen
+    val typeArgs(List(wrappedType)) = tpe.widen: @unchecked
 
     val name = "print_" + recordDecl.name
 
@@ -599,7 +599,7 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(tpe)
-    val typeArgs(List(wrappedType)) = tpe.widen
+    val typeArgs(List(wrappedType)) = tpe.widen: @unchecked
 
     val name = "toString_" + recordDecl.name
 
@@ -651,7 +651,7 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(tpe)
-    val typeArgs(List(wrappedType)) = tpe.widen
+    val typeArgs(List(wrappedType)) = tpe.widen: @unchecked
 
     val name = "serialize_" + recordDecl.name
 
@@ -680,7 +680,7 @@ object CompileOption extends DefinitionPC with TermPC with SelectPC with ApplyPC
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(tpe)
-    val typeArgs(List(wrappedType)) = tpe.widen
+    val typeArgs(List(wrappedType)) = tpe.widen: @unchecked
 
     val name = "deserialize_" + recordDecl.name
 

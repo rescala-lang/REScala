@@ -82,7 +82,7 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
 
     {
       case (Unapply(TypeApply(Select(Ident("Array"), "unapplySeq"), _), _, subPatterns), prefix, prefixType) =>
-        val typeArgs(List(elemType)) = prefixType.widen
+        val typeArgs(List(elemType)) = prefixType.widen: @unchecked
 
         val lengthCond = CEqualsExpr(CMemberExpr(prefix, lengthField), CIntegerLiteral(subPatterns.length))
 
@@ -163,7 +163,7 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
 
       {
         case tpe if tpe <:< TypeRepr.of[Array[?]] =>
-          val typeArgs(List(elemType)) = tpe.widen
+          val typeArgs(List(elemType)) = tpe.widen: @unchecked
 
           val dataFieldDecl = CFieldDecl(dataField, CPointerType(cascade.dispatch(_.compileTypeRepr)(elemType)))
           val lengthFieldDecl = CFieldDecl(lengthField, CIntegerType)
@@ -188,7 +188,7 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
 
       {
         case (expr, tpe) if tpe <:< TypeRepr.of[Array[?]] =>
-          val typeArgs(List(elemType)) = tpe.widen
+          val typeArgs(List(elemType)) = tpe.widen: @unchecked
 
           val propagateRelease = cascade.dispatch(_.usesRefCount)(elemType)
 
@@ -269,7 +269,7 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
   
       {
         case tpe if tpe <:< TypeRepr.of[Array[?]] =>
-          val typeArgs(List(elemType)) = tpe.widen
+          val typeArgs(List(elemType)) = tpe.widen: @unchecked
           cascade.dispatch(_.serializationRetainsEquality)(elemType)
       }
     }
@@ -322,7 +322,7 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(tpe)
-    val CFieldDecl(_, CQualType(CPointerType(elemCType), _)) = recordDecl.getField(dataField)
+    val CFieldDecl(_, CQualType(CPointerType(elemCType), _)) = recordDecl.getField(dataField): @unchecked
 
     CDesignatedInitExpr(List(
       dataField -> CCastExpr(
@@ -348,13 +348,13 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(tpe)
-    val typeArgs(List(elemType)) = tpe.widen
+    val typeArgs(List(elemType)) = tpe.widen: @unchecked
 
     val name = "create_" + recordDecl.name
 
     val lengthParam = CParmVarDecl("length", CIntegerType)
 
-    val CFieldDecl(_, CQualType(CPointerType(elemCType), _)) = recordDecl.getField(dataField)
+    val CFieldDecl(_, CQualType(CPointerType(elemCType), _)) = recordDecl.getField(dataField): @unchecked
 
     val arrDecl =
       CVarDecl(
@@ -444,9 +444,9 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
 
   private def buildArrayFill(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
     val recordDecl = getRecordDecl(tpe)
-    val CFieldDecl(_, CQualType(CPointerType(elemCType), _)) = recordDecl.getField(dataField)
+    val CFieldDecl(_, CQualType(CPointerType(elemCType), _)) = recordDecl.getField(dataField): @unchecked
 
-    val typeArgs(List(elemType)) = tpe.widen
+    val typeArgs(List(elemType)) = tpe.widen: @unchecked
 
     val name = "fill_" + recordDecl.name
 
@@ -498,13 +498,13 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(tpe)
-    val typeArgs(List(elemType)) = tpe.widen
+    val typeArgs(List(elemType)) = tpe.widen: @unchecked
 
     val name = "deepCopy_" + recordDecl.name
 
     val arrayParam = CParmVarDecl("arr", recordDecl.getTypeForDecl)
     val lengthExpr = CMemberExpr(arrayParam.ref, lengthField)
-    val CQualType(CPointerType(elemCType), _) = recordDecl.getField(dataField).declaredType
+    val CQualType(CPointerType(elemCType), _) = recordDecl.getField(dataField).declaredType: @unchecked
 
     val copyDecl =
       CVarDecl(
@@ -566,7 +566,7 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(tpe)
-    val typeArgs(List(elemType)) = tpe.widen
+    val typeArgs(List(elemType)) = tpe.widen: @unchecked
 
     val name = "print_" + recordDecl.name
 
@@ -612,7 +612,7 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(tpe)
-    val typeArgs(List(elemType)) = tpe.widen
+    val typeArgs(List(elemType)) = tpe.widen: @unchecked
 
     val name = "toString_" + recordDecl.name
 
@@ -698,7 +698,7 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(tpe)
-    val typeArgs(List(elemType)) = tpe.widen
+    val typeArgs(List(elemType)) = tpe.widen: @unchecked
 
     val name = "serialize_" + recordDecl.name
 
@@ -734,7 +734,7 @@ object CompileArray extends SelectPC with ApplyPC with MatchPC with TypePC with 
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(tpe)
-    val typeArgs(List(elemType)) = tpe.widen
+    val typeArgs(List(elemType)) = tpe.widen: @unchecked
 
     val name = "deserialize_" + recordDecl.name
 

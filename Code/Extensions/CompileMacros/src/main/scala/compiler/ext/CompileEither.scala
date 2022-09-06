@@ -84,7 +84,7 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
       {
         case (TypedOrTest(Unapply(TypeApply(Select(Ident("Left"), "unapply"), _), _, List(subPattern)), _), prefix, prefixType) =>
           val subPrefix = CMemberExpr(prefix, leftField)
-          val typeArgs(List(leftType, _)) = prefixType.widen
+          val typeArgs(List(leftType, _)) = prefixType.widen: @unchecked
 
           val isLeftCond = CNotExpr(CMemberExpr(prefix, isRightField))
 
@@ -95,7 +95,7 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
           (combinedCond, subDecls)
         case (TypedOrTest(Unapply(TypeApply(Select(Ident("Right"), "unapply"), _), _, List(subPattern)), _), prefix, prefixType) =>
           val subPrefix = CMemberExpr(prefix, rightField)
-          val typeArgs(List(_, rightType)) = prefixType.widen
+          val typeArgs(List(_, rightType)) = prefixType.widen: @unchecked
 
           val isRightCond = CMemberExpr(prefix, isRightField)
 
@@ -130,7 +130,7 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
 
       {
         case tpe if tpe <:< TypeRepr.of[Either[?, ?]] =>
-          val typeArgs(List(leftType, rightType)) = tpe.widen
+          val typeArgs(List(leftType, rightType)) = tpe.widen: @unchecked
           cascade.dispatch(_.classTypeName)(TypeRepr.of[Either].appliedTo(List(leftType, rightType)))
       }
     }
@@ -141,7 +141,7 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
 
       {
         case tpe if tpe <:< TypeRepr.of[Either[?, ?]] =>
-          val typeArgs(List(leftType, rightType)) = tpe.widen
+          val typeArgs(List(leftType, rightType)) = tpe.widen: @unchecked
 
           val leftFieldDecl = CFieldDecl(leftField, cascade.dispatch(_.compileTypeRepr)(leftType))
           val rightFieldDecl = CFieldDecl(rightField, cascade.dispatch(_.compileTypeRepr)(rightType))
@@ -165,7 +165,7 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
 
       {
         case tpe if tpe <:< TypeRepr.of[Either[?, ?]] =>
-          val typeArgs(List(leftType, rightType)) = tpe.widen
+          val typeArgs(List(leftType, rightType)) = tpe.widen: @unchecked
           cascade.dispatch(_.usesRefCount)(leftType) || cascade.dispatch(_.usesRefCount)(rightType)
       }
     }
@@ -176,7 +176,7 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
 
       {
         case (expr, tpe) if tpe <:< TypeRepr.of[Either[?, ?]] =>
-          val typeArgs(List(leftType, rightType)) = tpe.widen
+          val typeArgs(List(leftType, rightType)) = tpe.widen: @unchecked
 
           val releaseLeft = release(CMemberExpr(expr, leftField), leftType, CFalseLiteral).getOrElse(CNullStmt)
 
@@ -241,7 +241,7 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
 
       {
         case tpe if tpe <:< TypeRepr.of[Either[?, ?]] =>
-          val typeArgs(List(leftType, rightType)) = tpe.widen
+          val typeArgs(List(leftType, rightType)) = tpe.widen: @unchecked
           cascade.dispatch(_.serializationRetainsEquality)(leftType) && cascade.dispatch(_.serializationRetainsEquality)(rightType)
       }
     }
@@ -291,7 +291,7 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
   }
 
   private def buildLeftCreator(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
-    val typeArgs(List(leftType, _)) = tpe.widen
+    val typeArgs(List(leftType, _)) = tpe.widen: @unchecked
     val recordDecl = getRecordDecl(tpe)
     val name = "createLeft_" + recordDecl.name
 
@@ -317,7 +317,7 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
   }
 
   private def buildRightCreator(using Quotes)(tpe: quotes.reflect.TypeRepr)(using ctx: RecordDeclTC, cascade: CompilerCascade): CFunctionDecl = {
-    val typeArgs(List(_, rightType)) = tpe.widen
+    val typeArgs(List(_, rightType)) = tpe.widen: @unchecked
     val recordDecl = getRecordDecl(tpe)
     val name = "createRight_" + recordDecl.name
 
@@ -350,7 +350,7 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(tpe)
-    val typeArgs(List(leftType, rightType)) = tpe.widen
+    val typeArgs(List(leftType, rightType)) = tpe.widen: @unchecked
 
     val name = "equals_" + recordDecl.name
 
@@ -397,7 +397,7 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(tpe)
-    val typeArgs(List(leftType, rightType)) = tpe.widen
+    val typeArgs(List(leftType, rightType)) = tpe.widen: @unchecked
 
     val name = "deepCopy_" + recordDecl.name
 
@@ -440,7 +440,7 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(tpe)
-    val typeArgs(List(leftType, rightType)) = tpe.widen
+    val typeArgs(List(leftType, rightType)) = tpe.widen: @unchecked
 
     val name = "print_" + recordDecl.name
 
@@ -478,7 +478,7 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(tpe)
-    val typeArgs(List(leftType, rightType)) = tpe.widen
+    val typeArgs(List(leftType, rightType)) = tpe.widen: @unchecked
 
     val name = "toString_" + recordDecl.name
 
@@ -549,7 +549,7 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(tpe)
-    val typeArgs(List(leftType, rightType)) = tpe.widen
+    val typeArgs(List(leftType, rightType)) = tpe.widen: @unchecked
 
     val name = "serialize_" + recordDecl.name
 
@@ -594,7 +594,7 @@ object CompileEither extends SelectPC with ApplyPC with MatchPC with TypePC with
     import quotes.reflect.*
 
     val recordDecl = getRecordDecl(tpe)
-    val typeArgs(List(leftType, rightType)) = tpe.widen
+    val typeArgs(List(leftType, rightType)) = tpe.widen: @unchecked
 
     val name = "deserialize_" + recordDecl.name
 

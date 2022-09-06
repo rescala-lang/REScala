@@ -96,7 +96,7 @@ object CompileApply extends ApplyPC {
   private def compileApplyToCBinaryOperator(using Quotes)(apply: quotes.reflect.Apply)(using ctx: TranslationContext, cascade: CompilerCascade): CParenExpr = {
     import quotes.reflect.*
 
-    val Apply(Select(qualifier, name), List(arg)) = apply
+    val Apply(Select(qualifier, name), List(arg)) = apply: @unchecked
 
     val lhs = cascade.dispatch(_.compileTermToCExpr)(qualifier)
     val rhs = cascade.dispatch(_.compileTermToCExpr)(arg)

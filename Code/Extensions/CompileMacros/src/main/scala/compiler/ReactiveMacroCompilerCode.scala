@@ -21,7 +21,7 @@ trait ReactiveMacroCompilerCode extends MacroCompilerCode {
 
     given ctx: CTX = createTranslationContext()
 
-    val Inlined(_, _, Inlined(_, _, Block(stmts, expr))) = graph.asTerm
+    val Inlined(_, _, Inlined(_, _, Block(stmts, expr))) = graph.asTerm: @unchecked
 
     stmts.foreach(cascade.dispatch(_.compileReactiveTopLevelStmt))
 
