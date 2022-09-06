@@ -16,9 +16,9 @@ object Dependencies {
     val directories        = "26"
     val jetty              = "9.4.48.v20220622"
     val jol                = "0.16"
-    val jsoniterScalaCore  = "2.15.0"
-    val jsoniterScalaOld   = "2.13.3" // this is the latest version supporting Scala 2.11 and java 8
-    val jsoup              = "1.15.2"
+    val jsoniterScalaCore  = "2.17.1"
+    val jsoniterScalaOld   = "2.13.3.2" // this is the latest version supporting Scala 2.11 (and java 8)
+    val jsoup              = "1.15.3"
     val munit              = "1.0.0-M6"
     val normalizecss       = "8.0.1"
     val okHttp             = "4.10.0"
@@ -29,7 +29,7 @@ object Dependencies {
     val scala211           = "2.11.12"
     val scala212           = "2.12.16"
     val scala213           = "2.13.8"
-    val scala3             = "3.1.3"
+    val scala3             = "3.2.0"
     val scalaJavaTime      = "2.3.0"
     val scalaLoci          = "609b4c1b58"
     val scalaSwing         = "3.0.0"
@@ -83,7 +83,7 @@ object Dependencies {
   val scribeSlf4j = Def.setting("com.outr" %% "scribe-slf4j" % V.scribe)
   val sourcecode  = Def.setting("com.lihaoyi" %%% "sourcecode" % V.sourcecode)
   val tomlScala   = Def.setting("tech.sparse" %%% "toml-scala" % V.tomlScala)
-  val upickle     = Def.setting("com.lihaoyi" %% "upickle" % V.upickle)
+  val upickle     = Def.setting("com.lihaoyi" %%% "upickle" % V.upickle)
 
   val jsoniterScalaAll = Def.setting {
     val jsoniterVersion = if (Settings.`is 2.11`(scalaVersion.value))
