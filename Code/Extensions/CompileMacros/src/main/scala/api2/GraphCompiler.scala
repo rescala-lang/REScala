@@ -435,13 +435,9 @@ class GraphCompiler(using Quotes)(
   private val mainCTU: CTranslationUnitDecl = {
     val includes = mainInclude :: libInclude :: ctx.includesList
 
-    val globalVarDecls = topological.collect {
-      case s: CompiledSignal => signalVariables(s)
-    }
-
     CTranslationUnitDecl(
       includes,
-      globalVarDecls ++ updateFunctions ++ List(startup, updateFunction)
+      updateFunctions ++ List(startup, updateFunction)
     )
   }
 
