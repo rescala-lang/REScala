@@ -472,10 +472,10 @@ class GraphCompiler(using Quotes)(
   private val libCTU: CTranslationUnitDecl =
     CTranslationUnitDecl(
       libInclude :: ctx.includesList,
-      ctx.valueDeclList.sortBy(_.name) map {
-        case CVarDecl(name, declaredType, Some(_)) => CVarDecl(name, declaredType)
-        case other => other
-      }
+      ctx.valueDeclList.filter {
+        case _: CVarDecl => false
+        case _ => true
+      }.sortBy(_.name)
     )
 
   private val libHTU: CTranslationUnitDecl = {
