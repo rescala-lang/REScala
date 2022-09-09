@@ -4,17 +4,17 @@ import clangast.*
 import clangast.given
 import clangast.decl.*
 import clangast.expr.*
-import clangast.expr.binaryop.{CAssignmentExpr, CGreaterThanExpr, CLessThanExpr, COrExpr}
+import clangast.expr.binaryop.{CAndExpr, CAssignmentExpr, CEqualsExpr, CGreaterThanExpr, CLessThanExpr, CNotEqualsExpr, COrExpr}
 import clangast.expr.unaryop.CNotExpr
 import clangast.stmt.*
 import clangast.stubs.{CJSONH, DyadH, StdBoolH, StdLibH}
 import clangast.types.*
 import compiler.CompilerCascade
-import compiler.context.TranslationContext
+import compiler.context.RecordDeclTC
 import compiler.base.*
 import compiler.base.CompileDataStructure.{deepCopy, release, retain}
 import compiler.ext.*
-import compiler.ext.CompileSerialization.{serialize, deserialize}
+import compiler.ext.CompileSerialization.{deserialize, serialize}
 
 import java.io.{File, FileWriter}
 import scala.collection.mutable.ArrayBuffer
@@ -22,9 +22,10 @@ import scala.quoted.*
 
 class GraphCompiler(using Quotes)(
   reactives: List[CompiledReactive],
+  externalSources: List[CompiledReactive],
   outputReactives: List[CompiledReactive],
   appName: String
-)(using ctx: TranslationContext, cascade: CompilerCascade) {
+)(using ctx: RecordDeclTC, cascade: CompilerCascade) {
   import quotes.reflect.*
 
   private val sources: List[CompiledReactive] = reactives.filter(_.isSource)
@@ -40,7 +41,12 @@ class GraphCompiler(using Quotes)(
     }
 
   private val topological: List[CompiledReactive] = toposort(sources).reverse
-  private val sourcesTopological: List[CompiledReactive] = topological.filter(_.isSource)
+  private val localSourcesTopological: List[CompiledReactive] = topological.filter(r => r.isSource && !externalSources.contains(r))
+  private val orderedSources: List[CompiledReactive] = localSourcesTopological ++ externalSources
+
+  private val hasExternalSources: Boolean = externalSources.nonEmpty
+  private val hasOutputReactives: Boolean = outputReactives.nonEmpty
+  private val isConnected: Boolean = hasExternalSources || hasOutputReactives
 
   private def addValueToAllKeys[K, V](originalMap: Map[K, Set[V]], keys: List[K], value: V): Map[K, Set[V]] = {
     keys.foldLeft(originalMap) { (acc, i) =>
@@ -284,28 +290,36 @@ class GraphCompiler(using Quotes)(
     (CEmptyStmt :: sameCondCode :: (serialization ++ releaseCode.toList)) ++ compileUpdates(otherConds, toRelease.diff(released))
   }
 
+  private def emptySourceArgs(reactives: List[CompiledReactive]): List[CExpr] = reactives.map {
+    case e: CompiledEvent => CCallExpr(CompileOption.getNoneCreator(e.typeRepr).ref, List())
+    case s: CompiledSignal => CCallExpr(CompileOption.getNoneCreator(TypeRepr.of[Option].appliedTo(s.typeRepr)).ref, List())
+  }
+
   private val updateFunction: CFunctionDecl = {
-    val jsonParam = CParmVarDecl("json", CPointerType(CJSONH.cJSON))
-    val params = jsonParam :: sourcesTopological.map(sourceParameters)
+    val sourceParams = orderedSources.map(sourceParameters)
+
+    val params = if hasOutputReactives then CParmVarDecl("json", CPointerType(CJSONH.cJSON)) :: sourceParams else sourceParams
 
     val localVarDecls = topological.collect {
       case e: CompiledEvent if eventVariables.contains(e) => CDeclStmt(eventVariables(e))
       case s: CompiledSignal => CDeclStmt(signalChangedVars(s))
     }
 
-    val jsonVarDecls = CEmptyStmt :: jsonVars.values.toList.map(CDeclStmt.apply)
-
     val updates = compileUpdates(topologicalByCond, eventVariables.keySet.toSet[CompiledReactive])
 
-    val fillJson = CEmptyStmt ::
-      jsonVars.values.map[CStmt](jsonVar => CCallExpr(CJSONH.cJSON_AddItemToArray.ref, List(jsonParam.ref, jsonVar.ref))).toList
+    val body = if (hasOutputReactives) {
+      val jsonVarDecls = CEmptyStmt :: jsonVars.values.toList.map(CDeclStmt.apply)
 
-    val body = CCompoundStmt(localVarDecls ++ jsonVarDecls ++ updates ++ fillJson)
+      val fillJson = CEmptyStmt ::
+        jsonVars.values.map[CStmt](jsonVar => CCallExpr(CJSONH.cJSON_AddItemToArray.ref, List(params.head.ref, jsonVar.ref))).toList
+
+      CCompoundStmt(localVarDecls ++ jsonVarDecls ++ updates ++ fillJson)
+    } else CCompoundStmt(localVarDecls ++ updates)
 
     CFunctionDecl(appName + "_update", params, CVoidType, Some(body))
   }
 
-  private val onData: CFunctionDecl = {
+  lazy val onData: CFunctionDecl = {
     val eDecl = CParmVarDecl("e", CPointerType(DyadH.dyad_Event))
 
     val jsonDecl = CVarDecl(
@@ -314,47 +328,51 @@ class GraphCompiler(using Quotes)(
       Some(CCallExpr(CJSONH.cJSON_Parse.ref, List(CMemberExpr(eDecl.ref, DyadH.dataField, true))))
     )
 
-    val outputMsgDecl = CVarDecl("outputMsg", CPointerType(CJSONH.cJSON), Some(CCallExpr(CJSONH.cJSON_CreateArray.ref, List())))
-
-    val deserializedSources = sourcesTopological.zipWithIndex.map {
+    val deserializedSources = externalSources.zipWithIndex.map {
       case (e: CompiledEvent, i) =>
         deserialize(CCallExpr(CJSONH.cJSON_GetArrayItem.ref, List(jsonDecl.ref, i.lit)), e.typeRepr)
       case (s: CompiledSignal, i) =>
         deserialize(CCallExpr(CJSONH.cJSON_GetArrayItem.ref, List(jsonDecl.ref, i.lit)), TypeRepr.of[Option].appliedTo(s.typeRepr))
     }
 
-    val writeOutput = CCallExpr(
-      DyadH.dyad_writef.ref,
-      List(
-        CMemberExpr(eDecl.ref, DyadH.streamField, true),
-        CStringLiteral("%s\\n"),
-        CCallExpr(CJSONH.cJSON_Print.ref, List(outputMsgDecl.ref))
-      )
-    )
+    val body = if (hasOutputReactives) {
+      val outputMsgDecl = CVarDecl("outputMsg", CPointerType(CJSONH.cJSON), Some(CCallExpr(CJSONH.cJSON_CreateArray.ref, List())))
 
-    CFunctionDecl(
-      "onData",
-      List(eDecl),
-      CVoidType,
-      Some(CCompoundStmt(List(
+      val writeOutput = CCallExpr(
+        DyadH.dyad_writef.ref,
+        List(
+          CMemberExpr(eDecl.ref, DyadH.streamField, true),
+          CStringLiteral("%s\\n"),
+          CCallExpr(CJSONH.cJSON_Print.ref, List(outputMsgDecl.ref))
+        )
+      )
+
+      CCompoundStmt(List(
         jsonDecl,
         outputMsgDecl,
-        CCallExpr(updateFunction.ref, outputMsgDecl.ref :: deserializedSources),
+        CCallExpr(updateFunction.ref, outputMsgDecl.ref :: emptySourceArgs(localSourcesTopological) ++ deserializedSources),
         writeOutput,
         CCallExpr(CJSONH.cJSON_Delete.ref, List(outputMsgDecl.ref)),
         CCallExpr(CJSONH.cJSON_Delete.ref, List(jsonDecl.ref))
-      )))
-    )
+      ))
+    } else {
+      CCompoundStmt(List(
+        jsonDecl,
+        CCallExpr(updateFunction.ref, emptySourceArgs(localSourcesTopological) ++ deserializedSources),
+        CCallExpr(CJSONH.cJSON_Delete.ref, List(jsonDecl.ref))
+      ))
+    }
+
+    CFunctionDecl("onData", List(eDecl), CVoidType, Some(body))
   }
 
-  private val onAccept: CFunctionDecl = {
+  lazy val clientStream: CVarDecl = CVarDecl("clientStream", CPointerType(DyadH.dyad_Stream))
+
+  lazy val onAccept: CFunctionDecl = {
     val eDecl = CParmVarDecl("e", CPointerType(DyadH.dyad_Event))
 
-    CFunctionDecl(
-      "onAccept",
-      List(eDecl),
-      CVoidType,
-      Some(CCompoundStmt(List(
+    val body = if (hasExternalSources) {
+      CCompoundStmt(List(
         CCallExpr(
           DyadH.dyad_addListener.ref,
           List(
@@ -364,49 +382,79 @@ class GraphCompiler(using Quotes)(
             CNullLiteral
           )
         )
-      )))
-    )
+      ))
+    } else {
+      CCompoundStmt(List(CAssignmentExpr(clientStream.ref, CMemberExpr(eDecl.ref, DyadH.remoteField, true))))
+    }
+
+    CFunctionDecl("onAccept", List(eDecl), CVoidType, Some(body))
   }
 
   private val mainFun: CFunctionDecl = {
     val argc = CParmVarDecl("argc", CIntegerType)
     val argv = CParmVarDecl("argv", CArrayType(CPointerType(CCharType)))
 
-    val checkArgs = CIfStmt(
-      CLessThanExpr(argc.ref, 2.lit),
-      CCompoundStmt(List(
-        CompileString.printf("Listen port expected as command line argument\\n"),
-        CReturnStmt(Some(1.lit))
-      ))
-    )
-
-    val streamDecl = CVarDecl("s", CPointerType(DyadH.dyad_Stream), Some(CCallExpr(DyadH.dyad_newStream.ref, List())))
-    val registerOnAccept = CCallExpr(
-      DyadH.dyad_addListener.ref,
-      List(streamDecl.ref, DyadH.DYAD_EVENT_ACCEPT.ref, onAccept.ref, CNullLiteral)
-    )
-    val startListening = CCallExpr(
-      DyadH.dyad_listen.ref,
-      List(
-        streamDecl.ref,
-        CCallExpr(StdLibH.atoi.ref, List(CArraySubscriptExpr(argv.ref, 1.lit))))
-    )
-
-    val dyadUpdateLoop = CWhileStmt(
-      CGreaterThanExpr(CCallExpr(DyadH.dyad_getStreamCount.ref, List()), 0.lit),
-      CCompoundStmt(List(CCallExpr(DyadH.dyad_update.ref, List())))
-    )
-
     val releaseSignals = signals.flatMap(s => release(valueRef(s), s.typeRepr, CFalseLiteral))
     val releaseGlobals = ctx.valueDeclList.collect {
       case v: CVarDecl => release(v, CFalseLiteral)
     }.flatten
 
-    CFunctionDecl(
-      "main",
-      List(argc, argv),
-      CIntegerType,
-      Some(CCompoundStmt(
+    val body = if (isConnected) {
+      val checkArgs = CIfStmt(
+        CLessThanExpr(argc.ref, 2.lit),
+        CCompoundStmt(List(
+          CompileString.printf("Listen port expected as command line argument\\n"),
+          CReturnStmt(Some(1.lit))
+        ))
+      )
+
+      val streamDecl = CVarDecl("s", CPointerType(DyadH.dyad_Stream), Some(CCallExpr(DyadH.dyad_newStream.ref, List())))
+      val registerOnAccept = CCallExpr(
+        DyadH.dyad_addListener.ref,
+        List(streamDecl.ref, DyadH.DYAD_EVENT_ACCEPT.ref, onAccept.ref, CNullLiteral)
+      )
+      val startListening = CCallExpr(
+        DyadH.dyad_listen.ref,
+        List(
+          streamDecl.ref,
+          CCallExpr(StdLibH.atoi.ref, List(CArraySubscriptExpr(argv.ref, 1.lit)))
+        )
+      )
+
+      val updateFromLocalSources = if (!hasExternalSources) {
+        val outputMsgDecl = CVarDecl("outputMsg", CPointerType(CJSONH.cJSON), Some(CCallExpr(CJSONH.cJSON_CreateArray.ref, List())))
+
+        val writeOutput = CIfStmt(
+          CAndExpr(
+            CNotEqualsExpr(clientStream.ref, CNullLiteral),
+            CEqualsExpr(CCallExpr(DyadH.dyad_getState.ref, List(clientStream.ref)), DyadH.DYAD_STATE_CONNECTED.ref)
+          ),
+          CCallExpr(
+            DyadH.dyad_writef.ref,
+            List(
+              clientStream.ref,
+              CStringLiteral("%s\\n"),
+              CCallExpr(CJSONH.cJSON_Print.ref, List(outputMsgDecl.ref))
+            )
+          )
+        )
+
+        List[CStmt](
+          outputMsgDecl,
+          CCallExpr(updateFunction.ref, outputMsgDecl.ref :: emptySourceArgs(localSourcesTopological)),
+          writeOutput,
+          CCallExpr(CJSONH.cJSON_Delete.ref, List(outputMsgDecl.ref))
+        )
+      } else List()
+
+      val dyadUpdateLoop = CWhileStmt(
+        CGreaterThanExpr(CCallExpr(DyadH.dyad_getStreamCount.ref, List()), 0.lit),
+        CCompoundStmt(
+          updateFromLocalSources :+ CExprStmt(CCallExpr(DyadH.dyad_update.ref, List()))
+        )
+      )
+
+      CCompoundStmt(
         List[CStmt](
           checkArgs, CEmptyStmt,
           CCallExpr(startup.ref, List()),
@@ -419,18 +467,27 @@ class GraphCompiler(using Quotes)(
         ) ++ releaseSignals
           ++ releaseGlobals
           :+ CReturnStmt(Some(0.lit))
-      ))
-    )
+      )
+    } else {
+      CCompoundStmt(
+          List[CStmt](
+            CCallExpr(startup.ref, List()),
+            CCallExpr(updateFunction.ref, emptySourceArgs(localSourcesTopological))
+          ) ++ releaseSignals ++ releaseGlobals :+ CReturnStmt(Some(0.lit))
+      )
+    }
+
+    CFunctionDecl("main", List(argc, argv), CIntegerType, Some(body))
   }
 
   private val mainC: String = appName + "Main.c"
   private val mainH: String = appName + "Main.h"
   private val mainInclude: CInclude = CInclude(mainH, true)
+  private val appC: String = appName + "App.c"
+  private val appOut: String = appName + "App"
   private val libC: String = appName + "Lib.c"
   private val libH: String = appName + "Lib.h"
   private val libInclude: CInclude = CInclude(libH, true)
-  private val appC: String = appName + "App.c"
-  private val appOut: String = appName + "App"
 
   private val mainCTU: CTranslationUnitDecl = {
     val includes = mainInclude :: libInclude :: ctx.includesList
@@ -469,6 +526,18 @@ class GraphCompiler(using Quotes)(
     writeFile(pathToDir + "/" + mainH, mainHTU.textgen)
   }
 
+  private val appCTU: CTranslationUnitDecl =
+    CTranslationUnitDecl(
+      List(mainInclude, libInclude) ++ ctx.includesList,
+      if hasExternalSources then List(onData, onAccept, mainFun)
+      else if hasOutputReactives then List(clientStream, onAccept, mainFun)
+      else List(mainFun)
+    )
+
+  private def writeApp(pathToDir: String): Unit = {
+    writeFile(pathToDir + "/" + appC, appCTU.textgen)
+  }
+
   private val libCTU: CTranslationUnitDecl =
     CTranslationUnitDecl(
       libInclude :: ctx.includesList,
@@ -491,16 +560,6 @@ class GraphCompiler(using Quotes)(
   private def writeLib(pathToDir: String): Unit = {
     writeFile(pathToDir + "/" + libC, libCTU.textgen)
     writeFile(pathToDir + "/" + libH, libHTU.textgen)
-  }
-
-  private val appCTU: CTranslationUnitDecl =
-    CTranslationUnitDecl(
-      List(mainInclude, libInclude) ++ ctx.includesList,
-      List(onData, onAccept, mainFun)
-    )
-
-  private def writeApp(pathToDir: String): Unit = {
-    writeFile(pathToDir + "/" + appC, appCTU.textgen)
   }
 
   private def writeMakeFile(pathToDir: String, compiler: String): Unit = {

@@ -10,6 +10,8 @@ import compiler.ExtensionMethods.*
 import rescala.core.ReName
 import rescala.macros.MacroAccess
 import rescala.operator.RExceptions
+import com.github.plokhotnyuk.jsoniter_scala.macros.*
+import com.github.plokhotnyuk.jsoniter_scala.core.*
 
 import scala.quoted.*
 import scala.collection.mutable
@@ -135,7 +137,57 @@ object StandardBundle extends MetaBundle {
   type MC = ReactiveMacroCompiler.type
   override val macroCompiler: MC = ReactiveMacroCompiler
 
-  export macroCompiler.compileGraph
+  export macroCompiler.compileGraph as compileIsolatedGraph
+
+  type MetaReactivesFromEvents[T <: Tuple] <: Tuple = T match
+    case EmptyTuple => EmptyTuple
+    case rescala.default.Event[t] *: ts => MetaReactive[Option[t], RType.Event.type] *: MetaReactivesFromEvents[ts]
+
+  type MetaReactivesFromTuple[T <: Tuple] <: Tuple = T match
+    case EmptyTuple => EmptyTuple
+    case t *: ts => MetaReactive[Option[t], RType.Event.type] *: MetaReactivesFromTuple[ts]
+
+  type TupleFromMetaReactives[T <: Tuple] <: Tuple = T match
+    case EmptyTuple => EmptyTuple
+    case MetaReactive[Option[t], RType.Event.type] *: ts => t *: TupleFromMetaReactives[ts]
+
+  inline def compileRemoteGraphWithInput[IN <: Tuple : EventTupleUtils]
+  (inline appName: String)(inline dependencies: IN)(inline graph: MetaReactivesFromEvents[IN] => Unit)
+  (using JsonValueCodec[OptionsFromEvents[IN]]): RemoteGraphWithInput[IN] = {
+
+    macroCompiler.compileGraph(appName)(graph)
+
+    new RemoteGraphWithInput[IN] {
+      override val events: IN = dependencies
+    }
+  }
+
+  inline def compileRemoteGraphWithOutput[OUT <: Tuple]
+  (inline appName: String)(inline graph: OUT)
+  (using
+   JsonValueCodec[OptionsFromTuple[TupleFromMetaReactives[OUT]]],
+   TupleUtils[TupleFromMetaReactives[OUT]]
+  ): RemoteGraphWithOutput[TupleFromMetaReactives[OUT]] = {
+
+    macroCompiler.compileGraph(appName)(graph)
+
+    new RemoteGraphWithOutput[TupleFromMetaReactives[OUT]] {}
+  }
+
+  inline def compileRemoteGraphWithIO[OUT <: Tuple, IN <: Tuple : EventTupleUtils]
+  (inline appName: String)(inline dependencies: IN)(inline graph: MetaReactivesFromEvents[IN] => OUT)
+  (using
+   JsonValueCodec[OptionsFromTuple[TupleFromMetaReactives[OUT]]],
+   TupleUtils[TupleFromMetaReactives[OUT]],
+   JsonValueCodec[OptionsFromEvents[IN]]
+  ): RemoteGraphWithIO[IN, TupleFromMetaReactives[OUT]] = {
+
+    macroCompiler.compileGraph(appName)(graph)
+
+    new RemoteGraphWithIO[IN, TupleFromMetaReactives[OUT]] {
+      override val events: IN = dependencies
+    }
+  }
 }
 
 object MetaBundleExample {
@@ -145,7 +197,7 @@ object MetaBundleExample {
   def run(): Unit = {
 
     // did not bother to include sources, so just start with constant signals
-    compileGraph("metaBundleTest") {
+    compileIsolatedGraph("metaBundleTest") {
       val source = Signal(5)
 
       val inc = 1
@@ -186,8 +238,6 @@ object MetaBundleExample {
       }
 
       foldResult.observeChange(s => println(s))
-
-      List(arraySignal, arrayEvent, snapshotLike)
     }
 
     val source = Signal(5)

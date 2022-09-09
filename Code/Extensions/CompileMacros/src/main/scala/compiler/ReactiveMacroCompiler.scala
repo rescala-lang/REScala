@@ -13,13 +13,7 @@ trait ReactiveMacroCompiler extends MacroCompiler {
 }
 
 object ReactiveMacroCompiler extends ReactiveMacroCompiler {
-  private val impl: ReactiveMacroCompilerCode = new ReactiveMacroCompilerCode {
-    override given cascade: CompilerCascade = CompileReactive ~>: standardCascade
-
-    override type CTX = StandardContext with ReactiveTC
-
-    override protected def createTranslationContext(): CTX = new StandardContext with ReactiveTC {}
-  }
+  private val impl: ReactiveMacroCompilerCode = new ReactiveMacroCompilerCode {}
 
   export impl.*
 
