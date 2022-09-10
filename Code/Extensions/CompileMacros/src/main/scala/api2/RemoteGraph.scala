@@ -4,10 +4,6 @@ import rescala.default.*
 import com.github.plokhotnyuk.jsoniter_scala.macros.*
 import com.github.plokhotnyuk.jsoniter_scala.core.*
 
-import java.net.InetSocketAddress
-import java.nio.ByteBuffer
-import java.nio.channels.*
-
 type OptionsFromTuple[T <: Tuple] <: Tuple = T match
   case EmptyTuple => EmptyTuple
   case t *: ts => Option[t] *: OptionsFromTuple[ts]
@@ -72,56 +68,31 @@ given named[T, TS <: Tuple: EventTupleUtils]: EventTupleUtils[Evt[T] *: TS] with
   }
 
 trait RemoteGraph {
-  protected val chan: AsynchronousSocketChannel = AsynchronousSocketChannel.open()
+  protected var connector: Option[RemoteGraphConnector] = None
 
-  def connect(hostname: String, port: Int): Unit =
-    chan.connect(InetSocketAddress(hostname, port)).get()
-
-  def closeConnection(): Unit = chan.close()
+  def setConnector(c: RemoteGraphConnector): Unit = if connector.isEmpty then connector = Some(c)
 }
 
 trait RemoteGraphWithInput[IN <: Tuple: EventTupleUtils](using JsonValueCodec[OptionsFromEvents[IN]]) extends RemoteGraph {
   val events: IN
-  
+
   def startObserving(): Unit = {
     val dependencies = events.toList.map(_.asInstanceOf[ReSource])
     val grouped = Events.static(dependencies: _*) { t =>
       Some(summon[EventTupleUtils[IN]].staticAccesses(events, t))
     }
 
-    grouped.observe(v => chan.write(ByteBuffer.wrap(writeToArray(v))))
+    grouped.observe(v => connector.get.write(v))
   }
 }
 
 trait RemoteGraphWithOutput[OUT <: Tuple: TupleUtils](using JsonValueCodec[OptionsFromTuple[OUT]]) extends RemoteGraph {
-  protected class ReadHandler(cbs: Callbacks[OUT])(using JsonValueCodec[OptionsFromTuple[OUT]]) extends CompletionHandler[Integer, ByteBuffer]() {
-    override def completed(result: Integer, attachment: ByteBuffer): Unit = {
-      val buffer = attachment
-      buffer.flip()
-      val bytes = Array.ofDim[Byte](buffer.remaining())
-      buffer.get(bytes)
-
-      summon[TupleUtils[OUT]].processCallbacks(readFromArray[OptionsFromTuple[OUT]](bytes), cbs)
-
-      buffer.clear()
-      chan.read(buffer, buffer, this)
-    }
-
-    override def failed(exc: Throwable, attachment: ByteBuffer): Unit = {
-      exc match {
-        case _: ClosedChannelException =>
-        case _ =>
-          println("failed called with exception: ")
-          exc.printStackTrace()
-      }
-    }
-  }
-
   def eventsFromListen(): EvtsFromTuple[OUT] = {
     val (evts, cbs) = summon[TupleUtils[OUT]].createEvtsWithCallbacks
 
-    val recvBuffer = ByteBuffer.allocate(10000)
-    chan.read(recvBuffer, recvBuffer, new ReadHandler(cbs))
+    connector.get.read[OptionsFromTuple[OUT]] { v =>
+      summon[TupleUtils[OUT]].processCallbacks(v, cbs)
+    }
 
     evts
   }
