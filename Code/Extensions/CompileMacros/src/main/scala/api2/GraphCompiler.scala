@@ -74,6 +74,15 @@ class GraphCompiler(using Quotes)(
     sorted.toList
   }
 
+  private def computeSubGraph(startNodes: Set[CompiledReactive]): Set[CompiledReactive] = {
+    if (startNodes.isEmpty) {
+      Set()
+    } else {
+      val activatedNext = startNodes.flatMap(dataflow.getOrElse(_, Set()))
+      startNodes union computeSubGraph(activatedNext)
+    }
+  }
+
   private val updateFunctions: List[CFunctionDecl] = reactives.collect {
     case s: CompiledSignal => s.updateFun
     case r if !r.isSource => r.updateFun
@@ -295,28 +304,51 @@ class GraphCompiler(using Quotes)(
     case s: CompiledSignal => CCallExpr(CompileOption.getNoneCreator(TypeRepr.of[Option].appliedTo(s.typeRepr)).ref, List())
   }
 
-  private val updateFunction: CFunctionDecl = {
-    val sourceParams = orderedSources.map(sourceParameters)
+  private def buildTransactionFunction(sources: Set[CompiledReactive], nameSuffix: String): CFunctionDecl = {
+    val subGraph = computeSubGraph(sources)
 
-    val params = if hasOutputReactives then CParmVarDecl("json", CPointerType(CJSONH.cJSON)) :: sourceParams else sourceParams
+    val subGraphTopological = topologicalByCond.filter(subGraph.contains)
 
-    val localVarDecls = topological.collect {
+    val sourceParams = orderedSources.filter(sources.contains).map(sourceParameters)
+
+    val subGraphOutputReactives = outputReactives.filter(subGraph.contains)
+
+    val params = if subGraphOutputReactives.nonEmpty
+      then CParmVarDecl("json", CPointerType(CJSONH.cJSON)) :: sourceParams
+      else sourceParams
+
+    val localVarDecls = subGraphTopological.collect {
       case e: CompiledEvent if eventVariables.contains(e) => CDeclStmt(eventVariables(e))
       case s: CompiledSignal => CDeclStmt(signalChangedVars(s))
     }
 
-    val updates = compileUpdates(topologicalByCond, eventVariables.keySet.toSet[CompiledReactive])
+    val toRelease = eventVariables.keySet.toSet[CompiledReactive].filter(localVarDecls.contains)
 
-    val body = if (hasOutputReactives) {
-      val jsonVarDecls = CEmptyStmt :: jsonVars.values.toList.map(CDeclStmt.apply)
+    val updates = compileUpdates(subGraphTopological, toRelease)
+
+    val body = if (subGraphOutputReactives.nonEmpty) {
+      val subGraphJsonVars = subGraph.flatMap(jsonVars.lift)
+      val jsonVarDecls = CEmptyStmt :: subGraphJsonVars.toList.map(CDeclStmt.apply)
 
       val fillJson = CEmptyStmt ::
-        jsonVars.values.map[CStmt](jsonVar => CCallExpr(CJSONH.cJSON_AddItemToArray.ref, List(params.head.ref, jsonVar.ref))).toList
+        subGraphJsonVars.map[CStmt](jsonVar => CCallExpr(CJSONH.cJSON_AddItemToArray.ref, List(params.head.ref, jsonVar.ref))).toList
 
       CCompoundStmt(localVarDecls ++ jsonVarDecls ++ updates ++ fillJson)
     } else CCompoundStmt(localVarDecls ++ updates)
 
-    CFunctionDecl(appName + "_update", params, CVoidType, Some(body))
+    CFunctionDecl(appName + "_transaction_" + nameSuffix, params, CVoidType, Some(body))
+  }
+
+  val localTransactionFunction: CFunctionDecl = buildTransactionFunction(localSourcesTopological.toSet, "local")
+
+  val remoteTransactionFunction: CFunctionDecl = buildTransactionFunction(externalSources.toSet, "remote")
+
+  val transactionFunctions: List[CFunctionDecl] = {
+    val localFun = if localSourcesTopological.nonEmpty then List(localTransactionFunction) else List()
+
+    val remoteFun = if externalSources.nonEmpty then List(remoteTransactionFunction) else List()
+
+    localFun ++ remoteFun
   }
 
   lazy val onData: CFunctionDecl = {
@@ -350,7 +382,7 @@ class GraphCompiler(using Quotes)(
       CCompoundStmt(List(
         jsonDecl,
         outputMsgDecl,
-        CCallExpr(updateFunction.ref, outputMsgDecl.ref :: emptySourceArgs(localSourcesTopological) ++ deserializedSources),
+        CCallExpr(remoteTransactionFunction.ref, outputMsgDecl.ref :: deserializedSources),
         writeOutput,
         CCallExpr(CJSONH.cJSON_Delete.ref, List(outputMsgDecl.ref)),
         CCallExpr(CJSONH.cJSON_Delete.ref, List(jsonDecl.ref))
@@ -358,7 +390,7 @@ class GraphCompiler(using Quotes)(
     } else {
       CCompoundStmt(List(
         jsonDecl,
-        CCallExpr(updateFunction.ref, emptySourceArgs(localSourcesTopological) ++ deserializedSources),
+        CCallExpr(remoteTransactionFunction.ref, deserializedSources),
         CCallExpr(CJSONH.cJSON_Delete.ref, List(jsonDecl.ref))
       ))
     }
@@ -441,7 +473,7 @@ class GraphCompiler(using Quotes)(
 
         List[CStmt](
           outputMsgDecl,
-          CCallExpr(updateFunction.ref, outputMsgDecl.ref :: emptySourceArgs(localSourcesTopological)),
+          CCallExpr(localTransactionFunction.ref, outputMsgDecl.ref :: emptySourceArgs(localSourcesTopological)),
           writeOutput,
           CCallExpr(CJSONH.cJSON_Delete.ref, List(outputMsgDecl.ref))
         )
@@ -472,7 +504,7 @@ class GraphCompiler(using Quotes)(
       CCompoundStmt(
           List[CStmt](
             CCallExpr(startup.ref, List()),
-            CCallExpr(updateFunction.ref, emptySourceArgs(localSourcesTopological))
+            CCallExpr(localTransactionFunction.ref, emptySourceArgs(localSourcesTopological))
           ) ++ releaseSignals ++ releaseGlobals :+ CReturnStmt(Some(0.lit))
       )
     }
@@ -494,7 +526,7 @@ class GraphCompiler(using Quotes)(
 
     CTranslationUnitDecl(
       includes,
-      updateFunctions ++ List(startup, updateFunction)
+      updateFunctions ++ List(startup) ++ transactionFunctions
     )
   }
 
@@ -507,7 +539,7 @@ class GraphCompiler(using Quotes)(
 
     CTranslationUnitDecl(
       includes,
-      globalVarDecls ++ List(startup.declOnly, updateFunction.declOnly),
+      globalVarDecls ++ List(startup.declOnly) ++ transactionFunctions.map(_.declOnly),
       Some(appName.toUpperCase + "_MAIN")
     )
   }

@@ -23,6 +23,10 @@ object InteropTest extends App {
   val remote = compileRemoteGraphWithIO("interopTest")(toC, toCString) { (fromScala, fromScalaString) =>
     import StandardBundle.*
 
+    val localSource = Event(Some(5))
+
+    val localMap = localSource.map(_ / 2)
+
     val strCopy = Event(fromScalaString.value)
 
     val plusOne = fromScala.map(_ + 1)
