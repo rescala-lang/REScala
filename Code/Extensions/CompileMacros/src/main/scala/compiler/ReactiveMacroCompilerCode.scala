@@ -33,12 +33,12 @@ trait ReactiveMacroCompilerCode extends MacroCompilerCode {
     given ctx: CTX = createTranslationContext()
 
     val (params, stmts, expr) = removeInlines(graph.asTerm) match {
+      case Block(_, Block(List(DefDef(_, List(TermParamClause(params)), _, Some(Block(List(_: Import), Block(stmts, expr))))), _)) => (params, stmts, expr)
       case Block(_, Block(List(DefDef(_, _, _, Some(Block(params, Block(stmts, expr))))), _)) => (params, stmts, expr)
       case Block(_, Block(List(DefDef(_, _, _, Some(Block(stmts, expr)))), _)) => (List(), stmts, expr)
+      case Block(List(DefDef(_, _, _, Some(Match(_, List(CaseDef(Unapply(_, _, params), _, Block(stmts, expr))))))), _) => (params, stmts, expr)
       case Block(stmts, expr) => (List(), stmts, expr)
     }
-
-    // val Block(stmts, expr) = removeInlines(graph.asTerm): @unchecked
 
     val outputReactives = expr match {
       case Apply(TypeApply(Select(Ident(className), "apply"), _), l) if className.startsWith("Tuple") =>
@@ -55,15 +55,10 @@ trait ReactiveMacroCompilerCode extends MacroCompilerCode {
         List()
     }
 
-//    val externalSources = removeInlines(dependencies.asTerm) match {
-//      case Apply(TypeApply(Select(_, "apply"), _), l) =>
-//        l.collect { case i: Ident => ctx.reactivesList.find(_.name.equals(i.name)) }.flatten
-//      case Typed(Ident("EmptyTuple"), _) => List()
-//    }
-
-    val externalSources = params.flatMap {
-      case ValDef(name, _, _) => ctx.reactivesList.find(_.name.equals(name))
-    }
+    val externalSources = params.map {
+      case ValDef(name, _, _) => name
+      case Bind(name, _) => name
+    }.flatMap(name => ctx.reactivesList.find(_.name.equals(name)))
 
     val gc = new GraphCompiler(using summon[Quotes])(ctx.reactivesList, externalSources, outputReactives, appName.valueOrAbort)
     gc.writeIntoDir("out/" + appName.valueOrAbort, "gcc")

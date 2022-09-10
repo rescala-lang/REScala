@@ -35,11 +35,9 @@ object InteropTest extends App {
 
     (toScala, even)
   }
-  
-  val tcpClient = new TCPClientConnector("localhost", 8000)
 
+  val tcpClient = new TCPClientConnector("localhost", 8000)
   tcpClient.connect()
-  
   remote.setConnector(tcpClient)
 
   val (fromC, fromCBoolean) = remote.eventsFromListen()
