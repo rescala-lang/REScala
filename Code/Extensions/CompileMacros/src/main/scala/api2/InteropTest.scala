@@ -2,8 +2,6 @@ package rescala.api2
 
 import rescala.default.*
 import StandardBundle.CompileGraph
-import com.github.plokhotnyuk.jsoniter_scala.macros.*
-import com.github.plokhotnyuk.jsoniter_scala.core.*
 
 import scala.io.StdIn.readLine
 import java.net.InetSocketAddress
