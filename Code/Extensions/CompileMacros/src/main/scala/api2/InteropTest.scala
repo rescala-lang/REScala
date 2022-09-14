@@ -1,7 +1,7 @@
 package rescala.api2
 
 import rescala.default.*
-import StandardBundle.{compileRemoteGraphWithIO, compileRemoteGraphWithInput, compileRemoteGraphWithOutput}
+import StandardBundle.CompileGraph
 import com.github.plokhotnyuk.jsoniter_scala.macros.*
 import com.github.plokhotnyuk.jsoniter_scala.core.*
 
@@ -16,7 +16,7 @@ object InteropTest extends App {
 
   val toCString = Evt[String]()
 
-  val remote = compileRemoteGraphWithIO("interopTest")(toC, toCString) { (fromScala, fromScalaString) =>
+  val remote = CompileGraph.withIO("interopTest")(toC, toCString) { (fromScala, fromScalaString) =>
     import StandardBundle.*
 
     val localSource = Event(Some(5))
