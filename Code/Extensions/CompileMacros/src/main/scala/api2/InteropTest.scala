@@ -16,10 +16,6 @@ object InteropTest extends App {
 
   val toCString = Evt[String]()
 
-  given c1: JsonValueCodec[(Option[Int], Option[String])] = JsonCodecMaker.make
-
-  given c2: JsonValueCodec[(Option[Int], Option[Boolean])] = JsonCodecMaker.make
-
   val remote = compileRemoteGraphWithIO("interopTest")(toC, toCString) { (fromScala, fromScalaString) =>
     import StandardBundle.*
 
