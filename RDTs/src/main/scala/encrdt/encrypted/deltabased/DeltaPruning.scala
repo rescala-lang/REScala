@@ -15,3 +15,7 @@ trait DeltaPruning {
     )
   }
 }
+
+trait NoPruning {
+  protected def prune(receivedDeltaGroup: EncryptedDeltaGroup): Unit = {}
+}
