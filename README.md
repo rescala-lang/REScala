@@ -5,7 +5,7 @@ a programming paradigm that integrates the strong guarantees of functional react
 and is useful in many contexts such as traditional user interfaces, concurrent and distributed applications, web development, and server software.
 
 * Homepage: <http://www.rescala-lang.com/>
-* Usage Manual: <http://www.rescala-lang.com/manual/>
+* Usage Manual: <http://www.rescala-lang.com/manual>
 
 REScala is a research project held at TU Darmstadt in the
 [Software Technology Group](http://www.stg.tu-darmstadt.de/)
