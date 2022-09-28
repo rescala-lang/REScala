@@ -144,7 +144,7 @@ object StandardBundle extends MetaBundle {
   type TupleFromMetaReactives[T <: Tuple] <: Tuple = T match
     case EmptyTuple => EmptyTuple
     case MetaReactive[Option[t], RType.Event.type] *: ts => t *: TupleFromMetaReactives[ts]
-  
+
   object CompileGraph {
     export macroCompiler.compileGraph as isolated
 

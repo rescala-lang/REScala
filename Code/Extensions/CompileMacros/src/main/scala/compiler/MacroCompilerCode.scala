@@ -5,12 +5,13 @@ import clangast.expr.CExpr
 import clangast.types.CType
 import clangast.{CASTNode, WithContext}
 import compiler.base.*
+import compiler.FragmentedCompiler.dispatch
 import compiler.context.TranslationContext
 
 import scala.quoted.*
 
 trait MacroCompilerCode {
-  protected given cascade: CompilerCascade
+  protected given compiler: FragmentedCompiler
 
   protected type CTX <: TranslationContext
 
@@ -21,7 +22,7 @@ trait MacroCompilerCode {
 
     given ctx: CTX = createTranslationContext()
 
-    WithContext(cascade.dispatch(_.compileTree)(t.asTerm), ctx).toExpr
+    WithContext(dispatch[TreeIFFragment](_.compileTree)(t.asTerm), ctx).toExpr
   }
 
   def compileExprCode(e: Expr[_])(using Quotes): Expr[WithContext[CExpr]] = {
@@ -29,7 +30,7 @@ trait MacroCompilerCode {
 
     given ctx: CTX = createTranslationContext()
 
-    WithContext(cascade.dispatch(_.compileTermToCExpr)(e.asTerm), ctx).toExpr
+    WithContext(dispatch[TermIFFragment](_.compileTermToCExpr)(e.asTerm), ctx).toExpr
   }
 
   def compileFunCode(f: Expr[_])(using Quotes): Expr[WithContext[CFunctionDecl]] = {
@@ -37,7 +38,7 @@ trait MacroCompilerCode {
 
     given ctx: CTX = createTranslationContext()
 
-    val (originalName, compiledF) = cascade.dispatch(_.compileTerm)(f.asTerm) match {
+    val (originalName, compiledF) = dispatch[TermIFFragment](_.compileTerm)(f.asTerm) match {
       case funDecl: CFunctionDecl => (funDecl.name, funDecl.copy(name = Symbol.spliceOwner.owner.name))
     }
 
@@ -53,7 +54,7 @@ trait MacroCompilerCode {
 
     given ctx: CTX = createTranslationContext()
 
-    val compiledF = cascade.dispatch(_.compileTerm)(f.asTerm) match { case funDecl: CFunctionDecl => funDecl }
+    val compiledF = dispatch[TermIFFragment](_.compileTerm)(f.asTerm) match { case funDecl: CFunctionDecl => funDecl }
 
     WithContext(
       compiledF,
@@ -66,13 +67,13 @@ trait MacroCompilerCode {
     import quotes.reflect.*
 
     given ctx: CTX = createTranslationContext()
-    
-    // make sure that release, retain and deepCopy for the given type are compiled for later use
-    cascade.dispatchLifted(_.compileRetain)(TypeRepr.of[T])
-    cascade.dispatchLifted(_.compileRelease)(TypeRepr.of[T])
-    cascade.dispatchLifted(_.compileDeepCopy)(TypeRepr.of[T])
 
-    val compiledTypeRepr = cascade.dispatch(_.compileTypeRepr)(TypeRepr.of[T])
+    // make sure that release, retain and deepCopy for the given type are compiled for later use
+    compiler.dispatchLifted[DataStructureIFFragment](_.compileRetain)(TypeRepr.of[T])
+    compiler.dispatchLifted[DataStructureIFFragment](_.compileRelease)(TypeRepr.of[T])
+    compiler.dispatchLifted[DataStructureIFFragment](_.compileDeepCopy)(TypeRepr.of[T])
+
+    val compiledTypeRepr = dispatch[TypeIFFragment](_.compileTypeRepr)(TypeRepr.of[T])
 
     WithContext(compiledTypeRepr, ctx).toExpr
   }

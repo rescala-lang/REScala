@@ -5,7 +5,6 @@ import clangast.decl.CFunctionDecl
 import clangast.expr.CExpr
 import clangast.types.CType
 import compiler.context.ReactiveTC
-import compiler.ext.CompileReactive
 import rescala.api2.MetaBundle
 
 trait ReactiveMacroCompiler extends MacroCompiler {

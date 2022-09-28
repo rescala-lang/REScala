@@ -10,7 +10,7 @@ import scala.quoted.*
 
 object StandardMacroCompiler extends MacroCompiler {
   private val impl: MacroCompilerCode = new MacroCompilerCode {
-    override given cascade: CompilerCascade = standardCascade
+    override given compiler: FragmentedCompiler = standardFragmentedCompiler
 
     override type CTX = StandardContext
 

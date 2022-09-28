@@ -4,10 +4,6 @@ import rescala.default.*
 import StandardBundle.CompileGraph
 
 import scala.io.StdIn.readLine
-import java.net.InetSocketAddress
-import java.nio.channels.*
-import java.nio.ByteBuffer
-import scala.concurrent.Future
 
 object InteropTest extends App {
   val toC = Evt[Int]()

@@ -7,6 +7,7 @@ import clangast.WithContext
 import clangast.decl.CFunctionDecl
 import clangast.expr.CIntegerLiteral
 import clangast.stmt.{CCompoundStmt, CReturnStmt}
+import compiler.FragmentedCompiler.dispatch
 import compiler.base.*
 import compiler.ext.*
 import compiler.context.{ReactiveTC, RecordDeclTC}
@@ -15,7 +16,7 @@ import scala.annotation.tailrec
 import scala.quoted.*
 
 trait ReactiveMacroCompilerCode extends MacroCompilerCode {
-  override given cascade: CompilerCascade = CompileReactive ~>: standardCascade
+  override given compiler: FragmentedCompiler = ReactiveFragment +: standardFragmentedCompiler
 
   override type CTX = StandardContext with ReactiveTC
 
@@ -42,15 +43,15 @@ trait ReactiveMacroCompilerCode extends MacroCompilerCode {
 
     val outputReactives = expr match {
       case Apply(TypeApply(Select(Ident(className), "apply"), _), l) if className.startsWith("Tuple") =>
-        stmts.foreach(cascade.dispatch(_.compileReactiveTopLevelStmt))
+        stmts.foreach(dispatch[ReactiveIFFragment](_.compileReactiveTopLevelStmt))
 
         l.collect { case i: Ident => ctx.reactivesList.find(_.name.equals(i.name)) }.flatten
       case Block(List(innerExpr), Literal(UnitConstant())) =>
-        (stmts :+ innerExpr).foreach(cascade.dispatch(_.compileReactiveTopLevelStmt))
+        (stmts :+ innerExpr).foreach(dispatch[ReactiveIFFragment](_.compileReactiveTopLevelStmt))
 
         List()
       case _ =>
-        (stmts :+ expr).foreach(cascade.dispatch(_.compileReactiveTopLevelStmt))
+        (stmts :+ expr).foreach(dispatch[ReactiveIFFragment](_.compileReactiveTopLevelStmt))
 
         List()
     }

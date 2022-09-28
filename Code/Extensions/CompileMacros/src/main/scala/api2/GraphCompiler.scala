@@ -9,12 +9,13 @@ import clangast.expr.unaryop.CNotExpr
 import clangast.stmt.*
 import clangast.stubs.{CJSONH, DyadH, StdBoolH, StdLibH}
 import clangast.types.*
-import compiler.CompilerCascade
+import compiler.FragmentedCompiler
+import compiler.FragmentedCompiler.dispatch
 import compiler.context.RecordDeclTC
 import compiler.base.*
-import compiler.base.CompileDataStructure.{deepCopy, release, retain}
+import compiler.base.DataStructureFragment.{deepCopy, release, retain}
 import compiler.ext.*
-import compiler.ext.CompileSerialization.{deserialize, serialize}
+import compiler.ext.SerializationFragment.{deserialize, serialize}
 
 import java.io.{File, FileWriter}
 import scala.collection.mutable.ArrayBuffer
@@ -25,7 +26,7 @@ class GraphCompiler(using Quotes)(
   externalSources: List[CompiledReactive],
   outputReactives: List[CompiledReactive],
   appName: String
-)(using ctx: RecordDeclTC, cascade: CompilerCascade) {
+)(using fc: FragmentedCompiler)(using ctx: RecordDeclTC) {
   import quotes.reflect.*
 
   private val sources: List[CompiledReactive] = reactives.filter(_.isSource)
@@ -131,7 +132,7 @@ class GraphCompiler(using Quotes)(
     case s: CompiledSignal if s.isSource => s ->
       CParmVarDecl(
         s.name + "_param",
-        cascade.dispatch(_.compileTypeRepr)(TypeRepr.of[Option].appliedTo(s.typeRepr))
+        dispatch[TypeIFFragment](_.compileTypeRepr)(TypeRepr.of[Option].appliedTo(s.typeRepr))
       )
   }.toMap
 
@@ -143,7 +144,7 @@ class GraphCompiler(using Quotes)(
     )
 
   private val eventVariables: Map[CompiledEvent, CVarDecl] = events.collect {
-    case r if r.isSource && cascade.dispatch(_.usesRefCount)(r.typeRepr) =>
+    case r if r.isSource && dispatch[DataStructureIFFragment](_.usesRefCount)(r.typeRepr) =>
       r -> eventVar(r).copy(name = r.name + "_copy")
     case r if !r.isSource && r.cType != CQualType(CVoidType) => r -> eventVar(r)
   }.toMap
@@ -196,7 +197,7 @@ class GraphCompiler(using Quotes)(
   private def valueRef(r: CompiledReactive): CDeclRefExpr =
     r match {
       case s: CompiledSignal => signalVariables(s).ref
-      case s if s.isSource && !cascade.dispatch(_.usesRefCount)(s.typeRepr) => sourceParameters(s).ref
+      case s if s.isSource && !dispatch[DataStructureIFFragment](_.usesRefCount)(s.typeRepr) => sourceParameters(s).ref
       case e: CompiledEvent => eventVariables(e).ref
     }
 
@@ -217,7 +218,7 @@ class GraphCompiler(using Quotes)(
       val tempDecl = CVarDecl("temp", signal.cType, Some(valueRef(signal)))
       val oldDecl = CVarDecl("_old", signal.cType, Some(retain(deepCopy(valueRef(signal), signal.typeRepr), signal.typeRepr)))
 
-      val changedTest = cascade.dispatchLifted(_.compileEquals)(oldDecl.ref, signal.typeRepr, valueRef(signal), signal.typeRepr) match {
+      val changedTest = fc.dispatchLifted[ApplyIFFragment](_.compileEquals)(oldDecl.ref, signal.typeRepr, valueRef(signal), signal.typeRepr) match {
         case Some(expr) => CNotExpr(CParenExpr(expr))
         case None => CTrueLiteral
       }
@@ -237,7 +238,7 @@ class GraphCompiler(using Quotes)(
     }
 
     val updates = sameCond.collect {
-      case s: CompiledEvent if s.isSource && cascade.dispatch(_.usesRefCount)(s.typeRepr) =>
+      case s: CompiledEvent if s.isSource && dispatch[DataStructureIFFragment](_.usesRefCount)(s.typeRepr) =>
         eventUpdateAssignment(s, deepCopy(sourceParameters(s).ref, s.typeRepr))
       case s: CompiledSignal if s.isSource =>
         signalUpdateAssignment(s, deepCopy(sourceParameters(s).ref.value, s.typeRepr))
@@ -289,7 +290,7 @@ class GraphCompiler(using Quotes)(
     }
 
     val releaseCode = released.flatMap {
-      case r if cascade.dispatch(_.usesRefCount)(r.typeRepr) =>
+      case r if dispatch[DataStructureIFFragment](_.usesRefCount)(r.typeRepr) =>
         CEmptyStmt :: (release(valueRef(r), r.typeRepr, CFalseLiteral) map { releaseStmt =>
           CIfStmt(valueRef(r).defined, releaseStmt)
         }).toList
@@ -300,8 +301,8 @@ class GraphCompiler(using Quotes)(
   }
 
   private def emptySourceArgs(reactives: List[CompiledReactive]): List[CExpr] = reactives.map {
-    case e: CompiledEvent => CCallExpr(CompileOption.getNoneCreator(e.typeRepr).ref, List())
-    case s: CompiledSignal => CCallExpr(CompileOption.getNoneCreator(TypeRepr.of[Option].appliedTo(s.typeRepr)).ref, List())
+    case e: CompiledEvent => CCallExpr(OptionFragment.getNoneCreator(e.typeRepr).ref, List())
+    case s: CompiledSignal => CCallExpr(OptionFragment.getNoneCreator(TypeRepr.of[Option].appliedTo(s.typeRepr)).ref, List())
   }
 
   private def buildTransactionFunction(sources: Set[CompiledReactive], nameSuffix: String): CFunctionDecl = {
@@ -435,7 +436,7 @@ class GraphCompiler(using Quotes)(
       val checkArgs = CIfStmt(
         CLessThanExpr(argc.ref, 2.lit),
         CCompoundStmt(List(
-          CompileString.printf("Listen port expected as command line argument\\n"),
+          StringFragment.printf("Listen port expected as command line argument\\n"),
           CReturnStmt(Some(1.lit))
         ))
       )

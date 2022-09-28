@@ -1,39 +1,39 @@
 import compiler.base.*
 import compiler.context.*
-import compiler.debug.CompileDebug
+import compiler.debug.DebugFragment
 import compiler.ext.*
 
 package object compiler {
-  val minimalCascade: CompilerCascade = CompilerCascade(
-    CompileDebug,
-    CompileDataStructure,
-    CompileApply,
-    CompileDefinition,
-    CompileMatch,
-    CompileRef,
-    CompileSelect,
-    CompileStatement,
-    CompileTerm,
-    CompileTree,
-    CompileType
+  val minimalFragmentedCompiler: FragmentedCompiler = FragmentedCompiler(
+    DebugFragment,
+    DataStructureFragment,
+    ApplyFragment,
+    DefinitionFragment,
+    MatchFragment,
+    RefFragment,
+    SelectFragment,
+    StatementFragment,
+    TermFragment,
+    TreeFragment,
+    TypeFragment
   )
 
   trait MinimalContext extends ValueDeclTC with FunctionDeclTC with RecordDeclTC
 
   def createMinimalContext(): MinimalContext = new MinimalContext {}
 
-  val standardCascade: CompilerCascade =
-    CompileMainFunction
-      ~>: CompileHelperFun
-      ~>: CompileSet
-      ~>: CompileMap
-      ~>: CompileEither
-      ~>: CompileOption
-      ~>: CompileArray
-      ~>: CompileProduct
-      ~>: CompileSerialization
-      ~>: CompileString
-      ~>: minimalCascade
+  val standardFragmentedCompiler: FragmentedCompiler =
+    MainFunctionFragment
+      +: HelperFunFragment
+      +: SetFragment
+      +: MapFragment
+      +: EitherFragment
+      +: OptionFragment
+      +: ArrayFragment
+      +: ProductFragment
+      +: SerializationFragment
+      +: StringFragment
+      +: minimalFragmentedCompiler
 
   trait StandardContext extends MinimalContext
 
