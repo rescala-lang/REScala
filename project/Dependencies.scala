@@ -12,7 +12,7 @@ object Dependencies {
     val betterFiles        = "3.9.1"
     val catsCore           = "2.6.1"
     val circeCore          = "0.14.3"
-    val decline            = "2.3.0"
+    val decline            = "2.3.1"
     val directories        = "26"
     val jetty              = "9.4.49.v20220914"
     val jol                = "0.16"
@@ -36,12 +36,12 @@ object Dependencies {
     val scalacheck         = "1.17.0"
     val scalactic          = "3.0.0"
     val scalajsDom         = "2.3.0"
-    val scalatags          = "0.11.1"
-    val scalatest          = "3.2.13"
-    val scalatestpluscheck = "3.2.13.0"
+    val scalatags          = "0.12.0"
+    val scalatest          = "3.2.14"
+    val scalatestpluscheck = "3.2.14.0"
     val scopt              = "4.1.0"
     val scribe             = "3.10.3"
-    val slips              = "3b223bd2d9"
+    val slips              = "0.4.5"
     val sourcecode         = "0.3.0"
     val tomlScala          = "0.2.2"
     val upickle            = "2.0.0"
@@ -142,11 +142,11 @@ object Dependencies {
     }
     Seq(
       libraryDependencies ++= Seq(
-        "org.scalafx" %% "scalafx" % "18.0.2-R29",
+        "org.scalafx" %% "scalafx" % "19.0.0-R30",
         scalaSwing.value,
       ),
       libraryDependencies ++= Seq("base", "controls", "fxml", "graphics", "media", "swing", "web").map(m =>
-        "org.openjfx" % s"javafx-$m" % "18.0.2" classifier osName
+        "org.openjfx" % s"javafx-$m" % "19" classifier osName
       )
     )
   }
