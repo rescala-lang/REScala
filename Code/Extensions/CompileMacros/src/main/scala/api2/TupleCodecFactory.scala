@@ -1,8 +1,7 @@
-package rescala.api2
+package api2
 
 import com.github.plokhotnyuk.jsoniter_scala.macros.*
 import com.github.plokhotnyuk.jsoniter_scala.core.*
-import rescala.api2.StandardBundle.TupleFromMetaReactives
 
 import scala.quoted.*
 
@@ -89,21 +88,21 @@ object TupleCodecFactory {
       case '[t] => '{ JsonCodecMaker.make[t].asInstanceOf[JsonValueCodec[OptionsFromEvents[T]]] }
   }
 
-  inline def generateMetaReactiveCodecsTuple[T <: Tuple]: Codecs[OptionsFromTuple[TupleFromMetaReactives[T]]] =
-    ${ generateMetaReactiveCodecsTupleCode }
+  inline def generateCReactiveCodecsTuple[T <: Tuple]: Codecs[OptionsFromTuple[TupleFromCEvents[T]]] =
+    ${ generateCReactiveCodecsTupleCode }
 
-  def generateMetaReactiveCodecsTupleCode[T <: Tuple](using Type[T], Quotes): Expr[Codecs[OptionsFromTuple[TupleFromMetaReactives[T]]]] = {
+  def generateCReactiveCodecsTupleCode[T <: Tuple](using Type[T], Quotes): Expr[Codecs[OptionsFromTuple[TupleFromCEvents[T]]]] = {
     import quotes.reflect.*
 
     val AppliedType(_, mrTypes) = TypeRepr.of[T]: @unchecked
 
     val codecs = mrTypes.collect {
-      case AppliedType(_, List(inner, _)) =>
+      case AppliedType(_, List(inner)) =>
         inner.asType match
-          case '[t] => '{ JsonCodecMaker.make[t] }
+          case '[t] => '{ JsonCodecMaker.make[Option[t]] }
     }
 
-    Expr.ofTupleFromSeq(codecs).asInstanceOf[Expr[Codecs[OptionsFromTuple[TupleFromMetaReactives[T]]]]]
+    Expr.ofTupleFromSeq(codecs).asInstanceOf[Expr[Codecs[OptionsFromTuple[TupleFromCEvents[T]]]]]
   }
 
   def combineTupleCodecs[T <: Tuple](codecs: Codecs[OptionsFromTuple[T]])

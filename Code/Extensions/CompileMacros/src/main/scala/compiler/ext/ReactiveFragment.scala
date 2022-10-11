@@ -1,6 +1,6 @@
 package compiler.ext
 
-import api2.{CompiledEvent, CompiledFold, CompiledReactive, CompiledSignalExpr}
+import api2.*
 import clangast.*
 import clangast.given
 import clangast.decl.{CFunctionDecl, CParmVarDecl}
@@ -11,7 +11,6 @@ import compiler.FragmentedCompiler
 import compiler.FragmentedCompiler.dispatch
 import compiler.base.*
 import compiler.context.{FunctionDeclTC, ReactiveTC, TranslationContext, ValueDeclTC}
-import rescala.api2.CompilerReactiveMarker
 import rescala.macros.MacroAccess
 
 import scala.quoted.*
@@ -22,24 +21,24 @@ object ReactiveFragment extends SelectIFFragment with ApplyIFFragment with React
       import quotes.reflect.*
 
       {
-        case this.eventValueAccess(eventName, tpe) =>
-          val (eventParam, _) = ctx.inputParameters.getOrElseUpdate(
-            eventName,
-            (CParmVarDecl(eventName, dispatch[TypeIFFragment](_.compileTypeRepr)(tpe)), tpe.asInstanceOf[Object])
+        case this.reactiveValueAccess(rName, tpe) =>
+          val (rParam, _) = ctx.inputParameters.getOrElseUpdate(
+            rName,
+            (CParmVarDecl(rName, dispatch[TypeIFFragment](_.compileTypeRepr)(tpe)), tpe.asInstanceOf[Object])
           )
 
-          eventParam.ref
+          rParam.ref
       }
     }
 
-  private def eventValueAccess(using Quotes): PartialFunction[quotes.reflect.Term, (String, quotes.reflect.TypeRepr)] = {
+  private def reactiveValueAccess(using Quotes): PartialFunction[quotes.reflect.Term, (String, quotes.reflect.TypeRepr)] = {
     import quotes.reflect.*
 
     {
-      case select@Select(event@Ident(eventName), "value") if event.tpe <:< TypeRepr.of[MacroAccess[?, ?]] =>
-        (eventName, select.tpe)
-      case select@Select(Inlined(_, _, event@Ident(eventName)), "value") if event.tpe <:< TypeRepr.of[MacroAccess[?, ?]] =>
-        (eventName, select.tpe)
+      case select@Select(r@Ident(rName), "value") if r.tpe <:< TypeRepr.of[CReactive[_]] =>
+        (rName, select.tpe)
+      case select@Select(Inlined(_, _, r@Ident(rName)), "value") if r.tpe <:< TypeRepr.of[CReactive[_]] =>
+        (rName, select.tpe)
     }
   }
 
@@ -62,10 +61,10 @@ object ReactiveFragment extends SelectIFFragment with ApplyIFFragment with React
       import quotes.reflect.*
 
       {
-        case ValDef(name, tpt, Some(rhs)) if tpt.tpe <:< TypeRepr.of[CompilerReactiveMarker] =>
+        case ValDef(name, tpt, Some(rhs)) if tpt.tpe <:< TypeRepr.of[CReactive[_]] =>
           ctx.addReactive(dispatch[ReactiveIFFragment](_.compileReactive)(rhs).rename(name))
-        case evt: Term if fc.dispatchLifted[ReactiveIFFragment](_.compileReactive)(evt).isDefined =>
-          ctx.addReactive(dispatch[ReactiveIFFragment](_.compileReactive)(evt))
+        case t: Term if t.tpe <:< TypeRepr.of[CReactive[_]] =>
+          ctx.addReactive(dispatch[ReactiveIFFragment](_.compileReactive)(t))
         case valDef: ValDef =>
           val decl = dispatch[DefinitionIFFragment](_.compileValDefToCVarDecl)(valDef)
           ctx.addValueDecl(decl)
@@ -82,21 +81,20 @@ object ReactiveFragment extends SelectIFFragment with ApplyIFFragment with React
       import quotes.reflect.*
 
       {
-        case inlined@Inlined(Some(Apply(Apply(Apply(TypeApply(apply@Apply(TypeApply(Ident("fold"), _), List(Ident(primaryInput))), _), List(init)), List(f)), _)), _, _)
-          if inlined.tpe <:< TypeRepr.of[CompilerReactiveMarker] =>
+        case inlined@Inlined(Some(Apply(Apply(TypeApply(apply@Apply(TypeApply(Ident("fold"), _), List(Ident(inputReactive))), _), List(init)), List(f))), _, _)
+          if inlined.tpe <:< TypeRepr.of[CReactive[_]] =>
           val name = "signal_" + (apply.pos.startLine + 1) + "_" + (apply.pos.startColumn + 1)
 
           val cFun = dispatch[ReactiveIFFragment](_.compileReactiveExpr)(f)
           val cInit = dispatch[TermIFFragment](_.compileTermToCExpr)(init)
 
-          CompiledFold(name, cInit, primaryInput, cFun, init.tpe)
-        case inlined@Inlined(Some(Apply(Apply(TypeApply(Ident(id), _), List(expr)), _)), _, _)
-          if List("Signal", "Event").contains(id) && inlined.tpe <:< TypeRepr.of[CompilerReactiveMarker] =>
-          val posString = "_" + (inlined.pos.startLine + 1) + "_" + (inlined.pos.startColumn + 1)
+          CompiledFold(name, cInit, inputReactive, cFun, init.tpe)
+        case r @ this.reactiveExpression(id, expr) =>
+          val posString = "_" + (r.pos.startLine + 1) + "_" + (r.pos.startColumn + 1)
 
           val cFun = dispatch[ReactiveIFFragment](_.compileReactiveExpr)(expr)
 
-          if id.equals("Signal") then CompiledSignalExpr("signal" + posString, cFun, expr.tpe)
+          if id.equals("CSignal") then CompiledSignalExpr("signal" + posString, cFun, expr.tpe)
           else CompiledEvent("event" + posString, cFun, expr.tpe)
         case this.inlinedExtensionCall(pos, ext, f, id, expr) =>
           val posString = "_" + (pos.startLine + 1) + "_" + (pos.startColumn + 1)
@@ -104,7 +102,7 @@ object ReactiveFragment extends SelectIFFragment with ApplyIFFragment with React
           val fName = "anonfun_" + f.pos.sourceFile.name.stripSuffix(".scala") + "_" + (f.pos.startLine + 1) + "_" + (f.pos.startColumn + 1)
           val cFun = dispatch[ReactiveIFFragment](_.compileReactiveExpr)(expr).copy(name = fName)
 
-          if id.equals("Signal") then CompiledSignalExpr("signal" + posString, cFun, expr.tpe)
+          if id.equals("CSignal") then CompiledSignalExpr("signal" + posString, cFun, expr.tpe)
           else CompiledEvent("event" + posString, cFun, expr.tpe, ext.equals("map"))
       }
     }
@@ -116,10 +114,10 @@ object ReactiveFragment extends SelectIFFragment with ApplyIFFragment with React
     import quotes.reflect.*
 
     term match {
-      case inlined@Inlined(Some(Apply(TypeApply(apply@Apply(TypeApply(Ident(ext), _), _), _), List(f))), _, this.reactiveExpression(id, expr))
-        if List("Signal", "Event").contains(id) && inlined.tpe <:< TypeRepr.of[CompilerReactiveMarker] => (apply.pos, ext, f, id, expr)
-      case inlined@Inlined(Some(Apply(apply@Apply(TypeApply(Ident(ext), _), _), List(f))), _, this.reactiveExpression(id, expr))
-        if List("Signal", "Event").contains(id) && inlined.tpe <:< TypeRepr.of[CompilerReactiveMarker] => (apply.pos, ext, f, id, expr)
+      case inlined@Inlined(Some(Apply(TypeApply(apply@Apply(TypeApply(Ident(ext), _), _), _), List(f))), _, Typed(this.reactiveExpression(id, expr), _))
+        if inlined.tpe <:< TypeRepr.of[CReactive[_]] => (apply.pos, ext, f, id, expr)
+      case inlined@Inlined(Some(Apply(apply@Apply(TypeApply(Ident(ext), _), _), List(f))), _, Typed(this.reactiveExpression(id, expr), _))
+        if inlined.tpe <:< TypeRepr.of[CReactive[_]] => (apply.pos, ext, f, id, expr)
     }
   }
 
@@ -127,10 +125,8 @@ object ReactiveFragment extends SelectIFFragment with ApplyIFFragment with React
     import quotes.reflect.*
 
     {
-      case Typed(Inlined(Some(Apply(Apply(TypeApply(Ident(id), _), List(expr)), _)), _, _), _)
-        if List("Signal", "Event").contains(id) => (id, expr)
-      case Typed(Inlined(Some(Apply(Apply(TypeApply(Select(_, id), _), List(expr)), _)), _, _), _)
-        if List("Signal", "Event").contains(id) => (id, expr)
+      case apply@Apply(TypeApply(Select(Ident(id @ ("CSignal" | "CEvent")), "apply"), _), List(expr))
+        if apply.tpe <:< TypeRepr.of[CReactive[_]] => (id, expr)
     }
   }
 

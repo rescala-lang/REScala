@@ -4,7 +4,6 @@ import clangast.{CASTNode, WithContext}
 import clangast.decl.CFunctionDecl
 import clangast.expr.CExpr
 import clangast.types.CType
-import rescala.api2.MetaBundle
 
 import scala.quoted.*
 

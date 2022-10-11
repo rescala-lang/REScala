@@ -1,4 +1,4 @@
-package rescala.api2
+package api2
 
 import com.github.plokhotnyuk.jsoniter_scala.macros.*
 import com.github.plokhotnyuk.jsoniter_scala.core.*

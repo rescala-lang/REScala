@@ -1,7 +1,6 @@
-package rescala.api2
+package api2
 
 import rescala.default.*
-import StandardBundle.CompileGraph
 
 import scala.io.StdIn.readLine
 
@@ -11,13 +10,11 @@ object InteropTest extends App {
   val toCString = Evt[String]()
 
   val remote = CompileGraph.withIO("interopTest")(toC, toCString) { (fromScala, fromScalaString) =>
-    import StandardBundle.*
-
-    val localSource = Event(Some(5))
+    val localSource = CEvent(Some(5))
 
     val localMap = localSource.map(_ / 2)
 
-    val strCopy = Event(fromScalaString.value)
+    val strCopy = CEvent(fromScalaString.value)
 
     val plusOne = fromScala.map(_ + 1)
 

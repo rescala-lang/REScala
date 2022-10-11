@@ -61,7 +61,7 @@ trait ReactiveMacroCompilerCode extends MacroCompilerCode {
       case Bind(name, _) => name
     }.flatMap(name => ctx.reactivesList.find(_.name.equals(name)))
 
-    val gc = new GraphCompiler(using summon[Quotes])(ctx.reactivesList, externalSources, outputReactives, appName.valueOrAbort)
+    val gc = new GraphCompiler(ctx.reactivesList, externalSources, outputReactives, appName.valueOrAbort)
     gc.writeIntoDir("out/" + appName.valueOrAbort, "gcc")
 
     '{()}
