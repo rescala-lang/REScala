@@ -134,8 +134,8 @@ trait MetaBundle extends rescala.core.Core {
 }
 
 object StandardBundle extends MetaBundle {
-  type MC = ReactiveMacroCompiler.type
-  override val macroCompiler: MC = ReactiveMacroCompiler
+  type MC = StandardReactiveMacroCompiler.type
+  override val macroCompiler: MC = StandardReactiveMacroCompiler
 
   type MetaReactivesFromEvents[T <: Tuple] <: Tuple = T match
     case EmptyTuple => EmptyTuple
