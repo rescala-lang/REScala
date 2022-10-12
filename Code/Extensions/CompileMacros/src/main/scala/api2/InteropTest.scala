@@ -10,7 +10,7 @@ object InteropTest extends App {
   val toCString = Evt[String]()
 
   val remote = CompileGraph.withIO("interopTest")(toC, toCString) { (fromScala, fromScalaString) =>
-    val localSource = CEvent(Some(5))
+    val localSource = CEvent.source[Int]
 
     val localMap = localSource.map(_ / 2)
 

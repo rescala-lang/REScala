@@ -12,6 +12,9 @@ class CSignal[T] extends CReactive[T]
 object CSignal {
   @compileTimeOnly("This method can only be used inside blocks that are translated to C code")
   def apply[T](expr: T): CSignal[T] = ???
+
+  @compileTimeOnly("This method can only be used inside blocks that are translated to C code")
+  def source[T]: CSignal[T] = ???
 }
 
 class CEvent[T] extends CReactive[Option[T]]
@@ -19,6 +22,9 @@ class CEvent[T] extends CReactive[Option[T]]
 object CEvent {
   @compileTimeOnly("This method can only be used inside blocks that are translated to C code")
   def apply[T](expr: Option[T]): CEvent[T] = ???
+
+  @compileTimeOnly("This method can only be used inside blocks that are translated to C code")
+  def source[T]: CEvent[T] = ???
 }
 
 extension [T] (inline sig: CSignal[T]) {

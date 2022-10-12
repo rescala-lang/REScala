@@ -7,7 +7,7 @@ import scala.collection.mutable
 
 object MetaBundleExample extends App {
   CompileGraph.isolated("metaBundleTest") {
-    val source = CSignal(5)
+    val source = CSignal.source[Int]
 
     val inc = 1
 
@@ -21,9 +21,7 @@ object MetaBundleExample extends App {
 
     arraySignal.observeChange(a => println(a))
 
-    val esource = CEvent {
-      Some("Hi!")
-    }
+    val esource = CEvent.source[String]
 
     val emapped = esource.map(str => str)
 

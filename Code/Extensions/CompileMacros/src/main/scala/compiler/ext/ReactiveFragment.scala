@@ -96,10 +96,18 @@ object ReactiveFragment extends SelectIFFragment with ApplyIFFragment with React
 
           if id.equals("CSignal") then CompiledSignalExpr("signal" + posString, cFun, expr.tpe)
           else CompiledEvent("event" + posString, cFun, expr.tpe)
+        case TypeApply(sel@Select(Ident(id @ ("CSignal" | "CEvent")), "source"), List(tpt)) =>
+          val posString = "_" + (sel.pos.startLine + 1) + "_" + (sel.pos.startColumn + 1)
+
+          val optType = TypeRepr.of[Option].appliedTo(tpt.tpe)
+          val cFun = CFunctionDecl("dummy", List(), dispatch[TypeIFFragment](_.compileTypeRepr)(optType))
+
+          if id.equals("CSignal") then CompiledSignalExpr("signal" + posString, cFun, tpt.tpe)
+          else CompiledEvent("event" + posString, cFun, optType)
         case this.inlinedExtensionCall(pos, ext, f, id, expr) =>
           val posString = "_" + (pos.startLine + 1) + "_" + (pos.startColumn + 1)
 
-          val fName = "anonfun_" + f.pos.sourceFile.name.stripSuffix(".scala") + "_" + (f.pos.startLine + 1) + "_" + (f.pos.startColumn + 1)
+          val fName = "anonfun_" + f.pos.sourceFile.name.stripSuffix(".scala") + posString
           val cFun = dispatch[ReactiveIFFragment](_.compileReactiveExpr)(expr).copy(name = fName)
 
           if id.equals("CSignal") then CompiledSignalExpr("signal" + posString, cFun, expr.tpe)
