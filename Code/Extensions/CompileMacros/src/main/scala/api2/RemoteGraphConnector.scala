@@ -16,8 +16,16 @@ trait RemoteGraphConnector {
 class TCPClientConnector(hostname: String, port: Int) extends RemoteGraphConnector {
   protected val chan: AsynchronousSocketChannel = AsynchronousSocketChannel.open()
 
-  def connect(): Unit =
+  def connect(): TCPClientConnector = {
     chan.connect(InetSocketAddress(hostname, port)).get()
+    this
+  }
+
+  def connect(rg: RemoteGraph): TCPClientConnector = {
+    chan.connect(InetSocketAddress(hostname, port)).get()
+    rg.setConnector(this)
+    this
+  }
 
   def closeConnection(): Unit = chan.close()
 

@@ -73,30 +73,31 @@ given[T, TS <: Tuple : TupleCodec]: TupleCodec[T *: TS] with {
 }
 
 object TupleCodecFactory {
-  inline def generateEventCodecs[T <: Tuple]: JsonValueCodec[OptionsFromEvents[T]] = ${ generateEventCodecsCode }
+  inline def generateEventCodecsTuple[T <: Tuple]: Codecs[OptionsFromTuple[TupleFromEvents[T]]] = ${ generateEventCodecsTupleCode }
 
-  def generateEventCodecsCode[T <: Tuple](using Type[T], Quotes): Expr[JsonValueCodec[OptionsFromEvents[T]]] = {
+  def generateEventCodecsTupleCode[T <: Tuple](using Type[T], Quotes): Expr[Codecs[OptionsFromTuple[TupleFromEvents[T]]]] = {
     import quotes.reflect.*
 
-    val AppliedType(tupleType, eventTypes) = TypeRepr.of[T]: @unchecked
+    val AppliedType(_, evTypes) = TypeRepr.of[T]: @unchecked
 
-    val optionTypes = eventTypes.collect {
-      case AppliedType(_, inner) => TypeRepr.of[Option].appliedTo(inner)
+    val codecs = evTypes.collect {
+      case AppliedType(_, List(inner)) =>
+        inner.asType match
+          case '[t] => '{ JsonCodecMaker.make[Option[t]] }
     }
 
-    tupleType.appliedTo(optionTypes).asType match
-      case '[t] => '{ JsonCodecMaker.make[t].asInstanceOf[JsonValueCodec[OptionsFromEvents[T]]] }
+    Expr.ofTupleFromSeq(codecs).asInstanceOf[Expr[Codecs[OptionsFromTuple[TupleFromEvents[T]]]]]
   }
 
-  inline def generateCReactiveCodecsTuple[T <: Tuple]: Codecs[OptionsFromTuple[TupleFromCEvents[T]]] =
-    ${ generateCReactiveCodecsTupleCode }
+  inline def generateCEventCodecsTuple[T <: Tuple]: Codecs[OptionsFromTuple[TupleFromCEvents[T]]] =
+    ${ generateCEventCodecsTupleCode }
 
-  def generateCReactiveCodecsTupleCode[T <: Tuple](using Type[T], Quotes): Expr[Codecs[OptionsFromTuple[TupleFromCEvents[T]]]] = {
+  def generateCEventCodecsTupleCode[T <: Tuple](using Type[T], Quotes): Expr[Codecs[OptionsFromTuple[TupleFromCEvents[T]]]] = {
     import quotes.reflect.*
 
-    val AppliedType(_, mrTypes) = TypeRepr.of[T]: @unchecked
+    val AppliedType(_, evTypes) = TypeRepr.of[T]: @unchecked
 
-    val codecs = mrTypes.collect {
+    val codecs = evTypes.collect {
       case AppliedType(_, List(inner)) =>
         inner.asType match
           case '[t] => '{ JsonCodecMaker.make[Option[t]] }

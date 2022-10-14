@@ -18,6 +18,10 @@ type OptionsFromEvents[T <: Tuple] <: Tuple = T match
   case EmptyTuple => EmptyTuple
   case Event[t] *: ts => Option[t] *: OptionsFromEvents[ts]
 
+type TupleFromEvents[T <: Tuple] <: Tuple = T match
+  case EmptyTuple => EmptyTuple
+  case Event[t] *: ts => t *: TupleFromEvents[ts]
+
 type EvtsFromTuple[T <: Tuple] <: Tuple = T match
   case EmptyTuple => EmptyTuple
   case t *: ts => Evt[t] *: EvtsFromTuple[ts]
