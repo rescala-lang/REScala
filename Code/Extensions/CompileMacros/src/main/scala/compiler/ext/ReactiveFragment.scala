@@ -76,38 +76,47 @@ object ReactiveFragment extends SelectIFFragment with ApplyIFFragment with React
       }
     }
 
-  override def compileReactive(using Quotes)(using FragmentedCompiler)(using TranslationContext):
+  override def compileReactive(using Quotes)(using FragmentedCompiler)(using ctx: TranslationContext):
     PartialFunction[quotes.reflect.Term, CompiledReactive] = ensureCtx[ReactiveTC] {
       import quotes.reflect.*
 
       {
         case inlined@Inlined(Some(Apply(Apply(TypeApply(apply@Apply(TypeApply(Ident("fold"), _), List(Ident(inputReactive))), _), List(init)), List(f))), _, _)
           if inlined.tpe <:< TypeRepr.of[CReactive[_]] =>
-          val name = "signal_" + (apply.pos.startLine + 1) + "_" + (apply.pos.startColumn + 1)
+          val name = "signal" + posToString(apply.pos)
 
           val cFun = dispatch[ReactiveIFFragment](_.compileReactiveExpr)(f)
           val cInit = dispatch[TermIFFragment](_.compileTermToCExpr)(init)
 
           CompiledFold(name, cInit, inputReactive, cFun, init.tpe)
         case r @ this.reactiveExpression(id, expr) =>
-          val posString = "_" + (r.pos.startLine + 1) + "_" + (r.pos.startColumn + 1)
+          val posString = posToString(r.pos)
 
           val cFun = dispatch[ReactiveIFFragment](_.compileReactiveExpr)(expr)
 
           if id.equals("CSignal") then CompiledSignalExpr("signal" + posString, cFun, expr.tpe)
           else CompiledEvent("event" + posString, cFun, expr.tpe)
-        case TypeApply(sel@Select(Ident(id @ ("CSignal" | "CEvent")), "source"), List(tpt)) =>
-          val posString = "_" + (sel.pos.startLine + 1) + "_" + (sel.pos.startColumn + 1)
-
+        case TypeApply(sel@Select(Ident("CEvent"), "source"), List(tpt)) =>
           val optType = TypeRepr.of[Option].appliedTo(tpt.tpe)
           val cFun = CFunctionDecl("dummy", List(), dispatch[TypeIFFragment](_.compileTypeRepr)(optType))
 
-          if id.equals("CSignal") then CompiledSignalExpr("signal" + posString, cFun, tpt.tpe)
-          else CompiledEvent("event" + posString, cFun, optType)
-        case this.inlinedExtensionCall(pos, ext, f, id, expr) =>
-          val posString = "_" + (pos.startLine + 1) + "_" + (pos.startColumn + 1)
+          CompiledEvent("event" + posToString(sel.pos), cFun, optType)
+        case apply@Apply(TypeApply(Select(Ident("CSignal"), "source"), _), List(init)) =>
+          val name = "signal" + posToString(apply.pos)
+          val cFun = CFunctionDecl(
+            "init_" + name,
+            List(),
+            dispatch[TypeIFFragment](_.compileTypeRepr)(init.tpe),
+            Some(CCompoundStmt(List(CReturnStmt(Some(
+              dispatch[TermIFFragment](_.compileTermToCExpr)(init)
+            )))))
+          )
 
-          val fName = "anonfun_" + f.pos.sourceFile.name.stripSuffix(".scala") + posString
+          CompiledSignalExpr(name, cFun, init.tpe)
+        case this.inlinedExtensionCall(pos, ext, fPos, id, expr) =>
+          val posString = posToString(pos)
+
+          val fName = "anonfun_" + fPos.sourceFile.name.stripSuffix(".scala") + posString
           val cFun = dispatch[ReactiveIFFragment](_.compileReactiveExpr)(expr).copy(name = fName)
 
           if id.equals("CSignal") then CompiledSignalExpr("signal" + posString, cFun, expr.tpe)
@@ -115,17 +124,22 @@ object ReactiveFragment extends SelectIFFragment with ApplyIFFragment with React
       }
     }
 
+  private def posToString(using Quotes)(pos: quotes.reflect.Position): String =
+    "_" + (pos.startLine + 1) + "_" + (pos.startColumn + 1)
+
   private def inlinedExtensionCall(using Quotes): PartialFunction[
     quotes.reflect.Term,
-    (quotes.reflect.Position, String, quotes.reflect.Term, String, quotes.reflect.Term)
+    (quotes.reflect.Position, String, quotes.reflect.Position, String, quotes.reflect.Term)
   ] = term => {
     import quotes.reflect.*
 
     term match {
       case inlined@Inlined(Some(Apply(TypeApply(apply@Apply(TypeApply(Ident(ext), _), _), _), List(f))), _, Typed(this.reactiveExpression(id, expr), _))
-        if inlined.tpe <:< TypeRepr.of[CReactive[_]] => (apply.pos, ext, f, id, expr)
+        if inlined.tpe <:< TypeRepr.of[CReactive[_]] => (apply.pos, ext, f.pos, id, expr)
       case inlined@Inlined(Some(Apply(apply@Apply(TypeApply(Ident(ext), _), _), List(f))), _, Typed(this.reactiveExpression(id, expr), _))
-        if inlined.tpe <:< TypeRepr.of[CReactive[_]] => (apply.pos, ext, f, id, expr)
+        if inlined.tpe <:< TypeRepr.of[CReactive[_]] => (apply.pos, ext, f.pos, id, expr)
+      case inlined@Inlined(Some(apply@Apply(TypeApply(extId@Ident(ext), _), _)), _, Typed(this.reactiveExpression(id, expr), _))
+        if inlined.tpe <:< TypeRepr.of[CReactive[_]] => (apply.pos, ext, extId.pos, id, expr)
     }
   }
 
@@ -143,10 +157,10 @@ object ReactiveFragment extends SelectIFFragment with ApplyIFFragment with React
       import quotes.reflect.*
 
       {
-        case Block(List(), Block(List(f: DefDef), Closure(_, _))) =>
+        case Block(List(), expr) =>
+          dispatch[ReactiveIFFragment](_.compileReactiveExpr)(expr)
+        case Block(List(f: DefDef), Closure(_, _)) =>
           val cFun = dispatch[DefinitionIFFragment](_.compileDefDef)(f)
-
-          ctx.createMissingSources()
 
           val fullParams = cFun.parameters ++ ctx.inputParameters.values.map(_._1).toList
           ctx.inputParameters.clear()
@@ -164,8 +178,6 @@ object ReactiveFragment extends SelectIFFragment with ApplyIFFragment with React
           val pos = term.pos
           val inferredName =
             "anonfun_" + pos.sourceFile.name.stripSuffix(".scala") + "_" + (pos.startLine + 1) + "_" + (pos.startColumn + 1)
-
-          ctx.createMissingSources()
 
           val params = ctx.inputParameters.values.map(_._1).toList
           ctx.inputParameters.clear()

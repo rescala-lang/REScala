@@ -7,7 +7,7 @@ import scala.collection.mutable
 
 object MetaBundleExample extends App {
   CompileGraph.isolated("metaBundleTest") {
-    val source = CSignal.source[Int]
+    val source = CSignal.source(5)
 
     val inc = 1
 

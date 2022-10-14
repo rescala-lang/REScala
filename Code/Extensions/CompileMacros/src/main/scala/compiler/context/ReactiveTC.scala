@@ -17,11 +17,4 @@ trait ReactiveTC extends TranslationContext {
   def addReactive(r: CompiledReactive): Unit = reactives.append(r)
 
   def reactivesList: List[CompiledReactive] = reactives.toList
-
-  def createMissingSources(using Quotes)(): Unit =
-    inputParameters.values.foreach {
-      case (p, tpe) =>
-        if !reactives.exists(_.name.equals(p.name)) then
-          addReactive(CompiledEvent(p.name, CFunctionDecl("", List(), p.declaredType), tpe.asInstanceOf[quotes.reflect.TypeRepr]))
-    }
 }

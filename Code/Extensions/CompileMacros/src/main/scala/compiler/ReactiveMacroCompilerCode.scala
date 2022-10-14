@@ -1,6 +1,6 @@
 package compiler
 
-import api2.{CompiledReactive, CompiledSignalExpr, GraphCompiler}
+import api2.{CompiledEvent, CompiledReactive, CompiledSignalExpr, GraphCompiler}
 import clangast.*
 import clangast.given
 import clangast.WithContext
@@ -9,6 +9,7 @@ import clangast.expr.CIntegerLiteral
 import clangast.stmt.{CCompoundStmt, CReturnStmt}
 import compiler.FragmentedCompiler.dispatch
 import compiler.base.*
+import compiler.base.TypeFragment.typeArgs
 import compiler.ext.*
 import compiler.context.{ReactiveTC, RecordDeclTC}
 
@@ -41,6 +42,17 @@ trait ReactiveMacroCompilerCode extends MacroCompilerCode {
       case Block(stmts, expr) => (List(), stmts, expr)
     }
 
+    val externalSources = params.map {
+      case ValDef(name, tpt, _) => (name, tpt.tpe)
+      case Bind(name, wc@Wildcard()) => (name, wc.tpe)
+    } map { (name, tpe) =>
+      val typeArgs(List(innerType)) = tpe.widen: @unchecked
+      val optType = TypeRepr.of[Option].appliedTo(innerType)
+      CompiledEvent(name, CFunctionDecl("", List(), dispatch[TypeIFFragment](_.compileTypeRepr)(optType)), optType)
+    }
+
+    externalSources.foreach(ctx.addReactive)
+
     val outputReactives = expr match {
       case Apply(TypeApply(Select(Ident(className), "apply"), _), l) if className.startsWith("Tuple") =>
         stmts.foreach(dispatch[ReactiveIFFragment](_.compileReactiveTopLevelStmt))
@@ -55,11 +67,6 @@ trait ReactiveMacroCompilerCode extends MacroCompilerCode {
 
         List()
     }
-
-    val externalSources = params.map {
-      case ValDef(name, _, _) => name
-      case Bind(name, _) => name
-    }.flatMap(name => ctx.reactivesList.find(_.name.equals(name)))
 
     val gc = new GraphCompiler(ctx.reactivesList, externalSources, outputReactives, appName.valueOrAbort)
     gc.writeIntoDir("out/" + appName.valueOrAbort, "gcc")
