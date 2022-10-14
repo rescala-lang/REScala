@@ -13,7 +13,7 @@ import compiler.FragmentedCompiler
 import compiler.FragmentedCompiler.dispatch
 import compiler.context.RecordDeclTC
 import compiler.base.*
-import compiler.base.DataStructureFragment.{deepCopy, release, retain}
+import compiler.base.DataStructureFragment.{deepCopy, release, retain, usesRefCount}
 import compiler.ext.*
 import compiler.ext.SerializationFragment.{deserialize, serialize}
 
@@ -168,12 +168,12 @@ class GraphCompiler(using Quotes)(
     case _ => cond(r)
   }
 
-  private val updateConditions: Map[CompiledReactive, Set[CExpr]] =
-    topological.foldLeft(Map.empty[CompiledReactive, Set[CExpr]]) { (acc, r) =>
+  private def updateConditions(subGraph: Set[CompiledReactive]): Map[CompiledReactive, Set[CExpr]] =
+    topological.filter(subGraph.contains).foldLeft(Map.empty[CompiledReactive, Set[CExpr]]) { (acc, r) =>
       r match {
         case s if s.isSource => acc.updated(s, Set(sourceParameters(s).ref.defined))
         case f: CompiledFold => acc.updated(f, conditionAfterFilter(reactiveInputs(f).head, acc))
-        case _ => acc.updated(r, reactiveInputs(r).map(conditionAfterFilter(_, acc)).reduce(_ union _))
+        case _ => acc.updated(r, reactiveInputs(r).filter(subGraph.contains).map(conditionAfterFilter(_, acc)).reduce(_ union _))
       }
     }
 
@@ -182,11 +182,11 @@ class GraphCompiler(using Quotes)(
     case l => l.reduce(COrExpr.apply)
   }
 
-  private val topologicalByCond: List[CompiledReactive] = {
+  private def topologicalByCond(subGraph: Set[CompiledReactive], subGraphConds: Map[CompiledReactive, Set[CExpr]]): List[CompiledReactive] = {
     val (groupedByCond: Map[Set[CExpr], List[CompiledReactive]], condOrder: List[Set[CExpr]]) =
-      topological.foldLeft((Map.empty[Set[CExpr], List[CompiledReactive]], List[Set[CExpr]]())) {
+      topological.filter(subGraph.contains).foldLeft((Map.empty[Set[CExpr], List[CompiledReactive]], List[Set[CExpr]]())) {
         case ((groupedByCond, condOrder), r) =>
-          val cond = updateConditions(r)
+          val cond = subGraphConds(r)
           if groupedByCond.contains(cond) then (groupedByCond.updated(cond, groupedByCond(cond) :+ r), condOrder)
           else (groupedByCond.updated(cond, List(r)), condOrder :+ cond)
       }
@@ -201,12 +201,16 @@ class GraphCompiler(using Quotes)(
       case e: CompiledEvent => eventVariables(e).ref
     }
 
-  private def compileUpdates(remainingReactives: List[CompiledReactive], toRelease: Set[CompiledReactive]): List[CStmt] = {
+  private def compileUpdates(
+    remainingReactives: List[CompiledReactive],
+    subGraphConds: Map[CompiledReactive, Set[CExpr]],
+    toRelease: Set[CompiledReactive]
+  ): List[CStmt] = {
     if remainingReactives.isEmpty then return Nil
 
-    val condition = updateConditions(remainingReactives.head)
+    val condition = subGraphConds(remainingReactives.head)
     val (sameCond: List[CompiledReactive], otherConds: List[CompiledReactive]) =
-      remainingReactives.span { r => updateConditions(r) == condition }
+      remainingReactives.span { r => subGraphConds(r) == condition }
 
     def eventUpdateAssignment(event: CompiledReactive, rhs: CExpr): CStmt =
       CAssignmentExpr(
@@ -223,18 +227,26 @@ class GraphCompiler(using Quotes)(
         case None => CTrueLiteral
       }
 
-      CCompoundStmt(List[CStmt](
-        tempDecl,
-        oldDecl,
-        CAssignmentExpr(
-          valueRef(signal),
-          retain(rhs, signal.typeRepr)
-        ),
-        CAssignmentExpr(
-          signalChangedVars(signal).ref,
-          changedTest
-        )
-      ) ++ release(oldDecl.ref, signal.typeRepr, CFalseLiteral) ++ release(tempDecl.ref, signal.typeRepr, CFalseLiteral))
+      CCompoundStmt(
+        if dispatch[DataStructureIFFragment](_.usesRefCount)(signal.typeRepr) then List(tempDecl) else Nil ++
+        List[CStmt](
+          oldDecl,
+          CAssignmentExpr(
+            valueRef(signal),
+            retain(rhs, signal.typeRepr)
+          ),
+          CAssignmentExpr(
+            signalChangedVars(signal).ref,
+            changedTest
+          )
+        ) ++ release(oldDecl.ref, signal.typeRepr, CFalseLiteral) ++ release(tempDecl.ref, signal.typeRepr, CFalseLiteral)
+      )
+    }
+
+    def refOrNone(r: CompiledReactive): CExpr = r match {
+      case ev: CompiledEvent if !subGraphConds.contains(ev) =>
+        CCallExpr(OptionFragment.getNoneCreator(ev.typeRepr).ref, List())
+      case _ => valueRef(r)
     }
 
     val updates = sameCond.collect {
@@ -247,7 +259,7 @@ class GraphCompiler(using Quotes)(
           f,
           CCallExpr(
             f.updateFun.ref,
-            valueRef(f) :: valueRef(reactiveInputs(f).head).value :: reactiveInputs(f).tail.map(valueRef)
+            valueRef(f) :: refOrNone(reactiveInputs(f).head).value :: reactiveInputs(f).tail.map(refOrNone)
           )
         )
       case s: CompiledSignalExpr =>
@@ -255,17 +267,17 @@ class GraphCompiler(using Quotes)(
           s,
           CCallExpr(
             s.updateFun.ref,
-            reactiveInputs(s).map(valueRef)
+            reactiveInputs(s).map(refOrNone)
           )
         )
       case e: CompiledEvent if e.cType == CVoidType =>
-        CExprStmt(CCallExpr(e.updateFun.ref, reactiveInputs(e).map(valueRef)))
+        CExprStmt(CCallExpr(e.updateFun.ref, reactiveInputs(e).map(refOrNone)))
       case e: CompiledEvent if !e.isSource =>
         eventUpdateAssignment(
           e,
           CCallExpr(
             e.updateFun.ref,
-            reactiveInputs(e).map(valueRef)
+            reactiveInputs(e).map(refOrNone)
           )
         )
     }
@@ -297,7 +309,7 @@ class GraphCompiler(using Quotes)(
       case _ => None
     }
 
-    (CEmptyStmt :: sameCondCode :: (serialization ++ releaseCode.toList)) ++ compileUpdates(otherConds, toRelease.diff(released))
+    (CEmptyStmt :: sameCondCode :: (serialization ++ releaseCode.toList)) ++ compileUpdates(otherConds, subGraphConds, toRelease.diff(released))
   }
 
   private def emptySourceArgs(reactives: List[CompiledReactive]): List[CExpr] = reactives.map {
@@ -307,8 +319,8 @@ class GraphCompiler(using Quotes)(
 
   private def buildTransactionFunction(sources: Set[CompiledReactive], nameSuffix: String): CFunctionDecl = {
     val subGraph = computeSubGraph(sources)
-
-    val subGraphTopological = topologicalByCond.filter(subGraph.contains)
+    val subGraphConds = updateConditions(subGraph)
+    val subGraphTopological = topologicalByCond(subGraph, subGraphConds)
 
     val sourceParams = orderedSources.filter(sources.contains).map(sourceParameters)
 
@@ -320,12 +332,12 @@ class GraphCompiler(using Quotes)(
 
     val localVarDecls = subGraphTopological.collect {
       case e: CompiledEvent if eventVariables.contains(e) => CDeclStmt(eventVariables(e))
-      case s: CompiledSignal => CDeclStmt(signalChangedVars(s))
+      case s: CompiledSignal if subGraph.contains(s) => CDeclStmt(signalChangedVars(s))
     }
 
     val toRelease = eventVariables.keySet.toSet[CompiledReactive].filter(localVarDecls.contains)
 
-    val updates = compileUpdates(subGraphTopological, toRelease)
+    val updates = compileUpdates(subGraphTopological, subGraphConds, toRelease)
 
     val body = if (subGraphOutputReactives.nonEmpty) {
       val subGraphJsonVars = subGraph.flatMap(jsonVars.lift)
