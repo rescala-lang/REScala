@@ -144,7 +144,7 @@ object MatchFragment extends MatchIFFragment {
       }
     }
 
-  override def compileCaseDef(using Quotes)(using FragmentedCompiler)(using TranslationContext):
+  override def compileCaseDef(using Quotes)(using fc: FragmentedCompiler)(using TranslationContext):
     PartialFunction[(quotes.reflect.CaseDef, CExpr, quotes.reflect.TypeRepr), (Option[CExpr], List[CVarDecl], List[CStmt])] = ensureCtx[ValueDeclTC] { ctx ?=>
       import quotes.reflect.*
 
@@ -154,10 +154,21 @@ object MatchFragment extends MatchIFFragment {
 
           bindings.foreach { decl => ctx.nameToDecl.put(decl.name, decl) }
 
-          val stmtsList = dispatch[TermIFFragment](_.compileTermToCStmt)(rhs) match {
-            case CNullStmt => List()
-            case CCompoundStmt(stmts) => stmts
-            case stmt => List(stmt)
+          val stmtsList = rhs match {
+            case Block(stmts, expr) =>
+              val compiledStmts = stmts.map(dispatch[StatementIFFragment](_.compileStatementToCStmt))
+              fc.dispatchLifted[TermIFFragment](_.compileTermToCExpr)(expr) match {
+                case Some(compiledExpr) =>
+                  compiledStmts :+ CExprStmt(compiledExpr)
+                case None =>
+                  compiledStmts :+ dispatch[TermIFFragment](_.compileTermToCStmt)(expr)
+              }
+            case _ =>
+              dispatch[TermIFFragment](_.compileTermToCStmt)(rhs) match {
+                case CNullStmt => List()
+                case CCompoundStmt(stmts) => stmts
+                case stmt => List(stmt)
+              }
           }
 
           guard match {

@@ -101,6 +101,8 @@ object TypeFragment extends TypeIFFragment {
       case AnnotatedType(AppliedType(_, typeArgs), _) => typeArgs
       case MethodType(_, _, AppliedType(_, typeArgs)) => typeArgs
       case AppliedType(_, typeArgs) => typeArgs
+      case OrType(someType@AppliedType(_, typeArgs), noneType)
+        if someType <:< TypeRepr.of[Some[_]] && noneType <:< TypeRepr.of[None.type] => typeArgs
       case _ => List()
     }
   }

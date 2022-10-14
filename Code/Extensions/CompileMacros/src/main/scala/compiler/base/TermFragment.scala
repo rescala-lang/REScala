@@ -48,7 +48,7 @@ object TermFragment extends TermIFFragment {
       }
     }
 
-  override def compileTermToCExpr(using Quotes)(using FragmentedCompiler)(using TranslationContext):
+  override def compileTermToCExpr(using Quotes)(using fc: FragmentedCompiler)(using TranslationContext):
     PartialFunction[quotes.reflect.Term, CExpr] = ((term: quotes.reflect.Term) => {
       import quotes.reflect.*
 
@@ -56,6 +56,7 @@ object TermFragment extends TermIFFragment {
         case block: Block => Some(dispatch[TermIFFragment](_.compileBlockToCStmtExpr)(block))
         case ifTerm: If => Some(dispatch[TermIFFragment](_.compileIfToCConditionalOperator)(ifTerm))
         case matchTerm: Match => Some(dispatch[MatchIFFragment](_.compileMatchToCExpr)(matchTerm))
+        case inlined: Inlined => fc.dispatchLifted[TermIFFragment](_.compileTermToCExpr)(inlined.underlyingArgument)
         case _ =>
           dispatch[TermIFFragment](_.compileTerm)(term) match {
             case expr: CExpr => Some(expr)
