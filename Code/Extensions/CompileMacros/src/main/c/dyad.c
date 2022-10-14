@@ -234,6 +234,7 @@ static void select_add(SelectSet *s, int set, dyad_Socket fd) {
   f->fd_array[f->fd_count++] = fd;
 #else
   unsigned *p;
+  if (s->capacity == 0) select_grow(s);
   while (s->capacity * FD_SETSIZE < fd) {
     select_grow(s);
   }
@@ -301,6 +302,63 @@ static SelectSet dyad_selectSet;
 static double dyad_updateTimeout = 1;
 static double dyad_tickInterval = 1;
 static double dyad_lastTick = 0;
+
+// Modification
+static int numReadFDs = 0;
+static int numWriteFDs = 0;
+static int numExceptFDs = 0;
+static int *readFDs;
+static int *writeFDs;
+static int *exceptFDs;
+static void (**readHandlers)();
+static void (**writeHandlers)();
+static void (**exceptHandlers)();
+
+void dyad_setReadFDs(int n, int fds[], void (*handlers[])()) {
+  numReadFDs = n;
+  readFDs = fds;
+  readHandlers = handlers;
+}
+
+void dyad_setWriteFDs(int n, int fds[], void (*handlers[])()) {
+  numWriteFDs = n;
+  writeFDs = fds;
+  writeHandlers = handlers;
+}
+
+void dyad_setExceptFDs(int n, int fds[], void (*handlers[])()) {
+  numExceptFDs = n;
+  exceptFDs = fds;
+  exceptHandlers = handlers;
+}
+
+static void addExternalFDs(SelectSet *s) {
+  for (int i = 0; i < numReadFDs; i++) {
+    select_add(s, SELECT_READ, readFDs[i]);
+  }
+
+  for (int i = 0; i < numWriteFDs; i++) {
+    select_add(s, SELECT_WRITE, writeFDs[i]);
+  }
+
+  for (int i = 0; i < numExceptFDs; i++) {
+    select_add(s, SELECT_EXCEPT, exceptFDs[i]);
+  }
+}
+
+static void iterateExternalFDs(SelectSet *s) {
+  for (int i = 0; i < numReadFDs; i++) {
+    if (select_has(s, SELECT_READ, readFDs[i])) readHandlers[i]();
+  }
+
+  for (int i = 0; i < numWriteFDs; i++) {
+    if (select_has(s, SELECT_WRITE, writeFDs[i])) writeHandlers[i]();
+  }
+
+  for (int i = 0; i < numExceptFDs; i++) {
+    if (select_has(s, SELECT_EXCEPT, exceptFDs[i])) exceptHandlers[i]();
+  }
+}
 
 
 static void panic(const char *fmt, ...) {
@@ -685,6 +743,8 @@ void dyad_update(void) {
   /* Create fd sets for select() */
   select_zero(&dyad_selectSet);
 
+  addExternalFDs(&dyad_selectSet);
+
   stream = dyad_streams;
   while (stream) {
     switch (stream->state) {
@@ -728,6 +788,8 @@ void dyad_update(void) {
          dyad_selectSet.fds[SELECT_WRITE],
          dyad_selectSet.fds[SELECT_EXCEPT],
          &tv);
+
+  iterateExternalFDs(&dyad_selectSet);
 
   /* Handle streams */
   stream = dyad_streams;
