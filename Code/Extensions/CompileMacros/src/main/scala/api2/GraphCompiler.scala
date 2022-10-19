@@ -204,7 +204,7 @@ class GraphCompiler(using Quotes)(
   private def compileUpdates(
     remainingReactives: List[CompiledReactive],
     subGraphConds: Map[CompiledReactive, Set[CExpr]],
-    toRelease: Set[CompiledReactive]
+    toRelease: Set[CompiledEvent]
   ): List[CStmt] = {
     if remainingReactives.isEmpty then return Nil
 
@@ -228,7 +228,7 @@ class GraphCompiler(using Quotes)(
       }
 
       CCompoundStmt(
-        if dispatch[DataStructureIFFragment](_.usesRefCount)(signal.typeRepr) then List(tempDecl) else Nil ++
+        (if dispatch[DataStructureIFFragment](_.usesRefCount)(signal.typeRepr) then List[CStmt](tempDecl) else Nil) ++
         List[CStmt](
           oldDecl,
           CAssignmentExpr(
@@ -335,7 +335,7 @@ class GraphCompiler(using Quotes)(
       case s: CompiledSignal if subGraph.contains(s) => CDeclStmt(signalChangedVars(s))
     }
 
-    val toRelease = eventVariables.keySet.toSet[CompiledReactive].filter(localVarDecls.contains)
+    val toRelease = eventVariables.keySet.filter(subGraph.contains)
 
     val updates = compileUpdates(subGraphTopological, subGraphConds, toRelease)
 
