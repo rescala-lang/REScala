@@ -324,9 +324,7 @@ class GraphCompiler(using Quotes)(
 
     val sourceParams = orderedSources.filter(sources.contains).map(sourceParameters)
 
-    val subGraphOutputReactives = outputReactives.filter(subGraph.contains)
-
-    val params = if subGraphOutputReactives.nonEmpty
+    val params = if outputReactives.nonEmpty
       then CParmVarDecl("json", CPointerType(CJSONH.cJSON)) :: sourceParams
       else sourceParams
 
@@ -339,9 +337,14 @@ class GraphCompiler(using Quotes)(
 
     val updates = compileUpdates(subGraphTopological, subGraphConds, toRelease)
 
-    val body = if (subGraphOutputReactives.nonEmpty) {
-      val subGraphJsonVars = subGraph.flatMap(jsonVars.lift)
-      val jsonVarDecls = CEmptyStmt :: subGraphJsonVars.toList.map(CDeclStmt.apply)
+    val body = if (outputReactives.nonEmpty) {
+      val subGraphJsonVars = outputReactives.map { r =>
+        if subGraph.contains(r) then
+          jsonVars(r)
+        else
+          jsonVars(r).copy(init = Some(CCallExpr(CJSONH.cJSON_CreateNull.ref, List())))
+      }
+      val jsonVarDecls = CEmptyStmt :: subGraphJsonVars.map(CDeclStmt.apply)
 
       val fillJson = CEmptyStmt ::
         subGraphJsonVars.map[CStmt](jsonVar => CCallExpr(CJSONH.cJSON_AddItemToArray.ref, List(params.head.ref, jsonVar.ref))).toList
@@ -415,6 +418,7 @@ class GraphCompiler(using Quotes)(
 
   lazy val onAccept: CFunctionDecl = {
     val eDecl = CParmVarDecl("e", CPointerType(DyadH.dyad_Event))
+    val assignClientStream = CAssignmentExpr(clientStream.ref, CMemberExpr(eDecl.ref, DyadH.remoteField, true))
 
     val body = if (hasExternalSources) {
       CCompoundStmt(List(
@@ -426,10 +430,11 @@ class GraphCompiler(using Quotes)(
             onData.ref,
             CNullLiteral
           )
-        )
+        ),
+        assignClientStream
       ))
     } else {
-      CCompoundStmt(List(CAssignmentExpr(clientStream.ref, CMemberExpr(eDecl.ref, DyadH.remoteField, true))))
+      CCompoundStmt(List(assignClientStream))
     }
 
     CFunctionDecl("onAccept", List(eDecl), CVoidType, Some(body))
@@ -574,7 +579,7 @@ class GraphCompiler(using Quotes)(
   private val appCTU: CTranslationUnitDecl =
     CTranslationUnitDecl(
       List(mainInclude, libInclude) ++ ctx.includesList,
-      if hasExternalSources then List(onData, onAccept, mainFun)
+      if hasExternalSources then List(onData, clientStream, onAccept, mainFun)
       else if hasOutputReactives then List(clientStream, onAccept, mainFun)
       else List(mainFun)
     )

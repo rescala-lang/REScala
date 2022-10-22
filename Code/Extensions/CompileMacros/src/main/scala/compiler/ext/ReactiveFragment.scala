@@ -80,14 +80,18 @@ object ReactiveFragment extends SelectIFFragment with ApplyIFFragment with React
       import quotes.reflect.*
 
       {
-        case inlined@Inlined(Some(Apply(Apply(TypeApply(apply@Apply(TypeApply(Ident("fold"), _), List(Ident(inputReactive))), _), List(init)), List(f))), _, _)
+        case inlined@Inlined(Some(Apply(Apply(TypeApply(apply@Apply(TypeApply(Ident("fold"), _), List(inputReactive)), _), List(init)), List(f))), _, _)
           if inlined.tpe <:< TypeRepr.of[CReactive[_]] =>
           val name = "signal" + posToString(apply.pos)
 
           val cFun = dispatch[ReactiveIFFragment](_.compileReactiveExpr)(f)
           val cInit = dispatch[TermIFFragment](_.compileTermToCExpr)(init)
+          val inputReactiveName = inputReactive match {
+            case Ident(name) => name
+            case Inlined(_, _, Ident(name)) => name
+          }
 
-          CompiledFold(name, cInit, inputReactive, cFun, init.tpe)
+          CompiledFold(name, cInit, inputReactiveName, cFun, init.tpe)
         case r @ this.reactiveExpression(id, expr) =>
           val posString = posToString(r.pos)
 
@@ -112,14 +116,22 @@ object ReactiveFragment extends SelectIFFragment with ApplyIFFragment with React
           )
 
           CompiledSignalExpr(name, cFun, init.tpe)
-        case this.inlinedExtensionCall(pos, ext, id, expr) =>
+        case this.inlinedExtensionCall(pos, methodName, expansion) =>
           val posString = posToString(pos)
-
           val fName = "anonfun_" + pos.sourceFile.name.stripSuffix(".scala") + posString
-          val cFun = dispatch[ReactiveIFFragment](_.compileReactiveExpr)(expr).copy(name = fName)
 
-          if id.equals("CSignal") then CompiledSignalExpr("signal" + posString, cFun, expr.tpe)
-          else CompiledEvent("event" + posString, cFun, expr.tpe, ext.equals("map"))
+          dispatch[ReactiveIFFragment](_.compileReactive)(expansion) match {
+            case sig: CompiledSignalExpr =>
+              sig.copy(name = "signal" + posString, updateFun = sig.updateFun.copy(name = fName))
+            case fold: CompiledFold =>
+              fold.copy(name = "signal" + posString, updateFun = fold.updateFun.copy(name = fName))
+            case ev: CompiledEvent =>
+              ev.copy(
+                name = "event" + posString,
+                updateFun = ev.updateFun.copy(name = fName),
+                alwaysPropagates = methodName.equals("map")
+              )
+          }
       }
     }
 
@@ -128,17 +140,17 @@ object ReactiveFragment extends SelectIFFragment with ApplyIFFragment with React
 
   private def inlinedExtensionCall(using Quotes): PartialFunction[
     quotes.reflect.Term,
-    (quotes.reflect.Position, String, String, quotes.reflect.Term)
+    (quotes.reflect.Position, String, quotes.reflect.Term)
   ] = term => {
     import quotes.reflect.*
 
     term match {
-      case inlined@Inlined(Some(Apply(TypeApply(Apply(TypeApply(extId@Ident(ext), _), _), _), _)), _, Typed(this.reactiveExpression(id, expr), _))
-        if inlined.tpe <:< TypeRepr.of[CReactive[_]] => (extId.pos, ext, id, expr)
-      case inlined@Inlined(Some(Apply(Apply(TypeApply(extId@Ident(ext), _), _), _)), _, Typed(this.reactiveExpression(id, expr), _))
-        if inlined.tpe <:< TypeRepr.of[CReactive[_]] => (extId.pos, ext, id, expr)
-      case inlined@Inlined(Some(Apply(TypeApply(extId@Ident(ext), _), _)), _, Typed(this.reactiveExpression(id, expr), _))
-        if inlined.tpe <:< TypeRepr.of[CReactive[_]] => (extId.pos, ext, id, expr)
+      case inlined@Inlined(Some(Apply(TypeApply(Apply(TypeApply(methodId@Ident(methodName), _), _), _), _)), _, Typed(expansion, _))
+        if inlined.tpe <:< TypeRepr.of[CReactive[_]] => (methodId.pos, methodName, expansion)
+      case inlined@Inlined(Some(Apply(Apply(TypeApply(methodId@Ident(methodName), _), _), _)), _, Typed(expansion, _))
+        if inlined.tpe <:< TypeRepr.of[CReactive[_]] => (methodId.pos, methodName, expansion)
+      case inlined@Inlined(Some(Apply(TypeApply(methodId@Ident(methodName), _), _)), _, Typed(expansion, _))
+        if inlined.tpe <:< TypeRepr.of[CReactive[_]] => (methodId.pos, methodName, expansion)
     }
   }
 
