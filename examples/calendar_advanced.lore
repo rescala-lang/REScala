@@ -1,8 +1,6 @@
 type Calendar = AWSet[Appointment]
 type Invites = AWSet[(Appointment, User)]
 
-// precedence invite < add_appointment // is this even needed? add_appointment should not clonflict with itself and is therefore taking precedence
-
 // calendars
 val work: Source[Calendar] = Source(AWSet())     
 val vacation: Source[Calendar] = Source(AWSet()) 
