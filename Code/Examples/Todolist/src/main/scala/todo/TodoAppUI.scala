@@ -69,7 +69,7 @@ class TodoAppUI(val storagePrefix: String) {
       Signal.dynamic { tasksList.value.flatMap(l => new LWWRegisterSyntax(l.task.value).read) }
     val taskTags: Signal[List[TypedTag[LI]]] = Signal { tasksList.value.map(_.tag) }
 
-    val largeheader = window.location.hash.substring(1)
+    val largeheader = window.location.hash.drop(1)
 
     div(
       `class` := "todoapp",
