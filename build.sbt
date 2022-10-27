@@ -1,6 +1,5 @@
 lazy val commonSettings: Def.SettingsDefinition = List(
-  organization := "de.ckuessner",
-  idePackagePrefix := Some("de.ckuessner"),
+  organization := "com.github.ckuessner",
   scalaVersion := "2.13.8",
   scalacOptions ++= Seq("-unchecked", "-deprecation", "-Ymacro-annotations"),
   version := "0.1"
@@ -23,7 +22,7 @@ lazy val benchmarks = project
     assembly := (assembly dependsOn (Jmh/compile)).value,
     libraryDependencies ++= commonDependencies ++ javaFakerDependency,
     libraryDependencies +=   "com.github.pathikrit" %% "better-files" % "3.9.1",
-                             assembly / mainClass := Some("de.ckuessner.encrdt.benchmarks.BenchmarkRunnerApp"),
+                             assembly / mainClass := Some("com.github.ckuessner.encrdt.benchmarks.BenchmarkRunnerApp"),
     assembly / assemblyJarName := "benchmarks.jar",
     assembly / assemblyMergeStrategy := discardModuleInfoMergeStrategy
   ).dependsOn(encrdt)
@@ -55,18 +54,18 @@ lazy val commonDependencies = Seq(
   "org.conscrypt" % "conscrypt-openjdk-uber" % "2.5.2",
   // jsoniter-scala
   // Use the %%% operator instead of %% for Scala.js
-  "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core" % "2.16.0",
+  "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core" % "2.17.6",
   // Use the "provided" scope instead when the "compile-internal" scope is not supported
-  "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "2.16.0" % "provided",
+  "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "2.17.6" % "provided",
   // Logging
-  "org.slf4j" % "slf4j-api" % "2.0.0-alpha4",
-  "org.slf4j" % "slf4j-simple" % "2.0.0-alpha4",
+  "org.slf4j" % "slf4j-api" % "2.0.3",
+  "org.slf4j" % "slf4j-simple" % "2.0.3",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5")
 
 // scalatest
 lazy val scalatestDependency = Seq(
-  "org.scalactic" %% "scalactic" % "3.2.12",
-  "org.scalatest" %% "scalatest" % "3.2.12" % "test"
+  "org.scalactic" %% "scalactic" % "3.2.14",
+  "org.scalatest" %% "scalatest" % "3.2.14" % "test"
 )
 
 lazy val javaFakerDependency = Seq(
@@ -82,7 +81,7 @@ lazy val akkaDependency = Seq(
   "com.typesafe.akka" %% "akka-cluster-typed" % AkkaVersion,
 )
 
-lazy val jettyVersion = "11.0.11"
+lazy val jettyVersion = "11.0.12"
 lazy val jettyDependency = Seq(
   "org.eclipse.jetty" % "jetty-server" % jettyVersion,
   "org.eclipse.jetty.websocket" % "websocket-jetty-api" % jettyVersion,
