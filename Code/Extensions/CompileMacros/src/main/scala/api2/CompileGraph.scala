@@ -40,7 +40,7 @@ object CompileGraph {
     macroCompiler.compileGraph(appName)(graph)
 
     given JsonValueCodec[OptionsFromEvents[IN]] =
-      TupleCodecFactory.combineTupleCodecs(TupleCodecFactory.generateEventCodecsTuple[IN])
+      TupleCodecFactory.combineTupleCodecs(TupleCodecFactory.generateEventCodecsTuple[IN]).asInstanceOf[JsonValueCodec[OptionsFromEvents[IN]]]
 
     given JsonValueCodec[OptionsFromTuple[TupleFromCEvents[OUT]]] =
       TupleCodecFactory.combineTupleCodecs(TupleCodecFactory.generateCEventCodecsTuple[OUT])

@@ -3,7 +3,6 @@ package caseStudies.fireDetection
 import api2.*
 import api2.given
 import rescala.default.*
-import compiler.debug.Debug
 
 import scala.io.StdIn.readLine
 

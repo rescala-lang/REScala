@@ -79,7 +79,12 @@ class GraphCompiler(using Quotes)(
     if (startNodes.isEmpty) {
       Set()
     } else {
-      val activatedNext = startNodes.flatMap(dataflow.getOrElse(_, Set()))
+      val activatedNext = startNodes.flatMap { n =>
+        dataflow.getOrElse(n, Set()).filter {
+          case f: CompiledFold if nameToReactive(f.primaryInput) != n => false
+          case _ => true
+        }
+      }
       startNodes union computeSubGraph(activatedNext)
     }
   }
