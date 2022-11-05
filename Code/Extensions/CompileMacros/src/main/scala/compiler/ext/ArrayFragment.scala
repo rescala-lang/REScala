@@ -390,7 +390,7 @@ object ArrayFragment extends SelectIFFragment with ApplyIFFragment with MatchIFF
             v.tpe
           )
         ),
-        release(arrayIndexAccess(arr, idx), v.tpe, CFalseLiteral).get
+        release(tempDecl.ref, v.tpe, CFalseLiteral).get
       )))
     else
       CAssignmentExpr(
