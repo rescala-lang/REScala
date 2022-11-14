@@ -20,7 +20,7 @@ object Codecs {
   implicit val dotKeyCodec: JsonKeyCodec[Dot] = new JsonKeyCodec[Dot] {
     override def decodeKey(in: JsonReader): Dot = {
       val Array(time, id) = in.readKeyAsString().split("-", 2)
-      Dot(id.asInstanceOf[Defs.Id], time.asInstanceOf[Defs.Time])
+      Dot(id.asInstanceOf[Defs.Id], time.toLong.asInstanceOf[Defs.Time])
     }
     override def encodeKey(x: Dot, out: JsonWriter): Unit = out.writeKey(s"${x.time}-${x.replicaId}")
   }
