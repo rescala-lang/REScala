@@ -2,7 +2,7 @@
  * and may contain unused dependencies */
 
 // scalajs 1.0
-addSbtPlugin("ch.epfl.scala" % "sbt-scalajs-bundler" % "0.21.0") // https://github.com/scalacenter/scalajs-bundler
+addSbtPlugin("ch.epfl.scala" % "sbt-scalajs-bundler" % "0.21.1") // https://github.com/scalacenter/scalajs-bundler
 addSbtPlugin("org.scala-js"  % "sbt-scalajs"         % "1.11.0")
 libraryDependencies += "org.scala-js" %% "scalajs-env-jsdom-nodejs" % "1.1.0"
 
@@ -21,7 +21,7 @@ addSbtPlugin("io.github.davidgregory084" % "sbt-tpolecat"  % "0.3.1") // https:/
 // packaging
 addSbtPlugin("com.github.sbt" % "sbt-native-packager" % "1.9.11") // https://github.com/sbt/sbt-native-packager
 addSbtPlugin("org.scalameta"  % "sbt-native-image"    % "0.3.2") // https://github.com/scalameta/sbt-native-image
-addSbtPlugin("com.github.sbt" % "sbt-pgp"             % "2.1.2")
+addSbtPlugin("com.github.sbt" % "sbt-pgp"             % "2.2.0")
 
 // tooling
 addSbtPlugin("pl.project13.scala" % "sbt-jmh"     % "0.4.3")
