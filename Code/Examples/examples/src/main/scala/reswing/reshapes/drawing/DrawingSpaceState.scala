@@ -14,13 +14,15 @@ class DrawingSpaceState {
   // selected shape to be drawn
   lazy val nextShape: Signal[Shape] = Signal[Shape] { new Line(this) } // #SIG
   // currently selected shape inside the drawing space
-  final lazy val selectedShape: Signal[Shape] = // #SIG
+  final private val _selectedShape: Signal[Shape] = // #SIG
     ((shapes.changed && { shapes => // #IF  //#EF
       !(shapes contains selectedShape.value)
     } map { (_: Any) => null }) ||
     (select && { shape => // #EF
       shape == null || (shapes.value contains shape)
     })) latest null // #IF
+  // Without this indirection, the access above is made static, which causes an immediate infinite recursion
+  def selectedShape = _selectedShape
   // currently drawn shapes
   final lazy val shapes: Signal[List[Shape]] = Signal { commandsShapes() match { case (_, shapes) => shapes } } // #SIG
   // all executed commands
