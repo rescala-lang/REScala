@@ -11,7 +11,7 @@ object Defs {
   type Time = Long
 
   object Id:
-    given ordering: Ordering[Id] = summon[Ordering[String]]
+    given ordering: Ordering[Id] = Ordering.String
 
   val random: Random = scala.util.Random()
 
