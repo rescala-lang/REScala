@@ -188,6 +188,29 @@ trait SignalBundle extends SignalCompatBundle {
       }
     }
 
+    def fold[T](dependencies: Set[ReSource], init: T)(expr: StaticTicket => (() => T) => T)(implicit
+                                                                                            ticket: CreationTicket
+    ): Signal[T] = {
+      ticket.create(
+        dependencies,
+        Pulse.tryCatch[T](Pulse.Value(init)),
+        needsReevaluation = false
+        ) {
+        state => new SignalImpl[T](state, (st, v) => expr(st)(v), ticket.rename, None)
+      }
+    }
+
+
+    /** creates a new static signal depending on the dependencies, reevaluating the function */
+    @cutOutOfUserComputation
+    def stateful[T](dependencies: ReSource*)(expr: StaticTicket => T)(implicit
+        ct: CreationTicket
+    ): Signal[T] = {
+      ct.create[Pulse[T], SignalImpl[T]](dependencies.toSet, Pulse.empty, needsReevaluation = true) {
+        state => new SignalImpl[T](state, ignore2(expr), ct.rename, None)
+      }
+    }
+
     /** creates a signal that has dynamic dependencies (which are detected at runtime with Signal.apply(turn)) */
     @cutOutOfUserComputation
     def dynamicNoVarargs[T](dependencies: Seq[ReSource])(expr: DynamicTicket => T)(implicit

@@ -9,6 +9,7 @@ trait SignalCompatBundle extends ReadableMacroBundle {
   bundle: Operators =>
 
   trait SignalCompat[+T] extends ReadableMacro[T] {
+
     /** Return a Signal with f applied to the value
       * @group operator
       */
@@ -34,17 +35,15 @@ trait SignalCompatBundle extends ReadableMacroBundle {
     * @group create
     */
   object Signal {
-    inline def apply[T](inline expr: T)(implicit ct: CreationTicket): Signal[T] =  {
+    inline def apply[T](inline expr: T)(implicit ct: CreationTicket): Signal[T] = {
       val (sources, fun) = rescala.macros.getDependencies[T, ReSource, StaticTicket, true](expr)
       bundle.Signals.static(sources: _*)(fun)
     }
 
-
-    inline def dynamic[T](inline expr: T)(implicit ct: CreationTicket): Signal[T] =
-      {
-        val (sources, fun) = rescala.macros.getDependencies[T, ReSource, DynamicTicket, false](expr)
-        bundle.Signals.dynamic(sources: _*)(fun)
-      }
+    inline def dynamic[T](inline expr: T)(implicit ct: CreationTicket): Signal[T] = {
+      val (sources, fun) = rescala.macros.getDependencies[T, ReSource, DynamicTicket, false](expr)
+      bundle.Signals.dynamic(sources: _*)(fun)
+    }
   }
 
 }
