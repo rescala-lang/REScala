@@ -156,6 +156,16 @@ lazy val todolist = project.in(file("Code/Examples/Todolist"))
     ),
     jsAcceptUnfairGlobalTasks,
     scalaJSUseMainModuleInitializer := true,
+    TaskKey[File]("deploy", "generates a correct index.html for the todolist app") := {
+      val jspath     = (Compile / fastLinkJS/scalaJSLinkerOutputDirectory).value
+      val bp         = baseDirectory.value.toPath
+      val tp       = target.value.toPath
+      val template   = IO.read(bp.resolve("index.template.html").toFile)
+      val targetpath = tp.resolve("index.html").toFile
+      IO.write(targetpath, template.replace("JSPATH", s"${jspath}/main.js"))
+      IO.copyFile(bp.resolve("todolist.css").toFile, tp.resolve("todolist.css").toFile)
+      targetpath
+    }
   )
 
 lazy val encryptedTodo = project.in(file("Code/Examples/EncryptedTodoFx"))

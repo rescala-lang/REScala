@@ -51,15 +51,11 @@ Run with:
 
 ~~~
 cd "REScala main repository"
-$ sbt "project todolist" fastLinkJS           # get scala dependencies and compile scala to js
+$ sbt "project todolist" deploy           # get scala dependencies and compile scala to js
 cd "todolist subfolder (this file)"
-$ firefox index.html      # open todomvc    in browser
+$ firefox target/index.html               # open todomvc in browser
 ~~~
 
-If you upgrade to another scala version, you must update in todomvc.html and
-simpletodo.html the script src to the new version.
-  like this: "./target/scala-VERSION/daimpl-fastopt.js"
 
-(See other branch 'chat' for another app using rescala-multitiere/retier.)
 
 
