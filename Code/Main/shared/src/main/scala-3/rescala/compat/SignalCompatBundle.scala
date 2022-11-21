@@ -36,12 +36,12 @@ trait SignalCompatBundle extends ReadableMacroBundle {
     */
   object Signal {
     inline def apply[T](inline expr: T)(implicit ct: CreationTicket): Signal[T] = {
-      val (sources, fun) = rescala.macros.getDependencies[T, ReSource, StaticTicket, true](expr)
+      val (sources, fun, isStatic) = rescala.macros.getDependencies[T, ReSource, StaticTicket, true](expr)
       bundle.Signals.static(sources: _*)(fun)
     }
 
     inline def dynamic[T](inline expr: T)(implicit ct: CreationTicket): Signal[T] = {
-      val (sources, fun) = rescala.macros.getDependencies[T, ReSource, DynamicTicket, false](expr)
+      val (sources, fun, isStatic) = rescala.macros.getDependencies[T, ReSource, DynamicTicket, false](expr)
       bundle.Signals.dynamic(sources: _*)(fun)
     }
   }

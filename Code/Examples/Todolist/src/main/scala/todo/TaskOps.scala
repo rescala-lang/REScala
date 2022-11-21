@@ -4,7 +4,8 @@ import kofre.datatypes.RGA
 import kofre.decompose.containers.DeltaBufferRDT
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax
 import kofre.syntax.DottedName
-import rescala.default._
+import rescala.default.*
+import rescala.default.Fold
 
 import java.util.concurrent.ThreadLocalRandom
 import scala.annotation.nowarn
@@ -13,23 +14,23 @@ class TaskOps(@nowarn taskRefs: TaskReferences) {
 
   type State = DeltaBufferRDT[RGA[TaskRef]]
 
-  def handleCreateTodo(state: => State)(desc: String): State = {
+  def handleCreateTodo(createTodo: Event[String]): Fold.Branch[State] = createTodo.act { desc =>
     val taskid = s"Task(${ThreadLocalRandom.current().nextLong().toHexString})"
     TaskReferences.lookupOrCreateTaskRef(taskid, Some(TaskData(desc)))
     val taskref = TaskRef(taskid)
-    state.resetDeltaBuffer().prepend(taskref)
+    current.resetDeltaBuffer().prepend(taskref)
   }
 
-  def handleRemoveAll(state: => State, dt: DynamicTicket): State = {
-    state.resetDeltaBuffer().deleteBy { taskref =>
-      val isDone = dt.depend(taskref.task).read.exists(_.done)
+  def handleRemoveAll(removeAll: Event[Any]): Fold.Branch[State]  = removeAll.act { _ =>
+    current.resetDeltaBuffer().deleteBy { taskref =>
+      val isDone = taskref.task.value.read.exists(_.done)
       // todo, move to observer, disconnect during transaction does not respect rollbacks
       if (isDone) taskref.task.disconnect()
       isDone
     }
   }
 
-  def handleRemove(state: => State)(id: String): State = {
+  def handleRemove(state: State)(id: String): State = {
     state.resetDeltaBuffer().deleteBy { taskref =>
       val delete = taskref.id == id
       // todo, move to observer, disconnect during transaction does not respect rollbacks
@@ -38,8 +39,8 @@ class TaskOps(@nowarn taskRefs: TaskReferences) {
     }
   }
 
-  def handleDelta(state: => State)(delta: DottedName[RGA[TaskRef]]): State = {
-    val deltaBuffered = state
+  def handleDelta(deltaEvent: Event[DottedName[RGA[TaskRef]]]): Fold.Branch[State] = deltaEvent.act { delta =>
+    val deltaBuffered = current
 
     val newList = deltaBuffered.resetDeltaBuffer().applyDelta(delta)
 

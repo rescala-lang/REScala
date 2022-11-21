@@ -7,17 +7,17 @@ import rescala.core.Core
 import scala.quoted.*
 
 inline def getDependencies[Res, ReSource, Ticket, ForceStatic <: Boolean](inline expr: Res)
-    : (List[ReSource], Ticket => Res) =
+    : (List[ReSource], Ticket => Res, Boolean) =
   ${ rescala.macros.reactiveMacro[Res, ReSource, Ticket, ForceStatic]('expr) }
 
 def reactiveMacro[Res: Type, ReSource: Type, Ticket: Type, ForceStatic <: Boolean: Type](
     expr: Expr[Res]
-)(using q: Quotes): Expr[(List[ReSource], Ticket => Res)] =
+)(using q: Quotes): Expr[(List[ReSource], Ticket => Res, Boolean)] =
   import q.reflect.*
   val forceStatic =
     Type.valueOfConstant[ForceStatic].getOrElse(report.errorAndAbort("requires literal type for force static"))
   MacroLego[ReSource, Ticket](forceStatic)
-    .makeReactive[Res](expr).asInstanceOf[Expr[(List[ReSource], Ticket => Res)]]
+    .makeReactive[Res](expr).asInstanceOf[Expr[(List[ReSource], Ticket => Res, Boolean)]]
 
 class MacroLego[ReSource: Type, Ticket: Type](
     forceStatic: Boolean
@@ -154,7 +154,8 @@ class MacroLego[ReSource: Type, Ticket: Type](
       '{
         (
           List.from(${ Expr.ofList(defs.map(_.asExprOf[ReSource])) }),
-          ${ rdef.asExprOf[Ticket => Res] }
+          ${ rdef.asExprOf[Ticket => Res] },
+          ${ Expr(isStatic) }
         )
       }.asTerm
     }.asExpr
