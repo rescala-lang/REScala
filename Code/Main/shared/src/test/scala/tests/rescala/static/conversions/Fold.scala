@@ -200,9 +200,9 @@ class Fold extends RETests {
       val reset = Evt[Unit]()
       val res = Events.foldAll("") { acc =>
         Seq(
-          reset act (_ => ""),
-          word act identity,
-          count act (acc * _)
+          reset act2 (_ => ""),
+          word act2 identity,
+          count act2 (acc * _)
         )
       }
 
@@ -231,8 +231,8 @@ class Fold extends RETests {
       val e1 = Evt[Int]()
       val res = Events.foldAll(Option.empty[Int]) { _ =>
         Seq(
-          e0 act { _ => Some(1) },
-          e1 act { _ => Option(2) }
+          e0 act2 { _ => Some(1) },
+          e1 act2 { _ => Option(2) }
         )
       }
 

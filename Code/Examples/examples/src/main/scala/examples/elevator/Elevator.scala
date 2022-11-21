@@ -54,9 +54,9 @@ class Elevator(val nFloors: Int) {
 
   val waitingTime = Events.foldAll(0)(acc =>
     Seq(
-      reachedFloor act { _ => WaitingTime },
-      tick act { _ => if (isWaiting.now) acc - 1 else acc }
-    )
+      reachedFloor act2 { _ => WaitingTime },
+      tick act2 { _ => if (isWaiting.now) acc - 1 else acc }
+      )
   )
 
   val stoppedWaiting = waitingTime.changedTo(0)

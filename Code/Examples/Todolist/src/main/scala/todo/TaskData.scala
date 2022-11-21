@@ -120,9 +120,9 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
     val crdt = Storing.storedAs(s"$storePrefix$taskID", lww) { init =>
       Events.foldAll(init)(current =>
         Seq(
-          doneEv act { _ => current.resetDeltaBuffer().map(_.toggle()) },
-          edittextStr act { v => current.resetDeltaBuffer().map(_.edit(v)) },
-          deltaEvt act { delta => current.resetDeltaBuffer().applyDelta(delta) }
+          doneEv act2 { _ => current.resetDeltaBuffer().map(_.toggle()) },
+          edittextStr act2 { v => current.resetDeltaBuffer().map(_.edit(v)) },
+          deltaEvt act2 { delta => current.resetDeltaBuffer().applyDelta(delta) }
         )
       )
     }(Codecs.codecLww)

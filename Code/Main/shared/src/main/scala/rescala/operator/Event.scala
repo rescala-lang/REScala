@@ -364,8 +364,8 @@ trait EventBundle extends EventCompatBundle {
       * val add: Event[Int]
       * val reset: Event[Unit]
       * Events.foldAll(0){ current => Seq(
-      *   add act { v => current + v },
-      *   reset act { _ => 0 }
+      *   add act2 { v => current + v },
+      *   reset act2 { _ => 0 }
       * )}
       * }}}
       */
@@ -420,16 +420,16 @@ trait EventBundle extends EventCompatBundle {
       /** Constructs a handling branch that handles the static `event`
         * @param fun handler for activations of `event`
         */
-      final def act[A](fun: T => A): FoldMatch[A] = new StaticFoldMatch(event, fun)
+      final def act2[A](fun: T => A): FoldMatch[A] = new StaticFoldMatch(event, fun)
 
-      /** Similar to act, but provides access to a dynamic ticket in `fun` */
-      final def dyn[A](fun: DynamicTicket => T => A): FoldMatch[A] = new StaticFoldMatchDynamic(event, fun)
+      /** Similar to act2, but provides access to a dynamic ticket in `fun` */
+      final def dyn2[A](fun: DynamicTicket => T => A): FoldMatch[A] = new StaticFoldMatchDynamic(event, fun)
     }
 
     class OnEvs[T](events: => Seq[Event[T]]) {
 
       /** Constructs a handler for all `events`, note that `events` may dynamically compute the events from the current state */
-      final def act[A](fun: T => A): FoldMatch[A] = new DynamicFoldMatch(() => events, fun)
+      final def act2[A](fun: T => A): FoldMatch[A] = new DynamicFoldMatch(() => events, fun)
     }
 
     class CBResult[T, R](val event: Event[T], val data: R)

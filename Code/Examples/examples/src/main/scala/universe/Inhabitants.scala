@@ -50,9 +50,9 @@ trait Female extends Animal {
   private val becomePregnant: Event[Unit] = isPregnant.changedTo(true) // #EVT //#IF
   private val pregnancyTime: Signal[Int] = Events.foldAll(Animal.PregnancyTime)(acc =>
     Seq(
-      becomePregnant act { _ => Animal.PregnancyTime },
-      world.time.hour.changed act { _ => acc - (if (isPregnant.readValueOnce) 1 else 0) }
-    )
+      becomePregnant act2 { _ => Animal.PregnancyTime },
+      world.time.hour.changed act2 { _ => acc - (if (isPregnant.readValueOnce) 1 else 0) }
+      )
   )
   private val giveBirth: Event[Unit] = pregnancyTime.changedTo(0)                    // #EVT //#IF
   final override val isFertile       = Signals.lift(isAdult, isPregnant) { _ && !_ } // #SIG
