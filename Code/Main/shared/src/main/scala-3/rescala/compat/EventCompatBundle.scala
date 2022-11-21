@@ -69,26 +69,42 @@ trait EventCompatBundle extends ReadableMacroBundle {
 
   object Fold {
     opaque type FoldState[T] = T
-    case class Branch[S, T](f: T => Fold.FoldState[S] => S, e: Event[T])
+
+    trait Branch[S] {
+      def event: Event[?]
+      def run(dynamicTicket: DynamicTicket, current: S): S
+    }
+
+    class BranchImpl[S, T](f: DynamicTicket => T => Fold.FoldState[S] => S, e: Event[T]) extends Branch[S] {
+      def event: Event[?] = e
+      def run(dynamicTicket: DynamicTicket, current: S): S =
+        dynamicTicket.depend(e) match
+          case None     => current
+          case Some(ev) => f(dynamicTicket)(ev)(current)
+    }
 
     def unwrap[T](fs: FoldState[T]): T = fs
 
-    def apply[S](init: S)(branches: Branch[S, ?]*)(using creationTicket: CreationTicket) = {
-      Events.fold(branches.map(_.e).toSet, init) { st => state =>
-        branches.foldLeft(state()) { (curr, b) =>
-          st.dependStatic(b.e) match
-            case None      => curr
-            case Some(occ) => b.f(occ)(curr)
-        }
+    def apply[S](init: S)(branches: Branch[S]*)(using creationTicket: CreationTicket) = {
+      Events.fold(branches.map(_.event).toSet, init) { dt => state =>
+        branches.foldLeft(state()) { (curr, b) => b.run(dt, curr) }
       }
     }
 
+    def dynamic[S](init: S)(branches: S => Seq[Branch[S]])(using creationTicket: CreationTicket) = {
+      Events.fold(Set.empty, init) { dt => state =>
+        val s = state()
+        branches(s).foldLeft(s) { (curr, b) => b.run(dt, curr) }
+      }
+    }
 
   }
 
-  inline def state[S](using fs: Fold.FoldState[S]): S =  Fold.unwrap(fs)
+  inline def current[S](using fs: Fold.FoldState[S]): S = Fold.unwrap(fs)
   extension [T](e: Event[T]) {
-    def act[S](f: Fold.FoldState[S] ?=> T => S): Fold.Branch[S, T] = Fold.Branch(t => s => f(using s)(t), e)
+    def act[S](f: Fold.FoldState[S] ?=> T => S): Fold.Branch[S] = Fold.BranchImpl[S, T](dt => t => s => f(using s)(t), e)
+    def dyn[S](f: Fold.FoldState[S] ?=> DynamicTicket => T => S): Fold.Branch[S] =
+      Fold.BranchImpl[S, T](dt => t => s => f(using s)(dt)(t), e)
   }
 
 }

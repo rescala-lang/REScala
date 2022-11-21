@@ -344,7 +344,7 @@ trait EventBundle extends EventCompatBundle {
       * @see [[rescala.operator.EventBundle.Event.fold]]
       */
     @cutOutOfUserComputation
-    def fold[T](dependencies: Set[ReSource], init: T)(expr: StaticTicket => (() => T) => T)(implicit
+    def fold[T](dependencies: Set[ReSource], init: T)(expr: DynamicTicket => (() => T) => T)(implicit
         ticket: CreationTicket
     ): Signal[T] = {
       ticket.create(

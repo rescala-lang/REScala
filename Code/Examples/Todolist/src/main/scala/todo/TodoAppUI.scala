@@ -50,13 +50,13 @@ class TodoAppUI(val storagePrefix: String) {
 
     val tasksRDT: Signal[DeltaBufferRDT[RGA[TaskRef]]] =
       Storing.storedAs(storagePrefix, DeltaBufferRDT(replicaId, RGA.empty[TaskRef])) { init =>
-        Events.foldAll(init) { current =>
+        Fold.dynamic(init) { current =>
           Seq(
-            createTodo.event act2 taskOps.handleCreateTodo(current),
-            removeAll.event dyn2 { dt => _ => taskOps.handleRemoveAll(current, dt) },
-            current.toList.map(_.removed) act2 taskOps.handleRemove(current),
-            deltaEvt act2 taskOps.handleDelta(current)
+            createTodo.event act taskOps.handleCreateTodo(current),
+            removeAll.event dyn { dt => _ => taskOps.handleRemoveAll(current, dt) }
           )
+          ++ current.toList.map(_.removed).map { _.act(taskOps.handleRemove(current)) } :+
+          (deltaEvt act taskOps.handleDelta(current))
         }
       }(codecRGA)
 
