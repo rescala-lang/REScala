@@ -266,10 +266,10 @@ object ArrayFragment extends SelectIFFragment with ApplyIFFragment with MatchIFF
   private val dataField: String = "data"
   private val lengthField: String = "length"
 
-  private def arrayApply(using Quotes): PartialFunction[quotes.reflect.Apply, List[quotes.reflect.Term]] = apply => {
+  private def arrayApply(using Quotes): PartialFunction[quotes.reflect.Apply, List[quotes.reflect.Term]] = {
     import quotes.reflect.*
 
-    apply match {
+    {
       case Apply(Select(Ident("Array"), "apply"), varArgs(args)) => args
       case Apply(TypeApply(Select(Ident("Array"), "apply"), _), varArgs(args)) => args
     }

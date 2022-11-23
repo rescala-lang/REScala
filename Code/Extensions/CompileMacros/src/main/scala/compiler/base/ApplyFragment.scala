@@ -126,10 +126,10 @@ object ApplyFragment extends ApplyIFFragment {
     }
   }
 
-  def varArgs(using Quotes): PartialFunction[List[quotes.reflect.Term], List[quotes.reflect.Term]] = args => {
+  def varArgs(using Quotes): PartialFunction[List[quotes.reflect.Term], List[quotes.reflect.Term]] = {
     import quotes.reflect.*
 
-    args match {
+    {
       case List(x, Typed(Repeated(xs, _), _)) => x :: xs
       case List(Typed(Repeated(xs, _), _)) => xs
     }
