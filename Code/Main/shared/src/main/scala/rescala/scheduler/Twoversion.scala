@@ -6,7 +6,7 @@ import scala.annotation.nowarn
 import scala.collection.mutable.ListBuffer
 import scala.util.control.NonFatal
 
-case class Token()
+class Token()
 
 trait Twoversion extends Core {
 
@@ -145,7 +145,7 @@ trait Twoversion extends Core {
     */
   trait TwoVersionTransactionImpl extends TwoVersionTransaction {
 
-    val token: Token = Token()
+    val token: Token = new Token()
 
     val toCommit  = ListBuffer[ReSource]()
     val observers = ListBuffer[Observation]()
