@@ -345,29 +345,36 @@ trait Core {
     /** Name of the scheduler, used for helpful error messages. */
     def schedulerName: String
     override def toString: String = s"Scheduler($schedulerName)"
+
+    def maybeTransaction: Option[Transaction]
   }
 
   /** Provides the capability to look up transactions in the dynamic scope. */
   trait DynamicScope {
-    private[rescala] def dynamicTransaction[T](f: Transaction => T): T
+    private [rescala] def dynamicTransaction[T](f: Transaction => T): T
+    def maybeTransaction: Option[Transaction]
   }
 
   trait SchedulerImpl[Tx <: Transaction] extends DynamicScope with Scheduler {
 
     final private[rescala] def dynamicTransaction[T](f: Transaction => T): T = {
-      _currentInitializer.value match {
+      _currentTransaction.value match {
         case Some(transaction) => f(transaction)
         case None              => forceNewTransaction(Set.empty, ticket => f(ticket.tx))
       }
     }
 
-    final protected val _currentInitializer: DynamicVariable[Option[Tx]] =
+    final protected val _currentTransaction: DynamicVariable[Option[Tx]] =
       new DynamicVariable[Option[Tx]](None)
     final private[rescala] def withDynamicInitializer[R](init: Tx)(thunk: => R): R =
-      _currentInitializer.withValue(Some(init))(thunk)
+      _currentTransaction.withValue(Some(init))(thunk)
+
+    final override def maybeTransaction: Option[Transaction] = {
+      _currentTransaction.value
+    }
   }
 
-  case class ScopeSearch(val self: Either[Transaction, DynamicScope]) {
+  case class ScopeSearch(self: Either[Transaction, DynamicScope]) {
 
     /** Either just use the statically found transaction,
       * or do a lookup in the dynamic scope.
@@ -378,6 +385,11 @@ trait Core {
         case Left(integrated) => f(integrated)
         case Right(ds)        => ds.dynamicTransaction(dt => f(dt))
       }
+
+    def maybeTransaction: Option[Transaction] = self match {
+      case Left(integrated) => Some(integrated)
+      case Right(ds)        => ds.maybeTransaction
+    }
 
   }
 

@@ -28,10 +28,14 @@ trait Sources {
 
     /** Trigger the event */
     @deprecated("use .fire instead of apply", "0.21.0")
-    def apply(value: T)(implicit fac: Scheduler): Unit        = fire(value)(fac)
-    def fire()(implicit fac: Scheduler, ev: Unit =:= T): Unit = fire(ev(()))(fac)
-    def fire(value: T)(implicit fac: Scheduler): Unit         = fac.forceNewTransaction(this) { admit(value)(_) }
-    override def disconnect(): Unit                           = ()
+    def apply(value: T)(implicit fac: Scheduler, scopeSearch: ScopeSearch): Unit        = fire(value)
+    def fire()(implicit fac: Scheduler, scopeSearch: ScopeSearch, ev: Unit =:= T): Unit = fire(ev(()))
+    def fire(value: T)(implicit sched: Scheduler, scopeSearch: ScopeSearch): Unit =
+      scopeSearch.maybeTransaction match {
+        case None => sched.forceNewTransaction(this) { admit(value)(_) }
+        case Some(tx) => tx.observe(() => sched.forceNewTransaction(this) { admit(value)(_) })
+      }
+    override def disconnect(): Unit = ()
     def admitPulse(pulse: Pulse[T])(implicit ticket: AdmissionTicket): Unit = {
       ticket.recordChange(new InitialChange {
         override val source: Evt.this.type = Evt.this
@@ -59,13 +63,22 @@ trait Sources {
     override val resource: Signal[A] = this
     override def disconnect(): Unit  = ()
 
-    // def update(value: A)(implicit fac: Engine): Unit = set(value)
-    def set(value: A)(implicit fac: Scheduler): Unit = fac.forceNewTransaction(this) { admit(value)(_) }
+    def set(value: A)(implicit sched: Scheduler, scopeSearch: ScopeSearch): Unit =
+      scopeSearch.maybeTransaction match {
+        case None     => sched.forceNewTransaction(this) {admit(value)(_)}
+        case Some(tx) => tx.observe(() => sched.forceNewTransaction(this) {admit(value)(_)})
+      }
 
-    def transform(f: A => A)(implicit fac: Scheduler): Unit =
-      fac.forceNewTransaction(this) { t =>
+    def transform(f: A => A)(implicit sched: Scheduler, scopeSearch: ScopeSearch): Unit = {
+      def newTx() = sched.forceNewTransaction(this) { t =>
         admit(f(t.tx.now(this)))(t)
       }
+      scopeSearch.maybeTransaction match {
+        case None     => newTx()
+        case Some(tx) => tx.observe(() => newTx())
+      }
+    }
+
 
     def setEmpty()(implicit fac: Scheduler): Unit = fac.forceNewTransaction(this)(t => admitPulse(Pulse.empty)(t))
 

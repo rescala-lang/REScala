@@ -436,7 +436,7 @@ trait EventBundle extends EventCompatBundle {
     final class FromCallbackT[T] private[Events] (val dummy: Boolean = true) {
       def apply[R](body: (T => Unit) => R)(implicit ct: CreationTicket, s: Scheduler): CBResult[T, R] = {
         val evt: Evt[T] = Evt[T]()(ct)
-        val res         = body(evt.fire(_)(s))
+        val res         = body(evt.fire(_))
         new CBResult(evt, res)
       }
     }

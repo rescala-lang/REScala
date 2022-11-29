@@ -74,7 +74,7 @@ trait Twoversion extends Core {
       *   - not yet implemented
       */
     override def forceNewTransaction[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R): R = {
-      val tx = makeTransaction(_currentInitializer.value)
+      val tx = makeTransaction(_currentTransaction.value)
 
       val result =
         try {

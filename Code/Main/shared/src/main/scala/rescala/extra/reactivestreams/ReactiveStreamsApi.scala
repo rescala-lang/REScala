@@ -29,7 +29,7 @@ class ReactiveStreamsApi(val api: RescalaInterface) {
     override def onNext(value: T): Unit =
       synchronized {
         Objects.requireNonNull(value)
-        evt.fire(value)(fac)
+        evt.fire(value)(fac, ScopeSearch.fromSchedulerImplicit(fac))
         subscription.request(1)
       }
   }

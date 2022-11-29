@@ -59,14 +59,14 @@ class ExpensiveConflict {
   @Group("g")
   @GroupThreads(1)
   def cheap() = {
-    cheapSource.set(input.incrementAndGet())(scheduler)
+    cheapSource.set(input.incrementAndGet())(scheduler, ScopeSearch.fromSchedulerImplicit(scheduler))
   }
 
   @Benchmark
   @Group("g")
   @GroupThreads(1)
   def expensive(counter: EvaluationCounter) = {
-    expensiveSource.set(input.incrementAndGet())(scheduler)
+    expensiveSource.set(input.incrementAndGet())(scheduler, ScopeSearch.fromSchedulerImplicit(scheduler))
     counter.tried += tried
     counter.succeeded += 1
     tried = 0

@@ -49,11 +49,11 @@ class MultiReverseFan {
   @Benchmark
   def run(step: Step, params: ThreadParams): Unit = {
     val index = params.getThreadIndex
-    if (locks == null) sources(index).set(step.run())(scheduler)
+    if (locks == null) sources(index).set(step.run())(scheduler, ScopeSearch.fromSchedulerImplicit(scheduler))
     else {
       locks(index / groupSize).lock()
       try {
-        sources(index).set(step.run())(scheduler)
+        sources(index).set(step.run())(scheduler, ScopeSearch.fromSchedulerImplicit(scheduler))
       } finally locks(index / groupSize).unlock()
     }
   }
