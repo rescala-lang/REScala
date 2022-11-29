@@ -67,10 +67,13 @@ trait TopoBundle extends Core with ObserveBundle {
       } else if (predecessorsDone) reactive.state.done = true
     }
 
+    def observe(obs: Observation): Unit = afterCommitObservers.append(obs)
+
   }
 
   case class TopoTransaction(override val initializer: TopoInitializer) extends Transaction {
     override private[rescala] def access(reactive: ReSource): reactive.Value = reactive.state.value
+    override def observe(obs: Observation): Unit = initializer.observe(obs)
   }
 
   object TopoScheduler extends TopoSchedulerInterface

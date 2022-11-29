@@ -326,6 +326,8 @@ trait Core {
     }
     private[rescala] def access(reactive: ReSource): reactive.Value
 
+    def observe(obs: Observation): Unit
+
     def initializer: Initializer
   }
 
