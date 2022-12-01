@@ -33,7 +33,9 @@ trait Sources {
     def fire(value: T)(implicit sched: Scheduler, scopeSearch: ScopeSearch): Unit =
       scopeSearch.maybeTransaction match {
         case None => sched.forceNewTransaction(this) { admit(value)(_) }
-        case Some(tx) => tx.observe(() => sched.forceNewTransaction(this) { admit(value)(_) })
+        case Some(tx) => tx.observe(new Observation {
+            override def execute(): Unit = sched.forceNewTransaction(Evt.this) { admit(value)(_) }
+          })
       }
     override def disconnect(): Unit = ()
     def admitPulse(pulse: Pulse[T])(implicit ticket: AdmissionTicket): Unit = {
@@ -65,8 +67,10 @@ trait Sources {
 
     def set(value: A)(implicit sched: Scheduler, scopeSearch: ScopeSearch): Unit =
       scopeSearch.maybeTransaction match {
-        case None     => sched.forceNewTransaction(this) {admit(value)(_)}
-        case Some(tx) => tx.observe(() => sched.forceNewTransaction(this) {admit(value)(_)})
+        case None => sched.forceNewTransaction(this) { admit(value)(_) }
+        case Some(tx) => tx.observe(new Observation {
+            override def execute(): Unit = sched.forceNewTransaction(Var.this) { admit(value)(_) }
+          })
       }
 
     def transform(f: A => A)(implicit sched: Scheduler, scopeSearch: ScopeSearch): Unit = {
@@ -75,10 +79,9 @@ trait Sources {
       }
       scopeSearch.maybeTransaction match {
         case None     => newTx()
-        case Some(tx) => tx.observe(() => newTx())
+        case Some(tx) => tx.observe(new Observation { override def execute(): Unit = newTx() })
       }
     }
-
 
     def setEmpty()(implicit fac: Scheduler): Unit = fac.forceNewTransaction(this)(t => admitPulse(Pulse.empty)(t))
 
