@@ -27,7 +27,7 @@ object Dependencies {
     val reactiveStreams    = "1.0.4"
     val retypecheck        = "0.10.0"
     val scala211           = "2.11.12"
-    val scala212           = "2.12.16"
+    val scala212           = "2.12.17"
     val scala213           = "2.13.8"
     val scala3             = "3.2.1"
     val scalaJavaTime      = "2.3.0"

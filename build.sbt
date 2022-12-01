@@ -38,6 +38,7 @@ lazy val rescala = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file
     Compile / doc / scalacOptions += "-groups",
     // dotty seems to be currently unable to compile the docs … ?
     Compile / doc := (if (`is 3`(scalaVersion.value)) file("target/dummy/doc") else (Compile / doc).value),
+    Test / scalacOptions ~= (old => old.filter(_ != "-Xfatal-warnings")),
     publishSonatype,
     scalaReflectProvided,
     libraryDependencies ++= Seq(

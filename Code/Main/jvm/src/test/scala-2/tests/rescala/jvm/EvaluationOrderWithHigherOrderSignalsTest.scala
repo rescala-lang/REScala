@@ -29,7 +29,7 @@ class EvaluationOrderWithHigherOrderSignalsTest extends RETests {
       }(scheduler)
 
       changeX match {
-        case DontSet => ho.set(x4)
+        case DontSet => ho.set(x4)(implicitly, engine.ScopeSearch.fromSchedulerImplicit(engine.scheduler))
         case _ => transaction(x, ho) { implicit tx =>
             x.admit(newX)
             ho.admit(x4)

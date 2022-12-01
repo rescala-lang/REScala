@@ -168,7 +168,7 @@ class PessimisticTest extends RETests {
     assert(unregs === 0)
 
     // now, this should create some only in turn dynamic changes
-    b0.set(true)(mockFac)
+    b0.set(true)(mockFac, rescala.Schedulers.parrp.ScopeSearch.fromSchedulerImplicit(mockFac))
 
     assert(unsafeNow(i1_3) === 42)
     assert(reeval === 3)
@@ -176,7 +176,7 @@ class PessimisticTest extends RETests {
     assert(unregs === 0)
 
     // this does not
-    b0.set(false)(mockFac)
+    b0.set(false)(mockFac, rescala.Schedulers.parrp.ScopeSearch.fromSchedulerImplicit(mockFac))
 
     assert(unsafeNow(i1_3) === 42)
     assert(reeval === 4)
@@ -184,7 +184,7 @@ class PessimisticTest extends RETests {
     assert(unregs === 0)
 
     // this also does not, because the level of the dynamic signals stays on 3
-    b0.set(true)(mockFac)
+    b0.set(true)(mockFac, rescala.Schedulers.parrp.ScopeSearch.fromSchedulerImplicit(mockFac))
 
     assert(unsafeNow(i1_3) === 42)
     assert(reeval === 5)
