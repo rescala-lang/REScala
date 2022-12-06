@@ -5,7 +5,7 @@ import kofre.base.Defs.Id
 import kofre.time.Dots
 import kofre.dotted.{Dotted, DottedLattice}
 
-class DottedName[L](val replicaID: Defs.Id, val anon: Dotted[L]) {
+case class DottedName[L](replicaID: Defs.Id, anon: Dotted[L]) {
   def map[B](f: L => B): DottedName[B] = new DottedName(replicaID, anon.map(f))
 }
 

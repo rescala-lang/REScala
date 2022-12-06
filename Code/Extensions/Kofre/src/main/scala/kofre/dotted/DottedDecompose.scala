@@ -30,11 +30,14 @@ object DottedDecompose {
   inline def derived[T <: Product](using pm: Mirror.ProductOf[T]): DottedDecompose[T] = {
     val lattices: Tuple = summonAll[Tuple.Map[pm.MirroredElemTypes, DottedDecompose]]
     val bottoms: Tuple  = summonAll[Tuple.Map[pm.MirroredElemTypes, Bottom]]
-    new ProductDottedDecompose[T](lattices, bottoms, pm)
+    new ProductDottedDecompose[T](lattices, bottoms, pm, valueOf[pm.MirroredLabel])
   }
 
-  class ProductDottedDecompose[T <: Product](lattices: Tuple, bottoms: Tuple, pm: Mirror.ProductOf[T])
+  class ProductDottedDecompose[T <: Product](lattices: Tuple, bottoms: Tuple, pm: Mirror.ProductOf[T], label: String)
       extends DottedDecompose[T] {
+
+    override def toString: String = s"ProductDecomposeLattice[${ label }]"
+
 
     private def lat(i: Int): DottedDecompose[Any] = lattices.productElement(i).asInstanceOf[DottedDecompose[Any]]
     private def bot(i: Int): Bottom[Any]          = bottoms.productElement(i).asInstanceOf[Bottom[Any]]
@@ -47,18 +50,19 @@ object DottedDecompose {
           lat(i).mergePartial(left.map(_.productElement(i)), right.map(_.productElement(i)))
       })
 
-    override def decompose(a: Dotted[T]): Iterable[Dotted[T]] =
-      Range(0, lattices.productArity).flatMap { j =>
-        lat(j).decompose(a.map(_.productElement(j))).map {
-          _.map { elem =>
-            pm.fromProduct(new Product {
-              def canEqual(that: Any): Boolean = false
-              def productArity: Int            = lattices.productArity
-              def productElement(i: Int): Any  = if i == j then elem else bot(i).empty
-            })
-          }
-        }
-      }
+    override def decompose(a: Dotted[T]): Iterable[Dotted[T]] = List(a)
+      // // TODO: figure out what decompose means for dotted values
+      //Range(0, lattices.productArity).flatMap { j =>
+      //  lat(j).decompose(a.map(_.productElement(j))).map {
+      //    _.map { elem =>
+      //      pm.fromProduct(new Product {
+      //        def canEqual(that: Any): Boolean = false
+      //        def productArity: Int            = lattices.productArity
+      //        def productElement(i: Int): Any  = if i == j then elem else bot(i).empty
+      //      })
+      //    }
+      //  }
+      //}
 
     override def lteq(left: Dotted[T], right: Dotted[T]): Boolean =
       Range(0, lattices.productArity).forall { i =>
