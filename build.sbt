@@ -4,9 +4,9 @@ import sbt.Def
 
 val commonSettings = commonCrossBuildVersions +: jitpackResolver +: {
   scala.sys.env.get("re_scala_version") match {
-    case Some("211") => scalaVersion_211
-    case Some("212") => scalaVersion_212
-    case Some("213") => scalaVersion_213
+    case Some("2.11") => scalaVersion_211
+    case Some("2.12") => scalaVersion_212
+    case Some("2.13") => scalaVersion_213
     case _           => scalaVersion_3
   }
 }

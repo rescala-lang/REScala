@@ -4,12 +4,12 @@ on: [push, pull_request]
 
 jobs:
   build:
-
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [windows-latest, macos-latest, ubuntu-latest]
         java-version: [11, 17]
+        scala-version: ['2.11', '2.12', '2.13', '3']
 
     steps:
 
@@ -29,6 +29,8 @@ jobs:
     - name: Run tests
       env:
         JAVA_OPTS: -Xmx4g
+        re_scala_version: ${{ matrix.scala-version }}
+
       continue-on-error: true
       run: |
         sbt "set ThisBuild / Test / parallelExecution := false" compile Test/compile testQuick
