@@ -14,9 +14,9 @@ object Dependencies {
     val circeCore          = "0.14.3"
     val decline            = "2.4.0"
     val directories        = "26"
-    val jetty              = "9.4.49.v20220914"
+    val jetty              = "11.0.12"
     val jol                = "0.16"
-    val jsoniterScalaCore  = "2.17.9"
+    val jsoniterScalaCore  = "2.19.0"
     val jsoniterScalaOld   = "2.13.3.2" // this is the latest version supporting Scala 2.11 (and java 8)
     val jsoup              = "1.15.3"
     val munit              = "1.0.0-M7"
@@ -31,7 +31,7 @@ object Dependencies {
     val scala213           = "2.13.8"
     val scala3             = "3.2.1"
     val scalaJavaTime      = "2.3.0"
-    val scalaLoci          = "609b4c1b58"
+    val scalaLoci          = "03ddfb7ca9"
     val scalaSwing         = "3.0.0"
     val scalacheck         = "1.17.0"
     val scalactic          = "3.0.0"
@@ -40,7 +40,7 @@ object Dependencies {
     val scalatest          = "3.2.14"
     val scalatestpluscheck = "3.2.14.0"
     val scopt              = "4.1.0"
-    val scribe             = "3.10.3"
+    val scribe             = "3.10.5"
     val slips              = "0.4.5"
     val sourcecode         = "0.3.0"
     val tomlScala          = "0.2.2"
@@ -81,6 +81,7 @@ object Dependencies {
   val scopt       = Def.setting("com.github.scopt" %%% "scopt" % V.scopt)
   val scribe      = Def.setting("com.outr" %%% "scribe" % V.scribe)
   val scribeSlf4j = Def.setting("com.outr" %% "scribe-slf4j" % V.scribe)
+  val scribeSlf4j2 = Def.setting("com.outr" %% "scribe-slf4j2" % V.scribe)
   val sourcecode  = Def.setting("com.lihaoyi" %%% "sourcecode" % V.sourcecode)
   val tomlScala   = Def.setting("tech.sparse" %%% "toml-scala" % V.tomlScala)
   val upickle     = Def.setting("com.lihaoyi" %%% "upickle" % V.upickle)
@@ -113,6 +114,7 @@ object Dependencies {
 
   object loci {
     def generic(n: String): Def.Initialize[sbt.ModuleID] =
+      // very accurate check if this is a snapshot based version from jitpack (no .) or a normal version from maven or a local publish
       if (!V.scalaLoci.contains("."))
         Def.setting("com.github.scala-loci.scala-loci" %%% s"scala-loci-$n" % V.scalaLoci)
       else Def.setting("io.github.scala-loci"          %%% s"scala-loci-$n" % V.scalaLoci)
@@ -127,6 +129,7 @@ object Dependencies {
     val wsWeb         = generic("communicator-ws-webnative")
     val wsJavalin     = generic("communicator-ws-javalin")
     val wsJetty       = generic("communicator-ws-jetty")
+    val wsJetty11       = generic("communicator-ws-jetty11")
   }
 
   // Add JavaFX dependencies, should probably match whatever the scalafx version was tested against:

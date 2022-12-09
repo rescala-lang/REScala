@@ -97,6 +97,15 @@ object Settings {
        else List("-P:scalajs:nowarnGlobalExecutionContext")),
   )
 
-  // sse https://www.scala-js.org/doc/project/js-environments.html
+  // see https://www.scala-js.org/doc/project/js-environments.html
   val jsEnvDom = jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
+
+  // util to generate classpath file to be consumed by native image
+  val writeClasspath = TaskKey[Unit]("writeClasspath", "writes the classpath to a file in the target dir") := {
+    val cp         = (Compile / fullClasspathAsJars).value
+    val cpstring   = cp.map(at => s"""-cp "${at.data.toString.replace("\\", "/")}"\n""").mkString("")
+    val targetpath = target.value.toPath.resolve("classpath.txt")
+    IO.write(targetpath.toFile, cpstring)
+    ()
+  }
 }
