@@ -2,8 +2,6 @@ package tests.rescala.misc
 
 import tests.rescala.testtools.RETests
 
-import scala.concurrent.Future
-
 class ScheduledSetting extends RETests {
   multiEngined { engine =>
     import engine._

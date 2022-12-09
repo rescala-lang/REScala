@@ -70,6 +70,7 @@ private[reswing] trait ReSwingEventConnection {
               if (reaction isInstance e)
                 event(e.asInstanceOf[T])
           }
+          ()
         }
       })
       event

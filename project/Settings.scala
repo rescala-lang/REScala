@@ -38,6 +38,15 @@ object Settings {
     scalacOptions ++= settingsFor(scalaVersion.value)
   )
 
+  val scalaFullCrossBuildSupport = commonCrossBuildVersions +: {
+    scala.sys.env.get("SCALA_VERSION") match {
+      case Some("2.11") => scalaVersion_211
+      case Some("2.12") => scalaVersion_212
+      case Some("2.13") => scalaVersion_213
+      case _            => scalaVersion_3
+    }
+  }
+
   def `is 2.11`(scalaVersion: String): Boolean =
     CrossVersion.partialVersion(scalaVersion).contains((2, 11))
   def `is 2.13`(scalaVersion: String): Boolean =

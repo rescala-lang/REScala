@@ -140,6 +140,7 @@ private[reswing] trait ReSwingValueConnection {
                 }
             }
           }
+          ()
         }
       value
     }
@@ -153,6 +154,7 @@ private[reswing] trait ReSwingValueConnection {
         inSyncEDT {
           setter(forcedValue)
           enforcedProperties += name -> { () => Swing onEDT { setter(forcedValue) } }
+          ()
         }
       value
     }
