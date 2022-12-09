@@ -20,6 +20,6 @@ indent_style = space
 indent_size = 2
 
 # yml seems to require space indentation
-[*.yml]
+[*.{yml,yaml}]
 indent_style = space
 indent_size = 2
