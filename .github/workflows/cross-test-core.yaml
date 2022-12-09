@@ -12,7 +12,7 @@ jobs:
         scala-version: ['2.11', '2.12', '2.13']
     env:
       JAVA_OPTS: -Xmx4g
-      re_scala_version: ${{ matrix.scala-version }}
+      SCALA_VERSION: ${{ matrix.scala-version }}
     steps:
     - uses: actions/checkout@v2
     - uses: coursier/cache-action@v6
