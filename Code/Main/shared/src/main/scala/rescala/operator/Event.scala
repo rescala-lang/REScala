@@ -318,15 +318,15 @@ trait EventBundle extends EventCompatBundle {
     /** Creates change events */
     @cutOutOfUserComputation
     def change[T](signal: Signal[T])(implicit ticket: CreationTicket): Event[Diff[T]] =
-      ticket.scope.embedTransaction { initTurn =>
-        val internal = initTurn.initializer.create[(Pulse[T], Pulse[Diff[T]]), ChangeEventImpl[T]](
+      ticket.scope.embedTransaction { tx =>
+        val internal = tx.initializer.create[(Pulse[T], Pulse[Diff[T]]), ChangeEventImpl[T]](
           Set[ReSource](signal),
           (Pulse.NoChange, Pulse.NoChange),
           needsReevaluation = true
         ) { state =>
           new ChangeEventImpl[T](state, signal, ticket.rename)
         }
-        static(internal)(st => st.dependStatic(internal))(initTurn)
+        static(internal)(st => st.dependStatic(internal))(tx)
       }
 
     @cutOutOfUserComputation
