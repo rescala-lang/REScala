@@ -10,6 +10,7 @@ import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegister
 import kofre.decompose.interfaces.LWWRegisterInterface
 import kofre.dotted.{DotFun, Dotted}
 import loci.transmitter.IdenticallyTransmittable
+import rescala.extra.replication.DeltaFor
 import todo.Todolist.replicaId
 
 import scala.annotation.nowarn
@@ -26,7 +27,8 @@ object Codecs {
   }
 
   @nowarn()
-  implicit val codecState: JsonValueCodec[Dotted[RGA[TaskRef]]] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
+  implicit val codecState: JsonValueCodec[Dotted[RGA[TaskRef]]] =
+    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
   implicit val codecRGA: JsonValueCodec[DeltaBufferRDT[RGA[TaskRef]]] =
     new JsonValueCodec[DeltaBufferRDT[RGA[TaskRef]]] {
       override def decodeValue(
@@ -41,14 +43,14 @@ object Codecs {
       override def nullValue: DeltaBufferRDT[RGA[TaskRef]] = DeltaBufferRDT(replicaId, RGA.empty[TaskRef])
     }
 
-  implicit val transmittableList: IdenticallyTransmittable[Dotted[RGA[TaskRef]]] =
-    IdenticallyTransmittable()
-
-  implicit val todoTaskCodec: JsonValueCodec[TaskData] = JsonCodecMaker.make
+  implicit val transmittableList: IdenticallyTransmittable[DeltaFor[RGA[TaskRef]]] = IdenticallyTransmittable()
+  implicit val codectDeltaForTasklist: JsonValueCodec[DeltaFor[RGA[TaskRef]]]      = JsonCodecMaker.make
 
   implicit val codecLwwState: JsonValueCodec[Dotted[DotFun[TimedVal[TaskData]]]] = JsonCodecMaker.make
 
-  implicit val transmittableLWW: IdenticallyTransmittable[Dotted[LWWRegister[TaskData]]] =
+  implicit val codecDeltaForLWW: JsonValueCodec[DeltaFor[LWWRegister[TaskData]]] = JsonCodecMaker.make
+
+  implicit val transmittableDeltaForLWW: IdenticallyTransmittable[DeltaFor[LWWRegister[TaskData]]] =
     IdenticallyTransmittable()
 
   type LwC = DeltaBufferRDT[LWWRegister[TaskData]]

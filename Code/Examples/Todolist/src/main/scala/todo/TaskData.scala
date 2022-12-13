@@ -11,12 +11,15 @@ import kofre.syntax.DottedName
 import loci.registry.Binding
 import org.scalajs.dom.UIEvent
 import org.scalajs.dom.html.{Input, LI}
-import rescala.default._
-import rescala.extra.Tags._
-import rescala.extra.replication.LociDist
+import rescala.default.*
+import rescala.extra.Tags.*
+import rescala.extra.replication.{DeltaFor, ReplicationGroup}
 import scalatags.JsDom.TypedTag
-import scalatags.JsDom.all._
+import scalatags.JsDom.all.*
 import todo.Todolist.replicaId
+import Codecs.given
+import loci.serializer.jsoniterScala.given
+
 
 import scala.Function.const
 import scala.collection.mutable
@@ -65,9 +68,13 @@ object TaskReferences {
     TaskReferences.taskrefObj = taskrefs
     taskrefs
   }
+
+  val taskBinding = Binding[DeltaFor[LWWRegister[TaskData]] => Unit]("todo task")
+  val taskReplicator = ReplicationGroup(rescala.default, Todolist.registry, taskBinding)
 }
 
 class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
+
 
   def createTaskRef(
       taskID: String,
@@ -127,13 +134,8 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
       )
     }(Codecs.codecLww)
 
-    import Codecs.transmittableLWW
-    import Codecs.codecLwwState
-    import loci.serializer.jsoniterScala._
 
-    LociDist.distributeDeltaCRDT(crdt, deltaEvt, Todolist.registry)(
-      Binding[Dotted[LWWRegister[TaskData]] => Unit](taskID)
-    )
+    TaskReferences.taskReplicator.distributeDeltaRDT(taskID, crdt, deltaEvt)
 
     val taskData = crdt.map(x => LWWRegisterInterface.LWWRegisterSyntax(x).read.getOrElse(TaskData(desc = "LWW Empty")))
 

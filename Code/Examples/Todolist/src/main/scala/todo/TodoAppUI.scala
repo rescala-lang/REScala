@@ -10,21 +10,23 @@ import org.scalajs.dom.{UIEvent, window}
 import rescala.default.Events.CBResult
 import rescala.default._
 import rescala.extra.Tags._
-import rescala.extra.replication.LociDist
+import rescala.extra.replication.{DeltaFor, ReplicationGroup}
 import scalatags.JsDom
 import scalatags.JsDom.all._
 import scalatags.JsDom.tags2.section
 import scalatags.JsDom.{Attr, TypedTag}
-import todo.Codecs._
+import todo.Codecs.given
 import todo.Todolist.replicaId
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax
 import kofre.decompose.containers.DeltaBufferRDT
 import kofre.dotted.Dotted
 import kofre.syntax.DottedName
+import loci.serializer.jsoniterScala.given
 
 class TodoAppUI(val storagePrefix: String) {
 
-  implicit val stringCodec: JsonValueCodec[String] = JsonCodecMaker.make
+  val tasklistBinding = Binding[DeltaFor[RGA[TaskRef]] => Unit]("tasklist")
+  val tasklistReplicator = new ReplicationGroup(rescala.default, Todolist.registry, tasklistBinding)
 
   def getContents(): TypedTag[Div] = {
 
@@ -58,11 +60,9 @@ class TodoAppUI(val storagePrefix: String) {
           },
           taskOps.handleDelta(deltaEvt)
         )
-      }(codecRGA)
+      }(Codecs.codecRGA)
 
-    LociDist.distributeDeltaCRDT(tasksRDT, deltaEvt, Todolist.registry)(
-      Binding[Dotted[RGA[TaskRef]] => Unit]("tasklist")
-    )
+    tasklistReplicator.distributeDeltaRDT("tasklist", tasksRDT, deltaEvt)
 
     val tasksList: Signal[List[TaskRef]] = tasksRDT.map { _.toList }
     val tasksData: Signal[List[TaskData]] =
