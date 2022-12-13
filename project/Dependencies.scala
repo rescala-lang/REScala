@@ -14,9 +14,9 @@ object Dependencies {
     val circeCore          = "0.14.3"
     val decline            = "2.4.0"
     val directories        = "26"
-    val jetty              = "11.0.12"
+    val jetty              = "11.0.13"
     val jol                = "0.16"
-    val jsoniterScalaCore  = "2.19.0"
+    val jsoniterScalaCore  = "2.19.1"
     val jsoniterScalaOld   = "2.13.3.2" // this is the latest version supporting Scala 2.11 (and java 8)
     val jsoup              = "1.15.3"
     val munit              = "1.0.0-M7"

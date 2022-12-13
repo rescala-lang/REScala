@@ -151,9 +151,10 @@ lazy val todolist = project.in(file("Code/Examples/Todolist"))
     jsAcceptUnfairGlobalTasks,
     scalaJSUseMainModuleInitializer := true,
     TaskKey[File]("deploy", "generates a correct index.html for the todolist app") := {
-      val jspath     = (Compile / fastLinkJS/scalaJSLinkerOutputDirectory).value
+      val fastlink   = (Compile / fastLinkJS).value
+      val jspath     = (Compile / fastLinkJS / scalaJSLinkerOutputDirectory).value
       val bp         = baseDirectory.value.toPath
-      val tp       = target.value.toPath
+      val tp         = target.value.toPath
       val template   = IO.read(bp.resolve("index.template.html").toFile)
       val targetpath = tp.resolve("index.html").toFile
       IO.write(targetpath, template.replace("JSPATH", s"${jspath}/main.js"))
@@ -172,7 +173,7 @@ lazy val encryptedTodo = project.in(file("Code/Examples/EncryptedTodoFx"))
     scalaFxDependencies,
     fork := true,
     libraryDependencies ++= {
-      val jettyVersion = "11.0.12"
+      val jettyVersion = "11.0.13"
       Seq(
         "org.eclipse.jetty"           % "jetty-server"           % jettyVersion,
         "org.eclipse.jetty.websocket" % "websocket-jetty-api"    % jettyVersion,
