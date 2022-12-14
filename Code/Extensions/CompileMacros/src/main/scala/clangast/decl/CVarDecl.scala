@@ -7,14 +7,17 @@ import clangast.types.CQualType
 
 import scala.quoted.{Expr, Quotes}
 
-case class CVarDecl(name: String, declaredType: CQualType, init: Option[CExpr] = None) extends CValueDecl {
+case class CVarDecl(name: String, declaredType: CQualType, init: Option[CExpr] = None, inHeader: Boolean = false) extends CValueDecl {
   override def getType: CQualType = declaredType
 
   override def textgen: String = {
     val decl = declaredType.typedVar(name)
 
     init match {
-      case None       => decl + ";"
+      case None       =>
+        if inHeader
+        then s"extern $decl;"
+        else s"$decl;"
       case Some(expr) => decl + s" = ${expr.textgen};"
     }
   }

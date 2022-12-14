@@ -122,7 +122,7 @@ class GraphCompiler(using Quotes)(
     }.toList
 
     val initGlobalVals = ctx.valueDeclList.collect[CStmt] {
-      case v @ CVarDecl(_, _, Some(init)) => CAssignmentExpr(v.ref, init)
+      case v @ CVarDecl(_, _, Some(init), _) => CAssignmentExpr(v.ref, init)
     }
 
     CFunctionDecl(
@@ -575,6 +575,10 @@ class GraphCompiler(using Quotes)(
     CFunctionDecl("main", List(argc, argv), CIntegerType, Some(body))
   }
 
+  def forUseInHeader(valueDecl: CValueDecl): CValueDecl = valueDecl match
+    case cvd: CVarDecl => cvd.copy(inHeader = true)
+    case other         => other
+
   private val mainC: String         = appName + "Main.c"
   private val mainH: String         = appName + "Main.h"
   private val mainInclude: CInclude = CInclude(mainH, true)
@@ -598,7 +602,7 @@ class GraphCompiler(using Quotes)(
 
     val globalVarDecls = topological.collect {
       case s: CompiledSignal => signalVariables(s)
-    }
+    }.map(forUseInHeader)
 
     CTranslationUnitDecl(
       includes,
@@ -643,7 +647,7 @@ class GraphCompiler(using Quotes)(
     )
 
   private val libHTU: CTranslationUnitDecl = {
-    val valueDecls = ctx.valueDeclList.map(_.declOnly).sortBy(_.name)
+    val valueDecls = ctx.valueDeclList.map(_.declOnly).sortBy(_.name).map(forUseInHeader)
 
     CTranslationUnitDecl(
       ctx.includesList,

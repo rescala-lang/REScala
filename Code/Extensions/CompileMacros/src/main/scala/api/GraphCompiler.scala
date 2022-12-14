@@ -360,6 +360,10 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
     CFunctionDecl("executeReactifiUpdate", params, CVoidType, Some(body))
   }
 
+  def forUseInHeader(valueDecl: CValueDecl): CValueDecl = valueDecl match
+    case cvd: CVarDecl => cvd.copy(inHeader = true)
+    case other         => other
+
   private val mainC: String         = "reactifiMain.c"
   private val mainH: String         = "reactifiMain.h"
   private val mainInclude: CInclude = CInclude(mainH, true)
@@ -387,7 +391,7 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
 
     val globalVarDecls = topological.collect {
       case f: Fold[_] => globalVariables(f).declOnly
-    }
+    }.map(forUseInHeader)
 
     CTranslationUnitDecl(
       includes,
@@ -430,7 +434,7 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
     val includes = Set.from(contexts.flatMap(_.includes)).toList
 
     val typeDecls  = appendWithoutDuplicates(contexts.map(_.typeDecls))
-    val valueDecls = Set.from(contexts.flatMap(_.valueDecls)).toList.map(_.declOnly).sortBy(_.name)
+    val valueDecls = Set.from(contexts.flatMap(_.valueDecls)).toList.map(_.declOnly).sortBy(_.name).map(forUseInHeader)
 
     CTranslationUnitDecl(
       includes,
