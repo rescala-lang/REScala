@@ -14,7 +14,7 @@ case class CSwitchStmt(cond: CExpr, cases: List[CSwitchCase]) extends CStmt {
     """.strip().stripMargin
 
   override def toExpr(using Quotes): Expr[CSwitchStmt] = {
-    val condExpr = cond.toExpr
+    val condExpr  = cond.toExpr
     val casesExpr = Expr.ofList(cases.map(_.toExpr))
 
     '{ CSwitchStmt($condExpr, $casesExpr) }

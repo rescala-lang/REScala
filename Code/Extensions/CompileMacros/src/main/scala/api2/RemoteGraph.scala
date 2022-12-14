@@ -10,7 +10,8 @@ trait RemoteGraph {
   def setConnector(c: RemoteGraphConnector): Unit = if connector.isEmpty then connector = Some(c)
 }
 
-trait RemoteGraphWithInput[IN <: Tuple: EventTupleUtils](using JsonValueCodec[OptionsFromEvents[IN]]) extends RemoteGraph {
+trait RemoteGraphWithInput[IN <: Tuple: EventTupleUtils](using JsonValueCodec[OptionsFromEvents[IN]])
+    extends RemoteGraph {
   val events: IN
 
   def startObserving(): Unit = {
@@ -35,6 +36,7 @@ trait RemoteGraphWithOutput[OUT <: Tuple: TupleUtils](using JsonValueCodec[Optio
   }
 }
 
-trait RemoteGraphWithIO[IN <: Tuple: EventTupleUtils, OUT <: Tuple: TupleUtils]
-(using JsonValueCodec[OptionsFromEvents[IN]], JsonValueCodec[OptionsFromTuple[OUT]])
-  extends RemoteGraphWithInput[IN] with RemoteGraphWithOutput[OUT]
+trait RemoteGraphWithIO[IN <: Tuple: EventTupleUtils, OUT <: Tuple: TupleUtils](using
+    JsonValueCodec[OptionsFromEvents[IN]],
+    JsonValueCodec[OptionsFromTuple[OUT]]
+) extends RemoteGraphWithInput[IN] with RemoteGraphWithOutput[OUT]

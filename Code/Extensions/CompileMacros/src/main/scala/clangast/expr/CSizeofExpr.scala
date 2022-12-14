@@ -7,7 +7,7 @@ import scala.quoted.{Expr, Quotes}
 
 case class CSizeofExpr(arg: Either[CType, CExpr]) extends CExpr {
   override def textgen: String = arg match
-    case Left(t) => s"sizeof(${t.textgen})"
+    case Left(t)     => s"sizeof(${t.textgen})"
     case Right(expr) => s"sizeof(${expr.textgen})"
 
   override def toExpr(using Quotes): Expr[CSizeofExpr] = {
@@ -25,7 +25,7 @@ case class CSizeofExpr(arg: Either[CType, CExpr]) extends CExpr {
 
   override def mapChildren(mapper: CASTMapper): CExpr =
     CSizeofExpr(arg match {
-      case Left(tpe) => Left(mapper.mapCType(tpe))
+      case Left(tpe)   => Left(mapper.mapCType(tpe))
       case Right(expr) => Right(mapper.mapCExpr(expr))
     })
 }

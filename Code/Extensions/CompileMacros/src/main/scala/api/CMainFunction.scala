@@ -23,7 +23,7 @@ object CMainFunction {
       case WithContext(cast, _, _, _) => throw new MatchError(cast)
     }
   }
-  
+
   def empty: CMainFunction = {
     new CMainFunction(
       WithContext(

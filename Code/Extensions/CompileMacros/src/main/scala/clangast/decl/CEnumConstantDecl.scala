@@ -9,14 +9,14 @@ import scala.quoted.{Expr, Quotes}
 
 case class CEnumConstantDecl(name: String, initExpr: Option[CExpr]) extends CValueDecl {
   override def getType: CQualType = ???
-  
+
   override def textgen: String = initExpr match {
-    case None => name
+    case None       => name
     case Some(expr) => name + " = " + expr.textgen
   }
 
   override def toExpr(using Quotes): Expr[CEnumConstantDecl] = {
-    val nameExpr = Expr(name)
+    val nameExpr     = Expr(name)
     val initExprExpr = initExpr.map(_.toExpr).toExpr
 
     '{ CEnumConstantDecl($nameExpr, $initExprExpr) }

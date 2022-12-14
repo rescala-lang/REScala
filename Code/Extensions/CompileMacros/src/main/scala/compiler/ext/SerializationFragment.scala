@@ -14,17 +14,20 @@ import compiler.context.TranslationContext
 import scala.quoted.*
 
 object SerializationFragment extends SerializationIFFragment {
-  override def serializationRetainsEquality(using Quotes)(using FragmentedCompiler)(using TranslationContext):
-    PartialFunction[quotes.reflect.TypeRepr, Boolean] = {
-      import quotes.reflect.*
-  
-      {
-        case tpe if tpe <:< TypeRepr.of[Boolean | Char | Byte | Short | Int | Long | String] => true
-        case _ => false
-      }
-    }
+  override def serializationRetainsEquality(using Quotes)(using FragmentedCompiler)(using
+      TranslationContext
+  ): PartialFunction[quotes.reflect.TypeRepr, Boolean] = {
+    import quotes.reflect.*
 
-  def serialize(using Quotes)(expr: CExpr, tpe: quotes.reflect.TypeRepr)(using FragmentedCompiler)(using TranslationContext): CExpr = {
+    {
+      case tpe if tpe <:< TypeRepr.of[Boolean | Char | Byte | Short | Int | Long | String] => true
+      case _                                                                               => false
+    }
+  }
+
+  def serialize(using Quotes)(expr: CExpr, tpe: quotes.reflect.TypeRepr)(using FragmentedCompiler)(using
+      TranslationContext
+  ): CExpr = {
     import quotes.reflect.*
 
     tpe match {
@@ -38,7 +41,9 @@ object SerializationFragment extends SerializationIFFragment {
     }
   }
 
-  def deserialize(using Quotes)(expr: CExpr, tpe: quotes.reflect.TypeRepr)(using FragmentedCompiler)(using TranslationContext): CExpr = {
+  def deserialize(using Quotes)(expr: CExpr, tpe: quotes.reflect.TypeRepr)(using FragmentedCompiler)(using
+      TranslationContext
+  ): CExpr = {
     import quotes.reflect.*
 
     tpe match {

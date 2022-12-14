@@ -31,7 +31,8 @@ class TCPClientConnector(hostname: String, port: Int) extends RemoteGraphConnect
 
   override def write[T: JsonValueCodec](v: T): Unit = chan.write(ByteBuffer.wrap(writeToArray(v)))
 
-  protected class ReadHandler[T](onRead: T => Unit)(using JsonValueCodec[T]) extends CompletionHandler[Integer, ByteBuffer]() {
+  protected class ReadHandler[T](onRead: T => Unit)(using JsonValueCodec[T])
+      extends CompletionHandler[Integer, ByteBuffer]() {
     override def completed(result: Integer, attachment: ByteBuffer): Unit = {
       val buffer = attachment
       buffer.flip()

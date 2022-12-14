@@ -13,7 +13,7 @@ case class Source[V](name: String, cType: WithContext[CType]) extends Event[V] {
   override val baseName: String = "source"
 
   override def valueName: String = name
-  
+
   val validName: String = valueName + "_valid"
 
   @compileTimeOnly("This method can only be used in the parameters of CMainFunction.startTransaction")
@@ -22,5 +22,6 @@ case class Source[V](name: String, cType: WithContext[CType]) extends Event[V] {
 }
 
 object Source {
-  inline def apply[V, C <: MacroCompiler]()(using mc: C): Source[V] = new Source[V](mc.valName, mc.compileType[Option[V]])
+  inline def apply[V, C <: MacroCompiler]()(using mc: C): Source[V] =
+    new Source[V](mc.valName, mc.compileType[Option[V]])
 }

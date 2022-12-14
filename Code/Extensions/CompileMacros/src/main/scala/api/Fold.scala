@@ -25,5 +25,5 @@ object Fold {
   }
 }
 
-extension [V] (input: Event[V])
+extension [V](input: Event[V])
   inline def fold[R]: Fold.FoldFactory[V, R] = new Fold.FoldFactory(input)

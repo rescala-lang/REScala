@@ -10,10 +10,10 @@ import scala.quoted.*
 
 package object clangast {
   given Conversion[CType, CQualType] = CQualType(_)
-  given Conversion[CDecl, CStmt] = CDeclStmt(_)
-  given Conversion[CExpr, CStmt] = CExprStmt(_)
+  given Conversion[CDecl, CStmt]     = CDeclStmt(_)
+  given Conversion[CExpr, CStmt]     = CExprStmt(_)
 
-/*  extension (lhs: CExpr)
+  /*  extension (lhs: CExpr)
     @targetName("plus")
     infix def +(rhs: CExpr) = CPlusExpr(lhs, rhs)
     @targetName("minus")
@@ -24,13 +24,13 @@ package object clangast {
     infix def /(rhs: CExpr) = CDivExpr(lhs, rhs)
     @targetName("mod")
     infix def %(rhs: CExpr) = CModExpr(lhs, rhs)*/
-    
+
   extension (i: Int)
     def lit: CIntegerLiteral = CIntegerLiteral(i)
 
-  extension[T] (o: Option[Expr[T]])
+  extension [T](o: Option[Expr[T]])
     def toExpr(using Quotes, Type[T]): Expr[Option[T]] = o match {
-      case None => '{ None }
+      case None       => '{ None }
       case Some(expr) => '{ Some($expr) }
     }
 }

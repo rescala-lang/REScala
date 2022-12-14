@@ -7,15 +7,15 @@ import scala.quoted.*
 
 type Codecs[T <: Tuple] <: Tuple = T match
   case EmptyTuple => EmptyTuple
-  case t *: ts => JsonValueCodec[t] *: Codecs[ts]
+  case t *: ts    => JsonValueCodec[t] *: Codecs[ts]
 
 trait TupleCodec[T <: Tuple] {
   def decodeValue(
-                   codecs: Codecs[OptionsFromTuple[T]],
-                   in: JsonReader,
-                   default: OptionsFromTuple[T],
-                   checkComma: Boolean
-                 ): OptionsFromTuple[T]
+      codecs: Codecs[OptionsFromTuple[T]],
+      in: JsonReader,
+      default: OptionsFromTuple[T],
+      checkComma: Boolean
+  ): OptionsFromTuple[T]
 
   def encodeValue(codecs: Codecs[OptionsFromTuple[T]], x: OptionsFromTuple[T], out: JsonWriter): Unit
 
@@ -24,25 +24,29 @@ trait TupleCodec[T <: Tuple] {
 
 given TupleCodec[EmptyTuple] with {
   def decodeValue(
-                   codecs: Codecs[OptionsFromTuple[EmptyTuple]],
-                   in: JsonReader,
-                   default: OptionsFromTuple[EmptyTuple],
-                   checkComma: Boolean
-                 ): OptionsFromTuple[EmptyTuple] = EmptyTuple
+      codecs: Codecs[OptionsFromTuple[EmptyTuple]],
+      in: JsonReader,
+      default: OptionsFromTuple[EmptyTuple],
+      checkComma: Boolean
+  ): OptionsFromTuple[EmptyTuple] = EmptyTuple
 
-  def encodeValue(codecs: Codecs[OptionsFromTuple[EmptyTuple]], x: OptionsFromTuple[EmptyTuple], out: JsonWriter): Unit = ()
+  def encodeValue(
+      codecs: Codecs[OptionsFromTuple[EmptyTuple]],
+      x: OptionsFromTuple[EmptyTuple],
+      out: JsonWriter
+  ): Unit = ()
 
   def nullValue(codecs: Codecs[OptionsFromTuple[EmptyTuple]]): OptionsFromTuple[EmptyTuple] = EmptyTuple
 }
 
-given[T, TS <: Tuple : TupleCodec]: TupleCodec[T *: TS] with {
+given [T, TS <: Tuple: TupleCodec]: TupleCodec[T *: TS] with {
   def decodeValue(
-                   codecs: Codecs[OptionsFromTuple[T *: TS]],
-                   in: JsonReader,
-                   default: OptionsFromTuple[T *: TS],
-                   checkComma: Boolean
-                 ): OptionsFromTuple[T *: TS] = {
-    val codecsHead *: codecsTail = codecs
+      codecs: Codecs[OptionsFromTuple[T *: TS]],
+      in: JsonReader,
+      default: OptionsFromTuple[T *: TS],
+      checkComma: Boolean
+  ): OptionsFromTuple[T *: TS] = {
+    val codecsHead *: codecsTail   = codecs
     val defaultHead *: defaultTail = default
 
     val x = if !checkComma || in.isNextToken(44) then codecsHead.decodeValue(in, defaultHead) else in.commaError()
@@ -51,12 +55,12 @@ given[T, TS <: Tuple : TupleCodec]: TupleCodec[T *: TS] with {
   }
 
   def encodeValue(
-                   codecs: Codecs[OptionsFromTuple[T *: TS]],
-                   x: OptionsFromTuple[T *: TS],
-                   out: JsonWriter
-                 ): Unit = {
+      codecs: Codecs[OptionsFromTuple[T *: TS]],
+      x: OptionsFromTuple[T *: TS],
+      out: JsonWriter
+  ): Unit = {
     val codecsHead *: codecsTail = codecs
-    val xHead *: xTail = x
+    val xHead *: xTail           = x
 
     codecsHead.encodeValue(xHead, out)
 
@@ -64,8 +68,8 @@ given[T, TS <: Tuple : TupleCodec]: TupleCodec[T *: TS] with {
   }
 
   def nullValue(
-                 codecs: Codecs[OptionsFromTuple[T *: TS]]
-               ): OptionsFromTuple[T *: TS] = {
+      codecs: Codecs[OptionsFromTuple[T *: TS]]
+  ): OptionsFromTuple[T *: TS] = {
     val codecsHead *: codecsTail = codecs
 
     codecsHead.nullValue *: summon[TupleCodec[TS]].nullValue(codecsTail)
@@ -73,9 +77,13 @@ given[T, TS <: Tuple : TupleCodec]: TupleCodec[T *: TS] with {
 }
 
 object TupleCodecFactory {
-  inline def generateEventCodecsTuple[T <: Tuple]: Codecs[OptionsFromTuple[TupleFromEvents[T]]] = ${ generateEventCodecsTupleCode }
+  inline def generateEventCodecsTuple[T <: Tuple]: Codecs[OptionsFromTuple[TupleFromEvents[T]]] =
+    ${ generateEventCodecsTupleCode }
 
-  def generateEventCodecsTupleCode[T <: Tuple](using Type[T], Quotes): Expr[Codecs[OptionsFromTuple[TupleFromEvents[T]]]] = {
+  def generateEventCodecsTupleCode[T <: Tuple](using
+      Type[T],
+      Quotes
+  ): Expr[Codecs[OptionsFromTuple[TupleFromEvents[T]]]] = {
     import quotes.reflect.*
 
     val AppliedType(_, evTypes) = TypeRepr.of[T]: @unchecked
@@ -92,7 +100,10 @@ object TupleCodecFactory {
   inline def generateCEventCodecsTuple[T <: Tuple]: Codecs[OptionsFromTuple[TupleFromCEvents[T]]] =
     ${ generateCEventCodecsTupleCode }
 
-  def generateCEventCodecsTupleCode[T <: Tuple](using Type[T], Quotes): Expr[Codecs[OptionsFromTuple[TupleFromCEvents[T]]]] = {
+  def generateCEventCodecsTupleCode[T <: Tuple](using
+      Type[T],
+      Quotes
+  ): Expr[Codecs[OptionsFromTuple[TupleFromCEvents[T]]]] = {
     import quotes.reflect.*
 
     val AppliedType(_, evTypes) = TypeRepr.of[T]: @unchecked
@@ -106,8 +117,9 @@ object TupleCodecFactory {
     Expr.ofTupleFromSeq(codecs).asInstanceOf[Expr[Codecs[OptionsFromTuple[TupleFromCEvents[T]]]]]
   }
 
-  def combineTupleCodecs[T <: Tuple](codecs: Codecs[OptionsFromTuple[T]])
-                                    (using TupleCodec[T]): JsonValueCodec[OptionsFromTuple[T]] =
+  def combineTupleCodecs[T <: Tuple](codecs: Codecs[OptionsFromTuple[T]])(using
+      TupleCodec[T]
+  ): JsonValueCodec[OptionsFromTuple[T]] =
     new JsonValueCodec[OptionsFromTuple[T]] {
       override def decodeValue(in: JsonReader, default: OptionsFromTuple[T]): OptionsFromTuple[T] =
         if (in.isNextToken(91)) {

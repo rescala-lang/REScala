@@ -12,17 +12,20 @@ import compiler.context.TranslationContext
 import scala.quoted.*
 
 object MainFunctionFragment extends TermIFFragment {
-  override def compileTerm(using Quotes)(using FragmentedCompiler)(using TranslationContext):
-    PartialFunction[quotes.reflect.Term, CASTNode] = {
-      import quotes.reflect.*
-  
-      {
-        case Apply(Select(Ident("CMainFunction"), "startTransaction"), varArgs(assignments)) =>
-          CTransactionStatement(assignments.map(compileSourceAssignment))
-      }
-    }
+  override def compileTerm(using Quotes)(using FragmentedCompiler)(using
+      TranslationContext
+  ): PartialFunction[quotes.reflect.Term, CASTNode] = {
+    import quotes.reflect.*
 
-  private def compileSourceAssignment(using Quotes)(assignment: quotes.reflect.Term)(using FragmentedCompiler)(using TranslationContext): (String, CExpr) = {
+    {
+      case Apply(Select(Ident("CMainFunction"), "startTransaction"), varArgs(assignments)) =>
+        CTransactionStatement(assignments.map(compileSourceAssignment))
+    }
+  }
+
+  private def compileSourceAssignment(using Quotes)(assignment: quotes.reflect.Term)(using FragmentedCompiler)(using
+      TranslationContext
+  ): (String, CExpr) = {
     import quotes.reflect.*
 
     assignment match {

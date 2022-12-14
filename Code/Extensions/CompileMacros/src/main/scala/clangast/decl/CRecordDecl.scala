@@ -18,7 +18,7 @@ case class CRecordDecl(name: String, fields: List[CFieldDecl]) extends CTypeDecl
   }
 
   override def toExpr(using Quotes): Expr[CRecordDecl] = {
-    val nameExpr = Expr(name)
+    val nameExpr   = Expr(name)
     val fieldsExpr = Expr.ofList(fields.map(_.toExpr))
 
     '{ CRecordDecl($nameExpr, $fieldsExpr) }
@@ -26,6 +26,6 @@ case class CRecordDecl(name: String, fields: List[CFieldDecl]) extends CTypeDecl
 
   override def mapChildren(mapper: CASTMapper): CRecordDecl =
     CRecordDecl(name, fields.map(mapper.mapCFieldDecl))
-    
+
   def getField(name: String): CFieldDecl = fields.find(_.name.equals(name)).get
 }

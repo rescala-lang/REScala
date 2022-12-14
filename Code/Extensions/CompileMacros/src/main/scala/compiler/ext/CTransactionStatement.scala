@@ -12,11 +12,11 @@ case class CTransactionStatement(args: List[(String, CExpr)]) extends CStmt {
   override def toExpr(using Quotes): Expr[CTransactionStatement] = {
     val argsExpr = Expr.ofList(args.map {
       case (str, expr) =>
-        val strExpr = Expr(str)
+        val strExpr  = Expr(str)
         val exprExpr = expr.toExpr
         Expr.ofTuple((strExpr, exprExpr))
     })
-    
+
     '{ CTransactionStatement($argsExpr) }
   }
 

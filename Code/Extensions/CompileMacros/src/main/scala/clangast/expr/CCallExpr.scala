@@ -8,7 +8,7 @@ case class CCallExpr(callee: CExpr, args: List[CExpr]) extends CExpr {
 
   override def toExpr(using Quotes): Expr[CCallExpr] = {
     val calleeExpr = callee.toExpr
-    val argsExpr = Expr.ofList(args.map(_.toExpr))
+    val argsExpr   = Expr.ofList(args.map(_.toExpr))
 
     '{ CCallExpr($calleeExpr, $argsExpr) }
   }

@@ -26,9 +26,9 @@ object Map1 {
   }
 }
 
-extension [A] (input: Event[A])
+extension [A](input: Event[A])
   inline def map[R]: Map1.Map1Factory[A, R] = new Map1.Map1Factory(input)
-    
+
   inline def observe[C <: MacroCompiler](inline f: A => Unit)(using mc: C): Map1[A, Unit] =
     Map1(
       input,

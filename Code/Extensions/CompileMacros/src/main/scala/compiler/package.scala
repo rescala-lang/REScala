@@ -24,16 +24,16 @@ package object compiler {
 
   val standardFragmentedCompiler: FragmentedCompiler =
     MainFunctionFragment
-      +: HelperFunFragment
-      +: SetFragment
-      +: MapFragment
-      +: EitherFragment
-      +: OptionFragment
-      +: ArrayFragment
-      +: ProductFragment
-      +: SerializationFragment
-      +: StringFragment
-      +: minimalFragmentedCompiler
+    +: HelperFunFragment
+    +: SetFragment
+    +: MapFragment
+    +: EitherFragment
+    +: OptionFragment
+    +: ArrayFragment
+    +: ProductFragment
+    +: SerializationFragment
+    +: StringFragment
+    +: minimalFragmentedCompiler
 
   trait StandardContext extends MinimalContext
 

@@ -24,6 +24,6 @@ object Or {
   }
 }
 
-extension [V] (left: Event[V])
+extension [V](left: Event[V])
   @targetName("or")
   inline def || : Or.OrFactory[V] = new Or.OrFactory(left)

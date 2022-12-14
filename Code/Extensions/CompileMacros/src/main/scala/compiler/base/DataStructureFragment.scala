@@ -16,32 +16,36 @@ import compiler.context.{RecordDeclTC, TranslationContext}
 import scala.quoted.*
 
 object DataStructureFragment extends DataStructureIFFragment {
-  override def compileTypeToCRecordDecl(using Quotes)(using FragmentedCompiler)(using TranslationContext):
-    PartialFunction[quotes.reflect.TypeRepr, CRecordDecl] = {
-      import quotes.reflect.*
+  override def compileTypeToCRecordDecl(using Quotes)(using FragmentedCompiler)(using
+      TranslationContext
+  ): PartialFunction[quotes.reflect.TypeRepr, CRecordDecl] = {
+    import quotes.reflect.*
 
-      {
-        case MethodType(_, _, tpe) => dispatch[DataStructureIFFragment](_.compileTypeToCRecordDecl)(tpe)
-      }
+    {
+      case MethodType(_, _, tpe) => dispatch[DataStructureIFFragment](_.compileTypeToCRecordDecl)(tpe)
     }
+  }
 
-  override def usesRefCount(using Quotes)(using FragmentedCompiler)(using TranslationContext):
-    PartialFunction[quotes.reflect.TypeRepr, Boolean] = {
-      import quotes.reflect.*
+  override def usesRefCount(using Quotes)(using FragmentedCompiler)(using
+      TranslationContext
+  ): PartialFunction[quotes.reflect.TypeRepr, Boolean] = {
+    import quotes.reflect.*
 
-      {
-        case MethodType(_, _, tpe) => dispatch[DataStructureIFFragment](_.usesRefCount)(tpe)
-        case _ => false
-      }
+    {
+      case MethodType(_, _, tpe) => dispatch[DataStructureIFFragment](_.usesRefCount)(tpe)
+      case _                     => false
     }
+  }
 
-  override def compileRetain(using Quotes)(using FragmentedCompiler)(using TranslationContext):
-    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = ensureCtx[RecordDeclTC] { ctx ?=>
-      import quotes.reflect.*
+  override def compileRetain(using Quotes)(using FragmentedCompiler)(using
+      TranslationContext
+  ): PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = ensureCtx[RecordDeclTC] { ctx ?=>
+    import quotes.reflect.*
 
-      {
-        case tpe if dispatch[DataStructureIFFragment](_.usesRefCount)(tpe) =>
-          ctx.recordFunMap.getOrElseUpdate(dispatch[TypeIFFragment](_.typeName)(tpe) -> RETAIN, {
+    {
+      case tpe if dispatch[DataStructureIFFragment](_.usesRefCount)(tpe) =>
+        ctx.recordFunMap.getOrElseUpdate(
+          dispatch[TypeIFFragment](_.typeName)(tpe) -> RETAIN, {
             val recordDecl = getRecordDecl(tpe)
 
             val name = "retain_" + recordDecl.name
@@ -54,22 +58,25 @@ object DataStructureFragment extends DataStructureIFFragment {
             ))
 
             CFunctionDecl(name, List(param), recordDecl.getTypeForDecl, Some(body))
-          })
-      }
+          }
+        )
     }
+  }
 
-  override def compileRelease(using Quotes)(using FragmentedCompiler)(using TranslationContext):
-    PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = ensureCtx[RecordDeclTC] { ctx ?=>
-      import quotes.reflect.*
+  override def compileRelease(using Quotes)(using FragmentedCompiler)(using
+      TranslationContext
+  ): PartialFunction[quotes.reflect.TypeRepr, CFunctionDecl] = ensureCtx[RecordDeclTC] { ctx ?=>
+    import quotes.reflect.*
 
-      {
-        case tpe if dispatch[DataStructureIFFragment](_.usesRefCount)(tpe) =>
-          ctx.recordFunMap.getOrElseUpdate(dispatch[TypeIFFragment](_.typeName)(tpe) -> RELEASE, {
+    {
+      case tpe if dispatch[DataStructureIFFragment](_.usesRefCount)(tpe) =>
+        ctx.recordFunMap.getOrElseUpdate(
+          dispatch[TypeIFFragment](_.typeName)(tpe) -> RELEASE, {
             val recordDecl = getRecordDecl(tpe)
 
             val name = "release_" + recordDecl.name
 
-            val param = CParmVarDecl("rec", recordDecl.getTypeForDecl)
+            val param        = CParmVarDecl("rec", recordDecl.getTypeForDecl)
             val keepWithZero = CParmVarDecl("keep_with_zero", StdBoolH.bool)
 
             val body = CCompoundStmt(List(
@@ -84,17 +91,22 @@ object DataStructureFragment extends DataStructureIFFragment {
             ))
 
             CFunctionDecl(name, List(param, keepWithZero), CVoidType, Some(body))
-          })
-      }
+          }
+        )
     }
+  }
 
-  def retain(using Quotes)(expr: CExpr, tpe: quotes.reflect.TypeRepr)(using fc: FragmentedCompiler)(using TranslationContext): CExpr =
+  def retain(using Quotes)(expr: CExpr, tpe: quotes.reflect.TypeRepr)(using fc: FragmentedCompiler)(using
+      TranslationContext
+  ): CExpr =
     fc.dispatchLifted[DataStructureIFFragment](_.compileRetain)(tpe) match {
-      case None => expr
+      case None    => expr
       case Some(f) => CCallExpr(f.ref, List(expr))
     }
 
-  def release(using Quotes)(expr: CExpr, tpe: quotes.reflect.TypeRepr, keepWithZero: CExpr)(using fc: FragmentedCompiler)(using TranslationContext): Option[CStmt] =
+  def release(using Quotes)(expr: CExpr, tpe: quotes.reflect.TypeRepr, keepWithZero: CExpr)(using
+      fc: FragmentedCompiler
+  )(using TranslationContext): Option[CStmt] =
     fc.dispatchLifted[DataStructureIFFragment](_.compileRelease)(tpe).map { f =>
       CCallExpr(f.ref, List(expr, keepWithZero))
     }
@@ -105,19 +117,21 @@ object DataStructureFragment extends DataStructureIFFragment {
         val funName = "release_" + declName
         ctx.valueDeclList.find {
           case CFunctionDecl(`funName`, _, _, _, _) => true
-          case _ => false
+          case _                                    => false
         }.map(f => CCallExpr(f.ref, List(varDecl.ref, keepWithZero)))
       case _ => None
     }
 
   def releaseLocalVars(stmts: List[CStmt])(using TranslationContext): List[CStmt] = stmts.flatMap {
     case CDeclStmt(varDecl: CVarDecl) => release(varDecl, CFalseLiteral)
-    case _ => None
+    case _                            => None
   }
 
-  def deepCopy(using Quotes)(expr: CExpr, tpe: quotes.reflect.TypeRepr)(using fc: FragmentedCompiler)(using TranslationContext): CExpr =
+  def deepCopy(using Quotes)(expr: CExpr, tpe: quotes.reflect.TypeRepr)(using fc: FragmentedCompiler)(using
+      TranslationContext
+  ): CExpr =
     fc.dispatchLifted[DataStructureIFFragment](_.compileDeepCopy)(tpe) match {
-      case None => expr
+      case None    => expr
       case Some(f) => CCallExpr(f.ref, List(expr))
     }
 }

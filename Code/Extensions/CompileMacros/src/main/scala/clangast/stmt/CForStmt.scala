@@ -13,7 +13,7 @@ case class CForStmt(init: Option[CStmt], cond: Option[CExpr], inc: Option[CExpr]
   override def toExpr(using Quotes): Expr[CForStmt] = {
     val initExpr = init.map(_.toExpr).toExpr
     val condExpr = cond.map(_.toExpr).toExpr
-    val incExpr = inc.map(_.toExpr).toExpr
+    val incExpr  = inc.map(_.toExpr).toExpr
     val bodyExpr = body.toExpr
 
     '{ CForStmt($initExpr, $condExpr, $incExpr, $bodyExpr) }

@@ -16,7 +16,7 @@ class MappingLabel[K, V](register: V => Unit = (_: V) => ()) {
   def getOrElseUpdate(key: K, value: => V): V = {
     map.get(key) match {
       case Some(v) => v
-      case None => put(key, value)
+      case None    => put(key, value)
     }
   }
 }

@@ -11,9 +11,9 @@ case class CTypedefDecl(name: String, underlyingType: CQualType) extends CTypeDe
   override def textgen: String = s"typedef ${underlyingType.textgen} $name;"
 
   override def toExpr(using Quotes): Expr[CTypedefDecl] = {
-    val nameExpr = Expr(name)
+    val nameExpr           = Expr(name)
     val underlyingTypeExpr = underlyingType.toExpr
-    
+
     '{ CTypedefDecl($nameExpr, $underlyingTypeExpr) }
   }
 

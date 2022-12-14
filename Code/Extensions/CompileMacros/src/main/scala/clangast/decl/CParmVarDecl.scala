@@ -11,7 +11,7 @@ case class CParmVarDecl(name: String, declaredType: CQualType) extends CValueDec
   override def textgen: String = declaredType.typedVar(name)
 
   override def toExpr(using Quotes): Expr[CParmVarDecl] = {
-    val nameExpr = Expr(name)
+    val nameExpr         = Expr(name)
     val declaredTypeExpr = declaredType.toExpr
 
     '{ CParmVarDecl($nameExpr, $declaredTypeExpr) }

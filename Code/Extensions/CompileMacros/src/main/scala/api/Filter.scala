@@ -24,5 +24,5 @@ object Filter {
   }
 }
 
-extension [V] (input: Event[V])
+extension [V](input: Event[V])
   inline def filter: Filter.FilterFactory[V] = new Filter.FilterFactory(input)

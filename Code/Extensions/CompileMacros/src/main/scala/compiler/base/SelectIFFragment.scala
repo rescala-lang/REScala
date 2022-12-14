@@ -7,6 +7,7 @@ import compiler.context.TranslationContext
 import scala.quoted.*
 
 trait SelectIFFragment extends CompilerFragment {
-  def compileSelect(using Quotes)(using FragmentedCompiler)(using TranslationContext):
-    PartialFunction[quotes.reflect.Select, CExpr] = PartialFunction.empty
+  def compileSelect(using Quotes)(using FragmentedCompiler)(using
+      TranslationContext
+  ): PartialFunction[quotes.reflect.Select, CExpr] = PartialFunction.empty
 }

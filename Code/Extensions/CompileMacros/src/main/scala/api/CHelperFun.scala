@@ -44,23 +44,38 @@ object CHelperFun {
     new CHelperFun0(hfc.add(mc.compileFun(f)))
   }
 
-  inline def apply[T1, R, C <: MacroCompiler](inline f: T1 => R)(using mc: C, hfc: HelperFunCollection): CHelperFun1[T1, R] = {
+  inline def apply[T1, R, C <: MacroCompiler](inline f: T1 => R)(using
+      mc: C,
+      hfc: HelperFunCollection
+  ): CHelperFun1[T1, R] = {
     new CHelperFun1(hfc.add(mc.compileFun(f)))
   }
 
-  inline def apply[T1, T2, R, C <: MacroCompiler](inline f: (T1, T2) => R)(using mc: C, hfc: HelperFunCollection): CHelperFun2[T1, T2, R] = {
+  inline def apply[T1, T2, R, C <: MacroCompiler](inline f: (T1, T2) => R)(using
+      mc: C,
+      hfc: HelperFunCollection
+  ): CHelperFun2[T1, T2, R] = {
     new CHelperFun2(hfc.add(mc.compileFun(f)))
   }
 
-  inline def apply[T1, T2, T3, R, C <: MacroCompiler](inline f: (T1, T2, T3) => R)(using mc: C, hfc: HelperFunCollection): CHelperFun3[T1, T2, T3, R] = {
+  inline def apply[T1, T2, T3, R, C <: MacroCompiler](inline f: (T1, T2, T3) => R)(using
+      mc: C,
+      hfc: HelperFunCollection
+  ): CHelperFun3[T1, T2, T3, R] = {
     new CHelperFun3(hfc.add(mc.compileFun(f)))
   }
 
-  inline def apply[T1, T2, T3, T4, R, C <: MacroCompiler](inline f: (T1, T2, T3, T4) => R)(using mc: C, hfc: HelperFunCollection): CHelperFun4[T1, T2, T3, T4, R] = {
+  inline def apply[T1, T2, T3, T4, R, C <: MacroCompiler](inline f: (T1, T2, T3, T4) => R)(using
+      mc: C,
+      hfc: HelperFunCollection
+  ): CHelperFun4[T1, T2, T3, T4, R] = {
     new CHelperFun4(hfc.add(mc.compileFun(f)))
   }
 
-  inline def apply[T1, T2, T3, T4, T5, R, C <: MacroCompiler](inline f: (T1, T2, T3, T4, T5) => R)(using mc: C, hfc: HelperFunCollection): CHelperFun5[T1, T2, T3, T4, T5, R] = {
+  inline def apply[T1, T2, T3, T4, T5, R, C <: MacroCompiler](inline f: (T1, T2, T3, T4, T5) => R)(using
+      mc: C,
+      hfc: HelperFunCollection
+  ): CHelperFun5[T1, T2, T3, T4, T5, R] = {
     new CHelperFun5(hfc.add(mc.compileFun(f)))
   }
 }

@@ -4,7 +4,9 @@ import clangast.*
 import clangast.given
 import clangast.decl.*
 import clangast.expr.*
-import clangast.expr.binaryop.{CAndExpr, CAssignmentExpr, CEqualsExpr, CGreaterThanExpr, CLessThanExpr, CNotEqualsExpr, COrExpr}
+import clangast.expr.binaryop.{
+  CAndExpr, CAssignmentExpr, CEqualsExpr, CGreaterThanExpr, CLessThanExpr, CNotEqualsExpr, COrExpr
+}
 import clangast.expr.unaryop.CNotExpr
 import clangast.stmt.*
 import clangast.stubs.{CJSONH, DyadH, StdBoolH, StdLibH}
@@ -22,16 +24,16 @@ import scala.collection.mutable.ArrayBuffer
 import scala.quoted.*
 
 class GraphCompiler(using Quotes)(
-  reactives: List[CompiledReactive],
-  externalSources: List[CompiledReactive],
-  outputReactives: List[CompiledReactive],
-  appName: String
+    reactives: List[CompiledReactive],
+    externalSources: List[CompiledReactive],
+    outputReactives: List[CompiledReactive],
+    appName: String
 )(using fc: FragmentedCompiler)(using ctx: RecordDeclTC) {
   import quotes.reflect.*
 
   private val sources: List[CompiledReactive] = reactives.filter(_.isSource)
-  private val signals: List[CompiledSignal] = reactives.collect { case s: CompiledSignal => s }
-  private val events: List[CompiledEvent] = reactives.collect { case e: CompiledEvent => e }
+  private val signals: List[CompiledSignal]   = reactives.collect { case s: CompiledSignal => s }
+  private val events: List[CompiledEvent]     = reactives.collect { case e: CompiledEvent => e }
 
   private val nameToReactive: Map[String, CompiledReactive] = reactives.map(r => r.name -> r).toMap
   private val reactiveInputs: Map[CompiledReactive, List[CompiledReactive]] =
@@ -42,24 +44,25 @@ class GraphCompiler(using Quotes)(
     }
 
   private val topological: List[CompiledReactive] = toposort(sources).reverse
-  private val localSourcesTopological: List[CompiledReactive] = topological.filter(r => r.isSource && !externalSources.contains(r))
+  private val localSourcesTopological: List[CompiledReactive] =
+    topological.filter(r => r.isSource && !externalSources.contains(r))
   private val orderedSources: List[CompiledReactive] = localSourcesTopological ++ externalSources
 
   private val hasExternalSources: Boolean = externalSources.nonEmpty
   private val hasOutputReactives: Boolean = outputReactives.nonEmpty
-  private val isConnected: Boolean = hasExternalSources || hasOutputReactives
+  private val isConnected: Boolean        = hasExternalSources || hasOutputReactives
 
   private def addValueToAllKeys[K, V](originalMap: Map[K, Set[V]], keys: List[K], value: V): Map[K, Set[V]] = {
     keys.foldLeft(originalMap) { (acc, i) =>
       acc.updatedWith(i) {
-        case None => Some(Set(value))
+        case None    => Some(Set(value))
         case Some(s) => Some(s + value)
       }
     }
   }
 
   private def toposort(rems: List[CompiledReactive]): List[CompiledReactive] = {
-    val sorted = ArrayBuffer[CompiledReactive]()
+    val sorted     = ArrayBuffer[CompiledReactive]()
     val discovered = scala.collection.mutable.HashSet[CompiledReactive]()
 
     def _toposort(rem: CompiledReactive): Unit = {
@@ -82,7 +85,7 @@ class GraphCompiler(using Quotes)(
       val activatedNext = startNodes.flatMap { n =>
         dataflow.getOrElse(n, Set()).filter {
           case f: CompiledFold if nameToReactive(f.primaryInput) != n => false
-          case _ => true
+          case _                                                      => true
         }
       }
       startNodes union computeSubGraph(activatedNext)
@@ -91,7 +94,7 @@ class GraphCompiler(using Quotes)(
 
   private val updateFunctions: List[CFunctionDecl] = reactives.collect {
     case s: CompiledSignal => s.updateFun
-    case r if !r.isSource => r.updateFun
+    case r if !r.isSource  => r.updateFun
   }
 
   private val signalVariables: Map[CompiledSignal, CVarDecl] = signals.map {
@@ -100,7 +103,7 @@ class GraphCompiler(using Quotes)(
 
   private val startup: CFunctionDecl = {
     val initSignals = signalVariables.collect {
-      case (s@CompiledSignalExpr(_, updateFun, typeRepr), varDecl) =>
+      case (s @ CompiledSignalExpr(_, updateFun, typeRepr), varDecl) =>
         CExprStmt(CAssignmentExpr(
           varDecl.ref,
           retain(
@@ -134,7 +137,8 @@ class GraphCompiler(using Quotes)(
 
   private val sourceParameters: Map[CompiledReactive, CParmVarDecl] = sources.collect {
     case s: CompiledEvent if s.isSource => s -> CParmVarDecl(s.name, s.cType)
-    case s: CompiledSignal if s.isSource => s ->
+    case s: CompiledSignal if s.isSource =>
+      s ->
       CParmVarDecl(
         s.name + "_param",
         dispatch[TypeIFFragment](_.compileTypeRepr)(TypeRepr.of[Option].appliedTo(s.typeRepr))
@@ -164,13 +168,13 @@ class GraphCompiler(using Quotes)(
 
   extension (expr: CExpr)
     def defined: CExpr = CMemberExpr(expr, "defined")
-    def value: CExpr = CMemberExpr(expr, "val")
+    def value: CExpr   = CMemberExpr(expr, "val")
 
   private def conditionAfterFilter(r: CompiledReactive, cond: Map[CompiledReactive, Set[CExpr]]): Set[CExpr] = r match {
-    case s: CompiledSignal => Set(signalChangedVars(s).ref)
-    case s if s.isSource => cond(s)
+    case s: CompiledSignal                       => Set(signalChangedVars(s).ref)
+    case s if s.isSource                         => cond(s)
     case e: CompiledEvent if !e.alwaysPropagates => Set(eventVariables(e).ref.defined)
-    case _ => cond(r)
+    case _                                       => cond(r)
   }
 
   private def updateConditions(subGraph: Set[CompiledReactive]): Map[CompiledReactive, Set[CExpr]] =
@@ -178,18 +182,27 @@ class GraphCompiler(using Quotes)(
       r match {
         case s if s.isSource => acc.updated(s, Set(sourceParameters(s).ref.defined))
         case f: CompiledFold => acc.updated(f, conditionAfterFilter(reactiveInputs(f).head, acc))
-        case _ => acc.updated(r, reactiveInputs(r).filter(subGraph.contains).map(conditionAfterFilter(_, acc)).reduce(_ union _))
+        case _ => acc.updated(
+            r,
+            reactiveInputs(r).filter(subGraph.contains).map(conditionAfterFilter(_, acc)).reduce(_ union _)
+          )
       }
     }
 
   private def compileCondition(conds: Set[CExpr]): CExpr = conds.toList match {
     case List(c) => c
-    case l => l.reduce(COrExpr.apply)
+    case l       => l.reduce(COrExpr.apply)
   }
 
-  private def topologicalByCond(subGraph: Set[CompiledReactive], subGraphConds: Map[CompiledReactive, Set[CExpr]]): List[CompiledReactive] = {
+  private def topologicalByCond(
+      subGraph: Set[CompiledReactive],
+      subGraphConds: Map[CompiledReactive, Set[CExpr]]
+  ): List[CompiledReactive] = {
     val (groupedByCond: Map[Set[CExpr], List[CompiledReactive]], condOrder: List[Set[CExpr]]) =
-      topological.filter(subGraph.contains).foldLeft((Map.empty[Set[CExpr], List[CompiledReactive]], List[Set[CExpr]]())) {
+      topological.filter(subGraph.contains).foldLeft((
+        Map.empty[Set[CExpr], List[CompiledReactive]],
+        List[Set[CExpr]]()
+      )) {
         case ((groupedByCond, condOrder), r) =>
           val cond = subGraphConds(r)
           if groupedByCond.contains(cond) then (groupedByCond.updated(cond, groupedByCond(cond) :+ r), condOrder)
@@ -201,15 +214,15 @@ class GraphCompiler(using Quotes)(
 
   private def valueRef(r: CompiledReactive): CDeclRefExpr =
     r match {
-      case s: CompiledSignal => signalVariables(s).ref
+      case s: CompiledSignal                                                                 => signalVariables(s).ref
       case s if s.isSource && !dispatch[DataStructureIFFragment](_.usesRefCount)(s.typeRepr) => sourceParameters(s).ref
-      case e: CompiledEvent => eventVariables(e).ref
+      case e: CompiledEvent                                                                  => eventVariables(e).ref
     }
 
   private def compileUpdates(
-    remainingReactives: List[CompiledReactive],
-    subGraphConds: Map[CompiledReactive, Set[CExpr]],
-    toRelease: Set[CompiledEvent]
+      remainingReactives: List[CompiledReactive],
+      subGraphConds: Map[CompiledReactive, Set[CExpr]],
+      toRelease: Set[CompiledEvent]
   ): List[CStmt] = {
     if remainingReactives.isEmpty then return Nil
 
@@ -225,11 +238,17 @@ class GraphCompiler(using Quotes)(
 
     def signalUpdateAssignment(signal: CompiledSignal, rhs: CExpr): CStmt = {
       val tempDecl = CVarDecl("temp", signal.cType, Some(valueRef(signal)))
-      val oldDecl = CVarDecl("_old", signal.cType, Some(retain(deepCopy(valueRef(signal), signal.typeRepr), signal.typeRepr)))
+      val oldDecl =
+        CVarDecl("_old", signal.cType, Some(retain(deepCopy(valueRef(signal), signal.typeRepr), signal.typeRepr)))
 
-      val changedTest = fc.dispatchLifted[ApplyIFFragment](_.compileEquals)(oldDecl.ref, signal.typeRepr, valueRef(signal), signal.typeRepr) match {
+      val changedTest = fc.dispatchLifted[ApplyIFFragment](_.compileEquals)(
+        oldDecl.ref,
+        signal.typeRepr,
+        valueRef(signal),
+        signal.typeRepr
+      ) match {
         case Some(expr) => CNotExpr(CParenExpr(expr))
-        case None => CTrueLiteral
+        case None       => CTrueLiteral
       }
 
       CCompoundStmt(
@@ -244,7 +263,11 @@ class GraphCompiler(using Quotes)(
             signalChangedVars(signal).ref,
             changedTest
           )
-        ) ++ release(oldDecl.ref, signal.typeRepr, CFalseLiteral) ++ release(tempDecl.ref, signal.typeRepr, CFalseLiteral)
+        ) ++ release(oldDecl.ref, signal.typeRepr, CFalseLiteral) ++ release(
+          tempDecl.ref,
+          signal.typeRepr,
+          CFalseLiteral
+        )
       )
     }
 
@@ -290,7 +313,7 @@ class GraphCompiler(using Quotes)(
     val sameCondCode = CIfStmt(compileCondition(condition), CCompoundStmt(updates))
 
     val stillUsed = otherConds ++ otherConds.flatMap(reactiveInputs)
-    val released = toRelease.filterNot(stillUsed.contains)
+    val released  = toRelease.filterNot(stillUsed.contains)
 
     val serialization = CEmptyStmt :: sameCond.collect[CStmt] {
       case e: CompiledEvent if jsonVars.contains(e) =>
@@ -314,28 +337,34 @@ class GraphCompiler(using Quotes)(
       case _ => None
     }
 
-    (CEmptyStmt :: sameCondCode :: (serialization ++ releaseCode.toList)) ++ compileUpdates(otherConds, subGraphConds, toRelease.diff(released))
+    (CEmptyStmt :: sameCondCode :: (serialization ++ releaseCode.toList)) ++ compileUpdates(
+      otherConds,
+      subGraphConds,
+      toRelease.diff(released)
+    )
   }
 
   private def emptySourceArgs(reactives: List[CompiledReactive]): List[CExpr] = reactives.map {
     case e: CompiledEvent => CCallExpr(OptionFragment.getNoneCreator(e.typeRepr).ref, List())
-    case s: CompiledSignal => CCallExpr(OptionFragment.getNoneCreator(TypeRepr.of[Option].appliedTo(s.typeRepr)).ref, List())
+    case s: CompiledSignal =>
+      CCallExpr(OptionFragment.getNoneCreator(TypeRepr.of[Option].appliedTo(s.typeRepr)).ref, List())
   }
 
   private def buildTransactionFunction(sources: Set[CompiledReactive], nameSuffix: String): CFunctionDecl = {
-    val subGraph = computeSubGraph(sources)
-    val subGraphConds = updateConditions(subGraph)
+    val subGraph            = computeSubGraph(sources)
+    val subGraphConds       = updateConditions(subGraph)
     val subGraphTopological = topologicalByCond(subGraph, subGraphConds)
 
     val sourceParams = orderedSources.filter(sources.contains).map(sourceParameters)
 
-    val params = if outputReactives.nonEmpty
+    val params =
+      if outputReactives.nonEmpty
       then CParmVarDecl("json", CPointerType(CJSONH.cJSON)) :: sourceParams
       else sourceParams
 
     val localVarDecls = subGraphTopological.collect {
       case e: CompiledEvent if eventVariables.contains(e) => CDeclStmt(eventVariables(e))
-      case s: CompiledSignal if subGraph.contains(s) => CDeclStmt(signalChangedVars(s))
+      case s: CompiledSignal if subGraph.contains(s)      => CDeclStmt(signalChangedVars(s))
     }
 
     val toRelease = eventVariables.keySet.filter(subGraph.contains)
@@ -352,7 +381,9 @@ class GraphCompiler(using Quotes)(
       val jsonVarDecls = CEmptyStmt :: subGraphJsonVars.map(CDeclStmt.apply)
 
       val fillJson = CEmptyStmt ::
-        subGraphJsonVars.map[CStmt](jsonVar => CCallExpr(CJSONH.cJSON_AddItemToArray.ref, List(params.head.ref, jsonVar.ref))).toList
+        subGraphJsonVars.map[CStmt](jsonVar =>
+          CCallExpr(CJSONH.cJSON_AddItemToArray.ref, List(params.head.ref, jsonVar.ref))
+        ).toList
 
       CCompoundStmt(localVarDecls ++ jsonVarDecls ++ updates ++ fillJson)
     } else CCompoundStmt(localVarDecls ++ updates)
@@ -385,11 +416,15 @@ class GraphCompiler(using Quotes)(
       case (e: CompiledEvent, i) =>
         deserialize(CCallExpr(CJSONH.cJSON_GetArrayItem.ref, List(jsonDecl.ref, i.lit)), e.typeRepr)
       case (s: CompiledSignal, i) =>
-        deserialize(CCallExpr(CJSONH.cJSON_GetArrayItem.ref, List(jsonDecl.ref, i.lit)), TypeRepr.of[Option].appliedTo(s.typeRepr))
+        deserialize(
+          CCallExpr(CJSONH.cJSON_GetArrayItem.ref, List(jsonDecl.ref, i.lit)),
+          TypeRepr.of[Option].appliedTo(s.typeRepr)
+        )
     }
 
     val body = if (hasOutputReactives) {
-      val outputMsgDecl = CVarDecl("outputMsg", CPointerType(CJSONH.cJSON), Some(CCallExpr(CJSONH.cJSON_CreateArray.ref, List())))
+      val outputMsgDecl =
+        CVarDecl("outputMsg", CPointerType(CJSONH.cJSON), Some(CCallExpr(CJSONH.cJSON_CreateArray.ref, List())))
 
       val writeOutput = CCallExpr(
         DyadH.dyad_writef.ref,
@@ -422,7 +457,7 @@ class GraphCompiler(using Quotes)(
   lazy val clientStream: CVarDecl = CVarDecl("clientStream", CPointerType(DyadH.dyad_Stream))
 
   lazy val onAccept: CFunctionDecl = {
-    val eDecl = CParmVarDecl("e", CPointerType(DyadH.dyad_Event))
+    val eDecl              = CParmVarDecl("e", CPointerType(DyadH.dyad_Event))
     val assignClientStream = CAssignmentExpr(clientStream.ref, CMemberExpr(eDecl.ref, DyadH.remoteField, true))
 
     val body = if (hasExternalSources) {
@@ -477,7 +512,8 @@ class GraphCompiler(using Quotes)(
       )
 
       val updateFromLocalSources = if (!hasExternalSources) {
-        val outputMsgDecl = CVarDecl("outputMsg", CPointerType(CJSONH.cJSON), Some(CCallExpr(CJSONH.cJSON_CreateArray.ref, List())))
+        val outputMsgDecl =
+          CVarDecl("outputMsg", CPointerType(CJSONH.cJSON), Some(CCallExpr(CJSONH.cJSON_CreateArray.ref, List())))
 
         val writeOutput = CIfStmt(
           CAndExpr(
@@ -511,38 +547,42 @@ class GraphCompiler(using Quotes)(
 
       CCompoundStmt(
         List[CStmt](
-          checkArgs, CEmptyStmt,
+          checkArgs,
+          CEmptyStmt,
           CCallExpr(startup.ref, List()),
-          CCallExpr(DyadH.dyad_init.ref, List()), CEmptyStmt,
+          CCallExpr(DyadH.dyad_init.ref, List()),
+          CEmptyStmt,
           streamDecl,
           registerOnAccept,
-          startListening, CEmptyStmt,
-          dyadUpdateLoop, CEmptyStmt,
+          startListening,
+          CEmptyStmt,
+          dyadUpdateLoop,
+          CEmptyStmt,
           CCallExpr(DyadH.dyad_shutdown.ref, List())
         ) ++ releaseSignals
-          ++ releaseGlobals
-          :+ CReturnStmt(Some(0.lit))
+        ++ releaseGlobals
+        :+ CReturnStmt(Some(0.lit))
       )
     } else {
       CCompoundStmt(
-          List[CStmt](
-            CCallExpr(startup.ref, List()),
-            CCallExpr(localTransactionFunction.ref, emptySourceArgs(localSourcesTopological))
-          ) ++ releaseSignals ++ releaseGlobals :+ CReturnStmt(Some(0.lit))
+        List[CStmt](
+          CCallExpr(startup.ref, List()),
+          CCallExpr(localTransactionFunction.ref, emptySourceArgs(localSourcesTopological))
+        ) ++ releaseSignals ++ releaseGlobals :+ CReturnStmt(Some(0.lit))
       )
     }
 
     CFunctionDecl("main", List(argc, argv), CIntegerType, Some(body))
   }
 
-  private val mainC: String = appName + "Main.c"
-  private val mainH: String = appName + "Main.h"
+  private val mainC: String         = appName + "Main.c"
+  private val mainH: String         = appName + "Main.h"
   private val mainInclude: CInclude = CInclude(mainH, true)
-  private val appC: String = appName + "App.c"
-  private val appOut: String = appName + "App"
-  private val libC: String = appName + "Lib.c"
-  private val libH: String = appName + "Lib.h"
-  private val libInclude: CInclude = CInclude(libH, true)
+  private val appC: String          = appName + "App.c"
+  private val appOut: String        = appName + "App"
+  private val libC: String          = appName + "Lib.c"
+  private val libH: String          = appName + "Lib.h"
+  private val libInclude: CInclude  = CInclude(libH, true)
 
   private val mainCTU: CTranslationUnitDecl = {
     val includes = mainInclude :: libInclude :: ctx.includesList
@@ -598,7 +638,7 @@ class GraphCompiler(using Quotes)(
       libInclude :: ctx.includesList,
       ctx.valueDeclList.filter {
         case _: CVarDecl => false
-        case _ => true
+        case _           => true
       }.sortBy(_.name)
     )
 

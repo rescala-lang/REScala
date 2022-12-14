@@ -8,12 +8,15 @@ import compiler.context.TranslationContext
 import scala.quoted.*
 
 trait ReactiveIFFragment extends CompilerFragment {
-  def compileReactiveTopLevelStmt(using Quotes)(using FragmentedCompiler)(using TranslationContext):
-    PartialFunction[quotes.reflect.Statement, Unit] = PartialFunction.empty
+  def compileReactiveTopLevelStmt(using Quotes)(using FragmentedCompiler)(using
+      TranslationContext
+  ): PartialFunction[quotes.reflect.Statement, Unit] = PartialFunction.empty
 
-  def compileReactive(using Quotes)(using FragmentedCompiler)(using TranslationContext):
-    PartialFunction[quotes.reflect.Term, CompiledReactive] = PartialFunction.empty
+  def compileReactive(using Quotes)(using FragmentedCompiler)(using
+      TranslationContext
+  ): PartialFunction[quotes.reflect.Term, CompiledReactive] = PartialFunction.empty
 
-  def compileReactiveExpr(using Quotes)(using FragmentedCompiler)(using TranslationContext):
-    PartialFunction[quotes.reflect.Term, CFunctionDecl] = PartialFunction.empty
+  def compileReactiveExpr(using Quotes)(using FragmentedCompiler)(using
+      TranslationContext
+  ): PartialFunction[quotes.reflect.Term, CFunctionDecl] = PartialFunction.empty
 }

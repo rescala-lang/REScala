@@ -8,7 +8,7 @@ import scala.quoted.{Expr, Quotes}
 
 case class CReturnStmt(retVal: Option[CExpr] = None) extends CStmt {
   override def textgen: String = retVal match
-    case None => "return;"
+    case None       => "return;"
     case Some(expr) => s"return ${expr.textgen};"
 
   override def toExpr(using Quotes): Expr[CReturnStmt] = {

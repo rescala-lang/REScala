@@ -8,7 +8,7 @@ case class CArraySubscriptExpr(base: CExpr, idx: CExpr) extends CExpr {
 
   override def toExpr(using Quotes): Expr[CArraySubscriptExpr] = {
     val baseExpr = base.toExpr
-    val idxExpr = idx.toExpr
+    val idxExpr  = idx.toExpr
 
     '{ CArraySubscriptExpr($baseExpr, $idxExpr) }
   }

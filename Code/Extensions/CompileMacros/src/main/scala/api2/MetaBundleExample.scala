@@ -36,7 +36,7 @@ object MetaBundleExample extends App {
     val zipped = CEvent {
       (emapped.value, filtered.value) match
         case (Some(left), Some(right)) => someTuple(left, right)
-        case _ => Option.empty[(String, String)]
+        case _                         => Option.empty[(String, String)]
     }
 
     zipped.observe(t => println(t))

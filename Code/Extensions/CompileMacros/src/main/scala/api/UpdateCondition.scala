@@ -19,21 +19,21 @@ case class UpdateCondition(normalized: Set[Set[CExpr]]) {
 
   def compile: CExpr =
     normalized.toList.map(compileAnd) match {
-      case Nil => CTrueLiteral
+      case Nil                       => CTrueLiteral
       case List(CParenExpr(subExpr)) => subExpr
-      case andList => andList.reduceLeft(COrExpr.apply)
+      case andList                   => andList.reduceLeft(COrExpr.apply)
     }
 
   private def compileAnd(s: Set[CExpr]): CExpr = {
     s.toList match {
       case List(cond) => cond
-      case l => CParenExpr(l.tail.foldLeft(l.head)(CAndExpr.apply))
+      case l          => CParenExpr(l.tail.foldLeft(l.head)(CAndExpr.apply))
     }
   }
 }
 
 object UpdateCondition {
   val empty: UpdateCondition = UpdateCondition(Set.empty[Set[CExpr]])
-  
+
   def apply(v: CExpr): UpdateCondition = UpdateCondition(Set(Set(v)))
 }

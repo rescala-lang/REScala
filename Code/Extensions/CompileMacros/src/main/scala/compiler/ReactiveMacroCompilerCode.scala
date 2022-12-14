@@ -26,7 +26,7 @@ trait ReactiveMacroCompilerCode extends MacroCompilerCode {
   @tailrec
   protected final def removeInlines(using Quotes)(t: quotes.reflect.Term): quotes.reflect.Term = t match {
     case quotes.reflect.Inlined(_, _, inner) => removeInlines(inner)
-    case _ => t
+    case _                                   => t
   }
 
   def compileGraphCode(appName: Expr[String])(graph: Expr[_])(using Quotes): Expr[Unit] = {
@@ -35,19 +35,28 @@ trait ReactiveMacroCompilerCode extends MacroCompilerCode {
     given ctx: CTX = createTranslationContext()
 
     val (params, stmts, expr) = removeInlines(graph.asTerm) match {
-      case Block(_, Block(List(DefDef(_, List(TermParamClause(params)), _, Some(Block(List(_: Import), Block(stmts, expr))))), _)) => (params, stmts, expr)
+      case Block(
+            _,
+            Block(
+              List(DefDef(_, List(TermParamClause(params)), _, Some(Block(List(_: Import), Block(stmts, expr))))),
+              _
+            )
+          ) => (params, stmts, expr)
       case Block(_, Block(List(DefDef(_, _, _, Some(Block(params, Block(stmts, expr))))), _)) => (params, stmts, expr)
-      case Block(_, Block(List(DefDef(_, _, _, Some(Block(stmts, expr)))), _)) => (List(), stmts, expr)
-      case Block(List(DefDef(_, _, _, Some(Match(_, List(CaseDef(Unapply(_, _, params), _, Block(stmts, expr))))))), _) => (params, stmts, expr)
+      case Block(_, Block(List(DefDef(_, _, _, Some(Block(stmts, expr)))), _))                => (List(), stmts, expr)
+      case Block(
+            List(DefDef(_, _, _, Some(Match(_, List(CaseDef(Unapply(_, _, params), _, Block(stmts, expr))))))),
+            _
+          ) => (params, stmts, expr)
       case Block(stmts, expr) => (List(), stmts, expr)
     }
 
     val externalSources = params.map {
-      case ValDef(name, tpt, _) => (name, tpt.tpe)
-      case Bind(name, wc@Wildcard()) => (name, wc.tpe)
+      case ValDef(name, tpt, _)        => (name, tpt.tpe)
+      case Bind(name, wc @ Wildcard()) => (name, wc.tpe)
     } map { (name, tpe) =>
       val typeArgs(List(innerType)) = tpe.widen: @unchecked
-      val optType = TypeRepr.of[Option].appliedTo(innerType)
+      val optType                   = TypeRepr.of[Option].appliedTo(innerType)
       CompiledEvent(name, CFunctionDecl("", List(), dispatch[TypeIFFragment](_.compileTypeRepr)(optType)), optType)
     }
 
@@ -71,6 +80,6 @@ trait ReactiveMacroCompilerCode extends MacroCompilerCode {
     val gc = new GraphCompiler(ctx.reactivesList, externalSources, outputReactives, appName.valueOrAbort)
     gc.writeIntoDir("out/" + appName.valueOrAbort, "gcc")
 
-    '{()}
+    '{ () }
   }
 }

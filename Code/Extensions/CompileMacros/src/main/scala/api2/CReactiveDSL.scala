@@ -27,17 +27,17 @@ object CEvent {
   def source[T]: CEvent[T] = ???
 }
 
-extension [T] (inline sig: CSignal[T]) {
+extension [T](inline sig: CSignal[T]) {
   inline def map[R](inline f: T => R): CSignal[R] = CSignal {
     f(sig.value)
   }
 
-  inline def changed: CEvent[T] = CEvent { Some(sig.value)  }
+  inline def changed: CEvent[T] = CEvent { Some(sig.value) }
 
   inline def changedTo(inline value: T): CEvent[T] = CEvent {
     sig.value match {
       case `value` => Some(sig.value)
-      case _ => Option.empty[T]
+      case _       => Option.empty[T]
     }
   }
 
@@ -47,7 +47,7 @@ extension [T] (inline sig: CSignal[T]) {
   }
 }
 
-extension [T] (inline ev: CEvent[T]) {
+extension [T](inline ev: CEvent[T]) {
   @compileTimeOnly("This method can only be used inside blocks that are translated to C code")
   inline def fold[S](init: S)(f: (S, T) => S): CSignal[S] = ???
 

@@ -7,7 +7,8 @@ import compiler.MacroCompiler
 
 import scala.quoted.*
 
-case class Map2[A, B, R](l: Event[A], r: Event[B], cType: WithContext[CType], f: WithContext[CFunctionDecl]) extends Event[R] {
+case class Map2[A, B, R](l: Event[A], r: Event[B], cType: WithContext[CType], f: WithContext[CFunctionDecl])
+    extends Event[R] {
   override def inputs: List[ReSource] = List(l, r)
 
   override val baseName: String = "map2"
@@ -25,5 +26,5 @@ object Map2 {
   }
 }
 
-extension[A] (l: Event[A])
+extension [A](l: Event[A])
   inline def map2[B, R]: Map2.Map2Factory[A, B, R] = new Map2.Map2Factory(l)

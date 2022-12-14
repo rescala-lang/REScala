@@ -11,9 +11,9 @@ case class CMemberExpr(base: CExpr, memberName: String, isArrow: Boolean = false
     else base.textgen + "." + memberName
 
   override def toExpr(using Quotes): Expr[CMemberExpr] = {
-    val baseExpr = base.toExpr
+    val baseExpr       = base.toExpr
     val memberNameExpr = Expr(memberName)
-    val isArrowExpr = Expr(isArrow)
+    val isArrowExpr    = Expr(isArrow)
 
     '{ CMemberExpr($baseExpr, $memberNameExpr, $isArrowExpr) }
   }
