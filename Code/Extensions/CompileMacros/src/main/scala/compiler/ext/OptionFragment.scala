@@ -192,7 +192,7 @@ object OptionFragment extends DefinitionIFFragment with TermIFFragment with Sele
 
         val refCountFieldDecl =
           if dispatch[DataStructureIFFragment](_.usesRefCount)(wrappedType) then
-            List(CFieldDecl(refCountField, CPointerType(CIntegerType)))
+            List(CFieldDecl(refCountFieldName, CPointerType(CIntegerType)))
           else Nil
 
         CRecordDecl(
@@ -228,7 +228,7 @@ object OptionFragment extends DefinitionIFFragment with TermIFFragment with Sele
             CMemberExpr(expr, definedField),
             release(CMemberExpr(expr, valField), wrappedType, CFalseLiteral).get
           ),
-          CCallExpr(StdLibH.free.ref, List(CMemberExpr(expr, refCountField)))
+          CCallExpr(StdLibH.free.ref, List(CMemberExpr(expr, refCountFieldName)))
         ))
     }
   }

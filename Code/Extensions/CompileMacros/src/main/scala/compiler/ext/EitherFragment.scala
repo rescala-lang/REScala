@@ -155,7 +155,7 @@ object EitherFragment extends SelectIFFragment with ApplyIFFragment with MatchIF
               _.usesRefCount
             )(rightType)
           then
-            List(CFieldDecl(refCountField, CPointerType(CIntegerType)))
+            List(CFieldDecl(refCountFieldName, CPointerType(CIntegerType)))
           else Nil
 
         CRecordDecl(
@@ -200,7 +200,7 @@ object EitherFragment extends SelectIFFragment with ApplyIFFragment with MatchIF
             releaseRight,
             Some(releaseLeft)
           ),
-          CCallExpr(StdLibH.free.ref, List(CMemberExpr(expr, refCountField)))
+          CCallExpr(StdLibH.free.ref, List(CMemberExpr(expr, refCountFieldName)))
         ))
     }
   }

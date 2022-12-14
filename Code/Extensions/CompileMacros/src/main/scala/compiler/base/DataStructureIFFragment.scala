@@ -14,7 +14,7 @@ import compiler.context.{RecordDeclTC, TranslationContext}
 import scala.quoted.*
 
 trait DataStructureIFFragment extends CompilerFragment {
-  protected val refCountField = "refCount"
+  protected val refCountFieldName = "refCount"
 
   protected val RETAIN    = "RETAIN"
   protected val RELEASE   = "RELEASE"
@@ -29,21 +29,25 @@ trait DataStructureIFFragment extends CompilerFragment {
     )
   }
 
+  def refCountField(using TranslationContext): (String, CCastExpr) = {
+    refCountFieldName ->
+    CCastExpr(
+      CCallExpr(
+        StdLibH.calloc.ref,
+        List(
+          1.lit,
+          CSizeofExpr(Left(CIntegerType))
+        )
+      ),
+      CPointerType(CIntegerType)
+    )
+  }
+
   protected def allocRefCount(using Quotes)(tpe: quotes.reflect.TypeRepr)(using FragmentedCompiler)(using
       TranslationContext
   ): Option[(String, CExpr)] =
-    if dispatch[DataStructureIFFragment](_.usesRefCount)(tpe) then
-      Some(refCountField ->
-        CCastExpr(
-          CCallExpr(
-            StdLibH.calloc.ref,
-            List(
-              1.lit,
-              CSizeofExpr(Left(CIntegerType))
-            )
-          ),
-          CPointerType(CIntegerType)
-        ))
+    if dispatch[DataStructureIFFragment](_.usesRefCount)(tpe)
+    then Some(refCountField)
     else None
 
   def compileTypeToCRecordDecl(using Quotes)(using FragmentedCompiler)(using

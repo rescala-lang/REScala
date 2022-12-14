@@ -160,7 +160,7 @@ object ArrayFragment extends SelectIFFragment with ApplyIFFragment with MatchIFF
 
         val dataFieldDecl   = CFieldDecl(dataField, CPointerType(dispatch[TypeIFFragment](_.compileTypeRepr)(elemType)))
         val lengthFieldDecl = CFieldDecl(lengthField, CIntegerType)
-        val refCountFieldDecl = CFieldDecl(refCountField, CPointerType(CIntegerType))
+        val refCountFieldDecl = CFieldDecl(refCountFieldName, CPointerType(CIntegerType))
 
         CRecordDecl(
           "Array_" + dispatch[TypeIFFragment](_.typeName)(elemType),
@@ -191,9 +191,9 @@ object ArrayFragment extends SelectIFFragment with ApplyIFFragment with MatchIFF
         val propagateRelease = dispatch[DataStructureIFFragment](_.usesRefCount)(elemType)
 
         val freeThis: List[CStmt] = List(
-          CCallExpr(StdLibH.free.ref, List(CMemberExpr(expr, refCountField))),
+          CCallExpr(StdLibH.free.ref, List(CMemberExpr(expr, refCountFieldName))),
           CCallExpr(StdLibH.free.ref, List(CMemberExpr(expr, dataField)))
-        )
+          )
 
         if propagateRelease then
           val iter = CVarDecl("i", CIntegerType, Some(0.lit))

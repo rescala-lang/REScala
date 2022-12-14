@@ -53,9 +53,9 @@ object DataStructureFragment extends DataStructureIFFragment {
             val param = CParmVarDecl("rec", recordDecl.getTypeForDecl)
 
             val body = CCompoundStmt(List(
-              CIncExpr(CParenExpr(CDerefExpr(CMemberExpr(param.ref, refCountField)))),
+              CIncExpr(CParenExpr(CDerefExpr(CMemberExpr(param.ref, refCountFieldName)))),
               CReturnStmt(Some(param.ref))
-            ))
+              ))
 
             CFunctionDecl(name, List(param), recordDecl.getTypeForDecl, Some(body))
           }
@@ -80,15 +80,15 @@ object DataStructureFragment extends DataStructureIFFragment {
             val keepWithZero = CParmVarDecl("keep_with_zero", StdBoolH.bool)
 
             val body = CCompoundStmt(List(
-              CDecExpr(CParenExpr(CDerefExpr(CMemberExpr(param.ref, refCountField)))),
+              CDecExpr(CParenExpr(CDerefExpr(CMemberExpr(param.ref, refCountFieldName)))),
               CIfStmt(
                 CAndExpr(
-                  CLessEqualsExpr(CDerefExpr(CMemberExpr(param.ref, refCountField)), 0.lit),
+                  CLessEqualsExpr(CDerefExpr(CMemberExpr(param.ref, refCountFieldName)), 0.lit),
                   CNotExpr(keepWithZero.ref)
-                ),
+                  ),
                 dispatch[DataStructureIFFragment](_.compileFree)(param.ref, tpe)
               )
-            ))
+              ))
 
             CFunctionDecl(name, List(param, keepWithZero), CVoidType, Some(body))
           }

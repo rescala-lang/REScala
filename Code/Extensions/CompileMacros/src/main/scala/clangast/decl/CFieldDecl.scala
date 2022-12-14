@@ -1,4 +1,5 @@
 package clangast.decl
+
 import clangast.traversal.CASTMapper
 import clangast.types.CQualType
 

@@ -148,7 +148,7 @@ object MapFragment extends ApplyIFFragment with TypeIFFragment with DataStructur
     {
       case tpe if tpe <:< TypeRepr.of[mutable.Map[?, ?]] && validKeyType(tpe) =>
         val dataFieldDecl     = CFieldDecl(dataField, HashmapH.map_t)
-        val refCountFieldDecl = CFieldDecl(refCountField, CPointerType(CIntegerType))
+        val refCountFieldDecl = CFieldDecl(refCountFieldName, CPointerType(CIntegerType))
 
         val recName = dispatch[TypeIFFragment](_.typeName)(tpe)
 
@@ -178,9 +178,9 @@ object MapFragment extends ApplyIFFragment with TypeIFFragment with DataStructur
         val releaseValues = dispatch[DataStructureIFFragment](_.usesRefCount)(valueType)
 
         val freeThis: List[CStmt] = List(
-          CCallExpr(StdLibH.free.ref, List(CMemberExpr(expr, refCountField))),
+          CCallExpr(StdLibH.free.ref, List(CMemberExpr(expr, refCountFieldName))),
           CCallExpr(HashmapH.hashmap_free.ref, List(CMemberExpr(expr, dataField)))
-        )
+          )
 
         if releaseValues then
           val iterate = CCallExpr(

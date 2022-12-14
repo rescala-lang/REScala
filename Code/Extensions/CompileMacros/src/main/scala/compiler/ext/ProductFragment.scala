@@ -137,7 +137,7 @@ object ProductFragment extends SelectIFFragment with ApplyIFFragment with MatchI
 
         val refCountFieldDecl =
           if dispatch[DataStructureIFFragment](_.usesRefCount)(tpe) then
-            List(CFieldDecl(refCountField, CPointerType(CIntegerType)))
+            List(CFieldDecl(refCountFieldName, CPointerType(CIntegerType)))
           else Nil
 
         CRecordDecl(dispatch[TypeIFFragment](_.typeName)(tpe), fields ++ refCountFieldDecl)
@@ -169,7 +169,7 @@ object ProductFragment extends SelectIFFragment with ApplyIFFragment with MatchI
             release(CMemberExpr(expr, f.name), t, CFalseLiteral).get
         }
 
-        val freeRefCount = CCallExpr(StdLibH.free.ref, List(CMemberExpr(expr, refCountField)))
+        val freeRefCount = CCallExpr(StdLibH.free.ref, List(CMemberExpr(expr, refCountFieldName)))
 
         CCompoundStmt(releaseElems :+ freeRefCount)
     }
@@ -274,6 +274,29 @@ object ProductFragment extends SelectIFFragment with ApplyIFFragment with MatchI
     import quotes.reflect.*
 
     (term.tpe <:< TypeRepr.of[Product]) && fieldSymbols(term.tpe).exists(_.name.strip().equals(name))
+  }
+
+  def makeProductCreator(recordDecl: CRecordDecl) = {
+    val name = "create_" + recordDecl.name
+
+    val parameters = recordDecl.fields.map { field =>
+      CParmVarDecl(field.name, field.declaredType)
+    }
+
+    // TODO: this ignores reference counting
+    val create = CDesignatedInitExpr(recordDecl.fields.map { field => field.name } zip parameters.map(p => p.ref))
+
+    val prodDecl = CVarDecl(
+      "prod",
+      recordDecl.getTypeForDecl,
+      Some(create)
+    )
+    val body = CCompoundStmt(List(
+      prodDecl,
+      CReturnStmt(Some(prodDecl.ref))
+    ))
+
+    CFunctionDecl(name, parameters, recordDecl.getTypeForDecl, Some(body))
   }
 
   private def getProductCreator(using Quotes)(tpe: quotes.reflect.TypeRepr)(using FragmentedCompiler)(using

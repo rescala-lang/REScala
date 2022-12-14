@@ -337,7 +337,7 @@ class GraphCompiler(using Quotes)(
       case _ => None
     }
 
-    (CEmptyStmt :: sameCondCode :: (serialization ++ releaseCode.toList)) ++ compileUpdates(
+    (CEmptyStmt :: sameCondCode :: (/*serialization ++ */ releaseCode.toList)) ++ compileUpdates(
       otherConds,
       subGraphConds,
       toRelease.diff(released)
@@ -351,16 +351,18 @@ class GraphCompiler(using Quotes)(
   }
 
   private def buildTransactionFunction(sources: Set[CompiledReactive], nameSuffix: String): CFunctionDecl = {
+    val fullName = s"${appName}_transaction_$nameSuffix"
+
     val subGraph            = computeSubGraph(sources)
     val subGraphConds       = updateConditions(subGraph)
     val subGraphTopological = topologicalByCond(subGraph, subGraphConds)
 
     val sourceParams = orderedSources.filter(sources.contains).map(sourceParameters)
 
-    val params =
-      if outputReactives.nonEmpty
-      then CParmVarDecl("json", CPointerType(CJSONH.cJSON)) :: sourceParams
-      else sourceParams
+    val params = sourceParams
+      //if outputReactives.nonEmpty
+      //then CParmVarDecl("json", CPointerType(CJSONH.cJSON)) :: sourceParams
+      //else sourceParams
 
     val localVarDecls = subGraphTopological.collect {
       case e: CompiledEvent if eventVariables.contains(e) => CDeclStmt(eventVariables(e))
@@ -371,27 +373,37 @@ class GraphCompiler(using Quotes)(
 
     val updates = compileUpdates(subGraphTopological, subGraphConds, toRelease)
 
+    val returnType      = CRecordDecl(s"${fullName}_result", outputReactives.map { r => CFieldDecl(r.name, r.cType) })
+    val productCreation = ProductFragment.makeProductCreator(returnType)
+
+    ctx.addTypeDecl(returnType)
+    ctx.registerRecordFun(returnType, "CREATE", productCreation)
+
     val body =
       if outputReactives.isEmpty
       then CCompoundStmt(localVarDecls ++ updates)
       else {
-        val subGraphJsonVars = outputReactives.map { r =>
-          if subGraph.contains(r) then
-            jsonVars(r)
-          else
-            jsonVars(r).copy(init = Some(CCallExpr(CJSONH.cJSON_CreateNull.ref, List())))
-        }
-        val jsonVarDecls = CEmptyStmt :: subGraphJsonVars.map(CDeclStmt.apply)
+        //val subGraphJsonVars = outputReactives.map { r =>
+        //  if subGraph.contains(r) then
+        //    jsonVars(r)
+        //  else
+        //    jsonVars(r).copy(init = Some(CCallExpr(CJSONH.cJSON_CreateNull.ref, List())))
+        //}
+        //val jsonVarDecls = CEmptyStmt :: subGraphJsonVars.map(CDeclStmt.apply)
 
-        val fillJson = CEmptyStmt ::
-          subGraphJsonVars.map[CStmt](jsonVar =>
-            CCallExpr(CJSONH.cJSON_AddItemToArray.ref, List(params.head.ref, jsonVar.ref))
-          ).toList
+        // val fillJson = CEmptyStmt ::
+        //  subGraphJsonVars.map[CStmt](jsonVar =>
+        //    CCallExpr(CJSONH.cJSON_AddItemToArray.ref, List(params.head.ref, jsonVar.ref))
+        //  )
 
-        CCompoundStmt(localVarDecls ++ jsonVarDecls ++ updates ++ fillJson)
+        //CCompoundStmt(localVarDecls ++ jsonVarDecls ++ updates ++ fillJson)
+
+        val result = List(CReturnStmt(Some(CCallExpr(productCreation.ref, outputReactives.map(valueRef)))))
+
+        CCompoundStmt(localVarDecls ++ updates ++ result )
       }
 
-    CFunctionDecl(appName + "_transaction_" + nameSuffix, params, CVoidType, Some(body))
+    CFunctionDecl(fullName, params, returnType.getTypeForDecl, Some(body))
   }
 
   val localTransactionFunction: CFunctionDecl = buildTransactionFunction(localSourcesTopological.toSet, "local")
@@ -438,10 +450,14 @@ class GraphCompiler(using Quotes)(
         )
       )
 
+      val callRemoteTx = CCallExpr(remoteTransactionFunction.ref, outputMsgDecl.ref :: deserializedSources)
+
+      val transactionResultDcl = CVarDecl("transactionResult", remoteTransactionFunction.returnType, Some(callRemoteTx))
+
       CCompoundStmt(List(
         jsonDecl,
         outputMsgDecl,
-        CCallExpr(remoteTransactionFunction.ref, outputMsgDecl.ref :: deserializedSources),
+        transactionResultDcl,
         writeOutput,
         CCallExpr(CJSONH.cJSON_Delete.ref, List(outputMsgDecl.ref)),
         CCallExpr(CJSONH.cJSON_Delete.ref, List(jsonDecl.ref))
