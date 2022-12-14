@@ -371,22 +371,25 @@ class GraphCompiler(using Quotes)(
 
     val updates = compileUpdates(subGraphTopological, subGraphConds, toRelease)
 
-    val body = if (outputReactives.nonEmpty) {
-      val subGraphJsonVars = outputReactives.map { r =>
-        if subGraph.contains(r) then
-          jsonVars(r)
-        else
-          jsonVars(r).copy(init = Some(CCallExpr(CJSONH.cJSON_CreateNull.ref, List())))
+    val body =
+      if outputReactives.isEmpty
+      then CCompoundStmt(localVarDecls ++ updates)
+      else {
+        val subGraphJsonVars = outputReactives.map { r =>
+          if subGraph.contains(r) then
+            jsonVars(r)
+          else
+            jsonVars(r).copy(init = Some(CCallExpr(CJSONH.cJSON_CreateNull.ref, List())))
+        }
+        val jsonVarDecls = CEmptyStmt :: subGraphJsonVars.map(CDeclStmt.apply)
+
+        val fillJson = CEmptyStmt ::
+          subGraphJsonVars.map[CStmt](jsonVar =>
+            CCallExpr(CJSONH.cJSON_AddItemToArray.ref, List(params.head.ref, jsonVar.ref))
+          ).toList
+
+        CCompoundStmt(localVarDecls ++ jsonVarDecls ++ updates ++ fillJson)
       }
-      val jsonVarDecls = CEmptyStmt :: subGraphJsonVars.map(CDeclStmt.apply)
-
-      val fillJson = CEmptyStmt ::
-        subGraphJsonVars.map[CStmt](jsonVar =>
-          CCallExpr(CJSONH.cJSON_AddItemToArray.ref, List(params.head.ref, jsonVar.ref))
-        ).toList
-
-      CCompoundStmt(localVarDecls ++ jsonVarDecls ++ updates ++ fillJson)
-    } else CCompoundStmt(localVarDecls ++ updates)
 
     CFunctionDecl(appName + "_transaction_" + nameSuffix, params, CVoidType, Some(body))
   }
