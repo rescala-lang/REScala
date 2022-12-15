@@ -122,7 +122,7 @@ trait FullMVBundle extends Core {
       with HostImpl[FullMVTurn] {
 
     override object lockHost extends SubsumableLockHostImpl {
-      override def toString: String = "Locks " + schedulerName
+      override def toString: String = s"[LockHost ${hashCode()} for $schedulerName ${schedulerName.hashCode}]"
     }
     override val dummy: FullMVTurnImpl = {
       val dummy = new FullMVTurnImpl(this, Host.dummyGuid, null, lockHost.newLock())
@@ -197,7 +197,7 @@ trait FullMVBundle extends Core {
       }
     }
 
-    override def toString: String = "Turns " + schedulerName
+    override def toString: String = s"[Engine $schedulerName ${hashCode()}]"
     def cacheStatus: String = s"${instances.size()} turn instances and ${lockHost.instances.size()} lock instances"
   }
 

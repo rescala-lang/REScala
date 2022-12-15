@@ -11,7 +11,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 
 class FullMVApi(val timeout: Duration, val schedulerName: String) extends RescalaInterface with FullMVBundle with Mirror
     with TurnImplBundle with TaskBundle with FullMvStateBundle with SubsumableLockBundle {
-  override def scheduler: FullMVEngine = new FullMVEngine(timeout, schedulerName)
+  override val scheduler: FullMVEngine = new FullMVEngine(timeout, schedulerName)
 }
 
 object FullMVUtil {
