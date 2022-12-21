@@ -2,8 +2,8 @@ package decentral
 
 import decentral.Bindings._
 import kofre.base.DecomposeLattice
-import kofre.decompose.containers.DeltaBufferRDT
 import kofre.datatypes.AddWinsSet
+import kofre.decompose.containers.DeltaBufferRDT
 import kofre.dotted.Dotted
 import kofre.syntax.DottedName
 import loci.transmitter.{RemoteAccessException, RemoteRef}
@@ -143,7 +143,9 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
   }
 
   def onMutate(): Unit = {
-    if (set.deltaBuffer.isEmpty) return
+    if (set.deltaBuffer.isEmpty) {
+      return
+    }
 
     unboundLocalChanges = set.deltaBuffer.foldLeft(unboundLocalChanges) { (list, delta) =>
       list.prependedAll(DecomposeLattice[SetState].decompose(delta.anon))

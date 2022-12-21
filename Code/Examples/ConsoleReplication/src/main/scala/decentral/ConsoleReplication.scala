@@ -23,15 +23,14 @@ object Commandline {
     name = "replica",
     help = "Start a new replica"
   ) {
-    val ipAndPort = """([\d.]*):(\d*)""".r
-
     (idArg, listenPortArg, connectArg, initSizeArg).mapN {
       case (id, listenPort, connectTo, initSize) =>
-        val ipsAndPorts = connectTo.collect {
-          case ipAndPort(ip, port) => (ip, port.toInt)
+        val hostsAndPorts = connectTo.collect { hostAndIp =>
+          val lastColon = hostAndIp.lastIndexOf(':')
+          (hostAndIp.substring(0, lastColon), hostAndIp.substring(lastColon + 1).toInt)
         }
 
-        new Replica(listenPort, ipsAndPorts, id, initSize).run()
+        new Replica(listenPort, hostsAndPorts, id, initSize).run()
     }
   }
 
