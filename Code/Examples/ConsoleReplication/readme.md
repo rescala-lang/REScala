@@ -70,13 +70,13 @@ e.g.
 Start a replica by executing in a host console:
 
 ```bash
-/tmp/shared/stage/bin/central_console-replication replica <id> <listenport> <connectTo> <initSize>
+/tmp/shared/stage/bin/decentral_console-replication replica <id> <listenport> <connectTo> <initSize>
 ```
 
 e.g.
 
 ```bash
-/tmp/shared/stage/bin/central_console-replication replica a 4444 10.0.0.10:4444 1000
+/tmp/shared/stage/bin/decentral_console-replication replica a 4444 10.0.0.10:4444 1000
 ```
 
 initSize is used to initialize the set to contain the elements 0 until initSize
