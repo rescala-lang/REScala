@@ -12,7 +12,6 @@ import reswing.reader.Observable
 import scala.xml.Node
 import scala.xml.NodeSeq
 import rescala.default._
-import reswing.reader.common.sequence
 
 /** The XMLParser is responsible for the translation of xml to the
   * internal represantation of the RSS Feed
@@ -122,6 +121,8 @@ class XmlParser {
     val itemXML    = channelXML \ "item"
     // NOTE: we are not using parseItem
     //       because of the call to RSSItem.changeSource below
+    def sequence[A](l: List[Option[A]]) =
+      if (l contains None) None else Some(l.flatten)
     val itemsOpt = sequence((itemXML map { parseItemSilent(_) }).toList)
 
     for {
