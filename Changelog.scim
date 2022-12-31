@@ -1,0 +1,223 @@
+== v.next
+
+• automatic derivation of replicated data types
+	• cleaned up implementations of built-in replicated data types
+• Scala 3 version now has signal macros
+• move incremental collections' thesis results into main repository
+
+== v0.31.0
+date = 2021-12-07
+
+• drop checked macro support, use snapshot helpers instead
+• promote fullMV scheduler to published artifact
+• add experimental reactor syntax
+• internal refactoring for scala 3 support (-macros)
+
+== v0.30.0
+date = 2020-04-10
+
+• update ScalaJS to 1.0
+• fixes to cross compile for 2.11 (JVM only), 2.12, and 2.13
+• new Signal.map macro
+• more CRDT experiments
+
+== v0.29.0
+date = 2019-09-15
+
+* update scala-loci version to 0.3.0
+
+
+
+== v0.28.0
+date = 2019-09-08
+
+* fix rescalatgas observer behavior
+
+
+== v0.27.0
+date = 2019-09-7
+
+Include small external projects into the main project. This simplifies
+publishing and makes experimental features available in the published versions.
+
+
+== v0.26.0
+date = 2019-07-14
+
+* enable .value use in filter and collect macros
+* bugfixes for fold macro
+* add more crdts/lattice types
+* improve automatic name generation of reactives
+* update dependencies
+
+== v0.25.0
+date = 2019-03-31
+
+* many improvements to rescalatags
+* internal code cleanup and refactoring
+* CRDT library and distribution based on loci cleanups
+
+== v0.24.0
+date = 2018-07-14
+
+* move default import to rescala.default
+* updates to flatten operator
+* improve reactive macro cut out
+* better support for restoration
+
+
+== v0.23.0
+date = 2018-05-07
+
+no notes
+
+== v0.22.0
+date = 2018-02-25
+
+* add experimental multi fold events
+* fold is now a macro (can use signal dependencies)
+* rescalatags can now handle frags
+* internal refactorings
+
+
+== v0.21.1
+date = 2018-01-28
+
+* fix infinite loop when starting turns in observers
+
+== v0.21.0
+date = 2018-01-28
+
+* Reactive expressions are now static by default,
+and complain if any dynamic access happens.
+* Event.map is now also a macro and allows to access reactives.
+* Internal interface cleanups and performance improvements.
+
+
+== v0.20.0
+date = 2017-11-14
+
+no notes
+
+== v0.19.0
+date = 2016-12-21
+
+This is mostly a maintenance release to support Scala 2.12.
+
+* add Observable type alias to engine
+
+== v0.18.0
+date = 2016-09-19
+
+* many fixes and improvements for the Signal macro
+* add the rescalatags mini framework (thanks scala.rx and scalatags)
+* reactives can now propagate exceptions
+* signal can now be empty
+* importing `rescala._` should now cover everything useful (and not much more)
+* improved flattening, can now flatten many more combinations
+* migrated from junit to scalatest only
+* add reactive streams compatibility layer
+* allow garbage collection of unused downstream reactives
+
+== v0.17.0
+date = 2016-07-04
+
+embed RESwing
+embed case studies
+update locksweep semantics to match parrp (according to tests)
+release locks before observer phase
+
+
+== v0.16.0
+date = 2016-04-04
+
+* locksweep is now counter based
+* refactor internal API
+* benchmark cleanups and additions
+
+== v0.15.0
+date = 2016-02-25
+
+* reactive state handled per engine
+* merge pipelining branch
+
+== v0.14.0
+date = 2016-02-09
+
+no notes
+
+== v0.13.0
+date = 2015-06-20
+
+* add microbenchmarks
+* fix bug with missed key transfers
+* compile with scalajs
+* make composition of reactives typesafe with regard to internal state
+
+== v0.12.0
+date = 2015-06-15
+
+AtomicReferences instead of synchronized for lock implementation
+ParRP turn refectaring
+remove cyclic reference between turns and engines
+experimental GC starting from unused sources
+
+== v0.11.0 aka the thesis version
+date = 2015-03-12
+
+disabled assertions
+added exponetial backoff as a combined waiting strategy
+bugfixes and code cleanups
+
+== v0.10.0
+date = 2015-02-11
+
+simplify inter turn synchronization by introducing explicit keychains
+miscellaneous fixes improvements and renamings
+
+== v0.9.0
+date = 2014-12-29
+
+code cleanups and minor improvements
+
+== v0.8.0
+date = 2014-12-22
+
+reactives with a single static dependency now reuse the lock of their predecessor
+
+
+== v0.7.0
+date = 2014-12-19
+
+added STM turns
+added yielidng turns
+philosophers are back! and eating!
+
+== v0.6.0
+date = 2014-12-17
+
+fixed dynamic reads
+improved turn creation interface
+added spinlocking for initial lock acquisition
+removed philosophers
+
+== v0.5.0
+date = 2014-12-11
+
+this has improved pessimistic locking
+
+== v0.4.0
+date = 2014-12-01
+
+no notes
+
+== v0.3.0
+date = 2014-10-29
+
+no notes
+
+== v0.2.0
+date = 2016-08-17
+
+version used for public case and user studies
+
