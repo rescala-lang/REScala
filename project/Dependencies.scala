@@ -12,16 +12,17 @@ object Dependencies {
     val betterFiles        = "3.9.1"
     val catsCore           = "2.6.1"
     val circeCore          = "0.14.3"
-    val decline            = "2.4.0"
+    val decline            = "2.4.1"
     val directories        = "26"
     val jetty              = "11.0.13"
     val jol                = "0.16"
-    val jsoniterScalaCore  = "2.19.1"
+    val jsoniterScalaCore  = "2.20.1"
     val jsoniterScalaOld   = "2.13.3.2" // this is the latest version supporting Scala 2.11 (and java 8)
     val jsoup              = "1.15.3"
     val munit              = "1.0.0-M7"
     val normalizecss       = "8.0.1"
     val okHttp             = "4.10.0"
+    val oslib              = "0.9.0"
     val pprint             = "0.8.0"
     val quicklens          = "1.9.0"
     val reactiveStreams    = "1.0.4"
@@ -41,7 +42,7 @@ object Dependencies {
     val scalatestpluscheck = "3.2.14.0"
     val scopt              = "4.1.0"
     val scribe             = "3.10.5"
-    val slips              = "0.4.5"
+    val slips              = "0.4.5+6-045bdee6"
     val sourcecode         = "0.3.0"
     val tomlScala          = "0.2.2"
     val upickle            = "2.0.0"
@@ -61,6 +62,7 @@ object Dependencies {
   val munitScalacheck = Def.setting("org.scalameta" %%% "munit-scalacheck" % V.munit % Test)
   val normalizecss    = Def.setting("org.webjars.npm" % "normalize.css" % V.normalizecss)
   val okHttp          = Def.setting("com.squareup.okhttp3" % "okhttp" % V.okHttp)
+  val oslib           = Def.setting("com.lihaoyi" %%% "os-lib" % V.oslib)
   val pprint          = Def.setting("com.lihaoyi" %%% "pprint" % V.pprint)
   val quicklens       = Def.setting("com.softwaremill.quicklens" %%% "quicklens" % V.quicklens)
   val reactiveStreams = Def.setting("org.reactivestreams" % "reactive-streams" % V.reactiveStreams)
@@ -78,13 +80,13 @@ object Dependencies {
     Def.setting(if (`is 2.11`(scalaVersion.value))
       "org.scalatestplus"    %%% "scalacheck-1-15" % "3.2.4.0-M1"         % "test"
     else "org.scalatestplus" %%% "scalacheck-1-16" % V.scalatestpluscheck % "test")
-  val scopt       = Def.setting("com.github.scopt" %%% "scopt" % V.scopt)
-  val scribe      = Def.setting("com.outr" %%% "scribe" % V.scribe)
-  val scribeSlf4j = Def.setting("com.outr" %% "scribe-slf4j" % V.scribe)
+  val scopt        = Def.setting("com.github.scopt" %%% "scopt" % V.scopt)
+  val scribe       = Def.setting("com.outr" %%% "scribe" % V.scribe)
+  val scribeSlf4j  = Def.setting("com.outr" %% "scribe-slf4j" % V.scribe)
   val scribeSlf4j2 = Def.setting("com.outr" %% "scribe-slf4j2" % V.scribe)
-  val sourcecode  = Def.setting("com.lihaoyi" %%% "sourcecode" % V.sourcecode)
-  val tomlScala   = Def.setting("tech.sparse" %%% "toml-scala" % V.tomlScala)
-  val upickle     = Def.setting("com.lihaoyi" %%% "upickle" % V.upickle)
+  val sourcecode   = Def.setting("com.lihaoyi" %%% "sourcecode" % V.sourcecode)
+  val tomlScala    = Def.setting("tech.sparse" %%% "toml-scala" % V.tomlScala)
+  val upickle      = Def.setting("com.lihaoyi" %%% "upickle" % V.upickle)
 
   val jsoniterScalaAll = Def.setting {
     val jsoniterVersion = if (Settings.`is 2.11`(scalaVersion.value))
@@ -129,7 +131,7 @@ object Dependencies {
     val wsWeb         = generic("communicator-ws-webnative")
     val wsJavalin     = generic("communicator-ws-javalin")
     val wsJetty       = generic("communicator-ws-jetty")
-    val wsJetty11       = generic("communicator-ws-jetty11")
+    val wsJetty11     = generic("communicator-ws-jetty11")
   }
 
   // Add JavaFX dependencies, should probably match whatever the scalafx version was tested against:
