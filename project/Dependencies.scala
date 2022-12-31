@@ -1,10 +1,10 @@
 /* This file is shared between multiple projects
  * and may contain unused dependencies */
 
-import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
-import sbt._
-import Settings.{`is 3`, `is 2.11`}
-import sbt.Keys._
+import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport.*
+import sbt.*
+import Settings.{`is 2.11`, `is 3`}
+import sbt.Keys.*
 
 object Dependencies {
 
@@ -29,7 +29,7 @@ object Dependencies {
     val retypecheck        = "0.10.0"
     val scala211           = "2.11.12"
     val scala212           = "2.12.17"
-    val scala213           = "2.13.8"
+    val scala213           = "2.13.10"
     val scala3             = "3.2.1"
     val scalaJavaTime      = "2.3.0"
     val scalaLoci          = "5df6d12a45"
@@ -48,7 +48,7 @@ object Dependencies {
     val upickle            = "2.0.0"
   }
 
-  import Dependencies.{Versions => V}
+  import Dependencies.Versions as V
 
   val betterFiles =
     Def.setting(("com.github.pathikrit" %% "better-files" % V.betterFiles).cross(CrossVersion.for3Use2_13))

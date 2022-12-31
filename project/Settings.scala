@@ -1,30 +1,45 @@
 /* This file is shared between multiple projects
  * and may contain unused dependencies */
 
-import sbt.Keys._
-import sbt._
-import Dependencies.{Versions => V}
+import sbt.Keys.*
+import sbt.*
+import Dependencies.Versions as V
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.jsEnv
+
+import scala.math.Ordering.Implicits.infixOrderingOps
 
 object Settings {
 
   val commonCrossBuildVersions = crossScalaVersions := Seq(V.scala211, V.scala212, V.scala213, V.scala3)
 
+  val commonScalacOptions = scalacOptions ++= {
+    val version                         = CrossVersion.partialVersion(scalaVersion.value).get
+    def cond(b: Boolean, opts: String*) = if (b) opts.toList else Nil
+    List(
+      List("-feature", "-language:higherKinds", "-language:implicitConversions", "-language:existentials"),
+      cond(version >= (2, 13), "-Werror"),
+      cond(version < (2, 13), "-Xfatal-warnings"),
+      cond(version < (3, 0), "-language:experimental.macros"),
+      cond(version == (2, 13), "-Ytasty-reader"),
+      cond(version >= (3, 0), "-deprecation"),
+    ).flatten
+  }
+
   val scalaVersion_211 = Def.settings(
     scalaVersion := V.scala211,
-    scalacOptions ++= settingsFor(scalaVersion.value)
+    commonScalacOptions
   )
   val scalaVersion_212 = Def.settings(
     scalaVersion := V.scala212,
-    scalacOptions ++= settingsFor(scalaVersion.value)
+    commonScalacOptions
   )
   val scalaVersion_213 = Def.settings(
     scalaVersion := V.scala213,
-    scalacOptions ++= settingsFor(scalaVersion.value)
+    commonScalacOptions
   )
   val scalaVersion_3 = Def.settings(
     scalaVersion := V.scala3,
-    scalacOptions ++= settingsFor(scalaVersion.value)
+    commonScalacOptions
   )
 
   val scalaFullCrossBuildSupport = commonCrossBuildVersions +: {
@@ -40,17 +55,8 @@ object Settings {
     CrossVersion.partialVersion(scalaVersion).contains((2, 11))
   def `is 2.13`(scalaVersion: String): Boolean =
     CrossVersion.partialVersion(scalaVersion).contains((2, 13))
-  def `is 3`(version: String) =
-    CrossVersion.partialVersion(version) collect { case (3, _) => true } getOrElse false
-
-  def settingsFor(version: String) =
-    version match {
-      case v if v.startsWith("2.13") =>
-        List("-Ytasty-reader")
-      case v if v.startsWith("3.") =>
-        List("-feature", "-deprecation", "-language:implicitConversions")
-      case other => Nil
-    }
+  def `is 3`(scalaVersion: String) =
+    CrossVersion.partialVersion(scalaVersion) collect { case (3, _) => true } getOrElse false
 
   val safeInit = scalacOptions += "-Ysafe-init"
   val dottyMigration = List(
