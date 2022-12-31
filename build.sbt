@@ -16,7 +16,7 @@ lazy val rescalaProject = project.in(file(".")).settings(noPublish).aggregate(
   consoleReplication,
 )
 
-lazy val rescalaCore = project.in(file("Code")).settings(scalaFullCrossBuildSupport, noPublish).aggregate(
+lazy val rescalaCore = project.in(file("Code")).settings(crossScalaVersions := Nil, noPublish).aggregate(
   rescala.js,
   rescala.jvm,
   rescala.native,
