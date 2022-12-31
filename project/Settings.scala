@@ -4,6 +4,7 @@
 import sbt.Keys.*
 import sbt.*
 import Dependencies.Versions as V
+import com.jsuereth.sbtpgp.PgpKeys.publishSigned
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.jsEnv
 
 import scala.math.Ordering.Implicits.infixOrderingOps
@@ -76,7 +77,8 @@ object Settings {
     packagedArtifacts := Map.empty,
     publish           := {},
     publishLocal      := {},
-    publishM2         := {}
+    publishM2         := {},
+    publishSigned     := {}
   )
 
   val publishOnly213 =

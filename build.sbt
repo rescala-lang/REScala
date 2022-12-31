@@ -210,6 +210,8 @@ lazy val consoleReplication = project.in(file("Code/Examples/ConsoleReplication"
 // =====================================================================================
 // custom tasks
 
+// use `publishSigned` to publish
+// go to https://oss.sonatype.org/#stagingRepositories to move from staging to maven central
 lazy val publishSonatype = Def.settings(
   organization         := "de.tu-darmstadt.stg",
   organizationName     := "Software Technology Group",
