@@ -1,4 +1,5 @@
-== v.next
+== v0.32.0
+date = 2022-12-31
 
 • automatic derivation of replicated data types
 	• cleaned up implementations of built-in replicated data types
