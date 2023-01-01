@@ -1,4 +1,4 @@
-package dtn
+package replication.dtn
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{
   JsonReader, JsonValueCodec, JsonWriter, readFromArray, readFromByteBuffer, readFromString, readFromStringReentrant,

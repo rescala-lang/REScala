@@ -1,4 +1,4 @@
-package decentral
+package replication.decentral
 
 import de.rmgk.options.{Argument, Single, Style}
 

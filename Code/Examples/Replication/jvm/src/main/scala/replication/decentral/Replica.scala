@@ -1,12 +1,12 @@
-package decentral
+package replication.decentral
 
-import decentral.Bindings._
 import kofre.base.DecomposeLattice
 import kofre.datatypes.AddWinsSet
 import kofre.decompose.containers.DeltaBufferRDT
 import kofre.dotted.Dotted
 import kofre.syntax.DottedName
 import loci.transmitter.{RemoteAccessException, RemoteRef}
+import replication.decentral.Bindings.*
 
 import scala.concurrent.Future
 import scala.io.StdIn.readLine

@@ -1,6 +1,6 @@
-package central
+package replication.central
 
-import central.Bindings._
+import replication.central.Bindings.*
 import kofre.base.DecomposeLattice
 import kofre.decompose.containers.DeltaBufferRDT
 import kofre.datatypes.AddWinsSet
@@ -10,7 +10,7 @@ import loci.communicator.tcp.TCP
 import loci.registry.Registry
 import loci.transmitter.{RemoteAccessException, RemoteRef}
 
-import java.util.concurrent._
+import java.util.concurrent.*
 import scala.concurrent.Future
 import scala.io.StdIn.readLine
 import scala.util.matching.Regex

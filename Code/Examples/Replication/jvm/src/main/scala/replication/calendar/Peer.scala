@@ -1,8 +1,7 @@
-package calendar
+package replication.calendar
 
-import calendar.{Appointment, CalendarProgram, RaftTokens, Token}
-import calendar.Bindings._
-import calendar.SyncMessage.{AppointmentMessage, CalendarState, FreeMessage, RaftMessage, WantMessage}
+import Bindings._
+import SyncMessage.{AppointmentMessage, CalendarState, FreeMessage, RaftMessage, WantMessage}
 import kofre.base.DecomposeLattice
 import kofre.datatypes.AddWinsSet
 import kofre.datatypes.AddWinsSet.AWSetSyntax

@@ -1,4 +1,5 @@
-package calendar
+package replication.calendar
+
 import kofre.datatypes.AddWinsSet
 import rescala.default._
 import kofre.datatypes.AddWinsSet.AWSetSyntax

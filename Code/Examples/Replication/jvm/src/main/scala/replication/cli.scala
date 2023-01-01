@@ -1,7 +1,9 @@
-import central.CentralOptions
+package replication
+
 import de.rmgk.options.*
-import calendar.CalendarOptions
-import decentral.DecentralOptions
+import replication.calendar.{CalendarOptions, Peer}
+import replication.central.{CentralOptions, Checkpointer}
+import replication.decentral.{DecentralOptions, Replica}
 
 case class CliArgs(
     calendar: Subcommand[CalendarOptions] = Subcommand(CalendarOptions()),
@@ -35,7 +37,7 @@ object cli {
           case ipAndPort(ip, port) => (ip, port.toInt)
         }
 
-        new calendar.Peer(calArgs.id.value, calArgs.listenPort.value, ipsAndPorts).run()
+        new Peer(calArgs.id.value, calArgs.listenPort.value, ipsAndPorts).run()
 
     instance.decentral.value match
       case None =>
@@ -44,7 +46,7 @@ object cli {
           case ipAndPort(ip, port) => (ip, port.toInt)
         }
 
-        new decentral.Replica(decArgs.listenPort.value, ipsAndPorts, decArgs.id.value, decArgs.initSize.value).run()
+        new Replica(decArgs.listenPort.value, ipsAndPorts, decArgs.id.value, decArgs.initSize.value).run()
 
     instance.central.value match
       case None =>
@@ -56,11 +58,11 @@ object cli {
               case ipAndPort(ip, port) => (ip, port.toInt)
             }
 
-            new central.Peer(centralPeerArgs.id.value, centralPeerArgs.listenPort.value, ipsAndPorts).run()
+            new replication.central.Peer(centralPeerArgs.id.value, centralPeerArgs.listenPort.value, ipsAndPorts).run()
         centralArgs.checkpointer.value match
           case None =>
           case Some(checkpointerArgs) =>
-            new central.Checkpointer(checkpointerArgs.listenPort.value).run()
+            new Checkpointer(checkpointerArgs.listenPort.value).run()
 
     if instance.dtn.value.isDefined then dtn.run()
 

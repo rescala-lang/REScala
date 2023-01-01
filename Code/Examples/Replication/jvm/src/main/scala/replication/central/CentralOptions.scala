@@ -1,4 +1,4 @@
-package central
+package replication.central
 
 import de.rmgk.options.*
 

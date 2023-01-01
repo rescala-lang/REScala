@@ -1,6 +1,5 @@
-package calendar
+package replication.calendar
 
-import calendar.{Appointment, Token}
 import loci.registry.Binding
 import loci.transmitter.IdenticallyTransmittable
 import loci.serializer.jsoniterScala._

@@ -1,4 +1,4 @@
-package calendar
+package replication.calendar
 
 import kofre.base.Lattice
 import kofre.decompose.containers.DeltaBufferRDT

@@ -1,6 +1,6 @@
-package central
+package replication.central
 
-import central.Bindings._
+import Bindings._
 import kofre.base.DecomposeLattice
 import kofre.datatypes.AddWinsSet
 import kofre.dotted.Dotted
