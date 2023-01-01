@@ -42,7 +42,7 @@ object Dependencies {
     val scalatestpluscheck = "3.2.14.0"
     val scopt              = "4.1.0"
     val scribe             = "3.10.5"
-    val slips              = "1d6fa95509"
+    val slips              = "239a86348e"
     val sourcecode         = "0.3.0"
     val tomlScala          = "0.2.2"
     val upickle            = "2.0.0"
@@ -112,6 +112,7 @@ object Dependencies {
     val logging  = Def.setting("de.rmgk.slips" %%% "logging" % V.slips)
     val options  = Def.setting("de.rmgk.slips" %%% "options" % V.slips)
     val scip     = Def.setting("de.rmgk.slips" %%% "scip" % V.slips)
+    val script   = Def.setting("de.rmgk.slips" %%% "script" % V.slips)
   }
 
   object loci {

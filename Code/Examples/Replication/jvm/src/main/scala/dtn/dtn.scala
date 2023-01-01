@@ -154,7 +154,7 @@ def traverse[T](list: List[Async[Any, T]]): Async[Any, List[T]] = list match
       hr :: rest
     }
 
-@main def run(): Unit =
+def run(): Unit =
   val service = "dtn://rdt/~test"
 
   val res = Async[Unit] {
