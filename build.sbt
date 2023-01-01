@@ -13,7 +13,8 @@ lazy val rescalaProject = project.in(file(".")).settings(noPublish).aggregate(
   reswing,
   todolist,
   encryptedTodo,
-  consoleReplication,
+  replicationExamples.js,
+  replicationExamples.jvm,
 )
 
 lazy val rescalaCore = project.in(file("Code")).settings(crossScalaVersions := Nil, noPublish).aggregate(
@@ -186,8 +187,8 @@ lazy val encryptedTodo = project.in(file("Code/Examples/EncryptedTodoFx"))
     },
   )
 
-lazy val consoleReplication = project.in(file("Code/Examples/ConsoleReplication"))
-  .dependsOn(rescala.jvm, kofre.jvm)
+lazy val replicationExamples = crossProject(JVMPlatform, JSPlatform).crossType(CrossType.Full).in(file("Code/Examples/Replication"))
+  .dependsOn(rescala, kofre)
   .enablePlugins(JavaAppPackaging)
   .settings(
     scalaVersion_3,
