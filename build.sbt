@@ -37,10 +37,13 @@ lazy val rescala = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file
     jitpackResolver,
     libraryDependencies ++= Seq(
       sourcecode.value,
-      reactiveStreams.value,
       scalatest.value,
       scalatestpluscheck.value,
-    ) ++ retypecheck.value,
+      "org.reactivestreams" % "reactive-streams" % "1.0.4"
+    ) ++ (
+      if (`is 3`(scalaVersion.value)) None
+      else Some("io.github.scala-loci" %% "retypecheck" % "0.10.0")
+    ),
   )
   .jsSettings(
     libraryDependencies += scalatags.value % "provided,test",
@@ -79,14 +82,14 @@ lazy val distributedFullmv = project.in(file("Code/Extensions/MultiversionDistri
   .settings(
     scalaVersion_3,
     noPublish,
-    libraryDependencies ++= circeAll.value,
     libraryDependencies ++= Seq(
       scalatest.value,
       loci.communication.value,
       loci.tcp.value,
       loci.circe.value,
       loci.upickle.value,
-    )
+    ) ++ Seq("core", "generic", "parser")
+      .map(n => "io.circe" %%% s"circe-$n" % "0.14.3")
   )
   .dependsOn(rescala.jvm % "compile->compile;test->test")
 
@@ -114,7 +117,7 @@ lazy val microbench = project.in(file("Code/Microbenchmarks"))
     scalaVersion_3,
     noPublish,
     // (Compile / mainClass) := Some("org.openjdk.jmh.Main"),
-    libraryDependencies ++= circeAll.value ++ jsoniterScalaAll.value ++ List(
+    libraryDependencies ++= jsoniterScalaAll.value ++ List(
       upickle.value,
       betterFiles.value.cross(CrossVersion.for3Use2_13)
     ),
@@ -187,26 +190,27 @@ lazy val encryptedTodo = project.in(file("Code/Examples/EncryptedTodoFx"))
     },
   )
 
-lazy val replicationExamples = crossProject(JVMPlatform, JSPlatform).crossType(CrossType.Full).in(file("Code/Examples/Replication"))
-  .dependsOn(rescala, kofre)
-  .enablePlugins(JavaAppPackaging)
-  .settings(
-    scalaVersion_3,
-    jitpackResolver,
-    noPublish,
-    fork               := true,
-    run / connectInput := true,
-    jitpackResolver,
-    libraryDependencies ++= jsoniterScalaAll.value ++ Seq(
-      loci.tcp.value,
-      loci.jsoniterScala.value,
-      munitScalacheck.value,
-      munit.value,
-      scalacheck.value,
-      slips.options.value,
-      slips.delay.value,
-    ),
-  )
+lazy val replicationExamples =
+  crossProject(JVMPlatform, JSPlatform).crossType(CrossType.Full).in(file("Code/Examples/Replication"))
+    .dependsOn(rescala, kofre)
+    .enablePlugins(JavaAppPackaging)
+    .settings(
+      scalaVersion_3,
+      jitpackResolver,
+      noPublish,
+      fork               := true,
+      run / connectInput := true,
+      jitpackResolver,
+      libraryDependencies ++= jsoniterScalaAll.value ++ Seq(
+        loci.tcp.value,
+        loci.jsoniterScala.value,
+        munitScalacheck.value,
+        munit.value,
+        scalacheck.value,
+        slips.options.value,
+        slips.delay.value,
+      ),
+    )
 
 // =====================================================================================
 // custom tasks

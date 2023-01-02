@@ -10,9 +10,6 @@ object Dependencies {
 
   object Versions {
     val betterFiles        = "3.9.1"
-    val catsCore           = "2.6.1"
-    val circeCore          = "0.14.3"
-    val decline            = "2.4.1"
     val directories        = "26"
     val jetty              = "11.0.13"
     val jol                = "0.16"
@@ -22,10 +19,8 @@ object Dependencies {
     val munit              = "1.0.0-M7"
     val normalizecss       = "8.0.1"
     val okHttp             = "4.10.0"
-    val oslib              = "0.9.0"
     val pprint             = "0.8.0"
     val quicklens          = "1.9.0"
-    val reactiveStreams    = "1.0.4"
     val retypecheck        = "0.10.0"
     val scala211           = "2.11.12"
     val scala212           = "2.12.17"
@@ -52,8 +47,6 @@ object Dependencies {
 
   val betterFiles =
     Def.setting(("com.github.pathikrit" %% "better-files" % V.betterFiles).cross(CrossVersion.for3Use2_13))
-  val catsCore        = Def.setting("org.typelevel" %%% "cats-core" % V.catsCore)
-  val decline         = Def.setting("com.monovore" %%% "decline" % V.decline)
   val directories     = Def.setting("dev.dirs" % "directories" % V.directories)
   val jetty           = Def.setting("org.eclipse.jetty" % "jetty-rewrite" % V.jetty)
   val jol             = Def.setting("org.openjdk.jol" % "jol-core" % V.jol)
@@ -62,20 +55,15 @@ object Dependencies {
   val munitScalacheck = Def.setting("org.scalameta" %%% "munit-scalacheck" % V.munit % Test)
   val normalizecss    = Def.setting("org.webjars.npm" % "normalize.css" % V.normalizecss)
   val okHttp          = Def.setting("com.squareup.okhttp3" % "okhttp" % V.okHttp)
-  val oslib           = Def.setting("com.lihaoyi" %%% "os-lib" % V.oslib)
   val pprint          = Def.setting("com.lihaoyi" %%% "pprint" % V.pprint)
   val quicklens       = Def.setting("com.softwaremill.quicklens" %%% "quicklens" % V.quicklens)
-  val reactiveStreams = Def.setting("org.reactivestreams" % "reactive-streams" % V.reactiveStreams)
-  val retypecheck =
-    Def.setting(if (`is 3`(scalaVersion.value)) None
-    else Some("io.github.scala-loci" %% "retypecheck" % V.retypecheck))
-  val scalacheck    = Def.setting("org.scalacheck" %%% "scalacheck" % V.scalacheck % "test")
-  val scalactic     = Def.setting("org.scalactic" %% "scalactic" % V.scalactic)
-  val scalaJavaTime = Def.setting("io.github.cquiroz" %%% "scala-java-time" % V.scalaJavaTime)
-  val scalajsDom    = Def.setting("org.scala-js" %%% "scalajs-dom" % V.scalajsDom)
-  val scalaSwing    = Def.setting("org.scala-lang.modules" %% "scala-swing" % V.scalaSwing)
-  val scalatags     = Def.setting("com.lihaoyi" %%% "scalatags" % V.scalatags)
-  val scalatest     = Def.setting("org.scalatest" %%% "scalatest" % V.scalatest % "test")
+  val scalacheck      = Def.setting("org.scalacheck" %%% "scalacheck" % V.scalacheck % "test")
+  val scalactic       = Def.setting("org.scalactic" %% "scalactic" % V.scalactic)
+  val scalaJavaTime   = Def.setting("io.github.cquiroz" %%% "scala-java-time" % V.scalaJavaTime)
+  val scalajsDom      = Def.setting("org.scala-js" %%% "scalajs-dom" % V.scalajsDom)
+  val scalaSwing      = Def.setting("org.scala-lang.modules" %% "scala-swing" % V.scalaSwing)
+  val scalatags       = Def.setting("com.lihaoyi" %%% "scalatags" % V.scalatags)
+  val scalatest       = Def.setting("org.scalatest" %%% "scalatest" % V.scalatest % "test")
   val scalatestpluscheck =
     Def.setting(if (`is 2.11`(scalaVersion.value))
       "org.scalatestplus"    %%% "scalacheck-1-15" % "3.2.4.0-M1"         % "test"
@@ -101,9 +89,6 @@ object Dependencies {
   val scalaReflectProvided = libraryDependencies ++=
     (if (`is 3`(scalaVersion.value)) None
      else Some(scalaOrganization.value % "scala-reflect" % scalaVersion.value % "provided"))
-
-  val circeAll = Def.setting(Seq("core", "generic", "parser")
-    .map(n => "io.circe" %%% s"circe-$n" % V.circeCore))
 
   object slips {
     val category = Def.setting("de.rmgk.slips" %%% "category" % V.slips)
