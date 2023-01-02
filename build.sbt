@@ -197,7 +197,7 @@ lazy val replicationExamples =
       scalaVersion_3,
       jitpackResolver,
       noPublish,
-      fork               := true,
+      run / fork         := true,
       run / connectInput := true,
       jitpackResolver,
       libraryDependencies ++= jsoniterScalaAll.value ++ Seq(
