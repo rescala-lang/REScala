@@ -126,7 +126,7 @@ trait FullMVTurnReflectionBundle extends FullMVBundle {
       }
     }
 
-    @tailrec final override def asyncNewPhase(phase: TurnPhase.Type): Unit = {
+    final override def asyncNewPhase(phase: TurnPhase.Type): Unit = {
       val currentPhase = _phase.get
       if (currentPhase < phase) {
         val preds = predecessorIndex.get

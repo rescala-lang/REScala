@@ -18,7 +18,7 @@ import scala.util.{Failure, Success}
 trait ReactiveTransmittableBundle extends FullMVBundle {
   selfType: Mirror with TurnImplBundle with TaskBundle with FullMvStateBundle with SubsumableLockBundle
     with SignalCompatBundle with EventBundle with SignalBundle with ReactiveReflectionBundle
-    with ReactiveMirrorBundle =>
+    with ReactiveMirrorBundle with rescala.operator.Operators =>
 
   object ReactiveTransmittable {
     val DEBUG: Boolean = FullMVUtil.DEBUG || SubsumableLock.DEBUG
@@ -935,7 +935,7 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
             s"someone tried to add predecessors on turn $receiver, which should thus not have been possible to be deallocated"
           )
           maybeTurn.get.addPredecessor(predecessorTree.map { lookUpLocalTurnParameterInstance(_, endpoint) }).map(
-            BooleanResponse
+            BooleanResponse.apply
           )(FullMVUtil.notWorthToMoveToTaskpool)
         case NewSuccessor(receiver, successor) =>
           localTurnReceiverInstance(receiver) match {
