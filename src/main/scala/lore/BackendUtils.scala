@@ -107,6 +107,12 @@ def traverseFromNode[A <: Term](
         )
       case TFunC(name, args) =>
         TFunC(name, args.map(traverseFromNode(_, transformer)))
+      case TIf(cond, _then, _else) =>
+        TIf(
+          traverseFromNode(cond, transformer),
+          traverseFromNode(_then, transformer),
+          _else.map(traverseFromNode(_, transformer))
+        )
       case TArgT(_, _) | TVar(_) | TTypeAl(_, _) | TNum(_) | TTrue | TFalse |
           TString(_) =>
         transformed // don't traverse in cases without children
@@ -162,6 +168,8 @@ def uses(e: Term): Set[ID] = e match
   case TArrow(l, r)        => uses(l) ++ uses(r)
   case TTypeAl(_, _)       => Set.empty
   case TString(_)          => Set.empty
+  case TIf(cond, _then, _else) =>
+    uses(cond) ++ uses(_then) ++ _else.map(uses).getOrElse(Set())
 //   case e: StringExpr                 => Set()
 
 // def getDependants(
