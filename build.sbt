@@ -210,3 +210,15 @@ lazy val replicationExamples =
         slips.delay.value,
       ),
     )
+    .jvmSettings(
+      libraryDependencies ++= Seq(
+        loci.wsJetty11.value,
+        jetty.value,
+      )
+    )
+    .jsSettings(
+      libraryDependencies ++= Seq(
+        scalatags.value,
+        loci.wsWeb.value,
+      )
+    )
