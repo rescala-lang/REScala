@@ -1,5 +1,6 @@
-import Dependencies._
-import Settings._
+import Dependencies.*
+import RescalaDependencies.*
+import Settings.*
 import sbt.Def
 
 lazy val rescalaProject = project.in(file(".")).settings(noPublish).aggregate(
@@ -39,11 +40,9 @@ lazy val rescala = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file
       sourcecode.value,
       scalatest.value,
       scalatestpluscheck.value,
-      "org.reactivestreams" % "reactive-streams" % "1.0.4"
-    ) ++ (
-      if (`is 3`(scalaVersion.value)) None
-      else Some("io.github.scala-loci" %% "retypecheck" % "0.10.0")
+      reactivestreams,
     ),
+    libraryDependencies ++= retypecheck.value
   )
   .jsSettings(
     libraryDependencies += scalatags.value % "provided,test",
@@ -88,8 +87,8 @@ lazy val distributedFullmv = project.in(file("Code/Extensions/MultiversionDistri
       loci.tcp.value,
       loci.circe.value,
       loci.upickle.value,
-    ) ++ Seq("core", "generic", "parser")
-      .map(n => "io.circe" %%% s"circe-$n" % "0.14.3")
+    ),
+    libraryDependencies ++= circe.value
   )
   .dependsOn(rescala.jvm % "compile->compile;test->test")
 
@@ -211,42 +210,3 @@ lazy val replicationExamples =
         slips.delay.value,
       ),
     )
-
-// =====================================================================================
-// custom tasks
-
-// use `publishSigned` to publish
-// go to https://oss.sonatype.org/#stagingRepositories to move from staging to maven central
-lazy val publishSonatype = Def.settings(
-  organization         := "de.tu-darmstadt.stg",
-  organizationName     := "Software Technology Group",
-  organizationHomepage := Some(url("https://www.stg.tu-darmstadt.de/")),
-  scmInfo := Some(
-    ScmInfo(
-      url("https://github.com/rescala-lang/REScala"),
-      "scm:git@github.com:rescala-lang/REScala.git"
-    )
-  ),
-  developers := List(
-    Developer(
-      id = "ragnar",
-      name = "Ragnar Mogk",
-      email = "mogk@cs.tu-darmstadt.de",
-      url = url("https://www.stg.tu-darmstadt.de/")
-    )
-  ),
-
-  // no binary compatibility for 0.Y.z releases
-  versionScheme := Some("semver-spec"),
-  licenses      := List("Apache 2" -> new URL("http://www.apache.org/licenses/LICENSE-2.0.txt")),
-  homepage      := Some(url("https://www.rescala-lang.com/")),
-
-  // Remove all additional repository other than Maven Central from POM
-  pomIncludeRepository := { _ => false },
-  publishTo := {
-    val nexus = "https://oss.sonatype.org/"
-    if (isSnapshot.value) Some("snapshots" at s"${nexus}content/repositories/snapshots")
-    else Some("releases" at s"${nexus}service/local/staging/deploy/maven2")
-  },
-  publishMavenStyle := true
-)
