@@ -13,6 +13,9 @@ lazy val root = (project in file("."))
     libraryDependencies += "io.monix" %% "minitest" % "2.9.6" % Test,
     libraryDependencies += "org.typelevel" %% "core" % "1.2.0" % Test,
     testFrameworks += new TestFramework("minitest.runner.Framework"),
+    scalacOptions ++= List(
+      "-Xfatal-warnings"
+    ),
     // native-image flag "--initialize-at-build-time" is required for Cats Effect applications
     nativeImageOptions ++= List(
       "--initialize-at-build-time",
