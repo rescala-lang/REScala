@@ -2,7 +2,7 @@ import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport.*
 import sbt.*
 import sbt.Keys.*
 
-import Settings.`is 3`
+import Settings.{`is 3`, `is 2.11`}
 
 object RescalaDependencies {
 
@@ -12,7 +12,7 @@ object RescalaDependencies {
     (if (`is 3`(scalaVersion.value)) None
      else Some(scalaOrganization.value % "scala-reflect" % scalaVersion.value % "provided"))
   val scalatestpluscheck =
-    Def.setting(if (Settings.`is 2.11`(scalaVersion.value))
+    Def.setting(if (`is 2.11`(scalaVersion.value))
       "org.scalatestplus"    %%% "scalacheck-1-15" % "3.2.4.0-M1" % "test"
     else "org.scalatestplus" %%% "scalacheck-1-16" % "3.2.14.0"   % "test")
   val reactivestreams = "org.reactivestreams" % "reactive-streams" % "1.0.4"
@@ -45,15 +45,14 @@ object RescalaDependencies {
     )
   }
 
-
   // use `publishSigned` to publish
   // go to https://oss.sonatype.org/#stagingRepositories to move from staging to maven central
   val publishSonatype = Def.settings(
-    organization := "de.tu-darmstadt.stg",
-    organizationName := "Software Technology Group",
+    organization         := "de.tu-darmstadt.stg",
+    organizationName     := "Software Technology Group",
     organizationHomepage := Some(url("https://www.stg.tu-darmstadt.de/")),
-    homepage := Some(url("https://www.rescala-lang.com/")),
-    licenses := List("Apache 2" -> new URL("http://www.apache.org/licenses/LICENSE-2.0.txt")),
+    homepage             := Some(url("https://www.rescala-lang.com/")),
+    licenses             := List("Apache 2" -> new URL("http://www.apache.org/licenses/LICENSE-2.0.txt")),
     scmInfo := Some(
       ScmInfo(
         url("https://github.com/rescala-lang/REScala"),
@@ -81,6 +80,5 @@ object RescalaDependencies {
     },
     publishMavenStyle := true
   )
-
 
 }

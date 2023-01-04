@@ -4,7 +4,7 @@
 import Dependencies.Versions as V
 import com.jsuereth.sbtpgp.PgpKeys.publishSigned
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.jsEnv
-import sbt.*
+import sbt.{Def, *}
 import sbt.Keys.*
 
 import scala.math.Ordering.Implicits.infixOrderingOps
@@ -13,8 +13,9 @@ object Settings {
 
   val commonCrossBuildVersions = crossScalaVersions := Seq(V.scala211, V.scala212, V.scala213, V.scala3)
 
+  private def cond(b: Boolean, opts: String*) = if (b) opts.toList else Nil
+
   val commonScalacOptions = {
-    def cond(b: Boolean, opts: String*) = if (b) opts.toList else Nil
     Seq(Compile / compile, Test / compile).map(s =>
       s / scalacOptions ++= {
         val version = CrossVersion.partialVersion(scalaVersion.value).get
@@ -29,6 +30,12 @@ object Settings {
       }
     )
   }
+
+  // see https://www.scala-js.org/news/2021/12/10/announcing-scalajs-1.8.0/#the-default-executioncontextglobal-is-now-deprecated
+  val jsAcceptUnfairGlobalTasks =
+    Seq(scalacOptions, Test / scalacOptions).map(s =>
+      s ++= cond(!`is 3`(scalaVersion.value), "-P:scalajs:nowarnGlobalExecutionContext")
+    )
 
   val scalaVersion_211 = Def.settings(
     scalaVersion := V.scala211,
@@ -61,7 +68,6 @@ object Settings {
   def `is 3`(scalaVersion: String) =
     CrossVersion.partialVersion(scalaVersion) collect { case (3, _) => true } getOrElse false
 
-  val safeInit = scalacOptions += "-Ysafe-init"
   val dottyMigration = List(
     Compile / compile / scalacOptions ++= List("-rewrite", "-source", "3.0-migration"),
     Test / compile / scalacOptions ++= List("-rewrite", "-source", "3.0-migration")
@@ -83,29 +89,11 @@ object Settings {
     publishSigned     := {}
   )
 
-  val publishOnly213 =
-    Seq(
-      publishArtifact   := (if (`is 2.13`(scalaVersion.value)) publishArtifact.value else false),
-      packagedArtifacts := (if (`is 2.13`(scalaVersion.value)) packagedArtifacts.value else Map.empty),
-      publish           := (if (`is 2.13`(scalaVersion.value)) publish.value else {}),
-      publishLocal      := (if (`is 2.13`(scalaVersion.value)) publishLocal.value else {})
-    )
-
   // this is a tool to analyse memory consumption/layout
   val jolSettings = Seq(
     javaOptions += "-Djdk.attach.allowAttachSelf",
     fork := true,
     libraryDependencies += Dependencies.jol.value
-  )
-
-  // see https://www.scala-js.org/news/2021/12/10/announcing-scalajs-1.8.0/#the-default-executioncontextglobal-is-now-deprecated
-  val jsAcceptUnfairGlobalTasks = Def.settings(
-    scalacOptions ++=
-      (if (`is 3`(scalaVersion.value)) List.empty
-       else List("-P:scalajs:nowarnGlobalExecutionContext")),
-    Test / scalacOptions ++=
-      (if (`is 3`(scalaVersion.value)) List.empty
-       else List("-P:scalajs:nowarnGlobalExecutionContext")),
   )
 
   // see https://www.scala-js.org/doc/project/js-environments.html
