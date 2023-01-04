@@ -6,7 +6,7 @@ import kofre.syntax.{ArdtOpsContains, DottedName, OpsSyntaxHelper, PermIdMutate}
 import kofre.time.Dots
 
 /** A GMap (Grow-only Map) is a Delta CRDT that models a map from an arbitrary key type to nested Delta CRDTs.
-  * In contrast to [[ORMapInterface]], key/value pairs cannot be removed from this map. However, due to the smaller internal
+  * In contrast to [[ObserveRemoveMap]], key/value pairs cannot be removed from this map. However, due to the smaller internal
   * representation, mutate operations on large maps are a lot faster than on ObserveRemoveMap.
   *
   * The nested CRDTs can be queried/mutated by calling the queryKey/mutateKey methods with a DeltaQuery/DeltaMutator generated

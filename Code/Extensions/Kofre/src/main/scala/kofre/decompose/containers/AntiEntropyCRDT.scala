@@ -5,11 +5,11 @@ import kofre.time.Dots
 import kofre.dotted.{DottedDecompose, DottedLattice, Dotted}
 import kofre.syntax.{ArdtOpsContains, PermCausal, PermCausalMutate, PermIdMutate, DottedName}
 
-/** BasicCRDTs are Delta CRDTs that use [[JsoniterAntiEntropy]] and [[Network]] as Middleware for exchanging deltas between replicas.
+/** BasicCRDTs are Delta CRDTs that use [[AntiEntropy]] and [[Network]] as Middleware for exchanging deltas between replicas.
   * They cannot actually be used on multiple connected replicas, but are useful for locally testing the behavior of
   * Delta CRDTs.
   *
-  * Generated deltas are automatically propagated to the registered [[JsoniterAntiEntropy]] instance, but to apply deltas received
+  * Generated deltas are automatically propagated to the registered [[AntiEntropy]] instance, but to apply deltas received
   * by the AntiEntropy instance you need to explicitly call processReceivedDeltas on the CRDT.
   */
 class AntiEntropyCRDT[State](

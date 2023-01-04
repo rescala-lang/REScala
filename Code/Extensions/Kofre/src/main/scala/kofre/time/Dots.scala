@@ -5,7 +5,7 @@ import kofre.base.{DecomposeLattice, Lattice}
 import kofre.dotted.Dotted
 import kofre.time.Dot
 
-/** Essentially a more efficient version of a [[ Set[Dot] ]].
+/** Essentially a more efficient version of a [[Set[Dot] ]].
   * It typically tracks all dots known within some scope.
   *
   * This datastructure is used both for implementation of RDTs,

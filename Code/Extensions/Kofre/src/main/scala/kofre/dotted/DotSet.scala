@@ -30,9 +30,6 @@ object DotSet {
     }
   }
 
-  /** DotSet is a dot store implementation that is simply a set of dots. See [[EnableWinsFlag]] for a
-    * usage example.
-    */
   given contextDecompose: DottedDecompose[DotSet] =
     new FromConlattice[DotSet](dottedLattice) {
 

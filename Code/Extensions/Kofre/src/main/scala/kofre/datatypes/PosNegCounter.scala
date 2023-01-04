@@ -10,7 +10,7 @@ case class PosNegCounter(pos: GrowOnlyCounter, neg: GrowOnlyCounter) derives Dec
 
 /** A PNCounter (Positive-Negative Counter) is a Delta CRDT modeling a counter.
   *
-  * It is composed of two grow-only counters (see [[GCounterInterface]]) to enable both increments and decrements of the counter value.
+  * It is composed of two grow-only counters (see [[GrowOnlyCounter]]) to enable both increments and decrements of the counter value.
   */
 object PosNegCounter {
 

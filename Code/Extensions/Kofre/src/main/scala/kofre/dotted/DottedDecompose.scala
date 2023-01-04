@@ -36,8 +36,7 @@ object DottedDecompose {
   class ProductDottedDecompose[T <: Product](lattices: Tuple, bottoms: Tuple, pm: Mirror.ProductOf[T], label: String)
       extends DottedDecompose[T] {
 
-    override def toString: String = s"ProductDecomposeLattice[${ label }]"
-
+    override def toString: String = s"ProductDecomposeLattice[${label}]"
 
     private def lat(i: Int): DottedDecompose[Any] = lattices.productElement(i).asInstanceOf[DottedDecompose[Any]]
     private def bot(i: Int): Bottom[Any]          = bottoms.productElement(i).asInstanceOf[Bottom[Any]]
@@ -51,18 +50,18 @@ object DottedDecompose {
       })
 
     override def decompose(a: Dotted[T]): Iterable[Dotted[T]] = List(a)
-      // // TODO: figure out what decompose means for dotted values
-      //Range(0, lattices.productArity).flatMap { j =>
-      //  lat(j).decompose(a.map(_.productElement(j))).map {
-      //    _.map { elem =>
-      //      pm.fromProduct(new Product {
-      //        def canEqual(that: Any): Boolean = false
-      //        def productArity: Int            = lattices.productArity
-      //        def productElement(i: Int): Any  = if i == j then elem else bot(i).empty
-      //      })
-      //    }
-      //  }
-      //}
+    // // TODO: figure out what decompose means for dotted values
+    // Range(0, lattices.productArity).flatMap { j =>
+    //  lat(j).decompose(a.map(_.productElement(j))).map {
+    //    _.map { elem =>
+    //      pm.fromProduct(new Product {
+    //        def canEqual(that: Any): Boolean = false
+    //        def productArity: Int            = lattices.productArity
+    //        def productElement(i: Int): Any  = if i == j then elem else bot(i).empty
+    //      })
+    //    }
+    //  }
+    // }
 
     override def lteq(left: Dotted[T], right: Dotted[T]): Boolean =
       Range(0, lattices.productArity).forall { i =>
@@ -74,13 +73,9 @@ object DottedDecompose {
     export wcm.mergePartial
   }
 
-  /** DotLess is a dot store implementation that, in combination with [[DotPair]], allows to compose non-causal CRDTs
-    * with causal CRDTs. For a usage example, see [[RGA]], where the implicit presence of DotLess is
-    * necessary so that the non-causal [[interfaces.EpocheInterface]] can be part of the [[DotPair]] that makes up
-    * the state.
-    *
-    * Note, implementing this marks the type as independent of its context,
-    * beware types with different possible interpretations.
+  /** Enables the use of a [[kofre.base.DecomposeLattice]] as a [[DottedDecompose]].
+    * Beware that this works for most datastructures due to automatic derivation of the required instance,
+    * but will likely not have the inteded semantics if the datastructure does use any dots inside.
     */
   def liftDecomposeLattice[A: DecomposeLattice]: DottedDecompose[A] =
     new DottedDecompose[A] {

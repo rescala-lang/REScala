@@ -43,9 +43,6 @@ object DotFun {
     override def dots(dotStore: DotFun[V]): Dots = Dots.from(dotStore.repr.keySet)
   }
 
-  /** DotFun is a dot store implementation that maps dots to values of a Lattice type. See [[interfaces.MVRegisterInterface]]
-    * for a usage example.
-    */
   given perDotDecompose[A: DecomposeLattice]: DottedDecompose[DotFun[A]] =
     new FromConlattice[DotFun[A]](perDotLattice[A]) {
       private def dots(a: DotFun[A]): Dots = dotStore.dots(a)

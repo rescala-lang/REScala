@@ -8,7 +8,7 @@ import scala.annotation.tailrec
 import scala.collection.IndexedSeqView
 import scala.collection.mutable.ListBuffer
 
-/** Efficient storage of a set of [[Time]] when most stored values are contiguous ranges */
+/** Efficient storage of a set of [[kofre.base.Defs.Time]] when most stored values are contiguous ranges */
 class ArrayRanges(val inner: Array[Time], val used: Int) {
 
   override def equals(obj: Any): Boolean = obj match {
