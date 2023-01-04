@@ -26,6 +26,7 @@ trait Lattice[A] {
   }
 
   extension (left: A) {
+
     /** Lattice order is derived from merge, but should be overridden for efficiency */
     def <=(right: A): Boolean = this.merge(left, right) == right
     @targetName("mergeInfix")
@@ -39,7 +40,8 @@ object Lattice {
 
   /** Merge functions can throw away redundant information, if one constructs values directly (not by using operators)
     * this could result in values that should be equal, but are not.
-    * Normalize fixes this. */
+    * Normalize fixes this.
+    */
   def normalize[A: Lattice](v: A): A = v merge v
 
   implicit class Operators[A: Lattice](left: A):
@@ -69,7 +71,11 @@ object Lattice {
     case (Some(l), Some(r)) => Some(l merge r)
 
   given mapLattice[K, V: Lattice]: Lattice[Map[K, V]] = (left, right) =>
-    right.foldLeft(left) {
+    val (small, large) =
+      if 0 <= Integer.compareUnsigned(left.knownSize, right.knownSize)
+      then (right, left)
+      else (left, right)
+    small.foldLeft(large) {
       case (current, (key, r)) =>
         current.updatedWith(key) {
           case Some(l) => Some(l merge r)
