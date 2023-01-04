@@ -18,15 +18,21 @@ lazy val rescalaProject = project.in(file(".")).settings(noPublish).aggregate(
   replicationExamples.jvm,
 )
 
-lazy val rescalaCore = project.in(file("Code")).settings(crossScalaVersions := Nil, noPublish).aggregate(
-  rescala.js,
-  rescala.jvm,
-  rescala.native,
-)
+lazy val rescalaCore =
+  project.in(file("Code")).settings(
+    crossScalaVersions := Nil,
+    noPublish,
+    scalaVersion_3
+  ).aggregate(
+    rescala.js,
+    rescala.jvm,
+    rescala.native,
+  )
 
 lazy val rescala = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file("Code/Main"))
   .settings(
-    scalaFullCrossBuildSupport,
+    commonCrossBuildVersions,
+    scalaVersionFromEnv,
     // scaladoc
     autoAPIMappings := true,
     Compile / doc / scalacOptions += "-groups",
@@ -192,7 +198,6 @@ lazy val encryptedTodo = project.in(file("Code/Examples/EncryptedTodoFx"))
 lazy val replicationExamples =
   crossProject(JVMPlatform, JSPlatform).crossType(CrossType.Full).in(file("Code/Examples/Replication"))
     .dependsOn(rescala, kofre)
-    .enablePlugins(JavaAppPackaging)
     .settings(
       scalaVersion_3,
       jitpackResolver,

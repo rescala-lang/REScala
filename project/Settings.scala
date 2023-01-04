@@ -47,13 +47,11 @@ object Settings {
     commonScalacOptions
   )
 
-  val scalaFullCrossBuildSupport = commonCrossBuildVersions +: {
-    scala.sys.env.get("SCALA_VERSION") match {
-      case Some("2.11") => scalaVersion_211
-      case Some("2.12") => scalaVersion_212
-      case Some("2.13") => scalaVersion_213
-      case _            => scalaVersion_3
-    }
+  val scalaVersionFromEnv = scala.sys.env.get("SCALA_VERSION") match {
+    case Some("2.11") => scalaVersion_211
+    case Some("2.12") => scalaVersion_212
+    case Some("2.13") => scalaVersion_213
+    case _            => scalaVersion_3
   }
 
   def `is 2.11`(scalaVersion: String): Boolean =
@@ -112,13 +110,4 @@ object Settings {
 
   // see https://www.scala-js.org/doc/project/js-environments.html
   val jsEnvDom = jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
-
-  // util to generate classpath file to be consumed by native image
-  val writeClasspath = TaskKey[Unit]("writeClasspath", "writes the classpath to a file in the target dir") := {
-    val cp         = (Compile / fullClasspathAsJars).value
-    val cpstring   = cp.map(at => s"""-cp "${at.data.toString.replace("\\", "/")}"\n""").mkString("")
-    val targetpath = target.value.toPath.resolve("classpath.txt")
-    IO.write(targetpath.toFile, cpstring)
-    ()
-  }
 }
