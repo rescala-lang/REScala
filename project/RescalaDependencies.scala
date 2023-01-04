@@ -52,6 +52,8 @@ object RescalaDependencies {
     organization := "de.tu-darmstadt.stg",
     organizationName := "Software Technology Group",
     organizationHomepage := Some(url("https://www.stg.tu-darmstadt.de/")),
+    homepage := Some(url("https://www.rescala-lang.com/")),
+    licenses := List("Apache 2" -> new URL("http://www.apache.org/licenses/LICENSE-2.0.txt")),
     scmInfo := Some(
       ScmInfo(
         url("https://github.com/rescala-lang/REScala"),
@@ -69,8 +71,6 @@ object RescalaDependencies {
 
     // no binary compatibility for 0.Y.z releases
     versionScheme := Some("semver-spec"),
-    licenses := List("Apache 2" -> new URL("http://www.apache.org/licenses/LICENSE-2.0.txt")),
-    homepage := Some(url("https://www.rescala-lang.com/")),
 
     // Remove all additional repository other than Maven Central from POM
     pomIncludeRepository := { _ => false },

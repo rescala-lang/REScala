@@ -1,11 +1,11 @@
 /* This file is shared between multiple projects
  * and may contain unused dependencies */
 
-import sbt.Keys.*
-import sbt.*
 import Dependencies.Versions as V
 import com.jsuereth.sbtpgp.PgpKeys.publishSigned
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.jsEnv
+import sbt.*
+import sbt.Keys.*
 
 import scala.math.Ordering.Implicits.infixOrderingOps
 
@@ -13,17 +13,21 @@ object Settings {
 
   val commonCrossBuildVersions = crossScalaVersions := Seq(V.scala211, V.scala212, V.scala213, V.scala3)
 
-  val commonScalacOptions = scalacOptions ++= {
-    val version                         = CrossVersion.partialVersion(scalaVersion.value).get
+  val commonScalacOptions = {
     def cond(b: Boolean, opts: String*) = if (b) opts.toList else Nil
-    List(
-      List("-feature", "-language:higherKinds", "-language:implicitConversions", "-language:existentials"),
-      cond(version >= (2, 13), "-Werror"),
-      cond(version < (2, 13), "-Xfatal-warnings"),
-      cond(version < (3, 0), "-language:experimental.macros"),
-      cond(version == (2, 13), "-Ytasty-reader"),
-      cond(version >= (3, 0), "-deprecation"),
-    ).flatten
+    Seq(Compile / compile, Test / compile).map(s =>
+      s / scalacOptions ++= {
+        val version = CrossVersion.partialVersion(scalaVersion.value).get
+        List(
+          List("-feature", "-language:higherKinds", "-language:implicitConversions", "-language:existentials"),
+          cond(version >= (2, 13), "-Werror"),
+          cond(version < (2, 13), "-Xfatal-warnings"),
+          cond(version < (3, 0), "-language:experimental.macros"),
+          cond(version == (2, 13), "-Ytasty-reader"),
+          cond(version >= (3, 0), "-deprecation"),
+        ).flatten
+      }
+    )
   }
 
   val scalaVersion_211 = Def.settings(
