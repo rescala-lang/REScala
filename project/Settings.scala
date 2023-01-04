@@ -15,21 +15,30 @@ object Settings {
 
   private def cond(b: Boolean, opts: String*) = if (b) opts.toList else Nil
 
-  val commonScalacOptions = {
-    Seq(Compile / compile, Test / compile).map(s =>
-      s / scalacOptions ++= {
-        val version = CrossVersion.partialVersion(scalaVersion.value).get
-        List(
-          List("-feature", "-language:higherKinds", "-language:implicitConversions", "-language:existentials"),
-          cond(version >= (2, 13), "-Werror"),
-          cond(version < (2, 13), "-Xfatal-warnings"),
-          cond(version < (3, 0), "-language:experimental.macros"),
-          cond(version == (2, 13), "-Ytasty-reader"),
-          cond(version >= (3, 0), "-deprecation"),
-        ).flatten
-      }
-    )
-  }
+  // these are scoped to compile&test only to ensure that doc tasks and such do not randomly fail for no reason
+  val fatalWarnings = Seq(Compile / compile, Test / compile).map(s =>
+    s / scalacOptions ++= {
+      val version = CrossVersion.partialVersion(scalaVersion.value).get
+      List(
+        cond(version >= (2, 13), "-Werror"),
+        cond(version < (2, 13), "-Xfatal-warnings"),
+      ).flatten
+    }
+  )
+
+  val featureOptions = Seq(
+    scalacOptions ++= {
+      val version = CrossVersion.partialVersion(scalaVersion.value).get
+      List(
+        List("-feature", "-language:higherKinds", "-language:implicitConversions", "-language:existentials"),
+        cond(version == (2, 13), "-Ytasty-reader"),
+        cond(version >= (3, 0), "-deprecation"),
+        cond(version < (3, 0), "-language:experimental.macros")
+      ).flatten
+    }
+  )
+
+  val commonScalacOptions = fatalWarnings ++ featureOptions
 
   // see https://www.scala-js.org/news/2021/12/10/announcing-scalajs-1.8.0/#the-default-executioncontextglobal-is-now-deprecated
   val jsAcceptUnfairGlobalTasks =
