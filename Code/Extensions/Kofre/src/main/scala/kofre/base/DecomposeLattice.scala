@@ -32,7 +32,7 @@ trait DecomposeLattice[A] extends Lattice[A] {
 }
 
 object DecomposeLattice {
-  def apply[A](implicit l: DecomposeLattice[A]): DecomposeLattice[A] = l
+  def apply[A](implicit l: DecomposeLattice[A]): DecomposeLattice[A]    = l
   def decomposed[A](a: A)(implicit l: DecomposeLattice[A]): Iterable[A] = l.decomposed(a)
 
   /** reuse existing lattice instance to implement a DecomposeLattice */
@@ -92,7 +92,7 @@ object DecomposeLattice {
   class ProductDecomposeLattice[T <: Product](lattices: Tuple, bottoms: Tuple, pm: Mirror.ProductOf[T], label: String)
       extends DecomposeLattice[T] {
 
-    override def toString: String = s"ProductDecomposeLattice[${ label }]"
+    override def toString: String = s"ProductDecomposeLattice[${label}]"
 
     private def lat(i: Int): DecomposeLattice[Any] = lattices.productElement(i).asInstanceOf[DecomposeLattice[Any]]
     private def bot(i: Int): Bottom[Any]           = bottoms.productElement(i).asInstanceOf[Bottom[Any]]
