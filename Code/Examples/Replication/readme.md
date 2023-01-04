@@ -14,7 +14,23 @@ In this implementation, a central node holds the authority over recording checkp
 
 In this variant, each replica can create and publish checkpoints for its own changes. The checkpoint information of each replica is then encoded as a vector clock where each entry represents the checkpoint counter of a different replica. The minimum and maximum size of changes for creating a new checkpoint can be set by adjusting the minAtomsForCheckpoint and maxAtomsForCheckpoint fields in src/main/scala/decentral/Replica.
 
-## CORE Emulator Setup
+## CORE 9 Setup
+
+use the docker method as decsribed here, but you should be able to directly use the dockerfile in this folder
+https://coreemu.github.io/core/install.html#dockerfile-based-install
+
+```
+# build image
+sudo docker build -t core -f Dockerfile .
+# start container
+sudo docker run -itd --name core -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix:rw --privileged core
+# enable xhost access to the root user
+xhost +local:root
+# launch core-gui
+sudo docker exec -it core core-gui
+```
+
+## CORE Emulator Setup (old?)
 
 First, follow the instructions [here](https://github.com/dtn7/dtn7-rs/blob/master/doc/getting-started.md) to install CORE and create a simulated network.
 
@@ -37,7 +53,11 @@ iptables -t nat -I PREROUTING -p tcp -d 10.0.0.10/24 --dport 4444 -j DNAT --to-d
 
 To simulate an unreliable network, double-clicking the wlan in the CORE GUI lets you configure some properties such as delay or loss%. To simulate replicas temporarily disconnecting and reconnecting, drag their hosts around in the GUI, they will lose the connection if they are dragged too far from other hosts.
 
-## Starting Replicas
+## Running replication examples
+
+see makefile
+
+## Starting Replicas (old)
 
 ### Central
 

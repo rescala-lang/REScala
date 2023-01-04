@@ -1,3 +1,6 @@
+.ONESHELL:
+SHELL = /usr/bin/bash
+
 publishLocal:
 	sbtn '+ rescalaCore / publishLocal'
 	sbtn '+ kofreJS / publishLocal'
@@ -12,3 +15,10 @@ publishSigned:
 
 runSimpleCaseStudy:
 	sbtn 'examples / run'
+
+buildReplication:
+	sbtn 'replicationExamplesJVM/stageJars'
+
+runReplication: buildReplication
+	java -cp "Code/Examples/Replication/jvm/target/jars/*" replication.cli --help
+
