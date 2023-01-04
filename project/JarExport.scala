@@ -5,16 +5,15 @@ import sbt.Keys.{fullClasspathAsJars, target}
 import sbt.{Compile, IO, Setting, TaskKey}
 import sbt.*
 
-object JarExporter extends sbt.AutoPlugin {
+object JarExport extends sbt.AutoPlugin {
   override def trigger = allRequirements
-  object autoImport {
-    val writeClasspath = TaskKey[File]("writeClasspath", "writes the classpath to a file in the target dir")
-    val copyJars       = TaskKey[File]("copyJars", "copies classpath jars to a file in the target dir")
-  }
+
+  val writeClasspath = TaskKey[File]("writeClasspath", "writes the classpath to a file in the target dir")
+  val stageJars = TaskKey[File]("stageJars", "copies classpath jars to a file in the target dir")
 
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
     // util to generate classpath file to be consumed by native image
-    autoImport.writeClasspath := {
+    writeClasspath := {
       val cp         = (Compile / fullClasspathAsJars).value
       val cpstring   = cp.map(at => s"""-cp "${at.data.toString.replace("\\", "/")}"\n""").mkString("")
       val targetpath = target.value.toPath.resolve("classpath.txt")
@@ -22,7 +21,7 @@ object JarExporter extends sbt.AutoPlugin {
       targetpath.toFile
     },
     // util to copy classpath into a local folder
-    autoImport.copyJars := {
+    stageJars := {
       val cp         = (Compile / fullClasspathAsJars).value
       val targetpath = target.value.toPath.resolve("jars")
       IO.createDirectory(targetpath.toFile)
