@@ -4,7 +4,10 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, Jso
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import kofre.base.Defs.Time
 import kofre.datatypes.RGA.RGANode
-import kofre.datatypes.{AddWinsSet, EnableWinsFlag, Epoche, GrowMap, GrowOnlyCounter, ObserveRemoveMap, PosNegCounter, RGA, TimedVal, TwoPhaseSet}
+import kofre.datatypes.{
+  AddWinsSet, EnableWinsFlag, Epoche, GrowMap, GrowOnlyCounter, ObserveRemoveMap, PosNegCounter, RGA, TimedVal,
+  TwoPhaseSet
+}
 import kofre.decompose.interfaces.GListInterface.{GList, GListElem, GListNode}
 import kofre.decompose.interfaces.LexCounterInterface.LexPair
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
@@ -19,8 +22,6 @@ object JsoniterCodecs {
 
   /** Causal Context */
 
-  implicit val SetCContextCodec: JsonValueCodec[Set[Dot]] = JsonCodecMaker.make
-
   implicit val arrayOfLongCodec: JsonValueCodec[Array[Time]] = JsonCodecMaker.make
 
   implicit val arrayRangesCodec: JsonValueCodec[ArrayRanges] =
@@ -34,8 +35,7 @@ object JsoniterCodecs {
       override def nullValue: ArrayRanges = null
     }
 
-  implicit val CausalContextCodec: JsonValueCodec[Dots] =
-    JsonCodecMaker.make(CodecMakerConfig.withAllowRecursiveTypes(true))
+  implicit val CausalContextCodec: JsonValueCodec[Dots] = JsonCodecMaker.make
 
   /** AddWinsSet */
 
