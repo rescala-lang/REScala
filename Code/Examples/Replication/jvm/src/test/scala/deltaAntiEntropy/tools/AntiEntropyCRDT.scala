@@ -1,22 +1,22 @@
 package deltaAntiEntropy.tools
 
 import kofre.base.DecomposeLattice
-import kofre.decompose.containers.{AntiEntropy, CRDTInterface, Network}
+import kofre.decompose.containers.CRDTInterface
 import kofre.dotted.{Dotted, DottedDecompose, DottedLattice}
 import kofre.syntax.{ArdtOpsContains, DottedName, PermCausal, PermCausalMutate, PermIdMutate}
 import kofre.time.Dots
 import kofre.base.Id
 import kofre.base.Id.asId
 
-/** BasicCRDTs are Delta CRDTs that use [[AntiEntropy]] and [[Network]] as Middleware for exchanging deltas between replicas.
+/** BasicCRDTs are Delta CRDTs that use [[IAntiEntropy]] and [[Network]] as Middleware for exchanging deltas between replicas.
   * They cannot actually be used on multiple connected replicas, but are useful for locally testing the behavior of
   * Delta CRDTs.
   *
-  * Generated deltas are automatically propagated to the registered [[AntiEntropy]] instance, but to apply deltas received
+  * Generated deltas are automatically propagated to the registered [[IAntiEntropy]] instance, but to apply deltas received
   * by the AntiEntropy instance you need to explicitly call processReceivedDeltas on the CRDT.
   */
 class AntiEntropyCRDT[State](
-    protected val antiEntropy: AntiEntropy[State]
+    protected val antiEntropy: IAntiEntropy[State]
 ) extends CRDTInterface[State, AntiEntropyCRDT[State]] {
   override val replicaID: Id = antiEntropy.replicaID.asId
 
@@ -52,6 +52,6 @@ object AntiEntropyCRDT {
     *
     * @param antiEntropy AntiEntropy instance used for exchanging deltas with other replicas
     */
-  def apply[State](antiEntropy: AntiEntropy[State]): AntiEntropyCRDT[State] =
+  def apply[State](antiEntropy: IAntiEntropy[State]): AntiEntropyCRDT[State] =
     new AntiEntropyCRDT(antiEntropy)
 }

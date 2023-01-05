@@ -1,11 +1,11 @@
-package kofre.decompose.containers
+package deltaAntiEntropy.tools
 
-import kofre.time.Dots
+import kofre.base.Id
 import kofre.dotted.Dotted
 import kofre.syntax.DottedName
-import kofre.base.Id
+import kofre.time.Dots
 
-trait AntiEntropy[A] {
+trait IAntiEntropy[A] {
   def replicaID: String
   def recordChange(delta: DottedName[A], state: Dotted[A]): Unit
   def getReceivedDeltas: List[DottedName[A]]

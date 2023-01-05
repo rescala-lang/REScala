@@ -5,7 +5,6 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tools.AntiEntropy.{AckMsg, DeltaMsg}
 import kofre.base.{Bottom, DecomposeLattice, Id}
 import Id.asId
-import kofre.decompose.containers.Network
 import kofre.dotted.{Dotted, DottedDecompose}
 import kofre.syntax.DottedName
 import replication.JsoniterCodecs.given
@@ -30,7 +29,7 @@ class AntiEntropy[A: Bottom](
     network: Network,
     neighbors: mutable.Buffer[String] = mutable.Buffer()
 )(implicit val codec: JsonValueCodec[Dotted[A]], withContextLattice: DottedDecompose[A])
-    extends kofre.decompose.containers.AntiEntropy[A] {
+    extends IAntiEntropy[A] {
 
   override def state: Dotted[A] = fullState
 

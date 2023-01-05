@@ -3,8 +3,7 @@ package deltaAntiEntropy.tests
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tests.NetworkGenerators.*
-import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyCRDT}
-import kofre.decompose.containers.Network
+import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyCRDT, Network}
 import kofre.decompose.interfaces.GListInterface.{GList, contextDecompose}
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}

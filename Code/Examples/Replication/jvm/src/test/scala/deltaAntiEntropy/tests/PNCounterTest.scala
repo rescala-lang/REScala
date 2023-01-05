@@ -1,9 +1,8 @@
 package deltaAntiEntropy.tests
 
 import deltaAntiEntropy.tests.NetworkGenerators.*
-import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyCRDT}
+import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyCRDT, Network}
 import kofre.datatypes.PosNegCounter
-import kofre.decompose.containers.Network
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 import replication.JsoniterCodecs.*

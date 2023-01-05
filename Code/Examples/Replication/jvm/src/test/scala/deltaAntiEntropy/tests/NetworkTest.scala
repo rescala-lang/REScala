@@ -1,6 +1,6 @@
 package deltaAntiEntropy.tests
 
-import kofre.decompose.containers.Network
+import deltaAntiEntropy.tools.Network
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 

@@ -1,8 +1,7 @@
 package deltaAntiEntropy.tests
 
 import deltaAntiEntropy.tests.NetworkGenerators.*
-import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyCRDT}
-import kofre.decompose.containers.Network
+import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyCRDT, Network}
 import kofre.decompose.interfaces.LexCounterInterface.LexCounter
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
