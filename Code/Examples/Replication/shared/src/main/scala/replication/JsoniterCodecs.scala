@@ -88,7 +88,7 @@ object JsoniterCodecs {
     mapArrayCodec[GListNode[TimedVal[E]], GListElem[TimedVal[E]]](JsonCodecMaker.make, JsonCodecMaker.make)
   }
 
-  /** GSet */
+  /** GrowOnlySet */
 
   @nowarn("msg=never used")
   implicit def GSetStateCodec[E: JsonValueCodec]: JsonValueCodec[Set[E]] = JsonCodecMaker.make
