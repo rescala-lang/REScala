@@ -7,7 +7,6 @@ import loci.transmitter.RemoteRef
 import org.scalajs.dom
 import rescala.default.*
 import rescala.operator.RExceptions.EmptySignalControlThrowable
-import viscel.shared.*
 
 import java.util.NoSuchElementException
 import scala.concurrent.Future

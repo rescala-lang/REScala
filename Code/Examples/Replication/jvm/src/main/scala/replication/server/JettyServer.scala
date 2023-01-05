@@ -15,7 +15,6 @@ import org.eclipse.jetty.util.resource.Resource
 import org.eclipse.jetty.util.thread.QueuedThreadPool
 import rescala.default.Signal
 import rescala.extra.distributables.LociDist
-import viscel.shared.Bindings
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
