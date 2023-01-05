@@ -11,7 +11,7 @@ trait Core {
     * The ReSource below depends on some abstract state, which is defined by the concrete scheduler implementations.
     * As basically everything else references ReSources, everything must be bundled together.
     * This is good for users, because they get strong guarantees about the used correctness, and the API is still OK.
-    * Its terrible for us, because the Scala Incremental compiler does not really work anymore.
+    * Its terrible for us, because the Scala incremental compiler does not really work anymore.
     */
   type State[_]
 
@@ -38,7 +38,7 @@ trait Core {
   /** Base implementation for reactives, with [[Derived]] for scheduling,
     * together with a [[ReName]] and containing a [[State]]
     *
-    * @param state the initial state passed by the scheduler
+    * @param state the state passed by the scheduler
     * @param name  the name of the reactive, useful for debugging as it often contains positional information
     */
   abstract class Base[V](override protected[rescala] val state: State[V], override val name: ReName)
