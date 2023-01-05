@@ -1,6 +1,6 @@
 package test.kofre
 
-import kofre.base.{Bottom, DecomposeLattice, Defs, Lattice}
+import kofre.base.{Bottom, DecomposeLattice, Lattice}
 import kofre.datatypes.{EnableWinsFlag, PosNegCounter}
 import kofre.decompose.containers.DeltaBufferRDT
 import kofre.decompose.interfaces.LWWRegisterInterface
@@ -8,7 +8,7 @@ import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegister
 import kofre.dotted.{Dotted, DottedDecompose}
 import kofre.syntax.{ArdtOpsContains, DottedName, OpsSyntaxHelper}
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax
-import Project.ProjectSyntax
+import test.kofre.Project.ProjectSyntax
 
 case class Project(
     _name: LWWRegister[String],

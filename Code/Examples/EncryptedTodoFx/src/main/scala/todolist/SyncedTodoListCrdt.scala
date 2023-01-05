@@ -8,6 +8,8 @@ import kofre.primitives.LastWriterWins
 import rescala.extra.encrdt.sync.ConnectionManager
 import scalafx.application.Platform
 import todolist.SyncedTodoListCrdt.StateType
+import benchmarks.encrdt.Codecs.{ *, given}
+
 
 import java.net.URI
 import java.time.Instant
@@ -17,7 +19,7 @@ import scala.annotation.nowarn
 import scala.concurrent.duration.{DurationInt, MILLISECONDS}
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Try
-
+import benchmarks.encrdt.idFromString
 class SyncedTodoListCrdt(val replicaId: String) {
 
   private val crdt: DeltaAddWinsLastWriterWinsMap[UUID, TodoEntry] =

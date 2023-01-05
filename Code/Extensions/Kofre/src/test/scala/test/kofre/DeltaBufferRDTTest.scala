@@ -1,6 +1,6 @@
 package test.kofre
 
-import kofre.base.{Bottom, Defs, Lattice}
+import kofre.base.{Bottom, Id, Lattice}
 import kofre.datatypes.EnableWinsFlag
 import kofre.decompose.containers.DeltaBufferRDT
 
@@ -8,7 +8,7 @@ class DeltaBufferRDTTest extends munit.FunSuite {
 
   test("basic interaction") {
 
-    val dbe = DeltaBufferRDT[EnableWinsFlag](Defs.genId())
+    val dbe = DeltaBufferRDT[EnableWinsFlag](Id.genId())
 
     assertEquals(dbe.state.store, Bottom.empty[EnableWinsFlag])
     assert(!dbe.read)

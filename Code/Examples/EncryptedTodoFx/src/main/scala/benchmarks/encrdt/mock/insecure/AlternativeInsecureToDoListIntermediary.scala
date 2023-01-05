@@ -5,7 +5,7 @@ import benchmarks.encrdt.todolist.ToDoEntry
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap.DeltaAddWinsLastWriterWinsMapLattice
-
+import benchmarks.encrdt.idFromString
 import java.util.UUID
 
 class AlternativeInsecureToDoListIntermediary(val intermediaryReplicaId: String)(

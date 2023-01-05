@@ -34,7 +34,7 @@ class RaftLatticeTest extends munit.FunSuite {
   }
 
   test("another interaction") {
-    val participants = Set("a", "b", "perm")
+    val participants = Set("a", "b", "perm").map(kofre.base.Id.predefined)
     val afterFirstVote = RaftState[String](participants)
       .becomeCandidate("a")
       .supportLeader("b")

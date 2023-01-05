@@ -1,13 +1,12 @@
 package test.kofre
 
-import kofre.base.Id.Time
-import kofre.base.{Defs, Lattice}
-import kofre.time.{Dots, Dot, VectorClock}
-import kofre.dotted.{DottedDecompose, DotFun, DotMap, DotSet, HasDots}
-import kofre.datatypes.{GrowOnlyCounter, PosNegCounter}
-import kofre.primitives.{CausalQueue, LastWriterWins, MultiValueRegister}
-import kofre.sets.ORSet
 import org.scalacheck.{Arbitrary, Gen}
+import kofre.dotted.*
+import kofre.time.*
+import kofre.base.*
+import kofre.sets.*
+import kofre.datatypes.*
+import kofre.primitives.*
 
 object DataGenerator {
 
@@ -18,7 +17,7 @@ object DataGenerator {
     value: List[Long] <- Gen.listOfN(ids.size, Gen.oneOf(0L to 100L))
   } yield VectorClock.fromMap(ids.zip(value).toMap))
 
-  given arbLww: Arbitrary[LastWriterWins[Defs.Time, Int]] = Arbitrary(
+  given arbLww: Arbitrary[LastWriterWins[Time, Int]] = Arbitrary(
     for {
       time  <- Gen.long
       value <- Gen.choose(Int.MinValue, Int.MaxValue)

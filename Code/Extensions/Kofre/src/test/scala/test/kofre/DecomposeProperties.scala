@@ -1,6 +1,6 @@
 package test.kofre
 
-import kofre.base.{Bottom, DecomposeLattice, Defs, Lattice}
+import kofre.base.{Bottom, DecomposeLattice, Lattice}
 import kofre.time.VectorClock
 import kofre.datatypes.{GrowOnlyCounter, PosNegCounter}
 import kofre.primitives.{CausalQueue, LastWriterWins, MultiValueRegister}

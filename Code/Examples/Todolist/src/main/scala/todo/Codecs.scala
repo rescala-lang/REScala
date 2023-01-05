@@ -3,6 +3,7 @@ package todo
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import kofre.base.Id
+import kofre.base.Id.asId
 import kofre.datatypes.{RGA, TimedVal}
 import kofre.time.Dot
 import kofre.decompose.containers.DeltaBufferRDT
@@ -21,10 +22,14 @@ object Codecs {
   implicit val dotKeyCodec: JsonKeyCodec[Dot] = new JsonKeyCodec[Dot] {
     override def decodeKey(in: JsonReader): Dot = {
       val Array(time, id) = in.readKeyAsString().split("-", 2)
-      Dot(id, time.toLong)
+      Dot(Id.predefined(id), time.toLong)
     }
     override def encodeKey(x: Dot, out: JsonWriter): Unit = out.writeKey(s"${x.time}-${x.replicaId}")
   }
+  implicit val idCodec: JsonValueCodec[Id] = JsonCodecMaker.make[String].asInstanceOf
+  implicit val idKeyCodec: JsonKeyCodec[kofre.base.Id] = new JsonKeyCodec[Id]:
+    override def decodeKey(in: JsonReader): Id = Id.predefined(in.readKeyAsString())
+    override def encodeKey(x: Id, out: JsonWriter): Unit = out.writeKey(Id.unwrap(x))
 
   @nowarn()
   implicit val codecState: JsonValueCodec[Dotted[RGA[TaskRef]]] =

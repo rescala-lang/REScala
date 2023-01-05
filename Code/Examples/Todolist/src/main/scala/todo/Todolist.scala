@@ -2,12 +2,13 @@ package todo
 
 import loci.registry.Registry
 import org.scalajs.dom.{document, window}
+import kofre.base.Id
 
 import java.util.concurrent.ThreadLocalRandom
 
 object Todolist {
 
-  val replicaId: String = ThreadLocalRandom.current().nextLong().toHexString
+  val replicaId: Id = Id.genId()
 
   val registry = new Registry
 

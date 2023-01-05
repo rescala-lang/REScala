@@ -3,13 +3,18 @@ package benchmarks.encrdt
 import benchmarks.encrdt.todolist.ToDoEntry
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
-import kofre.base.Id.{Id, Time}
+import kofre.base.{Id, Time}
+import kofre.base.Id.asId
 import kofre.time.{ArrayRanges, Dots, Dot}
 import kofre.encrdt.crdts.{AddWinsLastWriterWinsMap, DeltaAddWinsLastWriterWinsMap}
 
 import java.util.UUID
 
 object Codecs {
+  implicit val idCodec: JsonValueCodec[Id] = JsonCodecMaker.make[String].asInstanceOf
+  implicit val idKeyCodec: JsonKeyCodec[kofre.base.Id] = new JsonKeyCodec[Id]:
+    override def decodeKey(in: JsonReader): Id = Id.predefined(in.readKeyAsString())
+    override def encodeKey(x: Id, out: JsonWriter): Unit = out.writeKey(Id.unwrap(x))
   implicit val awlwwmapJsonCodec: JsonValueCodec[AddWinsLastWriterWinsMap.LatticeType[String, String]] =
     JsonCodecMaker.make(CodecMakerConfig.withSetMaxInsertNumber(Int.MaxValue).withMapMaxInsertNumber(Int.MaxValue))
 
@@ -41,7 +46,7 @@ object Codecs {
     override def decodeKey(in: JsonReader): Dot = {
       val inputString = in.readKeyAsString()
       val index       = inputString.indexOf('@')
-      Dot(inputString.substring(index + 1), inputString.substring(0, index).toLong)
+      Dot(inputString.substring(index + 1).asId, inputString.substring(0, index).toLong)
     }
 
     override def encodeKey(x: Dot, out: JsonWriter): Unit = out.writeKey(s"${x.time}@${x.replicaId}")

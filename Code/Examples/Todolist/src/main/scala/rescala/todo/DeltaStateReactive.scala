@@ -10,7 +10,7 @@ class DeltaStateReactive[Delta, Combined](
     deltaInput: ReadAs[Delta],
     applyDelta: (Combined, Delta) => Combined,
     handlers: Seq[(DynamicTicket, Combined) => Delta],
-    override protected[rescala] val name: ReName,
+    override val name: ReName,
 ) extends Derived with ReadAs[DeltaWithState[Delta, Combined]] {
   override type Value = DeltaWithState[Delta, Combined]
   override protected[rescala] def state: State[Value]        = initState

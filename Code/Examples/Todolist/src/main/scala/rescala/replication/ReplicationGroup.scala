@@ -9,6 +9,7 @@ import loci.transmitter.RemoteRef
 import rescala.interface.RescalaInterface
 import scribe.Execution.global
 import kofre.base.Lattice.Operators
+import kofre.base.{Id}
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
@@ -30,7 +31,7 @@ class ReplicationGroup[Api <: RescalaInterface, A](
 
   registry.bindSbj(binding) { (remoteRef: RemoteRef, payload: DeltaFor[A]) =>
     localListeners.get(payload.name) match {
-      case Some(handler) => handler.fire(DottedName(remoteRef.toString, payload.delta))
+      case Some(handler) => handler.fire(DottedName( Id.predefined(remoteRef.toString), payload.delta))
       case None => unhandled = unhandled.updatedWith(payload.name) { current =>
           current merge Some(Map(remoteRef.toString -> payload.delta))
         }
@@ -51,7 +52,7 @@ class ReplicationGroup[Api <: RescalaInterface, A](
     unhandled.get(name) match {
       case None =>
       case Some(changes) =>
-        changes.foreach( (k, v) => deltaEvt.fire(DottedName(k, v)))
+        changes.foreach( (k, v) => deltaEvt.fire(DottedName(Id.predefined(k), v)))
     }
 
     def registerRemote(remoteRef: RemoteRef): Unit = {
@@ -88,7 +89,7 @@ class ReplicationGroup[Api <: RescalaInterface, A](
       // Praktisch wäre etwas wie crdt.observeDelta
       val observer = signal.observe { s =>
         val deltaStateList = s.deltaBuffer.collect {
-          case DottedName(replicaID, deltaState) if replicaID != remoteRef.toString => deltaState
+          case DottedName(replicaID, deltaState) if Id.unwrap(replicaID) != remoteRef.toString => deltaState
         } ++ resendBuffer.get(remoteRef).toList
 
         val combinedState = deltaStateList.reduceOption(DecomposeLattice[Dotted[A]].merge)

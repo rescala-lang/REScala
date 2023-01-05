@@ -12,7 +12,7 @@ class WithoutAPITest extends RETests {
 
       override type Value = T
       override protected[rescala] def state: State[T]            = initState
-      override protected[rescala] def name: ReName               = "I am a source name"
+      override def name: ReName               = "I am a source name"
       override def read(v: Value): T                             = v
       override protected[rescala] def commit(base: Value): Value = base
 
@@ -35,7 +35,7 @@ class WithoutAPITest extends RETests {
         with ReadAs[String] {
       override type Value = String
       override protected[rescala] def state: State[Value]        = initState
-      override protected[rescala] def name: ReName               = "I am a name"
+      override def name: ReName               = "I am a name"
       override protected[rescala] def commit(base: Value): Value = base
 
       override protected[rescala] def reevaluate(input: ReIn): Rout = {

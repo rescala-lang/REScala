@@ -4,6 +4,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.Aead
 import kofre.time.VectorClock
 import kofre.base.Lattice.Operators
+import benchmarks.encrdt.idFromString
 
 abstract class TrustedReplica[T](val localReplicaId: String, private val aead: Aead)(implicit
     val stateJsonCodec: JsonValueCodec[T]
