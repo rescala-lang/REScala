@@ -4,9 +4,9 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import replication.JsoniterCodecs._
 import kofre.datatypes.ObserveRemoveMap.contextDecompose
-import kofre.decompose.containers.{AntiEntropyCRDT, Network}
+import kofre.decompose.containers.Network
 import kofre.datatypes.{AddWinsSet, ObserveRemoveMap}
-import replication.AntiEntropy
+import testtools.{AntiEntropy, AntiEntropyCRDT}
 
 import scala.collection.mutable
 

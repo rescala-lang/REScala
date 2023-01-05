@@ -5,10 +5,10 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import org.scalacheck.{Arbitrary, Gen}
 import replication.JsoniterCodecs._
 import NetworkGenerators._
-import kofre.decompose.containers.{AntiEntropyCRDT, Network}
+import kofre.decompose.containers.Network
 import kofre.datatypes.AddWinsSet
 import org.scalacheck.Prop._
-import replication.AntiEntropy
+import testtools.{AntiEntropy, AntiEntropyCRDT}
 
 import scala.collection.mutable
 

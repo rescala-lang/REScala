@@ -8,9 +8,9 @@ import replication.JsoniterCodecs._
 import NetworkGenerators._
 import kofre.base.DecomposeLattice
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegisterSyntax
-import kofre.decompose.containers.{AntiEntropyCRDT, Network}
+import kofre.decompose.containers.Network
 import org.scalacheck.Prop._
-import replication.AntiEntropy
+import testtools.{AntiEntropy, AntiEntropyCRDT}
 
 import scala.collection.mutable
 import scala.util.Random

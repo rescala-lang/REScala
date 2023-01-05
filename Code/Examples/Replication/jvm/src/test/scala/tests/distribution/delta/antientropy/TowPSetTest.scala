@@ -6,10 +6,10 @@ import org.scalacheck.{Arbitrary, Gen}
 import replication.JsoniterCodecs._
 import NetworkGenerators._
 import kofre.datatypes.TwoPhaseSet
-import kofre.decompose.containers.{AntiEntropyCRDT, Network}
+import kofre.decompose.containers.Network
 
 import org.scalacheck.Prop._
-import replication.AntiEntropy
+import testtools.{AntiEntropy, AntiEntropyCRDT}
 
 import scala.collection.mutable
 

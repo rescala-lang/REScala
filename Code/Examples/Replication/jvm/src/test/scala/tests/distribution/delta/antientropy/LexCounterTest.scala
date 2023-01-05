@@ -3,11 +3,11 @@ package tests.distribution.delta.antientropy
 import kofre.decompose.interfaces.LexCounterInterface.LexCounter
 import org.scalacheck.{Arbitrary, Gen}
 import replication.JsoniterCodecs._
-import kofre.decompose.containers.{AntiEntropyCRDT, Network}
+import kofre.decompose.containers.Network
 import NetworkGenerators._
 
 import org.scalacheck.Prop._
-import replication.AntiEntropy
+import testtools.{AntiEntropy, AntiEntropyCRDT}
 
 import scala.collection.mutable
 

@@ -1,9 +1,10 @@
-package kofre.decompose.containers
+package testtools
 
 import kofre.base.DecomposeLattice
+import kofre.decompose.containers.{AntiEntropy, CRDTInterface, Network}
+import kofre.dotted.{Dotted, DottedDecompose, DottedLattice}
+import kofre.syntax.{ArdtOpsContains, DottedName, PermCausal, PermCausalMutate, PermIdMutate}
 import kofre.time.Dots
-import kofre.dotted.{DottedDecompose, DottedLattice, Dotted}
-import kofre.syntax.{ArdtOpsContains, PermCausal, PermCausalMutate, PermIdMutate, DottedName}
 
 /** BasicCRDTs are Delta CRDTs that use [[AntiEntropy]] and [[Network]] as Middleware for exchanging deltas between replicas.
   * They cannot actually be used on multiple connected replicas, but are useful for locally testing the behavior of
@@ -38,6 +39,8 @@ class AntiEntropyCRDT[State](
 }
 
 object AntiEntropyCRDT {
+
+  given antiEntropyContains[State]: ArdtOpsContains[AntiEntropyCRDT[State], State] = new {}
 
   given allPermissions[L: DottedDecompose]
       : (PermIdMutate[AntiEntropyCRDT[L], L] & PermCausalMutate[AntiEntropyCRDT[L], L]) =

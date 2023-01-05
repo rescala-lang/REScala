@@ -1,12 +1,12 @@
 package tests.distribution.delta.antientropy
 
-import kofre.decompose.containers.{AntiEntropyCRDT, Network}
+import kofre.decompose.containers.Network
 import kofre.decompose.interfaces.RCounterInterface.{RCounter, RCounterSyntax}
 import org.scalacheck.Prop._
 import org.scalacheck.{Arbitrary, Gen}
-import replication.AntiEntropy
 import replication.JsoniterCodecs._
 import tests.distribution.delta.antientropy.NetworkGenerators._
+import testtools.{AntiEntropy, AntiEntropyCRDT}
 
 import scala.collection.mutable
 import scala.util.Random

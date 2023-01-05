@@ -3,7 +3,7 @@ package kofre.syntax
 import kofre.base.Defs.Id
 import kofre.base.{DecomposeLattice, Defs, Lattice}
 import kofre.time.Dots
-import kofre.decompose.containers.{AntiEntropyCRDT, DeltaBufferRDT}
+import kofre.decompose.containers.DeltaBufferRDT
 import kofre.dotted.Dotted
 
 import scala.annotation.implicitNotFound
@@ -66,7 +66,6 @@ trait ArdtOpsContains[C, L]
 object ArdtOpsContains:
   given identityContains[L]: ArdtOpsContains[L, L]                                 = new {}
   given deltaBufferContains[State]: ArdtOpsContains[DeltaBufferRDT[State], State]  = new {}
-  given antiEntropyContains[State]: ArdtOpsContains[AntiEntropyCRDT[State], State] = new {}
   // given transitiveContains[A, B, C](using ArdtOpsContains[A, B], ArdtOpsContains[B, C]): ArdtOpsContains[A, C] = new {}
 
 /** Helps to define operations that update any container [[C]] containing values of type [[L]]
