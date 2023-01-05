@@ -1,4 +1,4 @@
-package replication.decentral
+package replication.checkpointing.decentral
 
 import de.rmgk.options.{Argument, Single, Style}
 

@@ -1,4 +1,4 @@
-package replication.central
+package replication.checkpointing.central
 
 import de.rmgk.options.*
 

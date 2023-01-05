@@ -1,4 +1,4 @@
-package replication.decentral
+package replication.checkpointing.decentral
 
 import loci.communicator.tcp.TCP
 import loci.registry.Registry

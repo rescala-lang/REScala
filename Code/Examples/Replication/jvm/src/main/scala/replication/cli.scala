@@ -2,14 +2,14 @@ package replication
 
 import de.rmgk.options.*
 import replication.calendar.{CalendarOptions, Peer}
-import replication.central.{CentralOptions, Checkpointer}
-import replication.decentral.{DecentralOptions, Replica}
+import replication.checkpointing.CheckpointingOptions
+import replication.checkpointing.central.{CentralOptions, Checkpointer}
+import replication.checkpointing.decentral.{DecentralOptions, Replica}
 
 case class CliArgs(
     calendar: Subcommand[CalendarOptions] = Subcommand(CalendarOptions()),
-    decentral: Subcommand[DecentralOptions] = Subcommand(DecentralOptions()),
-    central: Subcommand[CentralOptions] = Subcommand(CentralOptions()),
-    dtn: Subcommand[Unit] = Subcommand.empty()
+    dtn: Subcommand[Unit] = Subcommand.empty(),
+    checkpointing: Subcommand[CheckpointingOptions] = Subcommand(CheckpointingOptions())
 )
 
 object cli {
@@ -39,7 +39,7 @@ object cli {
 
         new Peer(calArgs.id.value, calArgs.listenPort.value, ipsAndPorts).run()
 
-    instance.decentral.value match
+    instance.checkpointing.value.flatMap(_.decentral.value) match
       case None =>
       case Some(decArgs) =>
         val ipsAndPorts = decArgs.connectTo.value.collect {
@@ -48,7 +48,7 @@ object cli {
 
         new Replica(decArgs.listenPort.value, ipsAndPorts, decArgs.id.value, decArgs.initSize.value).run()
 
-    instance.central.value match
+    instance.checkpointing.value.flatMap(_.central.value) match
       case None =>
       case Some(centralArgs) =>
         centralArgs.peer.value match
@@ -58,7 +58,11 @@ object cli {
               case ipAndPort(ip, port) => (ip, port.toInt)
             }
 
-            new replication.central.Peer(centralPeerArgs.id.value, centralPeerArgs.listenPort.value, ipsAndPorts).run()
+            new replication.checkpointing.central.Peer(
+              centralPeerArgs.id.value,
+              centralPeerArgs.listenPort.value,
+              ipsAndPorts
+            ).run()
         centralArgs.checkpointer.value match
           case None =>
           case Some(checkpointerArgs) =>

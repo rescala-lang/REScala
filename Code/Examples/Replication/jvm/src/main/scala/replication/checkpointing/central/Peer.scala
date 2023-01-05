@@ -1,6 +1,6 @@
-package replication.central
+package replication.checkpointing.central
 
-import replication.central.Bindings.*
+import Bindings.*
 import kofre.base.DecomposeLattice
 import kofre.decompose.containers.DeltaBufferRDT
 import kofre.datatypes.AddWinsSet
