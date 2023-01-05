@@ -29,7 +29,7 @@ object Dependencies {
     val scalatags     = "0.12.0"
     val scopt         = "4.1.0"
     val scribe        = "3.10.5"
-    val slips         = "239a86348e"
+    val slips         = "0.4.6"
     val sourcecode    = "0.3.0"
     val upickle       = "2.0.0"
   }
