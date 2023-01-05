@@ -139,7 +139,7 @@ object RGA {
       val nextDot     = context.nextDot(replicaID)
 
       val nextDots = List.iterate(nextDot, elems.size) {
-        case Dot(c, r) => Dot(c + 1, r)
+        case Dot(c, r) => Dot(c, r + 1)
       }
 
       findInsertIndex(current, i) match {

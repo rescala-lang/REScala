@@ -8,6 +8,7 @@ import kofre.dotted.{DottedDecompose, Dotted}
 import kofre.protocol.AuctionInterface
 import kofre.protocol.AuctionInterface.Bid.User
 import kofre.syntax.{OpsSyntaxHelper, PermIdMutate}
+import kofre.base.Defs
 
 /** A Rubis (Rice University Bidding System) is a Delta CRDT modeling an auction system.
   *
@@ -22,14 +23,14 @@ import kofre.syntax.{OpsSyntaxHelper, PermIdMutate}
 object RubisInterface {
   type AID = String
 
-  type State = (AddWinsSet[(User, String)], Map[User, String], Map[AID, AuctionInterface.AuctionData])
+  type State = (AddWinsSet[(User, Defs.Id)], Map[User, Defs.Id], Map[AID, AuctionInterface.AuctionData])
 
   private class DeltaStateFactory {
     val bottom: State = (AddWinsSet.empty, Map.empty, Map.empty)
 
     def make(
-        userRequests: AddWinsSet[(User, String)] = bottom._1,
-        users: Map[User, String] = bottom._2,
+        userRequests: AddWinsSet[(User, Defs.Id)] = bottom._1,
+        users: Map[User, Defs.Id] = bottom._2,
         auctions: Map[AID, AuctionInterface.AuctionData] = bottom._3
     ): State = (userRequests, users, auctions)
   }
@@ -77,7 +78,7 @@ object RubisInterface {
 
     def resolveRegisterUser()(using MutationIdP, CausalP): C = {
       val (req, users, _) = current
-      val newUsers = req.elements.foldLeft(Map.empty[User, String]) {
+      val newUsers = req.elements.foldLeft(Map.empty[User, Defs.Id]) {
         case (newlyRegistered, (uid, rid)) =>
           if ((users ++ newlyRegistered).contains(uid))
             newlyRegistered

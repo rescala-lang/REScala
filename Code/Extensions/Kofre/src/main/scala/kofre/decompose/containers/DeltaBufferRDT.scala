@@ -11,7 +11,7 @@ import kofre.syntax.{ArdtOpsContains, PermCausal, PermCausalMutate, PermIdMutate
   */
 class DeltaBufferRDT[State](
     val state: Dotted[State],
-    val replicaID: String,
+    val replicaID: Defs.Id,
     val deltaBuffer: List[DottedName[State]]
 ) extends CRDTInterface[State, DeltaBufferRDT[State]] {
 
@@ -51,7 +51,7 @@ object DeltaBufferRDT {
     *
     * @param replicaID Unique id of the replica that this instance is located on
     */
-  def apply[State](replicaID: String)(using bot: Bottom[Dotted[State]]): DeltaBufferRDT[State] =
+  def apply[State](replicaID: Defs.Id)(using bot: Bottom[Dotted[State]]): DeltaBufferRDT[State] =
     new DeltaBufferRDT[State](bot.empty, replicaID, List())
 
   def empty[State](replicaID: Defs.Id, init: State): DeltaBufferRDT[State] =

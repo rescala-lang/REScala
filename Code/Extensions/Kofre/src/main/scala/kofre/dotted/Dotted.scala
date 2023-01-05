@@ -6,7 +6,6 @@ import kofre.dotted.{DotFun, DotSet}
 import kofre.syntax.{ArdtOpsContains, DottedName, PermCausal, PermCausalMutate, PermQuery}
 import kofre.time.{Dot, Dots}
 
-import scala.util.NotGiven
 
 case class Dotted[A](store: A, context: Dots) {
   def map[B](f: A => B): Dotted[B]                 = Dotted(f(store), context)

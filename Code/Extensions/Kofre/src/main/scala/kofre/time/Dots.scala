@@ -68,7 +68,7 @@ case class Dots(internal: Map[Id, ArrayRanges]) {
   def toSet: Set[Dot] =
     internal.flatMap((key, tree) => tree.iterator.map(time => Dot(key, time))).toSet
 
-  def max(replicaID: String): Option[Dot] =
+  def max(replicaID: Id): Option[Dot] =
     internal.get(replicaID).flatMap(_.next.map(c => Dot(replicaID, c - 1)))
 
   def forall(cond: Dot => Boolean): Boolean = internal.forall { (id, tree) =>

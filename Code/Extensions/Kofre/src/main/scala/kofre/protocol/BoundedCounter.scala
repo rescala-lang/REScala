@@ -2,6 +2,7 @@ package kofre.protocol
 
 import kofre.base.DecomposeLattice
 import kofre.base.Defs.Id
+import kofre.base.Defs
 import kofre.datatypes.{GrowOnlyCounter, PosNegCounter}
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermId}
 import kofre.syntax.PermIdMutate.withID
@@ -10,7 +11,7 @@ case class BoundedCounter(reservations: PosNegCounter, allocations: GrowOnlyCoun
 
 object BoundedCounter {
   def init(value: Int, replicaID: Id): BoundedCounter =
-    val countervalue = PosNegCounter.zero.add(-value)(using withID("initial-allocation"))
+    val countervalue = PosNegCounter.zero.add(-value)(using withID( Defs.predefined("initial-allocation")))
     val initial      = PosNegCounter.zero.add(value)(using withID(replicaID))
     BoundedCounter(countervalue merge initial, GrowOnlyCounter.zero, Set(replicaID))
 
@@ -55,8 +56,8 @@ object BoundedCounter {
     def invariantOk(using QueryP): Unit =
       assert(current.reservations.value == 0, s"incorrect reservations: ${current.reservations.value}")
       assert(
-        current.allocations.value <= current.reservations.neg.inner("initial-allocation"),
-        s"allocation sum ${current.allocations.value} larger than initial reservations ${current.reservations.neg.inner("initial-allocation")}"
+        current.allocations.value <= current.reservations.neg.inner(Defs.predefined("initial-allocation")),
+        s"allocation sum ${current.allocations.value} larger than initial reservations ${current.reservations.neg.inner(Defs.predefined("initial-allocation"))}"
       )
   }
 

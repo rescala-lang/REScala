@@ -1,11 +1,11 @@
 package kofre.encrdt.crdts
-import kofre.base.Lattice
+import kofre.base.{Defs, Lattice}
 import kofre.encrdt.crdts.AddWinsLastWriterWinsMap.LatticeType
 import kofre.encrdt.lattices.{AddWinsMapLattice, CausalTimeTag}
 import kofre.primitives.LastWriterWins
 
 class AddWinsLastWriterWinsMap[K, V](
-    val replicaId: String,
+    val replicaId: Defs.Id,
     initialState: AddWinsMapLattice[K, LastWriterWins[CausalTimeTag, V]] =
       AddWinsMapLattice[K, LastWriterWins[CausalTimeTag, V]]()
 ) {
@@ -19,7 +19,7 @@ class AddWinsLastWriterWinsMap[K, V](
   def put(key: K, value: V): Unit = {
     val timeStamp = _state.values.get(key) match {
       case Some(register) => register.timestamp.advance(replicaId)
-      case None           => CausalTimeTag().advance(replicaId)
+      case None           => CausalTimeTag(replicaId = replicaId).advance(replicaId)
     }
 
     _state = _state.added(key, LastWriterWins(timeStamp, value), replicaId)

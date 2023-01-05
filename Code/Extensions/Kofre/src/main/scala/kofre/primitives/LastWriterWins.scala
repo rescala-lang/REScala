@@ -5,12 +5,12 @@ import kofre.base.Lattice
 /** Lattice with the least-upper-bound defined by the timeStamp.
   * Timestamps must be unique, totally ordered, consistent with causal order.
   */
-case class LastWriterWins[T, A](timestamp: T, payload: A)
+case class LastWriterWins[Time, Value](timestamp: Time, payload: Value)
 
 object LastWriterWins {
-  implicit def LWWRegLattice[O, T](using Ordering[O]): Lattice[LastWriterWins[O, T]] =
+  given lattice[Time, Value](using Ordering[Time]): Lattice[LastWriterWins[Time, Value]] =
     (left, right) =>
-      Ordering[O].compare(left.timestamp, right.timestamp) match
+      Ordering[Time].compare(left.timestamp, right.timestamp) match
         case 0 => if (left == right) then left
           else throw IllegalStateException(s"LWW same timestamp, different value: »$left«, »$right«")
         case -1 => right

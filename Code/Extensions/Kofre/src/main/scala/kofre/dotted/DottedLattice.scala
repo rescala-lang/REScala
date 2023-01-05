@@ -34,3 +34,8 @@ trait DottedLattice[A] extends Lattice[Dotted[A]] {
     else super.lteq(left, right)
   extension (left: Dotted[A]) def dotmerge(right: Dotted[A]): A = mergePartial(left, right)
 }
+
+object DottedLattice {
+  def fromLattice[A: Lattice]: DottedLattice[A] = new DottedLattice[A]:
+    override def mergePartial(left: Dotted[A], right: Dotted[A]): A = left.store merge right.store
+}

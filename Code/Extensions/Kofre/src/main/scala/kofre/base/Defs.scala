@@ -6,7 +6,7 @@ import scala.util.Random
 object Defs {
   def genTimestamp(): Long = System.currentTimeMillis
 
-  type Id = String
+  opaque type Id = String
 
   type Time = Long
 

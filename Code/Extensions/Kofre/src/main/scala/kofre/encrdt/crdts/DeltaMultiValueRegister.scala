@@ -8,7 +8,7 @@ object DeltaMultiValueRegister {
 
   def deltaWrite[V](
       value: V,
-      replicaId: String,
+      replicaId: kofre.base.Defs.Id ,
       register: DeltaMultiValueRegisterLattice[V]
   ): DeltaMultiValueRegisterLattice[V] = {
 

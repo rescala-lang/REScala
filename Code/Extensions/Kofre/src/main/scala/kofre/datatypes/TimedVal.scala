@@ -1,6 +1,8 @@
 package kofre.datatypes
 
 import kofre.base.DecomposeLattice
+import kofre.base.Defs.Id
+import math.Ordering.Implicits.infixOrderingOps
 
 /** TimedVal is a case class for values that allows chronological ordering of values based on their time of creation.
   * In the case that two values from two different replicas have the exact same timestamp, the lexical ordering of the
@@ -10,7 +12,7 @@ import kofre.base.DecomposeLattice
   * Instead of the default constructor, it is recommended that you use the apply method of the companion object which
   * automatically fills in the timestamp and nanoTime using System.currentTimeMillis() and System.nanoTime() respectively.
   */
-case class TimedVal[A](value: A, replicaID: String, nanoTime: Long, timestamp: Long) {
+case class TimedVal[A](value: A, replicaID: Id, nanoTime: Long, timestamp: Long) {
   def laterThan(other: TimedVal[A]): Boolean =
     this.timestamp > other.timestamp ||
     this.timestamp == other.timestamp &&
@@ -21,7 +23,7 @@ case class TimedVal[A](value: A, replicaID: String, nanoTime: Long, timestamp: L
 }
 
 object TimedVal {
-  def apply[A](value: A, replicaID: String): TimedVal[A] =
+  def apply[A](value: A, replicaID: Id): TimedVal[A] =
     TimedVal(value, replicaID, System.nanoTime(), System.currentTimeMillis())
 
   implicit def decomposeLattice[A]: DecomposeLattice[TimedVal[A]] = new DecomposeLattice[TimedVal[A]] {

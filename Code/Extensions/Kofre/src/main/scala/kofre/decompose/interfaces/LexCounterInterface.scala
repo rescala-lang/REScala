@@ -45,7 +45,7 @@ object LexCounterInterface {
       }
   }
 
-  type LexCounter = Map[String, LexPair[Int, Int]]
+  type LexCounter = Map[kofre.base.Defs.Id, LexPair[Int, Int]]
 
   given contextDecompose: DottedDecompose[LexCounter] = {
     given Bottom[Int] with { def empty: Int = Int.MinValue }

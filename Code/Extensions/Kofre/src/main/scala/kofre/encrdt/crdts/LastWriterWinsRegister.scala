@@ -1,9 +1,9 @@
 package kofre.encrdt.crdts
-import kofre.base.Lattice
+import kofre.base.{Defs, Lattice}
 import kofre.encrdt.lattices.CausalTimeTag
 import kofre.primitives.LastWriterWins
 
-class LastWriterWinsRegister[T](initialState: LastWriterWins[CausalTimeTag, T], val replicaId: String) {
+class LastWriterWinsRegister[T](initialState: LastWriterWins[CausalTimeTag, T], val replicaId: Defs.Id) {
 
   private var _state = initialState
 
@@ -20,9 +20,9 @@ class LastWriterWinsRegister[T](initialState: LastWriterWins[CausalTimeTag, T], 
 }
 
 object LastWriterWinsRegister {
-  def apply[T](replicaId: String, initialValue: T): LastWriterWinsRegister[T] =
+  def apply[T](replicaId: Defs.Id, initialValue: T): LastWriterWinsRegister[T] =
     new LastWriterWinsRegister(
-      LastWriterWins(CausalTimeTag().advance(replicaId), initialValue),
+      LastWriterWins(CausalTimeTag(replicaId = replicaId).advance(replicaId), initialValue),
       replicaId
     )
 }
