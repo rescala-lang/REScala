@@ -4,7 +4,10 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, Jso
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import kofre.base.Id
 import kofre.datatypes.RGA.RGANode
-import kofre.datatypes.{AddWinsSet, EnableWinsFlag, Epoche, GrowOnlyMap, GrowOnlyCounter, ObserveRemoveMap, PosNegCounter, RGA, TimedVal, TwoPhaseSet}
+import kofre.datatypes.{
+  AddWinsSet, EnableWinsFlag, Epoche, GrowOnlyMap, GrowOnlyCounter, ObserveRemoveMap, PosNegCounter, RGA, TimedVal,
+  TwoPhaseSet, GrowOnlySet
+}
 import kofre.decompose.interfaces.GListInterface.{GList, GListElem, GListNode}
 import kofre.decompose.interfaces.LexCounterInterface.{LexCounter, LexPair}
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
@@ -34,7 +37,7 @@ object JsoniterCodecs {
     }
 
   implicit val idKeyCodec: JsonKeyCodec[kofre.base.Id] = new JsonKeyCodec[Id]:
-    override def decodeKey(in: JsonReader): Id = Id.predefined(in.readKeyAsString())
+    override def decodeKey(in: JsonReader): Id           = Id.predefined(in.readKeyAsString())
     override def encodeKey(x: Id, out: JsonWriter): Unit = out.writeKey(Id.unwrap(x))
   implicit val CausalContextCodec: JsonValueCodec[Dots] = JsonCodecMaker.make
 
@@ -91,7 +94,7 @@ object JsoniterCodecs {
   /** GrowOnlySet */
 
   @nowarn("msg=never used")
-  implicit def GSetStateCodec[E: JsonValueCodec]: JsonValueCodec[Set[E]] = JsonCodecMaker.make
+  implicit def GSetStateCodec[E: JsonValueCodec]: JsonValueCodec[GrowOnlySet[E]] = JsonCodecMaker.make[Set[E]].asInstanceOf
 
   /** LastWriterWins */
   @nowarn("msg=never used")
@@ -152,7 +155,6 @@ object JsoniterCodecs {
   @nowarn("msg=never used")
   implicit def TwoPSetStateCodec[E: JsonValueCodec]: JsonValueCodec[TwoPhaseSet[E]] = JsonCodecMaker.make
 
-
   @nowarn("msg=never used")
   implicit def withContextWrapper[E: JsonValueCodec]: JsonValueCodec[Dotted[E]] = {
     def dottedTuple: JsonValueCodec[(E, Dots)] = JsonCodecMaker.make
@@ -169,6 +171,7 @@ object JsoniterCodecs {
   implicit def twoPSetContext[E: JsonValueCodec]: JsonValueCodec[Dotted[TwoPhaseSet[E]]] =
     withContextWrapper(TwoPSetStateCodec)
 
-  implicit def spcecificCodec: JsonValueCodec[Dotted[GrowOnlyMap[Int, AddWinsSet[Int]]]] = JsonCodecMaker.make
+  implicit def spcecificCodec: JsonValueCodec[Dotted[GrowOnlyMap[Int, AddWinsSet[Int]]]] =
+    JsonCodecMaker.make[Dotted[Map[Int, AddWinsSet[Int]]]].asInstanceOf
 
 }

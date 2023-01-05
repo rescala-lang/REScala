@@ -4,7 +4,9 @@ import kofre.base.{Bottom, DecomposeLattice}
 import kofre.decompose.*
 import kofre.protocol.AuctionInterface.Bid.User
 import kofre.datatypes.GrowOnlySet.syntax
+import kofre.datatypes.GrowOnlySet
 import kofre.syntax.OpsSyntaxHelper
+import kofre.datatypes.GrowOnlySet.given
 
 object AuctionInterface {
   sealed trait Status
@@ -74,7 +76,7 @@ object AuctionInterface {
 
   implicit class AuctionSyntax[C](container: C) extends OpsSyntaxHelper[C, AuctionData](container) {
     def bid(userId: User, price: Int)(using MutationP): C =
-      AuctionData(bids = current.bids.insert(Bid(userId, price))).mutator
+      AuctionData(bids = Set(Bid(userId, price))).mutator
 
     def close()(using MutationP): C = AuctionData(status = Closed).mutator
   }

@@ -8,7 +8,7 @@ import kofre.datatypes.GrowOnlySet
 import kofre.datatypes.GrowOnlySet.given
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
-import replication.JsoniterCodecs.*
+import replication.JsoniterCodecs.{*, given}
 
 import scala.collection.mutable
 
