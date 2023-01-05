@@ -1,18 +1,18 @@
-package kofre.decompose.interfaces
+package kofre.datatypes
 
-import kofre.datatypes.GrowMap
+import kofre.datatypes.GrowOnlyMap
 import kofre.decompose.*
 import kofre.dotted.DottedDecompose
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper}
 
-/** A GrowOnlySet is a Delta CRDT modeling a simple grow-only set. */
-object GSetInterface {
+type GrowOnlySet[E] = Set[E]
 
-  type GrowOnlySet[E] = Set[E]
+/** A GrowOnlySet is a Delta CRDT modeling a simple grow-only set. */
+object GrowOnlySet {
 
   given contextDecompose[E]: DottedDecompose[GrowOnlySet[E]] = DottedDecompose.liftDecomposeLattice
 
-  implicit class GSetSyntax[C, E](container: C) extends OpsSyntaxHelper[C, GrowOnlySet[E]](container) {
+  implicit class syntax[C, E](container: C) extends OpsSyntaxHelper[C, GrowOnlySet[E]](container) {
 
     def elements(using QueryP): Set[E] = current
 

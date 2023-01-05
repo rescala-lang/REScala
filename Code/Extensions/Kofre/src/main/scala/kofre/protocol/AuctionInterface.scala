@@ -2,9 +2,8 @@ package kofre.protocol
 
 import kofre.base.{Bottom, DecomposeLattice}
 import kofre.decompose.*
-import kofre.decompose.interfaces.GSetInterface
-import kofre.decompose.interfaces.GSetInterface.GSetSyntax
 import kofre.protocol.AuctionInterface.Bid.User
+import kofre.datatypes.GrowOnlySet.syntax
 import kofre.syntax.OpsSyntaxHelper
 
 object AuctionInterface {

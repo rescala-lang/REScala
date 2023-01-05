@@ -4,7 +4,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, Jso
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import kofre.base.Id
 import kofre.datatypes.RGA.RGANode
-import kofre.datatypes.{AddWinsSet, EnableWinsFlag, Epoche, GrowMap, GrowOnlyCounter, ObserveRemoveMap, PosNegCounter, RGA, TimedVal, TwoPhaseSet}
+import kofre.datatypes.{AddWinsSet, EnableWinsFlag, Epoche, GrowOnlyMap, GrowOnlyCounter, ObserveRemoveMap, PosNegCounter, RGA, TimedVal, TwoPhaseSet}
 import kofre.decompose.interfaces.GListInterface.{GList, GListElem, GListNode}
 import kofre.decompose.interfaces.LexCounterInterface.{LexCounter, LexPair}
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
@@ -152,8 +152,6 @@ object JsoniterCodecs {
   @nowarn("msg=never used")
   implicit def TwoPSetStateCodec[E: JsonValueCodec]: JsonValueCodec[TwoPhaseSet[E]] = JsonCodecMaker.make
 
-  @nowarn("msg=never used")
-  implicit def gmapCodec[K: JsonKeyCodec, V: JsonValueCodec]: JsonValueCodec[GrowMap[K, V]] = JsonCodecMaker.make
 
   @nowarn("msg=never used")
   implicit def withContextWrapper[E: JsonValueCodec]: JsonValueCodec[Dotted[E]] = {
@@ -171,6 +169,6 @@ object JsoniterCodecs {
   implicit def twoPSetContext[E: JsonValueCodec]: JsonValueCodec[Dotted[TwoPhaseSet[E]]] =
     withContextWrapper(TwoPSetStateCodec)
 
-  implicit def spcecificCodec: JsonValueCodec[Dotted[GrowMap[Int, AddWinsSet[Int]]]] = JsonCodecMaker.make
+  implicit def spcecificCodec: JsonValueCodec[Dotted[GrowOnlyMap[Int, AddWinsSet[Int]]]] = JsonCodecMaker.make
 
 }

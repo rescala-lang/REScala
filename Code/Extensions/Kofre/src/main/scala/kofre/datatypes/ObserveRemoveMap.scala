@@ -1,7 +1,7 @@
 package kofre.datatypes
 
 import kofre.base.{Bottom, DecomposeLattice, Id}
-import kofre.datatypes.GrowMap
+import kofre.datatypes.GrowOnlyMap
 import kofre.decompose.*
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
 import kofre.datatypes.ObserveRemoveMap
@@ -12,7 +12,7 @@ import kofre.time.{Dot, Dots}
 case class ObserveRemoveMap[K, V](inner: DotMap[K, V])
 
 /** An ObserveRemoveMap (Observed-Remove Map) is a Delta CRDT that models a map from an arbitrary key type to nested causal Delta CRDTs.
-  * In contrast to [[GrowMap]], ObserveRemoveMap allows the removal of key/value pairs from the map.
+  * In contrast to [[GrowOnlyMap]], ObserveRemoveMap allows the removal of key/value pairs from the map.
   *
   * The nested CRDTs can be queried/mutated by calling the queryKey/mutateKey methods with a DeltaQuery/DeltaMutator generated
   * by a CRDT Interface method of the nested CRDT. For example, to enable a nested EWFlag, one would pass `EWFlagInterface.enable()`

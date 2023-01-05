@@ -3,8 +3,9 @@ package deltaAntiEntropy.tests
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyCRDT, Network}
-import kofre.datatypes.{AddWinsSet, GrowMap}
+import kofre.datatypes.{AddWinsSet, GrowOnlyMap}
 import replication.JsoniterCodecs.*
+import kofre.datatypes.GrowOnlyMap.given
 
 import scala.collection.mutable
 
@@ -13,14 +14,14 @@ class GrowMapTest extends munit.ScalaCheckSuite {
 
   test("mutateKey/queryKey") { (add: List[Int], k: Int) =>
     val network = new Network(0, 0, 0)
-    val aea     = new AntiEntropy[GrowMap[Int, AddWinsSet[Int]]]("a", network, mutable.Buffer())
+    val aea     = new AntiEntropy[GrowOnlyMap[Int, AddWinsSet[Int]]]("a", network, mutable.Buffer())
     val aeb     = new AntiEntropy[AddWinsSet[Int]]("b", network, mutable.Buffer())
 
     val set = add.foldLeft(AntiEntropyCRDT[AddWinsSet[Int]](aeb)) {
       case (s, e) => s.add(e)
     }
 
-    val map = add.foldLeft(AntiEntropyCRDT[GrowMap[Int, AddWinsSet[Int]]](aea)) {
+    val map = add.foldLeft(AntiEntropyCRDT[GrowOnlyMap[Int, AddWinsSet[Int]]](aea)) {
       case (m, e) => m.mutateKeyNamedCtx(k, AddWinsSet.empty[Int])((st) => st.add(e))
     }
 

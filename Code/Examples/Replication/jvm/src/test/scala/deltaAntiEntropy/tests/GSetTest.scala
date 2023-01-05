@@ -4,7 +4,8 @@ import com.github.plokhotnyuk.jsoniter_scala.core.*
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tests.NetworkGenerators.*
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyCRDT, Network}
-import kofre.decompose.interfaces.GSetInterface.{GrowOnlySet, GSetSyntax, contextDecompose}
+import kofre.datatypes.GrowOnlySet
+import kofre.datatypes.GrowOnlySet.given
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 import replication.JsoniterCodecs.*

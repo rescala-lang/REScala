@@ -1,6 +1,6 @@
 package benchmarks.lattices.delta.crdt
 
-import kofre.datatypes.{EnableWinsFlag, GrowMap}
+import kofre.datatypes.{EnableWinsFlag, GrowOnlyMap}
 import kofre.decompose.containers.DeltaBufferRDT
 import org.openjdk.jmh.annotations._
 
@@ -18,7 +18,7 @@ class GMapBench {
   @Param(Array("1", "10", "100", "1000"))
   var numEntries: Int = _
 
-  type Contained = GrowMap[Int, EnableWinsFlag]
+  type Contained = GrowOnlyMap[Int, EnableWinsFlag]
   type SUT       = DeltaBufferRDT[Contained]
   var map: SUT = _
 
