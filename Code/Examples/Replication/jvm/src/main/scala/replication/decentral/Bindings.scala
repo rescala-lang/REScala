@@ -7,7 +7,7 @@ import kofre.dotted.Dotted
 import loci.registry.Binding
 import loci.serializer.jsoniterScala._
 import loci.transmitter.IdenticallyTransmittable
-import rescala.extra.lattices.delta.JsoniterCodecs._
+import replication.JsoniterCodecs._
 
 import scala.concurrent.Future
 

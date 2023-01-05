@@ -3,14 +3,13 @@ package tests.distribution.delta.antientropy
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import org.scalacheck.{Arbitrary, Gen}
-import rescala.extra.lattices.delta.JsoniterCodecs._
-
-import rescala.extra.replication.AntiEntropy
+import replication.JsoniterCodecs._
 import NetworkGenerators._
 import kofre.datatypes.TwoPhaseSet
 import kofre.decompose.containers.{AntiEntropyCRDT, Network}
 
 import org.scalacheck.Prop._
+import replication.AntiEntropy
 
 import scala.collection.mutable
 

@@ -4,8 +4,8 @@ import kofre.decompose.containers.{AntiEntropyCRDT, Network}
 import kofre.decompose.interfaces.RCounterInterface.{RCounter, RCounterSyntax}
 import org.scalacheck.Prop._
 import org.scalacheck.{Arbitrary, Gen}
-import rescala.extra.lattices.delta.JsoniterCodecs._
-import rescala.extra.replication.AntiEntropy
+import replication.AntiEntropy
+import replication.JsoniterCodecs._
 import tests.distribution.delta.antientropy.NetworkGenerators._
 
 import scala.collection.mutable

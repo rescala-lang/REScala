@@ -2,12 +2,11 @@ package tests.distribution.delta.antientropy
 
 import kofre.datatypes.PosNegCounter
 import org.scalacheck.{Arbitrary, Gen}
-import rescala.extra.lattices.delta.JsoniterCodecs._
-
-import rescala.extra.replication.AntiEntropy
+import replication.JsoniterCodecs._
 import kofre.decompose.containers.{AntiEntropyCRDT, Network}
 import NetworkGenerators._
 import org.scalacheck.Prop._
+import replication.AntiEntropy
 
 import scala.collection.mutable
 

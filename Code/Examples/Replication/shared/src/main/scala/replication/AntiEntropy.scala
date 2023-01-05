@@ -1,4 +1,4 @@
-package rescala.extra.replication
+package replication
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReaderException, JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
@@ -6,7 +6,7 @@ import kofre.base.{Bottom, DecomposeLattice}
 import kofre.decompose.containers.Network
 import kofre.dotted.{Dotted, DottedDecompose}
 import kofre.syntax.DottedName
-import rescala.extra.replication.AntiEntropy.{AckMsg, DeltaMsg}
+import AntiEntropy.{AckMsg, DeltaMsg}
 
 import scala.collection.mutable
 

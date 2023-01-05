@@ -3,7 +3,7 @@ package replication.calendar
 import loci.registry.Binding
 import loci.transmitter.IdenticallyTransmittable
 import loci.serializer.jsoniterScala._
-import rescala.extra.lattices.delta.JsoniterCodecs._
+import replication.JsoniterCodecs._
 import com.github.plokhotnyuk.jsoniter_scala.macros._
 import com.github.plokhotnyuk.jsoniter_scala.core._
 import kofre.datatypes.AddWinsSet
