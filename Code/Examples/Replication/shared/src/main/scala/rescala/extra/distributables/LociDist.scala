@@ -30,10 +30,9 @@ object LociDist {
       // println(s"received value for $signalName: ${newValue.hashCode()}")
       scheduler.forceNewTransaction(signal) { admissionTicket =>
         admissionTicket.recordChange(new InitialChange {
-          override val source = signal
+          override val source: signal.type = signal
           override def writeValue(b: source.Value, v: source.Value => Unit): Boolean = {
-            val merged = b.asInstanceOf[Pulse[A]].map(Lattice[A].merge(_, newValue)).asInstanceOf[source.Value]
-            given CanEqual[source.Value, source.Value] = CanEqual.canEqualAny
+            val merged = b.map(Lattice[A].merge(_, newValue)).asInstanceOf[source.Value]
             if (merged != b) {
               v(merged)
               true
