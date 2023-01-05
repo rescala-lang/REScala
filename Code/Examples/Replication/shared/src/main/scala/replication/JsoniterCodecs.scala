@@ -2,19 +2,17 @@ package replication
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
-import kofre.base.Defs.Time
+import kofre.base.Id
 import kofre.datatypes.RGA.RGANode
-import kofre.datatypes.{
-  AddWinsSet, EnableWinsFlag, Epoche, GrowMap, GrowOnlyCounter, ObserveRemoveMap, PosNegCounter, RGA, TimedVal,
-  TwoPhaseSet
-}
+import kofre.datatypes.{AddWinsSet, EnableWinsFlag, Epoche, GrowMap, GrowOnlyCounter, ObserveRemoveMap, PosNegCounter, RGA, TimedVal, TwoPhaseSet}
 import kofre.decompose.interfaces.GListInterface.{GList, GListElem, GListNode}
-import kofre.decompose.interfaces.LexCounterInterface.LexPair
+import kofre.decompose.interfaces.LexCounterInterface.{LexCounter, LexPair}
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
 import kofre.decompose.interfaces.RCounterInterface.RCounter
 import kofre.dotted.Dotted
 import kofre.protocol.AuctionInterface.AuctionData
 import kofre.time.{ArrayRanges, Dot, Dots}
+import kofre.base.Time
 
 import scala.annotation.nowarn
 
@@ -35,6 +33,9 @@ object JsoniterCodecs {
       override def nullValue: ArrayRanges = null
     }
 
+  implicit val idKeyCodec: JsonKeyCodec[kofre.base.Id] = new JsonKeyCodec[Id]:
+    override def decodeKey(in: JsonReader): Id = Id.predefined(in.readKeyAsString())
+    override def encodeKey(x: Id, out: JsonWriter): Unit = out.writeKey(Id.unwrap(x))
   implicit val CausalContextCodec: JsonValueCodec[Dots] = JsonCodecMaker.make
 
   /** AddWinsSet */
@@ -43,6 +44,7 @@ object JsoniterCodecs {
   implicit def AWSetStateCodec[E: JsonValueCodec]: JsonValueCodec[AddWinsSet[E]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
+  given JsonValueCodec[Id] = JsonCodecMaker.make[String].asInstanceOf[JsonValueCodec[Id]]
   @nowarn("msg=never used")
   implicit def AWSetEmbeddedCodec[E: JsonValueCodec]: JsonValueCodec[Map[E, Set[Dot]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
@@ -65,7 +67,7 @@ object JsoniterCodecs {
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   @nowarn("msg=never used")
-  def timedTupleCodec[A: JsonValueCodec]: JsonValueCodec[(A, String, Long, Long)] = JsonCodecMaker.make
+  def timedTupleCodec[A: JsonValueCodec]: JsonValueCodec[(A, Id, Long, Long)] = JsonCodecMaker.make
 
   implicit def timedValCodec[A: JsonValueCodec]: JsonValueCodec[TimedVal[A]] = new JsonValueCodec[TimedVal[A]] {
     override def decodeValue(in: JsonReader, default: TimedVal[A]): TimedVal[A] = {
@@ -102,7 +104,7 @@ object JsoniterCodecs {
 
   /** LexCounter */
 
-  implicit def LexCounterStateCodec: JsonValueCodec[Map[String, LexPair[Int, Int]]] = JsonCodecMaker.make
+  implicit def LexCounterStateCodec: JsonValueCodec[LexCounter] = JsonCodecMaker.make
 
   /** MVRegister */
 

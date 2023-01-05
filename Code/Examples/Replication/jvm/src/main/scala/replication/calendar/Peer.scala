@@ -2,7 +2,7 @@ package replication.calendar
 
 import Bindings._
 import SyncMessage.{AppointmentMessage, CalendarState, FreeMessage, RaftMessage, WantMessage}
-import kofre.base.DecomposeLattice
+import kofre.base.{DecomposeLattice, Id}
 import kofre.datatypes.AddWinsSet
 import kofre.datatypes.AddWinsSet.AWSetSyntax
 import kofre.dotted.{DottedDecompose, Dotted}
@@ -17,7 +17,7 @@ import scala.io.StdIn.readLine
 import scala.util.matching.Regex
 import scala.util.{Failure, Success}
 
-class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
+class Peer(id: Id, listenPort: Int, connectTo: List[(String, Int)]) {
 
   val registry = new Registry
 
@@ -71,7 +71,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
       calendar.replicated.foreach { case (id, set) =>
         set.now.deltaBuffer.collect {
-          case DottedName(replicaID, deltaState) if replicaID != rr.toString => deltaState
+          case DottedName(replicaID, deltaState) if Id.unwrap(replicaID) != rr.toString => deltaState
         }.reduceOption(DecomposeLattice[CalendarState].merge).foreach(sendRecursive(
           remoteReceiveSyncMessage,
           _,
@@ -80,13 +80,13 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
       }
 
       tokens.want.deltaBuffer.collect {
-        case DottedName(replicaID, deltaState) if replicaID != rr.toString => deltaState
+        case DottedName(replicaID, deltaState) if Id.unwrap(replicaID) != rr.toString => deltaState
       }.reduceOption(DecomposeLattice[Dotted[AddWinsSet[Token]]].merge).foreach { state =>
         remoteReceiveSyncMessage(WantMessage(state))
       }
 
       tokens.tokenFreed.deltaBuffer.collect {
-        case DottedName(replicaID, deltaState) if replicaID != rr.toString => deltaState
+        case DottedName(replicaID, deltaState) if Id.unwrap(replicaID) != rr.toString => deltaState
       }.reduceOption(DottedDecompose[AddWinsSet[Token]].merge).foreach { state =>
         remoteReceiveSyncMessage(FreeMessage(state))
       }
@@ -152,13 +152,13 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
 
         message match {
           case AppointmentMessage(deltaState, id) =>
-            val delta = DottedName(remoteRef.toString, deltaState)
+            val delta = DottedName(Id.predefined(remoteRef.toString), deltaState)
             val set   = calendar.replicated(id)
             set.transform(_.applyDelta(delta))
           case WantMessage(state) =>
-            tokens = tokens.applyWant(DottedName(remoteRef.toString, state))
+            tokens = tokens.applyWant(DottedName(Id.predefined(remoteRef.toString), state))
           case FreeMessage(state) =>
-            tokens = tokens.applyFree(DottedName(remoteRef.toString, state))
+            tokens = tokens.applyFree(DottedName(Id.predefined(remoteRef.toString), state))
           case RaftMessage(state) => {
             tokens = tokens.applyRaft(state)
           }

@@ -1,6 +1,6 @@
 package kofre.datatypes
 
-import kofre.base.{Bottom, DecomposeLattice, Defs}
+import kofre.base.{Bottom, DecomposeLattice, Id}
 import kofre.datatypes.GrowMap
 import kofre.decompose.*
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
@@ -43,7 +43,7 @@ object ObserveRemoveMap {
     }
 
     def queryAllEntries(using QueryP): Iterable[V] = current.inner.values
-    def mutateKey(k: K, m: (Defs.Id, Dotted[V]) => Dotted[V])(using
+    def mutateKey(k: K, m: (Id, Dotted[V]) => Dotted[V])(using
         CausalMutationP,
         IdentifierP,
         Bottom[V]

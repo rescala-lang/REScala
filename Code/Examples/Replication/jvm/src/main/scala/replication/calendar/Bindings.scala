@@ -2,13 +2,14 @@ package replication.calendar
 
 import loci.registry.Binding
 import loci.transmitter.IdenticallyTransmittable
-import loci.serializer.jsoniterScala._
-import replication.JsoniterCodecs._
-import com.github.plokhotnyuk.jsoniter_scala.macros._
-import com.github.plokhotnyuk.jsoniter_scala.core._
+import loci.serializer.jsoniterScala.*
+import replication.JsoniterCodecs.*
+import com.github.plokhotnyuk.jsoniter_scala.macros.*
+import com.github.plokhotnyuk.jsoniter_scala.core.*
 import kofre.datatypes.AddWinsSet
 import kofre.dotted.Dotted
 import kofre.protocol.RaftState
+import replication.JsoniterCodecs
 
 import scala.concurrent.Future
 
@@ -24,6 +25,8 @@ object SyncMessage {
 }
 
 object Bindings {
+
+  import JsoniterCodecs.given
 
   implicit val AppointmentCodec: JsonValueCodec[Appointment] = JsonCodecMaker.make
   implicit val TokenCodec: JsonValueCodec[Token]             = JsonCodecMaker.make

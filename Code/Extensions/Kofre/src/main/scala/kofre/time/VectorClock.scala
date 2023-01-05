@@ -1,15 +1,14 @@
 package kofre.time
 
-import kofre.base.Defs.Id
+import kofre.base.{Id, Time}
 import kofre.time.{Dot, VectorClock}
 import kofre.base.Lattice
-import kofre.base.Defs
 
 import scala.annotation.tailrec
 import scala.math.PartialOrdering
 
-case class VectorClock(timestamps: Map[Id, Defs.Time]) {
-  def timeOf(replicaId: Id): Defs.Time = timestamps.getOrElse(replicaId, 0)
+case class VectorClock(timestamps: Map[Id, Time]) {
+  def timeOf(replicaId: Id): Time = timestamps.getOrElse(replicaId, 0)
 
   def clockOf(replicaId: Id): Dot = Dot(replicaId, timeOf(replicaId))
 
@@ -21,10 +20,10 @@ case class VectorClock(timestamps: Map[Id, Defs.Time]) {
 object VectorClock {
 
   def zero: VectorClock                           = VectorClock(Map.empty)
-  def fromMap(m: Map[Id, Defs.Time]): VectorClock = VectorClock(m)
+  def fromMap(m: Map[Id, Time]): VectorClock = VectorClock(m)
 
   given lattice: Lattice[VectorClock] =
-    given Lattice[Defs.Time] = _ max _
+    given Lattice[Time] = _ max _
     Lattice.derived
 
   val vectorClockTotalOrdering: Ordering[VectorClock] = new Ordering[VectorClock] {
@@ -37,7 +36,7 @@ object VectorClock {
             case h :: t =>
               val l   = x.timestamps.getOrElse(h, 0L)
               val r   = y.timestamps.getOrElse(h, 0L)
-              val res = Ordering[Defs.Time].compare(l, r)
+              val res = Ordering[Time].compare(l, r)
               if (res == 0) then smaller(t) else res
             case Nil => 0
           }

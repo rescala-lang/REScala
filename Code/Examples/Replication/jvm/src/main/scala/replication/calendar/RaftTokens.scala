@@ -1,6 +1,6 @@
 package replication.calendar
 
-import kofre.base.Lattice
+import kofre.base.{Lattice, Id}
 import kofre.decompose.containers.DeltaBufferRDT
 import kofre.datatypes.AddWinsSet
 import kofre.datatypes.AddWinsSet.AWSetSyntax
@@ -9,12 +9,12 @@ import kofre.syntax.DottedName
 
 import scala.util.Random
 
-case class Token(id: Long, owner: String, value: String) {
+case class Token(id: Long, owner: Id, value: String) {
   def same(other: Token) = owner == other.owner && value == other.value
 }
 
 case class RaftTokens(
-    replicaID: String,
+    replicaID: Id,
     tokenAgreement: RaftState[Token],
     want: DeltaBufferRDT[AddWinsSet[Token]],
     tokenFreed: DeltaBufferRDT[AddWinsSet[Token]]
@@ -74,7 +74,7 @@ case class RaftTokens(
 }
 
 object RaftTokens {
-  def init(replicaID: String): RaftTokens =
+  def init(replicaID: Id): RaftTokens =
     RaftTokens(
       replicaID,
       RaftState(Set(replicaID)),

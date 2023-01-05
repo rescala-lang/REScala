@@ -10,8 +10,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import java.nio.charset.StandardCharsets
 import java.util.{Base64, Objects}
 import scala.concurrent.{Await, Future}
-import kofre.base.{Bottom, DecomposeLattice, Defs, Lattice}
-import kofre.base.Defs.Id
+import kofre.base.{Bottom, DecomposeLattice, Lattice}
+import kofre.base.Id
 import kofre.syntax.*
 import kofre.datatypes.PosNegCounter
 
@@ -61,6 +61,7 @@ case class WsSendData(src: String, dst: String, data: BinaryAsBase64, delivery_n
 given JsonValueCodec[WsRecvData] = JsonCodecMaker.make
 given JsonValueCodec[WsSendData] = JsonCodecMaker.make
 
+import replication.JsoniterCodecs.given
 given JsonValueCodec[PosNegCounter] = JsonCodecMaker.make
 
 class Replica[S: Lattice: JsonValueCodec](val id: Id, dtnNodeId: String, val service: String, @volatile var data: S) {
@@ -161,7 +162,7 @@ def run(): Unit =
     val nodeId = sget(URI.create(s"$api/status/nodeid")).bind
     sget(URI.create(s"$api/register?$service")).bind
 
-    val replica = Replica(Defs.genId(), nodeId, service, PosNegCounter.zero)
+    val replica = Replica(Id.genId(), nodeId, service, PosNegCounter.zero)
 
     val bundleString = sget(URI.create(s"$api/status/bundles")).bind
     val bundles = traverse(readFromString[List[String]](bundleString)(JsonCodecMaker.make).map { id =>

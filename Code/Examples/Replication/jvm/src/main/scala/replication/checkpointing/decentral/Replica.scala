@@ -1,6 +1,6 @@
 package replication.checkpointing.decentral
 
-import kofre.base.DecomposeLattice
+import kofre.base.{DecomposeLattice, Id}
 import kofre.datatypes.AddWinsSet
 import kofre.decompose.containers.DeltaBufferRDT
 import kofre.dotted.Dotted
@@ -12,7 +12,7 @@ import scala.concurrent.Future
 import scala.io.StdIn.readLine
 import scala.util.matching.Regex
 
-class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: String, initSize: Int) extends Peer {
+class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Id, initSize: Int) extends Peer {
   val add: Regex       = """add (\d+)""".r
   val remove: Regex    = """remove (\d+)""".r
   val clear: String    = "clear"
@@ -25,7 +25,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
 
   var set: DeltaBufferRDT[AddWinsSet[Int]] = DeltaBufferRDT.empty(id, AddWinsSet.empty)
 
-  var checkpoints: Map[String, Int] = Map(id -> 0)
+  var checkpoints: Map[Id, Int] = Map(id -> 0)
 
   var checkpointMap: Map[Checkpoint, SetState] = Map()
 
@@ -66,7 +66,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
   def propagateDeltas(): Unit = {
     registry.remotes.foreach { rr =>
       set.deltaBuffer.collect {
-        case DottedName(replicaID, deltaState) if replicaID != rr.toString => deltaState
+        case DottedName(replicaID, deltaState) if Id.unwrap(replicaID) != rr.toString => deltaState
       }.reduceOption(DecomposeLattice[SetState].merge).foreach(sendDelta(_, rr))
     }
 
@@ -76,7 +76,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
   def bindGetCheckpoints(): Unit = registry.bind(getCheckpointsBinding) { () => checkpoints }
 
   def bindReceiveDelta(): Unit = registry.bindSbj(receiveDeltaBinding) { (remoteRef: RemoteRef, deltaState: SetState) =>
-    val delta = DottedName(remoteRef.toString, deltaState)
+    val delta = DottedName(Id.predefined(remoteRef.toString), deltaState)
     set = set.applyDelta(delta)
 
     set.deltaBuffer.headOption match {
@@ -96,7 +96,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Strin
         case CheckpointMessage(cp @ Checkpoint(replicaID, counter), changes) =>
           if (checkpoints.contains(replicaID) && checkpoints(replicaID) >= counter) ()
           else {
-            set = set.applyDelta(DottedName(remoteRef.toString, changes)).resetDeltaBuffer()
+            set = set.applyDelta(DottedName(Id.predefined(remoteRef.toString), changes)).resetDeltaBuffer()
 
             unboundRemoteChanges =
               DecomposeLattice[SetState].diff(changes, unboundRemoteChanges).getOrElse(Dotted(AddWinsSet.empty))

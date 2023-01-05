@@ -1,6 +1,6 @@
 package kofre.rga
 
-import kofre.base.Defs.Id
+import kofre.base.Id
 import kofre.base.{DecomposeLattice, Lattice}
 import kofre.time.Dots
 import kofre.datatypes.{AddWinsSet, EnableWinsFlag}

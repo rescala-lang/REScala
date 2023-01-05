@@ -1,9 +1,8 @@
 package kofre.protocol
 
-import kofre.base.Defs.Id
+import kofre.base.Id
 import kofre.protocol.RaftState.*
 import kofre.base.Lattice
-import kofre.base.Defs
 
 import scala.util.Try
 
@@ -26,7 +25,7 @@ case class RaftState[T](
         .filter(_._2 >= consensusSize)
         .map(_._1)
         .max
-    }.getOrElse((0, Defs.zeroId))
+    }.getOrElse((0, Id.zero))
 
     val mterm = Try {
       grouped.iterator

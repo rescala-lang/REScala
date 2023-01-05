@@ -2,14 +2,14 @@ package kofre.primitives
 
 import kofre.base.Lattice
 import kofre.base.Lattice.Operators
-import kofre.base.Defs
+import kofre.base.Id
 import kofre.time.{Dots, Dot, VectorClock}
 import kofre.primitives.CausalQueue.QueueElement
 
 import scala.collection.immutable.Queue
 
 case class CausalQueue[T](values: Queue[QueueElement[T]], latest: VectorClock, removed: Dots) {
-  def enqueue(e: T, replicaID: Defs.Id): CausalQueue[T] =
+  def enqueue(e: T, replicaID: Id): CausalQueue[T] =
     val dot  = latest.inc(replicaID)
     val time = latest merge dot
     CausalQueue(values.enqueue(QueueElement(e, Dot(replicaID, dot.timestamps(replicaID)), time)), time, removed)

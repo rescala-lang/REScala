@@ -1,6 +1,6 @@
 package replication.webapp
 
-import kofre.base.Defs
+import kofre.base.Id
 import loci.registry.Registry
 import org.scalajs.dom
 import org.scalajs.dom.{Fetch, HttpMethod, RequestInit}
@@ -41,7 +41,7 @@ object WebRepMain {
       .flatMap(_.arrayBuffer().toFuture)
   }
 
-  val replicaID: Defs.Id = Defs.genId()
+  val replicaID: Id = Id.genId()
 
   def main(args: Array[String]): Unit = {
     dom.document.body = body("loading data …").render

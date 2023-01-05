@@ -1,7 +1,7 @@
 package kofre.datatypes
 
 import kofre.base.{Bottom, DecomposeLattice}
-import kofre.base.Defs.Id
+import kofre.base.Id
 import kofre.dotted.DottedDecompose
 import kofre.syntax.PermIdMutate.withID
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermId, PermIdMutate, PermQuery}

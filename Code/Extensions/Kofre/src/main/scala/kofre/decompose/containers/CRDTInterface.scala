@@ -1,7 +1,7 @@
 package kofre.decompose.containers
 
-import kofre.base.Defs.Id
-import kofre.base.{Bottom, DecomposeLattice, Defs, Lattice}
+import kofre.base.Id
+import kofre.base.{Bottom, DecomposeLattice, Id, Lattice}
 import kofre.time.Dots
 import kofre.syntax.DottedName
 import kofre.syntax.{PermCausal, PermCausalMutate, PermIdMutate, PermQuery}
@@ -11,7 +11,7 @@ trait CRDTInterface[State, Wrapper] {
 
   def state: Dotted[State]
 
-  val replicaID: Defs.Id
+  val replicaID: Id
 
   def applyDelta(delta: DottedName[State])(implicit u: DecomposeLattice[Dotted[State]]): Wrapper
 }

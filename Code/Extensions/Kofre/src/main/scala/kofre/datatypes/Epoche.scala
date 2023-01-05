@@ -1,11 +1,11 @@
 package kofre.datatypes
 
-import kofre.base.{Bottom, DecomposeLattice, Defs}
+import kofre.base.{Bottom, DecomposeLattice, Id, Time}
 import kofre.dotted.DottedDecompose
 import kofre.syntax.PermIdMutate.withID
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper}
 
-case class Epoche[E](counter: Defs.Time, value: E)
+case class Epoche[E](counter: Time, value: E)
 
 object Epoche {
 

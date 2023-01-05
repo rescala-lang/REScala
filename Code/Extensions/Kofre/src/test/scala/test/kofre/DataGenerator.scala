@@ -1,6 +1,6 @@
 package test.kofre
 
-import kofre.base.Defs.Time
+import kofre.base.Id.Time
 import kofre.base.{Defs, Lattice}
 import kofre.time.{Dots, Dot, VectorClock}
 import kofre.dotted.{DottedDecompose, DotFun, DotMap, DotSet, HasDots}
@@ -11,10 +11,10 @@ import org.scalacheck.{Arbitrary, Gen}
 
 object DataGenerator {
 
-  given arbId: Arbitrary[Defs.Id] = Arbitrary(Gen.oneOf('a' to 'g').map(_.toString))
+  given arbId: Arbitrary[Id] = Arbitrary(Gen.oneOf('a' to 'g').map(_.toString))
 
   given arbVersion: Arbitrary[VectorClock] = Arbitrary(for {
-    ids: Set[Defs.Id] <- Gen.nonEmptyListOf(arbId.arbitrary).map(_.toSet)
+    ids: Set[Id] <- Gen.nonEmptyListOf(arbId.arbitrary).map(_.toSet)
     value: List[Long] <- Gen.listOfN(ids.size, Gen.oneOf(0L to 100L))
   } yield VectorClock.fromMap(ids.zip(value).toMap))
 
@@ -26,7 +26,7 @@ object DataGenerator {
   )
 
   given arbGcounter: Arbitrary[GrowOnlyCounter] = Arbitrary(
-    Gen.mapOf[Defs.Id, Int](Gen.zip(arbId.arbitrary, Arbitrary.arbitrary[Int])).map(GrowOnlyCounter(_))
+    Gen.mapOf[Id, Int](Gen.zip(arbId.arbitrary, Arbitrary.arbitrary[Int])).map(GrowOnlyCounter(_))
   )
 
   given arbPosNeg: Arbitrary[PosNegCounter] = Arbitrary(

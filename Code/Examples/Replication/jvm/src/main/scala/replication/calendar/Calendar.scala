@@ -4,10 +4,11 @@ import kofre.datatypes.AddWinsSet
 import rescala.default._
 import kofre.datatypes.AddWinsSet.AWSetSyntax
 import kofre.decompose.containers.DeltaBufferRDT
+import kofre.base.Id
 
 case class Appointment(start: Int, end: Int)
 
-class CalendarProgram(id: String, synchronizationPoint: String => (=> Unit) => Unit) {
+class CalendarProgram(id: Id, synchronizationPoint: String => (=> Unit) => Unit) {
 
   type Calendar = DeltaBufferRDT[AddWinsSet[Appointment]]
 

@@ -2,7 +2,7 @@ package kofre.encrdt.crdts
 
 import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap.{DeltaAddWinsLastWriterWinsMapLattice}
 import kofre.encrdt.crdts.DeltaAddWinsMap.DeltaAddWinsMapLattice
-import kofre.base.{Bottom, DecomposeLattice, Defs, Lattice}
+import kofre.base.{Bottom, DecomposeLattice, Id, Lattice}
 import kofre.time.Dot
 import kofre.dotted.{DotFun, DotMap, Dotted, DottedDecompose, DottedLattice}
 import kofre.primitives.LastWriterWins
@@ -14,7 +14,7 @@ import java.time.Instant
 import scala.collection.mutable.ArrayBuffer
 
 class DeltaAddWinsLastWriterWinsMap[K, V](
-    val replicaId: Defs.Id,
+    val replicaId: Id,
     initialState: DeltaAddWinsLastWriterWinsMapLattice[K, V] = DeltaAddWinsLastWriterWinsMap.empty[K, V],
     initialDeltas: Vector[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = Vector()
 ) {
@@ -37,7 +37,7 @@ class DeltaAddWinsLastWriterWinsMap[K, V](
     mutate(
       DeltaAddWinsMap.deltaMutate[K, DotFun[(
           V,
-          kofre.primitives.LastWriterWins[java.time.Instant, kofre.base.Defs.Id]
+          kofre.primitives.LastWriterWins[java.time.Instant, Id]
       )]](
         key,
         DotFun.empty,
@@ -94,7 +94,7 @@ class DeltaAddWinsLastWriterWinsMap[K, V](
 
 object DeltaAddWinsLastWriterWinsMap {
   type DeltaAddWinsLastWriterWinsMapLattice[K, V] =
-    DeltaAddWinsMapLattice[K, DotFun[(V, LastWriterWins[Instant, Defs.Id])]]
+    DeltaAddWinsMapLattice[K, DotFun[(V, LastWriterWins[Instant, Id])]]
 
   def empty[K, V]: DeltaAddWinsLastWriterWinsMapLattice[K, V] =
     DeltaAddWinsMap.empty
@@ -103,16 +103,16 @@ object DeltaAddWinsLastWriterWinsMap {
 
   given deltaAddWinsMapLattice[K, V]: Lattice[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = {
     given timestampedValueLattice[V](using
-        Ordering[LastWriterWins[Instant, Defs.Id]]
-    ): Lattice[(V, LastWriterWins[Instant, Defs.Id])] =
+        Ordering[LastWriterWins[Instant, Id]]
+    ): Lattice[(V, LastWriterWins[Instant, Id])] =
       (left, right) =>
         // note, this is incorrect when both are equal
         if left._2 <= right._2 then right
         else left
-    given Bottom[DotFun[(V, LastWriterWins[Instant, Defs.Id])]] = Bottom.dotFun
-    given DottedLattice[DotFun[(V, LastWriterWins[Instant, Defs.Id])]] =
-      DotFun.perDotLattice[(V, LastWriterWins[Instant, Defs.Id])]
-    DotMap.dottedLattice[K, DotFun[(V, LastWriterWins[Instant, Defs.Id])]]
+    given Bottom[DotFun[(V, LastWriterWins[Instant, Id])]] = Bottom.dotFun
+    given DottedLattice[DotFun[(V, LastWriterWins[Instant, Id])]] =
+      DotFun.perDotLattice[(V, LastWriterWins[Instant, Id])]
+    DotMap.dottedLattice[K, DotFun[(V, LastWriterWins[Instant, Id])]]
   }
 
 }

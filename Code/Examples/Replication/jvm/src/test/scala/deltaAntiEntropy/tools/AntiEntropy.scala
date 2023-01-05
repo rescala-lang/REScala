@@ -3,10 +3,12 @@ package deltaAntiEntropy.tools
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReaderException, JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tools.AntiEntropy.{AckMsg, DeltaMsg}
-import kofre.base.{Bottom, DecomposeLattice}
+import kofre.base.{Bottom, DecomposeLattice, Id}
+import Id.asId
 import kofre.decompose.containers.Network
 import kofre.dotted.{Dotted, DottedDecompose}
 import kofre.syntax.DottedName
+import replication.JsoniterCodecs.given
 
 import scala.collection.mutable
 
@@ -71,7 +73,7 @@ class AntiEntropy[A: Bottom](
     case DeltaMsg(delta, seqNum) =>
       deltaBufferIn = deltaBufferIn :+ delta
       val msg: Message = Left(AckMsg(replicaID, seqNum))
-      network.sendMessage(delta.replicaID, writeToArray(msg))
+      network.sendMessage(kofre.base.Id.unwrap(delta.replicaID), writeToArray(msg))
   }
 
   private def receiveAck(msg: AckMsg): Unit = msg match {
@@ -97,13 +99,13 @@ class AntiEntropy[A: Bottom](
 
   private def prepareDeltaMsg(to: String): Option[DeltaMsg[A]] = {
     if (deltaBufferOut.isEmpty || deltaBufferOut.keySet.min > ackMap(to))
-      Some(DeltaMsg(DottedName(replicaID, fullState), nextSeqNum))
+      Some(DeltaMsg(DottedName(replicaID.asId, fullState), nextSeqNum))
     else {
       deltaBufferOut.collect {
-        case (n, DottedName(origin, deltaState)) if n >= ackMap(to) && origin != to => deltaState
+        case (n, DottedName(origin, deltaState)) if n >= ackMap(to) && Id.unwrap(origin) != to => deltaState
       } reduceOption { (left: Dotted[A], right: Dotted[A]) =>
         DecomposeLattice[Dotted[A]].merge(left, right)
-      } map { deltaState => DeltaMsg(DottedName(replicaID, deltaState), nextSeqNum) }
+      } map { deltaState => DeltaMsg(DottedName(replicaID.asId, deltaState), nextSeqNum) }
     }
   }
 

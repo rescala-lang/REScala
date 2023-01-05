@@ -1,6 +1,6 @@
 package kofre.decompose.interfaces
 
-import kofre.base.{Bottom, DecomposeLattice}
+import kofre.base.{Bottom, DecomposeLattice, Id}
 import kofre.base.Lattice.Operators
 import kofre.decompose.*
 import kofre.dotted.DottedDecompose
@@ -45,7 +45,7 @@ object LexCounterInterface {
       }
   }
 
-  type LexCounter = Map[kofre.base.Defs.Id, LexPair[Int, Int]]
+  type LexCounter = Map[Id, LexPair[Int, Int]]
 
   given contextDecompose: DottedDecompose[LexCounter] = {
     given Bottom[Int] with { def empty: Int = Int.MinValue }

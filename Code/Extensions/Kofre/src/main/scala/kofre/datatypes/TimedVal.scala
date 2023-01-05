@@ -1,7 +1,7 @@
 package kofre.datatypes
 
 import kofre.base.DecomposeLattice
-import kofre.base.Defs.Id
+import kofre.base.Id
 import math.Ordering.Implicits.infixOrderingOps
 
 /** TimedVal is a case class for values that allows chronological ordering of values based on their time of creation.

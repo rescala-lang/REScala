@@ -1,11 +1,11 @@
 package kofre.encrdt.crdts
-import kofre.base.{Defs, Lattice}
+import kofre.base.{Id, Lattice}
 import kofre.encrdt.crdts.AddWinsLastWriterWinsMap.LatticeType
 import kofre.encrdt.lattices.{AddWinsMapLattice, CausalTimeTag}
 import kofre.primitives.LastWriterWins
 
 class AddWinsLastWriterWinsMap[K, V](
-    val replicaId: Defs.Id,
+    val replicaId: Id,
     initialState: AddWinsMapLattice[K, LastWriterWins[CausalTimeTag, V]] =
       AddWinsMapLattice[K, LastWriterWins[CausalTimeTag, V]]()
 ) {

@@ -2,6 +2,7 @@ package kofre.decompose.containers
 
 import scala.collection.mutable
 import scala.util.Random
+import kofre.base.Id
 
 /** This class simulates an unreliable network that may lose, duplicate or delay messages. It was made together with [[AntiEntropy]]
   * to locally test the correctness of Delta CRDTs in unreliable networks. The network can be made reliable for certain

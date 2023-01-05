@@ -1,7 +1,7 @@
 package kofre.syntax
 
-import kofre.base.{Bottom, DecomposeLattice, Defs, Lattice}
-import kofre.base.Defs.Id
+import kofre.base.{Bottom, DecomposeLattice, Id, Lattice}
+import kofre.base.Id
 
 class TestReplica[A](val replicaId: Id, var anon: A) {
   def apply(delta: A)(using Lattice[A]): TestReplica[A] =
@@ -11,8 +11,8 @@ class TestReplica[A](val replicaId: Id, var anon: A) {
 
 object TestReplica {
 
-  def apply[L](replicaID: Defs.Id, anon: L): TestReplica[L] = new TestReplica(replicaID, anon)
-  def unapply[L](wnc: TestReplica[L]): Some[(Defs.Id, L)]   = Some((wnc.replicaId, wnc.anon))
+  def apply[L](replicaID: Id, anon: L): TestReplica[L] = new TestReplica(replicaID, anon)
+  def unapply[L](wnc: TestReplica[L]): Some[(Id, L)]   = Some((wnc.replicaId, wnc.anon))
 
   given permissions[L](using DecomposeLattice[L]): PermIdMutate[TestReplica[L], L]
     with {

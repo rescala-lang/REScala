@@ -1,6 +1,6 @@
 package kofre.primitives
 
-import kofre.base.Defs.Id
+import kofre.base.Id
 import kofre.base.Lattice
 import kofre.base.Lattice.Operators
 import kofre.time.VectorClock

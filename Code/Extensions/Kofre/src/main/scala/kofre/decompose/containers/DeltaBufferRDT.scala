@@ -1,6 +1,6 @@
 package kofre.decompose.containers
 
-import kofre.base.{Bottom, DecomposeLattice, Defs}
+import kofre.base.{Bottom, DecomposeLattice, Id}
 import kofre.time.Dots
 import kofre.dotted.{DottedDecompose, DottedLattice, Dotted}
 import kofre.syntax.{ArdtOpsContains, PermCausal, PermCausalMutate, PermIdMutate, PermQuery, DottedName}
@@ -11,7 +11,7 @@ import kofre.syntax.{ArdtOpsContains, PermCausal, PermCausalMutate, PermIdMutate
   */
 class DeltaBufferRDT[State](
     val state: Dotted[State],
-    val replicaID: Defs.Id,
+    val replicaID: Id,
     val deltaBuffer: List[DottedName[State]]
 ) extends CRDTInterface[State, DeltaBufferRDT[State]] {
 
@@ -51,11 +51,11 @@ object DeltaBufferRDT {
     *
     * @param replicaID Unique id of the replica that this instance is located on
     */
-  def apply[State](replicaID: Defs.Id)(using bot: Bottom[Dotted[State]]): DeltaBufferRDT[State] =
+  def apply[State](replicaID: Id)(using bot: Bottom[Dotted[State]]): DeltaBufferRDT[State] =
     new DeltaBufferRDT[State](bot.empty, replicaID, List())
 
-  def empty[State](replicaID: Defs.Id, init: State): DeltaBufferRDT[State] =
+  def empty[State](replicaID: Id, init: State): DeltaBufferRDT[State] =
     new DeltaBufferRDT[State](Dotted(init), replicaID, List())
 
-  def apply[State](replicaID: Defs.Id, init: State): DeltaBufferRDT[State] = empty(replicaID, init)
+  def apply[State](replicaID: Id, init: State): DeltaBufferRDT[State] = empty(replicaID, init)
 }

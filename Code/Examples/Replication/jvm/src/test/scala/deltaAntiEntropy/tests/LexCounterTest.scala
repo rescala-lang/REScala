@@ -6,7 +6,7 @@ import kofre.decompose.containers.Network
 import kofre.decompose.interfaces.LexCounterInterface.LexCounter
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
-import replication.JsoniterCodecs.*
+import replication.JsoniterCodecs.{given, *}
 
 import scala.collection.mutable
 

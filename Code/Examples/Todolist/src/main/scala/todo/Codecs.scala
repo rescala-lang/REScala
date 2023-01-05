@@ -2,7 +2,7 @@ package todo
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
-import kofre.base.Defs
+import kofre.base.Id
 import kofre.datatypes.{RGA, TimedVal}
 import kofre.time.Dot
 import kofre.decompose.containers.DeltaBufferRDT

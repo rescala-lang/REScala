@@ -15,8 +15,9 @@ import scala.concurrent.Future
 import scala.io.StdIn.readLine
 import scala.util.matching.Regex
 import scala.util.{Failure, Success}
+import kofre.base.Id
 
-class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
+class Peer(id: Id, listenPort: Int, connectTo: List[(String, Int)]) {
 
   val registry = new Registry
 
@@ -61,7 +62,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
       val remoteReceiveSyncMessage = registry.lookup(receiveSyncMessageBinding, rr)
 
       set.deltaBuffer.collect {
-        case DottedName(replicaID, deltaState) if replicaID != rr.toString => deltaState
+        case DottedName(replicaID, deltaState) if Id.unwrap(replicaID) != rr.toString => deltaState
       }.reduceOption(DecomposeLattice[SetState].merge).foreach(sendRecursive(
         remoteReceiveSyncMessage,
         _
@@ -150,7 +151,7 @@ class Peer(id: String, listenPort: Int, connectTo: List[(String, Int)]) {
         assessCheckpointRecursive()
       }
 
-      val delta = DottedName(remoteRef.toString, deltaState)
+      val delta = DottedName(Id.predefined(remoteRef.toString), deltaState)
       set = set.applyDelta(delta)
 
       processChangesForCheckpointing()

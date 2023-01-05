@@ -1,6 +1,6 @@
 package kofre.time
 
-import kofre.base.Defs.{Id, Time}
+import kofre.base.{Id, Time}
 import kofre.base.{DecomposeLattice, Lattice}
 import kofre.dotted.Dotted
 import kofre.time.Dot

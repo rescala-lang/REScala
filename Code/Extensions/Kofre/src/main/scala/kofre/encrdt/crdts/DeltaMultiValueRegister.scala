@@ -1,5 +1,5 @@
 package kofre.encrdt.crdts
-import kofre.base.Lattice
+import kofre.base.{Lattice, Id}
 import kofre.time.{Dots, Dot}
 import kofre.dotted.{DotFun, Dotted, HasDots}
 
@@ -8,7 +8,7 @@ object DeltaMultiValueRegister {
 
   def deltaWrite[V](
       value: V,
-      replicaId: kofre.base.Defs.Id ,
+      replicaId: Id ,
       register: DeltaMultiValueRegisterLattice[V]
   ): DeltaMultiValueRegisterLattice[V] = {
 
