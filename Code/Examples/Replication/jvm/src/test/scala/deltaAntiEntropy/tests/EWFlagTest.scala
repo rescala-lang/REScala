@@ -1,12 +1,12 @@
-package tests.distribution.delta.antientropy
+package deltaAntiEntropy.tests
 
-import org.scalacheck.{Arbitrary, Gen}
-import replication.JsoniterCodecs._
-import kofre.decompose.containers.Network
-import NetworkGenerators._
+import deltaAntiEntropy.tests.NetworkGenerators.*
+import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyCRDT}
 import kofre.datatypes.EnableWinsFlag
-import org.scalacheck.Prop._
-import testtools.{AntiEntropy, AntiEntropyCRDT}
+import kofre.decompose.containers.Network
+import org.scalacheck.Prop.*
+import org.scalacheck.{Arbitrary, Gen}
+import replication.JsoniterCodecs.*
 
 import scala.collection.mutable
 import scala.util.Random
@@ -33,7 +33,7 @@ object EWFlagGenerators {
 }
 
 class EWFlagTest extends munit.ScalaCheckSuite {
-  import EWFlagGenerators._
+  import EWFlagGenerators.*
 
   property("enable") {
     forAll { (flag: AntiEntropyCRDT[EnableWinsFlag]) =>

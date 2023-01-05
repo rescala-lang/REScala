@@ -1,24 +1,24 @@
-package tests.distribution.delta.antientropy
+package deltaAntiEntropy.tests
 
-import kofre.datatypes.PosNegCounter
-import org.scalacheck.{Arbitrary, Gen}
-import replication.JsoniterCodecs._
+import deltaAntiEntropy.tests.NetworkGenerators.*
+import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyCRDT}
 import kofre.decompose.containers.Network
-import NetworkGenerators._
-import org.scalacheck.Prop._
-import testtools.{AntiEntropy, AntiEntropyCRDT}
+import kofre.decompose.interfaces.LexCounterInterface.LexCounter
+import org.scalacheck.Prop.*
+import org.scalacheck.{Arbitrary, Gen}
+import replication.JsoniterCodecs.*
 
 import scala.collection.mutable
 
-object PosNegCounterGenerator {
-  val genPosNegCounter: Gen[AntiEntropyCRDT[PosNegCounter]] = for {
+object LexCounterGenerators {
+  val genLexCounter: Gen[AntiEntropyCRDT[LexCounter]] = for {
     nInc <- Gen.posNum[Int]
     nDec <- Gen.posNum[Int]
   } yield {
     val network = new Network(0, 0, 0)
-    val ae      = new AntiEntropy[PosNegCounter]("a", network, mutable.Buffer())
+    val ae      = new AntiEntropy[LexCounter]("a", network, mutable.Buffer())
 
-    val inced = (0 to nInc).foldLeft(AntiEntropyCRDT(ae)) {
+    val inced = (0 to nInc).foldLeft(AntiEntropyCRDT[LexCounter](ae)) {
       case (c, _) => c.inc()
     }
 
@@ -27,50 +27,55 @@ object PosNegCounterGenerator {
     }
   }
 
-  implicit val arbPosNegCounter: Arbitrary[AntiEntropyCRDT[PosNegCounter]] = Arbitrary(genPosNegCounter)
+  implicit val arbLexCounter: Arbitrary[AntiEntropyCRDT[LexCounter]] = Arbitrary(genLexCounter)
 }
 
-class PosNegCounterTest extends munit.ScalaCheckSuite {
-  import PosNegCounterGenerator._
+class LexCounterTest extends munit.ScalaCheckSuite {
+  import LexCounterGenerators.*
+
   property("inc") {
-    forAll { (counter: AntiEntropyCRDT[PosNegCounter]) =>
+    forAll { (counter: AntiEntropyCRDT[LexCounter]) =>
       val before = counter.value
       val inced  = counter.inc()
 
-      assert(
-        inced.value == before + 1,
+      assertEquals(
+        inced.value,
+        before + 1,
         s"Incrementing the counter should increase its value by 1, but ${inced.value} does not equal ${counter.value} + 1"
       )
     }
+
   }
   property("dec") {
-    forAll { (counter: AntiEntropyCRDT[PosNegCounter]) =>
+    forAll { (counter: AntiEntropyCRDT[LexCounter]) =>
       val before = counter.value
       val deced  = counter.dec()
 
-      assert(
-        deced.value == before - 1,
+      assertEquals(
+        deced.value,
+        before - 1,
         s"Decrementing the counter should decrease its value by 1, but ${deced.value} does not equal ${counter.value} - 1"
       )
     }
+
   }
   property("concurrent") {
     forAll { (incOrDecA: Boolean, incOrDecB: Boolean) =>
       val network = new Network(0, 0, 0)
 
-      val aea = new AntiEntropy[PosNegCounter]("a", network, mutable.Buffer("b"))
-      val aeb = new AntiEntropy[PosNegCounter]("b", network, mutable.Buffer("a"))
-      val aec = new AntiEntropy[PosNegCounter]("c", network, mutable.Buffer("c"))
+      val aea = new AntiEntropy[LexCounter]("a", network, mutable.Buffer("b"))
+      val aeb = new AntiEntropy[LexCounter]("b", network, mutable.Buffer("a"))
+      val aec = new AntiEntropy[LexCounter]("c", network, mutable.Buffer("c"))
 
-      val ca0 = if (incOrDecA) AntiEntropyCRDT[PosNegCounter](aea).inc() else AntiEntropyCRDT[PosNegCounter](aea).dec()
-      val cb0 = if (incOrDecB) AntiEntropyCRDT[PosNegCounter](aeb).inc() else AntiEntropyCRDT[PosNegCounter](aeb).dec()
+      val ca0 = if (incOrDecA) AntiEntropyCRDT[LexCounter](aea).inc() else AntiEntropyCRDT[LexCounter](aea).dec()
+      val cb0 = if (incOrDecB) AntiEntropyCRDT[LexCounter](aeb).inc() else AntiEntropyCRDT[LexCounter](aeb).dec()
 
       AntiEntropy.sync(aea, aeb)
 
       val ca1 = ca0.processReceivedDeltas()
       val cb1 = cb0.processReceivedDeltas()
 
-      val sequential = AntiEntropyCRDT(aec)
+      val sequential = AntiEntropyCRDT[LexCounter](aec)
       if (incOrDecA) sequential.inc() else sequential.dec()
       if (incOrDecB) sequential.inc() else sequential.dec()
 
@@ -79,24 +84,26 @@ class PosNegCounterTest extends munit.ScalaCheckSuite {
         s"Concurrent execution of increment or decrement should be equivalent to any sequential execution, but ${ca1.value} does not equal ${sequential.value}"
       )
 
-      assert(
-        cb1.value == sequential.value,
+      assertEquals(
+        cb1.value,
+        sequential.value,
         s"Concurrent execution of increment or decrement should be equivalent to any sequential execution, but ${cb1.value} does not equal ${sequential.value}"
       )
     }
+
   }
   property("convergence") {
     forAll { (incA: Short, decA: Short, incB: Short, decB: Short, network: Network) =>
-      val aea = new AntiEntropy[PosNegCounter]("a", network, mutable.Buffer("b"))
-      val aeb = new AntiEntropy[PosNegCounter]("b", network, mutable.Buffer("a"))
+      val aea = new AntiEntropy[LexCounter]("a", network, mutable.Buffer("b"))
+      val aeb = new AntiEntropy[LexCounter]("b", network, mutable.Buffer("a"))
 
-      val incedA = (0 until incA.toInt).foldLeft(AntiEntropyCRDT[PosNegCounter](aea)) {
+      val incedA = (0 until incA.toInt).foldLeft(AntiEntropyCRDT[LexCounter](aea)) {
         case (c, _) => c.inc()
       }
       val ca0 = (0 until decA.toInt).foldLeft(incedA) {
         case (c, _) => c.dec()
       }
-      val incedB = (0 until incB.toInt).foldLeft(AntiEntropyCRDT[PosNegCounter](aeb)) {
+      val incedB = (0 until incB.toInt).foldLeft(AntiEntropyCRDT[LexCounter](aeb)) {
         case (c, _) => c.inc()
       }
       val cb0 = (0 until decB.toInt).foldLeft(incedB) {

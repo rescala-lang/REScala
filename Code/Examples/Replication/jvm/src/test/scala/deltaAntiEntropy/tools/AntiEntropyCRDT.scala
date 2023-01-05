@@ -1,4 +1,4 @@
-package testtools
+package deltaAntiEntropy.tools
 
 import kofre.base.DecomposeLattice
 import kofre.decompose.containers.{AntiEntropy, CRDTInterface, Network}

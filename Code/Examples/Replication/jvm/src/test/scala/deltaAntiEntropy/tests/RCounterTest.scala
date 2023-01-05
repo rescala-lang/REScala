@@ -1,12 +1,12 @@
-package tests.distribution.delta.antientropy
+package deltaAntiEntropy.tests
 
+import deltaAntiEntropy.tests.NetworkGenerators.*
+import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyCRDT}
 import kofre.decompose.containers.Network
 import kofre.decompose.interfaces.RCounterInterface.{RCounter, RCounterSyntax}
-import org.scalacheck.Prop._
+import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
-import replication.JsoniterCodecs._
-import tests.distribution.delta.antientropy.NetworkGenerators._
-import testtools.{AntiEntropy, AntiEntropyCRDT}
+import replication.JsoniterCodecs.*
 
 import scala.collection.mutable
 import scala.util.Random
@@ -33,7 +33,7 @@ object RCounterGenerators {
 }
 
 class RCounterTest extends munit.ScalaCheckSuite {
-  import RCounterGenerators._
+  import RCounterGenerators.*
 
   property("increment") {
     forAll { (counter: AntiEntropyCRDT[RCounter]) =>

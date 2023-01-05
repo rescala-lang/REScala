@@ -1,14 +1,14 @@
-package tests.distribution.delta.antientropy
+package deltaAntiEntropy.tests
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
+import deltaAntiEntropy.tests.NetworkGenerators.*
+import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyCRDT}
 import kofre.datatypes.RGA
 import kofre.decompose.containers.Network
-import org.scalacheck.Prop._
+import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
-import replication.JsoniterCodecs._
-import tests.distribution.delta.antientropy.NetworkGenerators._
-import testtools.{AntiEntropy, AntiEntropyCRDT}
+import replication.JsoniterCodecs.*
 
 import scala.collection.mutable
 
@@ -47,7 +47,7 @@ object RGAGenerators {
 }
 
 class RGATest extends munit.ScalaCheckSuite {
-  import RGAGenerators._
+  import RGAGenerators.*
 
   implicit val IntCodec: JsonValueCodec[Int] = JsonCodecMaker.make
 

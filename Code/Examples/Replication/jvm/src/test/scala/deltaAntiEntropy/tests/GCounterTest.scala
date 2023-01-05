@@ -1,12 +1,12 @@
-package tests.distribution.delta.antientropy
+package deltaAntiEntropy.tests
 
-import kofre.decompose.containers.Network
+import deltaAntiEntropy.tests.NetworkGenerators.*
+import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyCRDT}
 import kofre.datatypes.GrowOnlyCounter
-import org.scalacheck.Prop._
+import kofre.decompose.containers.Network
+import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
-import replication.JsoniterCodecs._
-import tests.distribution.delta.antientropy.NetworkGenerators._
-import testtools.{AntiEntropy, AntiEntropyCRDT}
+import replication.JsoniterCodecs.*
 
 import scala.collection.mutable
 
@@ -26,7 +26,7 @@ object GCounterGenerators {
 }
 
 class GCounterTest extends munit.ScalaCheckSuite {
-  import GCounterGenerators._
+  import GCounterGenerators.*
 
   property("inc") {
     forAll { (counter: AntiEntropyCRDT[GrowOnlyCounter]) =>

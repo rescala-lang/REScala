@@ -1,7 +1,7 @@
-package tests.distribution.delta.antientropy
+package deltaAntiEntropy.tests
 
 import kofre.decompose.containers.Network
-import org.scalacheck.Prop._
+import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 
 object NetworkGenerators {
@@ -15,7 +15,7 @@ object NetworkGenerators {
 }
 
 class NetworkTest extends munit.ScalaCheckSuite {
-  import NetworkGenerators._
+  import NetworkGenerators.*
   property("sendMessage/receiveMessages") {
     forAll { (msgs: List[Array[Byte]], replicaID: String) =>
       val network = new Network(0, 0, 0)

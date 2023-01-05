@@ -1,15 +1,14 @@
-package tests.distribution.delta.antientropy
+package deltaAntiEntropy.tests
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import org.scalacheck.{Arbitrary, Gen}
-import replication.JsoniterCodecs._
-import NetworkGenerators._
+import deltaAntiEntropy.tests.NetworkGenerators.*
+import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyCRDT}
 import kofre.datatypes.TwoPhaseSet
 import kofre.decompose.containers.Network
-
-import org.scalacheck.Prop._
-import testtools.{AntiEntropy, AntiEntropyCRDT}
+import org.scalacheck.Prop.*
+import org.scalacheck.{Arbitrary, Gen}
+import replication.JsoniterCodecs.*
 
 import scala.collection.mutable
 
@@ -34,7 +33,7 @@ object TwoPSetGenerators {
 }
 
 class TowPSetTest extends munit.ScalaCheckSuite {
-  import TwoPSetGenerators._
+  import TwoPSetGenerators.*
 
   implicit val intCodec: JsonValueCodec[Int] = JsonCodecMaker.make
   property("insert") {

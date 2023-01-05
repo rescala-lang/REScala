@@ -1,12 +1,12 @@
-package tests.distribution.delta.antientropy
+package deltaAntiEntropy.tests
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import replication.JsoniterCodecs._
+import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyCRDT}
 import kofre.datatypes.ObserveRemoveMap.contextDecompose
-import kofre.decompose.containers.Network
 import kofre.datatypes.{AddWinsSet, ObserveRemoveMap}
-import testtools.{AntiEntropy, AntiEntropyCRDT}
+import kofre.decompose.containers.Network
+import replication.JsoniterCodecs.*
 
 import scala.collection.mutable
 

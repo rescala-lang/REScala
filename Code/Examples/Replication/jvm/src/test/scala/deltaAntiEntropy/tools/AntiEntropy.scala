@@ -1,12 +1,12 @@
-package testtools
+package deltaAntiEntropy.tools
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReaderException, JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
+import deltaAntiEntropy.tools.AntiEntropy.{AckMsg, DeltaMsg}
 import kofre.base.{Bottom, DecomposeLattice}
 import kofre.decompose.containers.Network
 import kofre.dotted.{Dotted, DottedDecompose}
 import kofre.syntax.DottedName
-import testtools.AntiEntropy.{AckMsg, DeltaMsg}
 
 import scala.collection.mutable
 

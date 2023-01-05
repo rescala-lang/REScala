@@ -1,16 +1,15 @@
-package tests.distribution.delta.antientropy
+package deltaAntiEntropy.tests
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
-import org.scalacheck.{Arbitrary, Gen}
-import replication.JsoniterCodecs._
-import NetworkGenerators._
+import deltaAntiEntropy.tests.NetworkGenerators.*
+import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyCRDT}
 import kofre.base.DecomposeLattice
-import kofre.decompose.interfaces.MVRegisterInterface.MVRegisterSyntax
 import kofre.decompose.containers.Network
-import org.scalacheck.Prop._
-import testtools.{AntiEntropy, AntiEntropyCRDT}
+import kofre.decompose.interfaces.MVRegisterInterface.{MVRegister, MVRegisterSyntax}
+import org.scalacheck.Prop.*
+import org.scalacheck.{Arbitrary, Gen}
+import replication.JsoniterCodecs.*
 
 import scala.collection.mutable
 import scala.util.Random
@@ -42,7 +41,7 @@ object MVRegisterGenerators {
 }
 
 class MVRegisterTest extends munit.ScalaCheckSuite {
-  import MVRegisterGenerators._
+  import MVRegisterGenerators.*
 
   implicit val intCodec: JsonValueCodec[Int] = JsonCodecMaker.make
 
