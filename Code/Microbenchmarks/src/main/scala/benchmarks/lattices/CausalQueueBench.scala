@@ -6,6 +6,7 @@ import org.openjdk.jmh.annotations._
 import kofre.rga.Sequence.RGA
 import kofre.rga.Sequence
 import kofre.rga.Sequence.RGAOps
+import kofre.base.Id.asId
 
 import java.util.concurrent.TimeUnit
 
@@ -28,12 +29,12 @@ class CausalQueueBench {
 
   @Setup
   def setup(): Unit = {
-    lca = (1 to size).foldLeft(CausalQueue.empty[Int]) { (q, e) => q.enqueue(e, "lca") }
+    lca = (1 to size).foldLeft(CausalQueue.empty[Int]) { (q, e) => q.enqueue(e, "lca".asId) }
   }
 
   def make(base: CausalQueue[Int], ops: Int, prefix: String) = {
     val s     = ops / 2
-    val added = (1 to s).foldLeft(base) { (acc, v) => acc.enqueue(v, prefix) }
+    val added = (1 to s).foldLeft(base) { (acc, v) => acc.enqueue(v, prefix.asId) }
     (1 to s).foldLeft(added) { (acc, _) => acc.dequeue() }
   }
 

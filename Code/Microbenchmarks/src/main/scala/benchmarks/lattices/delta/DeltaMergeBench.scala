@@ -5,7 +5,7 @@ import kofre.time.{Dots, Dot}
 import kofre.dotted.{DottedDecompose, Dotted}
 import org.openjdk.jmh.annotations
 import org.openjdk.jmh.annotations._
-
+import kofre.base.Id.asId
 import java.util.concurrent.TimeUnit
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -25,7 +25,7 @@ class DeltaMergeBench {
   var plusOneDeltaState: Dotted[RGA[Long]] = _
 
   def makeCContext(replicaID: String): Dots = {
-    val dots = (0L until size).map(Dot(replicaID, _)).toSet
+    val dots = (0L until size).map(Dot(replicaID.asId, _)).toSet
     Dots.from(dots)
   }
 
@@ -34,10 +34,10 @@ class DeltaMergeBench {
     val baseState: Dotted[RGA[Long]] = Dotted(RGA.empty)
 
     val deltaState: Dotted[RGA[Long]] =
-      baseState.named("").insertAll(0, 0L to size).anon
+      baseState.named("".asId).insertAll(0, 0L to size).anon
     fullState = DottedDecompose[RGA[Long]].merge(baseState, deltaState)
 
-    plusOneDeltaState = fullState.named("").insert(0, size).anon
+    plusOneDeltaState = fullState.named("".asId).insert(0, size).anon
     plusOneState = DottedDecompose[RGA[Long]].merge(fullState, plusOneDeltaState)
   }
 

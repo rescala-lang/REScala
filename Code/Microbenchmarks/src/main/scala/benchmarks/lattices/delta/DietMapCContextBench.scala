@@ -2,8 +2,9 @@ package benchmarks.lattices.delta
 
 import org.openjdk.jmh.annotations._
 import kofre.time.{Dots, Dot}
-
+import kofre.base.Id.asId
 import java.util.concurrent.TimeUnit
+import kofre.base.Id.asId
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -24,7 +25,7 @@ class DietMapCContextBench {
 
   private def makeCContext(replicaID: String, mul: Long, off: Long, len: Long): Dots = {
     val ranges = Range.Long(0L, size, 1).map(i => Range.Long(i * mul + off, i * mul + len + off, 1))
-    val dots   = ranges.flatten.map(Dot(replicaID, _)).toSet
+    val dots   = ranges.flatten.map(Dot(replicaID.asId, _)).toSet
     Dots.from(dots)
   }
 
@@ -32,8 +33,8 @@ class DietMapCContextBench {
   def setup(): Unit = {
     cca = makeCContext("a", 10, 0, 7)
     ccb = makeCContext("b", 10, 5, 7)
-    cca1 = cca.union(Dots.from(Set(Dot("b", 5))))
-    ccaSingle = Dots.from(Set(Dot("a", size + 10)))
+    cca1 = cca.union(Dots.from(Set(Dot("b".asId, 5))))
+    ccaSingle = Dots.from(Set(Dot("a".asId, size + 10)))
   }
 
   @Benchmark
