@@ -14,7 +14,6 @@ import org.eclipse.jetty.servlet.ServletContextHandler
 import org.eclipse.jetty.util.resource.Resource
 import org.eclipse.jetty.util.thread.QueuedThreadPool
 import rescala.default.Signal
-import rescala.extra.distributables.LociDist
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path

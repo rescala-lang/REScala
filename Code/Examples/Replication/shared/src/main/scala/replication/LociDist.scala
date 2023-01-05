@@ -1,9 +1,9 @@
-package rescala.extra.distributables
+package replication
 
+import kofre.base.Lattice
 import loci.registry.{Binding, Registry}
 import loci.transmitter.RemoteRef
-import rescala.default._
-import kofre.base.Lattice
+import rescala.default.*
 import rescala.operator.Pulse
 
 import java.util.concurrent.ConcurrentHashMap

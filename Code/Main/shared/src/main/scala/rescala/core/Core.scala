@@ -19,7 +19,7 @@ trait Core {
   trait ReSource {
     type Value
     protected[rescala] def state: State[Value]
-    protected[rescala] def name: ReName
+    def name: ReName
     protected[rescala] def commit(base: Value): Value
   }
 
@@ -240,7 +240,7 @@ trait Core {
 
     private var _initialChanges: Map[ReSource, InitialChange]         = Map[ReSource, InitialChange]()
     private[rescala] def initialChanges: Map[ReSource, InitialChange] = _initialChanges
-    private[rescala] def recordChange[T](ic: InitialChange): Unit = {
+    def recordChange[T](ic: InitialChange): Unit = {
       assert(
         declaredWrites.contains(ic.source),
         "must not set a source that has not been pre-declared for the transaction"
@@ -351,7 +351,7 @@ trait Core {
 
   /** Provides the capability to look up transactions in the dynamic scope. */
   trait DynamicScope {
-    private [rescala] def dynamicTransaction[T](f: Transaction => T): T
+    private[rescala] def dynamicTransaction[T](f: Transaction => T): T
     def maybeTransaction: Option[Transaction]
   }
 
