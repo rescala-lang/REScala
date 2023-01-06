@@ -8,15 +8,15 @@ import kofre.base.Lattice
 import kofre.base.Lattice._
 import rescala.extra.encrdt.encrypted.statebased.DecryptedState.vectorClockJsonCodec
 import benchmarks.encrdt.Codecs.{idKeyCodec, idCodec}
-import kofre.encrdt.MultiValueRegisterLattice
+import kofre.primitives.MultiValueRegister
 
 import scala.util.{Failure, Success, Try}
 
-class EncryptedCrdt(initialState: MultiValueRegisterLattice[EncryptedState] = MultiValueRegisterLattice(Map.empty)) {
+class EncryptedCrdt(initialState: MultiValueRegister[EncryptedState] = MultiValueRegister(Map.empty)) {
 
   private var _state = initialState
 
-  def state: MultiValueRegisterLattice[EncryptedState] = _state
+  def state: MultiValueRegister[EncryptedState] = _state
 
   def currentTime: VectorClock =
     if (state.versions.isEmpty) VectorClock.zero
@@ -37,8 +37,8 @@ class EncryptedCrdt(initialState: MultiValueRegisterLattice[EncryptedState] = Mu
       }
     })
 
-  def merge(other: MultiValueRegisterLattice[EncryptedState]): Unit = {
-    _state = Lattice[MultiValueRegisterLattice[EncryptedState]].merge(_state, other)
+  def merge(other: MultiValueRegister[EncryptedState]): Unit = {
+    _state = Lattice[MultiValueRegister[EncryptedState]].merge(_state, other)
   }
 }
 
