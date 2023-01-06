@@ -1,8 +1,8 @@
 package todo
 
 import kofre.datatypes.RGA
-import kofre.decompose.containers.DeltaBufferRDT
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax
+import kofre.deprecated.containers.DeltaBufferRDT
 import kofre.syntax.DottedName
 import rescala.default.*
 import rescala.default.Fold

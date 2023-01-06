@@ -2,7 +2,7 @@ package test.kofre
 
 import kofre.base.{Bottom, DecomposeLattice, Lattice}
 import kofre.datatypes.{EnableWinsFlag, PosNegCounter}
-import kofre.decompose.containers.DeltaBufferRDT
+import kofre.deprecated.containers.DeltaBufferRDT
 import kofre.decompose.interfaces.LWWRegisterInterface
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegister
 import kofre.dotted.{Dotted, DottedDecompose}

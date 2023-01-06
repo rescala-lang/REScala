@@ -6,9 +6,9 @@ import kofre.base.Id
 import kofre.base.Id.asId
 import kofre.datatypes.{RGA, TimedVal}
 import kofre.time.Dot
-import kofre.decompose.containers.DeltaBufferRDT
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegister
 import kofre.decompose.interfaces.LWWRegisterInterface
+import kofre.deprecated.containers.DeltaBufferRDT
 import kofre.dotted.{DotFun, Dotted}
 import loci.transmitter.IdenticallyTransmittable
 import rescala.extra.replication.DeltaFor

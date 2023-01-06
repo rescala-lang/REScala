@@ -18,7 +18,7 @@ import scalatags.JsDom.{Attr, TypedTag}
 import todo.Codecs.given
 import todo.Todolist.replicaId
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax
-import kofre.decompose.containers.DeltaBufferRDT
+import kofre.deprecated.containers.DeltaBufferRDT
 import kofre.dotted.Dotted
 import kofre.syntax.DottedName
 import loci.serializer.jsoniterScala.given

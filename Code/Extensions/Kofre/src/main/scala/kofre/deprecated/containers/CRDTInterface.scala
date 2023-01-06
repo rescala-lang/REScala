@@ -1,4 +1,4 @@
-package kofre.decompose.containers
+package kofre.deprecated.containers
 
 import kofre.base.Id
 import kofre.base.{Bottom, DecomposeLattice, Id, Lattice}

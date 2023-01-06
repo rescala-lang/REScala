@@ -3,8 +3,8 @@ package benchmarks.lattices.delta.crdt
 import org.openjdk.jmh.annotations._
 import kofre.decompose.interfaces.RCounterInterface.RCounter
 import kofre.decompose.interfaces.RCounterInterface.RCounterSyntax
-import kofre.decompose.containers.DeltaBufferRDT
 import kofre.decompose.interfaces.RCounterInterface
+import kofre.deprecated.containers.DeltaBufferRDT
 
 import java.util.concurrent.TimeUnit
 

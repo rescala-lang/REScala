@@ -1,7 +1,6 @@
 package rescala.extra.replication
 
 import kofre.base.{Bottom, DecomposeLattice, Lattice}
-import kofre.decompose.containers.DeltaBufferRDT
 import kofre.dotted.Dotted
 import kofre.syntax.DottedName
 import loci.registry.{Binding, Registry}
@@ -9,7 +8,8 @@ import loci.transmitter.RemoteRef
 import rescala.interface.RescalaInterface
 import scribe.Execution.global
 import kofre.base.Lattice.Operators
-import kofre.base.{Id}
+import kofre.base.Id
+import kofre.deprecated.containers.DeltaBufferRDT
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}

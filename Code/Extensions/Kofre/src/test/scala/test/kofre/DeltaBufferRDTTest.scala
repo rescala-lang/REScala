@@ -2,7 +2,7 @@ package test.kofre
 
 import kofre.base.{Bottom, Id, Lattice}
 import kofre.datatypes.EnableWinsFlag
-import kofre.decompose.containers.DeltaBufferRDT
+import kofre.deprecated.containers.DeltaBufferRDT
 
 class DeltaBufferRDTTest extends munit.FunSuite {
 

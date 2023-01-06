@@ -1,7 +1,6 @@
 package todo
 
 import kofre.datatypes.TimedVal
-import kofre.decompose.containers.DeltaBufferRDT
 import kofre.decompose.interfaces.LWWRegisterInterface
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegister
@@ -18,6 +17,7 @@ import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all.*
 import todo.Todolist.replicaId
 import Codecs.given
+import kofre.deprecated.containers.DeltaBufferRDT
 import loci.serializer.jsoniterScala.given
 
 

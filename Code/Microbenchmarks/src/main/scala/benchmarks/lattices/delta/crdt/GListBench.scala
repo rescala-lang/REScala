@@ -2,8 +2,8 @@ package benchmarks.lattices.delta.crdt
 
 import kofre.decompose.interfaces.GListInterface.GList
 import org.openjdk.jmh.annotations._
-import kofre.decompose.containers.DeltaBufferRDT
 import kofre.decompose.interfaces.GListInterface
+import kofre.deprecated.containers.DeltaBufferRDT
 
 import java.util.concurrent.TimeUnit
 

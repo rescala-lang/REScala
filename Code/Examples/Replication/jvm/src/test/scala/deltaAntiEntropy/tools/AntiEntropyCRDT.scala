@@ -1,12 +1,12 @@
 package deltaAntiEntropy.tools
 
 import kofre.base.DecomposeLattice
-import kofre.decompose.containers.CRDTInterface
 import kofre.dotted.{Dotted, DottedDecompose, DottedLattice}
 import kofre.syntax.{ArdtOpsContains, DottedName, PermCausal, PermCausalMutate, PermIdMutate}
 import kofre.time.Dots
 import kofre.base.Id
 import kofre.base.Id.asId
+import kofre.deprecated.containers.CRDTInterface
 
 /** BasicCRDTs are Delta CRDTs that use [[IAntiEntropy]] and [[Network]] as Middleware for exchanging deltas between replicas.
   * They cannot actually be used on multiple connected replicas, but are useful for locally testing the behavior of

@@ -2,7 +2,6 @@ package replication.checkpointing.central
 
 import Bindings.*
 import kofre.base.DecomposeLattice
-import kofre.decompose.containers.DeltaBufferRDT
 import kofre.datatypes.AddWinsSet
 import kofre.dotted.Dotted
 import kofre.syntax.DottedName
@@ -16,6 +15,7 @@ import scala.io.StdIn.readLine
 import scala.util.matching.Regex
 import scala.util.{Failure, Success}
 import kofre.base.Id
+import kofre.deprecated.containers.DeltaBufferRDT
 
 class Peer(id: Id, listenPort: Int, connectTo: List[(String, Int)]) {
 

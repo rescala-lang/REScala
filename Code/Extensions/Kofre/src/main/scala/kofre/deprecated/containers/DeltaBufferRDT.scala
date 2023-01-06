@@ -1,4 +1,4 @@
-package kofre.decompose.containers
+package kofre.deprecated.containers
 
 import kofre.base.{Bottom, DecomposeLattice, Id}
 import kofre.time.Dots
@@ -41,6 +41,8 @@ class DeltaBufferRDT[State](
 }
 
 object DeltaBufferRDT {
+
+  given deltaBufferContains[State]: ArdtOpsContains[DeltaBufferRDT[State], State] = new {}
 
   given contextPermissions[L: DottedDecompose]
       : (PermIdMutate[DeltaBufferRDT[L], L] & PermCausalMutate[DeltaBufferRDT[L], L]) = CRDTInterface.dottedPermissions
