@@ -2,11 +2,11 @@ package benchmarks.lattices
 
 import kofre.base.Lattice.Operators
 import org.openjdk.jmh.annotations._
-import kofre.rga.Sequence.RGA
-import kofre.rga.Sequence
-import kofre.rga.Sequence.RGAOps
+import kofre.datatypes.alternatives.rga.Sequence.RGA
+import kofre.datatypes.alternatives.rga.Sequence.RGAOps
 import kofre.base.Id.asId
 import kofre.datatypes.alternatives.CausalQueue
+import kofre.datatypes.alternatives.rga.Sequence
 
 import java.util.concurrent.TimeUnit
 

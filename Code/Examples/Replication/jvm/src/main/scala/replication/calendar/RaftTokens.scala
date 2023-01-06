@@ -3,8 +3,8 @@ package replication.calendar
 import kofre.base.{Lattice, Id}
 import kofre.datatypes.AddWinsSet
 import kofre.datatypes.AddWinsSet.AWSetSyntax
+import kofre.datatypes.experiments.RaftState
 import kofre.deprecated.containers.DeltaBufferRDT
-import kofre.protocol.RaftState
 import kofre.syntax.DottedName
 
 import scala.util.Random

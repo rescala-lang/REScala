@@ -1,4 +1,4 @@
-package kofre.rga
+package kofre.datatypes.alternatives.rga
 
 import kofre.base.Id
 import kofre.base.{DecomposeLattice, Lattice}
@@ -19,7 +19,7 @@ case class DeltaSequence[A](
 object DeltaSequence {
 
   def empty[A]: DeltaSequence[A] =
-    val addStart = Dotted(AddWinsSet.empty[kofre.rga.Vertex], Dots.empty).named(Vertex.start.id).add(
+    val addStart = Dotted(AddWinsSet.empty[Vertex], Dots.empty).named(Vertex.start.id).add(
       Vertex.start
     ).anon
     DeltaSequence(

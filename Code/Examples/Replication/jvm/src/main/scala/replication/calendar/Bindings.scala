@@ -7,8 +7,8 @@ import replication.JsoniterCodecs.*
 import com.github.plokhotnyuk.jsoniter_scala.macros.*
 import com.github.plokhotnyuk.jsoniter_scala.core.*
 import kofre.datatypes.AddWinsSet
+import kofre.datatypes.experiments.RaftState
 import kofre.dotted.Dotted
-import kofre.protocol.RaftState
 import replication.JsoniterCodecs
 
 import scala.concurrent.Future

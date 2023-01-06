@@ -1,8 +1,7 @@
-package kofre.protocol
+package kofre.datatypes.experiments
 
-import kofre.base.Id
-import kofre.protocol.RaftState.*
-import kofre.base.Lattice
+import kofre.base.{Id, Lattice}
+import kofre.datatypes.experiments.RaftState.*
 
 import scala.util.Try
 

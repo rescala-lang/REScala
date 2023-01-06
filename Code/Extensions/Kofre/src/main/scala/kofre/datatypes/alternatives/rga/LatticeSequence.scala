@@ -1,7 +1,7 @@
-package kofre.rga
+package kofre.datatypes.alternatives.rga
 
 import kofre.base.Lattice
-import kofre.rga.Sequence.RGA
+import Sequence.RGA
 
 import scala.collection.AbstractIterator
 

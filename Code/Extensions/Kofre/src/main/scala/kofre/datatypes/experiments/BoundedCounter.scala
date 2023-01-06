@@ -1,9 +1,9 @@
-package kofre.protocol
+package kofre.datatypes.experiments
 
 import kofre.base.{DecomposeLattice, Id}
 import kofre.datatypes.{GrowOnlyCounter, PosNegCounter}
-import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermId}
 import kofre.syntax.PermIdMutate.withID
+import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermId}
 
 case class BoundedCounter(reservations: PosNegCounter, allocations: GrowOnlyCounter, participants: Set[Id])
 

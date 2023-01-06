@@ -1,9 +1,8 @@
-package kofre.protocol
+package kofre.datatypes.experiments
 
 import kofre.base.Lattice.merge
+import kofre.base.{Id, Lattice}
 import kofre.time.VectorClock
-import kofre.base.Lattice
-import kofre.base.Id
 
 import scala.collection.immutable.HashMap
 

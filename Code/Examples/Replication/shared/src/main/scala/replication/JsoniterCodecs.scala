@@ -7,7 +7,7 @@ import kofre.datatypes.ReplicatedList.Node
 import kofre.datatypes.alternatives.ResettableCounter
 import kofre.datatypes.{AddWinsSet, EnableWinsFlag, Epoche, GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, GrowOnlySet, MultiVersionRegister, ObserveRemoveMap, PosNegCounter, ReplicatedList, TimedVal, TwoPhaseSet}
 import kofre.dotted.Dotted
-import kofre.protocol.AuctionInterface.AuctionData
+import kofre.datatypes.experiments.AuctionInterface.AuctionData
 import kofre.time.{ArrayRanges, Dot, Dots}
 
 import scala.annotation.nowarn

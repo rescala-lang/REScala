@@ -1,4 +1,4 @@
-package kofre.rga
+package kofre.datatypes.alternatives.rga
 
 import kofre.base.Lattice
 

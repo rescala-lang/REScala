@@ -1,6 +1,6 @@
 package test.kofre
 
-import kofre.protocol.BoundedCounter
+import kofre.datatypes.experiments.BoundedCounter
 import kofre.syntax.TestReplica
 
 class BoundedCounterTest extends munit.FunSuite {

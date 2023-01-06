@@ -1,11 +1,10 @@
-package kofre.protocol
+package kofre.datatypes.experiments
 
 import kofre.base.{Bottom, DecomposeLattice}
-import kofre.protocol.AuctionInterface.Bid.User
-import kofre.datatypes.GrowOnlySet.syntax
 import kofre.datatypes.GrowOnlySet
+import kofre.datatypes.GrowOnlySet.{syntax, given}
+import kofre.datatypes.experiments.AuctionInterface.Bid.User
 import kofre.syntax.OpsSyntaxHelper
-import kofre.datatypes.GrowOnlySet.given
 
 object AuctionInterface {
   sealed trait Status
