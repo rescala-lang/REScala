@@ -3,6 +3,7 @@ package kofre.decompose.interfaces
 import kofre.base.{Bottom, DecomposeLattice}
 import kofre.decompose.*
 import kofre.datatypes.{Epoche, TimedVal}
+import kofre.decompose.interfaces.GrowOnlyList.{GListElem, GListNode}
 import kofre.dotted.DottedDecompose
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper}
 
@@ -18,49 +19,60 @@ import scala.collection.mutable.ListBuffer
   * scale linearly with the length of the list. Similarly, toList always has to iterate the whole list, so for applications
   * that don't always need the whole list you should consider using toLazyList instead.
   */
+case class GrowOnlyList[E](innerContents: GrowOnlyList.Repr[E]) {
+  export innerContents.*
+}
+
 object GrowOnlyList {
   sealed trait GListNode[+E]
   case class GListHead()            extends GListNode[Nothing]
   case class GListElem[E](value: E) extends GListNode[E]
 
-  type GrowOnlyList[E] = Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]]
+  type Repr[E] = Map[
+    GListNode[TimedVal[E]],
+    GListElem[TimedVal[E]]
+  ]
 
-  def empty[E]: GrowOnlyList[E] = Map.empty
+  def empty[E]: GrowOnlyList[E] = GrowOnlyList(Map.empty)
 
+  given bottomInstance[E]: Bottom[GrowOnlyList[E]]            = Bottom.derived
   given contextDecompose[E]: DottedDecompose[GrowOnlyList[E]] = DottedDecompose.liftDecomposeLattice
 
   implicit def GListAsUIJDLattice[E]: DecomposeLattice[GrowOnlyList[E]] =
-    new DecomposeLattice[Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]]] {
+    new DecomposeLattice[GrowOnlyList[E]] {
       override def lteq(
-          left: Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]],
-          right: Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]]
+          left: GrowOnlyList[E],
+          right: GrowOnlyList[E]
       ): Boolean =
         left.keys.forall { k =>
           right.get(k).contains(left(k))
         }
 
       /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
-      override def decompose(state: Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]])
-          : Iterable[Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]]] =
-        state.toList.map((edge: (GListNode[TimedVal[E]], GListElem[TimedVal[E]])) => Map(edge))
+      override def decompose(state: GrowOnlyList[E]): Iterable[GrowOnlyList[E]] =
+        state.toList.map((edge: (GListNode[TimedVal[E]], GListElem[TimedVal[E]])) => GrowOnlyList(Map(edge)))
 
       @tailrec
       private def insertEdge(
-          state: Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]],
+          state: GrowOnlyList[E],
           edge: (GListNode[TimedVal[E]], GListElem[TimedVal[E]])
-      ): Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]] =
+      ): GrowOnlyList[E] =
         edge match {
           case (l, r @ GListElem(e1)) =>
             state.get(l) match {
-              case None => state + edge
+              case None => GrowOnlyList(state.innerContents + edge)
               case Some(next @ GListElem(e2)) =>
-                if (e1.laterThan(e2)) state + edge + (r -> next)
-                else insertEdge(state, next -> r)
+                if (e1.laterThan(e2)) GrowOnlyList(state.innerContents + edge + (r -> next))
+                else insertEdge(state, next                                        -> r)
             }
         }
 
       @tailrec
-      private def insertRec(left: GrowOnlyList[E], right: GrowOnlyList[E], current: GListNode[TimedVal[E]]): GrowOnlyList[E] =
+      private def insertRec(
+          left: GrowOnlyList[E],
+          right: GrowOnlyList[E],
+          current: GListNode[TimedVal[E]]
+      ): GrowOnlyList[E] =
         right.get(current) match {
           case None => left
           case Some(next) =>
@@ -75,9 +87,9 @@ object GrowOnlyList {
 
       /** By assumption: associative, commutative, idempotent. */
       override def merge(
-          left: Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]],
-          right: Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]]
-      ): Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]] =
+          left: GrowOnlyList[E],
+          right: GrowOnlyList[E]
+      ): GrowOnlyList[E] =
         (right.keySet -- right.values).foldLeft(left) { (state, startNode) =>
           insertRec(state, right, startNode)
         }
@@ -87,7 +99,11 @@ object GrowOnlyList {
       extends OpsSyntaxHelper[C, GrowOnlyList[E]](container) {
 
     @tailrec
-    private def findNth(state: GrowOnlyList[E], current: GListNode[TimedVal[E]], i: Int): Option[GListNode[TimedVal[E]]] = {
+    private def findNth(
+        state: GrowOnlyList[E],
+        current: GListNode[TimedVal[E]],
+        i: Int
+    ): Option[GListNode[TimedVal[E]]] = {
       if (i == 0) Some(current)
       else state.get(current) match {
         case None       => None
@@ -122,22 +138,22 @@ object GrowOnlyList {
     def size(using QueryP): Int = current.size
 
     def insert(i: Int, e: E)(using MutationIdP): C = {
-      findNth(current, GListHead(), i) match {
+      GrowOnlyList(findNth(current, GListHead(), i) match {
         case None       => Map.empty
         case Some(pred) => Map(pred -> GListElem(TimedVal(e, replicaID)))
-      }
+      })
     }.mutator
 
     def insertAll(i: Int, elems: Iterable[E])(using MutationP, IdentifierP): C = {
       if (elems.isEmpty)
         GrowOnlyList.empty[E]
       else
-        findNth(current, GListHead(), i) match {
+        GrowOnlyList(findNth(current, GListHead(), i) match {
           case None => Map.empty
           case Some(after) =>
             val order = elems.map(e => GListElem(TimedVal(e, replicaID)))
             Map((List(after) ++ order.init) zip order: _*)
-        }
+        })
     }.mutator
 
     @tailrec
@@ -150,7 +166,7 @@ object GrowOnlyList {
             case None           => state.removed(current).removed(next)
           }
 
-          withoutRec(edgeRemoved, current, elems)
+          withoutRec(GrowOnlyList(edgeRemoved), current, elems)
         case Some(next) => withoutRec(state, next, elems)
       }
 

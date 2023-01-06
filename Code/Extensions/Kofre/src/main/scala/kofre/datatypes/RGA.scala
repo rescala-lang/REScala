@@ -31,7 +31,7 @@ import kofre.time.{Dot, Dots}
   * for collaborative applications", see [[https://www.sciencedirect.com/science/article/pii/S0743731510002716?casa_token=lQaLin7aEvcAAAAA:Esc3h3WvkFHUcvhalTPPvV5HbJge91D4-2jyKiSlz8GBDjx31l4xvfH8DIstmQ973PVi46ckXHg here]]
   */
 
-case class RGA[E](order: Epoche[GrowOnlyList.GrowOnlyList[Dot]], meta: DotFun[RGA.RGANode[E]])
+case class RGA[E](order: Epoche[GrowOnlyList[Dot]], meta: DotFun[RGA.RGANode[E]])
 object RGA {
 
   def empty[E]: RGA[E] = kofre.datatypes.RGA(Epoche.empty, DotFun.empty)
@@ -65,10 +65,10 @@ object RGA {
   }
 
   private class DeltaStateFactory[E] {
-    given DottedDecompose[Epoche[GrowOnlyList.GrowOnlyList[Dot]]] = DottedDecompose.liftDecomposeLattice
+    given DottedDecompose[Epoche[GrowOnlyList[Dot]]] = DottedDecompose.liftDecomposeLattice
 
     def make(
-        epoche: Epoche[GrowOnlyList.GrowOnlyList[Dot]] = empty._1,
+        epoche: Epoche[GrowOnlyList[Dot]] = empty._1,
         df: DotFun[RGANode[E]] = DotFun.empty,
         cc: Dots = Dots.empty
     ): Dotted[RGA[E]] = Dotted(RGA(epoche, df), cc)
