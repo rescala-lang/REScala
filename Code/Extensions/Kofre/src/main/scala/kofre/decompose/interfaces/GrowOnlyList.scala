@@ -9,27 +9,27 @@ import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper}
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
 
-/** A GList is a Delta CRDT modeling a grow-only list where list elements can neither be removed nor modified.
+/** A GrowOnlyList is a Delta CRDT modeling a grow-only list where list elements can neither be removed nor modified.
   *
   * Concurrent inserts at the same index i are resolved by the timestamps of the insert operations: the later insert
   * will be at index i while the earlier insert will be pushed to index i+1.
   *
-  * Note: GList is implemented as a linked list, thus the time needed to execute operations at the end of the list will
+  * Note: GrowOnlyList is implemented as a linked list, thus the time needed to execute operations at the end of the list will
   * scale linearly with the length of the list. Similarly, toList always has to iterate the whole list, so for applications
   * that don't always need the whole list you should consider using toLazyList instead.
   */
-object GListInterface {
+object GrowOnlyList {
   sealed trait GListNode[+E]
   case class GListHead()            extends GListNode[Nothing]
   case class GListElem[E](value: E) extends GListNode[E]
 
-  type GList[E] = Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]]
+  type GrowOnlyList[E] = Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]]
 
-  def empty[E]: GList[E] = Map.empty
+  def empty[E]: GrowOnlyList[E] = Map.empty
 
-  given contextDecompose[E]: DottedDecompose[GList[E]] = DottedDecompose.liftDecomposeLattice
+  given contextDecompose[E]: DottedDecompose[GrowOnlyList[E]] = DottedDecompose.liftDecomposeLattice
 
-  implicit def GListAsUIJDLattice[E]: DecomposeLattice[GList[E]] =
+  implicit def GListAsUIJDLattice[E]: DecomposeLattice[GrowOnlyList[E]] =
     new DecomposeLattice[Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]]] {
       override def lteq(
           left: Map[GListNode[TimedVal[E]], GListElem[TimedVal[E]]],
@@ -60,7 +60,7 @@ object GListInterface {
         }
 
       @tailrec
-      private def insertRec(left: GList[E], right: GList[E], current: GListNode[TimedVal[E]]): GList[E] =
+      private def insertRec(left: GrowOnlyList[E], right: GrowOnlyList[E], current: GListNode[TimedVal[E]]): GrowOnlyList[E] =
         right.get(current) match {
           case None => left
           case Some(next) =>
@@ -83,11 +83,11 @@ object GListInterface {
         }
     }
 
-  implicit class GListSyntax[C, E](container: C)(using ArdtOpsContains[C, GList[E]])
-      extends OpsSyntaxHelper[C, GList[E]](container) {
+  implicit class GListSyntax[C, E](container: C)(using ArdtOpsContains[C, GrowOnlyList[E]])
+      extends OpsSyntaxHelper[C, GrowOnlyList[E]](container) {
 
     @tailrec
-    private def findNth(state: GList[E], current: GListNode[TimedVal[E]], i: Int): Option[GListNode[TimedVal[E]]] = {
+    private def findNth(state: GrowOnlyList[E], current: GListNode[TimedVal[E]], i: Int): Option[GListNode[TimedVal[E]]] = {
       if (i == 0) Some(current)
       else state.get(current) match {
         case None       => None
@@ -102,7 +102,7 @@ object GListInterface {
       }
 
     @tailrec
-    private def toListRec(state: GList[E], current: GListNode[TimedVal[E]], acc: ListBuffer[E]): ListBuffer[E] =
+    private def toListRec(state: GrowOnlyList[E], current: GListNode[TimedVal[E]], acc: ListBuffer[E]): ListBuffer[E] =
       state.get(current) match {
         case None                       => acc
         case Some(next @ GListElem(tv)) => toListRec(state, next, acc.append(tv.value))
@@ -130,7 +130,7 @@ object GListInterface {
 
     def insertAll(i: Int, elems: Iterable[E])(using MutationP, IdentifierP): C = {
       if (elems.isEmpty)
-        GListInterface.empty[E]
+        GrowOnlyList.empty[E]
       else
         findNth(current, GListHead(), i) match {
           case None => Map.empty
@@ -141,7 +141,7 @@ object GListInterface {
     }.mutator
 
     @tailrec
-    private def withoutRec(state: GList[E], current: GListNode[TimedVal[E]], elems: Set[E]): GList[E] =
+    private def withoutRec(state: GrowOnlyList[E], current: GListNode[TimedVal[E]], elems: Set[E]): GrowOnlyList[E] =
       state.get(current) match {
         case None => state
         case Some(next @ GListElem(tv)) if elems.contains(tv.value) =>

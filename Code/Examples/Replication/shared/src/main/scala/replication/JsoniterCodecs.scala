@@ -8,7 +8,7 @@ import kofre.datatypes.{
   AddWinsSet, EnableWinsFlag, Epoche, GrowOnlyMap, GrowOnlyCounter, ObserveRemoveMap, PosNegCounter, RGA, TimedVal,
   TwoPhaseSet, GrowOnlySet
 }
-import kofre.decompose.interfaces.GListInterface.{GList, GListElem, GListNode}
+import kofre.decompose.interfaces.GrowOnlyList.{GrowOnlyList, GListElem, GListNode}
 import kofre.decompose.interfaces.LexCounterInterface.{LexCounter, LexPair}
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
 import kofre.decompose.interfaces.RCounterInterface.RCounter
@@ -63,7 +63,7 @@ object JsoniterCodecs {
   implicit def MapStringIntStateCodec: JsonValueCodec[Map[String, Int]] = JsonCodecMaker.make
   implicit def GCounterStateCodec: JsonValueCodec[GrowOnlyCounter]      = JsonCodecMaker.make
 
-  /** GList */
+  /** GrowOnlyList */
 
   @nowarn("msg=never used")
   def mapArrayCodec[A: JsonValueCodec, B: JsonValueCodec]: JsonValueCodec[Map[A, B]] =
@@ -87,7 +87,7 @@ object JsoniterCodecs {
   }
 
   @nowarn()
-  implicit def GListStateCodec[E: JsonValueCodec]: JsonValueCodec[GList[E]] = {
+  implicit def GListStateCodec[E: JsonValueCodec]: JsonValueCodec[GrowOnlyList[E]] = {
     mapArrayCodec[GListNode[TimedVal[E]], GListElem[TimedVal[E]]](JsonCodecMaker.make, JsonCodecMaker.make)
   }
 

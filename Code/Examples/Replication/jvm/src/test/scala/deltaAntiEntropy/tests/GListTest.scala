@@ -4,7 +4,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tests.NetworkGenerators.*
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyCRDT, Network}
-import kofre.decompose.interfaces.GListInterface.{GList, contextDecompose}
+import kofre.decompose.interfaces.GrowOnlyList.{GrowOnlyList, contextDecompose}
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 import replication.JsoniterCodecs.*
@@ -12,18 +12,18 @@ import replication.JsoniterCodecs.*
 import scala.collection.mutable
 
 object GListGenerators {
-  def genGList[E: JsonValueCodec](implicit e: Arbitrary[E]): Gen[AntiEntropyCRDT[GList[E]]] = for {
+  def genGList[E: JsonValueCodec](implicit e: Arbitrary[E]): Gen[AntiEntropyCRDT[GrowOnlyList[E]]] = for {
     elems <- Gen.containerOf[List, E](e.arbitrary)
   } yield {
     val network = new Network(0, 0, 0)
-    val ae      = new AntiEntropy[GList[E]]("a", network, mutable.Buffer())
+    val ae      = new AntiEntropy[GrowOnlyList[E]]("a", network, mutable.Buffer())
 
-    elems.foldLeft(AntiEntropyCRDT[GList[E]](ae)) {
+    elems.foldLeft(AntiEntropyCRDT[GrowOnlyList[E]](ae)) {
       case (list, el) => list.insert(0, el)
     }
   }
 
-  implicit def arbGList[E: JsonValueCodec](implicit e: Arbitrary[E]): Arbitrary[AntiEntropyCRDT[GList[E]]] =
+  implicit def arbGList[E: JsonValueCodec](implicit e: Arbitrary[E]): Arbitrary[AntiEntropyCRDT[GrowOnlyList[E]]] =
     Arbitrary(genGList)
 }
 
@@ -33,21 +33,21 @@ class GListTest extends munit.ScalaCheckSuite {
   implicit val IntCodec: JsonValueCodec[Int] = JsonCodecMaker.make
 
   property("size, toList, read") {
-    forAll { (list: AntiEntropyCRDT[GList[Int]], readIdx: Int) =>
+    forAll { (list: AntiEntropyCRDT[GrowOnlyList[Int]], readIdx: Int) =>
       val l = list.toList
 
       assert(
         list.size == l.size,
-        s"The size of a GList should equal the size of the list resulting from toList, but ${list.size} does not equal ${list.toList.size}"
+        s"The size of a GrowOnlyList should equal the size of the list resulting from toList, but ${list.size} does not equal ${list.toList.size}"
       )
       assert(
         list.read(readIdx) == l.lift(readIdx),
-        s"Reading from the GList at any valid index should return the same value as reading from the list returned by toList, but at index $readIdx ${list.read(readIdx)} does not equal ${l.lift(readIdx)}"
+        s"Reading from the GrowOnlyList at any valid index should return the same value as reading from the list returned by toList, but at index $readIdx ${list.read(readIdx)} does not equal ${l.lift(readIdx)}"
       )
     }
   }
   property("insert") {
-    forAll { (list: AntiEntropyCRDT[GList[Int]], n: Int, e: Int) =>
+    forAll { (list: AntiEntropyCRDT[GrowOnlyList[Int]], n: Int, e: Int) =>
       val szeBefore = list.size
       val l         = list.toList
 
@@ -77,7 +77,7 @@ class GListTest extends munit.ScalaCheckSuite {
     }
   }
   property("toLazyList") {
-    forAll { (list: AntiEntropyCRDT[GList[Int]]) =>
+    forAll { (list: AntiEntropyCRDT[GrowOnlyList[Int]]) =>
       val l     = list.toList
       val lazyl = list.toLazyList.toList
 
@@ -91,15 +91,15 @@ class GListTest extends munit.ScalaCheckSuite {
     forAll { (base: List[Int], n1: Int, e1: Int, n2: Int, e2: Int) =>
       val network = new Network(0, 0, 0)
 
-      val aea = new AntiEntropy[GList[Int]]("a", network, mutable.Buffer("b"))
-      val aeb = new AntiEntropy[GList[Int]]("b", network, mutable.Buffer("a"))
+      val aea = new AntiEntropy[GrowOnlyList[Int]]("a", network, mutable.Buffer("b"))
+      val aeb = new AntiEntropy[GrowOnlyList[Int]]("b", network, mutable.Buffer("a"))
 
-      val la0 = base.reverse.foldLeft(AntiEntropyCRDT[GList[Int]](aea)) {
+      val la0 = base.reverse.foldLeft(AntiEntropyCRDT[GrowOnlyList[Int]](aea)) {
         case (l, e) => l.insert(0, e)
       }
 
       AntiEntropy.sync(aea, aeb)
-      val lb0 = AntiEntropyCRDT[GList[Int]](aeb).processReceivedDeltas()
+      val lb0 = AntiEntropyCRDT[GrowOnlyList[Int]](aeb).processReceivedDeltas()
 
       val size = base.size
       val idx1 = if (size == 0) 0 else math.floorMod(n1, size)
@@ -128,16 +128,16 @@ class GListTest extends munit.ScalaCheckSuite {
   }
   property("convergence") {
     forAll { (base: List[Int], insertedA: List[Int], insertedB: List[Int], network: Network) =>
-      val aea = new AntiEntropy[GList[Int]]("a", network, mutable.Buffer("b"))
-      val aeb = new AntiEntropy[GList[Int]]("b", network, mutable.Buffer("a"))
+      val aea = new AntiEntropy[GrowOnlyList[Int]]("a", network, mutable.Buffer("b"))
+      val aeb = new AntiEntropy[GrowOnlyList[Int]]("b", network, mutable.Buffer("a"))
 
-      val la0 = base.reverse.foldLeft(AntiEntropyCRDT[GList[Int]](aea)) {
+      val la0 = base.reverse.foldLeft(AntiEntropyCRDT[GrowOnlyList[Int]](aea)) {
         case (l, e) => l.insert(0, e)
       }
       network.startReliablePhase()
       AntiEntropy.sync(aea, aeb)
       network.endReliablePhase()
-      val lb0 = AntiEntropyCRDT[GList[Int]](aeb).processReceivedDeltas()
+      val lb0 = AntiEntropyCRDT[GrowOnlyList[Int]](aeb).processReceivedDeltas()
 
       val la1 = insertedA.foldLeft(la0) { (l, e) => l.insert(e, e) }
       val lb1 = insertedB.foldLeft(lb0) { (l, e) => l.insert(e, e) }

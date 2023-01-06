@@ -3,8 +3,8 @@ package kofre.datatypes
 import kofre.base.{Bottom, DecomposeLattice}
 import kofre.datatypes.{Epoche, TimedVal}
 import kofre.decompose.*
-import kofre.decompose.interfaces.GListInterface
-import kofre.decompose.interfaces.GListInterface.{GListAsUIJDLattice, GListSyntax}
+import kofre.decompose.interfaces.GrowOnlyList
+import kofre.decompose.interfaces.GrowOnlyList.{GListAsUIJDLattice, GListSyntax}
 import kofre.decompose.interfaces.RCounterInterface.RCounter
 import kofre.dotted.{DotFun, Dotted, DottedDecompose, DottedLattice}
 import kofre.syntax.PermIdMutate.withID
@@ -31,7 +31,7 @@ import kofre.time.{Dot, Dots}
   * for collaborative applications", see [[https://www.sciencedirect.com/science/article/pii/S0743731510002716?casa_token=lQaLin7aEvcAAAAA:Esc3h3WvkFHUcvhalTPPvV5HbJge91D4-2jyKiSlz8GBDjx31l4xvfH8DIstmQ973PVi46ckXHg here]]
   */
 
-case class RGA[E](order: Epoche[GListInterface.GList[Dot]], meta: DotFun[RGA.RGANode[E]])
+case class RGA[E](order: Epoche[GrowOnlyList.GrowOnlyList[Dot]], meta: DotFun[RGA.RGANode[E]])
 object RGA {
 
   def empty[E]: RGA[E] = kofre.datatypes.RGA(Epoche.empty, DotFun.empty)
@@ -65,10 +65,10 @@ object RGA {
   }
 
   private class DeltaStateFactory[E] {
-    given DottedDecompose[Epoche[GListInterface.GList[Dot]]] = DottedDecompose.liftDecomposeLattice
+    given DottedDecompose[Epoche[GrowOnlyList.GrowOnlyList[Dot]]] = DottedDecompose.liftDecomposeLattice
 
     def make(
-        epoche: Epoche[GListInterface.GList[Dot]] = empty._1,
+        epoche: Epoche[GrowOnlyList.GrowOnlyList[Dot]] = empty._1,
         df: DotFun[RGANode[E]] = DotFun.empty,
         cc: Dots = Dots.empty
     ): Dotted[RGA[E]] = Dotted(RGA(epoche, df), cc)
