@@ -6,7 +6,7 @@ import Settings.{`is 3`, `is 2.11`}
 
 object RescalaDependencies {
 
-  val scalatest = Def.setting("org.scalatest" %%% "scalatest" % "3.2.14" % Test)
+  val scalatest = Def.setting("org.scalatest" %%% "scalatest" % "3.2.15" % Test)
   val circe     = Def.setting(Seq("core", "generic", "parser").map(n => "io.circe" %%% s"circe-$n" % "0.14.3"))
   val scalaReflectProvided = libraryDependencies ++=
     (if (`is 3`(scalaVersion.value)) None

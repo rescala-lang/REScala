@@ -4,7 +4,7 @@
 import Dependencies.Versions as V
 import com.jsuereth.sbtpgp.PgpKeys.publishSigned
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.jsEnv
-import sbt.{Def, *}
+import sbt.*
 import sbt.Keys.*
 
 import scala.math.Ordering.Implicits.infixOrderingOps
@@ -35,6 +35,13 @@ object Settings {
         cond(version >= (3, 0), "-deprecation"),
         cond(version < (3, 0), "-language:experimental.macros")
       ).flatten
+    }
+  )
+
+  def explicitNulls(s: Configuration) = Seq(
+    s / scalacOptions ++= {
+      val version = CrossVersion.partialVersion(scalaVersion.value).get
+      cond(version._1 == 3, "-Yexplicit-nulls")
     }
   )
 
