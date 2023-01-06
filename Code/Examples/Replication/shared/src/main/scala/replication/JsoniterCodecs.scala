@@ -22,20 +22,19 @@ import scala.annotation.nowarn
 
 object JsoniterCodecs {
 
-  /** Causal Context */
+  def bimapCodec[A, B](codec: JsonValueCodec[A], to: A => B, from: B => A): JsonValueCodec[B] = new JsonValueCodec[B]:
+    override def decodeValue(in: JsonReader, default: B): B = to(codec.decodeValue(in, from(default)))
+    override def encodeValue(x: B, out: JsonWriter): Unit   = codec.encodeValue(from(x), out)
+    override def nullValue: B                               = to(codec.nullValue)
 
+  /** Causal Context */
   implicit val arrayOfLongCodec: JsonValueCodec[Array[Time]] = JsonCodecMaker.make
 
-  implicit val arrayRangesCodec: JsonValueCodec[ArrayRanges] =
-    new JsonValueCodec[ArrayRanges] {
-      override def decodeValue(in: JsonReader, default: ArrayRanges): ArrayRanges = {
-        val ar = arrayOfLongCodec.decodeValue(in, Array())
-        new ArrayRanges(ar, ar.length)
-      }
-      override def encodeValue(x: ArrayRanges, out: JsonWriter): Unit =
-        arrayOfLongCodec.encodeValue(x.inner.slice(0, x.used), out)
-      override def nullValue: ArrayRanges = null
-    }
+  implicit val arrayRangesCodec: JsonValueCodec[ArrayRanges] = bimapCodec(
+    arrayOfLongCodec,
+    ar => new ArrayRanges(ar, ar.length),
+    x => x.inner.slice(0, x.used)
+  )
 
   implicit val idKeyCodec: JsonKeyCodec[kofre.base.Id] = new JsonKeyCodec[Id]:
     override def decodeKey(in: JsonReader): Id           = Id.predefined(in.readKeyAsString())
@@ -44,12 +43,14 @@ object JsoniterCodecs {
 
   /** AddWinsSet */
 
-  @nowarn("msg=never used")
   implicit def AWSetStateCodec[E: JsonValueCodec]: JsonValueCodec[AddWinsSet[E]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
-  given JsonValueCodec[Id] = JsonCodecMaker.make[String].asInstanceOf[JsonValueCodec[Id]]
-  @nowarn("msg=never used")
+  given JsonValueCodec[Id] = bimapCodec(
+    JsonCodecMaker.make[String],
+    Id.predefined,
+    Id.unwrap
+  )
   implicit def AWSetEmbeddedCodec[E: JsonValueCodec]: JsonValueCodec[Map[E, Set[Dot]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
@@ -65,23 +66,17 @@ object JsoniterCodecs {
   implicit def GCounterStateCodec: JsonValueCodec[GrowOnlyCounter]      = JsonCodecMaker.make
 
   /** GrowOnlyList */
-
   @nowarn()
   implicit def growOnlyListCodec[E: JsonValueCodec]: JsonValueCodec[GrowOnlyList[E]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   /** GrowOnlySet */
-
-  @nowarn("msg=never used")
-  implicit def GSetStateCodec[E: JsonValueCodec]: JsonValueCodec[GrowOnlySet[E]] =
-    JsonCodecMaker.make[Set[E]].asInstanceOf
+  implicit def GSetStateCodec[E: JsonValueCodec]: JsonValueCodec[GrowOnlySet[E]] = JsonCodecMaker.make
 
   /** LastWriterWins */
-  @nowarn("msg=never used")
   implicit def LastWriterWinsStateCodec[A: JsonValueCodec]: JsonValueCodec[Dotted[Map[Dot, TimedVal[A]]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
-  @nowarn("msg=never used")
   implicit def LastWriterWinsEmbeddedCodec[A: JsonValueCodec]: JsonValueCodec[Map[Dot, TimedVal[A]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
@@ -91,12 +86,10 @@ object JsoniterCodecs {
 
   /** MVRegister */
 
-  @nowarn("msg=never used")
   implicit def MVRegisterEmbeddedCodec[A: JsonValueCodec]: JsonValueCodec[MVRegister[A]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   /** ObserveRemoveMap */
-  @nowarn("msg=never used")
   implicit def ORMapStateCodec[K: JsonValueCodec, V: JsonValueCodec]: JsonValueCodec[ObserveRemoveMap[K, V]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
@@ -127,21 +120,9 @@ object JsoniterCodecs {
 
   /** TwoPhaseSet */
 
-  @nowarn("msg=never used")
   implicit def TwoPSetStateCodec[E: JsonValueCodec]: JsonValueCodec[TwoPhaseSet[E]] = JsonCodecMaker.make
 
-  @nowarn("msg=never used")
-  implicit def withContextWrapper[E: JsonValueCodec]: JsonValueCodec[Dotted[E]] = {
-    def dottedTuple: JsonValueCodec[(E, Dots)] = JsonCodecMaker.make
-    new JsonValueCodec[Dotted[E]] {
-      override def decodeValue(in: JsonReader, default: Dotted[E]): Dotted[E] = {
-        val (a, b) = dottedTuple.decodeValue(in, if (default == null) null else (default.store, default.context))
-        Dotted(a, b)
-      }
-      override def encodeValue(x: Dotted[E], out: JsonWriter): Unit = dottedTuple.encodeValue((x.store, x.context), out)
-      override def nullValue: Dotted[E]                             = null
-    }
-  }
+  implicit def withContextWrapper[E: JsonValueCodec]: JsonValueCodec[Dotted[E]] = JsonCodecMaker.make
 
   implicit def twoPSetContext[E: JsonValueCodec]: JsonValueCodec[Dotted[TwoPhaseSet[E]]] =
     withContextWrapper(TwoPSetStateCodec)
