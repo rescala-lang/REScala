@@ -10,7 +10,6 @@ import kofre.datatypes.{
 }
 import kofre.decompose.interfaces.GrowOnlyList
 import kofre.decompose.interfaces.GrowOnlyList.{GListElem, GListNode}
-import kofre.decompose.interfaces.LexCounterInterface.{LexCounter, LexPair}
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
 import kofre.decompose.interfaces.RCounterInterface.RCounter
 import kofre.dotted.Dotted
@@ -80,9 +79,6 @@ object JsoniterCodecs {
   implicit def LastWriterWinsEmbeddedCodec[A: JsonValueCodec]: JsonValueCodec[Map[Dot, TimedVal[A]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
-  /** LexCounter */
-
-  implicit def LexCounterStateCodec: JsonValueCodec[LexCounter] = JsonCodecMaker.make
 
   /** MVRegister */
 
