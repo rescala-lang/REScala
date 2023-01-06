@@ -34,17 +34,13 @@ object GrowOnlyMap {
 
     def queryAllEntries()(using QueryP): Iterable[V] = current.values
 
-    def mutateKey(k: K)(m: Option[V] => V)(using MutationIdP): C = Map(k -> m(queryKey(k))).mutator
-
-    def mutateKeyCtx(k: K)(m: PermIdMutate[V, V] => Option[V] => V)(using MutationIdP): C = {
-      Map(k -> m(PermIdMutate.withID[V, V](replicaID))(queryKey(k))).mutator
-    }
-
     def mutateKeyNamedCtx(k: K, default: => V)(m: DottedName[V] => DottedName[V])(using
         CausalMutationP,
         IdentifierP
     ): C = {
-      m(Dotted(queryKey(k).getOrElse(default), context).named(replicaID)).anon.map(v => Map(k -> v)).mutator
+      m(
+        queryKey(k).getOrElse(default).inheritContext
+      ).anon.map(v => Map(k -> v)).mutator
     }
   }
 

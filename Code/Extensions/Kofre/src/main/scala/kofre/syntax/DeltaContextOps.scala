@@ -62,25 +62,27 @@ object PermIdMutate:
 @implicitNotFound("Could not show that »${C}\ncontains ${L}")
 trait ArdtOpsContains[C, L]
 object ArdtOpsContains:
-  given identityContains[L]: ArdtOpsContains[L, L]                                 = new {}
+  given identityContains[L]: ArdtOpsContains[L, L] = new {}
   // given transitiveContains[A, B, C](using ArdtOpsContains[A, B], ArdtOpsContains[B, C]): ArdtOpsContains[A, C] = new {}
 
 /** Helps to define operations that update any container [[C]] containing values of type [[L]]
   * using a scheme where mutations return deltas which are systematically applied.
   */
-trait OpsSyntaxHelper[C, L](container: C) {
+trait OpsTypes[C, L] {
   final type MutationIdP     = PermIdMutate[C, L]
   final type QueryP          = PermQuery[C, L]
   final type MutationP       = PermMutate[C, L]
   final type IdentifierP     = PermId[C]
   final type CausalP         = PermCausal[C]
   final type CausalMutationP = PermCausalMutate[C, L]
-
-  final protected def current(using perm: QueryP): L                          = perm.query(container)
-  final protected def replicaID(using perm: IdentifierP): Id             = perm.replicaId(container)
-  extension [A](c: Dotted[A]) def inheritId(using IdentifierP): DottedName[A] = c.named(replicaID)
-  final protected def context(using perm: CausalP): Dots                      = perm.context(container)
+}
+trait OpsSyntaxHelper[C, L](container: C) extends OpsTypes[C, L] {
+  final protected[kofre] def current(using perm: QueryP): L                   = perm.query(container)
+  final protected[kofre] def replicaID(using perm: IdentifierP): Id           = perm.replicaId(container)
+  final protected[kofre] def context(using perm: CausalP): Dots               = perm.context(container)
   extension (l: L)(using perm: MutationP) def mutator: C                      = perm.mutate(container, l)
   extension (l: Dotted[L])(using perm: CausalMutationP) def mutator: C        = perm.mutateContext(container, l)
+  extension [A](c: Dotted[A]) def inheritId(using IdentifierP): DottedName[A] = c.named(replicaID)
+  extension [A](a: A) def inheritContext(using IdentifierP, CausalP): DottedName[A] = Dotted(a, context).named(replicaID)
 
 }

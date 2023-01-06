@@ -85,7 +85,7 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
 //        given perm2: PermId[DeltaBufferRDT[L]] = DeltaBufferRDT.contextPermissions
 
         lwwInit.applyDelta {
-          MultiVersionRegister.syntax(DottedName(lwwInit.replicaID, lwwInit.state.map(_.repr))).write(TimedVal(
+          DottedName(lwwInit.replicaID, lwwInit.state.map(_.repr)).write(TimedVal(
             TaskData("<empty>"),
             0,
             lwwInit.replicaID,

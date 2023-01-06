@@ -25,7 +25,7 @@ object CausalLastWriterWins {
       current.repr.read.reduceOption(DecomposeLattice[TimedVal[A]].merge).map(x => x.value)
 
     def write(v: A)(using CausalMutationP, IdentifierP): C =
-      MultiVersionRegister.syntax(context.wrap(current.repr).named(replicaID)).write(TimedVal(v, replicaID)).anon.map(
+      context.wrap(current.repr).named(replicaID).write(TimedVal(v, replicaID)).anon.map(
         CausalLastWriterWins.apply
       ).mutator
 

@@ -3,7 +3,7 @@ package kofre.datatypes
 import kofre.base.{Bottom, DecomposeLattice, Id, Time}
 import kofre.dotted.DottedDecompose
 import kofre.syntax.PermIdMutate.withID
-import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper}
+import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, OpsTypes, PermQuery}
 
 case class Epoche[E](counter: Time, value: E)
 
