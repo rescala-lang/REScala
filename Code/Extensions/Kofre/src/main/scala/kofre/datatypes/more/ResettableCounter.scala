@@ -1,11 +1,10 @@
-package kofre.decompose.interfaces
+package kofre.datatypes.more
 
 import kofre.base.{Bottom, DecomposeLattice}
-import kofre.time.Dots
 import kofre.decompose.*
-import kofre.syntax.OpsSyntaxHelper
-import kofre.time.Dot
 import kofre.dotted.{DotFun, Dotted, DottedDecompose}
+import kofre.syntax.OpsSyntaxHelper
+import kofre.time.{Dot, Dots}
 
 /** An ResettableCounter (Resettable Counter/Add Wins Counter) is a Delta CRDT modeling a counter.
   *

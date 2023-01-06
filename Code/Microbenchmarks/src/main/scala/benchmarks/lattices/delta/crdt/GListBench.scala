@@ -1,8 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
-import kofre.decompose.interfaces.GrowOnlyList
+import kofre.datatypes.GrowOnlyList
 import org.openjdk.jmh.annotations._
-import kofre.decompose.interfaces.GrowOnlyList
 import kofre.deprecated.containers.DeltaBufferRDT
 
 import java.util.concurrent.TimeUnit

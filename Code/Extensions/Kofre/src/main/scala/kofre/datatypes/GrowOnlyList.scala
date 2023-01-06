@@ -1,9 +1,9 @@
-package kofre.decompose.interfaces
+package kofre.datatypes
 
 import kofre.base.{Bottom, DecomposeLattice}
-import kofre.decompose.*
+import kofre.datatypes.GrowOnlyList.Node
 import kofre.datatypes.{Epoche, TimedVal}
-import kofre.decompose.interfaces.GrowOnlyList.{GListElem, GListNode}
+import kofre.decompose.*
 import kofre.dotted.DottedDecompose
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper}
 
@@ -24,13 +24,14 @@ case class GrowOnlyList[E](innerContents: GrowOnlyList.Repr[E]) {
 }
 
 object GrowOnlyList {
-  sealed trait GListNode[+E]
-  case class GListHead()            extends GListNode[Nothing]
-  case class GListElem[E](value: E) extends GListNode[E]
+  enum Node[+E]:
+    case Head()            extends Node[Nothing]
+    case Elem[E](value: E) extends Node[E]
+  import Node.{Elem, Head}
 
   type Repr[E] = Map[
-    GListNode[TimedVal[E]],
-    GListElem[TimedVal[E]]
+    Node[TimedVal[E]],
+    Elem[TimedVal[E]]
   ]
 
   def empty[E]: GrowOnlyList[E] = GrowOnlyList(Map.empty)
@@ -50,18 +51,18 @@ object GrowOnlyList {
 
       /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
       override def decompose(state: GrowOnlyList[E]): Iterable[GrowOnlyList[E]] =
-        state.toList.map((edge: (GListNode[TimedVal[E]], GListElem[TimedVal[E]])) => GrowOnlyList(Map(edge)))
+        state.toList.map((edge: (Node[TimedVal[E]], Elem[TimedVal[E]])) => GrowOnlyList(Map(edge)))
 
       @tailrec
       private def insertEdge(
           state: GrowOnlyList[E],
-          edge: (GListNode[TimedVal[E]], GListElem[TimedVal[E]])
+          edge: (Node[TimedVal[E]], Elem[TimedVal[E]])
       ): GrowOnlyList[E] =
         edge match {
-          case (l, r @ GListElem(e1)) =>
+          case (l, r @ Elem(e1)) =>
             state.get(l) match {
               case None => GrowOnlyList(state.innerContents + edge)
-              case Some(next @ GListElem(e2)) =>
+              case Some(next @ Elem(e2)) =>
                 if (e1.laterThan(e2)) GrowOnlyList(state.innerContents + edge + (r -> next))
                 else insertEdge(state, next                                        -> r)
             }
@@ -71,7 +72,7 @@ object GrowOnlyList {
       private def insertRec(
           left: GrowOnlyList[E],
           right: GrowOnlyList[E],
-          current: GListNode[TimedVal[E]]
+          current: Node[TimedVal[E]]
       ): GrowOnlyList[E] =
         right.get(current) match {
           case None => left
@@ -101,9 +102,9 @@ object GrowOnlyList {
     @tailrec
     private def findNth(
         state: GrowOnlyList[E],
-        current: GListNode[TimedVal[E]],
+        current: Node[TimedVal[E]],
         i: Int
-    ): Option[GListNode[TimedVal[E]]] = {
+    ): Option[Node[TimedVal[E]]] = {
       if (i == 0) Some(current)
       else state.get(current) match {
         case None       => None
@@ -112,35 +113,35 @@ object GrowOnlyList {
     }
 
     def read(i: Int)(using QueryP): Option[E] =
-      findNth(current, GListHead(), i + 1).flatMap {
-        case GListHead()  => None
-        case GListElem(e) => Some(e.value)
+      findNth(current, Head(), i + 1).flatMap {
+        case Head()  => None
+        case Elem(e) => Some(e.value)
       }
 
     @tailrec
-    private def toListRec(state: GrowOnlyList[E], current: GListNode[TimedVal[E]], acc: ListBuffer[E]): ListBuffer[E] =
+    private def toListRec(state: GrowOnlyList[E], current: Node[TimedVal[E]], acc: ListBuffer[E]): ListBuffer[E] =
       state.get(current) match {
-        case None                       => acc
-        case Some(next @ GListElem(tv)) => toListRec(state, next, acc.append(tv.value))
+        case None                  => acc
+        case Some(next @ Elem(tv)) => toListRec(state, next, acc.append(tv.value))
       }
 
     def toList(using QueryP): List[E] =
-      toListRec(current, GListHead(), ListBuffer.empty[E]).toList
+      toListRec(current, Head(), ListBuffer.empty[E]).toList
 
     def toLazyList(using QueryP): LazyList[E] =
-      LazyList.unfold[E, GListNode[TimedVal[E]]](GListHead()) { node =>
+      LazyList.unfold[E, Node[TimedVal[E]]](Head()) { node =>
         current.get(node) match {
-          case None                       => None
-          case Some(next @ GListElem(tv)) => Some((tv.value, next))
+          case None                  => None
+          case Some(next @ Elem(tv)) => Some((tv.value, next))
         }
       }
 
     def size(using QueryP): Int = current.size
 
     def insert(i: Int, e: E)(using MutationIdP): C = {
-      GrowOnlyList(findNth(current, GListHead(), i) match {
+      GrowOnlyList(findNth(current, Head(), i) match {
         case None       => Map.empty
-        case Some(pred) => Map(pred -> GListElem(TimedVal(e, replicaID)))
+        case Some(pred) => Map(pred -> Elem(TimedVal(e, replicaID)))
       })
     }.mutator
 
@@ -148,19 +149,19 @@ object GrowOnlyList {
       if (elems.isEmpty)
         GrowOnlyList.empty[E]
       else
-        GrowOnlyList(findNth(current, GListHead(), i) match {
+        GrowOnlyList(findNth(current, Head(), i) match {
           case None => Map.empty
           case Some(after) =>
-            val order = elems.map(e => GListElem(TimedVal(e, replicaID)))
+            val order = elems.map(e => Elem(TimedVal(e, replicaID)): Elem[TimedVal[E]])
             Map((List(after) ++ order.init) zip order: _*)
         })
     }.mutator
 
     @tailrec
-    private def withoutRec(state: GrowOnlyList[E], current: GListNode[TimedVal[E]], elems: Set[E]): GrowOnlyList[E] =
+    private def withoutRec(state: GrowOnlyList[E], current: Node[TimedVal[E]], elems: Set[E]): GrowOnlyList[E] =
       state.get(current) match {
         case None => state
-        case Some(next @ GListElem(tv)) if elems.contains(tv.value) =>
+        case Some(next @ Elem(tv)) if elems.contains(tv.value) =>
           val edgeRemoved = state.get(next) match {
             case Some(nextnext) => state.removed(current).removed(next) + (current -> nextnext)
             case None           => state.removed(current).removed(next)
@@ -170,7 +171,7 @@ object GrowOnlyList {
         case Some(next) => withoutRec(state, next, elems)
       }
 
-    def without(elems: Set[E])(using MutationP): C = withoutRec(current, GListHead(), elems).mutator
+    def without(elems: Set[E])(using MutationP): C = withoutRec(current, Head(), elems).mutator
   }
 
 }

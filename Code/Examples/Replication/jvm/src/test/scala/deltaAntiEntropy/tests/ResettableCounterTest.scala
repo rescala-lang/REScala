@@ -2,8 +2,8 @@ package deltaAntiEntropy.tests
 
 import deltaAntiEntropy.tests.NetworkGenerators.*
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyCRDT, Network}
-import kofre.decompose.interfaces.ResettableCounter.RCounterSyntax
-import kofre.decompose.interfaces.ResettableCounter
+import kofre.datatypes.more.ResettableCounter
+import ResettableCounter.RCounterSyntax
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 import replication.JsoniterCodecs.*

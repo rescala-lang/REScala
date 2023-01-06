@@ -3,8 +3,7 @@ package kofre.datatypes
 import kofre.base.{Bottom, DecomposeLattice}
 import kofre.datatypes.{Epoche, TimedVal}
 import kofre.decompose.*
-import kofre.decompose.interfaces.GrowOnlyList
-import kofre.decompose.interfaces.GrowOnlyList.{GListAsUIJDLattice, GListSyntax}
+import GrowOnlyList.{GListAsUIJDLattice, GListSyntax}
 import kofre.dotted.{DotFun, Dotted, DottedDecompose, DottedLattice}
 import kofre.syntax.PermIdMutate.withID
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermIdMutate, PermMutate}

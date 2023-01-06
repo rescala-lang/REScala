@@ -2,20 +2,14 @@ package replication
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
-import kofre.base.Id
+import kofre.base.{Id, Time}
 import kofre.datatypes.RGA.RGANode
-import kofre.datatypes.{
-  AddWinsSet, EnableWinsFlag, Epoche, GrowOnlyMap, GrowOnlyCounter, ObserveRemoveMap, PosNegCounter, RGA, TimedVal,
-  TwoPhaseSet, GrowOnlySet
-}
-import kofre.decompose.interfaces.GrowOnlyList
-import kofre.decompose.interfaces.GrowOnlyList.{GListElem, GListNode}
+import kofre.datatypes.more.ResettableCounter
+import kofre.datatypes.{AddWinsSet, EnableWinsFlag, Epoche, GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, GrowOnlySet, ObserveRemoveMap, PosNegCounter, RGA, TimedVal, TwoPhaseSet}
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
-import kofre.decompose.interfaces.ResettableCounter
 import kofre.dotted.Dotted
 import kofre.protocol.AuctionInterface.AuctionData
 import kofre.time.{ArrayRanges, Dot, Dots}
-import kofre.base.Time
 
 import scala.annotation.nowarn
 

@@ -1,9 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
+import kofre.datatypes.more.ResettableCounter
 import org.openjdk.jmh.annotations._
-import kofre.decompose.interfaces.ResettableCounter.RCounter
-import kofre.decompose.interfaces.ResettableCounter.RCounterSyntax
-import kofre.decompose.interfaces.ResettableCounter
 import kofre.deprecated.containers.DeltaBufferRDT
 
 import java.util.concurrent.TimeUnit
