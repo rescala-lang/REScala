@@ -29,33 +29,34 @@ import kofre.time.{Dot, Dots}
   * for collaborative applications", see [[https://www.sciencedirect.com/science/article/pii/S0743731510002716?casa_token=lQaLin7aEvcAAAAA:Esc3h3WvkFHUcvhalTPPvV5HbJge91D4-2jyKiSlz8GBDjx31l4xvfH8DIstmQ973PVi46ckXHg here]]
   */
 
-case class RGA[E](order: Epoche[GrowOnlyList[Dot]], meta: DotFun[RGA.RGANode[E]])
-object RGA {
+case class ReplicatedList[E](order: Epoche[GrowOnlyList[Dot]], meta: DotFun[ReplicatedList.Node[E]])
+object ReplicatedList {
 
-  def empty[E]: RGA[E] = kofre.datatypes.RGA(Epoche.empty, DotFun.empty)
+  def empty[E]: ReplicatedList[E] = kofre.datatypes.ReplicatedList(Epoche.empty, DotFun.empty)
 
-  given rgaContext[E]: DottedDecompose[RGA[E]] = DottedDecompose.derived[RGA[E]]
+  given rgaContext[E]: DottedDecompose[ReplicatedList[E]] = DottedDecompose.derived[ReplicatedList[E]]
 
-  given bottom[E]: Bottom[RGA[E]] = new:
-    override def empty: RGA[E] = RGA.empty
+  given bottom[E]: Bottom[ReplicatedList[E]] = new:
+    override def empty: ReplicatedList[E] = ReplicatedList.empty
 
-  sealed trait RGANode[A]
-  case class Alive[A](v: TimedVal[A]) extends RGANode[A]
-  case class Dead[A]()                extends RGANode[A]
+  enum Node[A]:
+    case Alive[A](v: TimedVal[A]) extends Node[A]
+    case Dead[A]()                extends Node[A]
+  import Node.{Dead, Alive}
 
-  object RGANode {
-    implicit def RGANodeAsUIJDLattice[A]: DecomposeLattice[RGANode[A]] = new DecomposeLattice[RGANode[A]] {
-      override def lteq(left: RGANode[A], right: RGANode[A]): Boolean = (left, right) match {
+  object Node {
+    implicit def RGANodeAsUIJDLattice[A]: DecomposeLattice[Node[A]] = new DecomposeLattice[Node[A]] {
+      override def lteq(left: Node[A], right: Node[A]): Boolean = (left, right) match {
         case (Dead(), _)            => false
         case (_, Dead())            => true
         case (Alive(lv), Alive(rv)) => rv.laterThan(lv)
       }
 
       /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
-      override def decompose(state: RGANode[A]): Iterable[RGANode[A]] = List(state)
+      override def decompose(state: Node[A]): Iterable[Node[A]] = List(state)
 
       /** By assumption: associative, commutative, idempotent. */
-      override def merge(left: RGANode[A], right: RGANode[A]): RGANode[A] = (left, right) match {
+      override def merge(left: Node[A], right: Node[A]): Node[A] = (left, right) match {
         case (Alive(lv), Alive(rv)) => Alive(DecomposeLattice[TimedVal[A]].merge(lv, rv))
         case _                      => Dead()
       }
@@ -67,25 +68,25 @@ object RGA {
 
     def make(
         epoche: Epoche[GrowOnlyList[Dot]] = empty._1,
-        df: DotFun[RGANode[E]] = DotFun.empty,
+        df: DotFun[Node[E]] = DotFun.empty,
         cc: Dots = Dots.empty
-    ): Dotted[RGA[E]] = Dotted(RGA(epoche, df), cc)
+    ): Dotted[ReplicatedList[E]] = Dotted(ReplicatedList(epoche, df), cc)
   }
 
   private def deltaState[E]: DeltaStateFactory[E] = new DeltaStateFactory[E]
 
-  implicit class RGAOps[C, E](container: C)(using ArdtOpsContains[C, RGA[E]])
-      extends OpsSyntaxHelper[C, RGA[E]](container) {
+  implicit class RGAOps[C, E](container: C)(using ArdtOpsContains[C, ReplicatedList[E]])
+      extends OpsSyntaxHelper[C, ReplicatedList[E]](container) {
 
     def read(i: Int)(using QueryP): Option[E] = {
-      val RGA(fw, df) = current
+      val ReplicatedList(fw, df) = current
       fw.value.toLazyList.map(df.store).collect {
         case Alive(tv) => tv.value
       }.lift(i)
     }
 
     def size(using QueryP): Int = {
-      val RGA(_, df) = current
+      val ReplicatedList(_, df) = current
       df.values.count {
         case Dead()   => false
         case Alive(_) => true
@@ -93,19 +94,19 @@ object RGA {
     }
 
     def toList(using QueryP): List[E] = {
-      val RGA(fw, df) = current
+      val ReplicatedList(fw, df) = current
       new GListSyntax(fw.value).toList.map(df.store).collect {
         case Alive(tv) => tv.value
       }
     }
 
     def sequence(using QueryP): Long = {
-      val RGA(fw, _) = current
+      val ReplicatedList(fw, _) = current
       fw.counter
     }
 
-    private def findInsertIndex(state: RGA[E], n: Int): Option[Int] = state match {
-      case RGA(fw, df) =>
+    private def findInsertIndex(state: ReplicatedList[E], n: Int): Option[Int] = state match {
+      case ReplicatedList(fw, df) =>
         fw.value.toLazyList.zip(LazyList.from(1)).filter {
           case (dot, _) => df(dot) match {
               case Alive(_) => true
@@ -115,14 +116,14 @@ object RGA {
     }
 
     def insert(i: Int, e: E)(using CausalMutationP, IdentifierP): C = {
-      val RGA(fw, df) = current
-      val nextDot     = context.nextDot(replicaID)
+      val ReplicatedList(fw, df) = current
+      val nextDot                = context.nextDot(replicaID)
 
       findInsertIndex(current, i) match {
-        case None => Dotted(RGA.empty[E])
+        case None => Dotted(ReplicatedList.empty[E])
         case Some(glistInsertIndex) =>
           val glistDelta = fw.map(gl => GListSyntax(gl).insert(glistInsertIndex, nextDot)(using withID(replicaID)))
-          val dfDelta    = DotFun.empty[RGANode[E]] + (nextDot -> Alive(TimedVal(e, replicaID)))
+          val dfDelta    = DotFun.empty[Node[E]] + (nextDot -> Alive(TimedVal(e, replicaID)))
 
           deltaState[E].make(
             epoche = glistDelta,
@@ -133,19 +134,19 @@ object RGA {
     }.mutator
 
     def insertAll(i: Int, elems: Iterable[E])(using CausalMutationP, IdentifierP): C = {
-      val RGA(fw, df) = current
-      val nextDot     = context.nextDot(replicaID)
+      val ReplicatedList(fw, df) = current
+      val nextDot                = context.nextDot(replicaID)
 
       val nextDots = List.iterate(nextDot, elems.size) {
         case Dot(c, r) => Dot(c, r + 1)
       }
 
       findInsertIndex(current, i) match {
-        case None => Dotted(RGA.empty)
+        case None => Dotted(ReplicatedList.empty)
         case Some(glistInsertIndex) =>
           val glistDelta =
             fw.map(gl => GListSyntax(gl).insertAll(glistInsertIndex, nextDots)(using summon, withID(replicaID)))
-          val dfDelta = DotFun.empty[RGANode[E]] ++ (nextDots zip elems.map(e => Alive(TimedVal(e, replicaID))))
+          val dfDelta = DotFun.empty[Node[E]] ++ (nextDots zip elems.map(e => Alive(TimedVal(e, replicaID))))
 
           deltaState[E].make(
             epoche = glistDelta,
@@ -155,17 +156,17 @@ object RGA {
       }
     }.mutator
 
-    private def updateRGANode(state: RGA[E], i: Int, newNode: RGANode[E]): Dotted[RGA[E]] = {
-      val RGA(fw, df) = state
+    private def updateRGANode(state: ReplicatedList[E], i: Int, newNode: Node[E]): Dotted[ReplicatedList[E]] = {
+      val ReplicatedList(fw, df) = state
       fw.value.toLazyList.filter { dot =>
         df(dot) match {
           case Alive(_) => true
           case Dead()   => false
         }
       }.lift(i) match {
-        case None => Dotted(RGA.empty)
+        case None => Dotted(ReplicatedList.empty)
         case Some(d) =>
-          deltaState[E].make(df = DotFun.empty[RGANode[E]] + (d -> newNode))
+          deltaState[E].make(df = DotFun.empty[Node[E]] + (d -> newNode))
       }
     }
 
@@ -175,16 +176,16 @@ object RGA {
     def delete(i: Int)(using CausalMutationP, IdentifierP): C = updateRGANode(current, i, Dead[E]()).mutator
 
     private def updateRGANodeBy(
-        state: RGA[E],
+        state: ReplicatedList[E],
         cond: E => Boolean,
-        newNode: RGANode[E]
-    ): Dotted[RGA[E]] = {
-      val RGA(_, df) = state
+        newNode: Node[E]
+    ): Dotted[ReplicatedList[E]] = {
+      val ReplicatedList(_, df) = state
       val toUpdate = df.toList.collect {
         case (d, Alive(tv)) if cond(tv.value) => d
       }
 
-      val dfDelta = DotFun.empty[RGANode[E]] ++ toUpdate.map(_ -> newNode)
+      val dfDelta = DotFun.empty[Node[E]] ++ toUpdate.map(_ -> newNode)
 
       deltaState[E].make(df = DotFun(dfDelta))
     }
@@ -196,7 +197,7 @@ object RGA {
       updateRGANodeBy(current, cond, Dead[E]()).mutator
 
     def purgeTombstones()(using CausalMutationP, IdentifierP): C = {
-      val RGA(epoche, df) = current
+      val ReplicatedList(epoche, df) = current
       val toRemove = df.collect {
         case (dot, Dead()) => dot
       }.toSet

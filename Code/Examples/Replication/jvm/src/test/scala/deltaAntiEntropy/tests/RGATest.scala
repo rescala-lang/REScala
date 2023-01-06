@@ -4,7 +4,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tests.NetworkGenerators.*
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyCRDT, Network}
-import kofre.datatypes.RGA
+import kofre.datatypes.ReplicatedList
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 import replication.JsoniterCodecs.*
@@ -15,9 +15,9 @@ object RGAGenerators {
   def makeRGA[E](
       inserted: List[(Int, E)],
       removed: List[Int],
-      ae: AntiEntropy[RGA[E]]
-  ): AntiEntropyCRDT[RGA[E]] = {
-    val afterInsert = inserted.foldLeft(AntiEntropyCRDT[RGA[E]](ae)) {
+      ae: AntiEntropy[ReplicatedList[E]]
+  ): AntiEntropyCRDT[ReplicatedList[E]] = {
+    val afterInsert = inserted.foldLeft(AntiEntropyCRDT[ReplicatedList[E]](ae)) {
       case (rga, (i, e)) => rga.insert(i, e)
     }
 
@@ -26,7 +26,7 @@ object RGAGenerators {
     }
   }
 
-  def genRGA[E: JsonValueCodec](implicit e: Arbitrary[E]): Gen[AntiEntropyCRDT[RGA[E]]] = for {
+  def genRGA[E: JsonValueCodec](implicit e: Arbitrary[E]): Gen[AntiEntropyCRDT[ReplicatedList[E]]] = for {
     nInserted       <- Arbitrary.arbitrary[Byte].map(_.toInt.abs)
     insertedIndices <- Gen.containerOfN[List, Int](nInserted, Arbitrary.arbitrary[Int])
     insertedValues  <- Gen.containerOfN[List, E](nInserted, e.arbitrary)
@@ -34,14 +34,14 @@ object RGAGenerators {
   } yield {
     val network = new Network(0, 0, 0)
 
-    val ae = new AntiEntropy[RGA[E]]("a", network, mutable.Buffer())
+    val ae = new AntiEntropy[ReplicatedList[E]]("a", network, mutable.Buffer())
 
     makeRGA(insertedIndices zip insertedValues, removed, ae)
   }
 
   implicit def arbRGA[E: JsonValueCodec](implicit
       e: Arbitrary[E],
-  ): Arbitrary[AntiEntropyCRDT[RGA[E]]] =
+  ): Arbitrary[AntiEntropyCRDT[ReplicatedList[E]]] =
     Arbitrary(genRGA)
 }
 
@@ -51,7 +51,7 @@ class RGATest extends munit.ScalaCheckSuite {
   implicit val IntCodec: JsonValueCodec[Int] = JsonCodecMaker.make
 
   property("size, toList, read") {
-    forAll { (rga: AntiEntropyCRDT[RGA[Int]], readIdx: Int) =>
+    forAll { (rga: AntiEntropyCRDT[ReplicatedList[Int]], readIdx: Int) =>
       val listInitial: List[Int] = rga.toList
 
       assert(
@@ -67,7 +67,7 @@ class RGATest extends munit.ScalaCheckSuite {
 
   }
   property("insert") {
-    forAll { (rga: AntiEntropyCRDT[RGA[Int]], insertIdx: Int, insertValue: Int) =>
+    forAll { (rga: AntiEntropyCRDT[ReplicatedList[Int]], insertIdx: Int, insertValue: Int) =>
       val inserted = rga.insert(insertIdx, insertValue)
 
       assert(
@@ -82,7 +82,7 @@ class RGATest extends munit.ScalaCheckSuite {
 
   }
   property("delete") {
-    forAll { (rga: AntiEntropyCRDT[RGA[Int]], deleteIdx: Int) =>
+    forAll { (rga: AntiEntropyCRDT[ReplicatedList[Int]], deleteIdx: Int) =>
       val sizebefore = rga.size
       val listbefore = rga.toList
       val deleted    = rga.delete(deleteIdx)
@@ -99,7 +99,7 @@ class RGATest extends munit.ScalaCheckSuite {
 
   }
   property("update") {
-    forAll { (rga: AntiEntropyCRDT[RGA[Int]], updateIdx: Int, updateValue: Int) =>
+    forAll { (rga: AntiEntropyCRDT[ReplicatedList[Int]], updateIdx: Int, updateValue: Int) =>
       val updated = rga.update(updateIdx, updateValue)
 
       assert(
@@ -122,12 +122,12 @@ class RGATest extends munit.ScalaCheckSuite {
       (inserted: List[(Int, Int)], removed: List[Int], n1: Int, e1: Int, n2: Int, e2: Int) =>
         val network = new Network(0, 0, 0)
 
-        val aea = new AntiEntropy[RGA[Int]]("a", network, mutable.Buffer("b"))
-        val aeb = new AntiEntropy[RGA[Int]]("b", network, mutable.Buffer("a"))
+        val aea = new AntiEntropy[ReplicatedList[Int]]("a", network, mutable.Buffer("b"))
+        val aeb = new AntiEntropy[ReplicatedList[Int]]("b", network, mutable.Buffer("a"))
 
         val la0 = makeRGA(inserted, removed, aea)
         AntiEntropy.sync(aea, aeb)
-        val lb0 = AntiEntropyCRDT[RGA[Int]](aeb).processReceivedDeltas()
+        val lb0 = AntiEntropyCRDT[ReplicatedList[Int]](aeb).processReceivedDeltas()
 
         val size = la0.size
         val idx1 = if (size == 0) 0 else math.floorMod(n1, size)
@@ -159,12 +159,12 @@ class RGATest extends munit.ScalaCheckSuite {
     forAll { (inserted: List[(Int, Int)], removed: List[Int], n: Int, n1: Int, n2: Int) =>
       val network = new Network(0, 0, 0)
 
-      val aea = new AntiEntropy[RGA[Int]]("a", network, mutable.Buffer("b"))
-      val aeb = new AntiEntropy[RGA[Int]]("b", network, mutable.Buffer("a"))
+      val aea = new AntiEntropy[ReplicatedList[Int]]("a", network, mutable.Buffer("b"))
+      val aeb = new AntiEntropy[ReplicatedList[Int]]("b", network, mutable.Buffer("a"))
 
       val la0 = makeRGA(inserted, removed, aea)
       AntiEntropy.sync(aea, aeb)
-      val lb0 = AntiEntropyCRDT[RGA[Int]](aeb).processReceivedDeltas()
+      val lb0 = AntiEntropyCRDT[ReplicatedList[Int]](aeb).processReceivedDeltas()
 
       val idx = if (la0.size == 0) 0 else math.floorMod(n, la0.size)
 
@@ -212,12 +212,12 @@ class RGATest extends munit.ScalaCheckSuite {
     forAll { (inserted: List[(Int, Int)], removed: List[Int], n: Int, e1: Int, e2: Int) =>
       val network = new Network(0, 0, 0)
 
-      val aea = new AntiEntropy[RGA[Int]]("a", network, mutable.Buffer("b"))
-      val aeb = new AntiEntropy[RGA[Int]]("b", network, mutable.Buffer("a"))
+      val aea = new AntiEntropy[ReplicatedList[Int]]("a", network, mutable.Buffer("b"))
+      val aeb = new AntiEntropy[ReplicatedList[Int]]("b", network, mutable.Buffer("a"))
 
       val la0 = makeRGA(inserted, removed, aea)
       AntiEntropy.sync(aea, aeb)
-      val lb0 = AntiEntropyCRDT[RGA[Int]](aeb).processReceivedDeltas()
+      val lb0 = AntiEntropyCRDT[ReplicatedList[Int]](aeb).processReceivedDeltas()
 
       val idx = if (la0.size == 0) 0 else math.floorMod(n, la0.size)
 
@@ -241,12 +241,12 @@ class RGATest extends munit.ScalaCheckSuite {
     forAll { (inserted: List[(Int, Int)], removed: List[Int], n: Int, e: Int) =>
       val network = new Network(0, 0, 0)
 
-      val aea = new AntiEntropy[RGA[Int]]("a", network, mutable.Buffer("b"))
-      val aeb = new AntiEntropy[RGA[Int]]("b", network, mutable.Buffer("a"))
+      val aea = new AntiEntropy[ReplicatedList[Int]]("a", network, mutable.Buffer("b"))
+      val aeb = new AntiEntropy[ReplicatedList[Int]]("b", network, mutable.Buffer("a"))
 
       val la0 = makeRGA(inserted, removed, aea)
       AntiEntropy.sync(aea, aeb)
-      val lb0 = AntiEntropyCRDT[RGA[Int]](aeb).processReceivedDeltas()
+      val lb0 = AntiEntropyCRDT[ReplicatedList[Int]](aeb).processReceivedDeltas()
 
       val idx = if (la0.size == 0) 0 else math.floorMod(n, la0.size)
 
@@ -270,12 +270,12 @@ class RGATest extends munit.ScalaCheckSuite {
     forAll { (inserted: List[(Int, Int)], removed: List[Int], n: Int, e: Int) =>
       val network = new Network(0, 0, 0)
 
-      val aea = new AntiEntropy[RGA[Int]]("a", network, mutable.Buffer("b"))
-      val aeb = new AntiEntropy[RGA[Int]]("b", network, mutable.Buffer("a"))
+      val aea = new AntiEntropy[ReplicatedList[Int]]("a", network, mutable.Buffer("b"))
+      val aeb = new AntiEntropy[ReplicatedList[Int]]("b", network, mutable.Buffer("a"))
 
       val la0 = makeRGA(inserted, removed, aea)
       AntiEntropy.sync(aea, aeb)
-      val lb0 = AntiEntropyCRDT[RGA[Int]](aeb).processReceivedDeltas()
+      val lb0 = AntiEntropyCRDT[ReplicatedList[Int]](aeb).processReceivedDeltas()
 
       val idx = if (la0.size == 0) 0 else math.floorMod(n, la0.size)
 
@@ -304,14 +304,14 @@ class RGATest extends munit.ScalaCheckSuite {
           network: Network
       ) =>
         {
-          val aea = new AntiEntropy[RGA[Int]]("a", network, mutable.Buffer("b"))
-          val aeb = new AntiEntropy[RGA[Int]]("b", network, mutable.Buffer("a"))
+          val aea = new AntiEntropy[ReplicatedList[Int]]("a", network, mutable.Buffer("b"))
+          val aeb = new AntiEntropy[ReplicatedList[Int]]("b", network, mutable.Buffer("a"))
 
           val la0 = makeRGA(inserted, removed, aea)
           network.startReliablePhase()
           AntiEntropy.sync(aea, aeb)
           network.endReliablePhase()
-          val lb0 = AntiEntropyCRDT[RGA[Int]](aeb).processReceivedDeltas()
+          val lb0 = AntiEntropyCRDT[ReplicatedList[Int]](aeb).processReceivedDeltas()
 
           val la1 = {
             val inserted = insertedAB._1.foldLeft(la0) {

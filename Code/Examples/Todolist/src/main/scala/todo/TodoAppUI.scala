@@ -2,7 +2,7 @@ package todo
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import kofre.datatypes.RGA
+import kofre.datatypes.ReplicatedList
 import loci.registry.Binding
 import loci.serializer.jsoniterScala._
 import org.scalajs.dom.html.{Div, Input, LI}
@@ -25,7 +25,7 @@ import loci.serializer.jsoniterScala.given
 
 class TodoAppUI(val storagePrefix: String) {
 
-  val tasklistBinding = Binding[DeltaFor[RGA[TaskRef]] => Unit]("tasklist")
+  val tasklistBinding = Binding[DeltaFor[ReplicatedList[TaskRef]] => Unit]("tasklist")
   val tasklistReplicator = new ReplicationGroup(rescala.default, Todolist.registry, tasklistBinding)
 
   def getContents(): TypedTag[Div] = {
@@ -48,10 +48,10 @@ class TodoAppUI(val storagePrefix: String) {
     val taskrefs = TaskReferences(toggleAll.event, storagePrefix)
     val taskOps  = new TaskOps(taskrefs)
 
-    val deltaEvt = Evt[DottedName[RGA[TaskRef]]]()
+    val deltaEvt = Evt[DottedName[ReplicatedList[TaskRef]]]()
 
-    val tasksRDT: Signal[DeltaBufferRDT[RGA[TaskRef]]] =
-      Storing.storedAs(storagePrefix, DeltaBufferRDT(replicaId, RGA.empty[TaskRef])) { init =>
+    val tasksRDT: Signal[DeltaBufferRDT[ReplicatedList[TaskRef]]] =
+      Storing.storedAs(storagePrefix, DeltaBufferRDT(replicaId, ReplicatedList.empty[TaskRef])) { init =>
         Fold(init)(
           taskOps.handleCreateTodo(createTodo.event),
           taskOps.handleRemoveAll(removeAll.event),

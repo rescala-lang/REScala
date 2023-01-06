@@ -2,7 +2,7 @@ package kofre.dotted
 
 import kofre.base.Lattice.Operators
 import kofre.base.{Bottom, DecomposeLattice, Lattice}
-import kofre.datatypes.RGA
+import kofre.datatypes.ReplicatedList
 import kofre.decompose.interfaces
 import kofre.time.{Dot, Dots}
 

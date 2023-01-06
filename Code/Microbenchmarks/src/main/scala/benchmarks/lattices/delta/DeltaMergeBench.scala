@@ -1,6 +1,6 @@
 package benchmarks.lattices.delta
 
-import kofre.datatypes.RGA
+import kofre.datatypes.ReplicatedList
 import kofre.time.{Dots, Dot}
 import kofre.dotted.{DottedDecompose, Dotted}
 import org.openjdk.jmh.annotations
@@ -20,9 +20,9 @@ class DeltaMergeBench {
   @Param(Array("1", "10", "100", "1000"))
   var size: Long = _
 
-  var fullState: Dotted[RGA[Long]]         = _
-  var plusOneState: Dotted[RGA[Long]]      = _
-  var plusOneDeltaState: Dotted[RGA[Long]] = _
+  var fullState: Dotted[ReplicatedList[Long]]         = _
+  var plusOneState: Dotted[ReplicatedList[Long]]      = _
+  var plusOneDeltaState: Dotted[ReplicatedList[Long]] = _
 
   def makeCContext(replicaID: String): Dots = {
     val dots = (0L until size).map(Dot(replicaID.asId, _)).toSet
@@ -31,37 +31,37 @@ class DeltaMergeBench {
 
   @Setup
   def setup(): Unit = {
-    val baseState: Dotted[RGA[Long]] = Dotted(RGA.empty)
+    val baseState: Dotted[ReplicatedList[Long]] = Dotted(ReplicatedList.empty)
 
-    val deltaState: Dotted[RGA[Long]] =
+    val deltaState: Dotted[ReplicatedList[Long]] =
       baseState.named("".asId).insertAll(0, 0L to size).anon
-    fullState = DottedDecompose[RGA[Long]].merge(baseState, deltaState)
+    fullState = DottedDecompose[ReplicatedList[Long]].merge(baseState, deltaState)
 
     plusOneDeltaState = fullState.named("".asId).insert(0, size).anon
-    plusOneState = DottedDecompose[RGA[Long]].merge(fullState, plusOneDeltaState)
+    plusOneState = DottedDecompose[ReplicatedList[Long]].merge(fullState, plusOneDeltaState)
   }
 
   @Benchmark
-  def fullMerge: Dotted[RGA[Long]] = {
-    DottedDecompose[RGA[Long]].merge(fullState, plusOneState)
+  def fullMerge: Dotted[ReplicatedList[Long]] = {
+    DottedDecompose[ReplicatedList[Long]].merge(fullState, plusOneState)
   }
 
   @Benchmark
-  def fullDiff: Option[Dotted[RGA[Long]]] = {
-    DottedDecompose[RGA[Long]].diff(fullState, plusOneState)
+  def fullDiff: Option[Dotted[ReplicatedList[Long]]] = {
+    DottedDecompose[ReplicatedList[Long]].diff(fullState, plusOneState)
   }
 
   @Benchmark
-  def deltaMerge: Dotted[RGA[Long]] = {
-    DottedDecompose[RGA[Long]].diff(fullState, plusOneDeltaState) match {
+  def deltaMerge: Dotted[ReplicatedList[Long]] = {
+    DottedDecompose[ReplicatedList[Long]].diff(fullState, plusOneDeltaState) match {
       case Some(stateDiff) =>
-        DottedDecompose[RGA[Long]].merge(fullState, stateDiff)
+        DottedDecompose[ReplicatedList[Long]].merge(fullState, stateDiff)
       case None => fullState
     }
   }
 
   @Benchmark
-  def deltaMergeNoDiff: Dotted[RGA[Long]] = {
-    DottedDecompose[RGA[Long]].merge(fullState, plusOneDeltaState)
+  def deltaMergeNoDiff: Dotted[ReplicatedList[Long]] = {
+    DottedDecompose[ReplicatedList[Long]].merge(fullState, plusOneDeltaState)
   }
 }

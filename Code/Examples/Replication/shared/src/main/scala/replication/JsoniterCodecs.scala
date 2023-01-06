@@ -3,9 +3,9 @@ package replication
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import kofre.base.{Id, Time}
-import kofre.datatypes.RGA.RGANode
+import kofre.datatypes.ReplicatedList.Node
 import kofre.datatypes.more.ResettableCounter
-import kofre.datatypes.{AddWinsSet, EnableWinsFlag, Epoche, GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, GrowOnlySet, ObserveRemoveMap, PosNegCounter, RGA, TimedVal, TwoPhaseSet}
+import kofre.datatypes.{AddWinsSet, EnableWinsFlag, Epoche, GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, GrowOnlySet, ObserveRemoveMap, PosNegCounter, ReplicatedList, TimedVal, TwoPhaseSet}
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
 import kofre.dotted.Dotted
 import kofre.protocol.AuctionInterface.AuctionData
@@ -95,7 +95,7 @@ object JsoniterCodecs {
   /** RGA */
 
   @nowarn()
-  implicit def RGAStateCodec[E: JsonValueCodec]: JsonValueCodec[Dotted[RGA[E]]] = {
+  implicit def RGAStateCodec[E: JsonValueCodec]: JsonValueCodec[Dotted[ReplicatedList[E]]] = {
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
   }
 

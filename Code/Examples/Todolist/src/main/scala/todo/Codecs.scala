@@ -4,7 +4,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, Jso
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import kofre.base.Id
 import kofre.base.Id.asId
-import kofre.datatypes.{RGA, TimedVal}
+import kofre.datatypes.{ReplicatedList, TimedVal}
 import kofre.time.Dot
 import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegister
 import kofre.decompose.interfaces.LWWRegisterInterface
@@ -32,24 +32,24 @@ object Codecs {
     override def encodeKey(x: Id, out: JsonWriter): Unit = out.writeKey(Id.unwrap(x))
 
   @nowarn()
-  implicit val codecState: JsonValueCodec[Dotted[RGA[TaskRef]]] =
+  implicit val codecState: JsonValueCodec[Dotted[ReplicatedList[TaskRef]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
-  implicit val codecRGA: JsonValueCodec[DeltaBufferRDT[RGA[TaskRef]]] =
-    new JsonValueCodec[DeltaBufferRDT[RGA[TaskRef]]] {
+  implicit val codecRGA: JsonValueCodec[DeltaBufferRDT[ReplicatedList[TaskRef]]] =
+    new JsonValueCodec[DeltaBufferRDT[ReplicatedList[TaskRef]]] {
       override def decodeValue(
           in: JsonReader,
-          default: DeltaBufferRDT[RGA[TaskRef]]
-      ): DeltaBufferRDT[RGA[TaskRef]] = {
+          default: DeltaBufferRDT[ReplicatedList[TaskRef]]
+      ): DeltaBufferRDT[ReplicatedList[TaskRef]] = {
         val state = codecState.decodeValue(in, default.state)
-        new DeltaBufferRDT[RGA[TaskRef]](state, replicaId, List())
+        new DeltaBufferRDT[ReplicatedList[TaskRef]](state, replicaId, List())
       }
-      override def encodeValue(x: DeltaBufferRDT[RGA[TaskRef]], out: JsonWriter): Unit =
+      override def encodeValue(x: DeltaBufferRDT[ReplicatedList[TaskRef]], out: JsonWriter): Unit =
         codecState.encodeValue(x.state, out)
-      override def nullValue: DeltaBufferRDT[RGA[TaskRef]] = DeltaBufferRDT(replicaId, RGA.empty[TaskRef])
+      override def nullValue: DeltaBufferRDT[ReplicatedList[TaskRef]] = DeltaBufferRDT(replicaId, ReplicatedList.empty[TaskRef])
     }
 
-  implicit val transmittableList: IdenticallyTransmittable[DeltaFor[RGA[TaskRef]]] = IdenticallyTransmittable()
-  implicit val codectDeltaForTasklist: JsonValueCodec[DeltaFor[RGA[TaskRef]]]      = JsonCodecMaker.make
+  implicit val transmittableList: IdenticallyTransmittable[DeltaFor[ReplicatedList[TaskRef]]] = IdenticallyTransmittable()
+  implicit val codectDeltaForTasklist: JsonValueCodec[DeltaFor[ReplicatedList[TaskRef]]]      = JsonCodecMaker.make
 
   implicit val codecLwwState: JsonValueCodec[Dotted[DotFun[TimedVal[TaskData]]]] = JsonCodecMaker.make
 
