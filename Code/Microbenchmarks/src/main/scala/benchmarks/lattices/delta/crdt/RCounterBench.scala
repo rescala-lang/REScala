@@ -1,6 +1,6 @@
 package benchmarks.lattices.delta.crdt
 
-import kofre.datatypes.more.ResettableCounter
+import kofre.datatypes.alternatives.ResettableCounter
 import org.openjdk.jmh.annotations._
 import kofre.deprecated.containers.DeltaBufferRDT
 

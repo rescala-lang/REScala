@@ -1,8 +1,7 @@
 package kofre.datatypes
 
 import kofre.base.{Bottom, DecomposeLattice, Id}
-import kofre.datatypes.GrowOnlyMap
-import kofre.datatypes.ObserveRemoveMap
+import kofre.datatypes.{GrowOnlyMap, ObserveRemoveMap}
 import kofre.dotted.{DotMap, Dotted, DottedDecompose, DottedLattice, HasDots}
 import kofre.syntax.{ArdtOpsContains, DottedName, OpsSyntaxHelper}
 import kofre.time.{Dot, Dots}

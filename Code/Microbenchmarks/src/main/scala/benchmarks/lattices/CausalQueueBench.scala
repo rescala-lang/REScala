@@ -6,7 +6,7 @@ import kofre.rga.Sequence.RGA
 import kofre.rga.Sequence
 import kofre.rga.Sequence.RGAOps
 import kofre.base.Id.asId
-import kofre.datatypes.more.CausalQueue
+import kofre.datatypes.alternatives.CausalQueue
 
 import java.util.concurrent.TimeUnit
 

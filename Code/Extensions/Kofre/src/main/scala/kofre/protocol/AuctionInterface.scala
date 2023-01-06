@@ -1,7 +1,6 @@
 package kofre.protocol
 
 import kofre.base.{Bottom, DecomposeLattice}
-import kofre.decompose.*
 import kofre.protocol.AuctionInterface.Bid.User
 import kofre.datatypes.GrowOnlySet.syntax
 import kofre.datatypes.GrowOnlySet

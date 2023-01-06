@@ -1,8 +1,8 @@
 package kofre.datatypes
 
-import kofre.base.DecomposeLattice
-import kofre.base.Id
-import math.Ordering.Implicits.infixOrderingOps
+import kofre.base.{DecomposeLattice, Id}
+
+import scala.math.Ordering.Implicits.infixOrderingOps
 
 /** TimedVal is a case class for values that allows chronological ordering of values based on their time of creation.
   * In the case that two values from two different replicas have the exact same timestamp, the lexical ordering of the

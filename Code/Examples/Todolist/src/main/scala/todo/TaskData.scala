@@ -13,7 +13,7 @@ import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all.*
 import todo.Todolist.replicaId
 import Codecs.given
-import kofre.datatypes.more.MultiValueRegister
+import kofre.datatypes.alternatives.MultiValueRegister
 import kofre.deprecated.containers.DeltaBufferRDT
 import loci.serializer.jsoniterScala.given
 

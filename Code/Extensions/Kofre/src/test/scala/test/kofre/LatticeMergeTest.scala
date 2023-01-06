@@ -2,7 +2,7 @@ package test.kofre
 
 import kofre.base.{Time, Lattice}
 import kofre.datatypes.{LastWriterWins, ObserveRemoveSet}
-import kofre.datatypes.more.{CausalQueue, MultiValueRegister}
+import kofre.datatypes.alternatives.{CausalQueue, MultiValueRegister}
 import kofre.time.VectorClock
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}

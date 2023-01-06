@@ -4,7 +4,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, Jso
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import kofre.base.{Id, Time}
 import kofre.datatypes.ReplicatedList.Node
-import kofre.datatypes.more.ResettableCounter
+import kofre.datatypes.alternatives.ResettableCounter
 import kofre.datatypes.{AddWinsSet, EnableWinsFlag, Epoche, GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, GrowOnlySet, MultiVersionRegister, ObserveRemoveMap, PosNegCounter, ReplicatedList, TimedVal, TwoPhaseSet}
 import kofre.dotted.Dotted
 import kofre.protocol.AuctionInterface.AuctionData

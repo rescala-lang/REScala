@@ -1,6 +1,6 @@
 package test.kofre
 
-import kofre.datatypes.more.MultiValueRegister
+import kofre.datatypes.alternatives.MultiValueRegister
 import kofre.time.VectorClock
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}

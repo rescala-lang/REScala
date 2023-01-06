@@ -1,4 +1,4 @@
-package kofre.datatypes.more
+package kofre.datatypes.alternatives
 
 import kofre.base.Lattice.Operators
 import kofre.base.{Id, Lattice}

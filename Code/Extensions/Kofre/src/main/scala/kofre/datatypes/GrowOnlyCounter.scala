@@ -2,7 +2,6 @@ package kofre.datatypes
 
 import kofre.base.DecomposeLattice.*
 import kofre.base.{Bottom, DecomposeLattice, Id}
-import kofre.decompose.*
 import kofre.dotted.DottedDecompose
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermQuery}
 

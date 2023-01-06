@@ -19,8 +19,3 @@ object Id:
     val randomBytes = new Array[Byte](15)
     random.nextBytes(randomBytes)
     Base64.getEncoder.encodeToString(randomBytes)
-
-type Time = Long
-
-object Time:
-  def current(): Time = System.currentTimeMillis

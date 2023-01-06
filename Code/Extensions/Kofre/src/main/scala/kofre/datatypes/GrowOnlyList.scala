@@ -3,13 +3,12 @@ package kofre.datatypes
 import kofre.base.{Bottom, DecomposeLattice}
 import kofre.datatypes.GrowOnlyList.Node
 import kofre.datatypes.{Epoche, TimedVal}
-import kofre.decompose.*
 import kofre.dotted.DottedDecompose
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper}
-import math.Ordering.Implicits.infixOrderingOps
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
+import scala.math.Ordering.Implicits.infixOrderingOps
 
 /** A GrowOnlyList is a Delta CRDT modeling a grow-only list where list elements can neither be removed nor modified.
   *

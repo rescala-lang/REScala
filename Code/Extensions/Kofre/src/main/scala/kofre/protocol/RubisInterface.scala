@@ -1,7 +1,6 @@
 package kofre.protocol
 
 import kofre.base.{Bottom, DecomposeLattice}
-import kofre.decompose.*
 import kofre.datatypes.AddWinsSet.AWSetSyntax
 import kofre.datatypes.AddWinsSet
 import kofre.dotted.{DottedDecompose, Dotted}

@@ -2,8 +2,7 @@ package kofre.datatypes
 
 import kofre.base.{Bottom, DecomposeLattice}
 import kofre.datatypes.Epoche
-import kofre.decompose.*
-import kofre.dotted.{DottedDecompose, DotSet, Dotted, HasDots}
+import kofre.dotted.{DotSet, Dotted, DottedDecompose, HasDots}
 import kofre.syntax.OpsSyntaxHelper
 import kofre.time.Dots
 
