@@ -97,7 +97,7 @@ object GrowOnlyList {
         }
     }
 
-  implicit class GListSyntax[C, E](container: C)(using ArdtOpsContains[C, GrowOnlyList[E]])
+  implicit class syntax[C, E](container: C)(using ArdtOpsContains[C, GrowOnlyList[E]])
       extends OpsSyntaxHelper[C, GrowOnlyList[E]](container) {
 
     @tailrec
