@@ -5,7 +5,6 @@ import kofre.datatypes.{Epoche, TimedVal}
 import kofre.decompose.*
 import kofre.decompose.interfaces.GrowOnlyList
 import kofre.decompose.interfaces.GrowOnlyList.{GListAsUIJDLattice, GListSyntax}
-import kofre.decompose.interfaces.RCounterInterface.RCounter
 import kofre.dotted.{DotFun, Dotted, DottedDecompose, DottedLattice}
 import kofre.syntax.PermIdMutate.withID
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermIdMutate, PermMutate}
@@ -81,7 +80,7 @@ object RGA {
 
     def read(i: Int)(using QueryP): Option[E] = {
       val RGA(fw, df) = current
-      fw.value.toLazyList.map(df.repr).collect {
+      fw.value.toLazyList.map(df.store).collect {
         case Alive(tv) => tv.value
       }.lift(i)
     }
@@ -96,7 +95,7 @@ object RGA {
 
     def toList(using QueryP): List[E] = {
       val RGA(fw, df) = current
-      new GListSyntax(fw.value).toList.map(df.repr).collect {
+      new GListSyntax(fw.value).toList.map(df.store).collect {
         case Alive(tv) => tv.value
       }
     }

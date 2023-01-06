@@ -28,7 +28,7 @@ class DeltaAddWinsLastWriterWinsMap[K, V](
 
   def get(key: K): Option[V] =
     _state.store.get(key)
-      .map(_.repr.values)
+      .map(_.store.values)
       .getOrElse(Nil)
       .maxByOption(_._2)
       .map(_._1)

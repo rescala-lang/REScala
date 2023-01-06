@@ -14,11 +14,10 @@ import scala.annotation.targetName
   *
   * The delta CRDT paper calls this a DotFun
   */
-case class DotFun[A](repr: Map[Dot, A]) {
-  def dots: Dots = Dots.from(repr.keySet)
+case class DotFun[A](store: Map[Dot, A]) {
   @targetName("add")
-  def +(tup: (Dot, A)): DotFun[A] = DotFun(repr + tup)
-  export repr.{+ as _, repr as _, *}
+  def +(tup: (Dot, A)): DotFun[A] = DotFun(store + tup)
+  export store.{+ as _, repr as _, *}
 }
 
 object DotFun {
@@ -26,11 +25,11 @@ object DotFun {
   def empty[A]: DotFun[A] = DotFun(Map.empty)
 
   given perDotLattice[A: Lattice]: DottedLattice[DotFun[A]] = (left, right) => {
-    val fromLeft = left.store.repr.filter { case (dot, _) => !right.context.contains(dot) }
+    val fromLeft = left.store.store.filter { case (dot, _) => !right.context.contains(dot) }
 
-    DotFun(right.store.repr.foldLeft(fromLeft) {
+    DotFun(right.store.store.foldLeft(fromLeft) {
       case (m, (dot, r)) =>
-        left.store.repr.get(dot) match {
+        left.store.store.get(dot) match {
           case None =>
             if (left.context.contains(dot)) m
             else m.updated(dot, r)
@@ -40,7 +39,7 @@ object DotFun {
   }
 
   given dotStore[V]: HasDots[DotFun[V]] with {
-    override def dots(dotStore: DotFun[V]): Dots = Dots.from(dotStore.repr.keySet)
+    override def dots(dotStore: DotFun[V]): Dots = Dots.from(dotStore.store.keySet)
   }
 
   given perDotDecompose[A: DecomposeLattice]: DottedDecompose[DotFun[A]] =
@@ -49,8 +48,8 @@ object DotFun {
 
       override def lteq(left: Dotted[DotFun[A]], right: Dotted[DotFun[A]]): Boolean = {
         val firstCondition = left.context.forall(right.context.contains)
-        val secondCondition = right.store.repr.keySet.forall { k =>
-          left.store.repr.get(k).forall { l => DecomposeLattice[A].lteq(l, right.store.repr(k)) }
+        val secondCondition = right.store.store.keySet.forall { k =>
+          left.store.store.get(k).forall { l => DecomposeLattice[A].lteq(l, right.store.store(k)) }
         }
         val thirdCondition = {
           val diff = left.context.diff(dots(left.store))
@@ -63,7 +62,7 @@ object DotFun {
       override def decompose(state: Dotted[DotFun[A]]): Iterable[Dotted[DotFun[A]]] = {
         val added: Iterator[Dotted[DotFun[A]]] = for {
           d <- dots(state.store).iterator
-          v <- DecomposeLattice[A].decompose(state.store.repr(d))
+          v <- DecomposeLattice[A].decompose(state.store.store(d))
         } yield Dotted(DotFun(Map(d -> v)), Dots.single(d))
 
         val removed =

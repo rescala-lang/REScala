@@ -11,7 +11,7 @@ import kofre.datatypes.{
 import kofre.decompose.interfaces.GrowOnlyList
 import kofre.decompose.interfaces.GrowOnlyList.{GListElem, GListNode}
 import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
-import kofre.decompose.interfaces.RCounterInterface.RCounter
+import kofre.decompose.interfaces.ResettableCounter
 import kofre.dotted.Dotted
 import kofre.protocol.AuctionInterface.AuctionData
 import kofre.time.{ArrayRanges, Dot, Dots}
@@ -93,9 +93,9 @@ object JsoniterCodecs {
 
   implicit def PNCounterStateCodec: JsonValueCodec[PosNegCounter] = JsonCodecMaker.make
 
-  /** RCounter */
+  /** ResettableCounter */
 
-  implicit def RCounterStateCodec: JsonValueCodec[RCounter] =
+  implicit def RCounterStateCodec: JsonValueCodec[ResettableCounter] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   /** RGA */

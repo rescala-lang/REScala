@@ -1,9 +1,9 @@
 package benchmarks.lattices.delta.crdt
 
 import org.openjdk.jmh.annotations._
-import kofre.decompose.interfaces.RCounterInterface.RCounter
-import kofre.decompose.interfaces.RCounterInterface.RCounterSyntax
-import kofre.decompose.interfaces.RCounterInterface
+import kofre.decompose.interfaces.ResettableCounter.RCounter
+import kofre.decompose.interfaces.ResettableCounter.RCounterSyntax
+import kofre.decompose.interfaces.ResettableCounter
 import kofre.deprecated.containers.DeltaBufferRDT
 
 import java.util.concurrent.TimeUnit
@@ -20,13 +20,13 @@ class RCounterBench {
   @Param(Array("1", "10", "100", "1000"))
   var numReplicas: Int = _
 
-  var counter: DeltaBufferRDT[RCounter] = _
+  var counter: DeltaBufferRDT[ResettableCounter] = _
 
   @Setup
   def setup(): Unit = {
-    counter = (1 until numReplicas).foldLeft(DeltaBufferRDT("0", RCounterInterface.zero).increment()) {
+    counter = (1 until numReplicas).foldLeft(DeltaBufferRDT("0", ResettableCounter.zero).increment()) {
       case (c, n) =>
-        val delta = DeltaBufferRDT(n.toString, RCounterInterface.zero).increment().deltaBuffer.head
+        val delta = DeltaBufferRDT(n.toString, ResettableCounter.zero).increment().deltaBuffer.head
         c.applyDelta(delta)
     }
   }
@@ -35,14 +35,14 @@ class RCounterBench {
   def value(): Int = counter.value
 
   @Benchmark
-  def fresh(): DeltaBufferRDT[RCounter] = counter.fresh()
+  def fresh(): DeltaBufferRDT[ResettableCounter] = counter.fresh()
 
   @Benchmark
-  def increment(): DeltaBufferRDT[RCounter] = counter.increment()
+  def increment(): DeltaBufferRDT[ResettableCounter] = counter.increment()
 
   @Benchmark
-  def decrement(): DeltaBufferRDT[RCounter] = counter.decrement()
+  def decrement(): DeltaBufferRDT[ResettableCounter] = counter.decrement()
 
   @Benchmark
-  def reset(): DeltaBufferRDT[RCounter] = counter.reset()
+  def reset(): DeltaBufferRDT[ResettableCounter] = counter.reset()
 }
