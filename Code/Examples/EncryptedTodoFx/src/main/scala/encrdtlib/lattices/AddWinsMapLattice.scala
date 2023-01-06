@@ -1,4 +1,4 @@
-package kofre.encrdt
+package encrdtlib.lattices
 
 import kofre.base.{DecomposeLattice, Id, Lattice}
 import kofre.datatypes.AddWinsSet

@@ -3,7 +3,7 @@ package benchmarks.encrdt
 import benchmarks.encrdt.Codecs.awlwwmapJsonCodec
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToArray
 import com.google.crypto.tink.Aead
-import kofre.deprecated.containers.AddWinsLastWriterWinsMap
+import encrdtlib.container.AddWinsLastWriterWinsMap
 import kofre.time.VectorClock
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole

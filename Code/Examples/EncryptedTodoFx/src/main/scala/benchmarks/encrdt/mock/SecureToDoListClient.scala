@@ -4,10 +4,10 @@ import benchmarks.encrdt.mock.SecureToDoListClient.{ToDoMapLattice, mergeDecrypt
 import benchmarks.encrdt.todolist.ToDoEntry
 import com.google.crypto.tink.Aead
 import kofre.time.Dots
-import kofre.deprecated.containers.DeltaAddWinsLastWriterWinsMap.DeltaAddWinsLastWriterWinsMapLattice
+import encrdtlib.container.DeltaAddWinsLastWriterWinsMap.DeltaAddWinsLastWriterWinsMapLattice
 import benchmarks.encrdt.Codecs._
+import encrdtlib.container.DeltaAddWinsLastWriterWinsMap
 import encrdtlib.encrypted.deltabased.{DecryptedDeltaGroup, EncryptedDeltaGroup, TrustedReplica, UntrustedReplica}
-import kofre.deprecated.containers.DeltaAddWinsLastWriterWinsMap
 import kofre.dotted.{DotMap, Dotted}
 
 import java.util.UUID

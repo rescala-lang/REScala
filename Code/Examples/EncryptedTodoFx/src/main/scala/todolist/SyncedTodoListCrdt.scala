@@ -18,8 +18,8 @@ import scala.concurrent.duration.{DurationInt, MILLISECONDS}
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Try
 import benchmarks.encrdt.idFromString
+import encrdtlib.container.DeltaAddWinsLastWriterWinsMap
 import encrdtlib.sync.ConnectionManager
-import kofre.deprecated.containers.DeltaAddWinsLastWriterWinsMap
 
 class SyncedTodoListCrdt(val replicaId: String) {
 

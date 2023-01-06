@@ -10,7 +10,7 @@ import benchmarks.encrdt.todolist.{
 import com.google.crypto.tink.Aead
 import Codecs._
 import better.files._
-import kofre.deprecated.containers.DeltaAddWinsLastWriterWinsMap
+import encrdtlib.container.DeltaAddWinsLastWriterWinsMap
 
 import java.util.UUID
 

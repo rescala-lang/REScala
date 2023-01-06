@@ -1,11 +1,11 @@
-package kofre.deprecated.containers
+package encrdtlib.container
 
+import encrdtlib.container.DeltaAddWinsLastWriterWinsMap.{DeltaAddWinsLastWriterWinsMapLattice, deltaAddWinsMapLattice}
 import kofre.base.{Bottom, DecomposeLattice, Id, Lattice}
-import kofre.deprecated.containers.DeltaAddWinsLastWriterWinsMap.{DeltaAddWinsLastWriterWinsMapLattice, deltaAddWinsMapLattice}
 import kofre.dotted.{DotFun, DotMap, Dotted, DottedDecompose, DottedLattice}
-import kofre.encrdt.{DeltaAddWinsMap, DeltaMultiValueRegister}
-import kofre.encrdt.DeltaAddWinsMap.DeltaAddWinsMapLattice
-import kofre.encrdt.DeltaMultiValueRegister.DeltaMultiValueRegisterLattice
+import encrdtlib.lattices.DeltaAddWinsMap.DeltaAddWinsMapLattice
+import encrdtlib.lattices.{DeltaAddWinsMap, DeltaMultiValueRegister}
+import encrdtlib.lattices.DeltaMultiValueRegister.DeltaMultiValueRegisterLattice
 import kofre.primitives.LastWriterWins
 import kofre.time.Dot
 

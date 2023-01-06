@@ -9,8 +9,8 @@ import java.io.PrintWriter
 import java.nio.file.{Files, Path}
 import benchmarks.encrdt.Codecs.dotSetCodec
 import benchmarks.encrdt.idFromString
+import encrdtlib.container.DeltaAddWinsLastWriterWinsMap
 import encrdtlib.encrypted.deltabased.{EncryptedDeltaGroup, UntrustedReplica}
-import kofre.deprecated.containers.DeltaAddWinsLastWriterWinsMap
 
 class UntrustedDeltaBasedReplicaMock extends UntrustedReplica {
   override protected def prune(encryptedDeltaGroup: EncryptedDeltaGroup): Unit  = {}

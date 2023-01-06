@@ -1,8 +1,8 @@
-package kofre.encrdt
+package encrdtlib.lattices
 
+import encrdtlib.lattices.CausalTimeTag.lwwTimeOrd
 import kofre.base.Lattice.Operators
 import kofre.base.{Id, Lattice}
-import kofre.encrdt.CausalTimeTag.lwwTimeOrd
 import kofre.time.VectorClock
 
 import java.time.Instant

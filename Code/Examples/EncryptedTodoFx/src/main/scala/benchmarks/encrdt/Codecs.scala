@@ -3,9 +3,9 @@ package benchmarks.encrdt
 import benchmarks.encrdt.todolist.ToDoEntry
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
+import encrdtlib.container.{AddWinsLastWriterWinsMap, DeltaAddWinsLastWriterWinsMap}
 import kofre.base.{Id, Time}
 import kofre.base.Id.asId
-import kofre.deprecated.containers.{AddWinsLastWriterWinsMap, DeltaAddWinsLastWriterWinsMap}
 import kofre.time.{ArrayRanges, Dots, Dot}
 
 import java.util.UUID

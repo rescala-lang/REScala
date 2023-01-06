@@ -1,4 +1,4 @@
-package kofre.encrdt
+package encrdtlib.lattices
 
 import kofre.base.Bottom
 import kofre.dotted.HasDots.*
