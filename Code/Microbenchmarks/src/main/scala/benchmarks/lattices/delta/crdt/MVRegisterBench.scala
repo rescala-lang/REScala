@@ -1,10 +1,8 @@
 package benchmarks.lattices.delta.crdt
 
-import kofre.decompose.interfaces.MVRegisterInterface.MVRegister
-import org.openjdk.jmh.annotations._
-import kofre.decompose.interfaces.MVRegisterInterface.MVRegisterSyntax
-import kofre.decompose.interfaces.MVRegisterInterface
+import kofre.decompose.interfaces.MVRegister
 import kofre.deprecated.containers.DeltaBufferRDT
+import org.openjdk.jmh.annotations.*
 
 import java.util.concurrent.TimeUnit
 
@@ -24,9 +22,9 @@ class MVRegisterBench {
 
   @Setup
   def setup(): Unit = {
-    reg = (0 until numWrites).foldLeft(DeltaBufferRDT("-1", MVRegisterInterface.empty[Int])) {
+    reg = (0 until numWrites).foldLeft(DeltaBufferRDT("-1", MVRegister.empty[Int])) {
       case (r, i) =>
-        val delta = DeltaBufferRDT(i.toString, MVRegisterInterface.empty[Int]).write(i).deltaBuffer.head
+        val delta = DeltaBufferRDT(i.toString, MVRegister.empty[Int]).write(i).deltaBuffer.head
         r.applyDelta(delta)
     }
   }

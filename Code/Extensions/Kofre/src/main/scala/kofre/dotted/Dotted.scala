@@ -20,6 +20,7 @@ object Dotted {
 
   def latticeLift[L: DecomposeLattice: Bottom]: DecomposeLattice[Dotted[L]] = DecomposeLattice.derived
 
+
   given syntaxPermissions[L](using DottedLattice[L]): PermCausalMutate[Dotted[L], L]
     with {
     override def mutateContext(c: Dotted[L], delta: Dotted[L]): Dotted[L] = c merge delta

@@ -24,11 +24,11 @@ import scala.collection.mutable
   * @param neighbors The neighbors that this replica can communicate with directly
   * @tparam A State type of the CRDT that this anti-entropy algorithm is used with
   */
-class AntiEntropy[A: Bottom](
+class AntiEntropy[A](
     val replicaID: String,
     network: Network,
     neighbors: mutable.Buffer[String] = mutable.Buffer()
-)(implicit val codec: JsonValueCodec[Dotted[A]], withContextLattice: DottedDecompose[A])
+)(implicit bottom: Bottom[A], codec: JsonValueCodec[Dotted[A]], withContextLattice: DottedDecompose[A])
     extends IAntiEntropy[A] {
 
   override def state: Dotted[A] = fullState

@@ -1,9 +1,8 @@
 package benchmarks.lattices.delta.crdt
 
-import kofre.decompose.interfaces.LWWRegisterInterface.{LWWRegister, LWWRegisterSyntax}
-import org.openjdk.jmh.annotations._
-import kofre.decompose.interfaces.LWWRegisterInterface
+import kofre.decompose.interfaces.LWWRegister
 import kofre.deprecated.containers.DeltaBufferRDT
+import org.openjdk.jmh.annotations.*
 
 import java.util.concurrent.TimeUnit
 
@@ -21,8 +20,8 @@ class LWWRegisterBench {
 
   @Setup
   def setup(): Unit = {
-    empty = DeltaBufferRDT("a", LWWRegisterInterface.empty[Int])
-    full = DeltaBufferRDT("b", LWWRegisterInterface.empty[Int]).write(0)
+    empty = DeltaBufferRDT("a", LWWRegister.empty[Int])
+    full = DeltaBufferRDT("b", LWWRegister.empty[Int]).write(0)
   }
 
   @Benchmark

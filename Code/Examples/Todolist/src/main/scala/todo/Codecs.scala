@@ -6,8 +6,8 @@ import kofre.base.Id
 import kofre.base.Id.asId
 import kofre.datatypes.{ReplicatedList, TimedVal}
 import kofre.time.Dot
-import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegister
-import kofre.decompose.interfaces.LWWRegisterInterface
+import kofre.decompose.interfaces.LWWRegister.LWWRegister
+import kofre.decompose.interfaces.LWWRegister
 import kofre.deprecated.containers.DeltaBufferRDT
 import kofre.dotted.{DotFun, Dotted}
 import loci.transmitter.IdenticallyTransmittable
@@ -68,7 +68,7 @@ object Codecs {
       override def encodeValue(x: LwC, out: JsonWriter): Unit = codecLwwState.encodeValue(x.state, out)
       override def nullValue: LwC = {
         println(s"reading null")
-        DeltaBufferRDT(replicaId, LWWRegisterInterface.empty[TaskData])
+        DeltaBufferRDT(replicaId, LWWRegister.empty[TaskData])
       }
     }
 

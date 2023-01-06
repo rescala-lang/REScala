@@ -1,10 +1,10 @@
 package todo
 
 import kofre.datatypes.TimedVal
-import kofre.decompose.interfaces.LWWRegisterInterface
-import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax
-import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegister
-import kofre.decompose.interfaces.MVRegisterInterface.MVRegisterSyntax
+import kofre.decompose.interfaces.LWWRegister
+import kofre.decompose.interfaces.LWWRegister.LWWRegisterSyntax
+import kofre.decompose.interfaces.LWWRegister.LWWRegister
+import kofre.decompose.interfaces.MVRegister.syntax
 import kofre.dotted.Dotted
 import kofre.syntax.DottedName
 import loci.registry.Binding
@@ -80,13 +80,13 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
       taskID: String,
       task: Option[TaskData],
   ): TaskRefData = {
-    val lwwInit = DeltaBufferRDT(replicaId, LWWRegisterInterface.empty[TaskData])
+    val lwwInit = DeltaBufferRDT(replicaId, LWWRegister.empty[TaskData])
 
     val lww: DeltaBufferRDT[LWWRegister[TaskData]] = task match {
       case None => (
         MVRegisterSyntax(lwwInit).write(TimedVal(TaskData("<empty>"), lwwInit.replicaID, 0, 0))
       )
-      case Some(v) => LWWRegisterInterface.LWWRegisterSyntax(lwwInit).write(v)
+      case Some(v) => LWWRegister.LWWRegisterSyntax(lwwInit).write(v)
     }
 
     val edittext = Events.fromCallback[UIEvent] { inputChange =>
@@ -137,7 +137,7 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
 
     TaskReferences.taskReplicator.distributeDeltaRDT(taskID, crdt, deltaEvt)
 
-    val taskData = crdt.map(x => LWWRegisterInterface.LWWRegisterSyntax(x).read.getOrElse(TaskData(desc = "LWW Empty")))
+    val taskData = crdt.map(x => LWWRegister.LWWRegisterSyntax(x).read.getOrElse(TaskData(desc = "LWW Empty")))
 
     val removeButton =
       Events.fromCallback[UIEvent](cb => button(`class` := "destroy", onclick := cb))

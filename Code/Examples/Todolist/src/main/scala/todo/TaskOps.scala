@@ -1,7 +1,7 @@
 package todo
 
 import kofre.datatypes.ReplicatedList
-import kofre.decompose.interfaces.LWWRegisterInterface.LWWRegisterSyntax
+import kofre.decompose.interfaces.LWWRegister.LWWRegisterSyntax
 import kofre.deprecated.containers.DeltaBufferRDT
 import kofre.syntax.DottedName
 import rescala.default.*
