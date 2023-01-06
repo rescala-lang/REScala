@@ -1,7 +1,7 @@
 package test.kofre
 
 import kofre.base.{Time, Lattice}
-import kofre.datatypes.ORSet
+import kofre.datatypes.ObserveRemoveSet
 import kofre.time.VectorClock
 import kofre.primitives.{CausalQueue, LastWriterWins, MultiValueRegister}
 import org.scalacheck.Prop.*
@@ -10,7 +10,7 @@ import test.kofre.DataGenerator.{*, given}
 
 class VectorClockLattice extends LatticeMergeTest[VectorClock]
 class LWWLatice          extends LatticeMergeTest[LastWriterWins[Time, Int]]
-class OrSetLatice        extends LatticeMergeTest[ORSet[Int]]
+class OrSetLatice        extends LatticeMergeTest[ObserveRemoveSet[Int]]
 class MVRLattice         extends LatticeMergeTest[MultiValueRegister[Int]]
 
 abstract class LatticeMergeTest[A: Arbitrary: Lattice] extends munit.ScalaCheckSuite {

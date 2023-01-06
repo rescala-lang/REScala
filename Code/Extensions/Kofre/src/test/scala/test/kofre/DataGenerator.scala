@@ -36,11 +36,11 @@ object DataGenerator {
 
   given Lattice[Int] = _ max _
 
-  given arbORSet[A: Arbitrary]: Arbitrary[ORSet[A]] = Arbitrary(for {
+  given arbORSet[A: Arbitrary]: Arbitrary[ObserveRemoveSet[A]] = Arbitrary(for {
     added   <- Gen.nonEmptyListOf(Arbitrary.arbitrary[A])
     removed <- Gen.listOf(Gen.oneOf(added))
   } yield {
-    val a = added.foldLeft(ORSet.empty[A])((s, v) => Lattice.merge(s, s.add(v)))
+    val a = added.foldLeft(ObserveRemoveSet.empty[A])((s, v) => Lattice.merge(s, s.add(v)))
     removed.foldLeft(a)((s, v) => Lattice.merge(s, s.remove(v)))
   })
 
