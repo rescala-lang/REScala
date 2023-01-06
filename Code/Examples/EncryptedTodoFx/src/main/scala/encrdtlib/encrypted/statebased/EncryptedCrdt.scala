@@ -8,7 +8,7 @@ import kofre.base.Lattice
 import kofre.base.Lattice._
 import DecryptedState.vectorClockJsonCodec
 import benchmarks.encrdt.Codecs.{idKeyCodec, idCodec}
-import kofre.primitives.MultiValueRegister
+import kofre.datatypes.more.MultiValueRegister
 
 import scala.util.{Failure, Success, Try}
 

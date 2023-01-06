@@ -1,4 +1,4 @@
-package kofre.primitives
+package kofre.datatypes
 
 import kofre.base.Lattice
 

@@ -1,8 +1,7 @@
-package kofre.primitives
+package kofre.datatypes.more
 
-import kofre.base.Id
-import kofre.base.Lattice
 import kofre.base.Lattice.Operators
+import kofre.base.{Id, Lattice}
 import kofre.time.VectorClock
 
 import scala.annotation.tailrec

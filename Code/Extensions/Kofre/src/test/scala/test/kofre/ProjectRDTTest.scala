@@ -1,23 +1,21 @@
 package test.kofre
 
 import kofre.base.{Bottom, DecomposeLattice, Lattice}
-import kofre.datatypes.{EnableWinsFlag, PosNegCounter}
+import kofre.datatypes.{CausalLastWriterWins, EnableWinsFlag, PosNegCounter}
 import kofre.deprecated.containers.DeltaBufferRDT
-import kofre.decompose.interfaces.CausalLastWriterWinsRegister
 import kofre.dotted.{Dotted, DottedDecompose}
 import kofre.syntax.{ArdtOpsContains, DottedName, OpsSyntaxHelper}
-import kofre.decompose.interfaces.CausalLastWriterWinsRegister
 import test.kofre.Project.ProjectSyntax
 
 case class Project(
-    _name: CausalLastWriterWinsRegister[String],
+    _name: CausalLastWriterWins[String],
     _max_hours: PosNegCounter,
-    _account_name: CausalLastWriterWinsRegister[String],
+    _account_name: CausalLastWriterWins[String],
 ) derives DottedDecompose,
       Bottom
 
 object Project {
-  val empty: Project = Project(CausalLastWriterWinsRegister.empty, PosNegCounter.zero, CausalLastWriterWinsRegister.empty)
+  val empty: Project = Project(CausalLastWriterWins.empty, PosNegCounter.zero, CausalLastWriterWins.empty)
 
   implicit class ProjectSyntax[C](container: C)(using ArdtOpsContains[C, Project])
       extends OpsSyntaxHelper[C, Project](container) {
@@ -44,11 +42,11 @@ object Project {
     }
 
     def set_name(newName: String)(using CausalMutationP, IdentifierP): C = {
-      val updatedNameRegister: Dotted[CausalLastWriterWinsRegister[String]] = focus(_._name)(_.write(newName))
+      val updatedNameRegister: Dotted[CausalLastWriterWins[String]] = focus(_._name)(_.write(newName))
 
       val projectDelta = empty.copy(_name = updatedNameRegister.store)
       // Every syntax function that uses a CausalMutationP always returns both an updated context and an updated value.
-      // The updated context was produces by the `write` of the CausalLastWriterWinsRegister, while the value is the full project.
+      // The updated context was produces by the `write` of the CausalLastWriterWins, while the value is the full project.
       // Note, if there are multiple different things written within the same mutation,
       // it is important to pass the correct context along
       // – this is currently not handled by the focus method above
@@ -97,7 +95,7 @@ class ProjectRDTTest extends munit.FunSuite {
   }
 
   test("LWW delta buffer") {
-    val deltaBufferRdt    = DeltaBufferRDT("replica id", CausalLastWriterWinsRegister.empty[String]);
+    val deltaBufferRdt    = DeltaBufferRDT("replica id", CausalLastWriterWins.empty[String]);
     val newDeltaBufferRdt = deltaBufferRdt.write("test")
     assertEquals(newDeltaBufferRdt.read, Some("test"))
   }

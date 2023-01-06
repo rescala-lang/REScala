@@ -1,7 +1,6 @@
 package todo
 
-import kofre.datatypes.TimedVal
-import kofre.decompose.interfaces.{CausalLastWriterWinsRegister, MultiVersionRegister}
+import kofre.datatypes.{CausalLastWriterWins, MultiVersionRegister, TimedVal}
 import kofre.dotted.Dotted
 import kofre.syntax.{DottedName, PermCausalMutate, PermId}
 import loci.registry.Binding
@@ -14,8 +13,8 @@ import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all.*
 import todo.Todolist.replicaId
 import Codecs.given
+import kofre.datatypes.more.MultiValueRegister
 import kofre.deprecated.containers.DeltaBufferRDT
-import kofre.primitives.MultiValueRegister
 import loci.serializer.jsoniterScala.given
 
 import scala.Function.const
@@ -33,13 +32,13 @@ case class TaskData(
 case class TaskRef(id: String) {
   lazy val cached: TaskRefData = TaskReferences.lookupOrCreateTaskRef(id, None)
 
-  def task: Signal[DeltaBufferRDT[CausalLastWriterWinsRegister[TaskData]]] = cached.task
+  def task: Signal[DeltaBufferRDT[CausalLastWriterWins[TaskData]]] = cached.task
   def tag: TypedTag[LI]                                                    = cached.tag
   def removed: Event[String]                                               = cached.removed
 }
 
 final class TaskRefData(
-    val task: Signal[DeltaBufferRDT[CausalLastWriterWinsRegister[TaskData]]],
+    val task: Signal[DeltaBufferRDT[CausalLastWriterWins[TaskData]]],
     val tag: TypedTag[LI],
     val removed: Event[String],
     val id: String,
@@ -66,7 +65,7 @@ object TaskReferences {
     taskrefs
   }
 
-  val taskBinding    = Binding[DeltaFor[CausalLastWriterWinsRegister[TaskData]] => Unit]("todo task")
+  val taskBinding    = Binding[DeltaFor[CausalLastWriterWins[TaskData]] => Unit]("todo task")
   val taskReplicator = ReplicationGroup(rescala.default, Todolist.registry, taskBinding)
 }
 
@@ -76,13 +75,13 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
       taskID: String,
       task: Option[TaskData],
   ): TaskRefData = {
-    val lwwInit = DeltaBufferRDT(replicaId, CausalLastWriterWinsRegister.empty[TaskData])
+    val lwwInit = DeltaBufferRDT(replicaId, CausalLastWriterWins.empty[TaskData])
 
-    val lww: DeltaBufferRDT[CausalLastWriterWinsRegister[TaskData]] = task match {
+    val lww: DeltaBufferRDT[CausalLastWriterWins[TaskData]] = task match {
       case None =>
-//        type L = CausalLastWriterWinsRegister[TaskData]
+//        type L = CausalLastWriterWins[TaskData]
 //        given perm1: PermCausalMutate[DeltaBufferRDT[L], L] =
-//          DeltaBufferRDT.contextPermissions[CausalLastWriterWinsRegister[TaskData]]
+//          DeltaBufferRDT.contextPermissions[CausalLastWriterWins[TaskData]]
 //        given perm2: PermId[DeltaBufferRDT[L]] = DeltaBufferRDT.contextPermissions
 
         lwwInit.applyDelta {
@@ -91,7 +90,7 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
             0,
             lwwInit.replicaID,
             0
-          )).map(CausalLastWriterWinsRegister.apply)
+          )).map(CausalLastWriterWins.apply)
         }
       case Some(v) => lwwInit.write(v)
     }
@@ -116,9 +115,9 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
 
     val doneEv = toggleAll || doneClick.event
 
-    val deltaEvt = Evt[DottedName[CausalLastWriterWinsRegister[TaskData]]]()
+    val deltaEvt = Evt[DottedName[CausalLastWriterWins[TaskData]]]()
 
-    // type Carrier = CausalLastWriterWinsRegister.State[TaskData, DietMapCContext]
+    // type Carrier = CausalLastWriterWins.State[TaskData, DietMapCContext]
     //
     // val merge = implicitly[DecomposeLattice[Carrier]]
     //

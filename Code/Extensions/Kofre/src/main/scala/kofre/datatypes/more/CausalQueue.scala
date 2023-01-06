@@ -1,10 +1,9 @@
-package kofre.primitives
+package kofre.datatypes.more
 
-import kofre.base.Lattice
 import kofre.base.Lattice.Operators
-import kofre.base.Id
-import kofre.time.{Dots, Dot, VectorClock}
-import kofre.primitives.CausalQueue.QueueElement
+import kofre.base.{Id, Lattice}
+import kofre.datatypes.more.CausalQueue.QueueElement
+import kofre.time.{Dot, Dots, VectorClock}
 
 import scala.collection.immutable.Queue
 

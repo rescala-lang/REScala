@@ -1,9 +1,9 @@
 package test.kofre
 
 import kofre.base.{Bottom, DecomposeLattice, Lattice}
+import kofre.datatypes.more.{CausalQueue, MultiValueRegister}
 import kofre.time.VectorClock
-import kofre.datatypes.{GrowOnlyCounter, ObserveRemoveSet, PosNegCounter}
-import kofre.primitives.{CausalQueue, LastWriterWins, MultiValueRegister}
+import kofre.datatypes.{GrowOnlyCounter, LastWriterWins, ObserveRemoveSet, PosNegCounter}
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 import test.kofre.DataGenerator.{*, given}

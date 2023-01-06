@@ -1,6 +1,6 @@
 package benchmarks.lattices.delta.crdt
 
-import kofre.decompose.interfaces.MultiVersionRegister
+import kofre.datatypes.MultiVersionRegister
 import kofre.deprecated.containers.DeltaBufferRDT
 import org.openjdk.jmh.annotations.*
 

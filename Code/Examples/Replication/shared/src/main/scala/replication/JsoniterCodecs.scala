@@ -5,8 +5,7 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodec
 import kofre.base.{Id, Time}
 import kofre.datatypes.ReplicatedList.Node
 import kofre.datatypes.more.ResettableCounter
-import kofre.datatypes.{AddWinsSet, EnableWinsFlag, Epoche, GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, GrowOnlySet, ObserveRemoveMap, PosNegCounter, ReplicatedList, TimedVal, TwoPhaseSet}
-import kofre.decompose.interfaces.MultiVersionRegister
+import kofre.datatypes.{AddWinsSet, EnableWinsFlag, Epoche, GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, GrowOnlySet, MultiVersionRegister, ObserveRemoveMap, PosNegCounter, ReplicatedList, TimedVal, TwoPhaseSet}
 import kofre.dotted.Dotted
 import kofre.protocol.AuctionInterface.AuctionData
 import kofre.time.{ArrayRanges, Dot, Dots}

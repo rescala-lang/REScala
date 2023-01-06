@@ -1,12 +1,12 @@
 package benchmarks.lattices
 
 import kofre.base.Lattice.Operators
-import kofre.primitives.CausalQueue
 import org.openjdk.jmh.annotations._
 import kofre.rga.Sequence.RGA
 import kofre.rga.Sequence
 import kofre.rga.Sequence.RGAOps
 import kofre.base.Id.asId
+import kofre.datatypes.more.CausalQueue
 
 import java.util.concurrent.TimeUnit
 

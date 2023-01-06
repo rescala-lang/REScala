@@ -6,7 +6,7 @@ import kofre.dotted.{DotFun, DotMap, Dotted, DottedDecompose, DottedLattice}
 import encrdtlib.lattices.DeltaAddWinsMap.DeltaAddWinsMapLattice
 import encrdtlib.lattices.{DeltaAddWinsMap, DeltaMultiValueRegister}
 import encrdtlib.lattices.DeltaMultiValueRegister.DeltaMultiValueRegisterLattice
-import kofre.primitives.LastWriterWins
+import kofre.datatypes.LastWriterWins
 import kofre.time.Dot
 
 import java.time.Instant
@@ -37,7 +37,7 @@ class DeltaAddWinsLastWriterWinsMap[K, V](
     mutate(
       DeltaAddWinsMap.deltaMutate[K, DotFun[(
           V,
-          kofre.primitives.LastWriterWins[java.time.Instant, Id]
+          LastWriterWins[java.time.Instant, Id]
       )]](
         key,
         DotFun.empty,

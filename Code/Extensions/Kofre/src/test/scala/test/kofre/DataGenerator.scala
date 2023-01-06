@@ -5,7 +5,7 @@ import kofre.dotted.*
 import kofre.time.*
 import kofre.base.*
 import kofre.datatypes.*
-import kofre.primitives.*
+import kofre.datatypes.more.{CausalQueue, MultiValueRegister}
 
 object DataGenerator {
 
