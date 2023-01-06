@@ -8,9 +8,9 @@ import benchmarks.encrdt.todolist.{
   AddToDoItem, CompleteToDoItem, RemoveToDoItems, ToDoEntry, ToDoListInteraction, ToDoListInteractionGenerator
 }
 import com.google.crypto.tink.Aead
-import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap
 import Codecs._
 import better.files._
+import kofre.deprecated.containers.DeltaAddWinsLastWriterWinsMap
 
 import java.util.UUID
 

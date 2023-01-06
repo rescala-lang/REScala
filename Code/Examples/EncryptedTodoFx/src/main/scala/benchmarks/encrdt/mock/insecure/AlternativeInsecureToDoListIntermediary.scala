@@ -3,9 +3,9 @@ package benchmarks.encrdt.mock.insecure
 import benchmarks.encrdt.mock.IntermediarySizeInfo
 import benchmarks.encrdt.todolist.ToDoEntry
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
-import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap
-import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap.DeltaAddWinsLastWriterWinsMapLattice
+import kofre.deprecated.containers.DeltaAddWinsLastWriterWinsMap.DeltaAddWinsLastWriterWinsMapLattice
 import benchmarks.encrdt.idFromString
+import kofre.deprecated.containers.DeltaAddWinsLastWriterWinsMap
 import java.util.UUID
 
 class AlternativeInsecureToDoListIntermediary(val intermediaryReplicaId: String)(

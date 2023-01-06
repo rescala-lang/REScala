@@ -1,7 +1,7 @@
-package kofre.encrdt.lattices
+package kofre.encrdt
 
-import kofre.time.VectorClock
 import kofre.base.Lattice
+import kofre.time.VectorClock
 
 import scala.annotation.tailrec
 

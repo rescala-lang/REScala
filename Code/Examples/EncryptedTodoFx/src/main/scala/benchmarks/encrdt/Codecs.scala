@@ -5,8 +5,8 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, Jso
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import kofre.base.{Id, Time}
 import kofre.base.Id.asId
+import kofre.deprecated.containers.{AddWinsLastWriterWinsMap, DeltaAddWinsLastWriterWinsMap}
 import kofre.time.{ArrayRanges, Dots, Dot}
-import kofre.encrdt.crdts.{AddWinsLastWriterWinsMap, DeltaAddWinsLastWriterWinsMap}
 
 import java.util.UUID
 

@@ -1,7 +1,8 @@
-package kofre.encrdt.crdts
+package kofre.deprecated.containers
+
 import kofre.base.{Id, Lattice}
-import kofre.encrdt.crdts.AddWinsLastWriterWinsMap.LatticeType
-import kofre.encrdt.lattices.{AddWinsMapLattice, CausalTimeTag}
+import kofre.deprecated.containers.AddWinsLastWriterWinsMap.LatticeType
+import kofre.encrdt.{AddWinsMapLattice, CausalTimeTag}
 import kofre.primitives.LastWriterWins
 
 class AddWinsLastWriterWinsMap[K, V](

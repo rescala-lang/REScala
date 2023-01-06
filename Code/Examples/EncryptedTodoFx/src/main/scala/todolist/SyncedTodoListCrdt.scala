@@ -3,7 +3,6 @@ package todolist
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import kofre.time.Dot
-import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap
 import kofre.primitives.LastWriterWins
 import rescala.extra.encrdt.sync.ConnectionManager
 import scalafx.application.Platform
@@ -20,6 +19,8 @@ import scala.concurrent.duration.{DurationInt, MILLISECONDS}
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Try
 import benchmarks.encrdt.idFromString
+import kofre.deprecated.containers.DeltaAddWinsLastWriterWinsMap
+
 class SyncedTodoListCrdt(val replicaId: String) {
 
   private val crdt: DeltaAddWinsLastWriterWinsMap[UUID, TodoEntry] =

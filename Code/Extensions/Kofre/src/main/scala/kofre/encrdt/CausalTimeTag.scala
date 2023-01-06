@@ -1,8 +1,9 @@
-package kofre.encrdt.lattices
-import kofre.base.{Id, Lattice}
+package kofre.encrdt
+
 import kofre.base.Lattice.Operators
+import kofre.base.{Id, Lattice}
+import kofre.encrdt.CausalTimeTag.lwwTimeOrd
 import kofre.time.VectorClock
-import kofre.encrdt.lattices.CausalTimeTag.lwwTimeOrd
 
 import java.time.Instant
 import scala.math.PartialOrdering

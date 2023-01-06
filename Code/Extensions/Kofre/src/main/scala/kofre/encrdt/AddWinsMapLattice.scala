@@ -1,11 +1,11 @@
-package kofre.encrdt.lattices
+package kofre.encrdt
 
 import kofre.base.{DecomposeLattice, Id, Lattice}
-import kofre.time.Dots
 import kofre.datatypes.AddWinsSet
 import kofre.dotted.Dotted
-import kofre.syntax.{DottedName, PermIdMutate}
 import kofre.syntax.PermIdMutate.withID
+import kofre.syntax.{DottedName, PermIdMutate}
+import kofre.time.Dots
 
 case class AddWinsMapLattice[K, V](
     keys: Dotted[AddWinsSet[K]] = Dotted(AddWinsSet.empty[K]),

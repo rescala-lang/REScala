@@ -4,11 +4,11 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import com.google.crypto.tink.Aead
 import kofre.time.VectorClock
-import kofre.encrdt.lattices.MultiValueRegisterLattice
 import kofre.base.Lattice
 import kofre.base.Lattice._
 import rescala.extra.encrdt.encrypted.statebased.DecryptedState.vectorClockJsonCodec
 import benchmarks.encrdt.Codecs.{idKeyCodec, idCodec}
+import kofre.encrdt.MultiValueRegisterLattice
 
 import scala.util.{Failure, Success, Try}
 

@@ -1,17 +1,17 @@
-package kofre.encrdt.crdts
+package kofre.deprecated.containers
 
-import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap.{DeltaAddWinsLastWriterWinsMapLattice}
-import kofre.encrdt.crdts.DeltaAddWinsMap.DeltaAddWinsMapLattice
 import kofre.base.{Bottom, DecomposeLattice, Id, Lattice}
-import kofre.time.Dot
+import kofre.deprecated.containers.DeltaAddWinsLastWriterWinsMap.{DeltaAddWinsLastWriterWinsMapLattice, deltaAddWinsMapLattice}
 import kofre.dotted.{DotFun, DotMap, Dotted, DottedDecompose, DottedLattice}
+import kofre.encrdt.{DeltaAddWinsMap, DeltaMultiValueRegister}
+import kofre.encrdt.DeltaAddWinsMap.DeltaAddWinsMapLattice
+import kofre.encrdt.DeltaMultiValueRegister.DeltaMultiValueRegisterLattice
 import kofre.primitives.LastWriterWins
-import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap.deltaAddWinsMapLattice
-import kofre.encrdt.crdts.DeltaMultiValueRegister.DeltaMultiValueRegisterLattice
+import kofre.time.Dot
 
-import math.Ordering.Implicits.infixOrderingOps
 import java.time.Instant
 import scala.collection.mutable.ArrayBuffer
+import scala.math.Ordering.Implicits.infixOrderingOps
 
 class DeltaAddWinsLastWriterWinsMap[K, V](
     val replicaId: Id,

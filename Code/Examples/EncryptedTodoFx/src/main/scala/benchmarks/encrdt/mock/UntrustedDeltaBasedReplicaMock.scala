@@ -9,8 +9,8 @@ import rescala.extra.encrdt.encrypted.deltabased.{EncryptedDeltaGroup, Untrusted
 import java.io.PrintWriter
 import java.nio.file.{Files, Path}
 import benchmarks.encrdt.Codecs.dotSetCodec
-import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap
 import benchmarks.encrdt.idFromString
+import kofre.deprecated.containers.DeltaAddWinsLastWriterWinsMap
 
 class UntrustedDeltaBasedReplicaMock extends UntrustedReplica {
   override protected def prune(encryptedDeltaGroup: EncryptedDeltaGroup): Unit  = {}

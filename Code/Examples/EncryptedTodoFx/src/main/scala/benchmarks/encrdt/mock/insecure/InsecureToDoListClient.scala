@@ -4,7 +4,7 @@ import benchmarks.encrdt.mock.SecureToDoListClient.ToDoMapLattice
 import benchmarks.encrdt.mock.{SecureToDoListClient, ToDoListIntermediary}
 import benchmarks.encrdt.todolist.ToDoEntry
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToArray
-import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap
+import kofre.deprecated.containers.DeltaAddWinsLastWriterWinsMap
 import rescala.extra.encrdt.encrypted.deltabased.{DecryptedDeltaGroup, EncryptedDeltaGroup}
 
 import java.util.UUID

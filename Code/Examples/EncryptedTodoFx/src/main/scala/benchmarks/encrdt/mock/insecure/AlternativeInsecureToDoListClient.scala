@@ -4,8 +4,8 @@ import benchmarks.encrdt.mock.{DisseminationStats, ToDoListClient}
 import benchmarks.encrdt.mock.insecure.AlternativeInsecureToDoListClient.ToDoListState
 import benchmarks.encrdt.todolist.ToDoEntry
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToArray}
-import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap
-import kofre.encrdt.crdts.DeltaAddWinsLastWriterWinsMap.DeltaAddWinsLastWriterWinsMapLattice
+import kofre.deprecated.containers.DeltaAddWinsLastWriterWinsMap
+import DeltaAddWinsLastWriterWinsMap.DeltaAddWinsLastWriterWinsMapLattice
 
 import java.util.UUID
 
