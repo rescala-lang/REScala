@@ -129,7 +129,7 @@ object DeltaSequence {
             if (v == Vertex.start) merged
             else merged.addRightEdge(oldPositions(v), v)
         }
-        val vertices = left.map(_.vertices) dotmerge right.map(_.vertices)
+        val vertices = left.map(_.vertices) mergePartial right.map(_.vertices)
         val values   = Lattice.merge(left.store.values, right.store.values)(Lattice.mapLattice(noMapConflictsLattice))
 
         DeltaSequence(

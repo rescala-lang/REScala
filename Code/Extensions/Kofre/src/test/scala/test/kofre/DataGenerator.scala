@@ -4,7 +4,6 @@ import org.scalacheck.{Arbitrary, Gen}
 import kofre.dotted.*
 import kofre.time.*
 import kofre.base.*
-import kofre.sets.*
 import kofre.datatypes.*
 import kofre.primitives.*
 

@@ -3,7 +3,7 @@ package test.kofre
 import kofre.base.DecomposeLattice
 import kofre.time.{ArrayRanges, Dots, Dot}
 import kofre.dotted.DottedDecompose.*
-import kofre.dotted.{DottedDecompose, DottedLattice, DotFun, DotMap, DotSet, Dotted, HasDots}
+import kofre.dotted.{DottedDecompose, DottedLattice, DotFun, DotMap, DotSet, Dotted}
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 import test.kofre.DataGenerator.*
@@ -74,7 +74,7 @@ class DotMapTest extends munit.ScalaCheckSuite {
         if (dotsA.intersect(dotsB).isEmpty) {
           (dmA.keySet union dmB.keySet).foreach { k =>
             val vMerged =
-              Dotted(dmA.getOrElse(k, DotSet.empty), (ccA)) dotmerge
+              Dotted(dmA.getOrElse(k, DotSet.empty), (ccA)) mergePartial
               Dotted(dmB.getOrElse(k, DotSet.empty), (ccB))
 
             assert(

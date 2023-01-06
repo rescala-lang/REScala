@@ -1,7 +1,6 @@
-package kofre.sets
+package kofre.datatypes
 
-import kofre.base.Lattice
-import kofre.base.Id
+import kofre.base.{Id, Lattice}
 
 /** Implementation of an Observed-Remove Set similar to the one described by Shapiro et al. (2011) */
 case class ORSet[A](entries: Map[Id, A], tombstones: Set[Id]) {

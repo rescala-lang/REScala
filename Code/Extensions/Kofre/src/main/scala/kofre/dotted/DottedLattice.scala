@@ -21,6 +21,10 @@ import scala.annotation.targetName
   * Separating into a [[mergePartial]] allows extracting the context into the outermost layer reducing metadata overhead.
   */
 trait DottedLattice[A] extends Lattice[Dotted[A]] {
+
+  /** Partial merging combines the stored values, but ignores the context.
+    * Thus enabling nested merging of values, without merging context multiple times.
+    */
   def mergePartial(left: Dotted[A], right: Dotted[A]): A
 
   def merge(left: Dotted[A], right: Dotted[A]): Dotted[A] =
@@ -32,7 +36,10 @@ trait DottedLattice[A] extends Lattice[Dotted[A]] {
   override def lteq(left: Dotted[A], right: Dotted[A]): Boolean =
     if !(left.context <= right.context) then false
     else super.lteq(left, right)
-  extension (left: Dotted[A]) def dotmerge(right: Dotted[A]): A = mergePartial(left, right)
+
+  extension (left: Dotted[A])
+    @targetName("mergePartialExtension")
+    def mergePartial(right: Dotted[A]): A = this.mergePartial(left, right)
 }
 
 object DottedLattice {
