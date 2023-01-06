@@ -6,8 +6,7 @@ import kofre.base.Id
 import kofre.base.Id.asId
 import kofre.datatypes.{ReplicatedList, TimedVal}
 import kofre.time.Dot
-import kofre.decompose.interfaces.LWWRegister.LWWRegister
-import kofre.decompose.interfaces.LWWRegister
+import kofre.decompose.interfaces.CausalLastWriterWinsRegister
 import kofre.deprecated.containers.DeltaBufferRDT
 import kofre.dotted.{DotFun, Dotted}
 import loci.transmitter.IdenticallyTransmittable
@@ -53,23 +52,12 @@ object Codecs {
 
   implicit val codecLwwState: JsonValueCodec[Dotted[DotFun[TimedVal[TaskData]]]] = JsonCodecMaker.make
 
-  implicit val codecDeltaForLWW: JsonValueCodec[DeltaFor[LWWRegister[TaskData]]] = JsonCodecMaker.make
+  implicit val codecDeltaForLWW: JsonValueCodec[DeltaFor[CausalLastWriterWinsRegister[TaskData]]] = JsonCodecMaker.make
 
-  implicit val transmittableDeltaForLWW: IdenticallyTransmittable[DeltaFor[LWWRegister[TaskData]]] =
+  implicit val transmittableDeltaForLWW: IdenticallyTransmittable[DeltaFor[CausalLastWriterWinsRegister[TaskData]]] =
     IdenticallyTransmittable()
 
-  type LwC = DeltaBufferRDT[LWWRegister[TaskData]]
-  implicit val codecLww: JsonValueCodec[LwC] =
-    new JsonValueCodec[LwC] {
-      override def decodeValue(in: JsonReader, default: LwC): LwC = {
-        val state: Dotted[LWWRegister[TaskData]] = codecLwwState.decodeValue(in, default.state)
-        new DeltaBufferRDT[LWWRegister[TaskData]](state, replicaId, List())
-      }
-      override def encodeValue(x: LwC, out: JsonWriter): Unit = codecLwwState.encodeValue(x.state, out)
-      override def nullValue: LwC = {
-        println(s"reading null")
-        DeltaBufferRDT(replicaId, LWWRegister.empty[TaskData])
-      }
-    }
+  type LwC = DeltaBufferRDT[CausalLastWriterWinsRegister[TaskData]]
+  implicit val codecLww: JsonValueCodec[LwC] = JsonCodecMaker.make
 
 }

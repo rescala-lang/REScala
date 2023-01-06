@@ -1,13 +1,15 @@
 package kofre.datatypes
 
 import kofre.base.{Bottom, DecomposeLattice}
+import kofre.datatypes.GrowOnlyList.{GListAsUIJDLattice, GListSyntax}
 import kofre.datatypes.{Epoche, TimedVal}
 import kofre.decompose.*
-import GrowOnlyList.{GListAsUIJDLattice, GListSyntax}
 import kofre.dotted.{DotFun, Dotted, DottedDecompose, DottedLattice}
 import kofre.syntax.PermIdMutate.withID
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermIdMutate, PermMutate}
 import kofre.time.{Dot, Dots}
+
+import scala.math.Ordering.Implicits.infixOrderingOps
 
 /** An RGA (Replicated Growable Array) is a Delta CRDT modeling a list.
   *
@@ -42,14 +44,14 @@ object ReplicatedList {
   enum Node[A]:
     case Alive[A](v: TimedVal[A]) extends Node[A]
     case Dead[A]()                extends Node[A]
-  import Node.{Dead, Alive}
+  import Node.{Alive, Dead}
 
   object Node {
     implicit def RGANodeAsUIJDLattice[A]: DecomposeLattice[Node[A]] = new DecomposeLattice[Node[A]] {
       override def lteq(left: Node[A], right: Node[A]): Boolean = (left, right) match {
         case (Dead(), _)            => false
         case (_, Dead())            => true
-        case (Alive(lv), Alive(rv)) => rv.laterThan(lv)
+        case (Alive(lv), Alive(rv)) => rv > lv
       }
 
       /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */

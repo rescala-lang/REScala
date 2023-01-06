@@ -15,6 +15,7 @@ import scala.annotation.targetName
   * The delta CRDT paper calls this a DotFun
   */
 case class DotFun[A](store: Map[Dot, A]) {
+  def dots: Dots = DotFun.dotStore.dots(this)
   @targetName("add")
   def +(tup: (Dot, A)): DotFun[A] = DotFun(store + tup)
   export store.{+ as _, repr as _, *}

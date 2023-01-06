@@ -29,6 +29,7 @@ object CRDTInterface {
       override def context(c: B): Dots = c.state.context
     }
 
+
   def fullPermissions[L: DecomposeLattice: Bottom, B <: CRDTInterface[L, B]]: PermIdMutate[B, L] =
     new PermIdMutate[B, L] {
       override def replicaId(c: B): Id       = c.replicaID

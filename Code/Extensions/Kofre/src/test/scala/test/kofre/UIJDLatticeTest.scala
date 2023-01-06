@@ -1,8 +1,6 @@
 package test.kofre
 
 import kofre.base.DecomposeLattice.{*, given}
-import kofre.decompose.interfaces.LexCounterInterface.LexPair
-import kofre.decompose.interfaces.LexCounterInterface.LexPair.*
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 
@@ -338,86 +336,5 @@ class PairAsDecomposeLatticeTest extends munit.ScalaCheckSuite {
   }
 }
 
-object LexPairGenerators {
-  def genLexPair[A, B](implicit arbA: Arbitrary[A], arbB: Arbitrary[B]): Gen[LexPair[A, B]] =
-    for {
-      a <- arbA.arbitrary
-      b <- arbB.arbitrary
-    } yield LexPair(a, b)
 
-  implicit def arbLexPair[A, B](implicit
-      arbA: Arbitrary[A],
-      arbB: Arbitrary[B]
-  ): Arbitrary[LexPair[A, B]] =
-    Arbitrary(genLexPair)
-}
 
-class LexPairAsDecomposeLatticeTest extends munit.ScalaCheckSuite {
-  import LexPairGenerators.*
-
-  property("leq") {
-    forAll { (a: LexPair[Set[Int], Set[Int]], b: LexPair[Set[Int], Set[Int]], c: LexPair[Set[Int], Set[Int]]) =>
-      assert(
-        LexPairAsUIJDLattice[Set[Int], Set[Int]].lteq(a, a),
-        s"leq should be reflexive, but $a is not leq $a"
-      )
-
-      assert(
-        !(LexPairAsUIJDLattice[Set[Int], Set[Int]].lteq(a, b) && LexPairAsUIJDLattice[Set[Int], Set[Int]].lteq(
-          b,
-          c
-        )) || LexPairAsUIJDLattice[Set[Int], Set[Int]].lteq(a, c),
-        s"leq should be transitive, but $a leq $b and $b leq $c and $a is not leq $c"
-      )
-    }
-  }
-
-  property("merge") {
-    forAll {
-      (a: LexPair[Set[Int], Set[Int]], b: LexPair[Set[Int], Set[Int]], c: LexPair[Set[Int], Set[Int]]) =>
-        val mergeAB    = LexPairAsUIJDLattice[Set[Int], Set[Int]].merge(a, b)
-        val mergeTwice = LexPairAsUIJDLattice[Set[Int], Set[Int]].merge(mergeAB, b)
-
-        assertEquals(
-          mergeTwice,
-          mergeAB,
-          s"merge should be idempotent, but $mergeTwice does not equal $mergeAB"
-        )
-
-        val mergeBA = LexPairAsUIJDLattice[Set[Int], Set[Int]].merge(b, a)
-
-        assertEquals(
-          mergeBA,
-          mergeAB,
-          s"merge should be commutative, but $mergeBA does not equal $mergeAB"
-        )
-
-        val mergeAB_C = LexPairAsUIJDLattice[Set[Int], Set[Int]].merge(mergeAB, c)
-        val mergeBC   = LexPairAsUIJDLattice[Set[Int], Set[Int]].merge(b, c)
-        val mergeA_BC = LexPairAsUIJDLattice[Set[Int], Set[Int]].merge(a, mergeBC)
-
-        assertEquals(
-          mergeA_BC,
-          mergeAB_C,
-          s"merge should be associative, but $mergeA_BC does not equal $mergeAB_C"
-        )
-    }
-  }
-
-  property("decompose") {
-    forAll { (m: LexPair[Set[Int], Set[Int]]) =>
-      val decomposed = LexPairAsUIJDLattice[Set[Int], Set[Int]].decompose(m)
-      val merged     = decomposed.reduceOption(LexPairAsUIJDLattice[Set[Int], Set[Int]].merge)
-
-      merged match {
-        case None =>
-        case Some(x) =>
-          assertEquals(
-            x,
-            m,
-            s"merging the atoms produced by decompose should yield the original value, but $x does not equal $m"
-          )
-      }
-    }
-  }
-}

@@ -21,6 +21,7 @@ class DeltaBufferRDT[State](
   ): DeltaBufferRDT[State] =
     new DeltaBufferRDT[State](state, replicaID, deltaBuffer)
 
+
   override def applyDelta(delta: DottedName[State])(implicit
       u: DecomposeLattice[Dotted[State]]
   ): DeltaBufferRDT[State] =

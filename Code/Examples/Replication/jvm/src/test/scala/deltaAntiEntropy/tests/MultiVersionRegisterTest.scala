@@ -5,7 +5,7 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tests.NetworkGenerators.*
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyCRDT, Network}
 import kofre.base.DecomposeLattice
-import kofre.decompose.interfaces.MVRegister
+import kofre.decompose.interfaces.MultiVersionRegister
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 import replication.JsoniterCodecs.*
@@ -17,16 +17,16 @@ object MVRegisterGenerators {
   def genMVRegister[A: DecomposeLattice](implicit
       a: Arbitrary[A],
       cA: JsonValueCodec[A],
-  ): Gen[AntiEntropyCRDT[MVRegister[A]]] = for {
+  ): Gen[AntiEntropyCRDT[MultiVersionRegister[A]]] = for {
     values <- Gen.containerOf[List, A](a.arbitrary)
     nClear <- Gen.posNum[Short]
   } yield {
     val network = new Network(0, 0, 0)
-    val ae      = new AntiEntropy[MVRegister[A]]("a", network, mutable.Buffer())
+    val ae      = new AntiEntropy[MultiVersionRegister[A]]("a", network, mutable.Buffer())
 
     val ops = Random.shuffle(values.indices ++ List.fill(nClear.toInt)(-1))
 
-    ops.foldLeft(AntiEntropyCRDT[MVRegister[A]](ae)) {
+    ops.foldLeft(AntiEntropyCRDT[MultiVersionRegister[A]](ae)) {
       case (r, -1) => r.clear()
       case (r, n)  => r.write(values(n))
     }
@@ -35,17 +35,17 @@ object MVRegisterGenerators {
   implicit def arbMVRegister[A: DecomposeLattice](implicit
       a: Arbitrary[A],
       cA: JsonValueCodec[A],
-  ): Arbitrary[AntiEntropyCRDT[MVRegister[A]]] =
+  ): Arbitrary[AntiEntropyCRDT[MultiVersionRegister[A]]] =
     Arbitrary(genMVRegister)
 }
 
-class MVRegisterTest extends munit.ScalaCheckSuite {
+class MultiVersionRegisterTest extends munit.ScalaCheckSuite {
   import MVRegisterGenerators.*
 
   implicit val intCodec: JsonValueCodec[Int] = JsonCodecMaker.make
 
   property("write") {
-    forAll { (reg: AntiEntropyCRDT[MVRegister[Int]], v: Int) =>
+    forAll { (reg: AntiEntropyCRDT[MultiVersionRegister[Int]], v: Int) =>
       val written = reg.write(v)
 
       assert(
@@ -55,7 +55,7 @@ class MVRegisterTest extends munit.ScalaCheckSuite {
     }
   }
   property("clear") {
-    forAll { (reg: AntiEntropyCRDT[MVRegister[Int]]) =>
+    forAll { (reg: AntiEntropyCRDT[MultiVersionRegister[Int]]) =>
       val cleared = reg.clear()
 
       assert(
@@ -68,11 +68,11 @@ class MVRegisterTest extends munit.ScalaCheckSuite {
     forAll { (vA: Int, vB: Int) =>
       val network = new Network(0, 0, 0)
 
-      val aea = new AntiEntropy[MVRegister[Int]]("a", network, mutable.Buffer("b"))
-      val aeb = new AntiEntropy[MVRegister[Int]]("b", network, mutable.Buffer("a"))
+      val aea = new AntiEntropy[MultiVersionRegister[Int]]("a", network, mutable.Buffer("b"))
+      val aeb = new AntiEntropy[MultiVersionRegister[Int]]("b", network, mutable.Buffer("a"))
 
-      val ra0 = AntiEntropyCRDT[MVRegister[Int]](aea).write(vA)
-      val rb0 = AntiEntropyCRDT[MVRegister[Int]](aeb).write(vB)
+      val ra0 = AntiEntropyCRDT[MultiVersionRegister[Int]](aea).write(vA)
+      val rb0 = AntiEntropyCRDT[MultiVersionRegister[Int]](aeb).write(vB)
 
       AntiEntropy.sync(aea, aeb)
 
@@ -93,11 +93,11 @@ class MVRegisterTest extends munit.ScalaCheckSuite {
     forAll { (v: Int) =>
       val network = new Network(0, 0, 0)
 
-      val aea = new AntiEntropy[MVRegister[Int]]("a", network, mutable.Buffer("b"))
-      val aeb = new AntiEntropy[MVRegister[Int]]("b", network, mutable.Buffer("a"))
+      val aea = new AntiEntropy[MultiVersionRegister[Int]]("a", network, mutable.Buffer("b"))
+      val aeb = new AntiEntropy[MultiVersionRegister[Int]]("b", network, mutable.Buffer("a"))
 
-      val ra0 = AntiEntropyCRDT[MVRegister[Int]](aea).write(v)
-      val rb0 = AntiEntropyCRDT[MVRegister[Int]](aeb).clear()
+      val ra0 = AntiEntropyCRDT[MultiVersionRegister[Int]](aea).write(v)
+      val rb0 = AntiEntropyCRDT[MultiVersionRegister[Int]](aeb).clear()
 
       AntiEntropy.sync(aea, aeb)
 
@@ -117,17 +117,17 @@ class MVRegisterTest extends munit.ScalaCheckSuite {
   property("convergence") {
     forAll {
       (valuesA: List[Int], nClearA: Short, valuesB: List[Int], nClearB: Short, network: Network) =>
-        val aea = new AntiEntropy[MVRegister[Int]]("a", network, mutable.Buffer("b"))
-        val aeb = new AntiEntropy[MVRegister[Int]]("b", network, mutable.Buffer("a"))
+        val aea = new AntiEntropy[MultiVersionRegister[Int]]("a", network, mutable.Buffer("b"))
+        val aeb = new AntiEntropy[MultiVersionRegister[Int]]("b", network, mutable.Buffer("a"))
 
         val opsA = Random.shuffle(valuesA.indices ++ List.fill(nClearA.toInt)(-1))
         val opsB = Random.shuffle(valuesB.indices ++ List.fill(nClearB.toInt)(-1))
 
-        val ra0 = opsA.foldLeft(AntiEntropyCRDT[MVRegister[Int]](aea)) {
+        val ra0 = opsA.foldLeft(AntiEntropyCRDT[MultiVersionRegister[Int]](aea)) {
           case (r, -1) => r.clear()
           case (r, n)  => r.write(valuesA(n))
         }
-        val rb0 = opsB.foldLeft(AntiEntropyCRDT[MVRegister[Int]](aeb)) {
+        val rb0 = opsB.foldLeft(AntiEntropyCRDT[MultiVersionRegister[Int]](aeb)) {
           case (r, -1) => r.clear()
           case (r, n)  => r.write(valuesB(n))
         }

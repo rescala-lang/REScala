@@ -6,6 +6,7 @@ import kofre.datatypes.{Epoche, TimedVal}
 import kofre.decompose.*
 import kofre.dotted.DottedDecompose
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper}
+import math.Ordering.Implicits.infixOrderingOps
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
@@ -63,7 +64,7 @@ object GrowOnlyList {
             state.get(l) match {
               case None => GrowOnlyList(state.innerContents + edge)
               case Some(next @ Elem(e2)) =>
-                if (e1.laterThan(e2)) GrowOnlyList(state.innerContents + edge + (r -> next))
+                if (e1 > e2) GrowOnlyList(state.innerContents + edge + (r -> next))
                 else insertEdge(state, next                                        -> r)
             }
         }

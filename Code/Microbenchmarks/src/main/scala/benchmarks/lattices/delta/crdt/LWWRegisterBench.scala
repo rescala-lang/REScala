@@ -1,6 +1,6 @@
 package benchmarks.lattices.delta.crdt
 
-import kofre.decompose.interfaces.LWWRegister
+import kofre.decompose.interfaces.CausalLastWriterWinsRegister
 import kofre.deprecated.containers.DeltaBufferRDT
 import org.openjdk.jmh.annotations.*
 
@@ -15,13 +15,13 @@ import java.util.concurrent.TimeUnit
 @State(Scope.Thread)
 class LWWRegisterBench {
 
-  var empty: DeltaBufferRDT[LWWRegister[Int]] = _
-  var full: DeltaBufferRDT[LWWRegister[Int]]  = _
+  var empty: DeltaBufferRDT[CausalLastWriterWinsRegister[Int]] = _
+  var full: DeltaBufferRDT[CausalLastWriterWinsRegister[Int]]  = _
 
   @Setup
   def setup(): Unit = {
-    empty = DeltaBufferRDT("a", LWWRegister.empty[Int])
-    full = DeltaBufferRDT("b", LWWRegister.empty[Int]).write(0)
+    empty = DeltaBufferRDT("a", CausalLastWriterWinsRegister.empty[Int])
+    full = DeltaBufferRDT("b", CausalLastWriterWinsRegister.empty[Int]).write(0)
   }
 
   @Benchmark
@@ -31,20 +31,20 @@ class LWWRegisterBench {
   def readFull(): Option[Int] = full.read
 
   @Benchmark
-  def writeEmpty(): DeltaBufferRDT[LWWRegister[Int]] = empty.write(1)
+  def writeEmpty(): DeltaBufferRDT[CausalLastWriterWinsRegister[Int]] = empty.write(1)
 
   @Benchmark
-  def writeFull(): DeltaBufferRDT[LWWRegister[Int]] = full.write(1)
+  def writeFull(): DeltaBufferRDT[CausalLastWriterWinsRegister[Int]] = full.write(1)
 
   @Benchmark
-  def mapEmpty(): DeltaBufferRDT[LWWRegister[Int]] = empty.map(_ + 1)
+  def mapEmpty(): DeltaBufferRDT[CausalLastWriterWinsRegister[Int]] = empty.map(_ + 1)
 
   @Benchmark
-  def mapFull(): DeltaBufferRDT[LWWRegister[Int]] = full.map(_ + 1)
+  def mapFull(): DeltaBufferRDT[CausalLastWriterWinsRegister[Int]] = full.map(_ + 1)
 
   @Benchmark
-  def clearEmpty(): DeltaBufferRDT[LWWRegister[Int]] = empty.clear()
+  def clearEmpty(): DeltaBufferRDT[CausalLastWriterWinsRegister[Int]] = empty.clear()
 
   @Benchmark
-  def clearFull(): DeltaBufferRDT[LWWRegister[Int]] = full.clear()
+  def clearFull(): DeltaBufferRDT[CausalLastWriterWinsRegister[Int]] = full.clear()
 }

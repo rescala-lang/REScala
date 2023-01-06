@@ -17,7 +17,6 @@ import scalatags.JsDom.tags2.section
 import scalatags.JsDom.{Attr, TypedTag}
 import todo.Codecs.given
 import todo.Todolist.replicaId
-import kofre.decompose.interfaces.LWWRegister.LWWRegisterSyntax
 import kofre.deprecated.containers.DeltaBufferRDT
 import kofre.dotted.Dotted
 import kofre.syntax.DottedName
@@ -66,7 +65,7 @@ class TodoAppUI(val storagePrefix: String) {
 
     val tasksList: Signal[List[TaskRef]] = tasksRDT.map { _.toList }
     val tasksData: Signal[List[TaskData]] =
-      Signal.dynamic { tasksList.value.flatMap(l => new LWWRegisterSyntax(l.task.value).read) }
+      Signal.dynamic { tasksList.value.flatMap(l => l.task.value.read) }
     val taskTags: Signal[List[TypedTag[LI]]] = Signal { tasksList.value.map(_.tag) }
 
     val largeheader = window.location.hash.drop(1)

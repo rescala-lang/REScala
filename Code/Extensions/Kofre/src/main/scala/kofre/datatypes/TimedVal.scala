@@ -12,28 +12,27 @@ import math.Ordering.Implicits.infixOrderingOps
   * Instead of the default constructor, it is recommended that you use the apply method of the companion object which
   * automatically fills in the timestamp and nanoTime using System.currentTimeMillis() and System.nanoTime() respectively.
   */
-case class TimedVal[A](value: A, replicaID: Id, nanoTime: Long, timestamp: Long) {
-  def laterThan(other: TimedVal[A]): Boolean =
-    this.timestamp > other.timestamp ||
-    this.timestamp == other.timestamp &&
-    (
-      this.replicaID > other.replicaID ||
-      this.replicaID == other.replicaID && this.nanoTime > other.nanoTime
-    )
-}
+case class TimedVal[A](value: A, timestamp: Long, replicaID: Id, nanoTime: Long)
 
 object TimedVal {
+
+  given ordering[A]: Ordering[TimedVal[A]] = (left, right) =>
+    Ordering.Tuple3[Long, String, Long].compare(
+      Tuple.fromProductTyped(left).tail.asInstanceOf,
+      Tuple.fromProductTyped(right).tail.asInstanceOf
+    )
+
   def apply[A](value: A, replicaID: Id): TimedVal[A] =
-    TimedVal(value, replicaID, System.nanoTime(), System.currentTimeMillis())
+    TimedVal(value, System.currentTimeMillis(), replicaID, System.nanoTime())
 
   implicit def decomposeLattice[A]: DecomposeLattice[TimedVal[A]] = new DecomposeLattice[TimedVal[A]] {
-    override def lteq(left: TimedVal[A], right: TimedVal[A]): Boolean = !left.laterThan(right)
+    override def lteq(left: TimedVal[A], right: TimedVal[A]): Boolean = left <= right
 
     /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
     override def decompose(state: TimedVal[A]): Iterable[TimedVal[A]] = List(state)
 
     /** By assumption: associative, commutative, idempotent. */
     override def merge(left: TimedVal[A], right: TimedVal[A]): TimedVal[A] =
-      if (left.laterThan(right)) left else right
+      if lteq(left, right) then left else right
   }
 }
