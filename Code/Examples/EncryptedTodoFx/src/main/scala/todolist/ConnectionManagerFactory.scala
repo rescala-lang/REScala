@@ -1,7 +1,7 @@
 package todolist
 
-import rescala.extra.encrdt.sync.ConnectionManager
-import rescala.extra.encrdt.sync.p2p.P2PConnectionManager
+import encrdtlib.sync.ConnectionManager
+import encrdtlib.sync.p2p.P2PConnectionManager
 import todolist.SyncedTodoListCrdt.{StateType, stateCodec}
 
 object ConnectionManagerFactory {

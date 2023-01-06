@@ -1,4 +1,4 @@
-package rescala.extra.encrdt.encrypted.deltabased
+package encrdtlib.encrypted.deltabased
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToArray}
 import com.google.crypto.tink.Aead

@@ -1,6 +1,6 @@
 package benchmarks.encrdt.mock
 
-import rescala.extra.encrdt.encrypted.deltabased.{DeltaPruning, EncryptedDeltaGroup, UntrustedReplica}
+import encrdtlib.encrypted.deltabased.{DeltaPruning, EncryptedDeltaGroup, UntrustedReplica}
 
 class ToDoListIntermediary extends UntrustedReplica with DeltaPruning with IntermediarySizeInfo {
   def sizeInBytes: Long = {

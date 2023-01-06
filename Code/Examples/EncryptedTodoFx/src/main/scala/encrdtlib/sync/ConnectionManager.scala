@@ -1,4 +1,4 @@
-package rescala.extra.encrdt.sync
+package encrdtlib.sync
 
 import java.net.URI
 

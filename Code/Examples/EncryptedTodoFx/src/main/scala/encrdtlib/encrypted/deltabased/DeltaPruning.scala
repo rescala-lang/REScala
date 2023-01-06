@@ -1,4 +1,4 @@
-package rescala.extra.encrdt.encrypted.deltabased
+package encrdtlib.encrypted.deltabased
 
 import kofre.time.Dots
 

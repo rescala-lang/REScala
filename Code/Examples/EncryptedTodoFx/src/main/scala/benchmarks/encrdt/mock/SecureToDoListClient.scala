@@ -5,10 +5,8 @@ import benchmarks.encrdt.todolist.ToDoEntry
 import com.google.crypto.tink.Aead
 import kofre.time.Dots
 import kofre.deprecated.containers.DeltaAddWinsLastWriterWinsMap.DeltaAddWinsLastWriterWinsMapLattice
-import rescala.extra.encrdt.encrypted.deltabased.{
-  DecryptedDeltaGroup, EncryptedDeltaGroup, TrustedReplica, UntrustedReplica
-}
 import benchmarks.encrdt.Codecs._
+import encrdtlib.encrypted.deltabased.{DecryptedDeltaGroup, EncryptedDeltaGroup, TrustedReplica, UntrustedReplica}
 import kofre.deprecated.containers.DeltaAddWinsLastWriterWinsMap
 import kofre.dotted.{DotMap, Dotted}
 

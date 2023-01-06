@@ -7,7 +7,7 @@ import kofre.deprecated.containers.AddWinsLastWriterWinsMap
 import kofre.time.VectorClock
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
-import rescala.extra.encrdt.encrypted.statebased.DecryptedState.vectorClockJsonCodec
+import encrdtlib.encrypted.statebased.DecryptedState.vectorClockJsonCodec
 
 import java.util.concurrent.TimeUnit
 

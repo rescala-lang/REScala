@@ -1,9 +1,8 @@
-package rescala.extra.encrdt.encrypted.statebased
+package encrdtlib.encrypted.statebased
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.Aead
 import kofre.time.VectorClock
-import rescala.extra.encrdt.encrypted.statebased.EncryptedState
 import kofre.base.Lattice.Operators
 import kofre.base.Lattice
 

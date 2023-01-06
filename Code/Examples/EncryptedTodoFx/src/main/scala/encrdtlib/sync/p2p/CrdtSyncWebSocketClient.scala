@@ -1,8 +1,7 @@
-package rescala.extra.encrdt.sync.p2p
+package encrdtlib.sync.p2p
 
 import org.eclipse.jetty.websocket.client.{ClientUpgradeRequest, WebSocketClient}
-import rescala.extra.encrdt.sync.p2p.CrdtSyncWebSocketHandler
-import rescala.extra.encrdt.sync.p2p.P2PConnectionManager.REPLICAID_HEADER
+import P2PConnectionManager.REPLICAID_HEADER
 
 import java.net.URI
 import java.time.Duration

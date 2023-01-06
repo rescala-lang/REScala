@@ -4,9 +4,9 @@ import benchmarks.encrdt.Codecs.{deltaAwlwwmapJsonCodec, dotSetCodec}
 import benchmarks.encrdt.mock.UntrustedDeltaBasedReplicaMock
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToArray
 import com.google.crypto.tink.Aead
+import encrdtlib.encrypted.deltabased.DecryptedDeltaGroup
 import kofre.deprecated.containers.DeltaAddWinsLastWriterWinsMap
 import kofre.time.{Dots, Dot}
-import rescala.extra.encrdt.encrypted.deltabased.DecryptedDeltaGroup
 
 import java.io.PrintWriter
 import java.nio.file.{Files, Path, Paths}

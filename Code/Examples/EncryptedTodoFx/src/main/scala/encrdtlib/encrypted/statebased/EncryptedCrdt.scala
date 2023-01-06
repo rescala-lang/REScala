@@ -1,4 +1,4 @@
-package rescala.extra.encrdt.encrypted.statebased
+package encrdtlib.encrypted.statebased
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
@@ -6,7 +6,7 @@ import com.google.crypto.tink.Aead
 import kofre.time.VectorClock
 import kofre.base.Lattice
 import kofre.base.Lattice._
-import rescala.extra.encrdt.encrypted.statebased.DecryptedState.vectorClockJsonCodec
+import DecryptedState.vectorClockJsonCodec
 import benchmarks.encrdt.Codecs.{idKeyCodec, idCodec}
 import kofre.primitives.MultiValueRegister
 

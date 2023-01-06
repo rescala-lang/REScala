@@ -1,11 +1,11 @@
 package intermediaries_demo
 
-import rescala.extra.encrdt.sync.client_server.TrustedReplicaWebSocketClient
 import todolist.SyncedTodoListCrdt.{StateType, stateCodec}
 import todolist.{ConnectionManagerFactory, TodoListApp}
 
 import com.google.crypto.tink.aead.AeadConfig
 import com.google.crypto.tink._
+import encrdtlib.sync.client_server.TrustedReplicaWebSocketClient
 
 import java.nio.file.{Files, Path, Paths}
 

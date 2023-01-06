@@ -5,7 +5,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.writeToArray
 import kofre.deprecated.containers.DeltaAddWinsLastWriterWinsMap
 import kofre.time.VectorClock
 import DeltaAddWinsLastWriterWinsMap.StateType
-import rescala.extra.encrdt.encrypted.statebased.{DecryptedState, EncryptedState, UntrustedReplica}
+import encrdtlib.encrypted.statebased.{DecryptedState, EncryptedState, UntrustedReplica}
 
 import java.io.PrintWriter
 import java.nio.file.{Files, Paths}

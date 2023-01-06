@@ -1,4 +1,4 @@
-package rescala.extra.encrdt.encrypted.deltabased
+package encrdtlib.encrypted.deltabased
 
 trait Replica {
   def receive(encryptedState: EncryptedDeltaGroup): Unit

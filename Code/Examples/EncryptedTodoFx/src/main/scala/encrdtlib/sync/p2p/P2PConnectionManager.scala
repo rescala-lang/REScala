@@ -1,9 +1,9 @@
-package rescala.extra.encrdt.sync.p2p
+package encrdtlib.sync.p2p
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToString}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import rescala.extra.encrdt.sync.ConnectionManager
-import rescala.extra.encrdt.sync.p2p.P2PConnectionManager.{Message, State}
+import P2PConnectionManager.{Message, State}
+import encrdtlib.sync.ConnectionManager
 
 import java.net.{InetSocketAddress, URI}
 import java.util.concurrent.ConcurrentHashMap

@@ -4,12 +4,12 @@ import benchmarks.encrdt.Codecs
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToString
 import com.google.crypto.tink.Aead
 import kofre.time.Dots
-import rescala.extra.encrdt.encrypted.deltabased.{EncryptedDeltaGroup, UntrustedReplica}
 
 import java.io.PrintWriter
 import java.nio.file.{Files, Path}
 import benchmarks.encrdt.Codecs.dotSetCodec
 import benchmarks.encrdt.idFromString
+import encrdtlib.encrypted.deltabased.{EncryptedDeltaGroup, UntrustedReplica}
 import kofre.deprecated.containers.DeltaAddWinsLastWriterWinsMap
 
 class UntrustedDeltaBasedReplicaMock extends UntrustedReplica {

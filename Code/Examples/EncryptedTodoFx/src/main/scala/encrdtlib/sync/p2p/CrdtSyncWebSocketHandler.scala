@@ -1,10 +1,10 @@
-package rescala.extra.encrdt.sync.p2p
+package encrdtlib.sync.p2p
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromString, writeToString}
 import org.eclipse.jetty.websocket.api.exceptions.WebSocketTimeoutException
 import org.eclipse.jetty.websocket.api.{CloseStatus, Session, WebSocketAdapter, WebSocketBehavior}
-import rescala.extra.encrdt.sync.p2p.CrdtSyncWebSocketHandler.{clientShutdownCloseStatus, duplicateCloseStatus}
-import rescala.extra.encrdt.sync.p2p.P2PConnectionManager.{
+import CrdtSyncWebSocketHandler.{clientShutdownCloseStatus, duplicateCloseStatus}
+import P2PConnectionManager.{
   Message, Peers, REPLICAID_HEADER, RequestPeers, RequestState, State
 }
 
