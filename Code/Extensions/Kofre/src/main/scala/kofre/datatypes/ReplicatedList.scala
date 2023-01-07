@@ -4,7 +4,7 @@ import kofre.base.{Bottom, DecomposeLattice}
 import kofre.datatypes.{Epoche, TimedVal}
 import kofre.dotted.{DotFun, Dotted, DottedDecompose, DottedLattice}
 import kofre.syntax.PermIdMutate.withID
-import kofre.syntax.{ArdtOpsContains, DottedName, OpsSyntaxHelper, PermIdMutate, PermMutate}
+import kofre.syntax.{AnyNamed, ArdtOpsContains, DottedName, OpsSyntaxHelper, PermIdMutate, PermMutate}
 import kofre.time.{Dot, Dots}
 
 import scala.math.Ordering.Implicits.infixOrderingOps
@@ -122,7 +122,7 @@ object ReplicatedList {
       findInsertIndex(current, i) match {
         case None => Dotted(ReplicatedList.empty[E])
         case Some(glistInsertIndex) =>
-          val glistDelta = fw.map { (gl: GrowOnlyList[Dot]) =>
+          val glistDelta = fw.map { gl =>
             GrowOnlyList.syntax(gl).insert(using withID(replicaID))(glistInsertIndex, nextDot)
           }
           val dfDelta = DotFun.empty[Node[E]] + (nextDot -> Alive(TimedVal(e, replicaID)))
@@ -148,7 +148,7 @@ object ReplicatedList {
         case Some(glistInsertIndex) =>
           val glistDelta =
             fw.map { gl =>
-              GrowOnlyList.syntax(gl).insertAll(using summon, withID(replicaID))(glistInsertIndex, nextDots)
+              GrowOnlyList.syntax(AnyNamed(replicaID, gl)).insertAll(glistInsertIndex, nextDots).anon
             }
           val dfDelta = DotFun.empty[Node[E]] ++ (nextDots zip elems.map(e => Alive(TimedVal(e, replicaID))))
 

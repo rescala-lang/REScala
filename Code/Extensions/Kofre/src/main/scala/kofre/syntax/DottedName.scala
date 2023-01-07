@@ -28,3 +28,23 @@ object DottedName {
   given syntaxPassthroughTrans[K, L](using ArdtOpsContains[K, L]): ArdtOpsContains[DottedName[K], L] = new {}
   given syntaxPassthrough[L]: ArdtOpsContains[DottedName[L], L]                                      = new {}
 }
+
+case class AnyNamed[L](replicaID: Id, anon: L) {
+  def map[B](f: L => B): AnyNamed[B] = new AnyNamed(replicaID, f(anon))
+}
+
+object AnyNamed {
+
+  def empty[A: Bottom](replicaId: Id) = new AnyNamed(replicaId, Bottom.empty[A])
+
+  given permissions[L](using DecomposeLattice[Dotted[L]]): PermQuery[AnyNamed[L], L]
+    with PermId[AnyNamed[L]] with PermMutate[AnyNamed[L], L]
+    with {
+    override def replicaId(c: AnyNamed[L]): Id = c.replicaID
+    override def query(c: AnyNamed[L]): L      = c.anon
+    override def mutate(c: AnyNamed[L], delta: L): AnyNamed[L] = AnyNamed(c.replicaID, delta)
+  }
+
+  given syntaxPassthroughTrans[K, L](using ArdtOpsContains[K, L]): ArdtOpsContains[AnyNamed[K], L] = new {}
+  given syntaxPassthrough[L]: ArdtOpsContains[AnyNamed[L], L]                                      = new {}
+}
