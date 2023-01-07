@@ -37,6 +37,6 @@ object TimedVal {
 
     /** By assumption: associative, commutative, idempotent. */
     override def merge(left: TimedVal[A], right: TimedVal[A]): TimedVal[A] =
-      if lteq(left, right) then left else right
+      if left > right then left else right
   }
 }
