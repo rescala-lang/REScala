@@ -14,7 +14,7 @@ object GrowOnlyCounter {
 
   given contextDecompose: DottedDecompose[GrowOnlyCounter] = DottedDecompose.liftDecomposeLattice
 
-  implicit class GrowOnlyCounterSyntax[C](container: C)(using aoc: ArdtOpsContains[C, GrowOnlyCounter])
+  implicit class GrowOnlyCounterSyntax[C](container: C)
       extends OpsSyntaxHelper[C, GrowOnlyCounter](container) {
     def value(using QueryP): Int = current.inner.valuesIterator.sum
 

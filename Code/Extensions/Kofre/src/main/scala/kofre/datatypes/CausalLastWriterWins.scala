@@ -18,26 +18,26 @@ object CausalLastWriterWins {
   given bottomInstance[A]: Bottom[CausalLastWriterWins[A]]           = Bottom.derived
   given dottedDecompose[A]: DottedDecompose[CausalLastWriterWins[A]] = DottedDecompose.derived
 
-  implicit class syntax[C, A](container: C)(using ArdtOpsContains[C, CausalLastWriterWins[A]])
+  implicit class syntax[C, A](container: C)
       extends OpsSyntaxHelper[C, CausalLastWriterWins[A]](container) {
 
     def read(using QueryP): Option[A] =
-      current.repr.read.reduceOption(DecomposeLattice[TimedVal[A]].merge).map(x => x.value)
+      MultiVersionRegister.syntax(current.repr).read.reduceOption(DecomposeLattice[TimedVal[A]].merge).map(x => x.value)
 
-    def write(v: A)(using CausalMutationP, IdentifierP): C =
-      context.wrap(current.repr).named(replicaID).write(TimedVal(v, replicaID)).anon.map(
+    def write(using CausalMutationP, IdentifierP)(v: A): C =
+      MultiVersionRegister.syntax(current.repr.inherit).write(TimedVal(v, replicaID)).anon.map(
         CausalLastWriterWins.apply
       ).mutator
 
-    def map(f: A => A)(using CausalMutationP, IdentifierP): C =
+    def map(using CausalMutationP, IdentifierP)(f: A => A): C =
       read.map(f) match {
         case None    => Dotted(CausalLastWriterWins.empty).mutator
         case Some(v) => write(v)
       }
 
-    def clear()(using CausalMutationP): C = context.wrap(current.repr).clear()(using
-    Dotted.syntaxPermissions(using MultiVersionRegister.dottedDecompose)).map(
-      CausalLastWriterWins.apply
-    ).mutator
+    def clear(using CausalMutationP)(): C =
+      MultiVersionRegister.syntax(current.repr.inheritContext).clear().map(
+        CausalLastWriterWins.apply
+      ).mutator
   }
 }

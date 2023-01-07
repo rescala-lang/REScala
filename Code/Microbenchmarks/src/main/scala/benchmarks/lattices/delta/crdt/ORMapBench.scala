@@ -25,7 +25,10 @@ class ORMapBench {
 
   @Setup
   def setup(): Unit = {
-    map = (0 until numEntries).foldLeft(DeltaBufferRDT.empty[ObserveRemoveMap[Int, EnableWinsFlag]]("a", ObserveRemoveMap.empty)) {
+    map = (0 until numEntries).foldLeft(DeltaBufferRDT.empty[ObserveRemoveMap[Int, EnableWinsFlag]](
+      "a",
+      ObserveRemoveMap.empty
+    )) {
       case (m, i) => m.mutateKeyNamedCtx(i)(_.enable())
     }
   }
@@ -61,7 +64,7 @@ class ORMapBench {
   def removeAll(): SUT = map.removeAll(0 until numEntries)
 
   @Benchmark
-  def removeByValue(): SUT = map.removeByValue(_.read)
+  def removeByValue(): SUT = map.removeByValue(ewf => ewf.read)
 
   @Benchmark
   def clear(): SUT = map.clear()

@@ -3,7 +3,6 @@ package deltaAntiEntropy.tests
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyCRDT, Network}
-import kofre.datatypes.ObserveRemoveMap.contextDecompose
 import kofre.datatypes.{AddWinsSet, ObserveRemoveMap}
 import replication.JsoniterCodecs.*
 
@@ -64,7 +63,7 @@ class ORMapTest extends munit.ScalaCheckSuite {
       }
     }
 
-    val removed = map.remove(k)
+    val removed = ObserveRemoveMap.syntax(map).remove(k)
 
     val queryResult = removed.queryKey(k).elements
 

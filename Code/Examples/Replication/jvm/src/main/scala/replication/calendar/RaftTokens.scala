@@ -2,7 +2,7 @@ package replication.calendar
 
 import kofre.base.{Lattice, Id}
 import kofre.datatypes.AddWinsSet
-import kofre.datatypes.AddWinsSet.AWSetSyntax
+import kofre.datatypes.AddWinsSet.syntax
 import kofre.datatypes.experiments.RaftState
 import kofre.deprecated.containers.DeltaBufferRDT
 import kofre.syntax.DottedName

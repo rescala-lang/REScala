@@ -20,18 +20,18 @@ object TwoPhaseSet {
   given decomposeLattice[E]: DecomposeLattice[TwoPhaseSet[E]] = DecomposeLattice.derived
   given contextDecompose[E]: DottedDecompose[TwoPhaseSet[E]]  = DottedDecompose.liftDecomposeLattice
 
-  implicit class TwoPhaseSetOps[C, E](container: C) extends OpsSyntaxHelper[C, TwoPhaseSet[E]](container) {
+  implicit class syntax[C, E](container: C) extends OpsSyntaxHelper[C, TwoPhaseSet[E]](container) {
 
     def elements(using QueryP): Set[E] = {
       current.added diff current.removed
     }
 
-    def contains(element: E)(using QueryP): Boolean =
+    def contains(using QueryP)(element: E): Boolean =
       current.added.contains(element) && !current.removed.contains(element)
 
-    def insert(element: E)(using MutationP): C = TwoPhaseSet(Set(element), Set.empty).mutator
+    def insert(using MutationP)(element: E): C = TwoPhaseSet(Set(element), Set.empty).mutator
 
-    def remove(element: E)(using MutationP): C          = TwoPhaseSet(Set.empty, Set(element)).mutator
-    def removeAll(elements: Set[E])(using MutationP): C = TwoPhaseSet(Set.empty, elements).mutator
+    def remove(using MutationP)(element: E): C          = TwoPhaseSet(Set.empty, Set(element)).mutator
+    def removeAll(using MutationP)(elements: Set[E]): C = TwoPhaseSet(Set.empty, elements).mutator
   }
 }

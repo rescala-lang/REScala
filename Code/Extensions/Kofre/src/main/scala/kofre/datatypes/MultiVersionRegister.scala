@@ -16,14 +16,14 @@ case class MultiVersionRegister[A](repr: DotFun[A])
 object MultiVersionRegister {
   def empty[A]: MultiVersionRegister[A] = MultiVersionRegister(DotFun.empty)
 
-  given bottomInstance[A]: Bottom[MultiVersionRegister[A]] = Bottom.derived
+  given bottomInstance[A]: Bottom[MultiVersionRegister[A]]                             = Bottom.derived
   given dottedDecompose[A: DecomposeLattice]: DottedDecompose[MultiVersionRegister[A]] = DottedDecompose.derived
 
   implicit class syntax[C, A](container: C) extends OpsSyntaxHelper[C, MultiVersionRegister[A]](container) {
 
     def read(using QueryP): Set[A] = current.repr.values.toSet
 
-    def write(v: A)(using CausalMutationP, IdentifierP): C = {
+    def write(using CausalMutationP, IdentifierP)(v: A): C = {
       val nextDot = context.nextDot(replicaID)
 
       Dotted(
@@ -32,7 +32,7 @@ object MultiVersionRegister {
       ).mutator
     }
 
-    def clear()(using CausalMutationP): C =
+    def clear(using CausalMutationP)(): C =
       Dotted(
         MultiVersionRegister.empty,
         Dots.from(current.repr.keySet)

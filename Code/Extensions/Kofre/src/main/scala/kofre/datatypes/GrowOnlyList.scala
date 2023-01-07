@@ -97,7 +97,7 @@ object GrowOnlyList {
         }
     }
 
-  implicit class syntax[C, E](container: C)(using ArdtOpsContains[C, GrowOnlyList[E]])
+  implicit class syntax[C, E](container: C)
       extends OpsSyntaxHelper[C, GrowOnlyList[E]](container) {
 
     @tailrec
@@ -113,7 +113,7 @@ object GrowOnlyList {
       }
     }
 
-    def read(i: Int)(using QueryP): Option[E] =
+    def read(using QueryP)(i: Int): Option[E] =
       findNth(current, Head(), i + 1).flatMap {
         case Head()  => None
         case Elem(e) => Some(e.value)
@@ -139,14 +139,14 @@ object GrowOnlyList {
 
     def size(using QueryP): Int = current.size
 
-    def insert(i: Int, e: E)(using MutationIdP): C = {
+    def insert(using MutationIdP)(i: Int, e: E): C = {
       GrowOnlyList(findNth(current, Head(), i) match {
         case None       => Map.empty
         case Some(pred) => Map(pred -> Elem(TimedVal(e, replicaID)))
       })
     }.mutator
 
-    def insertAll(i: Int, elems: Iterable[E])(using MutationP, IdentifierP): C = {
+    def insertAll(using MutationP, IdentifierP)(i: Int, elems: Iterable[E]): C = {
       if (elems.isEmpty)
         GrowOnlyList.empty[E]
       else

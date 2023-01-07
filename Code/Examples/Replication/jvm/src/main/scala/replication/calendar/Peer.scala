@@ -4,7 +4,7 @@ import Bindings._
 import SyncMessage.{AppointmentMessage, CalendarState, FreeMessage, RaftMessage, WantMessage}
 import kofre.base.{DecomposeLattice, Id}
 import kofre.datatypes.AddWinsSet
-import kofre.datatypes.AddWinsSet.AWSetSyntax
+import kofre.datatypes.AddWinsSet.syntax
 import kofre.dotted.{DottedDecompose, Dotted}
 import kofre.syntax.DottedName
 import loci.communicator.tcp.TCP

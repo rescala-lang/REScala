@@ -22,11 +22,11 @@ object AddWinsSet {
   given contextDecompose[E]: DottedDecompose[AddWinsSet[E]] = DottedDecompose.derived
   given asCausalContext[E]: HasDots[AddWinsSet[E]]          = HasDots.derived
 
-  implicit class AWSetSyntax[C, E](container: C)(using ArdtOpsContains[C, AddWinsSet[E]]) extends OpsSyntaxHelper[C, AddWinsSet[E]](container) {
+  implicit class syntax[C, E](container: C) extends OpsSyntaxHelper[C, AddWinsSet[E]](container) {
 
     def elements(using QueryP): Set[E] = current.inner.keySet
 
-    def contains(elem: E)(using QueryP): Boolean = current.inner.contains(elem)
+    def contains(using QueryP)(elem: E): Boolean = current.inner.contains(elem)
 
     def add(e: E)(using CausalP, CausalMutationP, QueryP, IdentifierP): C = {
       val dm        = current.inner
@@ -59,7 +59,7 @@ object AddWinsSet {
       ).mutator
     }
 
-    def remove(e: E)(using QueryP, CausalMutationP): C = {
+    def remove(using QueryP, CausalMutationP)(e: E): C = {
       val dm = current.inner
       val v  = dm.getOrElse(e, DotSet.empty)
 

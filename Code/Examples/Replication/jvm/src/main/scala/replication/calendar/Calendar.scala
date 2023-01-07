@@ -2,7 +2,7 @@ package replication.calendar
 
 import kofre.datatypes.AddWinsSet
 import rescala.default._
-import kofre.datatypes.AddWinsSet.AWSetSyntax
+import kofre.datatypes.AddWinsSet.syntax
 import kofre.base.Id
 import kofre.deprecated.containers.DeltaBufferRDT
 
