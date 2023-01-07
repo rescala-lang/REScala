@@ -16,17 +16,21 @@ case class TimedVal[A](value: A, timestamp: Long, replicaID: Id, nanoTime: Long)
 
 object TimedVal {
 
-  given ordering[A]: Ordering[TimedVal[A]] = (left, right) =>
-    Ordering.Tuple3[Long, String, Long].compare(
-      Tuple.fromProductTyped(left).tail.asInstanceOf,
-      Tuple.fromProductTyped(right).tail.asInstanceOf
-    )
+  private val timedValOrdering: Ordering[TimedVal[Any]] =
+    val tuporder = Ordering.Tuple3[Long, String, Long]
+    (left, right) =>
+      tuporder.compare(
+        (left.timestamp, Id unwrap left.replicaID, left.nanoTime),
+        (right.timestamp, Id unwrap right.replicaID, right.nanoTime),
+      )
+
+  given ordering[A]: Ordering[TimedVal[A]] = timedValOrdering.asInstanceOf
 
   def apply[A](value: A, replicaID: Id): TimedVal[A] =
     TimedVal(value, System.currentTimeMillis(), replicaID, System.nanoTime())
 
   implicit def decomposeLattice[A]: DecomposeLattice[TimedVal[A]] = new DecomposeLattice[TimedVal[A]] {
-    override def lteq(left: TimedVal[A], right: TimedVal[A]): Boolean = left <= right
+    override def lteq(left: TimedVal[A], right: TimedVal[A]): Boolean = ordering.lteq(left, right)
 
     /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
     override def decompose(state: TimedVal[A]): Iterable[TimedVal[A]] = List(state)
