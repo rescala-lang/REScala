@@ -25,10 +25,13 @@ object ObserveRemoveMap {
     import DotMap.contextDecompose
     DottedDecompose.derived
 
-  def make[K, V](
+  private def make[K, V](
       dm: DotMap[K, V] = DotMap.empty[K, V],
       cc: Dots = Dots.empty
   ): Dotted[ObserveRemoveMap[K, V]] = Dotted(ObserveRemoveMap(dm), cc)
+
+  extension[C, K, V] (container: C)
+    def observeRemoveMap: syntax[C, K, V] = syntax(container)
 
   implicit class syntax[C, K, V](container: C)
       extends OpsSyntaxHelper[C, ObserveRemoveMap[K, V]](container) {

@@ -1,8 +1,10 @@
 package benchmarks.lattices.delta.crdt
 
-import org.openjdk.jmh.annotations._
+import kofre.base.DecomposeLattice
+import org.openjdk.jmh.annotations.*
 import kofre.datatypes.PosNegCounter
 import kofre.deprecated.containers.DeltaBufferRDT
+import kofre.dotted.DottedDecompose
 
 import java.util.concurrent.TimeUnit
 
@@ -25,7 +27,7 @@ class PNCounterBench {
     counter = (1 until numReplicas).foldLeft(DeltaBufferRDT("0", PosNegCounter.zero).inc()) {
       case (c, n) =>
         val delta = DeltaBufferRDT(n.toString, PosNegCounter.zero).inc().deltaBuffer.head
-        c.applyDelta(delta)
+        c.applyDelta(delta)(using DottedDecompose.liftDecomposeLattice)
     }
   }
 

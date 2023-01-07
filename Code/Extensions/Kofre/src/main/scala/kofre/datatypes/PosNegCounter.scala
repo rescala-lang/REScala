@@ -2,8 +2,7 @@ package kofre.datatypes
 
 import kofre.base.{Bottom, DecomposeLattice, Id}
 import kofre.dotted.DottedDecompose
-import kofre.syntax.PermIdMutate.withID
-import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermId, PermIdMutate, PermQuery}
+import kofre.syntax.OpsSyntaxHelper
 
 case class PosNegCounter(pos: GrowOnlyCounter, neg: GrowOnlyCounter) derives DecomposeLattice, Bottom
 
@@ -15,26 +14,29 @@ object PosNegCounter {
 
   val zero: PosNegCounter = PosNegCounter(GrowOnlyCounter.zero, GrowOnlyCounter.zero)
 
+  extension [C](container: C)
+    def posNegCounter: syntax[C] = syntax(container)
+
   given contextDecompose: DottedDecompose[PosNegCounter] = DottedDecompose.liftDecomposeLattice
 
-  implicit class PNCounterSyntax[C](container: C)(using ArdtOpsContains[C, PosNegCounter])
+  implicit class syntax[C](container: C)
       extends OpsSyntaxHelper[C, PosNegCounter](container) {
     def value(using QueryP): Int =
-      val pos = current._1.value
-      val neg = current._2.value
+      val pos = current.pos.growOnlyCounter.value
+      val neg = current.neg.growOnlyCounter.value
       pos - neg
 
-    def inc()(using MutationIdP): C =
-      val pos = current._1.inc()(using withID(replicaID))
+    def inc(using MutationIdP)(): C =
+      val pos = current.pos.growOnlyCounter.inc()
       PosNegCounter(pos, GrowOnlyCounter.zero).mutator
 
-    def dec()(using MutationIdP): C =
-      val neg = current._2.inc()(using withID(replicaID))
+    def dec(using MutationIdP)(): C =
+      val neg = current.neg.growOnlyCounter.inc()
       PosNegCounter(GrowOnlyCounter.zero, neg).mutator
 
-    def add(delta: Int)(using MutationIdP): C = {
-      if (delta > 0) PosNegCounter(current.pos.inc(delta)(using withID(replicaID)), GrowOnlyCounter.zero)
-      else if (delta < 0) PosNegCounter(GrowOnlyCounter.zero, current.neg.inc(-delta)(using withID(replicaID)))
+    def add(using MutationIdP)(delta: Int): C = {
+      if (delta > 0) PosNegCounter(current.pos.growOnlyCounter.add(delta), GrowOnlyCounter.zero)
+      else if (delta < 0) PosNegCounter(GrowOnlyCounter.zero, current.neg.growOnlyCounter.add(-delta))
       else PosNegCounter.zero
     }.mutator
   }

@@ -9,8 +9,8 @@ case class BoundedCounter(reservations: PosNegCounter, allocations: GrowOnlyCoun
 
 object BoundedCounter {
   def init(value: Int, replicaID: Id): BoundedCounter =
-    val countervalue = PosNegCounter.zero.add(-value)(using withID(Id.predefined("initial-allocation")))
-    val initial      = PosNegCounter.zero.add(value)(using withID(replicaID))
+    val countervalue = PosNegCounter.zero.add(using withID(using Id.predefined("initial-allocation")))(-value)
+    val initial      = PosNegCounter.zero.add(using withID(using replicaID))(value)
     BoundedCounter(countervalue merge initial, GrowOnlyCounter.zero, Set(replicaID))
 
   private val neutral: BoundedCounter = BoundedCounter(PosNegCounter.zero, GrowOnlyCounter.zero, Set.empty)
@@ -29,26 +29,26 @@ object BoundedCounter {
 
     def allocate(value: Int)(using MutationIdP): C = {
       if value < 0 || available < value then neutral
-      else neutral.copy(allocations = current.allocations.inc(value)(using withID(replicaID)))
+      else neutral.copy(allocations = current.allocations.add(value))
     }.mutator
 
     def transfer(amount: Int, target: Id)(using MutationIdP): C = {
-      if amount > available(using withID(replicaID)) then neutral
+      if amount > available then neutral
       else
         neutral.copy(reservations =
-          current.reservations.add(amount)(using withID(target)) merge
-          current.reservations.add(-amount)(using withID(replicaID))
+          current.reservations.add(using withID(using target))(amount) merge
+          current.reservations.add(-amount)
         )
     }.mutator
 
     def rebalance(using MutationIdP): C = {
-      val availableByReplica = current.participants.iterator.map(id => available(using withID(id)) -> id).toList
+      val availableByReplica = current.participants.iterator.map(id => available(using withID(using id)) -> id).toList
       val most               = availableByReplica.max
       val least              = availableByReplica.min
       if most._2 != replicaID then neutral
       else
         val diff: Int = (most._1 - least._1) / 2
-        current.transfer(diff, least._2)(using withID(replicaID))
+        current.transfer(diff, least._2)
     }.mutator
 
     def invariantOk(using QueryP): Unit =

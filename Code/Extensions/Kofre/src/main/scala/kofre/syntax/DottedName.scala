@@ -1,6 +1,6 @@
 package kofre.syntax
 
-import kofre.base.{Bottom, DecomposeLattice, Id}
+import kofre.base.{Bottom, DecomposeLattice, Id, Lattice}
 import kofre.time.Dots
 import kofre.dotted.{Dotted, DottedLattice}
 
@@ -37,12 +37,14 @@ object AnyNamed {
 
   def empty[A: Bottom](replicaId: Id) = new AnyNamed(replicaId, Bottom.empty[A])
 
-  given permissions[L](using DecomposeLattice[Dotted[L]]): PermQuery[AnyNamed[L], L]
-    with PermId[AnyNamed[L]] with PermMutate[AnyNamed[L], L]
+  given permissions[L](using Lattice[L]): PermQuery[AnyNamed[L], L]
+    with PermId[AnyNamed[L]]
+    with PermMutate[AnyNamed[L], L]
+    with PermIdMutate[AnyNamed[L], L]
     with {
-    override def replicaId(c: AnyNamed[L]): Id = c.replicaID
-    override def query(c: AnyNamed[L]): L      = c.anon
-    override def mutate(c: AnyNamed[L], delta: L): AnyNamed[L] = AnyNamed(c.replicaID, delta)
+    override def replicaId(c: AnyNamed[L]): Id                 = c.replicaID
+    override def query(c: AnyNamed[L]): L                      = c.anon
+    override def mutate(c: AnyNamed[L], delta: L): AnyNamed[L] = AnyNamed(c.replicaID, c.anon merge delta)
   }
 
   given syntaxPassthroughTrans[K, L](using ArdtOpsContains[K, L]): ArdtOpsContains[AnyNamed[K], L] = new {}

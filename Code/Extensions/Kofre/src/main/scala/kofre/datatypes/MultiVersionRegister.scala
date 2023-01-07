@@ -2,7 +2,7 @@ package kofre.datatypes
 
 import kofre.base.{Bottom, DecomposeLattice}
 import kofre.dotted.{DotFun, Dotted, DottedDecompose}
-import kofre.syntax.OpsSyntaxHelper
+import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper}
 import kofre.time.{Dot, Dots}
 
 /** An MultiVersionRegister (Multi-Value Register) is a Delta CRDT modeling a register.
@@ -18,6 +18,9 @@ object MultiVersionRegister {
 
   given bottomInstance[A]: Bottom[MultiVersionRegister[A]]                             = Bottom.derived
   given dottedDecompose[A: DecomposeLattice]: DottedDecompose[MultiVersionRegister[A]] = DottedDecompose.derived
+
+  extension [C, A](container: C)
+    def multiVersionRegister: syntax[C, A] = syntax(container)
 
   implicit class syntax[C, A](container: C) extends OpsSyntaxHelper[C, MultiVersionRegister[A]](container) {
 

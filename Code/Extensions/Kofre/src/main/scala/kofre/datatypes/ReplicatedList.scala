@@ -95,7 +95,7 @@ object ReplicatedList {
 
     def toList(using QueryP): List[E] = {
       val ReplicatedList(fw, df) = current
-      GrowOnlyList.syntax(fw.value).toList.map(df.store).collect {
+      fw.value.growOnlyList.toList.map(df.store).collect {
         case Alive(tv) => tv.value
       }
     }
@@ -123,7 +123,7 @@ object ReplicatedList {
         case None => Dotted(ReplicatedList.empty[E])
         case Some(glistInsertIndex) =>
           val glistDelta = fw.map { gl =>
-            gl.insertGL(using withID(replicaID))(glistInsertIndex, nextDot)
+            gl.insertGL(glistInsertIndex, nextDot)
           }
           val dfDelta = DotFun.empty[Node[E]] + (nextDot -> Alive(TimedVal(e, replicaID)))
 

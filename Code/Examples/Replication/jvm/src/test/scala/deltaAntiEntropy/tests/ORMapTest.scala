@@ -63,7 +63,7 @@ class ORMapTest extends munit.ScalaCheckSuite {
       }
     }
 
-    val removed = ObserveRemoveMap.syntax(map).remove(k)
+    val removed = map.observeRemoveMap.remove(k)
 
     val queryResult = removed.queryKey(k).elements
 

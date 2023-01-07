@@ -51,7 +51,7 @@ object PermMutate:
     override def query(c: A): A            = c
     override def mutate(c: A, delta: A): A = delta
 object PermIdMutate:
-  def withID[C, L](id: Id)(using mctx: PermMutate[C, L]): PermIdMutate[C, L] = new PermIdMutate[C, L]:
+  given withID[C, L](using id: Id)(using mctx: PermMutate[C, L]): PermIdMutate[C, L] = new PermIdMutate[C, L]:
     def mutate(c: C, delta: L): C = mctx.mutate(c, delta)
     def replicaId(c: C): Id       = id
     def query(c: C): L            = mctx.query(c)
@@ -78,7 +78,7 @@ trait OpsTypes[C, L] {
 }
 trait OpsSyntaxHelper[C, L](container: C) extends OpsTypes[C, L] {
   final protected[kofre] def current(using perm: QueryP): L                   = perm.query(container)
-  final protected[kofre] def replicaID(using perm: IdentifierP): Id           = perm.replicaId(container)
+  final protected[kofre] given replicaID(using perm: IdentifierP): Id  = perm.replicaId(container)
   final protected[kofre] def context(using perm: CausalP): Dots               = perm.context(container)
   extension (l: L)(using perm: MutationP) def mutator: C                      = perm.mutate(container, l)
   extension (l: Dotted[L])(using perm: CausalMutationP) def mutator: C        = perm.mutateContext(container, l)
