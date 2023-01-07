@@ -123,7 +123,7 @@ object ReplicatedList {
         case None => Dotted(ReplicatedList.empty[E])
         case Some(glistInsertIndex) =>
           val glistDelta = fw.map { gl =>
-            GrowOnlyList.syntax(gl).insert(using withID(replicaID))(glistInsertIndex, nextDot)
+            gl.insertGL(using withID(replicaID))(glistInsertIndex, nextDot)
           }
           val dfDelta = DotFun.empty[Node[E]] + (nextDot -> Alive(TimedVal(e, replicaID)))
 
@@ -148,7 +148,7 @@ object ReplicatedList {
         case Some(glistInsertIndex) =>
           val glistDelta =
             fw.map { gl =>
-              GrowOnlyList.syntax(AnyNamed(replicaID, gl)).insertAll(glistInsertIndex, nextDots).anon
+              AnyNamed(replicaID, gl).insertAllGL(glistInsertIndex, nextDots).anon
             }
           val dfDelta = DotFun.empty[Node[E]] ++ (nextDots zip elems.map(e => Alive(TimedVal(e, replicaID))))
 

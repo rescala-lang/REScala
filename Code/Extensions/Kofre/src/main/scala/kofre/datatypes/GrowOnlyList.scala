@@ -139,14 +139,14 @@ object GrowOnlyList {
 
     def size(using QueryP): Int = current.size
 
-    def insert(using MutationIdP)(i: Int, e: E): C = {
+    def insertGL(using MutationIdP)(i: Int, e: E): C = {
       GrowOnlyList(findNth(current, Head(), i) match {
         case None       => Map.empty
         case Some(pred) => Map(pred -> Elem(TimedVal(e, replicaID)))
       })
     }.mutator
 
-    def insertAll(using MutationP, IdentifierP)(i: Int, elems: Iterable[E]): C = {
+    def insertAllGL(using MutationP, IdentifierP)(i: Int, elems: Iterable[E]): C = {
       if (elems.isEmpty)
         GrowOnlyList.empty[E]
       else

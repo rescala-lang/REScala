@@ -76,7 +76,7 @@ class RGATest extends munit.ScalaCheckSuite {
       )
       assert(
         (insertIdx >= 0 && insertIdx <= rga.size) || inserted.toList == rga.toList,
-        s"Attempting to insert a value at an invalid index should not change the rga, but ${inserted.toList} does not equal ${rga.toList}"
+        s"Attempting to insertGL a value at an invalid index should not change the rga, but ${inserted.toList} does not equal ${rga.toList}"
       )
     }
 
@@ -232,7 +232,7 @@ class RGATest extends munit.ScalaCheckSuite {
 
       assert(
         la2.toList == sequential.toList,
-        s"Concurrent insert and update at the same index should have the same effect as sequential update then insert, but ${la2.toList} does not equal ${sequential.toList}"
+        s"Concurrent insertGL and update at the same index should have the same effect as sequential update then insertGL, but ${la2.toList} does not equal ${sequential.toList}"
       )
     }
 
@@ -261,7 +261,7 @@ class RGATest extends munit.ScalaCheckSuite {
 
       assert(
         la2.toList == sequential.toList,
-        s"Inserting an element next to an element that was concurrently deleted should have the same index as sequential insert then delete, but ${la2.toList} does not equal ${sequential.toList}"
+        s"Inserting an element next to an element that was concurrently deleted should have the same index as sequential insertGL then delete, but ${la2.toList} does not equal ${sequential.toList}"
       )
     }
 

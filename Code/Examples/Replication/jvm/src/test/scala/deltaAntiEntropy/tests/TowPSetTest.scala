@@ -94,11 +94,11 @@ class TowPSetTest extends munit.ScalaCheckSuite {
 
       assert(
         sa1.elements == sequential.elements,
-        s"Concurrent execution of insert/remove should be equivalent to their sequential execution, but ${sa1.elements} does not equal ${sequential.elements}"
+        s"Concurrent execution of insertGL/remove should be equivalent to their sequential execution, but ${sa1.elements} does not equal ${sequential.elements}"
       )
       assert(
         sb1.elements == sequential.elements,
-        s"Concurrent execution of insert/remove should be equivalent to their sequential execution, but ${sb1.elements} does not equal ${sequential.elements}"
+        s"Concurrent execution of insertGL/remove should be equivalent to their sequential execution, but ${sb1.elements} does not equal ${sequential.elements}"
       )
     }
   }

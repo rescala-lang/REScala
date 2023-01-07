@@ -23,7 +23,7 @@ class GListBench {
   @Setup
   def setup(): Unit = {
     list = (0 until listSize).foldLeft(DeltaBufferRDT("a", GrowOnlyList.empty[Int])) {
-      case (c, i) => c.insert(0, i)
+      case (c, i) => c.insertGL(0, i)
     }
   }
 
@@ -40,8 +40,8 @@ class GListBench {
   def readLast(): Option[Int] = list.read(listSize - 1)
 
   @Benchmark
-  def insertStart(): DeltaBufferRDT[GrowOnlyList[Int]] = list.insert(0, -1)
+  def insertStart(): DeltaBufferRDT[GrowOnlyList[Int]] = list.insertGL(0, -1)
 
   @Benchmark
-  def insertEnd(): DeltaBufferRDT[GrowOnlyList[Int]] = list.insert(listSize, -1)
+  def insertEnd(): DeltaBufferRDT[GrowOnlyList[Int]] = list.insertGL(listSize, -1)
 }
