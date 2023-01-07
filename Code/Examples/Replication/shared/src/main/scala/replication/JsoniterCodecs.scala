@@ -5,10 +5,12 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodec
 import kofre.base.{Id, Time}
 import kofre.datatypes.ReplicatedList.Node
 import kofre.datatypes.alternatives.ResettableCounter
-import kofre.datatypes.{AddWinsSet, EnableWinsFlag, Epoche, GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, GrowOnlySet, MultiVersionRegister, ObserveRemoveMap, PosNegCounter, ReplicatedList, TimedVal, TwoPhaseSet}
+import kofre.datatypes.{AddWinsSet, EnableWinsFlag, Epoche, GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, GrowOnlySet, MultiVersionRegister, ObserveRemoveMap, PosNegCounter, ReplicatedList, TwoPhaseSet}
 import kofre.dotted.Dotted
 import kofre.datatypes.experiments.AuctionInterface.AuctionData
 import kofre.time.{ArrayRanges, Dot, Dots}
+import kofre.datatypes.LastWriterWins.TimedVal
+
 
 import scala.annotation.nowarn
 

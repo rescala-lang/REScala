@@ -1,6 +1,8 @@
 package kofre.datatypes
 
-import kofre.base.Lattice
+import kofre.base.{DecomposeLattice, Lattice, Id}
+import kofre.time.WallClock
+import scala.math.Ordering.Implicits.infixOrderingOps
 
 import java.time.Instant
 
@@ -11,18 +13,25 @@ case class LastWriterWins[Time, Value](timestamp: Time, payload: Value)
 
 object LastWriterWins {
 
-  def now[Value](payload: Value): LastWriterWins[Instant, Value] = LastWriterWins(Instant.now(), payload)
+  type TimedVal[Value] = LastWriterWins[WallClock, Value]
 
-  given lattice[Time, Value](using Ordering[Time]): Lattice[LastWriterWins[Time, Value]] =
-    (left, right) =>
-      Ordering[Time].compare(left.timestamp, right.timestamp) match
-        case 0 => if (left.payload == right.payload) then left
-          else throw IllegalStateException(s"LWW same timestamp, different value: »$left«, »$right«")
-        case -1 => right
-        case 1  => left
+  def now[Value](payload: Value, replicaId: Id): LastWriterWins[WallClock, Value] =
+    LastWriterWins(WallClock.now(replicaId), payload)
 
-  given [O: Ordering, A]: Ordering[LastWriterWins[O, A]] with {
-    override def compare(x: LastWriterWins[O, A], y: LastWriterWins[O, A]): Int =
-      Ordering[O].compare(x.timestamp, y.timestamp)
-  }
+  implicit def decomposeLattice[Time: Ordering, A]: DecomposeLattice[LastWriterWins[Time, A]] =
+    new DecomposeLattice[LastWriterWins[Time, A]] {
+      override def lteq(left: LastWriterWins[Time, A], right: LastWriterWins[Time, A]): Boolean =
+        left.timestamp <= right.timestamp
+
+      /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
+      override def decompose(state: LastWriterWins[Time, A]): Iterable[LastWriterWins[Time, A]] = List(state)
+
+      /** By assumption: associative, commutative, idempotent. */
+      override def merge(left: LastWriterWins[Time, A], right: LastWriterWins[Time, A]): LastWriterWins[Time, A] =
+          Ordering[Time].compare(left.timestamp, right.timestamp) match
+            case 0 => if (left.payload == right.payload) then left
+              else throw IllegalStateException(s"LWW same timestamp, different value: »$left«, »$right«")
+            case -1 => right
+            case 1  => left
+    }
 }

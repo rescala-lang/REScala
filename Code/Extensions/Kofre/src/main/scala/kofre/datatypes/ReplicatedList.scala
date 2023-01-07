@@ -1,11 +1,13 @@
 package kofre.datatypes
 
 import kofre.base.{Bottom, DecomposeLattice}
-import kofre.datatypes.{Epoche, TimedVal}
+import kofre.datatypes.{Epoche}
 import kofre.dotted.{DotFun, Dotted, DottedDecompose, DottedLattice}
 import kofre.syntax.PermIdMutate.withID
 import kofre.syntax.{AnyNamed, ArdtOpsContains, DottedName, OpsSyntaxHelper, PermIdMutate, PermMutate}
 import kofre.time.{Dot, Dots}
+import kofre.datatypes.LastWriterWins.TimedVal
+
 
 import scala.math.Ordering.Implicits.infixOrderingOps
 
@@ -49,7 +51,7 @@ object ReplicatedList {
       override def lteq(left: Node[A], right: Node[A]): Boolean = (left, right) match {
         case (Dead(), _)            => false
         case (_, Dead())            => true
-        case (Alive(lv), Alive(rv)) => rv > lv
+        case (Alive(lv), Alive(rv)) => rv.timestamp > lv.timestamp
       }
 
       /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
@@ -85,7 +87,7 @@ object ReplicatedList {
     def read(using QueryP)(i: Int): Option[E] = {
       val ReplicatedList(fw, df) = current
       fw.value.toLazyList.map(df.store).collect {
-        case Alive(tv) => tv.value
+        case Alive(tv) => tv.payload
       }.lift(i)
     }
 
@@ -100,7 +102,7 @@ object ReplicatedList {
     def toList(using QueryP): List[E] = {
       val ReplicatedList(fw, df) = current
       fw.value.growOnlyList.toList.map(df.store).collect {
-        case Alive(tv) => tv.value
+        case Alive(tv) => tv.payload
       }
     }
 
@@ -129,7 +131,7 @@ object ReplicatedList {
           val glistDelta = fw.map { gl =>
             gl.insertGL(glistInsertIndex, nextDot)
           }
-          val dfDelta = DotFun.empty[Node[E]] + (nextDot -> Alive(TimedVal(e, replicaID)))
+          val dfDelta = DotFun.empty[Node[E]] + (nextDot -> Alive(LastWriterWins.now(e, replicaID)))
 
           deltaState[E].make(
             epoche = glistDelta,
@@ -154,7 +156,7 @@ object ReplicatedList {
             fw.map { gl =>
               AnyNamed(replicaID, gl).insertAllGL(glistInsertIndex, nextDots).anon
             }
-          val dfDelta = DotFun.empty[Node[E]] ++ (nextDots zip elems.map(e => Alive(TimedVal(e, replicaID))))
+          val dfDelta = DotFun.empty[Node[E]] ++ (nextDots zip elems.map(e => Alive(LastWriterWins.now(e, replicaID))))
 
           deltaState[E].make(
             epoche = glistDelta,
@@ -179,7 +181,7 @@ object ReplicatedList {
     }
 
     def update(using CausalMutationP, IdentifierP)(i: Int, e: E): C =
-      updateRGANode(current, i, Alive(TimedVal(e, replicaID))).mutator
+      updateRGANode(current, i, Alive(LastWriterWins.now(e, replicaID))).mutator
 
     def delete(using CausalMutationP, IdentifierP)(i: Int): C = updateRGANode(current, i, Dead[E]()).mutator
 
@@ -190,7 +192,7 @@ object ReplicatedList {
     ): Dotted[ReplicatedList[E]] = {
       val ReplicatedList(_, df) = state
       val toUpdate = df.toList.collect {
-        case (d, Alive(tv)) if cond(tv.value) => d
+        case (d, Alive(tv)) if cond(tv.payload) => d
       }
 
       val dfDelta = DotFun.empty[Node[E]] ++ toUpdate.map(_ -> newNode)
@@ -199,7 +201,7 @@ object ReplicatedList {
     }
 
     def updateBy(using CausalMutationP, IdentifierP)(cond: E => Boolean, e: E): C =
-      updateRGANodeBy(current, cond, Alive(TimedVal(e, replicaID))).mutator
+      updateRGANodeBy(current, cond, Alive(LastWriterWins.now(e, replicaID))).mutator
 
     def deleteBy(using CausalMutationP, IdentifierP)(cond: E => Boolean): C =
       updateRGANodeBy(current, cond, Dead[E]()).mutator

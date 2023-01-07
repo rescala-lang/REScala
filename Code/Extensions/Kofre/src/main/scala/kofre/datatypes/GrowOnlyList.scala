@@ -2,9 +2,10 @@ package kofre.datatypes
 
 import kofre.base.{Bottom, DecomposeLattice}
 import kofre.datatypes.GrowOnlyList.Node
-import kofre.datatypes.{Epoche, TimedVal}
+import kofre.datatypes.{Epoche}
 import kofre.dotted.DottedDecompose
 import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper}
+import kofre.datatypes.LastWriterWins.TimedVal
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
@@ -64,7 +65,7 @@ object GrowOnlyList {
             state.get(l) match {
               case None => GrowOnlyList(state.innerContents + edge)
               case Some(next @ Elem(e2)) =>
-                if (e1 > e2) GrowOnlyList(state.innerContents + edge + (r -> next))
+                if (e1.timestamp > e2.timestamp) GrowOnlyList(state.innerContents + edge + (r -> next))
                 else insertEdge(state, next                               -> r)
             }
         }
@@ -119,14 +120,14 @@ object GrowOnlyList {
     def read(using QueryP)(i: Int): Option[E] =
       findNth(current, Head(), i + 1).flatMap {
         case Head()  => None
-        case Elem(e) => Some(e.value)
+        case Elem(e) => Some(e.payload)
       }
 
     @tailrec
     private def toListRec(state: GrowOnlyList[E], current: Node[TimedVal[E]], acc: ListBuffer[E]): ListBuffer[E] =
       state.get(current) match {
         case None                  => acc
-        case Some(next @ Elem(tv)) => toListRec(state, next, acc.append(tv.value))
+        case Some(next @ Elem(tv)) => toListRec(state, next, acc.append(tv.payload))
       }
 
     def toList(using QueryP): List[E] =
@@ -136,7 +137,7 @@ object GrowOnlyList {
       LazyList.unfold[E, Node[TimedVal[E]]](Head()) { node =>
         current.get(node) match {
           case None                  => None
-          case Some(next @ Elem(tv)) => Some((tv.value, next))
+          case Some(next @ Elem(tv)) => Some((tv.payload, next))
         }
       }
 
@@ -145,7 +146,7 @@ object GrowOnlyList {
     def insertGL(using MutationIdP)(i: Int, e: E): C = {
       GrowOnlyList(findNth(current, Head(), i) match {
         case None       => Map.empty
-        case Some(pred) => Map(pred -> Elem(TimedVal(e, replicaID)))
+        case Some(pred) => Map(pred -> Elem(LastWriterWins.now(e, replicaID)))
       })
     }.mutator
 
@@ -156,7 +157,7 @@ object GrowOnlyList {
         GrowOnlyList(findNth(current, Head(), i) match {
           case None => Map.empty
           case Some(after) =>
-            val order = elems.map(e => Elem(TimedVal(e, replicaID)): Elem[TimedVal[E]])
+            val order = elems.map(e => Elem(LastWriterWins.now(e, replicaID)): Elem[TimedVal[E]])
             Map((List(after) ++ order.init) zip order: _*)
         })
     }.mutator
@@ -165,7 +166,7 @@ object GrowOnlyList {
     private def withoutRec(state: GrowOnlyList[E], current: Node[TimedVal[E]], elems: Set[E]): GrowOnlyList[E] =
       state.get(current) match {
         case None => state
-        case Some(next @ Elem(tv)) if elems.contains(tv.value) =>
+        case Some(next @ Elem(tv)) if elems.contains(tv.payload) =>
           val edgeRemoved = state.get(next) match {
             case Some(nextnext) => state.removed(current).removed(next) + (current -> nextnext)
             case None           => state.removed(current).removed(next)

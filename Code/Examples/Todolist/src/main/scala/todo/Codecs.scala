@@ -4,13 +4,15 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, Jso
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import kofre.base.Id
 import kofre.base.Id.asId
-import kofre.datatypes.{CausalLastWriterWins, ReplicatedList, TimedVal}
+import kofre.datatypes.{CausalLastWriterWins, ReplicatedList}
 import kofre.time.Dot
 import kofre.deprecated.containers.DeltaBufferRDT
 import kofre.dotted.{DotFun, Dotted}
 import loci.transmitter.IdenticallyTransmittable
 import rescala.extra.replication.DeltaFor
 import todo.Todolist.replicaId
+import kofre.datatypes.LastWriterWins.TimedVal
+
 
 import scala.annotation.nowarn
 

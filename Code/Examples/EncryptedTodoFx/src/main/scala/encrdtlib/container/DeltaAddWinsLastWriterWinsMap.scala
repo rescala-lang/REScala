@@ -30,7 +30,7 @@ class DeltaAddWinsLastWriterWinsMap[K, V](
     _state.store.get(key)
       .map(_.store.values)
       .getOrElse(Nil)
-      .maxByOption(_._2)
+      .maxByOption(_._2.timestamp)
       .map(_._1)
 
   def put(key: K, value: V): Unit =
@@ -79,7 +79,7 @@ class DeltaAddWinsLastWriterWinsMap[K, V](
 
   def values: Map[K, V] =
     _state.store.map { case (k, mvReg) =>
-      k -> mvReg.values.maxBy(_._2)._1
+      k -> mvReg.values.maxBy(_._2.timestamp)._1
     }
 
   def merge(other: DeltaAddWinsLastWriterWinsMapLattice[K, V]): Unit = {
@@ -102,16 +102,13 @@ object DeltaAddWinsLastWriterWinsMap {
   type StateType[K, V] = DeltaAddWinsLastWriterWinsMapLattice[K, V]
 
   given deltaAddWinsMapLattice[K, V]: Lattice[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = {
-    given timestampedValueLattice[V](using
-        Ordering[LastWriterWins[Instant, Id]]
-    ): Lattice[(V, LastWriterWins[Instant, Id])] =
+    val timestampedValueLattice: Lattice[(V, LastWriterWins[Instant, Id])] =
       (left, right) =>
         // note, this is incorrect when both are equal
-        if left._2 <= right._2 then right
+        if left._2.timestamp <= right._2.timestamp then right
         else left
-    given Bottom[DotFun[(V, LastWriterWins[Instant, Id])]] = Bottom.dotFun
     given DottedLattice[DotFun[(V, LastWriterWins[Instant, Id])]] =
-      DotFun.perDotLattice[(V, LastWriterWins[Instant, Id])]
+      DotFun.perDotLattice[(V, LastWriterWins[Instant, Id])](using timestampedValueLattice)
     DotMap.dottedLattice[K, DotFun[(V, LastWriterWins[Instant, Id])]]
   }
 

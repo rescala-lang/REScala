@@ -1,6 +1,6 @@
 package todo
 
-import kofre.datatypes.{CausalLastWriterWins, MultiVersionRegister, TimedVal}
+import kofre.datatypes.{CausalLastWriterWins, LastWriterWins, MultiVersionRegister}
 import kofre.dotted.Dotted
 import kofre.syntax.{DottedName, PermCausalMutate, PermId}
 import loci.registry.Binding
@@ -16,6 +16,8 @@ import Codecs.given
 import kofre.datatypes.alternatives.MultiValueRegister
 import kofre.deprecated.containers.DeltaBufferRDT
 import loci.serializer.jsoniterScala.given
+import kofre.datatypes.LastWriterWins.TimedVal
+import kofre.time.WallClock
 
 import scala.Function.const
 import scala.collection.mutable
@@ -33,8 +35,8 @@ case class TaskRef(id: String) {
   lazy val cached: TaskRefData = TaskReferences.lookupOrCreateTaskRef(id, None)
 
   def task: Signal[DeltaBufferRDT[CausalLastWriterWins[TaskData]]] = cached.task
-  def tag: TypedTag[LI]                                                    = cached.tag
-  def removed: Event[String]                                               = cached.removed
+  def tag: TypedTag[LI]                                            = cached.tag
+  def removed: Event[String]                                       = cached.removed
 }
 
 final class TaskRefData(
@@ -85,11 +87,9 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
 //        given perm2: PermId[DeltaBufferRDT[L]] = DeltaBufferRDT.contextPermissions
 
         lwwInit.applyDelta {
-          DottedName(lwwInit.replicaID, lwwInit.state.map(_.repr)).write(TimedVal(
-            TaskData("<empty>"),
-            0,
-            lwwInit.replicaID,
-            0
+          DottedName(lwwInit.replicaID, lwwInit.state.map(_.repr)).write(LastWriterWins(
+            WallClock(0, lwwInit.replicaID, 0),
+            TaskData("<empty>")
           )).map(CausalLastWriterWins.apply)
         }
       case Some(v) => lwwInit.write(v)
