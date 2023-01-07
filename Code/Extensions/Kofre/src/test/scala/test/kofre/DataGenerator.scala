@@ -6,6 +6,7 @@ import kofre.time.*
 import kofre.base.*
 import kofre.datatypes.*
 import kofre.datatypes.alternatives.MultiValueRegister
+import kofre.datatypes.alternatives.ObserveRemoveSet
 import kofre.datatypes.experiments.CausalQueue
 
 object DataGenerator {

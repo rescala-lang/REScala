@@ -14,10 +14,10 @@ object PosNegCounter {
 
   val zero: PosNegCounter = PosNegCounter(GrowOnlyCounter.zero, GrowOnlyCounter.zero)
 
+  given contextDecompose: DottedDecompose[PosNegCounter] = DottedDecompose.liftDecomposeLattice
+
   extension [C](container: C)
     def posNegCounter: syntax[C] = syntax(container)
-
-  given contextDecompose: DottedDecompose[PosNegCounter] = DottedDecompose.liftDecomposeLattice
 
   implicit class syntax[C](container: C)
       extends OpsSyntaxHelper[C, PosNegCounter](container) {

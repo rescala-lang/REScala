@@ -20,6 +20,9 @@ object TwoPhaseSet {
   given decomposeLattice[E]: DecomposeLattice[TwoPhaseSet[E]] = DecomposeLattice.derived
   given contextDecompose[E]: DottedDecompose[TwoPhaseSet[E]]  = DottedDecompose.liftDecomposeLattice
 
+  extension [C, E](container: C)
+    def twoPhaseSet: syntax[C, E] = syntax(container)
+
   implicit class syntax[C, E](container: C) extends OpsSyntaxHelper[C, TwoPhaseSet[E]](container) {
 
     def elements(using QueryP): Set[E] = {

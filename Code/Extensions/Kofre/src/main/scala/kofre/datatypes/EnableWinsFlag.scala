@@ -21,10 +21,13 @@ object EnableWinsFlag {
 
   val empty: EnableWinsFlag = EnableWinsFlag(DotSet.empty)
 
+  extension[C] (container: C)
+    def enableWinsFlag: syntax[C] = syntax(container)
+
   /** It is enabled if there is a value in the store.
     * It relies on the external context to track removals.
     */
-  implicit class EnableWinsFlagOps[C](container: C) extends OpsSyntaxHelper[C, EnableWinsFlag](container) {
+  implicit class syntax[C](container: C) extends OpsSyntaxHelper[C, EnableWinsFlag](container) {
     def read(using QueryP): Boolean = !current.inner.repr.isEmpty
 
     def enable(using CausalMutationP, IdentifierP)(): C = {

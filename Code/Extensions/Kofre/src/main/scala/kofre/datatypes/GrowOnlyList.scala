@@ -97,7 +97,7 @@ object GrowOnlyList {
         }
     }
 
-  extension[C, E] (container: C)
+  extension [C, E](container: C)
     def growOnlyList: syntax[C, E] = syntax(container)
 
   implicit class syntax[C, E](container: C)

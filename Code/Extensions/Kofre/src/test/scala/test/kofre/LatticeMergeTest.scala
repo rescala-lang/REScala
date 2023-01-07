@@ -1,8 +1,8 @@
 package test.kofre
 
-import kofre.base.{Time, Lattice}
-import kofre.datatypes.{LastWriterWins, ObserveRemoveSet}
-import kofre.datatypes.alternatives.MultiValueRegister
+import kofre.base.{Lattice, Time}
+import kofre.datatypes.LastWriterWins
+import kofre.datatypes.alternatives.{MultiValueRegister, ObserveRemoveSet}
 import kofre.datatypes.experiments.CausalQueue
 import kofre.time.VectorClock
 import org.scalacheck.Prop.*

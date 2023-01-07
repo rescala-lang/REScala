@@ -1,4 +1,4 @@
-package kofre.datatypes
+package kofre.datatypes.alternatives
 
 import kofre.base.{Id, Lattice}
 

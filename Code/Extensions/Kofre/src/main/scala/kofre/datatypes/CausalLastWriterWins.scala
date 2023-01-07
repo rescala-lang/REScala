@@ -17,6 +17,9 @@ object CausalLastWriterWins {
   given bottomInstance[A]: Bottom[CausalLastWriterWins[A]]           = Bottom.derived
   given dottedDecompose[A]: DottedDecompose[CausalLastWriterWins[A]] = DottedDecompose.derived
 
+  extension[C, A] (container: C)
+    def causalLastWriterWins: syntax[C, A] = syntax(container)
+
   implicit class syntax[C, A](container: C)
       extends OpsSyntaxHelper[C, CausalLastWriterWins[A]](container) {
 

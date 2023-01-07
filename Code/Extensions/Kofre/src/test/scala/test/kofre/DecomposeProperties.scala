@@ -4,7 +4,7 @@ import kofre.base.{Bottom, DecomposeLattice, Lattice}
 import kofre.datatypes.alternatives.MultiValueRegister
 import kofre.datatypes.experiments.CausalQueue
 import kofre.time.VectorClock
-import kofre.datatypes.{GrowOnlyCounter, LastWriterWins, ObserveRemoveSet, PosNegCounter}
+import kofre.datatypes.{GrowOnlyCounter, LastWriterWins, PosNegCounter}
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 import test.kofre.DataGenerator.{*, given}

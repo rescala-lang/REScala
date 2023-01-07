@@ -16,6 +16,9 @@ object GrowOnlySet {
   given decomposeLattice[E]: DecomposeLattice[GrowOnlySet[E]] = DecomposeLattice.setLattice
   given contextDecompose[E]: DottedDecompose[GrowOnlySet[E]] = DottedDecompose.liftDecomposeLattice
 
+  extension[C, E] (container: C)
+    def growOnlySet: syntax[C, E] = syntax(container)
+
   implicit class syntax[C, E](container: C) extends OpsSyntaxHelper[C, GrowOnlySet[E]](container) {
 
     def elements(using QueryP): Set[E] = current

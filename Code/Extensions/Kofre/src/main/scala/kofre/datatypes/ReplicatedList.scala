@@ -75,7 +75,11 @@ object ReplicatedList {
 
   private def deltaState[E]: DeltaStateFactory[E] = new DeltaStateFactory[E]
 
-  implicit class RGAOps[C, E](container: C)
+
+  extension[C, E] (container: C)
+    def multiVersionRegister: syntax[C, E] = syntax(container)
+
+  implicit class syntax[C, E](container: C)
       extends OpsSyntaxHelper[C, ReplicatedList[E]](container) {
 
     def read(using QueryP)(i: Int): Option[E] = {
