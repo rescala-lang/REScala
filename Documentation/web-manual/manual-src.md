@@ -17,9 +17,10 @@ The manual introduces the concepts related to functional reactive programming an
 Create a `build.sbt` file in an empty folder with the following contents:
 
 ```scala
-scalaVersion := "2.12.6"
-resolvers += Resolver.bintrayRepo("stg-tud", "maven")
-libraryDependencies += "de.tuda.stg" %% "rescala" % "0.24.0"
+// note, REScala runs on all Scala versions, and the recommended one is the latest 3.x.y
+// however, this tutorial still assumes 2.13
+scalaVersion := "2.13.10"
+libraryDependencies += "de.tu-darmstadt.stg" %% "rescala" % "0.32.0"
 ```
 
 Install [sbt](http://www.scala-sbt.org/) and run `sbt console` inside the folder,
@@ -74,7 +75,7 @@ If you do not care about the value, you can use an `Evt[Unit]`.
 If you need more than one value to the same event, you can use tuples.
 The following code snippet shows some valid events definitions:
 
-```scala mdoc:silent
+```scala mdoc:silent:nest
 val e1 = Evt[Int]()
 val e2 = Evt[Unit]()
 val e3 = Evt[(Boolean, String, Int)]()
@@ -89,7 +90,7 @@ e2.fire(())
 e3.fire((false, "Hallo", 5))
 ```
 
-### Now, observe, remove
+### Now, observe, disconnect
 
 The current value of a signal can be accessed using the ```now``` method.
 It is useful for debugging and testing, and sometimes inside onclick handlers.
@@ -148,23 +149,23 @@ def m1(x: Int) = {
   println(y)
 }
 val e6 = Evt[Int]()
-val o4 = e observe m1 _
+val o4 = e6.observe(m1)
 ```
 ```scala mdoc
 e6.fire(10)
 ```
 
-Handlers can be unregistered from events with the `remove` operator.
+Handlers can be unregistered from events with the `disconnect` operator.
 When a handler is unregistered, it is not executed when the event is fired.
 If you create handlers, you should also think about removing them, when they are no longer needed.
 
-```scala mdoc:silent
+```scala mdoc:silent:nest
 val e = Evt[Int]()
 val handler = e observe println
 ```
 ```scala mdoc
 e.fire(10) // println reaction
-handler.remove()
+handler.disconnect()
 e.fire(10) // no reaction
 ```
 
@@ -192,14 +193,16 @@ The signal ```c``` is a dependent / derivative of the vars ```a``` and ```b```, 
 
 Here are some more example of using signal expressions:
 
-```scala mdoc:silent
+```scala mdoc:silent:nest
 val a = Var(0)
 val b = Var(2)
 val c = Var(true)
 val s = Signal{ if (c()) a() else b() }
 
 def factorial(n: Int) = Range.inclusive(1,n).fold(1)(_ * _)
+```
 
+```scala mdoc:silent:nest
 val a = Var(0)
 val s: Signal[Int] = Signal {
   val tmp = a() * 2
@@ -226,7 +229,7 @@ while (time.now < 5) {
   Thread sleep 20
   time set time.now + 1
 }
-o1.remove()
+o1.disconnect()
 ```
 
 The application behaves as follows.
@@ -277,7 +280,7 @@ The initial value of the signal is set to `init`.
 
 Example:
 
-```scala mdoc:silent
+```scala mdoc:silent:nest
 val e = Evt[Int]()
 val s: Signal[Int] = e.latest(10)
 assert(s.now == 10)
@@ -299,7 +302,7 @@ that is fired every time the signal changes its value.
 
 Example:
 
-```scala mdoc:silent
+```scala mdoc:silent:nest
 var test = 0
 val v =  Var(1)
 val s = Signal{ v() + 1 }
@@ -322,11 +325,12 @@ The return type of the map function is the type parameter value of the resulting
 If `r` is a signal, then `r map f` is also a signal.
 If `r` is an event, then `r map f` is also an event.
 
-```scala mdoc:silent
+```scala mdoc:silent:nest
 val s = Var[Int](0)
 val s_MAP: Signal[String] = s map ((x: Int) => x.toString)
 val o1 = s_MAP observe ((x: String) => println(s"Here: $x"))
-
+```
+```scala mdoc:silent:nest
 val e = Evt[Int]()
 val e_MAP: Event[String] = e map ((x: Int) => x.toString)
 val o1 = e_MAP observe ((x: String) => println(s"Here: $x"))
@@ -351,7 +355,7 @@ associated to the event. The result is the new value of the signal.
 
 Example:
 
-```scala mdoc:silent
+```scala mdoc:silent:nest
 val e = Evt[Int]()
 val f = (x:Int,y:Int) => x+y
 val s: Signal[Int] = e.fold(10)(f)
@@ -370,7 +374,7 @@ must have the same parameter type (`Int` in the next example).
 The or combinator is left-biased, so if both e_1 and e_2 fire in the same
 transaction, the left value is returned.
 
-```scala mdoc:silent
+```scala mdoc:silent:nest
 val e1 = Evt[Int]()
 val e2 = Evt[Int]()
 val e1_OR_e2 = e1 || e2
@@ -385,7 +389,7 @@ The event `e && p` (or the alternative syntax `e filter p`) is fired if `e` occu
 The predicate is a function that accepts the event parameter as a formal parameter and returns `Boolean`.
 In other words the filter operator filters the events according to their parameter and a predicate.
 
-```scala mdoc:silent
+```scala mdoc:silent:nest
 val e = Evt[Int]()
 val e_AND: Event[Int] = e filter ((x: Int) => x>10)
 val o1 = e_AND observe ((x: Int) => println(x))
@@ -410,9 +414,9 @@ The argument of the event is simply discarded.
 
 `count(e: Event[_]): Signal[Int]`
 
-```scala mdoc:silent
+```scala mdoc:silent:nest
 val e = Evt[Int]()
-val s: Signal[Int] = e.count
+val s: Signal[Int] = e.count()
 
 assert(s.now == 0)
 e.fire(1); assert(s.now == 1)
@@ -431,7 +435,7 @@ Initially, an empty list is returned. Then the values are
 progressively filled up to the size specified by the
 programmer. Example:
 
-```scala mdoc:silent
+```scala mdoc:silent:nest
 val e = Evt[Int]()
 val s: Signal[scala.collection.LinearSeq[Int]] = e.last(5)
 val o1 = s observe println
@@ -463,7 +467,7 @@ as `Some(val)` or `None`.
 
 Example:
 
-```scala mdoc:silent
+```scala mdoc:silent:nest
 val e = Evt[Int]()
 val s: Signal[Option[Int]] = e.latestOption()
 assert(s.now == None)
@@ -485,14 +489,14 @@ If multiple events fire at the same time,
 the handlers are executed in order.
 The acc parameter reflects the current state.
 
-```scala mdoc:silent
+```scala mdoc:silent:nest
 val word = Evt[String]()
 val count = Evt[Int]()
 val reset = Evt[Unit]()
-val result = Events.foldAll(""){ acc => Events.Match(
-  reset >> (_ => ""),
-  word >> identity,
-  count >> (acc * _),
+val result = Events.foldAll(""){ acc => Seq(
+  reset act2 (_ => ""),
+  word act2 identity,
+  count act2 (acc * _),
 )}
 val o1 = result.observe(r => println(r))
 ```
@@ -502,7 +506,11 @@ reset.fire()
 word.fire("hello")
 count.fire(2)
 word.fire("world")
-update(count -> 2, word -> "do them all!", reset -> (()))
+rescala.default.transaction(count, count, reset) { implicit at =>
+	count.fire(2)
+	word.fire("do them all!")
+	reset.fire()
+}
 ```
 
 ### Iterate Signal
@@ -516,7 +524,7 @@ current value but only on the accumulated value.
 
 Example:
 
-```scala mdoc:silent
+```scala mdoc:silent:nest
 var test: Int = 0
 val e = Evt[Int]()
 val f = (x:Int) => { test=x; x+1 }
@@ -545,12 +553,11 @@ provides both the old and the new value of the signal in a tuple.
 
 Example:
 
-```scala mdoc:silent
+```scala mdoc:nest
 val s = Var(5)
 val e = s.change
 val o1 = e observe println
-```
-```scala mdoc
+
 s.set(10)
 s.set(20)
 ```
@@ -611,7 +618,7 @@ To tackle those shortcomings `rescala.extra.invarariant.SimpleScheduler` inside 
 Invariants can be directly attached to `Vars` and `Signals` to define functions that shall be true after every change.
 Each node can have multiple invariants and they can be attached using `specify`.
 
-```scala mdoc:silent
+```scala
 val v = Var { 42 }
 
 v.specify(
@@ -622,7 +629,7 @@ v.specify(
 
 Invariants can be named, to make them more expressive.
 
-```scala mdoc:silent
+```scala
 v.specify(
   new Invariant("always_positive", { value => value > 0} )
 )
@@ -652,7 +659,7 @@ Please check the [Scalacheck UserGuide](https://github.com/typelevel/scalacheck/
 Calling `test` on a signal will traverse its dependencies, find the closest generator on each branch
 and then use property based testing to find inputs that violate specified invariants.
 
-```scala mdoc:silent
+```scala
 val a = Var(42)
 val b = Var(42)
 val c = Signal { a() + b() }
@@ -712,14 +719,14 @@ returns the signal/var value *and* creates a dependency.
 The ```now``` operator returns the current value but does *not* create a dependency.
 For example the following signal declaration creates a dependency between ```a``` and ```s```, and a dependency between ```b``` and ```s```.
 
-```scala mdoc:silent
+```scala mdoc:silent:nest
 val s = Signal{ a() + b() }
 ```
 
 The following code instead establishes only a dependency between
 ```b``` and ```s```.
 
-```scala mdoc:silent
+```scala mdoc:silent:nest
 val s = Signal{ a.now + b() }
 ```
 
@@ -808,7 +815,7 @@ A solution to this problem is to use immutable objects.
 Since the objects cannot be modified, the only way to change a filed is to create an entirely new object and assign it to the var.
 As a result, the var is reevaluated.
 
-```scala mdoc
+```scala mdoc:nest
 class Foo(val x: Int){}
 val foo = new Foo(1)
 val varFoo = Var(foo)
@@ -821,7 +828,7 @@ println(s.now)
 Alternatively, one can still use mutable objects but assign again the var to force the reevaluation.
 However this style of programming is confusing for the reader and should be avoided when possible.
 
-```scala mdoc
+```scala mdoc:nest
 /* WRONG - DON'T DO THIS */
 class Foo(init: Int) { var x = init }
 val foo = new Foo(1)
@@ -839,7 +846,7 @@ println(s.now)
 Functions that operate on traditional values are not automatically transformed to operate on signals.
 For example consider the following functions:
 
-```scala mdoc:silent
+```scala mdoc:silent:nest
 def increment(x: Int): Int = x + 1
 ```
 
@@ -862,7 +869,7 @@ val s = Signal{ b + 1 } // s is a constant signal with value 2
 
 The following solution is syntactically correct and the signal ```s``` is updated every time the var ```a``` is updated.
 
-```scala mdoc:silent
+```scala mdoc:silent:nest
 val a = Var(1)
 val s = Signal{ increment(a()) + 1 }
 ```

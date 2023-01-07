@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-cs launch org.scalameta:mdoc_2.12:2.2.20 -- --classpath $(cs fetch --repository bintray:stg-tud/maven --classpath de.tuda.stg:rescala_2.12:0.24.0) --in manual-src.md --out manual.md
+cs launch org.scalameta:mdoc_2.13:2.3.6 -- --classpath $(cs fetch --classpath de.tu-darmstadt.stg:rescala_2.13:0.32.0) --in manual-src.md --out manual.md
