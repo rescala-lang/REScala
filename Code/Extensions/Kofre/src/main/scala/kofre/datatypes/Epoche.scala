@@ -3,7 +3,7 @@ package kofre.datatypes
 import kofre.base.{Bottom, DecomposeLattice, Id, Time}
 import kofre.dotted.DottedDecompose
 import kofre.syntax.PermIdMutate.withID
-import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, OpsTypes, PermQuery}
+import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, OpsTypes, PermMutate, PermQuery}
 
 case class Epoche[E](counter: Time, value: E)
 
@@ -15,14 +15,14 @@ object Epoche {
 
   given bottom[E: Bottom]: Bottom[Epoche[E]] with { override def empty: Epoche[E] = Epoche.empty }
 
-  implicit class EpocheSyntax[C, E](container: C)(using ArdtOpsContains[C, Epoche[E]])
+  implicit class EpocheSyntax[C, E](container: C)
       extends OpsSyntaxHelper[C, Epoche[E]](container) {
     def read(using QueryP): E = current.value
 
-    def write(value: E)(using MutationP): C       = current.copy(value = value).mutator
-    def epocheWrite(value: E)(using MutationP): C = Epoche(current.counter + 1, value).mutator
+    def write(using MutationP)(value: E): C       = current.copy(value = value).mutator
+    def epocheWrite(using MutationP)(value: E): C = Epoche(current.counter + 1, value).mutator
 
-    def map(f: E => E)(using MutationP): C = write(f(current.value))
+    def map(using MutationP)(f: E => E): C = write(f(current.value))
   }
 
   given epocheAsUIJDLattice[E: DecomposeLattice]: DecomposeLattice[Epoche[E]] = new DecomposeLattice[Epoche[E]] {

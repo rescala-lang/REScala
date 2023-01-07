@@ -1,7 +1,6 @@
 package kofre.datatypes
 
 import kofre.base.{Bottom, DecomposeLattice}
-import kofre.datatypes.GrowOnlyList.{GListAsUIJDLattice, syntax}
 import kofre.datatypes.{Epoche, TimedVal}
 import kofre.dotted.{DotFun, Dotted, DottedDecompose, DottedLattice}
 import kofre.syntax.PermIdMutate.withID
@@ -96,7 +95,7 @@ object ReplicatedList {
 
     def toList(using QueryP): List[E] = {
       val ReplicatedList(fw, df) = current
-      new syntax(fw.value).toList.map(df.store).collect {
+      GrowOnlyList.syntax(fw.value).toList.map(df.store).collect {
         case Alive(tv) => tv.value
       }
     }
@@ -123,7 +122,7 @@ object ReplicatedList {
       findInsertIndex(current, i) match {
         case None => Dotted(ReplicatedList.empty[E])
         case Some(glistInsertIndex) =>
-          val glistDelta = fw.map(gl => syntax(gl).insert(glistInsertIndex, nextDot)(using withID(replicaID)))
+          val glistDelta = fw.map(gl => gl.insert(glistInsertIndex, nextDot)(using withID(replicaID)))
           val dfDelta    = DotFun.empty[Node[E]] + (nextDot -> Alive(TimedVal(e, replicaID)))
 
           deltaState[E].make(
@@ -146,7 +145,7 @@ object ReplicatedList {
         case None => Dotted(ReplicatedList.empty)
         case Some(glistInsertIndex) =>
           val glistDelta =
-            fw.map(gl => syntax(gl).insertAll(glistInsertIndex, nextDots)(using summon, withID(replicaID)))
+            fw.map(gl => gl.insertAll(glistInsertIndex, nextDots)(using summon, withID(replicaID)))
           val dfDelta = DotFun.empty[Node[E]] ++ (nextDots zip elems.map(e => Alive(TimedVal(e, replicaID))))
 
           deltaState[E].make(

@@ -36,10 +36,11 @@ object GrowOnlyList {
 
   def empty[E]: GrowOnlyList[E] = GrowOnlyList(Map.empty)
 
-  given bottomInstance[E]: Bottom[GrowOnlyList[E]]            = Bottom.derived
-  given contextDecompose[E]: DottedDecompose[GrowOnlyList[E]] = DottedDecompose.liftDecomposeLattice
+  given bottomInstance[E]: Bottom[GrowOnlyList[E]] = Bottom.derived
+  given contextDecompose[E]: DottedDecompose[GrowOnlyList[E]] =
+    DottedDecompose.liftDecomposeLattice
 
-  implicit def GListAsUIJDLattice[E]: DecomposeLattice[GrowOnlyList[E]] =
+  given decomposeLattice[E]: DecomposeLattice[GrowOnlyList[E]] =
     new DecomposeLattice[GrowOnlyList[E]] {
       override def lteq(
           left: GrowOnlyList[E],
@@ -64,7 +65,7 @@ object GrowOnlyList {
               case None => GrowOnlyList(state.innerContents + edge)
               case Some(next @ Elem(e2)) =>
                 if (e1 > e2) GrowOnlyList(state.innerContents + edge + (r -> next))
-                else insertEdge(state, next                                        -> r)
+                else insertEdge(state, next                               -> r)
             }
         }
 
