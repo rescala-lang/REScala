@@ -99,6 +99,8 @@ class RGATest extends munit.ScalaCheckSuite {
 
   }
   property("update") {
+    // TODO: this seems to generate random update indizes and ignore everything outside the RGA size?
+    // Potentially many wasted executions ...
     forAll { (rga: AntiEntropyCRDT[ReplicatedList[Int]], updateIdx: Int, updateValue: Int) =>
       val updated = rga.update(updateIdx, updateValue)
 
