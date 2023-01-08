@@ -1,24 +1,27 @@
 
-# REScala Manual
-
-The manual serves as an introduction of the concepts in *REScala*.
+The manual serves as an introduction of the concepts in _REScala_.
 The full API is covered in the [scaladoc](../scaladoc/rescala/index.html) especially for Signals and Events.
 More details can be found in [[7, 3]](#ref).
 The manual introduces the concepts related to functional reactive programming and event-based programming from a practical perspective.
 
-* The chapter [The Basics](#the-basics) covers how to get started and integrate *REScala* into a program, and
-* The chapter [Common combinators](#common-combinators) presents *REScalas* most common features for composing signals and events.
-* The chapter [Combinators](#combinators) describes other combinators of *REScalas*.
-* If you encounter any problems, check out the chapter [Common Pitfalls](#common-pitfalls).
-* The readers interested in a more general presentation of these topics can find thee essential references in the section [related work](#related).
+Also see the introductory [video lecture](https://www.youtube.com/watch?v=iRh7UiclElk) that gives give a step by step introduction to developing applications in REScala.
+
+
+- The chapter [The Basics](#the-basics) covers how to get started and integrate _REScala_ into a program, and
+- The chapter [Common combinators](#common-combinators) presents _REScalas_ most common features for composing signals and events.
+- The chapter [Combinators](#combinators) describes other combinators of _REScalas_.
+- If you encounter any problems, check out the chapter [Common Pitfalls](#common-pitfalls).
+- The readers interested in a more general presentation of these topics can find thee essential references in the section [related work](#related).
+
+# Setup
 
 ## Setup
 
 Create a `build.sbt` file in an empty folder with the following contents:
 
 ```scala
-// note, REScala runs on all Scala versions, and the recommended one is the latest 3.x.y
-// however, this tutorial still assumes 2.13
+// should also work on any recent version of the Scala 2.11 - 3 branches
+// including ScalaJS 1.0 and ScalaNative 0.4
 scalaVersion := "2.13.10"
 libraryDependencies += "de.tu-darmstadt.stg" %% "rescala" % "0.32.0"
 ```
@@ -26,21 +29,94 @@ libraryDependencies += "de.tu-darmstadt.stg" %% "rescala" % "0.32.0"
 Install [sbt](http://www.scala-sbt.org/) and run `sbt console` inside the folder,
 this should allow you to follow along the following examples.
 
-The code examples in the manual serve as a self contained Scala REPL session,
-all code is executed and results are annotated as comments using [tut](https://github.com/tpolecat/tut).
+
+The code examples in the manual serve as a self contained Scala REPL session.
 Most code blocks can be executed on their own when adding this import,
 but some require definitions from the prior blocks.
-To use all features of *REScala* the only required import is:
+To use all features of _REScala_ the only required import is:
 
 ```scala mdoc:silent
 import rescala.default._
 ```
 
-## The Basics
+
+Note: Starting May 1. 2021 Bintray shut down their repository hosting, thus making older versions of REScala unavailable. We host a mirror of those versions (see resolver below), but please contact us in case you encounter issues.
+
+```scala
+resolvers += ("STG old bintray repo" at "http://www.st.informatik.tu-darmstadt.de/maven/").withAllowInsecureProtocol(true)
+libraryDependencies += "de.tuda.stg" %% "rescala" % "0.30.0"
+```
+
+
+<!--# Declarative Events-->
+
+<!--*REScala* supports declarative events, which are defined as a-->
+<!--composition of other events. For this purpose it offers operators like-->
+<!--`e_1 || e_2` , `e_1 && p` , `e_1.map(f)`. Event composition allows to-->
+<!--express the application logic in a clear and declarative way. Also,-->
+<!--the update logic is better localized because a single expression-->
+<!--models all the sources and the transformations that define an event-->
+<!--occurrence.-->
+
+<!--Declarative events are defined by composing other events. The-->
+<!--following code snippet shows some examples of valid definitions for-->
+<!--declarative events.-->
+
+<!--```scala-->
+<!--val e1 = Evt[Int]()-->
+<!--// e1: rescala.default.Evt[Int] = rescala.interface.RescalaInterfaceRequireSerializer#Evt:51-->
+
+<!--val e2 = Evt[Int]()-->
+<!--// e2: rescala.default.Evt[Int] = rescala.interface.RescalaInterfaceRequireSerializer#Evt:51-->
+
+<!--val e3 = e1 || e2-->
+<!--// e3: rescala.reactives.Event[Int,rescala.parrp.ParRP] = (or rescala.interface.RescalaInterfaceRequireSerializer#Evt:51 rescala.interface.RescalaInterfaceRequireSerializer#Evt:51)-->
+
+<!--val e4 = e1 && ((x: Int)=> x>10)-->
+<!--// e4: rescala.reactives.Event[Int,rescala.parrp.ParRP] = (filter rescala.interface.RescalaInterfaceRequireSerializer#Evt:51)-->
+
+<!--val e5 = e1 map ((x: Int)=> x.toString)-->
+<!--// e5: rescala.reactives.Event[String,rescala.parrp.ParRP] = e5:17-->
+<!--```-->
+
+<!--This section presents in details the operators that allow one to-->
+<!--compose events into declarative events.-->
+
+<!--# Imperative Events-->
+
+<!--*REScala* supports different kind of events. Imperative events are-->
+<!--directly triggered from the user. Declarative events trigger when the-->
+<!--events they depend on trigger. In reactive applications, events are-->
+<!--typically used to model changes that happen at discrete points in-->
+<!--time. For example a mouse click from the user or the arrival of a new-->
+<!--network packet. Some features of *REScala* events are valid for all-->
+<!--event types.-->
+
+<!--* Events carry a value. The value is associated to the event when-->
+<!--  the event is fired and received by all the registered handlers when-->
+<!--  each handler is executed.-->
+
+<!--* Events are generic types parametrized with the type of value-->
+<!--  they carry, like `Event[T]` and `Evt[T]` where-->
+<!--  `T` is the value carried by the event.-->
+
+<!--* Both imperative events and declarative events are subtypes of-->
+<!--  `Event[T]` and can referred to generically.-->
+
+<!--*REScala* imperative events are triggered imperatively by the-->
+<!--programmer. One can think to imperative events as a generalization of-->
+<!--a method call which supports (multiple) bodies that are registered and-->
+<!--unregistered dynamically.-->
+
+# The Basics
+
+<!--Because most code is imperative,-->
+<!--you need to know the following imperative parts of *REScala* for starters,-->
+<!--before making use of the functional features.-->
 
 This chapter is about using Var and Evt, the imperative subtypes of Signal and Event.
 
-### Var, set
+## Var, set, now
 
 A `Var[T]` holds a value of type `T`.
 `Var[T]` is a subtype of `Signal[T]`. See also the chapter about Signals.
@@ -66,7 +142,7 @@ c.transform( list => 0 :: list )
 <!--the value of a var must not be mutated indirectly,-->
 <!--as such changes are hidden to the framework.-->
 
-### Evt, fire
+## Evt, fire
 
 Imperative events are defined by the `Evt[T]` type.
 `Evt[T]` are a subtype of `Event[T]`.
@@ -79,7 +155,6 @@ The following code snippet shows some valid events definitions:
 val e1 = Evt[Int]()
 val e2 = Evt[Unit]()
 val e3 = Evt[(Boolean, String, Int)]()
-val e4 = Evt[String]()
 ```
 
 Events can be fired with the method `fire`, which will start a propagation.
@@ -90,9 +165,9 @@ e2.fire(())
 e3.fire((false, "Hallo", 5))
 ```
 
-### Now, observe, disconnect
+## Now, observe, remove
 
-The current value of a signal can be accessed using the ```now``` method.
+The current value of a signal can be accessed using the `now` method.
 It is useful for debugging and testing, and sometimes inside onclick handlers.
 If possible, use observers or even better combinators instead.
 
@@ -120,13 +195,6 @@ e.fire("tom")
 If multiple handlers are registered, all of them are executed when the event is fired.
 Applications should not rely on the order of handler execution.
 
-```scala mdoc:silent
-val e5 = Evt[Int]()
-val o2 = e observe { x => println(x) }
-val o3 = e observe { x => println(f"n: $x") }
-```
-```scala mdoc
-e5.fire(10)
 e5.fire(10)
 ```
 
@@ -138,6 +206,14 @@ Note that unit-type events still need an argument in the handler.
   e observe { x => println("ping") }
   e observe { _ => println("pong") }
 }
+```
+
+Note that events without arguments still need an argument in the handler.
+
+```scala mdoc:silent:nest
+val e = Evt[Unit]()
+e observe { x => println("ping") }
+e observe { _ => println("pong") }
 ```
 
 Scala allows one to refer to a method using the partially applied function syntax.
@@ -155,26 +231,27 @@ val o4 = e6.observe(m1)
 e6.fire(10)
 ```
 
-Handlers can be unregistered from events with the `disconnect` operator.
+Handlers can be unregistered from events with the `remove` operator.
 When a handler is unregistered, it is not executed when the event is fired.
 If you create handlers, you should also think about removing them, when they are no longer needed.
 
-```scala mdoc:silent:nest
+```scala
 val e = Evt[Int]()
-val handler = e observe println
+val handler1 = e observe println
+
+e.fire(10)
+// n: 10
+// 10
+
+handler1.remove()
 ```
-```scala mdoc
-e.fire(10) // println reaction
-handler.disconnect()
-e.fire(10) // no reaction
-```
 
-### Signal Expressions
+## Signal Expressions
 
-Signals are defined by the syntax ```Signal{```*sigexpr*```}```, where *sigexpr* is a side effect-free expression.
-A signal that carries integer values has the type ```Signal[Int]```.
+Signals are defined by the syntax `Signal{sigexpr}`, where _sigexpr_ is a side effect-free expression.
+A signal that carries integer values has the type `Signal[Int]`.
 
-Inside a signal expression other signals should be accessed with the ```()``` operator.
+Inside a signal expression other signals should be accessed with the `()` operator.
 In the following code, the signal `c` is defined to be `a + b`.
 When `a` or `b` are updated, the value of `c` is updated as well.
 
@@ -189,9 +266,9 @@ a set 4; println((a.now, b.now, c.now))
 b set 5; println((a.now, b.now, c.now))
 ```
 
-The signal ```c``` is a dependent / derivative of the vars ```a``` and ```b```, meaning that the values of ```s``` depends on both ```a``` and ```b```.
+The signal `c` is a dependent / derivative of the vars `a` and `b`, meaning that the values of `c` depends on both `a` and `b`.
 
-Here are some more example of using signal expressions:
+Here are some more examples of using signal expressions:
 
 ```scala mdoc:silent:nest
 val a = Var(0)
@@ -211,10 +288,9 @@ val s: Signal[Int] = Signal {
 }
 ```
 
+## Example
 
-### Example
-
-Now, we have introduced enough features of *REScala* to give a simple example.
+Now, we have introduced enough features of _REScala_ to give a simple example.
 The following example computes the displacement `space` of a particle that is moving at constant speed `SPEED`.
 The application prints all the values associated to the displacement over time.
 
@@ -239,18 +315,17 @@ the signal expression at Line 3 is reevaluated and the value of `space` is updat
 Finally, the current value of the `space` signal is printed every time the value of the signal changes.
 
 Note that using `println(space.now)` would also print the value of the signal, but only at the point in time in which the print statement is executed.
-Instead, the approach described so far prints *all* values of the signal.
+Instead, the approach described so far prints _all_ values of the signal.
 
 <!--More details about converting signals into events and back are provided in [Conversion Functions](#conversion-functions).-->
 
-
-## Common Combinators
+# Common Combinators
 
 Combinators express functional dependencies among values.
 Intuitively, the value of a combinator is computed from one or multiple input values.
 Whenever any inputs changes, the value of the combinator is also updated.
 
-### Latest, Changed
+## Latest, Changed
 
 Conversion between signals and events are fundamental to introduce
 time-changing values into OO applications -- which are usually event-based.
@@ -316,8 +391,7 @@ v.set(3)
 assert(test == 2)
 ```
 
-
-### Map
+## Map
 
 The reactive `r.map f` is obtained by applying `f` to the value carried by `r`.
 The map function must take the parameter as a formal parameter.
@@ -343,7 +417,7 @@ e fire 24
 ```
 
 
-### Fold
+## Fold
 
 The `fold` function creates a signal by folding events with a
 given function. Initially the signal holds the `init`
@@ -365,8 +439,7 @@ e.fire(2)
 assert(s.now == 13)
 ```
 
-
-### Or, And
+## Or, And
 
 The event `e_1 || e_2` is fired upon the occurrence of one among `e_1`
 or `e_2`. Note that the events that appear in the event expression
@@ -379,10 +452,14 @@ val e1 = Evt[Int]()
 val e2 = Evt[Int]()
 val e1_OR_e2 = e1 || e2
 val o1 = e1_OR_e2 observe ((x: Int) => println(x))
+
 ```
 ```scala mdoc
 e1.fire(1)
+// 1
+
 e2.fire(2)
+// 2
 ```
 
 The event `e && p` (or the alternative syntax `e filter p`) is fired if `e` occurs and the predicate `p` is satisfied.
@@ -403,10 +480,9 @@ e fire 2
 e fire 11
 ```
 
+# Combinators
 
-## Combinators
-
-### Count Signal
+## Count Signal
 
 Returns a signal that counts the occurrences of the event.
 Initially, when the event has never been fired yet, the signal holds the value 0.
@@ -423,8 +499,7 @@ e.fire(1); assert(s.now == 1)
 e.fire(3); assert(s.now == 2)
 ```
 
-
-### Last(n) Signal
+## Last(n) Signal
 
 The `last` function generalizes the `latest` function and
 returns a signal which holds the last `n` events.
@@ -447,7 +522,7 @@ e.fire(3);e.fire(4);e.fire(5)
 e.fire(6)
 ```
 
-### List Signal
+## List Signal
 
 Collects the event values in a (growing) list. This function should be
 used carefully. Since the entire history of events is maintained, the
@@ -455,6 +530,7 @@ function can potentially introduce a memory overflow.
 
 `list[T](e: Event[T]): Signal[List[T]]`
 
+## LatestOption Signal
 
 ### LatestOption Signal
 
@@ -480,7 +556,7 @@ assert(s.now == Option(1))
 ```
 
 
-### Fold matcher Signal
+## Fold matcher Signal
 
 The `fold` `Match` construct allows to match on one of multiple events.
 For every firing event, the corresponding handler function is executed,
@@ -507,13 +583,13 @@ word.fire("hello")
 count.fire(2)
 word.fire("world")
 rescala.default.transaction(count, count, reset) { implicit at =>
-	count.fire(2)
-	word.fire("do them all!")
-	reset.fire()
+  count.fire(2)
+  word.fire("do them all!")
+  reset.fire()
 }
 ```
 
-### Iterate Signal
+## Iterate Signal
 
 Returns a signal holding the value computed by `f` on the
 occurrence of an event. Differently from `fold`, there is no
@@ -543,13 +619,12 @@ assert(test == 12)
 assert(s.now == 13)
 ```
 
+## Change Event
 
-### Change Event
-
-The ```change``` function is similar to ```changed```, but it
+The `change` function is similar to `changed`, but it
 provides both the old and the new value of the signal in a tuple.
 
-```change[U >: T]: Event[(U, U)]```
+`change[U >: T]: Event[(U, U)]`
 
 Example:
 
@@ -562,10 +637,9 @@ s.set(10)
 s.set(20)
 ```
 
+## ChangedTo Event
 
-### ChangedTo Event
-
-The ```changedTo``` function is similar to ```changed```, but it
+The `changedTo` function is similar to `changed`, but it
 fires an event only when the signal changes its value to a given
 value.
 
@@ -583,15 +657,14 @@ v set(2); assert(test == 1)
 v set(3); assert(test == 1)
 ```
 
+## Flatten
 
-### Flatten
-
-The ```flatten``` function is used to ``flatten'' nested reactives.
+The `flatten` function is used to “flatten” nested reactives.
 
 It can, for instance, be used to detect if any signal within a collection of signals
 fired a changed event:
 
-```scala mdoc:silent
+```scala mdoc:silent:nest
 val v1 = Var(1)
 val v2 = Var("Test")
 val v3 = Var(true)
@@ -606,14 +679,14 @@ v2.set("Changed")
 v3.set(false)
 ```
 
-## Testing
+# Testing
 
 Conventional testing methods fail to thoroughly test reactive applications.
 Nodes may never be exposed to the full range of their possible inputs based on their current location in the spanned dependency graph.
 Furthermore, on receiving an invalid input, it is impossible to trace back the route of the problem.
 To tackle those shortcomings `rescala.extra.invarariant.SimpleScheduler` inside the `Tests-Sources` subproject adds the concept of _invariants_ and _generators_ to Rescala.
 
-### Invariants
+## Invariants
 
 Invariants can be directly attached to `Vars` and `Signals` to define functions that shall be true after every change.
 Each node can have multiple invariants and they can be attached using `specify`.
@@ -650,7 +723,7 @@ The error was caused by these update chains:
   tests.rescala.property.InvariantsTest#v:94 with value: Value(-100)
 ```
 
-### Generators
+## Generators
 
 Generators allow to test a `Signal`s whole input range.
 For this purpose generators are attached to one or more predecessors of the node to be tested using `setValueGenerator`.
@@ -707,20 +780,35 @@ class InvariantsTest extends AnyFreeSpec {
 }
 ```
 
-## Common Pitfalls
+# Common Pitfalls
 
-In this section we collect the most common pitfalls for users that are new to reactive programming and *REScala*.
+In this section we
+collect the most common pitfalls for users that are new to reactive
+programming and _REScala_.
 
+## Accessing values in signal expressions
 
-### Accessing values in signal expressions
+The `()`
+operator used on a signal or a var, inside a signal expression,
+returns the signal/var value _and_ creates a dependency. The
+`now` operator returns the current value but does _not_
+create a dependency. For example the following signal declaration
+creates a dependency between `a` and `s`, and a dependency
+between `b` and `s`.
 
-The ```()``` operator used on a signal or a var, inside a signal expression,
-returns the signal/var value *and* creates a dependency.
-The ```now``` operator returns the current value but does *not* create a dependency.
-For example the following signal declaration creates a dependency between ```a``` and ```s```, and a dependency between ```b``` and ```s```.
+```scala
+val a = Var(42)
+val b = Var(42)
+val c = Signal { a() + b() }
 
-```scala mdoc:silent:nest
-val s = Signal{ a() + b() }
+a.setValueGenerator(Gen.posNum[Int])
+b.setValueGenerator(Gen.posNum[Int])
+
+c.specify(
+  Invariant { value => value >= 0 },
+)
+
+c.test()
 ```
 
 The following code instead establishes only a dependency between
@@ -730,14 +818,13 @@ The following code instead establishes only a dependency between
 val s = Signal{ a.now + b() }
 ```
 
-In other words, in the last example, if ```a``` is updated, ```s```
+In other words, in the last example, if `a` is updated, `s`
 is not automatically updated. With the exception of the rare cases in
-which this behavior is desirable, using ```now``` inside a signal
+which this behavior is desirable, using `now` inside a signal
 expression is almost certainly a mistake. As a rule of dumb, signals
-and vars appear in signal expressions with the ```()``` operator.
+and vars appear in signal expressions with the `()` operator.
 
-
-### Attempting to assign a signal
+## Attempting to assign a signal
 
 Signals are not assignable.
 Signal depends on other signals and vars, the dependency is expressed by the signal expression.
@@ -745,13 +832,14 @@ The value of the signal is automatically updated when one of the values it depen
 Any attempt to set the value of a signal manually is a mistake.
 
 
-### Side effects in signal expressions
+## Side effects in signal expressions
 
 Signal expressions should be pure. i.e. they should not modify external variables.
 For example the following code is conceptually wrong because the variable
-```c``` is imperatively assigned form inside the signal expression (Line 4).
+`c` is imperatively assigned form inside the signal expression (Line 4).
 
-```scala mdoc:silent
+
+```scala mdoc:silent:nest
 var c = 0
 val s = Signal{
   val sum = a() + b();
@@ -760,10 +848,11 @@ val s = Signal{
 assert(c == 4)
 ```
 
-A possible solution is to refactor the code above to a more functional style.
-For example, by removing the variable ```c``` and replacing it directly with the signal.
+A possible solution is to refactor the code above to a more functional
+style. For example, by removing the variable `c` and replacing it
+directly with the signal.
 
-```scala mdoc:silent
+```scala mdoc:silent:nest
 val c = Signal{
   val sum = a() + b();
   sum * 2
@@ -772,10 +861,10 @@ assert(c.now == 4)
 ```
 
 
-### Cyclic dependencies
+## Cyclic dependencies
 
-When a signal ```s``` is defined, a dependency is establishes with each of the
-signals or vars that appear in the signal expression of ```s```.
+When a signal `s` is defined, a dependency is establishes with each of the
+signals or vars that appear in the signal expression of `s`.
 Cyclic dependencies produce a runtime error and must be avoided.
 For example the following code:
 
@@ -786,14 +875,13 @@ val s = Signal{ a() + t() }
 val t = Signal{ a() + s() + 1 }
 ```
 
-creates a mutual dependency between ```s``` and ```t```.
-Similarly, indirect cyclic dependencies must be avoided.
+creates a mutual dependency between `s` and
+`t`. Similarly, indirect cyclic dependencies must be avoided.
 
+## Objects and mutability
 
-### Objects and mutability
-
-Vars and signals may behave unexpectedly with mutable objects.
-Consider the following example.
+Vars and signals may behave
+unexpectedly with mutable objects. Consider the following example.
 
 ```scala
 /* WRONG - DON'T DO THIS */
@@ -805,15 +893,20 @@ println(s.now)
 foo.x = 2
 println(s.now)
 ```
+One may expect that after increasing the value of `foo.x` in
+Line 9, the signal expression is evaluated again and updated
+to 12. The reason why the application behaves differently is that
+signals and vars hold _references_ to objects, not the objects
+themselves. When the statement in Line 9 is executed, the
+value of the `x` field changes, but the reference hold by the
+`varFoo` var is the same. For this reason, no change is detected
+by the var, the var does not propagate the change to the signal, and
+the signal is not reevaluated.
 
-One may expect that after increasing the value of ```foo.x``` in Line 9, the signal expression is evaluated again and updated to 12.
-The reason why the application behaves differently is that signals and vars hold *references* to objects, not the objects themselves.
-When the statement in Line 9 is executed, the value of the ```x``` field changes, but the reference hold by the ```varFoo``` var is the same.
-For this reason, no change is detected by the var, the var does not propagate the change to the signal, and the signal is not reevaluated.
-
-A solution to this problem is to use immutable objects.
-Since the objects cannot be modified, the only way to change a filed is to create an entirely new object and assign it to the var.
-As a result, the var is reevaluated.
+A solution to this problem is to use immutable objects. Since the
+objects cannot be modified, the only way to change a filed is to
+create an entirely new object and assign it to the var. As a result,
+the var is reevaluated.
 
 ```scala mdoc:nest
 class Foo(val x: Int){}
@@ -825,8 +918,9 @@ varFoo set (new Foo(2))
 println(s.now)
 ```
 
-Alternatively, one can still use mutable objects but assign again the var to force the reevaluation.
-However this style of programming is confusing for the reader and should be avoided when possible.
+Alternatively, one can still use mutable objects but assign again the
+var to force the reevaluation. However this style of programming is
+confusing for the reader and should be avoided when possible.
 
 ```scala mdoc:nest
 /* WRONG - DON'T DO THIS */
@@ -841,17 +935,21 @@ println(s.now)
 ```
 
 
-### Functions of reactive values
+## Functions of reactive values
 
-Functions that operate on traditional values are not automatically transformed to operate on signals.
-For example consider the following functions:
+Functions that operate on
+traditional values are not automatically transformed to operate on
+signals. For example consider the following functions:
 
 ```scala mdoc:silent:nest
 def increment(x: Int): Int = x + 1
 ```
 
-The following code does not compile because the compiler expects an integer, not a var as a parameter of the ```increment``` function.
-In addition, since the ```increment``` function returns an integer, ```b``` has type ```Int```, and the call ```b()``` in the signal expression is also rejected by the compiler.
+The following code does not compile because the compiler expects an
+integer, not a var as a parameter of the `increment` function. In
+addition, since the `increment` function returns an integer,
+`b` has type `Int`, and the call `b()` in the signal
+expression is also rejected by the compiler.
 
 ```scala
 val a = Var(1)
@@ -859,7 +957,8 @@ val b = increment(a)     /* WRONG - DON'T DO THIS */
 val s = Signal{ b() + 1 }
 ```
 
-The following code snippet is syntactically correct, but the signal has a constant value 2 and is not updated when the var changes.
+The following code snippet is syntactically correct, but the signal
+has a constant value 2 and is not updated when the var changes.
 
 ```scala mdoc
 val a = Var(1)
@@ -867,67 +966,72 @@ val b: Int = increment(a.now) // b is not reactive!
 val s = Signal{ b + 1 } // s is a constant signal with value 2
 ```
 
-The following solution is syntactically correct and the signal ```s``` is updated every time the var ```a``` is updated.
+The following solution is syntactically correct and the signal
+`s` is updated every time the var `a` is updated.
 
 ```scala mdoc:silent:nest
 val a = Var(1)
 val s = Signal{ increment(a()) + 1 }
 ```
 
-
-## Essential Related Work
+# Essential Related Work
 
 {: #related }
 
-A more academic presentation of *REScala* is in [[7]](#ref).
+A more academic presentation of _REScala_ is in [[7]](#ref).
 A complete bibliography on reactive programming is beyond the scope of this work.
-The interested reader can refer to [[1]](#ref) for an overview of reactive programming and to [[8]](#ref) for the issues concerning the integration of RPwith object-oriented programming.
+The interested reader can refer to [[1]](#ref) for an overview of reactive
+programming and to [[8]](#ref) for the issues concerning the integration of RP
+with object-oriented programming.
 
-*REScala* builds on ideas originally developed in EScala [[3]](#ref) -- which supports event combination and implicit events.
-Other reactive languages directly represent time-changing values and remove inversion of control.
-Among the others, we mention FrTime [[2]](#ref) (Scheme), FlapJax [[6]](#ref) (Javascript), AmbientTalk/R [[4]](#ref) and Scala.React [[5]](#ref) (Scala).
+_REScala_ builds on ideas originally developed in EScala [[3]](#ref)
+-- which supports event combination and implicit events.
+Other reactive languages directly represent time-changing values and remove
+inversion of control.
+Among the others, we mention
+FrTime [[2]](#ref) (Scheme),
+FlapJax [[6]](#ref) (Javascript),
+AmbientTalk/R [[4]](#ref) and
+Scala.React [[5]](#ref) (Scala).
 
-
-## Acknowledgments
+# Acknowledgments
 
 Several people contributed to this manual,
-<!--with their ideas and comments -->
 among the others David Richter, Gerold Hintz and Pascal Weisenburger.
-<!--and Guido Salvaneschi of course?-->
 
 
-## References
+# References
 {: #ref}
 
-[1] *A survey on reactive programming.*<br>
+[1] _A survey on reactive programming._<br>
 E. Bainomugisha, A. Lombide Carreton, T. Van Cutsem, S. Mostinckx, and W. De Meuter.<br>
 ACM Comput. Surv. 2013.
 
-[2] *Embedding dynamic dataflow in a call-by value language.*<br>
+[2] _Embedding dynamic dataflow in a call-by value language._<br>
 G. H. Cooper and S. Krishnamurthi.<br>
-ESOP, pages 294–308, 2006.
+In ESOP, pages 294–308, 2006.
 
-[3] *EScala: modular event-driven object interactions in Scala.*<br>
+[3] _EScala: modular event-driven object interactions in Scala._<br>
 V. Gasiunas, L. Satabin, M. Mezini, A. Ńũnez, and J. Noýe.<br>
 AOSD ’11, pages 227–240. ACM, 2011.
 
-[4] *Loosely-coupled distributed reactive programming in mobile ad hoc networks.*<br>
+[4] _Loosely-coupled distributed reactive programming in mobile ad hoc networks._<br>
 A. Lombide Carreton, S. Mostinckx, T. Cutsem, and W. Meuter.<br>
 In J. Vitek, editor, Objects, Models, Components, Patterns, volume 6141 of Lecture Notes in Computer Science, pages 41–60. Springer Berlin Heidelberg, 2010.
 
-[5] *Deprecating the Observer Pattern with Scala.react.*<br>
+[5] _Deprecating the Observer Pattern with Scala.react._<br>
 I. Maier and M. Odersky.<br>
 Technical report, 2012.
 
-[6] *Flapjax: a programming language for ajax applications.*<br>
+[6] _Flapjax: a programming language for ajax applications._<br>
 L. A. Meyerovich, A. Guha, J. Baskin, G. H. Cooper, M. Greenberg, A. Bromfield, and S. Krishnamurthi.<br>
 OOPSLA ’09, pages 1–20. ACM, 2009.
 
-[7] *REScala: Bridging between objectoriented and functional style in reactive applications.*<br>
+[7] _REScala: Bridging between objectoriented and functional style in reactive applications._<br>
 G. Salvaneschi, G. Hintz, and M. Mezini.<br>
 AOSD ’14, New York, NY, USA, Accepted for publication, 2014. ACM.
 
-[8] *Reactive behavior in object-oriented applications: an analysis and a research roadmap.*<br>
+[8] _Reactive behavior in object-oriented applications: an analysis and a research roadmap._<br>
 G. Salvaneschi and M. Mezini.<br>
 AOSD ’13, pages 37–48, New York, NY, USA, 2013. ACM.
 
