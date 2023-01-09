@@ -58,7 +58,6 @@ object Codecs {
   implicit val transmittableDeltaForLWW: IdenticallyTransmittable[DeltaFor[CausalLastWriterWins[TaskData]]] =
     IdenticallyTransmittable()
 
-  type LwC = DeltaBufferRDT[CausalLastWriterWins[TaskData]]
-  implicit val codecLww: JsonValueCodec[LwC] = JsonCodecMaker.make
+  implicit val codecLww: JsonValueCodec[DeltaBufferRDT[CausalLastWriterWins[TaskData]]] = JsonCodecMaker.make
 
 }
