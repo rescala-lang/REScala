@@ -44,7 +44,7 @@ object DeltaSequence {
       DeltaSequenceOrder(inner ++ addRightEdgeDelta(left, insertee).inner)
   }
 
-  implicit class DeltaSequenceOps[C, A](container: C)(using ArdtOpsContains[C, DeltaSequence[A]])
+  implicit class DeltaSequenceOps[C, A](container: C)
       extends OpsSyntaxHelper[C, DeltaSequence[A]](container) {
 
     def successor(v: Vertex)(using QueryP): Option[Vertex] = {
