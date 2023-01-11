@@ -15,7 +15,7 @@ case class DeltaBufferRDT[State](
     deltaBuffer: List[DottedName[State]]
 ) {
 
-  def applyDelta(delta: DottedName[State])(implicit
+  def applyDelta(delta: DottedName[State])(using
       u: DecomposeLattice[Dotted[State]]
   ): DeltaBufferRDT[State] =
     delta match {
