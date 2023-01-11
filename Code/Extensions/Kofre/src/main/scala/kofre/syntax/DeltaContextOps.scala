@@ -63,7 +63,6 @@ object PermIdMutate:
 trait ArdtOpsContains[C, L]
 object ArdtOpsContains:
   given identityContains[L]: ArdtOpsContains[L, L] = new {}
-  // given transitiveContains[A, B, C](using ArdtOpsContains[A, B], ArdtOpsContains[B, C]): ArdtOpsContains[A, C] = new {}
 
 /** Helps to define operations that update any container [[C]] containing values of type [[L]]
   * using a scheme where mutations return deltas which are systematically applied.
