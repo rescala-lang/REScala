@@ -3,7 +3,7 @@ package deltaAntiEntropy.tests
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tests.NetworkGenerators.*
-import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyCRDT, Network}
+import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
 import kofre.datatypes.TwoPhaseSet
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
@@ -12,14 +12,14 @@ import replication.JsoniterCodecs.*
 import scala.collection.mutable
 
 object TwoPSetGenerators {
-  def genTwoPSet[E: Arbitrary](implicit c: JsonValueCodec[E]): Gen[AntiEntropyCRDT[TwoPhaseSet[E]]] = for {
+  def genTwoPSet[E: Arbitrary](implicit c: JsonValueCodec[E]): Gen[AntiEntropyContainer[TwoPhaseSet[E]]] = for {
     added   <- Gen.containerOf[List, E](Arbitrary.arbitrary[E])
     n       <- Gen.choose(0, added.size)
     removed <- Gen.pick(n, added)
   } yield {
     val network = new Network(0, 0, 0)
     val ae = new AntiEntropy[TwoPhaseSet[E]]("a", network, mutable.Buffer())(implicitly, twoPSetContext[E], implicitly)
-    val setAdded = added.foldLeft(AntiEntropyCRDT[TwoPhaseSet[E]](ae)) {
+    val setAdded = added.foldLeft(AntiEntropyContainer[TwoPhaseSet[E]](ae)) {
       case (set, e) => set.insert(e)
     }
     removed.foldLeft(setAdded) {
@@ -27,7 +27,7 @@ object TwoPSetGenerators {
     }
   }
 
-  implicit def arbTwoPSet[E: Arbitrary](implicit c: JsonValueCodec[E]): Arbitrary[AntiEntropyCRDT[TwoPhaseSet[E]]] =
+  implicit def arbTwoPSet[E: Arbitrary](implicit c: JsonValueCodec[E]): Arbitrary[AntiEntropyContainer[TwoPhaseSet[E]]] =
     Arbitrary(genTwoPSet)
 }
 
@@ -40,7 +40,7 @@ class TowPSetTest extends munit.ScalaCheckSuite {
       val network = new Network(0, 0, 0)
       val ae      = new AntiEntropy[TwoPhaseSet[Int]]("a", network, mutable.Buffer())
 
-      val setInserted = insert.foldLeft(AntiEntropyCRDT[TwoPhaseSet[Int]](ae)) {
+      val setInserted = insert.foldLeft(AntiEntropyContainer[TwoPhaseSet[Int]](ae)) {
         case (s, e) => s.insert(e)
       }
 
@@ -57,7 +57,7 @@ class TowPSetTest extends munit.ScalaCheckSuite {
     }
   }
   property("remove") {
-    forAll { (set: AntiEntropyCRDT[TwoPhaseSet[Int]], e: Int) =>
+    forAll { (set: AntiEntropyContainer[TwoPhaseSet[Int]], e: Int) =>
       val removed = set.remove(e)
 
       assert(
@@ -74,12 +74,12 @@ class TowPSetTest extends munit.ScalaCheckSuite {
       val aeb = new AntiEntropy[TwoPhaseSet[Int]]("b", network, mutable.Buffer("a"))
 
       val sa0 = addOrRemoveA match {
-        case Left(e)  => AntiEntropyCRDT[TwoPhaseSet[Int]](aea).insert(e)
-        case Right(e) => AntiEntropyCRDT[TwoPhaseSet[Int]](aea).remove(e)
+        case Left(e)  => AntiEntropyContainer[TwoPhaseSet[Int]](aea).insert(e)
+        case Right(e) => AntiEntropyContainer[TwoPhaseSet[Int]](aea).remove(e)
       }
       val sb0 = addOrRemoveB match {
-        case Left(e)  => AntiEntropyCRDT[TwoPhaseSet[Int]](aeb).insert(e)
-        case Right(e) => AntiEntropyCRDT[TwoPhaseSet[Int]](aeb).remove(e)
+        case Left(e)  => AntiEntropyContainer[TwoPhaseSet[Int]](aeb).insert(e)
+        case Right(e) => AntiEntropyContainer[TwoPhaseSet[Int]](aeb).remove(e)
       }
 
       AntiEntropy.sync(aea, aeb)
@@ -108,13 +108,13 @@ class TowPSetTest extends munit.ScalaCheckSuite {
         val aea = new AntiEntropy[TwoPhaseSet[Int]]("a", network, mutable.Buffer("b"))
         val aeb = new AntiEntropy[TwoPhaseSet[Int]]("b", network, mutable.Buffer("a"))
 
-        val insertedA = insertA.foldLeft(AntiEntropyCRDT[TwoPhaseSet[Int]](aea)) {
+        val insertedA = insertA.foldLeft(AntiEntropyContainer[TwoPhaseSet[Int]](aea)) {
           case (s, e) => s.insert(e)
         }
         val sa0 = removeA.foldLeft(insertedA) {
           case (s, e) => s.remove(e)
         }
-        val insertedB = insertB.foldLeft(AntiEntropyCRDT[TwoPhaseSet[Int]](aeb)) {
+        val insertedB = insertB.foldLeft(AntiEntropyContainer[TwoPhaseSet[Int]](aeb)) {
           case (s, e) => s.insert(e)
         }
         val sb0 = removeB.foldLeft(insertedB) {

@@ -3,7 +3,7 @@ package deltaAntiEntropy.tests
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tests.NetworkGenerators.*
-import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyCRDT, Network}
+import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
 import kofre.datatypes.AddWinsSet
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
@@ -12,7 +12,7 @@ import replication.JsoniterCodecs.*
 import scala.collection.mutable
 
 object AWSetGenerators {
-  def genAWSet[A: JsonValueCodec](implicit a: Arbitrary[A]): Gen[AntiEntropyCRDT[AddWinsSet[A]]] =
+  def genAWSet[A: JsonValueCodec](implicit a: Arbitrary[A]): Gen[AntiEntropyContainer[AddWinsSet[A]]] =
     for {
       added   <- Gen.containerOf[List, A](a.arbitrary)
       n       <- Gen.choose(0, added.size)
@@ -21,7 +21,7 @@ object AWSetGenerators {
       val network = new Network(0, 0, 0)
       val ae      = new AntiEntropy[AddWinsSet[A]]("a", network, mutable.Buffer())
 
-      val setAdded = added.foldLeft(AntiEntropyCRDT[AddWinsSet[A]](ae)) {
+      val setAdded = added.foldLeft(AntiEntropyContainer[AddWinsSet[A]](ae)) {
         case (set, e) => set.add(e)
       }
       removed.foldLeft(setAdded) {
@@ -31,7 +31,7 @@ object AWSetGenerators {
 
   implicit def arbAWSet[A: JsonValueCodec](implicit
       a: Arbitrary[A]
-  ): Arbitrary[AntiEntropyCRDT[AddWinsSet[A]]] =
+  ): Arbitrary[AntiEntropyContainer[AddWinsSet[A]]] =
     Arbitrary(genAWSet[A])
 }
 
@@ -40,8 +40,8 @@ class AWSetTest extends munit.ScalaCheckSuite {
 
   implicit val IntCodec: JsonValueCodec[Int] = JsonCodecMaker.make
   property("add") {
-    forAll { (set: AntiEntropyCRDT[AddWinsSet[Int]], e: Int) =>
-      val added: AntiEntropyCRDT[AddWinsSet[Int]] = set.add(e)
+    forAll { (set: AntiEntropyContainer[AddWinsSet[Int]], e: Int) =>
+      val added: AntiEntropyContainer[AddWinsSet[Int]] = set.add(e)
 
       val elems = added.elements
       assert(
@@ -51,7 +51,7 @@ class AWSetTest extends munit.ScalaCheckSuite {
     }
   }
   property("remove") {
-    forAll { (set: AntiEntropyCRDT[AddWinsSet[Int]], e: Int) =>
+    forAll { (set: AntiEntropyContainer[AddWinsSet[Int]], e: Int) =>
       val removedNotContained = set.remove(e)
       val added               = set.add(e)
       val removed             = added.remove(e)
@@ -68,7 +68,7 @@ class AWSetTest extends munit.ScalaCheckSuite {
     }
   }
   property("clear") {
-    forAll { (set: AntiEntropyCRDT[AddWinsSet[Int]]) =>
+    forAll { (set: AntiEntropyContainer[AddWinsSet[Int]]) =>
       val cleared = set.clear()
 
       assert(
@@ -84,8 +84,8 @@ class AWSetTest extends munit.ScalaCheckSuite {
       val aea = new AntiEntropy[AddWinsSet[Int]]("a", network, mutable.Buffer("b"))
       val aeb = new AntiEntropy[AddWinsSet[Int]]("b", network, mutable.Buffer("a"))
 
-      val seta0 = AntiEntropyCRDT[AddWinsSet[Int]](aea)
-      val setb0 = AntiEntropyCRDT[AddWinsSet[Int]](aeb)
+      val seta0 = AntiEntropyContainer[AddWinsSet[Int]](aea)
+      val setb0 = AntiEntropyContainer[AddWinsSet[Int]](aeb)
 
       val seta1 = seta0.add(e)
       val setb1 = setb0.add(e)
@@ -129,10 +129,10 @@ class AWSetTest extends munit.ScalaCheckSuite {
       val aea = new AntiEntropy[AddWinsSet[Int]]("a", network, mutable.Buffer("b"))
       val aeb = new AntiEntropy[AddWinsSet[Int]]("b", network, mutable.Buffer("a"))
 
-      val seta0 = AntiEntropyCRDT[AddWinsSet[Int]](aea).add(e).add(e1).add(e2)
+      val seta0 = AntiEntropyContainer[AddWinsSet[Int]](aea).add(e).add(e1).add(e2)
       aea.sendChangesToAllNeighbors()
       aeb.receiveFromNetwork()
-      val setb0 = AntiEntropyCRDT[AddWinsSet[Int]](aeb).processReceivedDeltas()
+      val setb0 = AntiEntropyContainer[AddWinsSet[Int]](aeb).processReceivedDeltas()
 
       val seta1 = seta0.remove(e)
       val setb1 = setb0.remove(e)
@@ -176,10 +176,10 @@ class AWSetTest extends munit.ScalaCheckSuite {
       val aea = new AntiEntropy[AddWinsSet[Int]]("a", network, mutable.Buffer("b"))
       val aeb = new AntiEntropy[AddWinsSet[Int]]("b", network, mutable.Buffer("a"))
 
-      val seta0 = AntiEntropyCRDT[AddWinsSet[Int]](aea).add(e2)
+      val seta0 = AntiEntropyContainer[AddWinsSet[Int]](aea).add(e2)
       aea.sendChangesToAllNeighbors()
       aeb.receiveFromNetwork()
-      val setb0 = AntiEntropyCRDT[AddWinsSet[Int]](aeb).processReceivedDeltas()
+      val setb0 = AntiEntropyContainer[AddWinsSet[Int]](aeb).processReceivedDeltas()
 
       val seta1 = seta0.add(e)
       val setb1 = setb0.remove(e)
@@ -223,9 +223,9 @@ class AWSetTest extends munit.ScalaCheckSuite {
       val aea = new AntiEntropy[AddWinsSet[Int]]("a", network, mutable.Buffer("b"))
       val aeb = new AntiEntropy[AddWinsSet[Int]]("b", network, mutable.Buffer("a"))
 
-      val seta0 = AntiEntropyCRDT[AddWinsSet[Int]](aea).add(e1).add(e2)
+      val seta0 = AntiEntropyContainer[AddWinsSet[Int]](aea).add(e1).add(e2)
       AntiEntropy.sync(aea, aeb)
-      val setb0 = AntiEntropyCRDT[AddWinsSet[Int]](aeb).processReceivedDeltas()
+      val setb0 = AntiEntropyContainer[AddWinsSet[Int]](aeb).processReceivedDeltas()
 
       val seta1 = seta0.add(e)
       val setb1 = setb0.clear()
@@ -251,14 +251,14 @@ class AWSetTest extends munit.ScalaCheckSuite {
         val aea = new AntiEntropy[AddWinsSet[Int]]("a", network, mutable.Buffer("b"))
         val aeb = new AntiEntropy[AddWinsSet[Int]]("b", network, mutable.Buffer("a"))
 
-        val setaAdded = addedA.foldLeft(AntiEntropyCRDT[AddWinsSet[Int]](aea)) {
+        val setaAdded = addedA.foldLeft(AntiEntropyContainer[AddWinsSet[Int]](aea)) {
           case (set, e) => set.add(e)
         }
         val seta0 = removedA.foldLeft(setaAdded) {
           case (set, e) => set.remove(e)
         }
 
-        val setbAdded = addedB.foldLeft(AntiEntropyCRDT[AddWinsSet[Int]](aeb)) {
+        val setbAdded = addedB.foldLeft(AntiEntropyContainer[AddWinsSet[Int]](aeb)) {
           case (set, e) => set.add(e)
         }
         val setb0 = removedB.foldLeft(setbAdded) {

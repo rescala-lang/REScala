@@ -1,7 +1,7 @@
 package deltaAntiEntropy.tests
 
 import deltaAntiEntropy.tests.NetworkGenerators.*
-import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyCRDT, Network}
+import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
 import kofre.datatypes.EnableWinsFlag
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
@@ -11,7 +11,7 @@ import scala.collection.mutable
 import scala.util.Random
 
 object EWFlagGenerators {
-  def genEWFlag: Gen[AntiEntropyCRDT[EnableWinsFlag]] = for {
+  def genEWFlag: Gen[AntiEntropyContainer[EnableWinsFlag]] = for {
     nEnable  <- Gen.posNum[Int]
     nDisable <- Gen.posNum[Int]
   } yield {
@@ -20,7 +20,7 @@ object EWFlagGenerators {
 
     val ops = Random.shuffle(List.fill(nEnable)(1) ++ List.fill(nDisable)(0))
 
-    ops.foldLeft(AntiEntropyCRDT[EnableWinsFlag](ae)) {
+    ops.foldLeft(AntiEntropyContainer[EnableWinsFlag](ae)) {
       case (f, 0) => f.disable()
       case (f, 1) => f.enable()
       // default case is only needed to stop the compiler from complaining about non-exhaustive match
@@ -28,14 +28,14 @@ object EWFlagGenerators {
     }
   }
 
-  implicit def arbEWFlag: Arbitrary[AntiEntropyCRDT[EnableWinsFlag]] = Arbitrary(genEWFlag)
+  implicit def arbEWFlag: Arbitrary[AntiEntropyContainer[EnableWinsFlag]] = Arbitrary(genEWFlag)
 }
 
 class EWFlagTest extends munit.ScalaCheckSuite {
   import EWFlagGenerators.*
 
   property("enable") {
-    forAll { (flag: AntiEntropyCRDT[EnableWinsFlag]) =>
+    forAll { (flag: AntiEntropyContainer[EnableWinsFlag]) =>
       val flagEnabled = flag.enable()
 
       assert(
@@ -46,7 +46,7 @@ class EWFlagTest extends munit.ScalaCheckSuite {
   }
 
   property("disable") {
-    forAll { (flag: AntiEntropyCRDT[EnableWinsFlag]) =>
+    forAll { (flag: AntiEntropyContainer[EnableWinsFlag]) =>
       val flagDisabled = flag.disable()
 
       assert(
@@ -62,8 +62,8 @@ class EWFlagTest extends munit.ScalaCheckSuite {
     val aea = new AntiEntropy[EnableWinsFlag]("a", network, mutable.Buffer("b"))
     val aeb = new AntiEntropy[EnableWinsFlag]("b", network, mutable.Buffer("a"))
 
-    val fa0 = AntiEntropyCRDT[EnableWinsFlag](aea).enable()
-    val fb0 = AntiEntropyCRDT[EnableWinsFlag](aeb).enable()
+    val fa0 = AntiEntropyContainer[EnableWinsFlag](aea).enable()
+    val fb0 = AntiEntropyContainer[EnableWinsFlag](aeb).enable()
 
     AntiEntropy.sync(aea, aeb)
 
@@ -86,8 +86,8 @@ class EWFlagTest extends munit.ScalaCheckSuite {
     val aea = new AntiEntropy[EnableWinsFlag]("a", network, mutable.Buffer("b"))
     val aeb = new AntiEntropy[EnableWinsFlag]("b", network, mutable.Buffer("a"))
 
-    val fa0 = AntiEntropyCRDT[EnableWinsFlag](aea)
-    val fb0 = AntiEntropyCRDT[EnableWinsFlag](aeb)
+    val fa0 = AntiEntropyContainer[EnableWinsFlag](aea)
+    val fb0 = AntiEntropyContainer[EnableWinsFlag](aeb)
 
     val fa1 = fa0.disable()
     val fb1 = fb0.disable()
@@ -113,8 +113,8 @@ class EWFlagTest extends munit.ScalaCheckSuite {
     val aea = new AntiEntropy[EnableWinsFlag]("a", network, mutable.Buffer("b"))
     val aeb = new AntiEntropy[EnableWinsFlag]("b", network, mutable.Buffer("a"))
 
-    val fa0 = AntiEntropyCRDT[EnableWinsFlag](aea).enable()
-    val fb0 = AntiEntropyCRDT[EnableWinsFlag](aeb).disable()
+    val fa0 = AntiEntropyContainer[EnableWinsFlag](aea).enable()
+    val fb0 = AntiEntropyContainer[EnableWinsFlag](aeb).disable()
 
     AntiEntropy.sync(aea, aeb)
 
@@ -139,13 +139,13 @@ class EWFlagTest extends munit.ScalaCheckSuite {
       val opsA = Random.shuffle(List.fill(enableA.toInt)(1) ++ List.fill(disableA.toInt)(0))
       val opsB = Random.shuffle(List.fill(enableB.toInt)(1) ++ List.fill(disableB.toInt)(0))
 
-      val fa0 = opsA.foldLeft(AntiEntropyCRDT[EnableWinsFlag](aea)) {
+      val fa0 = opsA.foldLeft(AntiEntropyContainer[EnableWinsFlag](aea)) {
         case (f, 0) => f.disable()
         case (f, 1) => f.enable()
         // default case is only needed to stop the compiler from complaining about non-exhaustive match
         case (f, _) => f
       }
-      val fb0 = opsB.foldLeft(AntiEntropyCRDT[EnableWinsFlag](aeb)) {
+      val fb0 = opsB.foldLeft(AntiEntropyContainer[EnableWinsFlag](aeb)) {
         case (f, 0) => f.disable()
         case (f, 1) => f.enable()
         // default case is only needed to stop the compiler from complaining about non-exhaustive match

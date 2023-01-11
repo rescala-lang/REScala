@@ -28,10 +28,9 @@ class AntiEntropy[A](
     val replicaID: String,
     network: Network,
     neighbors: mutable.Buffer[String] = mutable.Buffer()
-)(implicit bottom: Bottom[A], codec: JsonValueCodec[Dotted[A]], withContextLattice: DottedDecompose[A])
-    extends IAntiEntropy[A] {
+)(implicit bottom: Bottom[A], codec: JsonValueCodec[Dotted[A]], withContextLattice: DottedDecompose[A]) {
 
-  override def state: Dotted[A] = fullState
+  def state: Dotted[A] = fullState
 
   private val deltaBufferOut: mutable.Map[Int, DottedName[A]] = mutable.Map()
 

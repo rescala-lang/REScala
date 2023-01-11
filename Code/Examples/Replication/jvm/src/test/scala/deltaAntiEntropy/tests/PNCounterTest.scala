@@ -1,7 +1,7 @@
 package deltaAntiEntropy.tests
 
 import deltaAntiEntropy.tests.NetworkGenerators.*
-import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyCRDT, Network}
+import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
 import kofre.datatypes.PosNegCounter
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
@@ -10,14 +10,14 @@ import replication.JsoniterCodecs.*
 import scala.collection.mutable
 
 object PosNegCounterGenerator {
-  val genPosNegCounter: Gen[AntiEntropyCRDT[PosNegCounter]] = for {
+  val genPosNegCounter: Gen[AntiEntropyContainer[PosNegCounter]] = for {
     nInc <- Gen.posNum[Int]
     nDec <- Gen.posNum[Int]
   } yield {
     val network = new Network(0, 0, 0)
     val ae      = new AntiEntropy[PosNegCounter]("a", network, mutable.Buffer())
 
-    val inced = (0 to nInc).foldLeft(AntiEntropyCRDT(ae)) {
+    val inced = (0 to nInc).foldLeft(AntiEntropyContainer(ae)) {
       case (c, _) => c.inc()
     }
 
@@ -26,13 +26,13 @@ object PosNegCounterGenerator {
     }
   }
 
-  implicit val arbPosNegCounter: Arbitrary[AntiEntropyCRDT[PosNegCounter]] = Arbitrary(genPosNegCounter)
+  implicit val arbPosNegCounter: Arbitrary[AntiEntropyContainer[PosNegCounter]] = Arbitrary(genPosNegCounter)
 }
 
 class PosNegCounterTest extends munit.ScalaCheckSuite {
   import PosNegCounterGenerator.*
   property("inc") {
-    forAll { (counter: AntiEntropyCRDT[PosNegCounter]) =>
+    forAll { (counter: AntiEntropyContainer[PosNegCounter]) =>
       val before = counter.value
       val inced  = counter.inc()
 
@@ -43,7 +43,7 @@ class PosNegCounterTest extends munit.ScalaCheckSuite {
     }
   }
   property("dec") {
-    forAll { (counter: AntiEntropyCRDT[PosNegCounter]) =>
+    forAll { (counter: AntiEntropyContainer[PosNegCounter]) =>
       val before = counter.value
       val deced  = counter.dec()
 
@@ -61,15 +61,15 @@ class PosNegCounterTest extends munit.ScalaCheckSuite {
       val aeb = new AntiEntropy[PosNegCounter]("b", network, mutable.Buffer("a"))
       val aec = new AntiEntropy[PosNegCounter]("c", network, mutable.Buffer("c"))
 
-      val ca0 = if (incOrDecA) AntiEntropyCRDT[PosNegCounter](aea).inc() else AntiEntropyCRDT[PosNegCounter](aea).dec()
-      val cb0 = if (incOrDecB) AntiEntropyCRDT[PosNegCounter](aeb).inc() else AntiEntropyCRDT[PosNegCounter](aeb).dec()
+      val ca0 = if (incOrDecA) AntiEntropyContainer[PosNegCounter](aea).inc() else AntiEntropyContainer[PosNegCounter](aea).dec()
+      val cb0 = if (incOrDecB) AntiEntropyContainer[PosNegCounter](aeb).inc() else AntiEntropyContainer[PosNegCounter](aeb).dec()
 
       AntiEntropy.sync(aea, aeb)
 
       val ca1 = ca0.processReceivedDeltas()
       val cb1 = cb0.processReceivedDeltas()
 
-      val sequential = AntiEntropyCRDT(aec)
+      val sequential = AntiEntropyContainer(aec)
       if (incOrDecA) sequential.inc() else sequential.dec()
       if (incOrDecB) sequential.inc() else sequential.dec()
 
@@ -89,13 +89,13 @@ class PosNegCounterTest extends munit.ScalaCheckSuite {
       val aea = new AntiEntropy[PosNegCounter]("a", network, mutable.Buffer("b"))
       val aeb = new AntiEntropy[PosNegCounter]("b", network, mutable.Buffer("a"))
 
-      val incedA = (0 until incA.toInt).foldLeft(AntiEntropyCRDT[PosNegCounter](aea)) {
+      val incedA = (0 until incA.toInt).foldLeft(AntiEntropyContainer[PosNegCounter](aea)) {
         case (c, _) => c.inc()
       }
       val ca0 = (0 until decA.toInt).foldLeft(incedA) {
         case (c, _) => c.dec()
       }
-      val incedB = (0 until incB.toInt).foldLeft(AntiEntropyCRDT[PosNegCounter](aeb)) {
+      val incedB = (0 until incB.toInt).foldLeft(AntiEntropyContainer[PosNegCounter](aeb)) {
         case (c, _) => c.inc()
       }
       val cb0 = (0 until decB.toInt).foldLeft(incedB) {

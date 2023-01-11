@@ -2,7 +2,7 @@ package deltaAntiEntropy.tests
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyCRDT, Network}
+import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
 import kofre.datatypes.{AddWinsSet, ObserveRemoveMap}
 import replication.JsoniterCodecs.*
 
@@ -17,7 +17,7 @@ class ORMapTest extends munit.ScalaCheckSuite {
     val aeb     = new AntiEntropy[AddWinsSet[Int]]("b", network, mutable.Buffer())
 
     val set = {
-      val added: AntiEntropyCRDT[AddWinsSet[Int]] = add.foldLeft(AntiEntropyCRDT(aeb)) {
+      val added: AntiEntropyContainer[AddWinsSet[Int]] = add.foldLeft(AntiEntropyContainer(aeb)) {
         case (s, e) => s.add(e)
       }
 
@@ -27,7 +27,7 @@ class ORMapTest extends munit.ScalaCheckSuite {
     }
 
     val map = {
-      val added = add.foldLeft(AntiEntropyCRDT[ObserveRemoveMap[Int, AddWinsSet[Int]]](aea)) {
+      val added = add.foldLeft(AntiEntropyContainer[ObserveRemoveMap[Int, AddWinsSet[Int]]](aea)) {
         case (m, e) =>
           m.mutateKeyNamedCtx(k)(_.add(e))
       }
@@ -51,10 +51,10 @@ class ORMapTest extends munit.ScalaCheckSuite {
       new AntiEntropy[ObserveRemoveMap[Int, AddWinsSet[Int]]]("a", network, mutable.Buffer())
     val aeb = new AntiEntropy[AddWinsSet[Int]]("b", network, mutable.Buffer())
 
-    val empty = AntiEntropyCRDT[AddWinsSet[Int]](aeb)
+    val empty = AntiEntropyContainer[AddWinsSet[Int]](aeb)
 
     val map = {
-      val added = add.foldLeft(AntiEntropyCRDT[ObserveRemoveMap[Int, AddWinsSet[Int]]](aea)) {
+      val added = add.foldLeft(AntiEntropyContainer[ObserveRemoveMap[Int, AddWinsSet[Int]]](aea)) {
         case (m, e) => m.mutateKeyNamedCtx(k)(_.add(e))
       }
 

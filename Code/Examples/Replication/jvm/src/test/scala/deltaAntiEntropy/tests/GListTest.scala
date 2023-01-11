@@ -3,7 +3,7 @@ package deltaAntiEntropy.tests
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tests.NetworkGenerators.*
-import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyCRDT, Network}
+import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
 import kofre.datatypes.GrowOnlyList
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
@@ -12,18 +12,18 @@ import replication.JsoniterCodecs.*
 import scala.collection.mutable
 
 object GListGenerators {
-  def genGList[E: JsonValueCodec](implicit e: Arbitrary[E]): Gen[AntiEntropyCRDT[GrowOnlyList[E]]] = for {
+  def genGList[E: JsonValueCodec](implicit e: Arbitrary[E]): Gen[AntiEntropyContainer[GrowOnlyList[E]]] = for {
     elems <- Gen.containerOf[List, E](e.arbitrary)
   } yield {
     val network = new Network(0, 0, 0)
     val ae      = new AntiEntropy[GrowOnlyList[E]]("a", network, mutable.Buffer())
 
-    elems.foldLeft(AntiEntropyCRDT[GrowOnlyList[E]](ae)) {
+    elems.foldLeft(AntiEntropyContainer[GrowOnlyList[E]](ae)) {
       case (list, el) => list.insertGL(0, el)
     }
   }
 
-  implicit def arbGList[E: JsonValueCodec](implicit e: Arbitrary[E]): Arbitrary[AntiEntropyCRDT[GrowOnlyList[E]]] =
+  implicit def arbGList[E: JsonValueCodec](implicit e: Arbitrary[E]): Arbitrary[AntiEntropyContainer[GrowOnlyList[E]]] =
     Arbitrary(genGList)
 }
 
@@ -33,7 +33,7 @@ class GListTest extends munit.ScalaCheckSuite {
   implicit val IntCodec: JsonValueCodec[Int] = JsonCodecMaker.make
 
   property("size, toList, read") {
-    forAll { (list: AntiEntropyCRDT[GrowOnlyList[Int]], readIdx: Int) =>
+    forAll { (list: AntiEntropyContainer[GrowOnlyList[Int]], readIdx: Int) =>
       val l = list.toList
 
       assert(
@@ -47,7 +47,7 @@ class GListTest extends munit.ScalaCheckSuite {
     }
   }
   property("insert") {
-    forAll { (list: AntiEntropyCRDT[GrowOnlyList[Int]], n: Int, e: Int) =>
+    forAll { (list: AntiEntropyContainer[GrowOnlyList[Int]], n: Int, e: Int) =>
       val szeBefore = list.size
       val l         = list.toList
 
@@ -77,7 +77,7 @@ class GListTest extends munit.ScalaCheckSuite {
     }
   }
   property("toLazyList") {
-    forAll { (list: AntiEntropyCRDT[GrowOnlyList[Int]]) =>
+    forAll { (list: AntiEntropyContainer[GrowOnlyList[Int]]) =>
       val l     = list.toList
       val lazyl = list.toLazyList.toList
 
@@ -94,12 +94,12 @@ class GListTest extends munit.ScalaCheckSuite {
       val aea = new AntiEntropy[GrowOnlyList[Int]]("a", network, mutable.Buffer("b"))
       val aeb = new AntiEntropy[GrowOnlyList[Int]]("b", network, mutable.Buffer("a"))
 
-      val la0 = base.reverse.foldLeft(AntiEntropyCRDT[GrowOnlyList[Int]](aea)) {
+      val la0 = base.reverse.foldLeft(AntiEntropyContainer[GrowOnlyList[Int]](aea)) {
         case (l, e) => l.insertGL(0, e)
       }
 
       AntiEntropy.sync(aea, aeb)
-      val lb0 = AntiEntropyCRDT[GrowOnlyList[Int]](aeb).processReceivedDeltas()
+      val lb0 = AntiEntropyContainer[GrowOnlyList[Int]](aeb).processReceivedDeltas()
 
       val size = base.size
       val idx1 = if (size == 0) 0 else math.floorMod(n1, size)
@@ -131,13 +131,13 @@ class GListTest extends munit.ScalaCheckSuite {
       val aea = new AntiEntropy[GrowOnlyList[Int]]("a", network, mutable.Buffer("b"))
       val aeb = new AntiEntropy[GrowOnlyList[Int]]("b", network, mutable.Buffer("a"))
 
-      val la0 = base.reverse.foldLeft(AntiEntropyCRDT[GrowOnlyList[Int]](aea)) {
+      val la0 = base.reverse.foldLeft(AntiEntropyContainer[GrowOnlyList[Int]](aea)) {
         case (l, e) => l.insertGL(0, e)
       }
       network.startReliablePhase()
       AntiEntropy.sync(aea, aeb)
       network.endReliablePhase()
-      val lb0 = AntiEntropyCRDT[GrowOnlyList[Int]](aeb).processReceivedDeltas()
+      val lb0 = AntiEntropyContainer[GrowOnlyList[Int]](aeb).processReceivedDeltas()
 
       val la1 = insertedA.foldLeft(la0) { (l, e) => l.insertGL(e, e) }
       val lb1 = insertedB.foldLeft(lb0) { (l, e) => l.insertGL(e, e) }

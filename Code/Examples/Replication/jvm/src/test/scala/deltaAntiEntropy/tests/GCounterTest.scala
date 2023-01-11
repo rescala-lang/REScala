@@ -1,7 +1,7 @@
 package deltaAntiEntropy.tests
 
 import deltaAntiEntropy.tests.NetworkGenerators.*
-import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyCRDT, Network}
+import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
 import kofre.datatypes.GrowOnlyCounter
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
@@ -10,25 +10,25 @@ import replication.JsoniterCodecs.*
 import scala.collection.mutable
 
 object GCounterGenerators {
-  val genGCounter: Gen[AntiEntropyCRDT[GrowOnlyCounter]] = for {
+  val genGCounter: Gen[AntiEntropyContainer[GrowOnlyCounter]] = for {
     n <- Gen.posNum[Int]
   } yield {
     val network = new Network(0, 0, 0)
     val ae      = new AntiEntropy[GrowOnlyCounter]("a", network, mutable.Buffer())
 
-    (0 until n).foldLeft(AntiEntropyCRDT[GrowOnlyCounter](ae)) {
+    (0 until n).foldLeft(AntiEntropyContainer[GrowOnlyCounter](ae)) {
       case (c, _) => c.inc()
     }
   }
 
-  implicit val arbGCounter: Arbitrary[AntiEntropyCRDT[GrowOnlyCounter]] = Arbitrary(genGCounter)
+  implicit val arbGCounter: Arbitrary[AntiEntropyContainer[GrowOnlyCounter]] = Arbitrary(genGCounter)
 }
 
 class GCounterTest extends munit.ScalaCheckSuite {
   import GCounterGenerators.*
 
   property("inc") {
-    forAll { (counter: AntiEntropyCRDT[GrowOnlyCounter]) =>
+    forAll { (counter: AntiEntropyContainer[GrowOnlyCounter]) =>
       val before     = counter.value
       val counterInc = counter.inc()
 
@@ -46,8 +46,8 @@ class GCounterTest extends munit.ScalaCheckSuite {
     val aea = new AntiEntropy[GrowOnlyCounter]("a", network, mutable.Buffer("b"))
     val aeb = new AntiEntropy[GrowOnlyCounter]("b", network, mutable.Buffer("a"))
 
-    val ca0 = AntiEntropyCRDT[GrowOnlyCounter](aea).inc()
-    val cb0 = AntiEntropyCRDT[GrowOnlyCounter](aeb).inc()
+    val ca0 = AntiEntropyContainer[GrowOnlyCounter](aea).inc()
+    val cb0 = AntiEntropyContainer[GrowOnlyCounter](aeb).inc()
 
     AntiEntropy.sync(aea, aeb)
 
@@ -71,10 +71,10 @@ class GCounterTest extends munit.ScalaCheckSuite {
       val aea = new AntiEntropy[GrowOnlyCounter]("a", network, mutable.Buffer("b"))
       val aeb = new AntiEntropy[GrowOnlyCounter]("b", network, mutable.Buffer("a"))
 
-      val ca0 = (0 until incA.toInt).foldLeft(AntiEntropyCRDT[GrowOnlyCounter](aea)) {
+      val ca0 = (0 until incA.toInt).foldLeft(AntiEntropyContainer[GrowOnlyCounter](aea)) {
         case (c, _) => c.inc()
       }
-      val cb0 = (0 until incB.toInt).foldLeft(AntiEntropyCRDT[GrowOnlyCounter](aeb)) {
+      val cb0 = (0 until incB.toInt).foldLeft(AntiEntropyContainer[GrowOnlyCounter](aeb)) {
         case (c, _) => c.inc()
       }
 

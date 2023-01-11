@@ -1,7 +1,7 @@
 package deltaAntiEntropy.tests
 
 import deltaAntiEntropy.tests.NetworkGenerators.*
-import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyCRDT, Network}
+import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
 import kofre.datatypes.alternatives.ResettableCounter
 import ResettableCounter.RCounterSyntax
 import org.scalacheck.Prop.*
@@ -12,14 +12,14 @@ import scala.collection.mutable
 import scala.util.Random
 
 object RCounterGenerators {
-  def genRCounter: Gen[AntiEntropyCRDT[ResettableCounter]] = for {
+  def genRCounter: Gen[AntiEntropyContainer[ResettableCounter]] = for {
     num <- Gen.choose(0, 100)
     ops <- Gen.listOfN(num, Gen.chooseNum(0, 3))
   } yield {
     val network = new Network(0, 0, 0)
     val ae      = new AntiEntropy[ResettableCounter]("a", network, mutable.Buffer())
 
-    ops.foldLeft(AntiEntropyCRDT[ResettableCounter](ae)) {
+    ops.foldLeft(AntiEntropyContainer[ResettableCounter](ae)) {
       case (c, 0) => c.increment()
       case (c, 1) => c.decrement()
       case (c, 2) => c.reset()
@@ -29,14 +29,14 @@ object RCounterGenerators {
     }
   }
 
-  implicit def arbRCounter: Arbitrary[AntiEntropyCRDT[ResettableCounter]] = Arbitrary(genRCounter)
+  implicit def arbRCounter: Arbitrary[AntiEntropyContainer[ResettableCounter]] = Arbitrary(genRCounter)
 }
 
 class ResettableCounterTest extends munit.ScalaCheckSuite {
   import RCounterGenerators.*
 
   property("increment") {
-    forAll { (counter: AntiEntropyCRDT[ResettableCounter]) =>
+    forAll { (counter: AntiEntropyContainer[ResettableCounter]) =>
       val orig        = counter.value
       val incremented = counter.increment()
 
@@ -48,7 +48,7 @@ class ResettableCounterTest extends munit.ScalaCheckSuite {
   }
 
   property("decrement") {
-    forAll { (counter: AntiEntropyCRDT[ResettableCounter]) =>
+    forAll { (counter: AntiEntropyContainer[ResettableCounter]) =>
       val orig        = counter.value
       val decremented = counter.decrement()
 
@@ -60,7 +60,7 @@ class ResettableCounterTest extends munit.ScalaCheckSuite {
   }
 
   property("fresh") {
-    forAll { (counter: AntiEntropyCRDT[ResettableCounter]) =>
+    forAll { (counter: AntiEntropyContainer[ResettableCounter]) =>
       val orig  = counter.value
       val fresh = counter.fresh()
 
@@ -72,7 +72,7 @@ class ResettableCounterTest extends munit.ScalaCheckSuite {
   }
 
   property("reset") {
-    forAll { (counter: AntiEntropyCRDT[ResettableCounter]) =>
+    forAll { (counter: AntiEntropyContainer[ResettableCounter]) =>
       val reset = counter.reset()
 
       assertEquals(reset.value, 0, s"${reset.state}")
@@ -88,9 +88,9 @@ class ResettableCounterTest extends munit.ScalaCheckSuite {
       val aes = new AntiEntropy[ResettableCounter]("s", network, mutable.Buffer("s"))
 
       def processOpInto(op: Either[Unit, Boolean], into: AntiEntropy[ResettableCounter]) = op match {
-        case Left(_)      => AntiEntropyCRDT[ResettableCounter](into).increment()
-        case Right(false) => AntiEntropyCRDT[ResettableCounter](into).decrement()
-        case Right(true)  => AntiEntropyCRDT[ResettableCounter](into).fresh()
+        case Left(_)      => AntiEntropyContainer[ResettableCounter](into).increment()
+        case Right(false) => AntiEntropyContainer[ResettableCounter](into).decrement()
+        case Right(true)  => AntiEntropyContainer[ResettableCounter](into).fresh()
       }
 
       val ca0 = processOpInto(opA, aea)
@@ -122,9 +122,9 @@ class ResettableCounterTest extends munit.ScalaCheckSuite {
     val aea = new AntiEntropy[ResettableCounter]("a", network, mutable.Buffer("b"))
     val aeb = new AntiEntropy[ResettableCounter]("b", network, mutable.Buffer("a"))
 
-    val ca0 = AntiEntropyCRDT[ResettableCounter](aea).increment()
+    val ca0 = AntiEntropyContainer[ResettableCounter](aea).increment()
     AntiEntropy.sync(aea, aeb)
-    val cb0 = AntiEntropyCRDT[ResettableCounter](aeb).processReceivedDeltas()
+    val cb0 = AntiEntropyContainer[ResettableCounter](aeb).processReceivedDeltas()
 
     val ca1 = ca0.increment()
     val cb1 = cb0.reset()
@@ -152,11 +152,11 @@ class ResettableCounterTest extends munit.ScalaCheckSuite {
 
       val aea        = new AntiEntropy[ResettableCounter]("a", network, mutable.Buffer("b"))
       val aeb        = new AntiEntropy[ResettableCounter]("b", network, mutable.Buffer("a"))
-      val sequential = AntiEntropyCRDT(new AntiEntropy[ResettableCounter]("c", network, mutable.Buffer("c")))
+      val sequential = AntiEntropyContainer(new AntiEntropy[ResettableCounter]("c", network, mutable.Buffer("c")))
 
-      val ca0 = AntiEntropyCRDT[ResettableCounter](aea).increment()
+      val ca0 = AntiEntropyContainer[ResettableCounter](aea).increment()
       AntiEntropy.sync(aea, aeb)
-      val cb0 = AntiEntropyCRDT[ResettableCounter](aeb).processReceivedDeltas()
+      val cb0 = AntiEntropyContainer[ResettableCounter](aeb).processReceivedDeltas()
 
       sequential.increment()
 
@@ -219,7 +219,7 @@ class ResettableCounterTest extends munit.ScalaCheckSuite {
             nOpsB2._3.toInt
           )(2) ++ List.fill(nOpsB2._4.toInt)(3))
 
-          def applyOps(counter: AntiEntropyCRDT[ResettableCounter], ops: List[Int]): AntiEntropyCRDT[ResettableCounter] = {
+          def applyOps(counter: AntiEntropyContainer[ResettableCounter], ops: List[Int]): AntiEntropyContainer[ResettableCounter] = {
             ops.foldLeft(counter) {
               case (c, 0) => c.increment()
               case (c, 1) => c.decrement()
@@ -230,8 +230,8 @@ class ResettableCounterTest extends munit.ScalaCheckSuite {
             }
           }
 
-          val ca0 = applyOps(AntiEntropyCRDT[ResettableCounter](aea), opsA1)
-          val cb0 = applyOps(AntiEntropyCRDT[ResettableCounter](aeb), opsB1)
+          val ca0 = applyOps(AntiEntropyContainer[ResettableCounter](aea), opsA1)
+          val cb0 = applyOps(AntiEntropyContainer[ResettableCounter](aeb), opsB1)
 
           AntiEntropy.sync(aea, aeb)
 

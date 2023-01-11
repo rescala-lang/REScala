@@ -3,7 +3,7 @@ package deltaAntiEntropy.tests
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tests.NetworkGenerators.*
-import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyCRDT, Network}
+import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
 import kofre.base.DecomposeLattice
 import kofre.datatypes.MultiVersionRegister
 import org.scalacheck.Prop.*
@@ -17,7 +17,7 @@ object MVRegisterGenerators {
   def genMVRegister[A: DecomposeLattice](implicit
       a: Arbitrary[A],
       cA: JsonValueCodec[A],
-  ): Gen[AntiEntropyCRDT[MultiVersionRegister[A]]] = for {
+  ): Gen[AntiEntropyContainer[MultiVersionRegister[A]]] = for {
     values <- Gen.containerOf[List, A](a.arbitrary)
     nClear <- Gen.posNum[Short]
   } yield {
@@ -26,7 +26,7 @@ object MVRegisterGenerators {
 
     val ops = Random.shuffle(values.indices ++ List.fill(nClear.toInt)(-1))
 
-    ops.foldLeft(AntiEntropyCRDT[MultiVersionRegister[A]](ae)) {
+    ops.foldLeft(AntiEntropyContainer[MultiVersionRegister[A]](ae)) {
       case (r, -1) => r.clear()
       case (r, n)  => r.write(values(n))
     }
@@ -35,7 +35,7 @@ object MVRegisterGenerators {
   implicit def arbMVRegister[A: DecomposeLattice](implicit
       a: Arbitrary[A],
       cA: JsonValueCodec[A],
-  ): Arbitrary[AntiEntropyCRDT[MultiVersionRegister[A]]] =
+  ): Arbitrary[AntiEntropyContainer[MultiVersionRegister[A]]] =
     Arbitrary(genMVRegister)
 }
 
@@ -45,7 +45,7 @@ class MultiVersionRegisterTest extends munit.ScalaCheckSuite {
   implicit val intCodec: JsonValueCodec[Int] = JsonCodecMaker.make
 
   property("write") {
-    forAll { (reg: AntiEntropyCRDT[MultiVersionRegister[Int]], v: Int) =>
+    forAll { (reg: AntiEntropyContainer[MultiVersionRegister[Int]], v: Int) =>
       val written = reg.write(v)
 
       assert(
@@ -55,7 +55,7 @@ class MultiVersionRegisterTest extends munit.ScalaCheckSuite {
     }
   }
   property("clear") {
-    forAll { (reg: AntiEntropyCRDT[MultiVersionRegister[Int]]) =>
+    forAll { (reg: AntiEntropyContainer[MultiVersionRegister[Int]]) =>
       val cleared = reg.clear()
 
       assert(
@@ -71,8 +71,8 @@ class MultiVersionRegisterTest extends munit.ScalaCheckSuite {
       val aea = new AntiEntropy[MultiVersionRegister[Int]]("a", network, mutable.Buffer("b"))
       val aeb = new AntiEntropy[MultiVersionRegister[Int]]("b", network, mutable.Buffer("a"))
 
-      val ra0 = AntiEntropyCRDT[MultiVersionRegister[Int]](aea).write(vA)
-      val rb0 = AntiEntropyCRDT[MultiVersionRegister[Int]](aeb).write(vB)
+      val ra0 = AntiEntropyContainer[MultiVersionRegister[Int]](aea).write(vA)
+      val rb0 = AntiEntropyContainer[MultiVersionRegister[Int]](aeb).write(vB)
 
       AntiEntropy.sync(aea, aeb)
 
@@ -96,8 +96,8 @@ class MultiVersionRegisterTest extends munit.ScalaCheckSuite {
       val aea = new AntiEntropy[MultiVersionRegister[Int]]("a", network, mutable.Buffer("b"))
       val aeb = new AntiEntropy[MultiVersionRegister[Int]]("b", network, mutable.Buffer("a"))
 
-      val ra0 = AntiEntropyCRDT[MultiVersionRegister[Int]](aea).write(v)
-      val rb0 = AntiEntropyCRDT[MultiVersionRegister[Int]](aeb).clear()
+      val ra0 = AntiEntropyContainer[MultiVersionRegister[Int]](aea).write(v)
+      val rb0 = AntiEntropyContainer[MultiVersionRegister[Int]](aeb).clear()
 
       AntiEntropy.sync(aea, aeb)
 
@@ -123,11 +123,11 @@ class MultiVersionRegisterTest extends munit.ScalaCheckSuite {
         val opsA = Random.shuffle(valuesA.indices ++ List.fill(nClearA.toInt)(-1))
         val opsB = Random.shuffle(valuesB.indices ++ List.fill(nClearB.toInt)(-1))
 
-        val ra0 = opsA.foldLeft(AntiEntropyCRDT[MultiVersionRegister[Int]](aea)) {
+        val ra0 = opsA.foldLeft(AntiEntropyContainer[MultiVersionRegister[Int]](aea)) {
           case (r, -1) => r.clear()
           case (r, n)  => r.write(valuesA(n))
         }
-        val rb0 = opsB.foldLeft(AntiEntropyCRDT[MultiVersionRegister[Int]](aeb)) {
+        val rb0 = opsB.foldLeft(AntiEntropyContainer[MultiVersionRegister[Int]](aeb)) {
           case (r, -1) => r.clear()
           case (r, n)  => r.write(valuesB(n))
         }

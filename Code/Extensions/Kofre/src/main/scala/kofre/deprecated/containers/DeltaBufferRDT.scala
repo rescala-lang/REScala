@@ -9,20 +9,13 @@ import kofre.syntax.{ArdtOpsContains, PermCausal, PermCausalMutate, PermIdMutate
   * take these deltas and ship them to other replicas, using applyDelta to apply them on the remote state. After deltas
   * have been read and propagated by the middleware, it should call resetDeltaBuffer to empty the deltaBuffer.
   */
-class DeltaBufferRDT[State](
-    val state: Dotted[State],
-    val replicaID: Id,
-    val deltaBuffer: List[DottedName[State]]
-) extends CRDTInterface[State, DeltaBufferRDT[State]] {
+case class DeltaBufferRDT[State](
+    state: Dotted[State],
+    replicaID: Id,
+    deltaBuffer: List[DottedName[State]]
+) {
 
-  def copy(
-      state: Dotted[State] = state,
-      deltaBuffer: List[DottedName[State]] = deltaBuffer
-  ): DeltaBufferRDT[State] =
-    new DeltaBufferRDT[State](state, replicaID, deltaBuffer)
-
-
-  override def applyDelta(delta: DottedName[State])(implicit
+  def applyDelta(delta: DottedName[State])(implicit
       u: DecomposeLattice[Dotted[State]]
   ): DeltaBufferRDT[State] =
     delta match {
@@ -30,10 +23,7 @@ class DeltaBufferRDT[State](
         DecomposeLattice[Dotted[State]].diff(state, delta) match {
           case Some(stateDiff) =>
             val stateMerged = DecomposeLattice[Dotted[State]].merge(state, stateDiff)
-            copy(
-              state = stateMerged,
-              deltaBuffer = DottedName(origin, stateDiff) :: deltaBuffer
-            )
+            new DeltaBufferRDT(stateMerged, replicaID, DottedName(origin, stateDiff) :: deltaBuffer)
           case None => this.asInstanceOf[DeltaBufferRDT[State]]
         }
     }
@@ -46,9 +36,26 @@ object DeltaBufferRDT {
   given deltaBufferContains[State]: ArdtOpsContains[DeltaBufferRDT[State], State] = new {}
 
   given contextPermissions[L: DottedDecompose]
-      : (PermIdMutate[DeltaBufferRDT[L], L] & PermCausalMutate[DeltaBufferRDT[L], L]) = CRDTInterface.dottedPermissions
+      : (PermIdMutate[DeltaBufferRDT[L], L] & PermCausalMutate[DeltaBufferRDT[L], L]) =
+    new PermIdMutate[DeltaBufferRDT[L], L] with PermCausalMutate[DeltaBufferRDT[L], L] {
+      override def replicaId(c: DeltaBufferRDT[L]): Id = c.replicaID
+      override def mutate(c: DeltaBufferRDT[L], delta: L): DeltaBufferRDT[L] =
+        c.applyDelta(DottedName(c.replicaID, Dotted(delta, Dots.empty)))
+      override def query(c: DeltaBufferRDT[L]): L = c.state.store
+      override def mutateContext(
+          container: DeltaBufferRDT[L],
+          withContext: Dotted[L]
+      ): DeltaBufferRDT[L] = container.applyDelta(DottedName(container.replicaID, withContext))
+      override def context(c: DeltaBufferRDT[L]): Dots = c.state.context
+    }
 
-  given fullPermission[L: DecomposeLattice: Bottom]: PermIdMutate[DeltaBufferRDT[L], L] = CRDTInterface.fullPermissions
+  given fullPermission[L: DecomposeLattice: Bottom]: PermIdMutate[DeltaBufferRDT[L], L] =
+    new PermIdMutate[DeltaBufferRDT[L], L] {
+      override def replicaId(c: DeltaBufferRDT[L]): Id = c.replicaID
+      override def mutate(c: DeltaBufferRDT[L], delta: L): DeltaBufferRDT[L] =
+        c.applyDelta(DottedName(c.replicaID, Dotted(delta)))(using Dotted.latticeLift)
+      override def query(c: DeltaBufferRDT[L]): L = c.state.store
+    }
 
   /** Creates a new PNCounter instance
     *
