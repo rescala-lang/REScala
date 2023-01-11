@@ -17,7 +17,7 @@ case class Project(
 object Project {
   val empty: Project = Project(CausalLastWriterWins.empty, PosNegCounter.zero, CausalLastWriterWins.empty)
 
-  implicit class ProjectSyntax[C](container: C)(using ArdtOpsContains[C, Project])
+  implicit class ProjectSyntax[C](container: C)
       extends OpsSyntaxHelper[C, Project](container) {
 
     // As a note, these methods are added as kind of extension methods to `Project` and RDT containers of project.
