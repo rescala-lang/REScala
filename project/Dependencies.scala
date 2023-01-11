@@ -12,7 +12,7 @@ object Dependencies {
     val directories   = "26"
     val jetty         = "11.0.13"
     val jol           = "0.16"
-    val jsoniterScala = "2.20.1"
+    val jsoniterScala = "2.20.2"
     val jsoup         = "1.15.3"
     val munit         = "1.0.0-M7"
     val okHttp        = "4.10.0"
