@@ -3,7 +3,7 @@ package kofre.datatypes.experiments
 import kofre.base.{DecomposeLattice, Id}
 import kofre.datatypes.{GrowOnlyCounter, PosNegCounter}
 import kofre.syntax.PermIdMutate.withID
-import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermId}
+import kofre.syntax.{OpsSyntaxHelper, PermId}
 
 case class BoundedCounter(reservations: PosNegCounter, allocations: GrowOnlyCounter, participants: Set[Id])
 
@@ -17,7 +17,7 @@ object BoundedCounter {
 
   given lattice: DecomposeLattice[BoundedCounter] = DecomposeLattice.derived
 
-  implicit class BoundedCounterSyntax[C](container: C)(using ArdtOpsContains[C, BoundedCounter])
+  implicit class BoundedCounterSyntax[C](container: C)
       extends OpsSyntaxHelper[C, BoundedCounter](container) {
 
     def addParticipants(part: Set[Id])(using MutationIdP): C = neutral.copy(participants = part).mutator

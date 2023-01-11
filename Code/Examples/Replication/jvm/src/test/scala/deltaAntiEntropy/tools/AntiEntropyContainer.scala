@@ -2,7 +2,7 @@ package deltaAntiEntropy.tools
 
 import kofre.base.DecomposeLattice
 import kofre.dotted.{Dotted, DottedDecompose, DottedLattice}
-import kofre.syntax.{ArdtOpsContains, DottedName, PermCausal, PermCausalMutate, PermIdMutate}
+import kofre.syntax.{DottedName, PermCausal, PermCausalMutate, PermIdMutate}
 import kofre.time.Dots
 import kofre.base.Id
 import kofre.base.Id.asId
@@ -41,8 +41,6 @@ class AntiEntropyContainer[State](
 
 object AntiEntropyContainer {
 
-  given antiEntropyContains[State]: ArdtOpsContains[AntiEntropyContainer[State], State] = new {}
-
   given allPermissions[L: DottedDecompose]
       : (PermIdMutate[AntiEntropyContainer[L], L] & PermCausalMutate[AntiEntropyContainer[L], L]) =
     new PermIdMutate[AntiEntropyContainer[L], L] with PermCausalMutate[AntiEntropyContainer[L], L] {
@@ -51,8 +49,8 @@ object AntiEntropyContainer {
         c.applyDelta(DottedName(c.replicaID, Dotted(delta, Dots.empty)))
       override def query(c: AntiEntropyContainer[L]): L = c.state.store
       override def mutateContext(
-                                  container: AntiEntropyContainer[L],
-                                  withContext: Dotted[L]
+          container: AntiEntropyContainer[L],
+          withContext: Dotted[L]
       ): AntiEntropyContainer[L] = container.applyDelta(DottedName(container.replicaID, withContext))
       override def context(c: AntiEntropyContainer[L]): Dots = c.state.context
     }

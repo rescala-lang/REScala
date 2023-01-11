@@ -3,7 +3,7 @@ package kofre.datatypes
 import kofre.base.{Bottom, DecomposeLattice, Id}
 import kofre.datatypes.{GrowOnlyMap, ObserveRemoveMap}
 import kofre.dotted.{DotMap, Dotted, DottedDecompose, DottedLattice, HasDots}
-import kofre.syntax.{ArdtOpsContains, DottedName, OpsSyntaxHelper}
+import kofre.syntax.{DottedName, OpsSyntaxHelper}
 import kofre.time.{Dot, Dots}
 
 case class ObserveRemoveMap[K, V](inner: DotMap[K, V])

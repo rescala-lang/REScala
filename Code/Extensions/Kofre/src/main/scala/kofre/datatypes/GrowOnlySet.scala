@@ -3,7 +3,7 @@ package kofre.datatypes
 import kofre.base.{Bottom, DecomposeLattice}
 import kofre.datatypes.GrowOnlyMap
 import kofre.dotted.DottedDecompose
-import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper}
+import kofre.syntax.{OpsSyntaxHelper}
 
 type GrowOnlySet[E] = Set[E]
 

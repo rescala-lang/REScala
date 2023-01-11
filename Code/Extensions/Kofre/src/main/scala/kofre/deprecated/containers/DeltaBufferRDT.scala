@@ -3,7 +3,7 @@ package kofre.deprecated.containers
 import kofre.base.{Bottom, DecomposeLattice, Id}
 import kofre.time.Dots
 import kofre.dotted.{DottedDecompose, DottedLattice, Dotted}
-import kofre.syntax.{ArdtOpsContains, PermCausal, PermCausalMutate, PermIdMutate, PermQuery, DottedName}
+import kofre.syntax.{PermCausal, PermCausalMutate, PermIdMutate, PermQuery, DottedName}
 
 /** ReactiveCRDTs are Delta CRDTs that store applied deltas in their deltaBuffer attribute. Middleware should regularly
   * take these deltas and ship them to other replicas, using applyDelta to apply them on the remote state. After deltas
@@ -32,8 +32,6 @@ case class DeltaBufferRDT[State](
 }
 
 object DeltaBufferRDT {
-
-  given deltaBufferContains[State]: ArdtOpsContains[DeltaBufferRDT[State], State] = new {}
 
   given contextPermissions[L: DottedDecompose]
       : (PermIdMutate[DeltaBufferRDT[L], L] & PermCausalMutate[DeltaBufferRDT[L], L]) =

@@ -24,7 +24,4 @@ object TestReplica {
     override def mutate(c: TestReplica[L], delta: L): TestReplica[L] = c.apply(delta)
     override def query(c: TestReplica[L]): L                         = c.anon
   }
-
-  given syntaxPassthroughTrans[K, L](using ArdtOpsContains[K, L]): ArdtOpsContains[TestReplica[K], L] = new {}
-  given syntaxPassthrough[L]: ArdtOpsContains[TestReplica[L], L]                                      = new {}
 }

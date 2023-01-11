@@ -3,9 +3,8 @@ package kofre.datatypes
 import kofre.base.DecomposeLattice.*
 import kofre.base.{Bottom, DecomposeLattice, Id}
 import kofre.dotted.DottedDecompose
-import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermQuery}
+import kofre.syntax.{OpsSyntaxHelper, PermQuery}
 
-// this could be an opaque type, but interop
 case class GrowOnlyCounter(inner: Map[Id, Int]) derives DecomposeLattice, Bottom
 
 /** A GCounter is a Delta CRDT modeling an increment-only counter. */

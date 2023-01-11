@@ -145,7 +145,6 @@ given fullPermission[L: DecomposeLattice: Bottom]: PermIdMutate[ReplicaMutator[L
     c
   override def query(c: ReplicaMutator[L]): L = c.replica.data
 }
-given [L]: ArdtOpsContains[ReplicaMutator[L], L] = new {}
 
 def traverse[T](list: List[Async[Any, T]]): Async[Any, List[T]] = list match
   case Nil => Async { Nil }

@@ -4,7 +4,7 @@ import kofre.base.{Bottom, DecomposeLattice, Lattice}
 import kofre.datatypes.{CausalLastWriterWins, EnableWinsFlag, PosNegCounter}
 import kofre.deprecated.containers.DeltaBufferRDT
 import kofre.dotted.{Dotted, DottedDecompose}
-import kofre.syntax.{ArdtOpsContains, DottedName, OpsSyntaxHelper}
+import kofre.syntax.{DottedName, OpsSyntaxHelper}
 import test.kofre.Project.ProjectSyntax
 
 case class Project(

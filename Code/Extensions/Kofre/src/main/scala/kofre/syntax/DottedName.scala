@@ -25,8 +25,6 @@ object DottedName {
     override def context(c: DottedName[L]): Dots = c.anon.context
   }
 
-  given syntaxPassthroughTrans[K, L](using ArdtOpsContains[K, L]): ArdtOpsContains[DottedName[K], L] = new {}
-  given syntaxPassthrough[L]: ArdtOpsContains[DottedName[L], L]                                      = new {}
 }
 
 case class AnyNamed[L](replicaID: Id, anon: L) {
@@ -47,6 +45,4 @@ object AnyNamed {
     override def mutate(c: AnyNamed[L], delta: L): AnyNamed[L] = AnyNamed(c.replicaID, c.anon merge delta)
   }
 
-  given syntaxPassthroughTrans[K, L](using ArdtOpsContains[K, L]): ArdtOpsContains[AnyNamed[K], L] = new {}
-  given syntaxPassthrough[L]: ArdtOpsContains[AnyNamed[L], L]                                      = new {}
 }

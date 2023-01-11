@@ -4,7 +4,7 @@ import kofre.base.{Bottom, DecomposeLattice}
 import kofre.datatypes.GrowOnlyList.Node
 import kofre.datatypes.{Epoche}
 import kofre.dotted.DottedDecompose
-import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper}
+import kofre.syntax.{OpsSyntaxHelper}
 import kofre.datatypes.LastWriterWins.TimedVal
 
 import scala.annotation.tailrec

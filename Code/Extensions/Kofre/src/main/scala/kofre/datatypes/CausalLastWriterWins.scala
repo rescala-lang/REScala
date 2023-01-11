@@ -3,7 +3,7 @@ package kofre.datatypes
 import kofre.base.{Bottom, DecomposeLattice}
 import kofre.datatypes.MultiVersionRegister
 import kofre.dotted.{DotFun, Dotted, DottedDecompose, DottedLattice}
-import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper, PermIdMutate}
+import kofre.syntax.{OpsSyntaxHelper, PermIdMutate}
 import kofre.datatypes.LastWriterWins.TimedVal
 
 /** An LWW (Last Writer Wins) is a Delta CRDT modeling a register.

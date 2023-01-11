@@ -2,7 +2,7 @@ package kofre.datatypes
 
 import kofre.base.{Bottom, DecomposeLattice}
 import kofre.dotted.{DotFun, Dotted, DottedDecompose}
-import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper}
+import kofre.syntax.OpsSyntaxHelper
 import kofre.time.{Dot, Dots}
 
 /** An MultiVersionRegister (Multi-Value Register) is a Delta CRDT modeling a register.

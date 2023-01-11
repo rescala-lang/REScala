@@ -56,14 +56,6 @@ object PermIdMutate:
     def replicaId(c: C): Id       = id
     def query(c: C): L            = mctx.query(c)
 
-/** Helper trait to state that container C contains lattices of type L.
-  * This is used for better type inference
-  */
-@implicitNotFound("Could not show that »${C}\ncontains ${L}")
-trait ArdtOpsContains[C, L]
-object ArdtOpsContains:
-  given identityContains[L]: ArdtOpsContains[L, L] = new {}
-
 /** Helps to define operations that update any container [[C]] containing values of type [[L]]
   * using a scheme where mutations return deltas which are systematically applied.
   */

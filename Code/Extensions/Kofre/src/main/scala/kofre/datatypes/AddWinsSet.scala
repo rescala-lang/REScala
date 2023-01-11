@@ -4,7 +4,7 @@ import kofre.base.{Bottom, DecomposeLattice}
 import kofre.datatypes.AddWinsSet
 import kofre.dotted.DottedDecompose.*
 import kofre.dotted.{DotMap, DotSet, Dotted, DottedDecompose, HasDots}
-import kofre.syntax.{ArdtOpsContains, OpsSyntaxHelper}
+import kofre.syntax.OpsSyntaxHelper
 import kofre.time.{Dot, Dots}
 
 /** An AddWinsSet (Add-Wins Set) is a Delta CRDT modeling a set.

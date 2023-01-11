@@ -4,7 +4,7 @@ import kofre.base.{Bottom, DecomposeLattice}
 import kofre.datatypes.{Epoche}
 import kofre.dotted.{DotFun, Dotted, DottedDecompose, DottedLattice}
 import kofre.syntax.PermIdMutate.withID
-import kofre.syntax.{AnyNamed, ArdtOpsContains, DottedName, OpsSyntaxHelper, PermIdMutate, PermMutate}
+import kofre.syntax.{AnyNamed, DottedName, OpsSyntaxHelper, PermIdMutate, PermMutate}
 import kofre.time.{Dot, Dots}
 import kofre.datatypes.LastWriterWins.TimedVal
 

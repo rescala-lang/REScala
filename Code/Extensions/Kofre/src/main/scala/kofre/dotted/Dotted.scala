@@ -3,7 +3,7 @@ package kofre.dotted
 import kofre.base.Lattice.Operators
 import kofre.base.{Bottom, DecomposeLattice, Lattice, Id}
 import kofre.dotted.{DotFun, DotSet}
-import kofre.syntax.{ArdtOpsContains, DottedName, PermCausal, PermCausalMutate, PermQuery}
+import kofre.syntax.{DottedName, PermCausal, PermCausalMutate, PermQuery}
 import kofre.time.{Dot, Dots}
 
 
@@ -28,6 +28,4 @@ object Dotted {
     override def context(c: Dotted[L]): Dots                              = c.context
   }
 
-  given syntaxPassthroughTrans[K, L](using ArdtOpsContains[K, L]): ArdtOpsContains[Dotted[K], L] = new {}
-  given syntaxPassthrough[L](using ArdtOpsContains[L, L]): ArdtOpsContains[Dotted[L], L]         = new {}
 }
