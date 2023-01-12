@@ -24,7 +24,7 @@ case class DeltaBufferRDT[State](
           case Some(stateDiff) =>
             val stateMerged = DecomposeLattice[Dotted[State]].merge(state, stateDiff)
             new DeltaBufferRDT(stateMerged, replicaID, DottedName(origin, stateDiff) :: deltaBuffer)
-          case None => this.asInstanceOf[DeltaBufferRDT[State]]
+          case None => this
         }
     }
 
