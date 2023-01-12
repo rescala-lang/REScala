@@ -9,7 +9,7 @@ object JarExport extends sbt.AutoPlugin {
   override def trigger = allRequirements
 
   val writeClasspath = TaskKey[File]("writeClasspath", "writes the classpath to a file in the target dir")
-  val stageJars = TaskKey[File]("stageJars", "copies classpath jars to a file in the target dir")
+  val stageJars      = TaskKey[File]("stageJars", "copies classpath jars to a file in the target dir")
 
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
     // util to generate classpath file to be consumed by native image

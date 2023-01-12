@@ -38,12 +38,12 @@ object Settings {
     }
   )
 
-  def explicitNulls(s: Configuration) = Seq(
-    s / scalacOptions ++= {
+  def explicitNulls(conf: Configuration*) = conf.map { c =>
+    c / scalacOptions ++= {
       val version = CrossVersion.partialVersion(scalaVersion.value).get
       cond(version._1 == 3, "-Yexplicit-nulls")
     }
-  )
+  }
 
   val commonScalacOptions = fatalWarnings ++ featureOptions
 

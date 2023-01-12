@@ -1,7 +1,6 @@
 import Dependencies.*
 import RescalaDependencies.*
 import Settings.*
-import sbt.Def
 
 lazy val rescalaProject = project.in(file(".")).settings(noPublish).aggregate(
   examples,

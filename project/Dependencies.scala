@@ -28,7 +28,7 @@ object Dependencies {
     val scalajsDom    = "2.3.0"
     val scalatags     = "0.12.0"
     val scopt         = "4.1.0"
-    val scribe        = "3.10.5"
+    val scribe        = "3.10.6"
     val slips         = "0.4.6"
     val sourcecode    = "0.3.0"
     val upickle       = "2.0.0"
