@@ -103,7 +103,6 @@ lazy val distributedFullMVExamples = project.in(file("Code/Extensions/Multiversi
   .dependsOn(distributedFullmv % "test->test")
   .dependsOn(distributedFullmv % "compile->test")
   .dependsOn(rescala.jvm % "test->test")
-  .enablePlugins(JavaAppPackaging)
 
 lazy val distributedFullMVBenchmarks = project.in(file("Code/Extensions/MultiversionDistributed/benchmarks"))
   .enablePlugins(JmhPlugin)
@@ -113,7 +112,6 @@ lazy val distributedFullMVBenchmarks = project.in(file("Code/Extensions/Multiver
     (Compile / mainClass) := Some("org.openjdk.jmh.Main"),
   )
   .dependsOn(distributedFullmv % "compile->test")
-  .enablePlugins(JavaAppPackaging)
 
 lazy val microbench = project.in(file("Code/Microbenchmarks"))
   .enablePlugins(JmhPlugin)
@@ -127,7 +125,6 @@ lazy val microbench = project.in(file("Code/Microbenchmarks"))
     ),
     jolSettings,
   )
-  .enablePlugins(JavaAppPackaging)
   .dependsOn(rescala.jvm, kofre.jvm)
 
 // =====================================================================================
