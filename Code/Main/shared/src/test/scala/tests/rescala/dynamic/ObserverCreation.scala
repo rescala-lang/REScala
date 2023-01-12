@@ -7,9 +7,9 @@ class ObserverCreation extends RETests {
     import engine._
 
     test("add Event After") {
-      var res = 0
-      val e0  = Evt[Int]()("source")
-      val e1  = e0.map(identity)("firstMap")
+      var res   = 0
+      val e0    = Evt[Int]()("source")
+      val e1    = e0.map(identity)("firstMap")
       val inner = e0.map { _ + 1 }("innerMap").observe { res = _ }("observer")
       e1.map(_ => inner)("creatingMap")
       e0.fire(10)

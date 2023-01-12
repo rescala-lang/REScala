@@ -30,7 +30,7 @@ class DotsTest extends munit.ScalaCheckSuite {
       assert(
         Dots.from(ds).toSet == ds,
         s"DietMapCContext.toSet and DietMapCContext.from should be inverse operations, but ${Dots.from(ds).toSet} does not equal $ds"
-        )
+      )
     }
   }
 

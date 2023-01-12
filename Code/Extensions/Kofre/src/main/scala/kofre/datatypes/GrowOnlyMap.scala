@@ -25,8 +25,8 @@ object GrowOnlyMap {
   given contextLattice[K, V: DottedDecompose: HasDots: Bottom]: DottedDecompose[GrowOnlyMap[K, V]] =
     DotMap.contextDecompose[K, V].contextbimap[Map[K, V]](_.map(_.repr), _.map(DotMap.apply))
 
-  extension[C, K, V] (container: C)
-      def growOnlyMap: syntax[C, K, V] = syntax(container)
+  extension [C, K, V](container: C)
+    def growOnlyMap: syntax[C, K, V] = syntax(container)
 
   implicit class syntax[C, K, V](container: C)
       extends OpsSyntaxHelper[C, GrowOnlyMap[K, V]](container) {

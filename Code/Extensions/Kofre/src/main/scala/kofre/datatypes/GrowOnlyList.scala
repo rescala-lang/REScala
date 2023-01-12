@@ -66,7 +66,7 @@ object GrowOnlyList {
               case None => GrowOnlyList(state.innerContents + edge)
               case Some(next @ Elem(e2)) =>
                 if (e1.timestamp > e2.timestamp) GrowOnlyList(state.innerContents + edge + (r -> next))
-                else insertEdge(state, next                               -> r)
+                else insertEdge(state, next                                                   -> r)
             }
         }
 

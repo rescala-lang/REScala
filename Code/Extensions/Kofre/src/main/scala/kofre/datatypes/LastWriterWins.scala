@@ -28,10 +28,10 @@ object LastWriterWins {
 
       /** By assumption: associative, commutative, idempotent. */
       override def merge(left: LastWriterWins[Time, A], right: LastWriterWins[Time, A]): LastWriterWins[Time, A] =
-          Ordering[Time].compare(left.timestamp, right.timestamp) match
-            case 0 => if (left.payload == right.payload) then left
-              else throw IllegalStateException(s"LWW same timestamp, different value: »$left«, »$right«")
-            case -1 => right
-            case 1  => left
+        Ordering[Time].compare(left.timestamp, right.timestamp) match
+          case 0 => if (left.payload == right.payload) then left
+            else throw IllegalStateException(s"LWW same timestamp, different value: »$left«, »$right«")
+          case -1 => right
+          case 1  => left
     }
 }

@@ -4,9 +4,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromStrin
 import org.eclipse.jetty.websocket.api.exceptions.WebSocketTimeoutException
 import org.eclipse.jetty.websocket.api.{CloseStatus, Session, WebSocketAdapter, WebSocketBehavior}
 import CrdtSyncWebSocketHandler.{clientShutdownCloseStatus, duplicateCloseStatus}
-import P2PConnectionManager.{
-  Message, Peers, REPLICAID_HEADER, RequestPeers, RequestState, State
-}
+import P2PConnectionManager.{Message, Peers, REPLICAID_HEADER, RequestPeers, RequestState, State}
 
 import scala.util.{Failure, Success, Try}
 

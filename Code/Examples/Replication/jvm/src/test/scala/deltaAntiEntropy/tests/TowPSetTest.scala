@@ -27,7 +27,9 @@ object TwoPSetGenerators {
     }
   }
 
-  implicit def arbTwoPSet[E: Arbitrary](implicit c: JsonValueCodec[E]): Arbitrary[AntiEntropyContainer[TwoPhaseSet[E]]] =
+  implicit def arbTwoPSet[E: Arbitrary](implicit
+      c: JsonValueCodec[E]
+  ): Arbitrary[AntiEntropyContainer[TwoPhaseSet[E]]] =
     Arbitrary(genTwoPSet)
 }
 

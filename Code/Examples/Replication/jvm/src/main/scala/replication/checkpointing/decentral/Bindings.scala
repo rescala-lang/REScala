@@ -21,8 +21,8 @@ object Bindings {
 
   implicit val checkpointCodec: JsonValueCodec[Checkpoint] = JsonCodecMaker.make
 
-  implicit val setStateMessageCodec: JsonValueCodec[SetState]     = JsonCodecMaker.make
-  given  JsonValueCodec[Map[Id, Int]] = JsonCodecMaker.make
+  implicit val setStateMessageCodec: JsonValueCodec[SetState] = JsonCodecMaker.make
+  given JsonValueCodec[Map[Id, Int]]                          = JsonCodecMaker.make
 
   implicit val checkpointMessageCodec: JsonValueCodec[CheckpointMessage] = JsonCodecMaker.make
 

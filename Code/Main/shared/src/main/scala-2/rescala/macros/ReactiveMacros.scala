@@ -210,7 +210,7 @@ class ReactiveMacros(val c: blackbox.Context) {
       val ntype = c.prefix.tree.tpe
       underlyingReSourceType(ntype) match {
         case TypeRef(tn, _, _) => tn: Type
-        case _ => throw new IllegalStateException(s"underlying type is not a type ref: $ntype")
+        case _                 => throw new IllegalStateException(s"underlying type is not a type ref: $ntype")
       }
     }
 

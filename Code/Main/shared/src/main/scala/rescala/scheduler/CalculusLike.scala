@@ -58,7 +58,7 @@ trait CalculusLike extends Core {
 
   case class FTransaction(override val initializer: Initializer) extends Transaction {
     override private[rescala] def access(reactive: ReSource): reactive.Value = reactive.state.value
-    override def observe(obs: Observation): Unit = obs.execute()
+    override def observe(obs: Observation): Unit                             = obs.execute()
   }
 
   object FScheduler

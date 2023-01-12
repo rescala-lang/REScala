@@ -113,7 +113,7 @@ trait FullMVBundle extends Core {
   case class TransactionHandle(ti: FullMVTurn) extends Transaction {
     override private[rescala] def access(reactive: ReSource): reactive.Value = ti.dynamicBefore(reactive)
     override def initializer: Initializer                                    = ti
-    override def observe(obs: Observation): Unit = ti.observe(() => obs.execute())
+    override def observe(obs: Observation): Unit                             = ti.observe(() => obs.execute())
   }
 
   class FullMVEngine(val timeout: Duration, val schedulerName: String)

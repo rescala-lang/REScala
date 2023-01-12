@@ -30,7 +30,7 @@ object ObserveRemoveMap {
       cc: Dots = Dots.empty
   ): Dotted[ObserveRemoveMap[K, V]] = Dotted(ObserveRemoveMap(dm), cc)
 
-  extension[C, K, V] (container: C)
+  extension [C, K, V](container: C)
     def observeRemoveMap: syntax[C, K, V] = syntax(container)
 
   implicit class syntax[C, K, V](container: C)

@@ -61,8 +61,10 @@ class PosNegCounterTest extends munit.ScalaCheckSuite {
       val aeb = new AntiEntropy[PosNegCounter]("b", network, mutable.Buffer("a"))
       val aec = new AntiEntropy[PosNegCounter]("c", network, mutable.Buffer("c"))
 
-      val ca0 = if (incOrDecA) AntiEntropyContainer[PosNegCounter](aea).inc() else AntiEntropyContainer[PosNegCounter](aea).dec()
-      val cb0 = if (incOrDecB) AntiEntropyContainer[PosNegCounter](aeb).inc() else AntiEntropyContainer[PosNegCounter](aeb).dec()
+      val ca0 = if (incOrDecA) AntiEntropyContainer[PosNegCounter](aea).inc()
+      else AntiEntropyContainer[PosNegCounter](aea).dec()
+      val cb0 = if (incOrDecB) AntiEntropyContainer[PosNegCounter](aeb).inc()
+      else AntiEntropyContainer[PosNegCounter](aeb).dec()
 
       AntiEntropy.sync(aea, aeb)
 

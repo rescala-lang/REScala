@@ -8,7 +8,6 @@ import kofre.syntax.{AnyNamed, DottedName, OpsSyntaxHelper, PermIdMutate, PermMu
 import kofre.time.{Dot, Dots}
 import kofre.datatypes.LastWriterWins.TimedVal
 
-
 import scala.math.Ordering.Implicits.infixOrderingOps
 
 /** An RGA (Replicated Growable Array) is a Delta CRDT modeling a list.
@@ -77,8 +76,7 @@ object ReplicatedList {
 
   private def deltaState[E]: DeltaStateFactory[E] = new DeltaStateFactory[E]
 
-
-  extension[C, E] (container: C)
+  extension [C, E](container: C)
     def multiVersionRegister: syntax[C, E] = syntax(container)
 
   implicit class syntax[C, E](container: C)

@@ -37,7 +37,7 @@ class EmptySignalTestSuite extends RETests {
       val e1 = Evt[Unit]()
 
       val flat = v.flatten
-      val e2 = e1 map { _ => flat.count() }
+      val e2   = e1 map { _ => flat.count() }
 
       var s: Signal[Int] = null
 

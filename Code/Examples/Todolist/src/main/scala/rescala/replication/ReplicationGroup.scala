@@ -27,11 +27,11 @@ class ReplicationGroup[Api <: RescalaInterface, A](
   import api._
 
   private var localListeners: Map[String, Evt[DottedName[A]]] = Map.empty
-  private var unhandled: Map[String, Map[String, Dotted[A]]]               = Map.empty
+  private var unhandled: Map[String, Map[String, Dotted[A]]]  = Map.empty
 
   registry.bindSbj(binding) { (remoteRef: RemoteRef, payload: DeltaFor[A]) =>
     localListeners.get(payload.name) match {
-      case Some(handler) => handler.fire(DottedName( Id.predefined(remoteRef.toString), payload.delta))
+      case Some(handler) => handler.fire(DottedName(Id.predefined(remoteRef.toString), payload.delta))
       case None => unhandled = unhandled.updatedWith(payload.name) { current =>
           current merge Some(Map(remoteRef.toString -> payload.delta))
         }
@@ -52,7 +52,7 @@ class ReplicationGroup[Api <: RescalaInterface, A](
     unhandled.get(name) match {
       case None =>
       case Some(changes) =>
-        changes.foreach( (k, v) => deltaEvt.fire(DottedName(Id.predefined(k), v)))
+        changes.foreach((k, v) => deltaEvt.fire(DottedName(Id.predefined(k), v)))
     }
 
     def registerRemote(remoteRef: RemoteRef): Unit = {

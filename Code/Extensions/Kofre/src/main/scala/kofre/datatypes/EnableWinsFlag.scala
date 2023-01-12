@@ -21,7 +21,7 @@ object EnableWinsFlag {
 
   val empty: EnableWinsFlag = EnableWinsFlag(DotSet.empty)
 
-  extension[C] (container: C)
+  extension [C](container: C)
     def enableWinsFlag: syntax[C] = syntax(container)
 
   /** It is enabled if there is a value in the store.

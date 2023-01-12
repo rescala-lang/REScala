@@ -130,7 +130,7 @@ class DotSetTest extends munit.ScalaCheckSuite {
     forAll { (ds: Dots, deleted: Dots) =>
       val cc = ds union deleted
 
-      val decomposed                 = Dotted(DotSet.from(ds.iterator), cc).decomposed
+      val decomposed                         = Dotted(DotSet.from(ds.iterator), cc).decomposed
       val Dotted(DotSet(dsMerged), ccMerged) = decomposed.foldLeft(Dotted.empty[DotSet]) { _ merge _ }
 
       assertEquals(

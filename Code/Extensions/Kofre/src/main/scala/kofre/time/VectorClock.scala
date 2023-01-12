@@ -19,7 +19,7 @@ case class VectorClock(timestamps: Map[Id, Time]) {
 
 object VectorClock {
 
-  def zero: VectorClock                           = VectorClock(Map.empty)
+  def zero: VectorClock                      = VectorClock(Map.empty)
   def fromMap(m: Map[Id, Time]): VectorClock = VectorClock(m)
 
   given lattice: Lattice[VectorClock] =

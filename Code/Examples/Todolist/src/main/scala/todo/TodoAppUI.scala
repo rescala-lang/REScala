@@ -24,7 +24,7 @@ import loci.serializer.jsoniterScala.given
 
 class TodoAppUI(val storagePrefix: String) {
 
-  val tasklistBinding = Binding[DeltaFor[ReplicatedList[TaskRef]] => Unit]("tasklist")
+  val tasklistBinding    = Binding[DeltaFor[ReplicatedList[TaskRef]] => Unit]("tasklist")
   val tasklistReplicator = new ReplicationGroup(rescala.default, Todolist.registry, tasklistBinding)
 
   def getContents(): TypedTag[Div] = {
@@ -55,7 +55,7 @@ class TodoAppUI(val storagePrefix: String) {
           taskOps.handleCreateTodo(createTodo.event),
           taskOps.handleRemoveAll(removeAll.event),
           Fold.branch {
-            current.toList.flatMap(_.removed.value).foldLeft(current){(c, e) => taskOps.handleRemove(c)(e)}
+            current.toList.flatMap(_.removed.value).foldLeft(current) { (c, e) => taskOps.handleRemove(c)(e) }
           },
           taskOps.handleDelta(deltaEvt)
         )

@@ -39,6 +39,8 @@ class ReverseFan {
 
   @Benchmark
   def run(step: Step, params: ThreadParams): Unit =
-    if (isManual) synchronized { sources(params.getThreadIndex).set(step.run())(scheduler, ScopeSearch.fromSchedulerImplicit(scheduler)) }
+    if (isManual) synchronized {
+      sources(params.getThreadIndex).set(step.run())(scheduler, ScopeSearch.fromSchedulerImplicit(scheduler))
+    }
     else sources(params.getThreadIndex).set(step.run())(scheduler, ScopeSearch.fromSchedulerImplicit(scheduler))
 }

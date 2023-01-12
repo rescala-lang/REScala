@@ -219,7 +219,10 @@ class ResettableCounterTest extends munit.ScalaCheckSuite {
             nOpsB2._3.toInt
           )(2) ++ List.fill(nOpsB2._4.toInt)(3))
 
-          def applyOps(counter: AntiEntropyContainer[ResettableCounter], ops: List[Int]): AntiEntropyContainer[ResettableCounter] = {
+          def applyOps(
+              counter: AntiEntropyContainer[ResettableCounter],
+              ops: List[Int]
+          ): AntiEntropyContainer[ResettableCounter] = {
             ops.foldLeft(counter) {
               case (c, 0) => c.increment()
               case (c, 1) => c.decrement()

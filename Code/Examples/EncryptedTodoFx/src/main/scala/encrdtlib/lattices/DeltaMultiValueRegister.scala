@@ -9,7 +9,7 @@ object DeltaMultiValueRegister {
 
   def deltaWrite[V](
       value: V,
-      replicaId: Id ,
+      replicaId: Id,
       register: DeltaMultiValueRegisterLattice[V]
   ): DeltaMultiValueRegisterLattice[V] = {
 

@@ -56,7 +56,7 @@ class Elevator(val nFloors: Int) {
     Seq(
       reachedFloor act2 { _ => WaitingTime },
       tick act2 { _ => if (isWaiting.now) acc - 1 else acc }
-      )
+    )
   )
 
   val stoppedWaiting = waitingTime.changedTo(0)

@@ -335,6 +335,3 @@ class PairAsDecomposeLatticeTest extends munit.ScalaCheckSuite {
     }
   }
 }
-
-
-

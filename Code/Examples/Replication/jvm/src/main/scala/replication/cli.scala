@@ -47,7 +47,12 @@ object cli {
           case ipAndPort(ip, port) => (ip, port.toInt)
         }
 
-        new Replica(decArgs.listenPort.value, ipsAndPorts, Id.predefined(decArgs.id.value), decArgs.initSize.value).run()
+        new Replica(
+          decArgs.listenPort.value,
+          ipsAndPorts,
+          Id.predefined(decArgs.id.value),
+          decArgs.initSize.value
+        ).run()
 
     instance.checkpointing.value.flatMap(_.central.value) match
       case None =>

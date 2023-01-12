@@ -31,7 +31,6 @@ class BoundedCounterTest extends munit.FunSuite {
     r1.apply(r2.anon).rebalance
     assertInvariant()
 
-
     assertEquals(r1.available, 33)
     assertEquals(r2.available, 25)
     assertEquals(r3.available, 25)

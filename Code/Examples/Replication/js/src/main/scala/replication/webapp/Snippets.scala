@@ -23,7 +23,7 @@ object Snippets {
   def meta(meta: MetaInfo): Signal[TypedTag[Element]] = {
     val connectionStatus = Signal {
       meta.connection.value match {
-        case 0 => stringFrag(s"disconnected (attempt № ${meta.reconnecting.value})")
+        case 0     => stringFrag(s"disconnected (attempt № ${meta.reconnecting.value})")
         case other => stringFrag(s"$other active")
       }
     }

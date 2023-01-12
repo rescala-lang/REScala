@@ -22,7 +22,7 @@ object AddWinsSet {
   given contextDecompose[E]: DottedDecompose[AddWinsSet[E]] = DottedDecompose.derived
   given asCausalContext[E]: HasDots[AddWinsSet[E]]          = HasDots.derived
 
-  extension[C, E] (container: C)
+  extension [C, E](container: C)
     def addWinsSet: syntax[C, E] = syntax(container)
 
   implicit class syntax[C, E](container: C) extends OpsSyntaxHelper[C, AddWinsSet[E]](container) {

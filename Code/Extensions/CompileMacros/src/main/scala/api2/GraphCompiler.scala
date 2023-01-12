@@ -337,7 +337,7 @@ class GraphCompiler(using Quotes)(
       case _ => None
     }
 
-    (CEmptyStmt :: sameCondCode :: (/*serialization ++ */ releaseCode.toList)) ++ compileUpdates(
+    (CEmptyStmt :: sameCondCode :: ( /*serialization ++ */ releaseCode.toList)) ++ compileUpdates(
       otherConds,
       subGraphConds,
       toRelease.diff(released)
@@ -360,9 +360,9 @@ class GraphCompiler(using Quotes)(
     val sourceParams = orderedSources.filter(sources.contains).map(sourceParameters)
 
     val params = sourceParams
-      //if outputReactives.nonEmpty
-      //then CParmVarDecl("json", CPointerType(CJSONH.cJSON)) :: sourceParams
-      //else sourceParams
+    // if outputReactives.nonEmpty
+    // then CParmVarDecl("json", CPointerType(CJSONH.cJSON)) :: sourceParams
+    // else sourceParams
 
     val localVarDecls = subGraphTopological.collect {
       case e: CompiledEvent if eventVariables.contains(e) => CDeclStmt(eventVariables(e))
@@ -383,24 +383,24 @@ class GraphCompiler(using Quotes)(
       if outputReactives.isEmpty
       then CCompoundStmt(localVarDecls ++ updates)
       else {
-        //val subGraphJsonVars = outputReactives.map { r =>
+        // val subGraphJsonVars = outputReactives.map { r =>
         //  if subGraph.contains(r) then
         //    jsonVars(r)
         //  else
         //    jsonVars(r).copy(init = Some(CCallExpr(CJSONH.cJSON_CreateNull.ref, List())))
-        //}
-        //val jsonVarDecls = CEmptyStmt :: subGraphJsonVars.map(CDeclStmt.apply)
+        // }
+        // val jsonVarDecls = CEmptyStmt :: subGraphJsonVars.map(CDeclStmt.apply)
 
         // val fillJson = CEmptyStmt ::
         //  subGraphJsonVars.map[CStmt](jsonVar =>
         //    CCallExpr(CJSONH.cJSON_AddItemToArray.ref, List(params.head.ref, jsonVar.ref))
         //  )
 
-        //CCompoundStmt(localVarDecls ++ jsonVarDecls ++ updates ++ fillJson)
+        // CCompoundStmt(localVarDecls ++ jsonVarDecls ++ updates ++ fillJson)
 
         val result = List(CReturnStmt(Some(CCallExpr(productCreation.ref, outputReactives.map(valueRef)))))
 
-        CCompoundStmt(localVarDecls ++ updates ++ result )
+        CCompoundStmt(localVarDecls ++ updates ++ result)
       }
 
     CFunctionDecl(fullName, params, returnType.getTypeForDecl, Some(body))

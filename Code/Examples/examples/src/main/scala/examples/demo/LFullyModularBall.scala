@@ -75,7 +75,7 @@ object LFullyModularBall extends Main {
       Seq(
         reset act2 { case Point(x, y) => Pos(x.toDouble, y.toDouble) },
         inc act2 { inc => acc + inc }
-        )
+      )
     )
 
     val shape = new Circle(pos, diameter)

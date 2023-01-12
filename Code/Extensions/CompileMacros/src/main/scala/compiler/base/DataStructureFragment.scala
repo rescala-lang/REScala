@@ -55,7 +55,7 @@ object DataStructureFragment extends DataStructureIFFragment {
             val body = CCompoundStmt(List(
               CIncExpr(CParenExpr(CDerefExpr(CMemberExpr(param.ref, refCountFieldName)))),
               CReturnStmt(Some(param.ref))
-              ))
+            ))
 
             CFunctionDecl(name, List(param), recordDecl.getTypeForDecl, Some(body))
           }
@@ -85,10 +85,10 @@ object DataStructureFragment extends DataStructureIFFragment {
                 CAndExpr(
                   CLessEqualsExpr(CDerefExpr(CMemberExpr(param.ref, refCountFieldName)), 0.lit),
                   CNotExpr(keepWithZero.ref)
-                  ),
+                ),
                 dispatch[DataStructureIFFragment](_.compileFree)(param.ref, tpe)
               )
-              ))
+            ))
 
             CFunctionDecl(name, List(param, keepWithZero), CVoidType, Some(body))
           }

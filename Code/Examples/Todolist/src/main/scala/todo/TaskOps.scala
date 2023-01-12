@@ -20,7 +20,7 @@ class TaskOps(@nowarn taskRefs: TaskReferences) {
     current.resetDeltaBuffer().prepend(taskref)
   }
 
-  def handleRemoveAll(removeAll: Event[Any]): Fold.Branch[State]  = removeAll.act { _ =>
+  def handleRemoveAll(removeAll: Event[Any]): Fold.Branch[State] = removeAll.act { _ =>
     current.resetDeltaBuffer().deleteBy { taskref =>
       val isDone = taskref.task.value.read.exists(_.done)
       // todo, move to observer, disconnect during transaction does not respect rollbacks
@@ -38,18 +38,19 @@ class TaskOps(@nowarn taskRefs: TaskReferences) {
     }
   }
 
-  def handleDelta(deltaEvent: Event[DottedName[ReplicatedList[TaskRef]]]): Fold.Branch[State] = deltaEvent.act { delta =>
-    val deltaBuffered = current
+  def handleDelta(deltaEvent: Event[DottedName[ReplicatedList[TaskRef]]]): Fold.Branch[State] =
+    deltaEvent.act { delta =>
+      val deltaBuffered = current
 
-    val newList = deltaBuffered.resetDeltaBuffer().applyDelta(delta)
+      val newList = deltaBuffered.resetDeltaBuffer().applyDelta(delta)
 
-    val oldIDs = deltaBuffered.toList.toSet
-    val newIDs = newList.toList.toSet
+      val oldIDs = deltaBuffered.toList.toSet
+      val newIDs = newList.toList.toSet
 
-    val removed = oldIDs -- newIDs
-    removed.foreach { _.task.disconnect() }
+      val removed = oldIDs -- newIDs
+      removed.foreach { _.task.disconnect() }
 
-    newList
-  }
+      newList
+    }
 
 }

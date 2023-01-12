@@ -15,7 +15,7 @@ object Epoche {
 
   given bottom[E: Bottom]: Bottom[Epoche[E]] with { override def empty: Epoche[E] = Epoche.empty }
 
-  extension[C, E] (container: C)
+  extension [C, E](container: C)
     def epoche: syntax[C, E] = syntax(container)
 
   implicit class syntax[C, E](container: C)

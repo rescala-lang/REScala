@@ -13,7 +13,7 @@ import java.util.UUID
 object Codecs {
   implicit val idCodec: JsonValueCodec[Id] = JsonCodecMaker.make[String].asInstanceOf
   implicit val idKeyCodec: JsonKeyCodec[kofre.base.Id] = new JsonKeyCodec[Id]:
-    override def decodeKey(in: JsonReader): Id = Id.predefined(in.readKeyAsString())
+    override def decodeKey(in: JsonReader): Id           = Id.predefined(in.readKeyAsString())
     override def encodeKey(x: Id, out: JsonWriter): Unit = out.writeKey(Id.unwrap(x))
   implicit val awlwwmapJsonCodec: JsonValueCodec[AddWinsLastWriterWinsMap.LatticeType[String, String]] =
     JsonCodecMaker.make(CodecMakerConfig.withSetMaxInsertNumber(Int.MaxValue).withMapMaxInsertNumber(Int.MaxValue))

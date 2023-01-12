@@ -12,11 +12,11 @@ object GrowOnlySet {
 
   def empty[E]: GrowOnlySet[E] = Set.empty
 
-  given bottomInstance[E]: Bottom[GrowOnlySet[E]] = Bottom.setBottom
+  given bottomInstance[E]: Bottom[GrowOnlySet[E]]             = Bottom.setBottom
   given decomposeLattice[E]: DecomposeLattice[GrowOnlySet[E]] = DecomposeLattice.setLattice
-  given contextDecompose[E]: DottedDecompose[GrowOnlySet[E]] = DottedDecompose.liftDecomposeLattice
+  given contextDecompose[E]: DottedDecompose[GrowOnlySet[E]]  = DottedDecompose.liftDecomposeLattice
 
-  extension[C, E] (container: C)
+  extension [C, E](container: C)
     def growOnlySet: syntax[C, E] = syntax(container)
 
   implicit class syntax[C, E](container: C) extends OpsSyntaxHelper[C, GrowOnlySet[E]](container) {

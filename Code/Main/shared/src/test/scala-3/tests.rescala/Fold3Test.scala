@@ -2,7 +2,6 @@ package tests.rescala
 
 import tests.rescala.testtools.RETests
 
-
 class Fold3Test extends RETests {
   multiEngined { engine =>
     import engine._

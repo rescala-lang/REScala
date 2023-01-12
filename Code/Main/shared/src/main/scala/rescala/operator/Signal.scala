@@ -189,17 +189,16 @@ trait SignalBundle extends SignalCompatBundle {
     }
 
     def fold[T](dependencies: Set[ReSource], init: T)(expr: StaticTicket => (() => T) => T)(implicit
-                                                                                            ticket: CreationTicket
+        ticket: CreationTicket
     ): Signal[T] = {
       ticket.create(
         dependencies,
         Pulse.tryCatch[T](Pulse.Value(init)),
         needsReevaluation = false
-        ) {
+      ) {
         state => new SignalImpl[T](state, (st, v) => expr(st)(v), ticket.rename, None)
       }
     }
-
 
     /** creates a new static signal depending on the dependencies, reevaluating the function */
     @cutOutOfUserComputation

@@ -6,9 +6,8 @@ import kofre.dotted.{DotFun, DotSet}
 import kofre.syntax.{DottedName, PermCausal, PermCausalMutate, PermQuery}
 import kofre.time.{Dot, Dots}
 
-
 case class Dotted[A](store: A, context: Dots) {
-  def map[B](f: A => B): Dotted[B]                 = Dotted(f(store), context)
+  def map[B](f: A => B): Dotted[B] = Dotted(f(store), context)
   def named(id: Id): DottedName[A] = DottedName(id, this)
 }
 
@@ -19,7 +18,6 @@ object Dotted {
   def apply[A](a: A): Dotted[A]   = Dotted(a, Dots.empty)
 
   def latticeLift[L: DecomposeLattice: Bottom]: DecomposeLattice[Dotted[L]] = DecomposeLattice.derived
-
 
   given syntaxPermissions[L](using DottedLattice[L]): PermCausalMutate[Dotted[L], L]
     with {

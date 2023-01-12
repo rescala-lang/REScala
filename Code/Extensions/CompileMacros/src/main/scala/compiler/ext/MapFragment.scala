@@ -180,7 +180,7 @@ object MapFragment extends ApplyIFFragment with TypeIFFragment with DataStructur
         val freeThis: List[CStmt] = List(
           CCallExpr(StdLibH.free.ref, List(CMemberExpr(expr, refCountFieldName))),
           CCallExpr(HashmapH.hashmap_free.ref, List(CMemberExpr(expr, dataField)))
-          )
+        )
 
         if releaseValues then
           val iterate = CCallExpr(

@@ -21,6 +21,6 @@ class InsecureToDoListClient(
 
     disseminate(
       EncryptedDeltaGroup(serialPlaintextDeltaGroup, serialDottedVersionVector)
-      )
+    )
   }
 }

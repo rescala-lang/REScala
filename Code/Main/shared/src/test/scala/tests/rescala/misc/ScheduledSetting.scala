@@ -6,12 +6,11 @@ class ScheduledSetting extends RETests {
   multiEngined { engine =>
     import engine._
 
-
     test("setting during inner event") {
 
-      val outer = Var("outer")
+      val outer  = Var("outer")
       val source = Var[Signal[String]](outer)
-      val flat = source.flatten
+      val flat   = source.flatten
 
       val evt = Evt[Unit]()
 
