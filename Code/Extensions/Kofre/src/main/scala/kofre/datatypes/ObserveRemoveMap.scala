@@ -3,7 +3,7 @@ package kofre.datatypes
 import kofre.base.{Bottom, DecomposeLattice, Id}
 import kofre.datatypes.{GrowOnlyMap, ObserveRemoveMap}
 import kofre.dotted.{DotMap, Dotted, DottedDecompose, DottedLattice, HasDots}
-import kofre.syntax.{DottedName, OpsSyntaxHelper}
+import kofre.syntax.{Named, OpsSyntaxHelper}
 import kofre.time.{Dot, Dots}
 
 case class ObserveRemoveMap[K, V](inner: DotMap[K, V])
@@ -63,9 +63,9 @@ object ObserveRemoveMap {
         CausalMutationP,
         IdentifierP,
         Bottom[V]
-    )(k: K)(m: DottedName[V] => DottedName[V]): C = {
+    )(k: K)(m: Named[Dotted[V]] => Named[Dotted[V]]): C = {
       val v                           = current.inner.getOrElse(k, Bottom[V].empty)
-      val Dotted(stateDelta, ccDelta) = m(DottedName(replicaID, Dotted(v, context))).anon
+      val Dotted(stateDelta, ccDelta) = m(Named(replicaID, Dotted(v, context))).anon
       make[K, V](
         dm = DotMap(Map(k -> stateDelta)),
         cc = ccDelta

@@ -5,7 +5,7 @@ import kofre.base.{DecomposeLattice, Lattice}
 import kofre.time.Dots
 import kofre.datatypes.{AddWinsSet, EnableWinsFlag}
 import kofre.datatypes.AddWinsSet
-import kofre.syntax.{OpsSyntaxHelper, PermIdMutate, DottedName}
+import kofre.syntax.{OpsSyntaxHelper, PermIdMutate}
 import kofre.dotted.{DottedDecompose, DottedLattice, Dotted, HasDots}
 
 import scala.collection.{AbstractIterator, immutable}

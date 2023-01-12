@@ -6,15 +6,15 @@ import kofre.time.{Dots, Dot}
 import kofre.dotted.HasDots.*
 import kofre.datatypes.EnableWinsFlag
 import kofre.dotted.{Dotted, HasDots}
-import kofre.syntax.DottedName
 import org.scalacheck.{Arbitrary, Gen}
 import test.kofre.DataGenerator.*
+import kofre.syntax.Named
 
 class SyntaxTest extends munit.FunSuite {
 
   test("Manual Tests") {
 
-    val flag: DottedName[EnableWinsFlag] = DottedName.empty("me")
+    val flag: Named[Dotted[EnableWinsFlag]] = Named.empty("me")
 
     assert(!flag.read)
     val enabled = flag.enable()

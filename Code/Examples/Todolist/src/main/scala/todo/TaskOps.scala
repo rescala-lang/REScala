@@ -2,7 +2,8 @@ package todo
 
 import kofre.datatypes.ReplicatedList
 import kofre.deprecated.containers.DeltaBufferRDT
-import kofre.syntax.DottedName
+import kofre.dotted.Dotted
+import kofre.syntax.Named
 import rescala.default.*
 import rescala.default.Fold
 
@@ -38,7 +39,7 @@ class TaskOps(@nowarn taskRefs: TaskReferences) {
     }
   }
 
-  def handleDelta(deltaEvent: Event[DottedName[ReplicatedList[TaskRef]]]): Fold.Branch[State] =
+  def handleDelta(deltaEvent: Event[Named[Dotted[ReplicatedList[TaskRef]]]]): Fold.Branch[State] =
     deltaEvent.act { delta =>
       val deltaBuffered = current
 

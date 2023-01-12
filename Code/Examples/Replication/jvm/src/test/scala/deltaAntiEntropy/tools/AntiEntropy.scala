@@ -3,10 +3,10 @@ package deltaAntiEntropy.tools
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReaderException, JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tools.AntiEntropy.{AckMsg, DeltaMsg}
+import kofre.base.Id.asId
 import kofre.base.{Bottom, DecomposeLattice, Id}
-import Id.asId
 import kofre.dotted.{Dotted, DottedDecompose}
-import kofre.syntax.DottedName
+import kofre.syntax.Named
 import replication.JsoniterCodecs.given
 
 import scala.collection.mutable
@@ -32,9 +32,9 @@ class AntiEntropy[A](
 
   def state: Dotted[A] = fullState
 
-  private val deltaBufferOut: mutable.Map[Int, DottedName[A]] = mutable.Map()
+  private val deltaBufferOut: mutable.Map[Int, Named[Dotted[A]]] = mutable.Map()
 
-  private var deltaBufferIn: List[DottedName[A]] = List()
+  private var deltaBufferIn: List[Named[Dotted[A]]] = List()
 
   private var nextSeqNum: Int = 0
 
@@ -54,14 +54,14 @@ class AntiEntropy[A](
     neighbors.append(newNeighbor)
   }
 
-  def recordChange(delta: DottedName[A], state: Dotted[A]): Unit = {
+  def recordChange(delta: Named[Dotted[A]], state: Dotted[A]): Unit = {
     fullState = state
 
     deltaBufferOut.update(nextSeqNum, delta)
     nextSeqNum += 1
   }
 
-  def getReceivedDeltas: List[DottedName[A]] = {
+  def getReceivedDeltas: List[Named[Dotted[A]]] = {
     val deltas = deltaBufferIn
     deltaBufferIn = List()
     deltas
@@ -97,13 +97,13 @@ class AntiEntropy[A](
 
   private def prepareDeltaMsg(to: String): Option[DeltaMsg[A]] = {
     if (deltaBufferOut.isEmpty || deltaBufferOut.keySet.min > ackMap(to))
-      Some(DeltaMsg(DottedName(replicaID.asId, fullState), nextSeqNum))
+      Some(DeltaMsg(Named(replicaID.asId, fullState), nextSeqNum))
     else {
       deltaBufferOut.collect {
-        case (n, DottedName(origin, deltaState)) if n >= ackMap(to) && Id.unwrap(origin) != to => deltaState
+        case (n, Named(origin, deltaState)) if n >= ackMap(to) && Id.unwrap(origin) != to => deltaState
       } reduceOption { (left: Dotted[A], right: Dotted[A]) =>
         DecomposeLattice[Dotted[A]].merge(left, right)
-      } map { deltaState => DeltaMsg(DottedName(replicaID.asId, deltaState), nextSeqNum) }
+      } map { deltaState => DeltaMsg(Named(replicaID.asId, deltaState), nextSeqNum) }
     }
   }
 
@@ -128,7 +128,7 @@ class AntiEntropy[A](
 }
 
 object AntiEntropy {
-  case class DeltaMsg[A](delta: DottedName[A], seqNum: Int)
+  case class DeltaMsg[A](delta: Named[Dotted[A]], seqNum: Int)
   case class AckMsg(from: String, seqNum: Int)
 
   def sync[A](ae: AntiEntropy[A]*): Unit = {

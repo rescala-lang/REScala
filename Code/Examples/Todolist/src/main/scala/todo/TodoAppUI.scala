@@ -4,22 +4,22 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import kofre.datatypes.ReplicatedList
 import loci.registry.Binding
-import loci.serializer.jsoniterScala._
+import loci.serializer.jsoniterScala.*
 import org.scalajs.dom.html.{Div, Input, LI}
 import org.scalajs.dom.{UIEvent, window}
 import rescala.default.Events.CBResult
-import rescala.default._
-import rescala.extra.Tags._
+import rescala.default.*
+import rescala.extra.Tags.*
 import rescala.extra.replication.{DeltaFor, ReplicationGroup}
 import scalatags.JsDom
-import scalatags.JsDom.all._
+import scalatags.JsDom.all.*
 import scalatags.JsDom.tags2.section
 import scalatags.JsDom.{Attr, TypedTag}
 import todo.Codecs.given
 import todo.Todolist.replicaId
 import kofre.deprecated.containers.DeltaBufferRDT
 import kofre.dotted.Dotted
-import kofre.syntax.DottedName
+import kofre.syntax.Named
 import loci.serializer.jsoniterScala.given
 
 class TodoAppUI(val storagePrefix: String) {
@@ -47,7 +47,7 @@ class TodoAppUI(val storagePrefix: String) {
     val taskrefs = TaskReferences(toggleAll.event, storagePrefix)
     val taskOps  = new TaskOps(taskrefs)
 
-    val deltaEvt = Evt[DottedName[ReplicatedList[TaskRef]]]()
+    val deltaEvt = Evt[Named[Dotted[ReplicatedList[TaskRef]]]]()
 
     val tasksRDT: Signal[DeltaBufferRDT[ReplicatedList[TaskRef]]] =
       Storing.storedAs(storagePrefix, DeltaBufferRDT(replicaId, ReplicatedList.empty[TaskRef])) { init =>

@@ -1,10 +1,10 @@
 package kofre.datatypes
 
 import kofre.base.{Bottom, DecomposeLattice}
-import kofre.datatypes.{Epoche}
+import kofre.datatypes.Epoche
 import kofre.dotted.{DotFun, Dotted, DottedDecompose, DottedLattice}
 import kofre.syntax.PermIdMutate.withID
-import kofre.syntax.{AnyNamed, DottedName, OpsSyntaxHelper, PermIdMutate, PermMutate}
+import kofre.syntax.{Named, OpsSyntaxHelper, PermIdMutate, PermMutate}
 import kofre.time.{Dot, Dots}
 import kofre.datatypes.LastWriterWins.TimedVal
 
@@ -152,7 +152,7 @@ object ReplicatedList {
         case Some(glistInsertIndex) =>
           val glistDelta =
             fw.map { gl =>
-              AnyNamed(replicaID, gl).insertAllGL(glistInsertIndex, nextDots).anon
+              Named(replicaID, gl).insertAllGL(glistInsertIndex, nextDots).anon
             }
           val dfDelta = DotFun.empty[Node[E]] ++ (nextDots zip elems.map(e => Alive(LastWriterWins.now(e, replicaID))))
 

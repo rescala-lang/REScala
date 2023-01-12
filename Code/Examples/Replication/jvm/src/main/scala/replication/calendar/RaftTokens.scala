@@ -1,11 +1,12 @@
 package replication.calendar
 
-import kofre.base.{Lattice, Id}
+import kofre.base.{Id, Lattice}
 import kofre.datatypes.AddWinsSet
 import kofre.datatypes.AddWinsSet.syntax
 import kofre.datatypes.experiments.RaftState
 import kofre.deprecated.containers.DeltaBufferRDT
-import kofre.syntax.DottedName
+import kofre.dotted.Dotted
+import kofre.syntax.Named
 
 import scala.util.Random
 
@@ -56,11 +57,11 @@ case class RaftTokens(
     } else copy(tokenAgreement = generalDuties)
   }
 
-  def applyWant(state: DottedName[AddWinsSet[Token]]): RaftTokens = {
+  def applyWant(state: Named[Dotted[AddWinsSet[Token]]]): RaftTokens = {
     copy(want = want.applyDelta(state))
   }
 
-  def applyFree(state: DottedName[AddWinsSet[Token]]): RaftTokens = {
+  def applyFree(state: Named[Dotted[AddWinsSet[Token]]]): RaftTokens = {
     copy(tokenFreed = tokenFreed.applyDelta(state))
   }
 

@@ -2,8 +2,8 @@ package kofre.deprecated.containers
 
 import kofre.base.{Bottom, DecomposeLattice, Id}
 import kofre.time.Dots
-import kofre.dotted.{DottedDecompose, DottedLattice, Dotted}
-import kofre.syntax.{PermCausal, PermCausalMutate, PermIdMutate, PermQuery, DottedName}
+import kofre.dotted.{Dotted, DottedDecompose, DottedLattice}
+import kofre.syntax.{Named, PermCausal, PermCausalMutate, PermIdMutate, PermQuery}
 
 /** ReactiveCRDTs are Delta CRDTs that store applied deltas in their deltaBuffer attribute. Middleware should regularly
   * take these deltas and ship them to other replicas, using applyDelta to apply them on the remote state. After deltas
@@ -12,18 +12,18 @@ import kofre.syntax.{PermCausal, PermCausalMutate, PermIdMutate, PermQuery, Dott
 case class DeltaBufferRDT[State](
     state: Dotted[State],
     replicaID: Id,
-    deltaBuffer: List[DottedName[State]]
+    deltaBuffer: List[Named[Dotted[State]]]
 ) {
 
-  def applyDelta(delta: DottedName[State])(using
+  def applyDelta(delta: Named[Dotted[State]])(using
       u: DecomposeLattice[Dotted[State]]
   ): DeltaBufferRDT[State] =
     delta match {
-      case DottedName(origin, delta) =>
+      case Named(origin, delta) =>
         DecomposeLattice[Dotted[State]].diff(state, delta) match {
           case Some(stateDiff) =>
             val stateMerged = DecomposeLattice[Dotted[State]].merge(state, stateDiff)
-            new DeltaBufferRDT(stateMerged, replicaID, DottedName(origin, stateDiff) :: deltaBuffer)
+            new DeltaBufferRDT(stateMerged, replicaID, Named(origin, stateDiff) :: deltaBuffer)
           case None => this
         }
     }
@@ -38,12 +38,12 @@ object DeltaBufferRDT {
     new PermIdMutate[DeltaBufferRDT[L], L] with PermCausalMutate[DeltaBufferRDT[L], L] {
       override def replicaId(c: DeltaBufferRDT[L]): Id = c.replicaID
       override def mutate(c: DeltaBufferRDT[L], delta: L): DeltaBufferRDT[L] =
-        c.applyDelta(DottedName(c.replicaID, Dotted(delta, Dots.empty)))
+        c.applyDelta(Named(c.replicaID, Dotted(delta, Dots.empty)))
       override def query(c: DeltaBufferRDT[L]): L = c.state.store
       override def mutateContext(
           container: DeltaBufferRDT[L],
           withContext: Dotted[L]
-      ): DeltaBufferRDT[L] = container.applyDelta(DottedName(container.replicaID, withContext))
+      ): DeltaBufferRDT[L] = container.applyDelta(Named(container.replicaID, withContext))
       override def context(c: DeltaBufferRDT[L]): Dots = c.state.context
     }
 
@@ -51,7 +51,7 @@ object DeltaBufferRDT {
     new PermIdMutate[DeltaBufferRDT[L], L] {
       override def replicaId(c: DeltaBufferRDT[L]): Id = c.replicaID
       override def mutate(c: DeltaBufferRDT[L], delta: L): DeltaBufferRDT[L] =
-        c.applyDelta(DottedName(c.replicaID, Dotted(delta)))(using Dotted.latticeLift)
+        c.applyDelta(Named(c.replicaID, Dotted(delta)))(using Dotted.latticeLift)
       override def query(c: DeltaBufferRDT[L]): L = c.state.store
     }
 

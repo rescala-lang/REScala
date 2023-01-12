@@ -3,7 +3,7 @@ package replication.checkpointing.decentral
 import kofre.base.{DecomposeLattice, Id}
 import kofre.datatypes.AddWinsSet
 import kofre.dotted.Dotted
-import kofre.syntax.DottedName
+import kofre.syntax.Named
 import loci.transmitter.{RemoteAccessException, RemoteRef}
 import Bindings.*
 import kofre.deprecated.containers.DeltaBufferRDT
@@ -66,7 +66,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Id, i
   def propagateDeltas(): Unit = {
     registry.remotes.foreach { rr =>
       set.deltaBuffer.collect {
-        case DottedName(replicaID, deltaState) if Id.unwrap(replicaID) != rr.toString => deltaState
+        case Named(replicaID, deltaState) if Id.unwrap(replicaID) != rr.toString => deltaState
       }.reduceOption(DecomposeLattice[SetState].merge).foreach(sendDelta(_, rr))
     }
 
@@ -76,12 +76,12 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Id, i
   def bindGetCheckpoints(): Unit = registry.bind(getCheckpointsBinding) { () => checkpoints }
 
   def bindReceiveDelta(): Unit = registry.bindSbj(receiveDeltaBinding) { (remoteRef: RemoteRef, deltaState: SetState) =>
-    val delta = DottedName(Id.predefined(remoteRef.toString), deltaState)
+    val delta = Named(Id.predefined(remoteRef.toString), deltaState)
     set = set.applyDelta(delta)
 
     set.deltaBuffer.headOption match {
       case None =>
-      case Some(DottedName(_, deltaState)) =>
+      case Some(Named(_, deltaState)) =>
         unboundRemoteChanges = DecomposeLattice[SetState].merge(unboundRemoteChanges, deltaState)
 
         propagateDeltas()
@@ -96,7 +96,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Id, i
         case CheckpointMessage(cp @ Checkpoint(replicaID, counter), changes) =>
           if (checkpoints.contains(replicaID) && checkpoints(replicaID) >= counter) ()
           else {
-            set = set.applyDelta(DottedName(Id.predefined(remoteRef.toString), changes)).resetDeltaBuffer()
+            set = set.applyDelta(Named(Id.predefined(remoteRef.toString), changes)).resetDeltaBuffer()
 
             unboundRemoteChanges =
               DecomposeLattice[SetState].diff(changes, unboundRemoteChanges).getOrElse(Dotted(AddWinsSet.empty))

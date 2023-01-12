@@ -2,7 +2,7 @@ package todo
 
 import kofre.datatypes.{CausalLastWriterWins, LastWriterWins, MultiVersionRegister}
 import kofre.dotted.Dotted
-import kofre.syntax.{DottedName, PermCausalMutate, PermId}
+import kofre.syntax.{Named, PermCausalMutate, PermId}
 import loci.registry.Binding
 import org.scalajs.dom.UIEvent
 import org.scalajs.dom.html.{Input, LI}
@@ -87,10 +87,10 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
 //        given perm2: PermId[DeltaBufferRDT[L]] = DeltaBufferRDT.contextPermissions
 
         lwwInit.applyDelta {
-          DottedName(lwwInit.replicaID, lwwInit.state.map(_.repr)).write(LastWriterWins(
+          Named(lwwInit.replicaID, lwwInit.state.map(_.repr)).write(LastWriterWins(
             WallClock(0, lwwInit.replicaID, 0),
             TaskData("<empty>")
-          )).map(CausalLastWriterWins.apply)
+          )).map(_.map(CausalLastWriterWins.apply))
         }
       case Some(v) => lwwInit.write(v)
     }
@@ -115,7 +115,7 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
 
     val doneEv = toggleAll || doneClick.event
 
-    val deltaEvt = Evt[DottedName[CausalLastWriterWins[TaskData]]]()
+    val deltaEvt = Evt[Named[Dotted[CausalLastWriterWins[TaskData]]]]()
 
     // type Carrier = CausalLastWriterWins.State[TaskData, DietMapCContext]
     //

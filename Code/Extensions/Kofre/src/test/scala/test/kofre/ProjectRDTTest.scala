@@ -4,7 +4,7 @@ import kofre.base.{Bottom, DecomposeLattice, Lattice}
 import kofre.datatypes.{CausalLastWriterWins, EnableWinsFlag, PosNegCounter}
 import kofre.deprecated.containers.DeltaBufferRDT
 import kofre.dotted.{Dotted, DottedDecompose}
-import kofre.syntax.{DottedName, OpsSyntaxHelper}
+import kofre.syntax.{Named, OpsSyntaxHelper}
 import test.kofre.Project.ProjectSyntax
 
 case class Project(
@@ -34,7 +34,7 @@ object Project {
     // then we re-wrap that into a DottedName which makes all of the syntax of that projected value available.
     // We pass the re-wrapped value to a mapping function `f` that can modify it as any other thing that has a contex and name.
     // We then return only the `Dotted` (dropping the name) as a convenience – the name never changes.
-    private def focus[B, C](p: Project => B)(f: DottedName[B] => DottedName[C])(using
+    private def focus[B, C](p: Project => B)(f: Named[Dotted[B]] => Named[Dotted[C]])(using
         CausalMutationP,
         IdentifierP,
     ): Dotted[C] = {
@@ -68,14 +68,14 @@ class ProjectRDTTest extends munit.FunSuite {
     // The thing about the name and dots is that you always want to add them at the outermost layer,
     // such that the state is shared for everything inside your datatype.
     // specifically, the two CausalLastWriterWinsRegisters inside of project will now use the same context.
-    val p = DottedName("replica id", Dotted(Project.empty))
+    val p = Named("replica id", Dotted(Project.empty))
 
     // The whole point of the OpsSyntax above (and all its current unfortunate complications)
     // is to enable you to call the operations on different wrapper classes, such as this DottedName wrapper.
     // In particular, the way this is supposed to work at some point is that REScala provides a single global
     // name and a single global context (the thing in Dotted) that is used by all RDTs.
     // This is not yet implemented on the REScala side, but you may want to consider to implement something like that yourself.
-    val deltaRes: DottedName[Project] = p.set_name("some project")
+    val deltaRes: Named[Dotted[Project]] = p.set_name("some project")
     // Note that the way this operation (and most other operations in REScala/kofre) is to return only a delta
     // when you want to have the full result object, you first have to merge the result with the prior state.
     // DottedName by itself is not a lattice (as it is impossible to merge things with different names),
@@ -108,7 +108,7 @@ class ProjectRDTTest extends munit.FunSuite {
   }
 
   test("delta filtering") {
-    val init: DottedName[Project] = DottedName("replica id", Dotted(Project.empty))
+    val init: Named[Dotted[Project]] = Named("replica id", Dotted(Project.empty))
     val delta                     = init.set_name("some project")
 
     val dlat = DecomposeLattice[Dotted[Project]]

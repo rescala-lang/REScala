@@ -2,7 +2,7 @@ package deltaAntiEntropy.tools
 
 import kofre.base.DecomposeLattice
 import kofre.dotted.{Dotted, DottedDecompose, DottedLattice}
-import kofre.syntax.{DottedName, PermCausal, PermCausalMutate, PermIdMutate}
+import kofre.syntax.{Named, PermCausal, PermCausalMutate, PermIdMutate}
 import kofre.time.Dots
 import kofre.base.Id
 import kofre.base.Id.asId
@@ -21,13 +21,13 @@ class AntiEntropyContainer[State](
 
   def state: Dotted[State] = antiEntropy.state
 
-  def applyDelta(delta: DottedName[State])(using DecomposeLattice[Dotted[State]]): AntiEntropyContainer[State] =
+  def applyDelta(delta: Named[Dotted[State]])(using DecomposeLattice[Dotted[State]]): AntiEntropyContainer[State] =
     delta match {
-      case DottedName(origin, deltaCtx) =>
+      case Named(origin, deltaCtx) =>
         DecomposeLattice[Dotted[State]].diff(state, deltaCtx) match {
           case Some(stateDiff) =>
             val stateMerged = DecomposeLattice[Dotted[State]].merge(state, stateDiff)
-            antiEntropy.recordChange(DottedName(origin, stateDiff), stateMerged)
+            antiEntropy.recordChange(Named(origin, stateDiff), stateMerged)
           case None =>
         }
         this
@@ -46,12 +46,12 @@ object AntiEntropyContainer {
     new PermIdMutate[AntiEntropyContainer[L], L] with PermCausalMutate[AntiEntropyContainer[L], L] {
       override def replicaId(c: AntiEntropyContainer[L]): Id = c.replicaID
       override def mutate(c: AntiEntropyContainer[L], delta: L): AntiEntropyContainer[L] =
-        c.applyDelta(DottedName(c.replicaID, Dotted(delta, Dots.empty)))
+        c.applyDelta(Named(c.replicaID, Dotted(delta, Dots.empty)))
       override def query(c: AntiEntropyContainer[L]): L = c.state.store
       override def mutateContext(
           container: AntiEntropyContainer[L],
           withContext: Dotted[L]
-      ): AntiEntropyContainer[L] = container.applyDelta(DottedName(container.replicaID, withContext))
+      ): AntiEntropyContainer[L] = container.applyDelta(Named(container.replicaID, withContext))
       override def context(c: AntiEntropyContainer[L]): Dots = c.state.context
     }
 

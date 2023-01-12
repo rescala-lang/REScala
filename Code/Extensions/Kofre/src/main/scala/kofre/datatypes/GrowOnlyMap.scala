@@ -2,7 +2,7 @@ package kofre.datatypes
 
 import kofre.base.{Bottom, DecomposeLattice}
 import kofre.dotted.{DotMap, Dotted, DottedDecompose, DottedLattice, HasDots}
-import kofre.syntax.{DottedName, OpsSyntaxHelper, PermIdMutate}
+import kofre.syntax.{Named, OpsSyntaxHelper, PermIdMutate}
 import kofre.time.Dots
 
 /** A GMap (Grow-only Map) is a Delta CRDT that models a map from an arbitrary key type to nested Delta CRDTs.
@@ -37,7 +37,7 @@ object GrowOnlyMap {
 
     def queryAllEntries()(using QueryP): Iterable[V] = current.values
 
-    def mutateKeyNamedCtx(k: K, default: => V)(m: DottedName[V] => DottedName[V])(using
+    def mutateKeyNamedCtx(k: K, default: => V)(m: Named[Dotted[V]] => Named[Dotted[V]])(using
         CausalMutationP,
         IdentifierP
     ): C = {

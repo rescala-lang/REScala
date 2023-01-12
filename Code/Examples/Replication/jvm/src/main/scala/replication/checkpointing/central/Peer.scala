@@ -4,7 +4,7 @@ import Bindings.*
 import kofre.base.DecomposeLattice
 import kofre.datatypes.AddWinsSet
 import kofre.dotted.Dotted
-import kofre.syntax.DottedName
+import kofre.syntax.Named
 import loci.communicator.tcp.TCP
 import loci.registry.Registry
 import loci.transmitter.{RemoteAccessException, RemoteRef}
@@ -62,7 +62,7 @@ class Peer(id: Id, listenPort: Int, connectTo: List[(String, Int)]) {
       val remoteReceiveSyncMessage = registry.lookup(receiveSyncMessageBinding, rr)
 
       set.deltaBuffer.collect {
-        case DottedName(replicaID, deltaState) if Id.unwrap(replicaID) != rr.toString => deltaState
+        case Named(replicaID, deltaState) if Id.unwrap(replicaID) != rr.toString => deltaState
       }.reduceOption(DecomposeLattice[SetState].merge).foreach(sendRecursive(
         remoteReceiveSyncMessage,
         _
@@ -124,7 +124,7 @@ class Peer(id: Id, listenPort: Int, connectTo: List[(String, Int)]) {
 
             case Success(CheckpointMessage(cp, apply, keep)) =>
               if (cp > checkpoint) checkpoint = cp
-              set = apply.foldLeft(set)((s, d) => s.applyDelta(DottedName(id, d))).resetDeltaBuffer()
+              set = apply.foldLeft(set)((s, d) => s.applyDelta(Named(id, d))).resetDeltaBuffer()
               changesSinceCP = keep
           }
         }
@@ -151,7 +151,7 @@ class Peer(id: Id, listenPort: Int, connectTo: List[(String, Int)]) {
         assessCheckpointRecursive()
       }
 
-      val delta = DottedName(Id.predefined(remoteRef.toString), deltaState)
+      val delta = Named(Id.predefined(remoteRef.toString), deltaState)
       set = set.applyDelta(delta)
 
       processChangesForCheckpointing()
