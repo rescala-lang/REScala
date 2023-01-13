@@ -33,21 +33,19 @@ object DeltaBuffer {
   def dotted[State](replicaID: Id, init: State): DeltaBuffer[Dotted[State]] =
     new DeltaBuffer(replicaID, Dotted(init), List())
 
-  given dottedPermissions[L: DottedDecompose]: PermCausalMutate[DeltaBuffer[Dotted[L]], L] =
-    new PermCausalMutate[DeltaBuffer[Dotted[L]], L] {
-      override def query(c: DeltaBuffer[Dotted[L]]): L = c.state.store
-      override def mutateContext(
-          container: DeltaBuffer[Dotted[L]],
-          withContext: Dotted[L]
-      ): DeltaBuffer[Dotted[L]] = container.applyDelta(container.replicaID, withContext)
-      override def context(c: DeltaBuffer[Dotted[L]]): Dots = c.state.context
-    }
+  given dottedPermissions[L: DottedDecompose]: PermCausalMutate[DeltaBuffer[Dotted[L]], L] = new {
+    override def query(c: DeltaBuffer[Dotted[L]]): L = c.state.store
+    override def mutateContext(
+        container: DeltaBuffer[Dotted[L]],
+        withContext: Dotted[L]
+    ): DeltaBuffer[Dotted[L]] = container.applyDelta(container.replicaID, withContext)
+    override def context(c: DeltaBuffer[Dotted[L]]): Dots = c.state.context
+  }
 
-  given plainPermissions[L: DecomposeLattice: Bottom]: PermIdMutate[DeltaBuffer[L], L] =
-    new PermIdMutate[DeltaBuffer[L], L] {
-      override def replicaId(c: DeltaBuffer[L]): Id = c.replicaID
-      override def mutate(c: DeltaBuffer[L], delta: L): DeltaBuffer[L] =
-        c.applyDelta(c.replicaID, delta)
-      override def query(c: DeltaBuffer[L]): L = c.state
-    }
+  given plainPermissions[L: DecomposeLattice: Bottom]: PermIdMutate[DeltaBuffer[L], L] = new {
+    override def replicaId(c: DeltaBuffer[L]): Id = c.replicaID
+    override def mutate(c: DeltaBuffer[L], delta: L): DeltaBuffer[L] =
+      c.applyDelta(c.replicaID, delta)
+    override def query(c: DeltaBuffer[L]): L = c.state
+  }
 }

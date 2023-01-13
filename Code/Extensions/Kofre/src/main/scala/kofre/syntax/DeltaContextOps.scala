@@ -18,9 +18,16 @@ import scala.util.NotGiven
 @implicitNotFound("Requires query permission »${L}«\nfrom »${C}")
 trait PermQuery[C, L]:
   def query(c: C): L
+object PermQuery:
+  given identityQuery[A]: PermQuery[A, A] = PermMutate.identityDeltaMutate
+
 @implicitNotFound("Requires mutation permission.\nUnsure to modify »${L}«\nwithin »${C}«")
 trait PermMutate[C, L] extends PermQuery[C, L]:
   def mutate(c: C, delta: L): C
+object PermMutate:
+  given identityDeltaMutate[A]: PermMutate[A, A] with
+    override def query(c: A): A            = c
+    override def mutate(c: A, delta: A): A = delta
 
 @implicitNotFound(
   "Requires a replica ID.\nWhich seems unavailable in »${C}«\nMissing a container?"
@@ -29,27 +36,23 @@ trait PermId[C]:
   def replicaId(c: C): Id
 class FixedId[C](id: Id) extends PermId[C]:
   override def replicaId(c: C): Id = id
+
 @implicitNotFound(
   "Requires causal context permission.\nNo context in »${C}«\nMissing a container?"
 )
 trait PermCausal[C]:
   def context(c: C): Dots
+
 @implicitNotFound(
   "Requires context mutation permission.\nUnsure how to extract context from »${C}«\nto modify »${L}«"
 )
 trait PermCausalMutate[C, L] extends PermCausal[C], PermQuery[C, L]:
   def mutateContext(container: C, withContext: Dotted[L]): C
+
 @implicitNotFound(
   "Requires query, id, and mutation permission.\nUnsure how to extract them from »${C}«\nto modify »${L}«"
 )
 trait PermIdMutate[C, L] extends PermId[C], PermMutate[C, L]
-
-object PermQuery:
-  given identityQuery[A]: PermQuery[A, A] = PermMutate.identityDeltaMutate
-object PermMutate:
-  given identityDeltaMutate[A]: PermMutate[A, A] with
-    override def query(c: A): A            = c
-    override def mutate(c: A, delta: A): A = delta
 object PermIdMutate:
   given autoCombin[C, L](using i: PermId[C], m: PermMutate[C, L]): PermIdMutate[C, L] with
     export i.replicaId
@@ -72,11 +75,11 @@ trait OpsTypes[C, L] {
   final type CausalMutationP = PermCausalMutate[C, L]
 }
 trait OpsSyntaxHelper[C, L](container: C) extends OpsTypes[C, L] {
-  final protected[kofre] def current(using perm: QueryP): L                   = perm.query(container)
-  final protected[kofre] given replicaID(using perm: IdentifierP): Id         = perm.replicaId(container)
-  final protected[kofre] def context(using perm: CausalP): Dots               = perm.context(container)
-  extension (l: L)(using perm: MutationP) def mutator: C                      = perm.mutate(container, l)
-  extension (l: Dotted[L])(using perm: CausalMutationP) def mutator: C        = perm.mutateContext(container, l)
+  final protected[kofre] def current(using perm: QueryP): L                      = perm.query(container)
+  final protected[kofre] given replicaID(using perm: IdentifierP): Id            = perm.replicaId(container)
+  final protected[kofre] def context(using perm: CausalP): Dots                  = perm.context(container)
+  extension (l: L)(using perm: MutationP) def mutator: C                         = perm.mutate(container, l)
+  extension (l: Dotted[L])(using perm: CausalMutationP) def mutator: C           = perm.mutateContext(container, l)
   extension [A](c: Dotted[A]) def inheritId(using IdentifierP): Named[Dotted[A]] = c.named(replicaID)
   extension [A](a: A)
     def inheritContext(using CausalP): Dotted[A] = Dotted(a, context)
