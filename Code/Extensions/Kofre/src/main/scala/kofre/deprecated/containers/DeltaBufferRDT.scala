@@ -29,20 +29,18 @@ object DeltaBufferRDT {
 case class DeltaBuffer[State](
   state: State,
   replicaID: Id,
-  deltaBuffer: List[Named[State]]
+  deltaBuffer: List[State]
 ) {
 
-  def applyDelta(delta: Named[State])(using
-    u: DecomposeLattice[State]
-  ): DeltaBuffer[State] =
-    delta match {
-      case Named(origin, delta) =>
-        DecomposeLattice[State].diff(state, delta) match {
-          case Some(stateDiff) =>
-            val stateMerged = DecomposeLattice[State].merge(state, stateDiff)
-            new DeltaBuffer(stateMerged, replicaID, Named(origin, stateDiff) :: deltaBuffer)
-          case None => this
-        }
+  def applyDelta(delta: Named[State])(using DecomposeLattice[State]): DeltaBuffer[State] =
+    applyDelta(delta.anon)
+
+  def applyDelta(delta: State)(using DecomposeLattice[State]): DeltaBuffer[State] =
+    DecomposeLattice[State].diff(state, delta) match {
+      case Some(stateDiff) =>
+        val stateMerged = DecomposeLattice[State].merge(state, stateDiff)
+        new DeltaBuffer(stateMerged, replicaID, stateDiff :: deltaBuffer)
+      case None => this
     }
 
   def resetDeltaBuffer(): DeltaBuffer[State] = copy(deltaBuffer = List())
