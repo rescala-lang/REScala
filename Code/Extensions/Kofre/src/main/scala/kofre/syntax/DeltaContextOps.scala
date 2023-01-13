@@ -82,7 +82,7 @@ trait OpsSyntaxHelper[C, L](container: C) extends OpsTypes[C, L] {
 
   import kofre.syntax as s
 
-  given inheritId[C, L](using pid: PermId, mctx: s.PermMutate[C, L]): s.PermIdMutate[C, L] with
+  given inheritId[C, L](using pid: PermId, mctx: s.PermMutate[C, L], constraint: NotGiven[C =:= Named[L]]): s.PermIdMutate[C, L] with
     def mutate(c: C, delta: L): C = mctx.mutate(c, delta)
     def replicaId(c: C): Id       = pid.replicaId(container)
     def query(c: C): L            = mctx.query(c)

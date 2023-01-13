@@ -24,10 +24,16 @@ class BoundedCounterTest extends munit.FunSuite {
 
     r1.rebalance.allocate(10)
     assertInvariant()
+    assertEquals(r1.available, 40, "100 -> rebalanced to 50 -> -10 allocated")
+
     r2.apply(r1.anon).rebalance
     assertInvariant()
+    assertEquals(r2.available, 25, "50 transferred from r1 -> 25 rebalanced to r3")
+
     r3.apply(r2.anon)
     assertInvariant()
+    assertEquals(r3.available, 25, "got 25 from r2")
+
     r1.apply(r2.anon).rebalance
     assertInvariant()
 
