@@ -89,11 +89,6 @@ object Settings {
     Test / compile / scalacOptions ++= List("-rewrite", "-source", "3.0-migration")
   )
 
-  // the resolver itself is probably not used by any project, but kept around for historical documentation purposes
-  val legacyStgResolver =
-    resolvers += ("STG old bintray repo" at "http://www.st.informatik.tu-darmstadt.de/maven/")
-      .withAllowInsecureProtocol(true)
-
   val jitpackResolver = resolvers += "jitpack" at "https://jitpack.io"
 
   val noPublish = Seq(
