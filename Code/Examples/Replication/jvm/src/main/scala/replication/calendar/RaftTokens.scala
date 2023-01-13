@@ -4,9 +4,8 @@ import kofre.base.{Id, Lattice}
 import kofre.datatypes.AddWinsSet
 import kofre.datatypes.AddWinsSet.syntax
 import kofre.datatypes.experiments.RaftState
-import kofre.deprecated.containers.DeltaBufferDotted
 import kofre.dotted.Dotted
-import kofre.syntax.Named
+import kofre.syntax.{DeltaBuffer, DeltaBufferDotted, Named}
 
 import scala.util.Random
 
@@ -79,7 +78,7 @@ object RaftTokens {
     RaftTokens(
       replicaID,
       RaftState(Set(replicaID)),
-      DeltaBufferDotted(replicaID, AddWinsSet.empty[Token]),
-      DeltaBufferDotted(replicaID, AddWinsSet.empty[Token])
-    )
+      DeltaBuffer.dotted(replicaID, AddWinsSet.empty[Token]),
+      DeltaBuffer.dotted(replicaID, AddWinsSet.empty[Token])
+      )
 }

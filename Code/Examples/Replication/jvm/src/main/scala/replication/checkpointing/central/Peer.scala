@@ -4,7 +4,7 @@ import Bindings.*
 import kofre.base.DecomposeLattice
 import kofre.datatypes.AddWinsSet
 import kofre.dotted.Dotted
-import kofre.syntax.Named
+import kofre.syntax.{DeltaBuffer, DeltaBufferDotted, Named}
 import loci.communicator.tcp.TCP
 import loci.registry.Registry
 import loci.transmitter.{RemoteAccessException, RemoteRef}
@@ -15,7 +15,6 @@ import scala.io.StdIn.readLine
 import scala.util.matching.Regex
 import scala.util.{Failure, Success}
 import kofre.base.Id
-import kofre.deprecated.containers.DeltaBufferDotted
 
 class Peer(id: Id, listenPort: Int, connectTo: List[(String, Int)]) {
 
@@ -30,7 +29,7 @@ class Peer(id: Id, listenPort: Int, connectTo: List[(String, Int)]) {
   val size: String     = "size"
   val exit: String     = "exit"
 
-  var set: DeltaBufferDotted[AddWinsSet[Int]] = DeltaBufferDotted.empty(id, AddWinsSet.empty)
+  var set: DeltaBufferDotted[AddWinsSet[Int]] = DeltaBuffer.dotted(id, AddWinsSet.empty)
 
   var checkpoint: Int = 0
 

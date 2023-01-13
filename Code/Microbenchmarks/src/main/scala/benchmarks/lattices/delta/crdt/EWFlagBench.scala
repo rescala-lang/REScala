@@ -1,8 +1,8 @@
 package benchmarks.lattices.delta.crdt
 
 import kofre.datatypes.EnableWinsFlag
-import kofre.deprecated.containers.DeltaBufferDotted
-import org.openjdk.jmh.annotations._
+import kofre.syntax.{DeltaBuffer, DeltaBufferDotted}
+import org.openjdk.jmh.annotations.*
 
 import java.util.concurrent.TimeUnit
 
@@ -20,8 +20,8 @@ class EWFlagBench {
 
   @Setup
   def setup(): Unit = {
-    flagEnabled = DeltaBufferDotted.empty("a", EnableWinsFlag.empty).enable()
-    flagDisabled = DeltaBufferDotted.empty("b", EnableWinsFlag.empty).disable()
+    flagEnabled = DeltaBuffer.dotted("a", EnableWinsFlag.empty).enable()
+    flagDisabled = DeltaBuffer.dotted("b", EnableWinsFlag.empty).disable()
   }
 
   @Benchmark

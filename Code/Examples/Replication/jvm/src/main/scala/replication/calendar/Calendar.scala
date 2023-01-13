@@ -1,10 +1,10 @@
 package replication.calendar
 
 import kofre.datatypes.AddWinsSet
-import rescala.default._
+import rescala.default.*
 import kofre.datatypes.AddWinsSet.syntax
 import kofre.base.Id
-import kofre.deprecated.containers.DeltaBufferDotted
+import kofre.syntax.{DeltaBuffer, DeltaBufferDotted}
 
 case class Appointment(start: Int, end: Int)
 
@@ -12,8 +12,8 @@ class CalendarProgram(id: Id, synchronizationPoint: String => (=> Unit) => Unit)
 
   type Calendar = DeltaBufferDotted[AddWinsSet[Appointment]]
 
-  val work     = Var[Calendar](DeltaBufferDotted(id, AddWinsSet.empty[Appointment]))
-  val vacation = Var[Calendar](DeltaBufferDotted(id, AddWinsSet.empty[Appointment]))
+  val work     = Var[Calendar](DeltaBuffer.dotted(id, AddWinsSet.empty[Appointment]))
+  val vacation = Var[Calendar](DeltaBuffer.dotted(id, AddWinsSet.empty[Appointment]))
 
   val replicated = Map("work" -> work, "vacation" -> vacation)
 

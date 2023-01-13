@@ -1,26 +1,12 @@
-package kofre.deprecated.containers
+package kofre.syntax
 
 import kofre.base.{Bottom, DecomposeLattice, Id}
-import kofre.time.Dots
 import kofre.dotted.{Dotted, DottedDecompose, DottedLattice}
 import kofre.syntax.{Named, PermCausal, PermCausalMutate, PermIdMutate, PermQuery}
+import kofre.time.Dots
 
 type DeltaBufferDotted[State] = DeltaBuffer[Dotted[State]]
 
-object DeltaBufferDotted {
-
-  /** Creates a new PNCounter instance
-    *
-    * @param replicaID Unique id of the replica that this instance is located on
-    */
-  def apply[State](replicaID: Id)(using bot: Bottom[Dotted[State]]): DeltaBuffer[Dotted[State]] =
-    new DeltaBuffer(replicaID, bot.empty, List())
-
-  def empty[State](replicaID: Id, init: State): DeltaBuffer[Dotted[State]] =
-    new DeltaBuffer(replicaID, Dotted(init), List())
-
-  def apply[State](replicaID: Id, init: State): DeltaBuffer[Dotted[State]] = empty(replicaID, init)
-}
 
 /** ReactiveCRDTs are Delta CRDTs that store applied deltas in their deltaBuffer attribute. Middleware should regularly
   * take these deltas and ship them to other replicas, using applyDelta to apply them on the remote state. After deltas
@@ -44,6 +30,9 @@ case class DeltaBuffer[State](
 }
 
 object DeltaBuffer {
+
+  def dotted[State](replicaID: Id, init: State): DeltaBuffer[Dotted[State]] = new DeltaBuffer(replicaID, Dotted(init), List())
+
 
   given dottedPermissions[L: DottedDecompose]: PermCausalMutate[DeltaBuffer[Dotted[L]], L] =
     new PermCausalMutate[DeltaBuffer[Dotted[L]], L] {

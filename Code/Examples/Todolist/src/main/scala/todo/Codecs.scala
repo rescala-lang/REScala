@@ -6,12 +6,12 @@ import kofre.base.Id
 import kofre.base.Id.asId
 import kofre.datatypes.{CausalLastWriterWins, ReplicatedList}
 import kofre.time.Dot
-import kofre.deprecated.containers.DeltaBufferDotted
 import kofre.dotted.{DotFun, Dotted}
 import loci.transmitter.IdenticallyTransmittable
 import rescala.extra.replication.DeltaFor
 import todo.Todolist.replicaId
 import kofre.datatypes.LastWriterWins.TimedVal
+import kofre.syntax.{DeltaBuffer, DeltaBufferDotted}
 
 import scala.annotation.nowarn
 
@@ -45,7 +45,7 @@ object Codecs {
       override def encodeValue(x: DeltaBufferDotted[ReplicatedList[TaskRef]], out: JsonWriter): Unit =
         codecState.encodeValue(x.state, out)
       override def nullValue: DeltaBufferDotted[ReplicatedList[TaskRef]] =
-        DeltaBufferDotted(replicaId, ReplicatedList.empty[TaskRef])
+        DeltaBuffer.dotted(replicaId, ReplicatedList.empty[TaskRef])
     }
 
   implicit val transmittableList: IdenticallyTransmittable[DeltaFor[ReplicatedList[TaskRef]]] =

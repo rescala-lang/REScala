@@ -1,9 +1,8 @@
 package todo
 
 import kofre.datatypes.ReplicatedList
-import kofre.deprecated.containers.DeltaBufferDotted
 import kofre.dotted.Dotted
-import kofre.syntax.Named
+import kofre.syntax.{DeltaBufferDotted, Named}
 import rescala.default.*
 import rescala.default.Fold
 

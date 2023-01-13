@@ -1,7 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
 import kofre.datatypes.CausalLastWriterWins
-import kofre.deprecated.containers.DeltaBufferDotted
+import kofre.syntax.{DeltaBuffer, DeltaBufferDotted}
 import org.openjdk.jmh.annotations.*
 
 import java.util.concurrent.TimeUnit
@@ -20,8 +20,8 @@ class LWWRegisterBench {
 
   @Setup
   def setup(): Unit = {
-    empty = DeltaBufferDotted("a", CausalLastWriterWins.empty[Int])
-    full = DeltaBufferDotted("b", CausalLastWriterWins.empty[Int]).write(0)
+    empty = DeltaBuffer.dotted("a", CausalLastWriterWins.empty[Int])
+    full = DeltaBuffer.dotted("b", CausalLastWriterWins.empty[Int]).write(0)
   }
 
   @Benchmark

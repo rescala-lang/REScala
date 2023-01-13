@@ -2,13 +2,13 @@ package test.kofre
 
 import kofre.base.{Bottom, Id, Lattice}
 import kofre.datatypes.EnableWinsFlag
-import kofre.deprecated.containers.DeltaBufferDotted
+import kofre.syntax.{DeltaBuffer, DeltaBufferDotted}
 
 class DeltaBufferDottedTest extends munit.FunSuite {
 
   test("basic interaction") {
 
-    val dbe = DeltaBufferDotted[EnableWinsFlag](Id.genId())
+    val dbe = DeltaBuffer.dotted[EnableWinsFlag](Id.genId(), EnableWinsFlag.empty)
 
     assertEquals(dbe.state.store, Bottom.empty[EnableWinsFlag])
     assert(!dbe.read)

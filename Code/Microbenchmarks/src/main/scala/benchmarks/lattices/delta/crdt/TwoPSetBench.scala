@@ -1,7 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
 import kofre.datatypes.TwoPhaseSet
-import kofre.deprecated.containers.{DeltaBuffer, DeltaBufferDotted}
+import kofre.syntax.{DeltaBuffer, DeltaBufferDotted}
 import org.openjdk.jmh.annotations.*
 
 import java.util.concurrent.TimeUnit

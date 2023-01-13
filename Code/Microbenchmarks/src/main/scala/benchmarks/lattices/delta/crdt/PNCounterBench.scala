@@ -3,9 +3,8 @@ package benchmarks.lattices.delta.crdt
 import kofre.base.DecomposeLattice
 import org.openjdk.jmh.annotations.*
 import kofre.datatypes.PosNegCounter
-import kofre.deprecated.containers.{DeltaBuffer, DeltaBufferDotted}
 import kofre.dotted.{Dotted, DottedDecompose}
-import kofre.syntax.Named
+import kofre.syntax.{DeltaBuffer, DeltaBufferDotted, Named}
 
 import java.util.concurrent.TimeUnit
 

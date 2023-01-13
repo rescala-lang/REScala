@@ -2,7 +2,7 @@ package todo
 
 import kofre.datatypes.{CausalLastWriterWins, LastWriterWins, MultiVersionRegister}
 import kofre.dotted.Dotted
-import kofre.syntax.{Named, PermCausalMutate, PermId}
+import kofre.syntax.{DeltaBuffer, DeltaBufferDotted, Named, PermCausalMutate, PermId}
 import loci.registry.Binding
 import org.scalajs.dom.UIEvent
 import org.scalajs.dom.html.{Input, LI}
@@ -14,7 +14,6 @@ import scalatags.JsDom.all.*
 import todo.Todolist.replicaId
 import Codecs.given
 import kofre.datatypes.alternatives.MultiValueRegister
-import kofre.deprecated.containers.DeltaBufferDotted
 import loci.serializer.jsoniterScala.given
 import kofre.datatypes.LastWriterWins.TimedVal
 import kofre.time.WallClock
@@ -77,7 +76,7 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
     taskID: String,
     task: Option[TaskData],
   ): TaskRefData = {
-    val lwwInit = DeltaBufferDotted(replicaId, CausalLastWriterWins.empty[TaskData])
+    val lwwInit = DeltaBuffer.dotted(replicaId, CausalLastWriterWins.empty[TaskData])
 
     val lww: DeltaBufferDotted[CausalLastWriterWins[TaskData]] = task match {
       case None =>

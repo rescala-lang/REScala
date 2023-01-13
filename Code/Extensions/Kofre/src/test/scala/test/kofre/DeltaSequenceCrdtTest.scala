@@ -2,13 +2,13 @@ package test.kofre
 
 import kofre.base.Lattice
 import kofre.datatypes.alternatives.rga.{DeltaSequence, Vertex}
-import kofre.deprecated.containers.DeltaBufferDotted
 import kofre.dotted.Dotted
+import kofre.syntax.{DeltaBuffer, DeltaBufferDotted}
 
 class DeltaSequenceCrdtTest extends munit.FunSuite {
 
   test("basic interaction") {
-    val ds      = DeltaBufferDotted.empty("", DeltaSequence.empty[String])
+    val ds      = DeltaBuffer.dotted("", DeltaSequence.empty[String])
     val a       = "a"
     val vertex1 = Vertex.fresh()
     val vertex2                                          = Vertex.fresh()

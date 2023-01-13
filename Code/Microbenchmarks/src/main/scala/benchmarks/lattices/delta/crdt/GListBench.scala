@@ -2,7 +2,7 @@ package benchmarks.lattices.delta.crdt
 
 import kofre.datatypes.GrowOnlyList
 import org.openjdk.jmh.annotations.*
-import kofre.deprecated.containers.{DeltaBuffer, DeltaBufferDotted}
+import kofre.syntax.{DeltaBuffer, DeltaBufferDotted}
 
 import java.util.concurrent.TimeUnit
 

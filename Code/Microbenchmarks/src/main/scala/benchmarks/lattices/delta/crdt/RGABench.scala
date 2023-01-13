@@ -1,8 +1,8 @@
 package benchmarks.lattices.delta.crdt
 
 import kofre.datatypes.ReplicatedList
-import kofre.deprecated.containers.DeltaBufferDotted
-import org.openjdk.jmh.annotations._
+import kofre.syntax.{DeltaBuffer, DeltaBufferDotted}
+import org.openjdk.jmh.annotations.*
 
 import java.util.concurrent.TimeUnit
 
@@ -25,7 +25,7 @@ class RGABench {
 
   @Setup
   def setup(): Unit = {
-    rga = DeltaBufferDotted("a", ReplicatedList.empty[Int]).appendAll(0 until rgaSize)
+    rga = DeltaBuffer.dotted("a", ReplicatedList.empty[Int]).appendAll(0 until rgaSize)
     rgaCleared = rga.clear()
   }
 
