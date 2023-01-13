@@ -3,7 +3,6 @@ package kofre.datatypes.experiments
 import kofre.base.{DecomposeLattice, Id}
 import kofre.datatypes.{GrowOnlyCounter, PosNegCounter}
 import kofre.syntax.{Named, OpsSyntaxHelper, PermId}
-import kofre.syntax.Named.named
 
 case class BoundedCounter(reservations: PosNegCounter, allocations: GrowOnlyCounter, participants: Set[Id])
 
