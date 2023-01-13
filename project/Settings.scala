@@ -32,8 +32,8 @@ object Settings {
       List(
         List("-feature", "-language:higherKinds", "-language:implicitConversions", "-language:existentials"),
         cond(version == (2, 13), "-Ytasty-reader"),
+        cond(version < (3, 0), "-language:experimental.macros"),
         cond(version >= (3, 0), "-deprecation"),
-        cond(version < (3, 0), "-language:experimental.macros")
       ).flatten
     }
   )
