@@ -124,7 +124,7 @@ class Peer(id: Id, listenPort: Int, connectTo: List[(String, Int)]) {
 
             case Success(CheckpointMessage(cp, apply, keep)) =>
               if (cp > checkpoint) checkpoint = cp
-              set = apply.foldLeft(set)((s, d) => s.applyDelta(Named(id, d))).resetDeltaBuffer()
+              set = apply.foldLeft(set)((s, d) => s.applyDelta(id, d)).resetDeltaBuffer()
               changesSinceCP = keep
           }
         }
@@ -151,8 +151,7 @@ class Peer(id: Id, listenPort: Int, connectTo: List[(String, Int)]) {
         assessCheckpointRecursive()
       }
 
-      val delta = Named(Id.predefined(remoteRef.toString), deltaState)
-      set = set.applyDelta(delta)
+      set = set.applyDelta(Id.predefined(remoteRef.toString), deltaState)
 
       processChangesForCheckpointing()
 

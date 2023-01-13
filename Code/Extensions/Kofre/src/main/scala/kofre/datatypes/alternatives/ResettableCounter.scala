@@ -20,8 +20,8 @@ object ResettableCounter {
   val zero: ResettableCounter = ResettableCounter(DotFun.empty)
 
   private def deltaState(
-      df: Option[ResettableCounter] = None,
-      cc: Dots
+    df: Option[ResettableCounter] = None,
+    cc: Dots
   ): Dotted[ResettableCounter] = {
     Dotted(
       df.getOrElse(zero),
@@ -29,7 +29,10 @@ object ResettableCounter {
     )
   }
 
-  implicit class RCounterSyntax[C](container: C) extends OpsSyntaxHelper[C, ResettableCounter](container) {
+  extension [C](container: C)
+    def resettableCounter: syntax[C] = syntax(container)
+
+  implicit class syntax[C](container: C) extends OpsSyntaxHelper[C, ResettableCounter](container) {
 
     def value(using QueryP): Int = {
       current.inner.store.values.foldLeft(0) {

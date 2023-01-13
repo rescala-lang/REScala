@@ -24,8 +24,8 @@ import scala.collection.mutable
 import scala.scalajs.js.timers.setTimeout
 
 case class TaskData(
-    desc: String,
-    done: Boolean = false
+  desc: String,
+  done: Boolean = false
 ) {
   def toggle(): TaskData          = copy(done = !done)
   def edit(str: String): TaskData = copy(desc = str)
@@ -40,10 +40,10 @@ case class TaskRef(id: String) {
 }
 
 final class TaskRefData(
-    val task: Signal[DeltaBufferRDT[CausalLastWriterWins[TaskData]]],
-    val tag: TypedTag[LI],
-    val removed: Event[String],
-    val id: String,
+  val task: Signal[DeltaBufferRDT[CausalLastWriterWins[TaskData]]],
+  val tag: TypedTag[LI],
+  val removed: Event[String],
+  val id: String,
 ) {
   override def hashCode(): Int = id.hashCode
   override def equals(obj: Any): Boolean = obj match {
@@ -74,8 +74,8 @@ object TaskReferences {
 class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
 
   def createTaskRef(
-      taskID: String,
-      task: Option[TaskData],
+    taskID: String,
+    task: Option[TaskData],
   ): TaskRefData = {
     val lwwInit = DeltaBufferRDT(replicaId, CausalLastWriterWins.empty[TaskData])
 
@@ -86,12 +86,11 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
 //          DeltaBufferRDT.contextPermissions[CausalLastWriterWins[TaskData]]
 //        given perm2: PermId[DeltaBufferRDT[L]] = DeltaBufferRDT.contextPermissions
 
-        lwwInit.applyDelta {
-          Named(lwwInit.replicaID, lwwInit.state.map(_.repr)).write(LastWriterWins(
-            WallClock(0, lwwInit.replicaID, 0),
-            TaskData("<empty>")
-          )).map(_.map(CausalLastWriterWins.apply))
-        }
+        val res = lwwInit.state.map(_.repr).named(lwwInit.replicaID).write(LastWriterWins(
+          WallClock(0, lwwInit.replicaID, 0),
+          TaskData("<empty>")
+        )).map(_.map(CausalLastWriterWins.apply))
+        lwwInit.applyDelta(res.replicaId, res.anon)
       case Some(v) => lwwInit.write(v)
     }
 
@@ -135,7 +134,7 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
         Seq(
           doneEv act2 { _ => current.resetDeltaBuffer().map(_.toggle()) },
           edittextStr act2 { v => current.resetDeltaBuffer().map(_.edit(v)) },
-          deltaEvt act2 { delta => current.resetDeltaBuffer().applyDelta(delta) }
+          deltaEvt act2 { delta => current.resetDeltaBuffer().applyDelta(delta.replicaId, delta.anon) }
         )
       )
     }(Codecs.codecLww)

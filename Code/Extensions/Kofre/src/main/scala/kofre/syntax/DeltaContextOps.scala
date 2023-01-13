@@ -51,6 +51,10 @@ object PermMutate:
     override def query(c: A): A            = c
     override def mutate(c: A, delta: A): A = delta
 object PermIdMutate:
+  given autoCombin[C, L](using i: PermId[C], m: PermMutate[C, L]): PermIdMutate[C, L] with
+    export i.replicaId
+    export m.mutate
+    export m.query
   given withID[C, L](using id: Id)(using mctx: PermMutate[C, L]): PermIdMutate[C, L] = new PermIdMutate[C, L]:
     def mutate(c: C, delta: L): C = mctx.mutate(c, delta)
     def replicaId(c: C): Id       = id

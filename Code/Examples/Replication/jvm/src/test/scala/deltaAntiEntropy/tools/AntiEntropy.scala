@@ -71,7 +71,7 @@ class AntiEntropy[A](
     case DeltaMsg(delta, seqNum) =>
       deltaBufferIn = deltaBufferIn :+ delta
       val msg: Message = Left(AckMsg(replicaID, seqNum))
-      network.sendMessage(kofre.base.Id.unwrap(delta.replicaID), writeToArray(msg))
+      network.sendMessage(kofre.base.Id.unwrap(delta.replicaId), writeToArray(msg))
   }
 
   private def receiveAck(msg: AckMsg): Unit = msg match {

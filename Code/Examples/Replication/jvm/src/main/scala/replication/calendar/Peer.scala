@@ -152,9 +152,8 @@ class Peer(id: Id, listenPort: Int, connectTo: List[(String, Int)]) {
 
         message match {
           case AppointmentMessage(deltaState, id) =>
-            val delta = Named(Id.predefined(remoteRef.toString), deltaState)
             val set   = calendar.replicated(id)
-            set.transform(_.applyDelta(delta))
+            set.transform(_.applyDelta(Id.predefined(remoteRef.toString), deltaState))
           case WantMessage(state) =>
             tokens = tokens.applyWant(Named(Id.predefined(remoteRef.toString), state))
           case FreeMessage(state) =>

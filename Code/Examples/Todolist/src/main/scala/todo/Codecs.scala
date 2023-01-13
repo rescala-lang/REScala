@@ -40,7 +40,7 @@ object Codecs {
           default: DeltaBufferRDT[ReplicatedList[TaskRef]]
       ): DeltaBufferRDT[ReplicatedList[TaskRef]] = {
         val state = codecState.decodeValue(in, default.state)
-        new DeltaBufferRDT[ReplicatedList[TaskRef]](state, replicaId, List())
+        new DeltaBufferRDT[ReplicatedList[TaskRef]](replicaId, state, List())
       }
       override def encodeValue(x: DeltaBufferRDT[ReplicatedList[TaskRef]], out: JsonWriter): Unit =
         codecState.encodeValue(x.state, out)

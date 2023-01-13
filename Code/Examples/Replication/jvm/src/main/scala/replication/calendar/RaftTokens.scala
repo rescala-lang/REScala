@@ -58,11 +58,11 @@ case class RaftTokens(
   }
 
   def applyWant(state: Named[Dotted[AddWinsSet[Token]]]): RaftTokens = {
-    copy(want = want.applyDelta(state))
+    copy(want = want.applyDelta(state.replicaId, state.anon))
   }
 
   def applyFree(state: Named[Dotted[AddWinsSet[Token]]]): RaftTokens = {
-    copy(tokenFreed = tokenFreed.applyDelta(state))
+    copy(tokenFreed = tokenFreed.applyDelta(state.replicaId, state.anon))
   }
 
   def applyRaft(state: RaftState[Token]): RaftTokens = {

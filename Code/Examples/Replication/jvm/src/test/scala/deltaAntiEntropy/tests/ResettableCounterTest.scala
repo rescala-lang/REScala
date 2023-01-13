@@ -3,7 +3,7 @@ package deltaAntiEntropy.tests
 import deltaAntiEntropy.tests.NetworkGenerators.*
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
 import kofre.datatypes.alternatives.ResettableCounter
-import ResettableCounter.RCounterSyntax
+import ResettableCounter.syntax
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 import replication.JsoniterCodecs.*

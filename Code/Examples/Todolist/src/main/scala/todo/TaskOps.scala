@@ -43,7 +43,7 @@ class TaskOps(@nowarn taskRefs: TaskReferences) {
     deltaEvent.act { delta =>
       val deltaBuffered = current
 
-      val newList = deltaBuffered.resetDeltaBuffer().applyDelta(delta)
+      val newList = deltaBuffered.resetDeltaBuffer().applyDelta(delta.replicaId, delta.anon)
 
       val oldIDs = deltaBuffered.toList.toSet
       val newIDs = newList.toList.toSet
