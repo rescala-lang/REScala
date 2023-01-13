@@ -21,8 +21,8 @@ object GrowOnlySet {
 
   implicit class syntax[C, E](container: C) extends OpsSyntaxHelper[C, GrowOnlySet[E]](container) {
 
-    def elements(using QueryP): Set[E] = current
+    def elements(using PermQuery): Set[E] = current
 
-    def insert(element: E)(using MutationP): C = Set(element).mutator
+    def insert(element: E)(using PermMutate): C = Set(element).mutator
   }
 }

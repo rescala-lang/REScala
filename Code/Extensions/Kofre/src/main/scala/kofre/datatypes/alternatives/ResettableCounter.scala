@@ -34,7 +34,7 @@ object ResettableCounter {
 
   implicit class syntax[C](container: C) extends OpsSyntaxHelper[C, ResettableCounter](container) {
 
-    def value(using QueryP): Int = {
+    def value(using PermQuery): Int = {
       current.inner.store.values.foldLeft(0) {
         case (counter, (inc, dec)) => counter + inc - dec
       }
@@ -43,7 +43,7 @@ object ResettableCounter {
     /** Without using fresh, reset wins over concurrent increments/decrements
       * When using fresh after every time deltas are shipped to other replicas, increments/decrements win over concurrent resets
       */
-    def fresh()(using CausalMutationP, IdentifierP): C = {
+    def fresh()(using PermCausalMutate, PermId): C = {
       val nextDot = context.nextDot(replicaID)
 
       deltaState(
@@ -52,7 +52,7 @@ object ResettableCounter {
       ).mutator
     }
 
-    private def update(u: (Int, Int))(using CausalMutationP, IdentifierP): C = {
+    private def update(u: (Int, Int))(using PermCausalMutate, PermId): C = {
       context.max(replicaID) match {
         case Some(currentDot) if current.inner.store.contains(currentDot) =>
           val newCounter = (current.inner(currentDot), u) match {
@@ -73,11 +73,11 @@ object ResettableCounter {
       }
     }
 
-    def increment()(using CausalMutationP, IdentifierP): C = update((1, 0))
+    def increment()(using PermCausalMutate, PermId): C = update((1, 0))
 
-    def decrement()(using CausalMutationP, IdentifierP): C = update((0, 1))
+    def decrement()(using PermCausalMutate, PermId): C = update((0, 1))
 
-    def reset()(using CausalMutationP): C = {
+    def reset()(using PermCausalMutate): C = {
       deltaState(
         cc = Dots.from(current.inner.keySet)
       ).mutator

@@ -117,7 +117,7 @@ object GrowOnlyList {
       }
     }
 
-    def read(using QueryP)(i: Int): Option[E] =
+    def read(using PermQuery)(i: Int): Option[E] =
       findNth(current, Head(), i + 1).flatMap {
         case Head()  => None
         case Elem(e) => Some(e.payload)
@@ -130,10 +130,10 @@ object GrowOnlyList {
         case Some(next @ Elem(tv)) => toListRec(state, next, acc.append(tv.payload))
       }
 
-    def toList(using QueryP): List[E] =
+    def toList(using PermQuery): List[E] =
       toListRec(current, Head(), ListBuffer.empty[E]).toList
 
-    def toLazyList(using QueryP): LazyList[E] =
+    def toLazyList(using PermQuery): LazyList[E] =
       LazyList.unfold[E, Node[TimedVal[E]]](Head()) { node =>
         current.get(node) match {
           case None                  => None
@@ -141,16 +141,16 @@ object GrowOnlyList {
         }
       }
 
-    def size(using QueryP): Int = current.size
+    def size(using PermQuery): Int = current.size
 
-    def insertGL(using MutationIdP)(i: Int, e: E): C = {
+    def insertGL(using PermIdMutate)(i: Int, e: E): C = {
       GrowOnlyList(findNth(current, Head(), i) match {
         case None       => Map.empty
         case Some(pred) => Map(pred -> Elem(LastWriterWins.now(e, replicaID)))
       })
     }.mutator
 
-    def insertAllGL(using MutationP, IdentifierP)(i: Int, elems: Iterable[E]): C = {
+    def insertAllGL(using PermMutate, PermId)(i: Int, elems: Iterable[E]): C = {
       if (elems.isEmpty)
         GrowOnlyList.empty[E]
       else
@@ -176,7 +176,7 @@ object GrowOnlyList {
         case Some(next) => withoutRec(state, next, elems)
       }
 
-    def without(elems: Set[E])(using MutationP): C = withoutRec(current, Head(), elems).mutator
+    def without(elems: Set[E])(using PermMutate): C = withoutRec(current, Head(), elems).mutator
   }
 
 }

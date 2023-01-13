@@ -24,21 +24,21 @@ object CausalLastWriterWins {
   implicit class syntax[C, A](container: C)
       extends OpsSyntaxHelper[C, CausalLastWriterWins[A]](container) {
 
-    def read(using QueryP): Option[A] =
+    def read(using PermQuery): Option[A] =
       current.repr.multiVersionRegister.read.reduceOption(DecomposeLattice[TimedVal[A]].merge).map(x => x.payload)
 
-    def write(using CausalMutationP, IdentifierP)(v: A): C =
+    def write(using PermCausalMutate, PermId)(v: A): C =
       current.repr.inherit.multiVersionRegister.write(LastWriterWins.now(v, replicaID)).anon.map(
         CausalLastWriterWins.apply
       ).mutator
 
-    def map(using CausalMutationP, IdentifierP)(f: A => A): C =
+    def map(using PermCausalMutate, PermId)(f: A => A): C =
       read.map(f) match {
         case None    => Dotted(CausalLastWriterWins.empty).mutator
         case Some(v) => write(v)
       }
 
-    def clear(using CausalMutationP)(): C =
+    def clear(using PermCausalMutate)(): C =
       current.repr.inheritContext.multiVersionRegister.clear().map(
         CausalLastWriterWins.apply
       ).mutator

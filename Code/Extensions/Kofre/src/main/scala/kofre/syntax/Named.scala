@@ -4,12 +4,13 @@ import kofre.base.{Bottom, DecomposeLattice, Id, Lattice}
 import kofre.time.Dots
 import kofre.dotted.{Dotted, DottedLattice}
 
-
 case class Named[L](replicaId: Id, anon: L) {
   def map[B](f: L => B): Named[B] = new Named(replicaId, f(anon))
 }
 
 object Named {
+
+  extension [L](x: L) def named(replicaId: Id): Named[L] = Named(replicaId, x)
 
   def apply[L](replicaID: Id, inner: Dotted[L]): Named[Dotted[L]] = new Named(replicaID, inner)
   def unapply[L](wnc: Named[Dotted[L]]): Some[(Id, Dotted[L])]    = Some((wnc.replicaId, wnc.anon))

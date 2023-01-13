@@ -22,9 +22,9 @@ object Project {
     // As a note, these methods are added as kind of extension methods to `Project` and RDT containers of project.
     // Its generally a good idea to not have them clash with the methods or values defined on `Project`,
     // specifically, I renamed the members of `Project` to start with an _ in this case.
-    def name(using QueryP): String         = current._name.read.getOrElse("no name")
-    def max_hours(using QueryP): Int       = current._max_hours.value
-    def account_name(using QueryP): String = current._account_name.read.getOrElse("no account")
+    def name(using PermQuery): String         = current._name.read.getOrElse("no name")
+    def max_hours(using PermQuery): Int       = current._max_hours.value
+    def account_name(using PermQuery): String = current._account_name.read.getOrElse("no account")
 
     // this or something similar should maybe be added to OpsSyntaxHelper at some point.
     // Basically, the problem is that we want to modify the inner name, but within the current context,
@@ -34,13 +34,13 @@ object Project {
     // We pass the re-wrapped value to a mapping function `f` that can modify it as any other thing that has a contex and name.
     // We then return only the `Dotted` (dropping the name) as a convenience – the name never changes.
     private def focus[B, C](p: Project => B)(f: Named[Dotted[B]] => Named[Dotted[C]])(using
-        CausalMutationP,
-        IdentifierP,
+                                                                                      PermCausalMutate,
+                                                                                      PermId,
     ): Dotted[C] = {
       f(context.wrap(p(current)).named(replicaID)).anon
     }
 
-    def set_name(newName: String)(using CausalMutationP, IdentifierP): C = {
+    def set_name(newName: String)(using PermCausalMutate, PermId): C = {
       val updatedNameRegister: Dotted[CausalLastWriterWins[String]] = focus(_._name)(_.write(newName))
 
       val projectDelta = empty.copy(_name = updatedNameRegister.store)

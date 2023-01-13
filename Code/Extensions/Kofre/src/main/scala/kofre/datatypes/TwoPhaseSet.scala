@@ -25,16 +25,16 @@ object TwoPhaseSet {
 
   implicit class syntax[C, E](container: C) extends OpsSyntaxHelper[C, TwoPhaseSet[E]](container) {
 
-    def elements(using QueryP): Set[E] = {
+    def elements(using PermQuery): Set[E] = {
       current.added diff current.removed
     }
 
-    def contains(using QueryP)(element: E): Boolean =
+    def contains(using PermQuery)(element: E): Boolean =
       current.added.contains(element) && !current.removed.contains(element)
 
-    def insert(using MutationP)(element: E): C = TwoPhaseSet(Set(element), Set.empty).mutator
+    def insert(using PermMutate)(element: E): C = TwoPhaseSet(Set(element), Set.empty).mutator
 
-    def remove(using MutationP)(element: E): C          = TwoPhaseSet(Set.empty, Set(element)).mutator
-    def removeAll(using MutationP)(elements: Set[E]): C = TwoPhaseSet(Set.empty, elements).mutator
+    def remove(using PermMutate)(element: E): C          = TwoPhaseSet(Set.empty, Set(element)).mutator
+    def removeAll(using PermMutate)(elements: Set[E]): C = TwoPhaseSet(Set.empty, elements).mutator
   }
 }

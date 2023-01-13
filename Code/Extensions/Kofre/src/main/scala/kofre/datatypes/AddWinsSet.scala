@@ -27,11 +27,11 @@ object AddWinsSet {
 
   implicit class syntax[C, E](container: C) extends OpsSyntaxHelper[C, AddWinsSet[E]](container) {
 
-    def elements(using QueryP): Set[E] = current.inner.keySet
+    def elements(using PermQuery): Set[E] = current.inner.keySet
 
-    def contains(using QueryP)(elem: E): Boolean = current.inner.contains(elem)
+    def contains(using PermQuery)(elem: E): Boolean = current.inner.contains(elem)
 
-    def add(e: E)(using CausalP, CausalMutationP, QueryP, IdentifierP): C = {
+    def add(e: E)(using PermCausal, PermCausalMutate, PermQuery, PermId): C = {
       val dm        = current.inner
       val cc        = context
       val nextDot   = cc.max(replicaID).fold(Dot(replicaID, 0))(_.advance)
@@ -43,7 +43,7 @@ object AddWinsSet {
       ).mutator
     }
 
-    def addAll(elems: Iterable[E])(using IdentifierP, CausalP, CausalMutationP, QueryP): C = {
+    def addAll(elems: Iterable[E])(using PermId, PermCausal, PermCausalMutate, PermQuery): C = {
       val dm          = current.inner
       val cc          = context
       val nextCounter = cc.nextTime(replicaID)
@@ -62,7 +62,7 @@ object AddWinsSet {
       ).mutator
     }
 
-    def remove(using QueryP, CausalMutationP)(e: E): C = {
+    def remove(using PermQuery, PermCausalMutate)(e: E): C = {
       val dm = current.inner
       val v  = dm.getOrElse(e, DotSet.empty)
 
@@ -71,7 +71,7 @@ object AddWinsSet {
       ).mutator
     }
 
-    def removeAll(elems: Iterable[E])(using QueryP, CausalMutationP): C = {
+    def removeAll(elems: Iterable[E])(using PermQuery, PermCausalMutate): C = {
       val dm = current.inner
       val dotsToRemove = elems.foldLeft(Dots.empty) {
         case (dots, e) => dm.get(e) match {
@@ -85,7 +85,7 @@ object AddWinsSet {
       ).mutator
     }
 
-    def removeBy(cond: E => Boolean)(using QueryP, CausalMutationP): C = {
+    def removeBy(cond: E => Boolean)(using PermQuery, PermCausalMutate): C = {
       val dm = current.inner
       val removedDots = dm.collect {
         case (k, v) if cond(k) => v
@@ -96,7 +96,7 @@ object AddWinsSet {
       ).mutator
     }
 
-    def clear()(using QueryP, CausalMutationP): C = {
+    def clear()(using PermQuery, PermCausalMutate): C = {
       val dm = current.inner
       deltaState[E].make(
         cc = dm.dots

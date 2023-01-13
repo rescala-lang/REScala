@@ -3,7 +3,6 @@ package kofre.datatypes
 import kofre.base.{Bottom, DecomposeLattice}
 import kofre.datatypes.Epoche
 import kofre.dotted.{DotFun, Dotted, DottedDecompose, DottedLattice}
-import kofre.syntax.PermIdMutate.withID
 import kofre.syntax.{Named, OpsSyntaxHelper, PermIdMutate, PermMutate}
 import kofre.time.{Dot, Dots}
 import kofre.datatypes.LastWriterWins.TimedVal
@@ -82,14 +81,14 @@ object ReplicatedList {
   implicit class syntax[C, E](container: C)
       extends OpsSyntaxHelper[C, ReplicatedList[E]](container) {
 
-    def read(using QueryP)(i: Int): Option[E] = {
+    def read(using PermQuery)(i: Int): Option[E] = {
       val ReplicatedList(fw, df) = current
       fw.value.toLazyList.map(df.store).collect {
         case Alive(tv) => tv.payload
       }.lift(i)
     }
 
-    def size(using QueryP): Int = {
+    def size(using PermQuery): Int = {
       val ReplicatedList(_, df) = current
       df.values.count {
         case Dead()   => false
@@ -97,14 +96,14 @@ object ReplicatedList {
       }
     }
 
-    def toList(using QueryP): List[E] = {
+    def toList(using PermQuery): List[E] = {
       val ReplicatedList(fw, df) = current
       fw.value.growOnlyList.toList.map(df.store).collect {
         case Alive(tv) => tv.payload
       }
     }
 
-    def sequence(using QueryP): Long = {
+    def sequence(using PermQuery): Long = {
       val ReplicatedList(fw, _) = current
       fw.counter
     }
@@ -119,7 +118,7 @@ object ReplicatedList {
         }.map(_._2).prepended(0).lift(n)
     }
 
-    def insert(using CausalMutationP, IdentifierP)(i: Int, e: E): C = {
+    def insert(using PermCausalMutate, PermId)(i: Int, e: E): C = {
       val ReplicatedList(fw, df) = current
       val nextDot                = context.nextDot(replicaID)
 
@@ -139,7 +138,7 @@ object ReplicatedList {
       }
     }.mutator
 
-    def insertAll(using CausalMutationP, IdentifierP)(i: Int, elems: Iterable[E]): C = {
+    def insertAll(using PermCausalMutate, PermId)(i: Int, elems: Iterable[E]): C = {
       val ReplicatedList(fw, df) = current
       val nextDot                = context.nextDot(replicaID)
 
@@ -178,10 +177,10 @@ object ReplicatedList {
       }
     }
 
-    def update(using CausalMutationP, IdentifierP)(i: Int, e: E): C =
+    def update(using PermCausalMutate, PermId)(i: Int, e: E): C =
       updateRGANode(current, i, Alive(LastWriterWins.now(e, replicaID))).mutator
 
-    def delete(using CausalMutationP, IdentifierP)(i: Int): C = updateRGANode(current, i, Dead[E]()).mutator
+    def delete(using PermCausalMutate, PermId)(i: Int): C = updateRGANode(current, i, Dead[E]()).mutator
 
     private def updateRGANodeBy(
         state: ReplicatedList[E],
@@ -198,13 +197,13 @@ object ReplicatedList {
       deltaState[E].make(df = DotFun(dfDelta))
     }
 
-    def updateBy(using CausalMutationP, IdentifierP)(cond: E => Boolean, e: E): C =
+    def updateBy(using PermCausalMutate, PermId)(cond: E => Boolean, e: E): C =
       updateRGANodeBy(current, cond, Alive(LastWriterWins.now(e, replicaID))).mutator
 
-    def deleteBy(using CausalMutationP, IdentifierP)(cond: E => Boolean): C =
+    def deleteBy(using PermCausalMutate, PermId)(cond: E => Boolean): C =
       updateRGANodeBy(current, cond, Dead[E]()).mutator
 
-    def purgeTombstones(using CausalMutationP, IdentifierP)(): C = {
+    def purgeTombstones(using PermCausalMutate, PermId)(): C = {
       val ReplicatedList(epoche, df) = current
       val toRemove = df.collect {
         case (dot, Dead()) => dot
@@ -218,19 +217,19 @@ object ReplicatedList {
       ).mutator
     }
 
-    def clear(using CausalMutationP)(): C = {
+    def clear(using PermCausalMutate)(): C = {
       deltaState[E].make(
         cc = context
       ).mutator
     }
 
-    def prepend(using CausalMutationP, IdentifierP)(e: E): C = insert(0, e)
+    def prepend(using PermCausalMutate, PermId)(e: E): C = insert(0, e)
 
-    def append(using CausalMutationP, IdentifierP)(e: E): C = insert(size, e)
+    def append(using PermCausalMutate, PermId)(e: E): C = insert(size, e)
 
-    def prependAll(using CausalMutationP, IdentifierP)(elems: Iterable[E]): C = insertAll(0, elems)
+    def prependAll(using PermCausalMutate, PermId)(elems: Iterable[E]): C = insertAll(0, elems)
 
-    def appendAll(using CausalMutationP, IdentifierP)(elems: Iterable[E]): C = insertAll(size, elems)
+    def appendAll(using PermCausalMutate, PermId)(elems: Iterable[E]): C = insertAll(size, elems)
 
   }
 }
