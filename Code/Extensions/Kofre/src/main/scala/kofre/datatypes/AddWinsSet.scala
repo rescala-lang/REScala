@@ -34,7 +34,7 @@ object AddWinsSet {
     def add(e: E)(using PermCausal, PermCausalMutate, PermQuery, PermId): C = {
       val dm        = current.inner
       val cc        = context
-      val nextDot   = cc.max(replicaID).fold(Dot(replicaID, 0))(_.advance)
+      val nextDot   = cc.max(replicaId).fold(Dot(replicaId, 0))(_.advance)
       val v: DotSet = dm.getOrElse(e, DotSet.empty)
 
       deltaState[E].make(
@@ -46,8 +46,8 @@ object AddWinsSet {
     def addAll(elems: Iterable[E])(using PermId, PermCausal, PermCausalMutate, PermQuery): C = {
       val dm          = current.inner
       val cc          = context
-      val nextCounter = cc.nextTime(replicaID)
-      val nextDots    = Dots.from((nextCounter until nextCounter + elems.size).map(Dot(replicaID, _)))
+      val nextCounter = cc.nextTime(replicaId)
+      val nextDots    = Dots.from((nextCounter until nextCounter + elems.size).map(Dot(replicaId, _)))
 
       val ccontextSet = elems.foldLeft(nextDots) {
         case (dots, e) => dm.get(e) match {

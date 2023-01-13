@@ -21,9 +21,9 @@ object GrowOnlyCounter {
     def value(using PermQuery): Int = current.inner.valuesIterator.sum
 
     def inc(using PermIdMutate)(): C =
-      GrowOnlyCounter(Map(replicaID -> (current.inner.getOrElse(replicaID, 0) + 1))).mutator
+      GrowOnlyCounter(Map(replicaId -> (current.inner.getOrElse(replicaId, 0) + 1))).mutator
     def add(using PermIdMutate)(amount: Int): C =
       require(amount >= 0, "may not decrease counter")
-      GrowOnlyCounter(Map(replicaID -> (current.inner.getOrElse(replicaID, 0) + amount))).mutator
+      GrowOnlyCounter(Map(replicaId -> (current.inner.getOrElse(replicaId, 0) + amount))).mutator
   }
 }

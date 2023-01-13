@@ -120,7 +120,7 @@ object ReplicatedList {
 
     def insert(using PermCausalMutate, PermId)(i: Int, e: E): C = {
       val ReplicatedList(fw, df) = current
-      val nextDot                = context.nextDot(replicaID)
+      val nextDot                = context.nextDot(replicaId)
 
       findInsertIndex(current, i) match {
         case None => Dotted(ReplicatedList.empty[E])
@@ -128,7 +128,7 @@ object ReplicatedList {
           val glistDelta = fw.map { gl =>
             gl.insertGL(glistInsertIndex, nextDot)
           }
-          val dfDelta = DotFun.empty[Node[E]] + (nextDot -> Alive(LastWriterWins.now(e, replicaID)))
+          val dfDelta = DotFun.empty[Node[E]] + (nextDot -> Alive(LastWriterWins.now(e, replicaId)))
 
           deltaState[E].make(
             epoche = glistDelta,
@@ -140,7 +140,7 @@ object ReplicatedList {
 
     def insertAll(using PermCausalMutate, PermId)(i: Int, elems: Iterable[E]): C = {
       val ReplicatedList(fw, df) = current
-      val nextDot                = context.nextDot(replicaID)
+      val nextDot                = context.nextDot(replicaId)
 
       val nextDots = List.iterate(nextDot, elems.size) {
         case Dot(c, r) => Dot(c, r + 1)
@@ -151,9 +151,9 @@ object ReplicatedList {
         case Some(glistInsertIndex) =>
           val glistDelta =
             fw.map { gl =>
-              Named(replicaID, gl).insertAllGL(glistInsertIndex, nextDots).anon
+              Named(replicaId, gl).insertAllGL(glistInsertIndex, nextDots).anon
             }
-          val dfDelta = DotFun.empty[Node[E]] ++ (nextDots zip elems.map(e => Alive(LastWriterWins.now(e, replicaID))))
+          val dfDelta = DotFun.empty[Node[E]] ++ (nextDots zip elems.map(e => Alive(LastWriterWins.now(e, replicaId))))
 
           deltaState[E].make(
             epoche = glistDelta,
@@ -178,7 +178,7 @@ object ReplicatedList {
     }
 
     def update(using PermCausalMutate, PermId)(i: Int, e: E): C =
-      updateRGANode(current, i, Alive(LastWriterWins.now(e, replicaID))).mutator
+      updateRGANode(current, i, Alive(LastWriterWins.now(e, replicaId))).mutator
 
     def delete(using PermCausalMutate, PermId)(i: Int): C = updateRGANode(current, i, Dead[E]()).mutator
 
@@ -198,7 +198,7 @@ object ReplicatedList {
     }
 
     def updateBy(using PermCausalMutate, PermId)(cond: E => Boolean, e: E): C =
-      updateRGANodeBy(current, cond, Alive(LastWriterWins.now(e, replicaID))).mutator
+      updateRGANodeBy(current, cond, Alive(LastWriterWins.now(e, replicaId))).mutator
 
     def deleteBy(using PermCausalMutate, PermId)(cond: E => Boolean): C =
       updateRGANodeBy(current, cond, Dead[E]()).mutator

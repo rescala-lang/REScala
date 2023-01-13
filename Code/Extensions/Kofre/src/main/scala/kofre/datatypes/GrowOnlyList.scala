@@ -146,7 +146,7 @@ object GrowOnlyList {
     def insertGL(using PermIdMutate)(i: Int, e: E): C = {
       GrowOnlyList(findNth(current, Head(), i) match {
         case None       => Map.empty
-        case Some(pred) => Map(pred -> Elem(LastWriterWins.now(e, replicaID)))
+        case Some(pred) => Map(pred -> Elem(LastWriterWins.now(e, replicaId)))
       })
     }.mutator
 
@@ -157,7 +157,7 @@ object GrowOnlyList {
         GrowOnlyList(findNth(current, Head(), i) match {
           case None => Map.empty
           case Some(after) =>
-            val order = elems.map(e => Elem(LastWriterWins.now(e, replicaID)): Elem[TimedVal[E]])
+            val order = elems.map(e => Elem(LastWriterWins.now(e, replicaId)): Elem[TimedVal[E]])
             Map((List(after) ++ order.init) zip order: _*)
         })
     }.mutator

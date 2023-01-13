@@ -37,7 +37,7 @@ object Project {
                                                                                       PermCausalMutate,
                                                                                       PermId,
     ): Dotted[C] = {
-      f(context.wrap(p(current)).named(replicaID)).anon
+      f(context.wrap(p(current)).named(replicaId)).anon
     }
 
     def set_name(newName: String)(using PermCausalMutate, PermId): C = {

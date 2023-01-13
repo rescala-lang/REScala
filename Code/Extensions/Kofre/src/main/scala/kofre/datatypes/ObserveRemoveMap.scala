@@ -50,7 +50,7 @@ object ObserveRemoveMap {
     ): C = {
       val v = current.inner.getOrElse(k, Bottom[V].empty)
 
-      m(replicaID, context.wrap(v)) match {
+      m(replicaId, context.wrap(v)) match {
         case Dotted(stateDelta, ccDelta) =>
           make[K, V](
             dm = DotMap(Map(k -> stateDelta)),
@@ -65,7 +65,7 @@ object ObserveRemoveMap {
                           Bottom[V]
     )(k: K)(m: Named[Dotted[V]] => Named[Dotted[V]]): C = {
       val v                           = current.inner.getOrElse(k, Bottom[V].empty)
-      val Dotted(stateDelta, ccDelta) = m(Named(replicaID, Dotted(v, context))).anon
+      val Dotted(stateDelta, ccDelta) = m(Named(replicaId, Dotted(v, context))).anon
       make[K, V](
         dm = DotMap(Map(k -> stateDelta)),
         cc = ccDelta

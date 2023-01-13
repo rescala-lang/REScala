@@ -39,7 +39,7 @@ object RubisInterface {
     def placeBid(auctionId: AID, userId: User, price: Int)(using PermIdMutate): C = {
       val (_, users, m) = current
       val newMap =
-        if (users.get(userId).contains(replicaID) && m.contains(auctionId)) {
+        if (users.get(userId).contains(replicaId) && m.contains(auctionId)) {
           m.updatedWith(auctionId) { _.map(a => a.bid(userId, price)) }
         } else Map.empty[AID, AuctionInterface.AuctionData]
 
@@ -69,7 +69,7 @@ object RubisInterface {
       val (req, users, _) = current
       if (users.contains(userId)) Dotted(deltaState.make(), context).mutator
       else
-        val merged = Dotted(req, context).named(replicaID).add(userId -> replicaID).anon
+        val merged = Dotted(req, context).named(replicaId).add(userId -> replicaId).anon
         Dotted(deltaState.make(userRequests = merged.store), merged.context).mutator
     }
 

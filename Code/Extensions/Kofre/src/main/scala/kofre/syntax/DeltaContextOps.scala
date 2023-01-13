@@ -32,8 +32,12 @@ object PermMutate:
 @implicitNotFound(
   "Requires a replica ID.\nWhich seems unavailable in »${C}«\nMissing a container?"
 )
-trait PermId[C]:
+trait PermId[-C]:
   def replicaId(c: C): Id
+class FixedId(id: Id) extends PermId[Any]:
+  override def replicaId(c: Any): Id = id
+
+
 
 @implicitNotFound(
   "Requires causal context permission.\nNo context in »${C}«\nMissing a container?"
@@ -66,15 +70,15 @@ trait OpsTypes[C, L] {
 }
 trait OpsSyntaxHelper[C, L](container: C) extends OpsTypes[C, L] {
   final protected[kofre] def current(using perm: PermQuery): L              = perm.query(container)
-  final protected[kofre] def replicaID(using perm: PermId): Id              = perm.replicaId(container)
+  final protected[kofre] def replicaId(using perm: PermId): Id              = perm.replicaId(container)
   final protected[kofre] def context(using perm: PermCausal): Dots          = perm.context(container)
   extension (l: L)(using perm: PermMutate) def mutator: C                   = perm.mutate(container, l)
   extension (l: Dotted[L])(using perm: PermCausalMutate) def mutator: C     = perm.mutateContext(container, l)
-  extension [A](c: Dotted[A]) def inheritId(using PermId): Named[Dotted[A]] = c.named(replicaID)
+  extension [A](c: Dotted[A]) def inheritId(using PermId): Named[Dotted[A]] = c.named(replicaId)
   extension [A](a: A)
     def inheritContext(using PermCausal): Dotted[A] = Dotted(a, context)
   extension [A](a: A)
-    def inherit(using PermId, PermCausal): Named[Dotted[A]] = Dotted(a, context).named(replicaID)
+    def inherit(using PermId, PermCausal): Named[Dotted[A]] = Dotted(a, context).named(replicaId)
 
   import kofre.syntax as s
 

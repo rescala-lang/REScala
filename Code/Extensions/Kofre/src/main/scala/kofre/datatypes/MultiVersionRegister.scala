@@ -27,7 +27,7 @@ object MultiVersionRegister {
     def read(using PermQuery): Set[A] = current.repr.values.toSet
 
     def write(using PermCausalMutate, PermId)(v: A): C = {
-      val nextDot = context.nextDot(replicaID)
+      val nextDot = context.nextDot(replicaId)
 
       Dotted(
         MultiVersionRegister(DotFun(Map(nextDot -> v))),

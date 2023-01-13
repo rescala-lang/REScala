@@ -31,7 +31,7 @@ object EnableWinsFlag {
     def read(using PermQuery): Boolean = !current.inner.repr.isEmpty
 
     def enable(using PermCausalMutate, PermId)(): C = {
-      val nextDot = context.nextDot(replicaID)
+      val nextDot = context.nextDot(replicaId)
       Dotted(
         EnableWinsFlag(DotSet(Dots.single(nextDot))),
         current.inner.repr add nextDot
