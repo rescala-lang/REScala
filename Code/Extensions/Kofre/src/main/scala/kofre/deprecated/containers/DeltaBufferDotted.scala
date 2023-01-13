@@ -45,7 +45,7 @@ case class DeltaBuffer[State](
 
 object DeltaBuffer {
 
-  given contextPermissions[L: DottedDecompose]: PermCausalMutate[DeltaBuffer[Dotted[L]], L] =
+  given dottedPermissions[L: DottedDecompose]: PermCausalMutate[DeltaBuffer[Dotted[L]], L] =
     new PermCausalMutate[DeltaBuffer[Dotted[L]], L] {
       override def query(c: DeltaBuffer[Dotted[L]]): L = c.state.store
       override def mutateContext(
@@ -55,7 +55,7 @@ object DeltaBuffer {
       override def context(c: DeltaBuffer[Dotted[L]]): Dots = c.state.context
     }
 
-  given plainPermissions[L: DecomposeLattice : Bottom]: PermIdMutate[DeltaBuffer[L], L] =
+  given plainPermissions[L: DecomposeLattice: Bottom]: PermIdMutate[DeltaBuffer[L], L] =
     new PermIdMutate[DeltaBuffer[L], L] {
       override def replicaId(c: DeltaBuffer[L]): Id = c.replicaID
       override def mutate(c: DeltaBuffer[L], delta: L): DeltaBuffer[L] =
