@@ -1,8 +1,8 @@
 package benchmarks.lattices.delta.crdt
 
 import kofre.datatypes.GrowOnlyList
-import org.openjdk.jmh.annotations._
-import kofre.deprecated.containers.DeltaBufferDotted
+import org.openjdk.jmh.annotations.*
+import kofre.deprecated.containers.{DeltaBuffer, DeltaBufferDotted}
 
 import java.util.concurrent.TimeUnit
 
@@ -18,11 +18,11 @@ class GListBench {
   @Param(Array("0", "1", "10", "100", "1000"))
   var listSize: Int = _
 
-  var list: DeltaBufferDotted[GrowOnlyList[Int]] = _
+  var list: DeltaBuffer[GrowOnlyList[Int]] = _
 
   @Setup
   def setup(): Unit = {
-    list = (0 until listSize).foldLeft(DeltaBufferDotted("a", GrowOnlyList.empty[Int])) {
+    list = (0 until listSize).foldLeft(DeltaBuffer("a", GrowOnlyList.empty[Int])) {
       case (c, i) => c.insertGL(0, i)
     }
   }
@@ -40,8 +40,8 @@ class GListBench {
   def readLast(): Option[Int] = list.read(listSize - 1)
 
   @Benchmark
-  def insertStart(): DeltaBufferDotted[GrowOnlyList[Int]] = list.insertGL(0, -1)
+  def insertStart(): DeltaBuffer[GrowOnlyList[Int]] = list.insertGL(0, -1)
 
   @Benchmark
-  def insertEnd(): DeltaBufferDotted[GrowOnlyList[Int]] = list.insertGL(listSize, -1)
+  def insertEnd(): DeltaBuffer[GrowOnlyList[Int]] = list.insertGL(listSize, -1)
 }

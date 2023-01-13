@@ -2,7 +2,7 @@ package test.kofre
 
 import kofre.base.{Bottom, DecomposeLattice, Lattice}
 import kofre.datatypes.{CausalLastWriterWins, EnableWinsFlag, PosNegCounter}
-import kofre.deprecated.containers.DeltaBufferDotted
+import kofre.deprecated.containers.{DeltaBuffer, DeltaBufferDotted}
 import kofre.dotted.{Dotted, DottedDecompose}
 import kofre.syntax.{Named, OpsSyntaxHelper}
 import test.kofre.Project.ProjectSyntax
@@ -89,7 +89,7 @@ class ProjectRDTTest extends munit.FunSuite {
   }
 
   test("pos neg delta buffer") {
-    val deltaBufferRdt    = DeltaBufferDotted("replica id", PosNegCounter.zero);
+    val deltaBufferRdt    = DeltaBuffer("replica id", PosNegCounter.zero);
     val newDeltaBufferRdt = deltaBufferRdt.add(1)
     assertEquals(newDeltaBufferRdt.value, 1)
   }
