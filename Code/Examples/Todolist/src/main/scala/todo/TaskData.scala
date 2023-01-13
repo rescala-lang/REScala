@@ -14,7 +14,7 @@ import scalatags.JsDom.all.*
 import todo.Todolist.replicaId
 import Codecs.given
 import kofre.datatypes.alternatives.MultiValueRegister
-import kofre.deprecated.containers.DeltaBufferRDT
+import kofre.deprecated.containers.DeltaBufferDotted
 import loci.serializer.jsoniterScala.given
 import kofre.datatypes.LastWriterWins.TimedVal
 import kofre.time.WallClock
@@ -34,16 +34,16 @@ case class TaskData(
 case class TaskRef(id: String) {
   lazy val cached: TaskRefData = TaskReferences.lookupOrCreateTaskRef(id, None)
 
-  def task: Signal[DeltaBufferRDT[CausalLastWriterWins[TaskData]]] = cached.task
+  def task: Signal[DeltaBufferDotted[CausalLastWriterWins[TaskData]]] = cached.task
   def tag: TypedTag[LI]                                            = cached.tag
   def removed: Event[String]                                       = cached.removed
 }
 
 final class TaskRefData(
-  val task: Signal[DeltaBufferRDT[CausalLastWriterWins[TaskData]]],
-  val tag: TypedTag[LI],
-  val removed: Event[String],
-  val id: String,
+                         val task: Signal[DeltaBufferDotted[CausalLastWriterWins[TaskData]]],
+                         val tag: TypedTag[LI],
+                         val removed: Event[String],
+                         val id: String,
 ) {
   override def hashCode(): Int = id.hashCode
   override def equals(obj: Any): Boolean = obj match {
@@ -77,9 +77,9 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
     taskID: String,
     task: Option[TaskData],
   ): TaskRefData = {
-    val lwwInit = DeltaBufferRDT(replicaId, CausalLastWriterWins.empty[TaskData])
+    val lwwInit = DeltaBufferDotted(replicaId, CausalLastWriterWins.empty[TaskData])
 
-    val lww: DeltaBufferRDT[CausalLastWriterWins[TaskData]] = task match {
+    val lww: DeltaBufferDotted[CausalLastWriterWins[TaskData]] = task match {
       case None =>
 //        type L = CausalLastWriterWins[TaskData]
 //        given perm1: PermCausalMutate[DeltaBufferRDT[L], L] =

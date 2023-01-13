@@ -1,7 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
 import kofre.datatypes.ReplicatedList
-import kofre.deprecated.containers.DeltaBufferRDT
+import kofre.deprecated.containers.DeltaBufferDotted
 import org.openjdk.jmh.annotations._
 
 import java.util.concurrent.TimeUnit
@@ -18,14 +18,14 @@ class RGABench {
   @Param(Array("0", "1", "10", "100", "1000"))
   var rgaSize: Int = _
 
-  type SUT = DeltaBufferRDT[ReplicatedList[Int]]
+  type SUT = DeltaBufferDotted[ReplicatedList[Int]]
 
   var rga: SUT        = _
   var rgaCleared: SUT = _
 
   @Setup
   def setup(): Unit = {
-    rga = DeltaBufferRDT("a", ReplicatedList.empty[Int]).appendAll(0 until rgaSize)
+    rga = DeltaBufferDotted("a", ReplicatedList.empty[Int]).appendAll(0 until rgaSize)
     rgaCleared = rga.clear()
   }
 

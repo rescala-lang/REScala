@@ -2,14 +2,14 @@ package rescala.extra.replication
 
 import kofre.base.{Bottom, DecomposeLattice, Lattice}
 import kofre.dotted.Dotted
-import kofre.syntax.{Named}
+import kofre.syntax.Named
 import loci.registry.{Binding, Registry}
 import loci.transmitter.RemoteRef
 import rescala.interface.RescalaInterface
 import scribe.Execution.global
 import kofre.base.Lattice.Operators
 import kofre.base.Id
-import kofre.deprecated.containers.DeltaBufferRDT
+import kofre.deprecated.containers.DeltaBufferDotted
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
@@ -39,9 +39,9 @@ class ReplicationGroup[Api <: RescalaInterface, A](
   }
 
   def distributeDeltaRDT(
-    name: String,
-    signal: Signal[DeltaBufferRDT[A]],
-    deltaEvt: Evt[Named[Dotted[A]]],
+                          name: String,
+                          signal: Signal[DeltaBufferDotted[A]],
+                          deltaEvt: Evt[Named[Dotted[A]]],
   ): Unit = {
     require(!localListeners.contains(name), s"already registered a RDT with name $name")
     localListeners = localListeners.updated(name, deltaEvt)

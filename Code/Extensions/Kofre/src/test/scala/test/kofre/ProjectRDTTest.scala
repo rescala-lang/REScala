@@ -2,7 +2,7 @@ package test.kofre
 
 import kofre.base.{Bottom, DecomposeLattice, Lattice}
 import kofre.datatypes.{CausalLastWriterWins, EnableWinsFlag, PosNegCounter}
-import kofre.deprecated.containers.DeltaBufferRDT
+import kofre.deprecated.containers.DeltaBufferDotted
 import kofre.dotted.{Dotted, DottedDecompose}
 import kofre.syntax.{Named, OpsSyntaxHelper}
 import test.kofre.Project.ProjectSyntax
@@ -89,19 +89,19 @@ class ProjectRDTTest extends munit.FunSuite {
   }
 
   test("pos neg delta buffer") {
-    val deltaBufferRdt    = DeltaBufferRDT("replica id", PosNegCounter.zero);
+    val deltaBufferRdt    = DeltaBufferDotted("replica id", PosNegCounter.zero);
     val newDeltaBufferRdt = deltaBufferRdt.add(1)
     assertEquals(newDeltaBufferRdt.value, 1)
   }
 
   test("LWW delta buffer") {
-    val deltaBufferRdt    = DeltaBufferRDT("replica id", CausalLastWriterWins.empty[String]);
+    val deltaBufferRdt    = DeltaBufferDotted("replica id", CausalLastWriterWins.empty[String]);
     val newDeltaBufferRdt = deltaBufferRdt.write("test")
     assertEquals(newDeltaBufferRdt.read, Some("test"))
   }
 
   test("Project delta buffer") {
-    val deltaBufferRdt    = DeltaBufferRDT("replica id", Project.empty)
+    val deltaBufferRdt    = DeltaBufferDotted("replica id", Project.empty)
     val newDeltaBufferRdt = deltaBufferRdt.set_name("some project")
     // assertEquals(newDeltaBufferRdt.deltaBuffer, Nil)
     assertEquals(newDeltaBufferRdt.name, "some project")

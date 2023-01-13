@@ -2,7 +2,7 @@ package benchmarks.lattices.delta.crdt
 
 import kofre.datatypes.{EnableWinsFlag, ObserveRemoveMap}
 import kofre.datatypes.ObserveRemoveMap
-import kofre.deprecated.containers.DeltaBufferRDT
+import kofre.deprecated.containers.DeltaBufferDotted
 import org.openjdk.jmh.annotations._
 
 import java.util.concurrent.TimeUnit
@@ -19,13 +19,13 @@ class ORMapBench {
   @Param(Array("1", "10", "100", "1000"))
   var numEntries: Int = _
 
-  type SUT = DeltaBufferRDT[ObserveRemoveMap[Int, EnableWinsFlag]]
+  type SUT = DeltaBufferDotted[ObserveRemoveMap[Int, EnableWinsFlag]]
 
   var map: SUT = _
 
   @Setup
   def setup(): Unit = {
-    map = (0 until numEntries).foldLeft(DeltaBufferRDT.empty[ObserveRemoveMap[Int, EnableWinsFlag]](
+    map = (0 until numEntries).foldLeft(DeltaBufferDotted.empty[ObserveRemoveMap[Int, EnableWinsFlag]](
       "a",
       ObserveRemoveMap.empty
     )) {

@@ -4,7 +4,7 @@ import kofre.base.{Id, Lattice}
 import kofre.datatypes.AddWinsSet
 import kofre.datatypes.AddWinsSet.syntax
 import kofre.datatypes.experiments.RaftState
-import kofre.deprecated.containers.DeltaBufferRDT
+import kofre.deprecated.containers.DeltaBufferDotted
 import kofre.dotted.Dotted
 import kofre.syntax.Named
 
@@ -15,10 +15,10 @@ case class Token(id: Long, owner: Id, value: String) {
 }
 
 case class RaftTokens(
-    replicaID: Id,
-    tokenAgreement: RaftState[Token],
-    want: DeltaBufferRDT[AddWinsSet[Token]],
-    tokenFreed: DeltaBufferRDT[AddWinsSet[Token]]
+                       replicaID: Id,
+                       tokenAgreement: RaftState[Token],
+                       want: DeltaBufferDotted[AddWinsSet[Token]],
+                       tokenFreed: DeltaBufferDotted[AddWinsSet[Token]]
 ) {
 
   def owned(value: String): List[Token] = {
@@ -79,7 +79,7 @@ object RaftTokens {
     RaftTokens(
       replicaID,
       RaftState(Set(replicaID)),
-      DeltaBufferRDT(replicaID, AddWinsSet.empty[Token]),
-      DeltaBufferRDT(replicaID, AddWinsSet.empty[Token])
+      DeltaBufferDotted(replicaID, AddWinsSet.empty[Token]),
+      DeltaBufferDotted(replicaID, AddWinsSet.empty[Token])
     )
 }

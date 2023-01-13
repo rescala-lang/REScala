@@ -5,9 +5,9 @@ import kofre.time.Dots
 import kofre.dotted.{Dotted, DottedDecompose, DottedLattice}
 import kofre.syntax.{Named, PermCausal, PermCausalMutate, PermIdMutate, PermQuery}
 
-type DeltaBufferRDT[State] = DeltaBuffer[Dotted[State]]
+type DeltaBufferDotted[State] = DeltaBuffer[Dotted[State]]
 
-object DeltaBufferRDT {
+object DeltaBufferDotted {
 
   /** Creates a new PNCounter instance
     *

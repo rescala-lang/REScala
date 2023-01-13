@@ -2,17 +2,17 @@ package test.kofre
 
 import kofre.base.Lattice
 import kofre.datatypes.alternatives.rga.{DeltaSequence, Vertex}
-import kofre.deprecated.containers.DeltaBufferRDT
+import kofre.deprecated.containers.DeltaBufferDotted
 import kofre.dotted.Dotted
 
 class DeltaSequenceCrdtTest extends munit.FunSuite {
 
   test("basic interaction") {
-    val ds      = DeltaBufferRDT.empty("", DeltaSequence.empty[String])
+    val ds      = DeltaBufferDotted.empty("", DeltaSequence.empty[String])
     val a       = "a"
     val vertex1 = Vertex.fresh()
-    val vertex2 = Vertex.fresh()
-    val added2: DeltaBufferRDT[DeltaSequence[String]] = ds
+    val vertex2                                          = Vertex.fresh()
+    val added2: DeltaBufferDotted[DeltaSequence[String]] = ds
       .addRightDelta(a, Vertex.start, vertex1, "Hello world!")
       .addRightDelta(a, Vertex.start, vertex2, "Hello world 2!")
     assertEquals(added2.iterator.toList, List("Hello world 2!", "Hello world!"), "add right is correctly ordered")

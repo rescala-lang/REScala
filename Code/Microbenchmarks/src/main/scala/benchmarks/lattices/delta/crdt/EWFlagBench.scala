@@ -1,7 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
 import kofre.datatypes.EnableWinsFlag
-import kofre.deprecated.containers.DeltaBufferRDT
+import kofre.deprecated.containers.DeltaBufferDotted
 import org.openjdk.jmh.annotations._
 
 import java.util.concurrent.TimeUnit
@@ -15,13 +15,13 @@ import java.util.concurrent.TimeUnit
 @State(Scope.Thread)
 class EWFlagBench {
 
-  var flagEnabled: DeltaBufferRDT[EnableWinsFlag]  = _
-  var flagDisabled: DeltaBufferRDT[EnableWinsFlag] = _
+  var flagEnabled: DeltaBufferDotted[EnableWinsFlag]  = _
+  var flagDisabled: DeltaBufferDotted[EnableWinsFlag] = _
 
   @Setup
   def setup(): Unit = {
-    flagEnabled = DeltaBufferRDT.empty("a", EnableWinsFlag.empty).enable()
-    flagDisabled = DeltaBufferRDT.empty("b", EnableWinsFlag.empty).disable()
+    flagEnabled = DeltaBufferDotted.empty("a", EnableWinsFlag.empty).enable()
+    flagDisabled = DeltaBufferDotted.empty("b", EnableWinsFlag.empty).disable()
   }
 
   @Benchmark
@@ -31,14 +31,14 @@ class EWFlagBench {
   def readDisabled(): Boolean = flagDisabled.read
 
   @Benchmark
-  def enableEnabled(): DeltaBufferRDT[EnableWinsFlag] = flagEnabled.enable()
+  def enableEnabled(): DeltaBufferDotted[EnableWinsFlag] = flagEnabled.enable()
 
   @Benchmark
-  def enableDisabled(): DeltaBufferRDT[EnableWinsFlag] = flagDisabled.enable()
+  def enableDisabled(): DeltaBufferDotted[EnableWinsFlag] = flagDisabled.enable()
 
   @Benchmark
-  def disableEnabled(): DeltaBufferRDT[EnableWinsFlag] = flagEnabled.disable()
+  def disableEnabled(): DeltaBufferDotted[EnableWinsFlag] = flagEnabled.disable()
 
   @Benchmark
-  def disableDisabled(): DeltaBufferRDT[EnableWinsFlag] = flagDisabled.disable()
+  def disableDisabled(): DeltaBufferDotted[EnableWinsFlag] = flagDisabled.disable()
 }

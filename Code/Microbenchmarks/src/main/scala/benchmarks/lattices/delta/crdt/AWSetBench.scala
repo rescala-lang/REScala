@@ -1,7 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
 import kofre.datatypes.AddWinsSet
-import kofre.deprecated.containers.DeltaBufferRDT
+import kofre.deprecated.containers.DeltaBufferDotted
 import org.openjdk.jmh.annotations._
 
 import java.util.concurrent.TimeUnit
@@ -18,10 +18,10 @@ class AWSetBench {
   @Param(Array("0", "1", "10", "100", "1000"))
   var size: Int = _
 
-  var set: DeltaBufferRDT[AddWinsSet[Int]] = _
+  var set: DeltaBufferDotted[AddWinsSet[Int]] = _
 
-  def createBySize(size: Int): DeltaBufferRDT[AddWinsSet[Int]] =
-    (0 until size).foldLeft(DeltaBufferRDT.empty("a", AddWinsSet.empty[Int])) {
+  def createBySize(size: Int): DeltaBufferDotted[AddWinsSet[Int]] =
+    (0 until size).foldLeft(DeltaBufferDotted.empty("a", AddWinsSet.empty[Int])) {
       case (s, e) => s.add(e)
     }
 
@@ -34,23 +34,23 @@ class AWSetBench {
   def elements(): Set[Int] = set.elements
 
   @Benchmark
-  def add(): DeltaBufferRDT[AddWinsSet[Int]] = set.add(-1)
+  def add(): DeltaBufferDotted[AddWinsSet[Int]] = set.add(-1)
 
   @Benchmark
-  def addAll(): DeltaBufferRDT[AddWinsSet[Int]] = DeltaBufferRDT.empty("a", AddWinsSet.empty[Int]).addAll(0 until size)
+  def addAll(): DeltaBufferDotted[AddWinsSet[Int]] = DeltaBufferDotted.empty("a", AddWinsSet.empty[Int]).addAll(0 until size)
 
   @Benchmark
-  def remove(): DeltaBufferRDT[AddWinsSet[Int]] = set.remove(0)
+  def remove(): DeltaBufferDotted[AddWinsSet[Int]] = set.remove(0)
 
   @Benchmark
-  def removeBy(): DeltaBufferRDT[AddWinsSet[Int]] = set.removeBy((e: Int) => e == 0)
+  def removeBy(): DeltaBufferDotted[AddWinsSet[Int]] = set.removeBy((e: Int) => e == 0)
 
   @Benchmark
-  def removeAll(): DeltaBufferRDT[AddWinsSet[Int]] = set.removeAll(set.elements)
+  def removeAll(): DeltaBufferDotted[AddWinsSet[Int]] = set.removeAll(set.elements)
 
   @Benchmark
-  def clear(): DeltaBufferRDT[AddWinsSet[Int]] = set.clear()
+  def clear(): DeltaBufferDotted[AddWinsSet[Int]] = set.clear()
 
   @Benchmark
-  def construct(): DeltaBufferRDT[AddWinsSet[Int]] = createBySize(size)
+  def construct(): DeltaBufferDotted[AddWinsSet[Int]] = createBySize(size)
 }

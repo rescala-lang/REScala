@@ -6,7 +6,7 @@ import kofre.dotted.Dotted
 import kofre.syntax.Named
 import loci.transmitter.{RemoteAccessException, RemoteRef}
 import Bindings.*
-import kofre.deprecated.containers.DeltaBufferRDT
+import kofre.deprecated.containers.DeltaBufferDotted
 
 import scala.concurrent.Future
 import scala.io.StdIn.readLine
@@ -23,7 +23,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Id, i
   val minAtomsForCheckpoint = 100
   val maxAtomsForCheckpoint = 500
 
-  var set: DeltaBufferRDT[AddWinsSet[Int]] = DeltaBufferRDT.empty(id, AddWinsSet.empty)
+  var set: DeltaBufferDotted[AddWinsSet[Int]] = DeltaBufferDotted.empty(id, AddWinsSet.empty)
 
   var checkpoints: Map[Id, Int] = Map(id -> 0)
 

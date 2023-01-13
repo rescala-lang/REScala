@@ -1,7 +1,7 @@
 package todo
 
 import kofre.datatypes.ReplicatedList
-import kofre.deprecated.containers.DeltaBufferRDT
+import kofre.deprecated.containers.DeltaBufferDotted
 import kofre.dotted.Dotted
 import kofre.syntax.Named
 import rescala.default.*
@@ -12,7 +12,7 @@ import scala.annotation.nowarn
 
 class TaskOps(@nowarn taskRefs: TaskReferences) {
 
-  type State = DeltaBufferRDT[ReplicatedList[TaskRef]]
+  type State = DeltaBufferDotted[ReplicatedList[TaskRef]]
 
   def handleCreateTodo(createTodo: Event[String]): Fold.Branch[State] = createTodo.act { desc =>
     val taskid = s"Task(${ThreadLocalRandom.current().nextLong().toHexString})"

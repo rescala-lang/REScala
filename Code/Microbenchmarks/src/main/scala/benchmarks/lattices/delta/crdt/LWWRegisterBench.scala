@@ -1,7 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
 import kofre.datatypes.CausalLastWriterWins
-import kofre.deprecated.containers.DeltaBufferRDT
+import kofre.deprecated.containers.DeltaBufferDotted
 import org.openjdk.jmh.annotations.*
 
 import java.util.concurrent.TimeUnit
@@ -15,13 +15,13 @@ import java.util.concurrent.TimeUnit
 @State(Scope.Thread)
 class LWWRegisterBench {
 
-  var empty: DeltaBufferRDT[CausalLastWriterWins[Int]] = _
-  var full: DeltaBufferRDT[CausalLastWriterWins[Int]]  = _
+  var empty: DeltaBufferDotted[CausalLastWriterWins[Int]] = _
+  var full: DeltaBufferDotted[CausalLastWriterWins[Int]]  = _
 
   @Setup
   def setup(): Unit = {
-    empty = DeltaBufferRDT("a", CausalLastWriterWins.empty[Int])
-    full = DeltaBufferRDT("b", CausalLastWriterWins.empty[Int]).write(0)
+    empty = DeltaBufferDotted("a", CausalLastWriterWins.empty[Int])
+    full = DeltaBufferDotted("b", CausalLastWriterWins.empty[Int]).write(0)
   }
 
   @Benchmark
@@ -31,20 +31,20 @@ class LWWRegisterBench {
   def readFull(): Option[Int] = full.read
 
   @Benchmark
-  def writeEmpty(): DeltaBufferRDT[CausalLastWriterWins[Int]] = empty.write(1)
+  def writeEmpty(): DeltaBufferDotted[CausalLastWriterWins[Int]] = empty.write(1)
 
   @Benchmark
-  def writeFull(): DeltaBufferRDT[CausalLastWriterWins[Int]] = full.write(1)
+  def writeFull(): DeltaBufferDotted[CausalLastWriterWins[Int]] = full.write(1)
 
   @Benchmark
-  def mapEmpty(): DeltaBufferRDT[CausalLastWriterWins[Int]] = empty.map(_ + 1)
+  def mapEmpty(): DeltaBufferDotted[CausalLastWriterWins[Int]] = empty.map(_ + 1)
 
   @Benchmark
-  def mapFull(): DeltaBufferRDT[CausalLastWriterWins[Int]] = full.map(_ + 1)
+  def mapFull(): DeltaBufferDotted[CausalLastWriterWins[Int]] = full.map(_ + 1)
 
   @Benchmark
-  def clearEmpty(): DeltaBufferRDT[CausalLastWriterWins[Int]] = empty.clear()
+  def clearEmpty(): DeltaBufferDotted[CausalLastWriterWins[Int]] = empty.clear()
 
   @Benchmark
-  def clearFull(): DeltaBufferRDT[CausalLastWriterWins[Int]] = full.clear()
+  def clearFull(): DeltaBufferDotted[CausalLastWriterWins[Int]] = full.clear()
 }

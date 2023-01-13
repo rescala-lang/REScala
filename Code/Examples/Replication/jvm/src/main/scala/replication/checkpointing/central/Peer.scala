@@ -15,7 +15,7 @@ import scala.io.StdIn.readLine
 import scala.util.matching.Regex
 import scala.util.{Failure, Success}
 import kofre.base.Id
-import kofre.deprecated.containers.DeltaBufferRDT
+import kofre.deprecated.containers.DeltaBufferDotted
 
 class Peer(id: Id, listenPort: Int, connectTo: List[(String, Int)]) {
 
@@ -30,7 +30,7 @@ class Peer(id: Id, listenPort: Int, connectTo: List[(String, Int)]) {
   val size: String     = "size"
   val exit: String     = "exit"
 
-  var set: DeltaBufferRDT[AddWinsSet[Int]] = DeltaBufferRDT.empty(id, AddWinsSet.empty)
+  var set: DeltaBufferDotted[AddWinsSet[Int]] = DeltaBufferDotted.empty(id, AddWinsSet.empty)
 
   var checkpoint: Int = 0
 
