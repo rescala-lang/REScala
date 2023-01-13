@@ -10,8 +10,9 @@ import scala.collection.mutable.ListBuffer
 
 /** Efficient storage of a set of [[kofre.base.Time]] when most stored values are contiguous ranges. */
 class ArrayRanges(
-  /** Internally, ranges are stored as [begin, end) in a single array where begin is inclusive and end is exclusive. */
-  val inner: IArray[Time],
+  /** Internally, ranges are stored as [begin, end) in a single array where begin is inclusive and end is exclusive.
+    * Note that this is accessible to enable efficient external serialization, but any direct use of this field is discouraged. */
+  val inner: Array[Time],
   /** Operations that combine array ranges often only know an upper bound of how many result ranges there will be.
     * To minimize copying, the inner array is created with the upper bound and stored as is.
     */
@@ -75,7 +76,7 @@ class ArrayRanges(
   def isEmpty: Boolean = used == 0
 
   def add(x: Time): ArrayRanges =
-    union(new ArrayRanges(IArray(x, x + 1), 2))
+    union(new ArrayRanges(Array(x, x + 1), 2))
 
   def next: Option[Time] = Option.when(used != 0)(inner(used - 1))
 
@@ -137,7 +138,7 @@ class ArrayRanges(
 
     while (rok || lok) do findNextRange()
 
-    new ArrayRanges(IArray.unsafeFromArray(merged), mergedPos)
+    new ArrayRanges(merged, mergedPos)
 
   }
 
@@ -171,7 +172,7 @@ class ArrayRanges(
       }
     }
 
-    new ArrayRanges(IArray.unsafeFromArray(newInner), newInnerNextIndex)
+    new ArrayRanges(newInner, newInnerNextIndex)
   }
 
   def subtract(right: ArrayRanges): ArrayRanges = {
@@ -258,19 +259,19 @@ class ArrayRanges(
       }
     ) {}
 
-    new ArrayRanges(IArray.unsafeFromArray(newInner), newInnerNextIndex)
+    new ArrayRanges(newInner, newInnerNextIndex)
   }
 
   def decomposed: Iterable[ArrayRanges] = {
-    inner.view.slice(0, used).sliding(2, 2).map(r => new ArrayRanges(IArray.from(r), 2)).to(Iterable)
+    inner.view.slice(0, used).sliding(2, 2).map(r => new ArrayRanges(r.toArray, 2)).to(Iterable)
   }
 
 }
 
 object ArrayRanges {
-  val empty: ArrayRanges = new ArrayRanges(IArray.unsafeFromArray(Array.emptyLongArray), 0)
+  val empty: ArrayRanges = new ArrayRanges(Array.emptyLongArray, 0)
   def apply(elements: Seq[(Time, Time)]): ArrayRanges =
-    elements.map((s, e) => new ArrayRanges(IArray(s, e), 2)).foldLeft(ArrayRanges.empty)(_ union _)
+    elements.map((s, e) => new ArrayRanges(Array(s, e), 2)).foldLeft(ArrayRanges.empty)(_ union _)
   def elems(elems: Time*): ArrayRanges = from(elems)
 
   def from(it: Iterable[Time]): ArrayRanges = {
@@ -299,7 +300,7 @@ object ArrayRanges {
     newInternal(newInternalNextIndex + 1) = lastMax + 1 // until lastMax (exclusive)
     newInternalNextIndex += 2
 
-    new ArrayRanges(IArray.unsafeFromArray(newInternal), newInternalNextIndex)
+    new ArrayRanges(newInternal, newInternalNextIndex)
   }
 
   given latticeInstance: DecomposeLattice[ArrayRanges] with {
