@@ -91,7 +91,7 @@ object Dots {
 
   def from(dots: IterableOnce[Dot]): Dots = Dots(dots.iterator.to(Iterable).groupBy(_.replicaId).map {
     (key, times) =>
-      key -> ArrayRanges.from(times.iterator.map(_.time))
+      key -> ArrayRanges.from(times.view.map(_.time))
   })
 
 }

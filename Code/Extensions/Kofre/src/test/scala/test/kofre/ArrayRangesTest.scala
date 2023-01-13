@@ -82,21 +82,21 @@ class ArrayRangesTest extends munit.ScalaCheckSuite {
   private implicit def iteratorConv(range: Iterator[Int]): Iterator[Time] = range.map(i => i)
 
   test("from") {
-    assertEquals(ArrayRanges.from(Seq[Time](1, 2, 3).iterator), ArrayRanges(Seq((1, 4))))
-    assertEquals(ArrayRanges.from(Seq[Time](3, 2, 1).iterator), ArrayRanges(Seq((1, 4))))
+    assertEquals(ArrayRanges.from(Seq[Time](1, 2, 3)), ArrayRanges(Seq((1, 4))))
+    assertEquals(ArrayRanges.from(Seq[Time](3, 2, 1)), ArrayRanges(Seq((1, 4))))
 
-    assertEquals(ArrayRanges.from(Seq[Time](1, 3).iterator), ArrayRanges(Seq((1, 2), (3, 4))))
-    assertEquals(ArrayRanges.from(Seq[Time](3, 1).iterator), ArrayRanges(Seq((1, 2), (3, 4))))
+    assertEquals(ArrayRanges.from(Seq[Time](1, 3)), ArrayRanges(Seq((1, 2), (3, 4))))
+    assertEquals(ArrayRanges.from(Seq[Time](3, 1)), ArrayRanges(Seq((1, 2), (3, 4))))
 
-    assertEquals(ArrayRanges.from(((1 to 3) ++ (5 to 8)).iterator), ArrayRanges(Seq((1, 4), (5, 9))))
-    assertEquals(ArrayRanges.from(((5 to 8) ++ (1 to 3)).iterator), ArrayRanges(Seq((1, 4), (5, 9))))
+    assertEquals(ArrayRanges.from(((1L to 3) ++ (5L to 8))), ArrayRanges(Seq((1, 4), (5, 9))))
+    assertEquals(ArrayRanges.from(((5L to 8) ++ (1L to 3))), ArrayRanges(Seq((1, 4), (5, 9))))
   }
 
   test("duplicates") {
-    assertEquals(ArrayRanges.from(Seq[Time](1, 1).iterator), ArrayRanges(Seq((1, 2))))
-    assertEquals(ArrayRanges.from(Seq[Time](1, 3, 3).iterator), ArrayRanges(Seq((1, 2), (3, 4))))
+    assertEquals(ArrayRanges.from(Seq[Time](1, 1)), ArrayRanges(Seq((1, 2))))
+    assertEquals(ArrayRanges.from(Seq[Time](1, 3, 3)), ArrayRanges(Seq((1, 2), (3, 4))))
     assertEquals(
-      ArrayRanges.from(Seq[Time](1, 3, 3, 3, 4, 4, 5, 8, 8, 10).iterator),
+      ArrayRanges.from(Seq[Time](1, 3, 3, 3, 4, 4, 5, 8, 8, 10)),
       ArrayRanges(Seq((1, 2), (3, 6), (8, 9), (10, 11)))
     )
   }
@@ -252,11 +252,11 @@ class ArrayRangesTest extends munit.ScalaCheckSuite {
       val leftSet  = left.s
       val rightSet = right.s
 
-      val lr = ArrayRanges.from(leftSet.iterator)
-      val rr = ArrayRanges.from(rightSet.iterator)
+      val lr = ArrayRanges.from(leftSet)
+      val rr = ArrayRanges.from(rightSet)
 
-      assertEquals(lr union rr, ArrayRanges.from((leftSet union rightSet).iterator))
-      assertEquals(lr subtract rr, ArrayRanges.from((leftSet diff rightSet).iterator))
+      assertEquals(lr union rr, ArrayRanges.from((leftSet union rightSet)))
+      assertEquals(lr subtract rr, ArrayRanges.from((leftSet diff rightSet)))
     }
   }
 

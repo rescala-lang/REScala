@@ -15,11 +15,10 @@ class ArrayRanges(val inner: Array[Time], val used: Int) {
     case ar: ArrayRanges =>
       // would be nice to use the following, but does not exists on JS
       // util.Arrays.equals(inner, 0, used, ar.inner, 0, ar.used)
-      val left = inner.iterator.take(used)
+      val left  = inner.iterator.take(used)
       val right = ar.inner.iterator.take(ar.used)
       left sameElements right
   }
-
 
   override def hashCode(): Int = {
     inner.iterator.take(used).hashCode()
@@ -261,12 +260,12 @@ class ArrayRanges(val inner: Array[Time], val used: Int) {
 }
 
 object ArrayRanges {
-  val empty: ArrayRanges = new ArrayRanges(Array.empty[Time], 0)
+  val empty: ArrayRanges = new ArrayRanges(Array.emptyLongArray, 0)
   def apply(elements: Seq[(Time, Time)]): ArrayRanges =
     elements.map((s, e) => new ArrayRanges(Array(s, e), 2)).foldLeft(ArrayRanges.empty)(_ union _)
-  def elems(elems: Time*): ArrayRanges = from(elems.iterator)
+  def elems(elems: Time*): ArrayRanges = from(elems)
 
-  def from(it: Iterator[Time]): ArrayRanges = {
+  def from(it: Iterable[Time]): ArrayRanges = {
     val sorted = it.toArray.sortInPlace() // TODO: could be optimized further, but should be fast if already sorted
     if (sorted.isEmpty) return ArrayRanges.empty
 
