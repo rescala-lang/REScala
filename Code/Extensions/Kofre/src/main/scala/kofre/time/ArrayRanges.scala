@@ -12,8 +12,14 @@ import scala.collection.mutable.ListBuffer
 class ArrayRanges(val inner: Array[Time], val used: Int) {
 
   override def equals(obj: Any): Boolean = obj match {
-    case ar: ArrayRanges => inner.iterator.take(used).sameElements(ar.inner.iterator.take(ar.used))
+    case ar: ArrayRanges =>
+      // would be nice to use the following, but does not exists on JS
+      // util.Arrays.equals(inner, 0, used, ar.inner, 0, ar.used)
+      val left = inner.iterator.take(used)
+      val right = ar.inner.iterator.take(ar.used)
+      left sameElements right
   }
+
 
   override def hashCode(): Int = {
     inner.iterator.take(used).hashCode()
