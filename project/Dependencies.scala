@@ -23,7 +23,7 @@ object Dependencies {
     val scala213      = "2.13.10"
     val scala3        = "3.2.2"
     val scalaJavaTime = "2.3.0"
-    val scalaLoci     = "5df6d12a45"
+    val scalaLoci     = "ba22ec4262"
     val scalacheck    = "1.17.0"
     val scalajsDom    = "2.3.0"
     val scalatags     = "0.12.0"
