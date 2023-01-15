@@ -5,7 +5,7 @@ import kofre.base.{Id, Lattice}
 /** Implementation of an Observed-Remove Set similar to the one described by Shapiro et al. (2011) */
 case class ObserveRemoveSet[A](entries: Map[Id, A], tombstones: Set[Id]) {
 
-  def add(a: A): ObserveRemoveSet[A] = ObserveRemoveSet(Map(Id.genId() -> a), Set.empty)
+  def add(a: A): ObserveRemoveSet[A] = ObserveRemoveSet(Map(Id.gen() -> a), Set.empty)
 
   def remove(a: A): ObserveRemoveSet[A] = {
     // fetch ids of all instances of the element
@@ -20,7 +20,7 @@ case class ObserveRemoveSet[A](entries: Map[Id, A], tombstones: Set[Id]) {
 
 object ObserveRemoveSet {
   def empty[A]: ObserveRemoveSet[A]                 = ObserveRemoveSet(Map.empty, Set.empty)
-  def apply[A](values: Set[A]): ObserveRemoveSet[A] = ObserveRemoveSet(values.map(Id.genId() -> _).toMap, Set())
+  def apply[A](values: Set[A]): ObserveRemoveSet[A] = ObserveRemoveSet(values.map(Id.gen() -> _).toMap, Set())
   given lattice[A]: Lattice[ObserveRemoveSet[A]] = (left, right) =>
     val lefte  = left.entries -- right.tombstones
     val righte = right.entries -- left.tombstones

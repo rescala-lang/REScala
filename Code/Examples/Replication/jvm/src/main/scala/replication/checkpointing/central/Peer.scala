@@ -68,7 +68,7 @@ class Peer(id: Id, listenPort: Int, connectTo: List[(String, Int)]) {
       ))
     }
 
-    set = set.resetDeltaBuffer()
+    set = set.clearDeltas()
   }
 
   def splitState(atoms: Iterable[SetState], merged: SetState): (Iterable[SetState], Iterable[SetState]) = {
@@ -123,7 +123,7 @@ class Peer(id: Id, listenPort: Int, connectTo: List[(String, Int)]) {
 
             case Success(CheckpointMessage(cp, apply, keep)) =>
               if (cp > checkpoint) checkpoint = cp
-              set = apply.foldLeft(set)((s, d) => s.applyDelta(id, d)).resetDeltaBuffer()
+              set = apply.foldLeft(set)((s, d) => s.applyDelta(id, d)).clearDeltas()
               changesSinceCP = keep
           }
         }

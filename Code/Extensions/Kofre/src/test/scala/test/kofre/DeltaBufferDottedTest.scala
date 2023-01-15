@@ -8,7 +8,7 @@ class DeltaBufferDottedTest extends munit.FunSuite {
 
   test("basic interaction") {
 
-    val dbe = DeltaBuffer.dotted[EnableWinsFlag](Id.genId(), EnableWinsFlag.empty)
+    val dbe = DeltaBuffer.dotted[EnableWinsFlag](Id.gen(), EnableWinsFlag.empty)
 
     assertEquals(dbe.state.store, Bottom.empty[EnableWinsFlag])
     assert(!dbe.read)

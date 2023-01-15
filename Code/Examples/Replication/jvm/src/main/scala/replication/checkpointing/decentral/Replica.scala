@@ -69,7 +69,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Id, i
       }.reduceOption(DecomposeLattice[SetState].merge).foreach(sendDelta(_, rr))
     }
 
-    set = set.resetDeltaBuffer()
+    set = set.clearDeltas()
   }
 
   def bindGetCheckpoints(): Unit = registry.bind(getCheckpointsBinding) { () => checkpoints }
@@ -94,7 +94,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Id, i
         case CheckpointMessage(cp @ Checkpoint(replicaID, counter), changes) =>
           if (checkpoints.contains(replicaID) && checkpoints(replicaID) >= counter) ()
           else {
-            set = set.applyDelta(Id.predefined(remoteRef.toString), changes).resetDeltaBuffer()
+            set = set.applyDelta(Id.predefined(remoteRef.toString), changes).clearDeltas()
 
             unboundRemoteChanges =
               DecomposeLattice[SetState].diff(changes, unboundRemoteChanges).getOrElse(Dotted(AddWinsSet.empty))
@@ -160,7 +160,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Id, i
         registry.remotes.foreach { sendDelta(delta, _) }
       }
 
-      set = set.resetDeltaBuffer()
+      set = set.clearDeltas()
     }
   }
 

@@ -1,9 +1,12 @@
 package replication.webapp
 
-import kofre.base.Id
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
+import kofre.base.{Id, Lattice}
 import loci.registry.Registry
 import org.scalajs.dom
 import org.scalajs.dom.{Fetch, HttpMethod, RequestInit}
+import replication.DataManager
 import rescala.default.*
 import rescala.extra.Tags.*
 import scalatags.JsDom.attrs.id
@@ -14,6 +17,7 @@ import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import scala.scalajs.js.typedarray.ArrayBuffer
+
 
 case class MetaInfo(
     connection: Signal[Int],
@@ -41,12 +45,23 @@ object WebRepMain {
       .flatMap(_.arrayBuffer().toFuture)
   }
 
-  val replicaID: Id = Id.genId()
+  val replicaId: Id = Id.gen()
 
   def main(args: Array[String]): Unit = {
     dom.document.body = body("loading data …").render
 
+
+
     val registry = new Registry
+
+    given JsonValueCodec[Int] = JsonCodecMaker.make
+
+    given Lattice[Int] = _ + _
+
+    val dm = new DataManager[Int](replicaId, registry)
+
+    dm.disseminate()
+
 
     val ccm = new ContentConnectionManager(registry)
     ccm.autoreconnect()

@@ -8,7 +8,7 @@ import java.util.concurrent.ThreadLocalRandom
 
 object Todolist {
 
-  val replicaId: Id = Id.genId()
+  val replicaId: Id = Id.gen()
 
   val registry = new Registry
 

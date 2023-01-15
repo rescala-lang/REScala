@@ -11,5 +11,5 @@ object Vertex {
   val start: Vertex = Vertex(-1, Id.predefined("start"))
   val end: Vertex   = Vertex(0, Id.predefined("end"))
 
-  def fresh[A](): Vertex = Vertex(Time.current(), Id.genId())
+  def fresh[A](): Vertex = Vertex(Time.current(), Id.gen())
 }

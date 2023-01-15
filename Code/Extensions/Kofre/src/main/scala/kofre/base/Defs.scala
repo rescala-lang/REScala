@@ -15,7 +15,7 @@ object Id:
   extension (s: String) def asId: Id = s
 
   /** Generates unique identifiers for use by CRDTs */
-  def genId(): Id =
+  def gen(): Id =
     val randomBytes = new Array[Byte](15)
     random.nextBytes(randomBytes)
     Base64.getEncoder.encodeToString(randomBytes)

@@ -25,7 +25,7 @@ case class DeltaBuffer[State](
       case None => this
     }
 
-  def resetDeltaBuffer(): DeltaBuffer[State] = copy(deltaBuffer = List())
+  def clearDeltas(): DeltaBuffer[State] = copy(deltaBuffer = List())
 }
 
 object DeltaBuffer {

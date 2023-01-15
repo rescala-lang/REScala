@@ -161,7 +161,7 @@ def run(): Unit =
     val nodeId = sget(URI.create(s"$api/status/nodeid")).bind
     sget(URI.create(s"$api/register?$service")).bind
 
-    val replica = Replica(Id.genId(), nodeId, service, PosNegCounter.zero)
+    val replica = Replica(Id.gen(), nodeId, service, PosNegCounter.zero)
 
     val bundleString = sget(URI.create(s"$api/status/bundles")).bind
     val bundles = traverse(readFromString[List[String]](bundleString)(JsonCodecMaker.make).map { id =>
