@@ -24,11 +24,10 @@ import scala.concurrent.{Await, Promise}
 import scala.jdk.CollectionConverters.*
 
 class JettyServer(
-    staticPath: Path,
-    urlPrefix: String,
+    staticPath: Option[Path],
+    contextPath: String,
     registry: Registry,
     interface: String,
-    port: Int
 ) {
 
   lazy val jettyServer: Server = {
@@ -38,7 +37,8 @@ class JettyServer(
   }
 
   def stop(): Unit = jettyServer.stop()
-  def start(): Unit = {
+  
+  def start(port: Int): Unit = {
 
     // connectors accept requests – in this case on a TCP socket
     val connector = new ServerConnector(jettyServer)
@@ -54,7 +54,9 @@ class JettyServer(
     // Create and configure a ResourceHandler.
     val handler = new ResourceHandler()
     // Configure the directory where static resources are located.
-    handler.setBaseResource(Resource.newResource(staticPath))
+    staticPath match
+      case None       =>
+      case Some(path) => handler.setBaseResource(Resource.newResource(path))
     // Configure directory listing.
     handler.setDirectoriesListed(false)
     // Configure whether to accept range requests.
@@ -66,7 +68,7 @@ class JettyServer(
 
     // define a context with a given prefix to add loci socket
     val context = new ServletContextHandler(ServletContextHandler.SESSIONS)
-    context.setContextPath(urlPrefix)
+    context.setContextPath(contextPath)
 
     // add loci registry
     val wspath     = "/ws"

@@ -9,22 +9,33 @@ import replication.JsoniterCodecs.given
 
 import scala.annotation.nowarn
 
-class Repl {
+import java.util.Timer
 
-  val registry = new Registry
+class Commandline(settings: CliConnections) {
+
+  val replicaId         = Id.gen()
+  val registry          = new Registry
   val connectionManager = new ConnectionManager(registry)
 
-  val replicaId = Id.gen()
+  val dataManager =
+    @nowarn given JsonValueCodec[ReplicatedList[String]] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
+    new DataManager[ReplicatedList[String]](replicaId, registry)
 
-  @nowarn
-  given JsonValueCodec[ReplicatedList[String]] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
+  val timer = new Timer()
 
-  val dataManager = new DataManager[ReplicatedList[String]](replicaId, registry)
+  def start() =
+    settings.`tcp-listen-port`.value match
+      case None       =>
+      case Some(port) => connectionManager.listenTcp(port)
+    settings.`webserver-listen-port`.value match
+      case None       =>
+      case Some(port) => connectionManager.startWebserver(port)
+    settings.`tcp-connect`.value.map { _.split(':') }.collect {
+      case Array(ip, port) =>
+        (ip.trim, Integer.parseInt(port))
+    }.foreach(connectionManager.connectTcp.tupled)
 
   var count = 0
-
-  def host() = connectionManager.listenTcp(50443)
-  def join() = connectionManager.connectTcp("127.0.0.1", 50443)
 
   def add() =
     dataManager.applyLocalDelta(dataManager.currentValue.append(s"${replicaId}: $count").anon)

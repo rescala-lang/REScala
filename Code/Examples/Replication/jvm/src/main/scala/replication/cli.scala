@@ -7,10 +7,17 @@ import replication.checkpointing.central.{CentralOptions, Checkpointer}
 import replication.checkpointing.decentral.{DecentralOptions, Replica}
 import kofre.base.Id
 
+case class CliConnections(
+    `tcp-listen-port`: Argument[Int, Option, Style.Named] = Argument(_.text("tcp listen port")),
+    `tcp-connect`: Argument[String, List, Style.Named] = Argument(_.text("connections").valueName("<ip:port>")),
+    `webserver-listen-port`: Argument[Int, Option, Style.Named] = Argument(_.text("webserver listen port")),
+)
+
 case class CliArgs(
     calendar: Subcommand[CalendarOptions] = Subcommand(CalendarOptions()),
     dtn: Subcommand[Unit] = Subcommand.empty(),
-    checkpointing: Subcommand[CheckpointingOptions] = Subcommand(CheckpointingOptions())
+    checkpointing: Subcommand[CheckpointingOptions] = Subcommand(CheckpointingOptions()),
+    conn: Subcommand[CliConnections] = Subcommand(CliConnections()),
 )
 
 object cli {
@@ -75,6 +82,12 @@ object cli {
             new Checkpointer(checkpointerArgs.listenPort.value).run()
 
     if instance.dtn.value.isDefined then dtn.run()
+
+    instance.conn.value match
+      case None              =>
+      case Some(connections) =>
+        val serv = new Commandline(connections)
+        serv.start()
 
   }
 }
