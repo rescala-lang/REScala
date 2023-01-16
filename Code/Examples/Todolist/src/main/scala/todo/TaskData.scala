@@ -131,9 +131,9 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
     val crdt = Storing.storedAs(s"$storePrefix$taskID", lww) { init =>
       Events.foldAll(init)(current =>
         Seq(
-          doneEv act2 { _ => current.resetDeltaBuffer().map(_.toggle()) },
-          edittextStr act2 { v => current.resetDeltaBuffer().map(_.edit(v)) },
-          deltaEvt act2 { delta => current.resetDeltaBuffer().applyDelta(delta.replicaId, delta.anon) }
+          doneEv act2 { _ => current.clearDeltas().map(_.toggle()) },
+          edittextStr act2 { v => current.clearDeltas().map(_.edit(v)) },
+          deltaEvt act2 { delta => current.clearDeltas().applyDelta(delta.replicaId, delta.anon) }
         )
       )
     }(Codecs.codecLww)
