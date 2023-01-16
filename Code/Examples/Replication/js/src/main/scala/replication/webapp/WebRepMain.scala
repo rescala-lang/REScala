@@ -1,8 +1,10 @@
 package replication.webapp
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
-import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
+import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import kofre.base.{Id, Lattice}
+import kofre.datatypes.ReplicatedList
+import kofre.dotted.DottedLattice
 import loci.registry.Registry
 import org.scalajs.dom
 import org.scalajs.dom.{Fetch, HttpMethod, RequestInit}
@@ -12,12 +14,13 @@ import rescala.extra.Tags.*
 import scalatags.JsDom.attrs.id
 import scalatags.JsDom.implicits.{stringAttr, stringFrag}
 import scalatags.JsDom.tags.{body, h1, p}
+import replication.JsoniterCodecs.given
 
+import scala.annotation.nowarn
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import scala.scalajs.js.typedarray.ArrayBuffer
-
 
 case class MetaInfo(
     connection: Signal[Int],
@@ -50,18 +53,13 @@ object WebRepMain {
   def main(args: Array[String]): Unit = {
     dom.document.body = body("loading data …").render
 
-
-
     val registry = new Registry
 
-    given JsonValueCodec[Int] = JsonCodecMaker.make
+    @nowarn given JsonValueCodec[ReplicatedList[String]] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
-    given Lattice[Int] = _ + _
-
-    val dm = new DataManager[Int](replicaId, registry)
+    val dm = new DataManager[ReplicatedList[String]](replicaId, registry)
 
     dm.disseminate()
-
 
     val ccm = new ContentConnectionManager(registry)
     ccm.autoreconnect()
