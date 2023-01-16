@@ -147,14 +147,24 @@ trait Twoversion extends Core {
 
     val token: Token = new Token()
 
-    val toCommit  = ListBuffer[ReSource]()
-    val observers = ListBuffer[Observation]()
+    val toCommit      = ListBuffer[ReSource]()
+    val observers     = ListBuffer[Observation]()
+    var commitStarted = false
 
     override def schedule(commitable: ReSource): Unit = { toCommit += commitable; () }
 
-    def observe(f: Observation): Unit = { observers += f; () }
+    def observe(f: Observation): Unit = {
+      if (commitStarted) throw new IllegalStateException(
+        s"Added observation to transaction (${this}), but it is too late in its lifecycle. " +
+        s"This may happen due to capturing a transaction reference such that it survives outside of its dynamic scope."
+      )
+      observers += f; ()
+    }
 
-    override def commitPhase(): Unit = toCommit.foreach { r => r.state.commit(r.commit) }
+    override def commitPhase(): Unit = {
+      commitStarted = true
+      toCommit.foreach { r => r.state.commit(r.commit) }
+    }
 
     override def rollbackPhase(): Unit = toCommit.foreach(r => r.state.release())
 
