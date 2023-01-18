@@ -1,7 +1,7 @@
 package kofre.datatypes.alternatives
 
 import kofre.base.{Bottom, DecomposeLattice, Lattice}
-import kofre.dotted.{DotFun, Dotted, DottedDecompose}
+import kofre.dotted.{DotFun, Dotted, DottedLattice}
 import kofre.syntax.OpsSyntaxHelper
 import kofre.time.{Dot, Dots}
 
@@ -19,9 +19,9 @@ object ResettableCounter {
 
   val zero: ResettableCounter = ResettableCounter(DotFun.empty)
 
-  given dottedLattice: DottedDecompose[ResettableCounter] =
+  given dottedLattice: DottedLattice[ResettableCounter] =
     given Lattice[Int] = math.max _
-    DottedDecompose.derived
+    DottedLattice.derived
 
   private def deltaState(
     df: Option[ResettableCounter] = None,

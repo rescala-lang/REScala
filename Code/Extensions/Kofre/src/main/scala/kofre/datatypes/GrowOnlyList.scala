@@ -3,7 +3,7 @@ package kofre.datatypes
 import kofre.base.{Bottom, DecomposeLattice}
 import kofre.datatypes.GrowOnlyList.Node
 import kofre.datatypes.{Epoche}
-import kofre.dotted.DottedDecompose
+import kofre.dotted.DottedLattice
 import kofre.syntax.{OpsSyntaxHelper}
 import kofre.datatypes.LastWriterWins.TimedVal
 
@@ -38,8 +38,8 @@ object GrowOnlyList {
   def empty[E]: GrowOnlyList[E] = GrowOnlyList(Map.empty)
 
   given bottomInstance[E]: Bottom[GrowOnlyList[E]] = Bottom.derived
-  given contextDecompose[E]: DottedDecompose[GrowOnlyList[E]] =
-    DottedDecompose.liftLattice
+  given contextDecompose[E]: DottedLattice[GrowOnlyList[E]] =
+    DottedLattice.liftLattice
 
   given decomposeLattice[E]: DecomposeLattice[GrowOnlyList[E]] =
     new DecomposeLattice[GrowOnlyList[E]] {

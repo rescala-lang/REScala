@@ -2,7 +2,7 @@ package kofre.datatypes
 
 import kofre.base.{Bottom, DecomposeLattice, Id}
 import kofre.datatypes.{GrowOnlyMap, ObserveRemoveMap}
-import kofre.dotted.{DotMap, Dotted, DottedDecompose, DottedLattice, HasDots}
+import kofre.dotted.{DotMap, Dotted, DottedLattice, HasDots}
 import kofre.syntax.{Named, OpsSyntaxHelper}
 import kofre.time.{Dot, Dots}
 
@@ -21,9 +21,9 @@ object ObserveRemoveMap {
 
   given bottom[K, V]: Bottom[ObserveRemoveMap[K, V]] = Bottom.derived
 
-  given contextDecompose[K, V: DottedDecompose: HasDots: Bottom]: DottedDecompose[ObserveRemoveMap[K, V]] =
+  given contextDecompose[K, V: DottedLattice: HasDots: Bottom]: DottedLattice[ObserveRemoveMap[K, V]] =
     import DotMap.contextDecompose
-    DottedDecompose.derived
+    DottedLattice.derived
 
   private def make[K, V](
       dm: DotMap[K, V] = DotMap.empty[K, V],
@@ -91,7 +91,7 @@ object ObserveRemoveMap {
       ).mutator
     }
 
-    def removeByValue(using PermCausalMutate, DottedDecompose[V], HasDots[V])(cond: Dotted[V] => Boolean): C = {
+    def removeByValue(using PermCausalMutate, DottedLattice[V], HasDots[V])(cond: Dotted[V] => Boolean): C = {
       val toRemove = current.inner.values.collect {
         case v if cond(Dotted(v, context)) => HasDots[V].dots(v)
       }.fold(Dots.empty)(_ union _)
@@ -101,7 +101,7 @@ object ObserveRemoveMap {
       ).mutator
     }
 
-    def clear(using PermCausalMutate, DottedDecompose[V], HasDots[V])(): C = {
+    def clear(using PermCausalMutate, DottedLattice[V], HasDots[V])(): C = {
       make(
         cc = current.inner.dots
       ).mutator

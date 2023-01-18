@@ -2,7 +2,7 @@ package kofre.datatypes
 
 import kofre.base.DecomposeLattice.*
 import kofre.base.{Bottom, DecomposeLattice, Id, Lattice}
-import kofre.dotted.DottedDecompose
+import kofre.dotted.DottedLattice
 import kofre.syntax.{OpsSyntaxHelper, PermQuery}
 
 case class GrowOnlyCounter(inner: Map[Id, Int]) derives Bottom
@@ -15,7 +15,7 @@ object GrowOnlyCounter {
     given Lattice[Int] = math.max _
     Lattice.derived
 
-  given contextDecompose: DottedDecompose[GrowOnlyCounter] = DottedDecompose.liftLattice
+  given contextDecompose: DottedLattice[GrowOnlyCounter] = DottedLattice.liftLattice
 
   extension [C](container: C)
     def growOnlyCounter: syntax[C] = syntax(container)

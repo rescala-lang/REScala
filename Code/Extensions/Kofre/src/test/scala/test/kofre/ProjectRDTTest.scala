@@ -2,7 +2,7 @@ package test.kofre
 
 import kofre.base.{Bottom, DecomposeLattice, Lattice}
 import kofre.datatypes.{CausalLastWriterWins, EnableWinsFlag, PosNegCounter}
-import kofre.dotted.{Dotted, DottedDecompose}
+import kofre.dotted.{Dotted, DottedLattice}
 import kofre.syntax.{DeltaBuffer, DeltaBufferDotted, Named, OpsSyntaxHelper}
 import test.kofre.Project.ProjectSyntax
 
@@ -10,7 +10,7 @@ case class Project(
     _name: CausalLastWriterWins[String],
     _max_hours: PosNegCounter,
     _account_name: CausalLastWriterWins[String],
-) derives DottedDecompose,
+) derives DottedLattice,
       Bottom
 
 object Project {

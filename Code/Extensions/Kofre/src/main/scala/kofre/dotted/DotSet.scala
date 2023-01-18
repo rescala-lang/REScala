@@ -18,7 +18,7 @@ object DotSet {
     override def dots(a: DotSet): Dots = a.repr
   }
 
-  given contextDecompose: DottedDecompose[DotSet] =
+  given contextDecompose: DottedLattice[DotSet] =
     new DottedLattice[DotSet] {
 
       override def mergePartial(left: Dotted[DotSet], right: Dotted[DotSet]): DotSet = {

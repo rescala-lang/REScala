@@ -1,12 +1,10 @@
 package kofre.datatypes.alternatives.rga
 
-import kofre.base.Id
-import kofre.base.{DecomposeLattice, Lattice}
-import kofre.time.Dots
+import kofre.base.{DecomposeLattice, Id, Lattice}
 import kofre.datatypes.{AddWinsSet, EnableWinsFlag}
-import kofre.datatypes.AddWinsSet
+import kofre.dotted.{Dotted, DottedLattice, HasDots}
 import kofre.syntax.{OpsSyntaxHelper, PermIdMutate}
-import kofre.dotted.{DottedDecompose, DottedLattice, Dotted, HasDots}
+import kofre.time.Dots
 
 import scala.collection.{AbstractIterator, immutable}
 
@@ -103,8 +101,8 @@ object DeltaSequence {
       }
   }
 
-  given deltaSequenceLattice[A]: DottedDecompose[DeltaSequence[A]] =
-    new DottedDecompose[DeltaSequence[A]] {
+  given deltaSequenceLattice[A]: DottedLattice[DeltaSequence[A]] =
+    new DottedLattice[DeltaSequence[A]] {
 
       override def decompose(a: Dotted[DeltaSequence[A]]): Iterable[Dotted[DeltaSequence[A]]] = Iterable(a)
 

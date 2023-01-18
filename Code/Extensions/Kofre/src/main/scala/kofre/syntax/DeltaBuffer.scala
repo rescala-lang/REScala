@@ -1,7 +1,7 @@
 package kofre.syntax
 
 import kofre.base.{Bottom, DecomposeLattice, Id}
-import kofre.dotted.{Dotted, DottedDecompose, DottedLattice}
+import kofre.dotted.{Dotted, DottedLattice}
 import kofre.syntax.{Named, PermCausal, PermCausalMutate, PermIdMutate, PermQuery}
 import kofre.time.Dots
 
@@ -33,7 +33,7 @@ object DeltaBuffer {
   def dotted[State](replicaID: Id, init: State): DeltaBuffer[Dotted[State]] =
     new DeltaBuffer(replicaID, Dotted(init), List())
 
-  given dottedPermissions[L: DottedDecompose]: PermCausalMutate[DeltaBuffer[Dotted[L]], L] = new {
+  given dottedPermissions[L: DottedLattice]: PermCausalMutate[DeltaBuffer[Dotted[L]], L] = new {
     override def query(c: DeltaBuffer[Dotted[L]]): L = c.state.store
     override def mutateContext(
         container: DeltaBuffer[Dotted[L]],

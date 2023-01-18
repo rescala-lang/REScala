@@ -1,7 +1,7 @@
 package kofre.datatypes
 
 import kofre.base.{Bottom, DecomposeLattice}
-import kofre.dotted.DottedDecompose
+import kofre.dotted.DottedLattice
 import kofre.syntax.OpsSyntaxHelper
 
 /** A TwoPhaseSet (Two-Phase Set) is a Delta CRDT modeling a set.
@@ -18,7 +18,7 @@ object TwoPhaseSet {
   given bottom[E]: Bottom[TwoPhaseSet[E]] with { override def empty: TwoPhaseSet[E] = TwoPhaseSet.empty }
 
   given decomposeLattice[E]: DecomposeLattice[TwoPhaseSet[E]] = DecomposeLattice.derived
-  given contextDecompose[E]: DottedDecompose[TwoPhaseSet[E]]  = DottedDecompose.liftLattice
+  given contextDecompose[E]: DottedLattice[TwoPhaseSet[E]]  = DottedLattice.liftLattice
 
   extension [C, E](container: C)
     def twoPhaseSet: syntax[C, E] = syntax(container)

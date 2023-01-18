@@ -1,13 +1,12 @@
 package test.kofre
 
-import kofre.base.DecomposeLattice
-import kofre.time.{ArrayRanges, Dots, Dot}
-import kofre.dotted.DottedDecompose.*
-import kofre.dotted.{DottedDecompose, DottedLattice, DotFun, DotMap, DotSet, Dotted}
+import kofre.base.{DecomposeLattice, Lattice}
+import kofre.dotted.DottedLattice.*
+import kofre.dotted.{DotFun, DotMap, DotSet, Dotted, DottedLattice}
+import kofre.time.{ArrayRanges, Dot, Dots}
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 import test.kofre.DataGenerator.*
-import kofre.base.Lattice
 
 import scala.annotation.tailrec
 
@@ -138,7 +137,7 @@ class DotMapTest extends munit.ScalaCheckSuite {
       val cc = dm.dots union deleted
 
       val decomposed: Iterable[Dotted[TestedMap]] =
-        DottedDecompose[TestedMap].decompose(Dotted(dm, (cc)))
+        DottedLattice[TestedMap].decompose(Dotted(dm, (cc)))
       val wc: Dotted[TestedMap] =
         decomposed.foldLeft(Dotted(DotMap.empty[Int, DotSet], Dots.empty)) {
           case (Dotted(dmA, ccA), Dotted(dmB, ccB)) =>

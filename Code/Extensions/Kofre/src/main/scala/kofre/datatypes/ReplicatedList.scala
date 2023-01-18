@@ -2,10 +2,10 @@ package kofre.datatypes
 
 import kofre.base.{Bottom, DecomposeLattice}
 import kofre.datatypes.Epoche
-import kofre.dotted.{DotFun, Dotted, DottedDecompose, DottedLattice}
+import kofre.datatypes.LastWriterWins.TimedVal
+import kofre.dotted.{DotFun, Dotted, DottedLattice}
 import kofre.syntax.{Named, OpsSyntaxHelper, PermIdMutate, PermMutate}
 import kofre.time.{Dot, Dots}
-import kofre.datatypes.LastWriterWins.TimedVal
 
 import scala.math.Ordering.Implicits.infixOrderingOps
 
@@ -34,7 +34,7 @@ object ReplicatedList {
 
   def empty[E]: ReplicatedList[E] = kofre.datatypes.ReplicatedList(Epoche.empty, DotFun.empty)
 
-  given rgaContext[E]: DottedDecompose[ReplicatedList[E]] = DottedDecompose.derived[ReplicatedList[E]]
+  given rgaContext[E]: DottedLattice[ReplicatedList[E]] = DottedLattice.derived[ReplicatedList[E]]
 
   given bottom[E]: Bottom[ReplicatedList[E]] = new:
     override def empty: ReplicatedList[E] = ReplicatedList.empty
@@ -64,7 +64,7 @@ object ReplicatedList {
   }
 
   private class DeltaStateFactory[E] {
-    given DottedDecompose[Epoche[GrowOnlyList[Dot]]] = DottedDecompose.liftLattice
+    given DottedLattice[Epoche[GrowOnlyList[Dot]]] = DottedLattice.liftLattice
 
     def make(
         epoche: Epoche[GrowOnlyList[Dot]] = empty._1,

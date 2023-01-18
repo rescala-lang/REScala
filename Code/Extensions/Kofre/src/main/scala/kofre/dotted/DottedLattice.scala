@@ -63,10 +63,10 @@ object DottedLattice {
   inline def derived[T <: Product](using pm: Mirror.ProductOf[T]): DottedLattice[T] = {
     val lattices: Tuple = summonAll[Tuple.Map[pm.MirroredElemTypes, DottedLattice]]
 //    val bottoms: Tuple  = summonAll[Tuple.Map[pm.MirroredElemTypes, Bottom]]
-    new ProductDottedDecompose[T](lattices, null, pm, valueOf[pm.MirroredLabel])
+    new ProductDottedLattice[T](lattices, null, pm, valueOf[pm.MirroredLabel])
   }
 
-  class ProductDottedDecompose[T <: Product](lattices: Tuple, bottoms: Tuple, pm: Mirror.ProductOf[T], label: String)
+  class ProductDottedLattice[T <: Product](lattices: Tuple, bottoms: Tuple, pm: Mirror.ProductOf[T], label: String)
       extends DottedLattice[T] {
 
     override def toString: String = s"ProductDecomposeLattice[${label}]"

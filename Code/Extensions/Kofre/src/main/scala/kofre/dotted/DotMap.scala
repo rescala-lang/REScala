@@ -24,8 +24,8 @@ object DotMap {
   /** This essentially lifts the [[DottedLattice]] to a [[DotMap]].
     * Recursively merging values present in both maps with the given context.
     */
-  given contextDecompose[K, V: DottedDecompose: HasDots: Bottom]: DottedDecompose[DotMap[K, V]] =
-    new DottedDecompose[DotMap[K, V]] {
+  given contextDecompose[K, V: DottedLattice: HasDots: Bottom]: DottedLattice[DotMap[K, V]] =
+    new DottedLattice[DotMap[K, V]] {
 
       override def mergePartial(left: Dotted[DotMap[K, V]], right: Dotted[DotMap[K, V]]): DotMap[K, V] = {
         DotMap((left.store.repr.keySet union right.store.repr.keySet).flatMap { key =>
@@ -53,7 +53,7 @@ object DotMap {
           k <- state.store.keys
           Dotted(atomicV, atomicCC) <- {
             val v = state.store.getOrElse(k, Bottom.empty[V])
-            DottedDecompose[V].decompose(Dotted(v, HasDots[V].dots(v)))
+            DottedLattice[V].decompose(Dotted(v, HasDots[V].dots(v)))
           }
         } yield Dotted(DotMap(Map(k -> atomicV)), atomicCC)
 

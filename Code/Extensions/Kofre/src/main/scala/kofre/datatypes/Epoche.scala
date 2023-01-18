@@ -1,7 +1,7 @@
 package kofre.datatypes
 
 import kofre.base.{Bottom, DecomposeLattice, Id, Time}
-import kofre.dotted.DottedDecompose
+import kofre.dotted.DottedLattice
 import kofre.syntax.{OpsSyntaxHelper, OpsTypes, PermMutate, PermQuery}
 
 case class Epoche[E](counter: Time, value: E)
@@ -10,7 +10,7 @@ object Epoche {
 
   def empty[E: Bottom]: Epoche[E] = Epoche(0, Bottom[E].empty)
 
-  given contextDecompose[E: DecomposeLattice]: DottedDecompose[Epoche[E]] = DottedDecompose.liftLattice
+  given contextDecompose[E: DecomposeLattice]: DottedLattice[Epoche[E]] = DottedLattice.liftLattice
 
   given bottom[E: Bottom]: Bottom[Epoche[E]] with { override def empty: Epoche[E] = Epoche.empty }
 

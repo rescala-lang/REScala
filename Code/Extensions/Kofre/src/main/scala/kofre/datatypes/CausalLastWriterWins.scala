@@ -1,10 +1,10 @@
 package kofre.datatypes
 
 import kofre.base.{Bottom, DecomposeLattice}
-import kofre.datatypes.MultiVersionRegister
-import kofre.dotted.{DotFun, Dotted, DottedDecompose, DottedLattice}
-import kofre.syntax.{OpsSyntaxHelper, PermIdMutate}
 import kofre.datatypes.LastWriterWins.TimedVal
+import kofre.datatypes.MultiVersionRegister
+import kofre.dotted.{DotFun, Dotted, DottedLattice}
+import kofre.syntax.{OpsSyntaxHelper, PermIdMutate}
 
 /** An LWW (Last Writer Wins) is a Delta CRDT modeling a register.
   *
@@ -15,8 +15,8 @@ case class CausalLastWriterWins[A](repr: MultiVersionRegister[TimedVal[A]])
 object CausalLastWriterWins {
   def empty[A]: CausalLastWriterWins[A] = CausalLastWriterWins(MultiVersionRegister.empty)
 
-  given bottomInstance[A]: Bottom[CausalLastWriterWins[A]]           = Bottom.derived
-  given dottedDecompose[A]: DottedDecompose[CausalLastWriterWins[A]] = DottedDecompose.derived
+  given bottomInstance[A]: Bottom[CausalLastWriterWins[A]]       = Bottom.derived
+  given dottedLattice[A]: DottedLattice[CausalLastWriterWins[A]] = DottedLattice.derived
 
   extension [C, A](container: C)
     def causalLastWriterWins: syntax[C, A] = syntax(container)

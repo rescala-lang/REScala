@@ -1,7 +1,7 @@
 package kofre.datatypes
 
 import kofre.base.{Bottom, DecomposeLattice, Id}
-import kofre.dotted.DottedDecompose
+import kofre.dotted.DottedLattice
 import kofre.syntax.OpsSyntaxHelper
 
 case class PosNegCounter(pos: GrowOnlyCounter, neg: GrowOnlyCounter) derives DecomposeLattice, Bottom
@@ -14,7 +14,7 @@ object PosNegCounter {
 
   val zero: PosNegCounter = PosNegCounter(GrowOnlyCounter.zero, GrowOnlyCounter.zero)
 
-  given contextDecompose: DottedDecompose[PosNegCounter] = DottedDecompose.liftLattice
+  given contextDecompose: DottedLattice[PosNegCounter] = DottedLattice.liftLattice
 
   extension [C](container: C)
     def posNegCounter: syntax[C] = syntax(container)
