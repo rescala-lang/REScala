@@ -1,7 +1,7 @@
 package kofre.dotted
 
-import kofre.time.{Dot, Dots}
 import kofre.datatypes.EnableWinsFlag
+import kofre.time.{Dot, Dots}
 
 case class DotSet(repr: Dots) {
   def dots: Dots = repr

@@ -2,18 +2,12 @@ package kofre.dotted
 
 import kofre.base.Lattice.Operators
 import kofre.base.{Bottom, DecomposeLattice, Lattice}
-import kofre.time.{Dot, Dots}
-
-import kofre.base.Lattice.Operators
-import kofre.base.{Bottom, DecomposeLattice, Lattice}
 import kofre.datatypes.ReplicatedList
 import kofre.time.{Dot, Dots}
 
-import scala.annotation.implicitNotFound
+import scala.annotation.{implicitNotFound, targetName}
 import scala.compiletime.{erasedValue, summonAll, summonInline}
 import scala.deriving.Mirror
-
-import scala.annotation.targetName
 
 type DottedDecompose[A] = DottedLattice[A]
 val DottedDecompose: DottedLattice.type = DottedLattice
