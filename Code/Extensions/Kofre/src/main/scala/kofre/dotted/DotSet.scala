@@ -1,7 +1,6 @@
 package kofre.dotted
 
 import kofre.time.{Dot, Dots}
-import kofre.dotted.DottedDecompose.FromConlattice
 import kofre.datatypes.EnableWinsFlag
 
 case class DotSet(repr: Dots) {

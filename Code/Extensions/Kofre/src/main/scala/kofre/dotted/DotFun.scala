@@ -1,7 +1,6 @@
 package kofre.dotted
 
 import kofre.base.{Bottom, DecomposeLattice, Lattice}
-import kofre.dotted.DottedDecompose.FromConlattice
 import kofre.time.{Dot, Dots}
 
 import scala.annotation.targetName

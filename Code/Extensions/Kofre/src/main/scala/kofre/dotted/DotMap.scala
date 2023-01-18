@@ -2,7 +2,6 @@ package kofre.dotted
 
 import kofre.base.Bottom
 import kofre.time.Dots
-import kofre.dotted.DottedDecompose.FromConlattice
 
 case class DotMap[K, V](repr: Map[K, V]) {
   def dots(using ccv: HasDots[V]): Dots =
