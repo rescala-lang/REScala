@@ -4,7 +4,19 @@ import kofre.base.Lattice.Operators
 import kofre.base.{Bottom, DecomposeLattice, Lattice}
 import kofre.time.{Dot, Dots}
 
+import kofre.base.Lattice.Operators
+import kofre.base.{Bottom, DecomposeLattice, Lattice}
+import kofre.datatypes.ReplicatedList
+import kofre.time.{Dot, Dots}
+
+import scala.annotation.implicitNotFound
+import scala.compiletime.{erasedValue, summonAll, summonInline}
+import scala.deriving.Mirror
+
 import scala.annotation.targetName
+
+type DottedDecompose[A] = DottedLattice[A]
+val DottedDecompose: DottedLattice.type = DottedLattice
 
 /** The delta CRDT paper introduces a lot of individual abstractions
   * that all do a lot of cool stuff, but often not separated into their pieces.
@@ -40,9 +52,82 @@ trait DottedLattice[A] extends Lattice[Dotted[A]] {
   extension (left: Dotted[A])
     @targetName("mergePartialExtension")
     def mergePartial(right: Dotted[A]): A = this.mergePartial(left, right)
+
+  def contextbimap[B](to: Dotted[A] => Dotted[B], from: Dotted[B] => Dotted[A]): DottedLattice[B] =
+    new DottedLattice[B] {
+      override def lteq(left: Dotted[B], right: Dotted[B]): Boolean = DottedLattice.this.lteq(from(left), from(right))
+      override def decompose(a: Dotted[B]): Iterable[Dotted[B]]     = DottedLattice.this.decompose(from(a)).map(to)
+      override def mergePartial(left: Dotted[B], right: Dotted[B]): B =
+        to(Dotted(DottedLattice.this.mergePartial(from(left), from(right)))).store
+    }
 }
 
 object DottedLattice {
   def fromLattice[A: Lattice]: DottedLattice[A] = new DottedLattice[A]:
     override def mergePartial(left: Dotted[A], right: Dotted[A]): A = left.store merge right.store
+
+  def apply[A](implicit ds: DottedLattice[A]): DottedLattice[A] = ds
+
+  inline def derived[T <: Product](using pm: Mirror.ProductOf[T]): DottedLattice[T] = {
+    val lattices: Tuple = summonAll[Tuple.Map[pm.MirroredElemTypes, DottedLattice]]
+//    val bottoms: Tuple  = summonAll[Tuple.Map[pm.MirroredElemTypes, Bottom]]
+    new ProductDottedDecompose[T](lattices, null, pm, valueOf[pm.MirroredLabel])
+  }
+
+  class ProductDottedDecompose[T <: Product](lattices: Tuple, bottoms: Tuple, pm: Mirror.ProductOf[T], label: String)
+      extends DottedLattice[T] {
+
+    override def toString: String = s"ProductDecomposeLattice[${label}]"
+
+    private def lat(i: Int): DottedLattice[Any] = lattices.productElement(i).asInstanceOf[DottedLattice[Any]]
+    private def bot(i: Int): Bottom[Any]        = bottoms.productElement(i).asInstanceOf[Bottom[Any]]
+
+    override def mergePartial(left: Dotted[T], right: Dotted[T]): T =
+      pm.fromProduct(new Product {
+        def canEqual(that: Any): Boolean = false
+        def productArity: Int            = lattices.productArity
+        def productElement(i: Int): Any =
+          lat(i).mergePartial(left.map(_.productElement(i)), right.map(_.productElement(i)))
+      })
+
+    override def decompose(a: Dotted[T]): Iterable[Dotted[T]] = List(a)
+    // // TODO: figure out what decompose means for dotted values
+    // Range(0, lattices.productArity).flatMap { j =>
+    //  lat(j).decompose(a.map(_.productElement(j))).map {
+    //    _.map { elem =>
+    //      pm.fromProduct(new Product {
+    //        def canEqual(that: Any): Boolean = false
+    //        def productArity: Int            = lattices.productArity
+    //        def productElement(i: Int): Any  = if i == j then elem else bot(i).empty
+    //      })
+    //    }
+    //  }
+    // }
+
+    override def lteq(left: Dotted[T], right: Dotted[T]): Boolean =
+      Range(0, lattices.productArity).forall { i =>
+        lat(i).lteq(left.map(_.productElement(i)), right.map(_.productElement(i)))
+      }
+  }
+
+  abstract class FromConlattice[A](wcm: DottedLattice[A]) extends DottedLattice[A] {
+    export wcm.mergePartial
+  }
+
+  /** Enables the use of a [[kofre.base.DecomposeLattice]] as a [[DottedLattice]].
+    * Beware that this works for most datastructures due to automatic derivation of the required instance,
+    * but will likely not have the inteded semantics if the datastructure does use any dots inside.
+    */
+  def liftDecomposeLattice[A: DecomposeLattice]: DottedLattice[A] =
+    new DottedLattice[A] {
+      override def mergePartial(left: Dotted[A], right: Dotted[A]): A =
+        Lattice[A].merge(left.store, right.store)
+
+      override def lteq(left: Dotted[A], right: Dotted[A]): Boolean =
+        DecomposeLattice[A].lteq(left.store, right.store)
+
+      override def decompose(state: Dotted[A]): Iterable[Dotted[A]] = {
+        DecomposeLattice[A].decompose(state.store).map(Dotted(_, Dots.empty))
+      }
+    }
 }

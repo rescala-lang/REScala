@@ -19,18 +19,15 @@ object DotSet {
     override def dots(a: DotSet): Dots = a.repr
   }
 
-  /** This essentially tracks the currently present dots, and all dots */
-  given dottedLattice: DottedLattice[DotSet] with {
-    override def mergePartial(left: Dotted[DotSet], right: Dotted[DotSet]): DotSet = {
-      val fromLeft  = left.store.repr subtract right.context
-      val fromRight = right.store.repr.subtract(left.context subtract left.store.repr)
-
-      DotSet(fromLeft union fromRight)
-    }
-  }
-
   given contextDecompose: DottedDecompose[DotSet] =
-    new FromConlattice[DotSet](dottedLattice) {
+    new DottedLattice[DotSet] {
+
+      override def mergePartial(left: Dotted[DotSet], right: Dotted[DotSet]): DotSet = {
+        val fromLeft  = left.store.repr subtract right.context
+        val fromRight = right.store.repr.subtract(left.context subtract left.store.repr)
+
+        DotSet(fromLeft union fromRight)
+      }
 
       override def lteq(left: Dotted[DotSet], right: Dotted[DotSet]): Boolean = {
         val firstCondition = left.context.forall(right.context.contains)

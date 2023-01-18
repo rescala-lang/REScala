@@ -24,26 +24,29 @@ object DotFun {
 
   def empty[A]: DotFun[A] = DotFun(Map.empty)
 
-  given perDotLattice[A: Lattice]: DottedLattice[DotFun[A]] = (left, right) => {
-    val fromLeft = left.store.store.filter { case (dot, _) => !right.context.contains(dot) }
-
-    DotFun(right.store.store.foldLeft(fromLeft) {
-      case (m, (dot, r)) =>
-        left.store.store.get(dot) match {
-          case None =>
-            if (left.context.contains(dot)) m
-            else m.updated(dot, r)
-          case Some(l) => m.updated(dot, Lattice[A].merge(l, r))
-        }
-    })
-  }
-
   given dotStore[V]: HasDots[DotFun[V]] with {
     override def dots(dotStore: DotFun[V]): Dots = Dots.from(dotStore.store.keySet)
   }
 
   given perDotDecompose[A: DecomposeLattice]: DottedDecompose[DotFun[A]] =
-    new FromConlattice[DotFun[A]](perDotLattice[A]) {
+    new DottedLattice[DotFun[A]] {
+
+      /** Partial merging combines the stored values, but ignores the context.
+        * Thus enabling nested merging of values, without merging context multiple times.
+        */
+      override def mergePartial(left: Dotted[DotFun[A]], right: Dotted[DotFun[A]]): DotFun[A] = {
+        val fromLeft = left.store.store.filter { case (dot, _) => !right.context.contains(dot) }
+        DotFun(right.store.store.foldLeft(fromLeft) {
+          case (m, (dot, r)) =>
+            left.store.store.get(dot) match {
+              case None =>
+                if (left.context.contains(dot)) m
+                else m.updated(dot, r)
+              case Some(l) => m.updated(dot, Lattice[A].merge(l, r))
+            }
+        })
+      }
+
       private def dots(a: DotFun[A]): Dots = dotStore.dots(a)
 
       override def lteq(left: Dotted[DotFun[A]], right: Dotted[DotFun[A]]): Boolean = {

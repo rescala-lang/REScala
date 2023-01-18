@@ -25,19 +25,17 @@ object DotMap {
   /** This essentially lifts the [[DottedLattice]] to a [[DotMap]].
     * Recursively merging values present in both maps with the given context.
     */
-  given dottedLattice[K, V: DottedLattice: Bottom]: DottedLattice[DotMap[K, V]] with {
-    override def mergePartial(left: Dotted[DotMap[K, V]], right: Dotted[DotMap[K, V]]): DotMap[K, V] = {
-      DotMap((left.store.repr.keySet union right.store.repr.keySet).flatMap { key =>
-        val leftCausalStore  = left.map(_.getOrElse(key, Bottom.empty[V]))
-        val rightCausalStore = right.map(_.getOrElse(key, Bottom.empty[V]))
-        val res              = leftCausalStore mergePartial rightCausalStore
-        if Bottom.empty[V] == res then None else Some(key -> res)
-      }.toMap)
-    }
-  }
-
   given contextDecompose[K, V: DottedDecompose: HasDots: Bottom]: DottedDecompose[DotMap[K, V]] =
-    new FromConlattice[DotMap[K, V]](dottedLattice) {
+    new DottedDecompose[DotMap[K, V]] {
+
+      override def mergePartial(left: Dotted[DotMap[K, V]], right: Dotted[DotMap[K, V]]): DotMap[K, V] = {
+        DotMap((left.store.repr.keySet union right.store.repr.keySet).flatMap { key =>
+          val leftCausalStore  = left.map(_.getOrElse(key, Bottom.empty[V]))
+          val rightCausalStore = right.map(_.getOrElse(key, Bottom.empty[V]))
+          val res              = leftCausalStore mergePartial rightCausalStore
+          if Bottom.empty[V] == res then None else Some(key -> res)
+        }.toMap)
+      }
 
       override def lteq(left: Dotted[DotMap[K, V]], right: Dotted[DotMap[K, V]]): Boolean = {
         def firstCondition = (left.context subtract right.context).isEmpty

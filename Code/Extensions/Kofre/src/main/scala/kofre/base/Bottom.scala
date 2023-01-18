@@ -1,6 +1,6 @@
 package kofre.base
 
-import kofre.dotted.{DotFun, DotMap, DotSet, Dotted, DottedDecompose, HasDots}
+import kofre.dotted.{DotFun, DotMap, DotSet, Dotted, HasDots}
 import kofre.time.Dots
 
 import scala.deriving.Mirror
