@@ -15,7 +15,7 @@ object GrowOnlyCounter {
     given Lattice[Int] = math.max _
     Lattice.derived
 
-  given contextDecompose: DottedDecompose[GrowOnlyCounter] = DottedDecompose.liftDecomposeLattice
+  given contextDecompose: DottedDecompose[GrowOnlyCounter] = DottedDecompose.liftLattice
 
   extension [C](container: C)
     def growOnlyCounter: syntax[C] = syntax(container)

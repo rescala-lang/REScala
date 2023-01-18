@@ -63,8 +63,6 @@ trait DottedLattice[A] extends Lattice[Dotted[A]] {
 }
 
 object DottedLattice {
-  def fromLattice[A: Lattice]: DottedLattice[A] = new DottedLattice[A]:
-    override def mergePartial(left: Dotted[A], right: Dotted[A]): A = left.store merge right.store
 
   def apply[A](implicit ds: DottedLattice[A]): DottedLattice[A] = ds
 
@@ -114,11 +112,11 @@ object DottedLattice {
     export wcm.mergePartial
   }
 
-  /** Enables the use of a [[kofre.base.DecomposeLattice]] as a [[DottedLattice]].
+  /** Enables the use of a [[kofre.base.Lattice]] as a [[DottedLattice]].
     * Beware that this works for most datastructures due to automatic derivation of the required instance,
     * but will likely not have the inteded semantics if the datastructure does use any dots inside.
     */
-  def liftDecomposeLattice[A: DecomposeLattice]: DottedLattice[A] =
+  def liftLattice[A: Lattice]: DottedLattice[A] =
     new DottedLattice[A] {
       override def mergePartial(left: Dotted[A], right: Dotted[A]): A =
         Lattice[A].merge(left.store, right.store)

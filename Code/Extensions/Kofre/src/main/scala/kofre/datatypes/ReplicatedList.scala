@@ -64,7 +64,7 @@ object ReplicatedList {
   }
 
   private class DeltaStateFactory[E] {
-    given DottedDecompose[Epoche[GrowOnlyList[Dot]]] = DottedDecompose.liftDecomposeLattice
+    given DottedDecompose[Epoche[GrowOnlyList[Dot]]] = DottedDecompose.liftLattice
 
     def make(
         epoche: Epoche[GrowOnlyList[Dot]] = empty._1,

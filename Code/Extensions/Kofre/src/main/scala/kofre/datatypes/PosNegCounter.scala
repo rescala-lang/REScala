@@ -14,7 +14,7 @@ object PosNegCounter {
 
   val zero: PosNegCounter = PosNegCounter(GrowOnlyCounter.zero, GrowOnlyCounter.zero)
 
-  given contextDecompose: DottedDecompose[PosNegCounter] = DottedDecompose.liftDecomposeLattice
+  given contextDecompose: DottedDecompose[PosNegCounter] = DottedDecompose.liftLattice
 
   extension [C](container: C)
     def posNegCounter: syntax[C] = syntax(container)

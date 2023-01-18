@@ -39,7 +39,7 @@ object GrowOnlyList {
 
   given bottomInstance[E]: Bottom[GrowOnlyList[E]] = Bottom.derived
   given contextDecompose[E]: DottedDecompose[GrowOnlyList[E]] =
-    DottedDecompose.liftDecomposeLattice
+    DottedDecompose.liftLattice
 
   given decomposeLattice[E]: DecomposeLattice[GrowOnlyList[E]] =
     new DecomposeLattice[GrowOnlyList[E]] {

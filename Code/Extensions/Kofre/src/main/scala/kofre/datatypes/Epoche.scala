@@ -10,7 +10,7 @@ object Epoche {
 
   def empty[E: Bottom]: Epoche[E] = Epoche(0, Bottom[E].empty)
 
-  given contextDecompose[E: DecomposeLattice]: DottedDecompose[Epoche[E]] = DottedDecompose.liftDecomposeLattice
+  given contextDecompose[E: DecomposeLattice]: DottedDecompose[Epoche[E]] = DottedDecompose.liftLattice
 
   given bottom[E: Bottom]: Bottom[Epoche[E]] with { override def empty: Epoche[E] = Epoche.empty }
 
