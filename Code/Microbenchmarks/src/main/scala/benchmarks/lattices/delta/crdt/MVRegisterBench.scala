@@ -1,5 +1,6 @@
 package benchmarks.lattices.delta.crdt
 
+import kofre.base.Lattice
 import kofre.datatypes.MultiVersionRegister
 import kofre.dotted.Dotted
 import kofre.syntax.{DeltaBuffer, DeltaBufferDotted}
@@ -19,6 +20,7 @@ class MVRegisterBench {
   @Param(Array("0", "1", "10", "100", "1000"))
   var numWrites: Int = _
 
+  given Lattice[Int] = math.max _
   var reg: DeltaBufferDotted[MultiVersionRegister[Int]] = _
 
   @Setup

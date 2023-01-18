@@ -108,7 +108,7 @@ object DeltaAddWinsLastWriterWinsMap {
         if left._2.timestamp <= right._2.timestamp then right
         else left
     given DottedLattice[DotFun[(V, LastWriterWins[Instant, Id])]] =
-      DotFun.perDotLattice[(V, LastWriterWins[Instant, Id])](using timestampedValueLattice)
+      DotFun.dottedLattice[(V, LastWriterWins[Instant, Id])](using timestampedValueLattice)
     DotMap.dottedLattice[K, DotFun[(V, LastWriterWins[Instant, Id])]]
   }
 

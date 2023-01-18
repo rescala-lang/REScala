@@ -24,7 +24,7 @@ object DotMap {
   /** This essentially lifts the [[DottedLattice]] to a [[DotMap]].
     * Recursively merging values present in both maps with the given context.
     */
-  given contextDecompose[K, V: DottedLattice: HasDots: Bottom]: DottedLattice[DotMap[K, V]] =
+  given dottedLattice[K, V: DottedLattice: HasDots: Bottom]: DottedLattice[DotMap[K, V]] =
     new DottedLattice[DotMap[K, V]] {
 
       override def mergePartial(left: Dotted[DotMap[K, V]], right: Dotted[DotMap[K, V]]): DotMap[K, V] = {

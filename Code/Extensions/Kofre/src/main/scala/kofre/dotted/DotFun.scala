@@ -27,7 +27,7 @@ object DotFun {
     override def dots(dotStore: DotFun[V]): Dots = Dots.from(dotStore.store.keySet)
   }
 
-  given perDotDecompose[A: Lattice]: DottedLattice[DotFun[A]] =
+  given dottedLattice[A: Lattice]: DottedLattice[DotFun[A]] =
     new DottedLattice[DotFun[A]] {
 
       /** Partial merging combines the stored values, but ignores the context.

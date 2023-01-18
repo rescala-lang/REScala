@@ -21,7 +21,7 @@ import java.net.http.{HttpClient, HttpRequest, WebSocket}
 import java.net.http.HttpClient.{Redirect, Version}
 import java.net.http.HttpResponse.BodyHandlers
 import java.time.Duration
-import de.rmgk.delay.*
+import de.rmgk.delay.{extensions, *}
 
 import java.net.http.WebSocket.Listener
 import java.nio.ByteBuffer

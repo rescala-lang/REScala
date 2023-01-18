@@ -22,7 +22,7 @@ object ObserveRemoveMap {
   given bottom[K, V]: Bottom[ObserveRemoveMap[K, V]] = Bottom.derived
 
   given contextDecompose[K, V: DottedLattice: HasDots: Bottom]: DottedLattice[ObserveRemoveMap[K, V]] =
-    import DotMap.contextDecompose
+    import DotMap.dottedLattice
     DottedLattice.derived
 
   private def make[K, V](

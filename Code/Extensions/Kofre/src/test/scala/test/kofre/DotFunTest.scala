@@ -86,9 +86,9 @@ class DotFunTest extends munit.ScalaCheckSuite {
       val ccB = dfB.dots union deletedB
 
       assert(
-        DotFun.perDotDecompose[Int].lteq(Dotted(dfA, ccA), Dotted(dfA, ccA)),
+        DotFun.dottedLattice[Int].lteq(Dotted(dfA, ccA), Dotted(dfA, ccA)),
         s"DotFun.leq should be reflexive, but returns false when applied to ($dfA, $ccA, $dfA, $ccA)"
-      )
+        )
 
       val Dotted(dfMerged, ccMerged) =
         Lattice[Dotted[DotFun[Int]]].merge(
@@ -97,13 +97,13 @@ class DotFunTest extends munit.ScalaCheckSuite {
         )
 
       assert(
-        DotFun.perDotDecompose[Int].lteq(Dotted(dfA, (ccA)), Dotted(dfMerged, ccMerged)),
+        DotFun.dottedLattice[Int].lteq(Dotted(dfA, (ccA)), Dotted(dfMerged, ccMerged)),
         s"The result of DotFun.merge should be larger than its lhs, but DotFun.leq returns false when applied to ($dfA, $ccA, $dfMerged, $ccMerged)"
-      )
+        )
       assert(
-        DotFun.perDotDecompose[Int].lteq(Dotted(dfB, (ccB)), Dotted(dfMerged, ccMerged)),
+        DotFun.dottedLattice[Int].lteq(Dotted(dfB, (ccB)), Dotted(dfMerged, ccMerged)),
         s"The result of DotFun.merge should be larger than its rhs, but DotFun.leq returns false when applied to ($dfB, $ccB, $dfMerged, $ccMerged)"
-      )
+        )
     }
   }
 
@@ -127,7 +127,7 @@ class DotFunTest extends munit.ScalaCheckSuite {
 
       val withContext = Dotted(df, cc)
 
-      val decomposed: Iterable[Dotted[DotFun[Int]]] = DotFun.perDotDecompose.decompose(withContext)
+      val decomposed: Iterable[Dotted[DotFun[Int]]] = DotFun.dottedLattice.decompose(withContext)
 
       decomposed.foreach { dec =>
         assert(dec <= withContext)

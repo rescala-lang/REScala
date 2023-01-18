@@ -23,7 +23,7 @@ object GrowOnlyMap {
 
   given lattice[K, V: Lattice]: Lattice[GrowOnlyMap[K, V]] = Lattice.mapLattice
   given contextLattice[K, V: DottedLattice: HasDots: Bottom]: DottedLattice[GrowOnlyMap[K, V]] =
-    DotMap.contextDecompose[K, V].contextbimap[Map[K, V]](_.map(_.repr), _.map(DotMap.apply))
+    DotMap.dottedLattice[K, V].contextbimap[Map[K, V]](_.map(_.repr), _.map(DotMap.apply))
 
   extension [C, K, V](container: C)
     def growOnlyMap: syntax[C, K, V] = syntax(container)
