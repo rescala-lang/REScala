@@ -14,13 +14,15 @@ object Bottom {
   def empty[A](using bottom: Bottom[A]): A         = bottom.empty
   def apply[A](using bottom: Bottom[A]): Bottom[A] = bottom
 
-  given mapBottom[K, V]: Bottom[Map[K, V]] with {
-    override def empty: Map[K, V] = Map.empty
+  private[this] object mapBottomInstance extends Bottom[Map[Nothing, Nothing]] {
+    override def empty: Map[Nothing, Nothing] = Map.empty
   }
+  given mapBottom[K, V]: Bottom[Map[K, V]] = mapBottomInstance.asInstanceOf
 
-  given setBottom[V]: Bottom[Set[V]] with {
-    override def empty: Set[V] = Set.empty
+  private[this] object setBottomInstance extends Bottom[Set[Nothing]] {
+    override val empty: Set[Nothing] = Set.empty
   }
+  given setBottom[V]: Bottom[Set[V]] = setBottomInstance.asInstanceOf
 
   given intMaxBottom: Bottom[Int] with { override def empty: Int = Int.MinValue }
 
