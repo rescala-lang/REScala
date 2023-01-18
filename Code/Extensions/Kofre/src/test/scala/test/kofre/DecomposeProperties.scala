@@ -12,6 +12,7 @@ import test.kofre.DataGenerator.{*, given}
 class GrowDecomposes   extends DecomposeProperties[GrowOnlyCounter]
 class PosNegDecomposes extends DecomposeProperties[PosNegCounter]
 class TupleDecomposes  extends DecomposeProperties[(Set[Int], GrowOnlyCounter)]
+class MultiValueDecomposes  extends DecomposeProperties[MultiValueRegister[Int]]
 
 abstract class DecomposeProperties[A: Arbitrary: DecomposeLattice: Bottom] extends munit.ScalaCheckSuite {
 
@@ -23,13 +24,13 @@ abstract class DecomposeProperties[A: Arbitrary: DecomposeLattice: Bottom] exten
       val empty = Bottom[A].empty
 
       decomposed.foreach { d =>
-        assert(Lattice[A].lteq(d, counter), "decompose not smaller")
+        assert(Lattice[A].lteq(d, counter), s"decompose not smaller: »$d« <= »$counter«\nmerge: ${d merge counter}")
         assertNotEquals(empty, d, "decomposed result was empty")
       }
 
       val merged = counter.decomposed.foldLeft(empty)(Lattice.merge)
 
-      assertEquals(merged, counter, "decompose does not recompose")
+      assertEquals(merged, Lattice.normalize(counter), "decompose does not recompose")
 
     }
   }

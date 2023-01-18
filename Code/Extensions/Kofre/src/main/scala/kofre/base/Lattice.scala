@@ -27,8 +27,8 @@ trait Lattice[A] {
 
   extension (left: A) {
 
-    /** Lattice order is derived from merge, but should be overridden for efficiency */
-    def <=(right: A): Boolean = this.merge(left, right) == right
+    /** Lattice order is derived from merge, but should be overridden for efficiency. */
+    def <=(right: A): Boolean = this.merge(left, right) == Lattice.normalize(right)(using this)
     @targetName("mergeInfix")
     def merge(right: A): A = this.merge(left, right)
   }
