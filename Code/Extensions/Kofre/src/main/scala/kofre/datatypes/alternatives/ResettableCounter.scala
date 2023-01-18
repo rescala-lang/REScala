@@ -1,6 +1,6 @@
 package kofre.datatypes.alternatives
 
-import kofre.base.{Bottom, DecomposeLattice}
+import kofre.base.{Bottom, DecomposeLattice, Lattice}
 import kofre.dotted.{DotFun, Dotted, DottedDecompose}
 import kofre.syntax.OpsSyntaxHelper
 import kofre.time.{Dot, Dots}
@@ -13,11 +13,15 @@ import kofre.time.{Dot, Dots}
   * This counter was originally proposed by Baquera et al.
   * in "The problem with embedded CRDT counters and a solution", see [[https://dl.acm.org/doi/abs/10.1145/2911151.2911159?casa_token=D7n88K9dW7gAAAAA:m3WhHMFZxoCwGFk8DVoqJXBJpwJwrqKMLqtgKo_TSiwU_ErWgOZjo4UqYqDCb-bG3iJlXc_Ti7aB9w here]]
   */
-case class ResettableCounter(inner: DotFun[(Int, Int)]) derives Bottom, DottedDecompose
+case class ResettableCounter(inner: DotFun[(Int, Int)]) derives Bottom
 
 object ResettableCounter {
 
   val zero: ResettableCounter = ResettableCounter(DotFun.empty)
+
+  given dottedLattice: DottedDecompose[ResettableCounter] =
+    given Lattice[Int] = math.max _
+    DottedDecompose.derived
 
   private def deltaState(
     df: Option[ResettableCounter] = None,

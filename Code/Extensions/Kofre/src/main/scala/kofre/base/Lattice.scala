@@ -84,8 +84,6 @@ object Lattice {
 
   // /////////////// common instances below ///////////////
 
-  given intMaxLattice: Lattice[Int] = _ max _
-
   given setLattice[A]: Lattice[Set[A]] = new Lattice[Set[A]] {
     override def merge(left: Set[A], right: Set[A]): Set[A] = left union right
     override def lteq(left: Set[A], right: Set[A]): Boolean = left subsetOf right
