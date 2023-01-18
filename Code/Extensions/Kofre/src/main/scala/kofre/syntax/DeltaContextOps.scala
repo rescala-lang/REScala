@@ -1,9 +1,8 @@
 package kofre.syntax
 
-import kofre.base.Id
-import kofre.base.{DecomposeLattice, Id, Lattice}
-import kofre.time.Dots
+import kofre.base.{Id, Lattice}
 import kofre.dotted.Dotted
+import kofre.time.Dots
 
 import scala.annotation.implicitNotFound
 import scala.util.NotGiven

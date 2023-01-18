@@ -1,6 +1,6 @@
 package test.kofre
 
-import kofre.base.{DecomposeLattice, Lattice}
+import kofre.base.Lattice
 import kofre.dotted.DottedLattice.*
 import kofre.dotted.{DotFun, DotMap, DotSet, Dotted, DottedLattice}
 import kofre.time.{ArrayRanges, Dot, Dots}
@@ -46,7 +46,7 @@ class DotMapTest extends munit.ScalaCheckSuite {
         val ccB   = dotsB union deletedB
 
         val Dotted(dmMerged, ccMerged) =
-          DecomposeLattice[Dotted[TestedMap]].merge(
+          Lattice[Dotted[TestedMap]].merge(
             Dotted(dmA, (ccA)),
             Dotted(dmB, (ccB))
           )
@@ -102,7 +102,7 @@ class DotMapTest extends munit.ScalaCheckSuite {
         )
 
         val Dotted(dmMerged, ccMerged) =
-          DecomposeLattice[Dotted[TestedMap]].merge(
+          Lattice[Dotted[TestedMap]].merge(
             Dotted(dmA, (ccA)),
             Dotted(dmB, (ccB))
           )
@@ -141,7 +141,7 @@ class DotMapTest extends munit.ScalaCheckSuite {
       val wc: Dotted[TestedMap] =
         decomposed.foldLeft(Dotted(DotMap.empty[Int, DotSet], Dots.empty)) {
           case (Dotted(dmA, ccA), Dotted(dmB, ccB)) =>
-            DecomposeLattice[Dotted[TestedMap]].merge(Dotted(dmA, ccA), Dotted(dmB, ccB))
+            Lattice[Dotted[TestedMap]].merge(Dotted(dmA, ccA), Dotted(dmB, ccB))
         }
 
       val dmMerged: TestedMap = wc.store

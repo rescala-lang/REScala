@@ -1,10 +1,10 @@
 package test.kofre
 
-import kofre.base.{Bottom, DecomposeLattice, Lattice}
+import kofre.base.{Bottom, Lattice}
 import kofre.datatypes.alternatives.MultiValueRegister
 import kofre.datatypes.experiments.CausalQueue
-import kofre.time.VectorClock
 import kofre.datatypes.{GrowOnlyCounter, LastWriterWins, PosNegCounter}
+import kofre.time.VectorClock
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 import test.kofre.DataGenerator.{*, given}
@@ -14,7 +14,7 @@ class PosNegDecomposes extends DecomposeProperties[PosNegCounter]
 class TupleDecomposes  extends DecomposeProperties[(Set[Int], GrowOnlyCounter)]
 class MultiValueDecomposes  extends DecomposeProperties[MultiValueRegister[Int]]
 
-abstract class DecomposeProperties[A: Arbitrary: DecomposeLattice: Bottom] extends munit.ScalaCheckSuite {
+abstract class DecomposeProperties[A: Arbitrary: Lattice: Bottom] extends munit.ScalaCheckSuite {
 
   test("decomposition") {
     forAll { (counter: A) =>

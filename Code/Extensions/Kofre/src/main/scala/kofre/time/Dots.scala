@@ -1,7 +1,6 @@
 package kofre.time
 
-import kofre.base.{Id, Time}
-import kofre.base.{DecomposeLattice, Lattice}
+import kofre.base.{Id, Lattice, Time}
 import kofre.dotted.Dotted
 import kofre.time.Dot
 
@@ -87,7 +86,7 @@ object Dots {
 
   def single(dot: Dot): Dots = empty.add(dot.replicaId, dot.time)
 
-  implicit val contextLattice: DecomposeLattice[Dots] = DecomposeLattice.derived
+  implicit val contextLattice: Lattice[Dots] = Lattice.derived
 
   def from(dots: IterableOnce[Dot]): Dots = Dots(dots.iterator.to(Iterable).groupBy(_.replicaId).map {
     (key, times) =>

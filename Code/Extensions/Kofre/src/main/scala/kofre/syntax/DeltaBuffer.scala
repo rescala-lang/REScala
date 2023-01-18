@@ -1,6 +1,6 @@
 package kofre.syntax
 
-import kofre.base.{Bottom, DecomposeLattice, Id}
+import kofre.base.{Bottom, Lattice, Id}
 import kofre.dotted.{Dotted, DottedLattice}
 import kofre.syntax.{Named, PermCausal, PermCausalMutate, PermIdMutate, PermQuery}
 import kofre.time.Dots
@@ -17,10 +17,10 @@ case class DeltaBuffer[State](
     deltaBuffer: List[Named[State]] = Nil
 ) {
 
-  def applyDelta(source: Id, delta: State)(using DecomposeLattice[State]): DeltaBuffer[State] =
-    DecomposeLattice[State].diff(state, delta) match {
+  def applyDelta(source: Id, delta: State)(using Lattice[State]): DeltaBuffer[State] =
+    Lattice[State].diff(state, delta) match {
       case Some(stateDiff) =>
-        val stateMerged = DecomposeLattice[State].merge(state, stateDiff)
+        val stateMerged = Lattice[State].merge(state, stateDiff)
         new DeltaBuffer(replicaID, stateMerged, Named(source, stateDiff) :: deltaBuffer)
       case None => this
     }
@@ -42,7 +42,7 @@ object DeltaBuffer {
     override def context(c: DeltaBuffer[Dotted[L]]): Dots = c.state.context
   }
 
-  given plainPermissions[L: DecomposeLattice: Bottom]: PermIdMutate[DeltaBuffer[L], L] = new {
+  given plainPermissions[L: Lattice: Bottom]: PermIdMutate[DeltaBuffer[L], L] = new {
     override def replicaId(c: DeltaBuffer[L]): Id = c.replicaID
     override def mutate(c: DeltaBuffer[L], delta: L): DeltaBuffer[L] =
       c.applyDelta(c.replicaID, delta)

@@ -63,7 +63,7 @@ object Lattice {
     */
   def normalize[A: Lattice](v: A): A = v merge v
 
-  def decomposed[A](a: A)(implicit l: DecomposeLattice[A]): Iterable[A] = l.decomposed(a)
+  def decomposed[A](a: A)(implicit l: Lattice[A]): Iterable[A] = l.decomposed(a)
 
   implicit class Operators[A: Lattice](left: A):
     infix def merge(right: A): A = Lattice[A].merge(left, right)
@@ -159,22 +159,22 @@ object Lattice {
       end match
     res.asInstanceOf[T]
 
-  inline def derived[T <: Product](using pm: Mirror.ProductOf[T]): DecomposeLattice[T] = {
-    val lattices: Tuple = summonAll[Tuple.Map[pm.MirroredElemTypes, DecomposeLattice]]
+  inline def derived[T <: Product](using pm: Mirror.ProductOf[T]): Lattice[T] = {
+    val lattices: Tuple = summonAll[Tuple.Map[pm.MirroredElemTypes, Lattice]]
     val bottoms: Tuple  = summonAllMaybe[Tuple.Map[pm.MirroredElemTypes, Bottom]]
-    new ProductDecomposeLattice[T](lattices, bottoms, pm, valueOf[pm.MirroredLabel])
+    new ProductLattice[T](lattices, bottoms, pm, valueOf[pm.MirroredLabel])
   }
 
-  class ProductDecomposeLattice[T <: Product](
+  class ProductLattice[T <: Product](
       lattices: Tuple,
       bottoms: Tuple,
       pm: Mirror.ProductOf[T],
       label: String
-  ) extends DecomposeLattice[T] {
+  ) extends Lattice[T] {
 
-    override def toString: String = s"ProductDecomposeLattice[${label}]"
+    override def toString: String = s"ProductLattice[${label}]"
 
-    private def lat(i: Int): DecomposeLattice[Any] = lattices.productElement(i).asInstanceOf[DecomposeLattice[Any]]
+    private def lat(i: Int): Lattice[Any] = lattices.productElement(i).asInstanceOf[Lattice[Any]]
     private def bot(i: Int, default: Any): Any =
       val btm = bottoms.productElement(i)
       if btm == null

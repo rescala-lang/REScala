@@ -1,6 +1,6 @@
 package kofre.datatypes
 
-import kofre.base.{Bottom, DecomposeLattice}
+import kofre.base.{Bottom, Lattice}
 import kofre.datatypes.GrowOnlyMap
 import kofre.dotted.DottedLattice
 import kofre.syntax.{OpsSyntaxHelper}
@@ -13,7 +13,7 @@ object GrowOnlySet {
   def empty[E]: GrowOnlySet[E] = Set.empty
 
   given bottomInstance[E]: Bottom[GrowOnlySet[E]]             = Bottom.setBottom
-  given decomposeLattice[E]: DecomposeLattice[GrowOnlySet[E]] = DecomposeLattice.setLattice
+  given lattice[E]: Lattice[GrowOnlySet[E]] = Lattice.setLattice
   given contextDecompose[E]: DottedLattice[GrowOnlySet[E]]  = DottedLattice.liftLattice
 
   extension [C, E](container: C)

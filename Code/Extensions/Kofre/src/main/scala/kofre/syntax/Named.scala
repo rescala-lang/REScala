@@ -1,8 +1,8 @@
 package kofre.syntax
 
-import kofre.base.{Bottom, DecomposeLattice, Id, Lattice}
-import kofre.time.Dots
+import kofre.base.{Bottom, Id, Lattice}
 import kofre.dotted.{Dotted, DottedLattice}
+import kofre.time.Dots
 
 case class Named[L](replicaId: Id, anon: L) {
   def map[B](f: L => B): Named[B] = new Named(replicaId, f(anon))
@@ -10,7 +10,7 @@ case class Named[L](replicaId: Id, anon: L) {
 
 object Named {
 
-  given permissionsDN[L](using DecomposeLattice[Dotted[L]]): PermId[Named[Dotted[L]]]
+  given permissionsDN[L](using Lattice[Dotted[L]]): PermId[Named[Dotted[L]]]
     with PermCausalMutate[Named[Dotted[L]], L]
     with {
     override def replicaId(c: Named[Dotted[L]]): Id = c.replicaId

@@ -1,10 +1,10 @@
 package kofre.datatypes
 
-import kofre.base.{DecomposeLattice, Lattice, Id}
+import kofre.base.{Id, Lattice}
 import kofre.time.WallClock
-import scala.math.Ordering.Implicits.infixOrderingOps
 
 import java.time.Instant
+import scala.math.Ordering.Implicits.infixOrderingOps
 
 /** Lattice with the least-upper-bound defined by the timeStamp.
   * Timestamps must be unique, totally ordered, consistent with causal order.
@@ -18,8 +18,8 @@ object LastWriterWins {
   def now[Value](payload: Value, replicaId: Id): LastWriterWins[WallClock, Value] =
     LastWriterWins(WallClock.now(replicaId), payload)
 
-  implicit def decomposeLattice[Time: Ordering, A]: DecomposeLattice[LastWriterWins[Time, A]] =
-    new DecomposeLattice[LastWriterWins[Time, A]] {
+  implicit def Lattice[Time: Ordering, A]: Lattice[LastWriterWins[Time, A]] =
+    new Lattice[LastWriterWins[Time, A]] {
       override def lteq(left: LastWriterWins[Time, A], right: LastWriterWins[Time, A]): Boolean =
         left.timestamp <= right.timestamp
 

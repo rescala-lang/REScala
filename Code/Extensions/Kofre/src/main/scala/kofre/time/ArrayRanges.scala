@@ -1,7 +1,6 @@
 package kofre.time
 
-import kofre.base.Time
-import kofre.base.{DecomposeLattice, Lattice}
+import kofre.base.{Lattice, Time}
 
 import java.util
 import scala.annotation.tailrec
@@ -303,7 +302,7 @@ object ArrayRanges {
     new ArrayRanges(newInternal, newInternalNextIndex)
   }
 
-  given latticeInstance: DecomposeLattice[ArrayRanges] with {
+  given latticeInstance: Lattice[ArrayRanges] with {
     override def decompose(a: ArrayRanges): Iterable[ArrayRanges]          = a.decomposed
     override def lteq(left: ArrayRanges, right: ArrayRanges): Boolean      = left <= right
     override def merge(left: ArrayRanges, right: ArrayRanges): ArrayRanges = left union right

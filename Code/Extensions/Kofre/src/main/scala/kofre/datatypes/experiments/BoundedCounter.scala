@@ -1,6 +1,6 @@
 package kofre.datatypes.experiments
 
-import kofre.base.{DecomposeLattice, Id}
+import kofre.base.{Lattice, Id}
 import kofre.datatypes.{GrowOnlyCounter, PosNegCounter}
 import kofre.syntax.{Named, OpsSyntaxHelper, PermId, FixedId}
 
@@ -14,7 +14,7 @@ object BoundedCounter {
 
   private val neutral: BoundedCounter = BoundedCounter(PosNegCounter.zero, GrowOnlyCounter.zero, Set.empty)
 
-  given lattice: DecomposeLattice[BoundedCounter] = DecomposeLattice.derived
+  given lattice: Lattice[BoundedCounter] = Lattice.derived
 
   extension [C](container: C)
     def boundedCounter: syntax[C] = syntax(container)

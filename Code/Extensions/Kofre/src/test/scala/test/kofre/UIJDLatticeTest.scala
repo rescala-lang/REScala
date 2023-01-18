@@ -1,11 +1,11 @@
 package test.kofre
 
-import kofre.base.DecomposeLattice.{*, given}
+import kofre.base.Lattice.{*, given}
 import kofre.base.Lattice
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 
-class IntAsDecomposeLatticeTest extends munit.ScalaCheckSuite {
+class IntAsLatticeTest extends munit.ScalaCheckSuite {
   property("leq") {
     forAll { (a: Int, b: Int, c: Int) =>
       assert(
@@ -69,7 +69,7 @@ class IntAsDecomposeLatticeTest extends munit.ScalaCheckSuite {
   }
 }
 
-class SetAsDecomposeLatticeTest extends munit.ScalaCheckSuite {
+class SetAsLatticeTest extends munit.ScalaCheckSuite {
   property("leq") {
     forAll { (a: Set[Int], b: Set[Int], c: Set[Int]) =>
       assert(
@@ -133,7 +133,7 @@ class SetAsDecomposeLatticeTest extends munit.ScalaCheckSuite {
   }
 }
 
-class OptionAsDecomposeLatticeTest extends munit.ScalaCheckSuite {
+class OptionAsLatticeTest extends munit.ScalaCheckSuite {
   property("leq") {
     forAll { (a: Option[Int], b: Option[Int], c: Option[Int]) =>
       assert(
@@ -200,7 +200,7 @@ class OptionAsDecomposeLatticeTest extends munit.ScalaCheckSuite {
   }
 }
 
-class MapAsDecomposeLatticeTest extends munit.ScalaCheckSuite {
+class MapAsLatticeTest extends munit.ScalaCheckSuite {
   property("leq") {
     forAll { (a: Map[Int, Int], b: Map[Int, Int], c: Map[Int, Int]) =>
       assert(
@@ -270,7 +270,7 @@ class MapAsDecomposeLatticeTest extends munit.ScalaCheckSuite {
   }
 }
 
-class PairAsDecomposeLatticeTest extends munit.ScalaCheckSuite {
+class PairAsLatticeTest extends munit.ScalaCheckSuite {
   property("leq") {
     forAll { (a: (Set[Int], Set[Int]), b: (Set[Int], Set[Int]), c: (Set[Int], Set[Int])) =>
       assert(

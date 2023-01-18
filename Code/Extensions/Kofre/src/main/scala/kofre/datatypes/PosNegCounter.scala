@@ -1,10 +1,10 @@
 package kofre.datatypes
 
-import kofre.base.{Bottom, DecomposeLattice, Id}
+import kofre.base.{Bottom, Lattice, Id}
 import kofre.dotted.DottedLattice
 import kofre.syntax.OpsSyntaxHelper
 
-case class PosNegCounter(pos: GrowOnlyCounter, neg: GrowOnlyCounter) derives DecomposeLattice, Bottom
+case class PosNegCounter(pos: GrowOnlyCounter, neg: GrowOnlyCounter) derives Lattice, Bottom
 
 /** A PNCounter (Positive-Negative Counter) is a Delta CRDT modeling a counter.
   *

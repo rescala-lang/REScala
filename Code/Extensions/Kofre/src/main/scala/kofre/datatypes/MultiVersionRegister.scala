@@ -1,6 +1,6 @@
 package kofre.datatypes
 
-import kofre.base.{Bottom, DecomposeLattice}
+import kofre.base.{Bottom, Lattice}
 import kofre.dotted.{DotFun, Dotted, DottedLattice}
 import kofre.syntax.OpsSyntaxHelper
 import kofre.time.{Dot, Dots}
@@ -17,7 +17,7 @@ object MultiVersionRegister {
   def empty[A]: MultiVersionRegister[A] = MultiVersionRegister(DotFun.empty)
 
   given bottomInstance[A]: Bottom[MultiVersionRegister[A]]                             = Bottom.derived
-  given dottedLattice[A: DecomposeLattice]: DottedLattice[MultiVersionRegister[A]] = DottedLattice.derived
+  given dottedLattice[A: Lattice]: DottedLattice[MultiVersionRegister[A]] = DottedLattice.derived
 
   extension [C, A](container: C)
     def multiVersionRegister: syntax[C, A] = syntax(container)

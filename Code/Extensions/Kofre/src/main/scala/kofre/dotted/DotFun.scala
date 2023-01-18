@@ -1,6 +1,6 @@
 package kofre.dotted
 
-import kofre.base.{Bottom, DecomposeLattice, Lattice}
+import kofre.base.{Bottom, Lattice}
 import kofre.time.{Dot, Dots}
 
 import scala.annotation.targetName
@@ -27,7 +27,7 @@ object DotFun {
     override def dots(dotStore: DotFun[V]): Dots = Dots.from(dotStore.store.keySet)
   }
 
-  given perDotDecompose[A: DecomposeLattice]: DottedLattice[DotFun[A]] =
+  given perDotDecompose[A: Lattice]: DottedLattice[DotFun[A]] =
     new DottedLattice[DotFun[A]] {
 
       /** Partial merging combines the stored values, but ignores the context.
@@ -51,7 +51,7 @@ object DotFun {
       override def lteq(left: Dotted[DotFun[A]], right: Dotted[DotFun[A]]): Boolean = {
         val firstCondition = left.context.forall(right.context.contains)
         val secondCondition = right.store.store.keySet.forall { k =>
-          left.store.store.get(k).forall { l => DecomposeLattice[A].lteq(l, right.store.store(k)) }
+          left.store.store.get(k).forall { l => Lattice[A].lteq(l, right.store.store(k)) }
         }
         val thirdCondition = {
           val diff = left.context.diff(dots(left.store))
@@ -64,7 +64,7 @@ object DotFun {
       override def decompose(state: Dotted[DotFun[A]]): Iterable[Dotted[DotFun[A]]] = {
         val added: Iterator[Dotted[DotFun[A]]] = for {
           d <- dots(state.store).iterator
-          v <- DecomposeLattice[A].decompose(state.store.store(d))
+          v <- Lattice[A].decompose(state.store.store(d))
         } yield Dotted(DotFun(Map(d -> v)), Dots.single(d))
 
         val removed =

@@ -1,8 +1,8 @@
 package test.kofre
 
-import kofre.base.{DecomposeLattice, Lattice}
-import kofre.time.{Dots, Dot}
+import kofre.base.Lattice
 import kofre.dotted.{DotSet, Dotted, HasDots}
+import kofre.time.{Dot, Dots}
 import org.scalacheck.Prop
 import org.scalacheck.Prop.*
 import test.kofre.DataGenerator.*
@@ -77,7 +77,7 @@ class DotSetTest extends munit.ScalaCheckSuite {
       val ccA = dsA union deletedA
       val ccB = dsB union deletedB
 
-      val Dotted(dsMerged, ccMerged) = DecomposeLattice[Dotted[DotSet]].merge(
+      val Dotted(dsMerged, ccMerged) = Lattice[Dotted[DotSet]].merge(
         Dotted(DotSet(dsA), ccA),
         Dotted(DotSet(dsB), ccB)
       )

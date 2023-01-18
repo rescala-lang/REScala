@@ -1,6 +1,6 @@
 package test.kofre
 
-import kofre.base.DecomposeLattice
+import kofre.base.Lattice
 import kofre.time.{Dots, Dot}
 import kofre.dotted.{DotFun, Dotted, HasDots}
 import org.scalacheck.Prop.*
@@ -32,7 +32,7 @@ class DotFunTest extends munit.ScalaCheckSuite {
       val ccB   = dotsB union deletedB
 
       val Dotted(dfMerged, ccMerged) =
-        DecomposeLattice[Dotted[DotFun[Int]]].merge(
+        Lattice[Dotted[DotFun[Int]]].merge(
           Dotted(dfA, ccA),
           Dotted(dfB, ccB)
         )
@@ -57,10 +57,10 @@ class DotFunTest extends munit.ScalaCheckSuite {
 
       (dotsA intersect dotsB).iterator.foreach { d =>
         assert(
-          dfMerged(d) == DecomposeLattice[Int].merge(dfA(d), dfB(d)),
+          dfMerged(d) == Lattice[Int].merge(dfA(d), dfB(d)),
           s"If a dot is used as key in both DotFuns then the corresponding values should be merged in the result of DotFun.merge, but ${dfMerged(
               d
-            )} does not equal ${DecomposeLattice[Int].merge(dfA(d), dfB(d))}"
+            )} does not equal ${Lattice[Int].merge(dfA(d), dfB(d))}"
         )
       }
 
@@ -91,7 +91,7 @@ class DotFunTest extends munit.ScalaCheckSuite {
       )
 
       val Dotted(dfMerged, ccMerged) =
-        DecomposeLattice[Dotted[DotFun[Int]]].merge(
+        Lattice[Dotted[DotFun[Int]]].merge(
           Dotted(dfA, (ccA)),
           Dotted(dfB, (ccB))
         )
@@ -136,7 +136,7 @@ class DotFunTest extends munit.ScalaCheckSuite {
       val Dotted(dfMerged, ccMerged) =
         decomposed.foldLeft(Dotted(DotFun.empty[Int], Dots.empty)) {
           case (Dotted(dfA, ccA), Dotted(dfB, ccB)) =>
-            DecomposeLattice[Dotted[DotFun[Int]]].merge(Dotted(dfA, ccA), Dotted(dfB, ccB))
+            Lattice[Dotted[DotFun[Int]]].merge(Dotted(dfA, ccA), Dotted(dfB, ccB))
         }
 
       assertEquals(dfMerged, df)

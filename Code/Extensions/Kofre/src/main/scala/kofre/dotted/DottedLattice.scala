@@ -1,7 +1,7 @@
 package kofre.dotted
 
 import kofre.base.Lattice.Operators
-import kofre.base.{Bottom, DecomposeLattice, Lattice}
+import kofre.base.{Bottom, Lattice}
 import kofre.datatypes.ReplicatedList
 import kofre.time.{Dot, Dots}
 
@@ -69,7 +69,7 @@ object DottedLattice {
   class ProductDottedLattice[T <: Product](lattices: Tuple, bottoms: Tuple, pm: Mirror.ProductOf[T], label: String)
       extends DottedLattice[T] {
 
-    override def toString: String = s"ProductDecomposeLattice[${label}]"
+    override def toString: String = s"ProductLattice[${label}]"
 
     private def lat(i: Int): DottedLattice[Any] = lattices.productElement(i).asInstanceOf[DottedLattice[Any]]
     private def bot(i: Int): Bottom[Any]        = bottoms.productElement(i).asInstanceOf[Bottom[Any]]
@@ -112,10 +112,10 @@ object DottedLattice {
         Lattice[A].merge(left.store, right.store)
 
       override def lteq(left: Dotted[A], right: Dotted[A]): Boolean =
-        DecomposeLattice[A].lteq(left.store, right.store)
+        Lattice[A].lteq(left.store, right.store)
 
       override def decompose(state: Dotted[A]): Iterable[Dotted[A]] = {
-        DecomposeLattice[A].decompose(state.store).map(Dotted(_, Dots.empty))
+        Lattice[A].decompose(state.store).map(Dotted(_, Dots.empty))
       }
     }
 }

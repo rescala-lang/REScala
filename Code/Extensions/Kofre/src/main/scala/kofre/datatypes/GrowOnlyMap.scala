@@ -1,6 +1,6 @@
 package kofre.datatypes
 
-import kofre.base.{Bottom, DecomposeLattice}
+import kofre.base.{Bottom, Lattice}
 import kofre.dotted.{DotMap, Dotted, DottedLattice, HasDots}
 import kofre.syntax.{Named, OpsSyntaxHelper, PermIdMutate}
 import kofre.time.Dots
@@ -21,7 +21,7 @@ object GrowOnlyMap {
 
   given [K, V]: Bottom[GrowOnlyMap[K, V]] = Bottom.mapBottom
 
-  given decomposeLattice[K, V: DecomposeLattice]: DecomposeLattice[GrowOnlyMap[K, V]] = DecomposeLattice.mapLattice
+  given lattice[K, V: Lattice]: Lattice[GrowOnlyMap[K, V]] = Lattice.mapLattice
   given contextLattice[K, V: DottedLattice: HasDots: Bottom]: DottedLattice[GrowOnlyMap[K, V]] =
     DotMap.contextDecompose[K, V].contextbimap[Map[K, V]](_.map(_.repr), _.map(DotMap.apply))
 

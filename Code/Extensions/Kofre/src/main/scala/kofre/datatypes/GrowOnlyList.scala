@@ -1,6 +1,6 @@
 package kofre.datatypes
 
-import kofre.base.{Bottom, DecomposeLattice}
+import kofre.base.{Bottom, Lattice}
 import kofre.datatypes.GrowOnlyList.Node
 import kofre.datatypes.{Epoche}
 import kofre.dotted.DottedLattice
@@ -41,8 +41,8 @@ object GrowOnlyList {
   given contextDecompose[E]: DottedLattice[GrowOnlyList[E]] =
     DottedLattice.liftLattice
 
-  given decomposeLattice[E]: DecomposeLattice[GrowOnlyList[E]] =
-    new DecomposeLattice[GrowOnlyList[E]] {
+  given Lattice[E]: Lattice[GrowOnlyList[E]] =
+    new Lattice[GrowOnlyList[E]] {
       override def lteq(
           left: GrowOnlyList[E],
           right: GrowOnlyList[E]

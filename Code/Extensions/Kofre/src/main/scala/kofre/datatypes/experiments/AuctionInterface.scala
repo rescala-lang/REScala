@@ -1,6 +1,6 @@
 package kofre.datatypes.experiments
 
-import kofre.base.{Bottom, DecomposeLattice}
+import kofre.base.{Bottom, Lattice}
 import kofre.datatypes.GrowOnlySet
 import kofre.datatypes.GrowOnlySet.{syntax, given}
 import kofre.datatypes.experiments.AuctionInterface.Bid.User
@@ -12,7 +12,7 @@ object AuctionInterface {
   case object Closed extends Status
 
   object Status {
-    implicit val StatusAsUIJDLattice: DecomposeLattice[Status] = new DecomposeLattice[Status] {
+    implicit val StatusAsUIJDLattice: Lattice[Status] = new Lattice[Status] {
       override def lteq(left: Status, right: Status): Boolean = (left, right) match {
         case (Closed, Open) => false
         case _              => true
@@ -41,10 +41,10 @@ object AuctionInterface {
 
   case object AuctionData {
 
-    implicit val AuctionDataAsUIJDLattice: DecomposeLattice[AuctionData] = new DecomposeLattice[AuctionData] {
+    implicit val AuctionDataAsUIJDLattice: Lattice[AuctionData] = new Lattice[AuctionData] {
       override def lteq(left: AuctionData, right: AuctionData): Boolean = (left, right) match {
         case (AuctionData(lb, ls, _), AuctionData(rb, rs, _)) =>
-          DecomposeLattice[Set[Bid]].lteq(lb, rb) && DecomposeLattice[Status].lteq(ls, rs)
+          Lattice[Set[Bid]].lteq(lb, rb) && Lattice[Status].lteq(ls, rs)
       }
 
       override def decompose(state: AuctionData): Iterable[AuctionData] =
@@ -60,8 +60,8 @@ object AuctionInterface {
 
       override def merge(left: AuctionData, right: AuctionData): AuctionData = (left, right) match {
         case (AuctionData(lb, ls, _), AuctionData(rb, rs, _)) =>
-          val bidsMerged   = DecomposeLattice[Set[Bid]].merge(lb, rb)
-          val statusMerged = DecomposeLattice[Status].merge(ls, rs)
+          val bidsMerged   = Lattice[Set[Bid]].merge(lb, rb)
+          val statusMerged = Lattice[Status].merge(ls, rs)
           val winnerMerged = statusMerged match {
             case Open   => None
             case Closed => bidsMerged.maxByOption(_.bid).map(_.userId)

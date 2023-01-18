@@ -1,7 +1,7 @@
 package kofre.dotted
 
 import kofre.base.Lattice.Operators
-import kofre.base.{Bottom, DecomposeLattice, Id, Lattice}
+import kofre.base.{Bottom, Id, Lattice}
 import kofre.dotted.{DotFun, DotSet}
 import kofre.syntax.{Named, PermCausal, PermCausalMutate, PermQuery}
 import kofre.time.{Dot, Dots}
@@ -17,7 +17,7 @@ object Dotted {
   def empty[A: Bottom]: Dotted[A] = Dotted(Bottom.empty[A], Dots.empty)
   def apply[A](a: A): Dotted[A]   = Dotted(a, Dots.empty)
 
-  def latticeLift[L: DecomposeLattice: Bottom]: DecomposeLattice[Dotted[L]] = DecomposeLattice.derived
+  def latticeLift[L: Lattice: Bottom]: Lattice[Dotted[L]] = Lattice.derived
 
   given syntaxPermissions[L](using DottedLattice[L]): PermCausalMutate[Dotted[L], L]
     with {

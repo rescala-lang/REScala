@@ -1,7 +1,6 @@
 package kofre.syntax
 
-import kofre.base.{Bottom, DecomposeLattice, Id, Lattice}
-import kofre.base.Id
+import kofre.base.{Bottom, Id, Lattice}
 
 import scala.annotation.targetName
 
@@ -18,7 +17,7 @@ object TestReplica {
   def apply[L](replicaID: Id, anon: L): TestReplica[L]     = new TestReplica(replicaID, anon)
   def unapply[L](wnc: TestReplica[L]): Some[(Id, L)]       = Some((wnc.replicaId, wnc.anon))
 
-  given permissions[L](using DecomposeLattice[L]): PermIdMutate[TestReplica[L], L]
+  given permissions[L](using Lattice[L]): PermIdMutate[TestReplica[L], L]
     with {
     override def replicaId(c: TestReplica[L]): Id                    = c.replicaId
     override def mutate(c: TestReplica[L], delta: L): TestReplica[L] = c.apply(delta)

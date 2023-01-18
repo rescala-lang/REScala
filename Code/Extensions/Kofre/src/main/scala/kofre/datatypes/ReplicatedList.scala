@@ -1,6 +1,6 @@
 package kofre.datatypes
 
-import kofre.base.{Bottom, DecomposeLattice}
+import kofre.base.{Bottom, Lattice}
 import kofre.datatypes.Epoche
 import kofre.datatypes.LastWriterWins.TimedVal
 import kofre.dotted.{DotFun, Dotted, DottedLattice}
@@ -45,7 +45,7 @@ object ReplicatedList {
   import Node.{Alive, Dead}
 
   object Node {
-    implicit def RGANodeAsUIJDLattice[A]: DecomposeLattice[Node[A]] = new DecomposeLattice[Node[A]] {
+    implicit def RGANodeAsUIJDLattice[A]: Lattice[Node[A]] = new Lattice[Node[A]] {
       override def lteq(left: Node[A], right: Node[A]): Boolean = (left, right) match {
         case (Dead(), _)            => false
         case (_, Dead())            => true
@@ -57,7 +57,7 @@ object ReplicatedList {
 
       /** By assumption: associative, commutative, idempotent. */
       override def merge(left: Node[A], right: Node[A]): Node[A] = (left, right) match {
-        case (Alive(lv), Alive(rv)) => Alive(DecomposeLattice[TimedVal[A]].merge(lv, rv))
+        case (Alive(lv), Alive(rv)) => Alive(Lattice[TimedVal[A]].merge(lv, rv))
         case _                      => Dead()
       }
     }

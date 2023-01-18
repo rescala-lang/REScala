@@ -1,6 +1,6 @@
 package test.kofre
 
-import kofre.base.{Bottom, DecomposeLattice, Lattice}
+import kofre.base.{Bottom, Lattice}
 import kofre.datatypes.{CausalLastWriterWins, EnableWinsFlag, PosNegCounter}
 import kofre.dotted.{Dotted, DottedLattice}
 import kofre.syntax.{DeltaBuffer, DeltaBufferDotted, Named, OpsSyntaxHelper}
@@ -110,7 +110,7 @@ class ProjectRDTTest extends munit.FunSuite {
     val init: Named[Dotted[Project]] = Named("replica id", Dotted(Project.empty))
     val delta                     = init.set_name("some project")
 
-    val dlat = DecomposeLattice[Dotted[Project]]
+    val dlat = Lattice[Dotted[Project]]
 
     val decomposed = dlat.decomposed(delta.anon)
     val diff       = dlat.diff(init.anon, delta.anon)

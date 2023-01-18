@@ -1,6 +1,6 @@
 package kofre.datatypes.alternatives.rga
 
-import kofre.base.{DecomposeLattice, Id, Lattice}
+import kofre.base.{Id, Lattice}
 import kofre.datatypes.{AddWinsSet, EnableWinsFlag}
 import kofre.dotted.{Dotted, DottedLattice, HasDots}
 import kofre.syntax.{OpsSyntaxHelper, PermIdMutate}

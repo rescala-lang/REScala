@@ -1,6 +1,6 @@
 package kofre.datatypes
 
-import kofre.base.{Bottom, DecomposeLattice}
+import kofre.base.{Bottom, Lattice}
 import kofre.datatypes.Epoche
 import kofre.dotted.{DotSet, Dotted, DottedLattice, HasDots}
 import kofre.syntax.OpsSyntaxHelper

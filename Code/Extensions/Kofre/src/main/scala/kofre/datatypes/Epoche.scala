@@ -1,6 +1,6 @@
 package kofre.datatypes
 
-import kofre.base.{Bottom, DecomposeLattice, Id, Time}
+import kofre.base.{Bottom, Lattice, Id, Time}
 import kofre.dotted.DottedLattice
 import kofre.syntax.{OpsSyntaxHelper, OpsTypes, PermMutate, PermQuery}
 
@@ -10,7 +10,7 @@ object Epoche {
 
   def empty[E: Bottom]: Epoche[E] = Epoche(0, Bottom[E].empty)
 
-  given contextDecompose[E: DecomposeLattice]: DottedLattice[Epoche[E]] = DottedLattice.liftLattice
+  given contextDecompose[E: Lattice]: DottedLattice[Epoche[E]] = DottedLattice.liftLattice
 
   given bottom[E: Bottom]: Bottom[Epoche[E]] with { override def empty: Epoche[E] = Epoche.empty }
 
@@ -27,17 +27,17 @@ object Epoche {
     def map(using PermMutate)(f: E => E): C = write(f(current.value))
   }
 
-  given epocheAsUIJDLattice[E: DecomposeLattice]: DecomposeLattice[Epoche[E]] = new DecomposeLattice[Epoche[E]] {
+  given epocheAsUIJDLattice[E: Lattice]: Lattice[Epoche[E]] = new Lattice[Epoche[E]] {
 
     override def lteq(left: Epoche[E], right: Epoche[E]): Boolean = (left, right) match {
       case (Epoche(cLeft, vLeft), Epoche(cRight, vRight)) =>
-        cLeft < cRight || (cLeft == cRight && DecomposeLattice[E].lteq(vLeft, vRight))
+        cLeft < cRight || (cLeft == cRight && Lattice[E].lteq(vLeft, vRight))
     }
 
     /** Decomposes a lattice state into ic unique irredundant join decomposition of join-irreducible states */
     override def decompose(state: Epoche[E]): Iterable[Epoche[E]] = state match {
       case Epoche(c, v) =>
-        DecomposeLattice[E].decompose(v).map(Epoche(c, _))
+        Lattice[E].decompose(v).map(Epoche(c, _))
     }
 
     /** By assumption: associative, commutative, idempotent. */
@@ -45,7 +45,7 @@ object Epoche {
       case (Epoche(cLeft, vLeft), Epoche(cRight, vRight)) =>
         if (cLeft > cRight) left
         else if (cRight > cLeft) right
-        else Epoche(cLeft, DecomposeLattice[E].merge(vLeft, vRight))
+        else Epoche(cLeft, Lattice[E].merge(vLeft, vRight))
     }
   }
 }
