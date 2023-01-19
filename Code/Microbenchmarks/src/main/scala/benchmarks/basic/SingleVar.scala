@@ -1,8 +1,9 @@
 package benchmarks.basic
 
 import benchmarks.EngineParam
-import org.openjdk.jmh.annotations._
+import org.openjdk.jmh.annotations.*
 import rescala.Schedulers
+import rescala.core.Scheduler
 import rescala.interface.RescalaInterface
 
 import java.util.concurrent.TimeUnit
@@ -19,7 +20,7 @@ class SingleVar {
 
   var engine: RescalaInterface              = _
   final lazy val engineT                    = engine
-  implicit def scheduler: engineT.Scheduler = engineT.scheduler
+  implicit def scheduler: Scheduler[engineT.State] = engineT.scheduler
 
   var source: engineT.Var[Boolean] = _
   var current: Boolean             = _

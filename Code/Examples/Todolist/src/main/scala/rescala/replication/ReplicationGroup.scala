@@ -9,6 +9,7 @@ import rescala.interface.RescalaInterface
 import scribe.Execution.global
 import kofre.base.Lattice.Operators
 import kofre.base.Id
+import rescala.core.Disconnectable
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}

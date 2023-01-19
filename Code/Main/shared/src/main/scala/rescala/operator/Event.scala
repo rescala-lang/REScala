@@ -52,7 +52,7 @@ trait EventBundle extends EventCompatBundle {
     * @groupprio accessor 5
     */
   trait Event[+T] extends EventCompat[T] with Disconnectable {
-    override type State[V] = selfType.State[V]
+    final override type State[V] = selfType.State[V]
 
     implicit def internalAccess(v: Value): Pulse[T]
     def resource: ReadAs[Option[T]] = this

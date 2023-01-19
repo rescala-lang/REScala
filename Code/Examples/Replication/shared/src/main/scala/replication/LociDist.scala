@@ -3,6 +3,8 @@ package replication
 import kofre.base.Lattice
 import loci.registry.{Binding, Registry}
 import loci.transmitter.RemoteRef
+import rescala.core.{Disconnectable, InitialChange}
+import rescala.default
 import rescala.default.*
 import rescala.operator.Pulse
 
@@ -29,7 +31,7 @@ object LociDist {
       val signalName        = signal.name.str
       // println(s"received value for $signalName: ${newValue.hashCode()}")
       scheduler.forceNewTransaction(signal) { admissionTicket =>
-        admissionTicket.recordChange(new InitialChange {
+        admissionTicket.recordChange(new InitialChange[State] {
           override val source: signal.type = signal
           override def writeValue(b: source.Value, v: source.Value => Unit): Boolean = {
             val merged = b.map(Lattice[A].merge(_, newValue)).asInstanceOf[source.Value]

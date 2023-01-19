@@ -2,6 +2,7 @@ package rescala.benchmarks.measureSizes
 
 import kofre.time.ArrayRanges
 import org.openjdk.jol.info.GraphLayout
+import rescala.core.{AccessHandler, ReevTicket}
 import rescala.{Schedulers, default}
 
 object ObjectSizes {
@@ -24,10 +25,10 @@ object ObjectSizes {
     measure("transaction", List.fill(100)(ptx))
     measure(
       "reev ticket",
-      new rescala.default.ReevTicket(
+      new ReevTicket(
         ptx,
         (),
-        new default.AccessHandler {
+        new AccessHandler {
           override def staticAccess(reactive: default.ReSource): reactive.Value  = ???
           override def dynamicAccess(reactive: default.ReSource): reactive.Value = ???
         }
@@ -38,12 +39,12 @@ object ObjectSizes {
     measure("nolock transaction", List.fill(100)(stx))
     measure(
       "nolock reev ticket",
-      new rescala.Schedulers.synchron.ReevTicket(
+      new ReevTicket(
         stx,
         (),
-        new rescala.Schedulers.synchron.AccessHandler {
-          override def staticAccess(reactive: rescala.Schedulers.synchron.ReSource): reactive.Value  = ???
-          override def dynamicAccess(reactive: rescala.Schedulers.synchron.ReSource): reactive.Value = ???
+        new AccessHandler {
+          override def staticAccess(reactive: Schedulers.synchron.ReSource): reactive.Value  = ???
+          override def dynamicAccess(reactive: Schedulers.synchron.ReSource): reactive.Value = ???
         }
       )
     )

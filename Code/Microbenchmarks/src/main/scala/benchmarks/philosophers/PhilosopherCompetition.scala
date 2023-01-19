@@ -5,8 +5,9 @@ import java.util.concurrent.locks.{Lock, ReentrantLock}
 import java.util.concurrent.{ThreadLocalRandom, TimeUnit}
 import benchmarks.philosophers.PhilosopherTable.{Philosopher, Thinking}
 import benchmarks.{BusyThreads, EngineParam, Workload}
-import org.openjdk.jmh.annotations._
+import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
+import rescala.core.ScopeSearch
 import rescala.parrp.Backoff
 
 import scala.annotation.tailrec
@@ -38,8 +39,8 @@ class PhilosopherCompetition {
     val res = comp.stableTable.tryEat(seating)
     if (res) seating.philosopher.set(Thinking)(
       comp.stableTable.engine.scheduler,
-      comp.stableTable.engine.ScopeSearch.fromSchedulerImplicit(comp.stableTable.engine.scheduler)
-    )
+      ScopeSearch.fromSchedulerImplicit(comp.stableTable.engine.scheduler)
+      )
     !res
   }
 
@@ -73,7 +74,7 @@ class PhilosopherCompetition {
           try {
             seating.philosopher.set(Thinking)(
               comp.stableTable.engine.scheduler,
-              comp.stableTable.engine.ScopeSearch.fromSchedulerImplicit(comp.stableTable.engine.scheduler)
+              ScopeSearch.fromSchedulerImplicit(comp.stableTable.engine.scheduler)
             )
           } finally { thirdLock.unlock() }
         } finally { secondLock.unlock() }
@@ -132,7 +133,7 @@ class Competition extends BusyThreads {
       val phil: stableTable.engine.Var[Philosopher] = seat.philosopher
       phil.set(Thinking)(
         stableTable.engine.scheduler,
-        stableTable.engine.ScopeSearch.fromSchedulerImplicit(stableTable.engine.scheduler)
+        ScopeSearch.fromSchedulerImplicit(stableTable.engine.scheduler)
       )
     }
   }

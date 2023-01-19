@@ -2,9 +2,9 @@ package benchmarks.conflict
 
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
-
 import benchmarks.{EngineParam, Workload}
-import org.openjdk.jmh.annotations._
+import org.openjdk.jmh.annotations.*
+import rescala.core.ScopeSearch
 import rescala.interface.RescalaInterface
 
 @AuxCounters
