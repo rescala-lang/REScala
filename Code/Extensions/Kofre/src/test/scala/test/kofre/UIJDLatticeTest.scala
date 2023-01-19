@@ -274,15 +274,15 @@ class PairAsLatticeTest extends munit.ScalaCheckSuite {
   property("leq") {
     forAll { (a: (Set[Int], Set[Int]), b: (Set[Int], Set[Int]), c: (Set[Int], Set[Int])) =>
       assert(
-        PairAsUIJDLattice[Set[Int], Set[Int]].lteq(a, a),
+        Lattice[(Set[Int], Set[Int])].lteq(a, a),
         s"leq should be reflexive, but $a is not leq $a"
       )
 
       assert(
-        !(PairAsUIJDLattice[Set[Int], Set[Int]].lteq(a, b) && PairAsUIJDLattice[Set[Int], Set[Int]].lteq(
+        !(Lattice[(Set[Int], Set[Int])].lteq(a, b) && Lattice[(Set[Int], Set[Int])].lteq(
           b,
           c
-        )) || PairAsUIJDLattice[Set[Int], Set[Int]].lteq(a, c),
+        )) || Lattice[(Set[Int], Set[Int])].lteq(a, c),
         s"leq should be transitive, but $a leq $b and $b leq $c and $a is not leq $c"
       )
     }
@@ -290,8 +290,8 @@ class PairAsLatticeTest extends munit.ScalaCheckSuite {
 
   property("merge") {
     forAll { (a: (Set[Int], Set[Int]), b: (Set[Int], Set[Int]), c: (Set[Int], Set[Int])) =>
-      val mergeAB    = PairAsUIJDLattice[Set[Int], Set[Int]].merge(a, b)
-      val mergeTwice = PairAsUIJDLattice[Set[Int], Set[Int]].merge(mergeAB, b)
+      val mergeAB    = Lattice[(Set[Int], Set[Int])].merge(a, b)
+      val mergeTwice = Lattice[(Set[Int], Set[Int])].merge(mergeAB, b)
 
       assertEquals(
         mergeTwice,
@@ -299,7 +299,7 @@ class PairAsLatticeTest extends munit.ScalaCheckSuite {
         s"merge should be idempotent, but $mergeTwice does not equal $mergeAB"
       )
 
-      val mergeBA = PairAsUIJDLattice[Set[Int], Set[Int]].merge(b, a)
+      val mergeBA = Lattice[(Set[Int], Set[Int])].merge(b, a)
 
       assertEquals(
         mergeBA,
@@ -307,9 +307,9 @@ class PairAsLatticeTest extends munit.ScalaCheckSuite {
         s"merge should be commutative, but $mergeBA does not equal $mergeAB"
       )
 
-      val mergeAB_C = PairAsUIJDLattice[Set[Int], Set[Int]].merge(mergeAB, c)
-      val mergeBC   = PairAsUIJDLattice[Set[Int], Set[Int]].merge(b, c)
-      val mergeA_BC = PairAsUIJDLattice[Set[Int], Set[Int]].merge(a, mergeBC)
+      val mergeAB_C = Lattice[(Set[Int], Set[Int])].merge(mergeAB, c)
+      val mergeBC   = Lattice[(Set[Int], Set[Int])].merge(b, c)
+      val mergeA_BC = Lattice[(Set[Int], Set[Int])].merge(a, mergeBC)
 
       assertEquals(
         mergeA_BC,
@@ -321,8 +321,8 @@ class PairAsLatticeTest extends munit.ScalaCheckSuite {
 
   property("decompose") {
     forAll { (p: (Set[Int], Set[Int])) =>
-      val decomposed = PairAsUIJDLattice[Set[Int], Set[Int]].decompose(p)
-      val merged     = decomposed.reduceOption(PairAsUIJDLattice[Set[Int], Set[Int]].merge)
+      val decomposed = Lattice[(Set[Int], Set[Int])].decompose(p)
+      val merged     = decomposed.reduceOption(Lattice[(Set[Int], Set[Int])].merge)
 
       merged match {
         case None =>

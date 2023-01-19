@@ -37,11 +37,6 @@ trait Lattice[A] {
     */
   def decompose(a: A): Iterable[A] = Iterable(a)
 
-  def bimap[B](to: A => B, from: B => A): Lattice[B] = new Lattice[B] {
-    override def merge(left: B, right: B): B      = to(Lattice.this.merge(from(left), from(right)))
-    override def lteq(left: B, right: B): Boolean = Lattice.this.lteq(from(left), from(right))
-  }
-
   extension (left: A) {
 
     /** Lattice order is derived from merge, but should be overridden for efficiency. */
@@ -54,8 +49,8 @@ trait Lattice[A] {
 }
 
 object Lattice {
-  def apply[A](implicit ev: Lattice[A]): Lattice[A] = ev
-  def merge[A: Lattice](left: A, right: A): A       = apply[A].merge(left, right)
+  def apply[A](using ev: Lattice[A]): Lattice[A] = ev
+  def merge[A: Lattice](left: A, right: A): A    = apply[A].merge(left, right)
 
   /** Merge functions can throw away redundant information, if one constructs values directly (not by using operators)
     * this could result in values that should be equal, but are not.
@@ -63,7 +58,7 @@ object Lattice {
     */
   def normalize[A: Lattice](v: A): A = v merge v
 
-  def decomposed[A](a: A)(implicit l: Lattice[A]): Iterable[A] = l.decomposed(a)
+  def decompose[A: Lattice](a: A): Iterable[A] = a.decomposed
 
   implicit class Operators[A: Lattice](left: A):
     infix def merge(right: A): A = Lattice[A].merge(left, right)
@@ -106,7 +101,7 @@ object Lattice {
 
     override def decompose(state: Option[A]): Iterable[Option[A]] = state match {
       case None    => List.empty[Option[A]]
-      case Some(v) => v.decomposed.map(Some(_))
+      case Some(v) => v.decomposed.map(Some.apply)
     }
 
   }
@@ -140,67 +135,66 @@ object Lattice {
 
   given functionLattice[K, V: Lattice]: Lattice[K => V] = (left, right) => k => left(k) merge right(k)
 
-  given contextLattice[D: DottedLattice]: Lattice[Dotted[D]] = (left, right) =>
-    val dsMerged = DottedLattice[D].mergePartial(left, right)
-    val ccMerged = left.context merge right.context
-    Dotted[D](dsMerged, ccMerged)
-
-  given PairAsUIJDLattice[A: Lattice: Bottom, B: Lattice: Bottom]: Lattice[(A, B)]                          = derived
-  given TripleAsUIJDLattice[A: Lattice: Bottom, B: Lattice: Bottom, C: Lattice: Bottom]: Lattice[(A, B, C)] = derived
-
-  inline def summonAllMaybe[T <: Tuple]: T =
-    val res =
-      inline erasedValue[T] match
-        case _: EmptyTuple => EmptyTuple
-        case _: (τ *: τs) => summonFrom {
-            case b: τ => b
-            case _    => null
-          } *: summonAllMaybe[τs]
-      end match
-    res.asInstanceOf[T]
+  /** This causes tuple lattices to be generally derivable implicitly,
+    * without making all products derivable implicitly. */
+  inline given tupleLattice[T <: Tuple](using pm: Mirror.ProductOf[T]): Lattice[T] = derived
 
   inline def derived[T <: Product](using pm: Mirror.ProductOf[T]): Lattice[T] = {
     val lattices: Tuple = summonAll[Tuple.Map[pm.MirroredElemTypes, Lattice]]
-    val bottoms: Tuple  = summonAllMaybe[Tuple.Map[pm.MirroredElemTypes, Bottom]]
-    new ProductLattice[T](lattices, bottoms, pm, valueOf[pm.MirroredLabel])
+    val bottoms: Tuple  = Derivation.summonAllMaybe[Tuple.Map[pm.MirroredElemTypes, Bottom]]
+    new Derivation.ProductLattice[T](lattices, bottoms, pm, valueOf[pm.MirroredLabel])
   }
 
-  class ProductLattice[T <: Product](
-      lattices: Tuple,
-      bottoms: Tuple,
-      pm: Mirror.ProductOf[T],
-      label: String
-  ) extends Lattice[T] {
+  object Derivation {
 
-    override def toString: String = s"ProductLattice[${label}]"
+    inline def summonAllMaybe[T <: Tuple]: T =
+      val res =
+        inline erasedValue[T] match
+          case _: EmptyTuple => EmptyTuple
+          case _: (τ *: τs) => summonFrom {
+              case b: τ => b
+              case _    => null
+            } *: summonAllMaybe[τs]
+        end match
+      res.asInstanceOf[T]
 
-    private def lat(i: Int): Lattice[Any] = lattices.productElement(i).asInstanceOf[Lattice[Any]]
-    private def bot(i: Int, default: Any): Any =
-      val btm = bottoms.productElement(i)
-      if btm == null
-      then default
-      else btm.asInstanceOf[Bottom[Any]].empty
+    class ProductLattice[T <: Product](
+        lattices: Tuple,
+        bottoms: Tuple,
+        pm: Mirror.ProductOf[T],
+        label: String
+    ) extends Lattice[T] {
 
-    override def merge(left: T, right: T): T =
-      pm.fromProduct(new Product {
-        def canEqual(that: Any): Boolean = false
-        def productArity: Int            = lattices.productArity
-        def productElement(i: Int): Any  = lat(i).merge(left.productElement(i), right.productElement(i))
-      })
+      override def toString: String = s"ProductLattice[${label}]"
 
-    override def decompose(a: T): Iterable[T] =
-      Range(0, lattices.productArity).flatMap { j =>
-        lat(j).decompose(a.productElement(j)).map { elem =>
-          pm.fromProduct(new Product {
-            def canEqual(that: Any): Boolean = false
-            def productArity: Int            = lattices.productArity
-            def productElement(i: Int): Any  = if i == j then elem else bot(i, a.productElement(i))
-          })
+      private def lat(i: Int): Lattice[Any] = lattices.productElement(i).asInstanceOf[Lattice[Any]]
+      private def bot(i: Int, default: Any): Any =
+        val btm = bottoms.productElement(i)
+        if btm == null
+        then default
+        else btm.asInstanceOf[Bottom[Any]].empty
+
+      override def merge(left: T, right: T): T =
+        pm.fromProduct(new Product {
+          def canEqual(that: Any): Boolean = false
+          def productArity: Int            = lattices.productArity
+          def productElement(i: Int): Any  = lat(i).merge(left.productElement(i), right.productElement(i))
+        })
+
+      override def decompose(a: T): Iterable[T] =
+        Range(0, lattices.productArity).flatMap { j =>
+          lat(j).decompose(a.productElement(j)).map { elem =>
+            pm.fromProduct(new Product {
+              def canEqual(that: Any): Boolean = false
+              def productArity: Int            = lattices.productArity
+              def productElement(i: Int): Any  = if i == j then elem else bot(i, a.productElement(i))
+            })
+          }
         }
-      }
 
-    override def lteq(left: T, right: T): Boolean = Range(0, lattices.productArity).forall { i =>
-      lat(i).lteq(left.productElement(i), right.productElement(i))
+      override def lteq(left: T, right: T): Boolean = Range(0, lattices.productArity).forall { i =>
+        lat(i).lteq(left.productElement(i), right.productElement(i))
+      }
     }
   }
 }
