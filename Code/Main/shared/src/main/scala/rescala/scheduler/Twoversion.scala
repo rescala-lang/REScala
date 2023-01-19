@@ -207,9 +207,9 @@ trait Twoversion {
     }
 
     override private[rescala] def makeAdmissionPhaseTicket(initialWrites: Set[ReSource]): AdmissionTicket[State] =
-      new AdmissionTicket(this, initialWrites)
+      new AdmissionTicket[State](this, initialWrites)
     private[rescala] def makeDynamicReevaluationTicket[V, N](b: V): ReevTicket[State, V] =
-      new ReevTicket(this, b, accessHandler)
+      new ReevTicket[State, V](this, b, accessHandler)
 
     override def access(reactive: ReSource): reactive.Value =
       TwoVersionTransactionImpl.this.dynamicAfter(reactive)

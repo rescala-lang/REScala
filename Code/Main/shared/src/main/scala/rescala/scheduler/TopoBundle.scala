@@ -107,7 +107,7 @@ trait TopoBundle extends ObserveBundle {
             val transaction = TopoTransaction(creation)
             withDynamicInitializer(transaction) {
               // admission
-              val admissionTicket: AdmissionTicket[State] = new AdmissionTicket(transaction, initialWrites)
+              val admissionTicket: AdmissionTicket[State] = new AdmissionTicket[State](transaction, initialWrites)
               val admissionResult                         = admissionPhase(admissionTicket)
               val sources = admissionTicket.initialChanges.values.collect {
                 case iv if iv.writeValue(iv.source.state.value, iv.source.state.value = _) => iv.source

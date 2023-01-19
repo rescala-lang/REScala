@@ -19,7 +19,7 @@ trait ObserveBundle {
         state =>
           class Obs extends Base[dependency.State, Pulse[Nothing]](state, ct.rename) with Derived with DisconnectableImpl {
 
-            type State[V] = dependency.State[V]
+            override type State[V] = dependency.State[V]
 
             override protected[rescala] def commit(base: Obs.this.Value): Obs.this.Value = Pulse.NoChange
 

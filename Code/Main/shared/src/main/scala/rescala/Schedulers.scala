@@ -9,7 +9,7 @@ object Schedulers extends PlatformSchedulers {
   trait NoLock extends Levelbased {
     type State[V] = LevelState[V]
     private[rescala] class SimpleNoLock extends LevelBasedTransaction {
-      type State[V] = LevelState[V]
+      override type State[V] = LevelState[V]
       override protected def makeDerivedStructState[V](initialValue: V): State[V] = new LevelState(initialValue)
       override def releasePhase(): Unit                                           = ()
       override def preparationPhase(initialWrites: Set[ReSource.of[State]]): Unit           = {}

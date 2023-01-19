@@ -52,7 +52,7 @@ class ReactiveStreamsApi(val api: RescalaInterface) {
     with Derived
     with Subscription {
 
-    type State[V] = ReactiveStreamsApi.this.api.State[V]
+    override type State[V] = ReactiveStreamsApi.this.api.State[V]
 
     var requested: Long = 0
     var cancelled       = false

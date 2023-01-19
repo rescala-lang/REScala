@@ -463,7 +463,7 @@ trait IncrementalBundle {
             throw new Exception(s"Cannot remove element as it cannot be found")
         }
       }
-      ticket.recordChange(new InitialChange {
+      ticket.recordChange(new InitialChange[State] {
         override val source: IncSeq.this.type = IncSeq.this
         override def writeValue(b: Delta[T], v: Delta[T] => Unit): Boolean = {
           v(delta)

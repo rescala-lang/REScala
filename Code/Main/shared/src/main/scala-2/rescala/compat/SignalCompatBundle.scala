@@ -1,5 +1,6 @@
 package rescala.compat
 
+import rescala.core.{LowPriorityScopeImplicits, ReSource, ScopeSearch}
 import rescala.macros.MacroTags.{Dynamic, Static}
 import rescala.macros.ReadableMacroBundle
 import rescala.operator.{Operators, cutOutOfUserComputation}
@@ -21,9 +22,9 @@ trait SignalCompatBundle extends ReadableMacroBundle {
         Signals.type,
         StaticTicket,
         DynamicTicket,
-        ScopeSearch,
+        ScopeSearch[State],
         LowPriorityScopeImplicits,
-        ReSource
+        ReSource.of[State]
       ]
 
   }
@@ -41,9 +42,9 @@ trait SignalCompatBundle extends ReadableMacroBundle {
         Dep,
         Cap,
         DynamicTicket,
-        ScopeSearch,
+        ScopeSearch[State],
         LowPriorityScopeImplicits,
-        ReSource
+        ReSource.of[State]
       ]
   }
 
@@ -64,9 +65,9 @@ trait SignalCompatBundle extends ReadableMacroBundle {
         Signals.type,
         StaticTicket,
         DynamicTicket,
-        ScopeSearch,
+        ScopeSearch[State],
         LowPriorityScopeImplicits,
-        ReSource
+        ReSource.of[State]
       ]
     final def static[A](expression: A)(implicit ticket: CreationTicket): Signal[A] =
       macro rescala.macros.ReactiveMacros.ReactiveExpression[
@@ -75,9 +76,9 @@ trait SignalCompatBundle extends ReadableMacroBundle {
         Signals.type,
         StaticTicket,
         DynamicTicket,
-        ScopeSearch,
+        ScopeSearch[State],
         LowPriorityScopeImplicits,
-        ReSource
+        ReSource.of[State]
       ]
     final def dynamic[A](expression: A)(implicit ticket: CreationTicket): Signal[A] =
       macro rescala.macros.ReactiveMacros.ReactiveExpression[
@@ -86,9 +87,9 @@ trait SignalCompatBundle extends ReadableMacroBundle {
         Signals.type,
         StaticTicket,
         DynamicTicket,
-        ScopeSearch,
+        ScopeSearch[State],
         LowPriorityScopeImplicits,
-        ReSource
+        ReSource.of[State]
       ]
   }
 

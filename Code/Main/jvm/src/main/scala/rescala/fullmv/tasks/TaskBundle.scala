@@ -155,7 +155,7 @@ trait TaskBundle extends FullMVBundle {
       assert(turn.phase == TurnPhase.Executing, s"$turn cannot reevaluate (requires executing phase")
       var value                          = node.state.reevIn(turn)
       val transactionHandle              = TransactionHandle(turn)
-      val ticket: ReevTicket[State, node.Value] = new ReevTicket(transactionHandle, value, FullAccessHandle)
+      val ticket: ReevTicket[State, node.Value] = new ReevTicket[State, node.Value](transactionHandle, value, FullAccessHandle)
       val res: Result.of[State, node.Value] =
         try {
           turn.host.withDynamicInitializer(transactionHandle) {

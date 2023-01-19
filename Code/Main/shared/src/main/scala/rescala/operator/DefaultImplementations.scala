@@ -26,10 +26,13 @@ trait DefaultImplementations {
       with Derived
       with DisconnectableImpl {
 
-    type State[V] = self.State[V]
+    override type State[V] = self.State[V]
 
     override protected[rescala] def guardedReevaluate(rein: ReIn): Rout = {
-      val rein2    = isDynamicWithStaticDeps.fold(rein.trackStatic())(rein.trackDependencies)
+      val rein2    =  isDynamicWithStaticDeps match {
+        case None => rein.trackStatic()
+        case Some(deps) => rein.trackDependencies(deps)
+      }
       val newPulse = computePulse(rein2)
       if (newPulse.isChange) rein2.withValue(newPulse) else rein2
     }

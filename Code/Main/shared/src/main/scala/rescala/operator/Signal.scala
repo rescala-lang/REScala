@@ -4,6 +4,7 @@ import rescala.compat.SignalCompatBundle
 import rescala.operator.RExceptions.{EmptySignalControlThrowable, ObservedException}
 import rescala.core.{Disconnectable, ReSource, ReadAs, Scheduler}
 
+import scala.annotation.unchecked.uncheckedVariance
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
 import scala.util.control.NonFatal
@@ -30,7 +31,8 @@ trait SignalBundle extends SignalCompatBundle {
     override type Value <: Pulse[T]
     override def read(v: Value): T                             = v.get
     override protected[rescala] def commit(base: Value): Value = base
-    def resource: ReadAs.of[State, T]                                    = this
+
+    def resource: ReadAs.of[State, T @uncheckedVariance /* works in scala 3*/] = this
 
     /** Returns the current value of the signal
       * However, using now is in most cases not what you want.
@@ -151,7 +153,9 @@ trait SignalBundle extends SignalCompatBundle {
     private def ignore2[Tick, Current, Res](f: Tick => Res): (Tick, Current) => Res = (ticket, _) => f(ticket)
 
     @cutOutOfUserComputation
-    def ofUDF[T](udf: UserDefinedFunction[T, ReSource.of[State], DynamicTicket])(implicit ct: CreationTicket): Signal[T] = {
+    def ofUDF[T](udf: UserDefinedFunction[T, ReSource.of[State], DynamicTicket])(implicit
+        ct: CreationTicket
+    ): Signal[T] = {
       ct.create[Pulse[T], SignalImpl[T]](udf.staticDependencies, Pulse.empty, needsReevaluation = true) {
         state =>
           new SignalImpl[T](

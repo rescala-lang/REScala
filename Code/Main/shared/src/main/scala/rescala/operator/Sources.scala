@@ -87,7 +87,7 @@ trait Sources {
     def setEmpty()(implicit fac: Scheduler[State]): Unit = fac.forceNewTransaction(this)(t => admitPulse(Pulse.empty)(t))
 
     def admitPulse(pulse: Pulse[A])(implicit ticket: AdmissionTicket[State]): Unit = {
-      ticket.recordChange(new InitialChange {
+      ticket.recordChange(new InitialChange[State] {
         override val source: Var.this.type = Var.this
         override def writeValue(base: Pulse[A], writeCallback: Pulse[A] => Unit): Boolean =
           if (base != pulse) { writeCallback(pulse); true }
